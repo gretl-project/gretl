@@ -9,20 +9,21 @@ As of \app{gretl} version 1.9.13 the \cmd{join} command (see chapter
 datasets in a straightforward manner.  Such datasets contain
 information on when the observations in a time series were actually
 published by statistical agencies and how they have been revised over
-time. Probably the most popular source of such data is the ``Alfred''
-online database at the St. Louis Fed
-(\url{http://alfred.stlouisfed.org/}); there are similar offerings at
-the OECD.  The description in this section covers the case of a
-typical file downloaded from Alfred, but should be easy to adapt to
-files with a slightly different format.
+time. Probably the most popular sources of such data are the
+``Alfred'' online database at the St. Louis Fed
+(\url{http://alfred.stlouisfed.org/}) and the OECD's
+\textsf{StatExtracts} site \url{http://stats.oecd.org/}.  The
+description in this section covers the case of a typical file
+downloaded from Alfred, but should be easy to adapt to files with a
+slightly different format.
 
-From the general description of \cmd{join} it is clear that it needs a
-plain column-oriented text file, in which columns may be separated by
-commas (the most common choice), tabs, spaces or semicolons. Alfred
-provides the option to retrieve realtime data directly in such files
-(which are tab-delimited); if for some reason you only have a
-spreadsheet file of your dataset available you would need to export it
-to a plain text file first.
+As already stated, \cmd{join} requires a column-oriented plain text
+file, where the columns may be separated by commas, tabs, spaces or
+semicolons. Alfred and the OECD provide the option to download
+realtime data in this format (tab-delimited files from Alfred,
+comma-delimited from the OECD). If you have a realtime dataset in a
+spreadsheet file you must export it to a delimited text file before
+using it with \cmd{join}.
 
 Representing revision histories is more complex than just storing a
 standard time series, because for each observation period you have in
@@ -30,69 +31,149 @@ general more than one published value over time, along with the
 information on when each of these values were valid or
 current. Sometimes this is represented in spreadsheets with two time
 axes, one for the observation period and another one for the
-publication time (``vintage''). The filled cells then form something
+publication time or ``vintage''. The filled cells then form something
 resembling an upper triangle (or a ``guillotine'' blade shape with
 four corners, if the publication dates do not reach back far enough to
 complete the triangle).
 
+\subsection{Atomic format for realtime data}
+
 However, this format is not optimal for automatic processing, and
 \app{gretl}'s \cmd{join} works best instead with files that are in
-what we call the ``atomic format'', which is exactly Alfred's format
-if you choose the option ``Observations by Real-Time Period''. A file
-in atomic format contains one individual datum (one number) per line,
-together with some meta-information about it; a typical line of such a
-file along with the header line looks as follows, where \texttt{vname} is a
-placeholder for the actual name of a variable (such as \texttt{INDPRO}
-for industrial production):
+what we call the ``atomic format'', which is exactly the format used
+by Alfred if you choose the option ``Observations by Real-Time
+Period'', and the the OECD if (FIXME conditional?). A file in atomic
+format contains one actual data-point per line, together with some
+associated metadata. This is illustrated in Table~\ref{tab:atomic},
+where we show the first three lines from an Alfred file and an OECD
+file (slightly modified).\footnote{In the Alfred file we have used
+  commas rather than tabs as the column delimiter; in the OECD example
+  we have shortened the name in the \texttt{Variable} column.}
 
+\begin{table}[htbp]
+\begin{center}
+Alfred: monthly US industrial production
 \begin{code}
-observation_date;vname;realtime_start_date;realtime_end_date
-...
-
-2010-04-01; 98.34; 2011-06-14; 2012-08-02
-...
+observation_date,INDPRO,realtime_start_date,realtime_end_date
+1960-01-01,112.0000,1960-02-16,1960-03-15
+1960-01-01,111.0000,1960-03-16,1961-10-15
 \end{code}
+OECD: monthly UK industrial production
+\begin{code}
+Country,Variable,Frequency,Time,Edition,Value,Flags
+"United Kingdom","INDPRO","Monthly","Jan-1990","February 1999",100,
+"United Kingdom","INDPRO","Monthly","Feb-1990","February 1999",99.3,
+\end{code}
+\end{center}
+\caption{Variant atomic formats for realtime data}
+\label{tab:atomic}
+\end{table}
 
-What does the data line tell us? It says that for the period that
-started on April 1st 2010 the value for the variable in question that
-was published on June 14th 2011 was 98.34.\footnote{\app{Gretl}
-  supports the use of other decimal separators here, too, not just the
-  dot. As always, this must not interfere with the choice of the
-  column separator.} And this data vintage remained in effect until
-(and including) August 2nd 2012, when it was somehow invalidated,
-perhaps by a newly revised value which would be stored in another line
-of the same file (most likely, further down).
+Consider the first data line in the Alfred file: in the
+\verb|observation_date| column we find \texttt{1960-01-01}, indicating
+that the data-point on this line, namely 112.0, is an observation or
+measurement (in this case, of the US index of industrial production)
+that refers to the period starting on January 1st 1960. The
+\verb|realtime_start_date| value of \texttt{1960-02-16} tells us that
+this value was published on February 16th 1960, and the
+\verb|realtime_end_date| value says that this vintage remained current
+until (and including) March 15th 1960. On the next day (as we can see
+from the following line) the data-point was revised slightly downward
+to 111.0.
 
-The daily dates in the line are given in a format that follows the
-relevant ISO standard, \texttt{YYYY-MM-DD}, but below we also describe
-how to deal with differently formatted dates. Note that daily dates
-are appropriate for the last two columns, which jointly record the
-interval over which a given data vintage was current. Daily dates are
-not mandatory for the first column defining the observation or
-reference period (the period to which the data \textit{refer}), since
-the frequency may well be annual, quarterly or monthly. However,
-following Alfred's practice it is OK to specify the first day in the
-period even for non-daily data. Notice that this implies that in the
-example above it is not clear without further information whether the
-observation period is the second quarter of 2010, the month April
-2010, or the day April 1st 2010.  However, we assume that in practice
-this meta information is always available.
+Daily dates in Alfred files are given in a format that follows the
+relevant ISO standard, \texttt{YYYY-MM-DD}, but below we describe how
+to deal with differently formatted dates. Note that daily dates are
+appropriate for the last two columns, which jointly record the
+interval over which a given data vintage was current. Daily dates may
+be, in a sense, overly precise for the first column, since the data
+period may well be the year, quarter or month (as it is in fact
+here). However, following Alfred's practice it is OK to specify the
+first day in the period even for non-daily data.\footnote{Notice that
+  this implies that in the Alfred example above it is not clear
+  without further information whether the observation period is the
+  first quarter of 1960, the month January 1960, or the day January
+  1st 1960.  However, we assume that this information is always
+  available in context.}
 
-We will use Alfred's column names in our code examples, but of course
-these exact column header names are not mandatory in general, as long
-as you adapt your code accordingly. Also, it is perhaps noteworthy
-that these files are essentially tables structured according to
-relational-database concepts, so in principle they could be handled
-with SQL-based tools instead of using \app{gretl}'s \cmd{join}
-command.
+Compare the first data line of the OECD example. There's a greater
+amount of leading metadata, which is left implicit in the Alfred
+file. Here \texttt{Time} is the equivalent of Alfred's
+\verb|observation_date|, and \texttt{Edition} the equivalent of
+Alfred's \verb|realtime_start_date|. So we read that in February 1999
+a value of 100 was current for the UK index of industrial production
+for January 1990, and from the next line we see that in the same month
+a value of 99.3 was current for industrial production in February
+1990.
+
+Besides the different names and ordering of the columns, there are a
+few more substantive differences between Alfred and OECD files, most
+of which are irrelevant for \texttt{join} but some of which are
+(possibly) relevant.
+
+The first (irrelevant) difference is the ordering of the lines. It
+appears (though we're not sure how consistent this is) that in Alfred
+files the lines are sorted by observation date first and then by
+publication date---so that all revisions of a given observation are
+grouped together---while OECD files are sorted first by revision date
+(\texttt{Edition}) and then by observation date (\texttt{Time}). If we
+want the next revision of UK industrial production for January 1990 in
+the OECD file we have to scan down several lines until we find
+\begin{code}
+"United Kingdom","INDPRO","Monthly","Jan-1990","March 1999",100,
+\end{code}
+This difference is basically irrelevant because \texttt{join} can
+handle the case where the lines appear in random order, although some
+operations can be coded more conveniently if we're able to assume
+chronological ordering (either on the Alfred or the OECD pattern, it
+doesn't matter).
+
+The second (also irrelevant) difference is that the OECD seems to
+include periodic ``Edition'' lines even when there is no change from
+the previous value (as illustrated above, where the UK industrial
+production index for January 1990 is reported as 100.0 as of March
+1999, the same value that we saw to be current in February 1999),
+while Alfred reports a new value only when it differs from what was
+previously current.
+
+A third difference lies in the dating of the revisions or editions.
+As we have seen, Alfred gives a specific daily date while (in the UK
+industrial production file at any rate), the OECD just dates each
+edition to a month. This is not necessarily relevant for
+\texttt{join}, but it does raise the question of whether the OECD
+might date revisions to a finer granularity in some of their files, in
+which case one would have to be on the lookout for a different date
+format.
+
+The final difference is that Alfred supplies an ``end date'' for each
+data vintage while the OECD supplies only a starting date. In relation
+to OECD files it is safe to assume that each vintage remains valid
+until it is superceded by the next, explicitly stated, value. With the
+Alfred files, however, it seems possible in principle that a given
+vintage could ``expire'' some time before the next vintage becomes
+available.
+
+What could this mean? Well, it is possible that a given data-point has
+a definite value up to time $t$, but at $t+1$ it turns to
+``missing''. This might be the consequence of a change in the
+calculation method for the variable in question: the method has
+changed but, over some interval, the value according to the new method
+has not yet been prepared. We might expect that if this were to happen
+a new revision with a value of \texttt{NA} would be published, and
+recorded in the relevant realtime file. However, another way of
+representing this situation might be to show one revision as ending at
+$t$ and the next starting at $t+k$ (where $k$ is greater than one
+day), leaving a ``hole'' in the realtime file to represent,
+implicitly, a period during which the value is missing. We'll consider
+the consequences of this below.
 
 \section{Getting a certain data vintage }
 
-The most widespread real-world application of realtime data would be
-to ``travel back in time'' and retrieve the published data that were
-available on a certain day in the past. For example, suppose that your
-variable is named \texttt{INDPRO}, the path to the source file is
-available in the string variable \texttt{fname} (for example
+Probably the most common real-world application of realtime data is to
+``travel back in time'' and retrieve the data that were available as
+of a certain day in the past. For example, suppose that your variable
+is named \texttt{INDPRO}, the path to the source file is available in
+the string variable \texttt{fname} (for example
 \verb|fname = "C:/Users/yourname/Downloads/INDPRO.txt"|) and that you
 want to check the status quo on June 15th 2011; this can be achieved
 as follows.
