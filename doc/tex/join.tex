@@ -38,7 +38,7 @@ command loop can be used to apply \texttt{join} to multiple series.
 
 A related aspect of \texttt{join} should be noted---one that makes
 this command particularly useful when dealing with very large
-datafiles.  That is, when gretl executes a join operation it does not,
+data files.  That is, when gretl executes a join operation it does not,
 in general, read into memory the entire content of the right-hand side
 dataset.  Only those columns that are actually needed for the
 operation are read in full. This makes \texttt{join} faster and
@@ -180,7 +180,7 @@ this facility is perhaps best introduced by example.  Suppose that (as
 with many survey and census-based datasets) we have a dataset that is
 composed of two or more related files, each having a different unit of
 observation; for example we have a ``persons'' data file and a
-``households'' datafile. Table~\ref{tab:csv} shows a simple,
+``households'' data file. Table~\ref{tab:csv} shows a simple,
 artificial case. The file \texttt{people.csv} contains a unique
 identifier for the individuals, \texttt{pid}. The households file,
 \texttt{hholds.csv}, contains the unique household identifier
@@ -471,7 +471,7 @@ smpl PARENT<3  --restrict
 \end{code}
 %
 For compatibility with the Mroz dataset as presented in the gretl
-datafile \texttt{mroz87.gdt}, we rename the age and education
+data file \texttt{mroz87.gdt}, we rename the age and education
 variables as \texttt{WA} and \texttt{WE} respectively, then we
 store the reduced base dataset in gretl format.
 %
@@ -580,10 +580,7 @@ question. So for case (a) we subsample using \texttt{PARENT==1} (head
 of household) and filter the join using \texttt{PARENT==2} (spouse of
 head); in case (b) we do the converse. We thus construct \verb|H_ID|
 piece-wise.\footnote{In principle the husband ID variable could be
-  constructed without subsampling if more complex filtering were
-  supported, but as noted above the \texttt{join} filter is at present
-  limited to a binary expression involving only right-hand side
-  variables and constants.}
+  constructed without subsampling by using a more complex filter.}
 %
 \begin{code}
 # for women who are household heads
@@ -639,11 +636,11 @@ involve matching observations by time-period. Since gretl knows the
 period of each observation on the left, no ``inner key'' is required;
 all we need is a means of identifying the period on the right; we'll
 refer to this as the ``time key''. Most likely, this information will
-appear in a single column in the outer datafile, often but not always
+appear in a single column in the outer data file, often but not always
 the first column.
 
 The \texttt{join} command provides a simple (but limited) default for
-extracting period information from the outer datafile, plus an
+extracting period information from the outer data file, plus an
 option that can be used if the default is not applicable, as follows.
 \begin{itemize}
 \item The default assumptions are: (1) the time key appears in the
@@ -690,7 +687,7 @@ headings), but are given in the non-standard format year,
 
 The date format string should be composed using the codes employed by
 the POSIX function \texttt{strptime}; Table \ref{tab:join-datefmt}
-contains a list of the most-often used codes.\footnote{The
+contains a list of the most relevant codes.\footnote{The
   \texttt{\%q} code for quarter is not present in \texttt{strptime};
   it is added for use with \texttt{join} since quarterly data are
   common in macroeconomics.}
@@ -701,8 +698,8 @@ contains a list of the most-often used codes.\footnote{The
     \textbf{Code} & \textbf{Meaning} \\
     \hline
     \verb|%%| & The \% character. \\
-    \verb|%b| & The month name according to the current locale, in 
-    abbreviated or full.\\
+    \verb|%b| & The month name according to the current locale,
+    either abbreviated or in full.\\
     \verb|%C| & The century number (0--99).\\
     \verb|%d| & The day of month (1--31). \\
     \verb|%D| & Equivalent to \verb|%m/%d/%y|.  (This is the American
@@ -795,8 +792,8 @@ Frequency,Period,Country,Value,Flags
 \end{table}
 
 This is an instance of data in what we call \emph{atomic format}, that
-is, a format in which each line of the outer file contains only one
-figure and extracting data mainly requires filtering the appropriate
+is, a format in which each line of the outer file contains a single
+data-point and extracting data mainly requires filtering the appropriate
 lines. The outer time key is under the \texttt{Period} heading, and
 has the format \texttt{Q\emph{<quarter>-<year>}}. Assuming that the
 file in Table~\ref{tab:oecd-gdp} has the name \texttt{oecd.csv}, the
@@ -822,9 +819,6 @@ command into a string and then using string substitution, as in
 
 \begin{footnotesize}
 \begin{verbatim}
-nulldata 220
-setobs 4 1960:1
-
 sprintf optstr "--tkey=\"Period,Q%%q-%%Y\" --data=Value"
 
 join oecd.csv FRA @optstr --filter="Country==\"France\""
@@ -833,6 +827,213 @@ join oecd.csv ITA @optstr --filter="Country==\"Italy\""
 join oecd.csv  UK @optstr --filter="Country==\"United Kingdom\""
 \end{verbatim}
 \end{footnotesize}
+
+If one were importing a large number of such series it might be worth
+rewriting the sequence of joins as a loop, as in
+
+\begin{footnotesize}
+\begin{verbatim}
+sprintf optstr "--tkey=\"Period,Q%%q-%%Y\" --data=Value"
+sprintf countries "France Germany Italy \"United Kingdom\""
+sprintf vnames "FRA GER ITA UK"
+
+loop foreach i @countries
+  string vname = strsplit(vnames, i)
+  join oecd.csv @vname @optstr --filter="Country==\"$i\""
+endloop
+\end{verbatim}
+\end{footnotesize}
+\section{Special handling of time columns}
+\label{sec:join-timecols}
+
+When dealing with straight time series data the \texttt{tkey}
+mechanism described above should suffice in almost all cases. In some
+contexts, however, time enters the picture in a more complex way;
+examples include panel data (see section~\ref{sec:join-panel}) and
+so-called realtime data (see chapter~\ref{chap:realtime}). To handle
+such cases \texttt{join} provides the \option{timecols} option. This
+can be used to select certain columns in the right-hand data file for
+special treatment: strings representing dates in these columns will be
+converted to numerical values: 8-digit numbers on the pattern
+\texttt{YYYYMMDD} (ISO 8601 ``basic'' format for daily dates).  Once
+dates are in this form it is easy to use them in key-matching or
+filtering.
+
+By default it is assumed that the strings in the selected columns are
+in ISO 8601 ``extended'' format, \texttt{YYYY-MM-DD}. If that is not
+the case you can supply a time-format string using the
+\option{timecol-fmt} option. The format string should be written using
+the codes shown in Table~\ref{tab:join-datefmt}.
+
+Here are some examples:
+
+\begin{code}
+# select one column for treatment
+--timecols=start_date
+
+# select two columns for treatment
+--timecols="start_date,end_date"
+
+# specify US-style daily date format
+--timecol-fmt="%m/%d/%Y"
+
+# specify quarterly date-strings (as in 2004q1)
+--timecol-fmt="%Yq%q"
+\end{code}
+
+Some points to note:
+
+\begin{itemize}
+\item If a specified column is not selected for a substantive role in
+  the join operation (as data to be imported, as a key, or as an
+  auxiliary variable for use in aggregation) the column in question is
+  not read and so no conversion is carried out.
+\item If a specified column contains numerical rather than string
+  values, no conversion is carried out.
+\item If a string value in a selected column fails parsing using the
+  relevant time format (user-specified or default), the converted
+  value is \texttt{NA}.
+\item On successful conversion, the output is always in daily-date
+  form as stated above. If you specify a monthly or quarterly time
+  format, the converted date is the first day of the month or quarter.
+\end{itemize}
+
+In most cases, even if you wish to apply this treatment to more than
+one column a single time-format will be sufficient. However, it is
+possible to supply more than one format if needed. To take a
+real-world example, certain data files available from the OECD have
+two columns, \texttt{Time} and \texttt{Edition}, in which dates are
+represented differently---on the patterns ``\texttt{Feb-1990}'' and
+``\texttt{February 1990}'' (with month and year separated by a space)
+respectively. The month name (whether abbreviated or complete) is
+matched by the conversion specifier \texttt{\%b}, but the
+dash-versus-space difference requires distinct formats. If we wanted
+to convert both of these columns to 8-digit numbers we could do the
+following:
+\begin{code}
+--timecols="Time,Edition"
+--timecol-fmt="%b-%Y,%b %Y"
+\end{code}
+
+Multiple formats must be separated by commas (with no intervening
+spaces). If a format happens to contain a comma it can be enclosed in
+backslash-escaped double quotes. Note that you must give either one
+time-column format (which is taken to apply to all the
+\texttt{timecols} columns) or one for each of the selected columns.
+
+\section{Panel data}
+\label{sec:join-panel}
+
+In section~\ref{sec:join-timeser} we gave an example of reading
+quarterly GDP data for several countries from an OECD file. In that
+context we imported each country's data as a distinct time-series
+variable. Now suppose we want the GDP data in panel format instead
+(stacked time series). How can we do this with \texttt{join}? 
+
+As a reminder, here's what the OECD data look like:
+\begin{code}
+Frequency,Period,Country,Value,Flags
+"Quarterly","Q1-1960","France",463876.148126845,E
+"Quarterly","Q1-1960","Germany",768802.119278467,E
+"Quarterly","Q1-1960","Italy",414629.791450547,E
+"Quarterly","Q1-1960","United Kingdom",578437.090291889,E
+"Quarterly","Q2-1960","France",465618.977328614,E
+\end{code}
+and so on. If we have four countries and quarterly observations
+running from 1960:1 to 2013:2 ($T$ = 214 quarters) we might set up our
+panel workspace like this:
+\begin{code}
+scalar N = 4
+scalar T = 214
+scalar NT = N*T
+nulldata NT --preserve
+setobs T 1.1 --stacked-time-series
+\end{code}
+
+The relevant outer keys are obvious: \texttt{Country} for the country
+and \texttt{Period} for the time period. Our task is now to construct
+matching keys in the inner dataset. This can be done via two
+panel-specific options to the \texttt{setobs} command. Let's work on
+the time dimension first:
+\begin{code}
+setobs 4 1960:1 --panel-time
+series quarter = $obsdate
+\end{code}
+This variant of \texttt{setobs} allows us to tell gretl that time in
+our panel is quarterly, starting in the first quarter of 1960. Having
+set that, the accessor \verb|$obsdate| will give us a series of
+8-digit dates representing the first day of each quarter---19600101,
+19600401, 19600701, and so on, repeating for each country. As we
+explained in section~\ref{sec:join-timecols}, we can use the
+\option{timecols} option on the outer series \texttt{Period} to get
+exactly matching values (in this case using a format of \verb|Q%q-%Y|
+for parsing the \texttt{Period} values).
+
+Now for the country names:
+\begin{code}
+string cstrs
+sprintf cstrs "France Germany Italy \"United Kingdom\""
+setobs country cstrs --panel-groups
+\end{code}
+Here we write into the string \texttt{cstrs} the names of the
+countries, using escaped double-quotes to handle the space in ``United
+Kingdom'', then pass this string to \texttt{setobs} with the
+\option{panel-groups} option, preceded by the identifier
+\texttt{country}. This asks gretl to construct a string-valued series
+named \texttt{country}, in which each name will repeat $T$ times.
+
+We're now ready to join. Assuming the OECD file is named
+\texttt{oecd.csv} we do
+\begin{code}
+join oecd.csv GDP --data=Value \
+ --ikey=country,quarter --okey=Country,Period \
+ --timecols=Period --timecol-fmt="Q%q-%Y"
+\end{code}
+
+\subsection{Other input formats}
+
+The OECD file discussed above is in the most convenient format for
+\texttt{join}, with one data-point per line. But sometimes we may want
+to make a panel from a data file structured like this:
+\begin{code}
+# Real GDP
+Period,France,Germany,Italy,"United Kingdom"
+"Q1-1960",463863,768757,414630,578437
+"Q2-1960",465605,782438,420715,572853
+"Q3-1960",469091,809484,426894,581252
+"Q4-1960",474651,817758,427221,584779
+"Q1-1961",482285,826031,442528,594684
+...
+\end{code}
+
+Call this file \verb|side_by_side.csv|.  Assuming the same initial
+set-up as above, we can panelize the data by setting the sample to
+each country's time series in turn and importing the relevant
+column. The only point to watch here is that the string ``United
+Kingdom'', being a column heading, will become \verb|United_Kingdom|
+on importing (see section~\ref{sec:join-syntax}) so we'll need a
+slightly different set of country strings.
+%
+\begin{code}
+sprintf cstrs "France Germany Italy United_Kingdom"
+setobs country cstrs --panel-groups
+loop foreach i @cstrs --quiet
+  smpl country=="$i" --restrict --replace
+  join side_by_side.csv GDP --data=$i \
+  --ikey=quarter --okey=Period \
+  --timecols=Period --timecol-fmt="Q%q-%Y"
+endloop
+smpl full
+\end{code}
+
+If our working dataset and the outer data file are dimensioned such
+that there are just as many time-series observations on the right as
+there are time slots on the left---and the observations on the right
+are contiguous, in chronological order, and start on the same date as
+the working dataset---we could dispense with the key apparatus and
+just use the first line of the \texttt{join} command shown
+above. However, in general it is safer to use keys to ensure that the
+data end up in correct registration.
 
 
 \section{A related change}
@@ -844,7 +1045,7 @@ that concerns us here (and the only one that is backward-incompatible)
 is a revised interpretation of the \verb|--cols| option. 
 
 Up to gretl 1.9.9, this option was specific to the reading of
-fixed-format datafiles. In that context the parameter to the
+fixed-format data files. In that context the parameter to the
 option---a list of comma-separated numbers---was interpreted as a set
 of pairs of the form (start, width), telling gretl at which byte on
 each line to start reading, and how many bytes to read, to get the
@@ -853,10 +1054,12 @@ value for a given variable.
 As of gretl 1.9.10, the facility just described is still available but
 the option has been renamed as \verb|--fixed-cols|. The parameter to
 the plain \verb|--cols| option is now interpreted as a (1-based) list
-of the columns to be read from a delimited text datafile (e.g.\
+of the columns to be read from a delimited text data file (e.g.\
 CSV). Note that if the first column in a CSV file is an observations
 column, it is not included in the count: the first actual data column
 is treated as column 1.
+
+\clearpage
 
 \section*{Appendix: the full Mroz data script}
 

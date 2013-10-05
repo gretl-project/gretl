@@ -8,14 +8,14 @@ As of \app{gretl} version 1.9.13 the \cmd{join} command (see chapter
 \ref{chap:join}) has been enhanced to deal with so-called realtime
 datasets in a straightforward manner.  Such datasets contain
 information on when the observations in a time series were actually
-published by statistical agencies and how they have been revised over
-time. Probably the most popular sources of such data are the
-``Alfred'' online database at the St. Louis Fed
+published by the relevant statistical agency and how they have been
+revised over time. Probably the most popular sources of such data are
+the ``Alfred'' online database at the St.\ Louis Fed
 (\url{http://alfred.stlouisfed.org/}) and the OECD's
-\textsf{StatExtracts} site \url{http://stats.oecd.org/}.  The
-description in this section covers the case of a typical file
-downloaded from Alfred, but should be easy to adapt to files with a
-slightly different format.
+\textsf{StatExtracts} site, \url{http://stats.oecd.org/}.  The
+examples in this chapter deal with files downloaded from these
+sources, but should be easy to adapt to files with a slightly
+different format.
 
 As already stated, \cmd{join} requires a column-oriented plain text
 file, where the columns may be separated by commas, tabs, spaces or
@@ -34,21 +34,22 @@ axes, one for the observation period and another one for the
 publication time or ``vintage''. The filled cells then form something
 resembling an upper triangle (or a ``guillotine'' blade shape with
 four corners, if the publication dates do not reach back far enough to
-complete the triangle).
+complete the triangle). This format can be useful for giving a human
+reader an overview of the data, but it is not optimal for automatic
+processing; for that purpose ``atomic'' format is best.
 
-\subsection{Atomic format for realtime data}
+\section{Atomic format for realtime data}
+\label{sec:realtime-atomic}
 
-However, this format is not optimal for automatic processing, and
-\app{gretl}'s \cmd{join} works best instead with files that are in
-what we call the ``atomic format'', which is exactly the format used
-by Alfred if you choose the option ``Observations by Real-Time
-Period'', and the the OECD if (FIXME conditional?). A file in atomic
-format contains one actual data-point per line, together with some
-associated metadata. This is illustrated in Table~\ref{tab:atomic},
-where we show the first three lines from an Alfred file and an OECD
-file (slightly modified).\footnote{In the Alfred file we have used
-  commas rather than tabs as the column delimiter; in the OECD example
-  we have shortened the name in the \texttt{Variable} column.}
+What we are calling atomic format is exactly the format used by Alfred
+if you choose the option ``Observations by Real-Time Period'', and the
+OECD if (FIXME conditional?). A file in this format contains one
+actual data-point per line, together with associated metadata. This is
+illustrated in Table~\ref{tab:atomic}, where we show the first three
+lines from an Alfred file and an OECD file (slightly
+modified).\footnote{In the Alfred file we have used commas rather than
+  tabs as the column delimiter; in the OECD example we have shortened
+  the name in the \texttt{Variable} column.}
 
 \begin{table}[htbp]
 \begin{center}
@@ -77,24 +78,24 @@ that refers to the period starting on January 1st 1960. The
 \verb|realtime_start_date| value of \texttt{1960-02-16} tells us that
 this value was published on February 16th 1960, and the
 \verb|realtime_end_date| value says that this vintage remained current
-until (and including) March 15th 1960. On the next day (as we can see
-from the following line) the data-point was revised slightly downward
-to 111.0.
+through March 15th 1960. On the next day (as we can see from the
+following line) this data-point was revised slightly downward to
+111.0.
 
 Daily dates in Alfred files are given in a format that follows the
 relevant ISO standard, \texttt{YYYY-MM-DD}, but below we describe how
 to deal with differently formatted dates. Note that daily dates are
 appropriate for the last two columns, which jointly record the
-interval over which a given data vintage was current. Daily dates may
-be, in a sense, overly precise for the first column, since the data
-period may well be the year, quarter or month (as it is in fact
-here). However, following Alfred's practice it is OK to specify the
-first day in the period even for non-daily data.\footnote{Notice that
-  this implies that in the Alfred example above it is not clear
-  without further information whether the observation period is the
-  first quarter of 1960, the month January 1960, or the day January
-  1st 1960.  However, we assume that this information is always
-  available in context.}
+interval over which a given data vintage was current. Daily dates
+might, however, be considered overly precise for the first column,
+since the data period may well be the year, quarter or month (as it is
+in fact here). However, following Alfred's practice it is acceptable
+to specify a daily date, indicating the first day of the period, even
+for non-daily data.\footnote{Notice that this implies that in the
+  Alfred example it is not clear without further information whether
+  the observation period is the first quarter of 1960, the month
+  January 1960, or the day January 1st 1960.  However, we assume that
+  this information is always available in context.}
 
 Compare the first data line of the OECD example. There's a greater
 amount of leading metadata, which is left implicit in the Alfred
@@ -102,9 +103,9 @@ file. Here \texttt{Time} is the equivalent of Alfred's
 \verb|observation_date|, and \texttt{Edition} the equivalent of
 Alfred's \verb|realtime_start_date|. So we read that in February 1999
 a value of 100 was current for the UK index of industrial production
-for January 1990, and from the next line we see that in the same month
-a value of 99.3 was current for industrial production in February
-1990.
+for January 1990, and from the next line we see that in the same
+vintage month a value of 99.3 was current for industrial production in
+February 1990.
 
 Besides the different names and ordering of the columns, there are a
 few more substantive differences between Alfred and OECD files, most
@@ -131,7 +132,7 @@ doesn't matter).
 The second (also irrelevant) difference is that the OECD seems to
 include periodic ``Edition'' lines even when there is no change from
 the previous value (as illustrated above, where the UK industrial
-production index for January 1990 is reported as 100.0 as of March
+production index for January 1990 is reported as 100 as of March
 1999, the same value that we saw to be current in February 1999),
 while Alfred reports a new value only when it differs from what was
 previously current.
@@ -167,32 +168,38 @@ day), leaving a ``hole'' in the realtime file to represent,
 implicitly, a period during which the value is missing. We'll consider
 the consequences of this below.
 
-\section{Getting a certain data vintage }
+\section{Getting a certain data vintage}
+\label{sec:realtime-vintage}
 
-Probably the most common real-world application of realtime data is to
-``travel back in time'' and retrieve the data that were available as
-of a certain day in the past. For example, suppose that your variable
-is named \texttt{INDPRO}, the path to the source file is available in
-the string variable \texttt{fname} (for example
-\verb|fname = "C:/Users/yourname/Downloads/INDPRO.txt"|) and that you
-want to check the status quo on June 15th 2011; this can be achieved
-as follows.
+The most common application of realtime data is to ``travel back in
+time'' and retrieve the data that were current as of a certain date
+in the past. This would enable you to replicate a forecast or other
+statistical result that could have been produced at that date.
 
-First, we create a new empty dataset (taking care that our string
-variable \texttt{fname} is not erased, by the \option{preserve}
-option), and knowing that we are dealing with monthly data, we
-structure the dataset accordingly. For example,
+For example, suppose we are interested in a variable of monthly
+frequency named \texttt{INDPRO}, realtime data on which is stored in
+an Alfred file named \texttt{INDPRO.txt}, and we want to check the
+status quo as of June 15th 2011.
+
+If we don't already have a suitable dataset into which to import the
+\texttt{INDPRO} data, our first steps will be to create an
+appropriately dimensioned empty dataset using the \texttt{nulldata}
+command and then specify its time-series character via
+\texttt{setobs}, as in
 \begin{code}
-nulldata 132 --preserve
+nulldata 132
 setobs 12 2004:01
 \end{code}
 
-Alternatively, we could of course start from an existing dataset of
-monthly frequency.
+For convenience we can put the name of our realtime file into a
+string variable. On Windows this might look like
+\begin{code}
+string fname = "C:/Users/yourname/Downloads/INDPRO.txt"
+\end{code}
 
-Then, we import the data vintage 2011-06-15 into our dataset
-with \cmd{join}, arbitrarily choosing the self-explanatory series
-identifier of \texttt{ip\_asof\_20110615}.
+We can then import the data vintage 2011-06-15 using \cmd{join},
+arbitrarily choosing the self-explanatory identifier
+\texttt{ip\_asof\_20110615}.
 
 \begin{code}
 join @fname ip_asof_20110615 --tkey=observation_date --data=INDPRO \
@@ -204,53 +211,37 @@ join @fname ip_asof_20110615 --tkey=observation_date --data=INDPRO \
 Here some detailed explanations of the various options are warranted: 
 \begin{itemize}
 \item The \option{tkey} option specifies the column which should be
-  treated as holding the observation period identifiers that are going
-  to be matched against the periods in the current \app{gretl}
-  dataset.\footnote{Strictly speaking, using \option{tkey} is
-    unnecessary in this example because we could just have relied on the
-    default, which is to use the first column in the source file for
-    the periods. However, being explicit is often a good idea.}  The
-  more general form of this option is \option{tkey="colname,format"}
-  (note the double quotes here), so if the dates do not come in 
-  standard (e.g., ISO) format, we can instruct \app{gretl} how to
-  parse them by using the appropriate format description strings as
-  shown in Table \ref{tab:join-datefmt}.  For example, here we could
-  also have written \option{tkey="observation\_date,\%Y-\%m-\%d"}.
+  treated as holding the observation period identifiers to be matched
+  against the periods in the current gretl dataset.\footnote{Strictly
+    speaking, using \option{tkey} is unnecessary in this example
+    because we could just have relied on the default, which is to use
+    the first column in the source file for the periods. However,
+    being explicit is often a good idea.}  The more general form of
+  this option is \option{tkey="colname,format"} (note the double
+  quotes here), so if the dates do not come in standard (e.g., ISO)
+  format, we can tell gretl how to parse them by using the appropriate
+  format specifiers as shown in Table~\ref{tab:join-datefmt}.  For
+  example, here we could have written
+  \option{tkey="observation\_date,\%Y-\%m-\%d"}.
 \item Next, \option{data=INDPRO} tells \app{gretl} that we want to
   retrieve the entries stored in the column named \texttt{INDPRO}.
-\item The \option{timecols} option can be used to select certain
-  columns in the right-hand datafile for special treatment: strings
-  representing dates in these columns will be converted, if possible,
-  to numerical values: 8-digit numbers on the pattern
-  \texttt{YYYYMMDD} (ISO 8601 ``basic'' format for daily dates). We'll
-  need this for the next option, \option{filter}, since this
-  transformation to numerical values makes it possible to perform some
-  basic date arithmetic.
-
-  By default---which applies to files from Alfred---it is assumed that
-  the strings in the selected columns are in ISO 8601 ``extended''
-  format, \texttt{YYYY-MM-DD}. If that is not the case you can supply
-  a time-format string using the \option{timecol-fmt} option, which
-  then applies to all the columns included in the \option{timecols}
-  option. For example, you would specify the US-style daily date
-  format as \option{timecol-fmt="\%m/\%d/\%Y"} while quarterly
-  date-strings on the pattern of \texttt{2004q1} may be handled via
-  \option{timecol-fmt="\%Yq\%q"}. Any entry in the specified columns
-  that does not adhere to the specified date format will be converted
-  to a missing value (NA).
-
-  Note that on successful conversion, the output is always in
-  daily-date form as stated above. If the user specifies a monthly or
-  quarterly time format, the converted date is the first day of the
-  month or quarter.
+\item As explained in section~\ref{sec:join-timecols} the
+  \option{timecols} option selects certain columns in the right-hand
+  data file for conversion from date strings to 8-digit numbers on the
+  pattern \texttt{YYYYMMDD}.  We'll need this for the next step,
+  filtering, since this transformation to numerical values makes it
+  possible to perform some basic arithmetic on dates.  Note that since
+  date strings in Alfred files conform to gretl's default
+  assumption---ISO 8601 ``extended'' format, \texttt{YYYY-MM-DD}---it
+  is not necessary to use the \option{timecol-fmt} option here.
 \item The \option{filter} option specification is the central piece of
   our data retrieval; notice how we use the date constant 20110615 in
   basic ISO form to do numerical comparisons. It would also have been
-  possible to predefine a numerical variable, as in
+  possible to predefine a scalar variable, as in
  \begin{code}
-   vintagedate = 20110615
+   vintage = 20110615
  \end{code}
- and then use \texttt{vintagedate} in the \cmd{join} command instead.
+ and then use \texttt{vintage} in the \cmd{join} command instead.
 
   Here we tell \cmd{join} that we only want to extract those
   publications that (1) already appeared before June 15th 2011, and
@@ -275,7 +266,7 @@ before that, too), because they only have become available later on.
 
 \section{Getting the $n$-th release for each observation period}
 
-For some purposes it may also be useful to retrieve the $n$-th published
+For some purposes it may be useful to retrieve the $n$-th published
 value of each observation, where $n$ is a fixed positive integer,
 irrespective of \emph{when} each of these $n$-th releases was
 published. Suppose we are interested in the third release, then the
@@ -287,9 +278,9 @@ Since we do not need the \verb|realtime_start_date| and
 \verb|realtime_end_date| information for this retrieval, we have
 dropped the \option{timecols} option here. Note that this formulation
 assumes that the source file is ordered chronologically, otherwise
-using the \option{aggr="seq:3"} option, i.e.\ to retrieve the third
-entries in each sequence of matches could have yielded a result
-different from the one intended. This assumption, however, holds for
+using the option \option{aggr="seq:3"}, which retrieves the third
+value from each sequence of matches, could have yielded a result
+different from the one intended. However, this assumption holds for
 Alfred files and is probably rather safe in general.
 
 The values of the variable imported as \texttt{ip\_3rdpub} in this way
@@ -301,130 +292,147 @@ over to inflation-adjusted economic variables, where the base period
 of the price index changes over time. Mixing vintages in general also
 means mixing different scales in the output, with which you would have
 to deal appropriately.\footnote{Some user-contributed functions may be
-  available that address this issue, but it is beyond the scope of the
-  user guide here. Another even more complicated issue in the realtime
-  context is that of ``benchmark revisions'' applied by statistical
-  agencies, where the underlying definition or composition of a
-  variable changes on some date, which goes beyond a mere
-  rescaling. However, this type of structural change is not, in
-  principle, a feature of realtime data alone, but applies to any
-  time-series data.}
+  available that address this issue, but it is beyond our scope
+  here. Another even more complicated issue in the realtime context is
+  that of ``benchmark revisions'' applied by statistical agencies,
+  where the underlying definition or composition of a variable changes
+  on some date, which goes beyond a mere rescaling. However, this type
+  of structural change is not, in principle, a feature of realtime
+  data alone, but applies to any time-series data.}
 
 
 \section{Getting the values at a fixed lag after the observation
   period}
+\label{sec:realtime-fixed-lag}
 
-New data releases may (and in general, will) take place literally on
-any day of the month. However, if you are working with, say, monthly
-or quarterly data you may sometimes want to adjust the granularity of
+New data releases may take place on any day of the month, and as we
+have seen the specific day of each release is recorded in realtime
+files from Alfred. However, if you are working with, say, monthly or
+quarterly data you may sometimes want to adjust the granularity of
 your realtime axis to a monthly or quarterly frequency. For example,
-in order to analyse the data revision process of monthly industrial
+in order to analyse the data revision process for monthly industrial
 production you might be interested in the extent of revisions between
 the data published two and three months after each observation period.
 
-This is not trivial, however, and our solution here is to first create
-various auxiliary variables in the \app{gretl} dataset, also using
-information from the source file. This implies that several passes of
-\cmd{join} will be needed. First we will need a variable which for
-each observation period in the dataset describes the (daily) target
-date $n$ periods after the observation period. This boils down to an
-exercise in manipulating calendar date numbers, making use of the
-\app{gretl} accessors \dollar{obsmajor}, \dollar{obsminor},
-\dollar{obsmicro}, as well as the periodicity indicator \dollar{pd}.
-To facilitate reuse we wrap this in the function
-\texttt{getLagdate()}, which we treat as a blackbox here (but see the
-code at the end of the chapter).
+This is a relatively complicated task and there is more than one way
+of accomplishing it. Either you have to make several passes through
+the outer dataset or you need a sophisticated filter, written as a
+hansl function. Either way you will want to make use of some of
+gretl's built-in calendrical functions.
 
-So for the example case when $n=2$ we will construct the first
-auxiliary variable holding the target dates in basic ISO format
-(numerical, without hyphens) by calling:
+In section~\ref{sec:realtime-atomic} we mentioned the possibility of
+``holes'' in realtime files of the sort provided by Alfred. In our
+first solution for the fixed-lag join operation we ignore this
+possibility. That is, we assume that if a data-point happens to turn
+from valid to missing at any point in time this fact is recorded
+explicitly in the realtime file as a new vintage. We later show how
+the join can be modified to handle holes, should they occur.
+
+We'll assume that a suitably dimensioned workspace has been set up as
+described above. Given that, the key ingredients of the join are a
+filtering function which we'll call \verb|rel_ok| (for ``release OK'')
+and the \texttt{join} command which calls it. Here's the function:
+%
 \begin{code}
-series targetdate = getLagdate(2)
-\end{code}
-But because we cannot use variables from the current dataset directly
-in a \cmd{join} filter we first have to import essentially all the realtime
-information into our dataset. 
-
-The first step is to determine the number of needed passes, that is,
-what is the maximum number of available releases for a single observation
-period. The following straightforward \cmd{join} helps to achieve this,
-
-\begin{code}
-join @fname counter --tkey=observation_date --aggr=count
-\end{code}
-followed by:
-\begin{code}
-scalar maxpubs = max(counter)
-\end{code}
-
-Next we load all the information into the dataset, which may be
-somewhat inefficient but should not be a problem unless you are
-dealing with truly huge data (which is unlikely with macroeconomic
-data---the following loop with three joins and 27 iterations through
-a file with roughly 24000 lines, 1MB, takes roughly 25 seconds on a
-reasonably fast 2013 vintage laptop). As a bonus, we demonstrate how
-to abbreviate reused option parts with string variables:
-\begin{code}
-  # recycled options (note the escaped quotes)
-  sprintf baseopt "--tkey=observation_date \
-    --timecols=\"realtime_start_date,realtime_end_date\"
-  loop i=1..maxpubs -q
-    # get the starting and end dates of the i-th publication          
-    join @fname sd$i --data=realtime_start_date @baseopt --aggr=seq:$i
-    join @fname ed$i --data=realtime_end_date @baseopt --aggr=seq:$i
-    join @fname rel$i --data=INDPRO @baseopt --aggr=seq:$i
-  endloop
-\end{code}
-For the remaining operations we can work purely within the \app{gretl}
-dataset, which is rather fast. Looping again through the various
-releases we check observation by observation (but using the
-convenient and fast functions available for series) whether the target
-date falls between the realtime start and end dates, i.e.\ whether the
-respective release was current on the day $n$ periods after the
-observation period.
-\begin{code}
-series after2 = NA # initialize
-loop i=1..maxpubs -q
-    # record whether the i-th release was already available
-    series tmp_s = misszero((sd$i <= targetdate))
-
-    # record whether the i-th release was not already obsolete
-    series tmp_e = misszero((missing(ed$i) || (ed$i >= targetdate)))
-
-    # whenever both criteria are met, copy the values
-    series after2 = (tmp_s && tmp_e) ? rel$i : after2
-endloop
-\end{code}
-A caveat to remember is that here, too, the problem of base period
-changes is likely to appear, because again we are mixing vintages.
-
-\section{Functions}
-\begin{scode}
-function series getLagdate(int n) 
-    /* 
-      Construct the series of relevant daily dates, for the first day 
-      in the n-th period after the observation period; in principle 
-      should cover yearly, quarterly, monthly, and daily frequencies 
-      (not weekly).
-    */
-
-    if $pd==1                 # yearly
-        # (trailing 0101 for January 1st)
-        series lagdate = ($obsmajor + n)*10000 + 101
-    elif ($pd==4 || $pd==12)  # quarterly or monthly
-        # how many year numbers to add
-        series tempminor = $obsminor + n
-        series yrsplus = floor((tempminor - 1) / $pd)
-        # and the resulting quarter/month number
-        series pubminor = tempminor - (yrsplus * $pd) 
-        # construct the corresp. month, different for quarterly
-        series month = ($pd==4) ? (pubminor-1)*3 + 1 : pubminor
-        # put everything together
-        series lagdate = ($obsmajor+yrsplus)*10000 + month*100 + 1
-    elif ($pd>=5 && $pd<=7)    # daily
-        series lagdate = isodate(epochday($obsmajor, $obsminor, $obsmicro) + n)
-    endif
-
-return lagdate
+function series rel_ok (series obsdate, series reldate, int p)
+  series y_obs, m_obs, y_rel, m_rel, d_rel
+  # get year and month from observation date
+  isoconv(obsdate, &y_obs, &m_obs)
+  # get year, month and day from release date
+  isoconv(reldate, &y_rel, &m_rel, &d_rel)
+  # find the delta in months
+  series dm = (12*y_rel + m_rel) - (12*y_obs + m_obs)
+  # and implement the filter
+  return dm < p || (dm == p && d_rel == 1)
 end function
-\end{scode}
+\end{code}
+%
+And here's the command:
+%
+\begin{code}
+scalar lag = 3  # choose your fixed lag here
+join @fname INDPRO --tkey="observation_date,%Y%m%d" \
+--timecols="observation_date,realtime_start_date" \
+--filter="rel_ok(observation_date, realtime_start_date, lag)" \
+--aggr=max(realtime_start_date)
+\end{code}
+
+Note that we use \option{timecols} to convert both the observation
+date and the realtime start date (or release date) to 8-digit
+numerical values. Both of these series are passed to the filter, which
+uses the built-in function \texttt{isoconv} to extract year and month
+(and also day, for the release). We can then calculate \texttt{dm},
+the ``delta months'' since the observation date, for each release.
+The filter condition is that this delta should be less than the
+specified lag, $p$, or (this refinement may be debatable) the release
+occurs on the first day of the month given by observation date plus
+$p$.
+
+This filter condition may be satisfied by more than one release, so we
+need to specify an aggregation method: we simply choose the most
+recent release within the specified time window.
+
+Notice that in the context of the \option{tkey} option we have to
+allow for a side effect of including \verb|observation_date| in the
+\option{timecols} list. That is, although this column in its original
+form holds \texttt{YYYY-MM-DD} dates (and therefore does not need a
+format specifier), after conversion the values are in the form
+\texttt{YYYYMMDD}, which requires a format string of \verb|%Y%m%d|.
+
+\subsection{Detecting holes}
+
+Returning to the possibility of holes (implicit missing values) in the
+data, the point is that the most recent release that satisfies the
+condition defined by \verb|rel_ok| \textit{may} have expired,
+without a valid successor, before the lag window closed. In that case
+this method would record a seemingly valid value where an \texttt{NA}
+is actually called for.
+
+We can guard against this possibility by beefing up our filter function
+as follows.
+%
+\begin{code}
+function series rel_ok2 (series obsdate, series reldate,
+                         series enddate, int p)
+  series y1, m1, y2, m2, d2
+  /* (1): screen for revision not too recent */
+  # get year and month from observation date
+  isoconv(obsdate, &y1, &m1)
+  # get year, month and day from release date
+  isoconv(reldate, &y2, &m2, &d2)
+  # find the delta in months
+  series dm = (12*y2 + m2) - (12*y1 + m1)
+  series ok1 = dm < p || (dm == p && d2 == 1)
+  /* (2): screen for revision not already expired */
+  # find YYYMMDD day for obsdate + (p months)
+  series mp = m1+p <= 12 ? m1+p : (m1+p)%12
+  series yp = m1+p <= 12 ? y1 : y1 + floor((m1+p)/12)
+  series pdate = 10000*yp + 100*mp + 1
+  /* (3): take logical product of (1) and (2) as filter */
+  return ok1 && (missing(enddate) || enddate > pdate)
+end function
+\end{code}
+
+In this variant our function first screens out releases that are too
+recent to fall within the lag window, as before, but then goes on to
+form the series \texttt{pdate} which holds the first day of the month
+given by observation date plus $p$. The additional requirement for the
+filter is then that the expiry date for a release must come after
+\texttt{pdate}---allowing for the fact, as mentioned above, that if a
+release is still current at the end of the time represented in the
+realtime file, this is marked in Alfred files by a missing value in
+the realtime end date column.
+
+Now our filter can return non-zero for at most one release per
+observation period (since all but one must have expired by the end of
+the lag window, and maybe all have expired, in which case we'll get an
+\texttt{NA} in the output). So there's no need for the \option{aggr}
+option. The associated command now looks like this:
+
+\begin{code}
+scalar lag = 3  # choose your fixed lag here
+join @fname INDPRO --tkey="observation_date,%Y%m%d" \
+--timecols="observation_date,realtime_start_date,realtime_end_date" \
+--filter="rel_ok2(observation_date, realtime_start_date, \
+ realtime_end_date, lag)"
+\end{code}
