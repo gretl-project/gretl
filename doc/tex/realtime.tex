@@ -265,6 +265,7 @@ observations after June 2011 will be missing (and probably a few
 before that, too), because they only have become available later on.
 
 \section{Getting the $n$-th release for each observation period}
+\label{sec:realtime-nth}
 
 For some purposes it may be useful to retrieve the $n$-th published
 value of each observation, where $n$ is a fixed positive integer,
@@ -287,7 +288,7 @@ The values of the variable imported as \texttt{ip\_3rdpub} in this way
 were published at different dates, so the variable is effectively a
 mix of different vintages. Depending on the type of variable, this may
 also imply drastic jumps in the values; for example, index numbers are
-regularly rebased to different base periods. This problem also carries
+regularly re-based to different base periods. This problem also carries
 over to inflation-adjusted economic variables, where the base period
 of the price index changes over time. Mixing vintages in general also
 means mixing different scales in the output, with which you would have
@@ -326,12 +327,14 @@ first solution for the fixed-lag join operation we ignore this
 possibility. That is, we assume that if a data-point happens to turn
 from valid to missing at any point in time this fact is recorded
 explicitly in the realtime file as a new vintage. We later show how
-the join can be modified to handle holes, should they occur.
+the join can be modified to handle holes, should they occur (and also
+how to check for their presence).
 
 We'll assume that a suitably dimensioned workspace has been set up as
 described above. Given that, the key ingredients of the join are a
-filtering function which we'll call \verb|rel_ok| (for ``release OK'')
-and the \texttt{join} command which calls it. Here's the function:
+filtering function which we'll call \verb|rel_ok| (for ``release is
+OK'') and the \texttt{join} command which calls it. Here's the
+function:
 %
 \begin{code}
 function series rel_ok (series obsdate, series reldate, int p)
@@ -436,3 +439,116 @@ join @fname INDPRO --tkey="observation_date,%Y%m%d" \
 --filter="rel_ok2(observation_date, realtime_start_date, \
  realtime_end_date, lag)"
 \end{code}
+
+However, it's easy enough to use \texttt{join} to check an Alfred file
+for the presence of holes. Such a file contains a hole if and only if,
+for one or more realtime start dates, there is a difference of more
+than one day between this date and the preceding realtime end
+date. The script in Example~\ref{ex:holecheck} checks for this.
+
+\begin{script}[htbp]
+  \caption{Checking an Alfred realtime file for holes}
+  \label{ex:holecheck}
+\begin{scode}
+string fname = "INDPRO.txt"
+string test = readfile(fname)
+string s
+scalar n = 0
+loop while getline(test, s) --quiet
+  n++
+endloop
+n-- # subtract the header
+nulldata n --preserve
+join @fname revstart --data=realtime_start_date \
+ --timecols=realtime_start_date
+join @fname revend --data=realtime_end_date \
+ --timecols=realtime_end_date
+scalar holes = sum(revstart - revend(-1) > 1)
+if holes > 0
+  printf "File %s has %d realtime hole(s)!\n", fname, holes
+else
+  printf "Rest easy, file %s has no holes\n", fname
+endif
+\end{scode}
+\end{script}
+
+\subsection{An illustration}
+
+Having done all this work, we might as well see an example of what the
+fixed-lag join can produce.  Figure~\ref{fig:realtime-lag} shows four
+time series for the monthly index of US industrial production from
+October 2005 to June 2009: the value as of first publication plus the
+values current 3, 6 and 12 months out from the observation
+date.\footnote{Why not a longer series? Because if we try to extend it
+  in either direction we immediately run into the index re-basing
+  problem mentioned in section~\ref{sec:realtime-nth}, with big
+  (staggered) leaps downward in all the series.} From visual
+inspection it would seem that over much of this period the Federal
+reserve was fairly consistently overestimating industrial production
+at first release and shortly thereafter, relative to the figure they
+arrived at with a lag of a year.
+
+The script that produced this Figure is shown in full in
+Example~\ref{ex:revisions}. Note that in this script we are using a
+somewhat more efficient version of the \verb|rel_ok| function shown
+above, where we pass the required series arguments in ``pointer'' form
+to avoid having to copy them. We don't bother with detecting holes
+because we verified already that the file we're using doesn't contain
+any.
+
+\begin{figure}[htbp]
+  \centering
+\includegraphics{figures/realtime}
+  \caption{Successive revisions to US industrial production}
+  \label{fig:realtime-lag}
+\end{figure}
+
+\begin{script}[htbp]
+  \caption{Retrieving successive realtime lags of US industrial
+    production}
+  \label{ex:revisions}
+\begin{scode}
+function series rel_ok (series *obsdate, series *reldate, int p)
+  series y_obs, m_obs, y_rel, m_rel, d_rel
+  isoconv(obsdate, &y_obs, &m_obs)
+  isoconv(reldate, &y_rel, &m_rel, &d_rel)
+  series dm = (12*y_rel + m_rel) - (12*y_obs + m_obs)
+  return dm < p || (dm == p && d_rel == 1)
+end function
+
+nulldata 45
+setobs 12 2005:10
+
+string fname = "INDPRO.txt"
+
+# initial published values
+join @fname firstpub --data=INDPRO --tkey=observation_date \
+--timecols=realtime_start_date --aggr=min(realtime_start_date)
+
+# plus 3 months
+join @fname plus3 --data=INDPRO --tkey="observation_date,%Y%m%d" \
+--timecols="observation_date,realtime_start_date" \
+--filter="rel_ok(&observation_date, &realtime_start_date, 3)" \
+--aggr=max(realtime_start_date)
+
+# plus 6 months
+join @fname plus6 --data=INDPRO --tkey="observation_date,%Y%m%d" \
+--timecols="observation_date,realtime_start_date" \
+--filter="rel_ok(&observation_date, &realtime_start_date, 6)" \
+--aggr=max(realtime_start_date)
+
+# plus 12 months
+join @fname plus12 --data=INDPRO --tkey="observation_date,%Y%m%d" \
+--timecols="observation_date,realtime_start_date" \
+--filter="rel_ok(&observation_date, &realtime_start_date, 12)" \
+--aggr=max(realtime_start_date)
+
+setinfo firstpub --graph-name="First publication"
+setinfo plus3 --graph-name="Plus 3 months"
+setinfo plus6 --graph-name="Plus 6 months"
+setinfo plus12 --graph-name="Plus 12 months"
+
+gnuplot firstpub plus3 plus6 plus12 --time --with-lines \
+ --output=realtime.pdf { set key left bottom; }
+\end{scode}
+\end{script}
