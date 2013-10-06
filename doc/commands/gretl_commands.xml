@@ -10561,7 +10561,7 @@
 	it should be wrapped in backslash-escaped double-quotes. For
 	example, the following will create a series named
 	<lit>country</lit> in which the names in <lit>cstrs</lit> are
-	each repeated <math>T</math> times, <math>T</math>being the
+	each repeated <math>T</math> times, <math>T</math> being the
 	time-series length of the panel.
       </para>
       <code>
