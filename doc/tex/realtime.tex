@@ -385,10 +385,10 @@ format specifier), after conversion the values are in the form
 
 Returning to the possibility of holes (implicit missing values) in the
 data, the point is that the most recent release that satisfies the
-condition defined by \verb|rel_ok| \textit{may} have expired,
-without a valid successor, before the lag window closed. In that case
-this method would record a seemingly valid value where an \texttt{NA}
-is actually called for.
+condition defined by \verb|rel_ok| \textit{may} have expired, without
+a valid successor, before the lag window closed. In that case the
+method described above would record a seemingly valid value where an
+\texttt{NA} is actually called for.
 
 We can guard against this possibility by beefing up our filter function
 as follows.
@@ -486,7 +486,8 @@ The script that produced this Figure is shown in full in
 Example~\ref{ex:revisions}. Note that in this script we are using a
 somewhat more efficient version of the \verb|rel_ok| function shown
 above, where we pass the required series arguments in ``pointer'' form
-to avoid having to copy them. Having verified that the file in
+to avoid having to copy them (see
+chapter~\ref{chap:functions}). Having verified that the file in
 question doesn't contain any holes, we use the simpler form of filter.
 
 \begin{figure}[htbp]
