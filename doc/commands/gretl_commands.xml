@@ -10480,6 +10480,10 @@
         <option>
 	  <flag>--panel-time</flag>
 	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--panel-groups</flag>
+	  <effect>see below</effect>
         </option>	
       </options>
       <examples>
@@ -10530,18 +10534,40 @@
 	set will be sorted as stacked time series, by ascending values of
 	the units variable, <repl>unitvar</repl>.
       </para>
+      <subhead>Panel-specific options</subhead>
       <para>
-	The <opt>panel-time</opt> option can only be used with a
-	dataset which has already been defined as a panel; its purpose
-	is to set extra information regarding the time dimension of
-	the panel.  This information should be given on the pattern of
-	the first form of <lit>setobs</lit> noted above. For example,
-	the following may be used to indicate that the time dimension
-	of a panel is quarterly, starting in the first quarter of
-	1990.
+	The <opt>panel-time</opt> and <opt>panel-groups</opt> options
+	can only be used with a dataset which has already been defined
+	as a panel.
+      </para>
+      <para>
+	The purpose of <opt>panel-time</opt> is to set extra
+	information regarding the time dimension of the panel. This
+	should be given on the pattern of the first form of
+	<lit>setobs</lit> noted above. For example, the following may
+	be used to indicate that the time dimension of a panel is
+	quarterly, starting in the first quarter of 1990.
       </para>
       <code>
 	setobs 4 1990:1 --panel-time
+      </code>
+      <para>
+	The purpose of <opt>panel-groups</opt> is to create a
+	string-valued series holding names for the groups
+	(individuals, cross-sectional units) in the panel. With this
+	option you must supply a name for the series and a string
+	variable holding a list of group names (in that order). The
+	names should be separated by spaces; if a name includes spaces
+	it should be wrapped in backslash-escaped double-quotes. For
+	example, the following will create a series named
+	<lit>country</lit> in which the names in <lit>cstrs</lit> are
+	each repeated <math>T</math> times, <math>T</math>being the
+	time-series length of the panel.
+      </para>
+      <code>
+	string cstrs
+	sprintf cstrs "France Germany Italy \"United Kingdom\""
+	setobs country cstrs --panel-groups
       </code>
     </description> 
 
@@ -12461,42 +12487,6 @@
     </description>
 
   </command>
-
-  <common-opt name="output" param="filename">
-    <applies-to>gnuplot</applies-to>
-    <applies-to>boxplot</applies-to>
-    <applies-to>scatters</applies-to>
-    <applies-to>qqplot</applies-to>
-    <description>
-      <para>
-	Just testing!
-      </para>
-    </description>
-  </common-opt>
-
-  <common-opt name="plot" param="filename">
-    <applies-to>corrgm</applies-to>
-    <applies-to>xcorrgm</applies-to>
-    <applies-to>pergm</applies-to>
-    <applies-to>rmplot</applies-to>
-    <applies-to>hurst</applies-to>
-    <applies-to>leverage</applies-to>
-    <description>
-      <para>
-	Just testing, again!
-      </para>
-    </description>
-  </common-opt>
-
-  <common-opt name="robust">
-    <applies-to>ols</applies-to>
-    <applies-to>tsls</applies-to>
-    <description>
-      <para>
-	Just testing, again!
-      </para>
-    </description>
-  </common-opt>
 
 </commandref>
 

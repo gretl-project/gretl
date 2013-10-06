@@ -31,25 +31,28 @@ general more than one published value over time, along with the
 information on when each of these values were valid or
 current. Sometimes this is represented in spreadsheets with two time
 axes, one for the observation period and another one for the
-publication time or ``vintage''. The filled cells then form something
-resembling an upper triangle (or a ``guillotine'' blade shape with
-four corners, if the publication dates do not reach back far enough to
-complete the triangle). This format can be useful for giving a human
-reader an overview of the data, but it is not optimal for automatic
-processing; for that purpose ``atomic'' format is best.
+publication date or ``vintage''. The filled cells then form an upper
+triangle (or a ``guillotine blade'' shape, if the publication dates do
+not reach back far enough to complete the triangle). This format can
+be useful for giving a human reader an overview of realtime data, but
+it is not optimal for automatic processing; for that purpose
+``atomic'' format is best.
 
 \section{Atomic format for realtime data}
 \label{sec:realtime-atomic}
 
 What we are calling atomic format is exactly the format used by Alfred
-if you choose the option ``Observations by Real-Time Period'', and the
-OECD if (FIXME conditional?). A file in this format contains one
-actual data-point per line, together with associated metadata. This is
-illustrated in Table~\ref{tab:atomic}, where we show the first three
-lines from an Alfred file and an OECD file (slightly
-modified).\footnote{In the Alfred file we have used commas rather than
-  tabs as the column delimiter; in the OECD example we have shortened
-  the name in the \texttt{Variable} column.}
+if you choose the option ``Observations by Real-Time Period'', and by
+the OECD if you select all editions of a series for download as plain
+text (CSV).\footnote{If you choose to download in Excel format from
+  OECD you get a file in the triangular or guillotine format mentioned
+  above.} A file in this format contains one actual data-point per
+line, together with associated metadata. This is illustrated in
+Table~\ref{tab:atomic}, where we show the first three lines from an
+Alfred file and an OECD file (slightly modified).\footnote{In the
+  Alfred file we have used commas rather than tabs as the column
+  delimiter; in the OECD example we have shortened the name in the
+  \texttt{Variable} column.}
 
 \begin{table}[htbp]
 \begin{center}
@@ -82,20 +85,20 @@ through March 15th 1960. On the next day (as we can see from the
 following line) this data-point was revised slightly downward to
 111.0.
 
-Daily dates in Alfred files are given in a format that follows the
-relevant ISO standard, \texttt{YYYY-MM-DD}, but below we describe how
-to deal with differently formatted dates. Note that daily dates are
-appropriate for the last two columns, which jointly record the
-interval over which a given data vintage was current. Daily dates
-might, however, be considered overly precise for the first column,
-since the data period may well be the year, quarter or month (as it is
-in fact here). However, following Alfred's practice it is acceptable
-to specify a daily date, indicating the first day of the period, even
-for non-daily data.\footnote{Notice that this implies that in the
-  Alfred example it is not clear without further information whether
-  the observation period is the first quarter of 1960, the month
-  January 1960, or the day January 1st 1960.  However, we assume that
-  this information is always available in context.}
+Daily dates in Alfred files are given in ISO extended format,
+\texttt{YYYY-MM-DD}, but below we describe how to deal with
+differently formatted dates. Note that daily dates are appropriate for
+the last two columns, which jointly record the interval over which a
+given data vintage was current. Daily dates might, however, be
+considered overly precise for the first column, since the data period
+may well be the year, quarter or month (as it is in fact
+here). However, following Alfred's practice it is acceptable to
+specify a daily date, indicating the first day of the period, even for
+non-daily data.\footnote{Notice that this implies that in the Alfred
+  example it is not clear without further information whether the
+  observation period is the first quarter of 1960, the month January
+  1960, or the day January 1st 1960.  However, we assume that this
+  information is always available in context.}
 
 Compare the first data line of the OECD example. There's a greater
 amount of leading metadata, which is left implicit in the Alfred
@@ -218,10 +221,10 @@ Here some detailed explanations of the various options are warranted:
     the first column in the source file for the periods. However,
     being explicit is often a good idea.}  The more general form of
   this option is \option{tkey="colname,format"} (note the double
-  quotes here), so if the dates do not come in standard (e.g., ISO)
-  format, we can tell gretl how to parse them by using the appropriate
-  format specifiers as shown in Table~\ref{tab:join-datefmt}.  For
-  example, here we could have written
+  quotes here), so if the dates do not come in standard format, we can
+  tell gretl how to parse them by using the appropriate conversion
+  specifiers as shown in Table~\ref{tab:join-datefmt}.  For example,
+  here we could have written
   \option{tkey="observation\_date,\%Y-\%m-\%d"}.
 \item Next, \option{data=INDPRO} tells \app{gretl} that we want to
   retrieve the entries stored in the column named \texttt{INDPRO}.
@@ -229,14 +232,13 @@ Here some detailed explanations of the various options are warranted:
   \option{timecols} option selects certain columns in the right-hand
   data file for conversion from date strings to 8-digit numbers on the
   pattern \texttt{YYYYMMDD}.  We'll need this for the next step,
-  filtering, since this transformation to numerical values makes it
-  possible to perform some basic arithmetic on dates.  Note that since
-  date strings in Alfred files conform to gretl's default
-  assumption---ISO 8601 ``extended'' format, \texttt{YYYY-MM-DD}---it
-  is not necessary to use the \option{timecol-fmt} option here.
+  filtering, since the transformation to numerical values makes it
+  possible to perform basic arithmetic on dates.  Note that since
+  date strings in Alfred files conform to gretl's default assumption
+  it is not necessary to use the \option{timecol-fmt} option here.
 \item The \option{filter} option specification is the central piece of
   our data retrieval; notice how we use the date constant 20110615 in
-  basic ISO form to do numerical comparisons. It would also have been
+  ISO basic form to do numerical comparisons. It would also have been
   possible to predefine a scalar variable, as in
  \begin{code}
    vintage = 20110615
@@ -354,7 +356,7 @@ And here's the command:
 %
 \begin{code}
 scalar lag = 3  # choose your fixed lag here
-join @fname INDPRO --tkey="observation_date,%Y%m%d" \
+join @fname INDPRO --tkey=observation_date \
 --timecols="observation_date,realtime_start_date" \
 --filter="rel_ok(observation_date, realtime_start_date, lag)" \
 --aggr=max(realtime_start_date)
@@ -373,13 +375,6 @@ exactly $p$ months after the start of the observation period.
 This filter condition may be satisfied by more than one release, so we
 need to specify an aggregation method: we simply choose the most
 recent release within the specified time window.
-
-Notice that in the context of the \option{tkey} option we have to
-allow for a side effect of including \verb|observation_date| in the
-\option{timecols} list. That is, although this column in its original
-form holds \texttt{YYYY-MM-DD} dates (and therefore does not need a
-format specifier), after conversion the values are in the form
-\texttt{YYYYMMDD}, which requires a format string of \verb|%Y%m%d|.
 
 \subsection{Detecting holes}
 
@@ -433,7 +428,7 @@ option. The associated command now looks like this:
 
 \begin{code}
 scalar lag = 3  # choose your fixed lag here
-join @fname INDPRO --tkey="observation_date,%Y%m%d" \
+join @fname INDPRO --tkey=observation_date \
 --timecols="observation_date,realtime_start_date,realtime_end_date" \
 --filter="rel_ok2(observation_date, realtime_start_date, \
  realtime_end_date, lag)"
@@ -520,19 +515,19 @@ join @fname firstpub --data=INDPRO --tkey=observation_date \
 --timecols=realtime_start_date --aggr=min(realtime_start_date)
 
 # plus 3 months
-join @fname plus3 --data=INDPRO --tkey="observation_date,%Y%m%d" \
+join @fname plus3 --data=INDPRO --tkey=observation_date \
 --timecols="observation_date,realtime_start_date" \
 --filter="rel_ok(&observation_date, &realtime_start_date, 3)" \
 --aggr=max(realtime_start_date)
 
 # plus 6 months
-join @fname plus6 --data=INDPRO --tkey="observation_date,%Y%m%d" \
+join @fname plus6 --data=INDPRO --tkey=observation_date \
 --timecols="observation_date,realtime_start_date" \
 --filter="rel_ok(&observation_date, &realtime_start_date, 6)" \
 --aggr=max(realtime_start_date)
 
 # plus 12 months
-join @fname plus12 --data=INDPRO --tkey="observation_date,%Y%m%d" \
+join @fname plus12 --data=INDPRO --tkey=observation_date \
 --timecols="observation_date,realtime_start_date" \
 --filter="rel_ok(&observation_date, &realtime_start_date, 12)" \
 --aggr=max(realtime_start_date)

@@ -23,7 +23,8 @@
 <!ENTITY eg     "e.g.">
 <!ENTITY ie     "i.e.">
 
-<!ELEMENT commandref (command+, common-opt+)>
+<!ELEMENT commandref (command+)>
+
 <!ATTLIST commandref
    language    CDATA #REQUIRED
 >
@@ -43,6 +44,8 @@
    label        CDATA #IMPLIED
 >
 
+<!ELEMENT description  (para | code | mono | pre | ilist | nlist | table | subhead)*>
+
 <!ATTLIST description
    context (cli | gui | both) "both"
 >
@@ -55,7 +58,6 @@
 <!ELEMENT examples     (example*, demos?)>
 <!ELEMENT demos        (demo)+>
 <!ELEMENT altforms     (altform)+>
-<!ELEMENT description  (para | code | mono | pre | ilist | nlist | table | subhead)*>
 <!ELEMENT gui-access   (menu-path*, other-access?)>
 
 <!ELEMENT argpunct (#PCDATA)>
@@ -226,11 +228,5 @@
    c    CDATA #REQUIRED
 >
 
-<!ELEMENT common-opt (applies-to+, description)>
-
-<!ATTLIST common-opt
-   name   CDATA #REQUIRED
-   param  CDATA #IMPLIED
->
 
 

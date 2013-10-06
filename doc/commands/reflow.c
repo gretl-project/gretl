@@ -520,7 +520,7 @@ static void format_code_buf (char *buf, int ptype)
 
     for (i=n-1; i>0; i--) {
 	if (isspace(buf[i])) {
-	    buf[i] = 0;
+	    buf[i] = '\0';
 	} else {
 	    break;
 	}

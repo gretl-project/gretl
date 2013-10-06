@@ -7,18 +7,19 @@ Gretl provides two commands for adding data from file to an existing
 dataset in the program's workspace, namely \texttt{append} and
 \texttt{join}. The \texttt{append} command, which has been available
 for a long time, is relatively simple and is described in the
-\GCR. Here we focus on the \texttt{join} command (available since
-version 1.9.10), which is much more flexible and sophisticated. This
-chapter gives an overview of the functionality of \texttt{join} along
-with a detailed account of its syntax and options. We provide several
-toy examples and discuss one real-world case at length.
+\GCR. Here we focus on the \texttt{join} command, which is much more
+flexible and sophisticated. This chapter gives an overview of the
+functionality of \texttt{join} along with a detailed account of its
+syntax and options. We provide several toy examples and discuss one
+real-world case at length.
 
 First, a note on terminology: in the following we use the terms 
 ``left-hand'' and ``inner'' to refer to the dataset that is already in
 memory, and the terms ``right-hand'' and ``outer'' to refer to the
 dataset in the file from which additional data are to be drawn. 
 
-Two main things are new in \texttt{join}: 
+Two main features of \texttt{join} are worth emphasizing at the
+outset:
 \begin{itemize}
 \item ``Key'' variables can be used to match specific observations
   (rows) in the inner and outer datasets, and this match need not be
@@ -27,7 +28,7 @@ Two main things are new in \texttt{join}:
   in the outer dataset.
 \end{itemize}
 
-As will be explained below, these two features support rather complex
+As will be explained below, these features support rather complex
 concatenation and manipulation of data from different sources. The
 potential complexity of a \texttt{join} operation, when several
 options are activated, means that it is not possible to support batch
@@ -447,15 +448,13 @@ We assume that all the relevant files from the Bank of Italy survey
 are contained in a subdirectory called \texttt{SHIW}.
 
 Starting with \texttt{carcom10.csv}, we use the \verb|--cols| option
-to the \texttt{open} command to import specific series,\footnote{This
-  is a new usage of \texttt{cols}; see section~\ref{sec:join-cols} for
-  details.} namely \texttt{NQUEST} (household ID number),
-\texttt{NORD} (sequence number for individuals within each household),
-\texttt{SEX} (male = 1, female = 2), \texttt{PARENT} (status in
-household: 1 = head of household, 2 = spouse of head, etc.),
-\texttt{STACIV} (marital status: married = 1), \texttt{STUDIO}
-(educational level, coded from 1 to 8) and \texttt{ETA} (age in
-years).
+to the \texttt{open} command to import specific series, namely
+\texttt{NQUEST} (household ID number), \texttt{NORD} (sequence number
+for individuals within each household), \texttt{SEX} (male = 1, female
+= 2), \texttt{PARENT} (status in household: 1 = head of household, 2 =
+spouse of head, etc.), \texttt{STACIV} (marital status: married = 1),
+\texttt{STUDIO} (educational level, coded from 1 to 8) and
+\texttt{ETA} (age in years).
 %
 \begin{code}
 open SHIW/carcom10.csv --cols=1,2,3,4,9,10,29
@@ -617,13 +616,52 @@ for \texttt{mroz87.gdt}.\footnote{One other change is needed: in
   regressor named \texttt{CIT} is used. You can simply comment this
   out.} It turns out that the results are qualitatively very similar.
 
+\section{The representation of dates}
+\label{sec:join-isodates}
+
+Up to this point all the data we have considered have been
+cross-sectional. In the following sections we discuss data that have a
+time dimension, and before proceeding it may be useful to say
+something about the representation of dates. Gretl takes the ISO 8601
+standard as its reference point but provides mean of converting dates
+provided in other formats; it also offers a set of calendrical
+functions for manipulating dates (\texttt{isodate}, \texttt{isoconv},
+\texttt{epochday} and others).
+
+ISO 8601 recognizes two formats for daily dates, ``extended'' and
+``basic''. In both formats dates are given as 4-digit year, 2-digit
+month and 2-digit day, in that order. In extended format a dash is
+inserted between the fields---as in \texttt{2013-10-21} or more
+generally \texttt{YYYY-MM-DD}---while in basic format the fields are
+run together (\texttt{YYYYMMDD}). Extended format is more easily
+parsed by human readers while basic format is more suitable for
+computer processing, since one can apply ordinary arithmetic to
+compare dates as equal, earlier or later.  The standard also
+recognizes \texttt{YYYY-MM} as representing year and month, e.g.\
+\texttt{2010-11} for November 2010,\footnote{The form \texttt{YYYYMM}
+  is \textit{not} recognized for year and month.} as well as
+a plain four-digit number for year alone.
+
+One problem for economists is that the ``quarter'' is not a period
+covered by ISO 8601. This could be presented by \texttt{YYYY-Q} (with
+only one digit following the dash) but in gretl output we in fact use
+a colon, as in \texttt{2013:2} for the second quarter of 2013. (For
+printed output of months gretl also uses a colon, as in
+\texttt{2013:06}. A difficulty with following ISO here is that in a
+statistical context a string such as \texttt{1980-10} may look more
+like a subtraction than a date.)  Anyway, at present we are more
+interested in the parsing of dates on input rather than in what gretl
+prints. And in that context note that ``excess precision'' is
+acceptable: a month may be represented by its first day (e.g.\
+\texttt{2005-05-01} for May, 2005), and a quarter may be represented
+by its first month and day (\texttt{2005-07-01} for the third quarter
+of 2005).
+
+Some additional points regarding dates will be taken up as they become
+relevant in practical cases of joining data.
 
 \section{Time-series data}
 \label{sec:join-timeser}
-
-Up to this point all the data we have considered have been
-cross-sectional. Some different issues arise in the case of
-time-series data.
 
 Suppose our left-hand dataset is recognized by gretl as time series
 with a supported frequency (annual, quarterly, monthly, weekly, daily
@@ -648,10 +686,9 @@ option that can be used if the default is not applicable, as follows.
   is one of \texttt{obs}, \texttt{date}, \texttt{year},
   \texttt{period}, \texttt{observation}, or \verb|observation_date|
   (on a case-insensitive comparison); and (3) the time format conforms
-  to the ISO 8601 standard. This standard covers daily dates (format
-  \texttt{YYYY-MM-DD}, for example 2013-01-31), monthly observations
-  (format \texttt{YYYY-MM}, for example 2013-03) and annual
-  observations (format \texttt{YYYY}, 4-digit year).
+  to ISO 8601 where applicable (``extended'' daily date format
+  \texttt{YYYY-MM-DD}, monthly format \texttt{YYYY-MM}, or annual
+  format \texttt{YYYY}).
 \item If dates do not appear in the first column of the outer file, or
   if the column heading or format is not as just described, the
   \option{tkey} option can be used to indicate which column should be
@@ -737,8 +774,8 @@ Date,Open,High,Low,Close,Volume,Adj Close
 
 Note that the data are in reverse time-series order---that won't
 matter to \texttt{join}, the data can appear in any order. Also note
-that the first column is headed \texttt{Date} and holds daily dates in
-ISO 8601 format. That means we can pull the data into gretl very
+that the first column is headed \texttt{Date} and holds daily dates as
+ISO 8601 extended. That means we can pull the data into gretl very
 easily. In the following fragment we create a suitably dimensioned
 empty daily dataset then rely on the default behavior of \texttt{join}
 with time-series data to import the closing stock price.
@@ -855,12 +892,11 @@ such cases \texttt{join} provides the \option{timecols} option. This
 can be used to select certain columns in the right-hand data file for
 special treatment: strings representing dates in these columns will be
 converted to numerical values: 8-digit numbers on the pattern
-\texttt{YYYYMMDD} (ISO 8601 ``basic'' format for daily dates).  Once
-dates are in this form it is easy to use them in key-matching or
-filtering.
+\texttt{YYYYMMDD} (ISO basic daily format).  Once dates are in this
+form it is easy to use them in key-matching or filtering.
 
 By default it is assumed that the strings in the selected columns are
-in ISO 8601 ``extended'' format, \texttt{YYYY-MM-DD}. If that is not
+in ISO extended format, \texttt{YYYY-MM-DD}. If that is not
 the case you can supply a time-format string using the
 \option{timecol-fmt} option. The format string should be written using
 the codes shown in Table~\ref{tab:join-datefmt}.
@@ -1035,29 +1071,6 @@ just use the first line of the \texttt{join} command shown
 above. However, in general it is safer to use keys to ensure that the
 data end up in correct registration.
 
-
-\section{A related change}
-\label{sec:join-cols}
-
-Alongside the introduction of the \texttt{join} command, some changes
-have been made to the operation of the \texttt{open} command. The one
-that concerns us here (and the only one that is backward-incompatible)
-is a revised interpretation of the \verb|--cols| option. 
-
-Up to gretl 1.9.9, this option was specific to the reading of
-fixed-format data files. In that context the parameter to the
-option---a list of comma-separated numbers---was interpreted as a set
-of pairs of the form (start, width), telling gretl at which byte on
-each line to start reading, and how many bytes to read, to get the
-value for a given variable.
-
-As of gretl 1.9.10, the facility just described is still available but
-the option has been renamed as \verb|--fixed-cols|. The parameter to
-the plain \verb|--cols| option is now interpreted as a (1-based) list
-of the columns to be read from a delimited text data file (e.g.\
-CSV). Note that if the first column in a CSV file is an observations
-column, it is not included in the count: the first actual data column
-is treated as column 1.
 
 \clearpage
 
