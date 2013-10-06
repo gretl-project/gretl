@@ -134,7 +134,7 @@ time_series_label_check (DATASET *dset, int reversed, char *skipstr, PRN *prn);
 /* file-scope global */
 static char import_na[8];
 
-struct timecols_map {
+struct time_mapper {
     int ncols;       /* number of "timecols" */
     char **colnames; /* array of outer-dataset column names */
     int nfmts;       /* number of time-column formats */
@@ -143,16 +143,16 @@ struct timecols_map {
 };
 
 /* file-scope global */
-struct timecols_map g_timecols_map;
+struct time_mapper timecols_map;
 
 static void timecols_map_set (int ncols, char **colnames, 
 			      int nfmts, char **fmt, char *mq)
 {
-    g_timecols_map.ncols = ncols;
-    g_timecols_map.colnames = colnames;
-    g_timecols_map.nfmts = nfmts;
-    g_timecols_map.fmt = fmt;
-    g_timecols_map.m_means_q = mq;
+    timecols_map.ncols = ncols;
+    timecols_map.colnames = colnames;
+    timecols_map.nfmts = nfmts;
+    timecols_map.fmt = fmt;
+    timecols_map.m_means_q = mq;
 }
 
 static void timecols_map_init (void)
@@ -162,14 +162,14 @@ static void timecols_map_init (void)
 
 static void timecols_map_destroy (void)
 {
-    if (g_timecols_map.ncols > 0) {
-	strings_array_free(g_timecols_map.colnames, g_timecols_map.ncols);
+    if (timecols_map.ncols > 0) {
+	strings_array_free(timecols_map.colnames, timecols_map.ncols);
     }
-    if (g_timecols_map.nfmts > 0) {
-	strings_array_free(g_timecols_map.fmt, g_timecols_map.nfmts);
+    if (timecols_map.nfmts > 0) {
+	strings_array_free(timecols_map.fmt, timecols_map.nfmts);
     }
-    if (g_timecols_map.m_means_q != NULL) {
-	free(g_timecols_map.m_means_q);
+    if (timecols_map.m_means_q != NULL) {
+	free(timecols_map.m_means_q);
     }
     timecols_map_init();
 }
@@ -177,13 +177,13 @@ static void timecols_map_destroy (void)
 static int timecol_get_format (const DATASET *dset, int v, 
 			       char **pfmt, int *q)
 {
-    int nf = g_timecols_map.nfmts;
+    int nf = timecols_map.nfmts;
 
     if (nf == 0) {
 	return 0;
     } else if (nf == 1) {
-	*pfmt = g_timecols_map.fmt[0];
-	*q = g_timecols_map.m_means_q[0];
+	*pfmt = timecols_map.fmt[0];
+	*q = timecols_map.m_means_q[0];
 	return 1;
     } else {
 	/* Multiple formats were specified under the --timecol-fmt
@@ -193,13 +193,26 @@ static int timecol_get_format (const DATASET *dset, int v,
 	const char *vname = dset->varname[v];
 	int i;
 
-	for (i=0; i<g_timecols_map.nfmts; i++) {
-	    if (!strcmp(vname, g_timecols_map.colnames[i])) {
-		*pfmt = g_timecols_map.fmt[i];
-		*q = g_timecols_map.m_means_q[i];
+	for (i=0; i<timecols_map.nfmts; i++) {
+	    if (!strcmp(vname, timecols_map.colnames[i])) {
+		*pfmt = timecols_map.fmt[i];
+		*q = timecols_map.m_means_q[i];
 		return 1;
 	    }
 	}	
+    }
+
+    return 0;
+}
+
+static int column_is_timecol (const char *colname)
+{
+    int i, n = timecols_map.ncols;
+
+    for (i=0; i<n; i++) {
+	if (!strcmp(colname, timecols_map.colnames[i])) {
+	    return 1;
+	}
     }
 
     return 0;
@@ -1819,8 +1832,7 @@ static int non_numeric_check (csvdata *c, PRN *prn)
 
 /* Handle the case in "join" where the user specified some "timecols"
    for conversion to numeric and also gave a specific format for the
-   conversion: this format will have been copied into the file-scope
-   global variable g_timecol_fmt.
+   conversion.
 */
 
 static double special_time_val (const char *s, const char *fmt,
@@ -3222,6 +3234,13 @@ static int convert_to_string (char *targ, double x)
     }
 }
 
+static char *replace_time_format (joiner *jr, const char *fmt)
+{
+    free(jr->auto_keys->timefmt);
+    jr->auto_keys->timefmt = gretl_strdup(fmt);
+    return jr->auto_keys->timefmt;
+}
+
 /* Parse the obs string on row @i of the outer dataset and set the
    key(s) on row @j of the joiner struct. We get here only if we have 
    verified that the obs strings exist. The indices @i and @j may not 
@@ -3232,6 +3251,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 {
     char *tfmt = jr->auto_keys->timefmt;
     int tcol = jr->auto_keys->keycol;
+    int convert = jr->auto_keys->convert;
     int pd = jr->l_dset->pd;
     struct tm t = {0};
     char sconv[32];
@@ -3240,14 +3260,24 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     int s_src = 0;
     int err = 0;
 
+    if (j == 0 && tcol > 0 && convert) {
+	/* on our first pass, check for the case where the outer
+	   time-key column is in the --timecols set
+	*/
+	if (column_is_timecol(jr->r_dset->varname[tcol])) {
+	    tfmt = replace_time_format(jr, "%Y%m%d");
+	}
+    }
+
     if (tcol >= 0) {
 	/* using a specified column */
-	if (jr->auto_keys->convert) {
+	if (convert) {
+	    /* column is numeric, conversion needed */
 	    convert_to_string(sconv, jr->r_dset->Z[tcol][i]);
 	    s = sconv;
 	    s_src = 1;
 	} else {
-	    /* column is string-valued, fine */
+	    /* column is string-valued, OK */
 	    s = series_get_string_for_obs(jr->r_dset, tcol, i);
 	    s_src = 2;
 	}
@@ -3270,9 +3300,8 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 	    char *chk = strptime(s, "%Y-%m-%d", &t);
 
 	    if (chk != NULL && *chk == '\0') {
-		free(jr->auto_keys->timefmt);
-		jr->auto_keys->timefmt = gretl_strdup("%Y-%m-%d");
-		err = 0; /* we might be OK, cancel the error */
+		replace_time_format(jr, "%Y-%m-%d");
+		err = 0; /* we might be OK, cancel the error for now */
 	    }
 	}
 	if (err) {
