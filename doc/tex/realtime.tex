@@ -367,9 +367,8 @@ uses the built-in function \texttt{isoconv} to extract year and month
 (and also day, for the release). We can then calculate \texttt{dm},
 the ``delta months'' since the observation date, for each release.
 The filter condition is that this delta should be less than the
-specified lag, $p$, or (this refinement may be debatable) the release
-occurs on the first day of the month given by observation date plus
-$p$.
+specified lag, $p$, or (an optional refinement) the release occurs
+exactly $p$ months after the start of the observation period.
 
 This filter condition may be satisfied by more than one release, so we
 need to specify an aggregation method: we simply choose the most
@@ -421,10 +420,10 @@ recent to fall within the lag window, as before, but then goes on to
 form the series \texttt{pdate} which holds the first day of the month
 given by observation date plus $p$. The additional requirement for the
 filter is then that the expiry date for a release must come after
-\texttt{pdate}---allowing for the fact, as mentioned above, that if a
-release is still current at the end of the time represented in the
-realtime file, this is marked in Alfred files by a missing value in
-the realtime end date column.
+\texttt{pdate}---allowing for the fact, mentioned above, that if a
+release is still current at the end of the time represented in an
+Alfred file, this is indicated by a missing value in the realtime end
+date column.
 
 Now our filter can return non-zero for at most one release per
 observation period (since all but one must have expired by the end of
@@ -464,37 +463,31 @@ join @fname revstart --data=realtime_start_date \
 join @fname revend --data=realtime_end_date \
  --timecols=realtime_end_date
 scalar holes = sum(revstart - revend(-1) > 1)
-if holes > 0
-  printf "File %s has %d realtime hole(s)!\n", fname, holes
-else
-  printf "Rest easy, file %s has no holes\n", fname
-endif
+printf "Number of holes in file %s: %d\n", fname, holes
 \end{scode}
 \end{script}
 
 \subsection{An illustration}
 
-Having done all this work, we might as well see an example of what the
-fixed-lag join can produce.  Figure~\ref{fig:realtime-lag} shows four
-time series for the monthly index of US industrial production from
-October 2005 to June 2009: the value as of first publication plus the
-values current 3, 6 and 12 months out from the observation
-date.\footnote{Why not a longer series? Because if we try to extend it
-  in either direction we immediately run into the index re-basing
-  problem mentioned in section~\ref{sec:realtime-nth}, with big
-  (staggered) leaps downward in all the series.} From visual
-inspection it would seem that over much of this period the Federal
-reserve was fairly consistently overestimating industrial production
-at first release and shortly thereafter, relative to the figure they
-arrived at with a lag of a year.
+Figure~\ref{fig:realtime-lag} shows four time series for the monthly
+index of US industrial production from October 2005 to June 2009: the
+value as of first publication plus the values current 3, 6 and 12
+months out from the observation date.\footnote{Why not a longer
+  series? Because if we try to extend it in either direction we
+  immediately run into the index re-basing problem mentioned in
+  section~\ref{sec:realtime-nth}, with big (staggered) leaps downward
+  in all the series.} From visual inspection it would seem that over
+much of this period the Federal reserve was fairly consistently
+overestimating industrial production at first release and shortly
+thereafter, relative to the figure they arrived at with a lag of a
+year.
 
 The script that produced this Figure is shown in full in
 Example~\ref{ex:revisions}. Note that in this script we are using a
 somewhat more efficient version of the \verb|rel_ok| function shown
 above, where we pass the required series arguments in ``pointer'' form
-to avoid having to copy them. We don't bother with detecting holes
-because we verified already that the file we're using doesn't contain
-any.
+to avoid having to copy them. Having verified that the file in
+question doesn't contain any holes, we use the simpler form of filter.
 
 \begin{figure}[htbp]
   \centering
