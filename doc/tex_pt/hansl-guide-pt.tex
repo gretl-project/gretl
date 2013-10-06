@@ -1,22 +1,24 @@
 \documentclass[oneside]{book}
-\usepackage{url,verbatim,fancyvrb,color,appendix}
-\usepackage{array,longtable}
+\usepackage{url,verbatim,fancyvrb,appendix}
+\usepackage{pifont}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
-\usepackage[portuguese]{babel}
 \usepackage[authoryear]{natbib}
-\usepackage{gretl}
-\usepackage[a4paper,body={6.07in,9.7in},top=.8in,left=1.1in]{geometry}
+\usepackage{color,gretl}
+\usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
+\usepackage{dcolumn,amsmath,bm}
 
 %% \pdfimageresolution=120
-\hypersetup{pdftitle={Manual dos Comandos do Gretl},
+\hypersetup{pdftitle={A Guide to Hansl},
             pdfsubject={GNU Regression, Econometrics and Time Series Library},
-            pdfauthor={Allin Cottrell},
+            pdfauthor={Allin Cottrell and Jack Lucchetti},
             colorlinks=true,
             linkcolor=blue,
             urlcolor=red,
             citecolor=steel,
+            bookmarks=true,
+            bookmarksnumbered=true,
             plainpages=false
 }
 
@@ -26,21 +28,20 @@
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{1ex}
-
-\hyphenation{he-te-ro-ce-das-ti-ci-da-de}
+\setcounter{tocdepth}{1}
 
 %% titlepage
 
 \thispagestyle{empty}
 
 \begin{center}
-\pdfbookmark[1]{Manual dos Comandos do Gretl}{titlepage}
+\pdfbookmark[1]{Gretl User's Guide}{titlepage}
 
-\gtitle{Manual dos Comandos do Gretl}
+\gtitle{A Guide to Hansl}
 
-\gsubtitle{Gnu Regression, Econometrics and Time-series Library}
+\gsubtitle{the scripting language of gretl}
 
-{\large \sffamily 
+{\large \sffamily
 Allin Cottrell\\
 Department of Economics\\
 Wake Forest University\\
@@ -51,39 +52,29 @@ Dipartimento di Economia\\
 Università Politecnica delle Marche\\
 
 \vspace{20pt}
-
-Hélio Guilherme\\
-Tradução Portuguesa\\
-\vspace{20pt}
 \input date
 }
 
 \end{center}
 \clearpage
 
-%% end titlepage, begin license page
+%% end titlepage, start license page
 
 \thispagestyle{empty}
 
-\pdfbookmark[1]{Licença}{license}
+\pdfbookmark[1]{License}{license}
 
 \vspace*{2in}
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \emph{GNU Free Documentation License}, Version
 1.1 or any later version published by the Free Software Foundation
-(see \url{http://www.gnu.org/licenses/fdl.html}).\\
-
-\vspace{20pt}
-A cópia, distribuição e/ou modificação deste documento é permitida de
-acordo com os termos da \emph{Licença de Documentação Livre GNU},
-Versão 1.1 ou qualquer versão posterior publicada pela Free Software
-Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
+(see \url{http://www.gnu.org/licenses/fdl.html}).
 
 \clearpage
 
 %% end license page, start table of contents
-\pdfbookmark[1]{Conteúdo}{contents}
+\pdfbookmark[1]{Table of contents}{contents}
 
 \pagenumbering{roman}
 \pagestyle{headings}
@@ -93,13 +84,9 @@ Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
 \clearpage
 \pagenumbering{arabic}
 
-\include{cmdref}
-\include{funcref}
-\include{operators}
-\include{comments}
-\include{optarg}
-\include{reftables}
-\clearpage
-\include{biblio}
+\include{hansl-intro}
+
+% \clearpage
+% \include{biblio}
 
 \end{document}

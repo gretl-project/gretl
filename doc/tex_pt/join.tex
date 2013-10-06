@@ -1,0 +1,955 @@
+\chapter{Joining data sources}
+\label{chap:join}
+
+\section{Introduction}
+
+Gretl provides two commands for adding data from file to an existing
+dataset in the program's workspace, namely \texttt{append} and
+\texttt{join}. The \texttt{append} command, which has been available
+for a long time, is relatively simple and is described in the
+\GCR. Here we focus on the \texttt{join} command (available since
+version 1.9.10), which is much more flexible and sophisticated. This
+chapter gives an overview of the functionality of \texttt{join} along
+with a detailed account of its syntax and options. We provide several
+toy examples and discuss one real-world case at length.
+
+First, a note on terminology: in the following we use the terms 
+``left-hand'' and ``inner'' to refer to the dataset that is already in
+memory, and the terms ``right-hand'' and ``outer'' to refer to the
+dataset in the file from which additional data are to be drawn. 
+
+Two main things are new in \texttt{join}: 
+\begin{itemize}
+\item ``Key'' variables can be used to match specific observations
+  (rows) in the inner and outer datasets, and this match need not be
+  1 to 1.
+\item A row filter may be applied to screen out unwanted observations
+  in the outer dataset.
+\end{itemize}
+
+As will be explained below, these two features support rather complex
+concatenation and manipulation of data from different sources. The
+potential complexity of a \texttt{join} operation, when several
+options are activated, means that it is not possible to support batch
+importation of several series with a single command. In contrast with
+the \texttt{append} command, which by default imports the entire
+content of a data file, \texttt{join} imports one series at a time. A
+command loop can be used to apply \texttt{join} to multiple series.
+
+A related aspect of \texttt{join} should be noted---one that makes
+this command particularly useful when dealing with very large
+datafiles.  That is, when gretl executes a join operation it does not,
+in general, read into memory the entire content of the right-hand side
+dataset.  Only those columns that are actually needed for the
+operation are read in full. This makes \texttt{join} faster and
+less demanding of RAM than the methods available in most other
+software. On the other hand, gretl's asymmetrical treatment of the
+``inner'' and ``outer'' datasets in \texttt{join} may require some
+getting used to, for users of other packages.
+
+\section{Basic syntax}
+\label{sec:join-syntax}
+
+The minimal invocation of \texttt{join} is
+
+\qquad \texttt{join} \textsl{filename} \textsl{varname}
+
+where \textsl{filename} is the name of a delimited text data file and
+\textsl{varname} is the name of the series to be imported. Only
+column-delimited text files are supported at present; the delimiter
+may be comma, space, tab or semicolon. A series named \textsl{varname}
+may already be present in the left-hand dataset, but that is not
+required. The series to be imported may be numerical or string-valued.
+
+The effect of the minimal version of \texttt{join} is this: gretl
+looks for a data column labeled \textsl{varname} in the specified
+file; if such a column is found and the number of observations on the
+right matches the number of observations in the current sample range
+on the left, then the values from the right are copied into the
+relevant range of observations on the left. If \textsl{varname} does
+not already exist on the left, any observations outside of the current
+sample are set to \texttt{NA}; if it exists already then observations
+outside of the current sample are left unchanged.
+
+The case where you want to rename a series on import is handled by the
+\option{data} option. This option has one required argument, the name
+by which the series is known on the right. At this point we need to
+explain something about right-hand variable names (column
+headings). 
+
+\subsection{Right-hand names}
+
+We accept on input arbitrary column heading strings, but if these
+strings do not qualify as valid gretl identifiers they are
+automatically converted, and in the context of \texttt{join} you must
+use the converted names. A gretl identifier must start with a letter,
+contain nothing but (ASCII) letters, digits and the underscore
+character, and must not exceed 31 characters. The rules used in name
+conversion are:
+
+\begin{enumerate}
+\item Skip any leading non-letters.
+\item Until the 31-character is reached or the input is exhausted:
+  transcribe ``legal'' characters; skip ``illegal'' characters apart
+  from spaces; and replace one or more consecutive spaces with an
+  underscore, unless the last character transcribed is an underscore
+  in which case space is skipped.
+\end{enumerate}
+
+In the unlikely event that this policy yields an empty string, we
+replace the original with \texttt{col}\textsl{n}, where \textsl{n} is
+replaced by the 1-based index of the column in question among those
+used in the join operation. If you are in doubt regarding the
+converted name of a given column, the function \texttt{fixname()} can
+be used as a check: it takes the original string as an argument and
+returns the converted name. Examples:
+
+\begin{code}
+? eval fixname("valid_identifier")
+valid_identifier
+? eval fixname("12. Some name")
+Some_name
+\end{code}
+
+Returning to the use of the \option{data} option, suppose we have a
+column headed \verb|"12. Some name"| on the right and wish to import
+it as \texttt{x}. After figuring how the right-hand name converts, we
+can do
+%
+\begin{code}
+join foo.csv x --data="Some_name"
+\end{code}
+
+\section{Filtering}
+
+Rows from the outer dataset can be filtered using the \verb|--filter|
+option. The required parameter for this option is a Boolean condition,
+that is, an expression which evaluates to non-zero (true, include the
+row) or zero (false, skip the row) for each of the outer rows. The
+filter expression may include any of the following terms: up to three
+``right-hand'' series (under their converted names as explained
+above); scalar or string variables defined ``on the left''; any of the
+operators and functions available in gretl (including user-defined
+functions); and numeric or string constants.
+
+Here are a few simple examples of potentially valid filter options
+(assuming that the specified right-hand side columns are found):
+
+\begin{code}
+# 1. relationship between two right-hand variables
+--filter="x15<=x17"
+
+# 2. comparison of right-hand variable with constant
+--filter="nkids>2"
+
+# 3. comparison of string-valued right-hand variable with string constant
+--filter="SEX==\"F\""
+
+# 4. filter on valid values of a right-hand variable
+--filter=!missing(income)
+
+# 5. compound condition
+--filter="x < 100 && (x > 0 || y > 0)"
+\end{code}
+
+Note that if you are comparing against a string constant (as in
+example 3 above) it is necessary to put the string in ``escaped''
+double-quotes (each double-quote preceded by a backslash) so the
+interpreter knows that \texttt{F} is not supposed to be the name of a
+variable.
+
+It is safest to enclose the whole filter expression in double quotes,
+however this is not strictly required unless the expression contains
+spaces or the equals sign.
+
+In general, an error is flagged if a missing value is encountered in
+a series referenced in a filter expression. This is because the
+condition then becomes indeterminate; taking example 2 above, if the
+\texttt{nkids} value is \texttt{NA} on any given row we are not in a
+position to evaluate the condition \texttt{nkids>2}. However, you can
+use the \texttt{missing()} function---or \texttt{ok()}, which is a
+shorthand for \texttt{!missing()}---if you need a filter that keys off
+the missing or non-missing status of a variable.
+
+
+\section{Matching with keys}
+\label{sec:join-keys}
+
+Things get interesting when we come to key-matching. The purpose of
+this facility is perhaps best introduced by example.  Suppose that (as
+with many survey and census-based datasets) we have a dataset that is
+composed of two or more related files, each having a different unit of
+observation; for example we have a ``persons'' data file and a
+``households'' datafile. Table~\ref{tab:csv} shows a simple,
+artificial case. The file \texttt{people.csv} contains a unique
+identifier for the individuals, \texttt{pid}. The households file,
+\texttt{hholds.csv}, contains the unique household identifier
+\texttt{hid}, which is also present in the persons file.
+
+As a first example of \texttt{join} with keys, let's add the
+household-level variable \texttt{xh} to the persons dataset:
+%
+\begin{code}
+open people.csv --quiet
+join hholds.csv xh --ikey=hid
+print --byobs
+\end{code}
+
+The basic key option is named \texttt{ikey}; this indicates ``inner
+key'', that is, the key variable found in the left-hand or inner
+dataset. By default it is assumed that the right-hand dataset contains
+a column of the same name, though as we'll see below that assumption
+can be overridden. The \texttt{join} command above says, find a series
+named \texttt{xh} in the right-hand dataset and add it to the
+left-hand one, using the values of \texttt{hid} to match rows.
+Looking at the data in Table~\ref{tab:csv} we can see how this should
+work. Persons 1 and 2 are both members of household 1, so they should
+both get values of 1 for \texttt{xh}; persons 3 and 4 are members of
+household 2, so that \texttt{xh} = 4; and so on. Note that the order
+in which the key values occur on the right-hand side does not matter.
+The gretl output from the \texttt{print} command is shown in the lower
+panel of Table~\ref{tab:csv}.
+
+\begin{table}[thbp]
+\begin{center}
+\setlength{\tabcolsep}{4em}
+\begin{tabular}{ll}
+\texttt{people.csv} & \texttt{hholds.csv} \\[6pt]
+\texttt{pid,hid,gender,age,xp} & \texttt{hid,country,xh} \\
+\texttt{1,1,M,50,1} & \texttt{1,US,1} \\
+\texttt{2,1,F,40,2} & \texttt{6,IT,12} \\
+\texttt{3,2,M,30,3} & \texttt{3,UK,6} \\
+\texttt{4,2,F,25,2} & \texttt{4,IT,8} \\
+\texttt{5,3,M,40,3} & \texttt{2,US,4} \\
+\texttt{6,4,F,35,4} & \texttt{5,IT,10} \\
+\texttt{7,4,M,70,3} \\
+\texttt{8,4,F,60,3} \\
+\texttt{9,5,F,20,4} \\
+\texttt{10,6,M,40,4}
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{rrr}
+  \texttt{pid}  & \texttt{hid}   &  \texttt{xh} \\[6pt]
+    \texttt{1}  &  \texttt{1}    &   \texttt{1} \\
+    \texttt{2}  &  \texttt{1}    &   \texttt{1} \\
+    \texttt{3}  &  \texttt{2}    &   \texttt{4} \\
+    \texttt{4}  &  \texttt{2}    &   \texttt{4} \\
+    \texttt{5}  &  \texttt{3}    &   \texttt{6} \\
+    \texttt{6}  &  \texttt{4}    &   \texttt{8} \\
+    \texttt{7}  &  \texttt{4}    &   \texttt{8} \\
+    \texttt{8}  &  \texttt{4}    &   \texttt{8} \\
+    \texttt{9}  &  \texttt{5}    &  \texttt{10} \\
+   \texttt{10}  &  \texttt{6}    &  \texttt{12}
+\end{tabular}
+\caption{Two linked CSV data files, and the effect of a \texttt{join}}
+\label{tab:csv}
+\end{center}
+\end{table}
+
+Note that key variables are treated conceptually as integers. If a
+specified key contains fractional values these are truncated.
+
+Three extensions of the basic key mechanism are available.
+\begin{itemize}
+\item If the outer dataset contains a relevant key variable but it
+  goes under a different name from the inner key, you can use the
+  \verb|--okey| option to specify the outer key. (As with other
+  right-hand names, this does not have to be a valid gretl
+  identifier.) So, for example, if \texttt{hholds.csv} contained the
+  \texttt{hid} information, but under the name \texttt{HHOLD}, the
+  \texttt{join} command above could be modified as
+  \begin{code}
+  join hholds.csv xh --ikey=hid --okey=HHOLD
+  \end{code}
+
+\item If a single key is not sufficient to generate the matches you
+  want, you can specify a double key in the form of two series names
+  separated by a comma; in this case the importation of data is
+  restricted to those rows on which both keys match. The syntax here
+  is, for example
+  \begin{code}
+  join foo.csv x --ikey=key1,key2
+  \end{code}
+  Again, the \verb|--okey| option may be used if the corresponding
+  right-hand columns are named differently. The same number of keys 
+  must be given on the left and the right, but when a double key is
+  used and only one of the key names differs on the right, the name
+  that is in common may be omitted (although the comma separator must
+  be retained). For example, the second of the following lines is
+  acceptable shorthand for the first:
+  \begin{code}
+  join foo.csv x --ikey=key1,Lkey2 --okey=key1,Rkey2
+  join foo.csv x --ikey=key1,Lkey2 --okey=,Rkey2
+  \end{code}
+
+\item The example shown in Table~\ref{tab:csv} is an instance of a 1
+  to 1 match, in the sense that applying the matching criterion
+  produces exactly one value of the variable \texttt{xh} corresponding
+  to each row of the inner dataset. Two other possibilities arise.
+
+  First, it may be that some rows in the inner dataset have no match
+  on the right: by default such observations get \texttt{NA} for the
+  imported data. In some cases, the appropriate value to record in the
+  absence of a match may be zero rather than \texttt{NA}. For example,
+  consider a query on ``number of hours worked'' when the inner
+  dataset contains individuals and the outer file contains data on
+  jobs: if an individual does not appear in the jobs file, the number
+  of hours worked is implicitly zero. In such cases gretl's
+  \texttt{misszero()} function can be used to adjust the imported
+  data.
+
+  Second, some left-hand rows may have more than one match on the
+  right; we refer to this as 1 to $n$ matching. In that case it is
+  necessary to specify an ``aggregation method''. This is the job
+  of the \verb|--aggr| option, discussed below.
+
+\end{itemize}
+
+\section{Aggregation}
+\label{sec:join-aggr}
+
+The \verb|--aggr| option for 1 to $n$ matching of rows takes a single
+argument, which must be one of the following:
+
+\begin{center}
+\begin{tabular}{ll}
+\textit{Code} & \textit{Value returned} \\[6pt]
+\texttt{count} & count of matches \\
+\texttt{avg} & mean of matching values \\
+\texttt{sum} & sum of matching values \\
+\texttt{min} & minimum of matching values \\
+\texttt{max} & maximum of matching values \\
+\texttt{seq:}$i$ & the $i^{\rm th}$ matching 
+  value (e.g.\ \texttt{seq:2}) \\
+\texttt{min(}\textsl{aux}\texttt{)} & 
+  minimum of matching values of auxiliary variable \\
+\texttt{max(}\textsl{aux}\texttt{)} & 
+  maximum of matching values of auxiliary variable\\
+\end{tabular}
+\end{center}
+
+Note that the \texttt{count} aggregation method is special, in that
+there is no need for a ``data series'' on the right; the imported
+series is simply a function of the specified key(s). All the other
+methods require that ``actual data'' are found on the right.  Also
+note that when \texttt{count} is used, the value returned when no
+match is found is (as one might expect) zero rather than \texttt{NA}.
+
+The basic use of the \texttt{seq} method is shown above: following the
+colon you give a positive integer representing the (1-based) position
+of the observation in the sequence of matched rows. Alternatively, a
+negative integer can be used to count down from the last match
+(\texttt{seq:-1} selects the last match, \texttt{seq:-2} the
+second-last match, and so on). If the specified sequence number is out
+of bounds for a given observation this method returns \texttt{NA}.
+
+Referring again to the data in Table~\ref{tab:csv}, suppose we want to
+import data from the persons file into a dataset established at
+household level.  Here's an example where we use the individual
+\texttt{age} data from \texttt{people.csv} to add the average and
+minimum age of household members.
+\begin{code}
+open hholds.csv --quiet
+join people.csv avgage --ikey=hid --data=age --aggr=avg
+join people.csv minage --ikey=hid --data=age --aggr=min
+\end{code}
+
+Here's a further example where we add to the household data the sum of
+the personal data \texttt{xp}, with the twist that we apply filters to
+get the sum specifically for household members under the age of 40,
+and for women.
+\begin{code}
+open hholds.csv --quiet
+join people.csv young_xp --ikey=hid --filter="age<40" --data=xp --aggr=sum
+join people.csv female_xp --ikey=hid --filter="gender==\"F\"" --data=xp --aggr=sum
+\end{code}
+
+The possibility of using an auxiliary variable with the \texttt{min}
+and \texttt{max} modes of aggregation gives extra flexibility. For
+example, suppose we want for each household the income of its oldest
+member:
+\begin{code}
+open hholds.csv --quiet
+join people.csv oldest_xp --ikey=hid --data=xp --aggr=max(age)
+\end{code}
+
+
+\section{String-valued key variables}
+\label{sec:join-strings}
+
+The examples above use numerical variables (household and individual
+ID numbers) in the matching process. It is also possible to use
+string-valued variables, in which case a match means that the string
+values of the key variables compare equal (with case sensitivity). 
+When using double keys, you can mix numerical and string keys, but
+naturally you cannot mix a string variable on the left (via
+\texttt{ikey}) with a numerical one on the right (via \texttt{okey}),
+or vice versa.
+
+Here's a simple example. Suppose that alongside \texttt{hholds.csv} we
+have a file \texttt{countries.csv} with the following content:
+\begin{code}
+ country,GDP
+ UK,100
+ US,500
+ IT,150
+ FR,180
+\end{code}
+
+The variable \texttt{country}, which is also found in
+\texttt{hholds.csv}, is string-valued. We can pull the GDP of the
+country in which the household resides into our households dataset
+with
+\begin{code}
+open hholds.csv -q
+join countries.csv GDP --ikey=country
+\end{code}
+which gives
+\begin{code}
+           hid      country          GDP
+
+1            1            1          500
+2            6            2          150
+3            3            3          100
+4            4            2          150
+5            2            1          500
+6            5            2          150
+\end{code}
+
+
+\section{A real-world case}
+\label{sec:join-SHIW}
+
+For a real use-case for \texttt{join} with cross-sectional data, we
+turn to the Bank of Italy's \textit{Survey on Household Income and
+  Wealth} (SHIW).\footnote{Details of the survey can be found at
+  \url{http://www.bancaditalia.it/statistiche/indcamp/bilfait/dismicro}.
+  The ASCII (CSV) data files for the 2010 survey are available at
+  \url{http://www.bancaditalia.it/statistiche/indcamp/bilfait/dismicro/annuale/ascii/ind10_ascii.zip}.}
+In ASCII form the 2010 survey results comprise 47\,MB of data in 29
+files. In this exercise we will draw on five of the SHIW files to
+construct a replica of the dataset used in Thomas Mroz's famous paper
+(\textit{Econometrica}, 1987) on women's labor force participation,
+which contains data on married women between the age of 30 and 60
+along with certain characteristics of their households and husbands.
+
+Our general strategy is as follows: we create a ``core'' dataset by
+opening the file \texttt{carcom10.csv}, which contains basic data on
+the individuals. After dropping unwanted individuals (all but married
+women), we use the resulting dataset as a base for pulling in further
+data via the \texttt{join} command.
+
+The complete script to do the job is given in the Appendix to this
+chapter; here we walk through the script with comments interspersed.
+We assume that all the relevant files from the Bank of Italy survey
+are contained in a subdirectory called \texttt{SHIW}.
+
+Starting with \texttt{carcom10.csv}, we use the \verb|--cols| option
+to the \texttt{open} command to import specific series,\footnote{This
+  is a new usage of \texttt{cols}; see section~\ref{sec:join-cols} for
+  details.} namely \texttt{NQUEST} (household ID number),
+\texttt{NORD} (sequence number for individuals within each household),
+\texttt{SEX} (male = 1, female = 2), \texttt{PARENT} (status in
+household: 1 = head of household, 2 = spouse of head, etc.),
+\texttt{STACIV} (marital status: married = 1), \texttt{STUDIO}
+(educational level, coded from 1 to 8) and \texttt{ETA} (age in
+years).
+%
+\begin{code}
+open SHIW/carcom10.csv --cols=1,2,3,4,9,10,29
+\end{code}
+%
+We then restrict the sample to married women from 30 to 60 years of
+age, and additionally restrict the sample of women to those who are
+either heads of households or spouses of the head.
+%
+\begin{code}
+smpl SEX==2 && ETA>=30 && ETA<=60 && STACIV==1 --restrict
+smpl PARENT<3  --restrict
+\end{code}
+%
+For compatibility with the Mroz dataset as presented in the gretl
+datafile \texttt{mroz87.gdt}, we rename the age and education
+variables as \texttt{WA} and \texttt{WE} respectively, then we
+store the reduced base dataset in gretl format.
+%
+\begin{code}
+rename ETA WA
+rename STUDIO WE
+store mroz_rep.gdt
+\end{code}
+
+The next step will be to get data on working hours from the jobs file
+\texttt{allb1.csv}. There's a complication here. We need the total
+hours worked over the course of the year (for both the women and their
+husbands). This is not available as such, but the variables
+\texttt{ORETOT} and \texttt{MESILAV} give, respectively, average hours
+worked per week and the number of months worked in 2010, each on a
+per-job basis. If each person held at most one job over the year we
+could compute his or her annual hours as
+\begin{code}
+HRS = ORETOT * 52 * MESILAV/12
+\end{code}
+However, some people had more than one job, and in this case what we
+want is the sum of annual hours across their jobs.  We could use
+\texttt{join} with the \texttt{seq} aggregation method to construct
+this sum, but it is probably more straightforward to read the
+\texttt{allb1} data, compute the \texttt{HRS} values per job as shown
+above, and save the results to a temporary CSV file.
+%
+\begin{code}
+open SHIW/allb1.csv --cols=1,2,8,11 --quiet
+series HRS = misszero(ORETOT) * 52 * misszero(MESILAV)/12
+store HRS.csv NQUEST NORD HRS
+\end{code}
+
+Now we can reopen the base dataset and join the hours variable from
+\texttt{HRS.csv}.  Note that we need a double key here: the women are
+uniquely identified by the combination of \texttt{NQUEST} and
+\texttt{NORD}. We don't need an \texttt{okey} specification since
+these keys go under the same names in the right-hand file. We define
+labor force participation, \texttt{LFP}, based on hours.
+%
+\begin{code}
+open mroz_rep.gdt
+join HRS.csv WHRS --ikey=NQUEST,NORD --data=HRS --aggr=sum
+WHRS = misszero(WHRS)
+LFP = WHRS > 0
+\end{code}
+%
+For reference, here's how we could have used \texttt{seq} to avoid
+writing a temporary file:
+%
+\begin{code}
+join SHIW/allb1.csv njobs --ikey=NQUEST,NORD --data=ORETOT --aggr=count
+series WHRS = 0
+loop i=1..max(njobs) -q
+  join SHIW/allb1.csv htmp --ikey=NQUEST,NORD --data=ORETOT --aggr="seq:$i"
+  join SHIW/allb1.csv mtmp --ikey=NQUEST,NORD --data=MESILAV --aggr="seq:$i"
+  WHRS += misszero(htmp) * 52 * misszero(mtmp)/12 
+endloop
+\end{code}
+
+To generate the work experience variable, \texttt{AX}, we use the file
+\texttt{lavoro.csv}: this contains a variable named \texttt{ETALAV}
+which records the age at which the person first started work.
+%
+\begin{code}
+join SHIW/lavoro.csv ETALAV --ikey=NQUEST,NORD
+series AX = misszero(WA - ETALAV)
+\end{code}
+%
+We compute the woman's hourly wage, \texttt{WW}, as the ratio of total
+employment income to annual working hours.  This requires drawing the
+series \texttt{YL} (payroll income) and \texttt{YM} (net
+self-employment income) from the persons file \texttt{rper10.csv}.
+%
+\begin{code}
+join SHIW/rper10.csv YL --ikey=NQUEST,NORD --aggr=sum
+join SHIW/rper10.csv YM --ikey=NQUEST,NORD --aggr=sum
+series WW = LFP ? (YL + YM)/WHRS : 0
+\end{code}
+%
+The family's net disposable income is available as \texttt{Y} in the file
+\texttt{rfam10.csv}; we import this as \texttt{FAMINC}.
+%
+\begin{code}
+join SHIW/rfam10.csv FAMINC --ikey=NQUEST --data=Y
+\end{code}
+%
+Data on number of children are now obtained by applying the
+\texttt{count} method. For the Mroz replication we want the number of
+children under the age of 6, and also the number aged 6 to 18.
+%
+\begin{code}
+join SHIW/carcom10.csv KIDS --ikey=NQUEST --aggr=count --filter="ETA<=18"
+join SHIW/carcom10.csv KL6 --ikey=NQUEST --aggr=count --filter=ETA<6
+series K618 = KIDS - KL6
+\end{code}
+%
+We want to add data on the women's husbands, but how do we find them?
+To do this we create an additional inner key which we'll call
+\verb|H_ID| (husband ID), by sub-sampling in turn on the observations
+falling into each of two classes: (a) those where the woman is
+recorded as head of household and (b) those where the husband has that
+status. In each case we want the individual ID (\texttt{NORD}) of the
+household member whose status is complementary to that of the woman in
+question. So for case (a) we subsample using \texttt{PARENT==1} (head
+of household) and filter the join using \texttt{PARENT==2} (spouse of
+head); in case (b) we do the converse. We thus construct \verb|H_ID|
+piece-wise.\footnote{In principle the husband ID variable could be
+  constructed without subsampling if more complex filtering were
+  supported, but as noted above the \texttt{join} filter is at present
+  limited to a binary expression involving only right-hand side
+  variables and constants.}
+%
+\begin{code}
+# for women who are household heads
+smpl PARENT==1 --restrict --replace
+join SHIW/carcom10.csv H_ID --ikey=NQUEST --data=NORD --filter="PARENT==2"
+# for women who are not household heads
+smpl PARENT==2 --restrict --replace
+join SHIW/carcom10.csv H_ID --ikey=NQUEST --data=NORD --filter="PARENT==1"
+smpl full
+\end{code}
+%
+Now we can use our new inner key to retrieve the husbands' data,
+matching \verb|H_ID| on the left with \texttt{NORD} on the right
+within each household.
+%
+\begin{code}
+join SHIW/carcom10.csv HA --ikey=NQUEST,H_ID --okey=NQUEST,NORD --data=ETA
+join SHIW/carcom10.csv HE --ikey=NQUEST,H_ID --okey=NQUEST,NORD --data=STUDIO
+join HRS.csv HHRS --ikey=NQUEST,H_ID --okey=NQUEST,NORD --data=HRS --aggr=sum
+HHRS = misszero(HHRS)
+\end{code}
+%
+The remainder of the script is straightforward and does not require
+discussion here: we recode the education variables for compatibility;
+delete some intermediate series that are not needed any more; add
+informative labels; and save the final product. See the Appendix for
+details.
+
+To compare the results from this dataset with those from the earlier
+US data used by Mroz, one can copy the input file \texttt{heckit.inp}
+(supplied with the gretl package) and substitute \verb|mroz_rep.gdt|
+for \texttt{mroz87.gdt}.\footnote{One other change is needed: in
+  William Greene's specification of the heckit model an additional
+  regressor named \texttt{CIT} is used. You can simply comment this
+  out.} It turns out that the results are qualitatively very similar.
+
+
+\section{Time-series data}
+\label{sec:join-timeser}
+
+Up to this point all the data we have considered have been
+cross-sectional. Some different issues arise in the case of
+time-series data.
+
+Suppose our left-hand dataset is recognized by gretl as time series
+with a supported frequency (annual, quarterly, monthly, weekly, daily
+or hourly). This will be the case if the original data were read from
+a file that contained suitable time or date information, or if a
+time-series interpretation has been imposed using either the
+\texttt{setobs} command or its GUI equivalent.  Then---apart, perhaps,
+from some very special cases---joining additional data is bound to
+involve matching observations by time-period. Since gretl knows the
+period of each observation on the left, no ``inner key'' is required;
+all we need is a means of identifying the period on the right; we'll
+refer to this as the ``time key''. Most likely, this information will
+appear in a single column in the outer datafile, often but not always
+the first column.
+
+The \texttt{join} command provides a simple (but limited) default for
+extracting period information from the outer datafile, plus an
+option that can be used if the default is not applicable, as follows.
+\begin{itemize}
+\item The default assumptions are: (1) the time key appears in the
+  first column; (2) the heading of this column is either left blank or
+  is one of \texttt{obs}, \texttt{date}, \texttt{year},
+  \texttt{period}, \texttt{observation}, or \verb|observation_date|
+  (on a case-insensitive comparison); and (3) the time format conforms
+  to the ISO 8601 standard. This standard covers daily dates (format
+  \texttt{YYYY-MM-DD}, for example 2013-01-31), monthly observations
+  (format \texttt{YYYY-MM}, for example 2013-03) and annual
+  observations (format \texttt{YYYY}, 4-digit year).
+\item If dates do not appear in the first column of the outer file, or
+  if the column heading or format is not as just described, the
+  \option{tkey} option can be used to indicate which column should be
+  used and/or what format should be assumed.
+\end{itemize}
+
+\subsection{Setting the time-key column and/or format}
+
+The \option{tkey} option requires a parameter holding the name of the
+column in which the time key is located and/or a string specifying the
+format in which dates/times are written in the time-key column. This
+parameter should be enclosed in double-quotes. If both elements are
+present they should be separated by a comma; if only a format is given
+it should be preceded by a comma. Some examples:
+
+\begin{code}
+--tkey="Period,%m/%d/%Y"
+--tkey="Period"
+--tkey="obsperiod"
+--tkey=",%Ym%m"
+\end{code}
+
+The first of these applies if \texttt{Period} is not the first column
+on the right, and dates are given in the US format of month, day,
+year, separated by slashes. The second implies that although
+\texttt{Period} is not the first column, the date format is ISO 8601.
+The third again implies that the date format is OK; here the name is
+required even if \texttt{obsperiod} is the first column since this
+heading is not one recognized by gretl's heuristic. The last example
+implies that dates are in the first column (with one of the recognized
+headings), but are given in the non-standard format year,
+``\texttt{m}'', month.
+
+The date format string should be composed using the codes employed by
+the POSIX function \texttt{strptime}; Table \ref{tab:join-datefmt}
+contains a list of the most-often used codes.\footnote{The
+  \texttt{\%q} code for quarter is not present in \texttt{strptime};
+  it is added for use with \texttt{join} since quarterly data are
+  common in macroeconomics.}
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rp{0.7\textwidth}}
+    \textbf{Code} & \textbf{Meaning} \\
+    \hline
+    \verb|%%| & The \% character. \\
+    \verb|%b| & The month name according to the current locale, in 
+    abbreviated or full.\\
+    \verb|%C| & The century number (0--99).\\
+    \verb|%d| & The day of month (1--31). \\
+    \verb|%D| & Equivalent to \verb|%m/%d/%y|.  (This is the American
+    style date, very  confusing  to  non-Americans, especially
+    since \verb|%d/%m/%y| is widely used in Europe.  The 
+    ISO 8601 standard format is \verb|%Y-%m-%d|.) \\
+    \verb|%H| & The hour (0--23).\\
+    \verb|%j| & The day number in the year (1--366).\\
+    \verb|%m| & The month number (1--12).\\
+    \verb|%n| & Arbitrary whitespace.\\
+    \verb|%q| & The quarter (1--4).\\
+    \verb|%w| & The weekday number (0--6) with Sunday = 0.\\
+    \verb|%y| & The year within century (0--99).  When a century is
+    not otherwise specified, values in  the  range  69--99  refer
+    to  years  in  the  twentieth  century (1969--1999);  values
+    in the range 00--68 refer to years in the twenty-first century (2000--2068).\\
+    \verb|%Y| &  The year, including century (for example, 1991).\\
+    \hline
+  \end{tabular}
+  \caption{Date format codes}
+  \label{tab:join-datefmt}
+\end{table}
+
+\subsection{Example: daily stock prices}
+
+We show below the first few lines of a file named \texttt{IBM.csv}
+containing stock-price data for IBM corporation.
+
+\begin{code}
+Date,Open,High,Low,Close,Volume,Adj Close
+2013-08-02,195.50,195.50,193.22,195.16,3861000,195.16
+2013-08-01,196.65,197.17,195.41,195.81,2856900,195.81
+2013-07-31,194.49,196.91,194.49,195.04,3810000,195.04
+\end{code}
+
+Note that the data are in reverse time-series order---that won't
+matter to \texttt{join}, the data can appear in any order. Also note
+that the first column is headed \texttt{Date} and holds daily dates in
+ISO 8601 format. That means we can pull the data into gretl very
+easily. In the following fragment we create a suitably dimensioned
+empty daily dataset then rely on the default behavior of \texttt{join}
+with time-series data to import the closing stock price.
+
+\begin{code}
+nulldata 500
+setobs 5 2012-01-01
+join IBM.csv Close
+\end{code}
+
+To make explicit what we're doing, we could accomplish exactly the
+same using the \option{tkey} option:
+
+\begin{code}
+join IBM.csv Close --tkey="Date,%Y-%m-%d"
+\end{code}
+
+\subsection{Example: OECD quarterly data}
+
+Table~\ref{tab:oecd-gdp} shows an excerpt from a CSV file provided
+by the OECD statistical site (\url{stat.oecd.org}) in response to a
+request for GDP at constant prices for several
+countries.\footnote{Retrieved 2013-08-05. The OECD files in fact
+  contain two leading columns with very long labels; these are irrelevant
+  to the present example and can be omitted without altering the
+  sample script.}
+
+\begin{table}[htbp]
+\begin{code}
+Frequency,Period,Country,Value,Flags
+"Quarterly","Q1-1960","France",463876.148126845,E
+"Quarterly","Q1-1960","Germany",768802.119278467,E
+"Quarterly","Q1-1960","Italy",414629.791450547,E
+"Quarterly","Q1-1960","United Kingdom",578437.090291889,E
+"Quarterly","Q2-1960","France",465618.977328614,E
+"Quarterly","Q2-1960","Germany",782484.138122549,E
+"Quarterly","Q2-1960","Italy",420714.910290157,E
+"Quarterly","Q2-1960","United Kingdom",572853.474696578,E
+"Quarterly","Q3-1960","France",469104.41925852,E
+"Quarterly","Q3-1960","Germany",809532.161494483,E
+"Quarterly","Q3-1960","Italy",426893.675840156,E
+"Quarterly","Q3-1960","United Kingdom",581252.066618986,E
+"Quarterly","Q4-1960","France",474664.327992619,E
+"Quarterly","Q4-1960","Germany",817806.132384948,E
+"Quarterly","Q4-1960","Italy",427221.338414114,E
+...
+\end{code}
+\caption{Example of CSV file as provided by the OECD statistical
+  website}
+\label{tab:oecd-gdp}  
+\end{table}
+
+This is an instance of data in what we call \emph{atomic format}, that
+is, a format in which each line of the outer file contains only one
+figure and extracting data mainly requires filtering the appropriate
+lines. The outer time key is under the \texttt{Period} heading, and
+has the format \texttt{Q\emph{<quarter>-<year>}}. Assuming that the
+file in Table~\ref{tab:oecd-gdp} has the name \texttt{oecd.csv}, the
+following script reconstructs the time series of Gross Domestic
+Product for several countries:
+
+\begin{footnotesize}
+\begin{verbatim}
+nulldata 220
+setobs 4 1960:1
+
+join oecd.csv FRA --tkey="Period,Q%q-%Y" --data=Value --filter="Country==\"France\""
+join oecd.csv GER --tkey="Period,Q%q-%Y" --data=Value --filter="Country==\"Germany\""
+join oecd.csv ITA --tkey="Period,Q%q-%Y" --data=Value --filter="Country==\"Italy\""
+join oecd.csv  UK --tkey="Period,Q%q-%Y" --data=Value --filter="Country==\"United Kingdom\""
+\end{verbatim}
+\end{footnotesize}
+
+Note the use of the format codes \verb|%q| for the quarter and
+\verb|%Y| for the 4-digit year. A touch of elegance could
+have been added by storing the invariant part of the \cmd{join}
+command into a string and then using string substitution, as in
+
+\begin{footnotesize}
+\begin{verbatim}
+nulldata 220
+setobs 4 1960:1
+
+sprintf optstr "--tkey=\"Period,Q%%q-%%Y\" --data=Value"
+
+join oecd.csv FRA @optstr --filter="Country==\"France\""
+join oecd.csv GER @optstr --filter="Country==\"Germany\""
+join oecd.csv ITA @optstr --filter="Country==\"Italy\""
+join oecd.csv  UK @optstr --filter="Country==\"United Kingdom\""
+\end{verbatim}
+\end{footnotesize}
+
+
+\section{A related change}
+\label{sec:join-cols}
+
+Alongside the introduction of the \texttt{join} command, some changes
+have been made to the operation of the \texttt{open} command. The one
+that concerns us here (and the only one that is backward-incompatible)
+is a revised interpretation of the \verb|--cols| option. 
+
+Up to gretl 1.9.9, this option was specific to the reading of
+fixed-format datafiles. In that context the parameter to the
+option---a list of comma-separated numbers---was interpreted as a set
+of pairs of the form (start, width), telling gretl at which byte on
+each line to start reading, and how many bytes to read, to get the
+value for a given variable.
+
+As of gretl 1.9.10, the facility just described is still available but
+the option has been renamed as \verb|--fixed-cols|. The parameter to
+the plain \verb|--cols| option is now interpreted as a (1-based) list
+of the columns to be read from a delimited text datafile (e.g.\
+CSV). Note that if the first column in a CSV file is an observations
+column, it is not included in the count: the first actual data column
+is treated as column 1.
+
+\section*{Appendix: the full Mroz data script}
+
+\begin{code}
+# start with everybody; get gender, age and a few other variables 
+# directly while we're at it
+open SHIW/carcom10.csv --cols=1,2,3,4,9,10,29
+
+# subsample on married women between the ages of 30 and 60
+smpl SEX==2 && ETA>=30 && ETA<=60 && STACIV==1 --restrict
+# for simplicity, restrict to heads of households and their spouses
+smpl PARENT<3  --restrict
+
+# rename the age and education variables for compatibility; then
+# save the reduced base dataset
+rename ETA WA
+rename STUDIO WE
+store mroz_rep.gdt
+
+# make a temp file holding annual hours worked per job
+open SHIW/allb1.csv --cols=1,2,8,11 --quiet
+series HRS = misszero(ORETOT) * 52 * misszero(MESILAV)/12
+store HRS.csv NQUEST NORD HRS
+
+# reopen the base dataset and begin drawing assorted data in
+open mroz_rep.gdt
+
+# women's annual hours (summed across jobs) 
+join HRS.csv WHRS --ikey=NQUEST,NORD --data=HRS --aggr=sum
+WHRS = misszero(WHRS)
+
+# labor force participation
+LFP = WHRS > 0
+
+# work experience: ETALAV = age when started first job
+join SHIW/lavoro.csv ETALAV --ikey=NQUEST,NORD
+series AX = misszero(WA - ETALAV)
+
+# women's hourly wages
+join SHIW/rper10.csv YL --ikey=NQUEST,NORD --aggr=sum
+join SHIW/rper10.csv YM --ikey=NQUEST,NORD --aggr=sum
+series WW = LFP ? (YL + YM)/WHRS : 0
+
+# family income (Y = net disposable income)
+join SHIW/rfam10.csv FAMINC --ikey=NQUEST --data=Y
+
+# get data on children using the "count" method
+join SHIW/carcom10.csv KIDS --ikey=NQUEST --aggr=count --filter="ETA<=18"
+join SHIW/carcom10.csv KL6 --ikey=NQUEST --aggr=count --filter=ETA<6
+series K618 = KIDS - KL6
+
+# data on husbands: we first construct an auxiliary inner key for 
+# husbands, using the little trick of subsampling the inner dataset
+#
+# for women who are household heads
+smpl PARENT==1 --restrict --replace
+join SHIW/carcom10.csv H_ID --ikey=NQUEST --data=NORD --filter="PARENT==2"
+# for women who are not household heads
+smpl PARENT==2 --restrict --replace
+join SHIW/carcom10.csv H_ID --ikey=NQUEST --data=NORD --filter="PARENT==1"
+smpl full
+
+# add husbands' data via the newly-added secondary inner key
+join SHIW/carcom10.csv HA --ikey=NQUEST,H_ID --okey=NQUEST,NORD --data=ETA
+join SHIW/carcom10.csv HE --ikey=NQUEST,H_ID --okey=NQUEST,NORD --data=STUDIO
+join HRS.csv HHRS --ikey=NQUEST,H_ID --okey=NQUEST,NORD --data=HRS --aggr=sum
+HHRS = misszero(HHRS)
+
+# final cleanup begins
+
+# recode educational attainment as years of education
+matrix eduyrs = {0, 5, 8, 11, 13, 16, 18, 21}
+series WE = replace(WE, seq(1,8), eduyrs)
+series HE = replace(HE, seq(1,8), eduyrs)
+
+# cut some cruft
+delete SEX STACIV KIDS YL YM PARENT H_ID ETALAV
+
+# add some labels for the series
+setinfo LFP -d "1 if woman worked in 2010"
+setinfo WHRS -d "Wife's hours of work in 2010
+setinfo KL6 -d "Number of children less than 6 years old in household"
+setinfo K618 -d "Number of children between ages 6 and 18 in household"
+setinfo WA -d "Wife's age"
+setinfo WE -d "Wife's educational attainment, in years"
+setinfo WW -d "Wife's average hourly earnings, in 2010 euros"
+setinfo HHRS -d "Husband's hours worked in 2010"
+setinfo HA -d "Husband's age"
+setinfo HE -d "Husband's educational attainment, in years"
+setinfo FAMINC -d "Family income, in 2010 euros"
+setinfo AX -d "Actual years of wife's previous labor market experience"
+
+# save the final product
+store mroz_rep.gdt
+\end{code}
+

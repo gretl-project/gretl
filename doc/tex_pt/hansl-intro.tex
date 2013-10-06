@@ -1,0 +1,221 @@
+\chapter{Introduction}
+\label{intro}
+
+\section{Why scripting?}
+
+Hansl (the name expands, in recursive fashion, to ``Hansl's a neat
+scripting language'') is gretl's scripting language. It's not something
+new (although some of its features are new) and it's not an add-on or
+anything of the sort, it's an integral part of gretl. What's new is
+the name (we got tired of saying ``gretl's scripting language'') and
+the fact that we decided it's time to produce a document that
+specifically explains how to do gretl scripting to best effect.
+
+Beginning users of gretl are likely to use the graphical user
+interface (GUI, or point and click) at first, but all users should be
+aware that many things are better done via scripting. So what exactly
+is ``scripting'' and why is it (often, but not always) ``better''?
+
+Basically, scripting is programming. But the two terms have somewhat
+different connotations. ``Programming'' usually means using a
+relatively low-level language such as C, C++ or Java, while
+``scripting'' implies using a high-level language. In both cases
+you're producing ``code''---that is, plain text stuff that somehow or
+other causes the computer to do what you want---but ``low-level''
+means that you're responsible for the details of what the computer
+does, while with a high-level language you sail above such details,
+and tell the computer what you want done in quite general (albeit
+precise) terms. Scripting is much more easily learned than low-level
+programming.
+
+Why (or when) is scripting better than point-and-click? If you're
+exploring a dataset, trying to get an initial impression of what data
+it contains and how they might be related, then the GUI is the way to
+go: you draw some graphs, look at some summary statistics, estimate
+some models, run some diagnostic tests, examine the effects of adding
+or dropping regressors, and so on. Gretl is designed to make this sort
+of exploration easy, without any requirement that you learn the syntax
+of a bunch of commands or functions. But if you know a dataset quite
+well, and you want (say) to estimate a certain sequence of models and
+test a number of specific hypotheses, the GUI is just an
+encumbrance. You should think out in advance what you want to do,
+write it up in the form of a script, then get gretl to execute the
+script. 
+
+Scripting offers two main advantages:
+
+\begin{itemize}
+\item Efficiency: Say you're carrying out a fairly complicated
+  analysis, and after a while you decide that something is not quite
+  right --- maybe the data should be in first differences or logs
+  rather than levels. If your initial analysis is saved in script
+  form, it's easy to modify a few lines and re-run it; with
+  point-and-click you'd be laboriously redoing all the GUI
+  interaction.
+\item Replication: It's generally accepted that putative scientific
+  results are ``real'' only if they can be replicated.  If your
+  econometric work is saved as a script your peers can run the script
+  and (hopefully) get the same results. You too can replicate your own
+  findings at a later date without having to wonder, now how did I get
+  those estimates, exactly?
+\end{itemize}
+
+\section{Introducing hansl}
+
+A hansl script is a plain text file containing a set of
+\textsl{statements}, to be executed by gretl. These statements fall
+into three broad classes: commands; assignment (including function
+calls); and syntactical ``glue'' that enables you to make parts of a
+script conditional (\texttt{if} \dots{} \texttt{endif}), to repeat
+sections of the script (\texttt{loop} \dots{} \texttt{endloop}), to
+define your own functions, and so on.
+
+Like many econometrics packages, gretl offers both \textsl{commands}
+and \textsl{functions}. Commands typically carry out some sort of
+calculation and print some output. Functions also typically carry out
+some sort of calculation, but unless they are ``command-like'' they
+generally don't print anything, instead they \textsl{return} a value
+of some sort which you can either print or use as input to a further
+calculation. Another difference is that commands generally have a more
+``relaxed'' syntax and are hence easier for beginners to use; working
+with functions generally demands greater precision in what you type.
+
+There's a second duality which gretl shares with many econometrics
+programs, namely that between data \textsl{series} and
+\textsl{matrices}. These are two of the numerical types available in
+gretl, the third being \textsl{scalars}. Series are what you see when
+you open a data file; they compose a \textsl{dataset}, along with
+common information such as the time-series or panel structure of the
+data. You generally work with series by name; in addition you can
+construct named lists of series as a convenient shorthand. All the
+series in a dataset are of the same length, though some may be padded
+out with \texttt{NA}s (missing values). Matrices are more flexible:
+they can be of any dimension and they can be manipulated in 
+ways that are not available for series as such.
+
+\subsection{Anatomy of a command}
+
+Let's take a look at the anatomy of a command in hansl. The general
+structure is
+
+\quad \textsl{command-word} \textsl{arguments} \texttt{[} \textsl{options}
+\texttt{]}
+
+Here we're using the following conventions: a \textsl{slanting}
+typeface is used for place-holders, locations that will be filled by
+specific terms; and square brackets ``\texttt{[}'' and ``\texttt{]}''
+are used to indicate that the element they enclose is optional. (In
+composing an actual command you don't type the brackets.) For example,
+here's the command that would be used to produce OLS estimates of a
+linear model where the dependent variable (a series) is named
+\texttt{y}; the regressors (also of series type) are named
+\texttt{const}, \texttt{x1} and \texttt{x2}; and we want an
+abbreviated printout of the results:
+%
+\begin{code}
+ols y const x1 x2 --simple-print
+\end{code}
+%
+In this example ``\texttt{ols}'' is the command-word, the string
+``\texttt{y const x1 x2}'' specifies the arguments for the
+\texttt{ols} command, and ``\verb|--simple-print|'' specifies an
+option.  All command options in hansl start with a double dash; this
+ensures that they cannot be confused with arguments.  (The series
+named \texttt{const} is built-in; it is just a series of 1s, and it
+should be included in the regression specification to allow a non-zero
+$y$ intercept.)
+
+Most commands do not require any special punctuation: arguments and
+options are simply separated by white space. Note that with the
+\texttt{ols} command the arguments are not all on the same footing:
+one is the dependent variable and the others are regressors. The
+ambiguity that might arise here --- which one is the dependent
+variable? --- is simply resolved by the rule that the dependent
+variable must be given first. Some more advanced commands, however,
+take two or more subsets of arguments that play different roles, and
+in that context we use a semicolon, ``\texttt{;}'', to separate the
+subsets. This is the case with the \texttt{tsls} command, which calls
+for two-stage least squares estimation:
+%
+\begin{code}
+tsls y const x1 x2 ; const x1 z1
+\end{code}
+%
+We needn't concern ourselves with the details of the \texttt{tsls}
+command here, other than to note that the semicolon separates the list
+of regressors from the list of instruments.
+
+Most command options are like \verb|--simple-print| in that the term
+that follows the double dash is just a ``word'' (possibly containing a
+dash). However, some options either can take, or require, an
+argument. Take for example the \texttt{labels} command, which can be
+used to print the strings that describe the series in a dataset (if
+any), or to save these strings to file, or to load such strings from
+file. An appropriate command to save the strings to file might be
+%
+\begin{code}
+labels --to-file=labels.txt
+\end{code}
+%
+Here the \verb|--to-file| option requires an argument, a filename.
+Option arguments, where applicable, must be joined to the option
+word by an equals sign (with no surrounding space).
+
+The \textit{Gretl Command Reference} (GCR) lists all the commands that
+are available in hansl along with an account of the arguments they
+take and the options they support. The entries in the GCR also give an
+account of what the command does and (in some cases) examples of use.
+Many of the more complex commands are also discussed at greater
+length, with extended examples, in the \textit{Gretl User's Guide}.
+
+\subsection{A simple but complete command script}
+
+The simplest sort of hansl script uses nothing but commands. A typical
+order of events is that we open an existing datafile; estimate a
+model; and then run some tests (diagnostics and/or tests of specific
+hypotheses of interest). Here's a little example, using the four
+commands \texttt{open}, \texttt{ols}, \texttt{omit} and
+\texttt{modtest} (all of which are, of course, explained in the GCR):
+%
+\begin{code}
+# Open a datafile from the Ramanathan collection
+open data4-10.gdt
+# Estimate full model
+ols ENROLL const CATHOL PUPIL WHITE REV INCOME COLLEGE
+# Perform a joint test on PUPIL and REV: can we reject
+# the hypothesis that both coefficients are zero?
+omit PUPIL REV
+# Run White's test for heteroskedasticity
+modtest --white
+\end{code}
+
+The example illustrates a couple of general points. First, when
+opening a data file that is supplied with the gretl package, such as
+Ramanathan's \texttt{data4-10}, it is sufficient to give the plain
+name of the file, without a full ``path''. Gretl will find the file
+OK, and this way your script is portable --- on someone else's
+computer this datafile may be in a different location, but it will be
+found OK there too. Second, you can include ``comments'' in a hansl
+script (and it is a good idea to do so). Lines starting with a hash
+mark, ``\texttt{\#}'', are for human use, and are not taken to be
+commands.
+
+The gretl package contains numerous command scripts of the sort shown
+above. You can find these under the main-window menu item
+\textsf{/File/Script files/Practice file}. Some are very simple, some
+are more complex; they are intended to complement the entries in the
+\textit{Gretl Command Reference} by showing complete examples of use.
+
+\subsection{Assignment and functions}
+
+Notice that none of the example hansl statements above have included
+an equals sign --- except for the special use of ``\texttt{=}'' in
+gluing an option argument onto its option word. We haven't yet
+defined any variables or assigned values to variables. This is where
+things start to get interesting. 
+
+      
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "hansl-guide"
+%%% End: 

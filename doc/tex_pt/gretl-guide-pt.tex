@@ -3,14 +3,15 @@
 \usepackage{pifont}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
-\usepackage[portuges]{babel}
+\usepackage[portuguese]{babel}
 \usepackage[authoryear]{natbib}
 \usepackage{color,gretl}
 \usepackage[a4paper,body={6.07in,9.7in},top=.8in,left=1.1in]{geometry}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
 \usepackage{dcolumn,amsmath,bm}
+\usepackage[bottom]{footmisc}
 
-
+\allowdisplaybreaks[1]
 
 %% \pdfimageresolution=120
 \hypersetup{pdftitle={Manual de Utilização do Gretl},
@@ -55,7 +56,7 @@
 
 \gtitle{Manual de Utilização do Gretl}
 
-\gsubtitle{Gnu Regression, Econometrics and Time-series}
+\gsubtitle{Gnu Regression, Econometrics and Time-series Library}
 
 {\large \sffamily 
 Allin Cottrell\\
@@ -117,6 +118,8 @@ Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
 \include{starting}
 \include{modes}
 \include{datafiles}
+\include{join}
+\include{realtime}
 \include{genr}
 \include{sampling}
 \include{graphs}
@@ -138,13 +141,17 @@ Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
 \include{gmm}
 \include{criteria}
 %% \include{df}
+\include{tsfilter}
 \include{timeseries}
 \include{var}
 \include{vecm}
+\include{system}
 \include{forecast}
 \include{kalman}
+\include{numerical}
 \include{probit}
 \include{quantreg}
+\include{nonparam}
 
 \part{Detalhes técnicos}
 
@@ -152,6 +159,8 @@ Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
 \include{gretlR}
 \include{gretlOx}
 \include{gretlOctave}
+\include{gretlStata}
+\include{gretlPython}
 \include{trouble}
 \include{cli}
 

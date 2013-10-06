@@ -1,0 +1,64 @@
+\chapter{Gretl and Stata}
+\label{chap:gretlStata}
+
+\app{Stata} (\url{www.stata.com}) is closed-source, proprietary (and
+expensive) software and as such is not a natural companion to
+\app{gretl}. Nonetheless, given \app{Stata}'s popularity it is
+desirable to have a convenient way of comparing results across the two
+programs, and to that end we provide limited support for \app{Stata}
+code under the \texttt{foreign} command.
+
+The following example illustrates what's available. You can send the
+current \app{gretl} dataset to \app{Stata} using the
+\option{send-data} flag. And having defined a matrix within
+\app{Stata} you can export it for use with \app{gretl} via the
+\verb|gretl_export| command: this takes two arguments, the name of the
+matrix to export and the filename to use; the file is written to the
+user's ``dotdir'', from where it can be retrieved using the
+\texttt{mread()} function.\footnote{We do not currently offer the
+  complementary functionality of \verb|gretl_loadmat|, which enables
+  reading of matrices written by \app{gretl}'s \texttt{mwrite()}
+  function in \app{Ox} and \app{Octave}. This is not at all easy to
+  implement in \app{Stata} code.} To suppress printed output
+from \app{Stata} you can add the \option{quiet} flag to the
+\texttt{foreign} block.
+
+
+\begin{script}[htbp]
+  \caption{Comparison of clustered standard errors with \app{Stata}}
+\begin{scode}
+function matrix stata_reorder (matrix se)
+  # stata puts the intercept last, but gretl puts it first
+  scalar n = rows(se)
+  return se[n] | se[1:n-1]
+end function
+
+open data4-1
+ols 1 0 2 3 --cluster=bedrms
+matrix se = $stderr
+
+foreign language=stata --send-data
+  regress price sqft bedrms, vce(cluster bedrms)
+  matrix vcv = e(V)
+  gretl_export vcv "vcv.mat"
+end foreign
+
+matrix stata_vcv = mread("@dotdir/vcv.mat")
+stata_se = stata_reorder(sqrt(diag(stata_vcv)))
+matrix check = se - stata_se
+print check
+\end{scode}
+\label{Stata-test}
+\end{script}
+
+Note that there is no support for editing \app{Stata} scripts via the
+\app{gretl} GUI. Also note that \app{Stata} coerces all variable
+names to lower-case on data input, so even if series names in
+\app{gretl} are upper-case, or of mixed case, it's necessary to use
+all lower-case in \app{Stata}. 
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+

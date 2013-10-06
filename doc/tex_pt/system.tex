@@ -1,0 +1,361 @@
+\chapter{Multivariate models}
+\label{chap:system}
+
+By a multivariate model we mean one that includes more than one
+dependent variable. Certain specific types of multivariate model for
+time-series data are discussed elsewhere: chapter~\ref{chap:var} deals
+with VARs and chapter~\ref{chap:vecm} with VECMs. Here we discuss two
+general sorts of multivariate model, implemented in \app{gretl} via
+the \cmd{system} command: SUR systems (Seemingly Unrelated
+Regressions), in which all the regressors are taken to be exogenous
+and interest centers on the covariance of the error term across
+equations; and simultaneous systems, in which some regressors are
+assumed to be endogenous.
+
+In this chapter we give an account of the syntax and use of the
+\texttt{system} command and its companions, \texttt{restrict}
+and \texttt{estimate}; we also explain the options and accessors
+available in connection with multivariate models.
+
+\section{The system command}
+\label{sec:sys-command}
+
+The specification of a multivariate system takes the form of a block
+of statements, starting with \texttt{system} and ending with
+\texttt{end system}. Once a system is specified it can estimated via
+various methods, using the \texttt{estimate} command, with or without
+restrictions, which may be imposed via the \texttt{restrict} command.
+
+\subsection{Starting a system block}
+
+The first line of a \texttt{system} block may be augmented in either
+(or both) of two ways:
+
+\begin{itemize}
+\item An estimation method is specified for the system. This is done
+  by following \texttt{system} with an expression of the form
+  \texttt{method=}\textsl{estimator}, where \textsl{estimator} must be
+  one of \texttt{ols} (Ordinary Least Squares), \texttt{tsls}
+  (Two-Stage Least Squares), \texttt{sur} (Seemingly Unrelated
+  Regressions), \texttt{3sls} (Three-Stage Least Squares),
+  \texttt{liml} (Limited Information Maximum Likelihood) or
+  \texttt{fiml} (Full Information Maximum Likelihood). Two examples:
+\begin{code}
+system method=sur
+system method=fiml
+\end{code}
+OLS, TSLS and LIML are, of course, single-equation methods rather than
+true system estimators; they are included to facilitate comparisons.
+\item The system is assigned a name. This is done by giving the name
+  first, followed by a back-arrow, ``\verb|<-|'', followed by
+  \texttt{system}.  If the name contains spaces it must be enclosed in
+  double-quotes. Here are two examples:
+\begin{code}
+sys1 <- system
+"System 1" <- system
+\end{code}
+Note, however, that this naming method is not available within a
+user-defined function, only in the main body of a \app{gretl} script.
+\end{itemize}
+
+If the initial \texttt{system} line is augmented in the first way, the
+effect is that the system is estimated as soon as its definition is
+completed, using the specified method. The effect of the second option
+is that the system can then be referenced by the assigned name for the
+purposes of the \texttt{restrict} and \texttt{estimate} commands; in
+the \app{gretl} GUI an additional effect is that an icon for the
+system is added to the ``Session view''.
+
+These two possibilities can be combined, as in
+\begin{code}
+mysys <- system method=3sls
+\end{code}
+In this example the system is estimated immediately via Three-Stage
+Least Squares, and is also available for subsequent use under the
+name \texttt{mysys}.
+
+If the system is not named via the back-arrow mechanism, it is still
+available for subsequent use via \texttt{restrict} and
+\texttt{estimate}; in this case you should use the generic name
+\verb|$system| to refer to the last-defined multivariate system.
+
+\subsection{The body of a system block}
+
+The most basic element in the body of a \texttt{system} block is the
+\texttt{equation} statement, which is used to specify each equation
+within the system. This takes the same form as the regression
+specification for single-equation estimators, namely a list of series
+with the dependent variable given first, followed by the regressors,
+with the series given either by name or by ID number (order in the
+dataset). A system block must contain at least two \texttt{equation}
+statements, and for systems without endogenous regressors these
+statements are all that is required. So, for example, a minimal
+SUR specification might look like this:
+
+\begin{code}
+system method=sur
+  equation y1 const x1
+  equation y2 const x2
+end system
+\end{code}
+
+For simultaneous systems it is necessary to determine which regressors
+are endogenous and which exogenous. By default all regressors are
+treated as exogenous, except that any variable that appears as the
+dependent variable in one equation is automatically treated as
+endogeous if it appears as a regressor elsewhere. However, an explicit
+list of endogenous regressors may be supplied following the
+\texttt{equations} lines: this takes the form of the keyword
+\texttt{endog} followed by the names or ID numbers of the relevant
+regressors.
+
+When estimation is via TSLS or 3SLS it is possible to specify a
+particular set of instruments for each equation. This is done by
+giving the \texttt{equation} lists in the format used with the
+\texttt{tsls} command: first the dependent variable, then the
+regressors, then a semicolon, then the instruments, as in
+
+\begin{code}
+system method=3sls
+  equation y1 const x11 x12 ; const x11 z1
+  equation y2 const x21 x22 ; const x21 z2
+end system
+\end{code}
+
+In this case, as in \texttt{tsls}, any regressors that are not also
+listed as instruments are treated as endogenous, so in the example
+above \texttt{x11} and \texttt{x21} are treated as exogenous while
+\texttt{x21} and \texttt{x22} are endogenous, and instrumented by
+\texttt{z1} and \texttt{z2} respectively.
+
+One more sort of statement is allowed in a \texttt{system} block: that
+is, the keyword \texttt{identity} followed by an equation that defines
+an accounting relationship, rather then a stochastic one, between
+variables. For example,
+
+\begin{code}
+  identity Y = C + I + G + X
+\end{code}
+
+There can be more than one \texttt{identity} in a system block. But
+note that these statements are specific to estimation via FIML; they
+are ignored for other estimators.
+
+\subsection{Equation systems within functions}
+
+It is also possible to define a multivariate system in a programmatic
+way. This is useful if the precise specification of the system depends
+on some input parameters that are not known in advance, but are given
+when the script is actually run.\footnote{This feature was added in
+  version 1.9.7 of \app{gretl}.}
+
+The relevant syntax is given by the \texttt{equations} keyword (note
+the plural), which replaces the block of \texttt{equation} lines in
+the standard form. An \texttt{equations} line requires two list
+arguments. The first list must contain all series on the left-hand
+side of the system; thus the number of elements in this first list
+determines the number of equations in the system. The second list is a
+``list of lists'', which is a special variant of the list data type.
+That is, for each equation of the system you must provide a list of
+right-hand side variables, and the lists for all equations must be
+joined by assigning them to another list object; in that assignment,
+they must be separated by a semicolon.  Here is an example for a
+two-equation system:
+
+\begin{code}
+list syslist = xlist1 ; xlist2
+\end{code}
+
+Therefore, specifying a system generically in this way just involves 
+building the necessary list arguments, as shown in the following
+example:
+
+\begin{code}
+open denmark
+list LHS = LRM LRY
+list RHS1 = const LRM(-1) IBO(-1) IDE(-1)
+list RHS2 = const LRY(-1) IBO(-1)
+list RHS = RHS1 ; RHS2
+system method=ols
+     equations LHS RHS
+end system
+\end{code}
+
+As mentioned above, the option of assigning a specific name to a
+system is not available within functions, but the generic identifier
+\verb|$system| can be used to similar effect. The following example
+shows how one can define a system, estimate it via two methods, apply
+a restriction, then re-estimate it subject to the restriction.
+
+\begin{code}
+function void anonsys(series x, series y)
+     system
+         equation x const
+         equation y const
+     end system
+     estimate $system method=ols
+     estimate $system method=sur
+     restrict $system
+         b[1,1] - b[2,1] = 0
+     end restrict
+     estimate $system method=ols
+end function
+\end{code}
+
+\section{Restriction and estimation}
+\label{sec:sys-est}
+
+The behavior of the \texttt{restrict} command is a little different
+for multivariate systems as compared with single-equation models.
+
+In the single-equation case, \texttt{restrict} refers to the
+last-estimated model, and once the command is completed the
+restriction is tested. In the multivariate case, you must give the
+name of the system to which the restriction is to be applied (or
+\verb|$system| to refer to the last-defined system), and the effect of
+the command is just to attach the restriction to the system; testing
+is not done until the next \texttt{estimate} command is given.  In
+addition, in the system case the default is to produce full estimates
+of the restricted model; if you are not interested in the full
+estimates and just want the test statistic you can append the
+\verb|--quiet| option to \texttt{estimate}.
+
+A given system restriction remains in force until it is replaced or
+removed. To return a system to its unrestricted state you can give
+an empty restrict block, as in
+
+\begin{code}
+restrict sysname
+end restrict
+\end{code}
+
+As illustrated above, you can use the \texttt{method} tag to specify
+an estimation method with the \texttt{estimate} command. If the system
+has already been estimated you can omit this tag and the previous
+method is used again. 
+
+The \texttt{estimate} command is the main locus for options regarding
+the details of estimation. The available options are as follows:
+
+\begin{itemize}
+\item If the estimation method is SUR or 3SLS and the \verb|--iterate|
+  flag is given, the estimator will be iterated. In the case of SUR,
+  if the procedure converges the results are maximum likelihood
+  estimates. Iteration of three-stage least squares, however, does not
+  in general converge on the full-information maximum likelihood
+  results. This flag is ignored for other estimators.
+\item If the equation-by-equation estimators OLS or TSLS are chosen,
+  the default is to apply a degrees of freedom correction when
+  calculating standard errors. This can be suppressed using the
+  \verb|--no-df-corr| flag. This flag has no effect with the other
+  estimators; no degrees of freedom correction is applied in any case.
+\item By default, the formula used in calculating the elements of the
+  cross-equation covariance matrix is
+\[
+\hat{\sigma}_{ij} = \frac{\hat{u}'_i \hat{u}_j}{T}
+\]
+where $T$ is the sample size and $\hat{u}_i$ is the vector of
+residuals from equation $i$. But if the \verb|--geomean| flag is
+given, a degrees of freedom correction is applied: the formula is
+\[
+\hat{\sigma}_{ij} = \frac{\hat{u}'_i \hat{u}_j}{\sqrt{(T-k_i)(T-k_j)}}
+\]
+where $k_i$ denotes the number of independent parameters in equation
+$i$.
+\item If an iterative method is specified, the \verb|--verbose| option
+  calls for printing of the details of the iterations.
+\item When the system estimator is SUR or 3SLS the cross-equation
+  covariance matrix is initially estimated via OLS or TSLS,
+  respectively. In the case of a system subject to restrictions the
+  question arises: should the initial single-equation estimator be
+  restricted or unrestricted? The default is the former, but the
+  \verb|--unrestrict-init| flag can be used to select unrestricted
+  initialization. (Note that this is unlikely to make much difference
+  if the \verb|--iterate| option is given.)
+\end{itemize}
+
+\section{System accessors}
+\label{sec:sys-access}
+
+After system estimation various matrices may be retrieved for further
+analysis.  Let $g$ denote the number of equations in the system and
+let $K$ denote the total number of estimated parameters ($K = \sum_i
+k_i$). The accessors \verb|$uhat| and \verb|$yhat| get $T \times g$
+matrices holding the residuals and fitted values respectively. The
+accessor \verb|$coeff| gets the stacked $K$-vector of parameter
+estimates; \verb|$vcv| gets the $K \times K$ variance matrix of the
+parameter estimates; and \verb|$sigma| gets the $g \times g$
+cross-equation covariance matrix, $\hat{\Sigma}$.
+
+A test statistic for the hypothesis that $\Sigma$ is diagonal can be
+retrieved as \verb|$diagtest| and its p-value as
+\verb|$diagpval|. This is the Breusch--Pagan test except when the
+estimator is (unrestricted) iterated SUR, in which case it's a
+Likelihood Ratio test. The Breusch--Pagan test is computed as
+\[
+\mbox{LM} = T \sum_{i=2}^g \sum_{j=1}^{i-1} r^2_{ij}
+\]
+where $r_{ij} = \hat{\sigma}_{ij} /
+\sqrt{\hat{\sigma}_{ii}\hat{\sigma}_{jj}}$; the LR test is
+\[
+\mbox{LR} = T \left(\sum_{i=1}^g \log \hat{\sigma}^2_i -\log 
+ |\hat{\Sigma}| \right)
+\]
+where $\hat{\sigma}^2_i$ is $\hat{u}'_i \hat{u}_i / T$ from the
+individual OLS regressions. In both cases the test statistic is
+distributed asymptotically as $\chi^2$ with $g(g-1)/2$ degrees of
+freedom. 
+
+\subsection{Structural and reduced forms}
+
+Systems of simultaneous systems can be represented in structural form
+as
+\[
+\Gamma y_t = A_1 y_{t-1} + A_2 y_{t-2} + \cdots + A_p y_{t-p}
+ + B x_t + \epsilon_t
+\]
+where $y_t$ represents the vector of endogenous variables in period
+$t$, $x_t$ denotes the vector of exogenous variables, and $p$ is the
+maximum lag of the endogenous regressors.  The structural-form
+matrices can be retrieved as \verb|$sysGamma|, \verb|$sysA| and
+\verb|$sysB| respectively. If $y_t$ is $m \times 1$ and $x_t$ is $n
+\times 1$, then $\Gamma$ is $m \times m$ and $B$ is $m \times n$. If
+the system contains no lags of the endogenous variables then the $A$
+matrix is not defined, otherwise $A$ is the horizontal concatenation
+of $A_1,\dots,A_p$, and is therefore $m \times mp$.
+% $
+
+From the structural form it is straightforward to obtain the reduced
+form, namely,
+\[
+y_t = \Gamma^{-1} \left(\sum_{i=1}^p A_i y_{t-i}\right)
+ + \Gamma^{-1} B x_t + v_t
+\]
+where $v_t \equiv \Gamma^{-1}\epsilon_t$. The reduced form is used by
+\app{gretl} to generate forecasts in response to the \texttt{fcast}
+command. This means that --- in contrast to single-equation estimation
+--- the values produced via \texttt{fcast} for a static, within-sample
+forecast will in general differ from the fitted values retrieved via
+\verb|$yhat|. The fitted values for equation $i$ represent the
+expectation of $y_{ti}$ conditional on the contemporaneous values of
+all the regressors, while the \texttt{fcast} values are conditional on
+the exogenous and predetermined variables only.
+
+The above account has to be qualified for the case where a system is
+set up for estimation via TSLS or 3SLS using a specific list of
+instruments per equation, as described in
+section~\ref{sec:sys-command}. In that case it is possible to include
+more endogenous regressors than explicit equations (although, of
+course, there must be sufficient instruments to achieve
+identification). In such systems endogenous regressors that have no
+associated explicit equation are treated ``as if'' exogenous when
+constructing the structural-form matrices. This means that forecasts
+are conditional on the observed values of the ``extra'' endogenous
+regressors rather than solely on the values of the exogenous and
+predetermined variables. 
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+

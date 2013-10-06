@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1" ?>
+<?xml version="1.0" encoding="ISO-8859-1"?>
 <localization language="pt">
 
  <gentext          key="args" text="Argumentos: "/>
@@ -17,12 +17,12 @@
  <gentext key="or" text=" ou "/>
  <gentext key="Seealso" text="Ver também"/>
  <gentext key="anyfloat"      text="escalar, série ou matriz"/>
- <gentext key="series-or-vec" text="série ou vector"/>
+ <gentext key="series-or-vec" text="série ou vetor"/>
  <gentext key="series-or-mat" text="série ou matriz"/>
  <gentext key="scalar-or-series" text="escalar ou série"/>
  <gentext key="int-or-list"   text="número inteiro ou lista"/>
  <gentext key="series-or-list" text="série ou lista"/>
- <gentext key="scalar-or-vec" text="escalar ou vector"/>
+ <gentext key="scalar-or-vec" text="escalar ou vetor"/>
  <gentext key="scalar-or-matrix" text="escalar ou matriz"/>
  <gentext key="anyfloat-or-list" text="escalar, série, matriz ou lista"/>
  <gentext key="list-or-string" text="lista ou texto"/>
@@ -34,15 +34,15 @@
  <gentext key="int"           text="número inteiro"/>
  <gentext key="bool"          text="boolean"/>
  <gentext key="séries"        text="série"/>
- <gentext key="vector"        text="vector"/>
+ <gentext key="vector"        text="vetor"/>
  <gentext key="matrix"        text="matriz"/>
  <gentext key="smatrix"       text="matriz quadrada"/>
  <gentext key="symmat"        text="matriz simétrica"/>
  <gentext key="pdmat"         text="matriz positiva definida"/>
  <gentext key="matrixref"     text="referência a matriz"/>
  <gentext key="matrixref"     text="referência a série"/>
- <gentext key="cvec"          text="vector coluna"/>
- <gentext key="rvec"          text="vector linha"/>
+ <gentext key="cvec"          text="vetor coluna"/>
+ <gentext key="rvec"          text="vetor linha"/>
  <gentext key="list"          text="lista"/>
  <gentext key="string"        text="texto"/>
  <gentext key="char"          text="caractere"/>

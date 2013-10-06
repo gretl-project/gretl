@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-15" ?>
+<?xml version="1.0"  encoding="ISO-8859-1"?>
 <!DOCTYPE funcref SYSTEM "genr_funcs.dtd">
 
 <funcref language="portuguese">
@@ -45,7 +45,7 @@
       </description>
     </function>
 
-    <function name="$coeff" section="access" output="matrix" altort="scalar">
+    <function name="$coeff" section="access" output="matrix" altout="scalar">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s</fnarg>
       </fnargs>
@@ -412,7 +412,7 @@
       </description>
     </function>
 
-    <function name="$ncoeff" section="access" output="scalar">
+    <function name="$ncoeff" section="access" output="int">
       <description>
 	<para>
 	  Retorna o número total de coeficientes estimados no último modelo.
@@ -420,15 +420,15 @@
       </description>
     </function>
 
-    <function name="$nobs" section="access" targ="dnobs" output="scalar">
+    <function name="$nobs" section="access" targ="dnobs" output="int">
       <description>
 	<para>
-	  Retorna o número de observações na amostra presentemente seleccionada.
+	  Retorna o número de observações na amostra presentemente selecionada.
 	</para>
       </description>
     </function>
 
-    <function name="$nvars" section="access" output="scalar">
+    <function name="$nvars" section="access" output="int">
       <description>
 	<para>
 	  Retorna o número de variáveis no conjunto de dados (incluindo a
@@ -437,7 +437,83 @@
       </description>
     </function>
 
-    <function name="$pd" section="access" output="scalar">
+    <function name="$obsdate" section="access" output="series">
+      <description>
+	<para>
+	  Applicable when the current dataset is time-series with
+	  annual, quarterly, monthly or decennial frequency, or is
+	  dated daily or weekly, or when the dataset is a panel with
+	  time-series information set appropriately (see the <cmdref
+	  targ="setobs"/> command).  The returned series holds 8-digit
+	  numbers on the pattern <lit>YYYYMMDD</lit> (ISO 8601
+	  <quote>basic</quote> date format), which correspond to the
+	  day of the observation, or the first day of the observation
+	  period in case of a time-series frequency less than daily.
+	</para>
+	<para>
+	  Such a series can be helpful when using the <cmdref
+	  targ="join"/> command.
+	</para>
+      </description>
+    </function>
+
+    <function name="$obsmajor" section="access" output="series">
+      <description>
+	<para>
+	  Applicable when the observations in the current dataset have
+	  a major:minor structure, as in quarterly time series
+	  (year:quarter), monthly time series (year:month), hourly
+	  data (day:hour) and panel data (individual:period).  Returns
+	  a series holding the major or low-frequency component of
+	  each observation (for example, the year).
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="$obsminor"/>
+	    <fncref targ="$obsmicro"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="$obsmicro" section="access" output="series">
+      <description>
+	<para>
+	  Applicable when the observations in the current dataset have
+	  a major:minor:micro structure, as in dated daily time series
+	  (year:month:day).  Returns a series holding the micro or
+	  highest-frequency component of each observation (for
+	  example, the day).
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="$obsmajor"/>
+	    <fncref targ="$obsminor"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="$obsminor" section="access" output="series">
+      <description>
+	<para>
+	  Applicable when the observations in the current dataset have
+	  a major:minor structure, as in quarterly time series
+	  (year:quarter), monthly time series (year:month), hourly
+	  data (day:hour) and panel data (individual:period).  Returns
+	  a series holding the minor or high-frequency component of
+	  each observation (for example, the month).
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="$obsmajor"/>
+	    <fncref targ="$obsmicro"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="$pd" section="access" output="int">
       <description>
 	<para>
 	  Retorna a frequência ou periodicidade dos dados (por exemplo,
@@ -548,7 +624,7 @@
       </description>
     </function>
 
-    <function name="$stderr" section="access" output="matrix" altort="scalar">
+    <function name="$stderr" section="access" output="matrix" altout="scalar">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s</fnarg>
       </fnargs>
@@ -622,7 +698,7 @@
       </description>
     </function>
 
-    <function name="$T" section="access" output="scalar">
+    <function name="$T" section="access" output="int">
       <description>
 	<para>
 	  Retorna o número de observações utilizadas durante a estimação
@@ -631,20 +707,20 @@
       </description>
     </function>
 
-    <function name="$t1" section="access" output="scalar">
+    <function name="$t1" section="access" output="int">
       <description>
 	<para>
 	  Retorna o índice de base 1 da primeira observação na amostra
-	  correntemente seleccionada.
+	  correntemente selecionada.
 	</para>
       </description>
     </function>
 
-    <function name="$t2" section="access" output="scalar">
+    <function name="$t2" section="access" output="int">
       <description>
 	<para>
 	  Retorna o índice de base 1 da última observação na amostra
-	  correntemente seleccionada.
+	  correntemente selecionada.
 	</para>
       </description>
     </function>
@@ -710,7 +786,7 @@
       </description>
     </function>
 
-    <function name="$vcv" section="access" output="matrix" altort="scalar">
+    <function name="$vcv" section="access" output="matrix" altout="scalar">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s1</fnarg>
 	<fnarg optional="true" type="coeffname">s2</fnarg>
@@ -771,7 +847,7 @@
       </description>
     </function>
 
-    <function name="$windows" section="access" output="scalar">
+    <function name="$windows" section="access" output="int">
       <description>
 	<para>
 	  Retorna 1 se gretl estiver a correr em MS Windows, 0 caso 
@@ -871,6 +947,110 @@
       </description>
     </function>
 
+    <function name="aggregate" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="series-or-list">byvar</fnarg>
+	<fnarg type="string">funcname</fnarg>	
+      </fnargs>
+      <description>
+	<para>
+	  In the simplest version, both <argname>x</argname> and
+	  <argname>byvar</argname> are individual series. In that case
+	  this function returns a matrix with three columns: the first
+	  holds the distinct values of <argname>byvar</argname>,
+	  sorted in ascending order; the second holds the count of
+	  observations at which <argname>byvar</argname> takes on each
+	  of these values; and the third holds the values of the
+	  statistic specified by <argname>funcname</argname>
+	  calculated on series <argname>x</argname>, using only those
+	  observations at which <argname>byvar</argname> takes on the
+	  value given in the first column.
+	</para>
+	<para>
+	  More generally, if <argname>byvar</argname> is a list with
+	  <math>n</math> members then the left-hand <math>n</math>
+	  columns hold the combinations of the distinct values of each
+	  of the <math>n</math> series and the count column holds the
+	  number of observations at which each combination is
+	  realized.  If <argname>x</argname> is a list with
+	  <math>m</math> members then the rightmost <math>m</math>
+	  columns hold the values of the specified statistic for each
+	  of the <argname>x</argname> variables, again calculated on
+	  the sub-sample indicated in the first column(s).
+	</para>
+	<para>
+	  The following values of <argname>funcname</argname> are
+	  supported <quote>natively</quote>: <fncref targ="sum"/>,
+	  <fncref targ="sumall"/>, <fncref targ="mean"/>, <fncref
+	  targ="sd"/>, <fncref targ="var"/>, <fncref targ="sst"/>,
+	  <fncref targ="skewness"/>, <fncref targ="kurtosis"/>,
+	  <fncref targ="min"/>, <fncref targ="max"/>, <fncref
+	  targ="median"/>, <fncref targ="nobs"/> and <fncref
+	  targ="gini"/>. Each of these functions takes a series
+	  argument and returns a scalar value, and in that sense can
+	  be said to <quote>aggregate</quote> the series in some way.
+	  You may give the name of a user-defined function as the
+	  aggregator; like the built-ins, such a function must
+	  take a single series argument and return a scalar value.
+	</para>
+	<para>
+	  Note that although a count of cases is provided
+	  automatically the <lit>nobs</lit> function is not redundant
+	  as an aggregator, since it gives the number of valid
+	  (non-missing) observations on <argname>x</argname> at
+	  each <argname>byvar</argname> combination.
+	</para>
+	<para>
+	  For a simple example, suppose that <lit>region</lit>
+	  represents a coding of geographical region using integer
+	  values 1 to <math>n</math>, and <lit>income</lit> represents
+	  household income. Then the following would produce an <by
+	  r="n" c="3"/> matrix holding the region codes, the count of
+	  observations in each region, and mean household income for
+	  each of the regions:
+	</para>
+	<code>
+	  matrix m = aggregate(income, region, mean)
+	</code>
+	<para>
+	  For an example using lists, let <lit>gender</lit> be a
+	  male/female dummy variable, let <lit>race</lit> be a
+	  categorical variable with three values, and consider
+	  the following:
+	</para>
+	<code>
+	  list BY = gender race
+	  list X = income age
+	  matrix m = aggregate(X, BY, sd)
+	</code>	
+	<para>
+	  The <lit>aggregate</lit> call here will produce a <by r="6"
+	  c="5"/> matrix. The first two columns hold the 6 distinct
+	  combinations of gender and race values; the middle column
+	  holds the count for each of these combinations; and the
+	  rightmost two columns contain the sample standard deviations
+	  of <lit>income</lit> and <lit>age</lit>.
+	</para>
+	<para>
+	  Note that if <argname>byvar</argname> is a list, some
+	  combinations of the <argname>byvar</argname> values may not
+	  be present in the data (giving a count of zero). In that
+	  case the value of the statistics for <argname>x</argname>
+	  are recorded as <lit>NaN</lit> (not a number).  If you want
+	  to ignore such cases you can use the <fncref targ="selifr"/>
+	  function to select only those rows that have a non-zero
+	  count. The column to test is one place to the right of the
+	  number of <argname>byvar</argname> variables, so we can do:
+	</para>
+	<code>
+	  matrix m = aggregate(X, BY, sd)
+	  scalar c = nelem(BY)
+	  m = selifr(m, m[,c+1])
+	</code>
+      </description>
+    </function>
+
     <function name="argname" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -933,6 +1113,42 @@
 	  <seelist>
 	    <fncref targ="tanh"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="atof" section="strings" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Closely related to the C library function of the same name.
+	  Returns the result of converting the string
+	  <argname>s</argname> (or the leading portion thereof, after
+	  discarding any initial white space) to a floating-point
+	  number.  Unlike C's <lit>atof</lit>, however, the decimal
+	  character is always assumed (for reasons of portability) to
+	  be <quote><lit>.</lit></quote>. Any characters that follow
+	  the portion of <argname>s</argname> that converts to a
+	  floating-point number under this assumption are ignored.
+	</para>
+	<para>
+	  If none of <argname>s</argname> (following any discarded
+	  white space) is convertible under the stated assumption,
+	  <lit>NA</lit> is returned.
+	</para>
+	<code>
+	  # examples
+	  x = atof("1.234") # gives x = 1.234 
+	  x = atof("1,234") # gives x = 1
+	  x = atof("1.2y")  # gives x = 1.2
+	  x = atof("y")     # gives x = NA
+	  x = atof(",234")  # gives x = NA
+	</code>	
+	<para>
+	  See also <fncref targ="sscanf"/> for more flexible string to
+	  numeric conversion.
 	</para>
       </description>
     </function>
@@ -1404,13 +1620,13 @@
       </description>
     </function>
 
-    <function name="cols" section="matshape" output="scalar">
+    <function name="cols" section="matshape" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
       <description>
 	<para>
-	  The number of columns of <argname>X</argname>. 
+	  Returns the number of columns of <argname>X</argname>. 
 	  <seelist> 
 	    <fncref targ="mshape"/>
 	    <fncref targ="rows"/>
@@ -1938,17 +2154,22 @@
       </description>
     </function>
 
-    <function name="epochday" section="data-utils" output="scalar">
+    <function name="epochday" section="calendar" output="scalar-or-series">
       <fnargs>
-	<fnarg type="scalar">year</fnarg>
-	<fnarg type="scalar">month</fnarg>
-	<fnarg type="scalar">day</fnarg>
+	<fnarg type="scalar-or-series">year</fnarg>
+	<fnarg type="scalar-or-series">month</fnarg>
+	<fnarg type="scalar-or-series">day</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the number of the day in the current epoch specified by
-	  year, month and day (which equals 1 for the first of January in
-	  the year 1 AD).
+	  Returns the number of the day in the current epoch specified
+	  by year, month and day. The epoch day equals 1 for the first
+	  of January in the year 1 AD; it stood at 733786 on
+	  2010-01-01. If any of the arguments are given as series the
+	  value returned is a series, otherwise it is a scalar.
+	</para>
+	<para>
+	  For the inverse function, see <fncref targ="isodate"/>.
 	</para>
       </description>
     </function>
@@ -2185,19 +2406,47 @@
       </description>
     </function>
 
-    <function name="firstobs" section="data-utils" output="scalar">
+    <function name="firstobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  First non-missing observation for the variable
-	  <argname>y</argname>. Note that if some form of subsampling is
-	  in effect, the value returned may be smaller than the dollar
-	  variable <fncref targ="$t1"/>. 
+	  Returns the 1-based index of the first non-missing
+	  observation for the series <argname>y</argname>. Note that
+	  if some form of subsampling is in effect, the value returned
+	  may be smaller than the dollar variable <fncref
+	  targ="$t1"/>.
 	  <seelist> 
 	    <fncref targ="lastobs"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="fixname" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">rawname</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Intended for use in connection with the <cmdref
+	  targ="join"/> command.  Returns the result of converting
+	  <argname>rawname</argname> to a valid gretl identifier,
+	  which must start with a letter, contain nothing but (ASCII)
+	  letters, digits and the underscore character, and must not
+	  exceed 31 characters. The rules used in conversion are:
+	</para>
+	<para>
+	  1. Skip any leading non-letters.
+	</para>
+	<para>
+	  2. Until the 31-character limit is reached or the input is
+	  exhausted: transcribe <quote>legal</quote> characters; skip
+	  <quote>illegal</quote> characters apart from spaces; and
+	  replace one or more consecutive spaces with an underscore,
+	  unless the last character transcribed is an underscore in
+	  which case space is skipped.
 	</para>
       </description>
     </function>
@@ -2263,6 +2512,53 @@
 	  <argname>s</argname> is defined, returns the string value of
 	  that variable, otherwise returns an empty string.
 	  See also <fncref targ="ngetenv"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="getline" section="strings" output="scalar">
+      <fnargs>
+	<fnarg type="string">source</fnarg>
+	<fnarg type="string">target</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  This function is used to read successive lines from
+	  <argname>source</argname>, which should be a named string
+	  variable. On each call a line from the source is written to
+	  <argname>target</argname> (which must also be a named string
+	  variable), with the newline character stripped off. The
+	  valued returned is 1 if there was anything to be read
+	  (including blank lines), 0 if the source has been exhausted.
+	</para>
+	<para>
+	  Here is an example in which the content of a text file is
+	  broken into lines:
+	</para>
+	<code>
+	  string s = readfile("data.txt")
+	  string line
+	  scalar i = 1
+	  loop while getline(s, line)
+	    printf "line %d = '%s'\n", i++, line
+          endloop
+	</code>
+	<para>
+	  In this example we can be sure that the source is exhausted
+	  when the loop terminates. If the source might not be
+	  exhausted you should follow your regular call(s) to
+	  <lit>getline</lit> with a <quote>clean up</quote> call, in which
+	  <argname>target</argname> is replaced by <lit>null</lit> (or
+	  omitted altogether) as in
+	</para>
+	<code>
+	  getline(s, line)
+	  getline(s, null)
+	</code>
+	<para>
+	  Note that although the reading position advances at each call
+	  to <lit>getline</lit>, <argname>source</argname> is not modified
+	  by this function, only <argname>target</argname>.
 	</para>
       </description>
     </function>
@@ -2580,15 +2876,20 @@
       </description>
     </function>
 
-    <function name="inbundle" section="data-utils" output="scalar">
+    <function name="inbundle" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="bundle">b</fnarg>
 	<fnarg type="string">key</fnarg>
       </fnargs>    
       <description>
 	<para>
-	  Returns 1 if bundle <argname>b</argname> contains a data-item
-	  with name <argname>key</argname>, otherwise 0.
+	  Checks whether bundle <argname>b</argname> contains a
+	  data-item with name <argname>key</argname>. The value
+	  returned is an integer code for the type of the item: 0 for
+	  no match, 1 for scalar, 2 for series, 3 for matrix, 4 for
+	  string and 5 for bundle. The function <fncref
+	  targ="typestr"/> may be used to get the string
+	  corresponding to this code.
 	</para>	  
       </description>
     </function>   
@@ -2616,7 +2917,7 @@
       </description>
     </function>
 
-    <function name="inlist" section="data-utils" output="scalar">
+    <function name="inlist" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="list">L</fnarg>
 	<fnarg type="series">y</fnarg>
@@ -2797,7 +3098,7 @@
 
     <function name="invpd" section="linalg" output="smatrix">
       <fnargs>
-	<fnarg type="symmat">A</fnarg>
+	<fnarg type="pdmat">A</fnarg>
       </fnargs>  
       <description>
 	<para>
@@ -2812,8 +3113,8 @@
 
     <function name="irf" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="scalar">target</fnarg>
-	<fnarg type="scalar">shock</fnarg>
+	<fnarg type="int">target</fnarg>
+	<fnarg type="int">shock</fnarg>
 	<fnarg type="pscalar" optional="true">alpha</fnarg>
       </fnargs>  
       <description>
@@ -2864,10 +3165,10 @@
       </description>
     </function>
 
-    <function name="isconst" section="data-utils" output="scalar">
+    <function name="isconst" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
-	<fnarg type="scalar" optional="true">panel-code</fnarg>
+	<fnarg type="int" optional="true">panel-code</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2907,15 +3208,87 @@
       </description>
     </function>
 
-    <function name="isnull" section="data-utils" output="scalar">
+    <function name="isnull" section="data-utils" output="int">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="string">name</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns 0 if <argname>s</argname> is the identifier for a
+	  Returns 0 if <argname>name</argname> is the identifier for a
 	  currently defined object, be it a scalar, a series, a matrix,
-	  list or string; otherwise returns 1.
+	  list, string or bundle; otherwise returns 1.
+	</para>
+      </description>
+    </function>
+
+    <function name="isoconv" section="calendar" output="scalar">
+      <fnargs>
+	<fnarg type="series">date</fnarg>
+	<fnarg type="seriesref">&amp;year</fnarg>
+	<fnarg type="seriesref">&amp;month</fnarg>
+	<fnarg type="seriesref" optional="true">&amp;day</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given a series <argname>date</argname> holding dates in
+	  ISO 8601 <quote>basic</quote> format (<lit>YYYYMMDD</lit>),
+	  this function writes the year, month and (optionally)
+	  day components into the series named by the second and
+	  subsequent arguments. An example call, assuming the
+	  series <lit>dates</lit> contains suitable 8-digit values:
+	</para>
+	<code>
+	  series y, m, d
+	  isoconv(dates, &amp;y, &amp;m, &amp;d)
+	</code>
+	<para>
+	  The return value from this function is 0 on successful
+	  completion, non-zero on error.
+	</para>
+      </description>
+    </function>
+
+    <function name="isodate" section="calendar" output="seebelow">
+      <fnargs>
+	<fnarg type="scalar-or-series">ed</fnarg>
+	<fnarg type="bool" optional="true">as-string</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The argument <argname>ed</argname> is interpreted as an
+	  epoch day (which equals 1 for the first of January in the
+	  year 1 AD). The default return value &mdash; of the same
+	  type as <argname>ed</argname> &mdash; is an 8-digit number,
+	  or a series of such numbers, on the pattern
+	  <lit>YYYYMMDD</lit> (ISO 8601 <quote>basic</quote> format),
+	  giving the calendar date corresponding to the epoch day.
+	</para>
+	<para>
+	  If <argname>ed</argname> is a scalar (only) and the optional
+	  second argument <argname>as-string</argname> is non-zero,
+	  the return value is not numeric but rather a string on the
+	  pattern <lit>YYYY-MM-DD</lit> (ISO 8601
+	  <quote>extended</quote> format).
+	</para>
+	<para>
+	  For the inverse function, see <fncref targ="epochday"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="iwishart" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="symmat">S</fnarg>
+	<fnarg type="int">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given <argname>S</argname> (a positive definite <by r="p"
+	  c="p"/> scale matrix), returns a drawing from the Inverse
+	  Wishart distribution with <argname>v</argname> degrees of
+	  freedom. The returned matrix is also <by r="p" c="p"/>.  The
+	  algorithm of <cite key="odell-feiveson66">Odell and Feiveson
+	  (1966)</cite> is used.
 	</para>
       </description>
     </function>
@@ -2924,7 +3297,7 @@
       <fnargs>
 	<fnarg type="series">x</fnarg>
 	<fnarg type="scalar" optional="true">scale</fnarg>
-	<fnarg type="scalar" optional="true">control</fnarg>
+	<fnarg type="bool" optional="true">control</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3053,14 +3426,15 @@
 
     <function name="lags" section="transforms" output="list">
       <fnargs>
-	<fnarg type="scalar">p</fnarg>
+	<fnarg type="int">p</fnarg>
 	<fnarg type="series-or-list">y</fnarg>
+	<fnarg type="bool" optional="true">bylag</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Generates lags 1 to <argname>p</argname> of the series
 	  <argname>y</argname>, or if <argname>y</argname> is a list, of all
-	  variables in the list.  If <argname>p</argname> = 0, the maximum
+	  series in the list.  If <argname>p</argname> = 0, the maximum
 	  lag defaults to the periodicity of the data; otherwise
 	  <argname>p</argname> must be positive.
 	</para>
@@ -3072,19 +3446,29 @@
 	  name is truncated if necessary, and may be adjusted in case of
 	  non-uniqueness in the set of names thus constructed.  
 	</para>
+	<para>
+	  When <argname>y</argname> is a list and the lag order is
+	  greater than 1, the default ordering of the terms in the
+	  returned list is by variable: all lags of the first series
+	  in the input list followed by all lags of the second series,
+	  and so on. The optional third argument can be used to
+	  change this: if <argname>bylag</argname> is non-zero then
+	  the terms are ordered by lag: lag 1 of all the input series,
+	  then lag 2 of all the series, and so on.
+	</para>
       </description>
     </function>
 
-    <function name="lastobs" section="data-utils" output="scalar">
+    <function name="lastobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Last non-missing observation for the variable
-	  <argname>y</argname>. Note that if some form of subsampling is
-	  in effect, the value returned may be larger than the dollar
-	  variable <fncref targ="$t2"/>.
+	  Returns the 1-based index of the last non-missing
+	  observation for the series <argname>y</argname>. Note that
+	  if some form of subsampling is in effect, the value returned
+	  may be larger than the dollar variable <fncref targ="$t2"/>.
 	  <seelist>
 	    <fncref targ="firstobs"/>
 	  </seelist>
@@ -3157,21 +3541,21 @@
     <function name="ljungbox" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-	<fnarg type="scalar">p</fnarg>
+	<fnarg type="int">p</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Computes the Ljung&ndash;Box Q' statistic for the series
-	  <argname>y</argname> using lag order <argname>p</argname>. The
-	  currently defined sample range is used.  The lag order must be
-	  greater than or equal to 1 and less than the number of available
-	  observations.  
+	  <argname>y</argname> using lag order <argname>p</argname>,
+	  over the currently defined sample range.  The lag order must
+	  be greater than or equal to 1 and less than the number of
+	  available observations.
 	</para>
 	<para>
 	  This statistic may be referred to the chi-square
 	  distribution with <argname>p</argname> degrees of freedom as
 	  a test of the null hypothesis that the series
-	  <argname>y</argname> is serially incorrelated.
+	  <argname>y</argname> is not serially correlated.
 	  <seelist>
 	    <fncref targ="pvalue"/>
 	  </seelist>
@@ -3239,9 +3623,9 @@
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="scalar">d</fnarg>
+	<fnarg optional="true" type="int">d</fnarg>
 	<fnarg optional="true" type="scalar">q</fnarg>
-	<fnarg optional="true" type="scalar">robust</fnarg>
+	<fnarg optional="true" type="bool">robust</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3321,7 +3705,7 @@
     <function name="lrvar" section="filters" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
-	<fnarg type="scalar">k</fnarg>
+	<fnarg type="int">k</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3440,7 +3824,7 @@
 	<fnarg type="matrix">X</fnarg>
 	<fnarg optional="true" type="vector">u</fnarg>
 	<fnarg optional="true" type="vector">w</fnarg>
-	<fnarg type="scalar">p</fnarg>
+	<fnarg type="int">p</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3448,7 +3832,7 @@
 	  <argname>X</argname> (typically containing regressors), an
 	  (optional) <math>T</math>-vector <argname>u</argname> (typically
 	  containing residuals), an (optional) (<math>p</math>+1)-vector
-	  of weights <argname>w</argname>, and a scalar lag order
+	  of weights <argname>w</argname>, and a lag order
 	  <argname>p</argname>, which must be greater than or equal to 0.
 	</para>
 	<para context="tex">
@@ -3458,7 +3842,9 @@
 	</para>
 	<para context="notex">
 	  The returned matrix is given by
-	  sum_{j=-p}^{p} sum_j w_{|j|} (X_t' u_t u_{t-j} X_{t-j})
+	</para>
+	<para context="notex">	
+	  sum_{j=-p}^p sum_j w_{|j|} (X_t' u_t u_{t-j} X_{t-j})
 	</para>
 	<para>
 	  If <argname>u</argname> is given as <lit>null</lit> the
@@ -3701,8 +4087,8 @@
 
     <function name="mnormal" section="matbuild" output="matrix">
       <fnargs>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg type="scalar">c</fnarg>
+	<fnarg type="int">r</fnarg>
+	<fnarg type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3756,11 +4142,11 @@
       </description>
     </function>
 
-    <function name="monthlen" section="data-utils" output="scalar">
+    <function name="monthlen" section="calendar" output="int">
       <fnargs>
-	<fnarg type="scalar">month</fnarg>
-	<fnarg type="scalar">year</fnarg>
-	<fnarg type="scalar">weeklen</fnarg>
+	<fnarg type="int">month</fnarg>
+	<fnarg type="int">year</fnarg>
+	<fnarg type="int">weeklen</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3777,7 +4163,7 @@
       <fnargs>
 	<fnarg type="series">x</fnarg>
 	<fnarg type="scalar">p</fnarg>
-	<fnarg type="scalar" optional="true">control</fnarg>
+	<fnarg type="int" optional="true">control</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3830,8 +4216,7 @@
       <description>
 	<para>
 	  Works exactly as <fncref targ="mols"/>, except that the calculations
-	  are done in multiple precision using the GMP library (assuming this
-	  is available).
+	  are done in multiple precision using the GMP library.
 	</para>
 	<para>
 	  By default GMP uses 256 bits for each floating point number, but
@@ -3843,11 +4228,12 @@
 
     <function name="mrandgen" section="probdist" output="matrix">
       <fnargs>
-	<fnarg type="char">c</fnarg>
-	<fnarg type="scalar">a</fnarg>
-	<fnarg type="scalar">b</fnarg>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg type="scalar">c</fnarg>
+	<fnarg type="string">d</fnarg>
+	<fnarg type="scalar">p1</fnarg>
+	<fnarg type="scalar" conditional="true">p2</fnarg>
+	<fnarg type="scalar" conditional="true">p3</fnarg>
+	<fnarg type="int">rows</fnarg>
+	<fnarg type="int">cols</fnarg>
       </fnargs>
       <examples>
 	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
@@ -3857,16 +4243,16 @@
 	<para>
 	  Works like <fncref targ="randgen"/> except that the return
 	  value is a matrix rather than a series. The initial
-	  arguments to this function are as described for
+	  arguments to this function (the number of which depends on
+	  the selected distribution) are as described for
 	  <lit>randgen</lit>, but they must be followed by two
-	  integers to specify the number of rows
-	  (<argname>r</argname>) and columns (<argname>c</argname>) of
+	  integers to specify the number of rows and columns of
 	  the desired random matrix.
 	</para>
 	<para>
 	  The first example above calls for a uniform random column vector
 	  of length 50, while the second example specifies a <by r="20"
-	  c="20"/> random matrix with drawings from the the <math>t</math>
+	  c="20"/> random matrix with drawings from the <math>t</math>
 	  distribution with 14 degrees of freedom.
 	</para>
 	<para>
@@ -3880,17 +4266,22 @@
 
     <function name="mread" section="matbuild" output="matrix">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="string">fname</fnarg>
+	<fnarg optional="true" type="bool">import</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Reads a matrix from a text file. The string
-	  <argname>s</argname> must contain the name of the (plain
-	  text) file from which the matrix is to be read. The file in
-	  question may start with any number of comment lines, defined
-	  as lines that start with the hash mark, <lit>#</lit>; such
-	  lines are ignored.  Beyond that, the content must conform to
-	  the following rules:
+	  <argname>fname</argname> must contain the name of the file
+	  from which the matrix is to be read. If this name has the
+	  suffix <quote><lit>.gz</lit></quote> it is assumed that gzip
+	  compression has been applied in writing the file.
+	</para>
+	<para>
+	  The file in question may start with any number of comment
+	  lines, defined as lines that start with the hash mark,
+	  <lit>#</lit>; such lines are ignored.  Beyond that, the
+	  content must conform to the following rules:
 	</para>
 	<ilist>
 	  <li>
@@ -3902,7 +4293,8 @@
 	  </li>
 	  <li>
 	    <para>
-	      The columns must be separated by spaces or tab characters.
+	      The columns must be separated by spaces or tab
+	      characters.
 	    </para>
 	  </li>
 	  <li>
@@ -3912,6 +4304,15 @@
 	    </para>
 	  </li>
 	</ilist>
+	<para>
+	  If a non-zero value is given for the optional
+	  <argname>import</argname> argument, the input file is looked
+	  for in the user's <quote>dot</quote> directory. This is
+	  intended for use with the matrix-exporting functions offered
+	  in the context of the <cmdref targ="foreign"/> command. In
+	  this case the <argname>fname</argname> argument should be
+	  a plain filename, without any path component.
+	</para>
 	<para>
 	  Should an error occur (such as the file being badly formatted or
 	  inaccessible), an empty matrix is returned.
@@ -3980,8 +4381,8 @@
     <function name="mshape" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg type="scalar">c</fnarg>
+	<fnarg type="int">r</fnarg>
+	<fnarg type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4009,21 +4410,23 @@
     <function name="msortby" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar">j</fnarg>
+	<fnarg type="int">j</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns a matrix in which the rows of <argname>X</argname>
 	  are reordered by increasing value of the elements in
-	  column <argname>j</argname>.
+	  column <argname>j</argname>. This is a stable sort: 
+	  rows that share the same value in column <argname>j</argname>
+	  will not be interchanged.
 	</para>
       </description>
     </function>
 
     <function name="muniform" section="matbuild" output="matrix">
       <fnargs>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg type="scalar">c</fnarg>
+	<fnarg type="int">r</fnarg>
+	<fnarg type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4045,29 +4448,46 @@
       </description>
     </function>
 
-    <function name="mwrite" section="matbuild" output="scalar">
+    <function name="mwrite" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="string">fname</fnarg>
+	<fnarg optional="true" type="bool">export</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Writes the matrix <argname>X</argname> to a plain text file
-	  named <argname>s</argname>. The file will contain on the first
-	  line two integers, separated by a tab character, with the number
-	  of rows and columns; on the next lines, the matrix elements in
-	  scientific notation, separated by tabs (one line per row).
+	  named <argname>fname</argname>. The file will contain on the
+	  first line two integers, separated by a tab character, with
+	  the number of rows and columns; on the next lines, the
+	  matrix elements in scientific notation, separated by tabs
+	  (one line per row).
 	</para>
 	<para>
-	  If file <argname>s</argname> already exists, it will be
-	  overwritten. The return value is 0 on successful completion; if
-	  an error occurs, such as the file being unwritable, the return
-	  value will be non-zero.
+	  If file <argname>fname</argname> already exists, it will be
+	  overwritten. The return value is 0 on successful completion;
+	  if an error occurs, such as the file being unwritable, the
+	  return value will be non-zero.
 	</para>
 	<para>
-	  Matrices stored via the <lit>mwrite</lit> command can be easily
-	  read by other programs; see <guideref targ="chap:matrices"/> for
-	  details.
+	  If a non-zero value is given for the
+	  <argname>export</argname> argument, the output file will be
+	  written into the user's <quote>dot</quote> directory, where
+	  it is accessible by default via the matrix-loading functions
+	  offered in the context of the <cmdref targ="foreign"/>
+	  command. In this case a plain filename, without any path
+	  component, should be given for the second argument.
+	</para>
+	<para>
+	  Matrices stored via the <lit>mwrite</lit> command can be
+	  easily read by other programs; see <guideref
+	  targ="chap:matrices"/> for details.
+	</para>
+	<para>
+	  An extension to the basic behavior of this function is
+	  available: if <argname>fname</argname> has the suffix
+	  <quote><lit>.gz</lit></quote> then the file is written
+	  with gzip compression.
 	</para>
 	<para>
 	  <seelist>
@@ -4150,12 +4570,12 @@
 	</para>
 	<para context="tex">
 	  The scalar $\tau$ is used to prevent numerical problems when
-	  the the kernel function is evaluated too far away from zero
+	  the kernel function is evaluated too far away from zero
 	  and is called the trim parameter.
 	</para>
 	<para context="notex">
 	  The scalar <math>T</math> is used to prevent numerical
-	  problems when the the kernel function is evaluated too far
+	  problems when the kernel function is evaluated too far
 	  away from zero and is called the trim parameter.
 	</para>
         <para>
@@ -4186,13 +4606,14 @@
       </description>
     </function>
 
-    <function name="nelem" section="data-utils" output="scalar">
+    <function name="nelem" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="list">L</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the number of members in list <argname>L</argname>.
+	  Returns the number of members in the list
+	  <argname>L</argname>.
 	</para>
       </description>
     </function>
@@ -4211,7 +4632,7 @@
       </description>
     </function>
 
-    <function name="nobs" section="stats" output="scalar">
+    <function name="nobs" section="stats" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -4371,7 +4792,7 @@
 
     <function name="obslabel" section="data-utils" output="string">
       <fnargs>
-	<fnarg type="scalar">t</fnarg>
+	<fnarg type="int">t</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4382,7 +4803,7 @@
       </description>
     </function>
 
-    <function name="obsnum" section="data-utils" output="scalar">
+    <function name="obsnum" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -4470,8 +4891,8 @@
 
     <function name="ones" section="matbuild" output="matrix">
       <fnargs>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg type="scalar">c</fnarg>
+	<fnarg type="int">r</fnarg>
+	<fnarg type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4580,8 +5001,9 @@
       <description>
 	<para>
 	  Only applicable if the currently open dataset has a panel
-	  structure. Returns the per-unit maximum for variable
-	  <argname>y</argname>.
+	  structure. Returns a series holding the maxima of variable
+	  <argname>y</argname> for each cross-sectional unit (repeated
+	  for each time period).
 	</para>
 	<para>
 	  If the optional second argument is provided then
@@ -4595,6 +5017,8 @@
 	    <fncref targ="pnobs"/>
 	    <fncref targ="psd"/>
 	    <fncref targ="pxsum"/>
+	    <fncref targ="pshrink"/>
+	    <fncref targ="psum"/>
 	  </seelist>
 	</para>
       </description>
@@ -4608,15 +5032,15 @@
       <description>
 	<para context="notex">
 	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the per-unit mean for variable
-	  <argname>y</argname>; that is, the sum of the valid observations
-	  for each unit divided by the number of valid observations for
-	  each unit.	  
+	  structure. Returns a series holding the time-mean of
+	  variable <argname>y</argname> for each cross-sectional unit,
+	  the values being repeated for each period. Missing
+	  observations are skipped in calculating the means.
 	</para>
 	<para context="tex">
 	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the per-unit mean for variable
-	  <argname>y</argname>; that is, 
+	  structure. Computes the time-mean of variable
+	  <argname>y</argname> for each cross-sectional unit; that is, 
 	  \[ \bar{y}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} y_{i,t}\] 
 	  where $T_i$ is the number of valid
 	  observations for unit $i$.
@@ -4634,6 +5058,7 @@
 	    <fncref targ="psd"/>
 	    <fncref targ="pxsum"/>
 	    <fncref targ="pshrink"/>
+	    <fncref targ="psum"/>
 	  </seelist>
 	</para>
       </description>
@@ -4647,8 +5072,9 @@
       <description>
 	<para>
 	  Only applicable if the currently open dataset has a panel
-	  structure. Returns the per-unit mimimum for variable
-	  <argname>y</argname>.
+	  structure. Returns a series holding the minima of variable
+	  <argname>y</argname> for each cross-sectional unit (repeated
+	  for each time period).
 	</para>
 	<para>
 	  If the optional second argument is provided then
@@ -4661,6 +5087,8 @@
 	    <fncref targ="pmean"/>
 	    <fncref targ="pnobs"/>
 	    <fncref targ="psd"/>
+	    <fncref targ="pshrink"/>
+	    <fncref targ="psum"/>
 	  </seelist>
 	</para>
       </description>
@@ -4674,8 +5102,9 @@
       <description>
 	<para>
 	  Only applicable if the currently open dataset has a panel
-	  structure. Returns for each unit the number of non-missing
-	  cases for the variable <argname>y</argname>.
+	  structure. Returns a series holding the number of valid
+	  observations of variable <argname>y</argname> for each
+	  cross-sectional unit (repeated for each time period).
 	</para>
 	<para>
 	  If the optional second argument is provided then
@@ -4688,6 +5117,8 @@
 	    <fncref targ="pmin"/>
 	    <fncref targ="pmean"/>
 	    <fncref targ="psd"/>
+	    <fncref targ="pshrink"/>
+	    <fncref targ="psum"/>
 	  </seelist>
 	</para>
       </description>
@@ -4717,7 +5148,7 @@
     <function name="polyfit" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-	<fnarg type="scalar">q</fnarg>
+	<fnarg type="int">q</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4732,8 +5163,8 @@
     <function name="princomp" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar">p</fnarg>
-	<fnarg optional="true" type="scalar">covmat</fnarg>
+	<fnarg type="int">p</fnarg>
+	<fnarg optional="true" type="bool">covmat</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4780,6 +5211,41 @@
       </description>
     </function>
 
+    <function name="prodc" section="stats" output="rvec">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the product of the elements of <argname>X</argname>,
+	  by column.
+	  <seelist>
+	    <fncref targ="prodr"/>
+	    <fncref targ="meanc"/>
+	    <fncref targ="sdc"/>
+	    <fncref targ="sumc"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="prodr" section="stats" output="cvec">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the product of the elements of <argname>X</argname>,
+	  by row.
+	  <seelist>
+	    <fncref targ="prodc"/>
+	    <fncref targ="meanr"/>
+	    <fncref targ="sumr"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="psd" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -4788,11 +5254,13 @@
       <description>
 	<para context="notex">
 	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the per-unit sample standard deviation for
-	  variable <math>y</math>.  The denominator used is the sample
-	  size for each unit minus 1, unless the number of valid
-	  observations for the given unit is 1 (in which case 0 is
-	  returned) or 0 (in which case <lit>NA</lit> is returned).
+	  structure. Returns a series holding the sample standard
+	  deviation of variable <math>y</math> for each
+	  cross-sectional unit (with the values repeated for each time
+	  period).  The denominator used is the sample size for each
+	  unit minus 1, unless the number of valid observations for
+	  the given unit is 1 (in which case 0 is returned) or 0 (in
+	  which case <lit>NA</lit> is returned).
 	</para>
 	<para context="tex">
 	  Only applicable if the currently open dataset has a panel
@@ -4820,6 +5288,8 @@
 	    <fncref targ="pmin"/>
 	    <fncref targ="pmean"/>
 	    <fncref targ="pnobs"/>
+	    <fncref targ="pshrink"/>
+	    <fncref targ="psum"/>
 	  </seelist>
 	</para>
       </description>
@@ -4853,15 +5323,59 @@
 	<fnarg type="series">y</fnarg>
       </fnargs>
       <description>
-	<para context="notex">
+	<para>
 	  Only applicable if the currently open dataset has a panel
 	  structure. Returns a column vector holding the first valid
 	  observation for the series <argname>y</argname> for each
-	  unit or individual in the panel, over the current sample
+	  cross-sectional unit in the panel, over the current sample
 	  range. If a unit has no valid observations for the input
-	  series it is skipped. This function provides a means of
-	  compacting the information provided by functions such
-	  as <fncref targ="pmean"/>.
+	  series it is skipped.
+	</para>
+	<para>
+	  This function provides a means of compacting the series
+	  returned by functions such as <fncref targ="pmax"/> and
+	  <fncref targ="pmean"/>, in which a value pertaining to
+	  each cross-sectional unit is repeated for each time
+	  period. 
+	</para>
+      </description>
+    </function>
+
+    <function name="psum" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series" optional="true">mask</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Only applicable if the currently open dataset has a panel
+	  structure. Returns a series holding the sum over time of
+	  variable <argname>y</argname> for each cross-sectional unit,
+	  the values being repeated for each period. Missing
+	  observations are skipped in calculating the sums.
+	</para>
+	<para context="tex">
+	  Only applicable if the currently open dataset has a panel
+	  structure. Computes the sum over time of variable
+	  <argname>y</argname> for each cross-sectional unit; that is, 
+	  \[ S_i = \sum_{t=1}^{T_i} y_{i,t}\] 
+	  where $T_i$ is the number of valid observations for unit $i$.
+	</para>
+	<para>
+	  If the optional second argument is provided then
+	  observations for which the value of <argname>mask</argname>
+	  is zero are ignored.
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="pmax"/>
+	    <fncref targ="pmean"/>
+	    <fncref targ="pmin"/>
+	    <fncref targ="pnobs"/>
+	    <fncref targ="psd"/>
+	    <fncref targ="pxsum"/>
+	    <fncref targ="pshrink"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -4909,9 +5423,9 @@
       <description>
 	<para context="notex">
 	  Only applicable if the currently open dataset has a panel
-	  structure. Computes a series holding the sum of the values
+	  structure. Returns a series holding the sum of the values
 	  of <argname>y</argname> for each cross-sectional unit in
-	  each period.
+	  each period (the values being repeated for each unit).
 	</para>
 	<para context="tex">
 	  Only applicable if the currently open dataset has a panel
@@ -4991,6 +5505,107 @@
       </description>
     </function>
 
+    <function name="quadtable" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">type</fnarg>
+	<fnarg type="scalar" optional="true">a</fnarg>
+	<fnarg type="scalar" optional="true">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns an <by r="n" c="2"/> matrix for use with Gaussian
+	  quadrature (numerical integration). The first column holds
+	  the nodes or abscissae, the second the weights.
+	</para>
+	<para>
+	  The first argument specifies the number of points (rows) to
+	  compute. The second argument codes for the type of
+	  quadrature: use 1 for Gauss&ndash;Hermite (the default);
+	  2 for Gauss&ndash;Legendre; or 3 for Gauss&ndash;Laguerre.
+	  The significance of the optional parameters
+	  <argname>a</argname> and <argname>b</argname> depends on the
+	  selected <argname>type</argname>, as explained below.
+	</para>
+	<para context="notex">
+	  Gaussian quadrature is a method of approximating numerically
+	  the definite integral of some function of interest. Let the
+	  function be represented as the product
+	  <math>f(x)W(x)</math>. The types of quadrature differ in the
+	  specification of the component <math>W(x)</math>: in the
+	  Hermite case this is exp(&minus;<math>x</math><sup>2</sup>);
+	  in the Laguerre case, exp(&minus;<math>x</math>); and in the
+	  Legendre case simply <math>W(x)</math> = 1.
+	</para>
+	<para context="tex">
+	  Gaussian quadrature is a method of approximating numerically
+	  the definite integral of some function of interest. Let the
+	  function be represented as the product $f(x)W(x)$. The types
+	  of quadrature differ in the specification of the component
+	  $W(x)$: in the Hermite case we have $W(x) = \exp(-x^2)$; in
+	  the Laguerre case, $W(x) = \exp(-x)$; and in the Legendre
+	  case simply $W(x) = 1$.
+	</para>
+	<para context="notex">
+	  For each specification of <math>W</math>, one can compute a
+	  set of nodes, <math>x</math><sub>i</sub>, and weights,
+	  <math>w</math><sub>i</sub>, such that the sum from
+	  <math>i</math>=1 to <math>n</math> of
+	  <math>w</math><sub>i</sub><math>f</math>(<math>x</math><sub>i</sub>)
+	  approximates the desired integral. The method of <cite
+	  key="golub69">Golub and Welsch (1969)</cite> is used.
+	</para>
+	<para context="tex">
+	  For each specification of $W(x)$, one can compute a set of
+	  nodes, $x_i$, and weights, $w_i$, such that $\sum_{i=1}^n
+	  f(x_i) w_i$ approximates the desired integral. The method of
+	  <cite key="golub69">Golub and Welsch (1969)</cite> is used.
+	</para>
+	<para context="notex">
+	  When the Gauss&ndash;Legendre type is selected, the 
+	  optional arguments <argname>a</argname> and
+	  <argname>b</argname> can be used to control the lower and
+	  upper limits of integration, the default values being
+	  &minus;1 and 1. (In Hermite quadrature the
+	  limits are fixed at minus and plus infinity, while in
+	  the Laguerre case they are fixed at 0 and infinity.)
+	</para>
+	<para context="tex">
+	  When the Gauss&ndash;Legendre type is selected, the optional
+	  arguments <argname>a</argname> and <argname>b</argname> can
+	  be used to control the lower and upper limits of
+	  integration, the default values being $-1$ and 1. (In Hermite
+	  quadrature the limits are fixed at $-\infty$ and $+\infty$,
+	  while in the Laguerre case they are fixed at 0 and $\infty$.)
+	</para>
+	<para context="notex">
+	  In the Hermite case <argname>a</argname> and
+	  <argname>b</argname> play a different role: they can be used
+	  to replace the default form of
+	  <math>W</math>(<math>x</math>) with the (closely related)
+	  normal distribution with mean <argname>a</argname> and
+	  standard deviation <argname>b</argname>. Supplying values of
+	  0 and 1 for these parameters, for example, has the effect of
+	  making <math>W</math>(<math>x</math>) into the standard
+	  normal pdf, which is equivalent to multiplying the default
+	  nodes by the square root of two and dividing the weights by
+	  the square root of &pi;.
+	</para>
+	<para context="tex">
+	  In the Hermite case <argname>a</argname> and
+	  <argname>b</argname> play a different role: they can be used
+	  to replace the default form of $W(x)$ with the
+	  (closely related) normal distribution with mean
+	  <argname>a</argname> and standard deviation
+	  <argname>b</argname>. Supplying values of 0 and 1 for these
+	  parameters, for example, has the effect of making
+	  $W(x)$ into the standard normal pdf, which is equivalent
+	  to multiplying the default $x_i$ values by $\sqrt{2}$
+	  and dividing the default $w_i$ by $\sqrt{\pi}$.
+	</para>
+      </description>
+    </function>    
+
     <function name="quantile" section="stats" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
@@ -5029,9 +5644,10 @@
 
     <function name="randgen" section="probdist" output="series">
       <fnargs>
-	<fnarg type="char">c</fnarg>
-	<fnarg type="scalar-or-series">a</fnarg>
-	<fnarg type="scalar-or-series">b</fnarg>
+	<fnarg type="string">d</fnarg>
+	<fnarg type="scalar-or-series">p1</fnarg>
+	<fnarg type="scalar-or-series" conditional="true">p2</fnarg>
+	<fnarg type="scalar" conditional="true">p3</fnarg>
       </fnargs>
       <examples>
 	<example>series x = randgen(u, 0, 100)</example>
@@ -5042,37 +5658,45 @@
       </examples>
       <description>
 	<para>
-	  All-purpose random number generator. The parameter
-	  <argname>c</argname> is a character, which specifies from which
-	  distribution the pseudo-random numbers should be drawn. The
-	  arguments <argname>a</argname> and (in some cases)
-	  <argname>b</argname> provide the parameters of the selected
-	  distribution. If these are given as scalars the output series is
-	  identically distributed; if a series is given for
-	  <argname>a</argname> or <argname>b</argname> the distribution is
-	  conditional on the parameter value at each observation.
+	  All-purpose random number generator. The argument
+	  <argname>d</argname> is a string (in most cases just a
+	  single character) which specifies the distribution from
+	  which the pseudo-random numbers should be drawn. The
+	  arguments <argname>p1</argname> to <argname>p3</argname>
+	  specify the parameters of the selected distribution; the
+	  number of such parameters depends on the distribution.  For
+	  distributions other than the beta-binomial, the parameters
+	  <argname>p1</argname> and (if applicable)
+	  <argname>p2</argname> may be given as either scalars or
+	  series: if they are given as scalars the output series is
+	  identically distributed, while if a series is given for
+	  <argname>p1</argname> or <argname>p2</argname> the
+	  distribution is conditional on the parameter value at each
+	  observation. In the case of the beta-binomial all the
+	  parameters must be scalars.
 	</para>
 	<para>
-	  Specifics are given below: the character codes for each
-	  distribution are shown in parentheses, followed by the
-	  interpretation of the argument <argname>a</argname> and,
-	  where applicable, <argname>b</argname>.
+	  Specifics are given below: the string code for each
+	  distribution is shown in parentheses, followed by the
+	  interpretation of the argument <argname>p1</argname> and,
+	  where applicable, <argname>p2</argname> and
+	  <argname>p3</argname>.
 	</para>
 	  
 	<ilist context="notex">
 	  <li>
 	    <para>
-	      Uniform (continuous) (c = u or U): minimum; maximum
+	      Uniform (continuous) (u or U): minimum, maximum
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Uniform (discrete) (c = i): minimum; maximum
+	      Uniform (discrete) (i): minimum, maximum
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Normal (c = z, n, or N): mean; standard deviation
+	      Normal (z, n, or N): mean, standard deviation
 	    </para>
 	  </li>
 	  <li>
@@ -5087,50 +5711,62 @@
 	  </li>
 	  <li>
 	    <para>
-	      Snedecor's F (f or F): df (num.); df (den.)
+	      Snedecor's F (f or F): df (num.), df (den.)
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Gamma (g or G): shape; scale
+	      Gamma (g or G): shape, scale
 	    </para>
 	  </li>	  
 	  <li>
 	    <para>
-	      Binomial (b or B): probability; number of trials
+	      Binomial (b or B): probability, number of trials
 	    </para>
 	  </li>	  
 	  <li>
 	    <para>
-	      Poisson (p or P): Mean
+	      Poisson (p or P): mean
 	    </para>
 	  </li>	
 	  <li>
 	    <para>
-	      Weibull (w or W): shape; scale
+	      Weibull (w or W): shape, scale
 	    </para>
 	  </li>	
 	  <li>
 	    <para>
 	      Generalized Error (E): shape
 	    </para>
-	  </li>	
+	  </li>
+	  <li>
+	    <para>
+	      Beta (beta): shape1, shape2
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Beta-Binomial (bb): trials, shape1, shape2
+	    </para>
+	  </li>
 	</ilist>
 	<para context="tex">
 	  \begin{center}
-	  \begin{tabular}{llll}
-	  \textbf{Distribution} &amp; \textsl{c} &amp; \textsl{a} &amp; \textsl{b} \\[4pt]
-	  Uniform (continuous) &amp; \texttt{u} or \texttt{U} &amp; minimum &amp; maximum\\
-	  Uniform (discrete) &amp; \texttt{i} &amp; minimum &amp; maximum\\
-	  Normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; mean &amp; standard deviation\\
-	  Student's $t$ &amp; \texttt{t} &amp; degrees of freedom &amp; --\\
-	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; degrees of freedom &amp; --\\
-	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; df (num.) &amp; df (den.)\\
-	  Gamma &amp; \texttt{g} or \texttt{G} &amp; shape &amp; scale \\
-	  Binomial &amp; \texttt{b} or \texttt{B} &amp; $p$ &amp; $n$ \\
-	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; -- \\
-	  Weibull &amp; \texttt{w} or \texttt{W} &amp; shape &amp; scale \\
-	  Generalized Error &amp; \texttt{e} or \texttt{E} &amp; shape &amp; -- 
+	  \begin{tabular}{lllll}
+	  \textbf{Distribution} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
+	  Uniform (continuous) &amp; \texttt{u} or \texttt{U} &amp; minimum &amp; maximum &amp; --\\
+	  Uniform (discrete) &amp; \texttt{i} &amp; minimum &amp; maximum &amp; --\\
+	  Normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; mean &amp; standard deviation &amp; --\\
+	  Student's $t$ &amp; \texttt{t} &amp; degrees of freedom &amp; -- &amp; --\\
+	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; degrees of freedom &amp; -- &amp; --\\
+	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; df (num.) &amp; df (den.) &amp; --\\
+	  Gamma &amp; \texttt{g} or \texttt{G} &amp; shape &amp; scale  &amp; --\\
+	  Binomial &amp; \texttt{b} or \texttt{B} &amp; $p$ &amp; $n$  &amp; --\\
+	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; --  &amp; --\\
+	  Weibull &amp; \texttt{w} or \texttt{W} &amp; shape &amp; scale &amp; --\\
+	  Generalized Error &amp; \texttt{e} or \texttt{E} &amp; shape &amp; -- &amp; --\\
+	  Beta &amp; \texttt{beta} &amp; shape1 &amp; shape2 &amp; --\\
+	  Beta-Binomial &amp; \texttt{bb} &amp; $n$ &amp; shape1 &amp; shape2
 	  \end{tabular}
 	  \end{center}
 	</para>
@@ -5147,9 +5783,9 @@
 
     <function name="randgen1" section="probdist" output="scalar">
       <fnargs>
-	<fnarg type="char">c</fnarg>
-	<fnarg type="scalar">a</fnarg>
-	<fnarg type="scalar">b</fnarg>
+	<fnarg type="char">d</fnarg>
+	<fnarg type="scalar">p1</fnarg>
+	<fnarg type="scalar" conditional="true">p2</fnarg>
       </fnargs>
       <examples>
 	<example>scalar x = randgen1(z, 0, 1)</example>
@@ -5173,10 +5809,10 @@
       </description>
     </function>
 
-    <function name="randint" section="probdist" output="scalar">
+    <function name="randint" section="probdist" output="int">
       <fnargs>
-	<fnarg type="scalar">min</fnarg>
-	<fnarg type="scalar">max</fnarg>
+	<fnarg type="int">min</fnarg>
+	<fnarg type="int">max</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5189,7 +5825,7 @@
       </description>
     </function>
 
-    <function name="rank" section="linalg" output="scalar">
+    <function name="rank" section="linalg" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -5277,7 +5913,49 @@
 	  this file, otherwise flags an error.  
 	</para>
 	<para>
+	  In the case where <argname>fname</argname> starts with the
+	  indentifier of a supported internet protocol
+	  (<lit>http://</lit>, <lit>ftp://</lit>,
+	  <lit>https://</lit>), libcurl is invoked to download the
+	  resource.
+	</para>
+	<para>
 	  Also see the <fncref targ="sscanf"/> function.
+	</para>
+      </description>
+    </function>
+
+    <function name="regsub" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="string">match</fnarg>
+	<fnarg type="string">repl</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Returns a copy of <argname>s</argname> in which all
+	  occurrences of the pattern <argname>match</argname> are
+	  replaced using <argname>repl</argname>. The arguments
+	  <argname>match</argname> and <argname>repl</argname>
+	  are interpreted as Perl-style regular expressions.
+	</para>
+	<para>
+	  See also <fncref targ="strsub"/> for simple substitution of
+	  literal strings.
+	</para>
+      </description>
+    </function>
+
+    <function name="remove" section="data-utils" output="int">
+      <fnargs>
+	<fnarg type="string">fname</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  If a file by the name of <argname>fname</argname> exists and
+	  is writable by the user, removes (deletes) the named
+	  file. Returns 0 on successful completion, non-zero if there
+	  is no such file or the file cannot be removed.
 	</para>
       </description>
     </function>
@@ -5332,7 +6010,7 @@
     <function name="resample" section="stats" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
-	<fnarg optional="true" type="scalar">b</fnarg>
+	<fnarg optional="true" type="int">b</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -5379,7 +6057,7 @@
       </description>
     </function>
 
-    <function name="rownames" section="matbuild" output="scalar">
+    <function name="rownames" section="matbuild" output="int">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="list-or-string">s</fnarg>
@@ -5395,23 +6073,23 @@
 	  non-zero on error. See also <fncref targ="colnames"/>.
 	</para>
 	<para>
-          Example:
-        </para>
-        <code>
-         matrix M = {1,2;2,1;4,1} 
-         rownames(M, "Row1 Row2 Row3")
-         print M      
-      </code>
-      </description>
+      Example:
+    </para>
+    <code>
+      matrix M = {1,2;2,1;4,1} 
+      rownames(M, "Row1 Row2 Row3")
+      print M      
+    </code>
+	  </description>
     </function>
 
-    <function name="rows" section="matshape" output="scalar">
+    <function name="rows" section="matshape" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Number of rows of the matrix <argname>X</argname>.  
+	  Returns the number of rows of the matrix <argname>X</argname>.  
 	  <seelist>
 	    <fncref targ="cols"/>
 	    <fncref targ="mshape"/>
@@ -5540,9 +6218,9 @@
 
     <function name="seq" section="matbuild" output="rvec">
       <fnargs>
-	<fnarg type="scalar">a</fnarg>
-	<fnarg type="scalar">b</fnarg>
-	<fnarg optional="true" type="scalar">k</fnarg>
+	<fnarg type="int">a</fnarg>
+	<fnarg type="int">b</fnarg>
+	<fnarg optional="true" type="int">k</fnarg>
       </fnargs>   
       <description>
 	<para>
@@ -5573,11 +6251,30 @@
       </description>
     </function>
 
+    <function name="setnote" section="data-utils" output="int">
+      <fnargs>
+	<fnarg type="bundle">b</fnarg>
+	<fnarg type="string">key</fnarg>
+	<fnarg type="string">note</fnarg>
+      </fnargs>   
+      <description>
+	<para>
+	  Sets a descriptive note for the object identified by
+	  <argname>key</argname> in the bundle <argname>b</argname>.
+	  This note will be shown when the <lit>print</lit> command is
+	  used on the bundle. This function returns 0 on success or
+	  non-zero on failure (for example, if there is no object in
+	  <argname>b</argname> under the given
+	  <argname>key</argname>).
+	</para>
+      </description>
+    </function>    
+
     <function name="simann" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="vector">b</fnarg>
 	<fnarg type="fncall">f</fnarg>
-	<fnarg type="scalar" optional="true">maxit</fnarg>
+	<fnarg type="int" optional="true">maxit</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5709,7 +6406,7 @@
       </description>
     </function>
 
-    <function name="sscanf" section="strings" output="scalar">
+    <function name="sscanf" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">src</fnarg>
 	<fnarg type="string">format</fnarg>
@@ -5819,7 +6516,7 @@
       </description>
     </function>
 
-    <function name="strlen" section="strings" output="scalar">
+    <function name="strlen" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>  
@@ -5830,11 +6527,11 @@
       </description>
     </function>
 
-    <function name="strncmp" section="strings" output="scalar">
+    <function name="strncmp" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
-	<fnarg optional="true" type="scalar">n</fnarg>
+	<fnarg optional="true" type="int">n</fnarg>
       </fnargs>  
       <description>
 	<para>
@@ -5855,7 +6552,7 @@
     <function name="strsplit" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-	<fnarg type="scalar">i</fnarg>
+	<fnarg type="int">i</fnarg>
       </fnargs>  
       <description>
 	<para>
@@ -5909,14 +6606,15 @@
 	<para>
 	  Returns a copy of <argname>s</argname> in which all
 	  occurrences of <argname>find</argname> are replaced by
-	  <argname>subst</argname>.
+	  <argname>subst</argname>. See also <fncref targ="regsub"/>
+	  for more complex string replacement via regular expressions.
 	</para>
       </description>
     </function>
 
     <function name="sum" section="stats" output="scalar-or-series">
       <fnargs>
-	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="smlist">x</fnarg>
       </fnargs>      
       <description>
 	<para>
@@ -5924,6 +6622,10 @@
 	  non-missing observations in <argname>x</argname>. See also
 	  <fncref targ="sumall"/>.
 	</para>
+	<para>
+	  If <argname>x</argname> is a matrix, returns the sum of the
+	  elements of the matrix.
+	</para>	
 	<para>
 	  If <argname>x</argname> is a list, returns a series <math>y</math>
 	  such that <math>y</math><sub>t</sub> is the sum of the values of the
@@ -6101,6 +6803,18 @@
       </description>
     </function>
 
+    <function name="toupper" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns a copy of <argname>s</argname> in which any lower-case
+	  characters are converted to upper case.
+	</para>
+      </description>
+    </function>
+
     <function name="tr" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
@@ -6132,16 +6846,16 @@
     <function name="trimr" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar">ttop</fnarg>
-	<fnarg type="scalar">tbot</fnarg>
+	<fnarg type="int">ttop</fnarg>
+	<fnarg type="int">tbot</fnarg>
       </fnargs>   
       <description>
 	<para>
 	  Returns a matrix that is a copy of <argname>X</argname> with
 	  <argname>ttop</argname> rows trimmed at the top and
-	  <argname>tbot</argname> rows trimmed at the bottom.  The latter two
-	  arguments must be non-negative, and must sum to less than the total
-	  rows of <argname>X</argname>.
+	  <argname>tbot</argname> rows trimmed at the bottom.  The
+	  latter two arguments must be non-negative, and must sum to
+	  less than the total rows of <argname>X</argname>.
 	</para>
 	<para>
 	  <seelist>
@@ -6153,12 +6867,12 @@
 
     <function name="typestr" section="data-utils" output="string">
       <fnargs>
-	<fnarg type="scalar">code</fnarg>
+	<fnarg type="int">typecode</fnarg>
       </fnargs>      
       <description>
 	<para>
 	  Returns the name of the gretl data-type corresponding to
-	  <argname>code</argname>. This is intended for use in
+	  <argname>typecode</argname>. This is intended for use in
 	  conjunction with the function <fncref targ="inbundle"/>.
 	  The value returned is one of <quote>scalar</quote>,
 	  <quote>series</quote>, <quote>matrix</quote>,
@@ -6256,9 +6970,9 @@
     <function name="urcpval" section="probdist" output="scalar">
       <fnargs>
 	<fnarg type="scalar">tau</fnarg>
-	<fnarg type="scalar">n</fnarg>
-	<fnarg type="scalar">niv</fnarg>
-	<fnarg type="scalar">itv</fnarg>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int">niv</fnarg>
+	<fnarg type="int">itv</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6347,7 +7061,7 @@
       </fnargs>     
       <description>
 	<para>
-	  If given a scalar argument, returns the name of the variable with ID
+	  If given an integer argument, returns the name of the variable with ID
 	  number <argname>v</argname>, or generates an error if there is no
 	  such variable.
 	</para>
@@ -6359,7 +7073,7 @@
       </description>
     </function>
 
-    <function name="varnum" section="data-utils" output="scalar">
+    <function name="varnum" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">varname</fnarg>
       </fnargs>     
@@ -6456,11 +7170,11 @@
       </description>
     </function>
 
-    <function name="weekday" section="data-utils" output="scalar">
+    <function name="weekday" section="calendar" output="int">
       <fnargs>
-	<fnarg type="scalar">year</fnarg>
-	<fnarg type="scalar">month</fnarg>
-	<fnarg type="scalar">day</fnarg>
+	<fnarg type="int">year</fnarg>
+	<fnarg type="int">month</fnarg>
+	<fnarg type="int">day</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -6632,8 +7346,8 @@
 
     <function name="zeros" section="matbuild" output="matrix">
       <fnargs>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg type="scalar">c</fnarg>
+	<fnarg type="int">r</fnarg>
+	<fnarg type="int">c</fnarg>
       </fnargs> 
       <description>
 	<para>

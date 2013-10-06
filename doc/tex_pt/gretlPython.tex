@@ -1,0 +1,143 @@
+\chapter{Gretl and Python}
+\label{chap:gretlPython}
+
+\section{Introduction}
+\label{Python-intro}
+
+According to \url{www.python.org}, \app{Python} is ``an easy to learn,
+powerful programming language. It has efficient high-level data
+structures and a simple but effective approach to object-oriented
+programming. Python's elegant syntax and dynamic typing, together with
+its interpreted nature, make it an ideal language for scripting and
+rapid application development in many areas on most platforms.''
+
+Indeed, \app{Python} is widely used in a great variety of
+contexts. Numerous add-on modules are available; the ones likely to be
+of greatest interest to econometricians include \app{NumPy} (``the
+fundamental package for scientific computing with Python'' --- see
+\url{www.numpy.org}); \app{SciPy} (which builds on \app{NumPy} --- see
+\url{www.scipy.org}); and \app{Statsmodels}
+(\url{http://statsmodels.sourceforge.net/}).
+
+\section{Python support in gretl}
+\label{sec:Python-support}
+
+The support offered for \app{Python} in \app{gretl} is similar to that
+offered for \app{Octave} (chapter~\ref{chap:gretlOctave}). You can
+open and edit \app{Python} scripts in the \app{gretl} GUI.  Clicking
+the ``execute'' icon in the editor window will send your code to
+\app{Python} for execution. In addition you can embed \app{Python}
+code within a \app{gretl} script using a \texttt{foreign} block, as
+described in connection with \app{R}.
+
+When you launch \app{Python} from within \app{gretl} one variable and
+two convenience functions are pre-defined, as follows.
+\begin{code}
+gretl_dotdir
+gretl_loadmat(filename, autodot=1)
+gretl_export(M, filename, autodot=1)
+\end{code}
+The variable \verb|gretl_dotdir| holds the path to the user's ``dot
+directory.''  The first function loads a matrix of the given
+\texttt{filename} as written by \app{gretl}'s \texttt{mwrite}
+function, and the second writes matrix \texttt{M}, under the given
+\texttt{filename}, in the format wanted by \app{gretl}.
+
+By default the traffic in matrices goes via the dot directory on the
+\app{Python} side; that is, the name of this directory is prepended to
+\texttt{filename} for both reading and writing. (This is complementary
+to use of the \textsl{export} and \textsl{import} parameters with
+\app{gretl}'s \texttt{mwrite} and \texttt{mread} functions,
+respectively.) However, if you wish to take control over the reading
+and writing locations you can supply a zero value for
+\texttt{autodot} when calling \verb|gretl_loadmat| and
+\verb|gretl_export|: in that case the \texttt{filename} argument is
+used as is.
+
+Note that \verb|gretl_loadmat| and \verb|gretl_export| depend on
+\app{NumPy}; they make use of the functions \texttt{loadtxt} and
+\texttt{savetxt} respectively. Nonetheless, the presence of
+\app{NumPy} is not an absolute requirement if you don't need
+to use these two functions.
+
+\section{Illustration: linear regression with multicollinearity}
+\label{sec:Python-longley}
+
+Example~\ref{Python-longley} compares the numerical accuracy of
+\app{gretl}'s \texttt{ols} command with that of \app{NumPy}'s
+\texttt{linalg.lstsq}, using the notorious Longley test data which
+exhibit extreme multicollinearity.  Unlike some econometrics packages,
+\app{NumPy} does a good job on these data. The script computes and
+prints the log-relative error in estimation of the regression
+coefficients, using the NIST-certified values as a
+benchmark;\footnote{See
+  \url{http://www.itl.nist.gov/div898/strd/lls/data/Longley.shtml}.}
+the error values correspond to the number of correct digits (with a
+maximum of 15). The results will differ somewhat by computer
+architecture; the output shown was obtained on a 32-bit Linux Intel i5
+system.
+
+\begin{script}[htbp]
+  \caption{Comparing regression results with \app{Python}}
+\begin{scode}
+set echo off
+set messages off
+
+function matrix logrel_error (matrix est, matrix true)
+  return -log10(abs(est - true) ./ abs(true))
+end function
+
+open longley.gdt -q
+list LX = prdefl .. year
+# gretl's regular OLS
+ols employ 0 LX -q
+matrix b = $coeff
+
+mwrite({employ}, "y.mat", 1)
+mwrite({const} ~ {LX}, "X.mat", 1)
+
+foreign language=python
+   import numpy as np
+   y = gretl_loadmat('y.mat', 1)
+   X = gretl_loadmat('X.mat', 1)
+   # NumPy's OLS   
+   b = np.linalg.lstsq(X, y)[0]
+   gretl_export(np.transpose(np.matrix(b)), 'py_b.mat', 1)
+end foreign
+
+# NIST's certified coefficient values
+matrix nist_b = {-3482258.63459582, 15.0618722713733,
+    -0.358191792925910E-01, -2.02022980381683,
+    -1.03322686717359, -0.511041056535807E-01,
+     1829.15146461355}'
+
+matrix py_b = mread("py_b.mat", 1)
+matrix errs = logrel_error(b, nist_b) ~ logrel_error(py_b, nist_b)
+colnames(errs, "gretl python")
+printf "Log-relative errors, Longley coefficients:\n\n%12.5g\n", errs
+printf "Column means\n%12.5g\n", meanc(errs)
+\end{scode}
+Output:
+\begin{code}
+Log-relative errors, Longley coefficients:
+
+       gretl      python
+      12.844       12.85
+      11.528      11.414
+      12.393      12.401
+      13.135      13.121
+      13.738      13.318
+      12.587      12.363
+      12.848      12.852
+
+Column means
+      12.725      12.617
+\end{code}
+\label{Python-longley}
+\end{script}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+

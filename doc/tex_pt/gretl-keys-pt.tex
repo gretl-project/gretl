@@ -1,0 +1,60 @@
+\documentclass{article}
+\usepackage{gretl-lite}
+\usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
+
+\begin{document}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+\thispagestyle{empty}
+
+\begin{center}
+{\large \textbf{Gretl keyboard shortcuts}}
+\end{center}
+
+\textsf{Gretl} provides keyboard shortcuts for various commands. Some of
+these are standard and are indicated in the menus; for example
+\texttt{Ctrl-s} in the main window saves the current dataset, as
+indicated under the \textsf{File} menu. Others are specific to
+\textsf{gretl} and do not appear in the menus; these are documented
+below.
+
+\begin{center}
+\begin{tabular}{p{.2\textwidth}lp{.6\textwidth}}
+\textit{Context} & \textit{Key} & \textit{Effect} \\[6pt]
+
+Most windows & \texttt{Alt-w} & 
+  pop up a menu listing open \textsf{gretl} windows \\[6pt]
+
+Main window & \texttt{g} & 
+  open dialog for defining a new variable \\
+ & \texttt{h} & open command reference \\
+ & \texttt{c} & open the console \\
+ & \texttt{e} & edit properties of the selected series \\
+ & \texttt{t} & time-series plot of selected series (if applicable) \\
+ & \texttt{Alt-x} & open dialog for executing a single command \\
+ & \texttt{Ctrl-v} & paste data from clipboard (CSV or similar) \\
+ & \texttt{Delete} & delete the selected series \\[6pt]
+
+Graph window & \texttt{q} & close \\
+ & \texttt{s} & save to session \\
+ & \texttt{z} & start zooming \\
+ & \texttt{a} & render audio graph (if supported) \\[6pt]
+
+Model window & \texttt{q} & close \\
+ & \texttt{s} & save to session \\
+ & \texttt{a} & do audio (if supported) \\
+ & \texttt{x} & stop audio \\[6pt]
+
+Script output & \texttt{Alt-c} & cascade windows \\[6pt]
+
+Data files window & \texttt{Enter} & open the selected file \\[6pt]
+
+Console window & \texttt{Up} & navigate the command history, back \\
+ & \texttt{Down} & navigate command history, forward \\
+ & \texttt{Tab} & command completion \\
+
+\end{tabular}
+\end{center}
+
+\end{document}
