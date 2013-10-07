@@ -87,12 +87,12 @@ missing observations for the variables \texttt{x1}, \texttt{x2} and
 \emph{Solution:}
 \begin{code}
 list X = x1 x2 x3
-smpl --no missing X
+smpl --no-missing X
 \end{code}
 \end{samepage}
 
 \emph{Comment:} You can now save the file via a \cmd{store} command
-to preserve a subsampled version of the dataset. Alternative solution
+to preserve a subsampled version of the dataset. Alternative solutions
 based on the \cmd{ok} function, such as
 \begin{code}
 list X = x1 x2 x3
@@ -113,7 +113,7 @@ matrix vd = values(d)
 m = rows(vd)
 loop i=1..m
   scalar sel = vd[i]
-  smpl (d=sel) --restrict --replace
+  smpl d==sel --restrict --replace
   ols y const x
 endloop
 smpl --full
@@ -173,17 +173,17 @@ which $d_t = 1$.
 
 \emph{Solution:}
 \begin{code}
-  genr d = (t="1984:2")
+  genr d = (t=="1984:2")
 \end{code}
 
 \emph{Comment:} The internal variable \texttt{t} is used to refer to
 observations in string form, so if you have a cross-section sample you
-may just use \texttt{d = (t="123")}; of course, if the dataset has
-data labels, use the corresponding label. For example, if you open the
+may just use \texttt{d = (t=="123")}. If the dataset has observation
+labels you can use the corresponding label. For example, if you open the
 dataset \texttt{mrw.gdt}, supplied with gretl among the
 examples, a dummy variable for Italy could be generated via
 \begin{code}
-  genr DIta = (t="Italy")
+  genr DIta = (t=="Italy")
 \end{code}
 
 Note that this method does not require scripting at all. In fact, you
@@ -356,12 +356,12 @@ you, isn't it?
 \begin{code}
 smpl --full
 genr time
-genr minute = int(time/60) + 1
-genr second = time % 60
+series minute = int(time/60) + 1
+series second = time % 60
 setobs minute second --panel
 genr rv = psd(y)^2
 setobs 1 1
-smpl second=1 --restrict
+smpl second==1 --restrict
 store foo rv
 \end{code}
 
@@ -388,7 +388,7 @@ k1 = 1
 loop foreach i L1 --quiet
     k2 = 1
     loop foreach j L2 --quiet
-        if k1=k2
+        if k1 == k2
             ols $i 0 $j
         endif
         k2++
@@ -405,7 +405,8 @@ names can help. For example, if
   list Lx = x1 x2 x3
   list Ly = y1 y2 y3
 \end{code}
-looping over the integers is quite intuitive and certainly more elegant:
+then we could just loop over the integers---quite intuitive and certainly 
+more elegant:
 \begin{code}
   loop i=1..3
     ols y$i const x$i
