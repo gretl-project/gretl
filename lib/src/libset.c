@@ -415,12 +415,17 @@ static void state_vars_copy (set_vars *sv)
     robust_opts_copy(&sv->ropts);
 }
 
+#define OMP_SHOW 0
+
 int libset_use_openmp (int n)
 {
 #if defined(_OPENMP)
     if (state == NULL || !(state->flags & STATE_OPENMP_ON)) {
 	return 0;
     } else if (mp_nmk_min >= 0 && n > mp_nmk_min) {
+# if OMP_SHOW
+	fprintf(stderr, "libset_use_openmp: yes\n");
+# endif
 	return 1;
     }
 #endif
@@ -464,7 +469,7 @@ static int openmp_by_default (void)
 	}
     }
 
-#if 0   
+#if OMP_SHOW
     if (ret) {
 	fprintf(stderr, "num_cores = %d, using OpenMP by default\n",
 		num_cores);
