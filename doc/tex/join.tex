@@ -578,8 +578,7 @@ household member whose status is complementary to that of the woman in
 question. So for case (a) we subsample using \texttt{PARENT==1} (head
 of household) and filter the join using \texttt{PARENT==2} (spouse of
 head); in case (b) we do the converse. We thus construct \verb|H_ID|
-piece-wise.\footnote{In principle the husband ID variable could be
-  constructed without subsampling by using a more complex filter.}
+piece-wise.
 %
 \begin{code}
 # for women who are household heads

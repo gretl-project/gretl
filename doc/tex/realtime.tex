@@ -541,3 +541,60 @@ gnuplot firstpub plus3 plus6 plus12 --time --with-lines \
  --output=realtime.pdf { set key left bottom; }
 \end{scode}
 \end{script}
+
+\section{Getting the revision history for an observation}
+\label{sec:realtime-revhist}
+
+For our final example we show how to retrieve the revision history for
+a given observation (again using Alfred data on US industrial
+production). In this exercise we are switching the time axis: the
+observation period is a fixed point and time is ``vintage
+time''. 
+
+A suitable script is shown in Example~\ref{ex:revhistory}.  We first
+select an observation to track (January 1970). We start the clock in
+the following month, when a data-point for this period was first
+published, and let it run to the end of the vintage history (in this
+file, March 2013).  Our outer time key is the realtime start date and
+we filter on observation date; we name the imported \texttt{INDPRO}
+values as \texttt{ip\_jan70}. Since it sometimes happens that more
+than one revision occurs in a given month we need to select an
+aggregation method: here we choose to take the last revision in the
+month.
+
+Recall from section~\ref{sec:realtime-atomic} that Alfred records a
+new revision only when the data-point in question actually
+changes. This means that our imported series will contain missing
+values for all months when no real revision took place. Having checked
+for ``holes'' in our file (see section~\ref{sec:realtime-fixed-lag})
+and found none, we can apply a simple autoregressive procedure to fill
+in the data: each missing value equals the prior non-missing value.
+
+Figure~\ref{fig:realtime-revhist} displays the revision history. Over
+this sample period the periodic re-basings of the index clearly
+dominate amendments due to accrual of new information.
+
+\begin{script}[htbp]
+  \caption{Retrieving a revision history}
+  \label{ex:revhistory}
+\begin{scode}
+# choose the observation to track here (YYYYMMDD)
+scalar target = 19700101
+
+nulldata 518 --preserve
+setobs 12 1970:02
+
+join INDPRO.txt ip_jan70 --data=INDPRO --tkey=realtime_start_date \
+--timecols=observation_date \
+--filter="observation_date==target" --aggr=seq:-1
+
+ip_jan70 = ok(ip_jan70) ? ip_jan70 : ip_jan70(-1)
+\end{scode}
+\end{script}
+
+\begin{figure}[htbp]
+  \centering
+\includegraphics[scale=0.8]{figures/revhist}
+\caption{Vintages of US industrial production for January 1970}
+  \label{fig:realtime-revhist}
+\end{figure}
