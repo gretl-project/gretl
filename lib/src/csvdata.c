@@ -4389,6 +4389,12 @@ static int format_uses_quarterly (char *fmt)
     return ret;
 }
 
+static int set_auto_keys_fmt (obskey *auto_keys, const char *s)
+{
+    auto_keys->timefmt = gretl_strdup(s);
+    return auto_keys->timefmt == NULL ? E_ALLOC : 0;
+}
+
 /* time-series data on the left, and no explicit keys supplied */
 
 static int auto_keys_check (const DATASET *l_dset,
@@ -4416,10 +4422,8 @@ static int auto_keys_check (const DATASET *l_dset,
 
     if (*tkeyfmt != '\0') {
 	/* the user supplied a time-format spec */
-	auto_keys->timefmt = gretl_strdup(tkeyfmt);
-	if (auto_keys->timefmt == NULL) {
-	    err = E_ALLOC;
-	} else {
+	err = set_auto_keys_fmt(auto_keys, tkeyfmt);
+	if (!err) {
 	    if (pd == 4 && format_uses_quarterly(auto_keys->timefmt)) {
 		auto_keys->m_means_q = 1;
 	    }
@@ -4432,28 +4436,28 @@ static int auto_keys_check (const DATASET *l_dset,
 	    }
 	}
     } else {
-	/* ISO 8601 defaults */
+	/* default formats */
 	if (calendar_data(l_dset)) {
-	    auto_keys->timefmt = gretl_strdup("%Y-%m-%d");
-	    if (auto_keys->timefmt == NULL) {
-		err = E_ALLOC;
-	    } else {
+	    err = set_auto_keys_fmt(auto_keys, "%Y-%m-%d");
+	    if (!err) {
 		*n_keys = 1;
 	    }
 	} else if (pd == 12) {
-	    auto_keys->timefmt = gretl_strdup("%Y-%m");
-	    if (auto_keys->timefmt == NULL) {
-		err = E_ALLOC;
-	    } else {
+	    err = set_auto_keys_fmt(auto_keys, "%Y-%m");
+	    if (!err) {
 		*n_keys = 2;
 	    }
 	} else if (annual_data(l_dset)) {
-	    auto_keys->timefmt = gretl_strdup("%Y");
-	    if (auto_keys->timefmt == NULL) {
-		err = E_ALLOC;
-	    } else {
+	    err = set_auto_keys_fmt(auto_keys, "%Y");
+	    if (!err) {
 		*n_keys = 1;
-	    }	    
+	    }
+	} else if (pd == 4) {
+	    /* try "excess precision" ISO daily? */
+	    err = set_auto_keys_fmt(auto_keys, "%Y-%m-%d");
+	    if (!err) {
+		*n_keys = 2;
+	    }
 	} else {
 	    err = E_PDWRONG;
 	}
