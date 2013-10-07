@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-10-03 08:28-0400\n"
-"PO-Revision-Date: 2013-09-24 21:05+0200\n"
+"PO-Revision-Date: 2013-10-07 11:21+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -431,9 +431,9 @@ msgid "got invalid field '%s'"
 msgstr "Campo non valido '%s'"
 
 #: lib/src/calendar.c:403
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid starting date for %d-day data"
-msgstr "Ordine di ritardo non valido per arch (%d)"
+msgstr "Data di inizio non valida dati a %d giorni"
 
 #: lib/src/compare.c:269
 #, c-format
@@ -1158,7 +1158,7 @@ msgstr "%s: chiave alfabetica a sinistra ma numerica a destra"
 #: lib/src/csvdata.c:4782
 #, c-format
 msgid "Outer dataset: read %d columns and %d rows\n"
-msgstr ""
+msgstr "Dataset esterno: lette %d colonne e %d righe\n"
 
 #: lib/src/csvdata.c:4832 gui2/library.c:4000
 msgid "Series length does not match the dataset"
@@ -3100,14 +3100,12 @@ msgid "This command is implemented only for OLS models"
 msgstr "Questo comando è implementato solo per modelli OLS"
 
 #: lib/src/gretl_errors.c:55
-#, fuzzy
 msgid "Invalid argument"
-msgstr "Valore non valido"
+msgstr "Argomento non valido"
 
 #: lib/src/gretl_errors.c:56
-#, fuzzy
 msgid "Syntax error"
-msgstr "Errore nei dati"
+msgstr "Errore di sintassi"
 
 #: lib/src/gretl_errors.c:57
 msgid "No independent variables left after omissions"
@@ -3904,15 +3902,13 @@ msgid "variable %d: translating from strings to code numbers\n"
 msgstr "variabile %d: trasformazione da stringhe in codici numerici\n"
 
 #: lib/src/gretl_string_table.c:487
-#, fuzzy
 msgid ""
 "One or more non-numeric variables were found.\n"
 "These variables have been given numeric codes as follows.\n"
 "\n"
 msgstr ""
 "Sono state trovate variabili non numeriche.\n"
-"Gretl non può gestire direttamente queste variabili,\n"
-"quindi ha attribuito dei codici numerici nel modo seguente.\n"
+"Gretl  ha attribuito dei codici numerici nel modo seguente.\n"
 "\n"
 
 #: lib/src/gretl_string_table.c:490
@@ -6654,7 +6650,7 @@ msgstr "Non è stata scartata alcuna osservazione!"
 
 #: lib/src/subsample.c:1263
 msgid "--balanced option is invalid: the (full) dataset is not a panel"
-msgstr ""
+msgstr "l'opzione --balanced non è valida: il dataset completo non è un panel"
 
 #: lib/src/subsample.c:1805 lib/src/subsample.c:1824
 msgid "error in new starting obs"
@@ -9521,9 +9517,8 @@ msgstr ""
 "Conferma la sovrascrittura?"
 
 #: gui2/fileselect.c:793
-#, fuzzy
 msgid "Gretl data files (*.gdt)"
-msgstr "gretl file di dati (*.dat)"
+msgstr "File di dati gretl (*.gdt)"
 
 #: gui2/fileselect.c:794 gui2/fileselect.c:808
 msgid "CSV files (*.csv)"
@@ -9534,12 +9529,10 @@ msgid "ASCII files (*.txt)"
 msgstr "file ASCII (*.txt)"
 
 #: gui2/fileselect.c:796
-#, fuzzy
 msgid "Gnumeric files (*.gnumeric)"
 msgstr "file Gnumeric (*.gnumeric)"
 
 #: gui2/fileselect.c:797
-#, fuzzy
 msgid "Open Document files (*.ods)"
 msgstr "Open Document Spreadsheet (*.ods)"
 
@@ -9556,7 +9549,6 @@ msgid "Stata files (*.dta)"
 msgstr "File di Stata (*.dta)"
 
 #: gui2/fileselect.c:801
-#, fuzzy
 msgid "Eviews files (*.wf1)"
 msgstr "file di lavoro di Eviews (*.wf1)"
 
@@ -9565,12 +9557,10 @@ msgid "SPSS files (*.sav)"
 msgstr "file SPSS (*.sav)"
 
 #: gui2/fileselect.c:803
-#, fuzzy
 msgid "SAS xport files (*.xpt)"
-msgstr "file gnuplot (*.plt)"
+msgstr "file di export di SAS (*.xpt)"
 
 #: gui2/fileselect.c:804
-#, fuzzy
 msgid "Octave files (*.m)"
 msgstr "file GNU Octave (*.m)"
 
@@ -12684,7 +12674,7 @@ msgstr "Stringhe"
 
 #: gui2/helpfiles.c:372
 msgid "Calendar"
-msgstr ""
+msgstr "Calendario"
 
 #: gui2/helpfiles.c:412 gui2/textbuf.c:1643
 msgid "Index"
