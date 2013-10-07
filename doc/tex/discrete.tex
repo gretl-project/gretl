@@ -2,11 +2,13 @@
 \label{chap:discrete}
 
 When a variable can take only a finite, typically small, number of
-values, then the variable is said to be \emph{discrete}. Some
-\app{gretl} commands act in a slightly different way when applied to
-discrete variables; moreover, \app{gretl} provides a few commands that
-only apply to discrete variables.  Specifically, the \texttt{dummify}
-and \texttt{xtab} commands (see below) are available only for discrete
+values, then it is said to be \emph{discrete}. In gretl, variables of
+the series type (only) can be marked as discrete. (When we speak of
+``variables'' below this should be understood as referring to series.)
+Some gretl commands act in a slightly different way when applied to
+discrete variables; moreover, gretl provides a few commands that only
+apply to discrete variables.  Specifically, the \texttt{dummify} and
+\texttt{xtab} commands (see below) are available only for discrete
 variables, while the \texttt{freq} (frequency distribution) command
 produces different output for discrete variables.
 
@@ -14,7 +16,7 @@ produces different output for discrete variables.
 \section{Declaring variables as discrete}
 \label{discr-declare}
 
-\app{Gretl} uses a simple heuristic to judge whether a given variable
+Gretl uses a simple heuristic to judge whether a given variable
 should be treated as discrete, but you also have the option of
 explicitly marking a variable as discrete, in which case the heuristic
 check is bypassed.
@@ -62,21 +64,20 @@ this treatment.
 Note that marking a variable as discrete does not affect its content.
 It is the user's responsibility to make sure that marking a variable
 as discrete is a sensible thing to do.  Note that if you want to
-recode a continuous variable into classes, you can use the
-\texttt{genr} command and its arithmetic functions, as in the
-following example:
+recode a continuous variable into classes, you can use gretl's
+arithmetical functionality, as in the following example:
 \begin{code}
 nulldata 100
-# generate a variable with mean 2 and variance 1
-genr x = normal() + 2
+# generate a series with mean 2 and variance 1
+series x = normal() + 2
 # split into 4 classes
-genr z = (x>0) + (x>2) + (x>4)
+series z = (x>0) + (x>2) + (x>4)
 # now declare z as discrete
 discrete z
 \end{code}
 
 Once a variable is marked as discrete, this setting is remembered when
-you save the file.
+you save the data file.
 
 \section{Commands for discrete variables}
 \label{discr-commands}
@@ -226,7 +227,7 @@ Test for null hypothesis of normal distribution:
 Chi-square(2) = 1.872 with p-value 0.39211
 \end{code}
 %
-As can be seen from the sample output, a Doornik-Hansen test for
+As can be seen from the sample output, a Doornik--Hansen test for
 normality is computed automatically.  This test is suppressed for
 discrete variables where the number of distinct values is less than
 10.
