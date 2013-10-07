@@ -815,7 +815,7 @@
    
       <para context="gui">
 	Se você pretender apenas incluir no modelo desfasamentos específicos
-	AR ou MA (e não todos os desfasamentos até uma certa ordem) active a
+	AR ou MA (e não todos os desfasamentos até uma certa ordem) ative a
 	caixa de seleção à direita do seletor de números e escreva no campo de
 	texto uma lista	de desfasamentos, separados por espaços.
 	Alternativamente, se existir uma matriz contendo o conjunto de
@@ -825,9 +825,9 @@
 
       <para>
 	O normal é usar a funcionalidade <quote>nativa</quote> gretl
-        ARMA, com estimação de Máxima Verosimilhança (ML) exacta 
+        ARMA, com estimação de Máxima Verosimilhança (ML) exata 
         (usando o filtro de Kalman).  Outras opções são: código nativo,
-         ML condicional; <program>X-12-ARIMA</program>, ML exacta; e 
+         ML condicional; <program>X-12-ARIMA</program>, ML exata; e 
 	<program>X-12-ARIMA</program>, ML condicional.  (As últimas
         duas opções estão disponíveis apenas se o programa
 	<program>X-12-ARIMA</program> estiver instalado.)  Para detalhes
@@ -838,26 +838,26 @@
 	Quando o código nativo ML é usado, os erros padrão são por omissão 
 	baseados numa aproximação numérica da (inversa negativa da) Hessiana,
 	ou em recurso, no produto externo do gradiente (OPG) caso falhe o 
-	cálculo da Hessiana numérica. Pdem ser usadas duas opções 
+	cálculo da Hessiana numérica. Podem ser usadas duas opções 
 	(mutualmente exclusivas) para forçar a situação: a opção <opt>--opg</opt> 
 	força o uso do método OPG, sem tentar obter a Hessiana, enquanto a
 	opção <opt>--hessian</opt> desativa o OPG em último recurso.
 	Note que a falha na determinação da Hessiana numérica indica, em geral
-	um modelo incorrectamente especificado.
+	um modelo incorretamente especificado.
       </para>
 
       <para context="cli">
 	A opção <opt>--lbfgs</opt> é específica para estimação usando
-	código nativo ARMA code e ML exacta:
+	código nativo ARMA e ML exata:
 	significa o uso do algoritmo de <quote>memória limitada</quote>
 	L-BFGS-B em vez do usual maximizador BFGS.  Isto pode ajudar em
-	alguns casos onde a convergência é díficil de atingir.
+	alguns casos onde a convergência é difícil de atingir.
       </para>
 
       <para context="cli">
 	A opção <opt>--y-diff-only</opt> é específica na estimação de modelos
 	ARIMAX (modelos com uma ordem de integração não-nula e que incluam 
-	regressores exógenos), e aplica-se apenas quando se usa a ML exacta e
+	regressores exógenos), e aplica-se apenas quando se usa a ML exata e
 	nativa de gretl. Para esses modelos o comportamento normal é de 
 	diferenciar tanto as variáveis dependentes como as regressoras,
 	mas quando esta opção é fornecida, apenas é diferenciada a variável
@@ -866,10 +866,10 @@
 
       <para context="cli">
 	A opção <opt>--save-ehat</opt> é aplicável apenas quando se
-	usa estimação ML nativa e exacta. O efeito é o de disponibilizar
+	usa estimação ML nativa e exata. O efeito é o de disponibilizar
 	um vector contendo a estimativa óptima de período
 	<math>t</math> da perturbação data-<math>t</math> ou inovação:
-	isto pode ser recuperado com o uso do acessor <lit>$ehat</lit>.
+	isto pode ser recuperado com o uso do assessor <lit>$ehat</lit>.
 	Estes valores diferem da série dos resíduos (<lit>$uhat</lit>),
 	que contém os erros de predição um-passo-à-frente.
       </para>
@@ -1095,7 +1095,7 @@
 	<li>
 	  <para>Resíduos reamostrados versus erros normalizados simulados.
 	    No primeiro caso os resíduos originais (re-escalados como 
-	    sugerido em ETM) são reamostrados com substiuição.  No segundo
+	    sugerido em ETM) são reamostrados com substituição.  No segundo
 	    caso são gerados valores normalizados pseudo-aleatórios a partir
 	    da variância original dos resíduos.
 	  </para>
@@ -1238,20 +1238,20 @@
     <description>
       <para>
 	O filtro de Butterworth é uma aproximação a um filtro ideal
-	de onda-quadrada que deixa passar frequencias de uma certa
+	de onda-quadrada que deixa passar frequências de uma certa
 	gama com potência máxima enquanto bloqueia todas as outras.
       </para>
       <para>
 	Em princípio, valores altos do parâmetro de ordem, <math>n</math>, produzem
 	uma melhor aproximação ao filtro ideal, mas tem uma possível
 	penalidade de instabilidade numérica.  O valor de <quote>corte</quote> 
-	define a banda de passagem e a banda de bloqueio.  Ele é espresso em graus,
+	define a banda de passagem e a banda de bloqueio.  Ele é expresso em graus,
 	e tem que ser maior que 0 e menor que 180&deg; (ou &pi;	radianos, 
 	correspondendo à maior frequência nos dados).  Valores menores do corte 
 	produzem uma tendência mais suave (alisamento).
       </para>
       <para>
-	Observar o períodograma da série em estudo é uma análise preliminar que é
+	Observar o periodograma da série em estudo é uma análise preliminar que é
 	útil quando se pretende aplicar este filtro.  Para mais detalhes ver
 	<guideref targ="chap-genr"/>.
       </para>
@@ -1318,9 +1318,9 @@
       </para>
 
       <para>
-	Tem que se seguir a uma regressão de Mínimos Quadrados (OLS). Se um número de observação ou uma data tiver sido dado, produz um test sobre a hipótese nula de não haver quebra estrutural no ponto de separação indicado. O procedimento cria uma variável auxiliar que é igual a 1 a partir do ponto
+	Tem que se seguir a uma regressão de Mínimos Quadrados (OLS). Se um número de observação ou uma data tiver sido dado, produz um teste sobre a hipótese nula de não haver quebra estrutural no ponto de separação indicado. O procedimento cria uma variável auxiliar que é igual a 1 a partir do ponto
         especificado por <repl>observação</repl> até ao final da amostra,
-        caso contrário é 0, e cria também termos de interacção entre
+        caso contrário é 0, e cria também termos de interação entre
         esta variável auxiliar e as variáveis regressoras originais. Se tiver sido dada uma variável auxiliar, será testada a hipótese nula de homogeneidade estrutural no que diz respeito a essa variável auxiliar. Mais uma vez, os termos de interação são acrescentados. Em quaisquer dos casos, é executada uma regressão aumentada que inclui estes termos e
         é calculada a estatística <math>F</math>, considerando 
         a regressão aumentada como não restringida e a original como
@@ -1347,7 +1347,7 @@
     <description>
       <para>
 	Sem opções, apaga da memória todos os objetos gravados, incluindo o conjunto
-	de dados currente.  Note que ao abrir um novo conjunto de dados, ou ao usar
+	de dados corrente.  Note que ao abrir um novo conjunto de dados, ou ao usar
 	o comando <cmd>nulldata</cmd> para criar um conjunto de dados vazio,
 	obterá o mesmo efeito, por isso o uso de <cmd>clear</cmd> normalmente não
 	é necessário.
@@ -1372,10 +1372,10 @@
       </para>
       <para>
 	O estimador de variância <quote>agrupação-robusta</quote> 
-        divide a amostra num núero de subconjuntos ou agrupamentos
+        divide a amostra num número de subconjuntos ou agrupamentos
         de acordo com o valor tomado na variável selecionada. Em vez da
-        assumção clássica de que o erro é independente e identicamente
-        distribuido, este estimador permite que a variância do erro
+        assunção clássica de que o erro é independente e identicamente
+        distribuído, este estimador permite que a variância do erro
         seja diferente por agrupamento e também permite algum grau de
         dependência do erro dentro de cada agrupamento.
       </para>
@@ -1451,7 +1451,7 @@
 	</option>
 	<option>
 	  <flag>--test-down</flag>
-	  <effect>ordem de desfasamento automatica</effect>
+	  <effect>ordem de desfasamento automática</effect>
 	</option>
 	<option>
 	  <flag>--verbose</flag>
@@ -1467,7 +1467,7 @@
     <description>
       <para context="cli">
 	O teste de cointegração Engle&ndash;Granger.  O procedimento 
-        por omissão é: (1) efectuar testes de Dickey&ndash;Fuller (DF) 
+        por omissão é: (1) efetuar testes de Dickey&ndash;Fuller (DF) 
         segundo a hipótese nula de que cada variável listada tem uma raiz 
         unitária; (2) estima a regressão de cointegração; e (3) executar um 
         teste DF sobre os resíduos da regressão de cointegração. Se for 
@@ -1477,7 +1477,7 @@
 	Se a ordem de desfasamento especificada é positiva, todos os testes
 	Dickey&ndash;Fuller usam essa ordem, com esta qualificação: se a 
 	opção <opt>--test-down</opt> for dada, o valor indicado é tomado 
-	como sendo o máximo e a ordem de desfasamento efectivamente usada em
+	como sendo o máximo e a ordem de desfasamento efetivamente usada em
 	cada caso é obtida testando para baixo. Ver o comando 
 	<cmdref targ="adf"/> para detalhes sobre este procedimento.
       </para>
@@ -1492,28 +1492,28 @@
 
       <para context="gui">
 	O teste de cointegração Engle&ndash;Granger.  O procedimento
-        por omissão é: (1) efectuar testes de Dickey&ndash;Fuller (DF)
+        por omissão é: (1) efetuar testes de Dickey&ndash;Fuller (DF)
         segundo a hipótese nula de que cada variável listada tem uma
         raiz unitária; (2) estima a regressão de cointegração; e (3)  
         executar um teste DF sobre os resíduos da regressão de 
-        cointegração. No entanto, se estiver seleccionada a opção
+        cointegração. No entanto, se estiver selecionada a opção
         <quote>ignorar os testes iniciais DF</quote> os testes no 
         passo (1) são omitidos.
       </para>
       <para context="gui">
         Se a ordem de desfasamento <math>k</math>, é maior que zero, então
         são incluídos <math>k</math> desfasamentos no lado direito de cada
-        regressão de teste, excepto se estiver seleccionada a opção 
+        regressão de teste, excepto se estiver selecionada a opção 
         <quote>Testar para baixo a partir do desfasamento de maior ordem</quote>:
         nesse caso ela é encarada como sendo o máximo desfasamento e a 
-        efectivamente usada em cada caso é obtida testando para baixo.  
+        efetivamente usada em cada caso é obtida testando para baixo.  
         Ver o comando <cmdref targ="adf"/> para detalhes sobre este 
         procedimento.
       </para>
       <para context="gui">
 	Por omissão, as regressões de cointegração incluem uma constante.
         Se você deseja suprimir a constante, ou juntar uma tendência linear
-        ou quadrática, seleccione a opção apropriada a partir do conjunto de 
+        ou quadrática, selecione a opção apropriada a partir do conjunto de 
         botões de rádio disponíveis na janela do teste de cointegração.
       </para>
 
@@ -1600,14 +1600,14 @@
 	Capítulo 20. Os valores p são calculados usando a aproximação
 	gama de Doornik <cite key="doornik98" p="true">(Doornik, 1998)</cite>.
 	 São mostrados dois conjuntos de valores p para o teste traço,
-	valores assimtóticos imediatos e valores ajustados para o 
-	tamanho da amostra.  Por omissão, o acessor <lit>$pvalue</lit>
+	valores assintóticos imediatos e valores ajustados para o 
+	tamanho da amostra.  Por omissão, o assessor <lit>$pvalue</lit>
 	obtém a variante ajustada, mas se opção <opt>--asy</opt> for 
-	dada, pode ser usado para registar os valores assimtóticos.
+	dada, pode ser usado para registar os valores assintóticos.
       </para>
 
       <para context="gui">
-	Efectua o teste de Johansen para a cointegração entre as
+	Efetua o teste de Johansen para a cointegração entre as
 	variáveis listadas para a ordem de desfasamento selecionada.
 	  Para detalhes sobre este teste ver, por exemplo, o livro 
 	de Hamilton, <book>Time Series Analysis</book> (1994), 
@@ -1640,7 +1640,7 @@
         frequentemente referido como sendo o <quote>caso 3</quote>.  Os 
         outros quatro botões de opções produzem respectivamente os casos 1,
         2, 4, e 5.  O significado destes casos e os critérios para 
-        seleccionar um caso estão explicados no
+        selecionar um caso estão explicados no
         <guideref targ="chap:vecm"/>.
       </para>
 
@@ -1670,7 +1670,7 @@
         trimestrais ou mensais.
       </para>
       <para context="gui">
-        Se os dados são trimestrais ou mensais, fica disponível a selecção
+        Se os dados são trimestrais ou mensais, fica disponível a seleção
         de uma opção que lhe permite incluir um conjunto de variáveis
         auxiliares sazonais centradas.  Em todos os casos, a opção
         (<quote>Mostrar detalhes</quote>) permite apresentar as regressões
@@ -4663,77 +4663,76 @@
   </command>
 
   <command name="3-D" section="Graphs" context="gui"
-    label="3-dimensional plots">
+    label="Gráficos tridimensionais">
 
     <description>
-      <para>This feature works best if you have gnuplot 3.8 or higher
-	installed.  In that case you can manipulate the 3-D plot with
-	the mouse (rotate it, and expand or shrink the axes).</para>
+      <para>Caso você tenha instalado o gnuplot 3.8 ou superior, pode 
+	pode aproveitar a funcionalidade de manipulação de gráficos
+	3-D com o rato (rodá-los e expandir ou encolher os eixos).</para>
 
-      <para>In composing a 3-D plot, note that the Z-axis will be
-	shown as the vertical axis.  Thus if you have some dependent
-	variable that you think may be influenced by two independent
-	variables, you should put the dependent variable on the
-	Z-axis, and the independent variables on the X and Y
-	axes.</para>  
+      <para>Ao criar um gráfico 3-D, note que o eixo Z será mostrado
+	como sendo o eixo vertical.  Como tal, se você tiver alguma
+	variável dependente que pense poder ser influenciada por duas
+	variáveis independentes, você deve colocar a variável dependente
+	no eixo Z, e as variáveis independentes nos eixos X e Y.</para>  
 
-      <para>Unlike most other gretl graphs, 3-D plots are controlled
-	by gnuplot rather than gretl itself.  The gretl graph-editing
-	menu is not available.</para>
+      <para>Contrariamente à maior parte dos gráficos de gretl, os gráficos
+	3-D são controlados por gnuplot e não pelo gretl.  O menu de edição
+	de gráficos do gretl não estará disponível.</para>
 
     </description>
   </command>
 
   <command name="gui-funcs" section="Programming" 
-	   label="Special functions" context="gui">
+	   label="Funções especiais" context="gui">
     <description>
       <para>
-	This dialog enables you to specify which functions within a
-	package, if any, should be assigned to certain special roles.
-	Note that a given function can be assigned to at most one of
-	the following roles, and to qualify as a candidate for one
-	of these roles a function has to satisfy certain criteria.
+	Este diálogo permite-lhe especificar quais as funções de um
+	pacote, deverão ter certos papéis especiais.
+	Note que uma certa função pode ter apenas um dos seguintes
+	papéis, e para se qualificarem como candidatas para um destes
+	papéis as funções tem que satisfazer certos critérios.
       </para>
       <ilist>
 	<li>
 	  <para>
-	    <lit>bundle-print</lit>: prints output based on the
-	    content of a bundle produced by your package. Criteria:
-	    this function must have as its first parameter a
-	    bundle-pointer. If a second parameter is present it
-	    must take the form of an integer switch that has a
-	    default value.
+	    <lit>bundle-print</lit>: imprime saídas baseadas no
+            conteúdo de um "bundle" produzido pelo seu pacote.
+	    Critério: esta função tem que ter como o seu primeiro
+            parâmetro um ponteiro-"bundle". Se estiver presente
+            um segundo parâmetro ele tem que tomar a forma de
+            seletor inteiro que tenha um valor por omissão.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <lit>bundle-plot</lit>: produces one or more plots using
-	    a bundle produced by your package. Criteria: as for
-	    <lit>bundle-print</lit>.
+	    <lit>bundle-plot</lit>: produz um ou mais gráficos usando
+            um "bundle" produzido pelo seu pacote. Critério: o mesmo que
+	    para <lit>bundle-print</lit>.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <lit>bundle-test</lit>: carries out some sort of
-	    statistical test using a bundle produced by your package.
-	    Criteria: as for <lit>bundle-print</lit>.
+	    <lit>bundle-test</lit>: efetua algum tipo de teste estatístico
+            usando um "bundle" produzido pelo seu pacote. Critério: o mesmo que
+	    para <lit>bundle-print</lit>.
 	  </para>
 	</li>	
 	<li>
 	  <para>
-	    <lit>gui-main</lit>: the public interface that should be
-	    presented to users by default in GUI use. This is useful
-	    only if the package has more than one public interface.
+	    <lit>gui-main</lit>: o interface que deve ser apresentado
+            aos usuários por omissão quando usado em modo gráfico (GUI).
+            Isto é útil apenas quando um pacote tem mais que um interface
+            público.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <lit>gui-precheck</lit>: gate-keeper function which returns
-	    0 if the functionality of your package is applicable in the
-	    current context, non-zero otherwise. This is intended for
-	    use with packages that operate on a model in some way, to
-	    screen out types of model that are not handled by the
-	    package.
+	    <lit>gui-precheck</lit>: função guardião que retorna
+	    0 se a funcionalidade do seu pacote é aplicável no
+            contexto corrente, e não-zero caso contrário. Isto destina-se
+            a ser utilizado com pacotes que operam num modelo de algum modo,
+            para descartar tipos de modelos que não são suportados pelo pacote.
 	  </para>
 	</li>	
       </ilist>
@@ -4741,161 +4740,163 @@
   </command>
 
   <command name="gui-htest" section="Tests" context="gui"
-    label="Test statistic calculator">
+    label="Calculador de Estatísticas de Teste">
 
     <description>
       <para>
-	Gretl's test calculator computes test statistics and p-values for
-	various common hypothesis tests concerning one or two populations.  The
-	required input takes the form of sample statistics derived from one or
-	two samples, depending on the test chosen.  These statistics can be
-	typed in as numerical values.  Alternatively, if you have a data file
-	open, you can get gretl to calculate sample statistics for a selected
-	variable or variables (in the case of means and variances, but not in
-	the case of proportions).
+	O calculador de estatísticas de teste do gretl determina estatísticas
+	de teste e valores p para diversos testes de hipóteses para uma ou duas
+        populações.  As entradas necessárias tomam a forma de estatísticas amostrais
+        derivadas de uma ou duas amostras, dependendo do teste escolhido.  Estas
+        estatísticas podem ser indicadas como valores numéricos.  Em alternativa,
+        se você tiver um conjunto de dados aberto, você pode usar gretl para calcular
+        estatísticas amostrais para uma ou mais variáveis selecionadas (no caso de
+        médias e variâncias, mas não no caso de proporções).
       </para>
 
       <para>
-	If you want to base your test on a variable in the data set, first
-	activate this option by checking the box titled "Use variable from
-	dataset".  Then the drop-down list of variables will become active and
-	you can select a variable.  When you select a variable from the list,
-	the relevant statistics are automatically entered in the boxes below.
+	Se você quiser basear o seu teste numa variável do conjunto de dados,
+        primeiro ative esta opção selecionando a caixa intitulada "Usar variável do
+        conjunto de dados".  De seguida o seletor de variáveis fica ativo e você pode
+        selecionar a variável.  Quando seleciona uma variável a partir da lista,
+        as estatísticas relevantes são automaticamente colocadas nas caixas abaixo.
       </para>
 
       <para>
-	In addition to the simple selection of a variable, you have the option
-	of specifying a restriction on the selected variable (that is, defining
-	a sub-sample).   For example, suppose you have wage data in a variable
-	called "wage" and you also have a dummy variable called "gender" that
-	equals 1 for males and 0 for females (or vice versa). Then, in the test
-	for the difference of two means, you could select "wage" in both slots,
-	but add to the top slot "(gender=0)" and to the bottom "(gender=1)".
-	This would then give you a test for the difference between mean male
-	income and mean female income.  Note that when you type a restriction in
-	this way, you must then press the Enter key to have the sample statistics
-	calculated.  
+	Adicionalmente, além da simples seleção de uma variável, você tem a 
+        opção de especificar uma restrição para a variável selecionada (isto é,
+        definir uma sub-amostra).  Por exemplo, suponhamos que você tem
+	informação de salários na variável "salario" e que também tem uma
+	variável auxiliar chamada "sexo" que é igual a 1 para masculino e 0
+        para feminino (ou vice versa). Então, no teste para as diferenças de 
+        duas médias, você pode selecionar "salario" em ambos os campos, mas
+        acrescentar ao campo do topo "(sexo=0)" e ao de baixo "(sexo=1)".
+	Isto resultaria num teste para as diferenças entre rendimentos dos
+        homens e rendimentos das mulheres.  Note que quando você usa uma
+        restrição desta forma, você tem que pressionar a tecla "Enter" para
+        obter o cálculo das estatísticas amostrais.  
       </para>
 
       <para>
-	The sub-sampling restriction must be placed in parentheses following the
-	selected variable, and in general the restriction takes the form "var2
-	op value," where var2 is the name of a variable in the current data set,
-	val is a numerical value, and op is a comparison operator chosen from =,
-	!=, &lt;, &gt;, &lt;= or &gt;= (respectively equality, inequality, less
-	than, greater than, less than or equal, and greater than or equal).  The
-	spaces around the operator are optional.
+	A restrição de sub-amostragem pode ser colocada dentro de parêntesis após
+        a variável selecionada, e em geral a restrição toma a forma "var2
+	op val", onde var2 é o nome de uma variável no conjunto de dados corrente,
+        val é um valor numérico, e op é um operador de comparação escolhido dentre
+        =, !=, &lt;, &gt;, &lt;= ou &gt;= (respetivamente igualdade, desigualdade, menor
+	que, maior que, menor ou igual, e maior ou igual).  Os espaços separando o operador
+        são opcionais.
       </para>
 
     </description>
   </command>
 
   <command name="gui-htest-np" section="Tests" context="gui"
-    label="Nonparametric tests">
+    label="Testes Não-paramétricos">
 
     <description>
       <para>
-	Under the <quote>Difference test</quote> tab you can carry out a
-	nonparametric test for a difference between two populations or
-	groups, the specific test depending on the option selected.
+	No separador <quote>Teste da Diferença</quote> você pode efetuar
+        o teste não-paramétrico para a diferença entre duas populações ou
+        grupos, o teste específico depende da opção selecionada.
       </para>
       <para>
-	Sign test: This test is based on the fact that if two samples,
-	<math>x</math> and <math>y</math>, are drawn randomly
-	from the same distribution, the probability that
+	Teste dos sinais: Este teste é baseado no fato de que se duas amostras,
+	<math>x</math> e <math>y</math>, são obtidas aleatoriamente a partir da
+        mesma distribuição, a probabilidade de
 	<math>x</math><sub>i</sub> &gt;
-	<math>y</math><sub>i</sub>, for each observation
-	<math>i</math>, should equal 0.5.  The test statistic is
-	<math>w</math>, the number of observations for which
+	<math>y</math><sub>i</sub>, para cada observação
+	<math>i</math>, deve ser igual a 0,5.  A estatística de teste é
+	<math>w</math>, o número de observações em que
 	<math>x</math><sub>i</sub> &gt;
-	<math>y</math><sub>i</sub>. Under the null hypothesis this
-	follows the Binomial distribution with parameters
-	(<math>n</math>, 0.5), where <math>n</math> is the
-	number of observations.
+	<math>y</math><sub>i</sub>. Sob a hipótese nula isto segue uma
+        distribuição Binomial com parâmetros
+	(<math>n</math>; 0,5), onde <math>n</math> é o número de
+        observações.
       </para>
       <para>
-	Rank sum test: The Wilcoxon rank-sum test is performed.  This test
-	proceeds by ranking the observations from both samples jointly,
-	from smallest to largest, then finding the sum of the ranks of the
-	observations from one of the samples.  The two samples do not have
-	to be of the same size, and if they differ the smaller sample is
-	used in calculating the rank-sum.  Under the null hypothesis that
-	the samples are drawn from populations with the same median, the
-	probability distribution of the rank-sum can be computed for any
-	given sample sizes; and for reasonably large samples a close
-	Normal approximation exists.
+	Teste ordinal da soma de Wilcoxon: É executado o teste ordinal da 
+        soma de Wilcoxon.  Este teste inicia por ordenar as observações da
+        amostra conjunta do menor para o maior, depois obtém a soma das
+        ordens para uma das amostras.  As duas amostras não têm que ser da
+        mesma dimensão, e se elas forem diferentes será usada a de menor
+        tamanho para calcular a soma das ordens.  Sob a hipótese nula de que
+        as amostras foram obtidas a partir de populações com igual mediana,
+        a distribuição de probabilidade da soma de ordens pode ser calculada
+        para quaisquer dimensões de amostras; e para amostras suficientemente
+        grandes existe uma aproximação à Normal.
       </para>
       <para>
-	Signed rank test: The Wilcoxon signed-rank test is performed.
-	This is designed for matched data pairs such as, for example, the
-	values of a variable for a sample of individuals before and after
-	some treatment.  The test proceeds by finding the differences
-	between the paired observations, <math>x</math><sub>i</sub>
-	&minus; <math>y</math><sub>i</sub>, ranking these
-	differences by absolute value, then assigning to each pair a
-	signed rank, the sign agreeing with the sign of the difference.
-	One then calculates <math>W</math><sub>+</sub>, the sum of
-	the positive signed ranks.  As with the rank-sum test, this
-	statistic has a well-defined distribution under the null that the
-	median difference is zero, which converges to the Normal for
-	samples of reasonable size.
+	Teste ordinal dos sinais de Wilcoxon: É executado o teste ordinal dos 
+        sinais de Wilcoxon. Isto é designado pelo emparelhamento de dados de
+        modo a que, por exemplo, os valores de uma variável de uma amostra de
+        indivíduos antes e depois de algum tratamento.   O teste inicia por
+        encontrar as diferenças entre as observações emparelhadas, 
+        <math>x</math><sub>i</sub> &minus; <math>y</math><sub>i</sub>, ordenando
+        estas diferenças por valor absoluto, depois atribuindo a cada par uma
+        ordem com sinal, este sinal concorda com o sinal da diferença.
+	Em seguida é calculado <math>W</math><sub>+</sub>, a soma das ordens com
+        sinal positivo.  Tal como no teste ordinal da soma, esta estatística tem 
+        uma distribuição bem-definida sob a hipótese nula de que a diferença de
+        medianas é zero, o que converge para a Normal em amostras de tamanho 
+        razoável.
       </para>
       <para>
-	Under the <quote>Runs test</quote> tab you can carry out a test
-	for the randomness of a given variable, based on the number of
-	runs of consecutive positive or negative values.  If you select
-	the option <quote>Use first difference</quote>, the variable is
-	differenced prior to the analysis and hence the runs are
-	interpreted as runs of increasing or decreasing values of the
-	original variable.  The test statistic is based on a normal
-	approximation to the distribution of the number of runs under
-	the null of randomness.
+	No separador <quote>Teste de Aleatoriedade</quote> você pode efetuar
+        um teste para a aleatoriedade de uma dada variável, baseada no número
+        de sequências consecutivas de valores positivos ou negativos.  Se você
+        selecionar a opção <quote>Usar a primeira diferença</quote>, a variável
+        é diferenciada antes da análise e como tal as sequências são interpretadas
+        como sendo sequências crescentes ou decrescentes de valores da variável
+        original.  A estatística de teste é baseada na aproximação normal à
+        distribuição do número de sequências segundo a nulidade de aleatoriedade.
       </para>
 
     </description>
   </command>   
  
-  <command name="hausman" section="Tests" label="Panel diagnostics">
+  <command name="hausman" section="Tests" label="Diagnósticos de Painel">
 
     <description>
       <para>
-	This test is available only after estimating an OLS model
-	using panel data (see also <cmd>setobs</cmd>).  It tests the
-	simple pooled model against the principal alternatives, the fixed
-	effects and random effects models.
+	Este teste apenas está disponível após e estimar um modelo de
+        mínimos quadrados (OLS) usando dados de painel (ver também
+        <cmd>setobs</cmd>).  Ele testa o modelo de amostragem simples
+        ("pooled") contra as alternativas principais, os modelos de efeitos
+        fixos e efeitos aleatórios.
       </para>
 
       <para>
-	The fixed effects model allows the intercept of the regression to
-	vary across the cross-sectional units.  An
-	<math>F</math>-test is reported for the null hypotheses that
-	the intercepts do not differ. The random effects model decomposes
-	the residual variance into two parts, one part specific to the
-	cross-sectional unit and the other specific to the particular
-	observation.  (This estimator can be computed only if the number
-	of cross-sectional units in the data set exceeds the number of
-	parameters to be estimated.) The Breusch&ndash;Pagan LM statistic
-	tests the null hypothesis that the pooled OLS estimator is
-	adequate against the random effects alternative.
+	O modelo de efeitos fixos permite variar a interseção da regressão
+        ao longo das unidades de seção cruzada.  Uma estatística 
+        teste-<math>F</math> é apresentada segundo a hipótese nula de que
+        as interseções nãp diferem.  O modelo de efeitos aleatórios
+        decompõe a variância dos resíduos em duas partes, uma parte 
+        específica à unidade de seção cruzada e outra específica para
+        a observação em particular. (Este estimador pode ser calculado
+        apenas se o número de unidades de seção cruzada nos dados exceder o
+        número de parâmetros a serem estimados.) A estatística de teste 
+        Breusch&ndash;Pagan LM, testa a hipótese nula de que o estimador
+        mínimos quadrados de amostragem ("pooled") é adequado em oposição ao
+        da alternativa de efeitos aleatórios.
       </para>
 
       <para>
-	The pooled OLS model may be rejected against both of the
-	alternatives, fixed effects and random effects. Provided the
-	unit- or group-specific error is uncorrelated with the
-	independent variables, the random effects estimator is more
-	efficient than the fixed effects estimator; otherwise the
-	random effects estimator is inconsistent and the fixed effects
-	estimator is to be preferred. The null hypothesis for the
-	Hausman test is that the group-specific error is not so
-	correlated (and therefore the random effects model is
-	preferable).  A low p-value for this test counts against the
-	random effects model and in favor of fixed effects.
+	O modelo mínimos quadrados de amostragem ("pooled") pode ser
+        rejeitado contra ambas as alternativas, efeitos fixos e efeitos
+        aleatórios.  Desde que o erro específico por unidade ou por grupo seja não
+        correlacionado com as variáveis independentes, o estimador de 
+        efeitos aleatórios é mais eficiente do que o estimador de efeitos
+        fixos; caso contrário o estimador de efeitos aleatórios é 
+        inconsistente e o estimador de efeitos fixos será preferido.  A
+        hipótese nula para o teste de Hausman é de que o erro específico de grupo
+        não é tão correlacionado (e como tal o modelo de efeitos aleatórios é
+        preferível).  Um valor p baixo para este teste conta contra o modelo de
+        efeitos aleatórios e a favor do modelo de efeitos fixos.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/Panel diagnostics</menu-path>
+      <menu-path>Janela do modelo, /Testes/Diagnósticos de Painel</menu-path>
     </gui-access>
 
   </command>
