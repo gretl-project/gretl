@@ -3,7 +3,7 @@
 
 \section{Introduction}
 
-\app{Gretl} offers the following data types:
+Gretl offers the following data types:
 %
 \begin{center}
 \begin{tabular}{lp{.8\textwidth}}
@@ -143,7 +143,7 @@ via the gretl GUI.
 \label{sec:Bundles}
 
 A \texttt{bundle} is a container or wrapper for various sorts of
-objects --- specifically, scalars, series, matrices, strings and
+objects---specifically, scalars, series, matrices, strings and
 bundles. (Yes, a bundle can contain other bundles). A bundle takes the
 form of a hash table or associative array: each item placed in the
 bundle is associated with a key which can used to retrieve it
@@ -163,16 +163,16 @@ bundle foo = null
 \end{code}
 %
 These two formulations are basically equivalent, in that they both
-create an empty bundle. The difference is that the second variant
-may be reused --- if a bundle named \texttt{foo} already exists the
-effect is to empty it --- while the first may only be used once in
-a given \app{gretl} session; it is an error to declare a variable that
-already exists. 
+create an empty bundle. The difference is that the second variant may
+be reused---if a bundle named \texttt{foo} already exists the effect
+is to empty it---while the first may only be used once in a given
+gretl session; it is an error to declare a variable that already
+exists.
 
 To add an object to a bundle you assign to a compound left-hand value:
 the name of the bundle followed by the key. Two forms of syntax are
 acceptable in this context. The original syntax (and the only form
-supported prior to version 1.9.12 of \app{gretl}) requires that the
+supported prior to version 1.9.12 of gretl) requires that the
 key be given as a quoted string literal enclosed in square brackets.
 For example, the statement
 
@@ -181,13 +181,13 @@ foo["matrix1"] = m
 \end{code}
 
 adds an object called \texttt{m} (presumably a matrix) to bundle
-\texttt{foo} under the key \texttt{matrix1}. From \app{gretl} 1.9.12,
+\texttt{foo} under the key \texttt{matrix1}. From gretl 1.9.12,
 however, a simpler syntax is available, \emph{provided} the key
-satisfies the rules for a \app{gretl} variable name (31 characters
-maximum, starting with a letter and composed of just letters, numbers
-or underscore).\footnote{When using the original syntax, keys do not
-  have to be valid as variable names --- for example, they can include
-  spaces --- but they are limited to 31 characters.}  In that case you
+satisfies the rules for a gretl variable name (31 characters maximum,
+starting with a letter and composed of just letters, numbers or
+underscore).\footnote{When using the original syntax, keys do not have
+  to be valid as variable names---for example, they can include
+  spaces---but they are limited to 31 characters.}  In that case you
 can simply join the key to the bundle name with a dot, as in
 
 \begin{code}
@@ -286,7 +286,7 @@ bundle b:
 \subsection{What are bundles good for?}
 
 Bundles are unlikely to be of interest in the context of standalone
-\app{gretl} scripts, but they can be very useful in the context of
+gretl scripts, but they can be very useful in the context of
 complex function packages where a good deal of information has to be
 passed around between the component functions. Instead of using a
 lengthy list of individual arguments, function $A$ can bundle up the
@@ -314,7 +314,7 @@ fill_out_bundle(&my_bundle)
 The bundle type can also be used to advantage as the \textit{return
   value} from a packaged function, in cases where a package writer
 wants to give the user the option of accessing various results. In the
-\app{gretl} GUI, function packages that return a bundle are treated
+gretl GUI, function packages that return a bundle are treated
 specially: the output window that displays the printed results
 acquires a menu showing the bundled items (their names and types),
 from which the user can save items of interest. For example, a
@@ -325,8 +325,8 @@ possibilities.
 
 As a refinement to support the use of bundles as a function return
 type, the \texttt{setnote} function can be used to add a brief
-explanatory note to a bundled item --- such notes will then be shown
-in the GUI menu.  This function takes three arguments: the name of a
+explanatory note to a bundled item---such notes will then be shown in
+the GUI menu.  This function takes three arguments: the name of a
 bundle, a key string, and the note. For example
 
 \begin{code}
@@ -364,7 +364,7 @@ series y = log(x)
 matrix A = zeros(10,4)
 \end{code}
 
-The traditional way of creating a new variable in \app{gretl} was via
+The traditional way of creating a new variable in gretl was via
 the \app{genr} command (which is still supported), as in
 
 \begin{code}
@@ -383,7 +383,7 @@ implicit \textit{without} use of \texttt{genr}:\footnote{Apart from
 x = y/100
 \end{code}
 
-In ``modern'' \app{gretl} scripting we recommend that you state the
+In ``modern'' gretl scripting we recommend that you state the
 type of a new variable explicitly. This makes the intent clearer to a
 reader of the script and also guards against errors that might
 otherwise be difficult to understand (i.e.\ a certain variable turns
@@ -405,12 +405,12 @@ M = qform(a, X)
 \end{code}
 
 By a ``suitable'' value we mean one that is conformable for the type
-in question. A \app{gretl} variable acquires its type when it is first
+in question. A gretl variable acquires its type when it is first
 created and this cannot be changed via assignment; for example, if you
 have a matrix \texttt{A} and later want a string \texttt{A}, you will
 have to delete the matrix first.
 
-\tip{One point to watch out for in \app{gretl} scripting is type
+\tip{One point to watch out for in gretl scripting is type
   conflicts having to do with the names of series brought in from a
   data file. For example, in setting up a command loop (see
   chapter~\ref{chap:looping}) it is very common to call the loop index
@@ -421,16 +421,16 @@ have to delete the matrix first.
   loop index.}
 
 Although the type of an existing variable cannot be changed on the
-fly, \app{gretl} nonetheless tries to be as ``understanding'' as
+fly, gretl nonetheless tries to be as ``understanding'' as
 possible. For example if \texttt{x} is a series and you say
 
 \begin{code}
 x = 100
 \end{code} 
 
-\app{gretl} will give the series a constant value of 100 rather than
+gretl will give the series a constant value of 100 rather than
 complaining that you are trying to assign a scalar to a series. This
-issue is particularly relevant for the matrix type --- see
+issue is particularly relevant for the matrix type---see
 chapter~\ref{chap:matrices} for details.
 
 Besides using the regular assignment operator you also have the option
@@ -453,16 +453,16 @@ x--     # x now equals 99
 x++     # x now equals 100
 \end{code}
 
-In the case of objects holding more than one value --- series,
-matrices and bundles --- you can modify particular values within the
-object using an expression within square brackets to identify the
-elements to access. We have discussed this above for the bundle type
-and chapter~\ref{chap:matrices} goes into details for matrices. As for
+In the case of objects holding more than one value---series, matrices
+and bundles---you can modify particular values within the object using
+an expression within square brackets to identify the elements to
+access. We have discussed this above for the bundle type and
+chapter~\ref{chap:matrices} goes into details for matrices. As for
 series, there are two ways to specify particular values for
 modification: you can use a simple 1-based index, or if the dataset is
 a time series or panel (or if it has marker strings that identify the
 observations) you can use an appropriate observation string. Such
-strings are displayed by \app{gretl} when you print data with the 
+strings are displayed by gretl when you print data with the
 \verb|--byobs| flag. Examples:
 
 \begin{code}
