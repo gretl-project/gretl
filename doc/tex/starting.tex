@@ -10,9 +10,9 @@ program; please see Chapter~\ref{cli} below and the \GCR\ for details
 on the command-line program, \app{gretlcli}.
     
 You can supply the name of a data file to open as an argument to
-\app{gretl}, but for the moment let's not do that: just fire up the
+gretl, but for the moment let's not do that: just fire up the
 program.\footnote{For convenience we refer to the graphical client
-  program simply as \app{gretl} in this manual. Note, however, that
+  program simply as gretl in this manual. Note, however, that
   the specific name of the program differs according to the computer
   platform.  On Linux it is called \verb+gretl_x11+ while on MS
   Windows it is \verb+gretl.exe+. On Linux systems a wrapper script
@@ -48,7 +48,7 @@ that is of interest, you may open it by clicking on ``Open'', or just
 double-clicking on the file name. For the moment let's open
 \verb+data3-6+.  
 
-\tip{In \app{gretl} windows containing lists, double-clicking on a
+\tip{In gretl windows containing lists, double-clicking on a
   line launches a default action for the associated list entry: e.g.\
   displaying the values of a data series, opening a file.}
 
@@ -56,7 +56,7 @@ This file contains data pertaining to a classic
 econometric ``chestnut'', the consumption function.  The data window
 should now display the name of the current data file, the overall data
 range and sample range, and the names of the variables along with
-brief descriptive tags --- see Figure~\ref{fig-mainwin}.
+brief descriptive tags---see Figure~\ref{fig-mainwin}.
     
 \begin{figure}[htbp]
   \begin{center}
@@ -71,10 +71,10 @@ fairly self explanatory.  For now we'll dip into the Model menu; a
 brief tour of all the main window menus is given in
 Section~\ref{menus} below.
     
-\app{gretl}'s Model menu offers numerous various econometric
-estimation routines.  The simplest and most standard is Ordinary Least
-Squares (OLS). Selecting OLS pops up a dialog box calling for a
-\emph{model specification} --- see Figure~\ref{fig-selector}.
+Gretl's Model menu offers numerous various econometric estimation
+routines.  The simplest and most standard is Ordinary Least Squares
+(OLS). Selecting OLS pops up a dialog box calling for a \emph{model
+  specification}---see Figure~\ref{fig-selector}.
     
 \begin{figure}[htbp]
   \begin{center}
@@ -122,10 +122,10 @@ on the model.
 For most models there is also an option to print the regression
 output in {\LaTeX} format.  See Chapter~\ref{gretltex} for details.
 
-To import \app{gretl} output into a word processor, you may copy and
+To import gretl output into a word processor, you may copy and
 paste from an output window, using its \textsf{Edit} menu (or Copy
 button, in some contexts) to the target program.  Many (not all)
-\app{gretl} windows offer the option of copying in RTF (Microsoft's
+gretl windows offer the option of copying in RTF (Microsoft's
 ``Rich Text Format'') or as {\LaTeX}. If you are pasting into a word
 processor, RTF may be a good option because the tabular formatting of
 the output is preserved.\footnote{Note that when you copy as RTF under
@@ -137,14 +137,14 @@ the output is preserved.\footnote{Note that when you copy as RTF under
   Word) is already running prior to copying the material in question.}
 Alternatively, you can save the output to a (plain text) file then
 import the file into the target program.  When you finish a
-\app{gretl} session you are given the option of saving all the output
+gretl session you are given the option of saving all the output
 from the session to a single file.
 
  Note that on the \app{gnome} desktop and under MS Windows, the
  \textsf{File} menu includes a command to send the output directly to
  a printer.
 
- \tip{When pasting or importing plain text \app{gretl} output into a
+ \tip{When pasting or importing plain text gretl output into a
    word processor, select a monospaced or typewriter-style font (e.g.\
    Courier) to preserve the output's tabular formatting.  Select a
    small font (10-point Courier should do) to prevent the output lines
@@ -163,12 +163,12 @@ File, Tools, Data, View, Add, Sample, Variable, Model and Help menus.
 \begin{itemize}
 \item \textsf{File menu}
   \begin{itemize}
-  \item \textsf{Open data}: Open a native \app{gretl} data file or
+  \item \textsf{Open data}: Open a native gretl data file or
     import from other formats.  See Chapter~\ref{datafiles}.
   \item \textsf{Append data}: Add data to the current working data
-    set, from a \app{gretl} data file, a comma-separated values file
+    set, from a gretl data file, a comma-separated values file
     or a spreadsheet file.
-  \item \textsf{Save data}: Save the currently open native \app{gretl}
+  \item \textsf{Save data}: Save the currently open native gretl
     data file.
   \item \textsf{Save data as}: Write out the current data set in
     native format, with the option of using gzip data compression. See
@@ -187,17 +187,17 @@ File, Tools, Data, View, Add, Sample, Variable, Model and Help menus.
     data file automatically clears the old one) but sometimes it's
     useful.
   \item \textsf{Script files}: A ``script'' is a file containing a
-    sequence of \app{gretl} commands.  This item contains entries
+    sequence of gretl commands.  This item contains entries
     that let you open a script you have created previously (``User
     file''), open a sample script, or open an editor window in which
     you can create a new script.
   \item \textsf{Session files}: A ``session'' file contains a snapshot
-    of a previous \app{gretl} session, including the data set used
+    of a previous gretl session, including the data set used
     and any models or graphs that you saved.  Under this item you
     can open a saved session or save the current session.
   \item \textsf{Databases}: Allows you to browse various large
     databases, either on your own computer or, if you are connected
-    to the internet, on the \app{gretl} database server.  See
+    to the internet, on the gretl database server.  See
     Section~\ref{dbase} for details.
   \item \textsf{Function files}: Handles ``function packages'' (see
     Section~\ref{sec:func-packages}), which allow you to access
@@ -238,16 +238,16 @@ File, Tools, Data, View, Add, Sample, Variable, Model and Help menus.
     \app{gretlcli} (as opposed to using point-and-click).
   \item \textsf{Start Gnu R}: Start \app{R} (if it is installed on
     your system), and load a copy of the data set currently open in
-    \app{gretl}.  See Appendix~\ref{app-advanced}.
+    gretl.  See Appendix~\ref{app-advanced}.
   \item \textsf{Sort variables}: Rearrange the listing of variables in
     the main window, either by ID number or alphabetically by name.
   \item \textsf{NIST test suite}: Check the numerical accuracy of
-    \app{gretl} against the reference results for linear regression
+    gretl against the reference results for linear regression
     made available by the (US) National Institute of Standards and
     Technology.
   \item \textsf{Preferences}: Set the paths to various files
-    \app{gretl} needs to access. Choose the font in which gretl
-    displays text output.  Activate or suppress \app{gretl}'s
+    gretl needs to access. Choose the font in which gretl
+    displays text output.  Activate or suppress gretl's
     messaging about the availability of program updates, and so on.
     See the \GCR\ for further details.
   \end{itemize}
@@ -360,7 +360,7 @@ File, Tools, Data, View, Add, Sample, Variable, Model and Help menus.
     data set, where it's quite common to encounter missing values.
   \item \textsf{Set missing value code}: Set a numerical value that
     will be interpreted as ``missing'' or ``not available''.  This is
-    intended for use with imported data, when \app{gretl} has not
+    intended for use with imported data, when gretl has not
     recognized the missing-value code used.
   \end{itemize}
 
@@ -395,7 +395,7 @@ foo = x1 * x2
 \section{Keyboard shortcuts}
 \label{keyb-accel}
 
-When working in the main \app{gretl} window, some common operations
+When working in the main gretl window, some common operations
 may be performed using the keyboard, as shown in the table below.
 
 \begin{center}
@@ -437,7 +437,7 @@ The icons have the following functions, reading from left to right:
 \begin{enumerate}
 \item Launch a calculator program.  A convenience function in case you
   want quick access to a calculator when you're working in
-  \app{gretl}.  The default program is \verb+calc.exe+ under MS
+  gretl.  The default program is \verb+calc.exe+ under MS
   Windows, or \verb+xcalc+ under the X window system.  You can change
   the program under the ``Tools, Preferences, General'' menu,
   ``Programs'' tab.
@@ -445,7 +445,7 @@ The icons have the following functions, reading from left to right:
   type a series of commands to be sent to the program as a batch.
 \item Open the gretl console.  A shortcut to the ``Gretl console''
   menu item (Section~\ref{menus} above).
-\item Open the \app{gretl} session icon window.
+\item Open the session icon window.
 \item Open a window displaying available gretl function packages.
 \item Open this manual in PDF format.
 \item Open the help item for script commands syntax (i.e.\ a listing
@@ -454,7 +454,7 @@ The icons have the following functions, reading from left to right:
 \item Open the dialog box for estimating a model using ordinary least
   squares.
 \item Open a window listing the sample datasets supplied with
-  \app{gretl}, and any other data file collections that have been
+  gretl, and any other data file collections that have been
   installed.
 \end{enumerate}
 

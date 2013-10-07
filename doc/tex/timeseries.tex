@@ -72,7 +72,7 @@ lags of $z_t$ to this specification one can estimate \emph{Transfer
   Function models} (which generalize ARMA by adding the effects of
 exogenous variable distributed across time).
 
-\app{Gretl} provides a way to estimate both forms. Models written as
+Gretl provides a way to estimate both forms. Models written as
 in (\ref{eq:arma-with-x}) are estimated by maximum likelihood; models
 written as in (\ref{eq:arma-with-z}) are estimated by conditional
 maximum likelihood. (For more on these options see the section on
@@ -97,7 +97,7 @@ obviously, not numerically identical; rather
 \alpha = \left(1 - \phi_1 - \ldots - \phi_p\right) \mu
 \]
 
-The \app{gretl} syntax for estimating (\ref{eq:arma-with-xconst}) is simply
+The gretl syntax for estimating (\ref{eq:arma-with-xconst}) is simply
 \begin{code}
 arma p q ; y
 \end{code}
@@ -113,9 +113,11 @@ arma p q ; y --conditional
 
 Generalizing this principle to the estimation of
 (\ref{eq:arma-with-x}) or (\ref{eq:arma-with-z}), you get that
+%
 \begin{code}
 arma p q ; y const x1 x2
 \end{code}
+%
 would estimate the following model:
 \[
   y_t - x_t \beta = \phi_1 \left(y_{t-1} - x_{t-1} \beta \right) + \ldots + 
@@ -180,7 +182,7 @@ Such a model is known as a ``multiplicative seasonal ARMA model''.
 
 \subsection{Gaps in the lag structure}
 
-The standard way to specify an ARMA model in \app{gretl} is via the AR
+The standard way to specify an ARMA model in gretl is via the AR
 and MA orders, $p$ and $q$ respectively.  In this case all lags from 1
 to the given order are included.  In some cases one may wish to
 include only certain specific AR and/or MA lags.  This can be done in
@@ -213,7 +215,7 @@ the ARMA specification.
 The above discussion presupposes that the time series $y_t$ has
 already been subjected to all the transformations deemed necessary for
 ensuring stationarity (see also section \ref{sec:uroot}). Differencing
-is the most common of these transformations, and \app{gretl} provides
+is the most common of these transformations, and gretl provides
 a mechanism to include this step into the \cmd{arma} command: the
 syntax
 \begin{code}
@@ -232,7 +234,7 @@ except with regard to forecasting after estimation (see below).
 
 When the series $y_t$ is differenced before performing the analysis
 the model is known as ARIMA (``I'' for Integrated); for this reason,
-\app{gretl} provides the \cmd{arima} command as an alias for
+gretl provides the \cmd{arima} command as an alias for
 \cmd{arma}.
 
 Seasonal differencing is handled similarly, with the syntax
@@ -273,12 +275,12 @@ or
 %
 The first of these formulations can be described as a regression model
 with ARIMA errors, while the second preserves the levels of the $X$
-variables.  As of \app{gretl} version 1.8.6, the default model is
+variables.  As of gretl version 1.8.6, the default model is
 (\ref{eq:arima-with-x}), in which differencing is applied to both
 $y_t$ and $X_t$.  However, when using the default estimation method
 (native exact ML, see below), the option \option{y-diff-only} may be
-given, in which case \app{gretl} estimates
-(\ref{eq:arima-with-z}).\footnote{Prior to \app{gretl} 1.8.6, the
+given, in which case gretl estimates
+(\ref{eq:arima-with-z}).\footnote{Prior to gretl 1.8.6, the
   default model was (\ref{eq:arima-with-z}).  We changed this for the
   sake of consistency with other software.}
 
@@ -312,7 +314,7 @@ The CML method is nearly equivalent to maximum likelihood under the
 hypothesis of normality; the difference is that the first $(t_0 - 1)$
 observations are considered fixed and only enter the likelihood
 function as conditioning variables. As a consequence, the two methods
-are asymptotically equivalent under standard conditions --- except for
+are asymptotically equivalent under standard conditions---except for
 the fact, discussed above, that our CML implementation treats the
 constant and exogenous variables as per equation (\ref{eq:arma-with-z}).
 
@@ -324,7 +326,7 @@ arma 1 1 ; r --conditional
 \end{code}
 which produces the estimates shown in Table~\ref{tab:ml-cml}.  As you
 can see, the estimates of $\phi$ and $\theta$ are quite similar.  The
-reported constants differ widely, as expected --- see the discussion
+reported constants differ widely, as expected---see the discussion
 following equations (\ref{eq:arma-with-xconst}) and
 (\ref{eq:arma-with-zconst}).  However, dividing the CML constant by
 $1-\phi$ we get 7.38, which is not far from the ML estimate of 6.93.
@@ -352,7 +354,7 @@ The numerical methods used to maximize the likelihood for ARMA models
 are not guaranteed to converge.  Whether or not convergence is
 achieved, and whether or not the true maximum of the likelihood
 function is attained, may depend on the starting values for the
-parameters.  \app{Gretl} employs one of the following two
+parameters.  Gretl employs one of the following two
 initialization mechanisms, depending on the specification of the model
 and the estimation method chosen.
 
@@ -390,10 +392,10 @@ expected is the same as the order of specification in the \cmd{arma}
 or \cmd{arima} command.  In the example the constant is set to zero,
 $\phi_1$ to 0.85, and $\theta_1$ to 0.34.
 
-You can get \app{gretl} to revert to automatic initialization via
+You can get gretl to revert to automatic initialization via
 the command \cmd{set initvals auto}.
 
-Two variants of the BFGS algorithm are available in \app{gretl}.  In
+Two variants of the BFGS algorithm are available in gretl.  In
 general we recommend the default variant, which is based on an
 implementation by \cite{nash90}, but for some problems the
 alternative, limited-memory version (L-BFGS-B, see
@@ -404,18 +406,18 @@ the \texttt{arma} command.
 \subsection{Estimation via X-12-ARIMA}
 
 As an alternative to estimating ARMA models using ``native'' code,
-\app{gretl} offers the option of using the external program
+gretl offers the option of using the external program
 \app{X-12-ARIMA}.  This is the seasonal adjustment software produced
 and maintained by the U.S. Census Bureau; it is used for all official
 seasonal adjustments at the Bureau.
 
-\app{Gretl} includes a module which interfaces with \app{X-12-ARIMA}:
+Gretl includes a module which interfaces with \app{X-12-ARIMA}:
 it translates \cmd{arma} commands using the syntax outlined above into
 a form recognized by \app{X-12-ARIMA}, executes the program, and
 retrieves the results for viewing and further analysis within
-\app{gretl}.  To use this facility you have to install
+gretl.  To use this facility you have to install
 \app{X-12-ARIMA} separately.  Packages for both MS Windows and
-GNU/Linux are available from the \app{gretl} website,
+GNU/Linux are available from the gretl website,
 \url{http://gretl.sourceforge.net/}.
 
 To invoke \app{X-12-ARIMA} as the estimation engine, append the flag
@@ -443,7 +445,7 @@ autoregressive component, in particular, offers the possibility of
 forecasting a process ``out of sample'' over a substantial time
 horizon.
 
-\app{Gretl} supports forecasting on the basis of ARMA models using the
+Gretl supports forecasting on the basis of ARMA models using the
 method set out by \cite{box-jenkins76}.\footnote{See in particular
   their ``Program 4'' on p.\ 505ff.}  The Box and Jenkins algorithm
 produces a set of integrated AR coefficients which take into account
@@ -511,7 +513,7 @@ The output from the last command is:
 \label{sec:ADFtest}
 
 The Augmented Dickey--Fuller (ADF) test is, as implemented in
-\app{gretl}, the $t$-statistic on $\varphi$ in the following regression:
+gretl, the $t$-statistic on $\varphi$ in the following regression:
 \begin{equation}
   \label{eq:ADFtest}
   \Delta y_t = \mu_t + \varphi y_{t-1} + \sum_{i=1}^p \gamma_i \Delta
@@ -532,7 +534,7 @@ distribution, and consequently the critical values for the test,
 depends on the form of the $\mu_t$ term.  A full analysis of the
 various cases is inappropriate here: \cite{hamilton94} contains an
 excellent discussion, but any recent time series textbook covers
-this topic. Suffice it to say that \app{gretl} allows the user to
+this topic. Suffice it to say that gretl allows the user to
 choose the specification for $\mu_t$ among four different
 alternatives:
 
@@ -551,11 +553,11 @@ alternatives:
 
 These option flags are not mutually exclusive; when they are used
 together the statistic will be reported separately for each selected
-case.  By default, \app{gretl} uses the combination \verb|--c --ct|.
+case.  By default, gretl uses the combination \verb|--c --ct|.
 For each case, approximate p-values are calculated by means of the
 algorithm developed in \cite{mackinnon96}.
 
-The \app{gretl} command used to perform the test is \cmd{adf}; for example
+The gretl command used to perform the test is \cmd{adf}; for example
 \begin{code}
 adf 4 x1
 \end{code}
@@ -584,7 +586,7 @@ using the GLS residuals. This variant offers greater power than the
 regular ADF test for the cases $\mu_t = \mu_0$ and $\mu_t = \mu_0 +
 \mu_1 t$. 
 
-The ADF-GLS test is available in \app{gretl} via the \verb|--gls|
+The ADF-GLS test is available in gretl via the \verb|--gls|
 option to the \texttt{adf} command. When this option is selected the
 \verb|--nc| and \verb|--ctt| options become unavailable, and only one
 case can be selected at a time; by default the constant-only model is
@@ -622,7 +624,7 @@ simulation. Under the alternative, the statistic diverges.
 
 As a consequence, it is possible to construct a one-sided test based
 on $\eta$, where $H_0$ is rejected if $\eta$ is bigger than the
-appropriate critical value; \app{gretl} provides the 90, 95 and 99
+appropriate critical value; gretl provides the 90, 95 and 99
 percent quantiles. The critical values are computed via the method
 presented by \cite{sephton95}, which offers greater accuracy than the
 values tabulated in \cite{KPSS92}.
@@ -654,7 +656,7 @@ appending the \option{trend} option to the \cmd{kpss} command:
 kpss n y --trend
 \end{code}
 Note that in this case the asymptotic distribution of the test is
-different and the critical values reported by \app{gretl} differ
+different and the critical values reported by gretl differ
 accordingly.
 
 
@@ -701,7 +703,7 @@ plausibility of assuming a common AR(1) coefficient.\footnote{If the
   estimating panel models, even if this is unlikely to be literally
   true.}
 
-In \app{gretl}, the formulation (\ref{eq:panelADF}) is used
+In gretl, the formulation (\ref{eq:panelADF}) is used
 automatically when the \texttt{adf} command is used on panel data. The
 joint test statistic is formed using the method of \citet*{IPS03}. In
 this context the behavior of \texttt{adf} differs from regular
@@ -788,7 +790,7 @@ individually, in step 1, while (b) the null \emph{is} rejected for the
 residuals at step 3. That is, each of the individual series is $I(1)$
 but some linear combination of the series is $I(0)$.  
 
-This test is implemented in \app{gretl} by the \texttt{coint} command,
+This test is implemented in gretl by the \texttt{coint} command,
 which requires an integer lag order (for the ADF tests) followed by a
 list of variables to be tested, the first of which will be taken as
 dependent in the cointegrating regression. Please see the online help
@@ -854,7 +856,7 @@ way:
   of ARCH($q$).
 \end{enumerate}
 
-This test is implemented in \app{gretl} via the \cmd{modtest} command
+This test is implemented in gretl via the \cmd{modtest} command
 with the \option{arch} option, which must follow estimation of a
 time-series model by OLS (either a single-equation model or a
 VAR). For example,
@@ -904,10 +906,10 @@ variance.
 In principle the underlying innovation, $\varepsilon_t$, could follow
 any suitable probability distribution, and besides the obvious
 candidate of the normal or Gaussian distribution the Student's $t$
-distribution has been used in this context.  Currently \app{gretl}
+distribution has been used in this context.  Currently gretl
 only handles the case where $\varepsilon_t$ is assumed to be Gaussian.
 However, when the \option{robust} option to the \cmd{garch} command is
-given, the estimator \app{gretl} uses for the covariance matrix can be
+given, the estimator gretl uses for the covariance matrix can be
 considered Quasi-Maximum Likelihood even with non-normal disturbances.
 See below for more on the options regarding the GARCH covariance
 matrix.
@@ -929,7 +931,7 @@ straightforward task.  (Consider equation~\ref{eq:garch-vareq}: the
 conditional variance at any point in time, $\sigma^2_t$, depends on
 the conditional variance in earlier periods, but $\sigma^2_t$ is not
 observed, and must be inferred by some sort of Maximum Likelihood
-procedure.)  By default \app{gretl} uses native code that employs the
+procedure.)  By default gretl uses native code that employs the
 BFGS maximizer; you also have the option (activated by the
 \verb|--fcp| command-line switch) of using the method proposed by
 \cite{fiorentini96},\footnote{The algorithm is based on Fortran code
@@ -941,7 +943,7 @@ and second derivatives of the log-likelihood, and uses a
 mixed-gradient algorithm, exploiting the information matrix in the
 early iterations and then switching to the Hessian in the neighborhood
 of the maximum likelihood.  (This progress can be observed if you
-append the \option{verbose} option to \app{gretl}'s \cmd{garch}
+append the \option{verbose} option to gretl's \cmd{garch}
 command.)
 
 Several options are available for computing the covariance matrix of

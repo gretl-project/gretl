@@ -2,7 +2,7 @@
 \label{chap:matrices}
 
 Together with the other two basic types of data (series and scalars),
-\app{gretl} offers a quite comprehensive array of matrix methods. This
+gretl offers a quite comprehensive array of matrix methods. This
 chapter illustrates the peculiarities of matrix syntax and discusses
 briefly some of the more complex matrix functions. For a full listing
 of matrix functions and a comprehensive account of their syntax,
@@ -125,7 +125,7 @@ The syntax
 matrix A = {}
 \end{code}
 %
-creates an empty matrix --- a matrix with zero rows and zero columns.
+creates an empty matrix---a matrix with zero rows and zero columns.
 
 The main purpose of the concept of an empty matrix is to enable the
 user to define a starting point for subsequent concatenation
@@ -425,7 +425,7 @@ raised to the power $k$.
 \section{Matrix functions}
 \label{sec:matrix-func}
 
-Most of the \app{gretl} functions available for scalars and series
+Most of the gretl functions available for scalars and series
 also apply to matrices in an element-by-element fashion, and as such
 their behavior should be pretty obvious. This is the case for
 functions such as \texttt{log}, \texttt{exp}, \texttt{sin}, etc.
@@ -443,7 +443,7 @@ evaluates to a single matrix.\footnote{Note that to find the ``matrix
   square root'' you need the \texttt{cholesky} function (see below);
   moreover, the \texttt{exp} function computes the exponential element
   by element, and therefore does \emph{not} return the matrix
-  exponential unless the matrix is diagonal --- to get the matrix
+  exponential unless the matrix is diagonal---to get the matrix
   exponential, use \texttt{mexp}.}
 
 In this section, we review some aspects of \texttt{genr} functions that
@@ -514,11 +514,11 @@ b
 \subsection{Complex multiplication and division}
 \label{sec:complex}
 
-\app{Gretl} has no native provision for complex numbers. However,
-basic operations can be performed on vectors of complex numbers by
-using the convention that a vector of $n$ complex numbers is
-represented as a $n \times 2$ matrix, where the first column contains
-the real part and the second the imaginary part.
+Gretl has no native provision for complex numbers. However, basic
+operations can be performed on vectors of complex numbers by using the
+convention that a vector of $n$ complex numbers is represented as a $n
+\times 2$ matrix, where the first column contains the real part and
+the second the imaginary part.
 
 Addition and subtraction are trivial; the functions \texttt{cmult}
 and \texttt{cdiv} compute the complex product and division,
@@ -746,7 +746,7 @@ residuals.
 \label{sec:matrix-csv}
 
 The two functions \texttt{mread} and \texttt{mwrite} can be used for
-basic matrix input/output. This can be useful to enable \app{gretl} to
+basic matrix input/output. This can be useful to enable gretl to
 exchange data with other programs.
 
 The \texttt{mread} function accepts one string parameter: the name of
@@ -861,7 +861,8 @@ These are set out in Table~\ref{tab:matrix-accessors}.
   \dollar{stderr} & matrix of estimated standard errors \\
   \dollar{uhat}   & matrix of residuals \\
   \dollar{vcv}    & covariance matrix of parameter estimates \\
-  \dollar{vma}    & VMA matrices in stacked form --- see section \ref{sec:var-estim} (after VAR or VECM estimation) \\
+  \dollar{vma}    & VMA matrices in stacked form (see section
+    \ref{sec:var-estim}) \\
   \dollar{yhat}   & matrix of fitted values 
 \end{tabular}
 \caption{Matrix accessors for model data}

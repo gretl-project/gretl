@@ -4,13 +4,13 @@
 \section{Defining a function}
 \label{func-define}
 
-\app{Gretl} offers a mechanism for defining functions, which may be
+Gretl offers a mechanism for defining functions, which may be
 called via the command line, in the context of a script, or (if
 packaged appropriately, see section~\ref{sec:func-packages}) via the
 program's graphical interface.
 
 The syntax for defining a function looks like this:\footnote{The
-  syntax given here differs from the standard prior to \app{gretl}
+  syntax given here differs from the standard prior to gretl
   version 1.8.4.  For reasons of backward compatibility the old syntax
   is still supported; see section~\ref{sec:old-func} for details.}
 
@@ -34,7 +34,7 @@ strict order:
   Function names have a maximum length of 31 characters; they must
   start with a letter and can contain only letters, numerals and the
   underscore character.  You will get an error if you try to define a
-  function having the same name as an existing \app{gretl} command.
+  function having the same name as an existing gretl command.
 \item The functions's \textsl{parameters}, in the form of a
   comma-separated list enclosed in parentheses.  This may be run
   into the function name, or separated by white space as shown.
@@ -101,7 +101,7 @@ function parameter may include some additional fields, as follows:
 
 The first two of these options may be useful in many contexts; the
 last two may be helpful if a function is to be packaged for use in
-the \app{gretl} GUI (but probably not otherwise). We now expand on
+the gretl GUI (but probably not otherwise). We now expand on
 each of the options.
 
 \begin{itemize}
@@ -114,7 +114,7 @@ const matrix M
 \end{code} 
 %
 This constitutes a promise that the corresponding argument will not be
-modified within the function; \app{gretl} will flag an error if
+modified within the function; gretl will flag an error if
 the function attempts to modify the argument.
 
 \item Minimum, maximum and default values for \texttt{scalar} or
@@ -142,7 +142,7 @@ bool verbose[0]
 
 \item Descriptive string: This will show up as an aid to the user if
   the function is packaged (see section~\ref{sec:func-packages} below)
-  and called via \app{gretl}'s graphical interface.  The string should
+  and called via gretl's graphical interface.  The string should
   be enclosed in double quotes and separated from the preceding
   elements of the parameter specification with a space, as in
 %
@@ -204,7 +204,7 @@ function matrix myfunc2 (void)
 
 \subsection{The function body}
    
-The \textsl{function body} is composed of \app{gretl} commands, or
+The \textsl{function body} is composed of gretl commands, or
 calls to user-defined functions (that is, function calls may be
 nested).  A function may call itself (that is, functions may be
 recursive). While the function body may contain function calls, it may
@@ -342,10 +342,10 @@ By default, when a variable is passed to a function as an argument,
 what the function actually ``gets'' is a \emph{copy} of the outer
 variable, which means that the value of the outer variable is not
 modified by anything that goes on inside the function.  But the use of
-pointers allows a function and its caller to cooperate such that
-an outer variable can be modified by the function.  In effect, this
+pointers allows a function and its caller to cooperate such that an
+outer variable can be modified by the function.  In effect, this
 allows a function to ``return'' more than one value (although only one
-variable can be returned directly --- see below).  The parameter in
+variable can be returned directly---see below).  The parameter in
 question is marked with a prefix of \texttt{*} in the function
 definition, and the corresponding argument is marked with the
 complementary prefix \verb+&+ in the caller.  For example,
@@ -410,7 +410,7 @@ series resid = get_uhat_and_ess(price, xlist)
 Pointer arguments may also be useful for optimizing performance: even if
 a variable is not modified inside the function, it may be a good idea
 to pass it as a pointer if it occupies a lot of memory. Otherwise, the
-time \app{gretl} spends transcribing the value of the variable to the
+time gretl spends transcribing the value of the variable to the
 local copy may be non-negligible, compared to the time the function
 spends doing the job it was written for.
 
@@ -468,9 +468,9 @@ printf "Elapsed time:\n\
 %$
 \end{script}
 
-If a pointer argument is used for this sort of purpose --- and the
-object to which the pointer points is not modified by the function ---
-it is a good idea to signal this to the user by adding the
+If a pointer argument is used for this sort of purpose---and the
+object to which the pointer points is not modified by the
+function---it is a good idea to signal this to the user by adding the
 \texttt{const} qualifier, as shown for function \texttt{b} in
 Example~\ref{ex:perf-pointers}.  When a pointer argument is qualified
 in this way, any attempt to modify the object within the function will
@@ -498,9 +498,9 @@ will generate an error.
 
 The use of a named list as an argument to a function gives a means of
 supplying a function with a set of variables whose number is unknown
-when the function is written --- for example, sets of regressors or
+when the function is written---for example, sets of regressors or
 instruments.  Within the function, the list can be passed on to
-commands such as \texttt{ols}.  
+commands such as \texttt{ols}.
 
 A list argument can also be ``unpacked'' using a \texttt{foreach} loop
 construct, but this requires some care.  For example, suppose you have
@@ -636,7 +636,7 @@ returns 0, no name was found.
 \subsection{Return values}
 
 Functions can return nothing (just printing a result, perhaps), or
-they can return a single variable --- a scalar, series, list, matrix,
+they can return a single variable---a scalar, series, list, matrix,
 string, or bundle (see section~\ref{sec:Bundles}).  The return value,
 if any, is specified via a statement within the function body
 beginning with the keyword \texttt{return}, followed by either the
@@ -674,7 +674,7 @@ A \texttt{return} statement causes the function to return (exit) at
 the point where it appears within the body of the function.  A
 function may also exit when (a) the end of the function code is
 reached (in the case of a function with no return value), (b) a
-\app{gretl} error occurs, or (c) a \verb+funcerr+ statement is
+gretl error occurs, or (c) a \verb+funcerr+ statement is
 reached.
 
 The \verb+funcerr+ keyword, which may be followed by a string enclosed
@@ -725,7 +725,7 @@ and its commands are executed.
 
 \subsection{Debugging}
 
-The usual mechanism whereby \app{gretl} echoes commands and reports on
+The usual mechanism whereby gretl echoes commands and reports on
 the creation of new variables is by default suppressed when a function
 is being executed.  If you want more verbose output from a particular
 function you can use either or both of the following commands within
@@ -753,8 +753,8 @@ maximizer) at all levels of function execution.
 \section{Function packages}
 \label{sec:func-packages}
 
-Since \app{gretl} 1.6.0 there has been a mechanism to package
-functions and make them available to other users of \app{gretl}.  Here
+Since gretl 1.6.0 there has been a mechanism to package
+functions and make them available to other users of gretl.  Here
 is a walk-through of the process.
 
 \subsection{Load a function in memory}
@@ -781,7 +781,7 @@ end function
 In this case, we have appended a string to the function argument, as
 explained in section \ref{func-define}, so as to make our interface
 more informative.  This is not obligatory: if you omit the descriptive
-string, \app{gretl} will supply a predefined one.
+string, gretl will supply a predefined one.
 
 \begin{figure}[htbp]
   \centering
@@ -806,7 +806,7 @@ may proceed to the next stage.
 \subsection{Create a package}
 
 We first present the mechanism for creating a function package via
-\app{gretl}'s graphical interface. This can also be done via the
+gretl's graphical interface. This can also be done via the
 command line, which offers some additional functionality for package
 authors; an explanation is given later in this section.
 
@@ -815,7 +815,7 @@ This menu contains four items: ``On local machine'', ``On server'', ``Edit
 package'', ``New package''.
 
 Select ``New package''.  (This will produce an error message unless at
-least one user-defined function is currently loaded in memory --- see
+least one user-defined function is currently loaded in memory---see
 the previous point.)  In the first dialog you get to select:
 
 \begin{itemize}
@@ -851,8 +851,8 @@ script that contains all the relevant function definitions.
 
 Clicking ``Save'' in this dialog leads you to a File Save dialog.  All
 being well, this should be pointing towards a directory named
-\texttt{functions}, either under the \app{gretl} system directory (if
-you have write permission on that) or the \app{gretl} user directory.
+\texttt{functions}, either under the gretl system directory (if
+you have write permission on that) or the gretl user directory.
 This is the recommended place to save function package files, since
 that is where the program will look in the special routine for opening
 such files (see below).
@@ -864,7 +864,7 @@ allows you to make changes to a local function package.
 
 A word on the file you just saved.  By default, it will have a
 \texttt{.gfn} extension.  This is a ``function package'' file: unlike
-an ordinary \app{gretl} script file, it is an XML file containing both
+an ordinary gretl script file, it is an XML file containing both
 the function code and the extra information entered in the packager.
 Hackers might wish to write such a file from scratch rather than using
 the GUI packager, but most people are likely to find it awkward.  Note
@@ -890,7 +890,7 @@ has gleaned from the function package.  If you click on the ``View
 code'' icon in the toolbar of this new window, you get a script view
 window showing the actual function code. Now, back to the ``Function
 packages'' window, if you click on the package's name, the relevant
-functions are loaded into \app{gretl}'s workspace, ready to be called
+functions are loaded into gretl's workspace, ready to be called
 by clicking on the ``Call'' button.
 
 After loading the function(s) from the package, open the GUI console.
@@ -899,7 +899,7 @@ the public interface from the loaded function package: if any help text
 was provided for the function, it should be presented.
 
 In a similar way, you can browse and load the function packages
-available on the \app{gretl} server, by selecting ``File, Function
+available on the gretl server, by selecting ``File, Function
 files, On server''.
 
 Once your package is installed on your local machine, you can use the
@@ -917,7 +917,7 @@ specifying the package file as the argument, complete with the
 \end{figure}
 
 To continue with our example, load the file \texttt{np.gdt} (supplied
-with \app{gretl} among the sample datasets). Suppose you want to
+with gretl among the sample datasets). Suppose you want to
 compute the rate of change for the variable \texttt{iprod} via your
 new function and store the result in a series named \texttt{foo}.
 
@@ -954,14 +954,14 @@ The mechanism described above, for creating function packages using
 the GUI, is likely to be convenient for small to medium-sized packages
 but may be too cumbersome for ambitious packages that include a large
 hierarchy of private functions. To facilitate the building of such
-packages \app{gretl} offers the \texttt{makepkg} command.
+packages gretl offers the \texttt{makepkg} command.
 
 To use \texttt{makepkg} you create three files: a driver script that
 loads all the functions you want to package and invokes
 \texttt{makepkg}; a small, plain-text specification file that contains
 the required package details (author, version, etc.); and (in the
 simplest case) a plain text help file.  You run the driver script and
-\app{gretl} writes the package (\texttt{.gfn}) file.
+gretl writes the package (\texttt{.gfn}) file.
 
 We first illustrate with a simple notional package. We have a gretl
 script file named \texttt{foo.inp} that contains a function,
@@ -976,7 +976,7 @@ makepkg foo.gfn
 Note that the \texttt{makepkg} command takes one argument, the name of
 the package file to be created. The package \emph{specification file}
 should have the same basename but the extension \texttt{.spec}. In
-this case \app{gretl} will therefore look for \texttt{foo.spec}. It
+this case gretl will therefore look for \texttt{foo.spec}. It
 should look something like this:
 %
 \begin{code}
@@ -1018,7 +1018,7 @@ appear is immaterial. Here's a run-down of the basic fields:
  sample script.
 \item \texttt{min-version}: the minimum version of gretl required
  for the package to work correctly. If you're unsure about this,
- the conservative thing is to give the current \app{gretl} version.
+ the conservative thing is to give the current gretl version.
 \end{itemize}
 
 The \texttt{public} field indicates which function or functions are to
@@ -1095,7 +1095,7 @@ In addition to the fields shown in the simple example above,
 \texttt{gig.spec} includes three optional fields: \texttt{gui-main},
 \texttt{bundle-print} and \texttt{bundle-plot}. These keywords are
 used to designate certain functions as playing a special role in the
-\app{gretl} graphical interface. A function picked out in this way
+gretl graphical interface. A function picked out in this way
 must be in the \texttt{public} list and must satisfy certain
 further requirements.  
 %
@@ -1120,7 +1120,7 @@ further requirements.
 \end{itemize}
 
 The ``GUI special'' tags support a user-friendly mode of operation.
-On a successful call to \texttt{gui-main}, \app{gretl} opens a 
+On a successful call to \texttt{gui-main}, gretl opens a 
 window displaying the contents of the returned bundle (formatted
 via \texttt{bundle-print}). Menus in this window give the user the
 option of saving the entire bundle (in which case it's represented
@@ -1149,14 +1149,14 @@ format. Unlike plain-text help, this cannot be rolled into the
 \texttt{gfn} (XML) file produced by the \texttt{makepkg} command;
 rather, both \texttt{gig.gfn} and \texttt{gig.pdf} are packaged into a
 zip archive for distribution. This represents a form of package
-which is new in \app{gretl} 1.9.4. More details will be made
+which is new in gretl 1.9.4. More details will be made
 available before long. 
 
 \section{Memo: updating old-style functions}
 \label{sec:old-func}
 
 As mentioned at the start of this chapter, different rules were in
-force for defining functions prior to \app{gretl} 1.8.4. While the old
+force for defining functions prior to gretl 1.8.4. While the old
 syntax is still supported to date, this may not always be the
 case. But it is straightforward to convert a function to the new
 style. The only thing that must be changed for compatibility with the

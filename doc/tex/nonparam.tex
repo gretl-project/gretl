@@ -1,7 +1,7 @@
 \chapter{Nonparametric methods}
 \label{chap-nonparam}
 
-The main focus of \app{gretl} is on parametric estimation, but we offer a
+The main focus of gretl is on parametric estimation, but we offer a
 selection of nonparametric methods. The most basic of these
 %
 \begin{itemize}
@@ -49,7 +49,7 @@ total number of data points used in each regression; thus $r = qn$
 fitted series, smaller values to a series that tracks the actual data
 more closely; $0.25 \leq q \leq 0.5$ is often a suitable range.
 
-In \app{gretl}'s implementation of loess the weighting scheme is
+In gretl's implementation of loess the weighting scheme is
 that given by Cleveland, namely,
 \[
 w_k(x_i) = W(h_i^{-1}(x_k - x_i))
@@ -80,7 +80,7 @@ B(x) = \begin{cases}
 The polynomial regression is then re-run using weight
 $\delta_kw_k(x_i)$ at $(x_k, y_k)$.
 
-The \texttt{loess()} function in \app{gretl} takes up to five
+The \texttt{loess()} function in gretl takes up to five
 arguments as follows: the $y$ series, the $x$ series, the order $d$,
 the bandwidth $q$, and a boolean switch to turn on the robust
 adjustment. The last three arguments are optional: if they are omitted
@@ -131,7 +131,7 @@ conditioning variable $X$, and is defined as
 \]
 where $K_h(\cdot)$ is the so-called \emph{kernel function}, which is
 usually some simple transform of a density function that depends on a
-scalar called the \emph{bandwidth}. The one \app{gretl} uses is given
+scalar called the \emph{bandwidth}. The one gretl uses is given
 by
 \[
   K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
@@ -208,7 +208,7 @@ estimator is
 m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
   x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
 \]
-In order to have \app{gretl} compute the leave-one-out estimator, just
+In order to have gretl compute the leave-one-out estimator, just
 reverse the sign of $h$: if we changed example \ref{scr:nadarwat-ex} by
 substituting
 \begin{code}

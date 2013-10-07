@@ -14,23 +14,23 @@ rapid application development in many areas on most platforms.''
 Indeed, \app{Python} is widely used in a great variety of
 contexts. Numerous add-on modules are available; the ones likely to be
 of greatest interest to econometricians include \app{NumPy} (``the
-fundamental package for scientific computing with Python'' --- see
-\url{www.numpy.org}); \app{SciPy} (which builds on \app{NumPy} --- see
+fundamental package for scientific computing with Python''---see
+\url{www.numpy.org}); \app{SciPy} (which builds on \app{NumPy}---see
 \url{www.scipy.org}); and \app{Statsmodels}
 (\url{http://statsmodels.sourceforge.net/}).
 
 \section{Python support in gretl}
 \label{sec:Python-support}
 
-The support offered for \app{Python} in \app{gretl} is similar to that
+The support offered for \app{Python} in gretl is similar to that
 offered for \app{Octave} (chapter~\ref{chap:gretlOctave}). You can
-open and edit \app{Python} scripts in the \app{gretl} GUI.  Clicking
+open and edit \app{Python} scripts in the gretl GUI.  Clicking
 the ``execute'' icon in the editor window will send your code to
 \app{Python} for execution. In addition you can embed \app{Python}
-code within a \app{gretl} script using a \texttt{foreign} block, as
+code within a gretl script using a \texttt{foreign} block, as
 described in connection with \app{R}.
 
-When you launch \app{Python} from within \app{gretl} one variable and
+When you launch \app{Python} from within gretl one variable and
 two convenience functions are pre-defined, as follows.
 \begin{code}
 gretl_dotdir
@@ -39,15 +39,15 @@ gretl_export(M, filename, autodot=1)
 \end{code}
 The variable \verb|gretl_dotdir| holds the path to the user's ``dot
 directory.''  The first function loads a matrix of the given
-\texttt{filename} as written by \app{gretl}'s \texttt{mwrite}
+\texttt{filename} as written by gretl's \texttt{mwrite}
 function, and the second writes matrix \texttt{M}, under the given
-\texttt{filename}, in the format wanted by \app{gretl}.
+\texttt{filename}, in the format wanted by gretl.
 
 By default the traffic in matrices goes via the dot directory on the
 \app{Python} side; that is, the name of this directory is prepended to
 \texttt{filename} for both reading and writing. (This is complementary
 to use of the \textsl{export} and \textsl{import} parameters with
-\app{gretl}'s \texttt{mwrite} and \texttt{mread} functions,
+gretl's \texttt{mwrite} and \texttt{mread} functions,
 respectively.) However, if you wish to take control over the reading
 and writing locations you can supply a zero value for
 \texttt{autodot} when calling \verb|gretl_loadmat| and
@@ -64,7 +64,7 @@ to use these two functions.
 \label{sec:Python-longley}
 
 Example~\ref{Python-longley} compares the numerical accuracy of
-\app{gretl}'s \texttt{ols} command with that of \app{NumPy}'s
+gretl's \texttt{ols} command with that of \app{NumPy}'s
 \texttt{linalg.lstsq}, using the notorious Longley test data which
 exhibit extreme multicollinearity.  Unlike some econometrics packages,
 \app{NumPy} does a good job on these data. The script computes and

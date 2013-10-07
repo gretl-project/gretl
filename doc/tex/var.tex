@@ -1,13 +1,13 @@
 \chapter{Vector Autoregressions}
 \label{chap:var}
 
-\app{Gretl} provides a standard set of procedures for dealing with the
+Gretl provides a standard set of procedures for dealing with the
 multivariate time-series models known as VARs (\emph{Vector
-  AutoRegression}). More general models --- such as VARMAs, nonlinear
-models or multivariate GARCH models --- are not provided as of now,
+  AutoRegression}). More general models---such as VARMAs, nonlinear
+models or multivariate GARCH models---are not provided as of now,
 although it is entirely possible to estimate them by writing custom
-procedures in the \app{gretl} scripting language. In this chapter, we
-will briefly review \app{gretl}'s VAR toolbox.
+procedures in the gretl scripting language. In this chapter, we
+will briefly review gretl's VAR toolbox.
 
 \section{Notation}
 \label{sec:var-def}
@@ -163,7 +163,7 @@ Sum squared resid    8.654176   S.E. of regression   0.237830
 \end{scodebit}
 \end{script}
 
-The \app{gretl} command for estimating a VAR is \cmd{var} which, in
+The gretl command for estimating a VAR is \cmd{var} which, in
 the command line interface, is invoked in the following manner:
 \begin{flushleft}
     \texttt{[ \emph{modelname} \textless - ] var \emph{p} \emph{Ylist} [;
@@ -193,7 +193,7 @@ parameters.\footnote{In fact, under normality of $\epsilon_t$ OLS is
   indeed the conditional ML estimator. You may want to use other
   methods if you need to estimate a VAR in which some parameters are
   constrained.}  Given the simplicity of OLS, this is what every
-software package, including \app{gretl}, uses; example script
+software package, including gretl, uses; example script
 \ref{script:var-ols} exemplifies the fact that the \cmd{var} command
 gives you exactly the output you would have from a battery of OLS
 regressions. The advantage of using the dedicated command is that,
@@ -227,7 +227,7 @@ known as a \textbf{Granger causality} test.
 In addition, two accessors become available for the companion matrix
 (\dollar{compan}) and the VMA representation (\dollar{vma}). The
 latter deserves a detailed description: since the VMA representation
-\eqref{eq:VMArep} is of infinite order, \app{gretl} defines a
+\eqref{eq:VMArep} is of infinite order, gretl defines a
 \emph{horizon} up to which the $\Theta_i$ matrices are computed
 automatically. By default, this is a function of the periodicity of
 the data (see table \ref{tab:var-horizon}), but it can be set by the
@@ -243,7 +243,7 @@ of $\Theta_i$.
 \subsection{VAR lag-order selection}
 
 In order to help the user choose the most appropriate VAR order,
-\app{gretl} provides a special variant of the \texttt{var} command:
+gretl provides a special variant of the \texttt{var} command:
 \begin{flushleft}
   \texttt{var \emph{p} \emph{Ylist} [; \emph{Xlist}]} \option{lagselect}
 \end{flushleft}
@@ -303,7 +303,7 @@ Warning: in finite samples the choice of the maximum lag, $p$, may
 affect the outcome of the procedure. \textit{This is not a bug}, but
 rather an unavoidable side effect of the way these comparisons should
 be made. If your sample contains $T$ observations and you invoke the
-lag selection procedure with maximum order $p$, \app{gretl} examines
+lag selection procedure with maximum order $p$, gretl examines
 all VARs of order ranging form 1 to $p$, estimated on a uniform sample
 of $T-p$ observations. In other words, the comparison procedure does
 not use all the available data when estimating VARs of order less than
@@ -321,7 +321,7 @@ maximum tested order is 6.
 \section{Structural VARs}
 \label{sec:svar}
 
-\app{Gretl} does not currently provide a native implementation for the
+Gretl does not currently provide a native implementation for the
 general class of models known as ``Structural VARs''; however, it
 provides an implementation of the Cholesky decomposition-based
 approach, the classic and most popular SVAR variant.
@@ -354,7 +354,7 @@ As a rule, Impulse Response Functions are plotted as a function of
 $k$, and are interpreted as the effect that a shock has on an
 observable variable through time. Of course, what we observe are the
 estimated IRFs, so it is natural to endow them with confidence
-intervals: following common practice, \app{gretl} computes the
+intervals: following common practice, gretl computes the
 confidence intervals by using the bootstrap;\footnote{It is possible,
   in principle, to compute analytical confidence intervals via an
   asymptotic approximation, but this is not a very popular choice:
@@ -406,7 +406,7 @@ and so on.
 
 In this sort of exercise, therefore, the ordering of the $y$ variables
 is important, and the applied literature has developed the ``most
-exogenous first'' mantra --- where, in this setting, ``exogenous'' really
+exogenous first'' mantra---where, in this setting, ``exogenous'' really
 means ``instantaneously insensitive to structural
 shocks''.\footnote{The word ``exogenous'' has caught on in this
   context, but it's a rather unfortunate choice: for a start, each

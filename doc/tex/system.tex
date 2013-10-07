@@ -5,7 +5,7 @@ By a multivariate model we mean one that includes more than one
 dependent variable. Certain specific types of multivariate model for
 time-series data are discussed elsewhere: chapter~\ref{chap:var} deals
 with VARs and chapter~\ref{chap:vecm} with VECMs. Here we discuss two
-general sorts of multivariate model, implemented in \app{gretl} via
+general sorts of multivariate model, implemented in gretl via
 the \cmd{system} command: SUR systems (Seemingly Unrelated
 Regressions), in which all the regressors are taken to be exogenous
 and interest centers on the covariance of the error term across
@@ -55,7 +55,7 @@ sys1 <- system
 "System 1" <- system
 \end{code}
 Note, however, that this naming method is not available within a
-user-defined function, only in the main body of a \app{gretl} script.
+user-defined function, only in the main body of a gretl script.
 \end{itemize}
 
 If the initial \texttt{system} line is augmented in the first way, the
@@ -63,7 +63,7 @@ effect is that the system is estimated as soon as its definition is
 completed, using the specified method. The effect of the second option
 is that the system can then be referenced by the assigned name for the
 purposes of the \texttt{restrict} and \texttt{estimate} commands; in
-the \app{gretl} GUI an additional effect is that an icon for the
+the gretl GUI an additional effect is that an icon for the
 system is added to the ``Session view''.
 
 These two possibilities can be combined, as in
@@ -147,7 +147,7 @@ It is also possible to define a multivariate system in a programmatic
 way. This is useful if the precise specification of the system depends
 on some input parameters that are not known in advance, but are given
 when the script is actually run.\footnote{This feature was added in
-  version 1.9.7 of \app{gretl}.}
+  version 1.9.7 of gretl.}
 
 The relevant syntax is given by the \texttt{equations} keyword (note
 the plural), which replaces the block of \texttt{equation} lines in
@@ -332,14 +332,15 @@ y_t = \Gamma^{-1} \left(\sum_{i=1}^p A_i y_{t-i}\right)
  + \Gamma^{-1} B x_t + v_t
 \]
 where $v_t \equiv \Gamma^{-1}\epsilon_t$. The reduced form is used by
-\app{gretl} to generate forecasts in response to the \texttt{fcast}
-command. This means that --- in contrast to single-equation estimation
---- the values produced via \texttt{fcast} for a static, within-sample
-forecast will in general differ from the fitted values retrieved via
-\verb|$yhat|. The fitted values for equation $i$ represent the
-expectation of $y_{ti}$ conditional on the contemporaneous values of
-all the regressors, while the \texttt{fcast} values are conditional on
-the exogenous and predetermined variables only.
+gretl to generate forecasts in response to the \texttt{fcast}
+command. This means that---in contrast to single-equation
+estimation---the values produced via \texttt{fcast} for a static,
+within-sample forecast will in general differ from the fitted values
+retrieved via \verb|$yhat|. The fitted values for equation $i$
+represent the expectation of $y_{ti}$ conditional on the
+contemporaneous values of all the regressors, while the \texttt{fcast}
+values are conditional on the exogenous and predetermined variables
+only.
 
 The above account has to be qualified for the case where a system is
 set up for estimation via TSLS or 3SLS using a specific list of

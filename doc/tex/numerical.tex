@@ -75,7 +75,7 @@ contour lines are banana-shaped. It is defined by:
 \]
 %
 The function has a global minimum at $(x,y) = (1,1)$ where $f(x,y) =
-0$.  Example~\ref{rosenbrock} shows a \app{gretl} script that
+0$.  Example~\ref{rosenbrock} shows a gretl script that
 discovers the minimum using \texttt{BFGSmax} (giving a verbose account
 of progress). Note that, in this particular case, the function to be
 maximized only depends on the parameters, so the second parameter is
@@ -157,12 +157,12 @@ BFGS, discussed above, is an excellent all-purpose maximizer, and
 about as robust as possible given the limitations of digital computer
 arithmetic. The Newton--Raphson maximizer is not as robust, but may
 converge much faster than BFGS for problems where the maximand is
-reasonably well behaved --- in particular, where it is anything like
+reasonably well behaved---in particular, where it is anything like
 quadratic (see below). The case for using Newton--Raphson is enhanced
 if it is possible to supply a function to calculate the Hessian
 analytically.
 
-The \app{gretl} function \texttt{NRmax}, which implements the
+The gretl function \texttt{NRmax}, which implements the
 Newton--Raphson method, has a maximum of four arguments. The first two
 (required) arguments are exactly as for BFGS: an initial parameter
 vector, and a function call which returns the maximand given the
@@ -170,9 +170,9 @@ parameters. The (optional) third argument is again as in BFGS: a
 function call that calculates the gradient. Specific to \texttt{NRmax}
 is an optional fourth argument, namely a function call to calculate
 the (negative) Hessian. The first argument of this function must be a
-pre-defined matrix of the right dimension to hold the Hessian --- that
+pre-defined matrix of the right dimension to hold the Hessian---that
 is, a $k \times k$ matrix, where $k$ is the length of the parameter
-vector --- given in ``pointer'' form. The second argument should be
+vector---given in ``pointer'' form. The second argument should be
 the parameter vector (optionally in pointer form). Other data may be
 passed as additional arguments as needed. Similarly to the case with
 the gradient, if the fourth argument to \texttt{NRmax} is omitted then
@@ -258,8 +258,8 @@ A = NRmax(x, ND(x))
 \section{Simulated Annealing}
 \label{sec:sim-anneal}
 
-Simulated annealing --- as implemented by the \app{gretl} function
-\texttt{simann} --- is not a full-blown maximization method in its own
+Simulated annealing---as implemented by the gretl function
+\texttt{simann}---is not a full-blown maximization method in its own
 right, but can be a useful auxiliary tool in problems where
 convergence depends sensitively on the initial values of the
 parameters. The idea is that you supply initial values and the
@@ -279,7 +279,7 @@ of the previous one and determine the value of the criterion at the
 new point. If the criterion is higher we jump to the new point;
 otherwise, we jump with probability $P$ (and remain at the previous
 point with probability $1-P$).  As the iterations proceed, the system
-gradually ``cools'' --- that is, the radius of the random perturbation
+gradually ``cools''---that is, the radius of the random perturbation
 is reduced, as is the probability of making a jump when the criterion
 fails to increase.
 
@@ -333,8 +333,8 @@ print x
 \section{Computing a Jacobian}
 \label{sec:fdjac}
 
-\app{Gretl} offers the possibility of differentiating numerically a
-user-defined function via the \texttt{fdjac} function. 
+Gretl offers the possibility of differentiating numerically a
+user-defined function via the \texttt{fdjac} function.
 
 This function takes two arguments: an $n \times 1$ matrix holding
 initial parameter values and a function call that calculates and
@@ -432,7 +432,7 @@ printf "\nTest for MPC = 1: %g (p-value = %g)\n", \
 Script \ref{delta-method} exemplifies such a case: the example is
 taken from \cite{greene03}, section 9.3.1. The slight differences
 between the results reported in the original source and what
-\app{gretl} returns are due to the fact that the Jacobian is computed
+gretl returns are due to the fact that the Jacobian is computed
 numerically, rather than analytically as in the book.
 
 On the subject of numerical versus analytical derivatives, one may

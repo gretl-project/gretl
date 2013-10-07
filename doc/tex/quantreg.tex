@@ -6,7 +6,7 @@
 
 In Ordinary Least Squares (OLS) regression, the fitted values,
 $\hat{y}_i = X_i\hat{\beta}$, represent the \emph{conditional mean} of
-the dependent variable --- conditional, that is, on the regression
+the dependent variable---conditional, that is, on the regression
 function and the values of the independent variables.  In median
 regression, by contrast and as the name implies, fitted values
 represent the \emph{conditional median} of the dependent variable.  It
@@ -19,28 +19,28 @@ programming problem.
 
 Quantile regression is a generalization of median regression: the
 regression function predicts the conditional $\tau$-quantile of the
-dependent variable --- for example the first quartile ($\tau = .25$)
+dependent variable---for example the first quartile ($\tau = .25$)
 or the ninth decile ($\tau = .90$).
 
-If the classical conditions for the validity of OLS are satisfied ---
-that is, if the error term is independently and identically
-distributed, conditional on $X$ --- then quantile regression is
-redundant: all the conditional quantiles of the dependent variable
+If the classical conditions for the validity of OLS are
+satisfied---that is, if the error term is independently and
+identically distributed, conditional on $X$---then quantile regression
+is redundant: all the conditional quantiles of the dependent variable
 will march in lockstep with the conditional mean.  Conversely, if
 quantile regression reveals that the conditional quantiles behave in a
 manner quite distinct from the conditional mean, this suggests that
 OLS estimation is problematic.
 
-As of version 1.7.5, \app{gretl} offers quantile regression
+As of version 1.7.5, gretl offers quantile regression
 functionality (in addition to basic LAD regression, which has been
-available since early in \app{gretl}'s history via the \texttt{lad}
+available since early in gretl's history via the \texttt{lad}
 command).\footnote{We gratefully acknowledge our borrowing from the
   \texttt{quantreg} package for GNU \textsf{R} (version 4.17).  The
   core of the \texttt{quantreg} package is composed of Fortran code
   written by Roger Koenker; this is accompanied by various driver and
   auxiliary functions written in the \textsf{R} language by Koenker
   and Martin M\"achler.  The latter functions have been re-worked in C
-  for \app{gretl}.  We have added some guards against potential
+  for gretl.  We have added some guards against potential
   numerical problems in small samples.}
 
 \section{Basic syntax}
@@ -81,7 +81,7 @@ An option \option{intervals} is available.  When this is given we
 print confidence intervals for the parameter estimates instead of
 standard errors.  These intervals are computed using the rank
 inversion method and in general they are asymmetrical about the point
-estimates --- that is, they are not simply ``plus or minus so many
+estimates---that is, they are not simply ``plus or minus so many
 standard errors''.  The specifics of the calculation are inflected by
 the \option{robust} option: without this, the intervals are computed
 on the assumption of IID errors \citep{koenker94}; with it, they use
@@ -114,7 +114,7 @@ bounds in the second.  See also section~\ref{sec:bigdata} below.
 
 \section{Multiple quantiles}
 
-As a further option, you can give \textsl{tau} as a matrix --- either
+As a further option, you can give \textsl{tau} as a matrix---either
 the name of a predefined matrix or in numerical form, as in
 \verb+{.05, .25, .5, .75, .95}+.  The given model is estimated for all
 the $\tau$ values and the results are printed in a special form, as
@@ -143,22 +143,22 @@ With 90 percent confidence intervals
 \end{verbatim}
 }
 
-The \app{gretl} GUI has an entry for Quantile Regression (under
+The gretl GUI has an entry for Quantile Regression (under
 \textsf{/Model/Robust estimation}), and you can select multiple
 quantiles there too.  In that context, just give space-separated
 numerical values (as per the predefined options, shown in a drop-down
 list).  
 
 When you estimate a model in this way most of the standard menu items
-in the model window are disabled, but one extra item is available ---
-graphs showing the $\tau$ sequence for a given coefficient in
-comparison with the OLS coefficient.  An example is shown in
+in the model window are disabled, but one extra item is
+available---graphs showing the $\tau$ sequence for a given coefficient
+in comparison with the OLS coefficient.  An example is shown in
 Figure~\ref{fig:tau}.  This sort of graph provides a simple means of
 judging whether quantile regression is redundant (OLS is fine) or
-informative.  
+informative.
 
-In the example shown --- based on data on household income and food
-expenditure gathered by Ernst Engel (1821--1896) --- it seems clear
+In the example shown---based on data on household income and food
+expenditure gathered by Ernst Engel (1821--1896)---it seems clear
 that simple OLS regression is potentially misleading.  The
 ``crossing'' of the OLS estimate by the quantile estimates is very
 marked.  
@@ -202,7 +202,7 @@ estimates overlap at all the quantiles considered.
 
 As noted above, when you give the \option{intervals} option with the
 \texttt{quantreg} command, which calls for estimation of confidence
-intervals via rank inversion, \app{gretl} switches from the default
+intervals via rank inversion, gretl switches from the default
 Frisch--Newton algorithm to the Barrodale--Roberts simplex method.
 
 This is OK for moderately large datasets (up to, say, a few thousand
@@ -232,7 +232,7 @@ print ci
 The matrix \texttt{ci} will contain the lower and upper bounds of the
 (symmetrical) 90 percent confidence intervals.
 
-To avoid a situation where \app{gretl} becomes unresponsive for a very
+To avoid a situation where gretl becomes unresponsive for a very
 long time we have set the maximum number of iterations for the
 Borrodale--Roberts algorithm to the (somewhat arbitrary) value of
 1000.  We will experiment further with this, but for the meantime if

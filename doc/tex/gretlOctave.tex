@@ -16,12 +16,12 @@ packages that extend \app{Octave}'s functionality in various ways can
 be found at \url{octave.sf.net}.
 
 
-\section{\app{Octave} support in \app{gretl}}
+\section{\app{Octave} support in gretl}
 \label{sec:Octave-support}
 
-The support offered for \app{Octave} in \app{gretl} is similar to that
+The support offered for \app{Octave} in gretl is similar to that
 offered for \app{R} (chapter~\ref{chap:gretlR}).  For example, you can
-open and edit \app{Octave} scripts in the \app{gretl} GUI.  Clicking
+open and edit \app{Octave} scripts in the gretl GUI.  Clicking
 the ``execute'' icon in the editor window will send your code to
 \app{Octave} for execution.  Figures~\ref{fig:Octedit} and
 Figure~\ref{fig:Octout} show an \app{Octave} script and its output; in
@@ -42,10 +42,10 @@ replicate some results from \cite{greene00}.
   \label{fig:Octout}
 \end{figure}
 
-In addition you can embed \app{Octave} code within a \app{gretl}
+In addition you can embed \app{Octave} code within a gretl
 script using a \texttt{foreign} block, as described in connection with
 \app{R}.  A trivial example, which simply loads and prints the
-\app{gretl} data matrix within \app{Octave}, is shown below. (Note
+gretl data matrix within \app{Octave}, is shown below. (Note
 that in \app{Octave}, appending ``\texttt{;}'' to a line suppresses
 verbose output; leaving off the semicolon results in printing of the
 object that is produced, if any.)
@@ -118,18 +118,18 @@ addpath("~/stats/octave/forni");
 Alternatively, an \texttt{addpath} directive can be written into the
 \app{Octave} script that calls on these files.
 
-With everything set up on the \app{Octave} side we now write a
-\app{gretl} script (see Example~\ref{Octave-coher}) which opens a
-time-series dataset, constructs and writes a matrix containing two
-series, and defines a \texttt{foreign} block containing the
-\app{Octave} statements needed to produce the spectral coherence
-matrix. The matrix is exported via the \verb|gretl_export| function,
-which is automatically defined for you; this function takes two
-arguments, a matrix and a file name.  The file is written into the
-user's ``dotdir'', from where it can be picked up using
-\texttt{mread}. Finally, we produce a graph from the matrix in
-\app{gretl}.  In the script this is sent to the screen;
-Figure~\ref{fig:coherence} shows the same graph in PDF format.
+With everything set up on the \app{Octave} side we now write a gretl
+script (see Example~\ref{Octave-coher}) which opens a time-series
+dataset, constructs and writes a matrix containing two series, and
+defines a \texttt{foreign} block containing the \app{Octave}
+statements needed to produce the spectral coherence matrix. The matrix
+is exported via the \verb|gretl_export| function, which is
+automatically defined for you; this function takes two arguments, a
+matrix and a file name.  The file is written into the user's
+``dotdir'', from where it can be picked up using
+\texttt{mread}. Finally, we produce a graph from the matrix in gretl.
+In the script this is sent to the screen; Figure~\ref{fig:coherence}
+shows the same graph in PDF format.
 
 \begin{script}[htbp]
   \caption{Estimation of spectral coherence via \app{Octave}}

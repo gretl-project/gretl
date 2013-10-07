@@ -8,11 +8,10 @@ A separate program, \app{gnuplot}, is called to generate graphs.
 Gnuplot is a very full-featured graphing program with myriad options.
 It is available from \href{http://www.gnuplot.info/}{www.gnuplot.info}
 (but note that a suitable copy of gnuplot is bundled with the packaged
-versions of \app{gretl} for MS Windows and Mac OS X).  \app{gretl}
-gives you direct access, via a graphical interface, to a subset of
-gnuplot's options and it tries to choose sensible values for you; it
-also allows you to take complete control over graph details if you
-wish.
+versions of gretl for MS Windows and Mac OS X).  Gretl gives you
+direct access, via a graphical interface, to a subset of gnuplot's
+options and it tries to choose sensible values for you; it also allows
+you to take complete control over graph details if you wish.
 
 With a graph displayed, you can click on the graph window for a pop-up
 menu with the following options.
@@ -87,9 +86,9 @@ editor; ``OK'' applies the changes and closes the dialog.
 The GUI plot editor has two limitations.  First, it cannot represent
 all the myriad options that \app{gnuplot} offers. Users who are
 sufficiently familiar with \app{gnuplot} to know what they're missing
-in the plot editor presumably don't need much help from \app{gretl},
+in the plot editor presumably don't need much help from gretl,
 so long as they can get hold of the \app{gnuplot} command file that
-\app{gretl} has put together.  Second, even if the plot editor meets
+gretl has put together.  Second, even if the plot editor meets
 your needs, in terms of fine-tuning the graph you see on screen, a few
 details may need further work in order to get optimal results for
 publication.
@@ -100,7 +99,7 @@ access to the graph command file.
 \begin{itemize}
 \item In the graph display window, right-click and choose ``Save to
   session as icon''.
-\item If it's not already open, open the icon view window --- either
+\item If it's not already open, open the icon view window---either
   via the menu item View/Icon view, or by clicking the ``session icon
   view'' button on the main-window toolbar.
 \item Right-click on the icon representing the newly added graph and
@@ -130,7 +129,7 @@ points that may be useful.
 First, \app{gnuplot}'s output mode is set via the command \texttt{set
   term} followed by the name of a supported driver (``terminal'' in
 gnuplot parlance) plus various possible options.  (The top line in the
-plot commands window shows the \texttt{set term} line that \app{gretl}
+plot commands window shows the \texttt{set term} line that gretl
 used to make a PNG file, commented out.)  The graphic formats that are
 most suitable for publication are PDF and EPS.  These are supported by
 the gnuplot \texttt{term} types \texttt{pdf}, \texttt{pdfcairo} and
@@ -138,7 +137,7 @@ the gnuplot \texttt{term} types \texttt{pdf}, \texttt{pdfcairo} and
 \texttt{pdfcairo} driver has the virtue that is behaves in a very
 similar manner to the PNG one, the output of which you see on screen.
 This is provided by the version of gnuplot that is included in the
-\app{gretl} packages for MS Windows and Mac OS X; if you're on Linux
+gretl packages for MS Windows and Mac OS X; if you're on Linux
 it may or may be supported.  If \texttt{pdfcairo} is not available,
 the \texttt{pdf} terminal may be available; the \texttt{postscript}
 terminal is almost certainly available.
@@ -252,7 +251,7 @@ of a variable. The central box encloses the middle 50 percent of the
 data, i.e.\ it is bounded by the first and third quartiles.  The
 ``whiskers'' extend to the minimum and maximum values.  A line is
 drawn across the box at the median and a ``\texttt{+}'' sign
-identifies the mean --- see Figure~\ref{fig-boxplot}.
+identifies the mean---see Figure~\ref{fig-boxplot}.
 
 \begin{figure}[htbp]
   \begin{center}

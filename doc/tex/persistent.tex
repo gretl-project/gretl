@@ -5,9 +5,9 @@
 \section{Named lists}
 \label{named-lists}
 
-Many \app{gretl} commands take one or more lists of series as
+Many gretl commands take one or more lists of series as
 arguments.  To make this easier to handle in the context of command
-scripts, and in particular within user-defined functions, \app{gretl}
+scripts, and in particular within user-defined functions, gretl
 offers the possibility of \textit{named lists}.  
 
 \subsection{Creating and modifying named lists}
@@ -52,8 +52,8 @@ length of the name is 31 characters; list names cannot contain
 spaces.  
 
 Once a named list has been created, it will be ``remembered'' for the
-duration of the \app{gretl} session (unless you delete it), and can be
-used in the context of any \app{gretl} command where a list of
+duration of the gretl session (unless you delete it), and can be
+used in the context of any gretl command where a list of
 variables is expected.  One simple example is the specification of a
 list of regressors:
 %
@@ -115,7 +115,7 @@ xlist -= cpi
 \end{code}
 %
 
-In most contexts where lists are used in \app{gretl}, it is expected
+In most contexts where lists are used in gretl, it is expected
 that they do not contain any duplicated elements.  If you form a new
 list by simple concatenation, as in \texttt{list L3 = L1 L2}
 (where \texttt{L1} and \texttt{L2} are existing lists), it's possible
@@ -246,7 +246,7 @@ z^{(j)}_i =\left\{
 \] 
 in practice, you create dummies for the $x_i$ variable first and then
 you multiply them all by $z_i$; these are commonly called the
-\emph{interactions} between $x_i$ and $z_i$. In \app{gretl} you can do 
+\emph{interactions} between $x_i$ and $z_i$. In gretl you can do 
 \begin{code}
   list H = D ^ Z
 \end{code}
@@ -316,12 +316,12 @@ Output (selected portions):
 
 \subsection{Generating series from lists}
 
-Once a list is defined, \app{gretl} offers several functions that
+Once a list is defined, gretl offers several functions that
 apply to the list and return a series. In most cases, these functions
 also apply to single series and behave as natural extensions when
 applied to a list, but this is not always the case.
 
-For recognizing and handling missing values, \app{Gretl} offers
+For recognizing and handling missing values, gretl offers
 several functions (see the \GCR{} for details). In this context, it is
 worth remarking that the \texttt{ok()} function can be used with a
 list argument.  For example,
@@ -369,7 +369,7 @@ $x_{1,i}, x_{2,i}$ and $x_{3,i}$; missing values, if any, are implicitly discard
   \caption{GDP per capita and population in 3 European countries (Source: Eurostat)}
   \label{tab:EuroData}
 \end{table}
-In addition, \app{gretl} provides three functions for weighted
+In addition, gretl provides three functions for weighted
 operations: \texttt{wmean}, \texttt{wsd} and \texttt{wvar}. Consider
 as an illustration Table \ref{tab:EuroData}: the first three columns are GDP
 per capita for France, Germany and Italy; columns 4 to 6 contain the
@@ -491,7 +491,7 @@ vstr:     variance
 \end{code}
 
 String substitution can be used in contexts where a string variable is
-not acceptable as such. If \app{gretl} encounters the symbol \verb|@|
+not acceptable as such. If gretl encounters the symbol \verb|@|
 followed directly by the name of a string variable, this notation is
 treated as a ``macro'': the value of the variable is sustituted
 literally into the command line before the regular parsing of the
@@ -568,16 +568,16 @@ which attempts to print the values of two variables, \texttt{Just} and
 \subsection{Built-in strings}
 
 Apart from any strings that the user may define, some string variables
-are defined by \app{gretl} itself.  These may be useful for people
+are defined by gretl itself.  These may be useful for people
 writing functions that include shell commands.  The built-in strings
 are as shown in Table~\ref{tab:pred-strings}.
 
 \begin{table}[htbp]
 \centering
 \begin{tabular}{ll}
-  \texttt{gretldir} & the \app{gretl} installation directory \\
-  \texttt{workdir} & user's current \app{gretl} working directory \\
-  \texttt{dotdir} & the directory \app{gretl} uses for temporary files \\
+  \texttt{gretldir} & the gretl installation directory \\
+  \texttt{workdir} & user's current gretl working directory \\
+  \texttt{dotdir} & the directory gretl uses for temporary files \\
   \texttt{gnuplot} & path to, or name of, the \app{gnuplot} executable \\
   \texttt{tramo}& path to, or name of, the \app{tramo} executable \\
   \texttt{x12a} & path to, or name of, the \app{x-12-arima} executable \\
@@ -590,7 +590,7 @@ are as shown in Table~\ref{tab:pred-strings}.
 
 \subsection{Reading strings from the environment}
 
-In addition, it is possible to read into \app{gretl}'s named strings,
+In addition, it is possible to read into gretl's named strings,
 values that are defined in the external environment.  To do this you
 use the function \texttt{getenv}, which takes the name of an environment
 variable as its argument.  For example:
@@ -617,7 +617,7 @@ Generated scalar x = 0
 
 \subsection{Capturing strings via the shell}
 
-If shell commands are enabled in \app{gretl}, you can capture the
+If shell commands are enabled in gretl, you can capture the
 output from such commands using the syntax 
 
 \texttt{string} \textsl{stringname} = \texttt{\$(}\textsl{shellcommand}\texttt{)}

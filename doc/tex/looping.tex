@@ -4,7 +4,7 @@
 \section{Introduction}
 \label{loop-intro}
 
-The command \cmd{loop} opens a special mode in which \app{gretl}
+The command \cmd{loop} opens a special mode in which gretl
 accepts a block of commands to be repeated zero or more times.  This
 feature may be useful for, among other things, Monte Carlo simulations,
 bootstrapping of test statistics and iterative estimation procedures.
@@ -19,7 +19,7 @@ endloop
 Five forms of control-expression are available, as explained in
 section~\ref{loop-control}.
 
-Not all \app{gretl} commands are available within loops.  The commands
+Not all gretl commands are available within loops.  The commands
 that are not presently accepted in this context are shown in
 Table~\ref{tab:nonloopcmds}.
 
@@ -245,7 +245,7 @@ would expect \verb+r+ to equal 0.99 it may in fact have value
 0.990000000000001.)
 
 Any or all of the three expressions governing a \texttt{for} loop may
-be omitted --- the minimal form is \texttt{(;;)}.  If the continuation
+be omitted---the minimal form is \texttt{(;;)}.  If the continuation
 test is omitted it is implicitly true, so you have an infinite loop
 unless you arrange for some other way out, such as a \cmd{break}
 statement.
@@ -334,7 +334,7 @@ endloop
 This loop will print out summary statistics for the `a' and `b'
 estimates and $R^2$ across the 100 repetitions.  After running the
 loop, \verb+coeffs.gdt+, which contains the individual coefficient
-estimates from all the runs, can be opened in \app{gretl} to examine
+estimates from all the runs, can be opened in gretl to examine
 the frequency distribution of the estimates in detail.
 
 The command \cmd{nulldata} is useful for Monte Carlo work.  Instead of
@@ -353,8 +353,8 @@ estimation of a nonlinear consumption function of the form
 \[ C = \alpha + \beta Y^{\gamma} + \epsilon \]
 
 as presented in \cite{greene00}, Example 11.3.  This script is included
-in the \app{gretl} distribution under the name \verb+greene11_3.inp+;
-you can find it in \app{gretl} under the menu item ``File, Script files,
+in the gretl distribution under the name \verb+greene11_3.inp+;
+you can find it in gretl under the menu item ``File, Script files,
 Practice file, Greene...''.
 
 The option \option{print-final} for the \cmd{ols} command arranges

@@ -18,8 +18,8 @@
 {altcode}%
 {\vspace{1ex}\small\leftmargin 1em}{\vspace{1ex}}
 
-Since \textsf{gretl} version 1.9.2, the primary command for estimating
-dynamic panel models has been \texttt{dpanel}. The closely related
+Since gretl version 1.9.2, the primary command for estimating dynamic
+panel models has been \texttt{dpanel}. The closely related
 \texttt{arbond} command predated \texttt{dpanel}, and is still
 present, but whereas \texttt{arbond} only supports the so-called
 ``difference'' estimator \citep{arellano-bond91}, \texttt{dpanel} is
@@ -296,9 +296,9 @@ are appended automatically (see eq.\ \ref{eq:sys-gmm}).
 
 \subsection{Regressors}
 
-If we want to introduce additional regressors, we list them after
-the dependent variable in the same way as other \texttt{gretl}
-commands, such as \texttt{ols}. 
+If we want to introduce additional regressors, we list them after the
+dependent variable in the same way as other gretl commands, such as
+\texttt{ols}.
 
 For the difference orthogonality relations, \texttt{dpanel} takes care
 of transforming the regressors in parallel with the dependent
@@ -322,7 +322,7 @@ via the \verb|--time-dummies| option: in the differences-only case
 these dummies are entered in differenced form by default, but when the
 \verb|--dpdstyle| switch is applied they are entered in levels.
 
-The standard \texttt{gretl} syntax applies if you want to use lagged
+The standard gretl syntax applies if you want to use lagged
 explanatory variables, so for example the command
 \begin{code}
   dpanel 1 ; y const x(0 to -1) --system
@@ -839,7 +839,7 @@ or more Wald tests for the joint significance of the regressors (and time
 dummies, if applicable) and tests for first- and second-order
 autocorrelation of the residuals from the equations in differences.
 
-As in Ox/DPD, the Sargan test statistic reported by \textsf{gretl} is
+As in Ox/DPD, the Sargan test statistic reported by gretl is
 \[
   S = \left(\sum_{i=1}^N \hat{\bv}^{*\prime}_i \bZ_i\right)  
    \bA_N \left(\sum_{i=1}^N \bZ_i' \hat{\bv}^*_i\right)

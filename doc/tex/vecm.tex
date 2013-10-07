@@ -75,7 +75,7 @@ There are typically three steps in this sort of analysis:
 
 The following sections expand on each of these points, giving further
 econometric details and explaining how to implement the analysis using
-\app{gretl}.
+gretl.
 
 
 \section{Vector Error Correction Models as representation of a
@@ -146,7 +146,7 @@ occurs.
 Estimation typically proceeds in two stages: first, a sequence of
 tests is run to determine $r$, the cointegration rank. Then, for a
 given rank the parameters in equation (\ref{eq:VECMab}) are estimated.
-The two commands that \app{gretl} offers for estimating these systems
+The two commands that gretl offers for estimating these systems
 are \texttt{coint2} and \texttt{vecm}, respectively. 
 
 The syntax for \texttt{coint2} is 
@@ -357,7 +357,7 @@ The previous example can be generalized in three directions:
   levels).
 \end{enumerate}
 
-In order to accommodate the five cases, \app{gretl} provides the
+In order to accommodate the five cases, gretl provides the
 following options to the \texttt{coint2} and \texttt{vecm} commands:
 \begin{center}
   \begin{tabular}{ccl}
@@ -390,14 +390,14 @@ smallest. The null hypothesis for the $\lambda$-max test on the $i$-th
 eigenvalue is that $\lambda_i = 0$. The corresponding trace test,
 instead, considers the hypothesis $\lambda_j = 0$ for all $j \ge i$.
 
-The \app{gretl} command \cmd{coint2} performs these two
+The gretl command \cmd{coint2} performs these two
 tests. The corresponding menu entry in the GUI is ``Model, Time
 Series, Cointegration Test, Johansen''.
 
 As in the ADF test, the asymptotic distribution of the tests varies
 with the deterministic component $\mu_t$ one includes in the VAR (see
 section \ref{sec:coint-5cases} above). The following code uses the
-\cmd{denmark} data file, supplied with \app{gretl}, to replicate
+\cmd{denmark} data file, supplied with gretl, to replicate
 Johansen's example found in his 1995 book.
 %
 \begin{code}
@@ -461,7 +461,7 @@ first step, which also helps in that the remaining coefficients can be
 interpreted as the parameters in the equilibrium relations, but this
 only suffices when $r=1$.
 
-The method that \app{gretl} uses by default is known as the ``Phillips
+The method that gretl uses by default is known as the ``Phillips
 normalization'', or ``triangular representation''.\footnote{For
   comparison with other studies, you may wish to normalize $\beta$
   differently.  Using the \texttt{set} command you can do
@@ -491,7 +491,7 @@ post-multiplied by $\beta_1^{-1}$, giving
   \right]  ,
 \]
 
-The coefficients that \app{gretl} produces are $\hat{\beta}$, with
+The coefficients that gretl produces are $\hat{\beta}$, with
 $B$ known as the matrix of unrestricted coefficients. In
 terms of the underlying equilibrium relationship, the Phillips
 normalization expresses the system of $r$ equilibrium relations as
@@ -508,7 +508,7 @@ Although the triangular representation ensures that the statistical
 problem of estimating $\beta$ is solved, the resulting equilibrium
 relationships may be difficult to interpret. In this case, the user
 may want to achieve identification by specifying manually the system
-of $r^2$ constraints that \app{gretl} will use to produce an estimate
+of $r^2$ constraints that gretl will use to produce an estimate
 of $\beta$.
 
 As an example, consider the money demand system presented in section
@@ -619,8 +619,7 @@ theory underlying the equilibrium relationships; substantive
 restrictions of this sort are then testable via a likelihood-ratio
 statistic.
 
-\app{Gretl} is capable of testing general linear restrictions of the
-form 
+Gretl is capable of testing general linear restrictions of the form
 \begin{equation}
 \label{eq:Rb}
 R_b \vec{\beta} = q
@@ -654,7 +653,7 @@ and
 respectively, where $\phi$ and $\psi$ are the free parameter vectors
 associated with $\beta$ and $\alpha$ respectively.  We may refer
 to the free parameters collectively as $\theta$ (the column vector
-formed by concatenating $\phi$ and $\psi$).  \app{Gretl} uses this
+formed by concatenating $\phi$ and $\psi$).  Gretl uses this
 representation internally when testing the restrictions.
 
 If the list of restrictions that is passed to the \texttt{restrict}
@@ -780,7 +779,7 @@ interest rates, $y$ is output and $\pi$ is inflation.\footnote{A
   in this example the system is estimated with the constant term
   unrestricted, the liquidity premium gets merged in the system
   intercept and disappears from $z_t$.}  (The names for these
-variables in the \app{gretl} data file are \verb|m_p|, \texttt{rl},
+variables in the gretl data file are \verb|m_p|, \texttt{rl},
 \texttt{rs}, \texttt{y} and \texttt{infl}, respectively.)
 
 The cointegration rank assumed by the authors is 3 and there are 5
@@ -973,17 +972,17 @@ can be testable but not identifying.
 
 This can be seen quite easily in relation to a rank-1 system.  The
 restriction $\beta_1 = 1$ is identifying (it pins down the scale of
-$\beta$) but, being a pure scaling, it is not testable.  On the
-other hand, the restriction $\beta_1 + \beta_2 = 0$ is testable ---
-the system with this requirement imposed will almost certainly have a
-lower maximized likelihood --- but it is not identifying; it still
-leaves open the scale of $\beta$.  
+$\beta$) but, being a pure scaling, it is not testable.  On the other
+hand, the restriction $\beta_1 + \beta_2 = 0$ is testable---the system
+with this requirement imposed will almost certainly have a lower
+maximized likelihood---but it is not identifying; it still leaves
+open the scale of $\beta$.
 
 We said above that the number of restrictions must equal at least
 $r^2$, where $r$ is the cointegrating rank, for identification.  This
 is a necessary and not a sufficient condition.  In fact, when $r>1$ it
 can be quite tricky to assess whether a given set of restrictions is
-identifying.  \app{Gretl} uses the method suggested by \cite{doornik95},
+identifying.  Gretl uses the method suggested by \cite{doornik95},
 where identification is assessed via the rank of the information matrix.
 
 It can be shown that for restrictions of the sort (\ref{eq:vecbeta})
@@ -1017,12 +1016,12 @@ methods.\footnote{The exception is restrictions that are homogeneous,
   via the modified eigenvalues method set out by \cite{johansen95}.
   We solve directly for the ML estimator, without any need for
   iterative methods.}  In some cases convergence may be difficult, and
-\app{gretl} provides several choices to solve the problem.
+gretl provides several choices to solve the problem.
 
 \subsection{Switching and LBFGS}
 \label{sec:vecm-algorithms}
 
-Two maximization methods are available in \app{gretl}. The default is
+Two maximization methods are available in gretl. The default is
 the switching algorithm set out in \cite{boswijk-doornik04}.  The
 alternative is a limited-memory variant of the BFGS algorithm (LBFGS),
 using analytical derivatives.  This is invoked using the
@@ -1042,16 +1041,16 @@ the parameters.  For example, one might use all or part of the
 Phillips normalization (see section \ref{sec:johansen-ident}).
 
 Neither the switching algorithm nor LBFGS is guaranteed to find the
-global ML solution.\footnote{In developing \app{gretl}'s VECM-testing
+global ML solution.\footnote{In developing gretl's VECM-testing
   facilities we have considered a fair number of ``tricky cases'' from
   various sources. We'd like to thank Luca Fanelli of the University
   of Bologna and Sven Schreiber of Goethe University Frankfurt
-  for their help in devising torture-tests for \app{gretl}'s VECM
+  for their help in devising torture-tests for gretl's VECM
   code.} The optimizer may end up at a local maximum (or, in the case
 of the switching algorithm, at a saddle point).
 
 The solution (or lack thereof) may be sensitive to the initial value
-selected for $\theta$.  By default, \app{gretl} selects a starting
+selected for $\theta$.  By default, gretl selects a starting
 point using a deterministic method based on \cite{boswijk95}, but two
 further options are available: the initialization may be adjusted
 using simulated annealing, or the user may supply an explicit initial
@@ -1088,7 +1087,7 @@ the Moore--Penrose inverse of $A$.  Otherwise
 \subsection{Alternative initialization methods}
 \label{sec:vecm-alt-init}
 
-As mentioned above, \app{gretl} offers the option of adjusting the
+As mentioned above, gretl offers the option of adjusting the
 initialization using \textbf{simulated annealing}.  This is invoked by
 adding the \option{jitter} option to the \texttt{restrict} command.
 
@@ -1099,7 +1098,7 @@ previous one, and determine the likelihood at the new point.  If the
 likelihood is higher, we jump to the new point; otherwise, we jump
 with probability $P$ (and remain at the previous point with
 probability $1-P$).  As the iterations proceed, the system gradually
-``cools'' --- that is, the radius of the random perturbation is
+``cools''---that is, the radius of the random perturbation is
 reduced, as is the probability of making a jump when the likelihood
 fails to increase.
 
@@ -1111,7 +1110,7 @@ $\theta^*$.  This point may or may not have a greater likelihood than
 $\theta_0$.  And the procedure has an end point, $\theta_n$, which may
 or may not be ``best''.
 
-The rule followed by \app{gretl} in selecting an initial value for $\theta$
+The rule followed by gretl in selecting an initial value for $\theta$
 based on simulated annealing is this: use $\theta^*$ if $\theta^* >
 \theta_0$, otherwise use $\theta_n$.  That is, if we get an
 improvement in the likelihood via annealing, we make full use of this;
@@ -1145,7 +1144,7 @@ restrict
 end restrict
 \end{code}
 
-In this example --- from \cite{johansen95} --- the cointegration rank is
+In this example---from \cite{johansen95}---the cointegration rank is
 1 and there are 4 variables.  However, the model includes a restricted
 constant (the \option{rc} flag) so that $\beta$ has 5 elements.  The
 $\alpha$ matrix has 4 elements, one per equation.  So the matrix
@@ -1198,10 +1197,10 @@ restrict
 end restrict
 \end{code}
 
-This restriction comprises a substantive, testable requirement ---
-that $\beta_1$ and $\beta_2$ sum to zero --- and a normalization or
-scaling, $\beta_1 = 1$.  The question arises, might it be easier and
-more reliable to maximize the likelihood without imposing $\beta_1 =
+This restriction comprises a substantive, testable requirement---that
+$\beta_1$ and $\beta_2$ sum to zero---and a normalization or scaling,
+$\beta_1 = 1$.  The question arises, might it be easier and more
+reliable to maximize the likelihood without imposing $\beta_1 =
 1$?\footnote{As a numerical matter, that is.  In principle this should
   make no difference.}  If so, we could record this normalization,
 remove it for the purpose of maximizing the likelihood, then reimpose
@@ -1229,7 +1228,7 @@ included, so we do not do it in that case.  By ``just identified'' we
 mean that the system would not be identified if any of the
 restrictions were removed.  On that criterion the above example is not
 just identified, since the removal of the second restriction would not
-affect identification; and \app{gretl} would in fact perform scale
+affect identification; and gretl would in fact perform scale
 removal in this case unless the user specified otherwise.
 
 %%% Local Variables: 

@@ -24,7 +24,7 @@ following section.
 \subsection{The fixed and random effects models}
 \label{panel-est}
 
-In \app{gretl} version 1.6.0 and higher, the fixed and random effects
+In gretl version 1.6.0 and higher, the fixed and random effects
 models for panel data can be estimated in their own right.  In the
 graphical interface these options are found under the menu item
 ``Model/Panel/Fixed and random effects''.  In the command-line
@@ -32,7 +32,7 @@ interface one uses the \cmd{panel} command, with or without the
 \option{random-effects} option.
 
 This section explains the nature of these models and comments on their
-estimation via \app{gretl}.
+estimation via gretl.
 
 The pooled OLS specification may be written as 
 \begin{equation}
@@ -82,7 +82,7 @@ we can recover estimates of the $\alpha_i$s using
 \]
 
 These two methods (LSDV, and using de-meaned data) are numerically
-equivalent. \app{Gretl} takes the approach of de-meaning the data.  If
+equivalent. gretl takes the approach of de-meaning the data.  If
 you have a small number of cross-sectional units, a large number of
 time-series observations per unit, and a large number of regressors,
 it is more economical in terms of computer memory to use LSDV.  If 
@@ -96,7 +96,7 @@ ols y x du_*
 (See Chapter~\ref{chap-genr} for details on \texttt{unitdum}).
 
 The $\hat{\alpha}_i$ estimates are not printed as part of the standard
-model output in \app{gretl} (there may be a large number of these, and
+model output in gretl (there may be a large number of these, and
 typically they are not of much inherent interest).  However you can
 retrieve them after estimation of the fixed effects model if you
 wish.  In the graphical interface, go to the ``Save'' menu in the
@@ -123,8 +123,8 @@ for all $i$ and $t$, while the covariance $E(u_{is} u_{it})$ equals
 zero for all $s \neq t$ and the covariance $E(u_{jt} u_{it})$ equals
 zero for all $j \neq i$.
 
-If these assumptions are not met --- and they are unlikely to be met
-in the context of panel data --- OLS is not the most efficient
+If these assumptions are not met---and they are unlikely to be met
+in the context of panel data---OLS is not the most efficient
 estimator.  Greater efficiency may be gained using generalized least
 squares (GLS), taking into account the covariance structure of the
 error term.  
@@ -187,7 +187,7 @@ $\sigma^2_v$.  (These are often referred to as the ``within'' and
 variation within each cross-sectional unit and the latter to variation
 between the units).  Several means of estimating these magnitudes have
 been suggested in the literature \citep[see][]{baltagi95}; by default
-\app{gretl} uses the method of \cite{swamy72}: $\sigma^2_\varepsilon$
+gretl uses the method of \cite{swamy72}: $\sigma^2_\varepsilon$
 is estimated by the residual variance from the fixed effects model,
 and the sum $\sigma^2_\varepsilon + T_i \sigma^2_v$ is estimated as
 $T_i$ times the residual variance from the ``between'' estimator,
@@ -196,7 +196,7 @@ $T_i$ times the residual variance from the ``between'' estimator,
 \]
 The latter regression is implemented by constructing a data set
 consisting of the group means of all the relevant variables.
-Alternatively, if the \option{nerlove} option is given, \app{gretl}
+Alternatively, if the \option{nerlove} option is given, gretl
 uses the method suggested by \cite{nerlove71}. In this case
 $\sigma^2_v$ is estimated as the sample variance of the fixed effects,
 \[
@@ -238,8 +238,8 @@ issues must be taken into account.
   pooled OLS and the ``between'' estimator.  Suppose we have
   observations on $n$ units or individuals and there are $k$
   independent variables of interest.  If $k>n$, the ``between''
-  estimator is undefined --- since we have only $n$ effective
-  observations --- and hence so is the random effects estimator.
+  estimator is undefined---since we have only $n$ effective
+  observations---and hence so is the random effects estimator.
 \end{enumerate}
 
 If one does not fall foul of one or other of the prohibitions
@@ -251,7 +251,7 @@ From a purely statistical viewpoint, we could say that there is a
 tradeoff between robustness and efficiency. In the fixed effects
 approach, we do not make any hypotheses on the ``group effects'' (that
 is, the time-invariant differences in mean between the groups) beyond
-the fact that they exist --- and that can be tested; see below. As a
+the fact that they exist---and that can be tested; see below. As a
 consequence, once these effects are swept out by taking deviations
 from the group means, the remaining parameters can be estimated.
 
@@ -307,7 +307,7 @@ equation (\ref{eq:RE}) equals zero; if this hypothesis is not rejected,
 then again we conclude that the simple pooled model is adequate.
 
 The Hausman test probes the consistency of the GLS estimates.  The
-null hypothesis is that these estimates are consistent --- that is,
+null hypothesis is that these estimates are consistent---that is,
 that the requirement of orthogonality of the $v_i$ and the $X_i$ is
 satisfied.  The test is based on a measure, $H$, of the ``distance''
 between the fixed-effects and random-effects estimates, constructed
@@ -357,14 +357,14 @@ avoids this potential problem.  The procedure is:
   regressors to the RE model cannot raise the SSR.
 \end{itemize}
 
-By default \app{gretl} computes the Hausman test via the regression
+By default gretl computes the Hausman test via the regression
 method, but it uses the matrix-difference method if you pass the
 option \option{matrix-diff} to the \cmd{panel} command.
 
 \subsection{Robust standard errors}
 \label{panel-robust}
 
-For most estimators, \app{gretl} offers the option of computing an
+For most estimators, gretl offers the option of computing an
 estimate of the covariance matrix that is robust with respect to
 heteroskedasticity and/or autocorrelation (and hence also robust
 standard errors).  In the case of panel data, robust covariance matrix
@@ -465,9 +465,9 @@ underlying errors, $\varepsilon_{it}$, are not themselves serially
 correlated.
 
 The Anderson--Hsiao estimator is not provided as a built-in function
-in \app{gretl}, since \app{gretl}'s sensible handling of lags and
+in gretl, since gretl's sensible handling of lags and
 differences for panel data makes it a simple application of regression
-with instrumental variables --- see Example~\ref{anderson-hsiao},
+with instrumental variables---see Example~\ref{anderson-hsiao},
 which is based on a study of country growth rates by
 \cite{nerlove99}.\footnote{Also see Clint Cummins' benchmarks page,
   \url{http://www.stanford.edu/~clint/bench/}.}

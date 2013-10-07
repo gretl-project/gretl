@@ -90,7 +90,7 @@ another in the way they compute the direction vector
 $d(\mathbf{g}(\theta_0))$, to ensure that $\LogLik(\theta_1) >
 \LogLik(\theta_0)$ (so that we eventually end up on the maximum).
 
-The default method \app{gretl} uses to maximize the log-likelihood is
+The default method gretl uses to maximize the log-likelihood is
 a gradient-based algorithm known as the \textbf{BFGS} (Broyden,
 Fletcher, Goldfarb and Shanno) method. This technique is used in most
 econometric and statistical packages, as it is well-established and
@@ -167,7 +167,7 @@ where
 and $\gamma(\cdot)$ is the log of the gamma function.  In order to
 estimate the parameters $\alpha$ and $p$ via ML, we need to maximize
 (\ref{eq:gammaloglik}) with respect to them. The corresponding
-\app{gretl} code snippet is
+gretl code snippet is
 
 \begin{code}
 scalar alpha = 1
@@ -242,7 +242,7 @@ end mle
 
 Another thing to note is that sometimes parameters are constrained
 within certain boundaries: in this case, for example, both $\alpha$
-and $p$ must be positive numbers. \app{Gretl} does not check for this:
+and $p$ must be positive numbers. Gretl does not check for this:
 it is the user's responsibility to ensure that the function is
 always evaluated at an admissible point in the parameter space during
 the iterative search for the maximum. An effective technique is to
@@ -649,12 +649,12 @@ print m
 \label{sec:mle-func}
 
 The \texttt{mle} command allows you to estimate models that
-\app{gretl} does not provide natively: in some cases, it may be a good
+gretl does not provide natively: in some cases, it may be a good
 idea to wrap up the \texttt{mle} block in a user-defined function (see
-Chapter \ref{chap:functions}), so as to extend \app{gretl}'s
+Chapter \ref{chap:functions}), so as to extend gretl's
 capabilities in a modular and flexible way.
 
-As an example, we will take a simple case of a model that \app{gretl}
+As an example, we will take a simple case of a model that gretl
 does not yet provide natively: the zero-inflated Poisson model, or ZIP
 for short.\footnote{The actual ZIP model is in fact a bit more general
 than the one presented here. The specialized version discussed in this
@@ -833,7 +833,7 @@ Zero-inflated Poisson model:
 \end{code}
 
 A further step may then be creating a function package for accessing
-your new \texttt{zip()} function via \app{gretl}'s graphical interface. For
+your new \texttt{zip()} function via gretl's graphical interface. For
 details on how to do this, see section \ref{sec:func-packages}.
 
 \section{Advanced use of \texttt{mle}: functions, analytical
@@ -857,7 +857,7 @@ In the rest of this section, we will expand on the probit example of
 section \ref{sec:anal-der} to give the reader an idea of what a
 ``heavy-duty'' application of \cmd{mle} looks like. Most of the code
 fragments come from \verb|mle-advanced.inp|, which is one of the
-sample scripts supplied with the standard installation of \app{gretl}
+sample scripts supplied with the standard installation of gretl
 (see under \emph{File $>$ Script files $>$ Practice File}).
 
 \subsection{BFGS with and without analytical derivatives}
@@ -956,7 +956,7 @@ the \cmd{mle} block remains nicely compact.
 \subsection{Newton's method and the analytical Hessian}
 \label{sec:mle-adv-hessian}
 
-Since version 1.9.7, \app{gretl} offers the user the option of using
+Since version 1.9.7, gretl offers the user the option of using
 Newton's method for maximizing the log-likelihood. In terms of the
 notation used in section \ref{sec:mle-intro}, the direction for
 updating the inital parameter vector $\theta_0$ is given by
@@ -989,7 +989,7 @@ start, the Hessian $\mathbf{H}(\theta)$ may be difficult or very
 expensive to compute; moreover, the loglikelihood may not be globally
 concave, so for some values of $\theta$, the matrix
 $\mathbf{H}(\theta)$ is not negative definite or perhaps even
-singular.  Those cases are handled by \app{gretl}'s implementation of
+singular.  Those cases are handled by gretl's implementation of
 Newton's algorithm by means of several heuristic
 techniques\footnote{The gist to it is that, if $\mathbf{H}$ is not
   negative definite, it is substituted by $k \cdot
@@ -1006,24 +1006,24 @@ computation of the Hessian is not too CPU-intensive and the nature of
 the estimator is such that it is known in advance that the
 loglikelihood is globally concave. The probit models satisfies both
 requisites, so we will expand the preceding example to illustrate how
-to use Newton's method in \app{gretl}.
+to use Newton's method in gretl.
 
 A first example may be given simply by issuing the command
 \begin{code}
   set optimizer newton
 \end{code}
 before the \cmd{mle} block.\footnote{To go back to BFGS, you use
-  \cmd{set optimizer bfgs}.} This will instruct \app{gretl} to use
+  \cmd{set optimizer bfgs}.} This will instruct gretl to use
 Newton's method instead of BFGS. If the \cmd{deriv} keyword is used,
-\app{gretl} will differentiate the score function numerically;
+gretl will differentiate the score function numerically;
 otherwise, if the score has to be computed itself numerically,
-\app{gretl} will calculate $\mathbf{H}(\theta)$ by differentiating the
+gretl will calculate $\mathbf{H}(\theta)$ by differentiating the
 loglikelihood numerically twice. The latter solution, though, is
 generally to be avoided, as may be extremely time-consuming and may
 yield imprecise results.
 
 A much better option is to calculate the Hessian analytically and have
-\app{gretl} use its true value rather than a numerical
+gretl use its true value rather than a numerical
 approximation. In most cases, this is both much faster and numerically
 stable, but of course comes at the price of having to differentiate
 the loglikelihood twice to respect with the parameters and translate
@@ -1082,7 +1082,7 @@ In other words, the \cmd{hessian} keyword must be followed by the call
 to a function whose first argument is a matrix pointer which is
 supposed to be filled with the \emph{negative} of the Hessian at $\theta$.
 
-Another feature worth noting is that \app{gretl} does not perform any
+Another feature worth noting is that gretl does not perform any
 numerical check on whether the function computes the Hessian correctly
 or not. On the one hand, this means that you can trick \cmd{mle} into
 using alternatives to the Hessian and thereby implement other

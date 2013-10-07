@@ -19,26 +19,26 @@ academic users.  Quoting again from Doornik's website: ``The
 Console (command line) versions may be used freely for academic
 research and teaching purposes only\dots{}. The Ox syntax is public,
 and, of course, you may do with your own Ox code whatever you wish.''
-If you wish to use \app{Ox} in conjunction with \app{gretl} please
+If you wish to use \app{Ox} in conjunction with gretl please
 refer to \url{doornik.com} for further details on licensing.
 
 As the reader will no doubt have noticed, all the other software that
 we discuss in this Guide is open-source and freely available for all
 users.  We make an exception for \app{Ox} on the grounds that it is
-indeed fast and well designed, and that its statistical library ---
-along with various add-on packages that are also available --- has
-exceptional coverage of cutting-edge techniques in econometrics.  The
-\app{gretl} authors have used \app{Ox} for benchmarking some of
-\app{gretl}'s more advanced features such as dynamic panel models and
-state space models.\footnote{For a review of \app{Ox}, see
-  \cite{cribari-neto03} and for a (somewhat dated) comparison
-  of \app{Ox} with other matrix-oriented packages such as \app{GAUSS},
+indeed fast and well designed, and that its statistical
+library---along with various add-on packages that are also
+available---has exceptional coverage of cutting-edge techniques in
+econometrics.  The gretl authors have used \app{Ox} for benchmarking
+some of gretl's more advanced features such as dynamic panel models
+and state space models.\footnote{For a review of \app{Ox}, see
+  \cite{cribari-neto03} and for a (somewhat dated) comparison of
+  \app{Ox} with other matrix-oriented packages such as \app{GAUSS},
   see \cite{steinhaus99}.}
 
-\section{\app{Ox} support in \app{gretl}}
+\section{\app{Ox} support in gretl}
 \label{sec:Ox-support}
 
-The support offered for \app{Ox} in \app{gretl} is similar to that
+The support offered for \app{Ox} in gretl is similar to that
 offered for \app{R}, as discussed in chapter~\ref{chap:gretlR}, but
 with a few differences.  The first difference to note is that 
 \app{Ox} support is not on by default; it must be enabled explicitly.
@@ -47,14 +47,14 @@ with a few differences.  The first difference to note is that
   Tools/Preferences/General menu item and check the box labeled
   ``Enable Ox support''.
   Click ``OK'' in the preferences dialog, then
-  quit and restart \app{gretl}.  You will now find, under the Programs
+  quit and restart gretl.  You will now find, under the Programs
   tab in the Tools/Preferences/General dialog, an entry for specifying
   the path to the \texttt{oxl} executable, that is, the program that
   runs \app{Ox} files (on MS Windows it is called \texttt{oxl.exe}).
   Make sure that path is right, and you're ready to go.}
   
 With support enabled, you can open and edit \app{Ox} programs in the
-\app{gretl} GUI.  Clicking the ``execute'' icon in the editor window
+gretl GUI.  Clicking the ``execute'' icon in the editor window
 will send your code to \app{Ox} for execution.
 Figures~\ref{fig:Oxedit} and Figure~\ref{fig:Oxout} show an \app{Ox}
 program and part of its output.
@@ -73,9 +73,9 @@ program and part of its output.
   \label{fig:Oxout}
 \end{figure}
 
-In addition you can embed \app{Ox} code within a \app{gretl} script
+In addition you can embed \app{Ox} code within a gretl script
 using a \texttt{foreign} block, as described in connection with
-\app{R}.  A trivial example, which simply prints the \app{gretl} data
+\app{R}.  A trivial example, which simply prints the gretl data
 matrix within \app{Ox}, is shown below:
 %
 \begin{code}
@@ -94,17 +94,17 @@ end foreign
 \end{code}
 
 The above example illustrates how a matrix can be passed from
-\app{gretl} to \app{Ox}.  We use the \texttt{mwrite} function to write
+gretl to \app{Ox}.  We use the \texttt{mwrite} function to write
 a matrix into the user's ``dotdir'' (see
 section~\ref{sec:named-strings}), then in \app{Ox} we use the function
 \verb|gretl_loadmat| to retrieve the matrix.
 
-How does \verb|gretl_loadmat| come to be defined?  When \app{gretl}
+How does \verb|gretl_loadmat| come to be defined?  When gretl
 writes out the \app{Ox} program corresponding to your \texttt{foreign}
 block it does two things in addition.  First, it writes a small
 utility file named \verb|gretl_io.ox| into your dotdir.  This contains
 a definition for \verb|gretl_loadmat| and also for the function
-\verb|gretl_export| (see below).  Second, \app{gretl} interpolates
+\verb|gretl_export| (see below).  Second, gretl interpolates
 into your \app{Ox} code a line which includes this utility file (it is
 inserted right after the inclusion of \texttt{oxstd.h}, which is
 needed in all \app{Ox} programs).  Note that \verb|gretl_loadmat|
@@ -115,21 +115,21 @@ expects to find the named file in the user's dotdir.
 
 Example~\ref{Ox-DPD} shows a more ambitious case.  This script
 replicates one of the dynamic panel data models in
-\cite{arellano-bond91}, first using \app{gretl} and then using
-\app{Ox}; we then check the relative differences between the parameter
-estimates produced by the two programs (which turn out to be
-reassuringly small).
+\cite{arellano-bond91}, first using gretl and then using \app{Ox}; we
+then check the relative differences between the parameter estimates
+produced by the two programs (which turn out to be reassuringly
+small).
 
 Unlike the previous example, in this case we pass the dataset from
-\app{gretl} to \app{Ox} as a CSV file in order to preserve the
+gretl to \app{Ox} as a CSV file in order to preserve the
 variable names.  Note the use of the internal variable \verb|csv_na|
 to get the right representation of missing values for use with
-\app{Ox} --- and also note that the \verb|--send-data| option for the
+\app{Ox}---and also note that the \verb|--send-data| option for the
 \texttt{foreign} command is not available in connection with Ox.
 
 We get the parameter estimates back from \app{Ox} using
 \verb|gretl_export| on the \app{Ox} side and \texttt{mread} on the
-\app{gretl} side.  The \verb|gretl_export| function takes two
+gretl side.  The \verb|gretl_export| function takes two
 arguments, a matrix and a file name.  The file is written into the
 user's dotdir, from where it can be picked up using \texttt{mread}.
 The final portion of the output from Example~\ref{Ox-DPD} is shown
@@ -155,7 +155,7 @@ Generated matrix oxparm
 \end{code}
 
 \begin{script}[htbp]
-  \caption{Estimation of dynamic panel data model via \app{gretl} and \app{Ox}}
+  \caption{Estimation of dynamic panel data model via gretl and \app{Ox}}
 \begin{scode}
 open abdata.gdt
 

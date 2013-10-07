@@ -4,7 +4,7 @@
 \section{Introduction and examples}
 \label{nls-intro}
 
-\app{Gretl} supports nonlinear least squares (NLS) using a variant of
+Gretl supports nonlinear least squares (NLS) using a variant of
 the Levenberg--Marquardt algorithm.  The user must supply a
 specification of the regression function; prior to giving this
 specification the parameters to be estimated must be ``declared'' and
@@ -74,7 +74,7 @@ genr beta = $coeff(x1)
 \label{nls-gui}
 
 It is probably most convenient to compose the commands for NLS
-estimation in the form of a \app{gretl} script but you can also do so
+estimation in the form of a gretl script but you can also do so
 interactively, by selecting the item ``Nonlinear Least Squares'' under
 the ``Model, Nonlinear models'' menu.  This opens a dialog box where you can
 type the function specification (possibly prefaced by \cmd{genr} lines to set
@@ -98,7 +98,7 @@ tags.
 If you are able to figure out the derivatives of the regression
 function with respect to the parameters, it is advisable to supply
 those derivatives as shown in the examples above.  If that is not
-possible, \app{gretl} will compute approximate numerical derivatives.
+possible, gretl will compute approximate numerical derivatives.
 However, the properties of the NLS algorithm may not be so good in
 this case (see section~\ref{nls-accuracy}).
 
@@ -201,28 +201,28 @@ whether or not a correction for degrees of freedom should be applied
 when calculating the standard error of the regression (and the
 standard errors of the parameter estimates).  For comparability with
 OLS, and in light of the reasoning given in
-\cite{davidson-mackinnon93}, the estimates shown in \app{gretl}
+\cite{davidson-mackinnon93}, the estimates shown in gretl
 \emph{do} use a degrees of freedom correction.
 
 \section{Numerical accuracy}
 \label{nls-accuracy}
 
-Table \ref{tab-nls} shows the results of running the \app{gretl} NLS
+Table \ref{tab-nls} shows the results of running the gretl NLS
 procedure on the 27 Statistical Reference Datasets made available by
 the U.S.  National Institute of Standards and Technology (NIST) for
 testing nonlinear regression software.\footnote{For a discussion of
-  \app{gretl}'s accuracy in the estimation of linear models, see
+  gretl's accuracy in the estimation of linear models, see
   Appendix~\ref{app-accuracy}.}  For each dataset, two sets of
 starting values for the parameters are given in the test files, so the
 full test comprises 54 runs.  Two full tests were performed, one using
 all analytical derivatives and one using all numerical approximations.
 In each case the default tolerance was used.\footnote{The data shown
-  in the table were gathered from a pre-release build of \app{gretl}
+  in the table were gathered from a pre-release build of gretl
   version 1.0.9, compiled with \app{gcc} 3.3, linked against
   \app{glibc} 2.3.2, and run under Linux on an i686 PC (IBM ThinkPad
   A21m).}
 
-Out of the 54 runs, \app{gretl} failed to produce a solution
+Out of the 54 runs, gretl failed to produce a solution
 in 4 cases when using analytical derivatives, and in 5 cases when
 using numeric approximation. Of the four failures in analytical
 derivatives mode, two were due to non-convergence of the
@@ -242,10 +242,10 @@ estimates for both the parameters and the standard errors of the
 parameters.
 
 For each of the 54 runs in each mode, if the run produced a solution
-the parameter estimates obtained by \app{gretl} were compared with the
+the parameter estimates obtained by gretl were compared with the
 NIST certified values.  We define the ``minimum correct figures'' for
 a given run as the number of significant figures to which the
-\emph{least accurate} \app{gretl} estimate agreed with the certified
+\emph{least accurate} gretl estimate agreed with the certified
 value, for that run. The table shows both the average and the worst
 case value of this variable across all the runs that produced a
 solution.  The same information is shown for the estimated standard
@@ -253,15 +253,15 @@ errors.\footnote{For the standard errors, I excluded one outlier from
   the statistics shown in the table, namely \verb+Lanczos1+.  This is
   an odd case, using generated data with an almost-exact fit: the
   standard errors are 9 or 10 orders of magnitude smaller than the
-  coefficients.  In this instance \app{gretl} could reproduce the
+  coefficients.  In this instance gretl could reproduce the
   certified standard errors to only 3 figures (analytical derivatives)
   and 2 figures (numerical derivatives).}  
 
 The second measure of accuracy shown is the percentage of cases,
 taking into account all parameters from all successful runs, in which
-the \app{gretl} estimate agreed with the certified value to at least
+the gretl estimate agreed with the certified value to at least
 the 6 significant figures which are printed by default in the
-\app{gretl} regression output.
+gretl regression output.
 
 \begin{table}[htbp]
  \caption{Nonlinear regression: the NIST tests}
@@ -300,7 +300,7 @@ the 6 significant figures which are printed by default in the
   solutions to the test problems were obtained with substantially
   fewer iterations and the results were more accurate (most notably
   for the estimated standard errors).  Note also that the six-digit
-  results printed by \app{gretl} are not 100 percent reliable for
+  results printed by gretl are not 100 percent reliable for
   difficult nonlinear problems (in particular when using numerical
   derivatives).  Having registered this caveat, the percentage of
   cases where the results were good to six digits or better seems high

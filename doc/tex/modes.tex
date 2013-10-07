@@ -4,12 +4,12 @@
 \section{Command scripts}
 \label{scripts}
 
-As you execute commands in \app{gretl}, using the GUI and filling in
+As you execute commands in gretl, using the GUI and filling in
 dialog entries, those commands are recorded in the form of a
 ``script'' or batch file.  Such scripts can be edited and re-run,
-using either \app{gretl} or the command-line client, \app{gretlcli}.
+using either gretl or the command-line client, \app{gretlcli}.
 
-To view the current state of the script at any point in a \app{gretl}
+To view the current state of the script at any point in a gretl
 session, choose ``Command log'' under the Tools menu. This log
 file is called \verb+session.inp+ and it is overwritten whenever you
 start a new session.  To preserve it, save the script under a
@@ -42,18 +42,18 @@ on that command); (10) Close the window.
 When you execute the script, by clicking on the Execute icon or by
 pressing Ctrl-r, all output is directed to a single window, where it
 can be edited, saved or copied to the clipboard.  To learn more about
-the possibilities of scripting, take a look at the \app{gretl} Help
+the possibilities of scripting, take a look at the gretl Help
 item ``Command reference,'' or start up the command-line program
 \app{gretlcli} and consult its help, or consult the \GCR.
 
-If you run the script when part of it is highlighted, \app{gretl} will
+If you run the script when part of it is highlighted, gretl will
 only run that portion. Moreover, if you want to run just the current
 line, you can do so by pressing Ctrl-Enter.\footnote{This feature is
-  not unique to \app{gretl}; other econometric packages offer the same
+  not unique to gretl; other econometric packages offer the same
   facility. However, experience shows that while this can be
   remarkably useful, it can also lead to writing dinosaur scripts that
   are never meant to be executed all at once, but rather used as a
-  chaotic repository to cherry-pick snippets from. Since \app{gretl}
+  chaotic repository to cherry-pick snippets from. Since gretl
   allows you to have several script windows open at the same time, you
   may want to keep your scripts tidy and reasonably small.}
 
@@ -64,9 +64,9 @@ if there's a selection in place.  If the script is editable, this menu
 also gives the option of adding or removing comment markers from the
 start of the line or lines.
 
-The \app{gretl} package includes over 70 ``practice'' scripts.  Most
+The gretl package includes over 70 ``practice'' scripts.  Most
 of these relate to \cite{ramanathan02}, but they may also be used as a
-free-standing introduction to scripting in \app{gretl} and to various
+free-standing introduction to scripting in gretl and to various
 points of econometric theory.  You can explore the practice files
 under ``File, Script files, Practice file'' There you will find a
 listing of the files along with a brief description of the points they
@@ -79,7 +79,7 @@ in tandem, exploiting each method where it offers greater convenience.
 Here are two suggestions.
 
 \begin{itemize}
-\item Open a data file in the GUI.  Explore the data --- generate
+\item Open a data file in the GUI.  Explore the data---generate
   graphs, run regressions, perform tests.  Then open the Command log,
   edit out any redundant commands, and save it under a specific name.
   Run the script to generate a single file containing a concise record
@@ -97,14 +97,14 @@ Here are two suggestions.
 
 \subsection{Scripts and data files}
 
-One common way of doing econometric research with \app{gretl} is as
-follows: compose a script; execute the script; inspect the output;
-modify the script; run it again --- with the last three steps repeated
-as many times as necessary.  In this context, note that when you open
-a data file this clears out most of \app{gretl}'s internal state.
-It's therefore probably a good idea to have your script start with an
-\texttt{open} command: the data file will be re-opened each time, and
-you can be confident you're getting ``fresh'' results.
+One common way of doing econometric research with gretl is as follows:
+compose a script; execute the script; inspect the output; modify the
+script; run it again---with the last three steps repeated as many
+times as necessary.  In this context, note that when you open a data
+file this clears out most of gretl's internal state.  It's therefore
+probably a good idea to have your script start with an \texttt{open}
+command: the data file will be re-opened each time, and you can be
+confident you're getting ``fresh'' results.
 
 One further point should be noted.  When you go to open a new data
 file via the graphical interface, you are always prompted: opening a
@@ -145,7 +145,7 @@ in that case it must be wrapped in double quotes:
 \begin{code}
 "Model 1" <- ols Ct 0 Yt
 \end{code}
-Models saved in this way will appear as icons in the \app{gretl}
+Models saved in this way will appear as icons in the gretl
 icon view window (see Section \ref{session}) after the script is
 executed.  In addition, you can arrange to have a named model
 displayed (in its own window) automatically as follows:
@@ -181,7 +181,7 @@ the name of the object, as in \verb+ADF1.free+.
 \label{console}
 
 A further option is available for your computing convenience. Under
-\app{gretl}'s ``Tools'' menu you will find the item ``Gretl console''
+gretl's ``Tools'' menu you will find the item ``Gretl console''
 (there is also an ``open gretl console'' button on the toolbar in the
 main window).  This opens up a window in which you can type commands
 and execute them one by one (by pressing the Enter key) interactively.
@@ -200,7 +200,7 @@ graphs or text) aa described above for script mode.
 \section{The Session concept}
 \label{session}
 
-\app{gretl} offers the idea of a ``session'' as a way of keeping track
+Gretl offers the idea of a ``session'' as a way of keeping track
 of your work and revisiting it later. The basic idea is to provide an
 iconic space containing various objects pertaining to your current
 working session (see Figure \ref{fig-session}).  You can add objects
@@ -217,7 +217,7 @@ the session later.
   \label{fig-session}
 \end{figure}
 
-If you start \app{gretl} and open a data set, then select ``Icon
+If you start gretl and open a data set, then select ``Icon
 view'' from the View menu, you should see the basic default set of
 icons: these give you quick access to information on the data set (if
 any), correlation matrix (``Correlations'') and descriptive summary
@@ -234,7 +234,7 @@ Simply hitting the \verb+S+ key over the model window is a shortcut to
 the latter action.
 
 To add a graph, first create it (under the View menu, ``Graph
-specified vars'', or via one of \app{gretl}'s other graph-generating
+specified vars'', or via one of gretl's other graph-generating
 commands).  Click on the graph window to bring up the graph menu, and
 select ``Save to session as icon''.
 
@@ -247,19 +247,19 @@ object.  This popup menu also gives you the option of editing graphs.
 \label{model-table}
 
 In econometric research it is common to estimate several models with a
-common dependent variable --- the models differing in respect of which
+common dependent variable---the models differing in respect of which
 independent variables are included, or perhaps in respect of the
 estimator used.  In this situation it is convenient to present the
 regression results in the form of a table, where each column contains
 the results (coefficient estimates and standard errors) for a given
 model, and each row contains the estimates for a given variable across
-the models.  
+the models.
 
-In the Icon view window \app{gretl} provides a means of constructing
-such a table (and copying it in plain text, {\LaTeX} or Rich Text
-Format).  The procedure is outlined below.  (The model table can also
-be built non-interactively, in script mode.  For details, see the
-entry for \cmd{modeltab} in the \emph{Gretl Command Reference}.)
+In the Icon view window gretl provides a means of constructing such a
+table (and copying it in plain text, {\LaTeX} or Rich Text Format).
+The procedure is outlined below.  (The model table can also be built
+non-interactively, in script mode.  For details, see the entry for
+\cmd{modeltab} in the \emph{Gretl Command Reference}.)
 
       
 \begin{enumerate}
@@ -289,7 +289,7 @@ entry for \cmd{modeltab} in the \emph{Gretl Command Reference}.)
   table''.  Then go back to step 4 above and try again.
 \end{enumerate}
 
-A simple instance of \app{gretl}'s model table is shown in
+A simple instance of gretl's model table is shown in
 Figure~\ref{fig-model-table}.
 
 \begin{figure}[htbp]
@@ -326,7 +326,7 @@ you should be able to print the page.
 To clear the graph page, right-click on its icon and select ``Clear''.
 
 As with the model table, it is also possible to manipulate the graph
-page via commands in script or console mode --- see the entry for the
+page via commands in script or console mode---see the entry for the
 \cmd{graphpg} command in the \emph{Gretl Command Reference}.
 
 
@@ -334,18 +334,17 @@ page via commands in script or console mode --- see the entry for the
 \label{session-save}
 
 If you create models or graphs that you think you may wish to
-re-examine later, then before quitting \app{gretl} select ``Session
+re-examine later, then before quitting gretl select ``Session
 files, Save session'' from the File menu and give a name under
 which to save the session.  To re-open the session later, either
 
 \begin{itemize}
-\item Start \app{gretl} then re-open the session file by going to the
+\item Start gretl then re-open the session file by going to the
   ``File, Session files, Open session'', or
 \item From the command line, type \cmd{gretl -r} \textsl{sessionfile},
   where \textsl{sessionfile} is the name under which the session was
   saved, or
-\item Drag the icon representing a \app{gretl} session file onto
-  \app{gretl}.
+\item Drag the icon representing a session file onto gretl.
 \end{itemize}
 
 

@@ -53,7 +53,7 @@ compute the vector of ``slopes'', that is
   \mathrm{slope}_j(\bar{x}) = \left. \pder{F(z)}{x_j} \right|_{z =
     \bar{z}}
 \]
-\app{Gretl} automatically computes the slopes, setting each
+Gretl automatically computes the slopes, setting each
 explanatory variable at its sample mean.
 
 Another, equivalent way of thinking about this model is in terms of
@@ -76,7 +76,7 @@ of $\varepsilon_i$ is
   \frac{e^{-\varepsilon_i}}{(1 + e^{-\varepsilon_i})^2}
 \]
 
-Both the probit and logit model are estimated in \app{gretl} via
+Both the probit and logit model are estimated in gretl via
 maximum likelihood, where the log-likelihood can be written as
 \begin{equation}
   \label{eq:qr-loglik}
@@ -222,7 +222,7 @@ $L(\beta)$ can be made arbitrarily close to 0 simply by choosing
 enormous values for $\beta$. As a consequence, the log-likelihood has
 no maximum, despite being bounded.
 
-\app{Gretl} has a mechanism for preventing the algorithm from
+Gretl has a mechanism for preventing the algorithm from
 iterating endlessly in search of a non-existent maximum. One sub-case
 of interest is when the perfect prediction problem arises because of
 a single binary explanatory variable. In this case, the offending
@@ -249,7 +249,7 @@ are replicated in the example script \texttt{murder\_rates.inp}.
 
 These models constitute a simple variation on ordinary logit/probit
 models, and are usually applied when the dependent variable is a
-discrete and ordered measurement --- not simply binary, but on an
+discrete and ordered measurement---not simply binary, but on an
 ordinal rather than an interval scale.  For example, this sort of
 model may be applied when the dependent variable is a qualitative
 assessment such as ``Good'', ``Average'' and ``Bad''.  
@@ -291,7 +291,7 @@ on the characteristics $x_i$, is then given by
 %
 The unknown parameters $\alpha_j$ are estimated jointly with the
 $\beta$s via maximum likelihood.  The $\hat{\alpha}_j$ estimates are
-reported by \app{gretl} as \texttt{cut1}, \texttt{cut2} and so on. For
+reported by gretl as \texttt{cut1}, \texttt{cut2} and so on. For
 the probit variant, a conditional moment test for normality
 constructed in the spirit of \cite{chesher-irish87} is also included.
 
@@ -299,17 +299,17 @@ Note that the $\alpha_j$ parameters can be shifted arbitrarily by
 adding a constant to $z_i$, so the model is under-identified if there
 is some linear combination of the explanatory variables which is
 constant. The most obvious case in which this occurs is when the model
-contains a constant term; for this reason, \app{gretl} drops
+contains a constant term; for this reason, gretl drops
 automatically the intercept if present. However, it may happen that
 the user inadventently specifies a list of regressors that may be
 combined in such a way to produce a constant (for example, by using a
 full set of dummy variables for a discrete factor). If this happens,
-\app{gretl} will also drop any offending regressors.
+gretl will also drop any offending regressors.
 
-In order to apply these models in \app{gretl}, the dependent variable
+In order to apply these models in gretl, the dependent variable
 must either take on only non-negative integer values, or be explicitly
 marked as discrete.  (In case the variable has non-integer values, it
-will be recoded internally.)  Note that \app{gretl} does not provide a
+will be recoded internally.)  Note that gretl does not provide a
 separate command for ordered models: the \texttt{logit} and
 \texttt{probit} commands automatically estimate the ordered version if
 the dependent variable is acceptable, but not binary.
@@ -388,7 +388,7 @@ the weight of stocks in the pension portfolio.  Having reported the
 results of estimation of the ordered model, Wooldridge illustrates the
 effect of the \texttt{choice} variable by reference to an ``average''
 participant.  The example script shows how one can compute this effect
-in \app{gretl}.  
+in gretl.  
 
 After estimating ordered models, the \dollar{uhat} accessor yields
 generalized residuals as in binary models; additionally, the
@@ -401,7 +401,7 @@ $y^*_i$ simply by adding the two together.
 
 When the dependent variable is not binary and does not have a natural
 ordering, \emph{multinomial} models are used.  Multinomial logit is
-supported in \app{gretl} via the \verb|--multinomial| option to the
+supported in gretl via the \verb|--multinomial| option to the
 \texttt{logit} command.  Simple models can also be handled via the
 \texttt{mle} command (see chapter \ref{chap:mle}). We give here an
 example of such a model.  Let the dependent variable, $y_i$, take on
@@ -554,7 +554,7 @@ for example,
 \begin{code}
 tobit depvar indvars --llimit=10
 \end{code}
-would tell \app{gretl} that the left bound $a$ is set to 10.
+would tell gretl that the left bound $a$ is set to 10.
 
 \section{Interval regression}
 \label{sec:intreg}
@@ -589,11 +589,11 @@ models in several special cases:
 \item The Tobit model (see \ref{sec:tobit}) is a special case of the
   interval model in which $m_i$ and $M_i$ do not depend on $i$, that
   is, the censoring limits are the same for all observations. As a
-  matter of fact, \app{gretl}'s \texttt{tobit} commands is handled
+  matter of fact, gretl's \texttt{tobit} commands is handled
   internally as a special case of the interval model.
 \end{itemize}
 
-The \app{gretl} command \texttt{intreg} estimates interval models by
+The gretl command \texttt{intreg} estimates interval models by
 maximum likelihood, assuming normality of the disturbance term
 $\epsilon_i$.  Its syntax is
 %
@@ -624,7 +624,7 @@ additional regressors (see the \texttt{pvalue} command in the
 \GCR). Also included is a conditional moment normality test, similar
 to those provided for the probit, ordered probit and Tobit models (see
 above).  An example is contained in the sample script
-\texttt{wtp.inp}, provided with the \app{gretl} distribution.
+\texttt{wtp.inp}, provided with the gretl distribution.
 
 \begin{script}[ht]
   \caption{Interval model on artificial data}
@@ -750,7 +750,7 @@ equation (\ref{eq:heckit2}); next, the generalized residuals are
 inserted in equation (\ref{eq:heckit1}) to correct for the effect of
 sample selection.
 
-\app{Gretl} provides the \texttt{heckit} command to carry out
+Gretl provides the \texttt{heckit} command to carry out
 estimation; its syntax is
 %
 \begin{code}
@@ -763,7 +763,7 @@ observations and \texttt{Z} is a list of explanatory variables for the
 censoring equation.
 
 Since in most cases maximum likelihood is the method of
-choice, by default \app{gretl} computes ML estimates. The 2-step
+choice, by default gretl computes ML estimates. The 2-step
 Heckit estimates can be obtained by using the \option{two-step}
 option. After estimation, the \dollar{uhat} accessor contains the
 generalized residuals. As in the ordinary Tobit model, the residuals
@@ -801,7 +801,7 @@ heckit lww X ; LFP Z --two-step
 
 Example \ref{ex:heckit} shows two estimates from the dataset used in
 \cite{mroz87}: the first one replicates Table 22.7 in
-\cite{greene03},\footnote{Note that the estimates given by \app{gretl}
+\cite{greene03},\footnote{Note that the estimates given by gretl
   do not coincide with those found in the printed volume.  They do,
   however, match those found on the errata web page for Greene's book:
   \url{http://pages.stern.nyu.edu/~wgreene/Text/Errata/ERRATA5.htm}.}
@@ -842,7 +842,7 @@ semicolon, as in
   poisson depvar indep ; offset
 \end{code}
 It should be noted that the \texttt{poisson} command does not use,
-internally, the same optimization engines as most other \app{gretl}
+internally, the same optimization engines as most other gretl
 command, such as \cmd{arma} or \cmd{tobit}. As a consequence, some
 details may differ: the \option{verbose} option will yield different
 output and settings such as \texttt{bfgs\_toler} will not work.
@@ -886,7 +886,7 @@ $x_i$ can be shown to be
 \end{equation}
 which is known as the ``Negative Binomial Model''. The conditional
 mean is still $E(y_i | x_i) = \mu_i$, but the variance equals $V(y_i |
-x_i) = \mu_i \left( 1 + \mu_i \alpha \right)$. The \app{gretl} command
+x_i) = \mu_i \left( 1 + \mu_i \alpha \right)$. The gretl command
 for this model is \texttt{negbin depvar indep}.
 
 \begin{itemize}
@@ -894,10 +894,10 @@ for this model is \texttt{negbin depvar indep}.
   model, in which the conditional variance is a scalar multiple of the
   conditional mean, that is $V(y_i | x_i) = \mu_i \left( 1 + \gamma
   \right)$. To distinguish between the two, the model
-  \eqref{eq:negbin2} is termed ``Type 2''.  \app{Gretl} implements
+  \eqref{eq:negbin2} is termed ``Type 2''.  Gretl implements
   model 1 via the option \option{model1}.
 \item A script which exemplifies the above models is included among
-  \app{gretl}'s sample scripts, under the name \texttt{camtriv.inp}.
+  gretl's sample scripts, under the name \texttt{camtriv.inp}.
 \end{itemize}
 
 FIXME: expand.
@@ -921,12 +921,12 @@ following:
 
 In each case we may be interested in how the durations are
 distributed, and how they are affected by relevant covariates.  There
-are several approaches to this problem; the one we discuss here ---
-which is currently the only one supported by \app{gretl} --- is
+are several approaches to this problem; the one we discuss
+here---which is currently the only one supported by gretl---is
 estimation of a parametric model by means of Maximum Likelihood.  In
 this approach we hypothesize that the durations follow some definite
 probability law and we seek to estimate the parameters of that law,
-factoring in the influence of covariates. 
+factoring in the influence of covariates.
 
 We may express the density (PDF) of the durations as $f(t, X,
 \theta)$, where $t$ is the length of time in the state in question,
@@ -944,7 +944,7 @@ at least as long as $t$; it is therefore $1 - F(t, X, \theta)$ where
 $F$ is the CDF corresponding to the density $f(\cdot)$. The hazard
 function addresses this question: given that a state has persisted as
 long as $t$, what is the likelihood that it ends within a short
-increment of time beyond $t$ --- that is, it ends between $t$ and $t +
+increment of time beyond $t$---that is, it ends between $t$ and $t +
 \Delta$?  Taking the limit as $\Delta$ goes to zero, we end up with
 the ratio of the density to the survivor function:\footnote{For a
   fuller discussion see, for example, \cite{davidson-mackinnon04}.}
@@ -1082,7 +1082,7 @@ contributes to the likelihood. So in (\ref{eq:surv-loglik2}) we are
 adding up the log survivor function alone for the incomplete cases,
 plus the full log density for the completed cases.
 
-\subsection{Implementation in \app{gretl} and illustration}
+\subsection{Implementation in gretl and illustration}
 
 The \texttt{duration} command accepts a list of series on the usual
 pattern: dependent variable followed by covariates. If right-censoring
@@ -1118,7 +1118,7 @@ contains several covariates, which are described in the data file; we
 will focus below on interpretation of the \texttt{married} variable, a
 dummy which equals 1 if the respondent was married when imprisoned.
 
-Example~\ref{ex:duration1} shows the \app{gretl} commands for a
+Example~\ref{ex:duration1} shows the gretl commands for a
 Weibull model along with most of the output.  Consider first the scale
 factor, $\sigma$. The estimate is 1.241 with a standard error of
 0.048.  (We don't print a $z$ score and $p$-value for this term since
@@ -1303,7 +1303,7 @@ gnuplot 2 3 1 --with-lines --supp --matrix=mat_n --output=lognorm.plt
 
 One point to watch out for with the Weibull duration model is that the
 estimates may be represented in different ways.  The representation
-given by \app{gretl} is sometimes called the \textit{accelerated
+given by gretl is sometimes called the \textit{accelerated
   failure-time} (AFT) metric. An alternative that one sometimes sees
 is the \textit{log relative-hazard} metric; in fact this is the metric
 used in Wooldridge's presentation of the recidivism example.  To get
@@ -1316,7 +1316,7 @@ value is $-0.152$, which is what Wooldridge shows
 
 \subsection{Fitted values and residuals}
 
-By default, \app{gretl} computes fitted values (accessible via
+By default, gretl computes fitted values (accessible via
 \dollar{yhat}) as the conditional mean of duration.  The formulae
 are shown below (where $\Gamma$ denotes the gamma function, and the
 exponential variant is just Weibull with $\sigma = 1$).
@@ -1338,7 +1338,7 @@ is not noted in all software.\footnote{The \texttt{predict} adjunct to
   produces large negative values for the log-logistic mean in duration
   models with $\sigma > 1$.}
 
-Alternatively, if the \verb|--medians| option is given, \app{gretl}'s
+Alternatively, if the \verb|--medians| option is given, gretl's
 \texttt{duration} command will produce conditional medians as the
 content of \dollar{yhat}.  For the Weibull the median is
 $\exp(X\beta)(\log 2)^\sigma$; for the log-logistic and log-normal it

@@ -49,12 +49,12 @@ the ``classical'' formula,
 
 If the iid assumption is not satisfied, two things follow.  First, it
 is possible in principle to construct a more efficient estimator than
-OLS --- for instance some sort of Feasible Generalized Least Squares
+OLS---for instance some sort of Feasible Generalized Least Squares
 (FGLS).  Second, the simple ``classical'' formula for the variance of
 the least squares estimator is no longer correct, and hence the
-conventional OLS standard errors --- which are just the square roots
-of the diagonal elements of the matrix defined by
-(\ref{eq:ols-classical-varb}) --- do not provide valid means of
+conventional OLS standard errors---which are just the square roots of
+the diagonal elements of the matrix defined by
+(\ref{eq:ols-classical-varb})---do not provide valid means of
 statistical inference.
 
 In the recent history of econometrics there are broadly two approaches
@@ -73,7 +73,7 @@ While these methods are still in use, an alternative approach has
 found increasing favor: that is, use OLS but compute standard errors
 (or more generally, covariance matrices) that are robust with respect
 to deviations from the iid assumption.  This is typically combined
-with an emphasis on using large datasets --- large enough that the
+with an emphasis on using large datasets---large enough that the
 researcher can place some reliance on the (asymptotic) consistency
 property of OLS.  This approach has been enabled by the availability
 of cheap computing power.  The computation of robust standard errors
@@ -82,9 +82,9 @@ time, but now they are unproblematic.  The other point favoring the
 newer methodology is that while FGLS offers an efficiency advantage in
 principle, it often involves making additional statistical assumptions
 which may or may not be justified, which may not be easy to test
-rigorously, and which may threaten the consistency of the estimator
---- for example, the ``common factor restriction'' that is implied by
-traditional FGLS ``corrections'' for autocorrelated errors.
+rigorously, and which may threaten the consistency of the
+estimator---for example, the ``common factor restriction'' that is
+implied by traditional FGLS ``corrections'' for autocorrelated errors.
 
 James Stock and Mark Watson's \textit{Introduction to Econometrics}
 illustrates this approach at the level of undergraduate instruction:
@@ -95,9 +95,9 @@ classical standard errors (labeled ``homoskedasticity-only'') is
 confined to an Appendix.
 
 Against this background it may be useful to set out and discuss all
-the various options offered by \app{gretl} in respect of robust
+the various options offered by gretl in respect of robust
 covariance matrix estimation.  The first point to notice is that
-\app{gretl} produces ``classical'' standard errors by default (in all
+gretl produces ``classical'' standard errors by default (in all
 cases apart from GMM estimation).  In script mode you can get robust
 standard errors by appending the \option{robust} flag to estimation
 commands.  In the GUI program the model specification dialog usually
@@ -110,12 +110,12 @@ a set of possible robust estimation variants, and can also choose to
 make robust estimation the default.
 
 The specifics of the available options depend on the nature of the
-data under consideration --- cross-sectional, time series or panel ---
-and also to some extent the choice of estimator.  (Although we
-introduced robust standard errors in the context of OLS above, they
-may be used in conjunction with other estimators too.)  The following
-three sections of this chapter deal with matters that are specific to
-the three sorts of data just mentioned.  Note that additional details
+data under consideration---cross-sectional, time series or panel---and
+also to some extent the choice of estimator.  (Although we introduced
+robust standard errors in the context of OLS above, they may be used
+in conjunction with other estimators too.)  The following three
+sections of this chapter deal with matters that are specific to the
+three sorts of data just mentioned.  Note that additional details
 regarding covariance matrix estimation in the context of GMM are given
 in chapter~\ref{chap:gmm}.
 
@@ -161,15 +161,16 @@ matrix estimator (HCCME).
 
 Davidson and MacKinnon (\citeyear{davidson-mackinnon04}, chapter 5)
 offer a useful discussion of several variants on White's HCCME
-theme. They refer to the original variant of (\ref{eq:ols-varb-h}) ---
-in which the diagonal elements of $\hat{\Omega}$ are estimated
-directly by the squared OLS residuals, $\hat{u}^2_t$ --- as HC$_0$.
-(The associated standard errors are often called ``White's standard
-errors''.)  The various refinements of White's proposal share a common
-point of departure, namely the idea that the squared OLS residuals are
-likely to be ``too small'' on average.  This point is quite intuitive.
-The OLS parameter estimates, $\hat{\beta}$, satisfy by design the
-criterion that the sum of squared residuals,
+theme. They refer to the original variant of
+(\ref{eq:ols-varb-h})---in which the diagonal elements of
+$\hat{\Omega}$ are estimated directly by the squared OLS residuals,
+$\hat{u}^2_t$---as HC$_0$.  (The associated standard errors are often
+called ``White's standard errors''.)  The various refinements of
+White's proposal share a common point of departure, namely the idea
+that the squared OLS residuals are likely to be ``too small'' on
+average.  This point is quite intuitive.  The OLS parameter estimates,
+$\hat{\beta}$, satisfy by design the criterion that the sum of squared
+residuals,
 %
 \[
 \sum \hat{u}^2_t = \sum \left( y_t - X_t \hat{\beta} \right)^2
@@ -210,7 +211,7 @@ a clear consensus on which is ``best''.  Davidson and MacKinnon argue
 that the original HC$_0$ is likely to perform worse than the others;
 nonetheless, ``White's standard errors'' are reported more often than
 the more sophisticated variants and therefore, for reasons of
-comparability, HC$_0$ is the default HCCME in \app{gretl}.
+comparability, HC$_0$ is the default HCCME in gretl.
 
 If you wish to use HC$_1$, HC$_2$ or HC$_3$ you can arrange for this
 in either of two ways.  In script mode, you can do, for example,
@@ -357,7 +358,7 @@ This leaves two questions.  How exactly do we determine the maximum
 lag length or ``bandwidth'', $p$, of the HAC estimator?  And how
 exactly are the weights $w_j$ to be determined?  We will return to the
 (difficult) question of the bandwidth shortly.  As regards the
-weights, \app{Gretl} offers three variants.  The default is the
+weights, gretl offers three variants.  The default is the
 Bartlett kernel, as used by Newey and West.  This sets
 \[
 w_j = \left\{ \begin{array}{cc}
@@ -394,7 +395,7 @@ for $p=4$ and $j$ = 1 to 9.
 \includegraphics{figures/kernels}
 \end{figure}
 
-In \app{gretl} you select the kernel using the \texttt{set} command
+In gretl you select the kernel using the \texttt{set} command
 with the \verb|hac_kernel| parameter:
 %
 \begin{code}
@@ -408,10 +409,10 @@ set hac_kernel bartlett
 
 The asymptotic theory developed by Newey, West and others tells us in
 general terms how the HAC bandwidth, $p$, should grow with the sample
-size, $T$ --- that is, $p$ should grow in proportion to some
+size, $T$---that is, $p$ should grow in proportion to some
 fractional power of $T$.  Unfortunately this is of little help to the
 applied econometrician, working with a given dataset of fixed size.
-Various rules of thumb have been suggested, and \app{gretl} implements
+Various rules of thumb have been suggested, and gretl implements
 two such.  The default is $p = 0.75 T^{1/3}$, as recommended by
 \cite{stock-watson03}.  An alternative is $p = 4(T/100)^{2/9}$, as in
 \cite{wooldridge-intro}.  In each case one takes the integer part of the
@@ -500,7 +501,7 @@ Then an estimate of the matrix $X'\Omega X$ can be recovered via
 where $\hat{\Sigma}_{\varepsilon}$ is any HAC estimator, applied to the VAR
 residuals.
 
-You can ask for prewhitening in \app{gretl} using
+You can ask for prewhitening in gretl using
 %
 \begin{code}
 set hac_prewhiten on
@@ -526,19 +527,19 @@ This option is the default when prewhitening is selected, but you can
 override it by giving a specific numerical value for \verb|hac_lag|.
 
 Even the Newey--West data-based method does not fully pin down the
-bandwidth for any particular sample.  The first step involves 
+bandwidth for any particular sample.  The first step involves
 calculating a series of residual covariances.  The length of this
 series is given as a function of the sample size, but only up to a
-scalar multiple --- for example, it is given as $O(T^{2/9})$ for the
-Bartlett kernel.  \app{Gretl} uses an implied multiple of 1.  
+scalar multiple---for example, it is given as $O(T^{2/9})$ for the
+Bartlett kernel. Gretl uses an implied multiple of 1.
 
 \subsection{VARs: a special case}
 \label{sec:hac-VARs}
 
 A well-specified vector autoregression (VAR) will generally include
 enough lags of the dependent variables to obviate the problem of
-residual autocorrelation, in which case HAC estimation is redundant
---- although there may still be a need to correct for
+residual autocorrelation, in which case HAC estimation is
+redundant---although there may still be a need to correct for
 heteroskedasticity. For that reason plain HCCME, and not HAC, is the
 default when the \option{robust} flag is given in the context of the
 \cmd{var} command. However, if for some reason you need HAC you can
@@ -565,7 +566,7 @@ panel data require attention.
   is by pooled OLS.)
 \end{itemize}
 
-\app{Gretl} currently offers two robust covariance matrix estimators
+Gretl currently offers two robust covariance matrix estimators
 specifically for panel data.  These are available for models estimated
 via fixed effects, pooled OLS, and pooled two-stage least squares.
 The default robust estimator is that suggested by \cite{arellano03},
@@ -608,7 +609,7 @@ The covariances $\hat{\sigma}_{ij}$ are estimated via
 \]
 where $T$ is the length of the time series for each unit.  Beck and
 Katz call the associated standard errors ``Panel-Corrected Standard
-Errors'' (PCSE).  This estimator can be invoked in \app{gretl} via the
+Errors'' (PCSE).  This estimator can be invoked in gretl via the
 command 
 %
 \begin{code}
@@ -629,7 +630,7 @@ estimator is not used unless the \option{robust} flag is given, or the
 \section{The cluster-robust estimator}
 \label{sec:vcv-cluster}
 
-One further variance estimator is available in \app{gretl}, namely the
+One further variance estimator is available in gretl, namely the
 ``cluster-robust'' estimator. This may be appropriate (for
 cross-sectional data, mostly) when the observations naturally fall
 into groups or clusters, and one suspects that the error term may

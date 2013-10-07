@@ -7,24 +7,24 @@
 
 \TeX\ --- initially developed by Donald Knuth of Stanford University
 and since enhanced by hundreds of contributors around the world --- is
-the gold standard of scientific typesetting.  \app{Gretl} provides
+the gold standard of scientific typesetting.  Gretl provides
 various hooks that enable you to preview and print econometric results
 using the \TeX\ engine, and to save output in a form suitable for
 further processing with \TeX.
 
-This chapter explains the finer points of \app{gretl}'s \TeX-related
+This chapter explains the finer points of gretl's \TeX-related
 functionality.  The next section describes the relevant menu items;
 section~\ref{tex-tune} discusses ways of fine-tuning \TeX\ output; and
 section~\ref{tex-install} gives some pointers on installing (and
 learning) \TeX\ if you do not already have it on your computer.  (Just
-to be clear: \TeX\ is not included with the \app{gretl} distribution;
+to be clear: \TeX\ is not included with the gretl distribution;
 it is a separate package, including several programs and a large
 number of supporting files.)
 
 Before proceeding, however, it may be useful to set out briefly the
 stages of production of a final document using \TeX.  For the most
 part you don't have to worry about these details, since, in regard to
-previewing at any rate, \app{gretl} handles them for you.  But having
+previewing at any rate, gretl handles them for you.  But having
 some grasp of what is going on behind the scences will enable you to
 understand your options better.
 
@@ -41,7 +41,7 @@ formatting.  Typically this is either:
     called ``plain \TeX'', which is processed using the program
     \app{tex}.  The great majority of \TeX\ users, however, use the
     \LaTeX\ macros, initially developed by Leslie Lamport.
-    \app{Gretl} does not support plain \TeX.}
+    gretl does not support plain \TeX.}
 \end{itemize}
 
 For previewing, one uses either a DVI viewer (typically \app{xdvi} on
@@ -52,7 +52,7 @@ output, typically using the program \app{dvips} to generate a
 PostScript file.  If the PDF route is taken, the output is ready for
 printing without any further processing.
 
-On MS Windows and Mac OS X, \app{gretl} calls \app{pdflatex} to
+On MS Windows and Mac OS X, gretl calls \app{pdflatex} to
 process the source file, and expects the operating system to be able
 to find the default viewer for PDF output; DVI is not supported.  On
 GNU/Linux the default is also to produce PDF, but if you prefer the
@@ -68,7 +68,7 @@ system.
 
 \subsection{The model window}
 
-The fullest \TeX\ support in \app{gretl} is found in the GUI model
+The fullest \TeX\ support in gretl is found in the GUI model
 window.  This has a menu item titled ``LaTeX'' with sub-items
 ``View'', ``Copy'', ``Save'' and ``Equation options'' (see
 Figure~\ref{fig:latex-menu}).  
@@ -86,7 +86,7 @@ The first three sub-items have branches titled ``Tabular'' and
 the form of a table; this is the fullest and most explicit
 presentation of the results.  See Table~\ref{tab:mod1} for an example;
 this was pasted into the manual after using the ``Copy, Tabular'' item
-in \app{gretl} (a few lines were edited out for brevity).
+in gretl (a few lines were edited out for brevity).
 
 \begin{table}[htbp]
 \caption{Example of \LaTeX\ tabular output}
@@ -145,7 +145,7 @@ $F(3, 47)$ & 14.4306 \\
 \end{center}
 \end{table}
 
-The ``Equation'' option is fairly self-explanatory --- the results are
+The ``Equation'' option is fairly self-explanatory---the results are
 written across the page in equation format, as below:
 
 %%% the following needs the amsmath LaTeX package
@@ -197,7 +197,7 @@ appears when you press the button.
     \end{center}
 \end{figure}
 
-One aspect of \app{gretl}'s \TeX\ support that is likely to be
+One aspect of gretl's \TeX\ support that is likely to be
 particularly useful for publication purposes is the ability to produce
 a typeset version of the ``model table'' (see
 section~\ref{model-table}).  An example of this is shown in
@@ -240,17 +240,17 @@ Standard errors in parentheses\\
 \label{tex-tune}
 
 There are three aspects to this: adjusting the appearance of the
-output produced by \app{gretl} in \LaTeX\ preview mode; adjusting the
-formatting of \app{gretl}'s tabular output for models when using the
-\texttt{tabprint} command; and incorporating \app{gretl}'s output into
+output produced by gretl in \LaTeX\ preview mode; adjusting the
+formatting of gretl's tabular output for models when using the
+\texttt{tabprint} command; and incorporating gretl's output into
 your own \TeX\ files.
 
 
 \subsection{Previewing in the GUI}
 
 As regards \emph{preview mode}, you can control the appearance of
-\app{gretl}'s output using a file named \verb+gretlpre.tex+, which
-should be placed in your \app{gretl} user directory (see the \GCR).
+gretl's output using a file named \verb+gretlpre.tex+, which
+should be placed in your gretl user directory (see the \GCR).
 If such a file is found, its contents will be used as the ``preamble''
 to the \TeX\ source.  The default value of the preamble is as follows:
     
@@ -269,41 +269,41 @@ needed.)  Beyond that you can, for instance, change the type size or
 the font by altering the \texttt{documentclass} declaration or
 including an alternative font package.
 
-In addition, if you wish to typeset \app{gretl} output in more than
+In addition, if you wish to typeset gretl output in more than
 one language, you can set up per-language preamble files.  A
 ``localized'' preamble file is identified by a name of the form
 \verb|gretlpre_xx.tex|, where \texttt{xx} is replaced by the first two
 letters of the current setting of the \texttt{LANG} environment
 variable.  For example, if you are running the program in Polish,
-using \verb|LANG=pl_PL|, then \app{gretl} will do the following when
+using \verb|LANG=pl_PL|, then gretl will do the following when
 writing the preamble for a \TeX\ source file.
 
 \begin{enumerate}
-\item Look for a file named \verb|gretlpre_pl.tex| in the \app{gretl}
+\item Look for a file named \verb|gretlpre_pl.tex| in the gretl
   user directory.  If this is not found, then
-\item look for a file named \verb|gretlpre.tex| in the \app{gretl}
+\item look for a file named \verb|gretlpre.tex| in the gretl
   user directory.  If this is not found, then
 \item use the default preamble.
 \end{enumerate}
 
-Conversely, suppose you usually run \app{gretl} in a language other
+Conversely, suppose you usually run gretl in a language other
 than English, and have a suitable \verb|gretlpre.tex| file in place
 for your native language.  If on some occasions you want to produce
 \TeX\ output in English, then you could create an additional
 file \verb|gretlpre_en.tex|: this file will be used for the preamble
-when \app{gretl} is run with a language setting of, say,
+when gretl is run with a language setting of, say,
 \verb|en_US|.  
 
 
 \subsection{Command-line options}
 
-After estimating a model via a script --- or interactively via the
-\app{gretl} console or using the command-line program \app{gretlcli}
---- you can use the commands \texttt{tabprint} or \texttt{eqnprint} to
-print the model to file in tabular format or equation format
-respectively.  These options are explained in the \GCR{}.  
+After estimating a model via a script---or interactively via the gretl
+console or using the command-line program \app{gretlcli}---you can use
+the commands \texttt{tabprint} or \texttt{eqnprint} to print the model
+to file in tabular format or equation format respectively.  These
+options are explained in the \GCR{}.
 
-If you wish alter the appearance of \app{gretl}'s tabular output for
+If you wish alter the appearance of gretl's tabular output for
 models in the context of the \texttt{tabprint} command, you can
 specify a custom row format using the \option{format} flag.  The
 format string must be enclosed in double quotes and must be tied to
@@ -336,10 +336,10 @@ formatting you can use the special variant \verb|--format=default|.
 
 \subsection{Further editing}
 
-Once you have pasted \app{gretl}'s \TeX\ output into your own
+Once you have pasted gretl's \TeX\ output into your own
 document, or saved it to file and opened it in an editor, you can of
 course modify the material in any wish you wish.  In some cases,
-machine-generated \TeX\ is hard to understand, but \app{gretl}'s
+machine-generated \TeX\ is hard to understand, but gretl's
 output is intended to be human-readable and -editable.  In addition,
 it does not use any non-standard style packages.  Besides the standard
 \LaTeX\ document classes, the only files needed are, as noted above,

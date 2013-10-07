@@ -2,7 +2,7 @@
 \label{chap-filters}
 
 In addition to the usual application of lags and differences,
-\app{gretl} provides fractional differencing and various filters
+gretl provides fractional differencing and various filters
 commonly used in macroeconomics for trend-cycle decomposition: notably
 the Hodrick--Prescott filter \citep{hodrick97}, the Baxter--King
 bandpass filter \citep{baxter-king99} and the Butterworth
@@ -41,7 +41,7 @@ this could be considered shorthand for
 Y_t = X_t - 0.5 X_{t-1} - 0.125 X_{t-2} - 0.0625 X_{t-3} - \cdots 
 \]
     
-In \app{gretl} this transformation can be accomplished by the syntax 
+In gretl this transformation can be accomplished by the syntax 
 \begin{code}
 genr Y = fracdiff(X,0.5)
 \end{code}
@@ -75,7 +75,7 @@ second term penalizes variations in the growth rate of the trend
 component: the larger the value of $\lambda$, the higher is the
 penalty and hence the smoother the trend series.
 
-Note that the \cmd{hpfilt} function in \app{gretl} produces the
+Note that the \cmd{hpfilt} function in gretl produces the
 cyclical component, $c_t$, of the original series.  If you want the
 smoothed trend you can subtract the cycle from the original:
 
@@ -85,7 +85,7 @@ genr gt = yt - ct
 \end{code}
 
 \cite{hodrick97} suggest that a value of $\lambda = 1600$ is reasonable
-for quarterly data.  The default value in \app{gretl} is 100 times the
+for quarterly data.  The default value in gretl is 100 times the
 square of the data frequency (which, of course, yields 1600 for
 quarterly data).  The value can be adjusted using an optional
 second argument to \verb+hpfilt()+, as in
@@ -197,7 +197,7 @@ stop-band) but there is a downside: with a greater number of
 coefficients numerical instability may be an issue, and the influence
 of the initial values in the sample may be exaggerated.
 
-In \app{gretl} the Butterworth filter is implemented by the
+In gretl the Butterworth filter is implemented by the
 \verb+bwfilt()+ function,\footnote{The code for this filter is based
   on D. S. G. Pollock's programs \app{IDEOLOG} and \app{DETREND}. The
   Pascal source code for the former is available from
@@ -245,7 +245,7 @@ plot for the chosen filter. Note the smooth and reasonably steep
 drop-off in gain centered on the nominal cutoff of $68^{\circ} \approx
 3\pi/8$.
 
-The apparatus that supports this sort of analysis in the \app{gretl}
+The apparatus that supports this sort of analysis in the gretl
 GUI can be found under the \textsf{Variable} menu in the main window:
 the items \textsf{Periodogram} and \textsf{Filter}. In the periodogram
 dialog box you have the option of expressing the frequency axis in

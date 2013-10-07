@@ -124,7 +124,7 @@ See Davidson and MacKinnon (\citeyear{davidson-mackinnon93}, section
 17.6) for details.
 
 In the following sections we will show how these ideas are
-implemented in \app{gretl} through some examples.
+implemented in gretl through some examples.
 
 \section{OLS as GMM}
 \label{sec:gmm-ols}
@@ -168,7 +168,7 @@ previous section therefore specialize here to:
 \end{itemize}
 
 The code snippet contained in Example~\ref{gmm-ols-ex} uses
-\app{gretl}'s \texttt{gmm} command to make the above operational.
+gretl's \texttt{gmm} command to make the above operational.
 
 \begin{script}[htbp]
   \caption{OLS via GMM}
@@ -189,7 +189,7 @@ end gmm
 \end{code}
 \end{script}
 
-We feed \app{gretl} the necessary ingredients for GMM estimation
+We feed gretl the necessary ingredients for GMM estimation
 in a command block, starting with \texttt{gmm} and ending with
 \texttt{end gmm}. After the \texttt{end gmm} statement two mutually
 exclusive options can be specified: \option{two-step} or
@@ -248,13 +248,14 @@ least squares (TSLS) as a case of GMM.
 
 TSLS is employed in the case where one wishes to estimate a linear
 model of the form $y_t = X_t \beta + u_t$, but where one or more of
-the variables in the matrix $X$ are potentially endogenous ---
-correlated with the error term, $u$.  We proceed by identifying a set
-of instruments, $Z_t$, which are explanatory for the endogenous
-variables in $X$ but which are plausibly uncorrelated with $u$.  The
-classic two-stage procedure is (1) regress the endogenous elements of
-$X$ on $Z$; then (2) estimate the equation of interest, with the
-endogenous elements of $X$ replaced by their fitted values from (1).
+the variables in the matrix $X$ are potentially
+endogenous---correlated with the error term, $u$.  We proceed by
+identifying a set of instruments, $Z_t$, which are explanatory for the
+endogenous variables in $X$ but which are plausibly uncorrelated with
+$u$.  The classic two-stage procedure is (1) regress the endogenous
+elements of $X$ on $Z$; then (2) estimate the equation of interest,
+with the endogenous elements of $X$ replaced by their fitted values
+from (1).
 
 An alternative perspective is given by GMM.  We define the residual
 $\hat{u}_t$ as $y_t - X_t \hat{\beta}$, as usual.  But instead of
@@ -272,7 +273,7 @@ output from this script is shown in~\ref{gmm-tsls-out}.  The estimated
 standard errors from GMM are robust by default; if we supply the
 \option{robust} option to the \texttt{tsls} command we get identical
 results.\footnote{The data file used in this example is available in
-  the Stock and Watson package for \app{gretl}.  See
+  the Stock and Watson package for gretl.  See
   \url{http://gretl.sourceforge.net/gretl_data.html}.}
 
 \begin{script}[htbp]
@@ -361,7 +362,7 @@ where $J$ is a Jacobian term
 and $\Omega$ is the long-run covariance matrix of the orthogonality
 conditions. 
 
-\app{Gretl} computes $J$ by numeric differentiation (there is no
+Gretl computes $J$ by numeric differentiation (there is no
 provision for specifying a user-supplied analytical expression for $J$
 at the moment). As for $\Omega$, a consistent estimate is needed. The
 simplest choice is the sample covariance matrix of the $f_t$s:
@@ -374,7 +375,7 @@ This estimator is robust with respect to heteroskedasticity, but not
 with respect to autocorrelation.  A heteroskedasticity- and
 autocorrelation-consistent (HAC) variant can be obtained using the
 Bartlett kernel or similar.  A univariate version of this is used in
-the context of the \texttt{lrvar()} function --- see equation
+the context of the \texttt{lrvar()} function---see equation
 (\ref{eq:scalar-lrvar}).  The multivariate version is set out in
 equation (\ref{eq:gmm-hacvar}).
 
@@ -384,11 +385,11 @@ equation (\ref{eq:gmm-hacvar}).
     \sum_{t=k}^{T-k} \left[ \sum_{i=-k}^k w_i f_t(\theta) f_{t-i}(\theta)'  \right] ,
 \end{equation}
 
-\app{Gretl} computes the HAC covariance matrix by default when a GMM
+Gretl computes the HAC covariance matrix by default when a GMM
 model is estimated on time series data.  You can control the kernel
 and the bandwidth (that is, the value of $k$ in \ref{eq:gmm-hacvar})
 using the \texttt{set} command.  See chapter~\ref{chap-robust-vcv} for
-further discussion of HAC estimation.  You can also ask \app{gretl}
+further discussion of HAC estimation.  You can also ask gretl
 \emph{not} to use the HAC version by saying
 %
 \begin{code}
@@ -400,7 +401,7 @@ set force_hc on
 \section{A real example: the Consumption Based Asset Pricing Model}
 \label{sec:gmm-CBAPM}
 
-To illustrate \app{gretl}'s implementation of GMM, we will replicate
+To illustrate gretl's implementation of GMM, we will replicate
 the example given in chapter 3 of \cite{hall05}. The model to estimate
 is a classic application of GMM, and provides an example of a case
 when orthogonality conditions do not stem from statistical
@@ -561,7 +562,7 @@ set contains the constant and two lags of each variable.
 
 The command \texttt{set force\_hc on} on the second line of the script
 has the sole purpose of replicating the given example: as mentioned
-above, it forces \app{gretl} to compute the long-run variance of the
+above, it forces gretl to compute the long-run variance of the
 orthogonality conditions according to equation (\ref{eq:gmm-hcvar})
 rather than (\ref{eq:gmm-hacvar}).
 
@@ -609,7 +610,7 @@ are:
   number of lags to use when computing the long-run covariance matrix
   (see section \ref{sec:gmm-vcv}). Our advice is to go by trial and
   error, since results may be greatly influenced by a poor choice.
-  Future versions of \app{gretl} will include more options on
+  Future versions of gretl will include more options on
   covariance matrix estimation.
 \end{enumerate}
 

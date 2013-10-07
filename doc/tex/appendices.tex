@@ -4,17 +4,17 @@
 \section{Basic native format}
 \label{native}
 
-In \app{gretl}'s native data format, a data set is stored in XML
+In gretl's native data format, a data set is stored in XML
 (extensible mark-up language). Data files correspond to the simple DTD
 (document type definition) given in \verb+gretldata.dtd+, which is
-supplied with the \app{gretl} distribution and is installed in the
+supplied with the gretl distribution and is installed in the
 system data directory (e.g.\ \url{/usr/share/gretl/data} on Linux.)
 Data files may be plain text or gzipped.  They contain the actual data
 values plus additional information such as the names and descriptions
 of variables, the frequency of the data, and so on.
 
 Most users will probably not have need to read or write such files
-other than via \app{gretl} itself, but if you want to manipulate them
+other than via gretl itself, but if you want to manipulate them
 using other software tools you should examine the DTD and also take a
 look at a few of the supplied practice data files: \verb+data4-1.gdt+
 gives a simple example; \verb+data4-10.gdt+ is an example where
@@ -23,7 +23,7 @@ observation labels are included.
 \section{Traditional ESL format}
 \label{traddata}
 
-For backward compatibility, \app{gretl} can also handle data files in
+For backward compatibility, gretl can also handle data files in
 the ``traditional'' format inherited from Ramu Ramanathan's \app{ESL}
 program.  In this format a data set is represented by two text files;
 one contains the actual data and the other information on how the data
@@ -83,13 +83,13 @@ noted.
   indicates that in the corresponding data file the data are written
   out by variable rather than by observation.
 \item If \verb+BYOBS+ is followed by the keyword \verb+MARKERS+,
-  \app{gretl} expects a data file in which the \emph{first column}
+  gretl expects a data file in which the \emph{first column}
   contains strings (8 characters maximum) used to identify the
   observations.  This may be useful in the case of cross-sectional data
   where the units of observation are identifiable: countries, states,
   cities or whatever.  It can also be useful for irregular time series
   data, such as daily stock price data where some days are not trading
-  days --- in this case the observations can be marked with a date
+  days---in this case the observations can be marked with a date
   string such as \cmd{10/01/98}.  (Remember the 8-character maximum.)
   Note that \cmd{BYVAR} and \cmd{MARKERS} are mutually exclusive
   flags.  Also note that the ``markers'' are not considered to be a
@@ -113,7 +113,7 @@ command-line program or in the console window of the GUI program.
 \section{Binary database details}
 \label{dbdetails}
 
-A \app{gretl} database consists of two parts: an ASCII index file
+A gretl database consists of two parts: an ASCII index file
 (with filename suffix \verb+.idx+) containing information on the
 series, and a binary file (suffix \verb+.bin+) containing the actual
 data.  Two examples of the format for an entry in the \verb+idx+ file
@@ -160,14 +160,14 @@ variable 2, and so on.
 \label{app-build}
 
 Here we give instructions detailed enough to allow a user
-with only a basic knowledge of a Unix-type system to build \app{gretl}.
+with only a basic knowledge of a Unix-type system to build gretl.
 These steps were tested on a fresh installation of Debian Etch. For
 other Linux distributions (especially Debian-based ones, like Ubuntu
 and its derivatives) little should change. Other Unix-like operating
 systems such as Mac OS X and BSD would probably require more substantial
 adjustments.
 
-In this guided example, we will build \app{gretl} complete with
+In this guided example, we will build gretl complete with
 documentation.  This introduces a few more requirements, but gives you
 the ability to modify the documentation files as well, like the help
 files or the manuals.
@@ -189,7 +189,7 @@ GUI-based program \texttt{synaptic}. Users of Linux distributions
 which employ rpm packages (e.g.\ Red Hat/Fedora, Mandriva, SuSE) may
 want to refer to the
 \href{http://gretl.sourceforge.net/depend.html}{dependencies} page on
-the \app{gretl} website.
+the gretl website.
 
 The first step is installing the C compiler and related basic
 utilities, if these are not already in place. On a Debian system,
@@ -201,7 +201,7 @@ libc6-dev libc-dev gfortran gettext pkgconfig
 \end{code}
 
 Then it is necessary to install the ``development'' (\texttt{dev})
-packages for the libraries that \app{gretl} uses:
+packages for the libraries that gretl uses:
 \begin{center}
   \begin{tabular}{ll}
     \textit{Library} & \textit{command} \\ [4pt]
@@ -222,8 +222,8 @@ packages for the libraries that \app{gretl} uses:
 
 MPFR is optional, but recommended. It is possible to substitute GTK
 3.0 for GTK 2.0.  The \texttt{dev} packages for these libraries are
-necessary to \emph{compile} \app{gretl} --- you'll also need the
-plain, non-\texttt{dev} library packages to \emph{run} \app{gretl},
+necessary to \emph{compile} gretl---you'll also need the
+plain, non-\texttt{dev} library packages to \emph{run} gretl,
 but most of these should already be part of a standard installation.
 In order to enable other optional features, like audio support, you
 may need to install more libraries.
@@ -235,10 +235,10 @@ derivatives (Ubuntu, Knoppix and other distributions). The command
 \texttt{apt-get build-dep gretl}
 
 will download and install all the necessary packages for building the
-version of \app{gretl} that is currently present in your APT
+version of gretl that is currently present in your APT
 sources. Techincally, this does not guarantee that all the software
 necessary to build the CVS version is included, because the version of
-\app{gretl} on your repository may be quite old and build requirements
+gretl on your repository may be quite old and build requirements
 may have changed in the meantime. However, the chances of a mismatch
 are rather remote for a reasonably up-to-date system, so in most cases
 the above command should take care of everything correctly.}
@@ -247,16 +247,16 @@ the above command should take care of everything correctly.}
 
 At this point, it is possible to build from the source.  You have two
 options here: obtain the latest released source package, or retrieve
-the current CVS version of \app{gretl} (CVS = Concurrent Versions
+the current CVS version of gretl (CVS = Concurrent Versions
 System).  The usual caveat applies to the CVS version, namely, that it
 may not build correctly and may contain ``experimental'' code; on the
 other hand, CVS often contains bug-fixes relative to the released
 version.  If you want to help with testing and to contribute bug
-reports, we recommend using CVS \app{gretl}.
+reports, we recommend using CVS gretl.
 
 To work with the released source:
 \begin{enumerate}
-\item Download the \app{gretl} source package from
+\item Download the gretl source package from
   \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
 \item Unzip and untar the package.  On a system with the GNU utilities
   available, the command would be \cmd{tar xvfz gretl-N.tar.gz}
@@ -273,7 +273,7 @@ you may wish to consult include the CVS website at
 \href{http://www.nongnu.org/cvs/}{www.nongnu.org/cvs},
 general information on sourceforge CVS on the 
   \href{http://sourceforge.net/docman/display_doc.php?docid=14035&group_id=1}{SourceForge
-    CVS page}, and instructions specific to \app{gretl} at the
+    CVS page}, and instructions specific to gretl at the
 \href{http://sourceforge.net/cvs/?group_id=36234}{SF gretl CVS page}.
 
 When grabbing the CVS sources \textit{for the first time}, you should
@@ -327,7 +327,7 @@ multiplication and some other tasks. This requires adding the
 --enable-openmp
 \end{code}
 
-By default the \app{gretl} GUI is built using version 2.0 of the 
+By default the gretl GUI is built using version 2.0 of the 
 GTK libraries. However, another \texttt{configure} option enables
 use of version 3.0:
 \begin{code}
@@ -406,7 +406,7 @@ make
 
 This step will likely take several minutes to complete; a lot of
 output will be produced on screen. Once this is done, you can install
-your freshly baked copy of \app{gretl} on your system via
+your freshly baked copy of gretl on your system via
 \begin{code}
 make install
 \end{code}
@@ -423,7 +423,7 @@ sudo make install
 \chapter{Numerical accuracy}
 \label{app-accuracy}
 
-\app{Gretl} uses double-precision arithmetic throughout --- except for
+Gretl uses double-precision arithmetic throughout---except for
 the multiple-precision plugin invoked by the menu item ``Model, Other
 linear models, High precision OLS'' which represents floating-point
 values using a number of bits given by the environment variable
@@ -432,7 +432,7 @@ values using a number of bits given by the environment variable
 The normal equations of Least Squares are by default solved via
 Cholesky decomposition, which is highly accurate provided the matrix
 of cross-products of the regressors, $X'X$, is not very ill
-conditioned.  If this problem is detected, \app{gretl} automatically
+conditioned.  If this problem is detected, gretl automatically
 switches to use QR decomposition.
 
 The program has been tested rather thoroughly on the statistical
@@ -440,7 +440,7 @@ reference datasets provided by NIST (the U.S.  National Institute of
 Standards and Technology) and a full account of the results may be
 found on the gretl website (follow the link ``Numerical accuracy'').
 
-To date, two published reviews have discussed \app{gretl}'s accuracy:
+To date, two published reviews have discussed gretl's accuracy:
 Giovanni Baiocchi and Walter Distaso \citeyearpar{baiocchi03}, and
 Talha Yalta and Yasemin Yalta \citeyearpar{yalta07}.  We are grateful
 to these authors for their careful examination of the program.  Their
@@ -450,10 +450,10 @@ quantities relating to probability distributions (see
 \href{http://www.netlib.org/cephes/}{netlib.org}), changes to the
 formatting of regression output to ensure that the program displays a
 consistent number of significant digits, and attention to compiler
-issues in producing the MS Windows version of \app{gretl} (which at
+issues in producing the MS Windows version of gretl (which at
 one time was slighly less accurate than the Linux version).
 
-\app{Gretl} now includes a ``plugin'' that runs the NIST linear
+Gretl now includes a ``plugin'' that runs the NIST linear
 regression test suite.  You can find this under the ``Tools'' menu in
 the main window.  When you run this test, the introductory text
 explains the expected result.  If you run this test and see anything
@@ -461,7 +461,7 @@ other than the expected result, please send a bug report to
 \verb+cottrell@wfu.edu+.
 
 All regression statistics are printed to 6 significant figures in the
-current version of \app{gretl} (except when the multiple-precision
+current version of gretl (except when the multiple-precision
 plugin is used, in which case results are given to 12 figures).  If
 you want to examine a particular value more closely, first save it
 (for example, using the \cmd{genr} command) then print it using
@@ -470,9 +470,9 @@ you want to examine a particular value more closely, first save it
 \chapter{Related free software}
 \label{app-advanced}
 
-\app{Gretl}'s capabilities are substantial, and are expanding.
+Gretl's capabilities are substantial, and are expanding.
 Nonetheless you may find there are some things you can't do in
-\app{gretl}, or you may wish to compare results with other programs.
+gretl, or you may wish to compare results with other programs.
 If you are looking for complementary functionality in the realm of
 free, open-source software we recommend the following programs.  The
 self-description of each program is taken from its website.
@@ -509,21 +509,21 @@ self-description of each program is taken from its website.
 
 \end{itemize}
 
-As mentioned above, \app{gretl} offers the facility of exporting
+As mentioned above, gretl offers the facility of exporting
 data in the formats of both Octave and R.  In the case of Octave, the
-\app{gretl} data set is saved as a single matrix, \verb+X+. You can
+gretl data set is saved as a single matrix, \verb+X+. You can
 pull the \verb+X+ matrix apart if you wish, once the data are loaded
 in Octave; see the Octave manual for details.  As for R, the exported
 data file preserves any time series structure that is apparent to
-\app{gretl}.  The series are saved as individual structures. The data
+gretl.  The series are saved as individual structures. The data
 should be brought into R using the \cmd{source()} command.
   
-In addition, \app{gretl} has a convenience function for moving data
-quickly into R.  Under \app{gretl}'s ``Tools'' menu, you will find the
+In addition, gretl has a convenience function for moving data
+quickly into R.  Under gretl's ``Tools'' menu, you will find the
 entry ``Start GNU R''.  This writes out an R version of the current
-\app{gretl} data set (in the user's gretl directory), and sources it
+gretl data set (in the user's gretl directory), and sources it
 into a new R session.  The particular way R is invoked depends on the
-internal \app{gretl} variable \verb+Rcommand+, whose value may be set
+internal gretl variable \verb+Rcommand+, whose value may be set
 under the ``Tools, Preferences'' menu.  The default command is
 \cmd{RGui.exe} under MS Windows. Under X it is \cmd{xterm -e R}.
 Please note that at most three space-separated elements in this
