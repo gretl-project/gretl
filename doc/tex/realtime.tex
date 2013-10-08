@@ -315,7 +315,7 @@ quarterly data you may sometimes want to adjust the granularity of
 your realtime axis to a monthly or quarterly frequency. For example,
 in order to analyse the data revision process for monthly industrial
 production you might be interested in the extent of revisions between
-the data published two and three months after each observation period.
+the data available two and three months after each observation period.
 
 This is a relatively complicated task and there is more than one way
 of accomplishing it. Either you have to make several passes through
@@ -340,15 +340,15 @@ function:
 %
 \begin{code}
 function series rel_ok (series obsdate, series reldate, int p)
-  series y_obs, m_obs, y_rel, m_rel, d_rel
+  series y_obs, m_obs, y_rel, m_rel
   # get year and month from observation date
   isoconv(obsdate, &y_obs, &m_obs)
-  # get year, month and day from release date
-  isoconv(reldate, &y_rel, &m_rel, &d_rel)
+  # get year and month from release date
+  isoconv(reldate, &y_rel, &m_rel)
   # find the delta in months
   series dm = (12*y_rel + m_rel) - (12*y_obs + m_obs)
   # and implement the filter
-  return dm < p || (dm == p && d_rel == 1)
+  return dm <= p
 end function
 \end{code}
 %
@@ -356,7 +356,7 @@ And here's the command:
 %
 \begin{code}
 scalar lag = 3  # choose your fixed lag here
-join @fname INDPRO --tkey=observation_date \
+join @fname ip_plus3 --data=INDPRO --tkey=observation_date \
 --timecols="observation_date,realtime_start_date" \
 --filter="rel_ok(observation_date, realtime_start_date, lag)" \
 --aggr=max(realtime_start_date)
@@ -365,12 +365,14 @@ join @fname INDPRO --tkey=observation_date \
 Note that we use \option{timecols} to convert both the observation
 date and the realtime start date (or release date) to 8-digit
 numerical values. Both of these series are passed to the filter, which
-uses the built-in function \texttt{isoconv} to extract year and month
-(and also day, for the release). We can then calculate \texttt{dm},
-the ``delta months'' since the observation date, for each release.
-The filter condition is that this delta should be less than the
-specified lag, $p$, or (an optional refinement) the release occurs
-exactly $p$ months after the start of the observation period.
+uses the built-in function \texttt{isoconv} to extract year and month.
+We can then calculate \texttt{dm}, the ``delta months'' since the
+observation date, for each release.  The filter condition is that this
+delta should be no greater than the specified lag, $p$.\footnote{The
+  filter is written on the assumption that the lag is expressed in
+  months; on that understanding it could be used with annual or
+  quarterly data as well as monthly. The idea could be generalized to
+  cover weekly or daily data without much difficulty.}
 
 This filter condition may be satisfied by more than one release, so we
 need to specify an aggregation method: we simply choose the most
@@ -391,34 +393,29 @@ as follows.
 \begin{code}
 function series rel_ok2 (series obsdate, series reldate,
                          series enddate, int p)
-  series y1, m1, y2, m2, d2
+  series y1, m1, y2, m2
   /* (1): screen for revision not too recent */
-  # get year and month from observation date
   isoconv(obsdate, &y1, &m1)
-  # get year, month and day from release date
-  isoconv(reldate, &y2, &m2, &d2)
-  # find the delta in months
+  isoconv(revdate, &y2, &m2)
   series dm = (12*y2 + m2) - (12*y1 + m1)
-  series ok1 = dm < p || (dm == p && d2 == 1)
-  /* (2): screen for revision not already expired */
-  # find YYYMMDD day for obsdate + (p months)
-  series mp = m1+p <= 12 ? m1+p : (m1+p)%12
-  series yp = m1+p <= 12 ? y1 : y1 + floor((m1+p)/12)
-  series pdate = 10000*yp + 100*mp + 1
+  series ok1 = dm <= p
+  /* (2): screen for revision already expired */
+  isoconv(enddate, &y2, &m2)
+  dm = (12*y2 + m2) - (12*y1 + m1)
+  series ok2 = missing(dm) || dm > p
   /* (3): take logical product of (1) and (2) as filter */
-  return ok1 && (missing(enddate) || enddate > pdate)
+  return ok1 && ok2
 end function
 \end{code}
 
 In this variant our function first screens out releases that are too
 recent to fall within the lag window, as before, but then goes on to
-form the series \texttt{pdate} which holds the first day of the month
-given by observation date plus $p$. The additional requirement for the
-filter is then that the expiry date for a release must come after
-\texttt{pdate}---allowing for the fact, mentioned above, that if a
-release is still current at the end of the time represented in an
-Alfred file, this is indicated by a missing value in the realtime end
-date column.
+find the delta months between the start of the observation period and
+the release expiry date. The additional requirement for the filter is
+then that this delta is greater than the specified lag---allowing for
+the fact, mentioned above, that if a release is still current at the
+end of the time represented in an Alfred file, this is indicated by a
+missing value in the realtime end date column.
 
 Now our filter can return non-zero for at most one release per
 observation period (since all but one must have expired by the end of
@@ -428,7 +425,7 @@ option. The associated command now looks like this:
 
 \begin{code}
 scalar lag = 3  # choose your fixed lag here
-join @fname INDPRO --tkey=observation_date \
+join @fname ip_plus3 --data=INDPRO --tkey=observation_date \
 --timecols="observation_date,realtime_start_date,realtime_end_date" \
 --filter="rel_ok2(observation_date, realtime_start_date, \
  realtime_end_date, lag)"
@@ -498,11 +495,11 @@ question doesn't contain any holes, we use the simpler form of filter.
   \label{ex:revisions}
 \begin{scode}
 function series rel_ok (series *obsdate, series *reldate, int p)
-  series y_obs, m_obs, y_rel, m_rel, d_rel
+  series y_obs, m_obs, y_rel, m_rel
   isoconv(obsdate, &y_obs, &m_obs)
-  isoconv(reldate, &y_rel, &m_rel, &d_rel)
+  isoconv(reldate, &y_rel, &m_rel)
   series dm = (12*y_rel + m_rel) - (12*y_obs + m_obs)
-  return dm < p || (dm == p && d_rel == 1)
+  return dm <= p
 end function
 
 nulldata 45
@@ -594,7 +591,7 @@ ip_jan70 = ok(ip_jan70) ? ip_jan70 : ip_jan70(-1)
 
 \begin{figure}[htbp]
   \centering
-\includegraphics[scale=0.8]{figures/revhist}
+\includegraphics[scale=0.75]{figures/revhist}
 \caption{Vintages of US industrial production for January 1970}
   \label{fig:realtime-revhist}
 \end{figure}
