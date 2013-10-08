@@ -3125,11 +3125,11 @@ int csv_open_needs_matrix (gretlopt opt)
 /* below: apparatus to implement the "join" command */
 
 struct jr_row_ {
-    int n_keys;  /* number of keys (needed for qsort callback) */
-    int keyval;  /* primary key value */
-    int keyval2; /* secondary key value, if applicable */
-    double val;  /* data value */
-    double aux;  /* auxiliary value */
+    int n_keys;     /* number of keys (needed for qsort callback) */
+    gint64 keyval;  /* primary key value */
+    gint64 keyval2; /* secondary key value, if applicable */
+    double val;     /* data value */
+    double aux;     /* auxiliary value */
 };
 
 typedef struct jr_row_ jr_row;
@@ -3148,7 +3148,7 @@ struct joiner_ {
     int n_keys;     /* number of keys used (0, 1 or 2) */
     int n_unique;   /* number of unique primary key values on right */
     jr_row *rows;   /* array of table rows */
-    int *keys;      /* array of unique (primary) key values as integers */
+    gint64 *keys;   /* array of unique (primary) key values as 64-bit ints */
     int *key_freq;  /* counts of occurrences of (primary) key values */
     int *key_row;   /* record of starting row in joiner table for primary keys */
     int *str_keys;  /* flags for string comparison of key(s) */
@@ -3401,19 +3401,32 @@ static int evaluate_filter (jr_filter *filter, DATASET *r_dset,
     return err;
 }
 
-/* get an integer key value from a double, checking for pathology */
+/* get a 64-bit int key value from a double, checking for pathology */
 
-static int dtoi (double x, int obs, int *err)
+static gint64 dtoll (double x, int *err)
 {
-    if (xna(x) || fabs(x) > INT_MAX) {
-	if (obs > 0) {
-	    gretl_errmsg_sprintf("%s: invalid outer key value on row %d",
-				 "join", obs);
+    if (xna(x) || fabs(x) >  G_MAXINT64) {
+	*err = E_DATA;
+	return -1;
+    } else {
+	return (gint64) trunc(x);
+    }
+}
+
+static gint64 dtoll_full (double x, int key, int row, int *err)
+{
+    if (xna(x) || fabs(x) >  G_MAXINT64) {
+	if (key == 2) {
+	    gretl_errmsg_sprintf("%s: invalid secondary outer key value (%.12g) on row %d",
+				 "join", x, row);
+	} else {
+	    gretl_errmsg_sprintf("%s: invalid (primary) outer key value (%.12g) on row %d",
+				 "join", x, row);
 	}
 	*err = E_DATA;
 	return -1;
     } else {
-	return (int) trunc(x);
+	return (gint64) trunc(x);
     }
 }
 
@@ -3510,11 +3523,11 @@ static joiner *build_joiner (csvjoin *jspec,
 		if (using_auto_keys(jr)) {
 		    *err = read_outer_auto_keys(jr, j, i);
 		} else if (keycol > 0) {
-		    jr->rows[j].keyval = dtoi(Z[keycol][i], i+1, err);
-		    if (key2col > 0) {
+		    jr->rows[j].keyval = dtoll_full(Z[keycol][i], 1, i+1, err);
+		    if (!*err && key2col > 0) {
 			/* double key */
 			jr->rows[j].n_keys = 2;
-			jr->rows[j].keyval2 = dtoi(Z[key2col][i], i+1, err);
+			jr->rows[j].keyval2 = dtoll_full(Z[key2col][i], 2, i+1, err);
 		    } else {
 			/* single key */
 			jr->rows[j].n_keys = 1;
@@ -3622,7 +3635,7 @@ static int joiner_sort (joiner *jr)
 		    }
 		} else {
 		    /* arrange for qsort to move row to end */
-		    jr->rows[i].keyval = INT_MAX;
+		    jr->rows[i].keyval = G_MAXINT64;
 		    matches--;
 		}
 	    }
@@ -3704,14 +3717,14 @@ static void joiner_print (joiner *jr)
     for (i=0; i<jr->n_rows; i++) {
 	row = &jr->rows[i];
 	if (row->n_keys > 1) {
-	    fprintf(stderr, " row %d: keyvals=(%d,%d), data=%.12g\n", i, 
+	    fprintf(stderr, " row %d: keyvals=(%lld,%lld), data=%.12g\n", i, 
 		    row->keyval, row->keyval2, row->val);
 	} else {
 	    if (jr->str_keys[0] && row->keyval >= 0) {
-		fprintf(stderr, " row %d: keyval=%d (%s), data=%.12g\n", i, 
+		fprintf(stderr, " row %d: keyval=%lld (%s), data=%.12g\n", i, 
 			row->keyval, labels[row->keyval - 1], row->val);
 	    } else {
-		fprintf(stderr, " row %d: keyval=%d, data=%.12g\n", i, row->keyval,
+		fprintf(stderr, " row %d: keyval=%lld, data=%.12g\n", i, row->keyval,
 			row->val);
 	    }
 	}
@@ -3720,7 +3733,7 @@ static void joiner_print (joiner *jr)
     if (jr->keys != NULL) {
 	fprintf(stderr, " for primary key: n_unique = %d\n", jr->n_unique);
 	for (i=0; i<jr->n_unique; i++) {
-	    fprintf(stderr,"  key value %d: count = %d\n", 
+	    fprintf(stderr,"  key value %lld: count = %d\n", 
 		    jr->keys[i], jr->key_freq[i]);
 	}
     }
@@ -3753,7 +3766,7 @@ static int seqval_out_of_bounds (joiner *jr, int seqmax)
    among @vals at which @targ matches, or -1 for no match.  
 */
 
-static int binsearch (int targ, const int *vals, int n, int offset)
+static int binsearch (gint64 targ, const gint64 *vals, int n, int offset)
 {
     int m = n/2;
 
@@ -3812,7 +3825,7 @@ static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
    the caller.
 */
 
-static double aggr_value (joiner *jr, int key1, int key2,
+static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
 			  double *xmatch, double *auxmatch, 
 			  int *err)
 {
@@ -3826,9 +3839,9 @@ static double aggr_value (joiner *jr, int key1, int key2,
 
 #if AGGDEBUG
     if (pos < 0) {
-	fprintf(stderr, " key1 = %d: no match\n", key1);
+	fprintf(stderr, " key1 = %ld: no match\n", key1);
     } else {
-	fprintf(stderr, " key1 = %d: matched at position %d\n", key1, pos);
+	fprintf(stderr, " key1 = %ld: matched at position %d\n", key1, pos);
     }
 #endif    
 
@@ -3985,7 +3998,7 @@ static double maybe_adjust_string_code (series_table *rst,
 
 static int get_inner_key_values (joiner *jr, int i,
 				 const int *ikeyvars,
-				 int *pk1, int *pk2,
+				 gint64 *pk1, gint64 *pk2,
 				 int *missing)
 {
     DATASET *dset = jr->l_dset;
@@ -4008,7 +4021,7 @@ static int get_inner_key_values (joiner *jr, int i,
     } else {
 	/* using regular LHS key series */
 	double dk1, dk2 = 0;
-	int k1 = 0, k2 = 0;
+	gint64 k1 = 0, k2 = 0;
 
 	dk1 = dset->Z[ikeyvars[1]][i];
 	if (jr->n_keys == 2) {
@@ -4017,9 +4030,9 @@ static int get_inner_key_values (joiner *jr, int i,
 	if (xna(dk1) || xna(dk2)) {
 	    *missing = 1;
 	} else {
-	    k1 = dtoi(dk1, 0, &err);
+	    k1 = dtoll(dk1, &err);
 	    if (!err && jr->n_keys == 2) {
-		k2 = dtoi(dk2, 0, &err);
+		k2 = dtoll(dk2, &err);
 	    }
 	}
 	if (!err && !*missing) {
@@ -4039,7 +4052,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
     double *xmatch = NULL;
     double *auxmatch = NULL;
     int strcheck = 0;
-    int key, key2 = 0;
+    gint64 key, key2 = 0;
     int i, t, nmax;
     int err = 0;
 
