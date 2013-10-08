@@ -2070,6 +2070,7 @@ windata_t *view_help_file (const char *filename, int role)
 
     if (role != GUI_HELP && role != GUI_HELP_EN) {
 	set_up_helpview_menu(vwin);
+	hsize += 4;
     }
 
     if (role == FUNCS_HELP) {
