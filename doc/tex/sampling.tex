@@ -11,9 +11,10 @@ A sub-sample may be defined in relation to a full dataset in two
 different ways: we will refer to these as ``setting'' the sample and
 ``restricting'' the sample; these methods are discussed in
 sections~\ref{sec:sample-set} and~\ref{sec:sample-restrict}
-respectively. In addition section~\ref{sec:resampling} discusses
-resampling with replacement, which is useful in the context of
-bootstrapping test statistics.
+respectively. In addition section~\ref{sec:smpl-panel} discusses some
+special issues relating to panel data, and
+section~\ref{sec:resampling} covers resampling with replacement,
+which is useful in the context of bootstrapping test statistics.
 
 The following discussion focuses on the command-line approach. But you
 can also invoke the methods outlined here via the items under the
@@ -105,15 +106,14 @@ respondents with incomes over \$50,000.  Then we could use
 smpl income>50000 --restrict
 \end{code}
 
-A question arises here.  If we issue the two commands above in
-sequence, what do we end up with in our sub-sample: all cases with
-income over 50000, or just women with income over 50000? By default,
-the answer is the latter: women with income over 50000.  The second
-restriction augments the first, or in other words the final
-restriction is the logical product of the new restriction and any
-restriction that is already in place.  If you want a new restriction
-to replace any existing restrictions you can first recreate the full
-dataset using
+A question arises: if we issue the two commands above in sequence,
+what do we end up with in our sub-sample: all cases with income over
+50000, or just women with income over 50000? By default, the answer is
+the latter: women with income over 50000.  The second restriction
+augments the first, or in other words the final restriction is the
+logical product of the new restriction and any restriction that is
+already in place.  If you want a new restriction to replace any
+existing restrictions you can first recreate the full dataset using
 %
 \begin{code}
 smpl --full
@@ -139,14 +139,14 @@ several years (identified by the variable \verb+year+).  Then the
 restriction
 %
 \begin{code}
-smpl year=1995 --restrict
+smpl year==1995 --restrict
 \end{code}
 %
 produces a dataset that is not a panel, but a cross-section for the
 year 1995.  Similarly
 %
 \begin{code}
-smpl firm=3 --restrict
+smpl firm==3 --restrict
 \end{code}
 %
 produces a time-series dataset for firm number 3.
@@ -159,15 +159,12 @@ ending observations and uses these as parameters to the various
 commands calling for the estimation of models, the computation of
 statistics, and so on. In the case of restriction, the program makes a
 reduced copy of the dataset and by default treats this reduced copy as
-a simple, undated cross-section.\footnote{With one exception: if you
-  start with a balanced panel dataset and the restriction is such that
-  it preserves a balanced panel---for example, it results in the
-  deletion of all the observations for one cross-sectional unit---then
-  the reduced dataset is still, by default, treated as a panel.}
+a simple, undated cross-section---but see the further discussion of
+panel data in section~\ref{sec:smpl-panel}.
 
-If you wish to re-impose a time-series or panel interpretation of the
-reduced dataset you can do so using the \cmd{setobs} command, or the
-GUI menu item ``Data, Dataset structure''.
+If you wish to re-impose a time-series interpretation of the reduced
+dataset you can do so using the \cmd{setobs} command, or the GUI menu
+item ``Data, Dataset structure''.
 
 The fact that ``restricting'' the sample results in the creation of a
 reduced copy of the original dataset may raise an issue when the
@@ -199,6 +196,111 @@ to select 100 cases.  If you want the sample to be reproducible, you
 should set the seed for the random number generator first, using the
 \cmd{set} command.  This sort of sampling falls under the
 ``restriction'' category: a reduced copy of the dataset is made.
+
+\section{Panel data}
+\label{sec:smpl-panel}
+
+Consider for concreteness the Arellano--Bond dataset supplied with
+gretl (\texttt{abdata.gdt}). This comprises data on 140 firms
+$(n=140$) observed over the years 1976--1984 $(T=9)$. The dataset is
+``nominally balanced'' in the sense that that the time-series length
+is the same for all countries (this being a requirement for a dataset
+to count as a panel in gretl), but in fact there are many missing
+values (\texttt{NA}s).
+
+You may want to sub-sample such a dataset in either the
+cross-sectional dimension (limit the sample to a subset of firms) or
+the time dimension (e.g.\ use data from the 1980s only). The simplest
+(but limited) way to sub-sample on firms keys off the notation used by
+gretl for panel observations. The full data range is printed as
+\texttt{1:1} (firm 1, period 1) to \texttt{140:9} (firm 140, period
+9). The effect of
+%
+\begin{code}
+smpl 1:1 80:9
+\end{code}
+%
+is to limit the sample to the first 80 firms. Note that if you instead
+tried \texttt{smpl 1:1 80:4}, gretl would insist on preserving the
+balance of the panel and would truncate the range to ``complete''
+firms, as if you had typed \texttt{smpl 1:1 79:9}.
+
+The firms in the Arellano--Bond dataset are anonymous, but suppose you
+had a panel with five named countries. With such a panel you can
+inform gretl of the names of the groups using the \cmd{setobs}
+command. For example, given
+%
+\begin{code}
+string cstr = "Portugal Italy Ireland Greece Spain"
+setobs country cstr --panel-groups 
+\end{code}
+%
+gretl creates a string-valued series named \texttt{country} with group
+names taken from the variable \texttt{cstr}. Then, to include only
+Italy and Spain you could do
+%
+\begin{code}
+smpl country=="Italy" || country=="Spain" --restrict
+\end{code}
+%
+or to exclude one country,
+%
+\begin{code}
+smpl country!="Ireland" --restrict
+\end{code}
+
+To sub-sample in the time dimension, use of \option{restrict} is
+required. For example, the Arellano--Bond dataset contains a variable
+named \texttt{YEAR} that records the year of the observations and if
+one wanted to omit the first two years of data one could do
+%
+\begin{code}
+smpl YEAR >= 1978 --restrict
+\end{code}
+%
+If a dataset does not already incude a suitable variable for this
+purpose one can use the command \texttt{genr time} to create a simple
+1-based time index.
+
+Note that if you apply a sample restriction that just selects certain
+units (firms, countries or whatever), or selects certain contiguous
+time-periods---such that $n>1$, $T>1$ and the time-series length is
+still the same across all included units---your sub-sample will still
+be interpreted by gretl as a panel.
+
+
+\subsection{Unbalancing restrictions}
+
+In some cases one wants to sub-sample according to a criterion that
+``cuts across the grain'' of a panel dataset. For instance, suppose you
+have a micro dataset with thousands of individuals observed over
+several years and you want to restrict the sample to observations on
+employed women.  
+
+If we simply extracted from the total $nT$ rows of the dataset those
+that pertain to women who were employed at time $t$ $(t = 1,\dots,T)$
+we would likely end up with a dataset that doesn't count as a panel in
+gretl (because the specific time-series length, $T_i$, would differ
+across individuals). In some contexts it might be OK that gretl
+doesn't take your sub-sample to be a panel, but if you want to apply
+panel-specific methods this is a problem. You can solve it by giving
+the \option{balanced} option with \cmd{smpl}. For example, supposing
+your dataset contained dummy variables \texttt{gender} (with the value
+1 coding for women) and \texttt{employed}, you could do
+%
+\begin{code}
+smpl gender==1 && employed==1 --restrict --balanced
+\end{code}
+%
+What exactly does this do? Well, let's say the years of your data are
+2000, 2005 and 2010, and that some women were employed in all of those
+years, giving a maximum $T_i$ value of 3. But individual 526 is a
+women who was employed only in the year 2000 ($T_i = 1$). The effect
+of the \option{balanced} option is then to insert ``padding rows'' of
+\texttt{NA}s for the years 2005 and 2010 for individual 526, and
+similarly for all individuals with $0 < T_i < 3$. Your sub-sample
+then qualifies as a panel.
+
 
 \section{Resampling and bootstrapping}
 \label{sec:resampling}
