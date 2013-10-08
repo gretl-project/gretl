@@ -659,7 +659,7 @@ static int check_daily_dates (DATASET *dset, int *pd,
     for (t=0; t<dset->n && !err; t++) {
 	int wd, s = (*reversed)? (dset->n - 1 - t) : t;
 
-	wd = get_day_of_week(dset->S[s]);
+	wd = weekday_from_date(dset->S[s]);
 
 	if (dset->pd == 5 && (wd == 6 || wd == 0)) {
 	    /* Got Sat or Sun, can't be 5-day daily? */

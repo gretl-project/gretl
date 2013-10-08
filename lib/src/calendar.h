@@ -41,7 +41,9 @@ int iso_basic_to_extended (const double *b, double *y, double *m,
 
 long get_epoch_day (const char *date);
 
-int get_day_of_week (const char *date);
+int weekday_from_date (const char *date);
+
+int weekday_from_epoch_day (long ed);
 
 int day_starts_month (int d, int m, int y, int wkdays, int *pad);
 

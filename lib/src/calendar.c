@@ -201,16 +201,21 @@ char *ymd_extended_from_epoch_day (long ed, int *err)
 {
     char *ret = NULL;
     int y, m, d;
+    int myerr;
 
-    *err = real_ymd_from_epoch_day(ed, &y, &m, &d);
+    myerr = real_ymd_from_epoch_day(ed, &y, &m, &d);
 
-    if (!*err) {
+    if (!err) {
 	ret = calloc(12, 1);
 	if (ret == NULL) {
-	    *err = E_ALLOC;
+	    myerr = E_ALLOC;
 	} else {
 	    sprintf(ret, "%04d-%02d-%02d", y, m, d);
 	}
+    }
+
+    if (err != NULL) {
+	*err = myerr;
     }
 
     return ret;
@@ -240,7 +245,14 @@ double ymd_basic_from_epoch_day (long ed, int *err)
     return x;
 }
 
-static int weekday_from_epoch_day (long ed)
+/**
+ * weekday_from_epoch_day:
+ * @ed: epoch day (ed >= 1).
+ * 
+ * Returns: the weekday (Sunday = 0) corrsponding to @ed.
+ */
+
+int weekday_from_epoch_day (long ed)
 {
     int y, m, d, delta;
     long days = 0L;
@@ -624,13 +636,13 @@ double day_of_week (int yr, int mo, int day, int *err)
                                (w == 5 && d != 0 && d != 6))
 
 /**
- * get_day_of_week:
+ * weekday_from_date:
  * @date: calendar representation of date, [YY]YY/MM/DD
  * 
  * Returns: day of week as integer, Sunday = 0.
  */
 
-int get_day_of_week (const char *date)
+int weekday_from_date (const char *date)
 {
     int yr, mo, day;
 
@@ -868,13 +880,13 @@ int guess_daily_pd (const DATASET *dset)
     int gotsat = 0, gotsun = 0;
     int contig = 0;
 
-    wd = get_day_of_week(dset->S[0]);
+    wd = weekday_from_date(dset->S[0]);
     if (6 - wd < dset->n) {
 	havesat = 1;
     }
 
     for (t=0; t<dset->n && t<28; t++) {
-	wd = get_day_of_week(dset->S[t]);
+	wd = weekday_from_date(dset->S[t]);
 	if (wd == 0) {
 	    gotsun = 1;
 	} else if (wd == 6) {

@@ -810,7 +810,7 @@ int get_subperiod (int t, const DATASET *dset, int *err)
 	char datestr[12];
 
 	calendar_date_string(datestr, t, dset);
-	ret = get_day_of_week(datestr); 
+	ret = weekday_from_date(datestr); 
     } else if (dataset_is_daily(dset)) {
 	/* bodge, again */
 	ret = t % dset->pd;

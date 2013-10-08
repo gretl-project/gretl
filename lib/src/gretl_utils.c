@@ -879,6 +879,32 @@ static int invalid_stobs (const char *s)
     return E_DATA;
 }
 
+static void maybe_fix_daily_start (long *ed, int pd)
+{
+    int wday = weekday_from_epoch_day(*ed);
+    int fix = 0;
+
+    if (wday == 0) {
+	/* 5- or 6-day data: sunday not valid */
+	fix = 1;
+    } else if (wday == 6 && pd == 5) {
+	/* 5-day data: saturday not valid */
+	fix = 2;
+    }
+    
+    if (fix) {
+	char *fixed, *msg;
+
+	*ed += fix;
+	fixed = ymd_extended_from_epoch_day(*ed, NULL);
+	msg = gretl_strdup_printf("the starting date was corrected to Monday %s",
+				  fixed);
+	gretl_warnmsg_set(msg);
+	free(msg);
+	free(fixed);
+    }
+}
+
 #define likely_calendar_obs_string(s) (strchr(s, '-') || strchr(s, '/'))
 
 #define recognized_ts_frequency(f) (f == 4 || f == 12 || f == 24)
@@ -913,11 +939,14 @@ static int process_starting_obs (char *stobs, int pd, int *pstructure,
     if (dated) {
 	if (pd == 5 || pd == 6 || pd == 7 || pd == 52) {
 	    /* calendar-dated data, daily or weekly */
-	    double ed0 = get_epoch_day(stobs);
+	    long ed0 = get_epoch_day(stobs);
 
 	    if (ed0 < 0) {
 		return invalid_stobs(stobs);
 	    } else {
+		if (pd < 7) {
+		    maybe_fix_daily_start(&ed0, pd);
+		}
 		sd0 = ed0;
 		structure = TIME_SERIES;
 	    }

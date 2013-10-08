@@ -3657,7 +3657,7 @@ static int daily_dataset_to_weekly (DATASET *dset, int repday)
 
     for (t=0; t<dset->n; t++) {
 	ntodate(obs, t, dset);
-	wday = get_day_of_week(obs);
+	wday = weekday_from_date(obs);
 	if (wday == repday) {
 	    ok = 0;
 	    for (i=1; i<dset->v; i++) {
@@ -3696,7 +3696,7 @@ static int daily_dataset_to_weekly (DATASET *dset, int repday)
 
 	for (t=0; t<dset->n; t++) {
 	    ntodate(obs, t, dset);
-	    wday = get_day_of_week(obs);
+	    wday = weekday_from_date(obs);
 	    if (wday == repday) {
 		x[s++] = dset->Z[i][t];
 	    }
@@ -3930,7 +3930,7 @@ int compact_data_set (DATASET *dset, int newpd,
 	/* daily to weekly */
 	compfac = oldpd;
 	if (dated_daily_data(dset)) {
-	    startmin = get_day_of_week(dset->stobs);
+	    startmin = weekday_from_date(dset->stobs);
 	    if (oldpd == 7) {
 		if (monstart) {
 		    if (startmin == 0) startmin = 7;

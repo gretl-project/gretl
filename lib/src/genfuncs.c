@@ -2786,7 +2786,7 @@ int gen_wkday (DATASET *dset)
     
     for (t=0; t<dset->n; t++) {
 	ntodate(datestr, t, dset);
-	dset->Z[i][t] = get_day_of_week(datestr);
+	dset->Z[i][t] = weekday_from_date(datestr);
     }
 
     return 0;
