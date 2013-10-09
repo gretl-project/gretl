@@ -206,7 +206,7 @@ arbitrarily choosing the self-explanatory identifier
 
 \begin{code}
 join @fname ip_asof_20110615 --tkey=observation_date --data=INDPRO \
---timecols="realtime_start_date,realtime_end_date" \
+--tconvert="realtime_start_date,realtime_end_date" \
 --filter="realtime_start_date<=20110615 && \
 (missing(realtime_end_date) || 20110615<=realtime_end_date)"
 \end{code}
@@ -228,14 +228,14 @@ Here some detailed explanations of the various options are warranted:
   \option{tkey="observation\_date,\%Y-\%m-\%d"}.
 \item Next, \option{data=INDPRO} tells \app{gretl} that we want to
   retrieve the entries stored in the column named \texttt{INDPRO}.
-\item As explained in section~\ref{sec:join-timecols} the
-  \option{timecols} option selects certain columns in the right-hand
+\item As explained in section~\ref{sec:join-tconvert} the
+  \option{tconvert} option selects certain columns in the right-hand
   data file for conversion from date strings to 8-digit numbers on the
   pattern \texttt{YYYYMMDD}.  We'll need this for the next step,
   filtering, since the transformation to numerical values makes it
   possible to perform basic arithmetic on dates.  Note that since
   date strings in Alfred files conform to gretl's default assumption
-  it is not necessary to use the \option{timecol-fmt} option here.
+  it is not necessary to use the \option{tconv-fmt} option here.
 \item The \option{filter} option specification is the central piece of
   our data retrieval; notice how we use the date constant 20110615 in
   ISO basic form to do numerical comparisons. It would also have been
@@ -279,7 +279,7 @@ relevant \cmd{join} command becomes:
 \end{code}
 Since we do not need the \verb|realtime_start_date| and
 \verb|realtime_end_date| information for this retrieval, we have
-dropped the \option{timecols} option here. Note that this formulation
+dropped the \option{tconvert} option here. Note that this formulation
 assumes that the source file is ordered chronologically, otherwise
 using the option \option{aggr="seq:3"}, which retrieves the third
 value from each sequence of matches, could have yielded a result
@@ -357,12 +357,12 @@ And here's the command:
 \begin{code}
 scalar lag = 3  # choose your fixed lag here
 join @fname ip_plus3 --data=INDPRO --tkey=observation_date \
---timecols="observation_date,realtime_start_date" \
+--tconvert="observation_date,realtime_start_date" \
 --filter="rel_ok(observation_date, realtime_start_date, lag)" \
 --aggr=max(realtime_start_date)
 \end{code}
 
-Note that we use \option{timecols} to convert both the observation
+Note that we use \option{tconvert} to convert both the observation
 date and the realtime start date (or release date) to 8-digit
 numerical values. Both of these series are passed to the filter, which
 uses the built-in function \texttt{isoconv} to extract year and month.
@@ -426,7 +426,7 @@ option. The associated command now looks like this:
 \begin{code}
 scalar lag = 3  # choose your fixed lag here
 join @fname ip_plus3 --data=INDPRO --tkey=observation_date \
---timecols="observation_date,realtime_start_date,realtime_end_date" \
+--tconvert="observation_date,realtime_start_date,realtime_end_date" \
 --filter="rel_ok2(observation_date, realtime_start_date, \
  realtime_end_date, lag)"
 \end{code}
@@ -451,9 +451,9 @@ endloop
 n-- # subtract the header
 nulldata n --preserve
 join @fname revstart --data=realtime_start_date \
- --timecols=realtime_start_date
+ --tconvert=realtime_start_date
 join @fname revend --data=realtime_end_date \
- --timecols=realtime_end_date
+ --tconvert=realtime_end_date
 scalar holes = sum(revstart - revend(-1) > 1)
 printf "Number of holes in file %s: %d\n", fname, holes
 \end{scode}
@@ -509,23 +509,23 @@ string fname = "INDPRO.txt"
 
 # initial published values
 join @fname firstpub --data=INDPRO --tkey=observation_date \
---timecols=realtime_start_date --aggr=min(realtime_start_date)
+--tconvert=realtime_start_date --aggr=min(realtime_start_date)
 
 # plus 3 months
 join @fname plus3 --data=INDPRO --tkey=observation_date \
---timecols="observation_date,realtime_start_date" \
+--tconvert="observation_date,realtime_start_date" \
 --filter="rel_ok(&observation_date, &realtime_start_date, 3)" \
 --aggr=max(realtime_start_date)
 
 # plus 6 months
 join @fname plus6 --data=INDPRO --tkey=observation_date \
---timecols="observation_date,realtime_start_date" \
+--tconvert="observation_date,realtime_start_date" \
 --filter="rel_ok(&observation_date, &realtime_start_date, 6)" \
 --aggr=max(realtime_start_date)
 
 # plus 12 months
 join @fname plus12 --data=INDPRO --tkey=observation_date \
---timecols="observation_date,realtime_start_date" \
+--tconvert="observation_date,realtime_start_date" \
 --filter="rel_ok(&observation_date, &realtime_start_date, 12)" \
 --aggr=max(realtime_start_date)
 
@@ -582,7 +582,7 @@ nulldata 518 --preserve
 setobs 12 1970:02
 
 join INDPRO.txt ip_jan70 --data=INDPRO --tkey=realtime_start_date \
---timecols=observation_date \
+--tconvert=observation_date \
 --filter="observation_date==target" --aggr=seq:-1
 
 ip_jan70 = ok(ip_jan70) ? ip_jan70 : ip_jan70(-1)

@@ -53,8 +53,8 @@ int join_from_csv (const char *fname,
 		   AggrType agg,
 		   int seqval,
 		   const char *auxname,
-		   const char *timecolstr,
-		   const char *timecolfmt,
+		   const char *tconvstr,
+		   const char *tconvfmt,
 		   gretlopt opt,
 		   PRN *prn);
 

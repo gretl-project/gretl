@@ -131,75 +131,76 @@ struct csvdata_ {
 static int
 time_series_label_check (DATASET *dset, int reversed, char *skipstr, PRN *prn);
 
+static int format_uses_quarterly (char *fmt);
+
 /* file-scope global */
 static char import_na[8];
 
 struct time_mapper {
-    int ncols;       /* number of "timecols" */
+    int ncols;       /* number of "timeconv" columns */
     char **colnames; /* array of outer-dataset column names */
-    int nfmts;       /* number of time-column formats */
-    char **fmt;      /* array of time-format strings */
-    char *m_means_q; /* array of "monthly means quarterly" flags */
+    char *tname;     /* the name of the tkey col, if among colnames */
+    char **fmt;      /* array of up to two time-format strings, or NULL */
+    char m_means_q[2]; /* array of "monthly means quarterly" flags */
 };
 
 /* file-scope global */
-struct time_mapper timecols_map;
+struct time_mapper tconv_map;
 
-static void timecols_map_set (int ncols, char **colnames, 
-			      int nfmts, char **fmt, char *mq)
+static void timeconv_map_set (int ncols, char **colnames, char *tname,
+			      char **fmt)
 {
-    timecols_map.ncols = ncols;
-    timecols_map.colnames = colnames;
-    timecols_map.nfmts = nfmts;
-    timecols_map.fmt = fmt;
-    timecols_map.m_means_q = mq;
+    tconv_map.ncols = ncols;
+    tconv_map.colnames = colnames;
+    tconv_map.tname = tname;
+    tconv_map.fmt = fmt;
+
+    if (fmt != NULL) {
+	if (fmt[0] != NULL) {
+	    tconv_map.m_means_q[0] = format_uses_quarterly(fmt[0]);
+	}
+	if (fmt[1] != NULL) {
+	    tconv_map.m_means_q[1] = format_uses_quarterly(fmt[1]);
+	}
+    }	
 }
 
-static void timecols_map_init (void)
+static void timeconv_map_init (void)
 {
-    timecols_map_set(0, NULL, 0, NULL, NULL);
+    timeconv_map_set(0, NULL, NULL, NULL);
 }
 
-static void timecols_map_destroy (void)
+static void timeconv_map_destroy (void)
 {
-    if (timecols_map.ncols > 0) {
-	strings_array_free(timecols_map.colnames, timecols_map.ncols);
+    if (tconv_map.colnames != NULL) {
+	strings_array_free(tconv_map.colnames, tconv_map.ncols);
     }
-    if (timecols_map.nfmts > 0) {
-	strings_array_free(timecols_map.fmt, timecols_map.nfmts);
+    if (tconv_map.fmt != NULL) {
+	strings_array_free(tconv_map.fmt, 2);
     }
-    if (timecols_map.m_means_q != NULL) {
-	free(timecols_map.m_means_q);
-    }
-    timecols_map_init();
+    timeconv_map_init();
 }
 
 static int timecol_get_format (const DATASET *dset, int v, 
 			       char **pfmt, int *q)
 {
-    int nf = timecols_map.nfmts;
-
-    if (nf == 0) {
+    if (tconv_map.fmt == NULL) {
 	return 0;
-    } else if (nf == 1) {
-	*pfmt = timecols_map.fmt[0];
-	*q = timecols_map.m_means_q[0];
+    } else if (tconv_map.tname == NULL) {
+	/* get the common format at position 0 */
+	*pfmt = tconv_map.fmt[0];
+	*q = tconv_map.m_means_q[0];
 	return 1;
-    } else {
-	/* Multiple formats were specified under the --timecol-fmt
-	   option: find the one which corresponds to the name
-	   of the column we're looking at.
-	*/
-	const char *vname = dset->varname[v];
-	int i;
-
-	for (i=0; i<timecols_map.nfmts; i++) {
-	    if (!strcmp(vname, timecols_map.colnames[i])) {
-		*pfmt = timecols_map.fmt[i];
-		*q = timecols_map.m_means_q[i];
-		return 1;
-	    }
-	}	
+    } else if (!strcmp(dset->varname[v], tconv_map.tname)) {
+	/* get the tkey-specific format */
+	*pfmt = tconv_map.fmt[1];
+	*q = tconv_map.m_means_q[1];
+	return 1;
+    } else if (tconv_map.fmt[0] != NULL) {
+	/* get the other one */
+	*pfmt = tconv_map.fmt[0];
+	*q = tconv_map.m_means_q[0];
+	return 1;
     }
 
     return 0;
@@ -207,10 +208,10 @@ static int timecol_get_format (const DATASET *dset, int v,
 
 static int column_is_timecol (const char *colname)
 {
-    int i, n = timecols_map.ncols;
+    int i, n = tconv_map.ncols;
 
     for (i=0; i<n; i++) {
-	if (!strcmp(colname, timecols_map.colnames[i])) {
+	if (!strcmp(colname, tconv_map.colnames[i])) {
 	    return 1;
 	}
     }
@@ -1830,9 +1831,9 @@ static int non_numeric_check (csvdata *c, PRN *prn)
     return err;
 }
 
-/* Handle the case in "join" where the user specified some "timecols"
-   for conversion to numeric and also gave a specific format for the
-   conversion.
+/* Handle the case in "join" where the user specified some time
+   columns for conversion to numeric and also gave a specific format
+   for the conversion.
 */
 
 static double special_time_val (const char *s, const char *fmt,
@@ -3262,7 +3263,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 
     if (j == 0 && tcol > 0 && convert) {
 	/* on our first pass, check for the case where the outer
-	   time-key column is in the --timecols set
+	   time-key column is in the --timeconv set
 	*/
 	if (column_is_timecol(jr->r_dset->varname[tcol])) {
 	    tfmt = replace_time_format(jr, "%Y%m%d");
@@ -4489,27 +4490,62 @@ static int auto_keys_check (const DATASET *l_dset,
     return err;
 }
 
+static int make_time_fmts_array (char const **fmts, char ***pS) 
+{
+    char **S = strings_array_new(2);
+    int i, err = 0;
+
+    if (S == NULL) {
+	err = E_ALLOC;
+    } else {
+	for (i=0; i<2 && !err; i++) {
+	    if (fmts[i] != NULL) {
+		S[i] = gretl_strdup(fmts[i]);
+		if (S[i] == NULL) {
+		    err = E_ALLOC;
+		}
+	    }
+	}
+    }
+
+    if (err) {
+	strings_array_free(S, 2);
+    } else {
+	*pS = S;
+    }
+
+    return err;
+}
+
 /* Crawl along the string containing comma-separated names of columns
-   that are to be treated as "timecols". For each name, look for a
+   that fall under the "tconvert" option. For each name, look for a
    match among the names of columns selected from the CSV file for
    some role in the join operation (data, key or whatever). It is
-   not considered an error if there's no match for a given "timecol"
+   not considered an error if there's no match for a given "tconvert"
    name; in that case the column will be ignored.
 
-   In addition, if @fmts is non-NULL, parse out a specific time
-   format or formats to be applied to the timecols series.
+   If @fmt1 is non-NULL, this should hold a common format for date
+   conversion.
+
+   If @tkeyfmt is not an empty string, it holds a specific format
+   for the --tkey column. In that case we should check for tkey
+   among the tconvert columns; if it's present we need to add its
+   format to the timeconv_map apparatus (as an override to the
+   common format, or an addendum if no common format is given).
 */
 
-static int process_timecols_info (csvjoin *jspec, const char *cols,
-				  const char *fmts)
+static int process_tconvert_info (csvjoin *jspec, 
+				  const char *cols,
+				  const char *fmt1,
+				  const char *tkeyfmt)
 {
     int *list = NULL;
     char **names = NULL;
-    char **fmt = NULL;
-    char *mq = NULL;
+    char **fmts = NULL;
     const char *colname;
+    const char *fmt2 = NULL;
+    char *tkeyname = NULL;
     int nnames = 0;
-    int nfmts = 0;
     int i, j, err = 0;
 
     names = gretl_string_split(cols, &nnames, " ,");
@@ -4526,56 +4562,38 @@ static int process_timecols_info (csvjoin *jspec, const char *cols,
 		gretl_list_append_term(&list, j);
 		if (list == NULL) {
 		    err = E_ALLOC;
+		} else if (*tkeyfmt != '\0' && j == JOIN_KEY) {
+		    /* we've got the time-key variable here,
+		       and a format has been given for it
+		    */
+		    fmt2 = tkeyfmt;
+		    tkeyname = names[i];
 		}
 		break;
 	    }
 	}
     }
 
-    /* process the format(s) option if it has been supplied: there
-       should be either just one common format, or one format for each
-       of the timecols columns
-    */
+    /* allocate and record the time format info, if any */
 
-    if (!err && fmts != NULL && list != NULL) {
-	fmt = gretl_string_split_quoted(fmts, &nfmts, ",", &err);
-	if (!err && nfmts != 1 && nfmts != nnames) {
-	    gretl_errmsg_set("timecol-fmt: invalid number of formats");
-	    err = E_INVARG;
-	}
-	if (!err) {
-	    mq = calloc(nfmts, 1);
-	    if (mq == NULL) {
-		err = E_ALLOC;
-	    } else {
-		for (i=0; i<nfmts; i++) {
-		    if (format_uses_quarterly(fmt[i])) {
-			mq[i] = 1;
-		    }
-		}
-	    }
-	}	    
+    if (!err && list != NULL && (fmt1 != NULL || fmt2 != NULL)) {
+	char const *tmp[2] = {fmt1, fmt2};
+
+	err = make_time_fmts_array(tmp, &fmts);
     }
 
 #if CDEBUG
-    printlist(list, "timecols list");
-    if (fmts != NULL) {
-	for (i=0; i<nfmts; i++) {
-	    fprintf(stderr, "timecol-fmt %d = '%s'\n", i, fmt[i]);
-	}
-    }
+    printlist(list, "timeconv list");
 #endif
 
     if (!err && list != NULL) {
-	timecols_map_set(nnames, names, nfmts, fmt, mq);
+	timeconv_map_set(nnames, names, tkeyname, fmts);
     }
 
     if (err) {
 	/* clean up if need be */
 	strings_array_free(names, nnames);
 	free(list);
-	strings_array_free(fmt, nfmts);
-	free(mq);
     } else {
 	jspec->timecols = list;
     }
@@ -4769,8 +4787,8 @@ static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
  * @seqval: 1-based sequence number for aggregation, or 0.
  * @auxname: name of auxiliary column for max or min aggregation,
  * or NULL.
- * @timecolstr: string specifying time/date columns, or NULL.
- * @timecolfmt: string giving format(s) for time/date columns, or NULL.
+ * @tconvstr: string specifying date columns for conversion, or NULL.
+ * @tconvfmt: string giving format(s) for "timeconv" columns, or NULL.
  * @opt: may contain OPT_V for verbose operation.
  * @prn: gretl printing struct (or NULL).
  * 
@@ -4790,8 +4808,8 @@ int join_from_csv (const char *fname,
 		   AggrType aggr,
 		   int seqval,
 		   const char *auxname,
-		   const char *timecolstr,
-		   const char *timecolfmt,
+		   const char *tconvstr,
+		   const char *tconvfmt,
 		   gretlopt opt,
 		   PRN *prn)
 {
@@ -4822,7 +4840,7 @@ int join_from_csv (const char *fname,
     }
 
     obskey_init(&auto_keys);
-    timecols_map_init();
+    timeconv_map_init();
 
 #if CDEBUG
     fputs("*** join_from_csv:\n", stderr);
@@ -4857,11 +4875,11 @@ int join_from_csv (const char *fname,
     if (auxname != NULL) {
 	fprintf(stderr, " aggr auxiliary column = '%s'\n", auxname);
     }
-    if (timecolstr != NULL) {
-	fprintf(stderr, " timecols = '%s'\n", timecolstr);
+    if (tconvstr != NULL) {
+	fprintf(stderr, " timeconv = '%s'\n", tconvstr);
     }
-    if (timecolfmt != NULL) {
-	fprintf(stderr, " timecolfmt = '%s'\n", timecolfmt);
+    if (tconvfmt != NULL) {
+	fprintf(stderr, " tconvfmt = '%s'\n", tconvfmt);
     }    
 #endif
 
@@ -4925,10 +4943,10 @@ int join_from_csv (const char *fname,
 	}
     }
 
-    /* Step 3: handle the timecols and timecol-fmt options */
+    /* Step 3: handle the tconvert and tconv-fmt options */
 
-    if (!err && timecolstr != NULL) {
-	err = process_timecols_info(&jspec, timecolstr, timecolfmt);
+    if (!err && tconvstr != NULL) {
+	err = process_tconvert_info(&jspec, tconvstr, tconvfmt, tkeyfmt);
     }
 
     /* Step 4: read data from the outer file; check we got all the
@@ -5038,8 +5056,8 @@ int join_from_csv (const char *fname,
 
  bailout:
 
-    /* null out file-scope "timecols" globals */
-    timecols_map_destroy();
+    /* null out file-scope "timeconv" globals */
+    timeconv_map_destroy();
 
     if (auto_keys.timefmt != NULL) {
 	free(auto_keys.timefmt);

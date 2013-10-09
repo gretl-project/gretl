@@ -880,14 +880,14 @@ endloop
 \end{verbatim}
 \end{footnotesize}
 \section{Special handling of time columns}
-\label{sec:join-timecols}
+\label{sec:join-tconvert}
 
 When dealing with straight time series data the \texttt{tkey}
 mechanism described above should suffice in almost all cases. In some
 contexts, however, time enters the picture in a more complex way;
 examples include panel data (see section~\ref{sec:join-panel}) and
 so-called realtime data (see chapter~\ref{chap:realtime}). To handle
-such cases \texttt{join} provides the \option{timecols} option. This
+such cases \texttt{join} provides the \option{tconvert} option. This
 can be used to select certain columns in the right-hand data file for
 special treatment: strings representing dates in these columns will be
 converted to numerical values: 8-digit numbers on the pattern
@@ -897,23 +897,23 @@ form it is easy to use them in key-matching or filtering.
 By default it is assumed that the strings in the selected columns are
 in ISO extended format, \texttt{YYYY-MM-DD}. If that is not
 the case you can supply a time-format string using the
-\option{timecol-fmt} option. The format string should be written using
+\option{tconv-fmt} option. The format string should be written using
 the codes shown in Table~\ref{tab:join-datefmt}.
 
 Here are some examples:
 
 \begin{code}
 # select one column for treatment
---timecols=start_date
+--tconvert=start_date
 
 # select two columns for treatment
---timecols="start_date,end_date"
+--tconvert="start_date,end_date"
 
 # specify US-style daily date format
---timecol-fmt="%m/%d/%Y"
+--tconv-fmt="%m/%d/%Y"
 
 # specify quarterly date-strings (as in 2004q1)
---timecol-fmt="%Yq%q"
+--tconv-fmt="%Yq%q"
 \end{code}
 
 Some points to note:
@@ -933,28 +933,6 @@ Some points to note:
   format, the converted date is the first day of the month or quarter.
 \end{itemize}
 
-In most cases, even if you wish to apply this treatment to more than
-one column a single time-format will be sufficient. However, it is
-possible to supply more than one format if needed. To take a
-real-world example, certain data files available from the OECD have
-two columns, \texttt{Time} and \texttt{Edition}, in which dates are
-represented differently---on the patterns ``\texttt{Feb-1990}'' and
-``\texttt{February 1990}'' (with month and year separated by a space)
-respectively. The month name (whether abbreviated or complete) is
-matched by the conversion specifier \texttt{\%b}, but the
-dash-versus-space difference requires distinct formats. If we wanted
-to convert both of these columns to 8-digit numbers we could do the
-following:
-\begin{code}
---timecols="Time,Edition"
---timecol-fmt="%b-%Y,%b %Y"
-\end{code}
-
-Multiple formats must be separated by commas (with no intervening
-spaces). If a format happens to contain a comma it can be enclosed in
-backslash-escaped double quotes. Note that you must give either one
-time-column format (which is taken to apply to all the
-\texttt{timecols} columns) or one for each of the selected columns.
 
 \section{Panel data}
 \label{sec:join-panel}
@@ -999,8 +977,8 @@ our panel is quarterly, starting in the first quarter of 1960. Having
 set that, the accessor \verb|$obsdate| will give us a series of
 8-digit dates representing the first day of each quarter---19600101,
 19600401, 19600701, and so on, repeating for each country. As we
-explained in section~\ref{sec:join-timecols}, we can use the
-\option{timecols} option on the outer series \texttt{Period} to get
+explained in section~\ref{sec:join-tconvert}, we can use the
+\option{tconvert} option on the outer series \texttt{Period} to get
 exactly matching values (in this case using a format of \verb|Q%q-%Y|
 for parsing the \texttt{Period} values).
 
@@ -1022,7 +1000,7 @@ We're now ready to join. Assuming the OECD file is named
 \begin{code}
 join oecd.csv GDP --data=Value \
  --ikey=country,quarter --okey=Country,Period \
- --timecols=Period --timecol-fmt="Q%q-%Y"
+ --tconvert=Period --tconv-fmt="Q%q-%Y"
 \end{code}
 
 \subsection{Other input formats}
@@ -1056,7 +1034,7 @@ loop foreach i @cstrs --quiet
   smpl country=="$i" --restrict --replace
   join side_by_side.csv GDP --data=$i \
   --ikey=quarter --okey=Period \
-  --timecols=Period --timecol-fmt="Q%q-%Y"
+  --tconvert=Period --tconv-fmt="Q%q-%Y"
 endloop
 smpl full
 \end{code}

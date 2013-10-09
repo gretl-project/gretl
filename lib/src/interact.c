@@ -4577,15 +4577,16 @@ static int lib_join_data (ExecState *s,
 	OPT_A, /* aggr: aggregation method */
 	OPT_D, /* data: "payload" spec */
 	OPT_K, /* tkey: outer time-key name,format */
-	OPT_X, /* timecols: list of time/date columns */
-	OPT_T, /* timecol-fmt: format for "timecols" */ 
+	OPT_X, /* tconvert: date columns for conversion */
+	OPT_T, /* tconv-fmt: format for "tconvert" */ 
 	0 
     };
     const char *param;
     char *p, *okey = NULL, *filter = NULL;
     char *varname = NULL, *dataname = NULL;
-    char *auxname = NULL, *timecols = NULL;
-    char *timecolfmt = NULL;
+    char *auxname = NULL;
+    char *tconvstr = NULL;
+    char *tconvfmt = NULL;
     int *ikeyvars = NULL;
     int aggr = 0, seqval = 0;
     int tseries = 0;
@@ -4652,10 +4653,10 @@ static int lib_join_data (ExecState *s,
 		okey = gretl_strdup(param);
 	    } else if (jopt == OPT_X) {
 		/* string holding list of time/date cols */
-		timecols = gretl_strdup(param);
+		tconvstr = gretl_strdup(param);
 	    } else if (jopt == OPT_T) {
-		/* format for timecols columns */
-		timecolfmt = gretl_strdup(param);
+		/* format for tconvert columns */
+		tconvfmt = gretl_strdup(param);
 	    }
 	}
     }
@@ -4683,9 +4684,8 @@ static int lib_join_data (ExecState *s,
 	err = join_from_csv(newfile, varname, dset, 
 			    ikeyvars, okey, filter,
 			    dataname, aggr, seqval, 
-			    auxname, timecols,
-			    timecolfmt,
-			    opt, vprn);
+			    auxname, tconvstr,
+			    tconvfmt, opt, vprn);
     }	
 
     free(ikeyvars);
@@ -4694,8 +4694,8 @@ static int lib_join_data (ExecState *s,
     free(dataname);
     free(varname);
     free(auxname);
-    free(timecols);
-    free(timecolfmt);
+    free(tconvstr);
+    free(tconvfmt);
 
     return err;
 }
