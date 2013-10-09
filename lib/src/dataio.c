@@ -1863,6 +1863,7 @@ int gretl_get_data (char *fname, DATASET *dset,
  * @data_status: indicator for whether a data file is currently open
  * in gretl's work space (1) or not (0).
  * @length: desired length of data series.
+ * @opt: may contain OPT_N to suppress addition of an index series.
  * @prn: gretl printing struct.
  * 
  * Create an empty "dummy" data set, suitable for simulations.
@@ -1872,7 +1873,7 @@ int gretl_get_data (char *fname, DATASET *dset,
  */
 
 int open_nulldata (DATASET *dset, int data_status, int length,
-		   PRN *prn) 
+		   gretlopt opt, PRN *prn) 
 {
     int t;
 
@@ -1883,7 +1884,7 @@ int open_nulldata (DATASET *dset, int data_status, int length,
 
     /* dummy up the data info */
     dset->n = length;
-    dset->v = 2;
+    dset->v = (opt & OPT_N)? 1 : 2;
     dataset_obs_info_default(dset);
 
     if (dataset_allocate_varnames(dset)) {
@@ -1895,15 +1896,17 @@ int open_nulldata (DATASET *dset, int data_status, int length,
 	return E_ALLOC;
     }
 
-    /* add an index var */
-    strcpy(dset->varname[1], "index");
-    series_set_label(dset, 1, _("index variable"));
-    for (t=0; t<dset->n; t++) {
-	dset->Z[1][t] = (double) (t + 1);
+    if (dset->v > 1) {
+	/* add an index var */
+	strcpy(dset->varname[1], "index");
+	series_set_label(dset, 1, _("index variable"));
+	for (t=0; t<dset->n; t++) {
+	    dset->Z[1][t] = (double) (t + 1);
+	}
     }
 
     if (gretl_messages_on()) {
-	/* print out basic info */
+	/* print basic info */
 	pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
 			"observations range: %s to %s\n"), 
 		dset->pd, dset->n, dset->stobs, dset->endobs);

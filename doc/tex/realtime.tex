@@ -171,6 +171,52 @@ day), leaving a ``hole'' in the realtime file to represent,
 implicitly, a period during which the value is missing. We'll consider
 the consequences of this below.
 
+\section{More on time-related options}
+\label{sec:realtime-tconvert}
+
+Before we get properly started it is worth saying a little more about
+the \option{tkey} and \option{tconvert} options to \texttt{join}
+(first introduced in section~\ref{sec:join-tconvert}), as they apply in
+the case of realtime data.
+
+When you're working with regular time series data \texttt{tkey} is
+likely to be useful while \texttt{tconvert} is unlikely to be
+applicable (see section~\ref{sec:join-timeser}). On the other hand,
+when you're working with panel data \texttt{tkey} is definitely not
+applicable but \texttt{tconvert} may well be helpful
+(section~\ref{sec:join-panel}). When working with realtime data,
+however, depending on the task in hand both options may be useful. You
+will likely need \texttt{tkey}; you may well wish to select at least
+one column for \texttt{tconvert} treatment, and in fact you may want
+to name a given column in both contexts; that is, include the
+\texttt{tkey} variable among the \texttt{tconvert} columns.
+
+Why might this make sense? Well, think of the \option{tconvert} option
+as a ``preprocessing'' directive: it asks gretl to convert date
+strings to numerical values (8-digit ISO basic dates) ``at source'',
+as they are read from the outer datafile. The \option{tkey} option, on
+the other hand, singles out a column as the one to use for matching
+rows with the inner dataset. So you would want to name a column in
+both roles if (a) it should be used for matching periods and also (b)
+it is desirable to have the values from this column in numerical
+form, most likely for use in filtering.
+
+As we have seen, you can supply specific formats in connection with
+both \texttt{tkey} and \texttt{tconvert} (in the latter case via the
+companion \option{tconv-fmt} option) to handle the case where the
+date strings on the right are not ISO-friendly at source. This raises
+the question of how the format specifications work if a given
+column is named under both options.  Here are the rules that gretl
+applies:
+\begin{enumerate}
+\item If a format is given with the \option{tkey} option it always
+  applies to the \texttt{tkey} column alone; and for that column it
+  overrides any format given via the \option{tconv-fmt} option.
+\item If a format is given via \texttt{tconv-fmt} it is assumed to
+  apply to all the \texttt{tconvert} columns, unless this assumption
+  is overriden by rule 1.
+\end{enumerate}
+
 \section{Getting a certain data vintage}
 \label{sec:realtime-vintage}
 
@@ -592,6 +638,13 @@ ip_jan70 = ok(ip_jan70) ? ip_jan70 : ip_jan70(-1)
 \begin{figure}[htbp]
   \centering
 \includegraphics[scale=0.75]{figures/revhist}
-\caption{Vintages of US industrial production for January 1970}
+\caption{Vintages of the index of US industrial production for January
+  1970}
   \label{fig:realtime-revhist}
 \end{figure}
+
+    
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 

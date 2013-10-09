@@ -137,10 +137,10 @@ static int format_uses_quarterly (char *fmt);
 static char import_na[8];
 
 struct time_mapper {
-    int ncols;       /* number of "timeconv" columns */
-    char **colnames; /* array of outer-dataset column names */
-    char *tname;     /* the name of the tkey col, if among colnames */
-    char **fmt;      /* array of up to two time-format strings, or NULL */
+    int ncols;         /* number of "timeconv" columns */
+    char **colnames;   /* array of outer-dataset column names */
+    char *tname;       /* the name of the "tkey", if among colnames, or NULL */
+    char **fmt;        /* array of up to two time-format strings, or NULL */
     char m_means_q[2]; /* array of "monthly means quarterly" flags */
 };
 
@@ -4574,7 +4574,7 @@ static int process_tconvert_info (csvjoin *jspec,
 	}
     }
 
-    /* allocate and record the time format info, if any */
+    /* allocate and record the time-format info, if any */
 
     if (!err && list != NULL && (fmt1 != NULL || fmt2 != NULL)) {
 	char const *tmp[2] = {fmt1, fmt2};

@@ -733,7 +733,7 @@ void newdata_callback (void)
 	return;
     }
 
-    if (open_nulldata(dataset, data_status, n, NULL)) {
+    if (open_nulldata(dataset, data_status, n, OPT_NONE, NULL)) {
 	errbox(_("Failed to create empty data set"));
 	return;
     }

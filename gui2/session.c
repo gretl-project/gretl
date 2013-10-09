@@ -849,7 +849,7 @@ int gui_add_graph_to_session (char *fname, char *fullname, int type)
     if (type != GRETL_OBJ_PLOT && (dataset == NULL || dataset->Z == NULL)) {
 	/* we may be called via the "stats calculator" when
 	   there's no dataset yet */
-	err = open_nulldata(dataset, 0, 10, NULL);
+	err = open_nulldata(dataset, 0, 10, OPT_NONE, NULL);
 	if (err) {
 	    gui_errmsg(err);
 	    return 1;

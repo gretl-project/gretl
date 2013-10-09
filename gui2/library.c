@@ -8565,7 +8565,8 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	    pputs(prn, _("Data series length count missing or invalid\n"));
 	} else {
 	    close_session(cmd->opt);
-	    err = open_nulldata(dset, data_status, cmd->order, prn);
+	    err = open_nulldata(dset, data_status, cmd->order, 
+				OPT_NONE, prn);
 	    if (err) { 
 		errmsg(err, prn);
 	    } else {

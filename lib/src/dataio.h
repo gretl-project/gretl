@@ -113,7 +113,7 @@ int gretl_get_data (char *fname, DATASET *dset,
 		    gretlopt opt, PRN *prn);
 
 int open_nulldata (DATASET *dset, int data_status, 
-		   int length, PRN *prn);
+		   int length, gretlopt opt, PRN *prn);
 
 int import_csv (const char *fname, DATASET *dset, 
 	        gretlopt opt, PRN *prn);

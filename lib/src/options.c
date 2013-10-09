@@ -342,6 +342,7 @@ struct gretl_option gretl_opts[] = {
     { NORMTEST, OPT_W, "swilk", 0 },
     { NORMTEST, OPT_J, "jbera", 0 },
     { NORMTEST, OPT_L, "lillie", 0 },
+    { NULLDATA, OPT_N, "no-index", 0 },
     { NULLDATA, OPT_P, "preserve", 0 },
     { OLS,      OPT_F, "print-final", 0 },
     { OLS,      OPT_J, "jackknife", 0 },

@@ -1030,7 +1030,8 @@ static int exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	    pputs(prn, _("Data series length count missing or invalid\n"));
 	} else {
 	    cli_clear_data(cmd, dset, model);
-	    err = open_nulldata(dset, data_status, cmd->order, prn);
+	    err = open_nulldata(dset, data_status, cmd->order, 
+				cmd->opt, prn);
 	    if (err) { 
 		errmsg(err, prn);
 	    } else {
