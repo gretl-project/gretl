@@ -147,6 +147,16 @@ struct time_mapper {
 /* file-scope global */
 struct time_mapper tconv_map;
 
+enum {
+    TCONV_FMT = 0,
+    TKEY_FMT = 1
+};
+
+#define no_formats(map) (map.fmt == NULL)
+#define no_tkey_format(map) (map.tname == NULL)
+#define has_tconv_format(map) (map.fmt[TCONV_FMT] != NULL)
+#define is_tkey_variable(name, map) (strcmp(name, map.tname) == 0)
+
 static void timeconv_map_set (int ncols, char **colnames, char *tname,
 			      char **fmt)
 {
@@ -156,11 +166,13 @@ static void timeconv_map_set (int ncols, char **colnames, char *tname,
     tconv_map.fmt = fmt;
 
     if (fmt != NULL) {
-	if (fmt[0] != NULL) {
-	    tconv_map.m_means_q[0] = format_uses_quarterly(fmt[0]);
+	if (fmt[TCONV_FMT] != NULL) {
+	    tconv_map.m_means_q[TCONV_FMT] = 
+		format_uses_quarterly(fmt[TCONV_FMT]);
 	}
-	if (fmt[1] != NULL) {
-	    tconv_map.m_means_q[1] = format_uses_quarterly(fmt[1]);
+	if (fmt[TKEY_FMT] != NULL) {
+	    tconv_map.m_means_q[TKEY_FMT] = 
+		format_uses_quarterly(fmt[TKEY_FMT]);
 	}
     }	
 }
@@ -184,22 +196,22 @@ static void timeconv_map_destroy (void)
 static int timecol_get_format (const DATASET *dset, int v, 
 			       char **pfmt, int *q)
 {
-    if (tconv_map.fmt == NULL) {
+    if (no_formats(tconv_map)) {
 	return 0;
-    } else if (tconv_map.tname == NULL) {
-	/* get the common format at position 0 */
-	*pfmt = tconv_map.fmt[0];
-	*q = tconv_map.m_means_q[0];
+    } else if (no_tkey_format(tconv_map)) {
+	/* get the common "tconvert" format */
+	*pfmt = tconv_map.fmt[TCONV_FMT];
+	*q = tconv_map.m_means_q[TCONV_FMT];
 	return 1;
-    } else if (!strcmp(dset->varname[v], tconv_map.tname)) {
+    } else if (is_tkey_variable(dset->varname[v], tconv_map)) {
 	/* get the tkey-specific format */
-	*pfmt = tconv_map.fmt[1];
-	*q = tconv_map.m_means_q[1];
+	*pfmt = tconv_map.fmt[TKEY_FMT];
+	*q = tconv_map.m_means_q[TKEY_FMT];
 	return 1;
-    } else if (tconv_map.fmt[0] != NULL) {
+    } else if (has_tconv_format(tconv_map)) {
 	/* get the other one */
-	*pfmt = tconv_map.fmt[0];
-	*q = tconv_map.m_means_q[0];
+	*pfmt = tconv_map.fmt[TCONV_FMT];
+	*q = tconv_map.m_means_q[TCONV_FMT];
 	return 1;
     }
 
@@ -4490,7 +4502,7 @@ static int auto_keys_check (const DATASET *l_dset,
     return err;
 }
 
-static int make_time_fmts_array (char const **fmts, char ***pS) 
+static int make_time_formats_array (char const **fmts, char ***pS) 
 {
     char **S = strings_array_new(2);
     int i, err = 0;
@@ -4535,20 +4547,20 @@ static int make_time_fmts_array (char const **fmts, char ***pS)
 */
 
 static int process_tconvert_info (csvjoin *jspec, 
-				  const char *cols,
-				  const char *fmt1,
-				  const char *tkeyfmt)
+				  const char *tconvcols,
+				  const char *tconvfmt,
+				  const char *keyfmt)
 {
     int *list = NULL;
     char **names = NULL;
     char **fmts = NULL;
     const char *colname;
-    const char *fmt2 = NULL;
+    const char *tkeyfmt = NULL;
     char *tkeyname = NULL;
     int nnames = 0;
     int i, j, err = 0;
 
-    names = gretl_string_split(cols, &nnames, " ,");
+    names = gretl_string_split(tconvcols, &nnames, " ,");
     if (names == NULL) {
 	err = E_ALLOC;
     }
@@ -4562,11 +4574,11 @@ static int process_tconvert_info (csvjoin *jspec,
 		gretl_list_append_term(&list, j);
 		if (list == NULL) {
 		    err = E_ALLOC;
-		} else if (*tkeyfmt != '\0' && j == JOIN_KEY) {
+		} else if (*keyfmt != '\0' && j == JOIN_KEY) {
 		    /* we've got the time-key variable here,
 		       and a format has been given for it
 		    */
-		    fmt2 = tkeyfmt;
+		    tkeyfmt = keyfmt;
 		    tkeyname = names[i];
 		}
 		break;
@@ -4576,10 +4588,10 @@ static int process_tconvert_info (csvjoin *jspec,
 
     /* allocate and record the time-format info, if any */
 
-    if (!err && list != NULL && (fmt1 != NULL || fmt2 != NULL)) {
-	char const *tmp[2] = {fmt1, fmt2};
+    if (!err && list != NULL && (tconvfmt != NULL || tkeyfmt != NULL)) {
+	char const *tmp[2] = {tconvfmt, tkeyfmt};
 
-	err = make_time_fmts_array(tmp, &fmts);
+	err = make_time_formats_array(tmp, &fmts);
     }
 
 #if CDEBUG
