@@ -891,9 +891,9 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the inverse hyperbolic cosine of <argname>x</argname>
-	  (positive solution). <argname>x</argname> should be greater than 1;
-	  otherwise, NA is returned.
+	  Ritorna l'arcoseno iperbolico di <argname>x</argname>
+	  (soluzione positiva). <argname>x</argname> deve essere maggiore di 1;
+	  in caso contrario, vienne ritornato NA.
 	  <seelist>
 	    <fncref targ="cosh"/>
 	  </seelist>
