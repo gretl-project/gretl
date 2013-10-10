@@ -187,8 +187,8 @@ applicable but \texttt{tconvert} may well be helpful
 (section~\ref{sec:join-panel}). When working with realtime data,
 however, depending on the task in hand both options may be useful. You
 will likely need \texttt{tkey}; you may well wish to select at least
-one column for \texttt{tconvert} treatment, and in fact you may want
-to name a given column in both contexts; that is, include the
+one column for \texttt{tconvert} treatment; and in fact you may want
+to name a given column in both contexts---that is, include the
 \texttt{tkey} variable among the \texttt{tconvert} columns.
 
 Why might this make sense? Well, think of the \option{tconvert} option
@@ -203,7 +203,7 @@ form, most likely for use in filtering.
 
 As we have seen, you can supply specific formats in connection with
 both \texttt{tkey} and \texttt{tconvert} (in the latter case via the
-companion \option{tconv-fmt} option) to handle the case where the
+companion option \option{tconv-fmt}) to handle the case where the
 date strings on the right are not ISO-friendly at source. This raises
 the question of how the format specifications work if a given
 column is named under both options.  Here are the rules that gretl
