@@ -514,8 +514,39 @@ static int process_table (char *buf, int inlist)
     return 0;
 }
 
+static char *code_get_line (char *line, char **pbuf)
+{
+    char *buf = *pbuf;
+    int n = strcspn(buf, "\n\r");
+
+    if (n > 1000) {
+	fputs("reflow: code line too long\n", stderr);
+	exit(EXIT_FAILURE);
+    }
+
+    if (*buf == '\0') {
+	return NULL;
+    }
+
+    *line = '\0';
+
+    if (*buf == '\t') {
+	buf++;
+	n--;
+	strcat(line, "   ");
+    }
+
+    strncat(line, buf, n);
+    buf += n;
+    buf += strspn(buf, "\n\r");
+    *pbuf = buf;
+
+    return line == '\0' ? NULL : line;
+}
+
 static void format_code_buf (char *buf, int ptype)
 {
+    char line[1024];
     int i, n = strlen(buf);
 
     for (i=n-1; i>0; i--) {
@@ -532,7 +563,9 @@ static void format_code_buf (char *buf, int ptype)
 	fputs("<mono>", stdout);
     }
 
-    puts(buf);
+    while (code_get_line(line, &buf)) {
+	puts(line);
+    }
 
     if (ptype == CODE) {
 	fputs("</code>\n\n", stdout);
