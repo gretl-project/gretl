@@ -3,13 +3,17 @@ version 1.9.13, in progress
 - Add new functions: psum(), prodc(), prodr(), toupper(),
   getline(), isodate(), regsub(), atof()
 - "adf" command: add option to optimize the lag order using
-  the procedure recommended by Ng and Perron (2001), and 
+  the procedure recommended by Ng and Perron (2001), and
   make their modified AIC method the default
 - "outfile" command: add --quiet option
 - "var" command: add syntax to select specific lags
 - "boxplot" command: add facility to specify literal gnuplot
   lines, as with the "gnuplot" command
-- Make it legal to set loop_maxiter to 0 (hence disabling  
+- "setobs" command: add panel-specific options to set panel
+  time characteristics and group names
+- "join" command: substantial enhancements for dealing with
+  realtime data
+- Make it legal to set loop_maxiter to 0 (hence disabling
   the safety iteration limit for "while" loops)
 - Improve internals of pprintf() -- handle big string args
   properly
@@ -37,21 +41,21 @@ version 1.9.13, in progress
   correctly in the context of time-series plots
 - Fix bug: incomplete error-detection when parsing calls to
   diff() and log() on model-specification command line
-- Fix bug: $obsminor and $obsmicro not working with weekly 
+- Fix bug: $obsminor and $obsmicro not working with weekly
   datasets
 - Fix bug: matrix re-import from octave was broken
-- Fix bug: functions such as obsnum() which expect a string 
-  argument were failing when the argument was given in the form 
+- Fix bug: functions such as obsnum() which expect a string
+  argument were failing when the argument was given in the form
   of a function that returns a string
-- Fix bug: when python code is embedded in a gretl "foreign" 
-  block within a user-defined function, indentation of the 
+- Fix bug: when python code is embedded in a gretl "foreign"
+  block within a user-defined function, indentation of the
   python code was not being respected
-- Fix bug: in the context of the ternary query operator (as in 
+- Fix bug: in the context of the ternary query operator (as in
   "condition ? true_branch : false_branch") the presence of an
   undefined symbol was generating an error even if this symbol
   was confined to the non-selected branch
 - Fix bug: the "modeltab" command with the --output=filename
-  option was not working properly unless "modeltab show" was 
+  option was not working properly unless "modeltab show" was
   executed first
 - Stata .dta importer: read Stata 12 data files
 - xlsx importer: handle "inline" strings
@@ -95,11 +99,11 @@ version 1.9.13, in progress
 - GUI Add menu: add support for auto-generated dummy variables
   that code for a specific range of observations (or a single
   observation)
-- Fix bug: transient objects created within functions were 
+- Fix bug: transient objects created within functions were
   appearing in the GUI icon view window
 - Fix bug: possible crash when regressors are dropped from a
   random-effects panel model due to near-prefect collinearity
-- Fix bug: possible crash in vecm with lag order 1 and no 
+- Fix bug: possible crash in vecm with lag order 1 and no
   deterministic terms
 - Fix bug: loss of precision when printing data to CSV file,
   in some cases
@@ -128,24 +132,24 @@ version 1.9.13, in progress
 - Fix build bug: "make check" not working properly
 - Fix build bug: XDG (desktop) files not getting installed in
   a manner suitable for packagers of gretl
-- Support a matrix as an element-wise boolean condition for the 
+- Support a matrix as an element-wise boolean condition for the
   ternary "?" operator
-- The msortby() function: ensure that it performs a "stable" 
-  sort, such that rows sharing a common key value are never 
+- The msortby() function: ensure that it performs a "stable"
+  sort, such that rows sharing a common key value are never
   interchanged; also ensure that any row labels are put into
   the sorted order
 - The inbundle() function: return a code that identifies the
   type of a bundled item; also add typestr() function to turn
   this code into a string
 - GUI: allow resizing of plot windows, using the "+", "-" and
-  "0" keys (depends on gnuplot's pngcairo driver) 
+  "0" keys (depends on gnuplot's pngcairo driver)
 - GUI: fix for "save as..." for session files on Windows
 - GUI: fix for right-click in icon view window
-- GUI: fix for font selector in the GTK 3 version of the code 
+- GUI: fix for font selector in the GTK 3 version of the code
 
 2012-11-05 version 1.9.10
 - Update translations
-- Major new command "join": this adds sophisticated procedures for 
+- Major new command "join": this adds sophisticated procedures for
   assembling a dataset from multiple sources
 - New command "markers": manipulate observation marker strings
 - "delete" command: add a --force option to permit deletion of
@@ -154,7 +158,7 @@ version 1.9.13, in progress
 - "open" command: rename the option for reading fixed format data
   from --cols to --fixed-cols; also allow use of this command
   in loops (gretlcli only)
-- "dpanel" and "arbond" commands: indicate in the model printout 
+- "dpanel" and "arbond" commands: indicate in the model printout
   if the AR, Sargan or Wald tests failed
 - "gnuplot" command: add a --with-lp option to use linespoints
 - "modtest" command: support the autocorrelation option for ARMA
@@ -163,7 +167,7 @@ version 1.9.13, in progress
   as with the "gnuplot" command)
 - "freq" command: add a --matrix option to select a column from a
   named matrix instead of a series
-- "corrgm" command: make the $test and $pvalue accessors available 
+- "corrgm" command: make the $test and $pvalue accessors available
   for the Ljung-Box test at the maximum lag
 - "xtab" command: use string values of variables if available
 - Add three new functions: ghk(), halton() and isnan()

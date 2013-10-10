@@ -261,7 +261,9 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const int *zdigits,
 	return NULL;
     }
 
+#if 0
     fprintf(stderr, "mpZ: allocated %d vars, %d obs\n", l0, n);
+#endif
 
     /* number of polynomial terms to be generated */
     npoly = mpmod->polylist != NULL ? mpmod->polylist[0] : 0;
