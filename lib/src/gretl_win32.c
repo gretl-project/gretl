@@ -1277,9 +1277,10 @@ static void set_week_number_mon4 (struct tm *timeptr, int wnum)
     }
 }
 
+/* tailor-made for handling YYYYMMDD */
+
 static char *parse_iso_basic (const char *buf, struct tm *timeptr)
 {
-
     if (strlen(buf) == 8) {
 	char *s;
 	double x;
@@ -1312,6 +1313,9 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
     char c;
 
     if (strcmp(format, "%Y%m%d") == 0) {
+	/* the case where the format contains no punctuation
+	   is not handled correctly below 
+	*/
 	return parse_iso_basic(buf, timeptr);
     }
 
