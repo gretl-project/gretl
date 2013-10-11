@@ -453,11 +453,11 @@ to the \texttt{open} command to import specific series, namely
 for individuals within each household), \texttt{SEX} (male = 1, female
 = 2), \texttt{PARENT} (status in household: 1 = head of household, 2 =
 spouse of head, etc.), \texttt{STACIV} (marital status: married = 1),
-\texttt{STUDIO} (educational level, coded from 1 to 8) and
-\texttt{ETA} (age in years).
+\texttt{STUDIO} (educational level, coded from 1 to 8),
+\texttt{ETA} (age in years) and \texttt{ACOM4C} (size of town).
 %
 \begin{code}
-open SHIW/carcom10.csv --cols=1,2,3,4,9,10,29
+open SHIW/carcom10.csv --cols=1,2,3,4,9,10,29,41
 \end{code}
 %
 We then restrict the sample to married women from 30 to 60 years of
@@ -471,12 +471,15 @@ smpl PARENT<3  --restrict
 %
 For compatibility with the Mroz dataset as presented in the gretl
 data file \texttt{mroz87.gdt}, we rename the age and education
-variables as \texttt{WA} and \texttt{WE} respectively, then we
+variables as \texttt{WA} and \texttt{WE} respectively, we compute the
+\texttt{CIT} dummy and finally we
 store the reduced base dataset in gretl format.
 %
 \begin{code}
 rename ETA WA
 rename STUDIO WE
+series CIT = (ACOM4C > 2)
+
 store mroz_rep.gdt
 \end{code}
 
@@ -610,10 +613,8 @@ details.
 To compare the results from this dataset with those from the earlier
 US data used by Mroz, one can copy the input file \texttt{heckit.inp}
 (supplied with the gretl package) and substitute \verb|mroz_rep.gdt|
-for \texttt{mroz87.gdt}.\footnote{One other change is needed: in
-  William Greene's specification of the heckit model an additional
-  regressor named \texttt{CIT} is used. You can simply comment this
-  out.} It turns out that the results are qualitatively very similar.
+for \texttt{mroz87.gdt}. It turns out that the results are
+qualitatively very similar.
 
 \section{The representation of dates}
 \label{sec:join-isodates}
@@ -669,10 +670,13 @@ a file that contained suitable time or date information, or if a
 time-series interpretation has been imposed using either the
 \texttt{setobs} command or its GUI equivalent.  Then---apart, perhaps,
 from some very special cases---joining additional data is bound to
-involve matching observations by time-period. Since gretl knows the
-period of each observation on the left, no ``inner key'' is required;
-all we need is a means of identifying the period on the right; we'll
-refer to this as the ``time key''. Most likely, this information will
+involve matching observations by time-period. 
+
+In this case, contrary to the cross-sectional case, the inner dataset
+has a natural ordering which gretl is aware of; hence, no ``inner
+key'' is required. All we need is a means of identifying the period on
+the right and this is why, in a time-series context, we'll refer to
+the outer key as the ``time key''. Most likely, this information will
 appear in a single column in the outer data file, often but not always
 the first column.
 
@@ -1056,17 +1060,18 @@ data end up in correct registration.
 \begin{code}
 # start with everybody; get gender, age and a few other variables 
 # directly while we're at it
-open SHIW/carcom10.csv --cols=1,2,3,4,9,10,29
+open SHIW/carcom10.csv --cols=1,2,3,4,9,10,29,41
 
 # subsample on married women between the ages of 30 and 60
 smpl SEX==2 && ETA>=30 && ETA<=60 && STACIV==1 --restrict
 # for simplicity, restrict to heads of households and their spouses
 smpl PARENT<3  --restrict
 
-# rename the age and education variables for compatibility; then
-# save the reduced base dataset
+# rename the age and education variables for compatibility; compute
+# the "city" dummy and finally save the reduced base dataset
 rename ETA WA
 rename STUDIO WE
+series CIT = (ACOM4C>2)
 store mroz_rep.gdt
 
 # make a temp file holding annual hours worked per job
@@ -1141,6 +1146,7 @@ setinfo HA -d "Husband's age"
 setinfo HE -d "Husband's educational attainment, in years"
 setinfo FAMINC -d "Family income, in 2010 euros"
 setinfo AX -d "Actual years of wife's previous labor market experience"
+setinfo CIT -d "1 if live in large city"
 
 # save the final product
 store mroz_rep.gdt
