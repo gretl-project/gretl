@@ -1277,15 +1277,49 @@ static void set_week_number_mon4 (struct tm *timeptr, int wnum)
     }
 }
 
+static char *parse_iso_basic (const char *buf, struct tm *timeptr)
+{
+
+    if (strlen(buf) == 8) {
+	char *s;
+	double x;
+
+	errno = 0;
+	x = strtod(buf, &s);
+
+	if (errno == 0 && *s == '\0') {
+	    /* successful conversion */
+	    int y = (int) floor(x / 10000);
+	    int m = (int) floor((x - 10000*y) / 100);
+	    int d = (int) (x - 10000*y - 100*m);
+	    long ed = epoch_day_from_ymd(y, m, d);
+
+	    if (ed > 0) {
+		memset(timeptr, 0, sizeof *timeptr);
+		timeptr->tm_year = y - tm_year_base;
+		timeptr->tm_mon = m - 1;
+		timeptr->tm_mday = d;
+		buf += 8;
+	    }
+	}
+    }
+    
+    return (char *) buf;
+}
+
 char *strptime (const char *buf, const char *format, struct tm *timeptr)
 {
     char c;
+
+    if (strcmp(format, "%Y%m%d") == 0) {
+	return parse_iso_basic(buf, timeptr);
+    }
 
     for (; (c = *format) != '\0'; ++format) {
 	char *s;
 	int ret;
 
-	if (isspace (c)) {
+	if (isspace(c)) {
 	    while (isspace (*buf))
 		++buf;
 	} else if (c == '%' && format[1] != '\0') {
@@ -1294,32 +1328,32 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		c = *++format;
 	    switch (c) {
 	    case 'A' :
-		ret = match_string (&buf, full_weekdays);
+		ret = match_string(&buf, full_weekdays);
 		if (ret < 0)
 		    return NULL;
 		timeptr->tm_wday = ret;
 		break;
 	    case 'a' :
-		ret = match_string (&buf, abb_weekdays);
+		ret = match_string(&buf, abb_weekdays);
 		if (ret < 0)
 		    return NULL;
 		timeptr->tm_wday = ret;
 		break;
 	    case 'B' :
-		ret = match_string (&buf, full_month);
+		ret = match_string(&buf, full_month);
 		if (ret < 0)
 		    return NULL;
 		timeptr->tm_mon = ret;
 		break;
 	    case 'b' :
 	    case 'h' :
-		ret = match_string (&buf, abb_month);
+		ret = match_string(&buf, abb_month);
 		if (ret < 0)
 		    return NULL;
 		timeptr->tm_mon = ret;
 		break;
 	    case 'C' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_year = (ret * 100) - tm_year_base;
@@ -1328,14 +1362,14 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 	    case 'c' :
 		abort ();
 	    case 'D' :		/* %m/%d/%y */
-		s = strptime (buf, "%m/%d/%y", timeptr);
+		s = strptime(buf, "%m/%d/%y", timeptr);
 		if (s == NULL)
 		    return NULL;
 		buf = s;
 		break;
 	    case 'd' :
 	    case 'e' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_mday = ret;
@@ -1343,7 +1377,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		break;
 	    case 'H' :
 	    case 'k' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_hour = ret;
@@ -1351,7 +1385,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		break;
 	    case 'I' :
 	    case 'l' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
 		if (ret == 12)
@@ -1361,21 +1395,21 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		buf = s;
 		break;
 	    case 'j' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_yday = ret - 1;
 		buf = s;
 		break;
 	    case 'm' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_mon = ret - 1;
 		buf = s;
 		break;
 	    case 'M' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_min = ret;
@@ -1388,7 +1422,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		    return NULL;
 		break;
 	    case 'p' :
-		ret = match_string (&buf, ampm);
+		ret = match_string(&buf, ampm);
 		if (ret < 0)
 		    return NULL;
 		if (timeptr->tm_hour == 0) {
@@ -1398,19 +1432,19 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		    timeptr->tm_hour += 12;
 		break;
 	    case 'r' :		/* %I:%M:%S %p */
-		s = strptime (buf, "%I:%M:%S %p", timeptr);
+		s = strptime(buf, "%I:%M:%S %p", timeptr);
 		if (s == NULL)
 		    return NULL;
 		buf = s;
 		break;
 	    case 'R' :		/* %H:%M */
-		s = strptime (buf, "%H:%M", timeptr);
+		s = strptime(buf, "%H:%M", timeptr);
 		if (s == NULL)
 		    return NULL;
 		buf = s;
 		break;
 	    case 'S' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_sec = ret;
@@ -1424,54 +1458,54 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		break;
 	    case 'T' :		/* %H:%M:%S */
 	    case 'X' :
-		s = strptime (buf, "%H:%M:%S", timeptr);
+		s = strptime(buf, "%H:%M:%S", timeptr);
 		if (s == NULL)
 		    return NULL;
 		buf = s;
 		break;
 	    case 'u' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_wday = ret - 1;
 		buf = s;
 		break;
 	    case 'w' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_wday = ret;
 		buf = s;
 		break;
 	    case 'U' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
-		set_week_number_sun (timeptr, ret);
+		set_week_number_sun(timeptr, ret);
 		buf = s;
 		break;
 	    case 'V' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
-		set_week_number_mon4 (timeptr, ret);
+		set_week_number_mon4(timeptr, ret);
 		buf = s;
 		break;
 	    case 'W' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
-		set_week_number_mon (timeptr, ret);
+		set_week_number_mon(timeptr, ret);
 		buf = s;
 		break;
 	    case 'x' :
-		s = strptime (buf, "%Y:%m:%d", timeptr);
+		s = strptime(buf, "%Y:%m:%d", timeptr);
 		if (s == NULL)
 		    return NULL;
 		buf = s;
 		break;
 	    case 'y' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
 		if (ret < 70)
@@ -1481,14 +1515,12 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		buf = s;
 		break;
 	    case 'Y' :
-		ret = strtol (buf, &s, 10);
+		ret = strtol(buf, &s, 10);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_year = ret - tm_year_base;
 		buf = s;
 		break;
-	    case 'Z' :
-		abort ();
 	    case '\0' :
 		--format;
 		/* FALLTHROUGH */
@@ -1512,7 +1544,8 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		return NULL;
 	}
     }
-    return (char *)buf;
+
+    return (char *) buf;
 }
 
 
