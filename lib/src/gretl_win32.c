@@ -1551,5 +1551,3 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 
     return (char *) buf;
 }
-
-

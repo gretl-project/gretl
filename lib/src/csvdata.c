@@ -3234,6 +3234,44 @@ static joiner *joiner_new (int nrows)
     return jr;
 }
 
+static char *replace_time_format (joiner *jr, const char *fmt)
+{
+    free(jr->auto_keys->timefmt);
+    jr->auto_keys->timefmt = gretl_strdup(fmt);
+    return jr->auto_keys->timefmt;
+}
+
+#define USE_NUMERIC_DATE 0 /* need to experiment a little */
+
+#if USE_NUMERIC_DATE
+
+static int iso_basic_to_tm (double x, struct tm *tp)
+{
+    int err = 0;
+
+    if (na(x)) {
+	err = E_MISSDATA;
+    } else {
+	int y = (int) floor(x / 10000);
+	int m = (int) floor((x - 10000*y) / 100);
+	int d = (int) (x - 10000*y - 100*m);
+	long ed = epoch_day_from_ymd(y, m, d);
+
+	if (ed < 0) {
+	    err = E_DATA;
+	} else {
+	    memset(tp, 0, sizeof *tp);
+	    tp->tm_year = y - 1900;
+	    tp->tm_mon = m - 1;
+	    tp->tm_mday = d;
+	}
+    }
+
+    return err;
+}
+
+#else
+
 /* convert a numerical value to string for use with
    strptime as time-key */
 
@@ -3247,12 +3285,7 @@ static int convert_to_string (char *targ, double x)
     }
 }
 
-static char *replace_time_format (joiner *jr, const char *fmt)
-{
-    free(jr->auto_keys->timefmt);
-    jr->auto_keys->timefmt = gretl_strdup(fmt);
-    return jr->auto_keys->timefmt;
-}
+#endif /* USE_NUMERIC_DATE or not */
 
 /* Parse the obs string on row @i of the outer dataset and set the
    key(s) on row @j of the joiner struct. We get here only if we have 
@@ -3285,8 +3318,16 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     if (tcol >= 0) {
 	/* using a specified column */
 	if (convert) {
+#if USE_NUMERIC_DATE
+	    err = iso_basic_to_tm(jr->r_dset->Z[tcol][i], &t);
+	    if (err) {
+		return err;
+	    }
+	    goto proceed;
+#else
 	    /* column is numeric, conversion needed */
 	    convert_to_string(sconv, jr->r_dset->Z[tcol][i]);
+#endif
 	    s = sconv;
 	    s_src = 1;
 	} else {
@@ -3325,6 +3366,10 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 	    return err;
 	}
     }
+
+#if USE_NUMERIC_DATE
+ proceed:
+#endif
 
     if (calendar_data(jr->l_dset)) {
 	int y, m, d, eday;

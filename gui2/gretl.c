@@ -872,7 +872,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 			     windata_t *vwin)
 {
     int Ctrl = (event->state & GDK_CONTROL_MASK);
-    int Alt = (event->state & GDK_MOD1_MASK);
+    int Alt = (event->state & GDK_MOD1_MASK); /* FIXME Mac? */
     int k = event->keyval;
 
     if (is_control_key(event->keyval)) {
