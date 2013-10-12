@@ -405,7 +405,7 @@
       </description>
     </function>
 
-    <function name="$ncoeff" section="access" output="scalar">
+    <function name="$ncoeff" section="access" output="int">
       <description>
 	<para>
 	  Produce il numero totale dei coefficienti stimati nell'ultimo modello.
@@ -413,7 +413,7 @@
       </description>
     </function>
 
-    <function name="$nobs" section="access" targ="dnobs" output="scalar">
+    <function name="$nobs" section="access" targ="dnobs" output="int">
       <description>
 	<para>
 	  Produce il numero delle osservazioni nel campione selezionato.
@@ -421,10 +421,30 @@
       </description>
     </function>
 
-    <function name="$nvars" section="access" output="scalar">
+    <function name="$nvars" section="access" output="int">
       <description>
 	<para>
 	  Produce il numero delle variabili nel dataset (inclusa la costante).
+	</para>
+      </description>
+    </function>
+
+    <function name="$obsdate" section="access" output="series">
+      <description>
+	<para>
+	  Applicable when the current dataset is time-series with
+	  annual, quarterly, monthly or decennial frequency, or is
+	  dated daily or weekly, or when the dataset is a panel with
+	  time-series information set appropriately (see the <cmdref
+	  targ="setobs"/> command).  The returned series holds 8-digit
+	  numbers on the pattern <lit>YYYYMMDD</lit> (ISO 8601
+	  <quote>basic</quote> date format), which correspond to the
+	  day of the observation, or the first day of the observation
+	  period in case of a time-series frequency less than daily.
+	</para>
+	<para>
+	  Such a series can be helpful when using the <cmdref
+	  targ="join"/> command.
 	</para>
       </description>
     </function>
@@ -485,7 +505,7 @@
       </description>
     </function>
 
-    <function name="$pd" section="access" output="scalar">
+    <function name="$pd" section="access" output="int">
       <description>
 	<para>
 	  Produce la frequenza o la periodicità dei dati (es. 4 per dati
@@ -658,7 +678,7 @@
       </description>
     </function>
 
-    <function name="$T" section="access" output="scalar">
+    <function name="$T" section="access" output="int">
       <description>
 	<para>
 	  Numero di osservazioni usato nella stima dell'ultimo
@@ -667,7 +687,7 @@
       </description>
     </function>
 
-    <function name="$t1" section="access" output="scalar">
+    <function name="$t1" section="access" output="int">
       <description>
 	<para>
 	  Indice (a base 1) della prima osservazione nel campione
@@ -676,7 +696,7 @@
       </description>
     </function>
 
-    <function name="$t2" section="access" output="scalar">
+    <function name="$t2" section="access" output="int">
       <description>
 	<para>
 	  Indice (a base 1) dell'ultima osservazione nel campione
@@ -798,7 +818,7 @@
       </description>
     </function>
 
-    <function name="$windows" section="access" output="scalar">
+    <function name="$windows" section="access" output="int">
       <description>
 	<para>
 	  Ritorna 1 se gretl sta girando sotto Windows e 0
@@ -1067,6 +1087,42 @@
 	  <seelist>
 	    <fncref targ="tanh"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="atof" section="strings" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Closely related to the C library function of the same name.
+	  Returns the result of converting the string
+	  <argname>s</argname> (or the leading portion thereof, after
+	  discarding any initial white space) to a floating-point
+	  number.  Unlike C's <lit>atof</lit>, however, the decimal
+	  character is always assumed (for reasons of portability) to
+	  be <quote><lit>.</lit></quote>. Any characters that follow
+	  the portion of <argname>s</argname> that converts to a
+	  floating-point number under this assumption are ignored.
+	</para>
+	<para>
+	  If none of <argname>s</argname> (following any discarded
+	  white space) is convertible under the stated assumption,
+	  <lit>NA</lit> is returned.
+	</para>
+	<code>
+	  # examples
+	  x = atof("1.234") # gives x = 1.234 
+	  x = atof("1,234") # gives x = 1
+	  x = atof("1.2y")  # gives x = 1.2
+	  x = atof("y")     # gives x = NA
+	  x = atof(",234")  # gives x = NA
+	</code>	
+	<para>
+	  See also <fncref targ="sscanf"/> for more flexible string to
+	  numeric conversion.
 	</para>
       </description>
     </function>
@@ -1510,13 +1566,13 @@
       </description>
     </function>
 
-    <function name="cols" section="matshape" output="scalar">
+    <function name="cols" section="matshape" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
       <description>
 	<para>
-	  The number of columns of <argname>X</argname>. 
+	  Il numero di colonne di <argname>X</argname>. 
 	  <seelist> 
 	    <fncref targ="mshape"/>
 	    <fncref targ="rows"/>
@@ -2022,7 +2078,7 @@
       </description>
     </function>
 
-    <function name="epochday" section="data-utils" output="scalar">
+    <function name="epochday" section="calendar" output="scalar-or-series">
       <fnargs>
 	<fnarg type="scalar">year</fnarg>
 	<fnarg type="scalar">month</fnarg>
@@ -2285,7 +2341,7 @@
       </description>
     </function>
 
-    <function name="firstobs" section="data-utils" output="scalar">
+    <function name="firstobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -2298,6 +2354,33 @@
 	  <seelist> 
 	    <fncref targ="lastobs"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="fixname" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">rawname</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Intended for use in connection with the <cmdref
+	  targ="join"/> command.  Returns the result of converting
+	  <argname>rawname</argname> to a valid gretl identifier,
+	  which must start with a letter, contain nothing but (ASCII)
+	  letters, digits and the underscore character, and must not
+	  exceed 31 characters. The rules used in conversion are:
+	</para>
+	<para>
+	  1. Skip any leading non-letters.
+	</para>
+	<para>
+	  2. Until the 31-character limit is reached or the input is
+	  exhausted: transcribe <quote>legal</quote> characters; skip
+	  <quote>illegal</quote> characters apart from spaces; and
+	  replace one or more consecutive spaces with an underscore,
+	  unless the last character transcribed is an underscore in
+	  which case space is skipped.
 	</para>
       </description>
     </function>
@@ -2363,6 +2446,53 @@
 	  <argname>s</argname> is defined, returns the string value of
 	  that variable, otherwise returns an empty string.
 	  See also <fncref targ="ngetenv"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="getline" section="strings" output="scalar">
+      <fnargs>
+	<fnarg type="string">source</fnarg>
+	<fnarg type="string">target</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  This function is used to read successive lines from
+	  <argname>source</argname>, which should be a named string
+	  variable. On each call a line from the source is written to
+	  <argname>target</argname> (which must also be a named string
+	  variable), with the newline character stripped off. The
+	  valued returned is 1 if there was anything to be read
+	  (including blank lines), 0 if the source has been exhausted.
+	</para>
+	<para>
+	  Here is an example in which the content of a text file is
+	  broken into lines:
+	</para>
+	<code>
+	  string s = readfile("data.txt")
+	  string line
+	  scalar i = 1
+	  loop while getline(s, line)
+	    printf "line %d = '%s'\n", i++, line
+          endloop
+	</code>
+	<para>
+	  In this example we can be sure that the source is exhausted
+	  when the loop terminates. If the source might not be
+	  exhausted you should follow your regular call(s) to
+	  <lit>getline</lit> with a <quote>clean up</quote> call, in which
+	  <argname>target</argname> is replaced by <lit>null</lit> (or
+	  omitted altogether) as in
+	</para>
+	<code>
+	  getline(s, line)
+	  getline(s, null)
+	</code>
+	<para>
+	  Note that although the reading position advances at each call
+	  to <lit>getline</lit>, <argname>source</argname> is not modified
+	  by this function, only <argname>target</argname>.
 	</para>
       </description>
     </function>
@@ -2660,7 +2790,7 @@
       </description>
     </function>
 
-    <function name="inbundle" section="data-utils" output="scalar">
+    <function name="inbundle" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="bundle">b</fnarg>
 	<fnarg type="string">chiave</fnarg>
@@ -2696,7 +2826,7 @@
       </description>
     </function>
 
-    <function name="inlist" section="data-utils" output="scalar">
+    <function name="inlist" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="list">L</fnarg>
 	<fnarg type="series">y</fnarg>
@@ -2924,7 +3054,7 @@
       </description>
     </function>
 
-    <function name="isconst" section="data-utils" output="scalar">
+    <function name="isconst" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
 	<fnarg type="scalar" optional="true">panel-code</fnarg>
@@ -2967,7 +3097,7 @@
       </description>
     </function>
 
-    <function name="isnull" section="data-utils" output="scalar">
+    <function name="isnull" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -2985,6 +3115,77 @@
       </description>
     </function>  
 
+    <function name="isoconv" section="calendar" output="scalar">
+      <fnargs>
+	<fnarg type="series">date</fnarg>
+	<fnarg type="seriesref">&amp;year</fnarg>
+	<fnarg type="seriesref">&amp;month</fnarg>
+	<fnarg type="seriesref" optional="true">&amp;day</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given a series <argname>date</argname> holding dates in
+	  ISO 8601 <quote>basic</quote> format (<lit>YYYYMMDD</lit>),
+	  this function writes the year, month and (optionally)
+	  day components into the series named by the second and
+	  subsequent arguments. An example call, assuming the
+	  series <lit>dates</lit> contains suitable 8-digit values:
+	</para>
+	<code>
+	  series y, m, d
+	  isoconv(dates, &amp;y, &amp;m, &amp;d)
+	</code>
+	<para>
+	  The return value from this function is 0 on successful
+	  completion, non-zero on error.
+	</para>
+      </description>
+    </function>
+
+    <function name="isodate" section="calendar" output="seebelow">
+      <fnargs>
+	<fnarg type="scalar-or-series">ed</fnarg>
+	<fnarg type="bool" optional="true">as-string</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The argument <argname>ed</argname> is interpreted as an
+	  epoch day (which equals 1 for the first of January in the
+	  year 1 AD). The default return value &mdash; of the same
+	  type as <argname>ed</argname> &mdash; is an 8-digit number,
+	  or a series of such numbers, on the pattern
+	  <lit>YYYYMMDD</lit> (ISO 8601 <quote>basic</quote> format),
+	  giving the calendar date corresponding to the epoch day.
+	</para>
+	<para>
+	  If <argname>ed</argname> is a scalar (only) and the optional
+	  second argument <argname>as-string</argname> is non-zero,
+	  the return value is not numeric but rather a string on the
+	  pattern <lit>YYYY-MM-DD</lit> (ISO 8601
+	  <quote>extended</quote> format).
+	</para>
+	<para>
+	  For the inverse function, see <fncref targ="epochday"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="iwishart" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="symmat">S</fnarg>
+	<fnarg type="int">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given <argname>S</argname> (a positive definite <by r="p"
+	  c="p"/> scale matrix), returns a drawing from the Inverse
+	  Wishart distribution with <argname>v</argname> degrees of
+	  freedom. The returned matrix is also <by r="p" c="p"/>.  The
+	  algorithm of <cite key="odell-feiveson66">Odell and Feiveson
+	  (1966)</cite> is used.
+	</para>
+      </description>
+    </function>
 
     <function name="kdensity" section="stats" output="matrix">
       <fnargs>
@@ -3133,7 +3334,7 @@
       </description>
     </function>
 
-    <function name="lastobs" section="data-utils" output="scalar">
+    <function name="lastobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -3727,7 +3928,7 @@
       </description>
     </function>
 
-    <function name="monthlen" section="data-utils" output="scalar">
+    <function name="monthlen" section="calendar" output="int">
       <fnargs>
 	<fnarg type="scalar">month</fnarg>
 	<fnarg type="scalar">year</fnarg>
@@ -3994,7 +4195,7 @@
       </description>
     </function>
 
-    <function name="mwrite" section="data-utils" output="scalar">
+    <function name="mwrite" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="string">s</fnarg>
@@ -4138,7 +4339,7 @@
       </description>
     </function>
 
-    <function name="nelem" section="data-utils" output="scalar">
+    <function name="nelem" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="list">L</fnarg>
       </fnargs>
@@ -4164,7 +4365,7 @@
       </description>
     </function>
 
-    <function name="nobs" section="stats" output="scalar">
+    <function name="nobs" section="stats" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -4336,7 +4537,7 @@
       </description>
     </function>
 
-    <function name="obsnum" section="data-utils" output="scalar">
+    <function name="obsnum" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -5109,11 +5310,21 @@
 	<para>
 	  Se <argname>y</argname> è una serie, restituisce il suo
 	  <argname>p</argname>-esimo quantile. Ad sesmpio, se
-	  <math>p</math> = 0.5, si avrà la mediana. Se l'argomento è
-	  invece una matrice, ritorna un vettore riga contenente i
-	  <argname>p</argname>-esimi quantili per le colonne di
-	  <argname>y</argname>; in pratica, ogni colonna è trattata
-	  come se fosse una serie.
+	  <math>p</math> = 0.5, si avrà la mediana. 
+	</para>
+	<para>
+	  Se l'argomento è invece una matrice, ritorna un vettore riga
+	  contenente i <argname>p</argname>-esimi quantili per le
+	  colonne di <argname>y</argname>; in pratica, ogni colonna è
+	  trattata come se fosse una serie.
+	</para>
+	<para>
+	  In addition, for matrix <argname>y</argname> an alternate form
+	  of the second argument is supported: <argname>p</argname> may be
+	  given as a vector. In that case the return value is an <by r="m"
+	  c="n"/> matrix, where <repl>m</repl> is the number of elements
+	  in <argname>p</argname> and <repl>n</repl> is the number of
+	  columns in <argname>y</argname>.
 	</para>
 	<para context="tex">
 	  For a series of length $n$, the $p$-quantile, $q$, is defined
@@ -5272,7 +5483,7 @@
       </description>
     </function>
 
-    <function name="randint" section="probdist" output="scalar">
+    <function name="randint" section="probdist" output="int">
       <fnargs>
 	<fnarg type="scalar">min</fnarg>
 	<fnarg type="scalar">max</fnarg>
@@ -5288,7 +5499,7 @@
       </description>
     </function>
 
-    <function name="rank" section="linalg" output="scalar">
+    <function name="rank" section="linalg" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -5328,93 +5539,6 @@
 	  <seelist>
 	    <fncref targ="sort"/>
 	    <fncref targ="sortby"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="randgen" section="probdist" output="series">
-      <fnargs>
-	<fnarg type="char">c</fnarg>
-	<fnarg type="scalar">a</fnarg>
-	<fnarg type="scalar">b</fnarg>
-      </fnargs>
-      <examples>
-	<example>series x = randgen(u, 0, 100)</example>
-	<example>series t14 = randgen(t, 14)</example>
-	<example>series y = randgen(B, 0.6, 30)</example>
-	<example>series g = randgen(G, 1, 1)</example>
-      </examples>
-      <description>
-	<para>
-	  All-purpose random number generator. The parameter
-	  <argname>c</argname> is a character, which specifies from which
-	  distribution the pseudo-random numbers should be drawn;
-	  <argname>a</argname> and, in some cases, <argname>b</argname>
-	  gauge the shape of the distribution.
-	</para>
-	<ilist context="notex">
-	  <li>
-	    <para>
-	      Uniform (continuous) (c = u or U): minimum; maximum
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      Standard normal (c = z, n, or N): mean; standard deviation
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      Student's t (t): degrees of freedom
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      Chi square (c, x, or X): degrees of freedom
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      Snedecor's F (f or F): df (num.); df (den.)
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      Gamma (g or G): shape; scale
-	    </para>
-	  </li>	  
-	  <li>
-	    <para>
-	      Binomial (b or B): probability; number of trials
-	    </para>
-	  </li>	  
-	  <li>
-	    <para>
-	      Poisson (p or P): Mean
-	    </para>
-	  </li>	  
-	</ilist>
-	<para context="tex">
-	  \begin{center}
-	  \begin{tabular}{llll}
-	  \textbf{Distribution} &amp; \textsl{c} &amp; \textsl{a} &amp; \textsl{b} \\[4pt]
-	  Uniform (continuous) &amp; \texttt{u} or \texttt{U} &amp; minimum &amp; maximum\\
-	  Normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; mean &amp; standard deviation\\
-	  Student's $t$ &amp; \texttt{t} &amp; degrees of freedom &amp; --\\
-	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; degrees of freedom &amp; --\\
-	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; df (num.) &amp; df (den.)\\
-	  Gamma &amp; \texttt{g} or \texttt{G} &amp; shape &amp; scale \\
-	  Binomial &amp; \texttt{b} or \texttt{B} &amp; $p$ &amp; $n$ \\
-	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; --
-	  \end{tabular}
-	  \end{center}
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="normal"/>
-	    <fncref targ="uniform"/> 
-	    <fncref targ="genpois"/>
 	  </seelist>
 	</para>
       </description>
@@ -5469,7 +5593,28 @@
       </description>
     </function>
 
-    <function name="remove" section="data-utils" output="scalar">
+    <function name="regsub" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="string">match</fnarg>
+	<fnarg type="string">repl</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Returns a copy of <argname>s</argname> in which all
+	  occurrences of the pattern <argname>match</argname> are
+	  replaced using <argname>repl</argname>. The arguments
+	  <argname>match</argname> and <argname>repl</argname>
+	  are interpreted as Perl-style regular expressions.
+	</para>
+	<para>
+	  See also <fncref targ="strsub"/> for simple substitution of
+	  literal strings.
+	</para>
+      </description>
+    </function>
+
+    <function name="remove" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
       </fnargs>    
@@ -5568,8 +5713,7 @@
       </description>
     </function>
 
-
-    <function name="rownames" section="matbuild" output="scalar">
+    <function name="rownames" section="matbuild" output="int">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="list-or-string">s</fnarg>
@@ -5595,7 +5739,7 @@
 	  </description>
     </function>
 
-    <function name="rows" section="matshape" output="scalar">
+    <function name="rows" section="matshape" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -5739,7 +5883,7 @@
       </description>
     </function>
 
-    <function name="setnote" section="data-utils" output="scalar">
+    <function name="setnote" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="bundle">b</fnarg>
 	<fnarg type="string">key</fnarg>
@@ -5888,87 +6032,84 @@
       </description>
     </function>
 
-    <function name="sscanf" section="strings" output="scalar">
+    <function name="sscanf" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">src</fnarg>
 	<fnarg type="string">format</fnarg>
 	<fnarg type="varargs"/>
       </fnargs>  
       <description>
-	<para>
-	  Reads values from <argname>src</argname> under the control
-	  of <argname>format</argname> and assigns these values to one
-	  or more trailing arguments, indicated by the dots above.
-	  Returns the number of values assigned. This is a simplifed
-	  version of the <lit>sscanf</lit> function in the C
-	  programming language.
-	</para>
-	<para>
-	  <repl>src</repl> may be either a literal string, enclosed
-	  in double quotes, or the name of a predefined string
-	  variable.  <repl>format</repl> is defined similarly to the
-	  format string in <cmdref targ="printf"/> (more on this
-	  below). <repl>args</repl> should be a comma-separated list
-	  containing the names of pre-defined variables: these are the
-	  targets of conversion from <repl>src</repl>.  (For those
-	  used to C: one can prefix the names of numerical variables
-	  with <lit>&amp;</lit> but this is not required.)
-	</para>
-	<para>
-	  Literal text in <repl>format</repl> is matched against
-	  <repl>src</repl>.  Conversion specifiers start with
-	  <lit>%</lit>, and recognized conversions include
-	  <lit>%f</lit>, <lit>%g</lit> or <lit>%lf</lit> for
-	  floating-point numbers; <lit>%d</lit> for integers;
-	  <lit>%s</lit> for strings; and <lit>%m</lit> for matrices.
-	  You may insert a positive integer after the percent sign:
-	  this sets the maximum number of characters to read for the
-	  given conversion (or the maximum number of rows in the case
-	  of matrix conversion). Alternatively, you can insert a
-	  literal <lit>*</lit> after the percent to suppress the
-	  conversion (thereby skipping any characters that would
-	  otherwise have been converted for the given type).  For
-	  example, <lit>%3d</lit> converts the next 3 characters in
-	  <repl>source</repl> to an integer, if possible;
-	  <lit>%*g</lit> skips as many characters in
-	  <repl>source</repl> as could be converted to a single
-	  floating-point number.
-	</para>
-	<para>
-	  Matrix conversion works thus: the scanner reads a line of
-	  input and counts the (space- or tab-separated) number of
-	  numeric fields.  This defines the number of columns in the
-	  matrix.  By default, reading then proceeds for as many lines
-	  (rows) as contain the same number of numeric columns, but
-	  the maximum number of rows to read can be limited as
-	  described above.
-	</para>
-	<para>
-	  In addition to <lit>%s</lit> conversion for strings, a
-	  simplified version of the C format
-	  <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit>
-	  is available.  In this format <repl>N</repl> is the maximum
-	  number of characters to read and <repl>chars</repl> is a set
-	  of acceptable characters, enclosed in square brackets:
-	  reading stops if <repl>N</repl> is reached or if a character
-	  not in <repl>chars</repl> is encountered. The function of
-	  <repl>chars</repl> can be reversed by giving a circumflex,
-	  <lit>^</lit>, as the first character; in that case reading
-	  stops if a character in the given set is found.  (Unlike C,
-	  the hyphen does not play a special role in the
-	  <repl>chars</repl> set.)
-	</para>
-	<para>
-	  If the source string does not (fully) match the format, the
-	  number of conversions may fall short of the number of
-	  arguments given.  This is not in itself an error so far as
-	  gretl is concerned.  However, you may wish to check the
-	  number of conversions performed; this is given by the
-	  return value.
-	</para>
-	<para>
-	  Some examples follow:
-	</para>
+      <para>
+        Analizza una <repl>stringa</repl> seguendo il
+        <repl>formato</repl> indicato, assegnando zero o più valori
+        agli <repl>argomenti</repl> indicati. È una versione
+        semplificata della funzione <lit>sscanf</lit> del linguaggio
+        di programmazione C, e ritorna il numero di valori assegnati.
+      </para>
+      <para>
+        La <repl>stringa</repl> può essere una stringa vera e propria,
+	racchiusa tra virgolette doppie, o il nome di una variabile stringa
+	predefinita. Il <repl>formato</repl> è definito in modo simile alla
+	stringa di formato del comando <cmdref targ="printf"/> (si veda
+	oltre). Gli <repl>argomenti</repl> sono una lista separata da virgole
+	che contiene i nomi di variabili predefinite che verranno assegnate a
+	seconda dei valori letti dalla <repl>stringa</repl>. Per chi conosce
+	il C: è possibile prefissare con <lit>&amp;</lit> i nomi delle
+	variabili numeriche, ma non è richiesto.
+      </para>
+      <para>
+	Le regole specificate nel <repl>formato</repl> vengono usate per
+        analizzare la <repl>stringa</repl>. Le specifiche iniziano con un
+        carattere <lit>%</lit>, e comprendono
+        <lit>%f</lit>, <lit>%g</lit> o <lit>%lf</lit> per i numeri in virgola
+        mobile; <lit>%d</lit> per gli interi; <lit>%s</lit> per le stringhe, e
+	<lit>%m</lit> per le matrici. È possibile inserire un numero intero
+        positivo dopo il carattere percento, per impostare il numero massimo di
+        caratteri da leggere per ogni tipo di specifica (o il massimo numero di
+        righe nel caso di conversione in matrici). In alternativa è possibile
+        inserire un carattere <lit>*</lit> dopo il percento per sopprimere la
+        conversione di un certo numero di caratteri della stringa. Ad esempio,
+	<lit>%3d</lit> converte i 3 caratteri successivi della <repl>stringa</repl>
+        in un numero intero, se possibile; <lit>%*g</lit> salta tutti i caratteri
+        nella <repl>stringa</repl> che potrebbero essere convertiti in un numero
+        a virgola mobile.
+      </para>
+      <para>
+	La conversione in matrici funziona nel modo seguente: viene letta ogni
+        riga dell'input e vengono contati i campi numerici (separati da spazi o
+        tab). In questo modo viene definito il numero di colonne della matrice.
+        Vengono quindi lette tutte le righe seguenti che contengono lo stesso
+        numero di colonne numeriche; è anche possibile limitare il numero
+        massimo di righe da leggere.
+      </para>
+      <para>
+        Oltre alla conversione <lit>%s</lit> per le stringhe, è disponibile
+        anche una versione semplificata del formato C
+        <lit>%</lit><repl>N</repl><lit>[</lit><repl>caratteri</repl><lit>]</lit>.
+        In questo formato, <repl>N</repl> è il numero massimo di caratteri da
+        leggere, e <repl>caratteri</repl> è un insieme di caratteri accettabili,
+        racchiusi tra parentesi quadre; la lettura si ferma se si raggiunge il
+        limite di <repl>N</repl> o se si incontra un carattere non compreso
+        nell'insieme ammissibile. La funzione dell'insieme
+	<repl>caratteri</repl> può essere invertita specificando un accento
+        circonflesso <lit>^</lit> come primo carattere dell'insieme; in questo
+        caso, la lettura si ferma se si incontra un carattere dell'insieme
+        specificato. Al contrario del C, il carattere trattino non ha alcuna
+        funzione speciale in questo contesto.
+      </para>
+      <para>
+	Se la stringa non corrisponde esattamente al formato specificato, il
+        numero di conversioni effettuate può risultare diverso dal numero di
+        argomenti indicati. Per gretl questo non è necessariamente un errore,
+        tuttavia può essere utile voler controllare questa corrispondenza; è
+        possibile farlo usando la variabile scalare interna
+	<lit>$nscan</lit>, il cui valore viene aggiornato ogni volta che si
+        usa <lit>sscanf</lit>. In caso di uso interattivo viene mostrato anche
+        il numero di conversioni effettuate.
+      </para>
+      <para>
+	Ecco alcuni esempi:
+      </para>
 	<code>
 	  scalar x
 	  scalar y
@@ -5998,8 +6139,7 @@
       </description>
     </function>
 
-
-    <function name="strlen" section="strings" output="scalar">
+    <function name="strlen" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>  
@@ -6010,7 +6150,7 @@
       </description>
     </function>
 
-    <function name="strncmp" section="strings" output="scalar">
+    <function name="strncmp" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
@@ -6540,7 +6680,7 @@
       </description>
     </function>
 
-    <function name="varnum" section="data-utils" output="scalar">
+    <function name="varnum" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">varname</fnarg>
       </fnargs>     
@@ -6637,7 +6777,7 @@
       </description>
     </function>
 
-    <function name="weekday" section="data-utils" output="scalar">
+    <function name="weekday" section="calendar" output="int">
       <fnargs>
 	<fnarg type="scalar">year</fnarg>
 	<fnarg type="scalar">month</fnarg>
