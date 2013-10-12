@@ -764,11 +764,12 @@
     <function name="$vecGamma" section="access" output="matrix">
       <description>
 	<para>
-	  Must follow the estimation of a VECM; returns a matrix in
-	  which the Gamma matrices (coefficients on the lagged differences
-	  of the cointegrated variables) are stacked side by side.
-	  Each row represents an equation; for a VECM of lag order
-	  <math>p</math> there are <math>p</math> &minus; 1 sub-matrices.
+	  Deve seguire la stima di un VECM; ritorna una matrice in cui
+	  le matrici Gamma (cioè i coefficienti delle differenze
+	  ritardate) sono messe una fianco all'altra.  Ogni riga
+	  rappresenta un'equazione; per un VECM di ordine
+	  <math>p</math> ci sono <math>p</math> &minus; 1
+	  sottomatrici.
 	</para>
       </description>
     </function>    
@@ -5681,10 +5682,10 @@
       </fnargs>   
       <description>
 	<para>
-	  Selects from <argname>A</argname> only the columns for which
-	  the corresponding element of <argname>b</argname> is
-	  non-zero. <argname>b</argname> must be a row vector with
-	  the same number of columns as <argname>A</argname>.
+	  Seleziona da <argname>A</argname> solo le colonne per le
+	  quali l'elemento corrispondente di <argname>b</argname> è
+	  non-zero. <argname>b</argname> deve essere un vettore riga
+	  con lo stesso numero di colonne di <argname>A</argname>.
 	</para>
 	<para>
 	  <seelist>
@@ -5701,10 +5702,11 @@
       </fnargs>   
       <description>
 	<para>
-	  Selects from <argname>A</argname> only the rows for which
-	  the corresponding element of <argname>b</argname> is
-	  non-zero. <argname>b</argname> must be a column vector with
-	  the same number of rows as <argname>A</argname>.
+	  Seleziona da <argname>A</argname> solo le righe per le quali
+	  l'elemento corrispondente di <argname>b</argname> è
+	  non-zero. <argname>b</argname> deve essere un vettore
+	  colonna con lo stesso numero di righe di
+	  <argname>A</argname>.
 	</para>
 	<para>
 	  <seelist>
@@ -6362,10 +6364,11 @@
       </fnargs>     
       <description>
 	<para>
-	  Generates a series of uniform pseudo-random variates in the
-	  interval (<argname>a</argname>, <argname>b</argname>), or, if no
-	  arguments are supplied, in the interval (0,1). The algorithm
-	  used is the Mersenne Twister by Matsumoto and Nishimura (1998).
+	  Genera una serie di numeri pseudo-casuali uniformi
+	  nell'intervallo (<argname>a</argname>,
+	  <argname>b</argname>), oppure, in assenza di argomenti,
+	  nell'intervallo (0,1). L'algoritmo usato è il Mersenne
+	  Twister di Matsumoto e Nishimura (1998).
 	</para>
 	<para>
 	  <seelist>
