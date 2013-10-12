@@ -492,7 +492,7 @@ void series_attach_string_table (DATASET *dset, int i, void *ptr);
 
 void series_destroy_string_table (DATASET *dset, int i);
 
-int series_has_string_table (const DATASET *dset, int i);
+int is_string_valued (const DATASET *dset, int i);
 
 series_table *series_get_string_table (const DATASET *dset, int i);
 

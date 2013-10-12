@@ -1197,15 +1197,17 @@ void date_maj_min (int t, const DATASET *dset, int *maj, int *min)
 
 #define NO_PMAX(p,k) (p == NULL || p[k-1] == PMAX_NOT_AVAILABLE)
 
+#define TMPLEN 64
+
 static void csv_data_out (const DATASET *dset, const int *list,
 			  int print_obs, int digits, int *pmax, 
 			  char decpoint, char delim, FILE *fp)
 {
     const char *NA = get_csv_na_write_string();
-    char tmp[64];
+    char tmp[TMPLEN];
     double xt;
     int popit = 0, dotsub = 0;
-    int t, i;
+    int t, i, vi;
 
     if (decpoint == '.' && get_local_decpoint() == ',') {
 	gretl_push_c_numeric_locale();
@@ -1228,11 +1230,18 @@ static void csv_data_out (const DATASET *dset, const int *list,
 	}
 
 	for (i=1; i<=list[0]; i++) { 
-	    xt = dset->Z[list[i]][t];
+	    vi = list[i];
+	    xt = dset->Z[vi][t];
 	    if (na(xt)) {
 		fputs(NA, fp);
 	    } else {
-		if (NO_PMAX(pmax, i)) {
+		if (is_string_valued(dset, vi)) {
+		    *tmp = '\0';
+		    strcat(tmp, "\"");
+		    strncat(tmp, series_get_string_for_obs(dset, vi, t), 
+			    TMPLEN - 3);
+		    strcat(tmp, "\"");
+		} else if (NO_PMAX(pmax, i)) {
 		    sprintf(tmp, "%.*g", digits, xt);
 		} else {
 		    sprintf(tmp, "%.*f", pmax[i-1], xt);
@@ -1271,7 +1280,7 @@ static void R_data_out (const DATASET *dset, const int *list,
 {
     int print_markers = 0;
     double xt;
-    int t, i;
+    int t, i, vi;
 
     if (dset->S != NULL) {
 	print_markers = markers_are_unique(dset);
@@ -1281,10 +1290,13 @@ static void R_data_out (const DATASET *dset, const int *list,
 	if (print_markers) {
 	    fprintf(fp, "\"%s\" ", dset->S[t]);
 	} 
-	for (i=1; i<=list[0]; i++) { 
-	    xt = dset->Z[list[i]][t];
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    xt = dset->Z[vi][t];
 	    if (na(xt)) {
 		fputs("NA", fp);
+	    } else if (is_string_valued(dset, vi)) {
+		fprintf(fp, "\"%s\"", series_get_string_for_obs(dset, vi, t));
 	    } else if (NO_PMAX(pmax, i)) {
 		fprintf(fp, "%.*g", digits, xt);
 	    } else {
@@ -2333,7 +2345,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 		newvar = 1;
 		strcpy(dset->varname[v], addset->varname[i]);
 		copy_varinfo(dset->varinfo[v], addset->varinfo[i]);
-		if (series_has_string_table(addset, i) &&
+		if (is_string_valued(addset, i) &&
 		    addset->n == dset->n && offset == 0 &&
 		    addobs == 0) {
 		    series_table *st;

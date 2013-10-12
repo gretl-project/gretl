@@ -4967,7 +4967,7 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	nvals = gretl_vector_get_length(xvals);
 	if (nvals == 0) {
 	    err = E_DATA;
-	} else if (series_has_string_table(dset, v)) {
+	} else if (is_string_valued(dset, v)) {
 	    int n_labels;
 
 	    labels = series_get_string_vals(dset, v, &n_labels);

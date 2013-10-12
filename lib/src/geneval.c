@@ -1508,7 +1508,7 @@ static NODE *series_string_calc (NODE *l, NODE *r, int f, parser *p)
 	alt = &xt;
     }
 
-    if (vnum > 0 && series_has_string_table(p->dset, vnum)) {
+    if (vnum > 0 && is_string_valued(p->dset, vnum)) {
 	*alt = series_decode_string(p->dset, vnum, strval);
     }
 
@@ -3851,7 +3851,7 @@ static NODE *num_string_comp (NODE *l, NODE *r, int f, parser *p)
 	const char *s = snode->v.str;
 	int v = xnode->vnum;
 
-	if (v <= 0 || !series_has_string_table(p->dset, v)) {
+	if (v <= 0 || !is_string_valued(p->dset, v)) {
 	    p->err = E_TYPES;
 	} else {
 	    double sx = series_decode_string(p->dset, v, s);
@@ -11421,7 +11421,7 @@ static void pre_process (parser *p, int flags)
 
     /* string-valued series: do not overwrite wholesale */
     if (p->lh.t == VEC && p->lh.obs < 0 && 
-	series_has_string_table(p->dset, p->lh.v)) {
+	is_string_valued(p->dset, p->lh.v)) {
 	gretl_errmsg_set("Cannot overwrite entire string-valued series");
 	p->err = E_TYPES;
 	return;
@@ -12305,7 +12305,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	if (p->lh.obs >= 0) {
 	    /* target is actually a specific observation in a series */
 	    t = p->lh.obs;
-	    if (series_has_string_table(p->dset, v)) {
+	    if (is_string_valued(p->dset, v)) {
 		if (r->t == STR) {
 		    p->err = series_set_string_val(p->dset, v, t, r->v.str);
 		} else {

@@ -84,7 +84,7 @@ static NODE *newref (parser *p, int t)
 	    n->vnum = p->idnum;
 	    n->v.xvec = p->dset->Z[n->vnum];
 	    n->vname = p->idstr;
-	    if (series_has_string_table(p->dset, n->vnum)) {
+	    if (is_string_valued(p->dset, n->vnum)) {
 		n->flags |= SVL_NODE;
 	    }
 	} else if (t == UNUM || t == UNUM_P || t == UNUM_M) {

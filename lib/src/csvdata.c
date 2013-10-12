@@ -4641,7 +4641,7 @@ static int join_data_type_check (csvjoin *jspec,
 
     if (targvar > 0) {
 	/* there's an existing LHS series */
-	lstr = series_has_string_table(l_dset, targvar);
+	lstr = is_string_valued(l_dset, targvar);
 	if (lstr && aggr == AGGR_COUNT) {
 	    /* count values can't be mixed with strings */
 	    err = E_TYPES;
@@ -4650,7 +4650,7 @@ static int join_data_type_check (csvjoin *jspec,
 
     if (!err && valcol > 0) {
 	/* there's a payload variable on the right */
-	rstr = series_has_string_table(r_dset, valcol);
+	rstr = is_string_valued(r_dset, valcol);
     }
 
     if (!err && lr_mismatch(lstr, rstr)) {
@@ -4680,7 +4680,7 @@ static int aggregation_type_check (csvjoin *jspec, AggrType aggr)
 	    aggcol = jspec->colnums[JOIN_VAL];
 	}
 
-	if (aggcol > 0 && series_has_string_table(dset, aggcol)) {
+	if (aggcol > 0 && is_string_valued(dset, aggcol)) {
 	    gretl_errmsg_sprintf("'%s' is a string variable: aggregation type "
 				 "is not applicable", dset->varname[aggcol]);
 	    err = E_TYPES;
@@ -4755,7 +4755,7 @@ static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
 
     if (opt & OPT_K) {
 	/* time key on right */
-	rstr = series_has_string_table(jspec->c->dset, okeyvars[1]);
+	rstr = is_string_valued(jspec->c->dset, okeyvars[1]);
 	auto_keys->keycol = okeyvars[1];
 	if (!rstr) {
 	    /* flag the need to convert to string later */
@@ -4763,8 +4763,8 @@ static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
 	}
     } else {
 	/* regular key(s) on right */
-	lstr = series_has_string_table(dset, ikeyvars[1]);
-	rstr = series_has_string_table(jspec->c->dset, okeyvars[1]);
+	lstr = is_string_valued(dset, ikeyvars[1]);
+	rstr = is_string_valued(jspec->c->dset, okeyvars[1]);
 
 	if (lstr != rstr) {
 	    err = key_types_error(lstr, rstr);
@@ -4773,8 +4773,8 @@ static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
 	}
 
 	if (!err && okeyvars[2] > 0) {
-	    lstr = series_has_string_table(dset, ikeyvars[2]);
-	    rstr = series_has_string_table(jspec->c->dset, okeyvars[2]);
+	    lstr = is_string_valued(dset, ikeyvars[2]);
+	    rstr = is_string_valued(jspec->c->dset, okeyvars[2]);
 	    if (lstr != rstr) {
 		err = key_types_error(lstr, rstr);
 	    } else if (lstr) {
@@ -5056,7 +5056,7 @@ int join_from_csv (const char *fname,
 
     if (!err && dset->v > orig_v && jr->valcol > 0) {
 	/* we added a new series */
-	if (series_has_string_table(jr->r_dset, jr->valcol)) {
+	if (is_string_valued(jr->r_dset, jr->valcol)) {
 	    /* let the new series grab the RHS string table */
 	    steal_string_table(jr->l_dset, targvar, jr->r_dset, jr->valcol); 
 	}

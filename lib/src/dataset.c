@@ -3840,7 +3840,7 @@ void series_destroy_string_table (DATASET *dset, int i)
 }
 
 /**
- * series_has_string_table:
+ * is_string_valued:
  * @dset: pointer to dataset.
  * @i: index number of series.
  *
@@ -3849,7 +3849,7 @@ void series_destroy_string_table (DATASET *dset, int i)
  * string values), otherwise 0.
  */
 
-int series_has_string_table (const DATASET *dset, int i)
+int is_string_valued (const DATASET *dset, int i)
 {
     if (dset != NULL && i > 0 && i < dset->v) {
 	return dset->varinfo[i]->st != NULL;

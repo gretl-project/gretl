@@ -380,7 +380,7 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 	return;
     } 
 
-    if (varno > 0 && dset != NULL && series_has_string_table(dset, varno)) {
+    if (varno > 0 && dset != NULL && is_string_valued(dset, varno)) {
 	int n_labels;
 
 	labels = series_get_string_vals(dset, varno, &n_labels);
@@ -1985,11 +1985,13 @@ static int print_by_obs (int *list, const DATASET *dset,
     nrem = list[0];
     k = 1;
 
+#if 0
     /* 2013-09-18: for now, force numeric print of "string-valued" vars,
        unless we got just one */
     if (list[0] > 1) {
 	opt |= OPT_U;
     }
+#endif
 
     while (nrem > 0) {
 	/* fill the "block" list */
@@ -2015,7 +2017,7 @@ static int print_by_obs (int *list, const DATASET *dset,
 	    }
 	    for (i=1, j=j0; i<=blist[0]; i++, j++) {
 		v = blist[i];
-		if (!(opt & OPT_U) && series_has_string_table(dset, v)) {
+		if (!(opt & OPT_U) && is_string_valued(dset, v)) {
 		    const char *s = series_get_string_for_obs(dset, v, t);
 
 		    if (s == NULL || *s == '\0') {
@@ -2062,7 +2064,7 @@ static int print_by_var (const int *list, const DATASET *dset,
 	}
 	print_var_smpl(vi, dset, prn);
 	pputc(prn, '\n');
-	if (!(opt & OPT_U) && series_has_string_table(dset, vi)) {
+	if (!(opt & OPT_U) && is_string_valued(dset, vi)) {
 	    print_stringvals_for_var(dset, vi, prn);
 	} else {
 	    print_series_by_var(dset, vi, prn);

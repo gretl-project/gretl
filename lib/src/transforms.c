@@ -638,7 +638,7 @@ static int get_transform (int ci, int v, int aux, double x,
 	sprintf(label, _("= %s times %s"), dset->varname[v], 
 		dset->varname[aux]);
     } else if (ci == DUMMIFY) {
-	if (series_has_string_table(dset, v)) {
+	if (is_string_valued(dset, v)) {
 	    const char *s = series_get_string_for_value(dset, v, x);
 
 	    if (s != NULL && *s != '\0') {

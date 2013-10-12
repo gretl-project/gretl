@@ -1590,7 +1590,7 @@ static int string_table_count (const DATASET *dset,
 
     for (i=1; i<=nvars; i++) {
 	v = savenum(list, i);
-	if (series_has_string_table(dset, v)) {
+	if (is_string_valued(dset, v)) {
 	    n++;
 	}
     }
@@ -1934,7 +1934,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 
 	for (i=1; i<=nvars; i++) {
 	    v = savenum(list, i);
-	    if (!series_has_string_table(dset, v)) {
+	    if (!is_string_valued(dset, v)) {
 		continue;
 	    }
 	    strs = series_get_string_vals(dset, v, &n_strs);
