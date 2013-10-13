@@ -1308,6 +1308,30 @@ static char *parse_iso_basic (const char *buf, struct tm *timeptr)
     return (char *) buf;
 }
 
+static int my_strtoi (const char *s, char **endptr, int dmax)
+{
+    int i, k, d = 0;
+
+    for (i=0; s[i]; i++) {
+	if (isdigit(s[i])) d++;
+	else break;
+    }
+
+    if (d > dmax) {
+	char tmp[6];
+
+	*tmp = '\0';
+	strncat(tmp, s, dmax);
+	k = (int) strtol(tmp, NULL, 10);
+	*endptr = (char *) s + dmax;
+    } else {
+	k = (int) strtol(s, endptr, 10);
+    }
+
+    return k;
+}
+
+
 char *strptime (const char *buf, const char *format, struct tm *timeptr)
 {
     char c;
@@ -1357,7 +1381,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		timeptr->tm_mon = ret;
 		break;
 	    case 'C' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 2);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_year = (ret * 100) - tm_year_base;
@@ -1373,7 +1397,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		break;
 	    case 'd' :
 	    case 'e' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 2);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_mday = ret;
@@ -1381,7 +1405,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		break;
 	    case 'H' :
 	    case 'k' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 2);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_hour = ret;
@@ -1389,7 +1413,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		break;
 	    case 'I' :
 	    case 'l' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 2);
 		if (s == buf)
 		    return NULL;
 		if (ret == 12)
@@ -1399,21 +1423,21 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		buf = s;
 		break;
 	    case 'j' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 3);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_yday = ret - 1;
 		buf = s;
 		break;
 	    case 'm' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 2);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_mon = ret - 1;
 		buf = s;
 		break;
 	    case 'M' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 2);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_min = ret;
@@ -1448,7 +1472,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		buf = s;
 		break;
 	    case 'S' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 2);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_sec = ret;
@@ -1468,35 +1492,35 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		buf = s;
 		break;
 	    case 'u' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 1);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_wday = ret - 1;
 		buf = s;
 		break;
 	    case 'w' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 1);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_wday = ret;
 		buf = s;
 		break;
 	    case 'U' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 2);
 		if (s == buf)
 		    return NULL;
 		set_week_number_sun(timeptr, ret);
 		buf = s;
 		break;
 	    case 'V' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 2);
 		if (s == buf)
 		    return NULL;
 		set_week_number_mon4(timeptr, ret);
 		buf = s;
 		break;
 	    case 'W' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 2);
 		if (s == buf)
 		    return NULL;
 		set_week_number_mon(timeptr, ret);
@@ -1509,7 +1533,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		buf = s;
 		break;
 	    case 'y' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 2);
 		if (s == buf)
 		    return NULL;
 		if (ret < 70)
@@ -1519,7 +1543,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 		buf = s;
 		break;
 	    case 'Y' :
-		ret = strtol(buf, &s, 10);
+		ret = my_strtoi(buf, &s, 4);
 		if (s == buf)
 		    return NULL;
 		timeptr->tm_year = ret - tm_year_base;

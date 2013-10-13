@@ -3151,7 +3151,7 @@ struct obskey_ {
     char *timefmt; /* time format, as in strptime */
     int keycol;    /* the column holding the outer time-key */
     int m_means_q; /* "monthly means quarterly" */
-    int convert;   /* flag for conversion from numeric to string */
+    int numdates;  /* flag for conversion from numeric to string */
 };
 
 typedef struct obskey_ obskey;
@@ -3234,48 +3234,65 @@ static joiner *joiner_new (int nrows)
     return jr;
 }
 
-static char *replace_time_format (joiner *jr, const char *fmt)
-{
-    free(jr->auto_keys->timefmt);
-    jr->auto_keys->timefmt = gretl_strdup(fmt);
-    return jr->auto_keys->timefmt;
-}
-
-#define USE_NUMERIC_DATE 0 /* need to experiment a little */
-
-#if USE_NUMERIC_DATE
-
-static int iso_basic_to_tm (double x, struct tm *tp)
+static int real_set_outer_auto_keys (joiner *jr, const char *s,
+				     int j, struct tm *tp)
 {
     int err = 0;
 
-    if (na(x)) {
-	err = E_MISSDATA;
-    } else {
-	int y = (int) floor(x / 10000);
-	int m = (int) floor((x - 10000*y) / 100);
-	int d = (int) (x - 10000*y - 100*m);
-	long ed = epoch_day_from_ymd(y, m, d);
+    if (calendar_data(jr->l_dset)) {
+	int y, m, d, eday;
 
-	if (ed < 0) {
+	y = tp->tm_year + 1900;
+	m = tp->tm_mon + 1;
+	d = tp->tm_mday;
+	eday = epoch_day_from_ymd(y, m, d);
+	if (eday < 0) {
+	    if (s != NULL) {
+		gretl_errmsg_sprintf("'%s' is not a valid date", s);
+	    }
 	    err = E_DATA;
 	} else {
-	    memset(tp, 0, sizeof *tp);
-	    tp->tm_year = y - 1900;
-	    tp->tm_mon = m - 1;
-	    tp->tm_mday = d;
+	    jr->rows[j].n_keys = 1;
+	    jr->rows[j].keyval = eday;
+	    jr->rows[j].keyval2 = 0;
+	}
+    } else {
+	int maj, min;
+
+	maj = tp->tm_year + 1900;
+	min = tp->tm_mon + 1;
+	if (jr->auto_keys->m_means_q) {
+	    /* using the gretl-specific "%q" conversion */
+	    if (min > 4) {
+		gretl_errmsg_sprintf("'%s' is not a valid date", s);
+		err = E_DATA;
+	    }
+	} else if (jr->l_dset->pd == 4) {
+	    /* map from month on right to quarter on left */
+	    min = (int) ceil(min / 3.0);
+	}
+	if (!err) {
+	    jr->rows[j].n_keys = 2;
+	    jr->rows[j].keyval = maj;
+	    jr->rows[j].keyval2 = min;
 	}
     }
 
     return err;
 }
 
-#else
+static int set_time_format (obskey *auto_keys, const char *fmt)
+{
+    if (auto_keys->timefmt != NULL) {
+	free(auto_keys->timefmt);
+    }
+    auto_keys->timefmt = gretl_strdup(fmt);
+    return auto_keys->timefmt == NULL ? E_ALLOC : 0;
+}
 
-/* convert a numerical value to string for use with
-   strptime as time-key */
+/* convert a numerical value to string for use with strptime */
 
-static int convert_to_string (char *targ, double x)
+static int numdate_to_string (char *targ, double x)
 {
     if (na(x)) {
 	return E_MISSDATA;
@@ -3285,19 +3302,18 @@ static int convert_to_string (char *targ, double x)
     }
 }
 
-#endif /* USE_NUMERIC_DATE or not */
-
-/* Parse the obs string on row @i of the outer dataset and set the
-   key(s) on row @j of the joiner struct. We get here only if we have 
-   verified that the obs strings exist. The indices @i and @j may not 
-   be equal if a filter is being used.
+/* Parse a string from row @i of the outer dataset and set the
+   key(s) on row @j of the joiner struct. The indices @i and @j may
+   not be equal if a filter is being used. Note: we don't come
+   here if the outer time-key column is subject to "tconvert"
+   treatment; in that case we use read_iso_basic instead.
 */
 
 static int read_outer_auto_keys (joiner *jr, int j, int i)
 {
     char *tfmt = jr->auto_keys->timefmt;
+    int numdates = jr->auto_keys->numdates;
     int tcol = jr->auto_keys->keycol;
-    int convert = jr->auto_keys->convert;
     int pd = jr->l_dset->pd;
     struct tm t = {0};
     char sconv[32];
@@ -3306,28 +3322,11 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     int s_src = 0;
     int err = 0;
 
-    if (j == 0 && tcol > 0 && convert) {
-	/* on our first pass, check for the case where the outer
-	   time-key column is in the --timeconv set
-	*/
-	if (column_is_timecol(jr->r_dset->varname[tcol])) {
-	    tfmt = replace_time_format(jr, "%Y%m%d");
-	}
-    }
-
     if (tcol >= 0) {
 	/* using a specified column */
-	if (convert) {
-#if USE_NUMERIC_DATE
-	    err = iso_basic_to_tm(jr->r_dset->Z[tcol][i], &t);
-	    if (err) {
-		return err;
-	    }
-	    goto proceed;
-#else
+	if (numdates) {
 	    /* column is numeric, conversion needed */
-	    convert_to_string(sconv, jr->r_dset->Z[tcol][i]);
-#endif
+	    numdate_to_string(sconv, jr->r_dset->Z[tcol][i]);
 	    s = sconv;
 	    s_src = 1;
 	} else {
@@ -3354,7 +3353,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 	    char *chk = strptime(s, "%Y-%m-%d", &t);
 
 	    if (chk != NULL && *chk == '\0') {
-		replace_time_format(jr, "%Y-%m-%d");
+		set_time_format(jr->auto_keys, "%Y-%m-%d");
 		err = 0; /* we might be OK, cancel the error for now */
 	    }
 	}
@@ -3363,48 +3362,47 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 	    fprintf(stderr, "time-format match error in read_outer_auto_keys:\n"
 		    " remainder = '%s' (source = %s)\n", test ? test : "null", 
 		    s_src < 3 ? "specified time column" : "first-column strings");
-	    return err;
 	}
     }
 
-#if USE_NUMERIC_DATE
- proceed:
-#endif
+    if (!err) {
+	err = real_set_outer_auto_keys(jr, s, j, &t);
+    }
 
-    if (calendar_data(jr->l_dset)) {
-	int y, m, d, eday;
+    return err;
+}
 
-	y = t.tm_year + 1900;
-	m = t.tm_mon + 1;
-	d = t.tm_mday;
-	eday = epoch_day_from_ymd(y, m, d);
-	if (eday < 0) {
-	    gretl_errmsg_sprintf("'%s' is not a valid date", s);
-	    err = E_DATA;
-	} else {
-	    jr->rows[j].n_keys = 1;
-	    jr->rows[j].keyval = eday;
-	    jr->rows[j].keyval2 = 0;
-	}
+static int read_iso_basic (joiner *jr, int j, int i)
+{
+    int tcol = jr->auto_keys->keycol;
+    double x;
+    int err = 0;
+
+    x = jr->r_dset->Z[tcol][i];
+
+    if (na(x)) {
+	err = E_MISSDATA;
     } else {
-	int maj, min;
+	int y = (int) floor(x / 10000);
+	int m = (int) floor((x - 10000*y) / 100);
+	int d = (int) (x - 10000*y - 100*m);
+	long ed = epoch_day_from_ymd(y, m, d);
 
-	maj = t.tm_year + 1900;
-	min = t.tm_mon + 1;
-	if (jr->auto_keys->m_means_q) {
-	    /* using the gretl-specific "%q" conversion */
-	    if (min > 4) {
-		gretl_errmsg_sprintf("'%s' is not a valid date", s);
-		err = E_DATA;
-	    }
-	} else if (pd == 4) {
-	    /* map from month on right to quarter on left */
-	    min = (int) ceil(min / 3.0);
-	}
-	if (!err) {
-	    jr->rows[j].n_keys = 2;
-	    jr->rows[j].keyval = maj;
-	    jr->rows[j].keyval2 = min;
+	if (ed < 0) {
+	    gretl_errmsg_sprintf("'%.8g' is not a valid date", x);
+	    err = E_DATA;
+	} else if (calendar_data(jr->l_dset)) {
+	    /* note: no need to go via struct tm */
+	    jr->rows[j].n_keys = 1;
+	    jr->rows[j].keyval = ed;
+	    jr->rows[j].keyval2 = 0;
+	} else {
+	    struct tm t = {0};
+
+	    t.tm_year = y - 1900;
+	    t.tm_mon = m - 1;
+	    t.tm_mday = d;
+	    err = real_set_outer_auto_keys(jr, NULL, j, &t);
 	}
     }
 
@@ -3558,6 +3556,7 @@ static joiner *build_joiner (csvjoin *jspec,
 	*err = E_ALLOC;
     } else {
 	double **Z = r_dset->Z;
+	int use_iso_basic = 0;
 	int j = 0;
 
 	jr->aggr = aggr;
@@ -3567,6 +3566,21 @@ static joiner *build_joiner (csvjoin *jspec,
 	jr->l_dset = l_dset;
 	jr->r_dset = r_dset;
 	jr->auto_keys = auto_keys;
+
+	if (using_auto_keys(jr)) {
+	    /* check for the case where the outer time-key 
+	       column is in the "tconvert" set: if so we
+	       know it will be in YYYYMMDD format and we'll
+	       give it special treatment
+	    */
+	    int tcol = jr->auto_keys->keycol;
+
+	    if (tcol > 0 && jr->auto_keys->numdates) {
+		if (column_is_timecol(jr->r_dset->varname[tcol])) {
+		    use_iso_basic = 1;
+		}
+	    }
+	}
 
 	/* Now transcribe the data we want: we're pulling from the
 	   full outer dataset and writing into the array of joiner row
@@ -3578,7 +3592,9 @@ static joiner *build_joiner (csvjoin *jspec,
 	for (i=0; i<r_dset->n && !*err; i++) {
 	    if (join_row_wanted(filter, i)) {
 		/* the keys */
-		if (using_auto_keys(jr)) {
+		if (use_iso_basic) {
+		    *err = read_iso_basic(jr, j, i);
+		} else if (using_auto_keys(jr)) {
 		    *err = read_outer_auto_keys(jr, j, i);
 		} else if (keycol > 0) {
 		    jr->rows[j].keyval = dtoll_full(Z[keycol][i], 1, i+1, err);
@@ -4460,12 +4476,6 @@ static int format_uses_quarterly (char *fmt)
     return ret;
 }
 
-static int set_auto_keys_fmt (obskey *auto_keys, const char *s)
-{
-    auto_keys->timefmt = gretl_strdup(s);
-    return auto_keys->timefmt == NULL ? E_ALLOC : 0;
-}
-
 /* time-series data on the left, and no explicit keys supplied */
 
 static int auto_keys_check (const DATASET *l_dset,
@@ -4493,7 +4503,7 @@ static int auto_keys_check (const DATASET *l_dset,
 
     if (*tkeyfmt != '\0') {
 	/* the user supplied a time-format spec */
-	err = set_auto_keys_fmt(auto_keys, tkeyfmt);
+	err = set_time_format(auto_keys, tkeyfmt);
 	if (!err) {
 	    if (pd == 4 && format_uses_quarterly(auto_keys->timefmt)) {
 		auto_keys->m_means_q = 1;
@@ -4509,23 +4519,23 @@ static int auto_keys_check (const DATASET *l_dset,
     } else {
 	/* default formats */
 	if (calendar_data(l_dset)) {
-	    err = set_auto_keys_fmt(auto_keys, "%Y-%m-%d");
+	    err = set_time_format(auto_keys, "%Y-%m-%d");
 	    if (!err) {
 		*n_keys = 1;
 	    }
 	} else if (pd == 12) {
-	    err = set_auto_keys_fmt(auto_keys, "%Y-%m");
+	    err = set_time_format(auto_keys, "%Y-%m");
 	    if (!err) {
 		*n_keys = 2;
 	    }
 	} else if (annual_data(l_dset)) {
-	    err = set_auto_keys_fmt(auto_keys, "%Y");
+	    err = set_time_format(auto_keys, "%Y");
 	    if (!err) {
 		*n_keys = 1;
 	    }
 	} else if (pd == 4) {
 	    /* try "excess precision" ISO daily? */
-	    err = set_auto_keys_fmt(auto_keys, "%Y-%m-%d");
+	    err = set_time_format(auto_keys, "%Y-%m-%d");
 	    if (!err) {
 		*n_keys = 2;
 	    }
@@ -4663,7 +4673,7 @@ static void obskey_init (obskey *keys)
     keys->timefmt = NULL;
     keys->keycol = -1;
     keys->m_means_q = 0;
-    keys->convert = 0;
+    keys->numdates = 0;
 }
 
 #define lr_mismatch(l,r) ((l > 0 && r == 0) || (r > 0 && l == 0))
@@ -4804,7 +4814,7 @@ static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
 	auto_keys->keycol = okeyvars[1];
 	if (!rstr) {
 	    /* flag the need to convert to string later */
-	    auto_keys->convert = 1;
+	    auto_keys->numdates = 1;
 	}
     } else {
 	/* regular key(s) on right */

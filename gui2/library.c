@@ -8164,12 +8164,9 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     } else if (ci == GRAPHPG) {
 	err = graph_page_parse_line(s->line, s->cmd->opt);
     } else if (GRAPHING_COMMAND(ci)) {
-	fprintf(stderr, "library.c: GRAPHING_COMMAND, plotfile='%s'\n", gretl_plotfile());
 	if (*s->cmd->savename != '\0') {
-	    fprintf(stderr, " case 1\n");
 	    maybe_save_graph(s->cmd->savename, ci, s->prn);
 	} else {
-	    fprintf(stderr, " case 2\n");
 	    register_graph();
 	}
     } 
