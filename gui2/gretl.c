@@ -412,6 +412,8 @@ static void record_filearg (char *targ, const char *src)
 
 #ifdef MAC_INTEGRATION
 
+static GtkosxApplication *theApp;
+
 static gboolean app_should_quit_cb (GtkosxApplication *App, gpointer p)
 {
     // return exit_check();
@@ -496,9 +498,6 @@ int main (int argc, char **argv)
 #ifdef G_OS_WIN32
     char *callname = argv[0];
 #endif
-#ifdef MAC_INTEGRATION
-    GtkosxApplication *App;
-#endif
     int ftype = 0;
     char auxname[MAXLEN];
     char filearg[MAXLEN];
@@ -528,8 +527,9 @@ int main (int argc, char **argv)
     }
 
 #ifdef MAC_INTEGRATION
-    App = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
-    install_mac_signals(App);
+    theApp = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
+    install_mac_signals(theApp);
+    gtkosx_application_set_use_quartz_accelerators(theApp, FALSE);
 #endif
 
 #ifdef G_OS_WIN32
@@ -806,7 +806,7 @@ int main (int argc, char **argv)
     free_command_stack();
 
 #ifdef MAC_INTEGRATION
-    g_object_unref(App);
+    g_object_unref(theApp);
 #endif
 
     return EXIT_SUCCESS;
@@ -872,7 +872,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 			     windata_t *vwin)
 {
     int Ctrl = (event->state & GDK_CONTROL_MASK);
-    int Alt = (event->state & GDK_MOD1_MASK); /* FIXME Mac? */
+    int Alt = (event->state & GDK_MOD1_MASK);
     int k = event->keyval;
 
     if (is_control_key(event->keyval)) {
@@ -899,13 +899,22 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	if (k == GDK_v) {
 	    mdata_handle_paste();
 	    return TRUE;
-	} else if (k == GDK_q) {
-	    /* command-Q = quit */
-	    menu_exit_check();
+	} else if (k == GDK_h) {
+	    /* command-h = hide */
+	    gtkosx_application_hide(theApp);
 	    return TRUE;
 	} else if (k == GDK_comma) {
 	    options_dialog_callback();
 	    return TRUE;
+	}
+    }
+    if (Alt) {
+	if (k == alt_w_key) {
+	    /* alt-w -> Sigma */
+	    k = GDK_w;
+	} else if (k == alt_x_key) {
+	    /* alt-x -> approx. equals */
+	    k = GDK_x;
 	}
     }
 #endif  

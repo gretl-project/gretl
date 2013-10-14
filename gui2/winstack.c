@@ -995,9 +995,18 @@ void vwin_pack_toolbar (windata_t *vwin)
 static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event, 
 			       windata_t *vwin)
 {
-    if ((event->state & GDK_MOD1_MASK) && event->keyval == GDK_w) {
-	window_list_popup(w, NULL, vwin->main);
-	return TRUE;
+    if (event->state & GDK_MOD1_MASK) {
+	if (event->keyval == GDK_w) {
+	    window_list_popup(w, NULL, vwin->main);
+	    return TRUE;
+	}
+#ifdef MAC_NATIVE
+	if (event->keyval == alt_w_key) {
+	    /* alt-w -> Sigma */
+	    window_list_popup(w, NULL, vwin->main);
+	    return TRUE;
+	}	    
+#endif
     }
 
     return FALSE;

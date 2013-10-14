@@ -5342,7 +5342,7 @@ static int panel_overlay_ts_plot (const int vnum,
     for (i=0; i<nunits; i++) {
 	s = s0 + i * T;
 	if (single_series) {
-	    sprintf(gset->varname[i+1], dset->varname[vnum]);
+	    strcpy(gset->varname[i+1], dset->varname[vnum]);
 	} else if (grpnames != NULL) {
 	    strncat(gset->varname[i+1], grpnames[u0+i], VNAMELEN-1);
 	} else if (panel_labels) {

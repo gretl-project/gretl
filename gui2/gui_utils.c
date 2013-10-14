@@ -666,6 +666,9 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	/* treat Command as Ctrl */
 	Ctrl = 1;
     }
+    if (Alt && event->keyval == alt_w_key) {
+	upkey = GDK_W;
+    }
 #endif
 
     if (Ctrl) {
