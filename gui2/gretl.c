@@ -904,6 +904,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	    gtkosx_application_hide(theApp);
 	    return TRUE;
 	} else if (k == GDK_comma) {
+	    /* comand-, = preferences */
 	    options_dialog_callback();
 	    return TRUE;
 	}

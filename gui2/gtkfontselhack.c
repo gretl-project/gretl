@@ -663,7 +663,7 @@ gtk_fontsel_hack_show_available_fonts (GtkFontselHack *fontsel)
     GtkListStore *store;
     PangoContext *context; 
     PangoFontFamily **families;
-    const gchar *famname;
+    const char *famname;
     gint nf, i, got_ok;
     GtkTreeIter iter, match_iter;
     gint err = 0;
@@ -687,11 +687,14 @@ gtk_fontsel_hack_show_available_fonts (GtkFontselHack *fontsel)
 
     for (i=0; i<nf && !err; i++) {
 	famname = pango_font_family_get_name(families[i]);
+	if (famname == NULL) {
+	    /* bullet-proofing */
+	    continue;
+	}
 
 #if FDEBUG
 	fprintf(stderr, "Examining font family '%s'\n", famname);
 #endif
-
 	if (!validate_font_family(families[i], famname, i, nf, fontsel->filter, &err)) { 
 	    continue;
 	}

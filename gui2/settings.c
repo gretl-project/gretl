@@ -2359,6 +2359,7 @@ void font_selector (GtkAction *action)
     int which = fontsel_code(action);
     char *title = NULL;
     const char *fontname = NULL;
+    int err = 0;
  
     if (fc != NULL) {
 	gtk_window_present(GTK_WINDOW(fc));
@@ -2375,7 +2376,11 @@ void font_selector (GtkAction *action)
 	fontname = appfontname;
     }
 
-    gretl_font_filter_init();
+    err = gretl_font_filter_init();
+    if (err) {
+	gui_errmsg("Failed to initialize font filter");
+	return;
+    }
 
     fc = gtk_font_chooser_dialog_new(title, GTK_WINDOW(mdata->main));
     gtk_font_chooser_set_font(GTK_FONT_CHOOSER(fc), 

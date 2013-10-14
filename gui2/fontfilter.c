@@ -38,6 +38,10 @@ int gretl_font_filter_init (void)
     }    
 
     font_test_lang = pango_language_from_string("eng");
+    if (font_test_lang == NULL) {
+	gretl_font_filter_cleanup();
+	return 1;
+    }
 
     return 0;
 }
@@ -166,9 +170,7 @@ int validate_font_family (PangoFontFamily *family,
 #if FDEBUG
 	fprintf(stderr, "Checking font family %d, '%s'\n", i, famname);
 #endif
-
 	font_progress_bar(i, nf);
-
 	if (weird_font(famname)) {
 	    fcache[i] = HACK_WEIRD_FONT;
 	} else {
