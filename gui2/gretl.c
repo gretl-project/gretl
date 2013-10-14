@@ -910,7 +910,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
     }
 #endif  
 
-    if (k == GDK_h || k == GDK_F1) {
+    if (k == GDK_F1) {
 	/* invoke help */
 	plain_text_cmdref(NULL);
 	return TRUE;
@@ -1515,8 +1515,10 @@ static void make_main_window (void)
 
 #ifdef MAC_NATIVE
 # define CTRL_ALL "<meta>A"
+# define HELPKEY "<meta>question"
 #else
 # define CTRL_ALL "<control>A"
+# define HELPKEY NULL
 #endif
 
 GtkActionEntry main_entries[] = {
@@ -1792,7 +1794,7 @@ GtkActionEntry main_entries[] = {
 
     /* Help */
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
-    { "TextCmdRef", GTK_STOCK_HELP, N_("_Command reference"), NULL, NULL, G_CALLBACK(plain_text_cmdref) },
+    { "TextCmdRef", GTK_STOCK_HELP, N_("_Command reference"), HELPKEY, NULL, G_CALLBACK(plain_text_cmdref) },
     { "FuncRef",   GTK_STOCK_HELP, N_("_Function reference"), "", NULL, G_CALLBACK(genr_funcs_ref) },
     { "UserGuide", GRETL_STOCK_PDF, N_("_User's guide"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "PDFCmdRef", GRETL_STOCK_PDF, N_("_Command reference"), NULL, NULL, G_CALLBACK(display_pdf_help) },
