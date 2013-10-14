@@ -2378,7 +2378,7 @@ void font_selector (GtkAction *action)
 
     err = gretl_font_filter_init();
     if (err) {
-	gui_errmsg("Failed to initialize font filter");
+	errbox("Failed to initialize font filter");
 	return;
     }
 
