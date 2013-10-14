@@ -249,7 +249,7 @@
         media o il trend della variabile da testare, usando la procedura GLS
         suggerita da Elliott, Rothenberg e Stock (1996), che fornisce un test di
         potenza maggiore rispetto a quell'approccio standard di
-        Dickey&ndash;Fuller approach. Questa opzione non è compatibile con le
+        Dickey&ndash;Fuller. Questa opzione non è compatibile con le
         opzioni <lit>--nc</lit>, <lit>--ctt</lit> o <lit>--seasonals</lit>.
       </para>
       <para>
@@ -278,55 +278,59 @@
       <options>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't print results</effect>
+	  <effect>non stampare i risultati</effect>
 	</option>
       </options>
     </usage>
     <description>
       <para>
-	Analysis of Variance: <repl>response</repl> is a series measuring some
-	effect of interest and <repl>treatment</repl> must be a discrete
-	variable that codes for two or more types of treatment (or
-	non-treatment).  For two-way ANOVA, the <repl>block</repl> variable
-	(which should also be discrete) codes for the values of some control
-	variable.
+	Analisi della varianza: <repl>response</repl> è una serie che
+	misura un effetto di interesse e <repl>treatment</repl> deve
+	essere una variabile discreta che identifica due o più tipi di
+	trattamento (o non trattamento).  Nel caso dell'ANOVA a due
+	vie, la variabile <repl>block</repl> (anch'essa discreta)
+	identifica i valori di qualche variabile di controllo.
       </para>
       <para context="cli">
-	Unless the <opt>--quiet</opt> option is given, this command prints a
-	table showing the sums of squares and mean squares along with an
-	<math>F</math>-test.  The <math>F</math>-test and its P-value can be
-	retrieved using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
-	respectively.  
+	Se non è stata selezionata l'opzione <opt>--quiet</opt>,
+	questo comando stampa una tabella che mostra le somme e le
+	medie dei quadrati, nonché un test <math>F</math>.  Il test
+	<math>F</math> e il suo <emphasis>p-</emphasis>value possono
+	essere recuperati rispettivamente con gli accessori
+	<lit>$test</lit> e <lit>$pvalue</lit>.
       </para>
       <para>
-	The null hypothesis for the <math>F</math>-test is that the mean
-	response is invariant with respect to the treatment type, or in words
-	that the treatment has no effect.  Strictly speaking, the test
-	is valid only if the variance of the response is the same for
-	all treatment types.
+	L'ipotesi nulla del test <math>F</math> è che la risposta media sia 
+	invariante rispetto al tipo di trattamento; in altre parole, che il trattamento
+	non abbia alcun effetto. Formalmente, la validità del test richiede che 
+	la varianza della risposta sia la stessa per tutti i tipi di trattamento.
       </para>
       <para>
-	Note that the results shown by this command are in fact a subset of
-	the information given by the following procedure, which is easily
-	implemented in gretl.  Create a set of dummy variables coding for all
-	but one of the treatment types.  For two-way ANOVA, in addition create
-	a set of dummies coding for all but one of the <quote>blocks</quote>.
-	Then regress <repl>response</repl> on a constant and the dummies using
-	<cmdref targ="ols"/>.  For a one-way design the ANOVA table is printed
-	via the <opt>--anova</opt> option to <lit>ols</lit>.  In the two-way
-	case the relevant <math>F</math>-test is found by using the <cmdref
-	targ="omit"/> command.  For example (assuming <lit>y</lit> is the
-	response, <lit>xt</lit> codes for the treatment, and <lit>xb</lit>
-	codes for blocks):
+	Si noti che i risultati prodotti da questo comando
+	costituiscono in realtà un sottoinsieme dell'informazione
+	fornita dalla procedura seguente, facilmente implementabile in
+	gretl. Create un insieme di variabili dummy associate a tutti
+	i tipi di trattamento, tranne uno. Nel caso dell'ANOVA a due
+	vie, create anche un insieme di variabili dummy associate a
+	tutti i <quote>blocchi</quote>, tranne uno. Una volta fatto
+	questo, regredite <repl>response</repl> su una costante e le
+	dummy usando <cmdref targ="ols"/>.  Per un'analisi a una via
+	la tabella ANOVA può essere creata ricorrendo all'opzione
+	<opt>--anova</opt> del comando <lit>ols</lit>.  Nel caso di
+	un'analisi a due vie il test <math>F</math> può essere
+	calcolato usando il comando <cmdref targ="omit"/>. Per
+	esempio, se assumiamo che <lit>y</lit> sia la risposta,
+	<lit>xt</lit> identifichi il trattamento e <lit>xb</lit>
+	identifichi i blocchi:
       </para>
       <code>
-	# one-way
+	# analisi a una via
 	list dxt = dummify(xt)
 	ols y 0 dxt --anova
-	# two-way
+	# analisi a due vie
 	list dxb = dummify(xb)
 	ols y 0 dxt dxb
-	# test joint significance of dxt
+	# test di significatività congiunta di dxt
 	omit dxt --quiet
       </code>
     </description>
@@ -750,7 +754,7 @@
         tutti i ritardi fino all'ordine specificato) è possibile sostituire
         <repl>p</repl> e/o <repl>q</repl> in due modi: col nome di una matrice
         predefinita che contiene un insieme di valori interi, oppure con
-        un'espressione come <lit>{1 4}</lit>, osia un insieme di ritardi
+        un'espressione come <lit>{1 4}</lit>, ossia un insieme di ritardi
         separati da spazi e racchiusi tra parentesi graffe.
       </para>
         
@@ -872,7 +876,7 @@
 	dettagli dell'algoritmo BFGS. Nel caso di mancata convergenza
 	può essere utile, in certi casi, aumentare il numero massimo
 	di iterazioni e/o il parametro di tolleranza. Tuttavia,
-	risultati ottentuti con tolleranze molto alte dovrebbero
+	risultati ottenuti con tolleranze molto alte dovrebbero
 	essere considerati un po' sospetti, e va considerata la
 	possibilità che il modello sia mal specificato.
       </para>
@@ -899,28 +903,28 @@
       <options>
         <option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>stampa la matrice di covarianze</effect>
         </option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>standard errors robusti</effect>
         </option>
 	<option>
 	  <flag>--cluster</flag>
 	  <optparm>clustvar</optparm>
-	  <effect>see <cmdref targ="logit"/> for explanation</effect>
+	  <effect>vedi <cmdref targ="logit"/> per una spiegazione</effect>
         </option>
 	<option>
 	  <flag>--opg</flag>
-	  <effect>see below</effect>
+	  <effect>vedi sotto</effect>
         </option>
 	<option>
 	  <flag>--save-xbeta</flag>
-	  <effect>see below</effect>
+	  <effect>vedi sotto</effect>
         </option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print extra information</effect>
+	  <effect>stampa informazione extra</effect>
         </option>
       </options>      
       <examples>
@@ -933,44 +937,48 @@
     </usage>
     <description>
       <para>
-	Estimates a bivariate probit model, using the
-	Newton&ndash;Raphson method to maximize the likelihood.
+	Stima un modello probit bivariato massimizzando la verosimiglianza
+	con il metodo di Newton&ndash;Raphson.
       </para>
       <para>
-	The argument list starts with the two (binary) dependent
-	variables, followed by a list of regressors. If a second list
-	is given, separated by a semicolon, this is interpreted as a
-	set of regressors specific to the second equation, with
-	<repl>indepvars1</repl> being specific to the first equation;
-	otherwise <repl>indepvars1</repl> is taken to represent a
-	common set of regressors.
+	L'elenco degli argomenti inizia con due variabili dipendenti (binarie), 
+	seguite da una lista di regressori. Un'eventuale seconda lista,
+	separata dalla precedente da un punto e virgola, viene interpretata come
+	contenente l'insieme dei regressori specifici alla seconda equazione,
+	mentre <repl>indepvars1</repl> è specifica alla prima equazione;
+	in caso contrario il comando assume che <repl>indepvars1</repl> 
+	rappresenti un insieme di regressori comuni alle due equazioni.
       </para>
       <para>
-	By default, standard errors are computed using a numerical
-	approximation to the Hessian at convergence.  But if the
-	<opt>--opg</opt> option is given the covariance matrix is based on
-	the Outer Product of the Gradient (OPG), or if the
-	<opt>--robust</opt> option is given QML standard errors are
-	calculated, using a <quote>sandwich</quote> of the inverse of the
-	Hessian and the OPG.
+	Per default, gli errori standard sono calcolati usando
+	un'approssimazione numerica dell'Hessiana calcolata in
+	corrispondenza delle stime dei parametri. L'opzione
+	<opt>--opg</opt> permette di stimare la matrice di covarianza
+	usando il prodotto esterno del gradiente (Outer Product of the
+	Gradient, OPG); l'opzione <opt>--robust</opt> permette di
+	calcolare gli standard error QML a partire dalla matrice di
+	covarianza <quote>sandwich</quote> che usa sia l'inversa
+	dell'Hessiana che la matrice OPG.
       </para>
       <para>
-	After successful estimation, the accessor <lit>$uhat</lit>
-	retrieves a matrix with two columns holding the generalized
-	residuals for the two equations; that is, the expected values
-	of the disturbances conditional on the observed outcomes and
-	covariates.  By default <lit>$yhat</lit> retrieves a matrix
-	with four columns, holding the estimated probabilities of the
-	four possible joint outcomes for (<math>y</math><sub>1</sub>,
-	<math>y</math><sub>2</sub>), in the order (1,1), (1,0), (0,1),
-	(0,0). Alternatively, if the option <opt>--save-xbeta</opt> is
-	given, <lit>$yhat</lit> has two columns and holds the values
-	of the index functions for the respective equations.
+	Una volta completata con successo la stima, l'accessore
+	<lit>$uhat</lit> consente di recuperare una matrice di due
+	colonne contenente i residui generalizzati delle due
+	equazioni; in altre parole, i valori attesi degli errori
+	condizionali ai valori osservati delle variabili dipendenti e
+	delle covariate. Di default <lit>$yhat</lit> restituisce una
+	matrice di quattro colonne contenente le stime delle
+	probabilità dei quattro possibili esiti congiunti per
+	(<math>y</math><sub>1</sub>, <math>y</math><sub>2</sub>),
+	nell'ordine (1,1), (1,0), (0,1), (0,0). In alternativa, se il
+	comando è seguito dall'opzione <opt>--save-xbeta</opt> ,
+	<lit>$yhat</lit> ha due colonne contenenti i valori delle
+	funzioni indice delle rispettive equazioni.
       </para>
       <para>
-	The output includes a likelihood ratio test of the null
-	hypothesis that the disturbances in the two equations are
-	uncorrelated.
+	L'output comprende un test del rapporto di verosimiglianza
+	dell'ipotesi nulla che gli errori delle due equazioni siano
+	incorrelati fra loro.
       </para>
     </description>
   </command>
@@ -1104,10 +1112,11 @@
 
     <description>
 
-      <para>Esce da un ciclo. Questo comando può essere usato solo all'interno
-        di un ciclo e causa l'immediata interruzione dell'esecuzione del ciclo
-        (o di quello più interno, nel caso di cicli nidificati). Si veda anche
-        il comando <cmdref targ="loop"/>.
+      <para>Esce da un ciclo. Questo comando può essere usato solo
+      all'interno di un ciclo e causa l'immediata interruzione
+      dell'esecuzione del ciclo (o di quello più interno, nel caso di
+      cicli nidificati). Si veda anche il comando <cmdref
+      targ="loop"/>.
       </para> 
 
     </description>
@@ -1119,25 +1128,27 @@
 
     <description>
       <para>
-	The Butterworth filter is an appromixation to an ideal
-	square-wave filter which allows frequencies over a certain
-	range to pass at full strength while stopping all others.
+	Il filtro di Butterworth è un'approssimazione di un filtro
+	ideale a onda quadra che lascia completamente passare tutte le
+	frequenze all'interno di un certo intervallo e blocca tutte le
+	altre.
       </para>
       <para>
-	Higher values of the order parameter, <math>n</math>, produce
-	a closer approximation to the ideal filter, in principle,
-	but at the possible cost of numerical instability. The
-	<quote>cutoff</quote> value sets the boundary between
-	the pass band and the stop band. It is expressed in degrees,
-	and must be greater than 0 and less than 180&deg; (or &pi;
-	radians, corresponding to the highest frequency in the
-	data). Smaller values of the cutoff produce a smoother
-	trend.
+	Valori più elevati del parametro di ordine, <math>n</math>,
+	producono una migliore approssimazione del filtro ideale ma al
+	costo potenziale di introdurre un certo grado di instabilità
+	numerica. Il valore di <quote>cutoff</quote> individua la
+	soglia fra intervallo di frequenze lasciate passare e quello
+	delle frequenze bloccate. Questo parametro è espresso in gradi
+	e deve essere maggiore di 0 e minore di 180&deg; (o &pi;
+	radianti, corrispondente alla frequenza massima nei dati).
+	Valori inferiori di questa soglia producono un trend più
+	regolare.
       </para>
       <para>
-	Inspecting the periodogram of the target series is a
-	useful preliminary when you wish to apply this filter.  See
-	<guideref targ="chap-genr"/> for details.
+	Se si desidera applicare questo filtro è opportuno esaminare 
+	prima il periodogramma della serie storica considerata. V. 
+	<guideref targ="chap-genr"/> per maggiori dettagli.
       </para>
     </description>
 
@@ -1156,18 +1167,22 @@
     </usage>
     <description>
       <para>
-	This is not a command in its own right but can be used as a prefix
-	to most regular commands: the effect is to prevent termination of
-	a script if an error occurs in executing the command. If an error
-	does occur, this is registered in an internal error code which can
-	be accessed as <lit>$error</lit> (a zero value indicates success).
-	The value of <lit>$error</lit> should always be checked
-	immediately after using <lit>catch</lit>, and appropriate action
-	taken if the command failed.
+	Non si tratta di un vero e proprio comando, quanto piuttosto
+	di un prefisso applicabile alla maggior parte dei comandi
+	consueti; il suo effetto è quello di prevenire l'interruzione
+	di uno script nel caso in cui si verifichi un errore
+	nell'esecuzione di un comando. Un eventuale errore viene
+	registrato in un codice d'errore interno cui è possibile
+	accedere con <lit>$error</lit> (un valore nullo indica che
+	l'esecuzione ha avuto successo). Il valore di
+	<lit>$error</lit> dovrebbe sempre essere controllato subito
+	dopo aver usato <lit>catch</lit>, in modo da adottare le
+	misure più opportune nel caso in cui il comando non dovesse
+	aver avuto successo.
       </para> 
       <para>
-	The <lit>catch</lit> keyword cannot be used before <lit>if</lit>,
-	<lit>elif</lit> or <lit>endif</lit>.
+	<lit>catch</lit> non può essere usato prima di <lit>if</lit>,
+	<lit>elif</lit> o <lit>endif</lit>.
       </para>
     </description>
   </command>
@@ -1229,28 +1244,29 @@
 	</option>
 	<option>
 	  <flag>--other</flag>
-	  <effect>clear everything but the dataset</effect>
+	  <effect>cancella tutto fuorché il dataset</effect>
 	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	With no options, clears all saved objects, including the current
-	dataset if any, out of memory. Note that opening a new dataset, or
-	using the <cmd>nulldata</cmd> command to create an empty dataset,
-	also has this effect, so use of <cmd>clear</cmd> is not usually
-	necessary.
+	Senza alcuna opzione, cancella dalla memoria tutti gli oggetti
+	salvati, compreso l'eventuale campione corrente. Si noti che
+	anche aprire un nuovo dataset o usare il comando
+	<cmd>nulldata</cmd> per creare un dataset vuoto ha lo stesso
+	effetto; per questo motivo di solito non è necessario usare
+	<cmd>clear</cmd>.
       </para>
       <para>
-	If the <opt>--dataset</opt> option is given, then only the dataset
-	is cleared; other saved objects such as named matrices and scalars
-	are preserved.
+	Con l'opzione <opt>--dataset</opt> viene cancellato dalla
+	memoria solo il dataset; tutti gli altri oggetti, come matrici
+	e scalari salvati in precedenza, vengono conservati.
       </para>
       <para>
-	If the <opt>--other</opt> option is given, then the current
-	dataset, if any, is preserved but all other saved objects are
-	destroyed.
+	Con l'opzione <opt>--other</opt> viene conservato l'eventuale
+	dataset corrente, ma tutti gli altri oggetti in memoria
+	vengono cancellati.
       </para>
     </description>
   </command>
@@ -1259,20 +1275,23 @@
 	   label="Robust variance estimation" context="gui">
     <description>
       <para>
-	If you select the second option you must supply the name of a
-	clustering variable. This variable should have at least two
-	distinct values but generally should have substantially fewer
-	distinct values than there are observations in the sample
-	range.
+	Scegliendo la seconda opzione è necessario fornire il nome di
+	una variabile rispetto alla quale si effettua il clustering.
+	Questa variabile dovrebbe assumere almeno due valori diversi,
+	ma in generale il numero dei suoi valori distinti dovrebbe
+	essere significativamente inferiore al numero di osservazioni
+	nell'intervallo campionario considerato.
       </para>
       <para>
-	The <quote>cluster-robust</quote> variance estimator divides
-	the sample into a number of subsets or clusters according to
-	the value taken on by the selected variable.  In place of the
-	classical assumption that the error term is independently and
-	identically distributed, this estimator allows for the error
-	variance to differ by cluster and also allows for a degree of
-	dependence of the error within each cluster.
+	Lo stimatore della varianza <quote>cluster-robust</quote>
+	divide il campione in più sottoinsiemi o cluster sulla base dei
+	valori assunti dalla variabile selezionata. Questo stimatore
+	permette di evitare l'ipotesi classica che il termine d'errore
+	sia indipendente e identicamente distribuito, perché ammette
+	la possibilità che la sua varianza vari da un cluster
+	all'altro e che ogni errore possa presentare un certo grado di
+	dipendenza dagli altri errori all'interno dello stesso
+	cluster.
       </para>
     </description>
   </command>
@@ -1808,31 +1827,38 @@
 
     <description>
       <para>
-	The dependent variable is taken to represent a count of the occurrence
-	of events of some sort, and must have only non-negative integer
-	values. By default the Poisson distribution is used, but the drop-down
-	selector gives the options of using the Negative Binomial
-	distribution. (The variant NegBin 2 is commonly used in econometrics,
-	but the lesser used NegBin 1 is also available.)
+	Il comando assume che la variabile dipendente rappresenti un
+	conteggio del numero di volte in cui si è verificato un certo
+	evento e deve assumere solo valori interi non negativi. Di
+	default viene utilizzata la distribuzione di Poisson, ma il
+	menu a tendina da' la possibilità di usare la distribuzione
+	Binomale Negativa. (In econometria viene di solito usata la
+	variante NegBin 2, ma è comunque disponibile anche la meno
+	frequente NegBin 1).
       </para>
       <para>
-	Optionally, you may add an <quote>offset</quote> variable to the
-	specification.  This is a scale variable, the log of which is added to
-	the linear regression function (implicitly, with a coefficient of
-	1.0).  This makes sense if you expect the number of occurrences of the
-	event in question to be proportional, other things equal, to some
-	known factor.  For example, the number of traffic accidents might be
-	supposed to be proportional to traffic volume, other things equal, and
-	in that case traffic volume could be specified as an
-	<quote>offset</quote> in a model of the accident rate. The
-	offset variable must be strictly positive.  
+	Fra le opzioni è possibile aggiungere alla specificazione una
+	variabile di <quote>offset</quote>, un fattore di scala il cui
+	logaritmo viene aggiunto alla funzione di regressione lineare
+	(implicitamente con un coefficiente unitario). Questa
+	operazione è ragionevole se si ritiene che il numero di
+	realizzazioni dell'evento sia, a parità di tutte le altre
+	variabili, proporzionale a un fattore noto. Per esempio,
+	potremmo ritenere che, a parità di condizioni, il numero di
+	incidenti stradali sia proporzionale al volume del traffico;
+	in questo caso quest'ultimo potrebbe essere indicato come
+	variabile di <quote>offset</quote> in un modello che studia il
+	numero di incidenti. La variabile di offset deve essere
+	strettamente positiva.
       </para>
       <para>
-	By default, standard errors are computed using a numerical
-	approximation to the Hessian at convergence.  But if the <quote>Robust
-	  standard errors</quote> box is checked then QML standard errors are
-	calculated, using a <quote>sandwich</quote> of the inverse of the
-	Hessian and the outer product of the gradient.
+	Di default, gli standard error vengono calcolati usando
+	un'approssimazione numerica della matrice Hessiana in
+	corrispondenza delle stime dei parametri.  Se viene
+	selezionata l'opzione <quote>Robust standard errors</quote> il
+	comando calcola gli standard error QML a partire dalla matrice
+	di covarianza <quote>sandwich</quote> che usa sia l'inversa
+	dell'Hessiana che la matrice OPG.
       </para>
     </description>
   </command>
@@ -1842,12 +1868,13 @@
 
     <description>
       <para>
-	This dialog box allows you to create a gnuplot graph by specifying a
-	formula. This must be an expression acceptable to gnuplot.  Use
-	<lit>x</lit> to denote the value of the variable on the x-axis.
-	Please note that gnuplot uses <lit>**</lit> for exponentiation
-	(raising to a power), and that the decimal character must be given as
-	<quote>.</quote>.  Examples:
+	Questa finestra di dialogo permette di creare un grafico
+	gnuplot specificando una formula, a condizione che
+	quest'ultima sia un'espressione che gnuplot è in grado di
+	accettare. Per indicare la variabile sull'asse orizzontale
+	usate <lit>x</lit>. Si noti che gnuplot usa <lit>**</lit> per
+	indicare l'elevamento a potenza e che il separatore dei
+	decimali deve essere <quote>.</quote>.  Esempi:
       </para>
       <code>
 	10+0.35*x
@@ -1856,10 +1883,10 @@
 	exp(sqrt(pi*x))
       </code>
       <para>
-	To put an additional line onto a graph created in this way, click
-	on the graph and select <quote>Edit</quote>, select the
-	<quote>Lines</quote> tab in the graph editing dialog, and use
-	the <quote>Add line</quote> button.
+	Per inserire una nuova linea in un grafico usando questo comando, 
+	cliccate sul grafico, selezionate <quote>Edit</quote> e 
+	<quote>Lines</quote> nel menu dei comandi di modifica del grafico, 
+	e usate il pulsante <quote>Add line</quote>.
       </para>
     </description>
   </command>
@@ -1890,7 +1917,7 @@
         la previsione della variabile dipendente per l'osservazione 
 	<math>k</math> + 1; la seconda usa le prime
         <math>k</math> + 1 osservazioni per generare una previsione
-        per l'osservazione <math>k</math> + 2 e così via (dove
+        per l'osservazione <math>k</math> + 2 e cos via (dove
 	<math>k</math> è il numero dei parametri nel modello originale).
       </para>
       <para>
@@ -1928,32 +1955,35 @@
     <description>
       <para>
         Legge le variabili nella <repl>lista-variabili</repl> da un
-	database (gretl, RATS 4.0 o PcGive), che deve essere stato precedentemente
-        aperto con il comando <cmdref targ="open"/>. La frequenza dei dati l'intervallo
-        del campione possono essere impostati usando i comandi <cmdref targ="setobs"/>
-        e <cmdref targ="smpl"/> prima di questo comando. Ecco un esempio completo:</para>
+        database (gretl, RATS 4.0 o PcGive), che deve essere stato
+        precedentemente aperto con il comando <cmdref
+        targ="open"/>. La frequenza dei dati l'intervallo del campione
+        possono essere impostati usando i comandi <cmdref
+        targ="setobs"/> e <cmdref targ="smpl"/> prima di questo
+        comando. Ecco un esempio completo:</para>
 
       <code>
-	open macrodat.rat
-	setobs 4 1959:1
-	smpl ; 1999:4
-	data GDP_JP GDP_UK
+	open macrodat.rat setobs 4 1959:1 smpl ; 1999:4 data GDP_JP
+	GDP_UK
       </code>
 
-      <para>Questi comandi aprono un database chiamato
-	<filename>macrodat.rat</filename>, impostano un dataset trimestrale
-	che inizia nel primo trimestre del 1959 e finisce nel quarto trimestre
-	del 1999 e infine importano le serie <lit>GDP_JP</lit> e <lit>GDP_UK</lit>.
+      <para>
+	Questi comandi aprono un database chiamato
+	<filename>macrodat.rat</filename>, impostano un dataset
+	trimestrale che inizia nel primo trimestre del 1959 e finisce
+	nel quarto trimestre del 1999 e infine importano le serie
+	<lit>GDP_JP</lit> e <lit>GDP_UK</lit>.
       </para>
       <para>
-        Se non si specificano <lit>setobs</lit> e <lit>smpl</lit> nel modo descritto,
-        la frequenza dei dati e l'intervallo del campione vengono impostati
-        usando la prima variabile letta dal database.
+        Se non si specificano <lit>setobs</lit> e <lit>smpl</lit> nel
+        modo descritto, la frequenza dei dati e l'intervallo del
+        campione vengono impostati usando la prima variabile letta dal
+        database.
       </para>
       <para>
-        Se le serie da leggere hanno frequenza maggiore di quella impostata
-        nel dataset, è possibile specificare un metodo di compattamento, come mostrato
-        di seguito
+        Se le serie da leggere hanno frequenza maggiore di quella
+        impostata nel dataset, è possibile specificare un metodo di
+        compattamento, come mostrato di seguito
       </para>
 
       <code>
@@ -2094,21 +2124,21 @@
 
     <description>
       <para>
-	Experimental debugger for user-defined functions, available in the
-	command-line program, gretlcli, and in the GUI console.  The
-	<lit>debug</lit> command should be invoked after the function in
-	question is defined but before it is called.  The effect is that
-	execution pauses when the function is called and a special prompt is
-	shown.
+	Un debugger sperimentale per funzioni definite dall'utente,
+	disponibile a partire dalla linea di comando, gretlcli e dalla console GUI.
+	Il comando <lit>debug</lit> dovrebbe essere utilizzato dopo aver definito 
+	la funzione in questione ma prima di chiamarla. Il suo effetto è
+	quello di sospendere l'esecuzione quando la funzione viene chiamata; la
+	sospensione è segnalata dalla presenza di un prompt speciale.
       </para>
       <para>
-	At the debugging prompt you can type <lit>next</lit> to execute the
-	next command in the function, or <lit>continue</lit> to allow
-	execution of the function to continue unimpeded. These commands can be
-	abbreviated as <lit>n</lit> and <lit>c</lit> respectively.  You can
-	also interpolate an instruction at this prompt, for example a
-	<lit>print</lit> command to reveal the current value of some variable
-	of interest.
+	Una volta attivato il prompt di debug è possibile digitare <lit>next</lit>
+	per eseguire il comando successivo della funzione, o <lit>continue</lit> 
+	per far proseguire l'esecuzione della funzione senza ulteriori arresti.
+	Questi comandi possono essere rispettivamente abbreviati con
+	<lit>n</lit> e <lit>c</lit>. Al prompt di debug è anche possibile
+	interpolare un'istruzione, per esempio un comando <lit>print</lit> per
+	esaminare il valore corrente di qualche variabile di interesse.
       </para>
     </description>
   </command>  
@@ -2159,10 +2189,13 @@
 
     <description>
 
-      <para>La stima kernel di densità avviene definendo un insieme di punti di
-      riferimento distanziati in modo uniforme su un appropriato intervallo dei
-      dati, e attribuendo ad ognuno di essi un valore di densità
-      basato sui valori delle osservazioni circostanti.</para>
+      <para>
+	La stima kernel di densità avviene definendo un insieme di
+	punti di riferimento distanziati in modo uniforme su un
+	appropriato intervallo dei dati, e attribuendo ad ognuno di
+	essi un valore di densità basato sui valori delle osservazioni
+	circostanti.
+      </para>
       
       <para>
         La formula usata per calcolare la densità stimata in ognuno dei punti di
@@ -2177,24 +2210,27 @@
       di banda, aumenta il livellamento della densità stimata.
       </para>
 
-      <para>È possibile usare un kernel Gaussiano (la densità normale
-        standard) o il kernel di Epanechnikov, mentre la larghezza di banda
-        predefinita è quella suggerita da Silverman (1986), ossia
+      <para>
+	È possibile usare un kernel Gaussiano (la densità normale
+	standard) o il kernel di Epanechnikov, mentre la larghezza di
+	banda predefinita è quella suggerita da Silverman (1986),
+	ossia
 	<equation status="display"
 	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{1/5}\]"
 	  ascii="h = 0.9 min(s, IQR/1.349) n^{1/5}"
 	  graphic="kernel2"/>
 
-      dove <math>s</math> denota lo scarto quadratico medio dei dati e IQR
-      denota il range interquartile. È possibile allargare o restringere la
-      banda usando il <quote>fattore di aggiustamento della banda</quote>: la
-      banda effettivamente utilizzata si ottiene moltiplicando il valore di
-      Silverman per il fattore di aggiustamento.
+      dove <math>s</math> denota lo scarto quadratico medio dei dati e
+      IQR denota il range interquartile. È possibile allargare o
+      restringere la banda usando il <quote>fattore di aggiustamento
+      della banda</quote>: la banda effettivamente utilizzata si
+      ottiene moltiplicando il valore di Silverman per il fattore di
+      aggiustamento.
       </para>
 
-      <para>Per una buona discussione introduttiva della stima kernel, si veda
-      il capitolo 15 di <book>Econometric Theory and Methods</book> di Davidson
-      e MacKinnon.
+      <para>Per una buona discussione introduttiva della stima kernel,
+      si veda il capitolo 15 di <book>Econometric Theory and
+      Methods</book> di Davidson e MacKinnon.
       </para>
 
     </description>
@@ -2552,27 +2588,29 @@
 
     <description>
       <para>
-	Per ogni variabile rilevante nella <repl>lista-variabili</repl>,
-        crea un insieme di variabili dummy che codificano i valori distinti di
-        quella variabile. Le variabili rilevanti sono quelle che sono state
-        marcate esplicitamente come discrete, o quelle che assumono un numero
-        limitato di valori che devono essere <quote>abbastanza arrotondati</quote>
-        (multipli di 0.25).
+	Per ogni variabile rilevante nella
+	<repl>lista-variabili</repl>, crea un insieme di variabili
+	dummy che codificano i valori distinti di quella variabile. Le
+	variabili rilevanti sono quelle che sono state marcate
+	esplicitamente come discrete, o quelle che assumono un numero
+	limitato di valori che devono essere <quote>abbastanza
+	arrotondati</quote> (multipli di 0.25).
       </para>
       <para>
-	Per impostazione predefinita, viene aggiunta una variabile dummy per
-        ognuno dei valori distinti della variabile in questione.
-        Ad esempio, se una variabile discreta <lit>x</lit> ha 5 valori distinti,
-        verranno
-        create 5 variabili dummy, di nome <lit>Dx_1</lit>, <lit>Dx_2</lit> e
-        così via. La prima variabile dummy avrà valore 1 per le osservazioni in
-        cui <lit>x</lit> assume il suo valore minimo, e 0 altrove; la successiva
-        variabile dummy avrà valore 1 dove <lit>x</lit> assume il secondo tra i
-        suoi valori, e così via. Se viene usata una delle opzioni
-	<lit>--drop-first</lit> o <lit>--drop-last</lit>, il più basso o il più
-        alto dei valori della variabile viene omesso dalla codifica (questa
-        funzione può essere utile per evitare la cosiddetta
-	<quote>trappola delle variabili dummy</quote>).
+	Per impostazione predefinita, viene aggiunta una variabile
+	dummy per ognuno dei valori distinti della variabile in
+	questione.  Ad esempio, se una variabile discreta <lit>x</lit>
+	ha 5 valori distinti, verranno create 5 variabili dummy, di
+	nome <lit>Dx_1</lit>, <lit>Dx_2</lit> e così via. La prima
+	variabile dummy avrà valore 1 per le osservazioni in cui
+	<lit>x</lit> assume il suo valore minimo, e 0 altrove; la
+	successiva variabile dummy avrà valore 1 dove <lit>x</lit>
+	assume il secondo tra i suoi valori, e così via. Se viene
+	usata una delle opzioni <lit>--drop-first</lit> o
+	<lit>--drop-last</lit>, il più basso o il più alto dei valori
+	della variabile viene omesso dalla codifica (questa funzione
+	può essere utile per evitare la cosiddetta <quote>trappola
+	delle variabili dummy</quote>).
       </para>
       <para>
 	Questo comando può anche essere usato nel contesto di una regressione.
@@ -9878,16 +9916,18 @@
 	    fornire questa informazione nella riga <cmd>equation</cmd> usando la
             stessa sintassi accettata dal comando <cmdref targ="tsls"/>.</para>
 	</li>
-	<li><para><cmd>endog</cmd>: per i sistemi di equazioni simultanee, indica
-            la lista delle variabili endogene. È indicato principalmente per
-            la stima FIML, ma può essere usato anche nella stima minimi quadrati
-            a tre stadi al posto dell'istruzione <cmd>instr</cmd>: in questo modo
-            tutte le variabili non identificate come endogene verranno usate come
-            strumenti.</para>
+	<li><para><cmd>endog</cmd>: per i sistemi di equazioni
+	simultanee, indica la lista delle variabili endogene. È
+	indicato principalmente per la stima FIML, ma può essere usato
+	anche nella stima minimi quadrati a tre stadi al posto
+	dell'istruzione <cmd>instr</cmd>: in questo modo tutte le
+	variabili non identificate come endogene verranno usate come
+	strumenti.</para>
 	</li>
-	<li><para><cmd>identity</cmd>: per la stima FIML, un'identità che collega
-            due o più variabili del sistema. Questo tipo di istruzione è ignorata
-            se viene usato uno stimatore diverso da FIML.
+	<li><para><cmd>identity</cmd>: per la stima FIML, un'identità
+	che collega due o più variabili del sistema. Questo tipo di
+	istruzione è ignorata se viene usato uno stimatore diverso da
+	FIML.
 	  </para>
 	</li>
       </ilist>
@@ -9910,9 +9950,9 @@
 	  </para>
 	</li>
 	<li>
-          <para><lit>$coeff</lit>: il vettore colonna dei coefficienti (tutti
-            i coefficienti della prima equazione, seguiti da quelli della seconda
-            equazione, e così via).
+          <para><lit>$coeff</lit>: il vettore colonna dei coefficienti
+          (tutti i coefficienti della prima equazione, seguiti da
+          quelli della seconda equazione, e così via).
 	  </para>
 	</li>
 	<li>
@@ -10837,16 +10877,17 @@
     <description>
       <para>
 	Mostra il correlogramma incrociato per le variabili
-	<repl>var1</repl> e <repl>var2</repl>, che possono essere specificate
-        per nome o per numero. I valori sono i coefficienti di correlazione
-        campionari tra il valore presente di <repl>var1</repl> e i valori
-        ritardati e anticipati di <repl>var2</repl>.
+	<repl>var1</repl> e <repl>var2</repl>, che possono essere
+	specificate per nome o per numero. I valori sono i
+	coefficienti di correlazione campionari tra il valore presente
+	di <repl>var1</repl> e i valori ritardati e anticipati di
+	<repl>var2</repl>.
       </para>
       <para>
-	Se si indica un valore <repl>maxlag</repl>, la lunghezza del correlogramma è
-        limitata al numero di ritardi e anticipi indicati, altrimenti è
-        determinata automaticamente in funzione della frequenza dei dati e del
-        numero di osservazioni.
+	Se si indica un valore <repl>maxlag</repl>, la lunghezza del
+	correlogramma è limitata al numero di ritardi e anticipi
+	indicati, altrimenti è determinata automaticamente in funzione
+	della frequenza dei dati e del numero di osservazioni.
       </para>
     </description>
 
