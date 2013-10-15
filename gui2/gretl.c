@@ -899,10 +899,6 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	if (k == GDK_v) {
 	    mdata_handle_paste();
 	    return TRUE;
-	} else if (k == GDK_h) {
-	    /* command-h = hide */
-	    gtkosx_application_hide(theApp);
-	    return TRUE;
 	} else if (k == GDK_comma) {
 	    /* comand-, = preferences */
 	    options_dialog_callback();
@@ -918,6 +914,20 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	    k = GDK_x;
 	}
     }
+# ifdef GRETL_MACINT
+    /* special variant of libgtkmacintegration */
+    if (cmd_key(event)) {
+	if (k == GDK_h) {
+	    /* straight command-h = hide */
+	    gtkosx_application_hide(theApp);
+	    return TRUE;
+	} else if (Alt && k == 0x1ff) {
+	    /* opt-command-h = hide others */
+	    gtkosx_application_hide_others(theApp);
+	    return TRUE;
+	}
+    }
+# endif
 #endif  
 
     if (k == GDK_F1) {
