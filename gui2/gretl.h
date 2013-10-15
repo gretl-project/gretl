@@ -65,8 +65,8 @@
 			 (e->button == 1 && \
 			  (e->state & GDK_CONTROL_MASK)))
 # define cmd_key(e) (e->state & GDK_META_MASK)
-# define alt_w_key 16785937
-# define alt_x_key 16785992
+# define alt_w_key 0x1002211
+# define alt_x_key 0x1002248
 #else
 # define right_click(e) (e->button == 3)
 # define cmd_key(e) (0)
