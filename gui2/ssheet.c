@@ -2608,6 +2608,8 @@ static int build_sheet_view (Spreadsheet *sheet)
 			 G_CALLBACK(update_cell_position), sheet);
     }
 
+    g_signal_connect(G_OBJECT(sheet->win), "key-press-event",
+		     G_CALLBACK(catch_winlist_key), sheet->win);
     g_signal_connect(G_OBJECT(view), "key-press-event",
 		     G_CALLBACK(catch_spreadsheet_key), sheet);
 

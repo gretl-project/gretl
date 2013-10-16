@@ -4719,6 +4719,8 @@ static int gnuplot_show_png (const char *fname, const char *name,
     g_signal_connect(G_OBJECT(plot->shell), "destroy",
 		     G_CALLBACK(destroy_png_plot), plot);
     g_signal_connect(G_OBJECT(plot->shell), "key-press-event", 
+		     G_CALLBACK(catch_winlist_key), plot->shell);
+    g_signal_connect(G_OBJECT(plot->shell), "key-press-event", 
 		     G_CALLBACK(plot_key_handler), plot);
 
     /* box to hold canvas */

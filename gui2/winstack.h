@@ -22,11 +22,17 @@
 
 void window_list_add (GtkWidget *w, int role);
 
-void window_list_popup (GtkWidget *src, GdkEventButton *event, 
-			gpointer p);
+void window_list_popup (GtkWidget *src, GdkEvent *event, 
+			gpointer data);
 
-void vwin_winlist_popup (GtkWidget *src, GdkEventButton *event, 
+void vwin_winlist_popup (GtkWidget *src, GdkEvent *event, 
 			 windata_t *vwin);
+
+gint catch_winlist_key (GtkWidget *w, GdkEventKey *event, 
+			gpointer data);
+
+gint vwin_catch_winlist_key (GtkWidget *src, GdkEventKey *event, 
+			     windata_t *vwin);
 
 int get_n_listed_windows (void);
 

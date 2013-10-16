@@ -455,8 +455,15 @@ static gint catch_tabwin_key (GtkWidget *w, GdkEventKey *key,
     gint pg = gtk_notebook_get_current_page(notebook);
     GtkWidget *tab = gtk_notebook_get_nth_page(notebook, pg);
     windata_t *vwin = g_object_get_data(G_OBJECT(tab), "vwin");
+    gint ret;
 
-    return catch_viewer_key(w, key, vwin);
+    ret = vwin_catch_winlist_key(w, key, vwin);
+
+    if (ret == FALSE) {
+	ret = catch_viewer_key(w, key, vwin);
+    }
+
+    return ret;
 }
 
 static void  

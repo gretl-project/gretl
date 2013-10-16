@@ -3035,6 +3035,58 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
     return err;
 }
 
+static int plotlist_is_group_invariant (const int *list, const DATASET *dset)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (!series_is_group_invariant(dset, list[i])) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+static int panel_group_invariant_plot (const int *plotlist, 
+				       const char *literal,
+				       const DATASET *dset,
+				       gretlopt opt)
+{
+    DATASET *gset = (DATASET *) dset;
+    int save_structure = dset->structure;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
+    int save_pd = dset->pd;
+    int save_sd0 = dset->sd0;
+    int err;
+
+    /* limit sample to first group */
+    gset->t1 = 0;
+    gset->t2 = dset->pd - 1;
+
+    /* and mark as time-series data */
+    if (dset->panel_pd > 0) {
+	gset->pd = dset->panel_pd;
+	gset->sd0 = dset->panel_sd0;
+	gset->structure = TIME_SERIES;
+    } else {
+	gset->structure = SPECIAL_TIME_SERIES;
+	gset->pd = 1;
+    }
+
+    err = gnuplot(plotlist, literal, dset, opt);
+
+    /* put everything back as it was */
+    gset->t1 = save_t1;
+    gset->t2 = save_t2;
+    gset->structure = save_structure;
+    gset->pd = save_pd;
+    gset->sd0 = save_sd0;
+    
+    return err;
+}
+
 #define fit_opts (OPT_I | OPT_L | OPT_Q | OPT_N | OPT_E)
 
 /**
@@ -3080,6 +3132,12 @@ int gnuplot (const int *plotlist, const char *literal,
 	if (plotlist[0] > 1 || !dataset_is_time_series(dset)) {
 	    return E_BADOPT;
 	}
+    }
+
+    if (dataset_is_panel(dset) && 
+	plotlist_is_group_invariant(plotlist, dset)) {
+	return panel_group_invariant_plot(plotlist, literal,
+					  dset, opt);
     }
 
 #if GP_DEBUG

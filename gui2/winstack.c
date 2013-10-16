@@ -25,6 +25,10 @@
 #include "tabwin.h"
 #include "winstack.h"
 
+#if defined(MAC_INTEGRATION) && defined(PKGBUILD)
+# define MAC_HIDE_UNHIDE
+#endif
+
 #include "uservar.h"
 
 #define WDEBUG 0
@@ -385,10 +389,11 @@ static gboolean winlist_popup_done (GtkMenuShell *mshell,
 /* pop up a list of open windows from which the user can
    select one to raise and focus */
 
-void window_list_popup (GtkWidget *src, GdkEventButton *event, 
-			gpointer p)
+void window_list_popup (GtkWidget *src, GdkEvent *event, 
+			gpointer data)
 {
     static GtkWidget *menu;
+    GdkEventType evtype;
     GList *wlist = gtk_action_group_list_actions(window_group);
     GList *list = wlist;
     GtkWidget *item, *win = NULL;
@@ -402,8 +407,8 @@ void window_list_popup (GtkWidget *src, GdkEventButton *event,
 
     if (n_listed_windows > 1) {
 	list = g_list_sort(wlist, sort_window_items);
-	if (p != NULL) {
-	    win = GTK_WIDGET(p);
+	if (data != NULL) {
+	    win = GTK_WIDGET(data);
 	}
     }
 
@@ -445,16 +450,48 @@ void window_list_popup (GtkWidget *src, GdkEventButton *event,
 			 win);
     }
 
-    if (event != NULL) {
+    evtype = event != NULL ? event->type : 0;
+
+    if (evtype == GDK_BUTTON_PRESS) {
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
-		       event->button, event->time);
+		       ((GdkEventButton *) event)->button, 
+		       ((GdkEventButton *) event)->time);
+    } else if (evtype == GDK_KEY_PRESS) {
+	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
+		       0, ((GdkEventKey *) event)->time);
     } else {
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
 		       0, gtk_get_current_event_time());
     }
 }
 
-void vwin_winlist_popup (GtkWidget *src, GdkEventButton *event, 
+gint catch_winlist_key (GtkWidget *w, GdkEventKey *event, 
+			gpointer data)
+{
+#ifdef MAC_NATIVE
+    if ((event->state & GDK_MOD1_MASK) && event->keyval == alt_w_key) {
+	/* alt-w -> Sigma */
+	window_list_popup(w, (GdkEvent *) event, data);
+	return TRUE;
+    }
+# ifdef MAC_HIDE_UNHIDE
+    if (cmd_key(event) && mac_hide_unhide(event)) {
+	return TRUE;
+    }
+# endif	   
+#else
+    if (event->state & GDK_MOD1_MASK) {
+	if (event->keyval == GDK_w) {
+	    window_list_popup(w, (GdkEvent *) event, data);
+	    return TRUE;
+	}
+    }
+#endif
+
+    return FALSE;
+}
+
+void vwin_winlist_popup (GtkWidget *src, GdkEvent *event, 
 			 windata_t *vwin)
 {
     /* Note: this function may look redundant, given the
@@ -469,6 +506,42 @@ void vwin_winlist_popup (GtkWidget *src, GdkEventButton *event,
     */
     window_list_popup(src, event, vwin_toplevel(vwin));
 }
+
+gint vwin_catch_winlist_key (GtkWidget *src, GdkEventKey *event, 
+			     windata_t *vwin)
+{
+    /* note: same comment as for previous function: dealing
+       with tabbed thingies
+    */
+#ifdef MAC_NATIVE
+    if (event->state & GDK_MOD1_MASK) {
+	GtkWidget *toplev = vwin_toplevel(vwin);
+
+	if (event->keyval == alt_w_key) {
+	    /* alt-w -> Sigma */
+	    window_list_popup(src, (GdkEvent *) event, toplev);
+	    return TRUE;
+	}
+    }
+# ifdef MAC_HIDE_UNHIDE
+    if (cmd_key(event) && mac_hide_unhide(event)) {
+	return TRUE;
+    }
+# endif	    
+#else /* non-Mac */
+    if (event->state & GDK_MOD1_MASK) {
+	GtkWidget *toplev = vwin_toplevel(vwin);
+
+	if (event->keyval == GDK_w) {
+	    window_list_popup(src, (GdkEvent *) event, toplev);
+	    return TRUE;
+	}
+    }
+#endif
+
+    return FALSE;
+}
+
 
 /* on exiting, check for any editing windows with unsaved
    changes, and if we find any give the user a chance to
@@ -895,6 +968,8 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 
     vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+		     G_CALLBACK(vwin_catch_winlist_key), vwin);
     g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
@@ -992,26 +1067,6 @@ void vwin_pack_toolbar (windata_t *vwin)
     }
 }
 
-static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event, 
-			       windata_t *vwin)
-{
-    if (event->state & GDK_MOD1_MASK) {
-	if (event->keyval == GDK_w) {
-	    window_list_popup(w, NULL, vwin->main);
-	    return TRUE;
-	}
-#ifdef MAC_NATIVE
-	if (event->keyval == alt_w_key) {
-	    /* alt-w -> Sigma */
-	    window_list_popup(w, NULL, vwin->main);
-	    return TRUE;
-	}	    
-#endif
-    }
-
-    return FALSE;
-}
-
 windata_t *gretl_browser_new (int role, const gchar *title)
 {
     windata_t *vwin = vwin_new(role, NULL);
@@ -1025,7 +1080,7 @@ windata_t *gretl_browser_new (int role, const gchar *title)
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
-		     G_CALLBACK(catch_winlist_key), vwin);
+		     G_CALLBACK(catch_winlist_key), vwin->main);
     g_signal_connect(G_OBJECT(vwin->main), "destroy",
 		     G_CALLBACK(free_windata), vwin);
 
