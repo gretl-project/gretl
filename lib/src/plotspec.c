@@ -1852,9 +1852,9 @@ static plotbars *parse_bars_file (const char *fname,
     FILE *fp;
     plotbars *bars = NULL;
     char line[128];
-    char d1[16], d2[16];
-    int gotcolon = 0;
-    int gotother = 0;
+    int ncolon = 0;
+    int ndash = 0;
+    int d1, d2, d3, d4;
     int n = 0;
 
     fp = gretl_fopen(fname, "r");
@@ -1872,26 +1872,21 @@ static plotbars *parse_bars_file (const char *fname,
     while (fgets(line, sizeof line, fp)) {
 	if (*line == '#') {
 	    continue;
-	}
-	if (sscanf(line, "%15s %15s", d1, d2) != 2) {
+	} else if (sscanf(line, "%d:%d %d:%d", &d1, &d2, &d3, &d4) == 4) {
+	    ncolon++;
+	} else if (sscanf(line, "%d-%d %d-%d", &d1, &d2, &d3, &d4) == 4) {
+	    ndash++;
+	} else {
 	    break;
-	}
-	if (strchr(d1, ':') || strchr(d2, ':')) {
-	    gotcolon = 1;
-	}
-	if (strchr(d1, '/') || strchr(d2, '/') ||
-	    strchr(d1, '-') || strchr(d2, '-')) {
-	    gotother = 1;
 	}
 	n++;
     }
 
     /* initial check and allocation */
 
-    if (n == 0 || !gotcolon || gotother) {
-	/* FIXME relax this? */
+    if (n == 0 || (ncolon == 0 && ndash == 0)) {
 	*err = E_DATA;
-    } else if (n == 0 || (gotcolon && gotother)) {
+    } else if (ncolon > 0 && ndash > 0) {
 	*err = E_DATA;
     } else {
 	bars = plotbars_new(n);
@@ -1902,7 +1897,6 @@ static plotbars *parse_bars_file (const char *fname,
 
     if (*err == 0) {
 	double x0, x1;
-	int di[4], nf0, nf1;
 	int i = 0;
 
 	rewind(fp);
@@ -1913,29 +1907,22 @@ static plotbars *parse_bars_file (const char *fname,
 	    if (*line == '#') {
 		continue;
 	    }
-	    if (sscanf(line, "%15s %15s", d1, d2) != 2) {
-		break;
+	    if (ncolon) {
+		sscanf(line, "%d:%d %d:%d", &d1, &d2, &d3, &d4);
+	    } else {
+		sscanf(line, "%d-%d %d-%d", &d1, &d2, &d3, &d4);
 	    }
-	    nf0 = nf1 = 0;
-	    if (gotcolon) {
-		nf0 = sscanf(d1, "%d:%d", &di[0], &di[1]);
-		nf1 = sscanf(d2, "%d:%d", &di[2], &di[3]);
-	    }
-	    if (nf0 != 2 || nf1 != 2) {
+	    x0 = d1 + (d2 - 1.0) / 12;
+	    x1 = d3 + (d4 - 1.0) / 12;
+#if BDEBUG > 1
+	    fprintf(stderr, "%.4f %.4f\n", x0, x1);
+#endif
+	    if (x1 < x0) {
 		*err = E_DATA;
 	    } else {
-		x0 = di[0] + (di[1] - 1.0) / 12;
-		x1 = di[2] + (di[3] - 1.0) / 12;
-#if BDEBUG > 1
-		fprintf(stderr, "%.4f %.4f\n", x0, x1);
-#endif
-		if (x1 < x0) {
-		    *err = E_DATA;
-		} else {
-		    bars->dx[i][0] = x0;
-		    bars->dx[i][1] = x1;
-		    i++;
-		}
+		bars->dx[i][0] = x0;
+		bars->dx[i][1] = x1;
+		i++;
 	    }
 	}
     }

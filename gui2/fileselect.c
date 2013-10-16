@@ -820,7 +820,7 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 	if (ox_support) {
 	    filesel_add_filter(filesel, N_("Ox files (*.ox)"), "*.ox", maxlen);
 	}
-    } else if (action == OPEN_LABELS) {
+    } else if (action == OPEN_LABELS || action == OPEN_BARS) {
 	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt", maxlen);
 	filesel_add_filter(filesel, N_("all files (*.*)"), "*", maxlen);
     } else {
