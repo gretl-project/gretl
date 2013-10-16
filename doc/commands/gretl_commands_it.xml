@@ -1124,7 +1124,7 @@
   </command>
 
   <command name="bwfilter" section="Transformations" context="gui"
-    label="The Butterworth filter">
+    label="Il filtro di Butterworth">
 
     <description>
       <para>
@@ -1240,7 +1240,7 @@
       <options>
 	<option>
 	  <flag>--dataset</flag>
-	  <effect>clear dataset only</effect>
+	  <effect>cancella solo il dataset</effect>
 	</option>
 	<option>
 	  <flag>--other</flag>
@@ -2449,31 +2449,31 @@
       <options>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't show estimated model</effect>
+	  <effect>non mostra il modello stimato</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostra la matrice di covarianza</effect>
 	</option>
         <option>
 	  <flag>--two-step</flag>
-	  <effect>perform 2-step GMM estimation</effect>
+	  <effect>calcola la stima GMM a due passi</effect>
         </option>
         <option>
 	  <flag>--system</flag>
-	  <effect>add equations in levels</effect>
+	  <effect>aggiunge equazioni nei livelli</effect>
         </option>
         <option>
 	  <flag>--time-dummies</flag>
-	  <effect>add time dummy variables</effect>
+	  <effect>aggiunge variabili dummy temporali</effect>
         </option>
         <option>
 	  <flag>--dpdstyle</flag>
-	  <effect>emulate DPD package for Ox</effect>
+	  <effect>emula il pacchetto DPD per Ox</effect>
         </option>
         <option>
 	  <flag>--asymptotic</flag>
-	  <effect>uncorrected asymptotic standard errors</effect>
+	  <effect>errori standard asintotici non modificati</effect>
         </option>
       </options>
       <examples>
@@ -2489,75 +2489,78 @@
 
     <description>
       <para>
-	Carries out estimation of dynamic panel data models (that is,
-	panel models including one or more lags of the dependent
-	variable) using either the GMM-DIF or GMM-SYS method.
+	Stima modelli dinamici per dati di panel (in altre parole, 
+	modelli panel con uno o più ritardi della variabile dipendente)
+	usando il metodo GMM-DIF o quello GMM-SYS.
       </para>
       <para context="cli">
-	The parameter <repl>p</repl> represents the order of the
-	autoregression for the dependent variable. In the simplest
-	case this is a scalar value, but a pre-defined matrix may be
-	given for this argument, to specify a set of (possibly
-	non-contiguous) lags to be used.
+	Il paramtro <repl>p</repl> rappresenta l'ordine autoregressivo 
+	della variabile dipendente. Nel caso più semplice si tratta di 
+	uno scalare, ma per specificare un insieme di ritardi (non 
+	consecutivi) da è possibile indicare una matrice definita
+	in precedenza.
       </para>
       <para>
-	The dependent variable and regressors should be given in
-	levels form; they will be differenced automatically (since
-	this estimator uses differencing to cancel out the individual
-	effects).
+	La variabile dipendente e i regressori dovrebbero essere indicati 
+	in livelli; il comando provvede autonomamente a differenziarli
+	(dato che questo stimatore usa le differenze per eliminare
+	gli effetti individuali).
       </para>
       <para context="cli">
-	The last (optional) field in the command is for specifying
-	instruments.  If no instruments are given, it is assumed that all
-	the independent variables are strictly exogenous.  If you specify
-	any instruments, you should include in the list any strictly
-	exogenous independent variables.  For predetermined regressors,
-	you can use the <lit>GMM</lit> function to include a specified
-	range of lags in block-diagonal fashion.  This is illustrated in
-	the third example above.  The first argument to <lit>GMM</lit> is
-	the name of the variable in question, the second is the minimum
-	lag to be used as an instrument, and the third is the maximum lag.
-	The same syntax can be used with the <lit>GMMlevel</lit>
-	function to specify GMM-type instruments for the equations
-	in levels.
+	L'ultimo campo (opzionale) nel comando serve a specificare strumenti.
+	Se questi ultimi non vengono  indicati si assume che tutte le variabili
+	indipendenti siano strettamente esogene. Se si sceglie di specificare 
+	alcuni strumenti è opportuno includere nell'elenco anche le
+	variabili indipendenti strettamente esogene. Nel caso di regressori
+	predeterminati è possibile usare la funzione <lit>GMM</lit> per includere
+	uno specifico intervallo di ritardi seguendo uno schema diagonale a
+	blocchi. Una situazione di questo tipo è stata illustrata in 
+	precedenza nel terzo esempio. Il primo argomento di <lit>GMM</lit>
+	è il nome della variabile in questione, il secondo è il ritardo 
+	minimo da usare come strumento e il terzo è il ritardo massimo.
+	La stessa sintassi può essere utilizzata con la funzione
+	<lit>GMMlevel</lit> per specificare strumenti di tipo GMM 
+	per le equazioni nei livelli.
       </para>
       <para context="gui">
-	As regards the handling of instruments, please see the
-	documentation for the script version of this command.  Currently
-	you cannot specify instruments explicitly in the GUI: all the
-	independent variables are taken to be strictly exogenous.
+	Per quanto riguarda la gestione degli strumenti, si consultati
+	la documentazione di questo comando in modalità
+	scripting. Attualmente non è possibile specificare
+	esplicitamente degli strumenti nella GUI: tutte le variabili
+	indipendenti sono considerate strettamente esogene.
       </para>
       <para>
-	By default the results of 1-step estimation are reported (with
-	robust standard errors).  You may select 2-step estimation as an
-	option.  In both cases tests for autocorrelation of orders 1 and 2
-	are provided, as well as the Sargan overidentification test and a
-	Wald test for the joint significance of the regressors.  Note that
-	in this differenced model first-order autocorrelation is not a
-	threat to the validity of the model, but second-order
-	autocorrelation violates the maintained statistical assumptions.
+	Di default vengono riportati (con errori standard robusti) i risultati 
+	della stima al primo stadio; la stima al secondo stadio può essere 
+	richiesta indicato l'opzione corrispondente. In entrambi i casi
+	vengono forniti i test di autocorrelazione del primo e del secondo
+	ordine, così come il test di sovraidentificazione di Sargan e un test di 
+	Wald della significatività congiunta dei regressori. Si noti che in questo
+	modello nelle differenze l'autocorrelazione del primo ordine non
+	impedisce che il modello sia valido; l'autocorrelazione al secondo ordine,
+	tuttavia, viola le ipotesi statistiche che ne sono alla base.
       </para>
       <para context="cli">
-	In the case of 2-step estimation, standard errors are by default
-	computed using the finite-sample correction suggested by <cite
-	key="windmeijer05">Windmeijer (2005)</cite>.  The standard
-	asymptotic standard errors associated with the 2-step estimator
-	are generally reckoned to be an unreliable guide to inference, but
-	if for some reason you want to see them you can use the
-	<opt>--asymptotic</opt> option to turn off the Windmeijer
-	correction.
+	Nel caso della stima al secondo stadio gli errori standard sono 
+	per default calcolati usando la correzione per campioni finiti
+	suggerita da <cite
+	key="windmeijer05">Windmeijer (2005)</cite>. In generale l'inferenza
+	basata sugli errori standard asintotici associati allo stimatore 
+	al secondo stadio è considerata inaffidabile, ma se per qualche ragione
+	desiderate conoscere il loro valore potete usare l'opzione 
+	<opt>--asymptotic</opt> per disattivare la correzione di Windmeijer.
       </para>
       <para context="cli">
-	If the <opt>--time-dummies</opt> option is given, a set of
-	time dummy variables is added to the specified regressors.  
-	The number of dummies is one less than the maximum number of
-	periods used in estimation, to avoid perfect collinearity with
-	the constant.  The dummies are entered in differenced form unless
-	the <opt>--dpdstyle</opt> option is given, in which case they
-	are entered in levels.
+	Se viene indicata l'opzione <opt>--time-dummies</opt> il comando
+	aggiunge ai regressori specificati un insieme di variabili dummy. 
+	Il numero di queste ultime è pari al numero massimo di periodi usati nella
+	stima meno uno, allo scopo di evitare di avere collinearità perfetta con la costante. 
+	Le dummy vengono incluse in differenza, a meno che non sia indicata 
+	l'opzione <opt>--dpdstyle</opt>; in questo caso le dummy sono 
+	incluse in livello.
       </para>
       <para>
-	For further details and examples, please see <guideref
+	Per ulteriori dettagli ed esempi, si veda <guideref
 	targ="chap-dpanel"/>.
       </para>
     </description>
@@ -2588,29 +2591,27 @@
 
     <description>
       <para>
-	Per ogni variabile rilevante nella
-	<repl>lista-variabili</repl>, crea un insieme di variabili
-	dummy che codificano i valori distinti di quella variabile. Le
-	variabili rilevanti sono quelle che sono state marcate
-	esplicitamente come discrete, o quelle che assumono un numero
-	limitato di valori che devono essere <quote>abbastanza
-	arrotondati</quote> (multipli di 0.25).
+	Per ogni variabile rilevante nella <repl>lista-variabili</repl>,
+        crea un insieme di variabili dummy che codificano i valori distinti di
+        quella variabile. Le variabili rilevanti sono quelle che sono state
+        marcate esplicitamente come discrete, o quelle che assumono un numero
+        limitato di valori che devono essere <quote>abbastanza arrotondati</quote>
+        (multipli di 0.25).
       </para>
       <para>
-	Per impostazione predefinita, viene aggiunta una variabile
-	dummy per ognuno dei valori distinti della variabile in
-	questione.  Ad esempio, se una variabile discreta <lit>x</lit>
-	ha 5 valori distinti, verranno create 5 variabili dummy, di
-	nome <lit>Dx_1</lit>, <lit>Dx_2</lit> e così via. La prima
-	variabile dummy avrà valore 1 per le osservazioni in cui
-	<lit>x</lit> assume il suo valore minimo, e 0 altrove; la
-	successiva variabile dummy avrà valore 1 dove <lit>x</lit>
-	assume il secondo tra i suoi valori, e così via. Se viene
-	usata una delle opzioni <lit>--drop-first</lit> o
-	<lit>--drop-last</lit>, il più basso o il più alto dei valori
-	della variabile viene omesso dalla codifica (questa funzione
-	può essere utile per evitare la cosiddetta <quote>trappola
-	delle variabili dummy</quote>).
+	Per impostazione predefinita, viene aggiunta una variabile dummy per
+        ognuno dei valori distinti della variabile in questione.
+        Ad esempio, se una variabile discreta <lit>x</lit> ha 5 valori distinti,
+        verranno
+        create 5 variabili dummy, di nome <lit>Dx_1</lit>, <lit>Dx_2</lit> e
+        così via. La prima variabile dummy avrà valore 1 per le osservazioni in
+        cui <lit>x</lit> assume il suo valore minimo, e 0 altrove; la successiva
+        variabile dummy avrà valore 1 dove <lit>x</lit> assume il secondo tra i
+        suoi valori, e così via. Se viene usata una delle opzioni
+	<lit>--drop-first</lit> o <lit>--drop-last</lit>, il più basso o il più
+        alto dei valori della variabile viene omesso dalla codifica (questa
+        funzione può essere utile per evitare la cosiddetta
+	<quote>trappola delle variabili dummy</quote>).
       </para>
       <para>
 	Questo comando può anche essere usato nel contesto di una regressione.
@@ -2637,36 +2638,36 @@
       <options>
         <option>
           <flag>--exponential</flag>
-          <effect>use exponential distribution</effect>
+          <effect>usa la distribuzione esponenziale</effect>
         </option>
         <option>
           <flag>--loglogistic</flag>
-          <effect>use log-logistic distribution</effect>
+          <effect>usa la distribuzione log-logistica</effect>
         </option>
         <option>
           <flag>--lognormal</flag>
-          <effect>use log-normal distribution</effect>
+          <effect>usa la distribuzione log-normale</effect>
         </option>
         <option>
           <flag>--medians</flag>
-          <effect>fitted values are medians</effect>
+          <effect>i valori previsti sono mediane</effect>
         </option>
         <option>
           <flag>--robust</flag>
-          <effect>robust (QML) standard errors</effect>
+          <effect>errori standard robusti (QML)</effect>
         </option>
 	<option>
 	  <flag>--cluster</flag>
 	  <optparm>clustvar</optparm>
-	  <effect>see <cmdref targ="logit"/> for explanation</effect>
+	  <effect>v. <cmdref targ="logit"/> per una spiegazione</effect>
         </option>
         <option>
           <flag>--vcv</flag>
-          <effect>print covariance matrix</effect>
+          <effect>mostra la matrice di covarianza</effect>
         </option>
         <option>
           <flag>--verbose</flag>
-          <effect>print details of iterations</effect>
+          <effect>mostra dettagli delle iterazioni</effect>
         </option>
       </options>      
       <examples>
@@ -2677,28 +2678,28 @@
 
     <description>
       <para>
-	Estimates a duration model: the dependent variable (which must be
-	positive) represents the duration of some state of affairs, for 
-	example the length of spells of unemployment for a cross-section
-	of respondents. By default the Weibull distribution is used but
-	the exponential, log-logistic and log-normal distributions are
-	also available.
+	Stima un modello di durata: la variabile dipendente (che deve essere
+	positiva) rappresenta la durata di un certo fenomeno, per esempio
+	la lunghezza di un periodo di disoccupazione per una cross-section
+	di intervistati. Di default viene utilizzata una distribuzione Weibull,
+	ma sono disponibili anche le distribuzioni esponenziale, log-logistica 
+	e log-normale.
       </para>
       <para>
-	If some of the duration measurements are right-censored (&eg; an
-	individual's spell of unemployment has not come to an end within the
-	period of observation) then you should supply the trailing argument
-	<repl>censvar</repl>, a series in which non-zero values indicate
-	right-censored cases.
+	Se alcune delle durate misurate sono censurate a destra (&eg; il periodo 
+	di disoccupazione di un individuo non si è concluso all'interno del periodo 
+	di osservazione), deve essere specificato l'argomento accessorio 
+	<repl>censvar</repl> che indica una variabile i cui valori positivi
+	segnalano osservazioni censurate a destra.
       </para>
       <para>
-	By default the fitted values obtained via the accessor
-	<lit>$yhat</lit> are the conditional means of the durations, but if
-	the <opt>--medians</opt> option is given then <lit>$yhat</lit>
-	provides the conditional medians instead.
-      </para>
+	Di default i valori stimati ottenuti mediante l'accessore 
+	<lit>$yhat</lit> rappresentano le medie condizionali delle durate; se tuttavia
+	viene indicata l'opzione <opt>--medians</opt>, <lit>$yhat</lit> fornisce le 
+	mediane condizionali.
+	  </para>
       <para>
-	Please see <guideref targ="chap:discr-models"/> for details.
+	Vedi <guideref targ="chap:discr-models"/> per ulteriori dettagli.
       </para>
     </description>
 
@@ -3164,44 +3165,46 @@
       <options>
         <option>
 	  <flag>--gph</flag>
-	  <effect>do Geweke and Porter-Hudak test</effect>
+	  <effect>calcola il test di Geweke e Porter-Hudak</effect>
         </option>
         <option>
 	  <flag>--all</flag>
-	  <effect>do both tests</effect>
+	  <effect>calcola entrambi i test</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>don't print results</effect>
+	  <effect>non mostra i risultati</effect>
         </option>
       </options>
     </usage>
 
     <description>
       <para>
-	Tests the specified series for fractional integration
-	(<quote>long memory</quote>). The null hypothesis is that the
-	integration order of the series is zero.  By default the local
-	Whittle estimator <cite key="robinson95" p="true">(Robinson,
-	1995)</cite> is used but if the <opt>--gph</opt> option is given
-	the GPH test <cite key="GPH83" p="true">(Geweke and
-	Porter-Hudak, 1983)</cite> is performed instead. If the
-	<opt>--all</opt> flag is given then the results of both tests
-	are printed.
+	Verifica la presenza di integrazione frazionale 
+	(<quote>long memory</quote>) per la variabile specificata. 
+	L'ipotesi nulla è che l'ordine di integrazione della variabile
+	sia zero. Di default viene utilizzato lo stimatore locale di 
+	Whittle <cite key="robinson95" p="true">(Robinson,
+	1995)</cite>, ma se si indica l'opzione <opt>--gph</opt> il comando 
+	usa il test GPH <cite key="GPH83" p="true">(Geweke and
+	Porter-Hudak, 1983)</cite>. L'opzione 
+	<opt>--all</opt> permette di ottenere i risultati di 
+	entrambi i test.
       </para>
       <para>
-	For details on this sort of test, see <cite key="phillips04">Phillips 
-	and Shimotsu (2004)</cite>. 
+	Per maggiori dettagli su questo tipo di test, v. <cite
+	key="phillips04">Phillips e Shimotsu (2004)</cite>.
       </para>
       <para>
-	If the optional <repl>order</repl> argument is not given the order
-	for the test(s) is set automatically as the lesser of
-	<math>T</math>/2 and <math>T</math><sup>0.6</sup>.
+	Se non si specifica l'argomento opzionale <repl>order</repl>, 
+	l'ordine del test (o dei test) è automaticamente fissato al 
+	più piccolo fra 
+	<math>T</math>/2 e <math>T</math><sup>0.6</sup>.
       </para>
       <para>
-	The results can be retrieved using the accessors <lit>$test</lit>
-	and <lit>$pvalue</lit>. These values are based on the Local
-	Whittle Estimator unless the <opt>--gph</opt> option is given.
+	I risultati possono essere recuperati usando gli accessori <lit>$test</lit>
+	e <lit>$pvalue</lit>. Questi valori sono basati sullo stimatore locale
+	di Whittle a meno che non sia stata indicata l'opzione <opt>--gph</opt>.
       </para>
     </description>
 
@@ -4045,21 +4048,21 @@
       </para>
 
        <para>
-	Generally, the arguments <repl>yvars</repl> and
-	<repl>xvar</repl> are required, and refer to series in the
-	current dataset (given either by name or ID number).  But if a
-	named matrix is supplied via the <opt>--matrix</opt> option
-	these arguments become optional: if the specified matrix has
-	<math>k</math> columns, by default the first <math>k</math>
-	&minus; 1 columns are treated as the <repl>yvars</repl> and
-	the last column as <repl>xvar</repl>.  If the
-	<opt>--time-series</opt> option is given, however, all
-	<math>k</math> columns are plotted against time. If you wish
-	to plot selected columns of the matrix, you should specify
-	<repl>yvars</repl> and <repl>xvar</repl> in the form of
-	1-based column numbers.  For example if you want a scatterplot
-	of column 2 of matrix <lit>M</lit> against column 1, you can
-	do:
+	In generale è necessario specificare sia l'argomento <repl>yvars</repl> 
+	che quello <repl>xvar</repl>; entrambi devono indicare variabili
+	nel dataset corrente (per nome o numero identificativo). Se tuttavia 
+	viene specificata con l'opzione <opt>--matrix</opt> una matrice definita 
+	in precedenza questi argomenti diventano opzionali: se la matrice
+	specificata ha <math>k</math> colonne, di default le prime <math>k</math>
+	&minus; 1 sono considerate come <repl>yvars</repl>, e l'ultima come 
+	<repl>xvar</repl>. Se viene indicata l'opzione <opt>--time-series</opt>, 
+	tuttavia, il comando fornisce il grafico di tutte le <math>k</math> 
+	variabili rispetto al tempo. Se si desidera il grafico solo di alcune
+	colonne della matrice è necessario identificare 
+	<repl>yvars</repl> e <repl>xvar</repl> fornendo l'indice delle colonne 
+	corrispondenti, dove la prima colonna ha indice 1. Per esempio, 
+	se si desidera un grafico a dispersione della colonna 2 della 
+	matrice <lit>M</lit> rispetto alla colonna 1, il comando da digitare è:
       </para>
       <code>
 	gnuplot 2 1 --matrix=M
@@ -4071,19 +4074,19 @@
         gnuplot, chiamato <filename>gpttmpN.plt</filename>, a partire da N
 	= <lit>01</lit>; il grafico vero e proprio può essere generato
         usando il programma <program>gnuplot</program> (su MS Windows:
-	<program>wgnuplot</program>). This behavior can be
-	modified by use of the <opt>--output=</opt><repl>filename</repl>
-	option.  This option controls the filename used, and at the same time
-	allows you to specify a particular output format via the three-letter
-	extension of the file name, as follows: <lit>.eps</lit> results in the
-	production of an Encapsulated PostScript (EPS) file; <lit>.pdf</lit>
-	produces PDF; <lit>.png</lit> produces PNG format, <lit>.emf</lit>
-	calls for EMF (Enhanced MetaFile), <lit>.fig</lit> calls for an Xfig
-	file, and <lit>.svg</lit> for SVG (Scalable Vector Graphics). If the
-	dummy filename <quote><lit>display</lit></quote> is given then the
-	plot is shown on screen as in interactive mode. If a filename with any
-	extension other than those just mentioned is given, a gnuplot command
-	file is written.
+	<program>wgnuplot</program>). 
+	Questo comportamento può essere modificato usando l'opzione 
+	<opt>--output=</opt><repl>filename</repl>, che controlla il nome del file utilizzato
+	e contemporaneamente permette di specificare un particolare formato
+	di output usando l'estensione del nome del file (le tre lettere che 
+	seguono il .): <lit>.eps</lit> produce un file Encapsulated 
+	PostScript (EPS); <lit>.pdf</lit> produce un file PDF; <lit>.png</lit> 
+	produce un formato PNG, <lit>.emf</lit> un formato EMF (Enhanced MetaFile), 
+	<lit>.fig</lit> un file Xfig, e <lit>.svg</lit> uno SVG (Scalable Vector 
+	Graphics). Se come nome del file si indica <quote><lit>display</lit></quote>,
+	il grafico è inviato allo schermo come nella modalità interattiva.
+	Se si indica un nome del file con un'estensione diversa da quelle
+	appena citate viene prodotto un file di comandi gnuplot.
       </para>
 
       <para>
@@ -4279,52 +4282,50 @@
 	   label="Special functions" context="gui">
     <description>
       <para>
-	This dialog enables you to specify which functions within a
-	package, if any, should be assigned to certain special roles.
-	Note that a given function can be assigned to at most one of
-	the following roles, and to qualify as a candidate for one
-	of these roles a function has to satisfy certain criteria.
+	Questo comando permette di specificare se ad alcune delle funzioni
+	di un pacchetto devono essere attribuiti alcuni compiti specifici, e se sì a quali. 
+	Si noti che a una data funzione può essere attribuito al massimo 
+	uno dei compiti seguenti, e che per poter essere candidata a
+	uno di questi compiti la funzione deve soddisfare alcuni criteri.
       </para>
       <ilist>
 	<li>
 	  <para>
-	    <lit>bundle-print</lit>: prints output based on the
-	    content of a bundle produced by your package. Criteria:
-	    this function must have as its first parameter a
-	    bundle-pointer. If a second parameter is present it
-	    must take the form of an integer switch that has a
-	    default value.
+	    <lit>bundle-print</lit>: stampa l'output sulla base del contenuto
+		di un bundle di risultati generati dal vostro pacchetto. Criteri:
+		questa funzione deve avere come primo parametro un puntatore 
+		del bundle. Se presente, il secondo parametro deve assumere valori
+		interi, ed è necessario che ne sia specificato uno di default.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <lit>bundle-plot</lit>: produces one or more plots using
-	    a bundle produced by your package. Criteria: as for
+	    <lit>bundle-plot</lit>: produce uno o più grafici usando un bundle
+		generato dal vostro pacchetto. Criteri: come per 
 	    <lit>bundle-print</lit>.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <lit>bundle-test</lit>: carries out some sort of
-	    statistical test using a bundle produced by your package.
-	    Criteria: as for <lit>bundle-print</lit>.
+	    <lit>bundle-test</lit>: calcola qualche test statistico usando 
+		un bundle generato dal vostro pacchetto. Criteri: come per <lit>bundle-print</lit>.
 	  </para>
 	</li>	
 	<li>
 	  <para>
-	    <lit>gui-main</lit>: the public interface that should be
-	    presented to users by default in GUI use. This is useful
-	    only if the package has more than one public interface.
+	    <lit>gui-main</lit>: l'interfaccia pubblica che per default dovrebbe 
+		essere offerta agli utenti in modalità GUI. Questa opzione è utile
+		solo se il pacchetto può offrire più di un'interfaccia pubblica.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <lit>gui-precheck</lit>: gate-keeper function which returns
-	    0 if the functionality of your package is applicable in the
-	    current context, non-zero otherwise. This is intended for
-	    use with packages that operate on a model in some way, to
-	    screen out types of model that are not handled by the
-	    package.
+	    <lit>gui-precheck</lit>: funzione di controllo che restituisce 0 se
+		le funzionalità del vostro pacchetto possono essere applicate
+		al contesto corrente, e un valore diverso da 0 in caso contrario.
+		Questa opzione serve per i pacchetti che svolgono qualche operazione
+		a partire da un modello, in modo da evitare i tipi di modelli 
+		non gestibili dal pacchetto.
 	  </para>
 	</li>	
       </ilist>
@@ -4951,63 +4952,64 @@
 	<option>
 	  <flag>--data</flag>
 	  <optparm>column-name</optparm>
-	  <effect>see below</effect>
+	  <effect>v. oltre</effect>
 	</option>
 	<option>
 	  <flag>--filter</flag>
 	  <optparm>expression</optparm>
-	  <effect>see below</effect>
+	  <effect>v. oltre</effect>
 	</option>
 	<option>
 	  <flag>--ikey</flag>
 	  <optparm>inner-key</optparm>
-	  <effect>see below</effect>
+	  <effect>v. oltre</effect>
 	</option>
 	<option>
 	  <flag>--okey</flag>
 	  <optparm>outer-key</optparm>
-	  <effect>see below</effect>
+	  <effect>v. oltre</effect>
 	</option>
 	<option>
 	  <flag>--aggr</flag>
 	  <optparm>method</optparm>
-	  <effect>see below</effect>
+	  <effect>v. oltre</effect>
 	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	This command imports a data series from the source
-	<repl>filename</repl> (which must be a delimited text data
-	file) under the name <repl>varname</repl>. For details please
-	see <guideref targ="chap:join"/>; here we just give a brief
-	summary of the available options.
+	Questo comando importa una serie di dati dal file di origine 
+	<repl>filename</repl> (che deve essere un file di dati testuale 
+	delimitato) assegnandoli alla variabile <repl>varname</repl>. 
+	Per maggiori dettagli, si veda <guideref targ="chap:join"/>; 
+	in questa sede ci limitiamo a ricordare brevemente le opzioni 
+	disponibili.
       </para>
       <para>
-	The <opt>data</opt> option can be used to specify the column
-	heading of the data in the source file, if this differs from
-	the name by which the data should be known in gretl.
+	L'opzione <opt>data</opt> può essere usata per specificare 
+	l'intestazione della colonna nel file di origine se quest'ultima 
+	è diversa dal nome con il quale dovrebbero essere chiamati i dati 
+	in gretl.
       </para>
       <para>
-	The <opt>filter</opt> option can be used to specify a
-	criterion for filtering the source data (that is, selecting a
-	subset of observations).
+	L'opzione <opt>filter</opt> può essere usata per specificare un criterio
+	da seguire per filtrare i dati di origine (in altre parole,
+	per selezionare un osttoinsieme di osservazioni).
       </para> 
       <para>
-	The <opt>ikey</opt> and <opt>okey</opt> options can be used to 
-	specify a mapping between observations in the current dataset
-	and observations in the source data (for example, individuals
-	can be matched against the household to which they belong).
+	Le opzioni <opt>ikey</opt> e <opt>okey</opt> possono essere utilizzate
+	per specificare una relazione fra le osservazioni nel dataset corrente
+	e quelle nel file di origine (per esempio, gli individui possono essere 
+	assegnati alla famiglia di appartenenza).
       </para>
       <para>
-	The <opt>aggr</opt> option is used when the mapping between
-	observations in the current dataset and the source is not
-	one-to-one.
+	L'opzione <opt>aggr</opt> viene usata quando la relazione
+	fra osservazioni nel dataset corrente e nel file di oriogine non è biunivoca.
       </para>      
       <para>
-	See also <cmdref targ="append"/> for simpler joining
-	operations.
+	V. anche <cmdref targ="append"/> per alcune semplici operazioni di unione
+	di dataset.
       </para>
     </description>
 
@@ -5019,21 +5021,22 @@
       <options>
 	<option>
 	  <flag>--cross</flag>
-	  <effect>allow for cross-correlated disturbances</effect>
+	  <effect>ammette la possibilità di errori correlati fra loro in cross-section</effect>
 	</option>
 	<option>
 	  <flag>--diffuse</flag>
-	  <effect>use diffuse initialization</effect>
+	  <effect>usa un'inizializzazione diffusa</effect>
 	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	Opens a block of statements to set up a Kalman filter.  This block
-	should end with the line <lit>end kalman</lit>, to which the options
-	shown above may be appended.  The intervening lines specify the
-	matrices that compose the filter.  For example,
+	Inizia un blocco di istruzioni per impostare un filtro di Kalman.
+	Questo blocco deve terminare con la linea <lit>end kalman</lit>, 
+	alla quale possono essere aggiunte le opzioni elencate sopra. 
+	Le istruzioni del blocco specificano le matrici che compongono
+	il filtro. Per esempio,
       </para>
       <code>
 	kalman 
@@ -5044,7 +5047,7 @@
 	end kalman
       </code>
       <para>
-	Please see <guideref targ="chap:kalman"/> for details.
+	Vedi <guideref targ="chap:kalman"/> per ulteriori dettagli.
       </para>
 	<para>
 	  <seelist>
@@ -5370,15 +5373,15 @@
       <options>
 	<option>
 	  <flag>--nc</flag>
-	  <effect>test without a constant</effect>
+	  <effect>test senza costante</effect>
 	</option>
 	<option>
 	  <flag>--ct</flag>
-	  <effect>with constant and trend</effect>
+	  <effect>con costante e trend</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>suppress printing of results</effect>
+	  <effect>non mostra i risultati</effect>
 	</option>
       </options>
       <examples>
@@ -5390,34 +5393,33 @@
 
     <description>
       <para>
-	Carries out the panel unit-root test described by <cite
-	key="LLC2002">Levin, Lin and Chu (2002)</cite>. The null
-	hypothesis is that all of the individual time series exhibit a
-	unit root, and the alternative is that none of the series has a
-	unit root. (That is, a common AR(1) coefficient is assumed,
-	although in other respects the statistical properties of the
-	series are allowed to vary across individuals.)
+	Calcola il test di radice unitaria per dati panel di <cite
+	key="LLC2002">Levin, Lin and Chu (2002)</cite>. L'ipotesi nulla 
+	che tutte le singole serie storiche contengano una radica unitaria, 
+	mentre l'alternativa è che nessuna delle serie storiche ne contenga una. 
+	(In altre parole, si assume un coefficiente AR(1) comune a tutte le serie, anche
+	se altre proprietà statistiche delle serie possono variare da un'unità di osservazione
+	all'altra.)
       </para>
 	
       <para context="cli">
-	By default the test ADF regressions include a constant;
-	to suppress the constant use the <opt>--nc</opt> option, or
-	to add a linear trend use the <opt>--ct</opt> option.
-	(See the <cmdref targ="adf"/> command for explanation of
-	ADF regressions.)
+	Di default le regressioni dei test ADF contengono una costante;
+	per eliminarla usate l'opzione <opt>--nc</opt>; per aggiungere 
+	un trend lineare usate l'opzione <opt>--ct</opt>. 
+	(V. il comando <cmdref targ="adf"/> per una spiegazione delle 
+	regressioni ADF.)
       </para>
 
       <para context="cli">
-	The (non-negative) <repl>order</repl> for the test (governing
-	the number of lags of the dependent variable to include in the
-	ADF regressions) may be given in either of two forms. If a
-	scalar value is given, this is applied to all the individuals
-	in the panel.  The alternative is to provide a matrix
-	containing a specific lag order for each individual; this must
-	be a vector with as many elements as there are individuals in
-	the current sample range. Such a matrix can be specified by
-	name, or constructed using braces as illustrated in the
-	last example above.
+	Il valore (non negativo) <repl>order</repl> del numero di ritardi
+	della variabile dipendente da usare nel test può essere indicato
+	in due modi diversi. Se si fornisce uno scalare, questo viene applicato
+	a tutte le serie nel panel. In alternativa è possibile fornire
+	una matrice che contiene un particolare ordine di ritardo per ogni
+	serie. La matrice deve essere un vettore con numero di elementi
+	pari a quello delle unità di osservazione nel sottoinsieme corrente
+	del campione, e può essere indicata per nome o costruita usando
+	parentesi grafe come illustrato nell'ultimo degli esempi precedenti.
       </para>
 
     </description>
@@ -5431,24 +5433,23 @@
   <command name="loess" section="Estimation" label="Loess" context="gui">
     <description>
       <para>
-	Performs locally-weighted polynomial regression and produces a
-	series containing predicted values of the dependent variable for
-	each non-missing value of the independent variable. The method is
-	as described by <cite key="cleveland79">William Cleveland
+	Stima una regressione polinomiale locally-weighted e produce una serie
+	che contiene i valori previsti della variabile dipendente in 
+	corrispondenza di tutti i valori non missing della variabile indipendente.
+	Il metodo applicato è quello descritto da <cite key="cleveland79">William Cleveland
 	(1979)</cite>.
       </para>
       <para>
-	The controls allow you to specify the order of the polynomial
-	in the independent variable and the proportion of the data
-	points to be used in each local regression (the
-	bandwidth). Higher values of the bandwidth produce a smoother
-	outcome.
+	I parametri vi permettono di specificare l'ordine del polinomio
+	nella variabile indipendente e la percentuale di punti osservati
+	da utilizzare in ciascuna regressione locale (l'ampiezza di banda).
+	Valori più elevati di quest'ultima generato un risultato più liscio.
       </para>
       <para>
-	If the robust weights box is checked the local regression
-	procedure is iterated twice, with the weights being modified
-	based on the residuals from the previous iteration so as to
-	give less influence to outliers.
+	Se viene selezionata l'opzione dei pesi robusti la procedura
+	di regressione locale è ripetuta due volte, modificando i pesi 
+	sulla base dei residui ottenuti all'iterazione precedente in modo
+	da assegnare un'influenza minore alle osservazioni anomale.
       </para>
      </description>
   </command>
@@ -5791,21 +5792,20 @@
 
     <description>
       <para>
-	Supports creation of a gretl function package via the command
-	line. The filename argument represents the name of the package
-	to be created, and should have the <lit>.gfn</lit>
-	extension. Please see <guideref targ="chap:functions"/> for
-	details.
+	Permette la creazione di un <quote>function package</quote> da
+	linea di comando. Il nome di file indica il nome del pacchetto
+	da creare e deve avere estensione <lit>.gfn</lit>. Si veda
+	<guideref targ="chap:functions"/> per dettagli.
       </para>
       <para>
-	The option flags support the writing of auxiliary files for
-	use with gretl <quote>addons</quote>. The index file is a
-	short XML document containing basic information about the
-	package; it has the same basename as the package and the
-	extension <lit>.xml</lit>. The translations file contains
-	strings from the package that may be suitable for translation,
-	in C format; for package <lit>foo</lit> this file is named
-	<lit>foo-i18n.c</lit>.
+	Le opzioni consentono la scrittura di file ausiliari per l'uso
+	con gli <quote>addon</quote> di gretl. Il file indice è un
+	breve documento XML contenente alcune informazioni base sul
+	pacchetto; ha lo stesso nome del pacchetto stesso ed
+	estensione <lit>.xml</lit>. Il file di traduzioni contiene le
+	stringhe da tradurre del pacchetto, in formato C; per il
+	pacchetto <lit>pippo</lit> questo file deve chiamarsi
+	<lit>pippo-i18n.c</lit>.
       </para>
     </description>
 
@@ -7512,32 +7512,33 @@
   </command>
 
   <command name="polyweights" section="Transformations" context="gui"
-    label="Polynomial trend fitting">
+    label="Trend polinomiale">
 
     <description>
       <para>
-	In fitting a polynomial trend to a time series it may be
-	desirable to give extra weight to the observations at the
-	start and end of the sample. (Points in the middle of the
-	sample range have neighbours on both sides that are likely to
-	be pulling the fit in the same general direction.)
+	Quando si usa un trend polinomiale per approssimare una serie
+	storica, si può voler dare più peso alle osservazioni
+	all'inizio e alla fine del campione. (I punti in mezzo hanno
+	dei vicini su ambo il lati che, probabilmente, portano il
+	polinomio nella stessa direzione.)
       </para>
       <para>
-	The weighting schemes offered here (quadratic, cosine-bell and
-	steps) can be used to this effect. If you select one of these
-	schemes two additional settings must be chosen: first, what
-	maximum weight should be used (the minimum, baseline weight is
-	1.0)?  Second, what central fraction of the sample should be
-	given a uniform (minimal) weighting?
+	Gli schemi di ponderazione offerti qui (quadratico, a coseno e
+	a gradini) possono essere usati allo scopo. Selezionando uno
+	di essi, bisogna poi scegliere il valore per due settaggi
+	aggiuntivi: primo, il massimo peso da usare (il minimo è
+	1.0). Secondo, la frazione di campione centrale a qui dare un
+	peso uniforme (minimale).
       </para>
       <para>
-	Suppose, for example, you select a maximum weight of 3.0 and a
-	central fraction of 0.4. This means that the middle 40 percent
-	of the data get a weight of 1.0. If the steps shape is
-	selected the first and last 30 percent of the observations get
-	a weight of 3.0; otherwise, for the first 30 percent of
-	observations the weights decline gradually from 3.0 to 1.0; and
-	for the last 30 percent the weights increase from 1.0 to 3.0.
+	Supponiamo, ad esempio, di scegliere un peso massimo pari a
+	3.0 e una frazione centrale di 0.4. Ciò implica che il 40%
+	centrale dei dati riceverà una ponderazione di
+	1.0. Selezionando la ponderazione a gradini, il primo e
+	l'ultimo 30% delle osservazioni riceve un peso pari a 3.0;
+	altrimenti, il peso per il primo 30% delle osservazioni
+	decresce gradualmente da 3.0 to 1.0, e per l'ultimo 30% delle
+	osservazioni cresce gradualmente da 1.0 to 3.0.
       </para>
     </description>
 
@@ -7594,15 +7595,17 @@
       </para>
 
       <para>Opzionalmente è possibile aggiungere una variabile
-      <quote>offset</quote> alla specificazione, ossia una variabile di scala,
-       il cui logaritmo viene aggiunto alla funzione di regressione lineare
-       (con un coefficiente implicito di 1.0). Ciò ha senso se si ipotizza che
-       il numero di occorrenze dell'evento in questione sia proporzionale a
-       qualche fattore noto, a parità di altre condizioni. Ad esempio, il numero
-       di incidenti stradali può essere ipotizzato proporzionale al volume del
-       traffico, che potrebbe essere specificato come una variabile di
-       <quote>offset</quote> in un modello di Poisson per il tasso di incidenti.
-       La variabile di offset dev'essere strettamente positiva.
+      <quote>offset</quote> alla specificazione, ossia una variabile
+      di scala, il cui logaritmo viene aggiunto alla funzione di
+      regressione lineare (con un coefficiente implicito di 1.0). Ciò
+      ha senso se si ipotizza che il numero di occorrenze dell'evento
+      in questione sia proporzionale a qualche fattore noto, a parità
+      di altre condizioni. Ad esempio, il numero di incidenti stradali
+      può essere ipotizzato proporzionale al volume del traffico, che
+      potrebbe essere specificato come una variabile di
+      <quote>offset</quote> in un modello di Poisson per il tasso di
+      incidenti.  La variabile di offset dev'essere strettamente
+      positiva.
       </para>
 
     </description>
@@ -7661,14 +7664,15 @@
       </para>
       
       <para>
-        Nota: c'è un <quote>trucco</quote> con questo comando, usando 
-        l'opzione <lit>--byobs</lit>, che può essere utile quando si lavora
-        su un dataset con valori mancanti. Se si fornisce una lista di variabili
-        seguite da un punto e virgola e da una variabile finale, la variabile
-        finale non viene mostrata, ma viene usata per selezionare le
-        osservazioni da mostrare. Le osservazioni per cui la variabile finale
-        assume valore 0 non verranno mostrate. Ad esempio, si supponga di avere
-        la serie giornaliera <lit>x</lit> e di volere la lista delle date per
+        Nota: c'è un <quote>trucco</quote> con questo comando, usando
+        l'opzione <lit>--byobs</lit>, che può essere utile quando si
+        lavora su un dataset con valori mancanti. Se si fornisce una
+        lista di variabili seguite da un punto e virgola e da una
+        variabile finale, la variabile finale non viene mostrata, ma
+        viene usata per selezionare le osservazioni da mostrare. Le
+        osservazioni per cui la variabile finale assume valore 0 non
+        verranno mostrate. Ad esempio, si supponga di avere la serie
+        giornaliera <lit>x</lit> e di volere la lista delle date per
         cui <lit>x</lit> ha valori mancanti. Si può procedere nel modo
         seguente:
       </para>
@@ -7891,12 +7895,13 @@
         variabili.
       </para>
       <para>
-        Si noti che talvolta la distribuzione gamma viene caratterizzata dai
-        parametri di media e varianza, invece che da quelli di forma e scala.
-        La media è il prodotto di forma e scala, mentre la varianza è il
-        prodotto tra la forma e il quadrato della scala. Quindi la scala si può
-        ottenere come la varianza divisa per la media, mentre la forma come la
-        media divisa per la scala.
+        Si noti che talvolta la distribuzione gamma viene
+        caratterizzata dai parametri di media e varianza, invece che
+        da quelli di forma e scala.  La media è il prodotto di forma e
+        scala, mentre la varianza è il prodotto tra la forma e il
+        quadrato della scala. Quindi la scala si può ottenere come la
+        varianza divisa per la media, mentre la forma come la media
+        divisa per la scala.
       </para>
     </description>
 
@@ -7910,23 +7915,25 @@
 
     <description>
       <para>
-        Per un modello stimato con OLS su serie storiche, esegue il test del
-        rapporto di verosimiglianza di Quandt (QLR) per un break strutturale in
-        un punto incognito del campione, escludendo il 15% delle osservazioni
-        all'inizio e ella fine del campione.
+        Per un modello stimato con OLS su serie storiche, esegue il
+        test del rapporto di verosimiglianza di Quandt (QLR) per un
+        break strutturale in un punto incognito del campione,
+        escludendo il 15% delle osservazioni all'inizio e ella fine
+        del campione.
       </para>
       <para>
-	Per ogni possibile punto di rottura compreso nel 70% centrale delle
-        osservazioni, viene eseguito un test di Chow (si veda <cmdref
-          targ="chow"/>). La statistica del test QLR è il massimo dei valori
-	<math>F</math> di questi test; segue una distribuzione non
-        standard, i cui valori critici sono presi da <book>Introduction to
-          Econometrics</book> di Stock e Watson (2003). Se la statistica QLR
-        eccede il valore critico per un dato livello di significatività, è
-        possibile inferire che i parametri del modello non sono costanti.
-        Questa statistica può essere usata per riconoscere forme di instabilità
-        diverse da un singolo punto di rottura, ad esempio più punti di rottura
-        o un lento cambiamento dei parametri.
+	Per ogni possibile punto di rottura compreso nel 70% centrale
+	delle osservazioni, viene eseguito un test di Chow (si veda
+	<cmdref targ="chow"/>). La statistica del test QLR è il
+	massimo dei valori <math>F</math> di questi test; segue una
+	distribuzione non standard, i cui valori critici sono presi da
+	<book>Introduction to Econometrics</book> di Stock e Watson
+	(2003). Se la statistica QLR eccede il valore critico per un
+	dato livello di significatività, è possibile inferire che i
+	parametri del modello non sono costanti.  Questa statistica
+	può essere usata per riconoscere forme di instabilità diverse
+	da un singolo punto di rottura, ad esempio più punti di
+	rottura o un lento cambiamento dei parametri.
       </para>
     </description>
 
@@ -7957,39 +7964,41 @@
 
     <description>
       <para context="gui">
-	With just one series selected, displays a plot of the empirical
-	quantiles of the given series against the quantiles of the normal
-	distribution. The series must include at least 20 valid observations
-	in the current sample range. By default the empirical quantiles are
-	plotted against quantiles of the normal distribution having the same
-	mean and variance as the sample data, but two alternatives are
-	available: the data may be standardized (converted to z-scores) before
-	plotting, or the <quote>raw</quote> empirical quantiles may be plotted
-	against the quantiles of the standard normal distribution.
+	Con una sola serie selezionata, mostra un grafico della
+	distribuzione empirica della serie stessa contro i quantili
+	della normale. La serie deve includere almeno 20 valori validi
+	nel campione selezionato al momento. Per impostazione
+	predefinita, i quantili empirici vengono disegnati contro
+	quelli della normale avente media e varianza uguali a quelli
+	campionari della serie, ma sono disponibili due alternative: i
+	dati possono essere standardizzati prima, oppure i quantili
+	empirici possono essere disegnati contro quelli della normale
+	standardizzata.
       </para>
       <para context="cli">
-	Given just one series argument, displays a plot of the empirical
-	quantiles of the selected series (given by name or ID number)
-	against the quantiles of the normal distribution. The series must
-	include at least 20 valid observations in the current sample
-	range. By default the empirical quantiles are plotted against
-	quantiles of the normal distribution having the same mean and
-	variance as the sample data, but two alternatives are available:
-	if the <opt>--z-scores</opt> option is given the data are
-	standardized, while if the <opt>--raw</opt> option is given the
-	<quote>raw</quote> empirical quantiles are plotted against the
-	quantiles of the standard normal distribution. 
+	Con una sola serie come argomento, mostra un grafico della
+	distribuzione empirica della serie stessa (indicata col nome o
+	con il suo numero ID) contro i quantili della normale. La
+	serie deve includere almeno 20 valori validi nel campione
+	selezionato al momento. Per impostazione predefinita, i
+	quantili empirici vengono disegnati contro quelli della
+	normale avente media e varianza uguali a quelli campionari
+	della serie, ma sono disponibili due alternative: con
+	l'opzione <opt>--z-scores</opt>, i dati vengono standardizzati
+	prima, oppure, con l'opzione <opt>--raw</opt>, i quantili
+	empirici possono essere disegnati contro quelli della normale
+	standardizzata.
       </para>
       <para>
-	Given two series arguments, <repl>y</repl> and <repl>x</repl>,
-	displays a plot of the empirical quantiles of <repl>y</repl> against
-	those of <repl>x</repl>. The data values are not standardized.
+	Con due argomenti, <repl>y</repl> and <repl>x</repl>, mostra
+	un grafico dei quantili empirici di <repl>y</repl> contro
+	quelli di <repl>x</repl>. I dati non vengono standardizzati.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Variable/Normal Q-Q plot</menu-path>
-      <menu-path>/View/Graph specified vars/Q-Q plot</menu-path>
+      <menu-path>/Variabile/Q-Q normale</menu-path>
+      <menu-path>/Visualizza/Grafico/Q-Q</menu-path>
     </gui-access>
 
   </command>
@@ -8303,8 +8312,10 @@
       <lit>3.5*b[4]</lit>.
       </para>
 
-      <para>Ecco un esempio di un insieme di vincoli per un modello stimato in
-      precedenza:</para>
+      <para>
+	Ecco un esempio di un insieme di vincoli per un modello
+	stimato in precedenza:
+      </para>
 
       <code>
 	restrict
@@ -8314,9 +8325,10 @@
 	end restrict
       </code>
 
-      <para>Ed ecco un esempio di un insieme di vincoli da applicare a un
-      sistema (se il nome del sistema non contiene spazi, è possibile
-      tralasciare le virgolette).
+      <para>
+	Ed ecco un esempio di un insieme di vincoli da applicare a un
+	sistema (se il nome del sistema non contiene spazi, è
+	possibile tralasciare le virgolette).
       </para>
 
       <code>
@@ -8355,13 +8367,17 @@
 
     <description>
 
-      <para>Ognuno dei vincoli da imporre a un modello deve essere espresso
-        sotto forma di equazione con una combinazione lineare dei parametri al
-        primo membro e un valore numerico al secondo. Nel caso della singola
-        equazione, i parametri sono indicati con la sintassi <lit>b[</lit><repl>i</repl><lit>]</lit>,
-        dove <repl>i</repl> rappresenta la posizione nella lista dei regressori,
-        a partire da uno, oppure <lit>b[</lit><repl>variabile</repl><lit>]</lit>, dove
-        <repl>variabile</repl> è il nome del regressore in questione.
+      <para>
+	Ognuno dei vincoli da imporre a un modello deve essere
+	espresso sotto forma di equazione con una combinazione lineare
+	dei parametri al primo membro e un valore numerico al
+	secondo. Nel caso della singola equazione, i parametri sono
+	indicati con la sintassi
+	<lit>b[</lit><repl>i</repl><lit>]</lit>, dove <repl>i</repl>
+	rappresenta la posizione nella lista dei regressori, a partire
+	da uno, oppure
+	<lit>b[</lit><repl>variabile</repl><lit>]</lit>, dove
+	<repl>variabile</repl> è il nome del regressore in questione.
       </para>
 
       <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
@@ -8504,13 +8520,14 @@
         decrescente.
       </para>
 
-      <para>Oltre al grafico, gretl mostra anche le medie e i campi di
-      variazione per ogni sotto-campione, insieme al coefficiente di
-      pendenza della regressione OLS del campo di variazione sulla media
-      e il p-value per l'ipotesi nulla che la pendenza sia zero.
-      Se il coefficiente di pendenza è significativo al livello del 10
-      per cento, viene mostrata sul grafico la linea stimata della
-      regressione del campo di variazione sulla media.
+      <para>
+	Oltre al grafico, gretl mostra anche le medie e i campi di
+	variazione per ogni sotto-campione, insieme al coefficiente di
+	pendenza della regressione OLS del campo di variazione sulla
+	media e il p-value per l'ipotesi nulla che la pendenza sia
+	zero.  Se il coefficiente di pendenza è significativo al
+	livello del 10 per cento, viene mostrata sul grafico la linea
+	stimata della regressione del campo di variazione sulla media.
       </para>
     </description>
 
@@ -8531,9 +8548,10 @@
     <description>
       <para>
 	Esegue i comandi nel <repl>file-input</repl> e restituisce il
-        controllo al prompt interattivo. Questo comando si intende usato con il
-        programma a riga di comando gretlcli, o con il <quote>terminale di gretl</quote>
-        nel programma con interfaccia grafica.
+	controllo al prompt interattivo. Questo comando si intende
+	usato con il programma a riga di comando gretlcli, o con il
+	<quote>terminale di gretl</quote> nel programma con
+	interfaccia grafica.
       </para>
       <para>
 	Si veda anche <cmdref targ="include"/>.
@@ -8801,8 +8819,9 @@
     <description>
       <para>
        Calcola la differenza stagionale di ogni variabile della
-       <repl>lista-variabili</repl> e salva il risultato in una nuova variabile
-       con il prefisso <lit>sd_</lit>. Il comando è disponibile solo per serie storiche stagionali.
+       <repl>lista-variabili</repl> e salva il risultato in una nuova
+       variabile con il prefisso <lit>sd_</lit>. Il comando è
+       disponibile solo per serie storiche stagionali.
       </para>
     </description>
 
@@ -9085,12 +9104,14 @@
 	  </para>
  	</li>
 	<li>
-	  <para><lit>force_hc</lit>: <lit>off</lit> (predefinito)
-	    o <lit>on</lit>. Lo stimatore HAC viene usato in modo predefinito con dati
-            serie storiche e quando si usa l'opzione <lit>--robust</lit> di
-            <lit>ols</lit>. Impostando invece <lit>force_hc</lit> a
-            <quote>on</quote>, si forza l'uso della matrice di covarianza
-	    coerente con l'eteroschedasticità (che non tiene conto dell'autocorrelazione).
+	  <para><lit>force_hc</lit>: <lit>off</lit> (predefinito) o
+	  <lit>on</lit>. Lo stimatore HAC viene usato in modo
+	  predefinito con dati serie storiche e quando si usa
+	  l'opzione <lit>--robust</lit> di <lit>ols</lit>. Impostando
+	  invece <lit>force_hc</lit> a <quote>on</quote>, si forza
+	  l'uso della matrice di covarianza coerente con
+	  l'eteroschedasticità (che non tiene conto
+	  dell'autocorrelazione).
 	  </para>
 	</li>
 	<li>
@@ -9202,19 +9223,19 @@
       
       <ilist>
 	<li>
-	  <para><lit>horizon</lit>:
-	  un intero (il valore predefinito dipende dalla
-          frequenza dei dati). Imposta l'orizzonte per le funzioni impulso-risposta
-          e per la decomposizione della varianza nel contesto delle autoregressioni
-          vettoriali.
+	  <para><lit>horizon</lit>: un intero (il valore predefinito
+	  dipende dalla frequenza dei dati). Imposta l'orizzonte per
+	  le funzioni impulso-risposta e per la decomposizione della
+	  varianza nel contesto delle autoregressioni vettoriali.
 	  </para>
 	</li>
 	<li>
-	  <para><lit>vecm_norm</lit>: <lit>phillips</lit> (valore predefinito),
-          <lit>diag</lit>, <lit>first</lit> o <lit>none</lit>. Usato nel
-          contesto della stima VECM, attraverso il comando <cmdref targ="vecm"/>
-          per identificare i vettori di cointegrazione. Si veda la Guida all'uso
-          per i dettagli.
+	  <para><lit>vecm_norm</lit>: <lit>phillips</lit> (valore
+	  predefinito), <lit>diag</lit>, <lit>first</lit> o
+	  <lit>none</lit>. Usato nel contesto della stima VECM,
+	  attraverso il comando <cmdref targ="vecm"/> per identificare
+	  i vettori di cointegrazione. Si veda la Guida all'uso per i
+	  dettagli.
 	  </para>
 	</li>
       </ilist>
@@ -9660,10 +9681,10 @@
 
     <description>
       <para>
-	Questo comando funziona esattamente come il comando <cmdref targ="printf"/>,
-        stampando gli argomenti nel modo controllato dalla stringa di formato,
-        tranne per il fatto che il risultato è scritto nella stringa
-        specificata, <repl>var-stringa</repl>.
+	Questo comando funziona esattamente come il comando <cmdref
+	targ="printf"/>, stampando gli argomenti nel modo controllato
+	dalla stringa di formato, tranne per il fatto che il risultato
+	è scritto nella stringa specificata, <repl>var-stringa</repl>.
       </para>
       <para>
 	Per stampare la variabile stringa, basta usare il suo nome preceduto da
@@ -10116,22 +10137,25 @@
 
     <description>
       <para>
-	Quick and simple ASCII graphics.  Without the <opt>--time-series</opt>
-	flag, <repl>varlist</repl> must contain at least two series, the last
-	of which is taken as the variable for the <math>x</math> axis, and a
-	scatter plot is produced. In this case the <opt>--tall</opt> option
-	may be used to produce a graph in which the <math>y</math> axis is
-	represented by 40 rows of characters (the default is 20 rows).
+	Gafica ASCII nuda e cruda. Senza l'opzione
+	<opt>--time-series</opt>, <repl>varlist</repl> deve contenere
+	almeno due serie, l'ultima delle quali va sull'asse delle
+	ascisse, e verrà prodotto un diagramma a dispersione. In
+	questo caso, si può usare l'opzione <opt>--tall</opt> per
+	produrre un grafico in cui l'asse <math>y</math> è
+	rappresentato da 40 righe di caratteri (il default è 20
+	righe).
       </para>
       <para>
-	With the <opt>--time-series</opt>, a plot by observation is produced.
-	In this case the option <opt>--one-scale</opt> may be used to force
-	the use of a single scale; otherwise if <repl>varlist</repl> contains
-	more than one series the data may be scaled. Each line represents an
-	observation, with the data values plotted horizontally.  
+	Con l'opzione <opt>--time-series</opt>, viene prodotto un
+	grafico per osservazione.  In questo caso, l'opzione
+	<opt>--one-scale</opt> forza l'uso di una scala singola;
+	altrimenti, se <repl>varlist</repl> contiene più di una serie
+	i dati potrebbero essere riscalati. Ogni riga rappresenta
+	un'osservazione, con i dati disegnati orizzontalmente.
       </para>
       <para>
-	See also <cmdref targ="gnuplot"/>.
+	Vedi anche <cmdref targ="gnuplot"/>.
       </para>
     </description>
 
@@ -10257,18 +10281,20 @@
       </para>
       
       <para>
-	L'output delle stime TSLS comprende il test di Hausman e, se il modello è
-        sovra-identificato, il test di Sargan per la sovra-identificazione. Nel
-        test di Hausman, l'ipotesi nulla è che le stime OLS siano consistenti, o
-        in altre parole che non sia richiesta la stima per mezzo di variabili
-        strumentali. Un modello di questo tipo è sovra-identificato se ci sono
-        più strumenti di quelli strettamente necessari. Il test di Sargan è
-        basato su una regressione ausiliaria dei residui del modello minimi
-        quadrati a due stadi sull'intera lista degli strumenti. L'ipotesi nulla
-        è che tutti gli strumenti siano validi, cosa di cui si dovrebbe dubitare
-        se la regressione ausiliaria ha un significativo potere esplicativo.
-	Davidson e MacKinnon (2004, capitolo 8) forniscono una buona spiegazione di
-        entrambi i test.
+	L'output delle stime TSLS comprende il test di Hausman e, se
+	il modello è sovra-identificato, il test di Sargan per la
+	sovra-identificazione. Nel test di Hausman, l'ipotesi nulla è
+	che le stime OLS siano consistenti, o in altre parole che non
+	sia richiesta la stima per mezzo di variabili strumentali. Un
+	modello di questo tipo è sovra-identificato se ci sono più
+	strumenti di quelli strettamente necessari. Il test di Sargan
+	è basato su una regressione ausiliaria dei residui del modello
+	minimi quadrati a due stadi sull'intera lista degli
+	strumenti. L'ipotesi nulla è che tutti gli strumenti siano
+	validi, cosa di cui si dovrebbe dubitare se la regressione
+	ausiliaria ha un significativo potere esplicativo.  Davidson e
+	MacKinnon (2004, capitolo 8) forniscono una buona spiegazione
+	di entrambi i test.
       </para>
 
       <para>
@@ -10399,21 +10425,22 @@
       impulso-risposta.</para>  
 
       <para context="cli">
-	Imposta e stima (usando OLS) un'autoregressione vettoriale (VAR).
-        Il primo argomento specifica l'ordine di ritardo (o il massimo ordine di
-        ritardi se è stata usata l'opzione <lit>--lagselect</lit>). L'ordine può
-        essere indicato numericamente o con il nome di una variabile scalare
-        preesistente.  Quindi segue l'impostazione della prima equazione. Non
-        occorre includere i ritardi tra gli elementi della
-        <repl>lista-variabili</repl>: verranno aggiunti automaticamente. Il
-        punto e virgola separa le variabili stocastiche, per cui verrà incluso
-        un numero di ritardi pari a <repl>ordine</repl>, dai termini
-        deterministici o esogeni presenti nella
-        <repl>lista-esogene</repl>. Si noti che viene inclusa
-        automaticamente una costante, a meno che non si usi l'opzione
-        <lit>--nc</lit>; inoltre è possibile aggiungere un trend con l'opzione
-        <lit>--trend</lit> e variabili dummy stagionali con l'opzione
-        <lit>--seasonals</lit>.
+	Imposta e stima (usando OLS) un'autoregressione vettoriale
+	(VAR).  Il primo argomento specifica l'ordine di ritardo (o il
+	massimo ordine di ritardi se è stata usata l'opzione
+	<lit>--lagselect</lit>). L'ordine può essere indicato
+	numericamente o con il nome di una variabile scalare
+	preesistente.  Quindi segue l'impostazione della prima
+	equazione. Non occorre includere i ritardi tra gli elementi
+	della <repl>lista-variabili</repl>: verranno aggiunti
+	automaticamente. Il punto e virgola separa le variabili
+	stocastiche, per cui verrà incluso un numero di ritardi pari a
+	<repl>ordine</repl>, dai termini deterministici o esogeni
+	presenti nella <repl>lista-esogene</repl>. Si noti che viene
+	inclusa automaticamente una costante, a meno che non si usi
+	l'opzione <lit>--nc</lit>; inoltre è possibile aggiungere un
+	trend con l'opzione <lit>--trend</lit> e variabili dummy
+	stagionali con l'opzione <lit>--seasonals</lit>.
       </para>
 
       <para context="cli">
@@ -10437,13 +10464,14 @@
         può essere impostato usando il comando <cmdref targ="set"/>.
       </para> 
       <para context="cli">
-        Se si usa l'opzione <lit>--lagselect</lit>, il primo parametro del comando
-	<lit>var</lit> viene interpretato come il massimo ordine di ritardo.
-        In questo caso, il comando non produce il solito risultato della stima del VAR, ma
-        una tabella che mostra i valori dei criteri di informazione di Akaike
-        (AIC), Schwartz (BIC) e Hannan&ndash;Quinn (HQC) calcolati per VAR
-        dall'ordine 1 fino all'ordine massimo indicato, in modo da aiutare nella
-        scelta dell'ordine di ritardo ottimale.
+        Se si usa l'opzione <lit>--lagselect</lit>, il primo parametro
+        del comando <lit>var</lit> viene interpretato come il massimo
+        ordine di ritardo.  In questo caso, il comando non produce il
+        solito risultato della stima del VAR, ma una tabella che
+        mostra i valori dei criteri di informazione di Akaike (AIC),
+        Schwartz (BIC) e Hannan&ndash;Quinn (HQC) calcolati per VAR
+        dall'ordine 1 fino all'ordine massimo indicato, in modo da
+        aiutare nella scelta dell'ordine di ritardo ottimale.
        </para>
 
     </description>
@@ -10819,10 +10847,10 @@
        </li>
       </ilist>
       <para>
-       Se si è abituati ad avviare gretl da un terminale testuale invece che da
-       un menù o icona, può essere utile l'opzione che permette di usare la
-       directory attuale (determinata dalla shell) al momento dell'avvio del
-       programma.
+       Se si è abituati ad avviare gretl da un terminale testuale
+       invece che da un menù o icona, può essere utile l'opzione che
+       permette di usare la directory attuale (determinata dalla
+       shell) al momento dell'avvio del programma.
       </para>
     </description>
 
@@ -10837,26 +10865,26 @@
 
     <description>
       <para>
-	There are two procedural options here, controlled by the 
-	lower set of radio-buttons.
+	Qui ci sono duo opzioni procedurali, controllate dal set
+	inferiore di bottoni radio.
       </para>
       <para>
-	If you select <quote>Execute X-12-ARIMA directly</quote> then
-	gretl writes a command file for X-12-ARIMA and calls the
-	x12a program to execute the commands. In this case you have the
-	option of producing a graph and/or saving selected output series
-	to the gretl dataset.
+	Selezionando <quote>Esegui X-12-ARIMA direttamente</quote>
+	gretl scriverà un file di comandi per X-12-ARIMA e chiamerà il
+	programmma x12aper eseguirli. In questo caso, è possibile
+	produrre un grafico e/o salvare le serie di output nel dataset
+	di gretl.
       </para>
       <para>
-	If you select <quote>Make X-12-ARIMA command file</quote>
-	gretl writes a command file for X-12-ARIMA, as above, but then
-	opens this file in an editor window. In that window you are
-	able to make changes and to save the file under a chosen
-	name. You are also able to send the file for execution by x12a
-	(by clicking the <quote>Run</quote> button on the editor
-	window toolbar) and view the output. But in this case you do
-	not have the option of saving data as gretl series or
-	producing a gretl graph.
+	Selezionando invece <quote>Scrivi file di comandi
+	X-12-ARIMA</quote> gretl scriverà un file di comandi per
+	X-12-ARIMA, come sopra, ma poi questo file verrà aperto in una
+	finestra di editor, così da poter apportare modifiche e
+	salvarlo col nome voluto. Sarà anche possibile mandarlo in
+	esecuzione con x12a (cliccando il bottone <quote>Run</quote>
+	sulla barra degli strumenti dell'editor) e visualizzarne
+	l'output. In questo caso, tuttavia, non c'è possibilità di
+	salvare i dati prodotti o di di produrre grafici.
       </para>
     </description>
   </command>
