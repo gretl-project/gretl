@@ -1171,6 +1171,9 @@ static int get_native_data (char *fname, int ftype, int append,
 	delete_from_filelist(FILE_LIST_DATA, fname);
     } else {
 	finalize_data_open(fname, ftype, 0, append, NULL);
+	if (append) {
+	    infobox(_("Data appended OK\n"));
+	}
 	fputs(buf, stderr);
     } 
 

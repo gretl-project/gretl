@@ -21,7 +21,7 @@
 	<placeholder name="RecentData"/>
       </menu>      
       <menu action="AppendDataMenu">
-	<menuitem action="AppendData"/>
+	<menuitem action="AppendGdt"/>
 	<menuitem action="AppendCSV"/>
 	<menuitem action="AppendOctave"/>
 	<menuitem action="AppendGnumeric"/>

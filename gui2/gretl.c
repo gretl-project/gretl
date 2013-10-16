@@ -1560,7 +1560,7 @@ GtkActionEntry main_entries[] = {
     { "OpenJMulTi",   NULL, N_("_JMulTi..."), NULL, NULL, G_CALLBACK(open_data) },
 
     { "AppendDataMenu", NULL, N_("_Append data"), NULL, NULL, NULL }, 
-    { "AppendData",     NULL, N_("_Standard format..."), NULL, NULL, G_CALLBACK(open_data) },
+    { "AppendGdt",      NULL, N_("_Standard format..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendCSV",      NULL, N_("_text/CSV..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendOctave",   NULL, N_("_Octave..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendGnumeric", NULL, N_("_Gnumeric..."), NULL, NULL, G_CALLBACK(open_data) },
