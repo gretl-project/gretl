@@ -3050,39 +3050,30 @@ static int plotlist_is_group_invariant (const int *list, const DATASET *dset)
 
 static int panel_group_invariant_plot (const int *plotlist, 
 				       const char *literal,
-				       const DATASET *dset,
+				       DATASET *dset,
 				       gretlopt opt)
 {
-    DATASET *gset = (DATASET *) dset;
-    int save_structure = dset->structure;
-    int save_t1 = dset->t1;
-    int save_t2 = dset->t2;
-    int save_pd = dset->pd;
-    int save_sd0 = dset->sd0;
+    DATASET orig = *dset;
     int err;
 
     /* limit sample to first group */
-    gset->t1 = 0;
-    gset->t2 = dset->pd - 1;
+    dset->t1 = 0;
+    dset->t2 = dset->pd - 1;
 
     /* and mark as time-series data */
     if (dset->panel_pd > 0) {
-	gset->pd = dset->panel_pd;
-	gset->sd0 = dset->panel_sd0;
-	gset->structure = TIME_SERIES;
+	dset->pd = dset->panel_pd;
+	dset->sd0 = dset->panel_sd0;
+	dset->structure = TIME_SERIES;
     } else {
-	gset->structure = SPECIAL_TIME_SERIES;
-	gset->pd = 1;
+	dset->structure = SPECIAL_TIME_SERIES;
+	dset->pd = 1;
     }
 
     err = gnuplot(plotlist, literal, dset, opt);
 
     /* put everything back as it was */
-    gset->t1 = save_t1;
-    gset->t2 = save_t2;
-    gset->structure = save_structure;
-    gset->pd = save_pd;
-    gset->sd0 = save_sd0;
+    *dset = orig;
     
     return err;
 }
@@ -3137,7 +3128,7 @@ int gnuplot (const int *plotlist, const char *literal,
     if (dataset_is_panel(dset) && 
 	plotlist_is_group_invariant(plotlist, dset)) {
 	return panel_group_invariant_plot(plotlist, literal,
-					  dset, opt);
+					  (DATASET *) dset, opt);
     }
 
 #if GP_DEBUG
