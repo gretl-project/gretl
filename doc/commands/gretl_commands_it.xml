@@ -5902,27 +5902,26 @@
 	   label="Menu attachment" context="gui">
     <description>
       <para>
-	This dialog enables you to specify a menu attachment for
-	a function package. To do this you must complete the three
-	fields in the dialog box.
+	Questa finestra di dialogo permette di specificare a quale
+	menu attaccare il pacchetto. A tal fine, bisogna riempire i
+	tre campi previsti.
       </para>
-      <subhead>Label</subhead>
+      <subhead>Etichetta</subhead>
       <para>
-	This requires a short label string, which will appear as
-	the menu entry for the package.
+	Una breve stringa, che apparirà nel menu.
       </para>
-      <subhead>Window</subhead>
+      <subhead>Finestra</subhead>
       <para>
-	Select <quote>model window</quote> for a function package that
-	does something with a gretl model, and should appear in the
-	menu bar in a gretl model window. Otherwise, select
-	<quote>main window</quote>.
+	Selezionare <quote>finestra del modello</quote> per un
+	pacchetto che fa qualcosa copn un modello stimato da gretl, e
+	deve apparire nella barra del menu di un modello. In tutti gli
+	altri casi, selezionare <quote>finestra principale</quote>.
       </para>
-      <subhead>Menu tree</subhead>
+      <subhead>Albero del menu</subhead>
       <para>
-	Select the position within the menu tree (for either the
-	main window or the model window, as chosen above) where the
-	entry for the package should appear.
+	Selezionare la posizione nell'albero del menu (per la finestra
+	principale o per la finestra del modello, come da scelta
+	sopra) dove il pacchetto deve apparire.
       </para>
     </description>
   </command>
@@ -6413,29 +6412,30 @@
 	   context="gui">
     <description>
       <para>
-	Computes the Nadaraya&ndash;Watson nonparametric estimator of
-	the conditional mean of the dependent variable,
-	<math>m(x)</math>, for each non-missing value of the
-	independent variable.
+	Calcola lo stimatore nonparametrico di Nadaraya&ndash;Watson
+	per la media condizionale della variabile dipendente,
+	<math>m(x)</math>, per ogni valore valido della variabile
+	<math>x</math>.
       </para>
       <para>
-	The kernel function <math>K</math> is given by <math>K =
-	exp(-x</math><sup>2</sup><math> / 2h)</math> for <math>|x|
-	&lt; T</math> and zero otherwise.
+	La funzione kernel <math>K</math> è data da <math>K =
+	exp(-x</math><sup>2</sup><math> / 2h)</math> per <math>|x|
+	&lt; T</math> e zero altrove.
       </para>
       <para>
-	The bandwidth, usually a small number, controls the smoothness
-	of <math>m(x)</math> (higher values producing a smoother
-	series); the default value is <math>n</math><sup>-0.2</sup>.
+	L'ampiezza di banda, che di solito è un numero piccolo,
+	controlla quanto liscia debba essere la funzione
+	<math>m(x)</math> (più è alto il valore, più liscia sarà la
+	funzione); il valore di default è <math>n</math><sup>-0.2</sup>.
       </para>
       <para>
-	If the <quote>leave-one-out</quote> box is checked, a variant
-	of the estimator is employed in which the <math>i</math>-th
-	observation is not used in evaluating
-	<math>m(x</math><sub>i</sub><math>)</math>. This makes the
-	Nadaraya&ndash;Watson estimator more robust numerically and
-	its usage is normally advised when the estimator is computed
-	for inference purposes.
+	Se viene spillata la casella <quote>escludine uno</quote>,
+	verrà usata una variante dello stimatore in cui la
+	<math>i</math>-esima osservazione non viene usata per
+	calcolare <math>m(x</math><sub>i</sub><math>)</math>. Questo
+	rende lo stimatore Nadaraya&ndash;Watson più robusto
+	numericamente e il suo uso è, di norma, consigliabile quando
+	lo stimatore è usato per l'inferenza.
       </para>
      </description>
   </command>
@@ -6452,55 +6452,57 @@
       <options>
 	<option>
 	  <flag>--model1</flag>
-	  <effect>use NegBin 1 model</effect>
+	  <effect>usa il modello NegBin 1</effect>
 	</option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>QML covariance matrix</effect>
+	  <effect>matrice di covarianza QML</effect>
 	</option>
 	<option>
 	  <flag>--cluster</flag>
 	  <optparm>clustvar</optparm>
-	  <effect>see <cmdref targ="logit"/> for explanation</effect>
+	  <effect>vedi <cmdref targ="logit"/> per una spegazione</effect>
         </option>
 	<option>
 	  <flag>--opg</flag>
-	  <effect>see below</effect>
+	  <effect>vedi sotto</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>stampa la matrice di covarianze</effect>
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print details of iterations</effect>
+	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
       </options>
     </usage>  
 
     <description>
       <para>
-	Estimates a Negative Binomial model.  The dependent variable is taken
-	to represent a count of the occurrence of events of some sort, and
-	must have only non-negative integer values. By default the model
-	NegBin 2 is used, in which the conditional variance of the count is
-	given by &mu;(1 + &alpha;&mu;), where &mu; denotes the conditional
-	mean.  But if the <opt>--model1</opt> option is given the conditional
-	variance is &mu;(1 + &alpha;).
+	Stima un modello Binomiale Negativo.  Il comando assume che la
+	variabile dipendente rappresenti un conteggio del numero di
+	volte in cui si è verificato un certo evento e deve assumere
+	solo valori interi non negativi. Di default, viene usata la
+	distribuzione NegBin 2, in cui la varianza condizionale è data
+	da &mu;(1 + &alpha;&mu;), dove &mu; denota la media
+	condizionale.  Tuttavia, se vien data l'opzione
+	<opt>--model1</opt> allora la varianza condizionale sarà data
+	da &mu;(1 + &alpha;).
       </para>
       <para>
-	The optional <lit>offset</lit> series works in the same way as for the
-	<cmdref targ="poisson"/> command.  The Poisson model is a restricted
-	form of the Negative Binomial in which &alpha; = 0 by construction.
+	L'argomento opzionale <lit>offset</lit> funziona come per il
+	comando <cmdref targ="poisson"/>.  In effetti, il modello di
+	Poisson è un caso particolare del binomiale negativo con
+	&alpha; = 0.
       </para>
       <para>
-	By default, standard errors are computed using a numerical
-	approximation to the Hessian at convergence.  But if the
-	<opt>--opg</opt> option is given the covariance matrix is based on
-	the Outer Product of the Gradient (OPG), or if the
-	<opt>--robust</opt> option is given QML standard errors are
-	calculated, using a <quote>sandwich</quote> of the inverse of the
-	Hessian and the OPG.
+	Di default, gli errori standard vengono calcolati unsando
+	un'approssimazione numerica dell'Hessiana sul punto di
+	massimo.  Con l'opzione <opt>--opg</opt> la matrice di
+	covarianze verrà invece calcolata tramite il prodotto esterno
+	dei gradienti (OPG), o via QML con l'opzione <opt>--robust</opt> usando un
+	<quote>sandwich</quote> dell'hessiana inversa e dell'OPG.
       </para>
     </description>
 
