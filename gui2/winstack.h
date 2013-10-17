@@ -28,11 +28,10 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 void vwin_winlist_popup (GtkWidget *src, GdkEvent *event, 
 			 windata_t *vwin);
 
-gint catch_winlist_key (GtkWidget *w, GdkEventKey *event, 
-			gpointer data);
-
 gint vwin_catch_winlist_key (GtkWidget *src, GdkEventKey *event, 
 			     windata_t *vwin);
+
+void attach_window_key_specials (GtkWidget *w);
 
 int get_n_listed_windows (void);
 

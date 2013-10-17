@@ -924,21 +924,10 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	    return TRUE;
 	}
     }
-    if (Alt) {
-	if (k == alt_w_key) {
-	    /* alt-w -> Sigma */
-	    k = GDK_w;
-	} else if (k == alt_x_key) {
-	    /* alt-x -> approx. equals */
-	    k = GDK_x;
-	}
+    if (Alt && k == alt_x_key) {
+	/* alt-x -> approx. equals */
+	k = GDK_x;
     }
-# ifdef GRETL_MACINT
-    /* special variant of libgtkmacintegration */
-    if (cmd_key(event) && mac_hide_unhide(event)) {
-	return TRUE;
-    }
-# endif
 #endif  
 
     if (k == GDK_F1) {
@@ -957,10 +946,6 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	if (k == GDK_x) {
 	    /* Alt-x: invoke command minibuffer */
 	    minibuf_callback();
-	    return TRUE;
-	} else if (k == GDK_w) {
-	    /* Alt-w: window list */
-	    window_list_popup(w, NULL, vwin->main);
 	    return TRUE;
 	}
     }
@@ -1481,6 +1466,8 @@ static void make_main_window (void)
     g_signal_connect(G_OBJECT(mdata->listbox), "drag-data-received",
 		     G_CALLBACK(mdata_handle_drag),
 		     NULL);
+
+    attach_window_key_specials(mdata->main);
 
     g_signal_connect(G_OBJECT(mdata->listbox), "key-press-event",
 		     G_CALLBACK(catch_mdata_key),

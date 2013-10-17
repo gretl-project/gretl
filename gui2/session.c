@@ -3729,8 +3729,7 @@ static void iconview_connect_signals (GtkWidget *iconview)
 {
     g_signal_connect(G_OBJECT(iconview), "destroy",
 		     G_CALLBACK(session_view_free), NULL);
-    g_signal_connect(G_OBJECT(iconview), "key-press-event",
-		     G_CALLBACK(catch_winlist_key), iconview);
+    attach_window_key_specials(iconview);
     g_signal_connect(G_OBJECT(iconview), "key-press-event",
 		     G_CALLBACK(catch_iconview_key), NULL);
     g_signal_connect(G_OBJECT(iconview), "configure-event",

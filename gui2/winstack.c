@@ -33,6 +33,8 @@
 
 #define WDEBUG 0
 
+static gint select_next_window (gpointer self);
+
 /* Below: apparatus for keeping track of open gretl windows.
 
    This provides the basis for a pop-up listing of windows as
@@ -465,8 +467,26 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     }
 }
 
-gint catch_winlist_key (GtkWidget *w, GdkEventKey *event, 
-			gpointer data)
+static gint maybe_select_next_window (GdkEventKey *event,
+				      gpointer data)
+{
+    if (event->keyval == GDK_grave) {
+#ifdef MAC_NATIVE
+	if (cmd_key(event)) {
+	    return select_next_window(data);
+	}
+#else
+	if (event->state & GDK_CONTROL_MASK) {
+	    return select_next_window(data);
+	}
+#endif	
+    }
+
+    return FALSE;
+}
+
+static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event, 
+			       gpointer data)
 {
 #ifdef MAC_NATIVE
     if ((event->state & GDK_MOD1_MASK) && event->keyval == alt_w_key) {
@@ -478,8 +498,8 @@ gint catch_winlist_key (GtkWidget *w, GdkEventKey *event,
     if (cmd_key(event) && mac_hide_unhide(event)) {
 	return TRUE;
     }
-# endif	   
-#else
+# endif  
+#else /* non-Mac */
     if (event->state & GDK_MOD1_MASK) {
 	if (event->keyval == GDK_w) {
 	    window_list_popup(w, (GdkEvent *) event, data);
@@ -488,7 +508,7 @@ gint catch_winlist_key (GtkWidget *w, GdkEventKey *event,
     }
 #endif
 
-    return FALSE;
+    return maybe_select_next_window(event, data);
 }
 
 void vwin_winlist_popup (GtkWidget *src, GdkEvent *event, 
@@ -515,11 +535,10 @@ gint vwin_catch_winlist_key (GtkWidget *src, GdkEventKey *event,
     */
 #ifdef MAC_NATIVE
     if (event->state & GDK_MOD1_MASK) {
-	GtkWidget *toplev = vwin_toplevel(vwin);
-
 	if (event->keyval == alt_w_key) {
 	    /* alt-w -> Sigma */
-	    window_list_popup(src, (GdkEvent *) event, toplev);
+	    window_list_popup(src, (GdkEvent *) event, 
+			      vwin_toplevel(vwin));
 	    return TRUE;
 	}
     }
@@ -530,18 +549,16 @@ gint vwin_catch_winlist_key (GtkWidget *src, GdkEventKey *event,
 # endif	    
 #else /* non-Mac */
     if (event->state & GDK_MOD1_MASK) {
-	GtkWidget *toplev = vwin_toplevel(vwin);
-
 	if (event->keyval == GDK_w) {
-	    window_list_popup(src, (GdkEvent *) event, toplev);
+	    window_list_popup(src, (GdkEvent *) event,
+			      vwin_toplevel(vwin));
 	    return TRUE;
 	}
     }
 #endif
 
-    return FALSE;
+    return maybe_select_next_window(event, vwin_toplevel(vwin));
 }
-
 
 /* on exiting, check for any editing windows with unsaved
    changes, and if we find any give the user a chance to
@@ -658,6 +675,72 @@ void cascade_session_windows (void)
 
 	g_list_free(list);
     }
+}
+
+static gint select_next_window (gpointer self)
+{
+    static GList *wlist;
+    static int targ;
+
+    if (self == NULL) {
+	/* cleanup signal */
+	if (wlist != NULL) {
+	    g_list_free(wlist);
+	    wlist = NULL;
+	    targ = 0;
+	    return TRUE;
+	} else {
+	    return FALSE;
+	}
+    }
+
+    if (n_listed_windows > 1) {
+	GList *mylist;
+	GtkWidget *w;
+	int i = 0;
+
+	if (wlist == NULL) {
+	    wlist = gtk_action_group_list_actions(window_group);
+	    wlist = g_list_sort(wlist, sort_window_items);
+	}
+
+	mylist = g_list_first(wlist);
+
+	while (mylist) {
+	    w = window_from_action((GtkAction *) mylist->data);
+	    if (i >= targ && w != (GtkWidget *) self) {
+		gtk_window_present(GTK_WINDOW(w));
+		targ = i + 1;
+		break;
+	    }
+	    i++;
+	    mylist = mylist->next;
+	}
+
+	if (targ == n_listed_windows) targ = 0;
+    }
+
+    return TRUE;
+}
+
+static gint window_key_release (GtkWidget *w, GdkEventKey *event, 
+				gpointer data)
+{
+    if (event->keyval == GDK_Control_L || 
+	event->keyval == GDK_Control_R) {
+	return select_next_window(NULL);
+    } else {
+	return FALSE;
+    }
+}
+
+void attach_window_key_specials (GtkWidget *w)
+{
+    g_signal_connect(G_OBJECT(w), "key-press-event", 
+		     G_CALLBACK(catch_winlist_key), w);
+    gtk_widget_add_events(w, GDK_KEY_RELEASE_MASK);
+    g_signal_connect(G_OBJECT(w), "key-release-event", 
+		     G_CALLBACK(window_key_release), NULL);
 }
 
 windata_t *get_editor_for_file (const char *filename)
@@ -915,36 +998,14 @@ int highest_numbered_variable_in_winstack (void)
 
 /* end of window-list apparatus */
 
-static void vwin_init (windata_t *vwin, int role, gpointer data)
-{
-    vwin->main = NULL;
-    vwin->topmain = NULL;
-    vwin->vbox = NULL;
-    vwin->text = NULL;
-    vwin->listbox = NULL;
-    vwin->mbar = NULL;
-    vwin->finder = NULL;
-    vwin->status = NULL;
-    vwin->popup = NULL;
-    vwin->ui = NULL;
-    vwin->gretl_parent = NULL;
-    vwin->gretl_children = NULL;
-    vwin->data = data;
-    vwin->active_var = 0;
-    vwin->role = role;
-    vwin->n_model_tests = 0;
-    vwin->n_gretl_children = 0;
-    vwin->flags = 0;
-    vwin->fname[0] = '\0';
-    vwin->sbuf = NULL;
-}
-
 windata_t *vwin_new (int role, gpointer data)
 {
     windata_t *vwin = mymalloc(sizeof *vwin);
 
     if (vwin != NULL) {
-	vwin_init(vwin, role, data);
+	memset(vwin, 0, sizeof *vwin);
+	vwin->role = role;
+	vwin->data = data;
     }
 
     return vwin;
@@ -970,6 +1031,9 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(vwin_catch_winlist_key), vwin);
+    gtk_widget_add_events(vwin->main, GDK_KEY_RELEASE_MASK);
+    g_signal_connect(G_OBJECT(vwin->main), "key-release-event", 
+		     G_CALLBACK(window_key_release), NULL);
     g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
@@ -1079,8 +1143,7 @@ windata_t *gretl_browser_new (int role, const gchar *title)
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 
-    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
-		     G_CALLBACK(catch_winlist_key), vwin->main);
+    attach_window_key_specials(vwin->main);
     g_signal_connect(G_OBJECT(vwin->main), "destroy",
 		     G_CALLBACK(free_windata), vwin);
 
