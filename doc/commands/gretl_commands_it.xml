@@ -41,13 +41,32 @@
 
     <description>
       <para context="cli">
-	Va invocato dopo un comando di stima. Aggiunge al modello precedente
-        le variabili nella <repl>lista-variabili</repl> e stima il nuovo
-        modello. Viene eseguito anche un test per la significatività congiunta 
-        delle variabili aggiunte: nel caso di stime OLS, la statistica test è la
-        <math>F</math>, negli altri casi è il chi-quadro asintotico di
-        Wald. Un p-value inferiore a 0.05 indica che i coefficienti sono
-        congiuntamente significativi al livello del 5 per cento.
+	Va invocato dopo un comando di stima. Esegue un test congiunto
+	per l'aggiunta delle variabili specificate all'ultimo modello
+	stimato; si può avere accesso ai risultati del test tramite
+	<lit>$test</lit> e <lit>$pvalue</lit>.
+      </para>
+      <para context="cli">
+	Di default, ggiunge al modello precedente le variabili nella
+	<repl>lista-variabili</repl> e stima il nuovo modello.  Il
+	test è un test di Wald sul modello aumentato, che rimpiazza
+	quello originale come <quote>ultimo modello</quote> per quanto
+	riguarda,ad esempio, il contenuto di <lit>$uhat</lit> o test
+	ulteriori.
+      </para>
+      <para context="cli">
+	Alternativamente, con l'opzione <opt>lm</opt> (disponibile
+	solo per i modelli stimati via OLS), viene effettuato un test
+	LM. Viene eseguita una regressione ausiliaria in cui la
+	variabile dipendente è il residuo dell'ultimo modello e le
+	variabili indipendenti sono quello del modello originale più
+	<repl>lista-variabili</repl>. Sotto l'ipotesi nulla che le
+	variabili aggiuntive non hanno potere esplicativo, il prodotto
+	fra l'R-quadro non aggiustato della regressione ausiliaria e
+	il numero di osservazioni si distribuisce come una chi quadro
+	con tanti gradi di libertà quante sono le variabili in
+	<repl>lista-variabili</repl>. In questo caso, il modello
+	originale non viene rimpiazzato.
       </para>
       <para context="cli">
 	Se viene usata l'opzione <lit>--quiet</lit> viene mostrato solo
@@ -60,21 +79,17 @@
         speciali <lit>$test</lit> e <lit>$pvalue</lit>.
       </para>
       <para context="cli">
-       Se il modello originale è stato stimato con i minimi quadrati a due
-       stadi, può sorgere un'ambiguità: le nuove variabili vanno aggiunte come
-       regressori, come strumenti o con entrambe le funzioni? Per risolvere
-       l'ambiguità, nella modalità predefinita le variabili sono aggiunte come
-       regressori endogeni, se si usa l'opzione <lit>--inst</lit> sono aggiunte
-       come strumenti, mentre se si usa l'opzione <lit>--both</lit> sono aggiunte
-       come regressori esogeni.
+	L'opzione <opt>both</opt> è specifica per le stime con i
+	minimi quadrati a due stadi: essa indica che le nuove
+	variabili vanno aggiunte sia alla lista dei regressori che a
+	quella degli strumenti; di default, infatti, la
+	<repl>lista-variabili</repl> viene aggiunta soltanto ai
+	regressori.
       </para>
       <para context="gui">
-	Aggiunge le variabili selezionate al modello precedente e stima il
-        nuovo modello. Viene eseguito anche un test per la significatività congiunta 
-        delle variabili aggiunte: nel caso di stime OLS, la statistica test è la
-        <math>F</math>, negli altri casi è il chi-quadro asintotico di
-        Wald. Un p-value inferiore a 0.05 indica che i coefficienti sono
-        congiuntamente significativi al livello del 5 per cento.
+	Aggiunge le variabili selezionate al modello precedente e
+	stima il nuovo modello. Viene eseguito anche un test per la
+	significatività congiunta delle variabili aggiunte.
       </para>
     </description>
 
