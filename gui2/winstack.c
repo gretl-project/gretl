@@ -247,11 +247,8 @@ void window_list_add (GtkWidget *w, int role)
 		     G_CALLBACK(window_list_remove), 
 		     window_group);
 
-    if (w != mdata->main && !widget_is_iconview(w)) {
-	/* attach time to window */
-	g_object_set_data(G_OBJECT(w), "time", 
-			  GUINT_TO_POINTER(time(NULL)));
-    }
+    /* attach time to window */
+    g_object_set_data(G_OBJECT(w), "time", GUINT_TO_POINTER(time(NULL)));
 
     n_listed_windows++;
 
@@ -292,28 +289,10 @@ static gint sort_windows_by_time (gconstpointer a, gconstpointer b)
     GtkWidget *wb = window_from_action((GtkAction *) b);
     guint ta, tb;
 
-    if (wa == mdata->main) return -1;
-    if (wb == mdata->main) return 1;
-
     ta = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wa), "time"));
     tb = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wb), "time"));
 
     return ta - tb;
-}
-
-static gint sort_windows_by_inverse_time (gconstpointer a, gconstpointer b)
-{
-    GtkWidget *wa = window_from_action((GtkAction *) a);
-    GtkWidget *wb = window_from_action((GtkAction *) b);
-    guint ta, tb;
-
-    if (wa == mdata->main) return 1;
-    if (wb == mdata->main) return -1;
-
-    ta = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wa), "time"));
-    tb = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wb), "time"));
-
-    return tb - ta;
 }
 
 /* use real UTF-8 bullet character if possible, otherwise asterisk */
@@ -738,32 +717,45 @@ static gint select_other_window (gpointer self, int seq)
     if (n_listed_windows > 1) {
 	GList *mylist;
 	GtkWidget *w;
-	int i = 0;
+	int i;
 
 	if (wlist == NULL) {
 	    wlist = gtk_action_group_list_actions(window_group);
+	    wlist = g_list_sort(wlist, sort_windows_by_time);
+	    if (seq == WINDOW_PREV) {
+		targ = n_listed_windows - 1;
+	    }
 	}
 
 	if (seq == WINDOW_PREV) {
-	    wlist = g_list_sort(wlist, sort_windows_by_inverse_time);
-	} else {
-	    wlist = g_list_sort(wlist, sort_windows_by_time);
-	}	
-
-	mylist = g_list_first(wlist);
-
-	while (mylist) {
-	    w = window_from_action((GtkAction *) mylist->data);
-	    if (i >= targ && w != (GtkWidget *) self) {
-		gtk_window_present(GTK_WINDOW(w));
-		targ = i + 1;
-		break;
+	    i = n_listed_windows - 1;
+	    mylist = g_list_last(wlist);
+	    while (mylist) {
+		w = window_from_action((GtkAction *) mylist->data);
+		if (i <= targ && w != (GtkWidget *) self) {
+		    gtk_window_present(GTK_WINDOW(w));
+		    targ = i - 1;
+		    break;
+		}
+		i--;
+		mylist = mylist->prev;
 	    }
-	    i++;
-	    mylist = mylist->next;
+	    if (targ < 0) targ = n_listed_windows - 1;
+	} else {
+	    i = 0;
+	    mylist = g_list_first(wlist);
+	    while (mylist) {
+		w = window_from_action((GtkAction *) mylist->data);
+		if (i >= targ && w != (GtkWidget *) self) {
+		    gtk_window_present(GTK_WINDOW(w));
+		    targ = i + 1;
+		    break;
+		}
+		i++;
+		mylist = mylist->next;
+	    }
+	    if (targ == n_listed_windows) targ = 0;
 	}
-
-	if (targ == n_listed_windows) targ = 0;
     }
 
     return TRUE;
