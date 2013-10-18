@@ -19,7 +19,7 @@
       <description>
 	<para>
 	  Produce il criterio di informazione di Akaike per l'ultimo modello
-          stimato. Vedi <guideref targ="select-criteria"/> per dettagli.
+          stimato. Si veda <guideref targ="select-criteria"/> per dettagli.
 	</para>
       </description>
     </function>
@@ -28,7 +28,7 @@
       <description>
 	<para>
 	  Produce il criterio di informazione bayesiana di Schwarz per l'ultimo
-          modello stimato. Vedi <guideref targ="select-criteria"/> per dettagli.
+          modello stimato. Si veda <guideref targ="select-criteria"/> per dettagli.
 	</para>
       </description>
     </function>
@@ -98,7 +98,7 @@
     <function name="$datatype" section="access" output="scalar">
       <description>
 	<para>
-	  Ritorna un intero corrispondente al tipo di dataset
+	  Restituisce un intero corrispondente al tipo di dataset
 	  attualmente in memoria: 0 = nessun dato; 1 = dati
 	  cross-sezionali (non datati); 2 = serie storiche; 3 = panel.
 	</para>
@@ -109,7 +109,7 @@
       <description>
 	<para>
 	  Deve seguire la stima di un modello ad equazione singola e
-	  ritorna il nome della variabile dipendente.
+	  restituisce il nome della variabile dipendente.
 	</para>
       </description>
     </function>
@@ -118,10 +118,10 @@
       <description>
 	<para>
 	  Produce i gradi di libertà dell'ultimo modello stimato. Se
-	  questo consiste di un sistema di equazioni, viene ritornato
+	  questo consiste di un sistema di equazioni, viene restituito
 	  il numero dei gradi di libertà per equazione; se questo
-	  differeisce da un'equazione all'altra, allora il valore
-	  ritornato è pari al numero di osservazioni meno la media del
+	  differisce da un'equazione all'altra, allora il valore
+	  restituito è pari al numero di osservazioni meno la media del
 	  numero di coefficienti per equazione (arrotondato all'intero
 	  più vicino).
 	</para>
@@ -141,10 +141,10 @@
     <function name="$ec" section="access" output="matrix">
       <description>
 	<para>
-	  Deve seguire la stima di un VECM e ritorna una matrice
+	  Deve seguire la stima di un VECM e restituisce una matrice
 	  contenente i termini di correzione d'errore.  La matrice
-	  ritornata ha tante righe quante sono le osservazioni usate
-	  nella stima e un unmero di colonne pari al rango di
+	  restituita ha tante righe quante sono le osservazioni usate
+	  nella stima e un numero di colonne pari al rango di
 	  cointegrazione del sistema.
 	</para>
       </description>
@@ -153,7 +153,7 @@
     <function name="$error" section="access" output="scalar">
       <description>
 	<para>
-	  Ritorna il codice interno di errore, che avrà un valore
+	  Restituisce il codice interno di errore, che avrà un valore
 	  diverso da 0 se si è verificato un errore in presenza del
 	  modificatore <cmdref targ="catch"/>. Si noti che l'uso di
 	  questo accessore resetta il codice di errore interno a 0. Si
@@ -184,7 +184,7 @@
     <function name="$evals" section="access" output="matrix">
       <description>
 	<para>
-	  Deve seguire la stima di un VECM; ritorna un vettore
+	  Deve seguire la stima di un VECM; restituisce un vettore
 	  contenente gli autovalori usati nel calcolo del test traccia 
 	  per la cointegrazione.
 	</para>
@@ -194,10 +194,10 @@
     <function name="$fcast" section="access" output="matrix">
       <description>
 	<para>
-	  Deve seguire il comando <cmdref targ="fcast"/>; ritorna le
+	  Deve seguire il comando <cmdref targ="fcast"/>; restituisce le
 	  previsioni sotto forma di matrice. Se il modello usato per
 	  le previsioni è un modello a più equazioni, ogni colonna
-	  corrisponde ad un'equazione; altrimenti, ritorna un vettore
+	  corrisponde ad un'equazione; altrimenti, restituisce un vettore
 	  colonna.
 	</para>
       </description>
@@ -206,11 +206,11 @@
     <function name="$fcerr" section="access" output="matrix">
       <description>
 	<para>
-	  Deve seguire il comando <cmdref targ="fcast"/>; ritorna gli
+	  Deve seguire il comando <cmdref targ="fcast"/>; restituisce gli
 	  errori standard per le previsioni sotto forma di matrice. Se
 	  il modello usato per le previsioni è un modello a più
 	  equazioni, ogni colonna corrisponde ad un'equazione;
-	  altrimenti, ritorna un vettore colonna.
+	  altrimenti, restituisce un vettore colonna.
 	</para>
       </description>
     </function>
@@ -218,7 +218,7 @@
     <function name="$fevd" section="access" output="matrix">
       <description>
 	<para>
-	  Deve seguire la stima di un VAR. Ritorna una matrice
+	  Deve seguire la stima di un VAR. Restituisce una matrice
 	  contenete la scomposizione della varianza dell'errore di
 	  previsione (FEVD). Questa avrà <math>h</math> righe, dove
 	  <math>h</math> è l'orizzonte di previsione, che può essere
@@ -237,7 +237,7 @@
     <function name="$Fstat" section="access" output="scalar">
       <description>
 	<para>
-	  Ritorna la statistica F complessiva per l'ultimo modello
+	  Restituisce la statistica F complessiva per l'ultimo modello
 	  stimato, se disponibile.
 	</para>
       </description>
@@ -283,7 +283,7 @@
     <function name="$huge" section="access" output="scalar">
       <description>
 	<para>
-	  Ritorna un numero positivo molto grande. Di default è pari a 1.0E100,
+	  Restituisce un numero positivo molto grande. Di default è pari a 1.0E100,
 	  ma tale valore si può cambiare usando il comando <cmdref targ="set"/>.
 	</para>
       </description>
@@ -367,7 +367,7 @@
     <function name="$llt" section="access" output="series">
       <description>
 	<para>
-	  Per alcuni modelli stimati com massima verosimiglianza,
+	  Per alcuni modelli stimati con massima verosimiglianza,
 	  produce la serie della log-verosimiglianza per
 	  osservazione. Al momento, questo accessore funziona solo per
 	  logit e probit binari, tobit e heckit.
@@ -387,9 +387,9 @@
     <function name="$macheps" section="access" output="scalar">
       <description>
 	<para>
-	  Ritorna il valore dell'<quote>epsilon macchina</quote>,
+	  Restituisce il valore dell'<quote>epsilon macchina</quote>,
 	  ossia un limite superiore all'errore relativo dovuto
-	  all'arimetica a virgola mobile in doppia precisione.
+	  all'aritmetica a virgola mobile in doppia precisione.
 	</para>
       </description>
     </function>
@@ -432,19 +432,20 @@
     <function name="$obsdate" section="access" output="series">
       <description>
 	<para>
-	  Applicable when the current dataset is time-series with
-	  annual, quarterly, monthly or decennial frequency, or is
-	  dated daily or weekly, or when the dataset is a panel with
-	  time-series information set appropriately (see the <cmdref
-	  targ="setobs"/> command).  The returned series holds 8-digit
-	  numbers on the pattern <lit>YYYYMMDD</lit> (ISO 8601
-	  <quote>basic</quote> date format), which correspond to the
-	  day of the observation, or the first day of the observation
-	  period in case of a time-series frequency less than daily.
+	  Applicabile quando il dataset corrente è una serie storica
+	  con frequenza decennale, annuale, trimestrale, mensile,
+	  settimanale o giornaliera, oppure è un panel in cui la
+	  variabile che indicizza i periodi ha la frequenza
+	  appropriata (si veda il comando <cmdref targ="setobs"/>).
+	  La serie risultante ha 8 cifre con la struttura
+	  <lit>YYYYMMDD</lit> (forma <quote>base</quote> delle date
+	  secondo l'ISO 8601), che corrisponde al giorno
+	  dell'osservazione, o al primo giorno del periodo di
+	  osservazione nel caso di serie storiche con frequenza minore
+	  di quella giornaliera.
 	</para>
 	<para>
-	  Such a series can be helpful when using the <cmdref
-	  targ="join"/> command.
+	  Questa serie può essere utile quando si usa il comando <cmdref targ="join"/>.
 	</para>
       </description>
     </function>
@@ -455,7 +456,7 @@
 	  Applicabile quando le osservazioni nel dataset aperto hanno
 	  una struttura maggiore:minore, come in serie storiche
 	  trimestrali (anno:trimestre), mensili (anno:mese), orarie
-	  (giorno:ora) e dati panel (individuo:periodo). Ritorna una
+	  (giorno:ora) e dati panel (individuo:periodo). Restituisce una
 	  serie contenente la componente maggiore (a frequenza più
 	  bassa, come l'anno).
 	</para>
@@ -473,7 +474,7 @@
 	<para>
 	  Applicabile quando le osservazioni nel dataset aperto hanno
 	  una struttura maggiore:minore:micro, come in serie storiche
-	  giornaliere (anno:mese:giorno). Ritorna una
+	  giornaliere (anno:mese:giorno). Restituisce una
 	  serie contenente la componente micro (a frequenza più
 	  alta, come il giorno).
 	</para>
@@ -492,7 +493,7 @@
 	  Applicabile quando le osservazioni nel dataset aperto hanno
 	  una struttura maggiore:minore, come in serie storiche
 	  trimestrali (anno:trimestre), mensili (anno:mese), orarie
-	  (giorno:ora) e dati panel (individuo:periodo). Ritorna una
+	  (giorno:ora) e dati panel (individuo:periodo). Restituisce una
 	  serie contenente la componente minore (a frequenza più
 	  alta, come il mese).
 	</para>
@@ -517,7 +518,7 @@
     <function name="$pi" section="access" output="scalar">
       <description>
 	<para>
-	  Ritorna il valore di &pi; in doppia precisione.
+	  Restituisce il valore di &pi; in doppia precisione.
 	</para>
       </description>
     </function>
@@ -564,7 +565,7 @@
       <description>
 	<para>
 	  Deve seguire la stima di un modello ad equazione
-	  singola. Ritorna una variabile binaria con 1 per le
+	  singola. Restituisce una variabile binaria con 1 per le
 	  osservazioni usate nella stima, 0 per osservazioni incluse
 	  nel campione corrente ma non usate nella stima (ad esempio,
 	  per via di valori mancanti nella variabile dipendente) e NA
@@ -597,7 +598,7 @@
     <function name="$sigma" section="access" output="scalar-or-matrix">
       <description>
 	<para>
-	  Ritorna lo scarto quadratico medio dei residui dell'ultimo
+	  Restituisce lo scarto quadratico medio dei residui dell'ultimo
 	  modello stimato.
 	</para>
       </description>
@@ -610,16 +611,16 @@
       <description>
 	<para>
 	  L'accessore <lit>$stderr</lit> può usarsi in due modi: senza
-	  argomenti, ritorna un vettore colonna che contiene le stime
+	  argomenti, restituisce un vettore colonna che contiene le stime
 	  dei coefficienti per l'ultimo modello stimato.  Con il
-	  parametro opzionale, ritorna uno scalare contentente la
+	  parametro opzionale, restituisce uno scalare contenente la
 	  stima del parametro <argname>s</argname>.
 	</para>
 	<para>
 	  Se il <quote>modello</quote> in questione è un sistema, il
 	  risultato dipende dalle sue caratteristiche: per sistemi VAR
-	  e VECM il valore ritornato è una matrice con una colonna per
-	  equazione; altrimenti, è un vettore colonna contentente i
+	  e VECM il valore restituito è una matrice con una colonna per
+	  equazione; altrimenti, è un vettore colonna contenente i
 	  coefficienti della prima equazione, seguiti da quelli della
 	  seconda, e così via.
 	</para>
@@ -637,10 +638,10 @@
 	<para>
 	  Deve essere preceduto dal comando <lit>set stopwatch</lit>,
 	  che attiva la misurazione del tempo di CPU.  Il primo uso di
-	  questo accessore ritorna i secondi di CPU time trascorsi dal
+	  questo accessore restituisce i secondi di CPU time trascorsi dal
 	  comando <lit>set stopwatch</lit>. Ad ogni accesso il
 	  cronometro viene riazzerato, cosicché l'uso successivo
-	  dell'accessore ritorna i secondi di CPU intercorsi dalla
+	  dell'accessore restituisce i secondi di CPU intercorsi dalla
 	  chiamata precedente.
 	</para>
       </description>
@@ -651,7 +652,7 @@
 	<para>
 	  Deve seguire la stima di un sistema simultaneo.  Restituisce
 	  la matrice dei coefficienti delle endogene ritardate, se
-	  presenti nella forma strutturale. Vedi il comando <cmdref
+	  presenti nella forma strutturale. Si veda il comando <cmdref
 	  targ="system"/>.
 	</para>
       </description>
@@ -662,7 +663,7 @@
 	<para>
 	  Deve seguire la stima di un sistema simultaneo.  Restituisce
 	  la matrice dei coefficienti delle esogene nella forma
-	  strutturale. Vedi il comando <cmdref targ="system"/>.
+	  strutturale. Si veda il comando <cmdref targ="system"/>.
 	</para>
       </description>
     </function>
@@ -672,7 +673,7 @@
 	<para>
 	  Deve seguire la stima di un sistema simultaneo.  Restituisce
 	  la matrice dei coefficienti delle endogene contemporanee
-	  nella forma strutturale. Vedi il comando <cmdref
+	  nella forma strutturale. Si veda il comando <cmdref
 	  targ="system"/>.
 	</para>
       </description>
@@ -710,7 +711,7 @@
 	<para>
 	  Restituisce il valore della statistica test generata
 	  dall'ultimo comando esplicitamente volto al test di ipotesi
-	  (p. es: <lit>chow</lit>), se presente. Vedi <guideref
+	  (p. es: <lit>chow</lit>), se presente. Si veda <guideref
 	  targ="sec:genr-internal"/> per maggiori dettagli.
 	  <seelist>
 	    <fncref label="\$pvalue" targ="dpvalue"/>
@@ -722,7 +723,7 @@
     <function name="$trsq" section="access" output="scalar">
       <description>
 	<para>
-	  Ritorna <math>TR</math><sup>2</sup> (ampiezza campionaria
+	  Restituisce <math>TR</math><sup>2</sup> (ampiezza campionaria
 	  per R quadro) dall'ultimo modello.
 	</para>
       </description>
@@ -731,7 +732,7 @@
     <function name="$uhat" section="access" output="series">
       <description>
 	<para>
-	  Ritorna i residui dall'ultimo modello stimato. Cosa si
+	  Restituisce i residui dall'ultimo modello stimato. Cosa si
 	  intenda per 'residui' dipende dal modello che è stato
 	  stimato. Ad esempio, dopo una stima ARMA <lit>$uhat</lit>
 	  contiene gli errori di previsione a un passo; dopo un
@@ -739,8 +740,8 @@
 	</para>
 	<para>
 	  Se il modello in questione è multi-equazionale (un VAR o un
-	  VECM, o un siostema simultaneo), <lit>$uhat</lit> senza
-	  parametri ritorna una matrice contenente i residui nelle
+	  VECM, o un sistema simultaneo), <lit>$uhat</lit> senza
+	  parametri restituisce una matrice contenente i residui nelle
 	  colonne.
 	</para>
       </description>
@@ -749,7 +750,7 @@
     <function name="$unit" section="access" output="series">
       <description>
 	<para>
-	  Valido solo per dataset di tipo panel.  Ritorna una serie
+	  Valido solo per dataset di tipo panel.  Restituisce una serie
 	  con 1 per la prima unità cross-sezionale, 2 per la seconda e
 	  così via.
 	</para>
@@ -763,9 +764,9 @@
       </fnargs>
       <description>
 	<para>
-	  Senza argomenti, ritorna una matrica quadrata contentente le
+	  Senza argomenti, restituisce una matrice quadrata contenente le
 	  covarianze stimate dei coefficienti dell'ultimo modello. Con
-	  gli argomenti opzionali, ritorna uno scalare, con la
+	  gli argomenti opzionali, restituisce uno scalare, con la
 	  covarianza stimata fra i parametri di nome
 	  <argname>s1</argname> e <argname>s2</argname>.
 	  <seelist>
@@ -775,7 +776,7 @@
 	</para>
 	<para>
 	  Questo accessore non è disponibile per modelli di tipo VAR o
-	  VECM; in tal caso, vedi piuttosto <fncref targ="$sigma"/> e
+	  VECM; in tal caso, si veda piuttosto <fncref targ="$sigma"/> e
 	  <fncref targ="$xtxinv"/>.
 	</para>
       </description>
@@ -784,7 +785,7 @@
     <function name="$vecGamma" section="access" output="matrix">
       <description>
 	<para>
-	  Deve seguire la stima di un VECM; ritorna una matrice in cui
+	  Deve seguire la stima di un VECM; restituisce una matrice in cui
 	  le matrici Gamma (cioè i coefficienti delle differenze
 	  ritardate) sono messe una fianco all'altra.  Ogni riga
 	  rappresenta un'equazione; per un VECM di ordine
@@ -797,7 +798,7 @@
     <function name="$version" section="access" output="scalar">
       <description>
 	<para>
-	  Ritorna un valore intero che codifica la versione del
+	  Restituisce un valore intero che codifica la versione del
 	  programma, sotto la forma <lit>x.y.z</lit> (ad esempio,
 	  1.7.6).  Il valore prodotto da questo accessore è pari a
 	  <lit>10000*x + 100*y + z</lit>, cosicché 1.7.6 diventa
@@ -810,10 +811,11 @@
     <function name="$vma" section="access" output="matrix">
       <description>
 	<para>
-	  Must follow the estimation of a VAR or a VECM; returns a
-	  matrix containing the VMA representation up to the order
-	  specified via the <lit>set horizon</lit> command. See
-	  <guideref targ="sec:var-estim"/> for details.
+	  Deve seguire la stima di un VAR o di un VECM; restituisce
+	  una matrice contenente la rappresentazione VMA fino
+	  all'ordine specificato tramite il comando <lit>set
+	  horizon</lit>. Per maggiori dettagli, si veda <guideref
+	  targ="sec:var-estim"/>.
 	</para>
       </description>
     </function>
@@ -821,13 +823,13 @@
     <function name="$windows" section="access" output="int">
       <description>
 	<para>
-	  Ritorna 1 se gretl sta girando sotto Windows e 0
+	  Restituisce 1 se gretl sta girando sotto Windows e 0
 	  altrimenti. Questo accessore viene tipicamente usato per
 	  scrivere script portabili da un sistema operativo ad un
 	  altro.
 	</para>
 	<para>
-	  Also see the <cmdref targ="shell"/> command.
+	  Si veda anche il comando <cmdref targ="shell"/>.
 	</para>
       </description>
     </function>
@@ -835,12 +837,14 @@
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
-	  If the last model was a single equation, returns the list of
-	  regressors. If the last model was a system of equations,
-	  returns the <quote>global</quote> list of exogenous and
-	  predetermined variables (in the same order in which they
-	  appear in <fncref targ="$sysB"/>). In the last model was a
-	  VAR, returns the list of exogenous regressors, if any.
+	  Se l'ultimo modello stimato è un'equazione singola,
+	  restituisce la lista dei regressori. Se l'ultimo modello
+	  stimato è un sistema di equazioni, restituisce la lista
+	  <quote>globale</quote> delle variabili esogene e
+	  predeterminate (nello stesso ordine con cui compaiono in
+	  <fncref targ="$sysB"/>). Se l'ultimo modello è un VAR,
+	  restituisce la lista dei regressori esogeni, laddove
+	  presenti.
 	</para>
       </description>
     </function>
@@ -848,11 +852,12 @@
     <function name="$xtxinv" section="access" output="matrix">
       <description>
 	<para>
-	  Following estimation of a VAR or VECM (only), returns
-	  <math>X'X</math><sup>-1</sup>, where <math>X</math> is the common
-	  matrix of regressors used in each of the equations.  This accessor
-	  is not available for a VECM estimated with a restriction imposed on
-	  &agr;, the <quote>loadings</quote> matrix.
+	  Quando segue la stima di un VAR o di un VECM, restituisce
+	  <math>X'X</math><sup>-1</sup>, dove <math>X</math> è la
+	  matrice dei regressori usati in ciascuna delle
+	  equazioni. Questo accessore è disponibile solo per un VECM
+	  stimato con una restrizione imposta su &agr;, la matrice dei
+	  <quote>loading</quote>.
 	</para>
       </description>
     </function>
@@ -860,7 +865,7 @@
     <function name="$yhat" section="access" output="series">
       <description>
 	<para>
-	  Ritorna i valori stimati dall'ultima regressione.
+	  Restituisce i valori stimati dall'ultima regressione.
 	</para>
       </description>
     </function>
@@ -868,12 +873,13 @@
     <function name="$ylist" section="access" output="list">
       <description>
 	<para>
-	  If the last model estimated was a VAR, VECM or simultaneous
-	  system, returns the associated list of endogenous variables.
-	  If the last model was a single equation, this accessor gives
-	  a list with a single element, the dependent variable. In the
-	  special case of the biprobit model the list contains two
-	  elements. 
+	  Se l'ultimo modello stimato è un VAR, un VECM o un sistema
+	  di equazioni simultanee, restituisce la lista delle
+	  variabili endogene nel modello. Se l'ultimo modello stimato
+	  è un'equazione singola, questo accessore fornisce una lista
+	  di un solo elemento: la variabile dipendente. Nel caso
+	  particolare di un modello biprobit la lista contiene due
+	  elementi.
 	</para>
       </description>
     </function>
@@ -912,9 +918,9 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna l'arcoseno iperbolico di <argname>x</argname>
+	  Restituisce l'arcoseno iperbolico di <argname>x</argname>
 	  (soluzione positiva). <argname>x</argname> deve essere maggiore di 1;
-	  in caso contrario, vienne ritornato NA.
+	  in caso contrario, viene restituito NA.
 	  <seelist>
 	    <fncref targ="cosh"/>
 	  </seelist>
@@ -930,72 +936,79 @@
       </fnargs>
       <description>
 	<para>
-	  In the simplest version, both <argname>x</argname> and
-	  <argname>byvar</argname> are individual series. In that case
-	  this function returns a matrix with three columns: the first
-	  holds the distinct values of <argname>byvar</argname>,
-	  sorted in ascending order; the second holds the count of
-	  observations at which <argname>byvar</argname> takes on each
-	  of these values; and the third holds the values of the
-	  statistic specified by <argname>funcname</argname>
-	  calculated on series <argname>x</argname>, using only those
-	  observations at which <argname>byvar</argname> takes on the
-	  value given in the first column.
+	  Nella versione più semplice, in cui sia <argname>x</argname>
+	  sia <argname>byvar</argname> sono serie individuali, questa
+	  funzione restituisce una matrice con tre colonne: la prima
+	  contiene i valori distinti di <argname>byvar</argname>,
+	  ordinati in senso crescente; la seconda contiene il numero
+	  delle osservazioni in cui <argname>byvar</argname> assume
+	  ciascuno di questi valori; la terza, infine, contiene i
+	  valori della statistica specificata da
+	  <argname>funcname</argname>, calcolata sulla serie
+	  <argname>x</argname> usando solo quelle osservazioni per cui
+	  <argname>byvar</argname> assume il valore specificato nella
+	  prima colonna.
 	</para>
 	<para>
-	  More generally, if <argname>byvar</argname> is a list with
-	  <math>n</math> members then the left-hand <math>n</math>
-	  columns hold the combinations of the distinct values of each
-	  of the <math>n</math> series and the count column holds the
-	  number of observations at which each combination is
-	  realized.  If <argname>x</argname> is a list with
-	  <math>m</math> members then the rightmost <math>m</math>
-	  columns hold the values of the specified statistic for each
-	  of the <argname>x</argname> variables, again calculated on
-	  the sub-sample indicated in the first column(s).
+	  Più in generale, se <argname>byvar</argname> è una lista di
+	  <math>n</math> elementi, allora le prime <math>n</math>
+	  colonne da sinistra contengono le combinazioni dei valori
+	  distinti di ciascuna delle <math>n</math> serie, mentre la
+	  colonna immediatamente successiva contiene il numero delle
+	  osservazioni in cui ciascuna combinazione ricorre. Se
+	  <argname>x</argname> è una lista con <math>m</math>
+	  elementi, allora le <math>m</math> colonne più a destra
+	  contengono i valori della statistica specificata da
+	  <argname>funcname</argname> per ciascuna delle variabili
+	  <argname>x</argname>, calcolati sul sottocampione
+	  individuato dalle prime colonne.
 	</para>
 	<para>
-	  The following values of <argname>funcname</argname> are
-	  supported <quote>natively</quote>: <fncref targ="sum"/>,
-	  <fncref targ="sumall"/>, <fncref targ="mean"/>, <fncref
-	  targ="sd"/>, <fncref targ="var"/>, <fncref targ="sst"/>,
-	  <fncref targ="skewness"/>, <fncref targ="kurtosis"/>,
-	  <fncref targ="min"/>, <fncref targ="max"/>, <fncref
-	  targ="median"/>, <fncref targ="nobs"/> and <fncref
-	  targ="gini"/>. Each of these functions takes a series
-	  argument and returns a scalar value, and in that sense can
-	  be said to <quote>aggregate</quote> the series in some way.
-	  You may give the name of a user-defined function as the
-	  aggregator; like the built-ins, such a function must
-	  take a single series argument and return a scalar value.
+	  I seguenti valori di <argname>funcname</argname> sono
+	  supportati <quote>in modo nativo</quote>: <fncref
+	  targ="sum"/>, <fncref targ="sumall"/>, <fncref
+	  targ="mean"/>, <fncref targ="sd"/>, <fncref targ="var"/>,
+	  <fncref targ="sst"/>, <fncref targ="skewness"/>, <fncref
+	  targ="kurtosis"/>, <fncref targ="min"/>, <fncref
+	  targ="max"/>, <fncref targ="median"/>, <fncref targ="nobs"/>
+	  e <fncref targ="gini"/>. Ciascuna di queste funzioni accetta
+	  come argomento una serie e restituisce uno scalare, e in tal
+	  senso può dirsi che <quote>aggrega</quote> la serie in un
+	  qualche modo. &Egrave; anche possibile inserire il nome di
+	  una funzione definita dall'utente come aggregatore; come le
+	  funzioni supportate in modo nativo, tale funzione deve
+	  accettare come argomento una singola serie e ritornare uno
+	  scalare.
 	</para>
 	<para>
-	  Note that although a count of cases is provided
-	  automatically the <lit>nobs</lit> function is not redundant
-	  as an aggregator, since it gives the number of valid
-	  (non-missing) observations on <argname>x</argname> at
-	  each <argname>byvar</argname> combination.
+	  Si noti che, benché il conteggio dei casi sia fornito
+	  automaticamente, la funzione <lit>nobs</lit> non è
+	  ridondante come aggregatore, poiché fornisce il numero di
+	  osservazioni valide (non-missing) in <argname>x</argname>
+	  per ciascuna combinazione <argname>byvar</argname>.
 	</para>
 	<para>
-	  For a simple example, suppose that <lit>region</lit>
-	  represents a coding of geographical region using integer
-	  values 1 to <math>n</math>, and <lit>income</lit> represents
-	  household income. Then the following would produce an <by
-	  r="n" c="3"/> matrix holding the region codes, the count of
-	  observations in each region, and mean household income for
-	  each of the regions:
+	  Come semplice esempio, si supponga che <lit>region</lit> sia
+	  la codifica di regioni geografiche con valori interi da 1 ad
+	  <math>n</math> e <lit>income</lit> il reddito
+	  familiare. Allora quanto segue produrrà una matrice <by
+	  r="n" c="3"/> contenente: nella prima colonna, i codici
+	  delle regioni; nella seconda, il numero delle osservazioni
+	  in ciascuna regione; nella terza, il reddito familiare medio
+	  per regione:
 	</para>
 	<code>
 	  matrix m = aggregate(income, region, mean)
 	</code>
 	<para>
-	  For an example using lists, let <lit>gender</lit> be a
-	  male/female dummy variable and let <lit>race</lit> be a
-	  categorical variable with three values. Then the following
-	  will produce a matrix with 6 rows and 5 columns: the first
-	  two columns holding the gender/race combinations and the
-	  last two holding the sample standard deviations of 
-	  <lit>income</lit> and <lit>age</lit>:
+	  Per un esempio che utilizza liste, si ipotizzi che
+	  <lit>gender</lit> sia una variabile dummy maschio/femmina e
+	  <lit>race</lit> una variabile categoriale con tre possibili
+	  valori. Allora quanto segue genererà una matrice con 6 righe
+	  e 5 colonne: le prime due colonne conterranno le
+	  combinazioni possibili gender/race, mentre le ultime due la
+	  deviazione standard campionaria di <lit>income</lit> e
+	  <lit>age</lit>:
 	</para>
 	<code>
 	  list BY = gender race
@@ -1003,15 +1016,20 @@
 	  matrix m = aggregate(X, BY, sd)
 	</code>
 	<para>
-	  Note that if <argname>byvar</argname> is a list, some
-	  combinations of the <argname>byvar</argname> values may not
-	  be present in the data (giving a count of zero). In that
-	  case the value of the statistics for <argname>x</argname>
-	  are recorded as <lit>NaN</lit> (not a number).  If you want
-	  to ignore such cases you can use the <fncref targ="selifr"/>
-	  function to select only those rows that have a non-zero
-	  count. The column to test is one place to the right of the
-	  number of <argname>byvar</argname> variables, so we can do:
+	  Si noti che, nel caso in cui <argname>byvar</argname> sia
+	  una lista, alcune combinazioni dei valori di
+	  <argname>byvar</argname> potrebbero non essere presenti nei
+	  dati (il numero di osservazioni sarà zero). In tal caso, il
+	  valore delle statistiche per <argname>x</argname> viene
+	  registrato come <lit>NaN</lit> (Not a Number). Nel caso si
+	  voglia non considerare tali casi, si può utilizzare la
+	  funzione <fncref targ="selifr"/> per selezionare solo le
+	  righe associate ad un numero di osservazioni diverso da
+	  zero. Nel caso in cui <argname>byvar</argname> contenga
+	  <math>n</math> elementi, la colonna da testare sarà quella
+	  immediatamente a destra delle prime <math>n</math> colonne
+	  partendo da sinistra. Possiamo quindi eseguire il seguente
+	  codice:
 	</para>
 	<code>
 	  matrix m = aggregate(X, BY, sd)
@@ -1027,9 +1045,10 @@
       </fnargs>
       <description>
 	<para>
-	  For <argname>s</argname> the name of a parameter to a 
-	  user-defined function, returns the name of the corresponding
-	  argument, or an empty string if the argument was anonymous.
+	  Per <argname>s</argname>, il nome di un parametro in una
+	  funzione definita dall'utente, restituisce il nome del
+	  corrispondente argomento, o una stringa vuota se l'argomento
+	  era anonimo.
 	</para>
       </description>
     </function>
@@ -1040,9 +1059,10 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the arc sine of <argname>x</argname>, that is, the value
-	  whose sine is <argname>x</argname>.  The result is in radians; the
-	  input should be in the range &minus;1 to 1.
+	  Restituisce l'arcoseno di <argname>x</argname>, cioè, il
+	  valore il cui seno è <argname>x</argname>.  Il risultato è
+	  in radianti; l'input deve essere tra &minus;1 e 1, estremi
+	  compresi.
 	</para>
       </description>
     </function>
@@ -1053,7 +1073,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the inverse hyperbolic sine of <argname>x</argname>.
+	  Restituisce l'arcoseno iperbolico di <argname>x</argname>.
 	  <seelist>
 	    <fncref targ="sinh"/>
 	  </seelist>
@@ -1292,7 +1312,7 @@
       </examples>
       <description>
 	<para>
-	  Calcola funzioni di ripartizione. Ritorna <equation
+	  Calcola funzioni di ripartizione. Restituisce <equation
 	  status="inline" ascii="P(X &lt; x)" tex="$P(X \le x)$"/>,
 	  dove la distribuzione di <math>X</math> è determinata dal
 	  carattere <argname>c</argname>. Tra gli argomenti
@@ -1411,7 +1431,7 @@
 	  Divisione complessa. I due argomenti devono avere lo stesso
 	  numero di righe, <math>n</math>, e una o due colonne.  La
 	  prima colonna contiene la parte reale e l'eventuale seconda
-	  quella immaginaria.  Ritorna una matrice <by r="n" c="2"/>
+	  quella immaginaria.  Restituisce una matrice <by r="n" c="2"/>
 	  oppure, se la parte immaginaria del risultato è nulla, un
 	  vettore a <math>n</math> elementi.
 	  <seelist>
@@ -1497,7 +1517,7 @@
 	  Moltiplicazione complessa. I due argomenti devono avere lo
 	  stesso numero di righe, <math>n</math>, e una o due colonne.
 	  La prima colonna contiene la parte reale e l'eventuale
-	  seconda quella immaginaria.  Ritorna una matrice <by r="n"
+	  seconda quella immaginaria.  Restituisce una matrice <by r="n"
 	  c="2"/> oppure, se la parte immaginaria del risultato è
 	  nulla, un vettore a <math>n</math> elementi.
 	  <seelist>
@@ -1833,7 +1853,7 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna la diagonale principale di <argname>X</argname> in
+	  Restituisce la diagonale principale di <argname>X</argname> in
 	  un vettore colonna. Nota: se <argname>X</argname> è una
 	  matrice <by r="m" c="n"/>, il numero di elementi del vettore
 	  risultato è min(<math>m</math>, <math>n</math>).
@@ -1852,7 +1872,7 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna la simma diretta di <argname>A</argname> e
+	  Restituisce la simma diretta di <argname>A</argname> e
 	  <argname>B</argname>, ossia una matrice che ha
 	  <argname>A</argname> nell'angolo nord-ovest e
 	  <argname>B</argname> in quello sud-est. Se
@@ -1906,7 +1926,7 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna la funzione di densità per una normale standard. 
+	  Restituisce la funzione di densità per una normale standard. 
 	  <seelist>
 	    <fncref targ="cnorm"/>
 	    <fncref targ="qnorm"/>
@@ -2698,7 +2718,7 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna un vettore contenente gli indici riga dei massimi
+	  Restituisce un vettore contenente gli indici riga dei massimi
 	  delle colonne di <argname>X</argname>.
 	  <seelist> 
 	    <fncref targ="imaxr"/> 
@@ -2715,7 +2735,7 @@
       </fnargs>    
       <description>
 	<para>
-	  Ritorna un vettore contenente gli indici colonna dei massimi
+	  Restituisce un vettore contenente gli indici colonna dei massimi
 	  delle righe di <argname>X</argname>.
 	  <seelist> 
 	    <fncref targ="imaxc"/>
@@ -2762,7 +2782,7 @@
       </fnargs>    
       <description>
 	<para>
-	  Ritorna un vettore contenente gli indici riga dei minimi
+	  Restituisce un vettore contenente gli indici riga dei minimi
 	  delle colonne di <argname>X</argname>.
 	  <seelist>
 	    <fncref targ="imaxc"/>
@@ -2779,7 +2799,7 @@
       </fnargs>    
       <description>
 	<para>
-	  Ritorna un vettore contenente gli indici colonna dei minimi
+	  Restituisce un vettore contenente gli indici colonna dei minimi
 	  delle righe di <argname>X</argname>.
 	  <seelist>
 	    <fncref targ="imaxr"/> 
@@ -2797,7 +2817,7 @@
       </fnargs>    
       <description>
 	<para>
-	  Ritorna 1 se il bundle <argname>b</argname> contiene un
+	  Restituisce 1 se il bundle <argname>b</argname> contiene un
 	  elemento di nome <argname>chiave</argname> e 0 altrimenti.
 	</para>	  
       </description>
@@ -4259,7 +4279,7 @@
 	<para>
 	  Stima nonparametrica della media condizionale di
 	  <argname>y</argname> dato <argname>x</argname> col metodo di
-	  Nadaraya&ndash;Watson. Ritorna una serie contenente la stima
+	  Nadaraya&ndash;Watson. Restituisce una serie contenente la stima
 	  nonparametrica di
 	  <math>E(y</math><sub>i</sub><math>|x</math><sub>i</sub><math>)</math>
 	  per ogni elemento non-missing della serie
@@ -4286,7 +4306,7 @@
 	  di banda}, è un parametro (reale positivo) indicato
 	  dall'utente. Normalmente, è un numero piccolo: valori grandi
 	  di $h$ rendono $m(x)$ più liscia; una scelta molto comune è
-	  $n^{-0.2}$. Per più dettagli, vedi <guideref
+	  $n^{-0.2}$. Per più dettagli, si veda <guideref
 	  targ="sec:nadarwat"/>.
 	</para>
 	<para context="notex">
@@ -4295,7 +4315,7 @@
 	  dall'utente. Normalmente, è un numero piccolo: valori grandi
 	  di <argname>h</argname> rendono <math>m(x)</math> più
 	  liscia; una scelta molto comune è
-	  <math>n</math><sup>-0.2</sup>. Per più dettagli, vedi
+	  <math>n</math><sup>-0.2</sup>. Per più dettagli, si veda
 	  <guideref targ="sec:nadarwat"/>.
 	</para>
 	<para context="tex">
@@ -4509,7 +4529,7 @@
     <function name="obs" section="data-utils" output="series">
       <description>
 	<para>
-	  Ritorna una serie di interi consecutivi, partendo da 1 in
+	  Restituisce una serie di interi consecutivi, partendo da 1 in
 	  corrispondenza con l'inizio del dataset. Si noti che il
 	  risultato è indipendente dal sottocampionamento. Questa
 	  funzione è particolarmente utile con dataset di serie
@@ -4530,7 +4550,7 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna l'etichetta per la <argname>t</argname>-esima
+	  Restituisce l'etichetta per la <argname>t</argname>-esima
 	  osservazione, dove <argname>t</argname> è un indice che
 	  parte da 1.  La funzione inversa è <fncref targ="obsnum"/>.
 	</para>
@@ -4543,7 +4563,7 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna un intero corrispondente all'osservazione
+	  Restituisce un intero corrispondente all'osservazione
 	  specificata dalla stringa <math>s</math>. Si noti che il
 	  risultato è invariante al sottocampionamento. Questa
 	  funzione è particolarmente utile con campioni di serie
@@ -4684,10 +4704,10 @@
       </examples>
       <description>
 	<para>
-	  Calcola funzioni di densità o di probabilità. Ritorna la
+	  Calcola funzioni di densità o di probabilità. Restituisce la
 	  densità (se continue) o la probabilità (se discrete)
 	  <argname>x</argname> della distribzion identificata dal
-	  carattere <argname>c</argname>.  Vedi <fncref targ="cdf"/>
+	  carattere <argname>c</argname>.  Si veda <fncref targ="cdf"/>
 	  per dettagli sugli argomenti.  Le distribuzioni supportate
 	  dalla funzione <lit>pdf</lit> sono la normale,
 	  <math>t</math> di Student, chi-quadro, <math>F</math>,
@@ -4696,7 +4716,7 @@
 	  calcolato è in effetti la probabilità nel punto specificato.
 	</para>
 	<para>
-	  Per la normale, vedi anche la funzione <fncref
+	  Per la normale, si veda anche la funzione <fncref
 	  targ="dnorm"/>.
 	</para>
       </description>
@@ -4928,7 +4948,7 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna il prodotto degli elementi di <argname>X</argname>,
+	  Restituisce il prodotto degli elementi di <argname>X</argname>,
 	  per colonna.
 	  <seelist>
 	    <fncref targ="prodr"/>
@@ -4946,7 +4966,7 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna il prodotto degli elementi di <argname>X</argname>,
+	  Restituisce il prodotto degli elementi di <argname>X</argname>,
 	  per riga.
 	  <seelist>
 	    <fncref targ="prodc"/>
@@ -5166,8 +5186,8 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna i quantili della normale standardizzata. Se
-	  <argname>x</argname> non è fra 0 e 1, ritorna <lit>NA</lit>. 
+	  Restituisce i quantili della normale standardizzata. Se
+	  <argname>x</argname> non è fra 0 e 1, restituisce <lit>NA</lit>. 
 	  <seelist>
 	    <fncref targ="cnorm"/>
 	    <fncref targ="dnorm"/>
@@ -5313,7 +5333,7 @@
 	  <math>p</math> = 0.5, si avrà la mediana. 
 	</para>
 	<para>
-	  Se l'argomento è invece una matrice, ritorna un vettore riga
+	  Se l'argomento è invece una matrice, restituisce un vettore riga
 	  contenente i <argname>p</argname>-esimi quantili per le
 	  colonne di <argname>y</argname>; in pratica, ogni colonna è
 	  trattata come se fosse una serie.
@@ -5621,7 +5641,7 @@
       <description>
 	<para>
 	  Se il file <argname>fname</argname> esiste e l'utente ha i
-	  permessi di scrittura, lo cancella. Ritorna 0 se il comando
+	  permessi di scrittura, lo cancella. Restituisce 0 se il comando
 	  è andato a buon fine, non-zero se il file non esiste o non
 	  può essere cancellato.
 	</para>
@@ -5745,7 +5765,7 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna il numero di righe della matrice
+	  Restituisce il numero di righe della matrice
 	  <argname>X</argname>.
 	  <seelist>
 	    <fncref targ="cols"/>
@@ -5764,12 +5784,12 @@
       </fnargs>     
       <description>
 	<para>
-	  Se <argname>x</argname> è una serie, ritorna l'errore
+	  Se <argname>x</argname> è una serie, restituisce l'errore
 	  quadratico medio campionario (scalare), saltando i valori
 	  mancanti.
 	</para>
 	<para>
-	  Se, invece, <argname>x</argname> è una lista, ritorna una
+	  Se, invece, <argname>x</argname> è una lista, restituisce una
 	  serie <math>y</math> tale per cui <math>y</math><sub>t</sub>
 	  l'errore quadratico medio delle variabili nella lista
 	  all'osservazione <math>t</math>, o <lit>NA</lit> if there se
@@ -5867,7 +5887,7 @@
       </fnargs>   
       <description>
 	<para>
-	  Ritorna un vettore riga pieno di interi consecutivi, con
+	  Restituisce un vettore riga pieno di interi consecutivi, con
 	  <argname>a</argname> come primo elemento e
 	  <argname>b</argname> come ultimo. Se <argname>a</argname> è
 	  maggiore di <argname>b</argname>, la sequenza sarà
@@ -5895,7 +5915,7 @@
 	  dalla chiave <argname>key</argname> nel bundle
 	  <argname>b</argname>.  Essa verrà mostrata quando il comando
 	  <lit>print</lit> viene applicato al bundle. Questa funzione
-	  ritorna 0 se è andata a buon fine e non-zero in caso
+	  restituisce 0 se è andata a buon fine e non-zero in caso
 	  contrario (ad esempio, se nel bundle <argname>b</argname> la
 	  chiave <argname>key</argname> non c'è).
 	</para>
@@ -6044,7 +6064,7 @@
         <repl>formato</repl> indicato, assegnando zero o più valori
         agli <repl>argomenti</repl> indicati. È una versione
         semplificata della funzione <lit>sscanf</lit> del linguaggio
-        di programmazione C, e ritorna il numero di valori assegnati.
+        di programmazione C, e restituisce il numero di valori assegnati.
       </para>
       <para>
         La <repl>stringa</repl> può essere una stringa vera e propria,
@@ -6264,7 +6284,7 @@
       </fnargs>     
       <description>
 	<para>
-	  Ritorna la somma per colonna di <argname>X</argname>.
+	  Restituisce la somma per colonna di <argname>X</argname>.
 	  <seelist>
 	    <fncref targ="meanc"/>
 	    <fncref targ="sumr"/>
@@ -6359,7 +6379,7 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna la tangente iperbolica di <argname>x</argname>. 
+	  Restituisce la tangente iperbolica di <argname>x</argname>. 
 	</para>
 	<para context="tex">
 	  \[ \tanh x = \frac{e^{2x} - 1}{e^{2x} + 1}  \]
@@ -6412,7 +6432,7 @@
       </fnargs>    
       <description>
 	<para>
-	  Ritorna una copia di <argname>s</argname> in cui ogni
+	  Restituisce una copia di <argname>s</argname> in cui ogni
 	  lettera maiuscola è convertita in minuscola.
 	</para>
       </description>
@@ -6424,7 +6444,7 @@
       </fnargs>    
       <description>
 	<para>
-	  Ritorna una copia di <argname>s</argname> in cui ogni
+	  Restituisce una copia di <argname>s</argname> in cui ogni
 	  lettera minuscola è convertita in maiuscola.
 	</para>
       </description>
@@ -6436,7 +6456,7 @@
       </fnargs>    
       <description>
 	<para>
-	  Ritorna la traccia della matrice <argname>A</argname>,
+	  Restituisce la traccia della matrice <argname>A</argname>,
 	  ovvero la somma degli elementi lungo la diagonale.
 	  <seelist> 
 	    <fncref targ="diag"/>
