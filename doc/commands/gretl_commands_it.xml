@@ -104,12 +104,13 @@
 
     <description>
       <para>
-        Questa finestra di dialogo permette di aggiungere a un grafico una
-        linea, definita attraverso una formula che deve essere un'espressione
-        accettabile da gnuplot. Occorre usare <lit>x</lit> per indicare il valore
-        della variabile sull'asse x. Si noti inoltre che gnuplot usa <lit>**</lit>
-        per l'elevamento a potenza, e il punto <quote>.</quote> come separatore
-        decimale. Esempi:
+        Questa finestra di dialogo permette di aggiungere a un grafico
+        una linea, definita attraverso una formula che deve essere
+        un'espressione accettabile da gnuplot. Occorre usare
+        <lit>x</lit> per indicare il valore della variabile sull'asse
+        x. Si noti inoltre che gnuplot usa <lit>**</lit> per
+        l'elevamento a potenza, e il punto <quote>.</quote> come
+        separatore decimale. Esempi:
       </para>
       <code>
 	10+0.35*x
@@ -166,6 +167,7 @@
 	</option>
 	<option>
 	  <flag>--test-down</flag>
+	  <optparm optional="true">criterio</optparm>
 	  <effect>ordine di ritardo automatico</effect>
 	</option>
       </options>
@@ -191,12 +193,18 @@
        </para>
        
       <para context="cli">
+	The options shown above and the discussion which follows pertain
+	to the use of the <lit>adf</lit> command with regular time series
+	data. For use of this command with panel data please see below.
+      </para>
+
+      <para context="cli">
 	Calcola una serie di test Dickey&ndash;Fuller sulle variabili
-        specificate, assumendo come ipotesi nulla che le variabili
-        abbiano una radice unitaria. Se si usa l'opzione <lit>--difference</lit>,
-        i test vengono condotti sulla differenza prima delle variabili e la
-        discussione che segue va riferita a questa trasformazione delle
-        variabili.
+	specificate, assumendo come ipotesi nulla che le variabili
+	abbiano una radice unitaria. Se si usa l'opzione
+	<lit>--difference</lit>, i test vengono condotti sulla
+	differenza prima delle variabili e la discussione che segue va
+	riferita a questa trasformazione delle variabili.
       </para>
 
       <para context="cli">
@@ -206,7 +214,8 @@
         controllare le varianti specificando una o più opzioni.
       </para>
       
-      <para>In tutti i casi, la variabile dipendente è la differenza prima
+      <para>
+	In tutti i casi, la variabile dipendente è la differenza prima
         della variabile specificata, <math>y</math>, e la variabile
         dipendente più importante è il ritardo (di ordine uno) di
         <math>y</math>. Il modello è costruito in modo che il coefficiente
@@ -215,26 +224,51 @@
         scritto come <equation status="display"
         tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
         ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)"
-	graphic="adf1"/></para>
+	graphic="adf1"/> Under the null hypothesis of a unit root the
+	coefficient on lagged <math>y</math> equals zero; under the
+	alternative that <math>y</math> is stationary this coefficient is
+	negative.
+      </para>
 
       <para context="cli">
         Se l'ordine di ritardi, <math>k</math>, è maggiore di 0, ai
-        regressori di ognuna delle regressioni calcolate per il test saranno
-        aggiunti <math>k</math> ritardi della variabile dipendente, con la
-        precisazione che segue. Se si usa l'opzione <lit>--test-down</lit>,
+        regressori di ognuna delle regressioni calcolate per il test
+        saranno aggiunti <math>k</math> ritardi della variabile
+        dipendente. Se l'ordine è &minus;1, <math>k</math> è impostato
+        secondo la raccomandazione di <cite key="schwert89">Schwert
+        (1989)</cite>, ossia 12(<math>T</math>/100)<sup>0.25</sup>,
+        dove <math>T</math> è l'ampiezza campionaria. In tutti e due i
+        casi, comunque, se si usa l'opzione <lit>--test-down</lit>,
         <math>k</math> viene interpretato come ritardo massimo, mentre
-        l'ordine di ritardo effettivamente usato viene ottenuto testando
-        "all'indietro" con il seguente algoritmo:
+        l'ordine di ritardo effettivamente usato viene ottenuto
+        testando "all'indietro".  The criterion for testing down can
+        be selected using the option parameter, which must be one of
+        <lit>MAIC</lit>, <lit>MBIC</lit> or <lit>tstat</lit>. The MAIC
+        and MBIC methods are as described in <cite
+        key="ng-perron01">Ng and Perron (2001)</cite>; the lag order
+        is chosen so as to optimize an appropriately modified version
+        of the Akaike Information Criterion or the Schwartz Bayesian
+        Criterion, respectively.  The MAIC method is the default when
+        no method is explicitly specified. The tstat method is a
+        follows:
       </para>
 
       <para context="gui">
         Se l'ordine di ritardi, <math>k</math>, è maggiore di 0, ai
-        regressori di ognuna delle regressioni calcolate per il test saranno
-        aggiunti <math>k</math> ritardi della variabile dipendente, con la
-        precisazione che segue. Se viene selezionata la casella <quote>test per
-        il ritardo massimo</quote>, l'ordine selezionato verrà considerato come
-        ordine massimo, e l'ordine da usare effettivamente sarà ricavato
-        applicando la seguente procedura di test "all'indietro":
+        regressori di ognuna delle regressioni calcolate per il test
+        saranno aggiunti <math>k</math> ritardi della variabile
+        dipendente, con la precisazione che segue. Se viene
+        selezionata la casella <quote>test per il ritardo
+        massimo</quote>, l'ordine selezionato verrà considerato come
+        ordine massimo, e l'ordine da usare effettivamente sarà
+        ricavato applicando la seguente procedura di test
+        "all'indietro", usando il criterio scelto tramite la tendina
+        associata. The modified AIC and modified BIC
+	methods are as described in <cite key="ng-perron01">Ng and
+	Perron (2001)</cite>; the lag order is chosen so as to
+	optimize an appropriately modified version of the Akaike
+	Information Criterion (AIC) or the Schwartz Bayesian Criterion
+	(BIC).  The <math>t</math>-statistic method is a follows:
       </para>
 
       <nlist>
@@ -242,11 +276,11 @@
 	    <math>k</math> ritardi della variabile dipendente.
 	  </para>
 	</li>
-	<li><para>Se questo ordine di ritardi è significativo, esegue il test
-        con l'ordine di ritardo <math>k</math>.  Altrimenti, prova il test
-        con <math>k</math> = <math>k</math> &minus; 1; se
-	    <math>k</math> = 0, esegue il test con ordine di ritardo 0,
-            altrimenti va al punto 1.
+	<li><para>Se questo ordine di ritardi è significativo, esegue
+	il test con l'ordine di ritardo <math>k</math>.  Altrimenti,
+	prova il test con <math>k</math> = <math>k</math> &minus; 1;
+	se <math>k</math> = 0, esegue il test con ordine di ritardo 0,
+	altrimenti va al punto 1.
 	  </para>
 	</li>
       </nlist>
@@ -258,22 +292,25 @@
         distribuzione normale pari a 0.10 o inferiore.
       </para> 
       <para context="cli">
-        L'opzione <lit>--gls</lit> può essere usata insieme a una delle altre due
-        opzioni <lit>--c</lit> e <lit>--ct</lit> (il modello con costante o quello
-        con costante e trend). L'effetto di questa opzione è di rimuovere la
-        media o il trend della variabile da testare, usando la procedura GLS
-        suggerita da Elliott, Rothenberg e Stock (1996), che fornisce un test di
-        potenza maggiore rispetto a quell'approccio standard di
-        Dickey&ndash;Fuller. Questa opzione non è compatibile con le
-        opzioni <lit>--nc</lit>, <lit>--ctt</lit> o <lit>--seasonals</lit>.
+        L'opzione <lit>--gls</lit> può essere usata insieme a una
+        delle altre due opzioni <lit>--c</lit> e <lit>--ct</lit> (il
+        modello con costante o quello con costante e trend). L'effetto
+        di questa opzione è di rimuovere la media o il trend della
+        variabile da testare, usando la procedura GLS suggerita da
+        <cite key="ERS96">Elliott, Rothenberg and Stock (1996)</cite>,
+        che fornisce un test di potenza maggiore rispetto a
+        quell'approccio standard di Dickey&ndash;Fuller. Questa
+        opzione non è compatibile con le opzioni <lit>--nc</lit>,
+        <lit>--ctt</lit> o <lit>--seasonals</lit>.
       </para>
       <para>
         I <emphasis>p-</emphasis>value per questo test sono basati su
-	MacKinnon (1996). Il codice rilevante è incluso per gentile concessione
-        dell'autore. Nel caso del test con trend lineare usando la procedura GLS
-        questi <emphasis>P</emphasis>-value non sono utilizzabili; vengono usati
-        i valori critici contenuti nella Tabella 1 di Elliott, Rothenberg e Stock
-        (1996).
+        MacKinnon (1996). Il codice rilevante è incluso per gentile
+        concessione dell'autore. Nel caso del test con trend lineare
+        usando la procedura GLS questi <emphasis>P</emphasis>-value
+        non sono utilizzabili; vengono usati i valori critici
+        contenuti nella Tabella 1 di <cite key="ERS96">Elliott,
+        Rothenberg and Stock (1996)</cite>.
       </para>
     </description>
 
@@ -315,10 +352,12 @@
 	<lit>$test</lit> e <lit>$pvalue</lit>.
       </para>
       <para>
-	L'ipotesi nulla del test <math>F</math> è che la risposta media sia 
-	invariante rispetto al tipo di trattamento; in altre parole, che il trattamento
-	non abbia alcun effetto. Formalmente, la validità del test richiede che 
-	la varianza della risposta sia la stessa per tutti i tipi di trattamento.
+	L'ipotesi nulla del test <math>F</math> è che la risposta
+	media sia invariante rispetto al tipo di trattamento; in altre
+	parole, che il trattamento non abbia alcun
+	effetto. Formalmente, la validità del test richiede che la
+	varianza della risposta sia la stessa per tutti i tipi di
+	trattamento.
       </para>
       <para>
 	Si noti che i risultati prodotti da questo comando
@@ -386,19 +425,27 @@
         gretl possa capire come aggiungere i valori.
       </para>
       <para>
-	Nel caso di aggiunta di dati a un dataset panel, c'è una possibilità
-        speciale. Detti <math>n</math> il numero di unità cross-section, 
-	<math>T</math> il numero di periodi temporali, e <math>m</math> il
-        numero di nuove osservazioni da aggiungere. Se <math>m = n</math> i nuovi
-        dati saranno considerati invarianti nel tempo, e saranno copiati per
-        ognuno dei periodi temporali. D'altra parte, se <math>m = T</math> i dati
-        saranno trattati come invarianti tra le unità. Se il panel è
-	<quote>quadrato</quote>, ed <math>m</math> è pari sia ad <math>n</math>
-        che a <math>T</math>, il comportamento predefinito consiste nel trattare
-        i nuovi casi come invarianti nel tempo, ma è possibile forzare
-        l'interpretazione dei nuovi dati come serie storiche usando l'opzione
-	<lit>--time-series</lit> (che verrà ignorata in tutti gli altri casi).
+	Nel caso di aggiunta di dati a un dataset panel, c'è una
+	possibilità speciale. Detti <math>n</math> il numero di unità
+	cross-section, <math>T</math> il numero di periodi temporali,
+	e <math>m</math> il numero di nuove osservazioni da
+	aggiungere. Se <math>m = n</math> i nuovi dati saranno
+	considerati invarianti nel tempo, e saranno copiati per ognuno
+	dei periodi temporali. D'altra parte, se <math>m = T</math> i
+	dati saranno trattati come invarianti tra le unità. Se il
+	panel è <quote>quadrato</quote>, ed <math>m</math> è pari sia
+	ad <math>n</math> che a <math>T</math>, il comportamento
+	predefinito consiste nel trattare i nuovi casi come invarianti
+	nel tempo, ma è possibile forzare l'interpretazione dei nuovi
+	dati come serie storiche usando l'opzione
+	<lit>--time-series</lit> (che verrà ignorata in tutti gli
+	altri casi).
       </para>
+      <para>
+	Vedi anche <cmdref targ="join"/> per una gestione più
+	sofisticata di più di un file di dati esterno.
+      </para>
+
     </description>
 
     <gui-access>
@@ -427,17 +474,18 @@
     </usage>
 
     <description>
-      <para>
-	Calcola le stime parametriche usando la procedura iterativa generalizzata
-	di Cochrane&ndash;Orcutt (si veda il Capitolo 9.5 di
-	Ramanathan, 2002). La procedura termina quando le somme dei quadrati degli errori
-	consecutivi non differiscono per più dello 0.005 per cento, oppure dopo
-	20 iterazioni.</para>
+      <para> 
+	Calcola le stime parametriche usando la procedura iterativa
+	generalizzata di Cochrane&ndash;Orcutt (si veda il Capitolo
+	9.5 di <cite key="ramanathan02">Ramanathan (2002)</cite>. La
+	procedura termina quando le somme dei quadrati degli errori
+	consecutivi non differiscono per più dello 0.005 per cento,
+	oppure dopo 20 iterazioni.</para>
 
       <para context="gui">
-	La <quote>lista dei ritardi AR</quote> specifica la struttura del processo
-	dell'errore.  Ad esempio, l'indicazione <quote>1 3 4</quote> corrisponde
-	al processo: 
+	La <quote>lista dei ritardi AR</quote> specifica la struttura
+	del processo dell'errore.  Ad esempio, l'indicazione <quote>1
+	3 4</quote> corrisponde al processo:
 	<equation status="display" 
 	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
 	    \rho_4 u_{t-4} + e_t\]"
@@ -446,9 +494,9 @@
       </para>
 
       <para context="cli">
-	<repl quote="true">ritardi</repl> è una lista di ritardi nei residui, conclusa
-	da un punto e virgola. Nell'esempio precedente, il termine di errore è
-	specificato come
+	<repl quote="true">ritardi</repl> è una lista di ritardi nei
+	residui, conclusa da un punto e virgola. Nell'esempio
+	precedente, il termine di errore è specificato come
 	<equation status="display" 
 	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
 	    \rho_4 u_{t-4} + e_t\]"
@@ -502,17 +550,19 @@
         segue un processo autoregressivo del prim'ordine.
       </para>
       <para>
-	Il metodo predefinito è la procedura iterativa di Cochrane&ndash;Orcutt
-        (si veda ad esempio il capitolo 9.4 di Ramanathan, 2002). La procedura
-        termina quando le stime successive del coefficiente di
-        autocorrelazione non differiscono per più di 0.001, oppure dopo 20 iterazioni.
+	Il metodo predefinito è la procedura iterativa di
+	Cochrane&ndash;Orcutt (si veda ad esempio il capitolo 9.4 di
+	Ramanathan, 2002). La procedura termina quando le stime
+	successive del coefficiente di autocorrelazione non
+	differiscono per più di 0.001, oppure dopo 20 iterazioni.
       </para>
       <para>
-	Se si usa l'opzione <lit>--hilu</lit>, verrà usata la procedura di ricerca
-        di Hildreth&ndash;Lu.  I risultati sono quindi ottimizzati con la
-        procedura iterativa di Cochrane&ndash;Orcutt, a meno che non si usi
-        l'opzione <lit>--no-corc</lit> (che viene ignorata se non viene
-        specificata <lit>--hilu</lit>).
+	Se si usa l'opzione <lit>--hilu</lit>, verrà usata la
+	procedura di ricerca di Hildreth&ndash;Lu.  I risultati sono
+	quindi ottimizzati con la procedura iterativa di
+	Cochrane&ndash;Orcutt, a meno che non si usi l'opzione
+	<lit>--no-corc</lit> (che viene ignorata se non viene
+	specificata <lit>--hilu</lit>).
       </para>
       <para>
         Se si usa l'opzione <lit>--pwe</lit>, viene usato lo stimatore di
@@ -567,7 +617,7 @@
         </option>
         <option>
 	  <flag>--asymptotic</flag>
-	  <effect>calcola gli errori standard asintotici nel modo consueto</effect>
+	  <effect>calcola gli errori standard asintotici nel modo standard</effect>
         </option>
       </options>
       <examples>
@@ -582,65 +632,70 @@
 
     <description>
       <para>
-	Esegue la stima di modelli panel dinamici (ossia, modelli panel che
-        includono uno o più ritardi della variabile dipendente) usando il
-        metodo GMM proposto da Arellano e Bond (1991).  
+	Esegue la stima di modelli panel dinamici (ossia, modelli
+	panel che includono uno o più ritardi della variabile
+	dipendente) usando il metodo GMM proposto da <cite
+	key="arellano-bond91">Arellano and Bond (1991)</cite>.  Vedi,
+	tuttavia, il comando <cmdref targ="dpanel"/> per una
+	alternativa più avanzata e più flessibile, che offre lo
+	stimatore GMM-SYS oltre al GMM-DIF.
       </para>
       <para context="cli">
-	Il parametro <repl>p</repl> rappresenta l'ordine dell'autoregressione
-        per la variabile dipendente. Il parametro opzionale <repl>q</repl>
-        indica il  massimo ritardo del livello della variabile dipendente da
-        usare come strumento; se si omette questo argomento, o lo si pone uguale
-        a 0, vengono usati tutti i ritardi disponibili.
+	Il parametro <repl>p</repl> rappresenta l'ordine
+	dell'autoregressione per la variabile dipendente. Il parametro
+	opzionale <repl>q</repl> indica il massimo ritardo del livello
+	della variabile dipendente da usare come strumento; se si
+	omette questo argomento, o lo si pone uguale a 0, vengono
+	usati tutti i ritardi disponibili.
       </para>
       <para>
-	La variabile dipendente andrebbe specificata sotto forma di livello;
-        viene differenziata automaticamente, visto che lo stimatore usa la
-        differenziazione per eliminare gli effetti individuali. Le variabili
-        indipendenti invece non vengono differenziate automaticamente: se si
-        intende usare le differenze (tipicamente lo si vorrà fare per le
-        variabili quantitative, ma non ad esempio per le dummy temporali),
-        occorrerà prima creare le variabili differenziate e poi specificarle
-        come regressori.
+	La variabile dipendente andrebbe specificata in livelli; viene
+	differenziata automaticamente, visto che lo stimatore usa la
+	differenziazione per eliminare gli effetti individuali. Le
+	variabili indipendenti invece non vengono differenziate
+	automaticamente: se si intende usare le differenze
+	(tipicamente lo si vorrà fare per le variabili quantitative,
+	ma non ad esempio per le dummy temporali), occorrerà prima
+	creare le variabili differenziate e poi specificarle come
+	regressori.
       </para>
       <para context="cli">
-	L'ultimo campo (opzionale) del comando consente di specificare gli
-        strumenti. Se non viene usato, si assumerà che tutte le variabili
-        indipendenti sono strettamente esogene. Se si specifica uno strumento,
-        occorre includere nell'elenco tutte le variabili indipendenti
-        strettamente esogene. Per i regressori predeterminati, è possibile usare
-        la funzione <lit>GMM</lit> per includere un intervallo specifico di
-        ritardi in stile "diagonale". Questo modo di procedere è illustrato nel
-        terzo esempio visto sopra. Il primo argomento di <lit>GMM</lit> è il
-        nome della variabile in questione, il secondo è il ritardo minimo da
-        usare, mentre il terzo è quello massimo. Se il terzo argomento è pari a
-        0, vengono usati tutti i ritardi disponibili.
-      </para>
-      <para context="gui">
-	A proposito degli strumenti, si veda la documentazione per
-        la versione testuale di questo comando. Al momento non è possibile
-        specificare gli strumenti nell'interfaccia grafica: tutte le variabili
-        indipendenti sono considerate strettamente esogene.
+	L'ultimo campo (opzionale) del comando consente di specificare
+	gli strumenti. Se non viene usato, si assumerà che tutte le
+	variabili indipendenti sono strettamente esogene. Se si
+	specifica uno strumento, occorre includere nell'elenco tutte
+	le variabili indipendenti strettamente esogene. Per i
+	regressori predeterminati, è possibile usare la funzione
+	<lit>GMM</lit> per includere un intervallo specifico di
+	ritardi in stile "diagonale". Questo modo di procedere è
+	illustrato nel terzo esempio visto sopra. Il primo argomento
+	di <lit>GMM</lit> è il nome della variabile in questione, il
+	secondo è il ritardo minimo da usare, mentre il terzo è quello
+	massimo. Se il terzo argomento è pari a 0, vengono usati tutti
+	i ritardi disponibili.
       </para>
       <para>
-	Per impostazione predefinita, vengono mostrati i risultati della
-        stima a un passo (con errori standard robusti), ma è possibile scegliere
-        una stima a due passi. In entrambi i casi, vengono mostrati i testi per
-        l'autocorrelazione di ordine 1 e 2, oltre al test di
-        sovraidentificazione di Sargan. Si noti che in questo modello
-        differenziato l'autocorrelazione del prim'ordine non contrasta con la
-        validità del modello, mentre quella di ordine 2 viola le ipotesi
-        statistiche che ne sono alla base. 
+	Per impostazione predefinita, vengono mostrati i risultati
+	della stima a un passo (con errori standard robusti), ma è
+	possibile scegliere una stima a due passi. In entrambi i casi,
+	vengono mostrati i testi per l'autocorrelazione di ordine 1 e
+	2, oltre al test di sovraidentificazione di Sargan. Si noti
+	che in questo modello differenziato l'autocorrelazione del
+	prim'ordine non contrasta con la validità del modello, mentre
+	quella di ordine 2 viola le ipotesi statistiche che ne sono
+	alla base.
       </para>
-      <para context="cli">
-        Nel caso della stima in due passi, gli errori standard sono calcolati
-        usando la correzione per campioni finiti suggerita da Windmeijer (2005).
-        Gli errori standard asintotici calcolati nel modo consueto non sono
-        generalmente ritenuti affidabili nel caso dello stimatore a due passi,
-        ma se per qualche motivo si vuole usarli, è possibile usare l'opzione
-        <lit>--asymptotic</lit> per disabilitare la correzione di Windmeijer.
+      <para>
+        Nel caso della stima in due passi, gli errori standard sono
+        calcolati usando la correzione per campioni finiti suggerita
+        da<cite key="windmeijer05">Windmeijer (2005)</cite>.  Gli
+        errori standard asintotici calcolati nel modo consueto non
+        sono generalmente ritenuti affidabili nel caso dello stimatore
+        a due passi, ma se per qualche motivo si vuole usarli, è
+        possibile usare l'opzione <lit>--asymptotic</lit> per
+        disabilitare la correzione di Windmeijer.
       </para>
-      <para context="cli">
+      <para>
 	Se si usa l'opzione <lit>--time-dummies</lit>, viene aggiunto ai
         regressori un insieme di variabili dummy temporali. Il numero di
         variabili dummy è pari al numero massimo dei periodi usati nella stima
@@ -672,6 +727,13 @@
 
     <description>
       <para>
+	This command is retained at present for backward
+	compatibility, but you are better off using the maximum
+	likelihood estimator offered by the <cmdref targ="garch"/>
+	command; for a plain ARCH model, set the first GARCH
+	parameter to 0.
+      </para>
+      <para>
 	Stima il modello specificato tenendo conto della possibile
         eteroschedasticità condizionale autoregressiva (ARCH,
 	Autoregressive Conditional Heteroskedasticity). Per prima cosa il
@@ -683,7 +745,6 @@
         prevista di qualche osservazione nella regressione ausiliaria non
         risulta positiva, viene usato il corrispondente residuo al quadrato).
        </para>
-
       <para>
 	I valori <lit>alpha</lit> mostrati sotto i coefficienti sono i parametri
         del processo ARCH stimati nella regressione ausiliaria.
@@ -742,6 +803,18 @@
 	  <flag>--x-12-arima</flag>
 	  <effect>usa X-12-ARIMA per la stima</effect>
         </option>
+	<option>
+	  <flag>--lbfgs</flag>
+	  <effect>usa il massimizzatore L-BFGS-B</effect>
+	</option>
+	<option>
+	  <flag>--y-diff-only</flag>
+	  <effect>speciale per ARIMAX, si veda sotto</effect>
+	</option>
+	<option>
+	  <flag>--save-ehat</flag>
+	 <effect>si veda sotto</effect>
+	</option>
       </options>
       <examples>
         <example>arima 1 0 2 ; y</example>
@@ -752,64 +825,69 @@
 
     <description>
       <para context="cli">
-	Se non viene fornita una lista di <repl>variabili-indipendenti</repl>,
-        stima un modello autoregressivo integrato a media mobile (ARIMA: Autoregressive,
-        Integrated, Moving Average) univariato.  I valori <repl>p</repl>,
-        <repl>d</repl> e <repl>q</repl> rappresentano rispettivamente gli ordini
-        dei termini autoregressivi (AR), l'ordine di differenziazione, e quello dei termini
-        a media mobile (MA).  Questi valori possono essere indicati in forma
-        numerica o con i nomi di variabili scalari preesistenti. Ad esempio, un
-        valore <repl>d</repl> pari a 1 significa che prima di stimare i
-        parametri ARMA occorre prendere la differenza della variabile
-        dipendente.
+	Se non viene fornita una lista di
+	<repl>variabili-indipendenti</repl>, stima un modello
+	autoregressivo integrato a media mobile (ARIMA:
+	Autoregressive, Integrated, Moving Average) univariato.  I
+	valori <repl>p</repl>, <repl>d</repl> e <repl>q</repl>
+	rappresentano rispettivamente gli ordini dei termini
+	autoregressivi (AR), l'ordine di differenziazione, e quello
+	dei termini a media mobile (MA).  Questi valori possono essere
+	indicati in forma numerica o con i nomi di variabili scalari
+	preesistenti. Ad esempio, un valore <repl>d</repl> pari a 1
+	significa che prima di stimare i parametri ARMA occorre
+	prendere la differenza della variabile dipendente.
       </para>
 
       <para context="cli">
-        Se si vuole includere solo alcuni specifici ritardi AR o MA (invece che
-        tutti i ritardi fino all'ordine specificato) è possibile sostituire
-        <repl>p</repl> e/o <repl>q</repl> in due modi: col nome di una matrice
-        predefinita che contiene un insieme di valori interi, oppure con
-        un'espressione come <lit>{1 4}</lit>, ossia un insieme di ritardi
-        separati da spazi e racchiusi tra parentesi graffe.
+        Se si vuole includere solo alcuni specifici ritardi AR o MA
+        (invece che tutti i ritardi fino all'ordine specificato) è
+        possibile sostituire <repl>p</repl> e/o <repl>q</repl> in due
+        modi: col nome di una matrice predefinita che contiene un
+        insieme di valori interi, oppure con un'espressione come
+        <lit>{1 4}</lit>, ossia un insieme di ritardi separati da
+        spazi e racchiusi tra parentesi graffe.
       </para>
         
       <para context="cli">
         I valori interi opzionali <repl>P</repl>, <repl>D</repl> e
-        <repl>Q</repl> rappresentano rispettivamente, l'ordine dei termini AR
-        stagionali, l'ordine di differenziazione stagionale e l'ordine dei
-        termini MA stagionali. Essi sono rilevanti solo la frequenza dei dati è
-        superiore a 1 (ad esempio, dati trimestrali o mensili). Questi
-        valori devono essere indicati in forma numerica o come variabili
-        scalari.
+        <repl>Q</repl> rappresentano rispettivamente, l'ordine dei
+        termini AR stagionali, l'ordine di differenziazione stagionale
+        e l'ordine dei termini MA stagionali. Essi sono rilevanti solo
+        la frequenza dei dati è superiore a 1 (ad esempio, dati
+        trimestrali o mensili). Questi valori devono essere indicati
+        in forma numerica o come variabili scalari.
       </para>
       
       <para context="cli">
-        Nel caso univariato la scelta predefinita include un'intercetta nel
-        modello, ma questa può essere soppressa con l'opzione
-        <lit>--nc</lit>.  Se vengono aggiunte delle
-        <repl>variabili-indipendenti</repl>, il modello diventa un ARMAX: in
-        questo caso occorre indicare esplicitamente la costante se si
-        desidera un'intercetta (come nel secondo degli esempi proposti).
+        Nel caso univariato la scelta predefinita include
+        un'intercetta nel modello, ma questa può essere soppressa con
+        l'opzione <lit>--nc</lit>.  Se vengono aggiunte delle
+        <repl>variabili-indipendenti</repl>, il modello diventa un
+        ARMAX: in questo caso occorre indicare esplicitamente la
+        costante se si desidera un'intercetta (come nel secondo degli
+        esempi proposti).
       </para>
       
       <para context="cli">
-        È disponibile una sintassi alternativa per questo comando: se non si
-        intende applicare alcuna operazione di differenziazione (stagionale o
-        non stagionale), è possibile omettere totalmente i termini
-        <repl>d</repl> e <repl>D</repl>, invece che impostarli esplicitamente
-        pari a 0. Inoltre, <lit>arma</lit> è un sinonimo di <lit>arima</lit>,
-        quindi ad esempio il comando seguente è un modo valido per specificare
-        un modello ARMA(2,1):
+        È disponibile una sintassi alternativa per questo comando: se
+        non si intende applicare alcuna operazione di differenziazione
+        (stagionale o non stagionale), è possibile omettere totalmente
+        i termini <repl>d</repl> e <repl>D</repl>, invece che
+        impostarli esplicitamente pari a 0. Inoltre, <lit>arma</lit> è
+        un sinonimo di <lit>arima</lit>, quindi ad esempio il comando
+        seguente è un modo valido per specificare un modello
+        ARMA(2,1):
       </para>
       <code context="cli">
 	arma 2 1 ; y
       </code>
       
       <para context="gui">
-	Stima un modello ARMA, con o senza regressori esogeni. Se l'ordine di
-        differenziazione è maggiore di zero, il modello diventa un ARIMA. Se i
-        dati hanno una frequenza superiore a 1, viene offerta la possibilità di
-        includere termini stagionali.
+	Stima un modello ARMA, con o senza regressori esogeni. Se
+	l'ordine di differenziazione è maggiore di zero, il modello
+	diventa un ARIMA. Se i dati hanno una frequenza superiore a 1,
+	viene offerta la possibilità di includere termini stagionali.
       </para>
 
       <para context="gui">
@@ -822,31 +900,55 @@
       </para>
 
       <para>
-        Il funzionamento predefinito utilizza la funzionalità ARMA 
+        Il funzionamento predefinito utilizza la funzionalità ARMA
         <quote>interna</quote> di gretl, che usa la stima di massima
-        verosimiglianza esatta usando il filtro di Kalman; come opzione è
-        possibile usare la stima di massima verosimiglianza condizionale.
-        Se è stato installato il programma <program>X-12-ARIMA</program> è
-        possibile usare questo al posto del codice interno di gretl.
-        Per i dettagli su queste opzioni si veda la <guideref targ="arma-estimation"/>.
-      </para>
-
-      <para>
-        L'algoritmo interno di gretl per ARMA utilizza una procedura di
-	massima verosimiglianza condizionale, implementata attraverso la stima 
-	iterata	con minimi quadrati della regressione del prodotto esterno del
-	gradiente (OPG). Si veda la <guideref targ="jack-arma"/> per la logica della
-	procedura. I coefficienti AR (e quelli per gli eventuali regressori 
-	aggiuntivi) sono inizializzati usando una auto-regressione OLS, mentre
-	i coefficienti MA sono inizializzati a zero.
+        verosimiglianza esatta usando il filtro di Kalman; come
+        opzione è possibile usare la stima di massima verosimiglianza
+        condizionale.  Se è stato installato il programma
+        <program>X-12-ARIMA</program> è possibile usare questo al
+        posto del codice interno di gretl.  Per i dettagli su queste
+        opzioni si veda la <guideref targ="arma-estimation"/>.
       </para>
 
       <para context="cli">
-        Quando si usa il codice ARMA interno, le deviazioni standard sono stimate
-        basandosi su un'approssimazione numerica all'inversa negativa dell'Hessiana.
-        Se si usa l'opzione <lit>--opg</lit> viene invece usato il prodotto
-        esterno del gradiente. L'opzione è ignorata se si sceglie la stima con
-        <program>X-12-ARIMA</program>.
+        Quando si usa il codice ARMA interno, le deviazioni standard
+        sono stimate basandosi su un'approssimazione numerica
+        all'inversa negativa dell'Hessiana, passando automaticamente
+        al prodotto esterno del gradiente (OPG) in caso di problemi
+        numerici. Se si usa l'opzione <lit>--opg</lit> il prodotto
+        esterno del gradiente viene usato in ogni caso. L'opzione
+        <lit>--hessian</lit>, invece, disabilita il passaggio
+        automatico all'OPG in caso di problemi. Si noti, peraltro, che
+        l'impossibilità di calcolare numericamente l'hessiana è per
+        solito indice di un modello mal specificato.
+      </para>
+
+      <para context="cli">
+	The option <opt>--lbfgs</opt> is specific to estimation using
+	native ARMA code and exact ML: it calls for use of the 
+	<quote>limited memory</quote> L-BFGS-B algorithm in place
+	of the regular BFGS maximizer.  This may help in some
+	instances where convergence is difficult to achieve.
+      </para>
+
+      <para context="cli">
+	The option <opt>--y-diff-only</opt> is specific to estimation of
+	ARIMAX models (models with a non-zero order of integration and
+	including exogenous regressors), and applies only when gretl's native
+	exact ML is used. For such models the default behavior is to
+	difference both the dependent variable and the regressors, but when
+	this option is specified only the dependent variable is differenced,
+	the regressors remaining in level form.
+      </para>
+
+      <para context="cli">
+	The option <opt>--save-ehat</opt> is applicable only when
+	using native exact ML estimation. The effect is to make
+	available a vector holding the optimal estimate as of period
+	<math>t</math> of the <math>t</math>-dated disturbance or
+	innovation: this can be retrieved via the accessor <lit>$ehat</lit>.
+	These values differ from the residual series (<lit>$uhat</lit>),
+	which holds the one-step ahead forecast errors.
       </para>
 
       <para>
@@ -865,15 +967,57 @@
         metodo della massima verosimiglianza condizionale.
       </para> 
 
-      <para> 
-	Il valore di <quote>frequenza</quote> mostrato insieme alle radici
-	AR e MA è il valore di &lgr; che risolve
-	  <equation status="display" 
-	  tex="\[z=re^{i2\pi\lambda}\]"
-	  ascii="z = r * exp(i*2*pi*lambda)"
-	  graphic="lambda"/> dove <math>z</math> è la radice in questione
-	  e <math>r</math> è il suo modulo.
+      <para context="tex">
+	The AR and MA roots shown in connection with ARMA estimation
+	are based on the following representation of an ARMA($p,q$)
+	process:
+	\[
+	(1-\phi_1 L - \phi_2 L^2 - \cdots - \phi_p L^p)Y =
+          c + (1 + \theta_1 L + \theta_2 L^2 + \cdots +
+         \theta_q L^q)\varepsilon_t
+        \]
+        The AR roots are therefore the solutions to
+        \[
+         1 - \phi_1 z - \phi_2 z^2 - \cdots - \phi_p L^p = 0
+        \]
+        and stability requires that these roots lie outside the
+	unit circle.
       </para>
+
+      <para context="tex">
+	The <quote>frequency</quote> figure printed in connection with
+	the AR and MA roots is the $\lambda$ value that solves 
+	$z=re^{i2\pi\lambda}$, where $z$ is the root in question
+	and $r$ is its modulus.
+      </para>
+
+      <para context="notex">
+	The AR and MA roots shown in connection with ARMA estimation
+	are based on the following representation of an ARMA(p, q)
+	process:
+      </para>
+      <mono context="notex">
+	(1 - a_1*L - a_2*L^2 - ... - a_p*L^p)Y =
+          c + (1 + b_1*L + b_2*L^2 + ... + b_q*L^q) e_t
+      </mono>
+      <para context="notex">
+        The AR roots are therefore the solutions to
+      </para>
+      <mono context="notex">
+         1 - a_1*z - a_2*z^2 - ... - a_p*L^p = 0
+      </mono>
+      <para context="notex">
+        and stability requires that these roots lie outside the
+	unit circle.
+      </para>
+
+      <para context="notex">
+	Il valore di <quote>frequenza</quote> mostrato insieme alle
+	radici AR e MA è il valore di &lgr; che risolve <math>z</math>
+	= <math>r</math> * exp(i*2*&pi;*&lgr;)dove <math>z</math> è la
+	radice in questione e <math>r</math> è il suo modulo.
+      </para>
+
     </description>
 
     <gui-access>
@@ -1074,46 +1218,83 @@
 
     <description>
 
-      <para>Questo tipo di grafici (da Tukey e Chambers) mostra la distribuzione
-        di una variabile. La <quote>scatola</quote> centrale (box) racchiude il
-        50 per cento centrale dei dati, ossia è delimitato dal primo e terzo
-        quartile. I <quote>baffi</quote> (whiskers) si estendono fino ai valori
-        minimo e massimo. Una linea trasversale sulla scatola indica la mediana,
-        mentre un segno <quote>+</quote> indica la media.
+      <para>
+	Questo tipo di grafici (da Tukey e Chambers) mostra la
+	distribuzione di una variabile. La <quote>scatola</quote>
+	centrale (box) racchiude il 50 per cento centrale dei dati,
+	ossia è delimitato dal primo e terzo quartile. I
+	<quote>baffi</quote> (whiskers) si estendono fino ai valori
+	minimo e massimo. Una linea trasversale sulla scatola indica
+	la mediana, mentre un segno <quote>+</quote> indica la
+	media. Se viene selezionata l'opzione di mostrare un
+	intervallo di confidenza per la mediana, quetso viene
+	calcolato via bootstrap e mostrato sotto forma di lnee
+	tratteggiate orizzontali sopra e sotto la mediana.
       </para> 
 
-      <para>Nel caso dei grafici a tacca ("notches"), una tacca indica i limiti
-        dell'intervallo di confidenza approssimato al 90 per cento per la
-        mediana, ottenuto col metodo bootstrap.</para>
-
-      <para context="gui">Dopo ogni variabile specificata nel comando
-	boxplot, è possibile aggiungere un'espressione booleana tra
-        parentesi per limitare il campione per la variabile in questione.
-	Occorre inserire uno spazio tra il nome o il numero della variabile
-        e l'espressione. Si supponga di avere dati sui salari di uomini e
-        donne e di avere una variabile dummy <lit>GENERE</lit> che vale 1
-	per gli uomini e 0 per le donne. In questo caso, è possibile generare
-        dei boxplot comparativi usando la seguente riga nella finestra di
-        dialogo dei boxplot:</para>
-
-      <para context="cli">Dopo ogni variabile specificata nel comando
-	boxplot, è possibile aggiungere un'espressione booleana tra
-        parentesi per limitare il campione per la variabile in questione.
-	Occorre inserire uno spazio tra il nome o il numero della variabile
-        e l'espressione. Si supponga di avere dati sui salari di uomini e
-        donne e di avere una variabile dummy <lit>GENERE</lit> che vale 1
-	per gli uomini e 0 per le donne. In questo caso, è possibile generare
-        dei boxplot comparativi usando la seguente <repl
-	  quote="true">lista-variabili</repl>:</para>
-
-      <code>
-	salario (GENERE=1) salario (GENERE=0)
+      <para context="gui">
+	L'opzione <quote>factorized</quote> permette di esaminare la
+	distribuzione di una variabile condizionata ai valori di un
+	fattore discreto. Ad esempio, se un dataset contiene salari e
+	una variable binaria per il genere, si può scegliere di
+	analizzare la distribuzione del salario condizionata al genere
+	e visualizzare boxplot dei salri per i maschi e per le femmine
+	uno di fianco all'altro.
+      </para>
+      
+      <para context="cli">
+	L'opzione <quote>factorized</quote> permette di esaminare la
+	distribuzione di una variabile condizionata ai valori di un
+	fattore discreto. Ad esempio, se un dataset contiene salari e
+	una variable binaria per il genere, si può scegliere di
+	analizzare la distribuzione del salario condizionata al genere
+	e visualizzare boxplot dei salri per i maschi e per le femmine
+	uno di fianco all'altro, come ad esempio
+      </para>
+      <code context="cli">
+	boxplot wage gender --factorized
       </code>
+      <para context="cli">
+	Si noti che, in questo caso, bisogna specificare esattamente
+	due variabili, col fattore per secondo.
+      </para>
 
-      <para>Alcuni dettagli del funzionamento dei boxplot di gretl possono
-        essere controllati attraverso un file testuale chiamato
-        <filename>.boxplotrc</filename>.  Per ulteriori dettagli, si veda
-	la <guideref targ="sect-boxplots"/>.</para>
+      <para context="cli">
+	If the current data set is a panel, and just one variable is
+	specified, the <opt>panel</opt> option produces a series of
+	side-by-side boxplots, one for each panel <quote>unit</quote>
+	or group.
+      </para>
+
+      <para context="cli">
+	Generally, the argument <repl>varlist</repl> is required, and
+	refers to one or more series in the current dataset (given
+	either by name or ID number).  But if a named matrix is
+	supplied via the <opt>--matrix</opt> option this argument
+	becomes optional: by default a plot is drawn for each
+	column of the specified matrix.
+      </para>
+
+      <para context="cli">
+	Gretl's boxplots are generated using
+	<program>gnuplot</program>, and it is possible to specify
+	the plot more fully by appending additional gnuplot commands,
+	enclosed in braces. For details, please see the help for
+	the <cmdref targ="gnuplot"/> command.
+      </para>
+
+      <para context="cli">
+	In interactive mode the result is displayed immediately. In
+	batch mode the default behavior is that a gnuplot command file
+	is written in the user's working directory, with a name on the
+	pattern <filename>gpttmpN.plt</filename>, starting with N =
+	<lit>01</lit>. The actual plots may be generated later using
+	<program>gnuplot</program> (under MS Windows,
+	<program>wgnuplot</program>).  This behavior can be modified
+	by use of the <opt>--output=</opt><repl>filename</repl>
+	option. Per ulteriori dettagli, si veda il comando <cmdref
+	targ="gnuplot"/>.
+      </para>
 
     </description>
 
@@ -1126,7 +1307,6 @@
   <command name="break" section="Programming" label="Esce da un ciclo" context="cli">
 
     <description>
-
       <para>Esce da un ciclo. Questo comando può essere usato solo
       all'interno di un ciclo e causa l'immediata interruzione
       dell'esecuzione del ciclo (o di quello più interno, nel caso di
@@ -1235,11 +1415,12 @@
         regressione che include questi termini.
       </para>
       <para>
-        Per impostazione predefinita viene calcolata una statistica <math>F</math>,
-        prendendo la regressione aumentata come non vincolata e la regressione
-        originale come vincolata. Se il modello originale usa uno stimatore
-        robusto per la matrice di covarianza, come statistica test viene usato
-        un valore chi-quadro di Wald, basato su uno stimatore robusto della
+        Per impostazione predefinita viene calcolata una statistica
+        <math>F</math>, prendendo la regressione aumentata come non
+        vincolata e la regressione originale come vincolata. Se il
+        modello originale usa uno stimatore robusto per la matrice di
+        covarianza, come statistica test viene usato un valore
+        chi-quadro di Wald, basato su uno stimatore robusto della
         matrice di covarianza della regressione aumentata.
       </para>
     </description>
@@ -1277,11 +1458,6 @@
 	Con l'opzione <opt>--dataset</opt> viene cancellato dalla
 	memoria solo il dataset; tutti gli altri oggetti, come matrici
 	e scalari salvati in precedenza, vengono conservati.
-      </para>
-      <para>
-	Con l'opzione <opt>--other</opt> viene conservato l'eventuale
-	dataset corrente, ma tutti gli altri oggetti in memoria
-	vengono cancellati.
       </para>
     </description>
   </command>
@@ -1387,53 +1563,58 @@
 
     <description>
       <para context="cli">
-        Il test di cointegrazione di Engle&ndash;Granger. La procedura
-        predefinita è la seguente: (1) eseguire dei test Dickey&ndash;Fuller
-        aumentati, sull'ipotesi nulla che ognuna delle variabili elencate abbia
-        una radice unitaria; (2) stimare la regressione di cointegrazione;
-        (3) eseguire un test DF sui residui della regressione di
-        cointegrazione. Se si usa l'opzione <lit>--skip-df</lit>, il passo
-        (1) viene saltato.
+        Test di cointegrazione di Engle&ndash;Granger. La procedura
+        predefinita è la seguente: (1) eseguire dei test
+        Dickey&ndash;Fuller aumentati, sull'ipotesi nulla che ognuna
+        delle variabili elencate abbia una radice unitaria; (2)
+        stimare la regressione di cointegrazione; (3) eseguire un test
+        DF sui residui della regressione di cointegrazione. Se si usa
+        l'opzione <lit>--skip-df</lit>, il passo (1) viene saltato.
       </para>
       <para context="cli">
         Se l'ordine di ritardo specificato è positivo, tutti i test
-        Dickey&ndash;Fuller utilizzano questo ordine. Se l'ordine indicato viene
-        preceduto da un segno meno, viene interpretato come l'ordine massimo, e
-        l'ordine utilizzato effettivamente viene ricavato con la stessa
-        procedura di test "all'indietro" descritta per il comando
-        <cmdref targ="adf"/>.
+        Dickey&ndash;Fuller utilizzano questo ordine. Se l'ordine
+        indicato viene preceduto da un segno meno, viene interpretato
+        come l'ordine massimo, e l'ordine utilizzato effettivamente
+        viene ricavato con la stessa procedura di test "all'indietro"
+        descritta per il comando <cmdref targ="adf"/>.
       </para>
        <para context="cli">
-	L'impostazione predefinita consiste nell'includere una costante nella
-        regressione di cointegrazione; se si vuole omettere la costante, basta
-        usare l'opzione <lit>--nc</lit>. Se si vuole aggiungere all'elenco dei
-        termini deterministici della regressione un trend lineare o quadratico,
-        basta usare le opzioni <lit>--ct</lit> o <lit>--ctt</lit>. Queste opzioni
-        sono mutualmente esclusive.
+	L'impostazione predefinita consiste nell'includere una
+	costante nella regressione di cointegrazione; se si vuole
+	omettere la costante, basta usare l'opzione
+	<lit>--nc</lit>. Se si vuole aggiungere all'elenco dei termini
+	deterministici della regressione un trend lineare o
+	quadratico, basta usare le opzioni <lit>--ct</lit> o
+	<lit>--ctt</lit>. Queste opzioni sono mutualmente esclusive.
       </para>
       <para context="cli">
-        Il test di cointegrazione di Engle&ndash;Granger. La procedura
-        predefinita è la seguente: (1) eseguire dei test Dickey&ndash;Fuller
-        aumentati, sull'ipotesi nulla che ognuna delle variabili elencate abbia
-        una radice unitaria; (2) stimare la regressione di cointegrazione;
-        (3) eseguire un test DF sui residui della regressione di
-        cointegrazione. Se si attiva la casella <lit>Salta i test DF iniziali</lit>,
-        il passo (1) viene saltato.
+        Test di cointegrazione di Engle&ndash;Granger. La procedura
+        predefinita è la seguente: (1) eseguire dei test
+        Dickey&ndash;Fuller aumentati, sull'ipotesi nulla che ognuna
+        delle variabili elencate abbia una radice unitaria; (2)
+        stimare la regressione di cointegrazione; (3) eseguire un test
+        DF sui residui della regressione di cointegrazione. Se si
+        attiva la casella <lit>Salta i test DF iniziali</lit>, il
+        passo (1) viene saltato.
       </para>
       <para context="gui">
-	Se l'ordine di ritardo, <math>k</math>, è maggior di 0, verranno
-        inclusi <math>k</math> ritardi della variabile dipendente al
-        secondo membro di ognuna delle regressioni di test, a meno che non si
-        usi la casella <quote>test dal massimo ordine di ritardi all'indietro</quote>:
-        in questo caso, l'ordine specificato viene considerato come massimo e
-        l'ordine usato effettivamente viene determinato con la procedura di
-        test "all'indietro" descritta per il comando <cmdref targ="adf"/>.
+	Se l'ordine di ritardo, <math>k</math>, è maggior di 0,
+	verranno inclusi <math>k</math> ritardi della variabile
+	dipendente al secondo membro di ognuna delle regressioni di
+	test, a meno che non si usi la casella <quote>test dal massimo
+	ordine di ritardi all'indietro</quote>: in questo caso,
+	l'ordine specificato viene considerato come massimo e l'ordine
+	usato effettivamente viene determinato con la procedura di
+	test "all'indietro" descritta per il comando <cmdref
+	targ="adf"/>.
       </para>
       <para context="gui">
-	L'impostazione predefinita consiste nell'includere una costante nella
-        regressione di cointegrazione. Se si vuole omettere la costante, o
-        aggiungere un trend lineare o quadratico, basta selezionare le relative
-        opzioni nella finestra di dialogo.
+	L'impostazione predefinita consiste nell'includere una
+	costante nella regressione di cointegrazione. Se si vuole
+	omettere la costante, o aggiungere un trend lineare o
+	quadratico, basta selezionare le relative opzioni nella
+	finestra di dialogo.
       </para>
       <para>
         I <emphasis>pvalue</emphasis> per questo test si basano su
@@ -1500,18 +1681,26 @@
 
     <description>
       <para context="cli">
-        Esegue il test di Johansen per la cointegrazione tra le variabili della
-        <repl>lista-y</repl> per l'ordine specificato di ritardi.I valori critici
-        sono calcolati con l'approssimazione gamma di J. Doornik (Doornik,
-        1998). Per i dettagli su questo test, si veda Hamilton, <book>Time
-        Series Analysis</book> (1994), Cap. 20.
+        Esegue il test di Johansen per la cointegrazione tra le
+        variabili della <repl>lista-y</repl> per l'ordine specificato
+        di ritardi. Per dettagli, si veda <guideref targ="chap:vecm"/>
+        oppure <cite key="hamilton94">Hamilton (1994)</cite>, capitolo
+        20. I valori critici sono calcolati con l'approssimazione
+        gamma di J. Doornik (Doornik, 1998). Per il test traccia,
+        vengono formiti due set di valori critici: asintotici e
+        aggiustati per l'ampiezza campionaria. Di default, l'accessore
+        <lit>$pvalue</lit> riporta la variante aggiustata, ma i valori
+        asintotici possono essere ottenuti usando l'opzione
+        <opt>--asy</opt>
       </para>
       <para context="gui">
         Esegue il test di Johansen per la cointegrazione tra le variabili
-        elencate per l'ordine specificato di ritardi.I valori critici
+        elencate per l'ordine specificato di ritardi. I valori critici
         sono calcolati con l'approssimazione gamma di J. Doornik (Doornik,
         1998). Per i dettagli su questo test, si veda Hamilton, <book>Time
-        Series Analysis</book> (1994), Cap. 20.
+        Series Analysis</book> (1994), Cap. 20. Per il test traccia,
+        vengono formiti due set di valori critici: asintotici e
+        aggiustati per l'ampiezza campionaria.
       </para>
       <para context="cli">
 	L'inclusione di trend deterministici nel modello è controllata dalle
@@ -1540,21 +1729,23 @@
 	<guideref targ="chap:vecm"/>.
       </para>
       <para context="cli">
-	Le liste opzionali <repl>lista-x</repl> e <repl>lista-rx</repl> permettono
-        di controllare per specifiche variabili esogene che entrano nel sistema
-        in modo non vincolato (<repl>lista-x</repl>) o vincolate allo spazio di
-        cointegrazione (<repl>lista-rx</repl>). Queste liste vanno separate tra
-        di loro e dalla <repl>lista-y</repl> usando il carattere punto e
-        virgola.
+	Le liste opzionali <repl>lista-x</repl> e
+	<repl>lista-rx</repl> permettono di controllare per specifiche
+	variabili esogene che entrano nel sistema in modo non
+	vincolato (<repl>lista-x</repl>) o vincolate allo spazio di
+	cointegrazione (<repl>lista-rx</repl>). Queste liste vanno
+	separate tra di loro e dalla <repl>lista-y</repl> usando il
+	carattere punto e virgola.
       </para>
       <para context="gui">
-	È possibile controllare per le variabili esogene aggiungendole nel campo
-        inferiore. Per impostazione predefinita, le variabili vengono aggiunte al
-        modello in forma non vincolata (indicata da una lettera <lit>N</lit> vicino
-        al nome della variabile). Se si vuole che una certa variabile esogena
-        sia vincolata allo spazio di cointegrazione, basta fare clic col tasto
-        destro e selezionare <quote>Vincolata</quote> dal menu pop-up. Il simbolo
-        vicino alla variabile diventerà una V.
+	È possibile controllare per le variabili esogene aggiungendole
+	nel campo inferiore. Per impostazione predefinita, le
+	variabili vengono aggiunte al modello in forma non vincolata
+	(indicata da una lettera <lit>N</lit> vicino al nome della
+	variabile). Se si vuole che una certa variabile esogena sia
+	vincolata allo spazio di cointegrazione, basta fare clic col
+	tasto destro e selezionare <quote>Vincolata</quote> dal menu
+	pop-up. Il simbolo vicino alla variabile diventerà una V.
       </para>
       <para context="cli">
         L'opzione <lit>--seasonals</lit>, che può accompagnare una qualsiasi
@@ -1614,7 +1805,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Serie storiche/Test do cointegrazione/Johansen</menu-path>
+      <menu-path>/Modello/Serie storiche/Test di cointegrazione/Johansen</menu-path>
     </gui-access>
 
   </command>
@@ -1661,12 +1852,14 @@
 	</li>
       </ilist>
 
-      <para>Se si compatta un intero dataset, il metodo di compattamento
-        scelto diventa quello predefinito, ma se si è scelto un metodo di
-        compattamento per una certa variabile (nel menù <quote>Variabile/Modifica
-        attributi</quote>) viene usato quel metodo al posto di quello predefinito.
-        Se il metodo di compattamento è già stato scelto per tutte le variabili, non
-        viene presentata la scelta per il metodo di compattamento predefinito.
+      <para>Se si compatta un intero dataset, il metodo di
+      compattamento scelto diventa quello predefinito, ma se si è
+      scelto un metodo di compattamento per una certa variabile (nel
+      menù <quote>Variabile/Modifica attributi</quote>) viene usato
+      quel metodo al posto di quello predefinito.  Se il metodo di
+      compattamento è già stato scelto per tutte le variabili, non
+      viene presentata la scelta per il metodo di compattamento
+      predefinito.
 	</para>
 
     </description>
@@ -1787,17 +1980,21 @@
     </usage>
 
     <description>
-      <para>
+      <para context="notex">
 	Mostra i valori della funzione di autocorrelazione per la
-	<repl>variabile</repl> specificata (dal nome o dal numero).
-        I valori sono definiti come
-	<equation status="inline" 
-	  tex="$\hat{\rho}(u_t, u_{t-s})$"
-	  ascii="rho(u(t), u(t-s))"
-	  graphic="autocorr"/> dove <math>u</math><sub>t</sub>
+	<repl>variabile</repl> specificata (dal nome o dal numero).  I
+	valori sono definiti come &rgr;(<math>u</math><sub>t</sub>,
+	<math>u</math><sub>t-s</sub>) dove <math>u</math><sub>t</sub>
 	è la <math>t</math>-esima osservazione della variabile
 	<math>u</math> e <math>s</math> è il numero dei
 	ritardi.
+      </para>
+      <para context="tex">
+	Mostra i valori della funzione di autocorrelazione per la
+	<repl>variabile</repl> specificata (dal nome o dal numero).  I
+	valori sono definiti come $\hat{\rho}(u_t, u_{t-s})$, where
+	$u_t$ è la $t$-esima osservazione della variabile e $s$ è il
+	numero dei ritardi.
       </para>
 
       <para>
@@ -1812,10 +2009,24 @@
       </para>
 
       <para>
-	Se viene specificato un valore <repl>max-ritardo</repl>, la lunghezza
-        del correlogramma viene limitata al numero di ritardi specificato, altrimenti
-        viene scelta automaticamente in funzione della frequenza dei dati e del
-        numero di osservazioni.
+	Se viene specificato un valore <repl>max-ritardo</repl>, la
+	lunghezza del correlogramma viene limitata al numero di
+	ritardi specificato, altrimenti viene scelta automaticamente
+	in funzione della frequenza dei dati e del numero di
+	osservazioni.
+      </para>
+
+      <para>
+	By default, a plot of the correlogram is produced: a gnuplot
+	graph in interactive mode or an ASCII graphic in batch mode.
+	This can be adjusted via the <opt>plot</opt> option. The
+	acceptable parameters to this option are <lit>none</lit> (to
+	suppress the plot); <lit>ascii</lit> (to produce a text
+	graphic even when in interactive mode); <lit>display</lit> (to
+	produce a gnuplot graph even when in batch mode); or a file
+	name. The effect of providing a file name is as described for
+	the <opt>output</opt> option of the <cmdref targ="gnuplot"/>
+	command.
       </para>
 
       <para>

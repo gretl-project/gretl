@@ -293,9 +293,8 @@
       (1996)</cite>.  The relevant code is included by kind permission
       of the author.  In the case of the test with linear trend using
       GLS these <emphasis>P</emphasis>-values are not applicable;
-      critical values from Table 1 in <cite
-      key="ERS96">Elliott, Rothenberg and Stock (1996)</cite>
-      are shown instead.
+      critical values from Table 1 in <cite key="ERS96">Elliott,
+      Rothenberg and Stock (1996)</cite> are shown instead.
       </para>
 
       <subhead context="cli">Panel data</subhead>
@@ -666,36 +665,38 @@
       </para>
       <para>
 	The last (optional) field in the command is for specifying
-	instruments.  If no instruments are given, it is assumed that all
-	the independent variables are strictly exogenous.  If you specify
-	any instruments, you should include in the list any strictly
-	exogenous independent variables.  For predetermined regressors,
-	you can use the <lit>GMM</lit> function to include a specified
-	range of lags in block-diagonal fashion.  This is illustrated in
-	the third example above.  The first argument to <lit>GMM</lit> is
-	the name of the variable in question, the second is the minimum
-	lag to be used as an instrument, and the third is the maximum lag.
-	If the third argument is given as 0, all available lags are used.
+	instruments.  If no instruments are given, it is assumed that
+	all the independent variables are strictly exogenous.  If you
+	specify any instruments, you should include in the list any
+	strictly exogenous independent variables.  For predetermined
+	regressors, you can use the <lit>GMM</lit> function to include
+	a specified range of lags in block-diagonal fashion.  This is
+	illustrated in the third example above.  The first argument to
+	<lit>GMM</lit> is the name of the variable in question, the
+	second is the minimum lag to be used as an instrument, and the
+	third is the maximum lag.  If the third argument is given as
+	0, all available lags are used.
       </para>
       <para>
 	By default the results of 1-step estimation are reported (with
-	robust standard errors).  You may select 2-step estimation as an
-	option.  In both cases tests for autocorrelation of orders 1 and 2
-	are provided, as well as the Sargan overidentification test and a
-	Wald test for the joint significance of the regressors.  Note that
-	in this differenced model first-order autocorrelation is not a
-	threat to the validity of the model, but second-order
-	autocorrelation violates the maintained statistical assumptions.
+	robust standard errors).  You may select 2-step estimation as
+	an option.  In both cases tests for autocorrelation of orders
+	1 and 2 are provided, as well as the Sargan overidentification
+	test and a Wald test for the joint significance of the
+	regressors.  Note that in this differenced model first-order
+	autocorrelation is not a threat to the validity of the model,
+	but second-order autocorrelation violates the maintained
+	statistical assumptions.
       </para>
       <para>
-	In the case of 2-step estimation, standard errors are by default
-	computed using the finite-sample correction suggested by <cite
-	key="windmeijer05">Windmeijer (2005)</cite>.  The standard
-	asymptotic standard errors associated with the 2-step estimator
-	are generally reckoned to be an unreliable guide to inference, but
-	if for some reason you want to see them you can use the
-	<opt>--asymptotic</opt> option to turn off the Windmeijer
-	correction.
+	In the case of 2-step estimation, standard errors are by
+	default computed using the finite-sample correction suggested
+	by <cite key="windmeijer05">Windmeijer (2005)</cite>.  The
+	standard asymptotic standard errors associated with the 2-step
+	estimator are generally reckoned to be an unreliable guide to
+	inference, but if for some reason you want to see them you can
+	use the <opt>--asymptotic</opt> option to turn off the
+	Windmeijer correction.
       </para>
       <para>
 	If the <opt>--time-dummies</opt> option is given, a set of
@@ -829,33 +830,34 @@
     <description>
 
       <para context="cli">
-	If no <repl>indepvars</repl> list is given, estimates a univariate
-	ARIMA (Autoregressive, Integrated, Moving Average) model.  The
-	values <repl>p</repl>, <repl>d</repl> and <repl>q</repl>
-	represent the autoregressive (AR) order, the differencing order,
-	and the moving average (MA) order respectively.  These values may be
-	given in numerical form, or as the names of pre-existing scalar
-	variables.  A <repl>d</repl> value of 1, for instance, means that
-	the first difference of the dependent variable should be taken before
+	If no <repl>indepvars</repl> list is given, estimates a
+	univariate ARIMA (Autoregressive, Integrated, Moving Average)
+	model.  The values <repl>p</repl>, <repl>d</repl> and
+	<repl>q</repl> represent the autoregressive (AR) order, the
+	differencing order, and the moving average (MA) order
+	respectively.  These values may be given in numerical form, or
+	as the names of pre-existing scalar variables.  A
+	<repl>d</repl> value of 1, for instance, means that the first
+	difference of the dependent variable should be taken before
 	estimating the ARMA parameters.
       </para>
 
       <para context="cli">
-	If you wish to include only specific AR or MA lags in the model
-	(as opposed to all lags up to a given order) you can substitute
-	for <repl>p</repl> and/or <repl>q</repl> either (a) the name of a
-	pre-defined matrix containing a set of integer values or (b) an
-	expression such as <lit>{1,4}</lit>; that is, a set of lags
-	separated by commas and enclosed in braces.
+	If you wish to include only specific AR or MA lags in the
+	model (as opposed to all lags up to a given order) you can
+	substitute for <repl>p</repl> and/or <repl>q</repl> either (a)
+	the name of a pre-defined matrix containing a set of integer
+	values or (b) an expression such as <lit>{1,4}</lit>; that is,
+	a set of lags separated by commas and enclosed in braces.
       </para>
 
       <para context="cli">
 	The optional integer values <repl>P</repl>, <repl>D</repl> and
 	<repl>Q</repl> represent the seasonal AR, order for seasonal
 	differencing and seasonal MA order respectively.  These are
-	applicable only if the data have a frequency greater than 1 (for
-	example, quarterly or monthly data).  These orders must be
-	given in numerical form or as scalar variables.
+	applicable only if the data have a frequency greater than 1
+	(for example, quarterly or monthly data).  These orders must
+	be given in numerical form or as scalar variables.
       </para>
 
       <para context="cli">
@@ -868,23 +870,24 @@
       </para>
 
       <para context="cli">
-	An alternative form of syntax is available for this command: if
-	you do not want to apply differencing (either seasonal or
-	non-seasonal), you may omit the <repl>d</repl> and <repl>D</repl>
-	fields altogether, rather than explicitly entering 0.  In
-	addition, <lit>arma</lit> is a synonym or alias for
-	<lit>arima</lit>.  Thus for example the following command is a
-	valid way to specify an ARMA(2, 1) model:
+	An alternative form of syntax is available for this command:
+	if you do not want to apply differencing (either seasonal or
+	non-seasonal), you may omit the <repl>d</repl> and
+	<repl>D</repl> fields altogether, rather than explicitly
+	entering 0.  In addition, <lit>arma</lit> is a synonym or
+	alias for <lit>arima</lit>.  Thus for example the following
+	command is a valid way to specify an ARMA(2, 1) model:
       </para>
       <code context="cli">
 	arma 2 1 ; y
       </code>
 
       <para context="gui">
-	Estimates an ARMA model, with or without exogenous regressors. If
-	the order of differencing is greater than zero the model becomes
-	ARIMA.  If the data have a frequency greater than 1 the option of
-	including a seasonal component is presented.
+	Estimates an ARMA model, with or without exogenous
+	regressors. If the order of differencing is greater than zero
+	the model becomes ARIMA.  If the data have a frequency greater
+	than 1 the option of including a seasonal component is
+	presented.
       </para>
 
       <para context="gui">
@@ -907,15 +910,17 @@
       </para>
 
       <para context="cli">
-	When the native exact ML code is used, estimated standard errors are
-	by default based on a numerical approximation to the (negative inverse
-	of) the Hessian, with a fallback to the outer product of the gradient
-	(OPG) if calculation of the numerical Hessian should fail. Two
-	(mutually exclusive) option flags can be used to force the issue: the
-	<opt>--opg</opt> option forces use of the OPG method, with no attempt
-	to compute the Hessian, while the <opt>--hessian</opt> flag disables
-	the fallback to OPG. Note that failure of the numerical Hessian
-	computation is generally an indicator of a misspecified model.
+	When the native exact ML code is used, estimated standard
+	errors are by default based on a numerical approximation to
+	the (negative inverse of) the Hessian, with a fallback to the
+	outer product of the gradient (OPG) if calculation of the
+	numerical Hessian should fail. Two (mutually exclusive) option
+	flags can be used to force the issue: the <opt>--opg</opt>
+	option forces use of the OPG method, with no attempt to
+	compute the Hessian, while the <opt>--hessian</opt> flag
+	disables the fallback to OPG. Note that failure of the
+	numerical Hessian computation is generally an indicator of a
+	misspecified model.
       </para>
 
       <para context="cli">
@@ -1613,10 +1618,10 @@
 	<cmdref targ="adf"/> command for details of this procedure.
       </para>
       <para context="gui">
-	By default, the cointegrating regression contains a constant. If
-	you wish to suppress the constant, or to add a linear or quadratic
-	trend, select the appropriate option from the set of radio buttons
-	in the Cointegration dialog box.
+	By default, the cointegrating regression contains a
+	constant. If you wish to suppress the constant, or to add a
+	linear or quadratic trend, select the appropriate option from
+	the set of radio buttons in the Cointegration dialog box.
       </para>
 
       <para><emphasis>P-</emphasis>values for this test are based on
@@ -1713,7 +1718,9 @@
 	listed variables for the selected lag order.  For details of
 	this test see, for example, Hamilton, <book>Time Series
 	Analysis</book> (1994), Chapter 20.  P-values are computed via
-	Doornik's (1998) gamma approximation.
+	Doornik's (1998) gamma approximation. Two sets of
+	p-values are shown for the trace test, straight asymptotic
+	values and values adjusted for the sample size.
       </para>
 
       <para context="cli">
