@@ -660,13 +660,37 @@ char *get_built_in_string_by_name (const char *name)
     return NULL;
 }
 
+/* Try to recode the content of a local file or web resource
+   to UTF-8. Can be tricky since we don't know the original
+   encoding of the content.
+*/
+
 static gchar *recode_content (gchar *orig, int *err)
 {
+    const gchar *charset;
     GError *gerr = NULL;
     gsize wrote = 0;
     gchar *tr;
 
-    tr = g_locale_to_utf8(orig, -1, NULL, &wrote, &gerr);
+    if (g_get_charset(&charset)) {
+	/* we're in a UTF-8 locale, so we know that 
+	   g_locale_to_utf8 won't do the job; so guess
+	   the content is iso-8859-something?
+	*/
+	tr = g_convert(orig, -1, "UTF-8", "ISO-8859-15",
+		       NULL, &wrote, &gerr);
+    } else {
+	/* try assuming the material is in the locale
+	   encoding */
+	tr = g_locale_to_utf8(orig, -1, NULL, &wrote, &gerr);
+	if (gerr != NULL) {
+	    /* failed: try iso-8859-15? */
+	    g_error_free(gerr);
+	    gerr = NULL;
+	    tr = g_convert(orig, -1, "UTF-8", "ISO-8859-15",
+			   NULL, &wrote, &gerr);
+	}
+    }
 
     if (gerr != NULL) {
 	gretl_errmsg_set(gerr->message);
