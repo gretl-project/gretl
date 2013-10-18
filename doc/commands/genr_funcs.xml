@@ -5946,6 +5946,7 @@
     <function name="readfile" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
+	<fnarg type="string" optional="true">codeset</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -5961,7 +5962,18 @@
 	  resource.
 	</para>
 	<para>
-	  Also see the <fncref targ="sscanf"/> function.
+	  If the text to be read is not encoded in UTF-8, gretl will
+	  try recoding it from the current locale codeset if that is
+	  not UTF-8, or from ISO-8859-15 otherwise. If this simple
+	  default does not meet your needs you can use the optional
+	  second argument to specify a codeset. For example, if you
+	  want to read text in Microsoft codepage 1251 and that is not
+	  your locale codeset, you should give a second argument of
+	  <lit>"cp1251"</lit>.
+	</para>
+	<para>
+	  Also see the <fncref targ="sscanf"/> and <fncref
+	  targ="getline"/> functions.
 	</para>
       </description>
     </function>

@@ -4420,8 +4420,6 @@ static NODE *single_string_func (NODE *n, int f, parser *p)
 
 	if (f == F_ARGNAME) {
 	    ret->v.str = gretl_func_get_arg_name(s, &p->err);
-	} else if (f == F_READFILE) {
-	    ret->v.str = retrieve_file_content(s, &p->err);
 	} else if (f == F_BACKTICK) {
 	    ret->v.str = gretl_backtick(s, &p->err);
 	} else if (f == F_STRSTRIP) {
@@ -4431,6 +4429,29 @@ static NODE *single_string_func (NODE *n, int f, parser *p)
 	    normalize_join_colname(ret->v.str, s, 0);
 	} else {
 	    p->err = E_DATA;
+	}
+    }
+
+    return ret;
+}
+
+static NODE *readfile_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const char *codeset = NULL;
+
+	if (!null_or_empty(r)) {
+	    if (r->t == STR) {
+		codeset = r->v.str;
+	    } else {
+		node_type_error(F_READFILE, 2, STR, r, p);
+	    }
+	}
+
+	if (!p->err) {
+	    ret->v.str = retrieve_file_content(l->v.str, codeset, &p->err);
 	}
     }
 
@@ -10313,7 +10334,6 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;	
     case F_ARGNAME:
-    case F_READFILE:
     case F_BACKTICK:
     case F_STRSTRIP:
     case F_FIXNAME:
@@ -10323,6 +10343,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = argname_from_uvar(l, p);
 	} else {
 	    node_type_error(t->t, 0, STR, l, p);
+	}
+	break;
+    case F_READFILE:
+	if (l->t == STR) {
+	    ret = readfile_node(l, r, p);
+	} else {
+	    node_type_error(t->t, 1, STR, l, p);
 	}
 	break;
     case F_GETENV:

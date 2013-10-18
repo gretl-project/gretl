@@ -665,14 +665,19 @@ char *get_built_in_string_by_name (const char *name)
    encoding of the content.
 */
 
-static gchar *recode_content (gchar *orig, int *err)
+static gchar *recode_content (gchar *orig, const char *codeset,
+			      int *err)
 {
     const gchar *charset = NULL;
     GError *gerr = NULL;
     gsize wrote = 0;
     gchar *tr;
 
-    if (g_get_charset(&charset)) {
+    if (codeset != NULL) {
+	/* the user specified the source encoding */
+	tr = g_convert(orig, -1, "UTF-8", codeset,
+		       NULL, &wrote, &gerr);
+    } else if (g_get_charset(&charset)) {
 	/* we're in a UTF-8 locale, so we know that 
 	   g_locale_to_utf8 won't do the job; so guess
 	   the content is iso-8859-something?
@@ -722,7 +727,7 @@ static int shell_grab (const char *arg, char **sout)
 	char *content = *sout;
 
 	if (!g_utf8_validate(content, -1, NULL)) {
-	    content = recode_content(content, &err);
+	    content = recode_content(content, NULL, &err);
 	    *sout = content;
 	}
 
@@ -810,7 +815,8 @@ static int is_web_resource (const char *s)
     }
 }
 
-char *retrieve_file_content (const char *fname, int *err)
+char *retrieve_file_content (const char *fname, const char *codeset,
+			     int *err)
 {
     char *content = NULL;
     size_t len = 0;
@@ -820,7 +826,7 @@ char *retrieve_file_content (const char *fname, int *err)
     } else if (is_web_resource(fname)) {
 	content = retrieve_public_file_as_buffer(fname, &len, err);
 	if (!*err && !g_utf8_validate(content, len, NULL)) {
-	    content = recode_content(content, err);
+	    content = recode_content(content, codeset, err);
 	}
     } else {
 	char fullname[FILENAME_MAX];
@@ -837,7 +843,7 @@ char *retrieve_file_content (const char *fname, int *err)
 	    *err = E_FOPEN;
 	    g_error_free(gerr);
 	} else if (!g_utf8_validate(content, len, NULL)) {
-	    content = recode_content(content, err);
+	    content = recode_content(content, codeset, err);
 	}
     }
 

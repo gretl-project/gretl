@@ -255,7 +255,6 @@ enum {
     F_XPX,
     F_ARGNAME,
     F_OBSLABEL,
-    F_READFILE,
     F_BACKTICK,
     F_STRLEN,
     F_VARNAME,
@@ -342,6 +341,7 @@ enum {
     F_MREAD,
     F_GETLINE,
     F_ISODATE,
+    F_READFILE,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,

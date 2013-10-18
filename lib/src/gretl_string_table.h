@@ -69,7 +69,8 @@ char *gretl_getenv (const char *key, int *defined, int *err);
 
 char *retrieve_date_string (int t, const DATASET *dset, int *err);
 
-char *retrieve_file_content (const char *fname, int *err);
+char *retrieve_file_content (const char *fname, const char *codset,
+			     int *err);
 
 char *gretl_backtick (const char *arg, int *err);
 
