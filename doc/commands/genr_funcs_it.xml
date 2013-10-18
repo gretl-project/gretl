@@ -424,7 +424,7 @@
     <function name="$nvars" section="access" output="int">
       <description>
 	<para>
-	  Produce il numero delle variabili nel dataset (inclusa la costante).
+	Produce il numero delle variabili nel dataset (inclusa la costante).
 	</para>
       </description>
     </function>
@@ -1103,7 +1103,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the inverse hyperbolic tangent of <argname>x</argname>.
+	  Restituisce l'arcotangente iperbolica di <argname>x</argname>.
 	  <seelist>
 	    <fncref targ="tanh"/>
 	  </seelist>
@@ -1117,20 +1117,22 @@
       </fnargs>
       <description>
 	<para>
-	  Closely related to the C library function of the same name.
-	  Returns the result of converting the string
-	  <argname>s</argname> (or the leading portion thereof, after
-	  discarding any initial white space) to a floating-point
-	  number.  Unlike C's <lit>atof</lit>, however, the decimal
-	  character is always assumed (for reasons of portability) to
-	  be <quote><lit>.</lit></quote>. Any characters that follow
-	  the portion of <argname>s</argname> that converts to a
-	  floating-point number under this assumption are ignored.
+	  Analoga alla funzione della libreria C con lo stesso
+	  nome. Restituisce il risultato della conversione della
+	  stringa <argname>s</argname> (o della porzione di essa che
+	  segue qualsiasi spazio iniziale) in un numero a virgola
+	  mobile. In modo diverso dalla funzione <lit>atof</lit> in C,
+	  comunque, per questioni di portabilità, si assume sempre che
+	  il carattere decimale sia
+	  <quote><lit>.</lit></quote>. Qualsiasi carattere che segue
+	  la porzione di <argname>s</argname> convertita in numero
+	  decimale a virgola mobile sotto questa assunzione è
+	  ignorata.
 	</para>
 	<para>
-	  If none of <argname>s</argname> (following any discarded
-	  white space) is convertible under the stated assumption,
-	  <lit>NA</lit> is returned.
+	  Se nessuna porzione di <argname>s</argname> (che segue
+	  qualsiasi spazio iniziale) risulta convertibile sotto le
+	  suddette assunzioni, la funzione restituisce <lit>NA</lit>.
 	</para>
 	<code>
 	  # examples
@@ -1141,8 +1143,7 @@
 	  x = atof(",234")  # gives x = NA
 	</code>	
 	<para>
-	  See also <fncref targ="sscanf"/> for more flexible string to
-	  numeric conversion.
+	  Si veda anche <fncref targ="sscanf"/> per modalità più flessibili di conversione da stringa a numero.
 	</para>
       </description>
     </function>
@@ -1155,35 +1156,40 @@
       </fnargs>
       <description>
 	<para>
-	  Computes one of the Bessel function variants for order
-	  <argname>v</argname> and argument <argname>x</argname>.  The return
-	  value is of the same type as <argname>x</argname>. The specific
-	  function is selected by the first argument, which must be
-	  <lit>J</lit>, <lit>Y</lit>, <lit>I</lit>, or <lit>K</lit>.  A good
-	  discussion of the Bessel functions can be found on Wikipedia; here
-	  we give a brief account.
+	  Calcola una delle varianti della funzione di Bessel di
+	  ordine <argname>v</argname> con argomento
+	  <argname>x</argname>. Il valore restituito è dello stesso
+	  tipo dell'argomento <argname>x</argname>. La variante
+	  specifica della funzione è selezionata sulla base del primo
+	  argomento, che deve essere <lit>J</lit>, <lit>Y</lit>,
+	  <lit>I</lit>, o <lit>K</lit>.  Una buona discussione delle
+	  funzioni di Bessel si trova su Wikipedia; qui forniamo una
+	  breve sintesi.
 	</para>
 	<para>
-	  case <lit>J</lit>: Bessel function of the first kind.  Resembles a
-	  damped sine wave.  Defined for real <argname>v</argname> and
-	  <argname>x</argname>, but if <argname>x</argname> is negative
-	  then <argname>v</argname> must be an integer.
+	  caso <lit>J</lit>: Funzione di Bessel del primo
+	  tipo. Ricorda un'onda sinusoidale smorzata. Definita per
+	  <argname>v</argname> e <argname>x</argname> numeri
+	  reali. Tuttavia, se <argname>x</argname> è negativo,
+	  <argname>v</argname> deve essere un numero intero.
 	</para>
 	<para>
-	  case <lit>Y</lit>: Bessel function of the second kind.  Defined
-	  for real <argname>v</argname> and <argname>x</argname> but has
-	  a singularity at <argname>x</argname> = 0.
+	  caso <lit>Y</lit>: Funzione di Bessel del secondo
+	  tipo. Definita per <argname>v</argname> e
+	  <argname>x</argname> reali, ma ha una singolarità a
+	  <argname>x</argname> = 0.
 	</para>
 	<para>
-	  case <lit>I</lit>: Modified Bessel function of the first kind.
-	  An exponentially growing function.  Acceptable arguments are
-	  as for case <lit>J</lit>.
+	  caso <lit>I</lit>: Funzione di Bessel modificata del primo
+	  tipo. Una funzione con crescita esponenziale. Gli argomenti
+	  accettati sono gli stessi del caso <lit>J</lit>.
 	</para>
 	<para>
-	  case <lit>K</lit>: Modified Bessel function of the second kind.  An
-	  exponentially decaying function.  Diverges at <argname>x</argname> =
-	  0 and is not defined for negative <argname>x</argname>.  Symmetric
-	  around <argname>v</argname> = 0.
+	  caso <lit>K</lit>: Funzione di Bessel modificata del secondo
+	  tipo. Una funzione con decadimento esponenziale. Diverge a
+	  <argname>x</argname> = 0 e non è definita per valori
+	  negativi di <argname>x</argname>. È simmetrica
+	  attorno a <argname>v</argname> = 0.
 	</para>
       </description>
     </function>
@@ -1195,21 +1201,24 @@
       </fnargs>
       <description>
 	<para>
-	  Numerical maximization via the method of Broyden, Fletcher, Goldfarb
-	  and Shanno.  The vector <argname>b</argname> should hold the initial
-	  values of a set of parameters, and the string <argname>s</argname>
-	  should specify a call to a function that calculates the (scalar)
-	  criterion to be maximized, given the current parameter values and
-	  any other relevant data. If the object is in fact minimization, this
-	  function should return the negative of the criterion.  On successful
-	  completion, <lit>BFGSmax</lit> returns the maximized value of the
-	  criterion, and <argname>b</argname> holds the parameter values which
-	  produce the maximum.  
+	  Massimizzazione numerica con il metodo di Broyden, Fletcher,
+	  Goldfarb e Shanno. Il vettore <argname>b</argname> deve
+	  contenere i valori iniziali di un insieme di parametri,
+	  mentre la stringa <argname>s</argname> deve specificare la
+	  chiamata a una funzione che calcola il criterio (scalare) da
+	  massimizzare, dati i valori correnti dai parametri e
+	  qualsiasi altro dato rilevante. Se l'oggetto è di fatto una
+	  minimizzazione, è sufficiente ridefinire la funzione
+	  chiamata in modo che restituisca il criterio cambiato di
+	  segno. In caso di successo, <lit>BFGSmax</lit> restituisce
+	  il valore massimizzato del criterio, e <argname>b</argname>
+	  contiene i valori dei parametri associati al valore del
+	  criterio restituito.
 	</para>
 	<para>
-	  For more details and examples see the chapter
-	  on special functions in <lit>genr</lit> in 
-	  <guideref targ="sec:genr-numerical"/>.
+	  Per maggiori dettagli ed esempi, si veda il capitolo sulle
+	  funzioni speciali in <lit>genr</lit> in <guideref
+	  targ="sec:genr-numerical"/>.
 	  <seelist>
 	    <fncref targ="fdjac"/>
 	  </seelist>
@@ -1223,9 +1232,10 @@
       </fnargs>
       <description>
 	<para>
-	  Extracts the cyclical component of series <argname>y</argname>
-	  via the Baxter&ndash;King bandpass filter, a two-sided symmetric
-	  filter. See <guideref targ="chap-genr"/> for details.
+	  Estrae la componente ciclica della serie
+	  <argname>y</argname> attraverso il filtro passa banda di
+	  Baxter&ndash;King, a filtro simmetrico two-sided. Per i
+	  dettagli, si veda <guideref targ="chap-genr"/>.
 	  <seelist>
 	    <fncref targ="hpfilt"/>
 	  </seelist>
@@ -1240,8 +1250,7 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns the Box&ndash;Cox transformation with parameter
-	  <argname>d</argname> for the positive series <argname>y</argname>.
+	  Restituisce la trasformazione Box&ndash;Cox con parametro <argname>d</argname> della serie positiva <argname>y</argname>.
 	</para>	  
 	<para context="tex">
 	  \[ y_t^{(d)} = \left\{ \begin{array}{ll} \frac{y_t^d - 1}{d} &amp;
@@ -1249,10 +1258,7 @@
 	  \end{array} \right. \]
 	</para>
 	<para context="notex">
-	  The transformed series is 
-	  (<math>y</math><sup>d</sup> - 1)/<math>d</math> for
-	  <math>d</math> not equal to zero, or log(<math>y</math>) for
-	  <math>d</math> = 0.
+	  La serie trasformata è (<math>y</math><sup>d</sup> - 1)/<math>d</math> per <math>d</math> diverso da zero, o log(<math>y</math>) per <math>d</math> = 0.
 	</para>
       </description>
     </function>
@@ -1265,20 +1271,10 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the result from application of a low-pass
-	  Butterworth filter with order <argname>n</argname> and
-	  frequency cutoff <argname>omega</argname> to the series
-	  <argname>y</argname>. The cutoff is expressed in degrees and
-	  must be greater than 0 and less than 180. Smaller cutoff
-	  values restrict the pass-band to lower frequencies and hence
-	  produce a smoother trend. Higher values of
-	  <argname>n</argname> produce a sharper cutoff, at the cost
-	  of possible numerical instability. 
+	  Restituisce il risultato dell'applicazione di un filtro passa-basso Butterworth di ordine <argname>n</argname> e frequenza di taglio <argname>omega</argname> alla serie <argname>y</argname>. La frequenza di taglio è espressa in gradi e deve essere maggiore di 0 e minore di 180. Frequenze di taglio minori restringono il passa banda alle frequenze minori e quindi producono trend più smussati. Valori maggiori di <argname>n</argname> producono un taglio più netto, al costo di una possibile instabilità numerica. 
 	</para>
 	<para>
-	  Inspecting the periodogram of the target series is a
-	  useful preliminary when you wish to apply this function.
-	  See <guideref targ="chap-filters"/> for details.
+	  L'esame del periodogramma della serie target è un utile fase preliminare da compiere quando si vuole applicare una tale funzione. Si veda <guideref targ="chap-filters"/> per i dettagli.
 	  <seelist>
 	    <fncref targ="bkfilt"/>
 	    <fncref targ="hpfilt"/>
@@ -1293,8 +1289,7 @@
       </fnargs>
       <description>
 	<para>
-	  Centers the columns of matrix <argname>X</argname> around their
-	  means.
+	  Centra le colonne della matrice <argname>X</argname> attorno alla loro media.
 	</para>
       </description>
     </function>
@@ -1398,7 +1393,7 @@
 	  \end{center}
 	</para>
 	<para>
-	  La maggior parte delle distribzioni usano degli aliases per
+	  La maggior parte delle distribuzioni usano degli alias per
 	  rendere più agevole la memorizzazione dei codici.  Il caso
 	  della normale bivariata è particolare: la sintassi è <lit>x
 	  = cdf(D, rho, z1, z2)</lit> dove <lit>rho</lit> è la
@@ -1407,7 +1402,7 @@
 	<para context="tex">
 	  La parametrizzazione che \app{gretl} adotta per la
 	  v.c. Gamma implica che la funzione di densità possa essere
-	  scitta come \[ f(x; k, \theta) = \frac{x^{k-1}}{\theta^k}
+	  scritta come \[ f(x; k, \theta) = \frac{x^{k-1}}{\theta^k}
 	  \frac{e^{-x/\theta}}{\Gamma(k)} \] dove $k>0$ è il parametro
 	  di forma e $\theta>0$ è il parametro di scala.
 	</para>
@@ -1447,8 +1442,8 @@
       </fnargs>
       <description>
 	<para>
-	  Ceiling function: returns the smallest integer greater than or
-	  equal to <argname>x</argname>. 
+	  Parte intera superiore: restituisce il più piccolo numero
+	  intero maggiore o uguale a <argname>x</argname>.
 	  <seelist> 
 	    <fncref targ="floor"/>
 	    <fncref targ="int"/>
@@ -1463,12 +1458,13 @@
       </fnargs>
       <description>
 	<para>
-	  Peforms a Cholesky decomposition of the matrix
-	  <argname>A</argname>, which is assumed to be symmetric and
-	  positive definite. The result is a lower-triangular matrix
-	  <math>K</math> which satisfies <equation status="inline"
-	  ascii="A = KK'"  tex="$A = KK'$"/>. The function will fail if
-	  <argname>A</argname> is not symmetric or not positive definite.
+	  Esegue la decomposizione di Cholesky della matrice
+	  <argname>A</argname>, che si assume essere simmetrica e
+	  definita positiva. Il risultato è una matrice triangolare
+	  inferiore <math>K</math> che soddisfa <equation
+	  status="inline" ascii="A = KK'" tex="$A = KK'$"/>. La
+	  funzione restituisce un errore se <argname>A</argname> non è
+	  simmetrica o definita positiva.
 	</para>
       </description>
     </function>
@@ -1481,27 +1477,30 @@
       </fnargs>
       <description>
 	<para>
-	  Expands the input data, <argname>Y</argname>, to a higher
-	  frequency, using the interpolation method of <cite
-	  key="chowlin71">Chow and Lin (1971)</cite>. It is
-	  assumed that the columns of <argname>Y</argname>
-	  represent data series; the returned matrix has as many columns
-	  as <argname>Y</argname> and <argname>xfac</argname> times
-	  as many rows.
+	  Espande i dati input, <argname>Y</argname>, a una frequenza
+	  maggiore, usando il metodo di interpolazione di <cite
+	  key="chowlin71">Chow e Lin (1971)</cite>. Si assume che le
+	  colonne di <argname>Y</argname> rappresentino serie di dati;
+	  la matrice restituita ha tante colonne quante sono le
+	  colonne di <argname>Y</argname> e tante righe quante sono
+	  quelle di <argname>Y</argname> moltiplicate per
+	  <argname>xfac</argname>.
 	</para>
 	<para>
-	  The second argument represents the expansion factor: it should
-	  be 3 for expansion from quarterly to monthly or 4 for expansion
-	  from annual to quarterly, these being the only supported
-	  factors. The optional third argument may be used to provide a
-	  matrix of covariates at the higher (target) frequency.
+	  Il secondo argomento rappresenta il fattore di espansione:
+	  deve essere 3 per espandere la frequenza della serie da
+	  trimestrale a mensile, o 4 per espansioni da annuale a
+	  trimestrale. Questi sono gli unici fattori di espansione
+	  supportati. Il terzo argomento opzionale può essere
+	  utilizzato per generare una matrice di regressori con una
+	  frequenza (obiettivo) maggiore.
 	</para>
 	<para>
-	  The regressors used by default are a constant and quadratic
-	  trend. If <argname>X</argname> is provided, its columns are
-	  used as additional regressors; it is an error if the number of
-	  rows in <argname>X</argname> does not equal
-	  <argname>xfac</argname> times the number of rows in
+	  I regressori utilizzati di default sono una costante e un
+	  trend quadratico. Se viene fornita <argname>X</argname>, le
+	  sue colonne sono utilizzate come regressori addizionali; è
+	  un errore se il numero di righe in <argname>X</argname> non
+	  è uguale a <argname>xfac</argname> per il numero di righe in
 	  <argname>Y</argname>.
 	</para>
       </description>
@@ -1533,8 +1532,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the cumulative distribution function for a standard
-	  normal. 
+	  Restituisce la funzione di distribuzione cumulativa di una normale standard. 
 	  <seelist>
 	    <fncref targ="dnorm"/>
 	    <fncref targ="qnorm"/>
@@ -1550,12 +1548,12 @@
       </fnargs>
       <description>
 	<para>
-	  Retrieves the name for column <argname>col</argname> of
-	  matrix <argname>M</argname>. If <argname>M</argname> has
-	  no column names attached the value returned is an empty
-	  string; if <argname>col</argname> is out of bounds for
-	  the given matrix an error is flagged. See also
-	  <fncref targ="colnames"/>.
+	  Restituisce il nome della colonna <argname>col</argname>
+	  della matrice <argname>M</argname>. Se <argname>M</argname>
+	  non ha nomi associati alle colonne, la funzione restituisce
+	  una stringa vuota; se <argname>col</argname> è fuori dai
+	  limiti per la matrice data, viene restituito un messaggio di
+	  errore. Si veda anche <fncref targ="colnames"/>.
 	</para>
       </description>
     </function>
@@ -1567,16 +1565,18 @@
       </fnargs>
       <description>
 	<para>
-	  Attaches names to the columns of the <by r="T" c="k"/> matrix
-	  <argname>M</argname>. If <argname>s</argname> is a named list, the
-	  column names are copied from the names of the variables; the list
-	  must have <math>k</math> members. If <argname>s</argname> is a
-	  string, it should contain <math>k</math> space-separated
-	  sub-strings.  The return value is 0 on successful completion,
-	  non-zero on error. See also <fncref targ="rownames"/>.
+	  Attribuisce dei nomi alle colonne della matrice
+	  <argname>M</argname>. Se <argname>s</argname> è una lista, i
+	  nomi sono copiati da quelli delle variabili; la lista deve
+	  avere tanti elementi quante sono le colonne di
+	  <argname>M</argname>. Se <argname>s</argname> è una stringa,
+	  deve contenere un numero appropriato di sub-stringhe
+	  separate da spazi.  Restituisce 0 se la funzione è adata a
+	  buon fine, non-zero altrimenti. Si veda anche <fncref
+	  targ="rownames"/>.
 	</para>
 	<para>
-	  Example:
+	  Esempio:
 	</para>
 	<code>
 	  matrix M = {1,2;2,1;4,1}
@@ -1611,8 +1611,8 @@
       </fnargs>
       <description>
 	<para>
-	  Computes the correlation coefficient between <argname>y1</argname>
-	  and <argname>y2</argname>. 
+	  Calcola il coefficienti di correlazione fra
+	  <argname>y1</argname> e <argname>y2</argname>.
 	  <seelist> 
 	    <fncref targ="cov"/>
 	    <fncref targ="mcov"/>
@@ -1676,7 +1676,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the hyperbolic cosine of <argname>x</argname>.
+	  Restituisce il coseno iperbolico di <argname>x</argname>.
 	</para>
 	<para context="tex">
 	  \[ \cosh x = \frac{e^x + e^{-x}}{2}  \]
@@ -1698,8 +1698,8 @@
       </fnargs>
       <description>
 	<para>
-	  Computes the covariance between <argname>y1</argname> and
-	  <argname>y2</argname>. 
+	  Calcola la covarianza fra <argname>y1</argname> e
+	  <argname>y2</argname>.
 	  <seelist> 
 	    <fncref targ="corr"/> 
 	    <fncref targ="mcov"/>
@@ -1838,7 +1838,7 @@
       <description>
 	<para>
 	  Restituisce il determinante di <argname>A</argname>,
-	  calcolato trmite la scomposizione LU.
+	  calcolato tramite la scomposizione LU.
 	  <seelist> 
 	    <fncref targ="ldet"/>
 	    <fncref targ="rcond"/>
@@ -1872,7 +1872,7 @@
       </fnargs>
       <description>
 	<para>
-	  Restituisce la simma diretta di <argname>A</argname> e
+	  Restituisce la somma diretta di <argname>A</argname> e
 	  <argname>B</argname>, ossia una matrice che ha
 	  <argname>A</argname> nell'angolo nord-ovest e
 	  <argname>B</argname> in quello sud-est. Se
@@ -2271,7 +2271,7 @@
 	  <math>b</math><sub>p</sub> <math>y</math><sub>t-p</sub>
 	</para>
 	<para>
-	  Se l'algomento <argname>x</argname> è una serie, il risultato
+	  Se l'argomento <argname>x</argname> è una serie, il risultato
 	  sarà esso stesso una serie. Se invece <argname>x</argname>
 	  è una matrice con <math>T</math> righe e <math>k</math>
 	  colonne, il risultato sarà una matrice delle stesse dimensioni, in
@@ -4306,7 +4306,7 @@
 	  di banda}, è un parametro (reale positivo) indicato
 	  dall'utente. Normalmente, è un numero piccolo: valori grandi
 	  di $h$ rendono $m(x)$ più liscia; una scelta molto comune è
-	  $n^{-0.2}$. Per più dettagli, si veda <guideref
+	  $n^{-0.2}$. Per maggiori dettagli, si veda <guideref
 	  targ="sec:nadarwat"/>.
 	</para>
 	<para context="notex">
@@ -4315,19 +4315,19 @@
 	  dall'utente. Normalmente, è un numero piccolo: valori grandi
 	  di <argname>h</argname> rendono <math>m(x)</math> più
 	  liscia; una scelta molto comune è
-	  <math>n</math><sup>-0.2</sup>. Per più dettagli, si veda
+	  <math>n</math><sup>-0.2</sup>. Per maggiori dettagli, si veda
 	  <guideref targ="sec:nadarwat"/>.
 	</para>
 	<para context="tex">
 	  Lo scalare $\tau$ viene usato per prevenire problemi
 	  numerici che si verificano quando la funzione kernel è
-	  clacolata troppo lontano dallo zero e viene detto il
+	  calcolata troppo lontano dallo zero e viene detto il
 	  parametro di taglio.
 	</para>
 	<para context="notex">
 	  Lo scalare <math>T</math> viene usato per prevenire problemi
 	  numerici che si verificano quando la funzione kernel è
-	  clacolata troppo lontano dallo zero e viene detto il
+	  calcolata troppo lontano dallo zero e viene detto il
 	  parametro di taglio.
 	</para>
         <para>
@@ -5329,7 +5329,7 @@
       <description>
 	<para>
 	  Se <argname>y</argname> è una serie, restituisce il suo
-	  <argname>p</argname>-esimo quantile. Ad sesmpio, se
+	  <argname>p</argname>-esimo quantile. Ad esempio, se
 	  <math>p</math> = 0.5, si avrà la mediana. 
 	</para>
 	<para>
@@ -5740,17 +5740,19 @@
       </fnargs>
       <description>
 	<para>
-	  Attaches names to the rows of the <by r="m" c="n"/> matrix
-	  <argname>M</argname>. If <argname>s</argname> is a named list, the
-	  row names are copied from the names of the variables; the list
-	  must have <math>m</math> members. If <argname>s</argname> is a
-	  string, it should contain <math>m</math> space-separated
-	  sub-strings.  The return value is 0 on successful completion,
-	  non-zero on error. See also <fncref targ="colnames"/>.
+	  Attribuisce dei nomi alle righe della matrice
+	  <argname>M</argname>. Se <argname>s</argname> è una lista, i
+	  nomi sono copiati da quelli delle variabili; la lista deve
+	  avere tanti elementi quante sono le righe di
+	  <argname>M</argname>. Se <argname>s</argname> è una stringa,
+	  deve contenere un numero appropriato di sub-stringhe
+	  separate da spazi.  Restituisce 0 se la funzione è adata a
+	  buon fine, non-zero altrimenti. Si veda anche <fncref
+	  targ="colnames"/>.
 	</para>
 	<para>
-      Example:
-    </para>
+	  Esempio:
+	</para>
     <code>
       matrix M = {1,2;2,1;4,1} 
       rownames(M, "Row1 Row2 Row3")
@@ -6081,7 +6083,7 @@
 	Le regole specificate nel <repl>formato</repl> vengono usate per
         analizzare la <repl>stringa</repl>. Le specifiche iniziano con un
         carattere <lit>%</lit>, e comprendono
-        <lit>%f</lit>, <lit>%g</lit> o <lit>%lf</lit> per i numeri in virgola
+        <lit>%f</lit>, <lit>%g</lit> o <lit>%lf</lit> per i numeri a virgola
         mobile; <lit>%d</lit> per gli interi; <lit>%s</lit> per le stringhe, e
 	<lit>%m</lit> per le matrici. È possibile inserire un numero intero
         positivo dopo il carattere percento, per impostare il numero massimo di
