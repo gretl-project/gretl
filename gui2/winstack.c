@@ -33,7 +33,12 @@
 
 #define WDEBUG 0
 
-static gint select_next_window (gpointer self);
+enum {
+    WINDOW_NEXT,
+    WINDOW_PREV
+};
+
+static gint select_other_window (gpointer self, int seq);
 
 /* Below: apparatus for keeping track of open gretl windows.
 
@@ -281,6 +286,36 @@ static gint sort_window_items (gconstpointer a, gconstpointer b)
     return ta - tb;
 }
 
+static gint sort_windows_by_time (gconstpointer a, gconstpointer b)
+{
+    GtkWidget *wa = window_from_action((GtkAction *) a);
+    GtkWidget *wb = window_from_action((GtkAction *) b);
+    guint ta, tb;
+
+    if (wa == mdata->main) return -1;
+    if (wb == mdata->main) return 1;
+
+    ta = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wa), "time"));
+    tb = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wb), "time"));
+
+    return ta - tb;
+}
+
+static gint sort_windows_by_inverse_time (gconstpointer a, gconstpointer b)
+{
+    GtkWidget *wa = window_from_action((GtkAction *) a);
+    GtkWidget *wb = window_from_action((GtkAction *) b);
+    guint ta, tb;
+
+    if (wa == mdata->main) return 1;
+    if (wb == mdata->main) return -1;
+
+    ta = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wa), "time"));
+    tb = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wb), "time"));
+
+    return tb - ta;
+}
+
 /* use real UTF-8 bullet character if possible, otherwise asterisk */
 
 static void make_bullet (char *bullet)
@@ -467,20 +502,26 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     }
 }
 
-static gint maybe_select_next_window (GdkEventKey *event,
-				      gpointer data)
+static gint maybe_select_other_window (GdkEventKey *event,
+				       gpointer data)
 {
-    if (event->keyval == GDK_grave) {
 #ifdef MAC_NATIVE
-	if (cmd_key(event)) {
-	    return select_next_window(data);
+    if (cmd_key(event) && event->keyval == GDK_grave) {
+	if (event->state & GDK_SHIFT_MASK) {
+	    return select_other_window(data, WINDOW_PREV);
+	} else {
+	    return select_other_window(data, WINDOW_NEXT);
 	}
-#else
-	if (event->state & GDK_CONTROL_MASK) {
-	    return select_next_window(data);
-	}
-#endif	
     }
+#else
+    if (event->state & GDK_MOD1_MASK) {
+	if (event->keyval == GDK_Page_Up) {
+	    return select_other_window(data, WINDOW_PREV);
+	} else if (event->keyval == GDK_Page_Down) {
+	    return select_other_window(data, WINDOW_NEXT);
+	}
+    }
+#endif	
 
     return FALSE;
 }
@@ -508,7 +549,7 @@ static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event,
     }
 #endif
 
-    return maybe_select_next_window(event, data);
+    return maybe_select_other_window(event, data);
 }
 
 void vwin_winlist_popup (GtkWidget *src, GdkEvent *event, 
@@ -557,7 +598,7 @@ gint vwin_catch_winlist_key (GtkWidget *src, GdkEventKey *event,
     }
 #endif
 
-    return maybe_select_next_window(event, vwin_toplevel(vwin));
+    return maybe_select_other_window(event, vwin_toplevel(vwin));
 }
 
 /* on exiting, check for any editing windows with unsaved
@@ -677,7 +718,7 @@ void cascade_session_windows (void)
     }
 }
 
-static gint select_next_window (gpointer self)
+static gint select_other_window (gpointer self, int seq)
 {
     static GList *wlist;
     static int targ;
@@ -701,8 +742,13 @@ static gint select_next_window (gpointer self)
 
 	if (wlist == NULL) {
 	    wlist = gtk_action_group_list_actions(window_group);
-	    wlist = g_list_sort(wlist, sort_window_items);
 	}
+
+	if (seq == WINDOW_PREV) {
+	    wlist = g_list_sort(wlist, sort_windows_by_inverse_time);
+	} else {
+	    wlist = g_list_sort(wlist, sort_windows_by_time);
+	}	
 
 	mylist = g_list_first(wlist);
 
@@ -726,12 +772,19 @@ static gint select_next_window (gpointer self)
 static gint window_key_release (GtkWidget *w, GdkEventKey *event, 
 				gpointer data)
 {
+#ifdef MAC_NATIVE
     if (event->keyval == GDK_Control_L || 
 	event->keyval == GDK_Control_R) {
-	return select_next_window(NULL);
-    } else {
-	return FALSE;
+	return select_other_window(NULL, 0);
     }
+#else
+    if (event->keyval == GDK_Alt_L || 
+	event->keyval == GDK_Alt_R) {
+	return select_other_window(NULL, 0);
+    }
+#endif
+    
+    return FALSE;
 }
 
 void attach_window_key_specials (GtkWidget *w)
@@ -1073,7 +1126,10 @@ static void menu_bar_add_winlist (windata_t *vwin)
     GtkWidget *img, *button = gtk_button_new();
     GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
 
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION >= 16
+#if GTK_MAJOR_VERSION == 3 || MAC_NATIVE
+    /* looks better with Adwaita */
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+#elif GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION >= 16
     /* doesn't work with gtk 3.2.4 or 3.4.0 */
     GtkStyle *style = gtk_widget_get_style(vwin->mbar);
     GValue val = {0};
@@ -1087,9 +1143,6 @@ static void menu_bar_add_winlist (windata_t *vwin)
 	gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
     }
     g_value_unset(&val);
-#elif GTK_MAJOR_VERSION == 3
-    /* looks better with Adwaita */
-    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
 #endif
 
     img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, 
