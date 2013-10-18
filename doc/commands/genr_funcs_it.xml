@@ -974,7 +974,7 @@
 	  e <fncref targ="gini"/>. Ciascuna di queste funzioni accetta
 	  come argomento una serie e restituisce uno scalare, e in tal
 	  senso può dirsi che <quote>aggrega</quote> la serie in un
-	  qualche modo. &Egrave; anche possibile inserire il nome di
+	  qualche modo. È anche possibile inserire il nome di
 	  una funzione definita dall'utente come aggregatore; come le
 	  funzioni supportate in modo nativo, tale funzione deve
 	  accettare come argomento una singola serie e ritornare uno
