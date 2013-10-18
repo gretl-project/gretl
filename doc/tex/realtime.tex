@@ -150,26 +150,15 @@ which case one would have to be on the lookout for a different date
 format.
 
 The final difference is that Alfred supplies an ``end date'' for each
-data vintage while the OECD supplies only a starting date. In relation
-to OECD files it is safe to assume that each vintage remains valid
-until it is superceded by the next, explicitly stated, value. With the
-Alfred files, however, it seems possible in principle that a given
-vintage could ``expire'' some time before the next vintage becomes
-available.
-
-What could this mean? Well, it is possible that a given data-point has
-a definite value up to time $t$, but at $t+1$ it turns to
-``missing''. This might be the consequence of a change in the
-calculation method for the variable in question: the method has
-changed but, over some interval, the value according to the new method
-has not yet been prepared. We might expect that if this were to happen
-a new revision with a value of \texttt{NA} would be published, and
-recorded in the relevant realtime file. However, another way of
-representing this situation might be to show one revision as ending at
-$t$ and the next starting at $t+k$ (where $k$ is greater than one
-day), leaving a ``hole'' in the realtime file to represent,
-implicitly, a period during which the value is missing. We'll consider
-the consequences of this below.
+data vintage while the OECD supplies only a starting date. But there
+is less to this difference than meets the eye: according to the Alfred
+webmaster, ``by design, a new vintage must start immediately following
+(the day after) the lapse of the old vintage''---so the end date
+conveys no independent information.\footnote{Email received from
+  Travis May of the Federal Reserve Bank of St.\ Louis, 2013-10-17.
+  This closes off the possibility that a given vintage could lapse or
+  expire some time before the next vintage becomes available, hence
+  giving rise to a ``hole'' in an Alfred realtime file.}
 
 \section{More on time-related options}
 \label{sec:realtime-tconvert}
@@ -369,15 +358,6 @@ the outer dataset or you need a sophisticated filter, written as a
 hansl function. Either way you will want to make use of some of
 gretl's built-in calendrical functions.
 
-In section~\ref{sec:realtime-atomic} we mentioned the possibility of
-``holes'' in realtime files of the sort provided by Alfred. In our
-first solution for the fixed-lag join operation we ignore this
-possibility. That is, we assume that if a data-point happens to turn
-from valid to missing at any point in time this fact is recorded
-explicitly in the realtime file as a new vintage. We later show how
-the join can be modified to handle holes, should they occur (and also
-how to check for their presence).
-
 We'll assume that a suitably dimensioned workspace has been set up as
 described above. Given that, the key ingredients of the join are a
 filtering function which we'll call \verb|rel_ok| (for ``release is
@@ -424,87 +404,6 @@ This filter condition may be satisfied by more than one release, so we
 need to specify an aggregation method: we simply choose the most
 recent release within the specified time window.
 
-\subsection{Detecting holes}
-
-Returning to the possibility of holes (implicit missing values) in the
-data, the point is that the most recent release that satisfies the
-condition defined by \verb|rel_ok| \textit{may} have expired, without
-a valid successor, before the lag window closed. In that case the
-method described above would record a seemingly valid value where an
-\texttt{NA} is actually called for.
-
-We can guard against this possibility by beefing up our filter function
-as follows.
-%
-\begin{code}
-function series rel_ok2 (series obsdate, series reldate,
-                         series enddate, int p)
-  series y1, m1, y2, m2
-  /* (1): screen for revision not too recent */
-  isoconv(obsdate, &y1, &m1)
-  isoconv(revdate, &y2, &m2)
-  series dm = (12*y2 + m2) - (12*y1 + m1)
-  series ok1 = dm <= p
-  /* (2): screen for revision already expired */
-  isoconv(enddate, &y2, &m2)
-  dm = (12*y2 + m2) - (12*y1 + m1)
-  series ok2 = missing(dm) || dm > p
-  /* (3): take logical product of (1) and (2) as filter */
-  return ok1 && ok2
-end function
-\end{code}
-
-In this variant our function first screens out releases that are too
-recent to fall within the lag window, as before, but then goes on to
-find the delta months between the start of the observation period and
-the release expiry date. The additional requirement for the filter is
-then that this delta is greater than the specified lag---allowing for
-the fact, mentioned above, that if a release is still current at the
-end of the time represented in an Alfred file, this is indicated by a
-missing value in the realtime end date column.
-
-Now our filter can return non-zero for at most one release per
-observation period (since all but one must have expired by the end of
-the lag window, and maybe all have expired, in which case we'll get an
-\texttt{NA} in the output). So there's no need for the \option{aggr}
-option. The associated command now looks like this:
-
-\begin{code}
-scalar lag = 3  # choose your fixed lag here
-join @fname ip_plus3 --data=INDPRO --tkey=observation_date \
---tconvert="observation_date,realtime_start_date,realtime_end_date" \
---filter="rel_ok2(observation_date, realtime_start_date, \
- realtime_end_date, lag)"
-\end{code}
-
-However, it's easy enough to use \texttt{join} to check an Alfred file
-for the presence of holes. Such a file contains a hole if and only if,
-for one or more realtime start dates, there is a difference of more
-than one day between this date and the preceding realtime end
-date. The script in Example~\ref{ex:holecheck} checks for this.
-
-\begin{script}[htbp]
-  \caption{Checking an Alfred realtime file for holes}
-  \label{ex:holecheck}
-\begin{scode}
-string fname = "INDPRO.txt"
-string test = readfile(fname)
-string s
-scalar n = 0
-loop while getline(test, s) --quiet
-  n++
-endloop
-n-- # subtract the header
-nulldata n --preserve
-join @fname revstart --data=realtime_start_date \
- --tconvert=realtime_start_date
-join @fname revend --data=realtime_end_date \
- --tconvert=realtime_end_date
-scalar holes = sum(revstart - revend(-1) > 1)
-printf "Number of holes in file %s: %d\n", fname, holes
-\end{scode}
-\end{script}
-
 \subsection{An illustration}
 
 Figure~\ref{fig:realtime-lag} shows four time series for the monthly
@@ -524,9 +423,7 @@ The script that produced this Figure is shown in full in
 Example~\ref{ex:revisions}. Note that in this script we are using a
 somewhat more efficient version of the \verb|rel_ok| function shown
 above, where we pass the required series arguments in ``pointer'' form
-to avoid having to copy them (see
-chapter~\ref{chap:functions}). Having verified that the file in
-question doesn't contain any holes, we use the simpler form of filter.
+to avoid having to copy them (see chapter~\ref{chap:functions}).
 
 \begin{figure}[htbp]
   \centering
@@ -608,10 +505,9 @@ month.
 Recall from section~\ref{sec:realtime-atomic} that Alfred records a
 new revision only when the data-point in question actually
 changes. This means that our imported series will contain missing
-values for all months when no real revision took place. Having checked
-for ``holes'' in our file (see section~\ref{sec:realtime-fixed-lag})
-and found none, we can apply a simple autoregressive procedure to fill
-in the data: each missing value equals the prior non-missing value.
+values for all months when no real revision took place. However, we
+can apply a simple autoregressive procedure to fill in the data: each
+missing value equals the prior non-missing value.
 
 Figure~\ref{fig:realtime-revhist} displays the revision history. Over
 this sample period the periodic re-basing of the index overshadows

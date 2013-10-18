@@ -667,7 +667,7 @@ char *get_built_in_string_by_name (const char *name)
 
 static gchar *recode_content (gchar *orig, int *err)
 {
-    const gchar *charset;
+    const gchar *charset = NULL;
     GError *gerr = NULL;
     gsize wrote = 0;
     gchar *tr;
