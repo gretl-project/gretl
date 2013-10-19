@@ -3803,6 +3803,10 @@
 	  <effect>non include una costante</effect>
         </option>
         <option>
+	  <flag>--stdresid</flag>
+	  <effect>standardize the residuals</effect>
+        </option>
+        <option>
 	  <flag>--fcp</flag>
 	  <effect>usa l'algoritmo di Fiorentini, Calzolari e Panattoni</effect>
         </option>
@@ -3833,7 +3837,7 @@
 	  graphic="garch_h"/>
       </para>
       <para context="cli">
-	Il parametro <repl>p</repl> rappresenta quinsi l'ordine generalizzato
+	Il parametro <repl>p</repl> rappresenta quindi l'ordine generalizzato
 	(o <quote>AR</quote>), mentre <repl>q</repl> rappresenta il consueto
         ordine ARCH (o <quote>MA</quote>). Se <repl>p</repl> è diverso da zero,
 	anche <repl>q</repl> deve essere diverso da zero, altrimenti il modello
@@ -3855,7 +3859,7 @@
 	somma(j da 1 a p) b(j)*h(t-j)" graphic="garch_h"/>
       </para>
       <para context="gui">
-	Il parametro <repl>p</repl> rappresenta quinsi l'ordine generalizzato
+	Il parametro <repl>p</repl> rappresenta quindi l'ordine generalizzato
 	(o <quote>AR</quote>), mentre <repl>q</repl> rappresenta il consueto
         ordine ARCH (o <quote>MA</quote>). Se <repl>p</repl> è diverso da zero,
 	anche <repl>q</repl> deve essere diverso da zero, altrimenti il modello
@@ -3891,22 +3895,27 @@
         <cmdref targ="set"/>.
       </para>
 
-      <para context="gui">La varianza condizionale stimata, insieme ai residui e
-        ad altre statistiche del modello, può essere richiamata ed aggiunta al
-        dataset usando il menù <quote>Analisi</quote> presente nella
-        finestra del modello.
+      <para context="gui">La varianza condizionale stimata, insieme ai
+      residui e ad altre statistiche del modello, può essere
+      richiamata ed aggiunta al dataset usando il menù
+      <quote>Analisi</quote> presente nella finestra del modello. Se
+      viene spillata la casella <quote>Standardizza i residui</quote>,
+      i resuidi vengono divisi per la radice della varianzqa
+      condizionale stimata.
       </para>
 
       <para context="cli">
-	In modalità predefinita, le stime dei parametri di varianza sono
-	inizializzate usando la varianza dell'errore non condizionale, ottenuta
-        dalla stima OLS iniziale, per la costante, e piccoli valori positivi
-        per i coefficienti dei valori passati dell'errore al quadrato e
-        per la varianza dell'errore. L'opzione <lit>--arma-init</lit>
-	fa in modo che i valori iniziali per questi parametri siano ricavati da
-        un modello ARMA iniziale, sfruttando la relazione tra GARCH
-        e ARMA mostrata nel capitolo 21 di <book>Time Series Analysis</book> di Hamilton.
-        In alcuni casi, questo metodo può aumentare le probabilità di convergenza.
+	In modalità predefinita, le stime dei parametri di varianza
+	sono inizializzate usando la varianza dell'errore non
+	condizionale, ottenuta dalla stima OLS iniziale, per la
+	costante, e piccoli valori positivi per i coefficienti dei
+	valori passati dell'errore al quadrato e per la varianza
+	dell'errore. L'opzione <lit>--arma-init</lit> fa in modo che i
+	valori iniziali per questi parametri siano ricavati da un
+	modello ARMA iniziale, sfruttando la relazione tra GARCH e
+	ARMA mostrata nel capitolo 21 di <book>Time Series
+	Analysis</book> di Hamilton.  In alcuni casi, questo metodo
+	può aumentare le probabilità di convergenza.
       </para>
 
       <para context="cli">
@@ -3917,6 +3926,10 @@
       <code context="cli">
         genr ht = $h
       </code>
+      <para context="cli">
+	Con l'opzione <opt>--stdresid</opt>, i valori di <lit>$uhat</lit>
+	vengono divisi per la radice di <math>h</math><sub>t</sub>.
+      </para>
 
     </description>
 
@@ -3941,18 +3954,35 @@
 	In contesti appropriati, <lit>series</lit>, <lit>scalar</lit>
 	e <lit>matrix</lit> sono sinonimi per questo comando.
       </para>
-      <para>
+      <para context="cli">
 	Crea nuove variabili, di solito per mezzo di trasformazioni di
 	variabili esistenti. Si veda anche <cmdref targ="diff"/>,
-        <cmdref targ="logs"/>, <cmdref targ="lags"/>, <cmdref
-	  targ="ldiff"/>, <cmdref targ="sdiff"/> e <cmdref targ="square"/> per le scorciatoie. Nel
-	contesto di una formula <lit>genr</lit>, le variabili esistenti
-	devono essere referenziate per nome, non per numero
-	identificativo. La formula dev'essere una combinazione ben
-	definita di nomi di variabile, costanti, operatori e funzioni
-	(descritte oltre). Ulteriori dettagli su alcuni aspetti di questo
-	comando si possono trovare nella
-        <guideref targ="chap-genr"/>.
+	<cmdref targ="logs"/>, <cmdref targ="lags"/>, <cmdref
+	targ="ldiff"/>, <cmdref targ="sdiff"/> e <cmdref
+	targ="square"/> per alcune scorciatoie. Nel contesto di una
+	formula <lit>genr</lit>, le variabili esistenti devono essere
+	referenziate per nome, non per numero identificativo. La
+	formula dev'essere una combinazione ben definita di nomi di
+	variabile, costanti, operatori e funzioni (descritte
+	oltre). Ulteriori dettagli su alcuni aspetti di questo comando
+	si possono trovare nella <guideref targ="chap-genr"/>.
+      </para>
+
+      <para context="gui">
+	Use this box to define a new variable, on the pattern
+	<repl>name</repl> = <repl>formula</repl>.  The formula should be a
+	well-formed combination of variable names, constants, operators and
+	functions (details below).  To ensure you get the type of variable you
+	want, you can prefix the formula with a type-name, &eg;
+	<lit>scalar</lit>, <lit>series</lit> or <lit>matrix</lit>.  For
+	example, to create a series that has a constant value of 10,
+	you can type
+      </para>
+      <code context="gui">
+	series c = 10
+      </code>
+      <para context="gui">
+	(otherwise <lit>c = 10</lit> would create a scalar variable).
       </para>
 
       <para>
@@ -4329,6 +4359,10 @@
 	  <flag>--verbose</flag>
 	  <effect>Mostra i dettagli delle iterazioni</effect>
 	</option>
+	<option>
+	  <flag>--lbfgs</flag>
+	  <effect>usa il massimizzatore L-BFGS-B anziché il BFGS standard</effect>
+	</option>
       </options>
     </usage>
 
@@ -4520,24 +4554,28 @@
       </code>
 
       <para>
-	In modalità interattiva il risultato è mostrato immediatamente.
-        In modalità <quote>batch</quote>, viene scritto un file di comandi
-        gnuplot, chiamato <filename>gpttmpN.plt</filename>, a partire da N
-	= <lit>01</lit>; il grafico vero e proprio può essere generato
-        usando il programma <program>gnuplot</program> (su MS Windows:
-	<program>wgnuplot</program>). 
-	Questo comportamento può essere modificato usando l'opzione 
-	<opt>--output=</opt><repl>filename</repl>, che controlla il nome del file utilizzato
-	e contemporaneamente permette di specificare un particolare formato
-	di output usando l'estensione del nome del file (le tre lettere che 
-	seguono il .): <lit>.eps</lit> produce un file Encapsulated 
-	PostScript (EPS); <lit>.pdf</lit> produce un file PDF; <lit>.png</lit> 
-	produce un formato PNG, <lit>.emf</lit> un formato EMF (Enhanced MetaFile), 
-	<lit>.fig</lit> un file Xfig, e <lit>.svg</lit> uno SVG (Scalable Vector 
-	Graphics). Se come nome del file si indica <quote><lit>display</lit></quote>,
-	il grafico è inviato allo schermo come nella modalità interattiva.
-	Se si indica un nome del file con un'estensione diversa da quelle
-	appena citate viene prodotto un file di comandi gnuplot.
+	In modalità interattiva il risultato è mostrato
+	immediatamente.  In modalità <quote>batch</quote>, viene
+	scritto un file di comandi gnuplot, chiamato
+	<filename>gpttmpN.plt</filename>, a partire da N =
+	<lit>01</lit>; il grafico vero e proprio può essere generato
+	usando il programma <program>gnuplot</program> (su MS Windows:
+	<program>wgnuplot</program>).  Questo comportamento può essere
+	modificato usando l'opzione
+	<opt>--output=</opt><repl>filename</repl>, che controlla il
+	nome del file utilizzato e contemporaneamente permette di
+	specificare un particolare formato di output usando
+	l'estensione del nome del file (le tre lettere che seguono il
+	.): <lit>.eps</lit> produce un file Encapsulated PostScript
+	(EPS); <lit>.pdf</lit> produce un file PDF; <lit>.png</lit>
+	produce un formato PNG, <lit>.emf</lit> un formato EMF
+	(Enhanced MetaFile), <lit>.fig</lit> un file Xfig, e
+	<lit>.svg</lit> uno SVG (Scalable Vector Graphics). Se come
+	nome del file si indica <quote><lit>display</lit></quote>, il
+	grafico è inviato allo schermo come nella modalità
+	interattiva.  Se si indica un nome del file con un'estensione
+	diversa da quelle appena citate viene prodotto un file di
+	comandi gnuplot.
       </para>
 
       <para>
@@ -4564,9 +4602,9 @@
         comandi gnuplot sulla riga successiva. Ecco un esempio della sintassi:
       </para>
 
-      <para>
-	<lit>{ set title 'Il mio titolo'; set yrange [0:1000]; }</lit>
-      </para>
+      <code>
+	{ set title 'Il mio titolo'; set yrange [0:1000]; }
+      </code>
 
     </description>
 
@@ -4659,7 +4697,7 @@
 
       <para>
 	Per saperne di più su gnuplot, si veda
-	http://www.gnuplot.info
+	<url>http://www.gnuplot.info</url>
       </para>
 
     </description>
@@ -4667,6 +4705,16 @@
   </command>
 
   <command name="graphpg" section="Graphs" label="Pagina dei grafici">
+
+    <usage>
+      <altforms>
+        <altform><lit>graphpg add</lit></altform>
+	<altform><lit>graphpg fontscale </lit><repl>value</repl></altform>
+	<altform><lit>graphpg show</lit></altform>
+	<altform><lit>graphpg free</lit></altform>
+	<altform><lit>graphpg --output=</lit><repl>filename</repl></altform>
+      </altforms>
+    </usage>
 
     <description>
 
@@ -4697,6 +4745,50 @@
         delle Preferenze di gretl (nel menù Strumenti della finestra principale).
       </para>
 
+      <para>
+	It's also possible to operate on the graph page via script,
+	or using the console (in the GUI program). The following
+	commands and options are supported:
+      </para>
+      <para>
+	To add a graph to the graph page, issue the command
+	<lit>graphpg add</lit> after saving a named graph, as in
+      </para>
+      <code>
+	grf1 &lt;- gnuplot Y X
+	graphpg add
+      </code>
+       <para>
+	To display the graph page: <lit>graphpg show</lit>.
+      </para>
+      <para>
+	To clear the graph page: <lit>graphpg free</lit>.
+      </para>
+      <para>
+	To adjust the scale of the font used in the graph page, use
+	<lit>graphpg fontscale</lit> <repl>scale</repl>, where
+	<repl>scale</repl> is a multiplier (with a default of
+	1.0). Thus to make the font size 50 percent bigger than the
+	default you can do
+      </para>
+      <code>
+	graphpg fontscale 1.5
+      </code>
+      <para>
+	To call for printing of the graph page to file, use the flag
+	<opt>output=</opt> plus a filename; the filename should have
+	the suffix <quote><lit>.pdf</lit></quote>,
+	<quote><lit>.ps</lit></quote> or
+	<quote><lit>.eps</lit></quote>. For example:
+      </para>
+      <code>
+	graphpg --output="myfile.pdf"
+      </code>
+      <para>
+	In this context the output uses colored lines by default; to
+	use dot/dash patterns instead of colors you can append the
+	<opt>monochrome</opt> flag.
+      </para>
     </description>
 
   </command>
@@ -4706,10 +4798,8 @@
 
     <description>
       <para>
-        Questa funzionalità migliora se è stata installata una
-        versione di gnuplot pari o superiore alla 3.8, che consente
-        di manipolare il grafico 3D con il mouse (ruotandolo ed
-        allungando o riducendo gli assi).
+        Questa funzionalità consente di manipolare il grafico 3D con
+        il mouse (ruotandolo ed allungando o riducendo gli assi).
       </para>
 
       <para>
@@ -4733,11 +4823,12 @@
 	   label="Special functions" context="gui">
     <description>
       <para>
-	Questo comando permette di specificare se ad alcune delle funzioni
-	di un pacchetto devono essere attribuiti alcuni compiti specifici, e se sì a quali. 
-	Si noti che a una data funzione può essere attribuito al massimo 
-	uno dei compiti seguenti, e che per poter essere candidata a
-	uno di questi compiti la funzione deve soddisfare alcuni criteri.
+	Questo comando permette di specificare se ad alcune delle
+	funzioni di un pacchetto devono essere attribuiti alcuni
+	compiti specifici, e se sì a quali. Si noti che a una data
+	funzione può essere attribuito al massimo uno dei compiti
+	seguenti, e che per poter essere candidata a uno di questi
+	compiti la funzione deve soddisfare alcuni criteri.
       </para>
       <ilist>
 	<li>
@@ -4758,8 +4849,9 @@
 	</li>
 	<li>
 	  <para>
-	    <lit>bundle-test</lit>: calcola qualche test statistico usando 
-		un bundle generato dal vostro pacchetto. Criteri: come per <lit>bundle-print</lit>.
+	    <lit>bundle-test</lit>: calcola qualche test statistico
+	    usando un bundle generato dal vostro pacchetto. Criteri:
+	    come per <lit>bundle-print</lit>.
 	  </para>
 	</li>	
 	<li>
@@ -4857,16 +4949,17 @@
         osservazioni.
       </para>
       <para>
-       Test rank sum di Wilcoxon. Questo test procede ordinando le osservazioni estratte da
-        entrambi i campioni dalla più piccola alla più grande, e quindi calcolando
-        la somma dei ranghi delle osservazioni da uno dei campioni. I due
-        campioni non devono necessariamente avere la stessa dimensione: se sono
-        diversi, viene usato il campione più piccolo per calcolare la somma dei
-        ranghi. Sotto l'ipotesi nulla che i campioni siano estratti da
-        popolazioni con la stessa mediana, la distribuzione di probabilità della
-        somma dei ranghi può essere calcolata per ogni valore dell'ampiezza dei
-        due campioni, mentre per campioni abbastanza ampi essa approssima la
-        distribuzione normale.
+       Test rank sum di Wilcoxon. Questo test procede ordinando le
+       osservazioni estratte da entrambi i campioni dalla più piccola
+       alla più grande, e quindi calcolando la somma dei ranghi delle
+       osservazioni da uno dei campioni. I due campioni non devono
+       necessariamente avere la stessa dimensione: se sono diversi,
+       viene usato il campione più piccolo per calcolare la somma dei
+       ranghi. Sotto l'ipotesi nulla che i campioni siano estratti da
+       popolazioni con la stessa mediana, la distribuzione di
+       probabilità della somma dei ranghi può essere calcolata per
+       ogni valore dell'ampiezza dei due campioni, mentre per campioni
+       abbastanza ampi essa approssima la distribuzione normale.
       </para>
       <para>
        Test signed rank di Wilcoxon.  Questo test è valido per "coppie di
@@ -4954,15 +5047,16 @@
         stimatore HAC, di autocorrelazione).
       </para>
 
-      <para>HC0 produce gli <quote>errori standard originali di White</quote>;
-        HC1, HC2, HC3 e HC3a sono varianti che si ritiene producano risultati
-        migliori (più affidabili). Per i dettagli sugli stimatori, si veda
-	MacKinnon e White (Journal of Econometrics, 1985) o
-	Davidson e MacKinnon, Econometric Theory and Methods
-	(Oxford, 2004). Le sigle usate sono quelle proposte da
-	Davidson e MacKinnon. La variante <quote>HC3a</quote> è il
-	<quote>jackknife</quote> descritto da MacKinnon e White (1985); HC3 è
-        una sua vicina approssimazione.
+      <para>HC0 produce gli <quote>errori standard originali di
+      White</quote>; HC1, HC2, HC3 e HC3a sono varianti che si ritiene
+      producano risultati migliori (più affidabili). Per i dettagli
+      sugli stimatori, si veda <cite key="mackinnon-white85">MacKinnon
+      and White (Journal of Econometrics, 1985)</cite> o <cite
+      key="davidson-mackinnon04">Davidson and MacKinnon, Econometric
+      Theory and Methods (Oxford, 2004)</cite>. Le sigle usate sono
+      quelle proposte da Davidson e MacKinnon. La variante
+      <quote>HC3a</quote> è il <quote>jackknife</quote> descritto da
+      MacKinnon e White (1985); HC3 è una sua vicina approssimazione.
       </para>
 
       <para>Se si usa lo stimatore HAC per serie storiche, è possibile calibrare
@@ -4995,6 +5089,14 @@
 	<argument separated="true">equazione di selezione</argument>
       </arguments>
       <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printing of results</effect>
+	</option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>QML standard errors</effect>
+        </option>
         <option>
 	  <flag>--two-step</flag>
 	  <effect>esegue la stima in due passi</effect>
@@ -5207,32 +5309,28 @@
         tre forme seguenti:
       </para>
 
-      <pre>
-	<lit># Forma semplice</lit>&par;
-	<lit>if</lit> <repl>condizione</repl>&par;
-	<lit> </lit><lit> </lit> <repl>comandi</repl>&par;
-	<lit>endif</lit>
-      </pre>
-      
-      <pre>
-	<lit># A due rami</lit>&par;
-	<lit>if</lit> <repl>condizione</repl>&par;
-	<lit> </lit><lit> </lit> <repl>comandi-1</repl>&par;
-	<lit>else</lit>&par;
-	<lit> </lit><lit> </lit> <repl>comandi-2</repl>&par;
-	<lit>endif</lit>
-      </pre>
+      <code>
+	# forma semplice
+	if condition
+	    commands
+	endif
 
-      <pre>
-	<lit># A tre o più rami</lit>&par;
-	<lit>if</lit> <repl>condizione-1</repl>&par;
-	<lit> </lit><lit> </lit> <repl>comandi-1</repl>&par;
-	<lit>elif</lit> <repl>condizione-2</repl>&par;
-	<lit> </lit><lit> </lit> <repl>comandi-2</repl>&par;
- 	<lit>else</lit>&par;
-	<lit> </lit><lit> </lit> <repl>comandi-3</repl>&par;
- 	<lit>endif</lit>
-      </pre>
+	# a due rami
+	if condition
+	    commands1
+	else
+	    commands2
+        endif
+
+	# a tre o più rami
+	if condition1
+	    commands1
+	elif condition2
+	    commands2
+	else
+	    commands3
+	endif
+      </code>
  
       <para>
         La <repl quote="true">condizione</repl> deve essere un'espressione
@@ -5375,17 +5473,24 @@
 
     <description>
       <para>Se si sceglie l'intervallo di confidenza bootstrap nella
-      visualizzazione delle funzioni di impulso-risposta, gretl calcola un
-      intervallo di confidenza al 95 per cento per le risposte usando il metodo
-      bootstrap. Si effettua un campionamento (con reimmissione) dai residui del
-      VAR (o VECM) originale, viene costruito un dataset artificiale usando le
-      stime originali dei parametri e i residui ri-campionati, viene ri-stimato
-      il sistema e vengono ri-calcolate le funzioni di impulso-risposta.  Questa
-      procedura viene ripetuta 999 volte e vengono mostrati i quantili 0.025 e
-      0.975 per le risposte, insieme alle stime puntuali.
+      visualizzazione delle funzioni di impulso-risposta, gretl
+      calcola un intervallo di confidenza al 95 per cento per le
+      risposte usando il metodo bootstrap. Si effettua un
+      campionamento (con reimmissione) dai residui del VAR (o VECM)
+      originale, viene costruito un dataset artificiale usando le
+      stime originali dei parametri e i residui ri-campionati, viene
+      ri-stimato il sistema e vengono ri-calcolate le funzioni di
+      impulso-risposta.  Questa procedura viene ripetuta 999 volte e
+      vengono mostrati i quantili 0.025 e 0.975 per le risposte,
+      insieme alle stime puntuali.  L'opzione bootstrap al momento non
+      è disponibile per il VECM vincolati.
       </para>
       <para>
-       L'opzione bootstrap al momento non è disponibile per il VECM vincolati.
+	This dialog also supports reordering of the variables for the
+	Cholesky decomposition of the cross-equation covariance matrix.
+	The default is given by the order in which the variables are
+	entered into the model specification, but the up and down arrows
+	can be used to promote or demote a selected variable.
       </para>
     </description>
 
@@ -5458,6 +5563,13 @@
 	L'opzione <opt>aggr</opt> viene usata quando la relazione
 	fra osservazioni nel dataset corrente e nel file di oriogine non è biunivoca.
       </para>      
+      <para>
+	The <opt>tkey</opt> option is applicable only when the current
+	dataset has a time-series structure. It can be used to specify
+	the name of a column containing dates to be matched to the
+	dataset and/or the format in which dates are represented in
+	that column.
+      </para>     
       <para>
 	V. anche <cmdref targ="append"/> per alcune semplici operazioni di unione
 	di dataset.
@@ -5544,20 +5656,28 @@
 
     <description>
       <para context="gui">
-	Calcola il test KPSS (Kwiatkowski, Phillips, Schmidt e
-	Shin, 1992) per la stazionarietà di una variabile (o della sua
-        differenza prima, se si usa l'opzione di differenziazione). L'ipotesi
-        nulla è che la variabile in questione sia stazionaria, attorno
-        a un valore fisso o, se è stata selezionata l'opzione <lit>includi un trend</lit>,
-        attorno a un trend deterministico lineare.
+	Calcola il test KPSS (Kwiatkowski, Phillips, Schmidt e Shin,
+	1992) per la stazionarietà di una variabile (o della sua
+	differenza prima, se si usa l'opzione di
+	differenziazione). L'ipotesi nulla è che la variabile in
+	questione sia stazionaria, attorno a un valore fisso o, se è
+	stata selezionata l'opzione <lit>includi un trend</lit>,
+	attorno a un trend deterministico lineare.
       </para>
+
       <para context="cli">
-	Calcola il test KPSS (Kwiatkowski, Phillips, Schmidt e
-	Shin, 1992) per la stazionarietà di ognuna delle variabili specificate
-        (o della loro differenza prima, se si usa l'opzione <lit>--difference</lit>. L'ipotesi
-        nulla è che la variabile in questione sia stazionaria, attorno
-        a un valore fisso o, se è stata usata l'opzione <lit>--trend</lit>,
-        attorno a un trend deterministico lineare.
+	For use of this command with panel data please see the final
+	section in this entry.
+      </para>
+
+      <para context="cli">
+	Calcola il test KPSS (Kwiatkowski, Phillips, Schmidt e Shin,
+	1992) per la stazionarietà di ognuna delle variabili
+	specificate (o della loro differenza prima, se si usa
+	l'opzione <lit>--difference</lit>. L'ipotesi nulla è che la
+	variabile in questione sia stazionaria, attorno a un valore
+	fisso o, se è stata usata l'opzione <lit>--trend</lit>,
+	attorno a un trend deterministico lineare.
       </para>
       <para context="gui">
 	L'argomento ordine determina la dimensione della finestra usata per
@@ -5573,6 +5693,49 @@
         alla varianza stimata della componente random walk della variabile.
       </para>
 
+      <para>
+	The critical values shown for the test statistic are based on the
+	response surfaces estimated by <cite key="sephton95">Sephton
+	(Economics Letters, 1995)</cite>, which are more accurate for
+	small samples than the values given in the original KPSS
+	article. When the test statistic lies between the 10 percent and 1
+	percent critical values a p-value is shown; this is obtained
+	by linear interpolation and should not be taken too literally.
+      </para>
+
+      <subhead context="cli">Panel data</subhead>
+
+      <para context="cli">
+	When the <lit>kpss</lit> command is used with panel data, to
+	produce a panel unit root test, the applicable options and the
+	results shown are somewhat different.  While you may give a list
+	of variables for testing in the regular time-series case, with
+	panel data only one variable may be tested per command. And the
+	<opt>--verbose</opt> option has a different meaning: it produces a
+	brief account of the test for each individual time series (the
+	default being to show only the overall result).
+      </para>
+      <para context="cli">
+	When possible, the overall test (null hypothesis: the series in
+	question is stationary for all the panel units) is calculated
+	using the method of <cite key="choi01">Choi (Journal of
+	International Money and Finance, 2001)</cite>. This is not
+	always straightforward, the difficulty being that while the
+	Choi test is based on the p-values of the tests on the
+	individual series, we do not currently have a means of
+	calculating p-values for the KPSS test statistic; we must
+	rely on a few critical values.
+      </para>
+      <para context="cli">
+	If the test statistic for a given series falls between the 10
+	percent and 1 percent critical values, we are able to interpolate
+	a p-value. But if the test falls short of the 10 percent value, or
+	exceeds the 1 percent value, we cannot interpolate and can at best
+	place a bound on the global Choi test. If the individual test
+	statistic falls short of the 10 percent value for some units but
+	exceeds the 1 percent value for others, we cannot even compute
+	a bound for the global test.
+      </para>
     </description>
 
     <gui-access>
