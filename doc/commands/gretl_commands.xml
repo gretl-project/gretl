@@ -3116,7 +3116,7 @@
     <usage>
       <arguments>
         <argument optional="true">systemname</argument>
-        <argument optional="true">estimator</argument>
+	<argument optional="true">estimator</argument>
       </arguments>
       <options>
 	<option>
@@ -3504,9 +3504,10 @@
 
     <description>
      <para>
-	This command opens a special mode in which commands to be executed
-	by another program are accepted.  You exit this mode with <lit>end
-	  foreign</lit>; at this point the stacked commands are executed.
+	This command opens a special mode in which commands to be
+	executed by another program are accepted.  You exit this mode
+	with <lit>end foreign</lit>; at this point the stacked
+	commands are executed.
       </para>
       <para>
 	At present the <quote>foreign</quote> programs supported in

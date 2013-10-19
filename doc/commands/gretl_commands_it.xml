@@ -1974,6 +1974,13 @@
         <argument>variabile</argument>
         <argument optional="true">max-ritardo</argument>
       </arguments>
+      <options>
+       <option>
+	  <flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>si veda sotto</effect>
+        </option>	  
+      </options>
       <examples>
         <example>corrgm x 12</example>
       </examples>
@@ -2147,10 +2154,12 @@
 	<math>k</math> è il numero dei parametri nel modello originale).
       </para>
       <para>
-	Viene mostrata, anche graficamente, la somma cumulata degli errori 
-        scalati di previsione (o dei quadrati degli errori). L'ipotesi nulla della stabilità dei parametri
-        è rifiutata al livello di significatività del 5 per cento se la somma
-        cumulata va al di fuori delle bande di confidenza al 95 per cento.
+	Viene mostrata, anche graficamente, la somma cumulata degli
+	errori scalati di previsione (o dei quadrati degli
+	errori). L'ipotesi nulla della stabilità dei parametri è
+	rifiutata al livello di significatività del 5 per cento se la
+	somma cumulata va al di fuori delle bande di confidenza al 95
+	per cento.
       </para>
 
       <para>
@@ -2170,12 +2179,19 @@
 
   </command>
 
-  <command name="data" section="Dataset" label="Importazione da database" context="cli">
+  <command name="data" section="Dataset" 
+	   label="Importazione da database" context="cli">
 
     <usage>
       <arguments>
         <argument>lista-variabili</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't report results except on error</effect>
+	</option>
+      </options>
     </usage>
 
     <description>
@@ -2187,12 +2203,12 @@
         possono essere impostati usando i comandi <cmdref
         targ="setobs"/> e <cmdref targ="smpl"/> prima di questo
         comando. Ecco un esempio completo:</para>
-
       <code>
-	open macrodat.rat setobs 4 1959:1 smpl ; 1999:4 data GDP_JP
-	GDP_UK
+	open macrodat.rat 
+	setobs 4 1959:1 
+	smpl ; 1999:4 
+	data GDP_JP GDP_UK
       </code>
-
       <para>
 	Questi comandi aprono un database chiamato
 	<filename>macrodat.rat</filename>, impostano un dataset
@@ -2211,11 +2227,9 @@
         impostata nel dataset, è possibile specificare un metodo di
         compattamento, come mostrato di seguito
       </para>
-
       <code>
 	data (compact=average) LHUR PUNEW
       </code>
-
       <para>I quattro metodi di compattamento disponibili sono
 	<quote>average</quote> (usa la media delle osservazioni ad alta
 	frequenza), <quote>last</quote> (usa l'ultima osservazione),
@@ -2243,23 +2257,26 @@
         <example>dataset addobs 24</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
-        <example>dataset expand 12</example>
+        <example>dataset expand interp</example>
         <example>dataset transpose</example>
         <example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
+	<example>dataset renumber x 4</example>
+	<example>dataset clear</example>
       </examples>
     </usage>
 
     <description>
       <para>
 	Esegue varie operazioni sull'intero dataset, a seconda della
-        <repl>parola-chiave</repl> usata, che può essere
-	<lit>addobs</lit>, <lit>compact</lit>, <lit>expand</lit>,
-	<lit>transpose</lit>, <lit>sortby</lit>, <lit>dsortby</lit> o
-        <lit>resample</lit>.
-        Nota: questi comandi non sono disponibili quando
-        sul dataset è definito un sotto-campione ottenuto selezionando le
-        osservazioni con un criterio Booleano.
+	<repl>parola-chiave</repl> usata, che può essere
+	<lit>addobs</lit>, <lit>insobs</lit>, <lit>clear</lit>,
+	<lit>compact</lit>, <lit>expand</lit>, <lit>transpose</lit>,
+	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit> o
+	<lit>renumber</lit>.  Nota: questi comandi non sono
+	disponibili quando sul dataset è definito un sotto-campione
+	ottenuto selezionando le osservazioni con un criterio
+	Booleano.
       </para>
       <para>
 	<lit>addobs</lit>: deve essere seguito da un intero positivo. Aggiunge
@@ -2270,6 +2287,19 @@
         variabili dummy periodiche, sono riconosciute ed estese.
       </para>
       <para>
+	<lit>insobs</lit>: Must be followed by a positive integer no
+	greater than the current number of observations. Inserts a
+	single observation at the specified position. All subsequent
+	data are shifted by one place and the dataset is extended by
+	one observation. All variables apart from the constant are
+	given missing values at the new observation. This action is
+	not available for panel datasets.
+      </para>
+      <para>
+	<lit>clear</lit>: No parameter required.  Clears out the current
+	data, returning gretl to its initial <quote>empty</quote> state.
+      </para>      
+       <para>
 	<lit>compact</lit>: deve essere seguito da un intero positivo che
         rappresenta la nuova frequenza dei dati, che dovrebbe essere minore di
         quella attuale (ad esempio un valore 4 quando la frequenza attuale è 12
@@ -2283,14 +2313,16 @@
         consiste nel prendere la media dei valori sul periodo.
       </para>
       <para>
-	<lit>expand</lit>: deve essere seguito da un intero positivo che
-        rappresenta la nuova frequenza dei dati, che dovrebbe essere maggiore di
-        quella attuale. Questo comando è disponibile solo per serie storiche
-        annuali o trimestrali. I dati annuali possono essere espansi a
-        trimestrali o mensili; quelli trimestrali possono essere espansi a
-        mensili. Tutte le serie nel dataset verranno espanse assegnando alle
-        nuove osservazioni i valori del periodo corrispondente nel vecchio
-        dataset.
+	<lit>expand</lit>: Questo comando è disponibile solo per serie
+	storiche annuali o trimestrali. I dati annuali vengono espansi
+	a trimestrali, quelli trimestrali a mensili. Per default,
+	tutte le serie nel dataset verranno espanse assegnando alle
+	nuove osservazioni i valori del periodo corrispondente nel
+	vecchio dataset, ma con il modificatore <lit>interp</lit> le
+	serie vengono espanse usando l'interpolazione di
+	Chow&ndash;Lin (si veda <cite key="chowlin71">Chow e Lin,
+	1971</cite>): i regressori sono costante e trend quadratico;
+	il disturbo è assunto AR(1).
       </para>
       <para>
 	<lit>transpose</lit>: non richiede parametri aggiuntivi. Traspone il
@@ -2300,11 +2332,14 @@
         organizzati con le variabili disposte per riga.
       </para>
       <para>
-        <lit>sortby</lit>: richiede il nome di una variabile, che viene usata
-        come criterio di ordinamento. Le osservazioni di tutte le altre
-        variabili del dataset sono riordinate secondo valori crescenti della
-        variabile indicata. Questo comando è disponibile solo per dati non
-        datati.
+        <lit>sortby</lit>: richiede il nome di una variabile o di una
+        lista. Con una variabile, questa viene usata come criterio di
+        ordinamento. Le osservazioni di tutte le altre variabili del
+        dataset sono riordinate secondo valori crescenti della
+        variabile indicata. Nel caso di una lista, il comando procede
+        gerarchicamente: il primo criterio di rdinamento è la prima
+        variabile, e così via. Questo comando è disponibile solo per
+        dati non datati.
       </para>
       <para>
        <lit>dsortby</lit>: funziona come <lit>sortby</lit> ma riordina le
@@ -2317,6 +2352,14 @@
         includere, che può essere minore, uguale o maggiore del numero di
         osservazioni nei dati originali. Il dataset originale può essere
         recuperato usando il comando <lit>smpl full</lit>.  
+      </para>
+      <para>
+	<lit>renumber</lit>: Requires the name of an existing series
+	followed by an integer between 1 and the number of series in the
+	dataset minus one. Moves the specified series to the specified
+	position in the dataset, renumbering the other series
+	accordingly. (Position 0 is occupied by the constant, which
+	cannot be moved.)
       </para>
     </description>
 
@@ -2351,20 +2394,23 @@
     <description>
       <para>
 	Un debugger sperimentale per funzioni definite dall'utente,
-	disponibile a partire dalla linea di comando, gretlcli e dalla console GUI.
-	Il comando <lit>debug</lit> dovrebbe essere utilizzato dopo aver definito 
-	la funzione in questione ma prima di chiamarla. Il suo effetto è
-	quello di sospendere l'esecuzione quando la funzione viene chiamata; la
-	sospensione è segnalata dalla presenza di un prompt speciale.
+	disponibile a partire dalla linea di comando, gretlcli e dalla
+	console GUI.  Il comando <lit>debug</lit> dovrebbe essere
+	utilizzato dopo aver definito la funzione in questione ma
+	prima di chiamarla. Il suo effetto è quello di sospendere
+	l'esecuzione quando la funzione viene chiamata; la sospensione
+	è segnalata dalla presenza di un prompt speciale.
       </para>
       <para>
-	Una volta attivato il prompt di debug è possibile digitare <lit>next</lit>
-	per eseguire il comando successivo della funzione, o <lit>continue</lit> 
-	per far proseguire l'esecuzione della funzione senza ulteriori arresti.
-	Questi comandi possono essere rispettivamente abbreviati con
-	<lit>n</lit> e <lit>c</lit>. Al prompt di debug è anche possibile
-	interpolare un'istruzione, per esempio un comando <lit>print</lit> per
-	esaminare il valore corrente di qualche variabile di interesse.
+	Una volta attivato il prompt di debug è possibile digitare
+	<lit>next</lit> per eseguire il comando successivo della
+	funzione, o <lit>continue</lit> per far proseguire
+	l'esecuzione della funzione senza ulteriori arresti.  Questi
+	comandi possono essere rispettivamente abbreviati con
+	<lit>n</lit> e <lit>c</lit>. Al prompt di debug è anche
+	possibile interpolare un'istruzione, per esempio un comando
+	<lit>print</lit> per esaminare il valore corrente di qualche
+	variabile di interesse.
       </para>
     </description>
   </command>  
@@ -2380,20 +2426,27 @@
          <flag>--db</flag>
          <effect>rimuove dal database aperto</effect>
        </option>
+	<option>
+	  <flag>--type</flag>
+	  <optparm>nome di tipo</optparm>
+	  <effect>tutte le variabili di un dato tipo</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para>
-        Per impostazione predefinita, rimuove dal dataset le variabili
-        elencate (specificate tramite il nome o il numero). <emphasis>Usare con
-        cautela</emphasis>: non viene chiesta conferma dell'operazione e le
-        variabili con numeri identificativi più alti vengono ri-numerate.
+	This command is an all-purpose destructor for named variables
+	(whether series, scalars, matrices, strings or bundles). It
+	should be used with caution; no confirmation is asked.
       </para>
       <para>
-        Se non viene specificata alcuna <repl>lista-variabili</repl>
-        viene eliminata dal dataset l'ultima variabile (quella col numero
-        identificativo più alto).
+	In the case of series, <repl>varname</repl> may take the form
+	of a named list, in which case all series in the list are
+	deleted, or it may take the form of an explicit list of series
+	given by name or ID number. Note that when you delete series
+	any series with higher ID numbers than those on the deletion
+	list will be re-numbered.
       </para>
       <para>
        Se si usa l'opzione <lit>--db</lit>, il comando rimuove le variabili
@@ -2401,6 +2454,14 @@
        questo sia stato aperto in precedenza e che l'utente abbia il permesso
        di scrittura sul file che contiene il database. Si veda anche il comando
        <cmdref targ="open"/>.
+      </para>
+      <para>
+	If the <opt>--type</opt> option is given it must be
+	accompanied by one of the following type-names:
+	<lit>matrix</lit>, <lit>bundle</lit>, <lit>string</lit>,
+	<lit>list</lit>, or <lit>scalar</lit>. The effect is to delete
+	all variables of the given type. In this case (only), no
+	<repl>varname</repl> argument should be given.
       </para>
     </description>
 
@@ -2492,22 +2553,25 @@
     label="Finestra di dialogo Modello">
 
     <description>
-      <para>Per selezionare la variabile dipendente, fare clic su una variabile
-        nella lista di sinistra e premere il pulsante <quote>Scegli</quote>
-	con la freccia che punta verso il riquadro della variabile dipendente.
-	Selezionando la casella <quote>Imposta come predefinito</quote>, la
-        variabile scelta verrà sempre pre-selezionata come variabile dipendente
-        durante le prossime aperture della finestra di dialogo.
-        Trucco: facendo doppio clic su una variabile sulla sinistra, viene
-        selezionata come variabile dipendente e impostata come scelta predefinita.
+      <para>Per selezionare la variabile dipendente, fare clic su una
+      variabile nella lista di sinistra e premere il pulsante
+      <quote>Scegli</quote> con la freccia che punta verso il riquadro
+      della variabile dipendente.  Selezionando la casella
+      <quote>Imposta come predefinito</quote>, la variabile scelta
+      verrà sempre pre-selezionata come variabile dipendente durante
+      le prossime aperture della finestra di dialogo.  Trucco: facendo
+      doppio clic su una variabile sulla sinistra, viene selezionata
+      come variabile dipendente e impostata come scelta predefinita.
 	</para>
 
-      <para>Per selezionare le variabili indipendenti, fare clic su di esse nella
-        lista di sinistra e premere il pulsante <quote>Aggiungi</quote> (o fare clic
-        col pulsante destro del mouse). È possibile selezionare più variabili
-        contigue trascinando il mouse; se le variabili da selezionare non sono
-        contigue, occorre fare clic tenendo premuto il tasto <lit>Ctrl</lit>.</para>
-
+      <para>Per selezionare le variabili indipendenti, fare clic su di
+      esse nella lista di sinistra e premere il pulsante
+      <quote>Aggiungi</quote> (o fare clic col pulsante destro del
+      mouse). È possibile selezionare più variabili contigue
+      trascinando il mouse; se le variabili da selezionare non sono
+      contigue, occorre fare clic tenendo premuto il tasto
+      <lit>Ctrl</lit>.
+      </para>
     </description>
 
   </command>
@@ -2522,9 +2586,10 @@
 
     <description>
       <para>
-	Calcola la differenza prima di ogni variabile nella <repl>lista-variabili</repl>
-	e la salva in una nuova variabile il cui nome è prefissato con
-	<lit>d_</lit>.  Quindi <cmd>diff x y</cmd> crea le nuove variabili
+	Calcola la differenza prima di ogni variabile nella
+	<repl>lista-variabili</repl> e la salva in una nuova variabile
+	il cui nome è prefissato con <lit>d_</lit>.  Quindi <cmd>diff
+	x y</cmd> crea le nuove variabili
       </para>
       <code>
 	d_x = x(t) - x(t-1)
@@ -2587,17 +2652,19 @@
         osservazioni.
       </para>
       <para>
-	Con l'opzione <lit>--rank-sum</lit>, viene eseguito il test "rank-sum"
-        di Wilcoxon. Questo test procede ordinando le osservazioni estratte da
-        entrambi i campioni dalla più piccola alla più grande, e quindi calcolando
-        la somma dei ranghi delle osservazioni da uno dei campioni. I due
-        campioni non devono necessariamente avere la stessa dimensione: se sono
-        diversi, viene usato il campione più piccolo per calcolare la somma dei
-        ranghi. Sotto l'ipotesi nulla che i campioni siano estratti da
-        popolazioni con la stessa mediana, la distribuzione di probabilità della
-        somma dei ranghi può essere calcolata per ogni valore dell'ampiezza dei
-        due campioni, mentre per campioni abbastanza ampi essa approssima la
-        distribuzione normale.
+	Con l'opzione <lit>--rank-sum</lit>, viene eseguito il test
+	"rank-sum" di Wilcoxon. Questo test procede ordinando le
+	osservazioni estratte da entrambi i campioni dalla più piccola
+	alla più grande, e quindi calcolando la somma dei ranghi delle
+	osservazioni da uno dei campioni. I due campioni non devono
+	necessariamente avere la stessa dimensione: se sono diversi,
+	viene usato il campione più piccolo per calcolare la somma dei
+	ranghi. Sotto l'ipotesi nulla che i campioni siano estratti da
+	popolazioni con la stessa mediana, la distribuzione di
+	probabilità della somma dei ranghi può essere calcolata per
+	ogni valore dell'ampiezza dei due campioni, mentre per
+	campioni abbastanza ampi essa approssima la distribuzione
+	normale.
       </para>
       <para>
 	Con l'opzione <lit>--signed-rank</lit>, viene eseguito il test
@@ -2624,7 +2691,8 @@
 
   </command>
   
-  <command name="discrete" section="Transformations" label="Marca variabili discrete" context="cli">
+  <command name="discrete" section="Transformations" 
+	   label="Marca variabili discrete" context="cli">
 
     <usage>
       <arguments>
@@ -2733,57 +2801,63 @@
 	gli effetti individuali).
       </para>
       <para context="cli">
-	L'ultimo campo (opzionale) nel comando serve a specificare strumenti.
-	Se questi ultimi non vengono  indicati si assume che tutte le variabili
-	indipendenti siano strettamente esogene. Se si sceglie di specificare 
-	alcuni strumenti è opportuno includere nell'elenco anche le
-	variabili indipendenti strettamente esogene. Nel caso di regressori
-	predeterminati è possibile usare la funzione <lit>GMM</lit> per includere
-	uno specifico intervallo di ritardi seguendo uno schema diagonale a
-	blocchi. Una situazione di questo tipo è stata illustrata in 
-	precedenza nel terzo esempio. Il primo argomento di <lit>GMM</lit>
-	è il nome della variabile in questione, il secondo è il ritardo 
-	minimo da usare come strumento e il terzo è il ritardo massimo.
-	La stessa sintassi può essere utilizzata con la funzione
-	<lit>GMMlevel</lit> per specificare strumenti di tipo GMM 
-	per le equazioni nei livelli.
+	L'ultimo campo (opzionale) nel comando serve a specificare
+	strumenti.  Se questi ultimi non vengono indicati si assume
+	che tutte le variabili indipendenti siano strettamente
+	esogene. Se si sceglie di specificare alcuni strumenti è
+	opportuno includere nell'elenco anche le variabili
+	indipendenti strettamente esogene. Nel caso di regressori
+	predeterminati è possibile usare la funzione <lit>GMM</lit>
+	per includere uno specifico intervallo di ritardi seguendo uno
+	schema diagonale a blocchi. Una situazione di questo tipo è
+	stata illustrata in precedenza nel terzo esempio. Il primo
+	argomento di <lit>GMM</lit> è il nome della variabile in
+	questione, il secondo è il ritardo minimo da usare come
+	strumento e il terzo è il ritardo massimo.  La stessa sintassi
+	può essere utilizzata con la funzione <lit>GMMlevel</lit> per
+	specificare strumenti di tipo GMM per le equazioni nei
+	livelli.
       </para>
       <para context="gui">
-	Per quanto riguarda la gestione degli strumenti, si consultati
+	Per quanto riguarda la gestione degli strumenti, si consulti
 	la documentazione di questo comando in modalità
 	scripting. Attualmente non è possibile specificare
 	esplicitamente degli strumenti nella GUI: tutte le variabili
 	indipendenti sono considerate strettamente esogene.
       </para>
       <para>
-	Di default vengono riportati (con errori standard robusti) i risultati 
-	della stima al primo stadio; la stima al secondo stadio può essere 
-	richiesta indicato l'opzione corrispondente. In entrambi i casi
-	vengono forniti i test di autocorrelazione del primo e del secondo
-	ordine, così come il test di sovraidentificazione di Sargan e un test di 
-	Wald della significatività congiunta dei regressori. Si noti che in questo
-	modello nelle differenze l'autocorrelazione del primo ordine non
-	impedisce che il modello sia valido; l'autocorrelazione al secondo ordine,
-	tuttavia, viola le ipotesi statistiche che ne sono alla base.
+	Di default vengono riportati (con errori standard robusti) i
+	risultati della stima al primo stadio; la stima al secondo
+	stadio può essere richiesta indicato l'opzione
+	corrispondente. In entrambi i casi vengono forniti i test di
+	autocorrelazione del primo e del secondo ordine, così come il
+	test di sovraidentificazione di Sargan e un test di Wald della
+	significatività congiunta dei regressori. Si noti che in
+	questo modello nelle differenze l'autocorrelazione del primo
+	ordine non impedisce che il modello sia valido;
+	l'autocorrelazione al secondo ordine, tuttavia, viola le
+	ipotesi statistiche che ne sono alla base.
       </para>
       <para context="cli">
-	Nel caso della stima al secondo stadio gli errori standard sono 
-	per default calcolati usando la correzione per campioni finiti
-	suggerita da <cite
-	key="windmeijer05">Windmeijer (2005)</cite>. In generale l'inferenza
-	basata sugli errori standard asintotici associati allo stimatore 
-	al secondo stadio è considerata inaffidabile, ma se per qualche ragione
-	desiderate conoscere il loro valore potete usare l'opzione 
-	<opt>--asymptotic</opt> per disattivare la correzione di Windmeijer.
+	Nel caso della stima a due passi, gli errori standard sono per
+	default calcolati usando la correzione per campioni finiti
+	suggerita da <cite key="windmeijer05">Windmeijer
+	(2005)</cite>. In generale l'inferenza basata sugli errori
+	standard asintotici associati allo stimatore al secondo stadio
+	è considerata inaffidabile, ma se per qualche ragione
+	desiderate conoscere il loro valore potete usare l'opzione
+	<opt>--asymptotic</opt> per disattivare la correzione di
+	Windmeijer.
       </para>
       <para context="cli">
-	Se viene indicata l'opzione <opt>--time-dummies</opt> il comando
-	aggiunge ai regressori specificati un insieme di variabili dummy. 
-	Il numero di queste ultime è pari al numero massimo di periodi usati nella
-	stima meno uno, allo scopo di evitare di avere collinearità perfetta con la costante. 
-	Le dummy vengono incluse in differenza, a meno che non sia indicata 
-	l'opzione <opt>--dpdstyle</opt>; in questo caso le dummy sono 
-	incluse in livello.
+	Se viene indicata l'opzione <opt>--time-dummies</opt> il
+	comando aggiunge ai regressori specificati un insieme di
+	variabili dummy.  Il numero di queste ultime è pari al numero
+	massimo di periodi usati nella stima meno uno, allo scopo di
+	evitare di avere collinearità perfetta con la costante.  Le
+	dummy vengono incluse in differenza, a meno che non sia
+	indicata l'opzione <opt>--dpdstyle</opt>; in questo caso le
+	dummy sono incluse in livello.
       </para>
       <para>
 	Per ulteriori dettagli ed esempi, si veda <guideref
@@ -2817,34 +2891,37 @@
 
     <description>
       <para>
-	Per ogni variabile rilevante nella <repl>lista-variabili</repl>,
-        crea un insieme di variabili dummy che codificano i valori distinti di
-        quella variabile. Le variabili rilevanti sono quelle che sono state
-        marcate esplicitamente come discrete, o quelle che assumono un numero
-        limitato di valori che devono essere <quote>abbastanza arrotondati</quote>
-        (multipli di 0.25).
+	Per ogni variabile rilevante nella
+	<repl>lista-variabili</repl>, crea un insieme di variabili
+	dummy che codificano i valori distinti di quella variabile. Le
+	variabili rilevanti sono quelle che sono state marcate
+	esplicitamente come discrete, o quelle che assumono un numero
+	limitato di valori che devono essere <quote>abbastanza
+	arrotondati</quote> (multipli di 0.25).
       </para>
       <para>
-	Per impostazione predefinita, viene aggiunta una variabile dummy per
-        ognuno dei valori distinti della variabile in questione.
-        Ad esempio, se una variabile discreta <lit>x</lit> ha 5 valori distinti,
-        verranno
-        create 5 variabili dummy, di nome <lit>Dx_1</lit>, <lit>Dx_2</lit> e
-        così via. La prima variabile dummy avrà valore 1 per le osservazioni in
-        cui <lit>x</lit> assume il suo valore minimo, e 0 altrove; la successiva
-        variabile dummy avrà valore 1 dove <lit>x</lit> assume il secondo tra i
-        suoi valori, e così via. Se viene usata una delle opzioni
-	<lit>--drop-first</lit> o <lit>--drop-last</lit>, il più basso o il più
-        alto dei valori della variabile viene omesso dalla codifica (questa
-        funzione può essere utile per evitare la cosiddetta
-	<quote>trappola delle variabili dummy</quote>).
+	Per impostazione predefinita, viene aggiunta una variabile
+	dummy per ognuno dei valori distinti della variabile in
+	questione.  Ad esempio, se una variabile discreta <lit>x</lit>
+	ha 5 valori distinti, verranno create 5 variabili dummy, di
+	nome <lit>Dx_1</lit>, <lit>Dx_2</lit> e così via. La prima
+	variabile dummy avrà valore 1 per le osservazioni in cui
+	<lit>x</lit> assume il suo valore minimo, e 0 altrove; la
+	successiva variabile dummy avrà valore 1 dove <lit>x</lit>
+	assume il secondo tra i suoi valori, e così via. Se viene
+	usata una delle opzioni <lit>--drop-first</lit> o
+	<lit>--drop-last</lit>, il più basso o il più alto dei valori
+	della variabile viene omesso dalla codifica (questa funzione
+	può essere utile per evitare la cosiddetta <quote>trappola
+	delle variabili dummy</quote>).
       </para>
       <para>
-	Questo comando può anche essere usato nel contesto di una regressione.
-        Ad esempio, la riga seguente specifica un modello in cui
-	<lit>y</lit> viene regredita sull'insieme di variabili dummy che
-        codificano <lit>x</lit> (in questo contesto non è possibile passare
-        opzioni al comando <cmd>dummify</cmd>).
+	Questo comando può anche essere usato nel contesto di una
+	regressione.  Ad esempio, la riga seguente specifica un
+	modello in cui <lit>y</lit> viene regredita sull'insieme di
+	variabili dummy che codificano <lit>x</lit> (in questo
+	contesto non è possibile passare opzioni al comando
+	<cmd>dummify</cmd>).
       </para>
       <code>
 	ols y dummify(x)
@@ -2912,17 +2989,19 @@
 	e log-normale.
       </para>
       <para>
-	Se alcune delle durate misurate sono censurate a destra (&eg; il periodo 
-	di disoccupazione di un individuo non si è concluso all'interno del periodo 
-	di osservazione), deve essere specificato l'argomento accessorio 
-	<repl>censvar</repl> che indica una variabile i cui valori positivi
-	segnalano osservazioni censurate a destra.
+	Se alcune delle durate misurate sono censurate a destra (&eg;
+	il periodo di disoccupazione di un individuo non si è concluso
+	all'interno del periodo di osservazione), deve essere
+	specificato l'argomento accessorio <repl>censvar</repl> che
+	indica una variabile i cui valori positivi segnalano
+	osservazioni censurate a destra.
       </para>
       <para>
-	Di default i valori stimati ottenuti mediante l'accessore 
-	<lit>$yhat</lit> rappresentano le medie condizionali delle durate; se tuttavia
-	viene indicata l'opzione <opt>--medians</opt>, <lit>$yhat</lit> fornisce le 
-	mediane condizionali.
+	Di default i valori stimati ottenuti mediante l'accessore
+	<lit>$yhat</lit> rappresentano le medie condizionali delle
+	durate; se tuttavia viene indicata l'opzione
+	<opt>--medians</opt>, <lit>$yhat</lit> fornisce le mediane
+	condizionali.
 	  </para>
       <para>
 	Vedi <guideref targ="chap:discr-models"/> per ulteriori dettagli.
@@ -2944,12 +3023,26 @@
 
   <command name="else" section="Programming" label="Strutture di controllo" context="cli">
 
-    <description><para>Si veda <cmdref targ="if"/>.</para>
+    <description>
+      <para>Si veda <cmdref targ="if"/>. Si noti che <cmd>else</cmd>
+      dev'essere su un linea a sé stante, prima del comando
+      corrispondente. Si può aggiungere un commento, come ad esempio
+      </para>
+      <code>
+	else # OK, fa' un'altra cosa
+      </code>
+      <para>
+	ma nn si può aggiungere un comando, come in
+      </para>
+      <code>
+	else x = 5 # wrong!
+      </code>
     </description>
 
   </command>
 
-  <command name="end" section="Programming" label="Chiude un blocco di comandi" context="cli">
+  <command name="end" section="Programming" 
+	   label="Chiude un blocco di comandi" context="cli">
 
     <description>
       <para>
@@ -2965,11 +3058,9 @@
 
     <description><para>Si veda <cmdref targ="if"/>.</para>
     </description>
-
   </command>
 
   <command name="endloop" section="Programming" label="Chiude un ciclo di comandi" context="cli">
-
     <description>
       <para>
 	Indica la fine di un ciclo (loop) di comandi.  Si veda <cmdref targ="loop"/>.
@@ -3002,7 +3093,6 @@
         <lit>N</lit> è il numero di modelli stimati finora nella sessione
         in corso. Si veda anche <cmdref targ="tabprint"/>.
       </para>
-
       <para>
 	Usando l'opzione <lit>--complete</lit>, il file &latex; è un
         documento completo, pronto per essere processato; altrimenti il
@@ -3031,24 +3121,26 @@
     <description>
       <para>
 	Specifica un'equazione all'interno di un sistema di equazioni
-        (si veda <cmdref targ="system"/>). La sintassi per specificare
-        un'equazione in un sistema SUR è la stessa usata ad esempio in <cmdref
-        targ="ols"/>. Per un'equazione in un sistema con minimi quadrati 
-        a tre stadi, invece è possibile usare una specificazione simile a quella
-        usata per OLS e indicare una lista di strumenti comuni usando l'istruzione
-        <cmd>instr</cmd> (si veda ancora <cmdref targ="system"/>), oppure si può
-        usare la stessa sintassi di <cmdref targ="tsls"/>.
+	(si veda <cmdref targ="system"/>). La sintassi per specificare
+	un'equazione in un sistema SUR è la stessa usata ad esempio in
+	<cmdref targ="ols"/>. Per un'equazione in un sistema con
+	minimi quadrati a tre stadi, invece è possibile usare una
+	specificazione simile a quella usata per OLS e indicare una
+	lista di strumenti comuni usando l'istruzione <cmd>instr</cmd>
+	(si veda ancora <cmdref targ="system"/>), oppure si può usare
+	la stessa sintassi di <cmdref targ="tsls"/>.
       </para>
     </description>
 
   </command>
 
-  <command name="estimate" section="Estimation" label="Stima sistemi di equazioni" context="cli">
+  <command name="estimate" section="Estimation" 
+	   label="Stima sistemi di equazioni" context="cli">
 
     <usage>
       <arguments>
-        <argument>nome-sistema</argument>
-        <argument>stimatore</argument>
+        <argument optional="true">nome-sistema</argument>
+	<argument optional="true">stimatore</argument>
       </arguments>
       <options>
        <option>
@@ -3064,6 +3156,10 @@
          <effect>si veda oltre</effect>
        </option>
 	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print results</effect>
+	</option>
+	<option>
 	  <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
@@ -3077,13 +3173,18 @@
 
     <description>
       <para>
-	Esegue la stima di un sistema di equazioni, che deve essere stato
-        definito in precedenza usando il comando <cmdref targ="system"/>.
-        Per prima cosa va indicato il nome del sistema, racchiuso tra
-        virgolette se contiene spazi, quindi il tipo di stimatore, preceduto
-        dalla stringa <lit>method=</lit>. Gli stimatori disponibili sono:
-        <cmd>ols</cmd>, <cmd>tsls</cmd>, <cmd>sur</cmd>, <cmd>3sls</cmd>,
-        <cmd>fiml</cmd> o <cmd>liml</cmd>.
+	Esegue la stima di un sistema di equazioni, che deve essere
+	stato definito in precedenza usando il comando <cmdref
+	targ="system"/>.  Per prima cosa va indicato il nome del
+	sistema, racchiuso tra virgolette se contiene spazi, quindi il
+	tipo di stimatore, preceduto dalla stringa
+	<lit>method=</lit>. Gli stimatori disponibili sono:
+	<cmd>ols</cmd>, <cmd>tsls</cmd>, <cmd>sur</cmd>,
+	<cmd>3sls</cmd>, <cmd>fiml</cmd> o <cmd>liml</cmd>. Questi
+	argomento sono opzionali si il sistema in questione è già
+	stato stimato e occupa il posto dell'<quote>ultimo
+	modello</quote>; in tal caso, per default viene usato il
+	metodo di stima precedente.
       </para>
       <para>Se al sistema in questione sono stati imposti dei vincoli (si veda
        il comando <cmdref targ="restrict"/>), la stima sarà soggetta a tali
@@ -3106,20 +3207,21 @@
       opzione non ha effetti nel caso vengano usati altri stimatori, che non
       prevedono correzioni per i gradi di libertà.
       </para>
-      <para>La formula usata in modo predefinito per calcolare gli elementi della matrice
-       di covarianza tra equazioni è
+      <para>
+	La formula usata in modo predefinito per calcolare gli
+	elementi della matrice di covarianza tra equazioni è
        <equation status="display"
        tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{T}\]"
        ascii="sigma(i,j) = u(i)' * u(j) / T"
        graphic="syssigma1"/>
-       Se viene usata l'opzione <lit>--geomean</lit>, viene applicata una correzione
-       per i gradi di libertà secondo la formula
+       Se viene usata l'opzione <lit>--geomean</lit>, viene applicata
+       una correzione per i gradi di libertà secondo la formula
        <equation status="display"
        tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{\sqrt{(T-k_i)(T-k_j)}}\]"
        ascii="sigma(i,j) = u(i)' * u(j) / sqrt((T - ki) * (T - kj))"
        graphic="syssigma2"/>
-       dove i <math>k</math> indicano il numero di parametri indipendenti in
-       ogni equazione.
+       dove i <math>k</math> indicano il numero di parametri
+       indipendenti in ogni equazione.
       </para>
       <para>
         Se si usa l'opzione <lit>--verbose</lit> e un metodo iterativo, vengono
@@ -3135,37 +3237,45 @@
     <description>
 
       <para>
-	Se si vuole aggiungere a un dataset una serie di frequenza inferiore, è
-        necessario <quote>espandere</quote> la nuova serie. Ad esempio, una serie
-        trimestrale dovrà essere espansa per essere aggiunta a un dataset
-        mensile. Altre volte occorrerà espandere un intero dataset a una
-        frequenza superiore prima di aggiungervi una serie che ha una frequenza
-        superiore.
+	Se si vuole aggiungere a un dataset una serie di frequenza
+	inferiore, è necessario <quote>espandere</quote> la nuova
+	serie. Ad esempio, una serie trimestrale dovrà essere espansa
+	per essere aggiunta a un dataset mensile. Altre volte
+	occorrerà espandere un intero dataset a una frequenza
+	superiore prima di aggiungervi una serie che ha una frequenza
+	superiore.
       </para>
-
       <para>
         L'operazione di espansione dei dati è riservata gli utenti
-        <quote>esperti</quote>: occorre sapere bene cosa si sta facendo. In
-        pratica, gretl replica i valori della serie a minore frequenza tante
-        volte quanto è richiesto dai dati. Ad esempio, se si ha una
-        serie trimestrale con il valore 35.5 per l'osservazione 1990:1 (il primo
-        trimestre del 1990), espandendo la serie, il valore 35.5 verrà assegnato
-        alle osservazioni per gennaio, febbraio e marzo del 1990. La variabile
-        espansa non potrà quindi essere utilizzata per analisi temporali
-        "a grana fine", tranne nel caso si abbia ragione di ritenere che la
-        variabile in questione rimanga costante nei vari sotto-periodi.
+        <quote>esperti</quote>: occorre sapere bene cosa si sta
+        facendo. Quando si combinano serie di frequenza diversa nello
+        stesso dataset, di solito è più consigliabile compattare i
+        dati ad alta frequenza piuttosto che espandere quelli a bassa
+        frequenza
+      </para>
+      <para>
+	Ciò premesso, gretl offre due opzioni: valori ad altra
+	frequenza possono essere espansi usando il metodo di <cite
+	key="chowlin71">Chow e Lin (1971)</cite> oppure ripetendo i
+	dati a frequenza più bassa per il numero necessario di volte.
+      </para>
+      <para>
+	Il metodo di Chow&ndash;Lin è basato su una regressione su
+	costante e trend quadratico; il disturbo è assunto
+	AR(1). Questa procedura richiede 4 gradi di libertà.
+      </para>
+      <para>
+	Per quanto riguarda il metodo della ripetizione del dato,
+	invece, diamo un esempio. Se si ha una serie trimestrale con
+	il valore 35.5 per l'osservazione 1990:1 (il primo trimestre
+	del 1990), espandendo la serie, il valore 35.5 verrà assegnato
+	alle osservazioni per gennaio, febbraio e marzo del 1990. La
+	variabile espansa non potrà quindi essere utilizzata per
+	analisi temporali "a grana fine", tranne nel caso si abbia
+	ragione di ritenere che la variabile in questione rimanga
+	costante nei vari sotto-periodi.
       </para>
 
-      <para>
-	È utile tenere presenti due altri comandi. Per prima cosa, se si
-        combinano serie di diversa frequenza in un dataset, è opportuno
-        considerare la possibilità di compattare i dati a frequenza più alta,
-        invece che espandere quelli a frequenza più bassa, utilizzando il
-        comando presente nel menù Campione. In secondo luogo, se si sceglie di
-        espandere una serie, può essere utile applicare un'operazione di
-        smorzamento (smoothing) ai dati, fra quelle disponibili utilizzando il
-        comando <cmd>genr</cmd>.
-      </para>
 
     </description>
   </command>
@@ -3175,15 +3285,45 @@
 
     <description>
       <para>È possibile esportare dati in formato separato da virgole
-        (CSV: Comma-Separated Values), in modo che possano essere aperti
-        con fogli elettronici e molti altri programmi applicativi.
+      (CSV: Comma-Separated Values), in modo che possano essere aperti
+      con fogli elettronici e molti altri programmi
+      applicativi. Selezionando questa opzione, sarà possibile
+      scegliere diverse caratteristiche del file CSV.
 	</para>
-
-      <para>È anche possibile esportare i dati nei formati specifici di
-        GNU R o GNU octave.  Per ulteriori informazioni in questi programmi
-        (entrambi utili per l'analisi statistica avanzata) si vedano i 
-        rispettivi siti web: http://www.r-project.org/ e http://www.octave.org/
+      <para>
+	You also have the option of exporting data in the form of a
+	<quote>native</quote> gretl datafile, or (if the data are
+	suitable) exporting to a gretl database. See
+	<url>gretl.sourceforge.net/gretl_data.html</url> for an account of
+	gretl databases.
       </para>
+      <para>
+	You may also export data in a format suitable for use with
+	the following programs:
+      </para>
+      <ilist>
+	<li>
+	  <para>GNU R (<url>www.r-project.org</url>)</para>
+	</li>
+	<li>
+	  <para>GNU octave (<url>www.gnu.org/software/octave</url>)
+	  </para>
+	</li>
+	<li>
+	  <para>JMulTi (<url>www.jmulti.de</url>)</para>
+	</li>
+	<li>
+	  <para>PcGive (<url>www.pcgive.com</url>)</para>
+	</li>
+      </ilist>
+      <para>
+	If you wish to export data by copying to the clipboard rather than
+	writing to a file on disk, select the series you want to copy in
+	the main window, right-click, and select <quote>Copy to
+	clibboard</quote>. (Only CSV format is supported in this
+	context.) 
+      </para>
+
     </description>
   </command>
 
@@ -3233,12 +3373,21 @@
 	  <effect>genera previsioni fuori dal campione</effect>
         </option>
         <option>
+	  <flag>--no-stats</flag>
+	  <effect>don't print forecast statistics</effect>
+        </option>
+        <option>
 	  <flag>--quiet</flag>
 	  <effect>non mostra le previsioni</effect>
         </option>
         <option>
           <flag>--rolling</flag>
           <effect>vedi sotto</effect>
+        </option>
+        <option>
+	  <flag>--plot</flag>
+	  <optparm>nome di file</optparm>
+	  <effect>vedi sotto</effect>
         </option>
       </options>
       <examples>
@@ -3321,6 +3470,26 @@
          <lit>rolling</lit>.
        </para>
  
+      <para context="cli">
+	The <opt>--plot</opt> option (available only in the case of
+	single-equation estimation) calls for a plot file to be
+	produced, containing a graphical representation of the
+	forecast. The suffix of the <repl>filename</repl> argument to
+	this option controls the format of the plot: <lit>.eps</lit>
+	for EPS, <lit>.pdf</lit> for PDF, <lit>.png</lit> for PNG,
+	<lit>.plt</lit> for a gnuplot command file. The dummy filename
+	<lit>display</lit> can be used to force display of the plot in
+	a window. For example,
+      </para>
+      <code>
+	fcast --plot=fc.pdf
+      </code>
+      <para>
+	will generate a graphic in PDF format.  Absolute pathnames are
+	respected, otherwise files are written to the gretl working
+	directory.
+      </para>
+
        <para>
  	La natura degli errori standard della previsione (se disponibili)
         dipende dalla natura del modello e della previsione. Per i modelli
@@ -3346,9 +3515,7 @@
     label="Script esterni" context="cli">
 
     <usage>
-      <arguments>
-        <argument optional="true">linguaggio</argument>
-      </arguments>
+      <syntax><lit>foreign language=</lit><repl>lang</repl></syntax>
       <options>
        <option>
          <flag>--send-data</flag>
@@ -3363,16 +3530,22 @@
 
     <description>
      <para>
-       Questo comando apre una modalità speciale, in cui vengono accettati
-       comandi che verranno eseguiti da un programma esterno.
-       Con il comando <lit>end foreign</lit> si esce da questa modalità e i comandi
-       verranno eseguiti.
+       Questo comando apre una modalità speciale, in cui vengono
+       accettati comandi che verranno eseguiti da un programma
+       esterno.  Con il comando <lit>end foreign</lit> si esce da
+       questa modalità e i comandi verranno eseguiti.
       </para>
       <para>
-       Al momento, l'unico programma esterno compatibile con questa modalità è
-       GNU R, e l'unico argomento <repl>linguaggio</repl> accettabile è
-       <lit>language=R</lit> (che è il valore predefinito, e può essere omesso).
-       In futuro potranno essere supportati altri programmi.
+       Al momento, i programmi esterni compatibili con questa modalità
+       sono (<lit>language=R</lit>), Ox di Jurgen Doornik Ox
+       (<lit>language=Ox</lit>), GNU Octave
+       (<lit>language=Octave</lit>), Python e, in minor misura, Stata.
+       I nomi dei programmi esterni sono case-insensitive.
+      </para>
+      <para>
+	Con R, Octave e Stata l'opzione <opt>--send-data</opt> ha
+	l'effetto di rendere disponibile all'interno del programma di
+	destinazione l'intero dataset corrente.
       </para>
       <para>
        Si veda la <guideref targ="chap:gretlR"/> per dettagli ed esempi.
@@ -3428,9 +3601,10 @@
 	<math>T</math>/2 e <math>T</math><sup>0.6</sup>.
       </para>
       <para>
-	I risultati possono essere recuperati usando gli accessori <lit>$test</lit>
-	e <lit>$pvalue</lit>. Questi valori sono basati sullo stimatore locale
-	di Whittle a meno che non sia stata indicata l'opzione <opt>--gph</opt>.
+	I risultati possono essere recuperati usando gli accessori
+	<lit>$test</lit> e <lit>$pvalue</lit>. Questi valori sono
+	basati sullo stimatore locale di Whittle a meno che non sia
+	stata indicata l'opzione <opt>--gph</opt>.
       </para>
     </description>
 
@@ -3448,6 +3622,21 @@
       </arguments>
       <options>
         <option>
+	  <flag>--nbins</flag>
+	  <optparm>n</optparm>
+	  <effect>specify number of bins</effect>
+        </option>
+        <option>
+	  <flag>--min</flag>
+	  <optparm>minval</optparm>
+	  <effect>specify minimum, see below</effect>
+        </option>
+        <option>
+	  <flag>--binwidth</flag>
+	  <optparm>width</optparm>
+	  <effect>specify bin width, see below</effect>
+        </option>
+        <option>
          <flag>--quiet</flag>
          <effect>non mostra il grafico</effect>
         </option>
@@ -3463,45 +3652,81 @@
          <flag>--silent</flag>
          <effect>non mostra nulla</effect>
         </option>
+        <option>
+	  <flag>--show-plot</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>name</optparm>
+	  <effect>use column of named matrix</effect>
+        </option>
       </options>
+      <examples>
+        <example>freq x</example>
+	<example>freq x --normal</example>
+	<example>freq x --nbins=5</example>
+	<example>freq x --min=0 --binwidth=0.10</example>
+      </examples>
     </usage>
 
     <description context="cli">
       <para>
-        Se non vengono indicate opzioni, mostra la distribuzione di frequenza
-        per la <repl>variabile</repl> (indicata con il nome o il numero).
+        Se non vengono indicate opzioni, mostra la distribuzione di
+        frequenza per la <repl>variabile</repl> (indicata con il nome
+        o il numero).
       </para>
       <para>
-       Usando l'opzione <lit>--normal</lit>, vengono mostrati i risultati del
-       test chi-quadro di Doornik&ndash;Hansen per la normalità.
-       Usando l'opzione <lit>--gamma</lit>, al posto del test di normalità
-       viene eseguito il test non parametrico di Locke per l'ipotesi nulla che la
-       variabile segua la distribuzione gamma; si veda Locke (1976), Shapiro e
-       Chen (2001). Si noti che la parametrizzazione della distribuzione gamma
-       in gretl è (forma, scala).
+	If the <opt>--matrix</opt> option is given, <repl>var</repl>
+	(which must be an integer) is instead interpreted as a 1-based
+	index that selects a column from the named matrix.
       </para>
       <para>
-        In modalità interattiva viene mostrato anche un grafico della distribuzione,
-        a meno che non si usi l'opzione <lit>--quiet</lit>.
+	To control the presentation of the distribution you may
+	specify <emphasis>either</emphasis> the number of bins or
+	the minimum value plus the width of the bins, as shown in
+	the last two examples above. The <opt>--min</opt> option
+	sets the lower limit of the left-most bin.
       </para>
       <para>
-       L'opzione <lit>--silent</lit> sopprime interamente l'output mostrato
-       di solito. Ha senso usarla insieme a una delle opzioni riguardanti la
-       distribuzione: in questo modo la statistica test e il suo p-value
-       verranno salvati nelle variabili accessorie
+       Usando l'opzione <lit>--normal</lit>, vengono mostrati i
+       risultati del test chi-quadro di Doornik&ndash;Hansen per la
+       normalità.  Usando l'opzione <lit>--gamma</lit>, al posto del
+       test di normalità viene eseguito il test non parametrico di
+       Locke per l'ipotesi nulla che la variabile segua la
+       distribuzione gamma; si veda <cite key="locke76">Locke
+       (1976)</cite>, <cite key="shapiro-chen01">Shapiro e Chen
+       (2001)</cite>. Si noti che la parametrizzazione della
+       distribuzione gamma in gretl è (forma, scala).
+      </para>
+      <para>
+        In modalità interattiva viene mostrato anche un grafico della
+        distribuzione, a meno che non si usi l'opzione
+        <lit>--quiet</lit>. Per converso, il grafico non viene
+        mostrato quando il comando è invocato da script, a meno che
+        non venga usata l'opzione <opt>--show-plot</opt>. (Questo non
+        si applica alla versione di gretl a linea di comando,
+        <lit>gretlcli</lit>.)
+      </para>
+      <para>
+       L'opzione <lit>--silent</lit> sopprime interamente l'output
+       mostrato di solito. Ha senso usarla insieme a una delle opzioni
+       riguardanti la distribuzione: in questo modo la statistica test
+       e il suo p-value verranno salvati nelle variabili accessorie
        <lit>$test</lit> e <lit>$pvalue</lit>.
       </para>
     </description>
  
     <description context="gui">
       <para>
-        Nella finestra di dialogo della distribuzione di frequenza è possibile
-        controllare le caratteristiche del grafico in due modi diversi.
+        Nella finestra di dialogo della distribuzione di frequenza è
+        possibile controllare le caratteristiche del grafico in due
+        modi diversi.
       </para>
       <para>
-	Per prima cosa è possibile scegliere il numero di intervalli; in questo caso la
-        larghezza e la posizione degli intervalli sono calcolate
-        automaticamente.
+	Per prima cosa è possibile scegliere il numero di intervalli;
+	in questo caso la larghezza e la posizione degli intervalli
+	sono calcolate automaticamente.
       </para>
       <para>
         In alternativa, è possibile specificare il limite inferiore del primo
