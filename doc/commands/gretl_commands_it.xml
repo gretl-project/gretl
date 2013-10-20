@@ -5584,7 +5584,7 @@
       <options>
 	<option>
 	  <flag>--cross</flag>
-	  <effect>ammette la possibilità di errori correlati fra loro in cross-section</effect>
+	  <effect>permette la correlazione fra i due vettori di disturbi</effect>
 	</option>
 	<option>
 	  <flag>--diffuse</flag>
@@ -5745,12 +5745,37 @@
   </command>
   <command name="labels" section="Dataset" label="Mostra etichette delle variabili" context="cli">
 
+    <usage>
+      <altforms>
+	<altform><lit>labels [</lit> <repl>varlist</repl> <lit>]</lit></altform>	
+	<altform><lit>labels --to-file=</lit><repl>filename</repl></altform>
+	<altform><lit>labels --from-file=</lit><repl>filename</repl></altform>
+	<altform><lit>labels --delete</lit></altform>
+      </altforms>
+    </usage>
+
     <description>
       <para>
-	Mostra le etichette informative per le variabili generate con il comando
-        <cmd>genr</cmd> e quelle aggiunte al dataset attraverso
-        l'interfaccia grafica.
+	In the first form, prints out the informative labels (if present) for
+	the series in <repl>varlist</repl>, or for all series in the dataset
+	if <repl>varlist</repl> is not specified.
       </para>
+      <para>
+	With the option <opt>--to-file</opt>, writes to the named file the
+	labels for all series in the dataset, one per line. If no labels are
+	present an error is flagged; if some series have labels and others
+	do not, a blank line is printed for series with no label.
+      </para>
+      <para>
+	With the option <opt>--from-file</opt>, reads the specified file
+	(which should be plain text) and assigns labels to the series in
+	the dataset, reading one label per line and taking blank lines
+	to indicate blank labels.
+      </para>
+      <para>
+	The <opt>--delete</opt> option does what you'd expect: it
+	removes all the series labels from the dataset.
+      </para>      
     </description>
 
   </command>
@@ -5797,10 +5822,10 @@
   <command name="lags" section="Transformations" label="Crea ritardi" context="cli">
 
     <usage>
-      <altforms>
-        <altform><lit>lags</lit> <repl>lista-variabili</repl></altform>
-       <altform><lit>lags</lit> <repl>ordine</repl> <lit>;</lit> <repl>lista-variabili</repl></altform>
-      </altforms>
+      <arguments>
+        <argument optional="true" separated="true">ordine</argument>
+	<argument>lista-variabilii</argument>
+      </arguments>
       <examples>
        <example>lags x y</example>
        <example>lags 12 ; x y</example>
@@ -5823,7 +5848,7 @@
       </code>
       <para>
         Il numero dei ritardi creati può essere indicato come primo parametro
-        opzionale.
+        opzionale (se presente, deve essere seguito da un punto e virgola).
       </para>
     </description>
 
@@ -5920,34 +5945,32 @@
     <description>
       <para>
 	Deve seguire immediatamente un comando <cmd>ols</cmd>. Calcola
-        il <quote>leverage</quote> (<math>h</math>, compreso tra 0
-        e 1) di ogni osservazione nel campione su cui è stato stimato il
-        precedente modello. Mostra il residuo (<math>u</math>) per
-        ogni osservazione assieme al leverage corrispondente e a una
-        misura della sua influenza sulla stima:
-	  <equation status="inline" 
-	  tex="$uh/(1 - h)$"
-	  ascii="u*h/(1-h)"
-	  graphic="influence"/>. I <quote>punti di leverage</quote> per
-        cui il valore di <math>h</math> supera
-	2<math>k</math>/<math>n</math> (dove
-	<math>k</math> è il numero dei parametri stimati e
-        <math>n</math> è l'ampiezza del campione) sono indicati
-        con un asterisco. Per i dettagli sui concetti di leverage e
-        influenza, si veda Davidson e MacKinnon (1993, capitolo 2).
+	il <quote>leverage</quote> (<math>h</math>, compreso tra 0 e
+	1) di ogni osservazione nel campione su cui è stato stimato il
+	precedente modello. Mostra il residuo (<math>u</math>) per
+	ogni osservazione assieme al leverage corrispondente e a una
+	misura della sua influenza sulla stima: <equation
+	status="inline" tex="$uh/(1 - h)$" ascii="u*h/(1-h)"
+	graphic="influence"/>. I <quote>punti di leverage</quote> per
+	cui il valore di <math>h</math> supera
+	2<math>k</math>/<math>n</math> (dove <math>k</math> è il
+	numero dei parametri stimati e <math>n</math> è l'ampiezza del
+	campione) sono indicati con un asterisco. Per i dettagli sui
+	concetti di leverage e influenza, si veda <cite
+	key="davidson-mackinnon93">Davidson and MacKinnon
+	(1993)</cite>, capitolo 2.
       </para>
 
       <para>
 	Vengono mostrati anche i valori DFFITS: questi sono
-        <quote>residui studentizzati</quote> (ossia i residui previsti,
-        divisi per i propri errori standard) moltiplicati per
-	  <equation status="inline" 
-	  tex="$\sqrt{h/(1 - h)}$"
-	  ascii="sqrt[h/(1 - h)]"
-	  graphic="dffit"/>. Per una discussione dei residui
-          studentizzati e dei valori DFFITS si veda G. S. Maddala,
-        <book>Introduction to Econometrics</book>, capitolo 12 e anche
-        Belsley, Kuh e Welsch (1980).
+	<quote>residui studentizzati</quote> (ossia i residui
+	previsti, divisi per i propri errori standard) moltiplicati
+	per <equation status="inline" tex="$\sqrt{h/(1 - h)}$"
+	ascii="sqrt[h/(1 - h)]" graphic="dffit"/>. Per una discussione
+	dei residui studentizzati e dei valori DFFITS si veda <cite
+	key="maddala92">Maddala's Introduction to Econometrics</cite>,
+	cap. 12, oppure <cite key="belsley-etal80">Belsley, Kuh and
+	Welsch (1980)</cite>.
         </para>
         <para>
         In breve, i <quote>residui previsti</quote>
@@ -5968,7 +5991,33 @@
 	L'icona "+" in cima alla finestra del test di leverage apre una
         finestra di dialogo che permette di salvare nel dataset in uso
         una o più delle variabili del test.</para>
-
+      <para context="tex">
+	After execution, the <lit>$test</lit> accessor returns the
+	cross-validation criterion, which is defined as 
+        \[
+	\sum_{i=1}^n (y_i - \hat{y}_{-i})^2 
+        \] 
+        where $\hat{y}_{-i}$ is the forecast error for the $i$-th
+        observation, after it has been excluded from the sample. The
+        criterion is, hence, the sum of the squared forecasting errors
+        where all $n$ observations but the $i$-th one are used to
+        predict it (the so-called <emphasis>leave-one-out</emphasis>
+        estimator).  For a broader discussion of the cross-validation
+        criterion, see Davidson and MacKinnon's <book>Econometric
+        Theory and Methods</book>, pages 685--686, and the references
+        therein.
+      </para>
+      <para context="notex">
+	After execution, the <lit>$test</lit> accessor returns the
+	cross-validation criterion, which is defined as the sum of
+	squared deviations of the dependent variable from its forecast
+	value, the forecast for each observation being based on a
+	sample from which that observation is excluded.  (This is
+	known as the <emphasis>leave-one-out</emphasis> estimator).
+	For a broader discussion of the cross-validation criterion,
+	see Davidson and MacKinnon's <book>Econometric Theory and
+	Methods</book>, pages 685&ndash;686, and the references therein.
+      </para>
     </description>
 
     <gui-access>
@@ -6008,12 +6057,13 @@
     <description>
       <para>
 	Calcola il test di radice unitaria per dati panel di <cite
-	key="LLC2002">Levin, Lin and Chu (2002)</cite>. L'ipotesi nulla 
-	che tutte le singole serie storiche contengano una radica unitaria, 
-	mentre l'alternativa è che nessuna delle serie storiche ne contenga una. 
-	(In altre parole, si assume un coefficiente AR(1) comune a tutte le serie, anche
-	se altre proprietà statistiche delle serie possono variare da un'unità di osservazione
-	all'altra.)
+	key="LLC2002">Levin, Lin and Chu (2002)</cite>. L'ipotesi
+	nulla che tutte le singole serie storiche contengano una
+	radica unitaria, mentre l'alternativa è che nessuna delle
+	serie storiche ne contenga una.  (In altre parole, si assume
+	un coefficiente AR(1) comune a tutte le serie, anche se altre
+	proprietà statistiche delle serie possono variare da un'unità
+	di osservazione all'altra.)
       </para>
 	
       <para context="cli">
@@ -6047,10 +6097,11 @@
   <command name="loess" section="Estimation" label="Loess" context="gui">
     <description>
       <para>
-	Stima una regressione polinomiale locally-weighted e produce una serie
-	che contiene i valori previsti della variabile dipendente in 
-	corrispondenza di tutti i valori non missing della variabile indipendente.
-	Il metodo applicato è quello descritto da <cite key="cleveland79">William Cleveland
+	Stima una regressione polinomiale locally-weighted e produce
+	una serie che contiene i valori previsti della variabile
+	dipendente in corrispondenza di tutti i valori non missing
+	della variabile indipendente.  Il metodo applicato è quello
+	descritto da <cite key="cleveland79">William Cleveland
 	(1979)</cite>.
       </para>
       <para>
@@ -6075,9 +6126,13 @@
       <arguments>
         <argument>variabile-dipendente</argument>
         <argument>variabili-indipendenti</argument>
-	<argument optional="true" flag="ymax=">valore</argument>
       </arguments>
       <options>
+	<option>
+	  <flag>--ymax</flag>
+	  <optparm>value</optparm>
+	  <effect>specifica il massimo della variabile dipendente</effect>
+	</option>	
 	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
@@ -6085,7 +6140,7 @@
       </options>
       <examples>
         <example>logistic y const x</example>
-        <example>logistic y const x ymax=50</example>
+        <example>logistic y const x --ymax=50</example>
       </examples>
     </usage>
 
@@ -6109,16 +6164,15 @@
       </para>
         
       <para context="cli">
-        È possibile indicare un valore diverso per il massimo,
-        usando la sintassi opzionale <lit>ymax=</lit><repl>valore</repl>,
-        che segue la lista dei regressori. Il valore fornito deve essere
-        maggiore di tutti i valori osservati della variabile dipendente.
+        È possibile indicare un valore diverso per il massimo, usando
+        l'opzione <opt>--ymax</opt>. Il valore fornito deve essere
+        maggiore di tutti i valori osservati della variabile
+        dipendente.
       </para>
         
       <para context="gui">
         Nella finestra di dialogo del comando, è possibile specificare
-        un valore diverso per il massimo. Il valore fornito
-        <math>y</math><sup>*</sup> deve essere
+        un valore diverso per il massimo. Il valore fornito deve essere
         maggiore di tutti i valori osservati della variabile dipendente.
       </para>
 
@@ -6156,6 +6210,15 @@
 	<option>
 	  <flag>--robust</flag>
 	  <effect>errori standard robusti</effect>
+	</option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>errori standard clusterizzati</effect>
+        </option>
+	<option>
+	  <flag>--multinomial</flag>
+	  <effect>stima un logit multinomiale</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
@@ -6206,9 +6269,16 @@
         MacKinnon 2004, cap. 10.
       </para>
       <para>
-        Se la variabile dipendente non è binaria, ma è discreta, si ottengono
-        stime Logit ordinate. Se la variabile scelta come dipendente non è
-        discreta, viene emesso un messaggio di errore.
+        Se la variabile dipendente non è binaria, ma è discreta, si
+        ottengono stime Logit ordinate. Tuttavia, se viene fornita
+        l'opzione <opt>--multinomial</opt>, la variabile dipendente è
+        interpretata come non ordinale, e vengono prodotte stime Logit
+        Multinomiali. (In ambo i casi, verrà dato un errore se la
+        dipendente non è discreta.) Nel caso multinomiale, l'accessore
+        <lit>$mnlprobs</lit> sarà disponibile dopo la stima; esso
+        conterrà una matrice con le probabilità stimate dei possibili
+        valori della dipendente per ogni osservazione (osservazioni
+        per riga, valori per colonna).
       </para>
       <para>
 	Per condurre un'analisi delle proporzioni (dove la variabile
@@ -6223,7 +6293,7 @@
       </code>
       <para>
         e usare questa come variabile dipendente in una regressione OLS.
-        Si veda Ramanathan 2002, capitolo 12.
+        Si veda <cite key="ramanathan02">Ramanathan (2002)</cite>, capitolo 12.
       </para>
     </description>
 
@@ -6326,6 +6396,10 @@
         <argument>lista-variabili</argument>
       </arguments>
       <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra nulla</effect>
+        </option>
        <option>
          <flag>--save</flag>
          <effect>salva le distanze nel dataset</effect>
@@ -6431,18 +6505,34 @@
 
   <command name="markers" section="Dataset" label="Aggiunta di marcatori" context="cli">
 
+    <usage>
+      <altforms>
+	<altform><lit>markers --to-file=</lit><repl>nomefile</repl></altform>
+	<altform><lit>markers --from-file=</lit><repl>nomefile</repl></altform>
+	<altform><lit>markers --delete</lit></altform>
+      </altforms>
+    </usage>
+
     <description>
       <para>
-	Questo comando richiede il nome di un file che contiene
-	<quote>marcatori</quote> per le osservazioni, ossia brevi stringhe
-	identificative per singole osservazioni del dataset (ad esempio
-	nomi di paesi o città, o altri codici), che possono essere lunghe
-	fino a 8 caratteri. Il file deve contenere un marcatore per riga e
-	devono esserci tanti marcatori quante sono le osservazioni nel
-	dataset attuale. Se queste condizioni sono rispettate e se il file
-	specificato esiste, i marcatori verranno aggiunti al dataset e
-	saranno visibili scegliendo <quote>Mostra valori</quote> dal menù
-	Dati di gretl.</para>
+	With the option <opt>--to-file</opt>, writes to the named file
+	the observation marker strings from the current dataset, one
+	per line. If no such strings are present an error is flagged.
+      </para>
+      <para>
+	With the option <opt>--from-file</opt>, reads the specified
+	file (which should be plain text) and assigns observation
+	markers to the rows in the dataset, reading one marker per
+	line. In general there should be at least as many markers in
+	the file as observations in the dataset, but if the dataset is
+	a panel it is also acceptable if the number of markers in the
+	file matches the number of cross-sectional units (in which
+	case the markers are repeated for each time period.)
+      </para>
+      <para>
+	The <opt>--delete</opt> option does what you'd expect: it
+	removes the observation marker strings from the dataset.
+      </para>      
     </description>
   </command>
 
@@ -6569,6 +6659,14 @@
 	  <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
+	<option>
+	  <flag>--no-gradient-check</flag>
+	  <effect>si veda sotto</effect>
+	</option>
+	<option>
+	  <flag>--lbfgs</flag>
+	  <effect>usa L-BFGS-B invece di BFGS</effect>
+	</option>
       </options>
       <examples>
 	<demos>
@@ -6587,17 +6685,20 @@
       </para>
 
       <para>
-        Esempio: si supponga di avere una serie <lit>X</lit> con valori 0 o 1 e di
-        voler ottenere la stima di massima verosimiglianza della probabilità <lit>p</lit> 
-        che <lit>X</lit> valga 1 (è semplice intuire che la stima ML di <lit>p</lit>
-        corrisponderà alla proporzione dei valori 1 nel campione).
+        Esempio: si supponga di avere una serie <lit>X</lit> con
+        valori 0 o 1 e di voler ottenere la stima di massima
+        verosimiglianza della probabilità <lit>p</lit> che
+        <lit>X</lit> valga 1 (è semplice intuire che la stima ML di
+        <lit>p</lit> corrisponderà alla proporzione dei valori 1 nel
+        campione).
       </para>
 
-      <para>Occorre per prima cosa aggiungere <lit>p</lit> al dataset e assegnargli un
-        valore iniziale, attraverso il comando genr o i comandi del menù.
-	È possibile scrivere delle istruzioni <quote>genr</quote> appropriate
-        nella finestra di specificazione del comando di stima, prima di indicare
-        la specificazione della funzione di log-verosimiglianza.
+      <para>Occorre per prima cosa aggiungere <lit>p</lit> al dataset
+      e assegnargli un valore iniziale, attraverso il comando
+      <cmd>genr</cmd> o i comandi del menù.  È possibile scrivere
+      delle istruzioni <quote>genr</quote> appropriate nella finestra
+      di specificazione del comando di stima, prima di indicare la
+      specificazione della funzione di log-verosimiglianza.
       </para>
 
       <para>Si scrivano i seguenti comandi nella finestra del comando:</para>
@@ -6646,15 +6747,16 @@
       </para>
 
       <para>
-        Esempio: si supponga di avere una serie <lit>X</lit> con valori 0 o 1 e di
-        voler ottenere la stima di massima verosimiglianza della probabilità <lit>p</lit> 
-        che <lit>X</lit> valga 1 (è semplice intuire che la stima ML di <lit>p</lit>
-        corrisponderà alla proporzione dei valori 1 nel campione).
+        Esempio: si supponga di avere una serie <lit>X</lit> con
+        valori 0 o 1 e di voler ottenere la stima di massima
+        verosimiglianza della probabilità <lit>p</lit> che
+        <lit>X</lit> valga 1 (è semplice intuire che la stima ML di
+        <lit>p</lit> corrisponderà alla proporzione dei valori 1 nel
+        campione).
       </para>
 
-      <para>Occorre per prima cosa aggiungere <lit>p</lit> al dataset e assegnargli un
-        valore iniziale; è possibile farlo nel modo seguente con il comando genr:
-      <lit>genr p = 0.5</lit>.
+      <para>Occorre per prima cosa aggiungere <lit>p</lit> al dataset
+      e assegnargli un valore iniziale; ad esempio, <lit>scalar p = 0.5</lit>.
 	</para>
 
       <para>Quindi costruiamo il blocco di comandi per la stima di massima
@@ -6700,6 +6802,20 @@
         (ossia, un sandwich dell'inversa negativa dell'Hessiana e della matrice
         di covarianza del gradiente).
       </para>
+      <para>
+	If you supply analytical derivatives, by default gretl runs a
+	numerical check on their plausibility.  Occasionally this may
+	produce false positives, instances where correct derivatives
+	appear to be wrong and estimation is refused. To counter this,
+	or to achieve a little extra speed, you can give the option
+	<opt>--no-gradient-check</opt>.  Obviously, you should do
+	this only if you are quite confident that the gradient you
+	have specified is right.
+      </para>
+      <para>
+	For a much more in-depth description of <cmd>mle</cmd>, please
+	refer to <guideref targ="chap:mle"/>.
+      </para>
 
     </description>
 
@@ -6713,11 +6829,12 @@
     label="Tabella modelli">
 
     <usage>
-      <arguments>
-        <argument>add</argument>
-        <argument alternate="true">show</argument>
-        <argument alternate="true">free</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>modeltab add</lit></altform>
+	<altform><lit>modeltab show</lit></altform>
+	<altform><lit>modeltab free</lit></altform>
+	<altform><lit>modeltab --output=</lit><repl>nomefile</repl></altform>
+      </altforms>
     </usage>
 
     <description context="gui"> 
@@ -6735,47 +6852,46 @@
       Ecco come fare:</para>
 
       <nlist>
-	<li><para>1. Stimare un modello che si vuole includere nella
+	<li><para>Stimare un modello che si vuole includere nella
             tabella e selezionare, nel menù File della finestra di
             visualizzazione del modello, <quote>Salva alla sessione come
             icona</quote> o <quote>Salva come icona e chiudi</quote>.</para>
 	</li>
 
-	<li><para>2. Ripetere il punto 1 per gli alri modelli da
+	<li><para>Ripetere il punto 1 per gli alri modelli da
         includere nella tabella (fino a un massimo di sei modelli).</para>
 	</li>
 
-	<li><para>3. Completata la stima dei modelli, aprire l'icona
+	<li><para>Completata la stima dei modelli, aprire l'icona
         della sessione di gretl (selezionando <quote>Visualizza Icone</quote>
         nel menù Sessione della finestra principale di gretl, o facendo
         clic su <quote>Finestra icone</quote> sulla barra degli
         strumenti di gretl).</para>
 	</li>
 
-        <li><para>4. La finestra delle icone contiene
-        un'icona chiamata <quote>Tabella Modelli</quote>. Per aggiungere
-        alla tabella modelli il modello che deve apparire nella colonna
-        più a sinistra della tabella, basta trascinare l'icona del
-        modello sull'icona della Tabella Modelli, oppure fare clic col
-        tasto destro sull'icona del modello e selezionare
-        <quote>Aggiungi alla tabella modelli</quote> dal menù
-        pop-up.</para>
+        <li><para>La finestra delle icone contiene un'icona chiamata
+        <quote>Tabella Modelli</quote>. Per aggiungere alla tabella
+        modelli il modello che deve apparire nella colonna più a
+        sinistra della tabella, basta trascinare l'icona del modello
+        sull'icona della Tabella Modelli, oppure fare clic col tasto
+        destro sull'icona del modello e selezionare <quote>Aggiungi
+        alla tabella modelli</quote> dal menù pop-up.</para>
 	</li>
 
-	<li><para>5. Ripetere il punto 4 per gli altri modelli da
+	<li><para>Ripetere il punto 4 per gli altri modelli da
         aggiungere alla tabella. Il secondo modello scelto apparirà
         nella seconda colonna da sinistra della tabella, e così via.
 	</para>
 	</li>
 
-	<li><para>6. Ultimata la composizione della tabella, è possibile
+	<li><para>Ultimata la composizione della tabella, è possibile
         visualizzarla facendo doppio clic sulla sua icona. Per copiare
         la tabella negli appunti in uno dei formati supportati, basta
         fare clic sul menù Modifica della finestra in cui appare la
         tabella.</para>
 	</li>
 
-	<li><para>7. Se l'ordinamento dei modelli nella tabella non è
+	<li><para>Se l'ordinamento dei modelli nella tabella non è
         quello voluto, fare clic col tasto destro sull'icona della
         tabella modelli e selezionare <quote>Pulisci</quote>, quindi
         tornare al punto 4.</para>
@@ -6790,6 +6906,21 @@
         stimato alla tabella modelli, se possibile; <cmd>show</cmd>
 	mostra la tabella modelli in una finestra; <cmd>free</cmd>
 	pulisce la tabella.</para>
+      <para>
+	To call for printing of the model table, use the flag
+	<opt>output=</opt> plus a filename. If the filename has the
+	suffix <quote><lit>.tex</lit></quote>, the output will be in
+	&tex; format; if the suffix is <quote><lit>.rtf</lit></quote>
+	the output will be RTF; otherwise it will be plain text.
+	In the case of &tex; output the default is to produce a
+	<quote>fragment</quote>, suitable for inclusion in a
+	document; if you want a stand-alone document instead,
+	use the <opt>complete</opt> option, for example
+      </para>
+      <code>
+	modeltab --output="myfile.tex" --complete
+      </code>
+
     </description>
 
     <gui-access>
@@ -6881,41 +7012,32 @@
 	  <effect>eteroschedasticità, a gruppi</effect>
         </option>
         <option>
+	  <flag>--comfac</flag>
+	  <effect>restrizione a fattore comune, (solo modelli AR1)</effect>
+        </option>
+        <option>
 	  <flag>--quiet</flag>
 	  <effect>non mostra la regressione ausiliaria</effect>
         </option>
       </options>
     </usage>
 
-    <description context="gui">
+    <description>
       <para>
-	Questo comando racchiude vari test di ipotesi. La caratteristica
-        comune è che tutti i test prevedono la stima di una regressione
-        ausiliaria in cui la variabile dipendente è il residuo di una
-        regressione <quote>originale</quote>. Le variabili indipendenti
-        della regressione ausiliaria comprendono quelle della
-        regressione originale e alcuni termini aggiuntivi. La statistica
-        test è calcolata come (ampiezza campionaria * R-quadro) della 
-        regressione ausiliaria: si distribuisce come chi-quadro con
-        gradi di libertà pari al numero dei termini aggiuntivi, sotto
-        l'ipotesi nulla che essi non abbiano potere esplicativo sui
-        residui. Un valore <quote>elevato</quote> del chi-quadro (ossia
-        un basso p-value) suggerisce di rifiutare questa ipotesi nulla.
-      </para>
-    </description>
-
-    <description context="cli">
-      <para>
-        Deve seguire immediatamente un comando di stima. A seconda dell'opzione
-        usata, il comando esegue uno dei test seguenti: test dei moltiplicatori
-        di Lagrange per la non-linearità (logaritmi o quadrati), test di White
-        (con o senza i prodotti incrociati) o
-        test di Breusch&ndash;Pagan per l'eteroschedasticità, test LMF per la
-        correlazione seriale (si veda Kiviet, 1986) o test per il modello ARCH
-        (Autoregressive Conditional Heteroskedasticity, si veda anche il comando
-        <cmd>arch</cmd>). La maggior parte delle opzioni sono disponibili solo
-        per modelli stimati con OLS, ma si veda oltre per alcuni dettagli
-        riguardanti la stima con i minimi quadrati a due stadi.
+        Deve seguire immediatamente un comando di stima. A seconda
+        dell'opzione usata, il comando esegue uno dei test seguenti:
+        test di Doornik&ndash;Hansen per la normalità del termine di
+        errore; test dei moltiplicatori di Lagrange per la
+        non-linearità (logaritmi o quadrati); test di White (con o
+        senza i prodotti incrociati) o test di Breusch&ndash;Pagan per
+        l'eteroschedasticità, test LMF per la correlazione seriale (si
+        veda <cite key="kiviet86" p="true">(Kiviet, 1986)</cite>);
+        test per il modello ARCH (Autoregressive Conditional
+        Heteroskedasticity, si veda anche il comando <cmd>arch</cmd>);
+        o restrizione a fattore comune, (solo modelli AR1). La maggior
+        parte delle opzioni sono disponibili solo per modelli stimati
+        con OLS, ma si veda oltre per alcuni dettagli riguardanti la
+        stima con i minimi quadrati a due stadi.
       </para>
       <para>
 	L'argomento opzionale <lit>ordine</lit> è rilevante solo nel caso si
@@ -6935,6 +7057,13 @@
         stimato su dati panel: in questo caso viene eseguito un test per
         eteroschedasticità a gruppi (ossia per una varianza dell'errore diversa
         fra le unità cross section).
+      </para>
+      <para>
+	The <opt>--comfac</opt> option is available only when the model is
+	estimated via an AR(1) method such as Hildreth&ndash;Lu.  The
+	auxiliary regression takes the form of a relatively unrestricted
+	dynamic model, which is used to test the common factor restriction
+	implicit in the AR(1) specification.
       </para>
       <para>
 	Per impostazione predefinita, il programma mostra la regressione
