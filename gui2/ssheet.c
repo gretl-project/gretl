@@ -2608,11 +2608,6 @@ static int build_sheet_view (Spreadsheet *sheet)
 			 G_CALLBACK(update_cell_position), sheet);
     }
 
-    attach_window_key_specials(sheet->win);
-
-    g_signal_connect(G_OBJECT(view), "key-press-event",
-		     G_CALLBACK(catch_spreadsheet_key), sheet);
-
     /* attach to sheet struct */
     sheet->view = view;
 
@@ -3244,10 +3239,6 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	}
     }
 
-    g_signal_connect(G_OBJECT(sheet->view), "button-press-event",
-		     G_CALLBACK(catch_spreadsheet_click),
-		     sheet);
-
     if (c == SHEET_EDIT_MATRIX) {
 	err = add_matrix_data_to_sheet(sheet);
     } else if (c == SHEET_EDIT_SCALARS) {
@@ -3261,10 +3252,15 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	return;
     }
 
-    select_first_editable_cell(sheet);
+    g_signal_connect(G_OBJECT(sheet->view), "key-press-event",
+		     G_CALLBACK(catch_spreadsheet_key), sheet);
+    g_signal_connect(G_OBJECT(sheet->view), "button-press-event",
+		     G_CALLBACK(catch_spreadsheet_click),
+		     sheet);
 
-    gtk_widget_show(sheet->win);
+    select_first_editable_cell(sheet);
     window_list_add(sheet->win, SSHEET);
+    gtk_widget_show(sheet->win);
 
     if (editing_series(sheet)) {
 	/* we can't have the user making confounding changes elsewhere,

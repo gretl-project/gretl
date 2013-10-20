@@ -580,10 +580,6 @@ static tabwin_t *make_tabbed_viewer (int role)
 		     G_CALLBACK(page_removed_callback), tabwin);
     gtk_container_add(GTK_CONTAINER(vbox), tabwin->tabs);
 
-#ifndef G_OS_WIN32
-    set_wm_icon(tabwin->main);
-#endif
-
     return tabwin;
 }
 
@@ -943,7 +939,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     /* connect delete signal for single-script window */
     g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 		     G_CALLBACK(query_save_text), vwin);
-    /* and key-catcher for single-script window */
+    /* and key-catcher for single-item window */
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 

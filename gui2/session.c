@@ -3725,17 +3725,6 @@ iconview_resize_callback (GtkWidget *w, GdkEventConfigure *e, gpointer p)
     return FALSE;
 }
 
-static void iconview_connect_signals (GtkWidget *iconview)
-{
-    g_signal_connect(G_OBJECT(iconview), "destroy",
-		     G_CALLBACK(session_view_free), NULL);
-    attach_window_key_specials(iconview);
-    g_signal_connect(G_OBJECT(iconview), "key-press-event",
-		     G_CALLBACK(catch_iconview_key), NULL);
-    g_signal_connect(G_OBJECT(iconview), "configure-event",
-		     G_CALLBACK(iconview_resize_callback), NULL);
-}
-
 void view_session (void)
 {
     GtkWidget *ebox, *scroller;
@@ -3755,7 +3744,8 @@ void view_session (void)
     gtk_window_set_default_size(GTK_WINDOW(iconview), 400, 300);
 
     gtk_container_set_border_width(GTK_CONTAINER(iconview), 0);
-    iconview_connect_signals(iconview);
+    g_signal_connect(G_OBJECT(iconview), "destroy",
+		     G_CALLBACK(session_view_free), NULL);
 
     session_build_popups();
 
@@ -3776,8 +3766,13 @@ void view_session (void)
 					  icon_table);
 
     add_all_icons();
-    gtk_widget_show_all(iconview);
     window_list_add(iconview, OPEN_SESSION);
+    g_signal_connect(G_OBJECT(iconview), "key-press-event",
+		     G_CALLBACK(catch_iconview_key), NULL);
+    g_signal_connect(G_OBJECT(iconview), "configure-event",
+		     G_CALLBACK(iconview_resize_callback), NULL);
+
+    gtk_widget_show_all(iconview);
 
     gtk_container_foreach(GTK_CONTAINER(scroller), 
 			  (GtkCallback) white_bg_style, 

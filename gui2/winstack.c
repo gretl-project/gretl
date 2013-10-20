@@ -223,7 +223,7 @@ void window_list_add (GtkWidget *w, int role)
     fprintf(stderr, "window_list_add: %s\n", aname);
 #endif
 
-    if (w == mdata->main) {
+    if (role == MAINWIN) {
 	label = _("Main window");
     } else {
 	label = get_window_title(w);
@@ -242,13 +242,16 @@ void window_list_add (GtkWidget *w, int role)
     /* add new action entry to group */
     gtk_action_group_add_actions(window_group, &entry, 1, NULL);
 
-    /* attach callback to remove from window list */
-    g_signal_connect(G_OBJECT(w), "destroy", 
-		     G_CALLBACK(window_list_remove), 
-		     window_group);
+    if (role != MAINWIN) {
+	/* attach time to window */
+	g_object_set_data(G_OBJECT(w), "time", GUINT_TO_POINTER(time(NULL)));
+	/* attach callback to remove from window list */
+	g_signal_connect(G_OBJECT(w), "destroy", 
+			 G_CALLBACK(window_list_remove), 
+			 window_group);
+    }
 
-    /* attach time to window */
-    g_object_set_data(G_OBJECT(w), "time", GUINT_TO_POINTER(time(NULL)));
+    attach_window_key_specials(w);
 
     n_listed_windows++;
 
@@ -261,33 +264,17 @@ void window_list_add (GtkWidget *w, int role)
    the first value comes after the second." 
 */
 
-static gint sort_window_items (gconstpointer a, gconstpointer b)
+static gint sort_window_list (gconstpointer a, gconstpointer b)
 {
     GtkWidget *wa = window_from_action((GtkAction *) a);
     GtkWidget *wb = window_from_action((GtkAction *) b);
     guint ta, tb;
 
-    /* sort main window first, icon view second, otherwise
-       by time when the window was created
-    */
+    /* sort main window first, otherwise by time when the 
+       window was created */
 
     if (wa == mdata->main) return -1;
     if (wb == mdata->main) return 1;
-
-    if (widget_is_iconview(wa)) return -1;
-    if (widget_is_iconview(wb)) return 1;
-
-    ta = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wa), "time"));
-    tb = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wb), "time"));
-
-    return ta - tb;
-}
-
-static gint sort_windows_by_time (gconstpointer a, gconstpointer b)
-{
-    GtkWidget *wa = window_from_action((GtkAction *) a);
-    GtkWidget *wb = window_from_action((GtkAction *) b);
-    guint ta, tb;
 
     ta = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wa), "time"));
     tb = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wb), "time"));
@@ -422,7 +409,7 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     }
 
     if (n_listed_windows > 1) {
-	list = g_list_sort(wlist, sort_window_items);
+	list = g_list_sort(wlist, sort_window_list);
 	if (data != NULL) {
 	    win = GTK_WIDGET(data);
 	}
@@ -470,11 +457,10 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 
     if (evtype == GDK_BUTTON_PRESS) {
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
-		       ((GdkEventButton *) event)->button, 
-		       ((GdkEventButton *) event)->time);
+		       event->button.button, event->button.time);
     } else if (evtype == GDK_KEY_PRESS) {
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
-		       0, ((GdkEventKey *) event)->time);
+		       0, event->key.time);
     } else {
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
 		       0, gtk_get_current_event_time());
@@ -679,7 +665,7 @@ void cascade_session_windows (void)
 {
     if (n_listed_windows > 1) {
 	GList *list = gtk_action_group_list_actions(window_group);
-	GList *slist = g_list_sort(list, sort_window_items);
+	GList *slist = g_list_sort(list, sort_window_list);
 	GtkWidget *w;
 	gint x = 50, y = 50;
 	gint d = 30;
@@ -708,6 +694,7 @@ static gint select_other_window (gpointer self, int seq)
 	    g_list_free(wlist);
 	    wlist = NULL;
 	    targ = 0;
+	    fprintf(stderr, "*** select_other_window: released\n");
 	    return TRUE;
 	} else {
 	    return FALSE;
@@ -721,7 +708,7 @@ static gint select_other_window (gpointer self, int seq)
 
 	if (wlist == NULL) {
 	    wlist = gtk_action_group_list_actions(window_group);
-	    wlist = g_list_sort(wlist, sort_windows_by_time);
+	    wlist = g_list_sort(wlist, sort_window_list);
 	    if (seq == WINDOW_PREV) {
 		targ = n_listed_windows - 1;
 	    }
@@ -1067,20 +1054,8 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 	return NULL;
     }
 
-    if (role == MAINWIN) {
-	/* gets special treatment in gretl.c */
-	return vwin;
-    }
-
     vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
-    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
-		     G_CALLBACK(vwin_catch_winlist_key), vwin);
-    gtk_widget_add_events(vwin->main, GDK_KEY_RELEASE_MASK);
-    g_signal_connect(G_OBJECT(vwin->main), "key-release-event", 
-		     G_CALLBACK(window_key_release), NULL);
-    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
-		     G_CALLBACK(free_windata), vwin);
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 
     vwin->vbox = gtk_vbox_new(FALSE, 4);
@@ -1089,6 +1064,11 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 
     if (parent != NULL) {
 	vwin_add_child(parent, vwin);
+    }
+
+    if (role != MAINWIN) {
+	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
+			 G_CALLBACK(free_windata), vwin);
     }
 
     if (title != NULL) {
@@ -1188,7 +1168,6 @@ windata_t *gretl_browser_new (int role, const gchar *title)
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 
-    attach_window_key_specials(vwin->main);
     g_signal_connect(G_OBJECT(vwin->main), "destroy",
 		     G_CALLBACK(free_windata), vwin);
 

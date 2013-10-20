@@ -1377,7 +1377,6 @@ static void make_main_window (void)
 #ifdef MAC_INTEGRATION
     GtkUIManager *mac_mgr;
 #endif
-    GtkWidget *main_vbox;
     GtkWidget *box, *dlabel;
     GtkWidget *align;
     GtkWidget *menu;
@@ -1406,9 +1405,6 @@ static void make_main_window (void)
 	set_main_window_scale();
     }
 
-    mdata->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    g_object_set_data(G_OBJECT(mdata->main), "vwin", mdata);
-
     g_signal_connect(G_OBJECT(mdata->main), "configure-event",
 		     G_CALLBACK(mainwin_config), NULL);
     g_signal_connect(G_OBJECT(mdata->main), "delete-event",
@@ -1416,18 +1412,8 @@ static void make_main_window (void)
     g_signal_connect(G_OBJECT(mdata->main), "destroy",
 		     G_CALLBACK(gtk_main_quit), NULL);
 
-    gtk_window_set_title(GTK_WINDOW(mdata->main), "gretl");
     gtk_window_set_default_size(GTK_WINDOW(mdata->main), 
 				mainwin_width, mainwin_height);
-
-#ifndef G_OS_WIN32
-    set_wm_icon(mdata->main);
-#endif
-
-    main_vbox = gtk_vbox_new(FALSE, 4);
-    gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 4);
-    gtk_container_add(GTK_CONTAINER(mdata->main), main_vbox);
-    g_object_set_data(G_OBJECT(mdata->main), "vbox", main_vbox);
 
     menu = make_main_menu();
     if (menu == NULL) {
@@ -1435,7 +1421,7 @@ static void make_main_window (void)
     }
 
     /* put the main menu bar in place */
-    gtk_box_pack_start(GTK_BOX(main_vbox), menu, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(mdata->vbox), menu, FALSE, TRUE, 0);
 
 #ifdef MAC_INTEGRATION
     mac_mgr = add_mac_menu();
@@ -1462,20 +1448,16 @@ static void make_main_window (void)
 		      GTK_DEST_DEFAULT_ALL,
 		      gretl_drag_targets, 2,
 		      GDK_ACTION_COPY);
-
     g_signal_connect(G_OBJECT(mdata->listbox), "drag-data-received",
 		     G_CALLBACK(mdata_handle_drag),
 		     NULL);
-
-    attach_window_key_specials(mdata->main);
-
     g_signal_connect(G_OBJECT(mdata->listbox), "key-press-event",
 		     G_CALLBACK(catch_mdata_key),
 		     mdata);
 
-    gtk_box_pack_start(GTK_BOX(main_vbox), box, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(mdata->vbox), box, TRUE, TRUE, 0);
     mdata->status = gtk_label_new("");
-    gtk_box_pack_start(GTK_BOX(main_vbox), mdata->status, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(mdata->vbox), mdata->status, FALSE, TRUE, 0);
 
 #if GUI_DEBUG
     fprintf(stderr, " finalizing main window...\n");
@@ -1504,7 +1486,7 @@ static void make_main_window (void)
     fprintf(stderr, "  set_app_font done\n");
 #endif
 
-    add_mainwin_toolbar(main_vbox);
+    add_mainwin_toolbar(mdata->vbox);
 
 #if GUI_DEBUG
     fprintf(stderr, "  add_mainwin_toolbar done\n");
@@ -1523,8 +1505,6 @@ static void make_main_window (void)
     if (winsize && main_x >= 0 && main_y >= 0) {
 	gtk_window_move(GTK_WINDOW(mdata->main), main_x, main_y);
     }
-
-    window_list_add(mdata->main, MAINWIN);
 
 #if GUI_DEBUG
     fprintf(stderr, "  possible window_move done\n");

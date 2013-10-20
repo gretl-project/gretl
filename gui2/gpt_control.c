@@ -4718,9 +4718,6 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
     g_signal_connect(G_OBJECT(plot->shell), "destroy",
 		     G_CALLBACK(destroy_png_plot), plot);
-    attach_window_key_specials(plot->shell);
-    g_signal_connect(G_OBJECT(plot->shell), "key-press-event", 
-		     G_CALLBACK(plot_key_handler), plot);
 
     /* box to hold canvas */
     canvas_hbox = gtk_hbox_new(FALSE, 1);
@@ -4830,8 +4827,11 @@ static int gnuplot_show_png (const char *fname, const char *name,
     g_object_set_data(G_OBJECT(plot->shell), "plot-filename", 
 		      plot->spec->fname);
 
-    gtk_widget_show(plot->shell);
     window_list_add(plot->shell, GNUPLOT);
+    g_signal_connect(G_OBJECT(plot->shell), "key-press-event", 
+		     G_CALLBACK(plot_key_handler), plot);
+
+    gtk_widget_show(plot->shell);
 
     /* set the focus to the canvas area */
     gtk_widget_grab_focus(plot->canvas);  
