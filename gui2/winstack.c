@@ -123,11 +123,6 @@ static const gchar *window_list_icon (int role)
 static int n_listed_windows;
 static GtkActionGroup *window_group;
 
-int get_n_listed_windows (void)
-{
-    return n_listed_windows;
-}
-
 static const gchar *get_window_title (GtkWidget *w)
 {
     const gchar *s = NULL;
@@ -196,6 +191,83 @@ static char *winname_double_underscores (const gchar *src)
     *s = '\0';
 
     return targ;
+}
+
+static gint maybe_select_other_window (GdkEventKey *event,
+				       gpointer data)
+{
+#ifdef MAC_NATIVE
+    if (cmd_key(event) && event->keyval == GDK_grave) {
+	if (event->state & GDK_SHIFT_MASK) {
+	    return select_other_window(data, WINDOW_PREV);
+	} else {
+	    return select_other_window(data, WINDOW_NEXT);
+	}
+    }
+#else
+    if (event->state & GDK_MOD1_MASK) {
+	if (event->keyval == GDK_Page_Up) {
+	    return select_other_window(data, WINDOW_PREV);
+	} else if (event->keyval == GDK_Page_Down) {
+	    return select_other_window(data, WINDOW_NEXT);
+	}
+    }
+#endif	
+
+    return FALSE;
+}
+
+static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event, 
+			       gpointer data)
+{
+#ifdef MAC_NATIVE
+    if ((event->state & GDK_MOD1_MASK) && event->keyval == alt_w_key) {
+	/* alt-w -> Sigma */
+	window_list_popup(w, (GdkEvent *) event, data);
+	return TRUE;
+    }
+# ifdef MAC_HIDE_UNHIDE
+    if (cmd_key(event) && mac_hide_unhide(event)) {
+	return TRUE;
+    }
+# endif  
+#else /* non-Mac */
+    if (event->state & GDK_MOD1_MASK) {
+	if (event->keyval == GDK_w) {
+	    window_list_popup(w, (GdkEvent *) event, data);
+	    return TRUE;
+	}
+    }
+#endif
+
+    return maybe_select_other_window(event, data);
+}
+
+static gint window_key_release (GtkWidget *w, GdkEventKey *event, 
+				gpointer data)
+{
+#ifdef MAC_NATIVE
+    if (event->keyval == GDK_Control_L || 
+	event->keyval == GDK_Control_R) {
+	return select_other_window(NULL, 0);
+    }
+#else
+    if (event->keyval == GDK_Alt_L || 
+	event->keyval == GDK_Alt_R) {
+	return select_other_window(NULL, 0);
+    }
+#endif
+    
+    return FALSE;
+}
+
+static void attach_window_key_specials (GtkWidget *w)
+{
+    g_signal_connect(G_OBJECT(w), "key-press-event", 
+		     G_CALLBACK(catch_winlist_key), w);
+    gtk_widget_add_events(w, GDK_KEY_RELEASE_MASK);
+    g_signal_connect(G_OBJECT(w), "key-release-event", 
+		     G_CALLBACK(window_key_release), NULL);
 }
 
 void window_list_add (GtkWidget *w, int role)
@@ -467,56 +539,6 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     }
 }
 
-static gint maybe_select_other_window (GdkEventKey *event,
-				       gpointer data)
-{
-#ifdef MAC_NATIVE
-    if (cmd_key(event) && event->keyval == GDK_grave) {
-	if (event->state & GDK_SHIFT_MASK) {
-	    return select_other_window(data, WINDOW_PREV);
-	} else {
-	    return select_other_window(data, WINDOW_NEXT);
-	}
-    }
-#else
-    if (event->state & GDK_MOD1_MASK) {
-	if (event->keyval == GDK_Page_Up) {
-	    return select_other_window(data, WINDOW_PREV);
-	} else if (event->keyval == GDK_Page_Down) {
-	    return select_other_window(data, WINDOW_NEXT);
-	}
-    }
-#endif	
-
-    return FALSE;
-}
-
-static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event, 
-			       gpointer data)
-{
-#ifdef MAC_NATIVE
-    if ((event->state & GDK_MOD1_MASK) && event->keyval == alt_w_key) {
-	/* alt-w -> Sigma */
-	window_list_popup(w, (GdkEvent *) event, data);
-	return TRUE;
-    }
-# ifdef MAC_HIDE_UNHIDE
-    if (cmd_key(event) && mac_hide_unhide(event)) {
-	return TRUE;
-    }
-# endif  
-#else /* non-Mac */
-    if (event->state & GDK_MOD1_MASK) {
-	if (event->keyval == GDK_w) {
-	    window_list_popup(w, (GdkEvent *) event, data);
-	    return TRUE;
-	}
-    }
-#endif
-
-    return maybe_select_other_window(event, data);
-}
-
 void vwin_winlist_popup (GtkWidget *src, GdkEvent *event, 
 			 windata_t *vwin)
 {
@@ -531,39 +553,6 @@ void vwin_winlist_popup (GtkWidget *src, GdkEvent *event,
        evaluated on each invocation.
     */
     window_list_popup(src, event, vwin_toplevel(vwin));
-}
-
-gint vwin_catch_winlist_key (GtkWidget *src, GdkEventKey *event, 
-			     windata_t *vwin)
-{
-    /* note: same comment as for previous function: dealing
-       with tabbed thingies
-    */
-#ifdef MAC_NATIVE
-    if (event->state & GDK_MOD1_MASK) {
-	if (event->keyval == alt_w_key) {
-	    /* alt-w -> Sigma */
-	    window_list_popup(src, (GdkEvent *) event, 
-			      vwin_toplevel(vwin));
-	    return TRUE;
-	}
-    }
-# ifdef MAC_HIDE_UNHIDE
-    if (cmd_key(event) && mac_hide_unhide(event)) {
-	return TRUE;
-    }
-# endif	    
-#else /* non-Mac */
-    if (event->state & GDK_MOD1_MASK) {
-	if (event->keyval == GDK_w) {
-	    window_list_popup(src, (GdkEvent *) event,
-			      vwin_toplevel(vwin));
-	    return TRUE;
-	}
-    }
-#endif
-
-    return maybe_select_other_window(event, vwin_toplevel(vwin));
 }
 
 /* on exiting, check for any editing windows with unsaved
@@ -694,7 +683,6 @@ static gint select_other_window (gpointer self, int seq)
 	    g_list_free(wlist);
 	    wlist = NULL;
 	    targ = 0;
-	    fprintf(stderr, "*** select_other_window: released\n");
 	    return TRUE;
 	} else {
 	    return FALSE;
@@ -746,33 +734,6 @@ static gint select_other_window (gpointer self, int seq)
     }
 
     return TRUE;
-}
-
-static gint window_key_release (GtkWidget *w, GdkEventKey *event, 
-				gpointer data)
-{
-#ifdef MAC_NATIVE
-    if (event->keyval == GDK_Control_L || 
-	event->keyval == GDK_Control_R) {
-	return select_other_window(NULL, 0);
-    }
-#else
-    if (event->keyval == GDK_Alt_L || 
-	event->keyval == GDK_Alt_R) {
-	return select_other_window(NULL, 0);
-    }
-#endif
-    
-    return FALSE;
-}
-
-void attach_window_key_specials (GtkWidget *w)
-{
-    g_signal_connect(G_OBJECT(w), "key-press-event", 
-		     G_CALLBACK(catch_winlist_key), w);
-    gtk_widget_add_events(w, GDK_KEY_RELEASE_MASK);
-    g_signal_connect(G_OBJECT(w), "key-release-event", 
-		     G_CALLBACK(window_key_release), NULL);
 }
 
 windata_t *get_editor_for_file (const char *filename)
@@ -1172,7 +1133,6 @@ windata_t *gretl_browser_new (int role, const gchar *title)
 		     G_CALLBACK(free_windata), vwin);
 
     window_list_add(vwin->main, role);
-
 #ifndef G_OS_WIN32
     set_wm_icon(vwin->main);
 #endif

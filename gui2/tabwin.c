@@ -455,15 +455,8 @@ static gint catch_tabwin_key (GtkWidget *w, GdkEventKey *key,
     gint pg = gtk_notebook_get_current_page(notebook);
     GtkWidget *tab = gtk_notebook_get_nth_page(notebook, pg);
     windata_t *vwin = g_object_get_data(G_OBJECT(tab), "vwin");
-    gint ret;
 
-    ret = vwin_catch_winlist_key(w, key, vwin);
-
-    if (ret == FALSE) {
-	ret = catch_viewer_key(w, key, vwin);
-    }
-
-    return ret;
+    return catch_viewer_key(w, key, vwin);
 }
 
 static void  
@@ -552,8 +545,6 @@ static tabwin_t *make_tabbed_viewer (int role)
     }	
     g_signal_connect(G_OBJECT(tabwin->main), "destroy", 
 		     G_CALLBACK(tabwin_destroy), tabwin);
-    g_signal_connect(G_OBJECT(tabwin->main), "key-press-event", 
-		     G_CALLBACK(catch_tabwin_key), tabwin);
     g_object_set_data(G_OBJECT(tabwin->main), "tabwin", tabwin);
 
     /* vertically oriented container */
@@ -651,6 +642,8 @@ windata_t *viewer_tab_new (int role, const char *info,
 
     if (starting) {
 	window_list_add(tabwin->main, role);
+	g_signal_connect(G_OBJECT(tabwin->main), "key-press-event", 
+			 G_CALLBACK(catch_tabwin_key), tabwin);
     } 
 
     return vwin;
@@ -939,11 +932,13 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     /* connect delete signal for single-script window */
     g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 		     G_CALLBACK(query_save_text), vwin);
-    /* and key-catcher for single-item window */
+
+    /* add to window list and attach window-key signals */
+    window_list_add(vwin->main, vwin->role);
+
+    /* add key-catcher for single-item window */
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
-
-    window_list_add(vwin->main, vwin->role);
 
 #ifndef G_OS_WIN32
     set_wm_icon(vwin->main);
@@ -981,7 +976,8 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
     /* disconnect */
     vwin->main = NULL;
 
-    /* remove data and signals from stand-alone vwin->main */
+    /* remove data, and also remove destruction-related signals,
+       from stand-alone vwin->main */
     g_object_steal_data(G_OBJECT(oldmain), "vwin");
     g_signal_handlers_disconnect_by_func(oldmain,
 					 free_windata,
