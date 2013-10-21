@@ -9735,6 +9735,11 @@
 	  <optparm>filename</optparm>
 	  <effect>send output to specified file</effect>
         </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+        </option>
       </options>
       <examples>
         <example>scatters 1 ; 2 3 4 5</example>
@@ -9781,6 +9786,11 @@
 	plots can be a useful step in exploratory data analysis.  The
 	maximum number of plots is 16; any extra variables will be
 	ignored.
+      </para>
+      <para>
+	If the dataset is time-series, then the second sub-list can be
+	omitted, in which case it will implicitly be taken as "time",
+	so you can plot multiple time series in separated sub-graphs
       </para>
     </description>
 

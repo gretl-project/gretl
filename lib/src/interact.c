@@ -2436,7 +2436,7 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
 
     if (!cmd->err && cmd->ci == SCATTERS && cmd->list[0] < 2) {
 	/* check the list for the scatters command */
-	if ((cmd->opt & OPT_X) && (cmd->opt && OPT_T)) {
+	if ((cmd->opt & OPT_X) && (cmd->opt & OPT_T)) {
 	    ; /* non-empty list not required */
 	} else {
 	    /* all other cases: we need at least two series */
