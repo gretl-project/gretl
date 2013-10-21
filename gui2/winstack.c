@@ -201,10 +201,10 @@ static gint maybe_select_other_window (GdkEventKey *event,
 				       gpointer data)
 {
 #ifdef MAC_NATIVE
-    if (cmd_key(event) && event->keyval == GDK_grave) {
-	if (event->state & GDK_SHIFT_MASK) {
+    if (cmd_key(event)) {
+	if (event->keyval == GDK_asciitilde) {
 	    return select_other_window(data, WINDOW_PREV);
-	} else {
+	} else if (event->keyval == GDK_grave) {
 	    return select_other_window(data, WINDOW_NEXT);
 	}
     }
