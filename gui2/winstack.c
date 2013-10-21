@@ -206,9 +206,11 @@ static gint maybe_select_other_window (GdkEventKey *event,
     }
 #else
     if (event->state & GDK_MOD1_MASK) {
-	if (event->keyval == GDK_Page_Up) {
+	if (event->keyval == GDK_Page_Up || 
+	    event->keyval == GDK_KP_Page_Up) {
 	    return select_other_window(data, WINDOW_PREV);
-	} else if (event->keyval == GDK_Page_Down) {
+	} else if (event->keyval == GDK_Page_Down ||
+		   event->keyval == GDK_KP_Page_Down) {
 	    return select_other_window(data, WINDOW_NEXT);
 	}
     }
