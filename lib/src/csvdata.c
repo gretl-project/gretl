@@ -1389,7 +1389,21 @@ static int utf8_ok (FILE *fp, int pos)
 
     if (g_utf8_validate(test, -1, NULL)) {
 	ret = 1;
-    } 
+    } else {
+	GError *gerr = NULL;
+	gsize wrote = 0;
+	gchar *tr;
+
+	/* try for iso-8859? */
+	tr = g_convert(test, -1, "UTF-8", "ISO-8859-15",
+		       NULL, &wrote, &gerr);
+	if (gerr != NULL) {
+	    g_error_free(gerr);
+	} else {
+	    g_free(tr);
+	    ret = 1;
+	}
+    }
 
     free(test);
 
@@ -1468,7 +1482,7 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 	    !(c == CTRLZ) && !utf8_ok(fp, cc)) {
 	    pprintf(prn, A_("Binary data (%d) encountered (line %d:%d): "
 			    "this is not a valid text file\n"), 
-		    c, lines, cc);
+		    c, lines + 1, cc + 1);
 	    return -1;
 	}
 	if (cc == 0) {
@@ -1563,7 +1577,7 @@ static void purge_unquoted_spaces (char *s)
     }
 }
 
-static void compress_csv_line (csvdata *c)
+static void compress_csv_line (csvdata *c, int nospace)
 {
     int n = strlen(c->line);
     char *p = c->line + n - 1;
@@ -1580,8 +1594,9 @@ static void compress_csv_line (csvdata *c)
     }
 
     if (c->delim != ' ') {
-	/* 2012-07-14: was gretl_delchar(' ', c->line); */
-	purge_unquoted_spaces(c->line);
+	if (nospace) {
+	    purge_unquoted_spaces(c->line);
+	}
     } else {
 	compress_spaces(c->line);
     }
@@ -2120,7 +2135,7 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 	    }
 	}
 
-	compress_csv_line(c);
+	compress_csv_line(c, 1);
 
 	if (!gotdata) {
 	    /* scrutinize the first "real" line */
@@ -2338,7 +2353,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	}
     }
 
-    compress_csv_line(c);   
+    compress_csv_line(c, 1);   
 
     p = c->line;
     if (c->delim == ' ' && *p == ' ') p++;
@@ -2530,16 +2545,36 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 #define XML1_OK(u) ((u>=0x0020 && u<=0xD7FF) || \
 		    (u>=0xE000 && u<=0xFFFD))
 
-/* check that an observation label contains only 
+/* Check that an observation label contains only 
    valid UTF-8, and moreover that every character
-   is valid in XML 1.0
+   is valid in XML 1.0. If not, try recoding from
+   ISO 8859.
 */
 
-static int label_is_valid (gchar *s)
+static int maybe_fix_csv_string (gchar *s)
 {
+    int err = 0;
+
     if (!g_utf8_validate(s, -1, NULL)) {
-	return 0;
-    } else {
+	GError *gerr = NULL;
+	gsize wrote = 0;
+	gchar *tr;
+
+	/* try for iso-8859? */
+	tr = g_convert(s, -1, "UTF-8", "ISO-8859-15",
+		       NULL, &wrote, &gerr);
+	if (gerr != NULL) {
+	    gretl_errmsg_set(gerr->message);
+	    g_error_free(gerr);
+	    err = E_DATA;
+	} else {
+	    *s = '\0';
+	    gretl_utf8_strncat(s, tr, CSVSTRLEN-1);
+	    g_free(tr);
+	}
+    }
+
+    if (!err) {
 	int i, n = g_utf8_strlen(s, -1);
 	gunichar u;
 
@@ -2552,11 +2587,21 @@ static int label_is_valid (gchar *s)
 	}
     }
 
-    return 1;
+    return err;
 }
 
-static int 
-real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
+static void transcribe_obs_label (csvdata *c, int t)
+{
+    char *s = c->str;
+
+    if (*s == '"' || *s == '\'') {
+	s++;
+    }
+    c->dset->S[t][0] = '\0';
+    gretl_utf8_strncat(c->dset->S[t], s, OBSLEN - 1);
+}
+
+static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 {
     char *p;
     int miss_shown = 0;
@@ -2571,21 +2616,22 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 
 	if (*c->line == '#' || string_is_blank(c->line)) {
 	    continue;
-	}
-
-	if (*c->skipstr != '\0' && strstr(c->line, c->skipstr)) {
+	} else if (*c->skipstr != '\0' && strstr(c->line, c->skipstr)) {
 	    c->real_n -= 1;
 	    continue;
-	}
-
-	if (row_not_wanted(c, s)) {
+	} else if (row_not_wanted(c, s)) {
 	    s++;
 	    continue;
 	}
 
-	compress_csv_line(c);
+	compress_csv_line(c, 0);
 	p = c->line;
-	if (c->delim == ' ' && *p == ' ') p++;
+
+	if (c->delim == ' ') {
+	    if (*p == ' ') p++;
+	} else {
+	    p += strspn(p, " ");
+	}
 
 	j = 1;
 	for (k=0; k<c->ncols && !err; k++) {
@@ -2598,26 +2644,26 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 		}
 		p++;
 	    }
-	    if (*p == c->delim) {
-		p++;
-	    }
 	    c->str[i] = '\0';
-	    if (k == 0 && csv_skip_column(c) && c->dset->S != NULL) {
-		char *S = c->str;
-
-		c->dset->S[t][0] = 0;
-		if (*S == '"' || *S == '\'') {
-		    S++;
+	    err = maybe_fix_csv_string(c->str);
+	    if (!err) {
+		if (k == 0 && csv_skip_column(c) && c->dset->S != NULL) {
+		    transcribe_obs_label(c, t);
+		} else if (cols_subset(c) && skip_data_column(c, k)) {
+		    ; /* no-op */
+		} else {
+		    err = process_csv_obs(c, j++, t, &miss_shown, prn);
 		}
-		strncat(c->dset->S[t], S, OBSLEN - 1);
-		if (!label_is_valid((gchar *) c->dset->S[t])) {
-		    iso_to_ascii(c->dset->S[t]);
-		} 
-	    } else if (cols_subset(c) && skip_data_column(c, k)) {
-		; /* no-op */
-	    } else {
-		err = process_csv_obs(c, j++, t, &miss_shown, prn);
 	    }
+	    if (!err) {
+		/* prep for next column */
+		if (*p == c->delim) {
+		    p++;
+		}
+		if (c->delim != ' ') {
+		    p += strspn(p, " ");
+		}
+	    }		
 	}
 
 	s++;

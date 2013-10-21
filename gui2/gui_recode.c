@@ -180,17 +180,33 @@ static gchar *real_my_locale_to_utf8 (const gchar *src,
 				      int starting)
 {
     static int errcount;
+    const gchar *charset = NULL;
     gsize bytes;
     GError *err = NULL;
     gchar *ret;
 
-    if (starting) {
-	errcount = 0;
-	ret = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
-    } else if (errcount == 0) {
-	ret = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
+    if (g_get_charset(&charset)) {
+	/* in a UTF-8 locale */
+	if (starting) {
+	    errcount = 0;
+	    ret = g_convert(src, -1, "UTF-8", "ISO-8859-15", 
+			    NULL, &bytes, &err);
+	} else if (errcount == 0) {
+	    ret = g_convert(src, -1, "UTF-8", "ISO-8859-15", 
+			    NULL, &bytes, &err);
+	} else {
+	    ret = g_convert(src, -1, "UTF-8", "ISO-8859-15", 
+			    NULL, &bytes, NULL);
+	}	
     } else {
-	ret = g_locale_to_utf8(src, -1, NULL, &bytes, NULL);
+	if (starting) {
+	    errcount = 0;
+	    ret = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
+	} else if (errcount == 0) {
+	    ret = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
+	} else {
+	    ret = g_locale_to_utf8(src, -1, NULL, &bytes, NULL);
+	}
     }
 
     if (err) {

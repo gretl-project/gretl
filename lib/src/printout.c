@@ -1917,7 +1917,7 @@ static int *get_pmax_array (const int *list, const DATASET *dset)
 
 static void bufprint_string (char *buf, const char *s, int width)
 {
-    int i, n = width - strlen(s);
+    int i, n = width - g_utf8_strlen(s, -1);
 
     *buf = '\0';
 		    
@@ -1928,7 +1928,7 @@ static void bufprint_string (char *buf, const char *s, int width)
 	strcat(buf, s);
     } else {
 	strcat(buf, " ");
-	strncat(buf, s, width - 3);
+	gretl_utf8_strncat(buf, s, width - 3);
 	strcat(buf, "..");
     }
 }
