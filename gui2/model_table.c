@@ -1407,6 +1407,8 @@ int modeltab_parse_line (const char *line, gretlopt opt, PRN *prn)
 	if (!model_table_is_empty()) {
 	    clear_model_table(0, prn);
 	}
+    } else {
+	err = E_PARSE;
     }
 
     return err;

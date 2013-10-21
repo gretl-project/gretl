@@ -193,6 +193,10 @@ static char *winname_double_underscores (const gchar *src)
     return targ;
 }
 
+/* callback for command-accent on Mac or Alt-PgUp/PgDn on
+   X11 and Windows: switch window-focus within gretl
+*/
+
 static gint maybe_select_other_window (GdkEventKey *event,
 				       gpointer data)
 {

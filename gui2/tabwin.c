@@ -42,9 +42,8 @@ GtkTargetEntry tabwin_drag_targets[] = {
     { "text/uri-list",  0, GRETL_FILENAME },
 };
 
-/* We support one tabbed editor, for gretl scripts --
-   and we _may_ support a tabbed viewer for models
-   at some point */
+/* We support a tabbed editor for gretl scripts and also
+   a tabbed viewer for models */
 
 static tabwin_t *tabedit;
 static tabwin_t *tabmod;
@@ -192,7 +191,7 @@ static void page_removed_callback (GtkNotebook *notebook,
     if (np == 1) {
 	/* only one tab left after removal: this page should
 	   not display its own closer button, nor should it
-	   be detachable.
+	   be detachable
 	*/
 	GtkWidget *tab = gtk_notebook_get_nth_page(notebook, 0);
 
@@ -571,6 +570,10 @@ static tabwin_t *make_tabbed_viewer (int role)
 		     G_CALLBACK(page_removed_callback), tabwin);
     gtk_container_add(GTK_CONTAINER(vbox), tabwin->tabs);
 
+#ifndef G_OS_WIN32
+    set_wm_icon(tabwin->main);
+#endif
+
     return tabwin;
 }
 
@@ -579,27 +582,27 @@ static tabwin_t *get_tabwin_for_role (int role, int *starting)
     tabwin_t *tabwin = NULL;
 
     if (role == EDIT_SCRIPT) {
-	if (tabedit == NULL) {
+	if (tabedit != NULL) {
+	    tabwin = tabedit;
+	} else {
 	    *starting = 1;
 	    tabedit = tabwin = make_tabbed_viewer(role);
-	} else {
-	    tabwin = tabedit;
 	}
     } else if (role == VIEW_MODEL) {
-	if (tabmod == NULL) {
+	if (tabmod != NULL) {
+	    tabwin = tabmod;
+	} else {
 	    *starting = 1;
 	    tabmod = tabwin = make_tabbed_viewer(role);
-	} else {
-	    tabwin = tabmod;
 	}
     }	
 
     return tabwin;
 }
 
-/* Create an editor tab, as an alternative to a stand-alone editor
-   window. We build the tabbed editor if need be, otherwise we
-   stick a new tab into the existing editor.
+/* Create a viewer/editor tab, as an alternative to a stand-alone
+   window. We build the tabbed top-level if need be, otherwise we
+   stick a new tab into the existing window.
 */
 
 windata_t *viewer_tab_new (int role, const char *info,
