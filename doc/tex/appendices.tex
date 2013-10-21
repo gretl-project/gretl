@@ -268,13 +268,12 @@ To work with the released source:
 \end{enumerate}
 
 To work with CVS you'll first need to install the \app{cvs} client
-program if it's not already on your system.  Relevant resources
-you may wish to consult include the CVS website at
-\href{http://www.nongnu.org/cvs/}{www.nongnu.org/cvs},
-general information on sourceforge CVS on the 
-  \href{http://sourceforge.net/docman/display_doc.php?docid=14035&group_id=1}{SourceForge
-    CVS page}, and instructions specific to gretl at the
-\href{http://sourceforge.net/cvs/?group_id=36234}{SF gretl CVS page}.
+program if it's not already on your system.  Relevant resources you
+may wish to consult include the CVS website at
+\href{http://www.nongnu.org/cvs/}{www.nongnu.org/cvs} and instructions
+specific to gretl at the
+\href{http://sourceforge.net/p/gretl/code/?source=navbar}{SF gretl CVS
+  page}.
 
 When grabbing the CVS sources \textit{for the first time}, you should
 first decide where you want to store the code.  For example, you might
@@ -414,11 +413,32 @@ make install
 On most systems, the \texttt{make install} command requires you to
 have administrative privileges.  Hence, either you log in as
 \texttt{root} before launching \texttt{make install} or you may want
-to use the \texttt{sudo} utility:
+to use the \texttt{sudo} utility, as in:
 \begin{code}
 sudo make install
 \end{code}
 
+Now try if everything works: go back to your home directory and run gretl
+\begin{code}
+cd ~
+gretl &
+\end{code}
+
+If all is well, you ought to see gretl start, at which point just exit
+the program in the usual way. On the other hand, there is the
+possibility that gretl doesn't start and instead you see a message
+like
+
+\begin{code}
+   /usr/local/bin/gretl_x11: error while loading shared libraries:
+   libgretl-1.0.so.0: cannot open shared object file: No such file or directory
+\end{code}
+
+In this case, just run
+\begin{code}
+  sudo ldconfig
+\end{code}
+The problem should be fixed once and for all.
 
 \chapter{Numerical accuracy}
 \label{app-accuracy}
