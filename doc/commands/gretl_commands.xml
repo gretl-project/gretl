@@ -3926,6 +3926,16 @@
     </usage>
 
     <description>
+
+      <para>
+	NOTE: this command has undergone numerous changes and
+	enhancements since the following help text was written, so for
+	comprehensive and updated info on this command you'll want to
+	refer to <guideref targ="chap-genr"/>. On the other hand, this
+	help does not contain anything actually erroneous, so take the
+	following as <quote>you have this, plus more</quote>.
+      </para>
+
       <para context="cli">
 	In the appropriate context, <lit>series</lit>,
 	<lit>scalar</lit>, <lit>matrix</lit>, <lit>string</lit> and
