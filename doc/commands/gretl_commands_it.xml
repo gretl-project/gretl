@@ -47,7 +47,7 @@
 	<lit>$test</lit> e <lit>$pvalue</lit>.
       </para>
       <para context="cli">
-	Di default, ggiunge al modello precedente le variabili nella
+	Di default, aggiunge al modello precedente le variabili nella
 	<repl>lista-variabili</repl> e stima il nuovo modello.  Il
 	test è un test di Wald sul modello aumentato, che rimpiazza
 	quello originale come <quote>ultimo modello</quote> per quanto
@@ -67,16 +67,6 @@
 	con tanti gradi di libertà quante sono le variabili in
 	<repl>lista-variabili</repl>. In questo caso, il modello
 	originale non viene rimpiazzato.
-      </para>
-      <para context="cli">
-	Se viene usata l'opzione <lit>--quiet</lit> viene mostrato solo
-	il risultato del test per la significatività congiunta delle
-	variabili aggiunte, altrimenti vengono mostrate anche le stime
-	per il modello aumentato. Nell'ultimo caso, l'opzione
-	<lit>--vcv</lit> mostra anche la matrice di covarianza dei coefficienti.
- 	Usando l'opzione <lit>--silent</lit>, non viene mostrato nulla; tuttavia
-        i risultati del test possono essere recuperati usando le variabili
-        speciali <lit>$test</lit> e <lit>$pvalue</lit>.
       </para>
       <para context="cli">
 	L'opzione <opt>both</opt> è specifica per le stime con i
@@ -312,6 +302,36 @@
         contenuti nella Tabella 1 di <cite key="ERS96">Elliott,
         Rothenberg and Stock (1996)</cite>.
       </para>
+
+      <subhead context="cli">Panel data</subhead>
+
+      <para context="cli">
+	When the <lit>adf</lit> command is used with panel data, to
+	produce a panel unit root test, the applicable options and the
+	results shown are somewhat different.
+      </para>
+      <para context="cli">
+	First, while you may give a list of variables for testing in
+	the regular time-series case, with panel data only one
+	variable may be tested per command. Second, the options
+	governing the inclusion of deterministic terms become mutually
+	exclusive: you must choose between no-constant, constant only,
+	and constant plus trend; the default is constant only. In
+	addition, the <opt>--seasonals</opt> option is not available.
+	Third, the <opt>--verbose</opt> option has a different meaning:
+	it produces a brief account of the test for each individual
+	time series (the default being to show only the overall
+	result).
+      </para>
+      <para context="cli">
+	The overall test (null hypothesis: the series in question has
+	a unit root for all the panel units) is calculated in one or
+	both of two ways: using the method of <cite key="IPS03">Im,
+	Pesaran and Shin (Journal of Econometrics, 2003)</cite> or that
+	of <cite key="choi01">Choi (Journal of International Money and
+	Finance, 2001)</cite>.
+      </para>
+
     </description>
 
     <gui-access>
@@ -1213,6 +1233,24 @@
 	  <flag>--notches</flag>
 	  <effect>mostra l'intervallo di confidenza al 90 per cento per la mediana</effect>
 	</option>
+	<option>
+	  <flag>--factorized</flag>
+	  <effect>vedi sotto</effect>
+	</option>
+	<option>
+	  <flag>--panel</flag>
+	  <effect>vedi sotto</effect>
+	</option>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>name</optparm>
+	  <effect>opera su colonne di una matrice</effect>
+        </option>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>manda l'output a un file specificato</effect>
+	</option>
       </options>
     </usage>
 
@@ -1554,6 +1592,14 @@
 	  <flag>--skip-df</flag>
 	  <effect>non esegue i test DF sulle variabili individuali</effect>
 	</option>
+	<option>
+	  <flag>--test-down</flag>
+	  <effect>scelta automatica dell'ordine dei ritardi</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>mostra dettagli extra sulle regressioni</effect>
+	</option>
       </options>
       <examples>
         <example>coint 4 y x1 x2</example>
@@ -1652,6 +1698,10 @@
 	  <effect>costante vincolata</effect>
         </option>
         <option>
+	  <flag>--uc</flag>
+	  <effect>unrestricted constant</effect>
+        </option>
+        <option>
 	  <flag>--crt</flag>
 	  <effect>costante e trend vincolato</effect>
         </option>
@@ -1662,6 +1712,14 @@
         <option>
 	  <flag>--seasonals</flag>
 	  <effect>include dummy stagionali centrate</effect>
+        </option>
+        <option>
+	  <flag>--asy</flag>
+	  <effect>record asymptotic p-values</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
