@@ -10,14 +10,14 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-10-03 08:28-0400\n"
-"PO-Revision-Date: 2013-02-21 17:40+0100\n"
+"PO-Revision-Date: 2013-10-22 22:55+0100\n"
 "Last-Translator: \n"
 "Language-Team: German\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #: lib/src/adf_kpss.c:313
 msgid "lagged differences"
@@ -25,7 +25,7 @@ msgstr "verzögerte Differenzen"
 
 #: lib/src/adf_kpss.c:324 gui2/library.c:923
 msgid "modified BIC"
-msgstr ""
+msgstr "modifiziertes BIC"
 
 #: lib/src/adf_kpss.c:326 gui2/library.c:924
 msgid "t-statistic"
@@ -33,7 +33,7 @@ msgstr "t-Statistik"
 
 #: lib/src/adf_kpss.c:329 gui2/library.c:922
 msgid "modified AIC"
-msgstr ""
+msgstr "modifiziertes AIC"
 
 #: lib/src/adf_kpss.c:341
 #, c-format
@@ -66,9 +66,9 @@ msgid "including %d lags of (1-L)%s"
 msgstr "mit %d Lags von (1-L)%s"
 
 #: lib/src/adf_kpss.c:360
-#, fuzzy, c-format
+#, c-format
 msgid "(max was %d, criterion %s)"
-msgstr "(Max war %d)"
+msgstr "(Max war %d, Kriterium %s)"
 
 #: lib/src/adf_kpss.c:402 gui2/library.c:940 gui2/library.c:1159
 #: gui2/selector.c:6032 plugin/panurc.c:234
@@ -156,9 +156,8 @@ msgid "time trend variable"
 msgstr "Zeittrendvariable"
 
 #: lib/src/adf_kpss.c:831
-#, fuzzy
 msgid "Invalid option"
-msgstr "ungültige Option '--%s'"
+msgstr "Ungültige Option"
 
 #: lib/src/adf_kpss.c:862 lib/src/adf_kpss.c:1616 lib/src/boxplots.c:773
 #: lib/src/describe.c:1620 lib/src/describe.c:2955 lib/src/describe.c:3469
@@ -433,9 +432,9 @@ msgid "got invalid field '%s'"
 msgstr "erhielt ungültiges Feld '%s'"
 
 #: lib/src/calendar.c:403
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid starting date for %d-day data"
-msgstr "Ungültige Lagordnung für ARCH (%d)"
+msgstr "Ungültiges Anfangsdatum für %d-tägliche Daten"
 
 #: lib/src/compare.c:269
 #, c-format
@@ -1051,7 +1050,7 @@ msgstr "Warnung: %d Bezeichner wurden abgeschnitten.\n"
 
 #: lib/src/csvdata.c:2548
 msgid "scanning for row labels and data...\n"
-msgstr "suche nach Zeilenbezeichnern und Daten...\n"
+msgstr "suche nach Zeilenköpfen und Daten...\n"
 
 #: lib/src/csvdata.c:2571 lib/src/csvdata.c:2574 lib/src/dataio.c:2860
 msgid "parsing"
@@ -1126,31 +1125,31 @@ msgstr "Nicht genügend Speicher\n"
 
 #: lib/src/csvdata.c:3370
 msgid "No matching data after filtering"
-msgstr ""
+msgstr "Keine passenden Daten nach Filterung"
 
 #: lib/src/csvdata.c:3686
 msgid "You need to specify an aggregation method for a 1:n join"
 msgstr "Für einen 1:n join müssen Sie eine Aggregationsmethode angeben"
 
 #: lib/src/csvdata.c:4502
-#, fuzzy, c-format
+#, c-format
 msgid "%s: column '%s' was not found"
-msgstr "Befehl '%s' unbekannt"
+msgstr "%s: Spalte '%s' nicht gefunden"
 
 #: lib/src/csvdata.c:4518
 #, c-format
 msgid "%s: string key on left but numeric on right"
-msgstr ""
+msgstr "%s: Zeichenketten-Schlüssel \"links\" aber numerisch \"rechts\""
 
 #: lib/src/csvdata.c:4520
 #, c-format
 msgid "%s: string key on right but numeric on left"
-msgstr ""
+msgstr "%s: Zeichenketten-Schlüssel \"rechts\" aber numerisch \"links\""
 
 #: lib/src/csvdata.c:4782
 #, c-format
 msgid "Outer dataset: read %d columns and %d rows\n"
-msgstr ""
+msgstr "Äußerer Datensatz: las %d Spalten und %d Zeilen\n"
 
 #: lib/src/csvdata.c:4832 gui2/library.c:4000
 msgid "Series length does not match the dataset"
@@ -1162,21 +1161,21 @@ msgid "WARNING: ascii data read error at var %d, obs %d"
 msgstr "WARNUNG: Lesefehler ASCII-Daten bei Var. %d, Beob. %d"
 
 #: lib/src/dataio.c:276
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "First char of varname '%s' is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"Erstes Zeichen des Var.namens ('%c') ungültig\n"
+"Erstes Zeichen des Var.namens '%s' ungültig\n"
 "(das erste muss alfabetisch sein)"
 
 #: lib/src/dataio.c:280
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Varname '%s' contains illegal character '%c'\n"
 "Use only letters, digits and underscore"
 msgstr ""
-"Var'name enthält unzulässiges Zeichen '%c'\n"
+"Var'name '%s' enthält unzulässiges Zeichen '%c'\n"
 "Nur Buchstaben, Ziffern und Unterstrich benutzen"
 
 #: lib/src/dataio.c:286
@@ -1280,13 +1279,13 @@ msgstr ""
 "Lese Header-Datei %s\n"
 
 #: lib/src/dataio.c:1729 lib/src/dataio.c:1892 lib/src/gretl_xml.c:2615
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
 "observations range: %s to %s\n"
 msgstr ""
 "Periodizität: %d, max. Beob.: %d\n"
-"Beobachtungsbereich: %s-%s\n"
+"Beobachtungsbereich: %s bis %s\n"
 
 #: lib/src/dataio.c:1733
 msgid ""
@@ -1442,18 +1441,16 @@ msgid "years"
 msgstr "Jahre"
 
 #: lib/src/dataset.c:1971
-#, fuzzy
 msgid "weeks"
-msgstr "wöchentlich"
+msgstr "Wochen"
 
 #: lib/src/dataset.c:1973
 msgid "days"
-msgstr ""
+msgstr "Tage"
 
 #: lib/src/dataset.c:1975
-#, fuzzy
 msgid "hours"
-msgstr "stündlich"
+msgstr "Stunden"
 
 #: lib/src/dataset.c:2738
 msgid "Generated"
@@ -2399,7 +2396,7 @@ msgstr "'%s' : nur für Matrizen implementiert"
 #: lib/src/geneval.c:12312
 #, c-format
 msgid "type error: %s is string-valued"
-msgstr ""
+msgstr "Typfehler: %s ist Zeichenkette"
 
 #: lib/src/geneval.c:12710
 msgid "Bare declarations are not allowed here"
@@ -3082,14 +3079,12 @@ msgid "This command is implemented only for OLS models"
 msgstr "Dieser Befehl ist nur für KQ-Modelle implementiert"
 
 #: lib/src/gretl_errors.c:55
-#, fuzzy
 msgid "Invalid argument"
-msgstr "Ungültige Eingabe"
+msgstr "ungültiges Argument"
 
 #: lib/src/gretl_errors.c:56
-#, fuzzy
 msgid "Syntax error"
-msgstr "Datenfehler"
+msgstr "Syntaxfehler"
 
 #: lib/src/gretl_errors.c:57
 msgid "No independent variables left after omissions"
@@ -3481,7 +3476,7 @@ msgstr "rho = 0"
 
 #: lib/src/gretl_model.c:3473
 msgid "LR test for rho = 0"
-msgstr ""
+msgstr "LR-Test auf rho = 0"
 
 #: lib/src/gretl_model.c:3492
 msgid "robust variant"
@@ -3707,9 +3702,8 @@ msgid "Error: unit %g, period %g: duplicated observation"
 msgstr "Fehler: Gruppe %g, Periode %g: duplizierte Beobachtung"
 
 #: lib/src/gretl_panel.c:4854
-#, fuzzy
 msgid "Sorry, can't do this with a sub-sampled dataset"
-msgstr "Unmöglich während Bearbeitung des Datensatzes"
+msgstr "Sorry, unmöglich mit einer Teilstichprobe"
 
 #: lib/src/gretl_paths.c:2136
 msgid "User directory is not set"
@@ -3883,15 +3877,13 @@ msgid "variable %d: translating from strings to code numbers\n"
 msgstr "Variable %d: übersetze von Zeichenketten zu Codenummern\n"
 
 #: lib/src/gretl_string_table.c:487
-#, fuzzy
 msgid ""
 "One or more non-numeric variables were found.\n"
 "These variables have been given numeric codes as follows.\n"
 "\n"
 msgstr ""
 "Mind. eine nichtnumerische Variable wurde gefunden.\n"
-"Gretl kann nicht direkt damit umgehen, daher wurden\n"
-"folgende numerische Codes verwendet.\n"
+"Für diese Variablen wurden folgende numerische Codes verwendet.\n"
 "\n"
 
 #: lib/src/gretl_string_table.c:490
@@ -4280,9 +4272,9 @@ msgid "No data information is available.\n"
 msgstr "Keine Dateninformationen verfügbar.\n"
 
 #: lib/src/interact.c:4454
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid input '%s'\n"
-msgstr "%s: ungültiger Wert '%s'"
+msgstr "%s: ungültige Eingabe '%s'\n"
 
 #: lib/src/interact.c:4668 lib/src/interact.c:4676
 msgid "Inner key is missing"
@@ -4468,9 +4460,8 @@ msgid "Point observations"
 msgstr "Punkt-Beobachtungen"
 
 #: lib/src/modelprint.c:191
-#, fuzzy
 msgid "Pseudo-point observations"
-msgstr "Punkt-Beobachtungen"
+msgstr "Pseudo-Punkt-Beobachtungen"
 
 #: lib/src/modelprint.c:205
 msgid "Left-censored observations"
@@ -4555,7 +4546,7 @@ msgstr "Warnung: konnte numerische Hesse-Matrix nicht berechnen"
 
 #: lib/src/modelprint.c:628
 msgid "Warning: non-pd Hessian (but still nonsingular)"
-msgstr ""
+msgstr "Warnung: nicht-pd Hessematrix (aber nicht singulär)"
 
 #: lib/src/modelprint.c:646 lib/src/modelprint.c:664 lib/src/modelprint.c:672
 msgid "'Within' variance"
@@ -4826,9 +4817,8 @@ msgid "Multinomial Logit"
 msgstr "Multinomiales Logit"
 
 #: lib/src/modelprint.c:929
-#, fuzzy
 msgid "Random-effects probit"
-msgstr "Random effects"
+msgstr "Random-effects Probit"
 
 #: lib/src/modelprint.c:931 gui2/selector.c:3642
 msgid "Ordered Probit"
@@ -5220,7 +5210,7 @@ msgstr "Auswahlvariable"
 #: lib/src/modelprint.c:2034
 #, c-format
 msgid "Using %d quadrature points"
-msgstr ""
+msgstr "Benutze %d Quadratur-Punkte"
 
 #: lib/src/modelprint.c:2048
 msgid "Allowing for groupwise heteroskedasticity"
@@ -6617,7 +6607,7 @@ msgstr "Keine Beobachtungen wurden entfernt!"
 
 #: lib/src/subsample.c:1263
 msgid "--balanced option is invalid: the (full) dataset is not a panel"
-msgstr ""
+msgstr "--balanced -Option ungültig: (voller) Datensatz ist kein Panel"
 
 #: lib/src/subsample.c:1805 lib/src/subsample.c:1824
 msgid "error in new starting obs"
@@ -7012,9 +7002,9 @@ msgid "Matrix decomposition failed"
 msgstr "Matrixzerlegung fehlgeschlagen"
 
 #: lib/src/uservar.c:1354
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is currently read-only"
-msgstr "Die Variable %s ist nur lesbar"
+msgstr "Die Variable %s ist momentan nur lesbar"
 
 #: lib/src/var.c:714 lib/src/var.c:3119
 #, c-format
@@ -9478,9 +9468,8 @@ msgstr ""
 "Überschreiben OK?"
 
 #: gui2/fileselect.c:793
-#, fuzzy
 msgid "Gretl data files (*.gdt)"
-msgstr "gretl-Datendatei (.gdt)"
+msgstr "gretl-Datendateien (*.gdt)"
 
 #: gui2/fileselect.c:794 gui2/fileselect.c:808
 msgid "CSV files (*.csv)"
@@ -9491,14 +9480,12 @@ msgid "ASCII files (*.txt)"
 msgstr "ASCII-Dateien (*.txt)"
 
 #: gui2/fileselect.c:796
-#, fuzzy
 msgid "Gnumeric files (*.gnumeric)"
 msgstr "Gnumeric-Dateien (*.gnumeric)"
 
 #: gui2/fileselect.c:797
-#, fuzzy
 msgid "Open Document files (*.ods)"
-msgstr "Open Document Spreadsheet (*.ods)"
+msgstr "Open-Document-Dateien (*.ods)"
 
 #: gui2/fileselect.c:798 gui2/fileselect.c:812
 msgid "Excel files (*.xls)"
@@ -9513,23 +9500,20 @@ msgid "Stata files (*.dta)"
 msgstr "Stata-Dateien (*.dta)"
 
 #: gui2/fileselect.c:801
-#, fuzzy
 msgid "Eviews files (*.wf1)"
-msgstr "Eviews-Workfiles (*.wf1)"
+msgstr "Eviews-Dateien (*.wf1)"
 
 #: gui2/fileselect.c:802
 msgid "SPSS files (*.sav)"
 msgstr "SPSS-Dateien (*.sav)"
 
 #: gui2/fileselect.c:803
-#, fuzzy
 msgid "SAS xport files (*.xpt)"
-msgstr "Gnuplot-Dateien (*.plt)"
+msgstr "SAS-xport-Dateien (*.xpt)"
 
 #: gui2/fileselect.c:804
-#, fuzzy
 msgid "Octave files (*.m)"
-msgstr "GNU-Octave-Dateien (*.m)"
+msgstr "Octave-Dateien (*.m)"
 
 #: gui2/fileselect.c:805
 msgid "JMulTi files (*.dat)"
@@ -10005,38 +9989,36 @@ msgid "Save changes?"
 msgstr "Änderungen speichern?"
 
 #: gui2/fnsave.c:1415
-#, fuzzy
 msgid "Label"
-msgstr "Bezeichner"
+msgstr "Bezeichnung"
 
 #: gui2/fnsave.c:1429
-#, fuzzy
 msgid "Window"
 msgstr "Fenster"
 
 #: gui2/fnsave.c:1510
 msgid "To create a menu attachment, you must supply a label."
-msgstr ""
+msgstr "Zum Eintrag ins Menü müssen Sie eine Bezeichnung angeben."
 
 #: gui2/fnsave.c:1513
 msgid ""
 "To update the menu attachment, you should\n"
 "(a) save this package, and (b) restart gretl."
 msgstr ""
+"Zur Aktualisierung des Menüeintrags müssen Sie\n"
+"(a) dieses Paket speichern, (b) gretl neu starten."
 
 #: gui2/fnsave.c:1680
-#, fuzzy
 msgid "gretl: extra properties"
-msgstr "gretl: Fehler"
+msgstr "gretl: weitere Eigenschaften"
 
 #: gui2/fnsave.c:1695
-#, fuzzy
 msgid "Special functions"
-msgstr "Funktionen speichern"
+msgstr "Spezielle Funktionen"
 
 #: gui2/fnsave.c:1763
 msgid "Menu attachment"
-msgstr ""
+msgstr "Menüeintrag"
 
 #: gui2/fnsave.c:1815
 msgid "Date (YYYY-MM-DD)"
@@ -10071,9 +10053,8 @@ msgid "Add/remove functions"
 msgstr "Funktionen hinzufügen/entfernen"
 
 #: gui2/fnsave.c:1948
-#, fuzzy
 msgid "Extra properties"
-msgstr "Eigenschaften"
+msgstr "Weitere Eigenschaften"
 
 #: gui2/fnsave.c:1954
 msgid "Write spec file"
@@ -10463,7 +10444,7 @@ msgstr "Obere Schranke"
 #: gui2/gpt_dialog.c:2557
 #, c-format
 msgid "label %d: "
-msgstr "Feld %d: "
+msgstr "Bezeichnung %d: "
 
 #: gui2/gpt_dialog.c:2768
 msgid "Lines"
@@ -10495,7 +10476,7 @@ msgstr "Linie hinzufügen..."
 
 #: gui2/gpt_dialog.c:3058
 msgid "Labels"
-msgstr "Bezeichner"
+msgstr "Bezeichnungen"
 
 #: gui2/gpt_dialog.c:3087
 msgid "text"
@@ -10702,7 +10683,7 @@ msgstr "%s gefunden\n"
 
 #: gui2/gretl.c:470
 msgid "Start a new gretl instance?"
-msgstr ""
+msgstr "Neue gretl-Instanz starten?"
 
 #: gui2/gretl.c:1264
 msgid "No lists are currently defined"
@@ -11502,9 +11483,8 @@ msgid "Bi_variate..."
 msgstr "Bi_variat..."
 
 #: gui2/gretl.c:1775
-#, fuzzy
 msgid "_Random effects..."
-msgstr "Random effects"
+msgstr "_Random effects..."
 
 #: gui2/gretl.c:1776
 msgid "To_bit..."
@@ -12101,14 +12081,12 @@ msgid "_Save text as..."
 msgstr "_Speichere Text unter..."
 
 #: gui2/gui_utils.c:392
-#, fuzzy
 msgid "Save bundle to session as _icon"
-msgstr "Als Sitzungsteil_symbol speichern"
+msgstr "Bundle als Sitzungsteil_symbol speichern"
 
 #: gui2/gui_utils.c:394
-#, fuzzy
 msgid "Save bundle as icon and cl_ose"
-msgstr "Als Symbol speichern und schlie_ßen"
+msgstr "Bundle als Symbol speichern und schlie_ßen"
 
 #: gui2/gui_utils.c:399
 msgid "_Graph"
@@ -12196,9 +12174,8 @@ msgid "gretl: edit plot commands"
 msgstr "gretl: bearbeite Plotbefehle"
 
 #: gui2/gui_utils.c:1663
-#, fuzzy
 msgid "gretl: edit R script"
-msgstr "gretl: bearbeite Octave-Skript"
+msgstr "gretl: bearbeite R-Skript"
 
 #: gui2/gui_utils.c:1665
 msgid "gretl: edit Ox program"
@@ -12371,14 +12348,12 @@ msgid "forecast horizon (periods):"
 msgstr "Prognosehorizont (Perioden):"
 
 #: gui2/gui_utils.c:3524
-#, fuzzy
 msgid "line graph"
-msgstr "Speichere Graphen"
+msgstr "Liniendiagramm"
 
 #: gui2/gui_utils.c:3525
-#, fuzzy
 msgid "stacked bar graph"
-msgstr "Speichere Graphen"
+msgstr "Gestapeltes Säulendiagramm"
 
 #: gui2/gui_utils.c:3533 gui2/gui_utils.c:4203 gui2/gui_utils.c:4325
 msgid "Forecast variance decomposition"
@@ -12645,7 +12620,7 @@ msgstr "Zeichenketten"
 
 #: gui2/helpfiles.c:372
 msgid "Calendar"
-msgstr ""
+msgstr "Kalender"
 
 #: gui2/helpfiles.c:412 gui2/textbuf.c:1643
 msgid "Index"
@@ -12738,7 +12713,6 @@ msgid "Principal Components Analysis"
 msgstr "Hauptkomponentenanalyse"
 
 #: gui2/library.c:918
-#, fuzzy
 msgid "criterion"
 msgstr "Kriterium"
 
@@ -13808,9 +13782,8 @@ msgid "AR(1)"
 msgstr "AR(1)"
 
 #: gui2/selector.c:3644
-#, fuzzy
 msgid "Random effects (binary) probit"
-msgstr "Random effects"
+msgstr "Random effects (binäres) Probit"
 
 #: gui2/selector.c:3654
 msgid "Count data model"
@@ -14102,7 +14075,7 @@ msgstr "Bits pro Gleitkommawert"
 
 #: gui2/selector.c:5349
 msgid "Quadrature points"
-msgstr ""
+msgstr "Quadratur-Punkte"
 
 #: gui2/selector.c:5371
 msgid "Robust standard errors/intervals"
@@ -14795,9 +14768,8 @@ msgid "Emulate Windows look"
 msgstr "Emuliere Windowsaussehen"
 
 #: gui2/settings.c:190
-#, fuzzy
 msgid "Theme preference"
-msgstr "Sprachpräferenzen"
+msgstr "Stilpräferenzen (Theme)"
 
 #: gui2/settings.c:194
 msgid "Web browser"
@@ -14900,14 +14872,12 @@ msgid "Path to octave executable"
 msgstr "Pfad zur octave-Programmdatei"
 
 #: gui2/settings.c:261
-#, fuzzy
 msgid "Path to Stata executable"
-msgstr "Pfad zur octave-Programmdatei"
+msgstr "Pfad zur Stata-Programmdatei"
 
 #: gui2/settings.c:263
-#, fuzzy
 msgid "Path to Python executable"
-msgstr "Pfad zur oxl-Programmdatei"
+msgstr "Pfad zur Python-Programmdatei"
 
 #: gui2/settings.c:265
 msgid "Database server name"
@@ -15010,14 +14980,12 @@ msgid "Manuals"
 msgstr "Handbücher"
 
 #: gui2/settings.c:2269
-#, fuzzy
 msgid "Select a specific font"
-msgstr "RESET-Spezifikationstest"
+msgstr "Wähle spezifische Schriftart"
 
 #: gui2/settings.c:2270
-#, fuzzy
 msgid "Reset to Windows default"
-msgstr "Zurück auf Voreinstellung"
+msgstr "Zurücksetzen auf Windows-Voreinstellung"
 
 #: gui2/settings.c:2369 gui2/settings.c:2451
 msgid "Font for gretl output windows"
@@ -15798,14 +15766,12 @@ msgid "AB-model"
 msgstr "AB-Modell"
 
 #: plugin/addons-i18n.c:46
-#, fuzzy
 msgid "Bootstrap alpha"
-msgstr "_Bootstrap..."
+msgstr "Bootstrap-Alpha"
 
 #: plugin/addons-i18n.c:47
-#, fuzzy
 msgid "Bootstrap replications"
-msgstr "Bootstrap t-Quotient"
+msgstr "Bootstrap-Wiederholungen"
 
 #: plugin/addons-i18n.c:48
 msgid "C-model"
@@ -15848,9 +15814,8 @@ msgid "plain"
 msgstr "einfach"
 
 #: plugin/addons-i18n.c:61
-#, fuzzy
 msgid "template matrix"
-msgstr "Ersetzte Matrix %s"
+msgstr "Vorlagen-Matrix"
 
 #: plugin/anova.c:108 plugin/anova.c:110
 msgid "Treatment"
@@ -16263,11 +16228,11 @@ msgstr "benutzerdefinierte Startwerte"
 
 #: plugin/jrestrict.c:1264
 msgid "Strong convergence"
-msgstr ""
+msgstr "Starke Konvergenz"
 
 #: plugin/jrestrict.c:1266
 msgid "Weak convergence"
-msgstr ""
+msgstr "Schwache Konvergenz"
 
 #: plugin/jrestrict.c:1857
 #, c-format
