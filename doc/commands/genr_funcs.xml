@@ -4474,12 +4474,8 @@
 	  Returns a matrix with <argname>r</argname> rows and
 	  <argname>c</argname> columns, filled with uniform (0,1)
 	  pseudo-random variates. Note: the preferred method for
-	  generating a scalar uniform r.v. is recasting the output of
-	  <lit>muniform</lit> to a scalar, as in 
-	</para>
-	<code>
-	  scalar x = muniform(1,1)
-	</code>
+	  generating a scalar uniform r.v. is to use the <fncref
+	  targ="randgen1"/> function.
 	<para>
 	  <seelist>
 	    <fncref targ="mnormal"/>

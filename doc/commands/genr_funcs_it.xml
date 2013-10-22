@@ -3946,9 +3946,9 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a matrix with <argname>r</argname> rows and
-	  <argname>c</argname> columns, filled with standard normal
-	  pseudo-random variates. 
+	  Restituisce una matrice di <argname>r</argname> righe e
+	  <argname>c</argname> colonne, contenene numeri pseudocasuali
+	  estratti da una normale standardizzata.
 	  <seelist> 
 	    <fncref targ="normal"/>
 	    <fncref targ="muniform"/>
@@ -3982,11 +3982,10 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the number of (relevant) days in the specified month in
-	  the specified year; <argname>weeklen</argname>, which must equal
-	  5, 6 or 7, gives the number of days in the week that should be
-	  counted (a value of 6 omits Sundays, and a value of 5 omits both
-	  Saturdays and Sundays).
+	  Restituisce il numero di giorni (rilevanti) in un dato mese
+	  ed anno; l'argomento <argname>weeklen</argname> può essere
+	  5, 6 o 7, e indica il numeroi di giorni nella settimana da
+	  contare (il 6 omette le domeniche, il 5 anche i sabati).
 	</para>
       </description>
     </function>
@@ -4223,15 +4222,11 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a matrix with <argname>r</argname> rows and
-	  <argname>c</argname> columns, filled with uniform (0,1)
-	  pseudo-random variates. Note: the preferred method for
-	  generating a scalar uniform r.v. is recasting the output of
-	  <lit>muniform</lit> to a scalar, as in 
-	</para>
-	<code>
-	  scalar x = muniform(1,1)
-	</code>
+	  Restituisce una matrice di <argname>r</argname> righe e
+	  <argname>c</argname> colonne, contenene numeri pseudocasuali
+	  estratti da una uniforme (0,1). Nota: per generare uno
+	  scalare pseudocasuale uniforme, è consigliabile usare la
+	  funzione <fncref targ="randgen1"/>.
 	<para>
 	  <seelist>
 	    <fncref targ="mnormal"/>
@@ -4245,6 +4240,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="string">s</fnarg>
+	<fnarg optional="true" type="bool">export</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4259,6 +4255,15 @@
 	  overwritten. The return value is 0 on successful completion; if
 	  an error occurs, such as the file being unwritable, the return
 	  value will be non-zero.
+	</para>
+	<para>
+	  If a non-zero value is given for the
+	  <argname>export</argname> argument, the output file will be
+	  written into the user's <quote>dot</quote> directory, where
+	  it is accessible by default via the matrix-loading functions
+	  offered in the context of the <cmdref targ="foreign"/>
+	  command. In this case a plain filename, without any path
+	  component, should be given for the second argument.
 	</para>
 	<para>
 	  Matrices stored via the <lit>mwrite</lit> command can be easily
