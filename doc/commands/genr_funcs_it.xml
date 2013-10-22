@@ -283,7 +283,7 @@
     <function name="$huge" section="access" output="scalar">
       <description>
 	<para>
-	  Restituisce un numero positivo molto grande. Di default è pari a 1.0E100,
+	  Restituisce un numero positivo molto grande. Per impostazione predefinita è pari a 1.0E100,
 	  ma tale valore si può cambiare usando il comando <cmdref targ="set"/>.
 	</para>
       </description>
@@ -1234,7 +1234,7 @@
 	<para>
 	  Estrae la componente ciclica della serie
 	  <argname>y</argname> attraverso il filtro passa banda di
-	  Baxter&ndash;King, a filtro simmetrico two-sided. Per i
+	  Baxter&ndash;King, filtro simmetrico two-sided. Per i
 	  dettagli, si veda <guideref targ="chap-genr"/>.
 	  <seelist>
 	    <fncref targ="hpfilt"/>
@@ -1404,7 +1404,7 @@
 	  v.c. Gamma implica che la funzione di densità possa essere
 	  scritta come \[ f(x; k, \theta) = \frac{x^{k-1}}{\theta^k}
 	  \frac{e^{-x/\theta}}{\Gamma(k)} \] dove $k>0$ è il parametro
-	  di forma e $\theta>0$ è il parametro di scala.
+	  di forma e $\theta>0$ il parametro di scala.
 	</para>
 	<para>
 	  <seelist>
@@ -1459,7 +1459,7 @@
       <description>
 	<para>
 	  Esegue la decomposizione di Cholesky della matrice
-	  <argname>A</argname>, che si assume essere simmetrica e
+	  <argname>A</argname>, assunta simmetrica e
 	  definita positiva. Il risultato è una matrice triangolare
 	  inferiore <math>K</math> che soddisfa <equation
 	  status="inline" ascii="A = KK'" tex="$A = KK'$"/>. La
@@ -1477,7 +1477,7 @@
       </fnargs>
       <description>
 	<para>
-	  Espande i dati input, <argname>Y</argname>, a una frequenza
+	  Espande i dati in ingresso, <argname>Y</argname>, a una frequenza
 	  maggiore, usando il metodo di interpolazione di <cite
 	  key="chowlin71">Chow e Lin (1971)</cite>. Si assume che le
 	  colonne di <argname>Y</argname> rappresentino serie di dati;
@@ -1571,7 +1571,7 @@
 	  avere tanti elementi quante sono le colonne di
 	  <argname>M</argname>. Se <argname>s</argname> è una stringa,
 	  deve contenere un numero appropriato di sub-stringhe
-	  separate da spazi.  Restituisce 0 se la funzione è adata a
+	  separate da spazi.  Restituisce 0 se la funzione è andata a
 	  buon fine, non-zero altrimenti. Si veda anche <fncref
 	  targ="rownames"/>.
 	</para>
@@ -1611,7 +1611,7 @@
       </fnargs>
       <description>
 	<para>
-	  Calcola il coefficienti di correlazione fra
+	  Calcola il coefficiente di correlazione fra
 	  <argname>y1</argname> e <argname>y2</argname>.
 	  <seelist> 
 	    <fncref targ="cov"/>
@@ -1630,26 +1630,31 @@
       </fnargs>
       <description>
 	<para>
-	  If only the first two arguments are given, computes the correlogram
-	  for <argname>x</argname> for lags 1 to <argname>p</argname>.  Let
-	  <math>k</math> represent the number of elements in
-	  <argname>x</argname> (1 if <argname>x</argname> is a series, the
-	  number of columns if <argname>x</argname> is a matrix, or the number
-	  of list-members is <argname>x</argname> is a list).  The return
-	  value is a matrix with <argname>p</argname> rows and 2<math>k</math>
-	  columns, the first <math>k</math> columns holding the respective
-	  autocorrelations and the remainder the respective partial
-	  autocorrelations.
+	  Se sono forniti solo i primi due argomenti, calcola il
+	  correlogramma di <argname>x</argname> con ritardi da 1 a
+	  <argname>p</argname>. Il valore restituito è una matrice con
+	  <argname>p</argname> righe e 2<math>k</math> colonne, dove
+	  <math>k</math> è il numero di elementi di
+	  <argname>x</argname>, ovvero: 1 se <argname>x</argname> è
+	  una serie; il numero di colonne di <argname>x</argname> se
+	  <argname>x</argname> è una matrice; il numero degli elementi
+	  di <argname>x</argname> se <argname>x</argname> è una
+	  lista. Le prime <math>k</math> colonne della matrice
+	  restituita contengono le autocorrelazioni, mentre le
+	  restanti colonne le rispettive autocorrelazioni parziali.
 	</para>
 	<para>
-	  If a third argument is given, this function computes the
-	  cross-correlogram for each of the <math>k</math> elements in
-	  <argname>x</argname> and <argname>y</argname>, from lead
-	  <argname>p</argname> to lag <argname>p</argname>. The returned
-	  matrix has 2<math>p</math> + 1 rows and <math>k</math> columns.
-          If <argname>x</argname> is series or list and <argname>y</argname>
-          is a vector, the vector must have just as many rows as there
-          are observations in the current sample range.
+	  Se è fornito un terzo argomento, questa funzione calcola il
+	  correlogramma incrociato per ciascuno dei <math>k</math>
+	  elementi di <argname>x</argname> e <argname>y</argname>,
+	  dagli anticipi (<quote>lead</quote>) di ordine
+	  <argname>p</argname> fino ai ritardi (<quote>lag</quote>) di
+	  ordine <argname>p</argname>. La matrice restituita ha
+	  2<math>p</math> + 1 righe e <math>k</math> colonne. Se
+	  <argname>x</argname> è una serie o una lista e
+	  <argname>y</argname> un vettore, il vettore deve avere tante
+	  righe quante sono le osservazioni nell'intervallo del
+	  campione corrente.
 	</para>
       </description>
     </function>
@@ -1778,21 +1783,25 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Cumulates <argname>x</argname>. When <argname>x</argname> is a
-	  series, produces a series <math>y</math> each of whose elements is
-	  the sum of the values of <argname>x</argname> to date; the starting
-	  point of the summation is the first non-missing observation in the
-	  currently selected sample. When <argname>x</argname> is a matrix,
-	  its elements are cumulated by columns.
+	  Calcola la somma cumulata di <argname>x</argname>. Se
+	  <argname>x</argname> è una serie, restituisce una serie
+	  <math>y</math> in cui ciascuno degli elementi è la somma dei
+	  valori di <argname>x</argname> fino a quel punto; il primo
+	  termine della somma è la prima osservazione non mancante
+	  (non-missing) nel campione corrente. Se <argname>x</argname>
+	  è una matrice, la somma cumulata viene calcolata per
+	  ciascuna delle colonne.
 	</para>
 	<para context="tex">
-	  Cumulates <argname>x</argname>. When <math>x</math> is a series,
-	  produces a series $y_t = \sum_{s=m}^t x_s$; the starting point of
-	  the summation, <math>m</math>, is the first non-missing observation
-	  of the currently selected sample.  If any missing values are
-	  encountered in <math>x</math>, subsequent values of <math>y</math>
-	  will be set to missing. When <argname>x</argname> is a matrix, its
-	  elements are cumulated by columns.
+	  Calcola la somma cumulata di <argname>x</argname>. Se
+	  <math>x</math> è una serie, produce una serie $y_t =
+	  \sum_{s=m}^t x_s$. Il punto iniziale della sommatoria,
+	  <math>m</math>, è la prima osservazione non mancante
+	  nel campione corrente. Se la funzione incontra
+	  valori mancanti in <math>x</math>, i valori
+	  successivi in <math>y</math> saranno mancanti. Quando
+	  <argname>x</argname> è una matrice, gli elementi vengono
+	  sommati per colonna.
 	</para>
 	<para>
 	  <seelist>
@@ -1809,24 +1818,26 @@
       </fnargs>
       <description>
 	<para>
-	  Depends on having TRAMO/SEATS or X-12-ARIMA installed. Returns a
-	  deseasonalized (seasonally adjusted) version of the input series
-	  <argname>x</argname>, which must be a quarterly or monthly time
-	  series.  To use X-12-ARIMA give <lit>X</lit> as the second argument;
-	  to use TRAMO give <lit>T</lit>.  If the second argument is omitted
-	  then X-12-ARIMA is used.
+	  Dipende da TRAMO/SEATS o X-12-ARIMA, che devono perciò
+	  essere installati. Restituisce la serie <argname>x</argname>
+	  destagionalizzata. La serie in ingresso <argname>x</argname>
+	  deve essere una serie storica trimestrale o mensile. Per
+	  usare X-12-ARIMA inserire <lit>X</lit> come secondo
+	  argomento; per usare TRAMO inserire <lit>T</lit>. Se il
+	  secondo argomento è omesso, è utilizzato X-12-ARIMA.
 	</para>
 	<para>
-	  Note that if the input series has no detectable seasonal
-	  component this function will fail.  Also note that both
-	  TRAMO/SEATS and X-12-ARIMA offer numerous options;
-	  <lit>deseas</lit> calls them with all options at their default
-	  settings. For both programs, the seasonal factors are calculated
-	  on the basis of an automatically selected ARIMA model. One
-	  difference between the programs which can sometimes make a
-	  substantial difference to the results is that by default TRAMO
-	  performs a prior adjustment for outliers while X-12-ARIMA does
-	  not.
+	  Se la serie in ingresso non possiede una componente
+	  stagionale identificabile, la funzione fallisce. Si noti che
+	  sia TRAMO/SEATS sia X-12-ARIMA hanno numerose opzioni;
+	  <lit>deseas</lit> richiama i due programmi con tutte le
+	  opzioni ai valori predefiniti. In entrambi i programmi i
+	  fattori stagionali sono calcolati sulla base di un modello
+	  ARIMA selezionato automaticamente. Una differenza tra i due
+	  programmi, che a volte produce differenze sostanziali nei
+	  risultati, è che per impostazione predefinita TRAMO compie
+	  un aggiustamento preventivo per gli outlier, al contrario di
+	  X-12-ARIMA che non lo fa.
 	</para>
       </description>
     </function>
@@ -1888,10 +1899,11 @@
       </fnargs>
       <description>
 	<para>
-	  Computes first differences.  If <argname>y</argname> is a series, or
-	  a list of series, starting values are set to <lit>NA</lit>.  If
-	  <argname>y</argname> is a matrix, differencing is done by columns
-	  and starting values are set to 0.
+	  Calcola le differenze prime. Se <argname>y</argname> è una
+	  serie, o una lista di serie, i valori iniziali restituiti
+	  sono <lit>NA</lit>. Se <argname>y</argname> è una matrice,
+	  le differenze prime sono calcolate per colonna e i valori
+	  iniziali restituiti sono 0.
 	</para>
 	<para>
 	  <seelist>
@@ -1909,12 +1921,12 @@
       </fnargs>    
       <description>
 	<para context="notex">
-	  Returns the digamma (or Psi) function
-	  of <argname>x</argname>, that is the derivative of the log
-	  of the Gamma function.
+	  Restituisce la funzione digamma (o Psi) di
+	  <argname>x</argname>, cioè la derivata del logaritmo della
+	  funzione Gamma.
 	</para>
 	<para context="tex">
-	  Returns the digamma (or Psi) function of $x$, that is 
+	  Restituisce la funzione digamma (o Psi) di $x$, cioè
 	  $\frac{\mathrm{d} \Gamma(x)}{\mathrm{d} x}$.
 	</para>
       </description>
@@ -1959,26 +1971,32 @@
       </fnargs>
       <description>
 	<para>
-	  The argument <argname>x</argname> should be a discrete series. This
-	  function creates a set of dummy variables coding for the distinct
-	  values in the series.  By default the smallest value is taken as the
-	  omitted category and is not explicitly represented.
+	  L'argomento <argname>x</argname> deve essere una serie
+	  discreta. Questa funzione crea un insieme di variabili dummy
+	  (o binarie) che codificano i valori distinti della
+	  serie. Per impostazione predefinita, il valore più piccolo
+	  della serie originale è preso come categoria di riferimento
+	  e, per tale valore, non viene restituita alcuna dummy.
 	</para>
 	<para>
-	  The optional second argument represents the value of
-	  <argname>x</argname> which should be treated as the omitted
-	  category. The effect when a single argument is given is equivalent
-	  to <lit>dummify(x, min(x))</lit>.  To produce a full set of dummies,
-	  with no omitted category, use <lit>dummify(x, NA)</lit>.
+	  Il secondo argomento, opzionale, rappresenta il valore di
+	  <argname>x</argname> che deve essere assunto come categoria
+	  di riferimento, e quindi da omettere. L'effetto che si
+	  ottiene inserendo un solo argomento e tralasciando quello
+	  opzionale è equivalente a <lit>dummify(x, min(x))</lit>. Al
+	  fine di generare l'insieme completo delle dummy, non
+	  omettendo alcuna categoria, è possibile utilizzare il
+	  comando <lit>dummify(x, NA)</lit>.
 	</para>
 	<para> 
-	  The generated variables are automatically named according to
-	  the template
-	  <lit>D</lit><repl>varname</repl><lit>_</lit><repl>i</repl> where
-	  <repl>varname</repl> is the name of the original series and
-	  <repl>i</repl> is a 1-based index.  The original portion of the name
-	  is truncated if necessary, and may be adjusted in case of
-	  non-uniqueness in the set of names thus constructed. 
+	  Le variabili generate sono nominate in modo automatico
+	  secondo lo schema
+	  <lit>D</lit><repl>varname</repl><lit>_</lit><repl>i</repl>,
+	  dove <repl>varname</repl> è il nome della serie originale e
+	  <repl>i</repl> un indice in cui il valore iniziale è 1
+	  (<quote>1-based index</quote>). Il nome originale della
+	  serie è troncato se necessario e può essere modificato in
+	  caso di non unicità nell'insieme dei nomi così generato.
 	</para>
       </description>
     </function>
@@ -1990,51 +2008,55 @@
       </fnargs>
       <description>
 	<para>
-	  Computes the eigenvalues, and optionally the right eigenvectors, of
-	  the <by r="n" c="n"/> matrix <argname>A</argname>.  If all the
-	  eigenvalues are real, an <by r="n" c="1"/> matrix is returned;
-	  otherwise, the result is an <by r="n" c="2"/> matrix, the first
-	  column holding the real components and the second column the
-	  imaginary components.
+	  Calcola gli autovalori, e, se richiesto, gli autovettori
+	  destri della matrice <by r="n" c="n"/>
+	  <argname>A</argname>. Se tutti gli autovalori sono reali, la
+	  funzione restituisce una matrice <by r="n" c="1"/>; in caso
+	  contrario, il risultato è una matrice <by r="n" c="2"/>,
+	  dove la prima colonna contiene le parti reali degli
+	  autovalori, mentre la seconda le corrispondenti parti
+	  immaginarie.
 	</para>
 	<para>
-	  The second argument must be either the name of an existing
-	  matrix preceded by <lit>&amp;</lit> (to indicate the
-	  <quote>address</quote> of the matrix in question), in which case
-	  an auxiliary result is written to that matrix, or the keyword
-	  <lit>null</lit>, in which case the auxiliary result is not
-	  produced.
+	  Il secondo argomento può essere il nome di una matrice
+	  esistente preceduto da <lit>&amp;</lit> (per indicare
+	  l'indirizzo della matrice in questione), e in tal caso gli
+	  autovettori destri vengono scritti in questa matrice, oppure
+	  la parola chiave <lit>null</lit>, e in tal caso gli
+	  autovettori non vengono calcolati.
 	</para>
 	<para>
-	  If a non-null second argument is given, the specified matrix
-	  will be over-written with the auxiliary result.  (It is not
-	  required that the existing matrix be of the right dimensions to
-	  receive the result.) It will be organized as follows:
+	  Quando il secondo argomento è diverso da <lit>null</lit>, la
+	  matrice stessa è sovrascritta (non è necessario abbia la
+	  dimensione giusta per ricevere il risultato). La matrice
+	  risultante è organizzata come segue:
 	</para>
 	<ilist>
 	  <li>
 	    <para>
-	      If the <math>i</math>-th eigenvalue is real, the
-	      <math>i</math>-th column of <math>U</math> will contain the
-	      corresponding eigenvector;
+	      Se l'<math>i</math>-esimo autovalore è reale,
+	      l'<math>i</math>-esima colonna di <math>U</math>
+	      conterrà l'autovettore corrispondente;
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      If the <math>i</math>-th eigenvalue is complex, the
-	      <math>i</math>-th column of <argname>U</argname> will
-	      contain the real part of the corresponding eigenvector and
-	      the next column the imaginary part. The eigenvector for the
-	      conjugate eigenvalue is the conjugate of the eigenvector.
+	      Se l'<math>i</math>-esimo autovalore è complesso,
+	      l'<math>i</math>-esima colonna di <argname>U</argname>
+	      conterrà la parte reale dell'autovettore corrispondente
+	      e la colonna successiva la parte
+	      immaginaria. L'autovettore associato all'autovalore
+	      coniugato è il coniugato dell'autovettore.
 	    </para>
 	  </li>
 	</ilist>
 	<para>
-	  In other words, the eigenvectors are stored in the same order as
-	  the eigenvalues, but the real eigenvectors occupy one column,
-	  whereas complex eigenvectors take two (the real part comes
-	  first); the total number of columns is still <math>n</math>,
-	  because the conjugate eigenvector is skipped.
+	  In altre parole, gli autovettori compaiono nello stesso
+	  ordine degli autovalori, ma gli autovettori reali occupano
+	  una colonna, mentre quelli complessi ne occupano due (la
+	  parte reale è la prima); il numero totale di colonne è
+	  comunque <math>n</math>, perché l'autovettore coniugato è
+	  tralasciato.
 	</para>
 	<para>
 	  <seelist>
@@ -2053,19 +2075,20 @@
       </fnargs>
       <description>
 	<para>
-	  Computes the eigenvalues, and optionally the right eigenvectors, of
-	  the <by r="n" c="n"/> symmetrix matrix <argname>A</argname>; the
-	  second argument must be either the name of an existing matrix
-	  preceded by <lit>&amp;</lit> (to indicate the <quote>address</quote>
-	  of the matrix in question), in which case an auxiliary result is
-	  written to that matrix, or the keyword <lit>null</lit>, in which
-	  case the auxiliary result is not produced.
+	  Calcola gli autovalori, e, laddove richiesto, gli
+	  autovettori destri, della matrice simmetrica <by r="n"
+	  c="n"/> <argname>A</argname>; il secondo argomento deve
+	  essere o il nome di una matrice esistente, preceduto da
+	  <lit>&amp;</lit> (che indica l'indirizzo della matrice in
+	  questione), e in tal caso gli autovettori vengono salvati in
+	  tale matrice; o la parola chiave <lit>null</lit>, e in tal
+	  caso gli autovettori non vengono calcolati.
 	</para>
 	<para>
-	  If the second argument is not <lit>null</lit>, the specified
-	  matrix will be over-written with the auxiliary result.  (It is
-	  not required that the existing matrix be of the right dimensions
-	  to receive the result.)
+	 Se il secondo argomento non è <lit>null</lit>, la matrice
+	 specificata è sovrascritta inserendo gli autovettori destri
+	 calcolati (non è necessario che la matrice sia già della
+	 dimensione corretta per ricevere il risultato).
 	</para>
 	<para>
 	  <seelist>
@@ -2086,29 +2109,30 @@
       </fnargs>
       <description>
 	<para>
-	  Solves the generalized eigenvalue problem |<math>A</math>
-	  &minus; &lgr;<math>B</math>| = 0, where both <math>A</math>
-	  and <math>B</math> are symmetric and <math>B</math> is
-	  positive definite. The eigenvalues are returned directly,
-	  arranged in ascending order. If the optional third argument
-	  is given it should be the name of an existing matrix
-	  preceded by <lit>&amp;</lit>; in that case the generalized
-	  eigenvectors are written to the named matrix.
+	  Risolve il problema degli autovalori generalizzati
+	  |<math>A</math> &minus; &lgr;<math>B</math>| = 0, dove sia
+	  <math>A</math> sia <math>B</math> sono matrici simmetriche e
+	  <math>B</math> è definita positiva. Gli autovalori vengono
+	  restituiti direttamente, ordinati in senso crescente. Il
+	  terzo argomento opzionale deve essere il nome di una matrice
+	  esistente preceduto da <lit>&amp;</lit>. In tal caso, la
+	  funzione calcola anche gli autovettori generalizzati, che
+	  vengono salvati nella suddetta matrice.
 	</para>
       </description>
     </function>
 
     <function name="epochday" section="calendar" output="scalar-or-series">
       <fnargs>
-	<fnarg type="scalar">year</fnarg>
-	<fnarg type="scalar">month</fnarg>
-	<fnarg type="scalar">day</fnarg>
+	<fnarg type="scalar">anno</fnarg>
+	<fnarg type="scalar">mese</fnarg>
+	<fnarg type="scalar">giorno</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the number of the day in the current epoch specified by
-	  year, month and day (which equals 1 for the first of January in
-	  the year 1 AD).
+	  Ha come argomenti l'anno, il mese e il giorno e restituisce
+	  il numero di giorni nell'epoca corrente (che è uguale ad 1
+	  per il 1 gennaio dell'anno 1 d.C.).
 	</para>
       </description>
     </function>
@@ -2119,8 +2143,8 @@
       </fnargs>
       <description>
 	<para>
-	  Retrieves the gretl error message associated with
-	  <argname>errno</argname>. See also <fncref
+	  Recupera il messaggio di errore di gretl associato a
+	  <argname>errno</argname>. Si veda anche <fncref
 	  targ="$error"/>.
 	</para>
       </description>
@@ -2132,8 +2156,9 @@
       </fnargs>
       <description>
 	<para>
-	  Exponential. Note: in case of matrices, the function acts element
-	  by element. For the matrix exponential function, see <fncref
+	  Esponenziale. Si noti che, in caso di matrici, la funzione è
+	  calcolata sui singoli elementi della matrice. Per il calcolo
+	  dell'esponenziale di una matrice, si veda <fncref
 	  targ="mexp"/>.
 	</para>
       </description>
@@ -2147,30 +2172,31 @@
       </fnargs>
       <description>
 	<para>
-	  Produces a column vector holding several statistics which may be
-	  used for evaluating the series <argname>f</argname> as a
-	  forecast of the series <argname>y</argname> over the current
-	  sample range. Two vectors of the same length may be given in
-	  place of two series arguments.
+	  Restituisce un vettore colonna contenente diverse
+	  statistiche utili per valutare la serie <argname>f</argname>
+	  come previsione della serie <argname>y</argname> nel
+	  campione corrente. Al posto delle due serie, la funzione
+	  accetta come argomenti anche due vettori della stessa
+	  lunghezza.
 	</para>
 	<para>
-	  The layout of the returned vector is as follows:
+	  La struttura del vettore restituito è la seguente:
 	</para>
 	<code>
-	  1  Mean Error (ME)
-	  2  Mean Squared Error (MSE)
-	  3  Mean Absolute Error (MAE)
-	  4  Mean Percentage Error (MPE)
-	  5  Mean Absolute Percentage Error (MAPE)
-	  6  Theil's U 
-	  7  Bias proportion, UM
-	  8  Regression proportion, UR
-	  9  Disturbance proportion, UD
+	  1  Errore Medio (Mean Error, ME)
+	  2  Errore Quadratico Medio (Mean Squared Error, MSE)
+	  3  Errore Medio Assoluto (Mean Absolute Error, MAE)
+	  4  Errore Medio Percentuale (Mean Percentage Error, MPE)
+	  5  Errore Medio Assoluto Percentuale (Mean Absolute Percentage Error, MAPE)
+	  6  Coefficiente U di Theil (Theil's U) 
+	  7  Proporzione della distorsione (Bias proportion, UM)
+	  8  Proporzione della regressione (Regression proportion, UR)
+	  9  Proporzione del disturbo (Disturbance proportion, UD)
 	</code>
 	<para>
-	  For details on the calculation of these statistics, and the
-	  interpretation of the <math>U</math> values, please see 
-	  <guideref targ="chap-forecast"/>.
+	  Per maggiori dettagli sul calcolo di queste statistiche e
+	  l'interpretazione dei valori del coefficiente
+	  <math>U</math>, si veda <guideref targ="chap-forecast"/>.
 	</para>
       </description>
     </function>
@@ -5893,7 +5919,7 @@
 	  <argname>a</argname> come primo elemento e
 	  <argname>b</argname> come ultimo. Se <argname>a</argname> è
 	  maggiore di <argname>b</argname>, la sequenza sarà
-	  decrescente. L'eventale parte non intera viene ignorata per
+	  decrescente. L'eventuale parte non intera viene ignorata per
 	  entrambi gli argomenti.
 	</para>
 	<para>
@@ -6772,7 +6798,8 @@
       </fnargs>     
       <description>
 	<para>
-	  Stacks the columns of <argname>X</argname> as a column vector.
+	  Restituisce le colonne di <argname>X</argname> una sotto
+	  l'altra in un vettore colonna.
 	  <seelist>
 	    <fncref targ="mshape"/>
 	    <fncref targ="unvech"/>
@@ -6788,10 +6815,11 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns in a column vector the elements of <argname>A</argname>
-	  on and above the diagonal. Typically, this function is used on
-	  symmetric matrices; in this case, it can be undone by the
-	  function <fncref targ="unvech"/>. 
+	  Restituisce, sotto forma di vettore colonna, gli elementi di
+	  <argname>A</argname> sulla diagonale e al di sopra di
+	  essa. L'uso tipico di questa funzione è con matrici
+	  simmetriche, nel qual caso la sua funzione inversa è <fncref
+	  targ="unvech"/>.
 	  <seelist> 
 	    <fncref targ="vec"/>
 	  </seelist>
@@ -6807,9 +6835,9 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns the day of the week (Sunday = 0, Monday = 1, etc.) for the
-	  date specified by the three arguments, or <lit>NA</lit> if the date
-	  is invalid.
+	  Fornisce il giorno della settimana (Domenica = 0, Lunedì =
+	  1, ecc.) corrispondente alla data specificata dai tre
+	  argomenti, o <lit>NA</lit> se la data non è valida.
 	</para>
       </description>
     </function>
@@ -6821,14 +6849,15 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns a series <math>y</math> such that <math>y</math><sub>t</sub>
-	  is the weighted mean of the values of the variables in list
-	  <argname>Y</argname> at observation <math>t</math>, the respective
-	  weights given by the values of the variables in list
-	  <argname>W</argname> at <math>t</math>.  The weights can therefore
-	  be time-varying. The lists <argname>Y</argname> and
-	  <argname>W</argname> must be of the same length and the weights must
-	  be non-negative.
+	  Restituisce una serie <math>y</math> tale che
+	  <math>y</math><sub>t</sub> sia la media ponderata dei valori
+	  delle serie nella lista <argname>Y</argname>
+	  all'oosservazione <math>t</math>; i rispettivi pesi devono
+	  essere contenuti nella lista <argname>W</argname>, e quindi
+	  possono essere variabili nel tempo. Le due liste
+	  <argname>Y</argname> e <argname>W</argname> devono avere lo
+	  stesso numero di elementi ed i pesi devono essere
+	  non-negativi.
 	</para>
 	<para>
 	  <seelist> 
@@ -6846,14 +6875,15 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns a series <math>y</math> such that <math>y</math><sub>t</sub>
-	  is the weighted sample standard deviation of the values of the
-	  variables in list <argname>Y</argname> at observation
-	  <math>t</math>, the respective weights given by the values of the
-	  variables in list <argname>W</argname> at <math>t</math>.  The
-	  weights can therefore be time-varying. The lists
-	  <argname>Y</argname> and <argname>W</argname> must be of the same
-	  length and the weights must be non-negative.
+	  Restituisce una serie <math>y</math> tale che
+	  <math>y</math><sub>t</sub> sia l'errore quadratico medio
+	  ponderato dei valori delle serie nella lista
+	  <argname>Y</argname> all'oosservazione <math>t</math>; i
+	  rispettivi pesi devono essere contenuti nella lista
+	  <argname>W</argname>, e quindi possono essere variabili nel
+	  tempo. Le due liste <argname>Y</argname> e
+	  <argname>W</argname> devono avere lo stesso numero di
+	  elementi ed i pesi devono essere non-negativi.
 	</para>
 	<para>
 	  <seelist> 
@@ -6871,21 +6901,24 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns a series <math>y</math> such that <math>y</math><sub>t</sub>
-	  is the weighted sample variance of the values of the
-	  variables in list <argname>X</argname> at observation
-	  <math>t</math>, the respective weights given by the values of the
-	  variables in list <argname>W</argname> at <math>t</math>.  The
-	  weights can therefore be time-varying. The lists
-	  <argname>Y</argname> and <argname>W</argname> must be of the same
-	  length and the weights must be non-negative.
+	  Restituisce una serie <math>y</math> tale che
+	  <math>y</math><sub>t</sub> sia la varianza campionaria
+	  ponderata dei valori delle serie nella lista
+	  <argname>Y</argname> all'oosservazione <math>t</math>; i
+	  rispettivi pesi devono essere contenuti nella lista
+	  <argname>W</argname>, e quindi possono essere variabili nel
+	  tempo. Le due liste <argname>Y</argname> e
+	  <argname>W</argname> devono avere lo stesso numero di
+	  elementi ed i pesi devono essere non-negativi.
 	</para>
 	<para context="tex">
-	  The weighted sample variance is computed as
-	  \[ s^2_w = \frac{n'}{n'-1} \,
-	  \frac{\sum_{i=1}^n w_i(x_i - \bar{x}_w)^2}{\sum_{i=1}^n w_i} \]
-	  where $n'$ is the number of non-zero weights and $\bar{x}_w$ is
-	  the weighted mean.
+	  La varianza ponderata è calcolata come 
+	  \[ 
+	  s^2_w = \frac{n'}{n'-1} \, 
+	  \frac{\sum_{i=1}^n w_i(x_i - \bar{x}_w)^2}{\sum_{i=1}^n w_i} 
+	  \] 
+	  dove $n'$ è il numero di pesi non nulli e $\bar{x}_w$ è la
+	  media ponderata.
 	</para>
 	<para>
 	  <seelist> 
@@ -6903,9 +6936,9 @@
       </fnargs>     
       <description>
 	<para>
-	  Returns the greater of <argname>x</argname> and
-	  <argname>y</argname>, or <lit>NA</lit> if either value
-	  is missing.  
+	  Fornisce il massimo di <argname>x</argname> e
+	  <argname>y</argname>, o <lit>NA</lit> se uno dei due valori 
+	  è mancante.  
 	</para>
 	<para>
 	  <seelist> 
@@ -6924,9 +6957,9 @@
       </fnargs>     
       <description>
 	<para>
-	  Returns the lesser of <argname>x</argname> and
-	  <argname>y</argname>, or <lit>NA</lit> if either value
-	  is missing.
+	  Fornisce il minimo di <argname>x</argname> e
+	  <argname>y</argname>, o <lit>NA</lit> se uno dei due valori
+      è mancante.
 	</para>
 	<para>
 	  <seelist> 
@@ -6944,14 +6977,15 @@
       </fnargs>     
       <description>
 	<para>
-	  Returns a list that references the squares and cross-products
-	  of the variables in list <argname>L</argname>.  Squares are
-	  named on the pattern <lit>sq_</lit><repl>varname</repl> and
-	  cross-products on the pattern 
-	  <repl>var1</repl><lit>_</lit><repl>var2</repl>.  The input
-	  variable names are truncated if need be, and the output
-	  names may be adjusted in case of duplication
-	  of names in the returned list.
+          Fornisce una lista che contiene i quadrati e ai prodotti
+          incrociati delle variabili elencate in <argname>L</argname>.
+          Ai quadrati viene assegnato il nome secondo lo schema
+          <lit>sq_</lit><repl>varname</repl>, mentre per i prodotti
+          incrociati si utilizza
+          <repl>var1</repl><lit>_</lit><repl>var2</repl>.  I nomi
+          delle variabili in input sono troncati se necessario, e il
+          nome delle variabili in output possono essere cambiati in
+          caso di duplicazione dei nomi nella lista fornita.
 	</para>
       </description>
     </function>
@@ -6962,8 +6996,9 @@
       </fnargs>     
       <description>
 	<para>
-	  Converts zeros to <lit>NA</lit>s. If <argname>x</argname> is a
-	  series, the conversion is done element by element.
+	  Converte gli zeri in <lit>NA</lit>s. Se <argname>x</argname>
+	  è una variabile, la conversione viene fatta elemento per
+	  elemento.
 	  <seelist>
 	    <fncref targ="missing"/>
 	    <fncref targ="misszero"/>
@@ -6980,8 +7015,8 @@
       </fnargs> 
       <description>
 	<para>
-	  Outputs a zero matrix with <math>r</math> rows and
-	  <math>c</math> columns. 
+	  Produce una matrice di zeri con <math>r</math> righe e 
+	  <math>c</math> colonne. 
 	  <seelist> 
 	    <fncref targ="ones"/>
 	    <fncref targ="seq"/>
