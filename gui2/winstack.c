@@ -265,8 +265,8 @@ static gint window_key_release (GtkWidget *w, GdkEventKey *event,
 				gpointer data)
 {
 #ifdef MAC_NATIVE
-    if (event->keyval == GDK_Control_L || 
-	event->keyval == GDK_Control_R) {
+    if (event->keyval == GDK_Meta_L || 
+	event->keyval == GDK_Meta_R) {
 	return select_other_window(NULL, 0);
     }
 #else

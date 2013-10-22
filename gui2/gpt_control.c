@@ -4634,8 +4634,8 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
     /* Parse the gnuplot source file.  If we hit errors here,
        flag this, but it's not necessarily a show-stopper in
-       terms of simply displaying the graph. Unless we get
-       E_FOPEN, which really is a show-stopper.
+       terms of simply displaying the graph -- unless we get
+       E_FOPEN.
     */
     plot->err = read_plotspec_from_file(plot->spec, &plot->pd);
 
@@ -4709,15 +4709,13 @@ static int gnuplot_show_png (const char *fname, const char *name,
     }
 
     gtk_window_set_title(GTK_WINDOW(plot->shell), title);
-    g_free(title);
-
     gtk_window_set_resizable(GTK_WINDOW(plot->shell), FALSE);
+    g_signal_connect(G_OBJECT(plot->shell), "destroy",
+		     G_CALLBACK(destroy_png_plot), plot);
+    g_free(title);
 
     vbox = gtk_vbox_new(FALSE, 2);
     gtk_container_add(GTK_CONTAINER(plot->shell), vbox);
-
-    g_signal_connect(G_OBJECT(plot->shell), "destroy",
-		     G_CALLBACK(destroy_png_plot), plot);
 
     /* box to hold canvas */
     canvas_hbox = gtk_hbox_new(FALSE, 1);
@@ -4763,17 +4761,11 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
     /* the statusbar */
     plot->statusbar = gtk_statusbar_new();
-#if 0 /* redundant, wrong? */
-    gtk_widget_set_size_request(plot->statusbar, 1, -1);
-#endif
-
 #if GTK_MAJOR_VERSION < 3
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(plot->statusbar), FALSE);
 #endif
-
     plot->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(plot->statusbar),
 					     "plot_message");
-
     if (!plot->err) {
 	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar),
 			   plot->cid, _(" Right-click on graph for menu"));
@@ -4793,7 +4785,6 @@ static int gnuplot_show_png (const char *fname, const char *name,
     }
 
     gtk_box_pack_start(GTK_BOX(status_hbox), plot->statusbar, TRUE, TRUE, 0);
-
     add_graph_toolbar(status_hbox, plot);
 
     /* show stuff */
