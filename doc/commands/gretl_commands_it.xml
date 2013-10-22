@@ -13,8 +13,8 @@
       </arguments>
       <options>
 	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostra la matrice di covarianza</effect>
+	  <flag>--lm</flag>
+	  <effect>effettua un test LM (solo OLS)</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
@@ -24,10 +24,10 @@
  	  <flag>--silent</flag>
  	  <effect>non mostra nulla</effect>
  	</option>
-        <option>
-          <flag>--inst</flag>
-          <effect>aggiunge come strumento, solo per TSLS</effect>
-        </option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostra la matrice di covarianza</effect>
+	</option>
         <option>
           <flag>--both</flag>
           <effect>aggiunge come regressore e come strumento, solo per TSLS</effect>
@@ -183,9 +183,9 @@
        </para>
        
       <para context="cli">
-	The options shown above and the discussion which follows pertain
-	to the use of the <lit>adf</lit> command with regular time series
-	data. For use of this command with panel data please see below.
+	Le opzioni precedenti e la discussione seguente si riferiscono all'uso del comando 
+	<lit>adf</lit> con serie storiche regolari. La discussione dell'uso con
+	dati panel è esposta più avanti.
       </para>
 
       <para context="cli">
@@ -214,10 +214,9 @@
         scritto come <equation status="display"
         tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
         ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)"
-	graphic="adf1"/> Under the null hypothesis of a unit root the
-	coefficient on lagged <math>y</math> equals zero; under the
-	alternative that <math>y</math> is stationary this coefficient is
-	negative.
+	graphic="adf1"/> Sotto l'ipotesi nulla di radice unitaria il coefficiente 
+	della <math>y</math> ritardata è nullo; sotto l'alternativa che 
+	<math>y</math> sia stazionaria il coefficiente è negativo.
       </para>
 
       <para context="cli">
@@ -228,19 +227,20 @@
         secondo la raccomandazione di <cite key="schwert89">Schwert
         (1989)</cite>, ossia 12(<math>T</math>/100)<sup>0.25</sup>,
         dove <math>T</math> è l'ampiezza campionaria. In tutti e due i
-        casi, comunque, se si usa l'opzione <lit>--test-down</lit>,
+        casi, comunque, se si usa l'opzione <opt>--test-down</opt>,
         <math>k</math> viene interpretato come ritardo massimo, mentre
         l'ordine di ritardo effettivamente usato viene ottenuto
-        testando "all'indietro".  The criterion for testing down can
-        be selected using the option parameter, which must be one of
-        <lit>MAIC</lit>, <lit>MBIC</lit> or <lit>tstat</lit>. The MAIC
-        and MBIC methods are as described in <cite
-        key="ng-perron01">Ng and Perron (2001)</cite>; the lag order
-        is chosen so as to optimize an appropriately modified version
-        of the Akaike Information Criterion or the Schwartz Bayesian
-        Criterion, respectively.  The MAIC method is the default when
-        no method is explicitly specified. The tstat method is a
-        follows:
+        testando "all'indietro".  Il criterio per effettuare il test
+        all'indietro può essere selezionato usando il parametro
+        opzionale e deve essere uno fra <lit>MAIC</lit>,
+        <lit>MBIC</lit> o <lit>tstat</lit>.  I metodi MAIC e MBIC sono
+        descritti in <cite key="ng-perron01">Ng and Perron
+        (2001)</cite>; l'ordine dei ritardi viene scelto in modo da
+        ottimizzare rispettivamente una versione modificata del
+        Criterio di Informazione di Akaike o del Criterio Bayesiano di
+        Schwartz. Il metodo MAIC è quello applicato di default quando
+        non viene esplicitamente dichiarato un metodo. Il metodo tstat
+        è il seguente:
       </para>
 
       <para context="gui">
@@ -253,12 +253,13 @@
         ordine massimo, e l'ordine da usare effettivamente sarà
         ricavato applicando la seguente procedura di test
         "all'indietro", usando il criterio scelto tramite la tendina
-        associata. The modified AIC and modified BIC
-	methods are as described in <cite key="ng-perron01">Ng and
-	Perron (2001)</cite>; the lag order is chosen so as to
-	optimize an appropriately modified version of the Akaike
-	Information Criterion (AIC) or the Schwartz Bayesian Criterion
-	(BIC).  The <math>t</math>-statistic method is a follows:
+        associata. I metodi AIC e BIC modificati sono descritti in
+        <cite key="ng-perron01">Ng and Perron (2001)</cite>; l'ordine
+        dei ritardi viene scelto in modo da ottimizzare
+        rispettivamente una versione modificata del Criterio di
+        Informazione di Akaike o del Criterio Bayesiano di
+        Schwartz. Il metodo della statistica <math>t</math> è il
+        seguente:
       </para>
 
       <nlist>
@@ -281,9 +282,10 @@
         abbia un <emphasis>p</emphasis>-value asintotico a due code per la
         distribuzione normale pari a 0.10 o inferiore.
       </para> 
+
       <para context="cli">
-        L'opzione <lit>--gls</lit> può essere usata insieme a una
-        delle altre due opzioni <lit>--c</lit> e <lit>--ct</lit> (il
+        L'opzione <opt>--gls</opt> può essere usata insieme a una
+        delle altre due opzioni <opt>--c</opt> e <opt>--ct</opt> (il
         modello con costante o quello con costante e trend). L'effetto
         di questa opzione è di rimuovere la media o il trend della
         variabile da testare, usando la procedura GLS suggerita da
@@ -306,30 +308,31 @@
       <subhead context="cli">Panel data</subhead>
 
       <para context="cli">
-	When the <lit>adf</lit> command is used with panel data, to
-	produce a panel unit root test, the applicable options and the
-	results shown are somewhat different.
+	Quando il comando <lit>adf</lit> è usato con dati panel per calcolare 
+	un test panel di radici unitarie le opzioni applicabili sono leggermente
+	diverse.
+	      </para>
+      <para context="cli">
+	In primo luogo, mentre nel caso di serie storiche regolari è
+	possibile indicare un elenco di variabili da testare, con dati panel
+	ciascun comando può esaminare una sola variabile alla volta.
+	Secondo, le opzioni che governano l'inclusione di trend
+	deterministici diventano mutualmente esclusive: è necessario
+	scegliere fra il caso senza costante, quello con solo la costante,
+	e quello che la costante e il trend; il default è il secondo.
+	L'opzione <opt>--seasonals</opt>, inoltre, non è disponibile.
+	Terzo, l'opzione  <opt>--verbose</opt> ha un significato diverso:
+	produce un breve resoconto del test per ciascuna singola
+	serie storica (il default prevede di mostrare solo il risultato complessivo).
       </para>
       <para context="cli">
-	First, while you may give a list of variables for testing in
-	the regular time-series case, with panel data only one
-	variable may be tested per command. Second, the options
-	governing the inclusion of deterministic terms become mutually
-	exclusive: you must choose between no-constant, constant only,
-	and constant plus trend; the default is constant only. In
-	addition, the <opt>--seasonals</opt> option is not available.
-	Third, the <opt>--verbose</opt> option has a different meaning:
-	it produces a brief account of the test for each individual
-	time series (the default being to show only the overall
-	result).
-      </para>
-      <para context="cli">
-	The overall test (null hypothesis: the series in question has
-	a unit root for all the panel units) is calculated in one or
-	both of two ways: using the method of <cite key="IPS03">Im,
-	Pesaran and Shin (Journal of Econometrics, 2003)</cite> or that
-	of <cite key="choi01">Choi (Journal of International Money and
-	Finance, 2001)</cite>.
+	Il test complessivo (ipotesi nulla: la variabile in questione
+	ha una radice unitaria per tutte le unità panel) viene
+	calcolata in uno o in entrambi i modi disponibili: usando il
+	metodo di <cite key="IPS03">Im, Pesaran and Shin (Journal of
+	Econometrics, 2003)</cite> oppure quello di <cite
+	key="choi01">Choi (Journal of International Money and Finance,
+	2001)</cite>.
       </para>
 
     </description>
@@ -621,7 +624,7 @@
       <options>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>non stampa il modello stimato</effect>
+	  <effect>non mostra il modello stimato</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
@@ -747,11 +750,11 @@
 
     <description>
       <para>
-	This command is retained at present for backward
-	compatibility, but you are better off using the maximum
-	likelihood estimator offered by the <cmdref targ="garch"/>
-	command; for a plain ARCH model, set the first GARCH
-	parameter to 0.
+	Questo comando è attualmente mantenuto per ragioni di 
+	compatibilità con le versioni precedenti, ma è preferibile
+	usare lo stimatore di massima verosimiglianza disponibile
+	mediante il comando <cmdref targ="garch"/>; per un modello 
+	ARCH puro, fissate a 0 il primo parametro GARCH.
       </para>
       <para>
 	Stima il modello specificato tenendo conto della possibile
@@ -944,31 +947,31 @@
       </para>
 
       <para context="cli">
-	The option <opt>--lbfgs</opt> is specific to estimation using
-	native ARMA code and exact ML: it calls for use of the 
-	<quote>limited memory</quote> L-BFGS-B algorithm in place
-	of the regular BFGS maximizer.  This may help in some
-	instances where convergence is difficult to achieve.
+	L'opzione <opt>--lbfgs</opt> è riservata alla stima basata su codice 
+	ARMA nativo e MV esatta; quando viene indicata, la stima usa l'algoritmo 
+	L-BFGS a <quote>memoria limitata</quote> anziché l'ottimizzatore BFGS 
+	consueto. Questa variante può essere utile in alcune situazioni nelle quali 
+	la convergenza all'ottimo è problematica.
       </para>
 
       <para context="cli">
-	The option <opt>--y-diff-only</opt> is specific to estimation of
-	ARIMAX models (models with a non-zero order of integration and
-	including exogenous regressors), and applies only when gretl's native
-	exact ML is used. For such models the default behavior is to
-	difference both the dependent variable and the regressors, but when
-	this option is specified only the dependent variable is differenced,
-	the regressors remaining in level form.
+	L'opzione <opt>--y-diff-only</opt> è riservata alla stima di modelli
+	ARIMAX (modelli con ordine di integrazione non nullo e che includono
+	regressori esogeni), e si applica solo con la stima di MV esatta nativa 
+	di gretl. Per questi modelli il comportamento di default consiste nel
+	differenziare sia la variabile dipendente che i regressori, ma quando
+	viene indicata questa opzione viene differenziata solo la variabile
+	dipendente, mentre i regressori restano nei livelli.
       </para>
 
       <para context="cli">
-	The option <opt>--save-ehat</opt> is applicable only when
-	using native exact ML estimation. The effect is to make
-	available a vector holding the optimal estimate as of period
-	<math>t</math> of the <math>t</math>-dated disturbance or
-	innovation: this can be retrieved via the accessor <lit>$ehat</lit>.
-	These values differ from the residual series (<lit>$uhat</lit>),
-	which holds the one-step ahead forecast errors.
+	L'opzione <opt>--save-ehat</opt> è applicabile solo alla stima nativa di MV
+	esatta. Il suo effetto è quello di rendere disponibile un vettore
+	contenente la stima ottimale alla data <math>t</math> del disturbo
+	o innovazione alla stessa data: questo valore può essere recuperato
+	grazie all'accessore <lit>$ehat</lit>. Questi valori sono diversi
+	dalla variabile dei residui (<lit>$uhat</lit>) che contiene gli errori 
+	di previsione un passo in avanti.
       </para>
 
       <para>
@@ -988,47 +991,45 @@
       </para> 
 
       <para context="tex">
-	The AR and MA roots shown in connection with ARMA estimation
-	are based on the following representation of an ARMA($p,q$)
-	process:
+	Le radici AR e MA mostrate in occasione della stima ARMA sono
+	basate sulla seguente rappresentazione di un processo ARMA($p,q$):
 	\[
 	(1-\phi_1 L - \phi_2 L^2 - \cdots - \phi_p L^p)Y =
           c + (1 + \theta_1 L + \theta_2 L^2 + \cdots +
          \theta_q L^q)\varepsilon_t
         \]
-        The AR roots are therefore the solutions to
+	Di conseguenza, le radici AR sono le soluzioni di
         \[
          1 - \phi_1 z - \phi_2 z^2 - \cdots - \phi_p L^p = 0
         \]
-        and stability requires that these roots lie outside the
-	unit circle.
+	e la stazionarietà del processo richiede che queste radici si 
+	trovino al di fuori del cerchio di raggio unitario.	
       </para>
 
       <para context="tex">
-	The <quote>frequency</quote> figure printed in connection with
-	the AR and MA roots is the $\lambda$ value that solves 
-	$z=re^{i2\pi\lambda}$, where $z$ is the root in question
-	and $r$ is its modulus.
+	Il valore di <quote>frequency</quote> mostrato assieme alle radici 
+	AR e MA è il valore di $\lambda$ che risolve 
+	$z=re^{i2\pi\lambda}$, dove $z$ è la radice in questione e $r$ è
+	il suo modulo.
       </para>
 
       <para context="notex">
-	The AR and MA roots shown in connection with ARMA estimation
-	are based on the following representation of an ARMA(p, q)
-	process:
+	Le radici AR e MA mostrate in occasione delkla stima ARMA sono
+	basate sulla seguente rappresentazione	di un processo ARMA(p,q):
       </para>
       <mono context="notex">
 	(1 - a_1*L - a_2*L^2 - ... - a_p*L^p)Y =
           c + (1 + b_1*L + b_2*L^2 + ... + b_q*L^q) e_t
       </mono>
       <para context="notex">
-        The AR roots are therefore the solutions to
+	Di conseguenza le radici AR sono la soluzione di
       </para>
       <mono context="notex">
          1 - a_1*z - a_2*z^2 - ... - a_p*L^p = 0
       </mono>
       <para context="notex">
-        and stability requires that these roots lie outside the
-	unit circle.
+	e la stazionarietà del processo richiede che queste radici si 
+	trovino al di fuori del cerchio di raggio unitario.	
       </para>
 
       <para context="notex">
@@ -1086,7 +1087,7 @@
         </option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>standard errors robusti</effect>
+	  <effect>errori standard robusti</effect>
         </option>
 	<option>
 	  <flag>--cluster</flag>
@@ -1298,39 +1299,37 @@
       </para>
 
       <para context="cli">
-	If the current data set is a panel, and just one variable is
-	specified, the <opt>panel</opt> option produces a series of
-	side-by-side boxplots, one for each panel <quote>unit</quote>
-	or group.
+	Se il dataset corrente è un panel ed è stata specificata una sola 
+	variabile, l'opzione <opt>panel</opt> produce una serie di grafici
+	boxplot affiancati, uno per ogni <quote>unità</quote> o gruppo panel.
       </para>
 
       <para context="cli">
-	Generally, the argument <repl>varlist</repl> is required, and
-	refers to one or more series in the current dataset (given
-	either by name or ID number).  But if a named matrix is
-	supplied via the <opt>--matrix</opt> option this argument
-	becomes optional: by default a plot is drawn for each
-	column of the specified matrix.
+	In generale l'argomento <repl>varlist</repl> è necessario e deve
+	indicare una o più variabili nel dataset corrente (usando il nome
+	o il numero di ID). Se viene fornita una matrice usando l'opzione 
+	<opt>--matrix</opt>, tuttavia, questo argomento diventa opzionale: di
+	default viene mostrato un grafico per ciascuna delle colonne della
+	matrice specificata.
       </para>
 
       <para context="cli">
-	Gretl's boxplots are generated using
-	<program>gnuplot</program>, and it is possible to specify
-	the plot more fully by appending additional gnuplot commands,
-	enclosed in braces. For details, please see the help for
-	the <cmdref targ="gnuplot"/> command.
+	Il grafici boxplot di gretl sono generati usando <program>gnuplot</program>,
+	ed è possibile arricchire il grafico specificando altri comandi
+	gnuplot, includendoli fra parentesi graffa. Per maggiori dettagli
+	consultate per favore l'help del comando <cmdref targ="gnuplot"/>.
       </para>
 
       <para context="cli">
-	In interactive mode the result is displayed immediately. In
-	batch mode the default behavior is that a gnuplot command file
-	is written in the user's working directory, with a name on the
-	pattern <filename>gpttmpN.plt</filename>, starting with N =
-	<lit>01</lit>. The actual plots may be generated later using
-	<program>gnuplot</program> (under MS Windows,
-	<program>wgnuplot</program>).  This behavior can be modified
-	by use of the <opt>--output=</opt><repl>filename</repl>
-	option. Per ulteriori dettagli, si veda il comando <cmdref
+	In modalità interattiva il risultato viene mostrato immediatamente.
+	In batch il comportamento di default di gretl è di scrivere nella
+	directory di lavoro dell'utente un file di comandi gnuplot chiamato
+	<filename>gpttmpN.plt</filename>, iniziando da N = <lit>01</lit>. 
+	I grafici veri e propri possono essere generati in seguito usando 
+	<program>gnuplot</program> (in MS Windows,
+	<program>wgnuplot</program>). Questo comportamento può essere modificato 
+	usando l'opzione <opt>--output=</opt><repl>filename</repl>. 
+	Per ulteriori dettagli, si veda il comando <cmdref
 	targ="gnuplot"/>.
       </para>
 
@@ -1699,7 +1698,7 @@
         </option>
         <option>
 	  <flag>--uc</flag>
-	  <effect>unrestricted constant</effect>
+	  <effect>costante non vincolata</effect>
         </option>
         <option>
 	  <flag>--crt</flag>
@@ -1715,11 +1714,11 @@
         </option>
         <option>
 	  <flag>--asy</flag>
-	  <effect>record asymptotic p-values</effect>
+	  <effect>registra i p-value asintotici</effect>
         </option>
         <option>
 	  <flag>--silent</flag>
-	  <effect>don't print anything</effect>
+	  <effect>non mostra nulla</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
@@ -2005,8 +2004,8 @@
         mancanti.
       </para>
       <para>
-	Le opzioni (mutualmente esclusive) <lit>--spearman</lit> e
-	<lit>--kendall</lit> producono rispettivamente, la correlazione di rango
+	Le opzioni (mutualmente esclusive) <opt>--spearman</opt> e
+	<opt>--kendall</opt> producono rispettivamente, la correlazione di rango
         di Spearman (rho) e la correlazione di rango di Kendall (tau), invece
         del solito coefficiente di Pearson. Quando si usa una di queste opzioni,
         la <repl>lista-variabili</repl> deve contenere solo due variabili.
@@ -2082,16 +2081,15 @@
       </para>
 
       <para>
-	By default, a plot of the correlogram is produced: a gnuplot
-	graph in interactive mode or an ASCII graphic in batch mode.
-	This can be adjusted via the <opt>plot</opt> option. The
-	acceptable parameters to this option are <lit>none</lit> (to
-	suppress the plot); <lit>ascii</lit> (to produce a text
-	graphic even when in interactive mode); <lit>display</lit> (to
-	produce a gnuplot graph even when in batch mode); or a file
-	name. The effect of providing a file name is as described for
-	the <opt>output</opt> option of the <cmdref targ="gnuplot"/>
-	command.
+	Di default viene mostrato un grafico del correlogramma: un grafico
+	gnuplot in modalità interattiva o un grafico ASCII in modalità batch.
+	Questo comportamento può essere modificato con l'opzione <opt>plot</opt>.
+	Per questa opzione i parametri accettabili sono <lit>none</lit> (per
+	eliminare il grafico); <lit>ascii</lit> (per produrre un grafico
+	in formato testo anche in modalità interattiva); <lit>display</lit> (per
+	produrre un grafico gnuplot anche in modalità batch); oppure il  
+	nome di un file. In quest'ultimo caso l'effetto è quello descritto
+	per l'opzione <opt>output</opt> del comando <cmdref targ="gnuplot"/>.
       </para>
 
       <para>
@@ -2247,7 +2245,7 @@
       <options>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't report results except on error</effect>
+	  <effect>non mostra i risultati tranne che in caso di errore</effect>
 	</option>
       </options>
     </usage>
@@ -2345,17 +2343,17 @@
         variabili dummy periodiche, sono riconosciute ed estese.
       </para>
       <para>
-	<lit>insobs</lit>: Must be followed by a positive integer no
-	greater than the current number of observations. Inserts a
-	single observation at the specified position. All subsequent
-	data are shifted by one place and the dataset is extended by
-	one observation. All variables apart from the constant are
-	given missing values at the new observation. This action is
-	not available for panel datasets.
+	<lit>insobs</lit>: Deve essere seguito da un intero positivo inferiore
+	o uguale al numero corrente  di osservazioni. Inserisce una singola
+	ossrevazione nella posizione specificata. Tutti i dati successivi sono
+	spostati di una posizione e il dataset è allungato di un'osservazione. 
+	In corrispondenza della nuova osservazione a tutte le variabili, 
+	a parte la costante, vengono assegnati valori mancanti. Questa azione non
+	è disponibile in dataset panel.
       </para>
       <para>
-	<lit>clear</lit>: No parameter required.  Clears out the current
-	data, returning gretl to its initial <quote>empty</quote> state.
+	<lit>clear</lit>: Non richiede parametri. Elimina il campione corrente e 
+	riporta gretl al suo stato iniziale senza dati.
       </para>      
        <para>
 	<lit>compact</lit>: deve essere seguito da un intero positivo che
@@ -2412,12 +2410,11 @@
         recuperato usando il comando <lit>smpl full</lit>.  
       </para>
       <para>
-	<lit>renumber</lit>: Requires the name of an existing series
-	followed by an integer between 1 and the number of series in the
-	dataset minus one. Moves the specified series to the specified
-	position in the dataset, renumbering the other series
-	accordingly. (Position 0 is occupied by the constant, which
-	cannot be moved.)
+	<lit>renumber</lit>: Richiede il nome di una variabile esistente seguito da
+	un intero compreso fra 1 e il numero delle variabili nel campione meno 1. Sposta
+	la serie specificata nel dataset nella posizione indicata, rinumerando le altre 
+	variabili di conseguenza. (La posizione 0 è occupata dalla costante che non può
+	essere spostata.)
       </para>
     </description>
 
@@ -2494,17 +2491,16 @@
 
     <description>
       <para>
-	This command is an all-purpose destructor for named variables
-	(whether series, scalars, matrices, strings or bundles). It
-	should be used with caution; no confirmation is asked.
+	Questo comando è uno strumento multi-uso per eliminare variabili con un nome
+	(serie, scalari, matrici, stringhe o bundle). Deve essere usato con
+	cautela: non viene chiesta alcuna conferma.
       </para>
       <para>
-	In the case of series, <repl>varname</repl> may take the form
-	of a named list, in which case all series in the list are
-	deleted, or it may take the form of an explicit list of series
-	given by name or ID number. Note that when you delete series
-	any series with higher ID numbers than those on the deletion
-	list will be re-numbered.
+	Nel caso di variabili, <repl>varname</repl> può essere il nome di una lista,
+	e in questo caso vengono eliminate tutte le variabili incluse in essa, oppure
+	può essere una lista esplicita di variabili indicate per nome o numero ID. 
+	Si noti che quando cancellate variabili, quelle con numeri ID maggiori di quelli
+	inclusi nella lista da cancellare saranno rinumerati.
       </para>
       <para>
        Se si usa l'opzione <lit>--db</lit>, il comando rimuove le variabili
@@ -2514,12 +2510,11 @@
        <cmdref targ="open"/>.
       </para>
       <para>
-	If the <opt>--type</opt> option is given it must be
-	accompanied by one of the following type-names:
-	<lit>matrix</lit>, <lit>bundle</lit>, <lit>string</lit>,
-	<lit>list</lit>, or <lit>scalar</lit>. The effect is to delete
-	all variables of the given type. In this case (only), no
-	<repl>varname</repl> argument should be given.
+	Se viene indicata l'opzione <opt>--type</opt> è necessario accompagnarla
+	con uno dei nomi di tipi seguenti: <lit>matrix</lit>, <lit>bundle</lit>, 
+	<lit>string</lit>, 	<lit>list</lit> o <lit>scalar</lit>. L'effetto 
+	è quello di cancellare tutte le variabili di un certo tipo. Solo in questo caso
+	non è necessario fornire l'argomento <repl>varname</repl>.
       </para>
     </description>
 
@@ -3215,7 +3210,7 @@
        </option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't print results</effect>
+	  <effect>non mostra i risultati</effect>
 	</option>
 	<option>
 	  <flag>--verbose</flag>
@@ -3349,15 +3344,14 @@
       scegliere diverse caratteristiche del file CSV.
 	</para>
       <para>
-	You also have the option of exporting data in the form of a
-	<quote>native</quote> gretl datafile, or (if the data are
-	suitable) exporting to a gretl database. See
-	<url>gretl.sourceforge.net/gretl_data.html</url> for an account of
-	gretl databases.
+	E' anche possibile esportare dati sotto forma di file di dati 
+	<quote>native</quote> di gretl, oppure (se i dati lo rendono possibile)
+	esportare un database di gretl. V. <url>gretl.sourceforge.net/gretl_data.html</url> 
+	per una discussione dei database di gretl.
       </para>
       <para>
-	You may also export data in a format suitable for use with
-	the following programs:
+	E' anche possibile esportare i dati in un formato pronto per essere usato
+	dai programmi seguenti:	
       </para>
       <ilist>
 	<li>
@@ -3375,11 +3369,11 @@
 	</li>
       </ilist>
       <para>
-	If you wish to export data by copying to the clipboard rather than
-	writing to a file on disk, select the series you want to copy in
-	the main window, right-click, and select <quote>Copy to
-	clibboard</quote>. (Only CSV format is supported in this
-	context.) 
+	Se desiderate esportare i dati copiandoli negli appunti invece di 
+	scriverli in un file di dati, selezionate le variabili che volete
+	copiare nella finestra principale, cliccate sul pulsante destro e
+	selezionate <quote>Copia negli appunti</quote>. 
+	(In questo contesto è supportato solo il formato CSV.)
       </para>
 
     </description>
@@ -3432,7 +3426,7 @@
         </option>
         <option>
 	  <flag>--no-stats</flag>
-	  <effect>don't print forecast statistics</effect>
+	  <effect>non mostra le statistiche di previsione</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
@@ -3529,23 +3523,22 @@
        </para>
  
       <para context="cli">
-	The <opt>--plot</opt> option (available only in the case of
-	single-equation estimation) calls for a plot file to be
-	produced, containing a graphical representation of the
-	forecast. The suffix of the <repl>filename</repl> argument to
-	this option controls the format of the plot: <lit>.eps</lit>
-	for EPS, <lit>.pdf</lit> for PDF, <lit>.png</lit> for PNG,
-	<lit>.plt</lit> for a gnuplot command file. The dummy filename
-	<lit>display</lit> can be used to force display of the plot in
-	a window. For example,
+	L'opzione <opt>--plot</opt> (disponibile solo nel caso della stima di un
+	modello uniequazionale) consente di ottenere un file con un grafico delle 
+	previsioni. L'estensione dell'argomento <repl>filename</repl> 
+	di questa opzione controlla il formato del grafico: <lit>.eps</lit>
+	per EPS, <lit>.pdf</lit> per PDF, <lit>.png</lit> per PNG,
+	<lit>.plt</lit> per un file di comandi gnuplot. Il nome di file dummy 
+	<lit>display</lit> può essere usato per mostrare il grafico in una finestra. 
+	Per esempio, 
       </para>
       <code>
 	fcast --plot=fc.pdf
       </code>
       <para>
-	will generate a graphic in PDF format.  Absolute pathnames are
-	respected, otherwise files are written to the gretl working
-	directory.
+	genererà un grafico in formato PDF. Vengono rispettati gli indirizzi
+	di file assoluti; in caso contrario i fail vengono scritti nella directory
+	di lavoro di gretl.
       </para>
 
        <para>
@@ -3682,17 +3675,17 @@
         <option>
 	  <flag>--nbins</flag>
 	  <optparm>n</optparm>
-	  <effect>specify number of bins</effect>
+	  <effect>specifica il numero di intervalli</effect>
         </option>
         <option>
 	  <flag>--min</flag>
 	  <optparm>minval</optparm>
-	  <effect>specify minimum, see below</effect>
+	  <effect>specifica il valore minimo, v. oltre</effect>
         </option>
         <option>
 	  <flag>--binwidth</flag>
 	  <optparm>width</optparm>
-	  <effect>specify bin width, see below</effect>
+	  <effect>specifica l'ampiezza degli intervalli, v. oltre</effect>
         </option>
         <option>
          <flag>--quiet</flag>
@@ -3712,12 +3705,12 @@
         </option>
         <option>
 	  <flag>--show-plot</flag>
-	  <effect>see below</effect>
+	  <effect>v. oltre</effect>
         </option>
         <option>
 	  <flag>--matrix</flag>
-	  <optparm>name</optparm>
-	  <effect>use column of named matrix</effect>
+	  <optparm>nome</optparm>
+	  <effect>usa una colonna di una matrice indicata per nome</effect>
         </option>
       </options>
       <examples>
@@ -3735,16 +3728,17 @@
         o il numero).
       </para>
       <para>
-	If the <opt>--matrix</opt> option is given, <repl>var</repl>
-	(which must be an integer) is instead interpreted as a 1-based
-	index that selects a column from the named matrix.
+	Se viene indicata l'opzione <opt>--matrix</opt>, <repl>var</repl>
+	(che deve essere un intero) viene invece interpretato come un indice
+	di base 1 che individua una colonna in una matrice indicata per nome.
       </para>
       <para>
-	To control the presentation of the distribution you may
-	specify <emphasis>either</emphasis> the number of bins or
-	the minimum value plus the width of the bins, as shown in
-	the last two examples above. The <opt>--min</opt> option
-	sets the lower limit of the left-most bin.
+	Per controllare la presentazione della distribuzione è
+	possibile specificare <emphasis>o</emphasis> il numero di
+	intervalli o il valore minimo più l'ampiezza degli intervalli,
+	come illustrato negli ultimi due esempi precedenti. L'opzione
+	<opt>--min</opt> fissa il limite inferiore dell'intervallo più
+	a sinistra.
       </para>
       <para>
        Usando l'opzione <lit>--normal</lit>, vengono mostrati i
@@ -3862,7 +3856,7 @@
         </option>
         <option>
 	  <flag>--stdresid</flag>
-	  <effect>standardize the residuals</effect>
+	  <effect>standardizza i residui</effect>
         </option>
         <option>
 	  <flag>--fcp</flag>
@@ -4009,6 +4003,15 @@
 
     <description>
       <para>
+	NOTA: questo comando ha subito molti cambiamenti e migliorie
+	da quando l'help seguente è stato scritto, per cui per
+	informazioni complete e aggornate consigliamo di far
+	riferimento alla <guideref targ="chap-genr"/>. D'altro canto,
+	il testo che segue non contiene informazioni erronee, per cui
+	può essere interpretato come <quote>questo ed altro</quote>.
+      </para>
+
+      <para>
 	In contesti appropriati, <lit>series</lit>, <lit>scalar</lit>
 	e <lit>matrix</lit> sono sinonimi per questo comando.
       </para>
@@ -4027,20 +4030,20 @@
       </para>
 
       <para context="gui">
-	Use this box to define a new variable, on the pattern
-	<repl>name</repl> = <repl>formula</repl>.  The formula should be a
-	well-formed combination of variable names, constants, operators and
-	functions (details below).  To ensure you get the type of variable you
-	want, you can prefix the formula with a type-name, &eg;
-	<lit>scalar</lit>, <lit>series</lit> or <lit>matrix</lit>.  For
-	example, to create a series that has a constant value of 10,
-	you can type
+	Usate questa riga per definire una nuova variabile seguendo lo schema 
+	<repl>nome</repl> = <repl>formula</repl>.  La formula dovrebbe essere 
+	una combinazione sintatticamente corretta di nomi di variabili, 
+	operatori e funzioni (v. oltre per ulteriori dettagli). Per essere sicuri
+	di ottenere una variabile del tipo desiderato è possibile premettere alla
+	formula il nome di un tipo, &eg;
+	<lit>scalar</lit>, <lit>series</lit> o <lit>matrix</lit>.  Per esempio, 
+	per creare una variabile con un valore costante pari a 10 possiamo digitare
       </para>
       <code context="gui">
 	series c = 10
       </code>
       <para context="gui">
-	(otherwise <lit>c = 10</lit> would create a scalar variable).
+	(in caso contrario <lit>c = 10</lit> creerebbe una variabile scalare).
       </para>
 
       <para>
@@ -4804,48 +4807,48 @@
       </para>
 
       <para>
-	It's also possible to operate on the graph page via script,
-	or using the console (in the GUI program). The following
-	commands and options are supported:
+	E' anche possibile operare sulla pagina del grafico usanod uno script
+	oppure usando la console (nel programma GUI). Sono disponibili i comandi seguenti:
       </para>
       <para>
-	To add a graph to the graph page, issue the command
-	<lit>graphpg add</lit> after saving a named graph, as in
+	Per aggiungere un grafico alla pagina dei grafici, digitate il comando
+	<lit>graphpg add</lit> dopo aver salvato un grafico con un
+	nome, come in 
       </para>
       <code>
 	grf1 &lt;- gnuplot Y X
 	graphpg add
       </code>
        <para>
-	To display the graph page: <lit>graphpg show</lit>.
+	Per aprire la pagina dei grafici: <lit>graphpg show</lit>.
       </para>
       <para>
-	To clear the graph page: <lit>graphpg free</lit>.
+	Per svuotare la pagina dei grafici: <lit>graphpg free</lit>.
       </para>
       <para>
-	To adjust the scale of the font used in the graph page, use
-	<lit>graphpg fontscale</lit> <repl>scale</repl>, where
-	<repl>scale</repl> is a multiplier (with a default of
-	1.0). Thus to make the font size 50 percent bigger than the
-	default you can do
+	Per modificare la dimensione del font usato nella pagina dei grafici usate 
+	<lit>graphpg fontscale</lit> <repl>scale</repl>, dove 
+	<repl>scale</repl> è un moltiplicatore (con un valore di default pari a 1.0). 
+	Per rendere il fonto più grande del 50 per cento, dunque, 
+	è possibile scrivere
       </para>
       <code>
 	graphpg fontscale 1.5
       </code>
       <para>
-	To call for printing of the graph page to file, use the flag
-	<opt>output=</opt> plus a filename; the filename should have
-	the suffix <quote><lit>.pdf</lit></quote>,
-	<quote><lit>.ps</lit></quote> or
-	<quote><lit>.eps</lit></quote>. For example:
+	Per stampare su un file la pagina dei grafici usate l'opzione 
+	<opt>output=</opt> seguita dal nome di un file; questo nome deve avere 
+	il suffisso <quote><lit>.pdf</lit></quote>,
+	<quote><lit>.ps</lit></quote> o
+	<quote><lit>.eps</lit></quote>. Per esempio:
       </para>
       <code>
 	graphpg --output="myfile.pdf"
       </code>
       <para>
-	In this context the output uses colored lines by default; to
-	use dot/dash patterns instead of colors you can append the
-	<opt>monochrome</opt> flag.
+	In questo contesto l'output usa linee colorate di default; per usare 
+	linee punteggiate o tratteggiate al posto dei colori è possibile aggiungere
+	l'opzione <opt>monochrome</opt>.
       </para>
     </description>
 
@@ -5149,11 +5152,11 @@
       <options>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>suppress printing of results</effect>
+	  <effect>non mostra i risultati</effect>
 	</option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>QML standard errors</effect>
+	  <effect>errori standard QML</effect>
         </option>
         <option>
 	  <flag>--two-step</flag>
@@ -5544,11 +5547,12 @@
       è disponibile per il VECM vincolati.
       </para>
       <para>
-	This dialog also supports reordering of the variables for the
-	Cholesky decomposition of the cross-equation covariance matrix.
-	The default is given by the order in which the variables are
-	entered into the model specification, but the up and down arrows
-	can be used to promote or demote a selected variable.
+	Questo comando permette anche il riordinamento delle variabili per la
+	scomposizione di Cholesky della matrice di covarianza degli errori
+	delle diverse equazioni. Di default l'ordine adottato è quello con 
+	il quale le variabili vengono elencate nella specificazione del modello,
+	ma è possibile usare le frecce verso l'alto e verso il basso per spostare
+	una variabile selezionata.
       </para>
     </description>
 
@@ -5752,48 +5756,45 @@
       </para>
 
       <para>
-	The critical values shown for the test statistic are based on the
-	response surfaces estimated by <cite key="sephton95">Sephton
-	(Economics Letters, 1995)</cite>, which are more accurate for
-	small samples than the values given in the original KPSS
-	article. When the test statistic lies between the 10 percent and 1
-	percent critical values a p-value is shown; this is obtained
-	by linear interpolation and should not be taken too literally.
+	Il valori critici riportati per questa statistica test sono basati
+	sulle superfici di risposta	stimati da <cite key="sephton95">Sephton
+	(Economics Letters, 1995)</cite>, che per piccoli campioni sono più accurati 
+	di quelli forniti nell'articolo originale di KPSS. Quando la statistica test
+	si trova fra i valori critici al 10 e all'1 per cento viene mostrato un 
+	p-value ottenuto per interpolazione lineare, che non dovrebbe essere 
+	accettato in maniera acritica.
       </para>
 
       <subhead context="cli">Panel data</subhead>
 
       <para context="cli">
-	When the <lit>kpss</lit> command is used with panel data, to
-	produce a panel unit root test, the applicable options and the
-	results shown are somewhat different.  While you may give a list
-	of variables for testing in the regular time-series case, with
-	panel data only one variable may be tested per command. And the
-	<opt>--verbose</opt> option has a different meaning: it produces a
-	brief account of the test for each individual time series (the
-	default being to show only the overall result).
+	Quando il comando <lit>kpss</lit> viene usato con dati panel per calcolare 
+	un test panel di radice unitaria, le opzioni applicabili e i risultati
+	mostrati sono leggermente diversi. Mentre nel caso di serie storiche regolari
+	potete fornire una lista di variabili da testare, con dati panel il comando
+	può testare solo una variabile alla volta. L'opzione <opt>--verbose</opt>,
+	inoltre, ha un isgnificato diverso: produce un breve resoconto del test
+	per ciascuna singola serie storica (di default viene mostrato solo il
+	risultato complessivo).
       </para>
       <para context="cli">
-	When possible, the overall test (null hypothesis: the series in
-	question is stationary for all the panel units) is calculated
-	using the method of <cite key="choi01">Choi (Journal of
-	International Money and Finance, 2001)</cite>. This is not
-	always straightforward, the difficulty being that while the
-	Choi test is based on the p-values of the tests on the
-	individual series, we do not currently have a means of
-	calculating p-values for the KPSS test statistic; we must
-	rely on a few critical values.
+	Se possibile viene calcolato il test complessivo (ipotesi nulla: la ariabile in 
+	questione è stazionaria per tutte le unità panel) usando il metodo di 
+	<cite key="choi01">Choi (Journal of International Money and Finance, 
+	2001)</cite>. Questo calcolo non è sempre immediato perchè mentre il test di Choi
+	è basato sui p-valu dei test sulle singole serie, attualmente non esiste un modo
+	per calcolare i p-value della statistica test KPSS; dobbiamo perciò basarci
+	su qualche valore critico.
       </para>
       <para context="cli">
-	If the test statistic for a given series falls between the 10
-	percent and 1 percent critical values, we are able to interpolate
-	a p-value. But if the test falls short of the 10 percent value, or
-	exceeds the 1 percent value, we cannot interpolate and can at best
-	place a bound on the global Choi test. If the individual test
-	statistic falls short of the 10 percent value for some units but
-	exceeds the 1 percent value for others, we cannot even compute
-	a bound for the global test.
-      </para>
+	Se per una data variabile la statistica test cade fra i valori critici al 10 e all'1
+	per cento siamo in grado di interpolare un p-value. Ma se il test cade a sinistra
+	del valore critico al 10 per cento, o supera quello all'1 per cento, non riusciamo 
+	a interpolare e tutto ciò che possiamo ottenere è un limite superiore al test
+	globale di Choi. Se le singole statistiche test si trovano a sinistra del valore
+	critico al 10 per cento per alcune unità ma superano quello all'1 per cento per altre 
+	non è possibile neppure il calcolo del limite superiore del test globale.
+     </para>
     </description>
 
     <gui-access>
@@ -5814,25 +5815,24 @@
 
     <description>
       <para>
-	In the first form, prints out the informative labels (if present) for
-	the series in <repl>varlist</repl>, or for all series in the dataset
-	if <repl>varlist</repl> is not specified.
+	Nella sua prima forma mostra le etichette informative (se presenti) per le variabili
+	in <repl>varlist</repl>, oppure per tutte le variabili nel dataset
+	se <repl>varlist</repl> non è specificata.
       </para>
       <para>
-	With the option <opt>--to-file</opt>, writes to the named file the
-	labels for all series in the dataset, one per line. If no labels are
-	present an error is flagged; if some series have labels and others
-	do not, a blank line is printed for series with no label.
+	Con l'opzione <opt>--to-file</opt>, scrive nel file indicato le etichette di tutte
+	le variabili nel dataset, una per linea. Se non sono presenti etichette viene
+	emesso un messaggio d'errore; se alcune variabili hanno etichette e altre no,
+	per le seconde viene mostrata una linea vuota.
       </para>
       <para>
-	With the option <opt>--from-file</opt>, reads the specified file
-	(which should be plain text) and assigns labels to the series in
-	the dataset, reading one label per line and taking blank lines
-	to indicate blank labels.
+	Con l'opzione <opt>--from-file</opt>, legge il file specificato (che deve
+	essere di testo) e assegna le etichette alle variabili nel dataset, leggendo
+	un'etichetta per linea e interpretando linee vuote come etichette vuote.
       </para>
       <para>
-	The <opt>--delete</opt> option does what you'd expect: it
-	removes all the series labels from the dataset.
+	L'opzione <opt>--delete</opt> da quello che vi attendete:
+	rimuove dal dataset tutte le etichette di variabili.
       </para>      
     </description>
 
@@ -6050,31 +6050,29 @@
         finestra di dialogo che permette di salvare nel dataset in uso
         una o più delle variabili del test.</para>
       <para context="tex">
-	After execution, the <lit>$test</lit> accessor returns the
-	cross-validation criterion, which is defined as 
+	Dopo l'esecuzione l'accessore <lit>$test</lit> restituisce il criterio di 
+	validazione incrociata, definito come
         \[
 	\sum_{i=1}^n (y_i - \hat{y}_{-i})^2 
         \] 
-        where $\hat{y}_{-i}$ is the forecast error for the $i$-th
-        observation, after it has been excluded from the sample. The
-        criterion is, hence, the sum of the squared forecasting errors
-        where all $n$ observations but the $i$-th one are used to
-        predict it (the so-called <emphasis>leave-one-out</emphasis>
-        estimator).  For a broader discussion of the cross-validation
-        criterion, see Davidson and MacKinnon's <book>Econometric
-        Theory and Methods</book>, pages 685--686, and the references
-        therein.
+	dove $\hat{y}_{-i}$ è l'errore di previsione per la $i$-esima osservazione, 
+	dopo che quest'ultima è stata esclusa dal campione. Di conseguenza, il criterio
+	è la somma dei quadrati degli errori di previsione nella quale per prevedere
+	la $i$-esima osservazione vengono usate tutte le altre $n-1$ osservazioni
+	(il cosiddetto stimatore <emphasis>leave-one-out</emphasis>). Per una discussione più 
+	approfondita del criterio di validazione incrociata, v. Davidson e 
+	MacKinnon's <book>Econometric Theory and Methods</book>, pag. 685--686, 
+	e i riferimenti bibliografici ivi citati.
       </para>
       <para context="notex">
-	After execution, the <lit>$test</lit> accessor returns the
-	cross-validation criterion, which is defined as the sum of
-	squared deviations of the dependent variable from its forecast
-	value, the forecast for each observation being based on a
-	sample from which that observation is excluded.  (This is
-	known as the <emphasis>leave-one-out</emphasis> estimator).
-	For a broader discussion of the cross-validation criterion,
-	see Davidson and MacKinnon's <book>Econometric Theory and
-	Methods</book>, pages 685&ndash;686, and the references therein.
+	Dopo l'esecuzione, l'accessore <lit>$test</lit> restituisce il criterio di 
+	validazione incrociata, definito come la somma dei quadrati degli scarti fra
+	la variabile dipendente e il suo valore previsto, calcolato a partire 
+	da un campione dal quale quell'osservazione è stata esclusa.  
+	(Questo stimatore è chiamato <emphasis>leave-one-out</emphasis>). 
+	Per una discussione più  approfondita del criterio di validazione incrociata, 
+	v. Davidson e  MacKinnon's <book>Econometric Theory and Methods</book>, 
+	pag. 685&ndash;686, e i riferimenti bibliografici ivi citati.
       </para>
     </description>
 
@@ -6141,7 +6139,7 @@
 	serie. La matrice deve essere un vettore con numero di elementi
 	pari a quello delle unità di osservazione nel sottoinsieme corrente
 	del campione, e può essere indicata per nome o costruita usando
-	parentesi grafe come illustrato nell'ultimo degli esempi precedenti.
+	parentesi graffe come illustrato nell'ultimo degli esempi precedenti.
       </para>
 
     </description>
@@ -6527,11 +6525,11 @@
       <options>
         <option>
 	  <flag>--index</flag>
-	  <effect>write auxiliary index file</effect>
+	  <effect>crea un file ausiliario di indicizzazione</effect>
         </option>
         <option>
 	  <flag>--translations</flag>
-	  <effect>write auxiliary strings file</effect>
+	  <effect>crea un file ausiliario di stringhe</effect>
         </option>
       </options>
     </usage>    
@@ -6573,23 +6571,21 @@
 
     <description>
       <para>
-	With the option <opt>--to-file</opt>, writes to the named file
-	the observation marker strings from the current dataset, one
-	per line. If no such strings are present an error is flagged.
+	Con l'opzione <opt>--to-file</opt>, scrive nel file indicato le stringhe
+	marcatrici delle osservazioni presenti nel dataset corrente, una per ogni 
+	linea. Se il dataset non contiene stringhe viene emesso un messaggio d'errore.
       </para>
       <para>
-	With the option <opt>--from-file</opt>, reads the specified
-	file (which should be plain text) and assigns observation
-	markers to the rows in the dataset, reading one marker per
-	line. In general there should be at least as many markers in
-	the file as observations in the dataset, but if the dataset is
-	a panel it is also acceptable if the number of markers in the
-	file matches the number of cross-sectional units (in which
-	case the markers are repeated for each time period.)
+	Con l'opzione <opt>--from-file</opt>, legge dal file specificato (che deve essere
+	in formato testo) e assegna alle righe del dataset i marcatori di osservazione, 
+	leggendone uno per riga. In generale il file dovrebbe contenere tanti marcatori 
+	quante sono le osservazioni nel dataset, ma se quest'ultimo è un panel il 
+	numero di marcatori nel file potrebbe anche essere pari al numero di unità
+	in cross-section (nel qual caso i marcatori sono ripetuti a ogni data).
       </para>
       <para>
-	The <opt>--delete</opt> option does what you'd expect: it
-	removes the observation marker strings from the dataset.
+	L'opzione <opt>--delete</opt> fa quello che vi aspettate: 
+	cancella le stringhe marcatrici delle osservazioni dal dataset.
       </para>      
     </description>
   </command>
@@ -6861,18 +6857,18 @@
         di covarianza del gradiente).
       </para>
       <para>
-	If you supply analytical derivatives, by default gretl runs a
-	numerical check on their plausibility.  Occasionally this may
-	produce false positives, instances where correct derivatives
-	appear to be wrong and estimation is refused. To counter this,
-	or to achieve a little extra speed, you can give the option
-	<opt>--no-gradient-check</opt>.  Obviously, you should do
-	this only if you are quite confident that the gradient you
-	have specified is right.
+	Se vengono fornite derivate analitiche, per default gretl effettua un
+	controllo numerico per valutarne l'attendibilità. Talvolta questo controllo
+	può produrre dei falsi positivi; altre parole derivate corrette sembrano 
+	essere errate e il comando si rifiuta di completare la stima. Per evitare
+	questa possibilità o per realizzare un piccolo guadagno in termini
+	di tempo è possibile ricorrere all'opzione 
+	<opt>--no-gradient-check</opt>. Naturalmente è opportuno ricorrere a questa opzione
+	solo se si è convinti convinti della correttezza del gradiente specificato.
       </para>
       <para>
-	For a much more in-depth description of <cmd>mle</cmd>, please
-	refer to <guideref targ="chap:mle"/>.
+	Per una descrizione molto più approfondita di <cmd>mle</cmd>, per favore 
+	consultate <guideref targ="chap:mle"/>.
       </para>
 
     </description>
@@ -6965,15 +6961,15 @@
 	mostra la tabella modelli in una finestra; <cmd>free</cmd>
 	pulisce la tabella.</para>
       <para>
-	To call for printing of the model table, use the flag
-	<opt>output=</opt> plus a filename. If the filename has the
-	suffix <quote><lit>.tex</lit></quote>, the output will be in
-	&tex; format; if the suffix is <quote><lit>.rtf</lit></quote>
-	the output will be RTF; otherwise it will be plain text.
-	In the case of &tex; output the default is to produce a
-	<quote>fragment</quote>, suitable for inclusion in a
-	document; if you want a stand-alone document instead,
-	use the <opt>complete</opt> option, for example
+	Per stampare la tabella del modello usate l'opzione 
+	<opt>output=</opt> seguita dal nome di un file. Se quest'ultimo ha il suffisso
+	<quote><lit>.tex</lit></quote>, l'output sarà in formato 
+	&tex;; se il suffisso è <quote><lit>.rtf</lit></quote>
+	l'output sarà RTF; in caso contrario sarà in formato di testo. Nel caso di 
+	output in formato &tex; per default verrà prodotto un 
+	<quote>frammento</quote> pronto per essere inserito in un
+	documento; se invece si preferisce ottenere un documento completo, 
+	usate l'opzione <opt>complete</opt>; per esempio, 
       </para>
       <code>
 	modeltab --output="myfile.tex" --complete
@@ -7117,11 +7113,10 @@
         fra le unità cross section).
       </para>
       <para>
-	The <opt>--comfac</opt> option is available only when the model is
-	estimated via an AR(1) method such as Hildreth&ndash;Lu.  The
-	auxiliary regression takes the form of a relatively unrestricted
-	dynamic model, which is used to test the common factor restriction
-	implicit in the AR(1) specification.
+	L'opzione <opt>--comfac</opt> è disponibile solo quando il modello è stimato
+	usando un metodo AR(1), come quello di Hildreth&ndash;Lu. La regressione ausiliaria
+	ha la struttura di un modello dinamico relativamente poco vincolato ed è usata
+	per verificare il vincolo di fattori comuni implicito nella specificazione AR(1).
       </para>
       <para>
 	Per impostazione predefinita, il programma mostra la regressione
@@ -8756,11 +8751,11 @@
       <options>
 	<option>
 	  <flag>--z-scores</flag>
-	  <effect>see below</effect>
+	  <effect>v. oltre</effect>
         </option>
         <option>
 	  <flag>--raw</flag>
-	  <effect>see below</effect>
+	  <effect>v. oltre</effect>
         </option>
       </options>
     </usage>
@@ -9478,17 +9473,15 @@
     label="Save or remove series labels" context="gui">
     <description>
       <para>
-	If you choose Export here, gretl will write a file containing 
-	the descriptive labels of any series in the current dataset
-	that have such labels. This is a plain text file with one
-	line per variable. The line will be empty for variables that
-	have no descriptive label.
+	Se scegliete Export, gretl scriverà un file contenente le etichette
+	descrittive di tutte le variabili nel dataset corrente dotate di etichetta.
+	Il file sarà in formato testo con una linea per ogni variabile.
+	La linea di una variabile priva di etichetta verrà lasciata vuota.
       </para>
       <para>
-	If you choose Remove, the descriptive labels will be removed
-	for all series that have such labels. This would be
-	appropriate only if the current labels have somehow been
-	added in error.
+	Se scegliete Remove, verranno cancellate le etichette
+	descrittive di tutte le variabili dotate di etichetta. Una scelta di questo tipo
+	è appropriata solo se le etichette correnti sono state aggiunte per errore.
       </para>
     </description>
   </command>
@@ -9497,12 +9490,13 @@
     label="Add series labels" context="gui">
     <description>
       <para>
-	If you choose Yes here, you are offered a file-open dialog box to
-	select a plain text file containing descriptive labels for the
-	series in the current dataset. The file should contain one label
-	per line; a blank line means no label. Gretl will attempt to read
-	as many labels as there are series in the dataset, excluding the
-	constant.
+	Se scegliete Sì, vi apparirà la finestra di dialogo usata per
+	aprire un file di testo contenente le etichette descrittive
+	per le variabili nel dataset corrente. Il file deve contenere
+	un'etichetta per ogni linea; una linea vuota significa nessuna
+	etichetta. Gretl tenterà di leggere un numero di etichette
+	pari a quello delle variabili nel dataset, esclusa la
+	costante.
       </para>
     </description>
   </command>
@@ -9511,16 +9505,17 @@
     label="Save commands?" context="gui">
     <description>
       <para>
-	If you choose Yes here, gretl will write a file containing a
-	record of the commands you executed in the current session.  Most
-	commands that you execute via <quote>point and click</quote> have
-	a <quote>script</quote> counterpart, and it is these script
-	commands that will be saved.  You could take the file as the basis
-	for writing a gretl command script.
+	Se scegliete Sì gretl trascriverà su un file una registrazione
+	dei comandi eseguiti nel corso della sessione corrente. La
+	maggior parte dei comandi che scegliete di eseguire usando un
+	<quote>point and click</quote> hanno uno <quote>script</quote>
+	equivalente, ed è questo script che verrà trascritto.  Il file
+	così generato può servire come punto di partenza per la
+	stesura di uno script di comandi di gretl.
       </para>
       <para>
-	If you don't care to be prompted to save a record of commands
-	on exit, uncheck the tick box in the save commands dialog.
+	Se non vi interessa la possibilità che in uscita venga salvata una registrazione
+	dei comandi, deselezionate la casella nella finestra di dialogo salva comandi.
       </para>
     </description>
   </command>
@@ -9529,26 +9524,28 @@
     label="Save this gretl session?" context="gui">
     <description>
       <para>
-	If you choose Yes here, gretl will write a file containing a
-	<quote>snapshot</quote> of the current session, including a copy of
-	the working dataset along with any models, graphs or other objects
-	that you have saved <quote>as icons</quote>.  You can re-open this
-	file later to recreate the state of gretl as of the time you quit the
-	session (see the <quote>File/Session files</quote> menu).
+	Se scegliete Sì, gretl scriverà un file contenente
+	una<quote>fotografia</quote> della sessione corrente, compresa
+	una copia del dataset corrente e di tutti i modelli, grafici o
+	altri oggetti che avete salvato <quote>come icone</quote>.  In
+	seguito potete riaprire questo file per ricreare lo stato di
+	gretl al momento in cui è stata abbandonata la sessione (v. il
+	menu <quote>File/Sessioni</quote>).
       </para>
       <para>
-	If you mostly work with gretl using command scripts (which we
-	recommend for <quote>serious</quote> econometric work) you
-	probably don't need to save the session, but you should be
-	sure to save any changes to your script that you wish to keep.
-	You may also want to save any changes to your dataset, unless
-	these are of a sort that can easily be recreated by running
-	a script.
+	Se siete interessati prevalentemente a lavorare con gretl
+	usando script di comandi (un modo di procedere che consigliamo
+	caldamente per svolgere analisi econometriche
+	<quote>serie</quote>), probabilmente non vi interessa salvare
+	la sessione, ma dovete essere sicuri di salvare nello script
+	tutte le modifiche che vi interessa conservare. Potreste anche
+	voler salvare le modifiche effettuate al dataset, a meno che
+	non siano facilmente ricreabili eseguendo uno script.
       </para>
       <para>
-	If you work with scripts and don't care to be prompted to
-	save your session on exit, uncheck the tick box in the
-	save session dialog.
+	Se lavorate con script e non vi interessa la possibilità di
+	salvare la sessione in uscita, deselezionate la casella nella
+	finestra di dialogo salva sessione.
       </para>
     </description>
   </command>
