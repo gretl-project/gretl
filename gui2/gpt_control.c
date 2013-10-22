@@ -4771,10 +4771,6 @@ static int gnuplot_show_png (const char *fname, const char *name,
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(plot->statusbar), FALSE);
 #endif
 
-#if 0 /* redundant, wrong? */
-    gtk_container_set_resize_mode(GTK_CONTAINER (plot->statusbar),
-				  GTK_RESIZE_PARENT);
-#endif
     plot->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(plot->statusbar),
 					     "plot_message");
 
@@ -4854,8 +4850,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 	gtk_widget_destroy(plot->shell);
 	plot = NULL;
     } else {
-	g_object_set_data(G_OBJECT(plot->shell), "object",
-			  plot);
+	g_object_set_data(G_OBJECT(plot->shell), "object", plot);
     }
 
     return err;

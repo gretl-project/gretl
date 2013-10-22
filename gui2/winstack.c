@@ -57,16 +57,28 @@ static gint select_other_window (gpointer self, int seq);
 
 static GtkWidget *window_from_action (GtkAction *action)
 {
-    const gchar *s = gtk_action_get_name(action);
+    GtkWidget *w = NULL;
+
+    if (action != NULL) {
+	const gchar *name = gtk_action_get_name(action);
+
+	if (name != NULL) {
 #ifdef _WIN64
-    unsigned long long llptr = strtoull(s, NULL, 16);
-
-    return (GtkWidget *) llptr;
+	    /* note: win64 uses the LLP64 data model, so
+	       it's necessary to use long long to hold a
+	       pointer; on other 64-bit systems plain long
+	       is 64 bits (LP64).
+	    */
+	    unsigned long long ull = strtoull(name, NULL, 16);
+	    w = (GtkWidget *) ull;
 #else
-    unsigned long lptr = strtoul(s, NULL, 16);
-
-    return (GtkWidget *) lptr;
+	    unsigned long ul = strtoul(name, NULL, 16);
+	    w = (GtkWidget *) ul;
 #endif
+	}
+    }
+
+    return w;
 }
 
 /* callback to bring a selected window to the top */
@@ -75,7 +87,7 @@ static void gretl_window_raise (GtkAction *action, gpointer data)
 {
     GtkWidget *w = window_from_action(action);
 
-    if (GTK_IS_WINDOW(w)) {
+    if (w != NULL && GTK_IS_WINDOW(w)) {
 	gtk_window_present(GTK_WINDOW(w));
     }
 }
@@ -149,8 +161,10 @@ static const gchar *get_window_title (GtkWidget *w)
 
 static void window_list_remove (GtkWidget *w, GtkActionGroup *group)
 {
-    gchar *aname = g_strdup_printf("%p", (void *) w);
     GtkAction *action;
+    char aname[32];
+
+    sprintf(aname, "%p", (void *) w);
 
 #if WDEBUG
     fprintf(stderr, "window_list_remove: %s\n", aname);
@@ -161,8 +175,6 @@ static void window_list_remove (GtkWidget *w, GtkActionGroup *group)
 	gtk_action_group_remove_action(group, action);
 	n_listed_windows--;
     }    
-
-    g_free(aname);
 }
 
 static char *winname_double_underscores (const gchar *src)
@@ -284,7 +296,7 @@ void window_list_add (GtkWidget *w, int role)
     };
     const char *label;
     char *modlabel = NULL;
-    gchar *aname;
+    char aname[32];
 
     if (window_group == NULL) {
 	/* create the window list action group */
@@ -293,7 +305,7 @@ void window_list_add (GtkWidget *w, int role)
 
     /* set up an action entry for window @w */
 
-    aname = g_strdup_printf("%p", (void *) w);
+    sprintf(aname, "%p", (void *) w);
     entry.name = aname;
     entry.stock_id = window_list_icon(role);
 
@@ -311,7 +323,6 @@ void window_list_add (GtkWidget *w, int role)
     }
 
     if (label == NULL) {
-	g_free(aname);
 	return;
     }
 
@@ -334,7 +345,6 @@ void window_list_add (GtkWidget *w, int role)
     n_listed_windows++;
 
     free(modlabel);
-    g_free(aname);
 }
 
 /* GCompareFunc: returns "a negative integer if the first value comes
@@ -353,6 +363,11 @@ static gint sort_window_list (gconstpointer a, gconstpointer b)
 
     if (wa == mdata->main) return -1;
     if (wb == mdata->main) return 1;
+
+    /* bullet-proofing */
+    if (wa == NULL || wb == NULL) {
+	return 0;
+    }
 
     ta = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wa), "time"));
     tb = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(wb), "time"));
@@ -476,7 +491,7 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     static GtkWidget *menu;
     GdkEventType evtype;
     GList *wlist = gtk_action_group_list_actions(window_group);
-    GList *list = wlist;
+    GList *list;
     GtkWidget *item, *win = NULL;
     GtkAction *action;
 
@@ -487,13 +502,14 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     }
 
     if (n_listed_windows > 1) {
-	list = g_list_sort(wlist, sort_window_list);
+	wlist = g_list_sort(wlist, sort_window_list);
 	if (data != NULL) {
 	    win = GTK_WIDGET(data);
 	}
     }
 
     menu = gtk_menu_new();
+    list = wlist;
 
     while (list) {
 	action = (GtkAction *) list->data;
@@ -577,15 +593,17 @@ gboolean window_list_exit_check (void)
 
 	while (list) {
 	    w = window_from_action((GtkAction *) list->data);
-	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
-	    if (vwin != NULL && vwin_is_editing(vwin)) {
-		if (vwin_content_changed(vwin)) {
-		    gtk_window_present(GTK_WINDOW(vwin->main));
-		    ret = query_save_text(NULL, NULL, vwin);
+	    if (w != NULL) {
+		vwin = g_object_get_data(G_OBJECT(w), "vwin");
+		if (vwin != NULL && vwin_is_editing(vwin)) {
+		    if (vwin_content_changed(vwin)) {
+			gtk_window_present(GTK_WINDOW(vwin->main));
+			ret = query_save_text(NULL, NULL, vwin);
+		    }
 		}
-	    }
-	    if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
-		ret = tabwin_exit_check(w);
+		if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
+		    ret = tabwin_exit_check(w);
+		}
 	    }
 	    list = list->next;
 	}
@@ -635,19 +653,21 @@ void close_session_windows (void)
 
 	while (list) {
 	    w = window_from_action((GtkAction *) list->data);
-	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
-	    if (vwin == mdata) {
-		; /* main window: no-op! */
-	    } else if (vwin != NULL && (vwin_editing_script(vwin->role) ||
-					help_role(vwin->role) ||
-					other_dont_close(vwin->role))) {
-		; /* no-op */
-	    } else if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
-		/* tabbed script editor stays open, but tabbed model
-		   viewer should be closed */
-		tabwin_close_models_viewer(w);
-	    } else if (w != NULL && !keep_window_open(w)) {
-		gtk_widget_destroy(w);
+	    if (w != NULL) {
+		vwin = g_object_get_data(G_OBJECT(w), "vwin");
+		if (vwin == mdata) {
+		    ; /* main window: no-op! */
+		} else if (vwin != NULL && (vwin_editing_script(vwin->role) ||
+					    help_role(vwin->role) ||
+					    other_dont_close(vwin->role))) {
+		    ; /* no-op */
+		} else if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
+		    /* tabbed script editor stays open, but tabbed model
+		       viewer should be closed */
+		    tabwin_close_models_viewer(w);
+		} else if (w != NULL && !keep_window_open(w)) {
+		    gtk_widget_destroy(w);
+		}
 	    }
 	    list = list->next;
 	}
@@ -667,10 +687,12 @@ void cascade_session_windows (void)
 
 	while (slist) {
 	    w = window_from_action((GtkAction *) slist->data);
-	    gtk_window_move(GTK_WINDOW(w), x, y);
-	    gtk_window_present(GTK_WINDOW(w));
-	    x += d;
-	    y += d;
+	    if (w != NULL) {
+		gtk_window_move(GTK_WINDOW(w), x, y);
+		gtk_window_present(GTK_WINDOW(w));
+		x += d;
+		y += d;
+	    }
 	    slist = slist->next;
 	}
 
@@ -681,14 +703,12 @@ void cascade_session_windows (void)
 static gint select_other_window (gpointer self, int seq)
 {
     static GList *wlist;
-    static int targ;
 
     if (self == NULL) {
-	/* cleanup signal */
+	/* cleanup signal (mod key released) */
 	if (wlist != NULL) {
 	    g_list_free(wlist);
 	    wlist = NULL;
-	    targ = 0;
 	    return TRUE;
 	} else {
 	    return FALSE;
@@ -698,45 +718,32 @@ static gint select_other_window (gpointer self, int seq)
     if (n_listed_windows > 1) {
 	GList *mylist;
 	GtkWidget *w;
-	int i;
 
 	if (wlist == NULL) {
 	    wlist = gtk_action_group_list_actions(window_group);
 	    wlist = g_list_sort(wlist, sort_window_list);
-	    if (seq == WINDOW_PREV) {
-		targ = n_listed_windows - 1;
-	    }
 	}
 
-	if (seq == WINDOW_PREV) {
-	    i = n_listed_windows - 1;
-	    mylist = g_list_last(wlist);
-	    while (mylist) {
-		w = window_from_action((GtkAction *) mylist->data);
-		if (i <= targ && w != (GtkWidget *) self) {
-		    gtk_window_present(GTK_WINDOW(w));
-		    targ = i - 1;
-		    break;
+	/* find the window from which the keystroke emanated, @self,
+	   and then select the next or previous window in the list,
+	   wrapping around at the ends */
+
+	mylist = g_list_first(wlist);
+	while (mylist) {
+	    w = window_from_action((GtkAction *) mylist->data);
+	    if (w == (GtkWidget *) self) {
+		if (seq == WINDOW_PREV) {
+		    mylist = mylist->prev != NULL ? mylist->prev : 
+			g_list_last(wlist);
+		} else {
+		    mylist = mylist->next != NULL ? mylist->next : 
+			g_list_first(wlist);
 		}
-		i--;
-		mylist = mylist->prev;
+		gretl_window_raise((GtkAction *) mylist->data, NULL);
+		break;
 	    }
-	    if (targ < 0) targ = n_listed_windows - 1;
-	} else {
-	    i = 0;
-	    mylist = g_list_first(wlist);
-	    while (mylist) {
-		w = window_from_action((GtkAction *) mylist->data);
-		if (i >= targ && w != (GtkWidget *) self) {
-		    gtk_window_present(GTK_WINDOW(w));
-		    targ = i + 1;
-		    break;
-		}
-		i++;
-		mylist = mylist->next;
-	    }
-	    if (targ == n_listed_windows) targ = 0;
-	}
+	    mylist = mylist->next;
+	}	
     }
 
     return TRUE;
@@ -753,14 +760,16 @@ windata_t *get_editor_for_file (const char *filename)
 
 	while (list != NULL && ret == NULL) {
 	    w = window_from_action((GtkAction *) list->data);
-	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
-	    if (vwin != NULL && vwin_is_editing(vwin)) {
-		if (!strcmp(filename, vwin->fname)) {
-		    ret = vwin;
+	    if (w != NULL) {
+		vwin = g_object_get_data(G_OBJECT(w), "vwin");
+		if (vwin != NULL && vwin_is_editing(vwin)) {
+		    if (!strcmp(filename, vwin->fname)) {
+			ret = vwin;
+		    }
 		}
-	    }
-	    if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
-		ret = tabwin_get_editor_for_file(filename, w);
+		if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
+		    ret = tabwin_get_editor_for_file(filename, w);
+		}
 	    }
 	    list = list->next;
 	}
@@ -802,11 +811,13 @@ real_get_browser_for_database (const char *filename, int code)
 
 	while (list != NULL && ret == NULL) {
 	    w = window_from_action((GtkAction *) list->data);
-	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
-	    if (vwin != NULL && db_role_matches(vwin, code)) {
-		if (!strncmp(filename, vwin->fname, 
-			     strlen(vwin->fname))) {
-		    ret = vwin;
+	    if (w != NULL) {
+		vwin = g_object_get_data(G_OBJECT(w), "vwin");
+		if (vwin != NULL && db_role_matches(vwin, code)) {
+		    if (!strncmp(filename, vwin->fname, 
+				 strlen(vwin->fname))) {
+			ret = vwin;
+		    }
 		}
 	    }
 	    list = list->next;
@@ -838,9 +849,11 @@ windata_t *get_viewer_for_data (const gpointer data)
 
 	while (list != NULL && ret == NULL) {
 	    w = window_from_action((GtkAction *) list->data);
-	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
-	    if (vwin != NULL && vwin->data == data) {
-		ret = vwin;
+	    if (w != NULL) {
+		vwin = g_object_get_data(G_OBJECT(w), "vwin");
+		if (vwin != NULL && vwin->data == data) {
+		    ret = vwin;
+		}
 	    }
 	    list = list->next;
 	}
@@ -861,9 +874,11 @@ windata_t *get_browser_for_role (int role)
 
 	while (list != NULL && ret == NULL) {
 	    w = window_from_action((GtkAction *) list->data);
-	    vwin = g_object_get_data(G_OBJECT(w), "vwin");
-	    if (vwin != NULL && vwin->role == role) {
-		ret = vwin;
+	    if (w != NULL) {
+		vwin = g_object_get_data(G_OBJECT(w), "vwin");
+		if (vwin != NULL && vwin->role == role) {
+		    ret = vwin;
+		}
 	    }
 	    list = list->next;
 	}
@@ -889,9 +904,11 @@ GtkWidget *get_window_for_data (const gpointer data)
 
 	while (list != NULL && ret == NULL) {
 	    w = window_from_action((GtkAction *) list->data);
-	    p = g_object_get_data(G_OBJECT(w), "object");
-	    if (p == data) {
-		ret = w;
+	    if (w != NULL) {
+		p = g_object_get_data(G_OBJECT(w), "object");
+		if (p == data) {
+		    ret = w;
+		}
 	    }
 	    list = list->next;
 	}
@@ -938,9 +955,11 @@ GtkWidget *get_window_for_plot (const char *plotfile)
 
 	while (list != NULL && ret == NULL) {
 	    w = window_from_action((GtkAction *) list->data);
-	    test = g_object_get_data(G_OBJECT(w), "plot-filename");
-	    if (test != NULL && strstr(test, plotfile) != NULL) {
-		ret = w;
+	    if (w != NULL) {
+		test = g_object_get_data(G_OBJECT(w), "plot-filename");
+		if (test != NULL && strstr(test, plotfile) != NULL) {
+		    ret = w;
+		}
 	    }	    
 	    list = list->next;
 	}
@@ -963,29 +982,31 @@ int highest_numbered_variable_in_winstack (void)
 	while (list != NULL) {
 	    vwin = NULL;
 	    w = window_from_action((GtkAction *) list->data);
-	    tabwin = g_object_get_data(G_OBJECT(w), "tabwin");
-	    if (tabwin == NULL) {
-		vwin = g_object_get_data(G_OBJECT(w), "vwin");
-	    }
-	    if (tabwin != NULL) {
-		m_vmax = highest_numbered_var_in_tabwin(tabwin, dataset);
-		if (m_vmax > vmax) {
-		    vmax = m_vmax;
+	    if (w != NULL) {
+		tabwin = g_object_get_data(G_OBJECT(w), "tabwin");
+		if (tabwin == NULL) {
+		    vwin = g_object_get_data(G_OBJECT(w), "vwin");
 		}
-	    } else if (vwin != NULL && vwin->role == VIEW_MODEL) {
-		const MODEL *pmod = vwin->data;
+		if (tabwin != NULL) {
+		    m_vmax = highest_numbered_var_in_tabwin(tabwin, dataset);
+		    if (m_vmax > vmax) {
+			vmax = m_vmax;
+		    }
+		} else if (vwin != NULL && vwin->role == VIEW_MODEL) {
+		    const MODEL *pmod = vwin->data;
 
-		m_vmax = highest_numbered_var_in_model(pmod, dataset);
-		if (m_vmax > vmax) {
-		    vmax = m_vmax;
+		    m_vmax = highest_numbered_var_in_model(pmod, dataset);
+		    if (m_vmax > vmax) {
+			vmax = m_vmax;
+		    }
+		} else if (vwin != NULL && (vwin->role == VAR || vwin->role == VECM)) {
+		    const GRETL_VAR *var = vwin->data;
+
+		    m_vmax = gretl_VAR_get_highest_variable(var);
+		    if (m_vmax > vmax) {
+			vmax = m_vmax;
+		    }		    
 		}
-	    } else if (vwin != NULL && (vwin->role == VAR || vwin->role == VECM)) {
-		const GRETL_VAR *var = vwin->data;
-
-		m_vmax = gretl_VAR_get_highest_variable(var);
-		if (m_vmax > vmax) {
-		    vmax = m_vmax;
-		}		    
 	    }
 	    list = list->next;
 	}
