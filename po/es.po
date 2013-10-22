@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-10-03 08:28-0400\n"
-"PO-Revision-Date: 2013-10-01 14:46+0200\n"
+"PO-Revision-Date: 2013-10-22 18:58+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -3913,16 +3913,14 @@ msgid "variable %d: translating from strings to code numbers\n"
 msgstr "variable %d: traduciendo desde cadenas a números de código\n"
 
 #: lib/src/gretl_string_table.c:487
-#, fuzzy
 msgid ""
 "One or more non-numeric variables were found.\n"
 "These variables have been given numeric codes as follows.\n"
 "\n"
 msgstr ""
 "Se encontraron una o más variables no numéricas.\n"
-"Gretl no puede manejar esas variables directamente, así que\n"
 "se les han asignado códigos de valor numéricos como se muestra\n"
-" a continuación.\n"
+"a continuación.\n"
 "\n"
 
 #: lib/src/gretl_string_table.c:490
@@ -6678,6 +6676,8 @@ msgstr "¡No se ha quitado ninguna observación!"
 #: lib/src/subsample.c:1263
 msgid "--balanced option is invalid: the (full) dataset is not a panel"
 msgstr ""
+"la opción --balanced no es válida: el conjunto de datos (completo) no es un "
+"panel"
 
 #: lib/src/subsample.c:1805 lib/src/subsample.c:1824
 msgid "error in new starting obs"
@@ -9551,9 +9551,8 @@ msgstr ""
 "¿Desea sobreescribirlo?"
 
 #: gui2/fileselect.c:793
-#, fuzzy
 msgid "Gretl data files (*.gdt)"
-msgstr "fichero de datos gretl (.gdt)"
+msgstr "Ficheros de datos gretl (*.gdt)"
 
 #: gui2/fileselect.c:794 gui2/fileselect.c:808
 msgid "CSV files (*.csv)"
@@ -9564,14 +9563,12 @@ msgid "ASCII files (*.txt)"
 msgstr "Archivos ASCII (*.txt)"
 
 #: gui2/fileselect.c:796
-#, fuzzy
 msgid "Gnumeric files (*.gnumeric)"
-msgstr "ficheros de Gnumeric (*.gnumeric)"
+msgstr "Ficheros de Gnumeric (*.gnumeric)"
 
 #: gui2/fileselect.c:797
-#, fuzzy
 msgid "Open Document files (*.ods)"
-msgstr "Hoja de cálculo \"Open Document\" (*.ods)"
+msgstr "Ficheros de hoja de cálculo \"Open Document\" (*.ods)"
 
 #: gui2/fileselect.c:798 gui2/fileselect.c:812
 msgid "Excel files (*.xls)"
@@ -9586,23 +9583,20 @@ msgid "Stata files (*.dta)"
 msgstr "ficheros de Stata (*.dta)"
 
 #: gui2/fileselect.c:801
-#, fuzzy
 msgid "Eviews files (*.wf1)"
-msgstr "ficheros de trabajo Eviews (*.wf1)"
+msgstr "Ficheros de trabajo de Eviews (*.wf1)"
 
 #: gui2/fileselect.c:802
 msgid "SPSS files (*.sav)"
 msgstr "ficheros SPSS (*.sav)"
 
 #: gui2/fileselect.c:803
-#, fuzzy
 msgid "SAS xport files (*.xpt)"
-msgstr "ficheros gnuplot (*.plt)"
+msgstr "Ficheros xport de SAS (*.xpt)"
 
 #: gui2/fileselect.c:804
-#, fuzzy
 msgid "Octave files (*.m)"
-msgstr "ficheros GNU Octave (*.m)"
+msgstr "Ficheros de Octave (*.m)"
 
 #: gui2/fileselect.c:805
 msgid "JMulTi files (*.dat)"
@@ -12707,7 +12701,7 @@ msgstr "Cadenas de caracteres"
 
 #: gui2/helpfiles.c:372
 msgid "Calendar"
-msgstr ""
+msgstr "Calendario"
 
 #: gui2/helpfiles.c:412 gui2/textbuf.c:1643
 msgid "Index"
