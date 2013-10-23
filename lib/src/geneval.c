@@ -6571,6 +6571,23 @@ static int aggregate_discrete_check (const int *list, const DATASET *dset)
     return 0;
 }
 
+static gretl_matrix *mshape_scalar (double x, int r, int c, int *err)
+{
+    gretl_matrix *m = gretl_matrix_alloc(r, c);
+
+    if (m == NULL) {
+	*err = E_ALLOC;
+    } else {
+	int i, n = r * c;
+
+	for (i=0; i<n; i++) {
+	    m->val[i] = x;
+	}
+    }
+
+    return m;
+}
+
 /* evaluate a built-in function that has three arguments */
 
 static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
@@ -6580,7 +6597,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     int post_process = 1;
 
     if (f == F_MSHAPE) {
-	if (l->t != MAT && !scalar_node(l)) {
+	if (l->t != MAT && l->t != NUM) {
 	    node_type_error(f, 1, MAT, l, p);
 	} else if (!scalar_node(m)) {
 	    node_type_error(f, 2, NUM, m, p);
@@ -6591,15 +6608,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    int k2 = node_get_int(r, p);
 
 	    if (!p->err) {
-		if (scalar_node(l)) {
-		    A = gretl_matrix_alloc(k1, k2);
-		    if (A != NULL) {
-			double x = l->v.xval;
-			int i, n = k1*k2;
-			for (i=0; i<n; i++) {
-			    A->val[i] = x;
-			}
-		    }
+		if (l->t == NUM) {
+		    A = mshape_scalar(l->v.xval, k1, k2, &p->err);
 		} else {
 		    A = gretl_matrix_shape(l->v.m, k1, k2);
 		}

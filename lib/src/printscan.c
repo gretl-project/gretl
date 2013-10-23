@@ -1167,28 +1167,6 @@ static int scan_arg (const char **psrc, const char **pfmt, const char **pargs,
     return err;
 }
 
-/* Eat white space; detect comma and eat if found; eat more white
-   space.  Return 1 if comma was found else 0.
-*/
-
-int eat_comma (const char **src) 
-{
-    const char *s = *src;
-    int ret = 0;
-
-    s += strspn(s, " ");
-
-    if (*s == ',') {
-	ret = 1;
-	s++;
-	s += strspn(s, " ");
-    }
-
-    *src = s;
-
-    return ret;
-}
-
 /**
  * do_sscanf:
  * @src: the source string.
@@ -1246,6 +1224,180 @@ int do_sscanf (const char *src, const char *format, const char *args,
     if (!err) {
 	*n_items = nscan;
     }
+
+    return err;
+}
+
+/* apparatus to support (temporarily) the obsolete "sscanf" command */
+
+/* Eat white space; detect comma and eat if found; eat more white
+   space.  Return 1 if comma was found else 0.
+*/
+
+static int eat_comma (const char **src) 
+{
+    const char *s = *src;
+    int ret = 0;
+
+    s += strspn(s, " ");
+
+    if (*s == ',') {
+	ret = 1;
+	s++;
+	s += strspn(s, " ");
+    }
+
+    *src = s;
+
+    return ret;
+}
+
+static int get_literal_length (const char *s)
+{
+    int n = 0;
+
+    while (*s) {
+	if (*s == '"' && *(s-1) != '\\') {
+	    break;
+	}
+	n++;
+	s++;
+    }
+
+    return n;
+}
+
+static char *get_literal_or_stringvar (const char **src, int *err)
+{
+    const char *s = *src;
+    char *ret = NULL;
+    char *tmp = NULL;
+    int literal = 0;
+    int svar = 0;
+    int n = 0;
+
+    if (*s == '"') {
+	literal = 1;
+	s++;
+	n = get_literal_length(s);
+    } else if (*s == '@') {
+	svar = 1;
+	s++;
+	n = gretl_namechar_spn(s);
+    } else {
+	n = gretl_charpos(',', s);
+	if (n == gretl_namechar_spn(s)) {
+	    svar = 1;
+	}
+    }
+
+    if (n == 0) {
+	/* nothing there */
+	*err = E_PARSE;
+	return NULL;
+    }
+
+    tmp = gretl_strndup(s, n);
+    if (tmp == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (literal) {
+	ret = tmp;
+	s++;
+    } else if (svar) {
+	const char *p = get_string_by_name(tmp);
+
+	if (p == NULL) {
+	    *err = E_UNKVAR;
+	} else {
+	    ret = gretl_strdup(p);
+	    if (ret == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+	free(tmp);
+    } else {
+	ret = generate_string(tmp, NULL, err);
+    }
+
+    /* advance the caller's pointer */
+    *src = s + n;
+
+    return ret;
+}
+
+static int 
+split_scanf_line (const char *s, char **psrc, char **pfmt, 
+		  char **args)
+{
+    int gotcom, err = 0;
+
+    if (!strncmp(s, "sscanf ", 7)) {
+	s += 7;
+    } 
+
+    s += strspn(s, " ");
+
+    /* get the source string */
+    *psrc = get_literal_or_stringvar(&s, &err);
+    if (err) {
+	return err;
+    }
+    
+    /* skip to format string */
+    gotcom = eat_comma(&s);
+    if (!gotcom) {
+	/* empty format */
+	return E_PARSE;
+    }
+
+    /* get format string */
+    *pfmt = get_literal_or_stringvar(&s, &err);
+    if (err) {
+	return err;
+    }
+
+    /* skip to first arg */
+    gotcom = eat_comma(&s);
+    if (!gotcom) {
+	/* empty args */
+	return E_PARSE;
+    }
+
+    *args = gretl_strdup(s);
+    if (*args == NULL) {
+	return E_ALLOC;
+    }
+
+    return 0;
+}
+
+int remedial_sscanf (const char *line, DATASET *dset, PRN *prn)
+{
+    char *src = NULL;
+    char *format = NULL;
+    char *args = NULL;
+    int nscan = 0;
+    int err = 0;
+
+    gretl_error_clear();
+
+    err = split_scanf_line(line, &src, &format, &args);
+
+    if (!err) {
+	err = do_sscanf(src, format, args, dset, &nscan);
+    }
+
+    if (!err) {
+	pprintf(prn, "*** \"sscanf\": obsolete command, please use the "
+		"function of the same name\n");
+    }
+
+    free(src);
+    free(format);
+    free(args);
 
     return err;
 }

@@ -215,7 +215,7 @@ static int get_lags_param (CMD *cmd, char **ps)
 
 static void deprecate_alias (const char *targ, const char *repl)
 {
-    gretl_warnmsg_sprintf("\"%s\": obsolete command; please use \"%s\"",
+    gretl_warnmsg_sprintf("*** \"%s\": obsolete command; please use \"%s\"",
 			  targ, repl);
 }
 
@@ -243,6 +243,13 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "equations")) {
 	cmd->ci = EQUATION;
 	cmd->opt |= OPT_M;
+    } else if (!strcmp(s, "graph")) { 
+	deprecate_alias("graph", "textplot");
+	cmd->ci = PLOT; 	 
+    } else if (!strcmp(s, "plot")) {
+	deprecate_alias("plot", "textplot");
+	cmd->ci = PLOT; 	 
+	cmd->opt = OPT_S;
     } else if (!strcmp(s, "list")) {
 	char lname[VNAMELEN];
 	char fmt[24];
@@ -268,6 +275,17 @@ static int catch_command_alias (char *line, CMD *cmd)
 	}
     } else if (*s == '!' || !strcmp(s, "launch")) {
 	cmd->ci = SHELL;
+    } else if (!strcmp(s, "addobs")) { 	 
+	char *tmp = gretl_strdup(line); 	 
+
+	deprecate_alias("addobs", "dataset addobs");
+	strcpy(line, "dataset "); 	 
+	strcat(line, tmp); 	 
+	cmd->ci = DATAMOD; 	 
+	free(tmp);
+    } else if (!strcmp(s, "fcasterr")) {
+	deprecate_alias("fcasterr", "fcast");
+	cmd->ci = FCAST; 	 
     } else if (!strcmp(s, "continue")) {
 	cmd->ci = FUNDEBUG;
 	cmd->opt |= OPT_C;
@@ -364,6 +382,7 @@ static int catch_system_alias (CMD *cmd)
 	               c == SETOBS || \
 	               c == SHELL || \
                        c == SPRINTF || \
+		       c == SSCANF ||  \
                        c == SYSTEM || \
                        c == TABPRINT || \
                        c == VARLIST || \
@@ -5475,6 +5494,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case PRINTF:
     case SPRINTF:
 	err = do_printf(line, dset, prn);
+	break;
+
+    case SSCANF:
+	err = remedial_sscanf(line, dset, prn); 	 
 	break;
 
     case PVAL:

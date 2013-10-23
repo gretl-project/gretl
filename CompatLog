@@ -21,7 +21,6 @@ it still does.
 The following old, undocumented command aliases have finally
 been removed:
 
-"fcasterr" (use "fcast")
 "addobs"   (use "dataset addobs")
 "import"   (use "open")
 "graph"    (use "textplot")

@@ -1101,6 +1101,10 @@ gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
 	    }
 	}
 	if (nmatch > 1) {
+	    if (ci == SETOBS && !strcmp(s, "panel")) {
+		/* backward compatibility: --panel-vars was there first */
+		return OPT_P;
+	    }
 	    *status = OPT_AMBIGUOUS;
 	    return OPT_NONE;
 	}
