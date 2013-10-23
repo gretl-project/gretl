@@ -4592,7 +4592,6 @@ static int gnuplot_show_png (const char *fname, const char *name,
 {
     GtkWidget *vbox;
     GtkWidget *canvas_hbox;
-    GtkWidget *label_frame = NULL;
     GtkWidget *status_hbox = NULL;
     gchar *title = NULL;
     png_plot *plot;
@@ -4720,17 +4719,12 @@ static int gnuplot_show_png (const char *fname, const char *name,
     /* box to hold canvas */
     canvas_hbox = gtk_hbox_new(FALSE, 1);
     gtk_box_pack_start(GTK_BOX(vbox), canvas_hbox, TRUE, TRUE, 0);
-    gtk_widget_show(canvas_hbox);
 
     /* eventbox and hbox for status area  */
     plot->statusarea = gtk_event_box_new();
     gtk_box_pack_start(GTK_BOX(vbox), plot->statusarea, FALSE, FALSE, 0);
-
     status_hbox = gtk_hbox_new(FALSE, 2);
     gtk_container_add(GTK_CONTAINER(plot->statusarea), status_hbox);
-    gtk_widget_show(status_hbox);
-    gtk_container_set_resize_mode(GTK_CONTAINER (status_hbox),
-				  GTK_RESIZE_QUEUE);
 
     /* Create drawing-area widget */
     plot->canvas = gtk_drawing_area_new();
@@ -4742,25 +4736,29 @@ static int gnuplot_show_png (const char *fname, const char *name,
                            | GDK_BUTTON_RELEASE_MASK
                            | GDK_POINTER_MOTION_MASK
                            | GDK_POINTER_MOTION_HINT_MASK);
-
     gtk_widget_set_can_focus(plot->canvas, TRUE);
     g_signal_connect(G_OBJECT(plot->canvas), "button-press-event", 
 		     G_CALLBACK(plot_button_press), plot);
     g_signal_connect(G_OBJECT(plot->canvas), "button-release-event", 
 		     G_CALLBACK(plot_button_release), plot);
+    gtk_box_pack_start(GTK_BOX(canvas_hbox), plot->canvas, FALSE, FALSE, 0);
 
-    /* create the contents of the status area */
     if (plot_show_cursor_label(plot)) {
 	/* cursor label (graph position indicator) */
-	label_frame = gtk_frame_new(NULL);
-	gtk_frame_set_shadow_type(GTK_FRAME(label_frame), GTK_SHADOW_IN);
+	GtkWidget *frame = gtk_frame_new(NULL);
+
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
 	plot->cursor_label = gtk_label_new(" ");
-	gtk_container_add(GTK_CONTAINER(label_frame), plot->cursor_label);
-	gtk_widget_show(plot->cursor_label);
+	gtk_widget_set_size_request(plot->cursor_label, 160, -1);
+	gtk_container_add(GTK_CONTAINER(frame), plot->cursor_label);
+	gtk_box_pack_start(GTK_BOX(status_hbox), frame, FALSE, FALSE, 0);
     }
 
     /* the statusbar */
     plot->statusbar = gtk_statusbar_new();
+    gtk_box_pack_start(GTK_BOX(status_hbox), plot->statusbar, TRUE, TRUE, 0);
+    add_graph_toolbar(status_hbox, plot);
+
 #if GTK_MAJOR_VERSION < 3
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(plot->statusbar), FALSE);
 #endif
@@ -4776,27 +4774,6 @@ static int gnuplot_show_png (const char *fname, const char *name,
 			 G_CALLBACK(plot_motion_callback), plot);
     }
 
-    /* pack the widgets */
-    gtk_box_pack_start(GTK_BOX(canvas_hbox), plot->canvas, FALSE, FALSE, 0);
-
-    /* fill the status area */
-    if (plot_show_cursor_label(plot)) {
-	gtk_box_pack_start(GTK_BOX(status_hbox), label_frame, FALSE, FALSE, 0);
-    }
-
-    gtk_box_pack_start(GTK_BOX(status_hbox), plot->statusbar, TRUE, TRUE, 0);
-    add_graph_toolbar(status_hbox, plot);
-
-    /* show stuff */
-    gtk_widget_show(plot->canvas);
-
-    if (plot_show_cursor_label(plot)) {
-	gtk_widget_show(label_frame);
-    }
-
-    gtk_widget_show(plot->statusbar);
-    gtk_widget_show(plot->statusarea);
-
     gtk_widget_realize(plot->canvas);
     plot->window = gtk_widget_get_window(plot->canvas);
 
@@ -4804,24 +4781,18 @@ static int gnuplot_show_png (const char *fname, const char *name,
     gdk_window_set_back_pixmap(plot->window, NULL, FALSE);
 #endif
 
-    if (plot_show_cursor_label(plot)) {
-	gtk_widget_realize(plot->cursor_label);
-	gtk_widget_set_size_request(plot->cursor_label, 160, -1);
-    }
-
-    gtk_widget_show(vbox);
-
+    /* finish setup of plot->shell */
     g_object_set_data(G_OBJECT(plot->shell), "plot-filename", 
 		      plot->spec->fname);
-
     window_list_add(plot->shell, GNUPLOT);
     g_signal_connect(G_OBJECT(plot->shell), "key-press-event", 
 		     G_CALLBACK(plot_key_handler), plot);
+    gtk_widget_show_all(plot->shell);
 
-    gtk_widget_show(plot->shell);
-
+#if 0
     /* set the focus to the canvas area */
-    gtk_widget_grab_focus(plot->canvas);  
+    gtk_widget_grab_focus(plot->canvas);
+#endif
 
 #if GTK_MAJOR_VERSION >= 3
     g_signal_connect(G_OBJECT(plot->canvas), "draw",
@@ -4839,7 +4810,6 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
     if (err) {
 	gtk_widget_destroy(plot->shell);
-	plot = NULL;
     } else {
 	g_object_set_data(G_OBJECT(plot->shell), "object", plot);
     }

@@ -261,33 +261,6 @@ static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event,
     return maybe_select_other_window(event, data);
 }
 
-static gint window_key_release (GtkWidget *w, GdkEventKey *event, 
-				gpointer data)
-{
-#ifdef MAC_NATIVE
-    if (event->keyval == GDK_Meta_L || 
-	event->keyval == GDK_Meta_R) {
-	return select_other_window(NULL, 0);
-    }
-#else
-    if (event->keyval == GDK_Alt_L || 
-	event->keyval == GDK_Alt_R) {
-	return select_other_window(NULL, 0);
-    }
-#endif
-    
-    return FALSE;
-}
-
-static void attach_window_key_specials (GtkWidget *w)
-{
-    g_signal_connect(G_OBJECT(w), "key-press-event", 
-		     G_CALLBACK(catch_winlist_key), w);
-    gtk_widget_add_events(w, GDK_KEY_RELEASE_MASK);
-    g_signal_connect(G_OBJECT(w), "key-release-event", 
-		     G_CALLBACK(window_key_release), NULL);
-}
-
 void window_list_add (GtkWidget *w, int role)
 {
     GtkActionEntry entry = { 
@@ -340,7 +313,8 @@ void window_list_add (GtkWidget *w, int role)
 			 window_group);
     }
 
-    attach_window_key_specials(w);
+    g_signal_connect(G_OBJECT(w), "key-press-event", 
+		     G_CALLBACK(catch_winlist_key), w);
 
     n_listed_windows++;
 
@@ -695,34 +669,18 @@ void cascade_session_windows (void)
 	    }
 	    slist = slist->next;
 	}
-
 	g_list_free(list);
     }
 }
 
 static gint select_other_window (gpointer self, int seq)
 {
-    static GList *wlist;
-
-    if (self == NULL) {
-	/* cleanup signal (mod key released) */
-	if (wlist != NULL) {
-	    g_list_free(wlist);
-	    wlist = NULL;
-	    return TRUE;
-	} else {
-	    return FALSE;
-	}
-    }
-
     if (n_listed_windows > 1) {
+	GList *wlist = gtk_action_group_list_actions(window_group);
 	GList *mylist;
 	GtkWidget *w;
 
-	if (wlist == NULL) {
-	    wlist = gtk_action_group_list_actions(window_group);
-	    wlist = g_list_sort(wlist, sort_window_list);
-	}
+	wlist = g_list_sort(wlist, sort_window_list);
 
 	/* find the window from which the keystroke emanated, @self,
 	   and then select the next or previous window in the list,
@@ -743,10 +701,12 @@ static gint select_other_window (gpointer self, int seq)
 		break;
 	    }
 	    mylist = mylist->next;
-	}	
+	}
+	g_list_free(wlist);
+	return TRUE;
     }
 
-    return TRUE;
+    return FALSE;
 }
 
 windata_t *get_editor_for_file (const char *filename)
