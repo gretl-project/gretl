@@ -65,7 +65,7 @@ static GtkWidget *window_from_action (GtkAction *action)
 	if (name != NULL) {
 #ifdef _WIN64
 	    /* note: win64 uses the LLP64 data model, so
-	       it's necessary to use long long to hold a
+	       it's necessary to use a long long to hold a
 	       pointer; on other 64-bit systems plain long
 	       is 64 bits (LP64).
 	    */
