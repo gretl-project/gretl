@@ -4227,6 +4227,7 @@
 	  estratti da una uniforme (0,1). Nota: per generare uno
 	  scalare pseudocasuale uniforme, è consigliabile usare la
 	  funzione <fncref targ="randgen1"/>.
+	</para>
 	<para>
 	  <seelist>
 	    <fncref targ="mnormal"/>

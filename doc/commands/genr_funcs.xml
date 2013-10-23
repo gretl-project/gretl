@@ -4476,6 +4476,7 @@
 	  pseudo-random variates. Note: the preferred method for
 	  generating a scalar uniform r.v. is to use the <fncref
 	  targ="randgen1"/> function.
+	</para>
 	<para>
 	  <seelist>
 	    <fncref targ="mnormal"/>
