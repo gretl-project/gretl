@@ -126,7 +126,7 @@ the OECD file we have to scan down several lines until we find
 \begin{code}
 "United Kingdom","INDPRO","Monthly","Jan-1990","March 1999",100,
 \end{code}
-This difference is basically irrelevant because \texttt{join} can
+This difference is basically irrelevant because \cmd{join} can
 handle the case where the lines appear in random order, although some
 operations can be coded more conveniently if we're able to assume
 chronological ordering (either on the Alfred or the OECD pattern, it
@@ -144,7 +144,7 @@ A third difference lies in the dating of the revisions or editions.
 As we have seen, Alfred gives a specific daily date while (in the UK
 industrial production file at any rate), the OECD just dates each
 edition to a month. This is not necessarily relevant for
-\texttt{join}, but it does raise the question of whether the OECD
+\cmd{join}, but it does raise the question of whether the OECD
 might date revisions to a finer granularity in some of their files, in
 which case one would have to be on the lookout for a different date
 format.
@@ -164,7 +164,7 @@ conveys no independent information.\footnote{Email received from
 \label{sec:realtime-tconvert}
 
 Before we get properly started it is worth saying a little more about
-the \option{tkey} and \option{tconvert} options to \texttt{join}
+the \option{tkey} and \option{tconvert} options to \cmd{join}
 (first introduced in section~\ref{sec:join-tconvert}), as they apply in
 the case of realtime data.
 
@@ -241,9 +241,8 @@ arbitrarily choosing the self-explanatory identifier
 
 \begin{code}
 join @fname ip_asof_20110615 --tkey=observation_date --data=INDPRO \
---tconvert="realtime_start_date,realtime_end_date" \
---filter="realtime_start_date<=20110615 && \
-(missing(realtime_end_date) || 20110615<=realtime_end_date)"
+--tconvert="realtime_start_date" \
+--filter="realtime_start_date<=20110615" --aggr=max(realtime_start_date)
 \end{code}
 
 Here some detailed explanations of the various options are warranted: 
@@ -271,30 +270,26 @@ Here some detailed explanations of the various options are warranted:
   possible to perform basic arithmetic on dates.  Note that since
   date strings in Alfred files conform to gretl's default assumption
   it is not necessary to use the \option{tconv-fmt} option here.
-\item The \option{filter} option specification is the central piece of
+\item The \option{filter} option specification in combination with the 
+  subsequent \option{aggr} aggregation treatment is the central piece of
   our data retrieval; notice how we use the date constant 20110615 in
-  ISO basic form to do numerical comparisons. It would also have been
-  possible to predefine a scalar variable, as in
+  ISO basic form to do numerical comparisons, and how we perform the 
+  numerical \texttt{max} operation on the converted column 
+  \verb|realtime_start_date|. It would also have been possible to 
+  predefine a scalar variable, as in
  \begin{code}
    vintage = 20110615
  \end{code}
- and then use \texttt{vintage} in the \cmd{join} command instead.
-
+  and then use \texttt{vintage} in the \cmd{join} command instead.
   Here we tell \cmd{join} that we only want to extract those
-  publications that (1) already appeared before June 15th 2011, and
-  (2) were not yet obsolete on that day. The second condition is
-  complicated by the fact that Alfred uses a convention by which, in
-  the atomic file, the line containing the latest vintage contains a
-  missing value for \texttt{realtime\_end\_date}. The syntax shown in
-  the example handles the case when the relevant publication is the
-  latest available one. In practice, the following simpler filtering
-  plus aggregation operation that only involves the
-  \verb|realtime_start_date| column will typically be equivalent for
-  well-formed source files: 
+  publications that (1) already appeared before (and including) June 15th 2011, and
+  (2) were not yet obsoleted by a newer release.\footnote{By implementing 
+  the second condition through the \texttt{max} aggregation on the 
+  \verb|realtime_start_date| column alone, without using the 
+  \verb|realtime_end_date| column, we make use of the fact that Alfred
+  files cannot have ``holes'' as explained before.}
 \end{itemize}
-\begin{code}
-  --filter="realtime_start_date<=20110615" --aggr=max(realtime_start_date)
-\end{code}
+
 As a result, your dataset will now contain a time series named
 \verb|ip_asof_20110615| with the values that a researcher would have
 had available on June 15th 2011. Of course, all values for the
@@ -312,8 +307,8 @@ relevant \cmd{join} command becomes:
 \begin{code}
   join @fname ip_3rdpub --tkey=observation_date --data=INDPRO --aggr="seq:3"
 \end{code}
-Since we do not need the \verb|realtime_start_date| and
-\verb|realtime_end_date| information for this retrieval, we have
+Since we do not need the \verb|realtime_start_date| information for this 
+retrieval, we have
 dropped the \option{tconvert} option here. Note that this formulation
 assumes that the source file is ordered chronologically, otherwise
 using the option \option{aggr="seq:3"}, which retrieves the third
@@ -400,9 +395,13 @@ delta should be no greater than the specified lag, $p$.\footnote{The
   quarterly data as well as monthly. The idea could be generalized to
   cover weekly or daily data without much difficulty.}
 
-This filter condition may be satisfied by more than one release, so we
-need to specify an aggregation method: we simply choose the most
-recent release within the specified time window.
+This filter condition may be satisfied by more than one release, 
+but only the latest of those will actually be the vintage that was 
+current at the end of the $n$-th month after the observation period,
+so we add the option \option{aggr=max(realtime\_start\_date)}. 
+If instead you want to target the release at the \emph{beginning} of 
+the $n$-th month you would have to use a slightly more complicated 
+filter function. 
 
 \subsection{An illustration}
 
