@@ -24,14 +24,14 @@ newly introduced bugs. To see what's new in the snapshot, take a look at the gre
 <tr>
 <td><p>latest release (SHORTDATE)</p></td>
 <td><p>
-<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-intel.dmg.gz">gretl-VERSION-quartz.dmg.gz</a>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-quartz.dmg.gz">gretl-VERSION-quartz.dmg.gz</a>
 </p></td>
 </tr>
 
 <tr>
 <td><p>OR current snapshot</p></td>
 <td><p>
-<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-intel.dmg.gz/download">gretl-quartz.dmg.gz</a>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-quartz.dmg.gz/download">gretl-quartz.dmg.gz</a>
 </p></td>
 </tr>
 </table>
@@ -50,13 +50,14 @@ Once you're done installing gretl you can eject the disk image and delete the <k
 <h2>Trouble?</h2>
 
 <p>The gretl disk image is documented in 
-<a href="./README.pdf">README.pdf</a>, which contains some suggestions for 
+<a href="./README-quartz.pdf">README-quartz.pdf</a>, which contains some suggestions for 
 trouble-shooting.  Briefly, if you want to debug a non-functioning
-gretl on OS X, please try this: open an X11 terminal window; change directory
-(<kbd>cd</kbd>) to <kbd>Gretl.app</kbd> (where you installed the package); 
-change directory to <kbd>Contents/MacOS</kbd> and run the command</p>
+gretl on OS X, please try this: open a Terminal window and run the following
+commands (change the first line if you installed gretl somewhere other than 
+<kbd>/Applications</kbd>):
 
 <pre>
+cd /Applications/Gretl.app/Contents/MacOS
 ./gretl.sh
 </pre>
 
