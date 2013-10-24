@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>gretl on OS X</title>
+<LINK REL=STYLESHEET TYPE="text/css" HREF="css-gretl.html">
+</head>
+
+<body>
+
+<p>[<a href="http://gretl.sourceforge.net/index.html">gretl main page</a>]</p>
+
+<center>
+<h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
+<h2>for Mac OS X on Intel (quartz version)</h2>
+</center>
+
+<h2>Installing gretl</h2> 
+
+<p>Grab and install either the latest release or the current "snapshot".
+The snapshot is more up to date: often it will contain bug-fixes but sometimes it will contain 
+newly introduced bugs. To see what's new in the snapshot, take a look at the gretl
+<a href="../ChangeLog.html">Change log</a> (the "in progress" entry).</p>
+
+<table cellpadding="2">
+<tr>
+<td><p>latest release (SHORTDATE)</p></td>
+<td><p>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-intel.dmg.gz">gretl-VERSION-quartz.dmg.gz</a>
+</p></td>
+</tr>
+
+<tr>
+<td><p>OR current snapshot</p></td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-intel.dmg.gz/download">gretl-quartz.dmg.gz</a>
+</p></td>
+</tr>
+</table>
+
+<p>After downloading, double-click on the gretl <kbd>dmg.gz</kbd> file to unzip it.
+This will produce a <kbd>dmg</kbd> file; double-click on that to mount the
+disk image. Open the disk image in the Finder and drag Gretl onto Applications.
+<i>But note</i>: if you're updating an existing installation of gretl you should
+first open Applications in the Finder and delete the old Gretl item.
+</p>
+<p>
+Once you're done installing gretl you can eject the disk image and delete the <kbd>dmg</kbd> and
+<kbd>dmg.gz</kbd> files.
+</p>
+
+<h2>Trouble?</h2>
+
+<p>The gretl disk image is documented in 
+<a href="./README.pdf">README.pdf</a>, which contains some suggestions for 
+trouble-shooting.  Briefly, if you want to debug a non-functioning
+gretl on OS X, please try this: open an X11 terminal window; change directory
+(<kbd>cd</kbd>) to <kbd>Gretl.app</kbd> (where you installed the package); 
+change directory to <kbd>Contents/MacOS</kbd> and run the command</p>
+
+<pre>
+./gretl.sh
+</pre>
+
+<p>This should give you some feedback on what is going wrong.</p>
+
+<h2>Optional extras</h2>
+
+<p>You may wish to install X-12-ARIMA and/or TRAMO/SEATS. These are specialized programs for
+analysis of seasonal time series data, in versions compatible with gretl.
+</p>
+
+<table cellpadding="2">
+
+<tr>
+<td><p>X-12-ARIMA for Intel Mac</p></td>
+<td><p><a
+href="http://sourceforge.net/projects/gretl/files/x12a/x12arima-intel.dmg/download">x12arima-intel.dmg</a></p></td>
+</tr>
+
+<tr>
+<td><p>TRAMO/SEATS for Intel Mac</p></td>
+<td><p><a 
+href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats-intel.dmg/download">tramo-seats-intel.dmg</a></p></td>
+</tr>
+
+</table>
+
+<p>
+&nbsp;
+</p>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+ 
