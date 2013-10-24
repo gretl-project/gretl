@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-10-03 08:28-0400\n"
-"PO-Revision-Date: 2013-06-17 21:42-0300\n"
+"PO-Revision-Date: 2013-10-23 22:07-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -435,9 +435,9 @@ msgid "got invalid field '%s'"
 msgstr "encontrado campo inválido '%s'"
 
 #: lib/src/calendar.c:403
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid starting date for %d-day data"
-msgstr "Ordem de defasagem inválida para arch (%d)"
+msgstr "Data inicial inválida para dados de %d dias"
 
 #: lib/src/compare.c:269
 #, c-format
@@ -1132,7 +1132,7 @@ msgstr "Memória esgotada\n"
 
 #: lib/src/csvdata.c:3370
 msgid "No matching data after filtering"
-msgstr ""
+msgstr "Não existem dados adequados após a filtragem"
 
 #: lib/src/csvdata.c:3686
 msgid "You need to specify an aggregation method for a 1:n join"
@@ -1140,28 +1140,28 @@ msgstr ""
 "É necessário especificar um método de agregação para uma junção de 1:n "
 
 #: lib/src/csvdata.c:4502
-#, fuzzy, c-format
+#, c-format
 msgid "%s: column '%s' was not found"
-msgstr "o comando '%s' não é conhecido"
+msgstr "%s: coluna '%s' não foi encontrada"
 
 #: lib/src/csvdata.c:4518
 #, c-format
 msgid "%s: string key on left but numeric on right"
-msgstr ""
+msgstr "%s: rótulo de texto à esquerda mas numérico à direita"
 
 #: lib/src/csvdata.c:4520
 #, c-format
 msgid "%s: string key on right but numeric on left"
-msgstr ""
+msgstr "%s: rótulo de texto à direita mas numérico à esquerda"
 
 #: lib/src/csvdata.c:4782
 #, c-format
 msgid "Outer dataset: read %d columns and %d rows\n"
-msgstr ""
+msgstr "Conjunto de dados externo: lido %d colunas e %d linhas\n"
 
 #: lib/src/csvdata.c:4832 gui2/library.c:4000
 msgid "Series length does not match the dataset"
-msgstr "O tamanho da série não foi definido"
+msgstr "O tamanho da série não corresponde ao conjunto de dados"
 
 #: lib/src/dataio.c:179 lib/src/dataio.c:219
 #, c-format
@@ -2411,7 +2411,7 @@ msgstr "'%s' : apenas definido para matrizes"
 #: lib/src/geneval.c:12312
 #, c-format
 msgid "type error: %s is string-valued"
-msgstr ""
+msgstr "erro de tipo: %s é valor de texto"
 
 #: lib/src/geneval.c:12710
 msgid "Bare declarations are not allowed here"
@@ -3094,14 +3094,12 @@ msgid "This command is implemented only for OLS models"
 msgstr "Este comando está implementado apenas para modelos MQO"
 
 #: lib/src/gretl_errors.c:55
-#, fuzzy
 msgid "Invalid argument"
-msgstr "Entrada inválida"
+msgstr "Argumento inválido"
 
 #: lib/src/gretl_errors.c:56
-#, fuzzy
 msgid "Syntax error"
-msgstr "Erro de dados"
+msgstr "Erro de sintaxe"
 
 #: lib/src/gretl_errors.c:57
 msgid "No independent variables left after omissions"
@@ -3726,9 +3724,8 @@ msgid "Error: unit %g, period %g: duplicated observation"
 msgstr "Erro: unidade %g, período %g: observação duplicada"
 
 #: lib/src/gretl_panel.c:4854
-#, fuzzy
 msgid "Sorry, can't do this with a sub-sampled dataset"
-msgstr "Não é possível fazer isto durante a edição do conjunto de dados"
+msgstr "Não é possível fazer isto com um conjunto de dados subamostrado"
 
 #: lib/src/gretl_paths.c:2136
 msgid "User directory is not set"
@@ -3904,15 +3901,13 @@ msgid "variable %d: translating from strings to code numbers\n"
 msgstr "variável %d: traduzindo de texto para números de código\n"
 
 #: lib/src/gretl_string_table.c:487
-#, fuzzy
 msgid ""
 "One or more non-numeric variables were found.\n"
 "These variables have been given numeric codes as follows.\n"
 "\n"
 msgstr ""
-"Foram encontradas uma ou mais variáveis não-numéricas. Gretl\n"
-"não consegue lidar com essas variáveis diretamente, por isso foram\n"
-"atribuídos códigos numéricos conforme mostrado a seguir.\n"
+"Foram encontradas uma ou mais variáveis não-numéricas. Estas\n"
+"variáveis receberam códigos numéricos conforme mostrado a seguir.\n"
 "\n"
 
 #: lib/src/gretl_string_table.c:490
@@ -4303,9 +4298,9 @@ msgid "No data information is available.\n"
 msgstr "Não existe informação sobre os dados.\n"
 
 #: lib/src/interact.c:4454
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid input '%s'\n"
-msgstr "%s: valor inválido '%s'"
+msgstr "%s: entrada inválida '%s'\n"
 
 #: lib/src/interact.c:4668 lib/src/interact.c:4676
 msgid "Inner key is missing"
@@ -5242,7 +5237,7 @@ msgstr "Variável de seleção"
 #: lib/src/modelprint.c:2034
 #, c-format
 msgid "Using %d quadrature points"
-msgstr ""
+msgstr "Usando %d pontos de quadratura"
 
 #: lib/src/modelprint.c:2048
 msgid "Allowing for groupwise heteroskedasticity"
@@ -6648,6 +6643,7 @@ msgstr "Não foram descartadas quaisquer observações!"
 #: lib/src/subsample.c:1263
 msgid "--balanced option is invalid: the (full) dataset is not a panel"
 msgstr ""
+"opção --balanced não é válida: a base de dados (completa) não é um painel"
 
 #: lib/src/subsample.c:1805 lib/src/subsample.c:1824
 msgid "error in new starting obs"
@@ -7044,7 +7040,7 @@ msgid "Matrix decomposition failed"
 msgstr "Decomposição de matriz falhou"
 
 #: lib/src/uservar.c:1354
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is currently read-only"
 msgstr "A variável %s é apenas para leitura"
 
@@ -7403,7 +7399,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 17 de junho de 2013."
+"Tradução de 23 de outubro de 2013."
 
 #: gui2/about.c:165
 msgid "License"
@@ -9516,9 +9512,8 @@ msgstr ""
 "Deseja substituí-lo?"
 
 #: gui2/fileselect.c:793
-#, fuzzy
 msgid "Gretl data files (*.gdt)"
-msgstr "arquivo de dados gretl (.gdt)"
+msgstr "Arquivos de dados gretl (.gdt)"
 
 #: gui2/fileselect.c:794 gui2/fileselect.c:808
 msgid "CSV files (*.csv)"
@@ -9529,14 +9524,12 @@ msgid "ASCII files (*.txt)"
 msgstr "arquivos ASCII (*.txt)"
 
 #: gui2/fileselect.c:796
-#, fuzzy
 msgid "Gnumeric files (*.gnumeric)"
 msgstr "arquivos Gnumeric (*.gnumeric)"
 
 #: gui2/fileselect.c:797
-#, fuzzy
 msgid "Open Document files (*.ods)"
-msgstr "Planilha de cálculo \"Open Document\" (*.ods)"
+msgstr "Arquivos \"Open Document\" (*.ods)"
 
 #: gui2/fileselect.c:798 gui2/fileselect.c:812
 msgid "Excel files (*.xls)"
@@ -9551,23 +9544,20 @@ msgid "Stata files (*.dta)"
 msgstr "arquivos Stata (*.dta)"
 
 #: gui2/fileselect.c:801
-#, fuzzy
 msgid "Eviews files (*.wf1)"
-msgstr "arquivos de trabalho EViews (*.wf1)"
+msgstr "Arquivos EViews (*.wf1)"
 
 #: gui2/fileselect.c:802
 msgid "SPSS files (*.sav)"
 msgstr "arquivos SPSS (*.sav)"
 
 #: gui2/fileselect.c:803
-#, fuzzy
 msgid "SAS xport files (*.xpt)"
-msgstr "Arquivos Gnuplot (*.plt)"
+msgstr "Arquivos SAS xport (*.xpt)"
 
 #: gui2/fileselect.c:804
-#, fuzzy
 msgid "Octave files (*.m)"
-msgstr "Arquivos GNU Octave (*.m)"
+msgstr "Arquivos Octave (*.m)"
 
 #: gui2/fileselect.c:805
 msgid "JMulTi files (*.dat)"
@@ -11539,9 +11529,8 @@ msgid "Bi_variate..."
 msgstr "Bi_variado..."
 
 #: gui2/gretl.c:1775
-#, fuzzy
 msgid "_Random effects..."
-msgstr "Efeitos aleatórios"
+msgstr "Efeitos aleató_rios..."
 
 #: gui2/gretl.c:1776
 msgid "To_bit..."
@@ -12669,7 +12658,7 @@ msgstr "Cadeias de caracteres"
 
 #: gui2/helpfiles.c:372
 msgid "Calendar"
-msgstr ""
+msgstr "Calandário"
 
 #: gui2/helpfiles.c:412 gui2/textbuf.c:1643
 msgid "Index"
@@ -13351,7 +13340,7 @@ msgid ""
 "The data set is currently sub-sampled.\n"
 "Would you like to restore the full range?"
 msgstr ""
-"O conjunto de dados está sub-amostrado.\n"
+"O conjunto de dados está subamostrado.\n"
 "Deseja restaurar o intervalo completo?"
 
 #: gui2/library.c:7431
@@ -13364,7 +13353,7 @@ msgid ""
 "You must restore the full range before compacting.\n"
 "Restore the full range now?"
 msgstr ""
-"O conjunto de dados está sub-amostrado.\n"
+"O conjunto de dados está subamostrado.\n"
 "O intervalo completo deve ser restaurado antes da compactação.\n"
 "Restaurar agora o intervalo completo?"
 
@@ -13378,7 +13367,7 @@ msgid ""
 "You must restore the full range before expanding.\n"
 "Restore the full range now?"
 msgstr ""
-"O conjunto de dados está sub-amostrado.\n"
+"O conjunto de dados está subamostrado.\n"
 "O intervalo completo deve ser restaurado antes da expansão.\n"
 "Restaurar agora o intervalo completo?"
 
@@ -13831,9 +13820,8 @@ msgid "AR(1)"
 msgstr "AR(1)"
 
 #: gui2/selector.c:3644
-#, fuzzy
 msgid "Random effects (binary) probit"
-msgstr "Probit com efeitos aleatórios"
+msgstr "Probit com efeitos aleatórios (binário)"
 
 #: gui2/selector.c:3654
 msgid "Count data model"
@@ -14125,7 +14113,7 @@ msgstr "Bits por valor em vírgula-flutuante"
 
 #: gui2/selector.c:5349
 msgid "Quadrature points"
-msgstr ""
+msgstr "Pontos de quadratura"
 
 #: gui2/selector.c:5371
 msgid "Robust standard errors/intervals"
