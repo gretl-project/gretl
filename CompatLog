@@ -1,7 +1,4 @@
-version 1.9.13, in progress
-
-The "sscanf" command, deprecated since gretl 1.9.4, has been
-removed: use the function of the same name instead.
+2013-10-24 version 1.9.13
 
 The default criterion used in connection with the --test-down
 option for the "adf" command is now the modified AIC as
@@ -23,8 +20,6 @@ been removed:
 
 "addobs"   (use "dataset addobs")
 "import"   (use "open")
-"graph"    (use "textplot")
-"plot"     (use "textplot")
 
 2013-03-15 version 1.9.12
 

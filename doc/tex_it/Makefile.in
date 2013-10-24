@@ -37,17 +37,28 @@ TEXSRC = cli.tex \
 	optarg.tex \
 	var.tex
 
+BIBSRC = gretl.bib gretl.bst
+
+STYSRC = $(docsrc)/gretl.sty.in
+
 WEBDIR = /home/cottrell/stats/esl/website
 
 all: $(GUIDE) $(REF)
 
 $(GUIDE): gretl-guide-it.tex links textables_it date.tex
 	pdflatex $<
+	bibtex gretl-guide-it
+	pdflatex $<
+	bibtex gretl-guide-it
 	pdflatex $<
 	pdflatex $<
 
 $(REF): gretl-ref-it.tex links cmdtex functex textables_it topiclist date.tex
+	date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
+	bibtex gretl-ref-it
+	pdflatex $<
+	bibtex gretl-ref-it
 	pdflatex $<
 	pdflatex $<
 
@@ -64,6 +75,8 @@ links:
 	rm -f figures && ln -s $(docsrc)/figures_it ./figures
 	for f in $(TEXSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_it/$$f . ; fi ; done
+	for f in $(BIBSRC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
 
 cmdtex:
 	$(MAKE) -C ../commands cmdtex_it

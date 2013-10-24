@@ -91,8 +91,10 @@ void gretl_dialog_add_message (GtkWidget *dlg, const char *msg)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 12);
 }
 
-gint yes_no_dialog_with_parent (const char *title, const char *msg, 
-				int cancel, GtkWidget *parent)
+static gint 
+real_yes_no_dialog_with_parent (const char *title, const char *msg, 
+				int cancel, GtkWidget *parent,
+				int default_id)
 {
     GtkDialogFlags flags = GTK_DIALOG_MODAL;
     GtkWidget *dlg;
@@ -124,6 +126,10 @@ gint yes_no_dialog_with_parent (const char *title, const char *msg,
 			      GTK_RESPONSE_REJECT);
     }
 
+    if (default_id != 0) {
+	gtk_dialog_set_default_response(GTK_DIALOG(dlg), default_id);
+    }
+
     gretl_dialog_add_message(dlg, msg);
 
 #if GTK_MAJOR_VERSION < 3
@@ -144,9 +150,23 @@ gint yes_no_dialog_with_parent (const char *title, const char *msg,
     }
 }
 
+gint yes_no_dialog_with_parent (const char *title, const char *msg, 
+				int cancel, GtkWidget *parent)
+{
+    return real_yes_no_dialog_with_parent(title, msg, cancel, 
+					  parent, 0);
+}
+
 gint yes_no_dialog (const char *title, const char *msg, int cancel)
 {
-    return yes_no_dialog_with_parent(title, msg, cancel, NULL);
+    return real_yes_no_dialog_with_parent(title, msg, cancel, 
+					  NULL, 0);
+}
+
+gint no_yes_dialog (const char *title, const char *msg)
+{
+    return real_yes_no_dialog_with_parent(title, msg, 0, NULL,
+					  GTK_RESPONSE_NO);
 }
 
 static void toggle_session_prompt (GtkToggleButton *b)

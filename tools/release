@@ -8,8 +8,8 @@ Local:
 * Commit the above changes to CVS
 * Rebuild and publish the PDF docs
 * make dist ; and put the new gretl-N.M.P.tar.bz2 where it needs
-  to go, for building RPMs
-* Build the gretl RPMs
+  to go, for building RPM
+* Build the gretl RPM
 * Make the MS Windows installer
 * Make the Mac OS X installers (intel and ppc)
 * Get all the packages in place for upload to SF.

@@ -1,6 +1,9 @@
 \documentclass{article}
+\usepackage{pifont}
 \usepackage{gretl-lite}
 \usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
+
+\newcommand{\quatre}{\Pisymbol{pwd}{122}}
 
 \begin{document}
 
@@ -12,19 +15,21 @@
 {\large \textbf{Gretl keyboard shortcuts}}
 \end{center}
 
-\textsf{Gretl} provides keyboard shortcuts for various commands. Some of
-these are standard and are indicated in the menus; for example
-\texttt{Ctrl-s} in the main window saves the current dataset, as
-indicated under the \textsf{File} menu. Others are specific to
-\textsf{gretl} and do not appear in the menus; these are documented
-below.
+Gretl provides keyboard shortcuts for various commands. Some of these
+are standard and are indicated in the menus; for example
+\texttt{Ctrl-s} (on the Mac, \quatre\texttt{-s}) in the
+main window saves the current dataset, as indicated under the
+\textsf{File} menu. Others are specific to gretl and do not appear in
+the menus; these are documented below.
 
 \begin{center}
 \begin{tabular}{p{.2\textwidth}lp{.6\textwidth}}
 \textit{Context} & \textit{Key} & \textit{Effect} \\[6pt]
 
 Most windows & \texttt{Alt-w} & 
-  pop up a menu listing open \textsf{gretl} windows \\[6pt]
+  popup menu listing open \textsf{gretl} windows \\
+ & \texttt{Alt-PgUp} & previous gretl window (Mac: \quatre\texttt{-\textasciitilde})  \\
+ & \texttt{Alt-PgDn} & next gretl window (Mac: \quatre\texttt{-\`{}}) \\[6pt]
 
 Main window & \texttt{g} & 
   open dialog for defining a new variable \\

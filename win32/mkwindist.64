@@ -359,7 +359,7 @@ make gretl.iss
 # make Inno installer
 echo "Building gretl installer executable..."
 ${INNO_CMD} ./gretl.iss 2>errlog && \
-mv Output/setup.exe Output/gretl_install.exe && \
-ls -l Output/gretl_install.exe
+mv Output/setup.exe Output/gretl_install-64.exe && \
+ls -l Output/gretl_install-64.exe
 
 touch dist.stamp

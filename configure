@@ -649,6 +649,8 @@ XML_LIBS
 XML_CFLAGS
 GDK_PIXBUF_LIBS
 GDK_PIXBUF_CFLAGS
+GTK_LIBS
+GTK_CFLAGS
 use_xdg_utils
 use_xdg
 build_po
@@ -668,8 +670,10 @@ GTKSPINNER_LIBS
 GTKSPINNER_CFLAGS
 GTKMAC_LIBS
 GTKMAC_CFLAGS
-GTK_LIBS
-GTK_CFLAGS
+GTK3_LIBS
+GTK3_CFLAGS
+GTK2_LIBS
+GTK2_CFLAGS
 GLIB_LIBS
 GLIB_CFLAGS
 CURL_LIBS
@@ -823,7 +827,7 @@ enable_rpath
 with_libiconv_prefix
 with_libintl_prefix
 enable_gui
-enable_gtk3
+enable_gtk2
 enable_build_doc
 enable_quiet_build
 enable_swap_ends
@@ -877,8 +881,10 @@ CURL_CFLAGS
 CURL_LIBS
 GLIB_CFLAGS
 GLIB_LIBS
-GTK_CFLAGS
-GTK_LIBS
+GTK2_CFLAGS
+GTK2_LIBS
+GTK3_CFLAGS
+GTK3_LIBS
 GTKMAC_CFLAGS
 GTKMAC_LIBS
 GTKSPINNER_CFLAGS
@@ -1509,7 +1515,7 @@ Optional Features:
   --disable-nls           do not use Native Language Support
   --disable-rpath         do not hardcode runtime library paths
   --enable-gui            Enable gui [default=yes]
-  --enable-gtk3           Enable use of GTK+ 3.0 [default=no]
+  --enable-gtk2           Use GTK 2.0 in preference to GTK 3.0 [default=no]
   --enable-build-doc      Enable building of gretl docs [CVS only]
   --enable-quiet-build    Enable quiet building
   --enable-swap-ends      Build FRED database with swapped endianness
@@ -1578,8 +1584,10 @@ Some influential environment variables:
   CURL_LIBS   linker flags for CURL, overriding pkg-config
   GLIB_CFLAGS C compiler flags for GLIB, overriding pkg-config
   GLIB_LIBS   linker flags for GLIB, overriding pkg-config
-  GTK_CFLAGS  C compiler flags for GTK, overriding pkg-config
-  GTK_LIBS    linker flags for GTK, overriding pkg-config
+  GTK2_CFLAGS C compiler flags for GTK2, overriding pkg-config
+  GTK2_LIBS   linker flags for GTK2, overriding pkg-config
+  GTK3_CFLAGS C compiler flags for GTK3, overriding pkg-config
+  GTK3_LIBS   linker flags for GTK3, overriding pkg-config
   GTKMAC_CFLAGS
               C compiler flags for GTKMAC, overriding pkg-config
   GTKMAC_LIBS linker flags for GTKMAC, overriding pkg-config
@@ -2685,7 +2693,7 @@ _ACEOF
 echo "configuring for $PACKAGE $VERSION (library version $LIBVERSION)"
 
 build_gui="yes"
-try_gtk3="no"
+prefer_gtk2="no"
 build_docs="no"
 use_lucida="no"
 build_po="no"
@@ -6245,13 +6253,13 @@ fi
 fi
 
 
-# Check whether --enable-gtk3 was given.
-if test "${enable_gtk3+set}" = set; then :
-  enableval=$enable_gtk3; if test "$enableval" = "yes"
+# Check whether --enable-gtk2 was given.
+if test "${enable_gtk2+set}" = set; then :
+  enableval=$enable_gtk2; if test "$enableval" = "yes"
 then
-  try_gtk3=yes
+  prefer_gtk2=yes
 else
-  try_gtk3=no
+  prefer_gtk2=no
 fi
 fi
 
@@ -17254,22 +17262,22 @@ $as_echo "yes" >&6; }
 fi
 fi
 
-if test "$try_gtk3" = "yes" ; then
+if test "$prefer_gtk2" = "yes" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK" >&5
-$as_echo_n "checking for GTK... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK2" >&5
+$as_echo_n "checking for GTK2... " >&6; }
 
-if test -n "$GTK_CFLAGS"; then
-    pkg_cv_GTK_CFLAGS="$GTK_CFLAGS"
+if test -n "$GTK2_CFLAGS"; then
+    pkg_cv_GTK2_CFLAGS="$GTK2_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.0.1\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.0.1") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.14.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.14.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK_CFLAGS=`$PKG_CONFIG --cflags "gtk+-3.0 >= 3.0.1" 2>/dev/null`
+  pkg_cv_GTK2_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.14.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -17277,16 +17285,16 @@ fi
  else
     pkg_failed=untried
 fi
-if test -n "$GTK_LIBS"; then
-    pkg_cv_GTK_LIBS="$GTK_LIBS"
+if test -n "$GTK2_LIBS"; then
+    pkg_cv_GTK2_LIBS="$GTK2_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.0.1\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.0.1") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.14.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.14.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK_LIBS=`$PKG_CONFIG --libs "gtk+-3.0 >= 3.0.1" 2>/dev/null`
+  pkg_cv_GTK2_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.14.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -17307,42 +17315,123 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTK_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-3.0 >= 3.0.1" 2>&1`
+	        GTK2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
         else
-	        GTK_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-3.0 >= 3.0.1" 2>&1`
+	        GTK2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
-	echo "$GTK_PKG_ERRORS" >&5
+	echo "$GTK2_PKG_ERRORS" >&5
 
-	build_gui="no"
-      echo "GTK 3 >= 3.0.1 not found"
+	echo "GTK 2 >= 2.14.0 not found"
 
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	build_gui="no"
-      echo "GTK 3 >= 3.0.1 not found"
+	echo "GTK 2 >= 2.14.0 not found"
 
 else
-	GTK_CFLAGS=$pkg_cv_GTK_CFLAGS
-	GTK_LIBS=$pkg_cv_GTK_LIBS
+	GTK2_CFLAGS=$pkg_cv_GTK2_CFLAGS
+	GTK2_LIBS=$pkg_cv_GTK2_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	CFLAGS="$CFLAGS $GTK_CFLAGS"
+	GTK_CFLAGS=$GTK2_CFLAGS
+      GTK_LIBS=$GTK2_LIBS
+      CFLAGS="$CFLAGS $GTK_CFLAGS"
+      LIBS="$LIBS $GTK_LIBS"
+      gtk_version="2.0"
+fi
+elif test "$build_gui" = "yes" ; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK3" >&5
+$as_echo_n "checking for GTK3... " >&6; }
+
+if test -n "$GTK3_CFLAGS"; then
+    pkg_cv_GTK3_CFLAGS="$GTK3_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.0.1\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.0.1") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTK3_CFLAGS=`$PKG_CONFIG --cflags "gtk+-3.0 >= 3.0.1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GTK3_LIBS"; then
+    pkg_cv_GTK3_LIBS="$GTK3_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.0.1\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.0.1") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTK3_LIBS=`$PKG_CONFIG --libs "gtk+-3.0 >= 3.0.1" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GTK3_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-3.0 >= 3.0.1" 2>&1`
+        else
+	        GTK3_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-3.0 >= 3.0.1" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GTK3_PKG_ERRORS" >&5
+
+	echo "GTK 3 >= 3.0.1 not found"
+
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	echo "GTK 3 >= 3.0.1 not found"
+
+else
+	GTK3_CFLAGS=$pkg_cv_GTK3_CFLAGS
+	GTK3_LIBS=$pkg_cv_GTK3_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	GTK_CFLAGS=$GTK3_CFLAGS
+      GTK_LIBS=$GTK3_LIBS
+      CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       $as_echo "#define USE_GTK3 1" >>confdefs.h
 
       gtk_version="3.0"
       fake_gtkspinner="no"
 fi
-elif test "$build_gui" = "yes" ; then
+fi
+
+if test "$prefer_gtk2" = "no" && test "$gtk_version" = "none" ; then
+   if test "$build_gui" = "yes" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK" >&5
-$as_echo_n "checking for GTK... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK2" >&5
+$as_echo_n "checking for GTK2... " >&6; }
 
-if test -n "$GTK_CFLAGS"; then
-    pkg_cv_GTK_CFLAGS="$GTK_CFLAGS"
+if test -n "$GTK2_CFLAGS"; then
+    pkg_cv_GTK2_CFLAGS="$GTK2_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
     { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.14.0\""; } >&5
@@ -17350,7 +17439,7 @@ if test -n "$GTK_CFLAGS"; then
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.14.0" 2>/dev/null`
+  pkg_cv_GTK2_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.14.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -17358,8 +17447,8 @@ fi
  else
     pkg_failed=untried
 fi
-if test -n "$GTK_LIBS"; then
-    pkg_cv_GTK_LIBS="$GTK_LIBS"
+if test -n "$GTK2_LIBS"; then
+    pkg_cv_GTK2_LIBS="$GTK2_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
     { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.14.0\""; } >&5
@@ -17367,7 +17456,7 @@ if test -n "$GTK_LIBS"; then
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.14.0" 2>/dev/null`
+  pkg_cv_GTK2_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.14.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -17388,31 +17477,34 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTK_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
+	        GTK2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
         else
-	        GTK_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
+	        GTK2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
-	echo "$GTK_PKG_ERRORS" >&5
+	echo "$GTK2_PKG_ERRORS" >&5
 
 	build_gui="no"
-      echo "GTK 2 >= 2.14.0 not found"
+        echo "GTK 2 >= 2.14.0 not found"
 
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	build_gui="no"
-      echo "GTK 2 >= 2.14.0 not found"
+        echo "GTK 2 >= 2.14.0 not found"
 
 else
-	GTK_CFLAGS=$pkg_cv_GTK_CFLAGS
-	GTK_LIBS=$pkg_cv_GTK_LIBS
+	GTK2_CFLAGS=$pkg_cv_GTK2_CFLAGS
+	GTK2_LIBS=$pkg_cv_GTK2_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	CFLAGS="$CFLAGS $GTK_CFLAGS"
-      LIBS="$LIBS $GTK_LIBS"
-      gtk_version="2.0"
+	GTK_CFLAGS=$GTK2_CFLAGS
+        GTK_LIBS=$GTK2_LIBS
+        CFLAGS="$CFLAGS $GTK_CFLAGS"
+        LIBS="$LIBS $GTK_LIBS"
+        gtk_version="2.0"
 fi
+   fi
 fi
 
 if test "$darwin_build" = "yes" ; then
@@ -17756,6 +17848,8 @@ if test x"${MSGFMT}" != x ; then
 else
    echo "*** msgfmt not found, can't build message catalogs"
 fi
+
+
 
 
 

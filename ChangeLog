@@ -1,4 +1,4 @@
-version 1.9.13, in progress
+2013-10-24 version 1.9.13
 - Add Bulgarian, Catalan and Galician translations
 - Add new functions: psum(), prodc(), prodr(), toupper(),
   getline(), isodate(), regsub(), atof()
@@ -60,6 +60,8 @@ version 1.9.13, in progress
 - Stata .dta importer: read Stata 12 data files
 - xlsx importer: handle "inline" strings
 - CSV importer: ignore leading byte order mark
+- MS Windows: add a 64-bit build of gretl as a download option
+- OS X: add a 64-bit gtk-quartz build of the gretl package
 
 2013-03-15 version 1.9.12
 - Officially increase the maximum length of variable names

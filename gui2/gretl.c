@@ -487,9 +487,7 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
 	/* found pid of already-running gretl instance */
 	gint resp;
 
-	resp = yes_no_dialog("gretl", 
-			     _("Start a new gretl instance?"),
-			     0);
+	resp = no_yes_dialog("gretl", _("Start a new gretl instance?"));
 
 	if (resp != GRETL_YES) {
 	    /* try hand-off to prior gretl instance */
