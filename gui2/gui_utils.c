@@ -1071,8 +1071,10 @@ int get_imported_data (char *fname, int ftype, int append)
 		errbox(buf);
 	    } else {
 		gui_errmsg(err);
-	    } 
-	    delete_from_filelist(FILE_LIST_DATA, fname);
+	    }
+	    if (err == E_FOPEN) {
+		delete_from_filelist(FILE_LIST_DATA, fname);
+	    }
 	} else {
 	    if (buf != NULL && *buf != '\0') {
 		infobox(buf);
