@@ -2132,11 +2132,6 @@ int query_addons (void)
     int err = 0;
 
     sscanf(GRETL_VERSION, "%d.%d.%d", &v1, &v2, &v3);
-    if (strstr(GRETL_VERSION, "cvs")) {
-	/* benefit of the doubt */
-	v3++;
-    }
-    
     query = g_strdup_printf("/addons-data/pkginfo.php?gretl_version=%d.%d.%d",
 			    v1, v2, v3);
     err = query_sourceforge(query, &buf);
@@ -2166,11 +2161,6 @@ static int query_addons_dir (const char *pkgname, char *sfdir)
     *sfdir = '\0';
 
     sscanf(GRETL_VERSION, "%d.%d.%d", &v1, &v2, &v3);
-    if (strstr(GRETL_VERSION, "cvs")) {
-	/* benefit of the doubt */
-	v3++;
-    }
-    
     query = g_strdup_printf("/addons-data/pkgdir.php?gretl_version=%d.%d.%d"
 			    "&pkg=%s", v1, v2, v3, pkgname);
     err = query_sourceforge(query, &buf);
