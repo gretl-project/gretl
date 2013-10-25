@@ -51,7 +51,8 @@ typedef enum {
     GPT_GRID_X         = 1 << 23, /* display vertical grid lines */
     GPT_POLAR          = 1 << 24, /* plot is in polar mode */
     GPT_XL             = 1 << 25, /* large */
-    GPT_XXL            = 1 << 26  /* extra-large */
+    GPT_XXL            = 1 << 26, /* extra-large */
+    GPT_TIMEFMT        = 1 << 27  /* using gnuplot "timefmt" */
 } GptFlags; 
 
 typedef struct gretlRGB_ gretlRGB;

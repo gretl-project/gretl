@@ -944,3 +944,23 @@ int iso_basic_to_extended (const double *b, double *y, double *m, double *d,
     return 0;
 }
 
+double iso_to_time_t (const char *s, const char *fmt)
+{
+    double x = NADBL;
+
+    if (fmt != NULL && *fmt != '\0') {
+	struct tm t = {0};
+	time_t etime;
+	char *test;
+	
+	test = strptime(s, fmt, &t);
+	if (test != NULL && *test == '\0') {
+	    /* conversion went OK */
+	    etime = mktime(&t);
+	    x = (double) etime;
+	}
+    }
+
+    return x;
+}
+

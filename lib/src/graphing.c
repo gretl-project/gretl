@@ -63,8 +63,10 @@ struct gnuplot_info_ {
     int t1;
     int t2;
     double xrange;
+    char timefmt[16];
     char xtics[64];
-    char fmt[16];
+    char xfmt[16];
+    char yfmt[16];
     const char *yformula;
     const double *x;
     gretl_matrix *dvals;
@@ -77,6 +79,12 @@ enum {
     W_IMPULSES,
     W_LP
 };
+
+/* experimental: needs more work in gui2/gpt_control.c to
+   make use of gnuplot "timefmt" work with the GUI graph
+   apparatus. AC 2013-10-25.
+*/
+#define USE_TIMEFMT 0
 
 #define MAX_LETTERBOX_LINES 8
 
@@ -126,9 +134,10 @@ struct plot_type_info ptinfo[] = {
     { PLOT_TYPE_MAX,       NULL }
 };
 
-static void graph_list_adjust_sample (int *list, 
-				      gnuplot_info *ginfo,
-				      const DATASET *dset);
+static int graph_list_adjust_sample (int *list, 
+				     gnuplot_info *ginfo,
+				     const DATASET *dset,
+				     int listmin);
 static void clear_gpinfo (gnuplot_info *gi);
 static void make_time_tics (gnuplot_info *gi,
 			    const DATASET *dset,
@@ -427,13 +436,20 @@ static void get_gp_flags (gnuplot_info *gi, gretlopt opt,
 #endif
 }
 
-static void printvars (FILE *fp, int t, const int *list, const double **Z,
-		       const double *x, const char *label, double offset)
+static void printvars (FILE *fp, int t, 
+		       const int *list, 
+		       const double **Z,
+		       const double *x, 
+		       const char *label, 
+		       const char *date,
+		       double offset)
 {
     double xt;
     int i;
 
-    if (x != NULL) {
+    if (date != NULL) {
+	fprintf(fp, "%s ", date);
+    } else if (x != NULL) {
 	xt = x[t] + offset;
 	fprintf(fp, "%.10g ", xt);
     }
@@ -1907,9 +1923,12 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 	xvar = dset->Z[xno];
     }
 
-    graph_list_adjust_sample(gi->list, gi, dset);
-    if (gi->t1 >= gi->t2 || gi->list[0] != 2) {
-	return E_MISSDATA;
+    err = graph_list_adjust_sample(gi->list, gi, dset, 2);
+    if (!err && gi->list[0] > 2) {
+	err = E_DATA;
+    }
+    if (err) {
+	return err;
     }
 
     fp = open_gp_stream(PLOT_REGULAR, gi->flags, &err);
@@ -2096,9 +2115,9 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 	return E_DATA;
     }
 
-    graph_list_adjust_sample(gi->list, gi, dset);
-    if (gi->t1 >= gi->t2) {
-	return E_MISSDATA;
+    err = graph_list_adjust_sample(gi->list, gi, dset, 1);
+    if (err) {
+	return err;
     }
 
     err = get_fitted_line(gi, dset, fitline);
@@ -2152,7 +2171,8 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 } 
 
 static int check_tic_labels (double vmin, double vmax,
-			     gnuplot_info *gi)
+			     gnuplot_info *gi,
+			     char axis)
 {
     char s1[32], s2[32];
     int d, err = 0;
@@ -2166,9 +2186,13 @@ static int check_tic_labels (double vmin, double vmax,
     }
 
     if (d > 6) {
-	sprintf(gi->fmt, "%% .%dg", d+1);
-	sprintf(gi->xtics, "%.*g %#.6g", d+1, vmin, 
-		(vmax - vmin)/ 4.0);
+	if (axis == 'x') {
+	    sprintf(gi->xfmt, "%% .%dg", d+1);
+	    sprintf(gi->xtics, "%.*g %#.6g", d+1, vmin, 
+		    (vmax - vmin)/ 4.0);
+	} else {
+	    sprintf(gi->yfmt, "%% .%dg", d+1);
+	}	    
     }
 
     return err;
@@ -2179,13 +2203,13 @@ static void check_y_tics (gnuplot_info *gi, const double **Z,
 {
     double ymin, ymax;
 
-    *gi->fmt = '\0';
+    *gi->yfmt = '\0';
 
     gretl_minmax(gi->t1, gi->t2, Z[gi->list[1]], &ymin, &ymax);
-    check_tic_labels(ymin, ymax, gi);
+    check_tic_labels(ymin, ymax, gi, 'y');
 
-    if (*gi->fmt != '\0') {
-	fprintf(fp, "set format y \"%s\"\n", gi->fmt);
+    if (*gi->yfmt != '\0') {
+	fprintf(fp, "set format y \"%s\"\n", gi->yfmt);
     }
 }
 
@@ -2268,7 +2292,7 @@ static void print_x_range_from_list (gnuplot_info *gi,
 
 	fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
 	gi->xrange = xmax - xmin;
-	check_tic_labels(xmin0, xmax0, gi);
+	check_tic_labels(xmin0, xmax0, gi, 'x');
     }
 }
 
@@ -2292,6 +2316,26 @@ print_x_range (gnuplot_info *gi, const double *x, FILE *fp)
 	fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
 	gi->xrange = xmax - xmin;
     }
+}
+
+static void 
+print_x_range_from_dates (gnuplot_info *gi, const DATASET *dset,
+			  FILE *fp)
+{
+    char obs[OBSLEN];
+    double xmin, xmax;
+
+    ntodate(obs, gi->t1, dset);
+    xmin = iso_to_time_t(obs, "%Y-%m-%d");
+    ntodate(obs, gi->t2, dset);
+    xmax = iso_to_time_t(obs, "%Y-%m-%d");
+
+    gi->xrange = xmax - xmin;
+    xmin -= gi->xrange * .025;
+    xmax += gi->xrange * .025;
+
+    fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
+    gi->xrange = xmax - xmin;
 }
 
 /* two or more y vars plotted against some x: test to see if we want
@@ -2457,7 +2501,7 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
     int n = gi->t2 - gi->t1 + 1;
     double offset = 0.0;
     int datlist[3];
-    int ynum = 2;
+    int lmax, ynum = 2;
     int nomarkers = 0;
     int i, t;
 
@@ -2466,10 +2510,16 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 	offset = 0.10 * gi->xrange / n;
     }
 
-    if (gi->x != NULL) {
+    if (gi->flags & GPT_TIMEFMT) {
+	lmax = gi->list[0];
+	datlist[0] = 1;
+	ynum = 1;
+    } else if (gi->x != NULL) {
+	lmax = gi->list[0] - 1;
 	datlist[0] = 1;
 	ynum = 1;
     } else {
+	lmax = gi->list[0] - 1;
 	datlist[0] = 2;
 	datlist[1] = gi->list[gi->list[0]];
     }
@@ -2480,16 +2530,20 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 
     /* loop across the variables, printing x then y[i] for each i */
 
-    for (i=1; i<gi->list[0]; i++) {
+    for (i=1; i<=lmax; i++) {
 	double xoff = offset * (i - 1);
 
 	datlist[ynum] = gi->list[i];
 
 	for (t=gi->t1; t<=gi->t2; t++) {
 	    const char *label = NULL;
+	    const char *date = NULL;
 	    char obs[OBSLEN];
 
-	    if (gi->x == NULL && 
+	    if (gi->flags & GPT_TIMEFMT) {
+		ntodate(obs, t, dset);
+		date = obs;
+	    } else if (gi->x == NULL && 
 		all_graph_data_missing(gi->list, t, (const double **) dset->Z)) {
 		continue;
 	    }
@@ -2508,7 +2562,7 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 	    }
 
 	    printvars(fp, t, datlist, (const double **) dset->Z, 
-		      gi->x, label, xoff);
+		      gi->x, label, date, xoff);
 	}
 
 	fputs("e\n", fp);
@@ -2537,8 +2591,10 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     gi->t1 = dset->t1;
     gi->t2 = dset->t2;
     gi->xrange = 0.0;
+    gi->timefmt[0] = '\0';
     gi->xtics[0] = '\0';
-    gi->fmt[0] = '\0';
+    gi->xfmt[0] = '\0';
+    gi->yfmt[0] = '\0';
     gi->yformula = NULL;
 
     gi->x = NULL;
@@ -2674,14 +2730,15 @@ static void set_withstr (gnuplot_info *gi, int i, char *str)
     }
 }
 
-static void graph_list_adjust_sample (int *list, 
-				      gnuplot_info *ginfo,
-				      const DATASET *dset)
+static int graph_list_adjust_sample (int *list, 
+				     gnuplot_info *ginfo,
+				     const DATASET *dset,
+				     int listmin)
 {
     int t1min = ginfo->t1;
     int t2max = ginfo->t2;
-    int t_ok;
-    int i, t, vi;
+    int i, t, vi, t_ok;
+    int err = 0;
 
     for (t=t1min; t<=t2max; t++) {
 	t_ok = 0;
@@ -2733,6 +2790,12 @@ static void graph_list_adjust_sample (int *list,
 
     ginfo->t1 = t1min;
     ginfo->t2 = t2max;
+
+    if (ginfo->t1 >= ginfo->t2 || list[0] < listmin) {
+	err = E_MISSDATA;
+    }
+
+    return err;
 }
 
 static int maybe_add_plotx (gnuplot_info *gi,
@@ -2751,6 +2814,16 @@ static int maybe_add_plotx (gnuplot_info *gi,
 	gi->flags &= ~GPT_TS;
 	return 0;
     }
+
+#if USE_TIMEFMT
+    if (dated_daily_data(dset)) {
+	if (sample_size(dset) < 300) {
+	    /* experimental */
+	    gi->flags |= GPT_TIMEFMT;
+	    return 0;
+	}
+    }
+#endif
 
     gi->x = gretl_plotx(dset, OPT_NONE);
     if (gi->x == NULL) {
@@ -2976,7 +3049,16 @@ static void make_time_tics (gnuplot_info *gi,
 	pprintf(prn, "# timeseries %d", dset->pd);
 	gi->flags |= GPT_LETTERBOX;
 	pputs(prn, " (letterbox)\n");
-    } 
+    }
+
+#if USE_TIMEFMT
+    if (gi->flags & GPT_TIMEFMT) {
+	pputs(prn, "set xdata time\n");
+	pputs(prn, "set timefmt x \"%Y-%m-%d\"\n");
+	pputs(prn, "set format x \"%d/%m/%y\"\n");
+	return;
+    }
+#endif
 
     if (dset->pd == 4 && (gi->t2 - gi->t1) / 4 < 8) {
 	pputs(prn, "set xtics nomirror 0,1\n"); 
@@ -3107,7 +3189,7 @@ int gnuplot (const int *plotlist, const char *literal,
     char keystr[48] = {0};
     char fit_line[128] = {0};
     int oddman = 0;
-    int many = 0;
+    int lmin, many = 0;
     PlotType ptype;
     gnuplot_info gi;
     int i, err = 0;
@@ -3177,10 +3259,12 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
+    /* the minimum number of plotlist elements */
+    lmin = (gi.flags & GPT_TIMEFMT) ? 1 : 2;
+
     /* adjust sample range, and reject if it's empty */
-    graph_list_adjust_sample(list, &gi, dset);
-    if (gi.t1 >= gi.t2 || list[0] < 2) {
-	err = E_MISSDATA;
+    err = graph_list_adjust_sample(list, &gi, dset, lmin);
+    if (err) {
 	goto bailout;
     }
 
@@ -3229,8 +3313,12 @@ int gnuplot (const int *plotlist, const char *literal,
     fputs("set xzeroaxis\n", fp); 
     gnuplot_missval_string(fp);
 
-    if (list[0] == 2) {
-	/* only two variables */
+    if (list[0] == 1) {
+	/* only one variable (time series) */
+	print_axis_label('y', series_get_graph_name(dset, list[1]), fp);
+	strcpy(keystr, "set nokey\n");
+    } else if (list[0] == 2) {
+	/* just two variables */
 	if (gi.flags & GPT_AUTO_FIT) {
 	    print_auto_fit_string(gi.fit, fp);
 	    if (gi.flags & GPT_FA) {
@@ -3275,15 +3363,17 @@ int gnuplot (const int *plotlist, const char *literal,
 
     gretl_push_c_numeric_locale();
 
-    if (gi.x != NULL) {
+    if (gi.flags & GPT_TIMEFMT) {
+	print_x_range_from_dates(&gi, dset, fp);
+    } else if (gi.x != NULL) {
 	print_x_range(&gi, gi.x, fp);
     } else {
 	print_x_range_from_list(&gi, dset, list, fp);
     }
 
-    if (*gi.fmt != '\0' && *gi.xtics != '\0') {
+    if (*gi.xfmt != '\0' && *gi.xtics != '\0') {
 	/* remedial handling of broken tics */
-	fprintf(fp, "set format x \"%s\"\n", gi.fmt);
+	fprintf(fp, "set format x \"%s\"\n", gi.xfmt);
 	fprintf(fp, "set xtics %s\n", gi.xtics); 
     }
 
@@ -3354,7 +3444,9 @@ int gnuplot (const int *plotlist, const char *literal,
 	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 1\n", _("actual"), withstr);	
     } else {
 	/* all other cases */
-	for (i=1; i<list[0]; i++)  {
+	int lmax = (gi.flags & GPT_TIMEFMT)? list[0] : list[0] - 1;
+
+	for (i=1; i<=lmax; i++)  {
 	    set_lwstr(dset, list[i], lwstr);
 	    if (list[0] == 2) {
 		*s1 = '\0';
@@ -3363,7 +3455,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    }
 	    set_withstr(&gi, i, withstr);
 	    fprintf(fp, " '-' using 1:($2) title \"%s\" %s%s", s1, withstr, lwstr);
-	    if (i < list[0] - 1 || (gi.flags & GPT_AUTO_FIT)) {
+	    if (i < lmax || (gi.flags & GPT_AUTO_FIT)) {
 	        fputs(" , \\\n", fp); 
 	    } else {
 	        fputc('\n', fp);
@@ -3415,9 +3507,8 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
     /* ensure the time-series flag is unset */
     gi.flags &= ~GPT_TS;
 
-    graph_list_adjust_sample(gi.list, &gi, dset);
-    if (gi.t1 >= gi.t2) {
-	err = E_MISSDATA;
+    err = graph_list_adjust_sample(gi.list, &gi, dset, 1);
+    if (err) {
 	goto bailout;
     }
 
@@ -4038,7 +4129,7 @@ int gnuplot_3d (int *list, const char *literal,
 	    label = dset->S[t];
 	}
 	printvars(fq, t, datlist, (const double **) dset->Z, 
-		  NULL, label, 0.0);
+		  NULL, label, NULL, 0.0);
     }	
     fputs("e\n", fq);
 

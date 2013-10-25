@@ -39,6 +39,8 @@ double ymd_basic_from_epoch_day (long ed, int *err);
 int iso_basic_to_extended (const double *b, double *y, double *m, 
 			   double *d, int n);
 
+double iso_to_time_t (const char *s, const char *fmt);
+
 long get_epoch_day (const char *date);
 
 int weekday_from_date (const char *date);

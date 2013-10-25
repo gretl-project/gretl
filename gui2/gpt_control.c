@@ -1397,7 +1397,7 @@ static int get_gpt_data (GPT_SPEC *spec, int datacols, int do_markers,
 	x[3] = x[2] + spec->nobs;
 	x[4] = x[3] + spec->nobs;
 
-	for (t=0; t<spec->nobs; t++) {
+	for (t=0; t<spec->nobs && !err; t++) {
 	    int missing = 0;
 	    int nf = 0;
 
@@ -1423,10 +1423,15 @@ static int get_gpt_data (GPT_SPEC *spec, int datacols, int do_markers,
 		err = 1;
 	    }
 
-	    for (j=offset; j<nf; j++) {
+	    for (j=offset; j<nf && !err; j++) {
 		if (test[j][0] == '?') {
 		    x[j][t] = NADBL;
 		    missing++;
+		} else if (j == offset && (spec->flags & GPT_TIMEFMT)) {
+		    x[j][t] = iso_to_time_t(test[j], spec->timefmt);
+		    if (na(x[j][t])) {
+			err = E_DATA;
+		    }
 		} else {
 		    x[j][t] = atof(test[j]);
 		}
@@ -1650,15 +1655,24 @@ static int read_plot_logscale (const char *s, GPT_SPEC *spec)
     return err;
 }
 
-static int read_plot_format (const char *s, GPT_SPEC *spec)
+static int read_plot_format (const char *s, GPT_SPEC *spec,
+			     int timefmt)
 {
     char axis, fmt[16];
     int n, err = 0;
 
     n = sscanf(s, "%c \"%15[^\"]", &axis, fmt);
 
+    fprintf(stderr, "format: axis='%c', fmt='%s', time=%d\n",
+	    axis, fmt, timefmt);
+
     if (n < 2) {
 	err = 1;
+    } else if (timefmt) {
+	if (axis == 'x') {
+	    *spec->timefmt = '\0';
+	    strncat(spec->timefmt, fmt, 15);
+	}
     } else if (axis == 'x') {
 	*spec->xfmt = '\0';
 	strncat(spec->xfmt, fmt, 15);
@@ -1863,7 +1877,13 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 	    return 1;
 	}
     } else if (!strcmp(key, "format")) {
-	if (read_plot_format(val, spec)) {
+	if (read_plot_format(val, spec, 0)) {
+	    errbox(_("Failed to parse gnuplot file"));
+	    fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
+	    return 1;
+	}
+    } else if (!strcmp(key, "timefmt")) {
+	if (read_plot_format(val, spec, 1)) {
 	    errbox(_("Failed to parse gnuplot file"));
 	    fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
 	    return 1;
@@ -1903,7 +1923,11 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 	}
     } else if (!strcmp(key, "samples")) {
 	spec->samples = atoi(val);
-    } 
+    } else if (!strcmp(key, "xdata")) {
+	if (!strcmp(val, "time")) {
+	    spec->flags |= GPT_TIMEFMT;
+	}
+    }
 
     return 0;
 }
@@ -2574,6 +2598,12 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	goto bailout;
     }
 
+    if ((spec->flags & GPT_TIMEFMT) && *spec->timefmt == '\0') {
+	fprintf(stderr, "got 'xdata time' but no timefmt\n");
+	err = E_DATA;
+	goto bailout;
+    }
+
     for (i=0; i<4; i++) {
 	if (spec->titles[i][0] != '\0') {
 	    gretl_delchar('"', spec->titles[i]);
@@ -3119,6 +3149,23 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
     return TRUE;
 }
 
+static void format_gp_date (char *label, int lsize, 
+			    const char *fmt, double x)
+{
+    time_t etime = (time_t) x;
+
+#ifdef WIN32
+    struct tm *t = localtime(&etime);
+
+    strftime(label, lsize, fmt, t);
+#else
+    struct tm t = {0};
+
+    localtime_r(&etime, &t);
+    strftime(label, lsize, fmt, &t);
+#endif
+}
+
 #define float_fmt(i,x) ((i) && fabs(x) < 1.0e7)
 
 static gint
@@ -3173,7 +3220,11 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 	    if (plot->pd == 4 || plot->pd == 12) {
 		x_to_date(data_x, plot->pd, label);
 	    } else if (xfmt != NULL) {
-		sprintf(label, xfmt, data_x);
+		if (plot->spec->flags & GPT_TIMEFMT) {
+		    format_gp_date(label, sizeof label, xfmt, data_x);
+		} else {
+		    sprintf(label, xfmt, data_x);
+		}
 	    } else {
 		sprintf(label, (float_fmt(plot->xint, data_x))? "%7.0f" : 
 			"%#7.4g", data_x);

@@ -43,7 +43,6 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <errno.h>
-#include <time.h>
 
 static GtkWidget *files_vbox (windata_t *vwin);
 static GtkWidget *files_notebook (windata_t *vwin, int role);

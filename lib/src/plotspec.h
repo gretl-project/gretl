@@ -140,6 +140,7 @@ struct GPT_SPEC_ {
     double range[5][2];        /* axis range specifiers */
     double logbase[3];         /* axis log-scales base (0 for linear) */
     int keyspec;               /* position of key (or none) */
+    char timefmt[16];          /* time format, if applicable */
     char xfmt[16];             /* x-axis tic format */
     char xtics[64];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */
