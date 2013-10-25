@@ -67,7 +67,8 @@ struct SAS_fileinfo {
     int nmembers;     /* number of member datasets */
     int mem2pos;      /* starting offset of second dataset (if present) */
     int nvars;        /* number of variables in first dataset */
-    int obsize;       /* size of each observation in bytes */
+    int obsize;       /* size of each entire observation in bytes */
+    int maxvsize;     /* size of largest obs per variable */
     int nobs;         /* computed number of observations */
     int nobs_read;    /* number of obs actually read */
     int maxclen;      /* max. length of character variables, bytes */
@@ -101,6 +102,7 @@ static void SAS_fileinfo_init (struct SAS_fileinfo *finfo,
     finfo->mem2pos = 0;
     finfo->nvars = 0;
     finfo->obsize = 0;
+    finfo->maxvsize = 0;
     finfo->nobs = 0;
     finfo->nobs_read = 0;
     finfo->maxclen = 0;
@@ -369,7 +371,7 @@ static int header_type (struct SAS_fileinfo *finfo, char *buf, int quiet)
 static int get_nobs (FILE *fp, struct SAS_fileinfo *finfo)
 {
     int epos, pos = ftell(fp);
-    int bytes;
+    int bytes, vsize;
 
     if (finfo->mem2pos > 0) {
 	epos = finfo->mem2pos;
@@ -386,8 +388,6 @@ static int get_nobs (FILE *fp, struct SAS_fileinfo *finfo)
 
     if (bytes > 0 && finfo->nvars > 0) {
 	int i, rem = bytes % 80;
-	int maxpos = 0, imax = 0;
-	int ostest = 0;
 
 	if (rem > 0) {
 	    fprintf(stderr, "%d trailing bytes?\n", rem);
@@ -395,24 +395,22 @@ static int get_nobs (FILE *fp, struct SAS_fileinfo *finfo)
 	}
 
 	for (i=0; i<finfo->nvars; i++) {
-	    if (finfo->vars[i].pos > maxpos) {
-		maxpos = finfo->vars[i].pos;
-		imax = i;
+	    vsize = finfo->vars[i].pos + finfo->vars[i].size;
+	    if (vsize > finfo->maxvsize) {
+		finfo->maxvsize = vsize;
 	    }
 	    if (finfo->vars[i].type == XPT_CHARACTER) {
 		if (finfo->vars[i].size > finfo->maxclen) {
 		    finfo->maxclen = finfo->vars[i].size;
 		}
 	    }
-	    ostest += finfo->vars[i].size;
+	    finfo->obsize += vsize;
 	}
 
-	finfo->obsize = maxpos + finfo->vars[imax].size;
-	finfo->nobs = bytes / finfo->obsize;
-	fprintf(stderr, "number of observations = %d?\n", finfo->nobs);
 	fprintf(stderr, "max length of character data = %d\n", finfo->maxclen);
-	fprintf(stderr, "size of obs record = %d (check = %d)\n", 
-		finfo->obsize, ostest);
+	finfo->nobs = bytes / finfo->obsize;
+	fprintf(stderr, "nobs = %d/%d = %d?\n", bytes, finfo->obsize, 
+		finfo->nobs);
     }
 
     return (finfo->nobs == 0)? E_DATA : 0;
@@ -425,7 +423,7 @@ static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo,
     char *buf = NULL, *cbuf = NULL;
     char c8[8];
     double x;
-    int pos, i, t;
+    int pos, vsize, i, t;
 
     if (finfo->maxclen > 0) {
 	cbuf = malloc(finfo->maxclen + 1);
@@ -434,7 +432,7 @@ static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo,
 	}
     }
 
-    buf = malloc(finfo->obsize);
+    buf = malloc(finfo->maxvsize);
     if (buf == NULL) {
 	free(cbuf);
 	return E_ALLOC;
@@ -445,10 +443,13 @@ static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo,
 	series_set_label(dset, i+1, finfo->vars[i].label);
     }
 
-    t = 0;
-    while (fread(buf, 1, finfo->obsize, fp) == finfo->obsize) {
+    for (t=0; t<finfo->nobs; t++) {
 	for (i=0; i<finfo->nvars; i++) {
 	    pos = finfo->vars[i].pos;
+	    vsize = pos + finfo->vars[i].size;
+	    if (fread(buf, 1, vsize, fp) != vsize) {
+		break;
+	    }
 	    if (finfo->vars[i].type == XPT_NUMERIC) {
 		memcpy(c8, buf + pos, 8);
 		x = read_xpt(c8);
@@ -466,7 +467,6 @@ static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo,
 		}
 	    }
 	}
-	t++;
     }
 
     if (t > 0) {
@@ -617,6 +617,7 @@ int xport_get_data (const char *fname, DATASET *dset,
     err = SAS_read_global_header(fp, &finfo);
     if (err) {
 	pputs(prn, _("This file does not seem to be a valid SAS xport file"));
+	pputc(prn, '\n');
 	fclose(fp);
 	return err;
     }
@@ -651,6 +652,7 @@ int xport_get_data (const char *fname, DATASET *dset,
 	    pputs(prn, _("Out of memory\n"));
 	} else {
 	    pputs(prn, _("This file does not seem to be a valid SAS xport file"));
+	    pputc(prn, '\n');
 	}
 	goto bailout;
     }

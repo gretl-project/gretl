@@ -342,10 +342,12 @@ gretl_string_table_index (gretl_string_table *gst, const char *s,
 
     if (gst == NULL) return idx;
 
-    for (i=1; i<=gst->cols_list[0]; i++) {
-	if (gst->cols_list[i] == col) {
-	    st = gst->cols[i-1];
-	    break;
+    if (gst->cols_list != NULL) {
+	for (i=1; i<=gst->cols_list[0]; i++) {
+	    if (gst->cols_list[i] == col) {
+		st = gst->cols[i-1];
+		break;
+	    }
 	}
     }
 
