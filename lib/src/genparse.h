@@ -342,6 +342,7 @@ enum {
     F_GETLINE,
     F_ISODATE,
     F_READFILE,
+    F_PRINTF,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,
@@ -376,6 +377,7 @@ enum {
     F_AGGRBY,
     F_IWISHART,
     F_SSCANF,
+    F_SPRINTF,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
@@ -434,7 +436,8 @@ enum {
 #define string_last_func(s) (s == F_FDJAC || s == F_BFGSMAX || \
                              s == F_NRMAX || s == F_DESEAS || \
 			     s == F_AGGRBY || s == F_INBUNDLE || \
-			     s == F_SSCANF)
+			     s == F_SSCANF || s == F_PRINTF || \
+			     s == F_SPRINTF)
 
 /* functions taking string arg in middle position */
 #define string_mid_func(s) (s == F_BFGSMAX || s == F_NRMAX || s == F_SIMANN)

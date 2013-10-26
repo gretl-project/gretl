@@ -81,6 +81,7 @@
 #define stringvec_node(n) (n->flags & SVL_NODE)
 
 #define empty_or_num(n) (n == NULL || n->t == EMPTY || n->t == NUM)
+#define empty_or_string(n) (n == NULL || n->t == EMPTY || n->t == STR)
 #define null_or_empty(n) (n == NULL || n->t == EMPTY)
 
 #define ok_bundled_type(t) (t == NUM || t == STR || t == MAT || \
@@ -6986,16 +6987,40 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *eval_sscanf (NODE *l, NODE *m, NODE *r, parser *p)
+static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
+	const char *fmt = m->v.str;
+	const char *args = NULL;
+	const char *lstr = NULL;
 	int n = 0;
 
-	p->err = do_sscanf(l->v.str, m->v.str, r->v.str, p->dset, &n);
+	if (l != NULL) {
+	    if (ustring_node(l)) {
+		lstr = l->vname;
+	    } else if (f == F_SPRINTF) {
+		p->err = E_TYPES;
+	    } else {
+		lstr = l->v.str;
+	    }
+	}
+
 	if (!p->err) {
-	    ret->v.xval = n;
+	    if (!null_or_empty(r)) {
+		args = r->v.str;
+	    }
+	    if (f == F_SSCANF) {
+		p->err = do_sscanf(lstr, fmt, args, p->dset, &n);
+	    } else if (f == F_SPRINTF) {
+		p->err = do_printf(lstr, fmt, args, p->dset, p->prn, &n);
+	    } else {
+		p->err = do_printf(NULL, fmt, args, p->dset, p->prn, &n);
+	    }
+	    if (!p->err) {
+		ret->v.xval = n;
+	    }
 	}
     }
 
@@ -10185,9 +10210,23 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = eval_3args_func(l, m, r, t->t, p);
 	}
 	break;
+    case F_PRINTF:
+	if (l->t == STR && empty_or_string(r)) {
+	    ret = eval_print_scan(NULL, l, r, t->t, p);
+	} else {
+	    node_type_error(t->t, 0, STR, NULL, p);
+	}
+	break;	
+    case F_SPRINTF:
+	if (l->t == STR && m->t == STR && empty_or_string(r)) {
+	    ret = eval_print_scan(l, m, r, t->t, p);
+	} else {
+	    node_type_error(t->t, 0, STR, NULL, p);
+	}
+	break;		
     case F_SSCANF:
 	if (l->t == STR && m->t == STR && r->t == STR) {
-	    ret = eval_sscanf(l, m, r, p);
+	    ret = eval_print_scan(l, m, r, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, STR, NULL, p);
 	}

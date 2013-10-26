@@ -554,8 +554,13 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 
     if (wrapped) {
 	unwrap_string_arg(p);
-    } else if (sym != F_ISSTRING && sym != F_ISNULL) {
-	/* not quoted: give priority to string variables */
+    } else if (sym != F_ISSTRING && sym != F_ISNULL &&
+	       sym != F_PRINTF && sym != F_SPRINTF &&
+	       sym != F_SSCANF) {
+	/* not quoted: give priority to string variables
+	   unless we need the names of string variables 
+	   rather then their content
+	*/
 	char *ustr = get_string_by_name(p->idstr);
 
 	if (ustr != NULL) {

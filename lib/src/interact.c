@@ -5493,11 +5493,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case PRINTF:
     case SPRINTF:
-	err = do_printf(line, dset, prn);
-	break;
-
     case SSCANF:
-	err = remedial_sscanf(line, dset, prn); 	 
+	err = do_printscan_command(line, dset, prn); 	 
 	break;
 
     case PVAL:

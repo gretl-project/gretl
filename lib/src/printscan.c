@@ -365,8 +365,8 @@ get_printf_format_chunk (const char *s, int *fc,
    we're doing the "genr markers" special thing.
 */
 
-static int print_arg (char **pfmt, char **pargs, DATASET *dset,
-		      int t, PRN *prn)
+static int print_arg (const char **pfmt, const char **pargs, 
+		      DATASET *dset, int t, PRN *prn)
 {
     const char *intconv = "dxul";
     char *fmt = NULL;
@@ -661,10 +661,12 @@ static user_var *get_stringvar_target (const char *targ,
     return uvar;
 }
 
+#if 0
+
 /* supports both printf and sprintf */
 
-static int real_do_printf (const char *line, DATASET *dset, 
-			   PRN *inprn, int t)
+static int old_real_do_printf (const char *line, DATASET *dset, 
+			       PRN *inprn, int t)
 {
     PRN *prn = NULL;
     char targ[VNAMELEN];
@@ -755,21 +757,114 @@ static int real_do_printf (const char *line, DATASET *dset,
     return err;
 }
 
+#endif
+
+static int real_do_printf (const char *targ, const char *format,
+			   const char *args, DATASET *dset, 
+			   PRN *inprn, int *nchars, int t)
+{
+    PRN *prn = NULL;
+    user_var *uvar = NULL;
+    int sp, err = 0;
+
+    gretl_error_clear();
+
+#if PSDEBUG
+    fprintf(stderr, "do_printf:\n");
+    fprintf(stderr, " targ = '%s'\n", targ);
+    fprintf(stderr, " format = '%s'\n", format);
+    fprintf(stderr, " args = '%s'\n", args);
+#endif
+
+    sp = targ != NULL;
+
+    if (sp) {
+	/* sprintf: we need a target string variable */
+	uvar = get_stringvar_target(targ, dset, inprn, &err);
+	if (err) {
+	    return err;
+	}
+    }
+
+    /* Even for printf we'll buffer the output locally in 
+       case there's an error part way through the printing.
+    */
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+    if (err) {
+	return err;
+    }    
+
+    if (format != NULL) {
+	const char *p = format;
+	const char *q = args;
+
+	while (*p && !err) {
+	    if (*p == '%' && *(p+1) == '%') {
+		pputc(prn, '%');
+		p += 2;
+	    } else if (*p == '%') {
+		err = print_arg(&p, &q, dset, t, prn);
+	    } else if (*p == '\\') {
+		err = printf_escape(*(p+1), prn);
+		p += 2;
+	    } else {
+		pputc(prn, *p);
+		p++;
+	    }
+	}
+
+	if (q != NULL && *q != '\0') {
+	    pprintf(prn, "\nunmatched argument '%s'", q);
+	    err = E_PARSE;
+	}
+    }
+
+    if (!err) {
+	const char *buf = gretl_print_get_buffer(prn);
+
+	if (nchars != NULL) {
+	    *nchars = strlen(buf);
+	}
+
+	if (sp) {
+	    char *tmp = gretl_strdup(buf);
+
+	    if (tmp == NULL) {
+		err = E_ALLOC;
+	    } else {
+		user_var_replace_value(uvar, tmp);
+	    }
+	} else {
+	    pputs(inprn, buf);
+	}
+    } else if (!sp) {
+	pputc(inprn, '\n');
+    }
+
+    gretl_print_destroy(prn);
+
+    return err;
+}
+
 /**
  * do_printf:
- * @line: command line.
+ * @targ: target string (for sprintf); should be NULL for printf.
+ * @format: format string.
+ * @args: list of argument as string.
  * @dset: dataset struct.
  * @prn: printing struct.
+ * @nchars: location to receive number of characters printed.
  *
- * Implements a somewhat limited version of C's printf()
- * for use in gretl scripts.
+ * Implements a somewhat limited version of C's sprintf()
+ * and printf() for use in gretl scripts.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int do_printf (const char *line, DATASET *dset, PRN *prn)
+int do_printf (const char *targ, const char *format, const char *args,
+	       DATASET *dset, PRN *prn, int *nchars)
 {
-    return real_do_printf(line, dset, prn, -1);
+    return real_do_printf(targ, format, args, dset, prn, nchars, -1);
 }
 
 /* below: sscanf apparatus */
@@ -1228,30 +1323,94 @@ int do_sscanf (const char *src, const char *format, const char *args,
     return err;
 }
 
-/* apparatus to support (temporarily) the obsolete "sscanf" command */
+static char *formulate_sprintf_call (const char *s, int *err)
+{
+    char *call = NULL;
+    char vname[VNAMELEN] = {0};
+    int n = gretl_namechar_spn(s);
 
-int remedial_sscanf (const char *line, DATASET *dset, PRN *prn)
+    /* @s should look something like 'myvar "%g", x' */
+    
+    if (n == 0 || n >= VNAMELEN) {
+	*err = E_PARSE;
+    } else {
+	/* m: allow for "sprintf()" and terminating NUL */
+	int m = strlen(s) + 11;
+
+	strncat(vname, s, n);
+	s += n;
+	call = calloc(m, 1);
+	if (call == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    s += strspn(s, " ");
+	    if (*s == ',') {
+		sprintf(call, "sprintf(%s%s)", vname, s);
+	    } else {
+		sprintf(call, "sprintf(%s,%s)", vname, s);
+	    }
+	}
+    }
+
+    if (!*err && *vname != '\0') {
+	get_stringvar_target(vname, NULL, NULL, err);
+	if (*err) {
+	    free(call);
+	    call = NULL;
+	}
+    }
+	
+
+    return call;
+}
+
+/* apparatus to support the command-forms of printf, sprintf 
+   and sscanf */
+
+int do_printscan_command (const char *line, DATASET *dset, PRN *prn)
 {
     static int warned;
     char *tmp;
-    int err = 0;
+    int ci, err = 0;
 
-    if (!warned) {
+    if (!strncmp(line, "printf ", 7)) {
+	ci = PRINTF;
+	line += 7;
+    } else if (!strncmp(line, "sprintf ", 8)) {
+	ci = SPRINTF;
+	line += 8;
+    } else if (!strncmp(line, "sscanf ", 7)) {
+	ci = SSCANF;
+	line += 7;
+    } else {
+	return E_DATA;
+    }
+
+    if (ci == SSCANF && !warned) {
 	pputs(prn, "*** \"sscanf\": obsolete command, please use the "
 	      "function of the same name\n");
 	warned = 1;
     }
 
-    if (!strncmp(line, "sscanf ", 7)) {
-	line += 7;
+    line += strspn(line, " ");
+
+    if (ci == PRINTF) {
+	tmp = gretl_strdup_printf("printf(%s)", line);
+    } else if (ci == SSCANF) {
+	tmp = gretl_strdup_printf("sscanf(%s)", line);
+    } else {
+	tmp = formulate_sprintf_call(line, &err);
     }
 
-    line += strspn(line, " ");
-    tmp = gretl_strdup_printf("sscanf(%s)", line);
-
-    if (tmp == NULL) {
+    if (!err && tmp == NULL) {
 	err = E_ALLOC;
-    } else {
+    }
+
+#if PSDEBUG
+    fprintf(stderr, "do_printscan_command: revised='%s'\n", tmp);
+#endif
+
+    if (!err) {
 	err = generate(tmp, dset, OPT_U, prn);
     }
 
@@ -1270,8 +1429,13 @@ int remedial_sscanf (const char *line, DATASET *dset, PRN *prn)
 
 int generate_obs_markers (const char *s, DATASET *dset)
 {
+    char *format = NULL;
+    char *args = NULL;
     PRN *prn;
     int t, err = 0;
+
+    fprintf(stderr, "generate_obs_markers: s = '%s'\n", s);
+    return 1;
 
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
 
@@ -1288,7 +1452,7 @@ int generate_obs_markers (const char *s, DATASET *dset)
 
 	for (t=0; t<dset->n && !err; t++) {
 	    gretl_print_reset_buffer(prn);
-	    err = real_do_printf(s, dset, prn, t);
+	    err = real_do_printf(NULL, format, args, dset, prn, NULL, t);
 	    if (!err) {
 		buf = gretl_print_get_buffer(prn);
 		dset->S[t][0] = '\0';

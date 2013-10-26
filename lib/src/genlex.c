@@ -339,6 +339,8 @@ struct str_table funcs[] = {
     { F_STRSTRIP, "strstrip" },
     { F_STRNCMP,  "strncmp" },
     { F_STRLEN,   "strlen" },
+    { F_PRINTF,   "printf" },
+    { F_SPRINTF,  "sprintf" },
     { F_SSCANF,   "sscanf" },
     { F_VARNAME,  "varname" },
     { F_VARNUM,   "varnum" },
