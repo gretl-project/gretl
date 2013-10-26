@@ -441,6 +441,9 @@ static void unwrap_string_arg (parser *p)
     }
 }
 
+#define varargs_func(f) (f == F_PRINTF || f == F_SPRINTF || \
+			 f == F_SSCANF)
+
 /* Grab a string argument.  Note: we have a mechanism in genlex.c for
    retrieving arguments that take the form of quoted string literals
    or names of string variables.  The special use of this function is
@@ -474,7 +477,7 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	parser_getc(p);
     }
 
-    if (!fncall_func(sym)) {
+    if (!fncall_func(sym) && !varargs_func(sym)) {
 	/* check for a nested function call (2013-08-25) */
 	src = p->point - 1;
 	n = gretl_namechar_spn(src);
