@@ -540,90 +540,6 @@ static int print_arg (const char **pfmt, const char **pargs,
     return err;
 }
 
-/* split line into format and args, copying both parts */
-
-static int split_printf_line (const char *s, char *targ, int *sp,
-			      char **format, char **args)
-{
-    const char *p;
-    int n, err = 0;
-
-    *sp = 0;
-
-    if (!strncmp(s, "printf ", 7)) {
-	s += 7;
-    } else if (!strncmp(s, "sprintf ", 8)) {
-	s += 8;
-	*sp = 1;
-    }
-
-    if (*sp) {
-	/* need a target name */
-	s += strspn(s, " ");
-	err = extract_varname(targ, s, &n);
-	if (!err && n == 0) {
-	    err = E_PARSE;
-	}
-	if (err) {
-	    return err;
-	}
-	s += n;
-	/* allow comma after target */
-	s += strspn(s, " ");
-	if (*s == ',') {
-	    s++;
-	}
-    }
-
-    s += strspn(s, " ");
-    if (*s != '"' || *(s+1) == '\0') {
-	return E_PARSE;
-    }
-
-    s++;
-    p = s;
-
-    n = 0;
-    while (*s) {
-	if (*s == '"' && *(s-1) != '\\') {
-	    break;
-	}
-	n++;
-	s++;
-    }
-
-    if (n == 0) {
-	/* empty format string */
-	return 0;
-    }
-
-    *format = gretl_strndup(p, n);
-    if (*format == NULL) {
-	return E_ALLOC;
-    }
-
-    s++;
-    s += strspn(s, " ");
-
-    if (*s != ',') {
-	/* empty args */
-	*args = NULL;
-	return 0;
-    }
-
-    s++;
-    s += strspn(s, " ");
-
-    *args = gretl_strdup(s);
-    if (*args == NULL) {
-	return E_ALLOC;
-    }
-
-    return 0;
-}
-
-#define SPRINTF_COMPAT 1
-
 static user_var *get_stringvar_target (const char *targ, 
 				       DATASET *dset,
 				       PRN *prn,
@@ -640,7 +556,6 @@ static user_var *get_stringvar_target (const char *targ,
 	    *err = E_TYPES;
 	    return NULL;
 	}
-#if SPRINTF_COMPAT
 	if (uvar == NULL) {
 	    char genline[64];
 
@@ -651,7 +566,6 @@ static user_var *get_stringvar_target (const char *targ,
 		
 	    }
 	}
-#endif	
 	if (uvar == NULL) {
 	    gretl_errmsg_sprintf(_("%s: not a string variable"), targ);
 	    *err = E_DATA;
@@ -661,103 +575,7 @@ static user_var *get_stringvar_target (const char *targ,
     return uvar;
 }
 
-#if 0
-
 /* supports both printf and sprintf */
-
-static int old_real_do_printf (const char *line, DATASET *dset, 
-			       PRN *inprn, int t)
-{
-    PRN *prn = NULL;
-    char targ[VNAMELEN];
-    char *format = NULL;
-    char *args = NULL;
-    user_var *uvar = NULL;
-    int sp, err = 0;
-
-    gretl_error_clear();
-
-    *targ = '\0';
-
-    err = split_printf_line(line, targ, &sp, &format, &args);
-    if (err) {
-	return err;
-    }
-
-    if (sp) {
-	/* sprintf: we need a target string variable */
-	uvar = get_stringvar_target(targ, dset, inprn, &err);
-	if (err) {
-	    return err;
-	}
-    }
-
-    /* Even for printf we'll buffer the output locally in 
-       case there's an error part way through the printing.
-    */
-    prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
-    if (err) {
-	return err;
-    }    
-
-#if PSDEBUG
-    fprintf(stderr, "do_printf: line = '%s'\n", line);
-    fprintf(stderr, " targ = '%s'\n", targ);
-    fprintf(stderr, " format = '%s'\n", format);
-    fprintf(stderr, " args = '%s'\n", args);
-#endif
-
-    if (format != NULL) {
-	char *p = format;
-	char *q = args;
-
-	while (*p && !err) {
-	    if (*p == '%' && *(p+1) == '%') {
-		pputc(prn, '%');
-		p += 2;
-	    } else if (*p == '%') {
-		err = print_arg(&p, &q, dset, t, prn);
-	    } else if (*p == '\\') {
-		err = printf_escape(*(p+1), prn);
-		p += 2;
-	    } else {
-		pputc(prn, *p);
-		p++;
-	    }
-	}
-
-	if (q != NULL && *q != '\0') {
-	    pprintf(prn, "\nunmatched argument '%s'", q);
-	    err = E_PARSE;
-	}
-    }
-
-    if (!err) {
-	const char *buf = gretl_print_get_buffer(prn);
-
-	if (sp) {
-	    char *tmp = gretl_strdup(buf);
-
-	    if (tmp == NULL) {
-		err = E_ALLOC;
-	    } else {
-		user_var_replace_value(uvar, tmp);
-	    }
-	} else {
-	    pputs(inprn, buf);
-	}
-    } else if (!sp) {
-	pputc(inprn, '\n');
-    }
-
-    gretl_print_destroy(prn);
-    free(format);
-    free(args);
-
-    return err;
-}
-
-#endif
 
 static int real_do_printf (const char *targ, const char *format,
 			   const char *args, DATASET *dset, 
@@ -1113,6 +931,9 @@ static int scan_scalar (char *targ, const char **psrc,
 	    genline = gretl_strdup_printf("%s=%.16g", targ, x);
 	}
 	err = generate(genline, dset, OPT_P, NULL);
+#if PSDEBUG
+	fprintf(stderr, "genline '%s', err=%d\n", genline, err);
+#endif
 	if (!err) {
 	    *ns += 1;
 	}
@@ -1243,6 +1064,10 @@ static int scan_arg (const char **psrc, const char **pfmt, const char **pargs,
 	    }
 	}
     }
+
+#if PSDEBUG
+    fprintf(stderr, "scan_arg: targ = '%s'\n", targ);
+#endif
 
     /* do the actual scanning */
 

@@ -6998,10 +6998,12 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	int n = 0;
 
 	if (l != NULL) {
-	    if (ustring_node(l)) {
-		lstr = l->vname;
-	    } else if (f == F_SPRINTF) {
-		p->err = E_TYPES;
+	    if (f == F_SPRINTF) {
+		if (ustring_node(l)) {
+		    lstr = l->vname;
+		} else {
+		    p->err = E_TYPES;
+		}
 	    } else {
 		lstr = l->v.str;
 	    }
