@@ -39,13 +39,16 @@ double ymd_basic_from_epoch_day (long ed, int *err);
 int iso_basic_to_extended (const double *b, double *y, double *m, 
 			   double *d, int n);
 
-double iso_to_time_t (const char *s, const char *fmt);
-
 long get_epoch_day (const char *date);
 
 int weekday_from_date (const char *date);
 
 int weekday_from_epoch_day (long ed);
+
+double time_t_from_date (const char *s, const char *fmt);
+
+void date_from_time_t (char *targ, size_t tsize, 
+		       const char *fmt, double x);
 
 int day_starts_month (int d, int m, int y, int wkdays, int *pad);
 

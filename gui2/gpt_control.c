@@ -1427,8 +1427,8 @@ static int get_gpt_data (GPT_SPEC *spec, int datacols, int do_markers,
 		if (test[j][0] == '?') {
 		    x[j][t] = NADBL;
 		    missing++;
-		} else if (j == offset && (spec->flags & GPT_TIMEFMT)) {
-		    x[j][t] = iso_to_time_t(test[j], spec->timefmt);
+		} else if (j == 0 && (spec->flags & GPT_TIMEFMT)) {
+		    x[j][t] = time_t_from_date(test[j], spec->timefmt);
 		    if (na(x[j][t])) {
 			err = E_DATA;
 		    }
@@ -1662,9 +1662,6 @@ static int read_plot_format (const char *s, GPT_SPEC *spec,
     int n, err = 0;
 
     n = sscanf(s, "%c \"%15[^\"]", &axis, fmt);
-
-    fprintf(stderr, "format: axis='%c', fmt='%s', time=%d\n",
-	    axis, fmt, timefmt);
 
     if (n < 2) {
 	err = 1;
@@ -3149,23 +3146,6 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
     return TRUE;
 }
 
-static void format_gp_date (char *label, int lsize, 
-			    const char *fmt, double x)
-{
-    time_t etime = (time_t) x;
-
-#ifdef WIN32
-    struct tm *t = localtime(&etime);
-
-    strftime(label, lsize, fmt, t);
-#else
-    struct tm t = {0};
-
-    localtime_r(&etime, &t);
-    strftime(label, lsize, fmt, &t);
-#endif
-}
-
 #define float_fmt(i,x) ((i) && fabs(x) < 1.0e7)
 
 static gint
@@ -3221,7 +3201,7 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 		x_to_date(data_x, plot->pd, label);
 	    } else if (xfmt != NULL) {
 		if (plot->spec->flags & GPT_TIMEFMT) {
-		    format_gp_date(label, sizeof label, xfmt, data_x);
+		    date_from_time_t(label, sizeof label, xfmt, data_x);
 		} else {
 		    sprintf(label, xfmt, data_x);
 		}

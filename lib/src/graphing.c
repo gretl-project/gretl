@@ -50,6 +50,9 @@
 # endif
 #endif /* ! _WIN32 */
 
+/* experimental, AC 2013-10-25 */
+#define USE_TIMEFMT 1
+
 static char gnuplot_path[MAXLEN];
 static int gp_small_font_size;
 static double default_png_scale = 1.0;
@@ -79,12 +82,6 @@ enum {
     W_IMPULSES,
     W_LP
 };
-
-/* experimental: needs more work in gui2/gpt_control.c to
-   make use of gnuplot "timefmt" work with the GUI graph
-   apparatus. AC 2013-10-25.
-*/
-#define USE_TIMEFMT 0
 
 #define MAX_LETTERBOX_LINES 8
 
@@ -2326,9 +2323,9 @@ print_x_range_from_dates (gnuplot_info *gi, const DATASET *dset,
     double xmin, xmax;
 
     ntodate(obs, gi->t1, dset);
-    xmin = iso_to_time_t(obs, "%Y-%m-%d");
+    xmin = time_t_from_date(obs, gi->timefmt);
     ntodate(obs, gi->t2, dset);
-    xmax = iso_to_time_t(obs, "%Y-%m-%d");
+    xmax = time_t_from_date(obs, gi->timefmt);
 
     gi->xrange = xmax - xmin;
     xmin -= gi->xrange * .025;
@@ -2798,7 +2795,7 @@ static int graph_list_adjust_sample (int *list,
     return err;
 }
 
-static int maybe_add_plotx (gnuplot_info *gi,
+static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
 			    const DATASET *dset)
 {
     int k = gi->list[0];
@@ -2816,11 +2813,13 @@ static int maybe_add_plotx (gnuplot_info *gi,
     }
 
 #if USE_TIMEFMT
-    if (dated_daily_data(dset)) {
-	if (sample_size(dset) < 300) {
-	    /* experimental */
-	    gi->flags |= GPT_TIMEFMT;
-	    return 0;
+    if (!time_fit) {
+	if (dated_daily_data(dset) || dated_weekly_data(dset)) {
+	    if (sample_size(dset) < 300) {
+		/* experimental */
+		gi->flags |= GPT_TIMEFMT;
+		return 0;
+	    }
 	}
     }
 #endif
@@ -3051,14 +3050,14 @@ static void make_time_tics (gnuplot_info *gi,
 	pputs(prn, " (letterbox)\n");
     }
 
-#if USE_TIMEFMT
     if (gi->flags & GPT_TIMEFMT) {
 	pputs(prn, "set xdata time\n");
-	pputs(prn, "set timefmt x \"%Y-%m-%d\"\n");
-	pputs(prn, "set format x \"%d/%m/%y\"\n");
+	strcpy(gi->timefmt, "%Y-%m-%d");
+	pprintf(prn, "set timefmt x \"%s\"\n", gi->timefmt);
+	strcpy(gi->xfmt, "%Y-%m-%d");
+	pprintf(prn, "set format x \"%s\"\n", gi->xfmt);
 	return;
     }
-#endif
 
     if (dset->pd == 4 && (gi->t2 - gi->t1) / 4 < 8) {
 	pputs(prn, "set xtics nomirror 0,1\n"); 
@@ -3188,6 +3187,7 @@ int gnuplot (const int *plotlist, const char *literal,
     char lwstr[8] = {0};
     char keystr[48] = {0};
     char fit_line[128] = {0};
+    int time_fit = 0;
     int oddman = 0;
     int lmin, many = 0;
     PlotType ptype;
@@ -3204,6 +3204,8 @@ int gnuplot (const int *plotlist, const char *literal,
     if ((opt & OPT_T) && (opt & fit_opts)) {
 	if (plotlist[0] > 1 || !dataset_is_time_series(dset)) {
 	    return E_BADOPT;
+	} else {
+	    time_fit = 1;
 	}
     }
 
@@ -3223,7 +3225,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
-    err = maybe_add_plotx(&gi, dset);
+    err = maybe_add_plotx(&gi, time_fit, dset);
     if (err) {
 	goto bailout;
     }
@@ -3232,7 +3234,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	return loess_plot(&gi, literal, dset);
     }
 
-    if (opt & OPT_T && (opt & fit_opts)) {
+    if (time_fit) {
 	return time_fit_plot(&gi, literal, dset);
     }
 
@@ -3318,7 +3320,9 @@ int gnuplot (const int *plotlist, const char *literal,
 	print_axis_label('y', series_get_graph_name(dset, list[1]), fp);
 	strcpy(keystr, "set nokey\n");
     } else if (list[0] == 2) {
-	/* just two variables */
+	/* plotting two variables */
+	int no_key = 1;
+
 	if (gi.flags & GPT_AUTO_FIT) {
 	    print_auto_fit_string(gi.fit, fp);
 	    if (gi.flags & GPT_FA) {
@@ -3328,15 +3332,18 @@ int gnuplot (const int *plotlist, const char *literal,
 		make_gtitle(&gi, GTITLE_VLS, series_get_graph_name(dset, list[1]), 
 			    xlabel, fp);
 	    }
+	    no_key = 0;
 	}
 	if (gi.flags & GPT_RESIDS && !(gi.flags & GPT_DUMMY)) { 
 	    make_gtitle(&gi, GTITLE_RESID, series_get_label(dset, list[1]), 
 			NULL, fp);
 	    fprintf(fp, "set ylabel '%s'\n", _("residual"));
+	} else if (gi.flags & GPT_TIMEFMT) {
+	    no_key = 0;
 	} else {
 	    print_axis_label('y', series_get_graph_name(dset, list[1]), fp);
 	}
-	if (!(gi.flags & GPT_AUTO_FIT)) {
+	if (no_key) {
 	    strcpy(keystr, "set nokey\n");
 	}
     } else if ((gi.flags & GPT_RESIDS) && (gi.flags & GPT_DUMMY)) { 
@@ -3371,7 +3378,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	print_x_range_from_list(&gi, dset, list, fp);
     }
 
-    if (*gi.xfmt != '\0' && *gi.xtics != '\0') {
+    if (!(gi.flags & GPT_TIMEFMT) && *gi.xfmt != '\0' && *gi.xtics != '\0') {
 	/* remedial handling of broken tics */
 	fprintf(fp, "set format x \"%s\"\n", gi.xfmt);
 	fprintf(fp, "set xtics %s\n", gi.xtics); 
@@ -3448,7 +3455,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
 	for (i=1; i<=lmax; i++)  {
 	    set_lwstr(dset, list[i], lwstr);
-	    if (list[0] == 2) {
+	    if (list[0] == 2 && !(gi.flags & GPT_TIMEFMT)) {
 		*s1 = '\0';
 	    } else {
 		strcpy(s1, series_get_graph_name(dset, list[i]));

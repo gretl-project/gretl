@@ -3368,6 +3368,10 @@ static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis)
 	return;
     }
 
+    if (axis == 0 && (spec->flags & GPT_TIMEFMT)) {
+	return;
+    }
+
     ed->axis_range[axis].ID = axis;
 
     /* axis range: "auto" button */

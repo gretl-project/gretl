@@ -918,6 +918,21 @@ int guess_daily_pd (const DATASET *dset)
     return pd;
 }
 
+/**
+ * iso_basic_to_extended:
+ * @b: source array of YYYYMMDD values.
+ * @y: array to hold year values.
+ * @m: array to hold month values.
+ * @d: array to hold day-of-week values.
+ * @n: length of all the above arrays.
+ *
+ * Given the array @b of ISO 8601 "basic" daily dates (YYYYMMDD as
+ * doubles), fill out the arrays @y, @m and @d with year, month
+ * and day.
+ *
+ * Returns: 0.
+ */
+
 int iso_basic_to_extended (const double *b, double *y, double *m, double *d,
 			   int n)
 {
@@ -944,7 +959,17 @@ int iso_basic_to_extended (const double *b, double *y, double *m, double *d,
     return 0;
 }
 
-double iso_to_time_t (const char *s, const char *fmt)
+/**
+ * time_t_from_date:
+ * @s: date string.
+ * @fmt: the format to apply.
+ *
+ * Returns: the time_t value (as a double) corresponding to
+ * date @s as interpreted using format @fmt, or #NADBL if
+ * @s fails parsing according to @fmt.
+ */
+
+double time_t_from_date (const char *s, const char *fmt)
 {
     double x = NADBL;
 
@@ -962,5 +987,33 @@ double iso_to_time_t (const char *s, const char *fmt)
     }
 
     return x;
+}
+
+/**
+ * date_from_time_t:
+ * @targ: string into which to write the date.
+ * @tsize: the length of @targ.
+ * @fmt: the date format to use.
+ * @x: time_t value as a double.
+ *
+ * Writes into @targ a string representation of @x under the
+ * control of @fmt.
+ */
+
+void date_from_time_t (char *targ, size_t tsize, 
+		       const char *fmt, double x)
+{
+    time_t etime = (time_t) x;
+
+#ifdef WIN32
+    struct tm *t = localtime(&etime);
+
+    strftime(targ, tsize, fmt, t);
+#else
+    struct tm t = {0};
+
+    localtime_r(&etime, &t);
+    strftime(targ, tsize, fmt, &t);
+#endif
 }
 

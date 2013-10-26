@@ -1388,6 +1388,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
     for (i=0; i<spec->n_lines; i++) { 
 	int ncols = gp_line_data_columns(spec, i);
+	char date[OBSLEN];
 
 	if (ncols == 0) {
 	    /* no (regular) data to print */
@@ -1414,6 +1415,9 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    if (na(x[0][t])) {
 		fputs("? ", fp);
 		miss = 1;
+	    } else if (spec->flags & GPT_TIMEFMT) {
+		date_from_time_t(date, sizeof date, spec->timefmt, x[0][t]);
+		fprintf(fp, "%s ", date);
 	    } else {
 		fprintf(fp, "%.10g ", x[0][t]);
 	    }
