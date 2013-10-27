@@ -6998,13 +6998,19 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	int n = 0;
 
 	if (l != NULL) {
+	    /* note: this doesn't apply for printf */
 	    if (f == F_SPRINTF) {
 		if (ustring_node(l)) {
+		    /* for the first argument to sprintf we need to
+		       pass the name of a string variable, not its
+		       value
+		    */
 		    lstr = l->vname;
 		} else {
 		    p->err = E_TYPES;
 		}
 	    } else {
+		/* but for sscanf it's the value we want */
 		lstr = l->v.str;
 	    }
 	}
