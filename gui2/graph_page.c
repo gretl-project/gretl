@@ -370,7 +370,7 @@ static int gp_pdfcairo_fontsize (void)
 
 #ifndef G_OS_WIN32
     if (basesize == 0) {
-	double gpver = gnuplot_get_version();
+	double gpver = gnuplot_version();
 
 	basesize = (gpver > 4.4)? 10 : 5;
     }

@@ -238,7 +238,7 @@ int gnuplot_test_command (const char *cmd)
     return ret;
 }
 
-double gnuplot_get_version (void)
+double gnuplot_version (void)
 {
     static double vnum = 0.0;
 
@@ -1000,7 +1000,7 @@ const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
 	    ptsize = 6;
 	}
 #ifndef WIN32
-	if (gnuplot_get_version() <= 4.4) {
+	if (gnuplot_version() <= 4.4) {
 	    ptsize /= 2;
 	}
 #endif
@@ -1463,7 +1463,7 @@ static int gnuplot_too_old (void)
     static double gpv;
 
     if (gpv == 0.0) {
-	gpv = gnuplot_get_version();
+	gpv = gnuplot_version();
     }
 
     if (gpv < 4.4) {
@@ -7082,22 +7082,43 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
     return err;
 }
 
-/* for gnuplot versions <= 4.6 */
-#define GP_TIME_OFFSET 946684800.0
+#ifndef WIN64
+/* for gnuplot versions < 4.7 (we know the 64-bit gretl for 
+   Windows package uses gnuplot 4.7)
+*/
+# define GP_TIME_OFFSET 946684800.0
+# ifdef WIN32
+static double gnuplot_version (void)
+{
+    /* the 32-bit Windows package includes gnuplot 4.6.3
+       as of the gretl 1.9.13 release 
+    */
+    return 4.63;
+}
+# endif
+#endif
 
 void date_from_gnuplot_time (char *targ, size_t tsize, 
 			     const char *fmt, double x)
 {
-#ifdef WIN32
+#if defined(WIN64)
     time_t etime = (time_t) x;
-    struct tm *t = localtime(&etime);
 
-    strftime(targ, tsize, fmt, t);
+    strftime(targ, tsize, fmt, localtime(&etime));
+#elif defined(WIN32)
+    time_t etime;
+
+    if (gnuplot_version() < 4.7) {
+	x += GP_TIME_OFFSET;
+    } 
+
+    etime = (time_t) x;
+    strftime(targ, tsize, fmt, localtime(&etime));
 #else
     struct tm t = {0};
     time_t etime;
 
-    if (gnuplot_get_version() < 4.7) {
+    if (gnuplot_version() < 4.7) {
 	x += GP_TIME_OFFSET;
     }   
 
@@ -7121,8 +7142,8 @@ double gnuplot_time_from_date (const char *s, const char *fmt)
 	    /* conversion went OK */
 	    etime = mktime(&t);
 	    x = (double) etime;
-#ifndef WIN32
-	    if (gnuplot_get_version() < 4.7) {
+#ifndef WIN64
+	    if (gnuplot_version() < 4.7) {
 		x -= GP_TIME_OFFSET;
 	    } 
 #endif

@@ -126,7 +126,7 @@ static void saver_init (struct pdf_ps_saver *s,
     static int started;
 
     if (!started && gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	pdffontsize = (gnuplot_get_version() > 4.4)? 10 : 5;
+	pdffontsize = (gnuplot_version() > 4.4)? 10 : 5;
 	started = 1;
     }
 #endif
