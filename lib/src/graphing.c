@@ -2323,9 +2323,9 @@ print_x_range_from_dates (gnuplot_info *gi, const DATASET *dset,
     double xmin, xmax;
 
     ntodate(obs, gi->t1, dset);
-    xmin = time_t_from_date(obs, gi->timefmt);
+    xmin = gnuplot_time_from_date(obs, gi->timefmt);
     ntodate(obs, gi->t2, dset);
-    xmax = time_t_from_date(obs, gi->timefmt);
+    xmax = gnuplot_time_from_date(obs, gi->timefmt);
 
     gi->xrange = xmax - xmin;
     xmin -= gi->xrange * .025;
@@ -3371,9 +3371,7 @@ int gnuplot (const int *plotlist, const char *literal,
     gretl_push_c_numeric_locale();
 
     if (gi.flags & GPT_TIMEFMT) {
-#if 0
 	print_x_range_from_dates(&gi, dset, fp);
-#endif
     } else if (gi.x != NULL) {
 	print_x_range(&gi, gi.x, fp);
     } else {
@@ -7082,4 +7080,54 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
     }
 
     return err;
+}
+
+/* for gnuplot versions <= 4.6 */
+#define GP_TIME_OFFSET 946684800.0
+
+void date_from_gnuplot_time (char *targ, size_t tsize, 
+			     const char *fmt, double x)
+{
+#ifdef WIN32
+    time_t etime = (time_t) x;
+    struct tm *t = localtime(&etime);
+
+    strftime(targ, tsize, fmt, t);
+#else
+    struct tm t = {0};
+    time_t etime;
+
+    if (gnuplot_get_version() < 4.7) {
+	x += GP_TIME_OFFSET;
+    }   
+
+    etime = (time_t) x;
+    localtime_r(&etime, &t);
+    strftime(targ, tsize, fmt, &t);
+#endif
+}
+
+double gnuplot_time_from_date (const char *s, const char *fmt)
+{
+    double x = NADBL;
+
+    if (fmt != NULL && *fmt != '\0') {
+	struct tm t = {0};
+	time_t etime;
+	char *test;
+	
+	test = strptime(s, fmt, &t);
+	if (test != NULL && *test == '\0') {
+	    /* conversion went OK */
+	    etime = mktime(&t);
+	    x = (double) etime;
+#ifndef WIN32
+	    if (gnuplot_get_version() < 4.7) {
+		x -= GP_TIME_OFFSET;
+	    } 
+#endif
+	}
+    }
+
+    return x;
 }

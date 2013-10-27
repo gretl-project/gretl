@@ -1416,7 +1416,8 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 		fputs("? ", fp);
 		miss = 1;
 	    } else if (spec->flags & GPT_TIMEFMT) {
-		date_from_time_t(date, sizeof date, spec->timefmt, x[0][t]);
+		date_from_gnuplot_time(date, sizeof date, 
+				       spec->timefmt, x[0][t]);
 		fprintf(fp, "%s ", date);
 	    } else {
 		fprintf(fp, "%.10g ", x[0][t]);

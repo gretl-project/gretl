@@ -332,6 +332,12 @@ void gnuplot_png_set_use_aa (int s);
 
 void gnuplot_png_set_default_scale (double s);
 
+void date_from_gnuplot_time (char *targ, size_t tsize, 
+			     const char *fmt, double x);
+
+double gnuplot_time_from_date (const char *s, 
+			       const char *fmt);
+
 #ifndef WIN32
 int gnuplot_has_wxt (void);
 double gnuplot_get_version (void);

@@ -1428,7 +1428,7 @@ static int get_gpt_data (GPT_SPEC *spec, int datacols, int do_markers,
 		    x[j][t] = NADBL;
 		    missing++;
 		} else if (j == 0 && (spec->flags & GPT_TIMEFMT)) {
-		    x[j][t] = time_t_from_date(test[j], spec->timefmt);
+		    x[j][t] = gnuplot_time_from_date(test[j], spec->timefmt);
 		    if (na(x[j][t])) {
 			err = E_DATA;
 		    }
@@ -3201,7 +3201,8 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 		x_to_date(data_x, plot->pd, label);
 	    } else if (xfmt != NULL) {
 		if (plot->spec->flags & GPT_TIMEFMT) {
-		    date_from_time_t(label, sizeof label, xfmt, data_x);
+		    date_from_gnuplot_time(label, sizeof label, 
+					   xfmt, data_x);
 		} else {
 		    sprintf(label, xfmt, data_x);
 		}
@@ -5148,6 +5149,3 @@ void launch_gnuplot_interactive (const char *plotfile)
     }
 #endif /* !(G_OS_WIN32 or MAC_NATIVE) */
 }
-
-
-

@@ -45,11 +45,6 @@ int weekday_from_date (const char *date);
 
 int weekday_from_epoch_day (long ed);
 
-double time_t_from_date (const char *s, const char *fmt);
-
-void date_from_time_t (char *targ, size_t tsize, 
-		       const char *fmt, double x);
-
 int day_starts_month (int d, int m, int y, int wkdays, int *pad);
 
 int day_ends_month (int d, int m, int y, int wkdays);
