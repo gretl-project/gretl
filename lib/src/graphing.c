@@ -3371,7 +3371,9 @@ int gnuplot (const int *plotlist, const char *literal,
     gretl_push_c_numeric_locale();
 
     if (gi.flags & GPT_TIMEFMT) {
+#if 0
 	print_x_range_from_dates(&gi, dset, fp);
+#endif
     } else if (gi.x != NULL) {
 	print_x_range(&gi, gi.x, fp);
     } else {
