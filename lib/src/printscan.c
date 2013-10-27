@@ -32,6 +32,8 @@
 /* For the point of "x *= (1 + 0x1p-52)" below, see
    http://sourceware.org/bugzilla/show_bug.cgi?id=4943 ,
    contribution from Eric Postpischil, 2007-10-05.
+   It is designed to produce the generally expected
+   rounding behavior on printing a double.
 */
 
 static void printf_series (int v, const DATASET *dset,

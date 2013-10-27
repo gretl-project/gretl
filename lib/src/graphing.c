@@ -7082,10 +7082,18 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
     return err;
 }
 
-#ifndef WIN64
-/* for gnuplot versions < 4.7 (we know the 64-bit gretl for 
-   Windows package uses gnuplot 4.7)
+/* The complication below: up till version 4.6, gnuplot used
+   a non-standard base of the year 2000 for its equivalent of
+   time_t, so it's necessary to adjust by the number of seconds
+   between the start of 1970 and the start of 2000 when
+   calling *nix time functions. With version 4.7 (CVS) gnuplot
+   switched to a base of 1970.
+
+   The 64-bit Windows package of gretl includes gnuplot 4.7 so
+   if WIN64 is defined we know we don't need the adjustment.
 */
+
+#ifndef WIN64
 # define GP_TIME_OFFSET 946684800.0
 # ifdef WIN32
 static double gnuplot_version (void)
