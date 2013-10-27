@@ -10918,14 +10918,6 @@
 	format string, except that the result is written into the named
 	string, <repl>stringvar</repl>.
       </para>
-      <para>
-	To print the string variable, give its name preceded by
-	<lit>@</lit>, as in
-      </para>
-      <code>
-	sprintf myvar "%g", x
-	print "myvar has value @myvar"
-      </code>
     </description>
 
   </command>

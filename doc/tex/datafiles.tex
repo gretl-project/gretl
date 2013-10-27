@@ -466,14 +466,14 @@ the same variable in 1970.
 The following gretl script illustrates how we can accomplish the
 stacking, for both \varname{x1} and \varname{x2}.  We assume
 that the original data file is called \texttt{panel.txt}, and that in
-this file the columns are headed with ``variable names'' \varname{p1},
-\varname{p2}, \dots, \varname{p5}.  (The columns are not really
+this file the columns are headed with ``variable names'' \varname{v1},
+\varname{v2}, \dots, \varname{v5}.  (The columns are not really
 variables, but in the first instance we ``pretend'' that they are.)
 
 \begin{code}
 open panel.txt
-genr x1 = stack(p1..p5) --length=50
-genr x2 = stack(p1..p5) --offset=50 --length=50
+genr x1 = stack(v1..v5) --length=50
+genr x2 = stack(v1..v5) --offset=50 --length=50
 setobs 50 1:1 --stacked-cross-section
 store panel.gdt x1 x2
 \end{code}
@@ -483,7 +483,7 @@ The double dots within the parentheses indicate a range of variables
 to be stacked: here we want to stack all 5 columns (for all 5
 years).\footnote{You can also specify a list of series using
   the wildcard `\texttt{*}'; for example \texttt{stack(p*)} would
-  stack all series whose names begin with `p'.} 
+  stack all series whose names begin with `v'.} 
 The full data set contains 100 rows; in the stacking of variable
 \varname{x1} we wish to read only the first 50 rows from each column:
 we achieve this by adding \verb+--length=50+.  Note that if you want
@@ -491,7 +491,7 @@ to stack a non-contiguous set of columns you can give a
 comma-separated list of variable names, as in
 %
 \begin{code}
-genr x = stack(p1,p3,p5)
+genr x = stack(v1,v3,v5)
 \end{code}
 %
 or you can provide within the parentheses the name of a previously
@@ -503,7 +503,7 @@ this time we want gretl to start reading from the 50th row of the
 original data, and we specify \verb+--offset=50+.
 Line 4 imposes a panel interpretation on the data; finally, we save
 the data in gretl format, with the panel interpretation, discarding
-the original ``variables'' \varname{p1} through \varname{p5}.
+the original ``variables'' \varname{v1} through \varname{v5}.
 
 The illustrative script above is appropriate when the number of
 variable to be processed is small.  When then are many variables in
@@ -516,7 +516,7 @@ periods), but with 20 variables rather than 2.
 open panel.txt
 loop i=1..20
   genr k = ($i - 1) * 50
-  genr x$i = stack(p1..p5) --offset=k --length=50
+  genr x$i = stack(v1..v5) --offset=k --length=50
 endloop
 setobs 50 1.01 --stacked-cross-section
 store panel.gdt x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 \
