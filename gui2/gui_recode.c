@@ -358,6 +358,33 @@ static int maybe_adjust_cairo (char *line)
     return ret;
 }
 
+static void do_fix_xrange (char *line, int fix, FILE *fp)
+{
+    double xmin, xmax;
+    int n;
+
+    gretl_push_c_numeric_locale();
+
+    n = sscanf(line, "set xrange [%lf:%lf]", &xmin, &xmax);
+
+    if (n == 2) {
+	double offset = 946684800;
+
+	if (fix == 1) {
+	    /* old gnuplot to new */
+	    xmin += offset;
+	    xmax += offset;
+	} else {
+	    /* new gnuplot to old */
+	    xmin -= offset;
+	    xmax -= offset;
+	}
+	fprintf(fp, "set xrange [%.12g:%.12g]\n", xmin, xmax);
+    }
+
+    gretl_pop_c_numeric_locale();
+}
+
 /* Backward compatibility for gnuplot command files as saved in
    sessions: if the file is non-ascii and non-UTF-8, convert to UTF-8,
    since we have now (2008-01) standardized on UTF-8 as the encoding
@@ -375,8 +402,10 @@ int maybe_rewrite_gp_file (const char *fname)
     FILE *fin, *fout;
     gchar *trbuf, *modname = NULL;
     char line[512];
+    double gpver;
     int modified = 0;
     int recoded = 0;
+    int fix_xrange = 0;
     int err = 0;
 
     fin = gretl_fopen(fname, "r");
@@ -393,6 +422,8 @@ int maybe_rewrite_gp_file (const char *fname)
 	return 1;
     }
 
+    gpver = gnuplot_version();
+
     while (fgets(line, sizeof line, fin)) {
 	int modline = 0;
 	
@@ -407,6 +438,21 @@ int maybe_rewrite_gp_file (const char *fname)
 		fputs(line, fout);
 		modline = 1;
 	    }
+	} else if (!strncmp(line, "set xdata time", 14)) {
+	    int zy2000 = strstr(line, "ZERO_YEAR=2000") != NULL;
+
+	    if (gpver >= 4.7 && zy2000) {
+		fputs("set xdata time\n", fout);
+		modline = 1;
+		fix_xrange = 1;
+	    } else if (gpver < 4.7 && !zy2000) {
+		fputs("set xdata time # ZERO_YEAR=2000\n", fout);
+		modline = 1;
+		fix_xrange = 2;
+	    }
+	} else if (!strncmp(line, "set xrange", 10) && fix_xrange) {
+	    do_fix_xrange(line, fix_xrange, fout);
+	    modline = 1;
 	}
 
 	if (!modline && !g_utf8_validate(line, -1, NULL)) {

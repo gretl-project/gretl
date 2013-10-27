@@ -282,7 +282,25 @@ double gnuplot_version (void)
     return vnum;
 }
 
-#endif /* !WIN32 */
+#else /* MS Windows */
+
+# ifdef WIN64
+double gnuplot_version (void)
+{
+    /* As of the gretl 1.9.13 release, the package for 
+       64-bit Windows includes gnuplot 4.7 */
+    return 4.7;
+}
+# else
+double gnuplot_version (void)
+{
+    /* As of the gretl 1.9.13 release, the package for 
+       32-bit Windows includes gnuplot 4.6.3 */
+    return 4.63;
+}
+# endif
+
+#endif /* MS Windows or not */
 
 static int gp_list_pos (const char *s, const int *list,
 			const DATASET *dset)
@@ -2331,7 +2349,7 @@ print_x_range_from_dates (gnuplot_info *gi, const DATASET *dset,
     xmin -= gi->xrange * .025;
     xmax += gi->xrange * .025;
 
-    fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
+    fprintf(fp, "set xrange [%.12g:%.12g]\n", xmin, xmax);
     gi->xrange = xmax - xmin;
 }
 
@@ -3051,7 +3069,11 @@ static void make_time_tics (gnuplot_info *gi,
     }
 
     if (gi->flags & GPT_TIMEFMT) {
-	pputs(prn, "set xdata time\n");
+	if (gnuplot_version() < 4.7) {
+	    pputs(prn, "set xdata time # ZERO_YEAR=2000\n");
+	} else {
+	    pputs(prn, "set xdata time\n");
+	}
 	strcpy(gi->timefmt, "%Y-%m-%d");
 	pprintf(prn, "set timefmt x \"%s\"\n", gi->timefmt);
 	strcpy(gi->xfmt, "%Y-%m-%d");
@@ -7095,15 +7117,6 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 
 #ifndef WIN64
 # define GP_TIME_OFFSET 946684800.0
-# ifdef WIN32
-static double gnuplot_version (void)
-{
-    /* the 32-bit Windows package includes gnuplot 4.6.3
-       as of the gretl 1.9.13 release 
-    */
-    return 4.63;
-}
-# endif
 #endif
 
 void date_from_gnuplot_time (char *targ, size_t tsize, 

@@ -1157,7 +1157,11 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
     /* using time format for x-axis? */
     if (*spec->timefmt != '\0') {
-	fputs("set xdata time\n", fp);
+	if (gnuplot_version() < 4.7) {
+	    fputs("set xdata time # ZERO_YEAR=2000\n", fp);
+	} else {
+	    fputs("set xdata time\n", fp);
+	}	
 	fprintf(fp, "set timefmt x \"%s\"\n", spec->timefmt);
     }
 
