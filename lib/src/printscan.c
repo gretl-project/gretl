@@ -1254,16 +1254,17 @@ int do_printscan_command (const char *line, DATASET *dset, PRN *prn)
 
 int generate_obs_markers (const char *s, DATASET *dset)
 {
-    char *format = NULL;
-    char *args = NULL;
+    char format[16] = {0};
+    char args[32] = {0};
     PRN *prn;
-    int t, err = 0;
+    int n, t, err = 0;
 
-    fprintf(stderr, "generate_obs_markers: s = '%s'\n", s);
-    return 1;
+    n = sscanf(s, "\"%15[^\"]\", %31[^\r\n]", format, args);
+    if (n != 2) {
+	return E_PARSE;
+    }
 
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
-
     if (err) {
 	return err;
     }
