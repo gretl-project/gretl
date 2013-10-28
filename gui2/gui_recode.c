@@ -367,6 +367,9 @@ static void do_fix_xrange (char *line, int fix, FILE *fp)
 
     n = sscanf(line, "set xrange [%lf:%lf]", &xmin, &xmax);
 
+    /* note: if we fail here, we'll suppress the printing of
+       the xrange specification */
+
     if (n == 2) {
 	double offset = 946684800;
 

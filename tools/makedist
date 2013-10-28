@@ -6,7 +6,7 @@ parent=/home/cottrell/stats/esl
 version=$(grep GRETL_VERSION[^_] ${parent}/gretl/lib/src/version.h | \
           awk '{ print $NF}' | sed s/[\"\;]//g)
 versiondir=gretl-${version}	  
-tarfile="${versiondir}.tar.bz2"
+tarfile="${versiondir}.tar.xz"
 
 echo "making dist file for gretl $version using filename $tarfile"
 
@@ -18,6 +18,6 @@ cd $parent
 echo "making archive..."
 mv gretl ${versiondir}
 rm -f $tarfile
-tar cvjfX $tarfile tar_exclude ${versiondir}
+tar cvJfX $tarfile tar_exclude ${versiondir}
 mv ${versiondir} gretl
 

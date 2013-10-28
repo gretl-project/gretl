@@ -61,6 +61,7 @@ enum {
 /* globals accessed in settings.c */
 int tabwidth = 4;
 int smarttab = 1;
+int script_line_numbers = 0;
 
 static gboolean script_electric_enter (windata_t *vwin);
 static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods);
@@ -732,6 +733,9 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 
     gtk_text_view_set_editable(view, editable);
     gtk_text_view_set_cursor_visible(view, editable);
+
+    gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), 
+					  script_line_numbers);
 
     if (gretl_script_role(vwin->role)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
@@ -2590,6 +2594,7 @@ static void line_numbers_cb (GtkWidget *w, windata_t *vwin)
 {
     int s = gtk_source_view_get_show_line_numbers(GTK_SOURCE_VIEW(vwin->text));
 
+    script_line_numbers = !script_line_numbers;
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), !s);
 }
 

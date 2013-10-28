@@ -2,8 +2,10 @@ version 1.9.14, in progress
 - Some fixes for the SAS xport file importer
 - Fix for gretl-quartz (Mac) package: enable aquaterm in
   the gnuplot build
-- Experimental: use daily dates when plotting daily/weekly
-  data and there are not too many observations
+- Use daily dates when plotting daily/weekly data and there
+  are not too many observations
+- Line-numbering in the script editor: make this a preference
+  which is remembered
 
 2013-10-24 version 1.9.13
 - Add Bulgarian, Catalan and Galician translations

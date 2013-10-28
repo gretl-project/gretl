@@ -284,6 +284,8 @@ RCVAR rc_vars[] = {
       INVISET | INTSET, 0, TAB_NONE, NULL },
     { "smarttab", "\"Smart\" Tab and Enter", NULL, &smarttab, 
       INVISET | BOOLSET, 0, TAB_NONE, NULL },
+    { "script_line_numbers", "script line numbers", NULL, &script_line_numbers, 
+      INVISET | BOOLSET, 0, TAB_NONE, NULL },
     { "main_width", "main window width", NULL, &mainwin_width, 
       INVISET | INTSET, 0, TAB_NONE, NULL },
     { "main_height", "main window height", NULL, &mainwin_height, 
