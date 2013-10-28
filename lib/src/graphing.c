@@ -7116,7 +7116,7 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 */
 
 #ifndef WIN64
-# define GP_TIME_OFFSET 946684800.0
+# define GP_TIME_OFFSET 946684800
 #endif
 
 void date_from_gnuplot_time (char *targ, size_t tsize, 
@@ -7131,7 +7131,7 @@ void date_from_gnuplot_time (char *targ, size_t tsize,
 
     if (gnuplot_version() < 4.7) {
 	x += GP_TIME_OFFSET;
-    } 
+    }
 
     etime = (time_t) x;
     strftime(targ, tsize, fmt, localtime(&etime));

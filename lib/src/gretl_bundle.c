@@ -169,6 +169,13 @@ static void bundled_item_destroy (gpointer data)
 {
     bundled_item *item = data;
 
+#if BDEBUG
+    fprintf(stderr, "bundled_item_destroy: type %d\n", item->type);
+    if (item->type == GRETL_TYPE_STRING) {
+	fprintf(stderr, " string: '%s'\n", (char *) item->data);
+    }
+#endif
+
     switch (item->type) {
     case GRETL_TYPE_DOUBLE:
     case GRETL_TYPE_STRING:
@@ -190,6 +197,14 @@ static void bundled_item_destroy (gpointer data)
 
     free(item->note);
     free(item);
+}
+
+static void bundle_key_destroy (gpointer data)
+{
+#if BDEBUG
+    fprintf(stderr, "freeing key '%s'\n", (char *) data);
+#endif
+    free(data);
 }
 
 /**
@@ -225,7 +240,8 @@ void gretl_bundle_void_content (gretl_bundle *bundle)
 	}
 	free(bundle->creator);
 	bundle->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
-					   g_free, bundled_item_destroy);
+					   bundle_key_destroy, 
+					   bundled_item_destroy);
 	bundle->creator = NULL;
     }
 }
@@ -242,7 +258,8 @@ gretl_bundle *gretl_bundle_new (void)
 
     if (b != NULL) {
 	b->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
-				      g_free, bundled_item_destroy);
+				      bundle_key_destroy, 
+				      bundled_item_destroy);
 	b->creator = NULL;
     }
 
@@ -314,7 +331,9 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
     void *ret = NULL;
 
     if (bundle == NULL) {
-	*err = E_DATA;
+	if (err != NULL) {
+	    *err = E_DATA;
+	}
     } else {
 	gpointer p = g_hash_table_lookup(bundle->ht, key);
 
@@ -332,6 +351,71 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 	    gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
 	    *err = E_DATA;
 	}
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_bundle_steal_data:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @type: location to receive data type, or NULL.
+ * @size: location to receive size of data (= series
+ * length for GRETL_TYPE_SERIES, otherwise 0), or NULL.
+ * @err: location to receive error code, or NULL.
+ *
+ * Works like gretl_bundle_get_data() except that the data
+ * pointer in question is removed from @bundle before it is
+ * returned to the caller; so in effect the caller assumes
+ * ownership of the item.
+ *
+ * Returns: the item pointer associated with @key in the
+ * specified @bundle, or NULL if there is no such item.
+ */
+
+void *gretl_bundle_steal_data (gretl_bundle *bundle, const char *key,
+			       GretlType *type, int *size, int *err)
+{
+    void *ret = NULL;
+
+    if (bundle == NULL) {
+	if (err != NULL) {
+	    *err = E_DATA;
+	}
+    } else {
+	gpointer p = g_hash_table_lookup(bundle->ht, key);
+
+	if (p != NULL) {
+	    GList *keys = g_hash_table_get_keys(bundle->ht);
+	    bundled_item *item = p;
+	    gchar *keycpy = NULL;
+
+	    ret = item->data;
+	    if (type != NULL) {
+		*type = item->type;
+	    }
+	    if (size != NULL) {
+		*size = item->size;
+	    }
+	    while (keys) {
+		if (!strcmp(keys->data, key)) {
+		    keycpy = keys->data;
+		    break;
+		} else if (keys->next) {
+		    keys = keys->next;
+		} else {
+		    break;
+		}
+	    }
+	    g_hash_table_steal(bundle->ht, key);
+	    g_free(keycpy);
+	    g_list_free(keys);
+	    free(item);
+	} else if (err != NULL) {
+	    gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
+	    *err = E_DATA;
+	}	    
     }
 
     return ret;
@@ -951,7 +1035,7 @@ int gretl_bundle_copy_as (const char *name, const char *copyname)
 	g_hash_table_destroy(b1->ht);
 	b1->ht = g_hash_table_new_full(g_str_hash, 
 				       g_str_equal, 
-				       g_free, 
+				       bundle_key_destroy, 
 				       bundled_item_destroy);
     } else {
 	b1 = gretl_bundle_new();

@@ -6543,7 +6543,7 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 {
     int (*cfunc) (gretl_bundle *, PRN *);
     void *handle;
-    gretl_bundle *b;
+    gretl_bundle *argb;
     int i, err = 0;
 
 #if CDEBUG
@@ -6561,9 +6561,10 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 	return E_FOPEN;
     }    
 
-    b = gretl_bundle_new();
+    /* bundle to serve as wrapper for arguments */
+    argb = gretl_bundle_new();
 
-    if (b == NULL) {
+    if (argb == NULL) {
 	close_plugin(handle);
 	return E_ALLOC;
     }
@@ -6594,12 +6595,11 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 	    } else if (fp->type == GRETL_TYPE_BOOL) {
 		x = (x != 0.0);
 	    }
-	    err = gretl_bundle_set_data(b, key, &x, GRETL_TYPE_DOUBLE, 0);
-	} else if (fp->type == GRETL_TYPE_MATRIX || 
-		   fp->type == GRETL_TYPE_MATRIX_REF) {
+	    err = gretl_bundle_set_data(argb, key, &x, GRETL_TYPE_DOUBLE, 0);
+	} else if (fp->type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *m = arg->val.m;
 	    
-	    err = gretl_bundle_set_data(b, key, m, fp->type, 0);
+	    err = gretl_bundle_set_data(argb, key, m, fp->type, 0);
 	} else if (fp->type == GRETL_TYPE_SERIES) {
 	    int size = sample_size(dset);
 	    double *px;
@@ -6609,13 +6609,17 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 	    } else {
 		px = arg->val.px;
 	    }
-	    err = gretl_bundle_set_data(b, key, px + dset->t1, 
+	    err = gretl_bundle_set_data(argb, key, px + dset->t1, 
 					GRETL_TYPE_SERIES, size);
+	} else if (fp->type == GRETL_TYPE_BUNDLE) {
+	    gretl_bundle *b = arg->val.b;
+
+	    err = gretl_bundle_set_data(argb, key, b, 
+					GRETL_TYPE_BUNDLE, 0);
 	} else {
 	    /* FIXME strings and maybe other types */
 	    err = E_TYPES;
 	}
-
 #if CDEBUG
 	fprintf(stderr, "arg[%d] (\"%s\") type = %d, err = %d\n", 
 		i, key, fp->type, err);
@@ -6623,7 +6627,8 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
     }
 
     if (!err) {
-	err = (*cfunc) (b, prn);
+	/* call the plugin function */
+	err = (*cfunc) (argb, prn);
     }
 
     close_plugin(handle);
@@ -6633,14 +6638,15 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 	int size;
 	void *ptr;
 
-	ptr = gretl_bundle_get_data(b, "retval", &type, &size, &err);
+	ptr = gretl_bundle_steal_data(argb, "retval", &type, &size, &err);
 
 	if (!err) {
 #if CDEBUG
-	    fprintf(stderr, "%s: got return value of type %d\n", 
+	    fprintf(stderr, "%s: stole return value of type %d\n", 
 		    u->name, type);
 #endif
 	    if (type != u->rettype) {
+		fprintf(stderr, "handle_plugin_call: type doesn't match u->rettype\n");
 		err = E_TYPES;
 	    }
 	}
@@ -6649,22 +6655,17 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 		double *px = ptr;
 		
 		*(double *) retval = *px;
+		free(ptr);
 	    } else if (type == GRETL_TYPE_MATRIX) {
-		gretl_matrix *m = ptr;
-
-		/* FIXME when to copy, when not to */
-		*(gretl_matrix **) retval = gretl_matrix_copy(m);
-		if (*(gretl_matrix **) retval == NULL) {
-		    err = E_ALLOC;
-		}
-	    } else if (type == GRETL_TYPE_MATRIX_REF) {
-		/* is this always right? ever right? */
 		*(gretl_matrix **) retval = ptr;
+	    } else if (type == GRETL_TYPE_BUNDLE) {
+		*(gretl_bundle **) retval = ptr;
 	    }
 	}
     }
 
-    gretl_bundle_destroy(b);
+    /* free the arguments wrapper */
+    gretl_bundle_destroy(argb);
 
     return err;
 }
