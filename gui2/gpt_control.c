@@ -1921,7 +1921,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     } else if (!strcmp(key, "samples")) {
 	spec->samples = atoi(val);
     } else if (!strcmp(key, "xdata")) {
-	if (!strcmp(val, "time")) {
+	if (!strncmp(val, "time", 4)) {
 	    spec->flags |= GPT_TIMEFMT;
 	}
     }
@@ -3225,7 +3225,12 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 		sprintf(label_y, (float_fmt(plot->yint, data_y))? " %-7.0f" : 
 				  " %#-6.3g", data_y);
 	    }
-	    strcat(label, label_y);
+	    if (strlen(label) + strlen(label_y) < sizeof label) {
+		strcat(label, label_y);
+	    } else {
+		fprintf(stderr, "label='%s', label_y='%s'\n", label, label_y);
+		strcpy(label, label_y);
+	    }
 	}
 
 	if (plot_is_zooming(plot) && (state & GDK_BUTTON1_MASK)) {
