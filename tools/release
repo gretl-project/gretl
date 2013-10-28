@@ -25,6 +25,7 @@ Remote:
 Local:
 * Update all the web docs (this is automated: ./update_html)
   and upload them to sourceforge
+* Update the libgretl API docs and upload ("apipack")
 * Send a message to gretl-announce
 
 Allin Cottrell

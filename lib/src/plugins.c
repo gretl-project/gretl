@@ -328,7 +328,7 @@ void *gretl_dlopen (const char *path, int now)
  * @handle: handle to shared object; see gretl_dlopen().
  * @name: name of symbol to look up.
  *
- * Cross-platform wrapper for obtained a handle to
+ * Cross-platform wrapper for obtaining a handle to
  * a named symbol in a shared object.
  *
  * Returns: pointer corresponding to @name, or NULL.
@@ -371,7 +371,7 @@ static void *get_plugin_handle (const char *plugin)
  * Looks up @funcname in gretl's internal plugin table and
  * attempts to open the plugin object file that offers the
  * given function. If successful, the @handle argument 
- * receives the pointer obtained from dlopen or 
+ * receives the pointer obtained from dlopen() or 
  * equivalent, and this can be used to close the plugin
  * once the caller is finished with it; see close_plugin().
  *

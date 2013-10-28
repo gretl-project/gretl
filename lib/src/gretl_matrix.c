@@ -4036,8 +4036,8 @@ static int blas_nmk_min = -1;
  * If you have an optimized version of the BLAS you may want
  * to set blas_nmk_min to some suitable positive value. (Setting
  * it to 0 would result in external calls to the BLAS for all
- * matrix multiplications, however small, which is not
- * going to be optimal.)
+ * matrix multiplications, however small, which is unlikely
+ * to be optimal.)
  */
 
 void set_blas_nmk_min (int nmk)
@@ -8602,7 +8602,7 @@ int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
  * @A: matrix to hold \alpha, or NULL if not wanted.
  * @jrank: cointegration rank, <= p.
  * 
- * Solves the Johnsen generalized eigenvalue problem via
+ * Solves the Johansen generalized eigenvalue problem via
  * SVD decomposition.  See J. A. Doornik and R. J. O'Brien, 
  * "Numerically stable cointegration analysis", Computational 
  * Statistics and Data Analysis, 41 (2002), pp. 185-193, 
@@ -10981,7 +10981,7 @@ int gretl_matrix_QR_ols (const gretl_matrix *Y,
  * @b: coefficients, k-vector.
  * @err: location to receive error code.
  *
- * Returns: the unadjusted R-squared, based one the regression 
+ * Returns: the unadjusted R-squared, based on the regression 
  * represented by @y, @X and @b, or #NADBL on failure.
  */
 

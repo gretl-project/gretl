@@ -549,7 +549,7 @@ static int *make_db_save_list (const int *list, const DATASET *dset,
  * @opt: option flag.
  * @dset: dataset struct.
  *
- * Writes the listed series from @Z to a gretl database. If @opt
+ * Writes the listed series from @dset to a gretl database. If @opt
  * includes OPT_F (force, overwrite), then in case any variables
  * in the database have the same names as some of those in @list,
  * replace the ones in the database.  Otherwise, in case of replicated

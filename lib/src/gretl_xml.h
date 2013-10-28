@@ -133,8 +133,12 @@ char *gretl_get_gdt_description (const char *fname);
 
 int load_user_XML_file (const char *fname, PRN *prn);
 
+#ifndef __GTK_DOC_IGNORE__
+
 void gretl_xml_init (void);
 
 void gretl_xml_cleanup (void);
+
+#endif /* __GTK_DOC_IGNORE__ */
 
 #endif /* GRETL_XML_H */
