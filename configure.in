@@ -766,6 +766,13 @@ AC_SUBST(pkg_build)
 AC_SUBST(swap_ends)
 AC_SUBST(use_gsf)
 
+if test "$gtk_version" = "3.0" ; then
+   plugsub="gretl-gtk3"
+else 
+   plugsub="gretl-gtk2"
+fi
+AC_SUBST(plugsub)
+
 dnl record results on various libraries
 AC_SUBST(XML_CFLAGS)
 AC_SUBST(XML_LIBS)

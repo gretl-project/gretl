@@ -2,6 +2,7 @@ prefix=@prefix@
 exec_prefix=${prefix}
 libdir=@libdir@
 includedir=${prefix}/include
+plugindir=${libdir}/@plugsub@
 ompopt=@OPENMP_CFLAGS@
 
 Name: gretl

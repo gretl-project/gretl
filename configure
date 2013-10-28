@@ -634,6 +634,7 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 USE_SSE2
 RLIB
+plugsub
 use_gsf
 swap_ends
 pkg_build
@@ -18301,6 +18302,13 @@ fi
 
 
 
+
+
+if test "$gtk_version" = "3.0" ; then
+   plugsub="gretl-gtk3"
+else
+   plugsub="gretl-gtk2"
+fi
 
 
 
