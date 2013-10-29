@@ -2046,9 +2046,13 @@ int freqdist (int varno, const DATASET *dset,
 	    do_graph = 0;
 	}
 
-	if (do_graph && plot_freq(freq, dist)) {
-	    pputs(prn, _("gnuplot command failed\n"));
-	    do_graph = 0;
+	if (do_graph) {
+	    int gerr = plot_freq(freq, dist);
+
+	    if (gerr) {
+		pputs(prn, _("gnuplot command failed\n"));
+		do_graph = 0;
+	    }
 	}
 
 	free_freq(freq);

@@ -1504,7 +1504,7 @@ static int got_none_option (const char *s)
     return s != NULL && !strcmp(s, "none");
 }
 
-static const char *plot_output_option (PlotType p)
+static const char *plot_output_option (PlotType p, int *pci)
 {
     int ci = GNUPLOT;
     const char *s;
@@ -1532,11 +1532,19 @@ static const char *plot_output_option (PlotType p)
 	ci = RMPLOT;
     } else if (p == PLOT_LEVERAGE) {
 	ci = LEVERAGE;
+    } else if (p == PLOT_FREQ_SIMPLE ||
+	       p == PLOT_FREQ_NORMAL ||
+	       p == PLOT_FREQ_GAMMA) {
+	ci = FREQ;
     }
-    
+
     s = get_optval_string(ci, OPT_U);
     if (s != NULL && *s == '\0') {
 	s = NULL;
+    }
+
+    if (pci != NULL) {
+	*pci = ci;
     }
 
     return s;
@@ -1559,7 +1567,7 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags,
 {
     char fname[FILENAME_MAX] = {0};
     const char *optname = NULL;
-    int interactive = 0;
+    int ci, interactive = 0;
     FILE *fp = NULL;
 
     /* ensure we have 'gnuplot_path' in place (file-scope static var) */
@@ -1579,10 +1587,10 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags,
     *gnuplot_outname = '\0';
 
     /* check for --output=whatever option */
-    optname = plot_output_option(ptype);
+    optname = plot_output_option(ptype, &ci);
 
-    if (got_display_option(optname)) {
-	/* --output=display specified */
+    if (ci == FREQ || got_display_option(optname)) {
+	/* --output=display specified (or FREQ, a special) */
 	interactive = 1;
     } else if (optname != NULL) {
 	/* --output=filename specified */
@@ -1592,7 +1600,7 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags,
 	interactive = !gretl_in_batch_mode();
     }
 
-#if GPDEBUG
+#if GP_DEBUG
     fprintf(stderr, "optname = '%s', interactive = %d\n", 
 	    optname, interactive);
 #endif
@@ -1603,7 +1611,7 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags,
 	fp = gp_set_up_batch(fname, ptype, flags, optname, err);
     }
 
-#if GPDEBUG
+#if GP_DEBUG
     fprintf(stderr, "open_gp_stream_full: '%s'\n", gretl_plotfile());
 #endif
 
@@ -1625,7 +1633,7 @@ int gnuplot_graph_wanted (PlotType ptype, gretlopt opt)
 
     if (opt & OPT_U) {
 	/* check for --plot=whatever option */
-	optname = plot_output_option(ptype);
+	optname = plot_output_option(ptype, NULL);
     }
 
     if (got_none_option(optname)) {
