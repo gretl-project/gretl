@@ -8169,7 +8169,14 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 	} else {
 	    register_graph();
 	}
-    } 
+    } else if (ci == CLEAR) {
+	if (s->cmd->opt & OPT_D) {
+	    /* --dataset only */
+	    close_session(OPT_P);
+	} else {
+	    close_session(OPT_NONE);
+	}
+    }
 
     if (err) {
 	gui_errmsg(err);

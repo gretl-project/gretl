@@ -5230,6 +5230,16 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	}
 	break;
 
+#if 0 /* not yet */
+    case CLEAR:
+	if (gretl_in_gui_mode()) {
+	    schedule_callback(s);
+	} else {
+	    lib_clear_data(s, dset);
+	}
+	break;
+#endif
+
     case ANOVA:
 	err = anova(cmd->list, dset, cmd->opt, prn);
 	break;
