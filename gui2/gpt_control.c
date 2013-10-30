@@ -5058,6 +5058,9 @@ void launch_gnuplot_interactive (const char *plotfile)
     create_child_process(gpline);
     g_free(gpline);
 #elif defined(MAC_NATIVE)
+    /* FIXME we need to launch a script that sets the environment
+       correctly for gnuplot instead of just calling Terminal
+    */
     gchar *gpline;
 
     if (plotfile == NULL) {
