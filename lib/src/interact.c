@@ -4719,6 +4719,8 @@ static int lib_join_data (ExecState *s,
     return err;
 }
 
+#define ALLOW_GUI_OPEN 1
+
 static int lib_open_append (ExecState *s, 
 			    DATASET *dset, 
 			    char *newfile,
@@ -4739,11 +4741,19 @@ static int lib_open_append (ExecState *s,
 	return E_NODATA;
     }
 
+#if ALLOW_GUI_OPEN
+    if (cmd->ci == OPEN && gretl_function_depth() > 0) {
+	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
+			     gretl_command_word(cmd->ci));
+	return E_DATA;
+    }
+#else
     if (cmd->ci == OPEN && (gretl_in_gui_mode() || gretl_function_depth() > 0)) {
 	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
 			     gretl_command_word(cmd->ci));
 	return E_DATA;
     }
+#endif
 
     if (cmd->ci != JOIN && (opt & OPT_O)) {
 	odbc = 1;
@@ -4855,6 +4865,25 @@ static int lib_open_append (ExecState *s,
     }
 
     return err;
+}
+
+static int check_clear_data (void)
+{
+#if ALLOW_GUI_OPEN
+    if (gretl_function_depth() > 0) {
+	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
+			     gretl_command_word(CLEAR));
+	return E_DATA;
+    }
+#else
+    if (gretl_in_gui_mode() || gretl_function_depth() > 0) {
+	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
+			     gretl_command_word(CLEAR));
+	return E_DATA;
+    }
+#endif
+
+    return 0;
 }
 
 static void schedule_callback (ExecState *s)
@@ -5230,15 +5259,16 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	}
 	break;
 
-#if 0 /* not yet */
     case CLEAR:
-	if (gretl_in_gui_mode()) {
-	    schedule_callback(s);
-	} else {
-	    lib_clear_data(s, dset);
+	err = check_clear_data();
+	if (!err) {
+	    if (gretl_in_gui_mode()) {
+		schedule_callback(s);
+	    } else {
+		lib_clear_data(s, dset);
+	    }
 	}
 	break;
-#endif
 
     case ANOVA:
 	err = anova(cmd->list, dset, cmd->opt, prn);

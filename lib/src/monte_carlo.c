@@ -401,10 +401,6 @@ int ok_in_loop (int c)
 	return 0;
     }
 
-    if (c == OPEN && gretl_in_gui_mode()) {
-	return 0;
-    }
-
     return 1;
 }
 
