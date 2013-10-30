@@ -415,7 +415,7 @@ static void state_vars_copy (set_vars *sv)
     robust_opts_copy(&sv->ropts);
 }
 
-#define OMP_SHOW 0
+#define OMP_SHOW 1
 
 int libset_use_openmp (int n)
 {
@@ -423,7 +423,7 @@ int libset_use_openmp (int n)
     if (state == NULL || !(state->flags & STATE_OPENMP_ON)) {
 	return 0;
     } else if (mp_nmk_min >= 0 && n > mp_nmk_min) {
-# if OMP_SHOW
+# if OMP_SHOW > 1
 	fprintf(stderr, "libset_use_openmp: yes\n");
 # endif
 	return 1;
@@ -469,15 +469,19 @@ static int openmp_by_default (void)
 	}
     }
 
-#if OMP_SHOW
-    if (ret) {
-	fprintf(stderr, "num_cores = %d, using OpenMP by default\n",
-		num_cores);
-    } else {
-	fprintf(stderr, "num_cores = %d, not using OpenMP by default\n",
-		num_cores);
+# if OMP_SHOW
+    if (1) {
+	fprintf(stderr, "number of cores detected = %d\n", num_cores);
+	fprintf(stderr, "use OpenMP by default? %s\n", ret ? "yes" : "no");
+	if (ret) {
+	    char *s = getenv("OMP_NUM_THREADS");
+
+	    if (s != NULL && *s != '\0') {
+		fprintf(stderr, "OMP_NUM_THREADS set to %d\n", atoi(s));
+	    }
+	}
     }
-#endif	
+# endif	
 
     return ret;
 }
