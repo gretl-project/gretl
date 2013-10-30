@@ -4276,7 +4276,9 @@ static gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X,
 {
     gretl_matrix *XTX = NULL;
     double x;
-    int idx1, idx2;
+#if defined(_OPENMP)
+    int ii;
+#endif
     int i, j, k, nc, nr, n;
 
     if (gretl_is_null_matrix(X)) {
@@ -4292,7 +4294,10 @@ static gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X,
 	return NULL;
     }
 
-#if 0 // defined(_OPENMP)
+#if defined(_OPENMP)
+    if (!libset_use_openmp(n*nr)) {
+	goto st_mode;
+    }
 #pragma omp parallel for private(i, j, k, ii, x)
     for (i=0; i<nc; i++) {
 	for (j=i; j<nc; j++) {
@@ -4307,15 +4312,17 @@ static gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X,
 	    XTX->val[ii] = x;
 	}
     }
-#else
+    return XTX;
+
+ st_mode:
+#endif
+
     n = 0;
     for (i=0; i<nc; i++) {
 	for (j=i; j<nc; j++) {
-	    idx1 = i * nr;
-	    idx2 = j * nr;
 	    x = 0.0;
 	    for (k=0; k<nr; k++) {
-		x += X->val[idx1++] * X->val[idx2++];
+		x += X->val[i*nr+k] * X->val[j*nr+k];
 	    }
 	    if (i == j && x < DBL_EPSILON) {
 		*nasty = 1;
@@ -4323,7 +4330,6 @@ static gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X,
 	    XTX->val[n++] = x;
 	}
     }
-#endif
 
     return XTX;
 }

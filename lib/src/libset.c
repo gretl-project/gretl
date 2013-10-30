@@ -415,7 +415,7 @@ static void state_vars_copy (set_vars *sv)
     robust_opts_copy(&sv->ropts);
 }
 
-#define OMP_SHOW 1
+#define OMP_SHOW 0
 
 int libset_use_openmp (int n)
 {
