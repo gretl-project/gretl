@@ -4059,18 +4059,19 @@ int get_blas_nmk_min (void)
 
 static int use_blas (int n, int m, int k)
 {
+#if BLAS_DEBUG
+    fprintf(stderr, "use_blas ? nmk_min = %d\n", blas_nmk_min);
+#endif
     if (blas_nmk_min >= 0) {
 	double nmk = (double) n * m * k;
 
-	if (nmk >= (double) blas_nmk_min) {
 #if BLAS_DEBUG
-	    fprintf(stderr, "nmk = %g, using blas\n", nmk);
+	fprintf(stderr, " and nmk = %g\n", nmk);
 #endif
-	    return 1;
-	}
+	return nmk >= (double) blas_nmk_min;
+    } else {
+	return 0;
     }
-
-    return 0;
 }
 
 static void gretl_blas_dsyrk (const gretl_matrix *a, int atr,
@@ -4164,7 +4165,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
     }
 
 #if defined(_OPENMP)
-    if (!libset_use_openmp(nc*nc)) {
+    if (!libset_use_openmp(nc*nc*nr)) {
 	goto st_mode;
     }
 
@@ -4382,7 +4383,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     }
 
 #if defined(_OPENMP)
-    if (!libset_use_openmp(m*n)) {
+    if (!libset_use_openmp(m*n*k)) {
 	goto st_mode;
     }
 
