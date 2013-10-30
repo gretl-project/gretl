@@ -746,8 +746,17 @@ void context_error (int c, parser *p)
 
 static char *get_quoted_string (parser *p)
 {
-    int n = parser_char_index(p, '"');
+    const char *q = p->point;
     char *s = NULL;
+    int i, n = -1;
+
+    /* find matching (non-escaped) double-quote */
+    for (i=0; q[i] != '\0'; i++) {
+	if (q[i] == '"' && q[i-1] != '\\') {
+	    n = i;
+	    break;
+	}
+    }
 
     if (n >= 0) {
 	s = gretl_strndup(p->point, n);
