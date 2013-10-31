@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>gretl no OS X</title>
+<LINK REL=STYLESHEET TYPE="text/css" HREF="css-gretl.html">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+
+<body>
+
+<p>[<a href="http://gretl.sourceforge.net/pt.html">página inicial do gretl</a>]</p>
+
+<center>
+<h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
+<h2>para Mac OS X com processador PPC</h2>
+</center>
+
+<h2>Passo 1: certifique-se que tem X11</h2>
+
+<p>Para correr gretl, você tem que ter um sistema de janelas X11 instalado no seu Mac. Isto deverá se automático em OS X recentes, mas se você usa uma versão mais antiga talvez tenha que usar o DVD de instalação do sistema para instalar o X11..</p>
+
+<p>Como saber se o X11 está instalado? Abrir o Localizador e ir a <kbd>Aplicativos</kbd>. Dentro de Aplicativos, localize a pasta <kbd>Utilidades</kbd>, abrir-la e verificar no fim: se o X11 estiver instalado ele deve aparecer aí como um ícone.</p>
+
+<h2>Passo 2: instalar GTK</h2>
+
+<p>Algumas bibliotecas adicionais são necessárias para o gretl, nomeadamente GTK e outros relacionados. Instalar GTK usando <a href="http://r.research.att.com/gtk2-framework.dmg">gtk2-framework.dmg</a> (ou <a href="http://ricardo.ecn.wfu.edu/pub/gretl/gtk2-framework.dmg">sítio alternativo </a>).
+</p>
+ 
+<h2>Passo 3: instalar gretl</h2> 
+
+<p>Agora para o próprio gretl: obter e instalar a versão mais recente ou o "snapshot" (versão de desenvolvimento). O "snapshot" está mais atualizado: normalmente conterá correções de erros, mas por vezes poderá ter novos erros introduzidos. Para saber o que existe novo no "snapshot", dê uma vista de olhos no <a href="../ChangeLog.html">Registo/Registro de alterações</a> do gretl (na entrada "in progress").</p>
+
+<table cellpadding="2">
+<tr>
+<td><p>versão mais recente (SHORTDATE)</p></td>
+<td><p>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-ppc.dmg.gz">gretl-VERSION-ppc.dmg.gz</a>
+</p></td>
+</tr>
+
+<tr>
+<td><p>OU "snapshot" atual</p></td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-ppc.dmg.gz/download">gretl-ppc.dmg.gz</a>
+</p></td>
+</tr>
+</table>
+
+<p>Depois de obter o gretl, faça um duplo-clique no arquivo<kbd>dmg.gz</kbd> para o descomprimir. Isto produzirá um arquivo <kbd>dmg</kbd>; fazer um clique-duplo nele para montar a imagem de disco. Abrir a imagem de disco no Localizador e arrastar Gretl para dentro de Aplicativos. Abrir a imagem de disco no Finder e arrastar Gretl para dentro de Applications. <i>Mas note</i>: se você estiver atualizando uma instalação do gretl, você deverá primeiro abrir Aplicativos com o Localizador e apagar o item do Gretl antigo. Depois de ter instalado o gretl você pode ejetar a imagem de disco e apagar os arquivos <kbd>dmg</kbd> e <kbd>dmg.gz</kbd>.
+</p>
+
+<h2>Problemas?</h2>
+
+<p>A imagem de disco do gretl disk image está documentada em <a href="./README.pdf">README.pdf</a>, que contém algumas sugestões para despiste de problemas. Resumidamente, se você quiser despistar problemas num gretl não funcional em OS X, tente isto: abrir uma janela de terminal X11; mudar de diretório (<kbd>cd</kbd>) para <kbd>Gretl.app</kbd> (o local onde instalou o pacote); mudar para o diretório<kbd>Contents/Resources/bin</kbd> e rodar o comando</p>
+
+<pre>
+./gretl
+</pre>
+
+<p>Isto deve mostrar alguma informação sobre o que está acontecendo de errado.</p>
+
+<h2>Extras opcionais</h2>
+
+<p>Você pode querer instalar X-12-ARIMA e/ou TRAMO/SEATS. Estes são programas especializados para análise de séries temporais com sazonalidade, em versões compatíveis com gretl.
+</p>
+
+<table cellpadding="2">
+
+<tr>
+<td><p>X-12-ARIMA para Mac PowerPC</p></td>
+<td><p><a
+href="http://sourceforge.net/projects/gretl/files/x12a/x12arima-ppc.dmg/download">x12arima-ppc.dmg</a></p></td>
+</tr>
+
+<tr>
+<td><p>TRAMO/SEATS para Mac PowerPC</p></td>
+<td><p><a 
+href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats.dmg/download">tramo-seats.dmg</a></p></td>
+</tr>
+
+</table>
+
+<p>
+
+&nbsp;
+
+</p>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+ 
