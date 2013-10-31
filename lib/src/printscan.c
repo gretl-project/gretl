@@ -1191,7 +1191,15 @@ static char *formulate_sprintf_call (const char *s, int *err)
     return call;
 }
 
-#if 0 /* maybe reinstate this for a while ? */
+/* If USE_COMMAND_FORM is defined we don't pass printf and sprintf,
+   given in command form, through "genr" but just process them here.
+   This is faster, and although it gives a little less flexibility
+   this was the expected behaviour in gretl <= 1.9.13.
+*/
+
+#define USE_COMMAND_FORM 1
+
+#if USE_COMMAND_FORM
 
 /* split line into format and args, copying both parts */
 
@@ -1275,6 +1283,27 @@ static int split_printf_line (const char *s, char *targ, int *sp,
     return 0;
 }
 
+static int printf_driver (const char *line, DATASET *dset, PRN *prn)
+{
+    char *format = NULL;
+    char *args = NULL;
+    char targ[VNAMELEN];
+    int err, sp = 0;
+
+    err = split_printf_line(line, targ, &sp, &format, &args);
+
+    if (!err) {
+	char *vname = sp ? targ : NULL;
+
+	err = do_printf(vname, format, args, dset, prn, NULL);
+    }
+
+    free(format);
+    free(args);
+    
+    return err;
+}
+
 #endif
 
 /* apparatus to support the command-forms of printf, sprintf 
@@ -1285,6 +1314,12 @@ int do_printscan_command (const char *line, DATASET *dset, PRN *prn)
     static int warned;
     char *tmp;
     int ci, err = 0;
+
+#if USE_COMMAND_FORM
+    if (strncmp(line, "ssc", 3)) {
+	return printf_driver(line, dset, prn);
+    }
+#endif
 
     if (!strncmp(line, "printf ", 7)) {
 	ci = PRINTF;
