@@ -4869,7 +4869,7 @@
 	O modelo de efeitos fixos permite variar a interseção da regressão
         ao longo das unidades de seção cruzada.  Uma estatística 
         teste-<math>F</math> é apresentada segundo a hipótese nula de que
-        as interseções nãp diferem.  O modelo de efeitos aleatórios
+        as interseções não diferem.  O modelo de efeitos aleatórios
         decompõe a variância dos resíduos em duas partes, uma parte 
         específica à unidade de seção cruzada e outra específica para
         a observação em particular. (Este estimador pode ser calculado
@@ -4902,78 +4902,78 @@
   </command>
 
   <command name="hccme" section="Estimation" context="gui"
-    label="Robust standard errors">
+    label="Erros padrão robustos">
 
     <description>
       <para>
-	You are offered several variant calculations for standard
-	errors that are robust in the presence of heteroskedasticity
-	(and, in the case of the HAC estimator, autocorrelation).
+	Você tem disponível várias variantes de cálculo para erros
+        padrão que são robustos na presença de heteroscedasticidade
+	(e, no caso do estimador HAC, autocorrelação).
       </para>
       <para>
-	HC0 produces the original <quote>White's standard errors</quote>;
-	HC1, HC2, HC3 and HC3a are subsequent variations that are
-	generally reckoned to produce superior (more reliable) results.
-	For details of the estimators, see <cite
+	HC0 produz os <quote>erros padrão de White</quote> originais;
+	HC1, HC2, HC3 e HC3a são variações subsequentes que em geral
+        são reconhecidas de produzirem melhores (mais fiáveis) resultados.
+	Para detalhes dos estimadores, ver <cite
 	key="mackinnon-white85">MacKinnon and White (Journal of
-	Econometrics, 1985)</cite> or <cite
+	Econometrics, 1985)</cite> ou <cite
 	key="davidson-mackinnon04">Davidson and MacKinnon, Econometric
-	Theory and Methods (Oxford, 2004)</cite>.  The labels given here
-	are those used by Davidson and MacKinnon.  Variant
-	<quote>HC3a</quote> is the jackknife, as described in MacKinnon
-	and White; HC3 is a close approximation to the jackknife.
+	Theory and Methods (Oxford, 2004)</cite>.  As etiquetas aqui usadas
+        são as que Davidson e MacKinnon usaram.  A variante
+	<quote>HC3a</quote> é o canivete ("jackknife"), como descrita em MacKinnon
+	e White; HC3 é uma boa aproximação ao canivete.
       </para>
       <para>
-	If you use the HAC estimator for OLS on time-series data, you
-	are able to fine-tune the lag-length using the <cmd>set</cmd>
-	command.  Please see the gretl manual or the script commands
-	help file for details.
+	Se você usar o estimador HAC para OLS em dados de séries temporais,
+        você pode afinar o comprimento de desfasamento usando o comando 
+       <cmd>set</cmd>.  Por favor, para mais detalhes, ver o manual do
+        arquivo de ajuda das sequências de comandos.
       </para>
       <para>
-	When estimating a model via OLS using panel data, the default
-	robust estimator of the covariance matrix is that given by
-	Arellano.  The alternative is Beck and Katz's Panel Corrected
-	Standard Errors (PCSE).  The latter take into account
-	heteroskedasticity but not autocorrelation.  
+	Ao se estimar um modelo OLS usando dados de painel, o estimador
+	robusto por omissão da matriz de covariância é o dado por Arellano. 
+        A alternativa são os Erros Padrão Corrigidos de Painel de 
+        Beck e Katz (PCSE).  Este tem em conta a heteroscedasticidade mas
+        não a autocorrelação.  
       </para>
       <para>
-	Two robust estimators of the covariance matrix are
-	offered for GARCH models: QML is the Quasi-Maximum Likelihood
-	Estimator, and BW is the Bollerslev-Wooldridge estimator.
+	Para modelos GARCH são fornecidos dois estimadores robustos para a 
+        matriz de covariância: o estimador de Verosimilhança Quasi-Maximum
+        (QML), e estimador de Bollerslev-Wooldridge (BW).
       </para>
     </description>
 
   </command>
 
   <command name="heckit" section="Estimation" context="cli"
-    label="Heckman selection model">
+    label="Modelo de seleção Heckman">
 
     <usage>
       <arguments>
-        <argument>depvar</argument>
-        <argument>indepvars</argument>
-	<argument separated="true">selection equation</argument>
+        <argument>variável-dependente</argument>
+        <argument>variáveis-independentes</argument>
+	<argument separated="true">equação de seleção</argument>
       </arguments>
       <options>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>suppress printing of results</effect>
+	  <effect>suprimir a escrita de resultados</effect>
 	</option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>QML standard errors</effect>
+	  <effect>erros padrão QML</effect>
         </option>
         <option>
 	  <flag>--two-step</flag>
-	  <effect>perform two-step estimation</effect>
+	  <effect>efetuar estimação de dois passos</effect>
         </option>
         <option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>mostrar a matriz de covariância</effect>
         </option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print extra output</effect>
+	  <effect>mostrar saídas adicionais</effect>
         </option>
       </options>      
       <examples>
@@ -4986,34 +4986,32 @@
 
     <description>
       <para>
-	Heckman-type selection model.  In the specification, the list
-	before the semicolon represents the outcome equation, and the
-	second list represents the selection equation.  The dependent
-	variable in the selection equation (<lit>ys</lit> in the
-	example above) must be a binary variable.
+	Seleção do modelo de tipo Heckman.  Na especificação, a lista
+        antes do ponto-e-vírgula representa a equação do resultado.  A 
+        variável dependente na equação de seleção (<lit>ys</lit> no 
+        exemplo acima) tem que ser uma variável binária.
       </para>
       <para>
-	By default, the parameters are estimated by maximum
-	likelihood. The covariance matrix of the parameters is
-	computed using the negative inverse of the Hessian. If
-	two-step estimation is desired, use the <opt>--two-step</opt>
-	option. In this case, the covariance matrix of the parameters
-	of the outcome equation is appropriately adjusted as per
-	<cite key="heckman79">Heckman (1979)</cite>.
+	Por omissão, os parâmetros são estimados por máxima verosimilhança.
+        A matriz de covariância dos parâmetros é calculada usando a 
+        inversão negativa da Hessiana. Se for desejável a estimação,
+        de dois passos, use a opção <opt>--two-step</opt>. Neste caso,
+        a matriz de covariância dos parâmetros da equação resultante é
+        adequadamente ajustada de acordo com <cite key="heckman79">Heckman (1979)</cite>.
       </para>
       <para>
-	Please note that in ML estimation a numerical approximation of
-	the Hessian is used; this may lead to inaccuracies in the
-	estimated covariance matrix if the scale of the explanatory
-	variables is such that some of the estimated coefficients are
-	very small in absolute value. This problem will be addressed
-	in future versions; in the meantime, rescaling the offending
-	explanatory variable(s) can be used as a workaround.
+	Repare que na estimação de Máxima Verosimilhança (ML) é usada uma
+        aproximação numérica da Hessiana; isto pode levar a inexatidões na
+        matriz de covariância estimada se a escala das variáveis explanatórias
+        for para alguns dos coeficientes estimados muito pequena em 
+        valor absoluto. Este problema pode ser abordado em versões futuras;
+        por agora, como solução temporária, pode-se re-escalar a variável 
+        ou variáveis explanatórias que estão a causar problemas.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Model/Limited dependent variable/Heckit</menu-path>
+      <menu-path>/Modelo/Variável dependente limitada/Heckit...</menu-path>
     </gui-access>
 
   </command>
@@ -9651,6 +9649,11 @@
 	  <optparm>filename</optparm>
 	  <effect>send output to specified file</effect>
         </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+        </option>
       </options>
       <examples>
         <example>scatters 1 ; 2 3 4 5</example>
@@ -9697,6 +9700,11 @@
 	plots can be a useful step in exploratory data analysis.  The
 	maximum number of plots is 16; any extra variables will be
 	ignored.
+      </para>
+      <para>
+	If the dataset is time-series, then the second sub-list can be
+	omitted, in which case it will implicitly be taken as "time",
+	so you can plot multiple time series in separated sub-graphs
       </para>
     </description>
 
