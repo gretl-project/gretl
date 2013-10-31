@@ -1191,6 +1191,92 @@ static char *formulate_sprintf_call (const char *s, int *err)
     return call;
 }
 
+#if 0 /* maybe reinstate this for a while ? */
+
+/* split line into format and args, copying both parts */
+
+static int split_printf_line (const char *s, char *targ, int *sp,
+			      char **format, char **args)
+{
+    const char *p;
+    int n, err = 0;
+
+    *sp = 0;
+
+    if (!strncmp(s, "printf ", 7)) {
+	s += 7;
+    } else if (!strncmp(s, "sprintf ", 8)) {
+	s += 8;
+	*sp = 1;
+    }
+
+    if (*sp) {
+	/* need a target name */
+	s += strspn(s, " ");
+	err = extract_varname(targ, s, &n);
+	if (!err && n == 0) {
+	    err = E_PARSE;
+	}
+	if (err) {
+	    return err;
+	}
+	s += n;
+	/* allow comma after target */
+	s += strspn(s, " ");
+	if (*s == ',') {
+	    s++;
+	}
+    }
+
+    s += strspn(s, " ");
+    if (*s != '"' || *(s+1) == '\0') {
+	return E_PARSE;
+    }
+
+    s++;
+    p = s;
+
+    n = 0;
+    while (*s) {
+	if (*s == '"' && *(s-1) != '\\') {
+	    break;
+	}
+	n++;
+	s++;
+    }
+
+    if (n == 0) {
+	/* empty format string */
+	return 0;
+    }
+
+    *format = gretl_strndup(p, n);
+    if (*format == NULL) {
+	return E_ALLOC;
+    }
+
+    s++;
+    s += strspn(s, " ");
+
+    if (*s != ',') {
+	/* empty args */
+	*args = NULL;
+	return 0;
+    }
+
+    s++;
+    s += strspn(s, " ");
+
+    *args = gretl_strdup(s);
+    if (*args == NULL) {
+	return E_ALLOC;
+    }
+
+    return 0;
+}
+
+#endif
+
 /* apparatus to support the command-forms of printf, sprintf 
    and sscanf */
 
