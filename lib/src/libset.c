@@ -417,12 +417,12 @@ static void state_vars_copy (set_vars *sv)
 
 #define OMP_SHOW 0
 
-int libset_use_openmp (int n)
+int libset_use_openmp (double n)
 {
 #if defined(_OPENMP)
     if (state == NULL || !(state->flags & STATE_OPENMP_ON)) {
 	return 0;
-    } else if (mp_nmk_min >= 0 && n > mp_nmk_min) {
+    } else if (mp_nmk_min >= 0 && n > (double) mp_nmk_min) {
 # if OMP_SHOW > 1
 	fprintf(stderr, "libset_use_openmp: yes\n");
 # endif

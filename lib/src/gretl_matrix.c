@@ -4083,6 +4083,9 @@ static void gretl_blas_dsyrk (const gretl_matrix *a, int atr,
     integer k = (atr)? a->rows : a->cols;
     integer lda = a->rows;
     double x, alpha = 1.0, beta = 0.0;
+#if defined(_OPENMP)
+    double fpm;
+#endif
     int i, j;
 
     if (cmod == GRETL_MOD_CUMULATE) {
@@ -4096,7 +4099,8 @@ static void gretl_blas_dsyrk (const gretl_matrix *a, int atr,
 	   &beta, c->val, &n);
 
 #if defined(_OPENMP)
-    if (!libset_use_openmp(n*n)) {
+    fpm = (double) n * n;
+    if (!libset_use_openmp(fpm)) {
 	goto st_mode;
     }
 #pragma omp parallel for private(i, j, x)
@@ -4142,6 +4146,9 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
     int nc = (atr)? a->cols : a->rows;
     int nr = (atr)? a->rows : a->cols;
     int idx1, idx2;
+#if defined(_OPENMP)
+    double fpm;
+#endif
     double x;
 
     if (c->rows != nc) {
@@ -4165,7 +4172,8 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
     }
 
 #if defined(_OPENMP)
-    if (!libset_use_openmp(nc*nc*nr)) {
+    fpm = (double) nc * nc * nr;
+    if (!libset_use_openmp(fpm)) {
 	goto st_mode;
     }
 
@@ -4279,6 +4287,7 @@ static gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X,
     double x;
 #if defined(_OPENMP)
     int ii;
+    double fpm;
 #endif
     int i, j, k, nc, nr, n;
 
@@ -4296,7 +4305,8 @@ static gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X,
     }
 
 #if defined(_OPENMP)
-    if (!libset_use_openmp(n*nr)) {
+    fpm = (double) n * nr;
+    if (!libset_use_openmp(fpm)) {
 	goto st_mode;
     }
 #pragma omp parallel for private(i, j, k, ii, x)
@@ -4373,6 +4383,9 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     int ar = a->rows;
     int br = b->rows;
     int cr = c->rows;
+#if defined(_OPENMP)
+    double fpm;
+#endif
     int i, j, l;
 
     if (cmod == GRETL_MOD_CUMULATE) {
@@ -4383,7 +4396,8 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     }
 
 #if defined(_OPENMP)
-    if (!libset_use_openmp(m*n*k)) {
+    fpm = (double) m * n * k;
+    if (!libset_use_openmp(fpm)) {
 	goto st_mode;
     }
 
@@ -5401,7 +5415,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     int conftype;
     int i, j, nv;
 #if defined(_OPENMP)
-    int psize;
+    double psize;
 #endif
 
     if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
@@ -5434,7 +5448,8 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 
 #if defined(_OPENMP)
     if (conftype == CONF_ELEMENTS) {
-	psize = nv = m * n;
+	nv = m * n;
+	psize = (double) m * n;
     } else if (conftype == CONF_A_ROWVEC || 
 	       conftype == CONF_B_ROWVEC ||
 	       conftype == CONF_AR_BC) {
