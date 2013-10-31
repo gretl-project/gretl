@@ -415,7 +415,6 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
 	int symm = 1;
 	int udiag = 1;
 	int i, j;
-	
 
 	for (i=0; i<m->rows; i++) {
 	    for (j=0; j<m->cols; j++) {
@@ -1175,14 +1174,12 @@ int gretl_matrix_random_fill (gretl_matrix *m, int dist)
 
     n = m->rows * m->cols;
 
-    if (n == 0) {
-	return 0;
-    }
-
-    if (dist == D_NORMAL) {
-	gretl_rand_normal(m->val, 0, n - 1);
-    } else if (dist == D_UNIFORM) {
-	gretl_rand_uniform(m->val, 0, n - 1);
+    if (n > 0) {
+	if (dist == D_NORMAL) {
+	    gretl_rand_normal(m->val, 0, n - 1);
+	} else if (dist == D_UNIFORM) {
+	    gretl_rand_uniform(m->val, 0, n - 1);
+	}
     }
 
     return 0;

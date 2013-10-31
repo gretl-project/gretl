@@ -92,7 +92,12 @@ static void *gretl_memalign (size_t size, int *err)
     return mem;
 }
 
-#define RSIZE (MEXP / 128 + 1) * 4
+/* RSIZE must be a multiple of 4, and greater than or equal
+   to (MEXP / 128 + 1) * 4, where MEXP is the Mersenne Exponent
+   defined in rng/SFMT-params.h (currently 19937).
+*/
+
+#define RSIZE (MEXP / 128 + 1) * 16
 
 static guint32 *rbuf;
 static int r_i;
@@ -122,38 +127,6 @@ static void sfmt_array_cleanup (void)
     free(rbuf);
 # endif
     rbuf = NULL;
-}
-
-static int sfmt_fill_U01_array (double *a, int t1, int t2, int n)
-{
-    guint32 *buf;
-    int i, t, err = 0;
-
-    if (n < RSIZE) {
-	n = RSIZE;
-    } else if (n % 4) {
-	n += 4 - (n % 4);
-    }
-
-    buf = gretl_memalign(n * sizeof *buf, &err);
-    if (err) {
-	return err;
-    }
-
-    fill_array32(buf, n);
-
-    i = 0;
-    for (t=t1; t<=t2; t++) {
-	a[t] = to_real2(buf[i++]);
-    }
-
-# if defined(WIN32) && !defined(HAVE_POSIX_MEMALIGN)
-    win32_aligned_free(buf);
-# else
-    free(buf);
-# endif
-
-    return err;
 }
 
 static inline guint32 sfmt_rand32 (void)
@@ -895,19 +868,6 @@ void gretl_rand_uniform (double *a, int t1, int t2)
 {
     int t;
 
-#if USE_RAND_ARRAYS
-    if (use_sfmt) {
-	int n = t2 - t1 + 1;
-	int err = 0;
-
-	if (n >= 100) {
-	    err = sfmt_fill_U01_array(a, t1, t2, n);
-	    if (!err) {
-		return;
-	    }
-	}
-    }
-#endif
     if (use_sfmt) {
 	for (t=t1; t<=t2; t++) {
 	   a[t] = to_real2(sfmt_rand32());
