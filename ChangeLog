@@ -1,11 +1,19 @@
 version 1.9.14, in progress
-- Some fixes for the SAS xport file importer
-- Fix for gretl-quartz (Mac) package: enable aquaterm in
-  the gnuplot build
 - Use daily dates when plotting daily/weekly data and there
   are not too many observations
 - Line-numbering in the script editor: make this a preference
   which is remembered
+- mols() function: parallelize some of the work for builds
+  with openmp enabled
+- Fix bug: the build of gnulot included in the gretl-quartz
+  package (for Mac) did not work properly in stand-alone mode
+- Fix bug: the importer for SAS "xport" files over-counted the
+  number of observations, leading to out-of-memory failure on 
+  very big datasets
+- Fix bug: the --show-plot option to the "freq" command was not
+  being respected
+- Fix bug: failure parsing value-labels for "int" arguments in
+  building function packages
 
 2013-10-24 version 1.9.13
 - Add Bulgarian, Catalan and Galician translations
