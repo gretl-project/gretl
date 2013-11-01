@@ -30,6 +30,10 @@
 #include "tsls.h"
 #include "nls.h"
 
+#if defined(_OPENMP)
+# include <omp.h>
+#endif
+
 #include <glib.h>
 
 /**
@@ -801,8 +805,65 @@ static int XTX_XTy (const int *list, int t1, int t2,
 		xpy[i-2] = x;
 	    }
 	}
+    } else if (mask == NULL) {
+	/* plain data, no missing obs mask */
+#if defined(_OPENMP)
+	int k = lmax - lmin + 1;
+	guint64 T = t2 - t1 + 1;
+	guint64 fpm = T * (k*k + k)/2;
+	int vi, err = 0;
+
+	if (!libset_use_openmp(fpm)) {
+	    goto st_mode;
+	}
+#pragma omp parallel for private(i, j, t, vi, x)
+	for (i=lmin; i<=lmax; i++) {
+	    vi = list[i];
+	    for (j=i; j<=lmax; j++) {
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    x += dset->Z[vi][t] * dset->Z[list[j]][t];
+		}
+		if (i == j && x < DBL_EPSILON) {
+		    err = E_SINGULAR;
+		}
+		xpx[ijton(i-lmin, j-lmin, k)] = x;
+	    }
+	    if (xpy != NULL) {
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    x += y[t] * dset->Z[vi][t];
+		}
+		xpy[i-2] = x;
+	    }
+	}
+	return err;
+    
+    st_mode:
+#endif
+	for (i=lmin; i<=lmax; i++) {
+	    xi = dset->Z[list[i]];
+	    for (j=i; j<=lmax; j++) {
+		xj = dset->Z[list[j]];
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    x += xi[t] * xj[t];
+		}
+		if (i == j && x < DBL_EPSILON) {
+		    return E_SINGULAR;
+		}
+		xpx[m++] = x;
+	    }
+	    if (xpy != NULL) {
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    x += y[t] * xi[t];
+		}
+		xpy[i-2] = x;
+	    }
+	}
     } else {
-	/* no quasi-differencing or weighting wanted */
+	/* plain data, but with missing obs mask */
 	for (i=lmin; i<=lmax; i++) {
 	    xi = dset->Z[list[i]];
 	    for (j=i; j<=lmax; j++) {
@@ -1092,8 +1153,10 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     if (ci == AR1) {
 	if (opt & OPT_P) {
+	    /* OPT_P: Prais-Winsten */
 	    mdl.opt |= OPT_P;
 	} else if (opt & OPT_H) {
+	    /* OPT_H: Hildreth-Lu */
 	    mdl.opt |= OPT_H;
 	}
     } 
@@ -1232,7 +1295,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     if (nullmod) {
 	gretl_null_regress(&mdl, dset);
-    } else if (!jackknife && (opt & (OPT_R | OPT_I | OPT_Q))) { 
+    } else if (!jackknife && (opt & (OPT_R | OPT_I))) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
     } else {
@@ -1328,19 +1391,19 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
  * @dset: dataset struct.
  * @ci: one of the command indices in #LSQ_MODEL.
  * @opt: option flags: zero or more of the following --
- *   OPT_R compute robust standard errors;
- *   OPT_A treat as auxiliary regression (don't bother checking
+ *   OPT_R: compute robust standard errors;
+ *   OPT_A: treat as auxiliary regression (don't bother checking
  *     for presence of lagged dependent var, don't augment model count);
- *   OPT_N don't use degrees of freedom correction for standard
+ *   OPT_N: don't use degrees of freedom correction for standard
  *      error of regression;
- *   OPT_M reject missing observations within sample range;
- *   OPT_Z (internal use) suppress the automatic elimination of 
+ *   OPT_M: reject missing observations within sample range;
+ *   OPT_Z: (internal use) suppress the automatic elimination of 
  *      perfectly collinear variables.
  *   OPT_X: compute "variance matrix" as just (X'X)^{-1}
  *   OPT_B: don't compute R^2.
  *   OPT_I: compute Durbin-Watson p-value.
- *   OPT_Q: use QR decomposition (not necessarily robust VCV).
  *   OPT_U: treat null model as OK.
+ *   OPT_P: (ar1 only): use Prais-Winsten.
  *
  * Computes least squares estimates of the model specified by @list,
  * using an estimator determined by the value of @ci.
@@ -2248,7 +2311,6 @@ static double estimate_rho (const int *list, DATASET *dset,
     }
 
     if (!(opt & OPT_H) || !(opt & OPT_B)) {
-
 	if (!quiet) {
 	    if (opt & OPT_H) {
 		pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n"));
@@ -3091,7 +3153,7 @@ int whites_test (MODEL *pmod, DATASET *dset,
 	if (BP) {
 	    LM = get_BP_LM(pmod, list, &white, dset, opt, &err);
 	} else {
-	    white = lsq(list, dset, OLS, OPT_A | OPT_Q);
+	    white = lsq(list, dset, OLS, OPT_A);
 	    err = white.errcode;
 	    if (!err) {
 		LM = white.rsq * white.nobs;

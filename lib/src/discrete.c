@@ -2896,9 +2896,9 @@ static MODEL binary_model (int ci, const int *inlist,
     if (!mod.errcode) {
 	gretlopt ols_opt = OPT_A;
 
-	/* if we're doing logit/probit as an auxiliary regression,
+	/* If we're doing logit/probit as an auxiliary regression,
 	   it might be safer to abort on perfect collinearity;
-	   otherwise we'll try automatic elimination
+	   otherwise we'll try automatic elimination.
 	*/
 	if (opt & OPT_A) {
 	    ols_opt |= OPT_Z;

@@ -31,11 +31,16 @@
 # endif
 #endif
 
+#if defined(_OPENMP)
+# include <omp.h>
+#endif
+
 #include "../../rng/SFMT.c"
+
 #if defined(HAVE_POSIX_MEMALIGN) || defined(OS_OSX) || defined(WIN32)
-# define USE_RAND_ARRAYS 1 /* potentially faster, but needs more testing */
+# define USE_RAND_ARRAY 1 /* faster, if available */
 #else
-# define USE_RAND_ARRAYS 0
+# define USE_RAND_ARRAY 0
 #endif
 
 /**
@@ -63,7 +68,7 @@ static int use_sfmt = 1;
 
 static guint32 gretl_rand_octet (guint32 *sign);
 
-#if USE_RAND_ARRAYS
+#if USE_RAND_ARRAY
 
 static void *gretl_memalign (size_t size, int *err)
 {
@@ -112,10 +117,12 @@ static int sfmt_array_setup (void)
 
     if (rbuf == NULL) {
 	rbuf = gretl_memalign(RSIZE * sizeof *rbuf, &err);
+	if (!err) {
+	    fprintf(stderr, "sfmt_array_setup: allocated array of size %d\n", RSIZE);
+	}
     }
 
     if (!err) {
-	fprintf(stderr, "doing sfmt_array_setup, RSIZE=%d\n", RSIZE);
 	fill_array32(rbuf, RSIZE);
 	r_i = 0;
     }
@@ -143,11 +150,11 @@ static inline guint32 sfmt_rand32 (void)
     return rbuf[r_i++];
 }
 
-#else /* !USE_RAND_ARRAYS */
+#else /* !USE_RAND_ARRAY */
 
 # define sfmt_rand32 gen_rand32
 
-#endif /* USE_RAND_ARRAYS */
+#endif /* USE_RAND_ARRAY */
 
 /**
  * gretl_rand_init:
@@ -160,7 +167,8 @@ void gretl_rand_init (void)
     useed = time(NULL);
 
     init_gen_rand(useed);
-#if USE_RAND_ARRAYS
+
+#if USE_RAND_ARRAY
     sfmt_array_setup();
 #endif
 
@@ -183,7 +191,7 @@ void gretl_rand_init (void)
 
 void gretl_rand_free (void)
 {
-#if USE_RAND_ARRAYS
+#if USE_RAND_ARRAY
     sfmt_array_cleanup();
 #endif
     if (gretl_GRand != NULL) {
@@ -217,7 +225,7 @@ void gretl_rand_set_seed (unsigned int seed)
 {
     useed = (seed == 0)? time(NULL) : seed;
     init_gen_rand(useed); 
-#if USE_RAND_ARRAYS
+#if USE_RAND_ARRAY
     sfmt_array_setup();
 #endif
     if (gretl_GRand != NULL) {

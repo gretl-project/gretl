@@ -174,7 +174,7 @@ static int R_lib = 1;
 static int csv_digits = UNSET_INT;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
-static int mp_nmk_min = 65535;
+static int mp_nmk_min = 89999; /* was 65535 */
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);

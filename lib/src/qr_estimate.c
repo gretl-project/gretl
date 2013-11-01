@@ -290,18 +290,30 @@ static void
 get_data_X (gretl_matrix *X, const MODEL *pmod, const DATASET *dset)
 {
     int wt = pmod->nwt;
-    int i, j, t, vi;
+    int i, t, vi, s = 0;
 
     /* copy independent vars into matrix X */
-    j = 0;
-    for (i=2; i<=pmod->list[0]; i++) {
-	vi = pmod->list[i];
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (!model_missing(pmod, t)) {
-		if (wt) {
-		    X->val[j++] = sqrt(dset->Z[wt][t]) * dset->Z[vi][t];
-		} else {
-		    X->val[j++] = dset->Z[vi][t];
+
+    if (!wt && pmod->missmask == NULL) {
+	/* use faster method */
+	int T = pmod->t2 - pmod->t1 + 1;
+	size_t sz = T * sizeof(double);
+
+	for (i=2; i<=pmod->list[0]; i++) {
+	    vi = pmod->list[i];
+	    memcpy(X->val + s, dset->Z[vi] + pmod->t1, sz);
+	    s += T;
+	}
+    } else {
+	for (i=2; i<=pmod->list[0]; i++) {
+	    vi = pmod->list[i];
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		if (!model_missing(pmod, t)) {
+		    if (wt) {
+			X->val[s++] = sqrt(dset->Z[wt][t]) * dset->Z[vi][t];
+		    } else {
+			X->val[s++] = dset->Z[vi][t];
+		    }
 		}
 	    }
 	}
@@ -789,7 +801,23 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
     int qdiff = (pmod->rho != 0.0);
     int pwe = (pmod->opt & OPT_P);
     double x, pw1 = 0.0;
-    int i, j, t;
+    int i, s, t;
+
+    if (!pwe && !dwt && pmod->missmask == NULL) {
+	/* simple case: use faster procedure */
+	int T = pmod->t2 - pmod->t1 + 1;
+	size_t sz = T * sizeof(double);
+
+	s = 0;
+	for (i=2; i<=pmod->list[0]; i++) {
+	    memcpy(Q->val + s, dset->Z[pmod->list[i]] + pmod->t1, sz);
+	    s += T;
+	}
+	if (y != NULL) {
+	    memcpy(y->val, dset->Z[pmod->list[1]] + pmod->t1, sz);
+	}
+	return;
+    }
 
     if (pwe) {
 	pw1 = sqrt(1.0 - pmod->rho * pmod->rho);
@@ -800,7 +828,7 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
     }
 
     /* copy independent vars into matrix Q */
-    j = 0;
+    s = 0;
     for (i=2; i<=pmod->list[0]; i++) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (model_missing(pmod, t)) {
@@ -818,13 +846,13 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
 		    x -= pmod->rho * dset->Z[pmod->list[i]][t-1];
 		}
 	    }
-	    Q->val[j++] = x;
+	    Q->val[s++] = x;
 	}
     }
 
     if (y != NULL) {
 	/* copy dependent variable into y vector */
-	j = 0;
+	s = 0;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (model_missing(pmod, t)) {
 		continue;
@@ -841,7 +869,7 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
 		    x -= pmod->rho * dset->Z[pmod->list[1]][t-1];
 		}
 	    }
-	    y->val[j++] = x;
+	    y->val[s++] = x;
 	}
     }
 }
