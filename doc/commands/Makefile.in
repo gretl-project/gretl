@@ -264,7 +264,7 @@ functex_pt: xsltrans reflow $(PT_FNCSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ftex_pt.xml && \
 	cat $(PT_FNCSRC) | grep -v DOCTYPE | grep -v 'xml version' >> ftex_pt.xml && \
 	./xsltrans --funcs --tex ftex_pt.xml --docdir=$(CMDSDIR) | \
-	./reflow > ../tex_pt/funcbody.tex && rm ftex_pt.xml touch $@
+	./reflow > ../tex_pt/funcbody.tex && rm ftex_pt.xml && touch $@
 
 cmdtex: xsltrans reflow $(EN_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ctex.xml && \
