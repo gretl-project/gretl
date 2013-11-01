@@ -33,7 +33,7 @@
 
 #include "../../rng/SFMT.c"
 #if defined(HAVE_POSIX_MEMALIGN) || defined(OS_OSX) || defined(WIN32)
-# define USE_RAND_ARRAYS 0 /* potentially faster, but needs more testing */
+# define USE_RAND_ARRAYS 1 /* potentially faster, but needs more testing */
 #else
 # define USE_RAND_ARRAYS 0
 #endif
@@ -98,6 +98,10 @@ static void *gretl_memalign (size_t size, int *err)
 */
 
 #define RSIZE (MEXP / 128 + 1) * 16
+
+#if defined(_OPENMP) && !defined(OS_OSX)
+#pragma omp threadprivate(rbuf, r_i)
+#endif
 
 static guint32 *rbuf;
 static int r_i;
