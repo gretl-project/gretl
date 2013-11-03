@@ -1978,7 +1978,7 @@ static int check_freq_opts (gretlopt opt, int *n_bins,
     }
 
     if (opt & OPT_W) {
-	/* with specified */
+	/* width specified */
 	if (!(opt & OPT_M)) {
 	    /* but no min given */
 	    return E_ARGS;
