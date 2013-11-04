@@ -811,6 +811,10 @@
 	  <effect>mostra la matrice di covarianza</effect>
         </option>
         <option>
+	  <flag>--hessian</flag>
+	  <effect>si veda sotto</effect>
+        </option>
+        <option>
          <flag>--opg</flag>
 	 <effect>si veda sotto</effect>
         </option>

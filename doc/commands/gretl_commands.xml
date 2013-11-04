@@ -527,12 +527,12 @@
       </arguments>
       <options>
 	<option>
-	  <flag>--pwe</flag>
-	  <effect>use Prais&ndash;Winsten estimator</effect>
-	</option>
-	<option>
 	  <flag>--hilu</flag>
 	  <effect>use Hildreth&ndash;Lu procedure</effect>
+	</option>
+	<option>
+	  <flag>--pwe</flag>
+	  <effect>use Prais&ndash;Winsten estimator</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
