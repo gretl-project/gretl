@@ -756,8 +756,8 @@ void gretl_matrix_destroy_info (gretl_matrix *m);
 
 void lapack_mem_free (void);
 
-void set_blas_nmk_min (int nmk);
+void set_blas_mnk_min (int mnk);
 
-int get_blas_nmk_min (void);
+int get_blas_mnk_min (void);
 
 #endif /* GRETL_MATRIX_H */

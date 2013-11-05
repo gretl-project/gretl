@@ -4013,11 +4013,11 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 
 #define BLAS_DEBUG 0
 
-static int blas_nmk_min = -1;
+static int blas_mnk_min = -1;
 
 /**
- * set_blas_nmk_min:
- * @nmk: value to set.
+ * set_blas_mnk_min:
+ * @mnk: value to set.
  *
  * By default all matrix multiplication within libgretl is
  * done using native code, but there is the possibility of
@@ -4026,46 +4026,46 @@ static int blas_nmk_min = -1;
  * When multiplying an m x n matrix into an n x k matrix
  * libgretl finds the product of the dimensions, m*n*k,
  * and compares this with an internal threshhold variable, 
- * blas_nmk_min. If and only if blas_nmk_min >= 0 and
- * n*m*k >= blas_nmk_min, then we use the BLAS. By default
- * blas_nmk_min is set to -1 (BLAS never used). 
+ * blas_mnk_min. If and only if blas_mnk_min >= 0 and
+ * n*m*k >= blas_mnk_min, then we use the BLAS. By default
+ * blas_mnk_min is set to -1 (BLAS never used). 
  *
  * If you have an optimized version of the BLAS you may want
- * to set blas_nmk_min to some suitable positive value. (Setting
+ * to set blas_mnk_min to some suitable positive value. (Setting
  * it to 0 would result in external calls to the BLAS for all
  * matrix multiplications, however small, which is unlikely
  * to be optimal.)
  */
 
-void set_blas_nmk_min (int nmk)
+void set_blas_mnk_min (int mnk)
 {
-    blas_nmk_min = nmk;
+    blas_mnk_min = mnk;
 }
 
 /**
- * get_blas_nmk_min:
+ * get_blas_mnk_min:
  *
- * Returns: the value of the internal variable blas_nmk_min.
- * See set_blas_nmk_min().
+ * Returns: the value of the internal variable blas_mnk_min.
+ * See set_blas_mnk_min().
  */
 
-int get_blas_nmk_min (void)
+int get_blas_mnk_min (void)
 {
-    return blas_nmk_min;
+    return blas_mnk_min;
 }
 
-static int use_blas (int n, int m, int k)
+static int use_blas (int m, int n, int k)
 {
 #if BLAS_DEBUG
-    fprintf(stderr, "use_blas ? nmk_min = %d\n", blas_nmk_min);
+    fprintf(stderr, "use_blas ? mnk_min = %d\n", blas_mnk_min);
 #endif
-    if (blas_nmk_min >= 0) {
-	guint64 nmk = (guint64) n * m * k;
+    if (blas_mnk_min >= 0) {
+	guint64 mnk = (guint64) m * n * k;
 
 #if BLAS_DEBUG
-	fprintf(stderr, " and nmk = %g\n", nmk);
+	fprintf(stderr, " and mnk = %g\n", mnk);
 #endif
-	return nmk >= (guint64) blas_nmk_min;
+	return mnk >= (guint64) blas_mnk_min;
     } else {
 	return 0;
     }
