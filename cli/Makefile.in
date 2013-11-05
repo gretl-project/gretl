@@ -19,7 +19,14 @@ have_readline = @have_readline@
 READLINE_LIBS = @READLINE_LIBS@
 READLINE_CFLAGS = @READLINE_CFLAGS@
 
-SSE2_OPT = @SSE2_CFLAGS@
+SSE2_CFLAGS = @SSE2_CFLAGS@
+AVX_CFLAGS = @AVX_CFLAGS@
+ifeq ($(AVX_CFLAGS),)
+  SIMD_OPT = $(SSE2_CFLAGS)
+else
+  SIMD_OPT = $(AVX_CFLAGS)
+endif
+
 OMP_OPT = @OPENMP_CFLAGS@
 
 quiet_build = @quiet_build@
@@ -38,9 +45,9 @@ ifeq ($(quiet_build),yes)
   AMP = @
   CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
-  CCV = $(CC) $(SSE2_OPT) $(OMP_OPT) > /dev/null
+  CCV = $(CC) $(SIMD_OPT) $(OMP_OPT) > /dev/null
 else
-  CCV = $(CC) $(SSE2_OPT) $(OMP_OPT)
+  CCV = $(CC) $(SIMD_OPT) $(OMP_OPT)
 endif
 
 GRETLLIB = ../lib/libgretl-1.0.la

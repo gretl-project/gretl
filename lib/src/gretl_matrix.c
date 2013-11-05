@@ -32,6 +32,16 @@
 # include <omp.h>
 #endif
 
+#if defined(USE_AVX) || defined(USE_SSE2)
+# if defined(HAVE_IMMINTRIN_H)
+#  include <immintrin.h>
+# else
+#  include <mmintrin.h>
+#  include <xmmintrin.h>
+#  include <emmintrin.h>
+# endif
+#endif
+
 /**
  * SECTION:gretl_matrix
  * @short_description: construct and manipulate matrices
@@ -64,6 +74,23 @@ struct gretl_matrix_block_ {
 
 #define INFO_INVALID 0xdeadbeef
 #define is_block_matrix(m) (m->info == (matrix_info *) INFO_INVALID)
+
+#if USE_AVX
+# define mval_malloc(sz) _mm_malloc(sz,32)
+#elif USE_SSE2
+# define mval_malloc(sz) _mm_malloc(sz,16)
+#else
+# define mval_malloc(sz) malloc(sz)
+#endif
+
+#if USE_AVX || USE_SSE2
+static inline void mval_free (void *mem)
+{
+    if (mem != NULL) _mm_free(mem);
+}
+#else
+# define mval_free(v) free(v)
+#endif
 
 #define SVD_SMIN 1.0e-9
 
@@ -212,7 +239,7 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
     if (n == 0) {
 	m->val = NULL;
     } else {
-	m->val = malloc(n * sizeof *m->val);
+	m->val = mval_malloc(n * sizeof *m->val);
 	if (m->val == NULL) {
 	    set_gretl_matrix_err(E_ALLOC);
 	    free(m);
@@ -501,6 +528,25 @@ gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
     return m;
 }
 
+#if USE_AVX || USE_SSE2
+
+static double *mval_realloc (gretl_matrix *m, int n)
+{
+    double *newval = mval_malloc(n * sizeof(double));
+
+    if (newval != NULL && m->val != NULL) {
+	int old_n = m->rows * m->cols;
+
+	n = n < old_n ? n : old_n;
+	memcpy(newval, m->val, n * sizeof(double));
+	mval_free(m->val);
+    }
+
+    return newval;
+}
+
+#endif
+
 /**
  * gretl_matrix_realloc:
  * @m: matrix to reallocate.
@@ -535,7 +581,11 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 	return E_DATA;
     }
 
+#if USE_AVX || USE_SSE2
+    x = mval_realloc(m, n);
+#else
     x = realloc(m->val, n * sizeof *m->val);
+#endif 
     if (x == NULL) {
 	return E_ALLOC;
     }
@@ -548,7 +598,7 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
     return 0;
 }
 
-/**
+/*
  * gretl_matrix_init_full:
  * @m: matrix to be initialized.
  * @rows: number of rows.
@@ -561,9 +611,9 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
  * @val is compatible with the @rows and @cols specification.
  */
 
-void gretl_matrix_init_full (gretl_matrix *m,
-			     int rows, int cols,
-			     double *val)
+static void gretl_matrix_init_full (gretl_matrix *m,
+				    int rows, int cols,
+				    double *val)
 {
     m->rows = rows;
     m->cols = cols;
@@ -879,10 +929,10 @@ gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m)
     return gretl_matrix_copy_mod(m, GRETL_MOD_TRANSPOSE);
 }
 
-/* relatively lightweight version of gretl_matrix_copy, for
+/* Relatively lightweight version of gretl_matrix_copy, for
    internal use when we just want a temporary copy of an
    original matrix as workspace, and we know that the original
-   is not a null matrix
+   is not a null matrix.
 */
 
 static gretl_matrix *gretl_matrix_copy_tmp (const gretl_matrix *a)
@@ -890,7 +940,7 @@ static gretl_matrix *gretl_matrix_copy_tmp (const gretl_matrix *a)
     size_t sz = a->rows * a->cols * sizeof(double);
     gretl_matrix *b = malloc(sizeof *b);
 
-    if (b != NULL && (b->val = malloc(sz)) != NULL) {
+    if (b != NULL && (b->val = mval_malloc(sz)) != NULL) {
 	b->rows = a->rows;
 	b->cols = a->cols;
 	b->info = NULL;
@@ -1042,7 +1092,7 @@ void gretl_matrix_free (gretl_matrix *m)
     }
 
     if (m->val != NULL) {
-	free(m->val);
+	mval_free(m->val);
     }
 
     if (m->info != NULL) {
@@ -1236,7 +1286,7 @@ gretl_matrix *gretl_random_matrix_new (int r, int c, int dist)
 
 double gretl_vector_mean (const gretl_vector *v)
 {
-    double ret = 0.0;
+    double num = 0.0;
     int i, n, den = 0;
 
     if (gretl_is_null_matrix(v)) {
@@ -1250,12 +1300,12 @@ double gretl_vector_mean (const gretl_vector *v)
 
     for (i=0; i<n; i++) {
 	if (!na(v->val[i])) {
-	    ret += v->val[i];
+	    num += v->val[i];
 	    den++;
 	} 
     }
 
-    return (den > 0)? (ret / den) : NADBL;
+    return (den > 0)? (num / den) : NADBL;
 }
 
 /**
@@ -1978,6 +2028,59 @@ static int subtract_scalar_from_matrix (gretl_matrix *targ, double x)
     return 0;
 }
 
+#if USE_AVX
+
+static void gretl_matrix_avx_add_to (gretl_matrix *a,
+				     const gretl_matrix *b,
+				     int n)
+{
+    double *ax = a->val;
+    const double *bx = b->val;
+    int i, imax = n / 4;
+    int rem = n % 4;
+
+    for (i=0; i<imax; i++) {
+	/* add 4 doubles in parallel */
+	__m256d Ymm_A = _mm256_load_pd(ax);
+	__m256d Ymm_B = _mm256_load_pd(bx);
+	__m256d Ymm_C = _mm256_add_pd(Ymm_A, Ymm_B);
+	_mm256_store_pd(ax, Ymm_C);
+	ax += 4;
+	bx += 4;
+    }
+
+    for (i=0; i<rem; i++) {
+	ax[i] += bx[i];
+    }
+}
+
+#elif USE_SSE2
+
+static void gretl_matrix_sse_add_to (gretl_matrix *a,
+				     const gretl_matrix *b,
+				     int n)
+{
+    double *ax = a->val;
+    const double *bx = b->val;
+    int i, imax = n / 2;
+
+    for (i=0; i<imax; i++) {
+	/* add 2 doubles in parallel */
+	__m128d Xmm_A = _mm_load_pd(ax);
+	__m128d Xmm_B = _mm_load_pd(bx);
+	__m128d Xmm_C = _mm_add_pd(Xmm_A, Xmm_B);
+	_mm_store_pd(ax, Xmm_C);
+	ax += 2;
+	bx += 2;
+    }
+
+    if (n % 2) {
+	ax[0] += bx[0];
+    }
+}
+
+#endif
+
 /**
  * gretl_matrix_add_to:
  * @targ: target matrix.
@@ -2022,10 +2125,24 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
 
  st_mode: 
 #endif
-    
+
+    if (n < 16 || is_block_matrix(targ) || is_block_matrix(src)) {
+	/* we can't assume alignment of sub-matrices */
+	for (i=0; i<n; i++) {
+	    targ->val[i] += src->val[i];
+	}
+	return 0;
+    }
+
+#if USE_AVX
+    gretl_matrix_avx_add_to(targ, src, n);
+#elif USE_SSE2
+    gretl_matrix_sse_add_to(targ, src, n);
+#else
     for (i=0; i<n; i++) {
 	targ->val[i] += src->val[i];
     }
+#endif
 
     return 0;
 }
@@ -2064,6 +2181,59 @@ int gretl_matrix_add_transpose_to (gretl_matrix *targ,
 
     return 0;
 }
+
+#if USE_AVX
+
+static void gretl_matrix_avx_subt_from (gretl_matrix *a,
+					const gretl_matrix *b,
+					int n)
+{
+    double *ax = a->val;
+    const double *bx = b->val;
+    int i, imax = n / 4;
+    int rem = n % 4;
+
+    for (i=0; i<imax; i++) {
+	/* subtract 4 doubles in parallel */
+	__m256d Ymm_A = _mm256_load_pd(ax);
+	__m256d Ymm_B = _mm256_load_pd(bx);
+	__m256d Ymm_C = _mm256_sub_pd(Ymm_A, Ymm_B);
+	_mm256_store_pd(ax, Ymm_C);
+	ax += 4;
+	bx += 4;
+    }
+
+    for (i=0; i<rem; i++) {
+	ax[i] -= bx[i];
+    }
+}
+
+#elif USE_SSE2
+
+static void gretl_matrix_sse_subt_from (gretl_matrix *a,
+					const gretl_matrix *b,
+					int n)
+{
+    double *ax = a->val;
+    const double *bx = b->val;
+    int i, imax = n / 2;
+
+    for (i=0; i<imax; i++) {
+	/* subtract 2 doubles in parallel */
+	__m128d Xmm_A = _mm_load_pd(ax);
+	__m128d Xmm_B = _mm_load_pd(bx);
+	__m128d Xmm_C = _mm_sub_pd(Xmm_A, Xmm_B);
+	_mm_store_pd(ax, Xmm_C);
+	ax += 2;
+	bx += 2;
+    }
+
+    if (n % 2) {
+	ax[0] -= bx[0];
+    }
+}
+
+#endif
 
 /**
  * gretl_matrix_subtract_from:
@@ -2107,10 +2277,23 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
 
  st_mode: 
 #endif
-    
+
+    if (n < 16 || is_block_matrix(targ) || is_block_matrix(src)) {
+	for (i=0; i<n; i++) {
+	    targ->val[i] -= src->val[i];
+	}
+	return 0;
+    }
+
+#if USE_AVX
+    gretl_matrix_avx_subt_from(targ, src, n);
+#elif USE_SSE2
+    gretl_matrix_sse_subt_from(targ, src, n);
+#else
     for (i=0; i<n; i++) {
 	targ->val[i] -= src->val[i];
     }
+#endif
 
     return 0;
 }
@@ -2251,7 +2434,7 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
     double *val;
     size_t sz = r * c * sizeof *val;
 
-    val = malloc(sz);
+    val = mval_malloc(sz);
     if (val == NULL) {
 	return E_ALLOC;
     }
@@ -3237,7 +3420,7 @@ static void matrix_grab_content (gretl_matrix *targ, gretl_matrix *src)
     targ->rows = src->rows;
     targ->cols = src->cols;
     
-    free(targ->val);
+    mval_free(targ->val);
     targ->val = src->val;
     src->val = NULL;
 
@@ -6813,7 +6996,7 @@ int gretl_matrix_psd_root (gretl_matrix *a)
     }
 
     if (!err) {
-	free(a->val);
+	mval_free(a->val);
 	a->val = L->val;
 	L->val = NULL;
     }
@@ -8484,8 +8667,8 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     gretl_matrix *s = NULL;
     gretl_matrix *u = NULL;
     gretl_matrix *vt = NULL;
-    double xu, xvt;
     char jobu = 'N', jobvt = 'N';
+    double xu, xvt;
     double *uval = &xu, *vtval = &xvt;
     double *work = NULL;
     int k, err = 0;

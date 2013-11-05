@@ -117,9 +117,11 @@ static int sfmt_array_setup (void)
 
     if (rbuf == NULL) {
 	rbuf = gretl_memalign(RSIZE * sizeof *rbuf, &err);
+#if 0
 	if (!err) {
 	    fprintf(stderr, "sfmt_array_setup: allocated array of size %d\n", RSIZE);
 	}
+#endif
     }
 
     if (!err) {
@@ -140,7 +142,9 @@ static void sfmt_array_cleanup (void)
     rbuf = NULL;
 }
 
-static inline guint32 sfmt_rand32 (void)
+/* gcc 4.8.2 doesn't want to inline this */
+
+static guint32 sfmt_rand32 (void)
 {
     if (r_i == RSIZE) {
 	fill_array32(rbuf, RSIZE);

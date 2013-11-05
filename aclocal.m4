@@ -1,4 +1,4 @@
-# generated automatically by aclocal 1.13.4 -*- Autoconf -*-
+# generated automatically by aclocal 1.14 -*- Autoconf -*-
 
 # Copyright (C) 1996-2013 Free Software Foundation, Inc.
 
@@ -11243,6 +11243,7 @@ fi
 AC_SUBST([$1])dnl
 ])
 
+m4_include([macros/avx.m4])
 m4_include([macros/flite.m4])
 m4_include([macros/gmp.m4])
 m4_include([macros/lapack.m4])

@@ -632,6 +632,7 @@ ac_includes_default="\
 gt_needs=
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+USE_AVX
 USE_SSE2
 RLIB
 plugsub
@@ -706,6 +707,7 @@ READLINE_CFLAGS
 new_readline
 have_readline
 OPENMP_CFLAGS
+AVX_CFLAGS
 SSE2_CFLAGS
 MKLANG
 HOSTCC
@@ -853,6 +855,7 @@ enable_fast_install
 with_sysroot
 enable_libtool_lock
 enable_sse2
+enable_avx
 enable_openmp
 with_readline_prefix
 with_gmp_prefix
@@ -1530,6 +1533,7 @@ Optional Features:
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-sse2           use sse2 if available [default=auto]
+  --enable-avx            use avx if available [default=auto]
   --enable-openmp         use OpenMP if available [default=no]
 
 Optional Packages:
@@ -15030,6 +15034,103 @@ $as_echo "$sse2_result" >&6; }
 
 
 
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use AVX" >&5
+$as_echo_n "checking whether to use AVX... " >&6; }
+  # Check whether --enable-avx was given.
+if test "${enable_avx+set}" = set; then :
+  enableval=$enable_avx; enable_avx=$enableval
+
+fi
+
+  avx_result=no
+  save_CFLAGS=$CFLAGS
+  AVX_CFLAGS=
+  if test "$enable_avx" != "no" ; then
+    if test "x$AVX_CFLAGS" = "x" ; then
+      if test "x$SUNCC" = "xyes" && test "x$AMD64_ABI" = "xno" ; then
+        AVX_CFLAGS="-xarch=avx"
+      else
+        AVX_CFLAGS="-mavx -Winline"
+      fi
+    fi
+
+    have_avx_intrinsics=no
+    CFLAGS="$AVX_CFLAGS $CFLAGS"
+
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#if defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 5))
+#   if !defined(__amd64__) && !defined(__x86_64__)
+#      error "Need GCC >= 4.5 for AVX intrinsics on x86"
+#   endif
+#endif
+#include <immintrin.h>
+int main () {
+    __m256i a = _mm256_set1_epi32 (0), b = _mm256_set1_epi32 (0), c;
+	c = _mm256_permute2f128_si256 (a, b, 0);
+    return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  have_avx_intrinsics=yes
+else
+  AVX_CFLAGS=""
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    if test "$have_avx_intrinsics" = "yes" ; then
+      if test "$cross_compiling" = yes; then :
+  avx_result=yes
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
+#define GET_FEATURE_FLAGS 1
+
+int main (void)
+{
+    int32_t ecx, edx;
+    __asm__("cpuid"
+	    : "=c" (ecx),
+	      "=d" (edx)
+	    : "a" (GET_FEATURE_FLAGS)
+	    );
+    if ((ecx >> 28) & 1) {
+	return 0;
+    } else {
+        return 1;
+    }
+}
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  avx_result=yes
+else
+  avx_result=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+    fi
+
+    if test "$avx_result" = "yes" ; then
+       $as_echo "#define USE_AVX 1" >>confdefs.h
+
+    else
+       AVX_CFLAGS=""
+    fi
+  fi
+  CFLAGS="$save_CFLAGS"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $avx_result" >&5
+$as_echo "$avx_result" >&6; }
+
+
+
   # Check whether --enable-openmp was given.
 if test "${enable_openmp+set}" = set; then :
   enableval=$enable_openmp; enable_openmp=$enableval
@@ -15144,6 +15245,21 @@ $as_echo "$ac_cv_prog_cc_openmp" >&6; }
   fi
 
 
+
+if test "x$sse2_result" = "xyes" || test "x$avx_result" = "xyes" ; then
+  for ac_header in immintrin.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "immintrin.h" "ac_cv_header_immintrin_h" "$ac_includes_default"
+if test "x$ac_cv_header_immintrin_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_IMMINTRIN_H 1
+_ACEOF
+
+fi
+
+done
+
+fi
 
 if test "$ac_openmp_result" = "yes" ; then
   $as_echo "#define OPENMP_BUILD 1" >>confdefs.h
@@ -18309,6 +18425,7 @@ if test "$gtk_version" = "3.0" ; then
 else
    plugsub="gretl-gtk2"
 fi
+
 
 
 
@@ -23122,7 +23239,8 @@ Configuration:
   Use libgsf for zip/unzip:               ${use_gsf}
   MPFR support:                           ${have_mpfr}
   sse2 support for RNG:                   ${sse2_result}
-  openMP support:                         ${ac_openmp_result}
+  OpenMP support:                         ${ac_openmp_result}
+  AVX support for arithmetic:             ${avx_result}
   Build with GTK version:                 ${gtk_version}
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}

@@ -8,7 +8,8 @@ libdir = @libdir@
 CC = @CC@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
-SSE2_OPT = @SSE2_CFLAGS@
+SSE2_CFLAGS = @SSE2_CFLAGS@
+AVX_CFLAGS = @AVX_CFLAGS@
 OMP_OPT = @OPENMP_CFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
@@ -20,6 +21,12 @@ quiet_build = @quiet_build@
 pkg_build = @pkg_build@
 fake_gtkspinner = @fake_gtkspinner@
 mac_native = @mac_native@
+
+ifeq ($(AVX_CFLAGS),)
+  SIMD_OPT = $(SSE2_CFLAGS)
+else
+  SIMD_OPT = $(AVX_CFLAGS)
+endif
 
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
@@ -90,9 +97,9 @@ ifeq ($(quiet_build),yes)
   AMP = @
   CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
-  CCV = $(CC) $(SSE2_OPT) $(OMP_OPT) > /dev/null
+  CCV = $(CC) $(SIMD_OPT) $(OMP_OPT) > /dev/null
 else
-  CCV = $(CC) $(SSE2_OPT) $(OMP_OPT)
+  CCV = $(CC) $(SIMD_OPT) $(OMP_OPT)
 endif
 
 DEFS = $(NLSDEF)

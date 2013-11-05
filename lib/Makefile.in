@@ -26,8 +26,14 @@ FFTW_CFLAGS = @FFTW_CFLAGS@
 FFTW_LIBS = @FFTW_LIBS@
 RLIB_CFLAGS = @RLIB_CFLAGS@
 DARWIN_RPATH = @DARWIN_RPATH@
+SSE2_CFLAGS = @SSE2_CFLAGS@
+AVX_CFLAGS = @AVX_CFLAGS@
 
-SSE2_OPT = @SSE2_CFLAGS@
+ifeq ($(AVX_CFLAGS),)
+  SIMD_OPT = $(SSE2_CFLAGS)
+else
+  SIMD_OPT = $(AVX_CFLAGS)
+endif
 OMP_OPT = @OPENMP_CFLAGS@
 
 CURRENT=@LIBGRETL_CURRENT@
@@ -57,9 +63,9 @@ ifeq ($(quiet_build),yes)
   AMP = @
   CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
-  CCV = $(CC) $(SSE2_OPT) $(OMP_OPT) > /dev/null
+  CCV = $(CC) $(SIMD_OPT) $(OMP_OPT) > /dev/null
 else
-  CCV = $(CC) $(SSE2_OPT) $(OMP_OPT)
+  CCV = $(CC) $(SIMD_OPT) $(OMP_OPT)
 endif
 
 # Installation directories

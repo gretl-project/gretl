@@ -311,7 +311,13 @@ AC_ARG_VAR(HOSTCC, host compiler (for cross-build))
 AC_ARG_VAR(MKLANG, builder for gtksourceview files (cross-build))
 
 AC_C_SSE2
+AC_C_AVX
 AC_C_OPENMP
+
+dnl check for SIMD intrinsics headers
+if test "x$sse2_result" = "xyes" || test "x$avx_result" = "xyes" ; then
+  AC_CHECK_HEADERS(immintrin.h)
+fi
 
 dnl ensure that the source will get rebuilt if openmp
 dnl is turned on or off, by flagging this in config.h
@@ -784,6 +790,7 @@ AC_SUBST(RLIB_CFLAGS)
 AC_SUBST(RLIB_LIBS)
 AC_SUBST(RLIB)
 AC_SUBST(USE_SSE2)
+AC_SUBST(USE_AVX)
 
 dnl Determine installation prefix
 if test "${prefix}" = "NONE" ; then
@@ -900,7 +907,8 @@ Configuration:
   Use libgsf for zip/unzip:               ${use_gsf}
   MPFR support:                           ${have_mpfr}
   sse2 support for RNG:                   ${sse2_result}
-  openMP support:                         ${ac_openmp_result}
+  OpenMP support:                         ${ac_openmp_result}
+  AVX support for arithmetic:             ${avx_result}
   Build with GTK version:                 ${gtk_version}
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}

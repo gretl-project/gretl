@@ -136,6 +136,12 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Define to use SSE2 instrinsics. */
 #undef USE_SSE2
 
+/* Define to use AVX instrinsics. */
+#undef USE_AVX
+
+/* Do we have immintrin.h? */
+#undef HAVE_IMMINTRIN_H
+
 /* Enable audio graphs */
 #undef HAVE_AUDIO
 
