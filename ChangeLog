@@ -5,6 +5,7 @@ version 1.9.14, in progress
   which is remembered
 - mols() function: parallelize some of the work for builds
   with openmp enabled
+- GUI: provide a menu item for adding a panel unit index
 - Fix bug: the build of gnulot included in the gretl-quartz
   package (for Mac) did not work properly in stand-alone mode
 - Fix bug: the importer for SAS "xport" files over-counted the
@@ -14,6 +15,8 @@ version 1.9.14, in progress
   being respected
 - Fix bug: failure parsing value-labels for "int" arguments in
   building function packages
+- Fix bug: "foreach" loop failing when given a single term that
+  is not a named list
 
 2013-10-24 version 1.9.13
 - Add Bulgarian, Catalan and Galician translations
