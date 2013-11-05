@@ -23,7 +23,7 @@
 #include <time.h>
 #include <glib.h>
 
-#ifdef USE_SSE2
+#if defined(USE_AVX) || defined(USE_SSE2)
 # define HAVE_SSE2
 #else
 # ifdef HAVE_SSE2
@@ -124,7 +124,7 @@ static int sfmt_array_setup (void)
 #endif
     }
 
-    if (!err) {
+    if (rbuf != NULL) {
 	fill_array32(rbuf, RSIZE);
 	r_i = 0;
     }

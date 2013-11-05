@@ -43,7 +43,11 @@ union W128_T {
 typedef union W128_T w128_t;
 
 #elif defined(HAVE_SSE2)
-  #include <emmintrin.h>
+# if defined(HAVE_IMMINTRIN_H)
+#  include <immintrin.h>
+# else 
+#  include <emmintrin.h>
+# endif
 
 /** 128-bit data structure */
 union W128_T {

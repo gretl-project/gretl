@@ -827,6 +827,7 @@ char **gretl_string_split_quoted (const char *s, int *n,
     char *substr;
     char **S;
 
+    *err = 0;
     ignore = sep != NULL ? sep : " \t\n";
 
     *n = 0;
