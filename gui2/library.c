@@ -5596,13 +5596,26 @@ void add_dummies (GtkAction *action)
 void add_index (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
-    int tm = !strcmp(s, "AddTime");
+    int pu = !strcmp(s, "AddUnit");
+    int err, tm = 0;
 
-    if (gen_time(dataset, tm)) {
-	errbox((tm)? _("Error generating time trend") :
-	       _("Error generating index variable"));
+    if (pu) {
+	err = gen_unit(dataset);
     } else {
-	lib_command_strcpy((tm)? "genr time" : "genr index");
+	tm = !strcmp(s, "AddTime");
+	err = gen_time(dataset, tm);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	if (pu) {
+	    lib_command_strcpy("genr unit");
+	} else if (tm) {
+	    lib_command_strcpy("genr time");
+	} else {
+	    lib_command_strcpy("genr index");
+	}
 	record_command_verbatim();
 	populate_varlist();
 	mark_dataset_as_modified();

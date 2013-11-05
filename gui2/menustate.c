@@ -245,6 +245,7 @@ void time_series_menu_state (gboolean s)
 void panel_menu_state (gboolean s)
 {
     if (mdata->ui != NULL) {
+	flip(mdata->ui, "/menubar/Add/AddUnit", s);
 	flip(mdata->ui, "/menubar/Add/UnitDums", s);
 	flip(mdata->ui, "/menubar/Add/TimeDums", s);
 	flip(mdata->ui, "/menubar/Add/RangeDum", !s);

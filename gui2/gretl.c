@@ -1668,6 +1668,7 @@ GtkActionEntry main_entries[] = {
       G_CALLBACK(logs_etc_callback) },
     { "AddIndex", NULL, N_("_Index variable"), NULL, NULL, G_CALLBACK(add_index) },
     { "AddTime", NULL, N_("_Time trend"), NULL, NULL, G_CALLBACK(add_index) },
+    { "AddUnit", NULL, N_("_Panel unit index"), NULL, NULL, G_CALLBACK(add_index) },
     { "AddRandom", NULL, N_("_Random variable..."), NULL, NULL, G_CALLBACK(stats_calculator) },
     { "PeriodDums", NULL, N_("_Periodic dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
     { "UnitDums", NULL, N_("_Unit dummies"), NULL, NULL, G_CALLBACK(add_dummies) },

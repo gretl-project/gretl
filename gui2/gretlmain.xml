@@ -163,6 +163,7 @@
       <separator/>
       <menuitem action="AddIndex"/>
       <menuitem action="AddTime"/>
+      <menuitem action="AddUnit"/>
       <separator/>
       <menuitem action="AddRandom"/>
       <separator/>
