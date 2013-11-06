@@ -42,6 +42,8 @@
 # endif
 #endif
 
+#define SIMD_MIN 16
+
 /**
  * SECTION:gretl_matrix
  * @short_description: construct and manipulate matrices
@@ -2126,7 +2128,7 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
  st_mode: 
 #endif
 
-    if (n < 16 || is_block_matrix(targ) || is_block_matrix(src)) {
+    if (n < SIMD_MIN || is_block_matrix(targ) || is_block_matrix(src)) {
 	/* we can't assume alignment of sub-matrices */
 	for (i=0; i<n; i++) {
 	    targ->val[i] += src->val[i];
@@ -2278,7 +2280,7 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
  st_mode: 
 #endif
 
-    if (n < 16 || is_block_matrix(targ) || is_block_matrix(src)) {
+    if (n < SIMD_MIN || is_block_matrix(targ) || is_block_matrix(src)) {
 	for (i=0; i<n; i++) {
 	    targ->val[i] -= src->val[i];
 	}

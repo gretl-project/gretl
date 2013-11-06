@@ -70,23 +70,29 @@ static guint32 gretl_rand_octet (guint32 *sign);
 
 #if USE_RAND_ARRAY
 
+# if USE_AVX
+#  define ALIGN 32
+# else
+#  define ALIGN 16
+# endif
+
 static void *gretl_memalign (size_t size, int *err)
 {
     void *mem = NULL;
 
 # if defined(HAVE_POSIX_MEMALIGN)
-    *err = posix_memalign((void **) &mem, 16, size);
+    *err = posix_memalign((void **) &mem, ALIGN, size);
     if (*err) {
 	fprintf(stderr, "posix_memalign: err = %d\n", *err);
 	return NULL;
     }
 # elif defined(WIN32)
-    mem = win32_memalign(size, 16);
+    mem = win32_memalign(size, ALIGN);
     if (mem == NULL) {
 	fputs("win32_memalign: failed\n", stderr);
 	*err = E_ALLOC;
     }
-# else /* OS X: should be aligned OK by default */
+# else /* OS X: should be aligned OK by default? */
     mem = malloc(size);
     if (mem == NULL) {
 	fputs("osx_malloc: failed\n", stderr);
