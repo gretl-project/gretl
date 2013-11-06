@@ -52,6 +52,7 @@
  <gentext key="smlist"        text="serie, matrice o lista"/>
  <gentext key="fncall"        text="function call"/>
  <gentext key="optional"      text="opzionale"/>
+ <gentext key="conditional"   text="condizionale"/>
  <gentext key="seebelow"      text="vedi sotto"/>
  <gentext key="varargs"       text="vedi sotto"/>
  <gentext key="chapter"       text="il capitolo"/>
