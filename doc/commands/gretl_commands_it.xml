@@ -8597,6 +8597,15 @@
 	  <effect>mostra i p-value invece degli effetti
 	  marginali</effect>
 	</option>
+	<option>
+	  <flag>--random-effects</flag>
+	  <effect>stima un modello panel a effetti casuali (RE)</effect>
+	</option>
+	<option>
+	  <flag>--quadpoints</flag>
+	  <optparm>k</optparm>
+	  <effect>numero di punti di quadratura per la stima RE</effect>
+	</option>
       </options>
     </usage>
 
@@ -8634,6 +8643,56 @@
         dell'Hessiana stimata e del prodotto esterno del
         gradiente. Per i dettagli, si veda Davidson e MacKinnon 2004,
         cap. 10.
+      </para>
+      <para>
+	Con l'opzione <opt>--random-effects</opt>, il termine di errore è
+	composto per ipotesi da due componenti gaussiane: una,
+	specifica per l'unità cross-sezionale e invariante nel tempo
+	(nota come <quote>effetto individuale</quote>) e l'altra
+	specifica per quella particolare osservazione.
+      </para>
+      <para>
+	Il calcolo della log-verosimiglianza per questo modello viene
+	effettuato tramite la quadratura di Gauss-Hermite per
+	approssimare il valore di valori attesi di funzioni di
+	variabili casuali normali. Il numero di punti di quadratura
+	usati si può scegliere tramite l'opzione
+	<opt>--quadpoints</opt> (il default è 32). Un numero elevato
+	di questi aumenta l'accuratezza dei risultati, ma al costo di
+	tempi di calcolo più lunghi; in questo caso la stima può
+	richiedere molto tempo con dataset grandi.
+      </para>
+      <para>
+	Oltre ai parametri standard (e statistiche associate) relativi
+	alle variabili esplicative, dopo la stima di questo tipo di
+	modello vengono presentati alcuni risultati aggiuntivi:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>lnsigma2</lit>: la stima ML del logaritmo della
+	    varianza dell'effetto individuale;
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>sigma_u</lit>: la stima dell'errore quadratico medio
+	    dell'effetto individuale;
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>rho</lit>: la quota stima dell'effetto individuale
+	    sulla varianza totale del termine di errore composito
+	    (anche nota come correlazione intra-classe).
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Il test LR per l'ipotesi <lit>rho</lit>=0 consente di
+	stabilire se la specificazione a effetti random è in effetti
+	necessaria. Sotto la nulla, una semplice specificazione probit
+	è del tutto adeguata.
       </para>
       <para>
         Se la variabile dipendente non è binaria, ma è discreta, si
