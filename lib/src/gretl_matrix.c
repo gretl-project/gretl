@@ -33,6 +33,7 @@
 #endif
 
 #if defined(USE_AVX) || defined(USE_SSE2)
+# define USE_SIMD 1
 # if defined(HAVE_IMMINTRIN_H)
 #  include <immintrin.h>
 # else
@@ -85,13 +86,17 @@ struct gretl_matrix_block_ {
 # define mval_malloc(sz) malloc(sz)
 #endif
 
-#if defined(USE_AVX) || defined(USE_SSE2)
+#ifdef USE_SIMD
 static inline void mval_free (void *mem)
 {
     if (mem != NULL) _mm_free(mem);
 }
 #else
 # define mval_free(v) free(v)
+#endif
+
+#ifdef USE_SIMD
+# include "matrix_simd.c"
 #endif
 
 #define SVD_SMIN 1.0e-9
@@ -530,25 +535,6 @@ gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
     return m;
 }
 
-#if defined(USE_AVX) || defined(USE_SSE2)
-
-static double *mval_realloc (gretl_matrix *m, int n)
-{
-    double *newval = mval_malloc(n * sizeof(double));
-
-    if (newval != NULL && m->val != NULL) {
-	int old_n = m->rows * m->cols;
-
-	n = n < old_n ? n : old_n;
-	memcpy(newval, m->val, n * sizeof(double));
-	mval_free(m->val);
-    }
-
-    return newval;
-}
-
-#endif
-
 /**
  * gretl_matrix_realloc:
  * @m: matrix to reallocate.
@@ -583,7 +569,7 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 	return E_DATA;
     }
 
-#if defined(USE_AVX) || defined(USE_SSE2)
+#ifdef USE_SIMD
     x = mval_realloc(m, n);
 #else
     x = realloc(m->val, n * sizeof *m->val);
@@ -2030,106 +2016,6 @@ static int subtract_scalar_from_matrix (gretl_matrix *targ, double x)
     return 0;
 }
 
-#if defined(USE_AVX)
-
-static void gretl_matrix_avx_add_to (gretl_matrix *a,
-				     const gretl_matrix *b,
-				     int n)
-{
-    double *ax = a->val;
-    const double *bx = b->val;
-    int i, imax = n / 4;
-    int rem = n % 4;
-
-    for (i=0; i<imax; i++) {
-	/* add 4 doubles in parallel */
-	__m256d Ymm_A = _mm256_load_pd(ax);
-	__m256d Ymm_B = _mm256_load_pd(bx);
-	__m256d Ymm_C = _mm256_add_pd(Ymm_A, Ymm_B);
-	_mm256_store_pd(ax, Ymm_C);
-	ax += 4;
-	bx += 4;
-    }
-
-    for (i=0; i<rem; i++) {
-	ax[i] += bx[i];
-    }
-}
-
-static void gretl_matrix_avx_subt_from (gretl_matrix *a,
-					const gretl_matrix *b,
-					int n)
-{
-    double *ax = a->val;
-    const double *bx = b->val;
-    int i, imax = n / 4;
-    int rem = n % 4;
-
-    for (i=0; i<imax; i++) {
-	/* subtract 4 doubles in parallel */
-	__m256d Ymm_A = _mm256_load_pd(ax);
-	__m256d Ymm_B = _mm256_load_pd(bx);
-	__m256d Ymm_C = _mm256_sub_pd(Ymm_A, Ymm_B);
-	_mm256_store_pd(ax, Ymm_C);
-	ax += 4;
-	bx += 4;
-    }
-
-    for (i=0; i<rem; i++) {
-	ax[i] -= bx[i];
-    }
-}
-
-#elif defined(USE_SSE2)
-
-static void gretl_matrix_sse_add_to (gretl_matrix *a,
-				     const gretl_matrix *b,
-				     int n)
-{
-    double *ax = a->val;
-    const double *bx = b->val;
-    int i, imax = n / 2;
-
-    for (i=0; i<imax; i++) {
-	/* add 2 doubles in parallel */
-	__m128d Xmm_A = _mm_load_pd(ax);
-	__m128d Xmm_B = _mm_load_pd(bx);
-	__m128d Xmm_C = _mm_add_pd(Xmm_A, Xmm_B);
-	_mm_store_pd(ax, Xmm_C);
-	ax += 2;
-	bx += 2;
-    }
-
-    if (n % 2) {
-	ax[0] += bx[0];
-    }
-}
-
-static void gretl_matrix_sse_subt_from (gretl_matrix *a,
-					const gretl_matrix *b,
-					int n)
-{
-    double *ax = a->val;
-    const double *bx = b->val;
-    int i, imax = n / 2;
-
-    for (i=0; i<imax; i++) {
-	/* subtract 2 doubles in parallel */
-	__m128d Xmm_A = _mm_load_pd(ax);
-	__m128d Xmm_B = _mm_load_pd(bx);
-	__m128d Xmm_C = _mm_sub_pd(Xmm_A, Xmm_B);
-	_mm_store_pd(ax, Xmm_C);
-	ax += 2;
-	bx += 2;
-    }
-
-    if (n % 2) {
-	ax[0] -= bx[0];
-    }
-}
-
-#endif
-
 /**
  * gretl_matrix_add_to:
  * @targ: target matrix.
@@ -2183,10 +2069,8 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
 	return 0;
     }
 
-#if defined(USE_AVX)
-    gretl_matrix_avx_add_to(targ, src, n);
-#elif defined(USE_SSE2)
-    gretl_matrix_sse_add_to(targ, src, n);
+#if defined(USE_SIMD)
+    gretl_matrix_simd_add_to(targ, src, n);
 #else
     for (i=0; i<n; i++) {
 	targ->val[i] += src->val[i];
@@ -2195,118 +2079,6 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
 
     return 0;
 }
-
-#if defined(USE_AVX)
-
-void gretl_matrix_avx_add (const gretl_matrix *a,
-			   const gretl_matrix *b,
-			   gretl_matrix *c)
-{
-    const double *ax = a->val;
-    const double *bx = b->val;
-    double *cx = c->val;
-    int i, n = a->rows * a->cols;
-    int imax = n / 4;
-    int rem = n % 4;
-
-    for (i=0; i<imax; i++) {
-	/* process 4 doubles in parallel */
-	__m256d Ymm_A = _mm256_load_pd(ax);
-	__m256d Ymm_B = _mm256_load_pd(bx);
-	__m256d Ymm_C = _mm256_add_pd(Ymm_A, Ymm_B);
-	_mm256_store_pd(cx, Ymm_C);
-	cx += 4;
-	ax += 4;
-	bx += 4;
-    }
-
-    for (i=0; i<rem; i++) {
-	cx[i] = ax[i] + bx[i];
-    }
-}
-
-void gretl_matrix_avx_subtract (const gretl_matrix *a,
-				const gretl_matrix *b,
-				gretl_matrix *c)
-{
-    const double *ax = a->val;
-    const double *bx = b->val;
-    double *cx = c->val;
-    int i, n = a->rows * a->cols;
-    int imax = n / 4;
-    int rem = n % 4;
-
-    for (i=0; i<imax; i++) {
-	/* process 4 doubles in parallel */
-	__m256d Ymm_A = _mm256_load_pd(ax);
-	__m256d Ymm_B = _mm256_load_pd(bx);
-	__m256d Ymm_C = _mm256_sub_pd(Ymm_A, Ymm_B);
-	_mm256_store_pd(cx, Ymm_C);
-	cx += 4;
-	ax += 4;
-	bx += 4;
-    }
-
-    for (i=0; i<rem; i++) {
-	cx[i] = ax[i] - bx[i];
-    }
-}
-
-#elif defined(USE_SSE2)
-
-void gretl_matrix_sse_add (const gretl_matrix *a,
-			   const gretl_matrix *b,
-			   gretl_matrix *c)
-{
-    const double *ax = a->val;
-    const double *bx = b->val;
-    double *cx = c->val;
-    int i, n = a->rows * a->cols;
-    int imax = n / 2;
-			
-    for (i=0; i<imax; i++) {
-	/* process 2 doubles in parallel */
-	__m128d Xmm_A = _mm_load_pd(ax);
-	__m128d Xmm_B = _mm_load_pd(bx);
-	__m128d Xmm_C = _mm_add_pd(Xmm_A, Xmm_B);
-	_mm_store_pd(cx, Xmm_C);
-	cx += 2;
-	ax += 2;
-	bx += 2;
-    }
-
-    if (n % 2) {
-	cx[0] = ax[0] + bx[0];
-    }
-}
-
-void gretl_matrix_sse_subtract (const gretl_matrix *a,
-				const gretl_matrix *b,
-				gretl_matrix *c)
-{
-    const double *ax = a->val;
-    const double *bx = b->val;
-    double *cx = c->val;
-    int i, n = a->rows * a->cols;
-    int imax = n / 2;
-			
-    for (i=0; i<imax; i++) {
-	/* process 2 doubles in parallel */
-	__m128d Xmm_A = _mm_load_pd(ax);
-	__m128d Xmm_B = _mm_load_pd(bx);
-	__m128d Xmm_C = _mm_sub_pd(Xmm_A, Xmm_B);
-	_mm_store_pd(cx, Xmm_C);
-	cx += 2;
-	ax += 2;
-	bx += 2;
-    }
-
-    if (n % 2) {
-	cx[0] = ax[0] - bx[0];
-    }
-}
-
-#endif
 
 /**
  * gretl_matrix_add:
@@ -2344,10 +2116,8 @@ gretl_matrix_add (const gretl_matrix *a, const gretl_matrix *b,
 	return 0;
     }
 
-#if defined(USE_AVX)
-    gretl_matrix_avx_add(a, b, c);
-#elif defined(USE_SSE2)
-    gretl_matrix_sse_add(a, b, c);
+#if defined(USE_SIMD)
+    gretl_matrix_simd_add(a, b, c);
 #else
     for (i=0; i<n; i++) {
 	c->val[i] = a->val[i] + b->val[i];
@@ -2442,10 +2212,8 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
 	return 0;
     }
 
-#if defined(USE_AVX)
-    gretl_matrix_avx_subt_from(targ, src, n);
-#elif defined(USE_SSE2)
-    gretl_matrix_sse_subt_from(targ, src, n);
+#if defined(USE_SIMD)
+    gretl_matrix_simd_subt_from(targ, src, n);
 #else
     for (i=0; i<n; i++) {
 	targ->val[i] -= src->val[i];
@@ -2492,10 +2260,8 @@ gretl_matrix_subtract (const gretl_matrix *a, const gretl_matrix *b,
 	return 0;
     }
 
-#if defined(USE_AVX)
-    gretl_matrix_avx_subtract(a, b, c);
-#elif defined(USE_SSE2)
-    gretl_matrix_sse_subtract(a, b, c);
+#if defined(USE_SIMD)
+    gretl_matrix_simd_subtract(a, b, c);
 #else
     for (i=0; i<n; i++) {
 	c->val[i] = a->val[i] - b->val[i];
@@ -4867,6 +4633,13 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
  st_mode:
 
 #endif /* _OPENMP */
+
+#if 0 /* ifdef USE_SIMD (experiment) */
+    if (n <= 8 && !atr && !btr && !cmod) {
+	gretl_matrix_simd_mul(a, b, c);
+	return;
+    }
+#endif
 
     if (!btr) {
 	if (!atr) {
