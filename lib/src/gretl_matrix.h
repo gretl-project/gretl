@@ -328,11 +328,18 @@ int gretl_matrix_copy_values_shaped (gretl_matrix *targ,
 
 int gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src);
 
+int gretl_matrix_add (const gretl_matrix *a, const gretl_matrix *b,
+		      gretl_matrix *c);
+
 int gretl_matrix_add_transpose_to (gretl_matrix *targ, 
 				   const gretl_matrix *src);
 
 int 
 gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src);
+
+int 
+gretl_matrix_subtract (const gretl_matrix *a, const gretl_matrix *b,
+		       gretl_matrix *c);
 
 int 
 gretl_matrix_subtract_reversed (const gretl_matrix *a, gretl_matrix *b);

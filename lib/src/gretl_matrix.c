@@ -77,15 +77,15 @@ struct gretl_matrix_block_ {
 #define INFO_INVALID 0xdeadbeef
 #define is_block_matrix(m) (m->info == (matrix_info *) INFO_INVALID)
 
-#if USE_AVX
+#if defined(USE_AVX)
 # define mval_malloc(sz) _mm_malloc(sz,32)
-#elif USE_SSE2
+#elif defined(USE_SSE2)
 # define mval_malloc(sz) _mm_malloc(sz,16)
 #else
 # define mval_malloc(sz) malloc(sz)
 #endif
 
-#if USE_AVX || USE_SSE2
+#if defined(USE_AVX) || defined(USE_SSE2)
 static inline void mval_free (void *mem)
 {
     if (mem != NULL) _mm_free(mem);
@@ -530,7 +530,7 @@ gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
     return m;
 }
 
-#if USE_AVX || USE_SSE2
+#if defined(USE_AVX) || defined(USE_SSE2)
 
 static double *mval_realloc (gretl_matrix *m, int n)
 {
@@ -583,7 +583,7 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 	return E_DATA;
     }
 
-#if USE_AVX || USE_SSE2
+#if defined(USE_AVX) || defined(USE_SSE2)
     x = mval_realloc(m, n);
 #else
     x = realloc(m->val, n * sizeof *m->val);
@@ -2030,7 +2030,7 @@ static int subtract_scalar_from_matrix (gretl_matrix *targ, double x)
     return 0;
 }
 
-#if USE_AVX
+#if defined(USE_AVX)
 
 static void gretl_matrix_avx_add_to (gretl_matrix *a,
 				     const gretl_matrix *b,
@@ -2056,7 +2056,31 @@ static void gretl_matrix_avx_add_to (gretl_matrix *a,
     }
 }
 
-#elif USE_SSE2
+static void gretl_matrix_avx_subt_from (gretl_matrix *a,
+					const gretl_matrix *b,
+					int n)
+{
+    double *ax = a->val;
+    const double *bx = b->val;
+    int i, imax = n / 4;
+    int rem = n % 4;
+
+    for (i=0; i<imax; i++) {
+	/* subtract 4 doubles in parallel */
+	__m256d Ymm_A = _mm256_load_pd(ax);
+	__m256d Ymm_B = _mm256_load_pd(bx);
+	__m256d Ymm_C = _mm256_sub_pd(Ymm_A, Ymm_B);
+	_mm256_store_pd(ax, Ymm_C);
+	ax += 4;
+	bx += 4;
+    }
+
+    for (i=0; i<rem; i++) {
+	ax[i] -= bx[i];
+    }
+}
+
+#elif defined(USE_SSE2)
 
 static void gretl_matrix_sse_add_to (gretl_matrix *a,
 				     const gretl_matrix *b,
@@ -2078,6 +2102,29 @@ static void gretl_matrix_sse_add_to (gretl_matrix *a,
 
     if (n % 2) {
 	ax[0] += bx[0];
+    }
+}
+
+static void gretl_matrix_sse_subt_from (gretl_matrix *a,
+					const gretl_matrix *b,
+					int n)
+{
+    double *ax = a->val;
+    const double *bx = b->val;
+    int i, imax = n / 2;
+
+    for (i=0; i<imax; i++) {
+	/* subtract 2 doubles in parallel */
+	__m128d Xmm_A = _mm_load_pd(ax);
+	__m128d Xmm_B = _mm_load_pd(bx);
+	__m128d Xmm_C = _mm_sub_pd(Xmm_A, Xmm_B);
+	_mm_store_pd(ax, Xmm_C);
+	ax += 2;
+	bx += 2;
+    }
+
+    if (n % 2) {
+	ax[0] -= bx[0];
     }
 }
 
@@ -2136,13 +2183,174 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
 	return 0;
     }
 
-#if USE_AVX
+#if defined(USE_AVX)
     gretl_matrix_avx_add_to(targ, src, n);
-#elif USE_SSE2
+#elif defined(USE_SSE2)
     gretl_matrix_sse_add_to(targ, src, n);
 #else
     for (i=0; i<n; i++) {
 	targ->val[i] += src->val[i];
+    }
+#endif
+
+    return 0;
+}
+
+#if defined(USE_AVX)
+
+void gretl_matrix_avx_add (const gretl_matrix *a,
+			   const gretl_matrix *b,
+			   gretl_matrix *c)
+{
+    const double *ax = a->val;
+    const double *bx = b->val;
+    double *cx = c->val;
+    int i, n = a->rows * a->cols;
+    int imax = n / 4;
+    int rem = n % 4;
+
+    for (i=0; i<imax; i++) {
+	/* process 4 doubles in parallel */
+	__m256d Ymm_A = _mm256_load_pd(ax);
+	__m256d Ymm_B = _mm256_load_pd(bx);
+	__m256d Ymm_C = _mm256_add_pd(Ymm_A, Ymm_B);
+	_mm256_store_pd(cx, Ymm_C);
+	cx += 4;
+	ax += 4;
+	bx += 4;
+    }
+
+    for (i=0; i<rem; i++) {
+	cx[i] = ax[i] + bx[i];
+    }
+}
+
+void gretl_matrix_avx_subtract (const gretl_matrix *a,
+				const gretl_matrix *b,
+				gretl_matrix *c)
+{
+    const double *ax = a->val;
+    const double *bx = b->val;
+    double *cx = c->val;
+    int i, n = a->rows * a->cols;
+    int imax = n / 4;
+    int rem = n % 4;
+
+    for (i=0; i<imax; i++) {
+	/* process 4 doubles in parallel */
+	__m256d Ymm_A = _mm256_load_pd(ax);
+	__m256d Ymm_B = _mm256_load_pd(bx);
+	__m256d Ymm_C = _mm256_sub_pd(Ymm_A, Ymm_B);
+	_mm256_store_pd(cx, Ymm_C);
+	cx += 4;
+	ax += 4;
+	bx += 4;
+    }
+
+    for (i=0; i<rem; i++) {
+	cx[i] = ax[i] - bx[i];
+    }
+}
+
+#elif defined(USE_SSE2)
+
+void gretl_matrix_sse_add (const gretl_matrix *a,
+			   const gretl_matrix *b,
+			   gretl_matrix *c)
+{
+    const double *ax = a->val;
+    const double *bx = b->val;
+    double *cx = c->val;
+    int i, n = a->rows * a->cols;
+    int imax = n / 2;
+			
+    for (i=0; i<imax; i++) {
+	/* process 2 doubles in parallel */
+	__m128d Xmm_A = _mm_load_pd(ax);
+	__m128d Xmm_B = _mm_load_pd(bx);
+	__m128d Xmm_C = _mm_add_pd(Xmm_A, Xmm_B);
+	_mm_store_pd(cx, Xmm_C);
+	cx += 2;
+	ax += 2;
+	bx += 2;
+    }
+
+    if (n % 2) {
+	cx[0] = ax[0] + bx[0];
+    }
+}
+
+void gretl_matrix_sse_subtract (const gretl_matrix *a,
+				const gretl_matrix *b,
+				gretl_matrix *c)
+{
+    const double *ax = a->val;
+    const double *bx = b->val;
+    double *cx = c->val;
+    int i, n = a->rows * a->cols;
+    int imax = n / 2;
+			
+    for (i=0; i<imax; i++) {
+	/* process 2 doubles in parallel */
+	__m128d Xmm_A = _mm_load_pd(ax);
+	__m128d Xmm_B = _mm_load_pd(bx);
+	__m128d Xmm_C = _mm_sub_pd(Xmm_A, Xmm_B);
+	_mm_store_pd(cx, Xmm_C);
+	cx += 2;
+	ax += 2;
+	bx += 2;
+    }
+
+    if (n % 2) {
+	cx[0] = ax[0] - bx[0];
+    }
+}
+
+#endif
+
+/**
+ * gretl_matrix_add:
+ * @a: source matrix.
+ * @b: source matrix.
+ * @c: target matrix.
+ *
+ * Adds the elements of @a and @b, the result going to @c.
+ * 
+ * Returns: 0 on successful completion, or %E_NONCONF if the 
+ * matrices are not conformable for the operation.
+ */
+
+int 
+gretl_matrix_add (const gretl_matrix *a, const gretl_matrix *b,
+		  gretl_matrix *c)
+{
+    int rows = a->rows, cols = a->cols;
+    int i, n;
+
+    if (b->rows != rows || c->rows != rows ||
+	b->cols != cols || c->cols != cols) {
+	fprintf(stderr, "gretl_matrix_add: non-conformable\n");
+	return E_NONCONF;
+    }
+
+    n = rows * cols;
+
+    if (n < SIMD_MIN || is_block_matrix(a) || is_block_matrix(a) ||
+	is_block_matrix(c)) {
+	/* we can't assume suitable alignment of sub-matrices */
+	for (i=0; i<n; i++) {
+	    c->val[i] = a->val[i] + b->val[i];
+	}
+	return 0;
+    }
+
+#if defined(USE_AVX)
+    gretl_matrix_avx_add(a, b, c);
+#elif defined(USE_SSE2)
+    gretl_matrix_sse_add(a, b, c);
+#else
+    for (i=0; i<n; i++) {
+	c->val[i] = a->val[i] + b->val[i];
     }
 #endif
 
@@ -2183,59 +2391,6 @@ int gretl_matrix_add_transpose_to (gretl_matrix *targ,
 
     return 0;
 }
-
-#if USE_AVX
-
-static void gretl_matrix_avx_subt_from (gretl_matrix *a,
-					const gretl_matrix *b,
-					int n)
-{
-    double *ax = a->val;
-    const double *bx = b->val;
-    int i, imax = n / 4;
-    int rem = n % 4;
-
-    for (i=0; i<imax; i++) {
-	/* subtract 4 doubles in parallel */
-	__m256d Ymm_A = _mm256_load_pd(ax);
-	__m256d Ymm_B = _mm256_load_pd(bx);
-	__m256d Ymm_C = _mm256_sub_pd(Ymm_A, Ymm_B);
-	_mm256_store_pd(ax, Ymm_C);
-	ax += 4;
-	bx += 4;
-    }
-
-    for (i=0; i<rem; i++) {
-	ax[i] -= bx[i];
-    }
-}
-
-#elif USE_SSE2
-
-static void gretl_matrix_sse_subt_from (gretl_matrix *a,
-					const gretl_matrix *b,
-					int n)
-{
-    double *ax = a->val;
-    const double *bx = b->val;
-    int i, imax = n / 2;
-
-    for (i=0; i<imax; i++) {
-	/* subtract 2 doubles in parallel */
-	__m128d Xmm_A = _mm_load_pd(ax);
-	__m128d Xmm_B = _mm_load_pd(bx);
-	__m128d Xmm_C = _mm_sub_pd(Xmm_A, Xmm_B);
-	_mm_store_pd(ax, Xmm_C);
-	ax += 2;
-	bx += 2;
-    }
-
-    if (n % 2) {
-	ax[0] -= bx[0];
-    }
-}
-
-#endif
 
 /**
  * gretl_matrix_subtract_from:
@@ -2287,13 +2442,63 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
 	return 0;
     }
 
-#if USE_AVX
+#if defined(USE_AVX)
     gretl_matrix_avx_subt_from(targ, src, n);
-#elif USE_SSE2
+#elif defined(USE_SSE2)
     gretl_matrix_sse_subt_from(targ, src, n);
 #else
     for (i=0; i<n; i++) {
 	targ->val[i] -= src->val[i];
+    }
+#endif
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_subtract:
+ * @a: source_matrix.
+ * @b: source matrix.
+ * @c: target matrix.
+ *
+ * Subtracts the elements of @b from the corresponding elements
+ * of @a, the result going to @c.
+ * 
+ * Returns: 0 on successful completion, or %E_NONCONF if the 
+ * matrices are not conformable for the operation.
+ */
+
+int 
+gretl_matrix_subtract (const gretl_matrix *a, const gretl_matrix *b,
+		       gretl_matrix *c)
+{
+    int rows = a->rows, cols = a->cols;
+    int i, n;
+
+    if (b->rows != rows || c->rows != rows ||
+	b->cols != cols || c->cols != cols) {
+	fprintf(stderr, "gretl_matrix_subtract: non-conformable\n");
+	return E_NONCONF;
+    }
+
+    n = rows * cols;
+
+    if (n < SIMD_MIN || is_block_matrix(a) || is_block_matrix(a) ||
+	is_block_matrix(c)) {
+	/* we can't assume suitable alignment of sub-matrices */
+	for (i=0; i<n; i++) {
+	    c->val[i] = a->val[i] - b->val[i];
+	}
+	return 0;
+    }
+
+#if defined(USE_AVX)
+    gretl_matrix_avx_subtract(a, b, c);
+#elif defined(USE_SSE2)
+    gretl_matrix_sse_subtract(a, b, c);
+#else
+    for (i=0; i<n; i++) {
+	c->val[i] = a->val[i] - b->val[i];
     }
 #endif
 

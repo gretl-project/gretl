@@ -70,35 +70,41 @@ static guint32 gretl_rand_octet (guint32 *sign);
 
 #if USE_RAND_ARRAY
 
-# if USE_AVX
-#  define ALIGN 32
-# else
-#  define ALIGN 16
-# endif
+#ifdef USE_AVX
+# define ALIGN 32
+#else
+# define ALIGN 16
+#endif
 
-static void *gretl_memalign (size_t size, int *err)
+#ifndef HAVE_POSIX_MEMALIGN
+# if defined(WIN32) || ALIGN > 16
+#  define USE_GRETL_MEMALIGN
+# endif
+#endif
+
+static void *simd_malloc (size_t size, int *err)
 {
     void *mem = NULL;
 
-# if defined(HAVE_POSIX_MEMALIGN)
+#if defined(HAVE_POSIX_MEMALIGN)
     *err = posix_memalign((void **) &mem, ALIGN, size);
     if (*err) {
 	fprintf(stderr, "posix_memalign: err = %d\n", *err);
 	return NULL;
     }
-# elif defined(WIN32)
-    mem = win32_memalign(size, ALIGN);
+#elif defined(USE_GRETL_MEMALIGN)
+    mem = gretl_aligned_malloc(size, ALIGN);
     if (mem == NULL) {
-	fputs("win32_memalign: failed\n", stderr);
+	fputs("gretl_aligned_malloc: failed\n", stderr);
 	*err = E_ALLOC;
-    }
-# else /* OS X: should be aligned OK by default? */
+    }    
+#else /* assume malloc is 16-byte aligned by default (OS X) */
     mem = malloc(size);
     if (mem == NULL) {
 	fputs("osx_malloc: failed\n", stderr);
 	*err = E_ALLOC;
     }
-# endif
+#endif
 
     return mem;
 }
@@ -122,7 +128,7 @@ static int sfmt_array_setup (void)
     int err = 0;
 
     if (rbuf == NULL) {
-	rbuf = gretl_memalign(RSIZE * sizeof *rbuf, &err);
+	rbuf = simd_malloc(RSIZE * sizeof *rbuf, &err);
 #if 0
 	if (!err) {
 	    fprintf(stderr, "sfmt_array_setup: allocated array of size %d\n", RSIZE);
@@ -140,11 +146,11 @@ static int sfmt_array_setup (void)
 
 static void sfmt_array_cleanup (void)
 {
-# if defined(WIN32) && !defined(HAVE_POSIX_MEMALIGN)
-    win32_aligned_free(rbuf);
-# else
+#if defined(USE_GRETL_MEMALIGN)
+    gretl_aligned_free(rbuf);
+#else
     free(rbuf);
-# endif
+#endif
     rbuf = NULL;
 }
 
@@ -164,7 +170,7 @@ static guint32 sfmt_rand32 (void)
 
 # define sfmt_rand32 gen_rand32
 
-#endif /* USE_RAND_ARRAY */
+#endif /* USE_RAND_ARRAY or not */
 
 /**
  * gretl_rand_init:

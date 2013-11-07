@@ -73,10 +73,6 @@ int R_path_from_registry (char *s, int which);
 
 int maybe_print_R_path_addition (FILE *fp);
 
-void *win32_memalign (size_t size, size_t alignment);
-
-void win32_aligned_free (void *mem);
-
 char *strptime (const char *buf, const char *format, 
 		struct tm *timeptr);
 

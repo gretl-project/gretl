@@ -161,4 +161,10 @@ gretl_matrix *get_last_pvals_matrix (int *err);
 
 double gretl_stopwatch (void);
 
+/* aligned allocation */
+
+void *gretl_aligned_malloc (size_t size, size_t alignment);
+
+void gretl_aligned_free (void *mem);
+
 #endif /* GRETL_UTILS_H */

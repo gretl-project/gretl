@@ -2048,7 +2048,68 @@ gretl_matrix *get_last_pvals_matrix (int *err)
     return record_or_get_test_matrix(NULL, NULL, GET_TEST_PVAL, err);
 }
 
+/*
+  malloc and free for alignments greater than that guaranteed by the C
+  library, based on Steven G. Johnson's public domand code at
+  http://ab-initio.mit.edu/~stevenj/align.c 
+*/
 
+#ifdef HAVE_STDINT_H
+# include <stdint.h> /* for uintptr_t */
+#else
+# define uintptr_t size_t
+#endif
 
+#define NOT_POWER_OF_TWO(n) (((n) & ((n) - 1)))
+#define UI(p) ((uintptr_t) (p))
 
+#define PTR_ALIGN(p0, align)					\
+            ((void *) (((UI(p0) + (align + sizeof(void*)))	\
+			& (~UI(align - 1)))))
 
+/* pointer must sometimes be aligned; assume sizeof(void*) is a power of two */
+#define ORIG_PTR(p) (*(((void **) (UI(p) & (~UI(sizeof(void*) - 1)))) - 1))
+
+static void *real_aligned_malloc (size_t size, size_t align)
+{
+    void *p0, *p;
+
+    if (NOT_POWER_OF_TWO(align)) {
+	errno = EINVAL;
+	return NULL;
+    }
+
+    if (align < sizeof(void *)) {
+	align = sizeof(void *);
+    }
+
+    /* including the extra sizeof(void*) is overkill on a 32-bit
+       machine, since malloc is already 8-byte aligned, as long
+       as we enforce alignment >= 8 ...but oh well */
+
+    p0 = malloc(size + align + sizeof(void *));
+    if (!p0) {
+	return NULL;
+    }
+
+    p = PTR_ALIGN(p0, align);
+    ORIG_PTR(p) = p0;
+
+    return p;
+}
+
+void *gretl_aligned_malloc (size_t size, size_t alignment)
+{
+    if (size < 1) {
+	return NULL;
+    } else {
+	return real_aligned_malloc(size, alignment);
+    }
+}
+
+void gretl_aligned_free (void *mem)
+{
+    if (mem != NULL) {
+	free(ORIG_PTR(mem));
+    }
+}

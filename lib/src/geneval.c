@@ -1678,6 +1678,52 @@ static gretl_matrix *nullmat_multiply (const gretl_matrix *A,
     return C;
 }
 
+static gretl_matrix *
+matrix_add_sub_scalar (const gretl_matrix *A,
+		       const gretl_matrix *B,
+		       int op)
+{
+    gretl_matrix *C;
+    double xval, *xvec;
+    int r, c;
+
+    if (gretl_matrix_is_scalar(A)) {
+	r = B->rows;
+	c = B->cols;
+	xval = A->val[0];
+	xvec = B->val;
+    } else {
+	r = A->rows;
+	c = A->cols;
+	xval = B->val[0];
+	xvec = A->val;
+    }
+
+    C = gretl_matrix_alloc(r, c);
+
+    if (C != NULL) {
+	int i, n = r * c;
+
+	if (op == B_ADD) {
+	    for (i=0; i<n; i++) {
+		C->val[i] = xvec[i] + xval;
+	    }
+	} else {
+	    if (xvec == A->val) {
+		for (i=0; i<n; i++) {
+		    C->val[i] = xvec[i] - xval;
+		}
+	    } else {
+		for (i=0; i<n; i++) {
+		    C->val[i] = xval - xvec[i];
+		}
+	    }
+	}
+    }
+
+    return C;
+}
+
 /* return allocated result of binary operation performed on
    two matrices */
 
@@ -1705,27 +1751,20 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     switch (op) {
     case B_ADD:
     case B_SUB:
-	if (gretl_matrix_is_scalar(A) &&
-	    !gretl_matrix_is_scalar(B)) {
-	    C = gretl_matrix_copy(B);
+	if (gretl_matrix_is_scalar(A) ||
+	    gretl_matrix_is_scalar(B)) {
+	    C = matrix_add_sub_scalar(A, B, op);
 	    if (C == NULL) {
 		*err = E_ALLOC;
-	    } else if (op == B_ADD) {
-		*err = gretl_matrix_add_to(C, A);
-	    } else {
-		*err = gretl_matrix_subtract_from(C, A);
-		if (!*err) {
-		    gretl_matrix_switch_sign(C);
-		}
-	    }	    
+	    }
 	} else {
-	    C = gretl_matrix_copy(A);
+	    C = gretl_matrix_alloc(A->rows, A->cols);
 	    if (C == NULL) {
 		*err = E_ALLOC;
 	    } else if (op == B_ADD) {
-		*err = gretl_matrix_add_to(C, B);
+		*err = gretl_matrix_add(A, B, C);
 	    } else {
-		*err = gretl_matrix_subtract_from(C, B);
+		*err = gretl_matrix_subtract(A, B, C);
 	    }
 	}
 	break;
