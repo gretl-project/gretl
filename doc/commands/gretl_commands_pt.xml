@@ -8579,6 +8579,15 @@
 	  <flag>--p-values</flag>
 	  <effect>show p-values instead of slopes</effect>
 	</option>
+	<option>
+	  <flag>--random-effects</flag>
+	  <effect>estimates a random effects panel probit model</effect>
+	</option>
+	<option>
+	  <flag>--quadpoints</flag>
+	  <optparm>k</optparm>
+	  <effect>number of quadrature points for RE estimation</effect>
+	</option>
       </options>
     </usage>
 
@@ -8620,9 +8629,62 @@
 	is not discrete, an error is flagged.)
       </para>
       <para>
+	With the <opt>--random-effects</opt> option, the error
+	term is assumed to be composed of two normally distributed
+	components: one time-invariant term that is specific to the
+	cross-sectional unit or <quote>individual</quote> (and is
+	known as the individual effect); and one term that is specific
+	to the particular observation.
+      </para>
+      <para>
+	Evaluation of the likelihood for this model involves the use
+	of Gauss-Hermite quadrature for approximating the value of
+	expectations of functions of normal variates. The number of
+	quadrature points used can be chosen through the
+	<opt>--quadpoints</opt> option (the default is 32). Using more
+	points will increase the accuracy of the results, but at the
+	cost of longer compute time; with many quadrature points and a
+	large dataset estimation may be quite time consuming.
+      </para>
+      <para>
+	Besides the usual parameter estimates (and associated
+	statistics) relating to the included regressors, certain
+	additional information is presented on estimation of this
+	sort of model:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>lnsigma2</lit>: the maximum likelihood estimate of
+	    the log of the variance of the individual effect;
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>sigma_u</lit>: the estimated standard deviation of
+	    the individual effect; and
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>rho</lit>: the estimated share of the individual
+	    effect in the composite error variance (also known as the
+	    intra-class correlation).
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	The Likelihood Ratio test of the null hypothesis that
+	<lit>rho</lit> equals zero provides a means of assessing
+	whether the random effects specification is needed. If
+	the null is not rejected that suggests that a simple
+	pooled probit specification is adequate.
+      </para>
+      <para>
 	Probit for analysis of proportions is not implemented in
 	<program>gretl</program> at this point.
       </para>
+
     </description>
 
     <gui-access>
