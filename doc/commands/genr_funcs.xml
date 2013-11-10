@@ -4716,10 +4716,11 @@
 	  Returns the Net Present Value of <argname>x</argname>,
 	  considered as a sequence of payments (negative) and receipts
 	  (positive), evaluated at annual discount rate
-	  <argname>r</argname>.  The first value is taken as dated
-	  <quote>now</quote> and is not discounted.  To emulate an NPV
-	  function in which the first value is discounted, prepend zero to
-	  the input sequence.
+	  <argname>r</argname>; <argname>r</argname> must be expressed
+	  as a number, not a percentage (5<lit>%</lit> = 0.05).  The first value
+	  is taken as dated <quote>now</quote> and is not discounted.
+	  To emulate an NPV function in which the first value is
+	  discounted, prepend zero to the input sequence.
 	</para>
 	<para>
 	  Supported data frequencies are annual, quarterly, monthly, and

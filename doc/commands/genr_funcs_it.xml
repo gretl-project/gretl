@@ -3799,7 +3799,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the means of the columns of <argname>X</argname>. 
+	  Calcola le medie per colonna di <argname>X</argname>. 
 	  <seelist>
 	    <fncref targ="meanr"/>
 	    <fncref targ="sumc"/>
@@ -3814,7 +3814,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the means of the rows of <argname>X</argname>. 
+	  Calcola le medie per riga di <argname>X</argname>. 
 	  <seelist>
 	    <fncref targ="meanc"/>
 	    <fncref targ="sumr"/>
@@ -3829,7 +3829,7 @@
       </fnargs>
       <description>
 	<para>
-	  The median of the non-missing observations in series
+	  Calcola la mediana delle osservazioni non mancanti di una variabile
 	  <argname>y</argname>. 
 	  <seelist>
 	    <fncref targ="quantile"/>
@@ -3844,16 +3844,16 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Computes the matrix exponential of <argname>A</argname>, using
-	  algorithm 11.3.1 from Golub and Van Loan (1996).
+	  Calcola l'esponenziale della matrice <argname>A</argname>, usando
+	  l'algoritmo 11.3.1 di Golub e Val Loan (1996).).
 	</para>
 	<para context="tex">
-	  Matrix exponential, 
+	  Esponenziale di una matrice,
 	  \[ e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!}
 	  = \frac{I}{0!} + \frac{A}{1!} + \frac{A^2}{2!} + \frac{A^3}{3!}
 	  + \cdots\] 
-	  (This series is sure to converge.) The algorithm used
-	  is 11.3.1 from Golub and Van Loan (1996).
+	  (La convergenza di questa serie è garantita.) La funzione 
+	  usa l'algoritmo 11.3.1 di Gloub e Van Loan (1996).
 	</para>
       </description>
     </function>
@@ -3864,11 +3864,11 @@
       </fnargs>
       <description>
 	<para>
-	  If the argument <argname>y</argname> is a series, returns the
-	  (scalar) minimum of the non-missing observations in the series.
-	  If the argument is a list, returns a series each of whose
-	  elements is the minimum of the values of the listed variables at
-	  the given observation.
+	  Se l'argomento <argname>y</argname> è una variabile, calcola
+	  il minimo (scalare) delle osservazioni non mancanti della variabile.
+	  Se l'argomento è una lista, restituisce una variabile i cui elementi
+	  sono il minimo dei valori delle variabili incluse nella lista
+	  in corrispondenza di ciascuna osservazione.
 	</para>
 	<para>
 	  <seelist>
@@ -3886,7 +3886,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the minima of the columns of <argname>X</argname>.
+	  Calcola il minimo per colonna di <argname>X</argname>.
 	  <seelist>
 	    <fncref targ="iminc"/>
 	    <fncref targ="maxc"/> 
@@ -3902,7 +3902,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the minima of the rows of <argname>X</argname>. 
+	  Calcola il minimo per riga di <argname>X</argname>. 
 	  <seelist>
 	    <fncref targ="iminr"/>
 	    <fncref targ="maxr"/> 
@@ -3918,12 +3918,14 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a binary variable holding 1 if <argname>x</argname> is
-	  <lit>NA</lit>. If <argname>x</argname> is a series, the comparison
-	  is done element by element; if <argname>x</argname> is a list of
-	  series, the output is a series with 1 at observations for which
-	  at least one series in the list has a missing value, and 0
-	  otherwise.
+	  Crea una variabile binaria uguale a 1 se
+	  <argname>x</argname> è <lit>NA</lit>. Se
+	  <argname>x</argname> è una serie, il confronto viene
+	  effettuato elemento per elemento; se <argname>x</argname> è
+	  una lista di variabili, il risultato è una variabile con
+	  elementi pari a 1 per le osservazioni per le quali almeno
+	  una delle variabili incluse nella lista ha valore mancante,
+	  e 0 altrimenti.
 	</para>
 	<para>
 	  <seelist> 
@@ -3941,8 +3943,9 @@
       </fnargs>
       <description>
 	<para>
-	  Converts <lit>NA</lit>s to zeros. If <argname>x</argname> is a
-	  series, the conversion is done element by element. 
+	  Converte gli <lit>NA</lit> in zeri. Se <argname>x</argname>
+	  è una serie la conversione è effettuata elemento per
+	  elemento.
 	  <seelist>
 	    <fncref targ="missing"/>
 	    <fncref targ="ok"/>
@@ -3960,40 +3963,40 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Shifts up or down the rows of <argname>X</argname>.  If
-	  <argname>p</argname> is a positive scalar, returns a matrix
-	  in which the columns of <argname>X</argname> are shifted
-	  down by <argname>p</argname> rows and the first
-	  <argname>p</argname> rows are filled with the value
-	  <argname>m</argname>. If <argname>p</argname> is a negative
-	  number, <argname>X</argname> is shifted up and the last rows
-	  are filled with the value <argname>m</argname>. If
-	  <argname>m</argname> is omitted, it is understood to be
-	  zero.
+	  Sposta in alto o in basso le righe di <argname>X</argname>. Se
+	  <argname>p</argname> è uno scalare positivo, calcola una matrice
+	  nella quale le colonne di <argname>X</argname> sono spostate verso
+	  il basso di <argname>p</argname> righe e le prime 
+	  <argname>p</argname> righe sono riempite con il valore 
+	  <argname>m</argname>. Se <argname>p</argname> è un numero negativo, 
+	  <argname>X</argname> è spostata verso l'alto e le ultime righe
+	  sono riempite con il valore <argname>m</argname>. Se
+	  <argname>m</argname> viene omesso, al suo posto si utilizza un
+	  valore nullo.
 	</para>
 	<para context="tex">
-	  Shifts up or down the rows of <argname>X</argname>. If $p$
-	  is a positive scalar, the returned matrix $Y$ has typical
-	  element $Y_{i,j} = X_{i-p,j}$ for $i \ge p$ and zero
-	  otherwise. In other words, the columns of
-	  <argname>X</argname> are shifted down by
-	  <argname>p</argname> rows and the first <argname>p</argname>
-	  rows are filled with the value <argname>m</argname>. If
-	  <argname>p</argname> is a negative number,
-	  <argname>X</argname> is shifted up and the last rows are
-	  filled with the value <argname>m</argname>. If
-	  <argname>m</argname> is omitted, it is understood to be
-	  zero.
+	  Sposta in alto o in basso le righe di <argname>X</argname>. Se
+	  $p$ è uno scalare positivo, il risultato è una matrice $Y$ di elementi
+	  $Y_{i,j} = X_{i-p,j}$ per $i \ge p$ e zero altrimenti. In
+	  altre parole, le colonne di 
+	  <argname>X</argname> vengono spostate verso il basso di 
+	  <argname>p</argname> righe e le prime <argname>p</argname>
+	  righe sono riempite con il valore <argname>m</argname>. Se 
+	  <argname>p</argname> è un numero negativo,
+	  <argname>X</argname> viene spostata verso l'alto e le ultime righe 
+	  sono riempite con il valore <argname>m</argname>. Se 
+	  <argname>m</argname> è omesso, al suo posto si utilizza
+	  lo zero.
 	</para>
 	<para context="notex">
-	  If <argname>p</argname> is a vector, the above operation is
-	  carried out for each element in <argname>p</argname>,
-	  joining the resulting matrices horizontally.
+	  Se <argname>p</argname> è un vettore, l'operazione precedente
+	  è svolta per ciascun elemento di <argname>p</argname>,
+	  unendo le matrici così ottenute in senso orizzontale.
 	</para>
 	<para context="tex">
-	  If $p$ is a vector, the above operation is carried out for
-	  each element in $p$, joining the resulting matrices
-	  horizontally.
+	  Se $p$ è un vettore, l'operazione precedente è svolta
+	  per ciascun elemento di $p$, unendo le matrici così ottenute
+	  in senso orizzontale.
 	</para>
       </description>
     </function>
@@ -4025,26 +4028,28 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a <by r="k" c="n"/> matrix of parameter estimates obtained
-	  by OLS regression of the <by r="T" c="n"/> matrix
-	  <argname>Y</argname> on the <by r="T" c="k"/> matrix
+	  Restituisce una matrice <by r="k" c="n"/> di stime di
+	  parametri ottenute con la regressione dei minimi quadrati
+	  ordinari della matrice <by r="T" c="n"/>
+	  <argname>Y</argname> sulla matrice <by r="T" c="k"/>
 	  <argname>X</argname>.
 	</para>
 	<para>
-	  If the third argument is not <lit>null</lit>, the <by r="T" c="n"/>
-	  matrix <argname>U</argname> will contain the residuals. If the final
-	  argument is given and is not <lit>null</lit> then the
-	  <by r="k" c="k"/> matrix <argname>V</argname> will contain (a) the
-	  covariance matrix of the parameter estimates, if
-	  <argname>Y</argname> has just one column, or (b)
-	  <math>X'X</math><sup>-1</sup> if <argname>Y</argname> has multiple
-	  columns.
+	  Se il terzo argomento non è <lit>null</lit>, la matrice <by
+	  r="T" c="n"/> <argname>U</argname> conterrà i residui. Se
+	  l'ultimo argomento viene indicato e non è <lit>null</lit>,
+	  la matrice <by r="k" c="k"/> <argname>V</argname> conterrà
+	  (a) la matrice di covarianza delle stime dei parametri, se
+	  <argname>Y</argname> ha una sola colonna, o (b)
+	  <math>X'X</math><sup>-1</sup> se <argname>Y</argname> ha più
+	  colonne.
 	</para>
 	<para>
-	  By default, estimates are obtained via Cholesky decomposition, with
-	  a fallback to QR decomposition if the columns of
-	  <argname>X</argname> are highly collinear.  The use of SVD
-	  can be forced via the command <lit>set svd on</lit>.
+	  Di default, le stime sono ottenute usando una scomposizione
+	  di Cholesky, ricorrendo alla scomposizione QR se le colonne
+	  di <argname>X</argname> sono quasi collineari.  E' possibile
+	  imporre l'uso della scomposizione SVD usando il comando
+	  <lit>set svd on</lit>.
 	</para>
 	<para>
 	  <seelist> 
@@ -4079,44 +4084,53 @@
       </fnargs>
       <description>
 	<para>
-	  Depending on the value of the parameter
-	  <argname>p</argname>, returns either a simple or an
-	  exponentially weighted moving average of the input series
+	  A seconda del parametro 
+	  <argname>p</argname>, calcola una media mobile semplice o con pesi 
+	  esponenziali della variabile indicata in input
 	  <argname>x</argname>.
 	</para>
 	<para context="notex">
-	  If <argname>p</argname> &gt; 1, a simple <argname>p</argname>-term
-	  moving average is computed, that is, the arithmetic mean of x(t) to
-	  x(t-p+1). If a non-zero value is supplied for the optional
-	  <argname>control</argname> parameter the MA is centered,
-	  otherwise it is <quote>trailing</quote>.
+	  Se <argname>p</argname> &gt; 1, viene calcolata una media
+	  mobile semplice a <argname>p</argname>-termini; in altre
+	  parole, la media aritmetica da x(t) a x(t+p-1). Se viene
+	  indicato un valore non nullo per il parametro opzionale
+	  <argname>control</argname> la media mobile è centrata, in
+	  caso contrario è <quote>retrospettiva</quote> (usa solo
+	  l'osservazione corrente e quelle passate, ma non quelle
+	  future).
 	</para>
 	<para context="tex">
-	  If $p&gt;1$, a simple <argname>p</argname>-term moving average is
-	  computed, that is, $\frac{1}{p} \sum_{i=0}^{p-1} x_{t-i}$. If a
-	  non-zero value is supplied for the optional
-	  <argname>control</argname> parameter the MA is centered, otherwise
-	  it is <quote>trailing</quote>.
+	  Se $p&gt;1$, viene calcolata una media mobile semplice a
+	  <argname>p</argname> termini, in altre parole $\frac{1}{p}
+	  \sum_{i=0}^{p-1} x_{t-i}$. Se viene indicato un valore non
+	  nullo per il parametro opzionale <argname>control</argname>
+	  la media mobile è centrata, altrimenti è
+	  <quote>retrospettiva</quote> (usa solo l'osservazione
+	  corrente e quelle passate, ma non quelle future).
 	</para>
 	<para context="notex">
-	  If <argname>p</argname> is a positive fraction, an exponential
-	  moving average is computed: y(t) = p*x(t) + (1-p)*y(t-1). By default
-	  the output series, y, is initialized using the first valid value of
-	  <argname>x</argname>, but the <argname>control</argname> parameter
-	  may be used to specify the number of initial observations that
-	  should be averaged to produce y(0).  A zero value for
-	  <argname>control</argname> indicates that all the observations
-	  should be used.
+	  Se <argname>p</argname> è una frazione positiva viene
+	  calcolata una media mobile esponenziale: y(t) = p*x(t) +
+	  (1-p)*y(t-1). Di default la variabile calcolata, y, è
+	  inizializzata usando il primo valore valido di
+	  <argname>x</argname>, ma il parametro
+	  <argname>control</argname> può essere usato per specificare
+	  il numero di osservazioni iniziali che dovrebbero essere
+	  incluse nella media usata per calcolare y(0).  Un valore
+	  nullo di <argname>control</argname> indica che dovrebbero
+	  essere usate tutte le osservazioni.
 	</para>
 	<para context="tex">
-	  If $0 &lt; p &lt; 1$, an exponential moving average is computed:
-	  $y_t = p x_t + (1-p)y_{t-1}$. By default the output series $y$ is
-	  initialized using the first valid value of $x$, but the
-	  <argname>control</argname> parameter may be used to specify the
-	  number of initial observations that should be averaged to produce
-	  $y_0$.  A zero value for <argname>control</argname> indicates that
-	  all the observations should be used.
-	</para>	
+	  Se $0 &lt; p &lt; 1$, viene calcolata una media mobile
+	  esponenziale: $y_t = p x_t + (1-p)y_{t-1}$. Di default la
+	  variabile calcolata, $y$, è inizializzata usando il primo
+	  valore valido di $x$, ma il parametro
+	  <argname>control</argname> può essere usato per specificare
+	  il numero di osservazioni iniziali che dovrebbero essere
+	  incluse nella media usata per calcolare $y_0$.  Un valore
+	  nullo di <argname>control</argname> indica che devono essere
+	  usate tutte le osservazioni.
+	  </para>	
     </description>
     </function>
 
@@ -4128,12 +4142,12 @@
       </fnargs>
       <description>
 	<para>
-	  Works exactly as <fncref targ="mols"/>, except that the calculations
-	  are done in multiple precision using the GMP library.
+	  Funziona esattamente come <fncref targ="mols"/>, tranne che i calcoli
+	  sono effettuati in precisione multipla usando la libreria GMP.
 	</para>
 	<para>
-	  By default GMP uses 256 bits for each floating point number, but
-	  you can adjust this using the environment variable
+	  Di default GMP usa 256 bit per ogni numero a virgola mobile, ma
+	  questa convenzione può essere modificata usando la variabile d'ambiente
 	  <lit>GRETL_MP_BITS</lit>, &eg; <lit>GRETL_MP_BITS=1024</lit>.
 	</para>
       </description>
@@ -4154,19 +4168,19 @@
       </examples>
       <description>
 	<para>
-	  Works like <fncref targ="randgen"/> except that the return
-	  value is a matrix rather than a series. The initial
-	  arguments to this function are as described for
-	  <lit>randgen</lit>, but they must be followed by two
-	  integers to specify the number of rows
-	  (<argname>r</argname>) and columns (<argname>c</argname>) of
-	  the desired random matrix.
+	  Funziona come <fncref targ="randgen"/> tranne che il valore
+	  calcolato è una matrice anzichè una variabile. Gli argomenti
+	  iniziali di questa funzione sono come quelli descritti per
+	  <lit>randgen</lit>, ma devono essere seguiti da due interi
+	  per specificare il numero di righe (<argname>r</argname>) e
+	  colonne (<argname>c</argname>) della matrice casuale
+	  desiderata.
 	</para>
 	<para>
-	  The first example above calls for a uniform random column vector
-	  of length 50, while the second example specifies a <by r="20"
-	  c="20"/> random matrix with drawings from the the <math>t</math>
-	  distribution with 14 degrees of freedom.
+	  Il primo esempio fornito sopra calcola un vettore colonna
+	  casuale uniforme di 50 elementi, mentre il secondo specifica
+	  una matrice casuale <by r="20" c="20"/> con elementi tratti
+	  dalla distribuzione <math>t</math> con 14 gradi di libertà.
 	</para>
 	<para>
 	  <seelist>
@@ -4184,51 +4198,54 @@
       </fnargs>
       <description>
 	<para>
-	  Reads a matrix from a text file. The string
-	  <argname>fname</argname> must contain the name of the file
-	  from which the matrix is to be read. If this name has the
-	  suffix <quote><lit>.gz</lit></quote> it is assumed that gzip
-	  compression has been applied in writing the file.
+	  Legge una matrice da un file di testo. La stringa 
+	  <argname>fname</argname> deve contenere il nome del file da cui
+	  deve essere letta la matrice. Se questo nome ha estensione 
+	  <quote><lit>.gz</lit></quote>, si assume che il file sia stato creato
+	  con compressione gzip.
 	</para>
 	<para>
-	  The file in question may start with any number of comment
-	  lines, defined as lines that start with the hash mark,
-	  <lit>#</lit>; such lines are ignored.  Beyond that, the
-	  content must conform to the following rules:
+	  Il file in questione può iniziare con un numero
+	  di commenti qualsiasi, definiti come linee che iniziano 
+	  con il carattere <lit>#</lit>; queste linee sono ignorate. 
+	  A parte questo, il contenuto deve rispettare le regole seguenti:
 	</para>
 	<ilist>
 	  <li>
 	    <para>
-	      The first non-comment line must contain two integers,
-	      separated by a space or a tab, indicating the number of
-	      rows and columns, respectively.
+	      La prima riga non commentata deve contenere due interi,
+	      separati da uno spazio o un tabulatore, che indicano
+	      rispettivamente il numero di righe e di colonne.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      The columns must be separated by spaces or tab
-	      characters.
+	      Le colonne devono essere separate da spazi o caratteri.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      The decimal separator must be the dot character,
+	      Il separatore decimale deve essere il punto, 
 	      <quote><lit>.</lit></quote>.
 	    </para>
 	  </li>
 	</ilist>
 	<para>
-	  If a non-zero value is given for the optional
-	  <argname>import</argname> argument, the input file is looked
-	  for in the user's <quote>dot</quote> directory. This is
-	  intended for use with the matrix-exporting functions offered
-	  in the context of the <cmdref targ="foreign"/> command. In
-	  this case the <argname>fname</argname> argument should be
-	  a plain filename, without any path component.
+	  Se viene indicato un valore non nullo per l'argomento
+	  opzionale <argname>import</argname>, la ricerca del file di
+	  input avviene all'interno della directory <quote>dot</quote>
+	  dell'utente. Questa funzione è pensata per essere usata in
+	  combinazione con le funzioni che esportano matrici
+	  illustrate nel contesto del comando <cmdref
+	  targ="foreign"/>.  In questo caso l'argomento
+	  <argname>fname</argname> dovrebbe essere semplicemente un
+	  nome di file, senza una componente che ne indica il
+	  percorso.
 	</para>
 	<para>
-	  Should an error occur (such as the file being badly formatted or
-	  inaccessible), an empty matrix is returned.
+	  Se dovesse verificarsi un errore (per esempio dovuto al
+	  fatto che il file è inaccessibile o mal formattato) la
+	  funzione restituisce una matrice vuota.
 	</para>
 	<para>
 	  <seelist>
@@ -4244,9 +4261,10 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a matrix containing the rows of <argname>X</argname> in
-	  reverse order.  If you wish to obtain a matrix in which the columns
-	  of <argname>X</argname> appear in reverse order you can do:
+	  Restituisce una matrice contenente le righe di
+	  <argname>X</argname> in ordine inverso. Per ottenere una
+	  matrice in cui le colonne di <argname>X</argname> appaiano
+	  in ordine inverso si usi:
 	</para>
 	<code>
 	  matrix Y = mreverse(X')'
@@ -4265,28 +4283,27 @@
       </fnargs>
       <description>
 	<para>
-	  Restricted least squares: returns a <by r="k" c="n"/> matrix
-	  of parameter estimates obtained by least-squares regression
-	  of the <by r="T" c="n"/> matrix <argname>Y</argname> on the
-	  <by r="T" c="k"/> matrix <argname>X</argname> subject to the
-	  linear restriction <math>RB</math> = <math>q</math>, where
-	  <math>B</math> denotes the stacked coefficient vector.
-	  <argname>R</argname> must have <math>k</math> *
-	  <math>n</math> columns; each row of this matrix represents a
-	  linear restriction. The number of rows in <argname>q</argname>
-	  must match the number of rows in <argname>R</argname>.
+	  Minimi quadrati vincolati: calcola una matrice <by r="k" c="n"/> 
+	  di stime dei parametri ottenute regredendo con il metodo dei minimi quadrati
+	  la matrice <by r="T" c="n"/> <argname>Y</argname> sulla matrice 
+	  <by r="T" c="k"/> m<argname>X</argname> sotto i vincoli lineari 
+	  <math>RB</math> = <math>q</math>, dove 
+	  <math>B</math> indica il vettore dei coefficienti incolonnati.
+	  <argname>R</argname> deve avere <math>k</math> *
+	  <math>n</math> colonne; ogni riga della matrice rappresenta 
+	  un vincolo lineare. Il numero di righe di <argname>q</argname>
+	  deve essere pari al numero di righe di <argname>R</argname>.
 	</para>
 	<para>
-	  If the fifth argument is not <lit>null</lit>, the <by r="T"
-	  c="n"/> matrix <argname>U</argname> will contain the
-	  residuals. If the final argument is given and is not
-	  <lit>null</lit> then the <by r="k" c="k"/> matrix
-	  <argname>V</argname> will hold the restricted counterpart to
-	  the matrix <math>X'X</math><sup>-1</sup>. The variance
-	  matrix of the estimates for equation <math>i</math> can be
-	  constructed by multiplying the appropriate sub-matrix of
-	  <argname>V</argname> by an estimate of the error variance
-	  for that equation.
+	  Se il quinto argomento non è <lit>null</lit>, la matrice <by r="T"
+	  c="n"/> <argname>U</argname> conterrà i residui. Se viene indicato 
+	  l'ultimo argomento e non è 
+	  <lit>null</lit>, la matrice <by r="k" c="k"/> 
+	  <argname>V</argname> conterrà la versione vincolata della matrice  
+	  <math>X'X</math><sup>-1</sup>. La matrice di varianza delle stime
+	  dell'equazione <math>i</math> può essere costruita moltiplicando
+	  la sottomatrice opportuna di 
+	  <argname>V</argname> per una stima della varianza dell'errore di quell'equazione.
 	</para>
       </description>
     </function>  
@@ -4299,14 +4316,14 @@
       </fnargs>
       <description>
 	<para>
-	  Rearranges the elements of <argname>X</argname> into a matrix
-	  with <argname>r</argname> rows and <argname>c</argname> columns.
-	  Elements are read from <argname>X</argname> and written to the
-	  target in column-major order.  If <argname>X</argname> contains
-	  fewer than <math>k</math> = <math>rc</math> elements, the
-	  elements are repeated cyclically; otherwise, if
-	  <argname>X</argname> has more elements, only the first
-	  <math>k</math> are used.
+	  Riorganizza gli elementi di <argname>X</argname> in una matrice con 
+	  <argname>r</argname> righe e <argname>c</argname> colonne. Gli elementi vengono
+	  letti da <argname>X</argname> e inseriti nel risultato della funzione 
+	  in ordine di colonna. Se <argname>X</argname> contiene meno di 
+	  <math>k</math> = <math>rc</math> elementi, questi ultimi vengono 
+	  ripetuti ciclicamente; in caso contrario, se 
+	  <argname>X</argname> ha più elementi ne vengono usati solo i 
+	  primi <math>k</math>.
 	</para>
 	<para>
 	  <seelist>
@@ -4327,11 +4344,11 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a matrix in which the rows of <argname>X</argname>
-	  are reordered by increasing value of the elements in
-	  column <argname>j</argname>. This is a stable sort: 
-	  rows that share the same value in column <argname>j</argname>
-	  will not be interchanged.
+	  Restituisce una matrice nella quale le righe di <argname>X</argname>
+	  sono riordinate per valore crescente degli elementi nella
+	  colonna <argname>j</argname>. Il riordinamento è stabile:
+	  le righe che contengono lo stesso valore nella colonna <argname>j</argname>
+	  mantengono l'ordinamento relativo preesistente.
 	</para>
       </description>
     </function>
@@ -4366,37 +4383,37 @@
       </fnargs>
       <description>
 	<para>
-	  Writes the matrix <argname>X</argname> to a plain text file
-	  named <argname>fname</argname>. The file will contain on the first
-	  line two integers, separated by a tab character, with the number
-	  of rows and columns; on the next lines, the matrix elements in
-	  scientific notation, separated by tabs (one line per row).
+	  Copia la matrice <argname>X</argname> in un file di testo di nome 
+	  <argname>fname</argname>. Nelle prima linea il file contiene 
+	  due interi separati da un tabulatore corrispondenti ai numeri di 
+	  riga e di colonna; nelle righe seguenti sono indicati gli elementi
+	  della matrice in notazione scientifica, separati da tabulatori
+	  (una riga per ciascuna linea).
 	</para>
 	<para>
-	  If file <argname>fname</argname> already exists, it will be
-	  overwritten. The return value is 0 on successful completion; if
-	  an error occurs, such as the file being unwritable, the return
-	  value will be non-zero.
+	  Se il file <argname>fname</argname> esiste già verrà sovrasccritto.
+	  Il valore restituito è 0 in caso venga portata a termine
+	  correttamente l'esecuzione; se si verifica un errore, per esempio dovuto al
+	  fatto che il file non può essere sovrascritto, il valore restituito sarà non nullo.
 	</para>
 	<para>
-	  If a non-zero value is given for the
-	  <argname>export</argname> argument, the output file will be
-	  written into the user's <quote>dot</quote> directory, where
-	  it is accessible by default via the matrix-loading functions
-	  offered in the context of the <cmdref targ="foreign"/>
-	  command. In this case a plain filename, without any path
-	  component, should be given for the second argument.
+	  Se viene indicato un valore non nullo per l'argomento 
+	  <argname>export</argname>, il file di output sarà salvato nella 
+	  directory <quote>dot</quote> dell'utente, e ad esso per default sarà possibile 
+	  accedere usando le funzioni che caricano matrici contenute nel 
+	  contesto del comando <cmdref targ="foreign"/>. In questo caso è necessario
+	  indicare come secondo argomento il nome del  file privo del percorso.
 	</para>
 	<para>
-	  Matrices stored via the <lit>mwrite</lit> command can be easily
-	  read by other programs; see <guideref targ="chap:matrices"/> for
-	  details.
+	  Le matrici memorizzate usando il comando <lit>mwrite</lit> possono essere
+	  facilmente lette da altri programmi; v. <guideref targ="chap:matrices"/> per 
+	  ulteriori dettagli.
 	</para>
 	<para>
-	  An extension to the basic behavior of this function is
-	  available: if <argname>fname</argname> has the suffix
-	  <quote><lit>.gz</lit></quote> then the file is written
-	  with gzip compression.
+	  E' disponibile un'estensione del comportamento base di questa
+	  funzione: se <argname>fname</argname> ha estensione 
+	  <quote><lit>.gz</lit></quote>, il file viene salvato usando la 
+	  compressione gzip.
 	</para>
 	<para>
 	  <seelist>
@@ -4413,12 +4430,12 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a matrix holding the cross tabulation of the values
-	  contained in <argname>x</argname> (by row) and
-	  <argname>y</argname> (by column). The two arguments should be of
-	  the same type (both series or both column vectors), and because
-	  of the typical usage of this function, are assumed to contain
-	  integer values only.
+	  Restituisce una matrice contenente una tabella a doppia entrata dei valori
+	  contenuti in <argname>x</argname> (nel senso delle righe) e 
+	  <argname>y</argname> (nel senso delle colonne). I due argomenti devono
+	  essere dello stesso tipo (entrambe variabili e entrambi vettori
+	  colonna), e visto l'uso che tipicamente viene fatto di questa funzione
+	  si assume che contengano solo valori interi.
 	</para>
 	<para>
 	  <seelist>
@@ -4536,9 +4553,9 @@
       </fnargs>    
       <description>
 	<para>
-	  If an environment variable by the name of
-	  <argname>s</argname> is defined and has a numerical value,
-	  returns that value; otherwise returns NA.  See also <fncref
+	  Se è stata definita una variabile d'ambiente chiamata 
+	  <argname>s</argname> e le è stato assegnato un valore numerico,
+	  restituisce tale valore; in caso contrario restituisce NA. V anche <fncref
 	  targ="getenv"/>.
 	</para>
       </description>
@@ -4550,8 +4567,9 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the number of non-missing observations for the variable
-	  <argname>y</argname> in the currently selected sample.
+	  Restituisce il numero di osservazioni non mancanti
+	  per la variabile 
+	  <argname>y</argname> nella selezione corrente del campione.
 	</para>
       </description>
     </function>
@@ -4563,10 +4581,9 @@
       </fnargs>
       <description>
 	<para>
-	  Generates a series of Gaussian pseudo-random variates with mean
-	  &mu; and standard deviation &sigma;. If no arguments are
-	  supplied, standard normal variates <math>N</math>(0,1) are
-	  produced.
+	  Genera una sequenza di numeri pseudo-casuali tratti dalla distribuzione normale
+	  di media &mu; e deviazione standard &sigma;. Se non vengono forniti gli argomenti
+	  vengono generate realizzazioni tratte dalla distribuzione <math>N</math>(0,1).
 	</para>
 	<para>
 	  <seelist>
@@ -4587,17 +4604,21 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the Net Present Value of <argname>x</argname>,
-	  considered as a sequence of payments (negative) and receipts
-	  (positive), evaluated at annual discount rate
-	  <argname>r</argname>.  The first value is taken as dated
-	  <quote>now</quote> and is not discounted.  To emulate an NPV
-	  function in which the first value is discounted, prepend zero to
-	  the input sequence.
+	  Restituisce il Valore Attuale Netto (VAN) di
+	  <argname>x</argname>, considerato come una sequenza di
+	  esborsi (se negativi) e introiti (se positivi), valutati a
+	  un tasso d'interesse annuo <argname>r</argname>;
+	  <argname>r</argname> dev'essere espresso in numeri, non
+	  percentuali, (5<lit>%</lit> = 0.05).  Il primo valore è considerato
+	  come riferito al periodo <quote>presente</quote> e non viene
+	  scontato.  Per emulare una funzione che calcola il VAN
+	  scontando anche il primo valore, inserite uno zero
+	  all'inizio della sequenza degli input.
 	</para>
 	<para>
-	  Supported data frequencies are annual, quarterly, monthly, and
-	  undated (undated data are treated as if annual).
+	  La funzione può gestire frequenze di osservazione
+	  annuali, trimestrali, mensili e prive di data (le osservazioni
+	  prive di data sono considerate annuali).
 	</para>
 	<para>
 	  <seelist>
@@ -4616,34 +4637,31 @@
       </fnargs>
       <description>
 	<para>
-	  Numerical maximization via the Newton&ndash;Raphson method.
-	  The vector <argname>b</argname> should hold the initial
-	  values of a set of parameters, and the argument
-	  <argname>f</argname> should specify a call to a function
-	  that calculates the (scalar) criterion to be maximized,
-	  given the current parameter values and any other relevant
-	  data. If the object is in fact minimization, this function
-	  should return the negative of the criterion.  On successful
-	  completion, <lit>NRmax</lit> returns the maximized value of
-	  the criterion, and <argname>b</argname> holds the parameter
-	  values which produce the maximum.
+	  Massimizzazione numerica mediante il metodo di Newton&ndash;Raphson. Il
+	  vettore <argname>b</argname> deve contenere i valori iniziali 
+	  dei parametri, e l'argomento 
+	  <argname>f</argname> deve specificare una funzione che calcola
+	  il criterio (scalare) da massimizzare, dati i valori correnti dei
+	  parametri e altre informazioni rilevanti. Se l'obiettivo è di minimizzare
+	  il criterio, la funzione deve restituire il criterio cambiato di segno.
+	  Se l'esecuzione viene completata con successo, <lit>NRmax</lit> 
+	  restituisce il valore massimizzato del criterio e
+	  <argname>b</argname> contiene i valori dei parametri corrispondenti al massimo.
 	</para>
 	<para>
-	  The optional third and fourth arguments provide means of
-	  supplying analytical derivatives and an analytical
-	  (negative) Hessian, respectively. The functions referenced
-	  by <argname>g</argname> and <argname>h</argname> must take
-	  as their first argument a pre-defined matrix that is of the
-	  correct size to contain the gradient or Hessian,
-	  respectively, given in pointer form. They also must take the
-	  parameter vector as an argument (in pointer form or
-	  otherwise).  Other arguments are optional. If either or
-	  both of the optional arguments are omitted, a numerical
-	  approximation is used.
+	  Gli argomenti opzionali in terza e in quarta posizione permettono
+	  di specificare rispettivamente le derivate analitiche e una matrice Hessiana 
+	  analitica (negativa). Le funzioni indicate come <argname>g</argname> e 
+	  <argname>h</argname> devono assumere come primo argomento una matrice
+	  predefinita con le stesse dimensioni rispettivamente del gradiente e
+	  dell'Hessiana, indicati sotto forma di puntatore. Devono inoltre 
+	  accettare il vettore dei parametri come argomento (sotto forma di puntatore 
+	  o altro). Gli altri argomenti sono opzionali. Se si omette uno o entrambi 
+	  gli argomenti opzionali viene utilizzata un'approssimazione numerica.
 	</para>
 	<para>
-	  For more details and examples see the chapter on numerical
-	  methods in <guideref targ="chap-numerical"/>.
+	  Per maggiori dettagli ed esempi si veda il capitolo
+	  relativo ai metodi numerici in <guideref targ="chap-numerical"/>.
 	  <seelist>
 	    <fncref targ="BFGSmax"/>
 	    <fncref targ="fdjac"/>
@@ -4658,23 +4676,25 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Computes the right nullspace of <argname>A</argname>, via the
-	  singular value decomposition: the result is a matrix
-	  <math>B</math> such that the product <math>AB</math> is a zero
-	  matrix, except when <argname>A</argname> has full column rank,
-	  in which case an empty matrix is returned. Otherwise, if
-	  <argname>A</argname> is <by r="m" c="n"/>,
-	  <math>B</math> will be <math>n</math> by (<math>n</math> &minus;
-	  <math>r</math>), where <math>r</math> is the rank of
-	  <argname>A</argname>. 
+	  Calcola lo spazio nullo a destra di <argname>A</argname>,
+	  usando la scomposizione a valori singolari (SVD); il
+	  risultato è una matrice <math>B</math> tale che il prodotto
+	  <math>AB</math> è una matrice nulla, tranne quando
+	  <argname>A</argname> è di rango colonna pieno, caso in cui
+	  viene restituita una matrice vuota. In caso contrario,
+	  <argname>A</argname> è <by r="m" c="n"/>, <math>B</math>
+	  sarà <math>n</math> per (<math>n</math> &minus;
+	  <math>r</math>), dove <math>r</math> è il rango di
+	  <argname>A</argname>.
 	</para>
 	<para context="tex">
-	  Computes the right nullspace of <argname>A</argname>, via the
-	  singular value decomposition: the result is a matrix $B$ such
-	  that $AB = [0]$, except when $A$ has full column rank, in which
-	  case an empty matrix is returned. Otherwise, if $A$ is $m \times
-	  n$, $B$ will be an $n \times (n-r)$ matrix, where $r$ is the
-	  rank of $A$.  
+	  Calcola lo spazio nullo a destra di <argname>A</argname>,
+	  usando la scomposizione a valori singolari: il risultato è
+	  una matrice $B$ tale che $AB=[0]$, tranne quando $A$ è di
+	  rango colonna pieno, caso in cui viene restituita una
+	  matrice vuota. In caso contrario, se $A$ è $m \times n$, $B$
+	  sarà una matrice $n \times (n-r)$, dove $r$ è il rango di
+	  $A$.
 	</para>
 	<para>
 	  <seelist>
@@ -4751,22 +4771,25 @@
       </fnargs>
       <description>
 	<para>
-	  If <argname>x</argname> is a scalar, returns 1 if
-	  <argname>x</argname> is not <lit>NA</lit>, otherwise 0.  If
-	  <argname>x</argname> is a series, returns a series with
-	  value 1 at observations with non-missing values and zeros
-	  elsewhere. If <argname>x</argname> is a list, the output is
-	  a series with 0 at observations for which at least one
-	  series in the list has a missing value, and 1 otherwise.
+	  Se <argname>x</argname> è uno scalare, la funzione
+	  restituisce 1 se <argname>x</argname> non è <lit>NA</lit>,
+	  altrimenti 0. Se <argname>x</argname> è una serie, la
+	  funzione restituisce una serie contenente valore 1 per le
+	  osservazioni non mancanti e zero altrimenti.  Se
+	  <argname>x</argname> è una lista, il risultato è una
+	  variabile con zero in corrispondenza delle osservazioni per
+	  le quali almeno una variabile nella lista ha un valore
+	  mancante e 1 altrimenti.
 	</para>
 	<para>
-	  If <argname>x</argname> is a matrix the behavior is a little
-	  different, since matrices cannot contain <lit>NA</lit>s: the
-	  function returns a matrix of the same dimensions as
-	  <argname>x</argname>, with 1s in positions corresponding to
-	  finite elements of <argname>x</argname> and 0s in positions
-	  where the elements are non-finite (either infinities or
-	  not-a-number, as per the IEEE 754 standard).
+	  Se <argname>x</argname> è una matrice il comportamento è
+	  leggermente diverso, dato che le matrici non possono
+	  contenere <lit>NA</lit>: la funzione restituisce una matrice
+	  delle stesse dimensioni di <argname>x</argname>, con
+	  elementi pari a 1 nelle posizioni corrispondenti a elementi
+	  di <argname>x</argname> finiti, e 0 di quelli non finiti (o
+	  infiniti o not-a-number, in conformità con lo standard IEEE
+	  754).
 	</para>
 	<para>
 	  <seelist>
@@ -4774,7 +4797,7 @@
 	    <fncref targ="misszero"/>
 	    <fncref targ="zeromiss"/>
 	  </seelist>
-	  But note that these functions are not applicable to matrices.
+	  Notare che queste funzioni non possono essere applicate a matrici.
 	</para>
       </description>
     </function>
@@ -4785,12 +4808,13 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Returns the 1-norm of the matrix <argname>X</argname>, that is,
-	  the maximum across the columns of <argname>X</argname> of the
-	  sum of absolute values of the column elements.
+	  Restituisce la norma-1 della matrice <argname>X</argname>;
+	  in altre parole, il massimo fra le colonne di
+	  <argname>X</argname> della somma dei valori assoluti degli
+	  elementi della colonna.
 	</para>
 	<para context="tex">
-	  Returns the 1-norm of the $r \times c$ matrix
+	  Restituisce la norma-1 della matrice $r \times c$ 
 	  <argname>X</argname>: 
 	  \[\| X \|_1 = \max_j \sum_{i=1}^r |X_{ij}| \]
 	</para>
@@ -4810,8 +4834,8 @@
       </fnargs>
       <description>
 	<para>
-	  Outputs a matrix with <math>r</math> rows and <math>c</math>
-	  columns, filled with ones.
+	  Restituisce una matrice con <math>r</math> righe e <math>c</math>
+	  colonne con elementi tutti pari a 1.
 	</para>
 	<para>
 	  <seelist>
@@ -4828,21 +4852,21 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the forward orthogonal deviations for
-	  variable <argname>y</argname>.
+	  La funzione è applicabile solo se il dataset corrente ha
+	  struttura panel. Calcola le deviazioni ortogonali in avanti
+	  della variabile <argname>y</argname>.
 	</para>
 	<para context="tex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the forward orthogonal deviations for
-	  variable <argname>y</argname>, that is 
+	  La funzione è applicabile solo se il dataset corrente ha una
+	  struttura panel. Calcola le deviazioni ortogonali in avanti
+	  della variabile <argname>y</argname>; in altre parole, 
 	  \[ \tilde{y}_{i,t} =
 	  \sqrt{ \frac{T_i - t + 1}{T_i - t}} \left( y_{i,t} -
 	  \frac{1}{T_i - t - 1} \sum_{s=t+1}^{T_i} y_{i,s} \right) \]
 	</para>
 	<para>
-	  This transformation is sometimes used instead of differencing to
-	  remove individual effects from panel data. 
+	  Talvolta questa trasformazione viene utilizzata al posto delle
+	  differenze prime per rimuovere gli effetti individuali da dati panel.
 	  <seelist>
 	    <fncref targ="diff"/>
 	  </seelist>
@@ -4888,16 +4912,17 @@
       </fnargs>
       <description>
 	<para>
-	  If only the first argument is given, computes the sample periodogram
-	  for the given series or vector. If the second argument is given,
-	  computes an estimate of the spectrum of <argname>x</argname> using a
-	  Bartlett lag window of the given bandwidth, up to a maximum of half
-	  the number of observations (<math>T</math>/2).
+	  Se viene fornito solo il primo argomento la funzione calcola 
+	  il periodogramma campionario per la variabile o il vettore indicati. 
+	  Se viene fornito anche il secondo argomento, la funzione calcola 
+	  una stima dello spettro di <argname>x</argname> usando una finestra
+	  di ritardi di Bartlett con la banda indicata, fino a un massimo pari alla 
+	  metà delle osservazioni (<math>T</math>/2).
 	</para>
 	<para>
-	  Returns a matrix with two columns and <math>T</math>/2 rows: the
-	  first column holds the frequency, &omega;, from 2&pi;/<math>T</math>
-	  to &pi;, and the second the corresponding spectral density.
+	  Restituisce una matrice con due colonne e <math>T</math>/2 righe:
+	  la prima colonna contiene la frequenza, &omega;, da 2&pi;/<math>T</math>
+	  a &pi;, ae la seconda la densità spettrale corrispondente.
 	</para>
       </description>
     </function>
@@ -4909,15 +4934,16 @@
       </fnargs>
       <description>
 	<para>
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns a series holding the maxima of variable
-	  <argname>y</argname> for each cross-sectional unit (repeated
-	  for each time period).
+	  Questa funzione può essere applicata solo se il dataset corrente
+	  ha struttura panel. Restituisce una variabile contenente i massimi
+	  della variabile 
+	  <argname>y</argname> per ciascuna unità cross-section (ripetuti
+	  per tutti i periodi temporali).
 	</para>
 	<para>
-	  If the optional second argument is provided then
-	  observations for which the value of <argname>mask</argname>
-	  is zero are ignored.
+	  Se viene fornito il secondo argomento opzionale le osservazioni
+	  per le quali il valore di <argname>mask</argname> è nullo vengono 
+	  ignorate.
 	</para>
 	<para>
 	  <seelist> 
@@ -4940,24 +4966,24 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the per-unit mean for variable
-	  <argname>y</argname>; that is, the sum of the valid observations
-	  for each unit divided by the number of valid observations for
-	  each unit.	  
+	  Questa funzione è applicabile solo se il dataset corrente
+	  ha struttura panel. Calcola la media per ciascuna unità della 
+	  variabile 
+	  <argname>y</argname>; in altre parole, la somma delle osservazioni
+	  valide relative a ciascuna unità divisa per il loro numero.
 	</para>
 	<para context="tex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the per-unit mean for variable
-	  <argname>y</argname>; that is, 
+	  Questa funzione è applicabile solo se il dataset corrente ha
+	  struttura panel. Calcola la media per ciascuna unità della 
+	  variabile 
+	  <argname>y</argname>; in altre parole, 
 	  \[ \bar{y}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} y_{i,t}\] 
-	  where $T_i$ is the number of valid
-	  observations for unit $i$.
+	  dove $T_i$ è il numero di osservazioni valide per l'unità $i$.
 	</para>
 	<para>
-	  If the optional second argument is provided then
-	  observations for which the value of <argname>mask</argname>
-	  is zero are ignored.
+	  Se viene indicato il secondo parametro opzionale le
+	  osservazioni corrispondenti a un valore nullo di <argname>mask</argname>
+	  sono ignorate.
 	</para>
 	<para>
 	  <seelist> 
@@ -4974,15 +5000,16 @@
       </fnargs>
       <description>
 	<para>
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns a series holding the minima of variable
-	  <argname>y</argname> for each cross-sectional unit (repeated
-	  for each time period).
+	  Questa funzione è applicabile solo se il dataset corrente ha
+	  struttura panel. Restituisce una variabile contenente i minimi della 
+	  variabile 
+	  <argname>y</argname> per ciascuna unità della cross-section (replicati 
+	  per ogni periodo temporale).
 	</para>
 	<para>
-	  If the optional second argument is provided then
-	  observations for which the value of <argname>mask</argname>
-	  is zero are ignored.
+	  Se viene fornito il secondo argomento opzionale le osservazioni 
+		corrispondenti a un valore nullo di <argname>mask</argname>
+	  sono ignorate.
 	</para>	
 	<para>
 	  <seelist> 
@@ -5004,15 +5031,16 @@
       </fnargs>
       <description>
 	<para>
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns a series holding the number of valid
-	  observations of variable <argname>y</argname> for each
-	  cross-sectional unit (repeated for each time period).
+	  Questa funzione è applicabile solo se il dataset corrente ha
+	  struttura panel. Restituisce una variabile contenente il numero
+	  di osservazioni valide della variabile <argname>y</argname> per 
+	  ciascuna unità della cross-section (replicato per ogni periodo
+	  temporale).
 	</para>
 	<para>
-	  If the optional second argument is provided then
-	  observations for which the value of <argname>mask</argname>
-	  is zero are ignored.
+	  Se viene fornito il secondo argomento opzionale le osservazioni 
+		corrispondenti a un valore nullo di <argname>mask</argname>
+	  sono ignorate.
 	</para>
 	<para>
 	  <seelist> 
@@ -5033,17 +5061,18 @@
       </fnargs>
       <description>
 	<para>
-	  Finds the roots of a polynomial.  If the polynomial is of degree
-	  <math>p</math>, the vector <argname>a</argname> should contain
-	  <math>p</math> + 1 coefficients in ascending order, &ie; starting
-	  with the constant and ending with the coefficient on
+	  Calcola le radici di un polinomio. Se il polinomio è
+	  di grado 
+	  <math>p</math>, il vettore  <argname>a</argname> deve contenere 
+	  <math>p</math> + 1 coefficienti in ordine crescente, &ie; partendo 
+	  dalla costante e terminando con il coefficiente di 
 	  <math>x</math><sup>p</sup>.
 	</para>
 	<para>
-	  If all the roots are real they are returned in a column vector of
-	  length <math>p</math>, otherwise a <by r="p" c="2"/> matrix
-	  is returned, the real parts in the first column and the imaginary
-	  parts in the second.
+	  Se tutte le radici sono reali vengono restituite in un vettore colonna
+	  di lunghezza <math>p</math>; in caso contrario viene restituita una
+	  matrice <by r="p" c="2"/> con la parte reale delle radici nella prima colonna
+	  e la parte immaginaria nella seconda.
 	</para>
       </description>
     </function>
@@ -5055,10 +5084,9 @@
       </fnargs>
       <description>
 	<para>
-	  Fits a polynomial trend of order <argname>q</argname> to the
-	  input series <argname>y</argname> using the method of
-	  orthogonal polynomials. The series returned holds the
-	  fitted values.
+	  Interpola con il metodo dei polinomi ortogonali un trend
+	  polinomiale di ordine <argname>q</argname> alla variabile <argname>y</argname> 
+	  in input. La variabile contiene i valori interpolati.
 	</para>
       </description>
     </function>
@@ -5071,39 +5099,41 @@
       </fnargs>
       <description>
 	<para>
-	  Let the matrix <argname>X</argname> be <by r="T" c="k"/>, containing
-	  <math>T</math> observations on <math>k</math> variables.  The
-	  argument <argname>p</argname> must be a positive integer less than
-	  or equal to <math>k</math>. This function returns a <by r="T"
-	    c="p"/> matrix, <math>P</math>, holding the first <math>p</math>
-	  principal components of <argname>X</argname>.
+	  Sia data una matrice <argname>X</argname> sia <by r="T"
+	  c="k"/> e contenente <math>T</math> osservazioni su
+	  <math>k</math> variabili. L'argomento <argname>p</argname>
+	  deve essere un intero positivo inferiore o uguale a
+	  <math>k</math>. Questa funzione restituisce una matrice <by
+	  r="T" c="p"/> <math>P</math>, contenente le prime
+	  <math>p</math> componenti principali di
+	  <argname>X</argname>.
 	</para>
 	<para>
-	  The optional third argument acts as a boolean switch: if it is
-	  non-zero the principal components are computed on the basis of
-	  the covariance matrix of the columns of <argname>X</argname>
-	  (the default is to use the correlation matrix).
+	  Il terzo parametro è opzionale e ha l'effetto di una condizione logica:
+	  se non nullo le componenti principali vengono calcolate
+	  sulla base della matrice di covarianza delle colonne di <argname>X</argname>
+	  (il default è usare la matrice di correlazione).
 	</para>
 	<para context="notex">
-	  The elements of <math>P</math> are computed as the sum from
-	  <math>i</math> to <math>k</math> of <math>Z</math><sub>ti</sub>
-	  times <math>v</math><sub>ji</sub>, where
-	  <math>Z</math><sub>ti</sub> is the standardized value of
-	  variable <math>i</math> at observation <math>t</math> and
-	  <math>v</math><sub>ji</sub> is the <math>j</math>th eigenvector
-	  of the correlation matrix of the <math>X</math><sub>i</sub>s,
-	  with the eigenvectors ordered by decreasing value of the
-	  corresponding eigenvalues.
+	  Gli elementi di <math>P</math> sono calcolati come la somma
+	  da <math>i</math> a <math>k</math> di <math>Z</math><sub>ti</sub>
+	  per <math>v</math><sub>ji</sub>, dove
+	  <math>Z</math><sub>ti</sub> è il valore standardizzato della variabile 
+	  <math>i</math> all'osservazione <math>t</math> e 
+	  <math>v</math><sub>ji</sub> è l'autovettore <math>j</math> della
+	  matrice di correlazione (o covarianza) delle <math>X</math><sub>i</sub>, 
+	  con autovettori ordinati in ordine decrescente degli autovalori
+	  corrispondenti.
 	</para>
 	<para context="tex">
-	  The elements of $P$ are computed as 
+	  Gli elementi di $P$ sono calcolati come 
 	  \[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \] 
-	  where $Z_{ti}$ is the standardized value
-	  of variable $i$ at observation $t$, $Z_{ti} = (X_{ti} -
-	  \bar{X}_i) / \hat{\sigma}_i$, and $v^{(j)}$ is the $j$th
-	  eigenvector of the correlation (or covariance) matrix of the 
-	  $X_i$s, with the eigenvectors ordered by decreasing value 
-	  of the corresponding eigenvalues.
+	  dove $Z_{ti}$ è il valore standardizzato della variabile 
+	  $i$ all'osservazione $t$, $Z_{ti} = (X_{ti} -
+	  \bar{X}_i) / \hat{\sigma}_i$, e $v^{(j)}$ è l'autovettore $j$
+	  della matrice di correlazione (o covarianza) delle 
+	  $X_i$, con autovettori ordinati in senso decrescente 
+	  degli autovalori corrispondenti.
 	</para>	
 	<para>
 	  <seelist>
@@ -5155,31 +5185,32 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the per-unit sample standard deviation for
-	  variable <math>y</math>.  The denominator used is the sample
-	  size for each unit minus 1, unless the number of valid
-	  observations for the given unit is 1 (in which case 0 is
-	  returned) or 9 (in which case <lit>NA</lit> is returned).
+	  Questa funzione è applicabile solo se il dataset corrente ha
+	  struttura panel. Calcola la deviazione standard campionaria per ciascuna
+	  unità della cross-section della variabile <math>y</math>. Il denominatore
+	  utilizzato è la numerosità campionaria per ciascuna unità meno 1, a meno
+	  che il numero di osservazioni valide per l'unità in questione sia 1
+	  (nel qual caso viene restituito uno zero) o 0 (nel qual caso viene 
+	  <lit>NA</lit>).
 	</para>
 	<para context="tex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the per-unit sample standard deviation for
-	  variable <math>y</math>, that is 
+	  Questa funzione è applicabile solo se il dataset corrente ha
+	  struttura panel. Calcola la deviazione standard campionaria per ciascuna
+	  unità della cross-section della variabile <math>y</math>; in altre parole, 
 	  \[ \sigma_i = \sqrt{\frac{1}{T_i - 1} \sum_{t=1}^{T_i} 
-	  (y_{i,t} - \bar{y}_i)^2 } \]
-	  The above formula holds for $T_i \ge 2$, where $T_i$ is the
-	  number of valid observations for unit $i$; if $T_i = 0$,
-	  <lit>NA</lit> is returned; if $T_i = 1$, 0 is returned.
+	  (y_{i,t} - \bar{y}_i)^2 } \]. La formula precedente
+	  vale per $T_i\ge 2$, dove $T_i$ è il numero di osservazioni
+	  valide per l'unità $i$; se $T_i = 0$, la funzione restituisce 
+	  <lit>NA</lit>; se $T_i = 1$, la funzione restituisce 0.
 	</para>
 	<para>
-	  If the optional second argument is provided then
-	  observations for which the value of <argname>mask</argname>
-	  is zero are ignored.
+	  Se viene fornito il secondo argomento opzionale le osservazioni 
+		corrispondenti a un valore nullo di <argname>mask</argname>
+	  sono ignorate.
 	</para>
 	<para>
-	  Note: this function makes it possible to check whether a given
-	  variable (say, <lit>X</lit>) is time-invariant via the condition
+	  Nota: questa funzione rende possibile controllare se 
+	  una certa variabile (per esempio <lit>X</lit>) è costante nel tempo usando la condizione
 	  <lit>max(psd(X)) = 0</lit>.
 	</para>
 	<para>
@@ -5196,19 +5227,21 @@
       </fnargs>
       <description>
 	<para>
-	  Performs a generalized variant of the Cholesky decomposition of
-	  the matrix <argname>A</argname>, which must be positive
-	  semidefinite (but which may be singular). If the input matrix is
-	  not square an error is flagged, but symmetry is assumed and not
-	  tested; only the lower triangle of <argname>A</argname> is read.
-	  The result is a lower-triangular matrix <math>L</math> which
-	  satisfies <equation status="inline" ascii="A = LL'" tex="$A =
-	  LL'$"/>.  Indeterminate elements in the solution are set to
-	  zero.
+	  Calcola una variante generalizzata della scomposizione di
+	  Cholesky della matrice <argname>A</argname>, che deve essere
+	  semidefinita positiva (ma può essere singolare). Se la
+	  matrice in input non è quadrata la funzione genera un
+	  messaggio d'errore, ma la simmetria viene data per scontata,
+	  e non viene verificata; la funzione legge solo il triangolo
+	  inferiore di <argname>A</argname>.  Il risultato è una
+	  matrice triangolare inferiore <math>L</math> che soddisfa la
+	  condizione <equation status="inline" ascii="A = LL'" tex="$A
+	  = LL'$"/>. Gli elementi indeterminati della soluzione
+	  vengono posti pari a zero.
 	</para>
 	<para>
-	  For the case where <argname>A</argname> is positive definite,
-	  see <fncref targ="cholesky"/>.
+	  Nel caso in cui <argname>A</argname> sia definita positiva, v. 
+	  <fncref targ="cholesky"/>.
 	</para>
       </description>
     </function>
@@ -5219,19 +5252,18 @@
       </fnargs>
       <description>
 	<para>
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns a column vector holding the first valid
-	  observation for the series <argname>y</argname> for each
-	  cross-sectional unit in the panel, over the current sample
-	  range. If a unit has no valid observations for the input
-	  series it is skipped.
+	  Questa funzione è applicabile solo se il dataset corrente ha
+	  struttura panel. Restituisce un vettore colonna 
+	  contenente la prima osservazione valide della serie <argname>y</argname> 
+	  per ciascuna unità in cross-section del panel all'interno
+	  dell'intervallo campionario corrente. Le unità che non hanno nessuna 
+	  osservazione valida per la serie in input vengono ignorate.
 	</para>
 	<para>
-	  This function provides a means of compacting the series
-	  returned by functions such as <fncref targ="pmax"/> and
-	  <fncref targ="pmean"/>, in which a value pertaining to
-	  each cross-sectional unit is repeated for each time
-	  period. 
+	  Questa funzione permette di compattare le variabili
+	  create da funzioni come <fncref targ="pmax"/> e
+	  <fncref targ="pmean"/>, che replicano per tutti i periodi temporali
+	  un valore relativo a ogni unità della cross-section.
 	</para>
       </description>
     </function>
@@ -5243,23 +5275,24 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns a series holding the sum over time of
-	  variable <argname>y</argname> for each cross-sectional unit,
-	  the values being repeated for each period. Missing
-	  observations are skipped in calculating the sums.
+	  Questa funzione è applicabile solo se il dataset corrente ha
+	  struttura panel. Restituisce una variabile contenente la somma
+	  rispetto al tempo della variabile <argname>y</argname> per ogni unità
+	  della cross-section, replicando per tutti i periodi i valori così ottenuti.
+	  Nel calcolo delle somme le osservazioni mancanti vengono ignorate.
 	</para>
 	<para context="tex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the sum over time of variable
-	  <argname>y</argname> for each cross-sectional unit; that is, 
+	  Questa funzione è applicabile solo se il dataset corrente ha
+	  struttura panel. Calcola la somma rispetto al tempo della
+	  variabile <argname>y</argname> per ogni unità della cross-section;
+	  in altre parole, 
 	  \[ S_i = \sum_{t=1}^{T_i} y_{i,t}\] 
-	  where $T_i$ is the number of valid observations for unit $i$.
+	  dove $T_i$ è il numero di osservazioni valide per l'unità $i$.
 	</para>
 	<para>
-	  If the optional second argument is provided then
-	  observations for which the value of <argname>mask</argname>
-	  is zero are ignored.
+	  Se viene fornito il secondo argomento opzionale le osservazioni 
+		corrispondenti a un valore nullo di <argname>mask</argname>
+	  sono ignorate.
 	</para>
 	<para>
 	  <seelist> 
@@ -5288,16 +5321,16 @@
       </examples>
       <description>
 	<para>
-	  <math>P</math>-value calculator. Returns 
+	  Calcola un <math>P</math>-value. Restituisce 
 	  <equation status="inline" ascii="P(X > x)" tex="$P(X > x)$"/>,
-	  where the distribution <math>X</math> is determined by the
-	  character <argname>c</argname>. Between the arguments
-	  <argname>c</argname> and <argname>x</argname>, zero or more
-	  additional arguments are required to specify the parameters of
-	  the distribution; see <fncref targ="cdf"/> for details.  The
-	  distributions supported by the <lit>pval</lit> function are
-	  the standard normal, <math>t</math>, Chi square, <math>F</math>,
-	  gamma, binomial and Poisson.
+	  dove la distribuzione <math>X</math> è determinata dal carattere 
+	  <argname>c</argname>. Fra gli argomenti 
+	  <argname>c</argname> e <argname>x</argname> è necessario indicare 
+	  zero o più argomenti aggiuntivi per specificare i parametri della 
+	  distribuzione; v. <fncref targ="cdf"/> per ulteriori dettagli. 
+	  Le distribuzioni che la funzione <lit>pval</lit> può gestire sono 
+	  la normale standard, <math>t</math>, Chi quadrato, <math>F</math>,
+	  gamma, binomiale e Poisson.
 	</para>
 	<para>
 	  <seelist>
@@ -5315,26 +5348,28 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns a series holding the sum of the values
-	  of <argname>y</argname> for each cross-sectional unit in
-	  each period (the values being repeated for each unit).
+	  Questa funzione è applicabile solo se il dataset corrente ha
+	  struttura panel. Restituisce una variabile contenente 
+	  la somma dei valori di <argname>y</argname> rispetto alle unità della
+	  cross-section in ciascun periodo, replicando i valori
+	  così ottenuti per ciascuna unità.
 	</para>
 	<para context="tex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the cross-sectional sum for variable
-	  <argname>y</argname> in each period; that is, 
+	  Questa funzione è applicabile solo se il dataset corrente ha
+	  struttura panel. Calcola la somma in cross-section della variabile
+	  <argname>y</argname> in ciascun periodo; in altre parole, 
 	  \[ \tilde{y}_t = \sum_{i=1}^{N} y_{i,t}\] 
-	  where $N$ is the number of cross-sectional units.
+	  dove $N$ è il numero di unità in cross-section.
 	</para>
 	<para>
-	  If the optional second argument is provided then
-	  observations for which the value of <argname>mask</argname>
-	  is zero are ignored.
+	  Se viene fornito il secondo argomento opzionale le osservazioni 
+		corrispondenti a un valore nullo di <argname>mask</argname>
+	  sono ignorate.
 	</para>
 	<para>
-	  Note that this function works in a different dimension from
-	  the <fncref targ="pmean"/> function.
+	  Si noti che questa funzione lavora lungo
+	  una dimensione diversa da quella utilizzata dalla funzione 
+	  <fncref targ="pmean"/>.
 	</para>
       </description>
     </function>
@@ -5346,13 +5381,13 @@
       </fnargs>
       <description>
 	<para>
-	  Computes the quadratic form 
-	  <equation status="inline" ascii="Y = xAx'"
-	   tex="$Y = x A x'$"/>. Using this function instead of ordinary
-	  matrix multiplication guarantees more speed and better accuracy.
-	  If <argname>x</argname> and <argname>A</argname> are not
-	  conformable, or <argname>A</argname> is not symmetric, an error
-	  is returned.
+	  Calcola la forma quadratica <equation status="inline"
+	  ascii="Y = xAx'" tex="$Y = x A x'$"/>. L'uso di questa
+	  funzione al posto della consueta moltiplicazione matriciale
+	  garantisce maggiore velocità e accuratezza. Se le dimensioni
+	  di <argname>x</argname> e <argname>A</argname> non sono
+	  compatibili, o se <argname>A</argname> non è simmetrica
+	  viene restituito un messaggio d'errore.
 	</para>
       </description>
     </function>
@@ -5380,12 +5415,13 @@
       </fnargs>
       <description>
 	<para>
-	  Computes the QR decomposition of an <by r="m" c="n"/> matrix
-	  <argname>X</argname>, that is <math>X = QR</math> where
-	  <math>Q</math> is an <by r="m" c="n"/> orthogonal matrix and
-	  <math>R</math> is an <by r="n" c="n"/> upper triangular matrix. The
-	  matrix <math>Q</math> is returned directly, while <math>R</math> can
-	  be retrieved via the optional second argument.
+	  Calcola la scomposizione QR di una matrice <by r="m" c="n"/>
+	  <argname>X</argname>, in altre parole <math>X = QR</math>
+	  dove <math>Q</math> è una matrice ortogonale <by r="m"
+	  c="n"/> e <math>R</math> è una matrice triangolare superiore
+	  <by r="n" c="n"/>. La matrice <math>Q</math> viene
+	  restituita direttamente, mentre <math>R</math> può essere
+	  recuperata usando il secondo argomento opzionale.
 	</para>
 	<para>
 	  <seelist>
