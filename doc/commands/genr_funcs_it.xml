@@ -5442,94 +5442,101 @@
       </fnargs>
       <description>
 	<para>
-	  Returns an <by r="n" c="2"/> matrix for use with Gaussian
-	  quadrature (numerical integration). The first column holds
-	  the nodes or abscissae, the second the weights.
+	  Restituisce una matrice <by r="n" c="2"/> da usare per la
+	  quadratura di Gauss (integrazione numerica). La prima
+	  colonna contiene i nodi o ascisse, la seconda colonna
+	  contiene i pesi.
 	</para>
 	<para>
-	  The first argument specifies the number of points (rows) to
-	  compute. The second argument codes for the type of
-	  quadrature: use 1 for Gauss&ndash;Hermite (the default);
-	  2 for Gauss&ndash;Legendre; or 3 for Gauss&ndash;Laguerre.
-	  The significance of the optional parameters
-	  <argname>a</argname> and <argname>b</argname> depends on the
-	  selected <argname>type</argname>, as explained below.
+	  Il primo argomento specifica il numero dei punti (righe) da
+	  calcolare. Il secondo argomento specifica il codice del tipo
+	  di quadratura da utilizzare: 1 Gauss&ndash;Hermite
+	  (predefinita); 2 Gauss&ndash;Legendre; 3
+	  Gauss&ndash;Laguerre. Il significato dei parametri opzionali
+	  <argname>a</argname> e <argname>b</argname> dipende dal
+	  <argname>tipo</argname> selezionato, come spiegato sotto.
 	</para>
 	<para context="notex">
-	  Gaussian quadrature is a method of approximating numerically
-	  the definite integral of some function of interest. Let the
-	  function be represented as the product
-	  <math>f(x)W(x)</math>. The types of quadrature differ in the
-	  specification of the component <math>W(x)</math>: in the
-	  Hermite case this is exp(&minus;<math>x</math><sup>2</sup>);
-	  in the Laguerre case, exp(&minus;<math>x</math>); and in the
-	  Legendre case simply <math>W(x)</math> = 1.
+	  La quadratura di Gauss è un metodo per l'approssimazione
+	  numerica di un integrale definito di una qualche funzione di
+	  interesse. Si rappresenti la funzione come il prodotto
+	  <math>f(x)W(x)</math>. I diversi tipi di quadratura
+	  differiscono nella specificazione della componente
+	  <math>W(x)</math>: nel caso di Hermite questa è uguale a
+	  exp(&minus;<math>x</math><sup>2</sup>); nel caso di
+	  Laguerre, è data da exp(&minus;<math>x</math>); infine, nel
+	  caso di Legendre, si ha semplicemente <math>W(x)</math> = 1.
 	</para>
 	<para context="tex">
-	  Gaussian quadrature is a method of approximating numerically
-	  the definite integral of some function of interest. Let the
-	  function be represented as the product $f(x)W(x)$. The types
-	  of quadrature differ in the specification of the component
-	  $W(x)$: in the Hermite case we have $W(x) = \exp(-x^2)$; in
-	  the Laguerre case, $W(x) = \exp(-x)$; and in the Legendre
-	  case simply $W(x) = 1$.
+	  La quadratura di Gauss è un metodo di approssimazione
+	  numerica di un integrale definito di una qualche funzione di
+	  interesse. Si rappresenti la funzione come il prodotto
+	  $f(x)W(x)$. I diversi tipi di quadratura differiscono nella
+	  specificazione della componente $W(x)$: nel caso di Hermite
+	  abbiamo $W(x) = \exp(-x^2)$; nel caso di Laguerre, $W(x) =
+	  \exp(-x)$; nel caso di Legendre, semplicemente $W(x) = 1$.
 	</para>
 	<para context="notex">
-	  For each specification of <math>W</math>, one can compute a
-	  set of nodes, <math>x</math><sub>i</sub>, and weights,
-	  <math>w</math><sub>i</sub>, such that the sum from
-	  <math>i</math>=1 to <math>n</math> of
+	  Per ciascuna specificazione di <math>W</math>, si può
+	  calcolare un insieme di nodi, <math>x</math><sub>i</sub>, e
+	  pesi, <math>w</math><sub>i</sub>, tali che la somma da
+	  <math>i</math>=1 a <math>n</math> di
 	  <math>w</math><sub>i</sub><math>f</math>(<math>x</math><sub>i</sub>)
-	  approximates the desired integral. The method of <cite
-	  key="golub69">Golub and Welsch (1969)</cite> is used.
+	  approssima l'integrale desiderato. È usato il metodo di
+	  <cite key="golub69">Golub and Welsch (1969)</cite>.
 	</para>
 	<para context="tex">
-	  For each specification of $W(x)$, one can compute a set of
-	  nodes, $x_i$, and weights, $w_i$, such that $\sum_{i=1}^n
-	  f(x_i) w_i$ approximates the desired integral. The method of
-	  <cite key="golub69">Golub and Welsch (1969)</cite> is used.
+	  Per ciascuna specificazione di $W(x)$, si può calcolare un
+	  insieme di nodi, $x_i$, e pesi, $w_i$, tali che
+	  $\sum_{i=1}^n f(x_i) w_i$ approssima l'integrale
+	  desiderato. È usato il metodo di <cite key="golub69">Golub
+	  and Welsch (1969)</cite>.
 	</para>
 	<para context="notex">
-	  When the Gauss&ndash;Legendre type is selected, the 
-	  optional arguments <argname>a</argname> and
-	  <argname>b</argname> can be used to control the lower and
-	  upper limits of integration, the default values being
-	  &minus;1 and 1. (In Hermite quadrature the
-	  limits are fixed at minus and plus infinity, while in
-	  the Laguerre case they are fixed at 0 and infinity.)
+	  Quando si seleziona il metodo di Gauss&ndash;Legendre, gli
+	  argomenti opzionali <argname>a</argname> e
+	  <argname>b</argname> possono essere utilizzati per
+	  controllare i limiti, inferiore e superiore, di
+	  integrazione, i valori predefiniti sono &minus;1 e
+	  1. (Nella quadratura di Hermite i limiti sono fissati a meno
+	  e più infinito, mentre in quella di Laguerre sono fissati a
+	  0 e infinito.)
 	</para>
 	<para context="tex">
-	  When the Gauss&ndash;Legendre type is selected, the optional
-	  arguments <argname>a</argname> and <argname>b</argname> can
-	  be used to control the lower and upper limits of
-	  integration, the default values being $-1$ and 1. (In Hermite
-	  quadrature the limits are fixed at $-\infty$ and $+\infty$,
-	  while in the Laguerre case they are fixed at 0 and $\infty$.)
+	  Quando si seleziona il metodo di Gauss&ndash;Legendre, gli
+	  argomenti opzionali <argname>a</argname> e
+	  <argname>b</argname> possono essere utilizzati per
+	  controllare i limiti, inferiore e superiore, di
+	  integrazione, i valori predefiniti sono $-1$ e 1. (Nella
+	  quadratura di Hermite i limiti sono fissati a $-\infty$ e
+	  $+\infty$, mentre in quella di Laguerre sono fissati a 0 e
+	  $\infty$.)
 	</para>
 	<para context="notex">
-	  In the Hermite case <argname>a</argname> and
-	  <argname>b</argname> play a different role: they can be used
-	  to replace the default form of
-	  <math>W</math>(<math>x</math>) with the (closely related)
-	  normal distribution with mean <argname>a</argname> and
-	  standard deviation <argname>b</argname>. Supplying values of
-	  0 and 1 for these parameters, for example, has the effect of
-	  making <math>W</math>(<math>x</math>) into the standard
-	  normal pdf, which is equivalent to multiplying the default
-	  nodes by the square root of two and dividing the weights by
-	  the square root of &pi;.
+	  Nella quadratura di Hermite <argname>a</argname> e
+	  <argname>b</argname> svolgono un ruolo differente: possono
+	  essere utilizzati per sostituire la forma predefinita di
+	  <math>W</math>(<math>x</math>) con la distribuzione normale
+	  (strettamente associata) con media <argname>a</argname> e
+	  deviazione standard <argname>b</argname>. Per esempio,
+	  fornire valori 0 e 1 per questi parametri ha l'effetto di
+	  trasformare <math>W</math>(<math>x</math>) nella funzione di
+	  densità di una normale standard, il che è equivalente a
+	  moltiplicare i nodi predefiniti per la radice quadrata di 2
+	  e dividere i pesi per la radice quadrata di &pi;.
 	</para>
 	<para context="tex">
-	  In the Hermite case <argname>a</argname> and
-	  <argname>b</argname> play a different role: they can be used
-	  to replace the default form of $W(x)$ with the
-	  (closely related) normal distribution with mean
-	  <argname>a</argname> and standard deviation
-	  <argname>b</argname>. Supplying values of 0 and 1 for these
-	  parameters, for example, has the effect of making
-	  $W(x)$ into the standard normal pdf, which is equivalent
-	  to multiplying the default $x_i$ values by $\sqrt{2}$
-	  and dividing the default $w_i$ by $\sqrt{\pi}$.
+	  Nella quadratura di Hermite <argname>a</argname> e
+	  <argname>b</argname> svolgono un ruolo differente: possono
+	  essere utilizzati per sostituire la forma predefinita di
+	  $W(x)$ con la distribuzione normale (strettamente associata)
+	  con media <argname>a</argname> e deviazione standard
+	  <argname>b</argname>. Per esempio, fornire valori 0 e 1 per
+	  questi parametri ha l'effetto di trasformare $W(x)$ nella
+	  funzione di densità di una normale standard, il che è
+	  equivalente a moltiplicare i valori predefiniti $x_i$ per
+	  $\sqrt{2}$ e dividere i pesi $w_i$ predefiniti per
+	  $\sqrt{\pi}$.
 	</para>
       </description>
     </function>    
@@ -5552,20 +5559,20 @@
 	  trattata come se fosse una serie.
 	</para>
 	<para>
-	  In addition, for matrix <argname>y</argname> an alternate form
-	  of the second argument is supported: <argname>p</argname> may be
-	  given as a vector. In that case the return value is an <by r="m"
-	  c="n"/> matrix, where <repl>m</repl> is the number of elements
-	  in <argname>p</argname> and <repl>n</repl> is the number of
-	  columns in <argname>y</argname>.
+	  Inoltre, se <argname>y</argname> è una matrice, si può usare
+	  una forma alternativa del secondo argomento:
+	  <argname>p</argname> può essere un vettore. In tal caso, il
+	  valore restituito è una matrice <by r="m" c="n"/>, dove
+	  <repl>m</repl> è il numero di elementi in
+	  <argname>p</argname> e <repl>n</repl> il numero di colonne
+	  di <argname>y</argname>.
 	</para>
 	<para context="tex">
-	  For a series of length $n$, the $p$-quantile, $q$, is defined
-	  as:
-	  \[q = y_{[k]} + (n \cdot p - k) (y_{[k+1]} - y_{[k]})\] 
-	  where $k$ is the integer part of $n \cdot p$ and 
-	  $y_{[i]}$ is the $i$-th element of the series when
-	  sorted from smallest to largest.
+	  Per una serie di lunghezza $n$, il $p$-quantile, $q$, è
+	  definito come: \[q = y_{[k]} + (n \cdot p - k) (y_{[k+1]} -
+	  y_{[k]})\] dove $k$ è la parte intera di $n \cdot p$ e
+	  $y_{[i]}$ è l'elemento $i$-esimo della serie ordinata in
+	  senso crescente.
 	</para>
       </description>
     </function>
@@ -5586,115 +5593,115 @@
       </examples>
       <description>
 	<para>
-	  All-purpose random number generator. The argument
-	  <argname>d</argname> is a string (in most cases just a
-	  single character) which specifies the distribution from
-	  which the pseudo-random numbers should be drawn. The
-	  arguments <argname>p1</argname> to <argname>p3</argname>
-	  specify the parameters of the selected distribution; the
-	  number of such parameters depends on the distribution.  For
-	  distributions other than the beta-binomial, the parameters
-	  <argname>p1</argname> and (if applicable)
-	  <argname>p2</argname> may be given as either scalars or
-	  series: if they are given as scalars the output series is
-	  identically distributed, while if a series is given for
-	  <argname>p1</argname> or <argname>p2</argname> the
-	  distribution is conditional on the parameter value at each
-	  observation. In the case of the beta-binomial all the
-	  parameters must be scalars.
+	  Generatore di numeri casuali. L'argomento
+	  <argname>d</argname> è una stringa (nella maggior parte dei
+	  casi semplicemente un singolo carattere) che specifica la
+	  distribuzione da cui i numeri pseudo-casuali sono
+	  estratti. Gli argomenti da <argname>p1</argname> a
+	  <argname>p3</argname> specificano i parametri della
+	  distribuzione selezionata. Il numero di tali parametri
+	  dipende dalla distribuzione. Per le distribuzioni diverse
+	  dalla beta-binomiale, i parametri <argname>p1</argname> e
+	  (se applicabile) <argname>p2</argname> devono essere scalari
+	  o serie: se sono scalari, la serie generata è identicamente
+	  distribuita; se al contrario almeno uno dei due parametri in
+	  ingresso è una serie, per ciascuna osservazione la
+	  distribuzione è condizionata al valore dei parametri
+	  corrispondenti. Nel caso della beta-binomiale tutti i
+	  parametri devono essere scalari.
 	</para>
 	<para>
-	  Specifics are given below: the string code for each
-	  distribution is shown in parentheses, followed by the
-	  interpretation of the argument <argname>p1</argname> and,
-	  where applicable, <argname>p2</argname> and
+	  Le specifiche sono fornite sotto: il codice stringa per ogni
+	  distribuzione è mostrato fra parentesi, seguito
+	  dall'interpretazione dell'argomento <argname>p1</argname> e,
+	  laddove applicabile, <argname>p2</argname> e
 	  <argname>p3</argname>.
 	</para>
 	  
 	<ilist context="notex">
 	  <li>
 	    <para>
-	      Uniform (continuous) (u or U): minimum, maximum
+	      Uniforme (continua) (u o U): minimo, massimo
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Uniform (discrete) (i): minimum, maximum
+	      Uniforme (discreta) (i): minimo, massimo
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Normal (z, n, or N): mean, standard deviation
+	      Normale (z, n, o N): media, deviazione standard
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Student's t (t): degrees of freedom
+	      t di Student (t): gradi di libertà
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Chi square (c, x, or X): degrees of freedom
+	      Chi quadro (c, x, o X): gradi di libertà
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Snedecor's F (f or F): df (num.), df (den.)
+	      F di Snedecor (f o F): gradi di libertà (num.), gradi di libertà (den.)
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Gamma (g or G): shape, scale
+	      Gamma (g o G): forma, scala
 	    </para>
 	  </li>	  
 	  <li>
 	    <para>
-	      Binomial (b or B): probability, number of trials
+	      Binomiale (b o B): probabilità, numero di prove
 	    </para>
 	  </li>	  
 	  <li>
 	    <para>
-	      Poisson (p or P): mean
+	      Poisson (p o P): media
 	    </para>
 	  </li>	
 	  <li>
 	    <para>
-	      Weibull (w or W): shape, scale
+	      Weibull (w o W): forma, scala
 	    </para>
 	  </li>	
 	  <li>
 	    <para>
-	      Generalized Error (E): shape
+	      Generalized Error (E): forma
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Beta (beta): shape1, shape2
+	      Beta (beta): parametro 1, parametro 2
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Beta-Binomial (bb): trials, shape1, shape2
+	      Beta-Binomiale (bb): prove, parametro 1, parametro 2
 	    </para>
 	  </li>
 	</ilist>
 	<para context="tex">
 	  \begin{center}
 	  \begin{tabular}{lllll}
-	  \textbf{Distribution} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
-	  Uniform (continuous) &amp; \texttt{u} or \texttt{U} &amp; minimum &amp; maximum &amp; --\\
-	  Uniform (discrete) &amp; \texttt{i} &amp; minimum &amp; maximum &amp; --\\
-	  Normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; mean &amp; standard deviation &amp; --\\
-	  Student's $t$ &amp; \texttt{t} &amp; degrees of freedom &amp; -- &amp; --\\
-	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; degrees of freedom &amp; -- &amp; --\\
-	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; df (num.) &amp; df (den.) &amp; --\\
-	  Gamma &amp; \texttt{g} or \texttt{G} &amp; shape &amp; scale  &amp; --\\
-	  Binomial &amp; \texttt{b} or \texttt{B} &amp; $p$ &amp; $n$  &amp; --\\
-	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; --  &amp; --\\
-	  Weibull &amp; \texttt{w} or \texttt{W} &amp; shape &amp; scale &amp; --\\
-	  Generalized Error &amp; \texttt{e} or \texttt{E} &amp; shape &amp; -- &amp; --\\
-	  Beta &amp; \texttt{beta} &amp; shape1 &amp; shape2 &amp; --\\
-	  Beta-Binomial &amp; \texttt{bb} &amp; $n$ &amp; shape1 &amp; shape2
+	  \textbf{Distribuzione} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
+	  Uniforme (continua) &amp; \texttt{u} o \texttt{U} &amp; minimo &amp; massimo &amp; --\\
+	  Uniforme (discreta) &amp; \texttt{i} &amp; minimo &amp; massimo &amp; --\\
+	  Normale &amp; \texttt{z}, \texttt{n} o \texttt{N} &amp; media &amp; deviazione standard &amp; --\\
+	  $t$ di Student &amp; \texttt{t} &amp; gradi di libertà &amp; -- &amp; --\\
+	  Chi quadro &amp; \texttt{c}, \texttt{x} o \texttt{X} &amp; gradi di libertà &amp; -- &amp; --\\
+	  $F$ di Snedecor &amp; \texttt{f} o \texttt{F} &amp; gradi di libertà (num.) &amp; gradi di libertà (den.) &amp; --\\
+	  Gamma &amp; \texttt{g} o \texttt{G} &amp; forma &amp; scala &amp; --\\
+	  Binomiale &amp; \texttt{b} o \texttt{B} &amp; $p$ &amp; $n$  &amp; --\\
+	  Poisson &amp; \texttt{p} o \texttt{P} &amp; media &amp; --  &amp; --\\
+	  Weibull &amp; \texttt{w} o \texttt{W} &amp; forma &amp; scala &amp; --\\
+	  Generalized Error &amp; \texttt{e} o \texttt{E} &amp; forma &amp; -- &amp; --\\
+	  Beta &amp; \texttt{beta} &amp; parametro 1 &amp; parametro 2 &amp; --\\
+	  Beta-Binomiale &amp; \texttt{bb} &amp; $n$ &amp; parametro 1 &amp; parametro 2
 	  \end{tabular}
 	  \end{center}
 	</para>
@@ -5721,13 +5728,14 @@
       </examples>
       <description>
 	<para>
-	  Works like <fncref targ="randgen"/> except that the return
-	  value is a scalar rather than a series.
+	  Funziona come <fncref targ="randgen"/> eccetto per il fatto
+	  che il valore restituito è uno scalare invece di una serie.
 	</para>
 	<para>
-	  The first example above calls for a value from the standard
-	  normal distribution, while the second specifies a drawing
-	  from the Gamma distribution with shape 3 and scale 2.5.
+	  Il primo esempio sopra restituisce un valore da una
+	  distribuzione normale standard, mentre il secondo
+	  restituisce un valore estratto da una distribuzione Gamma
+	  con parametro di forma 3 e parametro di scala 2.5.
 	</para>
 	<para>
 	  <seelist>
@@ -5744,8 +5752,8 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a pseudo-random integer in the closed interval
-	  [<argname>min</argname>, <argname>max</argname>]. 
+	  Restituisce un numero intero pseudo-casuale nell'intervallo
+	  chiuso [<argname>min</argname>, <argname>max</argname>].
 	  <seelist>
 	  <fncref targ="randgen"/>
 	  </seelist>
@@ -5759,8 +5767,9 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the rank of <argname>X</argname>, numerically computed
-	  via the singular value decomposition. 
+	  Restituisce il rango di <argname>X</argname>, calcolato per
+	  via numerica attraverso la decomposizione ai valori
+	  singolari (SVD).
 	  <seelist> 
 	    <fncref targ="svd"/>
 	  </seelist>
@@ -5774,20 +5783,21 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a series with the ranks of <math>y</math>. The rank for
-	  observation <math>i</math> is the number of elements in the
-	  series that are less than <math>y</math><sub>i</sub> plus one
-	  half the number of elements in the series that are equal to
-	  <math>y</math><sub>i</sub>. (Intuitively, you may think of chess
-	  points, where victory gives you one point and a draw gives you
-	  half a point.) One is added so the lowest rank is 1 instead of
-	  0.
+	  Restituisce una serie con i ranghi di <math>y</math>. Il
+	  rango di un'osservazione <math>i</math> è pari al numero di
+	  elementi della serie minori di <math>y</math><sub>i</sub>
+	  più un mezzo il numero di elementi della serie uguali a
+	  <math>y</math><sub>i</sub>. (Intuitivamente, è possibile
+	  pensare al punteggio negli scacchi, dove per ogni vittoria
+	  si assegna un punto, mentre per ogni patta si assegna mezzo
+	  punto.) Al numero così calcolato si aggiunge uno, cosicché
+	  al rango più basso è associato 1 invece di 0.
 	</para>
 	<para context="tex">
-	  Formally, 
-	  \[ \mathrm{rank}(y_i) = 1 + \sum_{j \ne i} \left[
+	  In termini formali, 
+	  \[ \mathrm{rank}(y_i) = 1 + \sum_{j \ne i} \left[ 
 	  I(y_j &lt; y_i) + 0.5 \cdot I(y_j = y_i) \right] \] 
-	  where $I$ denotes the indicator function.
+	  dove $I$ è la funzione indicatrice.
 	</para>
 	<para>
 	  <seelist>
@@ -5804,22 +5814,22 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the reciprocal condition number for
-	  <argname>A</argname>, which must be symmetric and positive
-	  definite, with respect to the 1-norm.  In many circumstances,
-	  this is a better measure of the sensitivity of
-	  <argname>A</argname> to numerical operations such as inversion
-	  than the determinant.
+	  Restituisce il reciproco del numero di condizionamento
+	  rispetto alla norma-1 di <argname>A</argname>, che deve
+	  essere simmetrica e definita positiva. In molte circostanze,
+	  questa è una misura migliore del determinante circa la
+	  sensibilità di <argname>A</argname> a operazioni numeriche
+	  come l'inversione.
 	</para>
 	<para context="notex">
-	  The value is computed as the reciprocal of the product, 1-norm
-	  of <argname>A</argname> times 1-norm of
-	  <argname>A</argname>-inverse.
+	  Il valore è calcolato come il reciproco del prodotto della
+	  norma-1 di <argname>A</argname> per la norma-1 dell'inversa
+	  di <argname>A</argname>.
 	</para>
 	<para context="tex">
-	  Given that <math>A</math> is non-singular, we may define
+	  Poiché <math>A</math> è invertibile, è possibile definire 
 	  \[\kappa(A) = ||A||_1 \cdot ||A^{-1}||_1\] 
-	  This function returns $\kappa(A)^{-1}$.
+	  Questa funzione restituisce $\kappa(A)^{-1}$.
 	</para>
 	<para>
 	  <seelist>
@@ -5838,30 +5848,32 @@
       </fnargs>    
       <description>
 	<para>
-	  If a file by the name of <argname>fname</argname> exists and
-	  is readable, returns a string containing the content of
-	  this file, otherwise flags an error.  
+	  Se un file di nome <argname>fname</argname> esiste ed è
+	  leggibile, restituisce una stringa con il contenuto del
+	  file. In caso contrario restituisce un errore.
 	</para>
 	<para>
-	  In the case where <argname>fname</argname> starts with the
-	  indentifier of a supported internet protocol
+	  Nel caso in cui <argname>fname</argname> inizia con
+	  l'identificatore di un protocollo internet supportato
 	  (<lit>http://</lit>, <lit>ftp://</lit>,
-	  <lit>https://</lit>), libcurl is invoked to download the
-	  resource.
+	  <lit>https://</lit>), la funzione richiama libcurl per
+	  scaricare la risorsa.
 	</para>
 	<para>
-	  If the text to be read is not encoded in UTF-8, gretl will
-	  try recoding it from the current locale codeset if that is
-	  not UTF-8, or from ISO-8859-15 otherwise. If this simple
-	  default does not meet your needs you can use the optional
-	  second argument to specify a codeset. For example, if you
-	  want to read text in Microsoft codepage 1251 and that is not
-	  your locale codeset, you should give a second argument of
+	  Se il testo da leggere non ha una codifica UTF-8, gretl
+	  cerca di ricodificarlo a partire dalla codifica locale, nel
+	  caso non sia UTF-8, o da ISO-8859-15 in caso contrario. Se
+	  questo comportamento predefinito non si adatta alle vostre
+	  esigenze, è possibile utilizzare il secondo argomento
+	  opzionale per specificare la codifica. Per esempio, nel caso
+	  si vuole leggere un testo nella codifica Microsoft codepage
+	  1251, e questo non è il sistema in uso in locale, è
+	  possibile fornire come secondo argomento
 	  <lit>"cp1251"</lit>.
 	</para>
 	<para>
-	  Also see the <fncref targ="sscanf"/> and <fncref
-	  targ="getline"/> functions.
+	  Si vedano anche le funzioni <fncref targ="sscanf"/> e
+	  <fncref targ="getline"/>.
 	</para>
       </description>
     </function>
@@ -5874,15 +5886,15 @@
       </fnargs>  
       <description>
 	<para>
-	  Returns a copy of <argname>s</argname> in which all
-	  occurrences of the pattern <argname>match</argname> are
-	  replaced using <argname>repl</argname>. The arguments
-	  <argname>match</argname> and <argname>repl</argname>
-	  are interpreted as Perl-style regular expressions.
+	  Restituisce una copia di <argname>s</argname> in cui tutte
+	  le occorrenze del tipo <argname>match</argname> sono
+	  sostituite con <argname>repl</argname>. Gli argomenti
+	  <argname>match</argname> e <argname>repl</argname> sono
+	  interpretati come espressioni regolari in stile Perl.
 	</para>
 	<para>
-	  See also <fncref targ="strsub"/> for simple substitution of
-	  literal strings.
+	  Si veda anche <fncref targ="strsub"/> per semplici
+	  sostituzioni di stringhe letterali.
 	</para>
       </description>
     </function>
@@ -5909,20 +5921,22 @@
       </fnargs>    
       <description>
 	<para>
-	  Replaces each element of <argname>x</argname> equal to
-	  the <math>i</math>-th element of <argname>find</argname>
-	  with the corresponding element of <argname>subst</argname>.
+	  Sostituisce ogni elemento di <argname>x</argname> uguale
+	  all'<math>i</math>-esimo elemento di <argname>find</argname>
+	  con il corrispondente elemento di <argname>subst</argname>.
 	</para>
 	<para>
-	  If <argname>find</argname> is a scalar, <argname>subst</argname>
-	  must also be a scalar.  If <argname>find</argname> and
-	  <argname>subst</argname> are both vectors, they must have the same
-	  number of elements.  But if <argname>find</argname> is a vector and
-	  <argname>subst</argname> a scalar, then all matches will be replaced
-	  by <argname>subst</argname>.
+	  Se <argname>find</argname> è uno scalare, anche
+	  <argname>subst</argname> deve essere uno scalare. Se
+	  <argname>find</argname> e <argname>subst</argname> sono
+	  entrambi vettori, devono avere lo stesso numero di
+	  elementi. Se infine <argname>find</argname> è un vettore e
+	  <argname>subst</argname> uno scalare, tutte le
+	  corrispondenze saranno sostituite con
+	  <argname>subst</argname>.
 	</para>
 	<para>
-	  Example:
+	  Esempio:
 	</para>
 	<code>
 	  a = {1,2,3;3,4,5}
@@ -5932,7 +5946,7 @@
 	  print a b
 	</code>
 	<para>
-	  produces
+	  genera
 	</para>
 	<code>
           a (2 x 3)
@@ -5955,24 +5969,26 @@
       </fnargs>    
       <description>
 	<para>
-	  Resamples from <argname>x</argname> with replacement.  In the
-	  case of a series argument, each value of the returned series,
-	  <math>y</math><sub>t</sub>, is drawn from among all the values
-	  of <math>x</math><sub>t</sub> with equal probability.  When
-	  a matrix argument is given, each row of the returned matrix
-	  is drawn from the rows of <argname>x</argname> with equal
-	  probability.
+	  Ricampiona da <argname>x</argname> con reintroduzione. Nel
+	  caso in cui l'argomento sia una serie, ciascun valore della
+	  serie restituita, <math>y</math><sub>t</sub>, è estratto da
+	  tutti i valori di <math>x</math><sub>t</sub> con uguale
+	  probabilità. Quando l'argomento è una matrice, ciascuna riga
+	  della matrice restituita è estratta dalle righe di
+	  <argname>x</argname> con uguale probabilità.
 	</para>
 	<para>
-	  The optional argument <argname>b</argname> represents the block
-	  length for resampling by moving blocks.  If this argument is given
-	  it should be a positive integer greater than or equal to 2. The
-	  effect is that the output is composed by random selection with
-	  replacement from among all the possible contiguous sequences of
-	  length <argname>b</argname> in the input.  (In the case of matrix
-	  input, this means contiguous rows.) If the length of the data is not
-	  an integer multiple of the block length, the last selected block is
-	  truncated to fit.
+	  L'argomento opzionale <argname>b</argname>, che deve essere
+	  un numero intero maggiore o uguale a 2, indica la lunghezza
+	  del blocco nel ricampionamento a blocchi mobili (moving
+	  blocks). L'effetto è che l'output generato è il risultato di
+	  un'estrazione casuale con reintroduzione dall'insieme di
+	  tutte le possibili sequenze contigue di lunghezza
+	  <argname>b</argname> nell'input. (Nel caso l'input sia una
+	  matrice, i blocchi estratti sono sequenze contigue di righe
+	  della matrice.) Se la lunghezza dei dati non è un multiplo
+	  della lunghezza del blocco, l'ultimo blocco estratto è
+	  troncato per adattarlo.
 	</para>
       </description>
     </function>
@@ -5983,12 +5999,13 @@
       </fnargs>
       <description>
 	<para>
-	  Rounds to the nearest integer. Note that when <math>x</math>
-	  lies halfway between two integers, rounding is done "away
-	  from zero", so for example 2.5 rounds to 3, but 
-	  <lit>round(-3.5)</lit> gives &minus;4. This is a common
-	  convention in spreadsheet programs, but other software may
-	  yield different results.
+	  Approssima all'intero più vicino. Si noti che, quando
+	  <math>x</math> si trova esattamente nel mezzo tra due numeri
+	  interi, la funzione restituisce l'intero più distante da
+	  zero. Così, per esempio, 2.5 è approssimato a 3, ma
+	  <lit>round(-3.5)</lit> restituisce &minus;4. Questa è la
+	  convenzione di solito seguita nei fogli di calcolo, anche se
+	  altri programmi possono seguire convenzioni diverse.
 	  <seelist>
 	    <fncref targ="ceil"/>
 	    <fncref targ="floor"/>
@@ -6011,7 +6028,7 @@
 	  avere tanti elementi quante sono le righe di
 	  <argname>M</argname>. Se <argname>s</argname> è una stringa,
 	  deve contenere un numero appropriato di sub-stringhe
-	  separate da spazi.  Restituisce 0 se la funzione è adata a
+	  separate da spazi.  Restituisce 0 se la funzione è andata a
 	  buon fine, non-zero altrimenti. Si veda anche <fncref
 	  targ="colnames"/>.
 	</para>
@@ -6077,12 +6094,12 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the standard deviations of the columns of
-	  <argname>X</argname>. If <argname>df</argname> is positive
-	  it is used as the divisor for the column variances,
-	  otherwise the divisor is the number of rows in
-	  <argname>X</argname> (that is, no degrees of freedom
-	  correction is applied).
+	  Restituisce le deviazioni standard delle colonne di
+	  <argname>X</argname>. Se <argname>df</argname> è positivo, è
+	  utilizzato come divisore nel calcolo delle varianze delle
+	  colonne, in caso contrario il divisore utilizzato è il
+	  numero di righe di <argname>X</argname> (e quindi, non viene
+	  applicata nessuna correzione per i gradi di libertà).
 	  <seelist>
 	    <fncref targ="meanc"/>
 	    <fncref targ="sumc"/>
@@ -6097,10 +6114,10 @@
       </fnargs>   
       <description>
 	<para>
-	  Computes seasonal differences: <equation status="inline" 
-	  ascii="y(t) - y(t-k)"  tex="$y_t - y_{t-k}$"/>, where
-	  <math>k</math> is the periodicity of the current dataset (see
-	  <fncref targ="$pd"/>). Starting values are set to
+	  Calcola le differenze stagionali: <equation status="inline"
+	  ascii="y(t) - y(t-k)" tex="$y_t - y_{t-k}$"/>, dove
+	  <math>k</math> è la periodicità del dataset corrente (si
+	  veda <fncref targ="$pd"/>). I valori iniziali sono fissati a
 	  <lit>NA</lit>.
 	</para>
       </description>
@@ -6163,15 +6180,17 @@
 	  viene ignorata per entrambi gli argomenti.
 	</para>
 	<para>
-	  If the third argument is given, returns a row vector containing
-	  a sequence of integers starting with <argname>a</argname> and
-	  incremented (or decremented, if <argname>a</argname> is greater
-	  than <argname>b</argname>) by <argname>k</argname> at each step.
-	  The final value is the largest member of the sequence that is
-	  less than or equal to <argname>b</argname> (or mutatis mutandis
-	  for <argname>a</argname> greater than <argname>b</argname>).
-	  The argument <argname>k</argname> must be positive; if it is
-	  not integral its fractional part is discarded.
+	  In caso sia presente il terzo argomento, la funzione
+	  restituisce un vettore riga contenente una sequenza di
+	  interi che inizia con <argname>a</argname> ed è incrementata
+	  (o diminuita, nel caso in cui <argname>a</argname> sia
+	  maggiore di <argname>b</argname>) di <argname>k</argname> in
+	  ciascun passaggio. Il valore finale è il più grande elemento
+	  della sequenza minore o uguale a <argname>b</argname> (o
+	  mutatis mutandis, nel caso in cui <argname>a</argname> sia
+	  maggiore di <argname>b</argname>). L'argomento
+	  <argname>k</argname> deve essere positivo; nel caso non sia
+	  un intero la parte decimale è ignorata.
 	</para>
 	<para>
 	  <seelist>
@@ -6209,22 +6228,24 @@
       </fnargs>
       <description>
 	<para>
-	  Implements simulated annealing, which may be helpful in
-	  improving the initialization for a numerical optimization
-	  problem.
+	  Implementa il simulated annealing (letteralmente "ricottura
+	  simulata", che prende il nome dal processo di ricottura
+	  utilizzato per migliorare le caratteristiche delle leghe
+	  metalliche), che può essere utile nel migliorare
+	  l'inizializzazione nei problemi di ottimizzazione numerica.
 	</para>
 	<para>
-	  The first argument holds the intial value of a parameter
-	  vector and the second argument specifies a function call
-	  which returns the (scalar) value of the maximand. The
-	  optional third argument specifies the maximum number of
-	  iterations (which defaults to 1024). On successful
-	  completion, <lit>simann</lit> returns the final value of the
-	  maximand.
+	  Il primo argomento deve contenere il valore iniziale di un
+	  vettore di parametri. Il secondo argomento specifica la
+	  funzione da chiamare e che restituisce il valore (scalare)
+	  da massimizzare. Il terzo argomento, opzionale, specifica il
+	  massimo numero di iterazioni (il valore predefinito è
+	  1024). In caso di successo, <lit>simann</lit> restituisce il
+	  valore finale del massimando.
 	</para>
 	<para>
-	  For more details and an example see the chapter on numerical
-	  methods in <guideref targ="chap-numerical"/>.
+	  Per maggiori dettagli ed esempi si veda il capitolo sui
+	  metodi numerici in <guideref targ="chap-numerical"/>.
 	  <seelist>
 	    <fncref targ="BFGSmax"/>
 	    <fncref targ="NRmax"/>
@@ -6256,7 +6277,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the hyperbolic sine of <argname>x</argname>.
+	  Restituisce il seno iperbolico di <argname>x</argname>.
 	</para>
 	<para context="tex">
 	  \[ \sinh x = \frac{e^x - e^{-x}}{2}  \]
@@ -6277,8 +6298,9 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the skewness value for the series <argname>x</argname>,
-	  skipping any missing observations.
+	  Restituisce il valore di asimmetria per la serie
+	  <argname>x</argname>, non considerando le osservazioni
+	  mancanti.
 	</para>
       </description>
     </function>
@@ -6289,14 +6311,14 @@
       </fnargs>     
       <description>
 	<para>
-	  Sorts <argname>x</argname> in ascending order, skipping
-	  observations with missing values when <math>x</math> is a
-	  series.  
+	  Ordina <argname>x</argname> in senso crescente, non
+	  considerando le osservazioni mancanti nel caso in cui
+	  <math>x</math> sia una serie.
 	  <seelist>
 	    <fncref targ="dsort"/>
 	    <fncref targ="values"/>
 	  </seelist>
-	  For matrices specifically, see <fncref targ="msortby"/>.
+	  In particolare, per le matrici si veda <fncref targ="msortby"/>.
 	</para>
       </description>
     </function>
@@ -6308,9 +6330,9 @@
       </fnargs>     
       <description>
 	<para>
-	  Returns a series containing the elements of
-	  <argname>y2</argname> sorted by increasing value of the first
-	  argument, <argname>y1</argname>. 
+	  Restituisce una serie contenente gli elementi di
+	  <argname>y2</argname> ordinati per valore crescente del
+	  primo argomento, <argname>y1</argname>.
 	  <seelist>
 	    <fncref targ="sort"/>
 	    <fncref targ="ranking"/>
@@ -6325,8 +6347,8 @@
       </fnargs>     
       <description>
 	<para>
-	  Square root of <argname>x</argname>; produces <lit>NA</lit> for
-	  negative values.
+	  Radice quadrata di <argname>x</argname>; genera
+	  <lit>NA</lit> in caso di valori negativi.
 	</para>
       </description>
     </function>
@@ -6444,7 +6466,7 @@
       </fnargs>  
       <description>
 	<para>
-	  Returns the number of characters in <argname>s</argname>.
+	  Restituisce il numero di caratteri in <argname>s</argname>.
 	</para>
       </description>
     </function>
@@ -6457,16 +6479,19 @@
       </fnargs>  
       <description>
 	<para>
-	  Compares the two string arguments and returns an integer less
-	  than, equal to, or greater than zero if <argname>s1</argname> is
-	  found, respectively, to be less than, to match, or be greater
-	  than <argname>s2</argname>, up to the first <argname>n</argname>
-	  characters.  If <argname>n</argname> is omitted the comparison
-	  proceeds as far as possible.
+	  Compara le due stringhe fornite come argomenti e restituisce
+	  un intero minore, uguale, o maggiore di zero se
+	  <argname>s1</argname> risulta, rispettivamente, essere
+	  minore, combaciare, o essere maggiore di
+	  <argname>s2</argname>, fino ai primi <argname>n</argname>
+	  caratteri.  Se <argname>n</argname> è omesso, la
+	  comparazione procede fin dove possibile.
 	</para>
-	<para> Note that if you just want to compare two strings for
-	  equality, that can be done without using a function, as in
-	  <lit>if (s1 == s2) ...</lit>
+	<para> 
+	  Si noti che, nel caso in cui si voglia comparare due
+	  stringhe per verificarne l'uguaglianza, questo può essere
+	  fatto senza utilizzare alcuna funzione, come in <lit>if (s1
+	  == s2) ...</lit>
 	</para>
       </description>
     </function>
@@ -7123,7 +7148,7 @@
 	  Restituisce una serie <math>y</math> tale che
 	  <math>y</math><sub>t</sub> sia la media ponderata dei valori
 	  delle serie nella lista <argname>Y</argname>
-	  all'oosservazione <math>t</math>; i rispettivi pesi devono
+	  all'osservazione <math>t</math>; i rispettivi pesi devono
 	  essere contenuti nella lista <argname>W</argname>, e quindi
 	  possono essere variabili nel tempo. Le due liste
 	  <argname>Y</argname> e <argname>W</argname> devono avere lo
@@ -7149,7 +7174,7 @@
 	  Restituisce una serie <math>y</math> tale che
 	  <math>y</math><sub>t</sub> sia l'errore quadratico medio
 	  ponderato dei valori delle serie nella lista
-	  <argname>Y</argname> all'oosservazione <math>t</math>; i
+	  <argname>Y</argname> all'osservazione <math>t</math>; i
 	  rispettivi pesi devono essere contenuti nella lista
 	  <argname>W</argname>, e quindi possono essere variabili nel
 	  tempo. Le due liste <argname>Y</argname> e
@@ -7175,7 +7200,7 @@
 	  Restituisce una serie <math>y</math> tale che
 	  <math>y</math><sub>t</sub> sia la varianza campionaria
 	  ponderata dei valori delle serie nella lista
-	  <argname>Y</argname> all'oosservazione <math>t</math>; i
+	  <argname>Y</argname> all'osservazione <math>t</math>; i
 	  rispettivi pesi devono essere contenuti nella lista
 	  <argname>W</argname>, e quindi possono essere variabili nel
 	  tempo. Le due liste <argname>Y</argname> e
