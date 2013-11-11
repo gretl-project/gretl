@@ -6495,7 +6495,6 @@
 	</para>
       </description>
     </function>
-
     <function name="strsplit" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -6503,15 +6502,16 @@
       </fnargs>  
       <description>
 	<para>
-	  Returns space-separated element <argname>i</argname> from
-	  the string <argname>s</argname>. The index
-	  <argname>i</argname> is 1-based, and it is an error if
-	  <argname>i</argname> is less than 1. In case
-	  <argname>s</argname> contains no spaces and
-	  <argname>i</argname> equals 1, a copy of the entire input
-	  string is returned; otherwise, in case <argname>i</argname>
-	  exceeds the number of space-separated elements an empty
-	  string is returned.
+	  Restituisce l'elemento separato da spazio
+	  <argname>i</argname>-esimo della stringa
+	  <argname>s</argname>. L'indice <argname>i</argname> è a base
+	  1, e la funzione genera un errore se <argname>i</argname> è
+	  minore di 1. Nel caso in cui <argname>s</argname> non
+	  contenga spazi e <argname>i</argname> è uguale ad 1, la
+	  funzione restituisce una copia dell'intera stringa in
+	  ingresso. Nel caso in cui <argname>i</argname> eccede il
+	  numero degli elementi separati da spazio la funzione
+	  restituisce una stringa vuota.
 	</para>
       </description>
     </function>
@@ -6523,10 +6523,12 @@
       </fnargs>  
       <description>
 	<para>
-	  Searches <argname>s1</argname> for an occurrence of the string
-	  <argname>s2</argname>.  If a match is found, returns a copy of the
-	  portion of <argname>s1</argname> that starts with
-	  <argname>s2</argname>, otherwise returns an empty string.
+	  Ricerca <argname>s1</argname> per trovare un'occorrenza
+	  della stringa <argname>s2</argname>.  Nel caso venga trovata
+	  una corrispondenza, la funzione restituisce una copia della
+	  porzione di <argname>s1</argname> che inizia con
+	  <argname>s2</argname>; in caso contrario, la funzione
+	  restituisce una stringa vuota.
 	</para>
       </description>
     </function>
@@ -6537,8 +6539,8 @@
       </fnargs>  
       <description>
 	<para>
-	  Returns a copy of the argument <argname>s</argname> from
-	  which leading and trailing white space have been removed.
+	  Restituisce una copia dell'argomento <argname>s</argname> da
+	  cui sono stati rimossi gli spazi bianchi iniziali e finali.
 	</para>
       </description>
     </function>
@@ -6551,8 +6553,8 @@
       </fnargs>  
       <description>
 	<para>
-	  Returns a copy of <argname>s</argname> in which all
-	  occurrences of <argname>find</argname> are replaced by
+	  Restituisce una copia di <argname>s</argname> in cui tutte
+	  le occorrenze di <argname>find</argname> sono sostituite con
 	  <argname>subst</argname>.
 	</para>
       </description>
@@ -6566,18 +6568,18 @@
 	<para>
 	  Se <argname>x</argname> è una serie, restituisce la somma
 	  (scalare) delle osservazioni valide nella serie
-	  <argname>x</argname>. Vedi anche <fncref targ="sumall"/>.
+	  <argname>x</argname>. Si veda anche <fncref targ="sumall"/>.
 	</para>
 	<para>
-	  If <argname>x</argname> is a matrix, returns the sum of the
-	  elements of the matrix.
+	  Se <argname>x</argname> è una matrice, restituisce la somma degli elementi della matrice.
 	</para>	
 	<para>
-	  If <argname>x</argname> is a list, returns a series <math>y</math>
-	  such that <math>y</math><sub>t</sub> is the sum of the values of the
-	  variables in the list at observation <math>t</math>, or
-	  <lit>NA</lit> if there are any missing values at <math>t</math>.
-	</para>	
+	  Se <argname>x</argname> è una lista, restituisce una serie
+	  <math>y</math> tale che <math>y</math><sub>t</sub> è la
+	  somma dei valori delle variabili nella lista
+	  all'osservazione <math>t</math>, o <lit>NA</lit> se ci sono
+	  valori mancanti a <math>t</math>.
+	</para>
       </description>
     </function>
 
@@ -6587,9 +6589,9 @@
       </fnargs>      
       <description>
 	<para>
-	  Returns the sum of the observations of <argname>x</argname>
-	  over the current sample range, or <lit>NA</lit> if there are
-	  any missing values.
+	  Restituisce la somma delle osservazioni di
+	  <argname>x</argname> nel campione corrente, o <lit>NA</lit>
+	  se ci sono valori mancanti.
 	</para>
       </description>
     </function>
@@ -6600,7 +6602,7 @@
       </fnargs>     
       <description>
 	<para>
-	  Restituisce la somma per colonna di <argname>X</argname>.
+	  Restituisce le somme per colonna di <argname>X</argname>.
 	  <seelist>
 	    <fncref targ="meanc"/>
 	    <fncref targ="sumr"/>
@@ -6615,7 +6617,7 @@
       </fnargs>  
       <description>
 	<para>
-	  Returns the sums of the rows of <argname>X</argname>.
+	  Restituisce le somme per riga di <argname>X</argname>.
 	  <seelist> 
 	    <fncref targ="meanr"/>
 	    <fncref targ="sumc"/>
@@ -6632,12 +6634,12 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Performs the singular values decomposition of the matrix
-	  <argname>X</argname>.
+	  Esegue la scomposizione a valori singolari (SVD) della
+	  matrice <argname>X</argname>.
 	</para>
 	<para context="tex">
-	  Performs the singular values decomposition of the $r \times c$
-	  matrix $X$: 
+	  Esegue la scomposizione a valori singolari (SVD) della
+	  matrice $r \times c$ $X$:
 	  \[ X = U \left[
 	  \begin{array}{cccc} 
 	  \sigma_1 \\ 
@@ -6646,22 +6648,21 @@
 	  &amp; &amp; &amp; \sigma_n ,
 	  \end{array}
 	  \right] V \] 
-	  where $n = \min(r,c)$. $U$ is $r \times
-	  n$ and $V$ is $n \times c$, with $U'U = I$ and $VV' = I$.
+	  dove $n = \min(r,c)$. $U$ è $r \times n$ e $V$ è $n \times c$, con $U'U = I$ e $VV' = I$.
 	</para>
 	<para>
-	  The singular values are returned in a row vector.  The left
-	  and/or right singular vectors <math>U</math> and <math>V</math>
-	  may be obtained by supplying non-null values for arguments 2 and
-	  3, respectively.  For any matrix <lit>A</lit>, the code
+	  I valori singolari sono restituiti in un vettore riga.  I
+	  vettori singolari sinistri e/o destri <math>U</math> e
+	  <math>V</math> possono essere ottenuti fornendo valori
+	  non-nulli per, rispettivamente, gli argomenti 2 e 3. Per una
+	  matrice <lit>A</lit>, il codice
 	</para>
 	<code>
 	  s = svd(A, &amp;U, &amp;V) 
 	  B = (U .* s) * V
 	</code>
 	<para>
-	  should yield <lit>B</lit> identical to <lit>A</lit> (apart from
-	  machine precision).
+	  dovrebbe generare <lit>B</lit> identica ad <lit>A</lit> (precisione numerica a parte).
 	</para>
 	<para>
 	  <seelist>
@@ -6718,26 +6719,27 @@
       </fnargs>
       <description>
 	<para>
-	  Solves a Toeplitz system of linear equations, that is
-	  <math>Tx = b</math> where <math>T</math> is a square matrix
-	  whose element <math>T</math><sub>i,j</sub> equals
-	  <math>c</math><sub>i-j</sub> for <equation status="inline"
-	  ascii="i&gt;=j" tex="$i\ge j$"/> and
-	  <math>r</math><sub>j-i</sub> for <equation status="inline"
-	  ascii="i&lt;=j" tex="$i\le j$"/>. Note that the first
-	  elements of <math>c</math> and <math>r</math> must be equal,
-	  otherwise an error is returned. Upon successful completion,
-	  the function returns the vector <math>x</math>.
+	  Risolve un sistema di Toeplitz di equazioni lineari, cioè
+	  <math>Tx = b</math> dove <math>T</math> è una matrice
+	  quadrata il cui elemento <math>T</math><sub>i,j</sub> è
+	  uguale a <math>c</math><sub>i-j</sub> per <equation
+	  status="inline" ascii="i&gt;=j" tex="$i\ge j$"/> e a
+	  <math>r</math><sub>j-i</sub> per <equation status="inline"
+	  ascii="i&lt;=j" tex="$i\le j$"/>. Si noti che i primi
+	  elementi di <math>c</math> e <math>r</math> devono essere
+	  uguali. In caso contrario la funzione restituisce un
+	  errore. In caso di successo, la funzione restituisce il
+	  vettore <math>x</math>.
 	</para>
 	<para>
-	  The algorithm used here takes advantage of the special
-	  structure of the matrix <math>T</math>, which makes it much
-	  more efficient than other unspecialized algorithms,
-	  especially for large problems. Warning: in certain cases,
-	  the function may spuriously issue a singularity error when
-	  in fact the matrix <math>T</math> is nonsingular; this
-	  problem, however, cannot arise when <math>T</math> is
-	  positive definite.
+	  L'algoritmo usato sfrutta la speciale struttura della
+	  matrice <math>T</math>, che lo rende molto più efficiente di
+	  altri algoritmi meno specifici, specialmente per sistemi di
+	  grandi dimensioni. Attenzione: in certi casi, la funzione
+	  può restituire un errore di singolarità anche se la matrice
+	  <math>T</math> non sia effettivamente singolare; questo
+	  problema tuttavia non si presenta quando <math>T</math> è
+	  definita positiva.
 	</para>
       </description>
     </function>
@@ -6787,9 +6789,9 @@
       </fnargs>      
       <description>
 	<para>
-	  Matrix transposition. Note: this is rarely used; in order to get
-	  the trasnpose of a matrix, in most cases you can just use the
-	  prime operator: <lit>X'</lit>.
+	  Trasposizione di matrice. Si noti che, al fine di ottenere
+	  la trasposta di una matrice, nella maggior parte dei casi è
+	  possibile utilizzare l'operatore apice: <lit>X'</lit>.
 	</para>
       </description>
     </function>
@@ -6802,11 +6804,12 @@
       </fnargs>   
       <description>
 	<para>
-	  Returns a matrix that is a copy of <argname>X</argname> with
-	  <argname>ttop</argname> rows trimmed at the top and
-	  <argname>tbot</argname> rows trimmed at the bottom.  The latter two
-	  arguments must be non-negative, and must sum to less than the total
-	  rows of <argname>X</argname>.
+	  Restituisce una matrice che è una copia di
+	  <argname>X</argname> con <argname>ttop</argname> righe
+	  eliminate partendo dall'alto e <argname>tbot</argname> righe
+	  eliminate partendo dal basso. Gli ultimi due argomenti
+	  devono essere non-negativi e la somma dei due deve essere
+	  minore del numero totale di righe di <argname>X</argname>.
 	</para>
 	<para>
 	  <seelist>
@@ -6822,13 +6825,12 @@
       </fnargs>      
       <description>
 	<para>
-	  Returns the name of the gretl data-type corresponding to
-	  <argname>typecode</argname>. This is intended for use in
-	  conjunction with the function <fncref targ="inbundle"/>.
-	  The value returned is one of <quote>scalar</quote>,
-	  <quote>series</quote>, <quote>matrix</quote>,
-	  <quote>string</quote>, <quote>bundle</quote> or
-	  <quote>null</quote>.
+	  Restituisce il nome del tipo di dati di gretl corrispondente
+	  a <argname>typecode</argname>. È utilizzata insieme alla
+	  funzione <fncref targ="inbundle"/>. Il valore restituito è:
+	  <quote>scalar</quote>, <quote>series</quote>,
+	  <quote>matrix</quote>, <quote>string</quote>,
+	  <quote>bundle</quote> o <quote>null</quote>.
 	</para>
       </description>
     </function>
@@ -6864,10 +6866,10 @@
       </fnargs>      
       <description>
 	<para>
-	  Returns a vector containing the distinct elements of
-	  <argname>x</argname>, not sorted but in their order of
-	  appearance. See <fncref targ="values"/> for a variant
-	  that sorts the elements.
+	  Restituisce un vettore che contiene gli elementi distinti di
+	  <argname>x</argname>, non ordinati ma nell'ordine in cui
+	  compaiono. Si veda <fncref targ="values"/> per una variante
+	  che ordina gli elementi.
 	</para>
       </description>
     </function>
@@ -6878,14 +6880,13 @@
       </fnargs>      
       <description>
 	<para>
-	  Returns an <by r="n" c="n"/> symmetric matrix obtained by
-	  rearranging the elements of <math>v</math>. The number of elements
-	  in <math>v</math> must be a triangular integer &mdash; &ie;, a
-	  number <math>k</math> such that an integer <math>n</math> exists
-	  with the property <equation
-	    status="inline" ascii="k = n(n+1)/2" 
-	    tex="$k = n(n+1)/2$"/>. This is the inverse of the function
-	  <fncref targ="vech"/>. 
+	  Restituisce una matrice simmetrica <by r="n" c="n"/>
+	  ottenuta riordinando gli elementi di <math>v</math>. Il
+	  numero di elementi in <math>v</math> deve essere un intero
+	  triangolare, ossia un numero <math>k</math> che può essere
+	  scritto come <equation status="inline" ascii="k = n(n+1)/2"
+	  tex="$k = n(n+1)/2$"/>. con <math>n</math> intero. Questa
+	  funzione è l'inversa della funzione <fncref targ="vech"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -6901,13 +6902,15 @@
       </fnargs>  
       <description>
 	<para context="notex">
-	  Returns an <by r="n" c="n"/> upper triangular matrix: the elements
-	  on and above the diagonal are equal to the corresponding elements of
-	  <argname>A</argname>; the remaining elements are zero.
+	  Restituisce una matrice triangolare superiore <by r="n"
+	  c="n"/>: gli elementi sulla e sopra la diagonale sono uguali
+	  ai corrispondenti elementi di <argname>A</argname>; i
+	  restanti elementi sono zero.
 	</para>
 	<para context="tex">
-	  Returns an $n\times n$ upper triangular matrix <math>B</math>
-	  for which $B_{ij} = A_{ij}$ if $i \le j$ and 0 otherwise.
+	  Restituisce una matrice triangolare superiore $n\times n$
+	  <math>B</math> per cui $B_{ij} = A_{ij}$ se $i \le j$ e 0
+	  altrimenti.
 	</para>
 	<para>
 	  <seelist>
@@ -6926,26 +6929,25 @@
       </fnargs>
       <description>
 	<para>
-	  <math>P</math>-values for the test statistic from the
-	  Dickey&ndash;Fuller unit-root test and the
-	  Engle&ndash;Granger cointegration test, as per <cite
-	  key="mackinnon96">James MacKinnon (1996)</cite>.
+	  <math>P</math>-value della statistica test dal test Dickey&ndash;Fuller per radici unitarie e del test Engle&ndash;Granger di cointegrazione, come in <cite key="mackinnon96">James MacKinnon (1996)</cite>.
 	</para>
 	<para>
-	  The arguments are as follows: <argname>tau</argname> denotes the
-	  test statistic; <argname>n</argname> is the number of
-	  observations (or 0 for an asymptotic result);
-	  <argname>niv</argname> is the number of potentially cointegrated
-	  variables when testing for cointegration (or 1 for a univariate
-	  unit-root test); and <argname>itv</argname> is a code for the
-	  model specification: 1 for no constant, 2 for constant
-	  included, 3 for constant and linear trend, 4 for constant and
-	  quadratic trend.
+	  Gli argomenti sono i seguenti: <argname>tau</argname> indica
+	  la statistica test; <argname>n</argname> è il numero di
+	  osservazioni (o 0 per il risultato asintotico);
+	  <argname>niv</argname> è il numero di variabili
+	  potenzialmente cointegrate nel test di cointegrazione (o 1
+	  per il test univariato di radici unitarie);
+	  <argname>itv</argname> è il codice di specificazione del
+	  modello: 1 per il modello senza costante, 2 per il modello
+	  con costante inclusa, 3 per il modello con costante e trend
+	  lineare, 4 per il modello con costante e trend quadratico.
 	</para>
 	<para>
-	  Note that if the test regression is <quote>augmented</quote>
-	  with lags of the dependent variable, then you should give an
-	  <argname>n</argname> value of 0 to get an asymptotic result.
+	  Si noti che se il test è <quote>aumentato</quote> con i
+	  ritardi della variabile dipendente, si deve fornire un
+	  valore 0 all'argomento <argname>n</argname> per ottenere il
+	  risultato asintotico.
 	</para>
 	<para>
 	  <seelist> 
@@ -6961,12 +6963,12 @@
       </fnargs>      
       <description>
 	<para>
-	  Returns a vector containing the distinct elements of
-	  <argname>x</argname> sorted in ascending order. Note: because of
-	  its typical usage, <argname>x</argname> is assumed to contain
-	  integer values only. If not, the fractional part is truncated,
-	  so <lit>values(x)</lit> is always identical to
-	  <lit>values(int(x))</lit>.
+	  Restituisce un vettore contenente gli elementi distinti di
+	  <argname>x</argname> ordinati in senso crescente. Si noti
+	  che <argname>x</argname> si assume contenga solo valori
+	  interi. In caso contrario, la parte decimale è troncata,
+	  cosicché <lit>values(x)</lit> produce un risultato identico
+	  a <lit>values(int(x))</lit>.
 	</para>
 	<para>
 	  <seelist>
@@ -6983,20 +6985,21 @@
       </fnargs>     
       <description>
 	<para>
-	  If <argname>x</argname> is a series, returns the (scalar) sample
-	  variance, skipping any missing observations.
+	  Se <argname>x</argname> è una serie, restituisce la sua varianza campionaria (uno scalare), saltando i valori mancanti.
 	</para>
 	<para>
-	  If <argname>x</argname> is a list, returns a series <math>y</math>
-	  such that <math>y</math><sub>t</sub> is the sample variance of the
-	  values of the variables in the list at observation <math>t</math>,
-	  or <lit>NA</lit> if there are any missing values at <math>t</math>.
+	  Se <argname>x</argname> è una lista, restituisce una serie
+	  <math>y</math> tale che <math>y</math><sub>t</sub> è la
+	  varianza campionaria dei valori delle variabili nella lista
+	  all'osservazione <math>t</math>, o <lit>NA</lit> se ci sono
+	  valori mancanti a <math>t</math>.
 	</para>
 	<para>
-	  In each case the sum of squared deviations from the mean is divided
-	  by (<math>n</math> &minus; 1) for <math>n</math> &gt; 1. Otherwise
-	  the variance is given as zero if <math>n</math> = 1, or as
-	  <lit>NA</lit> if <math>n</math> = 0.
+	  In ogni caso, la somma delle deviazioni al quadrato dalla
+	  media è divisa per (<math>n</math> &minus; 1) se
+	  <math>n</math> &gt; 1. In caso contrario, la varianza
+	  restituita è zero se <math>n</math> = 1, o <lit>NA</lit> se
+	  <math>n</math> = 0.
 	</para>
 	<para>
 	  <seelist>
@@ -7012,14 +7015,15 @@
       </fnargs>     
       <description>
 	<para>
-	  If given a scalar argument, returns the name of the variable with ID
-	  number <argname>v</argname>, or generates an error if there is no
-	  such variable.
+	  Se l'argomento è uno scalare, restituisce il nome della
+	  variabile con numero ID <argname>v</argname>, o genera un
+	  errore nel caso in cui una tale variabile non esista.
 	</para>
 	<para>
-	  If given a list argument, returns a string containing the names of
-	  the variables in the list, separated by commas.  If the supplied
-	  list is empty, so is the returned string.
+	  Se l'argomento è una lista, restituisce una stringa
+	  contenente i nomi delle variabili nella lista, separati da
+	  una virgola. Se la lista fornita è vuota, la stringa
+	  restituita sarà vuota.
 	</para>
       </description>
     </function>
@@ -7030,8 +7034,7 @@
       </fnargs>     
       <description>
 	<para>
-	  Returns the ID number of the variable called
-	  <argname>varname</argname>, or NA is there is no such variable.
+	  Restituisce il numero ID della variabile chiamata <argname>varname</argname>, o NA se una tale variabile non esiste.
 	</para>
       </description>
     </function>
@@ -7044,38 +7047,38 @@
       </fnargs>
       <description>
 	<para>
-	  Simulates a <math>p</math>-order <math>n</math>-variable
-	  VAR, that is
+	  Simula un VAR di ordine <math>p</math> con <math>n</math> variabili, cioè 
 	  <equation status="inline"
 	  ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)." 
 	  tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$."/>
-
-	  The coefficient matrix <argname>A</argname> is composed by
-	  horizontal stacking of the <math>A</math><sub>i</sub>
-	  matrices; it is <by r="n" c="np"/>, with one row
-	  per equation. This corresponds to the first <math>n</math>
-	  rows of the matrix <lit>$compan</lit> provided by gretl's
-	  <lit>var</lit> and <lit>vecm</lit> commands.
+	  La matrice dei coefficienti <argname>A</argname> è formata
+	  incolonnando orizzontalmente le matrici
+	  <math>A</math><sub>i</sub>. Si tratta di una matrice <by
+	  r="n" c="np"/>, con una riga per ogni equazione. Corrisponde
+	  alle prime <math>n</math> righe della matrice
+	  <lit>$compan</lit> fornita dai comandi <lit>var</lit> e
+	  <lit>vecm</lit> di gretl.
 	</para>
 	<para>
-	  The <math>u_t</math> vectors are contained (as rows) in
-	  <argname>U</argname> (<by r="T" c="n"/>). Initial values are in
-	  <argname>y0</argname> (<by r="p" c="n"/>).
+	  Gli <math>u_t</math> vettori sono contenuti (come righe)
+	  nella matrice <argname>U</argname> (<by r="T" c="n"/>). I
+	  valori iniziali sono in <argname>y0</argname> (<by r="p"
+	  c="n"/>).
 	</para>
 	<para>
-	  If the VAR contains deterministic terms and/or exogenous
-	  regressors, these can be handled by folding them into the
-	  <argname>U</argname> matrix: each row of <argname>U</argname>
-	  then becomes 
+	  Se il VAR contiene termini deterministici e/o regressori
+	  esogeni, questi possono essere gestiti racchiudendoli nella
+	  matrice <argname>U</argname>: ciascuna riga di
+	  <argname>U</argname> diventa allora
 	  <equation status="inline"
 	  ascii="u(t) = B' x(t) + e(t)." 
 	  tex="$u_t = B' x_t + e_t$."/>
 	</para>
 	<para>
-	  The output matrix has <math>T</math> + <math>p</math> rows
-	  and <math>n</math> columns; it holds the initial <math>p</math>
-	  values of the endogenous variables plus <math>T</math>
-	  simulated values.
+	  La matrice in uscita ha<math>T</math> + <math>p</math> righe
+	  e <math>n</math> colonne; contiene i <math>p</math> valori
+	  iniziali delle variabili endogene più i <math>T</math>
+	  valori simulati.
 	</para>
 	<para>
 	  <seelist> 
@@ -7273,7 +7276,7 @@
       </fnargs>     
       <description>
 	<para>
-          Fornisce una lista che contiene i quadrati e ai prodotti
+          Fornisce una lista che contiene i quadrati e i prodotti
           incrociati delle variabili elencate in <argname>L</argname>.
           Ai quadrati viene assegnato il nome secondo lo schema
           <lit>sq_</lit><repl>varname</repl>, mentre per i prodotti
