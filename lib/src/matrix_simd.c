@@ -246,11 +246,11 @@ static void gretl_matrix_simd_subtract (const gretl_matrix *a,
 
 #endif /* AVX vs SSE */
 
-#if 0 /* not yet */
+#if 0 /* not ready yet */
 #ifdef USE_AVX
 
-/* Note: this is probably usable only for n <= 8 (shortage of AVX
-   registers). It is very much faster if m is a multiple of 4; k is
+/* Note: this is probably usable only for k <= 8 (shortage of AVX
+   registers). It is much faster if m is a multiple of 4; n is
    unconstrained.
 */
 
@@ -259,8 +259,8 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
 				   gretl_matrix *C)
 {
     int m = A->rows;
-    int n = A->cols;
-    int k = B->cols;
+    int n = B->cols;
+    int k = A->cols;
     const double *aval = A->val;
     const double *bval = B->val;
     double *cval = C->val;
@@ -269,36 +269,36 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
     int i, j;
 
     if (m >= 4) {
-	__m256d a[n], b[n];
+	__m256d a[k], b[k];
 	__m256d mult, ccol;
 	int h;
 
 	for (h=0; h<hmax; h++) {
-	    /* loop across the n columns of A, loading
+	    /* loop across the k columns of A, loading
 	       4 elements from each
 	     */
 	    if (hrem) {
 		/* unaligned */
-		for (j=0; j<n; j++) {
+		for (j=0; j<k; j++) {
 		    a[j] = _mm256_loadu_pd(aval + j*m);
 		}
 	    } else {
 		/* aligned */
-		for (j=0; j<n; j++) {
+		for (j=0; j<k; j++) {
 		    a[j] = _mm256_load_pd(aval + j*m);
 		}
 	    }
 
-	    /* loop across the k columns of B */
-	    for (j=0; j<k; j++) {
-		/* broadcast the n elements of col j of B */
-		for (i=0; i<n; i++) {
-		    b[i] = _mm256_broadcast_sd(&bval[j*n + i]);
+	    /* loop across the n columns of B */
+	    for (j=0; j<n; j++) {
+		/* broadcast the k elements of col j of B */
+		for (i=0; i<k; i++) {
+		    b[i] = _mm256_broadcast_sd(&bval[j*k + i]);
 		}
 
 		/* cumulate the products */
 		ccol = _mm256_setzero_pd();
-		for (i=0; i<n; i++) {
+		for (i=0; i<k; i++) {
 		    mult = _mm256_mul_pd(b[i], a[i]);
 		    ccol = _mm256_add_pd(ccol, mult);
 		}
@@ -323,27 +323,27 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
     
     if (hrem >= 2) {
 	/* do a single 128-bit run */
-	__m128d a[n], b[n];
+	__m128d a[k], b[k];
 	__m128d mult, ccol;
 	int realign = m % 2;
 
 	if (realign) {
-	    for (j=0; j<n; j++) {
+	    for (j=0; j<k; j++) {
 		a[j] = _mm_loadu_pd(aval + j*m);
 	    }
 	} else {
-	    for (j=0; j<n; j++) {
+	    for (j=0; j<k; j++) {
 		a[j] = _mm_load_pd(aval + j*m);
 	    }
 	}
 
-	for (j=0; j<k; j++) {
-	    for (i=0; i<n; i++) {
-		b[i] = _mm_set1_pd(bval[j*n + i]);
+	for (j=0; j<n; j++) {
+	    for (i=0; i<k; i++) {
+		b[i] = _mm_set1_pd(bval[j*k + i]);
 	    }
 
 	    ccol = _mm_setzero_pd();
-	    for (i=0; i<n; i++) {
+	    for (i=0; i<k; i++) {
 		mult = _mm_mul_pd(b[i], a[i]);
 		ccol = _mm_add_pd(ccol, mult);
 	    }
@@ -361,16 +361,16 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
     
     if (hrem) {
 	/* odd-valued m: compute the last row */
-	double ccol, a[n];
+	double ccol, a[k];
 
-	for (j=0; j<n; j++) {
+	for (j=0; j<k; j++) {
 	    a[j] = aval[j*m];
 	}
 
-	for (j=0; j<k; j++) {
+	for (j=0; j<n; j++) {
 	    ccol = 0.0; 
-	    for (i=0; i<n; i++) {
-		ccol += bval[j*n + i] * a[i];
+	    for (i=0; i<k; i++) {
+		ccol += bval[j*k + i] * a[i];
 	    }
 	    cval[m*j] = ccol;
 	}
@@ -379,8 +379,8 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
 
 #else /* SSE */
 
-/* Note: this is probably usable only for n <= 8 (shortage of SSE
-   registers). It is faster if m is a multiple of 2; but k is
+/* Note: this is probably usable only for k <= 8 (shortage of SSE
+   registers). It is faster if m is a multiple of 2; but n is
    unconstrained.
 */
 
@@ -389,8 +389,8 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
 				   gretl_matrix *C)
 {
     int m = A->rows;
-    int n = A->cols;
-    int k = B->cols;
+    int n = B->cols;
+    int k = A->cols;
     const double *aval = A->val;
     const double *bval = B->val;
     double *cval = C->val;
@@ -399,34 +399,34 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
     int i, j;
 
     if (m >= 2) {
-	__m128d a[n], b[n];
+	__m128d a[k], b[k];
 	__m128d mult, ccol;
 	int h;
 
 	for (h=0; h<hmax; h++) {
-	    /* loop across the n columns of A, loading
+	    /* loop across the k columns of A, loading
 	       2 elements from each
 	    */
 	    if (hrem) {
-		for (j=0; j<n; j++) {
+		for (j=0; j<k; j++) {
 		    a[j] = _mm_loadu_pd(aval + j*m);
 		}
 	    } else {
-		for (j=0; j<n; j++) {
+		for (j=0; j<k; j++) {
 		    a[j] = _mm_load_pd(aval + j*m);
 		}
 	    }
 
-	    /* loop across the k columns of B */
-	    for (j=0; j<k; j++) {
-		/* broadcast the n elements of col j of B */
-		for (i=0; i<n; i++) {
-		    b[i] = _mm_set1_pd(bval[j*n + i]);
+	    /* loop across the n columns of B */
+	    for (j=0; j<n; j++) {
+		/* broadcast the k elements of col j of B */
+		for (i=0; i<k; i++) {
+		    b[i] = _mm_set1_pd(bval[j*k + i]);
 		}
 
 		/* cumulate the products */
 		ccol = _mm_setzero_pd();
-		for (i=0; i<n; i++) {
+		for (i=0; i<k; i++) {
 		    mult = _mm_mul_pd(b[i], a[i]);
 		    ccol = _mm_add_pd(ccol, mult);
 		}
@@ -448,16 +448,16 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
 
     if (hrem) {
 	/* odd-valued m: compute the last row */
-	double ccol, a[n];
+	double ccol, a[k];
 
-	for (j=0; j<n; j++) {
+	for (j=0; j<k; j++) {
 	    a[j] = aval[j*m];
 	}
 
-	for (j=0; j<k; j++) {
+	for (j=0; j<n; j++) {
 	    ccol = 0.0; 
-	    for (i=0; i<n; i++) {
-		ccol += bval[j*n + i] * a[i];
+	    for (i=0; i<k; i++) {
+		ccol += bval[j*k + i] * a[i];
 	    }
 	    cval[m*j] = ccol;
 	}
@@ -465,5 +465,4 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
 }
 
 #endif /* AVX vs SIMD */
-#endif /* not yet */
-
+#endif /* not ready */

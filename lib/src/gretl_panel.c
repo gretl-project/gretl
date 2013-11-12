@@ -1553,6 +1553,7 @@ static int print_fe_results (panelmod_t *pan,
 			     DATASET *dset,
 			     PRN *prn)
 {
+    double pval;
     int n, maxlen = 0;
     int dfn, i, vi;
 
@@ -1693,6 +1694,10 @@ static void fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 
     pan->F = (pan->pooled->ess - wmod->ess) * pan->Fdfd / 
 	(wmod->ess * pan->Fdfn);
+
+    if (pan->F < 0) {
+	pan->F = 0;
+    }
 }
 
 static int fix_panelmod_list (MODEL *targ, panelmod_t *pan)

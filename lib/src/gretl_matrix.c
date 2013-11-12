@@ -4634,8 +4634,9 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 
 #endif /* _OPENMP */
 
-#if 0 /* ifdef USE_SIMD (experiment) */
-    if (n <= 8 && !atr && !btr && !cmod) {
+#if 0 /* ifdef(SIMD), but not yet */
+    if (k <= 8 && !atr && !btr && !cmod && !is_block_matrix(a) && 
+	!is_block_matrix(b) && !is_block_matrix(c)) {
 	gretl_matrix_simd_mul(a, b, c);
 	return;
     }
@@ -4828,7 +4829,7 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 	return E_NONCONF;
     }
 
-    if (use_blas(lrows, rcols, lcols)) { 
+    if (use_blas(lrows, rcols, lcols)) {
 	gretl_blas_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
     } else {
 	gretl_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
