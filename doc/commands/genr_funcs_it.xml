@@ -1238,13 +1238,14 @@
 	<para>
 	  Estrae la componente ciclica della serie
 	  <argname>y</argname> attraverso il filtro passa banda di
-	  Baxter&ndash;King, filtro simmetrico two-sided. The optional
-	  parameters <argname>f1</argname> and <argname>f2</argname>
-	  represent, respectively, the lower and upper bounds of the range of
-	  frequencies to extract, while <argname>k</argname> is the
-	  approximation order to be used. If these arguments are not supplied
-	  then the following default values are used: <argname>f1</argname> =
-	  8, <argname>f1</argname> = 32, <argname>k</argname> = 8.
+	  Baxter&ndash;King, filtro simmetrico two-sided. I parametri
+	  opzionali <argname>f1</argname> e <argname>f2</argname>
+	  rappresentano, rispettivamente, i limiti inferiore e
+	  superiore delle frequenze da estrarre, mentre
+	  <argname>k</argname> è l'ordine dell'approssimazione da
+	  usare. Se questi argomenti non sono forniti, vengono usati i
+	  seguenti valori di default: <argname>f1</argname> = 8,
+	  <argname>f1</argname> = 32, <argname>k</argname> = 8.
 	  <seelist>
 	    <fncref targ="bwfilt"/>
 	    <fncref targ="hpfilt"/>
@@ -1260,7 +1261,9 @@
       </fnargs>    
       <description>
 	<para>
-	  Restituisce la trasformazione Box&ndash;Cox con parametro <argname>d</argname> della serie positiva <argname>y</argname>.
+	  Restituisce la trasformazione Box&ndash;Cox con parametro
+	  <argname>d</argname> della serie positiva
+	  <argname>y</argname>.
 	</para>	  
 	<para context="tex">
 	  \[ y_t^{(d)} = \left\{ \begin{array}{ll} \frac{y_t^d - 1}{d} &amp;
@@ -1281,10 +1284,21 @@
       </fnargs>
       <description>
 	<para>
-	  Restituisce il risultato dell'applicazione di un filtro passa-basso Butterworth di ordine <argname>n</argname> e frequenza di taglio <argname>omega</argname> alla serie <argname>y</argname>. La frequenza di taglio è espressa in gradi e deve essere maggiore di 0 e minore di 180. Frequenze di taglio minori restringono il passa banda alle frequenze minori e quindi producono trend più smussati. Valori maggiori di <argname>n</argname> producono un taglio più netto, al costo di una possibile instabilità numerica. 
+	  Restituisce il risultato dell'applicazione di un filtro
+	  passa-basso Butterworth di ordine <argname>n</argname> e
+	  frequenza di taglio <argname>omega</argname> alla serie
+	  <argname>y</argname>. La frequenza di taglio è espressa in
+	  gradi e deve essere maggiore di 0 e minore di 180. Frequenze
+	  di taglio minori restringono il passa banda alle frequenze
+	  minori e quindi producono trend più smussati. Valori
+	  maggiori di <argname>n</argname> producono un taglio più
+	  netto, al costo di una possibile instabilità numerica.
 	</para>
 	<para>
-	  L'esame del periodogramma della serie target è un utile fase preliminare da compiere quando si vuole applicare una tale funzione. Si veda <guideref targ="chap-filters"/> per i dettagli.
+	  L'esame del periodogramma della serie target è un utile fase
+	  preliminare da compiere quando si vuole applicare una tale
+	  funzione. Si veda <guideref targ="chap-filters"/> per i
+	  dettagli.
 	  <seelist>
 	    <fncref targ="bkfilt"/>
 	    <fncref targ="hpfilt"/>
@@ -1299,7 +1313,8 @@
       </fnargs>
       <description>
 	<para>
-	  Centra le colonne della matrice <argname>X</argname> attorno alla loro media.
+	  Centra le colonne della matrice <argname>X</argname> attorno
+	  alla loro media.
 	</para>
       </description>
     </function>
@@ -1388,17 +1403,17 @@
 	  Bivariate normal &amp; \texttt{D} &amp; 
 	  $\rho$ &amp; -- \\ 
 	  Student's $t$ (central) &amp; \texttt{t} &amp;  
-	  degrees of freedom &amp; -- \\ 
+	  gradi di libertà &amp; -- \\ 
 	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; 
-	  degrees of freedom &amp; -- \\ 
+	  gradi di libertà &amp; -- \\ 
 	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp;
 	  df (num.) &amp; df (den.) \\ 
 	  Gamma &amp; \texttt{g} or \texttt{G} &amp;
-	  shape &amp; scale \\ 
+	  forma &amp; scala \\ 
 	  Binomial &amp; \texttt{b} or \texttt{B} &amp;
-	  probability &amp; trials \\ 
+	  probabilit\`a &amp; prove \\ 
 	  Poisson &amp; \texttt{p} or \texttt{P} &amp; 
-	  mean &amp; -- 
+	  media &amp; -- 
 	  \end{tabular}
 	  \end{center}
 	</para>
@@ -3323,20 +3338,23 @@
       </fnargs>
       <description>
 	<para>
-	  Richiede che sia definito un filtro di Kalman.  Performs a forward,
-	  filtering pass and returns 0 on successful completion or 1 
-	  if numerical problems are encountered.
+	  Richiede che sia definito un filtro di Kalman. Effettua il
+	  passaggio in avanti del filtro e restituisce il valore 0 se
+	  il comando è andato a buon fine oppure 1 se si è verificato
+	  qualche problema numerico.
 	</para>
 	<para>
-	  The optional matrix arguments can be used to retrieve the following
-	  information: <argname>E</argname> gets the matrix of one-step ahead
-	  prediction errors and <argname>V</argname> gets the variance matrix
-	  for these errors; <argname>S</argname> gets the matrix of estimated
-	  values of the state vector and <argname>P</argname> the variance
-	  matrix of these estimates; <argname>G</argname> gets the Kalman
-	  gain.  All of these matrices have <math>T</math> rows, corresponding
-	  to <math>T</math> observations.  For the column dimensions and
-	  further details see <guideref targ="chap:kalman"/>.
+	  Gli argomenti opzionali vengono usati per recuperare le
+	  seguenti informazioni: <argname>E</argname> dà la matrice
+	  degli errori di previsione a un passo in avanti e
+	  <argname>V</argname> la loro matrice di covarianze;
+	  <argname>S</argname> contiene le stime dei valori del
+	  vettore di stato e <argname>P</argname> la loro matrice di
+	  covarianze; <argname>G</argname> contiene il guadagno
+	  (Kalman gain).  Tutte queste matrici hanno <math>T</math>
+	  righe, corrispondenti alle <math>T</math> osservazioni.  Per
+	  le dimensioni colonna e altri dettagli, si veda <guideref
+	  targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -3384,11 +3402,12 @@
       </fnargs>
       <description>
 	<para>
-	  Richiede che sia definito un filtro di Kalman.  Performs a backward,
-	  smoothing pass and returns a matrix holding smoothed estimates of
-	  the state vector.  The optional argument <argname>P</argname> may be
-	  used to retrieve the MSE of the smoothed state.  For details see
-	  <guideref targ="chap:kalman"/>.
+	  Richiede che sia definito un filtro di Kalman.  Effettua un
+	  passaggio all'indietro (smoothing) e ritorna una matrice con
+	  le stime smussate (smoothed) del vettore di stato.  Per
+	  ottenere il MSE dello stato smussato, si può usare
+	  l'argomento opzionale <argname>P</argname>. Per ulteriori
+	  dettagli, si veda <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -3599,34 +3618,34 @@
       </fnargs>
       <description>
 	<para>
-	  Performs locally-weighted polynomial regression and returns
-	  a series holding predicted values of <argname>y</argname>
-	  for each non-missing value of <argname>x</argname>.  The
-	  method is as described by <cite key="cleveland79">William
-	  Cleveland (1979)</cite>.
+	  Effettua una regressione polinomiale ponderata localmente e
+	  ritorna una serie coi valori previsti di
+	  <argname>y</argname> per ogni elemento non mancante di
+	  <argname>x</argname>.  Viene usato il metodo descritto in
+	  <cite key="cleveland79">William Cleveland (1979)</cite>.
 	</para>
 	<para>
-	  The optional arguments <argname>d</argname> and
-	  <argname>q</argname> specify the order of the polynomial in
-	  <argname>x</argname> and the proportion of the data points
-	  to be used in local estimation, respectively.  The default
-	  values are <argname>d</argname> = 1 and <argname>q</argname>
-	  = 0.5. The other acceptable values for <argname>d</argname>
-	  are 0 and 2. Setting <argname>d</argname> = 0 reduces the
-	  local regression to a form of moving average. The value
-	  of <argname>q</argname> must be greater than 0 and cannot
-	  exceed 1; larger values produce a smoother outcome.
+	  Gli argomenti opzionali <argname>d</argname> e
+	  <argname>q</argname> specificano rispettivamente l'ordine
+	  del polinomio in <argname>x</argname> e la proporzione di
+	  punti da usarsi nella stima locale.  I valori predefiniti
+	  sono <argname>d</argname> = 1 e <argname>q</argname> =
+	  0.5. Gli altri valori consentiti per <argname>d</argname>
+	  sono 0 e 2. Con <argname>d</argname> = 0 la regressione
+	  locale si riduce a una forma di media mobile. Il valore di
+	  <argname>q</argname> dev'essere compreso fra 0 e 1; più
+	  grande è il valore, più liscia sarà la stima.
 	</para>
 	<para>
-	  If a non-zero value is given for the <argname>robust</argname>
-	  argument the local regressions are iterated twice, with the
-	  weights being modified based on the residuals from the previous
-	  iteration so as to give less influence to outliers.
+	  Dano all'argomento <argname>robust</argname> un valore
+	  non-zero, le regressioni locali sono effettuate due volte,
+	  con pesi modificati sulla base dei residui dell'iterazione
+	  precedente per ridurre l'effetto degli outlier.
 	</para>
 	<para>
-	  See also <fncref targ="nadarwat"/>, and in addition see
-	  <guideref targ="chap-nonparam"/> for details on
-	  nonparametric methods.
+	  Si veda anche <fncref targ="nadarwat"/>, e pure <guideref
+	  targ="chap-nonparam"/> per dettagli sui metodi
+	  nonparametrici.
 	</para>
       </description>
     </function>
@@ -6123,11 +6142,11 @@
 	  mancanti.
 	</para>
 	<para>
-	  Se, invece, <argname>x</argname> è una lista, restituisce una
-	  serie <math>y</math> tale per cui <math>y</math><sub>t</sub>
-	  l'errore quadratico medio delle variabili nella lista
-	  all'osservazione <math>t</math>, o <lit>NA</lit> if there se
-	  ci sono dei valori mancanti <math>t</math>.
+	  Se, invece, <argname>x</argname> è una lista, restituisce
+	  una serie <math>y</math> tale per cui
+	  <math>y</math><sub>t</sub> l'errore quadratico medio delle
+	  variabili nella lista all'osservazione <math>t</math>, o
+	  <lit>NA</lit> se ci sono dei valori mancanti <math>t</math>.
 	</para>
 	<para>
 	  <seelist> 

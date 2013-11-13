@@ -5626,19 +5626,20 @@
 	assegnati alla famiglia di appartenenza).
       </para>
       <para>
-	L'opzione <opt>aggr</opt> viene usata quando la relazione
-	fra osservazioni nel dataset corrente e nel file di oriogine non è biunivoca.
+	L'opzione <opt>aggr</opt> viene usata quando la relazione fra
+	osservazioni nel dataset corrente e nel file di oriogine non è
+	biunivoca.
       </para>      
       <para>
-	The <opt>tkey</opt> option is applicable only when the current
-	dataset has a time-series structure. It can be used to specify
-	the name of a column containing dates to be matched to the
-	dataset and/or the format in which dates are represented in
-	that column.
+	L'opzione <opt>tkey</opt> è applicabile solo quando il dataset
+	corrente ha una struttura di serie storiche. Viene usato per
+	specificare il nome di una colonna contenete le date da
+	accoppiare al dataset e/o il formato in cui le date sono
+	rappresentate in quella colonna.
       </para>     
       <para>
-	V. anche <cmdref targ="append"/> per alcune semplici operazioni di unione
-	di dataset.
+	V. anche <cmdref targ="append"/> per alcune semplici
+	operazioni di unione di dataset.
       </para>
     </description>
 
