@@ -32,6 +32,7 @@
 # include <omp.h>
 #endif
 
+#if 0 /* let's postpone this for a while */
 #if defined(USE_AVX) || defined(USE_SSE2)
 # define USE_SIMD 1
 # if defined(HAVE_IMMINTRIN_H)
@@ -42,6 +43,7 @@
 #  include <emmintrin.h>
 # endif
 #endif
+#endif /* postpone */
 
 #define SIMD_MIN 16
 
@@ -78,10 +80,12 @@ struct gretl_matrix_block_ {
 #define INFO_INVALID 0xdeadbeef
 #define is_block_matrix(m) (m->info == (matrix_info *) INFO_INVALID)
 
-#if defined(USE_AVX)
-# define mval_malloc(sz) _mm_malloc(sz,32)
-#elif defined(USE_SSE2)
-# define mval_malloc(sz) _mm_malloc(sz,16)
+#ifdef USE_SIMD
+# if defined(USE_AVX)
+#  define mval_malloc(sz) _mm_malloc(sz,32)
+# else
+#  define mval_malloc(sz) _mm_malloc(sz,16)
+# endif
 #else
 # define mval_malloc(sz) malloc(sz)
 #endif

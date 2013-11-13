@@ -38,7 +38,7 @@
 #include "../../rng/SFMT.c"
 
 #if defined(HAVE_POSIX_MEMALIGN) || defined(OS_OSX) || defined(WIN32)
-# define USE_RAND_ARRAY 1 /* faster, if available */
+# define USE_RAND_ARRAY 0 /* faster, but not totally ready */
 #else
 # define USE_RAND_ARRAY 0
 #endif
