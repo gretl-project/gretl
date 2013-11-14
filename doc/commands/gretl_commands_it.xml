@@ -7089,7 +7089,8 @@
         errore; test dei moltiplicatori di Lagrange per la
         non-linearità (logaritmi o quadrati); test di White (con o
         senza i prodotti incrociati) o test di Breusch&ndash;Pagan per
-        l'eteroschedasticità, test LMF per la correlazione seriale (si
+        l'eteroschedasticità (<cite key="breusch-pagan79">Breusch and
+        Pagan, 1979</cite>), test LMF per la correlazione seriale (si
         veda <cite key="kiviet86" p="true">(Kiviet, 1986)</cite>);
         test per il modello ARCH (Autoregressive Conditional
         Heteroskedasticity, si veda anche il comando <cmd>arch</cmd>);
@@ -7106,10 +7107,11 @@
         impostare un ordine di ritardo specifico.
       </para>
        <para>
-	L'opzione <lit>--robust</lit> ha effetto solo se viene scelto il test di
-	Breusch&ndash;Pagan; l'effetto è quello di usare lo stimatore robusto
-        per la varianza proposto da Koenker (1981), rendendo il test meno
-        sensibile all'ipotesi di normalità.
+	L'opzione <lit>--robust</lit> ha effetto solo se viene scelto
+	il test di Breusch&ndash;Pagan; l'effetto è quello di usare lo
+	stimatore robusto per la varianza proposto da <cite
+	key="koenker81">Koenker (1981)</cite>, rendendo il test meno
+	sensibile all'ipotesi di normalità.
       </para>
       <para>
 	L'opzione <lit>--panel</lit> è disponibile solo se il modello viene
