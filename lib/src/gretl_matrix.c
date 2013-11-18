@@ -4638,7 +4638,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 
 #endif /* _OPENMP */
 
-#if 0 /* ifdef(SIMD), but not yet */
+#if defined(USE_SIMD)
     if (k <= 8 && !atr && !btr && !cmod && !is_block_matrix(a) && 
 	!is_block_matrix(b) && !is_block_matrix(c)) {
 	gretl_matrix_simd_mul(a, b, c);
@@ -12979,5 +12979,3 @@ const char **gretl_matrix_get_rownames (const gretl_matrix *m)
 	return NULL;
     }
 }
-
-

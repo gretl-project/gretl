@@ -1018,9 +1018,11 @@ copy_data_to_subsample (DATASET *subset, const DATASET *dset,
     }
 
     /* copy panel time info? */
-    if (dataset_is_panel(subset) && subset->pd == dset->pd) {
-	subset->panel_pd = dset->panel_pd;
-	subset->panel_sd0 = dset->panel_sd0;
+    if (dataset_is_panel(subset)) {
+	if (subset->pd == dset->pd) {
+	    subset->panel_pd = dset->panel_pd;
+	    subset->panel_sd0 = dset->panel_sd0;
+	}
     }
 
     strcpy(subset->stobs, "1");
@@ -1238,6 +1240,20 @@ make_restriction_mask (int mode, const char *s,
     return err;
 }
 
+static void finalize_panel_subset (DATASET *subset)
+{
+    int pdp = subset->pd;
+    int den = 10.0;
+
+    while ((pdp = pdp / 10)) {
+	den *= 10;
+    }
+
+    subset->sd0 = 1.0 + 1.0 / den;
+    ntodate(subset->stobs, 0, subset); 
+    ntodate(subset->endobs, subset->n - 1, subset);
+}    
+
 /* This is also used elsewhere: 
 
    in gui2/session.c, when re-establishing a previously sub-sampled data 
@@ -1301,6 +1317,7 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 		subset->structure = STACKED_TIME_SERIES;
 		subset->n += npad;
 		subset->pd = subset->n / nunits;
+		finalize_panel_subset(subset);
 	    }
 	} else if (nunits == 1 && subset->n == dset->pd) {
 	    /* time series for single panel unit */

@@ -1553,7 +1553,6 @@ static int print_fe_results (panelmod_t *pan,
 			     DATASET *dset,
 			     PRN *prn)
 {
-    double pval;
     int n, maxlen = 0;
     int dfn, i, vi;
 
@@ -2900,12 +2899,9 @@ static int between_model (panelmod_t *pan, const DATASET *dset)
 /* When we automatically add dummy variables to the dataset,
    in estimating a panel model with the --time-dummies option,
    should we delete these when we're done, or leave them
-   in the dataset?
+   in the dataset? 2013-11-18: we'll delete them if the dataset
+   is subsampled, otherwise leave them.
 */
-
-#define CLEAN_UP_DUMMIES 0
-
-#if CLEAN_UP_DUMMIES
 
 static int 
 process_time_dummies (MODEL *pmod, const DATASET *dset, int v)
@@ -2945,8 +2941,6 @@ process_time_dummies (MODEL *pmod, const DATASET *dset, int v)
     return 0;
 }
 
-#endif
-
 static int
 add_dummies_to_list (const int *list, DATASET *dset, 
 		     int **plist)
@@ -2970,7 +2964,7 @@ add_dummies_to_list (const int *list, DATASET *dset,
 
     for (i=2; i<=dset->pd; i++) {
 	sprintf(dname, "dt_%d", i);
-	v = series_index(dset, dname);
+	v = series_greatest_index(dset, dname);
 	if (v == dset->v) {
 	    err = E_DATA;
 	    break;
@@ -3062,9 +3056,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
 MODEL real_panel_model (const int *list, DATASET *dset,
 			gretlopt opt, PRN *prn)
 {
-#if CLEAN_UP_DUMMIES
     int orig_v = dset->v;
-#endif
     MODEL mod;
     panelmod_t pan;
     gretlopt pan_opt = opt;
@@ -3239,11 +3231,9 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	if ((opt & OPT_D) && pan.ntdum > 0) {
 	    maybe_suppress_time_dummies(&mod, pan.ntdum);
 	}
-#if CLEAN_UP_DUMMIES
-	if (opt & OPT_D) {
+	if (complex_subsampled() && (opt & OPT_D)) {
 	    process_time_dummies(&mod, dset, orig_v);
 	}
-#endif
     }
 
     panelmod_free(&pan);
@@ -3252,9 +3242,9 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	mod.errcode = err;
     }
 
-#if CLEAN_UP_DUMMIES
-    dataset_drop_last_variables(dset, dset->v - orig_v);
-#endif
+    if (complex_subsampled()) {
+	dataset_drop_last_variables(dset, dset->v - orig_v);
+    }
 
     return mod;    
 }

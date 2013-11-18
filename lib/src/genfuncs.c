@@ -2538,6 +2538,7 @@ int panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
     int ndum, nnew;
     int n_unitdum = 0;
     int n_timedum = 0;
+    int allnew = 0;
     int newvnum;
     double xx;
 
@@ -2555,7 +2556,12 @@ int panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 	return E_PDWRONG;
     }
 
-    nnew = n_new_dummies(dset, n_unitdum, n_timedum);
+    if (complex_subsampled()) {
+	nnew = ndum;
+	allnew = 1;
+    } else {
+	nnew = n_new_dummies(dset, n_unitdum, n_timedum);
+    }
 
     if (nnew > 0 && prn != NULL) {
 	double sz = nnew * dset->n * 8 / (1024.0 * 1024.0);
@@ -2584,9 +2590,13 @@ int panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 
 	sprintf(vname, "dt_%d", vi);
 
-	dnum = series_index(dset, vname);
-	if (dnum >= orig_v) {
+	if (allnew) {
 	    dnum = newvnum++;
+	} else {
+	    dnum = series_index(dset, vname);
+	    if (dnum >= orig_v) {
+		dnum = newvnum++;
+	    }
 	}
 
 	strcpy(dset->varname[dnum], vname);
@@ -2611,9 +2621,13 @@ int panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 
 	sprintf(vname, "du_%d", vi);
 
-	dnum = series_index(dset, vname);
-	if (dnum >= orig_v) {
+	if (allnew) {
 	    dnum = newvnum++;
+	} else {
+	    dnum = series_index(dset, vname);
+	    if (dnum >= orig_v) {
+		dnum = newvnum++;
+	    }
 	}	
 
 	strcpy(dset->varname[dnum], vname);

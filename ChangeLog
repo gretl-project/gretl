@@ -17,6 +17,8 @@ version 1.9.14, in progress
   building function packages
 - Fix bug: "foreach" loop failing when given a single term that
   is not a named list
+- Fix bug: panel Hausman test producing bad output under some
+  conditions
 
 2013-10-24 version 1.9.13
 - Add Bulgarian, Catalan and Galician translations

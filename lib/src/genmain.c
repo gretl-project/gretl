@@ -404,6 +404,83 @@ int series_index (const DATASET *dset, const char *varname)
     return ret;
 }
 
+/**
+ * series_greatest_index:
+ * @dset: data information struct.
+ * @varname: name of variable to test.
+ *
+ * Returns: the ID number of the variable whose name is given,
+ * or the next available ID number if there is no variable of
+ * that name. In contrast to series_index() this variant searches
+ * down from the greatest current series ID.
+ */
+
+int series_greatest_index (const DATASET *dset, const char *varname)
+{
+    const char *s = varname;
+    int fd = 0, ret = -1;
+
+    if (dset != NULL) {
+	int i;
+	
+	ret = dset->v;
+
+	if (s == NULL || *s == '\0' || isdigit(*s)) {
+	    goto bailout;
+	}
+
+	if (strcmp(s, "const") == 0) {
+	    ret = 0;
+	    goto bailout;
+	}
+
+	if (strchr(s, '.') != NULL) {
+	    ret = try_for_listvar(dset, s);
+	    goto bailout;
+	}
+
+	fd = gretl_function_depth();
+
+	if (fd == 0) {
+	    /* not inside a user function: easy */
+	    for (i=dset->v-1; i>0; i--) { 
+		if (strcmp(dset->varname[i], s) == 0) {
+		    ret = i;
+		    break;
+		}
+	    }
+	} else {
+	    /* The condition for recognizing a series by name, if we're
+	       inside a user function: it must exist at the current level
+	       of function execution, and its tenure at that level must
+	       not just be the result of its being a member of a list
+	       that was passed as an argument.
+	    */
+	    for (i=dset->v-1; i>0; i--) { 
+		if (fd == series_get_stack_level(dset, i) &&
+		    !series_is_listarg(dset, i) && 
+		    strcmp(dset->varname[i], s) == 0) {
+		    ret = i;
+		    break;
+		}
+	    }
+	}
+    }
+
+    if (ret <= 0 && strcmp(s, "const")) {
+	ret = dset->v;
+    }
+
+ bailout:
+
+#if GEN_LEVEL_DEBUG
+    fprintf(stderr, "series_index for '%s', fd = %d: got %d (dset->v = %d)\n", 
+	    s, fd, ret, dset->v);
+#endif 
+
+    return ret;
+}
+
 int current_series_index (const DATASET *dset, const char *vname)
 {
     int v = -1;

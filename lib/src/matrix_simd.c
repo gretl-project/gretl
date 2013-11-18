@@ -19,6 +19,8 @@
 
 /* All code here is conditional on either AVX or SSE */
 
+#define SHOW_SIMD 0
+
 static double *mval_realloc (gretl_matrix *m, int n)
 {
     double *newval = mval_malloc(n * sizeof(double));
@@ -45,6 +47,11 @@ static void gretl_matrix_simd_add_to (gretl_matrix *a,
     int i, imax = n / 4;
     int rem = n % 4;
 
+#if SHOW_SIMD
+    fprintf(stderr, "AVX: gretl_matrix_simd_add_to (%d x %d)\n",
+	    a->rows, a->cols);
+#endif
+
     for (i=0; i<imax; i++) {
 	/* add 4 doubles in parallel */
 	__m256d Ymm_A = _mm256_load_pd(ax);
@@ -68,6 +75,11 @@ static void gretl_matrix_simd_subt_from (gretl_matrix *a,
     const double *bx = b->val;
     int i, imax = n / 4;
     int rem = n % 4;
+
+#if SHOW_SIMD
+    fprintf(stderr, "AVX: gretl_matrix_simd_subt_from (%d x %d)\n",
+	    a->rows, a->cols);
+#endif
 
     for (i=0; i<imax; i++) {
 	/* subtract 4 doubles in parallel */
@@ -94,6 +106,10 @@ static void gretl_matrix_simd_add_to (gretl_matrix *a,
     const double *bx = b->val;
     int i, imax = n / 2;
 
+#if SHOW_SIMD
+    fprintf(stderr, "SSE: gretl_matrix_simd_add_to\n");
+#endif
+
     for (i=0; i<imax; i++) {
 	/* add 2 doubles in parallel */
 	__m128d Xmm_A = _mm_load_pd(ax);
@@ -116,6 +132,10 @@ static void gretl_matrix_simd_subt_from (gretl_matrix *a,
     double *ax = a->val;
     const double *bx = b->val;
     int i, imax = n / 2;
+
+#if SHOW_SIMD
+    fprintf(stderr, "SSE: gretl_matrix_simd_subt_from\n");
+#endif
 
     for (i=0; i<imax; i++) {
 	/* subtract 2 doubles in parallel */
@@ -147,6 +167,11 @@ static void gretl_matrix_simd_add (const gretl_matrix *a,
     int imax = n / 4;
     int rem = n % 4;
 
+#if SHOW_SIMD
+    fprintf(stderr, "AVX: gretl_matrix_simd_add (%d x %d)\n",
+	    a->rows, a->cols);
+#endif
+
     for (i=0; i<imax; i++) {
 	/* process 4 doubles in parallel */
 	__m256d Ymm_A = _mm256_load_pd(ax);
@@ -173,6 +198,11 @@ static void gretl_matrix_simd_subtract (const gretl_matrix *a,
     int i, n = a->rows * a->cols;
     int imax = n / 4;
     int rem = n % 4;
+
+#if SHOW_SIMD
+    fprintf(stderr, "AVX: gretl_matrix_simd_subtract (%d x %d)\n",
+	    a->rows, a->cols);
+#endif
 
     for (i=0; i<imax; i++) {
 	/* process 4 doubles in parallel */
@@ -201,6 +231,10 @@ static void gretl_matrix_simd_add (const gretl_matrix *a,
     double *cx = c->val;
     int i, n = a->rows * a->cols;
     int imax = n / 2;
+
+#if SHOW_SIMD
+    fprintf(stderr, "SSE: gretl_matrix_simd_add\n");
+#endif
 			
     for (i=0; i<imax; i++) {
 	/* process 2 doubles in parallel */
@@ -227,6 +261,10 @@ static void gretl_matrix_simd_subtract (const gretl_matrix *a,
     double *cx = c->val;
     int i, n = a->rows * a->cols;
     int imax = n / 2;
+
+#if SHOW_SIMD
+    fprintf(stderr, "SSE: gretl_matrix_simd_subtract\n");
+#endif
 			
     for (i=0; i<imax; i++) {
 	/* process 2 doubles in parallel */
@@ -246,8 +284,42 @@ static void gretl_matrix_simd_subtract (const gretl_matrix *a,
 
 #endif /* AVX vs SSE */
 
-#if 0 /* not ready yet */
 #ifdef USE_AVX
+
+/* fast but restrictive: both A and B must be 4 x 4 */
+
+void gretl_matrix_avx_mul4 (const double *aval,
+			    const double *bval,
+			    double *cval)
+{
+    __m256d b1, b2, b3, b4;
+    __m256d mul, col;
+    int j;
+
+    /* load the columns of A */
+    __m256d a1 = _mm256_load_pd(aval);
+    __m256d a2 = _mm256_load_pd(aval + 4);
+    __m256d a3 = _mm256_load_pd(aval + 8);
+    __m256d a4 = _mm256_load_pd(aval + 12);
+
+    for (j=0; j<4; j++) {
+	/* broadcast the elements of col j of B */
+        b1 = _mm256_broadcast_sd(&bval[4*j]);
+        b2 = _mm256_broadcast_sd(&bval[4*j + 1]);
+        b3 = _mm256_broadcast_sd(&bval[4*j + 2]);
+        b4 = _mm256_broadcast_sd(&bval[4*j + 3]);
+
+	mul = _mm256_mul_pd(b1, a1);
+	b1  = _mm256_mul_pd(b2, a2);
+	col = _mm256_add_pd(mul, b1);
+	mul = _mm256_mul_pd(b3, a3);
+        b2  = _mm256_mul_pd(b4, a4);
+	b3  = _mm256_add_pd(mul, b2);
+	col = _mm256_add_pd(col, b3);
+
+	_mm256_store_pd(&cval[4*j], col);
+    }
+}
 
 /* Note: this is probably usable only for k <= 8 (shortage of AVX
    registers). It is much faster if m is a multiple of 4; n is
@@ -264,9 +336,20 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
     const double *aval = A->val;
     const double *bval = B->val;
     double *cval = C->val;
-    int hmax = m / 4;
-    int hrem = m % 4;
-    int i, j;
+    int hmax, hrem, i, j;
+
+#if SHOW_SIMD
+    fprintf(stderr, "AVX: gretl_matrix_simd_mul (MNK = %d, %d, %d)\n",
+	    m, n, k);
+#endif
+
+    if (m == 4 && n == 4 && k == 4) {
+	gretl_matrix_avx_mul4(aval, bval, cval);
+	return;
+    }
+
+    hmax = m / 4;
+    hrem = m % 4;
 
     if (m >= 4) {
 	__m256d a[k], b[k];
@@ -398,6 +481,10 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
     int hrem = m % 2;
     int i, j;
 
+#if SHOW_SIMD
+    fprintf(stderr, "SSE: gretl_matrix_simd_mul\n");
+#endif
+
     if (m >= 2) {
 	__m128d a[k], b[k];
 	__m128d mult, ccol;
@@ -465,4 +552,3 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
 }
 
 #endif /* AVX vs SIMD */
-#endif /* not ready */
