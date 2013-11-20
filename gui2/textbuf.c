@@ -157,21 +157,21 @@ gchar *textview_get_text (GtkWidget *view)
 gchar *textview_get_trimmed_text (GtkWidget *view)
 {
     gchar *s = textview_get_text(view);
+    gchar *p = s;
     gchar *ret = NULL;
 
-    if (s != NULL && *s != '\0') {
-	while (isspace(*s)) s++;
-
-	if (*s != '\0') {
-	    int i, len = strlen(s);
+    if (p != NULL && *p != '\0') {
+	while (isspace(*p)) p++;
+	if (*p != '\0') {
+	    int i, len = strlen(p);
 
 	    for (i=len-1; i>0; i--) {
-		if (!isspace(s[i])) break;
+		if (!isspace(p[i])) break;
 		len--;
 	    }
 
 	    if (len > 0) {
-		ret = g_strndup(s, len);
+		ret = g_strndup(p, len);
 	    }
 	}
     }

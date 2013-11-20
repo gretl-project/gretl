@@ -718,11 +718,20 @@ void set_sample_label (DATASET *dset)
     tsubset = dset->t1 > 0 || dset->t2 < dset->n - 1;
 
     /* construct label showing summary of dataset/sample info
-       (this goes at the foot of the window) */
-    
+       (this goes at the foot of the window) 
+    */
+
     if (complex_subsampled() && !tsubset && dataset_is_cross_section(dset)) {
 	sprintf(tmp, _("Undated: Full range n = %d; current sample"
 		       " n = %d"), get_full_length_n(), dataset->n);
+	gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
+    } else if (complex_subsampled() && dataset_is_panel(dset)) {
+	char t1str[OBSLEN], t2str[OBSLEN];
+	const char *pdstr = get_pd_string(dset);
+
+	ntodate(t1str, dset->t1, dset);
+	ntodate(t2str, dset->t2, dset);
+	sprintf(tmp, _("%s; sample %s - %s"), _(pdstr), t1str, t2str);
 	gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
     } else {
 	char t1str[OBSLEN], t2str[OBSLEN];
@@ -732,7 +741,7 @@ void set_sample_label (DATASET *dset)
 	    /* it's too verbose to print both full range and sample */
 	    ntodate(t1str, dset->t1, dset);
 	    ntodate(t2str, dset->t2, dset);
-	    sprintf(tmp, _("%s; sample %s - %s"), pdstr, t1str, t2str);
+	    sprintf(tmp, _("%s; sample %s - %s"), _(pdstr), t1str, t2str);
 	    gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
 	} else {
 	    ntodate(t1str, 0, dset);

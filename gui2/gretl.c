@@ -1070,23 +1070,39 @@ static int get_line_pos (GtkTreeModel *mod)
     return pos;
 }
 
+static int panel_dummy_first_sibling (const char *s, gretlopt opt)
+{
+    int i;
+
+    if (sscanf(s, "%d", &i) == 1 && i > 1) {
+	char numstr[16];
+
+	sprintf(numstr, "%d", i);
+	if (strlen(s) == strlen(numstr)) {
+	    if (opt == OPT_T) {
+		return current_series_index(dataset, "dt_1");
+	    } else {
+		return current_series_index(dataset, "du_1");
+	    }
+	}
+    }
+
+    return 0;
+}
+
 static int get_lag_or_dummy_parent (int v)
 {
     const char *vname = dataset->varname[v];
-    int i = 0, pv = 0;
+    int pv = 0;
 
     if (series_get_lag(dataset, v) != 0) {
 	pv = series_get_parent_id(dataset, v);
     } else if (series_get_transform(dataset, v) == DUMMIFY) {
 	pv = series_get_parent_id(dataset, v);
     } else if (!strncmp(vname, "dt_", 3)) {
-	if (sscanf(vname + 3, "%d", &i) && i > 1) {
-	    pv = current_series_index(dataset, "dt_1");
-	}
+	pv = panel_dummy_first_sibling(vname + 3, OPT_T);
     } else if (!strncmp(vname, "du_", 3)) {
-	if (sscanf(vname + 3, "%d", &i) && i > 1) {
-	    pv = current_series_index(dataset, "du_1");
-	}
+	pv = panel_dummy_first_sibling(vname + 3, OPT_U);
     }
 
     if (pv < 0 || pv >= dataset->v) {

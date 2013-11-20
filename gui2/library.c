@@ -7680,6 +7680,7 @@ static gretlopt store_action_to_opt (const char *fname, int action,
 
     switch (action) {
     case SAVE_DATA:
+    case SAVE_DATA_AS:
 	*exporting = 0;
 	break;
     case EXPORT_OCTAVE:  
