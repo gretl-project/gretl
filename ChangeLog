@@ -1,4 +1,4 @@
-version 1.9.14, in progress
+2013-11-21 version 1.9.14
 - Use daily dates when plotting daily/weekly data and there
   are not too many observations
 - Line-numbering in the script editor: make this a preference
@@ -6,7 +6,9 @@ version 1.9.14, in progress
 - mols() function: parallelize some of the work for builds
   with openmp enabled
 - GUI: provide a menu item for adding a panel unit index
-- Fix bug: the build of gnulot included in the gretl-quartz
+- GUI: "/File/Save data as" now switches the current dataset
+  to the name of the saved one
+- Fix bug: the build of gnuplot included in the gretl-quartz
   package (for Mac) did not work properly in stand-alone mode
 - Fix bug: the importer for SAS "xport" files over-counted the
   number of observations, leading to out-of-memory failure on 

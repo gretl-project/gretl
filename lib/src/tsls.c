@@ -1754,6 +1754,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	/* robust standard errors called for */
 	qr_tsls_vcv(&tsls, dset, opt);
 	if (tsls.errcode) {
+	    fprintf(stderr, "qr_tsls_vcv: err = %d\n", tsls.errcode);
 	    goto bailout;
 	}	
     } 

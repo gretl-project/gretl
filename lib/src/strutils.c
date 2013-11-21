@@ -949,6 +949,40 @@ int gretl_namechar_spn (const char *s)
 }
 
 /**
+ * double_quote_position:
+ * @s: the source string.
+ *
+ * Returns: the 0-based index of the position of the next
+ * unescaped double-quote character in @s, or -1 if no
+ * such character is found.
+ */
+
+int double_quote_position (const char *s)
+{
+    int i, j, ns, n = -1;
+
+    for (i=0; s[i]; i++) {
+	if (s[i] == '"') {
+	    ns = 0;
+	    for (j=i-1; j>=0; j--) {
+		if (s[j] == '\\') {
+		    ns++;
+		} else {
+		    break;
+		}
+	    }
+	    if (ns % 2 == 0) {
+		/* got an unescaped double-quote */
+		n = i;
+		break;
+	    }	    
+	}
+    }
+
+    return n;
+}
+
+/**
  * count_fields:
  * @s: the string to process.
  * @sep: string containing the character(s) to count as

@@ -211,7 +211,7 @@ static int gen_arg_val (const char *s, DATASET *dset,
     return err;
 }
 
-/* dup argv (s) up to the next free comma */
+/* dup argv (@s) up to the next free comma */
 
 static char *get_next_arg (const char *s, int *len, int *err)
 {
@@ -1218,6 +1218,10 @@ static int split_printf_line (const char *s, char *targ, int *sp,
 	*sp = 1;
     }
 
+#if PSDEBUG
+    fprintf(stderr, "split_printf_line: s='%s', sp=%d\n", s, *sp);
+#endif
+
     if (*sp) {
 	/* need a target name */
 	s += strspn(s, " ");
@@ -1237,26 +1241,23 @@ static int split_printf_line (const char *s, char *targ, int *sp,
     }
 
     s += strspn(s, " ");
-    if (*s != '"' || *(s+1) == '\0') {
+    if (*s != '"') {
 	return E_PARSE;
     }
 
     s++;
     p = s;
+    n = double_quote_position(s);
 
-    n = 0;
-    while (*s) {
-	if (*s == '"' && *(s-1) != '\\') {
-	    break;
-	}
-	n++;
-	s++;
-    }
-
-    if (n == 0) {
+    if (n < 0) {
+	/* malformed format string */
+	return E_PARSE;
+    } else if (n == 0) {
 	/* empty format string */
 	return 0;
     }
+
+    s += n;
 
     *format = gretl_strndup(p, n);
     if (*format == NULL) {
@@ -1316,7 +1317,8 @@ int do_printscan_command (const char *line, DATASET *dset, PRN *prn)
     int ci, err = 0;
 
 #if USE_COMMAND_FORM
-    if (strncmp(line, "ssc", 3)) {
+    if (strncmp(line, "ss", 2)) {
+	/* not sscanf() */
 	return printf_driver(line, dset, prn);
     }
 #endif

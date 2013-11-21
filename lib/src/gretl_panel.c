@@ -423,9 +423,7 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
     gretl_matrix_copy_values(V, W);
     err = gretl_matrix_cholesky_decomp(V);
     if (err) {
-#if 0
-	gretl_matrix_print(W, "W, not p.d.");
-#endif
+	fprintf(stderr, "beck_katz_vcv: matrix W is not p.d.\n");
 	gretl_model_set_int(pmod, "panel_bk_failed", 1);
 	goto bailout;
     }
@@ -553,6 +551,7 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 
     XX = panel_model_xpxinv(pmod, &err);
     if (err) {
+	fprintf(stderr, "panel_robust_vcv: failed at panel_model_xpxinv\n");
 	goto bailout;
     }
 

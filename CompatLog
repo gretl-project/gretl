@@ -1,3 +1,7 @@
+2013-11-21 version 1.9.14
+
+No intentional backward-incompatible changes
+
 2013-10-24 version 1.9.13
 
 The default criterion used in connection with the --test-down

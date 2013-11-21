@@ -38,7 +38,7 @@
 #include "../../rng/SFMT.c"
 
 #if defined(HAVE_POSIX_MEMALIGN) || defined(OS_OSX) || defined(WIN32)
-# define USE_RAND_ARRAY 0 /* faster, but not totally ready */
+# define USE_RAND_ARRAY 0 /* faster, but maybe not totally ready */
 #else
 # define USE_RAND_ARRAY 0
 #endif
@@ -467,6 +467,13 @@ union wraprand {
     gchar c[4];
 };
 
+static union wraprand wr;
+static int wr_i;
+
+#if defined(_OPENMP) && !defined(OS_OSX)
+#pragma omp threadprivate(wr, wr_i)
+#endif
+
 /* Split a 32-bit random value into 4 octets: each octet
    provides a 7-bit value for indexing into the Ziggurat plus a
    sign bit. Load a new guint32 when the material is exhausted.
@@ -479,26 +486,23 @@ union wraprand {
 
 static guint32 gretl_rand_octet (guint32 *sign)
 {
-    static union wraprand wr;
-    static int i;
-
     if (sign == NULL) {
-	i = 0;
+	wr_i = 0;
 	return 0;
     }
 
-    if (i == 0) {
+    if (wr_i == 0) {
 	if (use_sfmt) {
 	    wr.u = sfmt_rand32();
 	} else {
 	    wr.u = g_rand_int(gretl_GRand);
 	}
-	i = 4;
+	wr_i = 4;
     }
 
-    *sign = wr.c[--i] & 0x80;
+    *sign = wr.c[--wr_i] & 0x80;
 
-    return wr.c[i] & 0x07F;
+    return wr.c[wr_i] & 0x07F;
 }
 
 static double ran_normal_ziggurat (void)

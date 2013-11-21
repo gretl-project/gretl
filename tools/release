@@ -11,7 +11,7 @@ Local:
   to go, for building RPM
 * Build the gretl RPM
 * Make the MS Windows installer
-* Make the Mac OS X installers (intel and ppc)
+* Make the Mac OS X installers
 * Get all the packages in place for upload to SF.
 
 Remote:
