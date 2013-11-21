@@ -5033,8 +5033,14 @@ static void display_tx_output (const char *fname, int graph_ok,
 	    } 
 	}
 
-	/* ensure correct "free" behaviour */
-	buf = gretl_strdup(gbuf);
+	if (!g_utf8_validate(gbuf, -1, NULL)) {
+	    gsize bytes;
+
+	    buf = g_convert(gbuf, -1, "UTF-8", "ISO-8859-1", 
+			    NULL, &bytes, NULL);
+	} else {
+	    buf = gretl_strdup(gbuf);
+	}
 	g_free(gbuf);
 
 	prn = gretl_print_new_with_buffer(buf);
