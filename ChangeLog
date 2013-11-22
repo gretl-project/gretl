@@ -1,3 +1,6 @@
+version 1.9.15, in progress
+- Enable use of arrays in the SFMT random number generator
+
 2013-11-21 version 1.9.14
 - Use daily dates when plotting daily/weekly data and there
   are not too many observations
