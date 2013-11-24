@@ -655,7 +655,6 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
     int i, t, err = 0;
 
     targ->ci = POISSON;
-    
     gretl_model_set_int(targ, "iters", iter);
 
     if (oinfo != NULL) {
@@ -706,6 +705,55 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
     return err;
 }
 
+/* If the Poisson specification does not include a constant term we
+   can't use the nice short-cut that's available otherwise, so here
+   we run an auxiliary regression to get a proper starting point for
+   the iteratively weighted least squares routine.
+*/
+
+static int get_noconst_estimates (MODEL *pmod, DATASET *dset, int tmpno)
+{
+    int yno = pmod->list[1];
+    double *tmp = dset->Z[tmpno];
+    double *y = dset->Z[yno];
+    MODEL logmod;
+    int *tmplist;
+    int i, t, err = 0;
+
+    tmplist = gretl_list_copy(pmod->list);
+    if (tmplist == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (na(pmod->uhat[t])) {
+	    tmp[t] = NADBL;
+	} else {
+	    tmp[t] = log(y[t] + 1);
+	}
+    }
+
+    tmplist[1] = tmpno;
+    logmod = lsq(tmplist, dset, OLS, OPT_A);
+    err = logmod.errcode;
+
+    if (!err) {
+	for (i=0; i<pmod->ncoeff; i++) {
+	    pmod->coeff[i] = logmod.coeff[i];
+	}
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!na(pmod->uhat[t])) {
+		pmod->yhat[t] = exp(logmod.yhat[t]);
+	    }
+	}
+    }
+
+    free(tmplist);
+    clear_model(&logmod);    
+
+    return err;
+}
+
 static int do_poisson (MODEL *pmod, offset_info *oinfo, 
 		       DATASET *dset, gretlopt opt, 
 		       PRN *prn)
@@ -727,6 +775,7 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
     dset->t1 = pmod->t1;
     dset->t2 = pmod->t2;
 
+    /* list for iterated WLS */
     local_list = gretl_list_new(pmod->list[0] + 1);
     if (local_list == NULL) {
 	pmod->errcode = E_ALLOC;
@@ -741,26 +790,37 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
     /* the original dependent variable */
     y = dset->Z[pmod->list[1]];
 
-    /* weighting variable (first newly added var) */
+    /* weighting variable (the first newly added var) */
     local_list[1] = origv;
     wgt = dset->Z[origv];
 
-    /* dependent variable for GNR (second newly added var) */
+    /* dependent variable for GNR (the second newly added var) */
     local_list[2] = origv + 1;
     depvar = dset->Z[origv + 1];
-    
-    for (i=3; i<=local_list[0]; i++) { 
-	/* the original independent vars */
-	local_list[i] = pmod->list[i-1];
-    }    
 
-    pmod->coeff[0] = log(pmod->ybar);
-    if (oinfo != NULL) {
-	pmod->coeff[0] -= log(oinfo->mean);
+#if PDEBUG
+    strcpy(dset->varname[origv], "GNRweight");
+    strcpy(dset->varname[origv+1], "GNRy");
+#endif
+
+    for (i=3; i<=local_list[0]; i++) { 
+	/* insert the original independent vars */
+	local_list[i] = pmod->list[i-1];
     }
 
-    for (i=1; i<pmod->ncoeff; i++) { 
-	pmod->coeff[i] = 0.0;
+    if (pmod->ifc) {
+	pmod->coeff[0] = log(pmod->ybar);
+	if (oinfo != NULL) {
+	    pmod->coeff[0] -= log(oinfo->mean);
+	}
+	for (i=1; i<pmod->ncoeff; i++) { 
+	    pmod->coeff[i] = 0.0;
+	}
+    } else {
+	pmod->errcode = get_noconst_estimates(pmod, dset, origv);
+	if (pmod->errcode) {
+	    goto bailout;
+	}
     }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -768,21 +828,27 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 	    depvar[t] = NADBL;
 	    wgt[t] = NADBL;
 	} else {
-	    pmod->yhat[t] = pmod->ybar;
-	    if (oinfo != NULL) {
-		pmod->yhat[t] *= oinfo->x[t] / oinfo->mean;
+	    if (pmod->ifc) {
+		pmod->yhat[t] = pmod->ybar;
+		if (oinfo != NULL) {
+		    pmod->yhat[t] *= oinfo->x[t] / oinfo->mean;
+		}
+	    } else if (oinfo != NULL) {
+		pmod->yhat[t] *= oinfo->x[t];
 	    }
 	    depvar[t] = y[t] / pmod->yhat[t] - 1.0;
 	    wgt[t] = pmod->yhat[t];
 	}
     }
 
-    pputc(prn, '\n');
+    if (prn != NULL) 
+	pputc(prn, '\n');
 
     while (iter < POISSON_MAX_ITER && crit > POISSON_TOL) {
 
 	iter++;
 
+	/* weighted least squares */
 	tmpmod = lsq(local_list, dset, WLS, OPT_A);
 
 	if (tmpmod.errcode) {
@@ -792,7 +858,19 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 	    break;
 	}
 
-	crit = tmpmod.nobs * tmpmod.rsq;
+#if PDEBUG
+	printmodel(&tmpmod, dset, OPT_S, prn);
+#endif
+
+	if (pmod->ifc) {
+	    crit = tmpmod.nobs * tmpmod.rsq;
+	} else {
+	    /* use sum of squared gradients? */
+	    crit = 0.0;
+	    for (i=0; i<tmpmod.ncoeff; i++) { 
+		crit += tmpmod.coeff[i] * tmpmod.coeff[i];
+	    }
+	}
 
 	if (prn != NULL) {
 	    double ll = poisson_ll(y, pmod->yhat, pmod->t1, pmod->t2);
@@ -803,19 +881,14 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 
 	for (i=0; i<tmpmod.ncoeff; i++) { 
 	    pmod->coeff[i] += tmpmod.coeff[i];
-#if PDEBUG
-	    fprintf(stderr, "coeff[%d] = %g,\tgrad[%d] = %g\n", 
-		    i, pmod->coeff[i], i, tmpmod.coeff[i]);
-#endif
 	}
 
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (na(pmod->uhat[t])) {
-		continue;
+	    if (!na(pmod->uhat[t])) {
+		pmod->yhat[t] *= exp(tmpmod.yhat[t]);
+		depvar[t] = y[t] / pmod->yhat[t] - 1;
+		wgt[t] = pmod->yhat[t];
 	    }
-	    pmod->yhat[t] *= exp(tmpmod.yhat[t]);
-	    depvar[t] = y[t] / pmod->yhat[t] - 1;
-	    wgt[t] = pmod->yhat[t];
 	}
 
 	if (crit > POISSON_TOL) {
