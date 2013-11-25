@@ -9,7 +9,21 @@ needed for building libgretl, gretlcli and gretl_x11.
 It is organized by Linux distribution and expects your contributions 
 to validate and expand to new distributions.
 
-Hélio Guilherme, 23 September 2011 
+Helio Guilherme, 23 September 2011 
+-----
+
+Fedora 19              (contrib. 2013-11-23)
+# dependencies
+sudo yum install gcc gmp-devel mpfr-devel fftw3-devel lapack-devel \
+gnuplot libxml2-devel curl-devel readline-devel gtksourceview3-devel
+
+#optional (did not work)
+sudo yum install libgsf-devel
+
+# documentation build (optional)
+sudo yum install texlive libxslt-devel texlive-appendix 
+# language dependency for example
+texlive-babel-portuges
 
 Linux Mint 12          (contrib. 2012-02-26)
 Ubuntu oneiric (11.10) (contrib. 2012-06-10, helio_guilherme@hotmail.com)
