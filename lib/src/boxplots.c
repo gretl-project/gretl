@@ -502,7 +502,8 @@ static void get_box_y_range (PLOTGROUP *grp, double gyrange,
 }
 
 static int write_gnuplot_boxplot (PLOTGROUP *grp, 
-				  gretlopt opt)
+				  gretlopt opt, 
+				  const char **labels)
 {
     FILE *fp = NULL;
     BOXPLOT *bp;
@@ -569,7 +570,11 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp,
 	    fputs("set xtics (", fp);
 	    for (i=0; i<n; i++) {
 		if (opt & OPT_Z) {
-		    fprintf(fp, "\"%g\" %d", grp->dvals->val[i], i+1);
+		    if (labels==NULL) {
+			fprintf(fp, "\"%g\" %d", grp->dvals->val[i], i+1);
+		    } else {
+			fprintf(fp, "\"%s\" %d", labels[i], i+1);
+		    }
 		} else {
 		    fprintf(fp, "\"%s\" %d", grp->plots[i].varname, i+1);
 		}
@@ -712,6 +717,7 @@ static int transcribe_array_factorized (PLOTGROUP *grp, int i,
 
 static int factorized_boxplot_check (const int *list, 
 				     char **bools, 
+				     int *haslabels,
 				     const DATASET *dset)
 {
     int err = 0;
@@ -727,6 +733,8 @@ static int factorized_boxplot_check (const int *list,
 			       "which is discrete"));
 	    err = E_DATA;
 	}
+
+	*haslabels = is_string_valued(dset, v2);
     }
 
     return err;
@@ -757,6 +765,8 @@ static int real_boxplots (const int *list, char **bools,
     double lim = NADBL;
     int i, k, np;
     int err = 0;
+    int haslabels;
+    const char **labels = NULL;
 
     if (opt & OPT_L) {
 	/* we should have an explicit outlier limit */
@@ -778,10 +788,15 @@ static int real_boxplots (const int *list, char **bools,
     }
 
     if (opt & OPT_Z) {
-	err = factorized_boxplot_check(list, bools, dset);
+	err = factorized_boxplot_check(list, bools, &haslabels, dset);
 	if (err) {
 	    return err;
 	} 
+
+	if (haslabels) {
+	    int n_labels;
+	    labels = series_get_string_vals(dset, list[2], &n_labels);
+	}
     } 
 
     grp = plotgroup_new(list, literal, dset, lim, opt);
@@ -877,7 +892,7 @@ static int real_boxplots (const int *list, char **bools,
 	if (!do_intervals(grp)) {
 	    set_show_mean(grp);
 	}
-	err = write_gnuplot_boxplot(grp, opt);
+	err = write_gnuplot_boxplot(grp, opt, labels);
     }
 
     plotgroup_destroy(grp);   
