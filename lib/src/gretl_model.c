@@ -3472,6 +3472,9 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_RE,
       N_("LR test for rho = 0"), 
       NULL },
+    { GRETL_TEST_WITHIN_F,
+      N_("Joint test on named regressors"),
+      NULL },
     { GRETL_TEST_MAX, NULL, NULL }
 }; 
 
@@ -3598,7 +3601,7 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
 	}
     }
 
-    if (H0 == NULL) {
+    if (H0 == NULL && test->type != GRETL_TEST_WITHIN_F) {
 	return;
     }    
 
@@ -3607,6 +3610,10 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
 	if (tex_format(prn)) {
 	    pputc(prn, '-');
 	}
+    }
+
+    if (H0 == NULL) {
+	return;
     }
 
     if (plain_format(prn)) {

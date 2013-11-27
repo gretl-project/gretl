@@ -111,6 +111,7 @@ typedef enum {
     ORTHDEV,
     OUTFILE,
     PANEL,
+    PARALLEL,
     PCA,
     PERGM,
     PLOT,    

@@ -2886,6 +2886,8 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	/* format F-stat and get its p-value */
 	if (tex) {
 	    sprintf(teststr, "$F(%d, %d)$", pmod->dfn, pmod->dfd);
+	} else if (pmod->ci == PANEL && (pmod->opt & OPT_F)) {
+	    sprintf(teststr, A_("LSDV F(%d, %d)"), pmod->dfn, pmod->dfd);
 	} else {
 	    sprintf(teststr, "F(%d, %d)", pmod->dfn, pmod->dfd);
 	}
@@ -2910,6 +2912,10 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     } else if (COUNT_MODEL(pmod->ci) || binary_model(pmod)) {
 	key[4] = (tex)? N_("McFadden $R^2$") : 
 	    N_("McFadden R-squared");  /* 22: McFadden's pseudo-R-squared */
+    } else if (pmod->ci == PANEL && (pmod->opt & OPT_F)) {
+	/* 22: panel, fixed effects */
+	key[4] = (tex)? N_("LSDV $R^2$") : N_("LSDV R-squared");
+	key[5] = (tex)? N_("Within $R^2$") : N_("Within R-squared");
     }
 
     if (pmod->ci == ARBOND || pmod->ci == DPANEL) {

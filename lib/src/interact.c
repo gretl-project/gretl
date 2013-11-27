@@ -314,136 +314,137 @@ static int catch_system_alias (CMD *cmd)
     return cmd->ci;
 }
 
-#define REQUIRES_PARAM(c) (c == DATAMOD || \
-                           c == FUNC || \
-                           c == LOOP || \
-                           c == MAKEPKG || \
-			   c == MODPRINT || \
-                           c == NULLDATA || \
+#define REQUIRES_PARAM(c) (c == DATAMOD ||	\
+                           c == FUNC ||		\
+                           c == LOOP ||		\
+                           c == MAKEPKG ||	\
+			   c == MODPRINT ||	\
+                           c == NULLDATA ||	\
                            c == SETMISS)
 
-#define REQUIRES_ORDER(c) (c == ADF || \
-                           c == ARCH || \
-                           c == COINT || \
-                           c == COINT2 || \
-                           c == KPSS || \
-			   c == LEVINLIN || \
-                           c == NULLDATA || \
-                           c == VAR || \
+#define REQUIRES_ORDER(c) (c == ADF ||		\
+                           c == ARCH ||		\
+                           c == COINT ||	\
+                           c == COINT2 ||	\
+                           c == KPSS ||		\
+			   c == LEVINLIN ||	\
+                           c == NULLDATA ||	\
+                           c == VAR ||		\
                            c == VECM)
 
-#define NO_VARLIST(c) (c == APPEND || \
-                       c == BREAK || \
-                       c == CHOW || \
-		       c == CLEAR || \
-	               c == CUSUM || \
-                       c == DATA || \
-                       c == END || \
-	               c == ENDLOOP || \
-                       c == ESTIMATE || \
-	               c == EQNPRINT || \
-	               c == FCAST || \
-		       c == FOREIGN || \
-                       c == FUNC || \
-                       c == FUNCERR || \
-                       c == FUNCRET || \
-		       c == FUNDEBUG || \
-	               c == GENR || \
-                       c == GMM || \
-		       c == GRAPHPG || \
-	               c == HAUSMAN || \
-                       c == HELP || \
-                       c == INCLUDE || \
-    	               c == INFO || \
-		       c == JOIN || \
-                       c == KALMAN || \
-                       c == LEVERAGE || \
-                       c == LOOP || \
-		       c == MAKEPKG || \
-		       c == MARKERS || \
-                       c == MLE || \
-                       c == MODELTAB || \
-                       c == MODPRINT || \
-                       c == MODTEST || \
-                       c == NLS || \
-                       c == NULLDATA || \
-		       c == OPEN || \
-                       c == OUTFILE || \
-                       c == PRINTF || \
-	               c == PVAL || \
-                       c == QLRTEST || \
-	               c == QUIT || \
-                       c == RENAME || \
-                       c == RESET || \
-                       c == RESTRICT || \
-	               c == RUN || \
-                       c == SET || \
-                       c == SETINFO || \
-	               c == SETOBS || \
-	               c == SHELL || \
-                       c == SPRINTF || \
-		       c == SSCANF ||  \
-                       c == SYSTEM || \
-                       c == TABPRINT || \
-                       c == VARLIST || \
+#define NO_VARLIST(c) (c == APPEND ||		\
+                       c == BREAK ||		\
+                       c == CHOW ||		\
+		       c == CLEAR ||		\
+	               c == CUSUM ||		\
+                       c == DATA ||		\
+                       c == END ||		\
+	               c == ENDLOOP ||		\
+                       c == ESTIMATE ||		\
+	               c == EQNPRINT ||		\
+	               c == FCAST ||		\
+		       c == FOREIGN ||		\
+                       c == FUNC ||		\
+                       c == FUNCERR ||		\
+                       c == FUNCRET ||		\
+		       c == FUNDEBUG ||		\
+	               c == GENR ||		\
+                       c == GMM ||		\
+		       c == GRAPHPG ||		\
+	               c == HAUSMAN ||		\
+                       c == HELP ||		\
+                       c == INCLUDE ||		\
+    	               c == INFO ||		\
+		       c == JOIN ||		\
+                       c == KALMAN ||		\
+                       c == LEVERAGE ||		\
+                       c == LOOP ||		\
+		       c == MAKEPKG ||		\
+		       c == MARKERS ||		\
+                       c == MLE ||		\
+                       c == MODELTAB ||		\
+                       c == MODPRINT ||		\
+                       c == MODTEST ||		\
+                       c == NLS ||		\
+                       c == NULLDATA ||		\
+		       c == OPEN ||		\
+                       c == OUTFILE ||		\
+		       c == PARALLEL ||		\
+                       c == PRINTF ||		\
+	               c == PVAL ||		\
+                       c == QLRTEST ||		\
+	               c == QUIT ||		\
+                       c == RENAME ||		\
+                       c == RESET ||		\
+                       c == RESTRICT ||		\
+	               c == RUN ||		\
+                       c == SET ||		\
+                       c == SETINFO ||		\
+	               c == SETOBS ||		\
+	               c == SHELL ||		\
+                       c == SPRINTF ||		\
+		       c == SSCANF ||		\
+                       c == SYSTEM ||		\
+                       c == TABPRINT ||		\
+                       c == VARLIST ||		\
                        c == VIF)
 
-#define USES_LISTSEP(c) (c == AR || \
-                         c == ARBOND || \
-                         c == ARMA || \
-                         c == BIPROBIT || \
-                         c == COINT2 || \
-			 c == DPANEL ||	\
-                         c == EQUATION || \
-                         c == GARCH || \
-                         c == HECKIT || \
-                         c == IVREG || \
-                         c == MPOLS || \
-                         c == POISSON || \
-			 c == NEGBIN ||	\
-			 c == DURATION || \
-                         c == PRINT || \
-                         c == SCATTERS || \
-                         c == VAR || \
-                         c == VECM || \
+#define USES_LISTSEP(c) (c == AR ||		\
+                         c == ARBOND ||		\
+                         c == ARMA ||		\
+                         c == BIPROBIT ||	\
+                         c == COINT2 ||		\
+			 c == DPANEL ||		\
+                         c == EQUATION ||	\
+                         c == GARCH ||		\
+                         c == HECKIT ||		\
+                         c == IVREG ||		\
+                         c == MPOLS ||		\
+                         c == POISSON ||	\
+			 c == NEGBIN ||		\
+			 c == DURATION ||	\
+                         c == PRINT ||		\
+                         c == SCATTERS ||	\
+                         c == VAR ||		\
+                         c == VECM ||		\
                          c == XTAB)
 
-#define DOUBLE_SEP_OK(c) (c == ARBOND || \
-                          c == DPANEL || \
-                          c == ARMA || \
-                          c == COINT2 || \
+#define DOUBLE_SEP_OK(c) (c == ARBOND ||	\
+                          c == DPANEL ||	\
+                          c == ARMA ||		\
+                          c == COINT2 ||	\
 			  c == VECM) 
 
-#define NEEDS_LISTSEP(c) (c == AR || \
-                          c == ARBOND || \
-                          c == ARMA || \
-			  c == DPANEL || \
-                          c == GARCH || \
-                          c == HECKIT || \
+#define NEEDS_LISTSEP(c) (c == AR ||		\
+                          c == ARBOND ||	\
+                          c == ARMA ||		\
+			  c == DPANEL ||	\
+                          c == GARCH ||		\
+                          c == HECKIT ||	\
                           c == IVREG)
 
-#define DEFAULTS_TO_FULL_LIST(c) (c == CORR || \
-                                  c == DIFF || \
-                                  c == LDIFF || \
-                                  c == LABELS || \
-                                  c == LAGS || \
-                                  c == LOGS || \
-                                  c == PCA || \
-                                  c == PRINT || \
-                                  c == SDIFF || \
-                                  c == SMPL || \
-                                  c == SQUARE || \
-                                  c == ORTHDEV || \
-                                  c == STORE || \
+#define DEFAULTS_TO_FULL_LIST(c) (c == CORR ||		\
+                                  c == DIFF ||		\
+                                  c == LDIFF ||		\
+                                  c == LABELS ||	\
+                                  c == LAGS ||		\
+                                  c == LOGS ||		\
+                                  c == PCA ||		\
+                                  c == PRINT ||		\
+                                  c == SDIFF ||		\
+                                  c == SMPL ||		\
+                                  c == SQUARE ||	\
+                                  c == ORTHDEV ||	\
+                                  c == STORE ||		\
                                   c == SUMMARY)
 
-#define MODIFIES_LIST(c) (c == DIFF || \
-			  c == DUMMIFY || \
-			  c == LDIFF || \
-			  c == SDIFF || \
-			  c == LAGS || \
-			  c == LOGS || \
-			  c == SQUARE || \
+#define MODIFIES_LIST(c) (c == DIFF ||		\
+			  c == DUMMIFY ||	\
+			  c == LDIFF ||		\
+			  c == SDIFF ||		\
+			  c == LAGS ||		\
+			  c == LOGS ||		\
+			  c == SQUARE ||	\
 	                  c == ORTHDEV)
 
 /* given an assignment such as "foo <- command", extract
@@ -1872,13 +1873,14 @@ static int check_datamod_command (CMD *cmd, const char *s)
 
 /* apparatus for checking that the "end" command is valid */
 
-#define COMMAND_CAN_END(c) (c == FOREIGN || \
-			    c == FUNC || \
-                            c == GMM || \
-                            c == KALMAN || \
-                            c == MLE || \
-                            c == NLS || \
-			    c == RESTRICT || \
+#define COMMAND_CAN_END(c) (c == FOREIGN ||	\
+			    c == FUNC ||	\
+                            c == GMM ||		\
+                            c == KALMAN ||	\
+                            c == MLE ||		\
+                            c == NLS ||		\
+			    c == PARALLEL ||	\
+			    c == RESTRICT ||	\
 			    c == SYSTEM)
 
 static int check_end_command (CMD *cmd)
@@ -2262,12 +2264,12 @@ static int sepcount_error (int ci, int nsep)
     return err;
 }
 
-static int end_foreign (const char *s)
+static int ends_block (const char *s, const char *blocktype)
 {
     if (!strncmp(s, "end ", 4)) {
 	s += 3;
 	s += strspn(s, " \t");
-	if (!strncmp(s, "foreign", 7)) {
+	if (!strncmp(s, blocktype, strlen(blocktype))) {
 	    return 1;
 	}
     }
@@ -2535,12 +2537,19 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     }
 #endif
 
-    if (cmd->context == FOREIGN && !end_foreign(line)) {
+    if (cmd->context == FOREIGN && !ends_block(line, "foreign")) {
 	cmd_set_nolist(cmd);
 	cmd->opt = OPT_NONE;
 	cmd->ci = FOREIGN;
 	return 0;
     }
+
+    if (cmd->context == PARALLEL && !ends_block(line, "parallel")) {
+	cmd_set_nolist(cmd);
+	cmd->opt = OPT_NONE;
+	cmd->ci = PARALLEL;
+	return 0;
+    }    
 
     if ((cmd->flags & CMD_SUBST) || !gretl_looping_currently()) {
 	/* normalize line spaces */
@@ -2764,7 +2773,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     }	
 
     /* OK, now we're definitely doing a list-oriented command;
-	we begin by taking care of a few specials 
+       we begin by taking care of a few specials 
     */
 
     if (cmd->ci == GNUPLOT || cmd->ci == BXPLOT) {
@@ -3570,6 +3579,8 @@ static int effective_ci (const CMD *cmd)
 	    ci = FOREIGN;
 	} else if (!strcmp(cmd->param, "kalman")) {
 	    ci = KALMAN;
+	} else if (!strcmp(cmd->param, "parallel")) {
+	    ci = PARALLEL;
 	}
     }
 
@@ -3578,11 +3589,11 @@ static int effective_ci (const CMD *cmd)
 
 #define listsep_switch(c) (c == AR || c == MPOLS)
 
-#define hold_param(c) (c == IVREG || c == AR || c == ARBOND || \
-		       c == DPANEL || c == ARMA || c == CORRGM || \
-		       c == PERGM || c == SCATTERS || c == MPOLS || \
-                       c == GNUPLOT || c == GARCH || c == EQUATION || \
-		       c == POISSON || c == XCORRGM || c == HECKIT || \
+#define hold_param(c) (c == IVREG || c == AR || c == ARBOND ||		\
+		       c == DPANEL || c == ARMA || c == CORRGM ||	\
+		       c == PERGM || c == SCATTERS || c == MPOLS ||	\
+                       c == GNUPLOT || c == GARCH || c == EQUATION ||	\
+		       c == POISSON || c == XCORRGM || c == HECKIT ||	\
 		       c == NEGBIN || c == DURATION || c == FRACTINT)
 
 #define TESTLEN 62
@@ -3678,7 +3689,7 @@ static int command_is_silent (const CMD *cmd, const char *line)
 }
 
 #define rewritten_lags(c) ((c->ci == ARMA || c->ci == DPANEL || c->ci == VAR) && \
-                           c->parm2 != NULL && \
+                           c->parm2 != NULL &&				\
 			   *c->parm2 != '\0')
 
 /* these commands have sub-lists that may contain either
@@ -3686,19 +3697,19 @@ static int command_is_silent (const CMD *cmd, const char *line)
    this can't be handled properly by the list-printing
    mechanism */
 
-#define dont_print_list(c) ((c->flags & CMD_NOLIST) || \
-                             c->ci == ARBOND || \
-                             c->ci == ARMA || \
-                             c->ci == DPANEL || \
-			     c->ci == GARCH || \
-                             c->ci == OPEN)
+#define dont_print_list(c) ((c->flags & CMD_NOLIST) ||	\
+			    c->ci == ARBOND ||		\
+			    c->ci == ARMA ||		\
+			    c->ci == DPANEL ||		\
+			    c->ci == GARCH ||		\
+			    c->ci == OPEN)
 
-#define print_param_last(c) (c == ARBOND || \
-			     c == DPANEL || \
-			     c == DELEET || \
-	                     c == CORRGM || \
-                             c == PERGM || \
-	                     c == FRACTINT || \
+#define print_param_last(c) (c == ARBOND ||	\
+			     c == DPANEL ||	\
+			     c == DELEET ||	\
+	                     c == CORRGM ||	\
+                             c == PERGM ||	\
+	                     c == FRACTINT ||	\
                              c == XCORRGM)
 
 /*
@@ -4160,7 +4171,7 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	return E_ARGS;
     } else if (!strcmp(fname, "null")) {
 	if (gretl_messages_on()) {
-	   pputs(prn, _("Now discarding output\n")); 
+	    pputs(prn, _("Now discarding output\n")); 
 	}
 	outfile_redirect(prn, NULL, opt, vparms);
 	*outname = '\0';
@@ -5113,8 +5124,8 @@ static GretlType get_type_for_deletion (const char *param, int *err)
 #define can_continue(c) (c == ARMA || c == GARCH || c == GMM || \
                          c == MLE || c == NLS)
 
-#define want_param_to_order(c) (c == CORRGM || c == XCORRGM || \
-				c == PERGM || c == LAGS || \
+#define want_param_to_order(c) (c == CORRGM || c == XCORRGM ||	\
+				c == PERGM || c == LAGS ||	\
 				c == FRACTINT)
 
 /* OMIT and ADD: if we're estimating a revised model, should
@@ -5711,7 +5722,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    *model = lad(cmd->list, dset);
 	} else if (cmd->ci == QUANTREG) {
 	    *model = quantreg_driver(cmd->param, cmd->list, dset,
-					 cmd->opt, prn);
+				     cmd->opt, prn);
 	} else if (cmd->ci == DURATION) {
 	    *model = duration_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == GARCH) {
@@ -5720,10 +5731,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    *model = panel_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == ARBOND) {
 	    *model = arbond_model(cmd->list, cmd->param, dset, 
-				      cmd->opt, prn);
+				  cmd->opt, prn);
 	} else if (cmd->ci == DPANEL) {
 	    *model = dpd_model(cmd->list, cmd->auxlist, cmd->param, 
-				   dset, cmd->opt, prn);
+			       dset, cmd->opt, prn);
 	} else if (cmd->ci == INTREG) {
 	    *model = interval_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == BIPROBIT) {
@@ -5759,13 +5770,17 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	}
 	break;
 
+    case PARALLEL:
+	err = E_NOTIMP;
+	break;	
+
     case ADD:
     case OMIT:
 	if (get_last_model_type() == GRETL_OBJ_VAR) {
 	    err = VAR_omit_driver(cmd, dset, prn);
 	} else if (add_omit_save(cmd)) {
 	    MODEL mymod;
-
+	    
 	    gretl_model_init(&mymod, dset);
 	    if (cmd->ci == ADD) {
 		err = add_test_full(model, &mymod, cmd->list, 
@@ -5927,6 +5942,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = foreign_execute(dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "kalman")) {
 	    err = kalman_parse_line(line, dset, cmd->opt);
+	} else if (!strcmp(cmd->param, "parallel")) {
+	    err = E_NOTIMP;
 	} else {
 	    err = 1;
 	}
@@ -6272,7 +6289,7 @@ int get_command_index (char *line, CMD *cmd)
 
     if (cmd->ci == NLS || cmd->ci == MLE ||
 	cmd->ci == GMM || cmd->ci == FOREIGN ||
-	cmd->ci == KALMAN) {
+	cmd->ci == KALMAN || cmd->ci == PARALLEL) {
 	cmd->context = cmd->ci;
     }
 

@@ -121,6 +121,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { ORTHDEV,  "orthdev" },
     { OUTFILE,  "outfile" },
     { PANEL,    "panel" },
+    { PARALLEL, "parallel" },
     { PCA,      "pca" },
     { PERGM,    "pergm" },
     { PLOT,     "textplot" },    

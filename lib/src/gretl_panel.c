@@ -1737,7 +1737,8 @@ static int fix_panelmod_list (MODEL *targ, panelmod_t *pan)
 
 static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
 {
-    int nc = fmod->ncoeff;
+    double wfstt, wrsq;
+    int wdfn, nc = fmod->ncoeff;
     int err = 0;
 
     err = fix_panelmod_list(fmod, pan);
@@ -1750,20 +1751,32 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
     fmod->tss = pan->pooled->tss;
     fmod->ifc = 1;
 
-    gretl_model_set_double(fmod, "rsq_within", fmod->rsq);
-    fmod->fstt = (fmod->rsq / (1.0 - fmod->rsq)) * 
-	((double) fmod->dfd / (fmod->ncoeff - 1));
-    gretl_model_set_double(fmod, "F_variables", fmod->fstt); /* ?? */
-
-    /* should we modify R^2 in this way? */
-    fmod->rsq = 1.0 - (fmod->ess / fmod->tss);
-
-    if (fmod->dfd > 0) {
-	double den = fmod->tss * fmod->dfd;
-
-	fmod->adjrsq = 1 - (fmod->ess * (fmod->nobs - 1) / den);
+    wrsq = fmod->rsq;
+    if (wrsq < 0.0) {
+	wrsq = 0.0;
     }
 
+    wdfn = fmod->ncoeff - 1;
+
+    wfstt = (wrsq / (1.0 - wrsq)) * ((double) fmod->dfd / wdfn);
+    if (wfstt >= 0.0) {
+	ModelTest *test = model_test_new(GRETL_TEST_WITHIN_F);
+
+	if (test != NULL) {
+	    model_test_set_teststat(test, GRETL_STAT_F);
+	    model_test_set_dfn(test, wdfn);
+	    model_test_set_dfd(test, fmod->dfd);
+	    model_test_set_value(test, wfstt);
+	    model_test_set_pvalue(test, snedecor_cdf_comp(wdfn, fmod->dfd, wfstt));
+	    maybe_add_test_to_model(fmod, test);
+	}
+    }
+
+    /* note: this member is being borrowed for the "Within R-squared" */
+    fmod->adjrsq = wrsq;
+
+    /* LSDV-based statistics */
+    fmod->rsq = 1.0 - (fmod->ess / fmod->tss);
     if (fmod->rsq < 0.0) {
 	fmod->rsq = 0.0;
     } else {

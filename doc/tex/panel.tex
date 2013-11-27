@@ -409,6 +409,37 @@ ols depvar indepvars
 \end{scode}
 \end{script}
 
+\subsection{R-squared in the fixed effects model}
+
+There is no uniquely ``correct'' way of calculating $R^2$ in the
+context of the fixed-effects model.  It may be argued that a measure
+of the squared correlation between the dependent variable and the
+prediction yielded by the model is a desirable descriptive statistic
+to have, but which model and which (variant of the) dependent
+variable are we talking about?
+
+Fixed-effects models can be thought of in two equally defensible ways.
+From one perspective they provide a nice, clean way of sweeping out
+individual effects by using the fact that in the linear model a
+sufficient statistic is easy to compute. Alternatively, they provide a
+clever way to estimate the ``important'' parameters of a model in
+which you want to include (for whatever reason) a full set of
+individual dummies.  If you take the second of these perspectives,
+your dependent variable is unmodified $y$ and your model includes the
+unit dummies; the appropriate $R^2$ measure is then the squared
+correlation between $y$ and the $\hat{y}$ computed using both the
+measured individual effects and the effects of the explicitly named
+regressors. This is reported by gretl as the ``LSDV R-squared''. If
+you take the first point of view, on the other hand, your dependent
+variable is really $y_{it} - \bar{y}_i$ and your model just includes
+the $\beta$ terms, the coefficients of deviations of the $x$ variables
+from their per-unit means. In this case, the relevant measure of $R^2$
+is the so-called ``within'' $R^2$; this variant is printed by gretl
+for fixed-effects model in place of the adjusted $R^2$ (it being
+unclear in this case what exactly the ``adjustment'' should amount to
+anyway). 
+
+
 \section{Autoregressive panel models}
 \label{panel-auto}
 
