@@ -11,6 +11,14 @@ to validate and expand to new distributions.
 
 Helio Guilherme, 23 September 2011 
 -----
+CentOS 6.4              (contrib. 2013-11-27)
+
+# dependencies
+sudo yum install gmp-devel mpfr-devel fftw3-devel lapack-devel \
+gnuplot libxml2-devel curl-devel readline-devel gtksourceview2-devel
+
+# documentation build (optional)
+sudo yum install texlive libxslt-devel texlive-latex
 
 Fedora 19              (contrib. 2013-11-23)
 # dependencies
