@@ -5639,7 +5639,7 @@
 	<para context="tex">
 	  Per una serie di lunghezza $n$, il $p$-quantile, $q$, è
 	  definito come: \[q = y_{[k]} + (n \cdot p - k) (y_{[k+1]} -
-	  y_{[k]})\] dove $k$ è la parte intera di $n \cdot p$ e
+	  y_{[k]})\] dove $k$ è la parte intera di $(n+1) \cdot p$ e
 	  $y_{[i]}$ è l'elemento $i$-esimo della serie ordinata in
 	  senso crescente.
 	</para>
