@@ -5673,7 +5673,7 @@
 	<para context="tex">
 	  For a series of length $n$, the $p$-quantile, $q$, is defined
 	  as:
-	  \[q = y_{[k]} + (n \cdot p - k) (y_{[k+1]} - y_{[k]})\] 
+	  \[q = y_{[k]} + [(n+1) \cdot p - k] (y_{[k+1]} - y_{[k]})\] 
 	  where $k$ is the integer part of $(n+1) \cdot p$ and 
 	  $y_{[i]}$ is the $i$-th element of the series when
 	  sorted from smallest to largest.
