@@ -115,6 +115,11 @@ gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
 
 int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask);
 
+char *gretl_xml_serialize_matrix (const gretl_matrix *m, const char *name);
+
+gretl_matrix *gretl_xml_deserialize_matrix (const char *buf, int size, 
+					    int *err);
+
 #endif /* FULL_XML_HEADERS */
 
 int gretl_write_matrix_as_gdt (const char *fname, 

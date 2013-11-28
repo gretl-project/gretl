@@ -472,6 +472,107 @@ void gretl_xml_put_matrix (const gretl_matrix *m, const char *name,
 }
 
 /**
+ * gretl_xml_serialize_matrix:
+ * @m: matrix to be written.
+ * @name: name for matrix (or NULL).
+ *
+ * Returns: allocated string containing the serialized matrix
+ * as XML.
+ */
+
+char *gretl_xml_serialize_matrix (const gretl_matrix *m, const char *name) 
+{
+    char *ret;
+    PRN *prn;
+    int i, j, err = 0;
+
+    if (m == NULL) {
+	return NULL;
+    }
+
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+    if (prn == NULL) {
+	return NULL;
+    }
+
+    if (name == NULL) {
+	pprintf(prn, "<gretl-matrix rows=\"%d\" cols=\"%d\"\n", 
+		m->rows, m->cols);
+    } else {
+	pprintf(prn, "<gretl-matrix name=\"%s\" rows=\"%d\" cols=\"%d\"",
+		name, m->rows, m->cols);
+    }
+
+    if (gretl_matrix_is_dated(m)) {
+	int mt1 = gretl_matrix_get_t1(m);
+	int mt2 = gretl_matrix_get_t2(m);
+
+	pprintf(prn, " t1=\"%d\" t2=\"%d\"", mt1, mt2);
+    }
+
+    pputs(prn, ">\n");
+
+    for (i=0; i<m->rows; i++) {
+	for (j=0; j<m->cols; j++) {
+	    pprintf(prn, "%.17g ", gretl_matrix_get(m, i, j));
+	}
+	pputc(prn, '\n');
+    }
+
+    pputs(prn, "</gretl-matrix>\n");
+
+    ret = gretl_print_steal_buffer(prn);
+    gretl_print_destroy(prn);
+
+    return ret;
+}
+
+/**
+ * gretl_xml_deserialize_matrix:
+ * @buf: character buffer containing serialization of a gretl matrix.
+ * @size: size of @buf, or -1 to use full length of a NUL-terminated
+ * buffer.
+ * @err: location to receive error code.
+ *
+ * Returns: allocated gretl_matrix, or NULL on failure.
+ */
+
+gretl_matrix *gretl_xml_deserialize_matrix (const char *buf, int size, 
+					    int *err) 
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr node = NULL;
+    gretl_matrix *m = NULL;
+    int sz;
+
+    sz = size < 0 ? strlen(buf) : size;
+    doc = xmlParseMemory(buf, sz);
+
+    if (doc == NULL) {
+	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), "buffer");
+	*err = E_DATA;
+    } else {
+	node = xmlDocGetRootElement(doc);
+	if (node != NULL) {
+	    if (xmlStrcmp(node->name, (XUC) "gretl-matrix")) {
+		fprintf(stderr, "Unexpected root node '%s'\n", (char *) node->name);
+		*err = E_TYPES;
+	    }
+	}
+    }    
+
+    if (!*err) {
+	m = gretl_xml_get_matrix(node, doc, err);
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+    }
+
+    return m;
+}
+
+/**
  * gretl_xml_get_prop_as_int:
  * @node: XML node pointer.
  * @tag: name by which integer property is known.
