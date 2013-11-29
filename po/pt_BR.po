@@ -12658,7 +12658,7 @@ msgstr "Cadeias de caracteres"
 
 #: gui2/helpfiles.c:372
 msgid "Calendar"
-msgstr "Calandário"
+msgstr "Calendário"
 
 #: gui2/helpfiles.c:412 gui2/textbuf.c:1643
 msgid "Index"
