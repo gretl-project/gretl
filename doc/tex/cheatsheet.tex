@@ -313,6 +313,90 @@ series x = time
 \emph{Comment:} The special construct \cmd{genr time} and its variants
 are aware of whether a dataset is a panel.
 
+
+\subsection{Generating the ``hat'' values after an OLS regression}
+
+\emph{Problem:} I've just run an OLS regression, and now I need the
+so-called the leverage values (also known as the ``hat'' values). I
+know you can access residuals and fitted values through ``dollar''
+accessors, but nothing like that seems to be available for ``hat''
+values.
+
+\emph{Solution:}
+``Hat'' values are can be thought of as the diagonal of the projection
+matrix $P_X$, or more explicitly as
+\[
+h_i = \mathbf{x}_i' (X'X)^{-1} \mathbf{x}_i 
+\]
+where $X$ is the matrix of regressors and $\mathbf{x}_i'$ is its
+$i$-th row.
+
+The reader is invited to study the code below, which offers four
+different solutions to the problem:
+ 
+\begin{code}
+open data4-1.gdt --quiet
+list X = const sqft bedrms baths
+ols price X
+
+# method 1
+leverage --save --quiet
+series h1 = lever
+
+# these are necessary for what comes next
+matrix mX  = {X}
+matrix iXX = invpd(mX'mX)
+
+# method 2
+series h2 = diag(qform(mX, iXX))
+# method 3
+series h3 = sumr(mX .* (mX*iXX))
+# method 4
+series h4 = NA
+loop i=1..$nobs --quiet
+    matrix x = mX[i,]'
+    h4[i] = x'iXX*x
+end loop
+
+# verify
+print h1 h2 h3 h4 --byobs
+\end{code}
+%$
+
+\emph{Comment:} Solution 1 is the preferable one: it relies on the
+built-in \cmd{leverage} command, which computes the requested series
+quite efficiently, taking care of missing values, possible
+restrictions to the sample, etcetera.
+
+However, three more are shown for didactical purposes, mainly to show
+the user how to manipulate matrices. Solution 2 first constructs the
+$P_X$ matrix explicitly, via the \cmd{qform} function, and then takes
+its diagonal; this is definitely \emph{not} recommended (despite its
+compactness), since you generate a much bigger matrix than you
+actually need and waste a lot of memory and CPU cycles in the
+process. It doesn't matter very much in the present case, since the
+sample size is very small, but with a big dataset this could be a very
+bad idea.
+
+Solution 3 is more clever, and relies on the fact that, if you
+define $Z = X\cdot(X'X)^{-1}$, then $h_i$ could also
+be written as
+\[
+ h_i = \mathbf{x}_i' \mathbf{z}_i = \sum_{i=1}^k x_{ik} z_{i_k} 
+\]
+which is in turn equivalent to the sum of the elements of the $i$-th
+row of $X \odot Z$, where $\odot$ is the element-by-element
+product. In this case, your clever usage of matrix algebra would
+produce a solution computationally much superior to solution 2.
+
+Solution 4 is the most old-fashioned one, and employs an indexed
+loop. While this wastes practically no memory and employs no more CPU
+cycles in algebraic operations than strictly necessary, it imposes a
+much greater burden on the hansl interpreter, since handling a loop is
+conceptually more complex than a single operation. In practice, you'll
+find that for any realistically-sized problem, solution 4 is much
+slower that solution 3.
+
 \section{Neat tricks}
 \label{sec:cheat-neat}
 
