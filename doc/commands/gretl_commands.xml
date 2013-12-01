@@ -10541,6 +10541,58 @@
 
   </command>
 
+  <command name="setmiss" section="Dataset"
+    label="Missing value code">
+
+    <usage>
+      <arguments>
+        <argument>value</argument>
+        <argument optional="true">varlist</argument>
+      </arguments>
+      <examples>
+        <example>setmiss -1</example>
+        <example>setmiss 100 x2</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+	Get the program to interpret some specific numerical data
+	value (the first parameter to the command) as a code for
+	<quote>missing</quote>, in the case of imported data.  If this
+	value is the only parameter, as in the first example above,
+	the interpretation will be applied to all series in the data
+	set.  If <repl quote="true">value</repl> is followed by a list
+	of variables, by name or number, the interpretation is
+	confined to the specified variable(s). Thus in the second
+	example the data value 100 is interpreted as a code for
+	<quote>missing</quote>, but only for the variable
+	<lit>x2</lit>.
+      </para>
+      
+      <para context="gui">
+	Set a numerical value that will be interpreted as "missing" or
+	"not applicable", either for a particular data series (under
+	the Variable menu) or globally for the entire data set (under
+	the Sample menu).</para> 
+      
+      <para context="gui">
+	Gretl has its own internal coding for missing values, but
+	sometimes imported data may employ a different code.  For
+	example, if a particular series is coded such that a value of
+	-1 indicates "not applicable", you can select "Set missing
+	value code" under the Variable menu and type in the value "-1"
+	(without the quotes).  Gretl will then read the -1s as missing
+	observations.</para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Data/Set missing value code</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="setobs" section="Dataset" context="cli"
     label="Set frequency and starting observation">
 
@@ -10668,58 +10720,6 @@
       <menu-path>/Data/Dataset structure</menu-path>
     </gui-access>
       
-  </command>
-
-  <command name="setmiss" section="Dataset"
-    label="Missing value code">
-
-    <usage>
-      <arguments>
-        <argument>value</argument>
-        <argument optional="true">varlist</argument>
-      </arguments>
-      <examples>
-        <example>setmiss -1</example>
-        <example>setmiss 100 x2</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para context="cli">
-	Get the program to interpret some specific numerical data
-	value (the first parameter to the command) as a code for
-	<quote>missing</quote>, in the case of imported data.  If this
-	value is the only parameter, as in the first example above,
-	the interpretation will be applied to all series in the data
-	set.  If <repl quote="true">value</repl> is followed by a list
-	of variables, by name or number, the interpretation is
-	confined to the specified variable(s). Thus in the second
-	example the data value 100 is interpreted as a code for
-	<quote>missing</quote>, but only for the variable
-	<lit>x2</lit>.
-      </para>
-      
-      <para context="gui">
-	Set a numerical value that will be interpreted as "missing" or
-	"not applicable", either for a particular data series (under
-	the Variable menu) or globally for the entire data set (under
-	the Sample menu).</para> 
-      
-      <para context="gui">
-	Gretl has its own internal coding for missing values, but
-	sometimes imported data may employ a different code.  For
-	example, if a particular series is coded such that a value of
-	-1 indicates "not applicable", you can select "Set missing
-	value code" under the Variable menu and type in the value "-1"
-	(without the quotes).  Gretl will then read the -1s as missing
-	observations.</para>
-
-    </description>
-
-    <gui-access>
-      <menu-path>/Data/Set missing value code</menu-path>
-    </gui-access>
-
   </command>
 
   <command name="shell" section="Utilities" 

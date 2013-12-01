@@ -10191,12 +10191,62 @@
       <para>* Impostare il valore di una variabile (per variabili discrete).
       </para>
 
-
     </description>
 
     <gui-access>
       <menu-path>/Variabile/Modifica attributi</menu-path>
       <other-access>Menù pop-up nella finestra principale</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="setmiss" section="Dataset"
+    label="Codice dei valori mancanti">
+
+    <usage>
+      <arguments>
+        <argument>valore</argument>
+        <argument optional="true">lista-variabili</argument>
+      </arguments>
+      <examples>
+        <example>setmiss -1</example>
+        <example>setmiss 100 x2</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+	Imposta il programma in modo da interpretare un dato valore
+        numerico (il primo parametro indicato al comando) come codice
+        per i <quote>valori mancanti</quote> nei dati importati. Se
+        questo valore è l'unico parametro fornito, come nel primo degli
+        esempi precedenti, l'interpretazione verrà applicata a tutte le
+        serie del dataset. Se <repl quote="true">valore</repl> è seguito
+        da una lista di variabili, indicate per nome o numero,
+        l'interpretazione è limitata solo alle variabili specificate.
+        Così, nel secondo esempio, il valore 100 è interpretato come
+        codice per <quote>mancante</quote>, ma solo per la variabile
+        <lit>x2</lit>.
+      </para>
+      
+      <para context="gui">
+	Imposta un valore numerico che verrà interpretato come
+        "mancante" o "non applicabile", per una particolare serie (sotto
+        il menù Variabile) o globalmente per l'intero dataset (sotto il
+        menù Campione).</para> 
+      
+      <para context="gui">
+      Gretl ha un codice interno per i valori mancanti, che non sempre
+      può coincidere con quello usato dai dati importati. Ad esempio, se
+      una serie usa il valore -1 col significato di "non disponibile", è
+      possibile selezionare "Imposta codice valori mancanti" nel menù
+      Variabile e immettere il valore "-1" (senza le virgolette); gretl
+      interpreterà quindi i valori -1 come osservazioni mancanti.</para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Campione/Imposta codice valori mancanti</menu-path>
     </gui-access>
 
   </command>
@@ -10283,57 +10333,6 @@
 
     <gui-access>
       <menu-path>Dati/Struttura dataset</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="setmiss" section="Dataset"
-    label="Codice dei valori mancanti">
-
-    <usage>
-      <arguments>
-        <argument>valore</argument>
-        <argument optional="true">lista-variabili</argument>
-      </arguments>
-      <examples>
-        <example>setmiss -1</example>
-        <example>setmiss 100 x2</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para context="cli">
-	Imposta il programma in modo da interpretare un dato valore
-        numerico (il primo parametro indicato al comando) come codice
-        per i <quote>valori mancanti</quote> nei dati importati. Se
-        questo valore è l'unico parametro fornito, come nel primo degli
-        esempi precedenti, l'interpretazione verrà applicata a tutte le
-        serie del dataset. Se <repl quote="true">valore</repl> è seguito
-        da una lista di variabili, indicate per nome o numero,
-        l'interpretazione è limitata solo alle variabili specificate.
-        Così, nel secondo esempio, il valore 100 è interpretato come
-        codice per <quote>mancante</quote>, ma solo per la variabile
-        <lit>x2</lit>.
-      </para>
-      
-      <para context="gui">
-	Imposta un valore numerico che verrà interpretato come
-        "mancante" o "non applicabile", per una particolare serie (sotto
-        il menù Variabile) o globalmente per l'intero dataset (sotto il
-        menù Campione).</para> 
-      
-      <para context="gui">
-      Gretl ha un codice interno per i valori mancanti, che non sempre
-      può coincidere con quello usato dai dati importati. Ad esempio, se
-      una serie usa il valore -1 col significato di "non disponibile", è
-      possibile selezionare "Imposta codice valori mancanti" nel menù
-      Variabile e immettere il valore "-1" (senza le virgolette); gretl
-      interpreterà quindi i valori -1 come osservazioni mancanti.</para>
-
-    </description>
-
-    <gui-access>
-      <menu-path>/Campione/Imposta codice valori mancanti</menu-path>
     </gui-access>
 
   </command>
