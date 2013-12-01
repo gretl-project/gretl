@@ -24,6 +24,8 @@ void gretl_rand_init (void);
 
 void gretl_rand_free (void);
 
+void gretl_dcmt_init (int n, int self, unsigned int seed);
+
 void gretl_rand_set_seed (unsigned int seed);
 
 void gretl_rand_set_multi_seed (const gretl_matrix *seed);
@@ -87,10 +89,6 @@ gretl_matrix *inverse_wishart_matrix (const gretl_matrix *S,
 gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
 					int v, int replics, 
 					int *err);
-
-void gretl_rand_set_sfmt (int s);
-
-int gretl_rand_get_sfmt (void);
 
 void gretl_rand_set_box_muller (int s);
 

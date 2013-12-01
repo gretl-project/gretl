@@ -21,7 +21,6 @@
 
 #include "libgretl.h"
 #include <time.h>
-#include <glib.h>
 
 #if defined(USE_AVX) || defined(USE_SSE2)
 # define HAVE_SSE2
@@ -36,6 +35,7 @@
 #endif
 
 #include "../../rng/SFMT.c"
+#include "../../dcmt/dc.h"
 
 #if defined(HAVE_POSIX_MEMALIGN) || defined(OS_OSX) || defined(WIN32)
 # define USE_RAND_ARRAY 1 /* faster, requires aligned malloc */
@@ -61,10 +61,9 @@
  * global libgretl function libgretl_cleanup().
  */
 
-static GRand *gretl_GRand;
 static guint32 useed;
 
-static int use_sfmt = 1;
+static int use_dcmt = 0;
 
 static guint32 gretl_rand_octet (guint32 *sign);
 
@@ -172,6 +171,53 @@ static guint32 sfmt_rand32 (void)
 
 #endif /* USE_RAND_ARRAY or not */
 
+/* Find n independent "small" Mersenne Twisters with period 2^521-1;
+   set the one corresponding to @self as the one to use
+*/
+
+static mt_struct *dcmt;
+
+static int set_up_dcmt (int n, int self, unsigned int seed)
+{
+    mt_struct **mtss;
+    int w = 32;
+    int p = 521;
+    int dseed = 4172;
+    int i, count = 0;
+
+    mtss = get_mt_parameters_st(w, p, 0, n - 1, dseed, &count);
+    if (mtss == NULL) {
+        fprintf(stderr, "Couldn't get MT parameters\n");
+        return E_DATA;
+    }
+
+#if 1
+    fprintf(stderr, "set_up_dcmt: set up %d MTs, self = %d\n", n, self);
+#endif
+
+    use_dcmt = 1;
+
+    seed = seed != 0 ? seed : time(NULL);
+
+    for (i=0; i<count; i++) {
+	if (i == self) {
+	    dcmt = mtss[i];
+	    sgenrand_mt(seed, dcmt);
+	} else {
+	    free_mt_struct(mtss[i]);
+	}
+    }
+
+    free(mtss);
+
+    return 0;
+}
+
+inline static uint32_t dcmt_rand32 (void)
+{
+    return genrand_mt(dcmt);
+}
+
 /**
  * gretl_rand_init:
  *
@@ -188,15 +234,21 @@ void gretl_rand_init (void)
     sfmt_array_setup();
 #endif
 
-    if (getenv("GRETL_RAND_GLIB")) {
-	use_sfmt = 0;
-	if (gretl_GRand == NULL) {
-	    gretl_GRand = g_rand_new();
-	}
-	g_rand_set_seed(gretl_GRand, useed);
-    }
-
     gretl_rand_octet(NULL);
+}
+
+/**
+ * gretl_dcmt_init:
+ *
+ * Initialize DCMT, if needed.
+ */
+
+void gretl_dcmt_init (int n, int self, unsigned int seed)
+{
+    if (n > 1) {
+	set_up_dcmt(n, self, seed);
+	gretl_rand_octet(NULL);
+    }
 }
 
 /**
@@ -210,9 +262,10 @@ void gretl_rand_free (void)
 #if USE_RAND_ARRAY
     sfmt_array_cleanup();
 #endif
-    if (gretl_GRand != NULL) {
-	g_rand_free(gretl_GRand);
-	gretl_GRand = NULL;
+
+    if (dcmt != NULL) {
+	free_mt_struct(dcmt);
+	dcmt = NULL;
     }
 }
 
@@ -241,12 +294,15 @@ void gretl_rand_set_seed (unsigned int seed)
 {
     useed = (seed == 0)? time(NULL) : seed;
     init_gen_rand(useed); 
+
 #if USE_RAND_ARRAY
     sfmt_array_setup();
 #endif
-    if (gretl_GRand != NULL) {
-	g_rand_set_seed(gretl_GRand, useed);
+
+    if (dcmt != NULL) {
+	sgenrand_mt(seed, dcmt);
     }
+
     gretl_rand_octet(NULL);
 }
 
@@ -270,44 +326,10 @@ void gretl_rand_set_multi_seed (const gretl_matrix *seed)
     }
 
     init_by_array(useeds, 4);
-    if (gretl_GRand != NULL) {
-	g_rand_set_seed_array(gretl_GRand, useeds, 4);
-    }
     gretl_rand_octet(NULL);
 }
 
 #endif
-
-/**
- * gretl_rand_set_sfmt:
- * @s: 1 or 0.
- *
- * If @s is non-zero, set libgretl's generator for uniform
- * variates to use SFMT, as opposed to GLib's implementation
- * of the Mersenne Twister.
- */
-
-void gretl_rand_set_sfmt (int s)
-{
-    use_sfmt = s;
-
-    if (!use_sfmt && gretl_GRand == NULL) {
-	/* ensure that GRand is available */
-	gretl_GRand = g_rand_new();
-	g_rand_set_seed(gretl_GRand, useed);
-    }	
-}
-
-/**
- * gretl_rand_get_sfmt:
- *
- * Returns: non-zero if libgretl is using the SFMT RNG.
- */
-
-int gretl_rand_get_sfmt (void)
-{
-    return use_sfmt;
-}
 
 /**
  * gretl_rand_01:
@@ -318,10 +340,10 @@ int gretl_rand_get_sfmt (void)
 
 double gretl_rand_01 (void)
 {
-    if (use_sfmt) {
-	return to_real2(sfmt_rand32());
+    if (use_dcmt) {
+	return to_real2(dcmt_rand32());
     } else {
-	return g_rand_double(gretl_GRand);
+	return to_real2(sfmt_rand32());
     }
 }
 
@@ -492,10 +514,10 @@ static guint32 gretl_rand_octet (guint32 *sign)
     }
 
     if (wr_i == 0) {
-	if (use_sfmt) {
-	    wr.u = sfmt_rand32();
+	if (use_dcmt) {
+	    wr.u = dcmt_rand32();
 	} else {
-	    wr.u = g_rand_int(gretl_GRand);
+	    wr.u = sfmt_rand32();
 	}
 	wr_i = 4;
     }
@@ -511,7 +533,7 @@ static double ran_normal_ziggurat (void)
     double x, y;
 
     while (1) {
-	j = use_sfmt ? sfmt_rand32() : g_rand_int(gretl_GRand);
+	j = use_dcmt ? dcmt_rand32() : sfmt_rand32();
 	i = gretl_rand_octet(&sign);
 	j = j >> 2;
 
@@ -710,7 +732,7 @@ int gretl_rand_normal_full (double *a, int t1, int t2,
     return 0;
 }
 
-static guint32 sfmt_int_range (guint32 begin, guint32 end)
+static guint32 mt_int_range (guint32 begin, guint32 end)
 {
     guint32 dist = end - begin;
     guint32 rval = 0;
@@ -729,10 +751,16 @@ static guint32 sfmt_int_range (guint32 begin, guint32 end)
 	} else {
 	    maxval = dist - 1;
 	}
-	  
-	do {
-	    rval = sfmt_rand32();
-	} while (rval > maxval);
+
+	if (use_dcmt) {
+	    do {
+		rval = dcmt_rand32();
+	    } while (rval > maxval);	    
+	} else {
+	    do {
+		rval = sfmt_rand32();
+	    } while (rval > maxval);
+	}
 	  
 	rval %= dist;
     }
@@ -768,11 +796,11 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
     }
 
     for (t=t1; t<=t2; t++) {
-	if (use_sfmt) {
+	if (use_dcmt) {
+	    a[t] = to_real2(dcmt_rand32()) * (max - min) + min;
+	} else {
 	    /* FIXME use native array functionality? */
 	    a[t] = to_real2(sfmt_rand32()) * (max - min) + min;
-	} else {
-	    a[t] = g_rand_double_range(gretl_GRand, min, max);
 	}
     }
 
@@ -804,13 +832,8 @@ int gretl_rand_int_minmax (int *a, int n, int min, int max)
 	    a[i] = min;
 	}
     } else {
-	/* in g_rand_int_range() the upper bound is open */
 	for (i=0; i<n; i++) {
-	    if (use_sfmt) {
-		a[i] = sfmt_int_range(min, max + 1);
-	    } else {
-		a[i] = g_rand_int_range(gretl_GRand, min, max + 1);
-	    } 
+	    a[i] = mt_int_range(min, max + 1);
 	}
     }
 
@@ -863,18 +886,10 @@ int gretl_rand_uniform_int_minmax (double *a, int t1, int t2,
 	int i = 0;
 
 	for (t=t1; t<=t2; t++) {
-	    if (use_sfmt) {
-		x = sfmt_int_range(min, max + 1);
-	    } else {
-		x = g_rand_int_range(gretl_GRand, min, max + 1);
-	    } 
+	    x = mt_int_range(min, max + 1);
 	    if (opt & OPT_O) {
 		while (already_selected(a, i, x)) {
-		    if (use_sfmt) {
-			x = sfmt_int_range(min, max + 1);
-		    } else {
-			x = g_rand_int_range(gretl_GRand, min, max + 1);
-		    } 
+		    x = mt_int_range(min, max + 1);
 		}
 	    }
 	    a[t] = x;
@@ -900,23 +915,23 @@ void gretl_rand_uniform (double *a, int t1, int t2)
 {
     int t;
 
-    if (use_sfmt) {
+    if (use_dcmt) {
 	for (t=t1; t<=t2; t++) {
-	   a[t] = to_real2(sfmt_rand32());
+	   a[t] = to_real2(dcmt_rand32());
 	}
     } else {
 	for (t=t1; t<=t2; t++) {
-	   a[t] = g_rand_double(gretl_GRand);
+	   a[t] = to_real2(sfmt_rand32());
 	}
     }
 }
 
 static double gretl_rand_uniform_one (void) 
 {
-    if (use_sfmt) {
-	return to_real2(sfmt_rand32());
+    if (use_dcmt) {
+	return to_real2(dcmt_rand32());
     } else {
-	return g_rand_double(gretl_GRand);
+	return to_real2(sfmt_rand32());
     }
 }
 
@@ -1564,11 +1579,7 @@ int gretl_rand_beta_binomial (double *x, int t1, int t2,
 
 unsigned int gretl_rand_int_max (unsigned int max)
 {
-    if (use_sfmt) {
-	return sfmt_int_range(0, max);
-    } else {
-	return g_rand_int_range(gretl_GRand, 0, max);
-    }
+    return mt_int_range(0, max);
 }
 
 /**
@@ -1580,10 +1591,10 @@ unsigned int gretl_rand_int_max (unsigned int max)
 
 unsigned int gretl_rand_int (void)
 {
-    if (use_sfmt) {
-	return sfmt_rand32();
+    if (use_dcmt) {
+	return dcmt_rand32();
     } else {
-	return g_rand_int(gretl_GRand);
+	return sfmt_rand32();
     }
 }
 

@@ -28,16 +28,12 @@ static void show_help (const char *prog)
     fputs("--box-muller : when using normal RNG, use Box-Muller\n", stdout);
     fputs("               instead of Ziggurat (Ziggurat is default)\n\n", stdout);
 
-    fputs("--GLib : use GLib's MT rather than SFMT\n", stdout);
-    fputs("         (SFMT is the default)\n\n", stdout);
-
     exit(EXIT_SUCCESS);
 }
 
 enum {
     NORMAL_RNG = 1 << 0,
-    BOX_MULLER = 1 << 1,
-    USE_GLIB   = 1 << 2
+    BOX_MULLER = 1 << 1
 };
 
 static int read_opts (int argc, char **argv, int *flags,
@@ -63,8 +59,6 @@ static int read_opts (int argc, char **argv, int *flags,
 	    *flags |= NORMAL_RNG;
 	} else if (!strcmp(s, "--box-muller")) {
 	    *flags |= BOX_MULLER;
-	} else if (!strcmp(s, "--GLib")) {
-	    *flags |= USE_GLIB;
 	} else {
 	    fprintf(stderr, "%s: invalid option '%s'\n", argv[0], s);
 	}
@@ -83,8 +77,6 @@ static int read_opts (int argc, char **argv, int *flags,
 	printf("*** %s: running %s using %s generator\n", argv[0],
 	       size_string[*testsize], (*flags & NORMAL_RNG) ?
 	       "normal" : "uniform");
-	printf(" using %s for uniform RNG\n", (*flags & USE_GLIB) ?
-	       "GLib MT" : "SFMT");
 	if (*flags & NORMAL_RNG) {
 	    printf(" using %s for normals\n", (*flags & BOX_MULLER) ?
 		   "Box-Muller" : "Ziggurat");
@@ -105,10 +97,6 @@ static int read_opts (int argc, char **argv, int *flags,
 
    --box-muller : when using normal RNG, use Box-Muller
                   instead of Ziggurat (Ziggurat is default)
-
-   --GLib : use GLib's MT implementation, not SMFT
-            (SFMT is default)
-
 */
 
 int main (int argc, char **argv)
@@ -125,10 +113,6 @@ int main (int argc, char **argv)
     } 
 
     gretl_rand_init();
-
-    if (flags & USE_GLIB) {
-	gretl_rand_set_sfmt(0);
-    }
 
     if (flags & BOX_MULLER) {
 	gretl_rand_set_box_muller(1);

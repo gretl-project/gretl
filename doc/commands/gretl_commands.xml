@@ -10267,16 +10267,6 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>RNG</lit>: either <lit>MT</lit> or
-	  <lit>SFMT</lit> (the default). Switches between the default
-	  random number generator, namely the SIMD-oriented Fast
-	  Mersenne Twister (SFMT), and the Mersenne Twister of 2002 as
-	  implemented in GLib (MT). SFMT is faster and has better
-	  distributional properties but MT was gretl's RNG up to
-	  version 1.9.3.
-	  </para>
-	</li>
-	<li>
 	  <para><lit>normal_rand</lit>: <lit>ziggurat</lit> (the default) or
 	    <lit>box-muller</lit>.  Sets the method for generating random
 	    normal samples based on uniform input.
