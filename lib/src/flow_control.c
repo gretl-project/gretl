@@ -131,7 +131,7 @@ static void unmatched_message (int code)
 			 (code == SET_ELIF)? "elif": "endif");
 }
 
-#define IF_DEPTH 32
+#define IF_DEPTH 1024
 
 static int ifstate (int code, int val, int *err)
 {
