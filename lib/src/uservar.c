@@ -96,7 +96,6 @@ static user_var *user_var_new (const char *name, int type, void *value)
 	    if (m == NULL) {
 		u->ptr = gretl_null_matrix_new();
 	    } else if (matrix_is_saved(m)) {
-		fprintf(stderr, "*** user_var_new: got matrix_is_saved\n");
 		u->ptr = gretl_matrix_copy(m);
 	    } else {
 		u->ptr = value;
