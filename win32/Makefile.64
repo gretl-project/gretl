@@ -51,6 +51,7 @@ endif
 vpath %.c $(libsrcdir)
 vpath %.c $(topsrc)/cephes
 vpath %.c $(topsrc)/minpack
+vpath %.c $(topsrc)/dcmt
 vpath %.c $(topsrc)/cli
 vpath %.c $(guidir)
 vpath %.c $(plugindir)
@@ -306,6 +307,9 @@ MINSRC = chkder.c enorm.c fdjac2.c lmder1.c lmder.c lmdif.c lmpar.c \
 	qrfac.c qrsolv.c lbfgsb.c
 MINOBJ = $(MINSRC:.c=.o)
 
+DCMTSRC = check32.c eqdeg.c genmtrand.c mt19937.c prescr.c seive.c
+DCMTOBJ = $(DCMTSRC:.c=.o)
+
 OBJS = $(LIBOBJ) $(CLIOBJ) $(GUIOBJ) $(PLUGINOBJ)
 
 MOFILES = mo/de.po mo/el.mo mo/es.mo mo/eu.mo mo/fr.mo mo/it.mo mo/pl.mo \
@@ -347,7 +351,7 @@ gretl_updater.exe:
 $(MOFILES):
 	make -C mo
 
-dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) dllinit.o
+dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) $(DCMTOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
 	-o $@ $^ -lm -L$(imports) -lxml2.dll -lz -lintl -lprob -lgmp.dll \

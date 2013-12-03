@@ -135,11 +135,11 @@ static void unmatched_message (int code)
 
 static int ifstate (int code, int val, int *err)
 {
-    static unsigned char T[IF_DEPTH];
-    static unsigned char got_if[IF_DEPTH];
-    static unsigned char got_else[IF_DEPTH];
-    static unsigned char got_T[IF_DEPTH];
-    static unsigned char indent;
+    static unsigned short T[IF_DEPTH];
+    static unsigned short got_if[IF_DEPTH];
+    static unsigned short got_else[IF_DEPTH];
+    static unsigned short got_T[IF_DEPTH];
+    static unsigned short indent;
     int i, ret = 0;
 
 #if IFDEBUG
