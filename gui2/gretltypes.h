@@ -74,7 +74,7 @@ struct windata_t_ {
     windata_t *gretl_parent;
     windata_t **gretl_children;
     gpointer data;
-    int active_var; 
+    int active_var;
     int role;
     int n_model_tests;
     int n_gretl_children;

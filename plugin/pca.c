@@ -302,6 +302,10 @@ static int pca_save_components (VMatrix *cmat,
 	    series_set_label(dset, vi, label);
 	    g_free(label);
 	    for (t=0; t<dset->n; t++) {
+		if (t < dset->t1 || t > dset->t2) {
+		    dset->Z[vi][t] = NADBL;
+		    continue;
+		}
 		dset->Z[vi][t] = 0.0;
 		for (j=0; j<k; j++) {
 		    x = sZ[j][t];
@@ -330,7 +334,7 @@ static int pca_save_components (VMatrix *cmat,
 
    GUI: no option (simply display the results) or OPT_D. The latter
    means that we should not display the results, but should put up a 
-   dialog box allowing the user to decidewhat to save. 
+   dialog box allowing the user to decide what to save. 
 
    Note that depending on the original option supplied to the pca
    command, the incoming matrix may be either a correlation matrix
