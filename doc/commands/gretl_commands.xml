@@ -1238,13 +1238,15 @@
 	These plots display the distribution of a variable. The
 	central box encloses the middle 50 percent of the data, &ie;
 	it is bounded by the first and third quartiles.  The
-	<quote>whiskers</quote> extend to the minimum and maximum
-	values.  A line is drawn across the box at the median.  A
+	<quote>whiskers</quote> extend from each end of the box for a
+	range equal to 1.5 times the interquartile range. Observations
+	outside that range are considered outliers and represented via
+	dots.  A line is drawn across the box at the median.  A
 	<quote>+</quote> sign is used to indicate the mean.  If the
 	option of showing a confidence interval for the median is
-	selected, this is computed via the bootstrap method and
-	shown in the form of dashed horizontal lines above and/or
-	below the median.
+	selected, this is computed via the bootstrap method and shown
+	in the form of dashed horizontal lines above and/or below the
+	median.
       </para>
 
       <para context="gui">
@@ -8897,6 +8899,11 @@
 	  <flag>--raw</flag>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+        </option>
       </options>
     </usage>
 
@@ -8924,6 +8931,11 @@
 	standardized, while if the <opt>--raw</opt> option is given the
 	<quote>raw</quote> empirical quantiles are plotted against the
 	quantiles of the standard normal distribution. 
+      </para>
+      <para>
+	The option <opt>--output</opt> has the effect to send the
+	output to the desiderd filename; use <quote>display</quote> to
+	force output to the screen, for example during a loop.
       </para>
       <para>
 	Given two series arguments, <repl>y</repl> and <repl>x</repl>,

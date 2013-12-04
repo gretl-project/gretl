@@ -1266,13 +1266,16 @@
 	distribuzione di una variabile. La <quote>scatola</quote>
 	centrale (box) racchiude il 50 per cento centrale dei dati,
 	ossia è delimitato dal primo e terzo quartile. I
-	<quote>baffi</quote> (whiskers) si estendono fino ai valori
-	minimo e massimo. Una linea trasversale sulla scatola indica
-	la mediana, mentre un segno <quote>+</quote> indica la
-	media. Se viene selezionata l'opzione di mostrare un
-	intervallo di confidenza per la mediana, quetso viene
-	calcolato via bootstrap e mostrato sotto forma di lnee
-	tratteggiate orizzontali sopra e sotto la mediana.
+	<quote>baffi</quote> (whiskers) si estendono fino un valore
+	dato da una volta e mezzo il range interquartile a partire dai
+	bordi della scatola. Valori esterni a tale intervallo sono
+	considerati <quote>outlier</quote> e rappresentati con dei
+	punti. Una linea trasversale sulla scatola indica la mediana,
+	mentre un segno <quote>+</quote> indica la media. Se viene
+	selezionata l'opzione di mostrare un intervallo di confidenza
+	per la mediana, quetso viene calcolato via bootstrap e
+	mostrato sotto forma di lnee tratteggiate orizzontali sopra e
+	sotto la mediana.
       </para> 
 
       <para context="gui">
@@ -8852,6 +8855,11 @@
 	prima, oppure, con l'opzione <opt>--raw</opt>, i quantili
 	empirici possono essere disegnati contro quelli della normale
 	standardizzata.
+      </para>
+      <para>
+	Tramite l'opzione <opt>--output</opt> si invia il grafico al
+	file desiderato; usare <quote>display</quote> per forzare l'output
+	allo schermo, ad esempio nel contesto di un loop.
       </para>
       <para>
 	Con due argomenti, <repl>y</repl> and <repl>x</repl>, mostra
