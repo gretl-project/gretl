@@ -16916,7 +16916,7 @@ $as_echo_n "checking for gnuplot >= 4.4.0 with PNG support... " >&6; }
         if test $GPMAJOR -gt 4 ; then
           { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-        elif test $GPMAJOR -eq 4 && test $GPMINOR -ge 2 ; then
+        elif test $GPMAJOR -eq 4 && test $GPMINOR -ge 4 ; then
           { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
         else
