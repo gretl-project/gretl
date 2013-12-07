@@ -16930,7 +16930,7 @@ $as_echo "no" >&6; }
       echo
       echo "* gretl needs gnuplot >= 4.4.0, with PNG support."
       echo "* The current version of gnuplot is available from www.gnuplot.info"
-      exit
+      exit 1
     fi
   fi
 fi
@@ -17030,7 +17030,7 @@ if test "$PKG_CONFIG" = "no" ; then
    Please install pkg-config and then reconfigure gretl.
    pkg-config is available from http://www.freedesktop.org/
    "
-   exit
+   exit 1
 fi
 
 orig_CFLAGS=$CFLAGS
@@ -18063,7 +18063,7 @@ fi
 fi
 if test "${pixbuf_failed}" = "yes" ; then
     echo "* gretl needs but did not find the gdk-pixbuf library."
-    exit
+    exit 1
 fi
 
 
