@@ -1872,7 +1872,7 @@ gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
         if (!*err) {
 	    /* write vech of W into row k of Seq */
 	    vech_into_row(Seq, k, W);
-	    if (k < N-1) {
+	    if (k < replics - 1) {
 		/* refresh Normal draws */
 		gretl_rand_normal(Z, 0, np - 1);
 	    }
@@ -1891,4 +1891,3 @@ gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
 
     return Seq;
 }
-
