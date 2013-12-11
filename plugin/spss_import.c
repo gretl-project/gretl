@@ -150,7 +150,7 @@ struct spss_data_ {
     gretlopt opt;              /* option flags */
     int nvars;                 /* number of variables (really, 'elements') */
     int nobs;                  /* number of observations ('cases') */
-    int swapends;              /* reversing endianness? (1/0) */
+    int swapends;              /* reversing endianness? (0/1) */
     int encoding;              /* encoding for strings */
     int max_sv;                /* index of highest-numbered string variable */
     spss_var *vars;            /* info on individual variables */
@@ -230,7 +230,8 @@ static int sav_read_int32 (spss_data *sdat, int *err)
     int32_t ret = 0;
 
     *err = fread(&ret, sizeof ret, 1, sdat->fp) != 1;
-    if (*err && sdat->swapends) {
+
+    if (!*err && sdat->swapends) {
 	reverse_int(ret);
     }
 
