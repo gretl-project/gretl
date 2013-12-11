@@ -1,0 +1,162 @@
+\documentclass[oneside]{book}
+\usepackage{url,verbatim,fancyvrb,appendix,longtable}
+\usepackage{pifont}
+\usepackage[latin1]{inputenc}
+\usepackage[pdftex]{graphicx}
+\usepackage[authoryear]{natbib}
+\usepackage{color,gretl}
+\usepackage[a4paper,body={6.07in,9.7in},top=.8in,left=1.1in]{geometry}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+\usepackage{dcolumn,amsmath,bm}
+
+%% \pdfimageresolution=120
+\hypersetup{pdftitle={A Hansl Primer},
+            pdfsubject={The scripting language of gretl},
+            pdfauthor={Riccardo (Jack) Lucchetti},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            citecolor=steel,
+            bookmarks=true,
+            bookmarksnumbered=true,
+            plainpages=false
+}
+
+\begin{document}
+
+\VerbatimFootnotes
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+\setcounter{tocdepth}{1}
+
+%% titlepage
+
+\thispagestyle{empty}
+
+\begin{center}
+\pdfbookmark[1]{A Hansl Primer}{titlepage}
+
+\htitle{A Hansl Primer}
+
+\gsubtitle{The scripting language of gretl}
+
+{\large \sffamily
+Allin Cottrell\\
+Department of Economics\\
+Wake Forest University\\
+
+\vspace{20pt}
+Riccardo (Jack) Lucchetti\\
+Dipartimento di Scienze Economiche e Sociali\\
+Università Politecnica delle Marche\\
+
+\vspace{20pt}
+\input date
+}
+
+\end{center}
+\clearpage
+
+%% end titlepage, start license page
+
+\thispagestyle{empty}
+
+\pdfbookmark[1]{License}{license}
+
+\vspace*{2in}
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the \emph{GNU Free Documentation License}, Version
+1.1 or any later version published by the Free Software Foundation
+(see \url{http://www.gnu.org/licenses/fdl.html}).
+
+\cleardoublepage
+
+%% end license page, start table of contents
+\pdfbookmark[1]{Table of contents}{contents}
+
+\pagenumbering{roman}
+\pagestyle{headings}
+
+\tableofcontents
+
+\clearpage
+\pagenumbering{arabic}
+
+\chapter*{Introduction}
+\addcontentsline{toc}{chapter}{Introduction}
+
+\section*{What Hansl is and what it is not}
+
+Hansl is a recursive acronym: it stands for ``Hansl's A Neat Scripting
+Language''. You might therefore expect something very general in
+purpose. Not really.  Hansl was born as the scripting language for the
+econometrics program \app{gretl} and its role is unlikely to change.
+As a consequence, hansl should not be viewed as a fully fledged
+programming language such as C, FORTRAN, Perl or Python. Not because
+it lacks anything to be considered as such,\footnote{Hansl is in fact
+  Turing-complete.} but because its aim is different. Hansl should be
+considered as a special-purpose or domain-specific language, designed
+to make an econometrician's life easier. Hence it incorporates a
+series of conventions and choices that may irritate purists and have
+some marginal impact on raw performance, but that we, as professional
+econometricians, consider ``nice to have''.
+
+On the other hand, hansl is not just a tool to automate rote tasks. It
+has several features which make advanced programming possible, such as
+structured programming, recursion, complex data structures, and so on.
+
+This makes hansl somewhat different from plain matrix-oriented
+interpreted languages, such as the Matlab/Octave family, Ox and so on.
+As for style, the language which hansl most resembles is probably the
+bash scripting language.
+
+% Other consequences are laid out in chapter \ref{chap:hr-gretl}.
+
+\section*{The intent and structure of this document}
+
+The intended readers of this document are those who already know how
+to write code, and are familiar with the associated do-s and don't-s.
+Such users may wish to add hansl to their toolbox, alongside languages
+like C or FORTRAN, or programs such as R, Ox, Matlab, Stata, Gauss and
+the like, some of which they are already confident with. Here,
+therefore, the focus is not so much on ``How do I do this?'', but
+rather on ``How do I do this \emph{in hansl}?''.
+
+As a consequence, this document aims as making the reader a reasonably
+proficient hansl user in a (relatively) short time; however, not all
+the features of hansl are illustrated; for those, interested readers
+should consult the \GCR{} and \GUG{}.
+
+This guide is divided into three parts. The first part (``Without a
+dataset'') concentrates on hansl as a pure matrix-oriented programming
+language. The second part (``With a dataset'') exploits the fact that
+hansl scripts are run through gretl, which has very nice facilities
+for handling statistical datasets (interactively if necessary). This
+provides hansl with a series of extra constructs and features which
+make it extremely easy to write hansl scripts to perform all sorts
+of statistical procedures.
+
+In order to use hansl, you will need a working installation of
+gretl. We assume you have one. If you don't, please refer to chapter 1
+of the \GUG.
+
+\section*{Where to look for help}
+
+Huge overlap with \app{gretl} $\to$ \GUG, etcetera. The gretl-users
+mailing list is also useful.
+
+% \section*{How to run hansl scripts}
+
+% From within \app{gretl}, obviously. But be aware of \texttt{gretlcli},
+% especially for heavy-duty tasks (best under Unix).
+
+\include{hp-nodata}
+\include{hp-data}
+\include{hp-further}
+
+% \clearpage
+% \include{biblio}
+
+\end{document}

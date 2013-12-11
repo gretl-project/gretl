@@ -1,0 +1,346 @@
+\chapter{Control flow}
+\label{chap:hp-ctrlflow}
+
+The primary means for controlling the flow of execution in a hansl
+script are the the \cmd{loop} statement (repeated execution), \cmd{if}
+statement (conditional execution), the \cmd{catch} modifier (which
+enables the trapping of errors that would otherwise halt execution)
+and the \cmd{quit} command (which forces termination).
+
+\section{Loops}
+\label{sec:hr-loops}
+
+The basic hansl command for looping is (surprise) \cmd{loop}, and
+takes the form
+\begin{code}
+loop <control-expression> <options>
+    ...
+endloop
+\end{code}
+In other words, the pair of statements \cmd{loop} and \cmd{endloop}
+enclose the statements to repeat. Of course, loops can be nested.
+Several variants of the \texttt{<control-expression>} for a loop are
+supported, as follows:
+\begin{enumerate}
+\item unconditional loop
+\item while loop
+\item index loop
+\item foreach loop
+\item for loop.
+\end{enumerate}
+These variants are briefly described below.
+
+\subsection{Unconditional loop}
+
+This is the simplest variant. It takes the form
+\begin{code}
+loop <times>
+   ...
+endloop
+\end{code}
+where \texttt{<times>} is any expression that evaluates to a scalar,
+namely the required number of iterations. This is only evaluated at
+the beginning of the loop, so the number of iterations cannot be
+changed from within the loop itself.
+
+\subsection{Index loop}
+
+The syntax is
+\begin{code}
+loop <counter>=<min>..<max>
+   ...
+endloop
+\end{code}
+The limits \texttt{<min>} and \texttt{<max>} must evaluate to scalars;
+they are automatically turned into integers if they have a fractional
+part. The \texttt{<counter>} variable is started at \texttt{<min>} and
+incremented by 1 on each iteration until it equals \texttt{<max>}.
+
+The counter is ``read-only'' inside the loop. You can access either
+its numerical value or (by prepending a dollar sign) its string
+representation. For example:
+\begin{code}
+scalar Max = 4
+loop i=1..Max --quiet
+    printf "$i squared = %d\n", i*i
+endloop
+\end{code}
+%$
+
+\subsection{While loop}
+
+Here you have
+\begin{code}
+loop while <condition>
+   ...
+endloop
+\end{code}
+where \texttt{<condition>} should evaluate to a scalar, which is
+re-evaluated at each iteration. Looping stops as soon as
+\texttt{<condition>} becomes false (0). If \texttt{<condition>}
+becomes \texttt{NA}, an error is flagged and execution stops.  By
+default, \texttt{while} loops cannot exceed 1000 iterations. This is
+intended as a safeguard against potentially infinite loops. This
+setting can be overridden if necessary by setting the
+\texttt{loop\_maxiter} state variable to a different value (see
+chapter \ref{chap:settings}).
+
+\subsection{Foreach loop}
+\label{sec:loop-foreach}
+
+In this case the syntax is
+\begin{code}
+loop foreach <counter> <catalogue>
+   ...
+endloop
+\end{code}
+where \texttt{<catalogue>} can be either a variable of type
+\texttt{list} (i.e.\ a list of series), or a collection of
+space-separated strings. The counter variable automatically takes on
+the numerical values 1, 2, 3, \dots{} as execution proceeds, but its
+string value (accessed by prepending a dollar sign) shadows the names
+of the series in the list or the space-separated strings; this sort of
+loop is designed for string substitution.
+
+Here is an example in which the \texttt{<catalogue>} is a collection
+of function names: 
+\begin{code}
+loop foreach f sqrt exp ln
+    printf "$f(1) = %g\n", $f(1)
+endloop
+\end{code}
+
+\subsection{For loop}
+
+The final form of loop control emulates the \cmd{for} statement in the
+C programming language.  The syntax is \texttt{loop for}, followed by
+three component expressions, separated by semicolons and surrounded by
+parentheses, that is
+\begin{code}
+loop for ( <init> ; <cont> ; <modifier> )
+   ...
+endloop
+\end{code}
+
+The three components are as follows:
+\begin{enumerate}
+\item Initialization (\texttt{<init>}): This is evaluated once at the
+  start of the loop.
+\item Continuation condition (\texttt{<cont>}): this is evaluated at
+  the top of each iteration (including the first).  If the expression
+  evaluates as true (non-zero), iteration continues, otherwise it
+  stops. 
+\item Modifier (\texttt{<modifier>}): an expression which modifies the
+  value of some variable.  This is evaluated prior to checking the
+  continuation condition, on each iteration after the first.
+\end{enumerate}
+
+Here's a simple example:
+%
+\begin{code}
+loop for (r=0.01; r<.991; r+=.01)
+   ...
+endloop
+\end{code}
+
+Be aware of the limited precision of floating-point arithmetic. For
+example, the code snippet below will iterate forever on most platforms
+because \texttt{x} will never equal \textit{exactly} 0.01, even though
+it might seem that it should.
+\begin{code}
+loop for (x=1; x!=0.01; x=x*0.1)
+    printf "x = .18g\n", x
+endloop  
+\end{code}
+However, if you replace the condition \texttt{x!=0.01} with
+\texttt{x>=0.01}, the code will run as (probably) intended.
+ 
+\vspace{1ex}
+
+\subsection{Loop options}
+
+Two options can be given to the \cmd{loop} statement. One is
+\option{quiet}. This has simply the effect of suppressing certain
+lines of output that gretl prints by default to signal progress and
+completion of the loop; it has no other effect and the semantics of
+the loop contents remain unchanged. This option is commonly used in
+complex scripts.
+
+The \option{progressive} option is mostly used as a quick and
+efficient way to set up simulation studies. When this option is given,
+a few commands (notably \cmd{print} and \cmd{store}) are given a
+special, \emph{ad hoc} meaning. Please refer to the \GUG\ for more
+information.
+ 
+\subsection{Breaking out of loops}
+\label{sec:loop-break}
+
+The \cmd{break} command makes it possible to break out of a loop if
+necessary. Note that
+\begin{itemize}
+\item if you nest loops, \cmd{break} in the innermost loop will
+  interrupt that loop only and not the outer ones; and
+\item hansl does not provide any equivalent to the C \texttt{continue}
+  statement.
+\end{itemize}
+
+\section{The \cmd{if} statement}
+
+Conditional execution in hansl uses the \cmd{if} keyword. Its fullest
+usage is as follows
+\begin{code}
+if <condition>
+   ...
+elif <condition>
+   ...
+else 
+   ...
+endif  
+\end{code}
+
+Points to note:
+\begin{itemize}
+\item The \texttt{<condition>} can be any expression that evaluates to a
+  scalar: 0 is interpreted as ``false'', non-zero is interpreted as
+  ``true''; \texttt{NA} generates an error.
+\item The \cmd{elif} and \cmd{else} clauses are optional: the minimal
+  form is just \texttt{if} \dots{} \texttt{endif}.
+\item The \cmd{elif} keyword can be repeated, making hansl's \cmd{if}
+  statement a multi-way branch statement. There is no separate
+  \cmd{switch} or \cmd{case} statement in hansl.
+\item Conditional blocks of this sort can be nested up to a maximum of
+  1024.
+\end{itemize}
+
+Example:
+\begin{code}
+scalar x = 15
+
+# --- simple if ----------------------------------
+if x >= 10
+   printf "%g is more than two digits long\n", x
+endif
+
+# --- if with else -------------------------------
+if x >= 0
+   printf "%g is non-negative\n", x
+else
+   printf "%g is negative\n", x
+endif
+
+# --- multiple branches --------------------------
+if missing(x)
+   printf "%g is missing\n", x
+elif x < 0
+   printf "%g is negative\n", x
+elif floor(x) == x
+   printf "%g is an integer\n", x
+else
+   printf "%g is positive integer\n", x
+endif
+\end{code}
+
+Note to Stata users: hansl's \cmd{if} statement is fundamentally
+different from Stata's \texttt{if} option: the latter selects a
+subsample of observations for some action, while the former is used to
+decide if a group of statements must be executed or not; Stata calls
+this the \emph{branching \texttt{if}}.
+
+\subsection{The ternary query operator}
+
+Besides use of \texttt{if}, the ternary query operator, \texttt{?:},
+can be used to perform conditional assignment on a more ``micro''
+level. This has the form
+\begin{code}
+result = <condition> ? <t-value1> : <f-value>
+\end{code}
+If \texttt{<condition>} evaluates as true (non-zero) then
+\texttt{<t-value>} is assigned to \texttt{result}, otherwise
+\texttt{<f-value>} is assigned. This is obviously more compact than
+\texttt{if} \dots{} \texttt{else} \dots{} \texttt{endif}. The
+following example replicates the \cmd{abs} function by hand:
+\begin{code}
+scalar ax = x>=0 ? x : -x
+\end{code}
+Of course, in the above case it would have been much simpler to just
+write \texttt{ax = abs(x)}. Consider, however, the following case,
+which exploits the fact that the ternary operator can be nested:
+\begin{code}
+scalar days = (m==2) ? 28 : maxr(m.={4,6,9,11}) ? 30 : 31
+\end{code}
+This example deserves a few comments: we want to compute the number of
+days in a month, codified in the variable \texttt{m}. So, what we put into
+the scalar \texttt{days} comes from the following pathway:
+\begin{enumerate}
+\item first, we check if the month is February (\texttt{m==2}); if so,
+  we set \texttt{days} to 28 and we're done;\footnote{Ok, we don't
+    check for leap years here.}
+\item otherwise, we compute a matrix of zeros and ones via the
+  \verb|m.={4,6,9,11}| operation (note the ``dot'' operator); if
+  \texttt{m} equals any of the elements in the vector, the
+  corresponding element of the result will be one, and zero otherwise;
+\item by the function \cmd{maxr}, we take its maximum, so we're
+  checking whether \texttt{m} is one of the four values corresponding
+  to 30-days months;
+\item since the above evaluates to a scalar, we put the right value
+  into \texttt{days}.
+\end{enumerate}
+
+It is also
+more flexible, in this respect: in contrast to the usage of
+\texttt{if}, \texttt{<condition>} need not evaluate to a scalar.  So
+for example one can do this sort of thing with matrices:
+\begin{code}
+matrix A = mnormal(4,4)
+matrix B = upper(A.<0) ? -A : A
+\end{code}
+which will switch the sign of the negative elements of \texttt{A} on
+and above its diagonal. To achieve the same via a loop, one should
+have had to write a considerably longer chunk of code, such as
+\begin{code}
+matrix A = mnormal(4,4)
+matrix B = A
+
+loop r = 1..rows(A)
+  loop c = r .. cols(A)
+     if A[r,c] < 0
+       B[r,c] = -A[r,c]
+     endif
+  end loop
+end loop
+\end{code}
+
+\section{The \cmd{catch} modifier}
+
+Hansl offers a rudimentary form of exception handling via the
+\cmd{catch} modifier.
+
+This is not a command in its own right but can be used as a prefix to
+most regular commands: the effect is to prevent termination of a
+script if an error occurs in executing the command. If an error does
+occur, this is registered in an internal error code which can be
+accessed as \dollar{error} (a zero value indicates success). The value
+of \dollar{error} should always be checked immediately after using
+\texttt{catch}, and appropriate action taken if the command failed.
+
+The catch keyword cannot be used before \cmd{if}, \cmd{elif} or
+\cmd{endif}.
+
+\emph{\ldots Add example? \ldots}
+
+\section{The \cmd{quit} statement}
+
+When the \cmd{quit} statement is encountered in a hansl script,
+execution stops. If the command-line program \app{gretlcli} is running
+in batch mode, control returns to the operating system; if gretl is
+running in interactive mode, \app{gretl} will wait for interactive
+input. The \texttt{quit} command is rarely used in scripts since
+execution automatically stops when script input is exhausted, but it
+could be used in conjunction with \cmd{catch}. A script author could
+arrange matters so that on encountering a certain error condition an
+appropriate message is printed and the script is halted.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "hansl-primer"
+%%% End: 

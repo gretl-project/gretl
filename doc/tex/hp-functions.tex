@@ -1,0 +1,44 @@
+\chapter{User-written functions}
+
+Main structure:
+
+\begin{flushleft}
+\texttt{function \emph{type} \emph{funcname}(\emph{arguments})}\\
+   \quad \ldots\\
+   \quad \emph{function body}\\
+   \quad \ldots \\
+\texttt{end function}
+\end{flushleft}
+\section{Parameter passing and return values}
+\label{sec:params-returns}
+
+
+
+\section{Recursion}
+
+Obligatory factorial example
+\begin{code}
+function scalar factorial(scalar n)
+    if (n<0) || (n>floor(n))
+        # filter out everything that isn't a 
+        # non-negative integer
+        return NA
+    elif n==0
+        return 1
+    else
+        return n*factorial(n-1)
+    endif
+end function
+
+loop i=0..6 --quiet
+    printf "%d! = %d\n", i, factorial(i)
+end loop
+\end{code}
+
+Note: this is fun, but in practice, you'll be much better off using
+the pre-cooked gamma function (or, better still, its logarithm).
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "hansl-primer"
+%%% End: 

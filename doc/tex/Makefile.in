@@ -5,11 +5,11 @@ MAKE = @MAKE@
 
 GUIDE = gretl-guide.pdf
 REF = gretl-ref.pdf
-HANSL = hansl-guide.pdf
+HANSL = hansl-primer.pdf
 KBD = gretl-keys.pdf
 ALTGUIDE = gretl-guide-a4.pdf
 ALTREF = gretl-ref-a4.pdf
-ALTHANSL = hansl-guide-a4.pdf
+ALTHANSL = hansl-primer-a4.pdf
 ALTKBD = gretl-keys-a4.pdf
 
 TEXSRC = cli.tex \
@@ -64,7 +64,11 @@ TEXSRC = cli.tex \
 	system.tex \
 	operators.tex \
 	realtime.tex \
-	hansl-intro.tex
+	hp-ctrlflow.tex \
+	hp-data.tex \
+	hp-functions.tex \
+	hp-further.tex \
+	hp-nodata.tex
 
 BIBSRC = gretl.bib gretl.bst
 
@@ -91,7 +95,7 @@ $(REF): gretl-ref.tex links cmdtex functex textables topiclist \
 	pdflatex $<
 	pdflatex $<
 
-$(HANSL): hansl-guide.tex links \
+$(HANSL): hansl-primer.tex links \
 	date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
@@ -116,7 +120,7 @@ $(ALTREF): gretl-ref-a4.tex links cmdtex functex textables topiclist \
 	pdflatex $<
 	pdflatex $<
 
-$(ALTHANSL): hansl-guide-a4.tex links \
+$(ALTHANSL): hansl-primer-a4.tex links \
 	date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
@@ -130,7 +134,7 @@ gretl-guide.tex:
 gretl-ref.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
 
-hansl-guide.tex:
+hansl-primer.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
 
 gretl-keys.tex:
@@ -146,7 +150,7 @@ gretl-guide-a4.tex: $(docsrc)/tex/gretl-guide.tex ../commands/us2a4
 gretl-ref-a4.tex: $(docsrc)/tex/gretl-ref.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
-hansl-guide-a4.tex: $(docsrc)/tex/hansl-guide.tex ../commands/us2a4
+hansl-primer-a4.tex: $(docsrc)/tex/hansl-primer.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
 gretl-keys-a4.tex: $(docsrc)/tex/gretl-keys.tex ../commands/us2a4
@@ -189,7 +193,7 @@ onepass: gretl-guide.tex links textables
 refpass: gretl-ref.tex links cmdtex textables functex topiclist
 	pdflatex $<
 
-hanslpass: hansl-guide.tex links
+hanslpass: hansl-primer.tex links
 	pdflatex $<
 
 bibpass: onepass refpass
@@ -199,7 +203,7 @@ bibpass: onepass refpass
 clean:
 	rm -f *.aux *.log *.out *.toc *.pdf *.bbl *.blg
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
-	rm -f gretl-guide-a4.tex gretl-ref-a4.tex hansl-guide-a4.tex gretl-keys-a4.tex
+	rm -f gretl-guide-a4.tex gretl-ref-a4.tex hansl-primer-a4.tex gretl-keys-a4.tex
 	rm -f ../commands/textables ../commands/topiclist_en 
 	rm -f ../commands/cmdtex ../commands/functex
 

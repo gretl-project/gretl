@@ -1,0 +1,137 @@
+\part{Further topics}
+
+\chapter{The \texttt{set} command}
+\label{chap:settings}
+
+\chapter{Formatted output}
+
+\texttt{printf, sprintf} and the ``commands vs functions'' thing.
+
+\chapter{Function packages}
+
+\chapter{Going abroad}
+``Foreign'' blocks.
+
+\chapter{Tricks}
+\section{String substitution}
+\label{sec:stringsub}
+
+String variables can be used in two ways in hansl scripting: the name
+of the variable can be typed ``as is'', or it may be preceded by the
+``at'' sign, \verb|@|. In the first variant the named string is
+treated as a variable in its own right, while the second calls for
+``string substitution''. Which of these variants is appropriate
+depends on the context.
+
+In the following contexts the names of string variables should be
+given in plain form (without the ``at'' sign):
+
+\begin{itemize}
+\item When such a variable appears among the arguments to the
+  commands \texttt{printf} or \texttt{sprintf}.
+\item When such a variable is given as the argument to a function.
+\item On the right-hand side of a \texttt{string} assignment.
+\end{itemize}
+
+Here is an illustration of the use of a named string argument with
+\texttt{printf}:
+%
+\begin{code}
+? string vstr = "variance"
+Generated string vstr
+? printf "vstr: %12s\n", vstr
+vstr:     variance
+\end{code}
+
+String substitution, on the other hand, can be used in contexts where
+a string variable is not acceptable as such. If gretl encounters
+the symbol \verb|@| followed directly by the name of a string
+variable, this notation is in effect treated as a ``macro'': the value
+of the variable is sustituted literally into the command line before
+the regular parsing of the command is carried out.
+
+One common use of string substitution is when you want to construct
+and use the name of a series programatically. For example, suppose you
+want to create 10 random normal series named \texttt{norm1} to
+\texttt{norm10}. This can be accomplished as follows.
+%
+\begin{code}
+string sname = null
+loop i=1..10
+  sprintf sname "norm%d", i
+  series @sname = normal()
+endloop
+\end{code}
+%
+Note that plain \texttt{sname} could not be used in the second line
+within the loop: the effect would be to attempt to overwrite the
+string variable named \texttt{sname} with a series of the same name,
+hence generating an error. What we want is for the current
+\textit{value} of \texttt{sname} to be dumped directly into the
+command that defines a series, and the ``\verb|@|'' notation achieves
+that.
+
+Another typical use of string substitution is when you want the
+options used with a particular command to vary depending on
+some condition. For example,
+%
+\begin{code}
+function void use_optstr (series y, list xlist, int verbose)
+   string optstr = verbose ? "" : "--simple-print"
+   ols y xlist @optstr 
+end function
+
+open data4-1
+list X = const sqft
+use_optstr(price, X, 1)
+use_optstr(price, X, 0)
+\end{code}
+
+In the first call to the function \texttt{use\_optstr} the option
+string \verb|--simple-print| will be appended to the \cmd{ols}
+command; in the second call it will be omitted.
+
+When printing the value of a string variable using the \texttt{print}
+command, the plain variable name should generally be used, as in
+%
+\begin{code}
+string s = "Just testing"
+print s
+\end{code}
+%
+The following variant is equivalent, though clumsy and not
+recommended.
+%
+\begin{code}
+string s = "Just testing"
+print "@s"
+\end{code}
+%
+But note that this next variant does something quite different.
+%
+\begin{code}
+string s = "Just testing"
+print @s
+\end{code}
+%
+After string substitution, the command reads
+%
+\begin{code}
+print Just testing
+\end{code}
+%
+which is taken as a request to print the values of two variables,
+\texttt{Just} and \texttt{testing}.
+
+\subsection{Performance hint}
+
+Warning: gretl attempts to speed up execution of assignment
+expressions within loops by ``pre-compiling'' the expression.
+However, if such an expression contains string substitution it cannot
+be pre-compiled. So be sure to use the \verb|@| operator only when
+strictly necessary if you want to avoid a performance penalty.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "hansl-primer"
+%%% End: 

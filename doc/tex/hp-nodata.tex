@@ -1,0 +1,673 @@
+\part{Without a dataset}
+
+\chapter{Hello, world!}
+
+We begin with the time-honored ``Hello, world'' program, the
+obligatory first step in any programming language. It's actually very
+simple in hansl:
+\begin{code}
+  # First example
+  print "Hello, world!"
+\end{code}
+
+There are several ways to run the above example: you can put it in a
+text file \texttt{first\_ex.inp} and have gretl execute it from the
+command line through the command
+\begin{code}
+  gretlcli -b first_ex.inp
+\end{code}
+or you could just copy its contents in the editor window of a GUI
+gretl session and click on the ``gears'' icon. It's up to you; use
+whatever you like best.
+
+From a syntactical point of view, allow us to draw attention on
+the following points:
+\begin{enumerate}
+\item The line that begins with a hash mark (\texttt{\#}) is a
+  comment: if a hash mark is encountered, everything from that point
+  to the end of the current line is treated as a comment, and ignored
+  by the interpreter.
+\item The next line contains a \emph{command} (\cmd{print}) followed
+  by an \emph{argument}; this is fairly typical of hansl: most jobs
+  are carried out by calling commands.
+\item Hansl does not have an explicit command terminator such as the
+  ``\texttt{;}'' character in the C language family (C++, Java, C\#,
+  \ldots) or GAUSS; instead it uses the newline character as an
+  implicit terminator. So at the end of a command, you \emph{must}
+  insert a newline; conversely, you \emph{can't} put a newline in the
+  middle of a command---or not without taking special measures. If you
+  need to break a command over more than one line for the sake of
+  legibility you can use the ``\textbackslash'' (backslash) character,
+  which causes gretl to ignore the next line break.
+\end{enumerate}
+
+Note also that the \cmd{print} command automatically appends a line
+break, and does not recognize ``escape'' sequences such as
+``\verb|\n|''; such sequences are just printed literally. The
+\cmd{printf} command can be used for greater control over output.
+
+Let's now examine a simple variant of the above:
+\begin{code}
+  /*
+    Second example
+  */
+  string foo = "Hello, world"
+  print foo
+\end{code}
+
+In this example, the comment is written using the convention adopted
+in the C programming language: everything between ``\verb|/*|'' and
+``\verb|*/|'' is ignored.\footnote{Each type of comment can be masked
+  by the other:
+\begin{itemize}
+\item If \texttt{/*} follows \texttt{\#} on a given line which does
+  not already start in ignore mode, then there's nothing special about
+  \texttt{/*}, it's just part of a \texttt{\#}-style comment.
+\item If \texttt{\#} occurs when we're already in comment mode, it is
+  just part of a comment.
+\end{itemize}} Comments of this type cannot be nested.
+
+Then we have the line
+\begin{code}
+  string foo = "Hello, world"
+\end{code}
+In this line, we assign the value ``\texttt{Hello, world}'' to the
+variable named \texttt{foo}. Note that
+\begin{enumerate}
+\item The assignment operator is the equals sign (\texttt{=}).
+\item The name of the variable (its \texttt{identifier}) must follow
+  the following convention: identifiers can be at most 31 characters
+  long. They must start with a letter, and can contain only letters,
+  numbers and the underscore character. Identifiers in hansl are
+  case-sensitive, so \texttt{foo}, \texttt{Foo} and \texttt{FOO} are
+  three distinct names. Of course, some words are reserved and can't
+  be used as identifiers (however, nearly all reserved words only
+  contain lowercase characters).
+\end{enumerate}
+
+In hansl, a variable has to be of one of these types: \texttt{scalar},
+\texttt{series}, \texttt{matrix}, \texttt{list}, \texttt{string} or
+\texttt{bundle}. As we've already seen, string variables are used to
+hold sequences of alphanumeric characters. We'll introduce the other
+ones gradually; for example, the \texttt{matrix} type will be the
+object of the next chapter.  
+
+The reader may have noticed that the line 
+\begin{code}
+  string foo = "Hello, world"
+\end{code}
+implicitly performs two tasks: it \emph{declares} \texttt{foo} as a
+variable of type \texttt{string} and, at the same time, \emph{assigns}
+a value to \texttt{foo}. This is, in fact, not strictly required.  In
+most cases gretl is able to figure out by itself what type the
+variable should have, so the line \verb|foo = "Hello, world"| (without
+a type specifier) would have worked just fine.  However, it is more
+elegant (and leads to more legible and maintainable code) to use a
+type specifier at least the first time you introduce a variable.
+  
+In the next example, we will use a variable of the \texttt{scalar}
+type:
+\begin{code}
+  scalar x = 42
+  print x
+\end{code}
+A \texttt{scalar} is a double-precision floating point number, so
+\texttt{42} is the same as \texttt{42.0} or \texttt{4.20000E+01}. Note
+that hansl doesn't have a separate variable type for integers or
+complex numbers.
+
+An important detail to note is that, contrary to most other
+matrix-oriented languages in use in the econometrics community, hansl
+is \emph{strongly typed}. That is, you cannot assign a value of one
+type to a variable that has already been declared as another type. For
+example, this will return an error:
+\begin{code}
+  string a = "zoo"
+  a = 3.14 # no, no, no!
+\end{code}
+If you try running the example above, an error will be
+flagged. However, it is acceptable to destroy the original variable,
+via the \cmd{delete} command, and then re-declare it, as in
+\begin{code}
+  scalar X = 3.1415
+  delete X
+  string X = "apple pie"
+\end{code}
+
+There is no ``type-casting'' as in C, but some automatic type
+conversions are possible (more on this later).
+
+Many commands can take more than one argument
+\begin{code}
+  set echo off
+  set messages off
+
+  scalar x = 42
+  string foo = "not bad"
+  print x foo 
+\end{code}
+In this example, one \texttt{print} is used to print the values of two
+variables; more generally, \texttt{print} can be followed by as many
+arguments as desired. The other difference with respect to the
+previous code examples is in the use of the two \texttt{set}
+commands. Describing the \texttt{set} command in detail would lead to
+an overly long diversion; suffice it to say that here it is used as a
+way to silence unwanted output. See chapter \ref{chap:settings} or the
+\GCR{}.
+
+\section{Manipulation of scalars}
+
+Algebraic operations, obviously, and functions. 
+\begin{code}
+  a = 42
+  b = a * 0.5
+  c = sqrt(a*b)
+  print a b c
+\end{code}
+
+Stuff borrowed from C
+\begin{code}
+  a += c
+  b -=d
+  c++
+  d--
+  c = (a>0) ? b : sqrt(d)
+\end{code}
+
+Treatment of \texttt{NA}s.
+
+The \cmd{eval} command
+
+\section{Manipulation of strings}
+
+A string may take any of the following forms:
+\begin{itemize}
+\item the keyord \texttt{null}, or \texttt{""}, for an empty string
+\item a string literal (enclosed in double quotes); or
+\item the name of an existing string variable; or
+\item a function that returns a string (see below); or
+\item any of the above followed by \texttt{+} and an integer offset.
+\end{itemize}
+
+The role of the integer offset is to use a substring of the preceding
+element, starting at the given character offset.  An empty string is
+returned if the offset is greater than the length of the string in
+question.
+
+You can use the \verb|~| operator to join two or more strings, as
+in\footnote{Note on some national keyboards, you don't have the tilde
+  (\texttt{\~}) character. In gretl's script editor, this can be
+  obtained via its Unicode representation: type Ctrl-Shift-U, followed
+  by \texttt{7e}.}
+\begin{code}
+  a = "now"
+  b = "here"
+  c = a ~ c
+  print c
+\end{code}
+or
+\begin{code}
+string s1 = "sweet"
+string s2 = "Home, " ~ s1 ~ " home."
+\end{code}
+
+To add to the end of an existing string you can use the operator
+\texttt{~=}, as in
+\begin{code}
+  a = "abcde"
+  eval a+3
+  a ~= "fgh"
+\end{code}
+
+Functions and stuff borrowed from C
+
+A pretty nifty thing is \emph{string substitution}, but later (see
+\ref{sec:stringsub}).
+
+\chapter{Matrices}
+
+Matrices are one- or two-dimensional arrays of double-precision
+floating-point numbers. Hansl users who are accustomed to other matrix
+languages should note that multi-index objects are not
+supported. Matrices have rows and columns, that's it.
+
+\section{Matrix indexing}
+\label{sec:mat-index}
+
+Individual matrix elements are accessed through the \verb|[r,c]|
+syntax (indexing starts at 1). For example, \texttt{X[3,4]} indicates
+the element of $X$ on the third row, fourth column. For example,
+\begin{code}
+  matrix X = zeros(2,3)
+  X[2,1] = 4
+  print X
+\end{code}
+produces
+\begin{code}
+X (2 x 3)
+
+  0   0   0 
+  4   0   0 
+\end{code}
+
+Here are some more advanced ways to access matrix elements:
+\begin{enumerate}
+\item In case the matrix has only one row (column), the column (row)
+  specification can be omitted, as in \texttt{x[3]}.
+\item Omitting the row or column specification means ``take them
+  all'', as in \texttt{x[4,]} (fourth matrix row).
+\item For square matrices, the special syntax \texttt{x[diag]} can be
+  used, which will return the diagonal.
+\item Consecutive rows (columns) can be specified via the colon
+  (\texttt{:}) character, as in \texttt{x[,2:4]} (columns 2 to 4).
+  (Note that, unlike some other matrix languages, the syntax
+  \texttt{[m:n]} is illegal if $m>n$.)
+\item It is possible to use a vector to hold indices to a matrix. E.g.\
+  if $e = [2,3,6]$, then \texttt{X[,e]} contains the second, third and
+  sixth column of $X$.
+\end{enumerate}
+Moreover, matrices can be empty (zero rows/columns). 
+
+In the example above, the matrix \texttt{X} was constructed using
+the function \texttt{zeros()}, whose meaning should be obvious, but
+matrix elements can also be specified directly, as in
+\begin{code}
+scalar a = 2*3
+matrix A = { 1, 2, 3 ; 4, 5, a }
+\end{code}
+The matrix is defined by rows; the elements on each row are separated
+by commas and rows are separated by semicolons.  The whole expression
+must be wrapped in braces.  Spaces within the braces are not
+significant. The above expression defines a $2\times3$ matrix.
+
+Note that each element should be a numerical value, the name of a
+scalar variable, or an expression that evaluates to a scalar. In the
+example above the scalar \texttt{a} was first assigned a value and
+then used in matrix construction. (Also note, in passing, that
+\texttt{a} and \texttt{A} are two separate identifiers, due to
+case-sensitivity.)
+
+\section{Matrix operations}
+\label{sec:mat-op}
+
+Matrix sum, difference and product are obtained via \texttt{+},
+\texttt{-} and \texttt{*}, respectively. The prime operator
+(\texttt{'}) can act as a unary operator, in which case it transposes
+the preceeding matrix, or as a binary operator, in which case it acts
+as in ordinary matrix algebra, that is transposes the first matrix and
+multiplies it into the second done. Errors are flagged if
+conformability is a problem. For example:
+\begin{code}
+  matrix a = {11, 22 ; 33, 44}  # a is square 2 x 2
+  matrix b = {1,2,3; 3,2,1}     # b is 2 x 3
+
+  matrix c = a'         # c is the trasnpose of a
+  matrix d = b*a        # d is a 2x3 equal to b times a
+
+  matrix gina = b'd     # valid: gina is 3x3
+  matrix lina = d + b   # valid: lina is 2x3
+
+  /* -- these would generate errors if uncommented ----- */
+
+  # pina = c + a  # sum non-conformability
+  # rina = d * b  # product non-conformability
+\end{code}
+
+Other noteworthy matrix operators include \texttt{\^} (matrix power),
+\texttt{**} (Kronecker product), and the ``concatenation'' operators
+\verb|~| (horizontal) and \texttt{|} (vertical). Readers are invited
+to try them out by running the following code
+\begin{code}
+matrix A = {2,1;0,1}
+matrix B = {1,1;1,0}
+
+matrix KP = A ** B
+matrix PWR = A^3 
+matrix HC = A ~ B
+matrix VC = A | B
+
+print A B KP PWR HC VC
+\end{code}
+Note, in particular, that $A^3 = A \cdot A \cdot A$, which is different
+from what you get by computing the cubes of each element of $A$
+separately.
+
+Element-by-element operations are supported by the so-called ``dot''
+operators, which are obtained by putting a dot (``\texttt{.}'') before
+the corresponding operator. For example, the code
+\begin{code}
+A = {1,2; 3,4}
+B = {-1,0; 1,-1}
+eval A * B
+eval A .* B
+\end{code}
+produces
+\begin{code}
+   1   -2 
+   1   -4 
+
+  -1    0 
+   3   -4 
+\end{code}
+
+It's easy to verify that the first operation performed is regular
+matrix multiplication $A \cdot B$, whereas the second one is the
+Hadamard (element-by-element) product $A \odot B$. In fact, dot
+operators are more general and powerful than shown in the example
+above; see the chapter on matrices in \GUG{} for details.
+
+Dot and concatenation operators are less rigid than ordinary matrix
+operations in terms of conformability requirements: (\ldots)
+
+
+Hansl provides a reasonably comprehensive set of matrix functions,
+that is, functions that produce and/or operate on matrices. For a
+full list, see the \GCR, but a basic ``survival kit'' is provided
+in Table~\ref{tab:essential-matfuncs}.  Moreover, most scalar
+functions, such as \texttt{abs(), log()} etc., will operate on a
+matrix element-by-element.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rp{0.5\textwidth}}
+    \textbf{Function(s)} & \textbf{Purpose} \\
+    \hline
+    \texttt{zeros(r,c), ones(r,c)} & produce matrices with $r$ rows
+    and $c$ columns, filled with zeros and ones, respectively \\
+    \texttt{I(n)} & identity matrix of size $n$ \\
+    \texttt{rows(X), cols(X)} & return the number of rows and columns
+    of $X$, respectively \\
+    \texttt{inv(A)} & invert, if possible, the matrix $A$ \\
+    \texttt{maxc(A), minc(A), sumc(A), meanc(A)} & return a row vector
+    with the max, min, sum, means of each column of $A$, respectively\\
+    \texttt{maxr(A), minr(A), sumr(A), meanr(A)} & return a column vector
+    with the max, min, sum, means of each row of $A$, respectively\\
+    \texttt{mnormal(r,c), muniform(r,c)} & generate $r \times c$
+    matrices filled with standard Gaussian and uniform pseudo-random
+    numbers, respectively \\
+    \hline
+  \end{tabular}
+  \caption{Essential set of hansl matrix functions}
+  \label{tab:essential-matfuncs}
+\end{table}
+
+
+\begin{code}
+# example: OLS using matrices
+
+# fix the sample size
+scalar T = 256
+
+# construct vector of coefficients by direct imputation
+matrix beta = {1.5, 2.5, -0.5} # note: row vector
+
+# construct the matrix of independent variables
+matrix Z = mnormal(T, cols(beta)) # built-in functions
+
+# now construct the dependent variable: note the
+# usage of the "dot" and transpose operators
+
+matrix y = {1.2} .+ Z*beta' + mnormal(T, 1)
+
+# now do estimation
+matrix X = 1 ~ Z  # concatenation operator
+matrix beta_hat1 = inv(X'X) * (X'y) # by hand
+matrix beta_hat2 = mols(y, X)       # via the built-in function
+
+print beta_hat1 beta_hat2
+\end{code}
+
+\section{Matrix pointers}
+\label{sec:mat-pointers}
+
+Hansl uses the ``by value'' convention for passing parameters to
+functions. That is, when a variable is passed to a function as an
+argument, what the function actually ``gets'' is a \emph{copy} of the
+variable, which means that the value of the variable at the caller
+level is not modified by anything that goes on inside the function.
+But the use of pointers allows a function and its caller to cooperate
+such that an outer variable can be modified by the function.
+
+This mechanism is used by some built-in matrix functions to provide
+more than one ``return'' value. The primary result is always provided
+by the return value proper but certain auxiliary values may be
+retrieved via ``pointerized'' arguments; this usage is flagged by
+prepending the ampersand symbol, \texttt{\&}, to the name of the
+argument variable.
+
+The \texttt{eigensym} function, which performs the eigen-analysis of
+symmetric matrices, is a case in point. In the example below the first
+argument, \texttt{A}, represents the input data, that is, the matrix
+whose analysis is required. This variable will not be modified in any
+way by the function call. The primary result is the vector of
+eigenvalues of $A$, which is here assigned to the variable
+\texttt{ev}. The (optional) second argument, \texttt{\&V} (which may
+be read as ``the address of \texttt{V}''), is used to retrieve the
+right eigenvectors of $A$. A variable named in this way must be
+already declared, but it need not be of the right dimensions to
+receive the result; it will be resized as needed.
+\begin{code}
+matrix A = {1,2 ; 2,5}
+matrix V
+matrix ev = eigensym(A, &V)
+print A ev V
+\end{code}
+
+\chapter{Bundles}
+
+Bundles are \emph{associative arrays}, that is, generic containers for
+any assortment of hansl types (including other bundles) in which each
+element is identified by a string. Python users call these
+\emph{dictionaries}; in C++ and Java, they are referred to as
+\emph{maps}; they are known as \emph{hashes} in Perl. We call them
+\emph{bundles}. Each item placed in the bundle is associated with a
+key which can used to retrieve it subsequently.
+
+To use a bundle you first either ``declare'' it, as in
+%
+\begin{code}
+bundle foo
+\end{code}
+%
+or define an empty bundle using the \texttt{null} keyword:
+%
+\begin{code}
+bundle foo = null
+\end{code}
+%
+These two formulations are basically equivalent, in that they both
+create an empty bundle. The difference is that the second variant
+may be reused --- if a bundle named \texttt{foo} already exists the
+effect is to empty it --- while the first may only be used once in
+a given \app{gretl} session; it is an error to declare a variable that
+already exists. 
+
+To add an object to a bundle you assign to a compound left-hand value:
+the name of the bundle followed by the key. Two forms of syntax are
+acceptable in this context. The original syntax (and the only form
+supported prior to version 1.9.12 of \app{gretl}) requires that the
+key be given as a quoted string literal enclosed in square brackets.
+For example, the statement
+
+\begin{code}
+foo["matrix1"] = m
+\end{code}
+
+adds an object called \texttt{m} (presumably a matrix) to bundle
+\texttt{foo} under the key \texttt{matrix1}. From \app{gretl} 1.9.12,
+however, a simpler syntax is available, \emph{provided} the key
+satisfies the rules for a \app{gretl} variable name (31 characters
+maximum, starting with a letter and composed of just letters, numbers
+or underscore).\footnote{When using the original syntax, keys do not
+  have to be valid as variable names---for example, they can include
+  spaces---but they are limited to 31 characters.}  In that case you
+can simply join the key to the bundle name with a dot, as in
+
+\begin{code}
+foo.matrix1 = m
+\end{code}
+
+To get an item out of a bundle, again use the name of the bundle
+followed by the key, as in
+
+\begin{code}
+matrix bm = foo["matrix1"]
+# or using the dot notation
+matrix m = foo.matrix1
+\end{code}
+
+Note that the key identifying an object within a given bundle is
+necessarily unique. If you reuse an existing key in a new assignment,
+the effect is to replace the object which was previously stored under
+the given key. It is not required that the type of the replacement
+object is the same as that of the original.
+
+Also note that when you add an object to a bundle, what in fact
+happens is that the bundle acquires a copy of the object. The external
+object retains its own identity and is unaffected if the bundled
+object is replaced by another. Consider the following script fragment:
+
+\begin{code}
+bundle foo
+matrix m = I(3)
+foo.mykey = m
+scalar x = 20
+foo.mykey = x
+\end{code}
+
+After the above commands are completed bundle \texttt{foo} does not
+contain a matrix under \texttt{mykey}, but the original matrix
+\texttt{m} is still in good health.
+
+To delete an object from a bundle use the \texttt{delete} command,
+with the bundle/key combination, as in
+
+\begin{code}
+delete foo.mykey
+delete foo["quoted key"]
+\end{code}
+
+This destroys the object associated with the key and removes the key
+from the hash table.
+
+Besides adding, accessing, replacing and deleting individual items,
+the other operations that are supported for bundles are union,
+printing and deletion. As regards union, if bundles \texttt{b1} and
+\texttt{b2} are defined you can say
+
+\begin{code}
+bundle b3 = b1 + b2
+\end{code}
+
+to create a new bundle that is the union of the two others. The
+algorithm is: create a new bundle that is a copy of \texttt{b1}, then
+add any items from \texttt{b2} whose keys are not already present in
+the new bundle. (This means that bundle union is not commutative if
+the bundles have one or more key strings in common.)
+
+If \texttt{b} is a bundle and you say \texttt{print b}, you get a
+listing of the bundle's keys along with the types of the corresponding
+objects, as in
+
+\begin{code}
+? print b
+bundle b:
+ x (scalar)
+ mat (matrix)
+ inside (bundle)
+\end{code}
+
+\section{Bundle usage}
+\label{sec:bundle-usage}
+
+To illustrate the way a bundle can hold information, we will use the
+Ordinary Least Squares (OLS) model as an example: the following code
+estimates an OLS regression and stores all the results in a bundle.
+
+\begin{code}
+/* assume y and X are given T x 1 and T x k matrices */
+
+bundle my_model = null               # initialization
+my_model["T"] = rows(X)              # sample size
+my_model["k"] = cols(X)              # number of regressors
+matrix e                             # will hold the residuals
+b = mols(y, X, &e)                   # perform OLS via native function
+s2 = meanc(e.^2)                     # compute variance estimator
+matrix V = s2 .* invpd(X'X)          # compute covariance matrix
+
+/* now store estimated quantities into the bundle */
+
+my_model["betahat"] = b
+my_model["s2"] = s2
+my_model["vcv"] = V
+my_model["stderr"] = sqrt(diag(V))
+\end{code}
+
+The bundle so obtained is a container that can be used for all sort of
+purposes. For example, the next code snippet illustrates how to use
+a bundle with the same structure as the one created above to perform
+an out-of sample forecast. Imagine that $k=4$ and the value of
+$\mathbf{x}$ for which we vant to forecast $y$ is
+\[
+  \mathbf{x}' = [ 10 \quad 1  \quad -3 \quad 0.5 ]
+\]
+The formulae for the forecast would then be
+\begin{eqnarray*}
+  \hat{y}_f & = & \mathbf{x}'\hat{\beta} \\
+  s_f & = & \sqrt{\hat{\sigma}^2 + \mathbf{x}'V(\hat{\beta})\mathbf{x}} \\
+  CI & = & \hat{y}_f \pm 1.96 s_f 
+\end{eqnarray*}
+where $CI$ is the (approximate) 95 percent confidence interval. The
+above formulae translate into
+\begin{code}
+  x = { 10, 1, -3, 0.5 }
+  scalar ypred    = x * my_model["betahat"]
+  scalar varpred  = my_model["s2"] + qform(x, my_model["vcv"])
+  scalar sepred   = sqrt(varpred)
+  matrix CI_95    = ypred + {-1, 1} .* (1.96*sepred)
+  print ypred CI_95
+\end{code}
+
+\input{hp-ctrlflow}
+
+\input{hp-functions}
+
+\chapter{Numerical methods}
+
+\section{Numerical differentiation and optimisation}
+
+For optimization:
+\begin{itemize}
+\item BFGS (tried and true)
+\item Newton--Raphson; actually, the name is misleading. It should be
+  called something like ``curvature-based'', since it can be used for
+  BHHH and scoring method if necessary.
+\item Derivative-free methods: simulated annealing and (coming soon)
+  Nelder-Mead
+\end{itemize}
+
+These can use numerical or analytical derivatives when needed.
+
+\textbf{Note:} these functions are generic optimizers. In the context
+of an estimation problem, in which the maximand is a likelihood or
+something like that, we have specialized commands (\cmd{mle},
+\cmd{gmm} etcetera).
+
+For numerical differentiation we have
+\texttt{fdjac}\footnote{\textbf{Note to self:} we \emph{must}
+  implement bilateral numerical differentiation if we don't already
+  (have to check) and parallelization.}
+
+
+\section{Random number generation}
+
+\begin{itemize}
+\item Mersenne Twister in its various incarnations
+\item Ziggurat vs Box--Muller
+\item Other distributions
+\end{itemize}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "hansl-primer"
+%%% End: 
