@@ -1,4 +1,3 @@
-
 \part{With a dataset}
 
 \chapter{What is a dataset?}
@@ -7,13 +6,44 @@ A dataset is a memory area designed to hold the data you want to work
 on, if any. It may be thought of a big global variable, containing a
 (possibly huge) matrix of data and a hefty collection of metadata.
 
-The columns of the dataset matrix are called \emph{series}.
+\app{R} users may think that a dataset is similar to what you get when
+you \texttt{attach} a data frame in \app{R}. Not really: in hansl, you
+cannot have more than one dataset open at the same time. That's why we
+talk about \emph{the} dataset.
 
-\section{Reading and writing}
+When a dataset is present in memory (\emph{ie} open), a number of
+objects become available for your hansl script in a transparent and
+convenient way. Of course, the data themselves: the columns of the
+dataset matrix are called \emph{series}, which will be described in
+section \ref{sec:series}; sometimes, you will want to organize one or
+more series in a \emph{list} (section \ref{sec:lists}). Additionally,
+you have the possibility of using, as read-only global variables, some
+scalars or matrices, such as the number of observations, the number of
+variables, the nature of your dataset (cross-sectional, time series or
+panel), etcetera. These are called \emph{accessors}, and will be
+discussed in section \ref{sec:accessors}.
 
 You can open a dataset by reading data from a disk file, via the
-\app{gretl} \cmd{open} command, or by creating one from scratch,
-through the \cmd{nulldata} command. The \cmd{smpl} command then allows
+\cmd{open} command, or by creating one from scratch.
+
+\section{Creating a dataset from scratch}
+\begin{itemize}
+\item The \cmd{nulldata} command
+\item The \cmd{setobs} command
+\end{itemize}
+
+\section{Reading a dataset from a file}
+\begin{itemize}
+\item native format
+\item import capabilities (from URLs as well)
+\item ifty tricks with csv data (eg \cmd{join}).
+\end{itemize}
+
+\section{Saving datasets}
+
+\section{The \cmd{smpl} command}
+
+The \cmd{smpl} command then allows
 you to discard observations selectively, so that your series will
 contain only the observations you want (automatically changing the
 dimension of the dataset in the process). See chapter 4 in \GUG\ for
@@ -23,13 +53,6 @@ further information.\footnote{Users with a Stata background may find
   command, which applies until further notice, then you do what you
   have to. There is no equivalent to Stata's \texttt{if} clause to
   commands.}
-
-\begin{itemize}
-\item native format
-\item importing
-\item exporting
-\item appending, joining, etc
-\end{itemize}
 
 \chapter{Series, lists and accessors}
 
@@ -58,19 +81,7 @@ of 1s. The IDs of the actual data series can be displayed via the
 \cmd{varlist} command. (But note that in \textit{function calls}, as
 opposed to commands, series must be referred to by name.)  A detailed
 description of how a dataset works can be found in chapter 4 of
-\GUG.\footnote{\app{R} users may think that a dataset is similar to
-  what you get when you \texttt{attach} a data frame in \app{R}. Not
-  really: in hansl, you cannot have more than one dataset open at the
-  same time. That's why we talk about \emph{the} dataset.}
-
-The reason why hansl provides a specific series type, distinct from
-the matrix type, is historical. However, it is also very convenient.
-Operations that are typically performed on series in applied work can
-be awkward to implement using ``raw'' matrices. We have in mind tasks
-such as the computation of leads and lags, or regular and seasonal
-differences; the treatment of missing values; the addition of
-descriptive labels, and so on. Series are the basic data type on which
-gretl's built-in estimation commands depend.
+\GUG.
 
 Some basic rules regarding series follow:
 \begin{itemize}
@@ -86,6 +97,17 @@ Some basic rules regarding series follow:
     contains any (as in \verb|lngdp["2002:3"]|).
   \end{itemize}
 \end{itemize}
+
+\subsection{Converting series from/to matrices}
+
+The reason why hansl provides a specific series type, distinct from
+the matrix type, is historical. However, it is also very convenient.
+Operations that are typically performed on series in applied work can
+be awkward to implement using ``raw'' matrices. We have in mind tasks
+such as the computation of leads and lags, or regular and seasonal
+differences; the treatment of missing values; the addition of
+descriptive labels, and so on. Series are the basic data type on which
+gretl's built-in estimation commands depend.
 
 \subsection{The ternary operator with series}
 
@@ -217,7 +239,10 @@ loop foreach i X
 endloop
 \end{code}
 
-
+\section{Accessors}
+\label{sec:accessors}
+ 
+These begin with a dellar sign: eg, \dollar{nobs}.
 
 \chapter{Estimation methods}
 
@@ -245,7 +270,7 @@ A crude categorization:
   \cmd{quantreg}, \cmd{lad}, \cmd{biprobit}, \cmd{duration}
 \end{description}
 
-Don't be deceived by names: for example, the \cmd{probit} command can
+Don't let names deceive you: for example, the \cmd{probit} command can
 estimate ordered models, random-effect panel probit models, \ldots
 
 See the \GCR{} for details
@@ -255,13 +280,35 @@ See the \GCR{} for details
 The \cmd{system} block.
 
 \section{Post-estimation accessors}
+\label{sec:postest-accessors}
+
+After having estimated a model, you can access most of the relevant
+quantities via accessors.
+
+\begin{itemize}
+\item Generic: \dollar{coeff}, \dollar{vcv}, \dollar{uhat}
+\item Model-specific: for example, \dollar{jbeta}, \dollar{h},
+  \dollar{mnlprobs}
+\end{itemize}
+
+\subsection{Named models}
+
+\begin{code}
+diff y x
+ADL <- ols y const y(-1) x(0 to -1)
+ECM <- ols d_y const d_x y(-1) x(-1)
+ssr_a = ADL.$ess
+ssr_e = ECM.$ess # should be equal
+\end{code}
 
 \section{Generic estimation tools}
 \label{sec:est-blocks}
 
-These are useful if you want to write your own estimator.
+These are useful if you want to write your own estimator. Here we give
+a generic overview. See the relevant chapters in \GUG{} for a full explanation.
 
 \begin{itemize}
+\item \cmd{nls}
 \item \cmd{mle}
 \item \cmd{gmm}
 \end{itemize}
