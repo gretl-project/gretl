@@ -2526,3 +2526,57 @@ char *gretl_literal_replace (const char *orig,
 
     return mod;
 }
+
+/**
+ * gretl_substring:
+ * @str: the string to operate on.
+ * @first: 1-based index of initial character.
+ * @last: 1-based index of final character.
+ * @err: location to receive error code.
+ *
+ * Returns a substring of @str, from @first to @last.
+ */
+
+char *gretl_substring (const char *str, int first, int last, int *err)
+{
+    int len, ini, fin, sublen;
+    char *ret;
+
+    if (first <= 0 || last <= 0) {
+	gretl_errmsg_sprintf("Index value %d is out of bounds",
+			     first <= 0 ? first : last);
+	*err = E_DATA;
+    }
+
+    len = g_utf8_strlen(str, -1);
+    ini = (first < 1) ? 1 : ((first > len) ? len : first);
+    fin = (last < 1) ? 1 : ((last > len) ? len : last);
+    sublen = (fin >= ini) ? fin - ini + 1 : 0;
+
+    if (sublen == 0) {
+	ret = calloc(1, 1);
+    } else {
+	const char *s1;
+	int i;
+
+	for (i=1; i<ini; i++) {
+	    str = g_utf8_next_char(str);
+	}
+	s1 = str;
+	for (i=ini; i<=last; i++) {
+	    str = g_utf8_next_char(str);
+	}
+	len = str - s1;
+	ret = calloc(len + 1, 1);
+	if (ret != NULL) {
+	    *ret = '\0';
+	    gretl_utf8_strncat(ret, s1, len);
+	}
+    }
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    }
+
+    return ret;
+}

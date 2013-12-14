@@ -4213,7 +4213,8 @@ static NODE *object_status (NODE *n, int f, parser *p)
 		ret->v.xval = t;
 	    }
 	} else if (f == F_STRLEN) {
-	    ret->v.xval = strlen(s);
+	    /* ret->v.xval = strlen(s); */
+	    ret->v.xval = g_utf8_strlen(s, -1);
 	} else if (f == F_REMOVE) {
 	    ret->v.xval = gretl_remove(s);
 	} else if (f == F_TYPEOF) {
@@ -7009,6 +7010,26 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    if (!p->err) {
 		A = aggregate_by(x, y, xlist, ylist, fncall, 
 				 p->dset, &p->err);
+	    }
+	}
+    } else if (f == F_SUBSTR) {
+	if (l->t != STR) {
+	    node_type_error(f, 1, STR, l, p);
+	} else if (m->t != NUM) {
+	    node_type_error(f, 2, NUM, m, p);
+	} else if (r->t != NUM) {
+	    node_type_error(f, 3, NUM, r, p);
+	} else {
+	    post_process = 0;
+	    ret = aux_string_node(p);
+
+	    if (ret != NULL) {
+		int ini = node_get_int(m, p);
+		int fin = node_get_int(r, p);
+
+		if (!p->err) {
+		    ret->v.str = gretl_substring(l->v.str, ini, fin, &p->err);
+		}
 	    }
 	}
     }
@@ -10246,6 +10267,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_HALTON:
     case F_AGGRBY:
     case F_IWISHART:
+    case F_SUBSTR:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

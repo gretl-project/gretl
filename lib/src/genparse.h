@@ -378,6 +378,7 @@ enum {
     F_IWISHART,
     F_SSCANF,
     F_SPRINTF,
+    F_SUBSTR,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

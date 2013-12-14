@@ -91,6 +91,8 @@ char *gretl_str_expand (char **orig, const char *add, const char *sep);
 
 char *gretl_charsub (char *str, char find, char repl);
 
+char *gretl_substring (const char *str, int first, int last, int *err);
+
 char *comma_separate_numbers (char *s);
 
 char *shift_string_left (char *str, size_t move);

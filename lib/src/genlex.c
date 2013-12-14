@@ -404,6 +404,7 @@ struct str_table funcs[] = {
     { F_ATOF,     "atof" },
     { F_FIXNAME,  "fixname" },
     { F_ISOCONV,  "isoconv" },
+    { F_SUBSTR,   "substr" },
     { 0,          NULL }
 };
 
