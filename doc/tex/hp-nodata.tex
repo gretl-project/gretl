@@ -44,7 +44,8 @@ the following points:
 Note also that the \cmd{print} command automatically appends a line
 break, and does not recognize ``escape'' sequences such as
 ``\verb|\n|''; such sequences are just printed literally. The
-\cmd{printf} command can be used for greater control over output.
+\cmd{printf} command can be used for greater control over output; see
+chapter \ref{chap:formatting}.
 
 Let's now examine a simple variant of the above:
 \begin{code}
@@ -75,7 +76,7 @@ In this line, we assign the value ``\texttt{Hello, world}'' to the
 variable named \texttt{foo}. Note that
 \begin{enumerate}
 \item The assignment operator is the equals sign (\texttt{=}).
-\item The name of the variable (its \texttt{identifier}) must follow
+\item The name of the variable (its \emph{identifier}) must follow
   the following convention: identifiers can be at most 31 characters
   long. They must start with a letter, and can contain only letters,
   numbers and the underscore character. Identifiers in hansl are
@@ -150,22 +151,64 @@ In this example, one \texttt{print} is used to print the values of two
 variables; more generally, \texttt{print} can be followed by as many
 arguments as desired. The other difference with respect to the
 previous code examples is in the use of the two \texttt{set}
-commands. Describing the \texttt{set} command in detail would lead to
-an overly long diversion; suffice it to say that here it is used as a
-way to silence unwanted output. See chapter \ref{chap:settings} or the
-\GCR{}.
+commands. Describing the \texttt{set} command in detail would lead us
+to an overly long diversion; suffice it to say that here it is used as
+a way to silence unwanted output. See chapter \ref{chap:settings} or
+the \GCR{}.
 
 \section{Manipulation of scalars}
 
-Algebraic operations, obviously, and functions. 
+Algebraic operations work in the obvious way, with the classic
+algebraic operators with their traditional precedence rules: the caret
+(\verb|^|) is used for exponentiation. So for example
 \begin{code}
-  a = 42
-  b = a * 0.5
-  c = sqrt(a*b)
-  print a b c
+  scalar phi = exp(-0.5 * (x-m)^2 / s2) / sqrt(2 * $pi * s2)
+\end{code}
+%$
+In which we assume that \texttt{x}, \texttt{m} and \texttt{s2} are
+pre-existing scalars. The example above contains two noteworthy
+points:
+\begin{itemize}
+\item The usage of the \cmd{exp} and \cmd{sqrt} function; it goes
+  without saying that hansl possesses a reasonably wide repertoire of
+  functions. See the \GCR{} for the complete list.
+\item The usage of \verb|$pi| for the constant $\pi$. In a hansl
+  script, you have certain identifiers with a ``dollar'' prefix, which
+  work as read-only variables. Most of them are used in the presence
+  of an open dataset (see part \ref{part:hp-data}), but some are just
+  pre-defined constants, such as $\pi$. Again, see the \GCR{} for a
+  comprehensive list.  
+\end{itemize}
+
+Hansl does not possess a boolean type, so scalars are commonly used
+for holding true/false values. For this reason, you can also use
+the logical operators \emph{and} (\verb|&&|), \emph{or} (\verb+||+),
+and \emph{not} (\verb|!|) with scalars, as in the following example:
+\begin{code}
+  a = 1
+  b = 0
+  c = !(a && b)
+\end{code}
+Note that 0 evaluates to false, and anything else evaluates to
+true.
+
+
+A few constructs are borrowed from the C language family: one is the
+postfix increment operator:
+\begin{code}
+  tons = 16
+  days_older++
 \end{code}
 
-Stuff borrowed from C
+\begin{code}
+  beer_bottles = 10
+  beer_bottles--
+  print beer_bottles
+\end{code}
+That is, \texttt{x++} is the same as \texttt{x = x+1}. Note that this
+only works with addition and that the C ``prefix'' operators are not
+supported
+ 
 \begin{code}
   a += c
   b -=d
@@ -212,7 +255,7 @@ string s2 = "Home, " ~ s1 ~ " home."
 \end{code}
 
 To add to the end of an existing string you can use the operator
-\texttt{~=}, as in
+\verb|~=|, as in
 \begin{code}
   a = "abcde"
   eval a+3
