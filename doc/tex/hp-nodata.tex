@@ -156,11 +156,26 @@ to an overly long diversion; suffice it to say that here it is used as
 a way to silence unwanted output. See chapter \ref{chap:settings} or
 the \GCR{}.
 
+The \cmd{eval} command is useful when you want to look at the result
+of an expression without assigning it to a variable; for example
+\begin{code}
+  eval 2+3*4
+\end{code}
+will print the number 14. This is most useful when running gretl
+interactively, like a calculator, but it is usable in a hansl script
+for checking purposes, as in the following (rather silly) example:
+\begin{code}
+  scalar a = 1
+  scalar b = -1
+  # this ought to be 0
+  eval a+b
+\end{code}
+
 \section{Manipulation of scalars}
 
 Algebraic operations work in the obvious way, with the classic
-algebraic operators with their traditional precedence rules: the caret
-(\verb|^|) is used for exponentiation. So for example
+algebraic operators having their traditional precedence rules: the
+caret (\verb|^|) is used for exponentiation. For example,
 \begin{code}
   scalar phi = exp(-0.5 * (x-m)^2 / s2) / sqrt(2 * $pi * s2)
 \end{code}
@@ -172,12 +187,12 @@ points:
 \item The usage of the \cmd{exp} and \cmd{sqrt} function; it goes
   without saying that hansl possesses a reasonably wide repertoire of
   functions. See the \GCR{} for the complete list.
-\item The usage of \verb|$pi| for the constant $\pi$. In a hansl
-  script, you have certain identifiers with a ``dollar'' prefix, which
-  work as read-only variables. Most of them are used in the presence
-  of an open dataset (see part \ref{part:hp-data}), but some are just
-  pre-defined constants, such as $\pi$. Again, see the \GCR{} for a
-  comprehensive list.  
+\item The usage of \verb|$pi| for the constant $\pi$. In hansl, some
+  identifiers have a ``dollar'' prefix; they work as read-only
+  variables. Most of them are used in the context of an open dataset
+  (see part \ref{part:hp-data}), but some are just pre-defined
+  constants, such as $\pi$. Again, see the \GCR{} for a comprehensive
+  list.
 \end{itemize}
 
 Hansl does not possess a boolean type, so scalars are commonly used
@@ -192,34 +207,33 @@ and \emph{not} (\verb|!|) with scalars, as in the following example:
 Note that 0 evaluates to false, and anything else evaluates to
 true.
 
-
-A few constructs are borrowed from the C language family: one is the
+A few constructs are taken from the C language family: one is the
 postfix increment operator:
 \begin{code}
-  tons = 16
-  days_older++
+  a = 5
+  b = a++
+  print a b
 \end{code}
+the second line is equivalent to \texttt{b = a}, followed by
+\texttt{a++}, which in turn is shorthand for \texttt{a = a+1}, so
+running the code above will result in \texttt{b} containing 5 and
+\texttt{a} containing 6. Postfix subtraction is also supported; prefix
+operators, however, are not. Another C borrowing is the inflected
+assignment, as in \texttt{a += b}, which is equivalent to \texttt{a =
+  a + b}; several other similar operators are available, such as
+\texttt{-=}, \texttt{*=} and more. See the \GCR{} for details.
 
+The internal representations for a missing value varies from sytem to
+system, but is an inordinately large number (on most Unix flavors,
+it's somewhere around 1.7E+308). This is what you get if you try to
+compute quantities like the square root or the logarithm of a negative
+number, or directly via the \texttt{NA} constant, as in
 \begin{code}
-  beer_bottles = 10
-  beer_bottles--
-  print beer_bottles
+  scalar not_really = NA
+  scalar is_there = ok(not_really)
 \end{code}
-That is, \texttt{x++} is the same as \texttt{x = x+1}. Note that this
-only works with addition and that the C ``prefix'' operators are not
-supported
- 
-\begin{code}
-  a += c
-  b -=d
-  c++
-  d--
-  c = (a>0) ? b : sqrt(d)
-\end{code}
-
-Treatment of \texttt{NA}s.
-
-The \cmd{eval} command
+As shown in the example above, in hansl you have the \cmd{ok} function
+which tells you whether a scalar is \texttt{NA} or not.
 
 \section{Manipulation of strings}
 

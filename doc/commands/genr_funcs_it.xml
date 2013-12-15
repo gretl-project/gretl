@@ -6629,6 +6629,21 @@
       </description>
     </function>
 
+    <function name="substr" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="int">ini</fnarg>
+	<fnarg type="int">fin</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Restituisce una sottostringa di <argname>s</argname>, dal
+	  carattere <argname>ini</argname> al carattere
+	  <argname>fin</argname>.
+	</para>
+      </description>
+    </function>
+
     <function name="sum" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>

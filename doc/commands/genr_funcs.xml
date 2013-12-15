@@ -6663,6 +6663,20 @@
       </description>
     </function>
 
+    <function name="substr" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="int">start</fnarg>
+	<fnarg type="int">end</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Returns a substring of <argname>s</argname>, from character
+	  <argname>start</argname> to character <argname>end</argname>.
+	</para>
+      </description>
+    </function>
+
     <function name="sum" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
