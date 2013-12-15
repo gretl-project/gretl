@@ -762,12 +762,53 @@ static int copy_initial_hessian (gretl_matrix *A, double **H,
     return 0;
 }
 
+
+static double opt_slen_pwr (int n, int *ndelta, double *b, double *X, double *t, 
+			    double *objf, BFGS_CRIT_FUNC cfunc, void *data, 
+			    double sumgrad, double fmax, int *fcount)
+{
+    /* find the optimal steplength by successive powers of stepfrac */
+
+    double d, f, steplen = 1.0;
+    int i, crit_ok = 0, fc = 0;
+    do {
+	/* loop so long as (a) we haven't achieved an
+	   acceptable value of the criterion and (b) there is
+	   still some prospect of doing so */
+	*ndelta = n;
+	for (i=0; i<n; i++) {
+	    b[i] = X[i] + steplen * t[i];
+	    if (coeff_unchanged(b[i], X[i])) {
+		ndelta--;
+	    }
+	}
+	if (ndelta > 0) {
+	    f = cfunc(b, data);
+	    d = -sumgrad * steplen * acctol;
+	    fc++;
+	    crit_ok = !na(f) && (f >= fmax + d);
+#if BFGS_DEBUG
+	    fprintf(stderr, "crit_ok: f=%.10g, fmax=%.10g, d=%g, steplen=%g, ok=%d\n",
+			    f, fmax, d, steplen, crit_ok);
+#endif
+	    if (!crit_ok) {
+		/* calculated criterion no good: try smaller step */
+		steplen *= stepfrac;
+	    }
+	}
+    } while (ndelta != 0 && !crit_ok);
+    
+    *fcount += fc;
+    *objf = f; 
+    return steplen;
+}
+
 static int BFGS_orig (double *b, int n, int maxit, double reltol,
 		      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
 		      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
 		      gretl_matrix *A0, gretlopt opt, PRN *prn)
 {
-    int crit_ok, done;
+    int done;
     double *wspace = NULL;
     double **H = NULL;
     double *g, *t, *X, *c;
@@ -775,8 +816,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     int fcount, gcount, ndelta = 0;
     int show_activity = 0;
     double sumgrad, gradmax, gradnorm = 0.0;
-    double fmax, f, f0, d = 0.0;
-    double s, steplen = 0.0;
+    double fmax, f, f0, s, steplen = 0.0;
     double D1, D2;
     int i, j, ilast, iter;
     int err = 0;
@@ -884,35 +924,8 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 
 	if (sumgrad > 0.0) { 
 	    /* heading in the right direction */
-	    steplen = 1.0;
-	    crit_ok = 0;
-	    do {
-		/* loop so long as (a) we haven't achieved an
-		   acceptable value of the criterion and (b) there is
-		   still some prospect of doing so */
-		ndelta = n;
-		for (i=0; i<n; i++) {
-		    b[i] = X[i] + steplen * t[i];
-		    if (coeff_unchanged(b[i], X[i])) {
-			ndelta--;
-		    }
-		}
-		if (ndelta > 0) {
-		    f = cfunc(b, data);
-		    d = -sumgrad * steplen * acctol;
-		    fcount++;
-		    crit_ok = !na(f) && (f >= fmax + d);
-#if BFGS_DEBUG
-		    fprintf(stderr, "crit_ok: f=%.10g, fmax=%.10g, d=%g, steplen=%g, ok=%d\n",
-			    f, fmax, d, steplen, crit_ok);
-#endif
-		    if (!crit_ok) {
-			/* calculated criterion no good: try smaller step */
-			steplen *= stepfrac;
-		    }
-		}
-	    } while (ndelta != 0 && !crit_ok);
-
+	    steplen = opt_slen_pwr(n, &ndelta, b, X, t, &f, cfunc, data, 
+				   sumgrad, fmax, &fcount);
 	    done = fabs(fmax - f) <= reltol * (fabs(fmax) + reltol);
 
 #if BFGS_DEBUG
