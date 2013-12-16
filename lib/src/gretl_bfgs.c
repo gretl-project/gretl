@@ -261,8 +261,8 @@ static void hess_b_adjust_ij (double *c, const double *b, double *h, int n,
    Extrapolation.  It is derived from code in the gnu R package
    "numDeriv" by Paul Gilbert, which was in turn derived from code
    by Xinqiao Liu.  Turned into C and modified for gretl by
-   Allin Cottrell, June 2006.  On successful completion, returns
-   the negative inverse of the Hessian.
+   Allin Cottrell, June 2006.  On successful completion, writes
+   the negative inverse of the Hessian into @H.
 */
 
 static int numerical_hessian (const double *b, gretl_matrix *H,
@@ -762,20 +762,23 @@ static int copy_initial_hessian (gretl_matrix *A, double **H,
     return 0;
 }
 
+/* find the optimal steplength by successive powers of stepfrac */
 
-static double opt_slen_pwr (int n, int *ndelta, double *b, double *X, double *t, 
-			    double *objf, BFGS_CRIT_FUNC cfunc, void *data, 
-			    double sumgrad, double fmax, int *fcount)
+static double opt_slen_pwr (int n, int *pndelta, double *b, double *X, double *t, 
+			    double *pf, BFGS_CRIT_FUNC cfunc, void *data, 
+			    double sumgrad, double fmax, int *pfcount)
 {
-    /* find the optimal steplength by successive powers of stepfrac */
+    double d, f = *pf, steplen = 1.0;
+    int i, crit_ok = 0, fcount = 0;
+    int ndelta = *pndelta;
 
-    double d, f, steplen = 1.0;
-    int i, crit_ok = 0, fc = 0;
+    /* Below: iterate so long as (a) we haven't achieved an acceptable
+       value of the criterion and (b) there is still some prospect
+       of doing so.
+    */    
+
     do {
-	/* loop so long as (a) we haven't achieved an
-	   acceptable value of the criterion and (b) there is
-	   still some prospect of doing so */
-	*ndelta = n;
+	ndelta = n;
 	for (i=0; i<n; i++) {
 	    b[i] = X[i] + steplen * t[i];
 	    if (coeff_unchanged(b[i], X[i])) {
@@ -785,7 +788,7 @@ static double opt_slen_pwr (int n, int *ndelta, double *b, double *X, double *t,
 	if (ndelta > 0) {
 	    f = cfunc(b, data);
 	    d = -sumgrad * steplen * acctol;
-	    fc++;
+	    fcount++;
 	    crit_ok = !na(f) && (f >= fmax + d);
 #if BFGS_DEBUG
 	    fprintf(stderr, "crit_ok: f=%.10g, fmax=%.10g, d=%g, steplen=%g, ok=%d\n",
@@ -797,9 +800,11 @@ static double opt_slen_pwr (int n, int *ndelta, double *b, double *X, double *t,
 	    }
 	}
     } while (ndelta != 0 && !crit_ok);
-    
-    *fcount += fc;
-    *objf = f; 
+
+    *pndelta = ndelta;
+    *pfcount += fcount;
+    *pf = f;
+
     return steplen;
 }
 
@@ -994,8 +999,8 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	} else {
 	    /* heading in the wrong direction */
 	    if (ilast == gcount) {
-		/* we just reset: don't reset again; set ndelta = 0 so
-		   that we exit the main loop
+		/* we just did a reset, so don't reset again; instead set 
+		   ndelta = 0 so that we exit the main loop
 		*/
 		ndelta = 0;
 		if (gcount == 1) {
