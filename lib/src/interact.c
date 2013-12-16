@@ -5049,7 +5049,9 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	double xi = gretl_vector_get(xvals, i);
 	double *rv = NULL;
 
+	gretl_push_c_numeric_locale();
 	sprintf(genline, "%s == %g", byvar, xi);
+	gretl_pop_c_numeric_locale();
 	rv = generate_series(genline, dset, prn, &err);
 
 	if (!err) {
