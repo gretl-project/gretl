@@ -7,5 +7,3 @@
 <package name="tobit_y" label="Predicted values" model-window="true" path="/menubar/Analysis" toplev="true"/>
 <package name="fe_stats" label="Fixed effects statistics" model-window="true" path="/menubar/Analysis" toplev="true"/>
 </gretl-package-info>
-
-
