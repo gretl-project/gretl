@@ -2454,8 +2454,9 @@
 	  dell'input: trascrivere i caratteri <quote>legali</quote>;
 	  saltare i caratteri <quote>illegali</quote> esclusi gli
 	  spazi; e sostituire uno o più spazi consecutivi con un
-	  trattino basso, a meno che l'ultimo carattere trascritto sia
-	  un trattino, nel qual caso lo spazio è saltato.
+	  trattino basso, a meno che il precedente carattere
+	  trascritto sia un trattino, nel qual caso lo spazio è
+	  saltato.
 	</para>
       </description>
     </function>
@@ -6535,7 +6536,11 @@
       </fnargs>  
       <description>
 	<para>
-	  Restituisce il numero di caratteri in <argname>s</argname>.
+	  Restituisce il numero di caratteri in
+	  <argname>s</argname>. Si note che questo può non coincidere
+	  col numero di byte, se ne lla stringa siano presenti
+	  caratteri al di fuori del campo ASCII stampabile (ad
+	  esempio, lettere accentate).
 	</para>
       </description>
     </function>
@@ -6639,7 +6644,8 @@
 	<para>
 	  Restituisce una sottostringa di <argname>s</argname>, dal
 	  carattere <argname>ini</argname> al carattere
-	  <argname>fin</argname>.
+	  <argname>fin</argname>, compresi. L'indicizzazione è su base
+	  1.
 	</para>
       </description>
     </function>
@@ -6655,7 +6661,8 @@
 	  <argname>x</argname>. Si veda anche <fncref targ="sumall"/>.
 	</para>
 	<para>
-	  Se <argname>x</argname> è una matrice, restituisce la somma degli elementi della matrice.
+	  Se <argname>x</argname> è una matrice, restituisce la somma
+	  degli elementi della matrice.
 	</para>	
 	<para>
 	  Se <argname>x</argname> è una lista, restituisce una serie
