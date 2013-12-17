@@ -3,12 +3,69 @@
 Main structure:
 
 \begin{flushleft}
-\texttt{function \emph{type} \emph{funcname}(\emph{arguments})}\\
+\texttt{function \emph{type} \emph{funcname}(\emph{parameters})}\\
    \quad \ldots\\
    \quad \emph{function body}\\
    \quad \ldots \\
 \texttt{end function}
 \end{flushleft}
+
+The opening line of a function definition contains these elements, in
+strict order:
+
+\begin{enumerate}
+\item The keyword \texttt{function}.
+\item \texttt{\emph{type}}, which states the type of value returned by the
+  function, if any.  This must be one of \texttt{void} (if the
+  function does not return anything), \texttt{scalar},
+  \texttt{series}, \texttt{matrix}, \texttt{list} or \texttt{string}.
+\item \texttt{\emph{funcname}}, the unique identifier for the function.
+  Function names have a maximum length of 31 characters; they must
+  start with a letter and can contain only letters, numerals and the
+  underscore character.  You will get an error if you try to define a
+  function having the same name as an existing gretl command.
+\item The functions's \texttt{\emph{parameters}}, in the form of a
+  comma-separated list enclosed in parentheses.
+\end{enumerate}
+
+Function parameters can be of any of the types shown below.
+
+\begin{center}
+\begin{tabular}{ll}
+  \multicolumn{1}{c}{Type} & 
+  \multicolumn{1}{c}{Description} \\ [4pt]
+  \texttt{bool}   & scalar variable acting as a Boolean switch \\
+  \texttt{int}    & scalar variable acting as an integer  \\
+  \texttt{scalar} & scalar variable \\
+  \texttt{series} & data series \\
+  \texttt{list}   & named list of series \\
+  \texttt{matrix} & matrix or vector \\
+  \texttt{string} & string variable or string literal \\
+  \texttt{bundle} & all-purpose container (see chapter~\ref{chap:bundles})
+\end{tabular}
+\end{center}
+
+Each element in the listing of parameters must include two terms: a
+type specifier, and the name by which the parameter shall be known
+within the function.  An example follows:
+%    
+\begin{code}
+function scalar myfunc (series y, list xvars, bool verbose)
+\end{code}
+
+Each of the type-specifiers, with the exception of \texttt{list} and
+\texttt{string}, may be modified by prepending an asterisk to the
+associated parameter name, as in
+%    
+\begin{code}
+function scalar myfunc (series *y, scalar *b)
+\end{code}
+
+The meaning of this modification is explained below (see section
+\ref{funscope}); it is related to the use of pointer arguments in the
+C programming language.
+
+
 \section{Parameter passing and return values}
 \label{sec:params-returns}
 

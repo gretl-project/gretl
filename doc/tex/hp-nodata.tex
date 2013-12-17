@@ -349,7 +349,7 @@ Matrix sum, difference and product are obtained via \texttt{+},
 (\texttt{'}) can act as a unary operator, in which case it transposes
 the preceeding matrix, or as a binary operator, in which case it acts
 as in ordinary matrix algebra, that is transposes the first matrix and
-multiplies it into the second done. Errors are flagged if
+multiplies it into the second one. Errors are flagged if
 conformability is a problem. For example:
 \begin{code}
   matrix a = {11, 22 ; 33, 44}  # a is square 2 x 2
@@ -386,6 +386,14 @@ Note, in particular, that $A^3 = A \cdot A \cdot A$, which is different
 from what you get by computing the cubes of each element of $A$
 separately.
 
+Hansl also supports matrix left- and right-``division'', via the
+\verb'\' and \verb'/' operators, respectively. The expression
+\verb|A\b| solves $Ax = b$ for the unknown $x$. $A$ is assumed to be
+an $m \times n$ matrix with full column rank. If $A$ is square the
+method is LU decomposition. If $m > n$ the QR decomposition is used to
+find the least squares solution. In most cases, this is numerically
+more robust and more efficient than inverting $A$ explicitly.
+
 Element-by-element operations are supported by the so-called ``dot''
 operators, which are obtained by putting a dot (``\texttt{.}'') before
 the corresponding operator. For example, the code
@@ -412,7 +420,20 @@ above; see the chapter on matrices in \GUG{} for details.
 
 Dot and concatenation operators are less rigid than ordinary matrix
 operations in terms of conformability requirements: in most cases
-hansl will try to do ``the obvious thing'' (\ldots expand \ldots).
+hansl will try to do ``the obvious thing''. For example, a very common
+idiom in hansl is \texttt{Y = X ./ w}, where $X$ is an $n \times k$
+matrix and $w$ is an $n \times 1$ vector. The results $Y$ is an $n
+\times k$ matrix in which each row of $X$ is divided by the
+corresponding element of $w$. In proper matrix notation, this
+operation should be written as
+\[
+  Y = \langle w \rangle^{-1} X,
+\]
+where the $\langle \cdot \rangle$ indicates a diagonal
+matrix. Translating literally the above expression would imply
+creating a diagonal matrix out of $w$ and then inverting it, which is
+computationally much more expensive than using the dot operation. A
+detailed discussion is provided in \GUG.
 
 Hansl provides a reasonably comprehensive set of matrix functions,
 that is, functions that produce and/or operate on matrices. For a
@@ -449,6 +470,8 @@ matrix element-by-element.
   \label{tab:essential-matfuncs}
 \end{table}
 
+The following piece of code is meant to provide a concise example of
+all the features mentioned above.
 
 \begin{code}
 # example: OLS using matrices
@@ -471,8 +494,9 @@ matrix y = {1.2} .+ Z*beta' + mnormal(T, 1)
 matrix X = 1 ~ Z  # concatenation operator
 matrix beta_hat1 = inv(X'X) * (X'y) # by hand
 matrix beta_hat2 = mols(y, X)       # via the built-in function
+matrix beta_hat3 = X\y              # via matrix division
 
-print beta_hat1 beta_hat2
+print beta_hat1 beta_hat2 beta_hat3
 \end{code}
 
 \section{Matrix pointers}
@@ -480,7 +504,7 @@ print beta_hat1 beta_hat2
 
 Hansl uses the ``by value'' convention for passing parameters to
 functions. That is, when a variable is passed to a function as an
-argument, what the function actually ``gets'' is a \emph{copy} of the
+argument, what the function actually uses is a \emph{copy} of the
 variable, which means that the value of the variable at the caller
 level is not modified by anything that goes on inside the function.
 But the use of pointers allows a function and its caller to cooperate
@@ -495,7 +519,7 @@ argument variable.
 
 The \texttt{eigensym} function, which performs the eigen-analysis of
 symmetric matrices, is a case in point. In the example below the first
-argument, \texttt{A}, represents the input data, that is, the matrix
+argument \texttt{A} represents the input data, that is, the matrix
 whose analysis is required. This variable will not be modified in any
 way by the function call. The primary result is the vector of
 eigenvalues of $A$, which is here assigned to the variable
@@ -542,22 +566,20 @@ already exists.
 
 To add an object to a bundle you assign to a compound left-hand value:
 the name of the bundle followed by the key. Two forms of syntax are
-acceptable in this context. The original syntax (and the only form
-supported prior to version 1.9.12 of \app{gretl}) requires that the
-key be given as a quoted string literal enclosed in square brackets.
-For example, the statement
-
+acceptable in this context. The first form requires that the key be
+given as a quoted string literal enclosed in square brackets.  For
+example, the statement
 \begin{code}
 foo["matrix1"] = m
 \end{code}
-
 adds an object called \texttt{m} (presumably a matrix) to bundle
-\texttt{foo} under the key \texttt{matrix1}. From \app{gretl} 1.9.12,
-however, a simpler syntax is available, \emph{provided} the key
-satisfies the rules for a \app{gretl} variable name (31 characters
-maximum, starting with a letter and composed of just letters, numbers
-or underscore).\footnote{When using the original syntax, keys do not
-  have to be valid as variable names---for example, they can include
+\texttt{foo} under the key \texttt{matrix1}. 
+
+A simpler syntax is also available, \emph{provided} the key satisfies
+the rules for a \app{gretl} variable name (31 characters maximum,
+starting with a letter and composed of just letters, numbers or
+underscore).\footnote{When using the original syntax, keys do not have
+  to be valid as variable names---for example, they can include
   spaces---but they are limited to 31 characters.}  In that case you
 can simply join the key to the bundle name with a dot, as in
 
