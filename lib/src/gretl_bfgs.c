@@ -631,7 +631,7 @@ int numeric_gradient (double *b, double *g, int n,
     return err;
 }
 
-#define stepfrac	0.2
+#define STEPFRAC	0.2
 #define acctol		1.0e-7 /* alt: 0.0001 or 1.0e-7 (?) */
 #define reltest		10.0
 
@@ -762,13 +762,11 @@ static int copy_initial_hessian (gretl_matrix *A, double **H,
     return 0;
 }
 
-/* find the optimal steplength by successive powers of stepfrac */
-
-static double opt_slen_pwr (int n, int *pndelta, double *b, double *X, double *t, 
-			    double *pf, BFGS_CRIT_FUNC cfunc, void *data, 
-			    double sumgrad, double fmax, int *pfcount)
+static double opt_slen (int n, int *pndelta, double *b, double *X, double *t, 
+			double *pf, BFGS_CRIT_FUNC cfunc, void *data, 
+			double g0, double f0, int *pfcount)
 {
-    double d, f = *pf, steplen = 1.0;
+    double d, f1 = *pf, steplen = 1.0;
     int i, crit_ok = 0, fcount = 0;
     int ndelta = *pndelta;
 
@@ -779,6 +777,7 @@ static double opt_slen_pwr (int n, int *pndelta, double *b, double *X, double *t
 
     do {
 	ndelta = n;
+	crit_ok = 0;
 	for (i=0; i<n; i++) {
 	    b[i] = X[i] + steplen * t[i];
 	    if (coeff_unchanged(b[i], X[i])) {
@@ -786,24 +785,46 @@ static double opt_slen_pwr (int n, int *pndelta, double *b, double *X, double *t
 	    }
 	}
 	if (ndelta > 0) {
-	    f = cfunc(b, data);
-	    d = -sumgrad * steplen * acctol;
+	    f1 = cfunc(b, data);
+	    d = -g0 * steplen * acctol;
 	    fcount++;
-	    crit_ok = !na(f) && (f >= fmax + d);
-#if BFGS_DEBUG
-	    fprintf(stderr, "crit_ok: f=%.10g, fmax=%.10g, d=%g, steplen=%g, ok=%d\n",
-			    f, fmax, d, steplen, crit_ok);
-#endif
+#if 1
+	    /* find the optimal steplength by quadratic interpolation; 
+	       inspired by Kelley (1999), "Iterative Methods for Optimization", 
+	       especially section 3.2.1. */
+
+	    if (xna(f1)) {
+		/* function ends into NA zone, presumably, outside the 
+		   admissible parameter space; hence, try a much smaller 
+		   step */
+		steplen *= STEPFRAC;
+	    } else if (f1 < f0 + d) {
+		/* function computes, but goes down: try quadratic approx */
+		steplen *= 0.5 * g0 / (f0 - f1 + g0);
+		if (steplen < 1.0e-12) {
+		    /* safeguarding */
+		    fprintf(stderr, "safeguarding: f0 - f1 = %g, g0 = %g\n",
+			    f0 - f1, g0);
+		    steplen = 1.0e-12;
+		    crit_ok = 1;
+		}
+	    } else {
+		crit_ok = 1;
+	    }
+#else
+	    /* find the optimal steplength by successive powers of STEPFRAC */
+	    crit_ok = !na(f1) && (f1 >= f0 + d);
 	    if (!crit_ok) {
 		/* calculated criterion no good: try smaller step */
-		steplen *= stepfrac;
+		steplen *= STEPFRAC;
 	    }
+#endif
 	}
     } while (ndelta != 0 && !crit_ok);
 
     *pndelta = ndelta;
     *pfcount += fcount;
-    *pf = f;
+    *pf = f1;
 
     return steplen;
 }
@@ -929,8 +950,8 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 
 	if (sumgrad > 0.0) { 
 	    /* heading in the right direction */
-	    steplen = opt_slen_pwr(n, &ndelta, b, X, t, &f, cfunc, data, 
-				   sumgrad, fmax, &fcount);
+	    steplen = opt_slen(n, &ndelta, b, X, t, &f, cfunc, data, 
+			       sumgrad, fmax, &fcount);
 	    done = fabs(fmax - f) <= reltol * (fabs(fmax) + reltol);
 
 #if BFGS_DEBUG
