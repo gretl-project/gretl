@@ -84,6 +84,7 @@ variable named \texttt{foo}. Note that
   three distinct names. Of course, some words are reserved and can't
   be used as identifiers (however, nearly all reserved words only
   contain lowercase characters).
+\item The string delimiter is the double quote (\verb|"|). 
 \end{enumerate}
 
 In hansl, a variable has to be of one of these types: \texttt{scalar},
@@ -237,49 +238,45 @@ which tells you whether a scalar is \texttt{NA} or not.
 
 \section{Manipulation of strings}
 
-A string may take any of the following forms:
+Most of the previous section applies, with obvious modifications, to
+strings: you may manipulate strings either via operators, or
+functions. Hansl's repertoire of function for manipulating strings
+offers all the standard capabilities one would expect, such as
+\cmd{toupper}, \cmd{tolower}, \cmd{len} etcetera. Again, see the \GCR\
+for a complete list.
+
+In order to access part of a string, you may use the \cmd{substr}
+function, as in
+\begin{code}
+  string s = "endogenous"
+  string pet = substr(s, 3, 5)
+\end{code}
+which would result to assigning the value \texttt{dog} to the variable
+\texttt{pet}.
+
+Notable operators for strings are
 \begin{itemize}
-\item the keyord \texttt{null}, or \texttt{""}, for an empty string
-\item a string literal (enclosed in double quotes); or
-\item the name of an existing string variable; or
-\item a function that returns a string (see below); or
-\item any of the above followed by \texttt{+} and an integer offset.
-\end{itemize}
-
-The role of the integer offset is to use a substring of the preceding
-element, starting at the given character offset.  An empty string is
-returned if the offset is greater than the length of the string in
-question.
-
-You can use the \verb|~| operator to join two or more strings, as
+\item the \verb|~| operator, to join two or more strings, as
 in\footnote{Note on some national keyboards, you don't have the tilde
   (\texttt{\~}) character. In gretl's script editor, this can be
   obtained via its Unicode representation: type Ctrl-Shift-U, followed
   by \texttt{7e}.}
-\begin{code}
-  a = "now"
-  b = "here"
-  c = a ~ c
-  print c
-\end{code}
-or
-\begin{code}
-string s1 = "sweet"
-string s2 = "Home, " ~ s1 ~ " home."
-\end{code}
+  \begin{code}
+    string s1 = "sweet"
+    string s2 = "Home, " ~ s1 ~ " home."
+  \end{code}
+\item the closely related \verb|~=| operator, which acts as an
+  inflected assignment operator (that is, \verb|a ~= "fgh"| is
+  equivalent to \verb|a = a ~ "fgh"|);
+\item the offset operator \texttt{+}, which yields a substring of the
+  preceding element, starting at the given character offset.  An empty
+  string is returned if the offset is greater than the length of the
+  string in question.
+\end{itemize}
 
-To add to the end of an existing string you can use the operator
-\verb|~=|, as in
-\begin{code}
-  a = "abcde"
-  eval a+3
-  a ~= "fgh"
-\end{code}
-
-Functions and stuff borrowed from C
-
-A pretty nifty thing is \emph{string substitution}, but later (see
-\ref{sec:stringsub}).
+It is quite common, in hansl scripts, to use \emph{string
+  substitution}; however, we will efer it treatment to section
+\ref{sec:stringsub}.
 
 \chapter{Matrices}
 
@@ -414,8 +411,8 @@ operators are more general and powerful than shown in the example
 above; see the chapter on matrices in \GUG{} for details.
 
 Dot and concatenation operators are less rigid than ordinary matrix
-operations in terms of conformability requirements: (\ldots)
-
+operations in terms of conformability requirements: in most cases
+hansl will try to do ``the obvious thing'' (\ldots expand \ldots).
 
 Hansl provides a reasonably comprehensive set of matrix functions,
 that is, functions that produce and/or operate on matrices. For a
@@ -429,11 +426,15 @@ matrix element-by-element.
   \begin{tabular}{rp{0.5\textwidth}}
     \textbf{Function(s)} & \textbf{Purpose} \\
     \hline
-    \texttt{zeros(r,c), ones(r,c)} & produce matrices with $r$ rows
-    and $c$ columns, filled with zeros and ones, respectively \\
-    \texttt{I(n)} & identity matrix of size $n$ \\
     \texttt{rows(X), cols(X)} & return the number of rows and columns
     of $X$, respectively \\
+    \texttt{zeros(r,c), ones(r,c)} & produce matrices with $r$ rows
+    and $c$ columns, filled with zeros and ones, respectively \\
+    \texttt{mshape(X,r,c)} & rearrange the elements of $X$ into a
+    matrix with $r$ rows and $c$ columns \\
+    \texttt{I(n)} & identity matrix of size $n$ \\
+    \texttt{seq(a,b)} & generate a row vector containing integers form
+    $a$ to $b$ \\
     \texttt{inv(A)} & invert, if possible, the matrix $A$ \\
     \texttt{maxc(A), minc(A), sumc(A), meanc(A)} & return a row vector
     with the max, min, sum, means of each column of $A$, respectively\\
