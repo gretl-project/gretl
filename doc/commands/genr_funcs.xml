@@ -2484,7 +2484,7 @@
 	  exhausted: transcribe <quote>legal</quote> characters; skip
 	  <quote>illegal</quote> characters apart from spaces; and
 	  replace one or more consecutive spaces with an underscore,
-	  unless the last character transcribed is an underscore in
+	  unless the previous character transcribed is an underscore in
 	  which case space is skipped.
 	</para>
       </description>
@@ -6573,7 +6573,10 @@
       </fnargs>  
       <description>
 	<para>
-	  Returns the number of characters in <argname>s</argname>.
+	  Returns the number of characters in the string
+	  <argname>s</argname>. Note that this does not necessarily
+	  equal the number of bytes if some characters are outside
+	  of the printable-ASCII range.
 	</para>
       </description>
     </function>
@@ -6671,8 +6674,9 @@
       </fnargs>  
       <description>
 	<para>
-	  Returns a substring of <argname>s</argname>, from character
-	  <argname>start</argname> to character <argname>end</argname>.
+	  Returns a substring of <argname>s</argname>, from the
+	  character with (1-based) index <argname>start</argname> to
+	  that with index <argname>end</argname>, inclusive.
 	</para>
       </description>
     </function>
