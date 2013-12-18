@@ -552,6 +552,103 @@ matrix ev = eigensym(A, &V)
 print A ev V
 \end{code}
 
+\chapter{Nice-looking output}
+\label{chap:formatting}
+
+\section{Formatted output}
+\label{sec:printf}
+
+To give you more control over output, hansl provides you with
+the \cmd{printf} function, which works in a very similar way as in a
+great number of programming languages.
+
+Its syntax goes like this:
+\begin{flushleft}
+  \texttt{printf(\emph{format string}, \emph{arguments})}
+\end{flushleft}
+
+The \cmd{printf} function gives you extreme flexibility in what to
+print and how. The \emph{format string} is used to specify the precise
+way in which you want the \emph{arguments} to be printed.
+
+\subsection{The format string}
+\label{sec:fmtstring}
+
+Technically, \cmd{printf} is a function returning a scalar. Its real
+job, however, is to do formatted printing of text. In fact, what gets
+printed is the format string; this must be an expression that
+evaluates to a string, but in most cases will just be a constant
+string, that is an alphanumeric sequence surrounded by double
+quotes. However, some character sequences in the format string have a
+special meaning: those beginning with the percent character
+(\texttt{\%}) are interpreted as ``placeholders'' for the items
+contained in the argument list; moreover, special characters such as
+the newline character are represented via a combination beginning with
+the backslash (\verb|\|).
+
+For example,
+\begin{code}
+printf("The square root of %d is (roughly) %6.4f.\n", 5, sqrt(5))
+\end{code}
+will print 
+\begin{code}
+The square root of 5 is (roughly) 2.2361.
+\end{code}
+
+Let's see how:
+\begin{itemize}
+\item The first special sequence is \verb|%d|: this indicates that we
+  want an integer number at that place in the output string; since it
+  is the leftmost ``percent'' expression, it is matched to the first
+  argument, that is 5;
+\item the second special sequence is \verb|%6.4f|, which stands for a
+  decimal value with 4 digits after the decimal separator\footnote{The
+    decimal separator is the dot in English, but may be different in
+    certain locales.} and at least 6 digits wide; this will be matched
+  to the second argument; note that arguments are separated by
+  commas. Also note that the second argument is not a scalar constant
+  nor a scalar variable, but an expression that evaluates to a scalar;
+\item the format string ends with a \verb|\n| sequence, which inserts
+  a newline.
+\end{itemize}
+
+The maximum length of a format string is 127 characters. The escape
+sequences \verb|\n| (newline), \verb|\t| (tab), \verb|\v| (vertical
+tab) and \verb|\\| (literal backslash) are recognized. To print a
+literal percent sign, use \verb|%%|.
+
+Apart from those shown in the above example, recognized numeric
+formats are \verb|%e|, \verb|%E|, \verb|%f|, \verb|%g|, and \verb|%G|,
+in each case with the various modifiers available in C. The format
+\verb|%s| should be used for strings. As in C, numerical values that
+form part of the format (width and or precision) may be given directly
+as numbers, as in \verb|%10.4f|, or they may be given as variables. In
+the latter case, one puts asterisks into the format string and
+supplies corresponding arguments in order. For example,
+
+\begin{code}
+  scalar width = 12 
+  scalar precision = 6 
+  printf("x = %*.*f\n", width, precision, x)
+\end{code}
+
+If a matrix argument is given in association with a numeric format,
+the entire matrix is printed using the specified format for each
+element. 
+
+\tip{Important: the ``command vs function'' thing.}
+
+
+\subsection{Output to a string}
+\label{sec:sprintf}
+
+\cmd{sprintf}
+
+\subsection{Output to a file}
+\label{sec:outfile}
+
+\cmd{outfile}
+
 \chapter{Bundles}
 \label{chap:bundles}
 

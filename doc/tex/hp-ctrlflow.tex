@@ -140,9 +140,9 @@ loop foreach <counter> <catalogue>
    ...
 endloop
 \end{code}
-where \texttt{<catalogue>} can be either a variable of type
-\texttt{list} (i.e.\ a list of series), or a collection of
-space-separated strings. The counter variable automatically takes on
+where \texttt{<catalogue>} can be either a collection of
+space-separated strings, or a variable of type \texttt{list} (see
+section \ref{sec:lists}). The counter variable automatically takes on
 the numerical values 1, 2, 3, \dots{} as execution proceeds, but its
 string value (accessed by prepending a dollar sign) shadows the names
 of the series in the list or the space-separated strings; this sort of
@@ -151,10 +151,25 @@ loop is designed for string substitution.
 Here is an example in which the \texttt{<catalogue>} is a collection
 of function names: 
 \begin{code}
+scalar x = 1
 loop foreach f sqrt exp ln
-    printf "$f(1) = %g\n", $f(1)
+    scalar y = $f(1)
+    print y
 endloop
 \end{code}
+%$
+This will produce
+\begin{code}
+              y =  1.0000000
+              y =  2.7182818
+              y =  0.0000000
+\end{code}
+Note that the above example relies on the fact that \cmd{sqrt},
+\cmd{exp} and \cmd{ln} are predefined hansl functions. Syntactically,
+it would have been correct to include in the \texttt{<catalogue>} a
+``function name'' like \cmd{bzbRkf}, but the loop would have stopped
+with an error message, since \texttt{bzbRkf(1)} does not produce a
+scalar expression.
 
 \subsection{For loop}
 
