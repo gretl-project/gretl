@@ -41,11 +41,35 @@ endloop
 where \texttt{<times>} is any expression that evaluates to a scalar,
 namely the required number of iterations. This is only evaluated at
 the beginning of the loop, so the number of iterations cannot be
-changed from within the loop itself.
+changed from within the loop itself. Example:
+\begin{code}
+# triangular numbers
+scalar n = 6
+scalar count = 1
+scalar x = 0
+loop n
+    scalar x += count
+    count++
+    print x
+endloop
+\end{code}
+yields
+\begin{code}
+              x =  1.0000000
+              x =  3.0000000
+              x =  6.0000000
+              x =  10.000000
+              x =  15.000000
+              x =  21.000000
+\end{code}
 
+Note the usage of the 
 \subsection{Index loop}
 
-The syntax is
+The unconditional loop is used quite rarely, as in most cases it is
+useful to have a counter variable (\texttt{count} in the previous
+example). This is easily accomplished via the \emph{index loop}, whose
+syntax is
 \begin{code}
 loop <counter>=<min>..<max>
    ...
@@ -57,15 +81,37 @@ part. The \texttt{<counter>} variable is started at \texttt{<min>} and
 incremented by 1 on each iteration until it equals \texttt{<max>}.
 
 The counter is ``read-only'' inside the loop. You can access either
-its numerical value or (by prepending a dollar sign) its string
-representation. For example:
+its numerical value through the scalar \texttt{i} or use the accessor
+\dollar{i}, which will perform \emph{string substitution}: inside the
+loop, the expression \dollar{i} will be substituted by the hansl
+interpreter with the a string representation of the index variable. An
+example should made this clearer: the following input
 \begin{code}
-scalar Max = 4
-loop i=1..Max --quiet
-    printf "$i squared = %d\n", i*i
+scalar a_1 = 57
+scalar a_2 = 85
+scalar a_3 = 13
+
+loop i=1..3 --quiet
+    print i a_$i
 endloop
 \end{code}
 %$
+has for output
+\begin{code}
+    i = 1.0000000
+  a_1 = 57.000000
+    i = 2.0000000
+  a_2 = 85.000000
+    i = 3.0000000
+  a_3 = 13.000000
+\end{code}
+
+In the example above, at the first iteration the value of \texttt{i}
+is 1, so the hansl interpreter expands the expression \verb|a_$i| to
+\verb|a_1|, finds that a scalar by that name exists, and prints
+it. The same happens through the rest of the iterations. If one of the
+automatically constructed identifiers had not existed, execution would
+have stopped with an error.
 
 \subsection{While loop}
 

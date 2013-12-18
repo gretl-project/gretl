@@ -240,10 +240,10 @@ which tells you whether a scalar is \texttt{NA} or not.
 
 Most of the previous section applies, with obvious modifications, to
 strings: you may manipulate strings either via operators, or
-functions. Hansl's repertoire of function for manipulating strings
+functions. Hansl's repertoire of functions for manipulating strings
 offers all the standard capabilities one would expect, such as
-\cmd{toupper}, \cmd{tolower}, \cmd{len} etcetera. Again, see the \GCR\
-for a complete list.
+\cmd{toupper}, \cmd{tolower}, \cmd{strlen} etcetera, plus some more
+specialized ones. Again, see the \GCR\ for a complete list.
 
 In order to access part of a string, you may use the \cmd{substr}
 function, as in
@@ -254,7 +254,7 @@ function, as in
 which would result to assigning the value \texttt{dog} to the variable
 \texttt{pet}.
 
-Notable operators for strings are
+The following are useful operators for strings:
 \begin{itemize}
 \item the \verb|~| operator, to join two or more strings, as
 in\footnote{Note on some national keyboards, you don't have the tilde
@@ -266,17 +266,34 @@ in\footnote{Note on some national keyboards, you don't have the tilde
     string s2 = "Home, " ~ s1 ~ " home."
   \end{code}
 \item the closely related \verb|~=| operator, which acts as an
-  inflected assignment operator (that is, \verb|a ~= "fgh"| is
-  equivalent to \verb|a = a ~ "fgh"|);
+  inflected assignment operator (so \verb|a ~= "_ij"| is equivalent to
+  \verb|a = a ~ "_ij"|);
 \item the offset operator \texttt{+}, which yields a substring of the
   preceding element, starting at the given character offset.  An empty
   string is returned if the offset is greater than the length of the
   string in question.
 \end{itemize}
 
-It is quite common, in hansl scripts, to use \emph{string
-  substitution}; however, we will efer it treatment to section
-\ref{sec:stringsub}.
+A noteworthy point: strings may be (almost) arbitrarily long;
+moreover, they can contain special characters such as line breaks,
+etcetera. As a consequence, it is possible to use hansl for performing
+rather complex operations on text files by loading them into memory as
+a very long string and then operating on that;\footnote{Of course, the
+  reader is invited to take this with a grain of salt. If your job
+  involves manipulating a text files several gigabytes long, you
+  should consider using appropriate tools instead of hansl, such as
+  for example \app{perl} or \app{python}. However, on modern hardware
+  hansl may be a very defensible choice for text files up to a few
+  hundreds megabytes.} interested readers should take a look at the
+\cmd{readfile} and \cmd{getline} functions in the \GCR.
+
+For \emph{creating} complex strings, the most flexible tool is
+arguably the \cmd{sprintf} function. Its usage, however, is best
+illustrated in an ad-hoc portion of this primer, which is
+Chapter \ref{chap:formatting}. Finally, it is quite common, in hansl
+scripts, to use \emph{string substitution}; however, this is another
+topic that deserves special treatment, so we will defer its
+description to section \ref{sec:stringsub}.
 
 \chapter{Matrices}
 
@@ -444,7 +461,7 @@ matrix element-by-element.
 
 \begin{table}[htbp]
   \centering
-  \begin{tabular}{rp{0.5\textwidth}}
+  \begin{tabular}{rp{0.6\textwidth}}
     \textbf{Function(s)} & \textbf{Purpose} \\
     \hline
     \texttt{rows(X), cols(X)} & return the number of rows and columns
@@ -457,10 +474,10 @@ matrix element-by-element.
     \texttt{seq(a,b)} & generate a row vector containing integers form
     $a$ to $b$ \\
     \texttt{inv(A)} & invert, if possible, the matrix $A$ \\
-    \texttt{maxc(A), minc(A), sumc(A), meanc(A)} & return a row vector
-    with the max, min, sum, means of each column of $A$, respectively\\
-    \texttt{maxr(A), minr(A), sumr(A), meanr(A)} & return a column vector
-    with the max, min, sum, means of each row of $A$, respectively\\
+    \texttt{maxc(A), minc(A), meanc(A)} & return a row vector
+    with the max, min, means of each column of $A$, respectively\\
+    \texttt{maxr(A), minr(A), meanr(A)} & return a column vector
+    with the max, min, means of each row of $A$, respectively\\
     \texttt{mnormal(r,c), muniform(r,c)} & generate $r \times c$
     matrices filled with standard Gaussian and uniform pseudo-random
     numbers, respectively \\
@@ -632,9 +649,9 @@ This destroys the object associated with the key and removes the key
 from the hash table.
 
 Besides adding, accessing, replacing and deleting individual items,
-the other operations that are supported for bundles are union,
-printing and deletion. As regards union, if bundles \texttt{b1} and
-\texttt{b2} are defined you can say
+the other operations that are supported for bundles are union and
+printing. As regards union, if bundles \texttt{b1} and \texttt{b2} are
+defined you can say
 
 \begin{code}
 bundle b3 = b1 + b2
