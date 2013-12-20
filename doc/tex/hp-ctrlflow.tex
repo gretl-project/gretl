@@ -2,10 +2,139 @@
 \label{chap:hp-ctrlflow}
 
 The primary means for controlling the flow of execution in a hansl
-script are the the \cmd{loop} statement (repeated execution), \cmd{if}
-statement (conditional execution), the \cmd{catch} modifier (which
-enables the trapping of errors that would otherwise halt execution)
-and the \cmd{quit} command (which forces termination).
+script are the the \cmd{if} statement (conditional execution),
+\cmd{loop} statement (repeated execution), the \cmd{catch} modifier
+(which enables the trapping of errors that would otherwise halt
+execution) and the \cmd{quit} command (which forces termination).
+
+\section{The \cmd{if} statement}
+
+Conditional execution in hansl uses the \cmd{if} keyword. Its fullest
+usage is as follows
+\begin{code}
+if <condition>
+   ...
+elif <condition>
+   ...
+else 
+   ...
+endif  
+\end{code}
+
+Points to note:
+\begin{itemize}
+\item The \texttt{<condition>} can be any expression that evaluates to a
+  scalar: 0 is interpreted as ``false'', non-zero is interpreted as
+  ``true''; \texttt{NA} generates an error.
+\item The \cmd{elif} and \cmd{else} clauses are optional: the minimal
+  form is just \texttt{if} \dots{} \texttt{endif}.
+\item The \cmd{elif} keyword can be repeated, making hansl's \cmd{if}
+  statement a multi-way branch statement. There is no separate
+  \cmd{switch} or \cmd{case} statement in hansl.
+\item Conditional blocks of this sort can be nested up to a maximum of
+  1024.
+\end{itemize}
+
+Example:
+\begin{code}
+scalar x = 15
+
+# --- simple if ----------------------------------
+if x >= 10
+   printf "%g is more than two digits long\n", x
+endif
+
+# --- if with else -------------------------------
+if x >= 0
+   printf "%g is non-negative\n", x
+else
+   printf "%g is negative\n", x
+endif
+
+# --- multiple branches --------------------------
+if missing(x)
+   printf "%g is missing\n", x
+elif x < 0
+   printf "%g is negative\n", x
+elif floor(x) == x
+   printf "%g is an integer\n", x
+else
+   printf "%g is positive integer\n", x
+endif
+\end{code}
+
+Note to Stata users: hansl's \cmd{if} statement is fundamentally
+different from Stata's \texttt{if} option: the latter selects a
+subsample of observations for some action, while the former is used to
+decide if a group of statements must be executed or not; Stata calls
+this the \emph{branching \texttt{if}}.
+
+\subsection{The ternary query operator}
+
+Besides use of \texttt{if}, the ternary query operator, \texttt{?:},
+can be used to perform conditional assignment on a more ``micro''
+level. This has the form
+\begin{code}
+result = <condition> ? <t-value1> : <f-value>
+\end{code}
+If \texttt{<condition>} evaluates as true (non-zero) then
+\texttt{<t-value>} is assigned to \texttt{result}, otherwise
+\texttt{<f-value>} is assigned. This is obviously more compact than
+\texttt{if} \dots{} \texttt{else} \dots{} \texttt{endif}. The
+following example replicates the \cmd{abs} function by hand:
+\begin{code}
+scalar ax = x>=0 ? x : -x
+\end{code}
+Of course, in the above case it would have been much simpler to just
+write \texttt{ax = abs(x)}. Consider, however, the following case,
+which exploits the fact that the ternary operator can be nested:
+\begin{code}
+scalar days = (m==2) ? 28 : maxr(m.={4,6,9,11}) ? 30 : 31
+\end{code}
+This example deserves a few comments: we want to compute the number of
+days in a month, codified in the variable \texttt{m}. So, what we put into
+the scalar \texttt{days} comes from the following pathway:
+\begin{enumerate}
+\item first, we check if the month is February (\texttt{m==2}); if so,
+  we set \texttt{days} to 28 and we're done;\footnote{Ok, we don't
+    check for leap years here.}
+\item otherwise, we compute a matrix of zeros and ones via the
+  \verb|m.={4,6,9,11}| operation (note the ``dot'' operator); if
+  \texttt{m} equals any of the elements in the vector, the
+  corresponding element of the result will be one, and zero otherwise;
+\item by the function \cmd{maxr}, we take its maximum, so we're
+  checking whether \texttt{m} is one of the four values corresponding
+  to 30-days months;
+\item since the above evaluates to a scalar, we put the right value
+  into \texttt{days}.
+\end{enumerate}
+
+It is also
+more flexible, in this respect: in contrast to the usage of
+\texttt{if}, \texttt{<condition>} need not evaluate to a scalar.  So
+for example one can do this sort of thing with matrices:
+\begin{code}
+matrix A = mnormal(4,4)
+matrix B = upper(A.<0) ? -A : A
+\end{code}
+which will switch the sign of the negative elements of \texttt{A} on
+and above its diagonal. To achieve the same via a loop, one should
+have had to write a considerably longer chunk of code, such as
+\begin{code}
+matrix A = mnormal(4,4)
+matrix B = A
+
+loop r = 1..rows(A)
+  loop c = r .. cols(A)
+     if A[r,c] < 0
+       B[r,c] = -A[r,c]
+     endif
+  end loop
+end loop
+\end{code}
+
+The reader will have noticed that the above example uses the
+\texttt{loop} keyword, which is explained in the next section.
 
 \section{Loops}
 \label{sec:hr-loops}
@@ -185,8 +314,8 @@ endloop
 
 The three components are as follows:
 \begin{enumerate}
-\item Initialization (\texttt{<init>}): This is evaluated once at the
-  start of the loop.
+\item Initialization (\texttt{<init>}): this must be an assignment
+  statement, evaluated at the start of the loop.
 \item Continuation condition (\texttt{<cont>}): this is evaluated at
   the top of each iteration (including the first).  If the expression
   evaluates as true (non-zero), iteration continues, otherwise it
@@ -196,14 +325,34 @@ The three components are as follows:
   continuation condition, on each iteration after the first.
 \end{enumerate}
 
-Here's a simple example:
-%
+Here's an example, in which we found the square root of a number by
+successive approximations:
 \begin{code}
-loop for (r=0.01; r<.991; r+=.01)
-   ...
-endloop
-\end{code}
+# find the square root of x iteratively via Newton's method
+scalar x = 256
+d = 1
+loop for (y=(x+1)/2; abs(d) > 1.0e-7; y -= d/(2*y))
+    d = y*y - x
+    printf "y = %15.10f, d = %g\n", y, d
+end loop
 
+printf "sqrt(%g) = %g\n", x, y
+\end{code}
+Running the example gives
+\begin{code}
+y =  128.5000000000, d = 16256.3
+y =   65.2461089494, d = 4001.05
+y =   34.5848572866, d = 940.112
+y =   20.9934703720, d = 184.726
+y =   16.5938690915, d = 19.3565
+y =   16.0106268314, d = 0.340172
+y =   16.0000035267, d = 0.000112855
+y =   16.0000000000, d = 1.23919e-11
+
+Number of iterations: 8
+
+sqrt(256) = 16
+\end{code}
 Be aware of the limited precision of floating-point arithmetic. For
 example, the code snippet below will iterate forever on most platforms
 because \texttt{x} will never equal \textit{exactly} 0.01, even though
@@ -216,8 +365,6 @@ endloop
 However, if you replace the condition \texttt{x!=0.01} with
 \texttt{x>=0.01}, the code will run as (probably) intended.
  
-\vspace{1ex}
-
 \subsection{Loop options}
 
 Two options can be given to the \cmd{loop} statement. One is
@@ -237,140 +384,28 @@ information.
 \label{sec:loop-break}
 
 The \cmd{break} command makes it possible to break out of a loop if
-necessary. Note that
-\begin{itemize}
-\item if you nest loops, \cmd{break} in the innermost loop will
-  interrupt that loop only and not the outer ones; and
-\item hansl does not provide any equivalent to the C \texttt{continue}
-  statement.
-\end{itemize}
-
-\section{The \cmd{if} statement}
-
-Conditional execution in hansl uses the \cmd{if} keyword. Its fullest
-usage is as follows
+necessary.\footnote{Hansl does not provide any equivalent to the C
+  \texttt{continue} statement.} Note that if you nest loops,
+\cmd{break} in the innermost loop will interrupt that loop only and
+not the outer ones.  Here is an example in which we use the
+\texttt{while} variant of the \cmd{loop} statement to perform
+calculation of the square root in a manner similar to the example
+above, using \cmd{break} to jump out of the loop when the job is done.
 \begin{code}
-if <condition>
-   ...
-elif <condition>
-   ...
-else 
-   ...
-endif  
-\end{code}
-
-Points to note:
-\begin{itemize}
-\item The \texttt{<condition>} can be any expression that evaluates to a
-  scalar: 0 is interpreted as ``false'', non-zero is interpreted as
-  ``true''; \texttt{NA} generates an error.
-\item The \cmd{elif} and \cmd{else} clauses are optional: the minimal
-  form is just \texttt{if} \dots{} \texttt{endif}.
-\item The \cmd{elif} keyword can be repeated, making hansl's \cmd{if}
-  statement a multi-way branch statement. There is no separate
-  \cmd{switch} or \cmd{case} statement in hansl.
-\item Conditional blocks of this sort can be nested up to a maximum of
-  1024.
-\end{itemize}
-
-Example:
-\begin{code}
-scalar x = 15
-
-# --- simple if ----------------------------------
-if x >= 10
-   printf "%g is more than two digits long\n", x
-endif
-
-# --- if with else -------------------------------
-if x >= 0
-   printf "%g is non-negative\n", x
-else
-   printf "%g is negative\n", x
-endif
-
-# --- multiple branches --------------------------
-if missing(x)
-   printf "%g is missing\n", x
-elif x < 0
-   printf "%g is negative\n", x
-elif floor(x) == x
-   printf "%g is an integer\n", x
-else
-   printf "%g is positive integer\n", x
-endif
-\end{code}
-
-Note to Stata users: hansl's \cmd{if} statement is fundamentally
-different from Stata's \texttt{if} option: the latter selects a
-subsample of observations for some action, while the former is used to
-decide if a group of statements must be executed or not; Stata calls
-this the \emph{branching \texttt{if}}.
-
-\subsection{The ternary query operator}
-
-Besides use of \texttt{if}, the ternary query operator, \texttt{?:},
-can be used to perform conditional assignment on a more ``micro''
-level. This has the form
-\begin{code}
-result = <condition> ? <t-value1> : <f-value>
-\end{code}
-If \texttt{<condition>} evaluates as true (non-zero) then
-\texttt{<t-value>} is assigned to \texttt{result}, otherwise
-\texttt{<f-value>} is assigned. This is obviously more compact than
-\texttt{if} \dots{} \texttt{else} \dots{} \texttt{endif}. The
-following example replicates the \cmd{abs} function by hand:
-\begin{code}
-scalar ax = x>=0 ? x : -x
-\end{code}
-Of course, in the above case it would have been much simpler to just
-write \texttt{ax = abs(x)}. Consider, however, the following case,
-which exploits the fact that the ternary operator can be nested:
-\begin{code}
-scalar days = (m==2) ? 28 : maxr(m.={4,6,9,11}) ? 30 : 31
-\end{code}
-This example deserves a few comments: we want to compute the number of
-days in a month, codified in the variable \texttt{m}. So, what we put into
-the scalar \texttt{days} comes from the following pathway:
-\begin{enumerate}
-\item first, we check if the month is February (\texttt{m==2}); if so,
-  we set \texttt{days} to 28 and we're done;\footnote{Ok, we don't
-    check for leap years here.}
-\item otherwise, we compute a matrix of zeros and ones via the
-  \verb|m.={4,6,9,11}| operation (note the ``dot'' operator); if
-  \texttt{m} equals any of the elements in the vector, the
-  corresponding element of the result will be one, and zero otherwise;
-\item by the function \cmd{maxr}, we take its maximum, so we're
-  checking whether \texttt{m} is one of the four values corresponding
-  to 30-days months;
-\item since the above evaluates to a scalar, we put the right value
-  into \texttt{days}.
-\end{enumerate}
-
-It is also
-more flexible, in this respect: in contrast to the usage of
-\texttt{if}, \texttt{<condition>} need not evaluate to a scalar.  So
-for example one can do this sort of thing with matrices:
-\begin{code}
-matrix A = mnormal(4,4)
-matrix B = upper(A.<0) ? -A : A
-\end{code}
-which will switch the sign of the negative elements of \texttt{A} on
-and above its diagonal. To achieve the same via a loop, one should
-have had to write a considerably longer chunk of code, such as
-\begin{code}
-matrix A = mnormal(4,4)
-matrix B = A
-
-loop r = 1..rows(A)
-  loop c = r .. cols(A)
-     if A[r,c] < 0
-       B[r,c] = -A[r,c]
-     endif
-  end loop
+scalar x = 256
+scalar y = 1
+loop while 1 --quiet
+    d = y*y - x
+    if abs(d) < 1.0e-7
+        break
+    else
+        y -= d/(2*y)
+        printf "y = %15.10f, d = %g\n", y, d
+    endif
 end loop
-\end{code}
 
+printf "sqrt(%g) = %g\n", x, y
+\end{code}
 \section{The \cmd{catch} modifier}
 
 Hansl offers a rudimentary form of exception handling via the
@@ -387,7 +422,18 @@ of \dollar{error} should always be checked immediately after using
 The catch keyword cannot be used before \cmd{if}, \cmd{elif} or
 \cmd{endif}.
 
-\emph{\ldots Add example? \ldots}
+\begin{code}
+matrix a = floor(2*muniform(2,2))
+catch ai = inv(a)
+scalar err = $error
+
+if err
+    printf "The matrix\n%6.0f\nis singular!\n", a
+else
+    print ai
+endif
+\end{code}
+%$
 
 \section{The \cmd{quit} statement}
 
