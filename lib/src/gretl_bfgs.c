@@ -794,7 +794,7 @@ static double opt_slen (int n, int *pndelta, double *b, double *X, double *t,
 	       especially section 3.2.1. */
 
 	    if (xna(f1)) {
-		/* function ends into NA zone, presumably, outside the 
+		/* function goes into NA zone, presumably outside the 
 		   admissible parameter space; hence, try a much smaller 
 		   step */
 		steplen *= STEPFRAC;
