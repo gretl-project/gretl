@@ -558,37 +558,35 @@ print A ev V
 \section{Formatted output}
 \label{sec:printf}
 
-To give you more control over output, hansl provides you with
-the \cmd{printf} function, which works in a very similar way as in a
-great number of programming languages.
+To give you more control over output, hansl provides you with the
+\cmd{printf} command, which works in a very similar way as in a great
+number of programming languages.
 
 Its syntax goes like this:
 \begin{flushleft}
-  \texttt{printf(\emph{format string}, \emph{arguments})}
+  \texttt{printf \emph{format string}, \emph{arguments}}
 \end{flushleft}
 
-The \cmd{printf} function gives you extreme flexibility in what to
+The \cmd{printf} command gives you extreme flexibility in what to
 print and how. The \emph{format string} is used to specify the precise
 way in which you want the \emph{arguments} to be printed.
 
 \subsection{The format string}
 \label{sec:fmtstring}
 
-Technically, \cmd{printf} is a function returning a scalar. Its real
-job, however, is to do formatted printing of text. In fact, what gets
-printed is the format string; this must be an expression that
-evaluates to a string, but in most cases will just be a constant
-string, that is an alphanumeric sequence surrounded by double
-quotes. However, some character sequences in the format string have a
-special meaning: those beginning with the percent character
-(\texttt{\%}) are interpreted as ``placeholders'' for the items
-contained in the argument list; moreover, special characters such as
-the newline character are represented via a combination beginning with
-the backslash (\verb|\|).
+Technically, the \cmd{printf} command prints out the format string;
+this must be an expression that evaluates to a string, but in most
+cases will just be a constant string, that is an alphanumeric sequence
+surrounded by double quotes. However, some character sequences in the
+format string have a special meaning: those beginning with the percent
+character (\texttt{\%}) are interpreted as ``placeholders'' for the
+items contained in the argument list; moreover, special characters
+such as the newline character are represented via a combination
+beginning with the backslash (\verb|\|).
 
 For example,
 \begin{code}
-printf("The square root of %d is (roughly) %6.4f.\n", 5, sqrt(5))
+printf "The square root of %d is (roughly) %6.4f.\n", 5, sqrt(5)
 \end{code}
 will print 
 \begin{code}
@@ -629,20 +627,29 @@ supplies corresponding arguments in order. For example,
 \begin{code}
   scalar width = 12 
   scalar precision = 6 
-  printf("x = %*.*f\n", width, precision, x)
+  printf "x = %*.*f\n", width, precision, x
 \end{code}
 
 If a matrix argument is given in association with a numeric format,
 the entire matrix is printed using the specified format for each
 element. 
 
-\tip{Important: the ``command vs function'' thing.}
-
-
 \subsection{Output to a string}
 \label{sec:sprintf}
 
-\cmd{sprintf}
+Nearly the same thing can be achieved via the \cmd{sprintf} function:
+instead of printing out the result, it stores it to a string, as in 
+\begin{code}
+  string G = sprintf("x = %*.*f\n", width, precision, x)
+\end{code}
+after which the variable \texttt{G} can be the object of further
+processing.
+
+\tip{Both \cmd{printf} and \cmd{sprintf} started their career as
+  commands. Both of them can now be used as functions too. This is
+  going to go at some point: in the future, \cmd{sprintf} will
+  retain the function form only; as for \cmd{printf}, we haven't made
+  a final decision yet.}
 
 \subsection{Output to a file}
 \label{sec:outfile}
