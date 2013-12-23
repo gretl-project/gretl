@@ -499,7 +499,6 @@ void set_app_font (const char *fontname)
 	}
 	g_free(deffont);
 	if (noop) {
-	    fprintf(stderr, "set_app_font: no-op\n");
 	    return;
 	}
     }
