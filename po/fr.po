@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-10-03 08:28-0400\n"
-"PO-Revision-Date: 2013-12-15 21:16+0100\n"
+"PO-Revision-Date: 2013-12-24 21:43+0100\n"
 "Last-Translator: \n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -2785,7 +2785,7 @@ msgstr "'%s' : défini seulement pour les matrices"
 #: lib/src/geneval.c:12312
 #, c-format
 msgid "type error: %s is string-valued"
-msgstr ""
+msgstr "erreur : %s  est du type chaîne de caractères"
 
 #: lib/src/geneval.c:12710
 #, fuzzy
@@ -3944,7 +3944,7 @@ msgstr "rho = 0"
 
 #: lib/src/gretl_model.c:3473
 msgid "LR test for rho = 0"
-msgstr ""
+msgstr "Test LR pour rho = 0"
 
 #: lib/src/gretl_model.c:3492
 msgid "robust variant"
@@ -5700,7 +5700,7 @@ msgstr "Estimés à l'aide des moindres carrés"
 
 #: lib/src/modelprint.c:1641
 msgid "= MLE"
-msgstr ""
+msgstr "= MV"
 
 #: lib/src/modelprint.c:1644
 msgid "Estimated using Kalman filter"
@@ -8049,7 +8049,7 @@ msgstr "Test sur le VAR initial"
 
 #: lib/src/vartest.c:1098
 msgid "Test on VAR"
-msgstr ""
+msgstr "Test de VAR"
 
 #: cli/cli_object.c:92
 #: gui2/objectsave.c:152
@@ -14944,7 +14944,7 @@ msgstr "p. critique entre parenthèse"
 #: gui2/model_table.c:1167
 #: gui2/model_table.c:1255
 msgid "* indicates significance at the 10 percent level"
-msgstr "* indique un test non significatif au seuil de 10 pourcent"
+msgstr "* indique un test significatif au seuil de 10 pourcent"
 
 #: gui2/model_table.c:1055
 #: gui2/model_table.c:1169
