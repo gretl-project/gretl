@@ -1444,7 +1444,7 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 {
     int c, c1, cbak = 0, cc = 0;
     int comment = 0, maxlen = 0;
-    int lines = 0;
+    int crlf = 0, lines = 0;
 
     csv_set_trailing_comma(cdata); /* just provisionally */
 
@@ -1459,6 +1459,7 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 		break;
 	    } else if (c1 == 0x0a) {
 		/* CR + LF -> LF */
+		crlf = 1;
 		c = c1;
 	    } else {
 		/* Mac-style: CR not followed by LF */
@@ -1515,7 +1516,7 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 
     if (maxlen > 0) {
 	/* allow for newline and null terminator */
-	maxlen += 3;
+	maxlen += 2 + crlf;
     }
 
     return maxlen;

@@ -539,7 +539,6 @@ static int richardson_gradient (double *b, double *g, int n,
     double bi0, f1, f2;
     int r = RSTEPS;
     int i, k, m;
-    int err = 0;
 
     for (i=0; i<n; i++) {
 	bi0 = b[i];
@@ -567,7 +566,7 @@ static int richardson_gradient (double *b, double *g, int n,
 	g[i] = df[0];
     }
 
-    return err;
+    return 0;
 }
 
 /* trigger for switch to Richardson gradient */
