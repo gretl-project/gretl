@@ -559,7 +559,7 @@ static int richardson_gradient (double *b, double *g, int n,
 	b[i] = bi0;
 	p4m = 4.0;
 	for (m=0; m<r-1; m++) {
-	    for (k=0; k<r-m; k++) {
+	    for (k=0; k<r-m-1; k++) {
 		df[k] = (df[k+1] * p4m - df[k]) / (p4m - 1.0);
 	    }
 	    p4m *= 4.0;
@@ -788,7 +788,7 @@ static double opt_slen (int n, int *pndelta, double *b, double *X, double *t,
 	    f1 = cfunc(b, data);
 	    d = -g0 * steplen * acctol;
 	    fcount++;
-#if 1
+#if 0
 	    /* find the optimal steplength by quadratic interpolation; 
 	       inspired by Kelley (1999), "Iterative Methods for Optimization", 
 	       especially section 3.2.1. */
