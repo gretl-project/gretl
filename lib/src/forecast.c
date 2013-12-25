@@ -1298,7 +1298,7 @@ static int want_x_beta_prep (const MODEL *pmod, const int *xlist)
     if (xlist != NULL) {
 	int aflags = gretl_model_get_int(pmod, "arma_flags");
 
-	if ((aflags & ARMA_EXACT) || (aflags & ARMA_X12A)) {
+	if (aflags & (ARMA_EXACT | ARMA_X12A)) {
 	    ret = 1;
 	}
     }

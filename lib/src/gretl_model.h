@@ -23,7 +23,7 @@
 #include "objstack.h"
 
 typedef enum {
-    ARMA_X12A  = 1 << 0, /* using X-12-ARIMA to generate estimates */
+    ARMA_X12A  = 1 << 0, /* using X-12-ARIMA (or X-13) to generate estimates */
     ARMA_EXACT = 1 << 1, /* using exact ML */
     ARMA_LS    = 1 << 2, /* using conditional ML, and O/NLS == CML */
     ARMA_OLS   = 1 << 3  /* OLS == MLE */

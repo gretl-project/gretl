@@ -1631,7 +1631,11 @@ static void arma_extra_info (const MODEL *pmod, PRN *prn)
     int acode = gretl_model_get_int(pmod, "arma_flags");
 
     if (acode & ARMA_X12A) {
-	pputs(prn, _("Estimated using X-12-ARIMA"));
+	if (gretl_x12_is_x13()) {
+	    pputs(prn, _("Estimated using X-13-ARIMA"));
+	} else {
+	    pputs(prn, _("Estimated using X-12-ARIMA"));
+	}
 	pputs(prn, " (");
 	pputs(prn, (acode & ARMA_EXACT)? _("exact ML") : _("conditional ML"));
 	pputs(prn, ")\n");

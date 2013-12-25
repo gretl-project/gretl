@@ -182,6 +182,8 @@ const char *gretl_x12_arima (void);
 
 const char *gretl_x12_arima_dir (void);
 
+int gretl_x12_is_x13 (void);
+
 const char *gretl_rbin_path (void);
 
 const char *gretl_rlib_path (void);

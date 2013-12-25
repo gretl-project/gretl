@@ -2250,6 +2250,11 @@ const char *gretl_x12_arima_dir (void)
     return paths.x12adir;
 }
 
+int gretl_x12_is_x13 (void)
+{
+    return strstr(paths.x12a, "x13") != NULL;
+}
+
 const char *gretl_rbin_path (void)
 {
 #ifdef WIN32
