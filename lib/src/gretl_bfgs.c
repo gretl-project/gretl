@@ -1060,10 +1060,15 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	    set_gretl_warning(W_GRADIENT);
 	}
     } else if (fmax < f0) {
-	/* FIXME 64-bit? */
-	fprintf(stderr, "failed to match initial value of objective function:\n"
-		" f0=%.18g, fmax=%.18g\n", f0, fmax);
-	err = E_NOCONV;
+	/* allow a small sloppiness factor here? */
+	double rdiff;
+
+	rdiff = (f0 == 0.0)? -fmax : fabs((f0 - fmax) / f0);
+	if (rdiff > 1.0e-12) {
+	    fprintf(stderr, "failed to match initial value of objective function:\n"
+		    " f0=%.18g, fmax=%.18g\n", f0, fmax);
+	    err = E_NOCONV;
+	}
     } 
 
  skipcalc:
