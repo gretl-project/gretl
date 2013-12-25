@@ -1583,12 +1583,14 @@ static void compress_csv_line (csvdata *c, int nospace)
     int n = strlen(c->line);
     char *p = c->line + n - 1;
 
-    if (*p == '\n') {
+    if (*p == 0x0a) {
 	*p = '\0';
 	p--;
     }
 
-    if (*p == '\r') *p = '\0';
+    if (*p == 0x0d) {
+	*p = '\0';
+    }
 
     if (c->delim == ',') {
 	purge_quoted_commas(c->line);
@@ -2007,8 +2009,9 @@ static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
     return err;
 }
 
-/* wrapper for fgets(), designed to handle any sort of line
-   termination (unix, DOS, Mac or even an unholy mixture)
+/* Emulation of fgets(), designed to handle any sort of line
+   termination (unix, DOS, Mac or even an unholy mixture).
+   Line-endings are converted to LF (0x0a).
 */
 
 static char *csv_fgets (char *s, int n, FILE *fp)
@@ -2359,6 +2362,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     p = c->line;
     if (c->delim == ' ' && *p == ' ') p++;
     iso_to_ascii(p);
+
     if (strlen(p) > 118) {
 	pprintf(mprn, A_("   line: %.115s...\n"), p);
     } else {
@@ -2991,6 +2995,9 @@ static int real_import_csv (const char *fname,
     }
 
     datapos = ftell(fp);
+#if 1
+    fprintf(stderr, "csv_read_data: starting from pos %ld\n", datapos);
+#endif
 
     err = csv_read_data(c, fp, datapos, prn, mprn);
 
