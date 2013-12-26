@@ -11287,7 +11287,7 @@ static int alt_qform (const gretl_matrix *A, GretlMatrixMod amod,
 
     if (amod == GRETL_MOD_TRANSPOSE) {
 	/* A' * X * A */
-	gretl_matrix_multiply_mod(A, amod, 
+	gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
 				  X, GRETL_MOD_NONE,
 				  Tmp, GRETL_MOD_NONE);
 	gretl_matrix_multiply_mod(Tmp, GRETL_MOD_NONE, 

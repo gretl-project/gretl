@@ -288,7 +288,6 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
     const gchar *cset;
     FILE *fp;
     gchar *buf;
-    gchar *trbuf;
 
     buf = textview_get_text(vwin->text);
     if (buf == NULL) {
@@ -303,15 +302,22 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	return;
     }
 
-    if (!g_get_charset(&cset)) {
-	/* UTF-8 minuses not wanted for locale */
-	strip_unicode_minus(buf);
-    }
+    if (action == SAVE_SCRIPT) {
+	/* don't mess with encoding */
+	system_print_buf(buf, fp);
+    } else {
+	gchar *trbuf;
 
-    trbuf = my_locale_from_utf8(buf);
-    if (trbuf != NULL) {
-	system_print_buf(trbuf, fp);
-	g_free(trbuf);
+	if (!g_get_charset(&cset)) {
+	    /* UTF-8 minuses not wanted for locale */
+	    strip_unicode_minus(buf);
+	}
+
+	trbuf = my_locale_from_utf8(buf);
+	if (trbuf != NULL) {
+	    system_print_buf(trbuf, fp);
+	    g_free(trbuf);
+	}
     }
 
     g_free(buf);

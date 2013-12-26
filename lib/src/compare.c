@@ -150,6 +150,9 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 	gretl_matrix_print(b, "Wald coeff vector");
 #endif
 	err = gretl_invert_symmetric_matrix(C);
+	if (err) {
+	    fprintf(stderr, "wald_test: couldn't invert C\n");
+	}
 #if WDEBUG
 	gretl_matrix_print(C, "VCV-inverse");
 #endif
