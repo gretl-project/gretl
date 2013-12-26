@@ -11274,6 +11274,39 @@ int gretl_matrix_columnwise_product (const gretl_matrix *A,
     return 0;
 }
 
+static int alt_qform (const gretl_matrix *A, GretlMatrixMod amod,
+		      const gretl_matrix *X, gretl_matrix *C, 
+		      GretlMatrixMod cmod, int r)
+{
+    gretl_matrix *Tmp;
+
+    Tmp = gretl_matrix_alloc(r, X->cols);
+    if (Tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    if (amod == GRETL_MOD_TRANSPOSE) {
+	/* A' * X * A */
+	gretl_matrix_multiply_mod(A, amod, 
+				  X, GRETL_MOD_NONE,
+				  Tmp, GRETL_MOD_NONE);
+	gretl_matrix_multiply_mod(Tmp, GRETL_MOD_NONE, 
+				  A, GRETL_MOD_NONE,
+				  C, cmod);
+    } else {
+	/* A * X * A' */
+	gretl_matrix_multiply(A, X, Tmp);
+	gretl_matrix_multiply_mod(Tmp, GRETL_MOD_NONE,
+				  A, GRETL_MOD_TRANSPOSE,
+				  C, cmod);
+    }
+
+    gretl_matrix_xtr_symmetric(C);
+    gretl_matrix_free(Tmp);
+	
+    return 0;
+}
+
 /**
  * gretl_matrix_qform:
  * @A: m * k matrix or k * m matrix, depending on @amod.
@@ -11302,6 +11335,7 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
     register int i, j, ii, jj;
     double xi, xj, xij, xx;
     int m, k;
+    guint64 N;
 
     if (gretl_is_null_matrix(A) ||
 	gretl_is_null_matrix(X) ||
@@ -11321,6 +11355,13 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
     if (C->rows != m || C->cols != m) {
 	fputs("gretl_matrix_qform: destination matrix not conformable\n", stderr);
 	return E_NONCONF;
+    }
+
+    N = m * m * k * k;
+
+    if (N > 100000) {
+	/* take advantage of optimized matrix multiplication */
+	return alt_qform(A, amod, X, C, cmod, m);
     }
 
     if (amod) {

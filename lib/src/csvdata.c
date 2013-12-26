@@ -2357,11 +2357,23 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	}
     }
 
-    compress_csv_line(c, 1);   
+#if 1
+    fprintf(stderr, "line = '%s'\n", c->line);
+#endif
+
+    compress_csv_line(c, 1);
+
+#if 1
+    fprintf(stderr, "after compress: '%s'\n", c->line);
+#endif
 
     p = c->line;
     if (c->delim == ' ' && *p == ' ') p++;
     iso_to_ascii(p);
+
+#if 1
+    fprintf(stderr, "after iso_to_ascii: '%s'\n", p);
+#endif
 
     if (strlen(p) > 118) {
 	pprintf(mprn, A_("   line: %.115s...\n"), p);
@@ -2629,6 +2641,12 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 	    continue;
 	}
 
+#if 1
+	if (t < 3) {
+	    fprintf(stderr, "csv_fgets: '%s'\n", c->line);
+	}
+#endif
+
 	compress_csv_line(c, 0);
 	p = c->line;
 
@@ -2637,6 +2655,12 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 	} else {
 	    p += strspn(p, " ");
 	}
+
+#if 1
+	if (t < 3) {
+	    fprintf(stderr, "processed p: '%s'\n", p);
+	}
+#endif
 
 	j = 1;
 	for (k=0; k<c->ncols && !err; k++) {

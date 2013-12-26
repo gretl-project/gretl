@@ -1301,7 +1301,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     } else {
 	gretl_choleski_regress(&mdl, dset, rho, pwe, opt);
 	if (mdl.errcode == E_SINGULAR && !jackknife) {
-	    /* (near-) perfect collinearity is better handled by QR */
+	    /* near-perfect collinearity is better handled by QR */
 	    model_free_storage(&mdl);
 	    mdl.rho = rho;
 	    gretl_qr_regress(&mdl, dset, opt);

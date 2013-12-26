@@ -1014,7 +1014,7 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     get_model_data(pmod, dset, Q, y);
     err = QR_decomp_plus(Q, R, &rank, &warn);
 
-    /* handling of (near-)perfect collinearity */
+    /* handling of near-perfect collinearity */
     if (err == E_SINGULAR && !(opt & OPT_Z)) {
 	drop_redundant_vars(pmod, dset, R, rank, opt);
 	k = pmod->list[0] - 1;
@@ -1223,6 +1223,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 {
     gretl_matrix *V = NULL;
     gretl_matrix *W = NULL;
+    gretl_matrix *XXW = NULL;
     gretl_vector *ei = NULL;
     gretl_matrix *Xi = NULL;
     gretl_vector *eXi = NULL;
@@ -1239,12 +1240,13 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 
     V   = gretl_matrix_alloc(k, k);
     W   = gretl_zero_matrix_new(k, k);
+    XXW = gretl_zero_matrix_new(k, k);
     ei  = gretl_column_vector_alloc(N);
     Xi  = gretl_matrix_alloc(N, k);
     eXi = gretl_vector_alloc(k);
 
-    if (V == NULL || W == NULL || ei == NULL || 
-	Xi == NULL || eXi == NULL) {
+    if (V == NULL || W == NULL || XXW == NULL || 
+	ei == NULL || Xi == NULL || eXi == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
@@ -1307,8 +1309,9 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
     }
 
     /* form V(W) = (X'X)^{-1} W (X'X)^{-1} */
-    gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
-		       V, GRETL_MOD_NONE);
+    gretl_matrix_multiply(XX, W, XXW);
+    gretl_matrix_multiply(XXW, XX, V);
+    gretl_matrix_xtr_symmetric(V);
 
 #if CDEBUG
     gretl_matrix_print(XX, "X'X^{-1}");
@@ -1323,7 +1326,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 	N = pmod->nobs;
 	dfadj = (M/(M-1.0)) * (N-1.0)/(N-k);
 	gretl_matrix_multiply_by_scalar(V, dfadj);
-#if CDEBUG
+#if CDEBUG > 1
 	gretl_matrix_print(V, "V(adjusted)");
 #endif
 
@@ -1332,6 +1335,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
  bailout:
 
     gretl_matrix_free(W);
+    gretl_matrix_free(XXW);
     gretl_matrix_free(ei);
     gretl_matrix_free(Xi);
     gretl_matrix_free(eXi);

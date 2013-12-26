@@ -530,7 +530,10 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
     return err;
 }
 
-/* common setup for Arellano and Beck-Katz VCV estimators */
+/* common setup for Arellano and Beck-Katz VCV estimators
+   (note that pooled OLS with the --cluster option is
+   handled separately)
+*/
 
 static int 
 panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
