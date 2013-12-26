@@ -45,8 +45,7 @@ enum {
     CSV_REVERSED = 1 << 8,
     CSV_DOTSUB   = 1 << 9,
     CSV_ALLCOLS  = 1 << 10,
-    CSV_BOM      = 1 << 11,
-    CSV_NAMESCAN = 1 << 12
+    CSV_BOM      = 1 << 11
 };
 
 enum {
@@ -2041,10 +2040,6 @@ static char *csv_fgets (csvdata *cdata, FILE *fp)
 		ungetc(c1, fp);
 	    }
 	}
-	if (c == 0x0a && (cdata->flags & CSV_NAMESCAN)) {
-	    /* mark the reading position for data */
-	    cdata->datapos += i + 1;
-	}
 	s[i] = c;
     }
 
@@ -2359,9 +2354,6 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	fseek(fp, 3, SEEK_SET);
     }
 
-    c->flags |= CSV_NAMESCAN;
-    c->datapos = ftell(fp);
-
     while (csv_fgets(c, fp)) {
 	if (*c->line == '#' || string_is_blank(c->line)) {
 	    continue;
@@ -2370,7 +2362,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	}
     }
 
-    c->flags ^= CSV_NAMESCAN;
+    c->datapos = ftell(fp);
 
     compress_csv_line(c, 1);
 
@@ -2860,7 +2852,7 @@ static int real_import_csv (const char *fname,
 	mprn = prn;
     }
 
-    fp = gretl_fopen(fname, "r");
+    fp = gretl_fopen(fname, "rb");
     if (fp == NULL) {
 	pprintf(prn, A_("Couldn't open %s\n"), fname);
 	err = E_FOPEN;
