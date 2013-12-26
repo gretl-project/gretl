@@ -45,7 +45,8 @@ enum {
     CSV_REVERSED = 1 << 8,
     CSV_DOTSUB   = 1 << 9,
     CSV_ALLCOLS  = 1 << 10,
-    CSV_BOM      = 1 << 11
+    CSV_BOM      = 1 << 11,
+    CSV_NAMESCAN = 1 << 12
 };
 
 enum {
@@ -79,6 +80,7 @@ struct csvdata_ {
     char *line;
     DATASET *dset;
     int ncols, nrows;
+    long datapos;
     char str[CSVSTRLEN];
     char skipstr[8];
     int *codelist;
@@ -280,6 +282,7 @@ static csvdata *csvdata_new (DATASET *dset)
     c->dset = NULL;
     c->ncols = 0;
     c->nrows = 0;
+    c->datapos = 0;
     *c->str = '\0';
     *c->skipstr = '\0';
     c->codelist = NULL;
@@ -2014,8 +2017,10 @@ static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
    Line-endings are converted to LF (0x0a).
 */
 
-static char *csv_fgets (char *s, int n, FILE *fp)
+static char *csv_fgets (csvdata *cdata, FILE *fp)
 {
+    char *s = cdata->line;
+    int n = cdata->maxlen;
     int i, c1, c = 0;
 
     for (i=0; i<n-1 && c!=0x0a; i++) {
@@ -2036,22 +2041,27 @@ static char *csv_fgets (char *s, int n, FILE *fp)
 		ungetc(c1, fp);
 	    }
 	}
+	if (c == 0x0a && (cdata->flags & CSV_NAMESCAN)) {
+	    /* mark the reading position for data */
+	    cdata->datapos += i + 1;
+	}
 	s[i] = c;
     }
 
     s[i] = '\0';
-
+    
     return s;
 }
 
 /* pick up any comments following the data block in a CSV file */
 
-static char *get_csv_descrip (char *line, int n, FILE *fp)
+static char *get_csv_descrip (csvdata *c, FILE *fp)
 {
+    char *line = c->line;
     char *desc = NULL;
     size_t len;
 
-    while (csv_fgets(line, n, fp)) {
+    while (csv_fgets(c, fp)) {
 	tailstrip(line);
 	if (desc == NULL) {
 	    len = strlen(line) + 3;
@@ -2105,7 +2115,7 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 	fseek(fp, 3, SEEK_SET);
     }
 
-    while (csv_fgets(c->line, c->maxlen, fp) && !err) {
+    while (csv_fgets(c, fp) && !err) {
 
 	/* skip comment lines */
 	if (*c->line == '#') {
@@ -2116,7 +2126,7 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 	if (string_is_blank(c->line)) {
 	    if (gotdata) {
 		if (!csv_have_data(c)) {
-		    c->descrip = get_csv_descrip(c->line, c->maxlen, fp);
+		    c->descrip = get_csv_descrip(c, fp);
 		}
 		break;
 	    } else {
@@ -2349,7 +2359,10 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	fseek(fp, 3, SEEK_SET);
     }
 
-    while (csv_fgets(c->line, c->maxlen, fp)) {
+    c->flags |= CSV_NAMESCAN;
+    c->datapos = ftell(fp);
+
+    while (csv_fgets(c, fp)) {
 	if (*c->line == '#' || string_is_blank(c->line)) {
 	    continue;
 	} else {
@@ -2357,23 +2370,13 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	}
     }
 
-#if 1
-    fprintf(stderr, "line = '%s'\n", c->line);
-#endif
+    c->flags ^= CSV_NAMESCAN;
 
     compress_csv_line(c, 1);
-
-#if 1
-    fprintf(stderr, "after compress: '%s'\n", c->line);
-#endif
 
     p = c->line;
     if (c->delim == ' ' && *p == ' ') p++;
     iso_to_ascii(p);
-
-#if 1
-    fprintf(stderr, "after iso_to_ascii: '%s'\n", p);
-#endif
 
     if (strlen(p) > 118) {
 	pprintf(mprn, A_("   line: %.115s...\n"), p);
@@ -2505,7 +2508,7 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 	fseek(fp, 3, SEEK_SET);
     }
 
-    while (csv_fgets(c->line, c->maxlen, fp) && !err) {
+    while (csv_fgets(c, fp) && !err) {
 
 	tailstrip(c->line);
 
@@ -2629,7 +2632,7 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 
     c->real_n = c->dset->n;
 
-    while (csv_fgets(c->line, c->maxlen, fp) && !err) {
+    while (csv_fgets(c, fp) && !err) {
 
 	if (*c->line == '#' || string_is_blank(c->line)) {
 	    continue;
@@ -2641,12 +2644,6 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 	    continue;
 	}
 
-#if 1
-	if (t < 3) {
-	    fprintf(stderr, "csv_fgets: '%s'\n", c->line);
-	}
-#endif
-
 	compress_csv_line(c, 0);
 	p = c->line;
 
@@ -2655,12 +2652,6 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 	} else {
 	    p += strspn(p, " ");
 	}
-
-#if 1
-	if (t < 3) {
-	    fprintf(stderr, "processed p: '%s'\n", p);
-	}
-#endif
 
 	j = 1;
 	for (k=0; k<c->ncols && !err; k++) {
@@ -2714,7 +2705,7 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
     return err;
 }
 
-static int csv_read_data (csvdata *c, FILE *fp, long pos, PRN *prn, PRN *mprn)
+static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 {
     int reversed = csv_data_reversed(c);
     int err;
@@ -2723,7 +2714,7 @@ static int csv_read_data (csvdata *c, FILE *fp, long pos, PRN *prn, PRN *mprn)
 	pputs(mprn, A_("scanning for row labels and data...\n"));
     }
 
-    fseek(fp, pos, SEEK_SET);
+    fseek(fp, c->datapos, SEEK_SET);
 
     err = real_read_labels_and_data(c, fp, prn);
 
@@ -2857,7 +2848,6 @@ static int real_import_csv (const char *fname,
     PRN *mprn = NULL;
     int newdata = (dset->Z == NULL);
     int popit = 0;
-    long datapos;
     int i, err = 0;
 
     import_na_init();
@@ -3018,23 +3008,18 @@ static int real_import_csv (const char *fname,
 	csv_set_dotsub(c);
     }
 
-    datapos = ftell(fp);
-#if 1
-    fprintf(stderr, "csv_read_data: starting from pos %ld\n", datapos);
-#endif
-
-    err = csv_read_data(c, fp, datapos, prn, mprn);
+    err = csv_read_data(c, fp, prn, mprn);
 
     if (!err && csv_skip_bad(c)) {
 	/* try again */
-	err = csv_read_data(c, fp, datapos, prn, NULL);
+	err = csv_read_data(c, fp, prn, NULL);
     }
 
     if (!err) {
 	err = non_numeric_check(c, prn);
 	if (!err && csv_has_non_numeric(c)) {
 	    /* try once more */
-	    err = csv_read_data(c, fp, datapos, prn, NULL);
+	    err = csv_read_data(c, fp, prn, NULL);
 	}
     }
 
