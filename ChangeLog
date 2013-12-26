@@ -3,6 +3,10 @@ version 1.9.15, in progress
 - Enable use of arrays in the SFMT random number generator
 - Fix bug: incorrect handling of Poisson regression when the
   specification does not include an intercept term
+- Fix bug: bad handing of decimal comma in context of the --by
+  option
+- Fix bug: incorrect treatment of big-endian SPSS "sav" files
+  on data import
 - Enable use of value labels (if any) in factorized boxplots
 - Print out alternative definition of R^2 in FE linear panel 
   data models
