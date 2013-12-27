@@ -761,13 +761,14 @@ static int copy_initial_hessian (gretl_matrix *A, double **H,
     return 0;
 }
 
-static double opt_slen (int n, int *pndelta, double *b, double *X, double *t, 
+static double opt_slen (int n, int *pndelta, double *b, 
+			const double *X, const double *t, 
 			double *pf, BFGS_CRIT_FUNC cfunc, void *data, 
 			double g0, double f0, int *pfcount)
 {
     double d, f1 = *pf, steplen = 1.0;
     int i, crit_ok = 0, fcount = 0;
-    int ndelta = *pndelta;
+    int ndelta;
 
     /* Below: iterate so long as (a) we haven't achieved an acceptable
        value of the criterion and (b) there is still some prospect
@@ -790,12 +791,13 @@ static double opt_slen (int n, int *pndelta, double *b, double *X, double *t,
 #if 0
 	    /* find the optimal steplength by quadratic interpolation; 
 	       inspired by Kelley (1999), "Iterative Methods for Optimization", 
-	       especially section 3.2.1. */
-
+	       especially section 3.2.1. 
+	    */
 	    if (xna(f1)) {
 		/* function goes into NA zone, presumably outside the 
 		   admissible parameter space; hence, try a much smaller 
-		   step */
+		   step. FIXME execution can come back here indefinitely.
+		*/
 		steplen *= STEPFRAC;
 	    } else if (f1 < f0 + d) {
 		/* function computes, but goes down: try quadratic approx */
@@ -819,7 +821,7 @@ static double opt_slen (int n, int *pndelta, double *b, double *X, double *t,
 	    }
 #endif
 	}
-    } while (ndelta != 0 && !crit_ok);
+    } while (ndelta > 0 && !crit_ok);
 
     *pndelta = ndelta;
     *pfcount += fcount;

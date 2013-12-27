@@ -963,7 +963,7 @@ static int gmm_update_e (nlspec *s)
     for (j=0; j<s->oc->e->cols && !err; j++) {
 	v = s->oc->ecols[j].v;
 	if (v > 0) {
-#if GMM_DEBUG
+#if GMM_DEBUG > 1
 	    fprintf(stderr, "gmm_update_e: updating col %d from var %d\n",
 		    j, v);
 #endif
@@ -973,7 +973,7 @@ static int gmm_update_e (nlspec *s)
 		gretl_matrix_set(s->oc->e, t, j, etj);
 	    }
 	} else {
-#if GMM_DEBUG
+#if GMM_DEBUG > 1
 	    fprintf(stderr, "gmm_update_e: updating col %d from matrix %s\n",
 		    j, s->oc->ecols[j].mname);
 #endif
@@ -1020,7 +1020,7 @@ static int gmm_multiply_ocs (nlspec *s)
 	for (i=0; i<m; i++) {
 	    for (j=0; j<k; j++) {
 		if (gretl_matrix_get(s->oc->S, i, j) != 0) {
-#if GMM_DEBUG
+#if GMM_DEBUG > 1
 		    fprintf(stderr, "O.C. %d: multiplying col %d of e "
 			    "into col %d of Z\n", p, i, j);
 #endif
@@ -1045,7 +1045,7 @@ static int gmm_multiply_ocs (nlspec *s)
     return err;
 }
 
-#define CRIT_DEBUG 0
+#define CRIT_DEBUG 1
 
 /* calculate the value of the GMM criterion given the current
    parameter values */
@@ -1701,13 +1701,16 @@ int gmm_calculate (nlspec *s, PRN *prn)
 	fprintf(stderr, "GMM calling BFGS: outer_iters = %d\n",
 		outer_iters);
 #endif
-
 	s->crit = 0.0;
 
 	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
 		       &s->fncount, &s->grcount, 
 		       get_gmm_crit, C_GMM, NULL, s,
 		       NULL, iopt, s->prn);
+
+#if GMM_DEBUG
+	fprintf(stderr, "GMM BFGS: err = %d\n", err);
+#endif
 
 	/* don't keep displaying certain things */
 	iopt |= OPT_Q;

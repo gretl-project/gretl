@@ -224,11 +224,11 @@ assignment, as in \texttt{a += b}, which is equivalent to \texttt{a =
   a + b}; several other similar operators are available, such as
 \texttt{-=}, \texttt{*=} and more. See the \GCR{} for details.
 
-The internal representations for a missing value varies from sytem to
-system, but is an inordinately large number (on most Unix flavors,
-it's somewhere around 1.7E+308). This is what you get if you try to
-compute quantities like the square root or the logarithm of a negative
-number, or directly via the \texttt{NA} constant, as in
+The internal representation for a missing value is \texttt{DBL\_MAX},
+the largest double-precision number (generally in the neighborhood of
+1.7E+308). This is what you get if you try to compute quantities like
+the square root or the logarithm of a negative number, or directly via
+the \texttt{NA} constant, as in
 \begin{code}
   scalar not_really = NA
   scalar is_there = ok(not_really)
@@ -239,10 +239,10 @@ which tells you whether a scalar is \texttt{NA} or not.
 \section{Manipulation of strings}
 
 Most of the previous section applies, with obvious modifications, to
-strings: you may manipulate strings either via operators, or
+strings: you may manipulate strings via operators and/or
 functions. Hansl's repertoire of functions for manipulating strings
 offers all the standard capabilities one would expect, such as
-\cmd{toupper}, \cmd{tolower}, \cmd{strlen} etcetera, plus some more
+\cmd{toupper}, \cmd{tolower}, \cmd{strlen}, etc., plus some more
 specialized ones. Again, see the \GCR\ for a complete list.
 
 In order to access part of a string, you may use the \cmd{substr}
@@ -275,8 +275,8 @@ in\footnote{Note on some national keyboards, you don't have the tilde
 \end{itemize}
 
 A noteworthy point: strings may be (almost) arbitrarily long;
-moreover, they can contain special characters such as line breaks,
-etcetera. As a consequence, it is possible to use hansl for performing
+moreover, they can contain special characters such as line breaks and
+tabs. As a consequence, it is possible to use hansl for performing
 rather complex operations on text files by loading them into memory as
 a very long string and then operating on that;\footnote{Of course, the
   reader is invited to take this with a grain of salt. If your job
@@ -284,7 +284,7 @@ a very long string and then operating on that;\footnote{Of course, the
   should consider using appropriate tools instead of hansl, such as
   for example \app{perl} or \app{python}. However, on modern hardware
   hansl may be a very defensible choice for text files up to a few
-  hundreds megabytes.} interested readers should take a look at the
+  hundred megabytes.} interested readers should take a look at the
 \cmd{readfile} and \cmd{getline} functions in the \GCR.
 
 For \emph{creating} complex strings, the most flexible tool is
