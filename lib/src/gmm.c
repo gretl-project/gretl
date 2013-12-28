@@ -29,7 +29,6 @@
 #include <errno.h>
 
 #define GMM_DEBUG 0
-#define GMM_GMP 1
 
 typedef struct colsrc_ colsrc;
 typedef struct hac_info_ hac_info;
@@ -1020,8 +1019,6 @@ static int gmm_multiply_ocs (nlspec *s)
     return err;
 }
 
-#if !GMM_GMP
-
 static double regular_gmm_criterion (nlspec *s)
 {
     double tmp, crit = 0.0;
@@ -1056,8 +1053,6 @@ static double regular_gmm_criterion (nlspec *s)
     return -crit;
 }
 
-#endif
-
 /* calculate the value of the GMM criterion given the current
    parameter values */
 
@@ -1080,14 +1075,14 @@ static double get_gmm_crit (const double *b, void *data)
 	return NADBL;
     }
 
-#if GMM_GMP
-    s->crit = mp_gmm_criterion(s->oc->e, s->oc->Z,
-			       s->oc->S, s->oc->W,
-			       s->oc->sum, s->oc->tmp,
-			       s->oc->noc, &err);
-#else
-    s->crit = regular_gmm_criterion(s);
-#endif
+    if (nlspec_using_gmp(s)) {
+	s->crit = mp_gmm_criterion(s->oc->e, s->oc->Z,
+				   s->oc->S, s->oc->W,
+				   s->oc->sum, s->oc->tmp,
+				   s->oc->noc, &err);
+    } else {
+	s->crit = regular_gmm_criterion(s);
+    }
 
 #if GMM_DEBUG > 2
     gretl_matrix_print(s->oc->sum, "GMM: s->oc->sum");
@@ -1669,6 +1664,10 @@ int gmm_calculate (nlspec *s, PRN *prn)
     int converged = 0;
     int err = 0;
 
+    if (getenv("GRETL_GMM_GMP") != NULL) {
+	nlspec_set_using_gmp(s);
+    }
+
     if (s->opt & OPT_I) {
 	/* iterate */
 	oldcoeff = copyvec(s->coeff, s->ncoeff);
@@ -1695,17 +1694,17 @@ int gmm_calculate (nlspec *s, PRN *prn)
 #endif
 	s->crit = 0.0;
 
-#if GMM_GMP
-	err = mp_BFGS(s->coeff, s->ncoeff, maxit, s->tol, 
-		      &s->fncount, &s->grcount, 
-		      get_gmm_crit, C_GMM, s,
-		      iopt, s->prn);
-#else
-	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
-		       &s->fncount, &s->grcount, 
-		       get_gmm_crit, C_GMM, NULL, s,
-		       NULL, iopt, s->prn);
-#endif
+	if (nlspec_using_gmp(s)) {
+	    err = mp_BFGS(s->coeff, s->ncoeff, maxit, s->tol, 
+			  &s->fncount, &s->grcount, 
+			  get_gmm_crit, C_GMM, s,
+			  iopt, s->prn);
+	} else {
+	    err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
+			   &s->fncount, &s->grcount, 
+			   get_gmm_crit, C_GMM, NULL, s,
+			   NULL, iopt, s->prn);
+	}
 
 #if GMM_DEBUG
 	fprintf(stderr, "GMM BFGS: err = %d\n", err);

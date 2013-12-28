@@ -680,7 +680,6 @@ static int mp_columnwise_product (const gretl_matrix *A,
     int n = B->cols;
     int T = A->rows;
     mpf_t mpx, mpy, prod;
-    double x, y;
     int i, j, t, p;
 
     mpf_init(mpx);
@@ -692,10 +691,8 @@ static int mp_columnwise_product (const gretl_matrix *A,
 	for (j=0; j<n; j++) {
 	    if (S == NULL || gretl_matrix_get(S, i, j) != 0) {
 		for (t=0; t<T; t++) {
-		    x = gretl_matrix_get(A, t, i);
-		    y = gretl_matrix_get(B, t, j);
-		    mpf_set_d(mpx, x);
-		    mpf_set_d(mpy, y);
+		    mpf_set_d(mpx, gretl_matrix_get(A, t, i));
+		    mpf_set_d(mpy, gretl_matrix_get(B, t, j));
 		    mpf_mul(prod, mpx, mpy);
 		    gretl_mp_matrix_set(C, t, p, &prod);
 		}
