@@ -1054,13 +1054,8 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     if (iter >= maxit) {
 	fprintf(stderr, _("stopped after %d iterations\n"), iter);
 	err = E_NOCONV;
-    } else if (gradnorm > gradmax || gradnorm > GRAD_TOLER) {
-	if (gradnorm > gradmax) {
-	    err = E_NOCONV;
-	} else {
-	    gretl_warnmsg_sprintf(_("norm of gradient = %g"), gradnorm);
-	    set_gretl_warning(W_GRADIENT);
-	}
+    } else if (gradnorm > gradmax) {
+	err = E_NOCONV;
     } else if (fmax < f0) {
 	/* allow a small sloppiness factor here? */
 	double rdiff;
@@ -1072,6 +1067,11 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	    err = E_NOCONV;
 	}
     } 
+
+    if (!err && gradnorm > GRAD_TOLER) {
+	gretl_warnmsg_sprintf(_("norm of gradient = %g"), gradnorm);
+	set_gretl_warning(W_GRADIENT);
+    }
 
  skipcalc:
 
@@ -2415,3 +2415,5 @@ int gretl_simann (double *theta, int n, int maxit,
 
     return err;
 }
+
+#include "bfgs_mp.c"

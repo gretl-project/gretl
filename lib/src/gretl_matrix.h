@@ -664,6 +664,7 @@ double gretl_scalar_qform (const gretl_vector *b,
 
 int gretl_matrix_columnwise_product (const gretl_matrix *A,
 				     const gretl_matrix *B,
+				     const gretl_matrix *S,
 				     gretl_matrix *C);
 
 int

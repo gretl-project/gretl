@@ -29,6 +29,7 @@
 #include <errno.h>
 
 #define GMM_DEBUG 0
+#define GMM_GMP 1
 
 typedef struct colsrc_ colsrc;
 typedef struct hac_info_ hac_info;
@@ -998,41 +999,15 @@ static int gmm_update_e (nlspec *s)
 
 static int gmm_multiply_ocs (nlspec *s)
 {
-    int err = 0;
+    int err;
 
-    if (s->oc->S == NULL) {
-	/* simple case: no selection mechanism needed */
-	err = gretl_matrix_columnwise_product(s->oc->e,
-					      s->oc->Z,
-					      s->oc->tmp);
-	if (err) {
-	    fprintf(stderr, "gmm_multiply_ocs: err = %d from "
-		    "gretl_matrix_columnwise_product\n", err);
-	}
-    } else {
-	/* select the wanted i, j pairs */
-	int i, j, k, m, t, p = 0;
-	double x, y;
-
-	m = s->oc->e->cols;
-	k = s->oc->Z->cols;
-
-	for (i=0; i<m; i++) {
-	    for (j=0; j<k; j++) {
-		if (gretl_matrix_get(s->oc->S, i, j) != 0) {
-#if GMM_DEBUG > 1
-		    fprintf(stderr, "O.C. %d: multiplying col %d of e "
-			    "into col %d of Z\n", p, i, j);
-#endif
-		    for (t=0; t<s->nobs; t++) {
-			x = gretl_matrix_get(s->oc->e, t, i);
-			y = gretl_matrix_get(s->oc->Z, t, j);
-			gretl_matrix_set(s->oc->tmp, t, p, x * y);
-		    }
-		    p++;
-		}
-	    }
-	}
+    err = gretl_matrix_columnwise_product(s->oc->e,
+					  s->oc->Z,
+					  s->oc->S,
+					  s->oc->tmp);
+    if (err) {
+	fprintf(stderr, "gmm_multiply_ocs: err = %d from "
+		"gretl_matrix_columnwise_product\n", err);
     }
 
 #if GMM_DEBUG > 1
@@ -1045,63 +1020,80 @@ static int gmm_multiply_ocs (nlspec *s)
     return err;
 }
 
-#define CRIT_DEBUG 1
+#if !GMM_GMP
+
+static double regular_gmm_criterion (nlspec *s)
+{
+    double tmp, crit = 0.0;
+    gretl_matrix *sum = s->oc->sum;
+    gretl_matrix *W = s->oc->W;
+    int k = s->oc->noc;
+    int i, j, p, err;
+
+    err = gmm_multiply_ocs(s);
+    if (err) {
+	return NADBL;
+    }
+
+    /* compute column sums */
+    for (i=0; i<k; i++) {
+	sum->val[i] = 0.0;
+	for (j=0; j<s->nobs; j++) {
+	    sum->val[i] += gretl_matrix_get(s->oc->tmp, j, i);
+	}
+    }
+
+    /* calculate scalar quadratic form */
+    p = 0;
+    for (j=0; j<k; j++) {
+	tmp = 0.0;
+	for (i=0; i<k; i++) {
+	    tmp += sum->val[i] * W->val[p++];
+	}
+	crit += tmp * sum->val[j];
+    }
+
+    return -crit;
+}
+
+#endif
 
 /* calculate the value of the GMM criterion given the current
    parameter values */
 
-static double get_gmm_crit (const double *b, void *p)
+static double get_gmm_crit (const double *b, void *data)
 {
-    nlspec *s = (nlspec *) p;
-    int i, k, t;
-    int err = 0;
+    nlspec *s = (nlspec *) data;
+    int err;
 
     update_coeff_values(b, s);
 
-    if ((err = nl_calculate_fvec(s))) {
-#if CRIT_DEBUG
+    err = nl_calculate_fvec(s);
+    if (err) {
 	fprintf(stderr, "get_gmm_crit: err on nl_calculate_fvec = %d\n", err);
-#endif
 	return NADBL;
     }
 
-    if ((err = gmm_update_e(s))) {
-#if CRIT_DEBUG
+    err = gmm_update_e(s);
+    if (err) {
 	fprintf(stderr, "get_gmm_crit: err on gmm_update_e = %d\n", err);
-#endif
 	return NADBL;
     }
 
-    if ((err = gmm_multiply_ocs(s))) {
-#if CRIT_DEBUG
-	fprintf(stderr, "get_gmm_crit: err on gmm_multiply_ocs = %d\n", err);
+#if GMM_GMP
+    s->crit = mp_gmm_criterion(s->oc->e, s->oc->Z,
+			       s->oc->S, s->oc->W,
+			       s->oc->sum, s->oc->tmp,
+			       s->oc->noc, &err);
+#else
+    s->crit = regular_gmm_criterion(s);
 #endif
-	return NADBL;
-    }
-    
-    k = s->oc->noc;
-
-    for (i=0; i<k; i++) {
-	s->oc->sum->val[i] = 0.0;
-	for (t=0; t<s->nobs; t++) {
-	    s->oc->sum->val[i] += gretl_matrix_get(s->oc->tmp, t, i);
-	}
-    }
-
-    s->crit = gretl_scalar_qform(s->oc->sum, s->oc->W, &err);
-    if (!err) {
-	s->crit = -s->crit;
-    }
 
 #if GMM_DEBUG > 2
     gretl_matrix_print(s->oc->sum, "GMM: s->oc->sum");
     fprintf(stderr, "GMM: s->crit = %g\n", s->crit);
 #endif
 
-    if (err) {
-	s->crit = NADBL;
-    }
-	
     return s->crit;
 }
 
@@ -1703,10 +1695,17 @@ int gmm_calculate (nlspec *s, PRN *prn)
 #endif
 	s->crit = 0.0;
 
+#if GMM_GMP
+	err = mp_BFGS(s->coeff, s->ncoeff, maxit, s->tol, 
+		      &s->fncount, &s->grcount, 
+		      get_gmm_crit, C_GMM, s,
+		      iopt, s->prn);
+#else
 	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
 		       &s->fncount, &s->grcount, 
 		       get_gmm_crit, C_GMM, NULL, s,
 		       NULL, iopt, s->prn);
+#endif
 
 #if GMM_DEBUG
 	fprintf(stderr, "GMM BFGS: err = %d\n", err);
@@ -1770,6 +1769,10 @@ int gmm_calculate (nlspec *s, PRN *prn)
     }
 
     gmm_HAC_cleanup();
+
+#if GMM_GMP
+    mp_gmm_cleanup();
+#endif
 
     return err;    
 }

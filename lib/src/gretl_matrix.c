@@ -11222,19 +11222,27 @@ double gretl_matrix_r_squared (const gretl_matrix *y,
  * gretl_matrix_columwise_product:
  * @A: T x k matrix.
  * @B: T x n matrix.
- * @C: T x (k*n) matrix to hold the product.
+ * @S: k x n selection matrix, or NULL.
+ * @C: T x (k*n) matrix to hold the product (but see below).
  *
- * Computes a columnwise product in k blocks, each of n columns.
- * The first block consists of the Hadamard product of the first
- * column of @A and the matrix @B, the second block holds the
- * Hadamard product of the second column of @A and matrix @B, 
- * and so on.
+ * If @S is NULL, computes a columnwise product in k blocks, each
+ * of n columns. The first block consists of the Hadamard product
+ * of the first column of @A and the matrix @B, the second block 
+ * holds the Hadamard product of the second column of @A and 
+ * matrix @B, and so on. 
+ *
+ * A non-NULL @S matrix may be used to filter the column-pairs for
+ * multiplication: @C will include the product of column i of @A
+ * and column j of @B if and only if the i, j element of @S is
+ * non-zero. In this case @C should have a number of columns
+ * equal to the number of non-zero elements of @S.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
 
 int gretl_matrix_columnwise_product (const gretl_matrix *A,
 				     const gretl_matrix *B,
+				     const gretl_matrix *S,
 				     gretl_matrix *C)
 {
     int k, n, T;
@@ -11255,19 +11263,36 @@ int gretl_matrix_columnwise_product (const gretl_matrix *A,
 	return E_NONCONF;
     }
 
-    if (C->cols != k * n) {
+    if (S != NULL) {
+	if (S->rows != k || S->cols != n) {
+	    return E_NONCONF;
+	} else {
+	    int c = 0;
+
+	    for (i=0; i<k*n; i++) {
+		if (S->val[i] != 0) {
+		    c++;
+		}
+	    }
+	    if (C->cols != c) {
+		return E_NONCONF;
+	    }
+	}
+    } else if (C->cols != k * n) {
 	return E_NONCONF;
     }
 
     p = 0;
     for (i=0; i<k; i++) {
 	for (j=0; j<n; j++) {
-	    for (t=0; t<T; t++) {
-		x = gretl_matrix_get(A, t, i);
-		y = gretl_matrix_get(B, t, j);
-		gretl_matrix_set(C, t, p, x * y);
+	    if (S == NULL || gretl_matrix_get(S, i, j) != 0) {
+		for (t=0; t<T; t++) {
+		    x = gretl_matrix_get(A, t, i);
+		    y = gretl_matrix_get(B, t, j);
+		    gretl_matrix_set(C, t, p, x * y);
+		}
+		p++;
 	    }
-	    p++;
 	}
     }
 	    
