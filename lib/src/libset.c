@@ -607,20 +607,21 @@ void set_mp_bits (int b)
 
 int get_mp_bits (void)
 {
-    if (user_mp_bits >= DEFAULT_MP_BITS) {
+    if (user_mp_bits > DEFAULT_MP_BITS) {
 	return user_mp_bits;
     } else {
 	char *s = getenv("GRETL_MP_BITS");
 	int b;
 
-	if (s != NULL) {
+	if (s != NULL) { 
 	    b = atoi(s);
 	    if (mp_bits_ok(b)) {
 		return b;
 	    }
 	}
-	return DEFAULT_MP_BITS;
     }
+
+    return DEFAULT_MP_BITS;
 }
 
 const gretl_matrix *get_init_vals (void)

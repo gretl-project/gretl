@@ -36,6 +36,7 @@
 #endif
 
 #include <errno.h>
+#include <gmp.h>
 
 #ifndef WIN32
 # include <glib.h>
@@ -1839,6 +1840,7 @@ void libgretl_init (void)
 
     gretl_xml_init();
     gretl_stopwatch_init();
+    mpf_set_default_prec(get_mp_bits());
 }
 
 void libgretl_session_cleanup (int mode)

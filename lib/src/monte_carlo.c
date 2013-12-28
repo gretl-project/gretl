@@ -40,6 +40,7 @@
 #define SUBST_DEBUG 0
 
 #include <gmp.h>
+
 typedef mpf_t bigval;
 
 enum loop_types {

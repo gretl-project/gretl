@@ -27,6 +27,7 @@
 #include "../../minpack/minpack.h"
 
 #include <errno.h>
+#include <gmp.h>
 
 #define GMM_DEBUG 0
 
@@ -1021,11 +1022,11 @@ static int gmm_multiply_ocs (nlspec *s)
 
 static double regular_gmm_criterion (nlspec *s)
 {
-    double tmp, crit = 0.0;
+    double crit = 0.0;
     gretl_matrix *sum = s->oc->sum;
     gretl_matrix *W = s->oc->W;
     int k = s->oc->noc;
-    int i, j, p, err;
+    int i, j, err;
 
     err = gmm_multiply_ocs(s);
     if (err) {
@@ -1040,17 +1041,12 @@ static double regular_gmm_criterion (nlspec *s)
 	}
     }
 
-    /* calculate scalar quadratic form */
-    p = 0;
-    for (j=0; j<k; j++) {
-	tmp = 0.0;
-	for (i=0; i<k; i++) {
-	    tmp += sum->val[i] * W->val[p++];
-	}
-	crit += tmp * sum->val[j];
+    crit = gretl_scalar_qform(sum, W, &err);
+    if (!err) {
+	crit = -crit;
     }
 
-    return -crit;
+    return crit;
 }
 
 /* calculate the value of the GMM criterion given the current
@@ -1665,6 +1661,7 @@ int gmm_calculate (nlspec *s, PRN *prn)
     int err = 0;
 
     if (getenv("GRETL_GMM_GMP") != NULL) {
+	mpf_set_default_prec(get_mp_bits());
 	nlspec_set_using_gmp(s);
     }
 

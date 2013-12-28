@@ -11447,8 +11447,8 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
  * @err: pointer to receive error code.
  *
  * Computes the scalar product bXb', or b'Xb if @b is a column
- * vector.  The content of @err is set to 0 on success,
- * or a non-zero code on failure.
+ * vector. The content of @err is set to a non-zero code on 
+ * failure.
  * 
  * Returns: the scalar product, or #NADBL on failure.
  */
@@ -11457,9 +11457,8 @@ double gretl_scalar_qform (const gretl_vector *b,
 			   const gretl_matrix *X,
 			   int *err)
 {
-    gretl_matrix *tmp = NULL;
-    double ret = NADBL;
-    int mod, k;
+    double tmp, ret = 0.0;
+    int i, j, k, p;
 
     if (gretl_is_null_matrix(b) || gretl_is_null_matrix(X)) {
 	*err = E_DATA;
@@ -11471,20 +11470,15 @@ double gretl_scalar_qform (const gretl_vector *b,
     if (k == 0 || X->rows != k || X->cols != k) {
 	*err = E_NONCONF;
 	return NADBL;
-    } 
+    }
 
-    mod = (b->rows > 1)? GRETL_MOD_TRANSPOSE : GRETL_MOD_NONE;
-
-    tmp = gretl_matrix_alloc(1, 1);
-    if (tmp == NULL) {
-	*err = E_ALLOC;
-    } else {
-	tmp->val[0] = 0.0;
-	*err = gretl_matrix_qform(b, mod, X, tmp, GRETL_MOD_NONE);
-	if (!*err) {
-	    ret = tmp->val[0];
+    p = 0;
+    for (j=0; j<k; j++) {
+	tmp = 0.0;
+	for (i=0; i<k; i++) {
+	    tmp += b->val[i] * X->val[p++];
 	}
-	gretl_matrix_free(tmp);
+	ret += tmp * b->val[j];
     }
 
     return ret;
