@@ -1616,7 +1616,7 @@ static int maybe_prescale_weights (nlspec *s)
     if (crit > 0 && !na(crit)) {
 	double m, lc = gmm_log_10(crit);
 
-#if 0
+#if 1
 	fprintf(stderr, "maybe_preadjust_weights: crit=%g, lc=%g\n", 
 		crit, lc);
 	gretl_matrix_print(s->oc->sum, "s->oc->sum");

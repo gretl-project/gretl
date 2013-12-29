@@ -800,13 +800,25 @@ static double opt_slen (int n, int *pndelta, double *b,
 		*/
 		steplen *= STEPFRAC;
 	    } else if (f1 < f0 + d) {
+#if BFGS_DEBUG
+		fprintf(stderr, "opt_slen, case 2: steplen = %g, f0 = %g, f1 = %g, g0 = %g\n",
+			steplen, f0, f1, g0);
+#endif
 		/* function computes, but goes down: try quadratic approx */
 		steplen *= 0.5 * g0 / (f0 - f1 + g0);
+		
 		if (steplen < 1.0e-12) {
 		    /* safeguarding */
+#if BFGS_DEBUG
 		    fprintf(stderr, "safeguarding: f0 - f1 = %g, g0 = %g\n",
 			    f0 - f1, g0);
+#endif
 		    steplen = 1.0e-12;
+		    for (i=0; i<n; i++) {
+			b[i] = X[i] + steplen * t[i];
+		    }
+		    f1 = cfunc(b, data);
+		    fcount++;		    
 		    crit_ok = 1;
 		}
 	    } else {
@@ -823,6 +835,9 @@ static double opt_slen (int n, int *pndelta, double *b,
 	}
     } while (ndelta > 0 && !crit_ok);
 
+#if BFGS_DEBUG
+    fprintf(stderr, "opt_slen: steplen = %g\n", steplen);
+#endif
     *pndelta = ndelta;
     *pfcount += fcount;
     *pf = f1;
@@ -949,6 +964,15 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	fprintf(stderr, "\niter %d: sumgrad = %g\n", iter, sumgrad);
 #endif
 
+#if BFGS_DEBUG
+	fprintf(stderr, "H = \n");
+	for (i=0; i<n; i++) {
+	    for (j=0; j<=i; j++) {
+		fprintf(stderr, "%15.6f", H[i][j]);
+	    }
+	    fputc('\n', stderr);
+	}
+#endif
 	if (sumgrad > 0.0) { 
 	    /* heading in the right direction */
 	    steplen = opt_slen(n, &ndelta, b, X, t, &f, cfunc, data, 
@@ -974,6 +998,13 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 #endif
 		fmax = f;
 		gradfunc(b, g, n, cfunc, data);
+#if BFGS_DEBUG
+		fprintf(stderr, "new gradient:\n");
+		for (i=0; i<n; i++) {
+		    fprintf(stderr, "%15.6f", g[i]);
+		}
+		fputc('\n', stderr);
+#endif
 		gcount++;
 		iter++;
 		D1 = 0.0;

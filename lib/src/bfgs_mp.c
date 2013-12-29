@@ -254,8 +254,7 @@ static int mp_steplen (int n, int *pndelta, double *b,
 		/* steplen *= 0.5 * g0 / (f0 - f1 + g0); */
 		mpf_t num, den;
 
-		mpf_init(num);
-		mpf_init(den);
+		mpf_inits(num, den, NULL);
 
 		mpf_div_ui(num, g0, 2);
 		mpf_set_d(tmp, f0 - f1);
@@ -263,14 +262,20 @@ static int mp_steplen (int n, int *pndelta, double *b,
 		mpf_div(tmp, num, den);
 		mpf_mul(steplen, steplen, tmp);
 
-		mpf_clear(num);
-		mpf_clear(den);
+		mpf_clears(num, den, NULL);
 
 		if (mpf_cmp_d(steplen, 1.0e-12) < 0) {
 		    /* safeguarding */
 		    fprintf(stderr, "safeguarding: f0 - f1 = %g, g0 = %g\n",
 			    f0 - f1, mpf_get_d(g0));
 		    mpf_set_d(steplen, 1.0e-12);
+		    for (i=0; i<n; i++) {
+			mpf_mul(prod, steplen, t[i]);
+			mpf_add(tmp, X[i], prod);
+			b[i] = mpf_get_d(tmp);
+		    }
+		    f1 = cfunc(b, data);
+		    fcount++;			    
 		    crit_ok = 1;
 		}
 	    } else {
