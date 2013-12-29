@@ -2,12 +2,15 @@
 
 #include <gmp.h>
 
-static void free_triangular_mp_array (mpf_t **m, int n)
+static void triangular_mp_array_free (mpf_t **m, int n)
 {
     if (m != NULL) {
-	int i;
+	int i, j;
 
 	for (i=0; i<n; i++) {
+	    for (j=0; j<=i; j++) {
+		mpf_clear(m[i][j]);
+	    }
 	    free(m[i]);
 	}
 	free(m);
@@ -26,12 +29,14 @@ static mpf_t **triangular_mp_array_new (int n)
 	for (i=0; i<n; i++) {
 	    m[i] = malloc((i + 1) * sizeof **m);
 	    if (m[i] == NULL) {
-		free_triangular_mp_array(m, n);
+		for (j=0; j<i; j++) {
+		    free(m[j]);
+		}
+		free(m);
 		return NULL;
 	    }
 	}
- 
-	for (i=0; i<n; i++) {
+ 	for (i=0; i<n; i++) {
 	    for (j=0; j<i; j++) {
 		mpf_init(m[i][j]);
 	    }
@@ -87,12 +92,7 @@ static int mp_richardson (double *b, mpf_t *g, int n,
 	mpf_init(df[i]);
     }
 
-    mpf_init(num);
-    mpf_init(den);
-    mpf_init(tmp);
-    mpf_init(prod);
-    mpf_init(pf1);
-    mpf_init(pf2);
+    mpf_inits(num, den, tmp, prod, pf1, pf2, NULL);
 
     for (i=0; i<n; i++) {
 	bi0 = b[i];
@@ -136,12 +136,7 @@ static int mp_richardson (double *b, mpf_t *g, int n,
 	mpf_clear(df[i]);
     }
 
-    mpf_clear(num);
-    mpf_clear(den);
-    mpf_clear(tmp);
-    mpf_clear(prod);    
-    mpf_clear(pf1);
-    mpf_clear(pf2);    
+    mpf_clears(num, den, tmp, prod, pf1, pf2, NULL);
 
     return err;
 }
@@ -155,10 +150,7 @@ static int mp_simple_gradient (double *b, mpf_t *g, int n,
     double h = 1.0e-8;
     int i, err = 0;
 
-    mpf_init(num);
-    mpf_init(den);
-    mpf_init(pf1);
-    mpf_init(pf2);
+    mpf_inits(num, den, pf1, pf2, NULL);
 
     for (i=0; i<n; i++) {
 	bi0 = b[i];
@@ -183,10 +175,7 @@ static int mp_simple_gradient (double *b, mpf_t *g, int n,
 	mpf_div(g[i], num, den);
     }
 
-    mpf_clear(num);
-    mpf_clear(den);
-    mpf_clear(pf1);
-    mpf_clear(pf2);
+    mpf_clears(num, den, pf1, pf2, NULL);
 
     return err;
 }
@@ -222,9 +211,7 @@ static int mp_steplen (int n, int *pndelta, double *b,
     int ndelta;
 
     mpf_init_set_d(steplen, 1.0);
-    mpf_init(d);
-    mpf_init(prod);
-    mpf_init(tmp);
+    mpf_inits(d, prod, tmp, NULL);
 
     /* Below: iterate so long as (a) we haven't achieved an acceptable
        value of the criterion and (b) there is still some prospect
@@ -307,10 +294,7 @@ static int mp_steplen (int n, int *pndelta, double *b,
 
     mpf_set(*psteplen, steplen);
 
-    mpf_clear(steplen);
-    mpf_clear(d);
-    mpf_clear(prod);
-    mpf_clear(tmp);
+    mpf_clears(steplen, d, prod, tmp, NULL);
 
     return 0;
 }
@@ -324,18 +308,6 @@ static void mp_H_to_I (mpf_t **H, int n)
 	    mpf_set_d(H[i][j], 0.0);
 	}
 	mpf_set_d(H[i][i], 1.0);
-    }
-}
-
-static void mp_H_clear (mpf_t **H, int n)
-{
-    int i, j;
-
-    for (i=0; i<n; i++) {
-	for (j=0; j<i; j++) {
-	    mpf_clear(H[i][j]);
-	}
-	mpf_clear(H[i][i]);
     }
 }
 
@@ -371,14 +343,8 @@ int mp_BFGS (double *b, int n, int maxit, double reltol,
     int i, j, ilast, iter;
     int err = 0;
 
-    mpf_init(sumgrad);
-    mpf_init(gradnorm);
-    mpf_init(s);
-    mpf_init(steplen);
-    mpf_init(prod);
-    mpf_init(tmp);
-    mpf_init(D1);
-    mpf_init(D2);
+    mpf_inits(sumgrad, gradnorm, s, steplen,
+	      prod, tmp, D1, D2, NULL);
 
     optim_get_user_values(b, n, &maxit, &reltol, &gradmax, opt, prn);
 
@@ -590,21 +556,11 @@ int mp_BFGS (double *b, int n, int maxit, double reltol,
 
  bailout:
 
-    mpf_clear(sumgrad);
-    mpf_clear(gradnorm);
-    mpf_clear(s);
-    mpf_clear(steplen);
-    mpf_clear(prod);
-    mpf_clear(tmp);
-    mpf_clear(D1);
-    mpf_clear(D2);
+    mpf_clears(sumgrad, gradnorm, s, steplen,
+	       prod, tmp, D1, D2, NULL);
 
     mp_workspace_free(wspace, 4*n);
-
-    if (H != NULL) {
-	mp_H_clear(H, n);
-	free_triangular_mp_array(H, n);
-    }
+    triangular_mp_array_free(H, n);
 
     return err;
 }
@@ -682,9 +638,7 @@ static int mp_columnwise_product (const gretl_matrix *A,
     mpf_t mpx, mpy, prod;
     int i, j, t, p;
 
-    mpf_init(mpx);
-    mpf_init(mpy);
-    mpf_init(prod);
+    mpf_inits(mpx, mpy, prod, NULL);
 
     p = 0;
     for (i=0; i<k; i++) {
@@ -701,9 +655,7 @@ static int mp_columnwise_product (const gretl_matrix *A,
 	}
     }
 
-    mpf_clear(mpx);
-    mpf_clear(mpy);
-    mpf_clear(prod);    
+    mpf_clears(mpx, mpy, prod, NULL);
 	    
     return 0;
 }
@@ -748,13 +700,9 @@ double mp_gmm_criterion (const gretl_matrix *A,
 	    *err = E_ALLOC;
 	    return NADBL;
 	}
-    }  
+    }
 
-    mpf_init(tmp);
-    mpf_init(cti);
-    mpf_init(mpc);
-    mpf_init(prod);
-    mpf_init(wp);
+    mpf_inits(tmp, cti, mpc, prod, wp, NULL);
 
     mp_columnwise_product(A, B, S, C);
 
@@ -762,6 +710,7 @@ double mp_gmm_criterion (const gretl_matrix *A,
 	dtmp->val[i] = mpf_get_d(C->val[i]);
     }
 
+    /* compute column sums */
     for (i=0; i<k; i++) {
 	mpf_set_d(tmp, 0.0);
 	for (t=0; t<T; t++) {
@@ -772,6 +721,7 @@ double mp_gmm_criterion (const gretl_matrix *A,
 	dsum->val[i] = mpf_get_d(tmp);
     }
 
+    /* calculate scalar quadratic form */
     p = 0;
     for (j=0; j<k; j++) {
 	mpf_set_d(tmp, 0.0);
@@ -787,11 +737,7 @@ double mp_gmm_criterion (const gretl_matrix *A,
     mpf_neg(mpc, mpc);
     crit = mpf_get_d(mpc);
 
-    mpf_clear(tmp);
-    mpf_clear(cti);
-    mpf_clear(mpc);
-    mpf_clear(prod);
-    mpf_clear(wp);
+    mpf_clears(tmp, cti, mpc, prod, wp, NULL);
 
     return crit;
 }
