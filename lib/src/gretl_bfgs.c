@@ -766,9 +766,12 @@ static double opt_slen (int n, int *pndelta, double *b,
 			double *pf, BFGS_CRIT_FUNC cfunc, void *data, 
 			double g0, double f0, int *pfcount)
 {
+    int quad = getenv("GRETL_BFGS_SLEN_Q") != NULL;
     double d, f1 = *pf, steplen = 1.0;
     int i, crit_ok = 0, fcount = 0;
     int ndelta;
+    double safelen = 1.0e-10;
+    double incredible = -1.0e20;
 
     /* Below: iterate so long as (a) we haven't achieved an acceptable
        value of the criterion and (b) there is still some prospect
@@ -788,49 +791,56 @@ static double opt_slen (int n, int *pndelta, double *b,
 	    f1 = cfunc(b, data);
 	    d = -g0 * steplen * acctol;
 	    fcount++;
-#if 0
-	    /* find the optimal steplength by quadratic interpolation; 
-	       inspired by Kelley (1999), "Iterative Methods for Optimization", 
-	       especially section 3.2.1. 
-	    */
-	    if (xna(f1)) {
-		/* function goes into NA zone, presumably outside the 
-		   admissible parameter space; hence, try a much smaller 
-		   step.
+	    if (quad) {
+		/* find the optimal steplength by quadratic interpolation; 
+		   inspired by Kelley (1999), "Iterative Methods for Optimization", 
+		   especially section 3.2.1. 
 		*/
-		steplen *= STEPFRAC;
-	    } else if (f1 < f0 + d) {
+		if (xna(f1)) {
+		    /* function goes into NA zone, presumably outside the 
+		       admissible parameter space; hence, try a much smaller 
+		       step. FIXME execution can come back here indefinitely.
+		    */
+		    steplen *= STEPFRAC;
+		} else if (f1 < incredible) {
+		    /* Same as above, with the exception that the objective
+		       function technically computes, but returns a fishy value.
+		    */
+		    // fprintf(stderr, "Incredible! (f = %g)\n", f1);
+		    steplen *= STEPFRAC;
+		} else if (f1 < f0 + d) {
 #if BFGS_DEBUG
-		fprintf(stderr, "opt_slen, case 2: steplen = %g, f0 = %g, "
-			"f1 = %g, g0 = %g\n", steplen, f0, f1, g0);
+		    fprintf(stderr, "opt_slen, case 2: steplen = %g, f0 = %g, "
+			    "f1 = %g, g0 = %g\n", steplen, f0, f1, g0);
 #endif
-		/* function computes, but goes down: try quadratic approx */
-		steplen *= 0.5 * g0 / (f0 - f1 + g0);
-		
-		if (steplen < 1.0e-12) {
+		    /* function computes, but goes down: try quadratic approx */
+		    steplen *= 0.5 * g0 / (f0 - f1 + g0);
+		    
+		    if (steplen < safelen) {
+			/* safeguarding */
 #if BFGS_DEBUG
-		    fprintf(stderr, "safeguarding: f0 - f1 = %g, g0 = %g\n",
-			    f0 - f1, g0);
+			fprintf(stderr, "safeguarding: f0 - f1 = %g, g0 = %g\n",
+				f0 - f1, g0);
 #endif
-		    steplen = 1.0e-12;
-		    for (i=0; i<n; i++) {
-			b[i] = X[i] + steplen * t[i];
+			steplen = safelen;
+			for (i=0; i<n; i++) {
+			    b[i] = X[i] + steplen * t[i];
+			}
+			f1 = cfunc(b, data);
+			fcount++;		    
+			crit_ok = 1;
 		    }
-		    f1 = cfunc(b, data);
-		    fcount++;		    
+		} else {
 		    crit_ok = 1;
 		}
 	    } else {
-		crit_ok = 1;
+		/* find the optimal steplength by successive powers of STEPFRAC */
+		crit_ok = !na(f1) && (f1 >= f0 + d);
+		if (!crit_ok) {
+		    /* calculated criterion no good: try smaller step */
+		    steplen *= STEPFRAC;
+		}
 	    }
-#else
-	    /* find the optimal steplength by successive powers of STEPFRAC */
-	    crit_ok = !na(f1) && (f1 >= f0 + d);
-	    if (!crit_ok) {
-		/* calculated criterion no good: try smaller step */
-		steplen *= STEPFRAC;
-	    }
-#endif
 	}
     } while (ndelta > 0 && !crit_ok);
 

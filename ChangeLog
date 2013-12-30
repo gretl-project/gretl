@@ -10,7 +10,8 @@ version 1.9.15, in progress
 - Enable use of value labels (if any) in factorized boxplots
 - Print out alternative definition of R^2 in FE linear panel 
   data models
-- Internals: add support for multiple, independent PRNGs	
+- Internals: add support for multiple, independent PRNGs
+- win32 build: update gmp to 5.1.3, mpfr to 3.1.2	
 	
 2013-11-21 version 1.9.14
 - Use daily dates when plotting daily/weekly data and there

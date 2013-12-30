@@ -1578,6 +1578,14 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
     gretl_matrix_free(V);
 }
 
+/* GMM_NORMALIZE: set to 1 for old, conditional code, 
+   or 2 for new code */
+
+#define GMM_NORMALIZE 1 /* set to 1 or 2 for variants */
+#define NORM_DEBUG 0
+
+#if GMM_NORMALIZE == 1
+
 static double gmm_log_10 (double x)
 {
     double y;
@@ -1601,7 +1609,7 @@ static double gmm_log_10 (double x)
    keeping computer arithmetic in bounds.
 */
 
-static int maybe_prescale_weights (nlspec *s)
+static int gmm_normalize_wts_matrix (nlspec *s)
 {
     double *coeff;
     double crit;
@@ -1616,14 +1624,13 @@ static int maybe_prescale_weights (nlspec *s)
     if (crit > 0 && !na(crit)) {
 	double m, lc = gmm_log_10(crit);
 
-#if 1
+#if NORM_DEBUG
 	fprintf(stderr, "maybe_preadjust_weights: crit=%g, lc=%g\n", 
 		crit, lc);
 	gretl_matrix_print(s->oc->sum, "s->oc->sum");
 #endif
 
 	if (!na(lc) && (lc > 5 || lc < -5)) {
-	    /* FIXME ? */
 	    if (lc > 0) {
 		m = floor(lc/2);
 	    } else {
@@ -1640,6 +1647,80 @@ static int maybe_prescale_weights (nlspec *s)
 
     return 0;
 }
+
+#elif GMM_NORMALIZE == 2
+
+/* the idea here is to rescale rows and columns of the initial
+   weights matrix so that 1-step becomes independent of the 
+   order of magnitude of the individual orthogonality conditions
+*/
+
+static int gmm_normalize_wts_matrix (nlspec *s)
+{
+    double *coeff;
+    double inicrit;
+    int err = 0;
+
+    /* don't mess with what might be a user-specified
+       initialization of s->coeff */
+    coeff = copyvec(s->coeff, s->ncoeff);
+    if (coeff == NULL) {
+	return E_ALLOC;
+    }
+
+    inicrit = -1 * get_gmm_crit(coeff, s);
+
+    if (inicrit > 0 && !na(inicrit)) {
+	int k = s->oc->noc;
+	int n = s->oc->tmp->rows;
+	gretl_vector *qvec;
+
+	qvec = gretl_column_vector_alloc(k);
+
+	if (qvec == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    double *q = qvec->val;
+	    double x, sq = 0;
+	    double scale = 0;
+	    int i, j;
+#if NORM_DEBUG
+	    gretl_matrix_print(s->oc->W, "Weights (before)");
+#endif
+	    for (j=0; j<k; j++) {
+		q[j] = 0;
+		for (i=0; i<n; i++) {
+		    x = gretl_matrix_get(s->oc->tmp, i, j);
+		    q[j] += x*x;
+		}
+		sq += q[j];
+		scale += gretl_matrix_get(s->oc->W, j, j); 
+	    }
+
+	    scale /= n * sq;
+
+	    for (i=0; i<k; i++) {
+		for (j=0; j<k; j++) {
+		    x = gretl_matrix_get(s->oc->W, i, j);
+		    x /= scale * sqrt(q[i]*q[j]) * n;
+		    gretl_matrix_set(s->oc->W, i, j, x);
+		}
+	    }
+
+#if NORM_DEBUG
+	    gretl_matrix_print(qvec, "q");
+	    gretl_matrix_print(s->oc->W, "Weights (after)");
+#endif
+	    gretl_matrix_free(qvec);
+	}
+    }
+
+    free(coeff);
+
+    return err;
+}
+
+#endif /* GMM_NORMALIZE */
 
 /* BFGS driver, for the case of GMM estimation.  We may have to handle
    both "inner" (BFGS) and "outer" iterations here: the "outer"
@@ -1678,10 +1759,14 @@ int gmm_calculate (nlspec *s, PRN *prn)
 	outer_max = 2;
     }
 
-    /* experimental, 2010-04-22 */
+    /* experimental, 2013-12-30 */
+#if GMM_NORMALIZE == 1
     if (!s->oc->userwts) {
-	maybe_prescale_weights(s);
+	gmm_normalize_wts_matrix(s);
     }
+#elif GMM_NORMALIZE == 2
+    err = gmm_normalize_wts_matrix(s);
+#endif    
 
     while (!err && outer_iters < outer_max && !converged) {
 
@@ -1747,9 +1832,9 @@ int gmm_calculate (nlspec *s, PRN *prn)
 #endif
     }
 
-#if 1
-    if (!err && !(s->opt & (OPT_T | OPT_I))) {
-	/* we automatically scaled the identity matrix for weighting
+#if GMM_NORMALIZE == 1
+    if (!err && !(s->opt & (OPT_T | OPT_I)) && s->oc->scale_wt != 1) {
+	/* we auto-scaled the identity matrix for weighting
 	   purposes: undo the scaling here
 	*/
 	s->crit /= s->oc->scale_wt;
