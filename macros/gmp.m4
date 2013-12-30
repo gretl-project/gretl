@@ -46,12 +46,12 @@ main ()
   char *tmp_version;
   mpz_t a, b, c;
 
-  mpz_init (a);
-  mpz_init (b);
-  mpz_init (c);
-  mpz_mul (c, a, b);
+  mpz_init(a);
+  mpz_init(b);
+  mpz_init(c);
+  mpz_mul(c, a, b);
 
-  system ("touch conf.gmptest");
+  system("touch conf.gmptest");
 
 #ifdef __GNU_MP_VERSION
   gmp_major_version = __GNU_MP_VERSION;
@@ -74,13 +74,10 @@ main ()
 
   if ((gmp_major_version > major) ||
      ((gmp_major_version == major) && (gmp_minor_version > minor)) ||
-     ((gmp_major_version == major) && (gmp_minor_version == minor) && (gmp_micro_version >= micro)))
-  {
+     ((gmp_major_version == major) && (gmp_minor_version == minor) && (gmp_micro_version >= micro))) {
     return 0;
-  }
-  else
-  {
-    printf("\n*** An old version of GNU MP (%d.%d.%d) was found.\n",
+  } else {
+     printf("\n*** An old version of GNU MP (%d.%d.%d) was found.\n",
            gmp_major_version, gmp_minor_version, gmp_micro_version);
     printf("*** You need a version of GNU MP newer than %d.%d.%d. The latest version of\n",
            major, minor, micro);

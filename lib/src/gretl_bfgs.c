@@ -796,19 +796,18 @@ static double opt_slen (int n, int *pndelta, double *b,
 	    if (xna(f1)) {
 		/* function goes into NA zone, presumably outside the 
 		   admissible parameter space; hence, try a much smaller 
-		   step. FIXME execution can come back here indefinitely.
+		   step.
 		*/
 		steplen *= STEPFRAC;
 	    } else if (f1 < f0 + d) {
 #if BFGS_DEBUG
-		fprintf(stderr, "opt_slen, case 2: steplen = %g, f0 = %g, f1 = %g, g0 = %g\n",
-			steplen, f0, f1, g0);
+		fprintf(stderr, "opt_slen, case 2: steplen = %g, f0 = %g, "
+			"f1 = %g, g0 = %g\n", steplen, f0, f1, g0);
 #endif
 		/* function computes, but goes down: try quadratic approx */
 		steplen *= 0.5 * g0 / (f0 - f1 + g0);
 		
 		if (steplen < 1.0e-12) {
-		    /* safeguarding */
 #if BFGS_DEBUG
 		    fprintf(stderr, "safeguarding: f0 - f1 = %g, g0 = %g\n",
 			    f0 - f1, g0);

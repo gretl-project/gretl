@@ -1,4 +1,4 @@
 #!/bin/sh
 
 rm -f aclocal.m4
-aclocal -I ./macros -I /opt/gtk2/share/aclocal -I /usr/share/aclocal
+aclocal -I ./macros -I /usr/share/aclocal
