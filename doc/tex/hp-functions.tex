@@ -61,8 +61,39 @@ associated parameter name, as in
 function scalar myfunc (series *y, scalar *b)
 \end{code}
 
-The meaning of this modification is explained below; it is related to
-the use of pointer arguments in the C programming language.
+The meaning of this modification is explained below, in section
+\ref{sec:params-returns}; it is related to the use of pointer
+arguments in the C programming language.
+
+In order to get a feel for how functions work, here's a simple
+example:
+
+\begin{code}
+function scalar quasi_log(scalar x)
+/* popular approximation to the natural logarithm
+   via Padé polynomials */
+
+   if (x<0)
+      scalar ret = NA
+   else 
+      scalar ret = -2*(1-x)/(1+x)
+   endif
+
+   return ret
+end function
+
+loop for (x=0; x<3; x+=0.1)
+   printf "x = %4.2f; ln(x) = %g, approx = %g\n", x, ln(x), quasi_log(x)
+end loop
+\end{code}
+
+\begin{itemize}
+\item we begin by defining the function (scalar $\to$ scalar)
+\item with a comment for good measure
+\item (almost) arbitrary hansl code follows
+\item the \cmd{return} keyword exports the result
+\item usage example
+\end{itemize}
 
 
 \section{Parameter passing and return values}

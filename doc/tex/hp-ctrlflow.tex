@@ -124,7 +124,7 @@ have had to write a considerably longer chunk of code, such as
 matrix A = mnormal(4,4)
 matrix B = A
 
-loop r = 1..rows(A)
+loop r = 1 .. rows(A)
   loop c = r .. cols(A)
      if A[r,c] < 0
        B[r,c] = -A[r,c]
