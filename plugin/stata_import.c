@@ -601,9 +601,11 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 	*pst = dta_make_string_table(types, nvar, nsv);
     }
 
-    /* names */
+    /* variable names */
     for (i=0; i<nvar && !err; i++) {
         stata_read_string(fp, namelen + 1, aname, &err);
+	/* try to fix possible bad encoding */
+	iso_to_ascii(aname);
 	pprintf(vprn, "variable %d: name = '%s'\n", i+1, aname);
 	if (check_varname(aname) && try_fix_varname(aname)) {
 	    err = 1;
