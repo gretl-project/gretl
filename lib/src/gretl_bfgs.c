@@ -761,16 +761,32 @@ static int copy_initial_hessian (gretl_matrix *A, double **H,
     return 0;
 }
 
+/* returns number of coefficient that have actually changed */
+
+static int coeff_at_end(double *b, const double *X, const double *t, 
+			int n, double length)
+{
+    int i, ndelta = n;
+    for (i=0; i<n; i++) {
+	b[i] = X[i] + length * t[i];
+	if (coeff_unchanged(b[i], X[i])) {
+	    ndelta--;
+	}
+    }
+
+    return ndelta;
+}
+
 static double opt_slen (int n, int *pndelta, double *b, 
 			const double *X, const double *t, 
 			double *pf, BFGS_CRIT_FUNC cfunc, void *data, 
 			double g0, double f0, int *pfcount)
 {
     int quad = getenv("GRETL_BFGS_SLEN_Q") != NULL;
-    double d, f1 = *pf, steplen = 1.0;
+    double d, steplen, f1 = *pf, endpoint = 1.0;
     int i, crit_ok = 0, fcount = 0;
     int ndelta;
-    double safelen = 1.0e-10;
+    double safelen = 1.0e-12;
     double incredible = -1.0e20;
 
     /* Below: iterate so long as (a) we haven't achieved an acceptable
@@ -779,18 +795,14 @@ static double opt_slen (int n, int *pndelta, double *b,
     */    
 
     do {
-	ndelta = n;
 	crit_ok = 0;
-	for (i=0; i<n; i++) {
-	    b[i] = X[i] + steplen * t[i];
-	    if (coeff_unchanged(b[i], X[i])) {
-		ndelta--;
-	    }
-	}
+	ndelta = coeff_at_end(b, X, t, n, endpoint);
+
 	if (ndelta > 0) {
 	    f1 = cfunc(b, data);
-	    d = -g0 * steplen * acctol;
+	    d = -g0 * endpoint * acctol;
 	    fcount++;
+
 	    if (quad) {
 		/* find the optimal steplength by quadratic interpolation; 
 		   inspired by Kelley (1999), "Iterative Methods for Optimization", 
@@ -801,48 +813,65 @@ static double opt_slen (int n, int *pndelta, double *b,
 		       admissible parameter space; hence, try a much smaller 
 		       step. FIXME execution can come back here indefinitely.
 		    */
-		    steplen *= STEPFRAC;
-		} else if (f1 < incredible) {
+		    endpoint *= STEPFRAC;
+		} else if ((f1 - f0) < incredible) {
 		    /* Same as above, with the exception that the objective
 		       function technically computes, but returns a fishy value.
 		    */
-		    // fprintf(stderr, "Incredible! (f = %g)\n", f1);
-		    steplen *= STEPFRAC;
+		    endpoint *= STEPFRAC;
 		} else if (f1 < f0 + d) {
-#if BFGS_DEBUG
-		    fprintf(stderr, "opt_slen, case 2: steplen = %g, f0 = %g, "
-			    "f1 = %g, g0 = %g\n", steplen, f0, f1, g0);
-#endif
 		    /* function computes, but goes down: try quadratic approx */
-		    steplen *= 0.5 * g0 / (f0 - f1 + g0);
+		    steplen = 0.5 * endpoint * g0 / (f0 - f1 + g0);
+#if BFGS_DEBUG
+		    fprintf(stderr, "opt_slen, case 2: f0 = %g, f1 = %g, g0 = %g\n", 
+			    f0, f1, g0);
+		    fprintf(stderr, "opt_slen, case 2: endpoint = %g, "
+			    "steplen = %g\n", endpoint, steplen);
+#endif
 		    
 		    if (steplen < safelen) {
-			/* safeguarding */
-#if BFGS_DEBUG
-			fprintf(stderr, "safeguarding: f0 - f1 = %g, g0 = %g\n",
-				f0 - f1, g0);
-#endif
-			steplen = safelen;
-			for (i=0; i<n; i++) {
-			    b[i] = X[i] + steplen * t[i];
-			}
+			/* We have a ludicrously small steplength here;
+			 most likely, because the endpoint is too far out.
+			Let's trim it down and retry. 
+			*/
+			endpoint *= STEPFRAC;
+		    } else {
+			ndelta = coeff_at_end(b, X, t, n, steplen);
 			f1 = cfunc(b, data);
 			fcount++;		    
-			crit_ok = 1;
+#if BFGS_DEBUG
+			fprintf(stderr, "opt_slen, quadratic endopint: f1 = %g\n", f1); 
+#endif
+			crit_ok = !na(f1) && (f1 >= f0 + d);
+			/* if the function still goes down (or berserk), let's 
+			   trim the endpoint one more time and retry */
+#if BFGS_DEBUG
+			fprintf(stderr, "quadratic: slen = %g, crit_ok = %d\n",
+				steplen, crit_ok);
+#endif
+			if (!crit_ok) {
+			    endpoint *= STEPFRAC;
+			}
 		    }
 		} else {
 		    crit_ok = 1;
+		    steplen = endpoint;
 		}
 	    } else {
 		/* find the optimal steplength by successive powers of STEPFRAC */
 		crit_ok = !na(f1) && (f1 >= f0 + d);
 		if (!crit_ok) {
 		    /* calculated criterion no good: try smaller step */
-		    steplen *= STEPFRAC;
+		    endpoint *= STEPFRAC;
 		}
 	    }
 	}
+
     } while (ndelta > 0 && !crit_ok);
+
+    if (!quad && crit_ok) {
+	steplen = endpoint;
+    }
 
 #if BFGS_DEBUG
     fprintf(stderr, "opt_slen: steplen = %g\n", steplen);
