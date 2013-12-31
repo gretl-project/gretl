@@ -654,7 +654,48 @@ processing.
 \subsection{Output to a file}
 \label{sec:outfile}
 
-\cmd{outfile}
+The \cmd{outfile} command diverts output to filename, until further
+notice. Use the flag \option{append} to append output to an existing
+file or \option{write} to start a new file (or overwrite an existing
+one). Only one file can be opened in this way at any given
+time. The \option{close} flag is used to close an output file that was
+previously opened as above. Output will then revert to the default
+stream.
+
+For example:
+\begin{code}
+  printf "One!\n"
+  outfile "myfile.txt" --write
+  printf "Two!\n"
+  outfile "myfile.txt" --close
+  printf "Three!\n"
+  outfile "myfile.txt" --append
+  printf "Four!\n"
+  outfile "myfile.txt" --close
+  printf "Five!\n"
+\end{code}
+will result in the file \texttt{myfile.txt} containing the lines
+\begin{code}
+Two!
+Four!  
+\end{code}
+
+Three special variants on the above are available. If you give the
+keyword null in place of a real filename along with the write option, the effect is to suppress all printed output until redirection
+is ended. If either of the keywords stdout or stderr are given in
+place of a regular filename the effect is to redirect output to
+standard output or standard error output respectively.
+
+The \option{quiet} option is for use with \option{write} or
+\option{append}: its effect is to turn off the echoing of commands and
+the printing of auxiliary messages while output is redirected. It is
+equivalent to doing
+\begin{code}
+  set echo off 
+  set messages off
+\end{code}
+except that when redirection is ended the original values of the echo
+and messages variables are restored.
 
 \chapter{Bundles}
 \label{chap:bundles}

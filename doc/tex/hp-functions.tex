@@ -53,18 +53,6 @@ within the function.  An example follows:
 function scalar myfunc (series y, list xvars, bool verbose)
 \end{code}
 
-Each of the type-specifiers, with the exception of \texttt{list} and
-\texttt{string}, may be modified by prepending an asterisk to the
-associated parameter name, as in
-%    
-\begin{code}
-function scalar myfunc (series *y, scalar *b)
-\end{code}
-
-The meaning of this modification is explained below, in section
-\ref{sec:params-returns}; it is related to the use of pointer
-arguments in the C programming language.
-
 In order to get a feel for how functions work, here's a simple
 example:
 
@@ -95,11 +83,40 @@ end loop
 \item usage example
 \end{itemize}
 
+In practice, you may want to use the \cmd{include} command and put all
+your function definition in a separate file (or separate files if
+necessary); \cmd{include} commands can be nested.
+
 
 \section{Parameter passing and return values}
 \label{sec:params-returns}
 
+Important points to remember:
+\begin{itemize}
+\item parameters are passed \emph{by value}; if you need a function to
+  modify its arguments, you ought to use pointers (see below);
+\item In hansl, you cannot use global variables
+\item If you have to pass many parameters, you might want to wrap them
+  into a bundle.
+\end{itemize}
 
+\subsection{Pointers}
+
+Each of the type-specifiers, with the exception of \texttt{list} and
+\texttt{string}, may be modified by prepending an asterisk to the
+associated parameter name, as in
+%    
+\begin{code}
+function scalar myfunc (series *y, scalar *b)
+\end{code}
+
+The meaning of this modification is related to the use of pointer
+arguments in the C programming language.
+
+For matrix arguments, this is a nice way to write faster functions, as
+producing a copy of a large matrix can be quite
+time-consuming. However, the \cmd{const} qualifier achieves the same
+effect.
 
 \section{Recursion}
 
