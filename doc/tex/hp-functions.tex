@@ -1,11 +1,16 @@
 \chapter{User-written functions}
 
-Main structure:
+Hansl natively provides a reasonably wide array of pre-defined
+functions for manipulating variables of all kinds; the previous
+chapters contain several examples. However, it is also possible to
+extend hansl's native capabilities by defining additional
+functions.
 
+Here's how a user-defined function looks like:
 \begin{flushleft}
 \texttt{function \emph{type} \emph{funcname}(\emph{parameters})}\\
    \quad \ldots\\
-   \quad \emph{function body}\\
+   \quad \texttt{\emph{function body}}\\
    \quad \ldots \\
 \texttt{end function}
 \end{flushleft}
@@ -19,11 +24,11 @@ strict order:
   function, if any.  This must be one of \texttt{void} (if the
   function does not return anything), \texttt{scalar},
   \texttt{series}, \texttt{matrix}, \texttt{list} or \texttt{string}.
-\item \texttt{\emph{funcname}}, the unique identifier for the function.
-  Function names have a maximum length of 31 characters; they must
-  start with a letter and can contain only letters, numerals and the
-  underscore character.  You will get an error if you try to define a
-  function having the same name as an existing gretl command.
+\item \texttt{\emph{funcname}}, the unique identifier for the
+  function.  Function names have a maximum length of 31 characters;
+  they must start with a letter and can contain only letters, numerals
+  and the underscore character. It cannot coincide with a native gretl
+  command or function.
 \item The functions's \texttt{\emph{parameters}}, in the form of a
   comma-separated list enclosed in parentheses.
 \end{enumerate}
@@ -37,11 +42,11 @@ Function parameters can be of any of the types shown below.
   \texttt{bool}   & scalar variable acting as a Boolean switch \\
   \texttt{int}    & scalar variable acting as an integer  \\
   \texttt{scalar} & scalar variable \\
-  \texttt{series} & data series \\
-  \texttt{list}   & named list of series \\
+  \texttt{series} & data series (see section~\ref{sec:series})\\
+  \texttt{list}   & named list of series  (see section~\ref{sec:lists})\\
   \texttt{matrix} & matrix or vector \\
   \texttt{string} & string variable or string literal \\
-  \texttt{bundle} & all-purpose container (see chapter~\ref{chap:bundles})
+  \texttt{bundle} & all-purpose container
 \end{tabular}
 \end{center}
 
@@ -64,28 +69,61 @@ function scalar quasi_log(scalar x)
    if (x<0)
       scalar ret = NA
    else 
-      scalar ret = -2*(1-x)/(1+x)
+      scalar ret = 2*(x-1)/(x+1)
    endif
 
    return ret
 end function
 
-loop for (x=0; x<3; x+=0.1)
+loop for (x=0.5; x<2; x+=0.1)
    printf "x = %4.2f; ln(x) = %g, approx = %g\n", x, ln(x), quasi_log(x)
 end loop
 \end{code}
 
-\begin{itemize}
-\item we begin by defining the function (scalar $\to$ scalar)
-\item with a comment for good measure
-\item (almost) arbitrary hansl code follows
-\item the \cmd{return} keyword exports the result
-\item usage example
-\end{itemize}
+The code above computes the rational function
+\[
+  f(x) = 2 \cdot \frac{x-1}{x+1} ,
+\]
+which provides a decent approximation to the natural logarithm in a
+neighborhood of 1.
 
-In practice, you may want to use the \cmd{include} command and put all
+\begin{enumerate}
+\item We begin by defining the function via the \cmd{function}
+  keyword; the function definition will end with the \texttt{end
+    function} marker below;
+\item since the function is meant to return a scalar, we put the
+  keyword \texttt{scalar} after \cmd{function};
+\item between the round brackets, the arguments follow; in this case,
+  we only have one, which we call \texttt{x} and is assumed to be a
+  scalar;
+\item on the next line, the function definition begins: this can be
+  (almost) arbitrary hansl code; in this case, it includes a comment,
+  and an \cmd{if} block;
+\item the function ends with the \cmd{return} keyword, which exports
+  the result;
+\item the next lines provide a simple usage example; note that in the
+  \cmd{printf} command, the two functions \cmd{ln()} and
+  \cmd{quasi\_log()} are indistinguishable from a purely syntactic
+  viewpoint, although the former is a native function and the
+  latter is a user-defined one. 
+\end{enumerate}
+
+In many cases, you may end up writing several functions, which may be
+quite long; in order to avoid cluttering your script with the function
+definition, hansl provides the \cmd{include} command, so you can put all
 your function definition in a separate file (or separate files if
-necessary); \cmd{include} commands can be nested.
+necessary). For example, imagine you saved the \verb|quasi_log()|
+function definition above in a separate file called
+\verb|quasilog_def.inp|: the code above could be written more
+compactly as
+\begin{code}
+include quasilog_def.inp
+
+loop for (x=0.5; x<2; x+=0.1)
+   printf "x = %4.2f; ln(x) = %g, approx = %g\n", x, ln(x), quasi_log(x)
+end loop
+\end{code}
+Moreover, \cmd{include} commands can be nested.
 
 
 \section{Parameter passing and return values}
