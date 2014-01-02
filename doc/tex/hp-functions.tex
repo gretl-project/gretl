@@ -129,10 +129,37 @@ Moreover, \cmd{include} commands can be nested.
 \section{Parameter passing and return values}
 \label{sec:params-returns}
 
-Important points to remember:
+In hansl, parameters are passed \emph{by value}, so what is used
+inside the function is a copy of the original argument. You may modify
+it, but you'll be just modifying the copy. The following example
+should make this point clear:
+\begin{code}
+set echo off
+set messages off
+
+function void f(scalar x)
+    x = x*2
+    print x
+end function
+
+scalar x = 3
+f(x)
+print x
+\end{code}
+Running the above code yields
+\begin{code}
+              x =  6.0000000
+
+              x =  3.0000000
+\end{code}
+The first \cmd{print} statement happens inside the function, and the
+displayed value is 6 because \verb|x| is doubled; however, what really
+gets double is simply the \emph{copy} of \texttt{x}: this is
+demonstrated by the second \cmd{print} statement.  If you need a
+function to modify its arguments, you ought to use pointers (see
+below).
+
 \begin{itemize}
-\item parameters are passed \emph{by value}; if you need a function to
-  modify its arguments, you ought to use pointers (see below);
 \item In hansl, you cannot use global variables
 \item If you have to pass many parameters, you might want to wrap them
   into a bundle.
