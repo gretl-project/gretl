@@ -784,9 +784,9 @@ static double opt_slen (int n, int *pndelta, double *b,
 			double g0, double f0, int *pfcount)
 {
     int quad = getenv("GRETL_BFGS_SLEN_Q") != NULL;
-    double d, steplen, f1 = *pf, endpoint = 1.0;
-    int i, crit_ok = 0, fcount = 0;
-    int ndelta;
+    double d, f1 = *pf;
+    double steplen = 1.0, endpoint = 1.0;
+    int ndelta, crit_ok = 0, fcount = 0;
     double safelen = 1.0e-12;
     double incredible = -1.0e20;
 
