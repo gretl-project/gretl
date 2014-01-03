@@ -869,6 +869,29 @@ static void fix_filter_combo_size (GtkWidget *filesel, int maxlen)
     gtk_container_foreach(GTK_CONTAINER(ca), resize_combo, ivals);
 }
 
+static void add_compression_level_option (GtkWidget *filesel)
+{
+    GtkWidget *hbox, *label, *spin, *wedge;
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(filesel));
+    // gtk_box_set_homogeneous(GTK_BOX(hbox), FALSE);
+
+    label = gtk_label_new(_("Compression level (0 = none)"));
+    spin = gtk_spin_button_new_with_range(0, 9, 1);
+    wedge = gtk_label_new("    ");
+
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), wedge, TRUE, FALSE, 5);
+    gtk_box_reorder_child(GTK_BOX(hbox), label, 0);
+    gtk_box_reorder_child(GTK_BOX(hbox), spin, 1);
+    gtk_box_reorder_child(GTK_BOX(hbox), wedge, 2);
+
+    gtk_widget_show(label);
+    gtk_widget_show(spin);
+    gtk_widget_show(wedge);
+}
+
 static void gtk_file_selector (int action, FselDataSrc src, 
 			       gpointer data, GtkWidget *parent) 
 {
@@ -930,6 +953,11 @@ static void gtk_file_selector (int action, FselDataSrc src,
 					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					  okstr, GTK_RESPONSE_ACCEPT,
 					  NULL);
+#if 0 /* FIXME gtk 2? */
+    if (action == SAVE_DATA || action == SAVE_DATA_AS) {
+	add_compression_level_option(filesel);
+    }
+#endif
 
     gtk_dialog_set_default_response(GTK_DIALOG(filesel), GTK_RESPONSE_ACCEPT);
 

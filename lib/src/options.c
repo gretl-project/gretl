@@ -473,7 +473,7 @@ struct gretl_option gretl_opts[] = {
     { STORE,    OPT_N, "no-header", 0 },
     { STORE,    OPT_R, "gnu-R", 0 },
     { STORE,    OPT_T, "traditional", 0 },
-    { STORE,    OPT_Z, "gzipped", 0 },
+    { STORE,    OPT_Z, "gzipped", 1 },
     { STORE,    OPT_X, "omit-obs", 0 },
     { STORE,    OPT_E, "comment", 2 },
     { STORE,    OPT_I, "decimal-comma", 0 },
@@ -989,6 +989,25 @@ int get_optval_int (int ci, gretlopt opt, int *err)
     }
 
     return ret;
+}
+
+int get_compression_option (int ci)
+{
+    optparm *op = matching_optparm(ci, OPT_Z);
+    int level = 0;
+
+    if (op == NULL || op->val == NULL) {
+	return Z_DEFAULT_COMPRESSION;
+    } else {
+	level = atoi(op->val);
+	if (level < 0) {
+	    return 0;
+	} else if (level > 9) {
+	    return 9;
+	} else {
+	    return level;
+	}
+    }
 }
 
 /* below: called via GUI */

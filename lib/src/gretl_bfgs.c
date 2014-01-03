@@ -763,10 +763,11 @@ static int copy_initial_hessian (gretl_matrix *A, double **H,
 
 /* returns number of coefficient that have actually changed */
 
-static int coeff_at_end(double *b, const double *X, const double *t, 
-			int n, double length)
+static int coeff_at_end (double *b, const double *X, const double *t, 
+			 int n, double length)
 {
     int i, ndelta = n;
+
     for (i=0; i<n; i++) {
 	b[i] = X[i] + length * t[i];
 	if (coeff_unchanged(b[i], X[i])) {
@@ -830,9 +831,9 @@ static double opt_slen (int n, int *pndelta, double *b,
 #endif
 		    
 		    if (steplen < safelen) {
-			/* We have a ludicrously small steplength here;
-			 most likely, because the endpoint is too far out.
-			Let's trim it down and retry. 
+			/* We have a ludicrously small steplength here,
+			   most likely because the endpoint is too far out.
+			   Let's trim it down and retry. 
 			*/
 			endpoint *= STEPFRAC;
 		    } else {

@@ -1578,13 +1578,7 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
     gretl_matrix_free(V);
 }
 
-/* GMM_NORMALIZE: set to 1 for old, conditional code, 
-   or 2 for new code */
-
-#define GMM_NORMALIZE 1 /* set to 1 or 2 for variants */
 #define NORM_DEBUG 0
-
-#if GMM_NORMALIZE == 1
 
 static double gmm_log_10 (double x)
 {
@@ -1609,7 +1603,7 @@ static double gmm_log_10 (double x)
    keeping computer arithmetic in bounds.
 */
 
-static int gmm_normalize_wts_matrix (nlspec *s)
+static int gmm_normalize_wts_1 (nlspec *s)
 {
     double *coeff;
     double crit;
@@ -1648,14 +1642,12 @@ static int gmm_normalize_wts_matrix (nlspec *s)
     return 0;
 }
 
-#elif GMM_NORMALIZE == 2
-
 /* the idea here is to rescale rows and columns of the initial
    weights matrix so that 1-step becomes independent of the 
    order of magnitude of the individual orthogonality conditions
 */
 
-static int gmm_normalize_wts_matrix (nlspec *s)
+static int gmm_normalize_wts_2 (nlspec *s)
 {
     double *coeff;
     double inicrit;
@@ -1698,6 +1690,7 @@ static int gmm_normalize_wts_matrix (nlspec *s)
 	    }
 
 	    scale /= n * sq;
+	    fprintf(stderr, "gmm_normalize: scale = %g\n", scale);
 
 	    for (i=0; i<k; i++) {
 		for (j=0; j<k; j++) {
@@ -1720,8 +1713,6 @@ static int gmm_normalize_wts_matrix (nlspec *s)
     return err;
 }
 
-#endif /* GMM_NORMALIZE */
-
 /* BFGS driver, for the case of GMM estimation.  We may have to handle
    both "inner" (BFGS) and "outer" iterations here: the "outer"
    iterations (if applicable) are re-runs of BFGS using an updated
@@ -1730,6 +1721,7 @@ static int gmm_normalize_wts_matrix (nlspec *s)
 
 int gmm_calculate (nlspec *s, PRN *prn)
 {
+    static int normalize = 0;
     int full_fncount = 0;
     int full_grcount = 0;
     double itol = 1.0e-12, icrit = 1;
@@ -1740,6 +1732,14 @@ int gmm_calculate (nlspec *s, PRN *prn)
     int outer_max = 1;
     int converged = 0;
     int err = 0;
+
+    if (normalize == 0) {
+	if (getenv("GMM_NORMALIZE_2") != NULL) {
+	    normalize = 2;
+	} else {
+	    normalize = 1;
+	}
+    }
 
     if (getenv("GRETL_GMM_GMP") != NULL) {
 	mpf_set_default_prec(get_mp_bits());
@@ -1760,13 +1760,13 @@ int gmm_calculate (nlspec *s, PRN *prn)
     }
 
     /* experimental, 2013-12-30 */
-#if GMM_NORMALIZE == 1
-    if (!s->oc->userwts) {
-	gmm_normalize_wts_matrix(s);
+    if (normalize == 1) {
+	if (!s->oc->userwts) {
+	    gmm_normalize_wts_1(s);
+	}
+    } else if (normalize == 2) {
+	err = gmm_normalize_wts_2(s);
     }
-#elif GMM_NORMALIZE == 2
-    err = gmm_normalize_wts_matrix(s);
-#endif    
 
     while (!err && outer_iters < outer_max && !converged) {
 
@@ -1832,14 +1832,12 @@ int gmm_calculate (nlspec *s, PRN *prn)
 #endif
     }
 
-#if GMM_NORMALIZE == 1
-    if (!err && !(s->opt & (OPT_T | OPT_I)) && s->oc->scale_wt != 1) {
+    if (!err && normalize == 1 && s->oc->scale_wt != 1) {
 	/* we auto-scaled the identity matrix for weighting
 	   purposes: undo the scaling here
 	*/
 	s->crit /= s->oc->scale_wt;
     }
-#endif
 
     if (oldcoeff != NULL) {
 	free(oldcoeff);

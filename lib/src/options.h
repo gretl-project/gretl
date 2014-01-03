@@ -69,6 +69,8 @@ int set_optval_int (int ci, gretlopt opt, int k);
 
 int get_optval_int (int ci, gretlopt opt, int *err);
 
+int get_compression_option (int ci);
+
 void clear_option_params (void);
 
 void option_flags_cleanup (void);

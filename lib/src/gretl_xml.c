@@ -1769,7 +1769,13 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     if (gz) {
 	fz = gretl_gzopen(fname, "wb");
-	if (fz == Z_NULL) err = 1;
+	if (fz == Z_NULL) {
+	    err = 1;
+	} else {
+	    int level = get_compression_option(STORE);
+
+	    gzsetparams(fz, level, Z_DEFAULT_STRATEGY);
+	}
     } else {
 	fp = gretl_fopen(fname, "wb");
 	if (fp == NULL) err = 1;
