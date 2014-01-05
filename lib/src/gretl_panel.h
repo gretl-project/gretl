@@ -63,4 +63,6 @@ int panel_isconst (int t1, int t2, int pd, const double *x,
 
 int series_is_group_invariant (const DATASET *dset, int v);
 
+int panel_padding_rows (const DATASET *dset);
+
 #endif /* GRETL_PANEL_H_ */

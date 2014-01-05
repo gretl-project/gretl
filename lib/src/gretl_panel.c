@@ -5479,3 +5479,24 @@ int series_is_group_invariant (const DATASET *dset, int v)
 
     return 1;
 }
+
+int panel_padding_rows (const DATASET *dset)
+{
+    int missrow, nmiss = 0;
+    int i, t;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	missrow = 1;
+	for (i=1; i<dset->v; i++) {
+	    if (!na(dset->Z[i][t])) {
+		missrow = 0;
+		break;
+	    }
+	}
+	if (missrow) {
+	    nmiss++;
+	}
+    }
+    
+    return nmiss;
+}

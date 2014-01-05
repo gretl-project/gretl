@@ -68,6 +68,7 @@
    group-names    CDATA #IMPLIED
    time-frequency CDATA #IMPLIED
    time-start     CDATA #IMPLIED
+   skip-padding   CDATA #IMPLIED
 >
 
 

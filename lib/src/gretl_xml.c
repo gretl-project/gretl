@@ -33,7 +33,7 @@
 
 #undef XML_DEBUG
 
-#define GRETLDATA_VERSION "1.2"
+#define GRETLDATA_VERSION "1.3"
 
 #ifdef WIN32
 
@@ -1699,15 +1699,16 @@ static int string_table_count (const DATASET *dset,
     return n;
 }
 
-static void maybe_print_panel_info (const DATASET *dset, FILE *fp,
-				    gzFile fz)
+static void maybe_print_panel_info (const DATASET *dset, 
+				    int skip_padding,
+				    FILE *fp, gzFile fz)
 {
     int names = panel_group_names_ok(dset);
     int pd = dset->panel_pd;
     double sd0 = dset->panel_sd0;
     int times = pd > 0 && sd0 > 0.0;
 
-    if (names || times) {
+    if (names || times || skip_padding) {
 	alt_puts("<panel-info\n", fp, fz);
 	if (names) {
 	    if (fz) {
@@ -1725,8 +1726,24 @@ static void maybe_print_panel_info (const DATASET *dset, FILE *fp,
 		fprintf(fp, " time-start=\"%.10g\"\n", sd0);
 	    }
 	}
+	if (skip_padding) {
+	    alt_puts(" skip-padding=\"1\"\n", fp, fz);
+	}
 	alt_puts("/>\n", fp, fz);
     }
+}
+
+static int row_is_padding (const DATASET *dset, int t)
+{
+    int i;
+
+    for (i=1; i<dset->v; i++) {
+	if (!na(dset->Z[i][t])) {
+	    return 0;
+	}
+    }
+
+    return 1;
 }
 
 #define GDT_DIGITS 17
@@ -1764,6 +1781,8 @@ int gretl_write_gdt (const char *fname, const int *list,
     long sz = 0L;
     int i, t, v, nvars, ntabs;
     int have_markers, in_c_locale = 0;
+    int skip_padding = 0;
+    int padrows = 0;
     int uerr = 0;
     int err = 0;
 
@@ -1864,6 +1883,22 @@ int gretl_write_gdt (const char *fname, const int *list,
 	fprintf(fp, "type=\"%s\">\n", data_structure_string(dset->structure));
     }
 
+    have_markers = dataset_has_markers(dset);
+
+    if (dataset_is_panel(dset) && !have_markers && 
+	nvars == dset->v - 1) {
+	guint64 dsize = dset->n * dset->v * 8;
+	guint64 MB10 = 1024 * 1024 * 10;
+
+	if (dsize > MB10) {
+	    /* we have more than 10 MB of panel data */
+	    padrows = panel_padding_rows(dset);
+	    if (padrows > 0.3 * dset->n) {
+		skip_padding = 1;
+	    }
+	}
+    }
+
     /* deal with description, if any */
     if (dset->descrip != NULL) {
 	char *dbuf = gretl_xml_encode(dset->descrip);
@@ -1887,10 +1922,18 @@ int gretl_write_gdt (const char *fname, const int *list,
     in_c_locale = 1;
 
     /* then listing of variable names and labels */
-    if (gz) {
-	gzprintf(fz, "<variables count=\"%d\">\n", nvars);
-    } else {
-	fprintf(fp, "<variables count=\"%d\">\n", nvars);
+    if (skip_padding) {
+	if (gz) {
+	    gzprintf(fz, "<variables count=\"%d\">\n", nvars + 2);
+	} else {
+	    fprintf(fp, "<variables count=\"%d\">\n", nvars + 2);
+	}
+    } else {	
+	if (gz) {
+	    gzprintf(fz, "<variables count=\"%d\">\n", nvars);
+	} else {
+	    fprintf(fp, "<variables count=\"%d\">\n", nvars);
+	}
     }
 
     for (i=1; i<=nvars; i++) {
@@ -1980,22 +2023,28 @@ int gretl_write_gdt (const char *fname, const int *list,
 	alt_puts("\n/>\n", fp, fz);
     }
 
-    alt_puts("</variables>\n", fp, fz);
+    if (skip_padding) {
+	alt_puts("<variable name=\"unit__\"\n/>\n", fp, fz);
+	alt_puts("<variable name=\"time__\"\n/>\n", fp, fz);
+    }	
 
-    have_markers = dataset_has_markers(dset);
+    alt_puts("</variables>\n", fp, fz);
 
     /* then listing of observations */
     alt_puts("<observations ", fp, fz);
     if (gz) {
 	gzprintf(fz, "count=\"%d\" labels=\"%s\"",
-		 tsamp, (have_markers)? "true" : "false");
+		 tsamp - padrows, (have_markers)? "true" : "false");
     } else {
 	fprintf(fp, "count=\"%d\" labels=\"%s\"",
-		tsamp, (have_markers)? "true" : "false");
+		tsamp - padrows, (have_markers)? "true" : "false");
     }
     alt_puts(">\n", fp, fz);
 
     for (t=dset->t1; t<=dset->t2; t++) {
+	if (skip_padding && row_is_padding(dset, t)) {
+	    continue;
+	}
 	alt_puts("<obs", fp, fz);
 	if (have_markers) {
 	    uerr = gretl_xml_encode_to_buf(xmlbuf, dset->S[t], sizeof xmlbuf);
@@ -2019,7 +2068,13 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	    alt_puts(numstr, fp, fz);
 	}
+	if (skip_padding) {
+	    int unit = 1 + t / dset->pd;
+	    int time = t % dset->pd + 1;
 
+	    sprintf(numstr, "%d %d ", unit, time);
+	    alt_puts(numstr, fp, fz);
+	}
 	alt_puts("</obs>\n", fp, fz);
 
 	if (sz && t && ((t - dset->t1) % 50 == 0)) { 
@@ -2067,7 +2122,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
 
     if (dataset_is_panel(dset)) {
-	maybe_print_panel_info(dset, fp, fz);
+	maybe_print_panel_info(dset, skip_padding, fp, fz);
     }
 
     alt_puts("</gretldata>\n", fp, fz);
@@ -2482,7 +2537,8 @@ static int process_string_tables (xmlDocPtr doc, xmlNodePtr node,
     return err;
 }
 
-static int process_panel_info (xmlNodePtr cur, DATASET *dset)
+static int process_panel_info (xmlNodePtr cur, DATASET *dset,
+			       int *repad)
 {
     xmlChar *tmp;
     double sd0 = 0.0;
@@ -2504,6 +2560,12 @@ static int process_panel_info (xmlNodePtr cur, DATASET *dset)
 	sd0 = atof((const char *) tmp);
 	free(tmp);
     } 
+
+    tmp = xmlGetProp(cur, (XUC) "skip-padding");
+    if (tmp != NULL) {
+	*repad = 1;
+	free(tmp);
+    }    
 
     if (pd > 0 && sd0 > 0.0) {
 	dset->panel_pd = pd;
@@ -2780,6 +2842,23 @@ static void check_for_daily_date_strings (DATASET *dset)
     }
 }
 
+static int replace_panel_padding (DATASET *dset)
+{
+    int uv = dset->v - 2;
+    int tv = dset->v - 1;
+    int err = 0;
+
+    if (!strcmp(dset->varname[uv], "unit__") &&
+	!strcmp(dset->varname[tv], "time__")) {
+	err = set_panel_structure_from_vars(uv, tv, dset);
+	if (!err) {
+	    dataset_drop_last_variables(dset, 2);
+	}
+    }
+
+    return err;
+}
+
 /**
  * gretl_read_gdt:
  * @fname: name of file to open for reading.
@@ -2801,7 +2880,7 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
     xmlDocPtr doc = NULL;
     xmlNodePtr cur;
     int gotvars = 0, gotobs = 0, err = 0;
-    int caldata = 0;
+    int caldata = 0, repad = 0;
     double gdtversion = 1.0;
     long fsz, progress = 0L;
     int in_c_locale = 0;
@@ -2905,7 +2984,7 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 		gretl_errmsg_set(_("Variables information is missing"));
 		err = 1;
 	    } else {
-		err = process_panel_info(cur, tmpset);
+		err = process_panel_info(cur, tmpset, &repad);
 	    }
 	}
 	if (!err) {
@@ -2929,6 +3008,10 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 
     if (!err && caldata && tmpset->S != NULL) {
 	check_for_daily_date_strings(tmpset);
+    }
+
+    if (!err && repad) {
+	err = replace_panel_padding(tmpset);
     }
 
     if (!err) {
