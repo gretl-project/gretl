@@ -30,7 +30,11 @@ strict order:
   and the underscore character. It cannot coincide with a native gretl
   command or function.
 \item The functions's \texttt{\emph{parameters}}, in the form of a
-  comma-separated list enclosed in parentheses.
+  comma-separated list enclosed in parentheses.\footnote{If you have
+    to pass many parameters, you might want to consider wrapping them
+    into a bundle to avoid syntax cluttering.} Note: parameters are
+  the only way hansl function can ``read'' something from ``the
+  outside''. In hansl, there is no such thing as global variables.
 \end{enumerate}
 
 Function parameters can be of any of the types shown below.
@@ -100,7 +104,9 @@ neighborhood of 1.
   (almost) arbitrary hansl code; in this case, it includes a comment,
   and an \cmd{if} block;
 \item the function ends with the \cmd{return} keyword, which exports
-  the result;
+  the result;\footnote{Beware: unlike other languages (eg Matlab), you cannot
+  return multiple outputs from a function. However, you can return a
+  bundle and stuff it with as many objects as you want.}
 \item the next lines provide a simple usage example; note that in the
   \cmd{printf} command, the two functions \cmd{ln()} and
   \cmd{quasi\_log()} are indistinguishable from a purely syntactic
@@ -158,12 +164,6 @@ gets double is simply the \emph{copy} of \texttt{x}: this is
 demonstrated by the second \cmd{print} statement.  If you need a
 function to modify its arguments, you ought to use pointers (see
 below).
-
-\begin{itemize}
-\item In hansl, you cannot use global variables
-\item If you have to pass many parameters, you might want to wrap them
-  into a bundle.
-\end{itemize}
 
 \subsection{Pointers}
 
