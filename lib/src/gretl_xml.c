@@ -1746,6 +1746,33 @@ static int row_is_padding (const DATASET *dset, int t)
     return 1;
 }
 
+static int open_gdt_write_stream (const char *fname, gretlopt opt,
+				  FILE **fpp, gzFile *fzp)
+{
+    int done = 0, err = 0;
+
+    if (opt & OPT_Z) {
+	int level = get_compression_option(STORE);
+
+	if (level != 0) {
+	    *fzp = gretl_gzopen(fname, "wb");
+	    if (*fzp == NULL) {
+		err = 1;
+	    } else {
+		gzsetparams(*fzp, level, Z_DEFAULT_STRATEGY);
+		done = 1;
+	    }
+	}
+    }
+
+    if (!done && !err) {
+	*fpp = gretl_fopen(fname, "wb");
+	if (*fpp == NULL) err = 1;
+    }
+
+    return err;
+}
+
 #define GDT_DIGITS 17
 
 /**
@@ -1769,7 +1796,6 @@ int gretl_write_gdt (const char *fname, const int *list,
 {
     FILE *fp = NULL;
     gzFile fz = Z_NULL;
-    int gz = (opt & OPT_Z);
     int tsamp = dset->t2 - dset->t1 + 1;
     int *pmax = NULL;
     char startdate[OBSLEN], enddate[OBSLEN];
@@ -1780,30 +1806,20 @@ int gretl_write_gdt (const char *fname, const int *list,
     int (*show_progress) (long, long, int) = NULL;
     long sz = 0L;
     int i, t, v, nvars, ntabs;
-    int have_markers, in_c_locale = 0;
+    int gz, have_markers, in_c_locale = 0;
     int skip_padding = 0;
     int padrows = 0;
     int uerr = 0;
-    int err = 0;
+    int err;
 
-    if (gz) {
-	fz = gretl_gzopen(fname, "wb");
-	if (fz == Z_NULL) {
-	    err = 1;
-	} else {
-	    int level = get_compression_option(STORE);
-
-	    gzsetparams(fz, level, Z_DEFAULT_STRATEGY);
-	}
-    } else {
-	fp = gretl_fopen(fname, "wb");
-	if (fp == NULL) err = 1;
-    }
+    err = open_gdt_write_stream(fname, opt, &fp, &fz);
 
     if (err) {
 	gretl_errmsg_sprintf(_("Couldn't open %s for writing"), fname);
 	return 1;
     }
+
+    gz = (fz != Z_NULL);
 
     if (list != NULL) {
 	nvars = list[0];

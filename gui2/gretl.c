@@ -2417,7 +2417,6 @@ static void auto_store (void)
     } else {
 	/* ensure there's no stale selection around */
 	set_selector_storelist(NULL);
-
 	if ((data_status & USER_DATA) && has_suffix(datafile, ".gdt")) {
 	    /* bypass filename selection */
 	    do_store(datafile, SAVE_DATA, NULL);

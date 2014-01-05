@@ -7842,7 +7842,7 @@ int do_store (char *filename, int action, gpointer data)
 	if (is_gzipped(datafile)) {
 	    data_status |= GZIPPED_DATA;
 	} 
-	set_sample_label(dataset);	
+	set_sample_label(dataset);
     }
 
     if (!err) {

@@ -879,15 +879,11 @@ static void record_compress_level (GtkWidget *b, gpointer p)
 
 static void add_compression_level_option (GtkWidget *filesel)
 {
-    GtkWidget *area, *hbox, *label, *spin, *wedge;
-
-    area = gtk_dialog_get_action_area(GTK_DIALOG(filesel));
-    gtk_box_set_homogeneous(GTK_BOX(area), FALSE);
+    GtkWidget *hbox, *label, *spin;
 
     hbox = gtk_hbox_new(FALSE, 5);
     label = gtk_label_new(_("Compression level (0 = none)"));
     spin = gtk_spin_button_new_with_range(0, 9, 1);
-    wedge = gtk_label_new("    ");
 
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), 6);
     gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin), 0);
@@ -896,11 +892,9 @@ static void add_compression_level_option (GtkWidget *filesel)
 
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), wedge, TRUE, TRUE, 5);
-
-    gtk_box_pack_start(GTK_BOX(area), hbox, TRUE, FALSE, 5);
-    gtk_box_reorder_child(GTK_BOX(area), hbox, 0);
     gtk_widget_show_all(hbox);
+    gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(filesel), 
+				      hbox);
 }
 
 static void gtk_file_selector (int action, FselDataSrc src, 
@@ -964,12 +958,10 @@ static void gtk_file_selector (int action, FselDataSrc src,
 					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					  okstr, GTK_RESPONSE_ACCEPT,
 					  NULL);
-#if GTK_MAJOR_VERSION == 3
-    /* FIXME this looks hellish with gtk 2 */
+
     if (action == SAVE_DATA || action == SAVE_DATA_AS) {
 	add_compression_level_option(filesel);
     }
-#endif
 
     gtk_dialog_set_default_response(GTK_DIALOG(filesel), GTK_RESPONSE_ACCEPT);
 
