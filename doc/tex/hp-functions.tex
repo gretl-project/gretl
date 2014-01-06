@@ -33,7 +33,7 @@ strict order:
   comma-separated list enclosed in parentheses.\footnote{If you have
     to pass many parameters, you might want to consider wrapping them
     into a bundle to avoid syntax cluttering.} Note: parameters are
-  the only way hansl function can ``read'' something from ``the
+  the only way hansl function can receive anything from ``the
   outside''. In hansl, there is no such thing as global variables.
 \end{enumerate}
 
@@ -56,15 +56,21 @@ Function parameters can be of any of the types shown below.
 
 Each element in the listing of parameters must include two terms: a
 type specifier, and the name by which the parameter shall be known
-within the function.  An example follows:
-%    
-\begin{code}
-function scalar myfunc (series y, list xvars, bool verbose)
-\end{code}
+within the function.  
 
-In order to get a feel for how functions work, here's a simple
-example:
+The \emph{function body} contains (almost) arbitrary hansl code, which
+should compute the \emph{return value}, that is the value the function
+is supposed to yield. Any variable declared inside the function is
+\emph{local}, so it will cease to exist when the function ends.
 
+The \cmd{return} command is used to stop
+execution of the code inside the function and deliver its result to
+the calling code (note that this typically happens at the end of the
+function body, but doesn't have to).  The function definition must end
+with the expression \verb|end function|, on a line of its own.
+
+In order to get a feel for how functions work in practice, here's a
+simple example:
 \begin{code}
 function scalar quasi_log(scalar x)
 /* popular approximation to the natural logarithm
@@ -100,9 +106,8 @@ neighborhood of 1.
 \item between the round brackets, the arguments follow; in this case,
   we only have one, which we call \texttt{x} and is assumed to be a
   scalar;
-\item on the next line, the function definition begins: this can be
-  (almost) arbitrary hansl code; in this case, it includes a comment,
-  and an \cmd{if} block;
+\item on the next line, the function definition begins; in this case,
+  it includes a comment and an \cmd{if} block;
 \item the function ends with the \cmd{return} keyword, which exports
   the result;\footnote{Beware: unlike other languages (eg Matlab), you cannot
   return multiple outputs from a function. However, you can return a
@@ -140,9 +145,6 @@ inside the function is a copy of the original argument. You may modify
 it, but you'll be just modifying the copy. The following example
 should make this point clear:
 \begin{code}
-set echo off
-set messages off
-
 function void f(scalar x)
     x = x*2
     print x
@@ -155,12 +157,11 @@ print x
 Running the above code yields
 \begin{code}
               x =  6.0000000
-
               x =  3.0000000
 \end{code}
 The first \cmd{print} statement happens inside the function, and the
 displayed value is 6 because \verb|x| is doubled; however, what really
-gets double is simply the \emph{copy} of \texttt{x}: this is
+gets doubled is simply the \emph{copy} of \texttt{x}: this is
 demonstrated by the second \cmd{print} statement.  If you need a
 function to modify its arguments, you ought to use pointers (see
 below).
@@ -174,18 +175,75 @@ associated parameter name, as in
 \begin{code}
 function scalar myfunc (series *y, scalar *b)
 \end{code}
+This indicates that \verb|*y|, isn't a series, but a \emph{pointer} to
+a series.  In practice, a pointer to a variable contains the memory
+address at which the variable is stored.
 
-The meaning of this modification is related to the use of pointer
-arguments in the C programming language.
+This is usually considered a bit mysterious by people unfamiliar with
+the C programming language, so allow us to explain how pointers work
+by means of a (quite silly) example: suppose you set up a barber
+shop. Ideally, your customers would walk through your shop door, sit
+on a chair and have their hair trimmed or their beard shaved. However,
+local regulations forbid you to modify anything going through your
+shop door; of course, you wouldn't do much business if people must
+walk out of your barber shop with their hair untouched. Nevertheless,
+you have a simple way to go around this limitation: your customers can
+come to your shop, tell you their home address and walk out. Then,
+nobody stops you from going to their place and excercise your fine
+profession.
 
-For matrix arguments, this is a nice way to write faster functions, as
-producing a copy of a large matrix can be quite
-time-consuming. However, the \cmd{const} qualifier achieves the same
-effect.
+Unlike C, you have to take no special precaution inside the function
+body to distinguish the variable from its address\footnote{In C, this
+  would be called \emph{dereferencing} the pointer.}. You just use the
+variable's name. In order to supply the address of a variable when you
+invoke the function, you use the ampersand (\verb|&|) operator. An
+example should, hopefully, make this clear; the following code
+\begin{code}
+function void swap(scalar *a, scalar *b)
+    scalar tmp = a
+    a = b
+    b = tmp
+end function
+
+scalar x = 0
+scalar y = 1000000
+swap(&x, &y)
+print x y
+\end{code}
+gives
+\begin{code}
+              x =  1000000.0
+              y =  0.0000000
+\end{code}
+so \texttt{x} and \texttt{y} have in fact been swapped. How?
+
+First you have the function definition, in which the arguments are
+pointers to scalars. Inside the function body, the distinction is
+moot, as \verb|a| is taken to mean ``the scalar that you'll find at
+the address \verb|*a|, which you'll get as the first parameter'' (and
+likewise for \verb|b|). The rest of the function simply swaps
+\texttt{a} and \texttt{b} by means of a local temporary variable.
+
+Outside the function, we first initialize the two scalars \texttt{x}
+to 0 and \texttt{y} to a big number. Then we call the function.  When
+the function is called, it's given as arguments \verb|&a| and
+\verb|&b|, which hansl identifies as ``the memory address of'' the two
+scalars \texttt{a} and \texttt{b}, respectively.
+
+Writing a function with pointer arguments has two main consequences:
+first, as we just saw, it makes it possible to modify the function
+arguments. Second, it avoids the computational cost of having to
+allocate memory for a copy of the arguments and performing the copy
+operation; such cost is proportional to the size of the argument. 
+Hence, for matrix arguments, this is a nice way to write faster
+functions, as producing a copy of a large matrix can be quite
+time-consuming.\footnote{However, the \cmd{const} qualifier achieves the same
+effect. See \GUG\ for further details.}
 
 \section{Recursion}
 
-Obligatory factorial example
+Hansl functions can be recursive; what follows is the obligatory
+factorial example:
 \begin{code}
 function scalar factorial(scalar n)
     if (n<0) || (n>floor(n))
