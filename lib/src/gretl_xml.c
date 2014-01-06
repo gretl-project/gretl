@@ -1908,8 +1908,10 @@ int gretl_write_gdt (const char *fname, const int *list,
 
 	if (dsize > MB10) {
 	    /* we have more than 10 MB of panel data */
+	    fprintf(stderr, "panel: testing for skip-padding...\n");
 	    padrows = panel_padding_rows(dset);
-	    if (padrows > 0.3 * dset->n) {
+	    if (padrows > 0.25 * dset->n) {
+		fprintf(stderr, "skip-padding: dropping %d rows\n", padrows);
 		skip_padding = 1;
 	    }
 	}

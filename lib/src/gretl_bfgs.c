@@ -785,9 +785,9 @@ static double quad_slen (int n, int *pndelta, double *b,
 {
     double d, f1 = *pf;
     double steplen = 1.0, endpoint = 1.0;
-    int ndelta, crit_ok = 0, fcount = 0;
+    int ndelta, crit_ok = 0, fcount = 0, f1_done = 0;
     double safelen = 1.0e-12;
-    double incredible = -1.0e20;
+    double incredible = -1.0e12;
 
     /* Below: iterate so long as (a) we haven't achieved an acceptable
        value of the criterion and (b) there is still some prospect
@@ -799,9 +799,11 @@ static double quad_slen (int n, int *pndelta, double *b,
 	ndelta = coeff_at_end(b, X, t, n, endpoint);
 
 	if (ndelta > 0) {
-	    f1 = cfunc(b, data);
+	    if (!f1_done) {
+		f1 = cfunc(b, data);
+		fcount++;
+	    }
 	    d = -g0 * endpoint * acctol;
-	    fcount++;
 
 	    /* find the optimal steplength by quadratic interpolation; 
 	       inspired by Kelley (1999), "Iterative Methods for Optimization", 
@@ -813,18 +815,25 @@ static double quad_slen (int n, int *pndelta, double *b,
 		   step. FIXME execution can come back here indefinitely.
 		*/
 		endpoint *= STEPFRAC;
+#if BFGS_DEBUG
+		fprintf(stderr, "quad_slen: f1 is NA; trimming\n");
+#endif
 	    } else if ((f1 - f0) < incredible) {
 		/* Same as above, with the exception that the objective
 		   function technically computes, but returns a fishy value.
 		*/
 		endpoint *= STEPFRAC;
+#if BFGS_DEBUG
+		fprintf(stderr, "opt_slen: %g is incredible; trimming\n", 
+			f1 - f0);
+#endif
 	    } else if (f1 < f0 + d) {
 		/* function computes, but goes down: try quadratic approx */
 		steplen = 0.5 * endpoint * g0 / (f0 - f1 + g0);
 #if BFGS_DEBUG
-		fprintf(stderr, "opt_slen, case 2: f0 = %g, f1 = %g, g0 = %g\n", 
+		fprintf(stderr, "quad_slen, interpolate: f0 = %g, f1 = %g, g0 = %g\n", 
 			f0, f1, g0);
-		fprintf(stderr, "opt_slen, case 2: endpoint = %g, "
+		fprintf(stderr, "quad_slen, interpolate: endpoint = %g, "
 			"steplen = %g\n", endpoint, steplen);
 #endif
 		    
@@ -839,17 +848,20 @@ static double quad_slen (int n, int *pndelta, double *b,
 		    f1 = cfunc(b, data);
 		    fcount++;		    
 #if BFGS_DEBUG
-		    fprintf(stderr, "opt_slen, quadratic endopint: f1 = %g\n", f1); 
+		    fprintf(stderr, "quad_slen, interpolate: %g is safe\n", steplen); 
 #endif
 		    crit_ok = !na(f1) && (f1 >= f0 + d);
 		    /* if the function still goes down (or berserk), let's 
 		       trim the endpoint one more time and retry */
 #if BFGS_DEBUG
-		    fprintf(stderr, "quadratic: slen = %g, crit_ok = %d\n",
-			    steplen, crit_ok);
+		    fprintf(stderr, "quad_slen, interpolate: crit_ok = %d"
+			    " (f1 = %g)\n", crit_ok, f1);
 #endif
 		    if (!crit_ok) {
-			endpoint *= STEPFRAC;
+			endpoint = steplen;
+			f1_done = 1;
+		    } else {
+			f1_done = 0;
 		    }
 		}
 	    } else {
