@@ -118,10 +118,10 @@ static ProgressData *build_progress_window (int flag, int *cancel)
     return pdata;
 }
 
-int show_progress (long res, long expected, int flag)
+int show_progress (gint64 res, gint64 expected, int flag)
 {
     static ProgressData *pdata;
-    static long offs;
+    static gint64 offs;
     static int cancel;
 
     if (expected == 0) {
@@ -143,7 +143,7 @@ int show_progress (long res, long expected, int flag)
 	/* initialize the progress bar */
 	gchar *bytestr = NULL;
 
-	offs = 0L;
+	offs = 0;
 	cancel = 0;
 
 	pdata = build_progress_window(flag, &cancel);
@@ -155,7 +155,7 @@ int show_progress (long res, long expected, int flag)
 			 G_CALLBACK(destroy_progress),
 			 &pdata);
 
-	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), (gdouble) 0);
+	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), 0.0);
 
 	if (flag == SP_LOAD_INIT) {
 	    bytestr = g_strdup_printf("%s %ld Kbytes", _("Retrieving"),

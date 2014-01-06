@@ -1592,8 +1592,8 @@ int gretl_write_matrix_as_gdt (const char *fname,
     char datname[MAXLEN];
     void *handle = NULL;
     char *xmlbuf = NULL;
-    int (*show_progress) (long, long, int) = NULL;
-    long sz = 0L;
+    int (*show_progress) (gint64, gint64, int) = NULL;
+    gint64 sz = 0;
     int T = X->rows;
     int k = X->cols;
     int in_c_locale = 0;
@@ -1610,13 +1610,13 @@ int gretl_write_matrix_as_gdt (const char *fname,
     if (sz > 100000) {
 	fprintf(stderr, I_("Writing %ld Kbytes of data\n"), sz / 1024);
     } else {
-	sz = 0L;
+	sz = 0;
     }
 
     if (sz) {
 	show_progress = get_plugin_function("show_progress", &handle);
 	if (show_progress == NULL) {
-	    sz = 0L;
+	    sz = 0;
 	}
     }
 
@@ -1773,8 +1773,6 @@ static int open_gdt_write_stream (const char *fname, gretlopt opt,
     return err;
 }
 
-#define GDT_DIGITS 17
-
 /**
  * gretl_write_gdt:
  * @fname: name of file to write.
@@ -1803,12 +1801,12 @@ int gretl_write_gdt (const char *fname, const int *list,
     char numstr[128];
     char xmlbuf[256];
     void *handle = NULL;
-    int (*show_progress) (long, long, int) = NULL;
-    long sz = 0L;
+    int (*show_progress) (gint64, gint64, int) = NULL;
+    gint64 dsize = 0;
     int i, t, v, nvars, ntabs;
     int gz, have_markers, in_c_locale = 0;
     int skip_padding = 0;
-    int padrows = 0;
+    int fast = 0, gdt_digits = 17;
     int uerr = 0;
     int err;
 
@@ -1827,40 +1825,44 @@ int gretl_write_gdt (const char *fname, const int *list,
 	nvars = dset->v - 1;
     }
 
-    pmax = malloc(nvars * sizeof *pmax);
-    if (pmax == NULL) {
-	err = E_ALLOC;
-	goto cleanup;
-    } 
+    dsize = tsamp * nvars * sizeof(double);
 
-    sz = (tsamp * nvars * sizeof(double));
-    if (sz > 100000) {
-	fprintf(stderr, I_("Writing %ld Kbytes of data\n"), sz / 1024);
-	if (!progress) {
-	    sz = 0L;
+    if (dsize > 100000) {
+	fprintf(stderr, I_("Writing %ld Kbytes of data\n"), (long) (dsize / 1024));
+	if (dsize > 1024 * 1024 * 10) {
+	    gdt_digits = 15;
+	    fast = 1;
 	}
-    } else {
-	sz = 0L;
+    } else if (progress) {
+	/* suppress progress bar for smaller data */
+	progress = 0;
     }
 
-    if (sz) {
+    if (!fast) {
+	pmax = malloc(nvars * sizeof *pmax);
+	if (pmax == NULL) {
+	    err = E_ALLOC;
+	    goto cleanup;
+	}
+	for (i=0; i<nvars; i++) {
+	    int prec;
+
+	    v = savenum(list, i+1);
+	    prec = get_precision(&dset->Z[v][dset->t1], tsamp, gdt_digits);
+	    if (prec < gdt_digits) {
+		pmax[i] = prec;
+	    } else {
+		pmax[i] = PMAX_NOT_AVAILABLE;
+	    }
+	}	    
+    }
+
+    if (progress) {
 	show_progress = get_plugin_function("show_progress", &handle);
 	if (show_progress == NULL) {
-	    sz = 0L;
-	}
-    }
-
-    if (sz) (*show_progress)(0, sz, SP_SAVE_INIT); 
-
-    for (i=0; i<nvars; i++) {
-	int prec;
-
-	v = savenum(list, i+1);
-	prec = get_precision(&dset->Z[v][dset->t1], tsamp, GDT_DIGITS);
-	if (prec < GDT_DIGITS) {
-	    pmax[i] = prec;
+	    progress = 0;
 	} else {
-	    pmax[i] = PMAX_NOT_AVAILABLE;
+	    (*show_progress)(0, dsize, SP_SAVE_INIT);
 	}
     }
 
@@ -1902,18 +1904,14 @@ int gretl_write_gdt (const char *fname, const int *list,
     have_markers = dataset_has_markers(dset);
 
     if (dataset_is_panel(dset) && !have_markers && 
-	nvars == dset->v - 1) {
-	guint64 dsize = dset->n * dset->v * 8;
-	guint64 MB10 = 1024 * 1024 * 10;
+	nvars == dset->v - 1 && fast) {
+	/* we have more than 10 MB of panel data */
+	int padrows = panel_padding_rows(dset);
 
-	if (dsize > MB10) {
-	    /* we have more than 10 MB of panel data */
-	    fprintf(stderr, "panel: testing for skip-padding...\n");
-	    padrows = panel_padding_rows(dset);
-	    if (padrows > 0.25 * dset->n) {
-		fprintf(stderr, "skip-padding: dropping %d rows\n", padrows);
-		skip_padding = 1;
-	    }
+	if (padrows > 0.25 * dset->n) {
+	    fprintf(stderr, "skip-padding: dropping %d rows\n", padrows);
+	    skip_padding = 1;
+	    tsamp -= padrows;
 	}
     }
 
@@ -2052,10 +2050,10 @@ int gretl_write_gdt (const char *fname, const int *list,
     alt_puts("<observations ", fp, fz);
     if (gz) {
 	gzprintf(fz, "count=\"%d\" labels=\"%s\"",
-		 tsamp - padrows, (have_markers)? "true" : "false");
+		 tsamp, (have_markers)? "true" : "false");
     } else {
 	fprintf(fp, "count=\"%d\" labels=\"%s\"",
-		tsamp - padrows, (have_markers)? "true" : "false");
+		tsamp, (have_markers)? "true" : "false");
     }
     alt_puts(">\n", fp, fz);
 
@@ -2079,8 +2077,8 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    v = savenum(list, i);
 	    if (na(dset->Z[v][t])) {
 		strcpy(numstr, "NA ");
-	    } else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		sprintf(numstr, "%.*g ", GDT_DIGITS, dset->Z[v][t]);
+	    } else if (pmax == NULL || pmax[i-1] == PMAX_NOT_AVAILABLE) {
+		sprintf(numstr, "%.*g ", gdt_digits, dset->Z[v][t]);
 	    } else {
 		sprintf(numstr, "%.*f ", pmax[i-1], dset->Z[v][t]);
 	    }
@@ -2095,7 +2093,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	}
 	alt_puts("</obs>\n", fp, fz);
 
-	if (sz && t && ((t - dset->t1) % 50 == 0)) { 
+	if (progress && t && ((t - dset->t1) % 50 == 0)) { 
 	    (*show_progress) (50, tsamp, SP_NONE);
 	}
     }
@@ -2151,7 +2149,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	gretl_pop_c_numeric_locale();
     }
 
-    if (sz) {
+    if (progress) {
 	(*show_progress)(0, dset->t2 - dset->t1 + 1, SP_FINISH);
 	close_plugin(handle);
     } 
@@ -2333,7 +2331,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     xmlChar *tmp;
     int n, i, t;
     void *handle;
-    int (*show_progress) (long, long, int) = NULL;
+    int (*show_progress) (gint64, gint64, int) = NULL;
     int err = 0;
 
     tmp = xmlGetProp(node, (XUC) "count");
@@ -2353,7 +2351,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     if (progress > 0) {
 	show_progress = get_plugin_function("show_progress", &handle);
 	if (show_progress == NULL) {
-	    progress = 0L;
+	    progress = 0;
 	}
     }
 
@@ -2450,7 +2448,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	}
 
 	if (progress && t > 0 && t % 50 == 0) {
-	    (*show_progress) (50L, (long) dset->n, SP_NONE);
+	    (*show_progress) (50, dset->n, SP_NONE);
 	}
     }
 
@@ -2460,7 +2458,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 #if GDT_DEBUG
 	fprintf(stderr, "finalizing progress bar (n = %d)\n", dset->n);
 #endif
-	(*show_progress)(0L, (long) dset->n, SP_FINISH);
+	(*show_progress)(0, dset->n, SP_FINISH);
 	close_plugin(handle);
     }
 

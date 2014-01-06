@@ -158,7 +158,7 @@ static int progress_func (void *clientp, double dltotal, double dlnow,
 
 static void urlinfo_set_show_progress (urlinfo *u)
 {
-    int (*show_progress) (long, long, int) = NULL;
+    int (*show_progress) (gint64, gint64, int) = NULL;
     void *handle;
 
     show_progress = get_plugin_function("show_progress", 

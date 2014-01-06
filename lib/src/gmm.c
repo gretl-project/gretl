@@ -1624,7 +1624,7 @@ static int gmm_normalize_wts_1 (nlspec *s)
 	gretl_matrix_print(s->oc->sum, "s->oc->sum");
 #endif
 
-	if (!na(lc) && (lc > 5 || lc < -5)) {
+	if (!na(lc) && (lc > 4 || lc < -4)) { /* was 5 */
 	    if (lc > 0) {
 		m = floor(lc/2);
 	    } else {
