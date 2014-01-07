@@ -477,6 +477,7 @@ struct gretl_option gretl_opts[] = {
     { STORE,    OPT_X, "omit-obs", 0 },
     { STORE,    OPT_E, "comment", 2 },
     { STORE,    OPT_I, "decimal-comma", 0 },
+    { STORE,    OPT_B, "binary", 0 },       /* experiment */
     { SUMMARY,  OPT_B, "by", 2 },
     { SUMMARY,  OPT_S, "simple", 0 },
     { SUMMARY,  OPT_X, "matrix", 2 },

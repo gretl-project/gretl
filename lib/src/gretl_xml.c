@@ -1733,11 +1733,11 @@ static void maybe_print_panel_info (const DATASET *dset,
     }
 }
 
-static int row_is_padding (const DATASET *dset, int t)
+static int row_is_padding (const DATASET *dset, int t, int vmax)
 {
     int i;
 
-    for (i=1; i<dset->v; i++) {
+    for (i=1; i<vmax; i++) {
 	if (!na(dset->Z[i][t])) {
 	    return 0;
 	}
@@ -1773,6 +1773,138 @@ static int open_gdt_write_stream (const char *fname, gretlopt opt,
     return err;
 }
 
+static int bdt_write (const char *fname, const DATASET *dset, 
+		      const int *list, int nvars, int nrows)
+{
+    char *bname;
+    FILE *fp;
+    int T = dset->t2 - dset->t1 + 1;
+    size_t wrote;
+    int i, v, err = 0;
+
+    bname = switch_ext_new(fname, "bdt");
+    fp = gretl_fopen(bname, "wb");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    if (nrows < T) {
+	/* skip-padding is in force */
+	double *tmp = NULL;
+	int uv = 0, tv = 0;
+	int s, t, nv;
+
+	err = dataset_add_series((DATASET *) dset, 2);
+	if (!err) {
+	    tmp = malloc(nrows * sizeof *tmp);
+	    if (tmp == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+
+	if (!err) {
+	    uv = dset->v - 2;
+	    tv = dset->v - 1;
+	    nv = dset->v - 2;
+	}
+	
+	for (t=dset->t1; t<=dset->t2 && !err; t++) {
+	    if (!row_is_padding(dset, t, nv)) {
+		dset->Z[uv][t] = 1 + t / dset->pd;
+		dset->Z[tv][t] = t % dset->pd + 1;
+	    }
+	}
+
+	nv = nvars + 2;
+	for (i=1; i<=nv && !err; i++) {
+	    if (i <= nvars) {
+		v = savenum(list, i);
+	    } else {
+		v = (i == nvars + 1)? uv : tv;
+	    }
+	    s = 0;
+	    for (t=dset->t1; t<=dset->t2 && !err; t++) {
+		if (dset->Z[uv][t] != 0.0) {
+		    tmp[s++] = dset->Z[v][t];
+		}
+	    }
+	    wrote = fwrite(tmp, sizeof(double), nrows, fp);
+	    if (wrote != nrows) {
+		err = E_DATA;
+	    }
+	}
+
+	free(tmp);
+	if (uv > 0) {
+	    dataset_drop_last_variables((DATASET *) dset, 2);
+	}
+    } else {
+	for (i=1; i<=nvars && !err; i++) {
+	    v = savenum(list, i);
+	    wrote = fwrite(dset->Z[v] + dset->t1, sizeof(double), 
+			   T, fp);
+	    if (wrote != T) {
+		err = E_DATA;
+	    }
+	}
+    }
+	
+    fclose(fp);
+    free(bname);
+
+    return err;
+}
+
+static int bdt_read (const char *fname, const DATASET *dset)
+{
+    char *bname;
+    FILE *fp;
+    int T = dset->n;
+    size_t got;
+    int i, err = 0;
+
+    bname = switch_ext_new(fname, "bdt");
+    fp = gretl_fopen(bname, "rb");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    for (i=1; i<dset->v && !err; i++) {
+	got = fread(dset->Z[i], sizeof(double), T, fp);
+	if (got != T) {
+	    err = E_DATA;
+	}
+    }
+	
+    fclose(fp);
+    free(bname);
+
+    return err;
+}
+
+#if 0
+static int p15_OK (const DATASET *dset, int i)
+{
+    const double *x = dset->Z[i];
+    char *s, numstr[32];
+    int t, n = 0;
+    int ret = 0;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (!na(x[t])) {
+	    sprintf(numstr, "%#.17g", x[t]);
+	    len = strlen(numstr);
+	    s = numstr + len - 1;
+	    while (*s-- == '0') {
+		len--;
+	    }
+	}
+    }
+
+    return ret;
+}
+#endif
+
 /**
  * gretl_write_gdt:
  * @fname: name of file to write.
@@ -1805,8 +1937,8 @@ int gretl_write_gdt (const char *fname, const int *list,
     gint64 dsize = 0;
     int i, t, v, nvars, ntabs;
     int gz, have_markers, in_c_locale = 0;
-    int skip_padding = 0;
-    int fast = 0, gdt_digits = 17;
+    int binary = 0, skip_padding = 0;
+    int fastfmt = 0, gdt_digits = 17;
     int uerr = 0;
     int err;
 
@@ -1825,20 +1957,25 @@ int gretl_write_gdt (const char *fname, const int *list,
 	nvars = dset->v - 1;
     }
 
+    if (opt & OPT_B) {
+	binary = 1;
+	progress = 0;
+    }
+
     dsize = tsamp * nvars * sizeof(double);
 
     if (dsize > 100000) {
 	fprintf(stderr, I_("Writing %ld Kbytes of data\n"), (long) (dsize / 1024));
 	if (dsize > 1024 * 1024 * 10) {
 	    gdt_digits = 15;
-	    fast = 1;
+	    fastfmt = 1;
 	}
     } else if (progress) {
 	/* suppress progress bar for smaller data */
 	progress = 0;
     }
 
-    if (!fast) {
+    if (!binary && !fastfmt) {
 	pmax = malloc(nvars * sizeof *pmax);
 	if (pmax == NULL) {
 	    err = E_ALLOC;
@@ -1896,15 +2033,21 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
 
     if (gz) {
-	gzprintf(fz, "type=\"%s\">\n", data_structure_string(dset->structure));
+	gzprintf(fz, "type=\"%s\"", data_structure_string(dset->structure));
     } else {
-	fprintf(fp, "type=\"%s\">\n", data_structure_string(dset->structure));
+	fprintf(fp, "type=\"%s\"", data_structure_string(dset->structure));
+    }
+
+    if (binary) {
+	alt_puts(" binary=\"true\">\n", fp, fz);
+    } else {
+	alt_puts(">\n", fp, fz);
     }
 
     have_markers = dataset_has_markers(dset);
 
     if (dataset_is_panel(dset) && !have_markers && 
-	nvars == dset->v - 1 && fast) {
+	nvars == dset->v - 1 /* && fastfmt */) {
 	/* we have more than 10 MB of panel data */
 	int padrows = panel_padding_rows(dset);
 
@@ -2057,8 +2200,15 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
     alt_puts(">\n", fp, fz);
 
+    if (binary) {
+	err = bdt_write(fname, dset, list, nvars, tsamp);
+	if (!have_markers) {
+	    goto binary_done;
+	}
+    }
+
     for (t=dset->t1; t<=dset->t2; t++) {
-	if (skip_padding && row_is_padding(dset, t)) {
+	if (skip_padding && row_is_padding(dset, t, dset->v)) {
 	    continue;
 	}
 	alt_puts("<obs", fp, fz);
@@ -2072,6 +2222,10 @@ int gretl_write_gdt (const char *fname, const int *list,
 		}
 	    }
 	} 
+	if (binary) {
+	    alt_puts(" />\n", fp, fz);
+	    continue;
+	}
 	alt_puts(">", fp, fz);
 	for (i=1; i<=nvars; i++) {
 	    v = savenum(list, i);
@@ -2097,6 +2251,8 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    (*show_progress) (50, tsamp, SP_NONE);
 	}
     }
+
+ binary_done:
 
     alt_puts("</observations>\n", fp, fz);
 
@@ -2324,8 +2480,9 @@ static int process_values (DATASET *dset, int t, char *s)
 
 #define GDT_DEBUG 0
 
-static int process_observations (xmlDocPtr doc, xmlNodePtr node, 
-				 DATASET *dset, long progress)
+static int read_observations (xmlDocPtr doc, xmlNodePtr node, 
+			      DATASET *dset, long progress,
+			      int binary, const char *fname)
 {
     xmlNodePtr cur;
     xmlChar *tmp;
@@ -2348,6 +2505,10 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	return E_DATA;
     }
 
+    if (binary) {
+	progress = 0;
+    }
+
     if (progress > 0) {
 	show_progress = get_plugin_function("show_progress", &handle);
 	if (show_progress == NULL) {
@@ -2361,10 +2522,6 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    if (dataset_allocate_obs_markers(dset)) {
 		return E_ALLOC;
 	    }
-	} else if (strcmp((char *) tmp, "false")) {
-	    gretl_errmsg_set(_("labels attribute for observations must be "
-			       "'true' or 'false'"));
-	    return E_DATA;
 	}
 	free(tmp);
     } else {
@@ -2388,6 +2545,13 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	dset->Z[0][t] = 1.0;
     }
 
+    if (binary) {
+	err = bdt_read(fname, dset);
+	if (!dset->markers) {
+	    goto bailout;
+	}
+    }
+
     /* now get individual obs info: labels and values */
     cur = node->xmlChildrenNode;
     while (cur && xmlIsBlankNode(cur)) {
@@ -2402,7 +2566,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     if (progress) {
 	(*show_progress)(0L, progress, SP_LOAD_INIT);
 #if GDT_DEBUG
-	fprintf(stderr, "process_observations: inited progess bar (n=%d)\n",
+	fprintf(stderr, "read_observations: inited progess bar (n=%d)\n",
 		dset->n);
 #endif
     }
@@ -2420,6 +2584,11 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		    gretl_errmsg_sprintf(_("Case marker missing at obs %d"), t+1);
 		    return E_DATA;
 		}
+	    }
+
+	    if (binary) {
+		t++;
+		continue;
 	    }
 
 	    tmp = xmlNodeListGetRawString(doc, cur->xmlChildrenNode, 1);
@@ -2738,6 +2907,21 @@ static int xml_get_endobs (xmlNodePtr node, char *endobs, int caldata)
     return err;
 }
 
+static int gdt_binary_data (xmlNodePtr node)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) "binary");
+    int ret = 0;
+    
+    if (tmp != NULL) {
+	if (!strcmp((char *) tmp, "true")) {
+	    ret = 1;
+	}
+	free(tmp);
+    }
+
+    return ret;
+}
+
 static int lag_from_label (int v, const DATASET *dset, int *lag)
 {
     const char *test = series_get_label(dset, v);
@@ -2900,6 +3084,7 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
     double gdtversion = 1.0;
     long fsz, progress = 0L;
     int in_c_locale = 0;
+    int binary = 0;
 
     gretl_error_clear();
 
@@ -2961,7 +3146,9 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
     err = xml_get_endobs(cur, tmpset->endobs, caldata);
     if (err) {
 	goto bailout;
-    }     
+    }
+
+    binary = gdt_binary_data(cur);
 
 #if GDT_DEBUG
     fprintf(stderr, "starting to walk XML tree...\n");
@@ -2983,7 +3170,8 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 	    if (!gotvars) {
 		gretl_errmsg_set(_("Variables information is missing"));
 		err = 1;
-	    } else if (process_observations(doc, cur, tmpset, progress)) {
+	    } else if (read_observations(doc, cur, tmpset, progress,
+					 binary, fname)) {
 		err = 1;
 	    } else {
 		gotobs = 1;
