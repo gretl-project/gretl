@@ -97,10 +97,6 @@ int nlspec_add_weights (nlspec *s, const char *str);
 
 void nlspec_print_gmm_info (const nlspec *spec, PRN *prn);
 
-void nlspec_set_using_gmp (nlspec *s);
-
-int nlspec_using_gmp (const nlspec *spec);
-
 void maybe_add_gmm_residual (MODEL *pmod, const nlspec *spec, 
 			     const DATASET *dset);
 

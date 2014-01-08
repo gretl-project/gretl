@@ -53,8 +53,7 @@ enum {
     NL_ANALYTICAL = 1 << 0,
     NL_AUTOREG    = 1 << 1,
     NL_AHESS      = 1 << 2,
-    NL_NEWTON     = 1 << 3,
-    NL_GMP        = 1 << 4
+    NL_NEWTON     = 1 << 3
 } nl_flags;
 
 struct parm_ {
@@ -3855,14 +3854,4 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
     gretl_matrix_free(fcmat);
 
     return err;
-}
-
-void nlspec_set_using_gmp (nlspec *s)
-{
-    s->flags |= NL_GMP;
-}
-
-int nlspec_using_gmp (const nlspec *spec)
-{
-    return (spec->flags & NL_GMP)? 1 : 0;
 }

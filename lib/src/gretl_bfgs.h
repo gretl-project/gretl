@@ -105,20 +105,4 @@ void BFGS_defaults (int *maxit, double *tol, int ci);
 
 int optimizer_get_matrix_name (const char *fncall, char *name);
 
-/* GMP-related */
-
-int mp_BFGS (double *b, int n, int maxit, double reltol,
-	     int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
-	     int crittype, void *data, gretlopt opt, PRN *prn);
-
-double mp_gmm_criterion (const gretl_matrix *A,
-			 const gretl_matrix *B,
-			 const gretl_matrix *S,
-			 const gretl_matrix *W,
-			 gretl_matrix *dsum,
-			 gretl_matrix *dtmp,
-			 int noc, int *err);
-
-void mp_gmm_cleanup (void);
-
 #endif /* GRETL_BFGS_H */

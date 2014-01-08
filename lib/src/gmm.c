@@ -1020,7 +1020,7 @@ static int gmm_multiply_ocs (nlspec *s)
     return err;
 }
 
-static double regular_gmm_criterion (nlspec *s)
+static double gmm_criterion (nlspec *s)
 {
     double crit = 0.0;
     gretl_matrix *sum = s->oc->sum;
@@ -1071,14 +1071,7 @@ static double get_gmm_crit (const double *b, void *data)
 	return NADBL;
     }
 
-    if (nlspec_using_gmp(s)) {
-	s->crit = mp_gmm_criterion(s->oc->e, s->oc->Z,
-				   s->oc->S, s->oc->W,
-				   s->oc->sum, s->oc->tmp,
-				   s->oc->noc, &err);
-    } else {
-	s->crit = regular_gmm_criterion(s);
-    }
+    s->crit = gmm_criterion(s);
 
 #if GMM_DEBUG > 2
     gretl_matrix_print(s->oc->sum, "GMM: s->oc->sum");
@@ -1741,11 +1734,6 @@ int gmm_calculate (nlspec *s, PRN *prn)
 	}
     }
 
-    if (getenv("GRETL_GMM_GMP") != NULL) {
-	mpf_set_default_prec(get_mp_bits());
-	nlspec_set_using_gmp(s);
-    }
-
     if (s->opt & OPT_I) {
 	/* iterate */
 	oldcoeff = copyvec(s->coeff, s->ncoeff);
@@ -1776,17 +1764,10 @@ int gmm_calculate (nlspec *s, PRN *prn)
 #endif
 	s->crit = 0.0;
 
-	if (nlspec_using_gmp(s)) {
-	    err = mp_BFGS(s->coeff, s->ncoeff, maxit, s->tol, 
-			  &s->fncount, &s->grcount, 
-			  get_gmm_crit, C_GMM, s,
-			  iopt, s->prn);
-	} else {
-	    err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
-			   &s->fncount, &s->grcount, 
-			   get_gmm_crit, C_GMM, NULL, s,
-			   NULL, iopt, s->prn);
-	}
+	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
+		       &s->fncount, &s->grcount, 
+		       get_gmm_crit, C_GMM, NULL, s,
+		       NULL, iopt, s->prn);
 
 #if GMM_DEBUG
 	fprintf(stderr, "GMM BFGS: err = %d\n", err);
@@ -1848,10 +1829,6 @@ int gmm_calculate (nlspec *s, PRN *prn)
     }
 
     gmm_HAC_cleanup();
-
-#if GMM_GMP
-    mp_gmm_cleanup();
-#endif
 
     return err;    
 }

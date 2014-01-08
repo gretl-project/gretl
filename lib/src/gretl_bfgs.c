@@ -2528,5 +2528,3 @@ int gretl_simann (double *theta, int n, int maxit,
 
     return err;
 }
-
-#include "bfgs_mp.c"
