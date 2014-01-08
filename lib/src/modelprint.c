@@ -682,7 +682,7 @@ static double durbins_h (const MODEL *pmod)
 {
     int ldv = gretl_model_get_int(pmod, "ldepvar");
     double se = pmod->sderr[ldv - 2];
-    int T = pmod->nobs - 1;
+    int T = pmod->nobs;
     double h = NADBL;
 
     if (pmod->ess <= 0.0 || na(se) || (T * se * se) >= 1.0 ||
