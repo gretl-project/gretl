@@ -25,6 +25,7 @@
 #include "gretl_func.h"
 #include "gretl_string_table.h"
 #include "dbread.h"
+#include "swap_bytes.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1774,18 +1775,29 @@ static int open_gdt_write_stream (const char *fname, gretlopt opt,
 }
 
 static int bdt_write (const char *fname, const DATASET *dset, 
-		      const int *list, int nvars, int nrows)
+		      const int *list, int nvars, int nrows,
+		      gretlopt opt)
 {
     char *bname;
-    FILE *fp;
+    FILE *fp = NULL;
+    gzFile fz = Z_NULL;   
     int T = dset->t2 - dset->t1 + 1;
+    unsigned chk, len = 0;
     size_t wrote;
-    int i, v, err = 0;
+    int gz = 0;
+    int i, v, err;
 
     bname = switch_ext_new(fname, "bdt");
-    fp = gretl_fopen(bname, "wb");
-    if (fp == NULL) {
+    err = open_gdt_write_stream(bname, opt, &fp, &fz);
+    free(bname);
+
+    if (err) {
 	return E_FOPEN;
+    }
+
+    if (fz != Z_NULL) {
+	gz = 1;
+	len = nrows * sizeof(double);
     }
 
     if (nrows < T) {
@@ -1828,9 +1840,16 @@ static int bdt_write (const char *fname, const DATASET *dset,
 		    tmp[s++] = dset->Z[v][t];
 		}
 	    }
-	    wrote = fwrite(tmp, sizeof(double), nrows, fp);
-	    if (wrote != nrows) {
-		err = E_DATA;
+	    if (gz) {
+		chk = gzwrite(fz, tmp, len);
+		if (chk != len) {
+		    err = E_DATA;
+		}
+	    } else {
+		wrote = fwrite(tmp, sizeof(double), nrows, fp);
+		if (wrote != nrows) {
+		    err = E_DATA;
+		}
 	    }
 	}
 
@@ -1841,69 +1860,136 @@ static int bdt_write (const char *fname, const DATASET *dset,
     } else {
 	for (i=1; i<=nvars && !err; i++) {
 	    v = savenum(list, i);
-	    wrote = fwrite(dset->Z[v] + dset->t1, sizeof(double), 
-			   T, fp);
-	    if (wrote != T) {
-		err = E_DATA;
+	    if (gz) {
+		chk = gzwrite(fz, dset->Z[v] + dset->t1, len);
+		if (chk != len) {
+		    err = E_DATA;
+		}
+	    } else {
+		wrote = fwrite(dset->Z[v] + dset->t1, sizeof(double), 
+			       T, fp);
+		if (wrote != T) {
+		    err = E_DATA;
+		}
 	    }
 	}
     }
-	
-    fclose(fp);
-    free(bname);
+
+    if (fz != Z_NULL) {
+	gzclose(fz);
+    } else {
+	fclose(fp);
+    }
 
     return err;
 }
 
-static int bdt_read (const char *fname, const DATASET *dset)
+static void gdt_swap_endianness (DATASET *dset)
+{
+    int i, t;
+
+    for (i=1; i<dset->v; i++) {
+	for (t=0; t<dset->n; t++) {
+	    reverse_double(dset->Z[i][t]);
+	}
+    }
+}
+
+static int bdt_read (const char *fname, DATASET *dset,
+		     int order)
 {
     char *bname;
-    FILE *fp;
     int T = dset->n;
-    size_t got;
     int i, err = 0;
 
     bname = switch_ext_new(fname, "bdt");
-    fp = gretl_fopen(bname, "rb");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
+    
+    if (is_gzipped(bname)) {
+	gzFile fz = gretl_gzopen(bname, "rb");
+	unsigned chk, len = T * sizeof(double);
 
-    for (i=1; i<dset->v && !err; i++) {
-	got = fread(dset->Z[i], sizeof(double), T, fp);
-	if (got != T) {
-	    err = E_DATA;
+	if (fz == Z_NULL) {
+	    err = E_FOPEN;
+	} else {
+	    for (i=1; i<dset->v && !err; i++) {
+		chk = gzread(fz, dset->Z[i], len);
+		if (chk != len) {
+		    err = E_DATA;
+		}
+	    }
+	    gzclose(fz);
+	}
+    } else {
+	FILE *fp = gretl_fopen(bname, "rb");
+	size_t got;
+
+	if (fp == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    for (i=1; i<dset->v && !err; i++) {
+		got = fread(dset->Z[i], sizeof(double), T, fp);
+		if (got != T) {
+		    err = E_DATA;
+		}
+	    }
+	    fclose(fp);
 	}
     }
-	
-    fclose(fp);
+
     free(bname);
+
+    if (!err && order != G_BYTE_ORDER) {
+	gdt_swap_endianness(dset);
+    }
 
     return err;
 }
 
-#if 0
-static int p15_OK (const DATASET *dset, int i)
+static void write_binary_order (FILE *fp, gzFile fz)
 {
-    const double *x = dset->Z[i];
-    char *s, numstr[32];
-    int t, n = 0;
-    int ret = 0;
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+    alt_puts(" binary=\"little-endian\" ", fp, fz);
+#else
+    alt_puts(" binary=\"big-endian\" ", fp, fz);
+#endif
+}
+
+/* Here we're testing a series to see if it can be represented in full
+   precision (discarding any artifacts) using the format "%.15g". The
+   criterion is that each value must have a least one trailing zero
+   when printed using "% .14e". We don't necessarily check every
+   element in the series; assuming a reasonable degree of homogeneity
+   in the data it ought to be enough if 100 members pass the test.
+*/
+
+static int p15_OK (const DATASET *dset, int v)
+{
+    const double *x = dset->Z[v];
+    char s[32];
+    int t, i, n_ok = 0;
+    int ret = 1;
 
     for (t=dset->t1; t<=dset->t2; t++) {
 	if (!na(x[t])) {
-	    sprintf(numstr, "%#.17g", x[t]);
-	    len = strlen(numstr);
-	    s = numstr + len - 1;
-	    while (*s-- == '0') {
-		len--;
+	    sprintf(s, "% .14e", x[t]);
+	    for (i=16; i>13; i--) {
+		if (s[i] != '0') {
+		    break;
+		}
 	    }
+	    if (i == 16) {
+		ret = 0;
+		break;
+	    }
+	    n_ok++;
+	}
+	if (n_ok > 100) {
+	    break;
 	}
     }
 
     return ret;
 }
-#endif
 
 /**
  * gretl_write_gdt:
@@ -1927,7 +2013,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     FILE *fp = NULL;
     gzFile fz = Z_NULL;
     int tsamp = dset->t2 - dset->t1 + 1;
-    int *pmax = NULL;
+    char *p15 = NULL;
     char startdate[OBSLEN], enddate[OBSLEN];
     char datname[MAXLEN], freqstr[32];
     char numstr[128];
@@ -1938,7 +2024,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     int i, t, v, nvars, ntabs;
     int gz, have_markers, in_c_locale = 0;
     int binary = 0, skip_padding = 0;
-    int fastfmt = 0, gdt_digits = 17;
+    int gdt_digits = 17;
     int uerr = 0;
     int err;
 
@@ -1958,7 +2044,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
 
     if (opt & OPT_B) {
-	binary = 1;
+	binary = G_BYTE_ORDER;
 	progress = 0;
     }
 
@@ -1966,30 +2052,17 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     if (dsize > 100000) {
 	fprintf(stderr, I_("Writing %ld Kbytes of data\n"), (long) (dsize / 1024));
-	if (dsize > 1024 * 1024 * 10) {
-	    gdt_digits = 15;
-	    fastfmt = 1;
-	}
     } else if (progress) {
 	/* suppress progress bar for smaller data */
 	progress = 0;
     }
 
-    if (!binary && !fastfmt) {
-	pmax = malloc(nvars * sizeof *pmax);
-	if (pmax == NULL) {
-	    err = E_ALLOC;
-	    goto cleanup;
-	}
-	for (i=0; i<nvars; i++) {
-	    int prec;
-
-	    v = savenum(list, i+1);
-	    prec = get_precision(&dset->Z[v][dset->t1], tsamp, gdt_digits);
-	    if (prec < gdt_digits) {
-		pmax[i] = prec;
-	    } else {
-		pmax[i] = PMAX_NOT_AVAILABLE;
+    if (!binary) {
+	p15 = calloc(nvars, 1);
+	if (p15 != NULL) {
+	    for (i=0; i<nvars; i++) {
+		v = savenum(list, i+1);
+		p15[i] = p15_OK(dset, v);
 	    }
 	}	    
     }
@@ -2039,19 +2112,19 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
 
     if (binary) {
-	alt_puts(" binary=\"true\">\n", fp, fz);
-    } else {
-	alt_puts(">\n", fp, fz);
+	write_binary_order(fp, fz);
     }
+
+    alt_puts(">\n", fp, fz);
 
     have_markers = dataset_has_markers(dset);
 
     if (dataset_is_panel(dset) && !have_markers && 
-	nvars == dset->v - 1 /* && fastfmt */) {
+	nvars == dset->v - 1 && dsize > 1024 * 1024 * 10) {
 	/* we have more than 10 MB of panel data */
 	int padrows = panel_padding_rows(dset);
 
-	if (padrows > 0.25 * dset->n) {
+	if (padrows > 0.4 * dset->n) {
 	    fprintf(stderr, "skip-padding: dropping %d rows\n", padrows);
 	    skip_padding = 1;
 	    tsamp -= padrows;
@@ -2201,7 +2274,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     alt_puts(">\n", fp, fz);
 
     if (binary) {
-	err = bdt_write(fname, dset, list, nvars, tsamp);
+	err = bdt_write(fname, dset, list, nvars, tsamp, opt);
 	if (!have_markers) {
 	    goto binary_done;
 	}
@@ -2231,10 +2304,11 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    v = savenum(list, i);
 	    if (na(dset->Z[v][t])) {
 		strcpy(numstr, "NA ");
-	    } else if (pmax == NULL || pmax[i-1] == PMAX_NOT_AVAILABLE) {
+	    } else if (p15 == NULL || p15[i-1] == 0) {
+		/* use full default precision if required */
 		sprintf(numstr, "%.*g ", gdt_digits, dset->Z[v][t]);
 	    } else {
-		sprintf(numstr, "%.*f ", pmax[i-1], dset->Z[v][t]);
+		sprintf(numstr, "%.15g ", dset->Z[v][t]);
 	    }
 	    alt_puts(numstr, fp, fz);
 	}
@@ -2310,7 +2384,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	close_plugin(handle);
     } 
 
-    if (pmax) free(pmax);
+    if (p15) free(p15);
     if (fp != NULL) fclose(fp);
     if (fz != Z_NULL) gzclose(fz);
 
@@ -2546,7 +2620,7 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
     }
 
     if (binary) {
-	err = bdt_read(fname, dset);
+	err = bdt_read(fname, dset, binary);
 	if (!dset->markers) {
 	    goto bailout;
 	}
@@ -2907,14 +2981,16 @@ static int xml_get_endobs (xmlNodePtr node, char *endobs, int caldata)
     return err;
 }
 
-static int gdt_binary_data (xmlNodePtr node)
+static int gdt_binary_order (xmlNodePtr node)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) "binary");
     int ret = 0;
     
     if (tmp != NULL) {
-	if (!strcmp((char *) tmp, "true")) {
-	    ret = 1;
+	if (!strcmp((char *) tmp, "little-endian")) {
+	    ret = G_LITTLE_ENDIAN;
+	} else if (!strcmp((char *) tmp, "big-endian")) {
+	    ret = G_BIG_ENDIAN;
 	}
 	free(tmp);
     }
@@ -3084,17 +3160,18 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
     double gdtversion = 1.0;
     long fsz, progress = 0L;
     int in_c_locale = 0;
-    int binary = 0;
+    int gz, binary = 0;
 
     gretl_error_clear();
 
     fsz = get_filesize(fname);
+    gz = is_gzipped(fname);
 
     if (fsz < 0) {
 	return E_FOPEN;
     } else if (fsz > 100000) {
 	fprintf(stderr, "%s %ld bytes %s...\n", 
-		(is_gzipped(fname))? I_("Uncompressing") : I_("Reading"),
+		gz ? I_("Uncompressing") : I_("Reading"),
 		fsz, I_("of data"));
 	if (opt & OPT_B) {
 	    progress = fsz;
@@ -3148,7 +3225,7 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 	goto bailout;
     }
 
-    binary = gdt_binary_data(cur);
+    binary = gdt_binary_order(cur);
 
 #if GDT_DEBUG
     fprintf(stderr, "starting to walk XML tree...\n");
