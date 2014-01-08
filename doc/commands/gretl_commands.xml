@@ -11056,6 +11056,7 @@
         </option>
         <option>
 	  <flag>--gzipped</flag>
+	  <optparm optional="true">level</optparm>
 	  <effect>apply gzip compression</effect>
         </option>
         <option>
@@ -11102,9 +11103,16 @@
 	using a text editor.  The formats of
 	<program>Octave</program>, <program>R</program> and
 	<program>PcGive</program> are designed for use with the
-	respective programs.  Gzip compression may be useful for large
-	datasets.  See <guideref targ="datafiles"/> for details on the
-	various formats.
+	respective programs.
+      </para>
+      <para>
+	When data are saved in native format (only), the
+	<opt>gzipped</opt> option may be used for data compression,
+	which can be useful for large datasets. The optional parameter
+	for this flag controls the level of compression (from 0 to 9):
+	higher levels produce a smaller file, but compression takes
+	longer. The default level is 1; a level of 0 means that no
+	compression is applied.
       </para>
       <para>
 	The option flags <opt>--omit-obs</opt> and <opt>--no-header</opt>
