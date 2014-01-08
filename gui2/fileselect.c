@@ -885,7 +885,7 @@ static void add_compression_level_option (GtkWidget *filesel)
     label = gtk_label_new(_("Compression level (0 = none)"));
     spin = gtk_spin_button_new_with_range(0, 9, 1);
 
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), 6);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), 1);
     gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin), 0);
     g_signal_connect(G_OBJECT(spin), "destroy", 
 		     G_CALLBACK(record_compress_level), NULL);

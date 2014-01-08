@@ -998,7 +998,7 @@ int get_compression_option (int ci)
     int level = 0;
 
     if (op == NULL || op->val == NULL) {
-	return Z_DEFAULT_COMPRESSION;
+	return 1;
     } else {
 	level = atoi(op->val);
 	if (level < 0) {
