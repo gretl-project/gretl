@@ -27,7 +27,6 @@
 #include "../../minpack/minpack.h"
 
 #include <errno.h>
-#include <gmp.h>
 
 #define GMM_DEBUG 0
 
