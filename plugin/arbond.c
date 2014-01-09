@@ -2502,58 +2502,103 @@ static int dpd_step_1 (ddset *dpd)
     return err;
 }
 
+static int diag_try_list (const char *vname, int *vp, int *nd,
+			  diag_info **dp, int **listp)
+{
+    int *list = get_list_by_name(vname);
+
+    if (list == NULL) {
+	return E_UNKVAR;
+    } else {
+	int nv = list[0];
+
+	if (nv == 1) {
+	    *vp = list[1];
+	} else if (nv < 1) {
+	    return E_DATA;
+	} else {
+	    /* nv > 1 */
+	    int newlen = *nd + nv - 1;
+	    diag_info *dnew;
+
+	    dnew = realloc(*dp, newlen * sizeof *dnew);
+	    if (dnew == NULL) {
+		return E_ALLOC;
+	    } else {
+		*listp = list;
+		*dp = dnew;
+		*nd = newlen;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 /* Parse a particular entry in the (optional) incoming array 
    of "GMM(foo,m1,m2)" specifications.  We check that foo
    exists and that m1 and m2 have sane values (allowing that,
    for arbond, an m2 value of 0 means use all available lags).
 */
 
-static int parse_diag_info (int ci, const char *s, diag_info *d,
-			    const DATASET *dset)
+static int parse_diag_info (int ci, const char *s, diag_info **dp,
+			    int *ip, int *nd, const DATASET *dset)
 {
     char vname[VNAMELEN];
     char fmt[24];
+    int level = 0;
     int m1, m2;
     int err = 0;
 
-    d->depvar = 0;
-
     if (!strncmp(s, "GMM(", 4)) {
-	d->level = 0;
 	s += 4;
     } else if (!strncmp(s, "GMMlevel(", 9)) {
-	d->level = 1;
+	if (ci == ARBOND) {
+	    /* only dpanel supports "GMMlevel" */
+	    return E_PARSE;
+	}
+	level = 1;
 	s += 9;
     }	
-
-    if (ci == ARBOND && d->level != 0) {
-	/* only dpanel supports "GMMlevel" */
-	return E_PARSE;
-    }
 
     sprintf(fmt, "%%%d[^, ] , %%d , %%d)", VNAMELEN-1);
 
     if (sscanf(s, fmt, vname, &m1, &m2) != 3) {
 	err = E_PARSE;
     } else {
-	/* FIXME support lists here? */
 	int v = current_series_index(dset, vname);
+	int *vlist = NULL;
 
 	if (ci == ARBOND && m2 == 0) {
 	    /* signal for unlimited lags */
 	    m2 = 99;
 	}
 
-	if (v < 0) {
-	    err = E_UNKVAR;
-	} else if (m1 < 0 || m2 < m1) {
+	if (m1 < 0 || m2 < m1) {
 	    err = E_DATA;
-	} else {
-	    /* record series ID plus min and max lags */
-	    d->v = v;      
-	    d->minlag = m1;
-	    d->maxlag = m2;
-	    d->rows = 0;
+	} else if (v < 0) {
+	    err = diag_try_list(vname, &v, nd, dp, &vlist);
+	}
+
+	if (!err) {
+	    diag_info *d, *darray = *dp;
+	    int nv = (vlist == NULL)? 1 : vlist[0];
+	    int j, i = *ip;
+
+	    for (j=0; j<nv; j++) {
+		if (vlist != NULL) {
+		    v = vlist[j+1];
+		}
+		d = &darray[i+j];
+		d->depvar = 0;
+		d->level = level;
+		d->v = v;
+		d->minlag = m1;
+		d->maxlag = m2;
+		d->rows = 0;
+	    }
+
+	    *ip = i + nv;
 	}
     }
 
@@ -2614,7 +2659,7 @@ parse_GMM_instrument_spec (int ci, const char *spec, const DATASET *dset,
 	    } else {
 		*test = '\0';
 		strncat(test, s, len);
-		err = parse_diag_info(ci, test, &d[i++], dset);
+		err = parse_diag_info(ci, test, &d, &i, &nspec, dset);
 		s = p + 1;
 	    }
 	}
