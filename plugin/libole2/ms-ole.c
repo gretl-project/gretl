@@ -31,6 +31,8 @@
 
 #include "ms-ole.h"
 
+#define OLE_DEBUG 0
+
 #ifndef HAVE_UNISTD_H
 # define S_IRUSR 0000400
 # define S_IWUSR 0000200
@@ -275,7 +277,7 @@ static guint8 *get_block_ptr (MsOle *f, BLP b)
 /* NB. Different from biff_get_text, looks like a bug ! */
 static char *pps_get_text (guint8 *ptr, int length)
 {
-    int lp;
+    int i;
     char *ans;
     guint16 c;
     guint8 *inb;
@@ -287,15 +289,22 @@ static char *pps_get_text (guint8 *ptr, int length)
 	return 0;
     }
 
-    ans = g_malloc(length + 1);
+    ans = calloc(length + 1, 1);
 
     inb = ptr;
-    for (lp = 0; lp < length; lp++) {
-	c = MS_OLE_GET_GUINT16 (inb);
-	ans [lp] = (char) c;
+    for (i = 0; i < length; i++) {
+	c = MS_OLE_GET_GUINT16(inb);
+	if (c > 0 && c < 32) {
+	    i--;
+	} else {
+	    ans[i] = (char) c;
+	}
 	inb += 2;
     }
-    ans [lp] = 0;
+
+#if OLE_DEBUG
+    fprintf(stderr, "pps_get_text: '%s'\n", ans);
+#endif
 
     return ans;
 }
@@ -451,7 +460,7 @@ static gint pps_compare_func (PPS *a, PPS *b)
     g_return_val_if_fail(a->name, 0);
     g_return_val_if_fail(b->name, 0);
 
-    return g_strcasecmp(b->name, a->name);
+    return strcmp(b->name, a->name);
 }
 
 static void pps_decode_tree (MsOle *f, PPS_IDX p, PPS *parent)
@@ -618,12 +627,12 @@ static int read_sb (MsOle *f)
 	if (ptr == UNUSED_BLOCK || ptr == SPECIAL_BLOCK) {
 	    g_warning ("Corrupt file descriptor: serious error, "
 		       "invalid block in chain\n");
-	    g_array_free (f->sb, TRUE);
+	    g_array_free(f->sb, TRUE);
 	    f->sb = 0;
 	    return 0;
 	}
 	for (lp = 0;lp<BB_BLOCK_SIZE/4;lp++) {
-	    BLP p = MS_OLE_GET_GUINT32 (BB_R_PTR(f, ptr) + lp*4);
+	    BLP p = MS_OLE_GET_GUINT32(BB_R_PTR(f, ptr) + lp*4);
 
 	    g_array_append_val(f->sb, p);
 	    if (p != UNUSED_BLOCK) {
@@ -631,7 +640,7 @@ static int read_sb (MsOle *f)
 	    }
 	    idx++;
 	}
-	ptr = NEXT_BB (f, ptr);
+	ptr = NEXT_BB(f, ptr);
     }
 
     if (lastidx > 0) {
@@ -1102,93 +1111,42 @@ ms_ole_read_copy_sb (MsOleStream *s, guint8 *ptr, MsOlePos length)
 
 static GList *find_in_pps (GList *l, const char *name)
 {
-    PPS   *pps;
+    PPS   *pps = l->data;
     GList *cur;
 
-    g_return_val_if_fail(l != NULL, NULL);
-    g_return_val_if_fail(l->data != NULL, NULL);
-    pps = l->data;
     g_return_val_if_fail(IS_PPS(pps), NULL);
 
-    if (pps->type == MsOleStorageT ||
-	pps->type == MsOleRootT) {
-	cur = pps->children;
-    } else {
-	g_warning ("trying to enter a stream '%s'",
-		   pps->name? pps->name : "no name");
-	return NULL;
-    }
+    cur = pps->children;
 
     for ( ; cur; cur = g_list_next(cur)) {
 	PPS *pps = cur->data;
 
-	g_return_val_if_fail (IS_PPS (pps), NULL);
+	g_return_val_if_fail(IS_PPS (pps), NULL);
 
-	if (!pps->name)
-	    continue;
-
-	if (!g_strcasecmp(pps->name, name))
+	if (pps->name && !strcmp(pps->name, name)) {
+#if OLE_DEBUG
+	    fprintf(stderr, "find_in_pps: found '%s'\n", name);
+#endif
 	    return cur;
+	}
     }
 
     return NULL;
 }
 
-/**
- * path_to_pps:
- * @pps:  pointer to pps to return value in.
- * @f:    ole file handle.
- * @path: path to find.
- * @file: file to find in path.
- *
- * Locates a stream or storage with the given path.
- *
- * Return value: a #MsOleErr code.
- **/
-
-static MsOleErr
-path_to_pps (PPS **pps, MsOle *f, const char *path, const char *file)
+static MsOleErr path_to_workbook (PPS **pps, MsOle *f)
 {
-    guint     lp;
-    gchar   **dirs;
-    GList    *cur, *parent;
-
-    g_return_val_if_fail(f != NULL, MS_OLE_ERR_BADARG);
-    g_return_val_if_fail(path != NULL, MS_OLE_ERR_BADARG);
-
-    dirs = g_strsplit(path, "/", -1);
-    g_return_val_if_fail(dirs != NULL, MS_OLE_ERR_BADARG);
-
-    parent = cur = f->pps;
-
-    for (lp = 0; dirs[lp]; lp++) {
-	if (dirs[lp][0] == '\0' || !cur) {
-	    g_free(dirs[lp]);
-	    continue;
-	}
-
-	parent = cur;
-
-	cur = find_in_pps(parent, dirs[lp]);
-
-	g_free(dirs[lp]);
-    }
-
-    g_free(dirs);
+    GList *cur = f->pps;
 
     if (!cur || !cur->data)
 	return MS_OLE_ERR_EXIST;
 
-    if (file[0] == '\0') { /* We just want a directory */
-	*pps = cur->data;
-	g_return_val_if_fail(IS_PPS(cur->data), MS_OLE_ERR_INVALID);
-	return MS_OLE_ERR_OK;
+    cur = find_in_pps(f->pps, "Workbook");
+    
+    if (!cur) {
+	cur = find_in_pps(f->pps, "Book");
     }
 
-    parent = cur;
-    cur = find_in_pps(parent, file);
-
-    /* now the file */
     if (!cur) {
 	return MS_OLE_ERR_EXIST;
     }
@@ -1203,21 +1161,19 @@ path_to_pps (PPS **pps, MsOle *f, const char *path, const char *file)
 }
 
 /**
- * ms_ole_stream_open:
+ * real_ms_ole_open_workbook:
  * @stream: stream object.
  * @fs: filesystem object.
- * @dirpath: directory of the stream.
- * @name: stream name.
  *
- * Opens the stream in @dirpath with the name @name and creates the stream
- * object @stream.  The open is read-only.
+ * Opens the stream in "/" with the name "Workbook" (or failing
+ * that, "Book" and creates the stream object @stream.  The open
+ * is read-only.
  *
  * Return value: a #MsOleErr code.
  **/
 
-MsOleErr
-ms_ole_stream_open (MsOleStream ** const stream, MsOle *f,
-		    const char *path, const char *fname) 
+static MsOleErr
+real_ms_ole_open_workbook (MsOleStream ** const stream, MsOle *f)
 {
     PPS         *p;
     MsOleStream *s;
@@ -1229,10 +1185,7 @@ ms_ole_stream_open (MsOleStream ** const stream, MsOle *f,
 
     *stream = NULL;
 
-    if (!path || !f)
-	return MS_OLE_ERR_BADARG;
-
-    if ((result = path_to_pps(&p, f, path, fname)) != MS_OLE_ERR_OK)
+    if ((result = path_to_workbook(&p, f)) != MS_OLE_ERR_OK)
 	return result;
 
     if (p->type != MsOleStreamT)
@@ -1314,6 +1267,7 @@ ms_ole_stream_open (MsOleStream ** const stream, MsOle *f,
 	}
 	if (b != END_OF_CHAIN) {
 	    BLP next;
+
 	    g_warning ("Panic: extra unused blocks on end of '%s', wiping it\n",
 		       p->name);
 	    while (b != END_OF_CHAIN &&
@@ -1333,6 +1287,21 @@ ms_ole_stream_open (MsOleStream ** const stream, MsOle *f,
     ms_ole_ref(s->file);
 
     return MS_OLE_ERR_OK;
+}
+
+MsOleErr
+ms_ole_stream_open_workbook (MsOleStream ** const stream, MsOle *f)
+{
+    MsOleErr result;
+
+    result = real_ms_ole_open_workbook(stream, f);
+
+    if (result != MS_OLE_ERR_OK) {
+	ms_ole_stream_close(stream);
+	fputs("No Workbook or Book streams found\n", stderr);
+    }
+
+    return result;
 }
 
 /**

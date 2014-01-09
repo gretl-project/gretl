@@ -905,16 +905,11 @@ static int process_sheet (const char *filename, wbook *book, xls_info *xi,
 	return 1;
     }
 
-    result = ms_ole_stream_open(&stream, file, "/", "workbook");
+    result = ms_ole_stream_open_workbook(&stream, file);
 
     if (result != MS_OLE_ERR_OK) {
-	ms_ole_stream_close(&stream);
-	result = ms_ole_stream_open(&stream, file, "/", "book");
-	if (result != MS_OLE_ERR_OK) {
-	    ms_ole_stream_close(&stream);
-	    fputs("No book or workbook streams found\n", stderr);
-	    return 1;
-	}
+	ms_ole_destroy(&file);
+	return 1;
     }
 
     fputs("Reading file...\n", stderr);

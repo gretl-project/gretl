@@ -433,16 +433,9 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
     char *problem_loading = NULL;
     int excel_version = MS_BIFF_V_UNKNOWN;
 
-    result = ms_ole_stream_open(&stream, file, "/", "workbook");
+    result = ms_ole_stream_open_workbook(&stream, file);
     if (result != MS_OLE_ERR_OK) {
-	ms_ole_stream_close(&stream);
-
-	result = ms_ole_stream_open(&stream, file, "/", "book");
-	if (result != MS_OLE_ERR_OK) {
-	    ms_ole_stream_close(&stream);
-	    fputs("No book or workbook streams found\n", stderr);
-	    return excel_version;
-	}
+	return excel_version;
     }
 
     q = ms_biff_query_new(stream);

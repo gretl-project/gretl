@@ -104,10 +104,8 @@ void     ms_ole_destroy (MsOle **fs);
 #define MS_OLE_GET_GUINT64(p) (MS_OLE_GET_GUINT32(p) | \
 			       (((guint32)MS_OLE_GET_GUINT32((const guint8 *)(p)+4))<<32))
 
-MsOleErr ms_ole_stream_open (MsOleStream ** const stream,
-			     MsOle *fs,
-			     const char *dirpath,
-			     const char *name);
+MsOleErr ms_ole_stream_open_workbook (MsOleStream ** const stream,
+				      MsOle *fs);
 
 MsOleErr ms_ole_stream_close (MsOleStream ** const stream);
 
