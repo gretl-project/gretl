@@ -35,6 +35,12 @@ typedef enum {
     OPTIM_MAX
 } OptimCode;
 
+typedef enum {
+    STEPLEN_POWER,
+    STEPLEN_QUAD,
+    STEPLEN_MAX
+} SteplenCode;
+
 /* guard against consequences of typos */
 
 #define BFGS_MAXITER     "bfgs_maxiter"
@@ -42,6 +48,7 @@ typedef enum {
 #define BFGS_MAXGRAD     "bfgs_maxgrad"
 #define BFGS_VERBSKIP    "bfgs_verbskip"
 #define BFGS_RSTEP       "bfgs_richardson"
+#define OPTIM_STEPLEN    "optim_steplen"
 #define BHHH_MAXITER     "bhhh_maxiter"
 #define BHHH_TOLER       "bhhh_toler"
 #define LBFGS_MEM        "lbfgs_mem"

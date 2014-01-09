@@ -927,7 +927,6 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 		      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
 		      gretl_matrix *A0, gretlopt opt, PRN *prn)
 {
-    int quad = getenv("GRETL_BFGS_SLEN_Q") != NULL;
     int verbskip, verbose = (opt & OPT_V);
     double *wspace = NULL;
     double **H = NULL;
@@ -1052,7 +1051,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 #endif
 	if (sumgrad > 0.0) { 
 	    /* heading in the right direction */
-	    if (quad) {
+	    if (libset_get_int(OPTIM_STEPLEN) == STEPLEN_QUAD) {
 		steplen = quad_slen(n, &ndelta, b, X, t, &f, cfunc, data, 
 				    sumgrad, fmax, &fcount);
 	    } else {

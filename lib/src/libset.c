@@ -95,6 +95,7 @@ struct set_vars_ {
     double bfgs_toler;          /* convergence tolerance, BFGS */
     double bfgs_maxgrad;        /* max acceptable gradient norm, BFGS */
     int bfgs_verbskip;          /* BFGS: show one in n iterations  */
+    int optim_steplen;          /* step length algorithm (only BFGS for now) */
     int bhhh_maxiter;           /* max iterations, BHHH */          
     double bhhh_toler;          /* convergence tolerance, BHHH */
     int lbfgs_mem;              /* memory span for L-BFGS-B */
@@ -153,6 +154,7 @@ struct set_vars_ {
 
 #define libset_int(s) (!strcmp(s, BFGS_MAXITER) || \
 		       !strcmp(s, BFGS_VERBSKIP) || \
+		       !strcmp(s, OPTIM_STEPLEN) || \
 		       !strcmp(s, BHHH_MAXITER) || \
 		       !strcmp(s, GMM_MAXITER) || \
 		       !strcmp(s, LBFGS_MEM) || \
@@ -255,6 +257,12 @@ static const char *optim_strs[] = {
     NULL
 };
 
+static const char *steplen_strs[] = {
+    "power",
+    "quadratic",
+    NULL
+};
+
 static const char *normal_rand_strs[] = {
     "ziggurat",
     "box-muller",
@@ -279,6 +287,8 @@ static const char **libset_option_strings (const char *s)
 	return normal_rand_strs;
     } else if (!strcmp(s, "csv_delim")) {
 	return csv_delim_args;
+    } else if (!strcmp(s, OPTIM_STEPLEN)) {
+	return steplen_strs;
     } else {
 	return NULL;
     }
@@ -327,6 +337,8 @@ static const char *libset_option_string (const char *s)
 	return optim_strs[state->optim];
     } else if (!strcmp(s, NORMAL_RAND)) {
 	return normal_rand_strs[gretl_rand_get_box_muller()];
+    } else if (!strcmp(s, OPTIM_STEPLEN)) {
+	return steplen_strs[state->optim_steplen];
     } else {
 	return "?";
     }
@@ -393,6 +405,7 @@ static void state_vars_copy (set_vars *sv)
     sv->bfgs_toler = state->bfgs_toler;
     sv->bfgs_maxgrad = state->bfgs_maxgrad;
     sv->bfgs_verbskip = state->bfgs_verbskip;
+    sv->optim_steplen = state->optim_steplen;
     sv->bhhh_maxiter = state->bhhh_maxiter;
     sv->bhhh_toler = state->bhhh_toler;
     sv->lbfgs_mem = state->lbfgs_mem;
@@ -512,6 +525,7 @@ static void state_vars_init (set_vars *sv)
     sv->bfgs_toler = NADBL;
     sv->bfgs_maxgrad = 5.0;
     sv->bfgs_verbskip = 1;
+    sv->optim_steplen = STEPLEN_POWER;
     sv->bhhh_maxiter = 500;
     sv->bhhh_toler = NADBL;
     sv->lbfgs_mem = 8;
@@ -943,6 +957,14 @@ static int parse_libset_int_code (const char *key,
 		break;
 	    }
 	}
+    } else if (!g_ascii_strcasecmp(key, OPTIM_STEPLEN)) {
+	for (i=0; i<STEPLEN_MAX; i++) {
+	    if (!g_ascii_strcasecmp(val, steplen_strs[i])) {
+		state->optim_steplen = i;
+		err = 0;
+		break;
+	    }
+	}	
     }
 
     if (err) {
@@ -1253,7 +1275,8 @@ static void libset_print_bool (const char *s, PRN *prn,
                          !strcmp(s, HC_VERSION) || \
 			 !strcmp(s, VECM_NORM) || \
 			 !strcmp(s, GRETL_OPTIM) || \
-			 !strcmp(s, NORMAL_RAND))
+			 !strcmp(s, NORMAL_RAND) || \
+			 !strcmp(s, OPTIM_STEPLEN))
 
 const char *intvar_code_string (const char *s)
 {
@@ -1378,6 +1401,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_int(BFGS_MAXITER, prn, opt);
     libset_print_double(BFGS_TOLER, prn, opt);
     libset_print_double(BFGS_MAXGRAD, prn, opt);
+    libset_print_int(OPTIM_STEPLEN, prn, opt);
     libset_print_int(BHHH_MAXITER, prn, opt);
     libset_print_double(BHHH_TOLER, prn, opt);
     libset_print_int(RQ_MAXITER, prn, opt);
@@ -1787,6 +1811,8 @@ int libset_get_int (const char *key)
 
     if (!strcmp(key, BFGS_MAXITER)) {
 	return state->bfgs_maxiter;
+    } else if (!strcmp(key, OPTIM_STEPLEN)) {
+	return state->optim_steplen;
     } else if (!strcmp(key, BHHH_MAXITER)) {
 	return state->bhhh_maxiter;
     } else if (!strcmp(key, RQ_MAXITER)) {
@@ -1843,6 +1869,10 @@ static int intvar_min_max (const char *s, int *min, int *max,
     } else if (!strcmp(s, BFGS_VERBSKIP)) {
 	*min = 1;
 	*var = &state->bfgs_verbskip;
+    } else if (!strcmp(s, OPTIM_STEPLEN)) {
+	*min = 0;
+	*max = STEPLEN_MAX;
+	*var = &state->optim_steplen;
     } else if (!strcmp(s, BHHH_MAXITER)) {
 	*min = 1;
 	*var = &state->bhhh_maxiter;
