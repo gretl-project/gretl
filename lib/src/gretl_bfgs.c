@@ -910,7 +910,7 @@ static double simple_slen (int n, int *pndelta, double *b, double *X, double *t,
 	    crit_ok = !na(f1) && (f1 >= f0 + d);
 	    if (!crit_ok) {
 		/* calculated criterion no good: try smaller step */
-		steplen *= 0.5; /* STEPFRAC; */
+		steplen *= STEPFRAC;
 	    }
 	}
     } while (ndelta != 0 && !crit_ok);

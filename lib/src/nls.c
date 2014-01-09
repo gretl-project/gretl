@@ -849,6 +849,20 @@ static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
 
 #endif
 
+static int nl_coeff_check (nlspec *s)
+{
+    int i;
+
+    for (i=0; i<s->ncoeff; i++) {
+	if (na(s->coeff[i])) {
+	    gretl_errmsg_set("Unitialized parameter");
+	    return E_DATA;
+	}
+    }
+
+    return 0;
+}
+
 /* Adjust starting and ending points of sample if need be, to avoid
    missing values; abort if there are missing values within the
    (possibly reduced) sample range.  For this purpose we generate the
@@ -3072,6 +3086,11 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 
     if (check_spec_requirements(spec)) {
 	nlmod.errcode = E_PARSE;
+	goto bailout;
+    } 
+
+    if (nl_coeff_check(spec)) {
+	nlmod.errcode = E_DATA;
 	goto bailout;
     } 
 
