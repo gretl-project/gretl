@@ -2512,7 +2512,7 @@ static int parse_diag_info (int ci, const char *s, diag_info *d,
 			    const DATASET *dset)
 {
     char vname[VNAMELEN];
-    char fmt[16];
+    char fmt[24];
     int m1, m2;
     int err = 0;
 
@@ -2531,11 +2531,12 @@ static int parse_diag_info (int ci, const char *s, diag_info *d,
 	return E_PARSE;
     }
 
-    sprintf(fmt, "%%%d[^, ],%%d,%%d)", VNAMELEN-1);
+    sprintf(fmt, "%%%d[^, ] , %%d , %%d)", VNAMELEN-1);
 
     if (sscanf(s, fmt, vname, &m1, &m2) != 3) {
 	err = E_PARSE;
     } else {
+	/* FIXME support lists here? */
 	int v = current_series_index(dset, vname);
 
 	if (ci == ARBOND && m2 == 0) {

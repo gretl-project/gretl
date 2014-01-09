@@ -867,7 +867,7 @@ void ms_ole_destroy (MsOle **ptr)
 	destroy_pps(f->pps);
 	f->pps = NULL;
 
-#if 1 /* added to plug leaks, 2012-01-01, AC */
+	/* added to plug leaks, 2012-01-01, AC */
 	if (f->bb != NULL) {
 	    g_array_free(f->bb, TRUE);
 	}
@@ -877,7 +877,6 @@ void ms_ole_destroy (MsOle **ptr)
 	if (f->sbf != NULL) {
 	    g_array_free(f->sbf, TRUE);
 	}
-#endif
 
 	close(f->file_des);
 	g_free(f);
@@ -1316,10 +1315,6 @@ ms_ole_stream_open_workbook (MsOleStream ** const stream, MsOle *f)
 MsOleErr ms_ole_stream_close (MsOleStream ** const s)
 {
     if (*s) {
-	if ((*s)->file && (*s)->file->mode == 'w') {
-	    ((PPS *)(*s)->pps)->size = (*s)->size;
-	}
-
 	if ((*s)->blocks) {
 	    g_array_free((*s)->blocks, TRUE);
 	}
