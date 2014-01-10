@@ -85,7 +85,7 @@ void about_dialog (void)
     GtkWidget *vbox, *hbox, *label;
     GtkWidget *dialog, *image, *button;
     GtkWidget *ebox, *abox;
-    gchar *buf;
+    gchar *buf, *sysinfo = NULL;
 
     dialog = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(dialog),_("About gretl")); 
@@ -114,12 +114,41 @@ void about_dialog (void)
 	gtk_widget_show(image);
     }
 
+#ifdef PKGBUILD
+# if defined(_WIN64)
+    sysinfo = g_strdup_printf("MS Windows (x86_64)");
+# elif defined(G_OS_WIN32)
+    sysinfo = g_strdup_printf("MS Windows (x86)");
+# elif defined(MAC_NATIVE)
+    sysinfo = g_strdup_printf("Mac OS X (quartz, x86_64)");
+# elif defined(__ppc__)
+    sysinfo = g_strdup_printf("Mac OS X (X11, ppc)");
+# elif defined(OS_OSX)
+    sysinfo = g_strdup_printf("Mac OS X (X11, x86)");
+# endif
+#elif defined(__GNUC__)
+# if defined(linux) && defined(__x86_64__)
+    sysinfo = g_strdup_printf("Linux x86_64");
+# elif defined(__x86_64__)
+    sysinfo = g_strdup_printf("Intel x86_64");
+# endif
+#endif
+
     /* Program label */
-    buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"xx-large\">"
-				  "gretl %s</span>\n"
-				  "%s %s\n%s", GRETL_VERSION, 
-				  _("build date"), BUILD_DATE, 
-				  _(bonmot));
+    if (sysinfo == NULL) {
+	buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"x-large\">"
+				      "gretl %s</span>\n"
+				      "%s %s\n%s", GRETL_VERSION, 
+				      _("build date"), BUILD_DATE, 
+				      _(bonmot));
+    } else {
+	buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"x-large\">"
+				      "gretl %s</span>\n"
+				      "%s\n%s %s\n%s", GRETL_VERSION,
+				      sysinfo, _("build date"), BUILD_DATE, 
+				      _(bonmot));
+	g_free(sysinfo);
+    }
     label = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(label), buf);
     g_free(buf);
@@ -163,7 +192,6 @@ void about_dialog (void)
 
     /* GPL button */
     button = gtk_button_new_with_label(_("License"));
-    gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(license_callback), 

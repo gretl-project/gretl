@@ -3053,14 +3053,11 @@ static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
     return LM;
 }
 
-static int *ensure_const_copy_list (const MODEL *pmod, 
-				    DATASET *dset,
-				    int *err)
+static int *ensure_const_copy_list (const MODEL *pmod, int *err)
 {
-    int cpos = gretl_list_const_pos(pmod->list, 2, dset);    
     int *list = NULL;
 
-    if (cpos > 0) {
+    if (pmod->ifc) {
 	list = gretl_list_copy(pmod->list);
     } else {
 	int i, nl = pmod->list[0] + 1;
@@ -3068,7 +3065,7 @@ static int *ensure_const_copy_list (const MODEL *pmod,
 	list = gretl_list_new(nl);
 	if (list != NULL) {
 	    list[1] = pmod->list[1];
-	    list[2] = 0; /* add const */
+	    list[2] = 0; /* insert const */
 	    for (i=3; i<=nl; i++) {
 		list[i] = pmod->list[i-1];
 	    }
@@ -3085,12 +3082,17 @@ static int *ensure_const_copy_list (const MODEL *pmod,
 static int *ensure_const_augment_list (const MODEL *pmod, int aux,
 				       DATASET *dset, int *err)
 {
-    int *tmp = ensure_const_copy_list(pmod, dset, err);
     int *list = NULL;
+    
+    if (pmod->ifc) {
+	list = augment_regression_list(pmod->list, aux, dset, err);
+    } else {
+	int *tmp = ensure_const_copy_list(pmod, err);
 
-    if (!*err) {
-	list = augment_regression_list(tmp, aux, dset, err);
-	free(tmp);
+	if (!*err) {
+	    list = augment_regression_list(tmp, aux, dset, err);
+	    free(tmp);
+	}
     }
 
     return list;
@@ -3179,7 +3181,7 @@ int whites_test (MODEL *pmod, DATASET *dset,
 
     if (!err) {
 	if (BP) {
-	    list = ensure_const_copy_list(pmod, dset, &err);
+	    list = ensure_const_copy_list(pmod, &err);
 	} else {
 	    /* build aux regression list, adding squares and
 	       (possibly) cross-products of the original 
