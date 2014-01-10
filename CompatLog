@@ -1,3 +1,10 @@
+version 1.9.15, in progress
+
+The "set" variable "RNG" has been removed: the RNG is the SFMT
+(Simd-oriented Fast Mersenne Twister) and the option of using
+the GLib implementation of the Mersenne Twister (which was 
+gretl's RNG up to version 1.9.3) is no longer available.
+
 2013-11-21 version 1.9.14
 
 No intentional backward-incompatible changes
