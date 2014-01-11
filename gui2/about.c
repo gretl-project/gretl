@@ -26,7 +26,7 @@
 # include "gretlwin32.h"
 #endif
 
-const gchar *copyright = "Copyright (C) 2000-2012 Allin Cottrell and "
+const gchar *copyright = "Copyright (C) 2000-2014 Allin Cottrell and "
                          "Riccardo \"Jack\" Lucchetti";
 const gchar *bonmot = N_("\"By econometricians, for econometricians.\"");
 const gchar *website = "http://gretl.sourceforge.net/";
@@ -134,7 +134,6 @@ void about_dialog (void)
 # endif
 #endif
 
-    /* Program label */
     if (sysinfo == NULL) {
 	buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"x-large\">"
 				      "gretl %s</span>\n"
@@ -149,6 +148,7 @@ void about_dialog (void)
 				      _(bonmot));
 	g_free(sysinfo);
     }
+
     label = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(label), buf);
     g_free(buf);
