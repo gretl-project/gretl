@@ -653,12 +653,13 @@ static int broken_gradient (double *g, int n)
    If "set initvals" has been used, replace whatever initial values
    might have been in place with those given by the user (the customer
    is always right).  In addition, respect user settings for the
-   maximum number of iterations and the convergence tolerance.
+   maximum number of iterations, the convergence tolerance and
+   so on.
 */
 
 static void optim_get_user_values (double *b, int n, int *maxit,
 				   double *reltol, double *gradmax,
-				   gretlopt opt, PRN *prn)
+				   int *quad, gretlopt opt, PRN *prn)
 {
     const gretl_matrix *uinit;
     int uilen, umaxit;
@@ -699,9 +700,7 @@ static void optim_get_user_values (double *b, int n, int *maxit,
 	return;
     }
 
-    /* then check for a setting of the maximum number
-       of iterations */
-
+    /* check for a setting of the maximum number of iterations */
     umaxit = libset_get_int(BFGS_MAXITER);
     if (umaxit >= 0) {
 	*maxit = umaxit;
@@ -709,8 +708,7 @@ static void optim_get_user_values (double *b, int n, int *maxit,
 	*maxit = BFGS_MAXITER_DEFAULT;
     }
 
-    /* and then the convergence tolerance */
-
+    /* convergence tolerance */
     utol = libset_get_user_tolerance(BFGS_TOLER);
     if (!na(utol)) {
 	/* the user has actually set a value */
@@ -723,9 +721,15 @@ static void optim_get_user_values (double *b, int n, int *maxit,
 	*reltol = libset_get_double(BFGS_TOLER);
     }
 
-    /* and the maximum acceptable gradient norm */
-
+    /* maximum acceptable gradient norm */
     *gradmax = libset_get_double(BFGS_MAXGRAD);
+
+    /* step-length algorithm (BFGS only at present) */
+    if (quad != NULL) {
+	if (libset_get_int(OPTIM_STEPLEN) == STEPLEN_QUAD) {
+	    *quad = 1;
+	}
+    }
 }
 
 #define bfgs_print_iter(v,s,i) (v && (s == 1 || i % s == 0))
@@ -932,14 +936,14 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     double **H = NULL;
     double *g, *t, *X, *c;
     int fcount, gcount, ndelta = 0;
-    int show_activity = 0;
+    int quad = 0, show_activity = 0;
     double sumgrad, gradmax, gradnorm = 0.0;
     double fmax, f, f0, s, steplen = 0.0;
     double D1, D2;
     int i, j, ilast, iter, done;
     int err = 0;
 
-    optim_get_user_values(b, n, &maxit, &reltol, &gradmax, opt, prn);
+    optim_get_user_values(b, n, &maxit, &reltol, &gradmax, &quad, opt, prn);
 
     if (gradfunc == NULL) {
 	gradfunc = numeric_gradient;
@@ -1051,7 +1055,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 #endif
 	if (sumgrad > 0.0) { 
 	    /* heading in the right direction */
-	    if (libset_get_int(OPTIM_STEPLEN) == STEPLEN_QUAD) {
+	    if (quad) {
 		steplen = quad_slen(n, &ndelta, b, X, t, &f, cfunc, data, 
 				    sumgrad, fmax, &fcount);
 	    } else {
@@ -1245,7 +1249,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 
     *fncount = *grcount = 0;    
 
-    optim_get_user_values(b, n, &maxit, &reltol, &gradmax, opt, prn);
+    optim_get_user_values(b, n, &maxit, &reltol, &gradmax, NULL, opt, prn);
 
     /*
       m: the number of corrections used in the limited memory matrix.
@@ -2263,7 +2267,7 @@ int newton_raphson_max (double *b, int n, int maxit,
     }
 
     /* needs some work */
-    optim_get_user_values(b, n, NULL, NULL, NULL, opt, prn);
+    optim_get_user_values(b, n, NULL, NULL, NULL, NULL, opt, prn);
 
     b1 = b0 + n;
     copy_to(b1, b, n);
