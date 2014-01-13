@@ -26,11 +26,9 @@ Points to note:
 \item The \texttt{<condition>} can be any expression that evaluates to a
   scalar: 0 is interpreted as ``false'', non-zero is interpreted as
   ``true''; \texttt{NA} generates an error.
+\item There is no \texttt{then} keyword, like eg in Pascal or in Basic.
 \item The \cmd{elif} and \cmd{else} clauses are optional: the minimal
   form is just \texttt{if} \dots{} \texttt{endif}.
-\item The \cmd{elif} keyword can be repeated, making hansl's \cmd{if}
-  statement a multi-way branch statement. There is no separate
-  \cmd{switch} or \cmd{case} statement in hansl.
 \item Conditional blocks of this sort can be nested up to a maximum of
   1024.
 \end{itemize}
@@ -63,11 +61,19 @@ else
 endif
 \end{code}
 
-Note to Stata users: hansl's \cmd{if} statement is fundamentally
+Note, from the example above, that the \cmd{elif} keyword can be
+repeated, making hansl's \cmd{if} statement a multi-way branch
+statement. There is no separate \cmd{switch} or \cmd{case} statement
+in hansl. With one or more \cmd{elif}s, hansl will execute the topmost
+one for which the logical condition is satisfied, and then jump to
+\cmd{endif}.
+
+\tip{Stata users, beware: hansl's \cmd{if} statement is fundamentally
 different from Stata's \texttt{if} option: the latter selects a
 subsample of observations for some action, while the former is used to
-decide if a group of statements must be executed or not; Stata calls
-this the \emph{branching \texttt{if}}.
+decide if a group of statements must be executed or not; hansl's
+\cmd{if} is what Stata calls this the ``branching \texttt{if}''.}
+
 
 \subsection{The ternary query operator}
 
@@ -77,11 +83,15 @@ level. This has the form
 \begin{code}
 result = <condition> ? <t-value1> : <f-value>
 \end{code}
+
 If \texttt{<condition>} evaluates as true (non-zero) then
 \texttt{<t-value>} is assigned to \texttt{result}, otherwise
-\texttt{<f-value>} is assigned. This is obviously more compact than
-\texttt{if} \dots{} \texttt{else} \dots{} \texttt{endif}. The
-following example replicates the \cmd{abs} function by hand:
+\texttt{<f-value>} is assigned.\footnote{Some readers may find it
+  helpful to note that the conditional assignment operator works
+  exactly the same way as the \texttt{=IF()} function in
+  spreadsheets.}  This is obviously more compact than \texttt{if}
+\dots{} \texttt{else} \dots{} \texttt{endif}. The following example
+replicates the \cmd{abs} function by hand:
 \begin{code}
 scalar ax = x>=0 ? x : -x
 \end{code}
@@ -109,17 +119,18 @@ the scalar \texttt{days} comes from the following pathway:
   into \texttt{days}.
 \end{enumerate}
 
-It is also
-more flexible, in this respect: in contrast to the usage of
-\texttt{if}, \texttt{<condition>} need not evaluate to a scalar.  So
-for example one can do this sort of thing with matrices:
+Compared to the ordinary \cmd{if} statement, the ternary operator is
+also more flexible: in contrast to the usage of \texttt{if},
+\texttt{<condition>} need not evaluate to a scalar.  So for example
+one can do this sort of thing with matrices:
 \begin{code}
 matrix A = mnormal(4,4)
 matrix B = upper(A.<0) ? -A : A
 \end{code}
 which will switch the sign of the negative elements of \texttt{A} on
 and above its diagonal. To achieve the same via a loop, one should
-have had to write a considerably longer chunk of code, such as
+have had to write a considerably longer (and slower) chunk of code,
+such as
 \begin{code}
 matrix A = mnormal(4,4)
 matrix B = A
