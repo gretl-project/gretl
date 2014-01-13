@@ -121,12 +121,13 @@ neighborhood of 1.
 
 In many cases, you may end up writing several functions, which may be
 quite long; in order to avoid cluttering your script with the function
-definition, hansl provides the \cmd{include} command, so you can put all
-your function definition in a separate file (or separate files if
-necessary). For example, imagine you saved the \verb|quasi_log()|
-function definition above in a separate file called
-\verb|quasilog_def.inp|: the code above could be written more
-compactly as
+definition, hansl provides the \cmd{include} command, so you can put
+all your function definitions in a separate file, or separate files if
+you appreciate tidiness; note, however, that you can put as many
+function definitions as you want in any included file. For
+example, imagine you saved the \verb|quasi_log()| function definition
+above in a separate file called \verb|quasilog_def.inp|: the code
+above could be written more compactly as
 \begin{code}
 include quasilog_def.inp
 
@@ -173,10 +174,10 @@ Each of the type-specifiers, with the exception of \texttt{list} and
 associated parameter name, as in
 %    
 \begin{code}
-function scalar myfunc (series *y, scalar *b)
+function scalar myfunc (matrix *y, scalar *b)
 \end{code}
-This indicates that \verb|*y|, isn't a series, but a \emph{pointer} to
-a series.  In practice, a pointer to a variable contains the memory
+This indicates that \verb|*y|, isn't a matrix, but a \emph{pointer} to
+a matrix.  In practice, a pointer to a variable contains the memory
 address at which the variable is stored.
 
 This is usually considered a bit mysterious by people unfamiliar with
@@ -190,14 +191,16 @@ walk out of your barber shop with their hair untouched. Nevertheless,
 you have a simple way to go around this limitation: your customers can
 come to your shop, tell you their home address and walk out. Then,
 nobody stops you from going to their place and excercise your fine
-profession.
+profession. Formally, you're ok with the law, because no modification
+of anything took place inside your shop.
 
 Unlike C, you have to take no special precaution inside the function
 body to distinguish the variable from its address\footnote{In C, this
   would be called \emph{dereferencing} the pointer.}. You just use the
 variable's name. In order to supply the address of a variable when you
-invoke the function, you use the ampersand (\verb|&|) operator. An
-example should, hopefully, make this clear; the following code
+invoke the function, you use the ampersand (\verb|&|) operator. 
+
+An example should, hopefully, make things clearer; the following code
 \begin{code}
 function void swap(scalar *a, scalar *b)
     scalar tmp = a
@@ -253,7 +256,7 @@ function scalar factorial(scalar n)
     elif n==0
         return 1
     else
-        return n*factorial(n-1)
+        return n * factorial(n-1)
     endif
 end function
 
