@@ -3287,7 +3287,7 @@ MODEL logistic_model (const int *list, double lmax,
     return lmod;
 }
 
-static double choose (double n, double k)
+static double choose (double n, double k, int *err)
 {
     double c = 1.0;
     int i;
@@ -3296,16 +3296,33 @@ static double choose (double n, double k)
 	c *= (n - i) / (k - i);
     }
 
+    if (xna(c)) {
+	*err = 1;
+    }
+
     return c;
 }
 
 static double table_prob (double a, double b, double c, double d,
-			  double n)
+			  double n, int *err)
 {
-    double p1 = choose(a+b, a);
-    double p2 = choose(c+d, c);
-    double p3 = choose(n, a+c);
-    double P = p1 * p2 / p3;
+    double p1, p2, p3, P = NADBL;
+
+    p1 = choose(a+b, a, err);
+    if (!*err) {
+	p2 = choose(c+d, c, err);
+    }
+    if (!*err) {
+	p3 = choose(n, a+c, err);
+    }
+
+    if (!*err) {
+	P = p1 * p2 / p3;
+	if (xna(P)) {
+	    *err = 1;
+	    P = NADBL;
+	}
+    }
 
 #if 0
     fprintf(stderr, "\ntable_prob: a=%g, b=%g, c=%g, d=%g, n=%g\n", 
@@ -3332,8 +3349,14 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
 {
     double a, b, c, d, n, E0;
     double P0, Pi, PL, PR, P2;
+    int err = 0;
 
     if (tab->rows != 2 || tab->cols != 2) {
+	return E_DATA;
+    }
+
+    if (tab->n > 1000) {
+	/* not worth trying? */
 	return E_DATA;
     }
 
@@ -3346,44 +3369,56 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
     E0 = (tab->rtotal[0] * tab->ctotal[0]) / n;
 
     /* Probability of the observed table */
-    PL = PR = P2 = P0 = table_prob(a, b, c, d, n);
+    PL = PR = P2 = P0 = table_prob(a, b, c, d, n, &err);
 
-    while (a > 0 && d > 0) {
-	a -= 1; d -= 1;
-	c += 1; b += 1;
-	Pi = table_prob(a, b, c, d, n);
-	if (Pi <= P0 || tab->f[0][0] > E0) {
-	    PL += Pi;
-	}
-	if (Pi <= P0) {
-	    P2 += Pi;
+    if (!err) {
+	while (a > 0 && d > 0) {
+	    a -= 1; d -= 1;
+	    c += 1; b += 1;
+	    Pi = table_prob(a, b, c, d, n, &err);
+	    if (err) {
+		break;
+	    }
+	    if (Pi <= P0 || tab->f[0][0] > E0) {
+		PL += Pi;
+	    }
+	    if (Pi <= P0) {
+		P2 += Pi;
+	    }
 	}
     }
 
-    a = tab->f[0][0];
-    b = tab->f[0][1];
-    c = tab->f[1][0];
-    d = tab->f[1][1];
+    if (!err) {
+	a = tab->f[0][0];
+	b = tab->f[0][1];
+	c = tab->f[1][0];
+	d = tab->f[1][1];
 
-    while (c > 0 && b > 0) {
-	c -= 1; b -= 1;
-	a += 1; d += 1;
-	Pi = table_prob(a, b, c, d, n);
-	if (Pi <= P0 || tab->f[0][0] < E0) {
-	    PR += Pi;
-	}
-	if (Pi <= P0) {
-	    P2 += Pi;
+	while (c > 0 && b > 0) {
+	    c -= 1; b -= 1;
+	    a += 1; d += 1;
+	    Pi = table_prob(a, b, c, d, n, &err);
+	    if (err) {
+		break;
+	    }
+	    if (Pi <= P0 || tab->f[0][0] < E0) {
+		PR += Pi;
+	    }
+	    if (Pi <= P0) {
+		P2 += Pi;
+	    }
 	}
     } 
 
-    pprintf(prn, "\n%s:\n", _("Fisher's Exact Test"));
-    pprintf(prn, "  Left:   P-value = %g\n", PL);
-    pprintf(prn, "  Right:  P-value = %g\n", PR);
-    pprintf(prn, "  2-Tail: P-value = %g\n", P2);
-    pputc(prn, '\n');
+    if (!err) {
+	pprintf(prn, "\n%s:\n", _("Fisher's Exact Test"));
+	pprintf(prn, "  Left:   P-value = %g\n", PL);
+	pprintf(prn, "  Right:  P-value = %g\n", PR);
+	pprintf(prn, "  2-Tail: P-value = %g\n", P2);
+	pputc(prn, '\n');
+    }
 
-    return 0;
+    return err;
 }
 
 /**

@@ -531,16 +531,16 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 
 void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 {
+    int collabels = (tab->clabels != NULL);
+    int rowlabels = (tab->rlabels != NULL);
     int r = tab->rows;
     int c = tab->cols;
     double x, y;
     int n5 = 0;
     double ymin = 1.0e-7;
     double pearson = 0.0;
-    int i, j;
     char lbl[64];
-    int has_clabels = (tab->clabels!=NULL);
-    int has_rlabels = (tab->rlabels!=NULL);
+    int i, j;
 
     if (*tab->rvarname != '\0' && *tab->cvarname != '\0') {
 	pputc(prn, '\n');
@@ -551,12 +551,12 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 	pputs(prn, "\n       ");
     }
 
-    if(has_rlabels){
+    if (rowlabels) {
 	pputs(prn, "    ");
     }
 
     for (j=0; j<c; j++) {
-	if (!has_clabels) {
+	if (!collabels) {
 	    pprintf(prn, "[%4g]", tab->cval[j]);
 	} else {
 	    *lbl = '\0';
@@ -568,21 +568,18 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     pprintf(prn,"  %s\n  \n", _("TOT."));
 
     for (i=0; i<r; i++) {
-
 	if (tab->rtotal[i] > 0) {
-	    if (!has_rlabels) {
+	    if (!rowlabels) {
 		pprintf(prn, "[%4g] ", tab->rval[i]);
 	    } else {
 		*lbl = '\0';
 		gretl_utf8_strncat(lbl, tab->rlabels[i], 8);
 		pprintf(prn, "[%8s] ", lbl);
 	    }
-
 	    for (j=0; j<c; j++) {
-		if (has_clabels) {
+		if (collabels) {
 		    pputs(prn, "    ");
 		}
-
 		if (tab->ctotal[j]) {
 		    if (tab->f[i][j] || (opt & OPT_Z)) {
 			if (opt & (OPT_C | OPT_R)) {
@@ -599,19 +596,19 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 			pputs(prn, "      ");
 		    }
 		} 
-
 		if (!na(pearson)) {
-		    y = (double) (tab->rtotal[i] * tab->ctotal[j]) / tab->n;
-		    x = (double) tab->f[i][j] - y;
+		    y = ((double) tab->rtotal[i] * tab->ctotal[j]) / tab->n;
 		    if (y < ymin) {
 			pearson = NADBL;
 		    } else {
+			x = (double) tab->f[i][j] - y;
 			pearson += x * x / y;
-			if (y >= 5) n5++;
+			if (y >= 5) {
+			    n5++;
+			}
 		    }
 		}
 	    }
-
 	    if (opt & OPT_C) {
 		x = 100.0 * tab->rtotal[i] / tab->n;
 		pprintf(prn, "%5.1f%%\n", x);
@@ -623,12 +620,12 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 
     pputc(prn, '\n');
     pputs(prn, _("TOTAL  "));
-    if(has_rlabels){
+    if (rowlabels) {
 	pputs(prn, "    ");
     }
 
     for (j=0; j<c; j++) {
-	if (has_clabels) {
+	if (collabels) {
 	    pputs(prn, "    ");
 	}
 	if (opt & OPT_R) {
@@ -648,6 +645,7 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     }
 
     if (na(pearson)) {
+	pputc(prn, '\n');
 	pprintf(prn, _("Pearson chi-square test not computed: some "
 		       "expected frequencies were less\n"
 		       "than %g\n"), ymin);
