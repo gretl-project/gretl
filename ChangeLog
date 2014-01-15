@@ -16,6 +16,7 @@ version 1.9.15, in progress
   on data import
 - Fix bug: the auxiliary regression for White's test should
   contain a constant even if the model to be tested does not
+- Fix bug 181
 - Internals: add support for multiple, independent PRNGs
 - win32 build: update gmp to 5.1.3, mpfr to 3.1.2	
 	
