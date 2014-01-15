@@ -7649,27 +7649,6 @@ static int maybe_back_up_datafile (const char *fname)
     return err;
 }
 
-/* By default we apply gzip compression when saving a datafile in
-   native gdt format, but if there's an existing file of the same name
-   and it's uncompressed then we arrange for the new file to be
-   uncompressed too.  
-*/
-
-static int should_compress_data (const char *fname)
-{
-    FILE *fp = gretl_fopen(fname, "r");
-    int zipit = 1;
-
-    if (fp != NULL) {
-	fclose(fp);
-	if (!is_gzipped(fname)) {
-	    zipit = 0;
-	}
-    }
-
-    return zipit;
-}
-
 /* Note that in this context "exporting" means that we're saving
    a file that is not necessarily synced with the current dataset
    in memory (e.g. it may contain a subset of the currently defined
@@ -7685,6 +7664,7 @@ static gretlopt store_action_to_opt (const char *fname, int action,
     *exporting = 1;
 
     switch (action) {
+    case AUTO_SAVE_DATA:
     case SAVE_DATA:
     case SAVE_DATA_AS:
 	*exporting = 0;
@@ -7713,10 +7693,23 @@ static gretlopt store_action_to_opt (const char *fname, int action,
     default: break;
     }
 
-    if (action == SAVE_DATA || action == SAVE_DATA_AS ||
-	action == SAVE_BOOT_DATA || action == EXPORT_GDT) {
-	if (should_compress_data(fname)) {
-	    opt = OPT_Z;
+    if (action == AUTO_SAVE_DATA) {
+	/* saving a previously opened gdt file directly,
+	   not coming via file selector: let the save
+	   inherit the compression status of the original
+	   file
+	*/
+	if (is_gzipped(fname)) {
+	    opt |= OPT_Z;
+	}
+    } else if (action == SAVE_DATA || action == SAVE_DATA_AS ||
+	       action == SAVE_BOOT_DATA || action == EXPORT_GDT) {
+	int level = get_optval_int(STORE, OPT_Z, NULL);
+
+	/* apply compression unless the user has set the
+	   gzip level to zero via file dialog */
+	if (level > 0) {
+	    opt |= OPT_Z;
 	}
     }    
 
@@ -7768,11 +7761,9 @@ int do_store (char *filename, int action, gpointer data)
 
     opt = store_action_to_opt(filename, action, &exporting);
 
-    if (action == SAVE_DATA || action == SAVE_DATA_AS ||
-	action == SAVE_BOOT_DATA) {
-	if (should_compress_data(filename)) {
-	    opt = OPT_Z;
-	}
+    if (action == AUTO_SAVE_DATA) {
+	/* we've now dealt with the specifics of auto_save */
+	action = SAVE_DATA;
     }
 
     lib_command_sprintf("store \"%s\"", filename);
@@ -7801,7 +7792,7 @@ int do_store (char *filename, int action, gpointer data)
 	}
 	lib_command_strcat(print_flags(opt, STORE));
     } else if (has_suffix(filename, ".dat")) { 
-	/* saving in "traditional" mode as ".dat" */
+	/* saving in "traditional" ESL mode as ".dat" */
 	lib_command_strcat(" -t");
 	opt = OPT_T;
     } 

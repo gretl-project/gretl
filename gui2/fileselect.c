@@ -959,7 +959,9 @@ static void gtk_file_selector (int action, FselDataSrc src,
 					  okstr, GTK_RESPONSE_ACCEPT,
 					  NULL);
 
-    if (action == SAVE_DATA || action == SAVE_DATA_AS) {
+    if (action == SAVE_DATA || 
+	action == SAVE_DATA_AS || 
+	action == EXPORT_GDT) {
 	add_compression_level_option(filesel);
     }
 

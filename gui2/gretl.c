@@ -2419,7 +2419,7 @@ static void auto_store (void)
 	set_selector_storelist(NULL);
 	if ((data_status & USER_DATA) && has_suffix(datafile, ".gdt")) {
 	    /* bypass filename selection */
-	    do_store(datafile, SAVE_DATA, NULL);
+	    do_store(datafile, AUTO_SAVE_DATA, NULL);
 	} else {
 	    file_selector(SAVE_DATA, FSEL_DATA_NONE, NULL);
 	}

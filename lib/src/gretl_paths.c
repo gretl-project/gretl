@@ -2759,7 +2759,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.dbhost) {
 	strcpy(targ, "ricardo.ecn.wfu.edu");
     } else if (targ == paths.x12a) {
-	sprintf(targ, "%s\\x12arima\\x12a.exe", progfiles);
+	sprintf(targ, "%s\\x13as\\x13as.exe", progfiles);	
     } else if (targ == paths.tramo) {
 	sprintf(targ, "%s\\tramo\\tramo.exe", progfiles);
     } else if (targ == paths.rbinpath) {
@@ -2769,7 +2769,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.oxlpath) {
 	sprintf(targ, "%s\\OxMetrics6\\Ox\\bin\\oxl.exe", progfiles);
     } else if (targ == paths.octpath) {
-	strcpy(targ, "C:\\Octave\\3.2.3_gcc-4.0.0\\bin\\octave.exe");
+	strcpy(targ, "C:\\Octave-3.6.4\\bin\\octave.exe");
     } else if (targ == paths.statapath) {
 	sprintf(targ, "%s\\Stata\\stata.exe", progfiles);
     } else if (targ == paths.pypath) {
