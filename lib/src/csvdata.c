@@ -2444,11 +2444,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	if (!err) {
 	    /* set up to handle the "no varnames" case */
 	    csv_set_autoname(c);
-	    if (csv_has_bom(c)) {
-		fseek(fp, 3, SEEK_SET);
-	    } else {
-		rewind(fp);
-	    }
+	    c->datapos = csv_has_bom(c) ? 3 : 0;
 	    if (obs_labels_no_varnames(obscol, c->dset, numcount)) {
 		err = csv_reconfigure_for_markers(c->dset);
 		if (!err) {
