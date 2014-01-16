@@ -22,7 +22,6 @@
    copyright notice. */
 
 #include "libgretl.h"
-#include "gretl_xml.h"
 #include "version.h"
 
 #include <gtk/gtk.h>
