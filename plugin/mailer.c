@@ -22,6 +22,7 @@
    copyright notice. */
 
 #include "libgretl.h"
+#include "gretl_xml.h"
 #include "version.h"
 
 #include <gtk/gtk.h>
@@ -1203,7 +1204,7 @@ static int pack_and_mail (const char *fname,
     FILE *fpin, *fpout;
     int err = 0;
 
-    fpin = gretl_fopen(fname, "r");
+    fpin = gretl_fopen(fname, "rb");
     if (fpin == NULL) {
 	perror(fname);
 	err = 1;
@@ -1232,7 +1233,7 @@ static int pack_and_mail (const char *fname,
     }
 
     if (!err) {
-	fpin = gretl_fopen(tmpfname, "r");
+	fpin = gretl_fopen(tmpfname, "rb");
 	if (fpin == NULL) {
 	    perror(tmpfname);
 	    err = 1;

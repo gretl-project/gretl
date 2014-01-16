@@ -239,7 +239,37 @@ static void new_package_callback (GtkAction *action, gpointer p)
 #ifdef ENABLE_MAILER
 static void email_data (gpointer p, guint u, GtkWidget *w)
 {
-    send_file(datafile);
+    char gdttmp[FILENAME_MAX];
+    char *title = NULL;
+    int err;
+
+    /* We need to handle the cases where (a) we have unsaved
+       data or (b) the dataset is saved as a binary file. To
+       do this we write out a temporary copy of the current
+       dataset, gzipped but not binary.
+    */
+
+    if (*datafile != '\0') {
+	const char *base = path_last_element(datafile);
+	int len = strcspn(base, ".");
+
+	if (len > 0) {
+	    title = g_strndup(base, len);
+	}
+    }
+    
+    if (title == NULL) {
+	sprintf(gdttmp, "%suntitled.gdt", gretl_dotdir());
+    } else {
+	sprintf(gdttmp, "%s%s.gdt", gretl_dotdir(), title);
+	g_free(title);
+    }
+
+    err = gretl_write_gdt(gdttmp, NULL, dataset, OPT_Z, NULL, 0);
+    if (!err) {
+	send_file(gdttmp);
+    }
+    gretl_remove(gdttmp);
 }
 #endif
 

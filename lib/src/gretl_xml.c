@@ -1774,6 +1774,32 @@ static int open_gdt_write_stream (const char *fname, gretlopt opt,
     return err;
 }
 
+#define BDT_HDRLEN 24
+
+static int write_bdt_header (FILE *fp, gzFile fz)
+{
+    char header[BDT_HDRLEN] = {0};
+    int err = 0;
+
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+    strcpy(header, "gretl-bdt:little-endian");
+#else
+    strcpy(header, "gretl-bdt:big-endian");
+#endif
+
+    if (fz != Z_NULL) {
+	if (gzwrite(fz, header, BDT_HDRLEN) != BDT_HDRLEN) {
+	    err = E_DATA;
+	}
+    } else {
+	if (fwrite(header, 1, BDT_HDRLEN, fp) != BDT_HDRLEN) {
+	    err = E_DATA;
+	}
+    }
+
+    return err;
+}
+
 static int bdt_write (const char *fname, const DATASET *dset, 
 		      const int *list, int nvars, int nrows,
 		      gretlopt opt)
@@ -1800,11 +1826,13 @@ static int bdt_write (const char *fname, const DATASET *dset,
 	len = nrows * sizeof(double);
     }
 
+    write_bdt_header(fp, fz);
+
     if (nrows < T) {
 	/* skip-padding is in force */
 	double *tmp = NULL;
 	int uv = 0, tv = 0;
-	int s, t, nv;
+	int s, t, nv = 0;
 
 	err = dataset_add_series((DATASET *) dset, 2);
 	if (!err) {
@@ -1884,6 +1912,17 @@ static int bdt_write (const char *fname, const DATASET *dset,
     return err;
 }
 
+static void binary_write_message (const char *fname,
+				  PRN *prn)
+{
+    char *bname = switch_ext_new(fname, "bdt");
+
+    if (bname != NULL) {
+	pprintf(prn, "wrote %s and binary file %s\n", fname, bname);
+	free(bname);
+    }
+}
+
 static void gdt_swap_endianness (DATASET *dset)
 {
     int i, t;
@@ -1893,6 +1932,44 @@ static void gdt_swap_endianness (DATASET *dset)
 	    reverse_double(dset->Z[i][t]);
 	}
     }
+}
+
+static int read_bdt_header (FILE *fp, gzFile fz, int order)
+{
+    char hdr[BDT_HDRLEN] = {0};
+    unsigned chk;
+    int err = 0;
+
+    if (fz != Z_NULL) {
+	chk = gzread(fz, hdr, BDT_HDRLEN);
+    } else {
+	chk = fread(hdr, 1, BDT_HDRLEN, fp);
+    }
+
+    if (chk != BDT_HDRLEN) {
+	err = E_DATA;
+    } else {
+	int bin_order = 0;
+
+	if (strncmp(hdr, "gretl-bdt:", 10)) {
+	    err = E_DATA;
+	} else if (!strcmp(hdr + 10, "little-endian")) {
+	    bin_order = G_LITTLE_ENDIAN;
+	} else if (!strcmp(hdr + 10, "big-endian")) {
+	    bin_order = G_BIG_ENDIAN;
+	} else {
+	    err = E_DATA;
+	}
+	if (!err && bin_order != order) {
+	    err = E_DATA;
+	}
+    }
+
+    if (err) {
+	gretl_errmsg_set("Error reading binary data file");
+    }
+
+    return err;
 }
 
 static int bdt_read (const char *fname, DATASET *dset,
@@ -1911,6 +1988,7 @@ static int bdt_read (const char *fname, DATASET *dset,
 	if (fz == Z_NULL) {
 	    err = E_FOPEN;
 	} else {
+	    err = read_bdt_header(NULL, fz, order);
 	    for (i=1; i<dset->v && !err; i++) {
 		chk = gzread(fz, dset->Z[i], len);
 		if (chk != len) {
@@ -1926,6 +2004,7 @@ static int bdt_read (const char *fname, DATASET *dset,
 	if (fp == NULL) {
 	    err = E_FOPEN;
 	} else {
+	    err = read_bdt_header(fp, NULL, order);
 	    for (i=1; i<dset->v && !err; i++) {
 		got = fread(dset->Z[i], sizeof(double), T, fp);
 		if (got != T) {
@@ -1997,6 +2076,7 @@ static int p15_OK (const DATASET *dset, int v)
  * @list: list of variables to write (or %NULL to write all).
  * @dset: dataset struct.
  * @opt: if %OPT_Z write gzipped data, else uncompressed.
+ * @prn: gretl printer to display message, or NULL.
  * @progress: may be 1 when called from gui to display progress
  * bar in case of a large data write; generally should be 0.
  * 
@@ -2008,7 +2088,7 @@ static int p15_OK (const DATASET *dset, int v)
 
 int gretl_write_gdt (const char *fname, const int *list, 
 		     const DATASET *dset, gretlopt opt, 
-		     int progress)
+		     PRN *prn, int progress)
 {
     FILE *fp = NULL;
     gzFile fz = Z_NULL;
@@ -2016,8 +2096,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     char *p15 = NULL;
     char startdate[OBSLEN], enddate[OBSLEN];
     char datname[MAXLEN], freqstr[32];
-    char numstr[128];
-    char xmlbuf[256];
+    char numstr[128], xmlbuf[256];
     void *handle = NULL;
     int (*show_progress) (gint64, gint64, int) = NULL;
     gint64 dsize = 0;
@@ -2383,6 +2462,14 @@ int gretl_write_gdt (const char *fname, const int *list,
 	(*show_progress)(0, dset->t2 - dset->t1 + 1, SP_FINISH);
 	close_plugin(handle);
     } 
+
+    if (!err && prn != NULL) {
+	if (binary) {
+	    binary_write_message(fname, prn);
+	} else {
+	    pprintf(prn, _("wrote %s\n"), fname);
+	}
+    }
 
     if (p15) free(p15);
     if (fp != NULL) fclose(fp);
@@ -3372,6 +3459,35 @@ char *gretl_get_gdt_description (const char *fname)
     xmlFreeDoc(doc);
 
     return (char *) buf;
+}
+
+/**
+ * gretl_is_binary_gdt:
+ * @fname: name of file to examine.
+ * 
+ * Returns: 1 if the file named @fname is the gdt component
+ * of a gretl binary data pair.
+ */
+
+int gretl_is_binary_gdt (const char *fname)
+{
+    int ret = 0;
+
+    if (has_suffix(fname, ".gdt")) {
+	xmlDocPtr doc;
+	xmlNodePtr cur;
+	int err;
+
+	gretl_error_clear();
+	err = gretl_xml_open_doc_root(fname, "gretldata", 
+				      &doc, &cur);
+	if (!err) {
+	    ret = gdt_binary_order(cur) != 0;
+	}
+	xmlFreeDoc(doc);
+    }
+
+    return ret;
 }
 
 static char *gretl_xml_get_doc_type (const char *fname, int *err)

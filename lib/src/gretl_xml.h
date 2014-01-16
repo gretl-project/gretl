@@ -129,12 +129,14 @@ int gretl_write_matrix_as_gdt (const char *fname,
 
 int gretl_write_gdt (const char *fname, const int *list, 
 		     const DATASET *dset, gretlopt opt, 
-		     int progress);
+		     PRN *prn, int progress);
 
 int gretl_read_gdt (const char *fname, DATASET *dset, 
 		    gretlopt opt, PRN *prn);
 
 char *gretl_get_gdt_description (const char *fname);
+
+int gretl_is_binary_gdt (const char *fname);
 
 int load_user_XML_file (const char *fname, PRN *prn);
 

@@ -1323,6 +1323,7 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
     int *pmax = NULL;
     int freelist = 0;
     int csv_digits = 0;
+    int message_done = 0;
     double xx;
     int err = 0;
 
@@ -1349,7 +1350,8 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 
     if (fmt == GRETL_FMT_GDT || fmt == GRETL_FMT_GZIPPED) {
 	/* write standard XML .gdt file */
-	err = gretl_write_gdt(fname, list, dset, opt, progress);
+	err = gretl_write_gdt(fname, list, dset, opt, prn, progress);
+	message_done = 1;
 	goto write_exit;
     }
 
@@ -1578,8 +1580,8 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 
  write_exit:
 
-    if (!err && prn != NULL) {
-	pprintf(prn, "wrote %s\n", fname);
+    if (!err && !message_done && prn != NULL) {
+	pprintf(prn, _("wrote %s\n"), fname);
     }
 
     if (freelist) {
