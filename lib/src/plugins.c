@@ -244,6 +244,8 @@ struct plugin_function plugin_functions[] = {
     { "gretl_native_make_zipfile",       P_ZIPFILE},
     { "gretl_native_unzip_file",         P_ZIPFILE},
     { "gretl_native_unzip_session_file", P_ZIPFILE},
+    { "gretl_native_zip_datafile",       P_ZIPFILE},
+    { "gretl_native_unzip_datafile",     P_ZIPFILE},
 
     /* Dynamic panel data estimation */
     { "arbond_estimate",    P_ARBOND},

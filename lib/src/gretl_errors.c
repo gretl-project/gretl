@@ -289,6 +289,21 @@ void gretl_errmsg_set (const char *str)
 }
 
 /**
+ * gretl_errmsg_ensure:
+ * @str: an error message.
+ *
+ * If %gretl_errmsg is currently blank, copy the given string into
+ * the message space.
+ */
+
+void gretl_errmsg_ensure (const char *str)
+{
+    if (*gretl_errmsg == '\0') {
+	strncat(gretl_errmsg, str, ERRLEN - 1);
+    }
+}
+
+/**
  * gretl_warnmsg_set:
  * @str: a warning message.
  *

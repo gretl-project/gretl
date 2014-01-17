@@ -22,6 +22,7 @@
 #include <string.h>
 #include <glib.h>
 
+#include "strutils.h"
 #include "zipunzip.h"
 
 static gchar *gretl_zipfile_get_topdir (const char *fname)
@@ -84,7 +85,7 @@ int gretl_native_make_zipfile (const char *fname, const char *path,
     const char *array[2] = { path, NULL };
     int err;
 
-    err = zipfile_archive_files(fname, array, 9, 
+    err = zipfile_archive_files(fname, array, 6, 
 				ZIP_RECURSE_DIRS,
 				gerr);
 
@@ -111,6 +112,73 @@ int gretl_native_unzip_session_file (const char *fname, gchar **zdirname,
     }
 
     return err;
+}
+
+int gretl_native_unzip_datafile (const char *fname, const char *path,
+				 GError **gerr)
+{
+    char thisdir[FILENAME_MAX];
+    int err = 0;
+
+    fprintf(stderr, "gretl_native_unzip_datafile\n"
+	    " fname = '%s', path = '%s'\n", fname, path);
+
+    if (getcwd(thisdir, FILENAME_MAX - 1) == NULL) {
+	err = E_FOPEN; /* ?? */
+    } else {
+	char zipname[FILENAME_MAX];
+
+	fprintf(stderr, " cwd = '%s'\n", thisdir);
+	if (!g_path_is_absolute(fname)) {
+	    build_path(zipname, thisdir, fname, NULL);
+	} else {
+	    strcpy(zipname, fname);
+	}
+	fprintf(stderr, " zipname = '%s'\n", zipname);
+	gretl_chdir(path);
+	err = gretl_native_unzip_file(zipname, gerr);
+	gretl_chdir(thisdir);
+    }
+
+    return err;
+}
+
+int gretl_native_zip_datafile (const char *fname, const char *path,
+			       int level, GError **gerr)
+{
+    char thisdir[FILENAME_MAX];
+    int err = 0;
+
+    fprintf(stderr, "gretl_native_zip_datafile\n"
+	    " fname = '%s', path = '%s'\n", fname, path);
+
+    if (getcwd(thisdir, FILENAME_MAX - 1) == NULL) {
+	err = E_FOPEN; /* ?? */
+    } else {
+	char zipname[FILENAME_MAX];
+	const char *array[3] = {
+	    "data.xml", "data.bin", NULL
+	};
+
+	fprintf(stderr, " cwd = '%s'\n", thisdir);
+	if (!g_path_is_absolute(fname)) {
+	    build_path(zipname, thisdir, fname, NULL);
+	} else {
+	    strcpy(zipname, fname);
+	}
+	fprintf(stderr, " zipname = '%s'\n", zipname);
+	gretl_chdir(path);
+	err = zipfile_archive_files(zipname, array, level, 0, gerr);
+	gretl_chdir(thisdir);
+    }
+
+    if (*gerr != NULL && !err) {
+	/* shouldn't happen */
+	err = 1;
+    }    
+
+    /* don't let ZIP error codes get confused with gretl ones */
+    return (err != 0);
 }
 
 

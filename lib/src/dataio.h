@@ -24,8 +24,9 @@
 #include <string.h>
 
 typedef enum {
-    GRETL_NATIVE_DATA,    /* old-style gretl format data file */
     GRETL_XML_DATA,       /* gretl XML data file (.gdt) */
+    GRETL_BINARY_DATA,    /* zip file with binary component (.gdtb) */
+    GRETL_ESL_DATA,       /* old-style ESL/gretl format data file */
     GRETL_CSV,            /* comma-separated or other plain text data */
     GRETL_OCTAVE,         /* GNU octave ascii data file */
     GRETL_GNUMERIC,       /* gnumeric workbook data */

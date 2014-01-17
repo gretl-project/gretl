@@ -8302,7 +8302,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 
     if (ftype == GRETL_CSV) {
 	err = import_csv(myfile, dset, opt, vprn);
-    } else if (ftype == GRETL_XML_DATA) {
+    } else if (ftype == GRETL_XML_DATA || ftype == GRETL_BINARY_DATA) {
 	err = gretl_read_gdt(myfile, dset, opt | OPT_B, vprn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
 	err = import_spreadsheet(myfile, ftype, cmd->list, cmd->parm2, dset, 

@@ -127,7 +127,7 @@ int gretl_write_native_data (const char *fname, const int *list,
 	return E_INVARG;
     }
 
-    return gretl_write_gdt(fname, list, dset, OPT_Z, NULL, 0);
+    return gretl_write_gdt(fname, list, dset, OPT_Z, 0);
 }
 
 /**

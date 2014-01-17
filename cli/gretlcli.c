@@ -340,11 +340,12 @@ static void handle_datafile (char *filearg, char *runfile,
     case GRETL_RATS_DB:
 	exit(EXIT_FAILURE);
 	break;
-    case GRETL_NATIVE_DATA:
-	err = gretl_get_data(datafile, dset, OPT_NONE, prn);
-	break;
     case GRETL_XML_DATA:
+    case GRETL_BINARY_DATA:
 	err = gretl_read_gdt(datafile, dset, OPT_NONE, prn);
+	break;
+    case GRETL_ESL_DATA:
+	err = gretl_get_data(datafile, dset, OPT_NONE, prn);
 	break;
     case GRETL_CSV:
 	err = import_csv(datafile, dset, OPT_NONE, prn);
@@ -766,17 +767,17 @@ static int cli_open_append (CMD *cmd, const char *line,
     if (opt & OPT_Q) {
 	/* --quiet, but in case we hit any problems below... */
 	vprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
-    } 
+    }
 
-    if (ftype == GRETL_CSV) {
+    if (ftype == GRETL_XML_DATA || ftype == GRETL_BINARY_DATA) {
+	err = gretl_read_gdt(newfile, dset, opt, vprn);
+    } else if (ftype == GRETL_CSV) {
 	err = import_csv(newfile, dset, opt, vprn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
 	err = import_spreadsheet(newfile, ftype, cmd->list, cmd->parm2,
 				 dset, opt, vprn);
     } else if (OTHER_IMPORT(ftype)) {
 	err = import_other(newfile, ftype, dset, opt, vprn);
-    } else if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(newfile, dset, opt, vprn);
     } else if (ftype == GRETL_ODBC) {
 	err = set_odbc_dsn(line, vprn);
     } else if (dbdata) {

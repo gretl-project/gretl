@@ -94,6 +94,8 @@ char *maybe_save_gretl_errmsg (int err);
 
 void gretl_errmsg_set (const char *str);
 
+void gretl_errmsg_ensure (const char *str);
+
 void gretl_warnmsg_set (const char *str);
 
 void gretl_errmsg_sprintf (const char *fmt, ...);

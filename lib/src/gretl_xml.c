@@ -26,6 +26,7 @@
 #include "gretl_string_table.h"
 #include "dbread.h"
 #include "swap_bytes.h"
+#include "gretl_zip.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1758,7 +1759,7 @@ static int open_gdt_write_stream (const char *fname, gretlopt opt,
 	if (level != 0) {
 	    *fzp = gretl_gzopen(fname, "wb");
 	    if (*fzp == NULL) {
-		err = 1;
+		err = E_FOPEN;
 	    } else {
 		gzsetparams(*fzp, level, Z_DEFAULT_STRATEGY);
 		done = 1;
@@ -1768,68 +1769,53 @@ static int open_gdt_write_stream (const char *fname, gretlopt opt,
 
     if (!done && !err) {
 	*fpp = gretl_fopen(fname, "wb");
-	if (*fpp == NULL) err = 1;
+	if (*fpp == NULL) err = E_FOPEN;
     }
 
     return err;
 }
 
-#define BDT_HDRLEN 24
+#define BIN_HDRLEN 24
 
-static int write_bdt_header (FILE *fp, gzFile fz)
+static int write_binary_header (FILE *fp)
 {
-    char header[BDT_HDRLEN] = {0};
+    char header[BIN_HDRLEN] = {0};
     int err = 0;
 
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
-    strcpy(header, "gretl-bdt:little-endian");
+    strcpy(header, "gretl-bin:little-endian");
 #else
-    strcpy(header, "gretl-bdt:big-endian");
+    strcpy(header, "gretl-bin:big-endian");
 #endif
 
-    if (fz != Z_NULL) {
-	if (gzwrite(fz, header, BDT_HDRLEN) != BDT_HDRLEN) {
-	    err = E_DATA;
-	}
-    } else {
-	if (fwrite(header, 1, BDT_HDRLEN, fp) != BDT_HDRLEN) {
-	    err = E_DATA;
-	}
+    if (fwrite(header, 1, BIN_HDRLEN, fp) != BIN_HDRLEN) {
+	err = E_DATA;
     }
 
     return err;
 }
 
-static int bdt_write (const char *fname, const DATASET *dset, 
-		      const int *list, int nvars, int nrows,
-		      gretlopt opt)
+static int write_binary_data (const char *fname, const DATASET *dset, 
+			      const int *list, int nvars, int nrows)
 {
     char *bname;
-    FILE *fp = NULL;
-    gzFile fz = Z_NULL;   
+    FILE *fp;
     int T = dset->t2 - dset->t1 + 1;
-    unsigned chk, len = 0;
     size_t wrote;
-    int gz = 0;
-    int i, v, err;
+    int i, v, err = 0;
 
-    bname = switch_ext_new(fname, "bdt");
-    err = open_gdt_write_stream(bname, opt, &fp, &fz);
+    bname = switch_ext_new(fname, "bin");
+    fp = gretl_fopen(bname, "wb");
     free(bname);
 
-    if (err) {
+    if (fp == NULL) {
 	return E_FOPEN;
     }
 
-    if (fz != Z_NULL) {
-	gz = 1;
-	len = nrows * sizeof(double);
-    }
-
-    write_bdt_header(fp, fz);
+    write_binary_header(fp);
 
     if (nrows < T) {
-	/* skip-padding is in force */
+	/* panel data with skip-padding in force */
 	double *tmp = NULL;
 	int uv = 0, tv = 0;
 	int s, t, nv = 0;
@@ -1868,16 +1854,9 @@ static int bdt_write (const char *fname, const DATASET *dset,
 		    tmp[s++] = dset->Z[v][t];
 		}
 	    }
-	    if (gz) {
-		chk = gzwrite(fz, tmp, len);
-		if (chk != len) {
-		    err = E_DATA;
-		}
-	    } else {
-		wrote = fwrite(tmp, sizeof(double), nrows, fp);
-		if (wrote != nrows) {
-		    err = E_DATA;
-		}
+	    wrote = fwrite(tmp, sizeof(double), nrows, fp);
+	    if (wrote != nrows) {
+		err = E_DATA;
 	    }
 	}
 
@@ -1888,39 +1867,17 @@ static int bdt_write (const char *fname, const DATASET *dset,
     } else {
 	for (i=1; i<=nvars && !err; i++) {
 	    v = savenum(list, i);
-	    if (gz) {
-		chk = gzwrite(fz, dset->Z[v] + dset->t1, len);
-		if (chk != len) {
-		    err = E_DATA;
-		}
-	    } else {
-		wrote = fwrite(dset->Z[v] + dset->t1, sizeof(double), 
-			       T, fp);
-		if (wrote != T) {
-		    err = E_DATA;
-		}
+	    wrote = fwrite(dset->Z[v] + dset->t1, sizeof(double), 
+			   T, fp);
+	    if (wrote != T) {
+		err = E_DATA;
 	    }
 	}
     }
 
-    if (fz != Z_NULL) {
-	gzclose(fz);
-    } else {
-	fclose(fp);
-    }
+    fclose(fp);
 
     return err;
-}
-
-static void binary_write_message (const char *fname,
-				  PRN *prn)
-{
-    char *bname = switch_ext_new(fname, "bdt");
-
-    if (bname != NULL) {
-	pprintf(prn, "wrote %s and binary file %s\n", fname, bname);
-	free(bname);
-    }
 }
 
 static void gdt_swap_endianness (DATASET *dset)
@@ -1934,24 +1891,20 @@ static void gdt_swap_endianness (DATASET *dset)
     }
 }
 
-static int read_bdt_header (FILE *fp, gzFile fz, int order)
+static int read_binary_header (FILE *fp, int order)
 {
-    char hdr[BDT_HDRLEN] = {0};
+    char hdr[BIN_HDRLEN] = {0};
     unsigned chk;
     int err = 0;
 
-    if (fz != Z_NULL) {
-	chk = gzread(fz, hdr, BDT_HDRLEN);
-    } else {
-	chk = fread(hdr, 1, BDT_HDRLEN, fp);
-    }
+    chk = fread(hdr, 1, BIN_HDRLEN, fp);
 
-    if (chk != BDT_HDRLEN) {
+    if (chk != BIN_HDRLEN) {
 	err = E_DATA;
     } else {
 	int bin_order = 0;
 
-	if (strncmp(hdr, "gretl-bdt:", 10)) {
+	if (strncmp(hdr, "gretl-bin:", 10)) {
 	    err = E_DATA;
 	} else if (!strcmp(hdr + 10, "little-endian")) {
 	    bin_order = G_LITTLE_ENDIAN;
@@ -1972,47 +1925,29 @@ static int read_bdt_header (FILE *fp, gzFile fz, int order)
     return err;
 }
 
-static int bdt_read (const char *fname, DATASET *dset,
-		     int order)
+static int read_binary_data (const char *fname, DATASET *dset,
+			     int order)
 {
     char *bname;
+    FILE *fp;
+    size_t got;
     int T = dset->n;
     int i, err = 0;
 
-    bname = switch_ext_new(fname, "bdt");
-    
-    if (is_gzipped(bname)) {
-	gzFile fz = gretl_gzopen(bname, "rb");
-	unsigned chk, len = T * sizeof(double);
+    bname = switch_ext_new(fname, "bin");
+    fp = gretl_fopen(bname, "rb");
 
-	if (fz == Z_NULL) {
-	    err = E_FOPEN;
-	} else {
-	    err = read_bdt_header(NULL, fz, order);
-	    for (i=1; i<dset->v && !err; i++) {
-		chk = gzread(fz, dset->Z[i], len);
-		if (chk != len) {
-		    err = E_DATA;
-		}
-	    }
-	    gzclose(fz);
-	}
+    if (fp == NULL) {
+	err = E_FOPEN;
     } else {
-	FILE *fp = gretl_fopen(bname, "rb");
-	size_t got;
-
-	if (fp == NULL) {
-	    err = E_FOPEN;
-	} else {
-	    err = read_bdt_header(fp, NULL, order);
-	    for (i=1; i<dset->v && !err; i++) {
-		got = fread(dset->Z[i], sizeof(double), T, fp);
-		if (got != T) {
-		    err = E_DATA;
-		}
+	err = read_binary_header(fp, order);
+	for (i=1; i<dset->v && !err; i++) {
+	    got = fread(dset->Z[i], sizeof(double), T, fp);
+	    if (got != T) {
+		err = E_DATA;
 	    }
-	    fclose(fp);
 	}
+	fclose(fp);
     }
 
     free(bname);
@@ -2024,12 +1959,12 @@ static int bdt_read (const char *fname, DATASET *dset,
     return err;
 }
 
-static void write_binary_order (FILE *fp, gzFile fz)
+static void write_binary_order (FILE *fp)
 {
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
-    alt_puts(" binary=\"little-endian\" ", fp, fz);
+    fputs(" binary=\"little-endian\" ", fp);
 #else
-    alt_puts(" binary=\"big-endian\" ", fp, fz);
+    fputs(" binary=\"big-endian\" ", fp);
 #endif
 }
 
@@ -2070,25 +2005,9 @@ static int p15_OK (const DATASET *dset, int v)
     return ret;
 }
 
-/**
- * gretl_write_gdt:
- * @fname: name of file to write.
- * @list: list of variables to write (or %NULL to write all).
- * @dset: dataset struct.
- * @opt: if %OPT_Z write gzipped data, else uncompressed.
- * @prn: gretl printer to display message, or NULL.
- * @progress: may be 1 when called from gui to display progress
- * bar in case of a large data write; generally should be 0.
- * 
- * Write out in xml a data file containing the values of the given set
- * of variables.
- * 
- * Returns: 0 on successful completion, non-zero on error.
- */
-
-int gretl_write_gdt (const char *fname, const int *list, 
-		     const DATASET *dset, gretlopt opt, 
-		     PRN *prn, int progress)
+static int real_write_gdt (const char *fname, const int *list, 
+			   const DATASET *dset, gretlopt opt, 
+			   int progress)
 {
     FILE *fp = NULL;
     gzFile fz = Z_NULL;
@@ -2107,24 +2026,24 @@ int gretl_write_gdt (const char *fname, const int *list,
     int uerr = 0;
     int err;
 
-    err = open_gdt_write_stream(fname, opt, &fp, &fz);
+    if (opt & OPT_B) {
+	binary = G_BYTE_ORDER;
+	gz = progress = 0;
+	err = open_gdt_write_stream(fname, OPT_NONE, &fp, NULL);
+    } else {
+	err = open_gdt_write_stream(fname, opt, &fp, &fz);
+	gz = (fz != Z_NULL);
+    }
 
     if (err) {
 	gretl_errmsg_sprintf(_("Couldn't open %s for writing"), fname);
-	return 1;
+	return err;
     }
-
-    gz = (fz != Z_NULL);
 
     if (list != NULL) {
 	nvars = list[0];
     } else {
 	nvars = dset->v - 1;
-    }
-
-    if (opt & OPT_B) {
-	binary = G_BYTE_ORDER;
-	progress = 0;
     }
 
     dsize = tsamp * nvars * sizeof(double);
@@ -2191,7 +2110,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
 
     if (binary) {
-	write_binary_order(fp, fz);
+	write_binary_order(fp);
     }
 
     alt_puts(">\n", fp, fz);
@@ -2353,7 +2272,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     alt_puts(">\n", fp, fz);
 
     if (binary) {
-	err = bdt_write(fname, dset, list, nvars, tsamp, opt);
+	err = write_binary_data(fname, dset, list, nvars, tsamp);
 	if (!have_markers) {
 	    goto binary_done;
 	}
@@ -2375,7 +2294,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	} 
 	if (binary) {
-	    alt_puts(" />\n", fp, fz);
+	    fputs(" />\n", fp);
 	    continue;
 	}
 	alt_puts(">", fp, fz);
@@ -2463,19 +2382,73 @@ int gretl_write_gdt (const char *fname, const int *list,
 	close_plugin(handle);
     } 
 
-    if (!err && prn != NULL) {
-	if (binary) {
-	    binary_write_message(fname, prn);
-	} else {
-	    pprintf(prn, _("wrote %s\n"), fname);
-	}
-    }
-
     if (p15) free(p15);
     if (fp != NULL) fclose(fp);
     if (fz != Z_NULL) gzclose(fz);
 
     return err;
+}
+
+/**
+ * gretl_write_gdt:
+ * @fname: name of file to write.
+ * @list: list of variables to write (or %NULL to write all).
+ * @dset: dataset struct.
+ * @opt: if %OPT_Z write gzipped data, else uncompressed.
+ * @progress: may be 1 when called from gui to display progress
+ * bar in case of a large data write; generally should be 0.
+ * 
+ * Write out in xml a data file containing the values of the given set
+ * of variables.
+ * 
+ * Returns: 0 on successful completion, non-zero on error.
+ */
+
+int gretl_write_gdt (const char *fname, const int *list, 
+		     const DATASET *dset, gretlopt opt, 
+		     int progress)
+{
+    if (has_suffix(fname, ".gdtb")) {
+	/* zipfile with gdt + binary */
+	gchar *zdir;
+	int err;
+
+	zdir = g_strdup_printf("%stmp-zip", gretl_dotdir());
+	err = gretl_mkdir(zdir);
+
+	if (!err) {
+	    char xmlfile[FILENAME_MAX];
+	    GError *gerr = NULL;
+
+	    build_path(xmlfile, zdir, "data.xml", NULL);
+	    err = real_write_gdt(xmlfile, list, dset, opt | OPT_B, 0);
+
+	    if (!err) {
+		int level = get_compression_option(STORE);
+
+		err = gretl_zip_datafile(fname, zdir, level, &gerr);
+		if (gerr != NULL && err == 0) {
+		    err = 1;
+		} 
+		if (err) {
+		    if (gerr != NULL) {
+			gretl_errmsg_set(gerr->message);
+			g_error_free(gerr);
+		    } else {
+			gretl_errmsg_set("Problem writing data file");
+		    }
+		}
+	    }
+	    gretl_deltree(zdir);
+	}
+
+	g_free(zdir);
+	return err;
+    } else {
+	/* plain XML file */
+	return real_write_gdt(fname, list, dset, opt, progress);
+    }
+
 }
 
 static void transcribe_string (char *targ, const char *src, int maxlen)
@@ -2707,7 +2680,7 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
     }
 
     if (binary) {
-	err = bdt_read(fname, dset, binary);
+	err = read_binary_data(fname, dset, binary);
 	if (!dset->markers) {
 	    goto bailout;
 	}
@@ -3222,22 +3195,8 @@ static int replace_panel_padding (DATASET *dset)
     return err;
 }
 
-/**
- * gretl_read_gdt:
- * @fname: name of file to open for reading.
- * @dset: dataset struct.
- * @opt: use OPT_B to display gui progress bar; may also
- * use OPT_T when appending to panel data (see the "append"
- * command in the gretl manual). Otherwise use OPT_NONE.
- * @prn: where any messages should be written.
- * 
- * Read data from native file into gretl's workspace.
- * 
- * Returns: 0 on successful completion, non-zero otherwise.
- */
-
-int gretl_read_gdt (const char *fname, DATASET *dset, 
-		    gretlopt opt, PRN *prn) 
+static int real_read_gdt (const char *fname, const char *srcname,
+			  DATASET *dset, gretlopt opt, PRN *prn) 
 {
     DATASET *tmpset;
     xmlDocPtr doc = NULL;
@@ -3383,7 +3342,10 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
     }
 
     if (!err) {
-	data_read_message(fname, tmpset, prn);
+	if (srcname == NULL) {
+	    srcname = fname;
+	}
+	data_read_message(srcname, tmpset, prn);
 	err = merge_or_replace_data(dset, &tmpset, opt, prn);
     }
 
@@ -3416,6 +3378,14 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 	destroy_dataset(tmpset);
     }
 
+    if (err) {
+	/* not sure about this */
+	gchar *msg = g_strdup_printf(_("Couldn't open '%s'"), fname);
+
+	gretl_errmsg_ensure(msg);
+	g_free(msg);
+    }
+
 #if GDT_DEBUG
     fprintf(stderr, "gretl_read_gdt: returning %d\n", err);
 #endif
@@ -3424,10 +3394,65 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 }
 
 /**
+ * gretl_read_gdt:
+ * @fname: name of file to open for reading.
+ * @dset: dataset struct.
+ * @opt: use OPT_B to display gui progress bar; may also
+ * use OPT_T when appending to panel data (see the "append"
+ * command in the gretl manual). Otherwise use OPT_NONE.
+ * @prn: where any messages should be written.
+ * 
+ * Read data from native file into gretl's workspace.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ */
+
+int gretl_read_gdt (const char *fname, DATASET *dset, 
+		    gretlopt opt, PRN *prn)
+{
+    if (has_suffix(fname, ".gdtb")) {
+	/* zipfile with gdt + binary */
+	GError *gerr = NULL;
+	gchar *zdir;
+	int err;
+
+	zdir = g_strdup_printf("%stmp-unzip", gretl_dotdir());
+	err = gretl_mkdir(zdir);
+
+	if (!err) {
+	    err = gretl_unzip_datafile(fname, zdir, &gerr);
+	    if (gerr != NULL && err == 0) {
+		err = 1;
+	    } 
+	    if (err) {
+		if (gerr != NULL) {
+		    gretl_errmsg_set(gerr->message);
+		    g_error_free(gerr);
+		} else {
+		    gretl_errmsg_ensure("Problem opening data file");
+		}
+	    } else {
+		char xmlfile[FILENAME_MAX];
+
+		build_path(xmlfile, zdir, "data.xml", NULL);
+		err = real_read_gdt(xmlfile, fname, dset, opt, prn);
+	    }
+	    gretl_deltree(zdir);
+	}
+
+	g_free(zdir);
+	return err;
+    } else {
+	/* plain XML file */
+	return real_read_gdt(fname, NULL, dset, opt, prn);
+    }
+}
+
+/**
  * gretl_get_gdt_description:
  * @fname: name of file to try.
  * 
- * Read data description for gretl xml (.gdt) data file.
+ * Read data description for gretl native data file.
  * 
  * Returns: buffer containing description, or NULL on failure.
  */
@@ -3440,6 +3465,8 @@ char *gretl_get_gdt_description (const char *fname)
     int err;
 
     gretl_error_clear();
+
+    /* FIXME (?) : will fail with gdtb file */
 
     err = gretl_xml_open_doc_root(fname, "gretldata", 
 				  &doc, &cur);
@@ -3459,35 +3486,6 @@ char *gretl_get_gdt_description (const char *fname)
     xmlFreeDoc(doc);
 
     return (char *) buf;
-}
-
-/**
- * gretl_is_binary_gdt:
- * @fname: name of file to examine.
- * 
- * Returns: 1 if the file named @fname is the gdt component
- * of a gretl binary data pair.
- */
-
-int gretl_is_binary_gdt (const char *fname)
-{
-    int ret = 0;
-
-    if (has_suffix(fname, ".gdt")) {
-	xmlDocPtr doc;
-	xmlNodePtr cur;
-	int err;
-
-	gretl_error_clear();
-	err = gretl_xml_open_doc_root(fname, "gretldata", 
-				      &doc, &cur);
-	if (!err) {
-	    ret = gdt_binary_order(cur) != 0;
-	}
-	xmlFreeDoc(doc);
-    }
-
-    return ret;
 }
 
 static char *gretl_xml_get_doc_type (const char *fname, int *err)

@@ -1719,7 +1719,7 @@ static int real_save_session_dataset (const char *dname)
     if (!err) {
 	session_file_make_path(tmpname, dname);
 	write_err = gretl_write_gdt(tmpname, NULL, dataset, 
-				    OPT_NONE, NULL, 1);
+				    OPT_NONE, 1);
     }
 
     if (mask != NULL) {

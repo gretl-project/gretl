@@ -246,7 +246,7 @@ static void email_data (gpointer p, guint u, GtkWidget *w)
     /* We need to handle the cases where (a) we have unsaved
        data or (b) the dataset is saved as a binary file. To
        do this we write out a temporary copy of the current
-       dataset, gzipped but not binary.
+       dataset (gzipped XML).
     */
 
     if (*datafile != '\0') {
@@ -265,7 +265,7 @@ static void email_data (gpointer p, guint u, GtkWidget *w)
 	g_free(title);
     }
 
-    err = gretl_write_gdt(gdttmp, NULL, dataset, OPT_Z, NULL, 0);
+    err = gretl_write_gdt(gdttmp, NULL, dataset, OPT_Z, 0);
     if (!err) {
 	send_file(gdttmp);
     }
@@ -688,11 +688,12 @@ int main (int argc, char **argv)
 	ftype = detect_filetype(datafile, OPT_P);
 
 	switch (ftype) {
-	case GRETL_NATIVE_DATA:
-	    err = gretl_get_data(datafile, dataset, OPT_NONE, prn);
-	    break;
 	case GRETL_XML_DATA:
+	case GRETL_BINARY_DATA:
 	    err = gretl_read_gdt(datafile, dataset, OPT_NONE, prn);
+	    break;
+	case GRETL_ESL_DATA:
+	    err = gretl_get_data(datafile, dataset, OPT_NONE, prn);
 	    break;
 	case GRETL_CSV:
 	    err = import_csv(datafile, dataset, OPT_NONE, prn);

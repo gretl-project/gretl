@@ -31,6 +31,7 @@
 #endif
 
 #include "gretl_zip.h"
+#include "strutils.h"
 
 #ifdef USE_GSF
 
@@ -188,20 +189,80 @@ int gretl_make_zipfile (const char *fname, const char *path,
     return err;
 }
 
-static int real_unzip_file (const char *fname, gchar **zdirname,
-			    GError **gerr)
+int gretl_zip_datafile (const char *fname, const char *path,
+			int level, GError **gerr)
+{
+    GsfOutput *output;
+    GsfOutfile *outfile = NULL;
+    int err = 0;
+
+    ensure_gsf_init();
+
+#if ZDEBUG
+    fprintf(stderr, "gretl_zip_datafile (gsf):\n fname='%s'\n", fname);
+#endif
+
+    output = gsf_output_stdio_new(fname, gerr);
+    if (output == NULL) {
+	err = 1;
+    }
+     
+    if (!err) {
+	outfile = gsf_outfile_zip_new(output, gerr);
+	g_object_unref(G_OBJECT(output));
+	if (outfile == NULL) {
+	    err = 1;
+	}
+    } 
+
+    if (!err) {
+	const char *names[] = { "data.xml", "data.bin" };
+	char fullname[FILENAME_MAX];
+	GsfInput *zinp;
+	GsfOutput *zout;
+	int i;
+
+	for (i=0; i<2 && !err; i++) {
+	    build_path(fullname, path, names[i], NULL);
+	    zinp = gsf_input_stdio_new(fullname, gerr);
+	    if (zinp == NULL) {
+		err = 1;
+	    } else {
+		zout = gsf_outfile_new_child(outfile, names[i], 0);
+		err = transcribe_gsf_data(zinp, zout);
+		gsf_output_close(zout);
+		g_object_unref(G_OBJECT(zout));
+		g_object_unref(G_OBJECT(zinp));
+	    }
+	}
+    }
+
+    if (outfile != NULL) {
+	gsf_output_close(GSF_OUTPUT(outfile));
+	g_object_unref(G_OBJECT(outfile));
+    }
+
+#if ZDEBUG
+    fprintf(stderr, "*** gretl_zip_datafile: returning %d\n", err);
+#endif
+
+    return err;
+}
+
+static int real_unzip_file (const char *fname, const char *path,
+			    gchar **zdirname, GError **gerr)
 {
     GsfInput *input;
     GsfInfile *infile;
     GsfOutfile *outfile;
     int err = 0;
 
-    ensure_gsf_init();
-    input = gsf_input_stdio_new(fname, gerr);
-
 #if ZDEBUG
     fprintf(stderr, "*** real_unzip_file (gsf):\n fname='%s'\n", fname);
 #endif
+
+    ensure_gsf_init();
+    input = gsf_input_stdio_new(fname, gerr);
 
     if (input == NULL) {
 	err = 1;
@@ -214,7 +275,11 @@ static int real_unzip_file (const char *fname, gchar **zdirname,
 	    if (zdirname != NULL) {
 		*zdirname = g_strdup(gsf_infile_name_by_index(infile, 0));
 	    }
-	    outfile = gsf_outfile_stdio_new(".", gerr);
+	    if (path != NULL) {
+		outfile = gsf_outfile_stdio_new(path, gerr);
+	    } else {
+		outfile = gsf_outfile_stdio_new(".", gerr);
+	    }
 	    if (outfile == NULL) {
 		err = 1;
 	    } else {
@@ -232,12 +297,17 @@ static int real_unzip_file (const char *fname, gchar **zdirname,
 
 int gretl_unzip_file (const char *fname, GError **gerr)
 {
-    return real_unzip_file(fname, NULL, gerr);
+    return real_unzip_file(fname, NULL, NULL, gerr);
 }
 
 int gretl_unzip_session_file (const char *fname, gchar **zdirname, GError **gerr)
 {
-    return real_unzip_file(fname, zdirname, gerr);
+    return real_unzip_file(fname, NULL, zdirname, gerr);
+}
+
+int gretl_unzip_datafile (const char *fname, const char *path, GError **gerr)
+{
+    return real_unzip_file(fname, path, NULL, gerr);
 }
 
 #else /* native, using gretlzip plugin, not libgsf */
@@ -306,6 +376,44 @@ int gretl_unzip_session_file (const char *fname, gchar **zdirname, GError **gerr
     return err;
 }
 
-#endif
+int gretl_zip_datafile (const char *fname, const char *path,
+			int level, GError **gerr)
+{
+    int (*zfunc) (const char *, const char *, int, GError **);
+    void *handle = NULL;
+    int err = 0;
+
+    zfunc = get_plugin_function("gretl_native_zip_datafile", &handle);
+    if (zfunc == NULL) {
+        return 1;
+    }
+
+    err = (*zfunc)(fname, path, level, gerr);
+
+    close_plugin(handle);    
+
+    return err;
+}
+
+int gretl_unzip_datafile (const char *fname, const char *path,
+			  GError **gerr)
+{
+    int (*zfunc) (const char *, const char *, GError **);
+    void *handle = NULL;
+    int err = 0;
+
+    zfunc = get_plugin_function("gretl_native_unzip_datafile", &handle);
+    if (zfunc == NULL) {
+        return 1;
+    }
+
+    err = (*zfunc)(fname, path, gerr);
+
+    close_plugin(handle);    
+
+    return err;
+}
+
+#endif /* zip/unzip variants */
 
 

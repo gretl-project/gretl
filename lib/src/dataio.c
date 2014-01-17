@@ -46,6 +46,7 @@
 
 typedef enum {
     GRETL_FMT_GDT,       /* standard gretl XML data */
+    GRETL_FMT_BINARY,    /* native XML + binary data */
     GRETL_FMT_OCTAVE,    /* data in Gnu Octave format */
     GRETL_FMT_CSV,       /* data in Comma Separated Values format */
     GRETL_FMT_R,         /* data in Gnu R format */
@@ -1138,6 +1139,10 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
 			 char *delim)
 {
     GretlDataFormat fmt = 0;
+
+    if (has_suffix(fname, ".gdtb")) {
+	return GRETL_FMT_BINARY;
+    }
     
     if (opt & OPT_T) {
 	fmt = GRETL_FMT_ESL;
@@ -1323,7 +1328,6 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
     int *pmax = NULL;
     int freelist = 0;
     int csv_digits = 0;
-    int message_done = 0;
     double xx;
     int err = 0;
 
@@ -1348,10 +1352,11 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
     fmt = format_from_opt_or_name(opt, fname, &delim);
     fname = gretl_maybe_switch_dir(fname);
 
-    if (fmt == GRETL_FMT_GDT || fmt == GRETL_FMT_GZIPPED) {
-	/* write standard XML .gdt file */
-	err = gretl_write_gdt(fname, list, dset, opt, prn, progress);
-	message_done = 1;
+    if (fmt == GRETL_FMT_GDT || 
+	fmt == GRETL_FMT_GZIPPED ||
+	fmt == GRETL_FMT_BINARY) {
+	/* write native data file */
+	err = gretl_write_gdt(fname, list, dset, opt, progress);
 	goto write_exit;
     }
 
@@ -1580,7 +1585,7 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 
  write_exit:
 
-    if (!err && !message_done && prn != NULL) {
+    if (!err && prn != NULL) {
 	pprintf(prn, _("wrote %s\n"), fname);
     }
 
@@ -3288,7 +3293,7 @@ int gretl_is_pkzip_file (const char *fname)
 
 GretlFileType detect_filetype (char *fname, gretlopt opt)
 {
-    int i, c, ftype = GRETL_NATIVE_DATA;
+    int i, c, ftype = GRETL_ESL_DATA;
     FILE *fp;
 
     /* might be a script file? (watch out for DOS-mangled names) */
@@ -3302,6 +3307,8 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
 	} else {
 	    return GRETL_SCRIPT;
 	}
+    } else if (has_suffix(fname, ".gdtb")) {
+	return GRETL_BINARY_DATA;
     }
 
     if (has_suffix(fname, ".gnumeric"))
@@ -3350,7 +3357,7 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) { 
 	/* may be native file in different location */
-	return GRETL_NATIVE_DATA; 
+	return GRETL_ESL_DATA; 
     }
 
     /* take a peek at content */
@@ -3360,7 +3367,7 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
 	    break;
 	}
 	if (!isprint(c) && c != '\r' && c != '\t') {
-	    ftype = GRETL_NATIVE_DATA; /* native binary data? */
+	    ftype = GRETL_ESL_DATA; /* old-style binary data? */
 	    break;
 	}
     }
@@ -3626,3 +3633,4 @@ void dataset_add_import_info (DATASET *dset, const char *fname,
 	g_free(note);
     }
 }
+
