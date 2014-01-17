@@ -8068,7 +8068,10 @@ int execute_script (const char *runfile, const char *buf,
 		    contd = top_n_tail(line, sizeof line, &exec_err);
 		    while (contd && !state.in_comment && !exec_err) {
 			/* handle continued lines */
-			gui_get_input_line(tmp, fb, buf, &exec_err);
+			gotline = gui_get_input_line(tmp, fb, buf, &exec_err);
+			if (gotline == NULL) {
+			    break;
+			}
 			if (!exec_err && *tmp != '\0') {
 			    if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
 				exec_err = E_TOOLONG;
