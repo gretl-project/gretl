@@ -49,7 +49,7 @@
 
 #define ZDEBUG 1
 
-#define CHUNK 8192
+#define CHUNK 32768
 
 #define gsf_is_dir(i) (GSF_IS_INFILE(i) && gsf_infile_num_children(GSF_INFILE(i)) >= 0)
 
@@ -228,7 +228,13 @@ int gretl_zip_datafile (const char *fname, const char *path,
 	    if (zinp == NULL) {
 		err = 1;
 	    } else {
-		zout = gsf_outfile_new_child(outfile, names[i], 0);
+#if 0 /* libgsf not ready */    
+		zout = gsf_outfile_new_child_full(outfile, names[i], 0,
+						  "compression-level", level,
+						  NULL);
+#else
+                zout = gsf_outfile_new_child(outfile, names[i], 0);
+#endif					
 		err = transcribe_gsf_data(zinp, zout);
 		gsf_output_close(zout);
 		g_object_unref(G_OBJECT(zout));

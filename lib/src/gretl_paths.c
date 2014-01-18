@@ -800,46 +800,33 @@ static const char *gretl_readd (DIR *d)
     return (e == NULL)? NULL : e->d_name;
 }
 
-/* recursive deletion of directory tree: must be located
-   in the directory above the one to be deleted at the
-   outset */
-
-/**
- * gretl_deltree:
- * @path: name of directory to be deleted.
- *
- * Carries out recursive deletion of the specified directory.
- * Note: the current working directory should be set to one
- * level above @path when this function is called. FIXME.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int gretl_deltree (const char *path)
+static int real_deltree (const char *path)
 {
-    const char *fname;
     DIR *dir;
     int err = 0;
 
     errno = 0;
-
-    dir = opendir(path);
+    dir = gretl_opendir(path);
 
     if (dir == NULL) {
 	err = 1;
     } else {
+	const char *fname;
+	
 	err = chdir(path);
 	while ((fname = gretl_readd(dir)) != NULL && !err) {
+	    /* recursively delete dir's contents */
 	    if (strcmp(fname, ".") && strcmp(fname, "..")) {
 		if (gretl_isdir(fname)) {
-		    err = gretl_deltree(fname);
+		    err = real_deltree(fname);
 		} else {
-		    err = gretl_remove(fname);
+		    err = remove(fname);
 		}
 	    }
 	}
 	if (!err) {
 	    closedir(dir);
+	    /* delete the directory itself */
 	    if (chdir("..") == 0) {
 		err = gretl_remove(path);
 	    }
@@ -851,6 +838,32 @@ int gretl_deltree (const char *path)
 	err = E_FOPEN;
     }
     
+    return err;
+}
+
+/**
+ * gretl_deltree:
+ * @path: name of directory to be deleted.
+ *
+ * Carries out recursive deletion of the specified directory.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_deltree (const char *path)
+{
+    char tmp[FILENAME_MAX];
+    char *savedir = NULL;
+    int err;
+
+    savedir = getcwd(tmp, FILENAME_MAX - 1);
+
+    err = real_deltree(path);
+
+    if (savedir != NULL) {
+	gretl_chdir(savedir);
+    }
+
     return err;
 }
 
