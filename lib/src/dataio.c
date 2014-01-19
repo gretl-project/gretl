@@ -1828,7 +1828,7 @@ int gretl_get_data (char *fname, DATASET *dset,
     int err = 0;
 
     gretl_error_clear();
-    gdtsuff = has_suffix(fname, ".gdt");
+    gdtsuff = has_native_data_suffix(fname);
 
 #if 0
     fprintf(stderr, "gretl_get_data: calling addpath\n");
@@ -1845,6 +1845,15 @@ int gretl_get_data (char *fname, DATASET *dset,
 	    strcpy(fname, tryfile);
 	    gdtsuff = 1;
 	} else {
+	    *tryfile = '\0';
+	    strncat(tryfile, fname, MAXLEN-6);
+	    strncat(tryfile, ".gdtb", 5);
+	    if (gretl_addpath(tryfile, 0) != NULL) {
+		strcpy(fname, tryfile);
+		gdtsuff = 1;
+	    }
+	}
+	if (!gdtsuff) {
 	    gretl_errmsg_sprintf(_("Couldn't open file %s"), fname);
 	    return E_FOPEN;
 	} 
@@ -1854,8 +1863,8 @@ int gretl_get_data (char *fname, DATASET *dset,
 	append_opt = OPT_T;
     }
 
-    if (gdtsuff && gretl_is_xml_file(fname)) {
-	/* specific processing for XML .gdt datafiles  */
+    if (gdtsuff) {
+	/* specific processing for gretl datafiles  */
 	err = gretl_read_gdt(fname, dset, append_opt, prn);
     } else {
 	char hdrfile[MAXLEN];

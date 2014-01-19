@@ -1053,7 +1053,11 @@ static int try_open_file (char *targ, const char *finddir,
     err = gretl_test_fopen(tmp, "r");
     if (err && code == DATA_SEARCH) {
 	if (add_suffix(tmp, ".gdt")) {
-	    err = gretl_test_fopen(tmp, "r");
+	    err = gretl_test_fopen(tmp, "rb");
+	    if (err) {
+		strncat(tmp, "b", 1);
+		err = gretl_test_fopen(tmp, "rb");
+	    }
 	}
     }
 
@@ -1144,6 +1148,10 @@ static int try_open_file (char *targ, const char *finddir,
     if (err && code == DATA_SEARCH) {
 	if (add_suffix(tmp, ".gdt")) {
 	    err = gretl_test_fopen(tmp, "r");
+	    if (err) {
+		strncat(tmp, "b", 1);
+		err = gretl_test_fopen(tmp, "r");
+	    }
 	}
     }
 

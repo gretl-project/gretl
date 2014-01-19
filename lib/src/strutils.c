@@ -359,6 +359,31 @@ int has_suffix (const char *str, const char *sfx)
 }
 
 /**
+ * has_native_data_suffix:
+ * @fname: the filename to check.
+ *
+ * Returns: 1 if @fname ends with a suffix indicating it is a
+ * native gretl data file, 0 otherwise.
+ */
+
+int has_native_data_suffix (const char *fname)
+{
+    const char *p;
+
+    if (fname != NULL && (p = strrchr(fname, '.')) != NULL) {
+	p++;
+	if (!strcmp(p, "gdt") || !strcmp(p, "gdtb")) {
+	    return 1;
+	}
+	if (!strcmp(p, "GDT") || !strcmp(p, "GDTB")) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+/**
  * numeric_string:
  * @str: the string to examine.
  *

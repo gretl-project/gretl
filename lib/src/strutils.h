@@ -41,6 +41,8 @@ int string_is_blank (const char *s);
 
 int has_suffix (const char *str, const char *sfx);
 
+int has_native_data_suffix (const char *fname);
+
 int numeric_string (const char *str);
 
 int integer_string (const char *str);
