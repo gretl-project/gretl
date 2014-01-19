@@ -21,6 +21,7 @@ endif
 
 # gretl's mime types:
 #  application/gretl.data    (glob: *.gdt,   icon: gretl-data-icon.png)
+#  application/gretl.bindata (glob: *.gdtb,  icon: gretl-bindata-icon.png)
 #  application/gretl.session (glob: *.gretl, icon: gretl-session-icon.png)
 #  text/gretl.script         (glob: *.inp,   icon: gretl-script-icon.png)
 
@@ -35,6 +36,8 @@ sh-install: gretl.desktop installdirs $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-i
 	$(INSTALL_DATA) $(xdgsrc)/gretl.xml $(DESTDIR)$(datadir)/mime/packages
 	$(INSTALL_DATA) $(xdgsrc)/gretl-data-icon.png \
 	  $(DESTDIR)$(datadir)/icons/hicolor/32x32/mimetypes/application-gretl.data.png
+	$(INSTALL_DATA) $(xdgsrc)/gretl-bindata-icon.png \
+	  $(DESTDIR)$(datadir)/icons/hicolor/32x32/mimetypes/application-gretl.bindata.png
 	$(INSTALL_DATA) $(xdgsrc)/gretl-session-icon.png \
 	  $(DESTDIR)$(datadir)/icons/hicolor/32x32/mimetypes/application-gretl.session.png
 	$(INSTALL_DATA) $(xdgsrc)/gretl-script-icon.png \
@@ -49,6 +52,7 @@ xdg-install: gretl.desktop $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-icon.png \
 	xdg-desktop-menu install gretl.desktop --novendor
 	xdg-mime install $(xdgsrc)/gretl.xml --novendor
 	xdg-icon-resource install --context mimetypes --size 32 $(xdgsrc)/gretl-data-icon.png application-gretl.data
+	xdg-icon-resource install --context mimetypes --size 32 $(xdgsrc)/gretl-bindata-icon.png application-gretl.bindata
 	xdg-icon-resource install --context mimetypes --size 32 $(xdgsrc)/gretl-session-icon.png application-gretl.session
 	xdg-icon-resource install --context mimetypes --size 32 $(xdgsrc)/gretl-script-icon.png text-gretl.script
 	xdg-icon-resource install --context apps --size 32 $(xdgsrc)/32/gretl.png --novendor
