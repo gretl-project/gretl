@@ -6,6 +6,11 @@
      <comment>gretl data file</comment>
      <glob pattern="*.gdt"/>
    </mime-type>
+   
+   <mime-type type="application/gretl.bindata">
+     <comment>gretl binary data file</comment>
+     <glob pattern="*.gdtb"/>
+   </mime-type>
 
    <mime-type type="application/gretl.session">
      <comment>gretl session file</comment>
