@@ -189,6 +189,9 @@ int gretl_make_zipfile (const char *fname, const char *path,
     return err;
 }
 
+#if 0 /* libgsf not ready yet: doesn't support setting of
+	 zlib compression level */
+
 int gretl_zip_datafile (const char *fname, const char *path,
 			int level, GError **gerr)
 {
@@ -228,13 +231,10 @@ int gretl_zip_datafile (const char *fname, const char *path,
 	    if (zinp == NULL) {
 		err = 1;
 	    } else {
-#if 0 /* libgsf not ready */    
+		/* broken in libgsf-1.14.29 */
 		zout = gsf_outfile_new_child_full(outfile, names[i], 0,
 						  "compression-level", level,
 						  NULL);
-#else
-                zout = gsf_outfile_new_child(outfile, names[i], 0);
-#endif					
 		err = transcribe_gsf_data(zinp, zout);
 		gsf_output_close(zout);
 		g_object_unref(G_OBJECT(zout));
@@ -254,6 +254,31 @@ int gretl_zip_datafile (const char *fname, const char *path,
 
     return err;
 }
+
+#else
+
+/* use native gretlzip plugin code for now */
+
+int gretl_zip_datafile (const char *fname, const char *path,
+			int level, GError **gerr)
+{
+    int (*zfunc) (const char *, const char *, int, GError **);
+    void *handle = NULL;
+    int err = 0;
+
+    zfunc = get_plugin_function("gretl_native_zip_datafile", &handle);
+    if (zfunc == NULL) {
+        return 1;
+    }
+
+    err = (*zfunc)(fname, path, level, gerr);
+
+    close_plugin(handle);    
+
+    return err;
+}
+
+#endif /* work-around for missing functionality in libgsf */
 
 static int real_unzip_file (const char *fname, const char *path,
 			    gchar **zdirname, GError **gerr)

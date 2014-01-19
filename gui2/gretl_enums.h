@@ -166,6 +166,7 @@ enum file_ops {
     EXPORT_JM,
     EXPORT_DB,
     EXPORT_GDT,
+    EXPORT_GDTB,
     COPY_CSV,
     END_SAVE_DATA,  /* marker for end of data-saving section */
     SAVE_TEX,

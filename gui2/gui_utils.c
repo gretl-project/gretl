@@ -1205,7 +1205,7 @@ gboolean do_open_data (windata_t *fwin, int code)
     }
 
     if (code == OPEN_GDT || code == APPEND_GDT) {
-	/* native .gdt files */
+	/* native data files */
 	ftype = GRETL_XML_DATA;
     } else if (code == OPEN_CSV || code == APPEND_CSV) {
 	ftype = GRETL_CSV;

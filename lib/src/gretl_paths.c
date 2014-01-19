@@ -841,6 +841,8 @@ static int real_deltree (const char *path)
     return err;
 }
 
+#endif /* WIN32 or not */
+
 /**
  * gretl_deltree:
  * @path: name of directory to be deleted.
@@ -852,6 +854,9 @@ static int real_deltree (const char *path)
 
 int gretl_deltree (const char *path)
 {
+#ifdef WIN32
+    return win32_delete_dir(path);
+#else
     char tmp[FILENAME_MAX];
     char *savedir = NULL;
     int err;
@@ -865,9 +870,8 @@ int gretl_deltree (const char *path)
     }
 
     return err;
+#endif
 }
-
-#endif /* WIN32 or not */
 
 DIR *gretl_opendir (const char *name)
 {

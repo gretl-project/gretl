@@ -158,13 +158,23 @@ int show_progress (gint64 res, gint64 expected, int flag)
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), 0.0);
 
 	if (flag == SP_LOAD_INIT) {
-	    bytestr = g_strdup_printf("%s %ld Kbytes", _("Retrieving"),
+#ifdef G_OS_WIN32
+	    bytestr = g_strdup_printf("%s %I64d Kbytes", _("Retrieving"),
 				      expected / 1024);
+#else
+	    bytestr = g_strdup_printf("%s %lld Kbytes", _("Retrieving"),
+				      (long long) expected / 1024);
+#endif
 	} else if (flag == SP_SAVE_INIT) {
-	    bytestr = g_strdup_printf("%s %ld Kbytes", _("Storing"),
+#ifdef G_OS_WIN32
+	    bytestr = g_strdup_printf("%s %I64d Kbytes", _("Storing"),
 				      expected / 1024);
+#else
+	    bytestr = g_strdup_printf("%s %lld Kbytes", _("Storing"),
+				      (long long) expected / 1024);
+#endif
 	} else if (flag == SP_FONT_INIT) {
-	    bytestr = g_strdup_printf(_("Scanning %ld fonts"), expected);
+	    bytestr = g_strdup_printf(_("Scanning %d fonts"), (int) expected);
 	}
 
 	gtk_label_set_text(GTK_LABEL(pdata->label), bytestr);

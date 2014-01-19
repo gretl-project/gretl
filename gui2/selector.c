@@ -6096,6 +6096,7 @@ static void build_data_export_combo (selector *sr)
     static const char *opt_strs[] = {
 	N_("CSV"),
 	N_("gretl datafile (.gdt)"),
+	N_("gretl binary datafile (.gdtb)"),
 	N_("gretl database (.bin)"),
 	N_("GNU R"),
 	N_("Octave"),
@@ -6105,7 +6106,8 @@ static void build_data_export_combo (selector *sr)
     };
     static gretlopt opts[] = {
 	OPT_C, 
-	OPT_Z, 
+	OPT_Z,
+	OPT_B,
 	OPT_D, 
 	OPT_R, 
 	OPT_M,
@@ -6127,7 +6129,7 @@ static void build_data_export_combo (selector *sr)
     if (DSET_DB_OK(dataset)) {
 	combo = gretl_opts_combo(&export_opts, deflt);
     } else {
-	int masked[2] = {1, 2};
+	int masked[2] = {1, 3};
 	
 	combo = gretl_opts_combo_masked(&export_opts, deflt, masked);
     }
@@ -7378,6 +7380,8 @@ static int data_export_selection_callback (selector *sr)
 	    ci = EXPORT_DAT;
 	} else if (sr->opts & OPT_D) {
 	    ci = EXPORT_DB;
+	} else if (sr->opts & OPT_B) {
+	    ci = EXPORT_GDTB;
 	} else {
 	    ci = EXPORT_GDT;
 	}

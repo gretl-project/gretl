@@ -145,7 +145,9 @@ static const char *get_extension_for_action (int action, gpointer data)
 {
     const char *s = NULL;
 
-    if (GDT_ACTION(action)) {
+    if (action == EXPORT_GDTB) {
+	return ".gdtb";
+    } else if (GDT_ACTION(action)) {
 	return ".gdt";
     } else if (action == SAVE_GNUPLOT || action == SAVE_GRAPHIC) {
 	int ttype = gp_term_code(data, action);
@@ -796,8 +798,8 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 				 int *maxlen)
 {
     if (action == OPEN_DATA || action == APPEND_DATA) {
-	filesel_add_filter(filesel, N_("Gretl data files (*.gdt)"), "*.gdt", maxlen);
-	filesel_add_filter(filesel, N_("Gretl binary files (*.gdtb)"), "*.gdtb", maxlen);
+	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt", maxlen);
+	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb", maxlen);
 	filesel_add_filter(filesel, N_("CSV files (*.csv)"), "*.csv", maxlen);
 	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt", maxlen);
 	filesel_add_filter(filesel, N_("Gnumeric files (*.gnumeric)"), "*.gnumeric", maxlen);
@@ -962,7 +964,8 @@ static void gtk_file_selector (int action, FselDataSrc src,
 
     if (action == SAVE_DATA || 
 	action == SAVE_DATA_AS || 
-	action == EXPORT_GDT) {
+	action == EXPORT_GDT ||
+	action == EXPORT_GDTB) {
 	add_compression_level_option(filesel);
     }
 

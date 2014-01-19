@@ -1455,18 +1455,12 @@ void verify_clear_data (void)
 static void remove_session_dir (void)
 {
     const char *dotdir = gretl_dotdir();
-
-#ifdef G_OS_WIN32
     char *fullpath = g_strdup_printf("%s%s", dotdir,
 				     session.dirname);
 
     gretl_chdir(dotdir);
-    win32_delete_dir(fullpath);
+    gretl_deltree(fullpath);
     g_free(fullpath);
-#else
-    gretl_chdir(dotdir);
-    gretl_deltree(session.dirname);
-#endif
 }
 
 void session_init (void)

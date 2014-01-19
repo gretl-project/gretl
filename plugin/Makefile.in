@@ -187,6 +187,15 @@ ifeq ($(use_gsf),no)
   GRETL_ZIP_LIBS := $(GLIB_LIBS) -lz
 endif
 
+# for now we'll build the gretlzip plugin regardless, since
+# libgsf-1.14.29 does not support setting of the zlib
+# compression level
+ifeq ($(use_gsf),yes)
+  PLUGINS += gretlzip.la
+  GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(GLIB_CFLAGS)
+  GRETL_ZIP_LIBS := $(GLIB_LIBS) -lz
+endif
+
 ifeq ($(have_odbc),yes)
   PLUGINS += odbc_import.la
   ODBC_CFLAGS = @ODBC_CFLAGS@
