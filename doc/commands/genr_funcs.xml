@@ -2580,7 +2580,7 @@
 	  scalar i = 1
 	  loop while getline(s, line)
 	    printf "line %d = '%s'\n", i++, line
-          endloop
+	  endloop
 	</code>
 	<para>
 	  In this example we can be sure that the source is exhausted

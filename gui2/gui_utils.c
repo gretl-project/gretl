@@ -1097,6 +1097,7 @@ int get_imported_data (char *fname, int ftype, int append)
 
 static int get_csv_data (char *fname, int ftype, int append)
 {
+    windata_t *vwin;
     PRN *prn;
     gchar *title;
     int err = 0;
@@ -1118,7 +1119,10 @@ static int get_csv_data (char *fname, int ftype, int append)
     }
 
     /* show details regarding the import */
-    view_buffer(prn, 78, 350, title, IMPORT, NULL); 
+    vwin = view_buffer(prn, 78, 350, title, IMPORT, NULL);
+    gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
+				 GTK_WINDOW(mdata->main));
+
     g_free(title);
 
     if (err) {

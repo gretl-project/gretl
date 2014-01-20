@@ -85,14 +85,16 @@ void reg_suffix (const char *sfx, const char *name, const char *mime,
 	   "ValueName: \"\"; ValueData: \"{app}\\gretl.exe,%d\"\n",
 	   name, iconnum);
     /* map from filetype name to 'open' action */
-    if (iconnum == 1) {
-	printf("Root: HKCR; Subkey: \"%s\\shell\\open\\command\"; "
-	       "ValueType: string; ValueName: \"\"; ValueData: "
-	       "\"\"\"{app}\\gretl.exe\"\" \"\"%%1\"\"\"\n", name);
-    } else {
+    if (iconnum == 2) {
+	/* script: use "-r" */
 	printf("Root: HKCR; Subkey: \"%s\\shell\\open\\command\"; "
 	       "ValueType: string; ValueName: \"\"; ValueData: "
 	       "\"\"\"{app}\\gretl.exe\"\" -r \"\"%%1\"\"\"\n", name);
+    } else {
+	/* data or session file */
+	printf("Root: HKCR; Subkey: \"%s\\shell\\open\\command\"; "
+	       "ValueType: string; ValueName: \"\"; ValueData: "
+	       "\"\"\"{app}\\gretl.exe\"\" \"\"%%1\"\"\"\n", name);
     }
 }
 
