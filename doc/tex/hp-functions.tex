@@ -6,7 +6,7 @@ chapters contain several examples. However, it is also possible to
 extend hansl's native capabilities by defining additional
 functions.
 
-Here's how a user-defined function looks like:
+Here's what a user-defined function looks like:
 \begin{flushleft}
 \texttt{function \emph{type} \emph{funcname}(\emph{parameters})}\\
    \quad \ldots\\
@@ -134,7 +134,7 @@ include quasilog_def.inp
 
 loop for (x=0.5; x<2; x+=0.1)
    printf "x = %4.2f; ln(x) = %g, approx = %g\n", x, ln(x), quasi_log(x)
-end loop
+endloop
 \end{code}
 Moreover, \cmd{include} commands can be nested.
 
@@ -264,7 +264,7 @@ end function
 
 loop i=0..6 --quiet
     printf "%d! = %d\n", i, factorial(i)
-end loop
+endloop
 \end{code}
 
 Note: this is fun, but in practice, you'll be much better off using

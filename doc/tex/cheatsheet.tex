@@ -356,7 +356,7 @@ series h4 = NA
 loop i=1..$nobs --quiet
     matrix x = mX[i,]'
     h4[i] = x'iXX*x
-end loop
+endloop
 
 # verify
 print h1 h2 h3 h4 --byobs
