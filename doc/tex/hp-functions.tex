@@ -87,14 +87,14 @@ end function
 
 loop for (x=0.5; x<2; x+=0.1)
    printf "x = %4.2f; ln(x) = %g, approx = %g\n", x, ln(x), quasi_log(x)
-end loop
+endloop
 \end{code}
 
 The code above computes the rational function
 \[
   f(x) = 2 \cdot \frac{x-1}{x+1} ,
 \]
-which provides a decent approximation to the natural logarithm in a
+which provides a decent approximation to the natural logarithm in the
 neighborhood of 1.
 
 \begin{enumerate}
@@ -104,14 +104,15 @@ neighborhood of 1.
 \item since the function is meant to return a scalar, we put the
   keyword \texttt{scalar} after \cmd{function};
 \item between the round brackets, the arguments follow; in this case,
-  we only have one, which we call \texttt{x} and is assumed to be a
+  we only have one, which we call \texttt{x} and is specified to be a
   scalar;
 \item on the next line, the function definition begins; in this case,
   it includes a comment and an \cmd{if} block;
 \item the function ends with the \cmd{return} keyword, which exports
-  the result;\footnote{Beware: unlike other languages (eg Matlab), you cannot
-  return multiple outputs from a function. However, you can return a
-  bundle and stuff it with as many objects as you want.}
+  the result;\footnote{Beware: unlike some other languages (e.g.\
+    Matlab), you cannot directly return multiple outputs from a
+    function. However, you can return a bundle and stuff it with as
+    many objects as you want.}
 \item the next lines provide a simple usage example; note that in the
   \cmd{printf} command, the two functions \cmd{ln()} and
   \cmd{quasi\_log()} are indistinguishable from a purely syntactic
@@ -183,22 +184,23 @@ address at which the variable is stored.
 This is usually considered a bit mysterious by people unfamiliar with
 the C programming language, so allow us to explain how pointers work
 by means of a (quite silly) example: suppose you set up a barber
-shop. Ideally, your customers would walk through your shop door, sit
-on a chair and have their hair trimmed or their beard shaved. However,
-local regulations forbid you to modify anything going through your
+shop. Ideally, your customers would walk into your shop, sit on a
+chair and have their hair trimmed or their beard shaved. However,
+local regulations forbid you to modify anything coming in through your
 shop door; of course, you wouldn't do much business if people must
-walk out of your barber shop with their hair untouched. Nevertheless,
-you have a simple way to go around this limitation: your customers can
-come to your shop, tell you their home address and walk out. Then,
-nobody stops you from going to their place and excercise your fine
-profession. Formally, you're ok with the law, because no modification
+leave your shop with their hair untouched. Nevertheless, you have a
+simple way to go around this limitation: your customers can come to
+your shop, tell you their home address and walk out. Then, nobody
+stops you from going to their place and excercising your fine
+profession. Formally, you're OK with the law, because no modification
 of anything took place inside your shop.
 
-Unlike C, you have to take no special precaution inside the function
-body to distinguish the variable from its address\footnote{In C, this
-  would be called \emph{dereferencing} the pointer.}. You just use the
-variable's name. In order to supply the address of a variable when you
-invoke the function, you use the ampersand (\verb|&|) operator. 
+Unlike C, in hansl you don't have to take any special care inside the
+function body to distinguish the variable from its
+address;\footnote{In C, this would be called \emph{dereferencing} the
+  pointer.} you just use the variable's name. In order to supply the
+address of a variable when you invoke the function, you use the
+ampersand (\verb|&|) operator.
 
 An example should, hopefully, make things clearer; the following code
 \begin{code}
@@ -230,7 +232,7 @@ likewise for \verb|b|). The rest of the function simply swaps
 Outside the function, we first initialize the two scalars \texttt{x}
 to 0 and \texttt{y} to a big number. Then we call the function.  When
 the function is called, it's given as arguments \verb|&a| and
-\verb|&b|, which hansl identifies as ``the memory address of'' the two
+\verb|&b|, which hansl identifies as ``the address of'' the two
 scalars \texttt{a} and \texttt{b}, respectively.
 
 Writing a function with pointer arguments has two main consequences:

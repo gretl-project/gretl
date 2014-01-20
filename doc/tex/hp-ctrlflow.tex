@@ -2,10 +2,10 @@
 \label{chap:hp-ctrlflow}
 
 The primary means for controlling the flow of execution in a hansl
-script are the the \cmd{if} statement (conditional execution),
+script are the \cmd{if} statement (conditional execution), the
 \cmd{loop} statement (repeated execution), the \cmd{catch} modifier
 (which enables the trapping of errors that would otherwise halt
-execution) and the \cmd{quit} command (which forces termination).
+execution), and the \cmd{quit} command (which forces termination).
 
 \section{The \cmd{if} statement}
 
@@ -119,10 +119,12 @@ the scalar \texttt{days} comes from the following pathway:
   into \texttt{days}.
 \end{enumerate}
 
-Compared to the ordinary \cmd{if} statement, the ternary operator is
-also more flexible: in contrast to the usage of \texttt{if},
-\texttt{<condition>} need not evaluate to a scalar.  So for example
-one can do this sort of thing with matrices:
+The ternary operator is more flexible than the ordinary \cmd{if}
+statement. With \cmd{if}, the \texttt{<condition>} to be evaluated
+must always come down to a scalar, but the query operator just
+requires that the condition is of ``suitable'' type in light of the
+types of the operands.  So for example one can do this sort of thing
+with matrices:
 \begin{code}
 matrix A = mnormal(4,4)
 matrix B = upper(A.<0) ? -A : A
@@ -140,8 +142,8 @@ loop r = 1 .. rows(A)
      if A[r,c] < 0
        B[r,c] = -A[r,c]
      endif
-  end loop
-end loop
+  endloop
+endloop
 \end{code}
 
 The reader will have noticed that the above example uses the
@@ -226,8 +228,9 @@ The counter is ``read-only'' inside the loop. You can access either
 its numerical value through the scalar \texttt{i} or use the accessor
 \dollar{i}, which will perform \emph{string substitution}: inside the
 loop, the expression \dollar{i} will be substituted by the hansl
-interpreter with the a string representation of the index variable. An
-example should made this clearer: the following input
+interpreter with the string representation of the current value of the
+index variable. An example should made this clearer: the following
+input
 \begin{code}
 scalar a_1 = 57
 scalar a_2 = 85
@@ -267,7 +270,7 @@ where \texttt{<condition>} should evaluate to a scalar, which is
 re-evaluated at each iteration. Looping stops as soon as
 \texttt{<condition>} becomes false (0). If \texttt{<condition>}
 becomes \texttt{NA}, an error is flagged and execution stops.  By
-default, \texttt{while} loops cannot exceed 1000 iterations. This is
+default, \texttt{while} loops cannot exceed 100,000 iterations. This is
 intended as a safeguard against potentially infinite loops. This
 setting can be overridden if necessary by setting the
 \texttt{loop\_maxiter} state variable to a different value (see
@@ -291,7 +294,8 @@ of the series in the list or the space-separated strings; this sort of
 loop is designed for string substitution.
 
 Here is an example in which the \texttt{<catalogue>} is a collection
-of function names: 
+of names of functions that return a scalar value when given a scalar
+argument.
 \begin{code}
 scalar x = 1
 loop foreach f sqrt exp ln
@@ -306,12 +310,6 @@ This will produce
               y =  2.7182818
               y =  0.0000000
 \end{code}
-Note that the above example relies on the fact that \cmd{sqrt},
-\cmd{exp} and \cmd{ln} are predefined hansl functions. Syntactically,
-it would have been correct to include in the \texttt{<catalogue>} a
-``function name'' like \cmd{bzbRkf}, but the loop would have stopped
-with an error message, since \texttt{bzbRkf(1)} does not produce a
-scalar expression.
 
 \subsection{For loop}
 
@@ -320,7 +318,7 @@ C programming language.  The syntax is \texttt{loop for}, followed by
 three component expressions, separated by semicolons and surrounded by
 parentheses, that is
 \begin{code}
-loop for ( <init> ; <cont> ; <modifier> )
+loop for (<init>; <cont>; <modifier>)
    ...
 endloop
 \end{code}
@@ -338,7 +336,7 @@ The three components are as follows:
   continuation condition, on each iteration after the first.
 \end{enumerate}
 
-Here's an example, in which we found the square root of a number by
+Here's an example, in which we find the square root of a number by
 successive approximations:
 \begin{code}
 # find the square root of x iteratively via Newton's method
@@ -347,7 +345,7 @@ d = 1
 loop for (y=(x+1)/2; abs(d) > 1.0e-7; y -= d/(2*y))
     d = y*y - x
     printf "y = %15.10f, d = %g\n", y, d
-end loop
+endloop
 
 printf "sqrt(%g) = %g\n", x, y
 \end{code}
@@ -415,10 +413,11 @@ loop while 1 --quiet
         y -= d/(2*y)
         printf "y = %15.10f, d = %g\n", y, d
     endif
-end loop
+endloop
 
 printf "sqrt(%g) = %g\n", x, y
 \end{code}
+
 \section{The \cmd{catch} modifier}
 
 Hansl offers a rudimentary form of exception handling via the
@@ -454,11 +453,16 @@ When the \cmd{quit} statement is encountered in a hansl script,
 execution stops. If the command-line program \app{gretlcli} is running
 in batch mode, control returns to the operating system; if gretl is
 running in interactive mode, \app{gretl} will wait for interactive
-input. The \texttt{quit} command is rarely used in scripts since
-execution automatically stops when script input is exhausted, but it
-could be used in conjunction with \cmd{catch}. A script author could
-arrange matters so that on encountering a certain error condition an
-appropriate message is printed and the script is halted.
+input. 
+
+The \texttt{quit} command is rarely used in scripts since execution
+automatically stops when script input is exhausted, but it could be
+used in conjunction with \cmd{catch}. A script author could arrange
+matters so that on encountering a certain error condition an
+appropriate message is printed and the script is halted. Another use
+for \texttt{quit} is in program development: if you want to inspect the
+output of an initial portion of a complex script, the most convenient
+solution may to insert a temporary ``quit'' at a suitable point.
 
 %%% Local Variables: 
 %%% mode: latex

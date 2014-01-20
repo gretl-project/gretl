@@ -28,7 +28,7 @@ the following points:
   to the end of the current line is treated as a comment, and ignored
   by the interpreter.
 \item The next line contains a \emph{command} (\cmd{print}) followed
-  by an \emph{argument}; this is fairly typical of hansl: most jobs
+  by an \emph{argument}; this is fairly typical of hansl: many jobs
   are carried out by calling commands.
 \item Hansl does not have an explicit command terminator such as the
   ``\texttt{;}'' character in the C language family (C++, Java, C\#,
@@ -139,7 +139,7 @@ via the \cmd{delete} command, and then re-declare it, as in
 There is no ``type-casting'' as in C, but some automatic type
 conversions are possible (more on this later).
 
-Many commands can take more than one argument
+Many commands can take more than one argument, as in
 \begin{code}
   set echo off
   set messages off
@@ -185,25 +185,28 @@ In which we assume that \texttt{x}, \texttt{m} and \texttt{s2} are
 pre-existing scalars. The example above contains two noteworthy
 points:
 \begin{itemize}
-\item The usage of the \cmd{exp} and \cmd{sqrt} function; it goes
-  without saying that hansl possesses a reasonably wide repertoire of
-  functions. See the \GCR{} for the complete list.
-\item The usage of \verb|$pi| for the constant $\pi$. In hansl, some
-  identifiers have a ``dollar'' prefix; they work as read-only
-  variables. Most of them are used in the context of an open dataset
-  (see part \ref{part:hp-data}), but some are just pre-defined
-  constants, such as $\pi$. Again, see the \GCR{} for a comprehensive
-  list.
+\item The usage of the \cmd{exp} (exponential) and \cmd{sqrt} (square
+  root) functions; it goes without saying that hansl possesses a
+  reasonably wide repertoire of such functions. See the \GCR{} for the
+  complete list.
+\item The usage of \verb|$pi| for the constant $\pi$. While
+  user-specified identifiers must begin with a letter, built-in
+  identifiers for internal objects typically have a ``dollar'' prefix;
+  these are known as \emph{accessors} (basically, read-only
+  variables).  Most accessors are defined in the context of an open
+  dataset (see part \ref{part:hp-data}), but some represent
+  pre-defined constants, such as $\pi$. Again, see the \GCR{} for a
+  comprehensive list.
 \end{itemize}
 
-Hansl does not possess a boolean type, so scalars are commonly used
-for holding true/false values. For this reason, you can also use
+Hansl does not possess a specific boolean type, but scalars can be
+used for holding true/false values. It follows that you can also use
 the logical operators \emph{and} (\verb|&&|), \emph{or} (\verb+||+),
 and \emph{not} (\verb|!|) with scalars, as in the following example:
 \begin{code}
   a = 1
   b = 0
-  c = !(a && b)
+  c = !(a && b) # c = 1 (true), since (a && b) = 0 (false)
 \end{code}
 Note that 0 evaluates to false, and anything else evaluates to
 true.
@@ -227,14 +230,21 @@ assignment, as in \texttt{a += b}, which is equivalent to \texttt{a =
 The internal representation for a missing value is \texttt{DBL\_MAX},
 the largest double-precision number (generally in the neighborhood of
 1.7E+308). This is what you get if you try to compute quantities like
-the square root or the logarithm of a negative number, or directly via
-the \texttt{NA} constant, as in
+the square root or the logarithm of a negative number. You can also
+set a value to ``missing'' directly using the keyword \texttt{NA}.
+The function \cmd{ok} can be used to determine whether a scalar is
+\texttt{NA}, as in the following example which assigns a value of zero
+\texttt{test}:
 \begin{code}
   scalar not_really = NA
-  scalar is_there = ok(not_really)
+  scalar test = ok(not_really)
 \end{code}
-As shown in the example above, in hansl you have the \cmd{ok} function
-which tells you whether a scalar is \texttt{NA} or not.
+Note that you cannot test for equality to \texttt{NA}, as in
+\begin{code}
+  if x == NA ... # wrong!
+\end{code}
+because a missing value is taken as indeterminate and hence not equal
+to anything.
 
 \section{Manipulation of strings}
 
@@ -276,31 +286,31 @@ in\footnote{Note on some national keyboards, you don't have the tilde
 
 A noteworthy point: strings may be (almost) arbitrarily long;
 moreover, they can contain special characters such as line breaks and
-tabs. As a consequence, it is possible to use hansl for performing
-rather complex operations on text files by loading them into memory as
-a very long string and then operating on that;\footnote{Of course, the
-  reader is invited to take this with a grain of salt. If your job
-  involves manipulating a text files several gigabytes long, you
-  should consider using appropriate tools instead of hansl, such as
-  for example \app{perl} or \app{python}. However, on modern hardware
+tabs. It is therefore possible to use hansl for performing rather
+complex operations on text files by loading them into memory as a very
+long string and then operating on that;\footnote{Of course, the reader
+  is invited to take this with a grain of salt. If your job involves
+  manipulating a text files several gigabytes long, you should
+  consider using appropriate tools instead of hansl, such as for
+  example \app{perl} or \app{python}. However, on modern hardware
   hansl may be a very defensible choice for text files up to a few
   hundred megabytes.} interested readers should take a look at the
 \cmd{readfile} and \cmd{getline} functions in the \GCR.
 
-For \emph{creating} complex strings, the most flexible tool is
-arguably the \cmd{sprintf} function. Its usage, however, is best
-illustrated in an ad-hoc portion of this primer, which is
-Chapter \ref{chap:formatting}. Finally, it is quite common, in hansl
-scripts, to use \emph{string substitution}; however, this is another
-topic that deserves special treatment, so we will defer its
-description to section \ref{sec:stringsub}.
+For \emph{creating} complex strings, the most flexible tool is the
+\cmd{sprintf} function. Its usage, however, is best illustrated in an
+ad-hoc portion of this primer, namely Chapter
+\ref{chap:formatting}. Finally, it is quite common, in hansl scripts,
+to use \emph{string substitution}; however, this is another topic that
+deserves special treatment, so we will defer its description to
+section \ref{sec:stringsub}.
 
 \chapter{Matrices}
 
 Matrices are one- or two-dimensional arrays of double-precision
 floating-point numbers. Hansl users who are accustomed to other matrix
 languages should note that multi-index objects are not
-supported. Matrices have rows and columns, that's it.
+supported. Matrices have rows and columns, and that's it.
 
 \section{Matrix indexing}
 \label{sec:mat-index}
@@ -372,7 +382,7 @@ conformability is a problem. For example:
   matrix a = {11, 22 ; 33, 44}  # a is square 2 x 2
   matrix b = {1,2,3; 3,2,1}     # b is 2 x 3
 
-  matrix c = a'         # c is the trasnpose of a
+  matrix c = a'         # c is the transpose of a
   matrix d = b*a        # d is a 2x3 equal to b times a
 
   matrix gina = b'd     # valid: gina is 3x3
@@ -437,7 +447,7 @@ above; see the chapter on matrices in \GUG{} for details.
 
 Dot and concatenation operators are less rigid than ordinary matrix
 operations in terms of conformability requirements: in most cases
-hansl will try to do ``the obvious thing''. For example, a very common
+hansl will try to do ``the obvious thing''. For example, a common
 idiom in hansl is \texttt{Y = X ./ w}, where $X$ is an $n \times k$
 matrix and $w$ is an $n \times 1$ vector. The results $Y$ is an $n
 \times k$ matrix in which each row of $X$ is divided by the
@@ -531,7 +541,7 @@ This mechanism is used by some built-in matrix functions to provide
 more than one ``return'' value. The primary result is always provided
 by the return value proper but certain auxiliary values may be
 retrieved via ``pointerized'' arguments; this usage is flagged by
-prepending the ampersand symbol, \texttt{\&}, to the name of the
+prepending the ampersand symbol, ``\texttt{\&}'', to the name of the
 argument variable.
 
 The \texttt{eigensym} function, which performs the eigen-analysis of
@@ -610,10 +620,9 @@ Let's see how:
   a newline.
 \end{itemize}
 
-The maximum length of a format string is 127 characters. The escape
-sequences \verb|\n| (newline), \verb|\t| (tab), \verb|\v| (vertical
-tab) and \verb|\\| (literal backslash) are recognized. To print a
-literal percent sign, use \verb|%%|.
+The escape sequences \verb|\n| (newline), \verb|\t| (tab), \verb|\v|
+(vertical tab) and \verb|\\| (literal backslash) are recognized. To
+print a literal percent sign, use \verb|%%|.
 
 Apart from those shown in the above example, recognized numeric
 formats are \verb|%e|, \verb|%E|, \verb|%f|, \verb|%g|, and \verb|%G|,
@@ -750,8 +759,8 @@ the rules for a \app{gretl} variable name (31 characters maximum,
 starting with a letter and composed of just letters, numbers or
 underscore).\footnote{When using the original syntax, keys do not have
   to be valid as variable names---for example, they can include
-  spaces---but they are limited to 31 characters.}  In that case you
-can simply join the key to the bundle name with a dot, as in
+  spaces---but they are still limited to 31 characters.}  In that case
+you can simply join the key to the bundle name with a dot, as in
 
 \begin{code}
 foo.matrix1 = m
