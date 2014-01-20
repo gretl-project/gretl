@@ -115,6 +115,8 @@ void set_registry_entries (void)
 	       "Gretl script file", 2);
     reg_suffix(".gretl", "GretlSessionFile", "application/x-gretlsession", 
 	       "Gretl session file", 3);
+    reg_suffix(".gdtb", "GretlBindataFile", "application/x-gretlbindata", 
+	       "Gretl binary data file", 4);
 }
 
 void preamble (const char *s, int x64)
