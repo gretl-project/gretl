@@ -2737,7 +2737,7 @@ have_mac_integration="no"
 gui_disabled="no"
 MAKE="make"
 XML_LIBS=
-FONTREQ="\\RequirePackage{ae}"
+FONTREQ="\\RequirePackage{ae,amsmath}"
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
