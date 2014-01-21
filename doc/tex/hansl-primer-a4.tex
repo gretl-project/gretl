@@ -101,16 +101,15 @@ considered as a special-purpose or domain-specific language, designed
 to make an econometrician's life easier. Hence it incorporates a
 series of conventions and choices that may irritate purists and have
 some marginal impact on raw performance, but that we, as professional
-econometricians, consider ``nice to have''.
+econometricians, consider ``nice to have''.  This makes hansl somewhat
+different from plain matrix-oriented interpreted languages, such as
+the Matlab/Octave family, Ox and so on.
 
-On the other hand, hansl is not just a tool to automate rote tasks. It
-has several features which make advanced programming possible, such as
-structured programming, recursion, complex data structures, and so on.
-
-This makes hansl somewhat different from plain matrix-oriented
-interpreted languages, such as the Matlab/Octave family, Ox and so on.
-As for style, the language which hansl most resembles is probably the
-bash scripting language.
+On the other hand, hansl is by no means just a tool to automate rote
+tasks. It has several features which support advanced work: structured
+programming, recursion, complex data structures, and so on.  As for
+style, the language which hansl most resembles is probably that of the
+bash shell.
 
 % Other consequences are laid out in chapter \ref{chap:hr-gretl}.
 
@@ -118,7 +117,7 @@ bash scripting language.
 
 The intended readers of this document are those who already know how
 to write code, and are familiar with the associated do-s and don't-s.
-Such users may wish to add hansl to their toolbox, alongside languages
+Such people wish to add hansl to their toolbox, alongside languages
 like C or FORTRAN, or programs such as R, Ox, Matlab, Stata, Gauss and
 the like, some of which they are already confident with. Here,
 therefore, the focus is not so much on ``How do I do this?'', but
@@ -146,6 +145,8 @@ of the \GUG.
 
 Huge overlap with \app{gretl} $\to$ \GUG, etcetera. The gretl-users
 mailing list is also useful.
+
+\setcounter{chapter}{0}
 
 \include{hp-nodata}
 \include{hp-data}

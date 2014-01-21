@@ -53,7 +53,7 @@ Moreover, the location of the maximum is obviously determined by the
 data $\mathbf{Y}$. This means that the value
 \begin{equation}
   \label{eq:maxlik}
-  \hat{\theta}(\mathbf{Y}) = \stackunder{\theta \in \Theta}{\mathrm{Argmax}} \LogLik(\theta)
+  \hat{\theta}(\mathbf{Y}) = \argmax_{\theta \in \Theta} \LogLik(\theta)
 \end{equation}
 is some function of the observed data (a statistic), which has the
 property, under mild conditions, of being a consistent, asymptotically

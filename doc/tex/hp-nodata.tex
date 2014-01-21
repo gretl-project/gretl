@@ -888,12 +888,52 @@ above formulae translate into
 \end{code}
 
 \input{hp-ctrlflow}
-
 \input{hp-functions}
 
 \chapter{Numerical methods}
 
-\section{Numerical differentiation and optimisation}
+\section{Numerical differentiation and optimization}
+
+Many, if not most, cases in which an econometrician wants to use a
+programming language such as hansl instead of relying on pre-canned
+software involve some form of numerical optimization. This could take
+the form of maximization of a likelihood or similar methods of
+inferential statistics. Alternatively, optimization could be used in a
+more general and abstract way, for example to solve portfolio choice
+or analogous resource allocation problems.
+
+Since hansl is Turing-complete, in principle any numerical
+optimization technique could be programmed in hansl itself. Some of
+these, however, are already part of hansl's offering of native
+functions, in the interest of simplicity of use and CPU
+efficiency. These are geared towards the most common kind of problem
+encountered in economics and econometrics, that is unconstrained
+optimization of differentiable functions.
+
+In this chapter, we will briefly review what hansl offers to solve
+generic problems of the kind
+\[
+\hat{\mathbf{x}} \equiv \argmax_{\mathbf{x} \in \Re^k} f(\mathbf{x}; \mathbf{a}),
+\]
+where $f(\mathbf{x}; \mathbf{a})$ is a function of $\mathbf{x}$, whose
+shape depends on a vector of parameters $\mathbf{a}$. The objective
+function $f(\cdot)$ is assumed to return a scalar real value. In most
+cases, it will be assumed it is also continuous and differentiable,
+although this need not be necessarily the case. Note that, in hansl,
+you get functions for maximizing the objective function, but of course
+minimization can be achieved simply by flipping the sign of
+$f(\cdot)$.
+
+A special case of the above occurs when $\mathbf{x}$ is a vector of
+parameters and $\mathbf{a}$ is ``data''. In these cases, the objective
+function is usually a (log-)likelihood or a similar objective
+function, and the problem is one of estimation. For those cases, hansl
+offers several special constructs, which are reviewed in Section
+\ref{sec:est-blocks} and are aimed at making the job easier. Here, we
+deal with more generic problems; nevertheless, the differences are
+only in the hansl syntax involved: the mathematical algorithms that
+hansl employs to solve the optimization problem are the same.
+
 
 For optimization:
 \begin{itemize}

@@ -40,6 +40,19 @@
 %% \newenvironment{code}{\par\small\verbatim}
 %% {\endverbatim\normalsize\vspace{-1ex}}
 
+%% --- a few handy math additions ---------------------------------------
+
+\DeclareMathOperator*{\argmin}{\mathrm{Argmin}}
+\DeclareMathOperator*{\argmax}{\mathrm{Argmax}}
+\newcommand{\LogLik}{\ensuremath\ell}
+\newcommand{\stackunder}[2]{\ensuremath\mathrel{\mathop{#2}\limits_{#1}}}
+\newcommand{\pder}[2]{\frac{\ensuremath\partial #1}{\partial #2}}
+\newcommand{\convp}{\stackrel{\mathrm{p}}{\longrightarrow}}
+\newcommand{\convd}{\stackrel{\mathrm{d}}{\longrightarrow}}
+\renewcommand{\vec}[1]{{\rm vec}(#1)}
+
+%% ----------------------------------------------------------------------
+
 \newenvironment{textcode}{\par\small\ttfamily}
 {\normalfont\normalsize\par}
 
