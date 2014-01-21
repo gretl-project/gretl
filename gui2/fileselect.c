@@ -44,7 +44,7 @@
 #define EXPORT_OTHER(a,s) ((a == EXPORT_OCTAVE || \
 			    a == EXPORT_R ||	  \
 			    a == EXPORT_CSV ||	  \
-			    a == EXPORT_DAT ||				\
+			    a == EXPORT_DAT ||    \
 			    a == EXPORT_JM) && s != FSEL_DATA_PRN)
 
 #define SET_DIR_ACTION(i) (i == SET_DIR || i == SET_WDIR || \
@@ -837,12 +837,20 @@ static void record_compress_level (GtkWidget *b, gpointer p)
 static void add_compression_level_option (GtkWidget *filesel)
 {
     GtkWidget *hbox, *label, *spin;
+    guint64 dsetsize;
+    int deflt = 1;
+
+    dsetsize = (dataset->v - 1) * dataset->n * 8;
+    if (dsetsize < 30 * 1024) {
+	/* default to no compression for small data */
+	deflt = 0;
+    }
 
     hbox = gtk_hbox_new(FALSE, 5);
     label = gtk_label_new(_("Compression level (0 = none)"));
     spin = gtk_spin_button_new_with_range(0, 9, 1);
 
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), deflt);
     gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin), 0);
     g_signal_connect(G_OBJECT(spin), "destroy", 
 		     G_CALLBACK(record_compress_level), NULL);
