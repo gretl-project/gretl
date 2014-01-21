@@ -155,28 +155,7 @@ struct open_data_code {
 
 struct open_data_code open_data_codes[] = {
     { OPEN_DATA,       "OpenData" },    
-    { OPEN_GDT,        "OpenGdt" },
-    { APPEND_GDT,      "AppendGdt" },
-    { OPEN_CSV,        "OpenCSV" },
-    { APPEND_CSV,      "AppendCSV" },
-    { OPEN_OCTAVE,     "OpenOctave" },
-    { APPEND_OCTAVE,   "AppendOctave" },
-    { OPEN_GNUMERIC,   "OpenGnumeric" },
-    { APPEND_GNUMERIC, "AppendGnumeric" },
-    { OPEN_XLS,        "OpenXLS" },
-    { APPEND_XLS,      "AppendXLS" },
-    { OPEN_WF1,        "OpenWF1" },
-    { APPEND_WF1,      "AppendWF1" },
-    { OPEN_DTA,        "OpenDTA" },
-    { APPEND_DTA,      "AppendDTA" },
-    { OPEN_SAV,        "OpenSAV" },
-    { APPEND_SAV,      "AppendSAV" },
-    { OPEN_SAS,        "OpenSAS" },
-    { APPEND_SAS,      "AppendSAS" },
-    { OPEN_JMULTI,     "OpenJMulTi" },
-    { APPEND_JMULTI,   "AppendJMulTi" },
-    { OPEN_ODS,        "OpenODS" },
-    { APPEND_ODS,      "AppendODS" },
+    { APPEND_DATA,     "AppendData" },
     { OPEN_MARKERS,    "AddMarkers" },
     { OPEN_RATS_DB,    "RATSDB" },
     { OPEN_PCGIVE_DB,  "PcGiveDB" },
@@ -201,7 +180,7 @@ void open_data (GtkAction *action)
     if (!dataset_locked()) {
 	int code = open_data_code(gtk_action_get_name(action));
 
-#if 1
+#if 0 /* maybe insert elsewhere? */
 	if (code == OPEN_CSV || code == APPEND_CSV) {
 	    /* allow specification of separator */
 	    int resp = csv_options_dialog(code, GRETL_OBJ_DSET, NULL);

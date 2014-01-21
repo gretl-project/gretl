@@ -2,6 +2,8 @@ version 1.9.15, in progress
 - Add new function: substr()
 - Enable use of arrays in the SFMT random number generator
 - Enable use of value labels (if any) in factorized boxplots
+- Enable use of named lists in the GMM() and GMMlevel() 
+  parameter-groups for the "dpanel" and "arbond" commands
 - Print out alternative definition of R^2 in FE linear panel 
   data models
 - Add choice of compression level when saving data in native

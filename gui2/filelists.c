@@ -434,7 +434,7 @@ static void open_file_from_filelist (GtkAction *action)
     if (!strcmp(ftype, "Data")) {
 	strcpy(tryfile, datap[i]);
 	if (strstr(tryfile, ".csv")) {
-	    int resp = csv_options_dialog(OPEN_CSV, GRETL_OBJ_DSET, NULL);
+	    int resp = csv_options_dialog(OPEN_DATA, GRETL_OBJ_DSET, NULL);
 
 	    if (canceled(resp)) {
 		return;

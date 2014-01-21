@@ -515,7 +515,7 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
     tmp = gtk_label_new(_("separator for data columns:"));
     pack_in_hbox(tmp, vbox, 5);
 
-    if (ci == OPEN_CSV || ci == APPEND_CSV) {
+    if (ci == OPEN_DATA || ci == APPEND_DATA) {
 	/* on input only, add option to auto-detect separator */
 	button = gtk_radio_button_new_with_label(group, _("auto-detect"));
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));	
@@ -532,7 +532,7 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     csvp->comma_sep = button;
     pack_in_hbox(button, vbox, 0);
-    if (ci != OPEN_CSV && ci != APPEND_CSV)
+    if (ci != OPEN_DATA && ci != APPEND_DATA)
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvp);

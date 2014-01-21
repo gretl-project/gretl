@@ -20,97 +20,12 @@ look at a few of the supplied practice data files: \verb+data4-1.gdt+
 gives a simple example; \verb+data4-10.gdt+ is an example where
 observation labels are included.
 
-\section{Traditional ESL format}
-\label{traddata}
+\section{Binary data file format}
+\label{bindata}
 
-For backward compatibility, gretl can also handle data files in
-the ``traditional'' format inherited from Ramu Ramanathan's \app{ESL}
-program.  In this format a data set is represented by two text files;
-one contains the actual data and the other information on how the data
-should be read.  To be more specific:
+Added in CVS for gretl 1.9.15. TO BE WRITTEN.
 
-\begin{enumerate}
-\item \emph{Actual data}: A rectangular matrix of white-space
-  separated numbers. By default, each column represents a variable,
-  each row an observation. The data columns can be separated by spaces
-  or tabs. Traditionally the data filename has no extension/suffix.
-\item \emph{Header}: The data file must be accompanied by a header
-  file which has the same basename as the data file plus the suffix
-  \verb+.hdr+.  This file contains, in order:
-  \begin{itemize}
-  \item (Optional) \emph{comments} on the data, set off by the opening
-    string \verb+(*+ and the closing string \verb+*)+, each of these
-    strings to occur on lines by themselves.
-  \item (Required) a list of the \emph{names of the variables} in the
-    data file, separated by white space. Names are limited to 8
-    characters, must start with a letter, and are limited to
-    alphanumeric characters plus the underscore.  The list may
-    continue over more than one line; it should be terminated with a
-    semicolon.
-  \item (Required) an \emph{observations} line of the form
-    \verb+1 1 85+.  The first element gives the data frequency (1 for
-    undated or annual data, 4 for quarterly, 12 for monthly).  The
-    second and third elements give the starting and ending
-    observations.  These should be 1 and the number of observations,
-    respectively, for undated data.  For time-series data one can use
-    dates of the form \cmd{1959.1} (quarterly, one digit after the
-    point) or \cmd{1967.03} (monthly, two digits after the point).
-  \item The keyword \verb+BYOBS+ (but see below).
-  \end{itemize}
-\end{enumerate}
-
-Here is an example of a well-formed data header file; the
-corresponding data file contains three columns of data, each having 90
-entries.
-
-\begin{code} 
-(* 
-  DATA9-6: 
-  Data on log(money), log(income) and interest rate from US. 
-  Source: Stock and Watson (1993) Econometrica 
-  (unsmoothed data) Period is 1900-1989 (annual data). 
-  Data compiled by Graham Elliott. 
-*) 
-lmoney lincome intrate ; 
-1 1900 1989 BYOBS
-\end{code}
-
-Three further features of the traditional ESL data format may be
-noted.
-    
-\begin{enumerate}
-\item If the \verb+BYOBS+ keyword is replaced by \verb+BYVAR+ this
-  indicates that in the corresponding data file the data are written
-  out by variable rather than by observation.
-\item If \verb+BYOBS+ is followed by the keyword \verb+MARKERS+,
-  gretl expects a data file in which the \emph{first column}
-  contains strings (8 characters maximum) used to identify the
-  observations.  This may be useful in the case of cross-sectional data
-  where the units of observation are identifiable: countries, states,
-  cities or whatever.  It can also be useful for irregular time series
-  data, such as daily stock price data where some days are not trading
-  days---in this case the observations can be marked with a date
-  string such as \cmd{10/01/98}.  (Remember the 8-character maximum.)
-  Note that \cmd{BYVAR} and \cmd{MARKERS} are mutually exclusive
-  flags.  Also note that the ``markers'' are not considered to be a
-  variable: this column does not have a corresponding entry in the
-  list of variable names in the header file.
-\item If a file with the same base name as the data file and header
-  files, but with the suffix \verb+.lbl+, is found, it is read to fill
-  out the descriptive labels for the data series. The format of the
-  label file is simple: each line contains the name of one variable
-  (as found in the header file), followed by one or more spaces,
-  followed by the descriptive label. Here is an example, giving
-  a label for a variable named ``price'':
-  \verb+price New car price index, 1982 base year+
-\end{enumerate}
-
-If you want to save data in traditional format, use the
-\verb|--traditional| flag with the \cmd{store} command, either in the
-command-line program or in the console window of the GUI program.
-
-
-\section{Binary database details}
+\section{Native database format}
 \label{dbdetails}
 
 A gretl database consists of two parts: an ASCII index file

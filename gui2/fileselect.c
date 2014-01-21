@@ -41,44 +41,11 @@
 # include "gretlwin32.h"
 #endif
 
-#define OPEN_DATA_ACTION(i)  (i == OPEN_DATA || \
-			      i == OPEN_GDT ||	\
-                              i == OPEN_CSV || \
-                              i == OPEN_OCTAVE || \
-                              i == OPEN_GNUMERIC || \
-	                      i == OPEN_XLS || \
-                              i == OPEN_WF1 || \
-                              i == OPEN_DTA || \
-	                      i == OPEN_SAV || \
-			      i == OPEN_SAS || \
-                              i == OPEN_JMULTI || \
-                              i == OPEN_ODS)
-
-#define APPEND_DATA_ACTION(i) (i == APPEND_DATA || \
-			       i == APPEND_GDT ||  \
-                               i == APPEND_CSV || \
-                               i == APPEND_OCTAVE || \
-                               i == APPEND_GNUMERIC || \
-                               i == APPEND_XLS || \
-                               i == APPEND_WF1 || \
-                               i == APPEND_DTA || \
-                               i == APPEND_SAV || \
-			       i == APPEND_SAS || \
-                               i == APPEND_JMULTI || \
-                               i == APPEND_ODS)
-
-#define EXPORT_ACTION(a,s) ((a == EXPORT_OCTAVE || \
-                             a == EXPORT_R || \
-                             a == EXPORT_CSV || \
-                             a == EXPORT_DAT || \
-                             a == EXPORT_JM) && s != FSEL_DATA_PRN)
-
-#define GDT_ACTION(i) (i == SAVE_DATA || \
-                       i == SAVE_DATA_AS || \
-                       i == SAVE_BOOT_DATA || \
-                       i == EXPORT_GDT || \
-                       i == OPEN_GDT || \
-                       i == APPEND_GDT)
+#define EXPORT_OTHER(a,s) ((a == EXPORT_OCTAVE || \
+			    a == EXPORT_R ||	  \
+			    a == EXPORT_CSV ||	  \
+			    a == EXPORT_DAT ||				\
+			    a == EXPORT_JM) && s != FSEL_DATA_PRN)
 
 #define SET_DIR_ACTION(i) (i == SET_DIR || i == SET_WDIR || \
                            i == SET_FDIR || i == SET_DBDIR)
@@ -106,8 +73,6 @@ static struct extmap action_map[] = {
     { SAVE_GFN_SPEC,     ".spec" },
     { EXPORT_CSV,        ".csv" },
     { EXPORT_R,          ".R" },
-    { OPEN_OCTAVE,       ".m" },
-    { APPEND_OCTAVE,     ".m" },
     { EXPORT_OCTAVE,     ".m" },
     { EXPORT_DAT,        ".dat" },
     { SAVE_OUTPUT,       ".txt" },
@@ -116,24 +81,6 @@ static struct extmap action_map[] = {
     { SAVE_TEXT,         ".txt" },
     { OPEN_SCRIPT,       ".inp" },
     { OPEN_SESSION,      ".gretl" },
-    { OPEN_CSV,          ".csv" },
-    { APPEND_CSV,        ".csv" },
-    { OPEN_GNUMERIC,     ".gnumeric" },
-    { APPEND_GNUMERIC,   ".gnumeric" },
-    { OPEN_XLS,          ".xls" },
-    { APPEND_XLS,        ".xls" },
-    { OPEN_WF1,          ".wf1" },
-    { APPEND_WF1,        ".wf1" },
-    { OPEN_DTA,          ".dta" },
-    { APPEND_DTA,        ".dta" },
-    { OPEN_SAV,          ".sav" },
-    { APPEND_SAV,        ".sav" },
-    { OPEN_SAS,          ".xpt" },
-    { APPEND_SAS,        ".xpt" },
-    { OPEN_JMULTI,       ".dat" },
-    { APPEND_JMULTI,     ".dat" },
-    { OPEN_ODS,          ".ods" },
-    { APPEND_ODS,        ".ods" },
     { OPEN_RATS_DB,      ".rat" },
     { OPEN_PCGIVE_DB,    ".bn7" },
     { OPEN_GFN,          ".gfn" },
@@ -145,10 +92,10 @@ static const char *get_extension_for_action (int action, gpointer data)
 {
     const char *s = NULL;
 
-    if (action == EXPORT_GDTB) {
-	return ".gdtb";
-    } else if (GDT_ACTION(action)) {
+    if (action == EXPORT_GDT) {
 	return ".gdt";
+    } else if (action == EXPORT_GDTB) {
+	return ".gdtb";
     } else if (action == SAVE_GNUPLOT || action == SAVE_GRAPHIC) {
 	int ttype = gp_term_code(data, action);
 
@@ -222,10 +169,10 @@ static int post_process_savename (char *fname, int action, gpointer data)
 
 	if (ext != NULL && !has_suffix(fname, ext)) {
 	    /* We found a recommended extension, and it's not
-	       already present on fname; so we should probably
+	       already present on @fname; so we should probably
 	       append the extension -- unless perhaps we're
 	       looking at an action where there isn't exactly
-	       a canonical extension and fname already has some
+	       a canonical extension and @fname already has some
 	       sort of extension in place.
 	    */
 	    if (strcmp(ext, ".txt") && strcmp(ext, ".plt")) {
@@ -401,6 +348,13 @@ static void filesel_open_session (const char *fname)
     }
 }
 
+/* suggested_savename: pertains to the case where some data has
+   been imported from a file with name @fname and the user has
+   now chosen "Save data" (implicitly in native format). We'd
+   like to offer a suggestion for the name of the file to save.
+   A simple case would be, e.g. "foo.gdt" from imported "foo.xls".
+*/
+
 static char *suggested_savename (const char *fname)
 {
     const char *ss = strrchr(fname, SLASH);
@@ -527,10 +481,10 @@ file_selector_process_result (const char *in_fname, int action,
 	}
     } 
 
-    if (OPEN_DATA_ACTION(action)) {
+    if (action == OPEN_DATA) {
 	strcpy(tryfile, fname);
 	verify_open_data(NULL, action);
-    } else if (APPEND_DATA_ACTION(action)) {
+    } else if (action == APPEND_DATA) {
 	strcpy(tryfile, fname);
 	do_open_data(NULL, action);
     } else if (action == OPEN_SCRIPT) {
@@ -565,12 +519,14 @@ file_selector_process_result (const char *in_fname, int action,
 	return;
     }
 
-    if (EXPORT_ACTION(action, src) || action == EXPORT_GDT ||
+    if (EXPORT_OTHER(action, src) || 
+	action == EXPORT_GDT ||
+	action == EXPORT_GDTB ||
 	(action > END_SAVE_DATA && action < END_SAVE_OTHER)) {
 	/* saving CSV, graphs etc.; check overwrite */
 	quit = overwrite_stop(fname);
     } else if (action == SAVE_DATA_AS && strcmp(fname, datafile)) {
-	/* "saving as" over an existing gdt file */
+	/* check for "saving as" over an existing gdt file */
 	quit = overwrite_stop(fname);
     }
 
@@ -742,7 +698,8 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 	currname = suggested_savename(datafile);
 	gtk_file_chooser_set_current_name(filesel, currname);
 	g_free(currname);
-    } else if (EXPORT_ACTION(action, src) && *datafile != '\0') {
+    } else if (EXPORT_OTHER(action, src) && *datafile != '\0') {
+	/* formulate export name based on current datafile */
 	currname = suggested_exportname(datafile, action);
 	gtk_file_chooser_set_current_name(filesel, currname);
 	g_free(currname);
@@ -813,13 +770,6 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_filter(filesel, N_("Octave files (*.m)"), "*.m", maxlen);
 	filesel_add_filter(filesel, N_("JMulTi files (*.dat)"), "*.dat", maxlen);
 	filesel_add_filter(filesel, N_("all files (*.*)"), "*", maxlen);
-    } else if (action == OPEN_CSV || action == APPEND_CSV) {
-	filesel_add_filter(filesel, N_("CSV files (*.csv)"), "*.csv", maxlen);
-	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt", maxlen);
-	filesel_add_filter(filesel, N_("all files (*.*)"), "*", maxlen);
-    } else if (action == OPEN_XLS || action == APPEND_XLS) {
-	filesel_add_filter(filesel, N_("Excel files (*.xls)"), "*.xls", maxlen);
-	filesel_add_filter(filesel, N_("Excel files (*.xlsx)"), "*.xlsx", maxlen);
     } else if (action == OPEN_SCRIPT) {
 	filesel_add_filter(filesel, N_("gretl script files (*.inp)"), "*.inp", maxlen);
 	filesel_add_filter(filesel, N_("GNU R files (*.R)"), "*.R", maxlen);
@@ -832,6 +782,10 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
     } else if (action == OPEN_LABELS || action == OPEN_BARS) {
 	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt", maxlen);
 	filesel_add_filter(filesel, N_("all files (*.*)"), "*", maxlen);
+    } else if (action == SAVE_DATA || action == SAVE_DATA_AS ||
+	       action == SAVE_BOOT_DATA) {
+	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt", maxlen);
+	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb", maxlen);
     } else {
 	GtkFileFilter *filter = get_file_filter(action, data);
 

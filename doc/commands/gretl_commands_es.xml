@@ -4460,10 +4460,6 @@
 	  <effect>usar formato GNU R</effect>
         </option>
         <option>
-	  <flag>--traditional</flag>
-	  <effect>usar el formato tradicional de ESL</effect>
-        </option>
-        <option>
 	  <flag>--gzipped</flag>
 	  <effect>aplicar la compresión mediante gzip</effect>
         </option>

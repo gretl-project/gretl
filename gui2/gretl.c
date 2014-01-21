@@ -1570,38 +1570,14 @@ GtkActionEntry main_entries[] = {
     { "OpenDataMenu", NULL, N_("_Open data"), NULL, NULL, NULL }, 
     { "OpenData",     GTK_STOCK_OPEN, N_("_User file..."), NULL, NULL, G_CALLBACK(open_data) },
     { "DisplayDataFiles", GTK_STOCK_OPEN, N_("_Sample file..."), "", NULL, G_CALLBACK(show_files) },
-    { "ImportData",   NULL, N_("_Import"), NULL, NULL, NULL }, 
-    { "OpenCSV",      NULL, N_("_text/CSV..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "OpenOctave",   NULL, N_("_Octave..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "OpenGnumeric", NULL, N_("_Gnumeric..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "OpenXLS",      NULL, N_("_Excel..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "OpenODS",      NULL, N_("_Open Document..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "OpenWF1",      NULL, N_("_Eviews..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "OpenDTA",      NULL, N_("_Stata..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "OpenSAV",      NULL, N_("_SPSS..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "OpenSAS",      NULL, N_("_SAS (xport)..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "OpenJMulTi",   NULL, N_("_JMulTi..."), NULL, NULL, G_CALLBACK(open_data) },
-
-    { "AppendDataMenu", NULL, N_("_Append data"), NULL, NULL, NULL }, 
-    { "AppendGdt",      NULL, N_("_Standard format..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "AppendCSV",      NULL, N_("_text/CSV..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "AppendOctave",   NULL, N_("_Octave..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "AppendGnumeric", NULL, N_("_Gnumeric..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "AppendXLS",      NULL, N_("_Excel..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "AppendODS",      NULL, N_("_Open Document..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "AppendWF1",      NULL, N_("_Eviews..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "AppendDTA",      NULL, N_("_Stata..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "AppendSAV",      NULL, N_("_SPSS..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "AppendSAS",      NULL, N_("_SAS (xport)..."), NULL, NULL, G_CALLBACK(open_data) },
-    { "AppendJMulTi",   NULL, N_("_JMulTi..."), NULL, NULL, G_CALLBACK(open_data) },
-
+    { "AppendData", NULL, N_("_Append data..."), NULL, NULL, G_CALLBACK(open_data) }, 
     { "SaveData",  GTK_STOCK_SAVE, N_("_Save data"), NULL, NULL, G_CALLBACK(auto_store) },
     { "SaveDataAs", GTK_STOCK_SAVE_AS, N_("Save data _as..."), NULL, NULL, G_CALLBACK(fsave_callback) }, 
     { "ExportData", NULL, N_("_Export data..."), NULL, NULL, G_CALLBACK(fsave_callback) },
-
     { "MailData", GRETL_STOCK_MAIL, N_("Send To..."), NULL, NULL, G_CALLBACK(email_data) },
     { "NewData", GTK_STOCK_NEW, N_("_New data set"), NULL, NULL, G_CALLBACK(newdata_callback) },
     { "ClearData", GTK_STOCK_CLEAR, N_("C_lear data set"), NULL, NULL, G_CALLBACK(verify_clear_data) },
+
     { "WorkingDir", NULL, N_("_Working directory..."), NULL, NULL, G_CALLBACK(working_dir_dialog) },
     { "ScriptFiles", NULL, N_("_Script files"), NULL, NULL, NULL },
     { "OpenScript", GTK_STOCK_OPEN, N_("_User file..."), "", NULL, G_CALLBACK(open_script_callback) },
@@ -2475,7 +2451,7 @@ static void mdata_text_received (GtkClipboard *cb,
 	err = user_fopen(CLIPTEMP, fullname, &prn);
 
 	if (!err) {
-	    int ci = append ? APPEND_CSV : OPEN_CSV;
+	    int ci = append ? APPEND_DATA : OPEN_DATA;
 
 	    pputs(prn, text);
 	    gretl_print_destroy(prn);

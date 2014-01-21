@@ -1181,60 +1181,18 @@ static int get_native_data (char *fname, int ftype, int append,
     return err;
 }
 
-#define APPENDING(action) (action == APPEND_DATA || \
-			   action == APPEND_GDT ||  \
-                           action == APPEND_CSV || \
-                           action == APPEND_GNUMERIC || \
-                           action == APPEND_XLS || \
-			   action == APPEND_XLSX || \
-                           action == APPEND_ODS || \
-                           action == APPEND_WF1 || \
-                           action == APPEND_DTA || \
-	                   action == APPEND_SAV || \
-			   action == APPEND_SAS || \
-                           action == APPEND_JMULTI)
-
 gboolean do_open_data (windata_t *fwin, int code)
 {
-    int append = APPENDING(code);
-    gint ftype;
+    int append = (code == APPEND_DATA);
+    GretlFileType ftype;
     int err = 0;
 
-    gretl_error_clear();
+    /* the global variable @tryfile will contain the name
+       of the data file in question */
 
-    if (code == OPEN_XLS || code == APPEND_XLS) {
-	if (has_suffix(tryfile, ".xlsx")) {
-	    code = (code == OPEN_XLS)? OPEN_XLSX : APPEND_XLSX;
-	}
-    }
-
-    if (code == OPEN_GDT || code == APPEND_GDT) {
-	/* native data files */
-	ftype = GRETL_XML_DATA;
-    } else if (code == OPEN_CSV || code == APPEND_CSV) {
-	ftype = GRETL_CSV;
-    } else if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC) {
-	ftype = GRETL_GNUMERIC;
-    } else if (code == OPEN_ODS || code == APPEND_ODS) {
-	ftype = GRETL_ODS;
-    } else if (code == OPEN_XLS || code == APPEND_XLS) {
-	ftype = GRETL_XLS;
-    } else if (code == OPEN_XLSX || code == APPEND_XLSX) {
-	ftype = GRETL_XLSX;
-    } else if (code == OPEN_OCTAVE || code == APPEND_OCTAVE) {
-	ftype = GRETL_OCTAVE;
-    } else if (code == OPEN_WF1 || code == APPEND_WF1) {
-	ftype = GRETL_WF1;
-    } else if (code == OPEN_DTA || code == APPEND_DTA) {
-	ftype = GRETL_DTA;
-    } else if (code == OPEN_SAV || code == APPEND_SAV) {
-	ftype = GRETL_SAV;
-    } else if (code == OPEN_SAS || code == APPEND_SAS) {
-	ftype = GRETL_SAS;
-    } else if (code == OPEN_JMULTI || code == APPEND_JMULTI) {
-	ftype = GRETL_JMULTI;
+    if (g_path_is_absolute(tryfile)) {
+	ftype = data_file_type_from_name(tryfile);
     } else {
-	/* no filetype specified: have to guess */
 	ftype = detect_filetype(tryfile, OPT_P);
     }
 

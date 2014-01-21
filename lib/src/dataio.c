@@ -1134,6 +1134,73 @@ gretlopt data_save_opt_from_suffix (const char *fname)
     return opt;
 }
 
+struct extmap {
+    GretlFileType ftype;
+    const char *ext;
+};
+
+static struct extmap data_ftype_map[] = {
+    { GRETL_XML_DATA,     ".gdt" },
+    { GRETL_BINARY_DATA,  ".gdtb" },
+    { GRETL_CSV,          ".csv" },
+    { GRETL_OCTAVE,       ".m" },
+    { GRETL_GNUMERIC,     ".gnumeric" },
+    { GRETL_XLS,          ".xls" },
+    { GRETL_XLSX,         ".xlsx" },
+    { GRETL_ODS,          ".ods" },
+    { GRETL_WF1,          ".wf1" },
+    { GRETL_DTA,          ".dta" },
+    { GRETL_SAV,          ".sav" },
+    { GRETL_SAS,          ".xpt" },
+    { GRETL_JMULTI,       ".dat" }
+};
+
+GretlFileType data_file_type_from_name (const char *fname)
+{
+    const char *ext = strrchr(fname, '.');
+
+    if (ext != NULL && strchr(ext, '/')) {
+	/* the rightmost dot is not in the basename */
+	ext = NULL;
+    }
+
+#ifdef WIN32
+    if (ext != NULL && strchr(ext, '\\')) {
+	ext = NULL;
+    }
+#endif
+
+    if (ext != NULL) {
+	int i, n = G_N_ELEMENTS(data_ftype_map);
+
+	for (i=0; i<n; i++) {
+	    if (!g_ascii_strcasecmp(ext, data_ftype_map[i].ext)) {
+		return data_ftype_map[i].ftype;
+	    }
+	}
+	/* a few extras */
+	if (!g_ascii_strcasecmp(ext, ".txt") ||
+	    !g_ascii_strcasecmp(ext, ".asc")) {
+	    return GRETL_CSV;
+	}
+    }
+
+    return GRETL_UNRECOGNIZED;
+}
+
+const char *data_file_suffix_for_type (GretlFileType ftype)
+{
+    int i, n = G_N_ELEMENTS(data_ftype_map);
+
+    for (i=0; i<n; i++) {
+	if (ftype == data_ftype_map[i].ftype) {
+	    return data_ftype_map[i].ext;
+	}
+    }
+
+    return NULL;
+}
+
 static GretlDataFormat 
 format_from_opt_or_name (gretlopt opt, const char *fname,
 			 char *delim)
@@ -3302,7 +3369,8 @@ int gretl_is_pkzip_file (const char *fname)
 
 GretlFileType detect_filetype (char *fname, gretlopt opt)
 {
-    int i, c, ftype = GRETL_ESL_DATA;
+    GretlFileType ftype;
+    int i, c;
     FILE *fp;
 
     /* might be a script file? (watch out for DOS-mangled names) */
@@ -3316,38 +3384,20 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
 	} else {
 	    return GRETL_SCRIPT;
 	}
-    } else if (has_suffix(fname, ".gdtb")) {
-	return GRETL_BINARY_DATA;
     }
 
-    if (has_suffix(fname, ".gnumeric"))
-	return GRETL_GNUMERIC;
-    if (has_suffix(fname, ".xlsx"))
-	return GRETL_XLSX;
-    if (has_suffix(fname, ".xls"))
-	return GRETL_XLS;
-    if (has_suffix(fname, ".ods"))
-	return GRETL_ODS;
-    if (has_suffix(fname, ".wf1"))
-	return GRETL_WF1;
-    if (has_suffix(fname, ".dta"))
-	return GRETL_DTA;
-    if (has_suffix(fname, ".sav"))
-	return GRETL_SAV;
-    if (has_suffix(fname, ".xpt"))
-	return GRETL_SAS;
+    ftype = data_file_type_from_name(fname);
+    if (ftype != GRETL_UNRECOGNIZED) {
+	return ftype;
+    }
+
+    ftype = GRETL_ESL_DATA; /* FIXME */
+
+    /* database types */
     if (has_suffix(fname, ".bin"))
 	return GRETL_NATIVE_DB;
     if (has_suffix(fname, ".rat"))
 	return GRETL_RATS_DB;
-    if (has_suffix(fname, ".csv"))
-	return GRETL_CSV;
-    if (has_suffix(fname, ".txt"))
-	return GRETL_CSV;
-    if (has_suffix(fname, ".asc"))
-	return GRETL_CSV;
-    if (has_suffix(fname, ".m"))
-	return GRETL_OCTAVE;
     if (has_suffix(fname, ".bn7"))
 	return GRETL_PCGIVE_DB;
 

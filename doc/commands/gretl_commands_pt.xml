@@ -10958,10 +10958,6 @@
 	  <effect>use GNU R format</effect>
         </option>
         <option>
-	  <flag>--traditional</flag>
-	  <effect>use traditional ESL format</effect>
-        </option>
-        <option>
 	  <flag>--gzipped</flag>
 	  <effect>apply gzip compression</effect>
         </option>

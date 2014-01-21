@@ -10630,11 +10630,7 @@
 	  <flag>--gnu-R</flag>
 	  <effect>usa il formato GNU R</effect>
         </option>
-        <option>
-	  <flag>--traditional</flag>
-	  <effect>usa il formato tradizionale ESL</effect>
-        </option>
-        <option>
+         <option>
 	  <flag>--gzipped</flag>
 	  <effect>comprime con gzip</effect>
         </option>

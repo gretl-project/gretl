@@ -11051,10 +11051,6 @@
 	  <effect>use GNU R format</effect>
         </option>
         <option>
-	  <flag>--traditional</flag>
-	  <effect>use traditional ESL format</effect>
-        </option>
-        <option>
 	  <flag>--gzipped</flag>
 	  <optparm optional="true">level</optparm>
 	  <effect>apply gzip compression</effect>

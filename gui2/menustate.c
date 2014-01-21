@@ -132,7 +132,7 @@ void dataset_menubar_state (gboolean s)
 {
     if (mdata == NULL || mdata->ui == NULL) return;
 
-    flip(mdata->ui, "/menubar/File/AppendDataMenu", s);
+    flip(mdata->ui, "/menubar/File/AppendData", s);
     flip(mdata->ui, "/menubar/File/ClearData", s);
     flip(mdata->ui, "/menubar/File/SaveData", s);
     flip(mdata->ui, "/menubar/File/SaveDataAs", s);
