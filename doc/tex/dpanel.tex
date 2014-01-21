@@ -382,15 +382,15 @@ the second to the equations in levels. The syntax for \texttt{GMM()}
 is
 
 \begin{altcode}
-\texttt{GMM(}\textsl{varname}\texttt{,} \textsl{minlag}\texttt{,} 
+\texttt{GMM(}\textsl{name}\texttt{,} \textsl{minlag}\texttt{,} 
 \textsl{maxlag}\texttt{)}
 \end{altcode}
 
 \noindent
-where \textsl{varname} is replaced by the name of a series,
-and \textsl{minlag} and \textsl{maxlag} are replaced by the minimum
-and maximum lags to be used as instruments. The same goes for 
-\texttt{GMMlevel()}.
+where \textsl{name} is replaced by the name of a series (or the name
+of a list of series), and \textsl{minlag} and \textsl{maxlag} are
+replaced by the minimum and maximum lags to be used as
+instruments. The same goes for \texttt{GMMlevel()}.
 
 One common use of \texttt{GMM()} is to limit the number of lagged
 levels of the dependent variable used as instruments for the equations
@@ -627,13 +627,14 @@ Here is the corresponding gretl code:
 \begin{code}
 open abdata.gdt
 list X = w w(-1) k k(-1)
+list Z = w k
 
 # Blundell & Bond (1998), Table 4: 1976-86 GMM-DIF
-dpanel 1 ; n X const ; GMM(w,2,99) GMM(k,2,99) --time --two-step --dpd
+dpanel 1 ; n X const ; GMM(Z,2,99) --time --two-step --dpd
 
 # Blundell & Bond (1998), Table 4: 1976-86 GMM-SYS
-dpanel 1 ; n X const ; GMM(w,2,99) GMM(k,2,99) \
-  GMMlevel(w,1,1) GMMlevel(k,1,1) --time --two-step --dpd --system
+dpanel 1 ; n X const ; GMM(Z,2,99) GMMlevel(Z,1,1) \
+ --time --two-step --dpd --system
 \end{code}
 
 Note the use of the \verb|--system| option flag to specify GMM-SYS,
@@ -735,12 +736,11 @@ endloop
 smpl --full
 list X = linv lngd
 # 1-step GMM-DIF
-dpanel 1 ; ly X ; GMM(linv,2,99) GMM(lngd,2,99)
+dpanel 1 ; ly X ; GMM(X,2,99)
 # 2-step GMM-DIF
-dpanel 1 ; ly X ; GMM(linv,2,99) GMM(lngd,2,99) --two-step
+dpanel 1 ; ly X ; GMM(X,2,99) --two-step
 # GMM-SYS
-dpanel 1 ; ly X ; GMM(linv,2,99) GMM(lngd,2,99) \
- GMMlevel(linv,1,1) GMMlevel(lngd,1,1) --two-step --sys
+dpanel 1 ; ly X ; GMM(X,2,99) GMMlevel(X,1,1) --two-step --sys
 \end{code}
 
 For comparison we estimated the same two models using Ox/DPD and the
