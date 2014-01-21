@@ -71,7 +71,7 @@ have_mac_integration="no"
 gui_disabled="no"
 MAKE="make"
 XML_LIBS=
-FONTREQ="\\RequirePackage{ae,amsmath}"
+FONTREQ="\\RequirePackage{ae}"
 
 AC_CHECK_HEADERS(libintl.h,
 	try_nls="yes",

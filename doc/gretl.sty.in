@@ -1,8 +1,8 @@
-%% gretl.sty, written by Allin Cottrell, <2005/11/07>
-%% To be used when generating the Gretl manuals
-%% from LaTeX source.
+%% gretl.sty, originally written by Allin Cottrell, <2005/11/07>
+%% To be used when generating the Gretl manuals from LaTeX source.
 
 @FONTREQ@
+\RequirePackage{amsmath}
 \ProvidesPackage{gretl}
 
 \newcommand{\scriptname}{Example}
