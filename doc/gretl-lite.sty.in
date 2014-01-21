@@ -1,4 +1,4 @@
-%% gretl-lite.sty, Allin Cottrell, <2012/03/03>
+%% gretl-lite.sty, originally by Allin Cottrell, <2012/03/03>
 
 @FONTREQ@
 \ProvidesPackage{gretl-lite}
