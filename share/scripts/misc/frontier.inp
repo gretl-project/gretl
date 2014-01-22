@@ -2,32 +2,49 @@
 # (2001) "Banks' Inefficiency and Economic Growth: A Micro Macro 
 # Approach", Scottish Journal of Political Economy, 48, pp. 400–424.
 
-open banks91
+set echo off
+set messages off
 
-# Cobb-Douglas cost function
+open banks91.gdt
 
-ols cost const y p1 p2 p3
+# descriptive statistics (Table 1, p. 409)
+summary VC Q1 Q2 P1 P2 P3 --simple
+
+# transformations
+series cost = ln(VC)
+series q1 = ln(Q1)
+series q2 = ln(Q2)
+series p1 = ln(P1)
+series p2 = ln(P2)
+series p3 = ln(P3)
+
+# Cobb-Douglas cost function with homogeneity restrictions 
+# (unreported - used for initialization)
+genr rcost = cost - p1
+genr rp2 = p2 - p1
+genr rp3 = p3 - p1
+list X = const q1 q2 rp2 rp3 
+ols rcost X --quiet
 
 # Cobb-Douglas cost function with homogeneity restrictions
-
-genr rcost = cost - p3
-genr rp1 = p1 - p3
-genr rp2 = p2 - p3
-
-list xlist = const y rp1 rp2
-ols rcost xlist
-
-# Cobb-Douglas cost function with homogeneity restrictions
-# and inefficiency
+# and inefficiency (Table 2, p. 410)
 
 matrix b = $coeff
-
 scalar su = 0.1
 scalar sv = 0.1
+series e 
+mle logl = ln(cnorm(e*lambda)) - (ln(ss) + 0.5*e^2)
+    scalar ss = sqrt(su^2 + sv^2)
+    scalar lambda = su/sv
+    e = (rcost - lincomb(X, b)) / ss
+    params b su sv
+end mle
 
-mle logl   = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
-  scalar   ss = sqrt(su^2 + sv^2)
-  scalar   lambda = su/sv
-  series   e = rcost - lincomb(xlist, b)
-  params   b su sv
-end mle --hessian
+scalar ss = sqrt(su^2 + sv^2)
+scalar lambda = su/sv
+
+series le = lambda * e
+series eff = ss*lambda/(1 + lambda^2) * (invmills(-le) + le)
+
+# Table 3, p. 411
+summary eff
