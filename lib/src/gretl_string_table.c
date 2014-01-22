@@ -836,7 +836,7 @@ char *retrieve_file_content (const char *fname, const char *codeset,
 
 	*fullname = '\0';
 	strncat(fullname, fname, FILENAME_MAX - 1);
-	gretl_addpath(fullname, 0);
+	gretl_addpath(fullname, 0, NULL);
 
 	g_file_get_contents(fullname, &content, &len, &gerr);
 

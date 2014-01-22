@@ -50,8 +50,6 @@ typedef enum {
     GRETL_FMT_OCTAVE,    /* data in Gnu Octave format */
     GRETL_FMT_CSV,       /* data in Comma Separated Values format */
     GRETL_FMT_R,         /* data in Gnu R format */
-    GRETL_FMT_GZIPPED,   /* gzipped data */
-    GRETL_FMT_ESL,       /* traditional ESL-style data */
     GRETL_FMT_DAT,       /* data in PcGive format */
     GRETL_FMT_DB,        /* gretl native database format */
     GRETL_FMT_JM         /* JMulti ascii data */
@@ -85,153 +83,6 @@ double get_date_x (int pd, const char *obs)
     }
 
     return x;
-}
-
-/* Skip past comments in .hdr file.  Return 0 if comments found,
-   otherwise 1.
-*/
-
-#define STARTCOMMENT "(*"
-#define ENDCOMMENT   "*)"
-
-static int skip_esl_comments (FILE *fp, const char *str)
-{
-    char word[MAXLEN];  /* should be big enough to accommodate
-			   strings among the comments? */
-    int n = 0;
-
-    *word = '\0';
-
-    if (strncmp(str, STARTCOMMENT, 2) == 0) {
-        while (strcmp(word, ENDCOMMENT)) {
-            n += fscanf(fp, "%s", word);
-        }
-        return 0;
-    } 
-
-    return 1;
-}
-
-static char *get_esl_comment_lines (FILE *fp)
-{
-    char s[MAXLEN], *buf = NULL;
-    int count = 0, bigger = 1;
-
-    if (fgets(s, sizeof s, fp) == NULL) {
-	return NULL;
-    }
-
-    if (!strncmp(s, STARTCOMMENT, 2)) {
-	buf = malloc(20 * MAXLEN);
-
-	if (buf == NULL) {
-	    return NULL;
-	}
-
-	*buf = '\0';
-	while (fgets(s, sizeof s, fp)) {
-	    if (!strncmp(s, ENDCOMMENT, 2)) {
-		break;
-	    }
-	    if (++count > 20 * bigger) {
-		size_t bufsize = 20 * MAXLEN * ++bigger;
-		char *tmp = realloc(buf, bufsize);
-
-		if (tmp == NULL) {
-		    free(buf);
-		    return NULL;
-		} else {
-		    buf = tmp;
-		}
-	    }
-	    strcat(buf, s);
-	} 
-    }
-
-    return buf;
-}
-
-static void eatspace (FILE *fp)
-{
-    char c;
-
-    while (1) {
-	c = fgetc(fp);
-	if (!isspace((unsigned char) c)) {
-	    ungetc(c, fp);
-	    return;
-	}
-    }
-}
-
-static int read_esl_data (FILE *fp, const DATASET *dset, int byvar)
-{
-    int i, t, n = dset->n;
-    char c, marker[OBSLEN];
-    int err = 0;
-
-    gretl_error_clear();
-
-    if (byvar) {
-	/* data by variable */
-	for (i=1; i<dset->v; i++) {
-	    for (t=0; t<n && !err; t++) {
-		if ((fscanf(fp, "%lf", &dset->Z[i][t])) != 1) {
-		    gretl_errmsg_sprintf(_("WARNING: ascii data read error at var %d, "
-					   "obs %d"), i, t + 1);
-		    err = 1;
-		    break;
-		}
-		if (dset->Z[i][t] == -999.0) {
-		    dset->Z[i][t] = NADBL;
-		} 
-	    }
-	}	       
-    } else { 
-	/* data by observation */
-	char sformat[8];
-
-	sprintf(sformat, "%%%ds", OBSLEN - 1);
-
-	gretl_push_c_numeric_locale();
-
-	for (t=0; t<n && !err; t++) {
-	    eatspace(fp);
-	    c = fgetc(fp);  /* test for a #-opened comment line */
-	    if (c == '#') {
-		while (c != '\n') {
-		    c = fgetc(fp);
-		}
-	    } else {
-		ungetc(c, fp);
-	    }
-	    if (dset->markers) {
-		*marker = '\0';
-		if (fscanf(fp, sformat, marker) == 1) {
-		    if (*marker == '"' || *marker == '\'') {
-			strcpy(dset->S[t], marker + 1);
-		    } else {
-			strcpy(dset->S[t], marker);
-		    }
-		}
-	    }
-	    for (i=1; i<dset->v; i++) {
-		if ((fscanf(fp, "%lf", &dset->Z[i][t])) != 1) {
-		    gretl_errmsg_sprintf(_("WARNING: ascii data read error at var %d, "
-					   "obs %d"), i, t + 1);
-		    err = 1;
-		    break;
-		}
-		if (dset->Z[i][t] == -999.0) {
-		    dset->Z[i][t] = NADBL;
-		} 
-	    }
-	}
-
-	gretl_pop_c_numeric_locale();
-    }
-
-    return err;
 }
 
 /**
@@ -297,159 +148,6 @@ int check_varname (const char *varname)
 
     return ret;
 }   
-
-static int read_esl_hdr (const char *hdrfile, DATASET *dset, int *byvar)
-{
-    FILE *fp;
-    char str[MAXLEN], byobs[6], option[8];
-    int n, i = 0, descrip = 0;
-    int err = 0;
-
-    gretl_error_clear();
-
-    fp = gretl_fopen(hdrfile, "r");
-    if (fp == NULL) {
-	gretl_errmsg_sprintf(_("Couldn't open file %s"),  hdrfile);
-	return E_FOPEN;
-    }
-
-    if (fscanf(fp, "%s", str)) {
-	i = skip_esl_comments(fp, str);
-    } 
-
-    /* find the number of variables */
-
-    while (1) {
-        if (fscanf(fp, "%s", str) != 1) {
-	    fclose(fp);
-	    gretl_errmsg_sprintf(_("Opened header file %s\n"
-				   "Couldn't find list of variables (must "
-				   "be terminated with a semicolon)"), 
-				 hdrfile);
-	    return 1;
-	}
-	n = strlen(str);
-	if (str[n-1] == ';') {
-	    if (n > 1) i++;
-	    break;
-	} else {
-	    i++;
-	}
-    }
-
-    dset->v = i + 1;
-
-    if (dataset_allocate_varnames(dset)) {
-	fclose(fp);
-	return E_ALLOC;
-    }
-
-    i = 1;
-    rewind(fp);
-
-    *str = '\0';
-    if (fscanf(fp, "%s", str)) {
-	if (skip_esl_comments(fp, str)) {
-	    *dset->varname[i] = '\0';
-	    strncat(dset->varname[i], str, VNAMELEN - 1);
-	    err = check_varname(dset->varname[i++]);
-	} else {
-	    descrip = 1; /* comments were found */
-	}
-    } else {
-	err = E_DATA;
-    }
-
-    while (!err) {
-        if (fscanf(fp, "%s", str) == 0) {
-	    err = E_DATA;
-	    break;
-	}
-	n = strlen(str);
-	if (str[n-1] != ';') {
-	    *dset->varname[i] = '\0';
-            strncat(dset->varname[i], str, VNAMELEN - 1);
-	    err = check_varname(dset->varname[i++]);
-        } else {
-	    if (n > 1) {
-		*dset->varname[i] = '\0';
-		strncat(dset->varname[i], str, n-1);
-		err = check_varname(dset->varname[i]);
-	    }
-	    break;
-	}
-    }
-
-    if (!err) {
-	n = 0;
-	n += fscanf(fp, "%d", &dset->pd);
-	n += fscanf(fp, "%s", dset->stobs);
-	n += fscanf(fp, "%s", dset->endobs);
-	if (n != 3) {
-	    err = E_DATA;
-	}
-    }
-
-    if (err) {
-	goto bailout;
-    }
-
-    colonize_obs(dset->stobs);
-    colonize_obs(dset->endobs);
-
-    dset->sd0 = get_date_x(dset->pd, dset->stobs);
-
-    if (dset->sd0 >= 1.0) {
-	if (dset->pd == 1 || dset->pd == 4 || dset->pd == 12 ||
-	    dset->pd == 24) {
-	    dset->structure = TIME_SERIES;
-	} else {
-	    dset->structure = SPECIAL_TIME_SERIES;
-	}
-    } 
-
-    dset->n = -1;
-    dset->n = dateton(dset->endobs, dset) + 1;
-
-    dset->markers = NO_MARKERS;
-
-    n = fscanf(fp, "%5s %7s", byobs, option);
-
-    if (n == 1 && strcmp(byobs, "BYVAR") == 0) {
-	*byvar = 1;
-    } else if (n == 2) {
-	if (!strcmp(option, "SINGLE") || !strcmp(option, "BINARY")) {
-	    gretl_errmsg_set("Old-style binary datafile, not supported");
-	    err = E_DATA;
-	    goto bailout;
-	} else if (strcmp(option, "MARKERS") == 0) {
-	    dset->markers = 1;
-	} 
-    } 
-
-    /* last pass, to pick up data description */
-    if (descrip) {
-	char *dbuf;
-
-	rewind(fp);
-	dbuf = get_esl_comment_lines(fp);
-	if (dbuf != NULL) {
-	    gretl_delchar('\r', dbuf);
-	    dset->descrip = gretl_strdup(dbuf);
-	    free(dbuf);
-	}
-    } 
-
- bailout:
-
-    fclose(fp);
-
-    if (err) {
-	clear_datainfo(dset, CLEAR_FULL);
-    }
-
-    return err;
-}
 
 static int bad_date_string (const char *s)
 {
@@ -830,185 +528,6 @@ int get_subperiod (int t, const DATASET *dset, int *err)
     return ret;    
 }
 
-static int blank_check (FILE *fp)
-{
-    int i, deflt = 1;
-    char s[MAXLEN];
-
-    for (i=0; i<3 && deflt && fgets(s, MAXLEN-1, fp); i++) {
-	if (i == 0 && strncmp(s, "(*", 2)) {
-	    deflt = 0;
-	} else if (i == 1 && strncmp(s, _("space for comments"), 18)) {
-	    deflt = 0;
-	} else if (i == 2 && strncmp(s, "*)", 2)) {
-	    deflt = 0;
-	}
-    }
-
-    fclose(fp);
-
-    return deflt;
-}
-
-/**
- * get_info:
- * @hdrfile: name of data header file.
- * @prn: gretl printing struct.
- * 
- * print to @prn the informative comments contained in the given
- * data file (if any).
- * 
- * Returns: 0 on successful completion, non-zero on error or if there
- * are no informative comments.
- */
-
-int get_info (const char *hdrfile, PRN *prn)
-{      
-    char s[MAXLEN];
-    int i = 0;
-    FILE *hdr;
-
-    if ((hdr = gretl_fopen(hdrfile, "r")) == NULL) {
-	pprintf(prn, _("Couldn't open %s\n"), hdrfile); 
-	return 1;
-    }
-
-    /* see if it's just the default "space for comments" */
-    if (blank_check(hdr)) { /* yes */
-	pprintf(prn, _("No info in %s\n"), hdrfile);
-	return 2;
-    } 
-
-    /* no, so restart the read */
-    if ((hdr = gretl_fopen(hdrfile, "r")) == NULL) {
-	pprintf(prn, _("Couldn't open %s\n"), hdrfile); 
-	return 1;
-    }    
-
-    pprintf(prn, _("Data info in file %s:\n\n"), hdrfile);
-
-    if (fgets(s, MAXLEN-1, hdr) != NULL && !strncmp(s, STARTCOMMENT, 2)) {
-	do {
-	    if (fgets(s, MAXLEN-1, hdr) != NULL && strncmp(s, "*)", 2)) {
-#ifndef WIN32
-		gretl_delchar('\r', s);
-#endif
-		pputs(prn, s);
-		i++;
-	    }
-	} while (s != NULL && strncmp(s, ENDCOMMENT, 2));
-    }
-
-    if (i == 0) {
-	pputs(prn, _(" (none)\n"));
-    }
-
-    pputc(prn, '\n');
-
-    if (hdr != NULL) {
-	fclose(hdr);
-    }
-
-    return 0;
-}
-
-static int write_esl_lbl (const char *lblfile, const int *list, 
-			  const DATASET *dset)
-{
-    int i, vi, labels = 0;
-    int err = 0;
-
-    for (i=1; i<=list[0]; i++) {
-	vi = list[i];
-	if (vi != 0 && strlen(series_get_label(dset, vi)) > 2) {
-	    labels = 1;
-	    break;
-	}
-    }
-
-    if (labels) {
-	FILE *fp = gretl_fopen(lblfile, "w");
-
-	if (fp == NULL) {
-	    err = E_FOPEN;
-	} else {
-	    /* spit out varnames and labels */
-	    for (i=1; i<=list[0]; i++) {
-		vi = list[i];
-		if (vi != 0 && strlen(series_get_label(dset, vi)) > 2) {
-		    fprintf(fp, "%s %s\n", dset->varname[vi],
-			    series_get_label(dset, vi));
-		}
-	    }
-	    fclose(fp);
-	}
-    }
-
-    return err;
-}
-
-static int write_esl_hdr (const char *hdrfile, const int *list, 
-			  const DATASET *dset, int opt)
-{
-    FILE *fp;
-    char startdate[OBSLEN], enddate[OBSLEN];
-    int i;
-
-    fp = gretl_fopen(hdrfile, "w");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
-
-    ntodate(startdate, dset->t1, dset);
-    ntodate(enddate, dset->t2, dset);
-
-    /* write description of data set, if any */
-    if (dset->descrip != NULL) {
-	size_t len = strlen(dset->descrip);
-
-	if (len > 2) {
-	    fprintf(fp, "(*\n%s%s*)\n", dset->descrip,
-		    (dset->descrip[len-1] == '\n')? "" : "\n");
-	}
-    }
-
-    /* then the list of variables */
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == 0) {
-	    continue;
-	}
-	fprintf(fp, "%s ", dset->varname[list[i]]);
-	if (i && i <list[0] && (i+1) % 8 == 0) {
-	    fputc('\n', fp);
-	}
-    }  
-  
-    fputs(";\n", fp);
-
-    /* then the obs line */
-    fprintf(fp, "%d %s %s\n", dset->pd, startdate, enddate);
-    
-    /* and flags as required */
-    if (opt & OPT_V) {
-	fputs("BYVAR\n", fp);
-    } else { 
-	fputs("BYOBS\n", fp);
-	if (dset->markers) {
-	    fputs("MARKERS\n", fp);
-	}
-    }
-
-    if (dset->structure == STACKED_TIME_SERIES) {
-	fputs("PANEL2\n", fp);
-    } else if (dset->structure == STACKED_CROSS_SECTION) {
-	fputs("PANEL3\n", fp);
-    }
-    
-    fclose(fp);
-
-    return 0;
-}
-
 static int alt_get_dec_places (const double *x, int n, int d)
 {
     char *s, numstr[32];
@@ -1155,6 +674,43 @@ static struct extmap data_ftype_map[] = {
     { GRETL_JMULTI,       ".dat" }
 };
 
+static const char *get_filename_extension (const char *fname)
+{
+    const char *ext = strrchr(fname, '.');
+
+    if (ext != NULL && strchr(ext, '/')) {
+	/* the rightmost dot is not in the basename */
+	ext = NULL;
+    }
+
+#ifdef WIN32
+    if (ext != NULL && strchr(ext, '\\')) {
+	ext = NULL;
+    }
+#endif
+
+    return ext;
+}
+
+static GretlFileType data_file_type_from_extension (const char *ext)
+{
+    int i, n = G_N_ELEMENTS(data_ftype_map);
+
+    for (i=0; i<n; i++) {
+	if (!g_ascii_strcasecmp(ext, data_ftype_map[i].ext)) {
+	    return data_ftype_map[i].ftype;
+	}
+    }
+
+    /* a few extras */
+    if (!g_ascii_strcasecmp(ext, ".txt") ||
+	!g_ascii_strcasecmp(ext, ".asc")) {
+	return GRETL_CSV;
+    }
+
+    return GRETL_UNRECOGNIZED;
+}
+
 GretlFileType data_file_type_from_name (const char *fname)
 {
     const char *ext = strrchr(fname, '.');
@@ -1171,56 +727,39 @@ GretlFileType data_file_type_from_name (const char *fname)
 #endif
 
     if (ext != NULL) {
-	int i, n = G_N_ELEMENTS(data_ftype_map);
-
-	for (i=0; i<n; i++) {
-	    if (!g_ascii_strcasecmp(ext, data_ftype_map[i].ext)) {
-		return data_ftype_map[i].ftype;
-	    }
-	}
-	/* a few extras */
-	if (!g_ascii_strcasecmp(ext, ".txt") ||
-	    !g_ascii_strcasecmp(ext, ".asc")) {
-	    return GRETL_CSV;
-	}
+	return data_file_type_from_extension(ext);
     }
 
     return GRETL_UNRECOGNIZED;
 }
 
-const char *data_file_suffix_for_type (GretlFileType ftype)
-{
-    int i, n = G_N_ELEMENTS(data_ftype_map);
-
-    for (i=0; i<n; i++) {
-	if (ftype == data_ftype_map[i].ftype) {
-	    return data_ftype_map[i].ext;
-	}
-    }
-
-    return NULL;
-}
+#define non_native(o) (o & (OPT_M | OPT_R | OPT_C | OPT_D | OPT_G | OPT_J))
 
 static GretlDataFormat 
 format_from_opt_or_name (gretlopt opt, const char *fname,
-			 char *delim)
+			 char *delim, int *add_ext,
+			 int *err)
 {
-    GretlDataFormat fmt = 0;
-
-    if (has_suffix(fname, ".gdtb")) {
+    GretlDataFormat fmt = GRETL_FMT_GDT;
+    
+    if (has_suffix(fname, ".gdt")) {
+	if (non_native(opt)) {
+	    *err = E_BADOPT;
+	}
+	return GRETL_FMT_GDT;
+    } else if (has_suffix(fname, ".gdtb")) {
+	if (non_native(opt)) {
+	    *err = E_BADOPT;
+	}	
 	return GRETL_FMT_BINARY;
     }
     
-    if (opt & OPT_T) {
-	fmt = GRETL_FMT_ESL;
-    } else if (opt & OPT_M) {
+    if (opt & OPT_M) {
 	fmt = GRETL_FMT_OCTAVE;
     } else if (opt & OPT_R) {
 	fmt = GRETL_FMT_R;
     } else if (opt & OPT_C) {
 	fmt = GRETL_FMT_CSV;
-    } else if (opt & OPT_Z) {
-	fmt = GRETL_FMT_GZIPPED;
     } else if (opt & OPT_D) {
 	fmt = GRETL_FMT_DB;
     } else if (opt & OPT_G) {
@@ -1229,7 +768,7 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
 	fmt = GRETL_FMT_JM;
     }
 
-    if (fmt == 0) {
+    if (fmt == GRETL_FMT_GDT) {
 	if (has_suffix(fname, ".R")) {
 	    fmt = GRETL_FMT_R;
 	} else if (has_suffix(fname, ".csv")) {
@@ -1241,6 +780,10 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
 	    fmt = GRETL_FMT_CSV;
 	    *delim = ' ';
 	} 
+    }
+
+    if (fmt == GRETL_FMT_GDT) {
+	*add_ext = 1;
     }
 
     return fmt;
@@ -1386,7 +929,7 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 {
     int i, t, v, l0;
     GretlDataFormat fmt;
-    char datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
+    char datfile[MAXLEN];
     int tsamp = sample_size(dset);
     int n = dset->n;
     int pop_locale = 0;
@@ -1395,6 +938,7 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
     int *pmax = NULL;
     int freelist = 0;
     int csv_digits = 0;
+    int add_ext = 0;
     double xx;
     int err = 0;
 
@@ -1402,6 +946,11 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 
     if (list != NULL && list[0] == 0) {
 	return E_ARGS;
+    }
+
+    fmt = format_from_opt_or_name(opt, fname, &delim, &add_ext, &err);
+    if (err) {
+	return err;
     }
 
     if (list == NULL) {
@@ -1416,12 +965,9 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
     }
 
     l0 = list[0];
-    fmt = format_from_opt_or_name(opt, fname, &delim);
     fname = gretl_maybe_switch_dir(fname);
 
-    if (fmt == GRETL_FMT_GDT || 
-	fmt == GRETL_FMT_GZIPPED ||
-	fmt == GRETL_FMT_BINARY) {
+    if (fmt == GRETL_FMT_GDT || fmt == GRETL_FMT_BINARY) {
 	/* write native data file */
 	err = gretl_write_gdt(fname, list, dset, opt, progress);
 	goto write_exit;
@@ -1433,22 +979,6 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
     }
 
     strcpy(datfile, fname);
-
-    /* write header and label files if writing in old ESL format */
-    if (fmt == GRETL_FMT_ESL) {
-	switch_ext(hdrfile, datfile, "hdr");
-	switch_ext(lblfile, datfile, "lbl");
-	if (write_esl_hdr(hdrfile, list, dset, fmt)) {
-	    fputs(I_("Write of header file failed"), stderr);
-	    err = E_FOPEN;
-	    goto write_exit;
-	}
-	if (write_esl_lbl(lblfile, list, dset)) {
-	    fputs(I_("Write of labels file failed"), stderr);
-	    err = E_FOPEN;
-	    goto write_exit;
-	}
-    }
 
     /* open file for output */
     fp = gretl_fopen(datfile, "w");
@@ -1478,24 +1008,7 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 	pop_locale = 1;
     }
 
-    if (fmt == GRETL_FMT_ESL) { 
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    if (dataset_has_markers(dset)) {
-		fprintf(fp, "%s ", dset->S[t]);
-	    }
-	    for (i=1; i<=l0; i++) {
-		v = list[i];
-		if (na(dset->Z[v][t])) {
-		    fprintf(fp, "-999 ");
-		} else if (NO_PMAX(pmax, i)) {
-		    fprintf(fp, "%.*g ", csv_digits, dset->Z[v][t]);
-		} else {
-		    fprintf(fp, "%.*f ", pmax[i-1], dset->Z[v][t]);
-		}
-	    }
-	    fputc('\n', fp);
-	}
-    } else if (fmt == GRETL_FMT_CSV) {
+    if (fmt == GRETL_FMT_CSV) {
 	const char *msg = get_optval_string(STORE, OPT_E);
 	char decpoint = get_data_export_decpoint();
 	int print_obs = 0;
@@ -1653,7 +1166,11 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
  write_exit:
 
     if (!err && prn != NULL) {
-	pprintf(prn, _("wrote %s\n"), fname);
+	if (add_ext) {
+	    pprintf(prn, _("wrote %s.gdt\n"), fname);
+	} else {
+	    pprintf(prn, _("wrote %s\n"), fname);
+	}
     }
 
     if (freelist) {
@@ -1687,66 +1204,6 @@ int gui_write_data (const char *fname, int *list, const DATASET *dset,
 		    gretlopt opt)
 {
     return real_write_data(fname, list, dset, opt, 1, NULL);
-}
-
-static int no_case_series_index (const DATASET *dset,
-				 const char *vname)
-{
-    char s1[VNAMELEN], s2[VNAMELEN];
-    int i;
-
-    *s1 = '\0';
-    strncat(s1, vname, VNAMELEN - 1);
-    gretl_lower(s1);
-
-    for (i=1; i<dset->v; i++) {
-	strcpy(s2, dset->varname[i]);
-	gretl_lower(s2);
-	if (strcmp(s1, s2) == 0) {
-	    return i;
-	}
-    }
-
-    return -1;
-}
-
-/* read data "labels" from file */
-
-static void read_esl_labels (const char *lblfile, DATASET *dset)
-{
-    FILE * fp;
-    char line[MAXLEN], varname[VNAMELEN];
-    char *p;
-    int v;
-    
-    gretl_error_clear();
-
-    fp = gretl_fopen(lblfile, "r");
-    if (fp == NULL) {
-	/* doesn't exist, that's OK */
-	return;
-    }
-
-    while (fgets(line, MAXLEN, fp)) {
-	tailstrip(line);
-        if (sscanf(line, "%s", varname) != 1) {
-	    gretl_errmsg_sprintf(_("Bad data label in %s"), lblfile); 
-            break;
-        }
-	v = series_index(dset, varname);
-	if (v == dset->v) {
-	    v = no_case_series_index(dset, varname);
-	}
-	if (v > 0 && v < dset->v) {
-	    p = line + strlen(varname);
-	    p += strspn(p, " \t");
-	    series_set_label(dset, v, p);
-	} else {
-	    fprintf(stderr, I_("extraneous label for var '%s'\n"), varname);
-	}
-    }
-
-    fclose(fp);
 }
 
 /**
@@ -1783,82 +1240,6 @@ int is_gzipped (const char *fname)
     return gz;
 }
 
-static int import_esl (const char *datafile, char *auxfile,
-		       DATASET *dset, gretlopt opt, PRN *prn)
-{
-    DATASET *tmpset;
-    int byvar = 0;
-    int err = 0;
-
-    tmpset = datainfo_new();
-    if (tmpset == NULL) {
-	return E_ALLOC;
-    }
-	
-    /* try reading the header file */
-    err = read_esl_hdr(auxfile, tmpset, &byvar);
-    if (err) {
-	free(tmpset);
-	return err;
-    } 
-
-    pprintf(prn, I_("\nReading header file %s\n"), auxfile);
-
-    /* allocate data storage */
-    err = allocate_Z(tmpset, 0);
-
-    if (!err && tmpset->markers) {
-	/* deal with case where first column of the data file contains
-	   "marker" strings */
-	err = dataset_allocate_obs_markers(tmpset);
-    }
-
-    if (!err) {
-	/* read the actual data */
-	FILE *fp = gretl_fopen(datafile, "r");
-
-	if (fp == NULL) {
-	    err = E_FOPEN;
-	} else {
-	    err = read_esl_data(fp, tmpset, byvar); 
-	    fclose(fp);
-	}
-    }
-
-    if (!err) {
-	/* print out basic info from the files read */
-	pprintf(prn, I_("periodicity: %d, maxobs: %d\n"
-			"observations range: %s to %s\n"), tmpset->pd, tmpset->n,
-		tmpset->stobs, tmpset->endobs);
-
-	pputs(prn, I_("\nReading "));
-	pputs(prn, dataset_is_time_series(tmpset) ? I_("time-series") : 
-	      I_("cross-sectional"));
-	pputs(prn, I_(" datafile"));
-	if (strlen(datafile) > 40) {
-	    pputc(prn, '\n');
-	}
-	pprintf(prn, " %s\n\n", datafile);
-
-	/* Set sample range to entire length of dataset by default */
-	tmpset->t1 = 0; 
-	tmpset->t2 = tmpset->n - 1;
-
-	switch_ext(auxfile, datafile, "lbl");
-	read_esl_labels(auxfile, tmpset);
-    }
-
-    if (!err) {
-	err = merge_or_replace_data(dset, &tmpset, opt, prn);
-    }
-
-    if (err) {
-	destroy_dataset(tmpset);
-    }
-
-    return err;
-}
-
 /**
  * gretl_get_data:
  * @fname: name of file to try.
@@ -1868,15 +1249,14 @@ static int import_esl (const char *datafile, char *auxfile,
  * 
  * Read "native" data from file into gretl's work space, 
  * allocating space as required. This function handles
- * both the current gretl XML data format and the
- * traditional data format of gretl's precursor, ESL.
+ * both native XML data format and native binary format.
  * It also handles incomplete information: it can perform 
  * path-searching on @fname, and will try adding the .gdt
- * extension to @fname if this is not given.
+ * or .gdtb extension to @fname if this is not given.
  *
- * Note that a more straightforward function for reading a current
- * gretl XML data file (.gdt), given the correct path,
- * is gretl_read_gdt().
+ * Note that a more straightforward function for reading a
+ * native gretl data file, given the correct path, is
+ * gretl_read_gdt().
  *
  * The only applicable option is that @opt may contain
  * OPT_T when appending data to a panel dataset: in
@@ -1892,39 +1272,21 @@ int gretl_get_data (char *fname, DATASET *dset,
 {
     gretlopt append_opt = OPT_NONE;
     int gdtsuff;
+    char *test;
     int err = 0;
 
     gretl_error_clear();
-    gdtsuff = has_native_data_suffix(fname);
 
 #if 0
     fprintf(stderr, "gretl_get_data: calling addpath\n");
 #endif
-
-    if (gretl_addpath(fname, 0) == NULL && !gdtsuff) { 
-	/* not found: try appending the .gdt suffix? */
-	char tryfile[MAXLEN];
-
-	*tryfile = '\0';
-	strncat(tryfile, fname, MAXLEN-5);
-	strncat(tryfile, ".gdt", 4);
-	if (gretl_addpath(tryfile, 0) != NULL) {
-	    strcpy(fname, tryfile);
-	    gdtsuff = 1;
-	} else {
-	    *tryfile = '\0';
-	    strncat(tryfile, fname, MAXLEN-6);
-	    strncat(tryfile, ".gdtb", 5);
-	    if (gretl_addpath(tryfile, 0) != NULL) {
-		strcpy(fname, tryfile);
-		gdtsuff = 1;
-	    }
-	}
-	if (!gdtsuff) {
-	    gretl_errmsg_sprintf(_("Couldn't open file %s"), fname);
-	    return E_FOPEN;
-	} 
+    
+    test = gretl_addpath(fname, 0, NULL);
+    if (test == NULL) {
+	return E_FOPEN;
     }
+
+    gdtsuff = has_native_data_suffix(fname);
 
     if (opt & OPT_T) {
 	append_opt = OPT_T;
@@ -1934,19 +1296,8 @@ int gretl_get_data (char *fname, DATASET *dset,
 	/* specific processing for gretl datafiles  */
 	err = gretl_read_gdt(fname, dset, append_opt, prn);
     } else {
-	char hdrfile[MAXLEN];
-
-	/* are we looking at an ESL data file? */
-	switch_ext(hdrfile, fname, "hdr");
-	err = gretl_test_fopen(hdrfile, "r");
-
-	if (err) {
-	    /* no header file, so try a "csv"-type import */
-	    err = import_csv(fname, dset, append_opt, prn);
-	} else {
-	    /* treat as ESL data */
-	    err = import_esl(fname, hdrfile, dset, append_opt, prn);
-	}
+	/* try fallback to a "csv"-type import */
+	err = import_csv(fname, dset, append_opt, prn);
     }
 
     return err;
@@ -2034,33 +1385,45 @@ static int extend_markers (DATASET *dset, int old_n, int new_n)
     return err;
 }
 
-static void merge_error (char *msg, PRN *prn)
+static void merge_error (const char *msg, PRN *prn)
 {
     pputs(prn, msg);
     gretl_errmsg_set(msg);
 }
 
+static void merge_name_error (const char *objname, PRN *prn)
+{
+    gchar *msg;
+
+    msg = g_strdup_printf("Can't replace %s with a series", objname);
+    pprintf(prn, "%s\n", msg);
+    gretl_errmsg_set(msg);
+    g_free(msg);
+}
+
 static int count_new_vars (const DATASET *dset, const DATASET *addinfo,
 			   PRN *prn)
 {
-    const char *newname;
-    /* default to all new, and subtract */
+    const char *vname;
     int addvars = addinfo->v - 1;
     int i, j;
 
+    /* We start by assuming that all the series in @addinfo are new,
+       then subtract those we find to be already present. We also
+       check for collision between the names of series to be added and
+       the names of existing objects other than series.
+    */
+
     for (i=1; i<addinfo->v && addvars >= 0; i++) {
-	newname = addinfo->varname[i];
-	if (get_matrix_by_name(newname)) {
-	    merge_error("can't replace matrix with series\n", prn);
-	    addvars = -1;
-	} else if (get_string_by_name(newname)) {
-	    merge_error("can't replace string with series\n", prn);
+	vname = addinfo->varname[i];
+	if (gretl_is_user_var(vname)) {
+	    merge_name_error(vname, prn);
 	    addvars = -1;
 	} else {
 	    for (j=1; j<dset->v; j++) {
-		/* FIXME collision with scalar, matrix names */
-		if (!strcmp(newname, dset->varname[j])) {
+		if (!strcmp(vname, dset->varname[j])) {
 		    addvars--;
+		    break;
 		}
 	    }
 	}
@@ -3354,84 +2717,77 @@ int gretl_is_pkzip_file (const char *fname)
 
 /**
  * detect_filetype:
- * @fname: name of file to examine.
- * @opt: include OPT_P to permit path-searching if @fname
+ * @fname: the name of the file to test.
+ * @opt: OPT_P may be included to permit path-searching if @fname
  * is not an absolute path; in that case the @fname argument
  * may be modified, otherwise it will be left unchanged.
  * 
- * Attempt to determine the type of a file to be opened in gretl:
+ * Attempts to determine the type of a file to be opened in gretl:
  * data file (of various formats), or command script. If OPT_P
  * is given, the @fname argument must be an array of length 
- * at least %MAXLEN.
+ * at least %MAXLEN: a path may be prepended and in some cases
+ * an extension may be appended.
  * 
  * Returns: integer code indicating the type of file.
  */
 
 GretlFileType detect_filetype (char *fname, gretlopt opt)
 {
-    GretlFileType ftype;
-    int i, c;
-    FILE *fp;
+    const char *ext = get_filename_extension(fname);
+    GretlFileType ftype = GRETL_UNRECOGNIZED;
 
-    /* might be a script file? (watch out for DOS-mangled names) */
-    if (has_suffix(fname, ".inp")) { 
-	return GRETL_SCRIPT;
-    }
-
-    if (has_suffix(fname, ".gretl")) {
-	if (gretl_is_pkzip_file(fname)) {
-	    return GRETL_SESSION;
+    if (ext != NULL) {
+	/* first try judging the type by extension */
+	if (!strcmp(ext, ".inp")) { 
+	    ftype = GRETL_SCRIPT;
+	} else if (!strcmp(ext, ".gretl")) {
+	    if (gretl_is_pkzip_file(fname)) {
+		ftype = GRETL_SESSION;
+	    } else {
+		ftype = GRETL_SCRIPT;
+	    }
 	} else {
-	    return GRETL_SCRIPT;
+	    ftype = data_file_type_from_extension(ext);
+	    if (ftype == GRETL_UNRECOGNIZED) {
+		/* check for database types */
+		if (!strcmp(ext, ".bin")) {
+		    ftype = GRETL_NATIVE_DB;
+		} else if (!strcmp(ext, ".rat")) {
+		    ftype = GRETL_RATS_DB;
+		} else if (!strcmp(ext, ".bn7")) {
+		    ftype = GRETL_PCGIVE_DB;
+		}
+	    }
+	}
+	if (ftype != GRETL_UNRECOGNIZED) {
+	    return ftype;
 	}
     }
-
-    ftype = data_file_type_from_name(fname);
-    if (ftype != GRETL_UNRECOGNIZED) {
-	return ftype;
-    }
-
-    ftype = GRETL_ESL_DATA; /* FIXME */
-
-    /* database types */
-    if (has_suffix(fname, ".bin"))
-	return GRETL_NATIVE_DB;
-    if (has_suffix(fname, ".rat"))
-	return GRETL_RATS_DB;
-    if (has_suffix(fname, ".bn7"))
-	return GRETL_PCGIVE_DB;
 
     if (opt & OPT_P) {
-	gretl_addpath(fname, 0); 
-    }
+	/* perhaps we can add an extension via path-searching 
+	   (for gdt or gdtb files)
+	*/
+	int addsuff = 0;
 
-    if (gretl_is_xml_file(fname)) {
-	return GRETL_XML_DATA;  
-    } 
-
-    if (has_suffix(fname, ".dat") && is_jmulti_datafile(fname)) {
-	return GRETL_JMULTI; 
-    }
-
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) { 
-	/* may be native file in different location */
-	return GRETL_ESL_DATA; 
-    }
-
-    /* take a peek at content */
-    for (i=0; i<80; i++) {
-	c = getc(fp);
-	if (c == EOF || c == '\n') {
-	    break;
-	}
-	if (!isprint(c) && c != '\r' && c != '\t') {
-	    ftype = GRETL_ESL_DATA; /* old-style binary data? */
-	    break;
+	gretl_addpath(fname, 0, &addsuff);
+	if (addsuff) {
+	    /* check again for known data file types */
+	    ftype = data_file_type_from_name(fname);
 	}
     }
 
-    fclose(fp);
+    if (ftype == GRETL_UNRECOGNIZED) {
+	/* last gasp */
+	if (gretl_is_xml_file(fname)) {
+	    ftype = GRETL_XML_DATA;  
+	} else if (has_suffix(fname, ".dat") && is_jmulti_datafile(fname)) {
+	    ftype = GRETL_JMULTI; 
+	} else {
+	    /* default to assuming plain text data */
+	    ftype = GRETL_CSV;
+	}
+    }
 
     return ftype;
 }

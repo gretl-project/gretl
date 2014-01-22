@@ -11092,14 +11092,53 @@
 	sample range are saved.
       </para>
       <para>
-	By default the data are saved in <quote>native</quote> gretl
-	format, but the option flags permit saving in several
-	alternative formats.  CSV (Comma-Separated Values) data may be
-	read into spreadsheet programs, and can also be manipulated
-	using a text editor.  The formats of
-	<program>Octave</program>, <program>R</program> and
-	<program>PcGive</program> are designed for use with the
-	respective programs.
+	The format in which the data are written may be controlled in
+	the first instance by the extension or suffix of
+	<repl>filename</repl>, as follows:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>.gdt</lit>, or no extension: gretl's native XML
+	    data format. (If no extension is provided,
+	    <quote><lit>.gdt</lit></quote> is added automatically.)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.gtdb</lit>: gretl's native binary data format.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.csv</lit>: comma-separated values (CSV).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.txt</lit> or <lit>.asc</lit>: space-separated
+	    values.
+	  </para>
+	</li>	
+	<li>
+	  <para>
+	    <lit>.R</lit>: GNU R format.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.m</lit>: GNU Octave format.
+	  </para>
+	</li>	
+      </ilist>
+      <para>
+	The format-related option flags shown above can be used to
+	force the issue of the save format independently of the
+	filename (or to get gretl to write in the formats of PcGive or
+	JMulTi). However, if <repl>filename</repl> has extension
+	<lit>.gdt</lit> or <lit>.gdtb</lit> this necessarily implies
+	use of native format and the addition of a conflicting
+	option flag will generate an error.
       </para>
       <para>
 	When data are saved in native format (only), the

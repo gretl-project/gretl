@@ -2031,7 +2031,15 @@ static int real_write_gdt (const char *fname, const int *list,
 	gz = progress = 0;
 	err = open_gdt_write_stream(fname, OPT_NONE, &fp, NULL);
     } else {
-	err = open_gdt_write_stream(fname, opt, &fp, &fz);
+	if (!has_suffix(fname, ".gdt")) {
+	    /* force use of .gdt extension for native XML data */
+	    gchar *fullname = g_strdup_printf("%s.gdt", fname);
+
+	    err = open_gdt_write_stream(fullname, opt, &fp, &fz);
+	    g_free(fullname);
+	} else {
+	    err = open_gdt_write_stream(fname, opt, &fp, &fz);
+	}
 	gz = (fz != Z_NULL);
     }
 

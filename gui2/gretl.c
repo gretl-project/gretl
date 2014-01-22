@@ -291,7 +291,7 @@ static void get_runfile (char *fname)
     strncat(tryfile, fname, MAXLEN - 1);
 #endif
 
-    if (gretl_addpath(tryfile, 1) == NULL) {
+    if (gretl_addpath(tryfile, 1, NULL) == NULL) {
 	fprintf(stderr, I_("Couldn't find script '%s'\n"), tryfile);
 	exit(EXIT_FAILURE);
     } else {
@@ -691,9 +691,6 @@ int main (int argc, char **argv)
 	case GRETL_XML_DATA:
 	case GRETL_BINARY_DATA:
 	    err = gretl_read_gdt(datafile, dataset, OPT_NONE, prn);
-	    break;
-	case GRETL_ESL_DATA:
-	    err = gretl_get_data(datafile, dataset, OPT_NONE, prn);
 	    break;
 	case GRETL_CSV:
 	    err = import_csv(datafile, dataset, OPT_NONE, prn);

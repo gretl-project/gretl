@@ -121,7 +121,7 @@ int gretl_is_xml_file (const char *fname);
 
 int gretl_isdir (const char *path);
 
-char *gretl_addpath (char *fname, int script);
+char *gretl_addpath (char *fname, int script, int *addsuff);
 
 int getopenfile (const char *line, char *fname, gretlopt opt);
 

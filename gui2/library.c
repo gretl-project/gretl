@@ -7694,12 +7694,12 @@ static gretlopt store_action_to_opt (const char *fname, int action,
     }
 
     if (action == AUTO_SAVE_DATA) {
-	/* saving a previously opened gdt file directly,
-	   not coming via file selector: let the save
-	   inherit the compression status of the original
-	   file
+	/* saving a previously opened gdt(b) file directly,
+	   not coming via file selector: in the case of a
+	   plain gdt file let the save inherit the compression
+	   status of the original file
 	*/
-	if (is_gzipped(fname)) {
+	if (has_suffix(fname, ".gdt") && is_gzipped(fname)) {
 	    opt |= OPT_Z;
 	}
     } else if (action == SAVE_DATA || action == SAVE_DATA_AS ||
@@ -7707,7 +7707,7 @@ static gretlopt store_action_to_opt (const char *fname, int action,
 	int level = get_optval_int(STORE, OPT_Z, NULL);
 
 	/* apply compression unless the user has set the
-	   gzip level to zero via file dialog */
+	   gzip level to zero via the file save dialog */
 	if (level > 0) {
 	    opt |= OPT_Z;
 	}

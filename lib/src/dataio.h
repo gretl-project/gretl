@@ -26,7 +26,6 @@
 typedef enum {
     GRETL_XML_DATA,       /* gretl XML data file (.gdt) */
     GRETL_BINARY_DATA,    /* zip file with binary component (.gdtb) */
-    GRETL_ESL_DATA,       /* old-style ESL/gretl format data file */
     GRETL_CSV,            /* comma-separated or other plain text data */
     GRETL_OCTAVE,         /* GNU octave ascii data file */
     GRETL_GNUMERIC,       /* gnumeric workbook data */
@@ -88,8 +87,6 @@ int merge_dateton (const char *date, const DATASET *dset);
 char *ntodate (char *datestr, int t, const DATASET *dset);
 
 int get_subperiod (int t, const DATASET *dset, int *err);
-
-int get_info (const char *hdrfile, PRN *prn);
 
 int get_precision (const double *x, int n, int placemax);
 

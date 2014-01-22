@@ -344,9 +344,6 @@ static void handle_datafile (char *filearg, char *runfile,
     case GRETL_BINARY_DATA:
 	err = gretl_read_gdt(datafile, dset, OPT_NONE, prn);
 	break;
-    case GRETL_ESL_DATA:
-	err = gretl_get_data(datafile, dset, OPT_NONE, prn);
-	break;
     case GRETL_CSV:
 	err = import_csv(datafile, dset, OPT_NONE, prn);
 	break;
