@@ -575,9 +575,10 @@
       <para>
 	Il metodo predefinito è la procedura iterativa di
 	Cochrane&ndash;Orcutt (si veda ad esempio il capitolo 9.4 di
-	Ramanathan, 2002). La procedura termina quando le stime
-	successive del coefficiente di autocorrelazione non
-	differiscono per più di 0.001, oppure dopo 20 iterazioni.
+	<cite key="ramanathan02">Ramanathan, 2002</cite>). La
+	procedura termina quando le stime successive del coefficiente
+	di autocorrelazione non differiscono per più di 0.001, oppure
+	dopo 20 iterazioni.
       </para>
       <para>
 	Se si usa l'opzione <lit>--hilu</lit>, verrà usata la
@@ -593,7 +594,7 @@
         Cochrane&ndash;Orcutt; la differenza è che mentre Cochrane&ndash;Orcutt
         tralascia la prima osservazione, Prais&ndash;Winsten ne fa uso.  Per i
         dettagli, si veda per esempio il capitolo 13 di <book>Econometric
-        Analysis</book> (2000) di Greene.
+        Analysis</book> di <cite key="greene00">Greene (2000)</cite>.
       </para>
     </description>
 
