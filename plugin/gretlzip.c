@@ -22,6 +22,8 @@
 #include <string.h>
 #include <glib.h>
 
+#include <unistd.h> /* for getcwd */
+
 #include "strutils.h"
 #include "zipunzip.h"
 
