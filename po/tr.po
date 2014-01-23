@@ -4,15 +4,15 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # A. Talha YALTA <yalta@etu.edu.tr>, 2008, 2009, 2010.
-# A. Talha Yalta, 2010, 2011, 2012, 2013.
+# A. Talha Yalta, 2010, 2011, 2012, 2013, 2014.
 msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-10-03 08:28-0400\n"
-"PO-Revision-Date: 2013-09-04 14:30+0300\n"
-"Last-Translator: A. Talha Yalta\n"
-"Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
+"PO-Revision-Date: 2014-01-23 14:03+0200\n"
+"Last-Translator: Talha Yalta\n"
+"Language-Team: Turkish <kde-i18n-tr@kde.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -430,9 +430,9 @@ msgid "got invalid field '%s'"
 msgstr "geçersiz alan '%s'"
 
 #: lib/src/calendar.c:403
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid starting date for %d-day data"
-msgstr "ARCH (%d) için geçersiz gecikme derecesi"
+msgstr "%d-günlük veriler için geçersiz başlangıç tarihi"
 
 #: lib/src/compare.c:269
 #, c-format
@@ -1126,31 +1126,31 @@ msgstr "Bellek yetersiz\n"
 
 #: lib/src/csvdata.c:3370
 msgid "No matching data after filtering"
-msgstr ""
+msgstr "Süzme sonrası uyuşan veri yok"
 
 #: lib/src/csvdata.c:3686
 msgid "You need to specify an aggregation method for a 1:n join"
 msgstr "1:n birleştirmesi için bir toplulaştırma yöntemi belirtmelisiniz"
 
 #: lib/src/csvdata.c:4502
-#, fuzzy, c-format
+#, c-format
 msgid "%s: column '%s' was not found"
-msgstr "%s: süzgeç sütunu '%s' bulunamadı"
+msgstr "%s: '%s' sütunu bulunamadı"
 
 #: lib/src/csvdata.c:4518
 #, c-format
 msgid "%s: string key on left but numeric on right"
-msgstr ""
+msgstr "%s: soldaki metin ama sağdaki sayısal"
 
 #: lib/src/csvdata.c:4520
 #, c-format
 msgid "%s: string key on right but numeric on left"
-msgstr ""
+msgstr "%s: sağdaki metin ama soldaki sayısal"
 
 #: lib/src/csvdata.c:4782
 #, c-format
 msgid "Outer dataset: read %d columns and %d rows\n"
-msgstr ""
+msgstr "Dış veri seti: %d sütün ve %d satır okunacak\n"
 
 #: lib/src/csvdata.c:4832 gui2/library.c:4000
 msgid "Series length does not match the dataset"
@@ -2399,7 +2399,7 @@ msgstr "'%s': yalnızca dizeyler için tanımlı"
 #: lib/src/geneval.c:12312
 #, c-format
 msgid "type error: %s is string-valued"
-msgstr ""
+msgstr "tür hatası: '%s' metin değerli"
 
 #: lib/src/geneval.c:12710
 msgid "Bare declarations are not allowed here"
@@ -3082,18 +3082,16 @@ msgid "This command is implemented only for OLS models"
 msgstr "Bu komut yalnızca SEK modelleri için bulunmaktadır"
 
 #: lib/src/gretl_errors.c:55
-#, fuzzy
 msgid "Invalid argument"
-msgstr "Geçersiz girdi"
+msgstr "Geçersiz argüman"
 
 #: lib/src/gretl_errors.c:56
-#, fuzzy
 msgid "Syntax error"
-msgstr "Veri hatası"
+msgstr "Sözdizim hatası"
 
 #: lib/src/gretl_errors.c:57
 msgid "No independent variables left after omissions"
-msgstr "Çıkarmalardan sonra elde bağımsız değişken kalmadı"
+msgstr "Çıkarmalardan sonra elde bağımsız değişken yok"
 
 #: lib/src/gretl_errors.c:58
 msgid "No independent variables were omitted"
@@ -3704,9 +3702,8 @@ msgid "Error: unit %g, period %g: duplicated observation"
 msgstr "Hata: birim %g, dönem %g: tekrar edilmiş gözlem"
 
 #: lib/src/gretl_panel.c:4854
-#, fuzzy
 msgid "Sorry, can't do this with a sub-sampled dataset"
-msgstr "Bu işlemi veri setini düzenlerken yapamazsınız"
+msgstr "Üzgünüm, bunu alt-örneklemeli bir veri setiyle yapamazsınız"
 
 #: lib/src/gretl_paths.c:2136
 msgid "User directory is not set"
@@ -3879,15 +3876,13 @@ msgid "variable %d: translating from strings to code numbers\n"
 msgstr "değişken %d: dizgilerden kod sayılarına çevriliyor\n"
 
 #: lib/src/gretl_string_table.c:487
-#, fuzzy
 msgid ""
 "One or more non-numeric variables were found.\n"
 "These variables have been given numeric codes as follows.\n"
 "\n"
 msgstr ""
 "Bir veya birden fazla sayısal-dışı değişken bulundu.\n"
-"Gretl böyle değişkenler ile doğrudan başedemediği için,\n"
-"bunlara aşağıdaki sayısal kodlar atanmıştır.\n"
+"Bu değişkenlere verilmiş olan sayısal kodlar aşağıdadır.\n"
 "\n"
 
 #: lib/src/gretl_string_table.c:490
@@ -6606,7 +6601,7 @@ msgstr "Çıkarılan gözlem yok!"
 
 #: lib/src/subsample.c:1263
 msgid "--balanced option is invalid: the (full) dataset is not a panel"
-msgstr ""
+msgstr "'--balanced' seçeneği geçersiz: (tam) veri seti panel değil"
 
 #: lib/src/subsample.c:1805 lib/src/subsample.c:1824
 msgid "error in new starting obs"
@@ -9469,9 +9464,8 @@ msgstr ""
 "Üzerine yazılsın mı?"
 
 #: gui2/fileselect.c:793
-#, fuzzy
 msgid "Gretl data files (*.gdt)"
-msgstr "gretl veri dosyası (.gdt)"
+msgstr "Gretl veri dosyaları (.gdt)"
 
 #: gui2/fileselect.c:794 gui2/fileselect.c:808
 msgid "CSV files (*.csv)"
@@ -9483,12 +9477,11 @@ msgstr "ASCII dosyaları (*.txt)"
 
 #: gui2/fileselect.c:796
 msgid "Gnumeric files (*.gnumeric)"
-msgstr ""
+msgstr "Gnumeric dosyaları (*.gnumeric)"
 
 #: gui2/fileselect.c:797
-#, fuzzy
 msgid "Open Document files (*.ods)"
-msgstr "_Open Document..."
+msgstr "Open Document dosyaları (*.ods)"
 
 #: gui2/fileselect.c:798 gui2/fileselect.c:812
 msgid "Excel files (*.xls)"
@@ -9499,34 +9492,28 @@ msgid "Excel files (*.xlsx)"
 msgstr "Excel dosyası (*.xlsx)"
 
 #: gui2/fileselect.c:800
-#, fuzzy
 msgid "Stata files (*.dta)"
-msgstr "tüm dosyalar (*.*)"
+msgstr "Stata dosyaları (*.dta)"
 
 #: gui2/fileselect.c:801
-#, fuzzy
 msgid "Eviews files (*.wf1)"
-msgstr "Excel dosyası (*.xls)"
+msgstr "Eviews dosyaları (*.wf1)"
 
 #: gui2/fileselect.c:802
-#, fuzzy
 msgid "SPSS files (*.sav)"
-msgstr "CSV dosyaları (*.csv)"
+msgstr "SPSS dosyaları (*.sav)"
 
 #: gui2/fileselect.c:803
-#, fuzzy
 msgid "SAS xport files (*.xpt)"
-msgstr "gnuplot dosyaları (*.plt)"
+msgstr "SAS xport dosyaları (*.xpt)"
 
 #: gui2/fileselect.c:804
-#, fuzzy
 msgid "Octave files (*.m)"
-msgstr "GNU Octave dosyaları (*.m)"
+msgstr "Octave dosyaları (*.m)"
 
 #: gui2/fileselect.c:805
-#, fuzzy
 msgid "JMulTi files (*.dat)"
-msgstr "tüm dosyalar (*.*)"
+msgstr "JMulTi dosyaları (*.dat)"
 
 #: gui2/fileselect.c:806 gui2/fileselect.c:810 gui2/fileselect.c:825
 msgid "all files (*.*)"
@@ -9978,7 +9965,7 @@ msgstr "Panel verileri"
 
 #: gui2/fnsave.c:1027
 msgid "No dataset needed"
-msgstr "Veri seti istenmemektedir"
+msgstr "Veri seti gerekli değildir"
 
 #: gui2/fnsave.c:1032
 msgid "Data requirement"
@@ -12623,7 +12610,7 @@ msgstr "Dizgiler"
 
 #: gui2/helpfiles.c:372
 msgid "Calendar"
-msgstr ""
+msgstr "Takvim"
 
 #: gui2/helpfiles.c:412 gui2/textbuf.c:1643
 msgid "Index"
@@ -16581,7 +16568,7 @@ msgstr "Log dönüştürmeli"
 
 #: plugin/tramo_options.c:522 plugin/tramo-x12a.c:259
 msgid "No log transformation"
-msgstr "Log dönüştürmesiz"
+msgstr "Log dönüştürme yok"
 
 #: plugin/tramo_options.c:530 plugin/tramo_options.c:646
 #: plugin/tramo_options.c:706 plugin/tramo-x12a.c:266
@@ -16594,7 +16581,7 @@ msgstr "Ortalama düzeltmeli"
 
 #: plugin/tramo_options.c:559
 msgid "No mean correction"
-msgstr "Ortalama düzeltmeli değil"
+msgstr "Ortalama düzeltme yok"
 
 #: plugin/tramo_options.c:584
 msgid "Outliers"
