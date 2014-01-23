@@ -4,14 +4,21 @@
 \section{Basic native format}
 \label{native}
 
-In gretl's native data format, a data set is stored in XML
-(extensible mark-up language). Data files correspond to the simple DTD
-(document type definition) given in \verb+gretldata.dtd+, which is
-supplied with the gretl distribution and is installed in the
-system data directory (e.g.\ \url{/usr/share/gretl/data} on Linux.)
-Data files may be plain text or gzipped.  They contain the actual data
-values plus additional information such as the names and descriptions
-of variables, the frequency of the data, and so on.
+In gretl's basic native data format--for which we use the suffix
+\texttt{gdt}---a data set is stored in XML (extensible mark-up
+language). Data files correspond to the simple DTD (document type
+definition) given in \verb+gretldata.dtd+, which is supplied with the
+gretl distribution and is installed in the system data directory
+(e.g.\ \url{/usr/share/gretl/data} on Linux.)  Such files may be plain
+text (uncompressed) or gzipped.  They contain the actual data values
+plus additional information such as the names and descriptions of
+variables, the frequency of the data, and so on.
+
+In a \texttt{gdt} file the actual data values are written to 17
+significant figures (for generated data such as logs or pseudo-random
+numbers) or to a maximum of 15 figures for primary data. The C
+\texttt{printf} format ``\verb|%.*g|'' is used (for \texttt{*} = 17 or
+15) so that trailing zeros are not printed.
 
 Most users will probably not have need to read or write such files
 other than via gretl itself, but if you want to manipulate them
@@ -23,7 +30,66 @@ observation labels are included.
 \section{Binary data file format}
 \label{bindata}
 
-Added in CVS for gretl 1.9.15. TO BE WRITTEN.
+As of gretl 1.9.15, an alternative, binary format is available for
+data storage. Files of this sort have suffix \texttt{gdtb}, and they
+take the form of a \app{PKZIP} archive containing two files,
+\texttt{data.xml} and \texttt{data.bin}, with the following
+characteristics.
+\begin{itemize}
+\item \texttt{data.xml} is an XML file conforming to the gretldata DTD
+  mentioned above, holding all the metadata.
+\item \texttt{data.bin} starts with a header composed of one of the
+  strings
+
+  \texttt{gretl-bin:little-endian} \,\,or \\
+  \texttt{gretl-bin:big-endian}
+
+  padded to 24 bytes with nul characters.  This is followed by a
+  binary dump of the data series, by variable, as double-precision
+  floating-point values.
+\end{itemize}
+
+Binary values are saved in the endianness of the machine on which
+they're written; the header information enables gretl to convert to
+the endianness of the host on which the data are read if need be.
+
+The rationale for introducing the binary \texttt{gdtb} format is that
+for very large datasets it is a lot faster to write and read data in
+this form rather than as text. For small to moderately sized datasets
+(say, up to 10 megabytes or so) there is no appreciable advantage in the
+binary format and we recommend use of plain \texttt{gdt}. 
+
+Some illustrative timings are shown in Table~\ref{tab:dataspeed};
+these were obtained on a Lenovo ThinkPad X1 Carbon running gretl
+1.9.15.  The datasets contained a mixture of random normal series and
+random binary (dummy) series. The largest comprised 50000 observations
+on 1000 series and the smallest 5000 observations on 250 series.  As
+can be seen, there is a big time saving from the binary format when
+writing (and to a lesser extent, when reading) a dataset in the
+hundreds of megabytes range. At a size of around 10 megabytes,
+however, \texttt{gdt} files can be both written and read in under a
+second, surely fast enough for most purposes.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lrr@{\hskip 2em}rr@{\hskip 2em}rr@{\hskip 2em}rr}
+    & \multicolumn{2}{c}{381\,MB}
+    & \multicolumn{2}{c}{38\,MB}
+    & \multicolumn{2}{c}{19\,MB}
+    & \multicolumn{2}{c}{10\,MB} \\
+    format & write & read & write & read & write & read & write & read\\
+    \texttt{gdt} & 
+    21.76 & 4.91 & 2.20 & 0.48 & 1.19 & 0.32 & 0.59 & 0.16\\
+    \texttt{gdtb} & 
+    3.82 & 1.10 & 0.39 & 0.11 & 0.25 & 0.06 & 0.13 & 0.03
+  \end{tabular}
+  \caption{Data write and read timings in seconds for datasets
+    of various sizes in megabytes. The MB numbers represent the 
+    size of the datasets in memory; files of both formats are
+    substantially smaller when compression is applied.}
+  \label{tab:dataspeed}
+\end{table}
+
 
 \section{Native database format}
 \label{dbdetails}
@@ -174,7 +240,7 @@ To work with the released source:
 \item Download the gretl source package from
   \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
 \item Unzip and untar the package.  On a system with the GNU utilities
-  available, the command would be \cmd{tar xvfz gretl-N.tar.gz}
+  available, the command would be \cmd{tar xvfJ gretl-N.tar.xz}
   (replace \cmd{N} with the specific version number of the file you
   downloaded at step 1).
 \item Change directory to the gretl source directory created at step 2
@@ -241,11 +307,11 @@ multiplication and some other tasks. This requires adding the
 --enable-openmp
 \end{code}
 
-By default the gretl GUI is built using version 2.0 of the 
-GTK libraries. However, another \texttt{configure} option enables
-use of version 3.0:
+By default the gretl GUI is built using version 3.0 of the GTK
+library, if available, otherwise version 2.0. If you have both
+versions installed and prefer to use GTK 2.0, use the flag
 \begin{code}
---enable-gtk3
+--enable-gtk2
 \end{code}
 
 In order to have the documentation built, we need to pass the relevant
@@ -256,13 +322,11 @@ option to \texttt{configure}, as in
 But please note that this option will work only if you are using
 the CVS source.
 
-This, for example, if you want to install under \texttt{/usr},
-with OpenMP and GTK 3.0 support, and also build the documentation, you
-would do
+This, for example, if you want to install under \texttt{/usr}, with
+OpenMP support, and also build the documentation, you would do
 \begin{code}
 ./configure --prefix=/usr \
  --enable-openmp \
- --enable-gtk3 \
  --enable-build-doc
 \end{code}
 
