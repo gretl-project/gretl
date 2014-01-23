@@ -1157,6 +1157,7 @@ static int try_open_file (char *targ, const char *finddir,
     strcat(tmp, targ);
 
     err = gretl_test_fopen(tmp, "r");
+
     if (err && (flags & ADD_GDT)) {
 	if (maybe_add_suffix(tmp, ".gdt")) {
 	    err = gretl_test_fopen(tmp, "r");
@@ -1232,7 +1233,7 @@ static int find_in_subdir (const char *topdir, char *fname, int flags)
 
 #endif /* win32 vs posix */
 
-#define SEARCH_DEBUG 1
+#define SEARCH_DEBUG 0
 
 char *search_dir (char *fname, const char *topdir, int flags)
 {
@@ -1548,7 +1549,8 @@ char *gretl_function_package_get_path (const char *name,
 /**
  * gretl_addpath:
  * @fname: the initially given file name.
- * @script: if non-zero, suppose the file is a command script.
+ * @script: if non-zero, suppose the file we're looking for
+ * is a hansl script.
  * 
  * Elementary path-searching: try adding various paths to the given
  * @fname and see if it can be opened. Usually called by getopenfile().

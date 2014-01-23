@@ -577,6 +577,9 @@ int main (int argc, char *argv[])
 	} 
 	sprintf(line, "run %s\n", runfile);
 	err = exec_line(&state, dset, cmdprn);
+	if (err && fb == NULL) {
+	    exit(EXIT_FAILURE);
+	}
     }
 
     *linecopy = '\0';
@@ -1133,7 +1136,7 @@ static int exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     if (err) {
 	gretl_exec_state_uncomment(s);
     }
-    
+
     return err;
 }
 
