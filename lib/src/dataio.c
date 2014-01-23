@@ -1281,7 +1281,7 @@ int gretl_get_data (char *fname, DATASET *dset,
     fprintf(stderr, "gretl_get_data: calling addpath\n");
 #endif
     
-    test = gretl_addpath(fname, 0, NULL);
+    test = gretl_addpath(fname, 0);
     if (test == NULL) {
 	return E_FOPEN;
     }
@@ -2764,16 +2764,11 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
 	}
     }
 
-    if (opt & OPT_P) {
-	/* perhaps we can add an extension via path-searching 
-	   (for gdt or gdtb files)
-	*/
-	int addsuff = 0;
-
-	gretl_addpath(fname, 0, &addsuff);
-	if (addsuff) {
+    if ((opt & OPT_P) && gretl_addpath(fname, 0) != NULL) {
+	ext = get_filename_extension(fname);
+	if (ext != NULL) {
 	    /* check again for known data file types */
-	    ftype = data_file_type_from_name(fname);
+	    ftype = data_file_type_from_extension(ext);
 	}
     }
 

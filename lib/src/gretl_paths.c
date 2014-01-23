@@ -1039,11 +1039,16 @@ int gretl_path_prepend (char *file, const char *path)
     return 0;
 }
 
+enum {
+    ADD_GDT = 1 << 0,
+    ADD_GFN = 1 << 1,
+    SUBDIRS = 1 << 2
+};
+
 #ifdef WIN32
 
 static int try_open_file (char *targ, const char *finddir, 
-			  WIN32_FIND_DATA *fdata, int code,
-			  int *suffix_added)
+			  WIN32_FIND_DATA *fdata, int flags)
 {
     char tmp[MAXLEN];
     int n = strlen(finddir);
@@ -1057,16 +1062,13 @@ static int try_open_file (char *targ, const char *finddir,
 
     err = gretl_test_fopen(tmp, "r");
 
-    if (err && code == DATA_SEARCH) {
+    if (err && (flags & ADD_GDT)) {
 	if (maybe_add_suffix(tmp, ".gdt")) {
 	    err = gretl_test_fopen(tmp, "rb");
 	    if (err) {
 		/* try .gdtb also */
 		strncat(tmp, "b", 1);
 		err = gretl_test_fopen(tmp, "rb");
-	    }
-	    if (!err && suffix_added != NULL) {
-		*suffix_added = 1;
 	    }
 	}
     }
@@ -1115,8 +1117,7 @@ static int got_subdir (WIN32_FIND_DATA *fdata)
     return ret;
 }
 
-static int find_in_subdir (const char *topdir, char *fname, int code,
-			   int *suffix_added)
+static int find_in_subdir (const char *topdir, char *fname, int flags)
 {
     HANDLE handle;
     WIN32_FIND_DATA fdata;
@@ -1129,11 +1130,11 @@ static int find_in_subdir (const char *topdir, char *fname, int code,
     handle = FindFirstFile(finddir, &fdata); 
     if (handle != INVALID_HANDLE_VALUE) {
 	if (got_subdir(&fdata)) {
-	    found = try_open_file(fname, finddir, &fdata, code, suffix_added);
+	    found = try_open_file(fname, finddir, &fdata, flags);
 	} 
 	while (!found && FindNextFile(handle, &fdata)) {
 	    if (got_subdir(&fdata)) {
-		found = try_open_file(fname, finddir, &fdata, code, suffix_added);
+		found = try_open_file(fname, finddir, &fdata, flags);
 	    }
 	} 
 	FindClose(handle);
@@ -1145,8 +1146,7 @@ static int find_in_subdir (const char *topdir, char *fname, int code,
 #else /* end of win32 file-finding, on to posix */
 
 static int try_open_file (char *targ, const char *finddir, 
-			  struct dirent *dirent, int code,
-			  int *suffix_added)
+			  struct dirent *dirent, int flags)
 {
     char tmp[MAXLEN];
     int err, found = 0;
@@ -1157,16 +1157,13 @@ static int try_open_file (char *targ, const char *finddir,
     strcat(tmp, targ);
 
     err = gretl_test_fopen(tmp, "r");
-    if (err && code == DATA_SEARCH) {
+    if (err && (flags & ADD_GDT)) {
 	if (maybe_add_suffix(tmp, ".gdt")) {
 	    err = gretl_test_fopen(tmp, "r");
 	    if (err) {
 		/* try .gdtb also */
 		strncat(tmp, "b", 1);
 		err = gretl_test_fopen(tmp, "r");
-	    }
-	    if (!err && suffix_added != NULL) {
-		*suffix_added = 1;
 	    }
 	}
     }
@@ -1210,8 +1207,7 @@ static int got_subdir (const char *topdir, struct dirent *dirent)
     return ret;
 }
 
-static int find_in_subdir (const char *topdir, char *fname, int code,
-			   int *suffix_added)
+static int find_in_subdir (const char *topdir, char *fname, int flags)
 {
     DIR *dir;
     struct dirent *dirent;
@@ -1225,7 +1221,7 @@ static int find_in_subdir (const char *topdir, char *fname, int code,
     if (dir != NULL) {
 	while (!found && (dirent = readdir(dir))) {
 	    if (got_subdir(finddir, dirent)) {
-		found = try_open_file(fname, finddir, dirent, code, suffix_added);
+		found = try_open_file(fname, finddir, dirent, flags);
 	    }
 	}
 	closedir(dir);
@@ -1236,11 +1232,9 @@ static int find_in_subdir (const char *topdir, char *fname, int code,
 
 #endif /* win32 vs posix */
 
-#define SEARCH_DEBUG 0
+#define SEARCH_DEBUG 1
 
-static char *real_search_dir (char *fname, const char *topdir, 
-			      int code, int recurse, 
-			      int *suffix_added)
+char *search_dir (char *fname, const char *topdir, int flags)
 {
     char orig[MAXLEN];
     int err;
@@ -1257,58 +1251,35 @@ static char *real_search_dir (char *fname, const char *topdir,
 	if (!err) {
 	    return fname;
 	}
-	if (code == DATA_SEARCH) {
+	if (flags & ADD_GDT) {
 	    if (maybe_add_suffix(fname, ".gdt")) {
 		err = gretl_test_fopen(fname, "r");
 		if (!err) {
-		    if (suffix_added != NULL) {
-			*suffix_added = 1;
-		    }
 		    return fname;
 		}
 	    } else if (maybe_add_suffix(fname, ".gdtb")) {
 		err = gretl_test_fopen(fname, "r");
 		if (!err) {
-		    if (suffix_added != NULL) {
-			*suffix_added = 1;
-		    }
 		    return fname;
 		}
 	    }		
-	} else if (code == FUNCS_SEARCH) {
+	} else if (flags & ADD_GFN) {
 	    if (maybe_add_suffix(fname, ".gfn")) {
 		err = gretl_test_fopen(fname, "r");
 		if (!err) {
-		    if (suffix_added != NULL) {
-			*suffix_added = 1;
-			return fname;
-		    }
+		    return fname;
 		}
 	    }
 	}	    
 	strcpy(fname, orig);
-	if (code != CURRENT_DIR && recurse) {
-	    if (find_in_subdir(topdir, fname, code, suffix_added)) {
+	if (flags & SUBDIRS) {
+	    if (find_in_subdir(topdir, fname, flags)) {
 		return fname;
 	    }
 	}
     }
 
     return NULL;
-}
-
-static char *search_dir (char *fname, const char *topdir, 
-			 int code, int *suffix_added)
-{
-    return real_search_dir(fname, topdir, code, 1,
-			   suffix_added);
-}
-
-static char *search_current (char *fname, const char *topdir, 
-			     int code, int *suffix_added)
-{
-    return real_search_dir(fname, topdir, code, 0,
-			   suffix_added);
 }
 
 #ifdef WIN32
@@ -1403,9 +1374,9 @@ static int shelldir_open_dotfile (char *fname, char *orig)
 
 /**
  * get_plausible_search_dirs:
- * @type: should be DATA_SEARCH for data file packages,
- * DB_SEARCH for gretl databases, or FUNCS_SEARCH for
- * function packages.
+ * @stype: DATA_SEARCH for data file packages, DB_SEARCH for
+ * gretl databases, FUNCS_SEARCH for function packages, or
+ * SCRIPT_SEARCH for hansl scripts.
  * @n_dirs: location to receive the number of directories.
  * 
  * Returns: an array of plausible search paths, depending on the 
@@ -1413,7 +1384,7 @@ static int shelldir_open_dotfile (char *fname, char *orig)
  * with it, using strings_array_free().
  */
 
-char **get_plausible_search_dirs (int type, int *n_dirs)
+char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
 {
     char **dirs = NULL;
     const char *subdir;
@@ -1422,13 +1393,13 @@ char **get_plausible_search_dirs (int type, int *n_dirs)
 
     *n_dirs = 0;
 
-    if (type == DATA_SEARCH) {
+    if (stype == DATA_SEARCH) {
 	subdir = "data";
-    } else if (type == DB_SEARCH) {
+    } else if (stype == DB_SEARCH) {
 	subdir = "db";
-    } else if (type == FUNCS_SEARCH) {
+    } else if (stype == FUNCS_SEARCH) {
 	subdir = "functions";
-    } else if (type == SCRIPT_SEARCH) {
+    } else if (stype == SCRIPT_SEARCH) {
 	subdir = "scripts";
     } else {
 	fprintf(stderr, "get_plausible_search_dir: no type specified\n");
@@ -1471,7 +1442,7 @@ char **get_plausible_search_dirs (int type, int *n_dirs)
 	if (wd != NULL) {
 	    build_path(dirname, wd, subdir, NULL);
 	    err = strings_array_add(&dirs, n_dirs, dirname);
-	    if (!err && type != FUNCS_SEARCH) {
+	    if (!err && stype != FUNCS_SEARCH) {
 		strcpy(dirname, wd);
 		err = strings_array_add(&dirs, n_dirs, dirname);
 	    }
@@ -1578,9 +1549,6 @@ char *gretl_function_package_get_path (const char *name,
  * gretl_addpath:
  * @fname: the initially given file name.
  * @script: if non-zero, suppose the file is a command script.
- * @addsuff: location to receive 1 if we ended up adding a
- * suffix to @fname, 0 otherwise; or NULL if this information
- * is not required.
  * 
  * Elementary path-searching: try adding various paths to the given
  * @fname and see if it can be opened. Usually called by getopenfile().
@@ -1591,7 +1559,7 @@ char *gretl_function_package_get_path (const char *name,
  * file could be found.
  */
 
-char *gretl_addpath (char *fname, int script, int *addsuff)
+char *gretl_addpath (char *fname, int script)
 {
     char orig[MAXLEN];
     char *tmp = fname;
@@ -1619,7 +1587,13 @@ char *gretl_addpath (char *fname, int script, int *addsuff)
 	    make_path_absolute(fname, orig);
 	}
 	return fname;
-    } else if (g_path_is_absolute(fname)) {  
+    } else if (g_path_is_absolute(fname)) {
+	if (!script && maybe_add_suffix(fname, ".gdt")) {
+	    err = gretl_test_fopen(fname, "r");
+	    if (!err) {
+		return fname;
+	    }
+	}
 	/* unable to open file: if the path was absolute, fail */
 	return NULL;
     } else {
@@ -1628,11 +1602,9 @@ char *gretl_addpath (char *fname, int script, int *addsuff)
 
 	if (*gpath != '\0') {
 	    /* try looking where the last-opened script was found */
-	    if (script) {
-		test = search_dir(fname, gpath, CURRENT_DIR, addsuff);
-	    } else {
-		test = search_current(fname, gpath, DATA_SEARCH, addsuff);
-	    }
+	    int flags = script ? 0 : ADD_GDT;
+
+	    test = search_dir(fname, gpath, flags);
 	    if (test != NULL) {
 		return fname;
 	    }
@@ -1646,14 +1618,14 @@ char *gretl_addpath (char *fname, int script, int *addsuff)
 	    /* try searching some standard gretl paths */
 	    if (script) {
 		sprintf(trydir, "%sscripts", gpath);
-		test = search_dir(fname, trydir, SCRIPT_SEARCH, addsuff);
+		test = search_dir(fname, trydir, SUBDIRS);
 		if (test != NULL) { 
 		    return fname;
 		} else {
 		    fname = tmp;
 		    strcpy(fname, orig);
 		    sprintf(trydir, "%sfunctions", gpath);
-		    test = search_dir(fname, trydir, FUNCS_SEARCH, addsuff);
+		    test = search_dir(fname, trydir, ADD_GFN | SUBDIRS);
 		    if (test != NULL) {
 			return fname;
 		    }
@@ -1661,7 +1633,7 @@ char *gretl_addpath (char *fname, int script, int *addsuff)
 	    } else {
 		/* data file */
 		sprintf(trydir, "%sdata", gpath);
-		test = search_dir(fname, trydir, DATA_SEARCH, addsuff);
+		test = search_dir(fname, trydir, ADD_GDT | SUBDIRS);
 		if (test != NULL) { 
 		    return fname;
 		}
@@ -1680,14 +1652,14 @@ char *gretl_addpath (char *fname, int script, int *addsuff)
 	    /* try looking in ~/Library or dotdir */
 	    if (script) {
 		sprintf(trydir, "%sscripts", gpath);
-		test = search_dir(fname, trydir, SCRIPT_SEARCH, addsuff);
+		test = search_dir(fname, trydir, SUBDIRS);
 		if (test != NULL) { 
 		    return fname;
 		} else {
 		    fname = tmp;
 		    strcpy(fname, orig);
 		    sprintf(trydir, "%sfunctions", gpath);
-		    test = search_dir(fname, trydir, FUNCS_SEARCH, addsuff);
+		    test = search_dir(fname, trydir, ADD_GFN | SUBDIRS);
 		    if (test != NULL) { 
 			return fname;
 		    }
@@ -1695,7 +1667,7 @@ char *gretl_addpath (char *fname, int script, int *addsuff)
 	    } else {
 		/* data file */
 		sprintf(trydir, "%sdata", gpath);
-		test = search_dir(fname, trydir, DATA_SEARCH, addsuff);
+		test = search_dir(fname, trydir, ADD_GDT | SUBDIRS);
 		if (test != NULL) { 
 		    return fname;
 		}
@@ -1708,7 +1680,7 @@ char *gretl_addpath (char *fname, int script, int *addsuff)
 
 	if (*gpath != '\0') {
 	    /* try looking in user's dir (and subdirs) */
-	    test = search_dir(fname, gpath, USER_SEARCH, addsuff);
+	    test = search_dir(fname, gpath, SUBDIRS);
 	    if (test != NULL) { 
 		return fname;
 	    }
@@ -1720,7 +1692,7 @@ char *gretl_addpath (char *fname, int script, int *addsuff)
 
 	if (gpath != NULL && *gpath != '\0') {
 	    /* try looking in default workdir? */
-	    test = search_dir(fname, gpath, USER_SEARCH, addsuff);
+	    test = search_dir(fname, gpath, SUBDIRS);
 	    if (test != NULL) { 
 		return fname;
 	    }
@@ -1732,7 +1704,7 @@ char *gretl_addpath (char *fname, int script, int *addsuff)
 
 	if (gpath != NULL && *gpath != '\0') {
 	    /* try looking in shelldir? */
-	    test = search_dir(fname, gpath, CURRENT_DIR, addsuff);
+	    test = search_dir(fname, gpath, 0);
 	    if (test != NULL) { 
 		return fname;
 	    }
@@ -1748,7 +1720,7 @@ char *gretl_addpath (char *fname, int script, int *addsuff)
 	strcpy(fname, orig);
 
 	if (dtdir != NULL) {
-	    test = search_dir(fname, dtdir, CURRENT_DIR, addsuff);
+	    test = search_dir(fname, dtdir, 0);
 	    free(dtdir);
 	}
 	if (test != NULL) {
@@ -1884,7 +1856,7 @@ int getopenfile (const char *line, char *fname, gretlopt opt)
 #if SEARCH_DEBUG
     fprintf(stderr, "getopenfile: calling addpath on '%s'\n", fname);
 #endif
-    test = gretl_addpath(fname, script, NULL);
+    test = gretl_addpath(fname, script);
 #if SEARCH_DEBUG
     fprintf(stderr, "getopenfile: after: '%s'\n", fname);
 #endif
@@ -1905,19 +1877,21 @@ int getopenfile (const char *line, char *fname, gretlopt opt)
     return 0;
 }
 
-int has_system_prefix (const char *fname, int locus)
+int has_system_prefix (const char *fname, SearchType stype)
 {
     const char *gretldir = gretl_home();
     int n = strlen(gretldir);
     int ret = 0;
 
-    if (strlen(fname) < n) return 0;
+    if (strlen(fname) < n) {
+	return 0;
+    }
     
     if (!strncmp(fname, gretldir, n)) {
-	if (locus == DATA_SEARCH &&
+	if (stype == DATA_SEARCH &&
 	    !strncmp(fname + n, "data", 4)) {
 	    ret = 1;
-	} else if (locus == SCRIPT_SEARCH &&
+	} else if (stype == SCRIPT_SEARCH &&
 		   !strncmp(fname + n, "scripts", 7)) { 
 	    ret = 1;
 	}

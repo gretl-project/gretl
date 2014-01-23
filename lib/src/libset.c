@@ -2616,7 +2616,7 @@ static int real_libset_read_script (const char *fname,
 	char fullname[FILENAME_MAX];
 
 	strcpy(fullname, fname);
-	gretl_addpath(fullname, 0, NULL);
+	gretl_addpath(fullname, 0);
 	fp = gretl_fopen(fname, "r");
 	if (fp == NULL) {
 	    err = E_FOPEN;

@@ -2362,22 +2362,23 @@ static void get_local_object_status (const char *fname, int role,
     char fullname[MAXLEN];
     struct stat fbuf;
     char **dirs;
-    int type, found = 0;
+    SearchType stype;
+    int found = 0;
     int i, n_dirs;
     int err = 0;
 
     if (role == REMOTE_DB) {
-	type = DB_SEARCH;
+	stype = DB_SEARCH;
     } else if (role == REMOTE_DATA_PKGS) {
-	type = DATA_SEARCH;
+	stype = DATA_SEARCH;
     } else if (role == REMOTE_FUNC_FILES) {
-	type = FUNCS_SEARCH;
+	stype = FUNCS_SEARCH;
     } else {
 	*status = N_("Unknown: access error");
 	return;
     }
 
-    dirs = get_plausible_search_dirs(type, &n_dirs);
+    dirs = get_plausible_search_dirs(stype, &n_dirs);
 
     for (i=0; i<n_dirs; i++) {
 	build_path(fullname, dirs[i], fname, NULL);

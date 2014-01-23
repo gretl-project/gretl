@@ -24,13 +24,12 @@
 #include <dirent.h>
 
 typedef enum {
-    CURRENT_DIR,
     DATA_SEARCH,
     DB_SEARCH,
-    SCRIPT_SEARCH,
     FUNCS_SEARCH,
+    SCRIPT_SEARCH,
     USER_SEARCH
-} SearchLocation;
+} SearchType;
 
 typedef enum {
     GRETL_HELPFILE,
@@ -121,13 +120,13 @@ int gretl_is_xml_file (const char *fname);
 
 int gretl_isdir (const char *path);
 
-char *gretl_addpath (char *fname, int script, int *addsuff);
+char *gretl_addpath (char *fname, int script);
 
 int getopenfile (const char *line, char *fname, gretlopt opt);
 
 int fname_has_path (const char *fname);
 
-int has_system_prefix (const char *fname, int locus);
+int has_system_prefix (const char *fname, SearchType stype);
 
 void show_paths (void);
 
@@ -135,7 +134,7 @@ int gretl_set_paths (ConfigPaths *paths, gretlopt opt);
 
 int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt);
 
-char **get_plausible_search_dirs (int type, int *n_dirs);
+char **get_plausible_search_dirs (SearchType stype, int *n_dirs);
 
 char *gretl_function_package_get_path (const char *name,
 				       PkgType type);

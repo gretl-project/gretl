@@ -10,7 +10,7 @@
    startobs     CDATA #IMPLIED
    endobs       CDATA #IMPLIED
    type         CDATA #REQUIRED
-   binary       CDATA #IMPLIED  
+   binary       CDATA #IMPLIED
 >
 
 <!ELEMENT description ( #PCDATA )>

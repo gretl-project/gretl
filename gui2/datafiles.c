@@ -417,7 +417,8 @@ static int dont_go_there (const char *s)
    non-zero only if something show-stopping occurs
 */
 
-static int seek_file_collections (const char *basedir, int type,
+static int seek_file_collections (const char *basedir, 
+				  SearchType stype,
 				  int *err)
 {
     char *path = NULL;
@@ -430,9 +431,9 @@ static int seek_file_collections (const char *basedir, int type,
 	return 0;
     }
 
-    if (type == DATA_SEARCH) {
+    if (stype == DATA_SEARCH) {
 	path = gretl_strdup_printf("%sdata", basedir);
-    } else if (type == SCRIPT_SEARCH) {
+    } else if (stype == SCRIPT_SEARCH) {
 	path = gretl_strdup_printf("%sscripts", basedir);
     } else {
 	/* USER_SEARCH */
