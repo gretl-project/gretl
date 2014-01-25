@@ -190,7 +190,8 @@ int gretl_make_zipfile (const char *fname, const char *path,
 }
 
 #if 0 /* libgsf not ready yet: doesn't support setting of
-	 zlib compression level */
+	 zlib compression level as of version 1.14.29
+      */
 
 int gretl_zip_datafile (const char *fname, const char *path,
 			int level, GError **gerr)
