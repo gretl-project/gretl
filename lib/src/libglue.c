@@ -534,10 +534,13 @@ int matrix_command_driver (int ci,
 	/* note: this is a special case, for now */
 	return matrix_scatters(m, list, dset, opt);
     } else if (list != NULL && list[0] == 0) {
+	/* use all columns of the matrix */
 	mdset = gretl_dataset_from_matrix(m, NULL, OPT_B, &err);
     } else if (list != NULL && list[0] == 1 && ci == SUMMARY) {
+	/* summary stats for a single specified column */
 	mdset = gretl_dataset_from_matrix(m, list, OPT_B | OPT_N, &err);
     } else {
+	/* note that a NULL list is OK here */
 	mdset = gretl_dataset_from_matrix(m, list, OPT_B, &err);
     }
 

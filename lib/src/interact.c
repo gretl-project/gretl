@@ -2417,8 +2417,15 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
     */    
     if (DEFAULTS_TO_FULL_LIST(cmd->ci)) {
 	if (cmd->list[0] == 0) {
-	    if (cmd->ci != SMPL) {
-		/* "smpl" accepts an empty list as "all vars" */
+	    if (cmd->ci == SMPL) {
+		/* "smpl" accepts an empty list as "all vars", with
+		   the --no-missing or --contiguous options, so
+		   leave well alone */
+		;
+	    } else if (cmd->ci == SUMMARY && (cmd->opt & OPT_X)) {
+		/* summary with --matrix option: leave alone */
+		;
+	    } else {
 		cmd_full_list(dset, cmd);
 	    }
 	    /* suppress echo of the list -- may be too long */
