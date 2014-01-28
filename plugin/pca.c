@@ -234,7 +234,7 @@ static int standardize (double *y, const double *x, int n)
     double xbar, sd;
     int i, err;
 
-    err = gretl_moments(0, n-1, x, &xbar, &sd, NULL, NULL, 1);
+    err = gretl_moments(0, n-1, x, NULL, &xbar, &sd, NULL, NULL, 1);
 
     if (!err) {
 	for (i=0; i<n; i++) {
