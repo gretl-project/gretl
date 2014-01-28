@@ -229,13 +229,13 @@ static int set_kernel_params (kernel_info *kinfo,
 	    s, q1, q3, q3 - q1, w);
 #endif
 
-    if (w <= 0.0) {
-	return E_DATA;
-    }
-
     /* Silverman bandwidth times scale factor */
     bw = 0.9 * w * n5;
     kinfo->h = bwscale * bw;
+
+    if (kinfo->h <= 0.0) {
+	return E_DATA;
+    }
 
     /* number of points to use */
     kinfo->kn = kernel_kn(kinfo->n);
