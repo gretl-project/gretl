@@ -212,9 +212,9 @@ static int kernel_kn (int nobs)
     }
 }
 
-static void set_kernel_params (kernel_info *kinfo, 
-			       double bwscale,
-			       gretlopt opt)
+static int set_kernel_params (kernel_info *kinfo, 
+			      double bwscale,
+			      gretlopt opt)
 {
     double s = gretl_stddev(0, kinfo->n - 1, kinfo->x);
     double n5 = pow((double) kinfo->n, -0.20);
@@ -229,6 +229,10 @@ static void set_kernel_params (kernel_info *kinfo,
 	    s, q1, q3, q3 - q1, w);
 #endif
 
+    if (w <= 0.0) {
+	return E_DATA;
+    }
+
     /* Silverman bandwidth times scale factor */
     bw = 0.9 * w * n5;
     kinfo->h = bwscale * bw;
@@ -241,6 +245,8 @@ static void set_kernel_params (kernel_info *kinfo,
 
     kinfo->type = (opt & OPT_O)? EPANECHNIKOV_KERNEL :
 	GAUSSIAN_KERNEL;
+
+    return 0;
 }
 
 #define MINOBS 30
@@ -285,9 +291,11 @@ kernel_density (const double *y, const DATASET *dset,
 	return err;
     }
 
-    set_kernel_params(&kinfo, bwscale, opt);
-
-    err = density_plot(&kinfo, label);
+    err = set_kernel_params(&kinfo, bwscale, opt);
+    
+    if (!err) {
+	err = density_plot(&kinfo, label);
+    }
 
     free(kinfo.x);
 
@@ -306,9 +314,11 @@ kernel_density_matrix (const double *y, const DATASET *dset,
 	return NULL;
     }
 
-    set_kernel_params(&kinfo, bwscale, opt);
+    *err = set_kernel_params(&kinfo, bwscale, opt);
 
-    m = density_matrix(&kinfo, err);
+    if (!*err) {
+	m = density_matrix(&kinfo, err);
+    }
 
     free(kinfo.x);
 
@@ -328,9 +338,11 @@ array_kernel_density (const double *x, int n, const char *label)
     kinfo.x = (double *) x;
     kinfo.n = n;
 
-    set_kernel_params(&kinfo, 1.0, OPT_NONE);
+    err = set_kernel_params(&kinfo, 1.0, OPT_NONE);
 
-    err = density_plot(&kinfo, label);
+    if (!err) {
+	err = density_plot(&kinfo, label);
+    }
 
     return err;
 }
