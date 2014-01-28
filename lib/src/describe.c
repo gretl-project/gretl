@@ -1035,7 +1035,7 @@ int gretl_moments (int t1, int t2, const double *x,
     double s, s2, s3, s4;
     int allstats = 1;
     int weighted = (wts != NULL);
-    double denom, wt, wn = 0;
+    double wt, wn = 0;
 
     if (skew == NULL && kurt == NULL) {
 	allstats = 0;
@@ -1083,12 +1083,12 @@ int gretl_moments (int t1, int t2, const double *x,
 	}	
 	return 1;
     } 
-    /* calculate mean and initialize other stats */
 
     if (!weighted) {
 	wn = n;
     }
 
+    /* calculate mean and initialize other stats */
     *xbar = s / wn;
     var = 0.0;
     if (allstats) {
@@ -4593,28 +4593,24 @@ void free_summary (Summary *summ)
 static Summary *summary_new (const int *list, gretlopt opt)
 {
     Summary *s;
-    int nv;
+    int nv, seppos;
 
     s = malloc(sizeof *s);
     if (s == NULL) {
 	return NULL;
     }
 
-    int seppos = gretl_list_separator_position(list);
-    if (seppos > 0) {
-	nv = seppos - 1;
-	s->weight_var = list[seppos+1];
-	s->list = gretl_list_new(nv);
+    seppos = gretl_list_separator_position(list);
 
-	if (s->list == NULL) {
+    if (seppos > 0) {
+	int err = gretl_list_split_on_separator(list, &s->list, NULL);
+
+	if (err) {
 	    free(s);
 	    return NULL;
 	}
-
-	int i;
-	for(i=1; i<seppos; i++) {
-	    s->list[i] = list[i];
-	}
+	s->weight_var = list[seppos+1];	    
+	nv = seppos - 1;
     } else {
 	nv = list[0];
 	s->weight_var = 0;

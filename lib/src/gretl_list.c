@@ -2130,14 +2130,16 @@ int gretl_list_has_separator (const int *list)
 /**
  * gretl_list_split_on_separator:
  * @list: source list.
- * @plist1: pointer to accept first sub-list.
- * @plist2: pointer to accept second sub-list.
+ * @plist1: pointer to accept first sub-list, or NULL.
+ * @plist2: pointer to accept second sub-list, or NULL.
  *
  * If @list contains the list separator, #LISTSEP, creates two
  * sub-lists, one containing the elements of @list preceding
  * the separator and one containing the elements following
  * the separator.  The sub-lists are newly allocated, and assigned
- * as the content of @plist1 and @plist2 respectively.
+ * as the content of @plist1 and @plist2 respectively. However,
+ * one or other of the sublists can be discarded by passing
+ * NULL as the second or third argument.
  *
  * Returns: 0 on success, %E_ALLOC is memory allocation fails,
  * or %E_DATA if @list does not contain a separator.
@@ -2147,7 +2149,6 @@ int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
 {
     int *list1 = NULL, *list2 = NULL;
     int i, n = 0;
-    int err = 0;
 
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == LISTSEP) {
@@ -2157,35 +2158,38 @@ int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
     }
 
     if (n == 0) {
-	err = E_PARSE;
+	return E_PARSE;
     }
 
-    if (n > 1) {
-	list1 = gretl_list_new(n - 1);
-	if (list1 == NULL) {
-	    return E_ALLOC;
+    if (plist1 != NULL) {
+	if (n > 1) {
+	    list1 = gretl_list_new(n - 1);
+	    if (list1 == NULL) {
+		return E_ALLOC;
+	    }
+	    for (i=1; i<n; i++) {
+		list1[i] = list[i];
+	    }
 	}
-	for (i=1; i<n; i++) {
-	    list1[i] = list[i];
-	}
+	*plist1 = list1;
     }
 
-    if (n < list[0]) {
-	list2 = gretl_list_new(list[0] - n);
-	if (list2 == NULL) {
-	    free(list1);
-	    return E_ALLOC;
-	}
+    if (plist2 != NULL) {
+	if (n < list[0]) {
+	    list2 = gretl_list_new(list[0] - n);
+	    if (list2 == NULL) {
+		free(list1);
+		return E_ALLOC;
+	    }
 
-	for (i=1; i<=list2[0]; i++) {
-	    list2[i] = list[i + n];
+	    for (i=1; i<=list2[0]; i++) {
+		list2[i] = list[i + n];
+	    }
 	}
+	*plist2 = list2;
     }
-
-    *plist1 = list1;
-    *plist2 = list2;
     
-    return err;
+    return 0;
 }
 
 /**
