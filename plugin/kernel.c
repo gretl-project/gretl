@@ -222,13 +222,12 @@ static void set_kernel_params (kernel_info *kinfo,
 
     quartiles(kinfo->x, kinfo->n, &q1, &q3);
     r = (q3 - q1) / 1.349;
+    w = (r < s && r > 0)? r : s;
 
 #if KDEBUG
-    fprintf(stderr, "Silverman bandwidth: s=%g, q1=%g, q3=%g, IQR=%g\n",
-	    s, q1, q3, q3 - q1);
+    fprintf(stderr, "Silverman bandwidth: s=%g, q1=%g, q3=%g, IQR=%g, w=%g\n",
+	    s, q1, q3, q3 - q1, w);
 #endif
-
-    w = (r < s)? r : s;
 
     /* Silverman bandwidth times scale factor */
     bw = 0.9 * w * n5;
