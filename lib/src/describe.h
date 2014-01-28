@@ -25,6 +25,7 @@ typedef struct MahalDist_ MahalDist;
 typedef struct Summary_ {
     gretlopt opt;
     int n;
+    int weight_var;
     int *misscount;
     int *list;
     double *stats;
@@ -128,6 +129,7 @@ double gretl_skewness (int t1, int t2, const double *x);
 double gretl_kurtosis (int t1, int t2, const double *x);
 
 int gretl_moments (int t1, int t2, const double *x, 
+		   const double *wts,
 		   double *xbar, double *sd, 
 		   double *skew, double *kurt, int k);
 
@@ -195,6 +197,12 @@ int fractint (int varno, int order,
 Summary *get_summary (const int *list, const DATASET *dset,
 		      gretlopt opt, PRN *prn, 
 		      int *err);
+
+Summary *get_summary_weighted (const int *list, 
+			       const DATASET *dset, 
+			       const double *wts,
+			       gretlopt opt, PRN *prn, 
+			       int *err);
 
 Summary *get_summary_restricted (const int *list, 
 				 const DATASET *dset, 

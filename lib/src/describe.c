@@ -1012,6 +1012,7 @@ double gretl_kurtosis (int t1, int t2, const double *x)
  * @t1: starting observation.
  * @t2: ending observation.
  * @x: data series.
+ * @wts: weights (may be NULL)
  * @xbar: pointer to receive mean.
  * @sd: pointer to receive standard deviation.
  * @skew: pointer to receive skewness.
@@ -1025,6 +1026,7 @@ double gretl_kurtosis (int t1, int t2, const double *x)
  */
 
 int gretl_moments (int t1, int t2, const double *x, 
+		   const double *wts,
 		   double *xbar, double *std, 
 		   double *skew, double *kurt, int k)
 {
@@ -1032,6 +1034,8 @@ int gretl_moments (int t1, int t2, const double *x,
     double dev, var;
     double s, s2, s3, s4;
     int allstats = 1;
+    int weighted = (wts != NULL);
+    double denom, wt, wn = 0;
 
     if (skew == NULL && kurt == NULL) {
 	allstats = 0;
@@ -1057,8 +1061,17 @@ int gretl_moments (int t1, int t2, const double *x,
     n = 0;
     for (t=t1; t<=t2; t++) {
 	if (!na(x[t])) {
-	    s += x[t];
-	    n++;
+	    if (weighted) {
+		wt = wts[t];
+		if (!na(wt) && wt != 0.0) {
+		    s += wt * x[t];
+		    wn += wt;
+		    n++;
+		}
+	    } else {
+		s += x[t];
+		n++;
+	    }
 	}
     }
 
@@ -1069,10 +1082,14 @@ int gretl_moments (int t1, int t2, const double *x,
 	    *skew = *kurt = 0.0;
 	}	
 	return 1;
+    } 
+    /* calculate mean and initialize other stats */
+
+    if (!weighted) {
+	wn = n;
     }
 
-    /* calculate mean and initialize other stats */
-    *xbar = s / n;
+    *xbar = s / wn;
     var = 0.0;
     if (allstats) {
 	*skew = *kurt = 0.0;
@@ -1083,16 +1100,28 @@ int gretl_moments (int t1, int t2, const double *x,
     for (t=t1; t<=t2; t++) {
 	if (!na(x[t])) {
 	    dev = x[t] - *xbar;
-	    s2 += dev * dev;
-	    if (allstats) {
-		s3 += pow(dev, 3);
-		s4 += pow(dev, 4);
+	    if (weighted) {
+		wt = wts[t];
+		if (!na(wt) && wt != 0.0) {
+		    s2 += wt * dev * dev;
+		    if (allstats) {
+			s3 += wt * pow(dev, 3);
+			s4 += wt * pow(dev, 4);
+		    }
+		}
+	    } else {
+		s2 += dev * dev;
+		if (allstats) {
+		    s3 += pow(dev, 3);
+		    s4 += pow(dev, 4);
+		}
 	    }
 	}
     }
-
+    
+    
     /* variance */
-    var = s2 / (n - k);
+    var = s2 / (wn - k);
 
     if (var < 0.0) {
 	/* in principle impossible, but this is a computer */
@@ -1112,8 +1141,8 @@ int gretl_moments (int t1, int t2, const double *x,
 
     if (allstats) {
 	if (var > TINYVAR) {
-	    *skew = (s3 / n) / pow(s2 / n, 1.5);
-	    *kurt = ((s4 / n) / pow(s2 / n, 2)) - 3.0; /* excess kurtosis */
+	    *skew = (s3 / wn) / pow(s2 / wn, 1.5);
+	    *kurt = ((s4 / wn) / pow(s2 / wn, 2)) - 3.0; /* excess kurtosis */
 	} else {
 	    /* if variance is effectively zero, these should be undef'd */
 	    *skew = *kurt = NADBL;
@@ -1660,7 +1689,7 @@ freq_dist_stat (FreqDist *freq, const double *x, gretlopt opt, int k)
     freq->test = NADBL;
     freq->dist = 0;
 
-    gretl_moments(freq->t1, freq->t2, x, 
+    gretl_moments(freq->t1, freq->t2, x, NULL,
 		  &freq->xbar, &freq->sdx, 
 		  &skew, &kurt, k);
 
@@ -4564,17 +4593,32 @@ void free_summary (Summary *summ)
 static Summary *summary_new (const int *list, gretlopt opt)
 {
     Summary *s;
-    int nv = list[0];
+    int nv;
 
     s = malloc(sizeof *s);
     if (s == NULL) {
 	return NULL;
     }
 
-    s->list = gretl_list_copy(list);
-    if (s->list == NULL) {
-	free(s);
-	return NULL;
+    int seppos = gretl_list_separator_position(list);
+    if (seppos > 0) {
+	nv = seppos - 1;
+	s->weight_var = list[seppos+1];
+	s->list = gretl_list_new(nv);
+
+	if (s->list == NULL) {
+	    free(s);
+	    return NULL;
+	}
+
+	int i;
+	for(i=1; i<seppos; i++) {
+	    s->list[i] = list[i];
+	}
+    } else {
+	nv = list[0];
+	s->weight_var = 0;
+	s->list = gretl_list_copy(list);
     }
 
     s->opt = opt;
@@ -4617,6 +4661,130 @@ int summary_has_missing_values (const Summary *summ)
     }
 
     return 0;
+}
+
+/**
+ * get_summary_weighted:
+ * @list: list of variables to process.
+ * @dset: dataset struct.
+ * @wgt: series to use as weights.
+ * @opt: may include OPT_S for "simple" version.
+ * @prn: gretl printing struct.
+ * @err: location to receive error code.
+ *
+ * Calculates descriptive summary statistics for the specified
+ * variables, weighting the observations by @rv. The series @rv must
+ * be of full length (dset->n).
+ *
+ * Returns: #Summary object containing the summary statistics, or NULL
+ * on failure.
+ */
+
+Summary *get_summary_weighted (const int *list, const DATASET *dset, 
+			       const double *wts, gretlopt opt, 
+			       PRN *prn, int *err) 
+{
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    Summary *s;
+    double *x;
+    int i, t;
+
+    s = summary_new(list, opt);
+    if (s == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    x = malloc(dset->n * sizeof *x);
+    if (x == NULL) {
+	*err = E_ALLOC;
+	free_summary(s);
+	return NULL;
+    }    
+
+    for (i=0; i<s->list[0]; i++)  {
+	double *pskew = NULL, *pkurt = NULL;
+	int vi = s->list[i+1];
+	int ni = 0;
+        int ntot = 0;
+        double wt, wtot = 0;
+
+	/* create the weighted series: substitute NAs for values at
+	   which the weights are invalid or zero
+	*/
+	for (t=t1; t<=t2; t++) {
+	    wt = wts[t];
+	    if (!na(wt) && wt != 0.0) {
+                ntot++;
+		wtot += wt;
+		x[t] = dset->Z[vi][t];
+		if (!na(x[t])) {
+		    ni++;
+		}
+	    } else {
+		x[t] = NADBL;
+	    }
+	}
+
+	s->misscount[i] = ntot - ni;
+
+	if (ni > s->n) {
+	    s->n = ni;
+	}
+
+	if (ni == 0) { 
+	    pprintf(prn, _("Dropping %s: sample range contains no valid "
+			   "observations\n"), dset->varname[vi]);
+	    gretl_list_delete_at_pos(s->list, i + 1);
+	    if (s->list[0] == 0) {
+		return s;
+	    } else {
+		i--;
+		continue;
+	    }
+	}
+
+	if (opt & OPT_S) {
+	    s->skew[i] = NADBL;
+	    s->xkurt[i] = NADBL;
+	    s->cv[i] = NADBL;
+	    s->median[i] = NADBL;
+	} else {
+	    pskew = &s->skew[i];
+	    pkurt = &s->xkurt[i];
+	}
+
+	gretl_minmax(t1, t2, x, &s->low[i], &s->high[i]);
+	gretl_moments(t1, t2, x, wts, &s->mean[i], &s->sd[i], pskew, pkurt, 0);
+
+	if (!(opt & OPT_S)) {
+	    int err;
+
+	    if (floateq(s->mean[i], 0.0)) {
+		s->cv[i] = NADBL;
+	    } else if (floateq(s->sd[i], 0.0)) {
+		s->cv[i] = 0.0;
+	    } else {
+		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
+	    } 
+	    s->median[i] = gretl_median(t1, t2, x);
+	    s->perc05[i] = gretl_quantile(t1, t2, x, 0.05, OPT_Q, &err);
+	    s->perc95[i] = gretl_quantile(t1, t2, x, 0.95, OPT_Q, &err);
+	    s->iqr[i]    = gretl_quantile(t1, t2, x, 0.75, OPT_NONE, &err);
+	    if (!na(s->iqr[i])) {
+		s->iqr[i] -= gretl_quantile(t1, t2, x, 0.25, OPT_NONE, &err);
+	    }
+	}
+
+	if (dataset_is_panel(dset) && list[0] == 1) {
+	    panel_variance_info(x, dset, s->mean[0], &s->sw, &s->sb);
+	}	
+    } 
+
+    free(x);
+
+    return s;
 }
 
 /**
@@ -4711,7 +4879,7 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 
 	gretl_minmax(t1, t2, x, &s->low[i], &s->high[i]);
 	
-	gretl_moments(t1, t2, x, &s->mean[i], &s->sd[i], pskew, pkurt, 1);
+	gretl_moments(t1, t2, x, NULL, &s->mean[i], &s->sd[i], pskew, pkurt, 1);
 
 	if (!(opt & OPT_S)) {
 	    int err;
@@ -4811,8 +4979,14 @@ Summary *get_summary (const int *list, const DATASET *dset,
 	}
 
 	gretl_minmax(t1, t2, x, &s->low[i], &s->high[i]);
-	
-	gretl_moments(t1, t2, x, &s->mean[i], &s->sd[i], pskew, pkurt, 1);
+
+	if (s->weight_var == 0) {
+	    gretl_moments(t1, t2, x, NULL, &s->mean[i], &s->sd[i], 
+			  pskew, pkurt, 1);
+	} else {
+	    gretl_moments(t1, t2, x, dset->Z[s->weight_var], &s->mean[i], &s->sd[i], 
+			  pskew, pkurt, 0);
+	}
 
 	if (!(opt & OPT_S)) {
 	    int err;
@@ -5355,8 +5529,8 @@ int means_test (const int *list, const DATASET *dset,
 
     df = n1 + n2 - 2;
 
-    gretl_moments(0, n1-1, x, &m1, &s1, &skew, &kurt, 1);
-    gretl_moments(0, n2-1, y, &m2, &s2, &skew, &kurt, 1);
+    gretl_moments(0, n1-1, x, NULL, &m1, &s1, &skew, &kurt, 1);
+    gretl_moments(0, n2-1, y, NULL, &m2, &s2, &skew, &kurt, 1);
     mdiff = m1 - m2;
 
     v1 = s1 * s1;
@@ -5437,8 +5611,8 @@ int vars_test (const int *list, const DATASET *dset, PRN *prn)
 	return 1;
     }
     
-    gretl_moments(0, n1-1, x, &m, &s1, NULL, NULL, 1);
-    gretl_moments(0, n2-1, y, &m, &s2, NULL, NULL, 1);
+    gretl_moments(0, n1-1, x, NULL, &m, &s1, NULL, NULL, 1);
+    gretl_moments(0, n2-1, y, NULL, &m, &s2, NULL, NULL, 1);
 
     var1 = s1*s1;
     var2 = s2*s2;
