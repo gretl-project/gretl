@@ -3361,7 +3361,7 @@
 	</para>
 	<code>
 	  matrix d = kdensity(x)
-	  gnuplot 2 1 --matrix=d --with-lines
+	  gnuplot 2 1 --matrix=d --with-lines --suppress-fitted
 	</code>
       </description>
     </function>
