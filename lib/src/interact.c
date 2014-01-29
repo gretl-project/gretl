@@ -6306,7 +6306,7 @@ int get_command_index (char *line, CMD *cmd)
 		cmd->ci = GENR;
 	    } else if (get_user_function_by_name(cmd->word)) {
 		cmd->ci = GENR;
-		cmd->opt = OPT_U;
+		cmd->opt = OPT_O;
 	    } else {
 		cmd->err = 1;
 		gretl_errmsg_sprintf(_("command '%s' not recognized"), 
