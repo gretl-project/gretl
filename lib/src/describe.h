@@ -198,10 +198,8 @@ Summary *get_summary (const int *list, const DATASET *dset,
 		      gretlopt opt, PRN *prn, 
 		      int *err);
 
-Summary *get_summary_weighted (const int *list, 
-			       const DATASET *dset, 
-			       const double *wts,
-			       gretlopt opt, PRN *prn, 
+Summary *get_summary_weighted (const int *list, const DATASET *dset, 
+			       int var, gretlopt opt, PRN *prn, 
 			       int *err);
 
 Summary *get_summary_restricted (const int *list, 
@@ -210,7 +208,8 @@ Summary *get_summary_restricted (const int *list,
 				 gretlopt opt, PRN *prn, 
 				 int *err);
 
-int list_summary (const int *list, const DATASET *dset, 
+int list_summary (const int *list, int wgtvar, 
+		  const DATASET *dset, 
 		  gretlopt opt, PRN *prn);
 
 void print_summary (const Summary *summ,

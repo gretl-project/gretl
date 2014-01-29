@@ -559,7 +559,7 @@ int matrix_command_driver (int ci,
 	} else if (ci == GNUPLOT) {
 	    err = gnuplot(collist, param, mdset, opt);
 	} else if (ci == SUMMARY) {
-	    err = list_summary(collist, mdset, opt, prn);
+	    err = list_summary(collist, 0, mdset, opt, prn);
 	} else {
 	    err = E_DATA;
 	}

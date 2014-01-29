@@ -4435,6 +4435,11 @@ void print_summary (const Summary *summ,
 	return;
     }
 
+    if (summ->weight_var > 0) {
+	pprintf(prn, _("Weighting variable: %s\n"), 
+		       dset->varname[summ->weight_var]);
+    }
+
     if (summ->list[0] == 1) {
 	print_summary_single(summ, 0, 0, dset, prn);
 	return;
@@ -4590,33 +4595,28 @@ void free_summary (Summary *summ)
     free(summ);
 }
 
-static Summary *summary_new (const int *list, gretlopt opt)
+/**
+ * summary_new:
+ * @list: list of variables we want summary statistics for
+ * @wv: weighting variable (0=no weights)
+ * @opt: options
+ *
+ * Allocates a new "Summary" struct and initializes a few 
+ * things inside it 
+ */
+
+static Summary *summary_new (const int *list, int wv, gretlopt opt)
 {
     Summary *s;
-    int nv, seppos;
+    int nv = list[0];
 
     s = malloc(sizeof *s);
     if (s == NULL) {
 	return NULL;
     }
 
-    seppos = gretl_list_separator_position(list);
-
-    if (seppos > 0) {
-	int err = gretl_list_split_on_separator(list, &s->list, NULL);
-
-	if (err) {
-	    free(s);
-	    return NULL;
-	}
-	s->weight_var = list[seppos+1];	    
-	nv = seppos - 1;
-    } else {
-	nv = list[0];
-	s->weight_var = 0;
-	s->list = gretl_list_copy(list);
-    }
-
+    s->list = gretl_list_copy(list);
+    s->weight_var = wv;
     s->opt = opt;
     s->n = 0;
     s->misscount = malloc(nv * sizeof *s->misscount);
@@ -4677,7 +4677,7 @@ int summary_has_missing_values (const Summary *summ)
  */
 
 Summary *get_summary_weighted (const int *list, const DATASET *dset, 
-			       const double *wts, gretlopt opt, 
+			       int wtvar, gretlopt opt, 
 			       PRN *prn, int *err) 
 {
     int t1 = dset->t1;
@@ -4686,7 +4686,7 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
     double *x;
     int i, t;
 
-    s = summary_new(list, opt);
+    s = summary_new(list, wtvar, opt);
     if (s == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -4699,7 +4699,9 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
 	return NULL;
     }    
 
-    for (i=0; i<s->list[0]; i++)  {
+    const double *wts = dset->Z[wtvar];
+
+    for (i=0; i<list[0]; i++)  {
 	double *pskew = NULL, *pkurt = NULL;
 	int vi = s->list[i+1];
 	int ni = 0;
@@ -4810,7 +4812,7 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
     double *x;
     int i, t;
 
-    s = summary_new(list, opt);
+    s = summary_new(list, 0, opt);
     if (s == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -4928,7 +4930,7 @@ Summary *get_summary (const int *list, const DATASET *dset,
     Summary *s;
     int i, nmax;
 
-    s = summary_new(list, opt);
+    s = summary_new(list, 0, opt);
 
     if (s == NULL) {
 	*err = E_ALLOC;
@@ -5023,7 +5025,8 @@ Summary *get_summary (const int *list, const DATASET *dset,
  * Returns: 0 on success, non-zero code on error.
  */
 
-int list_summary (const int *list, const DATASET *dset, 
+int list_summary (const int *list, int wgtvar, 
+		  const DATASET *dset, 
 		  gretlopt opt, PRN *prn)
 {
     Summary *summ;
@@ -5033,7 +5036,13 @@ int list_summary (const int *list, const DATASET *dset,
 	return 0;
     }
 
-    summ = get_summary(list, dset, opt, prn, &err);
+    if (wgtvar==0) {
+	/* no weights */
+	summ = get_summary(list, dset, opt, prn, &err);
+    } else {
+	summ = get_summary_weighted (list, dset, wgtvar, opt, 
+				     prn, &err);
+    }
 
     if (!err) {
 	print_summary(summ, dset, prn);
