@@ -4436,6 +4436,7 @@ void print_summary (const Summary *summ,
     }
 
     if (summ->weight_var > 0) {
+	pputc(prn, '\n');
 	pprintf(prn, _("Weighting variable: %s\n"), 
 		       dset->varname[summ->weight_var]);
     }
@@ -4659,6 +4660,78 @@ int summary_has_missing_values (const Summary *summ)
     return 0;
 }
 
+static int compare_wgtord_rows (const void *a, const void *b) 
+{
+    const double **da = (const double **) a;
+    const double **db = (const double **) b;
+
+    return (da[0][0] > db[0][0]) - (da[0][0] < db[0][0]);
+}
+
+static int weighted_order_stats(const double *y, const double *w, 
+				double *ostats, int n, int k)
+{
+    /* "ostats" contains the quantiles to compute, and is re-used 
+       in output to hold the results 
+    */
+
+    int t, i, err = 0;
+    double wsum, x, p, q;
+    double **X = NULL;
+
+    X = doubles_array_new(n, 2);
+    if (X == NULL) {
+	return E_ALLOC;
+    }
+
+    t = 0;
+    wsum = 0.0;
+
+    for (i=0; i<n; i++) {
+	if (na(y[t]) || na(w[t]) || w[t] == 0.0) {
+	    i--;
+	} else {
+	    X[i][0] = y[t];
+	    X[i][1] = w[t];
+	    wsum += w[t];
+	}
+	t++;
+    }
+
+    qsort(X, n, sizeof *X, compare_wgtord_rows);
+
+    for (i=0; i<k; i++) {
+	p = ostats[i] * wsum;
+	q = X[0][1];
+	x = NADBL;
+	if (q == p) {
+	    x = X[0][0];
+	} else {
+	    t = 0;
+	    while (q<p) {
+		q += X[t++][1];
+	    }
+	}
+
+	if (X[t-1][0] == X[t][0]) {
+	    ostats[i]  = X[t][0]; 
+	} else {
+	    x = (q - p)/X[t][1];
+	    ostats[i] = x * X[t+1][0] + (1-x) * X[t][0];
+	}
+
+#if 0
+	fprintf(stderr, "P = %g, Q = %g, x = %g\n", p, q, x);
+	fprintf(stderr, "%d %12.6f %12.6f\n", t, X[t][0], X[t][1]);
+	fprintf(stderr, "%d %12.6f %12.6f\n", t+1, X[t+1][0], X[t+1][1]);
+#endif
+    }
+
+    doubles_array_free(X, n);
+
+    return err;
+}
+
 /**
  * get_summary_weighted:
  * @list: list of variables to process.
@@ -4684,6 +4757,7 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
     int t2 = dset->t2;
     Summary *s;
     double *x;
+    double *ostats;
     int i, t;
 
     s = summary_new(list, wtvar, opt);
@@ -4693,14 +4767,14 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
     }
 
     x = malloc(dset->n * sizeof *x);
-    if (x == NULL) {
+    ostats = malloc(5 * sizeof *ostats);
+    if (x == NULL || ostats == NULL) {
 	*err = E_ALLOC;
 	free_summary(s);
 	return NULL;
     }    
 
     const double *wts = dset->Z[wtvar];
-
     for (i=0; i<list[0]; i++)  {
 	double *pskew = NULL, *pkurt = NULL;
 	int vi = s->list[i+1];
@@ -4754,7 +4828,7 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
 	}
 
 	gretl_minmax(t1, t2, x, &s->low[i], &s->high[i]);
-	gretl_moments(t1, t2, x, wts, &s->mean[i], &s->sd[i], pskew, pkurt, 0);
+	gretl_moments(t1, t2, x, wts, &s->mean[i], &s->sd[i], pskew, pkurt, 1);
 
 	if (!(opt & OPT_S)) {
 	    int err;
@@ -4766,21 +4840,34 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
 	    } else {
 		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
 	    } 
-	    s->median[i] = gretl_median(t1, t2, x);
-	    s->perc05[i] = gretl_quantile(t1, t2, x, 0.05, OPT_Q, &err);
-	    s->perc95[i] = gretl_quantile(t1, t2, x, 0.95, OPT_Q, &err);
-	    s->iqr[i]    = gretl_quantile(t1, t2, x, 0.75, OPT_NONE, &err);
-	    if (!na(s->iqr[i])) {
-		s->iqr[i] -= gretl_quantile(t1, t2, x, 0.25, OPT_NONE, &err);
+
+	    ostats[0] = 0.05;
+	    ostats[1] = 0.25;
+	    ostats[2] = 0.5;
+	    ostats[3] = 0.75;
+	    ostats[4] = 0.95;
+
+	    err = weighted_order_stats(x, wts, ostats, ni, 5);
+
+	    if (!err) {
+		s->median[i] = ostats[2];
+		s->perc05[i] = ostats[0];
+		s->perc95[i] = ostats[4];
+		if (!na(ostats[1]) & !na(ostats[3]))  {
+		    s->iqr[i] = ostats[3] - ostats[1];
+		}
 	    }
 	}
 
+#if 0
 	if (dataset_is_panel(dset) && list[0] == 1) {
 	    panel_variance_info(x, dset, s->mean[0], &s->sw, &s->sb);
 	}	
+#endif
     } 
 
     free(x);
+    free(ostats);
 
     return s;
 }
