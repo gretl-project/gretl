@@ -8415,7 +8415,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     if (!s->in_comment && !cmd->context && !gretl_if_state_false()) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
-	int action = saved_object_action(line, prn);
+	int action = gui_saved_object_action(line, prn);
 
 	if (action == OBJ_ACTION_INVALID) {
 	    return 1; /* action was faulty */

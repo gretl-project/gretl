@@ -67,12 +67,12 @@ int data_status;
 char linebak[MAXLINE];      /* for storing comments */
 char *line_read;
 
-static int exec_line (ExecState *s, DATASET *dset, PRN *cmdprn);
+static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn);
 static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
-static int saved_object_action (const char *line, 
-				DATASET *dset, 
-				PRN *prn);
+static int cli_saved_object_action (const char *line, 
+				    DATASET *dset, 
+				    PRN *prn);
 
 static void usage (int err)
 {
@@ -576,7 +576,7 @@ int main (int argc, char *argv[])
 	    set_gretl_echo(0);
 	} 
 	sprintf(line, "run %s\n", runfile);
-	err = exec_line(&state, dset, cmdprn);
+	err = cli_exec_line(&state, dset, cmdprn);
 	if (err && fb == NULL) {
 	    exit(EXIT_FAILURE);
 	}
@@ -616,7 +616,7 @@ int main (int argc, char *argv[])
 
 	strcpy(linecopy, line);
 	tailstrip(linecopy);
-	err = exec_line(&state, dset, cmdprn);
+	err = cli_exec_line(&state, dset, cmdprn);
     } /* end of get commands loop */
 
     if (!err) {
@@ -629,7 +629,7 @@ int main (int argc, char *argv[])
     if (makepkg && !err) {
 	switch_ext(filearg, runfile, "gfn");
 	sprintf(line, "makepkg %s\n", filearg);
-	exec_line(&state, dset, cmdprn);
+	cli_exec_line(&state, dset, cmdprn);
     }
 
     /* leak check -- try explicitly freeing all memory allocated */
@@ -860,15 +860,15 @@ static void maybe_save_session_output (const char *cmdfile)
 
 #define ENDRUN (NC + 1)
 
-/* exec_line: this is called to execute both interactive and script
-   commands.  Note that most commands get passed on to the libgretl
-   function gretl_cmd_exec(), but some commands that require special
-   action are dealt with here.
+/* cli_exec_line: this is called to execute both interactive and
+   script commands.  Note that most commands get passed on to the
+   libgretl function gretl_cmd_exec(), but some commands that require
+   special action are dealt with here.
 
    see also gui_exec_line() in gui2/library.c
 */
 
-static int exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
+static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 {
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -895,7 +895,7 @@ static int exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     if (!s->in_comment && !cmd->context && !gretl_if_state_false()) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
-	int action = saved_object_action(line, dset, prn);
+	int action = cli_saved_object_action(line, dset, prn);
 
 	if (action == OBJ_ACTION_INVALID) {
 	    return 1; /* action was faulty */

@@ -2512,9 +2512,9 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
 
 int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr) 
 {
-    int nf, subst = 0;
     char *rem = NULL;
     char cnext = 0;
+    int nf;
 
     if (gretl_cmd_clear(cmd)) {
 	return cmd->err;
@@ -2527,6 +2527,8 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 #endif
 
     if (!cmd_nosub(cmd)) {
+	int subst = 0;
+
 	cmd->err = substitute_named_strings(line, &subst);
 	if (cmd->err) {
 	    return cmd->err;

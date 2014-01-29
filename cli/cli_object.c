@@ -62,9 +62,9 @@ static int cli_parse_object_request (const char *line,
     return action;
 }
 
-static int saved_object_action (const char *line, 
-				DATASET *dset,
-				PRN *prn)
+static int cli_saved_object_action (const char *line, 
+				    DATASET *dset,
+				    PRN *prn)
 {
     char objname[MAXSAVENAME] = {0};
     char *param = NULL;

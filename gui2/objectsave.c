@@ -108,7 +108,7 @@ int save_text_buffer (const char *name, PRN *prn)
     return err;
 }
 
-int saved_object_action (const char *line, PRN *prn)
+int gui_saved_object_action (const char *line, PRN *prn)
 {
     char objname[MAXSAVENAME] = {0};
     char *param = NULL;
