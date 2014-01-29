@@ -667,7 +667,7 @@ static int is_gen_special (const char *s, char *spec, const char **rem)
 #define gen_verbose(f) (!(f & P_PRINT) && \
                         !(f & P_DISCARD) && \
                         !(f & P_PRIVATE) && \
-                        !(f & P_UFUN) && \
+                        !(f & P_VOID) && \
                         !(f & P_QUIET) && \
                         !(f & P_DECL))
 
@@ -680,11 +680,13 @@ int generate (const char *line, DATASET *dset, gretlopt opt,
     parser p;
 
     if (opt & OPT_P) {
+	/* internal use of generate() */
 	flags |= P_PRIVATE;
     }
 
-    if (opt & OPT_U) {
-	flags |= P_UFUN;
+    if (opt & OPT_O) {
+	/* no assignment */
+	flags |= P_VOID;
     }
 
     if (opt & OPT_Q) {
@@ -705,7 +707,7 @@ int generate (const char *line, DATASET *dset, gretlopt opt,
 
     realgen(line, &p, dset, prn, flags);
 
-    if (!(opt & OPT_U)) {
+    if (!(flags & P_VOID)) {
 	gen_save_or_print(&p, prn);
     }
 
@@ -931,8 +933,8 @@ parser *genr_compile (const char *s, DATASET *dset,
 	flags |= P_PRIVATE;
     }
 
-    if (opt & OPT_U) {
-	flags |= P_UFUN;
+    if (opt & OPT_O) {
+	flags |= P_VOID;
     }
 
     if (opt & OPT_S) {
@@ -965,7 +967,7 @@ int execute_genr (parser *p, DATASET *dset, PRN *prn)
 
     realgen(NULL, p, dset, prn, P_EXEC);
 
-    if (!p->err && !(p->flags & P_UFUN)) {
+    if (!p->err && !(p->flags & P_VOID)) {
 	gen_save_or_print(p, prn);
     } 
 

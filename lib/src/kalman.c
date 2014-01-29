@@ -1446,7 +1446,7 @@ static gretl_matrix *kalman_update_matrix (kalman *K, int i,
 {
     gretl_matrix *m = NULL;
 
-    *err = generate(K->matcalls[i], NULL, OPT_U, prn);
+    *err = generate(K->matcalls[i], NULL, OPT_O, prn);
 
     if (*err) {
 	fprintf(stderr, "kalman_update_matrix: call='%s', err=%d\n", 

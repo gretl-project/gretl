@@ -5123,12 +5123,12 @@ int list_summary (const int *list, int wgtvar,
 	return 0;
     }
 
-    if (wgtvar==0) {
+    if (wgtvar == 0) {
 	/* no weights */
 	summ = get_summary(list, dset, opt, prn, &err);
     } else {
-	summ = get_summary_weighted (list, dset, wgtvar, opt, 
-				     prn, &err);
+	summ = get_summary_weighted(list, dset, wgtvar, opt, 
+				    prn, &err);
     }
 
     if (!err) {

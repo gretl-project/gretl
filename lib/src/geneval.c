@@ -5845,7 +5845,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	p->err = E_DATA;
     }
 
-    if (!p->err && !simple_ufun_call(p)) {
+    if (!p->err && !(p->flags & P_VOID)) {
 	/* check that the function returns something suitable */
 	rtype = user_func_get_return_type(uf);
 	if (!ok_function_return_type(rtype) || rtype == GRETL_TYPE_VOID) {
@@ -6588,7 +6588,7 @@ static gretl_matrix *get_density_matrix (const double *x,
 	return NULL;
     }
 
-    opt = (ctrl)? OPT_O : OPT_NONE; 
+    opt = ctrl ? OPT_O : OPT_NONE; 
     m = (*kdfunc)(x, dset, bws, opt, err);
     close_plugin(handle);
 
@@ -12623,7 +12623,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     /* flags that should be reinstated if they were
        present at compile time */
     int repflags[] = { P_PRINT, P_NATEST, P_AUTOREG,
-		       P_SLAVE, P_SLICE, P_UFUN,
+		       P_SLAVE, P_SLICE, P_VOID,
 		       P_LHPTR, P_DISCARD, P_SCALAR, 
 		       0 };
     int i, saveflags = p->flags;
@@ -12745,7 +12745,7 @@ static void parser_init (parser *p, const char *str,
 	p->targ = STR;
     } else if (p->flags & P_LIST) {
 	p->targ = LIST;
-    } else if (p->flags & P_UFUN) {
+    } else if (p->flags & P_VOID) {
 	p->targ = EMPTY;
     } else {
 	pre_process(p, flags);

@@ -1361,7 +1361,7 @@ int do_printscan_command (const char *line, DATASET *dset, PRN *prn)
 #endif
 
     if (!err) {
-	err = generate(tmp, dset, OPT_U, prn);
+	err = generate(tmp, dset, OPT_O, prn);
     }
 
     free(tmp);

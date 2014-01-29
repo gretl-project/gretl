@@ -5183,7 +5183,6 @@ static int check_function_structure (ufunc *fun)
     fprintf(stderr, "checking function '%s'\n", fun->name);
 #endif
 
-
     for (i=0; i<fun->n_lines && !err; i++) {
 #if 0
 	fprintf(stderr, "line[%d] = '%s'\n", i, fun->lines[i]);

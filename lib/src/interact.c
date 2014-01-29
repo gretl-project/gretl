@@ -2287,7 +2287,7 @@ static int ends_block (const char *s, const char *blocktype)
    a save to a named object as in "foo <- command".
 */
 
-static int get_command_word (const char *line, char *cnext, CMD *cmd)
+static int get_first_word (const char *line, char *cnext, CMD *cmd)
 {
     int n, ret = 0;
 
@@ -2599,8 +2599,8 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 	}
     } 
 
-    /* no command here? */
-    if (!get_command_word(line, &cnext, cmd)) {
+    /* maybe there's no command here? */
+    if (!get_first_word(line, &cnext, cmd)) {
 	cmd_set_nolist(cmd);
 	cmd->ci = CMD_NULL;
 	return cmd->err;
@@ -2626,7 +2626,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 
     if (cmd->ci == 0) {
 	if (!strcmp(cmd->word, "elif") && cnext == '(') {
-	    /* temporary reprieve for SVAR */
+	    /* bodge: temporary reprieve for SVAR */
 	    cmd->ci = ELIF;
 	} else if (cnext != '(') {
 	    /* regular command, not a function call */
@@ -2637,10 +2637,10 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 		cmd->ci = GENR;
 	    } else if (function_lookup(cmd->word)) {
 		cmd->ci = GENR;
-		cmd->opt = OPT_U;
+		cmd->opt = OPT_O;
 	    } else if (get_user_function_by_name(cmd->word)) {
 		cmd->ci = GENR;
-		cmd->opt = OPT_U;
+		cmd->opt = OPT_O;
 	    } else if (gretl_if_state_false()) {
 		cmd_set_nolist(cmd);
 		cmd->ci = CMD_MASKED;
@@ -5570,7 +5570,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = matrix_command_driver(cmd->ci, cmd->list, cmd->param,
 					dset, cmd->opt, prn);
 	} else {
-
 	    /* check if we have a weighting variable */
 	    const char *wgtvname;
 	    int wgtvar; 
@@ -6257,7 +6256,7 @@ int get_command_index (char *line, CMD *cmd)
 	line += 6;
     }
 
-    if (!get_command_word(line, &cnext, cmd)) {
+    if (!get_first_word(line, &cnext, cmd)) {
 	if (*line == '$' || *line == '@') {
 	    /* most plausible possibility? */
 	    strcpy(cmd->word, "genr");
