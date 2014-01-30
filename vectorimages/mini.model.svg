@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="16px"
+   height="16px"
+   id="svg4121"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="mini.model.svg">
+  <defs
+     id="defs4123">
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5212"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5208"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5204"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5200"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5196"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5192"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5188"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5184"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5180"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4342"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4338"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4334"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4330"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4326"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4322"
+       is_visible="true" />
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 8 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="16 : 8 : 1"
+       inkscape:persp3d-origin="8 : 5.3333333 : 1"
+       id="perspective4217" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="18.348762"
+     inkscape:cx="8.0038863"
+     inkscape:cy="8.4716623"
+     inkscape:current-layer="layer6"
+     showgrid="true"
+     inkscape:grid-bbox="true"
+     inkscape:document-units="px"
+     inkscape:window-width="867"
+     inkscape:window-height="662"
+     inkscape:window-x="256"
+     inkscape:window-y="96"
+     inkscape:window-maximized="0"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid4129" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="-3,22"
+       id="guide4344" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata4126">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer6"
+     inkscape:label="Camada1"
+     style="display:inline">
+    <g
+       id="g5231"
+       transform="matrix(1.8451613,0,0,1.1875,-7.8451613,-2)">
+      <image
+         width="14.090909"
+         height="16"
+         xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAsCAYAAAAEuLqPAAAABHNCSVQICAgIfAhkiAAAAwZJREFU WIXtl71LI1EUxU82H4WkEFERCUgKK0GsBSVqISIoKFYiWqj4VUmw1D9ArCwCKrEKCIpoCELQIlYi 4geohcqAIDMpDI4QZ0w0zNlqZXezm3mTGAK73m7mvjnv987cN++OjSRRwvhWysm/AL4A/i2A09NT 5LWj+QmxtbVFp9PJmZkZGoZh6dmCHdjZ2cH8/DzOzs4gyzJmZ2etOVHIysPhMFtbW/n4+EiSzGQy nJ6ept/vF3aiIIBgMEhN0365ZxgGg8EgdV0X0rCR//lZ4PgMkWg0img0ClVV4XA4MDg4CJ/PJ/Zw ITWQSqU4MTHBtbU1vr29kSTv7+/Z2NjIlZUVIY28AQzD4MjICM/Pz7NyGxsbdLvdTCaTpjp518Dq 6ip8Ph+ampqycjU1NXh5ecHl5aWpTl41kEwmsb29jb29vT/mJUkCALjdbnOxfOxfWlpiJBL5a76r q4ter5fv7++mWnkBdHZ2fhTd77G/v0+73Z4T8Oew/Ari8Tg8Hg+cTifi8TgikQheX19RX1+PTCaD qakprK+vo7u7W0jPMkAsFkN7ezsAYHl5GeFwGBUVFbi7u4PdbkdfXx+GhobEBa3aPz4+TlmWP67T 6TR1XadhGLy6uqLL5eLm5qawnmWAnp6enPn+/n42NDQIn4aWvgOKoqC2tjbnGK/Xi+vra6iqKqRp CSAWi6GtrS3nmEQiAQB4enoqDoDZIXN7ewubzWbqVF4AkiShurr6r3lVVXFxcYGWlhaUlZV9LoAs y1AUJeeYQCAAXdfh9/tFZcW3YSgUYnl5eVYL9iMkSWJlZSWHh4ctdcbCAGNjYwwEAlxYWMjKHR0d sa6ujqOjo0yn08KTkxZ6wt7eXuzu7mJxcRE3Nzdobm5GKpXCwcEBNE3D3NwcOjo6xK238goeHh44 OTn5cf38/Mzj42OenJxQVVVLK87LgVAoBJfLhYGBAesrNAmhXXB4eCjeZBYDIJFIoKqqqjQAiqLA 4/EUZXIAMK0BktA0Tay/KwZAsaPkv2ZfACUH+A4ej1+8JtunwgAAAABJRU5ErkJggg== "
+         id="image5228"
+         x="1"
+         y="-2.220446e-16" />
+    </g>
+  </g>
+</svg>
