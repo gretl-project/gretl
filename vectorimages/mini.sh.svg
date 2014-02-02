@@ -23,7 +23,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -53,6 +53,18 @@
        type="xygrid"
        id="grid3034" />
   </sodipodi:namedview>
+  <g
+     inkscape:groupmode="layer"
+     id="layer5"
+     inkscape:label="Camada1">
+    <rect
+       style="fill:#ffffff;stroke:#ffffff;stroke-width:1.06912208;display:inline"
+       id="rect3193"
+       width="14.973454"
+       height="13.893255"
+       x="0.48539332"
+       y="0.58869964" />
+  </g>
   <g
      inkscape:groupmode="layer"
      id="layer1"
