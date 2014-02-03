@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   width="16"
+   height="16"
+   sodipodi:docname="summary.svg">
+  <metadata
+     id="metadata8">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs6" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="966"
+     inkscape:window-height="673"
+     id="namedview4"
+     showgrid="true"
+     inkscape:zoom="19.685853"
+     inkscape:cx="8.3651355"
+     inkscape:cy="9.4248278"
+     inkscape:window-x="266"
+     inkscape:window-y="68"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="g3859">
+    <inkscape:grid
+       type="xygrid"
+       id="grid2987"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <g
+     inkscape:groupmode="layer"
+     id="layer1"
+     inkscape:label="Camada"
+     style="display:inline" />
+  <g
+     style="display:inline"
+     inkscape:label="Camada Texto"
+     id="g3859"
+     inkscape:groupmode="layer">
+    <g
+       id="g3930">
+      <rect
+         y="0.62898767"
+         x="0.47659373"
+         height="14.894419"
+         width="15.09761"
+         id="rect3056"
+         style="display:inline;fill:#ffffff;stroke:#ffffff;stroke-width:0.93722939000000005" />
+      <text
+         transform="scale(1.0924072,0.91540957)"
+         sodipodi:linespacing="125%"
+         id="text3044"
+         y="3.3882055"
+         x="0.27900532"
+         style="display:inline;font-size:3.66163826000000014px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#808080;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+         xml:space="preserve"><tspan
+           y="3.3882055"
+           x="0.27900532"
+           id="tspan3046"
+           sodipodi:role="line">01010101</tspan><tspan
+           id="tspan3050"
+           y="7.9652534"
+           x="0.27900532"
+           sodipodi:role="line">01010101</tspan><tspan
+           id="tspan3052"
+           y="12.542301"
+           x="0.27900532"
+           sodipodi:role="line">01010101</tspan><tspan
+           id="tspan3054"
+           y="17.119349"
+           x="0.27900532"
+           sodipodi:role="line">01010101</tspan><tspan
+           id="tspan3048"
+           y="21.696396"
+           x="0.27900532"
+           sodipodi:role="line" /></text>
+      <text
+         sodipodi:linespacing="125%"
+         id="text3875"
+         y="8.050806"
+         x="0.60957491"
+         style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+         xml:space="preserve"><tspan
+           y="8.050806"
+           x="0.60957491"
+           id="tspan3877"
+           sodipodi:role="line">μ</tspan><tspan
+           id="tspan3898"
+           y="28.050806"
+           x="0.60957491"
+           sodipodi:role="line" /></text>
+      <text
+         sodipodi:linespacing="125%"
+         id="text3900"
+         y="15.181388"
+         x="6.6851034"
+         style="font-size:16px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+         xml:space="preserve"><tspan
+           y="15.181388"
+           x="6.6851034"
+           id="tspan3902"
+           sodipodi:role="line">σ</tspan></text>
+    </g>
+  </g>
+</svg>
