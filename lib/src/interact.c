@@ -5570,25 +5570,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = matrix_command_driver(cmd->ci, cmd->list, cmd->param,
 					dset, cmd->opt, prn);
 	} else {
-	    /* check if we have a weighting variable */
-	    const char *wgtvname;
-	    int wgtvar; 
-
-	    wgtvname = get_optval_string(cmd->ci, OPT_W); 
-	    if (wgtvname == NULL) {
-		wgtvar = 0;
-	    } else {
-		wgtvar = current_series_index(dset, wgtvname);
-
-		if (wgtvar < 1 || wgtvar >= dset->v) {
-		    err = E_UNKVAR;
-		}
-	    }
-
-	    if (!err) {
-		err = list_summary(cmd->list, wgtvar, dset, 
-				   cmd->opt, prn);
-	    }
+	    err = list_summary_driver(cmd->list, dset, cmd->opt, prn);
 	}
 	break; 
 

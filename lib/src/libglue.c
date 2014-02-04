@@ -606,3 +606,29 @@ int matrix_freq_driver (const int *list,
     return err;
 }
 
+int list_summary_driver (const int *list, const DATASET *dset, 
+			 gretlopt opt, PRN *prn)
+{
+    int wtvar = 0;
+    int err = 0;
+
+    if (opt & OPT_W) {
+	const char *wname = get_optval_string(SUMMARY, OPT_W);
+
+	if (wname == NULL) {
+	    err = E_DATA;
+	} else {
+	    wtvar = current_series_index(dset, wname);
+	    if (wtvar < 0) {
+		err = E_UNKVAR;
+	    }
+	}
+    }
+
+    if (!err) {
+	err = list_summary(list, wtvar, dset, opt, prn);
+    }
+
+    return err;
+}
+

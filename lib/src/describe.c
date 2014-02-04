@@ -4617,6 +4617,11 @@ static Summary *summary_new (const int *list, int wv, gretlopt opt)
     }
 
     s->list = gretl_list_copy(list);
+    if (s->list == NULL) {
+	free(s);
+	return NULL;
+    }
+
     s->weight_var = wv;
     s->opt = opt;
     s->n = 0;
@@ -4668,13 +4673,12 @@ static int compare_wgtord_rows (const void *a, const void *b)
     return (da[0][0] > db[0][0]) - (da[0][0] < db[0][0]);
 }
 
-static int weighted_order_stats(const double *y, const double *w, 
-				double *ostats, int n, int k)
+static int weighted_order_stats (const double *y, const double *w, 
+				 double *ostats, int n, int k)
 {
     /* "ostats" contains the quantiles to compute, and is re-used 
        in output to hold the results 
     */
-
     int t, i, err = 0;
     double wsum, x, p, q;
     double **X = NULL;
@@ -4753,11 +4757,11 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
 			       int wtvar, gretlopt opt, 
 			       PRN *prn, int *err) 
 {
+    const double *wts;
+    double *x, ostats[5];
     int t1 = dset->t1;
     int t2 = dset->t2;
     Summary *s;
-    double *x;
-    double *ostats;
     int i, t;
 
     s = summary_new(list, wtvar, opt);
@@ -4767,14 +4771,14 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
     }
 
     x = malloc(dset->n * sizeof *x);
-    ostats = malloc(5 * sizeof *ostats);
-    if (x == NULL || ostats == NULL) {
+    if (x == NULL) {
 	*err = E_ALLOC;
 	free_summary(s);
 	return NULL;
     }    
 
-    const double *wts = dset->Z[wtvar];
+    wts = dset->Z[wtvar];
+
     for (i=0; i<list[0]; i++)  {
 	double *pskew = NULL, *pkurt = NULL;
 	int vi = s->list[i+1];
@@ -4858,7 +4862,6 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
 		}
 	    }
 	}
-
 #if 0
 	if (dataset_is_panel(dset) && list[0] == 1) {
 	    panel_variance_info(x, dset, s->mean[0], &s->sw, &s->sb);
@@ -4867,7 +4870,6 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
     } 
 
     free(x);
-    free(ostats);
 
     return s;
 }
