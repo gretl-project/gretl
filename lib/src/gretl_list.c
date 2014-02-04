@@ -2137,8 +2137,8 @@ int gretl_list_has_separator (const int *list)
  * sub-lists, one containing the elements of @list preceding
  * the separator and one containing the elements following
  * the separator.  The sub-lists are newly allocated, and assigned
- * as the content of @plist1 and @plist2 respectively. However,
- * one or other of the sublists can be discarded by passing
+ * as the content of @plist1 and @plist2 respectively. Note, however,
+ * that one or other of the sublists can be discarded by passing
  * NULL as the second or third argument.
  *
  * Returns: 0 on success, %E_ALLOC is memory allocation fails,
@@ -2181,7 +2181,6 @@ int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
 		free(list1);
 		return E_ALLOC;
 	    }
-
 	    for (i=1; i<=list2[0]; i++) {
 		list2[i] = list[i + n];
 	    }
