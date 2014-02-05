@@ -1,14 +1,14 @@
 # translation of es.po to Spanish
-# Copyright (C) 2002--2013 Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>,
+# Copyright (C) 2001--2014 Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>,
 # This file is distributed under the same license as the gretl package.
 #
-# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2013.
+# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2014.
 msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-02-04 08:58-0500\n"
-"PO-Revision-Date: 2013-10-22 18:58+0200\n"
+"PO-Revision-Date: 2014-02-05 09:29+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -1222,9 +1222,9 @@ msgid "Observation number out of bounds"
 msgstr "Número de observaciones fuera de los límites"
 
 #: lib/src/dataio.c:1170
-#, fuzzy, c-format
+#, c-format
 msgid "wrote %s.gdt\n"
-msgstr "escribió %s\n"
+msgstr "se escribió %s.gdt\n"
 
 #: lib/src/dataio.c:1172 lib/src/gretl_paths.c:2296 gui2/model_table.c:1372
 #, c-format
@@ -1797,9 +1797,9 @@ msgid "for the variable '%s' (%d valid observations)"
 msgstr "para la variable '%s' (%d observaciones válidas)"
 
 #: lib/src/describe.c:4440
-#, fuzzy, c-format
+#, c-format
 msgid "Weighting variable: %s\n"
-msgstr "variable de ponderaciones"
+msgstr "Variable de ponderaciones: %s\n"
 
 #: lib/src/describe.c:4468 lib/src/describe.c:4496 gui2/guiprint.c:771
 msgid "Std. Dev."
@@ -3434,9 +3434,8 @@ msgid "LR test for rho = 0"
 msgstr "Contraste LR para rho = 0"
 
 #: lib/src/gretl_model.c:3476
-#, fuzzy
 msgid "Joint test on named regressors"
-msgstr "Regresores de la segunda ecuación"
+msgstr "Contraste conjunto de los regresores nombrados"
 
 #: lib/src/gretl_model.c:3495
 msgid "robust variant"
@@ -5045,9 +5044,8 @@ msgid "Dependent variable"
 msgstr "Variable dependiente"
 
 #: lib/src/modelprint.c:1635
-#, fuzzy
 msgid "Estimated using X-13-ARIMA"
-msgstr "Estimación usando X-12-ARIMA"
+msgstr "Estimado usando X-13-ARIMA"
 
 #: lib/src/modelprint.c:1637
 msgid "Estimated using X-12-ARIMA"
@@ -5434,9 +5432,9 @@ msgid "P-value($F$)"
 msgstr "Valor p (de $F$)"
 
 #: lib/src/modelprint.c:2894
-#, fuzzy, c-format
+#, c-format
 msgid "LSDV F(%d, %d)"
-msgstr "F(%d, %d)"
+msgstr "F(%d, %d) MCVF"
 
 #: lib/src/modelprint.c:2911
 msgid "Uncentered $R^2$"
@@ -5464,22 +5462,19 @@ msgstr "R-cuadrado de McFadden"
 
 #: lib/src/modelprint.c:2921
 msgid "LSDV $R^2$"
-msgstr ""
+msgstr "$R^2$ MCVF"
 
 #: lib/src/modelprint.c:2921
-#, fuzzy
 msgid "LSDV R-squared"
-msgstr "R-cuadrado"
+msgstr "R-cuadrado MCVF (LSDV)"
 
 #: lib/src/modelprint.c:2922
-#, fuzzy
 msgid "Within $R^2$"
-msgstr "Intra"
+msgstr "$R^2$ intra"
 
 #: lib/src/modelprint.c:2922
-#, fuzzy
 msgid "Within R-squared"
-msgstr "R-cuadrado"
+msgstr "R-cuadrado 'intra'"
 
 #: lib/src/modelprint.c:2952
 msgid "Mean of innovations"
@@ -6973,9 +6968,9 @@ msgid "= %s times %s"
 msgstr "= %s veces %s"
 
 #: lib/src/transforms.c:645
-#, fuzzy, c-format
+#, c-format
 msgid "dummy for %s = '%s'"
-msgstr "variable ficticia para %s = %g"
+msgstr "variable ficticia para %s = '%s'"
 
 #: lib/src/transforms.c:647 lib/src/transforms.c:650
 #, c-format
@@ -9507,14 +9502,12 @@ msgstr ""
 "¿Desea sobreescribirlo?"
 
 #: gui2/fileselect.c:758 gui2/fileselect.c:787
-#, fuzzy
 msgid "Gretl datafiles (*.gdt)"
-msgstr "Ficheros de datos gretl (*.gdt)"
+msgstr "Ficheros de datos de Gretl (*.gdt)"
 
 #: gui2/fileselect.c:759 gui2/fileselect.c:788
-#, fuzzy
 msgid "Gretl binary datafiles (*.gdtb)"
-msgstr "Ficheros de datos gretl (*.gdt)"
+msgstr "Ficheros de datos binarios de gretl (*.gdtb)"
 
 #: gui2/fileselect.c:760
 msgid "CSV files (*.csv)"
@@ -9594,7 +9587,7 @@ msgstr "ficheros de Ox (*.ox)"
 
 #: gui2/fileselect.c:850
 msgid "Compression level (0 = none)"
-msgstr ""
+msgstr "Nivel de compresión (0 = ninguno)"
 
 #: gui2/filters.c:92
 msgid "Simple moving average"
@@ -10766,9 +10759,8 @@ msgid "_Sample file..."
 msgstr "Archivo de _muestra..."
 
 #: gui2/gretl.c:1570
-#, fuzzy
 msgid "_Append data..."
-msgstr "A_ñadir datos"
+msgstr "A_ñadir datos..."
 
 #: gui2/gretl.c:1571
 msgid "_Save data"
@@ -11164,9 +11156,8 @@ msgid "_Time trend"
 msgstr "_Tendencia temporal"
 
 #: gui2/gretl.c:1691
-#, fuzzy
 msgid "_Panel unit index"
-msgstr "_buscador de valores P"
+msgstr "Índice de unidades en datos de _panel"
 
 #: gui2/gretl.c:1692
 msgid "_Random variable..."
@@ -14298,9 +14289,8 @@ msgid "gretl datafile (.gdt)"
 msgstr "fichero de datos gretl (.gdt)"
 
 #: gui2/selector.c:6099
-#, fuzzy
 msgid "gretl binary datafile (.gdtb)"
-msgstr "fichero de datos gretl (.gdt)"
+msgstr "fichero de datos binario de gretl (.gdtb)"
 
 #: gui2/selector.c:6100
 msgid "gretl database (.bin)"
@@ -16444,9 +16434,9 @@ msgid "Storing"
 msgstr "Almacenando"
 
 #: plugin/progress_bar.c:177
-#, fuzzy, c-format
+#, c-format
 msgid "Scanning %d fonts"
-msgstr "Explorando %ld fuentes"
+msgstr "Explorando %d fuentes"
 
 #: plugin/quantreg.c:380
 msgid "Couldn't calculate confidence intervals for this model"
