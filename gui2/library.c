@@ -4941,28 +4941,6 @@ void do_freq_dist (void)
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
 
-/* tramo "LINUXST" from BDE outputs ISO-8859-1 
-   http://www.bde.es/servicio/software/linuxste.htm
-*/
-
-static gchar *maybe_fix_tramo_output (gchar *buf)
-{
-    gchar *ret = buf;
-
-    if (!g_utf8_validate(buf, -1, NULL)) {
-	gsize wrote;
-
-	ret = g_convert(buf, -1, "UTF-8", "ISO-8859-1",
-			NULL, &wrote, NULL);
-	if (ret == NULL) {
-	    errbox("Couldn't read TRAMO output");
-	} 
-	g_free(buf);
-    } 
-
-    return ret;
-}
-
 /* If we got a non-null warning message from X-12-ARIMA,
    pull it out of the .err file and display it in a
    warning dialog box.
@@ -5006,6 +4984,37 @@ static void display_x12a_warning (const char *fname)
     }
 }
 
+static gchar *retrieve_tx_output (const char *fname, int *err)
+{
+    gchar *buf = NULL;
+    gchar *ret = NULL;
+
+    *err = gretl_file_get_contents(fname, &buf, NULL);
+
+    if (*err) {
+	remove(fname);
+    } else if (!g_utf8_validate(buf, -1, NULL)) {
+	/* here we assume that the text encoding in both x12a
+	   and tramo output will be ISO-8859 (if not ASCII) 
+	*/
+	GError *gerr = NULL;
+	gsize bytes;
+
+	ret = g_convert(buf, -1, "UTF-8", "ISO-8859-1", 
+			NULL, &bytes, &gerr);
+	if (gerr != NULL) {
+	    errbox(gerr->message);
+	    g_error_free(gerr);
+	    *err = 1;
+	}	
+	g_free(buf);
+    } else {
+	ret = buf;
+    }
+
+    return ret;
+}
+
 static void display_tx_output (const char *fname, int graph_ok,
 			       int tramo, int oldv, gretlopt opt)
 {
@@ -5013,38 +5022,16 @@ static void display_tx_output (const char *fname, int graph_ok,
 	/* text output suppressed */
 	remove(fname);
     } else {
-	/* note that in some error cases this file might
-	   be informative */
-	gchar *gbuf = NULL;
-	char *buf;
-	int ferr = gretl_file_get_contents(fname, &gbuf, NULL);
+	gchar *buf;
 	PRN *prn;
+	int err = 0;
 
-	if (ferr) {
-	    remove(fname);
+	buf = retrieve_tx_output(fname, &err);
+	if (err) {
 	    return;
 	}
 
-	if (tramo) {
-	    gbuf = maybe_fix_tramo_output(gbuf);
-	    if (gbuf == NULL) {
-		remove(fname);
-		return;
-	    } 
-	}
-
-	if (!g_utf8_validate(gbuf, -1, NULL)) {
-	    gsize bytes;
-
-	    buf = g_convert(gbuf, -1, "UTF-8", "ISO-8859-1", 
-			    NULL, &bytes, NULL);
-	} else {
-	    buf = gretl_strdup(gbuf);
-	}
-	g_free(gbuf);
-
 	prn = gretl_print_new_with_buffer(buf);
-
 	view_buffer(prn, (tramo)? 106 : 84, 500, 
 		    (tramo)? _("gretl: TRAMO analysis") :
 		    _("gretl: X-12-ARIMA analysis"),
@@ -5110,16 +5097,16 @@ static void real_do_tramo_x12a (int v, int tramo)
     } else if (opt & OPT_W) {
 	/* got a warning from x12a */
 	display_x12a_warning(outfile);
-	opt &= ~OPT_W;
+	opt ^= OPT_W;
     } else if (opt & OPT_S) {
 	/* created x12a spec file for editing */
 	view_file(outfile, 1, 0, 78, 370, EDIT_X12A);
-	opt &= ~OPT_S;
+	opt ^= OPT_S;
 	return;
     } else if (opt & OPT_T) {
 	/* selected TRAMO only: no graph */
 	graph_ok = 0;
-	opt &= ~OPT_T;
+	opt ^= OPT_T;
     }
 
     if (*outfile != '\0') {
