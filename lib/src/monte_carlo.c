@@ -3154,10 +3154,11 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 				     cmd->word);
 		err = 1;
 	    } else if (cmd->ci == GENR) {
-		if (subst || (cmd->opt & OPT_U)) {
+		if (subst || (cmd->opt & OPT_O)) {
 		    /* can't use a "compiled" genr if string substitution
 		       has been done, since the genr expression will not
-		       be constant */
+		       be constant 
+		    */
 		    if (!loop_is_verbose(loop)) {
 			cmd->opt |= OPT_Q;
 		    }

@@ -370,7 +370,7 @@ static int nls_genr_setup (nlspec *s)
 
     if (!err && s->hesscall != NULL) {
 	s->hgen = genr_compile(s->hesscall, s->dset, 
-			       OPT_P | OPT_U, &err);
+			       OPT_P | OPT_O, &err);
 	if (!err) {
 	    err = execute_genr(s->hgen, s->dset, s->prn);
 	} 

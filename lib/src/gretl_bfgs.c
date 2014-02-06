@@ -1653,7 +1653,7 @@ static int user_gen_setup (umax *u,
 	/* process gradient formula */
 	err = optimizer_get_matrix_name(gradcall, u->gmname);
 	if (!err) {
-	    u->gg = genr_compile(gradcall, dset, OPT_P | OPT_U, &err);
+	    u->gg = genr_compile(gradcall, dset, OPT_P | OPT_O, &err);
 	    if (!err) {
 		err = execute_genr(u->gg, dset, u->prn);
 	    } 
@@ -1664,7 +1664,7 @@ static int user_gen_setup (umax *u,
 	/* process Hessian formula */
 	err = optimizer_get_matrix_name(hesscall, u->hmname);
 	if (!err) {
-	    u->gh = genr_compile(hesscall, dset, OPT_P | OPT_U, &err);
+	    u->gh = genr_compile(hesscall, dset, OPT_P | OPT_O, &err);
 	    if (!err) {
 		err = execute_genr(u->gg, dset, u->prn);
 	    } 
