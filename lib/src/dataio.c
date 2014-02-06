@@ -2759,7 +2759,10 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
 		}
 	    }
 	}
-	if (ftype != GRETL_UNRECOGNIZED) {
+    }
+
+    if (ftype != GRETL_UNRECOGNIZED) {
+	if (gretl_test_fopen(fname, "r") == 0) {
 	    return ftype;
 	}
     }
