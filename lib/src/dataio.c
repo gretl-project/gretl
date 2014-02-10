@@ -2737,7 +2737,7 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
     GretlFileType ftype = GRETL_UNRECOGNIZED;
 
     if (ext != NULL) {
-	/* first try judging the type by extension */
+	/* First try judging the type by extension */
 	if (!strcmp(ext, ".inp")) { 
 	    ftype = GRETL_SCRIPT;
 	} else if (!strcmp(ext, ".gretl")) {
@@ -2759,11 +2759,13 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
 		}
 	    }
 	}
-    }
-
-    if (ftype != GRETL_UNRECOGNIZED) {
-	if (gretl_test_fopen(fname, "r") == 0) {
-	    return ftype;
+	if (ftype != GRETL_UNRECOGNIZED) {
+	    /* We got a type from the extension, but can we find
+	       the file "as is"? If so, we're done.
+	    */
+	    if (gretl_test_fopen(fname, "r") == 0) {
+		return ftype;
+	    }
 	}
     }
 

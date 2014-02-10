@@ -4545,6 +4545,14 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 #endif
     int i, j, l;
 
+#if 0 // defined(USE_SIMD)
+    if (k <= 8 && !atr && !btr && !cmod && !is_block_matrix(a) && 
+	!is_block_matrix(b) && !is_block_matrix(c)) {
+	gretl_matrix_simd_mul(a, b, c);
+	return;
+    }
+#endif
+
     if (cmod == GRETL_MOD_CUMULATE) {
 	beta = 1;
     } else if (cmod == GRETL_MOD_DECREMENT) {
