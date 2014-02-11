@@ -210,5 +210,7 @@ const char *gretl_function_complete (const char *s);
 
 void gretl_function_hash_cleanup (void);
 
+void set_mpi_rank_and_size (int rank, int size);
+
 #endif /* GENMAIN_H */
 

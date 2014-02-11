@@ -19,6 +19,9 @@ have_readline = @have_readline@
 READLINE_LIBS = @READLINE_LIBS@
 READLINE_CFLAGS = @READLINE_CFLAGS@
 
+have_openmpi = @have_openmpi@
+OPENMPI_CFLAGS = @OPENMPI_CFLAGS@
+
 SSE2_CFLAGS = @SSE2_CFLAGS@
 AVX_CFLAGS = @AVX_CFLAGS@
 ifeq ($(AVX_CFLAGS),)

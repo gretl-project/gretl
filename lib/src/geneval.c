@@ -1377,6 +1377,15 @@ static NODE *eval_pdist (NODE *n, parser *p)
     return ret;
 }
 
+static int mpi_rank = 0;
+static int mpi_size = 1;
+
+void set_mpi_rank_and_size (int rank, int size)
+{
+    mpi_rank = rank;
+    mpi_size = size;
+}
+
 static double get_const_by_id (int id)
 {
     if (id == CONST_PI) {
@@ -1396,6 +1405,10 @@ static double get_const_by_id (int id)
 #else
 	return 0;
 #endif
+    } else if (id == CONST_MPI_RANK) {
+	return mpi_rank;
+    } else if (id == CONST_MPI_SIZE) {
+	return mpi_size;
     } else {
 	return NADBL;
     }

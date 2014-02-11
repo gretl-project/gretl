@@ -1,4 +1,4 @@
-# generated automatically by aclocal 1.14 -*- Autoconf -*-
+# generated automatically by aclocal 1.14.1 -*- Autoconf -*-
 
 # Copyright (C) 1996-2013 Free Software Foundation, Inc.
 
@@ -11250,6 +11250,7 @@ m4_include([macros/gmp.m4])
 m4_include([macros/lapack.m4])
 m4_include([macros/mpfr.m4])
 m4_include([macros/openmp.m4])
+m4_include([macros/openmpi.m4])
 m4_include([macros/readline.m4])
 m4_include([macros/sse2.m4])
 m4_include([macros/unixodbc.m4])

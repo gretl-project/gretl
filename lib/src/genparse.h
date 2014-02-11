@@ -402,7 +402,9 @@ enum {
     CONST_NA,
     CONST_INF,
     CONST_WIN32,
-    CONST_EPS
+    CONST_EPS,
+    CONST_MPI_RANK,
+    CONST_MPI_SIZE
 };
 
 enum {

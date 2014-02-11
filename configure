@@ -657,6 +657,7 @@ use_xdg_utils
 use_xdg
 build_po
 build_mailer
+have_openmpi
 have_odbc
 have_audio
 have_gnu_regex
@@ -706,6 +707,8 @@ READLINE_LIBS
 READLINE_CFLAGS
 new_readline
 have_readline
+OPENMPI_CFLAGS
+MPICC
 OPENMP_CFLAGS
 AVX_CFLAGS
 SSE2_CFLAGS
@@ -857,6 +860,7 @@ enable_libtool_lock
 enable_sse2
 enable_avx
 enable_openmp
+with_openmpi_include
 with_readline_prefix
 with_gmp_prefix
 with_mpfr_prefix
@@ -1559,6 +1563,7 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot=DIR Search for dependent libraries within DIR
                         (or the compiler's sysroot if not specified).
+  --with-openmpi-include=PFX path to Openmpi header
   --with-readline-prefix=PFX   Prefix where readline is installed (optional)
   --with-gmp-prefix=PFX   Prefix where GMP is installed (optional)
   --with-mpfr-prefix=PFX   Prefix where MPFR is installed (optional)
@@ -15335,6 +15340,93 @@ if test "$ac_openmp_result" = "yes" ; then
 
 fi
 
+
+
+# Extract the first word of "mpicc", so it can be a program name with args.
+set dummy mpicc; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_MPICC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$MPICC"; then
+  ac_cv_prog_MPICC="$MPICC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_MPICC="yes"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+MPICC=$ac_cv_prog_MPICC
+if test -n "$MPICC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPICC" >&5
+$as_echo "$MPICC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+if test x"${MPICC}" = xyes ; then
+
+#
+# Set up configure script macro
+#
+
+# Check whether --with-openmpi-include was given.
+if test "${with_openmpi_include+set}" = set; then :
+  withval=$with_openmpi_include; OPENMPI_inc_check="$with_openmpi_include $with_openmpi_include/include $with_openmpi_include/include/openmpi"
+else
+  OPENMPI_inc_check="/usr/include /usr/local/include /opt/openmpi/include /usr/include/openmpi"
+fi
+
+#
+# Look for OpenMPI headers
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenMPI include directory" >&5
+$as_echo_n "checking for OpenMPI include directory... " >&6; }
+OPENMPI_incdir=
+for m in $OPENMPI_inc_check ; do
+  if test -d "$m" && test -f "$m/mpi.h" ; then
+    OPENMPI_incdir=$m
+    break
+  fi
+done
+
+if test -z "$OPENMPI_incdir" ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: couldn't find mpi.h" >&5
+$as_echo "couldn't find mpi.h" >&6; }
+  have_openmpi=no
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OPENMPI_incdir" >&5
+$as_echo "$OPENMPI_incdir" >&6; }
+  have_openmpi=yes
+  $as_echo "#define HAVE_OPENMPI 1" >>confdefs.h
+
+  if test "$OPENMPI_incdir" = "/usr/include" ; then
+    OPENMPI_CFLAGS=""
+  else
+    OPENMPI_CFLAGS="-I${OPENMPI_incdir}"
+  fi
+
+fi
+
+else
+  have_openmpi="no"
+fi
+
 for ac_header in netdb.h sys/socket.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
@@ -18031,6 +18123,7 @@ if test x"${MSGFMT}" != x ; then
 else
    echo "*** msgfmt not found, can't build message catalogs"
 fi
+
 
 
 
@@ -23306,6 +23399,7 @@ Configuration:
   MPFR support:                           ${have_mpfr}
   sse2 support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
+  OpenMPI support:                        ${have_openmpi}
   AVX support for arithmetic:             ${avx_result}
   Build with GTK version:                 ${gtk_version}
   Build gretl documentation:              ${build_docs}

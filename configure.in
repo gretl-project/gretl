@@ -325,6 +325,19 @@ if test "$ac_openmp_result" = "yes" ; then
   AC_DEFINE(OPENMP_BUILD, 1)
 fi
 
+dnl
+dnl Check for mpicc executable
+dnl
+AC_DEFUN([AC_PROG_MPICC],
+[AC_CHECK_PROG(MPICC,mpicc,yes)])
+
+AC_PROG_MPICC
+if test x"${MPICC}" = xyes ; then
+  AC_OPENMPI_HEADER
+else
+  have_openmpi="no"
+fi
+
 dnl try to build mailer plugin?
 AC_CHECK_HEADERS(netdb.h sys/socket.h,
 	build_mailer="yes" ; AC_DEFINE(ENABLE_MAILER),
@@ -690,6 +703,7 @@ AC_SUBST(fake_gtkspinner)
 AC_SUBST(have_gnu_regex)
 AC_SUBST(have_audio)
 AC_SUBST(have_odbc)
+AC_SUBST(have_openmpi)
 AC_SUBST(build_mailer)
 AC_SUBST(build_po)
 AC_SUBST(use_xdg)
@@ -908,6 +922,7 @@ Configuration:
   MPFR support:                           ${have_mpfr}
   sse2 support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
+  OpenMPI support:                        ${have_openmpi}
   AVX support for arithmetic:             ${avx_result}
   Build with GTK version:                 ${gtk_version}
   Build gretl documentation:              ${build_docs}
