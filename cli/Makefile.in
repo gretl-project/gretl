@@ -21,6 +21,7 @@ READLINE_CFLAGS = @READLINE_CFLAGS@
 
 have_openmpi = @have_openmpi@
 OPENMPI_CFLAGS = @OPENMPI_CFLAGS@
+MPICC = mpicc
 
 SSE2_CFLAGS = @SSE2_CFLAGS@
 AVX_CFLAGS = @AVX_CFLAGS@
@@ -43,14 +44,19 @@ endif
 ifeq ($(have_readline),yes)
   RL_OBJ = complete.o
 endif
+ifeq ($(have_openmpi),yes)
+  MPICLI = gretlcli-mpi$(EXEEXT)
+endif
 
 ifeq ($(quiet_build),yes)
   AMP = @
   CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
   CCV = $(CC) $(SIMD_OPT) $(OMP_OPT) > /dev/null
+  MPICCV = $(MPICC) $(SIMD_OPT) $(OMP_OPT) > /dev/null
 else
   CCV = $(CC) $(SIMD_OPT) $(OMP_OPT)
+  MPICCV = $(MPICC) $(SIMD_OPT) $(OMP_OPT)
 endif
 
 GRETLLIB = ../lib/libgretl-1.0.la
@@ -65,6 +71,8 @@ vpath %.c $(topsrc)/cli
 
 SRCS = gretlcli.c complete.c
 OBJS = gretlcli.o $(RL_OBJ)
+MPISRC = gretlcli-mpi.c
+MPIOBJ = gretlcli-mpi.o
 
 DEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
 
@@ -76,12 +84,24 @@ LIBTOOL = ../libtool
 %.o: %.c
 	$(CCECHO)
 	$(AMP)$(CC) -c $(CFLAGS) $<
-	$(AMP)$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
+	$(AMP)$(CC) $(CFLAGS) -MM $< > .deps/$*.d
+
+all: $(CLI) $(MPICLI)
 
 $(CLI): .deps $(OBJS)
 	$(LDECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(OBJS) \
 	$(GRETLLIB) $(READLINE_LIBS)
+
+$(MPICLI): .deps $(MPIOBJ)
+	$(LDECHO)
+	$(AMP)$(LIBTOOL) --mode=link $(MPICCV) $(LDFLAGS) -o $@ $(MPIOBJ) \
+	$(GRETLLIB)
+
+$(MPIOBJ): $(MPISRC)
+	$(CCECHO)
+	$(AMP)$(MPICC) -c $(CFLAGS) $<
+	$(AMP)$(MPICC) $(CFLAGS) -MM $< > .deps/$*.d
 
 .deps:
 	$(AMP)mkdir $@
@@ -93,6 +113,9 @@ $(CLI): .deps $(OBJS)
 install: $(CLI) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(CLI) $(DESTDIR)$(bindir)/$(CLI)
 
+install-mpi: $(MPICLI) installdirs
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(CLI) $(DESTDIR)$(bindir)/$(MPICLI)
+
 install-strip: $(CLI) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(CLI) $(DESTDIR)$(bindir)/$(CLI)
 
@@ -100,7 +123,7 @@ installdirs: $(tooldir)/mkinstalldirs
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir)
 
 clean:
-	rm -f *.o $(CLI)
+	rm -f *.o $(CLI) $(MPICLI)
 	rm -rf .libs .deps
 
 distclean: clean
