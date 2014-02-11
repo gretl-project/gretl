@@ -38,9 +38,9 @@ static double *mval_realloc (gretl_matrix *m, int n)
 
 #ifdef USE_AVX
 
-static void gretl_matrix_simd_add_to (gretl_matrix *a,
-				      const gretl_matrix *b,
-				      int n)
+static int gretl_matrix_simd_add_to (gretl_matrix *a,
+				     const gretl_matrix *b,
+				     int n)
 {
     double *ax = a->val;
     const double *bx = b->val;
@@ -65,11 +65,13 @@ static void gretl_matrix_simd_add_to (gretl_matrix *a,
     for (i=0; i<rem; i++) {
 	ax[i] += bx[i];
     }
+
+    return 0;
 }
 
-static void gretl_matrix_simd_subt_from (gretl_matrix *a,
-					 const gretl_matrix *b,
-					 int n)
+static int gretl_matrix_simd_subt_from (gretl_matrix *a,
+					const gretl_matrix *b,
+					int n)
 {
     double *ax = a->val;
     const double *bx = b->val;
@@ -94,13 +96,15 @@ static void gretl_matrix_simd_subt_from (gretl_matrix *a,
     for (i=0; i<rem; i++) {
 	ax[i] -= bx[i];
     }
+
+    return 0;
 }
 
 #else /* SSE */
 
-static void gretl_matrix_simd_add_to (gretl_matrix *a,
-				      const gretl_matrix *b,
-				      int n)
+static int gretl_matrix_simd_add_to (gretl_matrix *a,
+				     const gretl_matrix *b,
+				     int n)
 {
     double *ax = a->val;
     const double *bx = b->val;
@@ -123,11 +127,13 @@ static void gretl_matrix_simd_add_to (gretl_matrix *a,
     if (n % 2) {
 	ax[0] += bx[0];
     }
+
+    return 0;
 }
 
-static void gretl_matrix_simd_subt_from (gretl_matrix *a,
-					 const gretl_matrix *b,
-					 int n)
+static int gretl_matrix_simd_subt_from (gretl_matrix *a,
+					const gretl_matrix *b,
+					int n)
 {
     double *ax = a->val;
     const double *bx = b->val;
@@ -150,15 +156,17 @@ static void gretl_matrix_simd_subt_from (gretl_matrix *a,
     if (n % 2) {
 	ax[0] -= bx[0];
     }
+
+    return 0;
 }
 
 #endif /* AVX vs SSE */
 
 #ifdef USE_AVX
 
-static void gretl_matrix_simd_add (const gretl_matrix *a,
-				   const gretl_matrix *b,
-				   gretl_matrix *c)
+static int gretl_matrix_simd_add (const gretl_matrix *a,
+				  const gretl_matrix *b,
+				  gretl_matrix *c)
 {
     const double *ax = a->val;
     const double *bx = b->val;
@@ -186,11 +194,13 @@ static void gretl_matrix_simd_add (const gretl_matrix *a,
     for (i=0; i<rem; i++) {
 	cx[i] = ax[i] + bx[i];
     }
+
+    return 0;
 }
 
-static void gretl_matrix_simd_subtract (const gretl_matrix *a,
-					const gretl_matrix *b,
-					gretl_matrix *c)
+static int gretl_matrix_simd_subtract (const gretl_matrix *a,
+				       const gretl_matrix *b,
+				       gretl_matrix *c)
 {
     const double *ax = a->val;
     const double *bx = b->val;
@@ -218,13 +228,15 @@ static void gretl_matrix_simd_subtract (const gretl_matrix *a,
     for (i=0; i<rem; i++) {
 	cx[i] = ax[i] - bx[i];
     }
+
+    return 0;
 }
 
 #else /* SSE */
 
-static void gretl_matrix_simd_add (const gretl_matrix *a,
-				   const gretl_matrix *b,
-				   gretl_matrix *c)
+static int gretl_matrix_simd_add (const gretl_matrix *a,
+				  const gretl_matrix *b,
+				  gretl_matrix *c)
 {
     const double *ax = a->val;
     const double *bx = b->val;
@@ -250,11 +262,13 @@ static void gretl_matrix_simd_add (const gretl_matrix *a,
     if (n % 2) {
 	cx[0] = ax[0] + bx[0];
     }
+
+    return 0;
 }
 
-static void gretl_matrix_simd_subtract (const gretl_matrix *a,
-					const gretl_matrix *b,
-					gretl_matrix *c)
+static int gretl_matrix_simd_subtract (const gretl_matrix *a,
+				       const gretl_matrix *b,
+				       gretl_matrix *c)
 {
     const double *ax = a->val;
     const double *bx = b->val;
@@ -280,6 +294,8 @@ static void gretl_matrix_simd_subtract (const gretl_matrix *a,
     if (n % 2) {
 	cx[0] = ax[0] - bx[0];
     }
+
+    return 0;
 }
 
 #endif /* AVX vs SSE */
@@ -288,9 +304,9 @@ static void gretl_matrix_simd_subtract (const gretl_matrix *a,
 
 /* fast but restrictive: both A and B must be 4 x 4 */
 
-void gretl_matrix_avx_mul4 (const double *aval,
-			    const double *bval,
-			    double *cval)
+int gretl_matrix_avx_mul4 (const double *aval,
+			   const double *bval,
+			   double *cval)
 {
     __m256d b1, b2, b3, b4;
     __m256d mul, col;
@@ -319,6 +335,8 @@ void gretl_matrix_avx_mul4 (const double *aval,
 
 	_mm256_store_pd(&cval[4*j], col);
     }
+
+    return 0;
 }
 
 /* Note: this is probably usable only for k <= 8 (shortage of AVX
@@ -326,9 +344,9 @@ void gretl_matrix_avx_mul4 (const double *aval,
    unconstrained.
 */
 
-static void gretl_matrix_simd_mul (const gretl_matrix *A,
-				   const gretl_matrix *B,
-				   gretl_matrix *C)
+static int gretl_matrix_simd_mul (const gretl_matrix *A,
+				  const gretl_matrix *B,
+				  gretl_matrix *C)
 {
     int m = A->rows;
     int n = B->cols;
@@ -344,8 +362,7 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
 #endif
 
     if (m == 4 && n == 4 && k == 4) {
-	gretl_matrix_avx_mul4(aval, bval, cval);
-	return;
+	return gretl_matrix_avx_mul4(aval, bval, cval);
     }
 
     hmax = m / 4;
@@ -458,6 +475,8 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
 	    cval[m*j] = ccol;
 	}
     }
+
+    return 0;
 }
 
 #else /* SSE */
@@ -467,9 +486,9 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
    unconstrained.
 */
 
-static void gretl_matrix_simd_mul (const gretl_matrix *A,
-				   const gretl_matrix *B,
-				   gretl_matrix *C)
+static int gretl_matrix_simd_mul (const gretl_matrix *A,
+				  const gretl_matrix *B,
+				  gretl_matrix *C)
 {
     int m = A->rows;
     int n = B->cols;
@@ -549,6 +568,8 @@ static void gretl_matrix_simd_mul (const gretl_matrix *A,
 	    cval[m*j] = ccol;
 	}
     }
+
+    return 0;
 }
 
 #endif /* AVX vs SIMD */

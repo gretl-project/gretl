@@ -122,6 +122,8 @@ struct set_vars_ {
 /* support dyslexia */
 #define BLAS_NMK_MIN "blas_nmk_min"
 #define MP_NMK_MIN "mp_nmk_min"
+#define SIMD_K_MAX "simd_k_max"
+#define SIMD_MN_MIN "simd_mn_min"
 
 #define libset_boolvar(s) (!strcmp(s, ECHO) || \
                            !strcmp(s, MESSAGES) || \
@@ -170,7 +172,9 @@ struct set_vars_ {
 		       !strcmp(s, BLAS_MNK_MIN) || \
 		       !strcmp(s, MP_MNK_MIN) || \
 		       !strcmp(s, BLAS_NMK_MIN) || \
-		       !strcmp(s, MP_NMK_MIN))
+		       !strcmp(s, MP_NMK_MIN) || \
+		       !strcmp(s, SIMD_K_MAX) || \
+		       !strcmp(s, SIMD_MN_MIN))
 
 /* global state */
 set_vars *state;
@@ -825,8 +829,10 @@ static int negval_invalid (const char *var)
 	if (!strcmp(var, BLAS_MNK_MIN) ||
 	    !strcmp(var, MP_MNK_MIN) ||
 	    !strcmp(var, BLAS_NMK_MIN) ||
-	    !strcmp(var, MP_NMK_MIN)) {
-	    /* these can be set to -1 */
+	    !strcmp(var, MP_NMK_MIN) ||
+	    !strcmp(var, SIMD_K_MAX) ||
+	    !strcmp(var, SIMD_MN_MIN)) {
+	    /* these can all be set to -1 */
 	    ret = 0;
 	}
     }
@@ -1379,6 +1385,8 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_int(GRETL_DEBUG, prn, opt);
     libset_print_int(BLAS_MNK_MIN, prn, opt);
     libset_print_int(MP_MNK_MIN, prn, opt);
+    libset_print_int(SIMD_K_MAX, prn, opt);
+    libset_print_int(SIMD_MN_MIN, prn, opt);
 
     if (opt & OPT_D) {
 	libset_print_bool(SHELL_OK, prn, opt);
@@ -1847,6 +1855,10 @@ int libset_get_int (const char *key)
 	return get_blas_mnk_min();
     } else if (!strcmp(key, MP_MNK_MIN) || !strcmp(key, MP_NMK_MIN)) {
 	return mp_mnk_min;
+    } else if (!strcmp(key, SIMD_K_MAX)) {
+	return get_simd_k_max();
+    } else if (!strcmp(key, SIMD_MN_MIN)) {
+	return get_simd_mn_min();
     } else if (!strcmp(key, BFGS_VERBSKIP)) {
 	return state->bfgs_verbskip;
     } else if (!strcmp(key, CSV_DIGITS)) {
@@ -1930,6 +1942,12 @@ int libset_set_int (const char *key, int val)
 
     if (!strcmp(key, BLAS_MNK_MIN) || !strcmp(key, BLAS_NMK_MIN)) {
 	set_blas_mnk_min(val);
+	return 0;
+    } else if (!strcmp(key, SIMD_K_MAX)) {
+	set_simd_k_max(val);
+	return 0;
+    } else if (!strcmp(key, SIMD_MN_MIN)) {
+	set_simd_mn_min(val);
 	return 0;
     } else if (!strcmp(key, MP_MNK_MIN) || !strcmp(key, MP_NMK_MIN)) {
 	mp_mnk_min = val;

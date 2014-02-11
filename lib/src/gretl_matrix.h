@@ -764,4 +764,13 @@ void set_blas_mnk_min (int mnk);
 
 int get_blas_mnk_min (void);
 
+void set_simd_k_max (int k);
+
+int get_simd_k_max (void);
+
+void set_simd_mn_min (int mn);
+
+int get_simd_mn_min (void);
+
+
 #endif /* GRETL_MATRIX_H */

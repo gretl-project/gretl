@@ -32,8 +32,10 @@
 # include <omp.h>
 #endif
 
-#if 0 /* let's postpone this for a while */
-#if defined(USE_AVX) || defined(USE_SSE2)
+/* we could activate this for the case where USE_SSE2 is defined,
+   but it's probably not worth it
+*/
+#if defined(USE_AVX)
 # define USE_SIMD 1
 # if defined(HAVE_IMMINTRIN_H)
 #  include <immintrin.h>
@@ -43,9 +45,6 @@
 #  include <emmintrin.h>
 # endif
 #endif
-#endif /* postpone */
-
-#define SIMD_MIN 16
 
 /**
  * SECTION:gretl_matrix
@@ -2020,6 +2019,37 @@ static int subtract_scalar_from_matrix (gretl_matrix *targ, double x)
     return 0;
 }
 
+/* Below: setting of the maximal value of K = the shared inner
+   dimension in matrix multiplication for use of SIMD. Also
+   setting of the minimum value of M x N for doing matrix
+   addition and subtraction via SIMD.
+*/
+
+static int simd_k_max = -1;
+static int simd_mn_min = -1;
+
+void set_simd_k_max (int k)
+{
+    simd_k_max = k;
+}
+
+int get_simd_k_max (void)
+{
+    return simd_k_max;
+}
+
+void set_simd_mn_min (int mn)
+{
+    simd_mn_min = mn;
+}
+
+int get_simd_mn_min (void)
+{
+    return simd_mn_min;
+}
+
+#define simd_add_sub(mn) (simd_mn_min > 0 && mn >= simd_mn_min)
+
 /**
  * gretl_matrix_add_to:
  * @targ: target matrix.
@@ -2065,21 +2095,15 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
  st_mode: 
 #endif
 
-    if (n < SIMD_MIN || is_block_matrix(targ) || is_block_matrix(src)) {
-	/* we can't assume alignment of sub-matrices */
-	for (i=0; i<n; i++) {
-	    targ->val[i] += src->val[i];
-	}
-	return 0;
-    }
-
 #if defined(USE_SIMD)
-    gretl_matrix_simd_add_to(targ, src, n);
-#else
+    if (simd_add_sub(n) && !is_block_matrix(targ) && !is_block_matrix(src)) {
+	return gretl_matrix_simd_add_to(targ, src, n);
+    }
+#endif
+
     for (i=0; i<n; i++) {
 	targ->val[i] += src->val[i];
     }
-#endif
 
     return 0;
 }
@@ -2111,22 +2135,18 @@ gretl_matrix_add (const gretl_matrix *a, const gretl_matrix *b,
 
     n = rows * cols;
 
-    if (n < SIMD_MIN || is_block_matrix(a) || is_block_matrix(a) ||
-	is_block_matrix(c)) {
-	/* we can't assume suitable alignment of sub-matrices */
-	for (i=0; i<n; i++) {
-	    c->val[i] = a->val[i] + b->val[i];
-	}
-	return 0;
-    }
-
 #if defined(USE_SIMD)
-    gretl_matrix_simd_add(a, b, c);
-#else
+    if (simd_add_sub(n) && 
+	!is_block_matrix(a) && 
+	!is_block_matrix(b) &&
+	!is_block_matrix(c)) {
+	return gretl_matrix_simd_add(a, b, c);
+    }
+#endif
+
     for (i=0; i<n; i++) {
 	c->val[i] = a->val[i] + b->val[i];
     }
-#endif
 
     return 0;
 }
@@ -2209,20 +2229,15 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
  st_mode: 
 #endif
 
-    if (n < SIMD_MIN || is_block_matrix(targ) || is_block_matrix(src)) {
-	for (i=0; i<n; i++) {
-	    targ->val[i] -= src->val[i];
-	}
-	return 0;
-    }
-
 #if defined(USE_SIMD)
-    gretl_matrix_simd_subt_from(targ, src, n);
-#else
+    if (simd_add_sub(n) && !is_block_matrix(targ) && !is_block_matrix(src)) {
+	return gretl_matrix_simd_subt_from(targ, src, n);
+    }
+#endif
+
     for (i=0; i<n; i++) {
 	targ->val[i] -= src->val[i];
     }
-#endif
 
     return 0;
 }
@@ -2255,22 +2270,18 @@ gretl_matrix_subtract (const gretl_matrix *a, const gretl_matrix *b,
 
     n = rows * cols;
 
-    if (n < SIMD_MIN || is_block_matrix(a) || is_block_matrix(a) ||
-	is_block_matrix(c)) {
-	/* we can't assume suitable alignment of sub-matrices */
-	for (i=0; i<n; i++) {
-	    c->val[i] = a->val[i] - b->val[i];
-	}
-	return 0;
-    }
-
 #if defined(USE_SIMD)
-    gretl_matrix_simd_subtract(a, b, c);
-#else
+    if (simd_add_sub(n) && 
+	!is_block_matrix(a) && 
+	!is_block_matrix(b) &&
+	!is_block_matrix(c)) {
+	return gretl_matrix_simd_subtract(a, b, c);
+    }
+#endif
+
     for (i=0; i<n; i++) {
 	c->val[i] = a->val[i] - b->val[i];
     }
-#endif
 
     return 0;
 }
@@ -4545,14 +4556,6 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 #endif
     int i, j, l;
 
-#if 0 // defined(USE_SIMD)
-    if (k <= 8 && !atr && !btr && !cmod && !is_block_matrix(a) && 
-	!is_block_matrix(b) && !is_block_matrix(c)) {
-	gretl_matrix_simd_mul(a, b, c);
-	return;
-    }
-#endif
-
     if (cmod == GRETL_MOD_CUMULATE) {
 	beta = 1;
     } else if (cmod == GRETL_MOD_DECREMENT) {
@@ -4647,7 +4650,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 #endif /* _OPENMP */
 
 #if defined(USE_SIMD)
-    if (k <= 8 && !atr && !btr && !cmod && !is_block_matrix(a) && 
+    if (k <= simd_k_max && !atr && !btr && !cmod && !is_block_matrix(a) && 
 	!is_block_matrix(b) && !is_block_matrix(c)) {
 	gretl_matrix_simd_mul(a, b, c);
 	return;
