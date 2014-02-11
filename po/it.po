@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.9.12\n"
+"Project-Id-Version: gretl 1.9.15\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-02-04 08:58-0500\n"
-"PO-Revision-Date: 2013-11-10 19:13+0100\n"
+"PO-Revision-Date: 2014-02-11 10:38+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1220,9 +1220,9 @@ msgid "Observation number out of bounds"
 msgstr "Numero di osservazione oltre i limiti"
 
 #: lib/src/dataio.c:1170
-#, fuzzy, c-format
+#, c-format
 msgid "wrote %s.gdt\n"
-msgstr "scritto %s\n"
+msgstr "scritto %s.gdt\n"
 
 #: lib/src/dataio.c:1172 lib/src/gretl_paths.c:2296 gui2/model_table.c:1372
 #, c-format
@@ -1796,9 +1796,9 @@ msgid "for the variable '%s' (%d valid observations)"
 msgstr "per la variabile '%s' (%d osservazioni valide)"
 
 #: lib/src/describe.c:4440
-#, fuzzy, c-format
+#, c-format
 msgid "Weighting variable: %s\n"
-msgstr "Variabile pesi"
+msgstr "Variabile peso: %s\n"
 
 #: lib/src/describe.c:4468 lib/src/describe.c:4496 gui2/guiprint.c:771
 msgid "Std. Dev."
@@ -3428,9 +3428,8 @@ msgid "LR test for rho = 0"
 msgstr "LR test per rho = 0"
 
 #: lib/src/gretl_model.c:3476
-#, fuzzy
 msgid "Joint test on named regressors"
-msgstr "Regressori della seconda equazione"
+msgstr "Test congiunto sui regressori"
 
 #: lib/src/gretl_model.c:3495
 msgid "robust variant"
@@ -5027,13 +5026,12 @@ msgid "Dependent variable"
 msgstr "Variabile dipendente"
 
 #: lib/src/modelprint.c:1635
-#, fuzzy
 msgid "Estimated using X-13-ARIMA"
-msgstr "Stimato usando X-12-ARIMA"
+msgstr "Stimato con X-13-ARIMA"
 
 #: lib/src/modelprint.c:1637
 msgid "Estimated using X-12-ARIMA"
-msgstr "Stimato usando X-12-ARIMA"
+msgstr "Stimato con X-12-ARIMA"
 
 #: lib/src/modelprint.c:1640 lib/src/modelprint.c:1650
 msgid "exact ML"
@@ -5417,9 +5415,9 @@ msgid "P-value($F$)"
 msgstr "P-value($F$)"
 
 #: lib/src/modelprint.c:2894
-#, fuzzy, c-format
+#, c-format
 msgid "LSDV F(%d, %d)"
-msgstr "F(%d, %d)"
+msgstr "LSDV F(%d, %d)"
 
 #: lib/src/modelprint.c:2911
 msgid "Uncentered $R^2$"
@@ -5447,21 +5445,19 @@ msgstr "R-quadro di McFadden"
 
 #: lib/src/modelprint.c:2921
 msgid "LSDV $R^2$"
-msgstr ""
+msgstr "LSDV $R^2$"
 
 #: lib/src/modelprint.c:2921
-#, fuzzy
 msgid "LSDV R-squared"
-msgstr "R-quadro"
+msgstr "R-quadro LSDV"
 
 #: lib/src/modelprint.c:2922
-#, fuzzy
 msgid "Within $R^2$"
-msgstr "Nei gruppi"
+msgstr "$R^2$ intra-gruppi"
 
 #: lib/src/modelprint.c:2922
 msgid "Within R-squared"
-msgstr "R-quadro 'within'"
+msgstr "R-quadro intra-gruppi"
 
 #: lib/src/modelprint.c:2952
 msgid "Mean of innovations"
@@ -6941,9 +6937,9 @@ msgid "= %s times %s"
 msgstr "= %s per %s"
 
 #: lib/src/transforms.c:645
-#, fuzzy, c-format
+#, c-format
 msgid "dummy for %s = '%s'"
-msgstr "dummy per %s = %g"
+msgstr "dummy per %s = '%s'"
 
 #: lib/src/transforms.c:647 lib/src/transforms.c:650
 #, c-format
@@ -9471,14 +9467,12 @@ msgstr ""
 "Conferma la sovrascrittura?"
 
 #: gui2/fileselect.c:758 gui2/fileselect.c:787
-#, fuzzy
 msgid "Gretl datafiles (*.gdt)"
 msgstr "File di dati gretl (*.gdt)"
 
 #: gui2/fileselect.c:759 gui2/fileselect.c:788
-#, fuzzy
 msgid "Gretl binary datafiles (*.gdtb)"
-msgstr "File di dati gretl (*.gdt)"
+msgstr "File di dati binario gretl (*.gdtb)"
 
 #: gui2/fileselect.c:760
 msgid "CSV files (*.csv)"
@@ -9558,7 +9552,7 @@ msgstr "file Ox (*.ox)"
 
 #: gui2/fileselect.c:850
 msgid "Compression level (0 = none)"
-msgstr ""
+msgstr "Livello di compressione (0=nessuna)"
 
 #: gui2/filters.c:92
 msgid "Simple moving average"
@@ -9578,7 +9572,7 @@ msgstr "Filtro passa-banda di Baxter-King"
 
 #: gui2/filters.c:100
 msgid "Butterworth filter"
-msgstr "Filtro Butterworth"
+msgstr "Filtro di Butterworth"
 
 #: gui2/filters.c:102
 msgid "Polynomial trend"
@@ -10730,7 +10724,6 @@ msgid "_Sample file..."
 msgstr "File di _esempio..."
 
 #: gui2/gretl.c:1570
-#, fuzzy
 msgid "_Append data..."
 msgstr "A_ggiungi dati"
 
@@ -11129,9 +11122,8 @@ msgid "_Time trend"
 msgstr "_Trend temporale"
 
 #: gui2/gretl.c:1691
-#, fuzzy
 msgid "_Panel unit index"
-msgstr "Calcola _p-value"
+msgstr "Indice panel degli individui"
 
 #: gui2/gretl.c:1692
 msgid "_Random variable..."
@@ -14282,9 +14274,8 @@ msgid "gretl datafile (.gdt)"
 msgstr "gretl file di dati (.gdt)"
 
 #: gui2/selector.c:6099
-#, fuzzy
 msgid "gretl binary datafile (.gdtb)"
-msgstr "gretl file di dati (.gdt)"
+msgstr "file di dati binario gretl(.gdtb)"
 
 #: gui2/selector.c:6100
 msgid "gretl database (.bin)"
@@ -16423,9 +16414,9 @@ msgid "Storing"
 msgstr "Salvataggio in corso"
 
 #: plugin/progress_bar.c:177
-#, fuzzy, c-format
+#, c-format
 msgid "Scanning %d fonts"
-msgstr "Lettura di %ld caratteri"
+msgstr "Lettura di %d tipi di carattere"
 
 #: plugin/quantreg.c:380
 msgid "Couldn't calculate confidence intervals for this model"
