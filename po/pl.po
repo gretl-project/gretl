@@ -1,15 +1,15 @@
-# Polish translation for gretl-1.9.12cvs
+# Polish translation for gretl-1.9.15cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
-# Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2013
-# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2013
-# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2013
+# Pawel Kufel <qfel@mat.umk.pl>, 2004 - 2014
+# Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2014
+# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2014
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.9.12\n"
+"Project-Id-Version: gretl-1.9.15\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-02-04 08:58-0500\n"
-"PO-Revision-Date: 2013-10-12 00:30-0400\n"
+"PO-Revision-Date: 2014-02-11 00:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -1212,9 +1212,9 @@ msgid "Observation number out of bounds"
 msgstr "Numer obserwacji poza zakresem"
 
 #: lib/src/dataio.c:1170
-#, fuzzy, c-format
+#, c-format
 msgid "wrote %s.gdt\n"
-msgstr "zapisano %s\n"
+msgstr "zapisano %s.gdt\n"
 
 #: lib/src/dataio.c:1172 lib/src/gretl_paths.c:2296 gui2/model_table.c:1372
 #, c-format
@@ -1791,9 +1791,9 @@ msgid "for the variable '%s' (%d valid observations)"
 msgstr "dla zmiennej '%s' (%d prawidłowych obserwacji)"
 
 #: lib/src/describe.c:4440
-#, fuzzy, c-format
+#, c-format
 msgid "Weighting variable: %s\n"
-msgstr "Zmienna - wagi"
+msgstr "Zmienna - wagi: %s\n"
 
 #: lib/src/describe.c:4468 lib/src/describe.c:4496 gui2/guiprint.c:771
 msgid "Std. Dev."
@@ -3416,9 +3416,8 @@ msgid "LR test for rho = 0"
 msgstr "Statystyka testu LR dla rho = 0"
 
 #: lib/src/gretl_model.c:3476
-#, fuzzy
 msgid "Joint test on named regressors"
-msgstr "Wybór regresorów"
+msgstr "Joint test on named regressors"
 
 #: lib/src/gretl_model.c:3495
 msgid "robust variant"
@@ -4744,11 +4743,11 @@ msgstr "1-step GMM"
 
 #: lib/src/modelprint.c:921 gui2/selector.c:3636
 msgid "Ordered Logit"
-msgstr "Wielokryteriowy uporządkowany Logit"
+msgstr "Wielopoziomowy uporządkowany Logit"
 
 #: lib/src/modelprint.c:923 gui2/selector.c:3638
 msgid "Multinomial Logit"
-msgstr "Wielokryteriowy nieuporządkowany Logit"
+msgstr "Wielopoziomowy nieuporządkowany Logit"
 
 #: lib/src/modelprint.c:929
 msgid "Random-effects probit"
@@ -4756,7 +4755,7 @@ msgstr "Probit z losowymi efektami"
 
 #: lib/src/modelprint.c:931 gui2/selector.c:3642
 msgid "Ordered Probit"
-msgstr "Wielokryteriowy uporządkowany Probit"
+msgstr "Wielopoziomowy uporządkowany Probit"
 
 #: lib/src/modelprint.c:937
 msgid "Two-step Heckit"
@@ -5013,9 +5012,8 @@ msgid "Dependent variable"
 msgstr "Zmienna zależna (Y)"
 
 #: lib/src/modelprint.c:1635
-#, fuzzy
 msgid "Estimated using X-13-ARIMA"
-msgstr "Wykorzystaj X-12-ARIMA"
+msgstr "Wykorzystaj X-13-ARIMA"
 
 #: lib/src/modelprint.c:1637
 msgid "Estimated using X-12-ARIMA"
@@ -5398,9 +5396,9 @@ msgid "P-value($F$)"
 msgstr "wartość p dla testu $F$"
 
 #: lib/src/modelprint.c:2894
-#, fuzzy, c-format
+#, c-format
 msgid "LSDV F(%d, %d)"
-msgstr "F(%d, %d)"
+msgstr "LSDV F(%d, %d)"
 
 #: lib/src/modelprint.c:2911
 msgid "Uncentered $R^2$"
@@ -5428,22 +5426,19 @@ msgstr "McFadden R-kwadrat"
 
 #: lib/src/modelprint.c:2921
 msgid "LSDV $R^2$"
-msgstr ""
+msgstr "LSDV $R^2$"
 
 #: lib/src/modelprint.c:2921
-#, fuzzy
 msgid "LSDV R-squared"
-msgstr "Wsp. determ. R-kwadrat"
+msgstr "LSDV R-kwadrat"
 
 #: lib/src/modelprint.c:2922
-#, fuzzy
 msgid "Within $R^2$"
-msgstr "Within"
+msgstr "Within $R^2$"
 
 #: lib/src/modelprint.c:2922
-#, fuzzy
 msgid "Within R-squared"
-msgstr "Wsp. determ. R-kwadrat"
+msgstr "Within R-kwadrat"
 
 #: lib/src/modelprint.c:2952
 msgid "Mean of innovations"
@@ -6921,9 +6916,9 @@ msgid "= %s times %s"
 msgstr "= %s times %s"
 
 #: lib/src/transforms.c:645
-#, fuzzy, c-format
+#, c-format
 msgid "dummy for %s = '%s'"
-msgstr "sztuczna zm. %s = %g"
+msgstr "sztuczna zm. %s = '%s'"
 
 #: lib/src/transforms.c:647 lib/src/transforms.c:650
 #, c-format
@@ -9445,14 +9440,12 @@ msgstr ""
 "Czy nadpiać istniejący plik?"
 
 #: gui2/fileselect.c:758 gui2/fileselect.c:787
-#, fuzzy
 msgid "Gretl datafiles (*.gdt)"
 msgstr "pliki danych gretla (*.gdt)"
 
 #: gui2/fileselect.c:759 gui2/fileselect.c:788
-#, fuzzy
 msgid "Gretl binary datafiles (*.gdtb)"
-msgstr "pliki danych gretla (*.gdt)"
+msgstr "binarne pliki danych gretla (*.gdtb)"
 
 #: gui2/fileselect.c:760
 msgid "CSV files (*.csv)"
@@ -9492,7 +9485,7 @@ msgstr "pliki SPSS (*.sav)"
 
 #: gui2/fileselect.c:769
 msgid "SAS xport files (*.xpt)"
-msgstr "pliki SAS xport (*.xpt)"
+msgstr "pliki danych SAS xport (*.xpt)"
 
 #: gui2/fileselect.c:770
 msgid "Octave files (*.m)"
@@ -9500,7 +9493,7 @@ msgstr "pliki programu GNU Octave (*.m)"
 
 #: gui2/fileselect.c:771
 msgid "JMulTi files (*.dat)"
-msgstr "pliki JMulTi (*.dat)"
+msgstr "pliki danych JMulTi (*.dat)"
 
 #: gui2/fileselect.c:772 gui2/fileselect.c:784
 msgid "all files (*.*)"
@@ -9524,7 +9517,7 @@ msgstr "pliki programu GNU Octave (*.m)"
 
 #: gui2/fileselect.c:778
 msgid "Python files (*.py)"
-msgstr "pliki Pythona (*.plt)"
+msgstr "pliki Pythona (*.py)"
 
 #: gui2/fileselect.c:780
 msgid "Ox files (*.ox)"
@@ -9532,7 +9525,7 @@ msgstr "pliki programu Ox (*.ox)"
 
 #: gui2/fileselect.c:850
 msgid "Compression level (0 = none)"
-msgstr ""
+msgstr "Pozim kompresji (0 = brak)"
 
 #: gui2/filters.c:92
 msgid "Simple moving average"
@@ -10704,9 +10697,8 @@ msgid "_Sample file..."
 msgstr "Pliki z _przykładami..."
 
 #: gui2/gretl.c:1570
-#, fuzzy
 msgid "_Append data..."
-msgstr "_Dołącz dane z pliku"
+msgstr "_Dołącz dane z pliku..."
 
 #: gui2/gretl.c:1571
 msgid "_Save data"
@@ -11102,9 +11094,8 @@ msgid "_Time trend"
 msgstr "_time - zmienna czasowa t"
 
 #: gui2/gretl.c:1691
-#, fuzzy
 msgid "_Panel unit index"
-msgstr "Wyznaczanie wartości _p"
+msgstr "indeks jednostek _panelu"
 
 #: gui2/gretl.c:1692
 msgid "_Random variable..."
@@ -11412,15 +11403,15 @@ msgstr "Model _Logitowy"
 
 #: gui2/gretl.c:1787 gui2/gretl.c:1791
 msgid "_Binary..."
-msgstr "_Dwukryteriowy (binarny)..."
+msgstr "_Dwupoziomowy (binarny)..."
 
 #: gui2/gretl.c:1788 gui2/gretl.c:1792
 msgid "_Ordered..."
-msgstr "wielokryteriowy _uporządkowany..."
+msgstr "Wielopoziomowy _uporządkowany..."
 
 #: gui2/gretl.c:1789
 msgid "_Multinomial..."
-msgstr "wielokryteriowy _nieuporządkowany..."
+msgstr "Wielopoziomowy _nieuporządkowany..."
 
 #: gui2/gretl.c:1790
 msgid "_Probit"
@@ -14242,9 +14233,8 @@ msgid "gretl datafile (.gdt)"
 msgstr "plik danych gretla (.gdt)"
 
 #: gui2/selector.c:6099
-#, fuzzy
 msgid "gretl binary datafile (.gdtb)"
-msgstr "plik danych gretla (.gdt)"
+msgstr "binarny plik danych gretla (.gdtb)"
 
 #: gui2/selector.c:6100
 msgid "gretl database (.bin)"
@@ -16381,9 +16371,9 @@ msgid "Storing"
 msgstr "Zapisywanie"
 
 #: plugin/progress_bar.c:177
-#, fuzzy, c-format
+#, c-format
 msgid "Scanning %d fonts"
-msgstr "Skanowanie %ld czcionek"
+msgstr "Skanowanie %d czcionek"
 
 #: plugin/quantreg.c:380
 msgid "Couldn't calculate confidence intervals for this model"
@@ -16739,115 +16729,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "WARNING: ascii data read error at var %d, obs %d"
-#~ msgstr "UWAGA: błędny odczyt danych dla zmiennej %d w obserwacji %d"
-
-#~ msgid "Couldn't open file %s"
-#~ msgstr "Nie można otworzyć pliku %s"
-
-#~ msgid ""
-#~ "Opened header file %s\n"
-#~ "Couldn't find list of variables (must be terminated with a semicolon)"
-#~ msgstr ""
-#~ "W otwartym pliku %s\n"
-#~ "nie może znaleźć listy zmiennych (nazwy muszą być rozdzielone przecinkami)"
-
-#~ msgid "space for comments"
-#~ msgstr "obszar dla komentarzy"
-
-#~ msgid "No info in %s\n"
-#~ msgstr "Brak informacji w %s\n"
-
-#~ msgid ""
-#~ "Data info in file %s:\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Informacja o danych w pliku %s\n"
-#~ "\n"
-
-#~ msgid " (none)\n"
-#~ msgstr " (brak)\n"
-
-#~ msgid "Write of header file failed"
-#~ msgstr "Błąd w zapisie nagłówka pliku"
-
-#~ msgid "Write of labels file failed"
-#~ msgstr "Błąd w zapisie etykiet pliku"
-
-#~ msgid "Bad data label in %s"
-#~ msgstr "Błędna etykieta danych w %s"
-
-#~ msgid "extraneous label for var '%s'\n"
-#~ msgstr "niezwiązana etykieta ze zmienną '%s'\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Reading header file %s\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Wczytywanie nagłówka pliku %s\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Reading "
-#~ msgstr ""
-#~ "\n"
-#~ "Wczytywanie "
-
-#~ msgid "time-series"
-#~ msgstr "szeregi czasowe"
-
-#~ msgid "cross-sectional"
-#~ msgstr "dane przekrojowe"
-
-#~ msgid " datafile"
-#~ msgstr " plik danych"
-
-#~ msgid "labels attribute for observations must be 'true' or 'false'"
-#~ msgstr "etykieta atrybutu dla obserwacji musi być 'true' lub 'false'"
-
-#~ msgid "Data written OK.\n"
-#~ msgstr "Plik danych zapisany: OK\n"
-
-#~ msgid "_Import"
-#~ msgstr "_Import"
-
-#~ msgid "_text/CSV..."
-#~ msgstr "_text/CSV..."
-
-#~ msgid "_Octave..."
-#~ msgstr "_Octave..."
-
-#~ msgid "_Gnumeric..."
-#~ msgstr "_Gnumeric..."
-
-#~ msgid "_Excel..."
-#~ msgstr "_Excel..."
-
-#~ msgid "_Open Document..."
-#~ msgstr "_OpenOffice..."
-
-#~ msgid "_Eviews..."
-#~ msgstr "E_views..."
-
-#~ msgid "_Stata..."
-#~ msgstr "_Stata..."
-
-#~ msgid "_SPSS..."
-#~ msgstr "_SPSS..."
-
-#~ msgid "_SAS (xport)..."
-#~ msgstr "SAS (_xport)..."
-
-#~ msgid "_JMulTi..."
-#~ msgstr "_JMulTi..."
-
-#~ msgid "_Standard format..."
-#~ msgstr "format s_tandardowy..."
-
-#~ msgid "Error generating time trend"
-#~ msgstr "Błąd generowania zmiennej czasowej"
-
-#~ msgid "Error generating index variable"
-#~ msgstr "Błąd generowania zmiennej - index"
