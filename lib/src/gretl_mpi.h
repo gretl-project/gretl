@@ -20,6 +20,8 @@
 #ifndef GRETL_MPI_H
 #define GRETL_MPI_H
 
+#include <mpi.h>
+
 int gretl_matrix_mpi_reduce (gretl_matrix *m, MPI_Op op,
 			     double *global_x, int id);
 

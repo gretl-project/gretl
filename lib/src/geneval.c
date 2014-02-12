@@ -34,7 +34,6 @@
 #include "csvdata.h"
 
 #ifdef HAVE_MPI
-# include <mpi.h>
 # include "gretl_mpi.h"
 #endif
 
@@ -1451,11 +1450,25 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = NULL;
 
 #ifndef HAVE_MPI
-    gretl_errmsg_set("MPI functions are not supported");
+    gretl_errmsg_set("MPI functions are not supported in this gretl build");
     p->err = 1;
 #else
     if (f == F_MPI_SEND && l->t != MAT) {
 	p->err = E_TYPES;
+    } else if (f == F_MPIBCAST) {
+	if (l->t != U_ADDR) {
+	    p->err = E_TYPES;
+	} else {
+	    /* switch to 'content' sub-node */
+	    l = l->v.b1.b;
+	    if (!umatrix_node(l)) {
+		p->err = E_TYPES;
+	    }
+	}
+    }
+
+    if (p->err) {
+	return NULL;
     } else if (f == F_MPI_SEND) {
 	const gretl_matrix *m = l->v.m;
 	int dest = node_get_int(r, p);
@@ -1474,6 +1487,20 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 	}
 	if (!p->err) {
 	    ret->v.m = gretl_matrix_mpi_receive(src, &p->err);
+	}
+    } else if (f == F_MPIBCAST) {
+	const char *mname = l->vname;
+	gretl_matrix *m = l->v.m;
+	int id;
+
+	MPI_Comm_rank(MPI_COMM_WORLD, &id);
+
+	ret = aux_scalar_node(p);
+	if (!p->err) {
+	    ret->v.xval = gretl_matrix_mpi_bcast(&m, id);
+	}
+	if (id > 0) {
+	    p->err = user_matrix_replace_matrix_by_name(mname, m);
 	}
     } else {
 	gretl_errmsg_set("MPI function not yet supported");

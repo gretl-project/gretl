@@ -244,6 +244,7 @@ SRCS = adf_kpss.c \
 	irfboot.c
 
 ifeq ($(have_mpi),yes)
+  PUBLIC_HDRS += gretl_mpi.h
   SRCS += gretl_mpi.c
 endif
 

@@ -18,8 +18,6 @@
  */
 
 #include "libgretl.h"
-
-#include <mpi.h>
 #include "gretl_mpi.h"
 
 static void gretl_mpi_error (int *err)
@@ -91,7 +89,9 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm, int id)
 
     if (!err) {
 	/* broadcast the matrix content */
-	err = MPI_Bcast(m->val, rc[0] * rc[1], MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	int n = rc[0] * rc[1];
+
+	err = MPI_Bcast(m->val, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
 
     if (err) {
@@ -194,7 +194,9 @@ int gretl_matrix_mpi_send_cols (const gretl_matrix *m,
     err = MPI_Send(rc, 2, MPI_INT, j, 0, MPI_COMM_WORLD);
 
     if (!err) {
-	err = MPI_Send(m->val + (j-1)*n, n, MPI_DOUBLE, j, 0, MPI_COMM_WORLD);
+	void *ptr = m->val + (j-1)*n;
+
+	err = MPI_Send(ptr, n, MPI_DOUBLE, j, 0, MPI_COMM_WORLD);
     }
 
     if (err) {
