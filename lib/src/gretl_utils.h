@@ -39,6 +39,8 @@ enum {
 
 void libgretl_init (void);
 
+void libgretl_mpi_init (int self, int np);
+
 void libgretl_session_cleanup (int mode);
 
 void libgretl_cleanup (void);

@@ -1455,7 +1455,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 #else
     if (f == F_MPI_SEND && l->t != MAT) {
 	p->err = E_TYPES;
-    } else if (f == F_MPIBCAST) {
+    } else if (f == F_BCAST) {
 	if (l->t != U_ADDR) {
 	    p->err = E_TYPES;
 	} else {
@@ -1488,7 +1488,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 	if (!p->err) {
 	    ret->v.m = gretl_matrix_mpi_receive(src, &p->err);
 	}
-    } else if (f == F_MPIBCAST) {
+    } else if (f == F_BCAST) {
 	const char *mname = l->vname;
 	gretl_matrix *m = l->v.m;
 	int id;
@@ -10634,7 +10634,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_MPI_SEND:
     case F_MPI_RECV:
-    case F_MPIBCAST:
+    case F_BCAST:
 	ret = mpi_transfer_node(l, r, t->t, p);
 	break;
     default: 

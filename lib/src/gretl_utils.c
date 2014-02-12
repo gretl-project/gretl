@@ -31,6 +31,15 @@
 #include "kalman.h"
 #include "gretl_www.h"
 
+#if defined(_OPENMP) && defined(USE_OPENMP)
+# include <omp.h>
+# define OMP_STOPWATCH
+#endif
+
+#ifdef HAVE_MPI
+# include <mpi.h>
+#endif
+
 #ifdef USE_RLIB
 # include "gretl_foreign.h"
 #endif
@@ -1722,57 +1731,90 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
     return err;
 }
 
+#if defined(HAVE_MPI) || defined(OMP_STOPWATCH)
+
+static double dt0;
+
+#endif /* MPI and OMP common time var */
+
+#ifdef HAVE_MPI
+
+static void gretl_mpi_stopwatch_init (void)
+{
+    dt0 = MPI_Wtime();
+}
+
+static double gretl_mpi_stopwatch (void)
+{
+    double dt1 = MPI_Wtime();
+    double x = dt1 - dt0;
+
+    dt0 = dt1;
+
+    return x;
+}
+
+static int want_mpi_stopwatch (void)
+{
+    static int ret = -1;
+
+    if (ret < 0) {
+	MPI_Initialized(&ret);
+	ret = ret > 0;
+    }
+
+    return ret;
+}
+
+#endif /* HAVE_MPI */
+
 /* internal execution timer: on OpenMP use omp_get_wtime(); else
    on Windows use use GetTickCount; else use times() if available,
    otherwise fall back on clock()
 */ 
 
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#ifdef OMP_STOPWATCH
 
-#include <omp.h>
-
-static double tim0;
-
-static void gretl_stopwatch_init (void)
+static void gretl_omp_stopwatch_init (void)
 {
-    tim0 = omp_get_wtime();
+    dt0 = omp_get_wtime();
 }
 
-double gretl_stopwatch (void)
+static double gretl_omp_stopwatch (void)
 {
-    double tim1 = omp_get_wtime();
-    double x = tim1 - tim0;
+    double dt1 = omp_get_wtime();
+    double x = dt1 - dt0;
 
-    tim0 = tim1;
+    dt0 = dt1;
 
     return x;
 } 
 
-#elif defined(WIN32)
+#elif defined(WIN32) /* Windows, without OpenMP */
 
 #include <windows.h>
 
-static DWORD tim0;
+static DWORD wt0;
 
-static void gretl_stopwatch_init (void)
+static void gretl_win32_stopwatch_init (void)
 {
-    tim0 = GetTickCount();
+    wt0 = GetTickCount();
 }
 
-double gretl_stopwatch (void)
+static double gretl_win32_stopwatch (void)
 {
-    DWORD tim1 = GetTickCount();
+    DWORD wt1 = GetTickCount();
     double x;
 
-    x = (double) (tim1 - tim0) / 1000.0;
-    tim0 = tim1;
+    x = (double) (wt1 - wt0) / 1000.0;
+    wt0 = wt1;
 
     return x;
 } 
 
 #else /* !OPENMP, !WIN32 */
 
-static clock_t tim0;
+static clock_t ut0;
 
 #ifdef HAVE_SYS_TIMES_H
 # include <sys/times.h>
@@ -1782,65 +1824,117 @@ static unsigned ticks_per_sec;
 # include <time.h>
 #endif
 
-static void gretl_stopwatch_init (void)
+static void gretl_unix_stopwatch_init (void)
 {
 #ifdef HAVE_SYS_TIMES_H
     struct tms timebuf;
 
     ticks_per_sec = sysconf(_SC_CLK_TCK);
-    tim0 = times(&timebuf);
+    ut0 = times(&timebuf);
 #else
-    tim0 = clock();
+    ut0 = clock();
 #endif
 }
 
-double gretl_stopwatch (void)
+static double gretl_unix_stopwatch (void)
 {
-    clock_t tim1;
+    clock_t ut1;
     double x;
 
 #ifdef HAVE_SYS_TIMES_H
     struct tms timebuf;
 
-    tim1 = times(&timebuf);
-    x = (double) (tim1 - tim0) / ticks_per_sec;
+    ut1 = times(&timebuf);
+    x = (double) (ut1 - ut0) / ticks_per_sec;
 #else
-    tim1 = clock();
-    x = (double) (tim1 - tim0) / CLOCKS_PER_SEC;
+    ut1 = clock();
+    x = (double) (ut1 - ut0) / CLOCKS_PER_SEC;
 #endif
 
-    tim0 = tim1;
+    ut0 = ut1;
 
     return x;
 } 
 
-#endif /* stopwatch variants */
+#endif /* specific stopwatch variants */
+
+static void gretl_stopwatch_init (void)
+{
+#if defined(HAVE_MPI)
+    if (want_mpi_stopwatch()) {
+	gretl_mpi_stopwatch_init();
+	return;
+    }
+#endif
+#if defined(OMP_STOPWATCH)
+    gretl_omp_stopwatch_init();
+#elif defined(WIN32)
+    gretl_win32_stopwatch_init();
+#else
+    gretl_unix_stopwatch_init();
+#endif    
+}
+
+double gretl_stopwatch (void)
+{
+#if defined(HAVE_MPI)
+    if (want_mpi_stopwatch()) {
+	return gretl_mpi_stopwatch();
+    }
+#endif
+#if defined(OMP_STOPWATCH)
+    return gretl_omp_stopwatch();
+#elif defined(WIN32)
+    return gretl_win32_stopwatch();
+#else
+    return gretl_unix_stopwatch();
+#endif 
+}
 
 /* library init and cleanup functions */
+
+static void real_libgretl_init (int self, int np)
+{
+    libset_init();
+
+    if (np > 1) {
+	/* use DCMT for multiple RNGs */
+	gretl_dcmt_init(np, self, 4172);
+    } else {
+	/* one RNG will do nicely */
+	gretl_rand_init();
+    }
+
+    gretl_xml_init();
+    gretl_stopwatch_init();
+    mpf_set_default_prec(get_mp_bits());
+}
 
 /**
  * libgretl_init:
  *
  * In a program that uses libgretl, this function should be 
  * called once, before any other libgretl functions are
- * used. See also libgretl_cleanup().
+ * used. See also libgretl_cleanup(), and libgretl_mpi_init().
  **/
 
 void libgretl_init (void)
 {
-    libset_init();
+    real_libgretl_init(0, 1);
+}
 
-#ifdef WIN32
-    fprintf(stderr, "libgretl_init: initializing RNG\n");
-#endif
-    gretl_rand_init();
-#ifdef WIN32
-    fprintf(stderr, " RNG ready\n");
-#endif
+/**
+ * libgretl_mpi_init:
+ * @np: the number of MPI processes.
+ *
+ * This function provides an alternative to libgretl_init()
+ * which should be used when a gretl client is to be run in 
+ * MPI mode.
+ **/
 
-    gretl_xml_init();
-    gretl_stopwatch_init();
-    mpf_set_default_prec(get_mp_bits());
+void libgretl_mpi_init (int self, int np)
+{
+    real_libgretl_init(self, np);
 }
 
 void libgretl_session_cleanup (int mode)

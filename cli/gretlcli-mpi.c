@@ -57,7 +57,7 @@ char cmdfile[MAXLEN];
 FILE *fb;
 int runit;
 int data_status;
-char linebak[MAXLINE];      /* for storing comments */
+char linebak[MAXLINE];
 
 static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn);
 static int push_input_file (FILE *fp);
@@ -232,7 +232,6 @@ int main (int argc, char *argv[])
     ExecState state;
     char *line = NULL;
     int quiet = 0;
-    int makepkg = 0;
     char filearg[MAXLEN];
     char runfile[MAXLEN];
     double scriptval = NADBL;
@@ -305,7 +304,7 @@ int main (int argc, char *argv[])
 	}
     }
 
-    libgretl_init();
+    libgretl_mpi_init(id, np);
 
     logo(quiet);
     if (!quiet) {
@@ -339,15 +338,10 @@ int main (int argc, char *argv[])
     gretl_exec_state_init(&state, 0, line, &cmd, model, prn);
 
     if (!na(scriptval)) {
-	/* define "scriptopt" */
 	gretl_scalar_add("scriptopt", scriptval);
     }
 
-    /* re-initialize: will be incremented by "run" cmd */
     runit = 0;
-    if (makepkg) {
-	set_gretl_echo(0);
-    } 
     sprintf(line, "run %s\n", runfile);
     err = cli_exec_line(&state, dset, cmdprn);
     if (err && fb == NULL) {
@@ -356,7 +350,8 @@ int main (int argc, char *argv[])
 
     *linecopy = '\0';
 
-    /* main command loop */
+    /* enter main command loop */
+
     while (cmd.ci != QUIT && fb != NULL) {
 	if (err && gretl_error_is_fatal()) {
 	    gretl_abort(linecopy);
@@ -389,7 +384,9 @@ int main (int argc, char *argv[])
 	strcpy(linecopy, line);
 	tailstrip(linecopy);
 	err = cli_exec_line(&state, dset, cmdprn);
-    } /* end of get commands loop */
+    }
+
+    /* finished main command loop */
 
     if (!err) {
 	err = gretl_if_state_check(0);
@@ -398,13 +395,7 @@ int main (int argc, char *argv[])
 	}
     }
 
-    if (makepkg && !err) {
-	switch_ext(filearg, runfile, "gfn");
-	sprintf(line, "makepkg %s\n", filearg);
-	cli_exec_line(&state, dset, cmdprn);
-    }
-
-    /* leak check -- try explicitly freeing all memory allocated */
+    /* leak check -- explicitly free all memory allocated */
 
     destroy_working_model(model);
     destroy_dataset(dset);

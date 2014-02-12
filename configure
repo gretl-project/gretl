@@ -850,6 +850,7 @@ with_gsf
 with_x_12_arima
 with_tramo_seats
 with_libR
+with_mpi
 with_odbc
 with_audio
 enable_static
@@ -1552,12 +1553,13 @@ Optional Packages:
   --without-libintl-prefix     don't search for libintl in includedir and libdir
   --with-lucida           Use Lucida fonts for manual [CVS only]
   --with-gmake            Use GNU make explicitly [default=no]
-  --with-readline      Build with libreadline support [default=auto]
+  --with-readline        Use readline library [default=auto]
   --with-mpfr            Use MPFR library [default=auto]
   --with-gsf             Use libgsf library [default=no]
   --with-x-12-arima      include X-12-ARIMA support [default=yes]
   --with-tramo-seats     include TRAMO/SEATS support [default=yes]
   --with-libR            include libR support [default=auto]
+  --with-mpi             include MPI support [default=auto]
   --with-odbc            include ODBC support
   --with-audio           include audio graph support (experimental)
   --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
@@ -2733,6 +2735,7 @@ have_libxml2="no"
 have_xslt="no"
 try_odbc="no"
 have_odbc="no"
+try_mpi="yes"
 try_libR="yes"
 have_libR="no"
 check_gnuplot="yes"
@@ -6536,6 +6539,18 @@ fi
 
 
 
+# Check whether --with-mpi was given.
+if test "${with_mpi+set}" = set; then :
+  withval=$with_mpi; if test "$withval" = "no"
+then
+  try_mpi=no
+fi
+else
+  try_mpi=yes
+fi
+
+
+
 # Check whether --with-odbc was given.
 if test "${with_odbc+set}" = set; then :
   withval=$with_odbc; if test "$withval" = "yes"
@@ -9394,7 +9409,7 @@ ia64-*-hpux*)
   rm -rf conftest*
   ;;
 
-x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*| \
+x86_64-*kfreebsd*-gnu|x86_64-*linux*|ppc*-*linux*|powerpc*-*linux*| \
 s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
@@ -9412,10 +9427,7 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	  x86_64-*linux*)
 	    LD="${LD-ld} -m elf_i386"
 	    ;;
-	  powerpc64le-*linux*)
-	    LD="${LD-ld} -m elf32lppclinux"
-	    ;;
-	  powerpc64-*linux*)
+	  ppc64-*linux*|powerpc64-*linux*)
 	    LD="${LD-ld} -m elf32ppclinux"
 	    ;;
 	  s390x-*linux*)
@@ -9434,10 +9446,7 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	  x86_64-*linux*)
 	    LD="${LD-ld} -m elf_x86_64"
 	    ;;
-	  powerpcle-*linux*)
-	    LD="${LD-ld} -m elf64lppc"
-	    ;;
-	  powerpc-*linux*)
+	  ppc*-*linux*|powerpc*-*linux*)
 	    LD="${LD-ld} -m elf64ppc"
 	    ;;
 	  s390*-*linux*|s390*-*tpf*)
@@ -13284,14 +13293,10 @@ fi
   # before this can be enabled.
   hardcode_into_libs=yes
 
-  # Add ABI-specific directories to the system library path.
-  sys_lib_dlsearch_path_spec="/lib64 /usr/lib64 /lib /usr/lib"
-
   # Append ld.so.conf contents to the search path
   if test -f /etc/ld.so.conf; then
     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;/^[	 ]*hwcap[	 ]/d;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;s/"//g;/^$/d' | tr '\n' ' '`
-    sys_lib_dlsearch_path_spec="$sys_lib_dlsearch_path_spec $lt_ld_extra"
-
+    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
   fi
 
   # We used to test for /lib/ld.so.1 and disable shared libraries on
@@ -15353,9 +15358,10 @@ if test "$ac_openmp_result" = "yes" ; then
 
 fi
 
+if test "$try_mpi" = "yes" ; then
 
 
-# Extract the first word of "mpicc", so it can be a program name with args.
+  # Extract the first word of "mpicc", so it can be a program name with args.
 set dummy mpicc; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -15392,7 +15398,7 @@ $as_echo "no" >&6; }
 fi
 
 
-if test x"${MPICC}" = xyes ; then
+  if test x"${MPICC}" = xyes ; then
 
 ARCH=`uname -m`
 if test "${ARCH}" = "i386" -o "${ARCH}" = "i686" -o "${ARCH}" = "ppc" -o "${ARCH}" = "sparcv9" ; then
@@ -15436,7 +15442,7 @@ $as_echo_n "checking for MPI library... " >&6; }
 MPI_libdir=
 for m in ${MPI_lib_check} ; do
   if test -d "$m" ; then
-    if (test -f "$m/libmpi.so" || test -f "$m/libmpi.a") ; then
+    if (test -f "$m/libmpi.so" || test -f "$m/libmpi.a" || test -f "$m/libmpi.dylib"); then
       MPI_libdir=$m
       break
     fi
@@ -15489,6 +15495,9 @@ $as_echo "$MPI_incdir" >&6; }
   fi
 fi
 
+  else
+    have_mpi="no"
+  fi
 else
   have_mpi="no"
 fi

@@ -59,6 +59,7 @@ have_libxml2="no"
 have_xslt="no"
 try_odbc="no"
 have_odbc="no"
+try_mpi="yes"
 try_libR="yes"
 have_libR="no"
 check_gnuplot="yes"
@@ -186,7 +187,7 @@ AC_ARG_WITH(gmake,
 AC_SUBST(MAKE)
 
 AC_ARG_WITH(readline,
-[  --with-readline      Build with libreadline support [[default=auto]]],
+[  --with-readline        Use readline library [[default=auto]]],
 if test "x${withval}" = "xno"
 then
   try_readline=no
@@ -246,6 +247,14 @@ then
   try_libR=no
 fi,
 try_libR=yes)
+
+AC_ARG_WITH(mpi,
+[  --with-mpi             include MPI support [[default=auto]]],
+if test "$withval" = "no"
+then
+  try_mpi=no
+fi,
+try_mpi=yes)
 
 AC_ARG_WITH(odbc,
 [  --with-odbc            include ODBC support],
@@ -325,15 +334,17 @@ if test "$ac_openmp_result" = "yes" ; then
   AC_DEFINE(OPENMP_BUILD, 1)
 fi
 
-dnl
-dnl Check for mpicc executable
-dnl
-AC_DEFUN([AC_PROG_MPICC],
-[AC_CHECK_PROG(MPICC,mpicc,yes)])
+if test "$try_mpi" = "yes" ; then
+dnl Check for MPI apparatus
+  AC_DEFUN([AC_PROG_MPICC],
+  [AC_CHECK_PROG(MPICC,mpicc,yes)])
 
-AC_PROG_MPICC
-if test x"${MPICC}" = xyes ; then
-  AC_MPI_HEADER
+  AC_PROG_MPICC
+  if test x"${MPICC}" = xyes ; then
+    AC_C_MPI
+  else
+    have_mpi="no"
+  fi
 else
   have_mpi="no"
 fi

@@ -1,7 +1,7 @@
 # Configure paths for MPI library and header
 # Allin Cottrell, February 2014
 
-AC_DEFUN([AC_MPI_HEADER],
+AC_DEFUN([AC_C_MPI],
 [
 dnl
 dnl Check the architecture
@@ -39,7 +39,7 @@ AC_MSG_CHECKING([for MPI library])
 MPI_libdir=
 for m in ${MPI_lib_check} ; do
   if test -d "$m" ; then
-    if (test -f "$m/libmpi.so" || test -f "$m/libmpi.a") ; then
+    if (test -f "$m/libmpi.so" || test -f "$m/libmpi.a" || test -f "$m/libmpi.dylib"); then
       MPI_libdir=$m
       break
     fi
