@@ -657,7 +657,7 @@ use_xdg_utils
 use_xdg
 build_po
 build_mailer
-have_openmpi
+have_mpi
 have_odbc
 have_audio
 have_gnu_regex
@@ -707,7 +707,8 @@ READLINE_LIBS
 READLINE_CFLAGS
 new_readline
 have_readline
-OPENMPI_CFLAGS
+MPI_LIBS
+MPI_CFLAGS
 MPICC
 OPENMP_CFLAGS
 AVX_CFLAGS
@@ -860,7 +861,8 @@ enable_libtool_lock
 enable_sse2
 enable_avx
 enable_openmp
-with_openmpi_include
+with_mpi_lib
+with_mpi_include
 with_readline_prefix
 with_gmp_prefix
 with_mpfr_prefix
@@ -1563,7 +1565,8 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot=DIR Search for dependent libraries within DIR
                         (or the compiler's sysroot if not specified).
-  --with-openmpi-include=PFX path to Openmpi header
+  --with-mpi-lib=PFX path to MPI library
+  --with-mpi-include=PFX path to MPI header
   --with-readline-prefix=PFX   Prefix where readline is installed (optional)
   --with-gmp-prefix=PFX   Prefix where GMP is installed (optional)
   --with-mpfr-prefix=PFX   Prefix where MPFR is installed (optional)
@@ -15392,50 +15395,102 @@ fi
 if test x"${MPICC}" = xyes ; then
 
 ARCH=`uname -m`
-#
-# Set up configure script macro
-#
-
-# Check whether --with-openmpi-include was given.
-if test "${with_openmpi_include+set}" = set; then :
-  withval=$with_openmpi_include; OPENMPI_inc_check="$with_openmpi_include $with_openmpi_include/include $with_openmpi_include/include/openmpi"
-else
-  OPENMPI_inc_check="/usr/include /usr/include/openmpi /usr/include/openmpi-${ARCH} /usr/local/include /usr/local/include/openmpi-${ARCH} /opt/openmpi/include /usr/include/openmpi"
+if test "${ARCH}" = "i386" -o "${ARCH}" = "i686" -o "${ARCH}" = "ppc" -o "${ARCH}" = "sparcv9" ; then
+   MODE=32
+elif test "${ARCH}" = "ia64" ; then
+   MODE=64
+elif test "${ARCH}" = "s390" ; then
+   MODE=31
+elif test "${ARCH}" = "s390x" ; then
+   MODE=64
+elif test "${ARCH}" = "x86_64" -o "${ARCH}" = "ppc64" -o "${ARCH}" = "sparc64" ; then
+   MODE=64
 fi
 
 #
-# Look for OpenMPI headers
+# Set up configure script macros
 #
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenMPI include directory" >&5
-$as_echo_n "checking for OpenMPI include directory... " >&6; }
-OPENMPI_incdir=
-for m in $OPENMPI_inc_check ; do
-  if test -d "$m" && test -f "$m/mpi.h" ; then
-    OPENMPI_incdir=$m
-    break
+
+# Check whether --with-mpi-lib was given.
+if test "${with_mpi_lib+set}" = set; then :
+  withval=$with_mpi_lib; MPI_lib_check="$with_mpi_lib $with_mpi_lib/lib${MODE} $with_mpi_lib/lib $with_mpi_lib/lib${MODE}/openmpi $with_mpi_lib/lib/openmpi"
+else
+  MPI_lib_check="/usr/lib /usr/lib/openmpi /usr/lib64/openmpi/lib"
+fi
+
+
+
+# Check whether --with-mpi-include was given.
+if test "${with_mpi_include+set}" = set; then :
+  withval=$with_mpi_include; MPI_inc_check="$with_mpi_include $with_mpi_include/include $with_mpi_include/include/openmpi"
+else
+  MPI_inc_check="/usr/include /usr/include/openmpi /usr/include/openmpi-${ARCH} /usr/local/include /usr/local/include/openmpi-${ARCH} /opt/openmpi/include /usr/include/openmpi"
+fi
+
+
+#
+# Look for MPI library
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for MPI library" >&5
+$as_echo_n "checking for MPI library... " >&6; }
+MPI_libdir=
+for m in ${MPI_lib_check} ; do
+  if test -d "$m" ; then
+    if (test -f "$m/libmpi.so" || test -f "$m/libmpi.a") ; then
+      MPI_libdir=$m
+      break
+    fi
   fi
 done
 
-if test -z "$OPENMPI_incdir" ; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: couldn't find mpi.h" >&5
-$as_echo "couldn't find mpi.h" >&6; }
-  have_openmpi=no
+if test -z "$MPI_libdir"
+then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: Couldn't find MPI library" >&5
+$as_echo "Couldn't find MPI library" >&6; }
+  have_mpi=no
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OPENMPI_incdir" >&5
-$as_echo "$OPENMPI_incdir" >&6; }
-  have_openmpi=yes
-  $as_echo "#define HAVE_OPENMPI 1" >>confdefs.h
-
-  if test "$OPENMPI_incdir" = "/usr/include" ; then
-    OPENMPI_CFLAGS=""
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPI_libdir" >&5
+$as_echo "$MPI_libdir" >&6; }
+  if test "MPI_libdir" = "/usr/lib" ; then
+    MPI_LIBS="-lmpi"
   else
-    OPENMPI_CFLAGS="-I${OPENMPI_incdir}"
+    MPI_LIBS="-L$MPI_libdir -lmpi"
   fi
+  #
+  # Look for MPI headers
+  #
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for MPI include directory" >&5
+$as_echo_n "checking for MPI include directory... " >&6; }
+  MPI_incdir=
+  for m in $MPI_inc_check ; do
+    if test -d "$m" && test -f "$m/mpi.h" ; then
+      MPI_incdir=$m
+      break
+    fi
+  done
 
+  if test -z "$MPI_incdir" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: couldn't find mpi.h" >&5
+$as_echo "couldn't find mpi.h" >&6; }
+    have_mpi=no
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPI_incdir" >&5
+$as_echo "$MPI_incdir" >&6; }
+    have_mpi=yes
+    $as_echo "#define HAVE_MPI 1" >>confdefs.h
+
+    if test "$MPI_incdir" = "/usr/include" ; then
+      MPI_CFLAGS=""
+    else
+      MPI_CFLAGS="-I${MPI_incdir}"
+    fi
+
+
+  fi
 fi
 
 else
-  have_openmpi="no"
+  have_mpi="no"
 fi
 
 for ac_header in netdb.h sys/socket.h
@@ -23410,7 +23465,7 @@ Configuration:
   MPFR support:                           ${have_mpfr}
   sse2 support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
-  OpenMPI support:                        ${have_openmpi}
+  MPI support:                            ${have_mpi}
   AVX support for arithmetic:             ${avx_result}
   Build with GTK version:                 ${gtk_version}
   Build gretl documentation:              ${build_docs}

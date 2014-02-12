@@ -31,6 +31,7 @@ AVX_CFLAGS = @AVX_CFLAGS@
 
 have_mpi = @have_mpi@
 MPI_CFLAGS = @MPI_CFLAGS@
+MPI_LIBS = @MPI_LIBS@
 
 ifeq ($(AVX_CFLAGS),)
   SIMD_OPT = $(SSE2_CFLAGS)
@@ -80,7 +81,7 @@ INSTALLDIRS = $(DESTDIR)$(libdir) $(DESTDIR)$(includedir) $(DESTDIR)$(pkgconfigd
 LIBGRETL = libgretl-1.0.la 
 
 LIBS = $(LAPACK_LIBS) -lm -ldl -lz $(XML_LIBS) \
-	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS) $(CURL_LIBS) $(GSF_LIBS)
+	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS) $(CURL_LIBS) $(GSF_LIBS) $(MPI_LIBS)
 
 #### End of system configuration section. ####
 
