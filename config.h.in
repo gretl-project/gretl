@@ -38,8 +38,8 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Are we using openmp? */
 #undef OPENMP_BUILD
 
-/* Are we supporting openmpi? */
-#undef HAVE_OPENMPI
+/* Are we supporting MPI? */
+#undef HAVE_MPI
 
 /* X-12-ARIMA support? */
 #undef HAVE_X12A

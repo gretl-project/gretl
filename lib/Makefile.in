@@ -29,6 +29,9 @@ DARWIN_RPATH = @DARWIN_RPATH@
 SSE2_CFLAGS = @SSE2_CFLAGS@
 AVX_CFLAGS = @AVX_CFLAGS@
 
+have_mpi = @have_mpi@
+MPI_CFLAGS = @MPI_CFLAGS@
+
 ifeq ($(AVX_CFLAGS),)
   SIMD_OPT = $(SSE2_CFLAGS)
 else
@@ -239,6 +242,10 @@ SRCS = adf_kpss.c \
 	vartest.c \
 	irfboot.c
 
+ifeq ($(have_mpi),yes)
+  SRCS += gretl_mpi.c
+endif
+
 CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
 	   fdtr.c gamma.c gdtr.c igam.c igami.c incbet.c incbi.c \
 	   mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c polevl.c polrt.c \
@@ -257,7 +264,8 @@ AUX_LOBJ = $(CEPHES_SRC:.c=.lo) $(MINPACK_SRC:.c=.lo) $(DCMT_SRC:.c=.lo)
 LIBTOOL = ../libtool
 
 override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) \
-	$(GMP_CFLAGS) $(FFTW_CFLAGS) $(CURL_CFLAGS) $(GSF_CFLAGS) $(RLIB_CFLAGS) -DHAVE_CONFIG_H $(LIBDEF)
+	$(GMP_CFLAGS) $(FFTW_CFLAGS) $(CURL_CFLAGS) $(GSF_CFLAGS) $(RLIB_CFLAGS) \
+	$(MPI_CFLAGS) -DHAVE_CONFIG_H $(LIBDEF)
 
 COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS) 
 

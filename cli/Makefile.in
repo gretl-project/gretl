@@ -19,8 +19,8 @@ have_readline = @have_readline@
 READLINE_LIBS = @READLINE_LIBS@
 READLINE_CFLAGS = @READLINE_CFLAGS@
 
-have_openmpi = @have_openmpi@
-OPENMPI_CFLAGS = @OPENMPI_CFLAGS@
+have_mpi = @have_mpi@
+MPI_CFLAGS = @MPI_CFLAGS@
 MPICC = mpicc
 
 SSE2_CFLAGS = @SSE2_CFLAGS@
@@ -44,7 +44,7 @@ endif
 ifeq ($(have_readline),yes)
   RL_OBJ = complete.o
 endif
-ifeq ($(have_openmpi),yes)
+ifeq ($(have_mpi),yes)
   MPICLI = gretlcli-mpi$(EXEEXT)
   INSTALL_MPI = install-mpi
 endif
@@ -104,7 +104,7 @@ gretlcli-mpi: .deps gretlcli-mpi.o
 gretlcli-mpi.o: gretlcli-mpi.c
 	$(MPICC_ECHO)
 	$(AMP)$(MPICC) -c $(CFLAGS) $<
-	$(AMP)$(MPICC) $(CFLAGS) $(OPENMPI_CFLAGS) -MM $< > .deps/$*.d
+	$(AMP)$(MPICC) $(CFLAGS) $(MPI_CFLAGS) -MM $< > .deps/$*.d
 
 .deps:
 	$(AMP)mkdir $@
