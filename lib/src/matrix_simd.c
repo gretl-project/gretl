@@ -164,15 +164,12 @@ static int gretl_matrix_simd_subt_from (gretl_matrix *a,
 
 #ifdef USE_AVX
 
-static int gretl_matrix_simd_add (const gretl_matrix *a,
-				  const gretl_matrix *b,
-				  gretl_matrix *c)
+static int gretl_matrix_simd_add (const double *ax,
+				  const double *bx,
+				  double *cx,
+				  int n)
 {
-    const double *ax = a->val;
-    const double *bx = b->val;
-    double *cx = c->val;
-    int i, n = a->rows * a->cols;
-    int imax = n / 4;
+    int i, imax = n / 4;
     int rem = n % 4;
 
 #if SHOW_SIMD
@@ -186,9 +183,9 @@ static int gretl_matrix_simd_add (const gretl_matrix *a,
 	__m256d Ymm_B = _mm256_load_pd(bx);
 	__m256d Ymm_C = _mm256_add_pd(Ymm_A, Ymm_B);
 	_mm256_store_pd(cx, Ymm_C);
-	cx += 4;
 	ax += 4;
 	bx += 4;
+	cx += 4;
     }
 
     for (i=0; i<rem; i++) {
@@ -198,15 +195,12 @@ static int gretl_matrix_simd_add (const gretl_matrix *a,
     return 0;
 }
 
-static int gretl_matrix_simd_subtract (const gretl_matrix *a,
-				       const gretl_matrix *b,
-				       gretl_matrix *c)
+static int gretl_matrix_simd_subtract (const double *ax,
+				       const double *bx,
+				       double *cx,
+				       int n)
 {
-    const double *ax = a->val;
-    const double *bx = b->val;
-    double *cx = c->val;
-    int i, n = a->rows * a->cols;
-    int imax = n / 4;
+    int i, imax = n / 4;
     int rem = n % 4;
 
 #if SHOW_SIMD
@@ -304,9 +298,9 @@ static int gretl_matrix_simd_subtract (const gretl_matrix *a,
 
 /* fast but restrictive: both A and B must be 4 x 4 */
 
-int gretl_matrix_avx_mul4 (const double *aval,
-			   const double *bval,
-			   double *cval)
+static int gretl_matrix_avx_mul4 (const double *aval,
+				  const double *bval,
+				  double *cval)
 {
     __m256d b1, b2, b3, b4;
     __m256d mul, col;
@@ -339,6 +333,64 @@ int gretl_matrix_avx_mul4 (const double *aval,
     return 0;
 }
 
+/* fast but restrictive: both A and B must be 8 x 8 */
+
+static int gretl_matrix_avx_mul8 (const double *aval,
+				  const double *bval,
+				  double *cval)
+{
+    __m256d a1, a2, a3, a4, a5, a6, a7, a8;
+    __m256d b1, b2, b3, b4, b5, b6, b7, b8;
+    __m256d mul, col; 
+    int i, j;
+
+    for (i=0; i<2; i++) {
+	/* half-load of columns of A */
+	a1 = _mm256_load_pd(aval);
+	a2 = _mm256_load_pd(aval + 8);
+	a3 = _mm256_load_pd(aval + 16);
+	a4 = _mm256_load_pd(aval + 24);
+	a5 = _mm256_load_pd(aval + 32);
+	a6 = _mm256_load_pd(aval + 40);
+	a7 = _mm256_load_pd(aval + 48);
+	a8 = _mm256_load_pd(aval + 56);
+
+	for (j=0; j<8; j++) {
+	    /* broadcast the elements of col i of B */
+	    b1 = _mm256_broadcast_sd(&bval[8*j]);
+	    b2 = _mm256_broadcast_sd(&bval[8*j + 1]);
+	    b3 = _mm256_broadcast_sd(&bval[8*j + 2]);
+	    b4 = _mm256_broadcast_sd(&bval[8*j + 3]);
+	    b5 = _mm256_broadcast_sd(&bval[8*j + 4]);
+	    b6 = _mm256_broadcast_sd(&bval[8*j + 5]);
+	    b7 = _mm256_broadcast_sd(&bval[8*j + 6]);
+	    b8 = _mm256_broadcast_sd(&bval[8*j + 7]);
+
+	    mul = _mm256_mul_pd(b1, a1);
+	    b1  = _mm256_mul_pd(b2, a2);
+	    col = _mm256_add_pd(mul, b1);
+	    mul = _mm256_mul_pd(b3, a3);
+	    b2  = _mm256_mul_pd(b4, a4);
+	    b3  = _mm256_add_pd(mul, b2);
+	    col = _mm256_add_pd(col, b3);
+	    mul = _mm256_mul_pd(b5, a5);
+	    b4  = _mm256_mul_pd(b6, a6);
+	    b5  = _mm256_add_pd(mul, b4);
+	    col = _mm256_add_pd(col, b5);
+	    mul = _mm256_mul_pd(b7, a7);
+	    b6  = _mm256_mul_pd(b8, a8);
+	    b7  = _mm256_add_pd(mul, b6);
+	    col = _mm256_add_pd(col, b7);
+
+	    _mm256_store_pd(&cval[8*j], col);
+	}
+	aval += 4;
+	cval += 4;
+    }
+
+    return 0;
+}
+
 /* Note: this is probably usable only for k <= 8 (shortage of AVX
    registers). It is much faster if m is a multiple of 4; n is
    unconstrained.
@@ -363,6 +415,10 @@ static int gretl_matrix_simd_mul (const gretl_matrix *A,
 
     if (m == 4 && n == 4 && k == 4) {
 	return gretl_matrix_avx_mul4(aval, bval, cval);
+    }
+
+    if (m == 8 && n == 8 && k == 8) {
+	return gretl_matrix_avx_mul8(aval, bval, cval);
     }
 
     hmax = m / 4;

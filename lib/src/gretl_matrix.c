@@ -2140,7 +2140,7 @@ gretl_matrix_add (const gretl_matrix *a, const gretl_matrix *b,
 	!is_block_matrix(a) && 
 	!is_block_matrix(b) &&
 	!is_block_matrix(c)) {
-	return gretl_matrix_simd_add(a, b, c);
+	return gretl_matrix_simd_add(a->val, b->val, c->val, n);
     }
 #endif
 
@@ -2275,7 +2275,7 @@ gretl_matrix_subtract (const gretl_matrix *a, const gretl_matrix *b,
 	!is_block_matrix(a) && 
 	!is_block_matrix(b) &&
 	!is_block_matrix(c)) {
-	return gretl_matrix_simd_subtract(a, b, c);
+	return gretl_matrix_simd_subtract(a->val, b->val, c->val, n);
     }
 #endif
 
