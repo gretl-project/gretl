@@ -59,7 +59,7 @@ int runit;
 int data_status;
 char linebak[MAXLINE];
 
-static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn);
+static int cli_exec_line (ExecState *s, int id, DATASET *dset, PRN *cmdprn);
 static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
 static int cli_saved_object_action (const char *line, 
@@ -350,7 +350,7 @@ int main (int argc, char *argv[])
 
     runit = 0;
     sprintf(line, "run %s\n", runfile);
-    err = cli_exec_line(&state, dset, cmdprn);
+    err = cli_exec_line(&state, id, dset, cmdprn);
     if (err && fb == NULL) {
 	mpi_exit(1);
     }
@@ -390,7 +390,7 @@ int main (int argc, char *argv[])
 
 	strcpy(linecopy, line);
 	tailstrip(linecopy);
-	err = cli_exec_line(&state, dset, cmdprn);
+	err = cli_exec_line(&state, id, dset, cmdprn);
     }
 
     /* finished main command loop */
@@ -628,7 +628,8 @@ static void maybe_save_session_output (const char *cmdfile)
    see also gui_exec_line() in gui2/library.c
 */
 
-static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
+static int cli_exec_line (ExecState *s, int id, DATASET *dset, 
+			  PRN *cmdprn)
 {
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -795,7 +796,9 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	    fclose(fb);
 	    fb = pop_input_file();
 	    if (fb == NULL) {
-		pputs(prn, _("Done\n"));
+		if (id == 0) {
+		    pputs(prn, _("Done\n"));
+		}
 	    } else {
 		cmd->ci = ENDRUN;
 	    }
