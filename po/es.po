@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-02-04 08:58-0500\n"
-"PO-Revision-Date: 2014-02-05 09:29+0100\n"
+"PO-Revision-Date: 2014-02-12 13:05+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -11165,7 +11165,7 @@ msgstr "_Variable aleatoria..."
 
 #: gui2/gretl.c:1693
 msgid "_Periodic dummies"
-msgstr "Variables _ficticias periódicas"
+msgstr "Variables _ficticias estacionales"
 
 #: gui2/gretl.c:1694
 msgid "_Unit dummies"
