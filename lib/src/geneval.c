@@ -33,6 +33,11 @@
 #include "version.h"
 #include "csvdata.h"
 
+#ifdef HAVE_MPI
+# include <mpi.h>
+# include "gretl_mpi.h"
+#endif
+
 #ifdef USE_RLIB
 # include "gretl_foreign.h"
 #endif
@@ -1439,6 +1444,44 @@ double get_const_by_name (const char *name, int *err)
 	}
 	return NADBL;
     }
+}
+
+static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = NULL;
+
+#ifndef HAVE_MPI
+    gretl_errmsg_set("MPI functions are not supported");
+    p->err = 1;
+#else
+    if (f == F_MPI_SEND && l->t != MAT) {
+	p->err = E_TYPES;
+    } else if (f == F_MPI_SEND) {
+	const gretl_matrix *m = l->v.m;
+	int dest = node_get_int(r, p);
+
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
+	if (!p->err) {
+	    ret->v.xval = gretl_matrix_mpi_send(m, dest);
+	}
+    } else if (f == F_MPI_RECV) {
+	int src = node_get_int(l, p);
+
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+	if (!p->err) {
+	    ret->v.m = gretl_matrix_mpi_receive(src, &p->err);
+	}
+    } else {
+	gretl_errmsg_set("MPI function not yet supported");
+	p->err = 1;
+    }
+#endif
+
+    return ret;
 }
 
 static NODE *scalar_calc (NODE *x, NODE *y, int f, parser *p)
@@ -10561,6 +10604,11 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, 0, STR, l, p);
 	}
+	break;
+    case F_MPI_SEND:
+    case F_MPI_RECV:
+    case F_MPIBCAST:
+	ret = mpi_transfer_node(l, r, t->t, p);
 	break;
     default: 
 	printf("eval: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),

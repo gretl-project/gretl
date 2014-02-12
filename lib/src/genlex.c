@@ -407,6 +407,9 @@ struct str_table funcs[] = {
     { F_FIXNAME,  "fixname" },
     { F_ISOCONV,  "isoconv" },
     { F_SUBSTR,   "substr" },
+    { F_MPI_SEND, "mpi_send" },
+    { F_MPI_RECV, "mpi_recv" },
+    { F_MPIBCAST, "mpibcast" },
     { 0,          NULL }
 };
 

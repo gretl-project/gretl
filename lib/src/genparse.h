@@ -276,6 +276,7 @@ enum {
     F_TYPEOF,
     F_ATOF,
     F_FIXNAME,
+    F_MPI_RECV,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
@@ -343,6 +344,8 @@ enum {
     F_ISODATE,
     F_READFILE,
     F_PRINTF,
+    F_MPI_SEND,
+    F_MPIBCAST,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,
