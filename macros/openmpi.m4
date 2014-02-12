@@ -3,13 +3,17 @@
 
 AC_DEFUN([AC_OPENMPI_HEADER],
 [
+dnl
+dnl Check the architecture
+dnl
+ARCH=`uname -m`
 #
 # Set up configure script macro
 #
 AC_ARG_WITH(openmpi-include,
 	[  --with-openmpi-include=PFX path to Openmpi header],
 	[OPENMPI_inc_check="$with_openmpi_include $with_openmpi_include/include $with_openmpi_include/include/openmpi"],
-	[OPENMPI_inc_check="/usr/include /usr/local/include /opt/openmpi/include /usr/include/openmpi"])
+	[OPENMPI_inc_check="/usr/include /usr/include/openmpi /usr/include/openmpi-${ARCH} /usr/local/include /usr/local/include/openmpi-${ARCH} /opt/openmpi/include /usr/include/openmpi"])
 #
 # Look for OpenMPI headers
 #

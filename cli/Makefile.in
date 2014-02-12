@@ -46,6 +46,7 @@ ifeq ($(have_readline),yes)
 endif
 ifeq ($(have_openmpi),yes)
   MPICLI = gretlcli-mpi$(EXEEXT)
+  INSTALL_MPI = install-mpi
 endif
 
 ifeq ($(quiet_build),yes)
@@ -53,6 +54,8 @@ ifeq ($(quiet_build),yes)
   CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
   CCV = $(CC) $(SIMD_OPT) $(OMP_OPT) > /dev/null
+  MPICC_ECHO = @echo "  MPICC  $@"
+  MPILD_ECHO = @echo "  MPILD  $@" 
   MPICCV = $(MPICC) $(SIMD_OPT) $(OMP_OPT) > /dev/null
 else
   CCV = $(CC) $(SIMD_OPT) $(OMP_OPT)
@@ -93,15 +96,15 @@ $(CLI): .deps $(OBJS)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(OBJS) \
 	$(GRETLLIB) $(READLINE_LIBS)
 
-$(MPICLI): .deps $(MPIOBJ)
-	$(LDECHO)
+gretlcli-mpi: .deps gretlcli-mpi.o
+	$(MPILD_ECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(MPICCV) $(LDFLAGS) -o $@ $(MPIOBJ) \
 	$(GRETLLIB)
 
-$(MPIOBJ): $(MPISRC)
-	$(CCECHO)
+gretlcli-mpi.o: gretlcli-mpi.c
+	$(MPICC_ECHO)
 	$(AMP)$(MPICC) -c $(CFLAGS) $<
-	$(AMP)$(MPICC) $(CFLAGS) -MM $< > .deps/$*.d
+	$(AMP)$(MPICC) $(CFLAGS) $(OPENMPI_CFLAGS) -MM $< > .deps/$*.d
 
 .deps:
 	$(AMP)mkdir $@
@@ -110,11 +113,11 @@ $(MPIOBJ): $(MPISRC)
 
 .PHONY :
 
-install: $(CLI) installdirs
+install: $(CLI) installdirs $(INSTALL_MPI)
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(CLI) $(DESTDIR)$(bindir)/$(CLI)
 
 install-mpi: $(MPICLI) installdirs
-	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(CLI) $(DESTDIR)$(bindir)/$(MPICLI)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(MPICLI) $(DESTDIR)$(bindir)/$(MPICLI)
 
 install-strip: $(CLI) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(CLI) $(DESTDIR)$(bindir)/$(CLI)
