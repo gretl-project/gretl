@@ -300,7 +300,7 @@ void gretl_rand_set_seed (unsigned int seed)
 #endif
 
     if (dcmt != NULL) {
-	sgenrand_mt(seed, dcmt);
+	sgenrand_mt(useed, dcmt);
     }
 
     gretl_rand_octet(NULL);
