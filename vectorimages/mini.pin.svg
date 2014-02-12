@@ -24,7 +24,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -184,18 +184,6 @@
        x2="15.609144"
        y2="3.0088065"
        gradientUnits="userSpaceOnUse" />
-    <filter
-       inkscape:collect="always"
-       id="filter4103"
-       x="-0.11769344"
-       width="1.2353869"
-       y="-0.1420256"
-       height="1.2840512">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="0.21983479"
-         id="feGaussianBlur4105" />
-    </filter>
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient4051"
@@ -343,16 +331,16 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:window-width="953"
-     inkscape:window-height="670"
+     inkscape:window-height="784"
      id="namedview4"
      showgrid="true"
      inkscape:zoom="32.021692"
-     inkscape:cx="10.779495"
-     inkscape:cy="10.275129"
+     inkscape:cx="10.841953"
+     inkscape:cy="9.0259758"
      inkscape:window-x="481"
      inkscape:window-y="27"
      inkscape:window-maximized="0"
-     inkscape:current-layer="g4289">
+     inkscape:current-layer="layer3">
     <inkscape:grid
        type="xygrid"
        id="grid2987" />
@@ -363,7 +351,7 @@
      inkscape:label="Camada1"
      style="display:inline">
     <g
-       id="g4289">
+       id="g3908">
       <path
          sodipodi:nodetypes="cc"
          inkscape:connector-curvature="0"
@@ -455,7 +443,7 @@
          sodipodi:cy="3.0088065"
          sodipodi:cx="12.762058"
          id="path4046-2"
-         style="fill:#0000aa;fill-opacity:1;fill-rule:nonzero;stroke:#0000aa;stroke-width:0.90600002;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;display:inline;filter:url(#filter4103-5)"
+         style="fill:#0000d4;fill-opacity:1;fill-rule:nonzero;stroke:#0000d4;display:inline;stroke-opacity:1"
          sodipodi:type="arc" />
       <path
          inkscape:connector-curvature="0"
@@ -503,8 +491,8 @@
       <path
          inkscape:connector-curvature="0"
          id="path4287"
-         d="m 10.906316,4.2267309 1,0.6171249 0.585219,0 0.843178,0 1.249153,0 0.32245,-0.5858961 0,-0.4141039 L 15,3 l 0,0 0,0.3740685 0,0.2192793 0,0.071264"
-         style="fill:#0000aa;fill-opacity:1;fill-rule:nonzero;stroke:#aaccff;stroke-width:0.90600002;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+         d="M 10.906316,4.2267309 11.656485,5 l 0.83505,0.3435171 0.999322,0.031229 1.093009,-0.5308902 0.32245,-0.5858961 0,-0.4141039 L 15,3 l 0,0 0,0.3740685 0,0.2192793 0,0.071264"
+         style="fill:none;stroke:#aaccff;stroke-width:0.90600002;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
          sodipodi:nodetypes="cccccccccccc" />
     </g>
   </g>

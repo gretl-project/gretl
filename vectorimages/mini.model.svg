@@ -131,14 +131,14 @@
      id="layer1"
      inkscape:label="Camada">
     <g
-       id="g3021">
+       id="g3009">
       <text
          transform="scale(1.224915,0.81638318)"
          sodipodi:linespacing="125%"
          id="text3003"
          y="15.923895"
          x="2.4491496"
-         style="font-size:16.75806236px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:'Times New Roman,'"
+         style="font-size:16.75806236000000027px;font-style:italic;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:'Times New Roman, Italic'"
          xml:space="preserve"><tspan
            y="15.923895"
            x="2.4491496"
@@ -150,9 +150,9 @@
          id="text3007"
          y="7.0548015"
          x="2.5181794"
-         style="font-size:8px;font-style:normal;font-weight:bold;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:'Times New Roman, Bold'"
+         style="font-size:10px;font-style:normal;font-weight:bold;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:'Times New Roman, Bold'"
          xml:space="preserve"><tspan
-           style="font-size:8px;font-style:normal;font-weight:bold;-inkscape-font-specification:'Times New Roman, Bold'"
+           style="font-size:10px;font-style:normal;font-weight:bold;-inkscape-font-specification:'Times New Roman, Bold'"
            y="7.0548015"
            x="2.5181794"
            id="tspan3009"
