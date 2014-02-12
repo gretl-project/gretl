@@ -221,6 +221,16 @@ static int maybe_get_input_line_continuation (char *line)
     return err;
 }
 
+static void maybe_print_intro (int id, int quiet)
+{
+    if (id == 0) {
+	logo(quiet);
+	if (!quiet) {
+	    session_time(NULL);
+	}
+    }
+}
+
 int main (int argc, char *argv[])
 {
 #ifdef WIN32
@@ -306,10 +316,7 @@ int main (int argc, char *argv[])
 
     libgretl_mpi_init(id, np);
 
-    logo(quiet);
-    if (!quiet) {
-	session_time(NULL);
-    }
+    maybe_print_intro(id, quiet);
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, &err);
     if (err) {
