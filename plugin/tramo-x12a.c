@@ -345,11 +345,13 @@ static GtkWidget *x12a_help_button (GtkWidget *hbox, tx_request *request)
     GtkWidget *button;
 
     button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-    gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
 				       button, TRUE);
-    gtk_widget_show(button);
+#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 2
+    gtk_button_box_set_child_non_homogeneous(GTK_BUTTON_BOX(hbox),
+					     button, TRUE);
+#endif
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(request->helpfunc), 
 		     NULL);
