@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-02-04 08:58-0500\n"
-"PO-Revision-Date: 2013-10-23 22:07-0300\n"
+"PO-Revision-Date: 2014-02-13 19:45-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.3\n"
+"X-Generator: Poedit 1.6.4\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -1219,9 +1219,9 @@ msgid "Observation number out of bounds"
 msgstr "Número de observações supera o limite"
 
 #: lib/src/dataio.c:1170
-#, fuzzy, c-format
+#, c-format
 msgid "wrote %s.gdt\n"
-msgstr "escreveu %s\n"
+msgstr "escreveu %s.gdt\n"
 
 #: lib/src/dataio.c:1172 lib/src/gretl_paths.c:2296 gui2/model_table.c:1372
 #, c-format
@@ -1797,9 +1797,9 @@ msgid "for the variable '%s' (%d valid observations)"
 msgstr "para a variável '%s' (%d observações válidas)"
 
 #: lib/src/describe.c:4440
-#, fuzzy, c-format
+#, c-format
 msgid "Weighting variable: %s\n"
-msgstr "Variável peso"
+msgstr "Variável peso: %s\n"
 
 #: lib/src/describe.c:4468 lib/src/describe.c:4496 gui2/guiprint.c:771
 msgid "Std. Dev."
@@ -3419,9 +3419,8 @@ msgid "LR test for rho = 0"
 msgstr "Teste LR para rô = 0"
 
 #: lib/src/gretl_model.c:3476
-#, fuzzy
 msgid "Joint test on named regressors"
-msgstr "Regressores da segunda equação"
+msgstr "Teste conjunto nos regressores designados"
 
 #: lib/src/gretl_model.c:3495
 msgid "robust variant"
@@ -5024,9 +5023,8 @@ msgid "Dependent variable"
 msgstr "Variável dependente"
 
 #: lib/src/modelprint.c:1635
-#, fuzzy
 msgid "Estimated using X-13-ARIMA"
-msgstr "Estimado usando X-12-ARIMA"
+msgstr "Estimado usando X-13-ARIMA"
 
 #: lib/src/modelprint.c:1637
 msgid "Estimated using X-12-ARIMA"
@@ -5411,9 +5409,9 @@ msgid "P-value($F$)"
 msgstr "P-valor($F$)"
 
 #: lib/src/modelprint.c:2894
-#, fuzzy, c-format
+#, c-format
 msgid "LSDV F(%d, %d)"
-msgstr "F(%d ; %d)"
+msgstr "F(%d, %d) LSDV"
 
 #: lib/src/modelprint.c:2911
 msgid "Uncentered $R^2$"
@@ -5441,17 +5439,15 @@ msgstr "R-quadrado de McFadden"
 
 #: lib/src/modelprint.c:2921
 msgid "LSDV $R^2$"
-msgstr ""
+msgstr "$R^2$ LSDV"
 
 #: lib/src/modelprint.c:2921
-#, fuzzy
 msgid "LSDV R-squared"
-msgstr "R-quadrado"
+msgstr "R-quadrado LSDV"
 
 #: lib/src/modelprint.c:2922
-#, fuzzy
 msgid "Within $R^2$"
-msgstr "Dentro"
+msgstr "Dentro $R^2$"
 
 #: lib/src/modelprint.c:2922
 msgid "Within R-squared"
@@ -6936,9 +6932,9 @@ msgid "= %s times %s"
 msgstr "= %s vezes %s"
 
 #: lib/src/transforms.c:645
-#, fuzzy, c-format
+#, c-format
 msgid "dummy for %s = '%s'"
-msgstr "dummy para %s = %g"
+msgstr "dummy para %s = '%s'"
 
 #: lib/src/transforms.c:647 lib/src/transforms.c:650
 #, c-format
@@ -9468,26 +9464,24 @@ msgstr ""
 "Deseja substituí-lo?"
 
 #: gui2/fileselect.c:758 gui2/fileselect.c:787
-#, fuzzy
 msgid "Gretl datafiles (*.gdt)"
-msgstr "Arquivos de dados gretl (.gdt)"
+msgstr "Arquivos de dados gretl (*.gdt)"
 
 #: gui2/fileselect.c:759 gui2/fileselect.c:788
-#, fuzzy
 msgid "Gretl binary datafiles (*.gdtb)"
-msgstr "Arquivos de dados gretl (.gdt)"
+msgstr "Arquivos de dados binário gretl (*.gdtb)"
 
 #: gui2/fileselect.c:760
 msgid "CSV files (*.csv)"
-msgstr "arquivos CSV (*.csv)"
+msgstr "Arquivos CSV (*.csv)"
 
 #: gui2/fileselect.c:761 gui2/fileselect.c:783
 msgid "ASCII files (*.txt)"
-msgstr "arquivos ASCII (*.txt)"
+msgstr "Arquivos ASCII (*.txt)"
 
 #: gui2/fileselect.c:762
 msgid "Gnumeric files (*.gnumeric)"
-msgstr "arquivos Gnumeric (*.gnumeric)"
+msgstr "Arquivos Gnumeric (*.gnumeric)"
 
 #: gui2/fileselect.c:763
 msgid "Open Document files (*.ods)"
@@ -9495,15 +9489,15 @@ msgstr "Arquivos \"Open Document\" (*.ods)"
 
 #: gui2/fileselect.c:764
 msgid "Excel files (*.xls)"
-msgstr "arquivos Excel (*.xls)"
+msgstr "Arquivos Excel (*.xls)"
 
 #: gui2/fileselect.c:765
 msgid "Excel files (*.xlsx)"
-msgstr "arquivos Excel (*.xlsx)"
+msgstr "Arquivos Excel (*.xlsx)"
 
 #: gui2/fileselect.c:766
 msgid "Stata files (*.dta)"
-msgstr "arquivos Stata (*.dta)"
+msgstr "Arquivos Stata (*.dta)"
 
 #: gui2/fileselect.c:767
 msgid "Eviews files (*.wf1)"
@@ -9511,7 +9505,7 @@ msgstr "Arquivos EViews (*.wf1)"
 
 #: gui2/fileselect.c:768
 msgid "SPSS files (*.sav)"
-msgstr "arquivos SPSS (*.sav)"
+msgstr "Arquivos SPSS (*.sav)"
 
 #: gui2/fileselect.c:769
 msgid "SAS xport files (*.xpt)"
@@ -9523,7 +9517,7 @@ msgstr "Arquivos Octave (*.m)"
 
 #: gui2/fileselect.c:771
 msgid "JMulTi files (*.dat)"
-msgstr "arquivos JMulTi (*.dat)"
+msgstr "Arquivos JMulTi (*.dat)"
 
 #: gui2/fileselect.c:772 gui2/fileselect.c:784
 msgid "all files (*.*)"
@@ -9555,7 +9549,7 @@ msgstr "Arquivos Ox (*.ox)"
 
 #: gui2/fileselect.c:850
 msgid "Compression level (0 = none)"
-msgstr ""
+msgstr "Nível de compressão (0 = nenhum)"
 
 #: gui2/filters.c:92
 msgid "Simple moving average"
@@ -10727,9 +10721,8 @@ msgid "_Sample file..."
 msgstr "Arquivo de exemplo_s..."
 
 #: gui2/gretl.c:1570
-#, fuzzy
 msgid "_Append data..."
-msgstr "_Acrescentar dados"
+msgstr "_Acrescentar dados..."
 
 #: gui2/gretl.c:1571
 msgid "_Save data"
@@ -11127,7 +11120,7 @@ msgstr "_Tendência temporal"
 #: gui2/gretl.c:1691
 #, fuzzy
 msgid "_Panel unit index"
-msgstr "Localizador de _p-valor"
+msgstr "Índice de unidade de _painel"
 
 #: gui2/gretl.c:1692
 msgid "_Random variable..."
@@ -14253,9 +14246,8 @@ msgid "gretl datafile (.gdt)"
 msgstr "arquivo de dados gretl (.gdt)"
 
 #: gui2/selector.c:6099
-#, fuzzy
 msgid "gretl binary datafile (.gdtb)"
-msgstr "arquivo de dados gretl (.gdt)"
+msgstr "arquivo de dados binário gretl (.gdbt)"
 
 #: gui2/selector.c:6100
 msgid "gretl database (.bin)"
@@ -16396,9 +16388,9 @@ msgid "Storing"
 msgstr "Guardando"
 
 #: plugin/progress_bar.c:177
-#, fuzzy, c-format
+#, c-format
 msgid "Scanning %d fonts"
-msgstr "Pesquisando %ld fontes"
+msgstr "Pesquisando %d fontes"
 
 #: plugin/quantreg.c:380
 msgid "Couldn't calculate confidence intervals for this model"
