@@ -51,10 +51,11 @@ static gchar *gretl_Rprofile;
 static gchar *gretl_Rsrc;
 static gchar *gretl_Rout;
 static gchar *gretl_Rmsg;
-static gchar *gretl_Oxprog;
+static gchar *gretl_ox_prog;
 static gchar *gretl_octave_prog;
 static gchar *gretl_stata_prog;
 static gchar *gretl_python_prog;
+static gchar *gretl_mpi_prog;
 
 static void destroy_foreign (void)
 {
@@ -79,6 +80,8 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 	foreign_lang = LANG_STATA;
     } else if (g_ascii_strcasecmp(lang, "python") == 0) {
 	foreign_lang = LANG_PYTHON;
+    } else if (g_ascii_strcasecmp(lang, "mpi") == 0) {
+	foreign_lang = LANG_MPI;
     } else {
 	pprintf(prn, "%s: unknown language\n", lang);
 	err = E_DATA;
@@ -89,13 +92,13 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 
 static const gchar *gretl_ox_filename (void)
 {
-    if (gretl_Oxprog == NULL) {
+    if (gretl_ox_prog == NULL) {
 	const char *dotdir = gretl_dotdir();
 
-	gretl_Oxprog = g_strdup_printf("%sgretltmp.ox", dotdir);
+	gretl_ox_prog = g_strdup_printf("%sgretltmp.ox", dotdir);
     }
 
-    return gretl_Oxprog;
+    return gretl_ox_prog;
 }
 
 static const gchar *gretl_octave_filename (void)
@@ -129,6 +132,17 @@ static const gchar *gretl_python_filename (void)
     }
 
     return gretl_python_prog;
+}
+
+static const gchar *gretl_mpi_filename (void)
+{
+    if (gretl_mpi_prog == NULL) {
+	const char *dotdir = gretl_dotdir();
+
+	gretl_mpi_prog = g_strdup_printf("%sgretltmp-mpi.inp", dotdir);
+    }
+
+    return gretl_mpi_prog;
 }
 
 static void make_gretl_R_names (void)
@@ -345,9 +359,58 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	   of the stata output (gretltmp.log)
 	*/
 	gretl_chdir(gretl_dotdir());
-    }	
+    }
 
     err = lib_run_prog_sync(argv, opt, prn);
+
+    return err;
+}
+
+static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
+{
+    /* FIXME just experimental */
+    char *hostfile = getenv("GRETL_MPI_HOSTS");
+    char npstr[8] = {0};
+    int err = 0;
+
+    if (hostfile == NULL) {
+	gretl_errmsg_set("For now, please set hostfile name via GRETL_MPI_HOSTS");
+	return E_DATA;
+    }
+
+    if (opt & OPT_N) {
+	int np = get_optval_int(FOREIGN, OPT_N, &err);
+
+	if (!err && np == 0) {
+	    err = E_DATA;
+	}
+	if (!err) {
+	    sprintf(npstr, "%d", np);
+	}
+    }
+
+    if (!err) {
+	char *argv[8];
+
+	argv[0] = "mpiexec";
+	if (*npstr != '\0') {
+	    argv[1] = "-np";
+	    argv[2] = npstr;
+	    argv[3] = "--hostfile";
+	    argv[4] = hostfile;
+	    argv[5] = "gretlcli-mpi";
+	    argv[6] = (char *) gretl_mpi_filename();
+	    argv[7] = NULL;
+	} else {
+	    argv[1] = "--hostfile";
+	    argv[2] = hostfile;
+	    argv[3] = "gretlcli-mpi";
+	    argv[4] = (char *) gretl_mpi_filename();
+	    argv[5] = NULL;
+	}	    
+
+	err = lib_run_prog_sync(argv, opt, prn);
+    }
 
     return err;
 }
@@ -736,6 +799,22 @@ int write_gretl_python_file (const char *buf, gretlopt opt, const char **pfname)
 	if (pfname != NULL) {
 	    *pfname = fname;
 	}
+    }
+
+    return 0;
+}
+
+static int write_gretl_mpi_file (void)
+{
+    const gchar *fname = gretl_mpi_filename();
+    FILE *fp = gretl_fopen(fname, "w");
+
+    if (fp == NULL) {
+	return E_FOPEN;
+    } else {
+	/* put out the stored 'foreign' lines */
+	put_foreign_lines(fp);
+	fclose(fp);
     }
 
     return 0;
@@ -1174,8 +1253,8 @@ void delete_gretl_R_files (void)
 
 static void delete_gretl_ox_file (void)
 {
-    if (gretl_Oxprog != NULL) {
-	gretl_remove(gretl_Oxprog);
+    if (gretl_ox_prog != NULL) {
+	gretl_remove(gretl_ox_prog);
     }
 }
 
@@ -1197,6 +1276,13 @@ static void delete_gretl_python_file (void)
 {
     if (gretl_python_prog != NULL) {
 	gretl_remove(gretl_python_prog);
+    }
+}
+
+static void delete_gretl_mpi_file (void)
+{
+    if (gretl_mpi_prog != NULL) {
+	gretl_remove(gretl_mpi_prog);
     }
 }
 
@@ -1906,6 +1992,20 @@ int foreign_execute (const DATASET *dset,
     }
 
     foreign_opt |= opt;
+
+#ifndef G_OS_WIN32
+    /* experimental! */
+    if (foreign_lang == LANG_MPI) {
+	err = write_gretl_mpi_file();
+	if (err) {
+	    delete_gretl_mpi_file();
+	} else {
+	    err = lib_run_mpi_sync(foreign_opt, prn);
+	}
+	destroy_foreign();
+	return err;
+    }
+#endif
 
     if (foreign_lang == LANG_R) {
 #ifdef USE_RLIB

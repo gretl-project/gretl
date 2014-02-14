@@ -24,7 +24,8 @@ typedef enum {
     LANG_OX,
     LANG_OCTAVE,
     LANG_STATA,
-    LANG_PYTHON
+    LANG_PYTHON,
+    LANG_MPI
 } ForeignLangs;
 
 int foreign_append_line(const char *line, gretlopt opt, PRN *prn);
