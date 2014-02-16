@@ -50,8 +50,8 @@ struct str_table consts[] = {
     { CONST_INF,   "$inf" },
     { CONST_WIN32, "WIN32" },
     { CONST_EPS,   "$macheps" },
-    { CONST_MPI_RANK, "$mpi_rank" },
-    { CONST_MPI_SIZE, "$mpi_size" },
+    { CONST_MPI_RANK, "$mpiRank" },
+    { CONST_MPI_SIZE, "$mpiSize" },
     { 0,        NULL }
 };
 
@@ -407,8 +407,8 @@ struct str_table funcs[] = {
     { F_FIXNAME,  "fixname" },
     { F_ISOCONV,  "isoconv" },
     { F_SUBSTR,   "substr" },
-    { F_MPI_SEND, "mpi_send" },
-    { F_MPI_RECV, "mpi_recv" },
+    { F_MPI_SEND, "mpisend" },
+    { F_MPI_RECV, "mpirecv" },
     { F_BCAST,    "bcast" },
     { 0,          NULL }
 };
