@@ -203,6 +203,7 @@ enum pref_tabs {
     TAB_MAIN,
     TAB_NET,
     TAB_PROGS,
+    TAB_MPI,
     TAB_VCV,
     TAB_MAN,
     TAB_MAX

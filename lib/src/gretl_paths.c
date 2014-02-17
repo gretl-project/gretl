@@ -71,6 +71,7 @@ struct INTERNAL_PATHS {
     char octpath[MAXLEN];
     char statapath[MAXLEN];
     char pypath[MAXLEN];
+    char mpi_hosts[MAXLEN];
     char dbhost[32];
     char pngfont[128];
     unsigned char status;
@@ -2375,6 +2376,11 @@ const char *gretl_python_path (void)
     return paths.pypath;
 }
 
+const char *gretl_mpi_hosts (void)
+{
+    return paths.mpi_hosts;
+}
+
 const char *gretl_current_dir (void)
 {
     return current_dir;
@@ -2783,6 +2789,10 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
     ndelta += maybe_transcribe_path(paths.statapath, cpaths->statapath, 0);
     ndelta += maybe_transcribe_path(paths.pypath, cpaths->pypath, 0);
 
+#ifdef HAVE_MPI
+    ndelta += maybe_transcribe_path(paths.mpi_hosts, cpaths->mpi_hosts, 0);
+#endif
+
 #ifdef USE_RLIB
     if (maybe_transcribe_path(paths.rlibpath, cpaths->rlibpath, 0)) {
 	gretl_R_reset_error();
@@ -2931,6 +2941,8 @@ static void load_default_path (char *targ)
 	strcpy(paths.statapath, app_paths[2]);
     } else if (targ == paths.pypath) {
 	strcpy(paths.pypath, app_paths[3]);
+    } else if (targ == paths.mpi_hosts) {
+	*paths.mpi_hosts = '\0';
     } else if (targ == paths.pngfont) {
 #if defined(MAC_NATIVE)
 	strcpy(targ, "Sans 13");

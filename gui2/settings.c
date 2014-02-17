@@ -117,6 +117,10 @@ static char hc_tseri[5] = "HAC";
 static char hc_panel[9] = "Arellano";
 static char hc_garch[5] = "QML";
 
+#ifdef HAVE_MPI
+static char mpi_pref[8] = "openmpi";
+#endif
+
 static int lcnumeric = 1;
 static double graph_scale = 1.0;
 
@@ -262,6 +266,12 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, sizeof paths.statapath, TAB_PROGS, NULL},
     { "python", N_("Path to Python executable"), NULL, paths.pypath, 
       MACHSET | BROWSER, sizeof paths.statapath, TAB_PROGS, NULL},
+#ifdef HAVE_MPI
+    { "mpi_hosts", N_("Path to MPI hosts file"), NULL, paths.mpi_hosts, 
+      MACHSET | BROWSER, sizeof paths.mpi_hosts, TAB_MPI, NULL},
+    { "mpi_pref", N_("Installed MPI variant"), NULL, mpi_pref, 
+      LISTSET, 2, TAB_MPI, NULL},
+#endif
     { "dbhost", N_("Database server name"), NULL, paths.dbhost, 
       USERSET, sizeof paths.dbhost, TAB_NET, NULL },
     { "dbproxy", N_("HTTP proxy"), NULL, http_proxy, 
@@ -993,6 +1003,9 @@ int options_dialog (int page, const char *varname, GtkWidget *parent)
     make_prefs_tab(notebook, TAB_MAIN);
     make_prefs_tab(notebook, TAB_NET);
     make_prefs_tab(notebook, TAB_PROGS);
+#ifdef HAVE_MPI
+    make_prefs_tab(notebook, TAB_MPI);
+#endif
     make_prefs_tab(notebook, TAB_VCV);
     make_prefs_tab(notebook, TAB_MAN);
 
@@ -1148,6 +1161,10 @@ static const char *hc_strs[] = {
     "HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
 };
 
+static const char *mpi_strs[] = {
+    "openmpi", "mpich"
+};
+
 static const char **get_list_setting_strings (void *var, int *n)
 {
     static const char *hc_panel_strs[] = {
@@ -1170,7 +1187,10 @@ static const char **get_list_setting_strings (void *var, int *n)
     } else if (var == hc_garch) {
 	strs = garch_strs;
 	*n = sizeof garch_strs / sizeof garch_strs[0];
-    } 
+    } else if (var == mpi_pref) {
+	strs = mpi_strs;
+	*n = sizeof mpi_strs / sizeof mpi_strs[0];
+    }
 
 #ifdef MAC_THEMING
     else if (var == themepref) {
@@ -1274,6 +1294,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	w = gtk_label_new(_("Network"));
     } else if (tab == TAB_PROGS) {
 	w = gtk_label_new(_("Programs"));
+    } else if (tab == TAB_MPI) {
+	w = gtk_label_new(_("MPI"));
     } else if (tab == TAB_VCV) {
 	w = gtk_label_new(_("HCCME"));
     } else if (tab == TAB_MAN) {

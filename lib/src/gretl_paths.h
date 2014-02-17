@@ -63,6 +63,7 @@ struct ConfigPaths_ {
     char octpath[MAXLEN];
     char statapath[MAXLEN];
     char pypath[MAXLEN];
+    char mpi_hosts[MAXLEN];
     char dbhost[64];
     char pngfont[128];
 };
@@ -196,6 +197,8 @@ const char *gretl_octave_path (void);
 const char *gretl_stata_path (void);
 
 const char *gretl_python_path (void);
+
+const char *gretl_mpi_hosts (void);
 
 const char *gretl_current_dir (void);
 

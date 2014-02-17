@@ -299,6 +299,7 @@ struct gretl_option gretl_opts[] = {
     { MODTEST,  OPT_W, "white", 0 },
     { MODTEST,  OPT_X, "white-nocross", 0 },
     { MPI,      OPT_N, "np", 2},
+    { MPI,      OPT_T, "threads", 2},
     { LABELS,   OPT_D, "delete", 0 },
     { LABELS,   OPT_F, "from-file", 2 },
     { LABELS,   OPT_T, "to-file", 2 },
@@ -1408,6 +1409,8 @@ static int end_block_ci (const char *s)
 	    return FOREIGN;
 	} else if (!strcmp(word, "system")) {
 	    return SYSTEM;
+	} else if (!strcmp(word, "mpi")) {
+	    return MPI;
 	}
     }
 

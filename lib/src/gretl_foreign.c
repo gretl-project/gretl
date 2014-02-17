@@ -379,7 +379,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     }
 
     if (opt & OPT_N) {
-	int np = get_optval_int(FOREIGN, OPT_N, &err);
+	int np = get_optval_int(MPI, OPT_N, &err);
 
 	if (!err && np == 0) {
 	    err = E_DATA;
@@ -1892,7 +1892,7 @@ static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
 	} else {
 	    err = E_PARSE;
 	}
-    } else if (!strncmp(line, "mpi ", 4)) {
+    } else if (!strncmp(line, "mpi", 3)) {
 	err = set_foreign_lang("mpi", prn);
     } else {
 	/* we'll default to R for now */
@@ -1995,8 +1995,7 @@ int foreign_execute (const DATASET *dset,
 
     foreign_opt |= opt;
 
-#ifndef G_OS_WIN32
-    /* experimental! */
+#ifdef HAVE_MPI
     if (foreign_lang == LANG_MPI) {
 	err = write_gretl_mpi_file();
 	if (err) {
