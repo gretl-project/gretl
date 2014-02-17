@@ -366,16 +366,35 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
+enum {
+    MPI_OPENMPI,
+    MPI_MPICH
+};
+
+static int mpi_variant = MPI_OPENMPI;
+
+void set_mpi_variant (const char *pref)
+{
+    if (!strcmp(pref, "OpenMPI")) {
+	mpi_variant = MPI_OPENMPI;
+    } else if (!strcmp(pref, "MPICH")) {
+	mpi_variant = MPI_MPICH;
+    }
+}
+
 static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 {
-    /* FIXME just experimental */
-    char *hostfile = getenv("GRETL_MPI_HOSTS");
-    char npstr[8] = {0};
+    const char *hostfile = gretl_mpi_hosts();
+    char npnum[8] = {0};
     int err = 0;
 
-    if (hostfile == NULL) {
-	gretl_errmsg_set("For now, please set hostfile name via GRETL_MPI_HOSTS");
-	return E_DATA;
+    if (*hostfile == '\0') {
+	hostfile = getenv("GRETL_MPI_HOSTS");
+
+	if (hostfile == NULL) {
+	    gretl_errmsg_set("Please set hostfile name via GUI,\nor via GRETL_MPI_HOSTS");
+	    return E_DATA;
+	}
     }
 
     if (opt & OPT_N) {
@@ -385,25 +404,33 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    err = E_DATA;
 	}
 	if (!err) {
-	    sprintf(npstr, "%d", np);
+	    sprintf(npnum, "%d", np);
 	}
     }
 
     if (!err) {
+	const char *hostsopt;
 	char *argv[8];
 
+	if (mpi_variant == MPI_MPICH) {
+	    hostsopt = "-machinefile";
+	} else {
+	    hostsopt = "--hostfile";
+	}
+
 	argv[0] = "mpiexec";
-	if (*npstr != '\0') {
+
+	if (*npnum != '\0') {
 	    argv[1] = "-np";
-	    argv[2] = npstr;
-	    argv[3] = "--hostfile";
-	    argv[4] = hostfile;
+	    argv[2] = npnum;
+	    argv[3] = (char *) hostsopt;
+	    argv[4] = (char *) hostfile;
 	    argv[5] = "gretlcli-mpi";
 	    argv[6] = (char *) gretl_mpi_filename();
 	    argv[7] = NULL;
 	} else {
-	    argv[1] = "--hostfile";
-	    argv[2] = hostfile;
+	    argv[1] = (char *) hostsopt;
+	    argv[2] = (char *) hostfile;
 	    argv[3] = "gretlcli-mpi";
 	    argv[4] = (char *) gretl_mpi_filename();
 	    argv[5] = NULL;

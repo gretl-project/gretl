@@ -2856,6 +2856,8 @@ static void load_default_path (char *targ)
 	sprintf(targ, "%s\\Stata\\stata.exe", progfiles);
     } else if (targ == paths.pypath) {
 	strcpy(targ, "python.exe"); /* ?? */
+    } else if (targ == paths.mpi_hosts) {
+	*targ = '\0';
     } else if (targ == paths.pngfont) {
 	strcpy(targ, "verdana 8");
     }
@@ -3013,6 +3015,7 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.octpath, cpaths->octpath, 0);
     path_init(paths.statapath, cpaths->statapath, 0);
     path_init(paths.pypath, cpaths->pypath, 0);
+    path_init(paths.mpi_hosts, cpaths->mpi_hosts, 0);
 
     /* graphing font */
     path_init(paths.pngfont, cpaths->pngfont, 0);
@@ -3420,6 +3423,8 @@ int cli_read_rc (void)
 		strncat(cpaths.statapath, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "python")) {
 		strncat(cpaths.pypath, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "mpi_hosts")) {
+		strncat(cpaths.mpi_hosts, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "Png_font")) {
 		strncat(cpaths.pngfont, val, 128 - 1);
 	    } else if (!strcmp(key, "Gp_colors")) {

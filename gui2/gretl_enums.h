@@ -173,6 +173,7 @@ enum file_ops {
     SET_WDIR,
     SET_FDIR,
     SET_DBDIR,
+    SET_OTHER,
     SAVE_DATA_PKG,
     SAVE_REMOTE_DB,
     FILE_OP_MAX

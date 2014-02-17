@@ -688,6 +688,22 @@ static void set_default_progs_path (GtkFileChooser *fsel)
 #endif
 }
 
+static void set_default_other_path (GtkFileChooser *fsel)
+{
+    char *home = getenv("HOME");
+
+    if (home != NULL) {
+#ifdef G_OS_WIN32
+	gchar *path = my_filename_to_utf8(home);
+
+	gtk_file_chooser_set_current_folder(fsel, path);
+	g_free(path);
+#else
+	gtk_file_chooser_set_current_folder(fsel, home);
+    }
+#endif
+}
+
 static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 					    int action, FselDataSrc src,
 					    gpointer data)
@@ -705,13 +721,15 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 	g_free(currname);
     } else if (action == SAVE_CMD_LOG) {
 	gtk_file_chooser_set_current_name(filesel, "session.inp");
-    } else if (action == SET_PROG || action == SET_DIR) {
+    } else if (action == SET_PROG || action == SET_DIR || action == SET_OTHER) {
 	currname = (gchar *) data;
 	if (currname != NULL && g_path_is_absolute(currname)) {
 	    gtk_file_chooser_set_filename(filesel, currname);
 	} else if (action == SET_PROG) {
 	    set_default_progs_path(filesel);
-	}	    
+	} else if (action == SET_OTHER) {
+	    set_default_other_path(filesel);
+	}
     } else if (action == SAVE_FUNCTIONS || 
 	       action == SAVE_FUNCTIONS_AS ||
 	       action == SAVE_GFN_SPEC) {
@@ -886,7 +904,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	fsel_action = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
 	okstr = GTK_STOCK_OK;
 	remember = 0;
-    } else if (action == SET_PROG) {
+    } else if (action == SET_PROG || action == SET_OTHER) {
 	fsel_action = GTK_FILE_CHOOSER_ACTION_OPEN;
 	okstr = GTK_STOCK_OK;
 	remember = 0;
@@ -936,7 +954,9 @@ static void gtk_file_selector (int action, FselDataSrc src,
     if (SET_DIR_ACTION(action)) {
 	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), startdir);
     } else {
-	filesel_set_filters(filesel, action, src, data, lenptr);
+	if (action != SET_PROG && action != SET_OTHER) {
+	    filesel_set_filters(filesel, action, src, data, lenptr);
+	}
 	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
 	filesel_maybe_set_current_name(GTK_FILE_CHOOSER(filesel), action,
 				       src, data);

@@ -46,6 +46,8 @@ int write_gretl_octave_file (const char *buf, gretlopt opt,
 			     const DATASET *dset,
 			     const char **pfname);
 
+void set_mpi_variant (const char *pref);
+
 #ifdef USE_RLIB
 
 int get_R_function_by_name (const char *name);

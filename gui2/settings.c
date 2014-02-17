@@ -33,6 +33,7 @@
 #include "libset.h"
 #include "texprint.h"
 #include "uservar.h"
+#include "gretl_foreign.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -118,7 +119,7 @@ static char hc_panel[9] = "Arellano";
 static char hc_garch[5] = "QML";
 
 #ifdef HAVE_MPI
-static char mpi_pref[8] = "openmpi";
+static char mpi_pref[8] = "OpenMPI";
 #endif
 
 static int lcnumeric = 1;
@@ -270,7 +271,7 @@ RCVAR rc_vars[] = {
     { "mpi_hosts", N_("Path to MPI hosts file"), NULL, paths.mpi_hosts, 
       MACHSET | BROWSER, sizeof paths.mpi_hosts, TAB_MPI, NULL},
     { "mpi_pref", N_("Installed MPI variant"), NULL, mpi_pref, 
-      LISTSET, 2, TAB_MPI, NULL},
+      LISTSET, 8, TAB_MPI, NULL},
 #endif
     { "dbhost", N_("Database server name"), NULL, paths.dbhost, 
       USERSET, sizeof paths.dbhost, TAB_NET, NULL },
@@ -1089,6 +1090,8 @@ static void browse_button_callback (GtkWidget *w, RCVAR *rc)
 
     if (strstr(rc->description, "directory") != NULL) {
 	code = SET_DIR;
+    } else if (rc->var == mpi_pref) {
+	code = SET_OTHER;
     }
 
     file_selector_with_parent(code, FSEL_DATA_MISC, rc->var, parent);
@@ -1162,7 +1165,7 @@ static const char *hc_strs[] = {
 };
 
 static const char *mpi_strs[] = {
-    "openmpi", "mpich"
+    "OpenMPI", "MPICH"
 };
 
 static const char **get_list_setting_strings (void *var, int *n)
@@ -1778,6 +1781,10 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     maybe_revise_tramo_x12a_status();
+#endif
+
+#ifdef HAVE_MPI
+    set_mpi_variant(mpi_pref);
 #endif
 
     if (use_proxy && *http_proxy == '\0') {
