@@ -406,6 +406,7 @@ enum {
     CONST_INF,
     CONST_WIN32,
     CONST_EPS,
+    CONST_HAVE_MPI,
     CONST_MPI_RANK,
     CONST_MPI_SIZE
 };

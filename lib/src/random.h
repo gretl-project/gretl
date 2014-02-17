@@ -96,5 +96,9 @@ int gretl_rand_get_box_muller (void);
 
 unsigned int gretl_rand_get_seed (void);
 
+int gretl_rand_set_dcmt (int s);
+
+int gretl_rand_get_dcmt (void);
+
 #endif /* RANDOM_H */
 

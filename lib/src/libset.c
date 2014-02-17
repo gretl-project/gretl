@@ -117,6 +117,7 @@ struct set_vars_ {
 #define MESSAGES "messages"
 #define WARNINGS "warnings"
 #define GRETL_DEBUG "debug"
+#define USE_DCMT "use_dcmt"
 #define BLAS_MNK_MIN "blas_mnk_min"
 #define MP_MNK_MIN "mp_mnk_min"
 /* support dyslexia */
@@ -144,6 +145,7 @@ struct set_vars_ {
 			   !strcmp(s, R_LIB) || \
 			   !strcmp(s, BFGS_RSTEP) || \
 			   !strcmp(s, DPDSTYLE) || \
+			   !strcmp(s, USE_DCMT) || \
 			   !strcmp(s, USE_OPENMP))
 
 #define libset_double(s) (!strcmp(s, CONV_HUGE) || \
@@ -2057,6 +2059,8 @@ int libset_get_bool (const char *key)
 	return R_functions;
     } else if (!strcmp(key, R_LIB)) {
 	return R_lib;
+    } else if (!strcmp(key, USE_DCMT)) {
+        return gretl_rand_get_dcmt();
     }
 
     if (!strcmp(key, MAX_VERBOSE) && gretl_debug > 1) {
@@ -2159,6 +2163,8 @@ int libset_set_bool (const char *key, int val)
 	return check_R_setting(&R_functions, val, key);
     } else if (!strcmp(key, R_LIB)) {
 	return check_R_setting(&R_lib, val, key);
+    } else if (!strcmp(key, USE_DCMT)) {
+	return gretl_rand_set_dcmt(val);
     }
 
     flag = boolvar_get_flag(key);

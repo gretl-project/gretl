@@ -1892,6 +1892,8 @@ static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
 	} else {
 	    err = E_PARSE;
 	}
+    } else if (!strncmp(line, "mpi ", 4)) {
+	err = set_foreign_lang("mpi", prn);
     } else {
 	/* we'll default to R for now */
 	foreign_lang = LANG_R;

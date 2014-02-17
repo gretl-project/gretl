@@ -1381,8 +1381,8 @@ static NODE *eval_pdist (NODE *n, parser *p)
     return ret;
 }
 
-static int mpi_rank = 0;
-static int mpi_size = 1;
+static int mpi_rank = -1;
+static int mpi_size = 0;
 
 void set_mpi_rank_and_size (int rank, int size)
 {
@@ -1405,6 +1405,12 @@ static double get_const_by_id (int id)
 #endif
     } else if (id == CONST_WIN32) {
 #ifdef WIN32
+	return 1;
+#else
+	return 0;
+#endif
+    } else if (id == CONST_HAVE_MPI) {
+#if HAVE_MPI
 	return 1;
 #else
 	return 0;

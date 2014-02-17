@@ -50,8 +50,9 @@ struct str_table consts[] = {
     { CONST_INF,   "$inf" },
     { CONST_WIN32, "WIN32" },
     { CONST_EPS,   "$macheps" },
-    { CONST_MPI_RANK, "$mpiRank" },
-    { CONST_MPI_SIZE, "$mpiSize" },
+    { CONST_HAVE_MPI, "$havempi" },
+    { CONST_MPI_RANK, "$mpirank" },
+    { CONST_MPI_SIZE, "$mpisize" },
     { 0,        NULL }
 };
 

@@ -365,11 +365,11 @@ static int catch_system_alias (CMD *cmd)
                        c == MODELTAB ||		\
                        c == MODPRINT ||		\
                        c == MODTEST ||		\
+		       c == MPI ||		\
                        c == NLS ||		\
                        c == NULLDATA ||		\
 		       c == OPEN ||		\
                        c == OUTFILE ||		\
-		       c == PARALLEL ||		\
                        c == PRINTF ||		\
 	               c == PVAL ||		\
                        c == QLRTEST ||		\
@@ -1878,8 +1878,8 @@ static int check_datamod_command (CMD *cmd, const char *s)
                             c == GMM ||		\
                             c == KALMAN ||	\
                             c == MLE ||		\
+			    c == MPI ||		\
                             c == NLS ||		\
-			    c == PARALLEL ||	\
 			    c == RESTRICT ||	\
 			    c == SYSTEM)
 
@@ -2546,19 +2546,14 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     }
 #endif
 
-    if (cmd->context == FOREIGN && !ends_block(line, "foreign")) {
+    if (cmd->context == FOREIGN && 
+	!ends_block(line, "foreign") &&
+	!ends_block(line, "mpi")) {
 	cmd_set_nolist(cmd);
 	cmd->opt = OPT_NONE;
 	cmd->ci = FOREIGN;
 	return 0;
     }
-
-    if (cmd->context == PARALLEL && !ends_block(line, "parallel")) {
-	cmd_set_nolist(cmd);
-	cmd->opt = OPT_NONE;
-	cmd->ci = PARALLEL;
-	return 0;
-    }    
 
     if ((cmd->flags & CMD_SUBST) || !gretl_looping_currently()) {
 	/* normalize line spaces */
@@ -3588,8 +3583,8 @@ static int effective_ci (const CMD *cmd)
 	    ci = FOREIGN;
 	} else if (!strcmp(cmd->param, "kalman")) {
 	    ci = KALMAN;
-	} else if (!strcmp(cmd->param, "parallel")) {
-	    ci = PARALLEL;
+	} else if (!strcmp(cmd->param, "mpi")) {
+	    ci = MPI;
 	}
     }
 
@@ -5768,9 +5763,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case FOREIGN:
+    case MPI:
 	err = foreign_append_line(line, cmd->opt, prn);
 	if (!err) {
-	    gretl_cmd_set_context(cmd, cmd->ci);
+	    gretl_cmd_set_context(cmd, FOREIGN);
 	} 
 	break;
 
@@ -5780,10 +5776,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	}
 	break;
-
-    case PARALLEL:
-	err = E_NOTIMP;
-	break;	
 
     case ADD:
     case OMIT:
@@ -5953,8 +5945,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = foreign_execute(dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "kalman")) {
 	    err = kalman_parse_line(line, dset, cmd->opt);
-	} else if (!strcmp(cmd->param, "parallel")) {
-	    err = E_NOTIMP;
+	} else if (!strcmp(cmd->param, "mpi")) {
+	    err = foreign_execute(dset, cmd->opt, prn);
 	} else {
 	    err = 1;
 	}
@@ -6300,8 +6292,10 @@ int get_command_index (char *line, CMD *cmd)
 
     if (cmd->ci == NLS || cmd->ci == MLE ||
 	cmd->ci == GMM || cmd->ci == FOREIGN ||
-	cmd->ci == KALMAN || cmd->ci == PARALLEL) {
+	cmd->ci == KALMAN) {
 	cmd->context = cmd->ci;
+    } else if (cmd->ci == MPI) {
+	cmd->context = FOREIGN;
     }
 
 #if CMD_DEBUG

@@ -64,6 +64,7 @@
 static guint32 useed;
 
 static int use_dcmt = 0;
+static int gen_rand_initted = 0;
 
 static guint32 gretl_rand_octet (guint32 *sign);
 
@@ -213,6 +214,25 @@ static int set_up_dcmt (int n, int self, unsigned int seed)
     return 0;
 }
 
+int gretl_rand_set_dcmt (int s)
+{
+    if (dcmt == NULL) {
+	gretl_errmsg_set("dcmt: not available");
+	return E_DATA;
+    } else {
+	if (!s && !gen_rand_initted) {
+	    gretl_rand_init();
+	}
+	use_dcmt = s;
+	return 0;
+    }
+}
+
+int gretl_rand_get_dcmt (void)
+{
+    return use_dcmt;
+}
+
 inline static uint32_t dcmt_rand32 (void)
 {
     return genrand_mt(dcmt);
@@ -235,6 +255,7 @@ void gretl_rand_init (void)
 #endif
 
     gretl_rand_octet(NULL);
+    gen_rand_initted = 1;
 }
 
 /**
