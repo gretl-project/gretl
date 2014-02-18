@@ -60,6 +60,8 @@ typedef struct ufunc_ ufunc;
 typedef struct fnpkg_ fnpkg;
 typedef struct fnargs_ fnargs;
 
+int n_user_functions (void);
+
 int n_free_functions (void);
 
 ufunc *get_user_function_by_name (const char *name);
@@ -158,7 +160,7 @@ int create_and_write_function_package (const char *fname,
 				       PRN *prn);
 
 int function_set_package_role (const char *name, fnpkg *pkg,
-			       const char *attr, 
+			       const char *attr,
 			       gretlopt opt, PRN *prn);
 
 const char *package_role_get_key (int flag);

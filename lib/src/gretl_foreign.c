@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "gretl_func.h"
 #include "gretl_foreign.h"
 
 #include <glib.h>
@@ -81,7 +82,12 @@ static int set_foreign_lang (const char *lang, PRN *prn)
     } else if (g_ascii_strcasecmp(lang, "python") == 0) {
 	foreign_lang = LANG_PYTHON;
     } else if (g_ascii_strcasecmp(lang, "mpi") == 0) {
+#ifdef HAVE_MPI
 	foreign_lang = LANG_MPI;
+#else
+	gretl_errmsg_set(_("MPI is not supported in this gretl build"));
+	err = E_NOTIMP;
+#endif
     } else {
 	pprintf(prn, "%s: unknown language\n", lang);
 	err = E_DATA;
@@ -391,19 +397,24 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     int orig_nt = 0;
     int err = 0;
 
+#if MPI_DEBUG
+    fprintf(stderr, "lib_run_mpi_sync: starting\n");
+#endif
+
     if (*hostfile == '\0') {
 	hostfile = getenv("GRETL_MPI_HOSTS");
 
 	if (hostfile == NULL) {
-	    gretl_errmsg_set("Please set hostfile name via GUI,\nor via GRETL_MPI_HOSTS");
+	    gretl_errmsg_set("Please set hostfile name via GUI, or via GRETL_MPI_HOSTS");
 	    return E_DATA;
 	}
     }
 
     if (opt & OPT_N) {
+	/* handle the number-of-processes option */
 	int np = get_optval_int(MPI, OPT_N, &err);
 
-	if (!err && np <= 0) {
+	if (!err && (np <= 0 || np > 9999999)) {
 	    err = E_DATA;
 	}
 	if (!err) {
@@ -474,6 +485,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     }
 
     if (orig_nt > 0 && orig_nt < 999999) {
+	/* restore the original number of OMP threads */
 	char ntnum[8];
 
 	sprintf(ntnum, "%d", orig_nt);
@@ -872,20 +884,54 @@ int write_gretl_python_file (const char *buf, gretlopt opt, const char **pfname)
     return 0;
 }
 
-static int write_gretl_mpi_file (void)
+static int mpi_send_funcs_setup (FILE *fp)
+{
+    const char *dotdir = gretl_dotdir();
+    gchar *fname;
+    int err;
+
+    fname = g_strdup_printf("%smpi-funcs-tmp.xml", dotdir);
+    err = write_session_functions_file(fname);
+
+    if (!err) {
+	fprintf(fp, "include \"%s\"\n", fname);
+    }
+
+    g_free(fname);
+
+    return err;
+}
+
+static int write_gretl_mpi_file (gretlopt opt)
 {
     const gchar *fname = gretl_mpi_filename();
     FILE *fp = gretl_fopen(fname, "w");
+    int err = 0;
 
     if (fp == NULL) {
-	return E_FOPEN;
+	err = E_FOPEN;
     } else {
-	/* put out the stored 'foreign' lines */
-	put_foreign_lines(fp);
-	fclose(fp);
+	/* forward the "echo" and "messages" states? */
+	if (!gretl_echo_on()) {
+	    fputs("set echo off\n", fp);
+	}
+	if (!gretl_messages_on()) {
+	    fputs("set messages off\n", fp);
+	}
+	if (opt & OPT_F) {
+	    /* honor the --send-functions option */
+	    if (n_user_functions() > 0) {
+		err = mpi_send_funcs_setup(fp);
+	    }
+	}
+	if (!err) {
+	    /* put out the stored 'foreign' lines */
+	    put_foreign_lines(fp);
+	    fclose(fp);
+	}
     }
 
-    return 0;
+    return err;
 }
 
 static int write_data_for_stata (const DATASET *dset,
@@ -2065,7 +2111,7 @@ int foreign_execute (const DATASET *dset,
 
 #ifdef HAVE_MPI
     if (foreign_lang == LANG_MPI) {
-	err = write_gretl_mpi_file();
+	err = write_gretl_mpi_file(foreign_opt);
 	if (err) {
 	    delete_gretl_mpi_file();
 	} else {

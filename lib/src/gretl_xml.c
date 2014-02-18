@@ -3543,7 +3543,11 @@ int load_user_XML_file (const char *fname, PRN *prn)
     }
 
     if (!strcmp(rootname, "gretl-functions")) {
-	err = load_function_package_by_filename(fname, prn);
+	if (has_suffix(fname, ".gfn")) {
+	    err = load_function_package_by_filename(fname, prn);
+	} else {
+	    err = read_session_functions_file(fname);
+	}
     } else {
 	err = E_DATA;
     }

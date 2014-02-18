@@ -608,6 +608,17 @@ static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
 }
 
 /**
+ * n_user_functions:
+ *
+ * Returns: the number of hansl functions currently loaded in memory.
+ */
+
+int n_user_functions (void)
+{
+    return n_ufuns;
+}
+
+/**
  * n_free_functions:
  *
  * Returns: the number of functions loaded in memory
@@ -4059,6 +4070,10 @@ static fnpkg *read_package_file (const char *fname, int *err)
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
+    }
+
+    if (!*err && pkg == NULL) {
+	*err = E_DATA;
     }
 
 #if PKG_DEBUG

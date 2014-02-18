@@ -298,6 +298,7 @@ struct gretl_option gretl_opts[] = {
     { MODTEST,  OPT_R, "robust", 0 },
     { MODTEST,  OPT_W, "white", 0 },
     { MODTEST,  OPT_X, "white-nocross", 0 },
+    { MPI,      OPT_F, "send-functions", 0 },
     { MPI,      OPT_N, "np", 2},
     { MPI,      OPT_T, "omp-threads", 2},
     { LABELS,   OPT_D, "delete", 0 },
@@ -519,6 +520,19 @@ struct gretl_option gretl_opts[] = {
     { XTAB,     OPT_Z, "zeros", 0 },
     { 0,        0L,    NULL, 0 }
 };
+
+static const char *get_longopt (int ci, gretlopt opt)
+{
+    int i;
+
+    for (i=0; gretl_opts[i].ci; i++) {
+	if (gretl_opts[i].ci == ci && gretl_opts[i].o == opt) {
+	    return gretl_opts[i].longopt;
+	}
+    }
+
+    return "??";
+}
 
 int cluster_option_ok (int ci)
 {
@@ -986,7 +1000,10 @@ int get_optval_int (int ci, gretlopt opt, int *err)
 	    }
 	}
     } else if (status == 2 && err != NULL) {
-	/* parameter is required */
+	const char *longopt = get_longopt(ci, opt);
+
+	gretl_errmsg_sprintf(_("The option '--%s' requires a parameter"), 
+			     longopt);
 	*err = E_DATA;
     }
 

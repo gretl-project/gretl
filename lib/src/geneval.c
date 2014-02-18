@@ -1456,7 +1456,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = NULL;
 
 #ifndef HAVE_MPI
-    gretl_errmsg_set("MPI functions are not supported in this gretl build");
+    gretl_errmsg_set(_("MPI is not supported in this gretl build"));
     p->err = 1;
 #else
     if (f == F_MPI_SEND && l->t != MAT) {
