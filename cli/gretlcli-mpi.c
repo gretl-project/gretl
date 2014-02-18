@@ -74,8 +74,8 @@ static void mpi_exit (int err)
 
 static void usage (int err)
 {
-    logo(0);
-    printf("gretlcli-mpi: you must give the name of a script to run.\n");
+    printf("gretlcli-mpi %s\n", GRETL_VERSION);
+    printf("You must give the name of a script to run.\n");
     mpi_exit(err);
 }
 
@@ -224,7 +224,7 @@ static int maybe_get_input_line_continuation (char *line)
 static void maybe_print_intro (int id, int quiet)
 {
     if (id == 0) {
-	logo(quiet);
+	printf("gretlcli-mpi %s\n", GRETL_VERSION);
 	if (!quiet) {
 	    session_time(NULL);
 	}
@@ -315,7 +315,6 @@ int main (int argc, char *argv[])
     }
 
     libgretl_mpi_init(id, np);
-
     maybe_print_intro(id, quiet);
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, &err);
@@ -350,7 +349,9 @@ int main (int argc, char *argv[])
 
     runit = 0;
     sprintf(line, "run %s\n", runfile);
+    state.flags |= INIT_EXEC;
     err = cli_exec_line(&state, id, dset, cmdprn);
+    state.flags ^= INIT_EXEC;
     if (err && fb == NULL) {
 	mpi_exit(1);
     }
@@ -642,8 +643,6 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	err = gretl_function_append_line(line);
 	if (err) {
 	    errmsg(err, prn);
-	} else {
-	    pprintf(cmdprn, "%s\n", line);
 	}
 	return err;
     }
@@ -720,7 +719,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	return err;
     }
 
-    if (gretl_echo_on()) {
+    if (gretl_echo_on() && !(s->flags & INIT_EXEC)) {
 	/* visual feedback, not recording */
 	if (cmd->ci == FUNC && runit > 1) {
 	    ; /* don't echo */
@@ -822,7 +821,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	    errmsg(err, prn);
 	    break;
 	}
-	if (gretl_messages_on()) {
+	if (gretl_messages_on() && !(s->flags & INIT_EXEC)) {
 	    pprintf(prn, " %s\n", runfile);
 	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {

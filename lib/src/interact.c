@@ -3672,6 +3672,10 @@ static int command_is_silent (const CMD *cmd, const char *line)
 	return 1;
     }
 
+    if (!strcmp(line, "set echo off")) {
+	return 1;
+    }
+
     if (!strncmp(line, "quit", 4) && string_is_blank(line + 4)) {
 	return 1;
     }
