@@ -96,6 +96,26 @@ static int set_foreign_lang (const char *lang, PRN *prn)
     return err;
 }
 
+#ifdef HAVE_MPI
+
+enum {
+    MPI_OPENMPI,
+    MPI_MPICH
+};
+
+static int mpi_variant = MPI_OPENMPI;
+
+void set_mpi_variant (const char *pref)
+{
+    if (!strcmp(pref, "OpenMPI")) {
+	mpi_variant = MPI_OPENMPI;
+    } else if (!strcmp(pref, "MPICH")) {
+	mpi_variant = MPI_MPICH;
+    }
+}
+
+#endif
+
 static const gchar *gretl_ox_filename (void)
 {
     if (gretl_ox_prog == NULL) {
@@ -249,6 +269,94 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
+static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
+{
+    const char *hostfile = gretl_mpi_hosts();
+    int orig_nt = 0;
+    int np = 0;
+    int err = 0;
+
+    if (*hostfile == '\0') {
+	hostfile = getenv("GRETL_MPI_HOSTS");
+
+	if (hostfile == NULL) {
+	    gretl_errmsg_set("Please set hostfile name via GUI, or via GRETL_MPI_HOSTS");
+	    return E_DATA;
+	}
+    }
+
+    if (opt & OPT_N) {
+	/* handle the number-of-processes option */
+	np = get_optval_int(MPI, OPT_N, &err);
+	if (!err && (np <= 0 || np > 9999999)) {
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	/* handle OMP threading in this context */
+	int nt = 1;
+
+	if (opt & OPT_T) {
+	    nt = get_optval_int(MPI, OPT_T, &err);
+	    if (!err && (nt <= 0 || nt > 9999999)) {
+		err = E_DATA;
+	    }
+	}
+	if (!err) {
+	    char *orig_ntstr = getenv("OMP_NUM_THREADS");
+	    char ntnum[8];
+
+	    if (orig_ntstr != NULL && *orig_ntstr != '\0') {
+		orig_nt = atoi(orig_ntstr);
+	    }
+	    sprintf(ntnum, "%d", nt);
+	    gretl_setenv("OMP_NUM_THREADS", ntnum);
+	}
+    }
+
+    if (!err) {
+	const char *ghome = gretl_home();
+	gchar *mpiexec_path;
+	gchar *gretlcli_mpi_path;
+	gchar *cmd, *sout = NULL;
+	
+	mpiexec_path = g_strdup_printf("%s\\bin\\mpiexec.exe", ghome);
+	gretlcli_mpi_path = g_strdup_printf("%sgretlcli-mpi", ghome);
+
+	if (np > 0) {
+	    cmd = g_strdup_printf("\"%s\" -np %d --hostfile \"%s\" \"%s\" \"%s\"",
+				  mpiexec_path, np, hostfile, gretlcli_mpi_path,
+				  gretl_mpi_filename());
+	} else {
+	    cmd = g_strdup_printf("\"%s\" --hostfile \"%s\" \"%s\" \"%s\"",
+				  mpiexec_path, hostfile, gretlcli_mpi_path,
+				  gretl_mpi_filename());
+	}
+
+	err = gretl_win32_grab_output(cmd, &sout);
+
+	if (sout != NULL && *sout != '\0') {
+	    pputs(prn, sout);
+	}
+
+	g_free(mpiexec_path);
+	g_free(gretlcli_mpi_path);
+	g_free(sout);
+	g_free(cmd);
+    }
+
+    if (orig_nt > 0 && orig_nt < 999999) {
+	/* restore the original number of OMP threads */
+	char ntnum[8];
+
+	sprintf(ntnum, "%d", orig_nt);
+	gretl_setenv("OMP_NUM_THREADS", ntnum);
+    }	
+
+    return err;
+}
+
 static char *win32_dotpath (void)
 {
     gchar *dotpath = g_strdup(gretl_dotdir());
@@ -370,22 +478,6 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
     err = lib_run_prog_sync(argv, opt, prn);
 
     return err;
-}
-
-enum {
-    MPI_OPENMPI,
-    MPI_MPICH
-};
-
-static int mpi_variant = MPI_OPENMPI;
-
-void set_mpi_variant (const char *pref)
-{
-    if (!strcmp(pref, "OpenMPI")) {
-	mpi_variant = MPI_OPENMPI;
-    } else if (!strcmp(pref, "MPICH")) {
-	mpi_variant = MPI_MPICH;
-    }
 }
 
 #define MPI_DEBUG 0

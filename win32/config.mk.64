@@ -28,6 +28,9 @@ endif
 # otherwise set to "no".
 HAVE_GTK_SPINNER = yes
 
+# set this for an MPI-enabled build
+have_mpi = yes
+
 # libxml2 includes: adjust to match your system
 XML2_INC = $(MGWDIR)/include/libxml2
 

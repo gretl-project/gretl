@@ -27,7 +27,7 @@ RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 # libraries
 GTKLIBS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs gtk+-win32-2.0)
 GLIBLIB := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs glib-2.0)
-CLI_LIBS = -lreadline -lhistory
+RL_LIBS = -lreadline -lhistory
 GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview-2.0 -lxml2.dll -L$(imports)
 GRETLLIB = -L$(imports) -lgretl -lintl
 LIBS = -lm $(GRETLLIB) -ladvapi32
@@ -45,6 +45,11 @@ ifeq ($(BUILDTYPE),cross)
 else
   GRETL_LANG = native_lang
   BUILDDATE = native_builddate
+endif
+
+ifeq ($(have_mpi),yes)
+  MPICLI = gretlcli-mpi.exe
+  MPI_LIBS = -lmpi
 endif
 
 # source paths
@@ -236,6 +241,10 @@ LIBSRC = adf_kpss.c \
 	varprint.c \
 	vartest.c \
 	irfboot.c
+	
+ifeq ($(have_mpi),yes)
+  LIBSRC += gretl_mpi.c
+endif
 
 LIBOBJ = $(LIBSRC:.c=.o)
 
@@ -322,10 +331,13 @@ MOFILES = mo/de.po mo/el.mo mo/es.mo mo/eu.mo mo/fr.mo mo/it.mo mo/pl.mo \
 # targets begin
 
 all: buildstamp dirs dlls/libprob.dll dlls/libgretl.dll \
-	$(PLUGINS) gretlcli.exe gretl.exe $(MOFILES) $(GRETL_LANG) gretl_updater.exe
+	$(PLUGINS) gretlcli.exe gretl.exe $(MPICLI) $(MOFILES) $(GRETL_LANG) gretl_updater.exe
 
 gretlcli.exe: $(CLIOBJ)
-	$(CC) -o $@ $^ $(LIBS) $(CLI_LIBS) -lz -lmingwex -s
+	$(CC) -o $@ $^ $(LIBS) $(RL_LIBS) -lz -lmingwex -s
+	
+gretlcli-mpi.exe: gretlcli-mpi.o
+	$(CC) -o $@ $< $(LIBS) $(MPI_LIBS) -lz -lmingwex -s
 
 gretl.exe: $(GUIOBJ) gretlres.o
 	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lz -lmingwex -s
@@ -355,7 +367,7 @@ dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) $(DCMTOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
 	-o $@ $^ -lm -L$(imports) -lxml2.dll -lz -lintl -lprob -lgmp.dll \
-	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS) $(FFTW_LIBS) $(CURL_LIBS)
+	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS) $(FFTW_LIBS) $(CURL_LIBS) $(MPI_LIBS)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \

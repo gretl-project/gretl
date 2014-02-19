@@ -97,6 +97,8 @@ mkdir -p windist/gretl/helpfigs
 mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/plugins/data
 mkdir -p windist/gretl/ui
+# for MPI
+mkdir -p windist/gretl/bin
 
 mkdir -p windist/gretl/share/themes/Emacs/gtk-2.0-key
 mkdir -p windist/gretl/share/themes/Default/gtk-2.0-key
@@ -167,6 +169,28 @@ done
 # system DLLs for threads/openmp, if required
 # add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
 add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
+
+# files for OMPI support, if wanted
+for f in \
+	ompi-ps.exe \
+	libmpi.dll \
+	ompi-server.exe \
+	libopen-pal.dll \
+	ompi_info.exe \
+	opal-wrapper.exe \
+	libopen-rte.dll \
+	ompi-checkpoint.exe \
+	orterun.exe \
+	orte-ps.exe \
+	orte-checkpoint.exe \
+	orte-clean.exe \
+	orted.exe \
+	opal-restart.exe \
+	ompi-clean.exe \
+	mpiexec.exe
+do
+    add_file ${SYSBIN}/$f gretl/bin/$f
+done
 
 # GTK aux. files
 add_file $WINFILES/auxfiles/locale.alias gretl/share/locale/locale.alias
