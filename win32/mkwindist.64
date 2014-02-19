@@ -11,11 +11,13 @@ fi
 
 TOPDIR=".."
 THISDIR=`pwd`
+MPI=no
 
 ########## CONFIGURE HERE ###################
 
 if [ "$BUILDTYPE" = "cross" ] ; then
   WINFILES=/home/cottrell/stats/esl/win32
+  MPIWIN=/home/cottrell/cfiles/ompi-win64
   ADDONS=/home/cottrell/stats/gretl-addons
   HLPDIR=${TOPDIR}/share
   DOCDIR=${TOPDIR}/build/doc/tex
@@ -97,8 +99,6 @@ mkdir -p windist/gretl/helpfigs
 mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/plugins/data
 mkdir -p windist/gretl/ui
-# for MPI
-mkdir -p windist/gretl/bin
 
 mkdir -p windist/gretl/share/themes/Emacs/gtk-2.0-key
 mkdir -p windist/gretl/share/themes/Default/gtk-2.0-key
@@ -108,6 +108,12 @@ mkdir -p windist/gretl/share/themes/Raleigh/gtk-2.0
 mkdir -p windist/gretl/lib/gtk-2.0/modules
 mkdir -p windist/gretl/lib/gtk-2.0/2.10.0/engines
 mkdir -p windist/gretl/etc/gtk-2.0
+
+if [ $MPI = "yes" ] ; then
+  mkdir -p windist/gretl/bin
+  mkdir -p windist/gretl/share/openmpi
+  mkdir -p windist/gretl/etc/openmpi
+fi
 
 # gretl and GTK translations
 LANGS=`cat ${TOPDIR}/po/LINGUAS | grep -v ^#`
@@ -119,6 +125,9 @@ done
 # put binaries in place
 add_file gretlcli.exe gretl/gretlcli.exe
 add_file gretl.exe gretl/gretl.exe
+if [ $MPI = "yes" ] ; then
+  add_file gretlcli-mpi.exe gretl/gretlcli-mpi.exe
+fi
 
 # home-made dynamic libs
 for f in dlls/*.dll ; do
@@ -170,15 +179,13 @@ done
 # add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
 add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
 
+if [ $MPI = "yes" ] ; then
 # files for OMPI support, if wanted
 for f in \
 	ompi-ps.exe \
-	libmpi.dll \
 	ompi-server.exe \
-	libopen-pal.dll \
 	ompi_info.exe \
 	opal-wrapper.exe \
-	libopen-rte.dll \
 	ompi-checkpoint.exe \
 	orterun.exe \
 	orte-ps.exe \
@@ -191,6 +198,18 @@ for f in \
 do
     add_file ${SYSBIN}/$f gretl/bin/$f
 done
+for f in \
+	libmpi.dll \
+	libopen-pal.dll \
+	libopen-rte.dll
+do
+    add_file ${SYSBIN}/$f gretl/$f
+done
+for f in ${MPIWIN}/share/openmpi/help-*.txt ; do
+    add_file $f gretl/share/openmpi/`basename $f`
+done
+add_file ${MPIWIN}/etc/openmpi/mpi-hosts.txt gretl/etc/openmpi/mpi-hosts.txt
+fi 
 
 # GTK aux. files
 add_file $WINFILES/auxfiles/locale.alias gretl/share/locale/locale.alias

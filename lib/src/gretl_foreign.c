@@ -56,7 +56,9 @@ static gchar *gretl_ox_prog;
 static gchar *gretl_octave_prog;
 static gchar *gretl_stata_prog;
 static gchar *gretl_python_prog;
+#ifdef HAVE_MPI
 static gchar *gretl_mpi_prog;
+#endif
 
 static void destroy_foreign (void)
 {
@@ -160,6 +162,8 @@ static const gchar *gretl_python_filename (void)
     return gretl_python_prog;
 }
 
+#ifdef HAVE_MPI
+
 static const gchar *gretl_mpi_filename (void)
 {
     if (gretl_mpi_prog == NULL) {
@@ -170,6 +174,8 @@ static const gchar *gretl_mpi_filename (void)
 
     return gretl_mpi_prog;
 }
+
+#endif
 
 static void make_gretl_R_names (void)
 {
@@ -269,6 +275,8 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
+#ifdef HAVE_MPI
+
 static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 {
     const char *hostfile = gretl_mpi_hosts();
@@ -356,6 +364,8 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 
     return err;
 }
+
+#endif
 
 static char *win32_dotpath (void)
 {
@@ -480,6 +490,8 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
+#ifdef HAVE_MPI
+
 #define MPI_DEBUG 0
 
 static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
@@ -586,6 +598,8 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 
     return err;
 }
+
+#endif /* HAVE_MPI */
 
 #endif /* switch on MS Windows or not */
 
@@ -976,6 +990,8 @@ int write_gretl_python_file (const char *buf, gretlopt opt, const char **pfname)
     return 0;
 }
 
+#ifdef HAVE_MPI
+
 static int mpi_send_funcs_setup (FILE *fp)
 {
     const char *dotdir = gretl_dotdir();
@@ -1025,6 +1041,8 @@ static int write_gretl_mpi_file (gretlopt opt)
 
     return err;
 }
+
+#endif /* HAVE_MPI */
 
 static int write_data_for_stata (const DATASET *dset,
 				 FILE *fp)
@@ -1485,12 +1503,16 @@ static void delete_gretl_python_file (void)
     }
 }
 
+#ifdef HAVE_MPI
+
 static void delete_gretl_mpi_file (void)
 {
     if (gretl_mpi_prog != NULL) {
 	gretl_remove(gretl_mpi_prog);
     }
 }
+
+#endif
 
 /* The following code block is used if we're implementing
    gretl's R support by dlopening the R shared library
