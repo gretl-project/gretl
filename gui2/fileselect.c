@@ -700,8 +700,8 @@ static void set_default_other_path (GtkFileChooser *fsel)
 	g_free(path);
 #else
 	gtk_file_chooser_set_current_folder(fsel, home);
-    }
 #endif
+    }
 }
 
 static void filesel_maybe_set_current_name (GtkFileChooser *filesel,

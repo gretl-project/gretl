@@ -1088,10 +1088,15 @@ static void browse_button_callback (GtkWidget *w, RCVAR *rc)
     GtkWidget *parent = g_object_get_data(G_OBJECT(w), "parent");
     int code = SET_PROG;
 
+#ifdef HAVE_MPI
+    if (rc->var == mpi_pref) {
+	file_selector_with_parent(SET_OTHER, FSEL_DATA_MISC, rc->var, parent);
+	return;
+    }
+#endif
+
     if (strstr(rc->description, "directory") != NULL) {
 	code = SET_DIR;
-    } else if (rc->var == mpi_pref) {
-	code = SET_OTHER;
     }
 
     file_selector_with_parent(code, FSEL_DATA_MISC, rc->var, parent);
@@ -1164,10 +1169,6 @@ static const char *hc_strs[] = {
     "HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
 };
 
-static const char *mpi_strs[] = {
-    "OpenMPI", "MPICH"
-};
-
 static const char **get_list_setting_strings (void *var, int *n)
 {
     static const char *hc_panel_strs[] = {
@@ -1190,10 +1191,18 @@ static const char **get_list_setting_strings (void *var, int *n)
     } else if (var == hc_garch) {
 	strs = garch_strs;
 	*n = sizeof garch_strs / sizeof garch_strs[0];
-    } else if (var == mpi_pref) {
+    } 
+
+#ifdef HAVE_MPI
+    else if (var == mpi_pref) {
+	static const char *mpi_strs[] = {
+	    "OpenMPI", "MPICH"
+	};
+
 	strs = mpi_strs;
 	*n = sizeof mpi_strs / sizeof mpi_strs[0];
     }
+#endif
 
 #ifdef MAC_THEMING
     else if (var == themepref) {
