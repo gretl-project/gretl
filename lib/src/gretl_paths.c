@@ -2857,7 +2857,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.pypath) {
 	strcpy(targ, "python.exe"); /* ?? */
     } else if (targ == paths.mpi_hosts) {
-	sprintf(targ, "%setc\\openmpi\\mpi-hosts.txt", paths.gretldir);
+	sprintf(targ, "%setc\\mpi-hosts.txt", paths.gretldir);
     } else if (targ == paths.pngfont) {
 	strcpy(targ, "verdana 8");
     }

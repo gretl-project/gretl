@@ -119,7 +119,11 @@ static char hc_panel[9] = "Arellano";
 static char hc_garch[5] = "QML";
 
 #ifdef HAVE_MPI
+# ifdef G_OS_WIN32
+static char mpi_pref[8] = "MS_MPI";
+# else
 static char mpi_pref[8] = "OpenMPI";
+# endif
 #endif
 
 static int lcnumeric = 1;
@@ -1089,7 +1093,7 @@ static void browse_button_callback (GtkWidget *w, RCVAR *rc)
     int code = SET_PROG;
 
 #ifdef HAVE_MPI
-    if (rc->var == mpi_pref) {
+    if (!strcmp(rc->key, "mpi_hosts")) {
 	file_selector_with_parent(SET_OTHER, FSEL_DATA_MISC, rc->var, parent);
 	return;
     }
@@ -1195,9 +1199,15 @@ static const char **get_list_setting_strings (void *var, int *n)
 
 #ifdef HAVE_MPI
     else if (var == mpi_pref) {
+# ifdef G_OS_WIN32
+	static const char *mpi_strs[] = {
+	    "MS-MPI" /* FIXME? */
+	};
+# else
 	static const char *mpi_strs[] = {
 	    "OpenMPI", "MPICH"
 	};
+#endif
 
 	strs = mpi_strs;
 	*n = sizeof mpi_strs / sizeof mpi_strs[0];

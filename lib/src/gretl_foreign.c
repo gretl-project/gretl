@@ -277,6 +277,10 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 
 #ifdef HAVE_MPI
 
+/* Windows: for now we'll not attempt to support anything
+   other than "native" MS-MPI
+*/
+
 static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 {
     const char *hostfile = gretl_mpi_hosts();
@@ -325,20 +329,18 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 
     if (!err) {
 	const char *ghome = gretl_home();
-	gchar *mpiexec_path;
 	gchar *gretlcli_mpi_path;
 	gchar *cmd, *sout = NULL;
 	
-	mpiexec_path = g_strdup_printf("%s\\bin\\mpiexec.exe", ghome);
 	gretlcli_mpi_path = g_strdup_printf("%sgretlcli-mpi", ghome);
 
 	if (np > 0) {
-	    cmd = g_strdup_printf("\"%s\" -np %d --hostfile \"%s\" \"%s\" \"%s\"",
-				  mpiexec_path, np, hostfile, gretlcli_mpi_path,
+	    cmd = g_strdup_printf("mpiexec /machinefile \"%s\" /np %d \"%s\" \"%s\"",
+				  hostfile, np, gretlcli_mpi_path,
 				  gretl_mpi_filename());
 	} else {
-	    cmd = g_strdup_printf("\"%s\" --hostfile \"%s\" \"%s\" \"%s\"",
-				  mpiexec_path, hostfile, gretlcli_mpi_path,
+	    cmd = g_strdup_printf("mpiexec /machinefile \"%s\" \"%s\" \"%s\"",
+				  hostfile, gretlcli_mpi_path,
 				  gretl_mpi_filename());
 	}
 
@@ -348,7 +350,6 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    pputs(prn, sout);
 	}
 
-	g_free(mpiexec_path);
 	g_free(gretlcli_mpi_path);
 	g_free(sout);
 	g_free(cmd);

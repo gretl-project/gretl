@@ -49,7 +49,7 @@ endif
 
 ifeq ($(have_mpi),yes)
   MPICLI = gretlcli-mpi.exe
-  MPI_LIBS = -lmpi
+  MPI_LIBS = -lmsmpi
 endif
 
 # source paths
@@ -337,7 +337,7 @@ gretlcli.exe: $(CLIOBJ)
 	$(CC) -o $@ $^ $(LIBS) $(RL_LIBS) -lz -lmingwex -s
 	
 gretlcli-mpi.exe: gretlcli-mpi.o
-	$(CC) -o $@ $< $(LIBS) $(MPI_LIBS) -lz -lmingwex -s
+	$(CC) -o $@ $< $(MPI_LIBS) $(LIBS) -lz -lmingwex -s
 
 gretl.exe: $(GUIOBJ) gretlres.o
 	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lz -lmingwex -s

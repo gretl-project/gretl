@@ -11,13 +11,12 @@ fi
 
 TOPDIR=".."
 THISDIR=`pwd`
-MPI=no
+MPI=yes
 
 ########## CONFIGURE HERE ###################
 
 if [ "$BUILDTYPE" = "cross" ] ; then
   WINFILES=/home/cottrell/stats/esl/win32
-  MPIWIN=/home/cottrell/cfiles/ompi-win64
   ADDONS=/home/cottrell/stats/gretl-addons
   HLPDIR=${TOPDIR}/share
   DOCDIR=${TOPDIR}/build/doc/tex
@@ -110,9 +109,7 @@ mkdir -p windist/gretl/lib/gtk-2.0/2.10.0/engines
 mkdir -p windist/gretl/etc/gtk-2.0
 
 if [ $MPI = "yes" ] ; then
-  mkdir -p windist/gretl/bin
-  mkdir -p windist/gretl/share/openmpi
-  mkdir -p windist/gretl/etc/openmpi
+  mkdir -p windist/gretl/etc
 fi
 
 # gretl and GTK translations
@@ -180,35 +177,7 @@ done
 add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
 
 if [ $MPI = "yes" ] ; then
-# files for OMPI support, if wanted
-for f in \
-	ompi-ps.exe \
-	ompi-server.exe \
-	ompi_info.exe \
-	opal-wrapper.exe \
-	ompi-checkpoint.exe \
-	orterun.exe \
-	orte-ps.exe \
-	orte-checkpoint.exe \
-	orte-clean.exe \
-	orted.exe \
-	opal-restart.exe \
-	ompi-clean.exe \
-	mpiexec.exe
-do
-    add_file ${SYSBIN}/$f gretl/bin/$f
-done
-for f in \
-	libmpi.dll \
-	libopen-pal.dll \
-	libopen-rte.dll
-do
-    add_file ${SYSBIN}/$f gretl/$f
-done
-for f in ${MPIWIN}/share/openmpi/help-*.txt ; do
-    add_file $f gretl/share/openmpi/`basename $f`
-done
-add_file ${MPIWIN}/etc/openmpi/mpi-hosts.txt gretl/etc/openmpi/mpi-hosts.txt
+  add_file ${WINFILES}/auxfiles/mpi-hosts.txt gretl/etc/mpi-hosts.txt
 fi 
 
 # GTK aux. files
