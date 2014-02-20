@@ -57,7 +57,7 @@ struct kpss_info_ {
     double pval;
 };
 
-enum {
+typedef enum {
     UR_NO_CONST = 1,
     UR_CONST,
     UR_TREND,
@@ -65,11 +65,11 @@ enum {
     UR_MAX
 } AdfCode;
 
-enum {
+typedef enum {
     ADF_EG_TEST   = 1 << 0,
     ADF_EG_RESIDS = 1 << 1,
     ADF_PANEL     = 1 << 2
-} adf_flags;
+} AdfFlags;
 
 enum {
     AUTO_MAIC = 1,
@@ -79,7 +79,7 @@ enum {
 
 /* replace y with demeaned or detrended y */
 
-static int GLS_demean_detrend (double *y, int T, int test)
+static int GLS_demean_detrend (double *y, int T, AdfCode test)
 {
     gretl_matrix *ya = NULL;
     gretl_matrix *Za = NULL;
@@ -226,7 +226,7 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 
     if (opt & OPT_G) {
 	/* GLS adjustment is wanted */
-	int test = (opt & OPT_T)? UR_TREND : UR_CONST;
+	AdfCode test = (opt & OPT_T)? UR_TREND : UR_CONST;
 	int t, v = dset->v;
 
 	*err = dataset_add_series(dset, 1);
@@ -309,7 +309,7 @@ static void show_lags_test (MODEL *pmod, int order, PRN *prn)
 	F = wald_omit_F(llist, pmod);
 
 	if (!na(F)) {
-	    pprintf(prn, "   %s: F(%d, %d) = %.3f [%.4f]\n",
+	    pprintf(prn, "  %s: F(%d, %d) = %.3f [%.4f]\n",
 		    _("lagged differences"), order, pmod->dfd, F, 
 		    snedecor_cdf_comp(order, pmod->dfd, F));
 	}
@@ -415,7 +415,7 @@ static const char *DF_test_string (int i)
 static void 
 print_adf_results (int order, int pmax, double DFt, double pv, 
 		   MODEL *dfmod, int dfnum, const char *vname, 
-		   int *blurb_done, unsigned char flags, int i, 
+		   int *blurb_done, AdfFlags flags, int i, 
 		   int niv, int nseas, gretlopt opt, 
 		   int auto_order, PRN *prn)
 {
@@ -454,20 +454,20 @@ print_adf_results (int order, int pmax, double DFt, double pv,
 
     if (flags & ADF_EG_RESIDS) {
 	/* last step of Engle-Granger test */
-	pprintf(prn, "   %s: %s\n", _("model"), 
+	pprintf(prn, "  %s: %s\n", _("model"), 
 		(order > 0)? ADF_model_string(0) : DF_model_string(0));
     } else {
-	pprintf(prn, "   %s ", _(DF_test_string(i)));
+	pprintf(prn, "  %s ", _(DF_test_string(i)));
 	if (nseas > 0 && i > 0) {
 	    pputs(prn, _("plus seasonal dummies"));
 	}
 	pputc(prn, '\n');
-	pprintf(prn, "   %s: %s\n", _("model"), 
+	pprintf(prn, "  %s: %s\n", _("model"), 
 		(order > 0)? ADF_model_string(i) : DF_model_string(i));
     }
 
     if (!na(dfmod->rho)) {
-	pprintf(prn, "   %s: %.3f\n", _("1st-order autocorrelation coeff. for e"), 
+	pprintf(prn, "  %s: %.3f\n", _("1st-order autocorrelation coeff. for e"), 
 		dfmod->rho);
     }
 
@@ -481,20 +481,20 @@ print_adf_results (int order, int pmax, double DFt, double pv,
 	sprintf(taustr, "tau_%s(%d)", urcstrs[i], niv);
     }
 
-    pprintf(prn, "   %s: %g\n"
-	    "   %s: %s = %g\n",
+    pprintf(prn, "  %s: %g\n"
+	    "  %s: %s = %g\n",
 	    _("estimated value of (a - 1)"), dfmod->coeff[dfnum],
 	    _("test statistic"), taustr, DFt);
 
     if ((opt & OPT_G) && i+1 == UR_TREND) {
 	const double *c = df_gls_ct_cval(dfmod->nobs);
 
-	pprintf(prn, "\n   %*s    ", TRANSLATED_WIDTH(_("Critical values")), " ");
+	pprintf(prn, "\n  %*s    ", TRANSLATED_WIDTH(_("Critical values")), " ");
 	pprintf(prn, "%g%%     %g%%     %g%%     %g%%\n", 10.0, 5.0, 2.5, 1.0);
-	pprintf(prn, "   %s: %.2f   %.2f   %.2f   %.2f\n", 
+	pprintf(prn, "  %s: %.2f   %.2f   %.2f   %.2f\n", 
 		_("Critical values"), c[0], c[1], c[2], c[3]);
     } else {
-	pprintf(prn, "   %s\n", pvstr);
+	pprintf(prn, "  %s\n", pvstr);
     } 
 }
 
@@ -595,7 +595,7 @@ static double get_sum_y2 (MODEL *pmod, int ylagno, const DATASET *dset)
 
 static int ic_adjust_order (int *list, int kmax, int which,
 			    DATASET *dset, gretlopt opt,
-			    int *err, PRN *prn)
+			    int test_num, int *err, PRN *prn)
 {
     MODEL kmod;
     gretlopt kmod_opt = (OPT_A | OPT_Z);
@@ -644,13 +644,19 @@ static int ic_adjust_order (int *list, int kmax, int which,
 	printmodel(&kmod, dset, OPT_NONE, prn);
 #endif
 	if (opt & OPT_V) {
-	    if (k == kmax) {
+	    const char *tag = (which == AUTO_MBIC) ? "MBIC" : "MAIC";
+
+	    if (k == kmax && test_num == 1) {
 		pputc(prn, '\n');
 	    }
-	    pprintf(prn, "MIC = %#g for k = %02d\n", MIC, k);
+	    pprintf(prn, "  k = %02d: %s = %#g\n", k, tag, MIC);
 	}	    
 	clear_model(&kmod);
 	gretl_list_delete_at_pos(tmplist, k + 2);
+    }
+
+    if ((opt & OPT_V) && test_num > 1) {
+	pputc(prn, '\n');
     }
 
     free(tmplist);
@@ -744,7 +750,7 @@ double get_urc_pvalue (double tau, int n, int niv, int itv,
 #define test_opt_not_set(o) (!(o & OPT_N) && !(o & OPT_C) && \
                              !(o & OPT_T) && !(o & OPT_R))
 
-static int test_wanted (int test, gretlopt opt)
+static int test_wanted (AdfCode test, gretlopt opt)
 {
     int ret = 0;
 
@@ -768,9 +774,9 @@ static int test_wanted (int test, gretlopt opt)
     return ret;
 }
 
-static int engle_granger_itv (gretlopt opt)
+static AdfCode engle_granger_itv (gretlopt opt)
 {
-    int itv = UR_CONST;
+    AdfCode itv = UR_CONST;
 
     if (opt & OPT_N) {
 	itv = UR_NO_CONST;
@@ -814,9 +820,15 @@ static int gettrend (DATASET *dset, int square)
     return idx;
 }
 
-static int get_auto_order_method (int *err)
+static int get_auto_order_method (AdfFlags flags, int *err)
 {
-    const char *s = get_optval_string(ADF, OPT_E);
+    const char *s;
+
+    if (flags & (ADF_EG_TEST | ADF_EG_RESIDS)) {
+	s = get_optval_string(COINT, OPT_E);
+    } else {
+	s = get_optval_string(ADF, OPT_E);
+    }
 
     if (s == NULL || *s == '\0') {
 	/* the default */
@@ -836,8 +848,8 @@ static int get_auto_order_method (int *err)
 
 static int real_adf_test (int varno, int order, int niv,
 			  DATASET *dset, gretlopt opt, 
-			  unsigned char flags,
-			  adf_info *ainfo, PRN *prn)
+			  AdfFlags flags, adf_info *ainfo, 
+			  PRN *prn)
 {
     MODEL dfmod;
     gretlopt eg_opt = OPT_NONE;
@@ -846,6 +858,7 @@ static int real_adf_test (int varno, int order, int niv,
     int blurb_done = 0;
     int auto_order = 0;
     int order_max = 0;
+    int test_num = 0;
     int *list = NULL;
     int *biglist = NULL;
     double DFt = NADBL;
@@ -865,7 +878,7 @@ static int real_adf_test (int varno, int order, int niv,
 
     if (opt & OPT_E) {
 	/* testing down */
-	auto_order = get_auto_order_method(&err);
+	auto_order = get_auto_order_method(flags, &err);
 	if (err) {
 	    return err;
 	}
@@ -996,12 +1009,14 @@ static int real_adf_test (int varno, int order, int niv,
 
     skipdet:
 
+	test_num++;
+
 	if (auto_order) {
 	    if (auto_order == AUTO_TSTAT) {
 		order = t_adjust_order(list, order_max, dset, &err, prn);
 	    } else {
 		order = ic_adjust_order(list, order_max, auto_order,
-					dset, opt, &err, prn);
+					dset, opt, test_num, &err, prn);
 	    }	    
 	    if (err) {
 		clear_model(&dfmod);
@@ -1070,6 +1085,9 @@ static int real_adf_test (int varno, int order, int niv,
 	    if (!na(pv)) {
 		gretl_model_set_int(&dfmod, "dfnum", dfnum);
 		gretl_model_set_double(&dfmod, "dfpval", pv);
+	    }
+	    if (flags & ADF_EG_RESIDS) {
+		gretl_model_set_int(&dfmod, "eg-resids", 1);
 	    }
 	    printmodel(&dfmod, dset, OPT_NONE, prn);
 	} else if (!(opt & OPT_Q) && !(flags & (ADF_EG_RESIDS | ADF_PANEL))) {
@@ -2148,7 +2166,7 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
     gretl_model_init(&cmod, dset);
 
     if (!(opt & OPT_S)) {
-	/* test all candidate vars for unit root */
+	/* start by testing all candidate vars for unit root */
 	coint_set_sample(clist, nv, order, dset);
 	for (i=1; i<=nv; i++) {
 	    if (step == 1) {

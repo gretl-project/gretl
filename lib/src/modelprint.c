@@ -3111,7 +3111,11 @@ static void aux_print_info_criteria (const MODEL *pmod, PRN *prn)
     }
 
     if (n > 0) {
-	pputs(prn, "\n\n");
+	if (gretl_model_get_int(pmod, "eg-resids")) {
+	    pputc(prn, '\n');
+	} else {
+	    pputs(prn, "\n\n");
+	}
     }
 }
 

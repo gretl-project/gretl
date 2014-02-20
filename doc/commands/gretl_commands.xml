@@ -1561,6 +1561,7 @@
 	</option>
 	<option>
 	  <flag>--test-down</flag>
+	  <optparm optional="true">criterion</optparm>
 	  <effect>automatic lag order</effect>
 	</option>
 	<option>
