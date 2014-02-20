@@ -102,10 +102,15 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 
 enum {
     MPI_OPENMPI,
-    MPI_MPICH
+    MPI_MPICH,
+    MPI_MSMPI
 };
 
+# ifdef G_OS_WIN32
+static int mpi_variant = MPI_MSMPI;
+# else
 static int mpi_variant = MPI_OPENMPI;
+# endif
 
 void set_mpi_variant (const char *pref)
 {
@@ -113,6 +118,8 @@ void set_mpi_variant (const char *pref)
 	mpi_variant = MPI_OPENMPI;
     } else if (!strcmp(pref, "MPICH")) {
 	mpi_variant = MPI_MPICH;
+    } else if (strcmp(pref, "MS-MPI")) {
+	mpi_variant = MPI_MSMPI;
     }
 }
 
@@ -2269,4 +2276,3 @@ int foreign_execute (const DATASET *dset,
 
     return err;
 }
-
