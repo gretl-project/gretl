@@ -2100,6 +2100,8 @@ static int coint_set_sample (const int *list, int nv, int order,
     return 0;
 }
 
+#define EG_MIN_SAMPLE 0
+
 /**
  * engle_granger_test:
  * @order: lag order for the test.
@@ -2124,9 +2126,11 @@ static int coint_set_sample (const int *list, int nv, int order,
 int engle_granger_test (int order, const int *list, DATASET *dset, 
 			gretlopt opt, PRN *prn)
 {
+#if EG_MIN_SAMPLE
+    int test_t1, test_t2;
+#endif
     int orig_t1 = dset->t1;
     int orig_t2 = dset->t2;
-    int test_t1, test_t2;
     gretlopt adf_opt = OPT_C;
     MODEL cmod;
     int detcode = UR_CONST;
@@ -2184,8 +2188,10 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
     }
     pprintf(prn, _("Step %d: cointegrating regression\n"), step++);
 
+#if EG_MIN_SAMPLE
     test_t1 = dset->t1;
     test_t2 = dset->t2;
+#endif
 
     dset->t1 = orig_t1;
     dset->t2 = orig_t2;
@@ -2212,8 +2218,10 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
     pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
 	    step, dset->varname[k]);
 
+#if EG_MIN_SAMPLE
     dset->t1 = test_t1;
     dset->t2 = test_t2;
+#endif
 
     /* Run (A)DF test on the residuals */
     real_adf_test(k, order, nv, dset, adf_opt, 
