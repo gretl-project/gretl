@@ -290,11 +290,6 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 
     if (*hostfile == '\0') {
 	hostfile = getenv("GRETL_MPI_HOSTS");
-
-	if (hostfile == NULL) {
-	    gretl_errmsg_set("Please set hostfile name via GUI, or via GRETL_MPI_HOSTS");
-	    return E_DATA;
-	}
     }
 
     if (opt & OPT_N) {
@@ -328,29 +323,32 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     }
 
     if (!err) {
-	const char *ghome = gretl_home();
-	gchar *gretlcli_mpi_path;
+	gchar *npbit, *hostbit;
 	gchar *cmd, *sout = NULL;
-	
-	gretlcli_mpi_path = g_strdup_printf("%sgretlcli-mpi", ghome);
 
-	if (np > 0) {
-	    cmd = g_strdup_printf("mpiexec /machinefile \"%s\" /np %d \"%s\" \"%s\"",
-				  hostfile, np, gretlcli_mpi_path,
-				  gretl_mpi_filename());
+	if (hostfile != NULL && *hostfile != '\0') {
+	    hostbit = g_strdup_printf(" /machinefile \"%s\"", hostfile);
 	} else {
-	    cmd = g_strdup_printf("mpiexec /machinefile \"%s\" \"%s\" \"%s\"",
-				  hostfile, gretlcli_mpi_path,
-				  gretl_mpi_filename());
+	    hostbit = g_strdup("");
 	}
 
-	err = gretl_win32_grab_output(cmd, &sout);
+	if (np > 0) {
+	    npbit = g_strdup_printf(" /np %d", np);
+	} else {
+	    npbit = g_strdup("");
+	}	
+	
+	cmd = g_strdup_printf("mpiexec%s%s \"%sgretlcli-mpi\" \"%s\"",
+			      hostbit, npbit, gretl_home(),
+			      gretl_mpi_filename());
 
+	err = gretl_win32_grab_output(cmd, &sout);
 	if (sout != NULL && *sout != '\0') {
 	    pputs(prn, sout);
 	}
 
-	g_free(gretlcli_mpi_path);
+	g_free(hostbit);
+	g_free(npbit);
 	g_free(sout);
 	g_free(cmd);
     }
@@ -508,11 +506,6 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 
     if (*hostfile == '\0') {
 	hostfile = getenv("GRETL_MPI_HOSTS");
-
-	if (hostfile == NULL) {
-	    gretl_errmsg_set("Please set hostfile name via GUI, or via GRETL_MPI_HOSTS");
-	    return E_DATA;
-	}
     }
 
     if (opt & OPT_N) {
@@ -553,38 +546,27 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     }
 
     if (!err) {
-	const char *hostsopt;
+	const char *hostsopt = NULL;
 	char *argv[8];
+	int i = 0;
 
-	if (mpi_variant == MPI_MPICH) {
-	    hostsopt = "-machinefile";
-	} else {
-	    hostsopt = "--hostfile";
+	if (hostfile != NULL && *hostfile != '\0') {
+	    hostsopt = (mpi_variant == MPI_MPICH)? "-machinefile" :
+		"--hostfile";
 	}
 
-#if MPI_DEBUG
-	fprintf(stderr, "mpi: hostsopt = '%s'\n", hostsopt);
-	fprintf(stderr, "mpi: hostfile = '%s'\n", hostfile);
-	fprintf(stderr, "mpi: np = '%s'\n", npnum);
-#endif	
-
-	argv[0] = "mpiexec";
-
+	argv[i++] = "mpiexec";
+	if (hostsopt != NULL) {
+	    argv[i++] = (char *) hostsopt;
+	    argv[i++] = (char *) hostfile;
+	}
 	if (*npnum != '\0') {
-	    argv[1] = "-np";
-	    argv[2] = npnum;
-	    argv[3] = (char *) hostsopt;
-	    argv[4] = (char *) hostfile;
-	    argv[5] = "gretlcli-mpi";
-	    argv[6] = (char *) gretl_mpi_filename();
-	    argv[7] = NULL;
-	} else {
-	    argv[1] = (char *) hostsopt;
-	    argv[2] = (char *) hostfile;
-	    argv[3] = "gretlcli-mpi";
-	    argv[4] = (char *) gretl_mpi_filename();
-	    argv[5] = NULL;
-	}	    
+	    argv[i++] = "-np";
+	    argv[i++] = npnum;
+	}
+	argv[i++] = "gretlcli-mpi";
+	argv[i++] = (char *) gretl_mpi_filename();
+	argv[i] = NULL;
 
 	err = lib_run_prog_sync(argv, opt, prn);
     }

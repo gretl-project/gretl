@@ -108,10 +108,6 @@ mkdir -p windist/gretl/lib/gtk-2.0/modules
 mkdir -p windist/gretl/lib/gtk-2.0/2.10.0/engines
 mkdir -p windist/gretl/etc/gtk-2.0
 
-if [ $MPI = "yes" ] ; then
-  mkdir -p windist/gretl/etc
-fi
-
 # gretl and GTK translations
 LANGS=`cat ${TOPDIR}/po/LINGUAS | grep -v ^#`
 for lang in $LANGS ; do
@@ -175,10 +171,6 @@ done
 # system DLLs for threads/openmp, if required
 # add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
 add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
-
-if [ $MPI = "yes" ] ; then
-  add_file ${WINFILES}/auxfiles/mpi-hosts.txt gretl/etc/mpi-hosts.txt
-fi 
 
 # GTK aux. files
 add_file $WINFILES/auxfiles/locale.alias gretl/share/locale/locale.alias

@@ -11,6 +11,7 @@ fi
 
 TOPDIR=".."
 THISDIR=`pwd`
+MPI=yes
 
 ########## CONFIGURE HERE ###################
 
@@ -96,6 +97,9 @@ mkdir -p windist/gretl/ui
 # put binaries in place
 add_file gretlcli.exe gretl/gretlcli.exe
 add_file gretl.exe gretl/gretl.exe
+if [ $MPI = "yes" ] ; then
+  add_file gretlcli-mpi.exe gretl/gretlcli-mpi.exe
+fi
 
 # home-made dynamic libs
 for f in dlls/*.dll ; do

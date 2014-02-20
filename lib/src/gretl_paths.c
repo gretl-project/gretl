@@ -2857,13 +2857,15 @@ static void load_default_path (char *targ)
     } else if (targ == paths.pypath) {
 	strcpy(targ, "python.exe"); /* ?? */
     } else if (targ == paths.mpi_hosts) {
-	sprintf(targ, "%setc\\mpi-hosts.txt", paths.gretldir);
+	*targ = '\0';
     } else if (targ == paths.pngfont) {
 	strcpy(targ, "verdana 8");
     }
 
     free(progfiles);
 }
+
+# if CFG_DEBUG
 
 static void show_paths_on_stderr (void)
 {
@@ -2873,6 +2875,8 @@ static void show_paths_on_stderr (void)
     fprintf(stderr, " dotdir = '%s'\n", paths.dotdir);
     fprintf(stderr, " gnuplot = '%s'\n", paths.gnuplot);
 }
+
+# endif
 
 #else /* !WIN32 */
 
@@ -3079,10 +3083,9 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
 
 #if CFG_DEBUG
     fprintf(stderr, "gretl_set_paths: returning %d\n", retval);
-#endif
-
-#ifdef WIN32
+# ifdef WIN32
     show_paths_on_stderr();
+# endif
 #endif
 
     return retval;

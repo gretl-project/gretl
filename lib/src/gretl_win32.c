@@ -29,6 +29,10 @@
 #include <shlobj.h>
 #include <aclapi.h>
 
+#define REGDEBUG 0
+
+#if REGDEBUG
+
 static void win_print_last_error (void)
 {
     DWORD dw = GetLastError();
@@ -49,6 +53,8 @@ static void win_print_last_error (void)
 	LocalFree(buf);
     }
 }
+
+#endif
 
 /* returns 0 on success */
 
@@ -71,8 +77,10 @@ int read_reg_val (HKEY tree, const char *base,
 		       );
 
     if (ret != ERROR_SUCCESS) {
+#if REGDEBUG
 	fprintf(stderr, "Couldn't read registry path %s\n", regpath);
 	win_print_last_error();
+#endif
         return 1;
     }
 

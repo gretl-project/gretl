@@ -571,7 +571,7 @@ buildstamp: $(BUILDDATE)
 	./builddate
 
 clean:
-	rm -f *.o *.d *.def *.exe $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/*
+	rm -f *.o *.d *.def *.exe $(CLIPROG) $(GUIPROG) $(MPICLI) $(CHECKER) dlls/*
 	rm -f plugins/* $(PLUGINS)
 	rm -f $(imports)/*.a 
 	rm -f gretl.stamp gretl.lang builddate build.h

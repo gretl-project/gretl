@@ -192,7 +192,7 @@ static int set_up_dcmt (int n, int self, unsigned int seed)
         return E_DATA;
     }
 
-#if 1
+#if 0
     fprintf(stderr, "set_up_dcmt: set up %d MTs, self = %d\n", n, self);
 #endif
 
