@@ -54,7 +54,6 @@ ifeq ($(quiet_build),yes)
   CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
   CCV = $(CC) $(SIMD_OPT) $(OMP_OPT) > /dev/null
-  MPICC_ECHO = @echo "  MPICC  $@"
   MPILD_ECHO = @echo "  MPILD  $@" 
   MPICCV = $(MPICC) $(SIMD_OPT) $(OMP_OPT) > /dev/null
 else
@@ -102,9 +101,9 @@ gretlcli-mpi: .deps gretlcli-mpi.o
 	$(GRETLLIB)
 
 gretlcli-mpi.o: gretlcli-mpi.c
-	$(MPICC_ECHO)
-	$(AMP)$(MPICC) -c $(CFLAGS) $<
-	$(AMP)$(MPICC) $(CFLAGS) $(MPI_CFLAGS) -MM $< > .deps/$*.d
+	$(CCECHO)
+	$(AMP)$(CC) -c $(CFLAGS) $(MPI_CFLAGS) $<
+	$(AMP)$(CC) $(CFLAGS) $(MPI_CFLAGS) -MM $< > .deps/$*.d
 
 .deps:
 	$(AMP)mkdir $@
