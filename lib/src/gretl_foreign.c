@@ -498,7 +498,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 
 #ifdef HAVE_MPI
 
-#define MPI_DEBUG 1
+#define MPI_DEBUG 0
 
 #if MPI_DEBUG
 static void print_mpi_command (char **argv)
@@ -514,7 +514,9 @@ static void print_mpi_command (char **argv)
 #endif
 
 /* The following should probably be redundant on Linux but may
-   be needed for the OS X package */
+   be needed for the OS X package, where the gretl bin
+   directory may not be in PATH.
+*/
 
 static gchar *gretl_mpi_binary (void)
 {
@@ -524,9 +526,11 @@ static gchar *gretl_mpi_binary (void)
 
     if (p != NULL) {
 	*p = '\0';
+	ret = g_strdup_printf("%s/bin/gretlcli-mpi", tmp);
+    } else {
+	ret = g_strdup("gretlcli-mpi");
     }
 
-    ret = g_strdup_printf("%s/bin/gretlcli-mpi", tmp);
     g_free(tmp);
 
     return ret;
@@ -581,8 +585,8 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     }
 
     if (!err) {
-	const char *hostsopt = NULL;
 	gchar *mpiprog = gretl_mpi_binary();
+	const char *hostsopt = NULL;
 	char *argv[8];
 	int i = 0;
 

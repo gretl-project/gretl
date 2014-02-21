@@ -31,9 +31,8 @@
 #include "kalman.h"
 #include "gretl_www.h"
 
-#if defined(_OPENMP) && defined(USE_OPENMP)
+#ifdef _OPENMP
 # include <omp.h>
-# define OMP_STOPWATCH
 #endif
 
 #ifdef HAVE_MPI
@@ -1731,7 +1730,7 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
     return err;
 }
 
-#if defined(HAVE_MPI) || defined(OMP_STOPWATCH)
+#if defined(HAVE_MPI) || defined(_OPENMP)
 
 static double dt0;
 
@@ -1773,7 +1772,7 @@ static int want_mpi_stopwatch (void)
    otherwise fall back on clock()
 */ 
 
-#ifdef OMP_STOPWATCH
+#ifdef _OPENMP
 
 static void gretl_omp_stopwatch_init (void)
 {
@@ -1866,7 +1865,7 @@ static void gretl_stopwatch_init (void)
 	return;
     }
 #endif
-#if defined(OMP_STOPWATCH)
+#if defined(_OPENMP)
     gretl_omp_stopwatch_init();
 #elif defined(WIN32)
     gretl_win32_stopwatch_init();
@@ -1882,7 +1881,7 @@ double gretl_stopwatch (void)
 	return gretl_mpi_stopwatch();
     }
 #endif
-#if defined(OMP_STOPWATCH)
+#if defined(_OPENMP)
     return gretl_omp_stopwatch();
 #elif defined(WIN32)
     return gretl_win32_stopwatch();

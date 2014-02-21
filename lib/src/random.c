@@ -30,7 +30,7 @@
 # endif
 #endif
 
-#if defined(_OPENMP)
+#if defined(_OPENMP) && !defined(OS_OSX)
 # include <omp.h>
 #endif
 
