@@ -564,7 +564,9 @@ file_selector_process_result (const char *in_fname, int action,
 	err = do_save_markers(fname);
     } else if (action == SAVE_LABELS) {
 	err = do_save_labels(fname);
-    } else if (action == SET_PROG || action == SET_DIR) {
+    } else if (action == SET_PROG || 
+	       action == SET_DIR ||
+	       action == SET_OTHER) {
 	set_path_callback(data, fname);
     } else if (action == SET_WDIR) {
 	set_working_dir_callback(data, fname);
