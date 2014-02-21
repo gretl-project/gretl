@@ -81,6 +81,10 @@ else
     else
       MPI_CFLAGS="-I${MPI_incdir}"
     fi
+    if test x"${MPICC}" = x ; then
+      MPICC=mpicc
+    fi 
+    AC_SUBST(MPICC)
     AC_SUBST(MPI_CFLAGS)
     AC_SUBST(MPI_LIBS)
   fi

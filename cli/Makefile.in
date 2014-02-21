@@ -20,8 +20,10 @@ READLINE_LIBS = @READLINE_LIBS@
 READLINE_CFLAGS = @READLINE_CFLAGS@
 
 have_mpi = @have_mpi@
+MPICC = @MPICC@
 MPI_CFLAGS = @MPI_CFLAGS@
-MPICC = mpicc
+MPI_LIBS = @MPI_LIBS@
+MPILINK = @MPILINK@
 
 SSE2_CFLAGS = @SSE2_CFLAGS@
 AVX_CFLAGS = @AVX_CFLAGS@
@@ -95,10 +97,10 @@ $(CLI): .deps $(OBJS)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(OBJS) \
 	$(GRETLLIB) $(READLINE_LIBS)
 
-gretlcli-mpi: .deps gretlcli-mpi.o
+gretlcli-mpi: .deps $(MPIOBJ)
 	$(MPILD_ECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(MPICCV) $(LDFLAGS) -o $@ $(MPIOBJ) \
-	$(GRETLLIB)
+	$(GRETLLIB) $(MPILINK)
 
 gretlcli-mpi.o: gretlcli-mpi.c
 	$(CCECHO)

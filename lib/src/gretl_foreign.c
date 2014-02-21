@@ -498,7 +498,39 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 
 #ifdef HAVE_MPI
 
-#define MPI_DEBUG 0
+#define MPI_DEBUG 1
+
+#if MPI_DEBUG
+static void print_mpi_command (char **argv)
+{
+    int i;
+
+    fputs("gretl/MPI argv array:\n ", stderr);
+    for (i=0; argv[i] != NULL; i++) {
+	fprintf(stderr, "%s ", argv[i]);
+    }
+    fputc('\n', stderr);
+}
+#endif
+
+/* The following should probably be redundant on Linux but may
+   be needed for the OS X package */
+
+static gchar *gretl_mpi_binary (void)
+{
+    gchar *tmp = g_strdup(gretl_home());
+    gchar *p = strstr(tmp, "/share/gretl");
+    gchar *ret;
+
+    if (p != NULL) {
+	*p = '\0';
+    }
+
+    ret = g_strdup_printf("%s/bin/gretlcli-mpi", tmp);
+    g_free(tmp);
+
+    return ret;
+}
 
 static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 {
@@ -506,10 +538,6 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     char npnum[8] = {0};
     int orig_nt = 0;
     int err = 0;
-
-#if MPI_DEBUG
-    fprintf(stderr, "lib_run_mpi_sync: starting\n");
-#endif
 
     if (*hostfile == '\0') {
 	hostfile = getenv("GRETL_MPI_HOSTS");
@@ -554,6 +582,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 
     if (!err) {
 	const char *hostsopt = NULL;
+	gchar *mpiprog = gretl_mpi_binary();
 	char *argv[8];
 	int i = 0;
 
@@ -571,11 +600,15 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    argv[i++] = "-np";
 	    argv[i++] = npnum;
 	}
-	argv[i++] = "gretlcli-mpi";
+	argv[i++] = mpiprog;
 	argv[i++] = (char *) gretl_mpi_filename();
 	argv[i] = NULL;
 
+#if MPI_DEBUG
+	print_mpi_command(argv);
+#endif
 	err = lib_run_prog_sync(argv, opt, prn);
+	g_free(mpiprog);
     }
 
     if (orig_nt > 0 && orig_nt < 999999) {

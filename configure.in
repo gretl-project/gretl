@@ -318,6 +318,7 @@ AC_C_BIGENDIAN
 
 AC_ARG_VAR(HOSTCC, host compiler (for cross-build))
 AC_ARG_VAR(MKLANG, builder for gtksourceview files (cross-build))
+AC_ARG_VAR(MPILINK, linker commands for MPI (cross-build))
 
 AC_C_SSE2
 AC_C_AVX
@@ -334,13 +335,17 @@ if test "$ac_openmp_result" = "yes" ; then
   AC_DEFINE(OPENMP_BUILD, 1)
 fi
 
+dnl Check for MPI apparatus?
 if test "$try_mpi" = "yes" ; then
-dnl Check for MPI apparatus
-  AC_DEFUN([AC_PROG_MPICC],
-  [AC_CHECK_PROG(MPICC,mpicc,yes)])
+  if test x"${MPICC}" = x ; then 
+    AC_DEFUN([AC_PROG_MPICC],
+    [AC_CHECK_PROG(HAVE_MPICC,mpicc,yes)])
 
-  AC_PROG_MPICC
-  if test x"${MPICC}" = xyes ; then
+    AC_PROG_MPICC
+  else
+    HAVE_MPICC="yes"
+  fi
+  if test "x${HAVE_MPICC}" = "xyes" ; then
     AC_C_MPI
   else
     have_mpi="no"
