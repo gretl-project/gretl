@@ -49,9 +49,11 @@
 # include <windows.h>
 # include "gretlwin32.h"
 #else
+#if 0 /* not needed? */
 # include <sys/stat.h>
 # include <fcntl.h>
 # include <errno.h>
+#endif
 # if HAVE_GTK_FONT_CHOOSER
 #  include "fontfilter.h"
 # else
@@ -667,6 +669,7 @@ static const char *get_reg_base (const char *key)
 #endif
 
 #ifdef OS_OSX
+
 static int alt_ok (const char *prog)
 {
     char *p, test[MAXSTR];
@@ -685,7 +688,7 @@ static int alt_ok (const char *prog)
          strcat(test, "x12arima/x12a");
     }
 
-    ok = check_for_prog(test);
+    ok = check_for_program(test);
     
     if (ok) {
         if (tr) {
@@ -697,6 +700,7 @@ static int alt_ok (const char *prog)
     
     return ok;
 }
+
 #endif
 
 #ifdef HAVE_TRAMO
@@ -720,7 +724,7 @@ static void set_tramo_status (void)
     if (*tramodir != '\0') {
 	const char *tramo = gretl_tramo();
 
-	ok = check_for_prog(tramo);
+	ok = check_for_program(tramo);
 # ifdef OS_OSX
 	if (!ok) {
 	    ok = alt_ok(tramo);
@@ -763,7 +767,7 @@ static void set_x12a_status (void)
     if (*x12adir != '\0') {
 	const char *x12a = gretl_x12_arima();
 
-	ok = check_for_prog(x12a);
+	ok = check_for_program(x12a);
 # ifdef OS_OSX    
 	if (!ok) {
 	    ok = alt_ok(x12a);
@@ -785,136 +789,7 @@ static void set_x12a_status (void)
 
 #endif /* HAVE_X12A */
 
-#ifdef G_OS_WIN32
-
-int check_for_prog (const char *prog)
-{
-    char tmp[MAXLEN];
-    WIN32_FIND_DATA find_data;
-    HANDLE hfind;
-    int ret = 1;
-
-    if (prog == NULL || *prog == '\0') {
-	return 0;
-    }
-
-    hfind = FindFirstFile(prog, &find_data);
-    if (hfind == INVALID_HANDLE_VALUE) {
-	ret = 0;
-    }
-    FindClose(hfind);
-
-    if (ret == 0) {
-	char *p;
-
-	ret = SearchPath(NULL, prog, NULL, MAXLEN, tmp, &p);
-    }
-
-    return ret;
-}
-
-#else /* !G_OS_WIN32 */
-
-int is_executable (const char *s, uid_t myid, gid_t mygrp)
-{
-    struct stat buf;
-    int ok = 0;
-
-    if (gretl_stat(s, &buf) != 0) {
-	return 0;
-    }
-
-    if (buf.st_mode & (S_IFREG|S_IFLNK)) {
-	if (buf.st_uid == myid && (buf.st_mode & S_IXUSR)) {
-	    ok = 1;
-	} else if (buf.st_gid == mygrp && (buf.st_mode & S_IXGRP)) {
-	    ok = 1;
-	} else if (buf.st_uid != myid && buf.st_gid != mygrp &&
-		   (buf.st_mode & S_IXOTH)) {
-	    ok = 1;
-	}
-    }
-
-    return ok;
-}
-
-int check_for_prog (const char *prog)
-{
-    uid_t myid = getuid();
-    gid_t mygrp = getgid();
-    char *path;
-    char *pathcpy;
-    char **dirs;
-    char *fullpath;
-    char *p;
-    int max_dlen = 0;
-    int found = 0;
-    int i, ndirs;
-
-    if (prog != NULL && *prog == '/') {
-	return is_executable(prog, myid, mygrp);
-    }
-
-    path = getenv("PATH");
-    if (path == NULL || *path == '\0') {
-	return 0;
-    }
-
-    pathcpy = gretl_strdup(path);
-    if (pathcpy == NULL) {
-	return 0;
-    }
-
-    ndirs = 1;
-    p = pathcpy;
-    while (*p) {
-	if (*p == ':') ndirs++;
-	p++;
-    }
-
-    dirs = malloc(ndirs * sizeof *dirs);
-    if (dirs == NULL) {
-	free(pathcpy);
-	return 0;
-    }
-
-    if (ndirs == 1) {
-	dirs[0] = pathcpy;
-	max_dlen = strlen(pathcpy);
-    } else {
-	for (i=0; i<ndirs; i++) {
-	    int dlen;
-
-	    dirs[i] = strtok((i == 0)? pathcpy : NULL, ":");
-	    if (dirs[i] == NULL) {
-		ndirs = i;
-		break;
-	    }
-	    dlen = strlen(dirs[i]);
-	    if (dlen > max_dlen) {
-		max_dlen = dlen;
-	    }
-	}
-    }
-
-    if (ndirs == 0 || 
-	(fullpath = malloc(max_dlen + strlen(prog) + 2)) == NULL) {
-	free(dirs);
-	free(pathcpy);
-	return 0;
-    }
-
-    for (i=0; i<ndirs && !found; i++) { 
-	sprintf(fullpath, "%s/%s", dirs[i], prog);
-	found = is_executable(fullpath, myid, mygrp);
-    }
-
-    free(dirs);
-    free(pathcpy);
-    free(fullpath);
-
-    return found;
-}
+#ifndef G_OS_WIN32
 
 static void root_check (void)
 {
@@ -943,7 +818,7 @@ int gretl_config_init (void)
     return err;
 }
 
-#endif /* *nix versus Windows */
+#endif /* !G_OS_WIN32 */
 
 static void highlight_options_entry (const char *vname)
 {

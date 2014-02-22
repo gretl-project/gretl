@@ -169,4 +169,8 @@ void *gretl_aligned_malloc (size_t size, size_t alignment);
 
 void gretl_aligned_free (void *mem);
 
+/* search in path */
+
+int check_for_program (const char *prog);
+
 #endif /* GRETL_UTILS_H */

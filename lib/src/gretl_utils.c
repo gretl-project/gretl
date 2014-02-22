@@ -46,10 +46,6 @@
 #include <errno.h>
 #include <gmp.h>
 
-#ifndef WIN32
-# include <glib.h>
-#endif
-
 static void gretl_tests_cleanup (void);
 
 /**
@@ -2208,3 +2204,124 @@ void gretl_aligned_free (void *mem)
 	free(ORIG_PTR(mem));
     }
 }
+
+#ifdef WIN32
+
+int check_for_program (const char *prog)
+{
+    return win32_check_for_program(prog);
+}
+
+#else /* !WIN32 */
+
+#include <sys/stat.h>
+
+static int is_executable (const char *s, uid_t myid, gid_t mygrp)
+{
+    struct stat buf;
+    int ok = 0;
+
+    if (gretl_stat(s, &buf) != 0) {
+	return 0;
+    }
+
+    if (buf.st_mode & (S_IFREG|S_IFLNK)) {
+	if (buf.st_uid == myid && (buf.st_mode & S_IXUSR)) {
+	    ok = 1;
+	} else if (buf.st_gid == mygrp && (buf.st_mode & S_IXGRP)) {
+	    ok = 1;
+	} else if (buf.st_uid != myid && buf.st_gid != mygrp &&
+		   (buf.st_mode & S_IXOTH)) {
+	    ok = 1;
+	}
+    }
+
+    return ok;
+}
+
+/**
+ * check_for_program:
+ * @prog: name of program.
+ * 
+ * Returns: 1 if @prog is found in the PATH, otherwise 0.
+ */
+
+int check_for_program (const char *prog)
+{
+    uid_t myid = getuid();
+    gid_t mygrp = getgid();
+    char *path;
+    char *pathcpy;
+    char **dirs;
+    char *fullpath;
+    char *p;
+    int max_dlen = 0;
+    int found = 0;
+    int i, ndirs;
+
+    if (prog != NULL && *prog == '/') {
+	return is_executable(prog, myid, mygrp);
+    }
+
+    path = getenv("PATH");
+    if (path == NULL || *path == '\0') {
+	return 0;
+    }
+
+    pathcpy = gretl_strdup(path);
+    if (pathcpy == NULL) {
+	return 0;
+    }
+
+    ndirs = 1;
+    p = pathcpy;
+    while (*p) {
+	if (*p == ':') ndirs++;
+	p++;
+    }
+
+    dirs = malloc(ndirs * sizeof *dirs);
+    if (dirs == NULL) {
+	free(pathcpy);
+	return 0;
+    }
+
+    if (ndirs == 1) {
+	dirs[0] = pathcpy;
+	max_dlen = strlen(pathcpy);
+    } else {
+	for (i=0; i<ndirs; i++) {
+	    int dlen;
+
+	    dirs[i] = strtok((i == 0)? pathcpy : NULL, ":");
+	    if (dirs[i] == NULL) {
+		ndirs = i;
+		break;
+	    }
+	    dlen = strlen(dirs[i]);
+	    if (dlen > max_dlen) {
+		max_dlen = dlen;
+	    }
+	}
+    }
+
+    if (ndirs == 0 || 
+	(fullpath = malloc(max_dlen + strlen(prog) + 2)) == NULL) {
+	free(dirs);
+	free(pathcpy);
+	return 0;
+    }
+
+    for (i=0; i<ndirs && !found; i++) { 
+	sprintf(fullpath, "%s/%s", dirs[i], prog);
+	found = is_executable(fullpath, myid, mygrp);
+    }
+
+    free(dirs);
+    free(pathcpy);
+    free(fullpath);
+
+    return found;
+}
+
+#endif /* WIN32 or not */

@@ -2930,8 +2930,8 @@ static void add_user_var_icon (gpointer data, gpointer intp)
 
 static void add_all_icons (void) 
 {
+    int show_graph_page = check_for_program(latex);
     GList *list = NULL;
-    int show_graph_page = check_for_prog(latex);
     int i;
 
     active_object = NULL;

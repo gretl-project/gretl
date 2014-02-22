@@ -1018,6 +1018,32 @@ int maybe_print_R_path_addition (FILE *fp)
     return err;
 }
 
+int win32_check_for_program (const char *prog)
+{
+    char tmp[MAXLEN];
+    WIN32_FIND_DATA find_data;
+    HANDLE hfind;
+    int ret = 1;
+
+    if (prog == NULL || *prog == '\0') {
+	return 0;
+    }
+
+    hfind = FindFirstFile(prog, &find_data);
+    if (hfind == INVALID_HANDLE_VALUE) {
+	ret = 0;
+    }
+    FindClose(hfind);
+
+    if (ret == 0) {
+	char *p;
+
+	ret = SearchPath(NULL, prog, NULL, MAXLEN, tmp, &p);
+    }
+
+    return ret;
+}
+
 /* the following needed since mingw does not include strptime */
 
 /*
