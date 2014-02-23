@@ -39,7 +39,9 @@ enum {
 
 void libgretl_init (void);
 
-void libgretl_mpi_init (int self, int np);
+#ifdef HAVE_MPI
+int libgretl_mpi_init (int self, int np);
+#endif
 
 void libgretl_session_cleanup (int mode);
 

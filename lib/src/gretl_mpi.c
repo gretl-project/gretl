@@ -19,6 +19,148 @@
 
 #include "libgretl.h"
 #include "gretl_mpi.h"
+#include <mpi.h>
+
+#ifdef WIN32
+# include <windows.h>
+#else
+# include <dlfcn.h>
+#endif
+
+/* Support for MPI in libgretl. We get the MPI symbols that we
+   need from the address space of the calling program to avoid
+   introducing a hard dependency on libmpi.
+*/
+
+static void *MPIhandle;       /* handle to the MPI library */
+static int gretl_MPI_err;     /* initialization error record */
+static int gretl_MPI_initted; /* are we initialized or not? */
+static double mpi_dt0;        /* for the MPI stopwatch */
+
+/* external constants that we'll need from libmpi */
+
+static MPI_Comm mpi_comm_world;
+static MPI_Datatype mpi_double;
+static MPI_Datatype mpi_int;
+static MPI_Op mpi_max;
+static MPI_Op mpi_sum;
+
+/* renamed, pointerized versions of the MPI functions we need */
+
+static int (*mpi_comm_rank) (MPI_Comm, int *);
+static int (*mpi_error_class) (int, int *);
+static int (*mpi_error_string) (int, char *, int *);
+static int (*mpi_reduce) (void *, void *, int, MPI_Datatype, MPI_Op,
+			  int, MPI_Comm);
+static int (*mpi_bcast) (void *, int, MPI_Datatype, int, MPI_Comm);
+static int (*mpi_send) (void *, int, MPI_Datatype, int, int, MPI_Comm);	       
+static int (*mpi_recv) (void *, int, MPI_Datatype, int, int, MPI_Comm,
+			MPI_Status *);
+static double (*mpi_wtime) (void);
+static int (*mpi_initialized) (int *);
+
+#define MPI_DEBUG 0
+
+static void *mpiget (void *handle, const char *name, int *err)
+{
+#ifdef WIN32
+    void *p = GetProcAddress(handle, name);
+#else
+    void *p = dlsym(handle, name);
+#endif
+    
+    if (p == NULL) {
+	printf("mpi_dlget: couldn't find '%s'\n", name);
+	*err += 1;
+    }
+
+#if MPI_DEBUG
+    else {
+	printf("mpi_dlget: '%s' -> %p\n", name, p);
+    }
+#endif
+
+    return p;
+}
+
+/* dlopen the MPI library and grab all the symbols we need */
+
+int gretl_MPI_init (void)
+{
+    int err = 0;
+
+    if (gretl_MPI_initted) {
+	return gretl_MPI_err;
+    }
+
+#if MPI_DEBUG
+    printf("Loading MPI symbols...\n");
+#endif
+
+#ifdef WIN32
+    MPIhandle = GetModuleHandle(NULL);
+#else
+    MPIhandle = dlopen(NULL, RTLD_NOW);
+#endif
+
+    MPIhandle = gretl_dlopen("", 1);
+    if (MPIhandle == NULL) {
+	err = E_EXTERNAL;
+	goto bailout;
+    } 
+
+    mpi_comm_rank    = mpiget(MPIhandle, "MPI_Comm_rank", &err);
+    mpi_error_class  = mpiget(MPIhandle, "MPI_Error_class", &err);
+    mpi_error_string = mpiget(MPIhandle, "MPI_Error_string", &err);
+    mpi_reduce       = mpiget(MPIhandle, "MPI_Reduce", &err);
+    mpi_bcast        = mpiget(MPIhandle, "MPI_Bcast", &err);
+    mpi_send         = mpiget(MPIhandle, "MPI_Send", &err);
+    mpi_recv         = mpiget(MPIhandle, "MPI_Recv", &err);
+    mpi_wtime        = mpiget(MPIhandle, "MPI_Wtime", &err);
+    mpi_initialized  = mpiget(MPIhandle, "MPI_Initialized", &err);
+
+    /* Note: Open MPI's mpi.h defines OMPI_MAJOR_VERSION,
+             MPICH's mpi.h defines MPICH_VERSION,
+             MS-MPI's mpi.h defines MSMPI_VER
+    */
+
+    if (!err) {
+#ifdef OMPI_MAJOR_VERSION
+	/* Open MPI defines the following symbols in a way that requires
+	   fetching symbols from the library */
+	mpi_comm_world = (MPI_Comm) mpiget(MPIhandle, "ompi_mpi_comm_world", &err);
+	mpi_double     = (MPI_Datatype) mpiget(MPIhandle, "ompi_mpi_double", &err);
+	mpi_int        = (MPI_Datatype) mpiget(MPIhandle, "ompi_mpi_int", &err);
+	mpi_max        = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_max", &err);
+	mpi_sum        = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_sum", &err);
+#else
+	/* It seems that MPICH and MS-MPI just define these things as integer
+	   values in the header */
+	mpi_comm_world = MPI_COMM_WORLD;
+	mpi_double     = MPI_DOUBLE;
+	mpi_int        = MPI_INT;
+	mpi_max        = MPI_MAX;
+	mpi_sum        = MPI_SUM;
+#endif
+    }
+
+    if (err) {
+	close_plugin(MPIhandle);
+	MPIhandle = NULL;
+	err = E_EXTERNAL;
+    }
+
+ bailout:
+
+#if MPI_DEBUG
+    printf("load_MPI_symbols: returning %d\n", err);
+#endif
+
+    gretl_MPI_err = err;
+    gretl_MPI_initted = 1;
+
+    return err;
+}
 
 static void gretl_mpi_error (int *err)
 {
@@ -26,28 +168,37 @@ static void gretl_mpi_error (int *err)
     int len, errclass;
     int id = 0;
 
-    MPI_Comm_rank(MPI_COMM_WORLD, &id);
-    MPI_Error_class(*err, &errclass);
-    MPI_Error_string(errclass, msg1, &len);
-    MPI_Error_string(*err, msg2, &len);
+    mpi_comm_rank(mpi_comm_world, &id);
+    mpi_error_class(*err, &errclass);
+    mpi_error_string(errclass, msg1, &len);
+    mpi_error_string(*err, msg2, &len);
     gretl_errmsg_sprintf("%3d: %s %s\n", id, msg1, msg2);
 
     *err = E_EXTERNAL;
 }
 
-int gretl_matrix_mpi_reduce (gretl_matrix *m, MPI_Op op,
+int gretl_matrix_mpi_reduce (gretl_matrix *m, Gretl_MPI_Op op,
 			     double *global_x, int id)
 {
+    MPI_Op mpi_op;
     double local_x = 0.0;
+
+    if (op == GRETL_MPI_SUM) {
+	mpi_op = mpi_sum;
+    } else if (op == GRETL_MPI_MAX) {
+	mpi_op = mpi_max;
+    } else {
+	return E_DATA;
+    }
 
     if (id > 0) {
 	int i, n = m->rows * m->cols;
 
-	if (op == MPI_SUM) {
+	if (mpi_op == mpi_sum) {
 	    for (i=0; i<n; i++) {
 		local_x += m->val[i];
 	    }
-	} else if (op == MPI_MAX) {
+	} else if (mpi_op == mpi_max) {
 	    local_x = m->val[0];
 	    for (i=1; i<n; i++) {
 		if (m->val[i] > local_x) {
@@ -58,7 +209,8 @@ int gretl_matrix_mpi_reduce (gretl_matrix *m, MPI_Op op,
 	/* implement other ops here */
     }
 
-    MPI_Reduce(&local_x, global_x, 1, MPI_DOUBLE, op, 0, MPI_COMM_WORLD);
+    mpi_reduce(&local_x, global_x, 1, mpi_double, mpi_op, 
+	       0, mpi_comm_world);
 
     return 0;
 }
@@ -77,7 +229,7 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm, int id)
     }
 
     /* broadcast the matrix dimensions first */
-    err = MPI_Bcast(rc, 2, MPI_INT, 0, MPI_COMM_WORLD);
+    err = mpi_bcast(rc, 2, mpi_int, 0, mpi_comm_world);
 
     if (!err && id > 0) {
 	/* everyone but root needs to allocate space */
@@ -91,7 +243,7 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm, int id)
 	/* broadcast the matrix content */
 	int n = rc[0] * rc[1];
 
-	err = MPI_Bcast(m->val, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	err = mpi_bcast(m->val, n, mpi_double, 0, mpi_comm_world);
     }
 
     if (err) {
@@ -106,12 +258,12 @@ int gretl_matrix_mpi_send (const gretl_matrix *m, int dest)
     int rc[2] = {m->rows, m->cols};
     int err;
 
-    err = MPI_Send(rc, 2, MPI_INT, dest, 0, MPI_COMM_WORLD);
+    err = mpi_send(rc, 2, mpi_int, dest, 0, mpi_comm_world);
 
     if (!err) {
 	int n = m->rows * m->cols;
 
-	err = MPI_Send(m->val, n, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);
+	err = mpi_send(m->val, n, mpi_double, dest, 0, mpi_comm_world);
     }
 
     if (err) {
@@ -127,7 +279,7 @@ int gretl_matrix_mpi_send_size_known (const gretl_matrix *m,
     int n = m->rows * m->cols;
     int err;
 
-    err = MPI_Send(m->val, n, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);
+    err = mpi_send(m->val, n, mpi_double, dest, 0, mpi_comm_world);
 
     if (err) {
 	gretl_mpi_error(&err);
@@ -143,7 +295,7 @@ gretl_matrix *gretl_matrix_mpi_receive (int source,
     MPI_Status status;
     int rc[2];
 
-    *err = MPI_Recv(rc, 2, MPI_INT, source, 0, MPI_COMM_WORLD, &status);
+    *err = mpi_recv(rc, 2, mpi_int, source, 0, mpi_comm_world, &status);
 
     if (!*err) {
 	m = gretl_matrix_alloc(rc[0], rc[1]);
@@ -152,8 +304,8 @@ gretl_matrix *gretl_matrix_mpi_receive (int source,
 	} else {
 	    int n = rc[0] * rc[1];
 
-	    *err = MPI_Recv(m->val, n, MPI_DOUBLE, source, 0, 
-			    MPI_COMM_WORLD, &status);
+	    *err = mpi_recv(m->val, n, mpi_double, source, 0, 
+			    mpi_comm_world, &status);
 	    if (*err) {
 		gretl_mpi_error(err);
 	    }
@@ -174,8 +326,8 @@ gretl_matrix_mpi_receive_size_known (int source, int rows, int cols,
     if (m == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = MPI_Recv(m->val, rows * cols, MPI_DOUBLE, source, 0, 
-			MPI_COMM_WORLD, &status);
+	*err = mpi_recv(m->val, rows * cols, mpi_double, source, 0, 
+			mpi_comm_world, &status);
 	if (*err) {
 	    gretl_mpi_error(err);
 	}	
@@ -191,12 +343,12 @@ int gretl_matrix_mpi_send_cols (const gretl_matrix *m,
     int n = m->rows * ncols;
     int err;
 
-    err = MPI_Send(rc, 2, MPI_INT, j, 0, MPI_COMM_WORLD);
+    err = mpi_send(rc, 2, mpi_int, j, 0, mpi_comm_world);
 
     if (!err) {
 	void *ptr = m->val + (j-1)*n;
 
-	err = MPI_Send(ptr, n, MPI_DOUBLE, j, 0, MPI_COMM_WORLD);
+	err = mpi_send(ptr, n, mpi_double, j, 0, mpi_comm_world);
     }
 
     if (err) {
@@ -205,3 +357,47 @@ int gretl_matrix_mpi_send_cols (const gretl_matrix *m,
 
     return err;
 }
+
+/* MPI timer */
+
+void gretl_mpi_stopwatch_init (void)
+{
+    mpi_dt0 = mpi_wtime();
+}
+
+double gretl_mpi_stopwatch (void)
+{
+    double dt1 = mpi_wtime();
+    double x = dt1 - mpi_dt0;
+
+    mpi_dt0 = dt1;
+
+    return x;
+}
+
+int gretl_mpi_rank (void)
+{
+    int id;
+
+    mpi_comm_rank(mpi_comm_world, &id);
+    return id;
+}
+
+int gretl_mpi_initialized (void)
+{
+    static int ret = -1;
+
+    if (!gretl_MPI_initted) {
+	return 0;
+    }
+
+    if (ret < 0) {
+	mpi_initialized(&ret);
+	ret = ret > 0;
+    }
+
+    return ret;
+}
+
+/* end MPI timer */
+

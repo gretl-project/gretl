@@ -1459,6 +1459,12 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
     gretl_errmsg_set(_("MPI is not supported in this gretl build"));
     p->err = 1;
 #else
+    if (!gretl_mpi_initialized()) {
+	gretl_errmsg_set(_("The MPI library is not loaded"));
+	p->err = 1;
+	return NULL;
+    }
+
     if (f == F_MPI_SEND && l->t != MAT) {
 	p->err = E_TYPES;
     } else if (f == F_BCAST) {
@@ -1497,9 +1503,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
     } else if (f == F_BCAST) {
 	const char *mname = l->vname;
 	gretl_matrix *m = l->v.m;
-	int id;
-
-	MPI_Comm_rank(MPI_COMM_WORLD, &id);
+	int id = gretl_mpi_rank();
 
 	ret = aux_scalar_node(p);
 	if (!p->err) {

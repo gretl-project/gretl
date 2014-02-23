@@ -20,9 +20,18 @@
 #ifndef GRETL_MPI_H
 #define GRETL_MPI_H
 
-#include <mpi.h>
+typedef enum {
+    GRETL_MPI_SUM,
+    GRETL_MPI_MAX
+} Gretl_MPI_Op;
 
-int gretl_matrix_mpi_reduce (gretl_matrix *m, MPI_Op op,
+int gretl_MPI_init (void);
+
+int gretl_mpi_initialized (void);
+
+int gretl_mpi_rank (void);
+
+int gretl_matrix_mpi_reduce (gretl_matrix *m, Gretl_MPI_Op op,
 			     double *global_x, int id);
 
 int gretl_matrix_mpi_bcast (gretl_matrix **pm, int id);
@@ -43,5 +52,9 @@ gretl_matrix_mpi_receive_size_known (int source,
 
 int gretl_matrix_mpi_send_cols (const gretl_matrix *m, 
 				int j, int ncols);
+
+void gretl_mpi_stopwatch_init (void);
+
+double gretl_mpi_stopwatch (void);
 
 #endif /* GRETL_MPI_H */

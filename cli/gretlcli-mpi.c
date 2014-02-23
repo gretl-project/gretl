@@ -314,7 +314,12 @@ int main (int argc, char *argv[])
 	}
     }
 
-    libgretl_mpi_init(id, np);
+    err = libgretl_mpi_init(id, np);
+    if (err) {
+	fputs("Couldn't initialize the MPI sub-system\n", stderr);
+	mpi_exit(1);
+    }
+
     maybe_print_intro(id, quiet);
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, &err);
