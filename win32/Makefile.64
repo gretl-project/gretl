@@ -367,7 +367,7 @@ dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) $(DCMTOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
 	-o $@ $^ -lm -L$(imports) -lxml2.dll -lz -lintl -lprob -lgmp.dll \
-	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS) $(FFTW_LIBS) $(CURL_LIBS) $(MPI_LIBS)
+	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS) $(FFTW_LIBS) $(CURL_LIBS)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
