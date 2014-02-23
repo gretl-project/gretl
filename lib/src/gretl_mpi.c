@@ -21,9 +21,7 @@
 #include "gretl_mpi.h"
 #include <mpi.h>
 
-#ifdef WIN32
-# include <windows.h>
-#else
+#ifndef WIN32
 # include <dlfcn.h>
 #endif
 
@@ -32,9 +30,18 @@
    the calling program to avoid introducing a hard dependency on 
    libmpi.
 
-   Note: Open MPI's mpi.h defines OMPI_MAJOR_VERSION,
-         MPICH's mpi.h defines MPICH_VERSION,
-         MS-MPI's mpi.h defines MSMPI_VER
+   To use functions in this translation unit from elsewhere in
+   libgretl one must first call gretl_MPI_init(), and then
+   guard subsequent calls with "if (gretl_mpi_initialized())".
+   Otherwise you'll get a segfault or (on Windows) a fatal MPI
+   error.
+
+   For future reference, the MPI variants define the following
+   specific symbols in mpi.h:
+
+     Open MPI: OMPI_MAJOR_VERSION
+     MPICH: MPICH_VERSION
+     MS-MPI: MSMPI_VER
 */
 
 #ifdef OMPI_MAJOR_VERSION
@@ -46,8 +53,8 @@ static MPI_Datatype mpi_int;
 static MPI_Op mpi_max;
 static MPI_Op mpi_sum;
 #else
-/* It seems that MPICH and MS-MPI just define these symbols as
-   integer values in the header */
+/* It seems that MPICH and MS-MPI just define these symbols
+   as integer values in the header */
 # define mpi_comm_world MPI_COMM_WORLD
 # define mpi_double     MPI_DOUBLE
 # define mpi_int        MPI_INT
@@ -69,7 +76,14 @@ static MPI_Op mpi_sum;
 	       
 int gretl_MPI_init (void)
 {
-    return 0; /* no-op */
+    int initted;
+
+    /* this is a no-op, provided that MPI itself
+       is initialized */
+
+    mpi_initialized(&initted);
+
+    return initted ? 0 : E_EXTERNAL;
 }
 
 #else /* !WIN32, use dlsym() */
@@ -384,6 +398,8 @@ double gretl_mpi_stopwatch (void)
     return x;
 }
 
+/* end MPI timer */
+
 int gretl_mpi_rank (void)
 {
     int id;
@@ -410,5 +426,4 @@ int gretl_mpi_initialized (void)
     return ret;
 }
 
-/* end MPI timer */
 
