@@ -27,26 +27,60 @@
 # include <dlfcn.h>
 #endif
 
-/* Support for MPI in libgretl. We get the MPI symbols that we
-   need from the address space of the calling program to avoid
-   introducing a hard dependency on libmpi.
+/* Support for MPI in libgretl. On systems other than MS Windows
+   We get the MPI symbols that we need from the address space of
+   the calling program to avoid introducing a hard dependency on 
+   libmpi.
+
+   Note: Open MPI's mpi.h defines OMPI_MAJOR_VERSION,
+         MPICH's mpi.h defines MPICH_VERSION,
+         MS-MPI's mpi.h defines MSMPI_VER
 */
 
-static void *MPIhandle;       /* handle to the MPI library */
-static int gretl_MPI_err;     /* initialization error record */
-static int gretl_MPI_initted; /* are we initialized or not? */
-static double mpi_dt0;        /* for the MPI stopwatch */
-
-/* external constants that we'll need from libmpi */
-
+#ifdef OMPI_MAJOR_VERSION
+/* external constants that need to be loaded from the 
+   Open MPI library */
 static MPI_Comm mpi_comm_world;
 static MPI_Datatype mpi_double;
 static MPI_Datatype mpi_int;
 static MPI_Op mpi_max;
 static MPI_Op mpi_sum;
+#else
+/* It seems that MPICH and MS-MPI just define these symbols as
+   integer values in the header */
+# define mpi_comm_world MPI_COMM_WORLD
+# define mpi_double     MPI_DOUBLE
+# define mpi_int        MPI_INT
+# define mpi_max        MPI_MAX
+# define mpi_sum        MPI_SUM
+#endif
+
+#ifdef WIN32 /* msmpi.dll loaded */
+
+#define mpi_comm_rank MPI_Comm_rank
+#define mpi_error_class MPI_Error_class
+#define mpi_error_string MPI_Error_string
+#define mpi_reduce MPI_Reduce
+#define mpi_bcast MPI_Bcast
+#define mpi_send MPI_Send
+#define mpi_recv MPI_Recv
+#define mpi_wtime MPI_Wtime
+#define mpi_initialized MPI_Initialized
+	       
+int gretl_MPI_init (void)
+{
+    return 0; /* no-op */
+}
+
+#else /* !WIN32, use dlsym() */
+
+#define MPI_DEBUG 0
+
+static void *MPIhandle;       /* handle to the MPI library */
+static int gretl_MPI_err;     /* initialization error record */
+static int gretl_MPI_initted; /* are we initialized or not? */
 
 /* renamed, pointerized versions of the MPI functions we need */
-
 static int (*mpi_comm_rank) (MPI_Comm, int *);
 static int (*mpi_error_class) (int, int *);
 static int (*mpi_error_string) (int, char *, int *);
@@ -59,15 +93,9 @@ static int (*mpi_recv) (void *, int, MPI_Datatype, int, int, MPI_Comm,
 static double (*mpi_wtime) (void);
 static int (*mpi_initialized) (int *);
 
-#define MPI_DEBUG 0
-
 static void *mpiget (void *handle, const char *name, int *err)
 {
-#ifdef WIN32
-    void *p = GetProcAddress(handle, name);
-#else
     void *p = dlsym(handle, name);
-#endif
     
     if (p == NULL) {
 	printf("mpi_dlget: couldn't find '%s'\n", name);
@@ -83,8 +111,6 @@ static void *mpiget (void *handle, const char *name, int *err)
     return p;
 }
 
-/* dlopen the MPI library and grab all the symbols we need */
-
 int gretl_MPI_init (void)
 {
     int err = 0;
@@ -97,13 +123,7 @@ int gretl_MPI_init (void)
     printf("Loading MPI symbols...\n");
 #endif
 
-#ifdef WIN32
-    MPIhandle = GetModuleHandle(NULL);
-#else
     MPIhandle = dlopen(NULL, RTLD_NOW);
-#endif
-
-    MPIhandle = gretl_dlopen("", 1);
     if (MPIhandle == NULL) {
 	err = E_EXTERNAL;
 	goto bailout;
@@ -119,30 +139,15 @@ int gretl_MPI_init (void)
     mpi_wtime        = mpiget(MPIhandle, "MPI_Wtime", &err);
     mpi_initialized  = mpiget(MPIhandle, "MPI_Initialized", &err);
 
-    /* Note: Open MPI's mpi.h defines OMPI_MAJOR_VERSION,
-             MPICH's mpi.h defines MPICH_VERSION,
-             MS-MPI's mpi.h defines MSMPI_VER
-    */
-
-    if (!err) {
 #ifdef OMPI_MAJOR_VERSION
-	/* Open MPI defines the following symbols in a way that requires
-	   fetching symbols from the library */
+    if (!err) {
 	mpi_comm_world = (MPI_Comm) mpiget(MPIhandle, "ompi_mpi_comm_world", &err);
 	mpi_double     = (MPI_Datatype) mpiget(MPIhandle, "ompi_mpi_double", &err);
 	mpi_int        = (MPI_Datatype) mpiget(MPIhandle, "ompi_mpi_int", &err);
 	mpi_max        = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_max", &err);
 	mpi_sum        = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_sum", &err);
-#else
-	/* It seems that MPICH and MS-MPI just define these things as integer
-	   values in the header */
-	mpi_comm_world = MPI_COMM_WORLD;
-	mpi_double     = MPI_DOUBLE;
-	mpi_int        = MPI_INT;
-	mpi_max        = MPI_MAX;
-	mpi_sum        = MPI_SUM;
-#endif
     }
+#endif
 
     if (err) {
 	close_plugin(MPIhandle);
@@ -161,6 +166,8 @@ int gretl_MPI_init (void)
 
     return err;
 }
+
+#endif /* WIN32 or not */
 
 static void gretl_mpi_error (int *err)
 {
@@ -360,6 +367,8 @@ int gretl_matrix_mpi_send_cols (const gretl_matrix *m,
 
 /* MPI timer */
 
+static double mpi_dt0;
+
 void gretl_mpi_stopwatch_init (void)
 {
     mpi_dt0 = mpi_wtime();
@@ -387,9 +396,11 @@ int gretl_mpi_initialized (void)
 {
     static int ret = -1;
 
+#ifndef WIN32
     if (!gretl_MPI_initted) {
 	return 0;
     }
+#endif
 
     if (ret < 0) {
 	mpi_initialized(&ret);

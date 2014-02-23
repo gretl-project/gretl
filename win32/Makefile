@@ -49,7 +49,7 @@ endif
 
 ifeq ($(have_mpi),yes)
   MPICLI = gretlcli-mpi.exe
-  MPI_LIBS = -lmsmpi
+  MPI_LIB = -lmsmpi
 endif
 
 # source paths
@@ -337,7 +337,7 @@ gretlcli.exe: $(CLIOBJ)
 	$(CC) -o $@ $^ $(LIBS) $(RL_LIBS) -lz -lmingwex -s
 	
 gretlcli-mpi.exe: gretlcli-mpi.o
-	$(CC) -o $@ $< $(MPI_LIBS) $(LIBS) -lz -lmingwex -s
+	$(CC) -o $@ $< $(MPI_LIB) $(LIBS) -lz -lmingwex -s
 
 gretl.exe: $(GUIOBJ) gretlres.o
 	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lz -lmingwex -s
@@ -367,7 +367,7 @@ dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) $(DCMTOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
 	-o $@ $^ -lm -L$(imports) -lxml2.dll -lz -lintl -lprob -lgmp.dll \
-	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS) $(FFTW_LIBS) $(CURL_LIBS)
+	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS) $(FFTW_LIBS) $(CURL_LIBS) $(MPI_LIB)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
