@@ -21,27 +21,29 @@
 #include "gretl_mpi.h"
 #include <mpi.h>
 
-#ifndef WIN32
+#ifdef WIN32
+# include <windows.h>
+#else
 # include <dlfcn.h>
 #endif
 
 /* Support for MPI in libgretl. On systems other than MS Windows
    We get the MPI symbols that we need from the address space of
    the calling program to avoid introducing a hard dependency on 
-   libmpi.
+   libmpi; on Windows we call LoadLibrary() on msmpi.dll to the
+   same effect.
 
    To use functions in this translation unit from elsewhere in
    libgretl one must first call gretl_MPI_init(), and then
    guard subsequent calls with "if (gretl_mpi_initialized())".
-   Otherwise you'll get a segfault or (on Windows) a fatal MPI
-   error.
+   Otherwise you'll get a segfault.
 
    For future reference, the MPI variants define the following
    specific symbols in mpi.h:
 
      Open MPI: OMPI_MAJOR_VERSION
-     MPICH: MPICH_VERSION
-     MS-MPI: MSMPI_VER
+     MPICH:    MPICH_VERSION
+     MS-MPI:   MSMPI_VER
 */
 
 #ifdef OMPI_MAJOR_VERSION
@@ -50,43 +52,21 @@
 static MPI_Comm mpi_comm_world;
 static MPI_Datatype mpi_double;
 static MPI_Datatype mpi_int;
-static MPI_Op mpi_max;
 static MPI_Op mpi_sum;
+static MPI_Op mpi_prod;
+static MPI_Op mpi_max;
+static MPI_Op mpi_min;
 #else
 /* It seems that MPICH and MS-MPI just define these symbols
    as integer values in the header */
 # define mpi_comm_world MPI_COMM_WORLD
 # define mpi_double     MPI_DOUBLE
 # define mpi_int        MPI_INT
-# define mpi_max        MPI_MAX
 # define mpi_sum        MPI_SUM
+# define mpi_prod       MPI_PROD
+# define mpi_max        MPI_MAX
+# define mpi_min        MPI_MIN
 #endif
-
-#ifdef WIN32 /* msmpi.dll loaded */
-
-#define mpi_comm_rank MPI_Comm_rank
-#define mpi_error_class MPI_Error_class
-#define mpi_error_string MPI_Error_string
-#define mpi_reduce MPI_Reduce
-#define mpi_bcast MPI_Bcast
-#define mpi_send MPI_Send
-#define mpi_recv MPI_Recv
-#define mpi_wtime MPI_Wtime
-#define mpi_initialized MPI_Initialized
-	       
-int gretl_MPI_init (void)
-{
-    int initted;
-
-    /* this is a no-op, provided that MPI itself
-       is initialized */
-
-    mpi_initialized(&initted);
-
-    return initted ? 0 : E_EXTERNAL;
-}
-
-#else /* !WIN32, use dlsym() */
 
 #define MPI_DEBUG 0
 
@@ -109,7 +89,11 @@ static int (*mpi_initialized) (int *);
 
 static void *mpiget (void *handle, const char *name, int *err)
 {
+#ifdef WIN32
+    void *p = GetProcAddress(handle, name);
+#else
     void *p = dlsym(handle, name);
+#endif
     
     if (p == NULL) {
 	printf("mpi_dlget: couldn't find '%s'\n", name);
@@ -137,7 +121,12 @@ int gretl_MPI_init (void)
     printf("Loading MPI symbols...\n");
 #endif
 
+#ifdef WIN32
+    MPIhandle = LoadLibrary("msmpi.dll");
+#else
     MPIhandle = dlopen(NULL, RTLD_NOW);
+#endif
+
     if (MPIhandle == NULL) {
 	err = E_EXTERNAL;
 	goto bailout;
@@ -158,8 +147,10 @@ int gretl_MPI_init (void)
 	mpi_comm_world = (MPI_Comm) mpiget(MPIhandle, "ompi_mpi_comm_world", &err);
 	mpi_double     = (MPI_Datatype) mpiget(MPIhandle, "ompi_mpi_double", &err);
 	mpi_int        = (MPI_Datatype) mpiget(MPIhandle, "ompi_mpi_int", &err);
-	mpi_max        = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_max", &err);
 	mpi_sum        = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_sum", &err);
+	mpi_prod       = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_prod", &err);
+	mpi_max        = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_max", &err);
+	mpi_min        = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_min", &err);
     }
 #endif
 
@@ -181,8 +172,6 @@ int gretl_MPI_init (void)
     return err;
 }
 
-#endif /* WIN32 or not */
-
 static void gretl_mpi_error (int *err)
 {
     char msg1[BUFSIZ], msg2[BUFSIZ];
@@ -198,39 +187,88 @@ static void gretl_mpi_error (int *err)
     *err = E_EXTERNAL;
 }
 
-int gretl_matrix_mpi_reduce (gretl_matrix *m, Gretl_MPI_Op op,
-			     double *global_x, int id)
+static double reduce_matrix_to_scalar (const gretl_matrix *m,
+				       Gretl_MPI_Op op)
+{
+    int i, n = m->rows * m->cols;
+    double x = 0.0;
+
+    if (op == GRETL_MPI_SUM) {
+	x = 0.0;
+	for (i=0; i<n; i++) {
+	    x += m->val[i];
+	}
+    } else if (op == GRETL_MPI_PROD) {
+	x = 1.0;
+	for (i=0; i<n; i++) {
+	    x *= m->val[i];
+	}	    
+    } else if (op == GRETL_MPI_MAX) {
+	x = m->val[0];
+	for (i=1; i<n; i++) {
+	    if (m->val[i] > x) {
+		x = m->val[i];
+	    }
+	}
+    } else if (op == GRETL_MPI_MIN) {
+	x = m->val[0];
+	for (i=1; i<n; i++) {
+	    if (m->val[i] < x) {
+		x = m->val[i];
+	    }
+	}
+    }	   
+
+    return x;
+}
+
+int gretl_mpi_reduce (void *sendp, GretlType sendtype, 
+		      void *recvp, GretlType recvtype, 
+		      Gretl_MPI_Op op, int id)
 {
     MPI_Op mpi_op;
     double local_x = 0.0;
 
+    /* If it turns out there's a real use case for this,
+       we can re-jig it to be more flexible with regard
+       to both types and operators.
+    */
+
+    if (sendtype == GRETL_TYPE_DOUBLE &&
+	recvtype == GRETL_TYPE_DOUBLE) {
+	; /* scalar <- scalar: OK */
+    } else if (sendtype == GRETL_TYPE_MATRIX &&
+	       recvtype == GRETL_TYPE_DOUBLE) {
+	; /* scalar <- matrix: OK */
+    } else {
+	return E_DATA;
+    }    
+
     if (op == GRETL_MPI_SUM) {
 	mpi_op = mpi_sum;
+    } else if (op == GRETL_MPI_PROD) {
+	mpi_op = mpi_prod;
     } else if (op == GRETL_MPI_MAX) {
 	mpi_op = mpi_max;
+    } else if (op == GRETL_MPI_MIN) {
+	mpi_op = mpi_min;
     } else {
 	return E_DATA;
     }
 
     if (id > 0) {
-	int i, n = m->rows * m->cols;
+	if (sendtype == GRETL_TYPE_MATRIX &&
+	    recvtype == GRETL_TYPE_DOUBLE) {
+	    gretl_matrix *m = sendp;
 
-	if (mpi_op == mpi_sum) {
-	    for (i=0; i<n; i++) {
-		local_x += m->val[i];
-	    }
-	} else if (mpi_op == mpi_max) {
-	    local_x = m->val[0];
-	    for (i=1; i<n; i++) {
-		if (m->val[i] > local_x) {
-		    local_x = m->val[i];
-		}
-	    }
+	    local_x = reduce_matrix_to_scalar(m, op);
+	} else if (sendtype == GRETL_TYPE_DOUBLE &&
+		   recvtype == GRETL_TYPE_DOUBLE) {
+	    local_x = *(double *) sendp;
 	}
-	/* implement other ops here */
     }
 
-    mpi_reduce(&local_x, global_x, 1, mpi_double, mpi_op, 
+    mpi_reduce(&local_x, recvp, 1, mpi_double, mpi_op, 
 	       0, mpi_comm_world);
 
     return 0;
@@ -412,11 +450,9 @@ int gretl_mpi_initialized (void)
 {
     static int ret = -1;
 
-#ifndef WIN32
     if (!gretl_MPI_initted) {
 	return 0;
     }
-#endif
 
     if (ret < 0) {
 	mpi_initialized(&ret);

@@ -346,6 +346,7 @@ enum {
     F_READFILE,
     F_PRINTF,
     F_MPI_SEND,
+    F_REDUCE,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,

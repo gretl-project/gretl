@@ -1451,6 +1451,25 @@ double get_const_by_name (const char *name, int *err)
     }
 }
 
+#ifdef HAVE_MPI
+
+static Gretl_MPI_Op reduce_op_from_string (const char *s)
+{
+    if (!strcmp(s, "sum")) {
+	return GRETL_MPI_SUM;
+    } else if (!strcmp(s, "prod")) {
+	return GRETL_MPI_PROD;
+    } else if (!strcmp(s, "max")) {
+	return GRETL_MPI_MAX;
+    } else if (!strcmp(s, "min")) {
+	return GRETL_MPI_MIN;
+    } else {
+	return 0;
+    }
+}
+
+#endif
+
 static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = NULL;
@@ -1476,6 +1495,10 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 	    if (!umatrix_node(l)) {
 		p->err = E_TYPES;
 	    }
+	}
+    } else if (f == F_REDUCE) {
+	if ((l->t != MAT && l->t != NUM) || r->t != STR) {
+	    p->err = E_TYPES;
 	}
     }
 
@@ -1512,11 +1535,32 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 	if (id > 0) {
 	    p->err = user_matrix_replace_matrix_by_name(mname, m);
 	}
+    } else if (f == F_REDUCE) {
+	GretlType ltype, rtype = GRETL_TYPE_DOUBLE;
+	void *sendp;
+
+	if (l->t == MAT) {
+	    ltype = GRETL_TYPE_MATRIX;
+	    sendp = l->v.m;
+	} else {
+	    ltype = GRETL_TYPE_DOUBLE;
+	    sendp = &l->v.xval;
+	}	    
+
+	ret = aux_scalar_node(p);
+	if (!p->err) {
+	    Gretl_MPI_Op op = reduce_op_from_string(r->v.str);
+	    int id = gretl_mpi_rank();
+
+	    p->err = gretl_mpi_reduce(sendp, ltype,
+				      &ret->v.xval, rtype,
+				      op, id);
+	}
     } else {
 	gretl_errmsg_set("MPI function not yet supported");
 	p->err = 1;
     }
-#endif
+#endif /* HAVE_MPI */
 
     return ret;
 }
@@ -10645,6 +10689,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MPI_SEND:
     case F_MPI_RECV:
     case F_BCAST:
+    case F_REDUCE:
 	ret = mpi_transfer_node(l, r, t->t, p);
 	break;
     default: 
