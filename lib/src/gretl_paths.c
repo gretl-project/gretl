@@ -2718,19 +2718,29 @@ static int initialize_dotdir (void)
     return err;
 }
 
-/* when updating: transcribe the new value unless it is empty or is
-   unchanged; if it's a directory string that needs to be
-   slash-terminated, check that; return 1 if any change was made
-   to the internally recorded value, @targ, otherwise return 0.
+enum {
+    PATH_NEEDS_SLASH = 1 << 0,
+    PATH_BLANK_OK    = 1 << 1
+};
+
+/* Updating a gretl paths element: transcribe the new value unless it
+   is unchanged; if it's a directory string that needs to be
+   slash-terminated, check that; return 1 if any change was made to
+   the internally recorded value, @targ, otherwise return 0.  Note
+   that we ignore empty @src unless the PATH_BLANK_OK flag is given.
 */
 
-static int maybe_transcribe_path (char *targ, char *src,
-				  int needs_slash)
+static int maybe_transcribe_path (char *targ, char *src, int flags)
 {
     int ret = 0;
 
-    if (*src != '\0') {
-	if (needs_slash) {
+    if (*src == '\0' && (flags & PATH_BLANK_OK)) {
+	if (*targ != '\0') {
+	    *targ = '\0';
+	    ret = 1;
+	}
+    } else if (*src != '\0') {
+	if (flags & PATH_NEEDS_SLASH) {
 	    slash_terminate(src);
 	}
 	if (strcmp(src, targ)) {
@@ -2766,14 +2776,16 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
 {
     int ndelta = 0;
 
-    if (maybe_transcribe_path(paths.gretldir, cpaths->gretldir, 1)) {
+    if (maybe_transcribe_path(paths.gretldir, cpaths->gretldir, 
+			      PATH_NEEDS_SLASH)) {
 	set_helpfile_paths(opt);
 	set_gretl_libpath(paths.gretldir);
 	ndelta++;
     }
     
     /* native databases */
-    maybe_transcribe_path(paths.dbhost, cpaths->dbhost, 0);
+    maybe_transcribe_path(paths.dbhost, cpaths->dbhost, 
+			  PATH_BLANK_OK);
 
 #ifndef WIN32
     /* gnuplot path: this is set immutably at start-up on Windows */
@@ -2790,7 +2802,8 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
     ndelta += maybe_transcribe_path(paths.pypath, cpaths->pypath, 0);
 
 #ifdef HAVE_MPI
-    ndelta += maybe_transcribe_path(paths.mpi_hosts, cpaths->mpi_hosts, 0);
+    ndelta += maybe_transcribe_path(paths.mpi_hosts, cpaths->mpi_hosts, 
+				    PATH_BLANK_OK);
 #endif
 
 #ifdef USE_RLIB

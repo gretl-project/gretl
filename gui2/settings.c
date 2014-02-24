@@ -1597,9 +1597,29 @@ static void rcvar_set_int (RCVAR *rcvar, int ival, int *changed)
     }
 }
 
+static int blank_ok (RCVAR *rcvar)
+{
+    if (!strcmp(rcvar->key, "mpi_hosts")) {
+	return 1;
+    } else if (!strcmp(rcvar->key, "dbproxy")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static void rcvar_set_string (RCVAR *rcvar, const char *sval, int *changed)
 {
     char *strvar = (char *) rcvar->var;
+
+    if (sval == NULL && blank_ok(rcvar)) {
+	/* allow "blanking out" of the item */
+	if (*strvar != '\0') {
+	    flag_changed(rcvar, changed);
+	    *strvar = '\0';
+	}
+	return;
+    }
 
     if (sval != NULL && *sval != '\0' && strcmp(sval, strvar)) {
 	flag_changed(rcvar, changed);
@@ -1640,15 +1660,11 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	    int bval = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 
 	    rcvar_set_int(rcvar, bval, &changed);
-	} else if ((rcvar->flags & USERSET) || 
-		   (rcvar->flags & MACHSET) ||
-		   (rcvar->flags & MACHSET)) {
-	    gchar *str = entry_box_get_trimmed_text(w);
+	} else if (rcvar->flags & (USERSET | MACHSET)) {
+	    gchar *sval = entry_box_get_trimmed_text(w);
 
-	    if (str != NULL) {
-		rcvar_set_string(rcvar, str, &changed);
-		g_free(str);
-	    } 
+	    rcvar_set_string(rcvar, sval, &changed);
+	    g_free(sval);
 	} else if (rcvar->flags & LISTSET) {
 	    GtkComboBox *box = GTK_COMBO_BOX(w);
 
@@ -1657,14 +1673,14 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
 		rcvar_set_int(rcvar, ival, &changed);
 	    } else {
-		gchar *str = combo_box_get_active_text(box);
+		gchar *sval = combo_box_get_active_text(box);
 
 		if (rcvar->flags & FLOATSET) {
-		    rcvar_set_double(rcvar, str, &changed);
+		    rcvar_set_double(rcvar, sval, &changed);
 		} else {
-		    rcvar_set_string(rcvar, str, &changed);
+		    rcvar_set_string(rcvar, sval, &changed);
 		}
-		g_free(str);
+		g_free(sval);
 	    }
 	}
     }
