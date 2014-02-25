@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-02-04 08:58-0500\n"
-"PO-Revision-Date: 2014-02-13 19:45-0300\n"
+"PO-Revision-Date: 2014-02-24 23:45-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -13835,7 +13835,7 @@ msgstr "Variável de tratamento"
 
 #: gui2/selector.c:3734
 msgid "Independent variable"
-msgstr "Variável independentes"
+msgstr "Variável independente"
 
 #: gui2/selector.c:3745 gui2/selector.c:6433
 msgid "Y-axis variables"
