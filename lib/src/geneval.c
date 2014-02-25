@@ -1463,6 +1463,10 @@ static Gretl_MPI_Op reduce_op_from_string (const char *s)
 	return GRETL_MPI_MAX;
     } else if (!strcmp(s, "min")) {
 	return GRETL_MPI_MIN;
+    } else if (!strcmp(s, "hcat")) {
+	return GRETL_MPI_HCAT;
+    } else if (!strcmp(s, "vcat")) {
+	return GRETL_MPI_VCAT;
     } else {
 	return 0;
     }
@@ -1486,19 +1490,21 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 
     if (f == F_MPI_SEND && l->t != MAT) {
 	p->err = E_TYPES;
-    } else if (f == F_BCAST) {
+    } else if (f == F_BCAST || f == F_REDUCE) {
 	if (l->t != U_ADDR) {
 	    p->err = E_TYPES;
 	} else {
 	    /* switch to 'content' sub-node */
 	    l = l->v.b1.b;
-	    if (!umatrix_node(l)) {
-		p->err = E_TYPES;
+	    if (f == F_BCAST) {
+		if (!umatrix_node(l)) {
+		    p->err = E_TYPES;
+		}
+	    } else {
+		if (!umatrix_node(l) && !uscalar_node(l)) {
+		    p->err = E_TYPES;
+		}
 	    }
-	}
-    } else if (f == F_REDUCE) {
-	if ((l->t != MAT && l->t != NUM) || r->t != STR) {
-	    p->err = E_TYPES;
 	}
     }
 
@@ -1524,37 +1530,48 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_matrix_mpi_receive(src, &p->err);
 	}
     } else if (f == F_BCAST) {
-	const char *mname = l->vname;
 	gretl_matrix *m = l->v.m;
 	int id = gretl_mpi_rank();
+	int myerr = 0;
 
 	ret = aux_scalar_node(p);
 	if (!p->err) {
-	    ret->v.xval = gretl_matrix_mpi_bcast(&m, id);
+	    myerr = ret->v.xval = gretl_matrix_mpi_bcast(&m, id);
 	}
-	if (id > 0) {
-	    p->err = user_matrix_replace_matrix_by_name(mname, m);
+	if (id > 0 && !myerr) {
+	    p->err = user_matrix_replace_matrix_by_name(l->vname, m);
 	}
     } else if (f == F_REDUCE) {
-	GretlType ltype, rtype = GRETL_TYPE_DOUBLE;
-	void *sendp;
+	void *sendp, *recvp;
+	GretlType type;
+	gretl_matrix *m = NULL;
+	double x = NADBL;
 
 	if (l->t == MAT) {
-	    ltype = GRETL_TYPE_MATRIX;
+	    type = GRETL_TYPE_MATRIX;
 	    sendp = l->v.m;
+	    recvp = &m;
 	} else {
-	    ltype = GRETL_TYPE_DOUBLE;
+	    type = GRETL_TYPE_DOUBLE;
 	    sendp = &l->v.xval;
+	    recvp = &x;
 	}	    
 
 	ret = aux_scalar_node(p);
 	if (!p->err) {
 	    Gretl_MPI_Op op = reduce_op_from_string(r->v.str);
 	    int id = gretl_mpi_rank();
+	    int myerr;
 
-	    p->err = gretl_mpi_reduce(sendp, ltype,
-				      &ret->v.xval, rtype,
-				      op, id);
+	    myerr = ret->v.xval = gretl_mpi_reduce(sendp, recvp, type,
+						   op, id);
+	    if (id == 0 && !myerr) {
+		if (type == GRETL_TYPE_MATRIX) {
+		    p->err = user_matrix_replace_matrix_by_name(l->vname, m);
+		} else {
+		    p->err = gretl_scalar_set_value(l->vname, x);
+		}
+	    }
 	}
     } else {
 	gretl_errmsg_set("MPI function not yet supported");

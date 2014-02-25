@@ -76,6 +76,7 @@ static int gretl_MPI_initted; /* are we initialized or not? */
 
 /* renamed, pointerized versions of the MPI functions we need */
 static int (*mpi_comm_rank) (MPI_Comm, int *);
+static int (*mpi_comm_size) (MPI_Comm, int *);
 static int (*mpi_error_class) (int, int *);
 static int (*mpi_error_string) (int, char *, int *);
 static int (*mpi_reduce) (void *, void *, int, MPI_Datatype, MPI_Op,
@@ -133,6 +134,7 @@ int gretl_MPI_init (void)
     } 
 
     mpi_comm_rank    = mpiget(MPIhandle, "MPI_Comm_rank", &err);
+    mpi_comm_size    = mpiget(MPIhandle, "MPI_Comm_size", &err);
     mpi_error_class  = mpiget(MPIhandle, "MPI_Error_class", &err);
     mpi_error_string = mpiget(MPIhandle, "MPI_Error_string", &err);
     mpi_reduce       = mpiget(MPIhandle, "MPI_Reduce", &err);
@@ -187,91 +189,143 @@ static void gretl_mpi_error (int *err)
     *err = E_EXTERNAL;
 }
 
-static double reduce_matrix_to_scalar (const gretl_matrix *m,
-				       Gretl_MPI_Op op)
+static int gretl_matrix_reduce (void *sendp, 
+				void *recvp,
+				Gretl_MPI_Op op,
+				int id)
 {
-    int i, n = m->rows * m->cols;
-    double x = 0.0;
-
-    if (op == GRETL_MPI_SUM) {
-	x = 0.0;
-	for (i=0; i<n; i++) {
-	    x += m->val[i];
-	}
-    } else if (op == GRETL_MPI_PROD) {
-	x = 1.0;
-	for (i=0; i<n; i++) {
-	    x *= m->val[i];
-	}	    
-    } else if (op == GRETL_MPI_MAX) {
-	x = m->val[0];
-	for (i=1; i<n; i++) {
-	    if (m->val[i] > x) {
-		x = m->val[i];
-	    }
-	}
-    } else if (op == GRETL_MPI_MIN) {
-	x = m->val[0];
-	for (i=1; i<n; i++) {
-	    if (m->val[i] < x) {
-		x = m->val[i];
-	    }
-	}
-    }	   
-
-    return x;
-}
-
-int gretl_mpi_reduce (void *sendp, GretlType sendtype, 
-		      void *recvp, GretlType recvtype, 
-		      Gretl_MPI_Op op, int id)
-{
-    MPI_Op mpi_op;
-    double local_x = 0.0;
-
-    /* If it turns out there's a real use case for this,
-       we can re-jig it to be more flexible with regard
-       to both types and operators.
-    */
-
-    if (sendtype == GRETL_TYPE_DOUBLE &&
-	recvtype == GRETL_TYPE_DOUBLE) {
-	; /* scalar <- scalar: OK */
-    } else if (sendtype == GRETL_TYPE_MATRIX &&
-	       recvtype == GRETL_TYPE_DOUBLE) {
-	; /* scalar <- matrix: OK */
-    } else {
-	return E_DATA;
-    }    
-
-    if (op == GRETL_MPI_SUM) {
-	mpi_op = mpi_sum;
-    } else if (op == GRETL_MPI_PROD) {
-	mpi_op = mpi_prod;
-    } else if (op == GRETL_MPI_MAX) {
-	mpi_op = mpi_max;
-    } else if (op == GRETL_MPI_MIN) {
-	mpi_op = mpi_min;
-    } else {
-	return E_DATA;
-    }
+    gretl_matrix *sm = NULL;
+    gretl_matrix *rm = NULL;
+    double *val = NULL;
+    int valsize = 0;
+    int rc[2] = {0};
+    int np = 0;
+    int err = 0;
 
     if (id > 0) {
-	if (sendtype == GRETL_TYPE_MATRIX &&
-	    recvtype == GRETL_TYPE_DOUBLE) {
-	    gretl_matrix *m = sendp;
+	sm = sendp;
+	valsize = sm->rows * sm->cols;
+    }
 
-	    local_x = reduce_matrix_to_scalar(m, op);
-	} else if (sendtype == GRETL_TYPE_DOUBLE &&
-		   recvtype == GRETL_TYPE_DOUBLE) {
-	    local_x = *(double *) sendp;
+    if (id == 1) {
+	/* sample worker */
+	rc[0] = sm->rows;
+	rc[1] = sm->cols;
+	err = mpi_send(rc, 2, mpi_int, 0, 0, mpi_comm_world);
+    } else if (id == 0) {
+	/* master */
+	err = mpi_recv(rc, 2, mpi_int, 1, 0, mpi_comm_world, 
+		       MPI_STATUS_IGNORE);
+	if (!err) {
+	    int r = rc[0], c = rc[1];
+
+	    valsize = r * c;
+	    mpi_comm_size(mpi_comm_world, &np);
+
+	    if (op == GRETL_MPI_SUM) {
+		rm = gretl_zero_matrix_new(r, c);
+	    } else if (op == GRETL_MPI_HCAT) {
+		rm = gretl_matrix_alloc(r, (np-1)*c);
+	    } else {
+		/* GRETL_MPI_VCAT */
+		rm = gretl_matrix_alloc((np-1)*r, c);
+	    }
+	    if (rm == NULL) {
+		err = E_ALLOC;
+	    } else {
+		val = malloc(valsize * sizeof *val);
+		if (val == NULL) {
+		    gretl_matrix_free(rm);
+		    rm = NULL;
+		    err = E_ALLOC;
+		}
+	    }
 	}
     }
 
-    mpi_reduce(&local_x, recvp, 1, mpi_double, mpi_op, 
-	       0, mpi_comm_world);
+    if (!err) {
+	if (id > 0) {
+	    err = mpi_send(sm->val, valsize, mpi_double, 0, 0, 
+			   mpi_comm_world);
+	} else {
+	    int iadd = valsize / rc[1];
+	    int k, i, j = 0, ii = 0;
 
-    return 0;
+	    for (k=1; k<np && !err; k++) {
+		err = mpi_recv(val, valsize, mpi_double, k, 0, 
+			       mpi_comm_world, MPI_STATUS_IGNORE);
+		if (op == GRETL_MPI_SUM) {
+		    for (i=0; i<valsize; i++) {
+			rm->val[i] += val[i];
+		    }
+		} else if (op == GRETL_MPI_HCAT) {
+		    for (i=0; i<valsize; i++) {
+			rm->val[j++] = val[i];
+		    }
+		} else {
+		    /* GRETL_MPI_VCAT - not done yet! */
+		    for (j=0; j<rc[1]; j++) {
+			for (i=0; i<iadd; i++) {
+			    gretl_matrix_set(rm, i, j, val[ii++]);
+			}
+		    }
+		}
+	    }
+	    free(val);
+	    if (!err) {
+		gretl_matrix **pm = recvp;
+
+		*pm = rm;
+	    }
+	}
+    }
+
+    return err;
+}
+
+int gretl_mpi_reduce (void *sendp, void *recvp,
+		      GretlType type, Gretl_MPI_Op op, 
+		      int id)
+{
+    int err = 0;
+
+    if (type != GRETL_TYPE_DOUBLE && 
+	type != GRETL_TYPE_MATRIX) {
+	return E_DATA;
+    }
+
+    if (type == GRETL_TYPE_DOUBLE) {
+	double local_x = 0.0;
+	MPI_Op mpi_op;
+
+	if (op == GRETL_MPI_SUM) {
+	    mpi_op = mpi_sum;
+	} else if (op == GRETL_MPI_PROD) {
+	    mpi_op = mpi_prod;
+	} else if (op == GRETL_MPI_MAX) {
+	    mpi_op = mpi_max;
+	} else if (op == GRETL_MPI_MIN) {
+	    mpi_op = mpi_min;
+	} else {
+	    return E_DATA;
+	}
+
+	if (id > 0) {
+	    local_x = *(double *) sendp;
+	}
+	err = mpi_reduce(&local_x, recvp, 1, mpi_double, 
+			 mpi_op, 0, mpi_comm_world);
+    } else {
+	/* GRETL_TYPE_MATRIX */
+	if (op != GRETL_MPI_SUM &&
+	    op != GRETL_MPI_HCAT &&
+	    op != GRETL_MPI_VCAT) {
+	    return E_DATA;
+	}
+	err = gretl_matrix_reduce(sendp, recvp, op, id);
+    }
+
+    return err;
 }
 
 int gretl_matrix_mpi_bcast (gretl_matrix **pm, int id)
@@ -351,10 +405,10 @@ gretl_matrix *gretl_matrix_mpi_receive (int source,
 					int *err)
 {
     gretl_matrix *m = NULL;
-    MPI_Status status;
     int rc[2];
 
-    *err = mpi_recv(rc, 2, mpi_int, source, 0, mpi_comm_world, &status);
+    *err = mpi_recv(rc, 2, mpi_int, source, 0, mpi_comm_world, 
+		    MPI_STATUS_IGNORE);
 
     if (!*err) {
 	m = gretl_matrix_alloc(rc[0], rc[1]);
@@ -364,7 +418,7 @@ gretl_matrix *gretl_matrix_mpi_receive (int source,
 	    int n = rc[0] * rc[1];
 
 	    *err = mpi_recv(m->val, n, mpi_double, source, 0, 
-			    mpi_comm_world, &status);
+			    mpi_comm_world, MPI_STATUS_IGNORE);
 	    if (*err) {
 		gretl_mpi_error(err);
 	    }
@@ -379,14 +433,13 @@ gretl_matrix_mpi_receive_size_known (int source, int rows, int cols,
 				     int *err)
 {
     gretl_matrix *m = NULL;
-    MPI_Status status;
 
     m = gretl_matrix_alloc(rows, cols);
     if (m == NULL) {
 	*err = E_ALLOC;
     } else {
 	*err = mpi_recv(m->val, rows * cols, mpi_double, source, 0, 
-			mpi_comm_world, &status);
+			mpi_comm_world, MPI_STATUS_IGNORE);
 	if (*err) {
 	    gretl_mpi_error(err);
 	}	

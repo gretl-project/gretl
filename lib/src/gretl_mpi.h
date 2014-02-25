@@ -24,7 +24,9 @@ typedef enum {
     GRETL_MPI_SUM = 1,
     GRETL_MPI_PROD,
     GRETL_MPI_MAX,
-    GRETL_MPI_MIN
+    GRETL_MPI_MIN,
+    GRETL_MPI_HCAT,
+    GRETL_MPI_VCAT
 } Gretl_MPI_Op;
 
 int gretl_MPI_init (void);
@@ -33,9 +35,9 @@ int gretl_mpi_initialized (void);
 
 int gretl_mpi_rank (void);
 
-int gretl_mpi_reduce (void *sendp, GretlType sendtype, 
-		      void *recvp, GretlType recvtype, 
-		      Gretl_MPI_Op op, int id);
+int gretl_mpi_reduce (void *sendp, void *recvp,
+		      GretlType type, Gretl_MPI_Op op, 
+		      int id);
 
 int gretl_matrix_mpi_bcast (gretl_matrix **pm, int id);
 
