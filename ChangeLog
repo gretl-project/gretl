@@ -11,7 +11,12 @@ version 1.9.15, in progress
 - Add choice of compression level when saving data in native
   gdt format
 - Stata dta import: handle (illegal) non-ASCII characters in
-  variable names 
+  variable names
+- Fix bug: the --test-down option to "coint" was not working
+  as advertised
+- Fix bug (?): the final regression in "coint" (Engle-Granger
+  test) could end up using a different sample range depending
+  on whether or not the --skip-df option was given
 - Fix bug: incorrect handling of Poisson regression when the
   specification does not include an intercept term
 - Fix bug: bad handing of decimal comma in context of the --by

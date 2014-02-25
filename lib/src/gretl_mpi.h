@@ -36,27 +36,25 @@ int gretl_mpi_initialized (void);
 int gretl_mpi_rank (void);
 
 int gretl_mpi_reduce (void *sendp, void *recvp,
-		      GretlType type, Gretl_MPI_Op op, 
-		      int id);
+		      GretlType type, Gretl_MPI_Op op);
 
-int gretl_matrix_mpi_bcast (gretl_matrix **pm, int id);
+int gretl_mpi_bcast (void *p, GretlType type);
+
+int gretl_matrix_mpi_bcast (gretl_matrix **pm);
+
+int gretl_mpi_send (void *p, GretlType type, int dest);
 
 int gretl_matrix_mpi_send (const gretl_matrix *m, int dest);
-
-int gretl_matrix_mpi_send_size_known (const gretl_matrix *m, 
-				      int dest);
 
 gretl_matrix *gretl_matrix_mpi_receive (int source, 
 					int *err);
 
-gretl_matrix *
-gretl_matrix_mpi_receive_size_known (int source, 
-				     int rows, 
-				     int cols,
-				     int *err);
+double gretl_scalar_mpi_receive (int source, 
+				 int *err);
 
-int gretl_matrix_mpi_send_cols (const gretl_matrix *m, 
-				int j, int ncols);
+int gretl_mpi_receive (int source, GretlType *type, 
+		       gretl_matrix **pm,
+		       double *px);
 
 void gretl_mpi_stopwatch_init (void);
 
