@@ -310,6 +310,7 @@ static int matrix_reduce_step (gretl_matrix *m, double *val,
 static int gretl_matrix_reduce (void *sendp, 
 				void *recvp,
 				Gretl_MPI_Op op,
+				int root,
 				int id)
 {
     gretl_matrix *sm = NULL;
@@ -327,14 +328,14 @@ static int gretl_matrix_reduce (void *sendp,
 	return E_DATA;
     }
 
-    if (id > 0) {
+    if (id != root) {
 	/* worker: send matrix dimensions to master */
 	sm = sendp;
 	rc[0] = sm->rows;
 	rc[1] = sm->cols;
 	err = mpi_send(rc, 2, mpi_int, 0, 0, mpi_comm_world);
     } else {
-	/* master: gather dimensions from workers, check for
+	/* root: gather dimensions from workers, check for
 	   conformability and allocate storage
 	*/
 	int i;
@@ -367,14 +368,14 @@ static int gretl_matrix_reduce (void *sendp,
     }
 
     if (!err) {
-	if (id > 0) {
+	if (id != root) {
 	    /* workers send their data */
 	    int sendsize = rc[0] * rc[1];
 
 	    err = mpi_send(sm->val, sendsize, mpi_double, 0,
 			   0, mpi_comm_world);
 	} else {
-	    /* master gathers data */
+	    /* root gathers data */
 	    int i, recvsize, offset = 0;
 
 	    for (i=1; i<np && !err; i++) {
@@ -389,7 +390,7 @@ static int gretl_matrix_reduce (void *sendp,
 	}
     }
 
-    if (id == 0) {
+    if (id == root) {
 	/* clean up and set return value */
 	free(val);
 	free(rows);
@@ -409,6 +410,7 @@ static int gretl_matrix_reduce (void *sendp,
 static int gretl_scalar_reduce (void *sendp, 
 				void *recvp,
 				Gretl_MPI_Op op,
+				int root,
 				int id)
 {
     double local_x = 0.0;
@@ -426,7 +428,7 @@ static int gretl_scalar_reduce (void *sendp,
 	return E_DATA;
     }
 
-    if (id > 0) {
+    if (id != root) {
 	local_x = *(double *) sendp;
     }
 
@@ -454,19 +456,20 @@ static int gretl_scalar_reduce (void *sendp,
 int gretl_mpi_reduce (void *sendp, void *recvp,
 		      GretlType type, Gretl_MPI_Op op)
 {
-    int id, err = 0;
+    int self, root = 0;
+    int err = 0;
 
     if (type != GRETL_TYPE_DOUBLE && 
 	type != GRETL_TYPE_MATRIX) {
 	return E_DATA;
     }
 
-    mpi_comm_rank(mpi_comm_world, &id);
+    mpi_comm_rank(mpi_comm_world, &self);
 
     if (type == GRETL_TYPE_DOUBLE) {
-	err = gretl_scalar_reduce(sendp, recvp, op, id);
+	err = gretl_scalar_reduce(sendp, recvp, op, root, self);
     } else {
-	err = gretl_matrix_reduce(sendp, recvp, op, id);
+	err = gretl_matrix_reduce(sendp, recvp, op, root, self);
     }
 
     return err;
@@ -476,19 +479,19 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm)
 {
     gretl_matrix *m = NULL;
     int rc[2];
+    int root = 0;
     int id, err;
 
     mpi_comm_rank(mpi_comm_world, &id);
 
-    if (id == 0) {
-	/* root is doing the broadcasting */
+    if (id == root) {
 	m = *pm;
 	rc[0] = m->rows;
 	rc[1] = m->cols;
     }
 
     /* broadcast the matrix dimensions first */
-    err = mpi_bcast(rc, 2, mpi_int, 0, mpi_comm_world);
+    err = mpi_bcast(rc, 2, mpi_int, root, mpi_comm_world);
 
     if (!err && id > 0) {
 	/* everyone but root needs to allocate space */
@@ -502,7 +505,8 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm)
 	/* broadcast the matrix content */
 	int n = rc[0] * rc[1];
 
-	err = mpi_bcast(m->val, n, mpi_double, 0, mpi_comm_world);
+	err = mpi_bcast(m->val, n, mpi_double, root, 
+			mpi_comm_world);
     }
 
     if (err) {
@@ -514,9 +518,9 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm)
 
 static int gretl_scalar_mpi_bcast (double *px)
 {
-    int err;
+    int err, root = 0;
 
-    err = mpi_bcast(px, 1, mpi_double, 0, mpi_comm_world);
+    err = mpi_bcast(px, 1, mpi_double, root, mpi_comm_world);
 
     if (err) {
 	gretl_mpi_error(&err);
