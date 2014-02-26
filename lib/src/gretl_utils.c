@@ -1910,6 +1910,14 @@ int libgretl_mpi_init (int self, int np)
     return real_libgretl_init(self, np);
 }
 
+#else
+
+int gretl_mpi_initialized (void)
+{
+    /* stub for non-MPI build */
+    return 0;
+}
+
 #endif
 
 void libgretl_session_cleanup (int mode)

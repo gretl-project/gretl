@@ -41,6 +41,9 @@ void libgretl_init (void);
 
 #ifdef HAVE_MPI
 int libgretl_mpi_init (int self, int np);
+#else
+/* dummy function */
+int gretl_mpi_initialized (void);
 #endif
 
 void libgretl_session_cleanup (int mode);

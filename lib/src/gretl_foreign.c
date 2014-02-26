@@ -1044,7 +1044,7 @@ static int mpi_send_funcs_setup (FILE *fp)
     return err;
 }
 
-static int write_gretl_mpi_file (gretlopt opt, int mpi_running)
+static int write_gretl_mpi_file (gretlopt opt)
 {
     const gchar *fname = gretl_mpi_filename();
     FILE *fp = gretl_fopen(fname, "w");
@@ -1054,19 +1054,17 @@ static int write_gretl_mpi_file (gretlopt opt, int mpi_running)
 	return E_FOPEN;
     }
 
-    if (!mpi_running) {
-	/* forward the "echo" and "messages" states? */
-	if (!gretl_echo_on()) {
-	    fputs("set echo off\n", fp);
-	}
-	if (!gretl_messages_on()) {
-	    fputs("set messages off\n", fp);
-	}
-	if (opt & OPT_F) {
-	    /* honor the --send-functions option */
-	    if (n_user_functions() > 0) {
-		err = mpi_send_funcs_setup(fp);
-	    }
+    /* forward the "echo" and "messages" states? */
+    if (!gretl_echo_on()) {
+	fputs("set echo off\n", fp);
+    }
+    if (!gretl_messages_on()) {
+	fputs("set messages off\n", fp);
+    }
+    if (opt & OPT_F) {
+	/* honor the --send-functions option */
+	if (n_user_functions() > 0) {
+	    err = mpi_send_funcs_setup(fp);
 	}
     }
 
@@ -2262,7 +2260,7 @@ int foreign_execute (const DATASET *dset,
 
 #ifdef HAVE_MPI
     if (foreign_lang == LANG_MPI) {
-	err = write_gretl_mpi_file(foreign_opt, 0);
+	err = write_gretl_mpi_file(foreign_opt);
 	if (err) {
 	    delete_gretl_mpi_file();
 	} else {
@@ -2323,28 +2321,3 @@ int foreign_execute (const DATASET *dset,
 
     return err;
 }
-
-#ifdef HAVE_MPI
-
-/* Used in handling the case where someone uses gretlcli-mpi
-   to execute a hansl script that contains an mpi block.
-   If not treated specially, this will cause an MPI error.
-   Here we write out the mpi-block commands "as is" and
-   return the filename in @fname; the stored commands will
-   then be executed as a regular script.
-*/
-
-int get_gretl_mpi_filename (char *fname)
-{
-    int err = write_gretl_mpi_file(OPT_NONE, 1);
-
-    *fname = '\0';
-    if (!err) {
-	strcpy(fname, gretl_mpi_filename());
-    }
-
-    destroy_foreign();
-    return err;
-}
-
-#endif

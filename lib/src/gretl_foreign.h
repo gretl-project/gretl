@@ -49,8 +49,6 @@ int write_gretl_octave_file (const char *buf, gretlopt opt,
 
 void set_mpi_variant (const char *pref);
 
-int get_gretl_mpi_filename (char *fname);
-
 #endif
 
 #ifdef USE_RLIB
