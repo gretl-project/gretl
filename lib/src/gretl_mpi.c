@@ -531,7 +531,12 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm)
     if (!err) {
 	/* broadcast the matrix content */
 	int n = rc[0] * rc[1];
-
+	
+	/* FIXME we can get a hang here with 100% CPU if
+	   a worker bombs out on bcast(); in that case
+	   it seems that root's call never returns --
+	   or maybe not before some looong time-out.
+	*/
 	err = mpi_bcast(m->val, n, mpi_double, root, 
 			mpi_comm_world);
     }

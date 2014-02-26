@@ -3044,6 +3044,11 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
     int i, t, origv;
     int err = 0;
 
+    if (spec == NULL) {
+	/* we use the static spec composed via nl_parse_line() */
+	spec = &private_spec;
+    }
+
     gretl_model_init(&nlmod, dset);
 
     if (dset == NULL || dset->v == 0) {
@@ -3054,11 +3059,6 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 
     origv = dset->v;
     gretl_model_smpl_init(&nlmod, dset);
-
-    if (spec == NULL) {
-	/* we use the static spec composed via nl_parse_line() */
-	spec = &private_spec;
-    }
 
     if (spec->nlfunc == NULL && spec->ci != GMM) {
 	gretl_errmsg_set(_("No function has been specified"));
@@ -3109,8 +3109,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 	goto bailout;
     }
 
-    if (spec->ci == GRETL_TYPE_DOUBLE) {
-	/* FIXME what's this -- a typo?? 2013-07-07 */
+    if (spec->lhtype == GRETL_TYPE_DOUBLE) {
 	spec->fvec = NULL;
 	spec->jac = NULL;
     } else {

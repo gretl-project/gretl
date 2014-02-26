@@ -79,9 +79,9 @@ static void usage (int err)
     mpi_exit(err);
 }
 
-static void gretl_abort (char *line)
+static void gretl_mpi_abort (char *line)
 {
-    fprintf(stderr, _("\ngretlcli: error executing script: halting\n"));
+    fprintf(stderr, _("\ngretlcli-mpi: error executing script: halting\n"));
     fprintf(stderr, "> %s\n", line);
     mpi_exit(1);
 }
@@ -367,7 +367,7 @@ int main (int argc, char *argv[])
 
     while (cmd.ci != QUIT && fb != NULL) {
 	if (err && gretl_error_is_fatal()) {
-	    gretl_abort(linecopy);
+	    gretl_mpi_abort(linecopy);
 	}
 
 	if (gretl_execute_loop()) { 
