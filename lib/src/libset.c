@@ -429,6 +429,38 @@ static void state_vars_copy (set_vars *sv)
     robust_opts_copy(&sv->ropts);
 }
 
+/* for processors count */
+#if defined(WIN32)
+# include <windows.h>
+#elif defined(OS_OSX)
+# include <sys/param.h>
+# include <sys/sysctl.h>
+#endif
+
+int gretl_n_processors (void)
+{
+    int n_proc = 1;
+
+#if defined(WIN32)
+    SYSTEM_INFO sysinfo;
+
+    GetSystemInfo(&sysinfo);
+    n_proc = sysinfo.dwNumberOfProcessors;
+#elif defined(OS_OSX)
+    int mib[2] = {CTL_HW, HW_NCPU}; /* or CTL_KERN, KERN_MAXPROC ? */
+    size_t len = sizeof n_proc;
+
+    if (sysctl(mib, 2, &n_proc, &len, NULL, 0) == -1) {
+	perror("could not determine number of CPUs available");
+	n_proc = 1;
+    }    
+#else
+    n_proc = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+
+    return n_proc;
+}
+
 #define OMP_SHOW 0
 
 int libset_use_openmp (guint64 n)
@@ -448,32 +480,12 @@ int libset_use_openmp (guint64 n)
 }
 
 #if defined(_OPENMP)
-# if defined(WIN32)
-# include <windows.h>
-# elif defined(OS_OSX)
-# include <sys/param.h>
-# include <sys/sysctl.h>
-# endif
 
 static int openmp_by_default (void)
 {
-    int num_cores = 1, ret = 0;
-# if defined(WIN32)
-    SYSTEM_INFO sysinfo;
+    int num_cores = gretl_n_processors();
+    int ret = num_cores > 1;
 
-    GetSystemInfo(&sysinfo);
-    num_cores = sysinfo.dwNumberOfProcessors;
-# elif defined(OS_OSX)
-    int mib[2] = {CTL_HW, HW_NCPU}; /* or CTL_KERN, KERN_MAXPROC ? */
-    size_t len = sizeof num_cores;
-
-    if (sysctl(mib, 2, &num_cores, &len, NULL, 0) == -1) {
-	perror("could not determine number of cpus available");
-    }    
-# else
-    num_cores = sysconf(_SC_NPROCESSORS_ONLN);
-# endif
-    ret = num_cores > 1;
     if (ret) {
 	/* one can use the environment to turn this off */
 	char *envstr = getenv("GRETL_USE_OPENMP");

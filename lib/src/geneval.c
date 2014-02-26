@@ -1472,6 +1472,17 @@ static Gretl_MPI_Op reduce_op_from_string (const char *s)
     }
 }
 
+static Gretl_MPI_Op scatter_op_from_string (const char *s)
+{
+    if (!strcmp(s, "bycols")) {
+	return GRETL_MPI_HSPLIT;
+    } else if (!strcmp(s, "byrows")) {
+	return GRETL_MPI_VSPLIT;
+    } else {
+	return 0;
+    }
+}
+
 #endif
 
 static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
@@ -1500,11 +1511,13 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 	    p->err = E_TYPES;
 	}
 	if (!p->err) {
+	    /* destination id */
 	    id = node_get_int(r, p);
 	}
     } else if (f == F_MPI_RECV) {
+	/* source id */
 	id = node_get_int(l, p);
-    } else if (f == F_BCAST || f == F_REDUCE) {
+    } else if (f == F_BCAST || f == F_REDUCE || f == F_SCATTER) {
 	if (l->t != U_ADDR) {
 	    p->err = E_TYPES;
 	} else {
@@ -1512,13 +1525,14 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 	    l = l->v.b1.b;
 	    if (umatrix_node(l)) {
 		type = GRETL_TYPE_MATRIX;
-	    } else if (uscalar_node(l)) {
+	    } else if (f != F_SCATTER && uscalar_node(l)) {
 		type = GRETL_TYPE_DOUBLE;
 	    } else {
 		p->err = E_TYPES;
 	    }
 	}
 	if (!p->err) {
+	    /* "self" id */
 	    id = gretl_mpi_rank();
 	}
     }
@@ -1609,6 +1623,20 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 		}
 	    }
 	}
+    } else if (f == F_SCATTER) {
+	ret = aux_scalar_node(p);
+	if (!p->err) {
+	    Gretl_MPI_Op op = scatter_op_from_string(r->v.str);
+	    gretl_matrix *m = NULL;
+	    gretl_matrix **pm;
+	    int err;
+
+	    pm = (id == 0)? &l->v.m : &m;
+	    err = ret->v.xval = gretl_matrix_mpi_scatter(pm, op);
+	    if (!err && id > 0) {
+		p->err = user_matrix_replace_matrix_by_name(l->vname, m);
+	    }
+	}	
     } else {
 	gretl_errmsg_set("MPI function not yet supported");
 	p->err = 1;
@@ -10743,7 +10771,12 @@ static NODE *eval (NODE *t, parser *p)
     case F_MPI_RECV:
     case F_BCAST:
     case F_REDUCE:
-	ret = mpi_transfer_node(l, r, t->t, p);
+    case F_SCATTER:
+	if ((t->t == F_REDUCE || t->t == F_SCATTER) && r->t != STR) {
+	    node_type_error(t->t, 2, STR, r, p);
+	} else {
+	    ret = mpi_transfer_node(l, r, t->t, p);
+	}
 	break;
     default: 
 	printf("eval: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),

@@ -26,7 +26,9 @@ typedef enum {
     GRETL_MPI_MAX,
     GRETL_MPI_MIN,
     GRETL_MPI_HCAT,
-    GRETL_MPI_VCAT
+    GRETL_MPI_VCAT,
+    GRETL_MPI_HSPLIT,
+    GRETL_MPI_VSPLIT
 } Gretl_MPI_Op;
 
 int gretl_MPI_init (void);
@@ -48,6 +50,9 @@ int gretl_matrix_mpi_send (const gretl_matrix *m, int dest);
 
 gretl_matrix *gretl_matrix_mpi_receive (int source, 
 					int *err);
+
+int gretl_matrix_mpi_scatter (gretl_matrix **pm, 
+			      Gretl_MPI_Op op);
 
 double gretl_scalar_mpi_receive (int source, 
 				 int *err);

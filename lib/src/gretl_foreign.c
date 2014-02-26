@@ -330,13 +330,17 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     }
 
     if (!err) {
-	gchar *npbit, *hostbit;
+	gchar *hostbit, *npbit;
 	gchar *cmd, *sout = NULL;
 
 	if (hostfile != NULL && *hostfile != '\0') {
 	    hostbit = g_strdup_printf(" /machinefile \"%s\"", hostfile);
 	} else {
 	    hostbit = g_strdup("");
+	    if (np == 0) {
+		/* no hosts file: supply a default np value */
+		np = gretl_n_processors();
+	    }
 	}
 
 	if (np > 0) {
@@ -593,6 +597,9 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	if (hostfile != NULL && *hostfile != '\0') {
 	    hostsopt = (mpi_variant == MPI_MPICH)? "-machinefile" :
 		"--hostfile";
+	} else if (*npnum == '\0') {
+	    /* no hosts file: supply a default np value */
+	    sprintf(npnum, "%d", gretl_n_processors());
 	}
 
 	argv[i++] = "mpiexec";
@@ -1037,15 +1044,17 @@ static int mpi_send_funcs_setup (FILE *fp)
     return err;
 }
 
-static int write_gretl_mpi_file (gretlopt opt)
+static int write_gretl_mpi_file (gretlopt opt, int mpi_running)
 {
     const gchar *fname = gretl_mpi_filename();
     FILE *fp = gretl_fopen(fname, "w");
     int err = 0;
 
     if (fp == NULL) {
-	err = E_FOPEN;
-    } else {
+	return E_FOPEN;
+    }
+
+    if (!mpi_running) {
 	/* forward the "echo" and "messages" states? */
 	if (!gretl_echo_on()) {
 	    fputs("set echo off\n", fp);
@@ -1059,12 +1068,13 @@ static int write_gretl_mpi_file (gretlopt opt)
 		err = mpi_send_funcs_setup(fp);
 	    }
 	}
-	if (!err) {
-	    /* put out the stored 'foreign' lines */
-	    put_foreign_lines(fp);
-	    fclose(fp);
-	}
     }
+
+    if (!err) {
+	/* put out the stored 'foreign' lines */
+	put_foreign_lines(fp);
+	fclose(fp);
+    }	
 
     return err;
 }
@@ -2252,7 +2262,7 @@ int foreign_execute (const DATASET *dset,
 
 #ifdef HAVE_MPI
     if (foreign_lang == LANG_MPI) {
-	err = write_gretl_mpi_file(foreign_opt);
+	err = write_gretl_mpi_file(foreign_opt, 0);
 	if (err) {
 	    delete_gretl_mpi_file();
 	} else {
@@ -2313,3 +2323,28 @@ int foreign_execute (const DATASET *dset,
 
     return err;
 }
+
+#ifdef HAVE_MPI
+
+/* Used in handling the case where someone uses gretlcli-mpi
+   to execute a hansl script that contains an mpi block.
+   If not treated specially, this will cause an MPI error.
+   Here we write out the mpi-block commands "as is" and
+   return the filename in @fname; the stored commands will
+   then be executed as a regular script.
+*/
+
+int get_gretl_mpi_filename (char *fname)
+{
+    int err = write_gretl_mpi_file(OPT_NONE, 1);
+
+    *fname = '\0';
+    if (!err) {
+	strcpy(fname, gretl_mpi_filename());
+    }
+
+    destroy_foreign();
+    return err;
+}
+
+#endif

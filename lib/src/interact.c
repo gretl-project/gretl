@@ -43,6 +43,10 @@
 #include "gretl_www.h"
 #include "csvdata.h"
 
+#ifdef HAVE_MPI
+# include "gretl_mpi.h"
+#endif
+
 #include <errno.h>
 #include <glib.h>
 
@@ -5177,6 +5181,31 @@ static int VAR_omit_driver (CMD *cmd, DATASET *dset, PRN *prn)
     return err;
 }
 
+static int mpi_execute (char *fname, ExecState *s, 
+			DATASET *dset, gretlopt opt, 
+			PRN *prn)
+{
+#ifdef HAVE_MPI
+    int err = 0;
+
+    if (gretl_mpi_initialized()) {
+	/* we're already running gretlcli-mpi */
+	err = get_gretl_mpi_filename(fname);
+	if (!err) {
+	    err = run_script(fname, s, dset, opt, prn);
+	}
+    } else {
+	/* launch gretlcli-mpi */
+	err = foreign_execute(dset, opt, prn);
+    }
+
+    return err;
+#else
+    /* "can't get here" */
+    return E_EXTERNAL;
+#endif	
+}
+
 static void abort_execution (ExecState *s)
 {
     *s->cmd->savename = '\0';
@@ -5950,7 +5979,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (!strcmp(cmd->param, "kalman")) {
 	    err = kalman_parse_line(line, dset, cmd->opt);
 	} else if (!strcmp(cmd->param, "mpi")) {
-	    err = foreign_execute(dset, cmd->opt, prn);
+	    err = mpi_execute(readfile, s, dset, cmd->opt, prn);
 	} else {
 	    err = 1;
 	}
