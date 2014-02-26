@@ -684,31 +684,97 @@ int gretl_mpi_receive (int source, GretlType *type,
     return err;
 }
 
-#if 0 /* do we want this? */
-
-int gretl_matrix_mpi_send_cols (const gretl_matrix *m, 
-				int j, int ncols)
+static void fill_tmp (gretl_matrix *m, double *tmp,
+		      int nr, int *offset)
 {
-    int rc[2] = {m->rows, ncols};
-    int n = m->rows * ncols;
-    int err;
+    double x;
+    int imin = *offset;
+    int imax = imin + nr;
+    int i, j, k = 0;
 
-    err = mpi_send(rc, 2, mpi_int, j, 0, mpi_comm_world);
-
-    if (!err) {
-	void *ptr = m->val + (j-1)*n;
-
-	err = mpi_send(ptr, n, mpi_double, j, 0, mpi_comm_world);
+    for (j=0; j<m->cols; j++) {
+	for (i=imin; i<imax; i++) {
+	    x = gretl_matrix_get(m, i, j);
+	    tmp[k++] = x;
+	}
     }
 
-    if (err) {
-	gretl_mpi_error(&err);
+    *offset += nr;
+}
+
+int gretl_matrix_mpi_split (gretl_matrix **pm, int by_rows)
+{
+    double *tmp = NULL;
+    int id, root = 0;
+    int rc[2];
+    int err = 0;
+
+    mpi_comm_rank(mpi_comm_world, &id);
+
+    if (id == root) {
+	gretl_matrix *m = *pm;
+	int nworkers;
+	int i, n, np;
+	
+	mpi_comm_size(mpi_comm_world, &np);
+	nworkers = np - 1;
+
+	if (by_rows) {
+	    int nr = m->rows / nworkers;
+	    int rem = m->rows % nworkers;
+	    int offset = 0;
+
+	    tmp = malloc(m->cols * (nr + rem) * sizeof *tmp);
+	    if (tmp == NULL) {
+		err = E_ALLOC;
+	    }
+
+	    n = nr * m->cols;
+	    rc[0] = nr;
+	    rc[1] = m->cols;
+	    
+	    for (i=1; i<np; i++) {
+		if (i == np - 1 && rem > 0) {
+		    rc[0] += rem;
+		    n += m->cols * rem;
+		}
+		fill_tmp(m, tmp, rc[0], &offset);
+		err = mpi_send(rc, 2, mpi_int, i, TAG_MATRIX_DIM, 
+			       mpi_comm_world);
+		err = mpi_send(tmp, n, mpi_double, i, TAG_MATRIX_VAL, 
+			       mpi_comm_world);
+	    }
+	} else {
+	    int nc = m->cols / nworkers;
+	    int rem = m->cols % nworkers;
+	    double *val = m->val;
+
+	    n = m->rows * nc;
+	    rc[0] = m->rows;
+	    rc[1] = nc;
+
+	    for (i=1; i<np; i++) {
+		if (i == np - 1 && rem > 0) {
+		    rc[1] += rem;
+		    n += m->rows * rem;
+		}
+		err = mpi_send(rc, 2, mpi_int, i, TAG_MATRIX_DIM, 
+			       mpi_comm_world);
+		err = mpi_send(val, n, mpi_double, i, TAG_MATRIX_VAL, 
+			       mpi_comm_world);
+		val += n;
+	    }
+	}
+    } else {
+	*pm = gretl_matrix_mpi_receive(root, &err);
+    }
+
+    if (id == root) {
+	free(tmp);
     }
 
     return err;
 }
-
-#endif
 
 /* MPI timer */
 
