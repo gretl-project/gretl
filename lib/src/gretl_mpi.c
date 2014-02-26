@@ -701,6 +701,7 @@ int gretl_mpi_receive (int source, GretlType *type,
     MPI_Status status;
     int err = 0;
 
+    /* check for the type of thing of offer from @source */
     mpi_probe(source, MPI_ANY_TAG, mpi_comm_world, &status);
 
     if (status.MPI_TAG == TAG_SCALAR_VAL) {
@@ -758,6 +759,7 @@ int gretl_matrix_mpi_scatter (gretl_matrix **pm,
 	    int rem = m->rows % nworkers;
 	    int offset = 0;
 
+	    /* we'll need a working buffer */
 	    tmp = malloc(m->cols * (nr + rem) * sizeof *tmp);
 	    if (tmp == NULL) {
 		err = E_ALLOC;
