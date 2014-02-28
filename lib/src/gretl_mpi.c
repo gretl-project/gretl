@@ -460,8 +460,6 @@ static int gretl_scalar_reduce (void *sendp,
 
     return mpi_reduce(&local_x, recvp, 1, mpi_double, 
 		      mpi_op, 0, mpi_comm_world);
-
-    return err;
 }
 
 /**
