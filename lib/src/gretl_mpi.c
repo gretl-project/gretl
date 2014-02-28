@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "libset.h"
 #include "gretl_mpi.h"
 #include <mpi.h>
 
@@ -193,8 +194,7 @@ static void gretl_mpi_error (int *err)
 
 static int matrix_dims_check (int *rows, int *cols, int n,
 			      Gretl_MPI_Op op,
-			      gretl_matrix *m0,
-			      int *use_root)
+			      gretl_matrix *m0)
 {
     int match_rows = 
 	(op == GRETL_MPI_SUM || op == GRETL_MPI_HCAT);
@@ -218,12 +218,11 @@ static int matrix_dims_check (int *rows, int *cols, int n,
     }
 
     if (m0 != NULL) {
-	/* see if we should include root's matrix */
-	*use_root = 1;
+	/* check root's matrix too */
 	if (match_rows && m0->rows != rows[0]) {
-	    *use_root = 0;
+	    return E_NONCONF;
 	} else if (match_cols && m0->cols != cols[0]) {
-	    *use_root = 0;
+	    return E_NONCONF;
 	}
     }	
 
@@ -327,7 +326,8 @@ static int gretl_matrix_reduce (void *sendp,
 				void *recvp,
 				Gretl_MPI_Op op,
 				int root,
-				int id)
+				int id,
+				int use_root)
 {
     gretl_matrix *sm = NULL;
     gretl_matrix *rm = NULL;
@@ -335,7 +335,6 @@ static int gretl_matrix_reduce (void *sendp,
     int *rows = NULL;
     int *cols = NULL;
     int rc[2] = {0};
-    int use_root = 0;
     int np = 0;
     int err = 0;
 
@@ -356,6 +355,7 @@ static int gretl_matrix_reduce (void *sendp,
 	/* root: gather dimensions from workers, check for
 	   conformability and allocate storage
 	*/
+	gretl_matrix *m0 = use_root ? sm : NULL;
 	int i;
 
 	mpi_comm_size(mpi_comm_world, &np);
@@ -376,13 +376,10 @@ static int gretl_matrix_reduce (void *sendp,
 	}
 
 	if (!err) {
-	    err = matrix_dims_check(rows, cols, np-1, op,
-				    sm, &use_root);
+	    err = matrix_dims_check(rows, cols, np-1, op, m0);
 	}
 
 	if (!err) {
-	    gretl_matrix *m0 = use_root ? sm : NULL;
-
 	    err = matrix_reduce_alloc(rows, cols, np-1, op, 
 				      &rm, &val, m0);
 	}
@@ -438,7 +435,8 @@ static int gretl_scalar_reduce (void *sendp,
 				void *recvp,
 				Gretl_MPI_Op op,
 				int root,
-				int id)
+				int id,
+				int use_root)
 {
     double local_x = 0.0;
     MPI_Op mpi_op;
@@ -455,12 +453,15 @@ static int gretl_scalar_reduce (void *sendp,
 	return E_DATA;
     }
 
-    if (id != root) {
+    if (id != root || use_root) {
+	/* FIXME handling of NA? */
 	local_x = *(double *) sendp;
     }
 
     return mpi_reduce(&local_x, recvp, 1, mpi_double, 
 		      mpi_op, 0, mpi_comm_world);
+
+    return err;
 }
 
 /**
@@ -483,7 +484,7 @@ static int gretl_scalar_reduce (void *sendp,
 int gretl_mpi_reduce (void *sendp, void *recvp,
 		      GretlType type, Gretl_MPI_Op op)
 {
-    int self, root = 0;
+    int self, use_root, root = 0;
     int err = 0;
 
     if (type != GRETL_TYPE_DOUBLE && 
@@ -491,12 +492,15 @@ int gretl_mpi_reduce (void *sendp, void *recvp,
 	return E_DATA;
     }
 
+    use_root = libset_get_bool(REDUCE_ALL);
     mpi_comm_rank(mpi_comm_world, &self);
 
     if (type == GRETL_TYPE_DOUBLE) {
-	err = gretl_scalar_reduce(sendp, recvp, op, root, self);
+	err = gretl_scalar_reduce(sendp, recvp, op, root, 
+				  self, use_root);
     } else {
-	err = gretl_matrix_reduce(sendp, recvp, op, root, self);
+	err = gretl_matrix_reduce(sendp, recvp, op, root, 
+				  self, use_root);
     }
 
     return err;

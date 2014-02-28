@@ -64,7 +64,8 @@ enum {
     STATE_BFGS_RSTEP      = 1 << 18, /* use Richardson method in BFGS numerical
 					gradient */
     STATE_DPDSTYLE_ON     = 1 << 19, /* emulate dpd in dynamic panel data models */
-    STATE_OPENMP_ON       = 1 << 20  /* using openmp */
+    STATE_OPENMP_ON       = 1 << 20, /* using openmp */
+    STATE_REDUCE_ALL      = 1 << 21  /* MPI reduce includes root */
 };    
 
 /* for values that really want a non-negative integer */
@@ -146,7 +147,8 @@ struct set_vars_ {
 			   !strcmp(s, BFGS_RSTEP) || \
 			   !strcmp(s, DPDSTYLE) || \
 			   !strcmp(s, USE_DCMT) || \
-			   !strcmp(s, USE_OPENMP))
+			   !strcmp(s, USE_OPENMP) || \
+			   !strcmp(s, REDUCE_ALL))   
 
 #define libset_double(s) (!strcmp(s, CONV_HUGE) || \
 			  !strcmp(s, BFGS_TOLER) || \
@@ -2023,6 +2025,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_DPDSTYLE_ON;
     } else if (!strcmp(s, USE_OPENMP)) {
 	return STATE_OPENMP_ON;
+    } else if (!strcmp(s, REDUCE_ALL)) {
+	return STATE_REDUCE_ALL;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
 		"variable '%s'\n", s);	

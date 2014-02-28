@@ -87,6 +87,7 @@ typedef enum {
 #define NADARWAT_TRIM    "nadarwat_trim"
 #define CONV_HUGE        "huge"
 #define USE_OPENMP       "openmp"
+#define REDUCE_ALL       "mpi_reduce_all"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
