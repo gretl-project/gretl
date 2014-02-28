@@ -43,10 +43,6 @@
 #include "gretl_www.h"
 #include "csvdata.h"
 
-#ifdef HAVE_MPI
-# include "gretl_mpi.h"
-#endif
-
 #include <errno.h>
 #include <glib.h>
 
@@ -217,10 +213,12 @@ static int get_lags_param (CMD *cmd, char **ps)
     return ret;
 }
 
-static void deprecate_alias (const char *targ, const char *repl)
+static void deprecate_alias (const char *bad, const char *good, int cmd)
 {
-    gretl_warnmsg_sprintf("*** \"%s\": obsolete command; please use \"%s\"",
-			  targ, repl);
+    const char *tag = cmd ? "command" : "construction";
+
+    gretl_warnmsg_sprintf("\"%s\": obsolete %s; please use \"%s\"",
+			  bad, tag, good);
 }
 
 /* catch aliased command words and assign cmd->ci; return
@@ -239,7 +237,7 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "ls")) {
 	cmd->ci = VARLIST;
     } else if (!strcmp(s, "pooled")) {
-	deprecate_alias("pooled", "ols");
+	deprecate_alias("pooled", "ols", 1);
 	cmd->ci = OLS;
     } else if (!strcmp(line, "smpl full")) {
 	strcpy(line, "smpl");
@@ -248,10 +246,10 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->ci = EQUATION;
 	cmd->opt |= OPT_M;
     } else if (!strcmp(s, "graph")) { 
-	deprecate_alias("graph", "textplot");
+	deprecate_alias("graph", "textplot", 1);
 	cmd->ci = PLOT; 	 
     } else if (!strcmp(s, "plot")) {
-	deprecate_alias("plot", "textplot");
+	deprecate_alias("plot", "textplot", 1);
 	cmd->ci = PLOT; 	 
 	cmd->opt = OPT_S;
     } else if (!strcmp(s, "list")) {
@@ -282,13 +280,13 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "addobs")) { 	 
 	char *tmp = gretl_strdup(line); 	 
 
-	deprecate_alias("addobs", "dataset addobs");
+	deprecate_alias("addobs", "dataset addobs", 1);
 	strcpy(line, "dataset "); 	 
 	strcat(line, tmp); 	 
 	cmd->ci = DATAMOD; 	 
 	free(tmp);
     } else if (!strcmp(s, "fcasterr")) {
-	deprecate_alias("fcasterr", "fcast");
+	deprecate_alias("fcasterr", "fcast", 1);
 	cmd->ci = FCAST; 	 
     } else if (!strcmp(s, "continue")) {
 	cmd->ci = FUNDEBUG;
@@ -5273,6 +5271,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	cmd->order = param_to_order(cmd->param);
     }
 
+#if 0
+    fprintf(stderr, "gretl_cmd_exec: '%s'\n", line);
+#endif
+
     switch (cmd->ci) {
 
     case APPEND:
@@ -5772,14 +5774,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case FOREIGN:
     case MPI:
-	if (cmd->ci == MPI && gretl_mpi_initialized()) {
-	    /* no-op: ignore */
-	    break;
-	}
 	err = foreign_append_line(line, cmd->opt, prn);
 	if (!err) {
 	    gretl_cmd_set_context(cmd, FOREIGN);
-	} 
+	}
 	break;
 
     case KALMAN:
@@ -5958,9 +5956,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (!strcmp(cmd->param, "kalman")) {
 	    err = kalman_parse_line(line, dset, cmd->opt);
 	} else if (!strcmp(cmd->param, "mpi")) {
-	    if (!gretl_mpi_initialized()) {
-		err = foreign_execute(dset, cmd->opt, prn);
-	    }
+	    err = foreign_execute(dset, cmd->opt, prn);
 	} else {
 	    err = 1;
 	}
@@ -6191,13 +6187,6 @@ static int could_be_varname (const char *s)
     return 0;
 }
 
-static int is_endif (const char *s)
-{
-    char s1[4], s2[4];
-
-    return sscanf(s, "%3s %3s", s1, s2) == 2 && !strcmp(s2, "if");
-}
-
 static int is_endloop (const char *s)
 {
     char s1[4], s2[5];
@@ -6265,9 +6254,8 @@ int get_command_index (char *line, CMD *cmd)
 #endif
 
     if (!strcmp(cmd->word, "end")) {
-	if (is_endif(line)) {
-	    cmd->ci = ENDIF;
-	} else if (is_endloop(line)) {
+	if (is_endloop(line)) {
+	    deprecate_alias("end loop", "endloop", 0);
 	    cmd->ci = ENDLOOP;
 	} else {
 	    cmd->context = 0;

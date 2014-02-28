@@ -2118,6 +2118,7 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
     LOOPSET *newloop = currloop;
     int err = 0;
 
+    warnmsg(s->prn); /* catch "end loop" if present */
     gretl_error_clear();
 
 #if LOOP_DEBUG > 1

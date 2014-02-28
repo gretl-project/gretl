@@ -22,6 +22,10 @@
 #include "gretl_func.h"
 #include "gretl_foreign.h"
 
+#ifdef HAVE_MPI
+# include "gretl_mpi.h"
+#endif
+
 #include <glib.h>
 
 #ifdef USE_RLIB
@@ -85,7 +89,12 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 	foreign_lang = LANG_PYTHON;
     } else if (g_ascii_strcasecmp(lang, "mpi") == 0) {
 #ifdef HAVE_MPI
-	foreign_lang = LANG_MPI;
+	if (gretl_mpi_initialized()) {
+	    gretl_errmsg_set(_("MPI is already initialized"));
+	    err = E_EXTERNAL;
+	} else {
+	    foreign_lang = LANG_MPI;
+	}
 #else
 	gretl_errmsg_set(_("MPI is not supported in this gretl build"));
 	err = E_NOTIMP;

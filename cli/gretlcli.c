@@ -878,6 +878,10 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     char runfile[MAXLEN];
     int err = 0;
 
+#if 0
+    fprintf(stderr, "cli_exec_line: '%s'\n", line);
+#endif
+
     if (gretl_compiling_function()) {
 	err = gretl_function_append_line(line);
 	if (err) {
