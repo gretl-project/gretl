@@ -277,7 +277,6 @@ enum {
     F_ATOF,
     F_FIXNAME,
     F_MPI_RECV,
-    F_BCAST,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
@@ -346,8 +345,7 @@ enum {
     F_READFILE,
     F_PRINTF,
     F_MPI_SEND,
-    F_REDUCE,
-    F_SCATTER,
+    F_BCAST,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,
@@ -384,6 +382,8 @@ enum {
     F_SSCANF,
     F_SPRINTF,
     F_SUBSTR,
+    F_REDUCE,
+    F_SCATTER,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
@@ -446,11 +446,14 @@ enum {
                              s == F_NRMAX || s == F_DESEAS || \
 			     s == F_AGGRBY || s == F_INBUNDLE || \
 			     s == F_SSCANF || s == F_PRINTF || \
-			     s == F_SPRINTF || s == F_REDUCE || \
-			     s == F_SCATTER)
+			     s == F_SPRINTF)
 
-/* functions taking string arg in middle position */
-#define string_mid_func(s) (s == F_BFGSMAX || s == F_NRMAX || s == F_SIMANN)
+/* functions taking fncall string arg in middle position */
+#define fnstring_mid_func(s) (s == F_BFGSMAX || s == F_NRMAX || \
+			      s == F_SIMANN)
+
+/* (other) functions taking string arg in middle position */
+#define string_mid_func(s) (s == F_REDUCE || s == F_SCATTER)
 
 /* functions taking one or more "fncall" string arguments */
 #define fncall_func(s) (s == F_BFGSMAX || s == F_FDJAC || \

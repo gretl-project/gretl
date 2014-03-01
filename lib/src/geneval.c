@@ -1485,7 +1485,8 @@ static Gretl_MPI_Op scatter_op_from_string (const char *s)
 
 #endif
 
-static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
+static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
+				int f, parser *p)
 {
 #ifndef HAVE_MPI
     gretl_errmsg_set(_("MPI is not supported in this gretl build"));
@@ -1494,6 +1495,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 #else
     NODE *ret = NULL;
     GretlType type = 0;
+    int root = 0;
     int id = 0;
 
     if (!gretl_mpi_initialized()) {
@@ -1532,6 +1534,11 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 	    }
 	}
 	if (!p->err) {
+	    NODE *rootspec = (f == F_BCAST)? r : r2;
+
+	    if (!null_or_empty(rootspec)) {
+		root = node_get_int(rootspec, p);
+	    }
 	    /* "self" id */
 	    id = gretl_mpi_rank();
 	}
@@ -1585,8 +1592,8 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 
 	ret = aux_scalar_node(p);
 	if (!p->err) {
-	    p->err = ret->v.xval = gretl_mpi_bcast(bcastp, type);
-	    if (!p->err && id > 0) {
+	    p->err = ret->v.xval = gretl_mpi_bcast(bcastp, type, root);
+	    if (!p->err && id != root) {
 		if (type == GRETL_TYPE_MATRIX) {
 		    p->err = user_matrix_replace_matrix_by_name(l->vname, m);
 		} else {
@@ -1595,41 +1602,44 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, int f, parser *p)
 	    }
 	}
     } else if (f == F_REDUCE) {
-	void *sendp, *recvp;
-	gretl_matrix *m = NULL;
-	double x = NADBL;
-
-	if (type == GRETL_TYPE_MATRIX) {
-	    sendp = l->v.m;
-	    recvp = &m;
-	} else {
-	    sendp = &l->v.xval;
-	    recvp = &x;
-	}	    
-
+#if 0 /* experiment not ready yet */
+	int all_reduce = 0;
+	if (root == -1) {
+	    /* FIXME this is just temporary? */
+	    all_reduce = 1;
+	    root = 0;
+	}
+#endif
 	ret = aux_scalar_node(p);
 	if (!p->err) {
 	    Gretl_MPI_Op op = reduce_op_from_string(r->v.str);
+	    gretlopt opt = OPT_NONE; 
+	    gretl_matrix *m = NULL;
+	    double x = NADBL;
 
-	    p->err = ret->v.xval = gretl_mpi_reduce(sendp, recvp, type, op);
-	    if (!p->err && id == 0) {
+	    if (type == GRETL_TYPE_MATRIX) { 
+		p->err = gretl_matrix_mpi_reduce(l->v.m, &m, op, root, opt);
+	    } else {
+		p->err = gretl_scalar_mpi_reduce(l->v.xval, &x, op, root, opt);
+	    }
+	    if (!p->err && id == root) {
 		if (type == GRETL_TYPE_MATRIX) {
 		    p->err = user_matrix_replace_matrix_by_name(l->vname, m);
 		} else {
 		    p->err = gretl_scalar_set_value(l->vname, x);
 		}
 	    }
+	    ret->v.xval = p->err;
 	}
     } else if (f == F_SCATTER) {
 	ret = aux_scalar_node(p);
 	if (!p->err) {
 	    Gretl_MPI_Op op = scatter_op_from_string(r->v.str);
 	    gretl_matrix *m = NULL;
-	    gretl_matrix **pm;
 
-	    pm = (id == 0)? &l->v.m : &m;
-	    p->err = ret->v.xval = gretl_matrix_mpi_scatter(pm, op);
-	    if (!p->err && id > 0) {
+	    p->err = ret->v.xval = gretl_matrix_mpi_scatter(l->v.m, &m, 
+							    op, root);
+	    if (!p->err) {
 		p->err = user_matrix_replace_matrix_by_name(l->vname, m);
 	    }
 	}	
@@ -10764,14 +10774,20 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MPI_SEND:
-    case F_MPI_RECV:
     case F_BCAST:
+	ret = mpi_transfer_node(l, r, NULL, t->t, p);
+	break;
+    case F_MPI_RECV:
+	ret = mpi_transfer_node(l, NULL, NULL, t->t, p);
+	break;
     case F_REDUCE:
     case F_SCATTER:
-	if ((t->t == F_REDUCE || t->t == F_SCATTER) && r->t != STR) {
-	    node_type_error(t->t, 2, STR, r, p);
+	if (m->t != STR) {
+	    node_type_error(t->t, 2, STR, m, p);
+	} else if (!empty_or_num(r)) {
+	    node_type_error(t->t, 3, NUM, r, p);
 	} else {
-	    ret = mpi_transfer_node(l, r, t->t, p);
+	    ret = mpi_transfer_node(l, m, r, t->t, p);
 	}
 	break;
     default: 

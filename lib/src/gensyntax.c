@@ -591,13 +591,19 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
     }
 }
 
-/* get_middle_string_arg() is used to retrieve a string that
-   defines a function call, e.g. in BFGSmax(). In this 
+enum {
+    RIGHT_STR = 1 << 0,
+    MID_STR   = 1 << 1,
+    MID_FNSTR = 1 << 2
+};
+
+/* get_middle_string_arg() is mostly used to retrieve a string
+   that defines a function call, e.g. in BFGSmax(). In this 
    context we expect a literal string, but not wrapped in
    quotes. 
 */
 
-static NODE *get_middle_string_arg (parser *p)
+static NODE *get_middle_string_arg (parser *p, int opt)
 {
     const char *src = NULL;
     const char *s;
@@ -636,7 +642,14 @@ static NODE *get_middle_string_arg (parser *p)
 		gotparen++;
 		paren++;
 	    } else if (*s == ')') {
-		paren--;
+		if (opt & MID_STR) {
+		    /* leave paren */
+		    close = i;
+		    break;
+		} else {
+		    /* opt is MID_FNSTR */
+		    paren--;
+		}
 	    }
 	    if (paren == 0) {
 		if (gotparen) {
@@ -647,7 +660,7 @@ static NODE *get_middle_string_arg (parser *p)
 		    /* leave comma */
 		    close = i;
 		    break;
-		} 
+		}
 	    } 
 	}
 	s++;
@@ -722,11 +735,6 @@ static NODE *get_bundle_member_name (parser *p)
 
     return newstr(p->idstr);
 }
-
-enum {
-    RIGHT_STR = 1 << 0,
-    MID_STR   = 1 << 1
-};
 
 static void get_matrix_def (NODE *t, parser *p, int *sub)
 {
@@ -909,7 +917,7 @@ static void pad_parent (NODE *parent, int k, int i, parser *p)
     }
 }
 
-#define next_arg_is_string(i,k,o) ((i>0 && i<k-1 && (o & MID_STR)) || \
+#define next_arg_is_string(i,k,o) ((i>0 && i<k-1 && (o & (MID_STR|MID_FNSTR))) || \
                                    (i==k-1 && (o & RIGHT_STR)))
 
 /* Get up to k comma-separated arguments (possibly optional).
@@ -947,8 +955,8 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	}
 
 	/* get the next argument */
-	if (i > 0 && i < k - 1 && (opt & MID_STR)) {
-	    child = get_middle_string_arg(p);
+	if (i > 0 && i < k - 1 && (opt & (MID_STR|MID_FNSTR))) {
+	    child = get_middle_string_arg(p, opt);
 	} else if (i == k - 1 && (opt & RIGHT_STR)) {
 	    child = get_final_string_arg(p, t, f, 0);
 	} else {
@@ -1042,7 +1050,9 @@ static NODE *powterm (parser *p)
 
     if (string_mid_func(sym)) {
 	opt |= MID_STR;
-    }    
+    } else if (fnstring_mid_func(sym)) {
+	opt |= MID_FNSTR;
+    }
 
     if (unary_op(sym)) {
 	if (p->ch == 0) {

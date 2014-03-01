@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "libset.h"
 #include "gretl_mpi.h"
 #include <mpi.h>
 
@@ -192,90 +191,138 @@ static void gretl_mpi_error (int *err)
     *err = E_EXTERNAL;
 }
 
+static int dim_error (int *dims, int n)
+{
+    int i, d0 = 0;
+    int err = 0;
+
+    /* allow for the possibility that some nodes
+       carry null matrices: d0 will be the common
+       non-zero dimension */
+
+    for (i=0; i<n; i++) {
+	if (dims[i] > 0) {
+	    d0 = dims[i];
+	    break;
+	}
+    }
+
+    /* check that all non-null matrices are conformable */
+
+    for (i=0; i<n; i++) {
+	if (dims[i] != d0 && dims[i] != 0) {
+	    err = E_NONCONF;
+	    break;
+	}
+    }
+
+    return err;
+}
+
+static void set_dim_max (int *dims, int *dtest, int n)
+{
+    int i;
+
+    /* find the max row dimension of matrices with
+       cols > 0, or vice versa */
+
+    for (i=0; i<n; i++) {
+	if (dtest[i] > 0) {
+	    if (dims[i] > dims[n]) {
+		dims[n] = dims[i];
+	    }
+	}
+    }
+}
+
 static int matrix_dims_check (int *rows, int *cols, int n,
-			      Gretl_MPI_Op op,
-			      gretl_matrix *m0)
+			      Gretl_MPI_Op op)
 {
     int match_rows = 
 	(op == GRETL_MPI_SUM || op == GRETL_MPI_HCAT);
     int match_cols = 
 	(op == GRETL_MPI_SUM || op == GRETL_MPI_VCAT);
-    int i;
+    int err = 0;
 
-    for (i=0; i<n; i++) {
-	if (rows[i] <= 0 || cols[i] <= 0) {
-	    /* should we do this? */
-	    return E_DATA;
-	}
-	if (i > 0) {
-	    if (match_rows && rows[i] != rows[i-1]) {
-		return E_NONCONF;
-	    }
-	    if (match_cols && cols[i] != cols[i-1]) {
-		return E_NONCONF;
-	    }
+    if (match_rows) {
+	err = dim_error(rows, n);
+    }
+
+    if (!err && match_cols) {
+	err = dim_error(cols, n);
+    }
+
+    if (!err) {
+	set_dim_max(rows, cols, n);
+	set_dim_max(cols, rows, n);
+	/* for now we'll consider a null matrix reduction
+	   as an error (though _maybe_ we want to permit
+	   this?)
+	*/
+	if (rows[n] == 0 || cols[n] == 0) {
+	    err = E_DATA;
 	}
     }
 
-    if (m0 != NULL) {
-	/* check root's matrix too */
-	if (match_rows && m0->rows != rows[0]) {
-	    return E_NONCONF;
-	} else if (match_cols && m0->cols != cols[0]) {
-	    return E_NONCONF;
-	}
-    }	
-
-    return 0;
+    return err;
 }
 
 static int matrix_reduce_alloc (int *rows, int *cols,
 				int n, Gretl_MPI_Op op,
 				gretl_matrix **pm,
-				double **px,
-				gretl_matrix *m0)
+				double **px)
 {
-    int r0 = m0 == NULL ? 0 : m0->rows;
-    int c0 = m0 == NULL ? 0 : m0->cols;
-    int i, r, c;
-    int xsize = 0;
-    int err = 0;
+    int rtotal = 0, ctotal = 0;
+    int i, err = 0;
+
+    /* Note: in the arrays @rows and @cols the elements 0 to
+       n-1 are the values for each node, and the elements n
+       are the maxima. 
+       
+       The tasks here are (a) to allocate a matrix of the right
+       size to hold the result of the "reduce" operation and (b) 
+       to allocate workspace big enough to hold the values of 
+       the largest individual matrix.
+    */
 
     if (op == GRETL_MPI_SUM) {
-	r = rows[0]; 
-	c = cols[0];
-	xsize = r * c;
+	rtotal = rows[n]; 
+	ctotal = cols[n];
     } else if (op == GRETL_MPI_HCAT) {
-	int cmax = c0;
-
-	r = rows[0];
-	c = c0;
+	/* there's a known common number of rows, but
+	   we need to determine the total number of
+	   columns in the result
+	*/
+	rtotal = rows[n];
 	for (i=0; i<n; i++) {
-	    c += cols[i];
-	    if (cols[i] > cmax) {
-		cmax = cols[i];
+	    if (rows[i] > 0) {
+		ctotal += cols[i];
 	    }
 	}
-	xsize = r * cmax;
-    } else {
-	int rmax = r0;
-
-	c = cols[0];
-	r = r0;
+    } else if (op == GRETL_MPI_VCAT) {
+	/* there's a known common number of columns, but
+	   we need to determine the total number of rows
+	   in the result
+	*/
+	ctotal = cols[n];
 	for (i=0; i<n; i++) {
-	    r += rows[i];
-	    if (rows[i] > rmax) {
-		rmax = rows[i];
-	    }	    
+	    if (cols[i] > 0) {
+		rtotal += rows[i];
+	    }
 	}
-	xsize = rmax * c;
     }
 
-    *pm = gretl_zero_matrix_new(r, c);
+    if (rtotal == 0 || ctotal == 0) {
+	err = E_DATA;
+    } else {
+	*pm = gretl_zero_matrix_new(rtotal, ctotal);
+    }
 
     if (*pm == NULL) {
 	err = E_ALLOC;
     } else {
+	size_t xsize = rows[n] * cols[n];
+
 	*px = malloc(xsize * sizeof **px);
 	if (*px == NULL) {
 	    gretl_matrix_free(*pm);
@@ -304,8 +351,7 @@ static int matrix_reduce_step (gretl_matrix *targ, double *src,
 	    targ->val[k++] = src[i];
 	}
 	*offset = k;
-    } else {
-	/* GRETL_MPI_VCAT */
+    } else if (op == GRETL_MPI_VCAT) {
 	int rmin = *offset;
 	int nrows = n / targ->cols;
 	int rmax = rmin + nrows;
@@ -322,20 +368,24 @@ static int matrix_reduce_step (gretl_matrix *targ, double *src,
     return 0;
 }
 
-static int gretl_matrix_reduce (void *sendp, 
-				void *recvp,
-				Gretl_MPI_Op op,
-				int root,
-				int id,
-				int use_root)
+static int invalid_root_error (int r)
 {
-    gretl_matrix *sm = NULL;
+    gretl_errmsg_sprintf(_("Invalid MPI root %d"), r);
+    return E_DATA;
+}
+
+int gretl_matrix_mpi_reduce (gretl_matrix *sm,
+			     gretl_matrix **pm,
+			     Gretl_MPI_Op op,
+			     int root,
+			     gretlopt opt)
+{
     gretl_matrix *rm = NULL;
     double *val = NULL;
     int *rows = NULL;
     int *cols = NULL;
     int rc[2] = {0};
-    int np = 0;
+    int id, np;
     int err = 0;
 
     if (op != GRETL_MPI_SUM &&
@@ -344,71 +394,86 @@ static int gretl_matrix_reduce (void *sendp,
 	return E_DATA;
     }
 
-    sm = sendp;
+    mpi_comm_rank(mpi_comm_world, &id);
+    mpi_comm_size(mpi_comm_world, &np);
+
+    if (root < 0 || root >= np) {
+	return invalid_root_error(root);
+    }
 
     if (id != root) {
-	/* worker: send matrix dimensions to master */
+	/* send matrix dimensions to root */
 	rc[0] = sm->rows;
 	rc[1] = sm->cols;
 	err = mpi_send(rc, 2, mpi_int, 0, 0, mpi_comm_world);
     } else {
-	/* root: gather dimensions from workers, check for
-	   conformability and allocate storage
+	/* root: gather dimensions from other processes, 
+	   check for conformability and allocate storage
 	*/
-	gretl_matrix *m0 = use_root ? sm : NULL;
 	int i;
 
-	mpi_comm_size(mpi_comm_world, &np);
-
-	rows = malloc((np-1) * sizeof *rows);
-	cols = malloc((np-1) * sizeof *cols);
+	rows = malloc((np+1) * sizeof *rows);
+	cols = malloc((np+1) * sizeof *cols);
 	if (rows == NULL || cols == NULL) {
 	    err = E_ALLOC;
 	}
 
-	for (i=1; i<np && !err; i++) {
-	    err = mpi_recv(rc, 2, mpi_int, i, 0, mpi_comm_world, 
-			   MPI_STATUS_IGNORE);
-	    if (!err) {
-		rows[i-1] = rc[0];
-		cols[i-1] = rc[1];
+	/* initialize record of row/col maxima */
+	rows[np] = 0;
+	cols[np] = 0;
+
+	for (i=0; i<np && !err; i++) {
+	    if (i == root) {
+		rows[i] = sm->rows;
+		cols[i] = sm->cols;
+	    } else {
+		err = mpi_recv(rc, 2, mpi_int, i, 0, mpi_comm_world, 
+			       MPI_STATUS_IGNORE);
+		if (!err) {
+		    rows[i] = rc[0];
+		    cols[i] = rc[1];
+		}
 	    }
 	}
 
 	if (!err) {
-	    err = matrix_dims_check(rows, cols, np-1, op, m0);
+	    err = matrix_dims_check(rows, cols, np, op);
 	}
 
 	if (!err) {
-	    err = matrix_reduce_alloc(rows, cols, np-1, op, 
-				      &rm, &val, m0);
+	    err = matrix_reduce_alloc(rows, cols, np, op,
+				      &rm, &val);
 	}
     }
 
     if (!err) {
 	if (id != root) {
-	    /* workers send their data */
+	    /* send data to root */
 	    int sendsize = rc[0] * rc[1];
 
-	    err = mpi_send(sm->val, sendsize, mpi_double, 0,
-			   0, mpi_comm_world);
+	    if (sendsize > 0) {
+		err = mpi_send(sm->val, sendsize, mpi_double, 0,
+			       0, mpi_comm_world);
+	    }
 	} else {
 	    /* root gathers and processes data */
 	    int i, recvsize, offset = 0;
 
-	    if (use_root) {
-		recvsize = sm->rows * sm->cols;
-		err = matrix_reduce_step(rm, sm->val, recvsize, op,
-					 &offset);
-	    }
-
-	    for (i=1; i<np && !err; i++) {
-		recvsize = rows[i-1] * cols[i-1];
-		err = mpi_recv(val, recvsize, mpi_double, i, 0, 
-			       mpi_comm_world, MPI_STATUS_IGNORE);
-		if (!err) {
-		    err = matrix_reduce_step(rm, val, recvsize, op,
+	    for (i=0; i<np && !err; i++) {
+		recvsize = rows[i] * cols[i];
+		if (recvsize == 0) {
+		    continue;
+		}
+		if (i == root) {
+		    err = matrix_reduce_step(rm, sm->val, recvsize, op,
 					     &offset);
+		} else {
+		    err = mpi_recv(val, recvsize, mpi_double, i, 0, 
+				   mpi_comm_world, MPI_STATUS_IGNORE);
+		    if (!err) {
+			err = matrix_reduce_step(rm, val, recvsize, op,
+						 &offset);
+		    }
 		}
 	    }
 	}
@@ -420,8 +485,6 @@ static int gretl_matrix_reduce (void *sendp,
 	free(rows);
 	free(cols);
 	if (!err) {
-	    gretl_matrix **pm = recvp;
-
 	    *pm = rm;
 	} else {
 	    gretl_matrix_free(rm);
@@ -431,15 +494,19 @@ static int gretl_matrix_reduce (void *sendp,
     return err;
 }
 
-static int gretl_scalar_reduce (void *sendp, 
-				void *recvp,
-				Gretl_MPI_Op op,
-				int root,
-				int id,
-				int use_root)
+int gretl_scalar_mpi_reduce (double x, 
+			     double *xp,
+			     Gretl_MPI_Op op,
+			     int root,
+			     gretlopt opt)
 {
-    double local_x = 0.0;
     MPI_Op mpi_op;
+    int np;
+
+    mpi_comm_size(mpi_comm_world, &np);
+    if (root < 0 || root >= np) {
+	return invalid_root_error(root);
+    }
 
     if (op == GRETL_MPI_SUM) {
 	mpi_op = mpi_sum;
@@ -453,65 +520,26 @@ static int gretl_scalar_reduce (void *sendp,
 	return E_DATA;
     }
 
-    if (id != root || use_root) {
-	/* FIXME handling of NA? */
-	local_x = *(double *) sendp;
-    }
+    /* convert NA to NaN for use with MPI's built-in
+       reduction functions */
+    x = na(x) ? M_NA : x;
 
-    return mpi_reduce(&local_x, recvp, 1, mpi_double, 
-		      mpi_op, 0, mpi_comm_world);
+    return mpi_reduce(&x, xp, 1, mpi_double, 
+		      mpi_op, root, mpi_comm_world);
 }
 
-/**
- * gretl_mpi_reduce:
- * @sendp: address of object to be broadcast.
- * @recvp: location to receive the reduced value.
- * @type: the type of the object to which @p points.
- * @op: the reduction operation to perform.
- *
- * Reduces to @recvp the value referenced by @sendp, from 
- * MPI_COMM_WORLD. At present @type must be GRETL_TYPE_MATRIX, 
- * in which case @sendp should be a (*gretl_matrix) pointer
- * and @recvp a (**gretl_matrix) pointer, or GRETL_TYPE_DOUBLE,
- * in which case both @sendp and @recvp should be (*double) 
- * pointers.
- *
- * Returns: 0 on successful completion, non-zero code otherwise.
- **/
-
-int gretl_mpi_reduce (void *sendp, void *recvp,
-		      GretlType type, Gretl_MPI_Op op)
-{
-    int self, use_root, root = 0;
-    int err = 0;
-
-    if (type != GRETL_TYPE_DOUBLE && 
-	type != GRETL_TYPE_MATRIX) {
-	return E_DATA;
-    }
-
-    use_root = libset_get_bool(REDUCE_ALL);
-    mpi_comm_rank(mpi_comm_world, &self);
-
-    if (type == GRETL_TYPE_DOUBLE) {
-	err = gretl_scalar_reduce(sendp, recvp, op, root, 
-				  self, use_root);
-    } else {
-	err = gretl_matrix_reduce(sendp, recvp, op, root, 
-				  self, use_root);
-    }
-
-    return err;
-}
-
-int gretl_matrix_mpi_bcast (gretl_matrix **pm)
+int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root)
 {
     gretl_matrix *m = NULL;
     int rc[2];
-    int root = 0;
-    int id, err;
+    int id, np, err;
 
     mpi_comm_rank(mpi_comm_world, &id);
+    mpi_comm_size(mpi_comm_world, &np);
+
+    if (root < 0 || root >= np) {
+	return invalid_root_error(root);
+    }
 
     if (id == root) {
 	m = *pm;
@@ -550,9 +578,15 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm)
     return err;
 }
 
-static int gretl_scalar_mpi_bcast (double *px)
+static int gretl_scalar_mpi_bcast (double *px, int root)
 {
-    int err, root = 0;
+    int np, err;
+
+    mpi_comm_size(mpi_comm_world, &np);
+
+    if (root < 0 || root >= np) {
+	return invalid_root_error(root);
+    }
 
     err = mpi_bcast(px, 1, mpi_double, root, mpi_comm_world);
 
@@ -567,6 +601,7 @@ static int gretl_scalar_mpi_bcast (double *px)
  * gretl_mpi_bcast:
  * @p: the location of the object to be broadcast.
  * @type: the type of the object to which @p points.
+ * @root: the rank of the root process.
  *
  * Broadcasts the value referenced by @p to MPI_COMM_WORLD.
  * At present @type must be GRETL_TYPE_MATRIX, in which case
@@ -576,12 +611,12 @@ static int gretl_scalar_mpi_bcast (double *px)
  * Returns: 0 on successful completion, non-zero code otherwise.
  **/
 
-int gretl_mpi_bcast (void *p, GretlType type)
+int gretl_mpi_bcast (void *p, GretlType type, int root)
 {
     if (type == GRETL_TYPE_DOUBLE) {
-	return gretl_scalar_mpi_bcast((double *) p);
+	return gretl_scalar_mpi_bcast((double *) p, root);
     } else if (type == GRETL_TYPE_MATRIX) {
-	return gretl_matrix_mpi_bcast((gretl_matrix **) p);
+	return gretl_matrix_mpi_bcast((gretl_matrix **) p, root);
     } else {
 	return E_DATA;
     }
@@ -719,7 +754,7 @@ int gretl_mpi_receive (int source, GretlType *type,
     return err;
 }
 
-static void fill_tmp (gretl_matrix *m, double *tmp,
+static void fill_tmp (const gretl_matrix *m, double *tmp,
 		      int nr, int *offset)
 {
     double x;
@@ -737,28 +772,48 @@ static void fill_tmp (gretl_matrix *m, double *tmp,
     *offset += nr;
 }
 
-int gretl_matrix_mpi_scatter (gretl_matrix **pm, 
-			      Gretl_MPI_Op op)
+static int scatter_to_self (int *rc, double *val, 
+			    gretl_matrix **pm)
+{
+    int err = 0;
+
+    *pm = gretl_matrix_alloc(rc[0], rc[1]);
+
+    if (*pm == NULL) {
+	err = E_ALLOC;
+    } else {
+	size_t n = rc[0] * rc[1] * sizeof *val;
+
+	memcpy((*pm)->val, val, n);
+    }
+
+    return err;
+}
+
+int gretl_matrix_mpi_scatter (const gretl_matrix *m,
+			      gretl_matrix **recvm,
+			      Gretl_MPI_Op op,
+			      int root)
 {
     double *tmp = NULL;
-    int id, root = 0;
+    int id, np;
     int rc[2];
     int err = 0;
 
     mpi_comm_rank(mpi_comm_world, &id);
+    mpi_comm_size(mpi_comm_world, &np);
+
+    if (root < 0 || root >= np) {
+	return invalid_root_error(root);
+    }
 
     if (id == root) {
-	gretl_matrix *m = *pm;
-	int nworkers;
-	int i, n, np;
+	int i, n;
 	
-	mpi_comm_size(mpi_comm_world, &np);
-	nworkers = np - 1;
-
 	if (op == GRETL_MPI_VSPLIT) {
 	    /* scatter by rows */
-	    int nr = m->rows / nworkers;
-	    int rem = m->rows % nworkers;
+	    int nr = m->rows / np;
+	    int rem = m->rows % np;
 	    int offset = 0;
 
 	    /* we'll need a working buffer */
@@ -771,41 +826,50 @@ int gretl_matrix_mpi_scatter (gretl_matrix **pm,
 	    rc[0] = nr;
 	    rc[1] = m->cols;
 	    
-	    for (i=1; i<np; i++) {
+	    for (i=0; i<np; i++) {
 		if (i == np - 1 && rem > 0) {
 		    rc[0] += rem;
 		    n += m->cols * rem;
 		}
 		fill_tmp(m, tmp, rc[0], &offset);
-		err = mpi_send(rc, 2, mpi_int, i, TAG_MATRIX_DIM, 
-			       mpi_comm_world);
-		err = mpi_send(tmp, n, mpi_double, i, TAG_MATRIX_VAL, 
-			       mpi_comm_world);
+		if (i == root) {
+		    err = scatter_to_self(rc, tmp, recvm);
+		} else {
+		    err = mpi_send(rc, 2, mpi_int, i, TAG_MATRIX_DIM, 
+				   mpi_comm_world);
+		    err = mpi_send(tmp, n, mpi_double, i, TAG_MATRIX_VAL, 
+				   mpi_comm_world);
+		}
 	    }
 	} else {
 	    /* scatter by columns */
-	    int nc = m->cols / nworkers;
-	    int rem = m->cols % nworkers;
+	    int nc = m->cols / np;
+	    int rem = m->cols % np;
 	    double *val = m->val;
 
 	    n = m->rows * nc;
 	    rc[0] = m->rows;
 	    rc[1] = nc;
 
-	    for (i=1; i<np; i++) {
+	    for (i=0; i<np; i++) {
 		if (i == np - 1 && rem > 0) {
 		    rc[1] += rem;
 		    n += m->rows * rem;
 		}
-		err = mpi_send(rc, 2, mpi_int, i, TAG_MATRIX_DIM, 
-			       mpi_comm_world);
-		err = mpi_send(val, n, mpi_double, i, TAG_MATRIX_VAL, 
-			       mpi_comm_world);
+		if (i == root) {
+		    err = scatter_to_self(rc, val, recvm);
+		} else {
+		    err = mpi_send(rc, 2, mpi_int, i, TAG_MATRIX_DIM, 
+				   mpi_comm_world);
+		    err = mpi_send(val, n, mpi_double, i, TAG_MATRIX_VAL, 
+				   mpi_comm_world);
+		}
 		val += n;
 	    }
 	}
     } else {
-	*pm = gretl_matrix_mpi_receive(root, &err);
+	/* non-root processes get their share-out */
+	*recvm = gretl_matrix_mpi_receive(root, &err);
     }
 
     if (id == root) {
