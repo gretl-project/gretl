@@ -383,6 +383,7 @@ enum {
     F_SPRINTF,
     F_SUBSTR,
     F_REDUCE,
+    F_ALLREDUCE,
     F_SCATTER,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
@@ -453,7 +454,8 @@ enum {
 			      s == F_SIMANN)
 
 /* (other) functions taking string arg in middle position */
-#define string_mid_func(s) (s == F_REDUCE || s == F_SCATTER)
+#define string_mid_func(s) (s == F_REDUCE || s == F_SCATTER || \
+			    s == F_ALLREDUCE)
 
 /* functions taking one or more "fncall" string arguments */
 #define fncall_func(s) (s == F_BFGSMAX || s == F_FDJAC || \

@@ -81,6 +81,8 @@ static int (*mpi_error_class) (int, int *);
 static int (*mpi_error_string) (int, char *, int *);
 static int (*mpi_reduce) (void *, void *, int, MPI_Datatype, MPI_Op,
 			  int, MPI_Comm);
+static int (*mpi_allreduce) (void *, void *, int, MPI_Datatype, MPI_Op,
+			     MPI_Comm);
 static int (*mpi_bcast) (void *, int, MPI_Datatype, int, MPI_Comm);
 static int (*mpi_send) (void *, int, MPI_Datatype, int, int, MPI_Comm);	       
 static int (*mpi_recv) (void *, int, MPI_Datatype, int, int, MPI_Comm,
@@ -139,6 +141,7 @@ int gretl_MPI_init (void)
     mpi_error_class  = mpiget(MPIhandle, "MPI_Error_class", &err);
     mpi_error_string = mpiget(MPIhandle, "MPI_Error_string", &err);
     mpi_reduce       = mpiget(MPIhandle, "MPI_Reduce", &err);
+    mpi_allreduce    = mpiget(MPIhandle, "MPI_Allreduce", &err);
     mpi_bcast        = mpiget(MPIhandle, "MPI_Bcast", &err);
     mpi_send         = mpiget(MPIhandle, "MPI_Send", &err);
     mpi_recv         = mpiget(MPIhandle, "MPI_Recv", &err);
@@ -480,16 +483,20 @@ int gretl_matrix_mpi_reduce (gretl_matrix *sm,
     }
 
     if (id == root) {
-	/* clean up and set return value */
+	/* clean up */
 	free(val);
 	free(rows);
 	free(cols);
+    }
+
+    if (id == root || (opt & OPT_A)) {
+	/* handle return value */
 	if (!err) {
 	    *pm = rm;
 	} else {
 	    gretl_matrix_free(rm);
 	}
-    }
+    }	    
 
     return err;
 }
@@ -501,7 +508,7 @@ int gretl_scalar_mpi_reduce (double x,
 			     gretlopt opt)
 {
     MPI_Op mpi_op;
-    int np;
+    int np, ret;
 
     mpi_comm_size(mpi_comm_world, &np);
     if (root < 0 || root >= np) {
@@ -524,8 +531,15 @@ int gretl_scalar_mpi_reduce (double x,
        reduction functions */
     x = na(x) ? M_NA : x;
 
-    return mpi_reduce(&x, xp, 1, mpi_double, 
-		      mpi_op, root, mpi_comm_world);
+    if (opt & OPT_A) {
+	ret = mpi_allreduce(&x, xp, 1, mpi_double, mpi_op, 
+			    mpi_comm_world);
+    } else {
+	ret = mpi_reduce(&x, xp, 1, mpi_double, mpi_op, 
+			 root, mpi_comm_world);
+    }
+
+    return ret;
 }
 
 int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root)

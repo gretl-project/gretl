@@ -412,7 +412,8 @@ struct str_table funcs[] = {
     { F_MPI_RECV, "mpirecv" },
     { F_BCAST,    "mpibcast" },
     { F_REDUCE,   "mpireduce" },
-    { F_SCATTER,  "mpiscatter" },
+    { F_ALLREDUCE, "mpiareduce" },
+    { F_SCATTER,   "mpiscatter" },
     { 0,          NULL }
 };
 

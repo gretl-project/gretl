@@ -1519,7 +1519,8 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
     } else if (f == F_MPI_RECV) {
 	/* source id */
 	id = node_get_int(l, p);
-    } else if (f == F_BCAST || f == F_REDUCE || f == F_SCATTER) {
+    } else if (f == F_BCAST || f == F_REDUCE || 
+	       f == F_ALLREDUCE || f == F_SCATTER) {
 	if (l->t != U_ADDR) {
 	    p->err = E_TYPES;
 	} else {
@@ -1592,7 +1593,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 
 	ret = aux_scalar_node(p);
 	if (!p->err) {
-	    p->err = ret->v.xval = gretl_mpi_bcast(bcastp, type, root);
+	    p->err = gretl_mpi_bcast(bcastp, type, root);
 	    if (!p->err && id != root) {
 		if (type == GRETL_TYPE_MATRIX) {
 		    p->err = user_matrix_replace_matrix_by_name(l->vname, m);
@@ -1600,20 +1601,13 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 		    p->err = gretl_scalar_set_value(l->vname, x);
 		}
 	    }
+	    ret->v.xval = p->err;
 	}
-    } else if (f == F_REDUCE) {
-#if 0 /* experiment not ready yet */
-	int all_reduce = 0;
-	if (root == -1) {
-	    /* FIXME this is just temporary? */
-	    all_reduce = 1;
-	    root = 0;
-	}
-#endif
+    } else if (f == F_REDUCE || f == F_ALLREDUCE) {
 	ret = aux_scalar_node(p);
 	if (!p->err) {
 	    Gretl_MPI_Op op = reduce_op_from_string(r->v.str);
-	    gretlopt opt = OPT_NONE; 
+	    gretlopt opt = (f == F_REDUCE)? OPT_NONE : OPT_A;
 	    gretl_matrix *m = NULL;
 	    double x = NADBL;
 
@@ -1622,7 +1616,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    } else {
 		p->err = gretl_scalar_mpi_reduce(l->v.xval, &x, op, root, opt);
 	    }
-	    if (!p->err && id == root) {
+	    if (!p->err && (id == root || f == F_ALLREDUCE)) {
 		if (type == GRETL_TYPE_MATRIX) {
 		    p->err = user_matrix_replace_matrix_by_name(l->vname, m);
 		} else {
@@ -10781,6 +10775,7 @@ static NODE *eval (NODE *t, parser *p)
 	ret = mpi_transfer_node(l, NULL, NULL, t->t, p);
 	break;
     case F_REDUCE:
+    case F_ALLREDUCE:
     case F_SCATTER:
 	if (m->t != STR) {
 	    node_type_error(t->t, 2, STR, m, p);
