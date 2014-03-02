@@ -444,7 +444,7 @@ static void unwrap_string_arg (parser *p)
 #define varargs_func(f) (f == F_PRINTF || f == F_SPRINTF || \
 			 f == F_SSCANF)
 
-/* Grab a string argument.  Note: we have a mechanism in genlex.c for
+/* Grab a string argument. Note: we have a mechanism in genlex.c for
    retrieving arguments that take the form of quoted string literals
    or names of string variables.  The special use of this function is
    to grab a literal string without requiring the user to wrap it in
@@ -592,30 +592,29 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 }
 
 enum {
-    RIGHT_STR = 1 << 0,
-    MID_STR   = 1 << 1,
-    MID_FNSTR = 1 << 2
+    RIGHT_STR  = 1 << 0,
+    MID_STR    = 1 << 1,
+    MID_FNCALL = 1 << 2
 };
 
 /* get_middle_string_arg() is mostly used to retrieve a string
-   that defines a function call, e.g. in BFGSmax(). In this 
-   context we expect a literal string, but not wrapped in
-   quotes. 
+   that defines a function call, e.g. in BFGSmax(). It can also
+   be used to trap a non-quoted string that functions as an
+   "enum" value, as in the "vcat" flag for mpireduce().
+   In the former case @opt will be MID_FNCALL, in the latter
+   MID_STR.
 */
 
 static NODE *get_middle_string_arg (parser *p, int opt)
 {
-    const char *src = NULL;
-    const char *s;
-    int gotparen = 0, close = 0;
-    int i, quoted, paren = 0;
+    int close = 0;
 
     while (p->ch == ' ') {
 	parser_getc(p);
     }
 
     if (p->ch == '"') {
-	/* special: arg is wrapped in quotes */
+	/* handle the case where the argument is quoted */
 	close = parser_char_index(p, '"');
 	if (close < 0) {
 	    unmatched_symbol_error('"', p);
@@ -623,81 +622,82 @@ static NODE *get_middle_string_arg (parser *p, int opt)
 	}
 	p->idstr = gretl_strndup(p->point, close);
 	close++;
-	goto post_process;
-    }
+    } else if (opt == MID_STR) {
+	/* handle the "enum"-type unquoted case */
+	int i1 = parser_char_index(p, ',');
+	int i2 = parser_char_index(p, ')');
 
-    /* find length of string to bare comma (unquoted, not in parens) or
-       matched right paren */
-
-    quoted = 0;
-    s = p->point;
-    i = 0;
-
-    while (*s) {
-	if (*s == '"') {
-	    quoted = !quoted;
+	if (i2 < 0) {
+	    unmatched_symbol_error('(', p);
+	    return NULL;
 	} 
-	if (!quoted) {
-	    if (*s == '(') {
-		gotparen++;
-		paren++;
-	    } else if (*s == ')') {
-		if (opt & MID_STR) {
-		    /* leave paren */
-		    close = i;
-		    break;
-		} else {
-		    /* opt is MID_FNSTR */
+	close = (i1 > 0 && i1 < i2)? i1 : i2;
+	p->idstr = gretl_strndup(p->point - 1, close + 1);
+    } else {
+	/* handle the MID_FNCALL case: the terminator of
+	   the argument will be a bare comma (unquoted, not 
+	   in parentheses) or a right paren which matches
+	   the paren that opens the argument list of
+	   the function call.
+	*/
+	const char *s = p->point;
+	int gotparen = 0;
+	int quoted = 0;
+	int paren = 0;
+	int i = 0;
+
+	while (*s) {
+	    if (*s == '"') {
+		quoted = !quoted;
+	    } 
+	    if (!quoted) {
+		if (*s == '(') {
+		    gotparen++;
+		    paren++;
+		} else if (*s == ')') {
 		    paren--;
 		}
+		if (paren == 0) {
+		    if (gotparen) {
+			/* include right paren */
+			close = i + 1;
+			break;
+		    } else if (*s == ',') {
+			/* leave comma */
+			close = i;
+			break;
+		    }
+		} 
 	    }
-	    if (paren == 0) {
-		if (gotparen) {
-		    /* include right paren */
-		    close = i + 1;
-		    break;
-		} else if (*s == ',') {
-		    /* leave comma */
-		    close = i;
-		    break;
-		}
-	    } 
+	    s++;
+	    i++;
 	}
-	s++;
-	i++;
+
+	if (paren > 0) {
+	    unmatched_symbol_error('(', p);
+	} else if (paren < 0) {
+	    unmatched_symbol_error(')', p);
+	} else if (quoted) {
+	    unmatched_symbol_error('"', p);
+	} else {
+	    p->idstr = gretl_strndup(p->point - 1, close + 1);
+	}
     }
-
-    if (paren > 0) {
-	unmatched_symbol_error('(', p);
-    } else if (paren < 0) {
-	unmatched_symbol_error(')', p);
-    } else if (quoted) {
-	unmatched_symbol_error('"', p);
-    }
-
-    if (p->err) {
-	return NULL;
-    }
-
-    src = p->point - 1;
-    p->idstr = gretl_strndup(src, close + 1);
-
- post_process:
 
     if (p->idstr == NULL) {
-	p->err = E_ALLOC;
-	return NULL;
-    }  
-
-    tailstrip(p->idstr);
-    parser_advance(p, close);
-    lex(p);
-
+	if (!p->err) {
+	    p->err = E_ALLOC;
+	}
+    } else {
+	tailstrip(p->idstr);
+	parser_advance(p, close);
+	lex(p);
 #if SDEBUG
-    fprintf(stderr, "get_middle_string_arg: '%s'\n", p->idstr);
+	fprintf(stderr, "get_middle_string_arg: '%s'\n", p->idstr);
 #endif
+    }
 
-    return (p->err)? NULL : newstr(p->idstr);
+    return (p->idstr == NULL)? NULL : newstr(p->idstr);
 }
 
 static NODE *get_bundle_member_name (parser *p)
@@ -917,7 +917,7 @@ static void pad_parent (NODE *parent, int k, int i, parser *p)
     }
 }
 
-#define next_arg_is_string(i,k,o) ((i>0 && i<k-1 && (o & (MID_STR|MID_FNSTR))) || \
+#define next_arg_is_string(i,k,o) ((i>0 && i<k-1 && (o & (MID_STR|MID_FNCALL))) || \
                                    (i==k-1 && (o & RIGHT_STR)))
 
 /* Get up to k comma-separated arguments (possibly optional).
@@ -955,7 +955,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	}
 
 	/* get the next argument */
-	if (i > 0 && i < k - 1 && (opt & (MID_STR|MID_FNSTR))) {
+	if (i > 0 && i < k - 1 && (opt & (MID_STR|MID_FNCALL))) {
 	    child = get_middle_string_arg(p, opt);
 	} else if (i == k - 1 && (opt & RIGHT_STR)) {
 	    child = get_final_string_arg(p, t, f, 0);
@@ -1050,8 +1050,8 @@ static NODE *powterm (parser *p)
 
     if (string_mid_func(sym)) {
 	opt |= MID_STR;
-    } else if (fnstring_mid_func(sym)) {
-	opt |= MID_FNSTR;
+    } else if (fncall_func(sym) && !func2_symb(sym)) {
+	opt |= MID_FNCALL;
     }
 
     if (unary_op(sym)) {

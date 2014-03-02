@@ -1505,6 +1505,9 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
     }
 
     if (f == F_MPI_SEND) {
+	/* we support sending a matrix or scalar; we need
+	   the destination id as second argument 
+	*/
 	if (l->t == MAT) {
 	    type = GRETL_TYPE_MATRIX;
 	} else if (l->t == NUM) {
@@ -1517,10 +1520,11 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    id = node_get_int(r, p);
 	}
     } else if (f == F_MPI_RECV) {
-	/* source id */
+	/* the single argument is the source id */
 	id = node_get_int(l, p);
     } else if (f == F_BCAST || f == F_REDUCE || 
 	       f == F_ALLREDUCE || f == F_SCATTER) {
+	/* we need a variable's address on the left */
 	if (l->t != U_ADDR) {
 	    p->err = E_TYPES;
 	} else {
@@ -1534,15 +1538,18 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 		p->err = E_TYPES;
 	    }
 	}
-	if (!p->err) {
+	if (!p->err && f != F_ALLREDUCE) {
+	    /* optional root specification */
 	    NODE *rootspec = (f == F_BCAST)? r : r2;
 
 	    if (!null_or_empty(rootspec)) {
 		root = node_get_int(rootspec, p);
 	    }
+	}
+	if (!p->err) {
 	    /* "self" id */
 	    id = gretl_mpi_rank();
-	}
+	}	    
     }
 
     if (p->err) {
@@ -1612,6 +1619,8 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    gretlopt opt = (f == F_REDUCE)? OPT_NONE : OPT_A;
 	    gretl_matrix *m = NULL;
 	    double x = NADBL;
+
+	    printf("REDUCE, root = %d\n", root);
 
 	    if (type == GRETL_TYPE_MATRIX) { 
 		p->err = gretl_matrix_mpi_reduce(l->v.m, &m, op, root, opt);
@@ -10769,15 +10778,19 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 0, STR, l, p);
 	}
 	break;
-    case F_MPI_SEND:
-    case F_BCAST:
-	ret = mpi_transfer_node(l, r, NULL, t->t, p);
-	break;
     case F_MPI_RECV:
 	ret = mpi_transfer_node(l, NULL, NULL, t->t, p);
 	break;
-    case F_REDUCE:
+    case F_MPI_SEND:
+    case F_BCAST:
     case F_ALLREDUCE:
+	if (t->t == F_ALLREDUCE && r->t != STR) {
+	    node_type_error(t->t, 2, STR, r, p);
+	} else {
+	    ret = mpi_transfer_node(l, r, NULL, t->t, p);
+	}
+	break;
+    case F_REDUCE:
     case F_SCATTER:
 	if (m->t != STR) {
 	    node_type_error(t->t, 2, STR, m, p);
