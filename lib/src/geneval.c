@@ -1620,8 +1620,6 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    gretl_matrix *m = NULL;
 	    double x = NADBL;
 
-	    printf("REDUCE, root = %d\n", root);
-
 	    if (type == GRETL_TYPE_MATRIX) { 
 		p->err = gretl_matrix_mpi_reduce(l->v.m, &m, op, root, opt);
 	    } else {
