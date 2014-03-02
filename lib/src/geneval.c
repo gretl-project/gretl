@@ -1584,7 +1584,9 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	double x = NADBL;
 
 	if (type == GRETL_TYPE_MATRIX) {
-	    m = l->v.m;
+	    if (id == root) {
+		m = l->v.m;
+	    }
 	    bcastp = &m;
 	} else {
 	    x = l->v.xval;

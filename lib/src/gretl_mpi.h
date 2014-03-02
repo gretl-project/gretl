@@ -41,6 +41,8 @@ int gretl_mpi_bcast (void *p, GretlType type, int root);
 
 int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root);
 
+int gretl_scalar_mpi_bcast (double *px, int root);
+
 int gretl_mpi_send (void *p, GretlType type, int dest);
 
 int gretl_matrix_mpi_send (const gretl_matrix *m, int dest);

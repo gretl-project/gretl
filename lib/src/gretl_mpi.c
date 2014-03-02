@@ -487,15 +487,16 @@ int gretl_matrix_mpi_reduce (gretl_matrix *sm,
 	free(val);
 	free(rows);
 	free(cols);
-    }
-
-    if (id == root || (opt & OPT_A)) {
 	/* handle return value */
 	if (!err) {
 	    *pm = rm;
 	} else {
 	    gretl_matrix_free(rm);
-	}
+	}	
+    }
+
+    if (!err && (opt & OPT_A)) {
+	err = gretl_matrix_mpi_bcast(pm, root);
     }	    
 
     return err;
@@ -564,7 +565,7 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root)
     /* broadcast the matrix dimensions first */
     err = mpi_bcast(rc, 2, mpi_int, root, mpi_comm_world);
 
-    if (!err && id > 0) {
+    if (!err && id != root) {
 	/* everyone but root needs to allocate space */
 	*pm = m = gretl_matrix_alloc(rc[0], rc[1]);
 	if (m == NULL) {
@@ -592,7 +593,7 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root)
     return err;
 }
 
-static int gretl_scalar_mpi_bcast (double *px, int root)
+int gretl_scalar_mpi_bcast (double *px, int root)
 {
     int np, err;
 
