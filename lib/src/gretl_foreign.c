@@ -1063,13 +1063,6 @@ static int write_gretl_mpi_file (gretlopt opt)
 	return E_FOPEN;
     }
 
-    /* forward the "echo" and "messages" states? */
-    if (!gretl_echo_on()) {
-	fputs("set echo off\n", fp);
-    }
-    if (!gretl_messages_on()) {
-	fputs("set messages off\n", fp);
-    }
     if (opt & OPT_F) {
 	/* honor the --send-functions option */
 	if (n_user_functions() > 0) {

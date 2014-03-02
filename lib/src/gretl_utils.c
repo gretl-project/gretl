@@ -1853,33 +1853,6 @@ double gretl_stopwatch (void)
 
 /* library init and cleanup functions */
 
-static int real_libgretl_init (int self, int np)
-{
-    int err = 0;
-
-    libset_init();
-
-    if (np > 1) {
-	/* use DCMT for multiple RNGs */
-	gretl_dcmt_init(np, self, 4172);
-#ifdef HAVE_MPI
-	/* and load MPI library functions */
-	err = gretl_MPI_init();
-#endif
-    } else {
-	/* one RNG will do nicely */
-	gretl_rand_init();
-    }
-
-    if (!err) {
-	gretl_xml_init();
-	gretl_stopwatch_init();
-	mpf_set_default_prec(get_mp_bits());
-    }
-
-    return err;
-}
-
 /**
  * libgretl_init:
  *
@@ -1890,7 +1863,11 @@ static int real_libgretl_init (int self, int np)
 
 void libgretl_init (void)
 {
-    real_libgretl_init(0, 1);
+    libset_init();
+    gretl_rand_init();
+    gretl_xml_init();
+    gretl_stopwatch_init();
+    mpf_set_default_prec(get_mp_bits());
 }
 
 #ifdef HAVE_MPI
@@ -1907,7 +1884,33 @@ void libgretl_init (void)
 
 int libgretl_mpi_init (int self, int np)
 {
-    return real_libgretl_init(self, np);
+    int err;
+
+    libset_init();
+
+    /* load MPI library functions */
+    err = gretl_MPI_init();
+    if (err) {
+	return err;
+    }
+
+    if (np > 1) {
+	/* use DCMT for multiple RNGs */
+	gretl_dcmt_init(np, self, 4172);
+    } else {
+	/* one RNG will do nicely */
+	gretl_rand_init();
+    }
+
+    gretl_xml_init();
+    gretl_stopwatch_init();
+    mpf_set_default_prec(get_mp_bits());
+
+    /* be relatively quiet by default */
+    set_gretl_echo(0);
+    set_gretl_messages(0);
+
+    return 0;
 }
 
 #else
