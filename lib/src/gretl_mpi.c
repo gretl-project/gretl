@@ -325,6 +325,8 @@ static int matrix_reduce_alloc (int *rows, int *cols,
 
     if (rtotal == 0 || ctotal == 0) {
 	err = E_DATA;
+    } else if (op == GRETL_MPI_PROD) {
+	*pm = gretl_unit_matrix_new(rtotal, ctotal);
     } else {
 	*pm = gretl_zero_matrix_new(rtotal, ctotal);
     }
