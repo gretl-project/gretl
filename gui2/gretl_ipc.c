@@ -61,7 +61,7 @@
    override this and launch a second (or third, etc.) gretl instance.
    
    GRETL_OPEN_HANDLER depends on GRETL_PID_FILE for its mechanism but
-   not vice versa.x 
+   not vice versa.
 */
 
 #ifdef GRETL_PID_FILE
