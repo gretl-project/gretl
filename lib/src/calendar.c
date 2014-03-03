@@ -961,7 +961,7 @@ int iso_basic_to_extended (const double *b, double *y, double *m, double *d,
 
 /**
  * easterdate:
- * @year: year for which we want Easter date (Gregorian)
+ * @year: year for which we want Easter date (Gregorian).
  *
  * Algorithm taken from Wikipedia page 
  * "https://en.wikipedia.org/wiki/Computus"
@@ -991,7 +991,6 @@ double easterdate (int year)
     int month = (h + L - 7 * m + 114) / 31;
     int day = ((h + L - 7 * m + 114) % 31) + 1;
 
-    double ret = month + day*0.01;
-    return ret;
+    return month + day * 0.01;
 }
 
