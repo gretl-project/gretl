@@ -205,11 +205,11 @@ function void Rosen_hess (matrix *H, matrix *param)
 end function
 
 matrix theta = { 0, 0 }
-matrix g = { 0, 0 }
+matrix grad = { 0, 0 }
 matrix H = zeros(2, 2)
 
 set max_verbose 1
-M = NRmax(theta, Rosenbrock(&theta), Rosen_grad(&g, &theta), 
+M = NRmax(theta, Rosenbrock(&theta), Rosen_grad(&grad, &theta), 
           Rosen_hess(&H, &theta))
 
 print theta

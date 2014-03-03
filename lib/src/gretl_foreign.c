@@ -430,10 +430,12 @@ static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
     } else if (status != 0) {
 	pprintf(prn, "%s exited with status %d", argv[0], status);
 	if (sout != NULL && *sout != '\0') {
+	    pputs(prn, "stdout:\n");
 	    pputs(prn, sout);
 	    pputc(prn, '\n');
 	} 
 	if (errout != NULL && *errout != '\0') {
+	    pputs(prn, "\nstderr:\n");
 	    pputs(prn, errout);
 	    pputc(prn, '\n');
 	}	
@@ -445,6 +447,14 @@ static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
 		do_stata_printout(prn);
 	    } else {
 		pputs(prn, sout);
+		pputc(prn, '\n');
+	    }
+	}
+	if (opt & OPT_V) {
+	    /* also print stderr output, if any */
+	    if (errout != NULL && *errout != '\0') {
+		pputs(prn, "\nstderr:\n");
+		pputs(prn, errout);
 		pputc(prn, '\n');
 	    }
 	}
@@ -1730,6 +1740,8 @@ static void set_path_for_Rlib (const char *Rhome)
 {
     char *path = getenv("PATH");
     gchar *Rpath;
+
+    /* FIXME x86_64 */
 
     Rpath = g_strdup_printf("%s\\bin\\i386", Rhome);
     fprintf(stderr, "Rpath = '%s'\n", Rpath);
