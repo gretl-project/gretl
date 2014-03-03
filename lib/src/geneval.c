@@ -3533,6 +3533,9 @@ static double real_apply_func (double x, int f, parser *p)
 	    eval_warning(p, f, errno);
 	}
 	return y;
+    case F_EASTER:
+	y = easterdate(x);
+	return y;
     default:
 	return 0.0;
     }
@@ -9971,6 +9974,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_LNGAMMA:
     case F_DIGAMMA:
     case F_INVMILLS:
+    case F_EASTER:
 	/* functions taking one argument, any type */
 	if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);

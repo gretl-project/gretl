@@ -69,4 +69,6 @@ int n_hidden_missing_obs (const DATASET *dset);
 
 int guess_daily_pd (const DATASET *dset);
 
+double easterdate (int year);
+
 #endif /* CALENDAR_H */ 

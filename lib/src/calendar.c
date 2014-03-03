@@ -959,3 +959,39 @@ int iso_basic_to_extended (const double *b, double *y, double *m, double *d,
     return 0;
 }
 
+/**
+ * easterdate:
+ * @year: year for which we want Easter date (Gregorian)
+ *
+ * Algorithm taken from Wikipedia page 
+ * "https://en.wikipedia.org/wiki/Computus"
+ * under the heading "Anonymous Gregorian algorithm".
+ *
+ * Returns the date of Easter in the Gregorian calendar as 
+ * (month + day/100). Note that April the 10th, is, under
+ * this convention, 4.1; hence, 4.2 is April the 20th, not
+ * April the 2nd (which would be 4.02).
+ */
+
+double easterdate (int year)
+{
+    int a = year % 19;
+    int b = year / 100;
+    int c = year % 100;
+    int d = b / 4;
+    int e = b % 4;
+    int f = (b + 8) / 25;
+    int g = (b - f + 1) / 3;
+    int h = (19 * a + b - d - g + 15) % 30;
+    int i = c / 4;
+    int k = c % 4;
+    int L = (32 + 2 * e + 2 * i - h - k) % 7;
+    int m = (a + 11 * h + 22 * L) / 451 ;
+
+    int month = (h + L - 7 * m + 114) / 31;
+    int day = ((h + L - 7 * m + 114) % 31) + 1;
+
+    double ret = month + day*0.01;
+    return ret;
+}
+

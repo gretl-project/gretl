@@ -2025,6 +2025,26 @@
       </description>
     </function>
 
+    <function name="easterday" section="calendar" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Dato l'anno in <argname>x</argname>, ritorna la data di
+	  Pasqua nel calendario gregoriano sotto forma dello scalare
+	  <math>mese + giorno/100</math>. Si not che, per questa
+	  convenzione, il 10 aprile è 4.1; quindi, 4.2 sarà il 20
+	  aprile, non il 2 (che sarebbe 4.02).
+	</para>
+	<code>
+	  scalar e = easterday(2014)
+	  scalar m = floor(e)
+	  scalar d = 100*(e-m)
+	</code>
+      </description>
+    </function>
+
     <function name="eigengen" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>

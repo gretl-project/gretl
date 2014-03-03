@@ -2067,6 +2067,26 @@
       </description>
     </function>
 
+    <function name="easterday" section="calendar" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given the year in argument <argname>x</argname>, returns the
+	  date of Easter in the Gregorian calendar as <math> month +
+	  day/100</math>. Note that April the 10th, is, under this
+	  convention, 4.1; hence, 4.2 is April the 20th, not April the
+	  2nd (which would be 4.02).
+	</para>
+	<code>
+	  scalar e = easterday(2014)
+	  scalar m = floor(e)
+	  scalar d = 100*(e-m)
+	</code>
+      </description>
+    </function>
+
     <function name="eigengen" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
