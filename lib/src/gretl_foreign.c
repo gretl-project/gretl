@@ -1738,19 +1738,22 @@ void gretl_R_reset_error (void)
 
 static void set_path_for_Rlib (const char *Rhome)
 {
+#ifdef _WIN64
+    const char *arch = "x64";
+#else
+    const char *arch = "i386";
+#endif
     char *path = getenv("PATH");
     gchar *Rpath;
 
-    /* FIXME x86_64 */
-
-    Rpath = g_strdup_printf("%s\\bin\\i386", Rhome);
+    Rpath = g_strdup_printf("%s\\bin\\%s", Rhome, arch);
     fprintf(stderr, "Rpath = '%s'\n", Rpath);
 
     if (path != NULL && strstr(path, Rpath) != NULL) {
 	; /* nothing to be done */
     } else {
 	g_free(Rpath);
-	Rpath = g_strdup_printf("%s;%s\\bin\\i386", path, Rhome);
+	Rpath = g_strdup_printf("%s;%s\\bin\\%s", path, Rhome, arch);
 	gretl_setenv("PATH", Rpath);
 	g_free(Rpath);
 	Rpath = NULL;
@@ -1761,7 +1764,7 @@ static void set_path_for_Rlib (const char *Rhome)
     }
 }
 
-#endif
+#endif /* WIN32 */
 
 /* Initialize the R library for use with gretl.  Note that we only
    need do this once per gretl session.  We need to check that the
