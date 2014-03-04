@@ -1,7 +1,7 @@
 version 1.9.15, in progress
 - Introduce a new native binary datafile format, the gdtb file
   (zipped XML metadata plus binary values)
-- Add new function: substr()
+- Add new functions: substr(), easterday()
 - Enable use of arrays in the SFMT random number generator
 - Enable use of value labels (if any) in factorized boxplots
 - Enable use of named lists in the GMM() and GMMlevel() 
