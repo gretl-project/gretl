@@ -81,15 +81,15 @@ Besides use of \texttt{if}, the ternary query operator, \texttt{?:},
 can be used to perform conditional assignment on a more ``micro''
 level. This has the form
 \begin{code}
-result = <condition> ? <t-value1> : <f-value>
+result = <condition> ? <true-value> : <false-value>
 \end{code}
 
 If \texttt{<condition>} evaluates as true (non-zero) then
-\texttt{<t-value>} is assigned to \texttt{result}, otherwise
-\texttt{<f-value>} is assigned.\footnote{Some readers may find it
-  helpful to note that the conditional assignment operator works
-  exactly the same way as the \texttt{=IF()} function in
-  spreadsheets.}  This is obviously more compact than \texttt{if}
+\texttt{<true-value>} is assigned to \texttt{result}, otherwise
+\texttt{result} will contain \texttt{<false-value>}.\footnote{Some
+  readers may find it helpful to note that the conditional assignment
+  operator works exactly the same way as the \texttt{=IF()} function
+  in spreadsheets.}  This is obviously more compact than \texttt{if}
 \dots{} \texttt{else} \dots{} \texttt{endif}. The following example
 replicates the \cmd{abs} function by hand:
 \begin{code}
@@ -123,16 +123,11 @@ The ternary operator is more flexible than the ordinary \cmd{if}
 statement. With \cmd{if}, the \texttt{<condition>} to be evaluated
 must always come down to a scalar, but the query operator just
 requires that the condition is of ``suitable'' type in light of the
-types of the operands.  So for example one can do this sort of thing
-with matrices:
-\begin{code}
-matrix A = mnormal(4,4)
-matrix B = upper(A.<0) ? -A : A
-\end{code}
-which will switch the sign of the negative elements of \texttt{A} on
-and above its diagonal. To achieve the same via a loop, one should
-have had to write a considerably longer (and slower) chunk of code,
-such as
+types of the operands.  So, for example, suppose you have a square
+matrix \texttt{A} and you want to switch the sign of the negative
+elements of \texttt{A} on and above its diagonal. You could use a
+loop\footnote{The \texttt{loop} keyword is explained in detail in the
+  next section}, and write a piece of code such as
 \begin{code}
 matrix A = mnormal(4,4)
 matrix B = A
@@ -146,8 +141,19 @@ loop r = 1 .. rows(A)
 endloop
 \end{code}
 
-The reader will have noticed that the above example uses the
-\texttt{loop} keyword, which is explained in the next section.
+By using the ternary operator, you can achieve the same effect via a
+considerably shorter (and faster) construct:
+\begin{code}
+matrix A = mnormal(4,4)
+matrix B = upper(A.<0) ? -A : A
+\end{code}
+
+\tip{At this point, it's likely that some reader would think ``Oh,
+  what the heck, this may be as cool as you want, but it's way too
+  complicated for me; I'll just use the traditional \cmd{if}''. Of
+  course, there's nothing wrong with this, but in some cases the
+  ternary assignment operator can lead to substantially faster code,
+  and comes surprisingly natural when one gets used to it.}
 
 \section{Loops}
 \label{sec:hr-loops}

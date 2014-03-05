@@ -20,10 +20,11 @@ strict order:
 
 \begin{enumerate}
 \item The keyword \texttt{function}.
-\item \texttt{\emph{type}}, which states the type of value returned by the
-  function, if any.  This must be one of \texttt{void} (if the
+\item \texttt{\emph{type}}, which states the type of value returned by
+  the function, if any.  This must be one of \texttt{void} (if the
   function does not return anything), \texttt{scalar},
-  \texttt{series}, \texttt{matrix}, \texttt{list} or \texttt{string}.
+  \texttt{series}, \texttt{matrix}, \texttt{list}, \texttt{string} or
+  \texttt{bundle}.
 \item \texttt{\emph{funcname}}, the unique identifier for the
   function.  Function names have a maximum length of 31 characters;
   they must start with a letter and can contain only letters, numerals
@@ -63,11 +64,17 @@ should compute the \emph{return value}, that is the value the function
 is supposed to yield. Any variable declared inside the function is
 \emph{local}, so it will cease to exist when the function ends.
 
-The \cmd{return} command is used to stop
-execution of the code inside the function and deliver its result to
-the calling code (note that this typically happens at the end of the
-function body, but doesn't have to).  The function definition must end
-with the expression \verb|end function|, on a line of its own.
+The \cmd{return} command is used to stop execution of the code inside
+the function and deliver its result to the calling code (note that
+this typically happens at the end of the function body, but doesn't
+have to).  The function definition must end with the expression
+\verb|end function|, on a line of its own.
+
+\tip{Beware: unlike some other languages (e.g.\ Matlab or GAUSS), you
+  cannot directly return multiple outputs from a function. However,
+  you can return a bundle and stuff it with as many objects as you
+  want.}
+
 
 In order to get a feel for how functions work in practice, here's a
 simple example:
@@ -109,10 +116,7 @@ neighborhood of 1.
 \item on the next line, the function definition begins; in this case,
   it includes a comment and an \cmd{if} block;
 \item the function ends with the \cmd{return} keyword, which exports
-  the result;\footnote{Beware: unlike some other languages (e.g.\
-    Matlab), you cannot directly return multiple outputs from a
-    function. However, you can return a bundle and stuff it with as
-    many objects as you want.}
+  the result;
 \item the next lines provide a simple usage example; note that in the
   \cmd{printf} command, the two functions \cmd{ln()} and
   \cmd{quasi\_log()} are indistinguishable from a purely syntactic
