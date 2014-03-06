@@ -40,7 +40,7 @@ enum {
 void libgretl_init (void);
 
 #ifdef HAVE_MPI
-int libgretl_mpi_init (int self, int np);
+int libgretl_mpi_init (int self, int np, int dcmt);
 #else
 /* dummy function */
 int gretl_mpi_initialized (void);
