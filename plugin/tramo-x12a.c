@@ -1036,6 +1036,21 @@ static int write_tramo_file (const char *fname,
     return 0;
 }
 
+static int x12_get_subperiod (double x, const DATASET *dset)
+{
+    int i, d = ceil(log10(dset->pd));
+    int ret;
+
+    x -= floor(x);
+    for (i=0; i<d; i++) {
+	x *= 10;
+    }
+
+    ret = (x-floor(x)) >.5 ? ceil(x) : floor(x);
+
+    return ret;
+}
+
 static int write_spc_file (const char *fname, const double *y,
 			   const char *vname,
 			   const DATASET *dset, 
@@ -1060,7 +1075,7 @@ static int write_spc_file (const char *fname, const double *y,
     sprintf(tmp, "%g", x);
     p = strchr(tmp, '.');
     if (p != NULL) {
-	startper = atoi(p + 1);
+	startper = x12_get_subperiod(x, dset);
     } else {
 	startper = 1;
     }
