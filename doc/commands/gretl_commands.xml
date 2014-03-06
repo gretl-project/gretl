@@ -11214,6 +11214,11 @@
 	  <effect>basic statistics only</effect>
         </option>
         <option>
+	  <flag>--weight</flag>
+	  <optparm>wvar</optparm>
+	  <effect>weighting variable</effect>
+        </option>
+        <option>
 	  <flag>--by</flag>
 	  <optparm>byvar</optparm>
 	  <effect>see below</effect>
@@ -11233,12 +11238,15 @@
 	the mean, minimum, maximum and standard deviation.
       </para>
       <para>
-	If the <opt>--by</opt> option is given (in which case the parameter
-	<repl>byvar</repl> should be the name of a discrete variable), then
-	statistics are printed for sub-samples corresponding to the distinct
-	values taken on by <repl>byvar</repl>.  For example, if
-	<repl>byvar</repl> is a (binary) dummy variable, statistics are
-	given for the cases <lit>byvar = 0</lit> and <lit>byvar = 1</lit>.
+	If the <opt>--by</opt> option is given (in which case the
+	parameter <repl>byvar</repl> should be the name of a discrete
+	variable), then statistics are printed for sub-samples
+	corresponding to the distinct values taken on by
+	<repl>byvar</repl>.  For example, if <repl>byvar</repl> is a
+	(binary) dummy variable, statistics are given for the cases
+	<lit>byvar = 0</lit> and <lit>byvar = 1</lit>. Note: at
+	present, this option is incompatible with the
+	<opt>--weight</opt> option.
       </para>
       <para>
 	If the alternative form is given, using a named matrix, then

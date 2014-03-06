@@ -5569,6 +5569,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case SUMMARY:
+	err = incompatible_options(cmd->opt, OPT_B | OPT_W);
+	if (err) {
+	    break;
+	}
 	if (cmd->opt & OPT_B) {
 	    err = do_command_by(cmd, dset, prn);
 	} else if (cmd->opt & OPT_X) {

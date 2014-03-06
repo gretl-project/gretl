@@ -10711,22 +10711,56 @@
 
   </command>
 
-  <command name="summary" section="Statistics" label="Statistiche descrittive" context="cli">
+  <command name="summary" section="Statistics" 
+	   label="Statistiche descrittive" context="cli">
 
     <usage>
       <arguments>
-        <argument optional="true">lista-variabili</argument>
+	<altform><lit>summary [</lit> <repl>lista</repl> ]</altform>
+	<altform><lit>summary --matrix=</lit><repl>nomematrice</repl></altform>
       </arguments>
+      <options>
+        <option>
+	  <flag>--simple</flag>
+	  <effect>solo statistiche di base</effect>
+        </option>
+        <option>
+	  <flag>--weight</flag>
+	  <optparm>wvar</optparm>
+	  <effect>variabile peso</effect>
+        </option>
+        <option>
+	  <flag>--by</flag>
+	  <optparm>byvar</optparm>
+	  <effect>vedi sotto</effect>
+        </option>
+      </options>
+
     </usage>
 
     <description>
       <para>
-	Mostra le statistiche descrittive per le variabili nella
-	<repl>lista-variabili</repl>, o per tutte le variabili nel
-        dataset, se non si indica una <repl>lista-variabili</repl>.
-        L'output comprende media, scarto quadratico medio, coefficiente
-        di variazione (= scarto quadratico medio / media), mediana, minimo,
-        massimo, coefficiente di asimmetria, curtosi.
+	Nella prima forma, mostra le statistiche descrittive per le
+	variabili nella <repl>lista-variabili</repl>, o per tutte le
+	variabili nel dataset, se non si indica una
+	<repl>lista-variabili</repl>.  L'output comprende media,
+	scarto quadratico medio, coefficiente di variazione (= scarto
+	quadratico medio / media), mediana, minimo, massimo,
+	coefficiente di asimmetria, curtosi in eccesso. Dando
+	l'opzione <opt>--simple</opt>, si avranno soltanto media,
+	minimo, massimo e scarto quadratico medio.
+      </para>
+      <para>
+	L'opzione <opt>--by</opt> (dove il parametro
+	<repl>byvar</repl> dev'essere il nome di una variabile
+	discreta), provoca la stampa delle statistiche per
+	sottocampioni definiti dai diversi valori di
+	<repl>byvar</repl>.  Ad esempio, se <repl>byvar</repl> è una
+	variabile binaria (dummy), verranno riportate separatamente le
+	statistiche relative ai sottocampioni definitia dai due casi
+	<lit>byvar = 0</lit> e <lit>byvar = 1</lit>. Nota: al momento,
+	questa opzione è incompatibile con l'altra opzione
+	<opt>--weight</opt>.
       </para>
     </description>
 

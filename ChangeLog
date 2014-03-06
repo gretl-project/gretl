@@ -2,6 +2,7 @@ version 1.9.15, in progress
 - Introduce a new native binary datafile format, the gdtb file
   (zipped XML metadata plus binary values)
 - Add new functions: substr(), easterday()
+- "summary" command: add --weights option
 - Enable use of arrays in the SFMT random number generator
 - Enable use of value labels (if any) in factorized boxplots
 - Enable use of named lists in the GMM() and GMMlevel() 
@@ -31,7 +32,7 @@ version 1.9.15, in progress
   monthly data starting in October
 - Fix bug 181
 - Internals: add support for multiple, independent PRNGs
-- win32 build: update gmp to 5.1.3, mpfr to 3.1.2	
+- win32 build: update gmp to 5.1.3, mpfr to 3.1.2
 	
 2013-11-21 version 1.9.14
 - Use daily dates when plotting daily/weekly data and there
