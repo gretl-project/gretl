@@ -10,8 +10,10 @@ version 1.9.15, in progress
   data models
 - Add choice of compression level when saving data in native
   gdt format
-- Stata dta import: handle (illegal) non-ASCII characters in
+- Stata dta import: handle (illegal!) non-ASCII characters in
   variable names
+- X-12-ARIMA interface: support the new X-13-ARIMA-SEATS as an
+  alternative
 - Fix bug: the --test-down option to "coint" was not working
   as advertised
 - Fix bug (?): the final regression in "coint" (Engle-Granger
@@ -25,6 +27,8 @@ version 1.9.15, in progress
   on data import
 - Fix bug: the auxiliary regression for White's test should
   contain a constant even if the model to be tested does not
+- Fix bug: wrong starting date being sent to x12a/x13as for
+  monthly data starting in October
 - Fix bug 181
 - Internals: add support for multiple, independent PRNGs
 - win32 build: update gmp to 5.1.3, mpfr to 3.1.2	
