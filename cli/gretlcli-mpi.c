@@ -66,16 +66,80 @@ static int cli_saved_object_action (const char *line,
 				    DATASET *dset, 
 				    PRN *prn);
 
+static int parse_options (int *pargc, char ***pargv, gretlopt *popt, 
+			  double *scriptval, int *dcmt, char *fname)
+{
+    char **argv;
+    int argc, gotfile = 0;
+    gretlopt opt = OPT_NONE;
+    int err = 0;
+
+    *fname = '\0';
+
+    if (pargv == NULL) {
+	return E_DATA;
+    }
+
+    argc = *pargc;
+    argv = *pargv;
+
+    while (*++argv) {
+	const char *s = *argv;
+
+	if (!strcmp(s, "-e") || !strncmp(s, "--english", 9)) { 
+	    opt |= OPT_ENGLISH;
+	} else if (!strcmp(s, "-h") || !strcmp(s, "--help")) {
+	    opt |= OPT_HELP;
+	} else if (!strcmp(s, "-v") || !strcmp(s, "--version")) {
+	    opt |= OPT_VERSION;
+	} else if (!strcmp(s, "-s") || !strcmp(s, "--single-rng")) { 
+	    *dcmt = 0;
+	} else if (!strncmp(s, "--scriptopt=", 12)) {
+	    *scriptval = atof(s + 12);
+	} else if (*s == '-') {
+	    /* not a valid option */
+	    err = E_DATA;
+	    break;
+	} else if (!gotfile) {
+	    strncat(fname, s, MAXLEN - 1);
+	    gotfile = 1;
+	}
+	argc--;
+    }
+
+    if (!(opt & (OPT_HELP|OPT_VERSION)) && !gotfile) {
+	err = E_DATA;
+    }
+
+    *pargc = argc;
+    *pargv = argv;
+    *popt = opt;
+
+    return err;
+}
+
 static void mpi_exit (int err)
 {
-    MPI_Finalize();
+    int initted;
+
+    MPI_Initialized(&initted);
+    if (initted) {
+	MPI_Finalize();
+    }
     exit(err ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
 static void usage (int err)
 {
     printf("gretlcli-mpi %s\n", GRETL_VERSION);
-    printf("You must give the name of a script to run.\n");
+    printf(_("You must give the name of a script to run.\n"));
+    printf(_("Options:\n"
+	     " -h or --help        Print this info and exit.\n"
+	     " -v or --version     Print version info and exit.\n"
+	     " -e or --english     Force use of English rather than translation.\n"
+	     " -s or --single-rng  Use a single RNG, not one per process.\n"));
+    printf(" --scriptopt=<value> sets a scalar value, accessible to a script\n"
+	   " under the name \"scriptopt\"\n\n");
     mpi_exit(err);
 }
 
@@ -221,13 +285,11 @@ static int maybe_get_input_line_continuation (char *line)
     return err;
 }
 
-static void maybe_print_intro (int id, int quiet)
+static void maybe_print_intro (int id)
 {
     if (id == 0) {
 	printf("gretlcli-mpi %s\n", GRETL_VERSION);
-	if (!quiet) {
-	    session_time(NULL);
-	}
+	session_time(NULL);
     }
 }
 
@@ -241,10 +303,10 @@ int main (int argc, char *argv[])
     MODEL *model = NULL;
     ExecState state;
     char *line = NULL;
-    int quiet = 0;
     char filearg[MAXLEN];
     char runfile[MAXLEN];
     double scriptval = NADBL;
+    int use_dcmt = 1;
     CMD cmd;
     PRN *prn = NULL;
     PRN *cmdprn = NULL;
@@ -272,20 +334,11 @@ int main (int argc, char *argv[])
     } else {
 	gretlopt opt;
 
-	err = parseopt(&argc, &argv, &opt, &scriptval, filearg);
-
-	if (!err && (opt & (OPT_DBOPEN | OPT_WEBDB))) {
-	    /* catch GUI-only options */
-	    err = E_BADOPT;
-	}
-
-	if (!err && (opt & (OPT_RUNIT | OPT_MAKEPKG))) {
-	    /* catch non-MPI options */
-	    err = E_BADOPT;
-	}
+	err = parse_options(&argc, &argv, &opt, &scriptval, 
+			    &use_dcmt, filearg);
 
 	if (err) {
-	    /* bad option */
+	    /* bad option, or missing filename */
 	    usage(1);
 	} else if (opt & (OPT_HELP | OPT_VERSION)) {
 	    /* we'll exit in these cases */
@@ -297,30 +350,20 @@ int main (int argc, char *argv[])
 	    }
 	}
 
-	/* We support batch mode only, and so need a filename
-	   argument */
-	if (*filearg == '\0') {
-	    usage(1);
-	}
-
 	strcpy(runfile, filearg);
 	    
-	if (opt & OPT_QUIET) {
-	    quiet = 1;
-	}
-
 	if (opt & OPT_ENGLISH) {
 	    force_language(LANG_C);
 	}
     }
 
-    err = libgretl_mpi_init(id, np);
+    err = libgretl_mpi_init(id, np, use_dcmt);
     if (err) {
 	fputs("Couldn't initialize the MPI sub-system\n", stderr);
 	mpi_exit(1);
     }
 
-    maybe_print_intro(id, quiet);
+    maybe_print_intro(id);
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, &err);
     if (err) {
