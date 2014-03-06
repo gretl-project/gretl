@@ -302,6 +302,7 @@ struct gretl_option gretl_opts[] = {
     { MPI,      OPT_N, "np", 2},
     { MPI,      OPT_T, "omp-threads", 2},
     { MPI,      OPT_V, "verbose", 0},
+    { MPI,      OPT_S, "single-rng", 0},
     { LABELS,   OPT_D, "delete", 0 },
     { LABELS,   OPT_F, "from-file", 2 },
     { LABELS,   OPT_T, "to-file", 2 },
