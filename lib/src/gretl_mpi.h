@@ -37,6 +37,8 @@ int gretl_mpi_initialized (void);
 
 int gretl_mpi_rank (void);
 
+int gretl_mpi_n_processes (void);
+
 int gretl_mpi_bcast (void *p, GretlType type, int root);
 
 int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root);

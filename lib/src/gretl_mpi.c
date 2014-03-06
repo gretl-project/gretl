@@ -946,6 +946,14 @@ int gretl_mpi_rank (void)
     return id;
 }
 
+int gretl_mpi_n_processes (void)
+{
+    int np;
+
+    mpi_comm_size(mpi_comm_world, &np);
+    return np;
+}
+
 int gretl_mpi_initialized (void)
 {
     static int ret = -1;
