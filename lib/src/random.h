@@ -28,8 +28,6 @@ void gretl_dcmt_init (int n, int self, unsigned int seed);
 
 void gretl_rand_set_seed (unsigned int seed);
 
-void gretl_rand_set_multi_seed (const gretl_matrix *seed);
-
 unsigned int gretl_rand_int (void);
 
 unsigned int gretl_rand_int_max (unsigned int max);

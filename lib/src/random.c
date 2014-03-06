@@ -22,6 +22,10 @@
 #include "libgretl.h"
 #include <time.h>
 
+#ifdef HAVE_MPI
+# include "gretl_mpi.h"
+#endif
+
 #if defined(USE_AVX) || defined(USE_SSE2)
 # define HAVE_SSE2
 #else
@@ -61,10 +65,10 @@
  * global libgretl function libgretl_cleanup().
  */
 
-static guint32 useed;
+static guint32 sfmt_seed;
+static guint32 dcmt_seed;
 
 static int use_dcmt = 0;
-static int gen_rand_initted = 0;
 
 static guint32 gretl_rand_octet (guint32 *sign);
 
@@ -146,12 +150,14 @@ static int sfmt_array_setup (void)
 
 static void sfmt_array_cleanup (void)
 {
+    if (rbuf != NULL) {
 #if defined(USE_GRETL_MEMALIGN)
-    gretl_aligned_free(rbuf);
+	gretl_aligned_free(rbuf);
 #else
-    free(rbuf);
+	free(rbuf);
 #endif
-    rbuf = NULL;
+	rbuf = NULL;
+    }
 }
 
 /* gcc 4.8.2 doesn't want to inline this */
@@ -197,13 +203,12 @@ static int set_up_dcmt (int n, int self, unsigned int seed)
 #endif
 
     use_dcmt = 1;
-
-    seed = seed != 0 ? seed : time(NULL);
+    dcmt_seed = seed != 0 ? seed : time(NULL);
 
     for (i=0; i<count; i++) {
 	if (i == self) {
 	    dcmt = mtss[i];
-	    sgenrand_mt(seed, dcmt);
+	    sgenrand_mt(dcmt_seed, dcmt);
 	} else {
 	    free_mt_struct(mtss[i]);
 	}
@@ -214,18 +219,62 @@ static int set_up_dcmt (int n, int self, unsigned int seed)
     return 0;
 }
 
+#ifdef HAVE_MPI
+
+static int dcmt_late_start (void)
+{
+    int np = gretl_mpi_n_processes();
+    int self = gretl_mpi_rank();
+    int err = 0;
+
+    if (np > 0 && self >= 0 && self < np) {
+	set_up_dcmt(np, self, 0);
+	gretl_rand_octet(NULL);
+    } else {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+#endif
+
 int gretl_rand_set_dcmt (int s)
 {
-    if (dcmt == NULL) {
-	gretl_errmsg_set("dcmt: not available");
-	return E_DATA;
-    } else {
-	if (!s && !gen_rand_initted) {
-	    gretl_rand_init();
-	}
-	use_dcmt = s;
+    int err = 0;
+
+    if (s == use_dcmt) {
+	/* no-op */
 	return 0;
     }
+
+    if (s) {
+	/* sfmt in use, dcmt requested */
+	if (dcmt == NULL) {
+	    /* dcmt not set up already */
+#ifdef HAVE_MPI
+	    err = dcmt_late_start();
+#else
+	    err = E_DATA;
+#endif
+	} else {
+	    /* reset seed and octet */
+	    dcmt_seed = time(NULL);
+	    sgenrand_mt(dcmt_seed, dcmt);
+	    gretl_rand_octet(NULL);
+	}
+    } else {
+	/* dcmt in use, sfmt requested */
+	gretl_rand_init();
+    }
+
+    if (err) {
+	gretl_errmsg_set("dcmt: not available");
+    } else {
+	use_dcmt = s;
+    }
+
+    return err;
 }
 
 int gretl_rand_get_dcmt (void)
@@ -242,20 +291,19 @@ inline static uint32_t dcmt_rand32 (void)
  * gretl_rand_init:
  *
  * Initialize gretl's PRNG, using the system time as seed.
+ * Default version, as opposed to DCMT.
  */
 
 void gretl_rand_init (void)
 {
-    useed = time(NULL);
-
-    init_gen_rand(useed);
+    sfmt_seed = time(NULL);
+    init_gen_rand(sfmt_seed);
 
 #if USE_RAND_ARRAY
     sfmt_array_setup();
 #endif
 
     gretl_rand_octet(NULL);
-    gen_rand_initted = 1;
 }
 
 /**
@@ -266,7 +314,7 @@ void gretl_rand_init (void)
 
 void gretl_dcmt_init (int n, int self, unsigned int seed)
 {
-    if (n > 1) {
+    if (n > 0 && self >= 0 && self < n) {
 	set_up_dcmt(n, self, seed);
 	gretl_rand_octet(NULL);
     }
@@ -298,7 +346,26 @@ void gretl_rand_free (void)
 
 unsigned int gretl_rand_get_seed (void)
 {
-    return useed;
+    if (use_dcmt) {
+	return dcmt_seed;
+    } else {
+	return sfmt_seed;
+    }
+}
+
+static void gretl_dcmt_set_seed (unsigned int seed)
+{
+    dcmt_seed = seed;
+    sgenrand_mt(dcmt_seed, dcmt);
+}
+
+static void gretl_sfmt_set_seed (unsigned int seed)
+{
+    sfmt_seed = seed;
+    init_gen_rand(sfmt_seed);
+#if USE_RAND_ARRAY
+    sfmt_array_setup();
+#endif
 }
 
 /**
@@ -313,15 +380,12 @@ unsigned int gretl_rand_get_seed (void)
 
 void gretl_rand_set_seed (unsigned int seed)
 {
-    useed = (seed == 0)? time(NULL) : seed;
-    init_gen_rand(useed); 
+    seed = (seed == 0)? time(NULL) : seed;
 
-#if USE_RAND_ARRAY
-    sfmt_array_setup();
-#endif
-
-    if (dcmt != NULL) {
-	sgenrand_mt(useed, dcmt);
+    if (use_dcmt) {
+	gretl_dcmt_set_seed(seed);
+    } else {
+	gretl_sfmt_set_seed(seed);
     }
 
     gretl_rand_octet(NULL);
