@@ -27,6 +27,10 @@
 #include "gretl_string_table.h"
 #include "gretl_func.h"
 
+#ifdef HAVE_MPI
+# include "gretl_mpi.h"
+#endif
+
 #include <unistd.h>
 #include <errno.h>
 
@@ -68,7 +72,7 @@ enum {
 };    
 
 /* for values that really want a non-negative integer */
-#define UNSET_INT -1
+#define UNSET_INT -9
 #define is_unset(i) (i == UNSET_INT)
 
 typedef struct set_vars_ set_vars;
@@ -539,7 +543,7 @@ static void state_vars_init (set_vars *sv)
     sv->initvals = NULL;
     sv->matmask = NULL;
 
-    sv->bfgs_maxiter = -1;
+    sv->bfgs_maxiter = UNSET_INT;
     sv->bfgs_toler = NADBL;
     sv->bfgs_maxgrad = 5.0;
     sv->bfgs_verbskip = 1;
@@ -1446,6 +1450,9 @@ static int print_settings (PRN *prn, gretlopt opt)
     } else {
 	pprintf(prn, "set seed %u\n", gretl_rand_get_seed());
 	pprintf(prn, "set normal_rand %s\n", libset_option_string(NORMAL_RAND));
+    }
+    if (gretl_mpi_initialized()) {
+	libset_print_bool(USE_DCMT, prn, opt);
     }
 
     libset_header(N_("Robust estimation"), prn, opt);
