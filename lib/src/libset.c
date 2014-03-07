@@ -1722,6 +1722,7 @@ int execute_set_line (const char *line, DATASET *dset,
 		err = libset_set_int(setobj, k);
 	    }
 	} else {
+	    gretl_errmsg_sprintf(_("set: unknown variable '%s'"), setobj);
 	    err = E_UNKVAR;
 	}
     }
