@@ -191,7 +191,7 @@ static int R_lib = 1;
 static int csv_digits = UNSET_INT;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
-static int mp_mnk_min = 89999; /* was 65535 */
+static int mp_mnk_min = 80000; /* was 65535 */
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
@@ -472,7 +472,7 @@ int libset_use_openmp (guint64 n)
 #if defined(_OPENMP)
     if (state == NULL || !(state->flags & STATE_OPENMP_ON)) {
 	return 0;
-    } else if (mp_mnk_min >= 0 && n > (guint64) mp_mnk_min) {
+    } else if (mp_mnk_min >= 0 && n >= (guint64) mp_mnk_min) {
 # if OMP_SHOW > 1
 	fprintf(stderr, "libset_use_openmp: yes\n");
 # endif

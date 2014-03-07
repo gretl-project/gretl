@@ -4190,6 +4190,10 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 
 #define BLAS_DEBUG 0
 
+/* FIXME set this to a positive value under OS X on Intel,
+   to take advantage of VecLib?
+*/
+
 static int blas_mnk_min = -1;
 
 /**
