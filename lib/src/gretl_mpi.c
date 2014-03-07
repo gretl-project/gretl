@@ -940,17 +940,23 @@ double gretl_mpi_stopwatch (void)
 
 int gretl_mpi_rank (void)
 {
-    int id;
+    int id = -1;
 
-    mpi_comm_rank(mpi_comm_world, &id);
+    if (gretl_mpi_initialized()) {
+	mpi_comm_rank(mpi_comm_world, &id);
+    }
+
     return id;
 }
 
 int gretl_mpi_n_processes (void)
 {
-    int np;
+    int np = 0;
 
-    mpi_comm_size(mpi_comm_world, &np);
+    if (gretl_mpi_initialized()) {
+	mpi_comm_size(mpi_comm_world, &np);
+    }
+
     return np;
 }
 
@@ -969,5 +975,3 @@ int gretl_mpi_initialized (void)
 
     return ret;
 }
-
-
