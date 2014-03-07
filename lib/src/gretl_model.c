@@ -3478,43 +3478,63 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_MAX, NULL, NULL }
 }; 
 
-static void print_test_opt (const ModelTest *test, PRN *prn)
+static const char *test_get_descrip (const ModelTest *test)
+{
+    static const char *dfree = 
+	N_("Distribution free Wald test for heteroskedasticity");
+
+    if (test->type == GRETL_TEST_GROUPWISE &&
+	test->teststat == GRETL_STAT_WALD_CHISQ) {
+	return dfree;
+    } else {
+	int i;
+
+	for (i=0; tstrings[i].ID < GRETL_TEST_MAX; i++) {
+	    if (test->type == tstrings[i].ID) {
+		return tstrings[i].descrip;
+	    }
+	}
+    }
+
+    return NULL;
+}
+
+static const char *test_get_opt_string (const ModelTest *test)
 {
     if (test->type == GRETL_TEST_RESET) {
 	if (test->opt & OPT_R) {
-	    pprintf(prn, " (%s)", _("squares only"));
+	    return N_("squares only");
 	} else if (test->opt & OPT_C) {
-	    pprintf(prn, " (%s)", _("cubes only"));
+	    return N_("cubes only");
 	}
     } else if (test->type == GRETL_TEST_WHITES) {
 	if (test->opt & OPT_X) {
-	    pprintf(prn, " (%s)", _("squares only"));
+	    return N_("squares only");
 	}
     } else if (test->type == GRETL_TEST_BP) {
 	if (test->opt & OPT_R) {
-	    pprintf(prn, " (%s)", _("robust variant"));
+	    return N_("robust variant");
 	}
-    }	
+    }
+
+    return NULL;
+}
+
+static void print_test_opt (const ModelTest *test, PRN *prn)
+{
+    const char *optstr = test_get_opt_string(test);
+
+    if (optstr != NULL) {
+	pprintf(prn, " (%s)", _(optstr));
+    }
 }  
 
 static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
 {
-    const char *descrip = NULL;
-    const char *param = NULL;
+    const char *descrip, *param = NULL;
     char ordstr[16];
-    int i;
 
-    for (i=0; tstrings[i].ID < GRETL_TEST_MAX; i++) {
-	if (test->type == tstrings[i].ID) {
-	    descrip = tstrings[i].descrip;
-	}
-    }
-
-    if (test->type == GRETL_TEST_GROUPWISE &&
-	test->teststat == GRETL_STAT_WALD_CHISQ) {
-	descrip = N_("Distribution free Wald test for heteroskedasticity");
-    }
-
+    descrip = test_get_descrip(test);
     if (descrip == NULL) {
 	return 1;
     }
@@ -3767,6 +3787,54 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
     }
 }
 
+static void csv_print_test (const ModelTest *src, PRN *prn)
+{
+    const char *descrip = NULL;
+    char c = prn_delim(prn);
+
+    set_alt_gettext_mode(prn);
+    descrip = test_get_descrip(src);
+
+    if (descrip != NULL) {
+	const char *optstr = test_get_opt_string(src);
+
+	if (optstr != NULL) {
+	    pprintf(prn, "\"%s, %s\"\n", descrip, optstr);
+	} else {
+	    pprintf(prn, "\"%s\"\n", descrip);
+	}
+    }
+    
+    if (src->param != NULL && *src->param != '\0') {
+	pprintf(prn, "\"%s\"%c\"%s\"\n", _("parameter"), c, src->param);
+    }
+
+    if (src->dfn > 0 && src->dfd > 0) {
+	pprintf(prn, "\"%s\"%c%d\n", _("dfn"), c, src->dfn);
+	pprintf(prn, "\"%s\"%c%d\n", _("dfd"), c, src->dfd);
+    } else if (src->dfn > 0) {
+	pprintf(prn, "\"%s\"%c%d\n", _("df"), c, src->dfn);
+    }
+    if (src->order) {
+	pprintf(prn, "\"%s\"%c%d\n", _("lag order"), c, src->order);
+    }
+    pprintf(prn, "\"%s\"%c%.15g\n", _("test statistic"), c, src->value);
+    if (!na(src->pvalue)) {
+	pprintf(prn, "\"%s\"%c%.15g\n", _("p-value"), c, src->pvalue);
+    }
+    
+    if (!na(src->crit)) {
+	double a = 100 * src->alpha;
+	gchar *buf;
+
+	buf = g_strdup_printf(_("%g percent critical value"), a);
+	pprintf(prn, "\"%s\"%c%g\n", buf, c, src->crit);
+	g_free(buf);
+    }
+
+    pputc(prn, '\n');
+}
+
 #define asy_test(t) (t == GRETL_STAT_WALD_CHISQ || \
 		     t == GRETL_STAT_Z)
 
@@ -3836,7 +3904,11 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
 void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn)
 {
     if (i >= 0 && i < pmod->ntests) {
-	gretl_model_test_print_direct(&pmod->tests[i], 1, prn);
+	if (csv_format(prn)) {
+	    csv_print_test(&pmod->tests[i], prn);
+	} else {
+	    gretl_model_test_print_direct(&pmod->tests[i], 1, prn);
+	}
     }
 }
 
