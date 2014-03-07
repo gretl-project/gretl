@@ -132,7 +132,8 @@ static void mpi_exit (int err)
 static void usage (int err)
 {
     printf("gretlcli-mpi %s\n", GRETL_VERSION);
-    printf(_("You must give the name of a script to run.\n"));
+    printf(_("This program should be run under mpiexec, and requires "
+	     "the name of a\nscript file as argument.\n"));
     printf(_("Options:\n"
 	     " -h or --help        Print this info and exit.\n"
 	     " -v or --version     Print version info and exit.\n"
