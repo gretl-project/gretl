@@ -41,11 +41,11 @@
 # include "gretlwin32.h"
 #endif
 
-#define EXPORT_OTHER(a,s) ((a == EXPORT_OCTAVE || \
-			    a == EXPORT_R ||	  \
-			    a == EXPORT_CSV ||	  \
-			    a == EXPORT_DAT ||    \
-			    a == EXPORT_JM) && s != FSEL_DATA_PRN)
+#define EXPORT_OTHER(a) (a == EXPORT_OCTAVE ||	\
+			 a == EXPORT_R ||	\
+			 a == EXPORT_CSV ||	\
+			 a == EXPORT_DAT ||	\
+			 a == EXPORT_JM)
 
 #define SET_DIR_ACTION(i) (i == SET_DIR || i == SET_WDIR || \
                            i == SET_FDIR || i == SET_DBDIR)
@@ -519,7 +519,7 @@ file_selector_process_result (const char *in_fname, int action,
 	return;
     }
 
-    if (EXPORT_OTHER(action, src) || 
+    if (EXPORT_OTHER(action) || 
 	action == EXPORT_GDT ||
 	action == EXPORT_GDTB ||
 	(action > END_SAVE_DATA && action < END_SAVE_OTHER)) {
@@ -716,7 +716,8 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 	currname = suggested_savename(datafile);
 	gtk_file_chooser_set_current_name(filesel, currname);
 	g_free(currname);
-    } else if (EXPORT_OTHER(action, src) && *datafile != '\0') {
+    } else if (EXPORT_OTHER(action) && src != FSEL_DATA_PRN &&
+	       *datafile != '\0') {
 	/* formulate export name based on current datafile */
 	currname = suggested_exportname(datafile, action);
 	gtk_file_chooser_set_current_name(filesel, currname);
