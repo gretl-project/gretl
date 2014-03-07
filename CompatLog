@@ -8,6 +8,9 @@ gretl's RNG up to version 1.9.3) is no longer available.
 Support for reading and writing data in the format of ESL,
 gretl's ancestor, has been removed.
 
+Use of "end loop" in place of "endloop" is now officially
+deprecated, and will be removed before long.
+
 2013-11-21 version 1.9.14
 
 No intentional backward-incompatible changes
