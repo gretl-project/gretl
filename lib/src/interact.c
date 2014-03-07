@@ -5179,6 +5179,37 @@ static int VAR_omit_driver (CMD *cmd, DATASET *dset, PRN *prn)
     return err;
 }
 
+static int model_print_driver (MODEL *pmod, DATASET *dset,
+			       int ci, const char *param,
+			       gretlopt opt, PRN *prn)
+{
+    int err = incompatible_options(opt, OPT_R | OPT_C);
+
+    if (!err) {
+	char fname[FILENAME_MAX];
+
+	strcpy(fname, param);
+
+	if (opt & OPT_R) {
+	    err = rtfprint(pmod, dset, fname, opt);
+	} else if (opt & OPT_C) {
+	    err = csvprint(pmod, dset, fname, opt);
+	} else {
+	    gretlopt texopt = opt;
+
+	    if (ci == EQNPRINT) {
+		texopt |= OPT_E;
+	    }		
+	    err = texprint(pmod, dset, fname, texopt);
+	}
+	if (!err) {
+	    pprintf(prn, _("Model printed to %s\n"), fname);
+	}
+    }
+
+    return err;
+}
+
 static void abort_execution (ExecState *s)
 {
     *s->cmd->savename = '\0';
@@ -5874,22 +5905,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (model->errcode == E_NAN) {
 	    pprintf(prn, _("Couldn't format model\n"));
 	} else {
-	    char fname[FILENAME_MAX];
-	    gretlopt opt = cmd->opt;
-
-	    strcpy(fname, cmd->param);
-
-	    if (cmd->opt & OPT_R) {
-		err = rtfprint(model, dset, fname, cmd->opt);
-	    } else {
-		if (cmd->ci == EQNPRINT) {
-		    opt |= OPT_E;
-		}		
-		err = texprint(model, dset, fname, opt);
-	    }
-	    if (!err) {
-		pprintf(prn, _("Model printed to %s\n"), fname);
-	    }
+	    err = model_print_driver(model, dset, cmd->ci,
+				     cmd->param, cmd->opt, 
+				     prn);
 	}
 	break;
 

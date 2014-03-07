@@ -11433,6 +11433,10 @@
 	  <effect>Produce RTF instead of &latex;</effect>
         </option>
         <option>
+	  <flag>--csv</flag>
+	  <effect>Produce CSV instead of &latex;</effect>
+        </option>
+        <option>
 	  <flag>--complete</flag>
 	  <effect>Create a complete document</effect>
         </option>
@@ -11445,17 +11449,26 @@
 
     <description>
       <para>
-	Must follow the estimation of a model.  Prints the estimated model in
-	tabular form &mdash; by default as &latex;, but as RTF if the
-	<opt>--rtf</opt> flag is given.  If a filename is specified using the
-	<lit>-f</lit> flag output goes to that file, otherwise it goes to a
-	file with a name of the form <filename>model_N.tex</filename> (or
-	<filename>model_N.rtf</filename>), where <lit>N</lit> is the number of
-	models estimated to date in the current session.
+	Must follow the estimation of a model.  Prints the estimated
+	model in tabular form &mdash; by default as &latex;, but as
+	RTF if the <opt>--rtf</opt> flag is given or as CSV is the
+	<opt>--csv</opt> flag is given.  If a filename is specified
+	using the <lit>-f</lit> flag output goes to that file,
+	otherwise it goes to a file with a name of the form
+	<filename>model_N</filename> followed by the extension
+	<lit>tex</lit>, <lit>rtf</lit> or <lit>csv</lit>, where
+	<lit>N</lit> is the number of models estimated to date in the
+	current session.
+      </para>
+      <para> 
+	If CSV format is selected, values are comma-separated unless
+	the decimal comma is in force, in which case the separator is
+	the semicolon. Note that CSV output may be less complete than
+	the other formats.
       </para>
       <para>
-	The further options discussed below are available only when printing
-	the model as &latex;.
+	The further options discussed below are available only when
+	printing the model as &latex;.
       </para>
       <para>
 	If the <opt>--complete</opt> flag is given the &latex; file is

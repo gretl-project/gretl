@@ -185,6 +185,7 @@ struct gretl_option gretl_opts[] = {
     { EQNPRINT, OPT_O, "complete", 0 },
     { EQNPRINT, OPT_T, "t-ratios", 0 },
     { TABPRINT, OPT_O, "complete", 0 },
+    { TABPRINT, OPT_C, "csv", 0 },
     { TABPRINT, OPT_R, "rtf", 0 },
     { TABPRINT, OPT_T, "format", 2 },
     { EQUATION, OPT_M, "multi", 0 },

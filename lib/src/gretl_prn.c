@@ -717,6 +717,19 @@ char *gretl_print_get_chunk (PRN *prn)
     return buf;
 }
 
+static void set_default_csv_delim (PRN *prn)
+{
+    char test[4];
+
+    sprintf(test, "%.1f", 1.0);
+
+    if (test[1] == ',') {
+	prn->delim = ';';
+    } else {
+	prn->delim = ',';
+    }
+}
+
 /**
  * gretl_print_set_format:
  * @prn: printing struct.
@@ -730,6 +743,9 @@ void gretl_print_set_format (PRN *prn, PrnFormat format)
     if (prn != NULL) {
 	if (format == GRETL_FORMAT_RTF) {
 	    format = GRETL_FORMAT_RTF | GRETL_FORMAT_DOC;
+	}
+	if (format == GRETL_FORMAT_CSV) {
+	    set_default_csv_delim(prn);
 	}
 	prn->format = format;
     }

@@ -1124,23 +1124,25 @@ static PRN *make_tex_prn (int ID, char *fname,
     return prn;
 }
 
-static PRN *make_rtf_prn (int ID, char *fname, int *err)
+static PRN *make_alt_prn (int ID, char *fname, int fmt, int *err)
 {
-    char rtffile[FILENAME_MAX];
+    char fullname[FILENAME_MAX];
     PRN *prn;
 
     if (*fname == '\0') {
-	sprintf(rtffile, "%smodel_%d.rtf", gretl_workdir(), ID);
-	strcpy(fname, rtffile);
+	const char *ext = fmt == GRETL_FORMAT_CSV ? ".csv" : "rtf";
+
+	sprintf(fullname, "%smodel_%d.%s", gretl_workdir(), ID, ext);
+	strcpy(fname, fullname);
     } else {
 	gretl_maybe_switch_dir(fname);
-	strcpy(rtffile, fname);       
+	strcpy(fullname, fname);       
     }
 
-    prn = gretl_print_new_with_filename(rtffile, err);
+    prn = gretl_print_new_with_filename(fullname, err);
 
     if (prn != NULL) {
-	gretl_print_set_format(prn, GRETL_FORMAT_RTF);
+	gretl_print_set_format(prn, fmt);
     }
 
     return prn;
@@ -1691,7 +1693,27 @@ int rtfprint (MODEL *pmod, const DATASET *dset, char *fname,
 	return E_NOTIMP;
     }
 
-    prn = make_rtf_prn(pmod->ID, fname, &err);
+    prn = make_alt_prn(pmod->ID, fname, GRETL_FORMAT_RTF, &err);
+
+    if (!err) {
+	err = printmodel(pmod, dset, opt, prn);
+	gretl_print_destroy(prn);
+    }
+
+    return err;
+}
+
+int csvprint (MODEL *pmod, const DATASET *dset, char *fname, 
+	      gretlopt opt)
+{
+    PRN *prn;
+    int err = 0;
+
+    if (RQ_SPECIAL_MODEL(pmod)) {
+	return E_NOTIMP;
+    }
+
+    prn = make_alt_prn(pmod->ID, fname, GRETL_FORMAT_CSV, &err);
 
     if (!err) {
 	err = printmodel(pmod, dset, opt, prn);

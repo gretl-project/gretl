@@ -3,6 +3,7 @@ version 1.9.15, in progress
   (zipped XML metadata plus binary values)
 - Add new functions: substr(), easterday()
 - "summary" command: add --weights option
+- "tabprint" command: add --csv option
 - Enable use of arrays in the SFMT random number generator
 - Enable use of value labels (if any) in factorized boxplots
 - Enable use of named lists in the GMM() and GMMlevel() 

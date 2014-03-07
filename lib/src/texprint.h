@@ -47,6 +47,9 @@ int texprint (MODEL *pmod, const DATASET *dset, char *fname,
 int rtfprint (MODEL *pmod, const DATASET *dset, char *fname, 
 	      gretlopt opt);
 
+int csvprint (MODEL *pmod, const DATASET *dset, char *fname, 
+	      gretlopt opt);
+
 char *tex_escape (char *targ, const char *src);
 
 char *tex_escape_special (char *targ, const char *src);
