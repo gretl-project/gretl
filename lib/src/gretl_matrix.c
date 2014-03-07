@@ -2026,11 +2026,13 @@ static int subtract_scalar_from_matrix (gretl_matrix *targ, double x)
 /* Below: setting of the maximal value of K = the shared inner
    dimension in matrix multiplication for use of SIMD. Also
    setting of the minimum value of M x N for doing matrix
-   addition and subtraction via SIMD.
+   addition and subtraction via SIMD. If these variables are
+   set to -1 that disables SIMD by default (though the user
+   can change that via the "set" command).
 */
 
-static int simd_k_max = -1;
-static int simd_mn_min = -1;
+static int simd_k_max = 8;   /* 2014-03-07: was -1 */
+static int simd_mn_min = 16; /* 2014-03-07: was -1 */
 
 void set_simd_k_max (int k)
 {
