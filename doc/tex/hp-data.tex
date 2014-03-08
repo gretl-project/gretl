@@ -33,7 +33,26 @@ You can open a dataset by reading data from a disk file, via the
 \item The \cmd{setobs} command
 \end{itemize}
 
+Example:
+\begin{code}
+set echo off
+set messages off
+
+set seed 443322           # initialize the random number generator
+nulldata 240              # stipulate how long your series will be
+setobs 12 1995:1          # monthly dataset, starting Jan 1995   
+\end{code}
+
+For more details, see \GUG\ and the \GCR\ for the \cmd{nulldata} and
+\cmd{setobs} commands. The only important thing to say at this point,
+however, is that you can resize your dataset and/or change some of its
+characteristics, such as its periodicity, at nearly any point inside
+your script if necessary.
+
 \section{Reading a dataset from a file}
+
+Important commands: \cmd{open}, \cmd{append}, \cmd{join}
+
 \begin{itemize}
 \item native format
 \item import capabilities (from URLs as well)
@@ -41,6 +60,13 @@ You can open a dataset by reading data from a disk file, via the
 \end{itemize}
 
 \section{Saving datasets}
+
+\begin{itemize}
+\item Storing with \cmd{save} (binary format vs XML)
+\item Using \cmd{save} to export to CSV
+\item (maybe) using \cmd{printf} and \cmd{outfile} if you need to do
+  something unusual; real-life cases?
+\end{itemize}
 
 \section{The \cmd{smpl} command}
 
@@ -99,6 +125,22 @@ Some basic rules regarding series follow:
   \end{itemize}
 \end{itemize}
 
+The rules for assigning values to series are just the same as for
+other objects, so the following example should be self-explanatory:
+\begin{code}
+  series k = 3         # implicit conversion from scalar; a constant series
+  series x = normal()  # pseudo-rv via a built-in functions
+  series s = a/b       # element-by-element operations
+
+  series movavg = 0.5*(x + x(-1)) # using lags
+  series y[2012:4] = x[2011:2]    # using individual data points 
+\end{code}
+
+\tip{In hansl, you don't have separate commands for \emph{creating}
+  series and \emph{modifying} them. Other popular packages make this
+  distinction, but we still struggle to understand why this is
+  supposed to be useful.}
+
 \subsection{Converting series from/to matrices}
 
 The reason why hansl provides a specific series type, distinct from
@@ -109,6 +151,33 @@ such as the computation of leads and lags, or regular and seasonal
 differences; the treatment of missing values; the addition of
 descriptive labels, and so on. Series are the basic data type on which
 gretl's built-in estimation commands depend.
+
+Basically:
+\begin{itemize}
+\item to turn series into matrices, you use the curly braces syntax,
+  as in
+  \begin{code}
+    matrix MACRO = { outputgap, unemp, infl }
+  \end{code}
+  where you can also use lists; the number of rows of the resulting
+  matrix will depend on your currently selected sample.
+\item To turn matrices into series, you can just use matrix columns,
+  as in
+  \begin{code}
+    series y = my_matrix[,4]
+  \end{code}
+  and it's your responsibility to make sure that the number of rows in
+  \texttt{my\_matrix} matches the currently selected sample.
+\end{itemize}
+
+Note that you can also assign a matrix to a list, but that has a
+completely different meaning.
+
+Be aware of the \cmd{lincomb} and \cmd{filter} functions too: they are
+quite useful for creating and manipulating series without having to
+convert them to matrices (which could be computationally costly with
+large datasets).
+
 
 \subsection{The ternary operator with series}
 
@@ -244,7 +313,9 @@ endloop
 \section{Accessors}
 \label{sec:accessors}
  
-These begin with a dollar sign: eg, \dollar{nobs}.
+These begin with a dollar sign: eg, \dollar{nobs}. They could be
+series, lists, scalars or matrices, depending on context. Note that
+accessors cannot be assigned to; there are read-only, so to speak.
 
 \chapter{Estimation methods}
 \label{chap:estimation}
