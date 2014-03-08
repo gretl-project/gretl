@@ -7212,7 +7212,6 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     if (selection) {
 	if (kid != NULL) {
 	    send_output_to_kid(kid, prn);
-	    shown = 1;
 	} else {
 	    vp = vwin;
 	}
