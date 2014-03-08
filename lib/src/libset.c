@@ -443,7 +443,13 @@ static void state_vars_copy (set_vars *sv)
 
 int gretl_n_processors (void)
 {
-    int n_proc = 1;
+    static int n_proc = -1;
+
+    if (n_proc >= 1) {
+	return n_proc;
+    }
+
+    n_proc = 1;
 
 #if defined(WIN32)
     SYSTEM_INFO sysinfo;

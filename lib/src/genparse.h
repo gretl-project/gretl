@@ -412,7 +412,8 @@ enum {
     CONST_EPS,
     CONST_HAVE_MPI,
     CONST_MPI_RANK,
-    CONST_MPI_SIZE
+    CONST_MPI_SIZE,
+    CONST_N_PROC
 };
 
 enum {
