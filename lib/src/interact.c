@@ -345,6 +345,7 @@ static int catch_system_alias (CMD *cmd)
                        c == ESTIMATE ||		\
 	               c == EQNPRINT ||		\
 	               c == FCAST ||		\
+		       c == FLUSH ||		\
 		       c == FOREIGN ||		\
                        c == FUNC ||		\
                        c == FUNCERR ||		\
@@ -5325,6 +5326,12 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    } else {
 		lib_clear_data(s, dset);
 	    }
+	}
+	break;
+
+    case FLUSH:
+	if (gretl_in_gui_mode()) {
+	    schedule_callback(s);
 	}
 	break;
 

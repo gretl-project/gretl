@@ -7068,19 +7068,12 @@ void display_var (void)
 
 static int suppress_logo;
 
-static int send_output_to_kid (windata_t *vwin, PRN *prn)
+static void send_output_to_kid (windata_t *kid, PRN *prn)
 {
-    windata_t *kid = vwin_first_child(vwin);
+    const char *txt = gretl_print_get_buffer(prn);
 
-    if (kid != NULL) {
-	const char *txt = gretl_print_get_buffer(prn);
-
-	textview_append_text_colorized(kid->text, txt, 0);
-	gretl_print_destroy(prn);
-	return 1;
-    }
-
-    return 0;
+    textview_append_text_colorized(kid->text, txt, 0);
+    gretl_print_destroy(prn);
 }
 
 static int script_wait;
@@ -7144,6 +7137,34 @@ static void stop_button_set_sensitive (windata_t *vwin,
     }
 }
 
+struct output_handler {
+    PRN *prn;
+    windata_t *vwin;
+};
+
+static struct output_handler oh;
+
+static void set_script_output_prn (PRN *prn)
+{
+    oh.prn = prn;
+}
+
+static void set_script_output_viewer (windata_t *vwin)
+{
+    oh.vwin = vwin;
+}
+
+static void handle_flush_callback (void)
+{
+    if (oh.prn != NULL) {
+	if (oh.vwin == NULL) {
+	    printf("handle_flush_callback: should open window now\n");
+	} else {
+	    printf("handle_flush_callback: should append to output now\n");
+	}
+    }
+}
+
 /* Execute a script from the buffer in a viewer window.  The script
    may be executed in full or in part (in case @selection is true)
 */
@@ -7152,10 +7173,10 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 			       gboolean selection)
 {
     gpointer vp = NULL;
+    windata_t *kid = NULL;
     GtkWidget *hbox;
     PRN *prn;
     int save_batch;
-    int shown = 0;
     int err;
 
     if (bufopen(&prn)) {
@@ -7164,7 +7185,8 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 
     if (selection) {
 	/* running a selected portion of a script */
-	if (vwin_first_child(vwin) != NULL) {
+	kid = vwin_first_child(vwin);
+	if (kid != NULL) {
 	    suppress_logo = 1;
 	}
     }
@@ -7173,6 +7195,9 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 
     stop_button_set_sensitive(vwin, TRUE);
     start_wait_for_output(hbox, TRUE);
+
+    set_script_output_prn(prn);
+    set_script_output_viewer(NULL);
 
     save_batch = gretl_in_batch_mode();
     err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
@@ -7185,14 +7210,15 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     suppress_logo = 0;
 
     if (selection) {
-	if (send_output_to_kid(vwin, prn)) {
+	if (kid != NULL) {
+	    send_output_to_kid(kid, prn);
 	    shown = 1;
 	} else {
 	    vp = vwin;
 	}
     }
 
-    if (!shown) {
+    if (kid != NULL) {
 	view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, vp);
     }
 
@@ -7202,6 +7228,9 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	lib_command_sprintf("run %s", vwin->fname);
 	record_command_verbatim();
     }
+
+    set_script_output_prn(NULL);
+    set_script_output_viewer(NULL);
 
     /* re-establish command echo (?) */
     set_gretl_echo(1);
@@ -8141,7 +8170,9 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     int ci = s->cmd->ci;
     int err = 0;
 
-    if (ptr != NULL && type == GRETL_OBJ_EQN) {
+    if (ci == FLUSH) {
+	handle_flush_callback();
+    } else if (ptr != NULL && type == GRETL_OBJ_EQN) {
 	add_model_to_session_callback(ptr, type);
     } else if (ptr != NULL && type == GRETL_OBJ_VAR) {
 	add_model_to_session_callback(ptr, type);
