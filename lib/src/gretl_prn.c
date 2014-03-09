@@ -670,10 +670,10 @@ int gretl_print_set_save_position (PRN *prn)
 {
     if (prn == NULL || prn->buf == NULL) {
 	return E_DATA;
+    } else {
+	prn->savepos = prn->blen; /* was strlen(prn->buf) */
+	return 0;
     }
-
-    prn->savepos = strlen(prn->buf);
-    return 0;
 }
 
 /**
@@ -704,10 +704,11 @@ void gretl_print_unset_save_position (PRN *prn)
 
 char *gretl_print_get_chunk (PRN *prn)
 {
+    int maxpos = prn->blen; /* was strlen(prn->buf) */
     char *buf;
 
     if (prn == NULL || prn->buf == NULL ||
-	prn->savepos < 0 || prn->savepos > strlen(prn->buf)) {
+	prn->savepos < 0 || prn->savepos > maxpos) {
 	return NULL;
     }
 
