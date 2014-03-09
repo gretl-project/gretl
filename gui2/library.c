@@ -7146,6 +7146,10 @@ static struct output_handler oh;
 
 static void clear_output_handler (void)
 {
+    if (oh.vwin != NULL) {
+	maybe_view_session();
+	gtk_widget_set_sensitive(oh.vwin->mbar, TRUE);
+    }
     oh.prn = NULL;
     oh.vwin = NULL;
 }
@@ -7154,11 +7158,21 @@ static void handle_flush_callback (void)
 {
     if (oh.prn != NULL) {
 	if (oh.vwin == NULL) {
-	    printf("handle_flush_callback: should open window now\n");
+	    oh.vwin = script_output_viewer_new(oh.prn);
+	    gretl_print_set_save_position(oh.prn);    
 	} else {
-	    printf("handle_flush_callback: should append to output now\n");
+	    char *buf = gretl_print_get_chunk(oh.prn);
+
+	    textview_append_text_colorized(oh.vwin->text, buf, 0);
+	    gretl_print_set_save_position(oh.prn);
+	    free(buf);
 	}
     }
+}
+
+int output_flush_in_progress (void)
+{
+    return oh.vwin != NULL;
 }
 
 /* Execute a script from the buffer in a viewer window.  The script
@@ -7206,7 +7220,8 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     if (kid != NULL) {
 	send_output_to_kid(kid, prn);
     } else if (oh.vwin != NULL) {
-	;
+	handle_flush_callback();
+	gretl_print_destroy(prn);
     } else {
 	/* In the @selection case, arrange for the new 
 	   script output to take on "kid" role

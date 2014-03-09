@@ -98,6 +98,8 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 				       const char *buf, 
 				       int hsize, int vsize);
 
+windata_t *script_output_viewer_new (PRN *prn);
+
 gchar *gretl_window_title (const char *s);
 
 gchar *title_from_filename (const char *fname, gboolean prepend);

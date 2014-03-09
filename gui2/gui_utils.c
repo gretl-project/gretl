@@ -1839,7 +1839,48 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     return view_buffer_with_parent(NULL, prn, hsize, 
 				   vsize, title,
 				   role, data);
-} 
+}
+
+windata_t *script_output_viewer_new (PRN *prn)
+{
+    windata_t *vwin;
+    gchar *title;
+    const char *buf;
+
+    title = make_viewer_title(SCRIPT_OUT, NULL);
+    vwin = gretl_viewer_new_with_parent(NULL, 
+					SCRIPT_OUT, 
+					title, 
+					NULL);
+    g_free(title);
+
+    if (vwin == NULL) {
+	return NULL;
+    }
+
+    vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
+    create_text(vwin, SCRIPT_WIDTH, 450, 0, FALSE);
+    text_set_word_wrap(vwin->text, 0);
+    text_table_setup(vwin->vbox, vwin->text);
+
+    /* defer activation of menu bar */
+    gtk_widget_set_sensitive(vwin->mbar, FALSE);
+
+    /* insert the text buffer from @prn */
+    buf = gretl_print_get_trimmed_buffer(prn);
+    textview_set_text_colorized(vwin->text, buf);
+
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+		     G_CALLBACK(catch_viewer_key), vwin);
+    g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
+		     G_CALLBACK(text_popup_handler), vwin);
+
+    gtk_widget_show(vwin->vbox);
+    gtk_widget_show(vwin->main);
+    gtk_widget_grab_focus(vwin->text);
+
+    return vwin;
+}
 
 #define text_out_ok(r) (r == VIEW_DATA || r == VIEW_FILE)
 

@@ -3675,7 +3675,7 @@ static int command_is_silent (const CMD *cmd, const char *line)
 	return 1;
     }
 
-    if (!strcmp(line, "set echo off")) {
+    if (!strcmp(line, "set echo off") || !strcmp(line, "flush")) {
 	return 1;
     }
 

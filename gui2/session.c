@@ -265,6 +265,7 @@ static void make_short_label_string (char *targ, const char *src);
 static gui_obj *get_gui_obj_by_data (void *finddata);
 static int gui_user_var_callback (const char *name, GretlType type,
 				  int action);
+static void auto_view_session (void);
 
 static int session_graph_count;
 static int session_bundle_count;
@@ -714,7 +715,7 @@ void save_output_as_text_icon (windata_t *vwin)
 
 	session_add_icon(text, GRETL_OBJ_TEXT, ICON_ADD_SINGLE);
     } else if (autoicon_on()) {
-	view_session();
+	auto_view_session();
     }
 }
 
@@ -736,7 +737,7 @@ static int add_model_to_session (void *ptr, const char *name,
     } else if (iconlist != NULL) {
 	session_add_icon(mod, type, ICON_ADD_SINGLE);
     } else if (autoicon_on()) {
-	view_session();
+	auto_view_session();
     }
 
     return err;
@@ -777,7 +778,7 @@ real_add_graph_to_session (const char *fname, const char *grname,
     if (iconlist != NULL) {
 	session_add_icon(graph, type, ICON_ADD_SINGLE);
     } else if (autoicon_on()) {
-	view_session();
+	auto_view_session();
     }
 
     return ADD_OBJECT_OK;
@@ -1139,8 +1140,10 @@ void bundle_add_as_icon (GtkAction *action, gpointer p)
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    if (autoicon_on() || show) {
+	    if (show) {
 		view_session();
+	    } else if (autoicon_on()) {
+		auto_view_session();
 	    }
 	    mark_session_changed();
 	    if (close_on_add(action)) {
@@ -2874,9 +2877,9 @@ static int gui_user_var_callback (const char *name, GretlType type,
 		session_add_icon(u, otype, ICON_ADD_SINGLE);
 	    }
 	} else if (autoicon_on()) {
-	    view_session();
+	    auto_view_session();
 	}
-	if (waiting_for_output()) {
+	if (iconview != NULL && waiting_for_output()) {
 	    gtk_widget_set_sensitive(iconview, FALSE);
 	}
 	mark_session_changed();
@@ -3775,6 +3778,25 @@ void view_session (void)
 
     gtk_widget_set_can_focus(icon_table, TRUE);
     gtk_widget_grab_focus(icon_table);
+}
+
+static int view_session_deferred;
+
+static void auto_view_session (void)
+{
+    if (output_flush_in_progress()) {
+	view_session_deferred = 1;
+    } else {
+	view_session();
+    }
+}
+
+void maybe_view_session (void)
+{
+    if (view_session_deferred) {
+	view_session_deferred = 0;
+	view_session();
+    }
 }
 
 static void make_short_label_string (char *targ, const char *src)
