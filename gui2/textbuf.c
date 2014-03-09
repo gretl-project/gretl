@@ -984,6 +984,37 @@ void textview_append_text_colorized (GtkWidget *view, const char *buf, int trim)
     real_textview_add_colorized(view, buf, 1, trim);
 }
 
+void textview_delete_processing_message (GtkWidget *view)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextMark *mark;
+    GtkTextIter i0, i1; 
+
+    g_return_if_fail(GTK_IS_TEXT_VIEW(view));
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    mark = gtk_text_buffer_get_mark(tbuf, "procmark");
+    gtk_text_buffer_get_iter_at_mark(tbuf, &i0, mark);
+    gtk_text_buffer_get_end_iter(tbuf, &i1);
+    gtk_text_buffer_delete(tbuf, &i0, &i1);
+}
+
+void textview_add_processing_message (GtkWidget *view)
+{
+    const char *msg = N_("processing...\n");
+    GtkTextBuffer *tbuf;
+    GtkTextIter iter; 
+
+    g_return_if_fail(GTK_IS_TEXT_VIEW(view));
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    gtk_text_buffer_get_end_iter(tbuf, &iter);
+    gtk_text_buffer_create_mark(tbuf, "procmark", &iter, TRUE); 
+    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+					     _(msg), -1,
+					     "redtext", NULL);
+}
+
 void textview_insert_file (windata_t *vwin, const char *fname)
 {
     FILE *fp;

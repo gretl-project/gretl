@@ -7106,6 +7106,10 @@ void start_wait_for_output (GtkWidget *w, gboolean big)
     gtk_widget_show(spinner);
     gtk_spinner_start(GTK_SPINNER(spinner));
     script_wait = 1;
+
+    while (gtk_events_pending()) {
+	gtk_main_iteration();
+    }
 }
 
 /* done: stop spinner */
@@ -7163,27 +7167,44 @@ static gint block_deletion (GtkWidget *w, GdkEvent *event, gpointer p)
     return TRUE;
 }
 
-static void handle_flush_callback (void)
+static void handle_flush_callback (int finalize)
 {
-#if 1
-    return; /* wait till this is more robust */
+#if 0
+    return; /* wait till this is more robust? */
 #endif
     if (oh.prn != NULL) {
+	/* we have an output printer in place */
 	if (oh.vwin == NULL) {
+	    /* no display window yet: make one */
 	    oh.vwin = script_output_viewer_new(oh.prn);
+	    /* stop the user from closing the output window
+	       until we're done */
 	    gtk_widget_set_sensitive(oh.vwin->mbar, FALSE);
 	    oh.handler_id = 
 		g_signal_connect(G_OBJECT(oh.vwin->main), 
 				 "delete-event", 
 				 G_CALLBACK(block_deletion), 
 				 NULL);
-	    gretl_print_set_save_position(oh.prn); 
+	    gretl_print_set_save_position(oh.prn);
+	    textview_add_processing_message(oh.vwin->text);
 	} else {
+	    /* use existing display window */
 	    char *buf = gretl_print_get_chunk(oh.prn);
 
+	    textview_delete_processing_message(oh.vwin->text);
 	    textview_append_text_colorized(oh.vwin->text, buf, 0);
-	    gretl_print_set_save_position(oh.prn);
 	    free(buf);
+	    if (finalize) {
+		gretl_print_destroy(oh.prn);
+	    } else {
+		/* prepare for another chunk of output */
+		textview_add_processing_message(oh.vwin->text);
+		gretl_print_set_save_position(oh.prn);
+	    }
+	}
+	/* ensure that the GUI gets updated */
+	while (gtk_events_pending()) {
+	    gtk_main_iteration();
 	}
     }
 }
@@ -7224,11 +7245,11 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 
     stop_button_set_sensitive(vwin, TRUE);
     start_wait_for_output(hbox, TRUE);
-
     save_batch = gretl_in_batch_mode();
-    err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
-    gretl_set_batch_mode(save_batch);
 
+    err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
+
+    gretl_set_batch_mode(save_batch);
     stop_wait_for_output(hbox);
     stop_button_set_sensitive(vwin, FALSE);
 
@@ -7238,11 +7259,10 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     if (kid != NULL) {
 	send_output_to_kid(kid, prn);
     } else if (oh.vwin != NULL) {
-	handle_flush_callback();
-	gretl_print_destroy(prn);
+	handle_flush_callback(1);
     } else {
 	/* In the @selection case, arrange for the new 
-	   script output to take on "kid" role
+	   script output window to take on the "kid" role
 	*/
 	void *vp = selection ? vwin : NULL;
 
@@ -7992,10 +8012,16 @@ static int ok_script_file (const char *runfile)
     return 1;
 }
 
-static void output_line (const char *line, ExecState *s, PRN *prn) 
+static void gui_output_line (const char *line, ExecState *s, PRN *prn) 
 {
-    int coding = gretl_compiling_function() || gretl_compiling_loop();
-    int n = strlen(line);
+    int coding, n;
+
+    if (!strcmp(line, "set echo off") || !strcmp(line, "flush")) {
+	return;
+    }
+
+    coding = gretl_compiling_function() || gretl_compiling_loop();
+    n = strlen(line);
 
     if (coding) {
 	pputs(prn, "> ");
@@ -8132,8 +8158,7 @@ int execute_script (const char *runfile, const char *buf,
 		if (!strncmp(line, "(* saved objects:", 17)) { 
 		    strcpy(line, "quit"); 
 		} else if (gretl_echo_on() && !including) {
-		    /* FIXME move this? */
-		    output_line(line, &state, prn);
+		    gui_output_line(line, &state, prn);
 		}
 		strcpy(tmp, line);
 		if (runfile != NULL) {
@@ -8197,7 +8222,7 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     int err = 0;
 
     if (ci == FLUSH) {
-	handle_flush_callback();
+	handle_flush_callback(0);
     } else if (ptr != NULL && type == GRETL_OBJ_EQN) {
 	add_model_to_session_callback(ptr, type);
     } else if (ptr != NULL && type == GRETL_OBJ_VAR) {

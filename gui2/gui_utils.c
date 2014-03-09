@@ -1865,7 +1865,9 @@ windata_t *script_output_viewer_new (PRN *prn)
 
     /* insert the text buffer from @prn */
     buf = gretl_print_get_trimmed_buffer(prn);
-    textview_set_text_colorized(vwin->text, buf);
+    if (buf != NULL && *buf != '\0') {
+	textview_set_text_colorized(vwin->text, buf);
+    }
 
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
@@ -4440,7 +4442,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 
     if (err) {
 	gui_errmsg(err);
-    } 
+    }
 }
 
 static void bundle_plot_call (GtkAction *action, gpointer p)

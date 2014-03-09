@@ -160,6 +160,7 @@ void gui_script_logo (PRN *prn)
     pprintf(prn, _("gretl version %s\n"), GRETL_VERSION);
     print_time(timestr);
     pprintf(prn, "%s: %s\n", _("Current session"), timestr);
+    pputc(prn, '\n');
 }
 
 /* ----------------------------------------------------- */

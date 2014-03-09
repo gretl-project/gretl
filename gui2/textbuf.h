@@ -109,4 +109,8 @@ void viewer_split_pane (windata_t *vwin, int vertical);
 
 void viewer_close_pane (windata_t *vwin);
 
+void textview_add_processing_message (GtkWidget *view);
+
+void textview_delete_processing_message (GtkWidget *view);
+
 #endif /* TEXTBUF_H */

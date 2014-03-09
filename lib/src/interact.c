@@ -4923,6 +4923,7 @@ static int callback_scheduled (ExecState *s)
 static void callback_exec (ExecState *s, char *fname, int err)
 {
     if (!err && s->callback != NULL) {
+
 	if (s->cmd->ci == OPEN) {
 	    s->callback(s, fname, 0);
 	} else {
