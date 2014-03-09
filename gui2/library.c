@@ -7140,6 +7140,7 @@ static void stop_button_set_sensitive (windata_t *vwin,
 struct output_handler {
     PRN *prn;
     windata_t *vwin;
+    gulong handler_id;
 };
 
 static struct output_handler oh;
@@ -7149,17 +7150,34 @@ static void clear_output_handler (void)
     if (oh.vwin != NULL) {
 	maybe_view_session();
 	gtk_widget_set_sensitive(oh.vwin->mbar, TRUE);
+	g_signal_handler_disconnect(G_OBJECT(oh.vwin->main),
+				    oh.handler_id);
     }
     oh.prn = NULL;
     oh.vwin = NULL;
+    oh.handler_id = 0;
+}
+
+static gint block_deletion (GtkWidget *w, GdkEvent *event, gpointer p)
+{
+    return TRUE;
 }
 
 static void handle_flush_callback (void)
 {
+#if 1
+    return; /* wait till this is more robust */
+#endif
     if (oh.prn != NULL) {
 	if (oh.vwin == NULL) {
 	    oh.vwin = script_output_viewer_new(oh.prn);
-	    gretl_print_set_save_position(oh.prn);    
+	    gtk_widget_set_sensitive(oh.vwin->mbar, FALSE);
+	    oh.handler_id = 
+		g_signal_connect(G_OBJECT(oh.vwin->main), 
+				 "delete-event", 
+				 G_CALLBACK(block_deletion), 
+				 NULL);
+	    gretl_print_set_save_position(oh.prn); 
 	} else {
 	    char *buf = gretl_print_get_chunk(oh.prn);
 

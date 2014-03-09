@@ -1863,9 +1863,6 @@ windata_t *script_output_viewer_new (PRN *prn)
     text_set_word_wrap(vwin->text, 0);
     text_table_setup(vwin->vbox, vwin->text);
 
-    /* defer activation of menu bar */
-    gtk_widget_set_sensitive(vwin->mbar, FALSE);
-
     /* insert the text buffer from @prn */
     buf = gretl_print_get_trimmed_buffer(prn);
     textview_set_text_colorized(vwin->text, buf);
