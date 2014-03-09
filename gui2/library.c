@@ -7144,14 +7144,10 @@ struct output_handler {
 
 static struct output_handler oh;
 
-static void set_script_output_prn (PRN *prn)
+static void clear_output_handler (void)
 {
-    oh.prn = prn;
-}
-
-static void set_script_output_viewer (windata_t *vwin)
-{
-    oh.vwin = vwin;
+    oh.prn = NULL;
+    oh.vwin = NULL;
 }
 
 static void handle_flush_callback (void)
@@ -7172,7 +7168,6 @@ static void handle_flush_callback (void)
 static void run_native_script (windata_t *vwin, gchar *buf, 
 			       gboolean selection)
 {
-    gpointer vp = NULL;
     windata_t *kid = NULL;
     GtkWidget *hbox;
     PRN *prn;
@@ -7189,15 +7184,14 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	if (kid != NULL) {
 	    suppress_logo = 1;
 	}
+    } else {
+	oh.prn = prn;
     }
 
     hbox = gtk_widget_get_parent(vwin->mbar);
 
     stop_button_set_sensitive(vwin, TRUE);
     start_wait_for_output(hbox, TRUE);
-
-    set_script_output_prn(prn);
-    set_script_output_viewer(NULL);
 
     save_batch = gretl_in_batch_mode();
     err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
@@ -7209,15 +7203,16 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     refresh_data();
     suppress_logo = 0;
 
-    if (selection) {
-	if (kid != NULL) {
-	    send_output_to_kid(kid, prn);
-	} else {
-	    vp = vwin;
-	}
-    }
-
     if (kid != NULL) {
+	send_output_to_kid(kid, prn);
+    } else if (oh.vwin != NULL) {
+	;
+    } else {
+	/* In the @selection case, arrange for the new 
+	   script output to take on "kid" role
+	*/
+	void *vp = selection ? vwin : NULL;
+
 	view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, vp);
     }
 
@@ -7228,8 +7223,7 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	record_command_verbatim();
     }
 
-    set_script_output_prn(NULL);
-    set_script_output_viewer(NULL);
+    clear_output_handler();
 
     /* re-establish command echo (?) */
     set_gretl_echo(1);
