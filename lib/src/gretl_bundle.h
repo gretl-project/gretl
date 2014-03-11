@@ -135,6 +135,8 @@ int load_bundle_from_xml (void *p1, void *p2, const char *name,
 
 int bundle_contains_data (gretl_bundle *b, void *data);
 
+gretl_bundle *get_sysinfo_bundle (int *err);
+
 #endif /* GRETL_BUNDLE_H_ */
 
 

@@ -23,6 +23,7 @@
 #include "gretl_func.h"
 #include "uservar.h"
 #include "gretl_string_table.h"
+#include "gretl_bundle.h"
 
 #include <glib.h>
 
@@ -54,6 +55,7 @@ struct str_table consts[] = {
     { CONST_MPI_RANK, "$mpirank" },
     { CONST_MPI_SIZE, "$mpisize" },
     { CONST_N_PROC,   "$nproc" },
+    { CONST_SYSINFO,  "$sysinfo" },
     { 0,        NULL }
 };
 
@@ -922,7 +924,13 @@ static void look_up_dollar_word (const char *s, parser *p)
     if ((p->idnum = dvar_lookup(s)) > 0) {
 	p->sym = DVAR;
     } else if ((p->idnum = const_lookup(s)) > 0) {
-	p->sym = CON;
+	if (p->idnum == CONST_SYSINFO) {
+	    p->sym = BUNDLE;
+	    p->idstr = gretl_strdup("$sysinfo");
+	    p->uval = get_sysinfo_bundle(&p->err);
+	} else {
+	    p->sym = CON;
+	}
     } else if ((p->idnum = mvar_lookup(s)) > 0) {
 	p->sym = MVAR;
     } else {
@@ -1817,5 +1825,3 @@ const char *getsymb (int t, const parser *p)
 
     return "unknown";
 }
-
-

@@ -5497,3 +5497,4 @@ int fill_dataset_dates_series (const DATASET *dset, double *x)
 
     return err;
 }
+

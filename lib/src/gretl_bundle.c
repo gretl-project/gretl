@@ -54,6 +54,8 @@ struct bundled_item_ {
     char *note;
 };
 
+static gretl_bundle *sysinfo_bundle;
+
 static int real_bundle_set_data (gretl_bundle *b, const char *key,
 				 void *ptr, GretlType type,
 				 int size, const char *note);
@@ -1006,7 +1008,7 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
  * Look for a saved bundle specified by @name, and if found,
  * make a full copy and save it under @copyname. This is
  * called from geneval.c on completion of assignment to a
- * bundle named @cpyname, where the returned value on the
+ * bundle named @copyname, where the returned value on the
  * right-hand side is a pre-existing saved bundle.
  *
  * Returns: 0 on success, non-zero code on error.
@@ -1018,13 +1020,16 @@ int gretl_bundle_copy_as (const char *name, const char *copyname)
     user_var *u;
     int err = 0;
 
-    u = get_user_var_of_type_by_name(name, GRETL_TYPE_BUNDLE);
-
-    if (u == NULL) {
-	return E_DATA;
+    if (!strcmp(name, "$sysinfo")) {
+	b0 = sysinfo_bundle;
+    } else {
+	u = get_user_var_of_type_by_name(name, GRETL_TYPE_BUNDLE);
+	if (u == NULL) {
+	    return E_DATA;
+	} else {
+	    b0 = user_var_get_value(u);
+	}
     }
-
-    b0 = user_var_get_value(u);
 
     u = get_user_var_of_type_by_name(copyname, GRETL_TYPE_BUNDLE);
     if (u != NULL) {
@@ -1390,5 +1395,34 @@ int load_bundle_from_xml (void *p1, void *p2, const char *name,
     }
 
     return err;
+}
+
+gretl_bundle *get_sysinfo_bundle (int *err)
+{
+    if (sysinfo_bundle == NULL) {
+	gretl_bundle *b = gretl_bundle_new();
+
+	if (b == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    int ival = 0;
+
+#if HAVE_MPI
+	    ival = check_for_program("mpiexec");
+#endif	    
+	    gretl_bundle_set_scalar(b, "mpi", (double) ival);
+	    ival = gretl_n_processors();
+	    gretl_bundle_set_scalar(b, "nproc", (double) ival);
+	    ival = 0;
+#ifdef _OPENMP
+	    ival = 1;
+#endif
+	    gretl_bundle_set_scalar(b, "omp", (double) ival);
+	    /* FIXME add some more elements */
+	}
+	sysinfo_bundle = b;
+    }
+
+    return sysinfo_bundle;
 }
 

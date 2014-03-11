@@ -1410,7 +1410,7 @@ static double get_const_by_id (int id)
 	return 0;
 #endif
     } else if (id == CONST_HAVE_MPI) {
-#if HAVE_MPI
+#ifdef HAVE_MPI
 	return check_for_program("mpiexec");
 #else
 	return 0;
@@ -9544,8 +9544,8 @@ static void node_reattach_data (NODE *n, parser *p)
     } else if (ulist_node(n)) {
 	data = n->v.ivec = get_list_by_name(n->vname);
     } else if (ubundle_node(n)) {
-	if (!strcmp(n->vname, "$")) {
-	    /* last model as bundle */
+	if (n->vname[0] == '$') {
+	    /* built-in bundle */
 	    return;
 	}
 	data = n->v.b = get_bundle_by_name(n->vname);
@@ -10633,7 +10633,7 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 0, FARGS, t->v.b1.b, p);
 	}
 	break;	
-    case CON: 
+    case CON:
 	/* built-in constant */
 	ret = retrieve_const(t, p);
 	break;

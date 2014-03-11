@@ -102,6 +102,7 @@ static NODE *newref (parser *p, int t)
 	} else if (t == BUNDLE) {
 	    n->vname = p->idstr;
 	    n->v.b = p->uval;
+	    fprintf(stderr, "newref: '%s', %p\n", n->vname, n->v.b);
 	} else if (t == USTR) {
 	    n->t = STR;
 	    n->vname = p->idstr;
