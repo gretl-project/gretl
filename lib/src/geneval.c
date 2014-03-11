@@ -6458,11 +6458,16 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	/* special: treat the 'last model' as a bundle */
 	val = last_model_get_data(key, &type, &size, &p->err);
     } else {
-	/* regular named bundle */
-	bundle = get_bundle_by_name(name);
-	if (bundle == NULL) {
-	    p->err = E_UNKVAR;
+	if (!strcmp(name, "$sysinfo")) {
+	    bundle = get_sysinfo_bundle(&p->err);
 	} else {
+	    /* regular named bundle */
+	    bundle = get_bundle_by_name(name);
+	    if (bundle == NULL) {
+		p->err = E_UNKVAR;
+	    }
+	}
+	if (!p->err) {
 	    val = gretl_bundle_get_data(bundle, key, &type, &size, &p->err);
 	}
     }
