@@ -6435,17 +6435,15 @@ static void process_bundle_member_subspec (NODE *n, parser *p,
 
 static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 {
-    const char *name = l->vname;
     char *key = r->v.str;
     char *s, *extra = NULL;
-    gretl_bundle *bundle;
     GretlType type;
     int size = 0;
     void *val = NULL;
     NODE *ret = NULL;
 
 #if EDEBUG
-    fprintf(stderr, "get_named_bundle_value: %s[\"%s\"]\n", name, key);
+    fprintf(stderr, "get_named_bundle_value: %s[\"%s\"]\n", l->vname, key);
 #endif
 
     if ((s = strchr(key, '[')) != NULL) {
@@ -6454,22 +6452,11 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	*s = '\0';
     }
 
-    if (!strcmp(name, "$")) {
+    if (!strcmp(l->vname, "$")) {
 	/* special: treat the 'last model' as a bundle */
 	val = last_model_get_data(key, &type, &size, &p->err);
     } else {
-	if (!strcmp(name, "$sysinfo")) {
-	    bundle = get_sysinfo_bundle(&p->err);
-	} else {
-	    /* regular named bundle */
-	    bundle = get_bundle_by_name(name);
-	    if (bundle == NULL) {
-		p->err = E_UNKVAR;
-	    }
-	}
-	if (!p->err) {
-	    val = gretl_bundle_get_data(bundle, key, &type, &size, &p->err);
-	}
+	val = gretl_bundle_get_data(l->v.b, key, &type, &size, &p->err);
     }
 
     if (p->err) {

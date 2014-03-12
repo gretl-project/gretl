@@ -1418,6 +1418,17 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	    ival = 1;
 #endif
 	    gretl_bundle_set_scalar(b, "omp", (double) ival);
+	    ival = sizeof(void*) == 8 ? 64 : 32;
+	    gretl_bundle_set_scalar(b, "wordlen", (double) ival);
+#if defined(G_OS_WIN32)
+	    gretl_bundle_set_string(b, "os", "windows");
+#elif defined(OS_OSX) 
+	    gretl_bundle_set_string(b, "os", "osx");
+#elif defined(linux)
+	    gretl_bundle_set_string(b, "os", "linux");
+#else
+	    gretl_bundle_set_string(b, "os", "other");
+#endif
 	    /* FIXME add some more elements */
 	}
 	sysinfo_bundle = b;
