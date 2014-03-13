@@ -229,7 +229,6 @@ install-strip: $(PROG) install-data
 
 install-data: installdirs
 	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.xpm $(DESTDIR)$(gretldir)
-	$(INSTALL_DATA) $(topsrc)/COPYING $(DESTDIR)$(gretldir)
 
 install-ui: installdirs
 	$(INSTALL_DATA) $(topsrc)/gui2/gretlmain.xml $(DESTDIR)$(uidir)

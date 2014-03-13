@@ -52,6 +52,7 @@ help:
 install: installdirs install_datafiles install_scripts install_functions \
 	install_fonts install_help
 	$(INSTALL_DATA) $(sharesrc)/gretl.stamp $(DESTDIR)$(gretldir)/gretl.stamp
+	$(INSTALL_DATA) $(topsrc)/COPYING $(DESTDIR)$(gretldir)/COPYING
 	$(MAKE) -C bcih install
 
 install-strip: install
