@@ -122,7 +122,7 @@ static char hc_garch[5] = "QML";
 
 #ifdef HAVE_MPI
 # ifdef G_OS_WIN32
-static char mpi_pref[8] = "MS_MPI";
+static char mpi_pref[8] = "MS-MPI";
 # else
 static char mpi_pref[8] = "OpenMPI";
 # endif

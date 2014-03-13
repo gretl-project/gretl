@@ -709,6 +709,13 @@ else
    echo "*** msgfmt not found, can't build message catalogs"
 fi
 
+dnl countermand any positive results for xdg if we're not
+dnl building the gretl GUI
+if test "$gui_disabled" = "yes" ; then
+  use_xdg=no
+  use_xdg_utils=no
+fi
+
 dnl record the results of the above tests
 AC_SUBST(build_gui)
 AC_SUBST(gtk_version)

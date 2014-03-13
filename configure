@@ -18212,6 +18212,11 @@ else
    echo "*** msgfmt not found, can't build message catalogs"
 fi
 
+if test "$gui_disabled" = "yes" ; then
+  use_xdg=no
+  use_xdg_utils=no
+fi
+
 
 
 
