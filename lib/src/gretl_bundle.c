@@ -1429,7 +1429,6 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 #else
 	    gretl_bundle_set_string(b, "os", "other");
 #endif
-	    /* FIXME add some more elements */
 	}
 	sysinfo_bundle = b;
     }

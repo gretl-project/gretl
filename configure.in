@@ -431,7 +431,7 @@ AC_SUBST(have_zlib)
 dnl
 dnl Check for GMP
 dnl
-AM_PATH_GMP(5.0.0, have_gmp="yes")
+AM_PATH_GMP(4.0.1, have_gmp="yes")
 
 dnl
 dnl See if MPFR is available

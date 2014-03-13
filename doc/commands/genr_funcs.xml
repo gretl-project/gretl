@@ -709,11 +709,54 @@
       </description>
     </function>
 
+    <function name="$sysinfo" section="access" output="bundle">
+      <description>
+	<para>
+	  Returns a bundle containing information on the capabilities
+	  of the gretl build and the system on which gretl is
+	  running. The members of the bundle are as follows:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>mpi</lit>: integer, equals 1 if the system supports
+	      MPI (Message Passing Interface), otherwise 0.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>omp</lit>: integer, equals 1 if gretl is built with
+	      support for Open MP, otherwise 0.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>nproc</lit>: integer, the number of processors
+	      available.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>wordlen</lit>: integer, either 32 or 64 for
+	      32- and 64-bit systems respectively.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>os</lit>: string representing the operating system,
+	      either <lit>linux</lit>, <lit>osx</lit>,
+	      <lit>windows</lit> or <lit>other</lit>.
+	    </para>
+	  </li>
+	</ilist>
+      </description>
+    </function>
+
     <function name="$T" section="access" output="int">
       <description>
 	<para>
-	  Returns the number of observations used in estimating the last
-	  model.
+	  Returns the number of observations used in estimating the
+	  last model.
 	</para>
       </description>
     </function>
