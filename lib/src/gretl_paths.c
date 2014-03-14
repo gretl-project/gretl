@@ -3442,7 +3442,11 @@ int cli_read_rc (void)
 	    } else if (!strcmp(key, "mpi_hosts")) {
 		strncat(cpaths.mpi_hosts, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "mpi_pref")) {
+#ifdef HAVE_MPI
 		set_mpi_variant(val);
+#else
+		;
+#endif
 	    } else if (!strcmp(key, "Png_font")) {
 		strncat(cpaths.pngfont, val, 128 - 1);
 	    } else if (!strcmp(key, "Gp_colors")) {
