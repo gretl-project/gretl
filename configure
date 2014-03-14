@@ -15439,7 +15439,7 @@ fi
 if test "${with_mpi_include+set}" = set; then :
   withval=$with_mpi_include; MPI_inc_check="$with_mpi_include $with_mpi_include/include $with_mpi_include/include/openmpi"
 else
-  MPI_inc_check="/usr/include /usr/include/openmpi /usr/include/openmpi-${ARCH} /usr/local/include /usr/local/include/openmpi-${ARCH} /opt/openmpi/include /usr/include/openmpi"
+  MPI_inc_check="/usr/include /usr/include/openmpi /usr/include/openmpi-${ARCH} /usr/local/include /usr/local/include/openmpi-${ARCH} /opt/openmpi/include /usr/include/openmpi /usr/lib/openmpi/include"
 fi
 
 
@@ -15457,6 +15457,20 @@ for m in ${MPI_lib_check} ; do
     fi
   fi
 done
+
+#
+# if not found, try for the MPICH library instead
+#
+if test -z "$MPI_libdir" ; then
+  for m in ${MPI_lib_check} ; do
+    if test -d "$m" ; then
+      if (test -f "$m/libmpich.so" || test -f "$m/libmpich.a" || test -f "$m/libmpich.dylib"); then
+        MPI_libdir=$m
+        break
+      fi
+    fi
+  done
+fi
 
 if test -z "$MPI_libdir"
 then

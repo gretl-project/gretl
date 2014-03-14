@@ -30,7 +30,7 @@ AC_ARG_WITH(mpi-lib,
 AC_ARG_WITH(mpi-include,
     [  --with-mpi-include=PFX path to MPI header],
     [MPI_inc_check="$with_mpi_include $with_mpi_include/include $with_mpi_include/include/openmpi"],
-    [MPI_inc_check="/usr/include /usr/include/openmpi /usr/include/openmpi-${ARCH} /usr/local/include /usr/local/include/openmpi-${ARCH} /opt/openmpi/include /usr/include/openmpi"])
+    [MPI_inc_check="/usr/include /usr/include/openmpi /usr/include/openmpi-${ARCH} /usr/local/include /usr/local/include/openmpi-${ARCH} /opt/openmpi/include /usr/include/openmpi /usr/lib/openmpi/include"])
 
 #
 # Look for MPI library
@@ -45,6 +45,20 @@ for m in ${MPI_lib_check} ; do
     fi
   fi
 done
+
+#
+# if not found, try for the MPICH library instead
+#
+if test -z "$MPI_libdir" ; then
+  for m in ${MPI_lib_check} ; do
+    if test -d "$m" ; then
+      if (test -f "$m/libmpich.so" || test -f "$m/libmpich.a" || test -f "$m/libmpich.dylib"); then
+        MPI_libdir=$m
+        break
+      fi
+    fi
+  done
+fi
 
 if test -z "$MPI_libdir"
 then
