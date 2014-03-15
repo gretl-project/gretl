@@ -1420,6 +1420,7 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	    gretl_bundle_set_scalar(b, "omp", (double) ival);
 	    ival = sizeof(void*) == 8 ? 64 : 32;
 	    gretl_bundle_set_scalar(b, "wordlen", (double) ival);
+	    gretl_bundle_set_scalar(b, "omp_num_threads", get_omp_n_threads());
 #if defined(G_OS_WIN32)
 	    gretl_bundle_set_string(b, "os", "windows");
 #elif defined(OS_OSX) 

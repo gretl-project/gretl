@@ -27,6 +27,10 @@
 #include "gretl_string_table.h"
 #include "gretl_func.h"
 
+#ifdef _OPENMP
+# include <omp.h>
+#endif
+
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
 #endif
@@ -122,13 +126,14 @@ struct set_vars_ {
 #define WARNINGS "warnings"
 #define GRETL_DEBUG "debug"
 #define USE_DCMT "use_dcmt"
+
 #define BLAS_MNK_MIN "blas_mnk_min"
-#define MP_MNK_MIN "mp_mnk_min"
-/* support dyslexia */
-#define BLAS_NMK_MIN "blas_nmk_min"
-#define MP_NMK_MIN "mp_nmk_min"
 #define SIMD_K_MAX "simd_k_max"
 #define SIMD_MN_MIN "simd_mn_min"
+#define MP_MNK_MIN "mp_mnk_min"
+/* but now preferred */
+#define OMP_MNK_MIN "omp_mnk_min"
+#define OMP_N_THREADS "omp_num_threads"
 
 #define libset_boolvar(s) (!strcmp(s, ECHO) || \
                            !strcmp(s, MESSAGES) || \
@@ -176,9 +181,9 @@ struct set_vars_ {
 		       !strcmp(s, GRETL_OPTIM) || \
 		       !strcmp(s, GRETL_DEBUG) || \
 		       !strcmp(s, BLAS_MNK_MIN) || \
+		       !strcmp(s, OMP_MNK_MIN) || \
 		       !strcmp(s, MP_MNK_MIN) || \
-		       !strcmp(s, BLAS_NMK_MIN) || \
-		       !strcmp(s, MP_NMK_MIN) || \
+		       !strcmp(s, OMP_N_THREADS) || \
 		       !strcmp(s, SIMD_K_MAX) || \
 		       !strcmp(s, SIMD_MN_MIN))
 
@@ -191,7 +196,8 @@ static int R_lib = 1;
 static int csv_digits = UNSET_INT;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
-static int mp_mnk_min = 80000; /* was 65535 */
+static int omp_mnk_min = 80000; /* was 65535 */
+static int omp_n_threads;
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
@@ -478,7 +484,7 @@ int libset_use_openmp (guint64 n)
 #if defined(_OPENMP)
     if (state == NULL || !(state->flags & STATE_OPENMP_ON)) {
 	return 0;
-    } else if (mp_mnk_min >= 0 && n >= (guint64) mp_mnk_min) {
+    } else if (omp_mnk_min >= 0 && n >= (guint64) omp_mnk_min) {
 # if OMP_SHOW > 1
 	fprintf(stderr, "libset_use_openmp: yes\n");
 # endif
@@ -489,10 +495,34 @@ int libset_use_openmp (guint64 n)
     return 0;
 }
 
+static int set_omp_n_threads (int n)
+{
+#if defined(_OPENMP)
+    if (n < 1 || n > gretl_n_processors()) {
+	gretl_errmsg_sprintf("omp_num_threads: must be >= 1 and <= %d",
+			     gretl_n_processors());
+	return E_DATA;
+    } else {
+	omp_n_threads = n;
+	omp_set_num_threads(n);
+	return 0;
+    }
+#else
+    gretl_errmsg_set("OpenMP is not enabled");
+    return E_DATA;
+#endif
+}
+
+int get_omp_n_threads (void)
+{
+    return omp_n_threads;
+}
+
 #if defined(_OPENMP)
 
 static int openmp_by_default (void)
 {
+    static int called = 0;
     int num_cores = gretl_n_processors();
     int ret = num_cores > 1;
 
@@ -505,17 +535,22 @@ static int openmp_by_default (void)
 	}
     }
 
+    if (!called && ret) {
+	char *s = getenv("OMP_NUM_THREADS");
+
+	if (s != NULL && *s != '\0') {
+	    omp_n_threads = atoi(s);
+	} else {
+	    omp_n_threads = num_cores;
+	}
+	called = 1;
+    }
+
 # if OMP_SHOW
     if (1) {
 	fprintf(stderr, "number of cores detected = %d\n", num_cores);
 	fprintf(stderr, "use OpenMP by default? %s\n", ret ? "yes" : "no");
-	if (ret) {
-	    char *s = getenv("OMP_NUM_THREADS");
-
-	    if (s != NULL && *s != '\0') {
-		fprintf(stderr, "OMP_NUM_THREADS set to %d\n", atoi(s));
-	    }
-	}
+	fprintf(stderr, "omp_num_threads = %d\n", omp_n_threads);
     }
 # endif	
 
@@ -851,9 +886,8 @@ static int negval_invalid (const char *var)
 
     if (var != NULL) {
 	if (!strcmp(var, BLAS_MNK_MIN) ||
+	    !strcmp(var, OMP_MNK_MIN) ||
 	    !strcmp(var, MP_MNK_MIN) ||
-	    !strcmp(var, BLAS_NMK_MIN) ||
-	    !strcmp(var, MP_NMK_MIN) ||
 	    !strcmp(var, SIMD_K_MAX) ||
 	    !strcmp(var, SIMD_MN_MIN)) {
 	    /* these can all be set to -1 */
@@ -1408,7 +1442,8 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_bool(WARNINGS, prn, opt);
     libset_print_int(GRETL_DEBUG, prn, opt);
     libset_print_int(BLAS_MNK_MIN, prn, opt);
-    libset_print_int(MP_MNK_MIN, prn, opt);
+    libset_print_int(OMP_MNK_MIN, prn, opt);
+    libset_print_int(OMP_N_THREADS, prn, opt);
     libset_print_int(SIMD_K_MAX, prn, opt);
     libset_print_int(SIMD_MN_MIN, prn, opt);
 
@@ -1879,10 +1914,12 @@ int libset_get_int (const char *key)
 	return state->optim;
     } else if (!strcmp(key, GRETL_DEBUG)) {
 	return gretl_debug;
-    } else if (!strcmp(key, BLAS_MNK_MIN) || !strcmp(key, BLAS_NMK_MIN)) {
+    } else if (!strcmp(key, BLAS_MNK_MIN)) {
 	return get_blas_mnk_min();
-    } else if (!strcmp(key, MP_MNK_MIN) || !strcmp(key, MP_NMK_MIN)) {
-	return mp_mnk_min;
+    } else if (!strcmp(key, OMP_MNK_MIN) || !strcmp(key, MP_MNK_MIN)) {
+	return omp_mnk_min;
+    } else if (!strcmp(key, OMP_N_THREADS)) {
+	return omp_n_threads;
     } else if (!strcmp(key, SIMD_K_MAX)) {
 	return get_simd_k_max();
     } else if (!strcmp(key, SIMD_MN_MIN)) {
@@ -1968,7 +2005,7 @@ int libset_set_int (const char *key, int val)
 	return 1;
     }
 
-    if (!strcmp(key, BLAS_MNK_MIN) || !strcmp(key, BLAS_NMK_MIN)) {
+    if (!strcmp(key, BLAS_MNK_MIN)) {
 	set_blas_mnk_min(val);
 	return 0;
     } else if (!strcmp(key, SIMD_K_MAX)) {
@@ -1977,9 +2014,11 @@ int libset_set_int (const char *key, int val)
     } else if (!strcmp(key, SIMD_MN_MIN)) {
 	set_simd_mn_min(val);
 	return 0;
-    } else if (!strcmp(key, MP_MNK_MIN) || !strcmp(key, MP_NMK_MIN)) {
-	mp_mnk_min = val;
+    } else if (!strcmp(key, OMP_MNK_MIN) || !strcmp(key, MP_MNK_MIN)) {
+	omp_mnk_min = val;
 	return 0;
+    } else if (!strcmp(key, OMP_N_THREADS)) {
+	return set_omp_n_threads(val);
     } else {
 	int min = 0, max = 0;
 	int *ivar = NULL;
