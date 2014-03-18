@@ -122,8 +122,8 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 	}
     } else {
 	int k, dim, d;
-	double g;
 	int a[4], b[4];
+	double y[m];
 
 	if (quality == 1) {
 	    eps *= 2;
@@ -141,28 +141,36 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 	    return 0;
 	}
 
-	for (i = 0; i < m; i++) {
-	    for (j = 0; j < n; j++) {
-		temp = x[j];
-		h = eps * fabs(temp);
-		if (h == 0.0) {
-		    h = eps;
-		}
-		g = 0.0;
-		for (k=0; k<dim; k++) {
-		    x[j] = temp + a[k]*h;
-		    (*fcn)(m, n, x, wa, iflag, p);
-		    if (*iflag < 0) {
-			return 0;
-		    }
-		    g += b[k]*wa[i];
-		}
-		x[j] = temp;
-		fjac[i + j * ldfjac] = g / (d*h);
+	for (j = 0; j < n; j++) {
+	    temp = x[j];
+	    h = eps * fabs(temp);
+	    if (h == 0.0) {
+		h = eps;
 	    }
+
+	    for (i = 0; i < m; i++) {
+		y[i] = 0.0;
+	    }
+	    
+	    for (k = 0; k < dim; k++) {
+		x[j] = temp + a[k]*h;
+		(*fcn)(m, n, x, wa, iflag, p);
+		if (*iflag < 0) {
+		    return 0;
+		}
+		for (i = 0; i < m; i++) {
+		    y[i] += b[k]*wa[i];
+		}
+	    }
+
+	    for (i = 0; i < m; i++) {
+		fjac[i + j * ldfjac] = y[i] / (d*h);
+	    }
+	    
+	    x[j] = temp;
 	}
     }
-
+    
     return 0;
 }
 

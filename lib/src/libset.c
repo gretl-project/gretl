@@ -431,6 +431,7 @@ static void state_vars_copy (set_vars *sv)
     sv->arma_vcv = state->arma_vcv;
     sv->garch_robust_vcv = state->garch_robust_vcv;
     sv->nadarwat_trim = state->nadarwat_trim;
+    sv->fdjac_qual = state->fdjac_qual;
 
     sv->initvals = gretl_matrix_copy(state->initvals);
     sv->matmask = gretl_matrix_copy(state->matmask);
