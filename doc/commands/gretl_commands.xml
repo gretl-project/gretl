@@ -10257,14 +10257,19 @@
 	</li>
 	<li>
 	  <para><lit>gmm_maxiter</lit>: one integer, the maximum number of
-	    iterations for gretl's <lit>gmm</lit> command when in iterated
+	    iterations for gretl's <cmdref targ="gmm"/> command when in iterated
 	    mode (as opposed to one- or two-step).  The default value is
 	    250.
 	  </para>
 	</li>
 	<li>
 	  <para><lit>nadarwat_trim</lit>: one integer, the trim
-	  parameter used in the <lit>nadarwat</lit> function.
+	  parameter used in the  <fncref targ="nadarwat"/> function.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>fdjac_quality</lit>: one integer between 0 and 2,
+	  the algorithm used by the <fncref targ="fdjac"/> function.
 	  </para>
 	</li>
       </ilist>

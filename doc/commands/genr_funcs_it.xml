@@ -2250,17 +2250,59 @@
       </fnargs> 
       <description>
 	<para>
-          Calcola numericamente (tramite l'approssimazione per
-          differenze-in-avanti) lo Jacobiano associato al vettore
-          <argname>b</argname> e la trasformazione definita dalle
-          funzioni nella stringa <argname>s</argname>. Per maggiori
-          dettagli ed esempi si veda il capitolo sulle funzioni
-          speciali in <lit>genr</lit> in <guideref
-          targ="sec:genr-numerical"/>.
+          Calcola un'approssimazione numerica allo jacobiano associato
+          al vettore <argname>b</argname> e la trasformazione definita
+          dalle funzioni nella stringa <argname>s</argname>. La
+          funzione deve avere <argname>b</argname> come suo primo
+          argomento (in forma di puntatore o no), seguita da eventuali
+          altri parametri, se necessario; deve restituire una matrice
+          <by r="m" c="1"/>. Se il comando va a buon fine, esso
+          restituirà una matrice <by r="m" c="n"/> matrix contenente
+          lo jacobiano. Ad esempio:
+	</para>
+	<code>
+	  matrix J = fdjac(theta, myfunc(&amp;theta, X))
+	</code>
+	<para>
+	  La funzione può usare tre metodi diversi: differenza in
+	  avanti, differenza bilaterale o un'estrapolazione di
+	  Richardson a 4 nodi. Rispettivamente:
+	</para>
+	<para context="tex">
+	  \[ J_0 = \frac{f(x + h) - f(x)}{h} \]
+	</para>
+	<para context="tex">
+	  \[ J_1 = \frac{f(x + h) - f(x - h)}{2h} \]
+	</para>
+	<para context="tex">
+	  \[ J_2 = \frac{8(f(x+h) - f(x-h)) - (f(x+2h) - f(x-2h))}{12h} \]
+	</para>
+	<para context="notex">
+	  <math>J</math><sub>0</sub> = <math>(f(x+h) - f(x))/h</math>
+	</para>
+	<para context="notex">
+	  <math>J</math><sub>1</sub> = <math>(f(x+h) - f(x-h))/2h</math>
+	</para>
+	<para context="notex">
+	  <math>J</math><sub>2</sub>  = <math>[8 (f(x+h) -  f(x-h)) -
+	  (f(x+2h) - f(x-2h))] /12h</math>
+	</para>
+	<para>
+	  Queste tre alternative, in generale, rappresentano un
+	  compromesso diverso fra velocità e accuratezza. Per
+	  scegliere quale metodo usare, il comando <cmdref
+	  targ="set"/> consente di impostare a 0, 1 o 2 la variabile
+	  <lit>fdjac_quality</lit>.
+	</para>
+	<para>
+	  Per maggiori dettagli ed esempi si veda il capitolo sulle
+	  funzioni speciali in <lit>genr</lit> in <guideref
+	  targ="sec:genr-numerical"/>.
 	</para>
 	<para>
 	  <seelist>
 	    <fncref targ="BFGSmax"/>
+	    <cmdref targ="set"/>
 	  </seelist>
 	</para>
       </description>

@@ -9932,6 +9932,23 @@
           al posto del codice interno di gretl per  calcolare le stime GARCH.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>gmm_maxiter</lit>: un intero, il numero massimo
+	  di iterazioni per il comando <cmdref targ="gmm"/> con
+	  l'opzione <opt>--iterate</opt>. Il default è 250.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>nadarwat_trim</lit>: un intero, il parametro di
+	  taglio usato dalla funzione <fncref targ="nadarwat"/>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>fdjac_quality</lit>: un intero fra 0 e 2,
+	  corrsipondente all'algoritmo usato nella funzione <fncref
+	  targ="fdjac"/>.
+	  </para>
+	</li>
       </ilist>
 
       <para>

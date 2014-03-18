@@ -2318,8 +2318,8 @@
       </fnargs> 
       <description>
 	<para>
-	  Calculates the (forward-difference approximation to the)
-	  Jacobian associated with the <math>n</math>-vector
+	  Calculates a numerical approximation to the Jacobian
+	  associated with the <math>n</math>-vector
 	  <argname>b</argname> and the transformation function
 	  specified by the argument <argname>fcall</argname>.  The
 	  function call should take <argname>b</argname> as its first
@@ -2333,12 +2333,43 @@
 	  matrix J = fdjac(theta, myfunc(&amp;theta, X))
 	</code>
 	<para>
+	  The function can use three different methods: simple
+	  forward-difference, bilateral difference or 4-nodes
+	  Richardson extrapolation. Respectively:
+	</para>
+	<para context="tex">
+	  \[ J_0 = \frac{f(x + h) - f(x)}{h} \]
+	</para>
+	<para context="tex">
+	  \[ J_1 = \frac{f(x + h) - f(x - h)}{2h} \]
+	</para>
+	<para context="tex">
+	  \[ J_2 = \frac{8(f(x+h) - f(x-h)) - (f(x+2h) - f(x-2h))}{12h} \]
+	</para>
+	<para context="notex">
+	  <math>J</math><sub>0</sub> = <math>(f(x+h) - f(x))/h</math>
+	</para>
+	<para context="notex">
+	  <math>J</math><sub>1</sub> = <math>(f(x+h) - f(x-h))/2h</math>
+	</para>
+	<para context="notex">
+	  <math>J</math><sub>2</sub>  = <math>[8 (f(x+h) -  f(x-h)) -
+	  (f(x+2h) - f(x-2h))] /12h</math>
+	</para>
+	<para>
+	  The three alternatives above provide, generally, a trade-off
+	  between accuracy and speed. You can choose among methods by
+	  using the <cmdref targ="set"/> command and specify the value
+	  0, 1 or 2 for the <lit>fdjac_quality</lit> variable.
+	</para>
+	<para>
 	  For more details and examples see the chapter on numerical
 	  methods in <guideref targ="chap-numerical"/>.
 	</para>
 	<para>
 	  <seelist>
 	    <fncref targ="BFGSmax"/>
+	    <cmdref targ="set"/>
 	  </seelist>
 	</para>
       </description>
