@@ -1409,7 +1409,7 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	    f[i] *= Tfac;
 	}
 
-	fdjac2_(gmm_jacobian_calc, m, n, s->coeff, f, 
+	fdjac2_(gmm_jacobian_calc, m, n, 0, s->coeff, f, 
 		J->val, m, &iflag, 0.0, wa4, s);
 
 	if (iflag != 0) {

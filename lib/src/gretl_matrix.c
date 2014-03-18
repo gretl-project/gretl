@@ -7785,12 +7785,6 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	fprintf(stderr, "gretl_invert_symmetric_matrix: "
 		"dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	err = (info > 0)? E_NOTPD : E_DATA;
-	if (err) {
-	   memcpy(a->val, aval, bytes);
-	   if (getenv("GRETL_MATRIX_DEBUG")) {
-	       gretl_matrix_print(a, "input matrix");
-	   }
-	}
     } 
 
     if (!err) {
@@ -7806,6 +7800,9 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 
     if (err) {
 	memcpy(a->val, aval, bytes);
+	if (getenv("GRETL_MATRIX_DEBUG")) {
+	    gretl_matrix_print(a, "input matrix");
+	}
     }
     
     lapack_free(aval);

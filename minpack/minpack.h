@@ -20,8 +20,8 @@ int chkder_(int m, int n, double *x, double *fvec,
 
 double enorm_(int n, double *x);
 
-int fdjac2_(S_fp fcn, int m, int n, double *x, double *fvec, 
-	    double *fjac, int ldfjac, int *iflag, 
+int fdjac2_(S_fp fcn, int m, int n, int quality, double *x, 
+	    double *fvec, double *fjac, int ldfjac, int *iflag, 
 	    double epsfcn, double *wa, void *p);
 
 int lmder1_(S_fp fcn, int m, int n, double *x, double *fvec, 

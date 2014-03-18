@@ -119,6 +119,7 @@ struct set_vars_ {
     char csv_write_na[8];       /* representation of NA in CSV output */
     char csv_read_na[8];        /* representation of NA in CSV input */
     double nadarwat_trim;       /* multiple of h to use in nadarwat() for trimming */
+    int fdjac_qual;             /* quality of "fdjac" function */
 };
 
 #define ECHO "echo"
@@ -185,7 +186,8 @@ struct set_vars_ {
 		       !strcmp(s, MP_MNK_MIN) || \
 		       !strcmp(s, OMP_N_THREADS) || \
 		       !strcmp(s, SIMD_K_MAX) || \
-		       !strcmp(s, SIMD_MN_MIN))
+		       !strcmp(s, SIMD_MN_MIN) || \
+		       !strcmp(s, FDJAC_QUAL))
 
 /* global state */
 set_vars *state;
@@ -1482,6 +1484,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_bool(USE_FCP, prn, opt);
     libset_print_bool(DPDSTYLE, prn, opt);
     libset_print_double(NADARWAT_TRIM, prn, opt);
+    libset_print_int(FDJAC_QUAL, prn, opt);
 
     libset_header(N_("Random number generation"), prn, opt);
 
@@ -1531,7 +1534,7 @@ static int libset_query_settings (const char *s, PRN *prn)
 	coded_var_show_opts(s, prn);
     } else if (libset_int(s)) {
 	int k = libset_get_int(s);
-
+	
 	if (is_unset(k)) {
 	    pprintf(prn, "%s: positive integer, currently unset\n", s);
 	} else {
@@ -1928,6 +1931,8 @@ int libset_get_int (const char *key)
 	return state->bfgs_verbskip;
     } else if (!strcmp(key, CSV_DIGITS)) {
 	return csv_digits;
+    } else if (!strcmp(key, FDJAC_QUAL)) {
+	return state->fdjac_qual;
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
 		"variable '%s'\n", key);	
@@ -1990,6 +1995,10 @@ static int intvar_min_max (const char *s, int *min, int *max,
     } else if (!strcmp(s, GRETL_DEBUG)) {
 	*min = 0;
 	*var = &gretl_debug;
+    } else if (!strcmp(s, FDJAC_QUAL)) {
+	*min = 0;
+	*max = 3;
+	*var = &state->fdjac_qual;
     } else {
 	fprintf(stderr, "libset_set_int: unrecognized "
 		"variable '%s'\n", s);	

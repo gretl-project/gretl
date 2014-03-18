@@ -476,6 +476,114 @@ static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
     return err;
 }
 
+#if 0 /* experimental: doesn't work as of 2014-03-17 */
+
+static int dump_content (int fd, int err, PRN *prn)
+{
+    char buf[2048];
+    ssize_t bytes;
+
+    if (err) {
+	pputs(prn, "\nstderr:\n");
+    }
+    
+    while ((bytes = read(fd, buf, 1023)) > 0) {
+	buf[bytes] = '\0';
+	pputs(prn, buf);
+    }
+    
+    pputc(prn, '\n');
+
+    return 0;
+}
+
+static void child_watch_callback (GPid pid, gint status, gpointer data)
+{
+    int *exited = (int *) data;
+
+    fprintf(stderr, "child_watch_callback: status = %d\n", status);
+    g_spawn_close_pid(pid);
+    *exited = 1;
+}
+
+static int lib_run_prog_with_killer (char **argv, gretlopt opt, PRN *prn)
+{
+    gint fdout = 0;
+    gint fderr = 0;
+    GPid child_pid;
+    GError *gerr = NULL;
+    int exited = 0;
+    gboolean ok;
+    int err = 0;
+
+    ok = g_spawn_async_with_pipes(NULL,
+				  argv,
+				  NULL,
+				  G_SPAWN_SEARCH_PATH | 
+				   G_SPAWN_DO_NOT_REAP_CHILD,
+				  NULL,
+				  NULL,
+				  &child_pid,
+				  NULL,
+				  &fdout,
+				  &fderr,
+				  &gerr);
+
+    fprintf(stderr, "async: ok = %d\n", (int) ok);
+
+    if (gerr != NULL) {
+	pprintf(prn, "%s\n", gerr->message); 
+	g_error_free(gerr);
+	gerr = NULL;
+	err = 1;
+    }
+
+    if (ok) {
+	int i = 0;
+	fprintf(stderr, "async: fdout=%d, fderr=%d, pid=%d\n", fdout, 
+		fderr, (int) child_pid);
+	g_child_watch_add(child_pid, child_watch_callback, &exited);
+	while (!exited) {
+	    /* allow kill here */
+	    g_usleep(10000);
+	    fprintf(stderr, "here %d\n", i++);
+	}
+    }
+
+    if (gerr != NULL) {
+	pprintf(prn, "%s\n", gerr->message); 
+	g_error_free(gerr);
+	err = 1;
+    } else if (fdout) {
+	if (!(opt & OPT_Q)) {
+	    /* with OPT_Q, don't print non-error output */
+	    dump_content(fdout, 0, prn);
+	}
+	if (opt & OPT_V) {
+	    /* also print stderr output, if any */
+	    if (fderr) {
+		dump_content(fderr, 1, prn);
+	    }
+	}
+    } else {
+	pprintf(prn, "%s: %s\n", argv[0], "Got no output");
+	err = 1;
+    }
+
+    if (fdout) {
+	close(fdout);
+    }
+    if (fderr) {
+	close(fderr);
+    }
+
+    fprintf(stderr, "async: returning %d\n", err);
+
+    return err;
+}
+
+#endif /* 0 */
+
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
     char *argv[] = {
@@ -648,6 +756,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	print_mpi_command(argv);
 #endif
 	err = lib_run_prog_sync(argv, opt, prn);
+	/* err = lib_run_prog_with_killer(argv, opt, prn); */
 	g_free(mpiprog);
     }
 

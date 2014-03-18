@@ -1923,6 +1923,7 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
     gretl_matrix *J = NULL;
     int m, n;
     int iflag = 0;
+    int quality = 0;
     double *wa = NULL;
     double *fvec = NULL;
     int i;
@@ -1973,7 +1974,9 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 	fvec[i] = u->fm_out->val[i];
     }
 
-    fdjac2_(user_calc_fvec, m, n, theta->val, fvec, J->val, 
+    quality = libset_get_int(FDJAC_QUAL);
+
+    fdjac2_(user_calc_fvec, m, n, quality, theta->val, fvec, J->val, 
 	    m, &iflag, 0.0, wa, u);
 
  bailout:

@@ -2551,7 +2551,7 @@ static int lm_approximate (nlspec *spec, PRN *prn)
 	spec->opt = OPT_NONE;
 
 	/* call minpack again */
-	fdjac2_(nls_calc_approx, m, n, spec->coeff, spec->fvec, 
+	fdjac2_(nls_calc_approx, m, n, 0, spec->coeff, spec->fvec, 
 		spec->jac, ldjac, &iflag, epsfcn, wa4, spec);
 	spec->crit = ess;
 	spec->iters = iters;

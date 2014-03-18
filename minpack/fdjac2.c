@@ -9,6 +9,10 @@
    See README in this directory for the Minpack Copyright.
 
    Allin Cottrell, Wake Forest University, April 2012
+
+   Modified in March 2014 by Jack Lucchetti to add a "quality"
+   switch (see below).
+
 */
 
 #include "minpack.h"
@@ -53,6 +57,10 @@ c
 c       n is a positive integer input variable set to the number
 c         of variables. n must not exceed m.
 c
+c       quality is a [0-2] int: 0 gives old-style forward-difference,
+c         1 bilateral difference and 2 gives 6th order Richardson
+c         extrapolation; higher quality means lower speed.
+c
 c       x is an input array of length n.
 c
 c       fvec is an input array of length m which must contain the
@@ -85,29 +93,73 @@ c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 */
 
-int fdjac2_(S_fp fcn, int m, int n, double *x, double *fvec, 
+int fdjac2_(S_fp fcn, int m, int n, int quality, 
+	    double *x, double *fvec, 
 	    double *fjac, int ldfjac, int *iflag, 
 	    double epsfcn, double *wa, void *p)
 {
-    double h, eps, temp;
+    double eps = sqrt(max(epsfcn, DBL_EPSILON));
+    double h, temp;
     int i, j;
 
-    eps = sqrt(max(epsfcn, DBL_EPSILON));
-
-    for (j = 0; j < n; j++) {
-	temp = x[j];
-	h = eps * fabs(temp);
-	if (h == 0.0) {
-	    h = eps;
+    if (quality == 0) {
+	/* plain old minpack fdjac2 */
+	for (j = 0; j < n; j++) {
+	    temp = x[j];
+	    h = eps * fabs(temp);
+	    if (h == 0.0) {
+		h = eps;
+	    }
+	    x[j] = temp + h;
+	    (*fcn)(m, n, x, wa, iflag, p);
+	    if (*iflag < 0) {
+		return 0;
+	    }
+	    x[j] = temp;
+	    for (i = 0; i < m; i++) {
+		fjac[i + j * ldfjac] = (wa[i] - fvec[i]) / h;
+	    }
 	}
-	x[j] = temp + h;
-	(*fcn)(m, n, x, wa, iflag, p);
-	if (*iflag < 0) {
+    } else {
+	int k, dim, d;
+	double g;
+	int a[4], b[4];
+
+	if (quality == 1) {
+	    eps *= 2;
+	    dim = 2;
+	    d = 2;
+	    a[0] = b[0] = -1;
+	    a[1] = b[1] = 1;
+	} else if (quality == 2) {
+	    dim = 4;
+	    d = 12;
+	    a[0] = -2; a[1] = -1; a[2] = 1; a[3] =  2;
+	    b[0] =  1; b[1] = -8; b[2] = 8; b[3] = -1;
+	} else {
+	    *iflag = -1;
 	    return 0;
 	}
-	x[j] = temp;
+
 	for (i = 0; i < m; i++) {
-	    fjac[i + j * ldfjac] = (wa[i] - fvec[i]) / h;
+	    for (j = 0; j < n; j++) {
+		temp = x[j];
+		h = eps * fabs(temp);
+		if (h == 0.0) {
+		    h = eps;
+		}
+		g = 0.0;
+		for (k=0; k<dim; k++) {
+		    x[j] = temp + a[k]*h;
+		    (*fcn)(m, n, x, wa, iflag, p);
+		    if (*iflag < 0) {
+			return 0;
+		    }
+		    g += b[k]*wa[i];
+		}
+		x[j] = temp;
+		fjac[i + j * ldfjac] = g / (d*h);
+	    }
 	}
     }
 

@@ -254,7 +254,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
     /* calculate the jacobian matrix */
 
     iflag = 2;
-    fdjac2_((S_fp)fcn, m, n, x, fvec, fjac, ldfjac, &iflag, 
+    fdjac2_((S_fp)fcn, m, n, 0, x, fvec, fjac, ldfjac, &iflag, 
 	    epsfcn, wa4, p);
     *nfev += n;
     if (iflag < 0) {
