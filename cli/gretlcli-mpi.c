@@ -120,10 +120,7 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
 
 static void mpi_exit (int err)
 {
-    int initted;
-
-    MPI_Initialized(&initted);
-    if (initted) {
+    if (!err) {
 	MPI_Finalize();
     }
     exit(err ? EXIT_FAILURE : EXIT_SUCCESS);
@@ -410,13 +407,14 @@ int main (int argc, char *argv[])
     /* enter main command loop */
 
     while (cmd.ci != QUIT && fb != NULL) {
-	if (err && gretl_error_is_fatal()) {
+	if (err) {
 	    gretl_mpi_abort(linecopy);
 	}
 
 	if (gretl_execute_loop()) { 
-	    if (gretl_loop_exec(&state, dset)) {
-		return 1;
+	    err = gretl_loop_exec(&state, dset);
+	    if (err) {
+		break;
 	    }
 	} else {
 	    err = cli_get_input_line(&state);
@@ -450,6 +448,10 @@ int main (int argc, char *argv[])
 	if (err) {
 	    errmsg(err, prn);
 	}
+    }
+
+    if (err) {
+	mpi_exit(err);
     }
 
     /* leak check -- explicitly free all memory allocated */
