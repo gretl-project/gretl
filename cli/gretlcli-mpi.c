@@ -120,10 +120,12 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
 
 static void mpi_exit (int err)
 {
-    if (!err) {
+    if (err) {
+	MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+    } else {
 	MPI_Finalize();
+	exit(EXIT_SUCCESS);
     }
-    exit(err ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
 static void usage (int err)
@@ -385,7 +387,6 @@ int main (int argc, char *argv[])
 	noalloc(); 
     }
 
-    set_mpi_rank_and_size(id, np);
     gretl_cmd_init(&cmd);
     gretl_exec_state_init(&state, 0, line, &cmd, model, prn);
 

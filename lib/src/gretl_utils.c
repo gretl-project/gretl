@@ -1889,6 +1889,9 @@ int libgretl_mpi_init (int self, int np, int dcmt)
 
     libset_init();
 
+    /* let geneval know */
+    set_mpi_rank_and_size(self, np);
+
     /* load MPI library functions */
     err = gretl_MPI_init();
     if (err) {
