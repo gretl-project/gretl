@@ -1078,7 +1078,7 @@ int genr_is_print (const parser *p)
 
 int genr_is_autoregressive (const parser *p)
 {
-    return (p->flags & P_AUTOREG);
+    return (autoreg(p));
 }
 
 void genr_set_na_check (parser *p)

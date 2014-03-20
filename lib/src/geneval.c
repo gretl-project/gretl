@@ -2575,6 +2575,31 @@ static NODE *matrix_text_write (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *bundle_text_write (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	const char *s = m->v.str;
+	int export = 0;
+	
+	if (!null_or_empty(r)) {
+	    export = (r->v.xval != 0);
+	}
+
+	ret = aux_scalar_node(p);
+	if (ret == NULL) { 
+	    return NULL;
+	}
+
+	ret->v.xval = gretl_bundle_write_as_xml(l->v.b, s, export);
+    } else {
+	ret = aux_scalar_node(p);
+    }
+
+    return ret;
+}
+
 /* matrix on left, scalar on right */
 
 static NODE *matrix_scalar_func (NODE *l, NODE *r, 
@@ -3081,9 +3106,15 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *string_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
+static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_matrix_node(p);
+    NODE *ret;
+
+    if (f == F_MREAD) {
+	ret = aux_matrix_node(p);
+    } else {
+	ret = aux_bundle_node(p);
+    }
 
     if (ret != NULL && starting(p)) {
 	int import = 0;
@@ -3099,17 +3130,21 @@ static NODE *string_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_matrix_read_from_text(n->v.str, import, 
 						   &p->err);
 	    break;
+	case F_BREAD:
+	    ret->v.b = gretl_bundle_read_from_xml(n->v.str, import, 
+						  &p->err);
+	    break;
 	default:
 	    break;
 	}
 
-	if (p->err == E_FOPEN) {
-	    /* should we do this? */
+	if (f == F_MREAD && p->err == E_FOPEN) {
+	    /* should we be doing this?? */
 	    ret->v.m = gretl_null_matrix_new();
 	    p->err = 0;
 	}
 
-	if (ret->v.m == NULL) {
+	if (f == F_MREAD && ret->v.m == NULL) {
 	    matrix_error(p);
 	}
     }
@@ -10383,12 +10418,13 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MREAD:
+    case F_BREAD:
 	if (l->t != STR) {
 	    node_type_error(t->t, 1, STR, l, p);	
 	} else if (!empty_or_num(r)) {
 	    node_type_error(t->t, 2, NUM, r, p);
 	} else {
-	    ret = string_to_matrix_func(l, r, t->t, p);
+	    ret = read_object_func(l, r, t->t, p);
 	}
 	break;
     case F_QR:
@@ -10414,6 +10450,14 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    p->err = E_TYPES;
 	} 
+	break;
+    case F_BWRITE:
+	/* bundle, with string as second arg */
+	if (l->t == BUNDLE && m->t == STR && empty_or_num(r)) {
+	    ret = bundle_text_write(l, m, r, p);
+	} else {
+	    p->err = E_TYPES;
+	}
 	break;
     case F_BFGSMAX:
 	/* matrix, plus one or two string args */
@@ -13224,7 +13268,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 
     parser_aux_init(p);
 
-    if (p->flags & P_AUTOREG) {
+    if (autoreg(p)) {
 	/* e.g. y = b*y(-1) : evaluate dynamically */
 	for (t=p->dset->t1; t<p->dset->t2 && !p->err; t++) {
 	    const double *x;

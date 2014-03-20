@@ -1291,33 +1291,10 @@ void xml_put_bundle (gretl_bundle *b, const char *name, FILE *fp)
     fputs("</gretl-bundle>\n", fp); 
 }
 
-/* For internal use only, called from uservar.c: @p1 should be of
-   type xmlNodePtr and @p2 should be an xmlDocPtr. We suppress the
-   actual pointer types in the prototype so that it's possible for a
-   module to include gretl_bundle.h without including the full libxml
-   headers.  
-*/
-
-int load_bundle_from_xml (void *p1, void *p2, const char *name,
-			  const char *creator)
+static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 {
-    xmlNodePtr node = (xmlNodePtr) p1;
-    xmlDocPtr doc = (xmlDocPtr) p2;
-    xmlNodePtr cur = node->xmlChildrenNode;
-    gretl_bundle *b;
     char *key, *typename;
     int err = 0;
-
-    b = gretl_bundle_new();
-    if (b == NULL) {
-	return E_ALLOC;
-    }
-
-    fprintf(stderr, "load_bundle_from_xml: '%s'\n", name);
-
-    if (creator != NULL && *creator != '\0') {
-	b->creator = gretl_strdup(creator);
-    }
 
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (XUC) "bundled-item")) {
@@ -1386,6 +1363,38 @@ int load_bundle_from_xml (void *p1, void *p2, const char *name,
 	cur = cur->next;
     }
 
+    return err;
+}
+
+/* For internal use only, called from uservar.c: @p1 should be of
+   type xmlNodePtr and @p2 should be an xmlDocPtr. We suppress the
+   actual pointer types in the prototype so that it's possible for a
+   module to include gretl_bundle.h without including the full libxml
+   headers.  
+*/
+
+int load_bundle_from_xml (void *p1, void *p2, const char *name,
+			  const char *creator)
+{
+    xmlNodePtr node = (xmlNodePtr) p1;
+    xmlDocPtr doc = (xmlDocPtr) p2;
+    xmlNodePtr cur = node->xmlChildrenNode;
+    gretl_bundle *b;
+    int err = 0;
+
+    b = gretl_bundle_new();
+    if (b == NULL) {
+	return E_ALLOC;
+    }
+
+    fprintf(stderr, "load_bundle_from_xml: '%s'\n", name);
+
+    if (creator != NULL && *creator != '\0') {
+	b->creator = gretl_strdup(creator);
+    }
+
+    err = load_bundled_items(b, cur, doc);
+
     if (!err) {
 	err = user_var_add(name, GRETL_TYPE_BUNDLE, b);
 	fprintf(stderr, "gretl_bundle_push: err = %d\n", err);
@@ -1395,6 +1404,70 @@ int load_bundle_from_xml (void *p1, void *p2, const char *name,
     }
 
     return err;
+}
+
+int gretl_bundle_write_as_xml (gretl_bundle *b, const char *fname,
+			       int export)
+{
+    char fullname[FILENAME_MAX];
+    FILE *fp;
+    int err = 0;
+
+    if (export) {
+	build_path(fullname, gretl_dotdir(), fname, NULL);
+    } else {
+	strcpy(fullname, fname);
+	gretl_maybe_switch_dir(fullname);
+    }
+
+    fp = gretl_fopen(fullname, "wb");
+    if (fp == NULL) {
+	err = E_FOPEN;
+    } else {
+	gretl_xml_header(fp);
+	xml_put_bundle(b, "temp", fp);
+	fclose(fp);
+    }
+
+    return err;
+}
+
+gretl_bundle *gretl_bundle_read_from_xml (const char *fname, int import,
+					  int *err)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    char fullname[FILENAME_MAX];
+    gretl_bundle *b;
+
+    b = gretl_bundle_new();
+    if (b == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }    
+
+    if (import) {
+	build_path(fullname, gretl_dotdir(), fname, NULL);
+    } else {
+	strcpy(fullname, fname);
+    }
+
+    *err = gretl_xml_open_doc_root(fullname, "gretl-bundle", &doc, &cur);
+
+    if (!*err) {
+	gretl_push_c_numeric_locale();
+	cur = cur->xmlChildrenNode;
+	*err = load_bundled_items(b, cur, doc);
+	gretl_pop_c_numeric_locale();
+	xmlFreeDoc(doc);
+    }
+
+    if (*err) {
+	gretl_bundle_destroy(b);
+	b = NULL;
+    }
+
+    return b;
 }
 
 gretl_bundle *get_sysinfo_bundle (int *err)
