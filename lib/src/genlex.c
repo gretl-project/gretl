@@ -322,6 +322,8 @@ struct str_table funcs[] = {
     { F_MRLS,     "mrls" },
     { F_MREAD,    "mread" },
     { F_MWRITE,   "mwrite" },
+    { F_BREAD,    "bread" },
+    { F_BWRITE,   "bwrite" },
     { F_MCSEL,    "selifc" },
     { F_MRSEL,    "selifr" },
     { F_POLROOTS, "polroots" },
@@ -1099,7 +1101,7 @@ static void word_check_next_char (parser *p)
     if (p->ch == '(') {
 	/* series (lag) or function */
 	if (p->sym == UVEC) {
-	    if (p->idnum == p->lh.v) {
+	    if (p->idnum > 0 && p->idnum == p->lh.v) {
 		p->flags |= P_AUTOREG;
 	    }
 	    p->sym = LAG;
