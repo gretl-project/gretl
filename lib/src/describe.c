@@ -3309,16 +3309,18 @@ static gretl_matrix *real_xcf_vec (const double *x, const double *y,
     int i;
 
     xbar = gretl_mean(0, T-1, x);
-    if (na(xbar)) {
+    if (xna(xbar)) {
 	*err = E_DATA;
 	return NULL;
     }
 
     ybar = gretl_mean(0, T-1, y);
-    if (na(ybar)) {
+    if (xna(ybar)) {
 	*err = E_DATA;
 	return NULL;
     }
+
+    fprintf(stderr, "xbar = %12.8f, ybar = %12.8f\n", xbar, ybar);
 
     xcf = gretl_column_vector_alloc(p * 2 + 1);
     if (xcf == NULL) {
