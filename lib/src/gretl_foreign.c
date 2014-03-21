@@ -339,7 +339,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     }
 
     if (!err) {
-	gchar *hostbit, *npbit, *rngbit;
+	gchar *hostbit, *npbit, *rngbit, *qopt;
 	gchar *cmd, *sout = NULL;
 
 	if (hostfile != NULL && *hostfile != '\0') {
@@ -363,10 +363,16 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	} else {
 	    rngbit = g_strdup("");
 	}
+
+	if (opt & OPT_Q) {
+	    qopt = g_strdup(" --quiet");
+	} else {
+	    qopt = g_strdup("");
+	}
 	
-	cmd = g_strdup_printf("mpiexec%s%s \"%sgretlcli-mpi\"%s \"%s\"",
+	cmd = g_strdup_printf("mpiexec%s%s \"%sgretlcli-mpi\"%s%s \"%s\"",
 			      hostbit, npbit, gretl_home(), rngbit,
-			      gretl_mpi_filename());
+			      qopt, gretl_mpi_filename());
 
 	err = gretl_win32_grab_output(cmd, &sout);
 	if (sout != NULL && *sout != '\0') {
@@ -617,7 +623,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     if (!err) {
 	gchar *mpiprog = gretl_mpi_binary();
 	const char *hostsopt = NULL;
-	char *argv[9];
+	char *argv[10];
 	int i = 0;
 
 	if (hostfile != NULL && *hostfile != '\0') {
@@ -640,6 +646,9 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	argv[i++] = mpiprog;
 	if (opt & OPT_S) {
 	    argv[i++] = "--single-rng";
+	}
+	if (opt & OPT_Q) {
+	    argv[i++] = "--quiet";
 	}
 	argv[i++] = (char *) gretl_mpi_filename();
 	argv[i] = NULL;
