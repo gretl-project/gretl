@@ -59,7 +59,8 @@ int runit;
 int data_status;
 char linebak[MAXLINE];
 
-static int cli_exec_line (ExecState *s, int id, DATASET *dset, PRN *cmdprn);
+static int cli_exec_line (ExecState *s, int id, DATASET *dset, 
+			  gretlopt progopt, PRN *cmdprn);
 static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
 static int cli_saved_object_action (const char *line, 
@@ -92,6 +93,8 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
 	    opt |= OPT_HELP;
 	} else if (!strcmp(s, "-v") || !strcmp(s, "--version")) {
 	    opt |= OPT_VERSION;
+	} else if (!strcmp(s, "-q") || !strcmp(s, "--quiet")) {
+	    opt |= OPT_QUIET;
 	} else if (!strcmp(s, "-s") || !strcmp(s, "--single-rng")) { 
 	    *dcmt = 0;
 	} else if (!strncmp(s, "--scriptopt=", 12)) {
@@ -136,6 +139,7 @@ static void usage (int err)
     printf(_("Options:\n"
 	     " -h or --help        Print this info and exit.\n"
 	     " -v or --version     Print version info and exit.\n"
+             " -q or --quiet       Don't print logo on start-up.\n"
 	     " -e or --english     Force use of English rather than translation.\n"
 	     " -s or --single-rng  Use a single RNG, not one per process.\n"));
     printf(" --scriptopt=<value> sets a scalar value, accessible to a script\n"
@@ -306,6 +310,7 @@ int main (int argc, char *argv[])
     char filearg[MAXLEN];
     char runfile[MAXLEN];
     double scriptval = NADBL;
+    gretlopt progopt = 0;
     int use_dcmt = 1;
     CMD cmd;
     PRN *prn = NULL;
@@ -332,17 +337,15 @@ int main (int argc, char *argv[])
     if (argc < 2) {
 	usage(1);
     } else {
-	gretlopt opt;
-
-	err = parse_options(&argc, &argv, &opt, &scriptval, 
+	err = parse_options(&argc, &argv, &progopt, &scriptval, 
 			    &use_dcmt, filearg);
 
 	if (err) {
 	    /* bad option, or missing filename */
 	    usage(1);
-	} else if (opt & (OPT_HELP | OPT_VERSION)) {
+	} else if (progopt & (OPT_HELP | OPT_VERSION)) {
 	    /* we'll exit in these cases */
-	    if (opt & OPT_HELP) {
+	    if (progopt & OPT_HELP) {
 		usage(0);
 	    } else {
 		logo(0);
@@ -352,7 +355,7 @@ int main (int argc, char *argv[])
 
 	strcpy(runfile, filearg);
 	    
-	if (opt & OPT_ENGLISH) {
+	if (progopt & OPT_ENGLISH) {
 	    force_language(LANG_C);
 	}
     }
@@ -363,7 +366,9 @@ int main (int argc, char *argv[])
 	mpi_exit(1);
     }
 
-    maybe_print_intro(id);
+    if (!(progopt & OPT_QUIET)) {
+	maybe_print_intro(id);
+    }
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, &err);
     if (err) {
@@ -397,7 +402,7 @@ int main (int argc, char *argv[])
     runit = 0;
     sprintf(line, "run %s\n", runfile);
     state.flags |= INIT_EXEC;
-    err = cli_exec_line(&state, id, dset, cmdprn);
+    err = cli_exec_line(&state, id, dset, progopt, cmdprn);
     state.flags ^= INIT_EXEC;
     if (err && fb == NULL) {
 	mpi_exit(1);
@@ -439,7 +444,7 @@ int main (int argc, char *argv[])
 
 	strcpy(linecopy, line);
 	tailstrip(linecopy);
-	err = cli_exec_line(&state, id, dset, cmdprn);
+	err = cli_exec_line(&state, id, dset, progopt, cmdprn);
     }
 
     /* finished main command loop */
@@ -682,7 +687,7 @@ static void maybe_save_session_output (const char *cmdfile)
 */
 
 static int cli_exec_line (ExecState *s, int id, DATASET *dset, 
-			  PRN *cmdprn)
+			  gretlopt progopt, PRN *cmdprn)
 {
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -847,7 +852,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	    fclose(fb);
 	    fb = pop_input_file();
 	    if (fb == NULL) {
-		if (id == 0) {
+		if (id == 0 && !(progopt & OPT_QUIET)) {
 		    pputs(prn, _("Done\n"));
 		}
 	    } else {
