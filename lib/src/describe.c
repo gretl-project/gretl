@@ -3320,8 +3320,6 @@ static gretl_matrix *real_xcf_vec (const double *x, const double *y,
 	return NULL;
     }
 
-    fprintf(stderr, "xbar = %12.8f, ybar = %12.8f\n", xbar, ybar);
-
     xcf = gretl_column_vector_alloc(p * 2 + 1);
     if (xcf == NULL) {
 	*err = E_ALLOC;  
