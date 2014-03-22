@@ -1484,6 +1484,8 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	    ival = check_for_program("mpiexec");
 #endif	    
 	    gretl_bundle_set_scalar(b, "mpi", (double) ival);
+	    ival = gretl_max_mpi_processes();
+	    gretl_bundle_set_scalar(b, "mpimax", (double) ival);
 	    ival = gretl_n_processors();
 	    gretl_bundle_set_scalar(b, "nproc", (double) ival);
 	    ival = 0;

@@ -45,6 +45,9 @@ int write_gretl_python_file (const char *buf, gretlopt opt, const char **pfname)
 int write_gretl_octave_file (const char *buf, gretlopt opt, 
 			     const DATASET *dset,
 			     const char **pfname);
+
+int gretl_max_mpi_processes (void);
+
 #ifdef HAVE_MPI
 
 void set_mpi_variant (const char *pref);

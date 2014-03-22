@@ -132,7 +132,58 @@ void set_mpi_variant (const char *pref)
     }
 }
 
-#endif
+int gretl_max_mpi_processes (void)
+{
+    const char *hostfile = gretl_mpi_hosts();
+    int procmax = gretl_n_processors();
+
+    if (hostfile != NULL && *hostfile != '\0') {
+	FILE *fp = gretl_fopen(hostfile, "r");
+
+	if (fp != NULL) {
+	    const char *fmt;
+	    char line[256], host[128];
+	    int nf, slots, allslots = 0;
+	    int err = 0;
+
+	    if (mpi_variant == MPI_MSMPI) {
+		fmt = "%127s %d";
+	    } else if (mpi_variant == MPI_MPICH) {
+		fmt = "%127[^:]:%d";
+	    } else {
+		fmt = "%127s slots=%d";
+	    }
+
+	    while (fgets(line, sizeof line, fp) && !err) {
+		if (*line != '#' && !string_is_blank(line)) {
+		    nf = sscanf(line, fmt, host, &slots);
+		    if (nf == 2) {
+			allslots += slots;
+		    } else {
+			err = E_DATA;
+		    }
+		}
+	    }
+
+	    if (!err && allslots > 0) {
+		procmax = allslots;
+	    }
+
+	    fclose(fp);
+	}
+    }
+
+    return procmax;
+}
+
+#else
+
+int gretl_max_mpi_processes (void)
+{
+    return 0;
+}
+
+#endif /* HAVE_MPI */
 
 static const gchar *gretl_ox_filename (void)
 {
