@@ -474,6 +474,51 @@ void gretl_xml_put_matrix (const gretl_matrix *m, const char *name,
 }
 
 /**
+ * gretl_xml_put_matrix_to_prn:
+ * @m: matrix to be written.
+ * @name: name for matrix.
+ * @prn: gretl printer.
+ * 
+ */
+
+void gretl_xml_put_matrix_to_prn (const gretl_matrix *m, 
+				  const char *name, 
+				  PRN *prn)
+{
+    int i, j;
+
+    if (m == NULL) {
+	return;
+    }
+
+    if (name == NULL) {
+	pprintf(prn, "<gretl-matrix rows=\"%d\" cols=\"%d\"\n", 
+		m->rows, m->cols);
+    } else {
+	pprintf(prn, "<gretl-matrix name=\"%s\" rows=\"%d\" cols=\"%d\"",
+		name, m->rows, m->cols);
+    }
+
+    if (gretl_matrix_is_dated(m)) {
+	int mt1 = gretl_matrix_get_t1(m);
+	int mt2 = gretl_matrix_get_t2(m);
+
+	pprintf(prn, " t1=\"%d\" t2=\"%d\"", mt1, mt2);
+    }
+
+    pputs(prn, ">\n");
+
+    for (i=0; i<m->rows; i++) {
+	for (j=0; j<m->cols; j++) {
+	    pprintf(prn, "%.16g ", gretl_matrix_get(m, i, j));
+	}
+	pputc(prn, '\n');
+    }
+
+    pputs(prn, "</gretl-matrix>\n"); 
+}
+
+/**
  * gretl_xml_serialize_matrix:
  * @m: matrix to be written.
  * @name: name for matrix (or NULL).

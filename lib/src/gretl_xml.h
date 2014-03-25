@@ -57,6 +57,10 @@ int gretl_xml_put_raw_string (const char *str, FILE *fp);
 void gretl_xml_put_matrix (const gretl_matrix *m, const char *name, 
 			   FILE *fp);
 
+void gretl_xml_put_matrix_to_prn (const gretl_matrix *m, 
+				  const char *name, 
+				  PRN *prn);
+
 int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
 			       int *i);
 

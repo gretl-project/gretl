@@ -82,12 +82,16 @@ void gretl_print_destroy (PRN *prn)
 
     fpdup = (prn->fp == prn->fpaux);
 
-    if (prn->fp != NULL && prn->fp != stdout && prn->fp != stderr) {
+    if (prn->fp != NULL) {
+	if (prn->fp == stdout) {
+	    fflush(stdout);
+	} else if (prn->fp != stderr) {
 #if PRN_DEBUG
-  	fprintf(stderr, "gretl_print_destroy: prn=%p, closing fp at %p\n", 
-		(void *) prn, (void *) prn->fp); 
+	    fprintf(stderr, "gretl_print_destroy: prn=%p, closing fp at %p\n", 
+		    (void *) prn, (void *) prn->fp); 
 #endif
-	fclose(prn->fp);
+	    fclose(prn->fp);
+	}
     }
 
     if (prn->fname != NULL) {
@@ -170,7 +174,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
     if (ptype == GRETL_PRINT_STREAM) {
 	prn->fp = fp;
     } else if (ptype == GRETL_PRINT_FILE) {
-	prn->fp = gretl_fopen(fname, "w");
+	prn->fp = gretl_fopen(fname, "wb");
 	if (prn->fp == NULL) {
 	    err = E_FOPEN;
 	    free(prn);

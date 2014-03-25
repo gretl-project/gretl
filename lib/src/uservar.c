@@ -1687,13 +1687,17 @@ static void write_user_lists (FILE *fp)
 
 static void write_user_bundles (FILE *fp)
 {
+    PRN *prn = gretl_print_new_with_stream(fp);
     int i;
 
     for (i=0; i<n_vars; i++) {
 	if (uvars[i]->type == GRETL_TYPE_BUNDLE) {
-	    xml_put_bundle(uvars[i]->ptr, uvars[i]->name, fp);
+	    xml_put_bundle(uvars[i]->ptr, uvars[i]->name, prn);
 	}
     }
+
+    gretl_print_detach_stream(prn);
+    gretl_print_destroy(prn);
 }
 
 static int read_user_scalars (xmlDocPtr doc, xmlNodePtr cur) 

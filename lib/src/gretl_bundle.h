@@ -128,7 +128,7 @@ void gretl_bundle_destroy (gretl_bundle *bundle);
 
 void gretl_bundle_void_content (gretl_bundle *bundle);
 
-void xml_put_bundle (gretl_bundle *b, const char *name, FILE *fp);
+void xml_put_bundle (gretl_bundle *b, const char *name, PRN *prn);
 
 int load_bundle_from_xml (void *p1, void *p2, const char *name,
 			  const char *creator);
@@ -136,8 +136,13 @@ int load_bundle_from_xml (void *p1, void *p2, const char *name,
 int gretl_bundle_write_as_xml (gretl_bundle *b, const char *fname,
 			       int export);
 
-gretl_bundle *gretl_bundle_read_from_xml (const char *fname, int import,
+gretl_bundle *gretl_bundle_read_from_xml (const char *fname, 
+					  int import,
 					  int *err);
+
+gretl_bundle *gretl_bundle_read_from_buffer (const char *buf, 
+					     int len,
+					     int *err);
 
 int bundle_contains_data (gretl_bundle *b, void *data);
 
