@@ -599,6 +599,7 @@ static void state_vars_init (set_vars *sv)
     sv->arma_vcv = ML_HESSIAN;
     sv->garch_robust_vcv = ML_UNSET;
     sv->nadarwat_trim = 4.0;
+    sv->fdjac_qual = 0;
 
     *sv->shelldir = '\0';
 
