@@ -410,12 +410,12 @@ int get_use_wimp (void)
 
 #endif
 
-static gretlopt set_paths_opt = OPT_NONE;
+static gretlopt update_paths_opt = OPT_NONE;
 
 void force_english_help (void)
 {
-    set_paths_opt |= OPT_N;
-    gretl_update_paths(&paths, set_paths_opt);
+    update_paths_opt |= OPT_N;
+    gretl_update_paths(&paths, update_paths_opt);
 }
 
 void set_fixed_font (const char *fontname)
@@ -1775,7 +1775,7 @@ int write_rc (void)
     rc_save_file_lists(fp);
     fclose(fp);
 
-    gretl_update_paths(&paths, set_paths_opt);
+    gretl_update_paths(&paths, update_paths_opt);
 
     return 0;
 }
@@ -1870,7 +1870,7 @@ static int common_read_rc_setup (void)
     set_panel_hccme(hc_panel);
     set_garch_robust_vcv(hc_garch);
 
-    err = gretl_set_paths(&paths, set_paths_opt);
+    err = gretl_set_paths(&paths);
     if (err) {
 	/* tell the user, then turn off the special alarm */
 	gui_errmsg(err);
