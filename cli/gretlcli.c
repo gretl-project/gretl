@@ -516,7 +516,7 @@ int main (int argc, char *argv[])
     }
 
 #ifdef WIN32
-    cli_read_registry(callname);
+    win32_cli_read_rc(callname);
 #else
     cli_read_rc();
 #endif /* WIN32 */
