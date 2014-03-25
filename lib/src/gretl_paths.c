@@ -2770,6 +2770,9 @@ static int maybe_transcribe_path (char *targ, char *src, int flags)
 
    * paths.pngfont is updated separately via the plot editing
      dialog
+
+   The @opt argument can include OPT_N to force use of the English-
+   language help file where this would not be the default.
 */
 
 int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
@@ -3038,13 +3041,12 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.pngfont, cpaths->pngfont, 0);
 }
 
-/* This is called after reading the gretl config file (or reading from
-   the registry on Windows) at startup (and only then).  Subsequent
-   updates to paths via the GUI (if any) are handled by the function
-   gretl_update_paths().
+/* This is called after reading the gretl config file at startup 
+   (and only then).  Subsequent updates to paths via the GUI (if any) 
+   are handled by the function gretl_update_paths().
 */
 
-int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
+int gretl_set_paths (ConfigPaths *cpaths)
 {
     int err0 = 0, err1 = 0;
     int retval = 0;
@@ -3053,18 +3055,11 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
     *paths.workdir = '\0';
     *paths.plotfile = '\0';
 
-    initialize_gretldir(cpaths->gretldir, opt);
+    initialize_gretldir(cpaths->gretldir, OPT_NONE);
 
-    if (!(opt & OPT_D)) {
-	/* OPT_D says dotdir = workdir */
-	err0 = initialize_dotdir();
-    }
+    err0 = initialize_dotdir();
 
     copy_paths_with_fallback(cpaths);
-
-    if (opt & OPT_D) {
-	strcpy(paths.dotdir, paths.workdir);
-    }
 
     if (strcmp(paths.dotdir, paths.workdir)) { 
 	err1 = validate_writedir(paths.workdir);
@@ -3317,8 +3312,6 @@ int slash_terminate (char *path)
     return 0;
 }
 
-#ifndef WIN32
-
 static void rc_set_gp_colors (const char *gpcolors)
 {
     char cstr[N_GP_COLORS][8];
@@ -3343,6 +3336,104 @@ static int rc_bool (const char *s)
     }	
 }
 
+static void handle_use_cwd (int use_cwd, ConfigPaths *cpaths)
+{
+    libset_set_bool(USE_CWD, use_cwd);
+
+    if (use_cwd) {
+	char *s, cwd[MAXLEN];
+
+	s = getcwd(cwd, MAXLEN);
+	if (s != NULL) {
+	    *cpaths->workdir = '\0';
+	    strncat(cpaths->workdir, s, MAXLEN - 2);
+	    slash_terminate(cpaths->workdir);
+	}
+    }
+}
+
+#define PROXLEN 64
+
+void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
+				 char *dbproxy, int *use_proxy)
+{
+    char line[MAXLEN], key[32], val[MAXLEN];
+
+    while (fgets(line, sizeof line, fp) != NULL) {
+	if (*line == '#') {
+	    continue;
+	}
+	if (!strncmp(line, "recent", 6)) {
+	    /* reached the "recent files" section */
+	    break;
+	}
+	if (sscanf(line, "%s", key) != 1) {
+	    continue;
+	}
+	*val = '\0';
+	/* get the string that follows " = " */ 
+	strncat(val, line + strlen(key) + 3, MAXLEN - 1);
+	gretl_strstrip(val); 
+	if (!strcmp(key, "gretldir")) {
+	    strncat(cpaths->gretldir, val, MAXLEN - 1);
+#ifndef WIN32
+	} else if (!strcmp(key, "gnuplot")) {
+	    strncat(cpaths->gnuplot, val, MAXLEN - 1);
+#endif
+	} else if (!strcmp(key, "userdir")) {
+	    strncat(cpaths->workdir, val, MAXLEN - 1);
+	} else if (!strcmp(key, "shellok")) {
+	    libset_set_bool(SHELL_OK, rc_bool(val));
+	} else if (!strcmp(key, "usecwd")) {
+	    handle_use_cwd(rc_bool(val), cpaths);
+	} else if (!strcmp(key, "dbhost")) {
+	    strncat(cpaths->dbhost, val, 32 - 1);
+	} else if (!strcmp(key, "dbproxy")) {
+	    strncat(dbproxy, val, PROXLEN - 1);
+	} else if (!strcmp(key, "useproxy")) {
+	    *use_proxy = rc_bool(val);
+	} else if (!strcmp(key, "x12a")) {
+	    strncat(cpaths->x12a, val, MAXLEN - 1);
+	} else if (!strcmp(key, "tramo")) {
+	    strncat(cpaths->tramo, val, MAXLEN - 1);
+	} else if (!strcmp(key, "Rbin")) {
+	    strncat(cpaths->rbinpath, val, MAXLEN - 1);
+	} else if (!strcmp(key, "Rlib")) {
+	    strncat(cpaths->rlibpath, val, MAXLEN - 1);
+	} else if (!strcmp(key, "ox")) {
+	    strncat(cpaths->oxlpath, val, MAXLEN - 1);
+	} else if (!strcmp(key, "octave")) {
+	    strncat(cpaths->octpath, val, MAXLEN - 1);
+	} else if (!strcmp(key, "stata")) {
+	    strncat(cpaths->statapath, val, MAXLEN - 1);
+	} else if (!strcmp(key, "python")) {
+	    strncat(cpaths->pypath, val, MAXLEN - 1);
+	} else if (!strcmp(key, "mpi_hosts")) {
+	    strncat(cpaths->mpi_hosts, val, MAXLEN - 1);
+	} else if (!strcmp(key, "mpi_pref")) {
+#ifdef HAVE_MPI
+	    set_mpi_variant(val);
+#else
+	    ;
+#endif
+	} else if (!strcmp(key, "Png_font")) {
+	    strncat(cpaths->pngfont, val, 128 - 1);
+	} else if (!strcmp(key, "Gp_colors")) {
+	    rc_set_gp_colors(val);
+	} else if (!strcmp(key, "HC_xsect")) {
+	    set_xsect_hccme(val);
+	} else if (!strcmp(key, "HC_tseri")) {
+	    set_tseries_hccme(val);
+	} else if (!strcmp(key, "HC_panel")) {
+	    set_panel_hccme(val);
+	} else if (!strcmp(key, "HC_garch")) {
+	    set_garch_robust_vcv(val);
+	}
+    }
+}
+
+#ifndef WIN32
+
 void get_gretl_rc_path (char *rcfile)
 {
     char *path = getenv("GRETL_CONFIG_FILE");
@@ -3363,8 +3454,6 @@ void get_gretl_rc_path (char *rcfile)
     }
 }
 
-#define PROXLEN 64
-
 /* non-Windows read of the gretl configuration file on behalf
    of the CLI program, gretlcli
 */
@@ -3372,116 +3461,26 @@ void get_gretl_rc_path (char *rcfile)
 int cli_read_rc (void) 
 {
     ConfigPaths cpaths = {0};
-    FILE *fp = NULL;
     char rcfile[FILENAME_MAX];
-    char line[MAXLEN], key[32], val[MAXLEN];
     char dbproxy[PROXLEN] = {0};
-    gretlopt paths_opt = OPT_NONE;
-    int usecwd = 0;
     int use_proxy = 0;
+    FILE *fp;
     int err = 0;
 
     get_gretl_rc_path(rcfile);
-
     fp = gretl_fopen(rcfile, "r");
+
     if (fp == NULL) {
 	err = E_FOPEN;
-	goto bailout;
+    } else {
+	get_gretl_config_from_file(fp, &cpaths, dbproxy, &use_proxy);
+	fclose(fp);
     }
-
-    while (fgets(line, sizeof line, fp) != NULL) {
-	if (*line == '#') {
-	    continue;
-	}
-	if (!strncmp(line, "recent", 6)) {
-	    /* reached the "recent files" section */
-	    break;
-	}
-	if (sscanf(line, "%s", key) == 1) {
-	    *val = '\0';
-	    /* get the string that follows " = " */ 
-	    strncat(val, line + strlen(key) + 3, MAXLEN - 1);
-	    gretl_strstrip(val); 
-	    if (!strcmp(key, "gretldir")) {
-		strncat(cpaths.gretldir, val, MAXLEN - 1);
-	    } else if (!strcmp(key, "gnuplot")) {
-		strncat(cpaths.gnuplot, val, MAXLEN - 1);
-	    } else if (!strcmp(key, "userdir")) {
-		strncat(cpaths.workdir, val, MAXLEN - 1);
-	    } else if (!strcmp(key, "no_dotdir")) {
-		if (rc_bool(val)) {
-		    paths_opt = OPT_D;
-		}
-	    } else if (!strcmp(key, "shellok")) {
-		libset_set_bool(SHELL_OK, rc_bool(val));
-	    } else if (!strcmp(key, "usecwd")) {
-		usecwd = rc_bool(val);
-		libset_set_bool(USE_CWD, usecwd);
-	    } else if (!strcmp(key, "dbhost")) {
-		strncat(cpaths.dbhost, val, 32 - 1);
-	    } else if (!strcmp(key, "dbproxy")) {
-		strncat(dbproxy, val, PROXLEN - 1);
-	    } else if (!strcmp(key, "useproxy")) {
-		use_proxy = rc_bool(val);
-	    } else if (!strcmp(key, "x12a")) {
-		strncat(cpaths.x12a, val, MAXLEN - 1);
-	    } else if (!strcmp(key, "tramo")) {
-		strncat(cpaths.tramo, val, MAXLEN - 1);
-	    } else if (!strcmp(key, "Rbin")) {
-		strncat(cpaths.rbinpath, val, MAXLEN - 1);
-	    } else if (!strcmp(key, "Rlib")) {
-		strncat(cpaths.rlibpath, val, MAXLEN - 1);
-	    } else if (!strcmp(key, "ox")) {
-		strncat(cpaths.oxlpath, val, MAXLEN - 1);
-	    } else if (!strcmp(key, "octave")) {
-		strncat(cpaths.octpath, val, MAXLEN - 1);
-	    } else if (!strcmp(key, "stata")) {
-		strncat(cpaths.statapath, val, MAXLEN - 1);
-	    } else if (!strcmp(key, "python")) {
-		strncat(cpaths.pypath, val, MAXLEN - 1);
-	    } else if (!strcmp(key, "mpi_hosts")) {
-		strncat(cpaths.mpi_hosts, val, MAXLEN - 1);
-	    } else if (!strcmp(key, "mpi_pref")) {
-#ifdef HAVE_MPI
-		set_mpi_variant(val);
-#else
-		;
-#endif
-	    } else if (!strcmp(key, "Png_font")) {
-		strncat(cpaths.pngfont, val, 128 - 1);
-	    } else if (!strcmp(key, "Gp_colors")) {
-		rc_set_gp_colors(val);
-	    } else if (!strcmp(key, "HC_xsect")) {
-		set_xsect_hccme(val);
-	    } else if (!strcmp(key, "HC_tseri")) {
-		set_tseries_hccme(val);
-	    } else if (!strcmp(key, "HC_panel")) {
-		set_panel_hccme(val);
-	    } else if (!strcmp(key, "HC_garch")) {
-		set_garch_robust_vcv(val);
-	    }
-	}
-    }
-
-    fclose(fp);
-
-    if (usecwd) {
-	char *s, cwd[MAXLEN];
-
-	s = getcwd(cwd, MAXLEN);
-	if (s != NULL) {
-	    *cpaths.workdir = '\0';
-	    strncat(cpaths.workdir, s, MAXLEN - 2);
-	    slash_terminate(cpaths.workdir);
-	}
-    }
-
- bailout:
 
     if (err) {
-	gretl_set_paths(&cpaths, paths_opt);
+	gretl_set_paths(&cpaths);
     } else {
-	err = gretl_set_paths(&cpaths, paths_opt);
+	err = gretl_set_paths(&cpaths);
     }
 
     gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
