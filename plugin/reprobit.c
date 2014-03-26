@@ -358,7 +358,12 @@ static int reprobit_score (double *theta, double *g, int npar,
 		qi->val[j] /= C->lik->val[i];
 	    }
             tmp = gretl_vector_dot_product(qi, C->wts, &err);
+#if 0
 	    g[ii] += (ii < k)? tmp : tmp * C->scale;
+#else
+	    /* for some reason, this seems to be right; investigate! */
+	    g[ii] += (ii < k)? tmp : tmp * 0.5;
+#endif
  	}
 	s += Ti;
     }
