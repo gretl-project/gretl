@@ -351,7 +351,6 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 {
     const char *hostfile = gretl_mpi_hosts();
-    int orig_nt = 0;
     int np = 0;
     int err = 0;
 
@@ -364,28 +363,6 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	np = get_optval_int(MPI, OPT_N, &err);
 	if (!err && (np <= 0 || np > 9999999)) {
 	    err = E_DATA;
-	}
-    }
-
-    if (!err) {
-	/* handle OMP threading in this context */
-	int nt = 1;
-
-	if (opt & OPT_T) {
-	    nt = get_optval_int(MPI, OPT_T, &err);
-	    if (!err && (nt <= 0 || nt > 9999999)) {
-		err = E_DATA;
-	    }
-	}
-	if (!err) {
-	    char *orig_ntstr = getenv("OMP_NUM_THREADS");
-	    char ntnum[8];
-
-	    if (orig_ntstr != NULL && *orig_ntstr != '\0') {
-		orig_nt = atoi(orig_ntstr);
-	    }
-	    sprintf(ntnum, "%d", nt);
-	    gretl_setenv("OMP_NUM_THREADS", ntnum);
 	}
     }
 
@@ -436,14 +413,6 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	g_free(sout);
 	g_free(cmd);
     }
-
-    if (orig_nt > 0 && orig_nt < 999999) {
-	/* restore the original number of OMP threads */
-	char ntnum[8];
-
-	sprintf(ntnum, "%d", orig_nt);
-	gretl_setenv("OMP_NUM_THREADS", ntnum);
-    }	
 
     return err;
 }
@@ -627,7 +596,6 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 {
     const char *hostfile = gretl_mpi_hosts();
     char npnum[8] = {0};
-    int orig_nt = 0;
     int err = 0;
 
     if (*hostfile == '\0') {
@@ -643,31 +611,6 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	}
 	if (!err) {
 	    sprintf(npnum, "%d", np);
-	}
-    }
-
-    if (!err) {
-	/* handle OMP threading in this context */
-	int nt = 1;
-
-	if (opt & OPT_T) {
-	    nt = get_optval_int(MPI, OPT_T, &err);
-	    if (!err && (nt <= 0 || nt > 9999999)) {
-		err = E_DATA;
-	    }
-	}
-	if (!err) {
-	    char *orig_ntstr = getenv("OMP_NUM_THREADS");
-	    char ntnum[8];
-
-	    if (orig_ntstr != NULL && *orig_ntstr != '\0') {
-		orig_nt = atoi(orig_ntstr);
-	    }
-	    sprintf(ntnum, "%d", nt);
-	    gretl_setenv("OMP_NUM_THREADS", ntnum);
-#if MPI_DEBUG
-	    fprintf(stderr, "mpi: set OMP_NUM_THREADS=%s\n", ntnum);
-#endif
 	}
     }
 
@@ -710,14 +653,6 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	err = lib_run_prog_sync(argv, opt, prn);
 	g_free(mpiprog);
     }
-
-    if (orig_nt > 0 && orig_nt < 999999) {
-	/* restore the original number of OMP threads */
-	char ntnum[8];
-
-	sprintf(ntnum, "%d", orig_nt);
-	gretl_setenv("OMP_NUM_THREADS", ntnum);
-    }	
 
     return err;
 }
@@ -1151,10 +1086,27 @@ static int write_gretl_mpi_file (gretlopt opt)
     }
 
     if (!err) {
+	if (opt & OPT_T) {
+	    /* respect the --omp-threads option */
+	    int nt = get_optval_int(MPI, OPT_T, &err);
+
+	    if (!err && (nt <= 0 || nt > 9999999)) {
+		err = E_DATA;
+	    }
+	    if (!err) {
+		fprintf(fp, "set omp_num_threads %d\n", nt);
+	    }
+	} else {
+	    /* by default, don't use OMP threading */
+	    fputs("set omp_num_threads 1\n", fp);
+	}
+    }
+
+    if (!err) {
 	/* put out the stored 'foreign' lines */
 	put_foreign_lines(fp);
 	fclose(fp);
-    }	
+    }
 
     return err;
 }
