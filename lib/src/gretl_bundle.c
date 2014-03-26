@@ -1552,6 +1552,7 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 #else
 	    gretl_bundle_set_string(b, "os", "other");
 #endif
+	    gretl_bundle_set_string(b, "hostname", g_get_host_name());
 	}
 	sysinfo_bundle = b;
     }
