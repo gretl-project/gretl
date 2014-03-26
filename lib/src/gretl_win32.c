@@ -970,7 +970,7 @@ int win32_check_for_program (const char *prog)
 	ret = SearchPath(NULL, prog, NULL, MAXLEN, tmp, &p);
     }
 
-    return ret;
+    return ret != 0;
 }
 
 /* the following needed since mingw does not include strptime */

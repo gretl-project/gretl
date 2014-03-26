@@ -2204,7 +2204,18 @@ void gretl_aligned_free (void *mem)
 
 int check_for_program (const char *prog)
 {
-    return win32_check_for_program(prog);
+    int ret = 0;
+
+    if (has_suffix(prog, ".exe")) {
+	ret = win32_check_for_program(prog);
+    } else {
+	gchar *test = g_strdup_printf("%s.exe", prog);
+
+	ret = win32_check_for_program(test);
+	g_free(test);
+    }
+
+    return ret;
 }
 
 #else /* !WIN32 */
