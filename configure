@@ -16523,7 +16523,6 @@ $as_echo "no" >&6; }
        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#include <f2c.h>
 #include <stdio.h>
 
 int
@@ -16781,7 +16780,6 @@ $as_echo "no" >&6; }
        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#include <f2c.h>
 #include <stdio.h>
 
 int

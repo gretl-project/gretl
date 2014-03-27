@@ -74,7 +74,6 @@ main ()
        CFLAGS="$LAPACK_CFLAGS $CFLAGS"
        LIBS="$LIBS $LAPACK_LIBS"
        AC_TRY_LINK([
-#include <f2c.h>
 #include <stdio.h>
 ],     [ return (1); ],
        [ echo "*** The test program compiled, but did not run. This usually means"
