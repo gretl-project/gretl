@@ -370,7 +370,10 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	gchar *hostbit, *npbit, *rngbit, *qopt;
 	gchar *cmd, *sout = NULL;
 
-	if (hostfile != NULL && *hostfile != '\0') {
+	if (!(opt & OPT_L) && hostfile != NULL && *hostfile != '\0') {
+	    /* note: OPT_L corresponds to --local, meaning that we
+	       should not use a hosts file even if one is present
+	    */
 	    hostbit = g_strdup_printf(" /machinefile \"%s\"", hostfile);
 	} else {
 	    hostbit = g_strdup("");
@@ -620,7 +623,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	char *argv[10];
 	int i = 0;
 
-	if (hostfile != NULL && *hostfile != '\0') {
+	if (!(opt & OPT_L) && hostfile != NULL && *hostfile != '\0') {
 	    hostsopt = (mpi_variant == MPI_MPICH)? "-machinefile" :
 		"--hostfile";
 	} else if (*npnum == '\0') {
