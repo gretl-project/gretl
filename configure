@@ -14282,16 +14282,6 @@ CC="$lt_save_CC"
 # Only expand once:
 
 
-
-test -z "$CFLAGS" && CFLAGS= auto_cflags=1
-test -z "$CC" && cc_specified=yes
-
-if test -n "$auto_cflags"; then
-  if test -n "$GCC"; then
-    CFLAGS="$CFLAGS -Wall"
-  fi
-fi
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ln -s works" >&5
 $as_echo_n "checking whether ln -s works... " >&6; }
 LN_S=$as_ln_s
@@ -16460,7 +16450,7 @@ fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LAPACK" >&5
 $as_echo_n "checking for LAPACK... " >&6; }
   if test x"${LAPACK_LIBS}" = x ; then
-     if test x$lapack_config_prefix = x ; then
+     if test "x$lapack_config_prefix" = x ; then
         LAPACK_LIBS="-llapack -lblas $FLIB"
      else
         LAPACK_LIBS="-L$lapack_config_prefix -llapack -lblas $FLIB"
@@ -16518,7 +16508,7 @@ $as_echo "no" >&6; }
        :
      else
        echo "*** Could not run LAPACK test program, checking why..."
-       CFLAGS="$LAPACK_CFLAGS $CFLAGS"
+       CFLAGS="$LAPACK_CFLAGS $CFLAGS $OPENMP_CFLAGS"
        LIBS="$LIBS $LAPACK_LIBS"
        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -16717,7 +16707,7 @@ fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LAPACK" >&5
 $as_echo_n "checking for LAPACK... " >&6; }
   if test x"${LAPACK_LIBS}" = x ; then
-     if test x$lapack_config_prefix = x ; then
+     if test "x$lapack_config_prefix" = x ; then
         LAPACK_LIBS="-llapack -lblas $FLIB"
      else
         LAPACK_LIBS="-L$lapack_config_prefix -llapack -lblas $FLIB"
@@ -16775,7 +16765,7 @@ $as_echo "no" >&6; }
        :
      else
        echo "*** Could not run LAPACK test program, checking why..."
-       CFLAGS="$LAPACK_CFLAGS $CFLAGS"
+       CFLAGS="$LAPACK_CFLAGS $CFLAGS $OPENMP_CFLAGS"
        LIBS="$LIBS $LAPACK_LIBS"
        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */

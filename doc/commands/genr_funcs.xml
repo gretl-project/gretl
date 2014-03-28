@@ -737,6 +737,17 @@
 	  </li>
 	  <li>
 	    <para>
+	      <lit>mpimax</lit>: integer, the maximum number of MPI
+	      processes that can be run in parallel. This is zero if
+	      MPI is not supported, otherwise it equals the local
+	      <lit>nproc</lit> value unless an MPI hosts file has been
+	      specified, in which case it is the sum of the number of
+	      processors or <quote>slots</quote> across all the
+	      machines referenced in that file.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	      <lit>wordlen</lit>: integer, either 32 or 64 for
 	      32- and 64-bit systems respectively.
 	    </para>
@@ -748,7 +759,25 @@
 	      <lit>windows</lit> or <lit>other</lit>.
 	    </para>
 	  </li>
+	  <li>
+	    <para>
+	      <lit>hostname</lit>: the name of the host machine on
+	      which the current gretl process is running (with a
+	      fallback of <lit>localhost</lit> in case the name
+	      cannot be determined).
+	    </para>
+	  </li>	  
 	</ilist>
+	<para>
+	  Note that individual elements in the bundle can be accessed
+	  using <quote>dot</quote> notation without any need to copy the
+	  whole bundle under a user-specified name. For example,
+	</para>
+	<code>
+	  if $sysinfo.os == "linux"
+	    # do something linux-specific
+	  endif
+	</code>
       </description>
     </function>
 

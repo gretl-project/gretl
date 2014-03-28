@@ -27,7 +27,7 @@ AC_ARG_VAR([LAPACK_LIBS],[linker flags for lapack, overriding auto-detection])
 
   AC_MSG_CHECKING(for LAPACK)
   if test x"${LAPACK_LIBS}" = x ; then
-     if test x$lapack_config_prefix = x ; then
+     if test "x$lapack_config_prefix" = x ; then
         LAPACK_LIBS="-llapack -lblas $FLIB"
      else
         LAPACK_LIBS="-L$lapack_config_prefix -llapack -lblas $FLIB"
@@ -71,7 +71,7 @@ main ()
        :
      else
        echo "*** Could not run LAPACK test program, checking why..."
-       CFLAGS="$LAPACK_CFLAGS $CFLAGS"
+       CFLAGS="$LAPACK_CFLAGS $CFLAGS $OPENMP_CFLAGS"
        LIBS="$LIBS $LAPACK_LIBS"
        AC_TRY_LINK([
 #include <stdio.h>
