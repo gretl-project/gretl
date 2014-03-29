@@ -20,6 +20,10 @@
 #ifndef FORECAST_H
 #define FORECAST_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     FC_STATIC,
     FC_DYNAMIC,
@@ -87,6 +91,10 @@ rolling_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
 void fcast_get_continuous_range (const FITRESID *fr, int *pt1, int *pt2);
 
 void forecast_matrix_cleanup (void);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif /* FORECAST_H */
 
