@@ -139,6 +139,25 @@ matrix of any size, the commands
 %
 result in a matrix \texttt{B} identical to \texttt{X}.
 
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lc|lc}
+\textit{Function} & \textit{Return value} & \textit{Function} & \textit{Return value} \\ [4pt]
+  \texttt{A', transp(A)} & \texttt{A} &  \texttt{rows(A)} & 0 \\
+  \texttt{cols(A)} & 0 &
+  \texttt{rank(A)} & 0 \\
+  \texttt{det(A)} & \texttt{NA} &
+  \texttt{ldet(A)} & \texttt{NA} \\
+  \texttt{tr(A)} & \texttt{NA} &
+  \texttt{onenorm(A)} & \texttt{NA} \\
+  \texttt{infnorm(A)} & \texttt{NA} &
+  \texttt{rcond(A)} & \texttt{NA} \\
+\end{tabular}
+\caption{Valid functions on an empty matrix, \texttt{A}}
+\label{tab:empty-matrix-funcs}
+\end{table}
+
 From an algebraic point of view, one can make sense of the idea of an
 empty matrix in terms of vector spaces: if a matrix is an ordered set
 of vectors, then \verb|A={}| is the empty set.  As a consequence,
@@ -156,26 +175,6 @@ under certain conditions: the functions \texttt{diag, vec, vech,
 \texttt{I, ones, zeros, mnormal, muniform} when one or more of the
 arguments is 0; and the function \texttt{nullspace} when its argument
 has full column rank.
-
-\begin{table}[htbp]
-\centering
-\begin{tabular}{lc}
-\textit{Function} & \textit{Return value} \\ [4pt]
-  \texttt{A', transp(A)} & \texttt{A} \\
-  \texttt{rows(A)} & 0 \\
-  \texttt{cols(A)} & 0 \\
-  \texttt{rank(A)} & 0 \\
-  \texttt{det(A)} & \texttt{NA} \\
-  \texttt{ldet(A)} & \texttt{NA} \\
-  \texttt{tr(A)} & \texttt{NA} \\
-  \texttt{onenorm(A)} & \texttt{NA} \\
-  \texttt{infnorm(A)} & \texttt{NA} \\
-  \texttt{rcond(A)} & \texttt{NA} \\
-\end{tabular}
-\caption{Valid functions on an empty matrix, \texttt{A}}
-\label{tab:empty-matrix-funcs}
-\end{table}
-
 
 \section{Selecting sub-matrices}
 \label{sec:matrix-sub}
@@ -1142,3 +1141,8 @@ ols price const sqft --vcv
 \end{scode}
 \end{script}
 
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
