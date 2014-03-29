@@ -292,8 +292,6 @@ static void update_ndx (reprob_container *C, const double *theta)
     C->scale = exp(theta[C->npar-1]/2.0);
 }
 
-#define SCOREFIX 1
-
 static int reprobit_score (double *theta, double *g, int npar, 
 			   BFGS_CRIT_FUNC ll, void *p)
 {
@@ -360,22 +358,12 @@ static int reprobit_score (double *theta, double *g, int npar,
 		qi->val[j] /= C->lik->val[i];
 	    }
             tmp = gretl_vector_dot_product(qi, C->wts, &err);
-#if SCOREFIX == 0
-	    g[ii] += (ii < k)? tmp : tmp * C->scale;
-#else
-	    /* for some reason, this seems to be right; investigate! */
-	    /*
-	    g[ii] += (ii < k)? tmp : tmp * 0.5;
-	    */
 	    g[ii] += tmp;
-#endif
  	}
 	s += Ti;
     }
 
-#if SCOREFIX == 1
     g[k] /= 2;
-#endif
     return err;
 }
 
