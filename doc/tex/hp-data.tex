@@ -49,9 +49,23 @@ however, is that you can resize your dataset and/or change some of its
 characteristics, such as its periodicity, at nearly any point inside
 your script if necessary.
 
+Once your dataset is in place, you can start populating it with
+series, either by reading it from disk files (see the next section) or
+by generating them via appropriate commands and functions.
+
 \section{Reading a dataset from a file}
 
 Important commands: \cmd{open}, \cmd{append}, \cmd{join}
+
+The \cmd{open} command is what you'll want to use in most cases, since
+(i) it handles transparently a decent variety of formats (native, CSV,
+spreadsheet, other packages' such as Stata and Eviews) and (ii) it
+takes care automatically of setting up the dataset for you.
+\begin{code}
+  open mydata.gdt    # native format
+  open yourdata.dta  # Stata format
+  open theirdata.xls # Excel format
+\end{code}
 
 \begin{itemize}
 \item native format
@@ -59,27 +73,63 @@ Important commands: \cmd{open}, \cmd{append}, \cmd{join}
 \item nifty tricks with csv data (eg \cmd{join}).
 \end{itemize}
 
+You can also use \cmd{open} to read stuff off tne Net, by using an URL
+instead of a filename, like eg in
+\begin{code}
+  open http://someserver.com/somedata.csv
+\end{code}
+
 \section{Saving datasets}
 
 \begin{itemize}
-\item Storing with \cmd{save} (binary format vs XML)
-\item Using \cmd{save} to export to CSV
+\item Storing with \cmd{store} (binary format vs XML)
+\item Using \cmd{store} to export to CSV
 \item (maybe) using \cmd{printf} and \cmd{outfile} if you need to do
   something unusual; real-life cases?
 \end{itemize}
 
 \section{The \cmd{smpl} command}
 
-The \cmd{smpl} command then allows
-you to discard observations selectively, so that your series will
-contain only the observations you want (automatically changing the
-dimension of the dataset in the process). See chapter 4 in \GUG\ for
-further information.\footnote{Users with a Stata background may find
-  the hansl way of doing things a little disconcerting at first. In
-  hansl, you first restrict your sample through the \cmd{smpl}
-  command, which applies until further notice, then you do what you
-  have to. There is no equivalent to Stata's \texttt{if} clause to
-  commands.}
+The \cmd{smpl} command then allows you to discard observations
+selectively, so that your series will contain only the observations
+you want (automatically changing the dimension of the dataset in the
+process). See chapter 4 in \GUG\ for further
+information.\footnote{Users with a Stata background may find the hansl
+  way of doing things a little disconcerting at first. In hansl, you
+  first restrict your sample through the \cmd{smpl} command, which
+  applies until further notice, then you do what you have to. There is
+  no equivalent to Stata's \texttt{if} clause to commands.}
+
+There are basically three variants to the \cmd{smpl} command:
+\begin{enumerate}
+\item Selecting a contiguous subset of observations: this will be
+  mostly useful with time-series datasets. For example:
+  \begin{code}
+    smpl 4 122            # select observations for 4 to 122
+    smpl 1984:1 2008:4    # the so-called "Great Moderation" period
+    smpl 2008-01-01 ;     # form January 1st, 2008 onwards
+  \end{code}
+\item Selecting observations on the basis of some criterion: this is
+  typically what you want with cross-sectional datasets. Example:
+  \begin{code}
+    smpl male == 1 --restrict                # males only
+    smpl male == 1 && age < 30 --restrict    # just the young guys
+    smpl employed --dummy                    # via a dummy variable
+  \end{code}
+  Note that, in this context, restrictions go ``on top'' of previous
+  ones. In order to start from scratch, you either reset the full
+  sample via \texttt{smpl full} or by using the \option{replace}
+  option.
+\item Restricting the active dataset to some observations so that a
+  certain effect is achieved automatically: for example, drawing a
+  random subsample, or ensuring that all rows that have missing
+  observations are automatically excluded. This is achieved via the
+  \option{no-missing}, \option{contiguous}, and \option{random}
+  options.
+\end{enumerate}
+
+In the context of panel datasets, some extra qaulifications have to be
+made. See \GUG.
 
 \chapter{Series, lists and accessors}
 
@@ -144,11 +194,11 @@ other objects, so the following example should be self-explanatory:
 \subsection{Converting series from/to matrices}
 
 The reason why hansl provides a specific series type, distinct from
-the matrix type, is historical. However, it is also very convenient.
-Operations that are typically performed on series in applied work can
-be awkward to implement using ``raw'' matrices. We have in mind tasks
-such as the computation of leads and lags, or regular and seasonal
-differences; the treatment of missing values; the addition of
+the matrix type, is historical. However, is also a very convenient
+feature.  Operations that are typically performed on series in applied
+work can be awkward to implement using ``raw'' matrices. We have in
+mind tasks such as the computation of leads and lags, or regular and
+seasonal differences; the treatment of missing values; the addition of
 descriptive labels, and so on. Series are the basic data type on which
 gretl's built-in estimation commands depend.
 

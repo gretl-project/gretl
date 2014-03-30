@@ -1127,11 +1127,7 @@ The optimization methods hansl puts at your disposal are:
   be very slow and CPU-intensive.
 \end{itemize}
 
-
-For numerical differentiation we have
-\texttt{fdjac}\footnote{\textbf{Note to self:} we \emph{must}
-  implement bilateral numerical differentiation if we don't already
-  (have to check) and parallelization.}. For example:
+For numerical differentiation we have \texttt{fdjac}. For example:
 
 \begin{code}
 set echo off
@@ -1180,7 +1176,11 @@ x = 0.9; beta(x) = 0.02430, analytical der. = -0.29700, numerical der. = -0.2970
 x = 1.0; beta(x) = 0.00000, analytical der. = -0.00000, numerical der. =       NA
 \end{code}
 
-\clearpage
+Details on the algorithm used can be found in the \GCR. Suffice it to
+say here that you have a \texttt{fdjac\_quality} setting that goes
+from 0 to 2.
+
+%\pagebreak[2]
 
 \section{Random number generation}
 
