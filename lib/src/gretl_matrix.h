@@ -22,6 +22,10 @@
 
 #include <stdarg.h>
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #ifdef NAN
 # define M_NA NAN
 #else
@@ -772,5 +776,8 @@ void set_simd_mn_min (int mn);
 
 int get_simd_mn_min (void);
 
+#ifdef  __cplusplus
+}
+#endif
 
 #endif /* GRETL_MATRIX_H */

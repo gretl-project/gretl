@@ -74,7 +74,7 @@ struct csvdata_ {
     char delim;
     char decpoint;
     int markerpd;
-    int maxlen;
+    int maxlinelen;
     int real_n;
     char *line;
     DATASET *dset;
@@ -275,7 +275,7 @@ static csvdata *csvdata_new (DATASET *dset)
     c->flags = 0;
     c->delim = '\t';
     c->markerpd = -1;
-    c->maxlen = 0;
+    c->maxlinelen = 0;
     c->real_n = 0;
     c->line = NULL;
     c->dset = NULL;
@@ -1445,7 +1445,7 @@ static void check_for_bom (FILE *fp, csvdata *c, PRN *prn)
 static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 {
     int c, c1, cbak = 0, cc = 0;
-    int comment = 0, maxlen = 0;
+    int comment = 0, maxlinelen = 0;
     int crlf = 0, lines = 0;
 
     csv_set_trailing_comma(cdata); /* just provisionally */
@@ -1470,8 +1470,8 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 	    }
 	}
 	if (c == 0x0a) {
-	    if (cc > maxlen) {
-		maxlen = cc;
+	    if (cc > maxlinelen) {
+		maxlinelen = cc;
 	    }
 	    cc = 0;
 	    if (cbak != 0 && cbak != ',') {
@@ -1510,18 +1510,18 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 	cc++;
     }
 
-    if (maxlen == 0) {
+    if (maxlinelen == 0) {
 	pprintf(prn, A_("Data file is empty\n"));
     } else if (csv_has_trailing_comma(cdata)) {
 	pprintf(prn, A_("Data file has trailing commas\n"));
     }
 
-    if (maxlen > 0) {
+    if (maxlinelen > 0) {
 	/* allow for newline and null terminator */
-	maxlen += 2 + crlf;
+	maxlinelen += 2 + crlf;
     }
 
-    return maxlen;
+    return maxlinelen;
 }
 
 #define nonspace_delim(d) (d != ',' && d != ';')
@@ -2019,7 +2019,7 @@ static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
 static char *csv_fgets (csvdata *cdata, FILE *fp)
 {
     char *s = cdata->line;
-    int n = cdata->maxlen;
+    int n = cdata->maxlinelen;
     int i, c1, c = 0;
 
     for (i=0; i<n-1 && c!=0x0a; i++) {
@@ -2888,8 +2888,8 @@ static int real_import_csv (const char *fname,
     }
 
     /* get line length, also check for binary data, etc. */
-    c->maxlen = csv_max_line_length(fp, c, prn);    
-    if (c->maxlen <= 0) {
+    c->maxlinelen = csv_max_line_length(fp, c, prn);    
+    if (c->maxlinelen <= 0) {
 	err = E_DATA;
 	goto csv_bailout;
     }
@@ -2913,7 +2913,7 @@ static int real_import_csv (const char *fname,
     }
 
     /* buffer to hold lines */
-    c->line = malloc(c->maxlen);
+    c->line = malloc(c->maxlinelen);
     if (c->line == NULL) {
 	err = E_ALLOC;
 	goto csv_bailout;
@@ -2925,7 +2925,7 @@ static int real_import_csv (const char *fname,
 	pprintf(mprn, A_("using delimiter '%c'\n"), c->delim);
     }
 
-    pprintf(mprn, A_("   longest line: %d characters\n"), c->maxlen - 1);
+    pprintf(mprn, A_("   longest line: %d characters\n"), c->maxlinelen - 1);
 
     if (csv_has_trailing_comma(c) && c->delim != ',') {
 	csv_unset_trailing_comma(c);
