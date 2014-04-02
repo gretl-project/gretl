@@ -34,6 +34,8 @@ version 1.9.15, in progress
   monthly data starting in October
 - Fix bug: score calculation for random-effects probit was 
   incorrect
+- Fix bug: incorrect estimates when the --robust option was
+  used with the "wls" command
 - Fix bug 181
 - Internals: add support for multiple, independent PRNGs
 - win32 build: update gmp to 5.1.3, mpfr to 3.1.2
