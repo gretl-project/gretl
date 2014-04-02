@@ -43,41 +43,40 @@
       <para context="cli">
 	Tem que ser invocado após um comando de estimação. As variáveis na
 	<repl>lista-de-variáveis</repl> são acrescentadas ao modelo anterior
-        e o novo modelo é estimado.  É apresentada uma estatística de 
-        significância conjunta, juntamente com o seu p-value.  O teste
-        estatístico é o <math>F</math> no caso de estimação por mínimos
-        quadrados (OLS), ou qui-quadrado assimptótico de Wald nos outros
-        casos.  Um p-value abaixo de 0,05 significa que os coeficientes são
-        conjuntamente significantes num nível de 5 porcento.
+    e o novo modelo é estimado. Os resultados do teste de significância
+    conjunta podem ser obtidos usando os acessores  <lit>$test</lit> e
+    <lit>$pvalue</lit>.
       </para>
       <para context="cli">
-	Se foi fornecida a opção <lit>--quiet</lit> os resultados apresentados
-	ficam confinados ao teste da significância conjunta das variáveis
-	acrescentadas, caso contrário, também serão mostradas as estimativas
-        para o modelo aumentado.  Neste caso, a opção <lit>--vcv</lit> faz com
-        que a matriz de covariâncias dos coeficientes também seja apresentada.
-	  Se for usada a opção <lit>--silent</lit>, não será mostrado nada; em
-        em todo o caso, os resultados do teste podem ser obtidos usando as
-        variáveis especiais <lit>$test</lit> e <lit>$pvalue</lit>.
+	Por omissão é efetuada uma estimação da versão aumentada do modelo
+    original, com a inclusão das variáveis da <lit>lista-de-variáveis</lit>.
+    O teste é um teste de Wald sobre o modelo aumentado, que substitui o
+    original como o <quote>modelo corrente</quote> para o propósito de, por
+    exemplo, obter os resíduos como <lit>$uhat</lit> ou realizar mais testes.
       </para>
       <para context="cli">
-	Se o modelo original foi estimado usando o método dos mínimos quadrados
-        de duas fases, ocorre uma situação ambígua: devem as novas variáveis
-        serem acrescentadas como sendo regressores, como instrumentos, ou como
-	ambos?  Isto resolve-se do seguinte modo: por omissão as novas variáveis
-	são acrescentadas como regressores endógenos, mas se foi dada a opção 
-	<lit> --inst</lit> elas são acrescentadas como instrumentos, ou se a opção 
-	<lit>--both</lit> está presente elas são acrescentadas como regressores
-	exógenos.
+	Em alternativa, usando a opção <opt>lm</opt> (apenas no caso de 
+	modelos estimados por OLS), será efetuado um teste LM. Uma regressão
+    auxiliar é executada, na qual a variável dependente é o resíduo do 
+    modelo anterior e as variáveis independentes são as mesmas do modelo
+    anterior mais as da <lit>lista-de-variáveis</lit>. De acordo com a 
+    hipótese nula de que as variáveis acrescentadas não acrescentam poder
+    explicativo, a dimensão da amostra vezes o R quadrado não-ajustado desta
+    regressão tem uma distribuição Qui-quadrado com um grau de liberdade igual
+    ao número de regressores adicionado. Neste caso o modelo original não
+    é alterado.
+      </para>
+      <para context="cli">
+	A opção <lit>--both</lit> é específico para o método dos mínimos quadrados
+    de duas fases: indica que as novas variáveis devem ser acrescentadas
+    tanto à lista de regressores como à lista de instrumentos, por omissão
+    apenas serão acrescentadas à lista de regressores.
       </para>
       <para context="gui">
 	As variáveis seleccionadas são acrescentadas ao modelo anterior e o novo
 	modelo é estimado. É apresentada a estatística de teste para a 
 	significância conjunta das variáveis acrescentadas, assim como o respectivo
-	p-value. A estatística de teste no caso de estimação pelos mínimos quadrados
-        (OLS) é a <math>F</math>, ou o qui-quadrado assimptótico de Wald nos
-	restantes casos. Um p-value abaixo de 0,05 significa que os coeficientes
-	são conjuntamente significantes num nível de 5 porcento.
+	p valor.
       </para>
     </description>
 
@@ -87,17 +86,16 @@
 
   </command>
 
-  <command name="addline" section="Graphs" label="Add line to graph"
+  <command name="addline" section="Graphs" label="Acrescentar linha a um gráfico"
     context="gui">
 
     <description>
       <para>
-	This dialog box allows you to add a line, defined via a formula,
-	to a graph.  The formula must be an expression acceptable to
-	gnuplot.  Use <lit>x</lit> to denote the value of the variable on
-	the x-axis.  Please note that gnuplot uses <lit>**</lit> for
-	exponentiation (raising to a power), and that the decimal
-	character must be given as <quote>.</quote>.  Examples:
+	Esta caixa de diálogo permite acrescentar uma linha a um gráfico, definida
+    por uma expressão.  A expressão tem que ser aceitável por gnuplot.
+    Use <lit>x</lit> para designar o valor da variável no eixo dos x.  Tenha em
+    atenção que gnuplot usa <lit>**</lit> para potenciação, e que o símbolo de 
+    decimais tem que ser <quote>.</quote>.  Exemplos:
       </para>
       <code>
 	10+0.35*x
@@ -155,6 +153,7 @@
 	</option>
 	<option>
 	  <flag>--test-down</flag>
+	  <optparm optional="true">critério</optparm>
 	  <effect>ordem de desfasamento automática</effect>
 	</option>
       </options>
@@ -6920,19 +6919,21 @@
 
     <description>
       <para>
-	Must immediately follow an estimation command. Depending on the
-	option given, this command carries out one of the following: the
-	Doornik&ndash;Hansen test for the normality of the error term; a
-	Lagrange Multiplier test for nonlinearity (logs or squares);
-	White's test (with or without cross-products) or the
-	Breusch&ndash;Pagan test for heteroskedasticity; the LMF test for
-	serial correlation <cite key="kiviet86" p="true">(Kiviet,
-	1986)</cite>; a test for ARCH (Autoregressive Conditional
-	Heteroskedasticity; see also the <cmd>arch</cmd> command); or a
-	test of the common factor restriction implied by AR(1) estimation.
-	With the exception of the normality and common factor test most of
-	the options are only available for models estimated via OLS, but
-	see below for details regarding two-stage least squares.
+	Must immediately follow an estimation command. Depending on
+	the option given, this command carries out one of the
+	following: the Doornik&ndash;Hansen test for the normality of
+	the error term; a Lagrange Multiplier test for nonlinearity
+	(logs or squares); White's test (with or without
+	cross-products) or the Breusch&ndash;Pagan test (<cite
+	key="breusch-pagan79">Breusch and Pagan, 1979</cite>) for
+	heteroskedasticity; the LMF test for serial correlation <cite
+	key="kiviet86" p="true">(Kiviet, 1986)</cite>; a test for ARCH
+	(Autoregressive Conditional Heteroskedasticity; see also the
+	<cmd>arch</cmd> command); or a test of the common factor
+	restriction implied by AR(1) estimation.  With the exception
+	of the normality and common factor test most of the options
+	are only available for models estimated via OLS, but see below
+	for details regarding two-stage least squares.
       </para>
       <para>
 	The optional <lit>order</lit> argument is relevant only in case
@@ -8798,6 +8799,11 @@
 	  <flag>--raw</flag>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+        </option>
       </options>
     </usage>
 
@@ -8825,6 +8831,11 @@
 	standardized, while if the <opt>--raw</opt> option is given the
 	<quote>raw</quote> empirical quantiles are plotted against the
 	quantiles of the standard normal distribution. 
+      </para>
+      <para>
+	The option <opt>--output</opt> has the effect to send the
+	output to the desiderd filename; use <quote>display</quote> to
+	force output to the screen, for example during a loop.
       </para>
       <para>
 	Given two series arguments, <repl>y</repl> and <repl>x</repl>,
@@ -10145,14 +10156,19 @@
 	</li>
 	<li>
 	  <para><lit>gmm_maxiter</lit>: one integer, the maximum number of
-	    iterations for gretl's <lit>gmm</lit> command when in iterated
+	    iterations for gretl's <cmdref targ="gmm"/> command when in iterated
 	    mode (as opposed to one- or two-step).  The default value is
 	    250.
 	  </para>
 	</li>
 	<li>
 	  <para><lit>nadarwat_trim</lit>: one integer, the trim
-	  parameter used in the <lit>nadarwat</lit> function.
+	  parameter used in the  <fncref targ="nadarwat"/> function.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>fdjac_quality</lit>: one integer between 0 and 2,
+	  the algorithm used by the <fncref targ="fdjac"/> function.
 	  </para>
 	</li>
       </ilist>
@@ -10165,16 +10181,6 @@
 	    the pseudo-random number generator.  By default this is set from the
 	    system time; if you want to generate repeatable sequences of random
 	    numbers you must set the seed manually.
-	  </para>
-	</li>
-	<li>
-	  <para><lit>RNG</lit>: either <lit>MT</lit> or
-	  <lit>SFMT</lit> (the default). Switches between the default
-	  random number generator, namely the SIMD-oriented Fast
-	  Mersenne Twister (SFMT), and the Mersenne Twister of 2002 as
-	  implemented in GLib (MT). SFMT is faster and has better
-	  distributional properties but MT was gretl's RNG up to
-	  version 1.9.3.
 	  </para>
 	</li>
 	<li>
@@ -10442,6 +10448,58 @@
 
   </command>
 
+  <command name="setmiss" section="Dataset"
+    label="Missing value code">
+
+    <usage>
+      <arguments>
+        <argument>value</argument>
+        <argument optional="true">varlist</argument>
+      </arguments>
+      <examples>
+        <example>setmiss -1</example>
+        <example>setmiss 100 x2</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+	Get the program to interpret some specific numerical data
+	value (the first parameter to the command) as a code for
+	<quote>missing</quote>, in the case of imported data.  If this
+	value is the only parameter, as in the first example above,
+	the interpretation will be applied to all series in the data
+	set.  If <repl quote="true">value</repl> is followed by a list
+	of variables, by name or number, the interpretation is
+	confined to the specified variable(s). Thus in the second
+	example the data value 100 is interpreted as a code for
+	<quote>missing</quote>, but only for the variable
+	<lit>x2</lit>.
+      </para>
+      
+      <para context="gui">
+	Set a numerical value that will be interpreted as "missing" or
+	"not applicable", either for a particular data series (under
+	the Variable menu) or globally for the entire data set (under
+	the Sample menu).</para> 
+      
+      <para context="gui">
+	Gretl has its own internal coding for missing values, but
+	sometimes imported data may employ a different code.  For
+	example, if a particular series is coded such that a value of
+	-1 indicates "not applicable", you can select "Set missing
+	value code" under the Variable menu and type in the value "-1"
+	(without the quotes).  Gretl will then read the -1s as missing
+	observations.</para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Data/Set missing value code</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="setobs" section="Dataset" context="cli"
     label="Set frequency and starting observation">
 
@@ -10569,58 +10627,6 @@
       <menu-path>/Data/Dataset structure</menu-path>
     </gui-access>
       
-  </command>
-
-  <command name="setmiss" section="Dataset"
-    label="Missing value code">
-
-    <usage>
-      <arguments>
-        <argument>value</argument>
-        <argument optional="true">varlist</argument>
-      </arguments>
-      <examples>
-        <example>setmiss -1</example>
-        <example>setmiss 100 x2</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para context="cli">
-	Get the program to interpret some specific numerical data
-	value (the first parameter to the command) as a code for
-	<quote>missing</quote>, in the case of imported data.  If this
-	value is the only parameter, as in the first example above,
-	the interpretation will be applied to all series in the data
-	set.  If <repl quote="true">value</repl> is followed by a list
-	of variables, by name or number, the interpretation is
-	confined to the specified variable(s). Thus in the second
-	example the data value 100 is interpreted as a code for
-	<quote>missing</quote>, but only for the variable
-	<lit>x2</lit>.
-      </para>
-      
-      <para context="gui">
-	Set a numerical value that will be interpreted as "missing" or
-	"not applicable", either for a particular data series (under
-	the Variable menu) or globally for the entire data set (under
-	the Sample menu).</para> 
-      
-      <para context="gui">
-	Gretl has its own internal coding for missing values, but
-	sometimes imported data may employ a different code.  For
-	example, if a particular series is coded such that a value of
-	-1 indicates "not applicable", you can select "Set missing
-	value code" under the Variable menu and type in the value "-1"
-	(without the quotes).  Gretl will then read the -1s as missing
-	observations.</para>
-
-    </description>
-
-    <gui-access>
-      <menu-path>/Data/Set missing value code</menu-path>
-    </gui-access>
-
   </command>
 
   <command name="shell" section="Utilities" 
@@ -10883,14 +10889,6 @@
 	format string, except that the result is written into the named
 	string, <repl>stringvar</repl>.
       </para>
-      <para>
-	To print the string variable, give its name preceded by
-	<lit>@</lit>, as in
-      </para>
-      <code>
-	sprintf myvar "%g", x
-	print "myvar has value @myvar"
-      </code>
     </description>
 
   </command>
@@ -10959,6 +10957,7 @@
         </option>
         <option>
 	  <flag>--gzipped</flag>
+	  <optparm optional="true">level</optparm>
 	  <effect>apply gzip compression</effect>
         </option>
         <option>
@@ -10998,16 +10997,62 @@
 	sample range are saved.
       </para>
       <para>
-	By default the data are saved in <quote>native</quote> gretl
-	format, but the option flags permit saving in several
-	alternative formats.  CSV (Comma-Separated Values) data may be
-	read into spreadsheet programs, and can also be manipulated
-	using a text editor.  The formats of
-	<program>Octave</program>, <program>R</program> and
-	<program>PcGive</program> are designed for use with the
-	respective programs.  Gzip compression may be useful for large
-	datasets.  See <guideref targ="datafiles"/> for details on the
-	various formats.
+	The format in which the data are written may be controlled in
+	the first instance by the extension or suffix of
+	<repl>filename</repl>, as follows:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>.gdt</lit>, or no extension: gretl's native XML
+	    data format. (If no extension is provided,
+	    <quote><lit>.gdt</lit></quote> is added automatically.)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.gtdb</lit>: gretl's native binary data format.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.csv</lit>: comma-separated values (CSV).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.txt</lit> or <lit>.asc</lit>: space-separated
+	    values.
+	  </para>
+	</li>	
+	<li>
+	  <para>
+	    <lit>.R</lit>: GNU R format.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.m</lit>: GNU Octave format.
+	  </para>
+	</li>	
+      </ilist>
+      <para>
+	The format-related option flags shown above can be used to
+	force the issue of the save format independently of the
+	filename (or to get gretl to write in the formats of PcGive or
+	JMulTi). However, if <repl>filename</repl> has extension
+	<lit>.gdt</lit> or <lit>.gdtb</lit> this necessarily implies
+	use of native format and the addition of a conflicting
+	option flag will generate an error.
+      </para>
+      <para>
+	When data are saved in native format (only), the
+	<opt>gzipped</opt> option may be used for data compression,
+	which can be useful for large datasets. The optional parameter
+	for this flag controls the level of compression (from 0 to 9):
+	higher levels produce a smaller file, but compression takes
+	longer. The default level is 1; a level of 0 means that no
+	compression is applied.
       </para>
       <para>
 	The option flags <opt>--omit-obs</opt> and <opt>--no-header</opt>
@@ -11073,6 +11118,11 @@
 	  <effect>basic statistics only</effect>
         </option>
         <option>
+	  <flag>--weight</flag>
+	  <optparm>wvar</optparm>
+	  <effect>weighting variable</effect>
+        </option>
+        <option>
 	  <flag>--by</flag>
 	  <optparm>byvar</optparm>
 	  <effect>see below</effect>
@@ -11092,12 +11142,15 @@
 	the mean, minimum, maximum and standard deviation.
       </para>
       <para>
-	If the <opt>--by</opt> option is given (in which case the parameter
-	<repl>byvar</repl> should be the name of a discrete variable), then
-	statistics are printed for sub-samples corresponding to the distinct
-	values taken on by <repl>byvar</repl>.  For example, if
-	<repl>byvar</repl> is a (binary) dummy variable, statistics are
-	given for the cases <lit>byvar = 0</lit> and <lit>byvar = 1</lit>.
+	If the <opt>--by</opt> option is given (in which case the
+	parameter <repl>byvar</repl> should be the name of a discrete
+	variable), then statistics are printed for sub-samples
+	corresponding to the distinct values taken on by
+	<repl>byvar</repl>.  For example, if <repl>byvar</repl> is a
+	(binary) dummy variable, statistics are given for the cases
+	<lit>byvar = 0</lit> and <lit>byvar = 1</lit>. Note: at
+	present, this option is incompatible with the
+	<opt>--weight</opt> option.
       </para>
       <para>
 	If the alternative form is given, using a named matrix, then
@@ -11284,6 +11337,10 @@
 	  <effect>Produce RTF instead of &latex;</effect>
         </option>
         <option>
+	  <flag>--csv</flag>
+	  <effect>Produce CSV instead of &latex;</effect>
+        </option>
+        <option>
 	  <flag>--complete</flag>
 	  <effect>Create a complete document</effect>
         </option>
@@ -11296,17 +11353,26 @@
 
     <description>
       <para>
-	Must follow the estimation of a model.  Prints the estimated model in
-	tabular form &mdash; by default as &latex;, but as RTF if the
-	<opt>--rtf</opt> flag is given.  If a filename is specified using the
-	<lit>-f</lit> flag output goes to that file, otherwise it goes to a
-	file with a name of the form <filename>model_N.tex</filename> (or
-	<filename>model_N.rtf</filename>), where <lit>N</lit> is the number of
-	models estimated to date in the current session.
+	Must follow the estimation of a model.  Prints the estimated
+	model in tabular form &mdash; by default as &latex;, but as
+	RTF if the <opt>--rtf</opt> flag is given or as CSV is the
+	<opt>--csv</opt> flag is given.  If a filename is specified
+	using the <lit>-f</lit> flag output goes to that file,
+	otherwise it goes to a file with a name of the form
+	<filename>model_N</filename> followed by the extension
+	<lit>tex</lit>, <lit>rtf</lit> or <lit>csv</lit>, where
+	<lit>N</lit> is the number of models estimated to date in the
+	current session.
+      </para>
+      <para> 
+	If CSV format is selected, values are comma-separated unless
+	the decimal comma is in force, in which case the separator is
+	the semicolon. Note that CSV output may be less complete than
+	the other formats.
       </para>
       <para>
-	The further options discussed below are available only when printing
-	the model as &latex;.
+	The further options discussed below are available only when
+	printing the model as &latex;.
       </para>
       <para>
 	If the <opt>--complete</opt> flag is given the &latex; file is
@@ -12477,42 +12543,6 @@
     </description>
 
   </command>
-
-  <common-opt name="output" param="filename">
-    <applies-to>gnuplot</applies-to>
-    <applies-to>boxplot</applies-to>
-    <applies-to>scatters</applies-to>
-    <applies-to>qqplot</applies-to>
-    <description>
-      <para>
-	Just testing!
-      </para>
-    </description>
-  </common-opt>
-
-  <common-opt name="plot" param="filename">
-    <applies-to>corrgm</applies-to>
-    <applies-to>xcorrgm</applies-to>
-    <applies-to>pergm</applies-to>
-    <applies-to>rmplot</applies-to>
-    <applies-to>hurst</applies-to>
-    <applies-to>leverage</applies-to>
-    <description>
-      <para>
-	Just testing, again!
-      </para>
-    </description>
-  </common-opt>
-
-  <common-opt name="robust">
-    <applies-to>ols</applies-to>
-    <applies-to>tsls</applies-to>
-    <description>
-      <para>
-	Just testing, again!
-      </para>
-    </description>
-  </common-opt>
 
 </commandref>
 
