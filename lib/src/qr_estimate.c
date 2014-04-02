@@ -803,8 +803,10 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
     double x, pw1 = 0.0;
     int i, s, t;
 
-    if (!pwe && !dwt && pmod->missmask == NULL) {
-	/* simple case: use faster procedure */
+    if (pmod->missmask == NULL && !pwe && !qdiff && !dwt && !pmod->nwt) {
+	/* simple case: no missing values and no data transformation
+	   called for, so use faster procedure 
+	*/
 	int T = pmod->t2 - pmod->t1 + 1;
 	size_t sz = T * sizeof(double);
 
@@ -830,11 +832,13 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
     /* copy independent vars into matrix Q */
     s = 0;
     for (i=2; i<=pmod->list[0]; i++) {
+	int vi = pmod->list[i];
+
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (model_missing(pmod, t)) {
 		continue;
 	    }
-	    x = dset->Z[pmod->list[i]][t];
+	    x = dset->Z[vi][t];
 	    if (dwt) {
 		if (dset->Z[dwt][t] == 0.0) continue;
 	    } else if (pmod->nwt) {
@@ -843,7 +847,7 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
 		if (pwe && t == pmod->t1) {
 		    x *= pw1;
 		} else {
-		    x -= pmod->rho * dset->Z[pmod->list[i]][t-1];
+		    x -= pmod->rho * dset->Z[vi][t-1];
 		}
 	    }
 	    Q->val[s++] = x;
@@ -852,12 +856,14 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
 
     if (y != NULL) {
 	/* copy dependent variable into y vector */
+	int vy = pmod->list[1];
+
 	s = 0;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (model_missing(pmod, t)) {
 		continue;
 	    }		
-	    x = dset->Z[pmod->list[1]][t];
+	    x = dset->Z[vy][t];
 	    if (dwt) {
 		if (dset->Z[dwt][t] == 0.0) continue;
 	    } else if (pmod->nwt) {
@@ -866,7 +872,7 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
 		if (pwe && t == pmod->t1) {
 		    x *= pw1;
 		} else {
-		    x -= pmod->rho * dset->Z[pmod->list[1]][t-1];
+		    x -= pmod->rho * dset->Z[vy][t-1];
 		}
 	    }
 	    y->val[s++] = x;
