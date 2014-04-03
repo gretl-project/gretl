@@ -709,12 +709,12 @@ new_readline
 have_readline
 MPI_LIBS
 MPI_CFLAGS
-MPICC
 HAVE_MPICC
 OPENMP_CFLAGS
 AVX_CFLAGS
 SSE2_CFLAGS
 MPILINK
+MPICC
 MKLANG
 HOSTCC
 OTOOL64
@@ -884,6 +884,7 @@ CPPFLAGS
 CPP
 HOSTCC
 MKLANG
+MPICC
 MPILINK
 LAPACK_LIBS
 PKG_CONFIG
@@ -1590,6 +1591,7 @@ Some influential environment variables:
   CPP         C preprocessor
   HOSTCC      host compiler (for cross-build)
   MKLANG      builder for gtksourceview files (cross-build)
+  MPICC       path to MPI compiler wrapper
   MPILINK     linker commands for MPI (cross-build)
   LAPACK_LIBS linker flags for lapack, overriding auto-detection
   PKG_CONFIG  path to pkg-config utility
@@ -15016,6 +15018,7 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
      as_fn_error $? "unknown endianness
  presetting ac_cv_c_bigendian=no (or yes) will help" "$LINENO" 5 ;;
  esac
+
 
 
 

@@ -303,6 +303,7 @@ AC_C_BIGENDIAN
 
 AC_ARG_VAR(HOSTCC, host compiler (for cross-build))
 AC_ARG_VAR(MKLANG, builder for gtksourceview files (cross-build))
+AC_ARG_VAR(MPICC, path to MPI compiler wrapper)
 AC_ARG_VAR(MPILINK, linker commands for MPI (cross-build))
 
 AC_C_SSE2
