@@ -274,6 +274,8 @@ RCVAR rc_vars[] = {
     { "python", N_("Path to Python executable"), NULL, paths.pypath, 
       MACHSET | BROWSER, sizeof paths.statapath, TAB_PROGS, NULL},
 #ifdef HAVE_MPI
+    { "mpiexec", N_("Path to mpiexec"), NULL, paths.mpiexec, 
+      MACHSET | BROWSER, sizeof paths.mpiexec, TAB_MPI, NULL},
     { "mpi_hosts", N_("Path to MPI hosts file"), NULL, paths.mpi_hosts, 
       MACHSET | BROWSER, sizeof paths.mpi_hosts, TAB_MPI, NULL},
     { "mpi_pref", N_("Installed MPI variant"), NULL, mpi_pref, 

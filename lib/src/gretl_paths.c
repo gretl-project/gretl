@@ -71,6 +71,7 @@ struct INTERNAL_PATHS {
     char octpath[MAXLEN];
     char statapath[MAXLEN];
     char pypath[MAXLEN];
+    char mpiexec[MAXLEN];
     char mpi_hosts[MAXLEN];
     char dbhost[32];
     char pngfont[128];
@@ -2381,6 +2382,11 @@ const char *gretl_mpi_hosts (void)
     return paths.mpi_hosts;
 }
 
+const char *gretl_mpiexec (void)
+{
+    return paths.mpiexec;
+}
+
 const char *gretl_current_dir (void)
 {
     return current_dir;
@@ -2805,6 +2811,7 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
     ndelta += maybe_transcribe_path(paths.pypath, cpaths->pypath, 0);
 
 #ifdef HAVE_MPI
+    ndelta += maybe_transcribe_path(paths.mpiexec, cpaths->mpiexec, 0);
     ndelta += maybe_transcribe_path(paths.mpi_hosts, cpaths->mpi_hosts, 
 				    PATH_BLANK_OK);
 #endif
@@ -2872,6 +2879,8 @@ static void load_default_path (char *targ)
 	sprintf(targ, "%s\\Stata\\stata.exe", progfiles);
     } else if (targ == paths.pypath) {
 	strcpy(targ, "python.exe"); /* ?? */
+    } else if (targ == paths.mpiexec) {
+	strcpy(targ, "mpiexec.exe");
     } else if (targ == paths.mpi_hosts) {
 	*targ = '\0';
     } else if (targ == paths.pngfont) {
@@ -2917,15 +2926,13 @@ static void load_default_path (char *targ)
     const char *app_paths[] = {
 	"/Applications/OxMetrics6/ox/bin/oxl",
 	"/Applications/Octave.app/Contents/Resources/bin/octave",
-	"/Applications/Stata/Stata.app/Contents/MacOS/Stata",
-	"python"
+	"/Applications/Stata/Stata.app/Contents/MacOS/Stata"
     };
 #else
     const char *app_paths[] = {
 	"oxl",
 	"octave",
-	"stata",
-	"python"
+	"stata"
     };
 #endif  
 
@@ -2962,7 +2969,9 @@ static void load_default_path (char *targ)
     } else if (targ == paths.statapath) {
 	strcpy(paths.statapath, app_paths[2]);
     } else if (targ == paths.pypath) {
-	strcpy(paths.pypath, app_paths[3]);
+	strcpy(paths.pypath, "python");
+    } else if (targ == paths.mpiexec) {
+	strcpy(paths.mpiexec, "mpiexec");
     } else if (targ == paths.mpi_hosts) {
 	*paths.mpi_hosts = '\0';
     } else if (targ == paths.pngfont) {
@@ -3035,6 +3044,7 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.octpath, cpaths->octpath, 0);
     path_init(paths.statapath, cpaths->statapath, 0);
     path_init(paths.pypath, cpaths->pypath, 0);
+    path_init(paths.mpiexec, cpaths->mpiexec, 0);
     path_init(paths.mpi_hosts, cpaths->mpi_hosts, 0);
 
     /* graphing font */
@@ -3408,6 +3418,8 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 	    strncat(cpaths->statapath, val, MAXLEN - 1);
 	} else if (!strcmp(key, "python")) {
 	    strncat(cpaths->pypath, val, MAXLEN - 1);
+	} else if (!strcmp(key, "mpiexec")) {
+	    strncat(cpaths->mpiexec, val, MAXLEN - 1);
 	} else if (!strcmp(key, "mpi_hosts")) {
 	    strncat(cpaths->mpi_hosts, val, MAXLEN - 1);
 	} else if (!strcmp(key, "mpi_pref")) {
