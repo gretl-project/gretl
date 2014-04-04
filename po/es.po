@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-02-04 08:58-0500\n"
-"PO-Revision-Date: 2014-02-12 13:05+0100\n"
+"PO-Revision-Date: 2014-04-04 16:10+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -11457,7 +11457,7 @@ msgstr "Modelo de panel _dinámico..."
 
 #: gui2/gretl.c:1785
 msgid "_Limited dependent variable"
-msgstr "Variable dependiente _limitada"
+msgstr "Variable _dependiente limitada"
 
 #: gui2/gretl.c:1786
 msgid "_Logit"
