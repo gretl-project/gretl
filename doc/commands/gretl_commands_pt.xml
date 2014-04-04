@@ -868,7 +868,7 @@
 	usa estimação ML nativa e exata. O efeito é o de disponibilizar
 	um vector contendo a estimativa óptima de período
 	<math>t</math> da perturbação data-<math>t</math> ou inovação:
-	isto pode ser recuperado com o uso do assessor <lit>$ehat</lit>.
+	isto pode ser recuperado com o uso do acessor <lit>$ehat</lit>.
 	Estes valores diferem da série dos resíduos (<lit>$uhat</lit>),
 	que contém os erros de predição um-passo-à-frente.
       </para>
@@ -1600,7 +1600,7 @@
 	gama de Doornik <cite key="doornik98" p="true">(Doornik, 1998)</cite>.
 	 São mostrados dois conjuntos de valores p para o teste traço,
 	valores assintóticos imediatos e valores ajustados para o 
-	tamanho da amostra.  Por omissão, o assessor <lit>$pvalue</lit>
+	tamanho da amostra.  Por omissão, o acessor <lit>$pvalue</lit>
 	obtém a variante ajustada, mas se opção <opt>--asy</opt> for 
 	dada, pode ser usado para registar os valores assintóticos.
       </para>

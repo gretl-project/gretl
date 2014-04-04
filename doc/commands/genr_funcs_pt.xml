@@ -158,7 +158,7 @@
 	  diferente de zero no caso de ter acontecido um erro mas 
 	  este tenha sido apanhado num bloco <cmdref targ="catch"/>. 
 	  Note que ao usar este acessor o código de erro interno 
-          ficará reiniciado a zero. Consultar também <fncref targ="errmsg"/>.
+      ficará reiniciado a zero. Consultar também <fncref targ="errmsg"/>.
 	  Se você pretender uma mensagem de erro associada a um 
 	  certo <lit>$error</lit> então tem que guardar o valor
 	  numa variável temporária, tal como em
@@ -169,6 +169,12 @@
 	    printf "Obtido o erro %d (%s)\n", errval, errmsg(errval);
 	  endif
 	</code>
+	<para>
+	  <seelist>
+	    <cmdref targ="catch"/>
+	    <fncref targ="errmsg"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -518,7 +524,7 @@
 	<para>
 	  Retorna a frequência ou periodicidade dos dados (por exemplo,
 	  4 para dados trimestrais). No caso de dados de painel, o valor
-          retornado é o comprimento da série temporal.
+      retornado é o comprimento da série temporal.
 	</para>
       </description>
     </function>
@@ -695,6 +701,78 @@
 	  Retorna a matriz de coeficientes das variáveis endógenas contemporâneas
 	  numa forma estrutural de sistema.  Consultar o comando <cmdref targ="system"/>.
 	</para>
+      </description>
+    </function>
+
+    <function name="$sysinfo" section="access" output="bundle">
+      <description>
+	<para>
+	  Returns a bundle containing information on the capabilities
+	  of the gretl build and the system on which gretl is
+	  running. The members of the bundle are as follows:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>mpi</lit>: integer, equals 1 if the system supports
+	      MPI (Message Passing Interface), otherwise 0.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>omp</lit>: integer, equals 1 if gretl is built with
+	      support for Open MP, otherwise 0.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>nproc</lit>: integer, the number of processors
+	      available.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>mpimax</lit>: integer, the maximum number of MPI
+	      processes that can be run in parallel. This is zero if
+	      MPI is not supported, otherwise it equals the local
+	      <lit>nproc</lit> value unless an MPI hosts file has been
+	      specified, in which case it is the sum of the number of
+	      processors or <quote>slots</quote> across all the
+	      machines referenced in that file.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>wordlen</lit>: integer, either 32 or 64 for
+	      32- and 64-bit systems respectively.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>os</lit>: string representing the operating system,
+	      either <lit>linux</lit>, <lit>osx</lit>,
+	      <lit>windows</lit> or <lit>other</lit>.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>hostname</lit>: the name of the host machine on
+	      which the current gretl process is running (with a
+	      fallback of <lit>localhost</lit> in case the name
+	      cannot be determined).
+	    </para>
+	  </li>	  
+	</ilist>
+	<para>
+	  Note that individual elements in the bundle can be accessed
+	  using <quote>dot</quote> notation without any need to copy the
+	  whole bundle under a user-specified name. For example,
+	</para>
+	<code>
+	  if $sysinfo.os == "linux"
+	    # do something linux-specific
+	  endif
+	</code>
       </description>
     </function>
 
@@ -890,6 +968,7 @@
 	</para>
       </description>
     </function>
+
     <function name="$ylist" section="access" output="list">
       <description>
 	<para>
@@ -1237,9 +1316,9 @@
     <function name="bkfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-	<fnarg type="scalar" optional="true">f1</fnarg>
-	<fnarg type="scalar" optional="true">f2</fnarg>
-	<fnarg type="scalar" optional="true">k</fnarg>
+	<fnarg type="int" optional="true">f1</fnarg>
+	<fnarg type="int" optional="true">f2</fnarg>
+	<fnarg type="int" optional="true">k</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -1252,6 +1331,7 @@
 	  then the following default values are used: <argname>f1</argname> =
 	  8, <argname>f1</argname> = 32, <argname>k</argname> = 8.
 	  <seelist>
+	    <fncref targ="bwfilt"/>
 	    <fncref targ="hpfilt"/>
 	  </seelist>
 	</para>
@@ -1285,7 +1365,7 @@
     <function name="bwfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-	<fnarg type="scalar">n</fnarg>
+	<fnarg type="int">n</fnarg>
 	<fnarg type="scalar">omega</fnarg>
       </fnargs>
       <description>
@@ -1490,7 +1570,7 @@
 
     <function name="cholesky" section="linalg" output="smatrix">
       <fnargs>
-	<fnarg type="symmat">A</fnarg>
+	<fnarg type="pdmat">A</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -1510,7 +1590,7 @@
     <function name="chowlin" section="transforms" output="matrix">
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
-	<fnarg type="scalar">xfac</fnarg>
+	<fnarg type="int">xfac</fnarg>
 	<fnarg type="matrix" optional="true">X</fnarg>
       </fnargs>
       <description>
@@ -1580,7 +1660,7 @@
     <function name="colname" section="strings" output="string">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
-	<fnarg type="scalar">col</fnarg>
+	<fnarg type="int">col</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -1613,7 +1693,7 @@
 	  Example:
 	</para>
 	<code>
-	  matrix M = {1,2;2,1;4,1}
+	  matrix M = {1, 2; 2, 1; 4, 1}
 	  colnames(M, "Col1 Col2")
 	  print M
 	</code>
@@ -1660,7 +1740,7 @@
     <function name="corrgm" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
-	<fnarg type="scalar">p</fnarg>
+	<fnarg type="int">p</fnarg>
 	<fnarg optional="true" type="series-or-vec">y</fnarg>
       </fnargs>
       <description>
@@ -1967,9 +2047,9 @@
       </fnargs>    
       <description>
 	<para context="notex">
-	  Returns the digamma (or Psi) function
-	  of <argname>x</argname>, that is the derivative of the log
-	  of the Gamma function.
+	  Returns the digamma (or Psi) function of
+	  <argname>x</argname>, that is the derivative of the log of
+	  the Gamma function.
 	</para>
 	<para context="tex">
 	  Returns the digamma (or Psi) function of $x$, that is 
@@ -2052,6 +2132,26 @@
 	  is truncated if necessary, and may be adjusted in case of
 	  non-uniqueness in the set of names thus constructed. 
 	</para>
+      </description>
+    </function>
+
+    <function name="easterday" section="calendar" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given the year in argument <argname>x</argname>, returns the
+	  date of Easter in the Gregorian calendar as <math> month +
+	  day/100</math>. Note that April the 10th, is, under this
+	  convention, 4.1; hence, 4.2 is April the 20th, not April the
+	  2nd (which would be 4.02).
+	</para>
+	<code>
+	  scalar e = easterday(2014)
+	  scalar m = floor(e)
+	  scalar d = 100*(e-m)
+	</code>
       </description>
     </function>
 
@@ -2176,7 +2276,7 @@
 
     <function name="errmsg" section="strings" output="string">
       <fnargs>
-	<fnarg type="scalar">errno</fnarg>
+	<fnarg type="int">errno</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2243,8 +2343,8 @@
       </fnargs> 
       <description>
 	<para>
-	  Calculates the (forward-difference approximation to the)
-	  Jacobian associated with the <math>n</math>-vector
+	  Calculates a numerical approximation to the Jacobian
+	  associated with the <math>n</math>-vector
 	  <argname>b</argname> and the transformation function
 	  specified by the argument <argname>fcall</argname>.  The
 	  function call should take <argname>b</argname> as its first
@@ -2258,12 +2358,43 @@
 	  matrix J = fdjac(theta, myfunc(&amp;theta, X))
 	</code>
 	<para>
+	  The function can use three different methods: simple
+	  forward-difference, bilateral difference or 4-nodes
+	  Richardson extrapolation. Respectively:
+	</para>
+	<para context="tex">
+	  \[ J_0 = \frac{f(x + h) - f(x)}{h} \]
+	</para>
+	<para context="tex">
+	  \[ J_1 = \frac{f(x + h) - f(x - h)}{2h} \]
+	</para>
+	<para context="tex">
+	  \[ J_2 = \frac{8(f(x+h) - f(x-h)) - (f(x+2h) - f(x-2h))}{12h} \]
+	</para>
+	<para context="notex">
+	  <math>J</math><sub>0</sub> = <math>(f(x+h) - f(x))/h</math>
+	</para>
+	<para context="notex">
+	  <math>J</math><sub>1</sub> = <math>(f(x+h) - f(x-h))/2h</math>
+	</para>
+	<para context="notex">
+	  <math>J</math><sub>2</sub>  = <math>[8 (f(x+h) -  f(x-h)) -
+	  (f(x+2h) - f(x-2h))] /12h</math>
+	</para>
+	<para>
+	  The three alternatives above provide, generally, a trade-off
+	  between accuracy and speed. You can choose among methods by
+	  using the <cmdref targ="set"/> command and specify the value
+	  0, 1 or 2 for the <lit>fdjac_quality</lit> variable.
+	</para>
+	<para>
 	  For more details and examples see the chapter on numerical
 	  methods in <guideref targ="chap-numerical"/>.
 	</para>
 	<para>
 	  <seelist>
 	    <fncref targ="BFGSmax"/>
+	    <cmdref targ="set"/>
 	  </seelist>
 	</para>
       </description>
@@ -2319,16 +2450,15 @@
 
     <function name="filter" section="filters" output="series">
       <fnargs>
-	<fnarg type="series">x</fnarg>
+	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">b</fnarg>
 	<fnarg optional="true" type="scalar">y0</fnarg>
       </fnargs>
       <description>
 	<para>
-	Computes an ARMA-like filtering of the
-	series <argname>x</argname>. The transformation can be written
-	as
+	Computes an ARMA-like filtering of the argument
+	<argname>x</argname>. The transformation can be written as
 	</para>
 	<para context="tex">
 	  \[ y_t = \sum_{i=0}^q a_i x_{t-i} + \sum_{i=i}^p b_i y_{t-i} \]
@@ -2344,8 +2474,15 @@
 	  <math>b</math><sub>p</sub> <math>y</math><sub>t-p</sub>
 	</para>
 	<para>
-	  The two arguments <argname>a</argname>
-	  and <argname>b</argname> are optional. They may be scalars,
+	  If argument <argname>x</argname> is a series, the result
+	  will be itself a series. Otherwise, if <argname>x</argname>
+	  is a matrix with <math>T</math> rows and <math>k</math>
+	  columns, the result will be a matrix of the same size, in
+	  which the filtering is performed column by column.
+	</para>
+	<para>
+	  The two arguments <argname>a</argname> and
+	  <argname>b</argname> are optional. They may be scalars,
 	  vectors or the keyword <lit>null</lit>.
 	</para>
 	<para>
@@ -2378,9 +2515,11 @@
 	<para>
 	  <seelist> 
 	    <fncref targ="bkfilt"/>
+	    <fncref targ="bwfilt"/>
 	    <fncref targ="fracdiff"/>
 	    <fncref targ="hpfilt"/>
 	    <fncref targ="movavg"/>
+	    <fncref targ="varsimul"/>
 	  </seelist>
 	</para>
 	<para>
@@ -2390,6 +2529,9 @@
 	  nulldata 5
 	  y = filter(index, 0.5, -0.9, 1)
 	  print index y --byobs
+	  x = seq(1,5)' ~ (1 | zeros(4,1))
+	  w = filter(x, 0.5, -0.9, 1)
+	  print x w
 	</code>
 	<para>
 	  produces
@@ -2402,6 +2544,22 @@
           3            3      0.27600   
           4            4      1.75160   
           5            5      0.92356   
+
+          x (5 x 2)
+           
+            1   1 
+            2   0 
+            3   0 
+            4   0 
+            5   0 
+           
+          w (5 x 2)
+           
+              -0.40000     -0.40000 
+                1.3600      0.36000 
+               0.27600     -0.32400 
+                1.7516      0.29160 
+               0.92356     -0.26244 
 	</code>
       </description>
     </function>
@@ -2445,7 +2603,7 @@
 	  exhausted: transcribe <quote>legal</quote> characters; skip
 	  <quote>illegal</quote> characters apart from spaces; and
 	  replace one or more consecutive spaces with an underscore,
-	  unless the last character transcribed is an underscore in
+	  unless the previous character transcribed is an underscore in
 	  which case space is skipped.
 	</para>
       </description>
@@ -2541,7 +2699,7 @@
 	  scalar i = 1
 	  loop while getline(s, line)
 	    printf "line %d = '%s'\n", i++, line
-          endloop
+	  endloop
 	</code>
 	<para>
 	  In this example we can be sure that the source is exhausted
@@ -2579,7 +2737,7 @@
 	</para>
 	<para>
 	  The argument <argname>C</argname> (<by r="m" c="m"/>) should give
-	  the Cholesky decomposition (lower triangular) of the covariance
+	  the Cholesky factor (lower triangular) of the covariance
 	  matrix of the <math>m</math> normal variates.  The arguments
 	  <argname>A</argname> and <argname>B</argname> should both be <by
 	  r="n" c="m"/>, giving respectively the lower and upper bounds
@@ -2672,9 +2830,9 @@
 
     <function name="halton" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="scalar">m</fnarg>
-	<fnarg type="scalar">r</fnarg>
-	<fnarg optional="true" type="scalar">offset</fnarg>
+	<fnarg type="int">m</fnarg>
+	<fnarg type="int">r</fnarg>
+	<fnarg optional="true" type="int">offset</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2752,7 +2910,9 @@
 	  a data-based default is used, namely 100 times the square of the
 	  periodicity (100 for annual data, 1600 for quarterly data, and so
 	  on).  
-	  <seelist> <fncref targ="bkfilt"/>
+	  <seelist> 
+	    <fncref targ="bkfilt"/>
+	    <fncref targ="bwfilt"/>
 	  </seelist>
 	</para>
       </description>
@@ -2760,7 +2920,7 @@
 
     <function name="I" section="matbuild" output="smatrix">
       <fnargs>
-	<fnarg type="scalar">n</fnarg>
+	<fnarg type="int">n</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3320,7 +3480,7 @@
 	</para>
 	<code>
 	  matrix d = kdensity(x)
-	  gnuplot 2 1 --matrix=d --with-lines
+	  gnuplot 2 1 --matrix=d --with-lines --suppress-fitted
 	</code>
       </description>
     </function>
@@ -4433,12 +4593,9 @@
 	  Returns a matrix with <argname>r</argname> rows and
 	  <argname>c</argname> columns, filled with uniform (0,1)
 	  pseudo-random variates. Note: the preferred method for
-	  generating a scalar uniform r.v. is recasting the output of
-	  <lit>muniform</lit> to a scalar, as in 
+	  generating a scalar uniform r.v. is to use the <fncref
+	  targ="randgen1"/> function.
 	</para>
-	<code>
-	  scalar x = muniform(1,1)
-	</code>
 	<para>
 	  <seelist>
 	    <fncref targ="mnormal"/>
@@ -4678,10 +4835,11 @@
 	  Returns the Net Present Value of <argname>x</argname>,
 	  considered as a sequence of payments (negative) and receipts
 	  (positive), evaluated at annual discount rate
-	  <argname>r</argname>.  The first value is taken as dated
-	  <quote>now</quote> and is not discounted.  To emulate an NPV
-	  function in which the first value is discounted, prepend zero to
-	  the input sequence.
+	  <argname>r</argname>; <argname>r</argname> must be expressed
+	  as a number, not a percentage (5<lit>%</lit> = 0.05).  The first value
+	  is taken as dated <quote>now</quote> and is not discounted.
+	  To emulate an NPV function in which the first value is
+	  discounted, prepend zero to the input sequence.
 	</para>
 	<para>
 	  Supported data frequencies are annual, quarterly, monthly, and
@@ -5634,8 +5792,8 @@
 	<para context="tex">
 	  For a series of length $n$, the $p$-quantile, $q$, is defined
 	  as:
-	  \[q = y_{[k]} + (n \cdot p - k) (y_{[k+1]} - y_{[k]})\] 
-	  where $k$ is the integer part of $n \cdot p$ and 
+	  \[q = y_{[k]} + [(n+1) \cdot p - k] (y_{[k+1]} - y_{[k]})\] 
+	  where $k$ is the integer part of $(n+1) \cdot p$ and 
 	  $y_{[i]}$ is the $i$-th element of the series when
 	  sorted from smallest to largest.
 	</para>
@@ -5905,6 +6063,7 @@
     <function name="readfile" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
+	<fnarg type="string" optional="true">codeset</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -5920,7 +6079,18 @@
 	  resource.
 	</para>
 	<para>
-	  Also see the <fncref targ="sscanf"/> function.
+	  If the text to be read is not encoded in UTF-8, gretl will
+	  try recoding it from the current locale codeset if that is
+	  not UTF-8, or from ISO-8859-15 otherwise. If this simple
+	  default does not meet your needs you can use the optional
+	  second argument to specify a codeset. For example, if you
+	  want to read text in Microsoft codepage 1251 and that is not
+	  your locale codeset, you should give a second argument of
+	  <lit>"cp1251"</lit>.
+	</para>
+	<para>
+	  Also see the <fncref targ="sscanf"/> and <fncref
+	  targ="getline"/> functions.
 	</para>
       </description>
     </function>
@@ -6522,7 +6692,10 @@
       </fnargs>  
       <description>
 	<para>
-	  Returns the number of characters in <argname>s</argname>.
+	  Returns the number of characters in the string
+	  <argname>s</argname>. Note that this does not necessarily
+	  equal the number of bytes if some characters are outside
+	  of the printable-ASCII range.
 	</para>
       </description>
     </function>
@@ -6608,6 +6781,21 @@
 	  occurrences of <argname>find</argname> are replaced by
 	  <argname>subst</argname>. See also <fncref targ="regsub"/>
 	  for more complex string replacement via regular expressions.
+	</para>
+      </description>
+    </function>
+
+    <function name="substr" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="int">start</fnarg>
+	<fnarg type="int">end</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Returns a substring of <argname>s</argname>, from the
+	  character with (1-based) index <argname>start</argname> to
+	  that with index <argname>end</argname>, inclusive.
 	</para>
       </description>
     </function>
