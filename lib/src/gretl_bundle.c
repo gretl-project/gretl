@@ -1528,7 +1528,7 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	    int ival = 0;
 
 #if HAVE_MPI
-	    ival = check_for_program("mpiexec");
+	    ival = check_for_mpiexec();
 #endif	    
 	    gretl_bundle_set_scalar(b, "mpi", (double) ival);
 	    ival = gretl_max_mpi_processes();

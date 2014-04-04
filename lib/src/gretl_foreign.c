@@ -176,6 +176,13 @@ int gretl_max_mpi_processes (void)
     return procmax;
 }
 
+int check_for_mpiexec (void)
+{
+    const char *prog = gretl_mpiexec();
+
+    return check_for_program(prog);
+}
+
 #else
 
 int gretl_max_mpi_processes (void)

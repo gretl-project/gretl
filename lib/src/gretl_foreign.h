@@ -52,6 +52,8 @@ int gretl_max_mpi_processes (void);
 
 void set_mpi_variant (const char *pref);
 
+int check_for_mpiexec (void);
+
 #endif
 
 #ifdef USE_RLIB

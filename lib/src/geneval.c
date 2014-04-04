@@ -1411,7 +1411,7 @@ static double get_const_by_id (int id)
 #endif
     } else if (id == CONST_HAVE_MPI) {
 #ifdef HAVE_MPI
-	return check_for_program("mpiexec");
+	return check_for_mpiexec();
 #else
 	return 0;
 #endif
