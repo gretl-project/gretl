@@ -20,10 +20,13 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "gretl_string_table.h"
-#include "gretl_www.h"
 #include "texprint.h"
+
 #ifdef USE_RLIB
 # include "gretl_foreign.h"
+#endif
+#ifdef USE_CURL
+# include "gretl_www.h"
 #endif
 
 #include <unistd.h>
@@ -3495,7 +3498,9 @@ int cli_read_rc (void)
 	err = gretl_set_paths(&cpaths);
     }
 
+#ifdef USE_CURL
     gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
+#endif
 
 #if 0
     show_paths();

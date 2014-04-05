@@ -21,8 +21,10 @@
 #include "libset.h"
 #include "gretl_func.h"
 #include "uservar.h"
-#include "gretl_www.h"
 #include "gretl_string_table.h"
+#ifdef USE_CURL
+# include "gretl_www.h"
+#endif
 
 #include <glib.h>
 
@@ -826,10 +828,15 @@ char *retrieve_file_content (const char *fname, const char *codeset,
     if (fname == NULL || *fname == '\0') {
 	*err = E_DATA;
     } else if (is_web_resource(fname)) {
+#ifdef USE_CURL
 	content = retrieve_public_file_as_buffer(fname, &len, err);
 	if (!*err && !g_utf8_validate(content, len, NULL)) {
 	    content = recode_content(content, codeset, err);
 	}
+#else
+	gretl_errmsg_set(_("Internet access not supported"));
+	*err = E_DATA;
+#endif
     } else {
 	char fullname[FILENAME_MAX];
 	GError *gerr = NULL;

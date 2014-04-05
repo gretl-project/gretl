@@ -40,8 +40,10 @@
 #include "kalman.h"
 #include "flow_control.h"
 #include "libglue.h"
-#include "gretl_www.h"
 #include "csvdata.h"
+#ifdef USE_CURL
+# include "gretl_www.h"
+#endif
 
 #include <errno.h>
 #include <glib.h>
@@ -4453,10 +4455,15 @@ static int lib_try_http (const char *s, char *fname, int *http)
     s += strspn(s, " ");
 
     if (strncmp(s, "http://", 7) == 0) {
+#ifdef USE_CURL
 	err = retrieve_public_file(s, fname);
 	if (!err) {
 	    *http = 1;
-	} 
+	}
+#else
+	gretl_errmsg_set(_("Internet access not supported"));
+	err = E_DATA;
+#endif
     }
 
     return err;

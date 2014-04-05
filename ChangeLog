@@ -38,6 +38,9 @@ version 1.9.15, in progress
   used with the "wls" command
 - Fix bug 181
 - Internals: add support for multiple, independent PRNGs
+- configure script: add an option --disable-www which drops
+  the libcurl dependency conditional on not building the
+  GUI program
 - win32 build: update gmp to 5.1.3, mpfr to 3.1.2
 	
 2013-11-21 version 1.9.14

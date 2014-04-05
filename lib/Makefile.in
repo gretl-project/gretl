@@ -29,6 +29,7 @@ DARWIN_RPATH = @DARWIN_RPATH@
 SSE2_CFLAGS = @SSE2_CFLAGS@
 AVX_CFLAGS = @AVX_CFLAGS@
 
+use_curl = @use_curl@
 have_mpi = @have_mpi@
 MPI_CFLAGS = @MPI_CFLAGS@
 
@@ -130,7 +131,6 @@ PUBLIC_HDRS = \
 	gretl_untar.h \
 	gretl_utils.h \
 	gretl_win32.h \
-	gretl_www.h \
 	gretl_xml.h \
 	interact.h \
 	johansen.h \
@@ -207,7 +207,6 @@ SRCS = adf_kpss.c \
 	gretl_string_table.c \
 	gretl_untar.c \
 	gretl_utils.c \
-	gretl_www.c \
 	gretl_xml.c \
 	gretl_zip.c \
 	interact.c \
@@ -241,6 +240,11 @@ SRCS = adf_kpss.c \
 	varprint.c \
 	vartest.c \
 	irfboot.c
+
+ifeq ($(use_curl),yes)
+  PUBLIC_HDRS += gretl_www.h
+  SRCS += gretl_www.c
+endif
 
 ifeq ($(have_mpi),yes)
   PUBLIC_HDRS += gretl_mpi.h

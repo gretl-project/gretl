@@ -29,7 +29,9 @@
 #include "gretl_xml.h"
 #include "forecast.h"
 #include "kalman.h"
-#include "gretl_www.h"
+#ifdef USE_CURL
+# include "gretl_www.h"
+#endif
 
 #ifdef _OPENMP
 # include <omp.h>
@@ -1968,7 +1970,9 @@ void libgretl_cleanup (void)
     kalman_cleanup();
     gnuplot_cleanup();
     bufgets_cleanup();
+#ifdef USE_CURL
     gretl_www_cleanup();
+#endif
     builtin_strings_cleanup();
 
 #ifdef USE_RLIB

@@ -8,6 +8,9 @@
 /* Flag the fact that we're building a self-installer package */
 #define PKGBUILD 1
 
+/* Flag use of libcurl */
+#define USE_CURL 1
+
 /* Extra floating-point GMP routines? */
 #define HAVE_MPFR 1
 

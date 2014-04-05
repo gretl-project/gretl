@@ -63,6 +63,7 @@ try_mpi="yes"
 try_libR="yes"
 have_libR="no"
 check_gnuplot="yes"
+use_curl="yes"
 darwin_build="no"
 quiet_build="no"
 swap_ends="no"
@@ -159,6 +160,22 @@ then
   check_gnuplot=yes
 else
   check_gnuplot=no
+fi])
+
+AC_ARG_ENABLE(www,
+[  --disable-www            do not link to libcurl for http],
+[if test "$enableval" = "yes"
+then
+  use_curl=yes
+else
+  if test "$gui_disabled" = "no" ; then
+    echo ""
+    echo "The --disable-www option is available only if you also"
+    echo "give the option --disable-gui"
+    exit 1
+  else
+    use_curl=no
+  fi
 fi])
 
 AC_ARG_WITH(lucida,
@@ -575,10 +592,15 @@ fi
 dnl
 dnl libcurl
 dnl
-if test "x$CURL_CFLAGS" != "x" || test "x$CURL_LIBS" != "x" ; then
-  have_curl="yes"
-elif test "$PKG_CONFIG" != "no" ; then
-   PKG_CHECK_MODULES(CURL, libcurl >= 7.13.0, have_curl="yes", have_curl="no")
+if test "$use_curl" = "yes" ; then
+  if test "x$CURL_CFLAGS" != "x" || test "x$CURL_LIBS" != "x" ; then
+    have_curl="yes"
+  elif test "$PKG_CONFIG" != "no" ; then
+    PKG_CHECK_MODULES(CURL, libcurl >= 7.13.0, have_curl="yes", have_curl="no")
+  fi
+  if test "$have_curl" = "yes" ; then
+    AC_DEFINE(USE_CURL)
+  fi
 fi
 
 dnl
@@ -715,6 +737,7 @@ AC_SUBST(have_odbc)
 AC_SUBST(have_mpi)
 AC_SUBST(build_mailer)
 AC_SUBST(build_po)
+AC_SUBST(use_curl)
 AC_SUBST(use_xdg)
 AC_SUBST(use_xdg_utils)
 AC_SUBST(GLIB_CFLAGS)

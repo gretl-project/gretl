@@ -655,6 +655,7 @@ GTK_LIBS
 GTK_CFLAGS
 use_xdg_utils
 use_xdg
+use_curl
 build_po
 build_mailer
 have_mpi
@@ -844,6 +845,7 @@ enable_xdg
 enable_xdg_utils
 enable_pkgbuild
 enable_gnuplot_checks
+enable_www
 with_lucida
 with_gmake
 with_readline
@@ -1538,6 +1540,7 @@ Optional Features:
   --enable-xdg-utils      Use xdg-utils for installing XDG files [default=auto]
   --enable-pkgbuild       For building relocatable package (e.g. OS X)
   --disable-gnuplot-checks do not run checks for gnuplot
+  --disable-www            do not link to libcurl for http
   --enable-static[=PKGS]  build static libraries [default=no]
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-fast-install[=PKGS]
@@ -2745,6 +2748,7 @@ try_mpi="yes"
 try_libR="yes"
 have_libR="no"
 check_gnuplot="yes"
+use_curl="yes"
 darwin_build="no"
 quiet_build="no"
 swap_ends="no"
@@ -6421,6 +6425,24 @@ then
   check_gnuplot=yes
 else
   check_gnuplot=no
+fi
+fi
+
+
+# Check whether --enable-www was given.
+if test "${enable_www+set}" = set; then :
+  enableval=$enable_www; if test "$enableval" = "yes"
+then
+  use_curl=yes
+else
+  if test "$gui_disabled" = "no" ; then
+    echo ""
+    echo "The --disable-www option is available only if you also"
+    echo "give the option --disable-gui"
+    exit 1
+  else
+    use_curl=no
+  fi
 fi
 fi
 
@@ -17480,9 +17502,10 @@ $as_echo "yes" >&6; }
 fi
 fi
 
-if test "x$CURL_CFLAGS" != "x" || test "x$CURL_LIBS" != "x" ; then
-  have_curl="yes"
-elif test "$PKG_CONFIG" != "no" ; then
+if test "$use_curl" = "yes" ; then
+  if test "x$CURL_CFLAGS" != "x" || test "x$CURL_LIBS" != "x" ; then
+    have_curl="yes"
+  elif test "$PKG_CONFIG" != "no" ; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CURL" >&5
@@ -17554,6 +17577,11 @@ else
 $as_echo "yes" >&6; }
 	have_curl="yes"
 fi
+  fi
+  if test "$have_curl" = "yes" ; then
+    $as_echo "#define USE_CURL 1" >>confdefs.h
+
+  fi
 fi
 
 if test "$PKG_CONFIG" != "no" ; then
@@ -18221,6 +18249,7 @@ if test "$gui_disabled" = "yes" ; then
   use_xdg=no
   use_xdg_utils=no
 fi
+
 
 
 

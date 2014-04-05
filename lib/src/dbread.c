@@ -21,12 +21,14 @@
 
 #include "libgretl.h"
 #include "swap_bytes.h"
-#include "gretl_www.h"
 #include "libset.h"
 #include "uservar.h"
 #include "matrix_extra.h"
 #include "usermat.h"
 #include "dbread.h"
+#ifdef USE_CURL
+# include "gretl_www.h"
+#endif
 
 #include <glib.h>
 #include <unistd.h>
@@ -243,6 +245,8 @@ static int get_native_db_data_masked (const char *dbbase,
     return err;
 }
 
+#ifdef USE_CURL
+
 /**
  * get_remote_db_data:
  * @dbbase:
@@ -300,6 +304,8 @@ int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo,
 
     return 0;
 }
+
+#endif /* USE_CURL */
 
 /**
  * get_pcgive_db_data:
@@ -544,6 +550,8 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
     return err;
 }
 
+#ifdef USE_CURL
+
 static int 
 get_remote_series_info (const char *series, SERIESINFO *sinfo)
 {
@@ -609,6 +617,8 @@ get_remote_series_info (const char *series, SERIESINFO *sinfo)
 
     return err;
 }
+
+#endif /* USE_CURL */
 
 static int in7_get_obs (int y0, int p0, int y1, int p1, 
 			SERIESINFO *sinfo)
@@ -1680,6 +1690,7 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
     *saved_db_name = '\0';
     strncat(saved_db_name, fname, MAXLEN - 1);
 
+#ifdef CURL
     if (filetype == GRETL_NATIVE_DB_WWW) {
 	int n = strlen(saved_db_name);
 
@@ -1696,6 +1707,11 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
 	} 
 	return err;
     }
+#else
+    pprintf(prn, _("Internet access not supported"));
+    pputc(prn, '\n');
+    return E_DATA;
+#endif
 
     fp = gretl_fopen(saved_db_name, "rb");
 
@@ -2491,8 +2507,10 @@ int db_get_series (char *line, DATASET *dset,
 	    err = get_rats_series_info(series, &sinfo);
 	} else if (saved_db_type == GRETL_PCGIVE_DB) {
 	    err = get_pcgive_series_info(series, &sinfo);
+#ifdef USE_CURL
 	} else if (saved_db_type == GRETL_NATIVE_DB_WWW) {
 	    err = get_remote_series_info(series, &sinfo);
+#endif
 	} else {
 	    err = get_native_series_info(series, &sinfo);
 	} 
