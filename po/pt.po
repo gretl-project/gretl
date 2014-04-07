@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-02-04 08:58-0500\n"
-"PO-Revision-Date: 2014-02-04 18:50+0100\n"
+"PO-Revision-Date: 2014-04-07 12:18+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -5563,7 +5563,7 @@ msgstr "Observações censuradas"
 
 #: lib/src/modelprint.c:4988 lib/src/modelprint.c:4996
 msgid "Actual"
-msgstr "Actual"
+msgstr "Atual"
 
 #: lib/src/modelprint.c:4991
 msgid "Predicted"
@@ -7357,7 +7357,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 4 de fevereiro de 2014."
+"Tradução de 7 de abril de 2014."
 
 #: gui2/about.c:194
 msgid "License"
