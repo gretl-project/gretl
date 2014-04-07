@@ -1049,7 +1049,7 @@ msgstr "Na linha %d, coluna %d:\n"
 #: lib/src/csvdata.c:2533 lib/src/dataio.c:2812 lib/src/dataio.c:2855
 #, c-format
 msgid "'%s' -- no numeric conversion performed!"
-msgstr "'%s' -- não foi efectuada nenhuma conversão numérica!"
+msgstr "'%s' -- não foi efetuada nenhuma conversão numérica!"
 
 #: lib/src/csvdata.c:2684
 #, c-format
@@ -1520,11 +1520,11 @@ msgstr ""
 #: lib/src/dbread.c:2794
 #, c-format
 msgid "%s: can't handle conversion"
-msgstr "%s: não se consegue efectuar a conversão"
+msgstr "%s: não se consegue efetuar a conversão"
 
 #: lib/src/dbread.c:2878
 msgid "Sorry, can't handle this conversion yet!"
-msgstr "Lamentamos, mas esta conversão ainda não pode ser efectuada!"
+msgstr "Lamentamos, mas esta conversão ainda não pode ser efetuada!"
 
 #: lib/src/dbread.c:2886
 #, c-format
@@ -2374,7 +2374,7 @@ msgstr "Falta um conjunto de dados"
 
 #: lib/src/genfuncs.c:2440 lib/src/gretl_errors.c:48
 msgid "This command won't work with the current periodicity"
-msgstr "Este comando não funciona com a periodicidade actual"
+msgstr "Este comando não funciona com a periodicidade atual"
 
 #: lib/src/genfuncs.c:2603 lib/src/genfuncs.c:2634
 #, c-format
@@ -2662,12 +2662,12 @@ msgstr "%s versus %s (com ajustamento cúbico)"
 #: lib/src/graphing.c:1850 lib/src/graphing.c:1854
 #, c-format
 msgid "Actual and fitted %s"
-msgstr "Efectivo e ajustado %s"
+msgstr "Efetivo e ajustado %s"
 
 #: lib/src/graphing.c:1856
 #, c-format
 msgid "Actual and fitted %s versus %s"
-msgstr "Efectivo e ajustado %s versus %s"
+msgstr "Efetivo e ajustado %s versus %s"
 
 #: lib/src/graphing.c:1982 gui2/gpt_dialog.c:576
 #, c-format
@@ -2695,7 +2695,7 @@ msgstr "esquerda"
 
 #: lib/src/graphing.c:3475 lib/src/graphing.c:3481
 msgid "actual"
-msgstr "efectivo"
+msgstr "efetivo"
 
 #: lib/src/graphing.c:3476 lib/src/graphing.c:3480 lib/src/printout.c:1258
 #: gui2/guiprint.c:955 gui2/guiprint.c:1532 gui2/guiprint.c:1592
@@ -2705,7 +2705,7 @@ msgstr "ajustado"
 
 #: lib/src/graphing.c:3573
 msgid "actual = predicted"
-msgstr "actual = predito"
+msgstr "atual = predito"
 
 #: lib/src/graphing.c:4290
 #, c-format
@@ -6037,7 +6037,7 @@ msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
 msgstr ""
-"Não se pode fazer: o conjunto de dados actual é diferente daquele\n"
+"Não se pode fazer: o conjunto de dados atual é diferente daquele\n"
 "a partir do qual o modelo de referência foi estimado\n"
 
 #: lib/src/options.c:1316
@@ -6147,7 +6147,7 @@ msgstr "Matriz de covariâncias dos coeficientes de regressão"
 
 #: lib/src/printout.c:85 lib/src/printout.c:162
 msgid "Current session"
-msgstr "Sessão actual"
+msgstr "Sessão atual"
 
 #: lib/src/printout.c:102 lib/src/printout.c:160
 #, c-format
@@ -6277,7 +6277,7 @@ msgstr "Conjunto de dados completo: %d observações\n"
 #: lib/src/printout.c:696
 #, c-format
 msgid "Current sample: %d observations\n"
-msgstr "Amostra actual: %d observações\n"
+msgstr "Amostra atual: %d observações\n"
 
 #: lib/src/printout.c:705 lib/src/printout.c:728
 msgid "Full data range"
@@ -6285,7 +6285,7 @@ msgstr "Intervalo completo dos dados"
 
 #: lib/src/printout.c:726 lib/src/subsample.c:2207
 msgid "Current sample"
-msgstr "Amostra actual"
+msgstr "Amostra atual"
 
 #: lib/src/printout.c:1004 lib/src/printout.c:1012
 msgid "Cross-equation VCV for residuals"
@@ -7288,12 +7288,12 @@ msgstr "Entrar \"open filename\" para abrir um conjunto de dados\n"
 #, c-format
 msgid "Opening a new data file closes the present one.  Proceed? (y/n) "
 msgstr ""
-"Ao abrir um novo ficheiro de dados fecha o actual.  Prosseguir? (sim (y) / "
+"Ao abrir um novo ficheiro de dados fecha o atual.  Prosseguir? (sim (y) / "
 "não (n)) "
 
 #: cli/gretlcli.c:758
 msgid "OK, staying with current data set\n"
-msgstr "OK, mantendo o conjunto de dados actual\n"
+msgstr "OK, mantendo o conjunto de dados atual\n"
 
 #: cli/gretlcli.c:833
 #, c-format
@@ -8313,7 +8313,7 @@ msgstr "Instalado"
 #: gui2/database.c:2167 gui2/database.c:2191 gui2/database.c:2407
 #: gui2/datafiles.c:1067 gui2/fncall.c:3148
 msgid "Up to date"
-msgstr "Actualizado"
+msgstr "Atualizado"
 
 #: gui2/database.c:2176 gui2/database.c:2186
 msgid "Error unzipping compressed data"
@@ -8325,7 +8325,7 @@ msgstr "Desconhecido: erro de acesso"
 
 #: gui2/database.c:2405 gui2/datafiles.c:1017 gui2/fncall.c:3150
 msgid "Not up to date"
-msgstr "Não actualizado"
+msgstr "Não atualizado"
 
 #: gui2/database.c:2412 gui2/database.c:2698
 msgid "Not installed"
@@ -8801,7 +8801,7 @@ msgid ""
 "made to the current data set?"
 msgstr ""
 "Deseja gravar as alterações que foram\n"
-"feitas ao conjunto de dados actual?"
+"feitas ao conjunto de dados atual?"
 
 #: gui2/dialogs.c:402
 msgid "Print missing values as:"
@@ -9053,11 +9053,11 @@ msgstr "Usar variável auxiliar:"
 
 #: gui2/dialogs.c:2713
 msgid "add to current restriction"
-msgstr "acrescentar à restrição actual"
+msgstr "acrescentar à restrição atual"
 
 #: gui2/dialogs.c:2721
 msgid "replace current restriction"
-msgstr "substituir a restrição actual"
+msgstr "substituir a restrição atual"
 
 #: gui2/dialogs.c:2779
 msgid "Observation at which to split the sample:"
@@ -9266,7 +9266,7 @@ msgstr "Primeiro apague o conjunto de dados corrente"
 
 #: gui2/dialogs.c:4177
 msgid "Try appending to current dataset"
-msgstr "Tente acrescentar ao conjunto de dados actual"
+msgstr "Tente acrescentar ao conjunto de dados atual"
 
 #: gui2/dialogs.c:4425
 msgid "No model is specified"
@@ -9603,12 +9603,12 @@ msgstr "Resíduo de %d-períodos da média móvel de%s"
 #: gui2/filters.c:217
 #, c-format
 msgid "Exponential moving average of %s (current weight %g)"
-msgstr "Média móvel exponencial de %s (peso actual %g)"
+msgstr "Média móvel exponencial de %s (peso atual %g)"
 
 #: gui2/filters.c:220
 #, c-format
 msgid "Residual from EMA of %s (current weight %g)"
-msgstr "Resíduo da média móvel exponencial de %s (peso actual %g)"
+msgstr "Resíduo da média móvel exponencial de %s (peso atual %g)"
 
 #: gui2/filters.c:225
 #, c-format
@@ -9723,7 +9723,7 @@ msgstr "Centrada"
 
 #: gui2/filters.c:672
 msgid "Weight on current observation:"
-msgstr "Peso na observação actual:"
+msgstr "Peso na observação atual:"
 
 #: gui2/filters.c:685
 msgid "lambda (higher values -> smoother trend):"
@@ -9900,7 +9900,7 @@ msgid ""
 "The %s package was not found, or is not up to date.\n"
 "Would you like to try downloading it now?"
 msgstr ""
-"O pacote %s não foi encontrado, ou não está actualizado.\n"
+"O pacote %s não foi encontrado, ou não está atualizado.\n"
 "Pretende tentar descarregá-lo agora?"
 
 #: gui2/fncall.c:2709 gui2/fnsave.c:1433
@@ -10016,7 +10016,7 @@ msgid ""
 "To update the menu attachment, you should\n"
 "(a) save this package, and (b) restart gretl."
 msgstr ""
-"Para actualizar o anexo de menu, você tem que\n"
+"Para atualizar o anexo de menu, você tem que\n"
 "(a) gravar este pacote, e (b) reiniciar gretl."
 
 #: gui2/fnsave.c:1680
@@ -11537,7 +11537,7 @@ msgstr "Atalhos de _Teclado"
 
 #: gui2/gretl.c:1819
 msgid "Check for _updates"
-msgstr "Verificar actualização da versão"
+msgstr "Verificar atualização da versão"
 
 #: gui2/gretl.c:1820
 msgid "Check for _addons"
@@ -11879,11 +11879,11 @@ msgstr "Gráfico dos _resíduos"
 
 #: gui2/gui_utils.c:227
 msgid "_Fitted, actual plot"
-msgstr "Gráficos _ajustado e actual"
+msgstr "Gráficos _ajustado e atual"
 
 #: gui2/gui_utils.c:229
 msgid "_Display actual, fitted, residual"
-msgstr "_Mostrar actual, ajustado, resíduos"
+msgstr "_Mostrar atual, ajustado, resíduos"
 
 #: gui2/gui_utils.c:231
 msgid "_Forecasts..."
@@ -12087,7 +12087,7 @@ msgid ""
 "will be lost.  Proceed to open data file?"
 msgstr ""
 "Abrir um novo ficheiro de dados fechará automaticamente\n"
-"o actual.  Todo o trabalho que não tenha sido gravado,\n"
+"o atual.  Todo o trabalho que não tenha sido gravado,\n"
 "será perdido.  Proceder com a abertura do ficheiro de dados?"
 
 #: gui2/gui_utils.c:1251
@@ -12101,7 +12101,7 @@ msgid ""
 "will be lost.  Proceed to open session file?"
 msgstr ""
 "Abrir um novo ficheiro de sessão fechará automaticamente\n"
-"a sessão actual.  Todo o trabalho que não tenha sido gravado,\n"
+"a sessão atual.  Todo o trabalho que não tenha sido gravado,\n"
 "será perdido.  Proceder com a abertura do ficheiro de sessão?"
 
 #: gui2/gui_utils.c:1311
@@ -12246,7 +12246,7 @@ msgstr "_Comparado com %s"
 
 #: gui2/gui_utils.c:2788
 msgid "Actual vs. Fitted"
-msgstr "Efectivo vs. Ajustado"
+msgstr "Efetivo vs. Ajustado"
 
 #: gui2/gui_utils.c:2798
 msgid "Residual _correlogram"
@@ -13339,7 +13339,7 @@ msgid ""
 "You have saved a reduced version of the current data set.\n"
 "Do you want to switch to the reduced version now?"
 msgstr ""
-"Você gravou uma versão reduzida do conjunto de dados actual.\n"
+"Você gravou uma versão reduzida do conjunto de dados atual.\n"
 "Deseja agora mudar para a versão reduzida?"
 
 #: gui2/library.c:7946 gui2/library.c:8030
@@ -13457,7 +13457,7 @@ msgstr "Sem Data"
 #: gui2/menustate.c:725
 #, c-format
 msgid "Undated: Full range n = %d; current sample n = %d"
-msgstr "Não datado: Intervalo completo n = %d; amostra actual n = %d"
+msgstr "Não datado: Intervalo completo n = %d; amostra atual n = %d"
 
 #: gui2/menustate.c:734 gui2/menustate.c:744 gui2/menustate.c:756
 #, c-format
@@ -14537,7 +14537,7 @@ msgid ""
 "Clearing the data set will end\n"
 "your current session.  Continue?"
 msgstr ""
-"Limpar o conjunto de dados actual\n"
+"Limpar o conjunto de dados atual\n"
 "irá fechar a sessão.  Continuar?"
 
 #: gui2/session.c:1945
@@ -14714,7 +14714,7 @@ msgstr "Directoria do utilizador de gretl"
 
 #: gui2/settings.c:174
 msgid "Tell me about gretl updates"
-msgstr "Informe-me sobre actualizações do gretl"
+msgstr "Informe-me sobre atualizações do gretl"
 
 #: gui2/settings.c:178
 msgid "Remember main window size"
@@ -14973,7 +14973,7 @@ msgstr "a directoria seleccionada acima"
 #: gui2/settings.c:2643
 msgid "the current directory as determined via the shell"
 msgstr ""
-"a directoria actual tal como foi determinado a partir do ambiente de trabalho"
+"a directoria atual tal como foi determinado a partir do ambiente de trabalho"
 
 #: gui2/settings.c:2653
 msgid "The file selection dialog should:"
@@ -15418,7 +15418,7 @@ msgstr "Editar valores..."
 
 #: gui2/toolbar.c:667
 msgid "Refresh"
-msgstr "Actualizar"
+msgstr "Atualizar"
 
 #: gui2/toolbar.c:668
 msgid "Add to dataset..."
@@ -15500,7 +15500,7 @@ msgstr ""
 "Estão disponíveis novos ficheiros no sítio Web do gretl.\n"
 "Estes ficheiros ocupam no total %u bytes.\n"
 "\n"
-"Deseja sair agora do gretl e fazer uma actualização da instalação?\n"
+"Deseja sair agora do gretl e fazer uma atualização da instalação?\n"
 "(Se preferir, pode executar mais tarde o gretl_updater.exe.)"
 
 #: gui2/update.c:140
@@ -15525,7 +15525,7 @@ msgstr ""
 #, c-format
 msgid "This file is part of the gretl update notification system\n"
 msgstr ""
-"Este ficheiro faz parte do sistema de notificação de actualizações do gretl\n"
+"Este ficheiro faz parte do sistema de notificação de atualizações do gretl\n"
 
 #: gui2/update.c:215
 msgid "No new files"
