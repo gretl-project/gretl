@@ -2836,11 +2836,11 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	vwin_menu_add_separator(vwin, "/menubar/Graphs");
 	entry.name = "Correlogram";
 	entry.label = _("Residual _correlogram");
-	entry.callback = G_CALLBACK(residual_correlogram);
+	entry.callback = G_CALLBACK(residual_correlogram_callback);
 	vwin_menu_add_item(vwin, "/menubar/Graphs", &entry);
 	entry.name = "Spectrum";
 	entry.label = _("Residual _periodogram");
-	entry.callback = G_CALLBACK(residual_periodogram);
+	entry.callback = G_CALLBACK(residual_periodogram_callback);
 	vwin_menu_add_item(vwin, "/menubar/Graphs", &entry);
     } else {
 	vwin_menu_add_separator(vwin, "/menubar/Graphs");

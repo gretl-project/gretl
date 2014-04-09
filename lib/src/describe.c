@@ -3847,7 +3847,7 @@ static void pergm_print (const char *vname, const double *d,
     double dt, yt;
     int t;
 
-    if (opt & OPT_R) {
+    if (vname == NULL) {
 	pprintf(prn, "\n%s\n", _("Residual periodogram"));
     } else {
 	pprintf(prn, _("\nPeriodogram for %s\n"), vname);
@@ -3868,7 +3868,10 @@ static void pergm_print (const char *vname, const double *d,
 
     for (t=1; t<=T/2; t++) {
 	dt = (opt & OPT_L)? log(d[t]) : d[t];
-	if (opt & OPT_D) {
+	if (opt & OPT_R) {
+	    yt = 2 * M_PI * (double) t / T;
+	    pprintf(prn, " %.5f%8d%16.2f", yt, t, (double) T / t);
+	} else if (opt & OPT_D) {
 	    yt = 360 * t / (double) T;
 	    pprintf(prn, " %7.3f%8d%16.2f", yt, t, (double) T / t);
 	} else {
@@ -3908,7 +3911,7 @@ static int finalize_fractint (const double *x,
 	m = (width > T / 2)? T / 2 : width;
     }
 
-    if (do_print) {
+    if (do_print && vname != NULL) {
 	pprintf(prn, "\n%s, T = %d\n\n", vname, T);
     }
 
@@ -4138,7 +4141,7 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
  * @width: width of window.
  * @dset: dataset struct.
  * @opt: if includes OPT_O, use Bartlett lag window for periodogram;
- * if includes OPT_R, the variable is a model residual; OPT_L, use log scale.
+ * OPT_L, use log scale.
  * @prn: gretl printing struct.
  *
  * Computes and displays the periodogram for the series specified 
@@ -4152,8 +4155,31 @@ int periodogram (int varno, int width, const DATASET *dset,
 {
     return pergm_or_fractint(PERGM_CMD, dset->Z[varno], 
 			     dset->t1, dset->t2, 
-			     width, 
-			     dset->varname[varno],
+			     width, dset->varname[varno],
+			     opt, prn, NULL);
+}
+
+/**
+ * residual_periodogram:
+ * @x: series to process.
+ * @width: width of window.
+ * @dset: dataset struct.
+ * @opt: if includes OPT_O, use Bartlett lag window for periodogram;
+ * OPT_L, use log scale.
+ * @prn: gretl printing struct.
+ *
+ * Computes and displays the periodogram for @x, which is presumed to
+ * be a model residual series.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int residual_periodogram (const double *x, int width, const DATASET *dset, 
+			  gretlopt opt, PRN *prn)
+{
+    return pergm_or_fractint(PERGM_CMD, x, 
+			     dset->t1, dset->t2, 
+			     width, NULL,
 			     opt, prn, NULL);
 }
 

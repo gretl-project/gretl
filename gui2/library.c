@@ -5309,7 +5309,7 @@ static int tmp_add_fit_resid (MODEL *pmod, DATASET *dset, int code)
     return err;
 }
 
-void residual_correlogram (GtkAction *action, gpointer p)
+void residual_correlogram_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -5368,9 +5368,9 @@ static void real_do_pergm (DATASET *dset, int code,
 	    record_lib_command();
 	}
     } else {
-	opt |= OPT_R;
-	err = periodogram(dset->v - 1, width, 
-			  dset, opt, prn);
+	const double *x = dset->Z[dset->v-1];
+
+	err = residual_periodogram(x, width, dset, opt, prn);
     }
 
     if (err) {
@@ -5390,7 +5390,7 @@ void do_pergm (GtkAction *action)
     real_do_pergm(dataset, SELECTED_VAR, NULL);
 }
 
-void residual_periodogram (GtkAction *action, gpointer p)
+void residual_periodogram_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;

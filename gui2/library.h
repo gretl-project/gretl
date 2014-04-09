@@ -224,13 +224,13 @@ void do_freq_dist (void);
 
 void do_corrgm (void);
 
-void residual_correlogram (GtkAction *action, gpointer p);
+void residual_correlogram_callback (GtkAction *action, gpointer p);
 
 void do_pergm (GtkAction *action);
 
 void do_fractint (GtkAction *action);
 
-void residual_periodogram (GtkAction *action, gpointer p);
+void residual_periodogram_callback (GtkAction *action, gpointer p);
 
 void residual_qq_plot (GtkAction *action, gpointer p);
 

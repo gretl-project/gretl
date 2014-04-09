@@ -17,6 +17,8 @@ version 1.9.15, in progress
   variable names
 - X-12-ARIMA interface: support the new X-13-ARIMA-SEATS as an
   alternative
+- Fix bug: incorrect plot header when the --radians option was
+  given with the "pergm" command
 - Fix bug: the --test-down option to "coint" was not working
   as advertised
 - Fix bug (?): the final regression in "coint" (Engle-Granger

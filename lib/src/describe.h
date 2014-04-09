@@ -187,6 +187,10 @@ int periodogram (int varno, int width,
 		 const DATASET *dset, 
 		 gretlopt opt, PRN *prn);
 
+int residual_periodogram (const double *x, int width, 
+			  const DATASET *dset, 
+			  gretlopt opt, PRN *prn);
+
 gretl_matrix *periodogram_matrix (const double *x, int t1, int t2,
 				  int width, int *err);
 

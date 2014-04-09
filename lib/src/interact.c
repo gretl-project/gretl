@@ -5638,8 +5638,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case MAHAL:
-	err = mahalanobis_distance(cmd->list, dset, 
-				   cmd->opt, prn);
+	err = mahalanobis_distance(cmd->list, dset, cmd->opt, prn);
 	break;
 
     case MEANTEST:

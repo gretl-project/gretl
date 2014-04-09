@@ -6612,7 +6612,7 @@ static int real_pergm_plot (const char *vname,
     int T2 = T / 2;
     int k, t, err = 0;
 
-    fputs("set xtics nomirror\n", fp); 
+    fputs("set xtics nomirror\n", fp);
 
     fprintf(fp, "set x2label '%s'\n", _("periods"));
     fprintf(fp, "set x2range [0:%d]\n", roundup_mod(T, 2.0));
@@ -6638,7 +6638,7 @@ static int real_pergm_plot (const char *vname,
     /* open gnuplot title string */
     fputs("set title '", fp);
 
-    if (opt & OPT_R) {
+    if (vname == NULL) {
 	fputs(_("Residual spectrum"), fp);
     } else {
 	sprintf(s, _("Spectrum of %s"), vname);
