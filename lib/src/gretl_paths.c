@@ -2919,7 +2919,12 @@ static void load_default_workdir (char *targ)
     if (home != NULL) {
 	sprintf(targ, "%s/gretl/", home);
     } else {
-	sprintf(targ, "%suser/", paths.gretldir);
+	home = getenv("GRETL_WORKDIR");
+	if (home != NULL) {
+	    strcpy(targ, home);
+	} else {
+	    sprintf(targ, "%suser/", paths.gretldir);
+	}
     }
 }
 
