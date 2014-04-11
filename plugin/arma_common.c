@@ -954,5 +954,3 @@ void arima_difference_undo (arma_info *ainfo, const DATASET *dset)
 }
 
 #endif /* X12A_CODE not defined */
-
-

@@ -46,6 +46,7 @@
 /* number of coefficients is m + 1 (i.e., m is degree of polynomial) */
 
 #include "mconf.h"
+#include <stdio.h>
 
 int polrt (double *xcof, double *cof, int m, cmplx *root)
 {
@@ -114,8 +115,8 @@ int polrt (double *xcof, double *cof, int m, cmplx *root)
 	t.i = 0;
 	p = &cof[n-1];
 	for (i=0; i<n; i++) {
-	    t1.r = x.r * t.r  -  x.i * t.i;
-	    t1.i = x.r * t.i  +  x.i * t.r;
+	    t1.r = x.r * t.r - x.i * t.i;
+	    t1.i = x.r * t.i + x.i * t.r;
 	    cofj = *p--;         /* evaluate polynomial */
 	    u.r += cofj * t1.r;
 	    u.i += cofj * t1.i;
@@ -126,10 +127,19 @@ int polrt (double *xcof, double *cof, int m, cmplx *root)
 	    t.i = t1.i;
 	}
 
-	mag = ud.r * ud.r  +  ud.i * ud.i;
+	mag = ud.r * ud.r + ud.i * ud.i;
 	if (mag == 0.0) {
-	    if(!final)
-		goto tryagn;
+	    if (!final) {
+		if (retry < 50) {
+		    /* questionable? (this goto was not
+		       conditional on the retry value, 
+		       changed 2014-04-11)
+		    */
+		    goto tryagn;
+		} else {
+		    break;
+		}
+	    }
 	    x.r = xsav.r;
 	    x.i = xsav.i;
 	    goto findon;
