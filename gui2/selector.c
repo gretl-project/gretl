@@ -7254,13 +7254,9 @@ static void selection_add_item (GtkTreeModel *model, GtkTreePath *path,
 
 char *main_window_selection_as_string (void) 
 {
+    struct list_maker lmkr = {NULL, 1, 0};
     GtkTreeSelection *select;
-    struct list_maker lmkr;
     char *ret = NULL;
-
-    lmkr.liststr = NULL;
-    lmkr.len = 1;
-    lmkr.overflow = 0;
 
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
 
