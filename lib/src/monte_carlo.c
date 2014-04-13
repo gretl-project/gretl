@@ -1226,6 +1226,7 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
  * @s: loop specification line.
  * @inloop: current loop struct pointer, or %NULL.
  * @dset: dataset struct.
+ * @opt: options associated with new loop.
  * @nested: location to receive info on whether a new
  * loop was created, nested within the input loop.
  * @err: location to receive error code.
@@ -1238,7 +1239,9 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 
 static LOOPSET *start_new_loop (char *s, LOOPSET *inloop, 
 				DATASET *dset,
-				int *nested, int *err)
+				gretlopt opt,
+				int *nested,
+				int *err)
 {
     LOOPSET *loop = NULL;
 
@@ -1247,6 +1250,13 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
 #if LOOP_DEBUG
     fprintf(stderr, "start_new_loop: inloop=%p, line='%s'\n", 
 	    (void *) inloop, s);
+#endif
+
+#if 0
+    if (inloop != NULL && (opt & OPT_P)) {
+	/* don't allow nesting of "progressive" loops? */
+	fprintf(stderr, "inner loop with OPT_P\n");
+    }
 #endif
 
     if (inloop == NULL || compile_level <= inloop->level) {
@@ -1458,7 +1468,7 @@ static void loop_model_init (LOOP_MODEL *lmod, int lno)
     lmod->cdiff = NULL;
 }
 
-/* Start up a LOOP_MODEL struct: copy pmod into place and
+/* Start up a LOOP_MODEL struct: copy @pmod into place and
    allocate storage */
 
 static int loop_model_start (LOOP_MODEL *lmod, const MODEL *pmod)
@@ -1917,6 +1927,9 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
 	if (err) {
 	    return err;
 	}
+    } else if (pmod->ncoeff != lmod->nc) {
+	gretl_errmsg_set(_("progressive loop: model must be of constant size"));
+	return E_DATA;
     }
 
     mpf_init(m);
@@ -1952,8 +1965,8 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
     return err;
 }
 
-/* Update the LOOP_PRINT struct lprn using the current values from the
-   variables in list.  If this is the first use we need to do some
+/* Update the LOOP_PRINT struct @lprn using the current values of the
+   specified variables. If this is the first use we need to do some
    allocation first.
 */
 
@@ -2140,7 +2153,7 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
 
 	if (!err) {
 	    newloop = start_new_loop(s->line, loop, dset, 
-				     &nested, &err);
+				     opt, &nested, &err);
 #if LOOP_DEBUG
 	    fprintf(stderr, "got LOOP: newloop at %p (err = %d)\n", 
 		    (void *) newloop, err);
