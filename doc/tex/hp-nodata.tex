@@ -385,7 +385,7 @@ conformability is a problem. For example:
   matrix b = {1,2,3; 3,2,1}     # b is 2 x 3
 
   matrix c = a'         # c is the transpose of a
-  matrix d = b*a        # d is a 2x3 equal to b times a
+  matrix d = a*b        # d is a 2x3 equal to a times b
 
   matrix gina = b'd     # valid: gina is 3x3
   matrix lina = d + b   # valid: lina is 2x3
@@ -687,11 +687,13 @@ processing.
 \subsection{Output to a file}
 \label{sec:outfile}
 
-The \cmd{outfile} command diverts output to filename, until further
-notice. Use the flag \option{append} to append output to an existing
+If you want to write your output to a file, the \cmd{outfile} command
+diverts output to filename, until further notice, so you'll want to
+put it before the commands which print out the material you want to
+save. Use the flag \option{append} to append output to an existing
 file or \option{write} to start a new file (or overwrite an existing
-one). Only one file can be opened in this way at any given
-time. The \option{close} flag is used to close an output file that was
+one). Only one file can be opened in this way at any given time. The
+\option{close} flag is used to close an output file that was
 previously opened as above. Output will then revert to the default
 stream.
 
@@ -714,10 +716,12 @@ Four!
 \end{code}
 
 Three special variants on the above are available. If you give the
-keyword null in place of a real filename along with the write option, the effect is to suppress all printed output until redirection
-is ended. If either of the keywords stdout or stderr are given in
-place of a regular filename the effect is to redirect output to
-standard output or standard error output respectively.
+keyword null in place of a real filename along with the write option,
+the effect is to suppress all printed output until redirection is
+ended.\footnote{For Unix geeks: if either of the keywords stdout or
+  stderr are given in place of a regular filename the effect is to
+  redirect output to standard output or standard error output,
+  respectively.}
 
 The \option{quiet} option is for use with \option{write} or
 \option{append}: its effect is to turn off the echoing of commands and
@@ -916,7 +920,8 @@ above formulae translate into
 
 \chapter{Numerical methods}
 
-\section{Numerical differentiation and optimization}
+\section{Numerical optimization}
+\label{sec:hp-numopt}
 
 Many, if not most, cases in which an econometrician wants to use a
 programming language such as hansl instead of relying on pre-canned
@@ -964,7 +969,7 @@ example which should give an idea of how things are done.
 
 \begin{code}
 function scalar Himmelblau(matrix x)
-    /* maxima:
+    /* extrema:
     f(3.0, 2.0) = 0.0, 
     f(-2.805118, 3.131312) = 0.0,
     f(-3.779310, -3.283186) = 0.0
@@ -999,7 +1004,7 @@ which has four different minima; $f(x, y) = (x^2+y-11)^2 +
   for a minimum, our definition returns the negative of the Himmelblau
   function proper.
 \item Then, we set \verb|max verbose| to 1. This is another example of
-  the uage of the \cmd{set} command; its meaning is ``let me see how
+  the usage of the \cmd{set} command; its meaning is ``let me see how
   the iterations go'' and it defaults to 0. By using the \cmd{set}
   command with appropriate parameters, you control several features of
   the optimization process, such as numerical tolerances,
@@ -1078,6 +1083,7 @@ Replaced scalar y2 = -1.05814e-07
              y1 = -1.8301573e-28
 
              y2 = -1.0581385e-07
+
 theta1 (1 x 2)
 
   3   2 
@@ -1126,6 +1132,9 @@ The optimization methods hansl puts at your disposal are:
   disconinuities or is not differentiable somewhere; however, they may
   be very slow and CPU-intensive.
 \end{itemize}
+
+\section{Numerical differentiation}
+\label{sec:hp-numdiff}
 
 For numerical differentiation we have \texttt{fdjac}. For example:
 

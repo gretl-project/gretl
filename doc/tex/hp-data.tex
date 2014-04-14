@@ -290,6 +290,11 @@ be written as
 \begin{code}
 ols y 0 x1 x2 x3 x4
 \end{code}
+Note that we used here the convention, mentioned in section
+\ref{sec:series}, by which a series can be identified by its ID number
+when used as an argument to a command, so we used \texttt{0} instead
+of \texttt{const}.
+
 
 Lists can be concatenated, as in as in \texttt{list L3 = L1 L2} (where
 \texttt{L1} and \texttt{L2} are names of existing lists). This will
@@ -323,8 +328,8 @@ elements of \texttt{L1} that are not present in \texttt{L2}.
 
 To \textit{append} or \textit{prepend} variables to an existing list,
 we can make use of the fact that a named list stands in for a
-``longhand'' list.  For example, we can do
-%
+``longhand'' list.  For example, assuming that a list \texttt{xlist}
+is already defined (possibly as \texttt{null}), we can do
 \begin{code}
 list xlist = xlist 5 6 7
 xlist = 9 10 xlist 11 12
@@ -345,6 +350,35 @@ see in hansl scripts something like
 \end{code}
 which ensures that the series \texttt{const} is included (exactly
 once) in the list \texttt{C}, and comes first.
+
+\subsection{Converting lists from/to matrices}
+
+The relationship between lists and matrices is a little ambivalent, as
+you may want to turn a list into a matrix by filling the latter with
+the ID numbers contained in the list, or rather with the data in the
+series the ID numbers refer to. In fact, both interpretations are
+legitimate and either action can be useful at times, so hansl lets you
+do both things.
+
+If you assign a list to a matrix, like in
+\begin{code}
+  list L = moo foo boo zoo
+  matrix a = L
+\end{code}
+the amtrix \texttt{a} will contain the ID numbers of the four series
+as a row vector. This operation goes both ways, so the statement
+\begin{code}
+  list C = seq(7,10)
+\end{code}
+is perfectly valid (provided, of course, that you have at least 10
+series in the currently open dataset).
+
+If instead you want to create a matrix from the contents of the series
+which belong to a given list, you have to enclose the list name in
+curly brackets, as in
+\begin{code}
+  matrix X = { L }
+\end{code}
 
 \subsection{The \texttt{foreach} loop variant with lists}
 

@@ -109,9 +109,11 @@ the scalar \texttt{days} comes from the following pathway:
   we set \texttt{days} to 28 and we're done;\footnote{Ok, we don't
     check for leap years here.}
 \item otherwise, we compute a matrix of zeros and ones via the
-  \verb|m.={4,6,9,11}| operation (note the ``dot'' operator); if
-  \texttt{m} equals any of the elements in the vector, the
-  corresponding element of the result will be one, and zero otherwise;
+  \verb|m.={4,6,9,11}| operation (note the usage of the ``dot''
+  operator to perform an element-by element comparison --- see section
+  \ref{sec:mat-op}); if \texttt{m} equals any of the elements in the
+  vector, the corresponding element of the result will be one, and
+  zero otherwise;
 \item by the function \cmd{maxr}, we take its maximum, so we're
   checking whether \texttt{m} is one of the four values corresponding
   to 30-days months;
