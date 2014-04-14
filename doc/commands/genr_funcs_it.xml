@@ -1283,7 +1283,6 @@
     <para>
       caso <lit>J</lit>: Funzione di Bessel del primo
       tipo. Ricorda un'onda sinusoidale smorzata. Definita per
-      <argname>v</argname> e <argname>x</argname>
       reali. Tuttavia, se <argname>x</argname> è negativo,
       <argname>v</argname> deve essere un numero intero.
     </para>
@@ -2930,7 +2929,6 @@
     </para>
       </description>
     </function>
-
 
     <function name="hdprod" section="linalg" output="matrix">
       <fnargs>
@@ -5099,27 +5097,28 @@
 	<fnarg type="string">s</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Restituisce un intero corrispondente all'osservazione
-	  specificata dalla stringa <math>s</math>. Si noti che il
-	  risultato è invariante al sottocampionamento. Questa
-	  funzione è particolarmente utile con campioni di serie
-	  storiche. Ad esempio, il codice
-	</para>
-	<code>
-	  open denmark 
-	  k = obsnum(1980:1)
-	</code>
-	<para>
-	  produce <lit>k = 25</lit>, ciò che indica che il primo
-	  trimestre 1980 è la venticinquesima osservazione nel dataset
-	  <lit>denmark</lit>.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="obs"/>
-	  </seelist>
-	</para>
+    <para>
+      Restituisce un intero corrispondente all'osservazione
+      specificata dalla stringa <math>s</math>. Si noti che il
+      risultato è invariante al sottocampionamento. Questa
+      funzione è particolarmente utile con campioni di serie
+      storiche. Ad esempio, il codice
+    </para>
+    <code>
+      open denmark 
+      k = obsnum(1980:1)
+    </code>
+    <para>
+      produce <lit>k = 25</lit>, ciò che indica che il primo
+      trimestre 1980 è la venticinquesima osservazione nel dataset
+      <lit>denmark</lit>.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="obs"/>
+        <fncref targ="obslabel"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -5128,35 +5127,35 @@
 	<fnarg type="anyfloat-or-list">x</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Se <argname>x</argname> è uno scalare, la funzione
-	  restituisce 1 se <argname>x</argname> non è <lit>NA</lit>,
-	  altrimenti 0. Se <argname>x</argname> è una serie, la
-	  funzione restituisce una serie contenente valore 1 per le
-	  osservazioni non mancanti e zero altrimenti.  Se
-	  <argname>x</argname> è una lista, il risultato è una
-	  variabile con zero in corrispondenza delle osservazioni per
-	  le quali almeno una variabile nella lista ha un valore
-	  mancante e 1 altrimenti.
-	</para>
-	<para>
-	  Se <argname>x</argname> è una matrice il comportamento è
-	  leggermente diverso, dato che le matrici non possono
-	  contenere <lit>NA</lit>: la funzione restituisce una matrice
-	  delle stesse dimensioni di <argname>x</argname>, con
-	  elementi pari a 1 nelle posizioni corrispondenti a elementi
-	  di <argname>x</argname> finiti, e 0 di quelli non finiti (o
-	  infiniti o not-a-number, in conformità con lo standard IEEE
-	  754).
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="missing"/>
-	    <fncref targ="misszero"/>
-	    <fncref targ="zeromiss"/>
-	  </seelist>
-	  Notare che queste funzioni non possono essere applicate a matrici.
-	</para>
+    <para>
+      Se <argname>x</argname> è uno scalare, la funzione
+      restituisce 1 se <argname>x</argname> non è <lit>NA</lit>,
+      altrimenti 0. Se <argname>x</argname> è una variabile la
+      funzione restituisce una serie contenente valore 1 per le
+      osservazioni non mancanti e zero altrimenti.  Se
+      <argname>x</argname> è una lista il risultato è una
+      variabile con zero in corrispondenza delle osservazioni per
+      le quali almeno una variabile nella lista ha un valore
+      mancante e 1 altrimenti.
+    </para>
+    <para>
+      Se <argname>x</argname> è una matrice il comportamento è
+      leggermente diverso, dato che le matrici non possono
+      contenere <lit>NA</lit>: la funzione restituisce una matrice
+      delle stesse dimensioni di <argname>x</argname>, con
+      elementi pari a 1 nelle posizioni corrispondenti a elementi
+      di <argname>x</argname> finiti, e 0 di quelli non finiti (o
+      infiniti o not-a-number, in conformità con lo standard IEEE
+      754).
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="missing"/>
+        <fncref targ="misszero"/>
+        <fncref targ="zeromiss"/>
+      </seelist>
+      Notare che queste funzioni non possono essere applicate a matrici.
+    </para>
       </description>
     </function>
 
@@ -5209,26 +5208,32 @@
 	<fnarg type="series">y</fnarg>
       </fnargs>
       <description>
-	<para context="notex">
-	  La funzione è applicabile solo se il dataset corrente ha
-	  struttura panel. Calcola le deviazioni ortogonali in avanti
-	  della variabile <argname>y</argname>.
-	</para>
-	<para context="tex">
-	  La funzione è applicabile solo se il dataset corrente ha una
-	  struttura panel. Calcola le deviazioni ortogonali in avanti
-	  della variabile <argname>y</argname>; in altre parole, 
-	  \[ \tilde{y}_{i,t} =
-	  \sqrt{ \frac{T_i - t + 1}{T_i - t}} \left( y_{i,t} -
-	  \frac{1}{T_i - t - 1} \sum_{s=t+1}^{T_i} y_{i,s} \right) \]
-	</para>
-	<para>
-	  Talvolta questa trasformazione viene utilizzata al posto delle
-	  differenze prime per rimuovere gli effetti individuali da dati panel.
-	  <seelist>
-	    <fncref targ="diff"/>
-	  </seelist>
-	</para>
+    <para context="notex">
+      La funzione è applicabile solo se il dataset corrente ha
+      struttura panel. Calcola le deviazioni ortogonali in avanti
+      della variabile <argname>y</argname>.
+    </para>
+    <para context="tex">
+      La funzione è applicabile solo se il dataset corrente ha una
+      struttura panel. Calcola le deviazioni ortogonali in avanti
+      della variabile <argname>y</argname>; in altre parole, 
+      \[ \tilde{y}_{i,t} =
+      \sqrt{ \frac{T_i - t + 1}{T_i - t}} \left( y_{i,t} -
+      \frac{1}{T_i - t - 1} \sum_{s=t+1}^{T_i} y_{i,s} \right) \]
+    </para>
+    <para>
+      Talvolta questa trasformazione viene utilizzata talvolta al posto delle
+      differenze per rimuovere gli effetti individuali da dati panel. Per assicurare
+      la compatibilità con le differenze prime, le deviazioni sono memorizzate
+      alla data successiva a quella che corrisponde alla loro effettiva collocazione
+      temporale (in altre parole, il valore alla data 
+      <math>t</math> è la deviazione che in realtà si riferisce alla data 
+      <math>t</math> &minus; 1).  In questo modo viene  persa la prima osservazione di 
+      ogni serie storica e non l'ultima.
+      <seelist>
+        <fncref targ="diff"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -5244,22 +5249,22 @@
 	<example>f3 = pdf(W, shape, scale, y)</example>
       </examples>
       <description>
-	<para>
-	  Calcola funzioni di densità o di probabilità. Restituisce la
-	  densità (se continue) o la probabilità (se discrete)
-	  <argname>x</argname> della distribzion identificata dal
-	  carattere <argname>c</argname>.  Si veda <fncref targ="cdf"/>
-	  per dettagli sugli argomenti.  Le distribuzioni supportate
-	  dalla funzione <lit>pdf</lit> sono la normale,
-	  <math>t</math> di Student, chi-quadro, <math>F</math>,
-	  gamma, Weibull, Generalized Error, binomiale and Poisson. Si
-	  noti che per la binomiale e la Poisson ciò che viene
-	  calcolato è in effetti la probabilità nel punto specificato.
-	</para>
-	<para>
-	  Per la normale, si veda anche la funzione <fncref
-	  targ="dnorm"/>.
-	</para>
+    <para>
+      Calcola funzioni di densità o di probabilità. Restituisce la
+      densità (se continue) o la probabilità (se discrete) in 
+      <argname>x</argname> della distribuzione identificata dal
+      carattere <argname>c</argname>.  Si veda <fncref targ="cdf"/>
+      per dettagli sugli argomenti.  Le distribuzioni supportate
+      dalla funzione <lit>pdf</lit> sono la normale,
+      <math>t</math> di Student, chi-quadro, <math>F</math>,
+      gamma, Weibull, Generalized Error, binomiale and Poisson. Si
+      noti che per la binomiale e la Poisson ciò che viene
+      calcolato è in effetti la probabilità nel punto specificato.
+    </para>
+    <para>
+      Per la normale, si veda anche la funzione <fncref
+      targ="dnorm"/>.
+    </para>
       </description>
     </function>
 
@@ -5323,31 +5328,37 @@
 	<fnarg type="series" optional="true">mask</fnarg>
       </fnargs>
       <description>
-	<para context="notex">
-	  Questa funzione è applicabile solo se il dataset corrente
-	  ha struttura panel. Calcola la media per ciascuna unità della 
-	  variabile 
-	  <argname>y</argname>; in altre parole, la somma delle osservazioni
-	  valide relative a ciascuna unità divisa per il loro numero.
-	</para>
-	<para context="tex">
-	  Questa funzione è applicabile solo se il dataset corrente ha
-	  struttura panel. Calcola la media per ciascuna unità della 
-	  variabile 
-	  <argname>y</argname>; in altre parole, 
-	  \[ \bar{y}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} y_{i,t}\] 
-	  dove $T_i$ è il numero di osservazioni valide per l'unità $i$.
-	</para>
-	<para>
-	  Se viene indicato il secondo parametro opzionale le
-	  osservazioni corrispondenti a un valore nullo di <argname>mask</argname>
-	  sono ignorate.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="psd"/>
-	  </seelist>
-	</para>
+    <para context="notex">
+      Questa funzione è applicabile solo se il dataset corrente
+      ha struttura panel. Calcola la media per ciascuna unità della 
+      variabile 
+      <argname>y</argname>; in altre parole, la somma delle osservazioni
+      valide relative a ciascuna unità divisa per il loro numero.
+    </para>
+    <para context="tex">
+      Questa funzione è applicabile solo se il dataset corrente ha
+      struttura panel. Calcola la media per ciascuna unità della 
+      variabile 
+      <argname>y</argname>; in altre parole, 
+      \[ \bar{y}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} y_{i,t}\] 
+      dove $T_i$ è il numero di osservazioni valide per l'unità $i$.
+    </para>
+    <para>
+      Se viene indicato il secondo parametro opzionale le
+      osservazioni corrispondenti a un valore nullo di <argname>mask</argname>
+      sono ignorate.
+    </para>
+    <para>
+      <seelist> 
+        <fncref targ="pmax"/>
+        <fncref targ="pmin"/>
+        <fncref targ="pnobs"/>
+        <fncref targ="psd"/>
+        <fncref targ="pxsum"/>
+        <fncref targ="pshrink"/>
+        <fncref targ="psum"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -5418,20 +5429,19 @@
 	<fnarg type="vector">a</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Calcola le radici di un polinomio. Se il polinomio è
-	  di grado 
-	  <math>p</math>, il vettore  <argname>a</argname> deve contenere 
-	  <math>p</math> + 1 coefficienti in ordine crescente, &ie; partendo 
-	  dalla costante e terminando con il coefficiente di 
-	  <math>x</math><sup>p</sup>.
-	</para>
-	<para>
-	  Se tutte le radici sono reali vengono restituite in un vettore colonna
-	  di lunghezza <math>p</math>; in caso contrario viene restituita una
-	  matrice <by r="p" c="2"/> con la parte reale delle radici nella prima colonna
-	  e la parte immaginaria nella seconda.
-	</para>
+    <para>
+      Calcola le radici di un polinomio. Se il polinomio è
+      di grado <math>p</math>, il vettore  <argname>a</argname> deve contenere 
+      <math>p</math> + 1 coefficienti in ordine crescente, &ie; partendo 
+      dalla costante e terminando con il coefficiente di 
+      <math>x</math><sup>p</sup>.
+    </para>
+    <para>
+      Se tutte le radici sono reali vengono restituite in un vettore colonna
+      di lunghezza <math>p</math>; in caso contrario viene restituita una
+      matrice <by r="p" c="2"/> con la parte reale delle radici nella prima colonna
+      e la parte immaginaria nella seconda.
+    </para>
       </description>
     </function>
 
@@ -5451,53 +5461,53 @@
 
     <function name="princomp" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="matrix">X</fnarg>
-	<fnarg type="int">p</fnarg>
-	<fnarg optional="true" type="bool">covmat</fnarg>
+    <fnarg type="matrix">X</fnarg>
+    <fnarg type="int">p</fnarg>
+    <fnarg optional="true" type="bool">covmat</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Sia data una matrice <argname>X</argname> sia <by r="T"
-	  c="k"/> e contenente <math>T</math> osservazioni su
-	  <math>k</math> variabili. L'argomento <argname>p</argname>
-	  deve essere un intero positivo inferiore o uguale a
-	  <math>k</math>. Questa funzione restituisce una matrice <by
-	  r="T" c="p"/> <math>P</math>, contenente le prime
-	  <math>p</math> componenti principali di
-	  <argname>X</argname>.
-	</para>
-	<para>
-	  Il terzo parametro è opzionale e ha l'effetto di una condizione logica:
-	  se non nullo le componenti principali vengono calcolate
-	  sulla base della matrice di covarianza delle colonne di <argname>X</argname>
-	  (il default è usare la matrice di correlazione).
-	</para>
-	<para context="notex">
-	  Gli elementi di <math>P</math> sono calcolati come la somma
-	  da <math>i</math> a <math>k</math> di <math>Z</math><sub>ti</sub>
-	  per <math>v</math><sub>ji</sub>, dove
-	  <math>Z</math><sub>ti</sub> è il valore standardizzato della variabile 
-	  <math>i</math> all'osservazione <math>t</math> e 
-	  <math>v</math><sub>ji</sub> è l'autovettore <math>j</math> della
-	  matrice di correlazione (o covarianza) delle <math>X</math><sub>i</sub>, 
-	  con autovettori ordinati in ordine decrescente degli autovalori
-	  corrispondenti.
-	</para>
-	<para context="tex">
-	  Gli elementi di $P$ sono calcolati come 
-	  \[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \] 
-	  dove $Z_{ti}$ è il valore standardizzato della variabile 
-	  $i$ all'osservazione $t$, $Z_{ti} = (X_{ti} -
-	  \bar{X}_i) / \hat{\sigma}_i$, e $v^{(j)}$ è l'autovettore $j$
-	  della matrice di correlazione (o covarianza) delle 
-	  $X_i$, con autovettori ordinati in senso decrescente 
-	  degli autovalori corrispondenti.
-	</para>	
-	<para>
-	  <seelist>
-	    <fncref targ="eigensym"/>
-	  </seelist>
-	</para>
+    <para>
+      Data la matrice <argname>X</argname> di dimensioni <by r="T"
+      c="k"/>, contenente <math>T</math> osservazioni su
+      <math>k</math> variabili, e un intero positivo <argname>p</argname>
+      inferiore o uguale a
+      <math>k</math>, questa funzione restituisce una matrice <by
+      r="T" c="p"/> <math>P</math>, contenente le prime
+      <math>p</math> componenti principali di
+      <argname>X</argname>.
+    </para>
+    <para>
+      Il terzo parametro è opzionale e ha l'effetto di una condizione logica:
+      se non nullo le componenti principali vengono calcolate
+      sulla base della matrice di covarianza delle colonne di <argname>X</argname>
+      (il default è usare la matrice di correlazione).
+    </para>
+    <para context="notex">
+      Gli elementi di <math>P</math> sono calcolati come la somma
+      da <math>i</math> a <math>k</math> di <math>Z</math><sub>ti</sub>
+      per <math>v</math><sub>ji</sub>, dove
+      <math>Z</math><sub>ti</sub> è il valore standardizzato della variabile 
+      <math>i</math> all'osservazione <math>t</math> e 
+      <math>v</math><sub>ji</sub> è l'autovettore <math>j</math> della
+      matrice di correlazione (o covarianza) delle <math>X</math><sub>i</sub>, 
+      con autovettori ordinati in ordine decrescente degli autovalori
+      corrispondenti.
+    </para>
+    <para context="tex">
+      Gli elementi di $P$ sono calcolati come 
+      \[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \] 
+      dove $Z_{ti}$ è il valore standardizzato della variabile 
+      $i$ all'osservazione $t$, $Z_{ti} = (X_{ti} -
+      \bar{X}_i) / \hat{\sigma}_i$, e $v^{(j)}$ è l'autovettore $j$
+      della matrice di correlazione (o covarianza) delle 
+      $X_i$, con autovettori ordinati in senso decrescente 
+      degli autovalori corrispondenti.
+    </para> 
+    <para>
+      <seelist>
+        <fncref targ="eigensym"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -5542,40 +5552,46 @@
 	<fnarg type="series" optional="true">mask</fnarg>
       </fnargs>
       <description>
-	<para context="notex">
-	  Questa funzione è applicabile solo se il dataset corrente ha
-	  struttura panel. Calcola la deviazione standard campionaria per ciascuna
-	  unità della cross-section della variabile <math>y</math>. Il denominatore
-	  utilizzato è la numerosità campionaria per ciascuna unità meno 1, a meno
-	  che il numero di osservazioni valide per l'unità in questione sia 1
-	  (nel qual caso viene restituito uno zero) o 0 (nel qual caso viene 
-	  <lit>NA</lit>).
-	</para>
-	<para context="tex">
-	  Questa funzione è applicabile solo se il dataset corrente ha
-	  struttura panel. Calcola la deviazione standard campionaria per ciascuna
-	  unità della cross-section della variabile <math>y</math>; in altre parole, 
-	  \[ \sigma_i = \sqrt{\frac{1}{T_i - 1} \sum_{t=1}^{T_i} 
-	  (y_{i,t} - \bar{y}_i)^2 } \]. La formula precedente
-	  vale per $T_i\ge 2$, dove $T_i$ è il numero di osservazioni
-	  valide per l'unità $i$; se $T_i = 0$, la funzione restituisce 
-	  <lit>NA</lit>; se $T_i = 1$, la funzione restituisce 0.
-	</para>
-	<para>
-	  Se viene fornito il secondo argomento opzionale le osservazioni 
-		corrispondenti a un valore nullo di <argname>mask</argname>
-	  sono ignorate.
-	</para>
-	<para>
-	  Nota: questa funzione rende possibile controllare se 
-	  una certa variabile (per esempio <lit>X</lit>) è costante nel tempo usando la condizione
-	  <lit>max(psd(X)) = 0</lit>.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="pmean"/>
-	  </seelist>
-	</para>
+    <para context="notex">
+      Questa funzione è applicabile solo se il dataset corrente ha
+      struttura panel. Restituisce una variabile contenente la deviazione standard 
+      campionaria della variabile <math>y</math> per ciascuna
+      unità della cross-section (con valori ripetuti per ciascuna data). Il denominatore
+      utilizzato è la numerosità campionaria per ciascuna unità meno 1, a meno
+      che il numero di osservazioni valide per l'unità in questione sia 1
+      (nel qual caso viene restituito uno zero) o 0 (nel qual caso viene 
+      <lit>NA</lit>).
+    </para>
+    <para context="tex">
+      Questa funzione è applicabile solo se il dataset corrente ha
+      struttura panel. Calcola la deviazione standard campionaria per ciascuna
+      unità della cross-section della variabile <math>y</math>; in altre parole, 
+      \[ \sigma_i = \sqrt{\frac{1}{T_i - 1} \sum_{t=1}^{T_i} 
+      (y_{i,t} - \bar{y}_i)^2 } \]. La formula precedente
+      vale per $T_i\ge 2$, dove $T_i$ è il numero di osservazioni
+      valide per l'unità $i$; se $T_i = 0$, la funzione restituisce 
+      <lit>NA</lit>; se $T_i = 1$, la funzione restituisce 0.
+    </para>
+    <para>
+      Se viene fornito il secondo argomento opzionale le osservazioni 
+        corrispondenti a un valore nullo di <argname>mask</argname>
+      sono ignorate.
+    </para>
+    <para>
+      Nota: questa funzione rende possibile controllare se 
+      una certa variabile (per esempio <lit>X</lit>) è costante nel tempo usando la condizione
+      <lit>max(psd(X)) = 0</lit>.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="pmax"/>
+        <fncref targ="pmin"/>
+        <fncref targ="pmean"/>
+        <fncref targ="pnobs"/>
+        <fncref targ="pshrink"/>
+        <fncref targ="psum"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -5678,24 +5694,26 @@
 	<example>p2 = pvalue(F, 3, 30, 5.67)</example>
       </examples>
       <description>
-	<para>
-	  Calcola un <math>P</math>-value. Restituisce 
-	  <equation status="inline" ascii="P(X > x)" tex="$P(X > x)$"/>,
-	  dove la distribuzione <math>X</math> è determinata dal carattere 
-	  <argname>c</argname>. Fra gli argomenti 
-	  <argname>c</argname> e <argname>x</argname> è necessario indicare 
-	  zero o più argomenti aggiuntivi per specificare i parametri della 
-	  distribuzione; v. <fncref targ="cdf"/> per ulteriori dettagli. 
-	  Le distribuzioni che la funzione <lit>pval</lit> può gestire sono 
-	  la normale standard, <math>t</math>, Chi quadrato, <math>F</math>,
-	  gamma, binomiale e Poisson.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="critical"/>
-	    <fncref targ="invcdf"/>
-	  </seelist>
-	</para>
+    <para>
+      Calcola un <math>P</math>-value. Restituisce 
+      <equation status="inline" ascii="P(X > x)" tex="$P(X > x)$"/>,
+      dove la distribuzione <math>X</math> è determinata dal carattere 
+      <argname>c</argname>. Fra gli argomenti 
+      <argname>c</argname> e <argname>x</argname> è necessario indicare 
+      zero o più argomenti aggiuntivi per specificare i parametri della 
+      distribuzione; v. <fncref targ="cdf"/> per ulteriori dettagli. 
+      Le distribuzioni che la funzione <lit>pval</lit> può gestire sono 
+      la normale standard, <math>t</math>, chi quadrato, <math>F</math>,
+      gamma, binomiale, Poisson, Weibull e Generalized Error.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="critical"/>
+        <fncref targ="invcdf"/>
+        <fncref targ="urcpval"/>
+        <fncref targ="imhof"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -5738,15 +5756,15 @@
 	<fnarg type="symmat">A</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Calcola la forma quadratica <equation status="inline"
-	  ascii="Y = xAx'" tex="$Y = x A x'$"/>. L'uso di questa
-	  funzione al posto della consueta moltiplicazione matriciale
-	  garantisce maggiore velocità e accuratezza. Se le dimensioni
-	  di <argname>x</argname> e <argname>A</argname> non sono
-	  compatibili, o se <argname>A</argname> non è simmetrica
-	  viene restituito un messaggio d'errore.
-	</para>
+    <para>
+      Calcola la forma quadratica <equation status="inline"
+      ascii="Y = xAx'" tex="$Y = x A x'$"/>. L'uso di questa
+      funzione al posto della consueta moltiplicazione matriciale
+      garantisce maggiore velocità e accuratezza. Se le dimensioni
+      di <argname>x</argname> e <argname>A</argname> non sono
+      compatibili o se <argname>A</argname> non è simmetrica
+      viene restituito un messaggio d'errore.
+    </para>
       </description>
     </function>
 
@@ -5793,109 +5811,109 @@
 
     <function name="quadtable" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="int">n</fnarg>
-	<fnarg type="int" optional="true">type</fnarg>
-	<fnarg type="scalar" optional="true">a</fnarg>
-	<fnarg type="scalar" optional="true">b</fnarg>
+    <fnarg type="int">n</fnarg>
+    <fnarg type="int" optional="true">type</fnarg>
+    <fnarg type="scalar" optional="true">a</fnarg>
+    <fnarg type="scalar" optional="true">b</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Restituisce una matrice <by r="n" c="2"/> da usare per la
-	  quadratura di Gauss (integrazione numerica). La prima
-	  colonna contiene i nodi o ascisse, la seconda colonna
-	  contiene i pesi.
-	</para>
-	<para>
-	  Il primo argomento specifica il numero dei punti (righe) da
-	  calcolare. Il secondo argomento specifica il codice del tipo
-	  di quadratura da utilizzare: 1 Gauss&ndash;Hermite
-	  (predefinita); 2 Gauss&ndash;Legendre; 3
-	  Gauss&ndash;Laguerre. Il significato dei parametri opzionali
-	  <argname>a</argname> e <argname>b</argname> dipende dal
-	  <argname>tipo</argname> selezionato, come spiegato sotto.
-	</para>
-	<para context="notex">
-	  La quadratura di Gauss è un metodo per l'approssimazione
-	  numerica di un integrale definito di una qualche funzione di
-	  interesse. Si rappresenti la funzione come il prodotto
-	  <math>f(x)W(x)</math>. I diversi tipi di quadratura
-	  differiscono nella specificazione della componente
-	  <math>W(x)</math>: nel caso di Hermite questa è uguale a
-	  exp(&minus;<math>x</math><sup>2</sup>); nel caso di
-	  Laguerre, è data da exp(&minus;<math>x</math>); infine, nel
-	  caso di Legendre, si ha semplicemente <math>W(x)</math> = 1.
-	</para>
-	<para context="tex">
-	  La quadratura di Gauss è un metodo di approssimazione
-	  numerica di un integrale definito di una qualche funzione di
-	  interesse. Si rappresenti la funzione come il prodotto
-	  $f(x)W(x)$. I diversi tipi di quadratura differiscono nella
-	  specificazione della componente $W(x)$: nel caso di Hermite
-	  abbiamo $W(x) = \exp(-x^2)$; nel caso di Laguerre, $W(x) =
-	  \exp(-x)$; nel caso di Legendre, semplicemente $W(x) = 1$.
-	</para>
-	<para context="notex">
-	  Per ciascuna specificazione di <math>W</math>, si può
-	  calcolare un insieme di nodi, <math>x</math><sub>i</sub>, e
-	  pesi, <math>w</math><sub>i</sub>, tali che la somma da
-	  <math>i</math>=1 a <math>n</math> di
-	  <math>w</math><sub>i</sub><math>f</math>(<math>x</math><sub>i</sub>)
-	  approssima l'integrale desiderato. È usato il metodo di
-	  <cite key="golub69">Golub and Welsch (1969)</cite>.
-	</para>
-	<para context="tex">
-	  Per ciascuna specificazione di $W(x)$, si può calcolare un
-	  insieme di nodi, $x_i$, e pesi, $w_i$, tali che
-	  $\sum_{i=1}^n f(x_i) w_i$ approssima l'integrale
-	  desiderato. È usato il metodo di <cite key="golub69">Golub
-	  and Welsch (1969)</cite>.
-	</para>
-	<para context="notex">
-	  Quando si seleziona il metodo di Gauss&ndash;Legendre, gli
-	  argomenti opzionali <argname>a</argname> e
-	  <argname>b</argname> possono essere utilizzati per
-	  controllare i limiti, inferiore e superiore, di
-	  integrazione, i valori predefiniti sono &minus;1 e
-	  1. (Nella quadratura di Hermite i limiti sono fissati a meno
-	  e più infinito, mentre in quella di Laguerre sono fissati a
-	  0 e infinito.)
-	</para>
-	<para context="tex">
-	  Quando si seleziona il metodo di Gauss&ndash;Legendre, gli
-	  argomenti opzionali <argname>a</argname> e
-	  <argname>b</argname> possono essere utilizzati per
-	  controllare i limiti, inferiore e superiore, di
-	  integrazione, i valori predefiniti sono $-1$ e 1. (Nella
-	  quadratura di Hermite i limiti sono fissati a $-\infty$ e
-	  $+\infty$, mentre in quella di Laguerre sono fissati a 0 e
-	  $\infty$.)
-	</para>
-	<para context="notex">
-	  Nella quadratura di Hermite <argname>a</argname> e
-	  <argname>b</argname> svolgono un ruolo differente: possono
-	  essere utilizzati per sostituire la forma predefinita di
-	  <math>W</math>(<math>x</math>) con la distribuzione normale
-	  (strettamente associata) con media <argname>a</argname> e
-	  deviazione standard <argname>b</argname>. Per esempio,
-	  fornire valori 0 e 1 per questi parametri ha l'effetto di
-	  trasformare <math>W</math>(<math>x</math>) nella funzione di
-	  densità di una normale standard, il che è equivalente a
-	  moltiplicare i nodi predefiniti per la radice quadrata di 2
-	  e dividere i pesi per la radice quadrata di &pi;.
-	</para>
-	<para context="tex">
-	  Nella quadratura di Hermite <argname>a</argname> e
-	  <argname>b</argname> svolgono un ruolo differente: possono
-	  essere utilizzati per sostituire la forma predefinita di
-	  $W(x)$ con la distribuzione normale (strettamente associata)
-	  con media <argname>a</argname> e deviazione standard
-	  <argname>b</argname>. Per esempio, fornire valori 0 e 1 per
-	  questi parametri ha l'effetto di trasformare $W(x)$ nella
-	  funzione di densità di una normale standard, il che è
-	  equivalente a moltiplicare i valori predefiniti $x_i$ per
-	  $\sqrt{2}$ e dividere i pesi $w_i$ predefiniti per
-	  $\sqrt{\pi}$.
-	</para>
+    <para>
+      Restituisce una matrice <by r="n" c="2"/> da usare per la
+      quadratura di Gauss (integrazione numerica). La prima
+      colonna contiene i nodi o ascisse, la seconda colonna
+      contiene i pesi.
+    </para>
+    <para>
+      Il primo argomento specifica il numero dei punti (righe) da
+      calcolare. Il secondo argomento specifica il codice del tipo
+      di quadratura da utilizzare: 1 Gauss&ndash;Hermite
+      (predefinita); 2 Gauss&ndash;Legendre; 3
+      Gauss&ndash;Laguerre. Il significato dei parametri opzionali
+      <argname>a</argname> e <argname>b</argname> dipende dal
+      <argname>tipo</argname> selezionato, come spiegato sotto.
+    </para>
+    <para context="notex">
+      La quadratura di Gauss è un metodo per l'approssimazione
+      numerica di un integrale definito di una qualche funzione di
+      interesse. Si rappresenti la funzione come il prodotto
+      <math>f(x)W(x)</math>. I diversi tipi di quadratura
+      differiscono nella specificazione della componente
+      <math>W(x)</math>: nel caso di Hermite questa è uguale a
+      exp(&minus;<math>x</math><sup>2</sup>); nel caso di
+      Laguerre, è data da exp(&minus;<math>x</math>); infine, nel
+      caso di Legendre, si ha semplicemente <math>W(x)</math> = 1.
+    </para>
+    <para context="tex">
+      La quadratura di Gauss è un metodo di approssimazione
+      numerica di un integrale definito di una qualche funzione di
+      interesse. Si rappresenti la funzione come il prodotto
+      $f(x)W(x)$. I diversi tipi di quadratura differiscono nella
+      specificazione della componente $W(x)$: nel caso di Hermite
+      abbiamo $W(x) = \exp(-x^2)$; nel caso di Laguerre, $W(x) =
+      \exp(-x)$; nel caso di Legendre, semplicemente $W(x) = 1$.
+    </para>
+    <para context="notex">
+      Per ciascuna specificazione di <math>W</math>, si può
+      calcolare un insieme di nodi, <math>x</math><sub>i</sub>, e
+      pesi, <math>w</math><sub>i</sub>, tali che la somma da
+      <math>i</math>=1 a <math>n</math> di
+      <math>w</math><sub>i</sub><math>f</math>(<math>x</math><sub>i</sub>)
+      approssima l'integrale desiderato. Viene usato il metodo di
+      <cite key="golub69">Golub and Welsch (1969)</cite>.
+    </para>
+    <para context="tex">
+      Per ciascuna specificazione di $W(x)$, si può calcolare un
+      insieme di nodi, $x_i$, e pesi, $w_i$, tali che
+      $\sum_{i=1}^n f(x_i) w_i$ approssima l'integrale
+      desiderato. È usato il metodo di <cite key="golub69">Golub
+      and Welsch (1969)</cite>.
+    </para>
+    <para context="notex">
+      Quando si seleziona il metodo di Gauss&ndash;Legendre, gli
+      argomenti opzionali <argname>a</argname> e
+      <argname>b</argname> possono essere utilizzati per
+      controllare i limiti inferiore e superiore di
+      integrazione; i valori predefiniti sono &minus;1 e
+      1. (Nella quadratura di Hermite i limiti sono fissati a meno
+      e più infinito, mentre in quella di Laguerre sono fissati a
+      0 e infinito.)
+    </para>
+    <para context="tex">
+      Quando si seleziona il metodo di Gauss&ndash;Legendre, gli
+      argomenti opzionali <argname>a</argname> e
+      <argname>b</argname> possono essere utilizzati per
+      controllare i limiti, inferiore e superiore, di
+      integrazione, i valori predefiniti sono $-1$ e 1. (Nella
+      quadratura di Hermite i limiti sono fissati a $-\infty$ e
+      $+\infty$, mentre in quella di Laguerre sono fissati a 0 e
+      $\infty$.)
+    </para>
+    <para context="notex">
+      Nella quadratura di Hermite <argname>a</argname> e
+      <argname>b</argname> svolgono un ruolo differente: possono
+      essere utilizzati per sostituire la forma predefinita di
+      <math>W</math>(<math>x</math>) con la distribuzione normale
+      (strettamente associata) con media <argname>a</argname> e
+      deviazione standard <argname>b</argname>. Per esempio,
+      fornire valori 0 e 1 per questi parametri ha l'effetto di
+      trasformare <math>W</math>(<math>x</math>) nella funzione di
+      densità di una normale standard, il che è equivalente a
+      moltiplicare i nodi predefiniti per la radice quadrata di 2
+      e dividere i pesi per la radice quadrata di &pi;.
+    </para>
+    <para context="tex">
+      Nella quadratura di Hermite <argname>a</argname> e
+      <argname>b</argname> svolgono un ruolo differente: possono
+      essere utilizzati per sostituire la forma predefinita di
+      $W(x)$ con la distribuzione normale (strettamente associata)
+      con media <argname>a</argname> e deviazione standard
+      <argname>b</argname>. Per esempio, fornire valori 0 e 1 per
+      questi parametri ha l'effetto di trasformare $W(x)$ nella
+      funzione di densità di una normale standard, il che è
+      equivalente a moltiplicare i valori predefiniti $x_i$ per
+      $\sqrt{2}$ e dividere i pesi $w_i$ predefiniti per
+      $\sqrt{\pi}$.
+    </para>
       </description>
     </function>    
 
@@ -5950,127 +5968,127 @@
 	<example>series P = randgen(P, mu)</example>
       </examples>
       <description>
-	<para>
-	  Generatore di numeri casuali. L'argomento
-	  <argname>d</argname> è una stringa (nella maggior parte dei
-	  casi semplicemente un singolo carattere) che specifica la
-	  distribuzione da cui i numeri pseudo-casuali sono
-	  estratti. Gli argomenti da <argname>p1</argname> a
-	  <argname>p3</argname> specificano i parametri della
-	  distribuzione selezionata. Il numero di tali parametri
-	  dipende dalla distribuzione. Per le distribuzioni diverse
-	  dalla beta-binomiale, i parametri <argname>p1</argname> e
-	  (se applicabile) <argname>p2</argname> devono essere scalari
-	  o serie: se sono scalari, la serie generata è identicamente
-	  distribuita; se al contrario almeno uno dei due parametri in
-	  ingresso è una serie, per ciascuna osservazione la
-	  distribuzione è condizionata al valore dei parametri
-	  corrispondenti. Nel caso della beta-binomiale tutti i
-	  parametri devono essere scalari.
-	</para>
-	<para>
-	  Le specifiche sono fornite sotto: il codice stringa per ogni
-	  distribuzione è mostrato fra parentesi, seguito
-	  dall'interpretazione dell'argomento <argname>p1</argname> e,
-	  laddove applicabile, <argname>p2</argname> e
-	  <argname>p3</argname>.
-	</para>
-	  
-	<ilist context="notex">
-	  <li>
-	    <para>
-	      Uniforme (continua) (u o U): minimo, massimo
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      Uniforme (discreta) (i): minimo, massimo
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      Normale (z, n, o N): media, deviazione standard
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      t di Student (t): gradi di libertà
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      Chi quadro (c, x, o X): gradi di libertà
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      F di Snedecor (f o F): gradi di libertà (num.), gradi di libertà (den.)
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      Gamma (g o G): forma, scala
-	    </para>
-	  </li>	  
-	  <li>
-	    <para>
-	      Binomiale (b o B): probabilità, numero di prove
-	    </para>
-	  </li>	  
-	  <li>
-	    <para>
-	      Poisson (p o P): media
-	    </para>
-	  </li>	
-	  <li>
-	    <para>
-	      Weibull (w o W): forma, scala
-	    </para>
-	  </li>	
-	  <li>
-	    <para>
-	      Generalized Error (E): forma
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      Beta (beta): parametro 1, parametro 2
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      Beta-Binomiale (bb): prove, parametro 1, parametro 2
-	    </para>
-	  </li>
-	</ilist>
-	<para context="tex">
-	  \begin{center}
-	  \begin{tabular}{lllll}
-	  \textbf{Distribuzione} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
-	  Uniforme (continua) &amp; \texttt{u} o \texttt{U} &amp; minimo &amp; massimo &amp; --\\
-	  Uniforme (discreta) &amp; \texttt{i} &amp; minimo &amp; massimo &amp; --\\
-	  Normale &amp; \texttt{z}, \texttt{n} o \texttt{N} &amp; media &amp; deviazione standard &amp; --\\
-	  $t$ di Student &amp; \texttt{t} &amp; gradi di libertà &amp; -- &amp; --\\
-	  Chi quadro &amp; \texttt{c}, \texttt{x} o \texttt{X} &amp; gradi di libertà &amp; -- &amp; --\\
-	  $F$ di Snedecor &amp; \texttt{f} o \texttt{F} &amp; gradi di libertà (num.) &amp; gradi di libertà (den.) &amp; --\\
-	  Gamma &amp; \texttt{g} o \texttt{G} &amp; forma &amp; scala &amp; --\\
-	  Binomiale &amp; \texttt{b} o \texttt{B} &amp; $p$ &amp; $n$  &amp; --\\
-	  Poisson &amp; \texttt{p} o \texttt{P} &amp; media &amp; --  &amp; --\\
-	  Weibull &amp; \texttt{w} o \texttt{W} &amp; forma &amp; scala &amp; --\\
-	  Generalized Error &amp; \texttt{e} o \texttt{E} &amp; forma &amp; -- &amp; --\\
-	  Beta &amp; \texttt{beta} &amp; parametro 1 &amp; parametro 2 &amp; --\\
-	  Beta-Binomiale &amp; \texttt{bb} &amp; $n$ &amp; parametro 1 &amp; parametro 2
-	  \end{tabular}
-	  \end{center}
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="normal"/>
-	    <fncref targ="uniform"/> 
-	    <fncref targ="mrandgen"/>
-	    <fncref targ="randgen1"/>
-	  </seelist>
-	</para>
+    <para>
+      Generatore di numeri casuali. L'argomento
+      <argname>d</argname> è una stringa (nella maggior parte dei
+      casi semplicemente un singolo carattere) che specifica la
+      distribuzione da cui i numeri pseudo-casuali sono
+      generati. Gli argomenti da <argname>p1</argname> a
+      <argname>p3</argname> specificano i parametri della
+      distribuzione selezionata. Il numero di tali parametri
+      dipende dalla distribuzione. Per le distribuzioni diverse
+      dalla beta-binomiale, i parametri <argname>p1</argname> e
+      (se applicabile) <argname>p2</argname> devono essere scalari
+      o variabili: se sono scalari, la serie generata è identicamente
+      distribuita; se al contrario almeno uno dei due parametri in
+      ingresso è una serie, per ciascuna osservazione la
+      distribuzione è condizionata al valore dei parametri
+      corrispondenti. Nel caso della beta-binomiale tutti i
+      parametri devono essere scalari.
+    </para>
+    <para>
+      Le specifiche sono fornite sotto: il codice stringa per ogni
+      distribuzione è mostrato fra parentesi, seguito
+      dall'interpretazione dell'argomento <argname>p1</argname> e,
+      ove applicabile, <argname>p2</argname> e
+      <argname>p3</argname>.
+    </para>
+      
+    <ilist context="notex">
+      <li>
+        <para>
+          Uniforme (continua) (u o U): minimo, massimo
+        </para>
+      </li>
+      <li>
+        <para>
+          Uniforme (discreta) (i): minimo, massimo
+        </para>
+      </li>
+      <li>
+        <para>
+          Normale (z, n, o N): media, deviazione standard
+        </para>
+      </li>
+      <li>
+        <para>
+          t di Student (t): gradi di libertà
+        </para>
+      </li>
+      <li>
+        <para>
+          Chi quadro (c, x, o X): gradi di libertà
+        </para>
+      </li>
+      <li>
+        <para>
+          F di Snedecor (f o F): gradi di libertà (num.), gradi di libertà (den.)
+        </para>
+      </li>
+      <li>
+        <para>
+          Gamma (g o G): forma, scala
+        </para>
+      </li>   
+      <li>
+        <para>
+          Binomiale (b o B): probabilità, numero di prove
+        </para>
+      </li>   
+      <li>
+        <para>
+          Poisson (p o P): media
+        </para>
+      </li> 
+      <li>
+        <para>
+          Weibull (w o W): forma, scala
+        </para>
+      </li> 
+      <li>
+        <para>
+          Generalized Error (E): forma
+        </para>
+      </li>
+      <li>
+        <para>
+          Beta (beta): forma1, forma2
+        </para>
+      </li>
+      <li>
+        <para>
+          Beta-Binomiale (bb): prove, forma1, forma2
+        </para>
+      </li>
+    </ilist>
+    <para context="tex">
+      \begin{center}
+      \begin{tabular}{lllll}
+      \textbf{Distribuzione} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
+      Uniforme (continua) &amp; \texttt{u} o \texttt{U} &amp; minimo &amp; massimo &amp; --\\
+      Uniforme (discreta) &amp; \texttt{i} &amp; minimo &amp; massimo &amp; --\\
+      Normale &amp; \texttt{z}, \texttt{n} o \texttt{N} &amp; media &amp; deviazione standard &amp; --\\
+      $t$ di Student &amp; \texttt{t} &amp; gradi di libertà &amp; -- &amp; --\\
+      Chi quadro &amp; \texttt{c}, \texttt{x} o \texttt{X} &amp; gradi di libertà &amp; -- &amp; --\\
+      $F$ di Snedecor &amp; \texttt{f} o \texttt{F} &amp; gradi di libertà (num.) &amp; gradi di libertà (den.) &amp; --\\
+      Gamma &amp; \texttt{g} o \texttt{G} &amp; forma &amp; scala &amp; --\\
+      Binomiale &amp; \texttt{b} o \texttt{B} &amp; $p$ &amp; $n$  &amp; --\\
+      Poisson &amp; \texttt{p} o \texttt{P} &amp; media &amp; --  &amp; --\\
+      Weibull &amp; \texttt{w} o \texttt{W} &amp; forma &amp; scala &amp; --\\
+      Generalized Error &amp; \texttt{e} o \texttt{E} &amp; forma &amp; -- &amp; --\\
+      Beta &amp; \texttt{beta} &amp; forma1 &amp; forma1 &amp; --\\
+      Beta-Binomiale &amp; \texttt{bb} &amp; $n$ &amp; forma1 &amp; forma1
+      \end{tabular}
+      \end{center}
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="normal"/>
+        <fncref targ="uniform"/> 
+        <fncref targ="mrandgen"/>
+        <fncref targ="randgen1"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6085,21 +6103,21 @@
 	<example>scalar g = randgen1(g, 3, 2.5)</example>
       </examples>
       <description>
-	<para>
-	  Funziona come <fncref targ="randgen"/> eccetto per il fatto
-	  che il valore restituito è uno scalare invece di una serie.
-	</para>
-	<para>
-	  Il primo esempio sopra restituisce un valore da una
-	  distribuzione normale standard, mentre il secondo
-	  restituisce un valore estratto da una distribuzione Gamma
-	  con parametro di forma 3 e parametro di scala 2.5.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="mrandgen"/>
-	  </seelist>
-	</para>
+    <para>
+      Funziona come <fncref targ="randgen"/> eccetto per il fatto
+      che il valore restituito è uno scalare invece di una variabile.
+    </para>
+    <para>
+      Il primo esempio sopra restituisce un valore da una
+      distribuzione normale standard, mentre il secondo
+      restituisce un valore generato da una distribuzione Gamma
+      con parametro di forma 3 e parametro di scala 2.5.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="mrandgen"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6109,13 +6127,13 @@
 	<fnarg type="int">max</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Restituisce un numero intero pseudo-casuale nell'intervallo
-	  chiuso [<argname>min</argname>, <argname>max</argname>].
-	  <seelist>
-	  <fncref targ="randgen"/>
-	  </seelist>
-	</para>
+    <para>
+      Restituisce un numero pseudo-casuale intero nell'intervallo
+      chiuso [<argname>min</argname>, <argname>max</argname>].
+      <seelist>
+      <fncref targ="randgen"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6124,14 +6142,14 @@
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Restituisce il rango di <argname>X</argname>, calcolato per
-	  via numerica attraverso la decomposizione ai valori
-	  singolari (SVD).
-	  <seelist> 
-	    <fncref targ="svd"/>
-	  </seelist>
-	</para>
+    <para>
+      Restituisce il rango di <argname>X</argname>, calcolato 
+      numericamente mediante la scomposizione a valori
+      singolari (SVD).
+      <seelist> 
+        <fncref targ="svd"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6140,29 +6158,29 @@
 	<fnarg type="series-or-vec">y</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Restituisce una serie con i ranghi di <math>y</math>. Il
-	  rango di un'osservazione <math>i</math> è pari al numero di
-	  elementi della serie minori di <math>y</math><sub>i</sub>
-	  più un mezzo il numero di elementi della serie uguali a
-	  <math>y</math><sub>i</sub>. (Intuitivamente, è possibile
-	  pensare al punteggio negli scacchi, dove per ogni vittoria
-	  si assegna un punto, mentre per ogni patta si assegna mezzo
-	  punto.) Al numero così calcolato si aggiunge uno, cosicché
-	  al rango più basso è associato 1 invece di 0.
-	</para>
-	<para context="tex">
-	  In termini formali, 
-	  \[ \mathrm{rank}(y_i) = 1 + \sum_{j \ne i} \left[ 
-	  I(y_j &lt; y_i) + 0.5 \cdot I(y_j = y_i) \right] \] 
-	  dove $I$ è la funzione indicatrice.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="sort"/>
-	    <fncref targ="sortby"/>
-	  </seelist>
-	</para>
+    <para>
+      Restituisce una variabile o un vettore con i ranghi di <math>y</math>. Il
+      rango di un'osservazione <math>i</math> è pari al numero di
+      elementi della variabile minori di <math>y</math><sub>i</sub>
+      più metà del numero di elementi della serie uguali a
+      <math>y</math><sub>i</sub>. (Intuitivamente, è possibile
+      pensare al punteggio negli scacchi, dove per ogni vittoria
+      si assegna un punto mentre per ogni patta si assegna mezzo
+      punto.) Al numero così calcolato si aggiunge uno, cosicché
+      al rango più basso è associato 1 invece di 0.
+    </para>
+    <para context="tex">
+      In termini formali, 
+      \[ \mathrm{rank}(y_i) = 1 + \sum_{j \ne i} \left[ 
+      I(y_j &lt; y_i) + 0.5 \cdot I(y_j = y_i) \right] \] 
+      dove $I$ è la funzione indicatrice.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="sort"/>
+        <fncref targ="sortby"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6171,31 +6189,30 @@
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Restituisce il reciproco del numero di condizionamento
-	  rispetto alla norma-1 di <argname>A</argname>, che deve
-	  essere simmetrica e definita positiva. In molte circostanze,
-	  questa è una misura migliore del determinante circa la
-	  sensibilità di <argname>A</argname> a operazioni numeriche
-	  come l'inversione.
-	</para>
-	<para context="notex">
-	  Il valore è calcolato come il reciproco del prodotto della
-	  norma-1 di <argname>A</argname> per la norma-1 dell'inversa
-	  di <argname>A</argname>.
-	</para>
-	<para context="tex">
-	  Poiché <math>A</math> è invertibile, è possibile definire 
-	  \[\kappa(A) = ||A||_1 \cdot ||A^{-1}||_1\] 
-	  Questa funzione restituisce $\kappa(A)^{-1}$.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="det"/>
-	    <fncref targ="ldet"/>
-	    <fncref targ="onenorm"/>
-	  </seelist>
-	</para>
+    <para>
+      Restituisce il reciproco del numero di condizionamento
+      di <argname>A</argname> rispetto alla norma-1. In molte circostanze,
+      questa grandezza è migliore del determinante come misura di 
+      sensibilità di <argname>A</argname> a operazioni numeriche
+      come l'inversione.
+    </para>
+    <para context="notex">
+      Il valore è calcolato come il reciproco del prodotto della
+      norma-1 di <argname>A</argname> per la norma-1 dell'inversa
+      di <argname>A</argname>.
+    </para>
+    <para context="tex">
+      Poiché <math>A</math> è invertibile, è possibile definire 
+      \[\kappa(A) = ||A||_1 \cdot ||A^{-1}||_1\] 
+      Questa funzione restituisce $\kappa(A)^{-1}$.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="det"/>
+        <fncref targ="ldet"/>
+        <fncref targ="onenorm"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6205,34 +6222,34 @@
 	<fnarg type="string" optional="true">codeset</fnarg>
       </fnargs>    
       <description>
-	<para>
-	  Se un file di nome <argname>fname</argname> esiste ed è
-	  leggibile, restituisce una stringa con il contenuto del
-	  file. In caso contrario restituisce un errore.
-	</para>
-	<para>
-	  Nel caso in cui <argname>fname</argname> inizia con
-	  l'identificatore di un protocollo internet supportato
-	  (<lit>http://</lit>, <lit>ftp://</lit>,
-	  <lit>https://</lit>), la funzione richiama libcurl per
-	  scaricare la risorsa.
-	</para>
-	<para>
-	  Se il testo da leggere non ha una codifica UTF-8, gretl
-	  cerca di ricodificarlo a partire dalla codifica locale, nel
-	  caso non sia UTF-8, o da ISO-8859-15 in caso contrario. Se
-	  questo comportamento predefinito non si adatta alle vostre
-	  esigenze, è possibile utilizzare il secondo argomento
-	  opzionale per specificare la codifica. Per esempio, nel caso
-	  si vuole leggere un testo nella codifica Microsoft codepage
-	  1251, e questo non è il sistema in uso in locale, è
-	  possibile fornire come secondo argomento
-	  <lit>"cp1251"</lit>.
-	</para>
-	<para>
-	  Si vedano anche le funzioni <fncref targ="sscanf"/> e
-	  <fncref targ="getline"/>.
-	</para>
+    <para>
+      Se un file di nome <argname>fname</argname> esiste ed è
+      leggibile, restituisce una stringa con il contenuto del
+      file. In caso contrario restituisce un errore.
+    </para>
+    <para>
+      Nel caso in cui <argname>fname</argname> inizia con
+      l'identificatore di un protocollo internet supportato
+      (<lit>http://</lit>, <lit>ftp://</lit>,
+      <lit>https://</lit>), la funzione richiama libcurl per
+      scaricare la risorsa.
+    </para>
+    <para>
+      Se il testo da leggere non ha una codifica UTF-8, gretl
+      cerca di ricodificarlo a partire dalla codifica locale, nel
+      caso non sia UTF-8, o da ISO-8859-15 in caso contrario. Se
+      questo comportamento predefinito non si adatta alle vostre
+      esigenze è possibile utilizzare il secondo argomento
+      opzionale per specificare la codifica. Per esempio, nel caso
+      si desideri leggere un testo nella codifica Microsoft codepage
+      1251, diversa dal sistema in uso in locale, è
+      possibile fornire come secondo argomento
+      <lit>"cp1251"</lit>.
+    </para>
+    <para>
+      Si vedano anche le funzioni <fncref targ="sscanf"/> e
+      <fncref targ="getline"/>.
+    </para>
       </description>
     </function>
 
@@ -6326,28 +6343,28 @@
 	<fnarg optional="true" type="int">b</fnarg>
       </fnargs>    
       <description>
-	<para>
-	  Ricampiona da <argname>x</argname> con reintroduzione. Nel
-	  caso in cui l'argomento sia una serie, ciascun valore della
-	  serie restituita, <math>y</math><sub>t</sub>, è estratto da
-	  tutti i valori di <math>x</math><sub>t</sub> con uguale
-	  probabilità. Quando l'argomento è una matrice, ciascuna riga
-	  della matrice restituita è estratta dalle righe di
-	  <argname>x</argname> con uguale probabilità.
-	</para>
-	<para>
-	  L'argomento opzionale <argname>b</argname>, che deve essere
-	  un numero intero maggiore o uguale a 2, indica la lunghezza
-	  del blocco nel ricampionamento a blocchi mobili (moving
-	  blocks). L'effetto è che l'output generato è il risultato di
-	  un'estrazione casuale con reintroduzione dall'insieme di
-	  tutte le possibili sequenze contigue di lunghezza
-	  <argname>b</argname> nell'input. (Nel caso l'input sia una
-	  matrice, i blocchi estratti sono sequenze contigue di righe
-	  della matrice.) Se la lunghezza dei dati non è un multiplo
-	  della lunghezza del blocco, l'ultimo blocco estratto è
-	  troncato per adattarlo.
-	</para>
+    <para>
+      Ricampiona da <argname>x</argname> con reintroduzione. Nel
+      caso in cui l'argomento sia una variabile, ciascun valore della
+      variabile restituita, <math>y</math><sub>t</sub>, è estratto da
+      tutti i valori di <math>x</math><sub>t</sub> con uguale
+      probabilità. Quando l'argomento è una matrice, ciascuna riga
+      della matrice restituita è estratta dalle righe di
+      <argname>x</argname> con uguale probabilità.
+    </para>
+    <para>
+      L'argomento opzionale <argname>b</argname>, che deve essere
+      un numero intero maggiore o uguale a 2, indica la lunghezza
+      del blocco nel ricampionamento a blocchi mobili (moving
+      blocks). L'effetto è che l'output generato è il risultato di
+      un'estrazione casuale con reintroduzione dall'insieme di
+      tutte le possibili sequenze contigue di lunghezza
+      <argname>b</argname> nell'input. (Nel caso l'input sia una
+      matrice, i blocchi estratti sono sequenze contigue di righe
+      della matrice.) Se la lunghezza dei dati non è un multiplo
+      della lunghezza del blocco, l'ultimo blocco estratto è
+      troncato per adattarlo.
+    </para>
       </description>
     </function>
 
@@ -6379,20 +6396,21 @@
 	<fnarg type="list-or-string">s</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Attribuisce dei nomi alle righe della matrice
-	  <argname>M</argname>. Se <argname>s</argname> è una lista, i
-	  nomi sono copiati da quelli delle variabili; la lista deve
-	  avere tanti elementi quante sono le righe di
-	  <argname>M</argname>. Se <argname>s</argname> è una stringa,
-	  deve contenere un numero appropriato di sub-stringhe
-	  separate da spazi.  Restituisce 0 se la funzione è andata a
-	  buon fine, non-zero altrimenti. Si veda anche <fncref
-	  targ="colnames"/>.
-	</para>
-	<para>
-	  Esempio:
-	</para>
+    <para>
+      Attribuisce dei nomi alle righe della matrice
+      <argname>M</argname> di dimensioni <by r="m" c="n"/>. 
+      Se <argname>s</argname> è una lista, i
+      nomi sono copiati da quelli delle variabili; la lista deve
+      avere tanti elementi quante sono le righe di
+      <argname>M</argname>. Se <argname>s</argname> è una stringa,
+      deve contenere un numero appropriato di sub-stringhe
+      separate da spazi.  Restituisce 0 se la funzione è andata a
+      buon fine, non-zero altrimenti. Si veda anche <fncref
+      targ="colnames"/>.
+    </para>
+    <para>
+      Esempio:
+    </para>
     <code>
       matrix M = {1,2;2,1;4,1} 
       rownames(M, "Row1 Row2 Row3")
@@ -6425,23 +6443,23 @@
 	<fnarg type="series-or-list">x</fnarg>
       </fnargs>     
       <description>
-	<para>
-	  Se <argname>x</argname> è una serie, restituisce l'errore
-	  quadratico medio campionario (scalare), saltando i valori
-	  mancanti.
-	</para>
-	<para>
-	  Se, invece, <argname>x</argname> è una lista, restituisce
-	  una serie <math>y</math> tale per cui
-	  <math>y</math><sub>t</sub> l'errore quadratico medio delle
-	  variabili nella lista all'osservazione <math>t</math>, o
-	  <lit>NA</lit> se ci sono dei valori mancanti <math>t</math>.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="var"/>
-	  </seelist>
-	</para>
+    <para>
+      Se <argname>x</argname> è una variabile, restituisce l'errore
+      quadratico medio campionario (scalare) saltando i valori
+      mancanti.
+    </para>
+    <para>
+      Se, invece, <argname>x</argname> è una lista, restituisce
+      una variabile <math>y</math> tale per cui
+      <math>y</math><sub>t</sub> è l'errore quadratico medio delle
+      variabili nella lista all'osservazione <math>t</math>, o
+      <lit>NA</lit> se ci sono dei valori mancanti <math>t</math>.
+    </para>
+    <para>
+      <seelist> 
+        <fncref targ="var"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6451,18 +6469,18 @@
 	<fnarg type="scalar" optional="true">df</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Restituisce le deviazioni standard delle colonne di
-	  <argname>X</argname>. Se <argname>df</argname> è positivo, è
-	  utilizzato come divisore nel calcolo delle varianze delle
-	  colonne, in caso contrario il divisore utilizzato è il
-	  numero di righe di <argname>X</argname> (e quindi, non viene
-	  applicata nessuna correzione per i gradi di libertà).
-	  <seelist>
-	    <fncref targ="meanc"/>
-	    <fncref targ="sumc"/>
-	  </seelist>
-	</para>
+    <para>
+      Restituisce le deviazioni standard delle colonne di
+      <argname>X</argname>. Se <argname>df</argname> è positivo, è
+      utilizzato come divisore nel calcolo delle varianze delle
+      colonne, in caso contrario il divisore utilizzato è il
+      numero di righe di <argname>X</argname> (in altre parole non viene
+      applicata nessuna correzione per i gradi di libertà).
+      <seelist>
+        <fncref targ="meanc"/>
+        <fncref targ="sumc"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6471,13 +6489,27 @@
 	<fnarg type="series-or-list">y</fnarg>
       </fnargs>   
       <description>
-	<para>
-	  Calcola le differenze stagionali: <equation status="inline"
-	  ascii="y(t) - y(t-k)" tex="$y_t - y_{t-k}$"/>, dove
-	  <math>k</math> è la periodicità del dataset corrente (si
-	  veda <fncref targ="$pd"/>). I valori iniziali sono fissati a
-	  <lit>NA</lit>.
-	</para>
+    <para>
+      Calcola le differenze stagionali: <equation status="inline"
+      ascii="y(t) - y(t-k)" tex="$y_t - y_{t-k}$"/>, dove
+      <math>k</math> è la periodicità del dataset corrente (si
+      veda <fncref targ="$pd"/>). I valori iniziali sono fissati a
+      <lit>NA</lit>.
+    </para>
+    <para> 
+      Quando viene restituita una lista alle singole variabili viene
+      automaticamente assegnato un nome secondo il formato
+      <lit>sd_</lit><repl>varname</repl>, dove <repl>varname</repl> è
+      il nome della variabile originaria. Se necessaril il nome viene
+      troncato e può essere modificato in caso di non unicità
+      all'interno dell'insieme di nomi costruiti in questo modo.
+    </para> 
+    <para>
+      <seelist> 
+        <fncref targ="diff"/>
+        <fncref targ="ldiff"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6487,17 +6519,17 @@
 	<fnarg type="rvec">b</fnarg>
       </fnargs>   
       <description>
-	<para>
-	  Seleziona da <argname>A</argname> solo le colonne per le
-	  quali l'elemento corrispondente di <argname>b</argname> è
-	  non-zero. <argname>b</argname> deve essere un vettore riga
-	  con lo stesso numero di colonne di <argname>A</argname>.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="selifr"/>
-	  </seelist>
-	</para>
+    <para>
+      Seleziona da <argname>A</argname> solo le colonne per le
+      quali l'elemento corrispondente di <argname>b</argname> è
+      non nullo. <argname>b</argname> deve essere un vettore riga
+      con lo stesso numero di colonne di <argname>A</argname>.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="selifr"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6507,18 +6539,19 @@
 	<fnarg type="cvec">b</fnarg>
       </fnargs>   
       <description>
-	<para>
-	  Seleziona da <argname>A</argname> solo le righe per le quali
-	  l'elemento corrispondente di <argname>b</argname> è
-	  non-zero. <argname>b</argname> deve essere un vettore
-	  colonna con lo stesso numero di righe di
-	  <argname>A</argname>.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="selifc"/>
-	  </seelist>
-	</para>
+    <para>
+      Seleziona da <argname>A</argname> solo le righe per le quali
+      l'elemento corrispondente di <argname>b</argname> è
+      non nullo. <argname>b</argname> deve essere un vettore
+      colonna con lo stesso numero di righe di
+      <argname>A</argname>.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="selifc"/>
+        <fncref targ="trimr"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6529,33 +6562,34 @@
 	<fnarg optional="true" type="int">k</fnarg>
       </fnargs>   
       <description>
-	<para>
-	  Con due soli argomenti, restituisce un vettore riga pieno di
-	  interi consecutivi, con <argname>a</argname> come primo
-	  elemento e <argname>b</argname> come ultimo. Se
-	  <argname>a</argname> è maggiore di <argname>b</argname>, la
-	  sequenza sarà decrescente. L'eventuale parte non intera
-	  viene ignorata per entrambi gli argomenti.
-	</para>
-	<para>
-	  In caso sia presente il terzo argomento, la funzione
-	  restituisce un vettore riga contenente una sequenza di
-	  interi che inizia con <argname>a</argname> ed è incrementata
-	  (o diminuita, nel caso in cui <argname>a</argname> sia
-	  maggiore di <argname>b</argname>) di <argname>k</argname> in
-	  ciascun passaggio. Il valore finale è il più grande elemento
-	  della sequenza minore o uguale a <argname>b</argname> (o
-	  mutatis mutandis, nel caso in cui <argname>a</argname> sia
-	  maggiore di <argname>b</argname>). L'argomento
-	  <argname>k</argname> deve essere positivo; nel caso non sia
-	  un intero la parte decimale è ignorata.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="ones"/>
-	    <fncref targ="zeros"/>
-	  </seelist>
-	</para>
+    <para>
+      Con due soli argomenti, restituisce un vettore riga di
+      interi consecutivi, con <argname>a</argname> come primo
+      elemento e <argname>b</argname> come ultimo. Se
+      <argname>a</argname> è maggiore di <argname>b</argname>, la
+      sequenza sarà decrescente. L'eventuale parte non intera
+      viene ignorata per entrambi gli argomenti.
+    </para>
+    <para>
+      In caso sia presente il terzo argomento, la funzione
+      restituisce un vettore riga contenente una sequenza di
+      interi che inizia con <argname>a</argname> e in
+      ciascun passaggio è incrementata
+      (o diminuita, nel caso in cui <argname>a</argname> sia
+      maggiore di <argname>b</argname>) di <argname>k</argname>. 
+      Il valore finale è il più grande elemento
+      della sequenza minore o uguale a <argname>b</argname> (o
+      mutatis mutandis, nel caso in cui <argname>a</argname> sia
+      maggiore di <argname>b</argname>). L'argomento
+      <argname>k</argname> deve essere positivo; nel caso non sia
+      un intero la parte decimale è ignorata.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="ones"/>
+        <fncref targ="zeros"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6566,15 +6600,15 @@
 	<fnarg type="string">note</fnarg>
       </fnargs>   
       <description>
-	<para>
-	  Imposta una nota descrittiva per l'oggetto identificato
-	  dalla chiave <argname>key</argname> nel bundle
-	  <argname>b</argname>.  Essa verrà mostrata quando il comando
-	  <lit>print</lit> viene applicato al bundle. Questa funzione
-	  restituisce 0 se è andata a buon fine e non-zero in caso
-	  contrario (ad esempio, se nel bundle <argname>b</argname> la
-	  chiave <argname>key</argname> non c'è).
-	</para>
+    <para>
+      Imposta una nota descrittiva per l'oggetto identificato
+      dalla chiave <argname>key</argname> nel bundle
+      <argname>b</argname>.  Essa verrà mostrata quando il comando
+      <lit>print</lit> viene applicato al bundle. Questa funzione
+      restituisce 0 se è andata a buon fine e non nullo in caso
+      contrario (ad esempio, se nel bundle <argname>b</argname> non esiste un
+      oggetto associato alla chiave <argname>key</argname>).
+    </para>
       </description>
     </function>    
 
@@ -6595,7 +6629,7 @@
 	<para>
 	  Il primo argomento deve contenere il valore iniziale di un
 	  vettore di parametri. Il secondo argomento specifica la
-	  funzione da chiamare e che restituisce il valore (scalare)
+	  funzione da chiamare che restituisce il valore (scalare)
 	  da massimizzare. Il terzo argomento, opzionale, specifica il
 	  massimo numero di iterazioni (il valore predefinito è
 	  1024). In caso di successo, <lit>simann</lit> restituisce il
@@ -6618,14 +6652,14 @@
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>       
       <description>
-	<para>
-	  Funzione seno.  
-	  <seelist>
-	    <fncref targ="cos"/>
-	    <fncref targ="tan"/>
-	    <fncref targ="atan"/>
-	  </seelist>
-	</para>
+    <para>
+      Funzione seno di <argname>x</argname>. 
+      <seelist>
+        <fncref targ="cos"/>
+        <fncref targ="tan"/>
+        <fncref targ="atan"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6655,11 +6689,11 @@
 	<fnarg type="series">x</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Restituisce il valore di asimmetria per la serie
-	  <argname>x</argname>, non considerando le osservazioni
-	  mancanti.
-	</para>
+    <para>
+      Restituisce il valore dell'indice di asimmetria per la serie
+      <argname>x</argname>, non considerando le osservazioni
+      mancanti.
+    </para>
       </description>
     </function>
 
@@ -6668,16 +6702,16 @@
 	<fnarg type="series-or-vec">x</fnarg>
       </fnargs>     
       <description>
-	<para>
-	  Ordina <argname>x</argname> in senso crescente, non
-	  considerando le osservazioni mancanti nel caso in cui
-	  <math>x</math> sia una serie.
-	  <seelist>
-	    <fncref targ="dsort"/>
-	    <fncref targ="values"/>
-	  </seelist>
-	  In particolare, per le matrici si veda <fncref targ="msortby"/>.
-	</para>
+    <para>
+      Ordina <argname>x</argname> in senso crescente, non
+      considerando le osservazioni mancanti nel caso in cui
+      <math>x</math> sia una variabile.
+      <seelist>
+        <fncref targ="dsort"/>
+        <fncref targ="values"/>
+      </seelist>
+      In particolare, per le matrici si veda <fncref targ="msortby"/>.
+    </para>
       </description>
     </function>
 
@@ -6687,15 +6721,15 @@
 	<fnarg type="series">y2</fnarg>
       </fnargs>     
       <description>
-	<para>
-	  Restituisce una serie contenente gli elementi di
-	  <argname>y2</argname> ordinati per valore crescente del
-	  primo argomento, <argname>y1</argname>.
-	  <seelist>
-	    <fncref targ="sort"/>
-	    <fncref targ="ranking"/>
-	  </seelist>
-	</para>
+    <para>
+      Restituisce una variabile contenente gli elementi di
+      <argname>y2</argname> ordinati per valore crescente del
+      primo argomento, <argname>y1</argname>.
+      <seelist>
+        <fncref targ="sort"/>
+        <fncref targ="ranking"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6704,10 +6738,16 @@
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>     
       <description>
-	<para>
-	  Radice quadrata di <argname>x</argname>; genera
-	  <lit>NA</lit> in caso di valori negativi.
-	</para>
+    <para>
+      Radice quadrata di <argname>x</argname>; genera
+      <lit>NA</lit> in caso di valori negativi.
+    </para>
+    <para>
+      Si noti che se l'argomento è una matrice l'operazione viene effettuata
+      elemento per elemento e dato che le matrici non possono contenere <lit>NA</lit>,
+      eventuali valori negativi generano un errore. Per la <quote>radice quadrata
+      matriciale</quote>, v. <fncref targ="cholesky"/>.
+    </para>
       </description>
     </function>
 
@@ -6719,58 +6759,60 @@
       </fnargs>  
       <description>
       <para>
-        Analizza una <repl>stringa</repl> seguendo il
-        <repl>formato</repl> indicato, assegnando zero o più valori
-        agli <repl>argomenti</repl> indicati. È una versione
-        semplificata della funzione <lit>sscanf</lit> del linguaggio
-        di programmazione C, e restituisce il numero di valori assegnati.
+        Legge valori da <argname>src</argname> seguendo il formato 
+        <argname>format</argname> e assegna questi valori a uno o più degli 
+        argomenti seguenti, rappresentati dai punti. Restituisce il numero di valori
+        assegnati. Questa funzione rappresenta una versione semplificata della funzione 
+        <lit>sscanf</lit> usata nel linguaggio di programmazione C.
       </para>
       <para>
         La <repl>stringa</repl> può essere una stringa vera e propria,
-	racchiusa tra virgolette doppie, o il nome di una variabile stringa
-	predefinita. Il <repl>formato</repl> è definito in modo simile alla
-	stringa di formato del comando <cmdref targ="printf"/> (si veda
-	oltre). Gli <repl>argomenti</repl> sono una lista separata da virgole
-	che contiene i nomi di variabili predefinite che verranno assegnate a
-	seconda dei valori letti dalla <repl>stringa</repl>. Per chi conosce
-	il C: è possibile prefissare con <lit>&amp;</lit> i nomi delle
-	variabili numeriche, ma non è richiesto.
+        racchiusa tra virgolette doppie, o il nome di una variabile stringa
+        predefinita. <repl>format</repl> è definito in modo simile alla
+        stringa di formato del comando <cmdref targ="printf"/> (si veda
+        oltre). <repl>args</repl> è una lista separata da virgole
+        che contiene i nomi di variabili predefinite cui verranno assegnati 
+        i valori letti da <repl>src</repl>. (Per chi conosce
+        C: è possibile ma non indispensabile prefissare con <lit>&amp;</lit> i nomi delle
+        variabili numeriche).
       </para>
       <para>
-	Le regole specificate nel <repl>formato</repl> vengono usate per
-        analizzare la <repl>stringa</repl>. Le specifiche iniziano con un
+        Le regole specificate in <repl>format</repl> vengono usate per
+        analizzare <repl>src</repl>. Le specifiche iniziano con un
         carattere <lit>%</lit>, e comprendono
         <lit>%f</lit>, <lit>%g</lit> o <lit>%lf</lit> per i numeri a virgola
         mobile; <lit>%d</lit> per gli interi; <lit>%s</lit> per le stringhe, e
-	<lit>%m</lit> per le matrici. È possibile inserire un numero intero
-        positivo dopo il carattere percento, per impostare il numero massimo di
-        caratteri da leggere per ogni tipo di specifica (o il massimo numero di
+        <lit>%m</lit> per le matrici. È possibile inserire un numero intero
+        positivo dopo il carattere percentuale per impostare il numero massimo di
+        caratteri da leggere per ogni tipo di specifica (o il numero massimo di
         righe nel caso di conversione in matrici). In alternativa è possibile
-        inserire un carattere <lit>*</lit> dopo il percento per sopprimere la
-        conversione di un certo numero di caratteri della stringa. Ad esempio,
-	<lit>%3d</lit> converte i 3 caratteri successivi della <repl>stringa</repl>
+        inserire un carattere <lit>*</lit> dopo il percentuale per sopprimere la
+        conversione di un certo numero di caratteri della stringa (e saltando
+        così eventuali caratteri che in caso contrario verrebbero convertiti
+        per un certo tipo). Ad esempio,
+        <lit>%3d</lit> converte i 3 caratteri successivi di <repl>src</repl>
         in un numero intero, se possibile; <lit>%*g</lit> salta tutti i caratteri
-        nella <repl>stringa</repl> che potrebbero essere convertiti in un numero
+        in <repl>src</repl> che potrebbero essere convertiti in un numero
         a virgola mobile.
       </para>
       <para>
 	La conversione in matrici funziona nel modo seguente: viene letta ogni
         riga dell'input e vengono contati i campi numerici (separati da spazi o
-        tab). In questo modo viene definito il numero di colonne della matrice.
+        tabulatori). In questo modo viene definito il numero di colonne della matrice.
         Vengono quindi lette tutte le righe seguenti che contengono lo stesso
-        numero di colonne numeriche; è anche possibile limitare il numero
-        massimo di righe da leggere.
+        numero di colonne numeriche, ma è comunque possibile limitare il numero
+        massimo di righe da leggere procedendo come descritto sopra.
       </para>
       <para>
-        Oltre alla conversione <lit>%s</lit> per le stringhe, è disponibile
+        Oltre alla conversione di <lit>%s</lit> per le stringhe, è disponibile
         anche una versione semplificata del formato C
-        <lit>%</lit><repl>N</repl><lit>[</lit><repl>caratteri</repl><lit>]</lit>.
+        <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit>.
         In questo formato, <repl>N</repl> è il numero massimo di caratteri da
-        leggere, e <repl>caratteri</repl> è un insieme di caratteri accettabili,
+        leggere, e <repl>chars</repl> è un insieme di caratteri accettabili,
         racchiusi tra parentesi quadre; la lettura si ferma se si raggiunge il
         limite di <repl>N</repl> o se si incontra un carattere non compreso
         nell'insieme ammissibile. La funzione dell'insieme
-	<repl>caratteri</repl> può essere invertita specificando un accento
+        <repl>chars</repl> può essere invertita specificando un accento
         circonflesso <lit>^</lit> come primo carattere dell'insieme; in questo
         caso, la lettura si ferma se si incontra un carattere dell'insieme
         specificato. Al contrario del C, il carattere trattino non ha alcuna
@@ -6780,11 +6822,8 @@
 	Se la stringa non corrisponde esattamente al formato specificato, il
         numero di conversioni effettuate può risultare diverso dal numero di
         argomenti indicati. Per gretl questo non è necessariamente un errore,
-        tuttavia può essere utile voler controllare questa corrispondenza; è
-        possibile farlo usando la variabile scalare interna
-	<lit>$nscan</lit>, il cui valore viene aggiornato ogni volta che si
-        usa <lit>sscanf</lit>. In caso di uso interattivo viene mostrato anche
-        il numero di conversioni effettuate.
+        tuttavia può essere utile controllare il numero di conversioni 
+        effettuate, pari al valore restituito dalla funzione.
       </para>
       <para>
 	Ecco alcuni esempi:
@@ -6808,13 +6847,13 @@
 	<fnarg type="series">y</fnarg>
       </fnargs>  
       <description>
-	<para>
-	  Somma dei quadrati degli scarti dalla media per le
-	  osservazioni valide nella serie <argname>y</argname>.
-	  <seelist> 
-	    <fncref targ="var"/>
-	  </seelist>
-	</para>
+    <para>
+      Restituisce la somma dei quadrati degli scarti dalla media per le
+      osservazioni valide nella variabile <argname>y</argname>.
+      <seelist> 
+        <fncref targ="var"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -6823,13 +6862,13 @@
 	<fnarg type="string">s</fnarg>
       </fnargs>  
       <description>
-	<para>
-	  Restituisce il numero di caratteri in
-	  <argname>s</argname>. Si note che questo può non coincidere
-	  col numero di byte, se ne lla stringa siano presenti
-	  caratteri al di fuori del campo ASCII stampabile (ad
-	  esempio, lettere accentate).
-	</para>
+    <para>
+      Restituisce il numero di caratteri nella stringa
+      <argname>s</argname>. Si note che questo può non coincidere
+      col numero di byte se sono presenti
+      caratteri al di fuori del campo ASCII stampabile (ad
+      esempio, lettere accentate).
+    </para>
       </description>
     </function>
 
@@ -6840,21 +6879,20 @@
 	<fnarg optional="true" type="scalar">n</fnarg>
       </fnargs>  
       <description>
-	<para>
-	  Compara le due stringhe fornite come argomenti e restituisce
-	  un intero minore, uguale, o maggiore di zero se
-	  <argname>s1</argname> risulta, rispettivamente, essere
-	  minore, combaciare, o essere maggiore di
-	  <argname>s2</argname>, fino ai primi <argname>n</argname>
-	  caratteri.  Se <argname>n</argname> è omesso, la
-	  comparazione procede fin dove possibile.
-	</para>
-	<para> 
-	  Si noti che, nel caso in cui si voglia comparare due
-	  stringhe per verificarne l'uguaglianza, questo può essere
-	  fatto senza utilizzare alcuna funzione, come in <lit>if (s1
-	  == s2) ...</lit>
-	</para>
+    <para>
+      Confronta le due stringhe fornite come argomenti e restituisce
+      un intero minore, uguale, o maggiore di zero se
+      <argname>s1</argname> risulta rispettivamente essere
+      minore, combaciare, o essere maggiore di
+      <argname>s2</argname>, fino ai primi <argname>n</argname>
+      caratteri.  Se <argname>n</argname> è omesso, il confronto 
+      procede fin dove possibile.
+    </para>
+    <para> 
+      Si noti che per verificare l'uguaglianza di due stringhe 
+      non è necessaria alcuna funzione, come in <lit>if (s1
+      == s2) ...</lit>
+    </para>
       </description>
     </function>
     <function name="strsplit" section="strings" output="string">
@@ -6863,18 +6901,17 @@
 	<fnarg type="int">i</fnarg>
       </fnargs>  
       <description>
-	<para>
-	  Restituisce l'elemento separato da spazio
-	  <argname>i</argname>-esimo della stringa
-	  <argname>s</argname>. L'indice <argname>i</argname> è a base
-	  1, e la funzione genera un errore se <argname>i</argname> è
-	  minore di 1. Nel caso in cui <argname>s</argname> non
-	  contenga spazi e <argname>i</argname> è uguale ad 1, la
-	  funzione restituisce una copia dell'intera stringa in
-	  ingresso. Nel caso in cui <argname>i</argname> eccede il
-	  numero degli elementi separati da spazio la funzione
-	  restituisce una stringa vuota.
-	</para>
+    <para>
+      Restituisce l'elemento <argname>i</argname>-esimo della stringa
+      <argname>s</argname> separato da spazi. L'indice <argname>i</argname> è a base
+      1 e la funzione genera un errore se <argname>i</argname> è
+      minore di 1. Nel caso in cui <argname>s</argname> non
+      contenga spazi e <argname>i</argname> sia uguale ad 1, la
+      funzione restituisce una copia dell'intera stringa in
+      ingresso; in caso contrario, se <argname>i</argname> è maggiore del 
+      numero di elementi separati da spazio la funzione
+      restituisce una stringa vuota.
+    </para>
       </description>
     </function>
 
@@ -6884,14 +6921,14 @@
 	<fnarg type="string">s2</fnarg>
       </fnargs>  
       <description>
-	<para>
-	  Ricerca <argname>s1</argname> per trovare un'occorrenza
-	  della stringa <argname>s2</argname>.  Nel caso venga trovata
-	  una corrispondenza, la funzione restituisce una copia della
-	  porzione di <argname>s1</argname> che inizia con
-	  <argname>s2</argname>; in caso contrario, la funzione
-	  restituisce una stringa vuota.
-	</para>
+    <para>
+      Cerca all'interno della stringa <argname>s1</argname> un'occorrenza
+      della stringa <argname>s2</argname>.  Nel caso venga trovata
+      una corrispondenza la funzione restituisce una copia della
+      porzione di <argname>s1</argname> che inizia con
+      <argname>s2</argname>; in caso contrario, la funzione
+      restituisce una stringa vuota.
+    </para>
       </description>
     </function>
 
@@ -6914,27 +6951,29 @@
 	<fnarg type="string">subst</fnarg>
       </fnargs>  
       <description>
-	<para>
-	  Restituisce una copia di <argname>s</argname> in cui tutte
-	  le occorrenze di <argname>find</argname> sono sostituite con
-	  <argname>subst</argname>.
-	</para>
+    <para>
+      Restituisce una copia di <argname>s</argname> in cui tutte
+      le occorrenze di <argname>find</argname> sono sostituite con
+      <argname>subst</argname>. V. anche <fncref targ="regsub"/> per 
+      una funzione più complessa che permette di sostituire stringhe sulla
+      base di espressioni regolari.
+    </para>
       </description>
     </function>
 
     <function name="substr" section="strings" output="string">
       <fnargs>
-	<fnarg type="string">s</fnarg>
-	<fnarg type="int">ini</fnarg>
-	<fnarg type="int">fin</fnarg>
+    <fnarg type="string">s</fnarg>
+    <fnarg type="int">start</fnarg>
+    <fnarg type="int">end</fnarg>
       </fnargs>  
       <description>
-	<para>
-	  Restituisce una sottostringa di <argname>s</argname>, dal
-	  carattere <argname>ini</argname> al carattere
-	  <argname>fin</argname>, compresi. L'indicizzazione è su base
-	  1.
-	</para>
+    <para>
+      Restituisce la sottostringa di <argname>s</argname> dal
+      carattere <argname>start</argname> al carattere
+      <argname>end</argname> compresi. L'indicizzazione è a base
+      1.
+    </para>
       </description>
     </function>
 
@@ -6943,22 +6982,22 @@
 	<fnarg type="smlist">x</fnarg>
       </fnargs>      
       <description>
-	<para>
-	  Se <argname>x</argname> è una serie, restituisce la somma
-	  (scalare) delle osservazioni valide nella serie
-	  <argname>x</argname>. Si veda anche <fncref targ="sumall"/>.
-	</para>
-	<para>
-	  Se <argname>x</argname> è una matrice, restituisce la somma
-	  degli elementi della matrice.
-	</para>	
-	<para>
-	  Se <argname>x</argname> è una lista, restituisce una serie
-	  <math>y</math> tale che <math>y</math><sub>t</sub> è la
-	  somma dei valori delle variabili nella lista
-	  all'osservazione <math>t</math>, o <lit>NA</lit> se ci sono
-	  valori mancanti a <math>t</math>.
-	</para>
+    <para>
+      Se <argname>x</argname> è una variabile restituisce la somma
+      (scalare) delle osservazioni non mancanti in
+      <argname>x</argname>. Si veda anche <fncref targ="sumall"/>.
+    </para>
+    <para>
+      Se <argname>x</argname> è una matrice restituisce la somma
+      degli elementi della matrice.
+    </para> 
+    <para>
+      Se <argname>x</argname> è una lista, restituisce una variabile 
+      <math>y</math> tale che <math>y</math><sub>t</sub> è la
+      somma dei valori delle variabili nella lista
+      all'osservazione <math>t</math>, o <lit>NA</lit> se ci sono
+      valori mancanti all'osservazione <math>t</math>.
+    </para>
       </description>
     </function>
 
@@ -7007,49 +7046,51 @@
 
     <function name="svd" section="linalg" output="rvec">
       <fnargs>
-	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
-	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
+    <fnarg type="matrix">X</fnarg>
+    <fnarg type="matrixref" optional="true">&amp;U</fnarg>
+    <fnarg type="matrixref" optional="true">&amp;V</fnarg>
       </fnargs>
       <description>
-	<para context="notex">
-	  Esegue la scomposizione a valori singolari (SVD) della
-	  matrice <argname>X</argname>.
-	</para>
-	<para context="tex">
-	  Esegue la scomposizione a valori singolari (SVD) della
-	  matrice $r \times c$ $X$:
-	  \[ X = U \left[
-	  \begin{array}{cccc} 
-	  \sigma_1 \\ 
-	  &amp; \sigma_2 \\ 
-	  &amp; &amp; \ddots \\ 
-	  &amp; &amp; &amp; \sigma_n ,
-	  \end{array}
-	  \right] V \] 
-	  dove $n = \min(r,c)$. $U$ è $r \times n$ e $V$ è $n \times c$, con $U'U = I$ e $VV' = I$.
-	</para>
-	<para>
-	  I valori singolari sono restituiti in un vettore riga.  I
-	  vettori singolari sinistri e/o destri <math>U</math> e
-	  <math>V</math> possono essere ottenuti fornendo valori
-	  non-nulli per, rispettivamente, gli argomenti 2 e 3. Per una
-	  matrice <lit>A</lit>, il codice
-	</para>
-	<code>
-	  s = svd(A, &amp;U, &amp;V) 
-	  B = (U .* s) * V
-	</code>
-	<para>
-	  dovrebbe generare <lit>B</lit> identica ad <lit>A</lit> (precisione numerica a parte).
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="eigengen"/>
-	    <fncref targ="eigensym"/>
-	    <fncref targ="qrdecomp"/>
-	  </seelist>
-	</para>
+    <para context="notex">
+      Esegue la scomposizione a valori singolari (SVD) della
+      matrice <argname>X</argname>.
+    </para>
+    <para context="tex">
+      Esegue la scomposizione a valori singolari (SVD) della
+      matrice $r \times c$ $X$:
+      \[ X = U \left[
+      \begin{array}{cccc} 
+      \sigma_1 \\ 
+      &amp; \sigma_2 \\ 
+      &amp; &amp; \ddots \\ 
+      &amp; &amp; &amp; \sigma_n ,
+      \end{array}
+      \right] V \] 
+      dove $n = \min(r,c)$. $U$ è $r \times n$ e $V$ è $n \times c$, 
+      con $U'U = I$ e $VV' = I$.
+    </para>
+    <para>
+      I valori singolari sono restituiti in un vettore riga.  I
+      vettori singolari sinistri e/o destri <math>U</math> e
+      <math>V</math> possono essere ottenuti fornendo valori
+      non nulli per, rispettivamente, gli argomenti 2 e 3. Per una
+      matrice <lit>A</lit>, il codice
+    </para>
+    <code>
+      s = svd(A, &amp;U, &amp;V) 
+      B = (U .* s) * V
+    </code>
+    <para>
+      dovrebbe generare <lit>B</lit> identica ad <lit>A</lit> 
+      (precisione numerica a parte).
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="eigengen"/>
+        <fncref targ="eigensym"/>
+        <fncref targ="qrdecomp"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -7058,14 +7099,14 @@
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Funzione tangente
-	  <seelist>
-	    <fncref targ="atan"/>
-	    <fncref targ="cos"/>
-	    <fncref targ="sin"/>
-	  </seelist>
-	</para>
+    <para>
+      Funzione tangente di <argname>x</argname>.
+      <seelist>
+        <fncref targ="atan"/>
+        <fncref targ="cos"/>
+        <fncref targ="sin"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -7092,34 +7133,34 @@
 
     <function name="toepsolv" section="linalg" output="cvec">
       <fnargs>
-	<fnarg type="vector">c</fnarg>
-	<fnarg type="vector">r</fnarg>
-	<fnarg type="vector">b</fnarg>
+    <fnarg type="vector">c</fnarg>
+    <fnarg type="vector">r</fnarg>
+    <fnarg type="vector">b</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Risolve un sistema di Toeplitz di equazioni lineari, cioè
-	  <math>Tx = b</math> dove <math>T</math> è una matrice
-	  quadrata il cui elemento <math>T</math><sub>i,j</sub> è
-	  uguale a <math>c</math><sub>i-j</sub> per <equation
-	  status="inline" ascii="i&gt;=j" tex="$i\ge j$"/> e a
-	  <math>r</math><sub>j-i</sub> per <equation status="inline"
-	  ascii="i&lt;=j" tex="$i\le j$"/>. Si noti che i primi
-	  elementi di <math>c</math> e <math>r</math> devono essere
-	  uguali. In caso contrario la funzione restituisce un
-	  errore. In caso di successo, la funzione restituisce il
-	  vettore <math>x</math>.
-	</para>
-	<para>
-	  L'algoritmo usato sfrutta la speciale struttura della
-	  matrice <math>T</math>, che lo rende molto più efficiente di
-	  altri algoritmi meno specifici, specialmente per sistemi di
-	  grandi dimensioni. Attenzione: in certi casi, la funzione
-	  può restituire un errore di singolarità anche se la matrice
-	  <math>T</math> non sia effettivamente singolare; questo
-	  problema tuttavia non si presenta quando <math>T</math> è
-	  definita positiva.
-	</para>
+    <para>
+      Risolve un sistema di Toeplitz di equazioni lineari, cioè
+      <math>Tx = b</math> dove <math>T</math> è una matrice
+      quadrata il cui elemento <math>T</math><sub>i,j</sub> è
+      uguale a <math>c</math><sub>i-j</sub> per <equation
+      status="inline" ascii="i&gt;=j" tex="$i\ge j$"/> e a
+      <math>r</math><sub>j-i</sub> per <equation status="inline"
+      ascii="i&lt;=j" tex="$i\le j$"/>. Si noti che i primi
+      elementi di <math>c</math> e <math>r</math> devono essere
+      uguali; in caso contrario la funzione restituisce un
+      errore. In caso di successo, la funzione restituisce il
+      vettore <math>x</math>.
+    </para>
+    <para>
+      L'algoritmo usato sfrutta la speciale struttura della
+      matrice <math>T</math>, che lo rende molto più efficiente di
+      altri algoritmi meno specifici, specialmente per sistemi di
+      grandi dimensioni. Attenzione: in certi casi, la funzione
+      può restituire un errore di singolarità anche se la matrice
+      <math>T</math> non è effettivamente singolare; questo
+      problema tuttavia non si presenta quando <math>T</math> è
+      definita positiva.
+    </para>
       </description>
     </function>
 
@@ -7167,11 +7208,11 @@
 	<fnarg type="matrix">X</fnarg>
       </fnargs>      
       <description>
-	<para>
-	  Trasposizione di matrice. Si noti che, al fine di ottenere
-	  la trasposta di una matrice, nella maggior parte dei casi è
-	  possibile utilizzare l'operatore apice: <lit>X'</lit>.
-	</para>
+    <para>
+      Trasposizione della matrice <argname>X</argname>. Si noti che per 
+      ottenere la trasposta di una matrice nella maggior parte dei casi è
+      possibile utilizzare l'operatore apice: <lit>X'</lit>.
+    </para>
       </description>
     </function>
 
@@ -7220,22 +7261,22 @@
 	<fnarg type="scalar">b</fnarg>
       </fnargs>     
       <description>
-	<para>
-	  Genera una serie di numeri pseudo-casuali uniformi
-	  nell'intervallo (<argname>a</argname>,
-	  <argname>b</argname>), oppure, in assenza di argomenti,
-	  nell'intervallo (0,1). L'algoritmo usato è il Mersenne
-	  Twister di Matsumoto e Nishimura (1998).
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="randgen"/>
-	    <fncref targ="normal"/>
-	    <fncref targ="genpois"/>
-	    <fncref targ="mnormal"/>
-	    <fncref targ="muniform"/>
-	  </seelist>
-	</para>
+    <para>
+      Genera una serie di numeri pseudo-casuali uniformi
+      nell'intervallo (<argname>a</argname>,
+      <argname>b</argname>), oppure, in assenza di argomenti,
+      nell'intervallo (0,1). L'algoritmo usato è il Mersenne
+      Twister sviluppato da <cite key="saito_matsumoto08">Saito and
+      Matsumoto (2008)</cite>.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="randgen"/>
+        <fncref targ="normal"/>
+        <fncref targ="mnormal"/>
+        <fncref targ="muniform"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -7258,20 +7299,21 @@
 	<fnarg type="vector">v</fnarg>
       </fnargs>      
       <description>
-	<para>
-	  Restituisce una matrice simmetrica <by r="n" c="n"/>
-	  ottenuta riordinando gli elementi di <math>v</math>. Il
-	  numero di elementi in <math>v</math> deve essere un intero
-	  triangolare, ossia un numero <math>k</math> che può essere
-	  scritto come <equation status="inline" ascii="k = n(n+1)/2"
-	  tex="$k = n(n+1)/2$"/>. con <math>n</math> intero. Questa
-	  funzione è l'inversa della funzione <fncref targ="vech"/>.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="mshape"/>
-	  </seelist>
-	</para>
+    <para>
+      Restituisce una matrice simmetrica <by r="n" c="n"/>
+      ottenuta riordinando gli elementi di <math>v</math>. Il
+      numero di elementi in <math>v</math> deve essere un intero
+      triangolare, ossia un numero <math>k</math> che può essere
+      scritto come <equation status="inline" ascii="k = n(n+1)/2"
+      tex="$k = n(n+1)/2$"/>, con <math>n</math> intero. Questa
+      funzione è l'inversa della funzione <fncref targ="vech"/>.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="mshape"/>
+        <fncref targ="vech"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -7301,38 +7343,41 @@
 
     <function name="urcpval" section="probdist" output="scalar">
       <fnargs>
-	<fnarg type="scalar">tau</fnarg>
-	<fnarg type="int">n</fnarg>
-	<fnarg type="int">niv</fnarg>
-	<fnarg type="int">itv</fnarg>
+    <fnarg type="scalar">tau</fnarg>
+    <fnarg type="int">n</fnarg>
+    <fnarg type="int">niv</fnarg>
+    <fnarg type="int">itv</fnarg>
       </fnargs>
       <description>
-	<para>
-	  <math>P</math>-value della statistica test dal test Dickey&ndash;Fuller per radici unitarie e del test Engle&ndash;Granger di cointegrazione, come in <cite key="mackinnon96">James MacKinnon (1996)</cite>.
-	</para>
-	<para>
-	  Gli argomenti sono i seguenti: <argname>tau</argname> indica
-	  la statistica test; <argname>n</argname> è il numero di
-	  osservazioni (o 0 per il risultato asintotico);
-	  <argname>niv</argname> è il numero di variabili
-	  potenzialmente cointegrate nel test di cointegrazione (o 1
-	  per il test univariato di radici unitarie);
-	  <argname>itv</argname> è il codice di specificazione del
-	  modello: 1 per il modello senza costante, 2 per il modello
-	  con costante inclusa, 3 per il modello con costante e trend
-	  lineare, 4 per il modello con costante e trend quadratico.
-	</para>
-	<para>
-	  Si noti che se il test è <quote>aumentato</quote> con i
-	  ritardi della variabile dipendente, si deve fornire un
-	  valore 0 all'argomento <argname>n</argname> per ottenere il
-	  risultato asintotico.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="pvalue"/>
-	  </seelist>
-	</para>
+    <para>
+      <math>P</math>-value della statistica test per il test di radici 
+      unitarie di Dickey&ndash;Fuller e del test di cointegrazione di
+      Engle&ndash;Granger, calcolato usando il metodo proposto da 
+      <cite key="mackinnon96">James MacKinnon (1996)</cite>.
+    </para>
+    <para>
+      Gli argomenti sono i seguenti: <argname>tau</argname> indica
+      la statistica test; <argname>n</argname> è il numero di
+      osservazioni (o 0 per il risultato asintotico);
+      <argname>niv</argname> è il numero di variabili
+      potenzialmente cointegrate nel test di cointegrazione (o 1
+      per il test univariato di radici unitarie);
+      <argname>itv</argname> è il codice di specificazione del
+      modello: 1 per il modello senza costante, 2 per il modello
+      con costante inclusa, 3 per il modello con costante e trend
+      lineare, 4 per il modello con costante e trend quadratico.
+    </para>
+    <para>
+      Si noti che se il test è <quote>aumentato</quote> con i
+      ritardi della variabile dipendente, si deve fornire un
+      valore 0 all'argomento <argname>n</argname> per ottenere il
+      risultato asintotico.
+    </para>
+    <para>
+      <seelist> 
+        <fncref targ="pvalue"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -7341,20 +7386,19 @@
 	<fnarg type="series-or-vec">x</fnarg>
       </fnargs>      
       <description>
-	<para>
-	  Restituisce un vettore contenente gli elementi distinti di
-	  <argname>x</argname> ordinati in senso crescente. Si noti
-	  che <argname>x</argname> si assume contenga solo valori
-	  interi. In caso contrario, la parte decimale è troncata,
-	  cosicché <lit>values(x)</lit> produce un risultato identico
-	  a <lit>values(int(x))</lit>.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="dsort"/>
-	    <fncref targ="sort"/>
-	  </seelist>
-	</para>
+    <para>
+      Restituisce un vettore contenente gli elementi distinti di
+      <argname>x</argname> ordinati in senso crescente. Se si desidera
+      troncare all'intero i valori prima di applicare questa funzione è 
+      possibile usare l'espressione <lit>values(int(x))</lit>.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="uniq"/>
+        <fncref targ="dsort"/>
+        <fncref targ="sort"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -7363,28 +7407,29 @@
 	<fnarg type="series-or-list">x</fnarg>
       </fnargs>     
       <description>
-	<para>
-	  Se <argname>x</argname> è una serie, restituisce la sua varianza campionaria (uno scalare), saltando i valori mancanti.
-	</para>
-	<para>
-	  Se <argname>x</argname> è una lista, restituisce una serie
-	  <math>y</math> tale che <math>y</math><sub>t</sub> è la
-	  varianza campionaria dei valori delle variabili nella lista
-	  all'osservazione <math>t</math>, o <lit>NA</lit> se ci sono
-	  valori mancanti a <math>t</math>.
-	</para>
-	<para>
-	  In ogni caso, la somma delle deviazioni al quadrato dalla
-	  media è divisa per (<math>n</math> &minus; 1) se
-	  <math>n</math> &gt; 1. In caso contrario, la varianza
-	  restituita è zero se <math>n</math> = 1, o <lit>NA</lit> se
-	  <math>n</math> = 0.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="sd"/>
-	  </seelist>
-	</para>
+    <para>
+      Se <argname>x</argname> è una variabile, restituisce la sua 
+      varianza campionaria (uno scalare), saltando i valori mancanti.
+    </para>
+    <para>
+      Se <argname>x</argname> è una lista, restituisce una variabile 
+      <math>y</math> tale che <math>y</math><sub>t</sub> è la
+      varianza campionaria dei valori delle variabili nella lista
+      all'osservazione <math>t</math>, o <lit>NA</lit> se ci sono
+      valori mancanti a <math>t</math>.
+    </para>
+    <para>
+      In ogni caso, la somma delle deviazioni al quadrato dalla
+      media è divisa per (<math>n</math> &minus; 1) se
+      <math>n</math> &gt; 1. In caso contrario, la varianza
+      restituita è nulla se <math>n</math> = 1, o <lit>NA</lit> se
+      <math>n</math> = 0.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="sd"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -7393,17 +7438,17 @@
 	<fnarg type="int-or-list">v</fnarg>
       </fnargs>     
       <description>
-	<para>
-	  Se l'argomento è uno scalare, restituisce il nome della
-	  variabile con numero ID <argname>v</argname>, o genera un
-	  errore nel caso in cui una tale variabile non esista.
-	</para>
-	<para>
-	  Se l'argomento è una lista, restituisce una stringa
-	  contenente i nomi delle variabili nella lista, separati da
-	  una virgola. Se la lista fornita è vuota, la stringa
-	  restituita sarà vuota.
-	</para>
+    <para>
+      Se l'argomento è uno scalare restituisce il nome della
+      variabile con numero ID <argname>v</argname> o genera un
+      errore nel caso in cui una tale variabile non esista.
+    </para>
+    <para>
+      Se l'argomento è una lista restituisce una stringa
+      contenente i nomi delle variabili nella lista, separati da
+      virgole. Se la lista fornita è vuota, la stringa
+      restituita sarà vuota.
+    </para>
       </description>
     </function>
 
@@ -7412,60 +7457,62 @@
 	<fnarg type="string">varname</fnarg>
       </fnargs>     
       <description>
-	<para>
-	  Restituisce il numero ID della variabile chiamata <argname>varname</argname>, o NA se una tale variabile non esiste.
-	</para>
+    <para>
+      Restituisce il numero ID della variabile  
+      <argname>varname</argname>, o NA se tale variabile non esiste.
+    </para>
       </description>
     </function>
 
     <function name="varsimul" section="linalg" output="matrix">
       <fnargs>
-	<fnarg type="matrix">A</fnarg>
-	<fnarg type="matrix">U</fnarg>
-	<fnarg type="matrix">y0</fnarg>
+    <fnarg type="matrix">A</fnarg>
+    <fnarg type="matrix">U</fnarg>
+    <fnarg type="matrix">y0</fnarg>
       </fnargs>
       <description>
-	<para>
-	  Simula un VAR di ordine <math>p</math> con <math>n</math> variabili, cioè 
-	  <equation status="inline"
-	  ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)." 
-	  tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$."/>
-	  La matrice dei coefficienti <argname>A</argname> è formata
-	  incolonnando orizzontalmente le matrici
-	  <math>A</math><sub>i</sub>. Si tratta di una matrice <by
-	  r="n" c="np"/>, con una riga per ogni equazione. Corrisponde
-	  alle prime <math>n</math> righe della matrice
-	  <lit>$compan</lit> fornita dai comandi <lit>var</lit> e
-	  <lit>vecm</lit> di gretl.
-	</para>
-	<para>
-	  Gli <math>u_t</math> vettori sono contenuti (come righe)
-	  nella matrice <argname>U</argname> (<by r="T" c="n"/>). I
-	  valori iniziali sono in <argname>y0</argname> (<by r="p"
-	  c="n"/>).
-	</para>
-	<para>
-	  Se il VAR contiene termini deterministici e/o regressori
-	  esogeni, questi possono essere gestiti racchiudendoli nella
-	  matrice <argname>U</argname>: ciascuna riga di
-	  <argname>U</argname> diventa allora
-	  <equation status="inline"
-	  ascii="u(t) = B' x(t) + e(t)." 
-	  tex="$u_t = B' x_t + e_t$."/>
-	</para>
-	<para>
-	  La matrice in uscita ha<math>T</math> + <math>p</math> righe
-	  e <math>n</math> colonne; contiene i <math>p</math> valori
-	  iniziali delle variabili endogene più i <math>T</math>
-	  valori simulati.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="$compan"/>
-	    <cmdref targ="var"/>
-	    <cmdref targ="vecm"/>
-	  </seelist>
-	</para>
+    <para>
+      Simula un VAR di ordine <math>p</math> con 
+      <math>n</math> variabili, cioè 
+      <equation status="inline"
+      ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)." 
+      tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$."/>
+      La matrice dei coefficienti <argname>A</argname> è formata
+      incolonnando orizzontalmente le matrici
+      <math>A</math><sub>i</sub>. Si tratta di una matrice <by
+      r="n" c="np"/>, con una riga per ogni equazione. Ciò corrisponde
+      alle prime <math>n</math> righe della matrice
+      <lit>$compan</lit> fornita dai comandi <lit>var</lit> e
+      <lit>vecm</lit> di gretl.
+    </para>
+    <para>
+      I vettori <math>u_t</math> sono contenuti (sotto forma di righe)
+      nella matrice <argname>U</argname> (<by r="T" c="n"/>). I
+      valori iniziali sono in <argname>y0</argname> (<by r="p"
+      c="n"/>).
+    </para>
+    <para>
+      Se il VAR contiene termini deterministici e/o regressori
+      esogeni, essi possono essere gestiti racchiudendoli nella
+      matrice <argname>U</argname>: ciascuna riga di
+      <argname>U</argname> diventa allora
+      <equation status="inline"
+      ascii="u(t) = B' x(t) + e(t)." 
+      tex="$u_t = B' x_t + e_t$."/>
+    </para>
+    <para>
+      La matrice in uscita ha<math>T</math> + <math>p</math> righe
+      e <math>n</math> colonne; contiene i <math>p</math> valori
+      iniziali delle variabili endogene più i <math>T</math>
+      valori simulati.
+    </para>
+    <para>
+      <seelist> 
+        <fncref targ="$compan"/>
+        <cmdref targ="var"/>
+        <cmdref targ="vecm"/>
+      </seelist>
+    </para>
 
       </description>
     </function>
@@ -7526,23 +7573,23 @@
 	<fnarg type="list">W</fnarg>
       </fnargs>    
       <description>
-	<para>
-	  Restituisce una serie <math>y</math> tale che
-	  <math>y</math><sub>t</sub> sia la media ponderata dei valori
-	  delle serie nella lista <argname>Y</argname>
-	  all'osservazione <math>t</math>; i rispettivi pesi devono
-	  essere contenuti nella lista <argname>W</argname>, e quindi
-	  possono essere variabili nel tempo. Le due liste
-	  <argname>Y</argname> e <argname>W</argname> devono avere lo
-	  stesso numero di elementi ed i pesi devono essere
-	  non-negativi.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="wsd"/>
-	    <fncref targ="wvar"/>
-	  </seelist>
-	</para> 
+    <para>
+      Restituisce una variabile <math>y</math> tale che
+      <math>y</math><sub>t</sub> è la media ponderata dei valori
+      delle variabili nella lista <argname>Y</argname>
+      all'osservazione <math>t</math>; i rispettivi pesi devono
+      essere contenuti nella lista <argname>W</argname> e 
+      possono quindi cambiare nel tempo. Le due liste
+      <argname>Y</argname> e <argname>W</argname> devono avere lo
+      stesso numero di elementi ed i pesi devono essere
+      non-negativi.
+    </para>
+    <para>
+      <seelist> 
+        <fncref targ="wsd"/>
+        <fncref targ="wvar"/>
+      </seelist>
+    </para> 
       </description>
     </function>
 
@@ -7552,23 +7599,23 @@
 	<fnarg type="list">W</fnarg>
       </fnargs>    
       <description>
-	<para>
-	  Restituisce una serie <math>y</math> tale che
-	  <math>y</math><sub>t</sub> sia l'errore quadratico medio
-	  ponderato dei valori delle serie nella lista
-	  <argname>Y</argname> all'osservazione <math>t</math>; i
-	  rispettivi pesi devono essere contenuti nella lista
-	  <argname>W</argname>, e quindi possono essere variabili nel
-	  tempo. Le due liste <argname>Y</argname> e
-	  <argname>W</argname> devono avere lo stesso numero di
-	  elementi ed i pesi devono essere non-negativi.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="wmean"/>
-	    <fncref targ="wvar"/>
-	  </seelist>
-	</para> 
+    <para>
+      Restituisce una variabile <math>y</math> tale che
+      <math>y</math><sub>t</sub> è l'errore quadratico medio
+      ponderato dei valori delle variabili nella lista
+      <argname>Y</argname> all'osservazione <math>t</math>; i
+      rispettivi pesi devono essere contenuti nella lista
+      <argname>W</argname>, e possono quindi cambiare nel
+      tempo. Le due liste <argname>Y</argname> e
+      <argname>W</argname> devono avere lo stesso numero di
+      elementi ed i pesi devono essere non-negativi.
+    </para>
+    <para>
+      <seelist> 
+        <fncref targ="wmean"/>
+        <fncref targ="wvar"/>
+      </seelist>
+    </para> 
       </description>
     </function>
 
@@ -7578,32 +7625,32 @@
 	<fnarg type="list">W</fnarg>
       </fnargs>    
       <description>
-	<para>
-	  Restituisce una serie <math>y</math> tale che
-	  <math>y</math><sub>t</sub> sia la varianza campionaria
-	  ponderata dei valori delle serie nella lista
-	  <argname>Y</argname> all'osservazione <math>t</math>; i
-	  rispettivi pesi devono essere contenuti nella lista
-	  <argname>W</argname>, e quindi possono essere variabili nel
-	  tempo. Le due liste <argname>Y</argname> e
-	  <argname>W</argname> devono avere lo stesso numero di
-	  elementi ed i pesi devono essere non-negativi.
-	</para>
-	<para context="tex">
-	  La varianza ponderata è calcolata come 
-	  \[ 
-	  s^2_w = \frac{n'}{n'-1} \, 
-	  \frac{\sum_{i=1}^n w_i(x_i - \bar{x}_w)^2}{\sum_{i=1}^n w_i} 
-	  \] 
-	  dove $n'$ è il numero di pesi non nulli e $\bar{x}_w$ è la
-	  media ponderata.
-	</para>
-	<para>
-	  <seelist> 
-	    <fncref targ="wmean"/>
-	    <fncref targ="wsd"/>
-	  </seelist>
-	</para> 
+    <para>
+      Restituisce una variabile <math>y</math> tale che
+      <math>y</math><sub>t</sub> è la varianza campionaria
+      ponderata dei valori delle variabili nella lista
+      <argname>Y</argname> all'osservazione <math>t</math>; i
+      rispettivi pesi devono essere contenuti nella lista
+      <argname>W</argname>, e possono quindi cambiare nel
+      tempo. Le due liste <argname>Y</argname> e
+      <argname>W</argname> devono avere lo stesso numero di
+      elementi ed i pesi devono essere non-negativi.
+    </para>
+    <para context="tex">
+      La varianza ponderata è calcolata come 
+      \[ 
+      s^2_w = \frac{n'}{n'-1} \, 
+      \frac{\sum_{i=1}^n w_i(x_i - \bar{x}_w)^2}{\sum_{i=1}^n w_i} 
+      \] 
+      dove $n'$ è il numero di pesi non nulli e $\bar{x}_w$ è la
+      media ponderata.
+    </para>
+    <para>
+      <seelist> 
+        <fncref targ="wmean"/>
+        <fncref targ="wsd"/>
+      </seelist>
+    </para> 
       </description>
     </function>
 
@@ -7614,7 +7661,7 @@
       </fnargs>     
       <description>
 	<para>
-	  Fornisce il massimo di <argname>x</argname> e
+	  Fornisce il maggiore fra <argname>x</argname> e
 	  <argname>y</argname>, o <lit>NA</lit> se uno dei due valori 
 	  è mancante.  
 	</para>
@@ -7635,7 +7682,7 @@
       </fnargs>     
       <description>
 	<para>
-	  Fornisce il minimo di <argname>x</argname> e
+	  Fornisce il minore fra <argname>x</argname> e
 	  <argname>y</argname>, o <lit>NA</lit> se uno dei due valori
       è mancante.
 	</para>
@@ -7654,17 +7701,17 @@
 	<fnarg type="list">L</fnarg>
       </fnargs>     
       <description>
-	<para>
-          Fornisce una lista che contiene i quadrati e i prodotti
-          incrociati delle variabili elencate in <argname>L</argname>.
-          Ai quadrati viene assegnato il nome secondo lo schema
-          <lit>sq_</lit><repl>varname</repl>, mentre per i prodotti
-          incrociati si utilizza
-          <repl>var1</repl><lit>_</lit><repl>var2</repl>.  I nomi
-          delle variabili in input sono troncati se necessario, e il
-          nome delle variabili in output possono essere cambiati in
-          caso di duplicazione dei nomi nella lista fornita.
-	</para>
+    <para>
+      Fornisce una lista che contiene i quadrati e i prodotti
+      incrociati delle variabili elencate nella lista <argname>L</argname>.
+      Ai quadrati viene assegnato un nome secondo lo schema
+      <lit>sq_</lit><repl>varname</repl>, mentre per i prodotti
+      incrociati si utilizza
+      <repl>var1</repl><lit>_</lit><repl>var2</repl>. Se necessario i nomi
+      delle variabili in input possono essere troncati e il
+      nome delle variabili in output possono essere cambiati in
+      caso di duplicazione dei nomi nella lista fornita.
+    </para>
       </description>
     </function>
 
@@ -7673,16 +7720,16 @@
 	<fnarg type="scalar-or-series">x</fnarg>
       </fnargs>     
       <description>
-	<para>
-	  Converte gli zeri in <lit>NA</lit>s. Se <argname>x</argname>
-	  è una variabile, la conversione viene fatta elemento per
-	  elemento.
-	  <seelist>
-	    <fncref targ="missing"/>
-	    <fncref targ="misszero"/>
-	    <fncref targ="ok"/>
-	  </seelist>
-	</para>
+    <para>
+      Converte gli zeri in <lit>NA</lit>s. Se <argname>x</argname>
+      è una variabile la conversione viene fatta elemento per
+      elemento.
+      <seelist>
+        <fncref targ="missing"/>
+        <fncref targ="misszero"/>
+        <fncref targ="ok"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -7692,14 +7739,14 @@
 	<fnarg type="int">c</fnarg>
       </fnargs> 
       <description>
-	<para>
-	  Produce una matrice di zeri con <math>r</math> righe e 
-	  <math>c</math> colonne. 
-	  <seelist> 
-	    <fncref targ="ones"/>
-	    <fncref targ="seq"/>
-	  </seelist>
-	</para>
+    <para>
+      Genera una matrice di zero con <math>r</math> righe e 
+      <math>c</math> colonne. 
+      <seelist> 
+        <fncref targ="ones"/>
+        <fncref targ="seq"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
