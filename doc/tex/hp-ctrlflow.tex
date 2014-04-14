@@ -26,11 +26,12 @@ Points to note:
 \item The \texttt{<condition>} can be any expression that evaluates to a
   scalar: 0 is interpreted as ``false'', non-zero is interpreted as
   ``true''; \texttt{NA} generates an error.
-\item There is no \texttt{then} keyword, like eg in Pascal or in Basic.
+\item Following \cmd{if}, ``then'' is implicit; there is no \texttt{then}
+  keyword as found in, e.g., Pascal or Basic.
 \item The \cmd{elif} and \cmd{else} clauses are optional: the minimal
   form is just \texttt{if} \dots{} \texttt{endif}.
 \item Conditional blocks of this sort can be nested up to a maximum of
-  1024.
+  depth of 1024.
 \end{itemize}
 
 Example:
@@ -64,15 +65,16 @@ endif
 Note, from the example above, that the \cmd{elif} keyword can be
 repeated, making hansl's \cmd{if} statement a multi-way branch
 statement. There is no separate \cmd{switch} or \cmd{case} statement
-in hansl. With one or more \cmd{elif}s, hansl will execute the topmost
-one for which the logical condition is satisfied, and then jump to
+in hansl. With one or more \cmd{elif}s, hansl will execute the first
+one for which the logical condition is satisfied and then jump to
 \cmd{endif}.
 
 \tip{Stata users, beware: hansl's \cmd{if} statement is fundamentally
-different from Stata's \texttt{if} option: the latter selects a
-subsample of observations for some action, while the former is used to
-decide if a group of statements must be executed or not; hansl's
-\cmd{if} is what Stata calls this the ``branching \texttt{if}''.}
+  different from Stata's \texttt{if} option: the latter selects a
+  subsample of observations for some action, while the former is used
+  to decide if a group of statements should be executed or not;
+  hansl's \cmd{if} is what Stata calls this the ``branching
+  \texttt{if}''.}
 
 
 \subsection{The ternary query operator}
@@ -88,7 +90,7 @@ If \texttt{<condition>} evaluates as true (non-zero) then
 \texttt{<true-value>} is assigned to \texttt{result}, otherwise
 \texttt{result} will contain \texttt{<false-value>}.\footnote{Some
   readers may find it helpful to note that the conditional assignment
-  operator works exactly the same way as the \texttt{=IF()} function
+  operator works in exactly the same way as the \texttt{=IF()} function
   in spreadsheets.}  This is obviously more compact than \texttt{if}
 \dots{} \texttt{else} \dots{} \texttt{endif}. The following example
 replicates the \cmd{abs} function by hand:
@@ -101,23 +103,23 @@ which exploits the fact that the ternary operator can be nested:
 \begin{code}
 scalar days = (m==2) ? 28 : maxr(m.={4,6,9,11}) ? 30 : 31
 \end{code}
-This example deserves a few comments: we want to compute the number of
-days in a month, codified in the variable \texttt{m}. So, what we put into
-the scalar \texttt{days} comes from the following pathway:
+This example deserves a few comments. We want to compute the number of
+days in a month, coded in the variable \texttt{m}. The value we assign
+to the scalar \texttt{days} comes from the following pathway.
 \begin{enumerate}
-\item first, we check if the month is February (\texttt{m==2}); if so,
-  we set \texttt{days} to 28 and we're done;\footnote{Ok, we don't
-    check for leap years here.}
-\item otherwise, we compute a matrix of zeros and ones via the
-  \verb|m.={4,6,9,11}| operation (note the usage of the ``dot''
-  operator to perform an element-by element comparison --- see section
+\item First we check if the month is February (\texttt{m==2}); if so,
+  we set \texttt{days} to 28 and we're done.\footnote{Ok, we're ignoring
+    leap years here.}
+\item Otherwise, we compute a matrix of zeros and ones via the
+  operation \verb|m.={4,6,9,11}| (note the use of the ``dot'' operator
+  to perform an element-by element comparison---see section
   \ref{sec:mat-op}); if \texttt{m} equals any of the elements in the
-  vector, the corresponding element of the result will be one, and
-  zero otherwise;
-\item by the function \cmd{maxr}, we take its maximum, so we're
-  checking whether \texttt{m} is one of the four values corresponding
-  to 30-days months;
-\item since the above evaluates to a scalar, we put the right value
+  vector, the corresponding element of the result will be 1, and
+  0 otherwise;
+\item The \cmd{maxr} function gives the maximum of this vector, so
+  we're checking whether \texttt{m} is any one of the four values
+  corresponding to 30-day months.
+\item Since the above evaluates to a scalar, we put the right value
   into \texttt{days}.
 \end{enumerate}
 
@@ -150,12 +152,12 @@ matrix A = mnormal(4,4)
 matrix B = upper(A.<0) ? -A : A
 \end{code}
 
-\tip{At this point, it's likely that some reader would think ``Oh,
-  what the heck, this may be as cool as you want, but it's way too
-  complicated for me; I'll just use the traditional \cmd{if}''. Of
-  course, there's nothing wrong with this, but in some cases the
-  ternary assignment operator can lead to substantially faster code,
-  and comes surprisingly natural when one gets used to it.}
+\tip{At this point some readers may think ``Well, this may be as cool
+  as you want, but it's way too complicated for me; I'll just use the
+  traditional \cmd{if}''. Of course, there's nothing wrong with that,
+  but in some cases the ternary assignment operator can lead to
+  substantially faster code, and it becomes surprisingly natural when
+  one gets used to it.}
 
 \section{Loops}
 \label{sec:hr-loops}
@@ -235,10 +237,9 @@ incremented by 1 on each iteration until it equals \texttt{<max>}.
 The counter is ``read-only'' inside the loop. You can access either
 its numerical value through the scalar \texttt{i} or use the accessor
 \dollar{i}, which will perform \emph{string substitution}: inside the
-loop, the expression \dollar{i} will be substituted by the hansl
-interpreter with the string representation of the current value of the
-index variable. An example should made this clearer: the following
-input
+loop, the hansl interpreter will substitute for the expression
+\dollar{i} the string representation of the current value of the index
+variable. An example should made this clearer: the following input
 \begin{code}
 scalar a_1 = 57
 scalar a_2 = 85
@@ -260,11 +261,11 @@ has for output
 \end{code}
 
 In the example above, at the first iteration the value of \texttt{i}
-is 1, so the hansl interpreter expands the expression \verb|a_$i| to
+is 1, so the interpreter expands the expression \verb|a_$i| to
 \verb|a_1|, finds that a scalar by that name exists, and prints
 it. The same happens through the rest of the iterations. If one of the
-automatically constructed identifiers had not existed, execution would
-have stopped with an error.
+automatically constructed identifiers had not been defined, execution
+would have stopped with an error.
 
 \subsection{While loop}
 
@@ -296,7 +297,7 @@ endloop
 where \texttt{<catalogue>} can be either a collection of
 space-separated strings, or a variable of type \texttt{list} (see
 section \ref{sec:lists}). The counter variable automatically takes on
-the numerical values 1, 2, 3, \dots{} as execution proceeds, but its
+the numerical values 1, 2, 3, and so on as execution proceeds, but its
 string value (accessed by prepending a dollar sign) shadows the names
 of the series in the list or the space-separated strings; this sort of
 loop is designed for string substitution.
@@ -429,24 +430,19 @@ printf "sqrt(%g) = %g\n", x, y
 \section{The \cmd{catch} modifier}
 
 Hansl offers a rudimentary form of exception handling via the
-\cmd{catch} modifier.
-
-This is not a command in its own right but can be used as a prefix to
-most regular commands: the effect is to prevent termination of a
-script if an error occurs in executing the command. If an error does
-occur, this is registered in an internal error code which can be
-accessed as \dollar{error} (a zero value indicates success). The value
-of \dollar{error} should always be checked immediately after using
-\texttt{catch}, and appropriate action taken if the command failed.
-
-The catch keyword cannot be used before \cmd{if}, \cmd{elif} or
-\cmd{endif}.
+\cmd{catch} keyword. This is not a command in its own right but can be
+used as a prefix to most regular commands: the effect is to prevent
+termination of a script if an error occurs in executing the
+command. If an error does occur, this is registered in an internal
+error code which can be accessed as \dollar{error} (a zero value
+indicating success). The value of \dollar{error} should always be
+checked immediately after using \texttt{catch}, and appropriate action
+taken if the command failed. Here is a simple example:
 
 \begin{code}
 matrix a = floor(2*muniform(2,2))
 catch ai = inv(a)
 scalar err = $error
-
 if err
     printf "The matrix\n%6.0f\nis singular!\n", a
 else
@@ -454,6 +450,9 @@ else
 endif
 \end{code}
 %$
+
+Note that the catch keyword cannot be used before \cmd{if}, \cmd{elif}
+or \cmd{endif}. 
 
 \section{The \cmd{quit} statement}
 
