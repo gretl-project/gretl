@@ -306,7 +306,7 @@ gretl_covariance_matrix_from_varlist (const int *list,
     gretl_matrix *V;
     gretl_vector *xbar;
     int k = list[0];
-    int t, i, j;
+    int t, i, j, vi, vj;
     double vv, x, y;
     int n, err = 0;
     
@@ -326,12 +326,14 @@ gretl_covariance_matrix_from_varlist (const int *list,
     }
 
     for (i=0; i<k && !err; i++) {
+	vi = list[i+1];
 	for (j=i; j<k; j++) {
+	    vj = list[j+1];
 	    vv = 0.0;
 	    n = 0;
 	    for (t=dset->t1; t<=dset->t2; t++) {
-		x = dset->Z[list[i+1]][t];
-		y = dset->Z[list[j+1]][t];
+		x = dset->Z[vi][t];
+		y = dset->Z[vj][t];
 		if (na(x) || na(y)) {
 		    continue;
 		}
@@ -342,7 +344,7 @@ gretl_covariance_matrix_from_varlist (const int *list,
 		err = E_DATA;
 		vv = NADBL;
 	    } else {
-		vv /= (n - 1); /* plain n? */
+		vv /= (n - 1); /* or plain n? */
 	    }
 	    gretl_matrix_set(V, i, j, vv);
 	    gretl_matrix_set(V, j, i, vv);
