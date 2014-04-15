@@ -28,14 +28,14 @@ strict order:
 \item \texttt{\emph{funcname}}, the unique identifier for the
   function.  Function names have a maximum length of 31 characters;
   they must start with a letter and can contain only letters, numerals
-  and the underscore character. It cannot coincide with a native gretl
-  command or function.
-\item The functions's \texttt{\emph{parameters}}, in the form of a
+  and the underscore character. They cannot coincide with the names of
+  native commands or functions.
+\item The function's \texttt{\emph{parameters}}, in the form of a
   comma-separated list enclosed in parentheses.\footnote{If you have
     to pass many parameters, you might want to consider wrapping them
     into a bundle to avoid syntax cluttering.} Note: parameters are
   the only way hansl function can receive anything from ``the
-  outside''. In hansl, there is no such thing as global variables.
+  outside''. In hansl there are no global variables.
 \end{enumerate}
 
 Function parameters can be of any of the types shown below.
@@ -55,9 +55,9 @@ Function parameters can be of any of the types shown below.
 \end{tabular}
 \end{center}
 
-Each element in the listing of parameters must include two terms: a
-type specifier, and the name by which the parameter shall be known
-within the function.  
+Each element in parameter list must include two terms: a type
+specifier, and the name by which the parameter shall be known within
+the function.
 
 The \emph{function body} contains (almost) arbitrary hansl code, which
 should compute the \emph{return value}, that is the value the function
@@ -65,9 +65,9 @@ is supposed to yield. Any variable declared inside the function is
 \emph{local}, so it will cease to exist when the function ends.
 
 The \cmd{return} command is used to stop execution of the code inside
-the function and deliver its result to the calling code (note that
-this typically happens at the end of the function body, but doesn't
-have to).  The function definition must end with the expression
+the function and deliver its result to the calling code. This
+typically happens at the end of the function body, but doesn't have
+to. The function definition must end with the expression
 \verb|end function|, on a line of its own.
 
 \tip{Beware: unlike some other languages (e.g.\ Matlab or GAUSS), you
@@ -75,20 +75,18 @@ have to).  The function definition must end with the expression
   you can return a bundle and stuff it with as many objects as you
   want.}
 
-
 In order to get a feel for how functions work in practice, here's a
 simple example:
 \begin{code}
 function scalar quasi_log(scalar x)
-/* popular approximation to the natural logarithm
-   via Padé polynomials */
-
+   /* popular approximation to the natural logarithm
+     via Padé polynomials 
+   */
    if (x<0)
       scalar ret = NA
    else 
       scalar ret = 2*(x-1)/(x+1)
    endif
-
    return ret
 end function
 
@@ -102,37 +100,31 @@ The code above computes the rational function
   f(x) = 2 \cdot \frac{x-1}{x+1} ,
 \]
 which provides a decent approximation to the natural logarithm in the
-neighborhood of 1.
+neighborhood of 1. Some comments on the code:
 
 \begin{enumerate}
-\item We begin by defining the function via the \cmd{function}
-  keyword; the function definition will end with the \texttt{end
-    function} marker below;
-\item since the function is meant to return a scalar, we put the
-  keyword \texttt{scalar} after \cmd{function};
-\item between the round brackets, the arguments follow; in this case,
-  we only have one, which we call \texttt{x} and is specified to be a
-  scalar;
-\item on the next line, the function definition begins; in this case,
-  it includes a comment and an \cmd{if} block;
-\item the function ends with the \cmd{return} keyword, which exports
-  the result;
-\item the next lines provide a simple usage example; note that in the
-  \cmd{printf} command, the two functions \cmd{ln()} and
+\item Since the function is meant to return a scalar, we put the
+  keyword \texttt{scalar} after the intial \cmd{function}.
+\item In this case the parameter list has only one element: it is
+  named \texttt{x} and is specified to be a scalar.
+\item On the next line the function definition begins; the body
+  includes a comment and an \cmd{if} block.
+\item The function ends by returning the computed value, \texttt{ret}.
+\item The following lines give a simple example of usage. Note that in
+  the \cmd{printf} command, the two functions \cmd{ln()} and
   \cmd{quasi\_log()} are indistinguishable from a purely syntactic
-  viewpoint, although the former is a native function and the
-  latter is a user-defined one. 
+  viewpoint, although the former is native and the latter is
+  user-defined.
 \end{enumerate}
 
-In many cases, you may end up writing several functions, which may be
-quite long; in order to avoid cluttering your script with the function
-definition, hansl provides the \cmd{include} command, so you can put
-all your function definitions in a separate file, or separate files if
-you appreciate tidiness; note, however, that you can put as many
-function definitions as you want in any included file. For
-example, imagine you saved the \verb|quasi_log()| function definition
-above in a separate file called \verb|quasilog_def.inp|: the code
-above could be written more compactly as
+In ambitious uses of hansl you may end up writing several functions,
+some of which may be quite long. In order to avoid cluttering your
+script with function definitions, hansl provides the \cmd{include}
+command: you can put your function definitions in a separate file (or
+set of files) and read them in as needed.  For example, suppose you
+saved the definition of \verb|quasi_log()| in a separate file called
+\verb|quasilog_def.inp|: the code above could then be written more
+compactly as
 \begin{code}
 include quasilog_def.inp
 
@@ -165,12 +157,12 @@ Running the above code yields
               x =  6.0000000
               x =  3.0000000
 \end{code}
-The first \cmd{print} statement happens inside the function, and the
-displayed value is 6 because \verb|x| is doubled; however, what really
-gets doubled is simply the \emph{copy} of \texttt{x}: this is
-demonstrated by the second \cmd{print} statement.  If you need a
-function to modify its arguments, you ought to use pointers (see
-below).
+The first \cmd{print} statement is executed inside the function, and
+the displayed value is 6 because the input \verb|x| is doubled;
+however, what really gets doubled is simply a \emph{copy} of the
+original \texttt{x}: this is demonstrated by the second \cmd{print}
+statement.  If you want a function to modify its arguments, you must
+use pointers.
 
 \subsection{Pointers}
 
@@ -179,34 +171,36 @@ Each of the type-specifiers, with the exception of \texttt{list} and
 associated parameter name, as in
 %    
 \begin{code}
-function scalar myfunc (matrix *y, scalar *b)
+function scalar myfunc (matrix *y)
 \end{code}
-This indicates that \verb|*y|, isn't a matrix, but a \emph{pointer} to
-a matrix.  In practice, a pointer to a variable contains the memory
+This indicates that the required argument is not a plain matrix but
+rather a \emph{pointer-to-matrix}, or in other words the memory
 address at which the variable is stored.
 
-This is usually considered a bit mysterious by people unfamiliar with
-the C programming language, so allow us to explain how pointers work
-by means of a (quite silly) example: suppose you set up a barber
+This can seem a bit mysterious to people unfamiliar with the C
+programming language, so allow us to explain how pointers work by
+means of a (frivolous) example. Suppose you set up a barber
 shop. Ideally, your customers would walk into your shop, sit on a
 chair and have their hair trimmed or their beard shaved. However,
 local regulations forbid you to modify anything coming in through your
-shop door; of course, you wouldn't do much business if people must
+shop door. Of course, you wouldn't do much business if people must
 leave your shop with their hair untouched. Nevertheless, you have a
-simple way to go around this limitation: your customers can come to
+simple way to get around this limitation: your customers can come to
 your shop, tell you their home address and walk out. Then, nobody
 stops you from going to their place and excercising your fine
-profession. Formally, you're OK with the law, because no modification
-of anything took place inside your shop.
+profession. You're OK with the law, because no modification of
+anything took place inside your shop.
 
-Unlike C, in hansl you don't have to take any special care inside the
-function body to distinguish the variable from its
-address;\footnote{In C, this would be called \emph{dereferencing} the
-  pointer.} you just use the variable's name. In order to supply the
-address of a variable when you invoke the function, you use the
-ampersand (\verb|&|) operator.
+Unlike C, however, in hansl you don't have to take any special care
+within the function to distinguish the variable from its address, you
+just use the variable's name.\footnote{In C, this would be called
+  \emph{dereferencing} the pointer. The distinction is not required in
+  hansl because there is no equivalent to operating on the supplied
+  address itself, as in C.}  In order to supply the address of a
+variable when you invoke the function, you use the ampersand
+(\verb|&|) operator.
 
-An example should, hopefully, make things clearer; the following code
+An example should make things clearer. The following code
 \begin{code}
 function void swap(scalar *a, scalar *b)
     scalar tmp = a
@@ -219,35 +213,35 @@ scalar y = 1000000
 swap(&x, &y)
 print x y
 \end{code}
-gives
+gives the output
 \begin{code}
               x =  1000000.0
               y =  0.0000000
 \end{code}
-so \texttt{x} and \texttt{y} have in fact been swapped. How?
+So \texttt{x} and \texttt{y} have in fact been swapped. How?
 
 First you have the function definition, in which the arguments are
 pointers to scalars. Inside the function body, the distinction is
 moot, as \verb|a| is taken to mean ``the scalar that you'll find at
-the address \verb|*a|, which you'll get as the first parameter'' (and
-likewise for \verb|b|). The rest of the function simply swaps
-\texttt{a} and \texttt{b} by means of a local temporary variable.
+the address given by the first argument'' (and likewise for
+\verb|b|). The rest of the function simply swaps \texttt{a} and
+\texttt{b} by means of a local temporary variable.
 
 Outside the function, we first initialize the two scalars \texttt{x}
-to 0 and \texttt{y} to a big number. Then we call the function.  When
-the function is called, it's given as arguments \verb|&a| and
-\verb|&b|, which hansl identifies as ``the address of'' the two
-scalars \texttt{a} and \texttt{b}, respectively.
+to 0 and \texttt{y} to a big number. When the function is called, it
+is given as arguments \verb|&a| and \verb|&b|, which hansl identifies
+as ``the address of'' the two scalars \texttt{a} and \texttt{b},
+respectively.
 
 Writing a function with pointer arguments has two main consequences:
 first, as we just saw, it makes it possible to modify the function
 arguments. Second, it avoids the computational cost of having to
 allocate memory for a copy of the arguments and performing the copy
-operation; such cost is proportional to the size of the argument. 
+operation; such cost is proportional to the size of the argument.
 Hence, for matrix arguments, this is a nice way to write faster
 functions, as producing a copy of a large matrix can be quite
-time-consuming.\footnote{However, the \cmd{const} qualifier achieves the same
-effect. See \GUG\ for further details.}
+time-consuming.\footnote{However, the \cmd{const} qualifier achieves
+  the same effect. See \GUG\ for further details.}
 
 \section{Recursion}
 
