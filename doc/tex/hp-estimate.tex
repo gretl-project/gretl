@@ -1,0 +1,78 @@
+\chapter{Estimation methods}
+\label{chap:estimation}
+
+\section{Primitive estimation techniques}
+\label{sec:canned}
+
+By ``primitive'' we mean coded in C, really.
+
+These share, more or less, the syntax
+\begin{flushleft}
+\texttt{\emph{commandname parameters options}}
+\end{flushleft}
+with a few exceptions (eg systems)
+
+A crude categorization: 
+\begin{description}
+\item[Linear, single equation] \cmd{ols}, \cmd{tsls}, \cmd{ar1},
+  \cmd{mpols}
+\item[Linear, multi-equation] \cmd{system}, \cmd{var}, \cmd{vecm} 
+\item[Nonlinear, single equation] \cmd{logit}, \cmd{probit},
+  \cmd{poisson}, \cmd{negbin}, \cmd{tobit}, \cmd{intreg},
+  \cmd{logistic}
+\item[Panel] \cmd{panel}, \cmd{dpanel}
+\item[Assorted] \cmd{arima}, \cmd{garch}, \cmd{heckit},
+  \cmd{quantreg}, \cmd{lad}, \cmd{biprobit}, \cmd{duration}
+\end{description}
+
+Don't let names deceive you: for example, the \cmd{probit} command can
+estimate ordered models, random-effect panel probit models, \ldots
+
+See the \GCR{} for details
+
+\subsection{Simultaneous systems}
+
+The \cmd{system} block.
+
+\section{Post-estimation accessors}
+\label{sec:postest-accessors}
+
+After having estimated a model, you can access most of the relevant
+quantities via accessors.
+
+\begin{itemize}
+\item Generic: \dollar{coeff}, \dollar{vcv}, \dollar{uhat}
+\item Model-specific: for example, \dollar{jbeta}, \dollar{h},
+  \dollar{mnlprobs}
+\end{itemize}
+
+\subsection{Named models}
+
+\begin{code}
+diff y x
+ADL <- ols y const y(-1) x(0 to -1)
+ECM <- ols d_y const d_x y(-1) x(-1)
+ssr_a = ADL.$ess
+ssr_e = ECM.$ess # should be equal
+\end{code}
+
+\section{Generic estimation tools}
+\label{sec:est-blocks}
+
+These are useful if you want to write your own estimator. Here we give
+a generic overview. See the relevant chapters in \GUG{} for a full explanation.
+
+\begin{itemize}
+\item \cmd{nls}
+\item \cmd{mle}
+\item \cmd{gmm}
+\end{itemize}
+
+\subsection{Formatting your output}
+
+The \cmd{modprint} command.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "hansl-primer"
+%%% End: 
