@@ -1,0 +1,317 @@
+\chapter{Hello, world!}
+
+We begin with the time-honored ``Hello, world'' program, the
+obligatory first step in any programming language. It's actually very
+simple in hansl:
+\begin{code}
+  # First example
+  print "Hello, world!"
+\end{code}
+
+There are several ways to run the above example: you can put it in a
+text file \texttt{first\_ex.inp} and have gretl execute it from the
+command line through the command
+\begin{code}
+  gretlcli -b first_ex.inp
+\end{code}
+or you could just copy its contents in the editor window of a GUI
+gretl session and click on the ``gears'' icon. It's up to you; use
+whatever you like best.
+
+From a syntactical point of view, allow us to draw attention on
+the following points:
+\begin{enumerate}
+\item The line that begins with a hash mark (\texttt{\#}) is a
+  comment: if a hash mark is encountered, everything from that point
+  to the end of the current line is treated as a comment, and ignored
+  by the interpreter.
+\item The next line contains a \emph{command} (\cmd{print}) followed
+  by an \emph{argument}; this is fairly typical of hansl: many jobs
+  are carried out by calling commands.
+\item Hansl does not have an explicit command terminator such as the
+  ``\texttt{;}'' character in the C language family (C++, Java, C\#,
+  \ldots) or GAUSS; instead it uses the newline character as an
+  implicit terminator. So at the end of a command, you \emph{must}
+  insert a newline; conversely, you \emph{can't} put a newline in the
+  middle of a command---or not without taking special measures. If you
+  need to break a command over more than one line for the sake of
+  legibility you can use the ``\textbackslash'' (backslash) character,
+  which causes gretl to ignore the following line break.
+\end{enumerate}
+
+Note also that the \cmd{print} command automatically appends a line
+break, and does not recognize ``escape'' sequences such as
+``\verb|\n|''; such sequences are just printed literally. The
+\cmd{printf} command can be used for greater control over output; see
+chapter \ref{chap:formatting}.
+
+Let's now examine a simple variant of the above:
+\begin{code}
+  /*
+    Second example
+  */
+  string foo = "Hello, world"
+  print foo
+\end{code}
+
+In this example, the comment is written using the convention adopted
+in the C programming language: everything between ``\verb|/*|'' and
+``\verb|*/|'' is ignored.\footnote{Each type of comment can be masked
+  by the other:
+\begin{itemize}
+\item If \texttt{/*} follows \texttt{\#} on a given line which does
+  not already start in ignore mode, then there's nothing special about
+  \texttt{/*}, it's just part of a \texttt{\#}-style comment.
+\item If \texttt{\#} occurs when we're already in comment mode, it is
+  just part of a comment.
+\end{itemize}} Comments of this type cannot be nested.
+
+Then we have the line
+\begin{code}
+  string foo = "Hello, world"
+\end{code}
+In this line, we assign the value ``\texttt{Hello, world}'' to the
+variable named \texttt{foo}. Note that
+\begin{enumerate}
+\item The assignment operator is the equals sign (\texttt{=}).
+\item The name of the variable (its \emph{identifier}) must follow
+  the following convention: identifiers can be at most 31 characters
+  long. They must start with a letter, and can contain only letters,
+  numbers and the underscore character. Identifiers in hansl are
+  case-sensitive, so \texttt{foo}, \texttt{Foo} and \texttt{FOO} are
+  three distinct names. Of course, some words are reserved and can't
+  be used as identifiers (however, nearly all reserved words only
+  contain lowercase characters).
+\item The string delimiter is the double quote (\verb|"|). 
+\end{enumerate}
+
+In hansl, a variable has to be of one of these types: \texttt{scalar},
+\texttt{series}, \texttt{matrix}, \texttt{list}, \texttt{string} or
+\texttt{bundle}. As we've just seen, string variables are used to
+hold sequences of alphanumeric characters. We'll introduce the other
+ones gradually; for example, the \texttt{matrix} type will be the
+object of the next chapter.  
+
+The reader may have noticed that the line 
+\begin{code}
+  string foo = "Hello, world"
+\end{code}
+implicitly performs two tasks: it \emph{declares} \texttt{foo} as a
+variable of type \texttt{string} and, at the same time, \emph{assigns}
+a value to \texttt{foo}. The declaration component is not strictly
+required. In most cases gretl is able to figure out by itself what
+type a newly introduced variable should have, and the line
+\verb|foo = "Hello, world"| (without a type specifier) would have
+worked just fine.  However, it is more elegant (and leads to more
+legible and maintainable code) to use a type specifier at least the
+first time you introduce a variable.
+  
+In the next example, we will use a variable of the \texttt{scalar}
+type:
+\begin{code}
+  scalar x = 42
+  print x
+\end{code}
+A \texttt{scalar} is a double-precision floating point number, so
+\texttt{42} is the same as \texttt{42.0} or \texttt{4.20000E+01}. Note
+that hansl doesn't have a separate variable type for integers or
+complex numbers.
+
+An important detail to note is that, contrary to most other
+matrix-oriented languages in use in the econometrics community, hansl
+is \emph{strongly typed}. That is, you cannot assign a value of one
+type to a variable that has already been declared as having a
+different type. For example, this will return an error:
+\begin{code}
+  string a = "zoo"
+  a = 3.14 # no, no, no!
+\end{code}
+If you try running the example above, an error will be
+flagged. However, it is acceptable to destroy the original variable,
+via the \cmd{delete} command, and then re-declare it, as in
+\begin{code}
+  scalar X = 3.1415
+  delete X
+  string X = "apple pie"
+\end{code}
+
+There is no ``type-casting'' as in C, but some automatic type
+conversions are possible (more on this later).
+
+Many commands can take more than one argument, as in
+\begin{code}
+  set echo off
+  set messages off
+
+  scalar x = 42
+  string foo = "not bad"
+  print x foo 
+\end{code}
+In this example, one \texttt{print} is used to print the values of two
+variables; more generally, \texttt{print} can be followed by as many
+arguments as desired. The other difference with respect to the
+previous code examples is in the use of the two \texttt{set}
+commands. Describing the \texttt{set} command in detail would lead us
+to an overly long diversion; suffice it to say that this command is
+used to set the values of various ``state variables'' that influence
+the behavior of the program; here it is used as a way to silence
+unwanted output. See chapter \ref{chap:settings} or the \GCR{} for
+more on \texttt{set}.
+
+The \cmd{eval} command is useful when you want to look at the result
+of an expression without assigning it to a variable; for example
+\begin{code}
+  eval 2+3*4
+\end{code}
+will print the number 14. This is most useful when running gretl
+interactively, like a calculator, but it is usable in a hansl script
+for checking purposes, as in the following (rather silly) example:
+\begin{code}
+  scalar a = 1
+  scalar b = -1
+  # this ought to be 0
+  eval a+b
+\end{code}
+
+\section{Manipulation of scalars}
+
+Algebraic operations work in the obvious way, with the classic
+algebraic operators having their traditional precedence rules: the
+caret (\verb|^|) is used for exponentiation. For example,
+\begin{code}
+  scalar phi = exp(-0.5 * (x-m)^2 / s2) / sqrt(2 * $pi * s2)
+\end{code}
+%$
+in which we assume that \texttt{x}, \texttt{m} and \texttt{s2} are
+pre-existing scalars. The example above contains two noteworthy
+points:
+\begin{itemize}
+\item The usage of the \cmd{exp} (exponential) and \cmd{sqrt} (square
+  root) functions; it goes without saying that hansl possesses a
+  reasonably wide repertoire of such functions. See the \GCR{} for the
+  complete list.
+\item The usage of \verb|$pi| for the constant $\pi$. While
+  user-specified identifiers must begin with a letter, built-in
+  identifiers for internal objects typically have a ``dollar'' prefix;
+  these are known as \emph{accessors} (basically, read-only
+  variables).  Most accessors are defined in the context of an open
+  dataset (see part~\ref{part:hp-data}), but some represent
+  pre-defined constants, such as $\pi$. Again, see the \GCR{} for a
+  comprehensive list.
+\end{itemize}
+
+Hansl does not possess a specific boolean type, but scalars can be
+used for holding true/false values. It follows that you can also use
+the logical operators \emph{and} (\verb|&&|), \emph{or} (\verb+||+),
+and \emph{not} (\verb|!|) with scalars, as in the following example:
+\begin{code}
+  a = 1
+  b = 0
+  c = !(a && b) 
+\end{code}
+In the example above, \texttt{c} will equal 1 (true), since
+\verb|(a && b)| is false, and the exclamation mark is the ``not''
+operator.  Note that 0 evaluates to false, and anything else (not
+necessarily 1) evaluates to true.
+
+A few constructs are taken from the C language family: one is the
+postfix increment operator:
+\begin{code}
+  a = 5
+  b = a++
+  print a b
+\end{code}
+the second line is equivalent to \texttt{b = a}, followed by
+\texttt{a++}, which in turn is shorthand for \texttt{a = a+1}, so
+running the code above will result in \texttt{b} containing 5 and
+\texttt{a} containing 6. Postfix subtraction is also supported; prefix
+operators, however, are not. Another C borrowing is the inflected
+assignment, as in \texttt{a += b}, which is equivalent to \texttt{a =
+  a + b}; several other similar operators are available, such as
+\texttt{-=}, \texttt{*=} and more. See the \GCR{} for details.
+
+The internal representation for a missing value is \texttt{DBL\_MAX},
+the largest double-precision number (generally in the neighborhood of
+1.7E+308). This is what you get if you try to compute quantities like
+the square root or the logarithm of a negative number. You can also
+set a value to ``missing'' directly using the keyword \texttt{NA}.
+The function \cmd{ok} can be used to determine whether a scalar is
+\texttt{NA}, as in the following example which assigns a value of zero
+\texttt{test}:
+\begin{code}
+  scalar not_really = NA
+  scalar test = ok(not_really)
+\end{code}
+Note that you cannot test for equality to \texttt{NA}, as in
+\begin{code}
+  if x == NA ... # wrong!
+\end{code}
+because a missing value is taken as indeterminate and hence not equal
+to anything. This last example, despite being wrong, illustrates a
+point worth noting: the test-for-equality operator in hansl is the
+double equals sign, ``\texttt{==}'' (as opposed to plain
+``\texttt{=}'' which indicates assignment).
+
+\section{Manipulation of strings}
+
+Most of the previous section applies, with obvious modifications, to
+strings: you may manipulate strings via operators and/or
+functions. Hansl's repertoire of functions for manipulating strings
+offers all the standard capabilities one would expect, such as
+\cmd{toupper}, \cmd{tolower}, \cmd{strlen}, etc., plus some more
+specialized ones. Again, see the \GCR\ for a complete list.
+
+In order to access part of a string, you may use the \cmd{substr}
+function, as in
+\begin{code}
+  string s = "endogenous"
+  string pet = substr(s, 3, 5)
+\end{code}
+which would result to assigning the value \texttt{dog} to the variable
+\texttt{pet}.
+
+The following are useful operators for strings:
+\begin{itemize}
+\item the \verb|~| operator, to join two or more strings, as
+in\footnote{Note on some national keyboards, you don't have the tilde
+  (\texttt{\~}) character. In gretl's script editor, this can be
+  obtained via its Unicode representation: type Ctrl-Shift-U, followed
+  by \texttt{7e}.}
+  \begin{code}
+    string s1 = "sweet"
+    string s2 = "Home, " ~ s1 ~ " home."
+  \end{code}
+\item the closely related \verb|~=| operator, which acts as an
+  inflected assignment operator (so \verb|a ~= "_ij"| is equivalent to
+  \verb|a = a ~ "_ij"|);
+\item the offset operator \texttt{+}, which yields a substring of the
+  preceding element, starting at the given character offset.  An empty
+  string is returned if the offset is greater than the length of the
+  string in question.
+\end{itemize}
+
+A noteworthy point: strings may be (almost) arbitrarily long;
+moreover, they can contain special characters such as line breaks and
+tabs. It is therefore possible to use hansl for performing rather
+complex operations on text files by loading them into memory as a very
+long string and then operating on that;\footnote{Of course, the reader
+  is invited to take this with a pinch of salt. If your job involves
+  manipulating a text files several gigabytes long, you should
+  consider using appropriate tools instead of hansl, such as for
+  example \app{perl} or \app{python}. However, on modern hardware
+  hansl may be a defensible choice for text files up to a few hundred
+  megabytes.} interested readers should take a look at the
+\cmd{readfile}, \cmd{getline} and \cmd{regsub} functions in the \GCR.
+
+For \emph{creating} complex strings, the most flexible tool is the
+\cmd{sprintf} function. Its usage, however, is best illustrated in an
+ad-hoc portion of this primer, namely Chapter
+\ref{chap:formatting}. Finally, it is quite common to use \emph{string
+  substitution} in hansl sripts; however, this is another topic that
+deserves special treatment so we defer its description to section
+\ref{sec:stringsub}.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "hansl-primer"
+%%% End: 

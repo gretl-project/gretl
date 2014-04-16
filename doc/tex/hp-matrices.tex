@@ -1,0 +1,263 @@
+\chapter{Matrices}
+\label{chap:matrices}
+
+Matrices are one- or two-dimensional arrays of double-precision
+floating-point numbers. Hansl users who are accustomed to other matrix
+languages should note that multi-index objects are not
+supported. Matrices have rows and columns, and that's it.
+
+\section{Matrix indexing}
+\label{sec:mat-index}
+
+Individual matrix elements are accessed through the \verb|[r,c]|
+syntax, where indexing starts at 1. For example, \texttt{X[3,4]}
+indicates the element of $X$ on the third row, fourth column. For
+example,
+\begin{code}
+  matrix X = zeros(2,3)
+  X[2,1] = 4
+  print X
+\end{code}
+produces
+\begin{code}
+X (2 x 3)
+
+  0   0   0 
+  4   0   0 
+\end{code}
+
+Here are some more advanced ways to access matrix elements:
+\begin{enumerate}
+\item In case the matrix has only one row (column), the column (row)
+  specification can be omitted, as in \texttt{x[3]}.
+\item including the comma but omitting the row or column specification
+  means ``take them all'', as in \texttt{x[4,]} (fourth row, all columns).
+\item For square matrices, the special syntax \texttt{x[diag]} can be
+  used to access the the diagonal.
+\item Consecutive rows or columns can be specified via the colon
+  (\texttt{:}) character, as in \texttt{x[,2:4]} (columns 2 to 4).
+  But note that, unlike some other matrix languages, the syntax
+  \texttt{[m:n]} is illegal if $m>n$.
+\item It is possible to use a vector to hold indices to a matrix. E.g.\
+  if $e = [2,3,6]$, then \texttt{X[,e]} contains the second, third and
+  sixth column of $X$.
+\end{enumerate}
+Moreover, matrices can be empty (zero rows and columns). 
+
+In the example above, the matrix \texttt{X} was constructed using
+the function \texttt{zeros()}, whose meaning should be obvious, but
+matrix elements can also be specified directly, as in
+\begin{code}
+scalar a = 2*3
+matrix A = { 1, 2, 3 ; 4, 5, a }
+\end{code}
+The matrix is defined by rows; the elements on each row are separated
+by commas and rows are separated by semicolons.  The whole expression
+must be wrapped in braces.  Spaces within the braces are not
+significant. The above expression defines a $2\times3$ matrix.
+
+Note that each element should be a numerical value, the name of a
+scalar variable, or an expression that evaluates to a scalar. In the
+example above the scalar \texttt{a} was first assigned a value and
+then used in matrix construction. (Also note, in passing, that
+\texttt{a} and \texttt{A} are two separate identifiers, due to
+case-sensitivity.)
+
+\section{Matrix operations}
+\label{sec:mat-op}
+
+Matrix sum, difference and product are obtained via \texttt{+},
+\texttt{-} and \texttt{*}, respectively. The prime operator
+(\texttt{'}) can act as a unary operator, in which case it transposes
+the preceeding matrix, or as a binary operator, in which case it acts
+as in ordinary matrix algebra, that is transposes the first matrix and
+multiplies it into the second one. Errors are flagged if
+conformability is a problem. For example:
+\begin{code}
+  matrix a = {11, 22 ; 33, 44}  # a is square 2 x 2
+  matrix b = {1,2,3; 3,2,1}     # b is 2 x 3
+
+  matrix c = a'         # c is the transpose of a
+  matrix d = a*b        # d is a 2x3 matrix equal to a times b
+
+  matrix gina = b'd     # valid: gina is 3x3
+  matrix lina = d + b   # valid: lina is 2x3
+
+  /* -- these would generate errors if uncommented ----- */
+
+  # pina = c + a  # sum non-conformability
+  # rina = d * b  # product non-conformability
+\end{code}
+
+Other noteworthy matrix operators include \texttt{\^} (matrix power),
+\texttt{**} (Kronecker product), and the ``concatenation'' operators,
+\verb|~| (horizontal) and \texttt{|} (vertical). Readers are invited
+to try them out by running the following code
+\begin{code}
+matrix A = {2,1;0,1}
+matrix B = {1,1;1,0}
+
+matrix KP = A ** B
+matrix PWR = A^3 
+matrix HC = A ~ B
+matrix VC = A | B
+
+print A B KP PWR HC VC
+\end{code}
+Note, in particular, that $A^3 = A \cdot A \cdot A$, which is different
+from what you get by computing the cubes of each element of $A$
+separately.
+
+Hansl also supports matrix left- and right-``division'', via the
+\verb'\' and \verb'/' operators, respectively. The expression
+\verb|A\b| solves $Ax = b$ for the unknown $x$. $A$ is assumed to be
+an $m \times n$ matrix with full column rank. If $A$ is square the
+method is LU decomposition. If $m > n$ the QR decomposition is used to
+find the least squares solution. In most cases, this is numerically
+more robust and more efficient than inverting $A$ explicitly.
+
+Element-by-element operations are supported by the so-called ``dot''
+operators, which are obtained by putting a dot (``\texttt{.}'') before
+the corresponding operator. For example, the code
+\begin{code}
+A = {1,2; 3,4}
+B = {-1,0; 1,-1}
+eval A * B
+eval A .* B
+\end{code}
+produces
+\begin{code}
+   1   -2 
+   1   -4 
+
+  -1    0 
+   3   -4 
+\end{code}
+
+It's easy to verify that the first operation performed is regular
+matrix multiplication $A \cdot B$, whereas the second one is the
+Hadamard (element-by-element) product $A \odot B$. In fact, dot
+operators are more general and powerful than shown in the example
+above; see the chapter on matrices in \GUG{} for details.
+
+Dot and concatenation operators are less rigid than ordinary matrix
+operations in terms of conformability requirements: in most cases
+hansl will try to do ``the obvious thing''. For example, a common
+idiom in hansl is \texttt{Y = X ./ w}, where $X$ is an $n \times k$
+matrix and $w$ is an $n \times 1$ vector. The result $Y$ is an $n
+\times k$ matrix in which each row of $X$ is divided by the
+corresponding element of $w$. In proper matrix notation, this
+operation should be written as
+\[
+  Y = \langle w \rangle^{-1} X,
+\]
+where the $\langle \cdot \rangle$ indicates a diagonal
+matrix. Translating literally the above expression would imply
+creating a diagonal matrix out of $w$ and then inverting it, which is
+computationally much more expensive than using the dot operation. A
+detailed discussion is provided in \GUG.
+
+Hansl provides a reasonably comprehensive set of matrix functions,
+that is, functions that produce and/or operate on matrices. For a
+full list, see the \GCR, but a basic ``survival kit'' is provided
+in Table~\ref{tab:essential-matfuncs}.  Moreover, most scalar
+functions, such as \texttt{abs(), log()} etc., will operate on a
+matrix element-by-element.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rp{0.6\textwidth}}
+    \textbf{Function(s)} & \textbf{Purpose} \\
+    \hline
+    \texttt{rows(X), cols(X)} & return the number of rows and columns
+    of $X$, respectively \\
+    \texttt{zeros(r,c), ones(r,c)} & produce matrices with $r$ rows
+    and $c$ columns, filled with zeros and ones, respectively \\
+    \texttt{mshape(X,r,c)} & rearrange the elements of $X$ into a
+    matrix with $r$ rows and $c$ columns \\
+    \texttt{I(n)} & identity matrix of size $n$ \\
+    \texttt{seq(a,b)} & generate a row vector containing integers form
+    $a$ to $b$ \\
+    \texttt{inv(A)} & invert, if possible, the matrix $A$ \\
+    \texttt{maxc(A), minc(A), meanc(A)} & return a row vector
+    with the max, min, means of each column of $A$, respectively\\
+    \texttt{maxr(A), minr(A), meanr(A)} & return a column vector
+    with the max, min, means of each row of $A$, respectively\\
+    \texttt{mnormal(r,c), muniform(r,c)} & generate $r \times c$
+    matrices filled with standard Gaussian and uniform pseudo-random
+    numbers, respectively \\
+    \hline
+  \end{tabular}
+  \caption{Essential set of hansl matrix functions}
+  \label{tab:essential-matfuncs}
+\end{table}
+
+The following piece of code is meant to provide a concise example of
+all the features mentioned above.
+
+\begin{code}
+# example: OLS using matrices
+
+# fix the sample size
+scalar T = 256
+
+# construct vector of coefficients by direct imputation
+matrix beta = {1.5, 2.5, -0.5} # note: row vector
+
+# construct the matrix of independent variables
+matrix Z = mnormal(T, cols(beta)) # built-in functions
+
+# now construct the dependent variable: note the
+# usage of the "dot" and transpose operators
+
+matrix y = {1.2} .+ Z*beta' + mnormal(T, 1)
+
+# now do estimation
+matrix X = 1 ~ Z  # concatenation operator
+matrix beta_hat1 = inv(X'X) * (X'y) # OLS by hand
+matrix beta_hat2 = mols(y, X)       # via the built-in function
+matrix beta_hat3 = X\y              # via matrix division
+
+print beta_hat1 beta_hat2 beta_hat3
+\end{code}
+
+\section{Matrix pointers}
+\label{sec:mat-pointers}
+
+Hansl uses the ``by value'' convention for passing parameters to
+functions. That is, when a variable is passed to a function as an
+argument, what the function actually gets is a \emph{copy} of the
+variable, which means that the value of the variable at the caller
+level is not modified by anything that goes on inside the function.
+But the use of pointers allows a function and its caller to cooperate
+such that an outer variable can be modified by the function.
+
+This mechanism is used by some built-in matrix functions to provide
+more than one ``return'' value. The primary result is always provided
+by the return value proper but certain auxiliary values may be
+retrieved via ``pointerized'' arguments; this usage is flagged by
+prepending the ampersand symbol, ``\texttt{\&}'', to the name of the
+argument variable.
+
+The \texttt{eigensym} function, which performs the eigen-analysis of
+symmetric matrices, is a case in point. In the example below the first
+argument \texttt{A} represents the input data, that is, the matrix
+whose analysis is required. This variable will not be modified in any
+way by the function call. The primary result is the vector of
+eigenvalues of $A$, which is here assigned to the variable
+\texttt{ev}. The (optional) second argument, \texttt{\&V} (which may
+be read as ``the address of \texttt{V}''), is used to retrieve the
+right eigenvectors of $A$. A variable named in this way must be
+already declared, but it need not be of the right dimensions to
+receive the result; it will be resized as needed.
+\begin{code}
+matrix A = {1,2 ; 2,5}
+matrix V
+matrix ev = eigensym(A, &V)
+print A ev V
+\end{code}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "hansl-primer"
+%%% End: 

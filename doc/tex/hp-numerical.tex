@@ -1,0 +1,284 @@
+\chapter{Numerical methods}
+\label{chap:numerical}
+
+\section{Numerical optimization}
+\label{sec:hp-numopt}
+
+Many, if not most, cases in which an econometrician wants to use a
+programming language such as hansl, rather than relying on pre-canned
+routines, involve some form of numerical optimization. This could take
+the form of maximization of a likelihood or similar methods of
+inferential statistics. Alternatively, optimization could be used in a
+more general and abstract way, for example to solve portfolio choice
+or analogous resource allocation problems.
+
+Since hansl is Turing-complete, in principle any numerical
+optimization technique could be programmed in hansl itself. Some such
+techniques, however, are included in hansl's set of native
+functions, in the interest of both simplicity of use and
+efficiency. These are geared towards the most common kind of problem
+encountered in economics and econometrics, that is unconstrained
+optimization of differentiable functions.
+
+In this chapter, we will briefly review what hansl offers to solve
+generic problems of the kind
+\[
+\hat{\mathbf{x}} \equiv \argmax_{\mathbf{x} \in \Re^k} f(\mathbf{x}; \mathbf{a}),
+\]
+where $f(\mathbf{x}; \mathbf{a})$ is a function of $\mathbf{x}$, whose
+shape depends on a vector of parameters $\mathbf{a}$. The objective
+function $f(\cdot)$ is assumed to return a scalar real value. In most
+cases, it will be assumed it is also continuous and differentiable,
+although this need not necessarily be the case. (Note that while
+hansl's built-in functions maximize the given objective function,
+minimization can be achieved simply by flipping the sign of
+$f(\cdot)$.)
+
+A special case of the above occurs when $\mathbf{x}$ is a vector of
+parameters and $\mathbf{a}$ represents ``data''. In these cases, the
+objective function is usually a (log-)likelihood and the problem is
+one of estimation. For such cases hansl offers several special
+constructs, reviewed in section~\ref{sec:est-blocks}. Here we deal
+with more generic problems; nevertheless, the differences are only in
+the hansl syntax involved: the mathematical algorithms that gretl
+employs to solve the optimization problem are the same.
+
+The reader is invited to read the ``Numerical methods'' chapter of
+\GUG\ for a comprehensive treatment. Here, we will only give a small
+example which should give an idea of how things are done.
+
+\begin{code}
+function scalar Himmelblau(matrix x)
+    /* extrema:
+    f(3.0, 2.0) = 0.0, 
+    f(-2.805118, 3.131312) = 0.0,
+    f(-3.779310, -3.283186) = 0.0
+    f(3.584428, -1.848126) = 0.0
+    */
+    scalar ret = (x[1]^2 + x[2] - 11)^2
+    return -(ret + (x[1] + x[2]^2 - 7)^2)
+end function
+
+# ----------------------------------------------------------------------
+
+set max_verbose 1
+
+matrix theta1 = { 0, 0 }
+y1 = BFGSmax(theta1, "Himmelblau(theta1)")
+matrix theta2 = { 0, -1 }
+y2 = NRmax(theta2, "Himmelblau(theta2)")
+
+print y1 y2 theta1 theta2
+\end{code}
+
+We use for illustration here a classic ``nasty'' function from the
+numerical optimization literature, namely the Himmelblau function,
+which has four different minima; $f(x, y) = (x^2+y-11)^2 +
+(x+y^2-7)^2$. The example proceeds as follows.
+\begin{enumerate}
+\item First we define the function to optimize: it must return a
+  scalar and have among its arguments the vector to optimize. In this
+  particular case that is its only argument, but there could have been
+  other ones if necessary.  Since in this case we are solving for a
+  minimum our definition returns the negative of the Himmelblau
+  function proper.
+\item We next set \verb|max verbose| to 1. This is another example of
+  the usage of the \cmd{set} command; its meaning is ``let me see how
+  the iterations go'' and it defaults to 0. By using the \cmd{set}
+  command with appropriate parameters, you control several features of
+  the optimization process, such as numerical tolerances,
+  visualization of the iterations, and so forth.
+\item Define $\theta_1 = [0, 0]$ as the starting point.
+\item Invoke the \cmd{BFGSmax} function; this will seek the maximum
+  via the BFGS technique. Its base syntax is \texttt{BFGSmax(arg1,
+    arg2)}, where \texttt{arg1} is the vector contining the
+  optimization variable and \texttt{arg2} is a string containing the
+  invocation of the function to maximize. BFGS will try several values
+  of $\theta_1$ until the maximum is reached. On successful
+  completion, the vector \texttt{theta1} will contain the final
+  point. (Note: there's \emph{much} more to this. For details, be sure
+  to read \GUG and the \GCR.)
+\item Then we tackle the same problem but with a different starting
+  point and a different optimization technique. We start from
+  $\theta_2 = [0, -1]$ and use Newton--Raphson instead of BFGS,
+  calling the \cmd{NRmax()} function instead if \cmd{BFGSmax()}. The
+  syntax, however, is the same.
+\item Finally, we print the results.
+\end{enumerate}
+
+Table~\ref{tab:optim-output} on page \pageref{tab:optim-output}
+contains a selected portion of the output. Note that the second run
+converges to a different local optimum than the first one. This is a
+consequence of having initialized the algorithm with a different
+starting point. In this example, numerical derivatives were used, but
+you can supply analytically computed derivatives to both methods if
+you have a hansl function for them; see \GUG\ for more detail.
+
+\begin{table}[ht]
+  \begin{footnotesize}
+\begin{scode}
+? matrix theta1 = { 0, 0 }
+Replaced matrix theta1
+? y1 = BFGSmax(theta1, "Himmelblau(11, theta1)")
+Iteration 1: Criterion = -170.000000000
+Parameters:       0.0000      0.0000
+Gradients:        14.000      22.000 (norm 0.00e+00)
+
+Iteration 2: Criterion = -128.264504038 (steplength = 0.04)
+Parameters:      0.56000     0.88000
+Gradients:        33.298      39.556 (norm 5.17e+00)
+
+...
+
+--- FINAL VALUES: 
+Criterion = -1.83015730011e-28 (steplength = 0.0016)
+Parameters:       3.0000      2.0000
+Gradients:    1.7231e-13 -3.7481e-13 (norm 7.96e-07)
+
+Function evaluations: 39
+Evaluations of gradient: 16
+Replaced scalar y1 = -1.83016e-28
+? matrix theta2 = { 0, -1 }
+Replaced matrix theta2
+? y2 = NRmax(theta2, "Himmelblau(11, theta2)")
+Iteration 1: Criterion = -179.999876556 (steplength = 1)
+Parameters:   1.0287e-05     -1.0000
+Gradients:        12.000  2.8422e-06 (norm 7.95e-03)
+
+Iteration 2: Criterion = -175.440691085 (steplength = 1)
+Parameters:      0.25534     -1.0000
+Gradients:        12.000  4.5475e-05 (norm 1.24e+00)
+
+...
+
+--- FINAL VALUES: 
+Criterion = -3.77420797114e-22 (steplength = 1)
+Parameters:       3.5844     -1.8481
+Gradients:   -2.6649e-10  2.9536e-11 (norm 2.25e-05)
+
+Gradient within tolerance (1e-07)
+Replaced scalar y2 = -1.05814e-07
+? print y1 y2 theta1 theta2
+
+             y1 = -1.8301573e-28
+
+             y2 = -1.0581385e-07
+
+theta1 (1 x 2)
+
+  3   2 
+
+theta2 (1 x 2)
+
+      3.5844      -1.8481 
+\end{scode}
+    
+  \end{footnotesize}
+  \caption{Output from maximization}
+  \label{tab:optim-output}
+\end{table}
+
+The optimization methods hansl puts at your disposal are:
+\begin{itemize}
+\item BFGS, via the \cmd{BFGSmax()} function. This is in most cases
+  the best compromise between performance and robustness. It assumes
+  that the function to maximize is differentiable and will try to
+  approximate its curvature by clever use of the change in the
+  gradient between iterations. You can supply it with an
+  analytically-computed gradient for speed and accuracy, but if you
+  don't, the first derivatives will be computed numerically.
+\item Newton--Raphson, via the \cmd{NRmax()} function. Actually, the
+  name is misleading. It should be called something like
+  ``curvature-based'', since it relies on the iterations
+  \[
+    x_{i+1} = -\lambda_i C(x_i)^{-1} g(x_i)
+  \]
+  where $g(x)$ is the gradient and $C(x_i)$ is some measure of
+  curvature of the function to optimize; if $C(x)$ is the Hessian
+  matrix, you get Newton--Raphson. Again, you can code your own
+  functions for $g(\cdot)$ and $C(\cdot)$, but if you don't then
+  numerical approximations to the gradient and the Hessian will be
+  used, respectively. Other popular optimization methods (such as BHHH
+  and the scoring algorithm) can be implemented by supplying to
+  \cmd{NRmax()}the appropriate curvature matrix $C(\cdot)$. This
+  method is very efficient when it works, but is rather fragile: for
+  example, if $C(x_i)$ happens to be non-negative definite at some
+  iteration convergence may become problematic.
+\item Derivative-free methods: the only method that hansl offers
+  presently is simulated annealing, via the \cmd{simann()} function,
+  but an implementiation of the Nelder--Mead algorithm (also known as
+  the ``amoeba'' method) should be just a matter of time. These
+  methods work even when the function to maximize has some form of
+  disconinuity or is not everywhere differentiable; however, they may
+  be very slow and CPU-intensive.
+\end{itemize}
+
+\section{Numerical differentiation}
+\label{sec:hp-numdiff}
+
+For numerical differentiation we have \texttt{fdjac}. For example:
+
+\begin{code}
+set echo off
+set messages off
+
+function scalar beta(scalar x, scalar a, scalar b)
+    return x^(a-1) * (1-x)^(b-1)
+end function
+
+function scalar ad_beta(scalar x, scalar a, scalar b)
+    scalar g = beta(x, a-1, b-1)
+    f1 = (a-1) * (1-x)
+    f2 = (b-1) * x
+    return (f1 - f2) * g
+end function
+
+function scalar nd_beta(scalar x, scalar a, scalar b)
+    matrix mx = {x}
+    return fdjac(mx, beta(mx, a, b))
+end function
+
+a = 3.5
+b = 2.5
+
+loop for (x=0; x<=1; x+=0.1) --quiet
+    printf "x = %3.1f; beta(x) = %7.5f, ", x, beta(x, a, b)
+    A = ad_beta(x, a, b)
+    N = nd_beta(x, a, b)
+    printf "analytical der. = %8.5f, numerical der. = %8.5f\n", A, N
+endloop
+\end{code}
+
+returns 
+
+\begin{code}
+x = 0.0; beta(x) = 0.00000, analytical der. =  0.00000, numerical der. =  0.00000
+x = 0.1; beta(x) = 0.00270, analytical der. =  0.06300, numerical der. =  0.06300
+x = 0.2; beta(x) = 0.01280, analytical der. =  0.13600, numerical der. =  0.13600
+x = 0.3; beta(x) = 0.02887, analytical der. =  0.17872, numerical der. =  0.17872
+x = 0.4; beta(x) = 0.04703, analytical der. =  0.17636, numerical der. =  0.17636
+x = 0.5; beta(x) = 0.06250, analytical der. =  0.12500, numerical der. =  0.12500
+x = 0.6; beta(x) = 0.07055, analytical der. =  0.02939, numerical der. =  0.02939
+x = 0.7; beta(x) = 0.06736, analytical der. = -0.09623, numerical der. = -0.09623
+x = 0.8; beta(x) = 0.05120, analytical der. = -0.22400, numerical der. = -0.22400
+x = 0.9; beta(x) = 0.02430, analytical der. = -0.29700, numerical der. = -0.29700
+x = 1.0; beta(x) = 0.00000, analytical der. = -0.00000, numerical der. =       NA
+\end{code}
+
+Details on the algorithm used can be found in the \GCR. Suffice it to
+say here that you have a \texttt{fdjac\_quality} setting that goes
+from 0 to 2.
+
+% \section{Random number generation}
+
+% \begin{itemize}
+% \item Mersenne Twister in its various incarnations
+% \item Ziggurat vs Box--Muller
+% \item Other distributions
+% \end{itemize}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "hansl-primer"
+%%% End: 
+

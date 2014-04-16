@@ -1,0 +1,181 @@
+\chapter{Bundles}
+\label{chap:bundles}
+
+Bundles are \emph{associative arrays}, that is, generic containers for
+any assortment of hansl types (including other bundles) in which each
+element is identified by a string. Python users call these
+\emph{dictionaries}; in C++ and Java, they are referred to as
+\emph{maps}; they are known as \emph{hashes} in Perl. We call them
+\emph{bundles}. Each item placed in the bundle is associated with a
+key which can used to retrieve it subsequently.
+
+To use a bundle you first either ``declare'' it, as in
+%
+\begin{code}
+bundle foo
+\end{code}
+%
+or define an empty bundle using the \texttt{null} keyword:
+%
+\begin{code}
+bundle foo = null
+\end{code}
+%
+These two formulations are basically equivalent, in that they both
+create an empty bundle. The difference is that the second variant may
+be reused---if a bundle named \texttt{foo} already exists the effect
+is to empty it---while the first may only be used once in a given
+\app{gretl} session; it is an error to declare a variable that already
+exists.
+
+To add an object to a bundle you assign to a compound left-hand value:
+the name of the bundle followed by the key. Two forms of syntax are
+acceptable in this context. The first form requires that the key be
+given as a quoted string literal enclosed in square brackets.  For
+example, the statement
+\begin{code}
+foo["matrix1"] = m
+\end{code}
+adds an object called \texttt{m} (presumably a matrix) to bundle
+\texttt{foo} under the key \texttt{matrix1}. 
+
+A simpler syntax is also available, \emph{provided} the key satisfies
+the rules for a \app{gretl} variable name (31 characters maximum,
+starting with a letter and composed of just letters, numbers or
+underscore).\footnote{When using the more elaborate syntax, keys do
+  not have to be valid as variable names---for example, they can
+  include spaces---but they are still limited to 31 characters.}  In
+that case you can simply join the key to the bundle name with a dot,
+as in
+
+\begin{code}
+foo.matrix1 = m
+\end{code}
+
+To get an item out of a bundle, again use the name of the bundle
+followed by the key, as in
+
+\begin{code}
+matrix bm = foo["matrix1"]
+# or using the dot notation
+matrix m = foo.matrix1
+\end{code}
+
+Note that the key identifying an object within a given bundle is
+necessarily unique. If you reuse an existing key in a new assignment,
+the effect is to replace the object which was previously stored under
+the given key. It is not required that the type of the replacement
+object is the same as that of the original.
+
+Also note that when you add an object to a bundle, what in fact
+happens is that the bundle acquires a copy of the object. The external
+object retains its own identity and is unaffected if the bundled
+object is replaced by another. Consider the following script fragment:
+
+\begin{code}
+bundle foo
+matrix m = I(3)
+foo.mykey = m
+scalar x = 20
+foo.mykey = x
+\end{code}
+
+After the above commands are completed bundle \texttt{foo} does not
+contain a matrix under \texttt{mykey}, but the original matrix
+\texttt{m} is still in good health.
+
+To delete an object from a bundle use the \texttt{delete} command,
+with the bundle/key combination, as in
+
+\begin{code}
+delete foo.mykey
+delete foo["quoted key"]
+\end{code}
+
+This destroys the object associated with the key and removes the key
+from the hash table.\footnote{Internally, gretl bundles in fact take
+  the form of \textsf{GLib} hash tablrd.}
+
+Besides adding, accessing, replacing and deleting individual items,
+the other operations that are supported for bundles are union and
+printing. As regards union, if bundles \texttt{b1} and \texttt{b2} are
+defined you can say
+
+\begin{code}
+bundle b3 = b1 + b2
+\end{code}
+
+to create a new bundle that is the union of the two others. The
+algorithm is: create a new bundle that is a copy of \texttt{b1}, then
+add any items from \texttt{b2} whose keys are not already present in
+the new bundle. (This means that bundle union is not necessarily
+commutative if the bundles have one or more key strings in common.)
+
+If \texttt{b} is a bundle and you say \texttt{print b}, you get a
+listing of the bundle's keys along with the types of the corresponding
+objects, as in
+
+\begin{code}
+? print b
+bundle b:
+ x (scalar)
+ mat (matrix)
+ inside (bundle)
+\end{code}
+
+\section{Bundle usage}
+\label{sec:bundle-usage}
+
+To illustrate the way a bundle can hold information, we will use the
+Ordinary Least Squares (OLS) model as an example: the following code
+estimates an OLS regression and stores all the results in a bundle.
+
+\begin{code}
+/* assume y and X are given T x 1 and T x k matrices */
+
+bundle my_model = null               # initialization
+my_model["T"] = rows(X)              # sample size
+my_model["k"] = cols(X)              # number of regressors
+matrix e                             # will hold the residuals
+b = mols(y, X, &e)                   # perform OLS via native function
+s2 = meanc(e.^2)                     # compute variance estimator
+matrix V = s2 .* invpd(X'X)          # compute covariance matrix
+
+/* now store estimated quantities into the bundle */
+
+my_model["betahat"] = b
+my_model["s2"] = s2
+my_model["vcv"] = V
+my_model["stderr"] = sqrt(diag(V))
+\end{code}
+
+The bundle so obtained is a container that can be used for all sort of
+purposes. For example, the next code snippet illustrates how to use
+a bundle with the same structure as the one created above to perform
+an out-of sample forecast. Imagine that $k=4$ and the value of
+$\mathbf{x}$ for which we vant to forecast $y$ is
+\[
+  \mathbf{x}' = [ 10 \quad 1  \quad -3 \quad 0.5 ]
+\]
+The formulae for the forecast would then be
+\begin{eqnarray*}
+  \hat{y}_f & = & \mathbf{x}'\hat{\beta} \\
+  s_f & = & \sqrt{\hat{\sigma}^2 + \mathbf{x}'V(\hat{\beta})\mathbf{x}} \\
+  CI & = & \hat{y}_f \pm 1.96 s_f 
+\end{eqnarray*}
+where $CI$ is the (approximate) 95 percent confidence interval. The
+above formulae translate into
+\begin{code}
+  x = { 10, 1, -3, 0.5 }
+  scalar ypred    = x * my_model["betahat"]
+  scalar varpred  = my_model["s2"] + qform(x, my_model["vcv"])
+  scalar sepred   = sqrt(varpred)
+  matrix CI_95    = ypred + {-1, 1} .* (1.96*sepred)
+  print ypred CI_95
+\end{code}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "hansl-primer"
+%%% End: 
+

@@ -1,0 +1,184 @@
+\chapter{Nice-looking output}
+\label{chap:formatting}
+
+\section{Formatted output}
+\label{sec:printf}
+
+To give you more control over output, hansl provides you with the
+\cmd{printf} command, which works in a very similar way as in a great
+number of programming languages.
+
+Its syntax goes like this:
+\begin{flushleft}
+  \texttt{printf \emph{format string}, \emph{arguments}}
+\end{flushleft}
+
+The \cmd{printf} command gives you extreme flexibility in what to
+print and how. The \emph{format string} is used to specify the precise
+way in which you want the \emph{arguments} to be printed.
+
+\subsection{The format string}
+\label{sec:fmtstring}
+
+Technically, the \cmd{printf} command prints out the format string;
+this must be an expression that evaluates to a string, but in most
+cases will just be a string literal, that is an alphanumeric sequence
+surrounded by double quotes. However, some character sequences in the
+format string have a special meaning: those beginning with the percent
+character (\texttt{\%}) are interpreted as ``placeholders'' for the
+items contained in the argument list; moreover, special characters
+such as the newline character are represented via a combination
+beginning with the backslash (\verb|\|).
+
+For example,
+\begin{code}
+printf "The square root of %d is (roughly) %6.4f.\n", 5, sqrt(5)
+\end{code}
+will print 
+\begin{code}
+The square root of 5 is (roughly) 2.2361.
+\end{code}
+
+Let's see how:
+\begin{itemize}
+\item The first special sequence is \verb|%d|: this indicates that we
+  want an integer number at that place in the output string; since it
+  is the leftmost ``percent'' expression, it is matched to the first
+  argument, that is 5.
+\item The second special sequence is \verb|%6.4f|, which stands for a
+  decimal value with 4 digits after the decimal separator\footnote{The
+    decimal separator is the dot in English, but may be different in
+    other locales.} and at least 6 digits wide; this will be matched
+  to the second argument. Note that arguments are separated by
+  commas. Also note that the second argument is not a scalar constant
+  nor a scalar variable, but an expression that evaluates to a scalar.
+\item The format string ends with the sequence \verb|\n|, which
+  inserts a newline.
+\end{itemize}
+
+The escape sequences \verb|\n| (newline), \verb|\t| (tab), \verb|\v|
+(vertical tab) and \verb|\\| (literal backslash) are recognized. To
+print a literal percent sign, use \verb|%%|.
+
+Apart from those shown in the above example, recognized numeric
+formats are \verb|%e|, \verb|%E|, \verb|%f|, \verb|%g|, and \verb|%G|,
+in each case with the various modifiers available in C. The format
+\verb|%s| should be used for strings. As in C, numerical values that
+form part of the format (width and or precision) may be given directly
+as numbers, as in \verb|%10.4f|, or they may be given as variables. In
+the latter case, one puts asterisks into the format string and
+supplies corresponding arguments in order. For example,
+
+\begin{code}
+  scalar width = 12 
+  scalar precision = 6 
+  printf "x = %*.*f\n", width, precision, x
+\end{code}
+
+If a matrix argument is given in association with a numeric format,
+the entire matrix is printed using the specified format for each
+element. A few more examples are given in table \ref{tab:printf-ex}.
+\begin{table}[htbp]
+  \centering
+  \begin{footnotesize}
+    \begin{tabular}{p{0.6\textwidth}p{0.3\textwidth}}
+      \hline
+      The command & produces \\
+      \hline
+      \verb|printf "%12.3f", $pi| & 3.142 \\
+      \verb|printf "%12.7f", $pi| & 3.1415927 \\
+      \verb|printf "%6s%12.5f%12.5f %d\n", "alpha", 3.5, 9.1, 3| &
+      \verb| alpha     3.50000     9.10000 3| \\
+      \verb|printf "%6s%12.5f%12.5f\t%d\n", "beta", 1.2345, 1123.432, 11| &
+      \verb|  beta     1.23450  1123.43200 11| \\
+      \verb|printf "%d, %10d, %04d\n", 1,2,3| & 
+      \verb|1,          2, 0003| \\
+      \verb|printf "%6.0f (%5.2f%%)\n", 32, 11.232| & \verb|32 (11.23%)| \\
+      \hline
+    \end{tabular}
+  \end{footnotesize}
+  \caption{Print format examples}
+  \label{tab:printf-ex}
+\end{table}
+
+\subsection{Output to a string}
+\label{sec:sprintf}
+
+A closely related effect can be achieved via the \cmd{sprintf}
+function: instead of printing out the result, it stores it to a
+string, as in
+\begin{code}
+  string G = sprintf("x = %*.*f\n", width, precision, x)
+\end{code}
+after which the variable \texttt{G} can be the object of further
+processing.
+
+\tip{Both \cmd{printf} and \cmd{sprintf} started their career as
+  commands. Both of them can now be used as functions too. This is
+  going to go at some point: in the future, \cmd{sprintf} will
+  retain the function form only; as for \cmd{printf}, we haven't made
+  a final decision yet.}
+
+\subsection{Output to a file}
+\label{sec:outfile}
+
+If you want to write your output to a file, the \cmd{outfile} command
+diverts output to filename, until further notice, so you'll want to
+put it before the commands which print out the material you want to
+save. Use the flag \option{append} to append output to an existing
+file or \option{write} to start a new file (or overwrite an existing
+one). Only one file can be opened in this way at any given time. The
+\option{close} flag is used to close an output file that was
+previously opened as above. Output will then revert to the default
+stream.
+
+For example:
+\begin{code}
+  printf "One!\n"
+  outfile "myfile.txt" --write
+  printf "Two!\n"
+  outfile "myfile.txt" --close
+  printf "Three!\n"
+  outfile "myfile.txt" --append
+  printf "Four!\n"
+  outfile "myfile.txt" --close
+  printf "Five!\n"
+\end{code}
+will result in the file \texttt{myfile.txt} containing the lines
+\begin{code}
+Two!
+Four!  
+\end{code}
+
+Three special variants on the above are available. If you give the
+keyword \texttt{null} in place of a real filename along with the write
+option, the effect is to suppress all printed output until redirection
+is ended.\footnote{For Unix geeks: if either of the keywords
+  \texttt{stdout} or \texttt{stderr} are given in place of a regular
+  filename the effect is to redirect output to standard output or
+  standard error output, respectively.}
+
+The \option{quiet} option is for use with \option{write} or
+\option{append}: its effect is to turn off the echoing of commands and
+the printing of auxiliary messages while output is redirected. It is
+equivalent to doing
+\begin{code}
+  set echo off 
+  set messages off
+\end{code}
+except that when redirection is ended the original values of the echo
+and messages variables are restored.
+
+\section{Graphics}
+
+The primary graphing command in hansl is \texttt{gnuplot} which, as
+the name suggests, provides an interface to the \textsf{gnuplot}
+program. It is used for plotting series in a dataset (see
+part~\ref{part:hp-data}) or columns in a matrix. For discussion of
+this command (and some other more specialized ones, such as
+\texttt{boxplot} and \texttt{qqplot}), see the \GUG.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "hansl-primer"
+%%% End: 
