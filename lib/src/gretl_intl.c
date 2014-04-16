@@ -1109,6 +1109,7 @@ static char *get_gp_encoding_set (char *s, int targ)
     } else if (chinese_locale()) {
 	strcpy(s, "CP950");
     } else {
+	/* ENC_CODEPAGE */
 	strcpy(s, "CP125");
 	if (latin == 2) {
 	    strcat(s, "0");

@@ -135,7 +135,7 @@ static void gretl_clipboard_set (int fmt)
 
 #ifdef OS_OSX
     if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
-	FILE *fp = popen("/usr/bin/pbcopy", "w");
+	FILE *fp = popen("/usr/bin/pbcopy", "wb");
 
 	if (fp != NULL) {
 	    fputs(clipboard_buf, fp);
@@ -170,10 +170,10 @@ static void gretl_clipboard_set (int fmt)
 }
 
 /* We call this when a buffer to be copied as RTF contains
-   non-ascii characters but validates as UTF-8. Note that the 
+   non-ASCII characters but validates as UTF-8. Note that the 
    UTF-8 minus sign does not recode correctly into Windows 
    codepages, so if it's present we have to remove it first, 
-   then see if there's anything non-ascii left to handle.
+   then see if there's anything non-ASCII left to handle.
 */
 
 static char *strip_utf8 (char *buf)
@@ -181,6 +181,9 @@ static char *strip_utf8 (char *buf)
     strip_unicode_minus(buf);
 
     if (string_is_utf8((const unsigned char *) buf)) {
+#if CLIPDEBUG
+	fprintf(stderr, "strip_utf8: stage 2, recoding\n");
+#endif
 	return utf8_to_cp(buf);
     } else {
 	return buf;
@@ -206,10 +209,15 @@ int prn_to_clipboard (PRN *prn, int fmt)
     gretl_clipboard_free();
 
     if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
+	/* UTF-8 will never work in RTF */
 	utf8_ok = 0;
     } else if (fmt == GRETL_FORMAT_TXT && !g_get_charset(&cset)) {
 	utf8_ok = 0;
     }
+
+#if CLIPDEBUG
+    fprintf(stderr, "prn_to_clipboard, fmt = %d, utf8_ok = %d\n", fmt, utf8_ok);
+#endif
 
     if (!utf8_ok && string_is_utf8((const unsigned char *) buf)) {
 	trbuf = strip_utf8(buf);

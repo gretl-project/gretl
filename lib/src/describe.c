@@ -5868,16 +5868,14 @@ real_mahalanobis_distance (const int *list, DATASET *dset,
 
     n = sample_size(dset);
     if (n < 2) {
-	dset->t1 = orig_t1;
-	dset->t2 = orig_t2;
-	return E_DATA;
+	err = E_DATA;
+	goto bailout;
     }
 
     xdiff = gretl_column_vector_alloc(list[0]);
     if (xdiff == NULL) {
-	dset->t1 = orig_t1;
-	dset->t2 = orig_t2;
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto bailout;
     }
 
     S = gretl_covariance_matrix_from_varlist(list, 
@@ -5899,7 +5897,7 @@ real_mahalanobis_distance (const int *list, DATASET *dset,
 
     if (!err) {
 	int k = gretl_vector_get_length(means);
-	int miss, obslen, savevar = 0;
+	int miss, obslen = 0, savevar = 0;
 	double m, x, xbar;
 	int i, t, vi;
 
@@ -5908,16 +5906,18 @@ real_mahalanobis_distance (const int *list, DATASET *dset,
 	    savevar = mdist_saver(dset);
 	}
 
-	pprintf(prn, "%s\n", _("Mahalanobis distances from the centroid"));
-	pprintf(prn, "%s\n", _("using the variables:"));
-	for (i=1; i<=list[0]; i++) {
-	    pprintf(prn, " %s\n", dset->varname[list[i]]);
-	}
-	pputc(prn, '\n');
+	if (prn != NULL) {
+	    pprintf(prn, "%s\n", _("Mahalanobis distances from the centroid"));
+	    pprintf(prn, "%s\n", _("using the variables:"));
+	    for (i=1; i<=list[0]; i++) {
+		pprintf(prn, " %s\n", dset->varname[list[i]]);
+	    }
+	    pputc(prn, '\n');
 
-	obslen = max_obs_marker_length(dset);
-	if (obslen < 8) {
-	    obslen = 8;
+	    obslen = max_obs_marker_length(dset);
+	    if (obslen < 8) {
+		obslen = 8;
+	    }
 	}
 
 	for (t=dset->t1; t<=dset->t2; t++) {
@@ -5935,36 +5935,48 @@ real_mahalanobis_distance (const int *list, DATASET *dset,
 		} 
 	    }
 
-	    m = miss ? NADBL : gretl_scalar_qform(xdiff, S, &err);
-
-	    print_obs_marker(t, dset, obslen, prn);
-
-	    if (err || miss) {
-		pprintf(prn, "NA\n");
+	    if (miss) {
+		m = NADBL;
 	    } else {
-		m = sqrt(m);
-		pprintf(prn, "%9.6f\n", m);
-		if (savevar > 0) {
-		    dset->Z[savevar][t] = m;
-		} else if (md != NULL) {
-		    md->d[t] = m;
+		m = gretl_scalar_qform(xdiff, S, &err);
+		if (!err) {
+		    m = sqrt(m);
 		}
 	    }
+
+	    if (prn != NULL) {
+		print_obs_marker(t, dset, obslen, prn);
+		if (err || miss) {
+		    pprintf(prn, "NA\n");
+		} else {
+		    pprintf(prn, "%9.6f\n", m);
+		}
+	    }
+
+	    if (savevar > 0) {
+		dset->Z[savevar][t] = m;
+	    } else if (md != NULL) {
+		md->d[t] = m;
+	    }	    
 	}
 
-	if (savevar > 0) {
+	if (savevar > 0 && prn != NULL) {
 	    pputc(prn, '\n');
 	    pprintf(prn, _("Distances saved as '%s'"), 
 		    dset->varname[savevar]);
 	    pputc(prn, '\n');
 	}
 
-	pputc(prn, '\n');
+	if (prn != NULL) {
+	    pputc(prn, '\n');
+	}
     }
 
     gretl_matrix_free(xdiff);
     gretl_matrix_free(means);
     gretl_matrix_free(S);
+
+ bailout:
 
     dset->t1 = orig_t1;
     dset->t2 = orig_t2;

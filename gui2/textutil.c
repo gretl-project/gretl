@@ -419,7 +419,7 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	gui_errmsg(err);
     } else {
 	if (what == W_PREVIEW) {
-	    /* there's no RTF preview option */
+	    /* TeX only: there's no RTF preview option */
 	    view_latex(prn);
 	} else if (what == W_COPY) {
 	    prn_to_clipboard(prn, fmt);
