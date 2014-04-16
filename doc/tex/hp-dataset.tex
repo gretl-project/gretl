@@ -130,7 +130,40 @@ made; see \GUG.
 \section{Dataset accessors}
 \label{sec:accessors}
 
-TO BE WRITTEN.
+Several characteristics of the current dataset can be determined by
+reference to built-in accessor (``dollar'') variables. The main ones,
+which all return scalar values, are shown in
+Table~\ref{tab:dataset-accessors}.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lp{0.7\textwidth}}
+    \textbf{Accessor} & \textbf{Value returned} \\ \hline
+    \verb|$datatype| & Coding for the type of dataset: 
+    0 = no data; 1 = cross-sectional (undated); 2 = time-series;
+    3 = panel \\
+    \verb|$nobs| & The number of observations in the current 
+    sample range \\
+    \verb|$nvars| & The number of series (including the constant)\\
+    \verb|$pd| & The data frequency (1 for cross-sectional, 4 for
+    quarterly, and so on) \\
+    \verb|$t1| & 1-based index of the first observation in the
+    current sample \\
+    \verb|$t2| & 1-based index of the last observation in the
+    current sample \\
+    \hline
+  \end{tabular}
+  \caption{The principal dataset accessors}
+  \label{tab:dataset-accessors}
+\end{table}
+
+In addition there are a few more specialized accessors:
+\dollar{obsdate}, \dollar{obsmajor}, \dollar{obsminor},
+\dollar{obsmicro} and \dollar{unit}. These are specific to time-series
+and/or panel data, and they all return series. See the \GCR{} for
+details. 
+
+
 
 %%% Local Variables: 
 %%% mode: latex

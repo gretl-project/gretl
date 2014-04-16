@@ -1,16 +1,45 @@
 \chapter{Estimation methods}
 \label{chap:estimation}
 
-\section{Primitive estimation techniques}
+You can, of course, estimate econometric models via hansl without
+having a dataset (in the sense in which we're using that term here) in
+place---just as you might in \textsf{Matlab}, for instance. You'll
+need \textit{data}, but these can be loaded in matrix form (see the
+\texttt{mread} function in the \GCR), or generated artificially via
+functions such as \texttt{mnormal} or \texttt{muniform}. You can roll
+your own estimator using hansl's linear algebra primitives, and you
+also have access to more specialized functions such as \texttt{mols}
+(see section \ref{sec:mat-op}) and \texttt{mrls} (restricted least
+squares) if you need them.
+
+However, unless you need to use an estimation method which is not
+currently supported by gretl, or have a strong desire to reinvent the
+wheel, you will probably want to make use of the built-in estimation
+commands available in hansl. These commands are series-oriented and
+therefore require a dataset. They fall into two main categories:
+``canned'' procedures, and generic tools that can be used to estimate
+a wide variety of models based on common principles.
+
+\section{Canned estimation procedures}
 \label{sec:canned}
 
-By ``primitive'' we mean coded in C, really.
+``Canned'' doesn't sound very appetizing these days but it's the term
+that's commonly used. Basically it means two things, neither of them
+in fact unappetizing.
+\begin{itemize}
+\item The user is presented with a fairly simple interface. A few
+  inputs must be specified, and perhaps a few options selected, then
+  the heavy lifting is done within the gretl library.
+\item The algorithm is written in C, by experienced coders. It is
+  therefore faster (possibly \textit{much} faster) than an
+  implementation in an interpreted language such as hansl.
+\end{itemize}
 
-These share, more or less, the syntax
+Such procedures share, more or less, the syntax
 \begin{flushleft}
 \texttt{\emph{commandname parameters options}}
 \end{flushleft}
-with a few exceptions (eg systems)
+with a few exceptions (e.g.\ systems).
 
 A crude categorization: 
 \begin{description}
@@ -26,9 +55,9 @@ A crude categorization:
 \end{description}
 
 Don't let names deceive you: for example, the \cmd{probit} command can
-estimate ordered models, random-effect panel probit models, \ldots
+estimate ordered models, random-effect panel probit models, \dots{}
 
-See the \GCR{} for details
+See the \GCR{} for details.
 
 \subsection{Simultaneous systems}
 
@@ -71,6 +100,9 @@ a generic overview. See the relevant chapters in \GUG{} for a full explanation.
 \subsection{Formatting your output}
 
 The \cmd{modprint} command.
+
+\label{LastPage}
+
 
 %%% Local Variables: 
 %%% mode: latex

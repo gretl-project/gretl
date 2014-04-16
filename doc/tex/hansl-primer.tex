@@ -87,7 +87,7 @@ under the terms of the \emph{GNU Free Documentation License}, Version
 \chapter*{Introduction}
 \addcontentsline{toc}{chapter}{Introduction}
 
-\section*{What Hansl is and what it is not}
+\section*{What hansl is and what it is not}
 
 Hansl is a recursive acronym: it stands for ``Hansl's A Neat Scripting
 Language''. You might therefore expect something very general in
@@ -141,10 +141,40 @@ In order to use hansl, you will need a working installation of
 gretl. We assume you have one. If you don't, please refer to chapter 1
 of the \GUG.
 
-\section*{Where to look for help}
+\section*{Other resources}
 
-Huge overlap with \app{gretl} $\to$ \GUG, etcetera. The gretl-users
-mailing list is also useful.
+If you are serious about learning hansl then after working through
+this primer---or in the process of doing so---you should take a look
+at the following additional resources.
+\begin{itemize}
+\item The \GCR. This contains a complete listing of the commands and
+  built-in functions available in hansl, with a full account of their
+  syntax and options. Examples of usage are provided in some
+  instances. This is available in an ``online'' version for handy
+  reference as well as in PDF, both accessible via the \textsf{Help} menu
+  in the gretl GUI.
+\item The \textit{Gretl User's Guide}. Chapters 10 to 16, in
+  particular, go into more detail on some of the programming topics
+  discussed here (gretl data types, loops, the definition and use
+  of functions). In addition Part II of the \textit{Guide}, on
+  Econometric Methods, gives many examples of hansl usage. The
+  \textit{Guide} is available via gretl's Help menu; the latest
+  version can also be found online at
+  \url{http://sourceforge.net/projects/gretl/files/manual/}.
+\item Sample scripts. The gretl package comes with a large number of
+  sample or practice scripts, which can be found under the menu item
+  \textsf{/File/Script files/Practice file}. Many of these are simple
+  replication exercises for textbook problems but you will find some
+  more interesting examples under the \textsf{Gretl} tab.
+\item Function packages. Relatively ambitious examples of hansl coding
+  can be found in the various contributed ``function packages''. You
+  can access these packages via the gretl menu item
+  \textsf{/File/Function files/On server}. Right-click on a package
+  and select \textsf{View code} to examine the hansl functions.
+\item The gretl-users mailing list. Most well-considered
+  questions get answered quite quickly and fully. See
+  \url{http://lists.wfu.edu/mailman/listinfo/gretl-users}.
+\end{itemize}
 
 \setcounter{chapter}{0}
 
@@ -164,9 +194,9 @@ mailing list is also useful.
 \include{hp-series}
 \include{hp-estimate}
 
-\part{Further topics}
-\label{part:hp-further}
-\include{hp-further}
+%% \part{Further topics}
+%% \label{part:hp-further}
+%% \include{hp-further}
 
 % \clearpage
 % \include{biblio}
