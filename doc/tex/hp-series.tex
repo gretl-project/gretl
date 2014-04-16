@@ -1,4 +1,4 @@
-\chapter{Series, lists and accessors}
+\chapter{Series and lists}
 \label{chap:series-etc}
 
 Scalars, matrices and strings can be used in a hansl script at any
@@ -11,17 +11,18 @@ open.
  
 Series are just what any applied economist would call ``variables'',
 that is, repeated observations of a given quantity; a dataset is an
-ordered array of series, complemented by additional information,
-such as the nature of the data (time-series, cross-section or panel),
+ordered array of series, complemented by additional information, such
+as the nature of the data (time-series, cross-section or panel),
 descriptive labels for the series and/or the observations, source
-information and so on.
+information and so on. Series are the basic data type on which gretl's
+built-in estimation commands depend.
 
 The series belonging to a dataset are named via standard hansl
 identifiers (strings of maximum length 31 characters as described
 above). In the context of commands that take series as arguments,
 series may be referenced either by name or by \emph{ID number}, that
 is, the index of the series within the dataset. Position 0 in a
-dataset is always taken by the automatic constant known as
+dataset is always taken by the automatic ``variable'' known as
 \texttt{const}, which is just a column of 1s. The IDs of the actual
 data series can be displayed via the \cmd{varlist} command. (But note
 that in \textit{function calls}, as opposed to commands, series must
@@ -34,24 +35,27 @@ Some basic rules regarding series follow:
   then the syntax \texttt{lngdp(-1)} yields its first lag, and
   \texttt{lngdp(+1)} its first lead.
 \item To access individual elements of a series, you use square
-  brackets enclosing either
+  brackets enclosing
   \begin{itemize}
   \item the progressive (1-based) number of the observation you want,
     as in \verb|lngdp[15]|, or
+  \item the corresponding date code in the case of time-series data,
+    as in \verb|lngdp[2008:4]| (for the 4th quarter of 2008), or
   \item the corresponding observation marker string, if the dataset
-    contains any (as in \verb|lngdp["2002:3"]|).
+    contains any, as in \verb|GDP["USA"]|.
   \end{itemize}
 \end{itemize}
 
 The rules for assigning values to series are just the same as for
-other objects, so the following example should be self-explanatory:
+other objects, so the following examples should be self-explanatory:
 \begin{code}
   series k = 3         # implicit conversion from scalar; a constant series
   series x = normal()  # pseudo-rv via a built-in function
-  series s = a/b       # element-by-element operations
+  series s = a/b       # element-by-element operation on existing series
 
   series movavg = 0.5*(x + x(-1)) # using lags
-  series y[2012:4] = x[2011:2]    # using individual data points 
+  series y[2012:4] = x[2011:2]    # using individual data points
+  series x2000 = 100*x/x[2000:1]  # constructing an index
 \end{code}
 
 \tip{In hansl, you don't have separate commands for \emph{creating}
@@ -59,20 +63,20 @@ other objects, so the following example should be self-explanatory:
   distinction, but we still struggle to understand why this is
   supposed to be useful.}
 
-\subsection{Converting series from/to matrices}
+\subsection{Converting series to or from matrices}
 
 The reason why hansl provides a specific series type, distinct from
 the matrix type, is historical. However, is also a very convenient
 feature.  Operations that are typically performed on series in applied
-work can be awkward to implement using ``raw'' matrices. We have in
-mind tasks such as the computation of leads and lags, or regular and
-seasonal differences; the treatment of missing values; the addition of
-descriptive labels, and so on. Series are the basic data type on which
-gretl's built-in estimation commands depend.
+work can be awkward to implement using ``raw'' matrices---for example,
+the computation of leads and lags, or regular and seasonal
+differences; the treatment of missing values; the addition of
+descriptive labels, and so on.
 
-Basically:
+Anyway, it is straightforward to convert data in either direction
+between the series and matrix types.
 \begin{itemize}
-\item to turn series into matrices, you use the curly braces syntax,
+\item To turn series into matrices, you use the curly braces syntax,
   as in
   \begin{code}
     matrix MACRO = {outputgap, unemp, infl}
@@ -84,17 +88,15 @@ Basically:
   \begin{code}
     series y = my_matrix[,4]
   \end{code}
-  It is your responsibility to make sure that the number of rows in
-  \texttt{my\_matrix} matches the currently selected sample.
+  But note that this will work only if the number of rows in
+  \texttt{my\_matrix} matches the length of the dataset (or the
+  currently selected sample range).
 \end{itemize}
 
-Note that you can also assign a matrix to a list, but that has a
-completely different meaning. (FIXME: give a reference or omit)
-
-Be aware of the \cmd{lincomb} and \cmd{filter} functions too: they are
-quite useful for creating and manipulating series without having to
-convert them to matrices (which could be computationally costly with
-large datasets).
+Also note that the \cmd{lincomb} and \cmd{filter} functions are quite
+useful for creating and manipulating series in complex ways without
+having to convert the data to matrix form (which could be
+computationally costly with large datasets).
 
 \subsection{The ternary operator with series}
 
@@ -105,7 +107,7 @@ Consider this assignment:
 \end{code}
 
 Here we assume that \texttt{employed} is a dummy series coding for
-employee status; its value will be tested for each observation in the
+employee status. Its value will be tested for each observation in the
 current sample range and the value assigned to \texttt{worker\_income}
 at that observation will be determined accordingly. It is therefore
 equivalent to the following much more verbose formulation (where
@@ -225,16 +227,16 @@ The idea of converting from a list, as defined above, to a matrix may
 be taken in either of two ways. You may want to turn a list into a
 matrix (vector) by filling the latter with the ID numbers contained in
 the former, or rather to create a matrix whose columns contain the
-series to which the ID numbers refer. In fact, both interpretations
-are legitimate (and potentially useful in different contexts) so hansl
+series to which the ID numbers refer. Both interpretations are
+legitimate (and potentially useful in different contexts) so hansl
 lets you go either way.
 
 If you assign a list to a matrix, as in
 \begin{code}
   list L = moo foo boo zoo
-  matrix a = L
+  matrix A = L
 \end{code}
-the matrix \texttt{a} will contain the ID numbers of the four series
+the matrix \texttt{A} will contain the ID numbers of the four series
 as a row vector. This operation goes both ways, so the statement
 \begin{code}
   list C = seq(7,10)
@@ -262,13 +264,6 @@ loop foreach i X
     printf "mean($i) = %g\n", mean($i)
 endloop
 \end{code}
-
-\section{Accessors}
-\label{sec:accessors}
- 
-These begin with a dollar sign: eg, \dollar{nobs}. They may be series,
-lists, scalars or matrices, depending on context. Note that accessors
-cannot be assigned to; there are ``read-only'', so to speak.
 
 %%% Local Variables: 
 %%% mode: latex

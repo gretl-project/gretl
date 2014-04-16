@@ -45,15 +45,15 @@ characteristics, such as its periodicity, at nearly any point inside
 your script if necessary.
 
 Once your dataset is in place, you can start populating it with
-series, either by reading it from disk files (see the next section) or
-by generating them via appropriate commands and functions.
+series, either by reading them from files or by generating them via
+appropriate commands and functions.
 
 \section{Reading a dataset from a file}
 
 The primary commands here are \cmd{open}, \cmd{append} and \cmd{join}.
 
-The \cmd{open} command is what you'll want to use in most cases, since
-it handles transparently a wide variety of formats (native, CSV,
+The \cmd{open} command is what you'll want to use in most cases. It
+handles transparently a wide variety of formats (native, CSV,
 spreadsheet, data files produced by other packages such as
 \textsf{Stata}, \textsf{Eviews}, \textsf{SPSS} and \textsf{SAS}) and
 it also takes care of setting up the dataset for you automatically.
@@ -126,6 +126,11 @@ There are basically three variants to the \cmd{smpl} command:
 
 In the context of panel datasets, some extra qualifications have to be
 made; see \GUG.
+
+\section{Dataset accessors}
+\label{sec:accessors}
+
+TO BE WRITTEN.
 
 %%% Local Variables: 
 %%% mode: latex
