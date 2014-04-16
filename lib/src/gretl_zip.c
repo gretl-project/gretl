@@ -190,7 +190,7 @@ int gretl_make_zipfile (const char *fname, const char *path,
 }
 
 #if 0 /* libgsf not ready yet: doesn't support setting of
-	 zlib compression level as of version 1.14.29
+	 zlib compression level as of version 1.14.30
       */
 
 int gretl_zip_datafile (const char *fname, const char *path,
@@ -232,9 +232,9 @@ int gretl_zip_datafile (const char *fname, const char *path,
 	    if (zinp == NULL) {
 		err = 1;
 	    } else {
-		/* broken in libgsf-1.14.29 */
+		/* property not present in libgsf <= 1.14.30 */
 		zout = gsf_outfile_new_child_full(outfile, names[i], 0,
-						  "compression-level", level,
+						  "deflate-level", level,
 						  NULL);
 		err = transcribe_gsf_data(zinp, zout);
 		gsf_output_close(zout);
