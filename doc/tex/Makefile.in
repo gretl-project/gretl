@@ -64,11 +64,17 @@ TEXSRC = cli.tex \
 	system.tex \
 	operators.tex \
 	realtime.tex \
+	hp-hello.tex \
+	hp-matrices.tex \
+	hp-output.tex \
+	hp-bundles.tex \
+	hp-numerical.tex \
 	hp-ctrlflow.tex \
-	hp-data.tex \
 	hp-functions.tex \
-	hp-further.tex \
-	hp-nodata.tex
+	hp-dataset.tex \
+	hp-series.tex \
+	hp-estimate.tex \
+	hp-further.tex
 
 BIBSRC = gretl.bib gretl.bst
 
