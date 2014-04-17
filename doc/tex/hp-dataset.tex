@@ -38,7 +38,7 @@ nulldata 240              # stipulate how long your series will be
 setobs 12 1995:1          # define as monthly dataset, starting Jan 1995   
 \end{code}
 
-For more details, see \GUG\ and the \GCR\ for the \cmd{nulldata} and
+For more details see \GUG, and the \GCR\ for the \cmd{nulldata} and
 \cmd{setobs} commands. The only important thing to say at this point,
 however, is that you can resize your dataset and/or change some of its
 characteristics, such as its periodicity, at nearly any point inside
@@ -56,45 +56,52 @@ The \cmd{open} command is what you'll want to use in most cases. It
 handles transparently a wide variety of formats (native, CSV,
 spreadsheet, data files produced by other packages such as
 \textsf{Stata}, \textsf{Eviews}, \textsf{SPSS} and \textsf{SAS}) and
-it also takes care of setting up the dataset for you automatically.
+also takes care of setting up the dataset for you automatically.
 \begin{code}
   open mydata.gdt    # native format
   open yourdata.dta  # Stata format
   open theirdata.xls # Excel format
 \end{code}
 
-\begin{itemize}
-\item native format
-\item import capabilities (from URLs as well)
-\item nifty tricks with csv data (eg \cmd{join}).
-\end{itemize}
-
-You can also use \cmd{open} to read stuff off the Internet, by using a URL
-instead of a filename, as in
+The \cmd{open} command can also be used to read stuff off the
+Internet, by using a URL instead of a filename, as in
 \begin{code}
   open http://someserver.com/somedata.csv
 \end{code}
 
+\GUG\ describes the requirements on plain text data files of the
+``CSV'' type for direct importation by gretl. It also describes
+gretl's native data formats (XML-based and binary).
+
+The \cmd{append} and \cmd{join} commands can be used to add further
+series from file to a previously opened dataset. The \cmd{join}
+command is extremely flexible and has a chapter to itself in
+\GUG.
+
 \section{Saving datasets}
 
-\begin{itemize}
-\item Storing with \cmd{store} (binary format vs XML)
-\item Using \cmd{store} to export to CSV
-\item (maybe) using \cmd{printf} and \cmd{outfile} if you need to do
-  something unusual; real-life cases?
-\end{itemize}
+The \cmd{store} command is used to write the current dataset (or a
+subset) out to file. Besides writing in gretl's native formats,
+\cmd{store} can also be used to export data as CSV or in the format of
+\textsf{R}. Series can be written out as matrices using the
+\texttt{mwrite} function. If you have special requirements that are
+not met by \cmd{store} or \cmd{mwrite} it is possible to use
+\cmd{outfile} plus \cmd{printf} (see chapter~\ref{chap:formatting})
+to gain full control over the way data are saved.
+
 
 \section{The \cmd{smpl} command}
 
-Having opened a dataset somehow, the \cmd{smpl} command allows you to
-discard observations selectively, so that your series will contain
-only the observations you want (automatically changing the dimension
-of the dataset in the process). See chapter 4 in \GUG\ for further
-information.\footnote{Users with a Stata background may find the hansl
-  way of doing things a little disconcerting at first. In hansl, you
-  first restrict your sample through the \cmd{smpl} command, which
-  applies until further notice, then you do what you have to. There is
-  no equivalent to Stata's \texttt{if} clause to commands.}
+Once you have opened a dataset somehow, the \cmd{smpl} command allows
+you to discard observations selectively, so that your series will
+contain only the observations you want (automatically changing the
+dimension of the dataset in the process). See chapter 4 in \GUG\ for
+further information.\footnote{Users with a Stata background may find
+  the hansl way of doing things a little disconcerting at first. In
+  hansl, you first restrict your sample through the \cmd{smpl}
+  command, which applies until further notice, then you do what you
+  have to. There is no equivalent to Stata's \texttt{if} clause to
+  commands.}
 
 There are basically three variants to the \cmd{smpl} command:
 \begin{enumerate}
@@ -112,7 +119,7 @@ There are basically three variants to the \cmd{smpl} command:
     smpl male == 1 && age < 30 --restrict    # just the young guys
     smpl employed --dummy                    # via a dummy variable
   \end{code}
-  Note that, in this context, restrictions go ``on top'' of previous
+  Note that, in this context, restrictions go ``on top of'' previous
   ones. In order to start from scratch, you either reset the full
   sample via \texttt{smpl full} or use the \option{replace} option
   along with \option{restrict}.

@@ -180,26 +180,31 @@ address at which the variable is stored.
 
 This can seem a bit mysterious to people unfamiliar with the C
 programming language, so allow us to explain how pointers work by
-means of a (frivolous) example. Suppose you set up a barber
-shop. Ideally, your customers would walk into your shop, sit on a
-chair and have their hair trimmed or their beard shaved. However,
-local regulations forbid you to modify anything coming in through your
-shop door. Of course, you wouldn't do much business if people must
-leave your shop with their hair untouched. Nevertheless, you have a
-simple way to get around this limitation: your customers can come to
-your shop, tell you their home address and walk out. Then, nobody
-stops you from going to their place and exercising your fine
-profession. You're OK with the law, because no modification of
-anything took place inside your shop.
+analogy. Suppose you set up a barber shop. Ideally, your customers
+would walk into your shop, sit on a chair and have their hair trimmed
+or their beard shaved. However, local regulations forbid you to modify
+anything coming in through your shop door. Of course, you wouldn't do
+much business if people must leave your shop with their hair
+untouched. Nevertheless, you have a simple way to get around this
+limitation: your customers can come to your shop, tell you their home
+address and walk out. Then, nobody stops you from going to their place
+and exercising your fine profession. You're OK with the law, because
+no modification of anything took place inside your shop.
 
-Unlike C, however, in hansl you don't have to take any special care
-within the function to distinguish the variable from its address, you
-just use the variable's name.\footnote{In C, this would be called
-  \emph{dereferencing} the pointer. The distinction is not required in
-  hansl because there is no equivalent to operating on the supplied
-  address itself, as in C.}  In order to supply the address of a
-variable when you invoke the function, you use the ampersand
-(\verb|&|) operator.
+While our imaginary restriction on the barber seems arbitrary, the
+analogous restriction in a programming context is not: it prevents
+functions from having unpredictable side effects. (You might be upset
+if it turned out that your person was modified after visiting the
+grocery store!)
+
+In hansl (unlike C) you don't have to take any special care within the
+function to distinguish the variable from its address,\footnote{In C,
+  this would be called \emph{dereferencing} the pointer. The
+  distinction is not required in hansl because there is no equivalent
+  to operating on the supplied address itself, as in C.} you just use
+the variable's name.  In order to supply the address of a variable
+when you invoke the function, you use the ampersand (\verb|&|)
+operator.
 
 An example should make things clearer. The following code
 \begin{code}

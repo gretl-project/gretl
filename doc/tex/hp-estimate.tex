@@ -23,59 +23,140 @@ a wide variety of models based on common principles.
 \section{Canned estimation procedures}
 \label{sec:canned}
 
-``Canned'' doesn't sound very appetizing these days but it's the term
+``Canned'' maybe doesn't sound very appetizing but it's the term
 that's commonly used. Basically it means two things, neither of them
 in fact unappetizing.
 \begin{itemize}
 \item The user is presented with a fairly simple interface. A few
   inputs must be specified, and perhaps a few options selected, then
-  the heavy lifting is done within the gretl library.
+  the heavy lifting is done within the gretl library. Full results
+  are printed (parameter estimates plus numerous auxiliary
+  statistics). 
 \item The algorithm is written in C, by experienced coders. It is
   therefore faster (possibly \textit{much} faster) than an
   implementation in an interpreted language such as hansl.
 \end{itemize}
 
-Such procedures share, more or less, the syntax
+Most such procedures share the syntax
 \begin{flushleft}
-\texttt{\emph{commandname parameters options}}
+\quad \textsl{commandname parameters options}
 \end{flushleft}
-with a few exceptions (e.g.\ systems).
+where \textsl{parameters} usually takes the form of a listing of
+series: the dependent variable followed by the regressors.
 
-A crude categorization: 
-\begin{description}
-\item[Linear, single equation] \cmd{ols}, \cmd{tsls}, \cmd{ar1},
-  \cmd{mpols}
-\item[Linear, multi-equation] \cmd{system}, \cmd{var}, \cmd{vecm} 
-\item[Nonlinear, single equation] \cmd{logit}, \cmd{probit},
-  \cmd{poisson}, \cmd{negbin}, \cmd{tobit}, \cmd{intreg},
-  \cmd{logistic}
-\item[Panel] \cmd{panel}, \cmd{dpanel}
-\item[Assorted] \cmd{arima}, \cmd{garch}, \cmd{heckit},
-  \cmd{quantreg}, \cmd{lad}, \cmd{biprobit}, \cmd{duration}
-\end{description}
+The line-up of procedures can be crudely categorized as follows:
+
+\begin{center}
+\begin{tabular}{l>{\raggedright\arraybackslash}p{.6\textwidth}}
+Linear, single equation: & \cmd{ols}, \cmd{tsls}, \cmd{ar1},
+\cmd{mpols} \\
+Linear, multi-equation: & \cmd{system}, \cmd{var}, \cmd{vecm} \\
+Nonlinear, single equation: & 
+ \cmd{logit}, \cmd{probit}, \cmd{poisson}, \cmd{negbin}, \cmd{tobit},
+ \cmd{intreg}, \cmd{logistic}, \cmd{duration} \\
+Panel: & \cmd{panel}, \cmd{dpanel} \\
+Miscellaneous: & \cmd{arima}, \cmd{garch}, \cmd{heckit},
+  \cmd{quantreg}, \cmd{lad}, \cmd{biprobit}
+\end{tabular}
+\end{center}
 
 Don't let names deceive you: for example, the \cmd{probit} command can
 estimate ordered models, random-effect panel probit models, \dots{}
+The hansl ``house style'' is to keep to a relatively small number of
+command words and to distinguish variants within a class of estimators
+such as Probit by means of options, or the character of the data
+supplied.
 
-See the \GCR{} for details.
+Simultaneous systems (SUR, FIML and so on) constitute the main
+exception to the syntax summary above; these require a \cmd{system}
+block---see the chapter on Multivariate models in \GUG.
 
-\subsection{Simultaneous systems}
+\section{Generic estimation tools}
+\label{sec:est-blocks}
 
-The \cmd{system} block.
+Hansl offers three main toolkits for defining estimators beyond the
+canned selection. Here's a quick overview:
+
+\begin{center}
+\begin{tabular}{lll}
+command & estimator & \textit{User's Guide} \\[4pt]
+\cmd{nls} & nonlinear least squares & chapter 20 \\
+\cmd{mle} & maximum likelihood estimation & chapter 21\\
+\cmd{gmm} & generalized method of moments & chapter 22
+\end{tabular}
+\end{center}
+
+Each of these commands takes the form of a block of statements (e.g.\
+\texttt{nls} \dots{} \textrm{end nls}). The user must supply a
+function to compute the fitted dependent variable (\texttt{nls}), the
+log-likelihood (\texttt{mle}), or the GMM residuals
+(\texttt{gmm}). With \texttt{nls} and \texttt{mle}, analytical
+derivatives of the function in question with respect to the parameters
+may (optionally) be supplied.
+
+The most widely used of these tools is probably \texttt{mle}. Hansl
+offers several canned ML estimators, but if you come across a model
+that you want to estimate via maximum likelihood and it is not
+supported natively, all you have to do is write down the
+log-likelihood in hansl's notation and run it through the \texttt{mle}
+apparatus.
 
 \section{Post-estimation accessors}
 \label{sec:postest-accessors}
 
-After having estimated a model, you can access most of the relevant
-quantities via accessors.
+All of the methods mentioned above are \textit{commands}, not
+functions; they therefore do not \textit{return} any values. However,
+after estimating a model---either using a canned procedure or one of
+the toolkits---you can grab most of the quantities you might wish to
+have available for further analysis via accessors.
 
-\begin{itemize}
-\item Generic: \dollar{coeff}, \dollar{vcv}, \dollar{uhat}
-\item Model-specific: for example, \dollar{jbeta}, \dollar{h},
-  \dollar{mnlprobs}
-\end{itemize}
+Some such accessors are generic, and are available after using just
+about any estimator. Examples include \dollar{coeff} and
+\dollar{stderr} (to get the vectors of coefficients and standard
+errors, respectively), \dollar{uhat} and \dollar{yhat} (residuals and
+fitted values), and \dollar{vcv} (the covariance matrix of the
+coefficients). Some, on the other hand, are specific to certain
+estimators. Examples here include \dollar{jbeta} (the cointegration
+matrix, following estimation of a VECM), \dollar{h} (the estimated
+conditional variance series following GARCH estimation), and
+\dollar{mnlprobs} (the matrix of per-outcome probabilities following
+multinomial logit estimation).
 
-\subsection{Named models}
+A full listing and description of accessors can be found in the
+\GCR.
+
+\section{Formatting the results of estimation}
+
+The commands mentioned in this chapter produce by default quite
+verbose (and, hopefully, nicely formatted) output. However, in some
+cases you may want to use built-in commands as auxiliary steps in
+implementing an estimator that is not itself built in. In that context
+the standard printed output may be inappropriate and you may want to
+take charge of presenting the results yourself. 
+
+This can be accomplished quite easily. First, you can suppress the
+usual output by using the \option{quiet} option with built-in
+estimation commands.\footnote{For some commands, \option{quiet}
+  reduces but does not eliminate gretl's usual output. In these cases
+  you can give the \option{silent} option. Consult the \GCR\ to
+  determine which commands accept this option.} Second, you can
+use the \cmd{modprint} command to generate the desired output.
+As usual, see the \GCR\ for details.
+
+\section{Named models}
+
+We said above that estimation commands in hansl don't return
+anything. This should be qualified in one respect: it is possible to
+use a special syntax to push a model onto a stack of named models.
+Rather than the usual assignment symbol, the form ``\verb|<-|'' is
+used for this purpose. This is mostly intended for use in the gretl
+GUI but it can also be used in hansl scripting.
+
+Once a model is saved in this way, the accessors mentioned above can
+be used in a special way, joined by a dot to the name of the target
+model. A little example follows. (Note that \dollar{ess} accesses the
+error sum of squares, or sum of squared residuals, for models
+estimated via least squares.)
 
 \begin{code}
 diff y x
@@ -84,22 +165,6 @@ ECM <- ols d_y const d_x y(-1) x(-1)
 ssr_a = ADL.$ess
 ssr_e = ECM.$ess # should be equal
 \end{code}
-
-\section{Generic estimation tools}
-\label{sec:est-blocks}
-
-These are useful if you want to write your own estimator. Here we give
-a generic overview. See the relevant chapters in \GUG{} for a full explanation.
-
-\begin{itemize}
-\item \cmd{nls}
-\item \cmd{mle}
-\item \cmd{gmm}
-\end{itemize}
-
-\subsection{Formatting your output}
-
-The \cmd{modprint} command.
 
 \label{LastPage}
 

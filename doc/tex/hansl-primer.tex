@@ -1,9 +1,9 @@
 \documentclass[oneside]{book}
-\usepackage{url,verbatim,fancyvrb,appendix,longtable}
+\usepackage{url,verbatim,fancyvrb}
 \usepackage{pifont}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
-\usepackage[authoryear]{natbib}
+%\usepackage[authoryear]{natbib}
 \usepackage{color,gretl}
 \usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
@@ -83,9 +83,10 @@ under the terms of the \emph{GNU Free Documentation License}, Version
 
 \clearpage
 \pagenumbering{arabic}
+%\setcounter{chapter}{-1}
 
-\chapter*{Introduction}
-\addcontentsline{toc}{chapter}{Introduction}
+\chapter{Introduction}
+%\addcontentsline{toc}{chapter}{Introduction}
 
 \section*{What hansl is and what it is not}
 
@@ -111,8 +112,6 @@ programming, recursion, complex data structures, and so on.  As for
 style, the language which hansl most resembles is probably that of the
 bash shell.
 
-% Other consequences are laid out in chapter \ref{chap:hr-gretl}.
-
 \section*{The intent and structure of this document}
 
 The intended readers of this document are those who already know how
@@ -128,24 +127,24 @@ proficient hansl user in a (relatively) short time; however, not all
 the features of hansl are illustrated; for those, interested readers
 should consult the \GCR{} and \GUG{}.
 
-This guide is divided into three parts. The first part (``Without a
-dataset'') concentrates on hansl as a pure matrix-oriented programming
-language. The second part (``With a dataset'') exploits the fact that
-hansl scripts are run through gretl, which has very nice facilities
-for handling statistical datasets (interactively if necessary). This
-provides hansl with a series of extra constructs and features which
-make it extremely easy to write hansl scripts to perform all sorts
-of statistical procedures.
+This guide is divided into two main parts. Part~\ref{part:hp-nodata}
+(``Without a dataset'') concentrates on hansl as a pure
+matrix-oriented programming language. Part~\ref{part:hp-data} (``With
+a dataset'') exploits the fact that hansl scripts are run through
+gretl, which has very nice facilities for handling statistical
+datasets (interactively if necessary). This provides hansl with a
+series of extra constructs and features which make it extremely easy
+to write hansl scripts to perform all sorts of statistical procedures.
 
 In order to use hansl, you will need a working installation of
 gretl. We assume you have one. If you don't, please refer to chapter 1
-of the \GUG.
+of \GUG.
 
 \section*{Other resources}
 
 If you are serious about learning hansl then after working through
-this primer---or in the process of doing so---you should take a look
-at the following additional resources.
+this primer---or in the process of doing so---you'll want to take a
+look at the following additional resources.
 \begin{itemize}
 \item The \GCR. This contains a complete listing of the commands and
   built-in functions available in hansl, with a full account of their
@@ -176,7 +175,6 @@ at the following additional resources.
   \url{http://lists.wfu.edu/mailman/listinfo/gretl-users}.
 \end{itemize}
 
-\setcounter{chapter}{0}
 
 \part{Without a dataset}
 \label{part:hp-nodata}

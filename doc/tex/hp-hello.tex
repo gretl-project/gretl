@@ -1,4 +1,5 @@
 \chapter{Hello, world!}
+\label{chap:hello}
 
 We begin with the time-honored ``Hello, world'' program, the
 obligatory first step in any programming language. It's actually very
@@ -296,19 +297,17 @@ A noteworthy point: strings may be (almost) arbitrarily long;
 moreover, they can contain special characters such as line breaks and
 tabs. It is therefore possible to use hansl for performing rather
 complex operations on text files by loading them into memory as a very
-long string and then operating on that;\footnote{Of course, the reader
-  is invited to take this with a pinch of salt. If your job involves
-  manipulating a text files several gigabytes long, you should
-  consider using appropriate tools instead of hansl, such as for
-  example \app{perl} or \app{python}. However, on modern hardware
-  hansl may be a defensible choice for text files up to a few hundred
-  megabytes.} interested readers should take a look at the
-\cmd{readfile}, \cmd{getline} and \cmd{regsub} functions in the \GCR.
+long string and then operating on that; interested readers should take
+a look at the \cmd{readfile}, \cmd{getline}, \cmd{strsub} and
+\cmd{regsub} functions in the \GCR.\footnote{We are not claiming that
+  hansl would be the tool of choice for text processing in
+  general. Nonetheless the functions mentioned here can be very useful
+  for tasks such as pre-processing plain text data files that do not
+  meet the requirements for direct importation into gretl.}
 
 For \emph{creating} complex strings, the most flexible tool is the
-\cmd{sprintf} function. Its usage, however, is best illustrated in an
-ad-hoc portion of this primer, namely Chapter
-\ref{chap:formatting}. 
+\cmd{sprintf} function. Its usage is illustrated in
+Chapter~\ref{chap:formatting}.
 
 % Finally, it is quite common to use \emph{string
 %   substitution} in hansl sripts; however, this is another topic that
