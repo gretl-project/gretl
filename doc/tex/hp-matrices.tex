@@ -30,7 +30,7 @@ Here are some more advanced ways to access matrix elements:
 \begin{enumerate}
 \item In case the matrix has only one row (column), the column (row)
   specification can be omitted, as in \texttt{x[3]}.
-\item including the comma but omitting the row or column specification
+\item Including the comma but omitting the row or column specification
   means ``take them all'', as in \texttt{x[4,]} (fourth row, all columns).
 \item For square matrices, the special syntax \texttt{x[diag]} can be
   used to access the diagonal.
@@ -40,7 +40,7 @@ Here are some more advanced ways to access matrix elements:
   \texttt{[m:n]} is illegal if $m>n$.
 \item It is possible to use a vector to hold indices to a matrix. E.g.\
   if $e = [2,3,6]$, then \texttt{X[,e]} contains the second, third and
-  sixth column of $X$.
+  sixth columns of $X$.
 \end{enumerate}
 Moreover, matrices can be empty (zero rows and columns). 
 
@@ -70,9 +70,9 @@ Matrix sum, difference and product are obtained via \texttt{+},
 \texttt{-} and \texttt{*}, respectively. The prime operator
 (\texttt{'}) can act as a unary operator, in which case it transposes
 the preceding matrix, or as a binary operator, in which case it acts
-as in ordinary matrix algebra, that is transposes the first matrix and
-multiplies it into the second one. Errors are flagged if
-conformability is a problem. For example:
+as in ordinary matrix algebra, multiplying the transpose of the first
+matrix into the second one. Errors are flagged if conformability is a
+problem. For example:
 \begin{code}
   matrix a = {11, 22 ; 33, 44}  # a is square 2 x 2
   matrix b = {1,2,3; 3,2,1}     # b is 2 x 3
@@ -241,7 +241,7 @@ argument variable.
 
 The \texttt{eigensym} function, which performs the eigen-analysis of
 symmetric matrices, is a case in point. In the example below the first
-argument \texttt{A} represents the input data, that is, the matrix
+argument $A$ represents the input data, that is, the matrix
 whose analysis is required. This variable will not be modified in any
 way by the function call. The primary result is the vector of
 eigenvalues of $A$, which is here assigned to the variable

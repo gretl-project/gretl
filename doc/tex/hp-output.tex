@@ -10,25 +10,25 @@ number of programming languages.
 
 Its syntax goes like this:
 \begin{flushleft}
-  \texttt{printf \emph{format string}, \emph{arguments}}
+  \texttt{printf \emph{format}, \emph{arguments}}
 \end{flushleft}
 
-The \cmd{printf} command gives you extreme flexibility in what to
-print and how. The \emph{format string} is used to specify the precise
+The \cmd{printf} command gives you great flexibility in what to
+print and how. The \emph{format} is used to specify the precise
 way in which you want the \emph{arguments} to be printed.
 
 \subsection{The format string}
 \label{sec:fmtstring}
 
-Technically, the \cmd{printf} command prints out the format string;
-this must be an expression that evaluates to a string, but in most
-cases will just be a string literal, that is an alphanumeric sequence
-surrounded by double quotes. However, some character sequences in the
-format string have a special meaning: those beginning with the percent
-character (\texttt{\%}) are interpreted as ``placeholders'' for the
-items contained in the argument list; moreover, special characters
-such as the newline character are represented via a combination
-beginning with the backslash (\verb|\|).
+In the general case the \cmd{printf} format must be an expression that
+evaluates to a string, but in most cases will just be a \textit{string
+  literal} (an alphanumeric sequence surrounded by double
+quotes). However, some character sequences in the format have a
+special meaning: those beginning with the percent character
+(\texttt{\%}) are interpreted as ``placeholders'' for the items
+contained in the argument list; moreover, special characters such as
+the newline character are represented via a combination beginning with
+the backslash (\verb|\|).
 
 For example,
 \begin{code}
@@ -42,8 +42,8 @@ The square root of 5 is (roughly) 2.2361.
 Let's see how:
 \begin{itemize}
 \item The first special sequence is \verb|%d|: this indicates that we
-  want an integer number at that place in the output string; since it
-  is the leftmost ``percent'' expression, it is matched to the first
+  want an integer at that place in the output; since it is the
+  leftmost ``percent'' expression, it is matched to the first
   argument, that is 5.
 \item The second special sequence is \verb|%6.4f|, which stands for a
   decimal value with 4 digits after the decimal separator\footnote{The
