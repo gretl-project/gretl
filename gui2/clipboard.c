@@ -127,6 +127,32 @@ static void gretl_clipboard_clear (GtkClipboard *clip, gpointer p)
     gretl_clipboard_free();
 }
 
+#ifdef OS_OSX
+
+static void pasteboard_set (int fmt)
+{
+    FILE *fp = popen("/usr/bin/pbcopy", "wb");
+
+    if (fp != NULL) {
+	char *save_locale = NULL;
+
+	if (gretl_is_ascii(clipboard_buf)) {
+	    save_locale = gretl_strdup(setlocale(LC_CTYPE, NULL));
+	    setlocale(LC_CTYPE, "C");
+	}
+
+	fputs(clipboard_buf, fp);
+	pclose(fp);
+
+	if (save_locale != NULL) {
+	    setlocale(LC_CTYPE, save_locale);
+	    free(save_locale);
+	}
+    }
+}
+
+#endif
+
 static void gretl_clipboard_set (int fmt)
 {
     static GtkClipboard *clip;
@@ -135,13 +161,8 @@ static void gretl_clipboard_set (int fmt)
 
 #ifdef OS_OSX
     if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
-	FILE *fp = popen("/usr/bin/pbcopy", "wb");
-
-	if (fp != NULL) {
-	    fputs(clipboard_buf, fp);
-	    pclose(fp);
-	    return;
-	}
+	pasteboard_set(fmt);
+	return;
     }
 #endif
 
@@ -238,6 +259,12 @@ int prn_to_clipboard (PRN *prn, int fmt)
     if (clipboard_buf == NULL) {
 	err = 1;
     } else {
+#if 0 /* ifdef OS_OSX */
+	if (fmt == GRETL_FORMAT_RTF) {
+	    infobox("gretl_clipboard_set, first 5 bytes:\n0x%x 0x%x 0x%x 0x%x 0x%x",
+		    buf[0], buf[1], buf[2], buf[3], buf[4]);
+	}
+#endif
 	gretl_clipboard_set(fmt);
     }
 
