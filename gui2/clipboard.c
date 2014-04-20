@@ -131,12 +131,17 @@ static void gretl_clipboard_clear (GtkClipboard *clip, gpointer p)
 
 static void pasteboard_set (int fmt)
 {
-    FILE *fp = popen("/usr/bin/pbcopy", "wb");
+    FILE *fp = popen("/usr/bin/pbcopy", "w");
 
-    if (fp != NULL) {
+    if (fp == NULL) {
+	errbox("Couldn't open pbcopy");
+    } else {
 	char *save_locale = NULL;
 
 	if (gretl_is_ascii(clipboard_buf)) {
+	    /* FIXME: and if it's not? Make this specific to the
+	       Japanese locale? 
+	    */
 	    save_locale = gretl_strdup(setlocale(LC_CTYPE, NULL));
 	    setlocale(LC_CTYPE, "C");
 	}
@@ -259,12 +264,6 @@ int prn_to_clipboard (PRN *prn, int fmt)
     if (clipboard_buf == NULL) {
 	err = 1;
     } else {
-#if 0 /* ifdef OS_OSX */
-	if (fmt == GRETL_FORMAT_RTF) {
-	    infobox("gretl_clipboard_set, first 5 bytes:\n0x%x 0x%x 0x%x 0x%x 0x%x",
-		    buf[0], buf[1], buf[2], buf[3], buf[4]);
-	}
-#endif
 	gretl_clipboard_set(fmt);
     }
 
