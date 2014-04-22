@@ -1414,13 +1414,13 @@ int load_bundle_from_xml (void *p1, void *p2, const char *name,
 }
 
 int gretl_bundle_write_as_xml (gretl_bundle *b, const char *fname,
-			       int export)
+			       int to_dotdir)
 {
     char fullname[FILENAME_MAX];
     PRN *prn;
     int err = 0;
 
-    if (export) {
+    if (to_dotdir) {
 	build_path(fullname, gretl_dotdir(), fname, NULL);
     } else {
 	strcpy(fullname, fname);

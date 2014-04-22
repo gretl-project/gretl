@@ -134,7 +134,7 @@ int load_bundle_from_xml (void *p1, void *p2, const char *name,
 			  const char *creator);
 
 int gretl_bundle_write_as_xml (gretl_bundle *b, const char *fname,
-			       int export);
+			       int to_dotdir);
 
 gretl_bundle *gretl_bundle_read_from_xml (const char *fname, 
 					  int import,
