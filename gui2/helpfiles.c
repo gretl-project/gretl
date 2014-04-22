@@ -1860,7 +1860,8 @@ enum {
     GRETL_REF,
     GNUPLOT_REF,
     X12A_REF,
-    GRETL_KEYS
+    GRETL_KEYS,
+    HANSL_PRIMER
 };
 
 static int get_writable_doc_path (char *path, const char *fname)
@@ -1973,8 +1974,11 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	"gretl-keys.pdf",
 	"gretl-keys-a4.pdf"
     };
+    const char *primer_files[] = {
+	"hansl-primer.pdf",
+	"hansl-primer-a4.pdf"
+    };    
     const char *fname;
-    char *tmp = NULL;
     FILE *fp;
     int gotit = 0;
     int err = 0;
@@ -1983,20 +1987,28 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	i = 0;
     }
 
+    if (code == GRETL_KEYS || code == HANSL_PRIMER) {
+	/* no translations */
+	if (i > 1) i = 1;
+    }
+
     if (code == GRETL_GUIDE) {
 	fname = guide_files[i];
     } else if (code == GRETL_REF) {
 	fname = ref_files[i];
     } else if (code == GRETL_KEYS) {
-	if (i > 1) i = 1; /* no translations */
 	fname = kbd_files[i];
+    } else if (code == HANSL_PRIMER) {
+	fname = primer_files[i];
     } else if (code == GNUPLOT_REF) {
 	fname = "gnuplot.pdf";
     } else if (code == X12A_REF) {
-	fname = "x12adocV03.pdf";
+	fname = gretl_x12_is_x13() ? "docX13AS.pdf" : "x12adocV03.pdf";
     } else {
 	return E_DATA;
     }
+
+    fprintf(stderr, "pdf help: looking for %s\n", fname);
 
     /* is the file available in public dir? */
     sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
@@ -2028,13 +2040,18 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	}
     }
 
+    fprintf(stderr, "after local search, gotit = %d\n", gotit);
+
     if (!gotit) {
 	/* check for download location */
 	err = get_writable_doc_path(fullpath, fname);
 
+	fprintf(stderr, "writable_doc_path: err = %d\n", err);
+
 	/* do actual download */
 	if (!err) {
 	    err = retrieve_manfile(fname, fullpath);
+	    fprintf(stderr, "retrieve_manfile: err = %d\n", err);
 	}
 
 	if (err) {
@@ -2047,8 +2064,6 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	    }
 	}
     }
-
-    free(tmp);
 
     return err;
 }
@@ -2074,10 +2089,10 @@ void display_pdf_help (GtkAction *action)
 	    code = GRETL_REF;
 	} else if (!strcmp(gtk_action_get_name(action), "KbdRef")) {
 	    code = GRETL_KEYS;
+	} else if (!strcmp(gtk_action_get_name(action), "Primer")) {
+	    code = HANSL_PRIMER;
 	}
     }
-
-    fprintf(stderr, "display_pdf_help: code = %d\n", code);
 
     err = find_or_download_pdf(code, get_manpref(), fname);
 

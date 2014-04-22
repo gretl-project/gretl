@@ -269,6 +269,7 @@
       <menuitem action="UserGuide"/>
       <menuitem action="PDFCmdRef"/>
       <menuitem action="KbdRef"/>
+      <menuitem action="Primer"/>
       <separator/>
       <menuitem action="UpdateCheck"/>
       <menuitem action="SFAddons"/>
