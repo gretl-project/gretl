@@ -516,26 +516,21 @@ void gretl_www_cleanup (void)
     gretl_curl_toggle(0);
 }
 
-int get_update_info (char **saver, time_t filedate, int queryopt)
+int get_update_info (char **saver, int verbose)
 {
     urlinfo u;
-    char tmp[32];
     int err = 0;
 
     urlinfo_init(&u, gretlhost, SAVE_TO_BUFFER, NULL);
     strcat(u.url, updatecgi);
 
-    if (queryopt == QUERY_VERBOSE) {
-	strcat(u.url, "?opt=MANUAL_QUERY&date=");
+    if (verbose) {
+	strcat(u.url, "?opt=MANUAL_QUERY");
     } else {
-	strcat(u.url, "?opt=QUERY&date=");
+	strcat(u.url, "?opt=QUERY");
     } 
 
-    sprintf(tmp, "%d", (int) filedate); /* FIXME? */
-    strcat(u.url, tmp);
-
     err = curl_get(&u);
-
     urlinfo_finalize(&u, saver, &err);
 
     return err;

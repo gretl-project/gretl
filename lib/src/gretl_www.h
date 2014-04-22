@@ -40,11 +40,6 @@ typedef enum {
     QUERY_SF
 } CGIOpt;
 
-typedef enum {
-    QUERY_SILENT,
-    QUERY_VERBOSE
-} QueryOpt;
-
 int gretl_www_init (const char *host, const char *proxy, int use_proxy);
 
 void gretl_www_cleanup (void);
@@ -76,7 +71,7 @@ int retrieve_remote_db_data (const char *dbname,
 
 int retrieve_manfile (const char *fname, const char *localname);
 
-int get_update_info (char **saver, time_t filedate, int queryopt);
+int get_update_info (char **saver, int verbose);
 
 int upload_function_package (const char *login, const char *pass, 
 			     const char *fname, const char *buf,

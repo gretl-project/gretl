@@ -20,12 +20,12 @@
 #include "gretl.h"
 #include "gretl_www.h"
 
-static int real_update_query (int queryopt)
+static int real_update_query (int verbose)
 {
     char *getbuf = NULL;
     int err;
 
-    err = get_update_info(&getbuf, 0, queryopt);
+    err = get_update_info(&getbuf, verbose);
 
     if (err || getbuf == NULL) {
 	return 1;
@@ -33,7 +33,7 @@ static int real_update_query (int queryopt)
 
     if (strncmp(getbuf, "message:", 8) == 0) {
 	infobox(getbuf + 9);
-    } else if (queryopt == QUERY_VERBOSE) {
+    } else if (verbose) {
 	infobox(_("No new files"));
     }
 
@@ -43,18 +43,15 @@ static int real_update_query (int queryopt)
 }
 
 #if 0
-
-/* not used right now, but we may want to reactivate it
-   in some form */
-
 int silent_update_query (void)
 {
-    return real_update_query(QUERY_SILENT);
+    /* not used right now, but we may want to reactivate it
+       in some form */
+    return real_update_query(0);
 }
-
 #endif
 
 int update_query (void)
 {
-    return real_update_query(QUERY_VERBOSE);
+    return real_update_query(1);
 }
