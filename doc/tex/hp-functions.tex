@@ -249,6 +249,56 @@ functions, as producing a copy of a large matrix can be quite
 time-consuming.\footnote{However, the \cmd{const} qualifier achieves
   the same effect. See \GUG\ for further details.}
 
+\subsection{Advanced parameter passing and optional arguments}
+
+The parameters to a hansl function can be also specified in more
+sophisticated ways than outlined above. There are three additional
+features worth mentioning:
+\begin{enumerate}
+\item A descriptive string can be attached to each parameter for GUI usage.
+\item For some parameter types, there is a special syntax construct
+  for ensuring that its value is bounded; for example, you can
+  stipulate a scalar argument to be positive, or constrained within a
+  pre-specified range.
+\item Some of the arguments can be made optional.
+\end{enumerate}
+
+A thorough discussion is too long to fit in this document, and the
+interested reader ought to refer to the ``User-defined
+functions'' chapter of the \GUG. Here, we'll just show you a simple,
+and hopefully self-explanatory, example which combines features 2 and
+3: supposed you have a function for producing smileys, defined as
+\begin{code}
+function void smileys(int times[0::1], bool frown[0])
+    if frown
+        string s = ":-("
+    else
+        string s = ":-)"
+    endif
+    
+    loop times --quiet
+        printf "%s ", s
+    endloop
+    
+    printf "\n"
+end function
+\end{code}
+
+Then, running
+\begin{code}
+smileys()
+smileys(2, 1)
+smileys(4)
+\end{code}
+
+produces
+
+\begin{code}
+:-) 
+:-( :-( 
+:-) :-) :-) :-) 
+\end{code}
+
 \section{Recursion}
 
 Hansl functions can be recursive; what follows is the obligatory
