@@ -1947,7 +1947,11 @@ static int get_x12a_doc_path (char *path, const char *fname)
 #if !defined(G_OS_WIN32) && !defined(OS_OSX)
 	if (!ret) {
 	    /* using gretl x12a package? */
-	    sprintf(path, "/opt/x12arima/docs/%s", fname);
+	    if (gretl_x12_is_x13()) {
+		sprintf(path, "/opt/x13as/docs/%s", fname);
+	    } else {
+		sprintf(path, "/opt/x12arima/docs/%s", fname);
+	    }
 	    ret = 1;
 	}
 #endif
