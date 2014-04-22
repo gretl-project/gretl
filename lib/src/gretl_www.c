@@ -19,21 +19,13 @@
 
 /* gretl_www.c for gretl -- uses libcurl API */
 
-/* Note: STANDALONE is defined if we're building the stand-alone
-   updater program for Windows.  This program does not depend on glib
-   or libgretl.
-*/
-
 #ifdef WIN64
 # include <winsock2.h>
 #endif
 
-#ifndef STANDALONE
-# include "libgretl.h"
-# include "libset.h"
-# include "build.h"
-#endif
-
+#include "libgretl.h"
+#include "libset.h"
+#include "build.h"
 #include "version.h"
 #include "gretl_www.h"
 
@@ -62,10 +54,8 @@ static char datapkg_list[DBHLEN] = "/addons-data/datapkgs.txt";
 static int wproxy;
 static char proxyhost[128];
 
-#ifndef STANDALONE
 static char sffiles[DBHLEN] = "downloads.sourceforge.net";
 static char sfweb[DBHLEN]   = "gretl.sourceforge.net";
-#endif
 
 typedef struct urlinfo_ urlinfo;
 
@@ -111,9 +101,7 @@ static void urlinfo_init (urlinfo *u,
     u->phandle = NULL;
     u->pstarted = 0;
 
-#ifndef STANDALONE
     gretl_error_clear();
-#endif
 
 #ifdef BUILD_DATE
     sprintf(u->agent, "gretl-%s-%s", GRETL_VERSION, BUILD_DATE);
@@ -121,8 +109,7 @@ static void urlinfo_init (urlinfo *u,
     sprintf(u->agent, "gretl-%s", GRETL_VERSION);
 #endif
 
-#if defined(STANDALONE) || defined (WIN32)
-    /* the linux test updater program pretends to be Windows */
+#ifdef WIN32
     strcat(u->agent, "w");
 #endif
 }
@@ -145,21 +132,6 @@ static void urlinfo_finalize (urlinfo *u, char **getbuf, int *err)
 	}
     }    
 }
-
-#ifdef STANDALONE
-
-static void urlinfo_set_show_progress (urlinfo *u)
-{
-    return;
-}
-
-static int progress_func (void *clientp, double dltotal, double dlnow, 
-			  double ultotal, double ulnow)
-{
-    return 0;
-}
-
-#else
 
 static void urlinfo_set_show_progress (urlinfo *u)
 {
@@ -192,15 +164,11 @@ static int progress_func (void *clientp, double dltotal, double dlnow,
     return (ret == SP_RETURN_CANCELED) ? 1 : 0;
 }
 
-#endif
-
 static void stop_progress_bar (urlinfo *u)
 {
     if (u->progfunc != NULL) {
 	u->progfunc(0, 1024, SP_FINISH);
-#ifndef STANDALONE
 	close_plugin(u->phandle);
-#endif
     }
 }
 
@@ -245,9 +213,6 @@ static size_t write_func (void *buf, size_t size, size_t nmemb,
     }
 
     if (u->saveopt == SAVE_TO_FILE) {
-#if WDEBUG > 1
-	fprintf(stderr, "SAVE_TO_FILE: using %s\n", u->localfile);
-#endif
 	if (u->fp == NULL) {
 	    u->fp = gretl_fopen(u->localfile, "wb");
 	    if (u->fp == NULL) {
@@ -284,7 +249,6 @@ static size_t write_func (void *buf, size_t size, size_t nmemb,
 
 static int progress_bar_wanted (int opt)
 {
-#ifndef STANDALONE
     if (gretl_in_gui_mode()) {
 	return (opt == GRAB_IDX || 
 		opt == GRAB_DATA ||
@@ -295,7 +259,6 @@ static int progress_bar_wanted (int opt)
 		opt == GRAB_PKG ||
 		opt == GRAB_FOREIGN);
     }
-#endif
     return 0;
 }
 
@@ -577,8 +540,6 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
 
     return err;
 }
-
-#ifndef STANDALONE /* functions below not needed for updater */
 
 /* The content of the function package to be uploaded is in @buf;
    the (short, pathless) filename for this package is in @fname.
@@ -919,5 +880,3 @@ char *retrieve_public_file_as_buffer (const char *uri, size_t *len,
 
     return buf;
 }
-
-#endif /* !STANDALONE */
