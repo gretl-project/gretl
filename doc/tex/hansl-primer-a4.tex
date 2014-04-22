@@ -1,9 +1,9 @@
 \documentclass[oneside]{book}
-\usepackage{url,verbatim,fancyvrb,appendix,longtable}
+\usepackage{url,verbatim,fancyvrb}
 \usepackage{pifont}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
-\usepackage[authoryear]{natbib}
+%\usepackage[authoryear]{natbib}
 \usepackage{color,gretl}
 \usepackage[a4paper,body={6.07in,9.7in},top=.8in,left=1.1in]{geometry}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
@@ -83,18 +83,19 @@ under the terms of the \emph{GNU Free Documentation License}, Version
 
 \clearpage
 \pagenumbering{arabic}
+%\setcounter{chapter}{-1}
 
-\chapter*{Introduction}
-\addcontentsline{toc}{chapter}{Introduction}
+\chapter{Introduction}
+%\addcontentsline{toc}{chapter}{Introduction}
 
-\section*{What Hansl is and what it is not}
+\section*{What hansl is and what it is not}
 
 Hansl is a recursive acronym: it stands for ``Hansl's A Neat Scripting
 Language''. You might therefore expect something very general in
 purpose. Not really.  Hansl was born as the scripting language for the
 econometrics program \app{gretl} and its role is unlikely to change.
 As a consequence, hansl should not be viewed as a fully fledged
-programming language such as C, FORTRAN, Perl or Python. Not because
+programming language such as C, Fortran, Perl or Python. Not because
 it lacks anything to be considered as such,\footnote{Hansl is in fact
   Turing-complete.} but because its aim is different. Hansl should be
 considered as a special-purpose or domain-specific language, designed
@@ -111,15 +112,13 @@ programming, recursion, complex data structures, and so on.  As for
 style, the language which hansl most resembles is probably that of the
 bash shell.
 
-% Other consequences are laid out in chapter \ref{chap:hr-gretl}.
-
 \section*{The intent and structure of this document}
 
 The intended readers of this document are those who already know how
 to write code, and are familiar with the associated do-s and don't-s.
-Such people wish to add hansl to their toolbox, alongside languages
-like C or FORTRAN, or programs such as R, Ox, Matlab, Stata, Gauss and
-the like, some of which they are already confident with. Here,
+Such people may wish to add hansl to their toolbox, alongside
+languages like C or FORTRAN, or programs such as R, Ox, Matlab, Stata
+or Gauss, some of which they are already confident with. Here,
 therefore, the focus is not so much on ``How do I do this?'', but
 rather on ``How do I do this \emph{in hansl}?''.
 
@@ -128,28 +127,73 @@ proficient hansl user in a (relatively) short time; however, not all
 the features of hansl are illustrated; for those, interested readers
 should consult the \GCR{} and \GUG{}.
 
-This guide is divided into three parts. The first part (``Without a
-dataset'') concentrates on hansl as a pure matrix-oriented programming
-language. The second part (``With a dataset'') exploits the fact that
-hansl scripts are run through gretl, which has very nice facilities
-for handling statistical datasets (interactively if necessary). This
-provides hansl with a series of extra constructs and features which
-make it extremely easy to write hansl scripts to perform all sorts
-of statistical procedures.
+This guide is divided into two parts. Part~\ref{part:hp-nodata}
+(``Without a dataset'') concentrates on hansl as a pure
+matrix-oriented programming language. Part~\ref{part:hp-data} (``With
+a dataset'') exploits the fact that hansl scripts are run through
+gretl, which has very nice facilities for handling statistical
+datasets (interactively if necessary). This provides hansl with a
+series of extra constructs and features which make it extremely easy
+to write hansl scripts to perform all sorts of statistical procedures.
 
 In order to use hansl, you will need a working installation of
 gretl. We assume you have one. If you don't, please refer to chapter 1
-of the \GUG.
+of \GUG.
 
-\section*{Where to look for help}
+\section*{Other resources}
 
-Huge overlap with \app{gretl} $\to$ \GUG, etcetera. The gretl-users
-mailing list is also useful.
+If you are serious about learning hansl then after working through
+this primer---or in the process of doing so---you'll want to take a
+look at the following additional resources.
+\begin{itemize}
+\item The \GCR. This contains a complete listing of the commands and
+  built-in functions available in hansl, with a full account of their
+  syntax and options. Examples of usage are provided in some
+  instances. This is available in an ``online'' version for handy
+  reference as well as in PDF, both accessible via the \textsf{Help} menu
+  in the gretl GUI.
+\item The \textit{Gretl User's Guide}. Chapters 10 to 16, in
+  particular, go into more detail on some of the programming topics
+  discussed here (data types, loops, the definition and use of
+  functions). In addition Part II of the \textit{Guide}, on
+  Econometric Methods, gives many examples of hansl usage. The
+  \textit{Guide} is available via gretl's \textsf{Help} menu; the
+  latest version can also be found online at
+  \url{http://sourceforge.net/projects/gretl/files/manual/}.
+\item Sample scripts. The gretl package comes with a large number of
+  sample or practice scripts, which can be found under the menu item
+  \textsf{/File/Script files/Practice file}. Many of these are simple
+  replication exercises for textbook problems but you will find some
+  more interesting examples under the \textsf{Gretl} tab.
+\item Function packages. Relatively ambitious examples of hansl coding
+  can be found in the various contributed ``function packages''. You
+  can access these packages via the gretl menu item
+  \textsf{/File/Function files/On server}. Right-click on a package
+  and select \textsf{View code} to examine the hansl functions.
+\item The gretl-users mailing list. Most well-considered
+  questions get answered quite quickly and fully. See
+  \url{http://lists.wfu.edu/mailman/listinfo/gretl-users}.
+\end{itemize}
 
-\setcounter{chapter}{0}
 
-\include{hp-nodata}
-\include{hp-data}
+\part{Without a dataset}
+\label{part:hp-nodata}
+\include{hp-hello}
+\include{hp-matrices}
+\include{hp-output}
+\include{hp-bundles}
+\include{hp-numerical}
+\include{hp-ctrlflow}
+\include{hp-functions}
+
+\part{With a dataset}
+\label{part:hp-data}
+\include{hp-dataset}
+\include{hp-series}
+\include{hp-estimate}
+
+\appendix
+
 \include{hp-further}
 
 % \clearpage

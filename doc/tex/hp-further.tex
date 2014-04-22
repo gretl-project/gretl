@@ -1,17 +1,94 @@
-\chapter{The \texttt{set} command}
-\label{chap:settings}
 
-\chapter{Function packages}
+\chapter{Further topics}
+% \section{The \texttt{set} command}
+% \label{chap:settings}
 
-\chapter{Going abroad}
-``Foreign'' blocks.
+% \section{Function packages}
 
+\section{Going abroad}
 
-Friendly relationship with \LaTeX{} and \app{gnuplot}
+Gretl is designed to interact as nicely as possible with other
+programs which are likely to be of interest to the applied
+econometrician. Most of the infrastructure that gretl provides for
+this purpose carries over to hansl.
 
+\subsection{Interaction with the underlying OS}
 
-\chapter{Tricks}
-\section{String substitution}
+You can run external commands from a hansl script via the \cmd{launch}
+and \cmd{!} commands\footnote{Yes, that is an exclamation mark}. They
+both pass the subsequent string to the OS to be run asynchronously
+and synchronously, respectively.
+
+For example, on Unix-like systems (Linux and OSX), the code
+\begin{code}
+! echo "a(1) * 4" | bc -l && echo "Thats's pi!"
+\end{code}
+
+should yield
+
+\begin{code}
+3.14159265358979323844
+Thats's pi!
+\end{code}
+
+If you feel playful, try \texttt{launch xeyes} on a system with X11
+enabled.
+
+\subsection{\LaTeX{} and \app{gnuplot}}
+
+FIXME: TODO
+
+\begin{itemize}
+\item For \LaTeX: briefly describe the \cmd{tabprint} and
+  \cmd{modprint} commands.
+\item For \app{gnuplot}: give a little example of the \cmd{gnuplot}
+  command with the \option{input} and \option{output} options.
+\end{itemize}
+
+\subsection{The \cmd{foreign} block}
+
+It is possible to embed ``foreign'' code in a hansl script and pass it
+to the appropriate program, so to outsource certain operations to
+other software and collect the results back.
+
+While we have to defer the reader to the \GUG\ for a comprehensive
+description of this feature, an extremely concise description could be
+the following: hansl recognizes as possible counterparts the following
+list of external programs:
+\begin{itemize}
+\item R
+\item Matlab and its dialects (\emph{e.g.}~ Octave)
+\item Ox
+\item Python
+\item Stata
+\end{itemize}
+
+For example, the following piece of code
+\begin{code}
+foreign language=python
+	import sys
+	print(sys.version)
+end foreign
+\end{code}
+should yield something like
+\begin{code}
+2.7.5+ (default, Sep 17 2013, 15:31:50) 
+[GCC 4.8.1]
+\end{code}
+where the lines between \cmd{foreign} and \cmd{end foreign} were sent
+literally to python and the result was displayed as if it were gretl's
+own output. It goes without saying that, in order for the above to
+work, python must be installed on your system and gretl should be
+configured appropriately to find it.
+
+Each of the possible partners to the \cmd{foreign} command has its own
+peculiarities and quirks, so in order to make effective use of this
+feature, you should read the appropriate chapters of the \GUG. One
+word of caution, however, applies generally: \textbf{execution is
+  synchronous}, so if the ``foreign'' programs hangs for some reason,
+your hansl script will, too. 
+\section{Tricks}
+\subsection{String substitution}
 \label{sec:stringsub}
 
 String variables can be used in two ways in hansl scripting: the name
