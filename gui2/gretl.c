@@ -71,7 +71,6 @@
 #endif
 
 /* update.c */
-extern int silent_update_query (void);
 extern int update_query (void); 
 
 /* functions private to gretl.c */
@@ -160,7 +159,6 @@ int data_status, orig_vars;
 float gui_scale;
 
 /* defaults for some options */
-int updater = FALSE;
 int winsize = FALSE;
 int main_x = -1;
 int main_y = -1;
@@ -808,11 +806,6 @@ int main (int argc, char **argv)
 	} else {
 	    do_open_script(EDIT_SCRIPT);
 	}
-    }
-
-    /* check for program updates? */
-    if (updater) {
-	silent_update_query(); 
     }
 
     /* try opening specified database or package */

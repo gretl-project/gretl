@@ -181,10 +181,6 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, sizeof paths.gretldir, TAB_MAIN, NULL },
     { "userdir", N_("User's gretl directory"), NULL, paths.workdir, 
       INVISET, sizeof paths.workdir, TAB_MAIN, NULL },
-#if 0 /* not working anyway */
-    { "updater", N_("Tell me about gretl updates"), NULL, &updater, 
-      BOOLSET, 0, TAB_MAIN, NULL },
-#endif
 #ifndef G_OS_WIN32
     { "winsize", N_("Remember main window size"), NULL, &winsize, 
       BOOLSET, 0, TAB_MAIN, NULL },

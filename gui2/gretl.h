@@ -108,7 +108,6 @@ extern char scriptfile[MAXLEN];
 extern char tryfile[MAXLEN];
 
 /* global option-related vars */
-extern int updater;
 extern int winsize;
 extern int main_x;
 extern int main_y;
