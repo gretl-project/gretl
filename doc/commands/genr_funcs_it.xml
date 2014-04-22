@@ -1400,6 +1400,57 @@
       </description>
     </function>
 
+    <function name="bread" section="data-utils" output="bundle">
+      <fnargs>
+    <fnarg type="string">nomefile</fnarg>
+    <fnarg optional="true" type="bool">import</fnarg>
+      </fnargs>
+      <description>
+    <para>
+      Legge un bundle da un file di testo. la stringa
+      <argname>nomefile</argname> deve contenere il nome del file da
+      cui deve essere letta il bundle. Se questo nome ha estensione
+      <quote><lit>.gz</lit></quote>, si assume che il file sia stato
+      creato con compressione gzip.
+    </para>
+    <para>
+      Il file in questione dev'essere un file XML appropriatamente
+      definito: esso deve contenere un elemento
+      <lit>gretl-bundle</lit>, usato a sua volta per contenere zero o
+      più elementi <lit>bundled-item</lit>. Ad esempio:
+    </para>
+    <code>
+      &lt;?xml version="1.0" encoding="UTF-8"?&gt;
+      &lt;gretl-bundle name="temp"&gt;
+        &lt;bundled-item key="s" type="string"&gt;moo&lt;/bundled-item&gt;
+        &lt;bundled-item key="x" type="scalar"&gt;3&lt;/bundled-item&gt;
+      &lt;/gretl-bundle&gt;
+    </code>
+    <para>
+      Come ci si può aspettare, file di questo tipo vengono generati
+      automaticamente dalla funzione complementare <fncref targ="bwrite"/>.
+    </para>
+    <para>
+      Se viene indicato un valore non nullo per l'argomento opzionale
+      <argname>import</argname>, la ricerca del file di input avviene
+      all'interno della directory <quote>dot</quote> dell'utente. In
+      questo caso l'argomento <argname>fname</argname> dovrebbe essere
+      semplicemente un nome di file, senza indicazione del percorso.
+    </para>
+    <para>
+      Se dovesse verificarsi un errore (per esempio dovuto al fatto
+      che il file è inaccessibile o mal formattato) l'accessore
+      <fncref targ="$error"/> risulterà non-zero.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="mread"/>
+        <fncref targ="bwrite"/>
+      </seelist>
+    </para>
+      </description>
+    </function>
+
     <function name="bwfilt" section="filters" output="series">
       <fnargs>
     <fnarg type="series">y</fnarg>
@@ -1426,6 +1477,39 @@
       <seelist>
         <fncref targ="bkfilt"/>
         <fncref targ="hpfilt"/>
+      </seelist>
+    </para>
+      </description>
+    </function>
+
+    <function name="bwrite" section="data-utils" output="int">
+      <fnargs>
+    <fnarg type="bundle">B</fnarg>
+    <fnarg type="string">fname</fnarg>
+    <fnarg optional="true" type="bool">export</fnarg>
+      </fnargs>
+      <description>
+    <para>
+      Copia il bundle <argname>B</argname> in un file XML di nome 
+      <argname>fname</argname>. Per una sommaria descrizione del suo
+      formato, si veda la funzione <fncref targ="bread"/>.
+      Se il file <argname>fname</argname> esiste già verrà sovrascritto.
+      Il valore restituito è 0 in caso l'esecuzione venga portata a termine
+      correttamente; se si verifica un errore, per esempio dovuto al
+      fatto che il file non può essere sovrascritto, il valore restituito 
+      sarà non nullo.
+    </para>
+    <para>
+      Se viene indicato un valore non nullo per l'argomento
+      <argname>export</argname>, il file di output sarà salvato nella
+      directory <quote>dot</quote> dell'utente. In questo caso è
+      necessario indicare come secondo argomento il nome del file
+      privo del percorso.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="bread"/>
+        <fncref targ="mwrite"/>
       </seelist>
     </para>
       </description>
@@ -4538,13 +4622,13 @@
 
     <function name="mread" section="matbuild" output="matrix">
       <fnargs>
-    <fnarg type="string">fname</fnarg>
+    <fnarg type="string">nomefile</fnarg>
     <fnarg optional="true" type="bool">import</fnarg>
       </fnargs>
       <description>
     <para>
       Legge una matrice da un file di testo. La stringa 
-      <argname>fname</argname> deve contenere il nome del file da cui
+      <argname>nomefile</argname> deve contenere il nome del file da cui
       deve essere letta la matrice. Se questo nome ha estensione 
       <quote><lit>.gz</lit></quote>, si assume che il file sia stato creato
       con compressione gzip.

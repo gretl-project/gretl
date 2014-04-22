@@ -1366,11 +1366,62 @@
       </description>
     </function>
 
+    <function name="bread" section="data-utils" output="bundle">
+      <fnargs>
+    <fnarg type="string">fname</fnarg>
+    <fnarg optional="true" type="bool">import</fnarg>
+      </fnargs>
+      <description>
+    <para>
+      Reads a bundle from a text file. The string
+      <argname>fname</argname> must contain the name of the file
+      from which the bundle is to be read. If this name has the
+      suffix <quote><lit>.gz</lit></quote> it is assumed that gzip
+      compression has been applied in writing the file.
+    </para>
+    <para>
+      The file in question should be an appropriately defined XML
+      file: it should contain a <lit>gretl-bundle</lit> element, which
+      is used to store zero or more <lit>bundled-item</lit>
+      elements. For example,
+    </para>
+    <code>
+      &lt;?xml version="1.0" encoding="UTF-8"?&gt;
+      &lt;gretl-bundle name="temp"&gt;
+        &lt;bundled-item key="s" type="string"&gt;moo&lt;/bundled-item&gt;
+        &lt;bundled-item key="x" type="scalar"&gt;3&lt;/bundled-item&gt;
+      &lt;/gretl-bundle&gt;
+    </code>
+    <para>
+      As you may expect, such files are generated automatically by the
+      companion function <fncref targ="bwrite"/>.
+    </para>
+    <para>
+      If a non-zero value is given for the optional
+      <argname>import</argname> argument, the input file is looked
+      for in the user's <quote>dot</quote> directory. In
+      this case the <argname>fname</argname> argument should be
+      a plain filename, without any path component.
+    </para>
+    <para>
+      Should an error occur (such as the file being badly formatted or
+      inaccessible), an error is returned via the <fncref
+      targ="$error"/> accessor.
+    </para>
+    <para>
+      <seelist>
+        <fncref targ="mread"/>
+        <fncref targ="bwrite"/>
+      </seelist>
+    </para>
+      </description>
+    </function>
+
     <function name="bwfilt" section="filters" output="series">
       <fnargs>
-    <fnarg type="series">y</fnarg>
-    <fnarg type="int">n</fnarg>
-    <fnarg type="scalar">omega</fnarg>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="scalar">omega</fnarg>
       </fnargs>
       <description>
     <para>
@@ -1393,6 +1444,38 @@
         <fncref targ="hpfilt"/>
       </seelist>
     </para>
+      </description>
+    </function>
+
+    <function name="bwrite" section="data-utils" output="int">
+      <fnargs>
+	<fnarg type="bundle">B</fnarg>
+	<fnarg type="string">fname</fnarg>
+	<fnarg optional="true" type="bool">export</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Writes the bundle <argname>B</argname> to an XML file named
+	  <argname>fname</argname>. For a summary description of its
+	  format, see <fncref targ="bread"/>. If file
+	  <argname>fname</argname> already exists, it will be
+	  overwritten. The return value is 0 on successful completion; if
+	  an error occurs, such as the file being unwritable, the return
+	  value will be non-zero.
+	</para>
+	<para>
+	  If a non-zero value is given for the <argname>export</argname>
+	  argument, the output file will be written into the user's
+	  <quote>dot</quote> directory. In this case a plain filename,
+	  without any path component, should be given for the second
+	  argument.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="bread"/>
+            <fncref targ="mwrite"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -4484,6 +4567,7 @@
     </para>
     <para>
       <seelist>
+        <fncref targ="bread"/>
         <fncref targ="mwrite"/>
       </seelist>
     </para>

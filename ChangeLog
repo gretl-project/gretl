@@ -1,7 +1,7 @@
 version 1.9.15, in progress
 - Introduce a new native binary datafile format, the gdtb file
   (zipped XML metadata plus binary values)
-- Add new functions: substr(), easterday()
+- Add new functions: bread(), bwrite(), substr(), easterday()
 - "summary" command: add --weights option
 - "tabprint" command: add --csv option
 - "fdjac" function: provide choice of algorithm	
@@ -38,7 +38,7 @@ version 1.9.15, in progress
   incorrect
 - Fix bug: incorrect estimates when the --robust option was
   used with the "wls" command
-- Fix bug 181
+- Fix bugs 181, 182
 - Internals: add support for multiple, independent PRNGs
 - configure script: add an option --disable-www which drops
   the libcurl dependency conditional on not building the
