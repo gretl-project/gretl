@@ -2040,18 +2040,13 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	}
     }
 
-    fprintf(stderr, "after local search, gotit = %d\n", gotit);
-
     if (!gotit) {
 	/* check for download location */
 	err = get_writable_doc_path(fullpath, fname);
 
-	fprintf(stderr, "writable_doc_path: err = %d\n", err);
-
 	/* do actual download */
 	if (!err) {
 	    err = retrieve_manfile(fname, fullpath);
-	    fprintf(stderr, "retrieve_manfile: err = %d\n", err);
 	}
 
 	if (err) {

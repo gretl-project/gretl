@@ -331,7 +331,7 @@ MOFILES = mo/de.po mo/el.mo mo/es.mo mo/eu.mo mo/fr.mo mo/it.mo mo/pl.mo \
 # targets begin
 
 all: buildstamp dirs dlls/libprob.dll dlls/libgretl.dll \
-	$(PLUGINS) gretlcli.exe gretl.exe $(MPICLI) $(MOFILES) $(GRETL_LANG) gretl_updater.exe
+	$(PLUGINS) gretlcli.exe gretl.exe $(MPICLI) $(MOFILES) $(GRETL_LANG)
 
 gretlcli.exe: $(CLIOBJ)
 	$(CC) -o $@ $^ $(LIBS) $(RL_LIBS) -lz -lmingwex -s
@@ -356,9 +356,6 @@ mklang.exe: mklang.o
 
 native_lang: mklang.exe
 	PATH=/bin:./dlls:/mingw/winbuild/misc-dll ./mklang.exe > gretl.lang
-
-gretl_updater.exe:
-	make -C updater
 
 $(MOFILES):
 	make -C mo
@@ -577,7 +574,6 @@ clean:
 	rm -f gretl.stamp gretl.lang builddate build.h
 	rm -f windist/MANIFEST windist/gretl.iss 
 	rm -rf windist/gretl windist/Output
-	make -C updater clean
 	make -C mo clean
 	make -C db clean
 

@@ -162,8 +162,9 @@ estimated via least squares.)
 diff y x
 ADL <- ols y const y(-1) x(0 to -1)
 ECM <- ols d_y const d_x y(-1) x(-1)
+# the following two values should be equal
 ssr_a = ADL.$ess
-ssr_e = ECM.$ess # should be equal
+ssr_e = ECM.$ess
 \end{code}
 
 \label{LastPage}

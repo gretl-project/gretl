@@ -54,7 +54,6 @@ void define_program_icons (void)
     printf("\n[Icons]\n");
     printf("Name: \"{group}\\gretl\"; Filename: \"{app}\\gretl.exe\"\n");
     printf("Name: \"{group}\\Gretl Web Site\"; Filename: \"{app}\\gretl_website.url\"\n");
-    printf("Name: \"{group}\\gretl updater\"; Filename: \"{app}\\gretl_updater.exe\"\n");
     printf("Name: \"{group}\\uninstall gretl\"; Filename: \"{app}\\unins000.exe\"\n");
     printf("Name: \"{userdesktop}\\gretl\"; Filename: \"{app}\\gretl.exe\"; WorkingDir: \"{app}\"\n");
 }

@@ -127,8 +127,7 @@ static void urlinfo_init (urlinfo *u,
 #endif
 }
 
-static void urlinfo_finalize (urlinfo *u, char **getbuf,
-			      int err)
+static void urlinfo_finalize (urlinfo *u, char **getbuf, int *err)
 {
     if (u->fp != NULL) {
 	fclose(u->fp); 
@@ -136,9 +135,15 @@ static void urlinfo_finalize (urlinfo *u, char **getbuf,
 	*getbuf = u->getbuf;
     }
 
-    if (err && u->localfile != NULL) {
+    if (*err && u->localfile != NULL) {
 	gretl_remove(u->localfile);
     }
+
+    if (u->saveopt == SAVE_TO_FILE || u->saveopt == SAVE_TO_BUFFER) {
+	if (u->datalen == 0) {
+	    *err = E_DATA;
+	}
+    }    
 }
 
 #ifdef STANDALONE
@@ -240,6 +245,9 @@ static size_t write_func (void *buf, size_t size, size_t nmemb,
     }
 
     if (u->saveopt == SAVE_TO_FILE) {
+#if WDEBUG > 1
+	fprintf(stderr, "SAVE_TO_FILE: using %s\n", u->localfile);
+#endif
 	if (u->fp == NULL) {
 	    u->fp = gretl_fopen(u->localfile, "wb");
 	    if (u->fp == NULL) {
@@ -356,7 +364,7 @@ static void maybe_revise_www_paths (void)
     }
 }
 
-static int gretl_curl_switch (int on)
+static int gretl_curl_toggle (int on)
 {
     static int init_done;
 
@@ -384,7 +392,7 @@ static int curl_get (urlinfo *u)
     CURLcode res;
     int err = 0;
 
-    err = gretl_curl_switch(1);
+    err = gretl_curl_toggle(1);
     if (err) {
 	return err;
     }
@@ -512,7 +520,7 @@ static int retrieve_url (const char *hostname,
 
     err = curl_get(&u);
 
-    urlinfo_finalize(&u, getbuf, err);
+    urlinfo_finalize(&u, getbuf, &err);
 
     return err;
 }
@@ -542,7 +550,7 @@ int gretl_www_init (const char *host, const char *proxy, int use_proxy)
 
 void gretl_www_cleanup (void)
 {
-    gretl_curl_switch(0);
+    gretl_curl_toggle(0);
 }
 
 int get_update_info (char **saver, time_t filedate, int queryopt)
@@ -565,7 +573,7 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
 
     err = curl_get(&u);
 
-    urlinfo_finalize(&u, saver, err);
+    urlinfo_finalize(&u, saver, &err);
 
     return err;
 }
@@ -598,7 +606,7 @@ int upload_function_package (const char *login, const char *pass,
     urlinfo_init(&u, gretlhost, saveopt, NULL);
     strcat(u.url, datacgi);
 
-    err = gretl_curl_switch(1);
+    err = gretl_curl_toggle(1);
     if (err) {
 	return err;
     }
@@ -857,7 +865,7 @@ int retrieve_public_file (const char *uri, char *localname)
 	    urlinfo_set_show_progress(&u);
 	}
 	err = curl_get(&u);
-	urlinfo_finalize(&u, NULL, err);
+	urlinfo_finalize(&u, NULL, &err);
     }
 
     if (err) {
@@ -896,7 +904,7 @@ char *retrieve_public_file_as_buffer (const char *uri, size_t *len,
 	urlinfo_init(&u, NULL, SAVE_TO_BUFFER, NULL);
 	strcpy(u.url, uri);
 	*err = curl_get(&u);
-	urlinfo_finalize(&u, &buf, *err);
+	urlinfo_finalize(&u, &buf, err);
 	*len = (*err)? 0 : u.datalen;
     }
 

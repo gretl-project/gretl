@@ -24,27 +24,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifdef WIN32
-
-static size_t get_bufsize (const char *buf)
-{
-    unsigned i, newsize = 0L;
-    int pos;
-    char line[60];
-
-    while ((pos = gretl_charpos('\n', buf)) > 0) {
-	strncpy(line, buf, pos);
-	line[pos] = 0;
-	sscanf(line, "%*s %u", &i);
-	newsize += i;
-	buf += pos + 1;
-    }
-
-    return newsize;
-}
-
-#endif /* WIN32 */
-
 /* E.g. Sun Mar 16 13:50:52 EST 2003 */
 
 static time_t get_time_from_stamp_file (const char *fname)
@@ -93,43 +72,6 @@ static time_t get_time_from_stamp_file (const char *fname)
     return mktime(&stime);
 }
 
-#ifdef WIN32
-
-static void maybe_fork_updater (char *msg)
-{
-    int resp;
-
-    resp = yes_no_dialog("gretl", msg, 0);
-
-    if (resp == GRETL_YES) {
-	const char *gretldir = gretl_home();
-	size_t n = strlen(gretldir);
-	gchar *ud;
-
-	if (gretldir[n-1] != SLASH) {
-	    ud = g_strdup_printf("%s\\gretl_updater.exe -g", gretldir);
-	} else {
-	    ud = g_strdup_printf("%sgretl_updater.exe -g", gretldir);
-	}
-	WinExec(ud, SW_SHOWNORMAL);
-	exit(EXIT_SUCCESS);
-    }
-}
-
-static void win_new_files_response (const char *buf)
-{
-    char infotxt[512];
-
-    sprintf(infotxt, _("New files are available from the gretl web site.\n"
-		       "These files have a combined size of %u bytes.\n\nWould "
-		       "you like to exit from gretl and update your installation now?\n"
-		       "(You can run gretl_updater.exe later if you prefer.)"),
-	    get_bufsize(buf));
-    maybe_fork_updater(infotxt);
-}
-
-#else
-
 static void new_files_response (int admin, const char *testfile,
 				const char *hometest)
 {
@@ -156,19 +98,15 @@ static void new_files_response (int admin, const char *testfile,
     infobox(infotxt);
 }
 
-#endif
-
 static int real_update_query (int queryopt)
 {
-    int err = 0;
     char *getbuf = NULL;
     char testfile[MAXLEN];
-#ifndef WIN32
-    int admin = 0;
     char hometest[MAXLEN];
-#endif
     struct stat fbuf;
     time_t filedate = (time_t) 0;
+    int admin = 0;
+    int err = 0;
 
     build_path(testfile, gretl_home(), "gretl.stamp", NULL);
 
@@ -178,18 +116,16 @@ static int real_update_query (int queryopt)
 	return 1;
     } else {
 	filedate = get_time_from_stamp_file(testfile);
-#ifndef WIN32
 	*hometest = '\0';
 	if (getuid() != fbuf.st_uid) { 
-	    /* user is not owner of gretl.stamp */
+	    /* the user is not the owner of gretl.stamp */
 	    build_path(hometest, gretl_dotdir(), "gretl.stamp", NULL);
-	    if (!gretl_stat(hometest, &fbuf)) {
+	    if (gretl_stat(hometest, &fbuf) == 0) {
 		filedate = get_time_from_stamp_file(hometest);
 	    }
 	} else {
 	    admin = 1;
 	}
-#endif /* !WIN32 */
     }
 
     if (filedate == (time_t) 0) {
@@ -206,11 +142,7 @@ static int real_update_query (int queryopt)
     if (strncmp(getbuf, "message:", 8) == 0) {
 	infobox(getbuf + 9);
     } else if (strncmp(getbuf, "No new", 6)) {
-#ifdef WIN32
-	win_new_files_response(getbuf);
-#else
 	new_files_response(admin, testfile, hometest);
-#endif 
     } else if (queryopt == QUERY_VERBOSE) {
 	infobox(_("No new files"));
     }
