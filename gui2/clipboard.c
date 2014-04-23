@@ -136,23 +136,8 @@ static void pasteboard_set (int fmt)
     if (fp == NULL) {
 	errbox("Couldn't open pbcopy");
     } else {
-	char *save_locale = NULL;
-
-	if (gretl_is_ascii(clipboard_buf)) {
-	    /* FIXME: and if it's not? Make this specific to the
-	       Japanese locale? 
-	    */
-	    save_locale = gretl_strdup(setlocale(LC_CTYPE, NULL));
-	    setlocale(LC_CTYPE, "C");
-	}
-
 	fputs(clipboard_buf, fp);
 	pclose(fp);
-
-	if (save_locale != NULL) {
-	    setlocale(LC_CTYPE, save_locale);
-	    free(save_locale);
-	}
     }
 }
 

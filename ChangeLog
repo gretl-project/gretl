@@ -1,10 +1,12 @@
 version 1.9.15, in progress
+- Help menu: add item for the new "hansl primer" which covers
+  the basics of gretl's scripting language
 - Introduce a new native binary datafile format, the gdtb file
   (zipped XML metadata plus binary values)
 - Add new functions: bread(), bwrite(), substr(), easterday()
 - "summary" command: add --weights option
 - "tabprint" command: add --csv option
-- "fdjac" function: provide choice of algorithm	
+- fdjac function: provide choice of algorithm	
 - Enable use of arrays in the SFMT random number generator
 - Enable use of value labels (if any) in factorized boxplots
 - Enable use of named lists in the GMM() and GMMlevel() 
@@ -41,7 +43,7 @@ version 1.9.15, in progress
 - Fix bugs 181, 182
 - Internals: add support for multiple, independent PRNGs
 - configure script: add an option --disable-www which drops
-  the libcurl dependency conditional on not building the
+  the libcurl dependency, conditional on not building the
   GUI program
 - win32 build: update gmp to 5.1.3, mpfr to 3.1.2
 	
