@@ -490,17 +490,19 @@ int do_modprint (const char *line, gretlopt opt, PRN *prn)
     }
 
     if (!err) {
+	PrnFormat fmt = GRETL_FORMAT_TXT;
+
 	if (opt & OPT_C) {
-	    gretl_print_set_format(prn, GRETL_FORMAT_CSV);
+	    fmt = GRETL_FORMAT_CSV;
 	} else if (opt & OPT_R) {
-	    gretl_print_set_format(prn, GRETL_FORMAT_RTF);
+	    fmt = GRETL_FORMAT_RTF;
 	} else if (opt & OPT_T) {
+	    fmt = GRETL_FORMAT_TEX;
 	    if (opt & OPT_O) {
-		gretl_print_set_format(prn, GRETL_FORMAT_TEX | GRETL_FORMAT_DOC);
-	    } else {
-		gretl_print_set_format(prn, GRETL_FORMAT_TEX);
+		fmt |= GRETL_FORMAT_DOC;
 	    }
 	}
+	gretl_print_set_format(prn, fmt);
 	err = print_model_from_matrices(coef_se, addstats, parnames, prn);
     }
 
