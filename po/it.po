@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.15\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-04-23 17:55+0100\n"
-"PO-Revision-Date: 2014-02-11 10:38+0100\n"
+"PO-Revision-Date: 2014-04-24 00:46+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1482,9 +1482,8 @@ msgstr "Memoria esaurita!"
 
 #: lib/src/dbread.c:1711 lib/src/gretl_string_table.c:837
 #: lib/src/interact.c:4464 cli/gretlcli.c:711
-#, fuzzy
 msgid "Internet access not supported"
-msgstr "la frequenza %d non è supportata"
+msgstr "Manca l'accesso a Internet"
 
 #: lib/src/dbread.c:1891 lib/src/subsample.c:1816 lib/src/subsample.c:1833
 msgid "error reading smpl line"
@@ -2224,13 +2223,12 @@ msgid "Generated series %s (ID %d)"
 msgstr "Generata la serie %s (ID %d)"
 
 #: lib/src/geneval.c:1494 lib/src/gretl_foreign.c:99
-#, fuzzy
 msgid "MPI is not supported in this gretl build"
-msgstr "%s: localizzazione non supportata su questo sistema"
+msgstr "MPI non è supportato su questo sistema"
 
 #: lib/src/geneval.c:1504
 msgid "The MPI library is not loaded"
-msgstr ""
+msgstr "La libreria MPI non è caricata"
 
 #: lib/src/geneval.c:3934 lib/src/interact.c:1598
 #, c-format
@@ -2987,13 +2985,12 @@ msgid "no such item"
 msgstr "nessun elemento di questo tipo"
 
 #: lib/src/gretl_bundle.c:1495
-#, fuzzy
 msgid "xmlParseMemory failed"
-msgstr "xmlParseFile fallito su %s"
+msgstr "xmlParseMemory fallito"
 
 #: lib/src/gretl_bundle.c:1501
 msgid "xmlDocGetRootElement failed"
-msgstr ""
+msgstr "xmlDocGetRootElement fallito"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3190,9 +3187,8 @@ msgid "Warning"
 msgstr "Attenzione"
 
 #: lib/src/gretl_foreign.c:93
-#, fuzzy
 msgid "MPI is already initialized"
-msgstr "Il modello è già salvato"
+msgstr "MPI già inizialiazzato"
 
 #: lib/src/gretl_func.c:2407 lib/src/gretl_func.c:2467
 #: lib/src/gretl_func.c:2543 lib/src/gretl_utils.c:1639
@@ -3479,9 +3475,8 @@ msgid "failed"
 msgstr "fallito"
 
 #: lib/src/gretl_model.c:3809
-#, fuzzy
 msgid "parameter"
-msgstr "Parametro"
+msgstr "parametro"
 
 #: lib/src/gretl_model.c:3813 gui2/calculator.c:2006
 msgid "dfn"
@@ -4402,9 +4397,9 @@ msgid "Pseudo-random number generator seeded with %d\n"
 msgstr "Scelto %d come seme per il generatore di numeri pseudocasuali\n"
 
 #: lib/src/libset.c:1771
-#, fuzzy, c-format
+#, c-format
 msgid "set: unknown variable '%s'"
-msgstr "Variabile ignota '%s'"
+msgstr "set: variabile ignota '%s'"
 
 #: lib/src/matrix_extra.c:852
 msgid "Non-positive values encountered"
@@ -5711,7 +5706,7 @@ msgstr "Raggiunto il massimo numero di iterazioni, %d"
 
 #: lib/src/monte_carlo.c:1931
 msgid "progressive loop: model must be of constant size"
-msgstr ""
+msgstr "loop con opzione \"progressive\": il modello deve avere dimensione costante"
 
 #: lib/src/monte_carlo.c:2143
 msgid "Sorry, this command is not available in loop mode"
@@ -11580,7 +11575,7 @@ msgstr "Scelte rapide da tastiera"
 
 #: gui2/gretl.c:1812
 msgid "_Hansl primer"
-msgstr ""
+msgstr "Introduzione ad Hansl (in inglese)"
 
 #: gui2/gretl.c:1813
 msgid "Check for _updates"
@@ -14904,18 +14899,16 @@ msgid "Path to Python executable"
 msgstr "Percorso per l'eseguibile python"
 
 #: gui2/settings.c:273
-#, fuzzy
 msgid "Path to mpiexec"
-msgstr "Path di Rterm.exe"
+msgstr "Path di mpiexec"
 
 #: gui2/settings.c:275
 msgid "Path to MPI hosts file"
-msgstr ""
+msgstr "Percorso del file di host per MPI"
 
 #: gui2/settings.c:277
-#, fuzzy
 msgid "Installed MPI variant"
-msgstr "tutte le varianti"
+msgstr "variante MPI installata"
 
 #: gui2/settings.c:280
 msgid "Database server name"
@@ -15011,7 +15004,7 @@ msgstr "Programmi"
 
 #: gui2/settings.c:1193
 msgid "MPI"
-msgstr ""
+msgstr "MPI"
 
 #: gui2/settings.c:1195
 msgid "HCCME"
@@ -15295,9 +15288,8 @@ msgid "No undo information available"
 msgstr "Mancano informazioni per annullare"
 
 #: gui2/textbuf.c:1004
-#, fuzzy
 msgid "processing...\n"
-msgstr "_Apri sessione..."
+msgstr "elaborazione in corso...\n"
 
 #: gui2/textbuf.c:1543
 msgid "Gretl Command Reference"
