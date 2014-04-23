@@ -1,25 +1,23 @@
 
-\chapter{Further topics}
+\chapter{Going abroad}
 % \section{The \texttt{set} command}
 % \label{chap:settings}
 
 % \section{Function packages}
-
-\section{Going abroad}
 
 Gretl is designed to interact as nicely as possible with other
 programs which are likely to be of interest to the applied
 econometrician. Most of the infrastructure that gretl provides for
 this purpose carries over to hansl.
 
-\subsection{Interaction with the underlying OS}
+\section{Interaction with the underlying OS}
 
 You can run external commands from a hansl script via the \cmd{launch}
-and \cmd{!} commands\footnote{Yes, that is an exclamation mark}. They
-both pass the subsequent string to the OS to be run asynchronously
-and synchronously, respectively.
+and \cmd{!} commands.\footnote{Yes, that is an exclamation mark.} They
+both pass the subsequent string to the OS, to be run asynchronously
+or synchronously, respectively.
 
-For example, on Unix-like systems (Linux and OSX), the code
+For example, on Unix-like systems (Linux and OS X), the code
 \begin{code}
 ! echo "a(1) * 4" | bc -l && echo "Thats's pi!"
 \end{code}
@@ -34,7 +32,19 @@ Thats's pi!
 If you feel playful, try \texttt{launch xeyes} on a system with X11
 enabled.
 
-\subsection{\LaTeX{} and \app{gnuplot}}
+\section{\LaTeX{} and \app{gnuplot}}
+
+\LaTeX{} and \textsf{gnuplot} are both called by gretl in various GUI
+contexts (e.g.\ displaying estimation results in nicely typeset form,
+and displaying plots). It is also possible to exploit their
+functionality via hansl scripting. 
+
+As regards \LaTeX, the relevant commands are \cmd{tabprint} and
+\cmd{modprint}. The first of these is used to generate a tabular
+representation of the results from the last estimation command. As the 
+\GCR\ details, this can be directed to a named file and the 
+particulars of the \TeX\ output can be controlled (to an extent) via
+the option flags \option{complete} and \option{format}.
 
 FIXME: TODO
 
@@ -45,25 +55,17 @@ FIXME: TODO
   command with the \option{input} and \option{output} options.
 \end{itemize}
 
-\subsection{The \cmd{foreign} block}
+\section{The \cmd{foreign} block}
 
-It is possible to embed ``foreign'' code in a hansl script and pass it
-to the appropriate program, so to outsource certain operations to
-other software and collect the results back.
+It is possible to embed ``foreign'' code in a hansl script and have it
+passed to the appropriate program, so as to outsource certain
+operations to other software and collect the results back.
 
-While we have to defer the reader to the \GUG\ for a comprehensive
-description of this feature, an extremely concise description could be
-the following: hansl recognizes as possible counterparts the following
-list of external programs:
-\begin{itemize}
-\item R
-\item Matlab and its dialects (\emph{e.g.}~ Octave)
-\item Ox
-\item Python
-\item Stata
-\end{itemize}
-
-For example, the following piece of code
+While we have to refer the reader to the \GUG\ for a comprehensive
+description of this feature, in a nutshell hansl recognizes as
+possible counterparts the following external programs: \textsf{R},
+\textsf{Octave}, \textsf{Ox}, \textsf{Python} and \textsf{Stata}.  For
+example, the following piece of code
 \begin{code}
 foreign language=python
 	import sys
@@ -76,20 +78,34 @@ should yield something like
 [GCC 4.8.1]
 \end{code}
 where the lines between \cmd{foreign} and \cmd{end foreign} were sent
-literally to python and the result was displayed as if it were gretl's
-own output. It goes without saying that, in order for the above to
-work, python must be installed on your system and gretl should be
-configured appropriately to find it.
+literally to \textsf{python} and the result was displayed as if it
+were gretl's own output. It goes without saying that, in order for the
+above to work, \textsf{python} must be installed on your system and
+gretl should be configured appropriately to find
+it.\footnote{Configuration is done via the gretl GUI, under the
+\textsf{Preferences} menu.}
 
-Each of the possible partners to the \cmd{foreign} command has its own
+Each of the possible targets of the \cmd{foreign} command has its own
 peculiarities and quirks, so in order to make effective use of this
-feature, you should read the appropriate chapters of the \GUG. One
-word of caution, however, applies generally: \textbf{execution is
+feature you should read the appropriate chapters of the \GUG. One word
+of caution, however, applies generally: \emph{execution is
   synchronous}, so if the ``foreign'' programs hangs for some reason,
-your hansl script will, too. 
-\section{Tricks}
-\subsection{String substitution}
+your hansl script will, too.
+
+\chapter{Tricks}
+
+\section{String substitution}
 \label{sec:stringsub}
+
+\textsl{This section comes with a health warning. ``String
+  substitution'' affords great flexibility, and is part of the current
+  hansl idiom, but carries a significant cost in terms of efficiency;
+  it is no accident that this mechanism is not supported by
+  ``serious'' programming languages. It is likely that in future we
+  will provide alternative methods for achieving effects that at
+  present can only be achieved by string substitution, and if so we
+  may remove this facility altogether. That said, let's take a look at
+  the current state of affairs\dots{}}
 
 String variables can be used in two ways in hansl scripting: the name
 of the variable can be typed ``as is'', or it may be preceded by the
@@ -98,8 +114,8 @@ treated as a variable in its own right, while the second calls for
 ``string substitution''. Which of these variants is appropriate
 depends on the context.
 
-In the following contexts the names of string variables should be
-given in plain form (without the ``at'' sign):
+In the following contexts the names of string variables should always
+be given in plain form (without the ``at'' sign):
 
 \begin{itemize}
 \item When such a variable appears among the arguments to the
@@ -108,8 +124,8 @@ given in plain form (without the ``at'' sign):
 \item On the right-hand side of a \texttt{string} assignment.
 \end{itemize}
 
-Here is an illustration of the use of a named string argument with
-\texttt{printf}:
+Here is an illustration of (interactive) use of a named string
+argument with \texttt{printf}:
 %
 \begin{code}
 ? string vstr = "variance"
@@ -151,7 +167,7 @@ options used with a particular command to vary depending on
 some condition. For example,
 %
 \begin{code}
-function void use_optstr (series y, list xlist, int verbose)
+function void use_optstr (series y, list xlist, bool verbose)
    string optstr = verbose ? "" : "--simple-print"
    ols y xlist @optstr 
 end function
@@ -174,7 +190,7 @@ string s = "Just testing"
 print s
 \end{code}
 %
-The following variant is equivalent, though clumsy and not
+The following variant is equivalent, though clumsy and definitely not
 recommended.
 %
 \begin{code}
@@ -195,17 +211,8 @@ After string substitution, the command reads
 print Just testing
 \end{code}
 %
-which is taken as a request to print the values of two variables,
-\texttt{Just} and \texttt{testing}.
-
-\subsection{Performance hint}
-
-Warning: gretl attempts to speed up execution of assignment
-expressions within loops by ``pre-compiling'' the expression.
-However, if such an expression contains string substitution it cannot
-be pre-compiled. So be sure to use the \verb|@| operator only when
-strictly necessary if you want to avoid a performance penalty.
-
+which would be taken as a request to print the values of two
+variables, \texttt{Just} and \texttt{testing}.
 
 \label{LastPage}
 
