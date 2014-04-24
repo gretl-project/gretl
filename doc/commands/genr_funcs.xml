@@ -6162,10 +6162,9 @@
     </para>
     <para>
       In the case where <argname>fname</argname> starts with the
-      indentifier of a supported internet protocol
-      (<lit>http://</lit>, <lit>ftp://</lit>,
-      <lit>https://</lit>), libcurl is invoked to download the
-      resource.
+      identifier of a supported internet protocol (<lit>http://</lit>,
+      <lit>ftp://</lit>, <lit>https://</lit>), libcurl is invoked to
+      download the resource.
     </para>
     <para>
       If the text to be read is not encoded in UTF-8, gretl will
