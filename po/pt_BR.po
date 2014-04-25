@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-04-23 17:55+0100\n"
-"PO-Revision-Date: 2014-02-24 23:45-0300\n"
+"PO-Revision-Date: 2014-04-24 21:46-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.6.4\n"
+"X-Generator: Poedit 1.5.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -1401,7 +1401,7 @@ msgstr "O conjunto de dados encontra-se sub-amostrado.\n"
 #: lib/src/dataset.c:2883
 #, c-format
 msgid "Dataset extended by %d observations"
-msgstr "Conjunto de dados extendido com %d observações"
+msgstr "Conjunto de dados estendido com %d observações"
 
 #: lib/src/dataset.c:3157
 #, c-format
@@ -1483,9 +1483,8 @@ msgstr "Memória esgotada!"
 
 #: lib/src/dbread.c:1711 lib/src/gretl_string_table.c:837
 #: lib/src/interact.c:4464 cli/gretlcli.c:711
-#, fuzzy
 msgid "Internet access not supported"
-msgstr "a frequência %d não é suportada"
+msgstr "Acesso à internet não suportado"
 
 #: lib/src/dbread.c:1891 lib/src/subsample.c:1816 lib/src/subsample.c:1833
 msgid "error reading smpl line"
@@ -2222,13 +2221,12 @@ msgid "Generated series %s (ID %d)"
 msgstr "Gerou-se a série temporal %s (ID %d)"
 
 #: lib/src/geneval.c:1494 lib/src/gretl_foreign.c:99
-#, fuzzy
 msgid "MPI is not supported in this gretl build"
-msgstr "%s: indioma não suportado por este sistema"
+msgstr "MPI não é suportado nessa compilação do Gretl"
 
 #: lib/src/geneval.c:1504
 msgid "The MPI library is not loaded"
-msgstr ""
+msgstr "A biblioteca MPI não está carregada"
 
 #: lib/src/geneval.c:3934 lib/src/interact.c:1598
 #, c-format
@@ -2982,13 +2980,12 @@ msgid "no such item"
 msgstr "esse item não existe"
 
 #: lib/src/gretl_bundle.c:1495
-#, fuzzy
 msgid "xmlParseMemory failed"
-msgstr "xmlParseFile falhou em %s"
+msgstr "xmlParseMemory falhou"
 
 #: lib/src/gretl_bundle.c:1501
 msgid "xmlDocGetRootElement failed"
-msgstr ""
+msgstr "xmlDocGetRootElement falhou"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3183,9 +3180,8 @@ msgid "Warning"
 msgstr "Aviso"
 
 #: lib/src/gretl_foreign.c:93
-#, fuzzy
 msgid "MPI is already initialized"
-msgstr "O modelo já foi gravado"
+msgstr "MPI já foi inicializado"
 
 #: lib/src/gretl_func.c:2407 lib/src/gretl_func.c:2467
 #: lib/src/gretl_func.c:2543 lib/src/gretl_utils.c:1639
@@ -3469,9 +3465,8 @@ msgid "failed"
 msgstr "falhou"
 
 #: lib/src/gretl_model.c:3809
-#, fuzzy
 msgid "parameter"
-msgstr "Parâmetros: "
+msgstr "parâmetro"
 
 #: lib/src/gretl_model.c:3813 gui2/calculator.c:2006
 msgid "dfn"
@@ -4404,7 +4399,7 @@ msgstr "Gerador de números pseudo-aleatórios com semente %d\n"
 #: lib/src/libset.c:1771
 #, fuzzy, c-format
 msgid "set: unknown variable '%s'"
-msgstr "Variável '%s' desconhecida"
+msgstr "set: variável '%s' desconhecida"
 
 #: lib/src/matrix_extra.c:852
 msgid "Non-positive values encountered"
@@ -5703,7 +5698,7 @@ msgstr "Atingido o máximo de iterações, %d"
 
 #: lib/src/monte_carlo.c:1931
 msgid "progressive loop: model must be of constant size"
-msgstr ""
+msgstr "Ciclo de comandos progressivo: modelo deve ser de tamanho constante"
 
 #: lib/src/monte_carlo.c:2143
 msgid "Sorry, this command is not available in loop mode"
@@ -6087,7 +6082,7 @@ msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
 msgstr ""
-"Não é possível fazerr: o conjunto de dados atual é diferente daquele\n"
+"Não é possível fazer: o conjunto de dados atual é diferente daquele\n"
 "a partir do qual o modelo de referência foi estimado\n"
 
 #: lib/src/options.c:1010 lib/src/options.c:1364
@@ -7403,7 +7398,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 23 de outubro de 2013."
+"Tradução de 24 de abril de 2014."
 
 #: gui2/about.c:194
 msgid "License"
@@ -11162,7 +11157,6 @@ msgid "_Time trend"
 msgstr "_Tendência temporal"
 
 #: gui2/gretl.c:1684
-#, fuzzy
 msgid "_Panel unit index"
 msgstr "Índice de unidade de _painel"
 
@@ -11576,7 +11570,7 @@ msgstr "Atalhos de _teclados"
 
 #: gui2/gretl.c:1812
 msgid "_Hansl primer"
-msgstr ""
+msgstr "Introdução ao _Hansl"
 
 #: gui2/gretl.c:1813
 msgid "Check for _updates"
@@ -12473,7 +12467,7 @@ msgid ""
 "this model was estimated?"
 msgstr ""
 "A amostra do modelo difere da amostra do conjunto de dados,\n"
-"por isto algumas opções do menu serão desabilitadas.\n"
+"por isto algumas opções do menu serão desabilitaras.\n"
 "\n"
 "Deseja restaurar a amostra utilizada na estimação deste\n"
 "modelo?"
@@ -14876,18 +14870,16 @@ msgid "Path to Python executable"
 msgstr "Caminho para executável Python"
 
 #: gui2/settings.c:273
-#, fuzzy
 msgid "Path to mpiexec"
-msgstr "Caminho para Rterm.exe"
+msgstr "Caminho para mpiexec"
 
 #: gui2/settings.c:275
 msgid "Path to MPI hosts file"
-msgstr ""
+msgstr "Caminho para arquivos hospedeiros MPI"
 
 #: gui2/settings.c:277
-#, fuzzy
 msgid "Installed MPI variant"
-msgstr "todas as variantes"
+msgstr "Variante MPI instalada"
 
 #: gui2/settings.c:280
 msgid "Database server name"
@@ -14985,7 +14977,7 @@ msgstr "Programas"
 
 #: gui2/settings.c:1193
 msgid "MPI"
-msgstr ""
+msgstr "MPI"
 
 #: gui2/settings.c:1195
 msgid "HCCME"
@@ -15269,9 +15261,8 @@ msgid "No undo information available"
 msgstr "Sem informação para desfazer"
 
 #: gui2/textbuf.c:1004
-#, fuzzy
 msgid "processing...\n"
-msgstr "_Abrir sessão..."
+msgstr "processando...\n"
 
 #: gui2/textbuf.c:1543
 msgid "Gretl Command Reference"
