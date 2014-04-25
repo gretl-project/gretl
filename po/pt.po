@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-04-23 17:55+0100\n"
-"PO-Revision-Date: 2014-04-07 12:18+0100\n"
+"PO-Revision-Date: 2014-04-25 23:09+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -1482,9 +1482,8 @@ msgstr "Memória esgotada!"
 
 #: lib/src/dbread.c:1711 lib/src/gretl_string_table.c:837
 #: lib/src/interact.c:4464 cli/gretlcli.c:711
-#, fuzzy
 msgid "Internet access not supported"
-msgstr "a frequência %d não é suportada"
+msgstr "Não é suportado o acesso à Internet"
 
 #: lib/src/dbread.c:1891 lib/src/subsample.c:1816 lib/src/subsample.c:1833
 msgid "error reading smpl line"
@@ -2221,13 +2220,12 @@ msgid "Generated series %s (ID %d)"
 msgstr "Gerou-se a série %s (ID %d)"
 
 #: lib/src/geneval.c:1494 lib/src/gretl_foreign.c:99
-#, fuzzy
 msgid "MPI is not supported in this gretl build"
-msgstr "%s: linguagem não suportada neste sistema"
+msgstr "Esta produção de gretl não tem suporte a MPI"
 
 #: lib/src/geneval.c:1504
 msgid "The MPI library is not loaded"
-msgstr ""
+msgstr "A biblioteca MPI não foi carregada"
 
 #: lib/src/geneval.c:3934 lib/src/interact.c:1598
 #, c-format
@@ -2979,13 +2977,12 @@ msgid "no such item"
 msgstr "item inexistente"
 
 #: lib/src/gretl_bundle.c:1495
-#, fuzzy
 msgid "xmlParseMemory failed"
-msgstr "xmlParseFile falhou em %s"
+msgstr "falhou xmlParseMemory"
 
 #: lib/src/gretl_bundle.c:1501
 msgid "xmlDocGetRootElement failed"
-msgstr ""
+msgstr "falhou xmlDocGetRootElement"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3181,9 +3178,8 @@ msgid "Warning"
 msgstr "Aviso"
 
 #: lib/src/gretl_foreign.c:93
-#, fuzzy
 msgid "MPI is already initialized"
-msgstr "O modelo já foi gravado"
+msgstr "MPI já está inicializado"
 
 #: lib/src/gretl_func.c:2407 lib/src/gretl_func.c:2467
 #: lib/src/gretl_func.c:2543 lib/src/gretl_utils.c:1639
@@ -3468,9 +3464,8 @@ msgid "failed"
 msgstr "falhou"
 
 #: lib/src/gretl_model.c:3809
-#, fuzzy
 msgid "parameter"
-msgstr "Parâmetros: "
+msgstr "parâmetro"
 
 #: lib/src/gretl_model.c:3813 gui2/calculator.c:2006
 msgid "dfn"
@@ -4406,9 +4401,9 @@ msgid "Pseudo-random number generator seeded with %d\n"
 msgstr "Gerador de números pseudo-aleatórios com semente %d\n"
 
 #: lib/src/libset.c:1771
-#, fuzzy, c-format
+#, c-format
 msgid "set: unknown variable '%s'"
-msgstr "Variável '%s' desconhecida"
+msgstr "set: variável '%s' desconhecida"
 
 #: lib/src/matrix_extra.c:852
 msgid "Non-positive values encountered"
@@ -5707,7 +5702,7 @@ msgstr "Atingido o máximo de iterações, %d"
 
 #: lib/src/monte_carlo.c:1931
 msgid "progressive loop: model must be of constant size"
-msgstr ""
+msgstr "progressive loop: o modelo tem que ser de tamanho constante"
 
 #: lib/src/monte_carlo.c:2143
 msgid "Sorry, this command is not available in loop mode"
@@ -7409,7 +7404,8 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 7 de abril de 2014."
+"Tradução de 25 de abril de 2014.\n"
+"(Vivam os 40 anos de Liberdade!)"
 
 #: gui2/about.c:194
 msgid "License"
@@ -11581,7 +11577,7 @@ msgstr "Atalhos de _Teclado"
 
 #: gui2/gretl.c:1812
 msgid "_Hansl primer"
-msgstr ""
+msgstr "Introdução ao _Hansl"
 
 #: gui2/gretl.c:1813
 msgid "Check for _updates"
@@ -14885,18 +14881,16 @@ msgid "Path to Python executable"
 msgstr "Caminho para o executável Python"
 
 #: gui2/settings.c:273
-#, fuzzy
 msgid "Path to mpiexec"
-msgstr "Caminho para Rterm.exe"
+msgstr "Caminho para mpiexec"
 
 #: gui2/settings.c:275
 msgid "Path to MPI hosts file"
-msgstr ""
+msgstr "Caminho para o ficheiro de anfitriões MPI"
 
 #: gui2/settings.c:277
-#, fuzzy
 msgid "Installed MPI variant"
-msgstr "todas as variantes"
+msgstr "Variante MPI instalada"
 
 #: gui2/settings.c:280
 msgid "Database server name"
@@ -14994,7 +14988,7 @@ msgstr "Programas"
 
 #: gui2/settings.c:1193
 msgid "MPI"
-msgstr ""
+msgstr "MPI"
 
 #: gui2/settings.c:1195
 msgid "HCCME"
@@ -15278,9 +15272,8 @@ msgid "No undo information available"
 msgstr "Sem informação para \"desfazer\""
 
 #: gui2/textbuf.c:1004
-#, fuzzy
 msgid "processing...\n"
-msgstr "_Abrir Sessão..."
+msgstr "processando...\n"
 
 #: gui2/textbuf.c:1543
 msgid "Gretl Command Reference"
