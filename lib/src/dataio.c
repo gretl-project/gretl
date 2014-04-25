@@ -528,45 +528,6 @@ int get_subperiod (int t, const DATASET *dset, int *err)
     return ret;    
 }
 
-static int alt_get_dec_places (const double *x, int n, int d)
-{
-    char *s, numstr[32];
-    int dmin = 100, dmax = 0;
-    int dt, t;
-
-    /* see if we get (close to) a common number of decimal places if we
-       print to precision @d without forcing the inclusion of trailing
-       zeros
-    */
-
-    gretl_push_c_numeric_locale();
-
-    for (t=0; t<n; t++) {
-	sprintf(numstr, "%.*g", d, x[t]);
-	s = strrchr(numstr, '.');
-	if (s != NULL && strchr(numstr, 'e') == NULL) {
-	    dt = strlen(s) - 1;
-	    if (dt < dmin) {
-		dmin = dt;
-	    } 
-	    if (dt > dmax) {
-		dmax = dt;
-	    }
-	} else {
-	    dmin = dmax = 0;
-	    break;
-	}
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    if (dmin > 0 && dmax > 0 && dmax - dmin < 2) {
-	return dmax;
-    } else {
-	return 0;
-    }
-}
-
 /**
  * get_precision:
  * @x: data vector.
@@ -608,14 +569,6 @@ int get_precision (const double *x, int n, int placemax)
 
     if (n_ok == 0) {
 	return PMAX_NOT_AVAILABLE;
-    }
-
-    if (placemax >= 10 && placemax < 24) {
-	/* interpret @placemax as number of significant digits */
-	p = alt_get_dec_places(x, n, placemax);
-	if (p > 0) {
-	    return p;
-	}
     }
 
     for (t=0; t<n; t++) {
@@ -815,8 +768,8 @@ void date_maj_min (int t, const DATASET *dset, int *maj, int *min)
 #define TMPLEN 64
 
 static void csv_data_out (const DATASET *dset, const int *list,
-			  int print_obs, int digits, int *pmax, 
-			  char decpoint, char delim, FILE *fp)
+			  int print_obs, int digits, char decpoint, 
+			  char delim, FILE *fp)
 {
     const char *NA = get_csv_na_write_string();
     char tmp[TMPLEN];
@@ -856,10 +809,8 @@ static void csv_data_out (const DATASET *dset, const int *list,
 		    strncat(tmp, series_get_string_for_obs(dset, vi, t), 
 			    TMPLEN - 3);
 		    strcat(tmp, "\"");
-		} else if (NO_PMAX(pmax, i)) {
-		    sprintf(tmp, "%.*g", digits, xt);
 		} else {
-		    sprintf(tmp, "%.*f", pmax[i-1], xt);
+		    sprintf(tmp, "%.*g", digits, xt);
 		}
 		if (dotsub) {
 		    gretl_charsub(tmp, '.', ',');
@@ -891,7 +842,7 @@ static int markers_are_unique (const DATASET *dset)
 }
 
 static void R_data_out (const DATASET *dset, const int *list,
-			int digits, int *pmax, FILE *fp)
+			int digits, FILE *fp)
 {
     int print_markers = 0;
     double xt;
@@ -912,17 +863,15 @@ static void R_data_out (const DATASET *dset, const int *list,
 		fputs("NA", fp);
 	    } else if (is_string_valued(dset, vi)) {
 		fprintf(fp, "\"%s\"", series_get_string_for_obs(dset, vi, t));
-	    } else if (NO_PMAX(pmax, i)) {
-		fprintf(fp, "%.*g", digits, xt);
 	    } else {
-		fprintf(fp, "%.*f", pmax[i-1], xt);
+		fprintf(fp, "%.*g", digits, xt);
 	    }
 	    fputc(i < list[0] ? ' ' : '\n', fp);
 	}
     }
 }
 
-#define DEFAULT_CSV_DIGITS 12
+#define DEFAULT_CSV_DIGITS 15
 
 static int real_write_data (const char *fname, int *list, const DATASET *dset, 
 			    gretlopt opt, int progress, PRN *prn)
@@ -930,12 +879,10 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
     int i, t, v, l0;
     GretlDataFormat fmt;
     char datfile[MAXLEN];
-    int tsamp = sample_size(dset);
     int n = dset->n;
     int pop_locale = 0;
     char delim = 0;
     FILE *fp = NULL;
-    int *pmax = NULL;
     int freelist = 0;
     int csv_digits = 0;
     int add_ext = 0;
@@ -990,15 +937,6 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
     csv_digits = libset_get_int(CSV_DIGITS);
 
     if (csv_digits <= 0) {
-	/* the user has not overriden the default */
-	pmax = malloc(l0 * sizeof *pmax);
-	if (pmax != NULL) {
-	    for (i=0; i<l0; i++) {
-		v = list[i+1];
-		pmax[i] = get_precision(&dset->Z[v][dset->t1], tsamp, 
-					DEFAULT_CSV_DIGITS);
-	    }
-	}
 	csv_digits = DEFAULT_CSV_DIGITS;
     }
 
@@ -1041,7 +979,7 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 	    fprintf(fp, "%s\n", dset->varname[list[l0]]);
 	}
 
-	csv_data_out(dset, list, print_obs, csv_digits, pmax, 
+	csv_data_out(dset, list, print_obs, csv_digits,
 		     decpoint, delim, fp);
     } else if (fmt == GRETL_FMT_R) { 
 	/* GNU R dataframe */
@@ -1058,7 +996,7 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 	}
 	fprintf(fp, "%s\n", dset->varname[list[l0]]);
 
-	R_data_out(dset, list, csv_digits, pmax, fp);
+	R_data_out(dset, list, csv_digits, fp);
     } else if (fmt == GRETL_FMT_OCTAVE) { 
 	/* GNU Octave: write out data as several matrices (one per
 	   series) in the same file */
@@ -1071,10 +1009,8 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 		xx = dset->Z[v][t];
 		if (na(xx)) {
 		    fputs("NaN ", fp);
-		} else 	if (NO_PMAX(pmax, i)) {
-		    fprintf(fp, "%.15g ", xx);
 		} else {
-		    fprintf(fp, "%.*f ", pmax[i-1], xx); 
+		    fprintf(fp, "%.*g ", csv_digits, xx);
 		}
 		if (t == dset->t2 || t % 4 == 0) {
 		    fputc('\n', fp);
@@ -1106,10 +1042,8 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 		xx = dset->Z[v][t];
 		if (na(xx)) {
 		    fprintf(fp, "-9999.99");
-		} else if (NO_PMAX(pmax, i)) {
-		    fprintf(fp, "%.*g", csv_digits, xx);
 		} else {
-		    fprintf(fp, "%.*f", pmax[i-1], xx);
+		    fprintf(fp, "%.*g", csv_digits, xx);
 		}
 		fputc('\n', fp);
 	    }
@@ -1143,17 +1077,13 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 		v = list[i];
 		if (na(dset->Z[v][t])) {
 		    fputs("NaN ", fp);
-		} else if (NO_PMAX(pmax, i)) {
-		    fprintf(fp, "%.*g ", csv_digits, dset->Z[v][t]);
 		} else {
-		    fprintf(fp, "%.*f ", pmax[i-1], dset->Z[v][t]);
+		    fprintf(fp, "%.*g ", csv_digits, dset->Z[v][t]);
 		}
 	    }
 	    fputc('\n', fp);
 	}
     }
-
-    free(pmax);
 
     if (pop_locale) {
 	gretl_pop_c_numeric_locale();
