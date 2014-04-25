@@ -8587,6 +8587,41 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
     return ret;
 }
 
+static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (l->t != STR || r->t != STR) {
+	p->err = E_TYPES;
+    } else if (p->dset == NULL || p->dset->n == 0) {
+	no_data_error(p);
+    } else {
+	const char *vname = l->v.str;
+	const char *formula = r->v.str;
+	char *line;
+	int vnum = -1;
+
+	line = malloc(8 + strlen(vname) + strlen(formula));
+	if (line == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    int err = 0;
+
+	    sprintf(line, "series %s=%s", vname, formula);
+	    err = generate(line, p->dset, OPT_NONE, p->prn);
+	    if (!err) {
+		vnum = current_series_index(p->dset, vname);
+	    }
+	    ret = aux_scalar_node(p);
+	    if (ret != NULL) {
+		ret->v.xval = vnum;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 enum {
     FORK_L,
     FORK_R,
@@ -10839,6 +10874,9 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    ret = mpi_transfer_node(l, m, r, t->t, p);
 	}
+	break;
+    case F_GENSERIES:
+	ret = gen_series_node(l, r, p);
 	break;
     default: 
 	printf("eval: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),
