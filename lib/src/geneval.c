@@ -8599,12 +8599,12 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 	const char *vname = l->v.str;
 	const char *formula = r->v.str;
 	char *line;
-	int vnum = -1;
 
-	line = malloc(8 + strlen(vname) + strlen(formula));
+	line = malloc(9 + strlen(vname) + strlen(formula));
 	if (line == NULL) {
 	    p->err = E_ALLOC;
 	} else {
+	    int vnum = -1;
 	    int err = 0;
 
 	    sprintf(line, "series %s=%s", vname, formula);
@@ -8616,6 +8616,7 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 	    if (ret != NULL) {
 		ret->v.xval = vnum;
 	    }
+	    free(line);
 	}
     }
 
