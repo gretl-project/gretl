@@ -85,6 +85,7 @@ under the terms of the \emph{GNU Free Documentation License}, Version
 \pagenumbering{arabic}
 %\setcounter{chapter}{-1}
 
+
 \chapter{Introduction}
 %\addcontentsline{toc}{chapter}{Introduction}
 
@@ -127,7 +128,7 @@ proficient hansl user in a (relatively) short time; however, not all
 the features of hansl are illustrated; for those, interested readers
 should consult the \GCR{} and \GUG{}.
 
-This guide is divided into two parts. Part~\ref{part:hp-nodata}
+This guide comprises two main parts. Part~\ref{part:hp-nodata}
 (``Without a dataset'') concentrates on hansl as a pure
 matrix-oriented programming language. Part~\ref{part:hp-data} (``With
 a dataset'') exploits the fact that hansl scripts are run through
@@ -135,6 +136,9 @@ gretl, which has very nice facilities for handling statistical
 datasets (interactively if necessary). This provides hansl with a
 series of extra constructs and features which make it extremely easy
 to write hansl scripts to perform all sorts of statistical procedures.
+
+% A short third part (which is likely to be expanded in future) gives a
+% brief account of a few ``further topics''.
 
 In order to use hansl, you will need a working installation of
 gretl. We assume you have one. If you don't, please refer to chapter 1
@@ -175,6 +179,121 @@ look at the following additional resources.
   \url{http://lists.wfu.edu/mailman/listinfo/gretl-users}.
 \end{itemize}
 
+\chapter{For the impatient}
+\label{chap:impatient}
+
+If you're reading this, you're probably thinking ``Do I really need to
+go through the whole thing? After all, I've been coding econometric
+stuff for a while, and I'm pretty confident I can work my way
+through. I just need to get started and, perhaps, a few tips''. Well,
+you may be right. In this case, we'll just give you a one-page hansl
+script which exemplifies a hefty share of the topics we'll go through
+in the rest of this manual. We will use, for our example, a Vector
+AutoRegressive model, or VAR for short.
+
+As you probably know, a finite-order VAR can be estimated via
+conditional maximum likelihood simply by repeatedly applying OLS to
+each equation. That amounts to solving a least-squares problem and its
+solution can be easily written, in matrix notation, as $\hat{\Pi} =
+(X'X)^{-1} X'Y$, where $Y$ contains your endogenous variables and $X$
+contains their lags plus other exogenous series (typically, a constant
+term at least). But of course, you may choose to find the maximum of
+the concentrated likelihood $\mathcal{L} = -T/2 \ln|\hat{\Sigma}|$
+numerically if you so wish.
+
+The following example contains a hansl script which performs the
+these actions:
+\begin{enumerate}
+\item Read data from a disk file.
+\item Perform some data transformation and simple visualization.
+\item Estimates the VAR via 
+  \begin{enumerate}
+  \item the native hansl command
+  \item iterated OLS
+  \item matrix algebra (in 3 different ways)
+  \item numerical maximization the log-likelihood.
+  \end{enumerate}
+\item Print out the results.
+\end{enumerate}
+The script also contains some concise comments.
+
+\begin{scode}
+open AWM.gdt --quiet                   # load data from disk
+
+/* data transformations and visualisation */
+
+series y = 100 * hpfilt(ln(YER))       # the "series" concept: operate on      
+series u = 100 * URX                   # vectors on an element-by-element basis
+series r = STN - 100*sdiff(ln(HICP))   # (but you also have special functions) 
+
+scatters y r u --output=display        # command example with an option: graph data
+
+/* in-house VAR */
+
+scalar p = 2                           # strong typing: a scalar is not a
+                                       # matrix nor a series
+
+var p y r u                            # estimation command
+A = $coeff                             # and corresponding accessor
+
+/* by iterated OLS */
+
+list X = y r u                         # the list is yet another variable type
+
+matrix B = {}                          # initialize an empty matrix
+
+loop foreach i X                       # loop over the 3 var equations
+    ols $i const X(-1 to -p) --quiet   # using native OLS command
+    B ~= $coeff                        # and store estimated coefficients
+end loop                               # as matrix columns
+
+/* via matrices */
+
+matrix mY = { y, r, u }                # construct a matrix from series
+matrix mX = 1 ~ mlag(mY, {1,2})        # or from matrix operators/functions
+mY = mY[p+1:,]                         # and select the appropriate rows
+mX = mX[p+1:,]                         # via "range" syntax
+
+C1 = mX\mY                             # matlab-style matrix inversion
+C2 = mols(mY, mX)                      # or native function
+C3 = inv(mX'mX) * (mX'mY)              # or algebraic primitives
+
+/* or the hard, needlessly complicated way --- just to show off */
+
+function scalar loglik(matrix param, const matrix X, const matrix Y)
+
+    # this function computes the concentrated log-likelihood
+    # for an unrestricted multivariate regression model
+
+    scalar n = cols(Y)
+    scalar k = cols(X)
+    scalar T = rows(Y)
+    matrix C = mshape(param, k, n)
+    matrix E = Y - X*C
+    matrix Sigma = E'E
+
+    return -T/2 * ln(det(Sigma))
+end function
+
+matrix c = zeros(21,1)                  # initialize the parameters
+mle ll = loglik(c, mX, mY)              # and maximize the log-likelihood
+    params c                            # via BFGS, printing out the
+end mle                                 # results when done
+
+D = mshape(c, 7, 3)                     # reshape the results for conformability
+
+/* print out the results */
+
+# note: row ordering between alternatives is different 
+
+print A B C1 C2 C3 D
+\end{scode}
+%$
+
+If you were able to follow the script above in all its parts,
+congratulations. You probably don't need to read the rest of this
+document (but we don't mind if you do). If, instead, you find this too
+scary, never mind: we'll take things step by step. Read on.
 
 \part{Without a dataset}
 \label{part:hp-nodata}
@@ -192,9 +311,8 @@ look at the following additional resources.
 \include{hp-series}
 \include{hp-estimate}
 
-\appendix
-
-\include{hp-further}
+% \part{Further topics}
+% \include{hp-further}
 
 % \clearpage
 % \include{biblio}
