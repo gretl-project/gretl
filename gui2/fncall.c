@@ -2485,6 +2485,7 @@ static void add_package_to_menu (addon_info *addon,
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gfn_menu_callback)
     };
     GtkActionGroup *actions;
+    char *fixed_label = NULL;
     guint merge_id;
 
 #if PKG_DEBUG
@@ -2497,6 +2498,19 @@ static void add_package_to_menu (addon_info *addon,
 	pkg_item.label = _(addon->label);
     } else {
 	pkg_item.label = addon->pkgname;
+    }
+    
+    if (strchr(pkg_item.label, '_')) {
+	const char *s = pkg_item.label;
+	int n = 0;
+
+	while (*s && (s = strchr(s, '_')) != NULL) {
+	    n++;
+	    s++;
+	}
+	fixed_label = malloc(strlen(pkg_item.label) + n + 1);
+	double_underscores(fixed_label, pkg_item.label);
+	pkg_item.label = fixed_label;
     }
 
     merge_id = gtk_ui_manager_new_merge_id(vwin->ui);
@@ -2514,6 +2528,8 @@ static void add_package_to_menu (addon_info *addon,
     gtk_action_group_add_actions(actions, &pkg_item, 1, vwin);
     gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
     g_object_unref(actions);
+
+    free(fixed_label);
 }
 
 /* run a package's gui-precheck function to determine if
