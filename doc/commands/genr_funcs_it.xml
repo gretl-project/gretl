@@ -2614,7 +2614,7 @@
     <argname>x</argname>. In formule, la trasformazione è
     </para>
     <para context="tex">
-      \[ y_t = \sum_{i=0}^q a_i x_{t-i} + \sum_{i=i}^p b_i y_{t-i} \]
+      \[ y_t = \sum_{i=0}^q a_i x_{t-i} + \sum_{i=1}^p b_i y_{t-i} \]
     </para>
     <para context="notex">
       <math>y</math><sub>t</sub> = 
