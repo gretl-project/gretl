@@ -2446,7 +2446,7 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
 
     gretl_matrix_destroy_info(m);
 
-    free(val);
+    mval_free(val);
 
     return 0;
 }
