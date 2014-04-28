@@ -44,12 +44,6 @@
 	<menuitem action="PcGiveDB"/>
 	<menuitem action="RemoteDB"/>
       </menu>
-      <menu action="FunctionFiles">
-	<menuitem action="LocalGfn"/>
-	<menuitem action="RemoteGfn"/>
-	<menuitem action="EditGfn"/>
-	<menuitem action="NewGfn"/>
-      </menu>
       <separator/>
       <menuitem action="Quit"/>
     </menu>
@@ -67,6 +61,12 @@
       <menuitem action="Gnuplot"/>
       <menuitem action="StartR"/>
       <separator/>
+      <menu action="FunctionFiles">
+	<menuitem action="LocalGfn"/>
+	<menuitem action="RemoteGfn"/>
+	<menuitem action="EditGfn"/>
+	<menuitem action="NewGfn"/>
+      </menu>
       <menu action="NistTest">
 	<menuitem action="NistBasic"/>
 	<menuitem action="NistVerbose"/>

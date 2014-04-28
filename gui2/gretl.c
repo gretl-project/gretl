@@ -1593,11 +1593,6 @@ GtkActionEntry main_entries[] = {
     { "PcGiveDB", GTK_STOCK_OPEN, N_("_PcGive..."), "", NULL, G_CALLBACK(open_data) },
     { "RemoteDB", GTK_STOCK_NETWORK, N_("On database _server..."), NULL, NULL, G_CALLBACK(show_files) },
 
-    { "FunctionFiles", NULL, N_("_Function files"), NULL, NULL, NULL },
-    { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
-    { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
-    { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_package_callback) },
-    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_package_callback) },
     { "Quit", GTK_STOCK_QUIT, NULL, NULL, NULL,  G_CALLBACK(menu_exit_check)},
 
     /* Tools */
@@ -1613,6 +1608,11 @@ GtkActionEntry main_entries[] = {
     { "ShowConsole", NULL, N_("_Gretl console"), NULL, NULL, G_CALLBACK(gretl_console) },
     { "Gnuplot", NULL, N_("_Gnuplot"), NULL, NULL, G_CALLBACK(start_gnuplot_callback) },
     { "StartR", NULL, N_("Start GNU _R"), NULL, NULL, G_CALLBACK(start_R_callback) },
+    { "FunctionFiles", NULL, N_("_Function packages"), NULL, NULL, NULL },
+    { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
+    { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
+    { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_package_callback) },
+    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_package_callback) },
     { "NistTest", NULL, N_("_NIST test suite"), NULL, NULL, NULL },
     { "NistBasic", NULL, N_("_Basic"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVerbose", NULL, N_("_Verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
