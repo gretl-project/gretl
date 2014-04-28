@@ -217,7 +217,7 @@ mknews: mknews.c
 $(GRETL_LANG): $(MKLANG)
 	$(MKLANG) > $@
 
-$(GRETL_NEWS): $(MKNEWS)
+$(GRETL_NEWS): $(MKNEWS) $(topsrc)/ChangeLog
 	$(MKNEWS) $(topsrc)/ChangeLog > $@
 
 .deps:
@@ -259,7 +259,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(uidir)
 
 clean:
-	rm -f *.o $(PROG) mklang gretl.lang mknews NEWS
+	rm -f *.o $(PROG) mklang mknews $(GRETL_LANG) $(GRETL_NEWS)
 	rm -rf .libs .deps
 
 distclean: clean
