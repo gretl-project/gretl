@@ -46,7 +46,7 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
 
-    fputs("For the full log of gretl changes, see\n", f2);
+    fputs("For the full log of gretl changes since January 2000, see\n", f2);
     fputs("http://gretl.sourceforge.net/ChangeLog.html\n\n", f2);
 
     while (fgets(line, sizeof line, f1)) {
