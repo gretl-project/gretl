@@ -810,9 +810,9 @@ gretl's graphical interface. This can also be done via the
 command line, which offers some additional functionality for package
 authors; an explanation is given later in this section.
 
-Start the GUI program and take a look at the ``File, Function files'' menu.
-This menu contains four items: ``On local machine'', ``On server'', ``Edit
-package'', ``New package''.
+Start the GUI program and take a look at the ``Tools, Function
+packages'' menu.  This menu contains four items: ``On local machine'',
+``On server'', ``Edit package'', ``New package''.
 
 Select ``New package''.  (This will produce an error message unless at
 least one user-defined function is currently loaded in memory---see
@@ -857,8 +857,8 @@ This is the recommended place to save function package files, since
 that is where the program will look in the special routine for opening
 such files (see below).
 
-Needless to say, the menu command ``File, Function files, Edit package''
-allows you to make changes to a local function package.
+Needless to say, the menu item ``Tools, Function packages, Edit
+package'' allows you to make changes to a local function package.
 
 \vspace{6pt}
 
@@ -882,16 +882,16 @@ for fast loading using \textsf{libxml}.
 Why package functions in this way?  To see what's on offer so far, try
 the next phase of the walk-through.
 
-Close gretl, then re-open it.  Now go to ``File, Function files, On
-local machine''. If the previous stage above has gone OK, you should
-see the file you packaged and saved, with its short description.  If
-you click on ``Info'' you get a window with all the information gretl
-has gleaned from the function package.  If you click on the ``View
-code'' icon in the toolbar of this new window, you get a script view
-window showing the actual function code. Now, back to the ``Function
-packages'' window, if you click on the package's name, the relevant
-functions are loaded into gretl's workspace, ready to be called
-by clicking on the ``Call'' button.
+Close gretl, then re-open it.  Now go to ``Tools, Function packages,
+On local machine''. If the previous stage above has gone OK, you
+should see the file you packaged and saved, with its short
+description.  If you click on ``Info'' you get a window with all the
+information gretl has gleaned from the function package.  If you click
+on the ``View code'' icon in the toolbar of this new window, you get a
+script view window showing the actual function code. Now, back to the
+``Function packages'' window, if you click on the package's name, the
+relevant functions are loaded into gretl's workspace, ready to be
+called by clicking on the ``Call'' button.
 
 After loading the function(s) from the package, open the GUI console.
 Try typing \texttt{help foo}, replacing \texttt{foo} with the name of
@@ -899,8 +899,8 @@ the public interface from the loaded function package: if any help text
 was provided for the function, it should be presented.
 
 In a similar way, you can browse and load the function packages
-available on the gretl server, by selecting ``File, Function
-files, On server''.
+available on the gretl server, by selecting ``Tools, Function
+packages, On server''.
 
 Once your package is installed on your local machine, you can use the
 function it contains via the graphical interface as described above,
@@ -921,13 +921,13 @@ with gretl among the sample datasets). Suppose you want to
 compute the rate of change for the variable \texttt{iprod} via your
 new function and store the result in a series named \texttt{foo}.
 
-Go to ``File, Function files, On local machine''.  You will be shown a
-list of the installed packages, including the one you have just
-created. If you select it and click on ``Execute'' (or double-click on
-the name of the function package), a window similar to the one shown
-in figure \ref{fig:function_call} will appear.  Notice that the
-description string ``Series to process'', supplied with the function
-definition, appears to the left of the top series chooser.
+Go to ``Tools, Function packages, On local machine''.  You will be
+shown a list of the installed packages, including the one you have
+just created. If you select it and click on ``Execute'' (or
+double-click on the name of the function package), a window similar to
+the one shown in figure \ref{fig:function_call} will appear.  Notice
+that the description string ``Series to process'', supplied with the
+function definition, appears to the left of the top series chooser.
 
 Click ``Ok'' and the series \texttt{foo} will be generated (see figure
 \ref{fig:iprod_pc}).  Under some circumstances you might have to press
