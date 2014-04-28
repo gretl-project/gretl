@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-04-23 17:55+0100\n"
-"PO-Revision-Date: 2013-10-22 22:55+0100\n"
+"POT-Creation-Date: 2014-04-28 09:36+0100\n"
+"PO-Revision-Date: 2014-04-28 09:42+0100\n"
 "Last-Translator: \n"
 "Language-Team: German\n"
 "Language: \n"
@@ -947,7 +947,7 @@ msgid ""
 msgstr ""
 "Binärdaten (%d) gefunden (Zeile %d:%d): dies ist eine ungültige Textdatei\n"
 
-#: lib/src/csvdata.c:1514 lib/src/dataio.c:2313
+#: lib/src/csvdata.c:1514 lib/src/dataio.c:2243
 msgid "Data file is empty\n"
 msgstr "Datendatei ist leer\n"
 
@@ -1039,7 +1039,7 @@ msgstr "es scheint, dass keine Variablennamen existieren\n"
 msgid "At row %d, column %d:\n"
 msgstr "Bei Zeile %d, Spalte %d:\n"
 
-#: lib/src/csvdata.c:2533 lib/src/dataio.c:2817 lib/src/dataio.c:2860
+#: lib/src/csvdata.c:2533 lib/src/dataio.c:2747 lib/src/dataio.c:2790
 #, c-format
 msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- keine Zahlenumwandlung ausgeführt!"
@@ -1053,11 +1053,11 @@ msgstr "Warnung: %d Bezeichner wurden abgeschnitten.\n"
 msgid "scanning for row labels and data...\n"
 msgstr "suche nach Zeilenköpfen und Daten...\n"
 
-#: lib/src/csvdata.c:2725 lib/src/csvdata.c:2728 lib/src/dataio.c:2336
+#: lib/src/csvdata.c:2725 lib/src/csvdata.c:2728 lib/src/dataio.c:2266
 msgid "parsing"
 msgstr "parse"
 
-#: lib/src/csvdata.c:2853 lib/src/dataio.c:2538 lib/src/dataio.c:2611
+#: lib/src/csvdata.c:2853 lib/src/dataio.c:2468 lib/src/dataio.c:2541
 #: lib/src/dbread.c:1744
 #, c-format
 msgid "Couldn't open %s\n"
@@ -1072,12 +1072,12 @@ msgstr "benutze Format fester Spalten\n"
 msgid "using delimiter '%c'\n"
 msgstr "verwendetes Trennzeichen '%c'\n"
 
-#: lib/src/csvdata.c:2928 lib/src/dataio.c:2350
+#: lib/src/csvdata.c:2928 lib/src/dataio.c:2280
 #, c-format
 msgid "   longest line: %d characters\n"
 msgstr "   längste Zeile: %d Zeichen\n"
 
-#: lib/src/csvdata.c:2954 lib/src/dataio.c:2433
+#: lib/src/csvdata.c:2954 lib/src/dataio.c:2363
 #, c-format
 msgid "   number of variables: %d\n"
 msgstr "Anzahl Variablen: %d\n"
@@ -1087,7 +1087,7 @@ msgstr "Anzahl Variablen: %d\n"
 msgid "   number of non-blank lines: %d\n"
 msgstr "Anzahl nichtleerer Zeilen: %d\n"
 
-#: lib/src/csvdata.c:2958 lib/src/dataio.c:2408 lib/src/dataio.c:2488
+#: lib/src/csvdata.c:2958 lib/src/dataio.c:2338 lib/src/dataio.c:2418
 msgid "Invalid data file\n"
 msgstr "Ungültige Datendatei\n"
 
@@ -1211,21 +1211,21 @@ msgstr "'%s': ungültiger Beobachtungsindex"
 msgid "Observation number out of bounds"
 msgstr "Beobachtungsnummer außerhalb der Grenzen"
 
-#: lib/src/dataio.c:1170
+#: lib/src/dataio.c:1100
 #, fuzzy, c-format
 msgid "wrote %s.gdt\n"
 msgstr "%s geschrieben \n"
 
-#: lib/src/dataio.c:1172 lib/src/gretl_paths.c:2301 gui2/model_table.c:1372
+#: lib/src/dataio.c:1102 lib/src/gretl_paths.c:2301 gui2/model_table.c:1372
 #, c-format
 msgid "wrote %s\n"
 msgstr "%s geschrieben \n"
 
-#: lib/src/dataio.c:1348 lib/src/dataio.c:2049 lib/src/gretl_xml.c:3198
+#: lib/src/dataio.c:1278 lib/src/dataio.c:1979 lib/src/gretl_xml.c:3198
 msgid "index variable"
 msgstr "Indexvariable"
 
-#: lib/src/dataio.c:1356 lib/src/gretl_xml.c:3173
+#: lib/src/dataio.c:1286 lib/src/gretl_xml.c:3173
 #, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
@@ -1234,77 +1234,77 @@ msgstr ""
 "Periodizität: %d, max. Beob.: %d\n"
 "Beobachtungsbereich: %s bis %s\n"
 
-#: lib/src/dataio.c:1559 lib/src/dataio.c:1764 lib/src/dataio.c:1780
-#: lib/src/dataio.c:2417 lib/src/dataio.c:2426 cli/gretlcli.c:117
+#: lib/src/dataio.c:1489 lib/src/dataio.c:1694 lib/src/dataio.c:1710
+#: lib/src/dataio.c:2347 lib/src/dataio.c:2356 cli/gretlcli.c:117
 #: gui2/gretl.c:276
 msgid "Out of memory!\n"
 msgstr "Nicht genügend Speicher!\n"
 
-#: lib/src/dataio.c:1696
+#: lib/src/dataio.c:1626
 msgid "Data frequency does not match\n"
 msgstr "Datenfrequenz passt nicht\n"
 
-#: lib/src/dataio.c:1712
+#: lib/src/dataio.c:1642
 msgid "New data not conformable for appending\n"
 msgstr "Neue Daten nicht konform zum Anhängen\n"
 
-#: lib/src/dataio.c:1718
+#: lib/src/dataio.c:1648
 msgid "Inconsistency in observation markers\n"
 msgstr "Inkonsistenz bei Beobachtungskennzeichnern\n"
 
-#: lib/src/dataio.c:1831 gui2/gui_utils.c:1174
+#: lib/src/dataio.c:1761 gui2/gui_utils.c:1174
 msgid "Data appended OK\n"
 msgstr "Daten angehängt OK\n"
 
-#: lib/src/dataio.c:2235
+#: lib/src/dataio.c:2165
 msgid "No markers are available for writing"
 msgstr "Keine Kennzeichner zum Schreiben verfügbar"
 
-#: lib/src/dataio.c:2305
+#: lib/src/dataio.c:2235
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
 msgstr "Binärdaten (%d) gefunden: dies ist ungültige Textdatei\n"
 
-#: lib/src/dataio.c:2391
+#: lib/src/dataio.c:2321
 #, c-format
 msgid "   Found matrix '%s' with %d rows, %d columns\n"
 msgstr "   Fand Matrix '%s' mit %d Zeilen, %d Spalten\n"
 
-#: lib/src/dataio.c:2434
+#: lib/src/dataio.c:2364
 #, c-format
 msgid "   number of observations: %d\n"
 msgstr "   Anzahl Beobachtungen: %d\n"
 
-#: lib/src/dataio.c:2435
+#: lib/src/dataio.c:2365
 #, c-format
 msgid "   number of data blocks: %d\n"
 msgstr "   Blöcke von Variablen: %d\n"
 
-#: lib/src/dataio.c:2561 lib/src/dataio.c:2627 gui2/gui_utils.c:1038
+#: lib/src/dataio.c:2491 lib/src/dataio.c:2557 gui2/gui_utils.c:1038
 msgid "Unrecognized data type"
 msgstr "Unerkannter Datentyp"
 
-#: lib/src/dataio.c:2823 lib/src/dataio.c:2866
+#: lib/src/dataio.c:2753 lib/src/dataio.c:2796
 #, c-format
 msgid "Extraneous character '%c' in data"
 msgstr "Seltsames Zeichen '%c' in Daten"
 
-#: lib/src/dataio.c:2825 lib/src/dataio.c:2868
+#: lib/src/dataio.c:2755 lib/src/dataio.c:2798
 #, c-format
 msgid "Extraneous character (0x%x) in data"
 msgstr "Seltsames Zeichen (0x%x) in Daten"
 
-#: lib/src/dataio.c:2831 lib/src/dataio.c:2874
+#: lib/src/dataio.c:2761 lib/src/dataio.c:2804
 #, c-format
 msgid "'%s' -- number out of range!"
 msgstr "'%s' -- Zahl außerhalb der Grenzen!"
 
-#: lib/src/dataio.c:3027
+#: lib/src/dataio.c:2957
 #, c-format
 msgid "Data imported from %s file '%s', %s\n"
 msgstr "Daten aus %s-Datei '%s' importiert, %s:\n"
 
-#: lib/src/dataio.c:3030
+#: lib/src/dataio.c:2960
 #, c-format
 msgid "Data imported from %s, %s\n"
 msgstr "Importierte Daten von %s, %s\n"
@@ -2240,108 +2240,108 @@ msgstr ""
 "Zahl der Argumente (%d) entspricht nicht der Zahl der\n"
 "Parameter für Funktion %s (%d)"
 
-#: lib/src/geneval.c:9305
+#: lib/src/geneval.c:9341
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': Ungültiges Argument für %s()\n"
 
-#: lib/src/geneval.c:9356 cli/cli_object.c:48 gui2/objectsave.c:53
+#: lib/src/geneval.c:9392 cli/cli_object.c:48 gui2/objectsave.c:53
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: kein solches Objekt\n"
 
-#: lib/src/geneval.c:9601
+#: lib/src/geneval.c:9637
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr "%s: zu wenige Argumente"
 
-#: lib/src/geneval.c:9603
+#: lib/src/geneval.c:9639
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr "%s: ungültiger Argumenttyp %s"
 
-#: lib/src/geneval.c:9606
+#: lib/src/geneval.c:9642
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: Argument %d: ungültiger Typ %s"
 
-#: lib/src/geneval.c:9616
+#: lib/src/geneval.c:9652
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: Operand sollte %s sein"
 
-#: lib/src/geneval.c:9619
+#: lib/src/geneval.c:9655
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: Operand %d sollte %s sein"
 
-#: lib/src/geneval.c:9624
+#: lib/src/geneval.c:9660
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: Argument sollte %s sein"
 
-#: lib/src/geneval.c:9627
+#: lib/src/geneval.c:9663
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: Argument %d sollte %s sein"
 
-#: lib/src/geneval.c:9633
+#: lib/src/geneval.c:9669
 #, c-format
 msgid ", is %s"
 msgstr ", ist %s"
 
-#: lib/src/geneval.c:11353 lib/src/genlex.c:741
+#: lib/src/geneval.c:11392 lib/src/genlex.c:742
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "Das Symbol '%c' ist ungültig in diesem Kontext\n"
 
-#: lib/src/geneval.c:11504 lib/src/genlex.c:781 lib/src/genlex.c:851
+#: lib/src/geneval.c:11543 lib/src/genlex.c:782 lib/src/genlex.c:852
 #: lib/src/gensyntax.c:257
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "Unpassendes '%c'\n"
 
-#: lib/src/geneval.c:11559
+#: lib/src/geneval.c:11598
 #, c-format
 msgid "The variable %s is of type %s"
 msgstr "Die Variable %s ist vom Typ %s"
 
-#: lib/src/geneval.c:11710
+#: lib/src/geneval.c:11749
 #, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr "'%s': Name ist zu lang (Maximum ist %d Zeichen)\n"
 
-#: lib/src/geneval.c:11818
+#: lib/src/geneval.c:11857
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : nicht für Matrizen implementiert"
 
-#: lib/src/geneval.c:11825
+#: lib/src/geneval.c:11864
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : nicht für Listen implementiert"
 
-#: lib/src/geneval.c:11832
+#: lib/src/geneval.c:11871
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : nicht für Zeichenketten implementiert"
 
-#: lib/src/geneval.c:11839 lib/src/geneval.c:11853
+#: lib/src/geneval.c:11878 lib/src/geneval.c:11892
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : nicht für diesen Typ implementiert"
 
-#: lib/src/geneval.c:11846
+#: lib/src/geneval.c:11885
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : nur für Matrizen implementiert"
 
-#: lib/src/geneval.c:12748
+#: lib/src/geneval.c:12787
 #, c-format
 msgid "type error: %s is string-valued"
 msgstr "Typfehler: %s ist Zeichenkette"
 
-#: lib/src/geneval.c:13146
+#: lib/src/geneval.c:13185
 msgid "Bare declarations are not allowed here"
 msgstr "Leerdeklaration hier nicht erlaubt"
 
@@ -2472,39 +2472,39 @@ msgstr "Keine"
 msgid "other"
 msgstr "andere"
 
-#: lib/src/genlex.c:718
+#: lib/src/genlex.c:719
 #, c-format
 msgid "%s: no such object"
 msgstr "%s: kein solches Objekt"
 
-#: lib/src/genlex.c:720
+#: lib/src/genlex.c:721
 #, c-format
 msgid "The symbol '%s' is undefined"
 msgstr "Das Symbol '%s' ist nicht definiert"
 
-#: lib/src/genlex.c:730 lib/src/genlex.c:732
+#: lib/src/genlex.c:731 lib/src/genlex.c:733
 #, c-format
 msgid "'%s': no argument was given"
 msgstr "'%s': Kein Argument angegeben"
 
-#: lib/src/genlex.c:743
+#: lib/src/genlex.c:744
 msgid "(for logical AND, use '&&')\n"
 msgstr "(für logisches UND: '&&' benutzen)\n"
 
-#: lib/src/genlex.c:745
+#: lib/src/genlex.c:746
 msgid "(for logical OR, use '||')\n"
 msgstr "(für logisches ODER: '||' benutzen)\n"
 
-#: lib/src/genlex.c:753
+#: lib/src/genlex.c:754
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr "Das Symbol '%s' ist ungültig in diesem Kontext\n"
 
-#: lib/src/genlex.c:848
+#: lib/src/genlex.c:849
 msgid "Empty observation []\n"
 msgstr "Leere Beobachtung []\n"
 
-#: lib/src/genlex.c:1612
+#: lib/src/genlex.c:1613
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "Ungültiges Zeichen '%c'\n"
@@ -8313,7 +8313,7 @@ msgid "Installed"
 msgstr "Installiert"
 
 #: gui2/database.c:2167 gui2/database.c:2191 gui2/database.c:2407
-#: gui2/datafiles.c:1067 gui2/fncall.c:3148
+#: gui2/datafiles.c:1067 gui2/fncall.c:3164
 msgid "Up to date"
 msgstr "Aktuell"
 
@@ -8325,7 +8325,7 @@ msgstr "Fehler beim Entzippen der gepackten Daten"
 msgid "Unknown: access error"
 msgstr "Unbekannt: Zugriffsfehler"
 
-#: gui2/database.c:2405 gui2/datafiles.c:1017 gui2/fncall.c:3150
+#: gui2/database.c:2405 gui2/datafiles.c:1017 gui2/fncall.c:3166
 msgid "Not up to date"
 msgstr "Nicht aktuell"
 
@@ -9906,15 +9906,15 @@ msgstr ""
 "Paket %s nicht auffindbar, oder nicht aktuell.\n"
 "Möchten Sie versuchen, es jetzt herunterzuladen? "
 
-#: gui2/fncall.c:2709 gui2/fnsave.c:1433
+#: gui2/fncall.c:2725 gui2/fnsave.c:1433
 msgid "main window"
 msgstr "Hauptfenster"
 
-#: gui2/fncall.c:2710 gui2/fnsave.c:1434
+#: gui2/fncall.c:2726 gui2/fnsave.c:1434
 msgid "model window"
 msgstr "Modellfenster"
 
-#: gui2/fncall.c:2715
+#: gui2/fncall.c:2731
 #, c-format
 msgid ""
 "The package %s can be attached to the gretl menus\n"
@@ -9925,21 +9925,21 @@ msgstr ""
 "als \"%s/%s\" am %s.\n"
 "Möchten Sie dies tun?"
 
-#: gui2/fncall.c:3009
+#: gui2/fncall.c:3025
 #, c-format
 msgid "Adding %s under %s."
 msgstr "Füge %s unter %s hinzu."
 
-#: gui2/fncall.c:3013 gui2/fncall.c:3017 gui2/settings.c:1687
+#: gui2/fncall.c:3029 gui2/fncall.c:3033 gui2/settings.c:1687
 msgid "This change will take effect when you restart gretl"
 msgstr "Diese Änderung wird nach einem Neustart von gretl wirksam"
 
-#: gui2/fncall.c:3152
+#: gui2/fncall.c:3168
 #, c-format
 msgid "Requires gretl %s"
 msgstr "Benötigt gretl %s"
 
-#: gui2/fncall.c:3158
+#: gui2/fncall.c:3174
 msgid "Error reading package"
 msgstr "Fehler beim Lesen vom Paket"
 
@@ -10832,73 +10832,73 @@ msgstr "_PcGive..."
 msgid "On database _server..."
 msgstr "auf Datenbank_server..."
 
-#: gui2/gretl.c:1596
-msgid "_Function files"
-msgstr "_Funktionsdateien"
-
-#: gui2/gretl.c:1597
-msgid "On _local machine..."
-msgstr "auf _lokaler Maschine..."
-
-#: gui2/gretl.c:1598
-msgid "On _server..."
-msgstr "Auf _Server..."
-
 #: gui2/gretl.c:1599
-msgid "Edit package..."
-msgstr "Paket editieren..."
-
-#: gui2/gretl.c:1600
-msgid "_New package"
-msgstr "_Neues Paket"
-
-#: gui2/gretl.c:1604
 msgid "_Tools"
 msgstr "_Werkzeuge"
 
-#: gui2/gretl.c:1605
+#: gui2/gretl.c:1600
 msgid "_Statistical tables"
 msgstr "_Statistische Tabellen"
 
-#: gui2/gretl.c:1606
+#: gui2/gretl.c:1601
 msgid "_P-value finder"
 msgstr "_P-Wert-Finder"
 
-#: gui2/gretl.c:1607
+#: gui2/gretl.c:1602
 msgid "_Distribution graphs"
 msgstr "_Verteilungsgraphen"
 
-#: gui2/gretl.c:1608
+#: gui2/gretl.c:1603
 msgid "_Plot a curve"
 msgstr "_Plotte eine Kurve"
 
-#: gui2/gretl.c:1609
+#: gui2/gretl.c:1604
 msgid "_Test statistic calculator"
 msgstr "_Teststatistik-Rechner"
 
-#: gui2/gretl.c:1610
+#: gui2/gretl.c:1605
 msgid "_Nonparametric tests"
 msgstr "_Nichtparametrische Tests"
 
-#: gui2/gretl.c:1611
+#: gui2/gretl.c:1606
 msgid "_Seed for random numbers"
 msgstr "Saat für _Zufallszahlen"
 
-#: gui2/gretl.c:1612
+#: gui2/gretl.c:1607
 msgid "_Command log"
 msgstr "_Befehls-Log"
 
-#: gui2/gretl.c:1613
+#: gui2/gretl.c:1608
 msgid "_Gretl console"
 msgstr "_Gretl-Konsole"
 
-#: gui2/gretl.c:1614
+#: gui2/gretl.c:1609
 msgid "_Gnuplot"
 msgstr "_Gnuplot"
 
-#: gui2/gretl.c:1615
+#: gui2/gretl.c:1610
 msgid "Start GNU _R"
 msgstr "Starte GNU _R"
+
+#: gui2/gretl.c:1611
+msgid "_Function packages"
+msgstr "_Funktionspakete"
+
+#: gui2/gretl.c:1612
+msgid "On _local machine..."
+msgstr "auf _lokaler Maschine..."
+
+#: gui2/gretl.c:1613
+msgid "On _server..."
+msgstr "Auf _Server..."
+
+#: gui2/gretl.c:1614
+msgid "Edit package..."
+msgstr "Paket editieren..."
+
+#: gui2/gretl.c:1615
+msgid "_New package"
+msgstr "_Neues Paket"
 
 #: gui2/gretl.c:1616
 msgid "_NIST test suite"
@@ -16741,6 +16741,9 @@ msgstr "Statistiken/Transformationen"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Wahrscheinlichkeitsverteilungen"
+
+#~ msgid "_Function files"
+#~ msgstr "_Funktionsdateien"
 
 #~ msgid "Tell me about gretl updates"
 #~ msgstr "Updates für gretl melden"

@@ -2,11 +2,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9x\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-04-23 17:55+0100\n"
-"PO-Revision-Date: 2013-08-09 01:27+0800\n"
+"POT-Creation-Date: 2014-04-28 09:36+0100\n"
+"PO-Revision-Date: 2014-04-28 10:04+0100\n"
 "Last-Translator: Yi-Nung Yang <yinung@cycu.edu.tw>\n"
 "Language-Team: gretl <gretl-users@lists.wfu.edu>\n"
-"Language: \n"
+"Language: Chinese\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -976,7 +976,7 @@ msgid ""
 "Binary data (%d) encountered (line %d:%d): this is not a valid text file\n"
 msgstr " (%d) 是二進位 (binary) 資料 (line %d:%d): 這不是一個一般的文字檔\n"
 
-#: lib/src/csvdata.c:1514 lib/src/dataio.c:2313
+#: lib/src/csvdata.c:1514 lib/src/dataio.c:2243
 msgid "Data file is empty\n"
 msgstr "資料檔中無資料 (Data file is empty)\n"
 
@@ -1067,7 +1067,7 @@ msgstr "似乎沒有定義變數名稱\n"
 msgid "At row %d, column %d:\n"
 msgstr "在第 %d 列 (row) , 第 %d 列 (column):\n"
 
-#: lib/src/csvdata.c:2533 lib/src/dataio.c:2817 lib/src/dataio.c:2860
+#: lib/src/csvdata.c:2533 lib/src/dataio.c:2747 lib/src/dataio.c:2790
 #, c-format
 msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- 沒有任何數值轉換被執行!"
@@ -1081,11 +1081,11 @@ msgstr "警告: %d labels 被截斷\n"
 msgid "scanning for row labels and data...\n"
 msgstr "尋找列 (row) 資料之標記...\n"
 
-#: lib/src/csvdata.c:2725 lib/src/csvdata.c:2728 lib/src/dataio.c:2336
+#: lib/src/csvdata.c:2725 lib/src/csvdata.c:2728 lib/src/dataio.c:2266
 msgid "parsing"
 msgstr "進行資料剖析 (parsing)..."
 
-#: lib/src/csvdata.c:2853 lib/src/dataio.c:2538 lib/src/dataio.c:2611
+#: lib/src/csvdata.c:2853 lib/src/dataio.c:2468 lib/src/dataio.c:2541
 #: lib/src/dbread.c:1744
 #, c-format
 msgid "Couldn't open %s\n"
@@ -1100,12 +1100,12 @@ msgstr "使用固定長度欄位\n"
 msgid "using delimiter '%c'\n"
 msgstr "使用之分隔符號 (delimiter): '%c'\n"
 
-#: lib/src/csvdata.c:2928 lib/src/dataio.c:2350
+#: lib/src/csvdata.c:2928 lib/src/dataio.c:2280
 #, c-format
 msgid "   longest line: %d characters\n"
 msgstr "   最長的一行有 %d 字元 (characters)\n"
 
-#: lib/src/csvdata.c:2954 lib/src/dataio.c:2433
+#: lib/src/csvdata.c:2954 lib/src/dataio.c:2363
 #, c-format
 msgid "   number of variables: %d\n"
 msgstr "   匯入 %d 變數\n"
@@ -1115,7 +1115,7 @@ msgstr "   匯入 %d 變數\n"
 msgid "   number of non-blank lines: %d\n"
 msgstr "   非空白行數: %d\n"
 
-#: lib/src/csvdata.c:2958 lib/src/dataio.c:2408 lib/src/dataio.c:2488
+#: lib/src/csvdata.c:2958 lib/src/dataio.c:2338 lib/src/dataio.c:2418
 msgid "Invalid data file\n"
 msgstr "資料檔格式錯誤\n"
 
@@ -1239,21 +1239,21 @@ msgstr "'%s':樣本指標錯誤"
 msgid "Observation number out of bounds"
 msgstr "樣本數超出範圍 (out of bounds)"
 
-#: lib/src/dataio.c:1170
+#: lib/src/dataio.c:1100
 #, fuzzy, c-format
 msgid "wrote %s.gdt\n"
 msgstr "寫入 %s\n"
 
-#: lib/src/dataio.c:1172 lib/src/gretl_paths.c:2301 gui2/model_table.c:1372
+#: lib/src/dataio.c:1102 lib/src/gretl_paths.c:2301 gui2/model_table.c:1372
 #, c-format
 msgid "wrote %s\n"
 msgstr "寫入 %s\n"
 
-#: lib/src/dataio.c:1348 lib/src/dataio.c:2049 lib/src/gretl_xml.c:3198
+#: lib/src/dataio.c:1278 lib/src/dataio.c:1979 lib/src/gretl_xml.c:3198
 msgid "index variable"
 msgstr "指標變數 (index variable)"
 
-#: lib/src/dataio.c:1356 lib/src/gretl_xml.c:3173
+#: lib/src/dataio.c:1286 lib/src/gretl_xml.c:3173
 #, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
@@ -1262,77 +1262,77 @@ msgstr ""
 "periodicity: %d, 最大樣本數: %d\n"
 "樣本區間範圍: 從 %s 到 %s\n"
 
-#: lib/src/dataio.c:1559 lib/src/dataio.c:1764 lib/src/dataio.c:1780
-#: lib/src/dataio.c:2417 lib/src/dataio.c:2426 cli/gretlcli.c:117
+#: lib/src/dataio.c:1489 lib/src/dataio.c:1694 lib/src/dataio.c:1710
+#: lib/src/dataio.c:2347 lib/src/dataio.c:2356 cli/gretlcli.c:117
 #: gui2/gretl.c:276
 msgid "Out of memory!\n"
 msgstr "記憶體不足\n"
 
-#: lib/src/dataio.c:1696
+#: lib/src/dataio.c:1626
 msgid "Data frequency does not match\n"
 msgstr "資料頻率不相符\n"
 
-#: lib/src/dataio.c:1712
+#: lib/src/dataio.c:1642
 msgid "New data not conformable for appending\n"
 msgstr "資料格式不符而無法新增\n"
 
-#: lib/src/dataio.c:1718
+#: lib/src/dataio.c:1648
 msgid "Inconsistency in observation markers\n"
 msgstr "樣本資料註記不一致\n"
 
-#: lib/src/dataio.c:1831 gui2/gui_utils.c:1174
+#: lib/src/dataio.c:1761 gui2/gui_utils.c:1174
 msgid "Data appended OK\n"
 msgstr "資料已新增成功\n"
 
-#: lib/src/dataio.c:2235
+#: lib/src/dataio.c:2165
 msgid "No markers are available for writing"
 msgstr "無資料註記可寫入"
 
-#: lib/src/dataio.c:2305
+#: lib/src/dataio.c:2235
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
 msgstr " (%d) 是二進位 (binary) 資料: 這不是一個一般的文字檔\n"
 
-#: lib/src/dataio.c:2391
+#: lib/src/dataio.c:2321
 #, c-format
 msgid "   Found matrix '%s' with %d rows, %d columns\n"
 msgstr "   找到矩陣 '%s'  含 %d 列 (rows), %d 行 (columns)\n"
 
-#: lib/src/dataio.c:2434
+#: lib/src/dataio.c:2364
 #, c-format
 msgid "   number of observations: %d\n"
 msgstr "   樣本數: %d\n"
 
-#: lib/src/dataio.c:2435
+#: lib/src/dataio.c:2365
 #, c-format
 msgid "   number of data blocks: %d\n"
 msgstr "   data blocks 之數目: %d\n"
 
-#: lib/src/dataio.c:2561 lib/src/dataio.c:2627 gui2/gui_utils.c:1038
+#: lib/src/dataio.c:2491 lib/src/dataio.c:2557 gui2/gui_utils.c:1038
 msgid "Unrecognized data type"
 msgstr "無法辨識之資料型態"
 
-#: lib/src/dataio.c:2823 lib/src/dataio.c:2866
+#: lib/src/dataio.c:2753 lib/src/dataio.c:2796
 #, c-format
 msgid "Extraneous character '%c' in data"
 msgstr "資料中有奇怪的字元: '%c' "
 
-#: lib/src/dataio.c:2825 lib/src/dataio.c:2868
+#: lib/src/dataio.c:2755 lib/src/dataio.c:2798
 #, c-format
 msgid "Extraneous character (0x%x) in data"
 msgstr "資料中有奇怪的字元 (0x%x)"
 
-#: lib/src/dataio.c:2831 lib/src/dataio.c:2874
+#: lib/src/dataio.c:2761 lib/src/dataio.c:2804
 #, c-format
 msgid "'%s' -- number out of range!"
 msgstr "'%s' -- 超過樣本範圍"
 
-#: lib/src/dataio.c:3027
+#: lib/src/dataio.c:2957
 #, c-format
 msgid "Data imported from %s file '%s', %s\n"
 msgstr "已從 %s 檔 '%s', 匯入資料 %s \n"
 
-#: lib/src/dataio.c:3030
+#: lib/src/dataio.c:2960
 #, c-format
 msgid "Data imported from %s, %s\n"
 msgstr "已從 %s, 匯入資料 %s\n"
@@ -2285,110 +2285,110 @@ msgstr ""
 "所給的參數數目有 %d 個，並不符合\n"
 "函數 %s 所需要的 %d 個參數之數目"
 
-#: lib/src/geneval.c:9305
+#: lib/src/geneval.c:9341
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': 錯誤的參數 for %s()\n"
 
-#: lib/src/geneval.c:9356 cli/cli_object.c:48 gui2/objectsave.c:53
+#: lib/src/geneval.c:9392 cli/cli_object.c:48 gui2/objectsave.c:53
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: 沒有這種物件 (object)\n"
 
-#: lib/src/geneval.c:9601
+#: lib/src/geneval.c:9637
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr "%s: 參數數目不足"
 
-#: lib/src/geneval.c:9603
+#: lib/src/geneval.c:9639
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr "%s: 引數型態錯誤 %s"
 
-#: lib/src/geneval.c:9606
+#: lib/src/geneval.c:9642
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: 引數 %d: 型態錯誤 %s"
 
-#: lib/src/geneval.c:9616
+#: lib/src/geneval.c:9652
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: 運算域應該是 %s"
 
-#: lib/src/geneval.c:9619
+#: lib/src/geneval.c:9655
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: 運算域 %d 應該是 %s"
 
-#: lib/src/geneval.c:9624
+#: lib/src/geneval.c:9660
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: 參數應該是 %s"
 
-#: lib/src/geneval.c:9627
+#: lib/src/geneval.c:9663
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: 參數 %d 應該是 %s"
 
-#: lib/src/geneval.c:9633
+#: lib/src/geneval.c:9669
 #, c-format
 msgid ", is %s"
 msgstr ", is %s"
 
-#: lib/src/geneval.c:11353 lib/src/genlex.c:741
+#: lib/src/geneval.c:11392 lib/src/genlex.c:742
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "符號 '%c' 不能用在此處\n"
 
-#: lib/src/geneval.c:11504 lib/src/genlex.c:781 lib/src/genlex.c:851
+#: lib/src/geneval.c:11543 lib/src/genlex.c:782 lib/src/genlex.c:852
 #: lib/src/gensyntax.c:257
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "'%c' 應成對出現\n"
 
-#: lib/src/geneval.c:11559
+#: lib/src/geneval.c:11598
 #, fuzzy, c-format
 msgid "The variable %s is of type %s"
 msgstr "產生新變數(_n)"
 
-#: lib/src/geneval.c:11710
+#: lib/src/geneval.c:11749
 #, fuzzy, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr ""
 "變數名稱 %s... 太長\n"
 "(變數名稱最長允計 %d characters)"
 
-#: lib/src/geneval.c:11818
+#: lib/src/geneval.c:11857
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : 尚不能用在矩陣運算"
 
-#: lib/src/geneval.c:11825
+#: lib/src/geneval.c:11864
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : 尚不能用在變數集 (lists)"
 
-#: lib/src/geneval.c:11832
+#: lib/src/geneval.c:11871
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : 尚不能用在字串 (strings)"
 
-#: lib/src/geneval.c:11839 lib/src/geneval.c:11853
+#: lib/src/geneval.c:11878 lib/src/geneval.c:11892
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : 尚不能用在此變數形態 (type)"
 
-#: lib/src/geneval.c:11846
+#: lib/src/geneval.c:11885
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : only defined for matrices"
 
-#: lib/src/geneval.c:12748
+#: lib/src/geneval.c:12787
 #, c-format
 msgid "type error: %s is string-valued"
 msgstr ""
 
-#: lib/src/geneval.c:13146
+#: lib/src/geneval.c:13185
 msgid "Bare declarations are not allowed here"
 msgstr ""
 
@@ -2523,39 +2523,39 @@ msgstr "無"
 msgid "other"
 msgstr "其它線性模型(_l)"
 
-#: lib/src/genlex.c:718
+#: lib/src/genlex.c:719
 #, c-format
 msgid "%s: no such object"
 msgstr "%s: 沒有這種物件 (object)"
 
-#: lib/src/genlex.c:720
+#: lib/src/genlex.c:721
 #, fuzzy, c-format
 msgid "The symbol '%s' is undefined"
 msgstr "殘差是常態分配"
 
-#: lib/src/genlex.c:730 lib/src/genlex.c:732
+#: lib/src/genlex.c:731 lib/src/genlex.c:733
 #, c-format
 msgid "'%s': no argument was given"
 msgstr "'%s': 未給定參數"
 
-#: lib/src/genlex.c:743
+#: lib/src/genlex.c:744
 msgid "(for logical AND, use '&&')\n"
 msgstr "(邏輯的 AND, 請用 '&&' 符號)\n"
 
-#: lib/src/genlex.c:745
+#: lib/src/genlex.c:746
 msgid "(for logical OR, use '||')\n"
 msgstr "(邏輯的 OR, 請用 '||' 符號)\n"
 
-#: lib/src/genlex.c:753
+#: lib/src/genlex.c:754
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr "符號 '%s' 在此並不符合規則\n"
 
-#: lib/src/genlex.c:848
+#: lib/src/genlex.c:849
 msgid "Empty observation []\n"
 msgstr "空的樣本 []\n"
 
-#: lib/src/genlex.c:1612
+#: lib/src/genlex.c:1613
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "錯誤的字元 '%c'\n"
@@ -8485,7 +8485,7 @@ msgid "Installed"
 msgstr "安裝完成"
 
 #: gui2/database.c:2167 gui2/database.c:2191 gui2/database.c:2407
-#: gui2/datafiles.c:1067 gui2/fncall.c:3148
+#: gui2/datafiles.c:1067 gui2/fncall.c:3164
 msgid "Up to date"
 msgstr "已更至最新"
 
@@ -8498,7 +8498,7 @@ msgstr "無法從伺服器取得資料..."
 msgid "Unknown: access error"
 msgstr "未知: 存取錯誤 access error"
 
-#: gui2/database.c:2405 gui2/datafiles.c:1017 gui2/fncall.c:3150
+#: gui2/database.c:2405 gui2/datafiles.c:1017 gui2/fncall.c:3166
 msgid "Not up to date"
 msgstr "尚未更至最新"
 
@@ -10118,15 +10118,15 @@ msgstr ""
 "並未發現 %s 函數套件, 或者尚未更新.\n"
 "你想要試試現在下載?"
 
-#: gui2/fncall.c:2709 gui2/fnsave.c:1433
+#: gui2/fncall.c:2725 gui2/fnsave.c:1433
 msgid "main window"
 msgstr "主視窗"
 
-#: gui2/fncall.c:2710 gui2/fnsave.c:1434
+#: gui2/fncall.c:2726 gui2/fnsave.c:1434
 msgid "model window"
 msgstr "模型視窗"
 
-#: gui2/fncall.c:2715
+#: gui2/fncall.c:2731
 #, c-format
 msgid ""
 "The package %s can be attached to the gretl menus\n"
@@ -10137,21 +10137,21 @@ msgstr ""
 "以 \"%s/%s\" 放在 %s.\n"
 "你想要這樣做嗎?"
 
-#: gui2/fncall.c:3009
+#: gui2/fncall.c:3025
 #, c-format
 msgid "Adding %s under %s."
 msgstr "新增 %s (在 %s 之中)"
 
-#: gui2/fncall.c:3013 gui2/fncall.c:3017 gui2/settings.c:1687
+#: gui2/fncall.c:3029 gui2/fncall.c:3033 gui2/settings.c:1687
 msgid "This change will take effect when you restart gretl"
 msgstr "你剛才的設定, 必需重新啟動 gretl 才會生效"
 
-#: gui2/fncall.c:3152
+#: gui2/fncall.c:3168
 #, c-format
 msgid "Requires gretl %s"
 msgstr "gretl 版本至少要 %s"
 
-#: gui2/fncall.c:3158
+#: gui2/fncall.c:3174
 msgid "Error reading package"
 msgstr "套件函數讀取錯誤"
 
@@ -11053,73 +11053,73 @@ msgstr "_PcGive..."
 msgid "On database _server..."
 msgstr "從伺服器資料庫讀取資料 (_s)..."
 
-#: gui2/gretl.c:1596
-msgid "_Function files"
-msgstr "自訂函數套件(_F)"
-
-#: gui2/gretl.c:1597
-msgid "On _local machine..."
-msgstr "從本機讀取 (_l)..."
-
-#: gui2/gretl.c:1598
-msgid "On _server..."
-msgstr "從伺服器讀取 (_s)..."
-
 #: gui2/gretl.c:1599
-msgid "Edit package..."
-msgstr "編輯函數套件"
-
-#: gui2/gretl.c:1600
-msgid "_New package"
-msgstr "開啟新函數套件(_N)"
-
-#: gui2/gretl.c:1604
 msgid "_Tools"
 msgstr "工具(_T)"
 
-#: gui2/gretl.c:1605
+#: gui2/gretl.c:1600
 msgid "_Statistical tables"
 msgstr "統計表臨界值(_S)"
 
-#: gui2/gretl.c:1606
+#: gui2/gretl.c:1601
 msgid "_P-value finder"
 msgstr "查P值(_P)"
 
-#: gui2/gretl.c:1607
+#: gui2/gretl.c:1602
 msgid "_Distribution graphs"
 msgstr "機率分配圖(_D)"
 
-#: gui2/gretl.c:1608
+#: gui2/gretl.c:1603
 msgid "_Plot a curve"
 msgstr "畫曲線圖"
 
-#: gui2/gretl.c:1609
+#: gui2/gretl.c:1604
 msgid "_Test statistic calculator"
 msgstr "基本假設檢定(_T)"
 
-#: gui2/gretl.c:1610
+#: gui2/gretl.c:1605
 msgid "_Nonparametric tests"
 msgstr "無母數檢定(_N)"
 
-#: gui2/gretl.c:1611
+#: gui2/gretl.c:1606
 msgid "_Seed for random numbers"
 msgstr "隨機變數產生設定值(_S)"
 
-#: gui2/gretl.c:1612
+#: gui2/gretl.c:1607
 msgid "_Command log"
 msgstr "指令紀錄(_C)"
 
-#: gui2/gretl.c:1613
+#: gui2/gretl.c:1608
 msgid "_Gretl console"
 msgstr "開啟 console 指令視窗(_G)"
 
-#: gui2/gretl.c:1614
+#: gui2/gretl.c:1609
 msgid "_Gnuplot"
 msgstr "_Gnuplot 繪圖"
 
-#: gui2/gretl.c:1615
+#: gui2/gretl.c:1610
 msgid "Start GNU _R"
 msgstr "開啟 GNU _R"
+
+#: gui2/gretl.c:1611
+msgid "_Function packages"
+msgstr "自訂函數套件 (function packages)"
+
+#: gui2/gretl.c:1612
+msgid "On _local machine..."
+msgstr "從本機讀取 (_l)..."
+
+#: gui2/gretl.c:1613
+msgid "On _server..."
+msgstr "從伺服器讀取 (_s)..."
+
+#: gui2/gretl.c:1614
+msgid "Edit package..."
+msgstr "編輯函數套件"
+
+#: gui2/gretl.c:1615
+msgid "_New package"
+msgstr "開啟新函數套件(_N)"
 
 #: gui2/gretl.c:1616
 msgid "_NIST test suite"
@@ -17100,6 +17100,9 @@ msgstr "敘述統計(_S)"
 #, fuzzy
 msgid "Probability distributions"
 msgstr "右尾機率"
+
+#~ msgid "_Function files"
+#~ msgstr "自訂函數套件(_F)"
 
 #~ msgid "Tell me about gretl updates"
 #~ msgstr "有版本更新, 通知我"

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-04-23 17:55+0100\n"
-"PO-Revision-Date: 2012-04-02 16:08-0500\n"
+"POT-Creation-Date: 2014-04-28 09:36+0100\n"
+"PO-Revision-Date: 2014-04-28 09:53+0100\n"
 "Last-Translator: Pavla Nikolovova <nikolovova@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "Language: es\n"
@@ -950,7 +950,7 @@ msgid ""
 msgstr ""
 "Nalezena binární data (%d) (řádek %d:%d): toto není platný textový soubor\n"
 
-#: lib/src/csvdata.c:1514 lib/src/dataio.c:2313
+#: lib/src/csvdata.c:1514 lib/src/dataio.c:2243
 msgid "Data file is empty\n"
 msgstr "Datový soubor je prázdný\n"
 
@@ -1043,7 +1043,7 @@ msgstr "zdá se, že chybí jména proměnných\n"
 msgid "At row %d, column %d:\n"
 msgstr "V řádku %d, sloupci %d:\n"
 
-#: lib/src/csvdata.c:2533 lib/src/dataio.c:2817 lib/src/dataio.c:2860
+#: lib/src/csvdata.c:2533 lib/src/dataio.c:2747 lib/src/dataio.c:2790
 #, c-format
 msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' –- nebyla provedena numerická konverze!"
@@ -1057,11 +1057,11 @@ msgstr "varování: jména některých proměnných byla duplikována\n"
 msgid "scanning for row labels and data...\n"
 msgstr "hledání popisků řádků a dat...\n"
 
-#: lib/src/csvdata.c:2725 lib/src/csvdata.c:2728 lib/src/dataio.c:2336
+#: lib/src/csvdata.c:2725 lib/src/csvdata.c:2728 lib/src/dataio.c:2266
 msgid "parsing"
 msgstr "analýza"
 
-#: lib/src/csvdata.c:2853 lib/src/dataio.c:2538 lib/src/dataio.c:2611
+#: lib/src/csvdata.c:2853 lib/src/dataio.c:2468 lib/src/dataio.c:2541
 #: lib/src/dbread.c:1744
 #, c-format
 msgid "Couldn't open %s\n"
@@ -1076,12 +1076,12 @@ msgstr "s použitím pevného formátu sloupce\n"
 msgid "using delimiter '%c'\n"
 msgstr "použití oddělovače '%c'\n"
 
-#: lib/src/csvdata.c:2928 lib/src/dataio.c:2350
+#: lib/src/csvdata.c:2928 lib/src/dataio.c:2280
 #, c-format
 msgid "   longest line: %d characters\n"
 msgstr "   nejdelší řádek: %d znaků\n"
 
-#: lib/src/csvdata.c:2954 lib/src/dataio.c:2433
+#: lib/src/csvdata.c:2954 lib/src/dataio.c:2363
 #, c-format
 msgid "   number of variables: %d\n"
 msgstr "   počet proměnných: %d\n"
@@ -1091,7 +1091,7 @@ msgstr "   počet proměnných: %d\n"
 msgid "   number of non-blank lines: %d\n"
 msgstr "   počet neprázdných řádků: %d\n"
 
-#: lib/src/csvdata.c:2958 lib/src/dataio.c:2408 lib/src/dataio.c:2488
+#: lib/src/csvdata.c:2958 lib/src/dataio.c:2338 lib/src/dataio.c:2418
 msgid "Invalid data file\n"
 msgstr "Neplatný datový soubor\n"
 
@@ -1215,21 +1215,21 @@ msgstr "'%s': neplatný index pozorování"
 msgid "Observation number out of bounds"
 msgstr "Počet pozorování překročil limit"
 
-#: lib/src/dataio.c:1170
+#: lib/src/dataio.c:1100
 #, fuzzy, c-format
 msgid "wrote %s.gdt\n"
 msgstr "zapsáno %s\n"
 
-#: lib/src/dataio.c:1172 lib/src/gretl_paths.c:2301 gui2/model_table.c:1372
+#: lib/src/dataio.c:1102 lib/src/gretl_paths.c:2301 gui2/model_table.c:1372
 #, c-format
 msgid "wrote %s\n"
 msgstr "zapsáno %s\n"
 
-#: lib/src/dataio.c:1348 lib/src/dataio.c:2049 lib/src/gretl_xml.c:3198
+#: lib/src/dataio.c:1278 lib/src/dataio.c:1979 lib/src/gretl_xml.c:3198
 msgid "index variable"
 msgstr "indexová proměnná"
 
-#: lib/src/dataio.c:1356 lib/src/gretl_xml.c:3173
+#: lib/src/dataio.c:1286 lib/src/gretl_xml.c:3173
 #, fuzzy, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
@@ -1238,80 +1238,80 @@ msgstr ""
 "periodicita: %d, max. pozorování: %d\n"
 "rozsah pozorování: %s-%s\n"
 
-#: lib/src/dataio.c:1559 lib/src/dataio.c:1764 lib/src/dataio.c:1780
-#: lib/src/dataio.c:2417 lib/src/dataio.c:2426 cli/gretlcli.c:117
+#: lib/src/dataio.c:1489 lib/src/dataio.c:1694 lib/src/dataio.c:1710
+#: lib/src/dataio.c:2347 lib/src/dataio.c:2356 cli/gretlcli.c:117
 #: gui2/gretl.c:276
 msgid "Out of memory!\n"
 msgstr "Nedostatek paměti!\n"
 
-#: lib/src/dataio.c:1696
+#: lib/src/dataio.c:1626
 msgid "Data frequency does not match\n"
 msgstr "Frekvence dat neodpovídá\n"
 
-#: lib/src/dataio.c:1712
+#: lib/src/dataio.c:1642
 msgid "New data not conformable for appending\n"
 msgstr "Nová data nejsou vhodná pro připojení\n"
 
-#: lib/src/dataio.c:1718
+#: lib/src/dataio.c:1648
 msgid "Inconsistency in observation markers\n"
 msgstr "Nekonzistence v označení pozorování\n"
 
-#: lib/src/dataio.c:1831 gui2/gui_utils.c:1174
+#: lib/src/dataio.c:1761 gui2/gui_utils.c:1174
 msgid "Data appended OK\n"
 msgstr "Data byla v pořádku připojena\n"
 
-#: lib/src/dataio.c:2235
+#: lib/src/dataio.c:2165
 #, fuzzy
 msgid "No markers are available for writing"
 msgstr "Žádná data nebyla k dispozici pro vykreslení grafu"
 
-#: lib/src/dataio.c:2305
+#: lib/src/dataio.c:2235
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
 msgstr "Nalezena binární data (%d): toto není platný textový soubor\n"
 
-#: lib/src/dataio.c:2391
+#: lib/src/dataio.c:2321
 #, c-format
 msgid "   Found matrix '%s' with %d rows, %d columns\n"
 msgstr "   Nalezena matice '%s' s %d řádky, %d sloupci\n"
 
-#: lib/src/dataio.c:2434
+#: lib/src/dataio.c:2364
 #, c-format
 msgid "   number of observations: %d\n"
 msgstr "   počet pozorování: %d\n"
 
-#: lib/src/dataio.c:2435
+#: lib/src/dataio.c:2365
 #, c-format
 msgid "   number of data blocks: %d\n"
 msgstr "   počet datových bloků: %d\n"
 
-#: lib/src/dataio.c:2561 lib/src/dataio.c:2627 gui2/gui_utils.c:1038
+#: lib/src/dataio.c:2491 lib/src/dataio.c:2557 gui2/gui_utils.c:1038
 msgid "Unrecognized data type"
 msgstr "Nerozpoznán datový typ"
 
-#: lib/src/dataio.c:2823 lib/src/dataio.c:2866
+#: lib/src/dataio.c:2753 lib/src/dataio.c:2796
 #, c-format
 msgid "Extraneous character '%c' in data"
 msgstr "Přebytečný znak '%c' v datech"
 
-#: lib/src/dataio.c:2825 lib/src/dataio.c:2868
+#: lib/src/dataio.c:2755 lib/src/dataio.c:2798
 #, c-format
 msgid "Extraneous character (0x%x) in data"
 msgstr "Přebytečný znak (0x%x) v datech"
 
-#: lib/src/dataio.c:2831 lib/src/dataio.c:2874
+#: lib/src/dataio.c:2761 lib/src/dataio.c:2804
 #, c-format
 msgid "'%s' -- number out of range!"
 msgstr "'%s' –- číslo mimo rozsah!"
 
-#: lib/src/dataio.c:3027
+#: lib/src/dataio.c:2957
 #, fuzzy, c-format
 msgid "Data imported from %s file '%s', %s\n"
 msgstr ""
 "Informace o datech v souboru %s:\n"
 "\n"
 
-#: lib/src/dataio.c:3030
+#: lib/src/dataio.c:2960
 #, c-format
 msgid "Data imported from %s, %s\n"
 msgstr ""
@@ -2252,108 +2252,108 @@ msgstr ""
 "Počet argumentů (%d) neodpovídá počtu\n"
 "parametrů funkce %s (%d)"
 
-#: lib/src/geneval.c:9305
+#: lib/src/geneval.c:9341
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': neplatný argument pro %s()\n"
 
-#: lib/src/geneval.c:9356 cli/cli_object.c:48 gui2/objectsave.c:53
+#: lib/src/geneval.c:9392 cli/cli_object.c:48 gui2/objectsave.c:53
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: takový objekt neexistuje\n"
 
-#: lib/src/geneval.c:9601
+#: lib/src/geneval.c:9637
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr "%s: nedostatečné argumenty"
 
-#: lib/src/geneval.c:9603
+#: lib/src/geneval.c:9639
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr "%s: neplatný typ argumentu %s"
 
-#: lib/src/geneval.c:9606
+#: lib/src/geneval.c:9642
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: argument %d: neplatný typ %s"
 
-#: lib/src/geneval.c:9616
+#: lib/src/geneval.c:9652
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: operand by měl být %s"
 
-#: lib/src/geneval.c:9619
+#: lib/src/geneval.c:9655
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: operand %d by měl být %s"
 
-#: lib/src/geneval.c:9624
+#: lib/src/geneval.c:9660
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: argument by měl být %s"
 
-#: lib/src/geneval.c:9627
+#: lib/src/geneval.c:9663
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: argument %d by měl být %s"
 
-#: lib/src/geneval.c:9633
+#: lib/src/geneval.c:9669
 #, fuzzy, c-format
 msgid ", is %s"
 msgstr "= %s krát %s"
 
-#: lib/src/geneval.c:11353 lib/src/genlex.c:741
+#: lib/src/geneval.c:11392 lib/src/genlex.c:742
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "Symbol '%c' je v tomto kontextu neplatný\n"
 
-#: lib/src/geneval.c:11504 lib/src/genlex.c:781 lib/src/genlex.c:851
+#: lib/src/geneval.c:11543 lib/src/genlex.c:782 lib/src/genlex.c:852
 #: lib/src/gensyntax.c:257
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "Neshodující se '%c'\n"
 
-#: lib/src/geneval.c:11559
+#: lib/src/geneval.c:11598
 #, c-format
 msgid "The variable %s is of type %s"
 msgstr "Proměnná %s je typu %s"
 
-#: lib/src/geneval.c:11710
+#: lib/src/geneval.c:11749
 #, fuzzy, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr "'%s': jméno je příliš dlouhé (maximálně 15 znaků)\n"
 
-#: lib/src/geneval.c:11818
+#: lib/src/geneval.c:11857
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : není implementováno pro matice"
 
-#: lib/src/geneval.c:11825
+#: lib/src/geneval.c:11864
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : není implementováno pro seznamy"
 
-#: lib/src/geneval.c:11832
+#: lib/src/geneval.c:11871
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : není implementováno pro řetězce"
 
-#: lib/src/geneval.c:11839 lib/src/geneval.c:11853
+#: lib/src/geneval.c:11878 lib/src/geneval.c:11892
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : není implementováno pro tento typ"
 
-#: lib/src/geneval.c:11846
+#: lib/src/geneval.c:11885
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : definováno pouze pro matice"
 
-#: lib/src/geneval.c:12748
+#: lib/src/geneval.c:12787
 #, c-format
 msgid "type error: %s is string-valued"
 msgstr ""
 
-#: lib/src/geneval.c:13146
+#: lib/src/geneval.c:13185
 #, fuzzy
 msgid "Bare declarations are not allowed here"
 msgstr "%s: zde není povolené dělení"
@@ -2486,39 +2486,39 @@ msgstr "žádný"
 msgid "other"
 msgstr "jiné"
 
-#: lib/src/genlex.c:718
+#: lib/src/genlex.c:719
 #, c-format
 msgid "%s: no such object"
 msgstr "%s: takový objekt neexistuje"
 
-#: lib/src/genlex.c:720
+#: lib/src/genlex.c:721
 #, c-format
 msgid "The symbol '%s' is undefined"
 msgstr "Symbol '%s' není definovaný"
 
-#: lib/src/genlex.c:730 lib/src/genlex.c:732
+#: lib/src/genlex.c:731 lib/src/genlex.c:733
 #, c-format
 msgid "'%s': no argument was given"
 msgstr "'%s': nebyl zadán žádný argument"
 
-#: lib/src/genlex.c:743
+#: lib/src/genlex.c:744
 msgid "(for logical AND, use '&&')\n"
 msgstr "(pro logické A použijte '&&')\n"
 
-#: lib/src/genlex.c:745
+#: lib/src/genlex.c:746
 msgid "(for logical OR, use '||')\n"
 msgstr "(pro logické NEBO použijte '||')\n"
 
-#: lib/src/genlex.c:753
+#: lib/src/genlex.c:754
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr "Symbol '%s' je v tomto kontextu neplatný\n"
 
-#: lib/src/genlex.c:848
+#: lib/src/genlex.c:849
 msgid "Empty observation []\n"
 msgstr "Prázdné pozorování []\n"
 
-#: lib/src/genlex.c:1612
+#: lib/src/genlex.c:1613
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "Neplatný znak '%c'\n"
@@ -8334,7 +8334,7 @@ msgid "Installed"
 msgstr "Nainstalováno"
 
 #: gui2/database.c:2167 gui2/database.c:2191 gui2/database.c:2407
-#: gui2/datafiles.c:1067 gui2/fncall.c:3148
+#: gui2/datafiles.c:1067 gui2/fncall.c:3164
 msgid "Up to date"
 msgstr "Aktualizované"
 
@@ -8346,7 +8346,7 @@ msgstr "Chyba při otevírání kompresovaných dat"
 msgid "Unknown: access error"
 msgstr "Neznámá: přístupová chyba"
 
-#: gui2/database.c:2405 gui2/datafiles.c:1017 gui2/fncall.c:3150
+#: gui2/database.c:2405 gui2/datafiles.c:1017 gui2/fncall.c:3166
 msgid "Not up to date"
 msgstr "Není aktualizované"
 
@@ -9937,17 +9937,17 @@ msgstr ""
 "Balík %s nebyl nalezen nebo není aktuální.\n"
 "Přejete si ho nyní stáhnout?"
 
-#: gui2/fncall.c:2709 gui2/fnsave.c:1433
+#: gui2/fncall.c:2725 gui2/fnsave.c:1433
 #, fuzzy
 msgid "main window"
 msgstr "Hlavní okno"
 
-#: gui2/fncall.c:2710 gui2/fnsave.c:1434
+#: gui2/fncall.c:2726 gui2/fnsave.c:1434
 #, fuzzy
 msgid "model window"
 msgstr "Zavřít okno"
 
-#: gui2/fncall.c:2715
+#: gui2/fncall.c:2731
 #, c-format
 msgid ""
 "The package %s can be attached to the gretl menus\n"
@@ -9955,21 +9955,21 @@ msgid ""
 "Do you want to do this?"
 msgstr ""
 
-#: gui2/fncall.c:3009
+#: gui2/fncall.c:3025
 #, fuzzy, c-format
 msgid "Adding %s under %s."
 msgstr "_V závislosti na %s a %s"
 
-#: gui2/fncall.c:3013 gui2/fncall.c:3017 gui2/settings.c:1687
+#: gui2/fncall.c:3029 gui2/fncall.c:3033 gui2/settings.c:1687
 msgid "This change will take effect when you restart gretl"
 msgstr "Tato změna se projeví, až restartujete gretl"
 
-#: gui2/fncall.c:3152
+#: gui2/fncall.c:3168
 #, c-format
 msgid "Requires gretl %s"
 msgstr ""
 
-#: gui2/fncall.c:3158
+#: gui2/fncall.c:3174
 #, fuzzy
 msgid "Error reading package"
 msgstr "Chyba při čtení %s\n"
@@ -10867,74 +10867,74 @@ msgstr "_PcGive..."
 msgid "On database _server..."
 msgstr "Na databázovém _serveru..."
 
-#: gui2/gretl.c:1596
-msgid "_Function files"
-msgstr "_Soubory funkcí"
-
-#: gui2/gretl.c:1597
-msgid "On _local machine..."
-msgstr "Na _místním počítači..."
-
-#: gui2/gretl.c:1598
-msgid "On _server..."
-msgstr "Na _serveru..."
-
 #: gui2/gretl.c:1599
-msgid "Edit package..."
-msgstr "Upravit balíček..."
-
-#: gui2/gretl.c:1600
-msgid "_New package"
-msgstr "_Nový balíček"
-
-#: gui2/gretl.c:1604
 msgid "_Tools"
 msgstr "_Nástroje"
 
-#: gui2/gretl.c:1605
+#: gui2/gretl.c:1600
 msgid "_Statistical tables"
 msgstr "_Statistické tabulky"
 
-#: gui2/gretl.c:1606
+#: gui2/gretl.c:1601
 msgid "_P-value finder"
 msgstr "_Výpočet p-hodnot"
 
-#: gui2/gretl.c:1607
+#: gui2/gretl.c:1602
 msgid "_Distribution graphs"
 msgstr "_Grafy rozdělení"
 
-#: gui2/gretl.c:1608
+#: gui2/gretl.c:1603
 msgid "_Plot a curve"
 msgstr "_Vykreslit křivku"
 
-#: gui2/gretl.c:1609
+#: gui2/gretl.c:1604
 msgid "_Test statistic calculator"
 msgstr "_Výpočet testovacích statistik"
 
-#: gui2/gretl.c:1610
+#: gui2/gretl.c:1605
 msgid "_Nonparametric tests"
 msgstr "_Neparametrické testy"
 
-#: gui2/gretl.c:1611
+#: gui2/gretl.c:1606
 msgid "_Seed for random numbers"
 msgstr "_Nastavení pro generátor náhodných čísel"
 
-#: gui2/gretl.c:1612
+#: gui2/gretl.c:1607
 msgid "_Command log"
 msgstr "_Výpis příkazu"
 
-#: gui2/gretl.c:1613
+#: gui2/gretl.c:1608
 msgid "_Gretl console"
 msgstr "_Konzole gretlu"
 
-#: gui2/gretl.c:1614
+#: gui2/gretl.c:1609
 #, fuzzy
 msgid "_Gnuplot"
 msgstr "Gnuplot barvy"
 
-#: gui2/gretl.c:1615
+#: gui2/gretl.c:1610
 msgid "Start GNU _R"
 msgstr "Spustit GNU _R"
+
+#: gui2/gretl.c:1611
+msgid "_Function packages"
+msgstr "Balíčky _funkcí"
+
+#: gui2/gretl.c:1612
+msgid "On _local machine..."
+msgstr "Na _místním počítači..."
+
+#: gui2/gretl.c:1613
+msgid "On _server..."
+msgstr "Na _serveru..."
+
+#: gui2/gretl.c:1614
+msgid "Edit package..."
+msgstr "Upravit balíček..."
+
+#: gui2/gretl.c:1615
+msgid "_New package"
+msgstr "_Nový balíček"
 
 #: gui2/gretl.c:1616
 msgid "_NIST test suite"
@@ -16808,6 +16808,9 @@ msgstr "Statistiky/transformace"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Pravděpodobnostní rozdělení"
+
+#~ msgid "_Function files"
+#~ msgstr "_Soubory funkcí"
 
 #~ msgid "Tell me about gretl updates"
 #~ msgstr "Chci informace o aktualizacích gretlu"
