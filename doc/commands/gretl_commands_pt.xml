@@ -6386,7 +6386,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/File/Function files/New package</menu-path>
+      <menu-path>/Tools/Function packages/New package</menu-path>
     </gui-access>
 
   </command>
