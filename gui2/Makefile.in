@@ -44,6 +44,7 @@ MKLANG = @MKLANG@
 
 GRETL_LANG = gretl.lang
 GNUPLOT_LANG = gnuplot.lang
+GRETL_NEWS = NEWS
 
 ifeq ($(have_sourceview),3.0)
   svprefix = $(shell pkg-config --variable=prefix gtksourceview-3.0)
@@ -85,6 +86,10 @@ endif
 
 ifeq ($(MKLANG),) 
   MKLANG = ./mklang
+endif
+
+ifeq ($(MKNEWS),) 
+  MKNEWS = ./mknews
 endif
 
 ifeq ($(quiet_build),yes)
@@ -206,8 +211,14 @@ mklang.o: mklang.c $(LANGDEPS)
 mklang: mklang.o $(GRETLLIB)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
 
+mknews: mknews.c
+	$(AMP)$(CC) -o $@ $<
+
 $(GRETL_LANG): $(MKLANG)
 	$(MKLANG) > $@
+
+$(GRETL_NEWS): $(MKNEWS)
+	$(MKNEWS) $(topsrc)/ChangeLog > $@
 
 .deps:
 	$(AMP)mkdir $@
@@ -216,7 +227,7 @@ $(GRETL_LANG): $(MKLANG)
 
 .PHONY:
 
-install: install-exec install-ui $(INSTALL_SCRIPT) install-data install-lang
+install: install-exec install-ui $(INSTALL_SCRIPT) install-data install-lang install-news
 
 install-strip: $(PROG) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
@@ -238,6 +249,9 @@ install-lang: $(GRETL_LANG) installdirs
 	$(INSTALL_DATA) $(GRETL_LANG) $(DESTDIR)$(langdir)/gretl.lang
 	$(INSTALL_DATA) $(topsrc)/gui2/$(GNUPLOT_LANG) $(DESTDIR)$(langdir)/gnuplot.lang
 
+install-news: $(GRETL_NEWS) installdirs
+	$(INSTALL_DATA) $(GRETL_NEWS) $(DESTDIR)$(gretldir)
+
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir) 
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)
@@ -245,7 +259,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(uidir)
 
 clean:
-	rm -f *.o $(PROG) mklang gretl.lang
+	rm -f *.o $(PROG) mklang gretl.lang mknews NEWS
 	rm -rf .libs .deps
 
 distclean: clean

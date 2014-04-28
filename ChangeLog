@@ -1,4 +1,6 @@
 version 1.9.15, in progress
+- GUI reorganization: move the Function packages menu from 
+  /Files to /Tools
 - Help menu: add item for the new "hansl primer" which covers
   the basics of gretl's scripting language
 - Introduce a new native binary datafile format, the gdtb file

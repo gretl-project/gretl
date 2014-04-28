@@ -63,6 +63,15 @@ static void license_callback (GtkWidget *w, gpointer p)
     g_free(fname);
 }
 
+static void relnotes_callback (GtkWidget *w, gpointer p)
+{
+    gchar *fname;
+
+    fname = g_strdup_printf("%sNEWS", gretl_home());
+    view_file(fname, 0, 0, 78, 350, VIEW_FILE);
+    g_free(fname);
+}
+
 static void show_link_cursor (GtkWidget *w, gpointer p)
 {
     GdkWindow *window = gtk_widget_get_window(w);
@@ -189,6 +198,13 @@ void about_dialog (void)
 	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
 	gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
     }
+
+    /* NEWS button */
+    button = gtk_button_new_with_label(_("News"));
+    gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(relnotes_callback), 
+		     NULL);
 
     /* GPL button */
     button = gtk_button_new_with_label(_("License"));
