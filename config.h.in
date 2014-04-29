@@ -29,7 +29,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Location of shared gretl files */
 #define GRETL_PREFIX "/usr/local"
 
-/* Building a reloctable package (Windows, OS X)? */
+/* Building a relocatable package (Windows, OS X)? */
 #undef PKGBUILD
 
 /* Using libcurl for http? */
@@ -59,7 +59,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Define if zlib is available */
 #undef HAVE_ZLIB
 
-/* Define if using libgsf (>= 1.14.29) */
+/* Define if using libgsf (>= 1.14.31) for zip/unzip */
 #undef USE_GSF
 
 /* Is LaTeX available? */
