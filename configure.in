@@ -163,7 +163,7 @@ else
 fi])
 
 AC_ARG_ENABLE(www,
-[  --disable-www            do not link to libcurl for http],
+[  --disable-www           do not link to libcurl for http],
 [if test "$enableval" = "yes"
 then
   use_curl=yes
@@ -320,6 +320,7 @@ AC_C_BIGENDIAN
 
 AC_ARG_VAR(HOSTCC, host compiler (for cross-build))
 AC_ARG_VAR(MKLANG, builder for gtksourceview files (cross-build))
+AC_ARG_VAR(MKNEWS, builder for NEWS file (cross-build))
 AC_ARG_VAR(MPICC, path to MPI compiler wrapper)
 AC_ARG_VAR(MPILINK, linker commands for MPI (cross-build))
 
@@ -982,4 +983,3 @@ Now type '$MAKE' to build gretl."
     echo
   fi
 fi
-

@@ -716,6 +716,7 @@ AVX_CFLAGS
 SSE2_CFLAGS
 MPILINK
 MPICC
+MKNEWS
 MKLANG
 HOSTCC
 OTOOL64
@@ -886,6 +887,7 @@ CPPFLAGS
 CPP
 HOSTCC
 MKLANG
+MKNEWS
 MPICC
 MPILINK
 LAPACK_LIBS
@@ -1540,7 +1542,7 @@ Optional Features:
   --enable-xdg-utils      Use xdg-utils for installing XDG files [default=auto]
   --enable-pkgbuild       For building relocatable package (e.g. OS X)
   --disable-gnuplot-checks do not run checks for gnuplot
-  --disable-www            do not link to libcurl for http
+  --disable-www           do not link to libcurl for http
   --enable-static[=PKGS]  build static libraries [default=no]
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-fast-install[=PKGS]
@@ -1548,7 +1550,7 @@ Optional Features:
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-sse2           use sse2 if available [default=auto]
   --enable-avx            use avx if available [default=auto]
-  --enable-openmp         use OpenMP if available [default=no]
+  --enable-openmp         use OpenMP if available [default=auto]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1594,6 +1596,7 @@ Some influential environment variables:
   CPP         C preprocessor
   HOSTCC      host compiler (for cross-build)
   MKLANG      builder for gtksourceview files (cross-build)
+  MKNEWS      builder for NEWS file (cross-build)
   MPICC       path to MPI compiler wrapper
   MPILINK     linker commands for MPI (cross-build)
   LAPACK_LIBS linker flags for lapack, overriding auto-detection
@@ -15048,6 +15051,7 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
 
 
 
+
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use SSE2" >&5
 $as_echo_n "checking whether to use SSE2... " >&6; }
   # Check whether --enable-sse2 was given.
@@ -15243,6 +15247,8 @@ $as_echo "$avx_result" >&6; }
 
 
 
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use OpenMP" >&5
+$as_echo_n "checking whether to use OpenMP... " >&6; }
   # Check whether --enable-openmp was given.
 if test "${enable_openmp+set}" = set; then :
   enableval=$enable_openmp; enable_openmp=$enableval
@@ -15251,9 +15257,7 @@ fi
 
   ac_openmp_result=no
   OPENMP_CFLAGS=
-  if test "$enable_openmp" = yes; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $CC option to support OpenMP" >&5
-$as_echo_n "checking for $CC option to support OpenMP... " >&6; }
+  if test "$enable_openmp" != "no" ; then
     if ${ac_cv_prog_cc_openmp+:} false; then :
   $as_echo_n "(cached) " >&6
 else
@@ -15346,15 +15350,15 @@ rm -f core conftest.err conftest.$ac_objext \
 
 fi
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_cc_openmp" >&5
-$as_echo "$ac_cv_prog_cc_openmp" >&6; }
-    case $ac_cv_prog_cc_openmp in
+        case $ac_cv_prog_cc_openmp in
       "none needed" | unsupported)
 	OPENMP_CFLAGS= ;;
       *)
 	OPENMP_CFLAGS=$ac_cv_prog_cc_openmp ;;
     esac
   fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_openmp_result" >&5
+$as_echo "$ac_openmp_result" >&6; }
 
 
 
@@ -23554,4 +23558,3 @@ Now type '$MAKE' to build gretl."
     echo
   fi
 fi
-

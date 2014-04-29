@@ -11,14 +11,14 @@
 # -----------
 AC_DEFUN([AC_C_OPENMP],
 [
+  AC_MSG_CHECKING([whether to use OpenMP])
   AC_ARG_ENABLE(openmp,
-    [AS_HELP_STRING([--enable-openmp], [use OpenMP if available [default=no]])],
+    [AS_HELP_STRING([--enable-openmp], [use OpenMP if available [default=auto]])],
     [enable_openmp=$enableval]
   )
   ac_openmp_result=no
   OPENMP_CFLAGS=
-  if test "$enable_openmp" = yes; then
-    AC_MSG_CHECKING([for $CC option to support OpenMP])
+  if test "$enable_openmp" != "no" ; then
     AC_CACHE_VAL([ac_cv_prog_cc_openmp], [
       ac_cv_prog_cc_openmp=unsupported
       AC_LINK_IFELSE([AC_LANG_SOURCE([
@@ -86,7 +86,7 @@ int main () { return omp_get_num_threads (); }
 	done
       fi
       ])
-    AC_MSG_RESULT([$ac_cv_prog_cc_openmp])
+    dnl AC_MSG_RESULT([$ac_cv_prog_cc_openmp])
     case $ac_cv_prog_cc_openmp in
       "none needed" | unsupported)
 	OPENMP_CFLAGS= ;;
@@ -94,6 +94,7 @@ int main () { return omp_get_num_threads (); }
 	OPENMP_CFLAGS=$ac_cv_prog_cc_openmp ;;
     esac
   fi
+  AC_MSG_RESULT([$ac_openmp_result])
   AC_SUBST([OPENMP_CFLAGS])
 ])
 
