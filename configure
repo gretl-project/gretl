@@ -15351,8 +15351,11 @@ rm -f core conftest.err conftest.$ac_objext \
 fi
 
         case $ac_cv_prog_cc_openmp in
-      "none needed" | unsupported)
+      "none needed")
+        ac_openmp_result=yes
 	OPENMP_CFLAGS= ;;
+      unsupported)
+        OPENMP_CFLAGS= ;;
       *)
 	OPENMP_CFLAGS=$ac_cv_prog_cc_openmp ;;
     esac

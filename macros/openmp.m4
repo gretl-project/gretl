@@ -88,8 +88,11 @@ int main () { return omp_get_num_threads (); }
       ])
     dnl AC_MSG_RESULT([$ac_cv_prog_cc_openmp])
     case $ac_cv_prog_cc_openmp in
-      "none needed" | unsupported)
+      "none needed")
+        ac_openmp_result=yes
 	OPENMP_CFLAGS= ;;
+      unsupported)
+        OPENMP_CFLAGS= ;;
       *)
 	OPENMP_CFLAGS=$ac_cv_prog_cc_openmp ;;
     esac
