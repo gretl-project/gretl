@@ -5,11 +5,11 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Gretl (1.9.14)\n"
+"Project-Id-Version: Gretl (1.9.99)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-04-28 09:36+0100\n"
-"PO-Revision-Date: 2014-04-28 09:51+0100\n"
-"Last-Translator: J.C.E.N. <ecadrian.estevez@usc.es>\n"
+"PO-Revision-Date: 2014-04-29 17:20+0100\n"
+"Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
 "MIME-Version: 1.0\n"
@@ -1480,9 +1480,8 @@ msgstr "Fóra de memoria!"
 
 #: lib/src/dbread.c:1711 lib/src/gretl_string_table.c:837
 #: lib/src/interact.c:4464 cli/gretlcli.c:711
-#, fuzzy
 msgid "Internet access not supported"
-msgstr "A frecuencia %d non é compatible"
+msgstr "O acceso a Internet non se admite"
 
 #: lib/src/dbread.c:1891 lib/src/subsample.c:1816 lib/src/subsample.c:1833
 msgid "error reading smpl line"
@@ -2218,13 +2217,12 @@ msgid "Generated series %s (ID %d)"
 msgstr "Serie '%s' xerada (ID %d)"
 
 #: lib/src/geneval.c:1494 lib/src/gretl_foreign.c:99
-#, fuzzy
 msgid "MPI is not supported in this gretl build"
-msgstr "%s: este idioma local non se permite neste sistema"
+msgstr "Esta compilación de Gretl non admite MPI"
 
 #: lib/src/geneval.c:1504
 msgid "The MPI library is not loaded"
-msgstr ""
+msgstr "A biblioteca MPI non se cargou"
 
 #: lib/src/geneval.c:3934 lib/src/interact.c:1598
 #, c-format
@@ -2980,13 +2978,12 @@ msgid "no such item"
 msgstr "Non existe ese elemento"
 
 #: lib/src/gretl_bundle.c:1495
-#, fuzzy
 msgid "xmlParseMemory failed"
-msgstr "xmlParseFile fallou en %s"
+msgstr "Fallou 'xmlParseMemory'"
 
 #: lib/src/gretl_bundle.c:1501
 msgid "xmlDocGetRootElement failed"
-msgstr ""
+msgstr "Fallou 'xmlDocGetRootElement'"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3182,9 +3179,8 @@ msgid "Warning"
 msgstr "Aviso"
 
 #: lib/src/gretl_foreign.c:93
-#, fuzzy
 msgid "MPI is already initialized"
-msgstr "O modelo xa se gardou"
+msgstr "MPI xa se iniciou"
 
 #: lib/src/gretl_func.c:2407 lib/src/gretl_func.c:2467
 #: lib/src/gretl_func.c:2543 lib/src/gretl_utils.c:1639
@@ -3470,9 +3466,8 @@ msgid "failed"
 msgstr "fallou"
 
 #: lib/src/gretl_model.c:3809
-#, fuzzy
 msgid "parameter"
-msgstr "Parámetros: "
+msgstr "Parámetro"
 
 #: lib/src/gretl_model.c:3813 gui2/calculator.c:2006
 msgid "dfn"
@@ -4398,9 +4393,9 @@ msgid "Pseudo-random number generator seeded with %d\n"
 msgstr "Xerador de números pseudoaleatorios iniciado con semente %d\n"
 
 #: lib/src/libset.c:1771
-#, fuzzy, c-format
+#, c-format
 msgid "set: unknown variable '%s'"
-msgstr "Variable '%s' descoñecida"
+msgstr "set: variable '%s' descoñecida"
 
 #: lib/src/matrix_extra.c:852
 msgid "Non-positive values encountered"
@@ -4544,7 +4539,7 @@ msgstr "Aviso: Hessiana non def. positiva (pero aínda non singular)"
 
 #: lib/src/modelprint.c:646 lib/src/modelprint.c:664 lib/src/modelprint.c:672
 msgid "'Within' variance"
-msgstr "Varianza 'dentro' (within)"
+msgstr "Varianza 'intra' (within)"
 
 #: lib/src/modelprint.c:647 lib/src/modelprint.c:665 lib/src/modelprint.c:673
 msgid "'Between' variance"
@@ -5076,7 +5071,7 @@ msgstr "Variable dependente"
 
 #: lib/src/modelprint.c:1635
 msgid "Estimated using X-13-ARIMA"
-msgstr "Estimación usando ARIMA-X-12"
+msgstr "Estimación usando ARIMA-X-13"
 
 #: lib/src/modelprint.c:1637
 msgid "Estimated using X-12-ARIMA"
@@ -5496,15 +5491,15 @@ msgstr "$R^2$ MCVF"
 
 #: lib/src/modelprint.c:2921
 msgid "LSDV R-squared"
-msgstr "R-cadrado"
+msgstr "R-cadrado MCVF"
 
 #: lib/src/modelprint.c:2922
 msgid "Within $R^2$"
-msgstr "D.T. intra"
+msgstr "$R^2$ intra"
 
 #: lib/src/modelprint.c:2922
 msgid "Within R-squared"
-msgstr "R-cadrado"
+msgstr "R-cadrado intra"
 
 #: lib/src/modelprint.c:2952
 msgid "Mean of innovations"
@@ -5701,7 +5696,7 @@ msgstr "Acadouse o número máximo de iteracións, %d"
 
 #: lib/src/monte_carlo.c:1931
 msgid "progressive loop: model must be of constant size"
-msgstr ""
+msgstr "Bucle progresivo: o modelo debe ter un tamaño constante"
 
 #: lib/src/monte_carlo.c:2143
 msgid "Sorry, this command is not available in loop mode"
@@ -6984,9 +6979,9 @@ msgid "= %s times %s"
 msgstr "= %s veces '%s'"
 
 #: lib/src/transforms.c:645
-#, fuzzy, c-format
+#, c-format
 msgid "dummy for %s = '%s'"
-msgstr "variable ficticia para '%s' = %g"
+msgstr "Variable ficticia para %s = '%s'"
 
 #: lib/src/transforms.c:647 lib/src/transforms.c:650
 #, c-format
@@ -9608,7 +9603,7 @@ msgstr "ficheiros de Ox (*.ox)"
 
 #: gui2/fileselect.c:871
 msgid "Compression level (0 = none)"
-msgstr "Proba de rachas (niveis)"
+msgstr "Nivel de compresión (0=ningún)"
 
 #: gui2/filters.c:92
 msgid "Simple moving average"
@@ -11176,7 +11171,7 @@ msgstr "_Tendencia temporal"
 
 #: gui2/gretl.c:1684
 msgid "_Panel unit index"
-msgstr "Variables índices de panel"
+msgstr "Índice de unidades en _panel"
 
 #: gui2/gretl.c:1685
 msgid "_Random variable..."
@@ -11588,7 +11583,7 @@ msgstr "_Atallos de teclado..."
 
 #: gui2/gretl.c:1812
 msgid "_Hansl primer"
-msgstr ""
+msgstr "Manual básico de _Hansl"
 
 #: gui2/gretl.c:1813
 msgid "Check for _updates"
@@ -14894,18 +14889,16 @@ msgid "Path to Python executable"
 msgstr "Ruta ao executable de Python"
 
 #: gui2/settings.c:273
-#, fuzzy
 msgid "Path to mpiexec"
-msgstr "Ruta a Rterm.exe"
+msgstr "Ruta a mpiexec"
 
 #: gui2/settings.c:275
 msgid "Path to MPI hosts file"
-msgstr ""
+msgstr "Ruta ao ficheiro de servidores MPI"
 
 #: gui2/settings.c:277
-#, fuzzy
 msgid "Installed MPI variant"
-msgstr "todas as variantes"
+msgstr "Instalouse a variante de MPI"
 
 #: gui2/settings.c:280
 msgid "Database server name"
@@ -15003,7 +14996,7 @@ msgstr "Programas"
 
 #: gui2/settings.c:1193
 msgid "MPI"
-msgstr ""
+msgstr "MPI"
 
 #: gui2/settings.c:1195
 msgid "HCCME"
@@ -15288,9 +15281,8 @@ msgid "No undo information available"
 msgstr "Non hai información dispoñible para 'desfacer'"
 
 #: gui2/textbuf.c:1004
-#, fuzzy
 msgid "processing...\n"
-msgstr "_Abrir sesión..."
+msgstr "Procesando...\n"
 
 #: gui2/textbuf.c:1543
 msgid "Gretl Command Reference"
@@ -16434,9 +16426,9 @@ msgid "Storing"
 msgstr "Almacenando"
 
 #: plugin/progress_bar.c:177
-#, fuzzy, c-format
+#, c-format
 msgid "Scanning %d fonts"
-msgstr "Gretl: Explorando fontes"
+msgstr "Explorando %d fontes"
 
 #: plugin/quantreg.c:380
 msgid "Couldn't calculate confidence intervals for this model"
