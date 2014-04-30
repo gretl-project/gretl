@@ -173,21 +173,21 @@ want to refer to the
 the gretl website.
 
 The first step is installing the C compiler and related basic
-utilities, if these are not already in place. On a Debian system,
-these are contained in a bunch of packages that can be installed via
-the command
+utilities, if these are not already in place. On a Debian (or
+derivative) system, these are contained in a bunch of packages that
+can be installed via the command
 \begin{code}
 apt-get install gcc autoconf automake1.9 libtool flex bison gcc-doc \
 libc6-dev libc-dev gfortran gettext pkgconfig
 \end{code}
 
 Then it is necessary to install the ``development'' (\texttt{dev})
-packages for the libraries that gretl uses:
+packages for the libraries that gretl uses: 
 \begin{center}
   \begin{tabular}{ll}
     \textit{Library} & \textit{command} \\ [4pt]
     GLIB     & \texttt{apt-get install libglib2.0-dev} \\
-    GTK 2.0  & \texttt{apt-get install libgtk2.0-dev} \\
+    GTK 3.0  & \texttt{apt-get install libgtk3.0-dev} \\
     PNG      & \texttt{apt-get install libpng12-dev} \\
     XSLT     & \texttt{apt-get install libxslt1-dev} \\
     LAPACK   & \texttt{apt-get install liblapack-dev} \\
@@ -195,14 +195,14 @@ packages for the libraries that gretl uses:
     READLINE & \texttt{apt-get install libreadline-dev} \\
     ZLIB     & \texttt{apt-get install zlib1g-dev} \\
     XML      & \texttt{apt-get install libxml2-dev} \\
-    GMP      & \texttt{apt-get install libgmp3-dev} \\
-    CURL     & \texttt{apt-get install libcurl-dev} \\
+    GMP      & \texttt{apt-get install libgmp-dev} \\
+    CURL     & \texttt{apt-get install libcurl4-gnutls-dev} \\
     MPFR     & \texttt{apt-get install libmpfr-dev}
   \end{tabular}
 \end{center}
 
 MPFR is optional, but recommended. It is possible to substitute GTK
-3.0 for GTK 2.0.  The \texttt{dev} packages for these libraries are
+2.0 for GTK 3.0.  The \texttt{dev} packages for these libraries are
 necessary to \emph{compile} gretl---you'll also need the
 plain, non-\texttt{dev} library packages to \emph{run} gretl,
 but most of these should already be part of a standard installation.
@@ -244,7 +244,7 @@ To work with the released source:
   (replace \cmd{N} with the specific version number of the file you
   downloaded at step 1).
 \item Change directory to the gretl source directory created at step 2
-  (e.g.\ \verb+gretl-1.9.11+).
+  (e.g.\ \verb+gretl-1.9.14+).
 \item Proceed to the next section, ``Configure and make''.
 \end{enumerate}
 
@@ -322,6 +322,17 @@ option to \texttt{configure}, as in
 But please note that this option will work only if you are using
 the CVS source.
 
+
+\tip{In order to build the documentation, there is the possibility
+  that you will have to install some extra software on top of the
+  packages mentioned in the previous section. For example, you may
+  need some extra \LaTeX\ packages to compile the manuals. Two of the
+  required packages, that not every standard \LaTeX\ installation
+  include, are typically \app{pifont.sty} and \app{appendix.sty}. You
+  could install the corresponding packages from your distribution or
+  you could simply download them from CTAN and install them by hand.}
+
+
 This, for example, if you want to install under \texttt{/usr}, with
 OpenMP support, and also build the documentation, you would do
 \begin{code}
@@ -344,21 +355,24 @@ Configuration:
   Use readline library:                   yes
   Use gnuplot for graphs:                 yes
   Use LaTeX for typesetting output:       yes
+  Use libgsf for zip/unzip:               no
   MPFR support:                           yes
   sse2 support for RNG:                   yes
-  openMP support:                         yes
-  Build with GTK version:                 3.0
+  OpenMP support:                         yes
+  MPI support:                            no
+  AVX support for arithmetic:             no
+  Build with GTK version:                 2.0
   Build gretl documentation:              yes
   Use Lucida fonts:                       no
   Build message catalogs:                 yes
   X-12-ARIMA support:                     yes
   TRAMO/SEATS support:                    yes
   libR support:                           yes
-  ODBC support:                           yes
+  ODBC support:                           no
   Experimental audio support:             no
   Use xdg-utils in installation:          if DESTDIR not set
   LAPACK libraries:
-    -llapack -lblas
+    -llapack -lblas -lgfortran
 
 Now type 'make' to build gretl.
 You can also do 'make pdfdocs' to build the PDF documentation.
