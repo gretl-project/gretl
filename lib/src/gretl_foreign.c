@@ -1102,11 +1102,15 @@ static int write_gretl_mpi_file (gretlopt opt)
 	    /* respect the --omp-threads option */
 	    int nt = get_optval_int(MPI, OPT_T, &err);
 
-	    if (!err && (nt <= 0 || nt > 9999999)) {
-		err = E_DATA;
-	    }
-	    if (!err) {
-		fprintf(fp, "set omp_num_threads %d\n", nt);
+	    if (nt == -1) {
+		; /* unlimited/auto */
+	    } else {
+		if (!err && (nt <= 0 || nt > 9999999)) {
+		    err = E_DATA;
+		}
+		if (!err) {
+		    fprintf(fp, "set omp_num_threads %d\n", nt);
+		}
 	    }
 	} else {
 	    /* by default, don't use OMP threading */
