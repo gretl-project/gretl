@@ -426,6 +426,11 @@ static int seek_file_collections (const char *basedir,
     struct dirent *dirent;
     int n_coll = 0;
 
+#if COLL_DEBUG
+    fprintf(stderr, "*** seek_file_collections: basedir='%s', type=%d\n", 
+	    basedir, stype);
+#endif
+
     if (*err) {
 	/* a fatal error occurred already, skip it */
 	return 0;
@@ -448,7 +453,7 @@ static int seek_file_collections (const char *basedir,
     }
 
 #if COLL_DEBUG
-    fprintf(stderr, "*** seeking file collections in '%s'\n", path);
+    fprintf(stderr, "*** seek_file_collections: path='%s'\n", path);
 #endif
 
     while (!*err && (dirent = readdir(topdir))) {
@@ -456,6 +461,9 @@ static int seek_file_collections (const char *basedir,
 	    char *subpath;
 	    DIR *subdir;
 
+#if COLL_DEBUG > 1
+	    fprintf(stderr, " dname = '%s'\n", dirent->d_name);
+#endif
 	    if (strcmp(dirent->d_name, ".")) {
 		subpath = full_path(path, dirent->d_name);
 	    } else {
@@ -538,6 +546,8 @@ static int build_file_collections (void)
 	    wd = maybe_get_default_workdir();
 	    if (wd != NULL) {
 		n += seek_file_collections(wd, USER_SEARCH, &err);
+		n += seek_file_collections(wd, DATA_SEARCH, &err);
+		n += seek_file_collections(wd, SCRIPT_SEARCH, &err);
 	    }
 	}
 	if (!err && n == 0) {
@@ -2044,7 +2054,6 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 		closedir(dir);
 	    }
 	}
-
 	strings_array_free(dnames, n_dirs);
     } else {
 	dnames = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
@@ -2057,7 +2066,6 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 		closedir(dir);
 	    }
 	}
-
 	strings_array_free(dnames, n_dirs);
     }	    
 

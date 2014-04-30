@@ -1953,7 +1953,7 @@ static char *get_writable_target (int code, char *objname,
     int err = 0;
 
 #if 0
-    fprintf(stderr, "get_writable_target\n");
+    fprintf(stderr, "get_writable_target, starting\n");
 #endif
 
     targ = mymalloc(MAXLEN);
