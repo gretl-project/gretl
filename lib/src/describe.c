@@ -4728,9 +4728,17 @@ static int weighted_order_stats (const double *y, const double *w,
 	}
     }
 
+#if 0
+    fprintf(stderr, "Before sorting:\n");
+    for (i=0; i<n; i++) {
+	fprintf(stderr, "%d: %g, %g\n", i, X[i][0], X[i][1]);
+    }
+#endif
+
     qsort(X, n, sizeof *X, compare_wgtord_rows);
 
 #if 0
+    fprintf(stderr, "After sorting:\n");
     for (i=0; i<n; i++) {
 	fprintf(stderr, "%d: %g, %g\n", i, X[i][0], X[i][1]);
     }
@@ -4751,7 +4759,7 @@ static int weighted_order_stats (const double *y, const double *w,
 	    }
 	}
 
-	if (t >= n - 1) {
+	if (t == 0 || t >= n - 1) {
 	    ostats[i] = NADBL;
 	    continue;
 	}
@@ -4759,7 +4767,7 @@ static int weighted_order_stats (const double *y, const double *w,
 	if (X[t-1][0] == X[t][0]) {
 	    ostats[i] = X[t][0]; 
 	} else {
-	    x = (q - p)/X[t][1];
+	    x = (q - p) / X[t][1];
 	    ostats[i] = x * X[t+1][0] + (1-x) * X[t][0];
 	}
 
