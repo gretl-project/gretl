@@ -4714,37 +4714,50 @@ static int weighted_order_stats (const double *y, const double *w,
 	return E_ALLOC;
     }
 
-    t = 0;
+    i = 0;
     wsum = 0.0;
 
-    for (i=0; i<n; i++) {
+    for (t=0; t<n; t++) {
 	if (na(y[t]) || na(w[t]) || w[t] == 0.0) {
-	    i--;
+	    continue;
 	} else {
 	    X[i][0] = y[t];
 	    X[i][1] = w[t];
 	    wsum += w[t];
+	    i++;
 	}
-	t++;
     }
 
     qsort(X, n, sizeof *X, compare_wgtord_rows);
+
+#if 0
+    for (i=0; i<n; i++) {
+	fprintf(stderr, "%d: %g, %g\n", i, X[i][0], X[i][1]);
+    }
+#endif
 
     for (i=0; i<k; i++) {
 	p = ostats[i] * wsum;
 	q = X[0][1];
 	x = NADBL;
-	if (q == p) {
-	    x = X[0][0];
+	if (p < q) {
+	    ostats[i] = NADBL;
+	    continue;
 	} else {
 	    t = 0;
-	    while (q<p) {
-		q += X[t++][1];
+	    while (q <= p) {
+		q += X[t][1];
+		if (q < p) t++;
 	    }
 	}
 
+	if (t >= n - 1) {
+	    ostats[i] = NADBL;
+	    continue;
+	}
+
 	if (X[t-1][0] == X[t][0]) {
-	    ostats[i]  = X[t][0]; 
+	    ostats[i] = X[t][0]; 
 	} else {
 	    x = (q - p)/X[t][1];
 	    ostats[i] = x * X[t+1][0] + (1-x) * X[t][0];
