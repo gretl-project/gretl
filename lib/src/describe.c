@@ -4702,12 +4702,12 @@ static int compare_wgtord_rows (const void *a, const void *b)
 static int weighted_order_stats (const double *y, const double *w, 
 				 double *ostats, int n, int k)
 {
-    /* "ostats" contains the quantiles to compute, and is re-used 
-       in output to hold the results 
+    /* on input "ostats" contains the quantiles to compute;
+       on output it holds the results 
     */
+    double p, q, wsum = 0.0;
+    double **X;
     int t, i, err = 0;
-    double wsum, x, p, q;
-    double **X = NULL;
 
     X = doubles_array_new(n, 2);
     if (X == NULL) {
@@ -4715,8 +4715,6 @@ static int weighted_order_stats (const double *y, const double *w,
     }
 
     i = 0;
-    wsum = 0.0;
-
     for (t=0; t<n; t++) {
 	if (na(y[t]) || na(w[t]) || w[t] == 0.0) {
 	    continue;
@@ -4728,35 +4726,15 @@ static int weighted_order_stats (const double *y, const double *w,
 	}
     }
 
-#if 0
-    fprintf(stderr, "Before sorting:\n");
-    for (i=0; i<n; i++) {
-	fprintf(stderr, "%d: %g, %g\n", i, X[i][0], X[i][1]);
-    }
-#endif
-
     qsort(X, n, sizeof *X, compare_wgtord_rows);
-
-#if 0
-    fprintf(stderr, "After sorting:\n");
-    for (i=0; i<n; i++) {
-	fprintf(stderr, "%d: %g, %g\n", i, X[i][0], X[i][1]);
-    }
-#endif
 
     for (i=0; i<k; i++) {
 	p = ostats[i] * wsum;
 	q = X[0][1];
-	x = NADBL;
-	if (p < q) {
-	    ostats[i] = NADBL;
-	    continue;
-	} else {
-	    t = 0;
-	    while (q <= p) {
-		q += X[t][1];
-		if (q < p) t++;
-	    }
+	t = 0;
+	while (q <= p) {
+	    q += X[t][1];
+	    if (q < p) t++;
 	}
 
 	if (t == 0 || t >= n - 1) {
@@ -4767,15 +4745,10 @@ static int weighted_order_stats (const double *y, const double *w,
 	if (X[t-1][0] == X[t][0]) {
 	    ostats[i] = X[t][0]; 
 	} else {
-	    x = (q - p) / X[t][1];
-	    ostats[i] = x * X[t+1][0] + (1-x) * X[t][0];
-	}
+	    double a = (q - p) / X[t][1];
 
-#if 0
-	fprintf(stderr, "P = %g, Q = %g, x = %g\n", p, q, x);
-	fprintf(stderr, "%d %12.6f %12.6f\n", t, X[t][0], X[t][1]);
-	fprintf(stderr, "%d %12.6f %12.6f\n", t+1, X[t+1][0], X[t+1][1]);
-#endif
+	    ostats[i] = a * X[t+1][0] + (1-a) * X[t][0];
+	}
     }
 
     doubles_array_free(X, n);
