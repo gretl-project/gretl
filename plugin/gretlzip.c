@@ -116,27 +116,35 @@ int gretl_native_unzip_session_file (const char *fname, gchar **zdirname,
     return err;
 }
 
+#define ZDEBUG 0
+
 int gretl_native_unzip_datafile (const char *fname, const char *path,
 				 GError **gerr)
 {
     char thisdir[FILENAME_MAX];
     int err = 0;
 
+#if ZDEBUG
     fprintf(stderr, "gretl_native_unzip_datafile\n"
 	    " fname = '%s', path = '%s'\n", fname, path);
+#endif
 
     if (getcwd(thisdir, FILENAME_MAX - 1) == NULL) {
-	err = E_FOPEN; /* ?? */
+	err = E_FOPEN; /* ? */
     } else {
 	char zipname[FILENAME_MAX];
 
+#if ZDEBUG
 	fprintf(stderr, " cwd = '%s'\n", thisdir);
+#endif
 	if (!g_path_is_absolute(fname)) {
 	    build_path(zipname, thisdir, fname, NULL);
 	} else {
 	    strcpy(zipname, fname);
 	}
+#if ZDEBUG
 	fprintf(stderr, " zipname = '%s'\n", zipname);
+#endif
 	gretl_chdir(path);
 	err = gretl_native_unzip_file(zipname, gerr);
 	gretl_chdir(thisdir);
@@ -151,8 +159,10 @@ int gretl_native_zip_datafile (const char *fname, const char *path,
     char thisdir[FILENAME_MAX];
     int err = 0;
 
+#if ZDEBUG
     fprintf(stderr, "gretl_native_zip_datafile\n"
 	    " fname = '%s', path = '%s'\n", fname, path);
+#endif
 
     if (getcwd(thisdir, FILENAME_MAX - 1) == NULL) {
 	err = E_FOPEN; /* ?? */
@@ -162,13 +172,17 @@ int gretl_native_zip_datafile (const char *fname, const char *path,
 	    "data.xml", "data.bin", NULL
 	};
 
+#if ZDEBUG
 	fprintf(stderr, " cwd = '%s'\n", thisdir);
+#endif
 	if (!g_path_is_absolute(fname)) {
 	    build_path(zipname, thisdir, fname, NULL);
 	} else {
 	    strcpy(zipname, fname);
 	}
+#if ZDEBUG
 	fprintf(stderr, " zipname = '%s'\n", zipname);
+#endif
 	gretl_chdir(path);
 	err = zipfile_archive_files(zipname, array, level, 0, gerr);
 	gretl_chdir(thisdir);
