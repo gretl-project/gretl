@@ -1690,8 +1690,8 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
     *saved_db_name = '\0';
     strncat(saved_db_name, fname, MAXLEN - 1);
 
-#ifdef CURL
     if (filetype == GRETL_NATIVE_DB_WWW) {
+#ifdef USE_CURL
 	int n = strlen(saved_db_name);
 
 	if (n > 4) {
@@ -1704,14 +1704,14 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
 	if (!err) {
 	    saved_db_type = filetype;
 	    pprintf(prn, "%s\n", saved_db_name);
-	} 
+	}
+#else
+	pprintf(prn, _("Internet access not supported"));
+	pputc(prn, '\n');
+	err = E_DATA;
+#endif
 	return err;
     }
-#else
-    pprintf(prn, _("Internet access not supported"));
-    pputc(prn, '\n');
-    return E_DATA;
-#endif
 
     fp = gretl_fopen(saved_db_name, "rb");
 
