@@ -5505,11 +5505,6 @@ static NODE *series_sort_by (NODE *l, NODE *r, parser *p)
 	} else {
 	    p->err = E_TYPES;
 	}
-
-	if (p->err) {
-	    free(ret);
-	    ret = NULL;
-	}
     } 
 
     return ret;
@@ -5542,11 +5537,6 @@ static NODE *vector_sort (NODE *l, int f, parser *p)
 		p->err = E_TYPES;
 	    }
 	}
-
-	if (p->err) {
-	    free(ret);
-	    ret = NULL;
-	}
     } 
 
     return ret;
@@ -5575,11 +5565,6 @@ static NODE *vector_values (NODE *l, int f, parser *p)
 	} else {
 	    p->err = E_DATA;
 	}
-
-	if (p->err) {
-	    free(ret);
-	    ret = NULL;
-	}
     } 
 
     return ret;
@@ -5606,11 +5591,6 @@ static NODE *do_irr (NODE *l, parser *p)
 	    ret->v.xval = gretl_irr(x, n, pd, &p->err);
 	} else {
 	    p->err = E_DATA;
-	}
-
-	if (p->err) {
-	    free(ret);
-	    ret = NULL;
 	}
     } 
 

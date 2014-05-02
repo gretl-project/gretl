@@ -743,7 +743,7 @@ static int cli_open_append (CMD *cmd, const char *line,
 	    return err;
 	}
     }
-    
+
     if (opt & OPT_W) {
 	ftype = GRETL_NATIVE_DB_WWW;
     } else if (opt & OPT_O) {
