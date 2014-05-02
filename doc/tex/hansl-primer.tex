@@ -248,7 +248,7 @@ matrix B = {}                          # initialize an empty matrix
 loop foreach i X                       # loop over the 3 var equations
     ols $i const X(-1 to -p) --quiet   # using native OLS command
     B ~= $coeff                        # and store the estimated coefficients
-end loop                               # as matrix columns
+endloop                               # as matrix columns
 
 /* via matrices */
 
