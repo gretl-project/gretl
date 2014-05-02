@@ -198,7 +198,11 @@ static int R_lib = 1;
 static int csv_digits = UNSET_INT;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
+#ifdef OS_OSX
+static int omp_mnk_min = -1;
+#else
 static int omp_mnk_min = 80000; /* was 65535 */
+#endif
 static int omp_n_threads;
 
 static int boolvar_get_flag (const char *s);
