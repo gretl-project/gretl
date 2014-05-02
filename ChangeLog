@@ -1,4 +1,4 @@
-version 1.9.15, in progress
+2014-05-02 version 1.9.90
 - GUI reorganization: move the Function packages menu from 
   /Files to /Tools
 - GUI enhancement: add News button under "/Help/About gretl"

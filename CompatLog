@@ -1,4 +1,4 @@
-version 1.9.15, in progress
+version 1.9.90
 
 The "set" variable "RNG" has been removed: the RNG is the SFMT
 (Simd-oriented Fast Mersenne Twister) and the option of using
