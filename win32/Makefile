@@ -41,9 +41,11 @@ GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk
 
 ifeq ($(BUILDTYPE),cross)
   GRETL_LANG = cross_lang
+  GRETL_NEWS = cross_news
   BUILDDATE = cross_builddate
 else
   GRETL_LANG = native_lang
+  GRETL_NEWS = native_news
   BUILDDATE = native_builddate
 endif
 
@@ -331,11 +333,11 @@ MOFILES = mo/de.po mo/el.mo mo/es.mo mo/eu.mo mo/fr.mo mo/it.mo mo/pl.mo \
 # targets begin
 
 all: buildstamp dirs dlls/libprob.dll dlls/libgretl.dll \
-	$(PLUGINS) gretlcli.exe gretl.exe $(MPICLI) $(MOFILES) $(GRETL_LANG)
+	$(PLUGINS) gretlcli.exe gretl.exe $(MPICLI) $(MOFILES) $(GRETL_LANG) $(GRETL_NEWS)
 
 gretlcli.exe: $(CLIOBJ)
 	$(CC) -o $@ $^ $(LIBS) $(RL_LIBS) -lz -lmingwex -s
-	
+
 gretlcli-mpi.exe: gretlcli-mpi.o
 	$(CC) -o $@ $< $(MPI_LIB) $(LIBS) -lz -lmingwex -s
 
@@ -348,14 +350,23 @@ gretlres.o: gretl.rc
 cross_lang: $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c
 	HERE=$$PWD ; cd $(host_builddir)/gui2 && make mklang && ./mklang > $$HERE/gretl.lang ; cd $$HERE
 
+cross_news: $(topsrc)/ChangeLog
+	HERE=$$PWD ; cd $(host_builddir)/gui2 && make mknews && cd $$HERE && $(topsrc)/build/gui2/mknews $< > NEWS
+
 mklang.o: mklang.c $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c
 	$(CC) -c -I. -I$(libsrcdir) -I$(XML2_INC) $<
 
 mklang.exe: mklang.o
 	$(CC) -o $@ $< $(GRETLLIB) -lxml2.dll -lz
 
+mknews.exe: mknews.c
+	$(CC) -o $@ $<
+
 native_lang: mklang.exe
 	PATH=/bin:./dlls:/mingw/winbuild/misc-dll ./mklang.exe > gretl.lang
+
+native_news: mknews.exe
+	./mknews.exe $(topsrc)/ChangeLog > NEWS
 
 $(MOFILES):
 	make -C mo

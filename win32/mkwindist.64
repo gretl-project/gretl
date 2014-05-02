@@ -211,6 +211,9 @@ add_file ${WINFILES}/gtksourceview-data/language2.rng \
   gretl/gtksourceview/language2.rng
 add_file ${WINFILES}/gtksourceview-data/styles.rng \
   gretl/gtksourceview/styles.rng
+  
+# release news file
+add_file NEWS gretl/NEWS
 
 # help files, license, logo
 add_file ${HLPDIR}/gretlgui.hlp gretl/gretlgui_hlp.txt
