@@ -3912,7 +3912,7 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
     gretl_matrix *MA = NULL;
     gretl_matrix *XX = NULL;
     gretl_matrix *E = NULL;
-    double uu, DW;
+    double uu, DW = 0;
     double pv = NADBL;
     int k = X->cols;
     int n = X->rows;

@@ -3121,7 +3121,7 @@ int whites_test (MODEL *pmod, DATASET *dset,
     int *list = NULL;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
-    double zz, LM;
+    double zz, LM = 0;
     MODEL white;
     int t, err = 0;
 

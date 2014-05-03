@@ -1973,7 +1973,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
     int v = dset->v;
     int *addlist = NULL;
     int *testlist = NULL;
-    double x, pval = 1.0;
+    double x = 0, pval = 1;
     MODEL aux;
     int i, t;
     int err = 0;
