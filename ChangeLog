@@ -1,3 +1,6 @@
+version 1.9.91, in progress
+- Hush some gcc-4.9.0 warnings
+
 2014-05-02 version 1.9.90
 - GUI reorganization: move the Function packages menu from 
   /Files to /Tools
