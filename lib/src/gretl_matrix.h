@@ -228,6 +228,11 @@ void gretl_matrix_block_zero (gretl_matrix_block *B);
 
 gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...);
 
+int gretl_matrix_block_n_matrices (gretl_matrix_block *B);
+
+gretl_matrix *gretl_matrix_block_get_matrix (gretl_matrix_block *B,
+					     int i);
+
 gretl_matrix *gretl_identity_matrix_new (int n);
 
 gretl_matrix *gretl_DW_matrix_new (int n);

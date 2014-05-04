@@ -412,6 +412,21 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
     return B;
 }
 
+int gretl_matrix_block_n_matrices (gretl_matrix_block *B)
+{
+    return B == NULL ? 0 : B->n;
+}
+
+gretl_matrix *gretl_matrix_block_get_matrix (gretl_matrix_block *B,
+					     int i)
+{
+    if (B == NULL || i < 0 || i >= B->n) {
+	return NULL;
+    } else {
+	return B->matrix[i];
+    }
+}
+
 int gretl_matrix_xna_check (const gretl_matrix *m)
 {
     int ret = 0;
