@@ -34,6 +34,8 @@ lib/src/gretl_intl.c
 lib/src/gretl_list.c
 lib/src/gretl_matrix.c
 lib/src/gretl_model.c
+lib/src/gretl_mpi.c
+lib/src/gretl_normal.c
 lib/src/gretl_panel.c
 lib/src/gretl_paths.c
 lib/src/gretl_prn.c
@@ -44,6 +46,7 @@ lib/src/gretl_utils.c
 lib/src/gretl_win32.c
 lib/src/gretl_www.c
 lib/src/gretl_xml.c
+lib/src/gretl_zip.c
 lib/src/interact.c
 lib/src/irfboot.c
 lib/src/kalman.c
@@ -51,6 +54,7 @@ lib/src/laginfo.c
 lib/src/libglue.c
 lib/src/libset.c
 lib/src/matrix_extra.c
+lib/src/matrix_simd.c
 lib/src/missing.c
 lib/src/modelprint.c
 lib/src/monte_carlo.c
@@ -79,6 +83,7 @@ lib/src/vartest.c
 cli/cli_object.c
 cli/complete.c
 cli/gretlcli.c
+cli/gretlcli-mpi.c
 gui2/about.c
 gui2/calculator.c
 gui2/callbacks.c
@@ -112,6 +117,7 @@ gui2/lagpref.c
 gui2/library.c
 gui2/menustate.c
 gui2/mklang.c
+gui2/mknews.c
 gui2/model_table.c
 gui2/objectsave.c
 gui2/obsbutton.c
