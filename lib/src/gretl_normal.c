@@ -979,7 +979,10 @@ static double ghk_tj (const gretl_matrix *C,
 	    combo_2(dWT, WT, tmp, TB-TA, dWT);
 	}
 
-        WT *= TB -TA; /* accumulate weight */
+	if (WT > 0) {
+	    WT *= TB -TA; /* accumulate weight */
+	}
+
         inicol += j+1;
     }
 
@@ -994,33 +997,39 @@ static double ghk_tj (const gretl_matrix *C,
 static int *column_indices (int m)
 {
     int i, j, pos, k = 0;
-    int *ret;
+    int *ndx;
 
-    ret = malloc((m * (m+1))/2 * sizeof *ret);
-    if (ret == NULL) {
-	return ret;
+    ndx = malloc((m * (m+1))/2 * sizeof *ndx);
+    if (ndx == NULL) {
+	return ndx;
     }
 
     for (i=0; i<m; i++) {
 	for (j=0; j<=i; j++) {
 	    pos = j*(j+1)/2 + j*(m-j-1) + i;
-	    ret[k++] = pos;
+	    ndx[k++] = pos;
 	}
     }
 
-    return ret;
+    return ndx;
 }
 
 static int reorder_dP (gretl_matrix *dP, int m)
 {
-    int *ndx = column_indices(m);
     int nc = dP->cols - 2*m;
     gretl_matrix *tmp;
+    int *ndx;
     double xij;
     int i, j, k;
 
+    ndx = column_indices(m);
+    if (ndx == NULL) {
+	return E_ALLOC;
+    }
+
     tmp = gretl_matrix_alloc(dP->rows, nc);
     if (tmp == NULL) {
+	free(ndx);
 	return E_ALLOC;
     }
 
@@ -1037,6 +1046,7 @@ static int reorder_dP (gretl_matrix *dP, int m)
     }
 
     gretl_matrix_free(tmp);
+    free(ndx);
 
     return 0;
 }
