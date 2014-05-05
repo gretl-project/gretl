@@ -35,7 +35,7 @@ const char *lang_names[] = {
 };
 
 struct lang_strings_t {
-    char lang[8];
+    char lang[16];
     char longdate[48];
     char shortdate[16];
 };
@@ -185,6 +185,7 @@ int get_intl_progdate (const char *s, int i)
     if (nf != 3) {
 	err = 1;
     } else {
+	char langspec[32];
 	char pdate[32];
 	struct tm tm = {0};
 
@@ -192,10 +193,14 @@ int get_intl_progdate (const char *s, int i)
 	tm.tm_mon = mon - 1;
 	tm.tm_mday = day;
 
-	setlocale(LC_TIME, lang_strings[i].lang);
-	strftime(pdate, sizeof pdate, "%b %e, %Y", &tm);
+	sprintf(langspec, "%s.UTF-8", lang_strings[i].lang);
+	setlocale(LC_TIME, langspec);
+	if (!strncmp(lang_strings[i].lang, "ru", 2)) {
+	    strftime(pdate, sizeof pdate, "%b %e, %Y г.", &tm);
+	} else {
+	    strftime(pdate, sizeof pdate, "%b %e, %Y", &tm);
+	}
 	setlocale(LC_TIME, "C");
-
 	strcpy(lang_strings[i].shortdate, pdate);
     }
 
@@ -243,26 +248,29 @@ int syscmd_to_string (const char *syscmd, char *targ, const char *tmpfile)
 
 int make_subst_file (const char *verstr, const char *progdate)
 {
-    char syscmd[64];
     const char *tmpfile = "tmp.txt";
+    char syscmd[64];
     int i, err = 0;
 
     for (i=0; i<NLANGS; i++) {
-	char langbit[16];
-
-	if (!strcmp(lang_strings[i].lang, "en_US")) {
-	    *langbit = '\0';
-	} else {
-	    sprintf(langbit, "LANG=%s ", lang_strings[i].lang);
-	}
-
-	sprintf(syscmd, "%sdate > %s", langbit, tmpfile);
+	sprintf(syscmd, "date +\"%%Y-%%m-%%d\" > %s", tmpfile);
 	err = syscmd_to_string(syscmd, lang_strings[i].longdate, tmpfile);
 
 	if (progdate != NULL) {
 	    err = get_intl_progdate(progdate, i);
 	} else {
-	    sprintf(syscmd, "%sdate +\"%%b %%e, %%Y\" > %s", langbit, tmpfile);
+	    char langbit[32];
+	    
+	    if (!strcmp(lang_strings[i].lang, "en_US")) {
+		*langbit = '\0';
+	    } else {
+		sprintf(langbit, "LANG=%s.UTF-8 ", lang_strings[i].lang);
+	    }
+	    if (!strncmp(lang_strings[i].lang, "ru", 2)) {
+		sprintf(syscmd, "%sdate +\"%%b %%e, %%Y г.\" > %s", langbit, tmpfile);
+	    } else {
+		sprintf(syscmd, "%sdate +\"%%b %%e, %%Y\" > %s", langbit, tmpfile);
+	    }
 	    err = syscmd_to_string(syscmd, lang_strings[i].shortdate, tmpfile);
 	}
     }
