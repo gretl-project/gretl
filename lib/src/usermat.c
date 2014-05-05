@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "matrix_extra.h"
+#include "gretl_normal.h"
 #include "usermat.h"
 #include "genparse.h"
 #include "uservar.h"
@@ -1055,10 +1056,10 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
    replace the old one, and we set @newmat = 1).
 */
 
-static gretl_matrix *get_ols_matrix (const char *mname, 
-				     int r, int c,
-				     int *newmat, 
-				     int *err)
+static gretl_matrix *get_sized_matrix (const char *mname, 
+				       int r, int c,
+				       int *newmat, 
+				       int *err)
 {
     gretl_matrix *m = get_matrix_by_name(mname);
 
@@ -1124,7 +1125,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
     }
 
     if (!nullarg(Uname)) {
-	U = get_ols_matrix(Uname, T, g, &newU, err);
+	U = get_sized_matrix(Uname, T, g, &newU, err);
 	if (*err) {
 	    return NULL;
 	}
@@ -1141,7 +1142,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	    /* a single dependent variable */
 	    int nv = g * k;
 
-	    V = get_ols_matrix(Vname, nv, nv, &newV, err);
+	    V = get_sized_matrix(Vname, nv, nv, &newV, err);
 	    if (!*err) {
 		ps2 = &s2;
 	    }
@@ -1229,7 +1230,7 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
     }
 
     if (!nullarg(Uname)) {
-	U = get_ols_matrix(Uname, T, g, &newU, err);
+	U = get_sized_matrix(Uname, T, g, &newU, err);
 	if (*err) {
 	    return NULL;
 	}
@@ -1273,6 +1274,46 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
     }
 
     return B;
+}
+
+gretl_matrix *user_matrix_GHK (const gretl_matrix *C, 
+			       const gretl_matrix *A,
+			       const gretl_matrix *B,
+			       const gretl_matrix *U,
+			       const char *dP_name, 
+			       int *err)
+{
+    gretl_matrix *P = NULL;
+    gretl_matrix *dP = NULL;
+    int new_dP = 0;
+    int n, m, npar;
+
+    if (gretl_is_null_matrix(A) || gretl_is_null_matrix(C)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    n = A->rows;
+    m = C->rows;
+    npar = m + m + m*(m+1)/2;
+
+    if (!nullarg(dP_name)) {
+	dP = get_sized_matrix(dP_name, n, npar, &new_dP, err);
+    } 
+
+    if (!*err) {
+	P = gretl_GHK2(C, A, B, U, dP, err);
+    }
+
+    if (new_dP) {
+	if (*err) {
+	    gretl_matrix_free(dP);
+	} else {
+	    user_matrix_replace_matrix_by_name(dP_name, dP);
+	}
+    }
+
+    return P;
 }
 
 static void maybe_eigen_trim (gretl_matrix *E)

@@ -399,6 +399,39 @@ double bvnorm_cdf (double rho, double a, double b)
 #endif
 }
 
+static int ghk_input_check (const gretl_matrix *C,
+			    const gretl_matrix *A,
+			    const gretl_matrix *B,
+			    const gretl_matrix *U,
+			    const gretl_matrix *dP)
+{
+    if (gretl_is_null_matrix(C) ||
+	gretl_is_null_matrix(A) ||
+	gretl_is_null_matrix(B) ||
+	gretl_is_null_matrix(U)) {
+	return E_DATA;
+    }
+
+    if (A->rows != B->rows ||
+	A->cols != B->cols ||
+	C->rows != A->cols ||
+	C->cols != A->cols ||
+	U->rows != A->cols) {
+	return E_NONCONF;
+    }
+
+    if (dP != NULL) {
+	int m = C->rows;
+	int np = m + m + m*(m+1)/2;
+
+	if (dP->rows != A->rows || dP->cols != np) {
+	    return E_NONCONF;
+	}
+    }
+
+    return 0;
+}
+
 /*
   C  Lower triangular Cholesky factor of \Sigma, m x m
   A  Lower bound of rectangle, m x 1
@@ -542,20 +575,8 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
     int ABok, pzero;
     int i, j;
 
-    if (gretl_is_null_matrix(C) ||
-	gretl_is_null_matrix(A) ||
-	gretl_is_null_matrix(B) ||
-	gretl_is_null_matrix(U)) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (A->rows != B->rows ||
-	A->cols != B->cols ||
-	C->rows != A->cols ||
-	C->cols != A->cols ||
-	U->rows != A->cols) {
-	*err = E_NONCONF;
+    *err = ghk_input_check(C, A, B, U, NULL);
+    if (*err) {
 	return NULL;
     }
 
@@ -1024,13 +1045,12 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 			  const gretl_matrix *A,
 			  const gretl_matrix *B,
 			  const gretl_matrix *U,
-			  gretl_matrix **pdP,
+			  gretl_matrix *dP,
 			  int *err)
 {
     gretl_matrix_block *Bk;
     gretl_matrix *a, *b, *u;
     gretl_matrix *P = NULL;
-    gretl_matrix *dP = NULL;
     gretl_matrix *dpj = NULL;
 
     /* for passing to ghk_tj */
@@ -1044,15 +1064,22 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     gretl_matrix *TT;
     gretl_matrix *cj;
 
-    int r = U->cols;
-    int n = A->rows;
-    int m = C->rows;
-    int npar = m + m + m*(m+1)/2;
-    int do_score = (pdP != NULL);
+    int r, n, m, npar;
+    int do_score = (dP != NULL);
     double huge;
     GretlMatrixMod mod;
     int ghk_err = 0;
     int t, i, j;
+
+    *err = ghk_input_check(C, A, B, U, dP);
+    if (*err) {
+	return NULL;
+    }
+
+    r = U->cols;
+    n = A->rows;
+    m = C->rows;
+    npar = m + m + m*(m+1)/2;
 
     /* work space for this function */
     Bk = gretl_matrix_block_new(&a, 1, m,
@@ -1094,9 +1121,9 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     }
 
     if (do_score) {
-	dP = gretl_zero_matrix_new(n, npar);
+	gretl_matrix_zero(dP);
 	dpj = gretl_matrix_alloc(1, npar);
-	if (dP == NULL || dpj == NULL) {
+	if (dpj == NULL) {
 	    *err = E_ALLOC;
 	    goto bailout;
 	}	    
@@ -1163,7 +1190,6 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 
     if (do_score) {
 	reorder_dP(dP, m);
-	*pdP = dP;
     }
 
  bailout:
@@ -1177,7 +1203,6 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     }
 
     if (*err) {
-	gretl_matrix_free(dP);
 	gretl_matrix_free(P);
 	P = NULL;
     }

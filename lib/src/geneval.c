@@ -8286,7 +8286,52 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		gretl_matrix_free(ret->v.m);
 	    }	    
 	    ret->v.m = gretl_GHK(C, A, B, U, &p->err);
+	}
+    } else if (t->t == F_GHK2) {
+	gretl_matrix *C = NULL;
+	gretl_matrix *A = NULL;
+	gretl_matrix *B = NULL;
+	gretl_matrix *U = NULL;
+	const char *dP_name = NULL;
+
+	if (k < 4 || k > 5) {
+	    n_args_error(k, 5, t->t, p);
 	} 
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i < 4 && e->t != MAT) {
+		node_type_error(t->t, i+1, MAT, e, p);
+	    } else if (i == 0) {
+		C = e->v.m;
+	    } else if (i == 1) {
+		A = e->v.m;
+	    } else if (i == 2) {
+		B = e->v.m;
+	    } else if (i == 3) {
+		U = e->v.m;
+	    } else {
+		/* the optional last argument */
+		if (e->t == EMPTY) {
+		    ; /* OK */
+		} else if (e->t != U_ADDR) {
+		    node_type_error(t->t, i+1, U_ADDR, e, p);
+		} else {
+		    dP_name = ptr_node_get_matrix_name(e, p);
+		}
+	    } 
+	}
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+	if (!p->err) {
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }
+	    ret->v.m = user_matrix_GHK(C, A, B, U, dP_name, &p->err);
+	}
     } else if (t->t == F_QUADTAB) {
 	int order = -1, method = 0;
 	double a = NADBL;
@@ -10611,6 +10656,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_NRMAX:
     case F_LOESS:
     case F_GHK:
+    case F_GHK2:
     case F_QUADTAB:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);

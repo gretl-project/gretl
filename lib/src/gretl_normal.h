@@ -34,7 +34,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 			  const gretl_matrix *A,
 			  const gretl_matrix *B,
 			  const gretl_matrix *U,
-			  gretl_matrix **pdP,
+			  gretl_matrix *dP,
 			  int *err);
 
 #endif /* GRETL_NORMAL_H */
