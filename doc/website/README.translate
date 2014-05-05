@@ -18,5 +18,11 @@ Main page     index_pat.html     gretl_turkish_pat.html
 Windows page  win32_pat.html     win32_pat_tr.html
 OS X page     osx_pat.html       osx_pat_tr.html
 
+Also please note: translating the gretl web pages is not a one-time
+job! Translations will be useful only if they are updated fairly
+regularly in step with changes in the English-language pages, which
+can be tracked in CVS.
+ 
+
 
 
