@@ -8,7 +8,7 @@
 #define HTMLLEN 1024
 #define BUFFER_SIZE 4096
 
-#define NLANGS 5
+#define NLANGS 6
 
 static char WEBDIR[256];
 static char SRCDIR[256];
@@ -19,7 +19,8 @@ enum {
     ES,
     IT,
     PT,
-    TR
+    TR,
+    RU
 };
 
 char substfile[FILENAME_MAX];
@@ -29,7 +30,8 @@ const char *lang_names[] = {
     "es_ES",
     "it_IT",
     "pt_PT",
-    "tr_TR"
+    "tr_TR",
+    "ru_RU"
 };
 
 struct lang_strings_t {
@@ -440,6 +442,8 @@ int copy_substitute (const char *fsrc, const char *ftarg,
 	lang = PT;
     } else if (strstr(fsrc, "turk") || strstr(fsrc, "_tr")) {
 	lang = TR;
+    } else if (strstr(fsrc, "russi") || strstr(fsrc, "_ru")) {
+	lang = RU;
     } else {
 	lang = EN;
     }
@@ -500,6 +504,7 @@ int process_templates (char *verstr)
 	{ "gretl_turkish_pat.html",   "tr.html" },
 	{ "win32_pat_tr.html",        "win32/index_tr.html" },
 	{ "osx_pat_tr.html",          "osx_tr.html" },
+	{ "gretl_russian_pat.html",   "ru.html" }, 
 	{ NULL, NULL }
     };
     struct from_to *ptr = templates;
