@@ -611,10 +611,12 @@
     <function name="$sargan" section="access" output="rvec">
       <description>
     <para>
-      Deve seguire un comando <lit>tsls</lit>. Produce un vettore <by r="1"
-      c="3"/> che contiene nell'ordine: il valore della statistica del test
-          di Sargan di sovraidentificazione, i corrispondenti gradi di
-          libertà e il p-value.
+      Deve seguire un comando <lit>tsls</lit>. Produce un vettore <by
+      r="1" c="3"/> che contiene nell'ordine: il valore della
+      statistica del test di Sargan di sovraidentificazione, i
+      corrispondenti gradi di libertà e il p-value. Se il modello è
+      esattamente identificato, la statistica non è disponibile, e
+      tentare di ottenerla provoca un errore.
     </para>
       </description>
     </function>

@@ -616,7 +616,9 @@
       Must follow a <lit>tsls</lit> command. Returns a <by r="1"
       c="3"/> vector, containing the value of the Sargan
       over-identification test statistic, the corresponding
-      degrees of freedom and p-value, in that order.
+      degrees of freedom and p-value, in that order. If the model is
+      exactly identified, the statistic is unavailable, and trying to
+      access it provokes an error.
     </para>
       </description>
     </function>
