@@ -1024,7 +1024,7 @@ static int reorder_dP (gretl_matrix *dP, int m)
 	return E_ALLOC;
     }
 
-    gretl_matrix_extract_matrix(tmp, dP, 0, nc, GRETL_MOD_NONE);
+    gretl_matrix_extract_matrix(tmp, dP, 0, 2*m, GRETL_MOD_NONE);
 
     for (j=0; j<nc; j++) {
 	if (ndx[j] != j) {
