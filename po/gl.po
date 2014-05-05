@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.9.99)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-05-05 13:04+0100\n"
-"PO-Revision-Date: 2014-04-29 17:20+0100\n"
+"PO-Revision-Date: 2014-05-05 17:49+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -3520,9 +3520,9 @@ msgid "The model exhibits an exact linear fit"
 msgstr "O modelo presenta un axuste linear exacto"
 
 #: lib/src/gretl_mpi.c:390
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid MPI rank %d"
-msgstr "Orde de retardo %d incorrecta"
+msgstr "Rango MPI %d incorrecto"
 
 #: lib/src/gretl_panel.c:1022
 msgid ""
@@ -7395,6 +7395,8 @@ msgid ""
 "This program should be run under mpiexec, and requires the name of a\n"
 "script file as argument.\n"
 msgstr ""
+"Este programa debe executarse baixo 'mpiexec' e precisa, como argumento,\n"
+"do nome dun ficheiro de guión .\n"
 
 #: cli/gretlcli-mpi.c:141
 #, c-format
@@ -7406,16 +7408,21 @@ msgid ""
 " -e or --english     Force use of English rather than translation.\n"
 " -s or --single-rng  Use a single RNG, not one per process.\n"
 msgstr ""
+"Opcións:\n"
+" -h ou --help        Amosa esta información e remata.\n"
+" -v ou --version     Amosa información da versión e remata.\n"
+" -q ou --quiet       Non amosa o logo no inicio.\n"
+" -e ou --english     Forza o uso do inglés en troques da tradución.\n"
+" -s ou --single-rng  Usa un único RNG, non un por cada proceso.\n"
 
 #: cli/gretlcli-mpi.c:154
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "gretlcli-mpi: error executing script: halting\n"
 msgstr ""
 "\n"
-"\n"
-"gretlcli: Erro executando guión: parando.\n"
+"gretlcli-mpi: Erro executando guión: parando.\n"
 
 #: gui2/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -7439,7 +7446,7 @@ msgstr ""
 
 #: gui2/about.c:203
 msgid "News"
-msgstr ""
+msgstr "Novas"
 
 #: gui2/about.c:210
 msgid "License"
