@@ -21,6 +21,7 @@
 #include "libset.h"
 #include "missing_private.h"
 #include "gretl_bfgs.h"
+#include "gretl_normal.h"
 
 #include <errno.h>
 

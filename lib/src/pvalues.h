@@ -90,16 +90,6 @@ double student_critval (double df, double a);
 
 double log_normal_pdf (double x);
 
-double invmills (double x);
-
-double bvnorm_cdf (double rho, double a, double b);
-
-gretl_matrix *gretl_GHK (const gretl_matrix *C,
-			 const gretl_matrix *A,
-			 const gretl_matrix *B,
-			 const gretl_matrix *U,
-			 int *err);
-
 double gamma_cdf (double s1, double s2, double x, int control);
 
 double gamma_cdf_comp (double s1, double s2, double x, int control);

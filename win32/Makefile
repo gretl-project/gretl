@@ -201,6 +201,7 @@ LIBSRC = adf_kpss.c \
 	gretl_list.c \
 	gretl_matrix.c \
 	gretl_model.c \
+	gretl_normal.c \
 	gretl_panel.c \
 	gretl_paths.c \
 	gretl_prn.c \
@@ -243,7 +244,7 @@ LIBSRC = adf_kpss.c \
 	varprint.c \
 	vartest.c \
 	irfboot.c
-	
+
 ifeq ($(have_mpi),yes)
   LIBSRC += gretl_mpi.c
 endif

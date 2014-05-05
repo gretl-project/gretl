@@ -21,6 +21,7 @@
 #include "version.h"
 #include "matrix_extra.h"
 #include "gretl_bfgs.h"
+#include "gretl_normal.h"
 #include "libset.h"
 #include "missing_private.h"
 

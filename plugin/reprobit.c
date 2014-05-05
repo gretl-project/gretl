@@ -21,6 +21,7 @@
 #include "gretl_model.h"
 #include "matrix_extra.h"
 #include "gretl_bfgs.h"
+#include "gretl_normal.h"
 #include "libset.h"
 
 typedef struct reprob_container_ reprob_container;
