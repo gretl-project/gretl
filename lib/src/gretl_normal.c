@@ -1140,9 +1140,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     }
 
     huge = libset_get_double(CONV_HUGE);
-#if 0
     set_cephes_hush(1);
-#endif
 
     for (t=0; t<n; t++) {
 	/* loop across observations */
@@ -1194,9 +1192,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 	}
     }
 
-#if 0
     set_cephes_hush(0);
-#endif
 
     if (do_score) {
 	reorder_dP(dP, m);
