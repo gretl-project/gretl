@@ -2542,8 +2542,10 @@ int db_get_series (char *line, DATASET *dset,
 	    err = get_rats_db_data(saved_db_name, &sinfo, dbZ);
 	} else if (saved_db_type == GRETL_PCGIVE_DB) {
 	    err = get_pcgive_db_data(saved_db_name, &sinfo, dbZ);
+#ifdef USE_CURL
 	} else if (saved_db_type == GRETL_NATIVE_DB_WWW) {
 	    err = get_remote_db_data(saved_db_name, &sinfo, dbZ);
+#endif
 	} else if (rowmask != NULL) {
 	    err = get_native_db_data_masked(saved_db_name, &sinfo, dbZ, 
 					    rowmask);
