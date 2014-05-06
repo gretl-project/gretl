@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-05-05 13:04+0100\n"
+"POT-Creation-Date: 2014-05-06 09:48+0100\n"
 "PO-Revision-Date: 2014-04-28 09:40+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
@@ -303,11 +303,13 @@ msgid "Step %d: cointegrating regression\n"
 msgstr "Etapa %d: regresión cointegrante\n"
 
 #: lib/src/adf_kpss.c:2230
+#, fuzzy
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
-"(a) The unit-root hypothesis is not rejected for the individual variables.\n"
-"(b) The unit-root hypothesis is rejected for the residuals (uhat) from the \n"
+"(a) The unit-root hypothesis is not rejected for the individual variables, "
+"and\n"
+"(b) the unit-root hypothesis is rejected for the residuals (uhat) from the \n"
 "    cointegrating regression.\n"
 msgstr ""
 "\n"
@@ -834,9 +836,9 @@ msgid "Invalid column specification"
 msgstr "Especificación columna no válida"
 
 #: lib/src/csvdata.c:435 lib/src/dbread.c:2398 lib/src/kalman.c:2077
-#: lib/src/kalman.c:2564 lib/src/libset.c:1124 lib/src/usermat.c:945
-#: lib/src/usermat.c:1005 lib/src/usermat.c:1014 lib/src/usermat.c:1066
-#: lib/src/usermat.c:1085 lib/src/usermat.c:1317 lib/src/usermat.c:1369
+#: lib/src/kalman.c:2564 lib/src/libset.c:1124 lib/src/usermat.c:946
+#: lib/src/usermat.c:1006 lib/src/usermat.c:1015 lib/src/usermat.c:1067
+#: lib/src/usermat.c:1086 lib/src/usermat.c:1358 lib/src/usermat.c:1410
 #, c-format
 msgid "'%s': no such matrix"
 msgstr "'%s': no existe esa matriz"
@@ -2250,108 +2252,108 @@ msgstr ""
 "El número de argumentos (%d) no casa con el número de \n"
 " parámetros para la función %s (%d)"
 
-#: lib/src/geneval.c:9358
+#: lib/src/geneval.c:9367
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': Argumento no válido para %s()\n"
 
-#: lib/src/geneval.c:9409 cli/cli_object.c:48 gui2/objectsave.c:53
+#: lib/src/geneval.c:9418 cli/cli_object.c:48 gui2/objectsave.c:53
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: no existe ese objeto\n"
 
-#: lib/src/geneval.c:9654
+#: lib/src/geneval.c:9663
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr "%s: no se han determinado suficientes argumentos"
 
-#: lib/src/geneval.c:9656
+#: lib/src/geneval.c:9665
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr "%s: Argumento de tipo no válido %s"
 
-#: lib/src/geneval.c:9659
+#: lib/src/geneval.c:9668
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: argumento %d: el tipo %s no es válido"
 
-#: lib/src/geneval.c:9669
+#: lib/src/geneval.c:9678
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: el operando debería ser %s"
 
-#: lib/src/geneval.c:9672
+#: lib/src/geneval.c:9681
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: el operando %d debería ser %s"
 
-#: lib/src/geneval.c:9677
+#: lib/src/geneval.c:9686
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: el argumento debería ser %s"
 
-#: lib/src/geneval.c:9680
+#: lib/src/geneval.c:9689
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: el argumento %d debería ser %s"
 
-#: lib/src/geneval.c:9686
+#: lib/src/geneval.c:9695
 #, c-format
 msgid ", is %s"
 msgstr ", es %s"
 
-#: lib/src/geneval.c:11410 lib/src/genlex.c:743
+#: lib/src/geneval.c:11419 lib/src/genlex.c:743
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "El símbolo '%c' no es válido en este contexto\n"
 
-#: lib/src/geneval.c:11561 lib/src/genlex.c:783 lib/src/genlex.c:853
+#: lib/src/geneval.c:11570 lib/src/genlex.c:783 lib/src/genlex.c:853
 #: lib/src/gensyntax.c:257
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "'%c' no corresponde\n"
 
-#: lib/src/geneval.c:11616
+#: lib/src/geneval.c:11625
 #, c-format
 msgid "The variable %s is of type %s"
 msgstr "La variable %s es de tipo %s"
 
-#: lib/src/geneval.c:11767
+#: lib/src/geneval.c:11776
 #, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr "'%s': el nombre es demasiado largo (máximo %d caracteres)\n"
 
-#: lib/src/geneval.c:11875
+#: lib/src/geneval.c:11884
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : no está preparado para matrices"
 
-#: lib/src/geneval.c:11882
+#: lib/src/geneval.c:11891
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : no está preparado para listas"
 
-#: lib/src/geneval.c:11889
+#: lib/src/geneval.c:11898
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : no está preparado para cadenas de caracteres"
 
-#: lib/src/geneval.c:11896 lib/src/geneval.c:11910
+#: lib/src/geneval.c:11905 lib/src/geneval.c:11919
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : no está preparado para este tipo"
 
-#: lib/src/geneval.c:11903
+#: lib/src/geneval.c:11912
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : sólo está definido para matrices"
 
-#: lib/src/geneval.c:12805
+#: lib/src/geneval.c:12814
 #, c-format
 msgid "type error: %s is string-valued"
 msgstr "error de tipos: %s es una cadena de caracteres"
 
-#: lib/src/geneval.c:13203
+#: lib/src/geneval.c:13212
 msgid "Bare declarations are not allowed here"
 msgstr "Aquí no se permiten declaraciones genéricas"
 
@@ -7059,25 +7061,25 @@ msgstr ""
 "No se satisface la condición de orden para la identificación.\n"
 "Se necesitan al menos %d instrumentos más."
 
-#: lib/src/usermat.c:120 lib/src/usermat.c:205 lib/src/usermat.c:519
+#: lib/src/usermat.c:121 lib/src/usermat.c:206 lib/src/usermat.c:520
 #, c-format
 msgid "Index value %d is out of bounds"
 msgstr "El valor del índice %d está fuera de los límites"
 
-#: lib/src/usermat.c:156 gui2/calculator.c:1382
+#: lib/src/usermat.c:157 gui2/calculator.c:1382
 msgid "Range is non-positive!"
 msgstr "¡El rango no es positivo!"
 
-#: lib/src/usermat.c:178
+#: lib/src/usermat.c:179
 #, c-format
 msgid "Range %d to %d is non-positive!"
 msgstr "¡El dominio desde %d hasta %d no es positivo!"
 
-#: lib/src/usermat.c:248
+#: lib/src/usermat.c:249
 msgid "Ambiguous matrix index"
 msgstr "Índice de matriz ambiguo"
 
-#: lib/src/usermat.c:917
+#: lib/src/usermat.c:918
 msgid "Matrix decomposition failed"
 msgstr "Falló la descomposición de una matriz"
 

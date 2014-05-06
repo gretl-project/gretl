@@ -2229,7 +2229,7 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
 
     pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
 		 "(a) The unit-root hypothesis is not rejected for the individual"
-		 " variables.\n(b) The unit-root hypothesis is rejected for the "
+		 " variables, and\n(b) the unit-root hypothesis is rejected for the "
 		 "residuals (uhat) from the \n    cointegrating regression.\n"));
     pputc(prn, '\n');
 
