@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-05-06 09:48+0100\n"
-"PO-Revision-Date: 2014-04-28 09:43+0100\n"
+"PO-Revision-Date: 2014-05-07 12:07+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -19,8 +19,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Virtaal 0.7.1\n"
-"X-Poedit-Language: Portuguese\n"
-"X-Poedit-Country: PORTUGAL\n"
 "X-Poedit-SourceCharset: iso-8859-15\n"
 "X-Language: pt_PT\n"
 
@@ -309,7 +307,6 @@ msgid "Step %d: cointegrating regression\n"
 msgstr "Passo %d: regressão de cointegração\n"
 
 #: lib/src/adf_kpss.c:2230
-#, fuzzy
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -321,8 +318,8 @@ msgstr ""
 "\n"
 "Existe evidência de uma relação de cointegração se:\n"
 "(a) A hipótese de raiz unitária não é rejeitada para as variáveis "
-"individuais.\n"
-"(b) A hipótese de raiz unitária é rejeitada para os resíduos (uhat) da \n"
+"individuais, e\n"
+"(b) a hipótese de raiz unitária é rejeitada para os resíduos (uhat) da \n"
 "    regressão de cointegração.\n"
 
 #: lib/src/bootstrap.c:516 lib/src/bootstrap.c:580
@@ -3520,9 +3517,9 @@ msgid "The model exhibits an exact linear fit"
 msgstr "O modelo tem um ajustamento linear exacto"
 
 #: lib/src/gretl_mpi.c:390
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid MPI rank %d"
-msgstr "Ordem de desfasamento %d inválida"
+msgstr "Ordem MPI %d inválida"
 
 #: lib/src/gretl_panel.c:1022
 msgid ""
@@ -7404,6 +7401,8 @@ msgid ""
 "This program should be run under mpiexec, and requires the name of a\n"
 "script file as argument.\n"
 msgstr ""
+"Este programa deve correr dentro de mpiexec, e precisa do nome de um\n"
+"ficheiro de comandos como argumento.\n"
 
 #: cli/gretlcli-mpi.c:141
 #, c-format
@@ -7415,15 +7414,21 @@ msgid ""
 " -e or --english     Force use of English rather than translation.\n"
 " -s or --single-rng  Use a single RNG, not one per process.\n"
 msgstr ""
+"Opções:\n"
+" -h ou --help        Mostra esta informação e termina.\n"
+" -v ou --version     Mostra a informação da versão e termina..\n"
+" -q ou --quiet       Não mostrar o logótipo ao iniciar.\n"
+" -e ou --english     Forçar o uso de Inglês ao invés da tradução.\n"
+" -s ou --single-rng  Usar um único RNG, e não um por processo.\n"
 
 #: cli/gretlcli-mpi.c:154
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "gretlcli-mpi: error executing script: halting\n"
 msgstr ""
 "\n"
-"gretlcli: erro ao executar sequência de comandos: terminando\n"
+"gretlcli-mpi: erro ao executar sequência de comandos: terminando\n"
 
 #: gui2/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -7441,12 +7446,11 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 25 de abril de 2014.\n"
-"(Vivam os 40 anos de Liberdade!)"
+"Tradução de 7 de maio de 2014."
 
 #: gui2/about.c:203
 msgid "News"
-msgstr ""
+msgstr "Notícias"
 
 #: gui2/about.c:210
 msgid "License"
