@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.15\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-05-06 09:48+0100\n"
-"PO-Revision-Date: 2014-05-07 09:37+0200\n"
+"PO-Revision-Date: 2014-05-07 09:41+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -7416,7 +7416,8 @@ msgstr ""
 "  -v o --version     Mostra informazioni sulla versione ed esce.\n"
 "  -q o --quiet       Non stampare il logo all'avvio\n"
 "  -e o --english     Forza l'uso della lingua inglese.\n"
-"  -s o --single-rng  Mostra meno informazioni sul programma.\n"
+"  -s o --single-rng  Usa un solo generatore di numeri casuali anziché\n"
+"                     uno per processo.\n"
 
 #: cli/gretlcli-mpi.c:154
 #, c-format
