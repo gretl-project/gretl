@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.15\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-05-06 09:48+0100\n"
-"PO-Revision-Date: 2014-04-28 09:40+0100\n"
+"PO-Revision-Date: 2014-05-07 09:37+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -303,7 +303,6 @@ msgid "Step %d: cointegrating regression\n"
 msgstr "Passo %d: regressione di cointegrazione\n"
 
 #: lib/src/adf_kpss.c:2230
-#, fuzzy
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -315,6 +314,7 @@ msgstr ""
 "\n"
 "Ci sono sintomi di una relazione di cointegrazione se:\n"
 "(a) L'ipotesi di radice unitaria non è rifiutata per le singole variabili.\n"
+"e contemporaneamente\n"
 "(b) L'ipotesi di radice unitaria è rifiutata per i residui (uhat) della \n"
 "    regressione di cointegrazione.\n"
 
@@ -3531,9 +3531,9 @@ msgid "The model exhibits an exact linear fit"
 msgstr "Il modello produce un adattamento lineare perfetto"
 
 #: lib/src/gretl_mpi.c:390
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid MPI rank %d"
-msgstr "Ordine di ritardo non valido %d"
+msgstr "Rango MPI non valido %d"
 
 #: lib/src/gretl_panel.c:1022
 msgid ""
@@ -7398,6 +7398,8 @@ msgid ""
 "This program should be run under mpiexec, and requires the name of a\n"
 "script file as argument.\n"
 msgstr ""
+"Questo programma deve essere eseguito sotto mpiexec, e richiede come\n"
+"argomento il nome di un file di script\n"
 
 #: cli/gretlcli-mpi.c:141
 #, c-format
@@ -7409,15 +7411,19 @@ msgid ""
 " -e or --english     Force use of English rather than translation.\n"
 " -s or --single-rng  Use a single RNG, not one per process.\n"
 msgstr ""
+"Opzioni:\n"
+"  -h o --help        Mostra queste informazioni ed esce.\n"
+"  -v o --version     Mostra informazioni sulla versione ed esce.\n"
+"  -q o --quiet       Non stampare il logo all'avvio\n"
+"  -e o --english     Forza l'uso della lingua inglese.\n"
+"  -s o --single-rng  Mostra meno informazioni sul programma.\n"
 
 #: cli/gretlcli-mpi.c:154
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "gretlcli-mpi: error executing script: halting\n"
-msgstr ""
-"\n"
-"gretlcli: errore nell'esecuzione dello script: abbandono\n"
+msgstr "\ngretlcli-mpi: errore nell'esecuzione dello script: abbandono\n"
 
 #: gui2/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -7440,7 +7446,7 @@ msgstr ""
 
 #: gui2/about.c:203
 msgid "News"
-msgstr ""
+msgstr "Novità"
 
 #: gui2/about.c:210
 msgid "License"
