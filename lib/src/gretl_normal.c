@@ -821,6 +821,10 @@ static void vector_subtract (gretl_matrix *targ,
     }
 }
 
+/* New-style GHK computation for observation t, iteration j.
+   This variant computes the derivatives as well as the weight
+*/
+
 static double ghk_tj (const gretl_matrix *C,
 		      const double *a,
 		      const double *b,
@@ -842,39 +846,28 @@ static double ghk_tj (const gretl_matrix *C,
     double z, x, fx, den;
     int m = C->rows;
     int npar = m + m + m*(m+1)/2;
-    int do_score = (dWT != NULL);
     int inicol, j, i;
 
-    if (do_score) {
-	dTA = gretl_matrix_block_get_matrix(Bk, 0);
-	dTB = gretl_matrix_block_get_matrix(Bk, 1);
-	dm  = gretl_matrix_block_get_matrix(Bk, 2);
-	dx  = gretl_matrix_block_get_matrix(Bk, 3);
-	tmp = gretl_matrix_block_get_matrix(Bk, 4);
-	cj  = gretl_matrix_block_get_matrix(Bk, 5);
-	TT  = gretl_matrix_block_get_matrix(Bk, 6);
-	dTT = gretl_matrix_block_get_matrix(Bk, 7);
-    } else {
-	cj = gretl_matrix_block_get_matrix(Bk, 0);
-	TT = gretl_matrix_block_get_matrix(Bk, 1);
-    }
+    dTA = gretl_matrix_block_get_matrix(Bk, 0);
+    dTB = gretl_matrix_block_get_matrix(Bk, 1);
+    dm  = gretl_matrix_block_get_matrix(Bk, 2);
+    dx  = gretl_matrix_block_get_matrix(Bk, 3);
+    tmp = gretl_matrix_block_get_matrix(Bk, 4);
+    cj  = gretl_matrix_block_get_matrix(Bk, 5);
+    TT  = gretl_matrix_block_get_matrix(Bk, 6);
+    dTT = gretl_matrix_block_get_matrix(Bk, 7);
 
     gretl_matrix_block_zero(Bk);
     den = C->val[0];
-
-    if (do_score) {
-	gretl_matrix_reuse(dTT, npar, 1);
-    }
+    gretl_matrix_reuse(dTT, npar, 1);
 
     if (a[0] == -huge) {
 	TA = 0.0;
     } else {
 	z = a[0] / den;
 	TA = normal_cdf(z);
-	if (do_score) {
-	    dTA->val[0] = normal_pdf(z) / den;
-	    dTA->val[2*m] = -normal_pdf(z) * z/den;
-	}
+	dTA->val[0] = normal_pdf(z) / den;
+	dTA->val[2*m] = -normal_pdf(z) * z/den;
     }
 
     if (b[0] == huge) {
@@ -882,24 +875,136 @@ static double ghk_tj (const gretl_matrix *C,
     } else {
 	z = b[0] / den;
 	TB = normal_cdf(z);
-	if (do_score) {
-	    dTB->val[m] = normal_pdf(z) / den;
-	    dTB->val[2*m] = -normal_pdf(z) * z/den;
-	}
+	dTB->val[m] = normal_pdf(z) / den;
+	dTB->val[2*m] = -normal_pdf(z) * z/den;
     }
 
     WT = TB - TA;
     x = TB - u[0] * (TB - TA);
     TT->val[0] = normal_cdf_inverse(x);
 
-    if (do_score) {
-	fx = normal_pdf(TT->val[0]);
-	scaled_convex_combo(dTT, u[0], dTA, dTB, 1/fx);
-	vector_diff(dWT, dTB, dTA);
-    }
+    fx = normal_pdf(TT->val[0]);
+    scaled_convex_combo(dTT, u[0], dTA, dTB, 1/fx);
+    vector_diff(dWT, dTB, dTA);
 
     /* first column of the gradient which refers to C */
     inicol = 2*m + 1;
+
+    for (j=1; j<m; j++) {
+	double mj = 0.0;
+	int k = 0;
+
+	gretl_matrix_reuse(TT, j, 1);
+	gretl_matrix_reuse(cj, 1, j);
+
+	for (i=0; i<j; i++) {
+	    cj->val[i] = gretl_matrix_get(C, j, i);
+	    mj += cj->val[i] * TT->val[i];
+	}
+
+	gretl_matrix_zero(dx);
+	gretl_matrix_zero(dm);
+
+	for (i=inicol; i<=inicol+j-1; i++) {
+	    dm->val[i] = TT->val[k++];
+	}
+	gretl_matrix_multiply_mod(cj, GRETL_MOD_NONE,
+				  dTT, GRETL_MOD_TRANSPOSE,
+				  tmp, GRETL_MOD_NONE);
+	gretl_matrix_add_to(dm, tmp);
+
+        den = gretl_matrix_get(C, j, j);
+
+	if (a[j] == -huge) {
+            TA = 0.0;
+	    gretl_matrix_zero(dTA);
+	} else {	    
+            x = (a[j] - mj) / den;
+            TA = normal_cdf(x);
+	    fx = normal_pdf(x);
+	    dx->val[j] = 1;
+	    vector_subtract(dx, dm);
+	    dx->val[inicol+j] -= x;
+	    vector_copy_mul(dTA, dx, fx/den);
+	}
+
+	gretl_matrix_zero(dx);
+
+ 	if (b[j] == huge) {
+            TB = 1.0;
+	    gretl_matrix_zero(dTB);
+	} else {	    
+            x = (b[j] - mj) / den;
+            TB = normal_cdf(x);
+	    fx = normal_pdf(x);
+	    dx->val[m+j] = 1;
+	    vector_subtract(dx, dm);
+	    dx->val[inicol+j] -= x;
+	    vector_copy_mul(dTB, dx, fx/den);
+	}
+
+	x = TB - u[j] * (TB - TA);
+	TT->val[j] = normal_cdf_inverse(x);
+
+	fx = normal_pdf(TT->val[j]);
+	scaled_convex_combo(tmp, u[j], dTA, dTB, 1/fx);
+	gretl_matrix_reuse(dTT, npar, j+1);
+	gretl_matrix_inscribe_matrix(dTT, tmp, 0, j, GRETL_MOD_TRANSPOSE);
+	vector_diff(tmp, dTB, dTA);
+	combo_2(dWT, WT, tmp, TB-TA, dWT);
+
+	if (WT > 0) {
+	    WT *= TB -TA; /* accumulate weight */
+	}
+
+        inicol += j+1;
+    }
+
+    return WT;
+}
+
+/* New-style GHK computation for observation t, iteration j.
+   This variant computes weight only.
+*/
+
+static double ghk_tj_prob (const gretl_matrix *C,
+			   const double *a,
+			   const double *b,
+			   const double *u,
+			   gretl_matrix_block *Bk,
+			   double huge,
+			   int *err)
+{
+    gretl_matrix *cj = NULL;
+    gretl_matrix *TT = NULL;
+    double TA, TB, WT;
+    double z, x, den;
+    int m = C->rows;
+    int j, i;
+
+    cj = gretl_matrix_block_get_matrix(Bk, 0);
+    TT = gretl_matrix_block_get_matrix(Bk, 1);
+
+    gretl_matrix_block_zero(Bk);
+    den = C->val[0];
+
+    if (a[0] == -huge) {
+	TA = 0.0;
+    } else {
+	z = a[0] / den;
+	TA = normal_cdf(z);
+    }
+
+    if (b[0] == huge) {
+	TB = 1.0;
+    } else {
+	z = b[0] / den;
+	TB = normal_cdf(z);
+    }
+
+    WT = TB - TA;
+    x = TB - u[0] * (TB - TA);
+    TT->val[0] = normal_cdf_inverse(x);
 
     for (j=1; j<m; j++) {
 	double mj = 0.0;
@@ -912,78 +1017,30 @@ static double ghk_tj (const gretl_matrix *C,
 	    mj += cj->val[i] * TT->val[i];
 	}
 
-	if (do_score) {
-	    int k = 0;
-
-	    gretl_matrix_zero(dx);
-	    gretl_matrix_zero(dm);
-
-	    for (i=inicol; i<=inicol+j-1; i++) {
-		dm->val[i] = TT->val[k++];
-	    }
-	    gretl_matrix_multiply_mod(cj, GRETL_MOD_NONE,
-				      dTT, GRETL_MOD_TRANSPOSE,
-				      tmp, GRETL_MOD_NONE);
-	    gretl_matrix_add_to(dm, tmp);
-	}
-
         den = gretl_matrix_get(C, j, j);
 
 	if (a[j] == -huge) {
             TA = 0.0;
-	    if (do_score) {
-		gretl_matrix_zero(dTA);
-	    }
 	} else {	    
             x = (a[j] - mj) / den;
             TA = normal_cdf(x);
-	    if (do_score) {
-		fx = normal_pdf(x);
-		dx->val[j] = 1;
-		vector_subtract(dx, dm);
-		dx->val[inicol+j] -= x;
-		vector_copy_mul(dTA, dx, fx/den);
-	    }
-	}
-
-	if (do_score) {
-	    gretl_matrix_zero(dx);
 	}
 
  	if (b[j] == huge) {
             TB = 1.0;
-	    if (do_score) {
-		gretl_matrix_zero(dTB);
-	    }
 	} else {	    
             x = (b[j] - mj) / den;
             TB = normal_cdf(x);
-	    if (do_score) {
-		fx = normal_pdf(x);
-		dx->val[m+j] = 1;
-		vector_subtract(dx, dm);
-		dx->val[inicol+j] -= x;
-		vector_copy_mul(dTB, dx, fx/den);
-	    }
 	}
 
 	x = TB - u[j] * (TB - TA);
 	TT->val[j] = normal_cdf_inverse(x);
 
-	if (do_score) {
-	    fx = normal_pdf(TT->val[j]);
-	    scaled_convex_combo(tmp, u[j], dTA, dTB, 1/fx);
-	    gretl_matrix_reuse(dTT, npar, j+1);
-	    gretl_matrix_inscribe_matrix(dTT, tmp, 0, j, GRETL_MOD_TRANSPOSE);
-	    vector_diff(tmp, dTB, dTA);
-	    combo_2(dWT, WT, tmp, TB-TA, dWT);
-	}
-
 	if (WT > 0) {
 	    WT *= TB -TA; /* accumulate weight */
+	} else {
+	    break;
 	}
-
-        inicol += j+1;
     }
 
     return WT;
@@ -1051,6 +1108,36 @@ static int reorder_dP (gretl_matrix *dP, int m)
     return 0;
 }
 
+static gretl_matrix_block *ghk_block_alloc (int m, int npar,
+					    int do_score)
+{
+    gretl_matrix_block *B = NULL;
+    
+    if (do_score) {
+	/* work space for ghk_tj, with score */
+	gretl_matrix *M[8] = {NULL};
+
+	B = gretl_matrix_block_new(&M[0], 1, npar, /* dTA */
+				   &M[1], 1, npar, /* dTB */
+				   &M[2], 1, npar, /* dm */
+				   &M[3], 1, npar, /* dx */
+				   &M[4], 1, npar, /* tmp */
+				   &M[5], 1, m,    /* cj */
+				   &M[6], m, 1,    /* TT */
+				   &M[7], npar, m, /* dTT */
+				   NULL);
+    } else {
+	/* work space for ghk_tj, prob only */
+	gretl_matrix *M[2] = {NULL};
+
+	B = gretl_matrix_block_new(&M[0], 1, m, /* cj */
+				   &M[1], m, 1, /* TT */
+				   NULL);
+    }
+
+    return B;
+}
+
 gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 			  const gretl_matrix *A,
 			  const gretl_matrix *B,
@@ -1059,21 +1146,11 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 			  int *err)
 {
     gretl_matrix_block *Bk;
-    gretl_matrix *a, *b, *u;
+    gretl_matrix_block *Bk2;
+    gretl_matrix *a, *b;
+    gretl_matrix *u = NULL;
     gretl_matrix *P = NULL;
     gretl_matrix *dpj = NULL;
-
-    /* for passing to ghk_tj */
-    gretl_matrix_block *Bk2;
-    gretl_matrix *dTA;
-    gretl_matrix *dTB;
-    gretl_matrix *dTT;
-    gretl_matrix *dm;
-    gretl_matrix *dx;
-    gretl_matrix *tmp;
-    gretl_matrix *TT;
-    gretl_matrix *cj;
-
     int r, n, m, npar;
     int do_score = (dP != NULL);
     double huge;
@@ -1101,24 +1178,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 	return NULL;
     }
 
-    if (do_score) {
-	/* work space for ghk_tj, with score */
-	Bk2 = gretl_matrix_block_new(&dTA, 1, npar,
-				     &dTB, 1, npar,
-				     &dm,  1, npar,
-				     &dx,  1, npar,
-				     &tmp, 1, npar,
-				     &cj,  1, m,
-				     &TT,  m, 1,
-				     &dTT, npar, m,
-				     NULL);
-    } else {
-	/* work space for ghk_tj, prob only */
-	Bk2 = gretl_matrix_block_new(&cj,  1, m,
-				     &TT,  m, 1,
-				     NULL);
-    }
-
+    Bk2 = ghk_block_alloc(m, npar, do_score);
     if (Bk2 == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
@@ -1158,6 +1218,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 		break;
 	    }
 	}
+
 	if (err_t == E_DATA) {
 	    gretl_errmsg_sprintf("ghk: inconsistent bounds: B[%d,%d] < A[%d,%d]",
 				 t+1, i+1, t+1, i+1);
@@ -1171,17 +1232,21 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 	    }
 	    continue;
 	}
+
 	P->val[t] = 0.0;
 	for (j=0; j<r; j++) {
 	    /* Monte Carlo iterations, using successive columns of U */
 	    gretl_matrix_extract_matrix(u, U, 0, j, GRETL_MOD_NONE);
-            P->val[t] += ghk_tj(C, a->val, b->val, u->val, dpj, Bk2, huge, err);
 	    if (do_score) {
+		P->val[t] += ghk_tj(C, a->val, b->val, u->val, dpj, Bk2, huge, err);
 		mod = (j == 0)? GRETL_MOD_NONE : GRETL_MOD_CUMULATE;
 		gretl_matrix_inscribe_matrix(dP, dpj, t, 0, mod);
+	    } else {
+		P->val[t] += ghk_tj_prob(C, a->val, b->val, u->val, Bk2, huge, err);
 	    }
 	}
 	P->val[t] /= r;
+
 	if (do_score) {
 	    double x;
 
