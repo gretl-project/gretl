@@ -1,0 +1,5 @@
+As of 2014-05-08
+For the latest config.guess and config.sub:
+
+http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD
+http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD
