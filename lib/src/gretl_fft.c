@@ -19,6 +19,16 @@
 
 #include "libgretl.h"
 #include "gretl_fft.h"
+
+#define USE_FFTW3 1
+
+/* USE_FFTW3 must be non-zero for any "production" build; we just allow
+   zeroing this for experiments in which we want a smaller memory
+   footprint for gretlcli.
+*/
+
+#if USE_FFTW3
+
 #include <fftw3.h>
 
 static int fft_allocate (double **px, gretl_matrix **pm,
@@ -185,3 +195,19 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
 
     return ft;
 }
+
+#else /* !USE_FFTW3 */
+
+gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
+{
+    *err = E_EXTERNAL;
+    return NULL;
+}
+
+gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
+{
+    *err = E_EXTERNAL;
+    return NULL;
+}
+
+#endif
