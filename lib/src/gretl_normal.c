@@ -647,7 +647,7 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	}
 
 	gretl_matrix_block_destroy(Bk);
-    }
+    } /* end omp parallel */
 
     set_cephes_hush(0);
 
@@ -1127,7 +1127,7 @@ static gretl_matrix_block *ghk_block_alloc (int m, int npar,
 				   &M[7], npar, m, /* dTT */
 				   NULL);
     } else {
-	/* work space for ghk_tj, prob only */
+	/* work space for ghk_tj, no score */
 	gretl_matrix *M[2] = {NULL};
 
 	B = gretl_matrix_block_new(&M[0], 1, m, /* cj */
