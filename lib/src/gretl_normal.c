@@ -1138,6 +1138,8 @@ static gretl_matrix_block *ghk_block_alloc (int m, int npar,
     return B;
 }
 
+#define GHK2_OMP 0 /* can experiment here, but score not ready */
+
 gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 			  const gretl_matrix *A,
 			  const gretl_matrix *B,
@@ -1156,7 +1158,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     double huge;
     GretlMatrixMod mod;
     int ghk_err = 0;
-    int t, i, j;
+    int t, i, j, iter;
 
     *err = ghk_input_check(C, A, B, U, dP);
     if (*err) {
@@ -1168,23 +1170,16 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     m = C->rows;
     npar = m + m + m*(m+1)/2;
 
-    /* work space for this function */
+    /* common work space for this function */
     Bk = gretl_matrix_block_new(&a, 1, m,
 				&b, 1, m,
-				&u, m, 1,
 				NULL);
     if (Bk == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    Bk2 = ghk_block_alloc(m, npar, do_score);
-    if (Bk2 == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    P = gretl_matrix_alloc(n, 1);
+    P = gretl_zero_matrix_new(n, 1);
     if (P == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
@@ -1192,69 +1187,127 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 
     if (do_score) {
 	gretl_matrix_zero(dP);
-	dpj = gretl_matrix_alloc(1, npar);
-	if (dpj == NULL) {
-	    *err = E_ALLOC;
-	    goto bailout;
-	}	    
     }
 
     huge = libset_get_double(CONV_HUGE);
     set_cephes_hush(1);
 
-    for (t=0; t<n; t++) {
-	/* loop across observations */
-	int err_t = 0;
-
-	for (i=0; i<m; i++) {
-	    /* transcribe and check bounds at current obs */
-	    a->val[i] = gretl_matrix_get(A, t, i);
-	    b->val[i] = gretl_matrix_get(B, t, i);
-	    if (isnan(a->val[i]) || isnan(b->val[i])) {
-		err_t = E_MISSDATA;
-		break;
-	    } else if (b->val[i] < a->val[i]) {
-		ghk_err = err_t = E_DATA;
-		break;
+#if GHK2_OMP
+#pragma omp parallel if (r>8) private(iter,u,Bk2,dpj)
+#endif
+    {
+	u = gretl_matrix_alloc(m, 1);
+	if (u == NULL) {
+	    *err = E_ALLOC;
+	}
+	Bk2 = ghk_block_alloc(m, npar, do_score);
+	if (Bk2 == NULL) {
+	    *err = E_ALLOC;
+	}
+	dpj = NULL;
+	if (do_score) {
+	    dpj = gretl_matrix_alloc(1, npar);
+	    if (dpj == NULL) {
+		*err = E_ALLOC;
 	    }
 	}
+	if (*err) {
+	    goto omp_end;
+	}
 
-	if (err_t == E_DATA) {
-	    gretl_errmsg_sprintf("ghk: inconsistent bounds: B[%d,%d] < A[%d,%d]",
-				 t+1, i+1, t+1, i+1);
-	    break;
-	} else if (err_t == E_MISSDATA) {
-	    P->val[t] = 0.0/0.0; /* NaN */
-	    if (do_score) {
-		for (j=0; j<npar; j++) {
-		    gretl_matrix_set(dP, t, j, 0.0/0.0);
+	t = 0;
+
+	while (t < n) {
+	    /* loop across observations */
+	    int err_t = 0;
+
+#if GHK2_OMP
+#pragma omp single
+#endif
+	    for (i=0; i<m; i++) {
+		/* transcribe and check bounds at current obs */
+		a->val[i] = gretl_matrix_get(A, t, i);
+		b->val[i] = gretl_matrix_get(B, t, i);
+		if (isnan(a->val[i]) || isnan(b->val[i])) {
+		    err_t = E_MISSDATA;
+		    break;
+		} else if (b->val[i] < a->val[i]) {
+		    ghk_err = err_t = E_DATA;
+		    break;
 		}
 	    }
-	    continue;
-	}
 
-	P->val[t] = 0.0;
-	for (j=0; j<r; j++) {
-	    /* Monte Carlo iterations, using successive columns of U */
-	    gretl_matrix_extract_matrix(u, U, 0, j, GRETL_MOD_NONE);
-	    if (do_score) {
-		P->val[t] += ghk_tj(C, a->val, b->val, u->val, dpj, Bk2, huge, err);
-		mod = (j == 0)? GRETL_MOD_NONE : GRETL_MOD_CUMULATE;
-		gretl_matrix_inscribe_matrix(dP, dpj, t, 0, mod);
-	    } else {
-		P->val[t] += ghk_tj_prob(C, a->val, b->val, u->val, Bk2, huge, err);
+	    if (err_t == E_DATA) {
+		gretl_errmsg_sprintf("ghk: inconsistent bounds: B[%d,%d] < A[%d,%d]",
+				     t+1, i+1, t+1, i+1);
+		break;
+	    } else if (err_t == E_MISSDATA) {
+#if GHK2_OMP
+#pragma omp single
+#endif
+		{
+		    P->val[t] = 0.0/0.0; /* NaN */
+		    if (do_score) {
+			for (j=0; j<npar; j++) {
+			    gretl_matrix_set(dP, t, j, 0.0/0.0);
+			}
+		    }
+		}
+		goto next_t;
 	    }
-	}
-	P->val[t] /= r;
 
-	if (do_score) {
-	    double x;
-
-	    for (j=0; j<npar; j++) {
-		x = gretl_matrix_get(dP, t, j);
-		gretl_matrix_set(dP, t, j, x / r);
+#if GHK2_OMP
+            #pragma omp for
+#endif
+	    for (iter=0; iter<r; iter++) {
+		/* Monte Carlo iterations, using successive columns of U */
+		gretl_matrix_extract_matrix(u, U, 0, iter, GRETL_MOD_NONE);
+		if (do_score) {
+		    P->val[t] = ghk_tj(C, a->val, b->val, u->val, dpj, Bk2, huge, err);
+		    mod = (iter == 0)? GRETL_MOD_NONE : GRETL_MOD_CUMULATE;
+		    /* the following should be "omp critical" ? */
+		    gretl_matrix_inscribe_matrix(dP, dpj, t, 0, mod);
+		} else {
+#if GHK2_OMP
+                    #pragma omp atomic
+#endif
+		    P->val[t] += ghk_tj_prob(C, a->val, b->val, u->val, Bk2, huge, err);
+		}
 	    }
+
+#if GHK2_OMP
+	    if (t >= n) {
+		fprintf(stderr, "thread %d has t = %d\n", omp_get_thread_num(), t);
+		abort();
+	    }
+#pragma omp single
+#endif
+	    {
+		P->val[t] /= r;
+
+		if (do_score) {
+		    double x;
+
+		    for (j=0; j<npar; j++) {
+			x = gretl_matrix_get(dP, t, j);
+			gretl_matrix_set(dP, t, j, x / r);
+		    }
+		}
+	    }
+
+	next_t:
+#if GHK2_OMP
+#pragma omp single
+	    { t++; }
+#else
+	    t++;
+#endif
 	}
+
+    omp_end:
+	gretl_matrix_free(u);
+	gretl_matrix_block_destroy(Bk2);
+	gretl_matrix_free(dpj);
     }
 
     set_cephes_hush(0);
@@ -1266,8 +1319,6 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
  bailout:
 
     gretl_matrix_block_destroy(Bk);
-    gretl_matrix_block_destroy(Bk2);
-    gretl_matrix_free(dpj);
 
     if (!*err && ghk_err) {
 	*err = ghk_err;
