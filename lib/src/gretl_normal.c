@@ -594,7 +594,7 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 
     set_cephes_hush(1);
 
-#pragma omp parallel if (nobs>256) private(i,j,Bk,Ai,Bi,TA,TB,WT,TT,ABok,pzero,ierr)
+#pragma omp parallel if (nobs>49) private(i,j,Bk,Ai,Bi,TA,TB,WT,TT,ABok,pzero,ierr)
     {
 	Bk = gretl_matrix_block_new(&Ai, dim, 1,
 				    &Bi, dim, 1,
@@ -677,20 +677,8 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
     int dim, nobs, ndraws;
     int i, j;
 
-    if (gretl_is_null_matrix(C) ||
-	gretl_is_null_matrix(A) ||
-	gretl_is_null_matrix(B) ||
-	gretl_is_null_matrix(U)) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (A->rows != B->rows ||
-	A->cols != B->cols ||
-	C->rows != A->cols ||
-	C->cols != A->cols ||
-	U->rows != A->cols) {
-	*err = E_NONCONF;
+    *err = ghk_input_check(C, A, B, U, NULL);
+    if (*err) {
 	return NULL;
     }
 
@@ -777,39 +765,53 @@ static void scaled_convex_combo (gretl_matrix *targ, double w,
     }
 }
 
-static void combo_2 (gretl_matrix *targ,
-		     double w1, const gretl_matrix *m1,
-		     double w2, const gretl_matrix *m2)
+static int combo_2 (gretl_matrix *targ,
+		    double w1, const gretl_matrix *m1,
+		    double w2, const gretl_matrix *m2)
 {
     int i, n = gretl_vector_get_length(targ);
 
     for (i=0; i<n; i++) {
 	targ->val[i] = w1 * m1->val[i] + w2 * m2->val[i];
+	if (isnan(targ->val[i])) {
+	    return E_NAN;
+	}	
     }
+
+    return 0;
 }
 
-static void vector_copy_mul (gretl_matrix *targ,
-			     const gretl_matrix *src,
-			     double w)
+static int vector_copy_mul (gretl_matrix *targ,
+			    const gretl_matrix *src,
+			    double w)
 {
     int i, n = gretl_vector_get_length(targ);
 
     for (i=0; i<n; i++) {
 	targ->val[i] = w * src->val[i];
+	if (isnan(targ->val[i])) {
+	    return E_NAN;
+	}
     }
+
+    return 0;
 }
 
-static void vector_diff (gretl_matrix *targ,
-			 const gretl_matrix *m1,
-			 const gretl_matrix *m2)
+static int vector_diff (gretl_matrix *targ,
+			const gretl_matrix *m1,
+			const gretl_matrix *m2)
 {
     int i, n = gretl_vector_get_length(targ);
 
     for (i=0; i<n; i++) {
 	targ->val[i] = m1->val[i] - m2->val[i];
+	if (isnan(targ->val[i])) {
+	    return E_NAN;
+	}
     }
-}
 
+    return 0;
+}
 
 static void vector_subtract (gretl_matrix *targ,
 			     const gretl_matrix *src)
@@ -831,6 +833,7 @@ static double ghk_tj (const gretl_matrix *C,
 		      const double *u,
 		      gretl_matrix *dWT,
 		      gretl_matrix_block *Bk,
+		      int iter,
 		      double huge,
 		      int *err)
 {
@@ -885,12 +888,12 @@ static double ghk_tj (const gretl_matrix *C,
 
     fx = normal_pdf(TT->val[0]);
     scaled_convex_combo(dTT, u[0], dTA, dTB, 1/fx);
-    vector_diff(dWT, dTB, dTA);
+    *err = vector_diff(dWT, dTB, dTA);
 
     /* first column of the gradient which refers to C */
     inicol = 2*m + 1;
 
-    for (j=1; j<m; j++) {
+    for (j=1; j<m && !*err; j++) {
 	double mj = 0.0;
 	int k = 0;
 
@@ -921,11 +924,19 @@ static double ghk_tj (const gretl_matrix *C,
 	} else {	    
             x = (a[j] - mj) / den;
             TA = normal_cdf(x);
+	    if (TA > 0.99999999999999) {
+		fprintf(stderr, "TA ~= 1.0, could be trouble (x=%g)\n", x);
+		fprintf(stderr, " (a[j]=%g, mj=%g, den=%g)\n", a[j], mj, den);
+	    }
 	    fx = normal_pdf(x);
 	    dx->val[j] = 1;
 	    vector_subtract(dx, dm);
 	    dx->val[inicol+j] -= x;
-	    vector_copy_mul(dTA, dx, fx/den);
+	    *err = vector_copy_mul(dTA, dx, fx/den);
+	}
+
+	if (*err) {
+	    break;
 	}
 
 	gretl_matrix_zero(dx);
@@ -940,18 +951,25 @@ static double ghk_tj (const gretl_matrix *C,
 	    dx->val[m+j] = 1;
 	    vector_subtract(dx, dm);
 	    dx->val[inicol+j] -= x;
-	    vector_copy_mul(dTB, dx, fx/den);
+	    *err = vector_copy_mul(dTB, dx, fx/den);
 	}
 
 	x = TB - u[j] * (TB - TA);
 	TT->val[j] = normal_cdf_inverse(x);
+	if (na(TT->val[j])) {
+	    fprintf(stderr, "TT is NA at j=%d (x=%g)\n", j, x);
+	    fprintf(stderr, " (TA=%.16g, TB=%.16g, u[j]=%g)\n", TA, TB, u[j]);
+	    *err = E_NAN;
+	}
 
-	fx = normal_pdf(TT->val[j]);
-	scaled_convex_combo(tmp, u[j], dTA, dTB, 1/fx);
-	gretl_matrix_reuse(dTT, npar, j+1);
-	gretl_matrix_inscribe_matrix(dTT, tmp, 0, j, GRETL_MOD_TRANSPOSE);
-	vector_diff(tmp, dTB, dTA);
-	combo_2(dWT, WT, tmp, TB-TA, dWT);
+	if (!*err) {
+	    fx = normal_pdf(TT->val[j]);
+	    scaled_convex_combo(tmp, u[j], dTA, dTB, 1/fx);
+	    gretl_matrix_reuse(dTT, npar, j+1);
+	    gretl_matrix_inscribe_matrix(dTT, tmp, 0, j, GRETL_MOD_TRANSPOSE);
+	    *err = vector_diff(tmp, dTB, dTA);
+	    combo_2(dWT, WT, tmp, TB-TA, dWT);
+	}
 
 	if (WT > 0) {
 	    WT *= TB -TA; /* accumulate weight */
@@ -1138,7 +1156,7 @@ static gretl_matrix_block *ghk_block_alloc (int m, int npar,
     return B;
 }
 
-#define GHK2_OMP 0 /* can experiment here, but score not ready */
+#define GHK2_OMP 0 /* can experiment here */
 
 gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 			  const gretl_matrix *A,
@@ -1155,8 +1173,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     gretl_matrix *dpj = NULL;
     int r, n, m, npar;
     int do_score = (dP != NULL);
-    double huge;
-    GretlMatrixMod mod;
+    double huge, pj;
     int ghk_err = 0;
     int t, i, j, iter;
 
@@ -1193,7 +1210,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     set_cephes_hush(1);
 
 #if GHK2_OMP
-#pragma omp parallel if (r>8) private(iter,u,Bk2,dpj)
+#pragma omp parallel if (r>8) private(iter,u,Bk2,dpj,pj)
 #endif
     {
 	u = gretl_matrix_alloc(m, 1);
@@ -1257,29 +1274,32 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 	    }
 
 #if GHK2_OMP
-            #pragma omp for
+#pragma omp for
 #endif
 	    for (iter=0; iter<r; iter++) {
 		/* Monte Carlo iterations, using successive columns of U */
 		gretl_matrix_extract_matrix(u, U, 0, iter, GRETL_MOD_NONE);
 		if (do_score) {
-		    P->val[t] = ghk_tj(C, a->val, b->val, u->val, dpj, Bk2, huge, err);
-		    mod = (iter == 0)? GRETL_MOD_NONE : GRETL_MOD_CUMULATE;
-		    /* the following should be "omp critical" ? */
-		    gretl_matrix_inscribe_matrix(dP, dpj, t, 0, mod);
-		} else {
+		    pj = ghk_tj(C, a->val, b->val, u->val, dpj, Bk2, iter, 
+				huge, err);
 #if GHK2_OMP
-                    #pragma omp atomic
+#pragma omp critical
 #endif
-		    P->val[t] += ghk_tj_prob(C, a->val, b->val, u->val, Bk2, huge, err);
+		    gretl_matrix_inscribe_matrix(dP, dpj, t, 0, GRETL_MOD_CUMULATE);
+		} else {
+		    pj = ghk_tj_prob(C, a->val, b->val, u->val, Bk2, huge, err);
 		}
+#if GHK2_OMP
+#pragma omp atomic
+#endif
+		P->val[t] += pj;
+	    }
+
+	    if (*err) {
+		break;
 	    }
 
 #if GHK2_OMP
-	    if (t >= n) {
-		fprintf(stderr, "thread %d has t = %d\n", omp_get_thread_num(), t);
-		abort();
-	    }
 #pragma omp single
 #endif
 	    {
@@ -1298,7 +1318,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 	next_t:
 #if GHK2_OMP
 #pragma omp single
-	    { t++; }
+	    t++;
 #else
 	    t++;
 #endif
