@@ -765,52 +765,37 @@ static void scaled_convex_combo (gretl_matrix *targ, double w,
     }
 }
 
-static int combo_2 (gretl_matrix *targ,
-		    double w1, const gretl_matrix *m1,
-		    double w2, const gretl_matrix *m2)
+static void combo_2 (gretl_matrix *targ,
+		     double w1, const gretl_matrix *m1,
+		     double w2, const gretl_matrix *m2)
 {
     int i, n = gretl_vector_get_length(targ);
 
     for (i=0; i<n; i++) {
 	targ->val[i] = w1 * m1->val[i] + w2 * m2->val[i];
-	if (isnan(targ->val[i])) {
-	    return E_NAN;
-	}	
     }
-
-    return 0;
 }
 
-static int vector_copy_mul (gretl_matrix *targ,
-			    const gretl_matrix *src,
-			    double w)
+static void vector_copy_mul (gretl_matrix *targ,
+			     const gretl_matrix *src,
+			     double w)
 {
     int i, n = gretl_vector_get_length(targ);
 
     for (i=0; i<n; i++) {
 	targ->val[i] = w * src->val[i];
-	if (isnan(targ->val[i])) {
-	    return E_NAN;
-	}
     }
-
-    return 0;
 }
 
-static int vector_diff (gretl_matrix *targ,
-			const gretl_matrix *m1,
-			const gretl_matrix *m2)
+static void vector_diff (gretl_matrix *targ,
+			 const gretl_matrix *m1,
+			 const gretl_matrix *m2)
 {
     int i, n = gretl_vector_get_length(targ);
 
     for (i=0; i<n; i++) {
 	targ->val[i] = m1->val[i] - m2->val[i];
-	if (isnan(targ->val[i])) {
-	    return E_NAN;
-	}
     }
-
-    return 0;
 }
 
 static void vector_subtract (gretl_matrix *targ,
@@ -888,12 +873,12 @@ static double ghk_tj (const gretl_matrix *C,
 
     fx = normal_pdf(TT->val[0]);
     scaled_convex_combo(dTT, u[0], dTA, dTB, 1/fx);
-    *err = vector_diff(dWT, dTB, dTA);
+    vector_diff(dWT, dTB, dTA);
 
     /* first column of the gradient which refers to C */
     inicol = 2*m + 1;
 
-    for (j=1; j<m && !*err; j++) {
+    for (j=1; j<m; j++) {
 	double mj = 0.0;
 	int k = 0;
 
@@ -932,11 +917,7 @@ static double ghk_tj (const gretl_matrix *C,
 	    dx->val[j] = 1;
 	    vector_subtract(dx, dm);
 	    dx->val[inicol+j] -= x;
-	    *err = vector_copy_mul(dTA, dx, fx/den);
-	}
-
-	if (*err) {
-	    break;
+	    vector_copy_mul(dTA, dx, fx/den);
 	}
 
 	gretl_matrix_zero(dx);
@@ -951,7 +932,7 @@ static double ghk_tj (const gretl_matrix *C,
 	    dx->val[m+j] = 1;
 	    vector_subtract(dx, dm);
 	    dx->val[inicol+j] -= x;
-	    *err = vector_copy_mul(dTB, dx, fx/den);
+	    vector_copy_mul(dTB, dx, fx/den);
 	}
 
 	x = TB - u[j] * (TB - TA);
@@ -959,17 +940,14 @@ static double ghk_tj (const gretl_matrix *C,
 	if (na(TT->val[j])) {
 	    fprintf(stderr, "TT is NA at j=%d (x=%g)\n", j, x);
 	    fprintf(stderr, " (TA=%.16g, TB=%.16g, u[j]=%g)\n", TA, TB, u[j]);
-	    *err = E_NAN;
 	}
 
-	if (!*err) {
-	    fx = normal_pdf(TT->val[j]);
-	    scaled_convex_combo(tmp, u[j], dTA, dTB, 1/fx);
-	    gretl_matrix_reuse(dTT, npar, j+1);
-	    gretl_matrix_inscribe_matrix(dTT, tmp, 0, j, GRETL_MOD_TRANSPOSE);
-	    *err = vector_diff(tmp, dTB, dTA);
-	    combo_2(dWT, WT, tmp, TB-TA, dWT);
-	}
+	fx = normal_pdf(TT->val[j]);
+	scaled_convex_combo(tmp, u[j], dTA, dTB, 1/fx);
+	gretl_matrix_reuse(dTT, npar, j+1);
+	gretl_matrix_inscribe_matrix(dTT, tmp, 0, j, GRETL_MOD_TRANSPOSE);
+	vector_diff(tmp, dTB, dTA);
+	combo_2(dWT, WT, tmp, TB-TA, dWT);
 
 	if (WT > 0) {
 	    WT *= TB -TA; /* accumulate weight */
