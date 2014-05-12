@@ -56,8 +56,8 @@
 <!ELEMENT fnarg (#PCDATA)>
 <!ATTLIST fnarg 
     type      (scalar | series | vector | rvec | cvec | matrix | smatrix | symmat | 
-               matrixref | seriesref | anyfloat | scalar-or-series | series-or-vec | 
-               series-or-mat | list | coeffname | string | char | sslist | 
+               matrixref | seriesref | bundleref |anyfloat | scalar-or-series | 
+	       series-or-vec | series-or-mat | list | coeffname | string | char | sslist | 
                series-or-list | smlist | pscalar | seebelow | fncall |
                anyfloat-or-list | list-or-string | scalar-or-vec |
                int-or-list | scalar-or-matrix | int | bool | pdmat |

@@ -42,6 +42,7 @@
  <gentext key="pdmat"         text="matrice definita positiva"/>
  <gentext key="matrixref"     text="riferimento a matrice"/>
  <gentext key="seriesref"     text="riferimento a serie"/>
+ <gentext key="bundleref"     text="riferimento a bundle"/>
  <gentext key="cvec"          text="vettore colonna"/>
  <gentext key="rvec"          text="vettore riga"/>
  <gentext key="list"          text="lista"/>

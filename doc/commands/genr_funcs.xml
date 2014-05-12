@@ -1370,8 +1370,8 @@
 
     <function name="bread" section="data-utils" output="bundle">
       <fnargs>
-    <fnarg type="string">fname</fnarg>
-    <fnarg optional="true" type="bool">import</fnarg>
+	<fnarg type="string">fname</fnarg>
+	<fnarg optional="true" type="bool">import</fnarg>
       </fnargs>
       <description>
     <para>
@@ -2019,6 +2019,82 @@
         <fncref targ="diff"/>
       </seelist>
     </para>
+      </description>
+    </function>
+
+    <function name="curl" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bundleref">&amp;b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Provides a somewhat flexible means of obtaining a text
+	  buffer containing data from an internet server, using
+	  libcurl. On input the bundle <argname>b</argname> must
+	  contain a string named <lit>URL</lit> which gives the
+	  full address of the resource on the target host. Other
+	  optional elements are as follows.
+	</para>
+	<ilist>
+	  <li><para>
+	    <lit>header</lit>: a string specifying an HTTP header
+	    to be sent to the host.
+	  </para></li>
+	  <li><para>
+	    <lit>postdata</lit>: a string holding data to be sent to
+	    the host.
+	  </para></li>
+	</ilist>
+	<para>
+	  The <lit>header</lit> and <lit>postdata</lit> fields are
+	  intended for use with an HTTP <lit>POST</lit> request; if
+	  <lit>postdata</lit> is present the <lit>POST</lit> method is
+	  implicit, otherwise the <lit>GET</lit> method is
+	  implicit. (But note that for straightforward <lit>GET</lit>
+	  requests <fncref targ="readfile"/> offers a simpler
+	  interface.)
+	</para>
+	<para>
+	  One other optional bundle element is recognized: if a scalar
+	  named <lit>include</lit> is present and has a non-zero value,
+	  this is taken as a request to include the header received
+	  from the host with the output body.
+	</para>
+	<para>
+	  On completion of the request, the text received from the
+	  server is added to the bundle under the key
+	  <lit>output</lit>.
+	</para>
+	<para>
+	  If an error occurs in formulating the request (for example
+	  there's no <lit>URL</lit> on input) the function fails,
+	  otherwise it returns zero. Note, however, that
+	  <quote>success</quote> in this sense does not necessarily
+	  mean that you got the data you wanted; you must check the
+	  content of the output buffer.
+	</para>
+	<para>
+	  Here is an example of use: downloading some data from the
+	  US Bureau of Labor Statistics site, which requires sending
+	  a JSON query. Note the use of <cmdref targ="sprintf"/> to
+	  embed double-quotes in the <lit>POST</lit> data.
+	</para>
+	<code>
+	  bundle req
+	  req.URL = "http://api.bls.gov/publicAPI/v1/timeseries/data/"
+	  req.include = 1
+	  req.header = "Content-Type: application/json"
+	  string s
+	  sprintf s, "{\"seriesid\":[\"LEU0254555900\"]}"
+	  req.postdata = s
+
+	  curl(&amp;req)
+	  s = req.output
+	  string line
+	  loop while getline(s, line) --quiet
+	    printf "%s\n", line
+	  endloop
+	</code>
       </description>
     </function>
 
