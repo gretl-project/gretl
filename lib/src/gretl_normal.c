@@ -555,6 +555,8 @@ static double GHK_1 (const gretl_matrix *C,
     return P;
 }
 
+#define OMP_GHK_MIN 60
+
 /**
  * gretl_GHK:
  * @C: Cholesky decomposition of covariance matrix, lower triangular,
@@ -590,9 +592,10 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
     gretl_matrix *TA, *TB;
     gretl_matrix *WT, *TT;
     double huge;
-    int dim, nobs, ndraws;
+    int m, n, r;
     int ierr, ghk_err = 0;
     int ABok, pzero;
+    unsigned sz = 0;
     int i, j;
 
     *err = ghk_input_check(C, A, B, U, NULL);
@@ -602,26 +605,30 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 
     huge = libset_get_double(CONV_HUGE);
 
-    dim = C->rows;
-    nobs = A->rows;
-    ndraws = U->cols;
+    m = C->rows;
+    n = A->rows;
+    r = U->cols;
 
-    P = gretl_matrix_alloc(nobs, 1);
+    P = gretl_matrix_alloc(n, 1);
     if (P == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
+    if (n >= 2) {
+	sz = n * m * r;
+    }
+
     set_cephes_hush(1);
 
-#pragma omp parallel if (nobs>49) private(i,j,Bk,Ai,Bi,TA,TB,WT,TT,ABok,pzero,ierr)
+#pragma omp parallel if (sz>OMP_GHK_MIN) private(i,j,Bk,Ai,Bi,TA,TB,WT,TT,ABok,pzero,ierr)
     {
-	Bk = gretl_matrix_block_new(&Ai, dim, 1,
-				    &Bi, dim, 1,
-				    &TA, 1, ndraws,
-				    &TB, 1, ndraws,
-				    &WT, 1, ndraws,
-				    &TT, dim, ndraws,
+	Bk = gretl_matrix_block_new(&Ai, m, 1,
+				    &Bi, m, 1,
+				    &TA, 1, r,
+				    &TB, 1, r,
+				    &WT, 1, r,
+				    &TT, m, r,
 				    NULL);
 	if (Bk == NULL) {
 	    ierr = E_ALLOC;
@@ -631,10 +638,10 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	}
 
         #pragma omp for
-	for (i=0; i<nobs; i++) {
+	for (i=0; i<n; i++) {
 	    ABok = 1; pzero = 0;
 
-	    for (j=0; j<dim && !ierr; j++) {
+	    for (j=0; j<m && !ierr; j++) {
 		Ai->val[j] = gretl_matrix_get(A, i, j);
 		Bi->val[j] = gretl_matrix_get(B, i, j);
 		ABok = !(isnan(Ai->val[j]) || isnan(Bi->val[j]));
@@ -694,7 +701,7 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
     gretl_matrix *TA, *TB;
     gretl_matrix *WT, *TT;
     double huge;
-    int dim, nobs, ndraws;
+    int m, n, r;
     int i, j;
 
     *err = ghk_input_check(C, A, B, U, NULL);
@@ -704,17 +711,17 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 
     huge = libset_get_double(CONV_HUGE);
 
-    dim = C->rows;
-    nobs = A->rows;
-    ndraws = U->cols;
+    m = C->rows;
+    n = A->rows;
+    r = U->cols;
 
     if (!*err) {
-	Bk = gretl_matrix_block_new(&Ai, dim, 1,
-				    &Bi, dim, 1,
-				    &TA, 1, ndraws,
-				    &TB, 1, ndraws,
-				    &WT, 1, ndraws,
-				    &TT, dim, ndraws,
+	Bk = gretl_matrix_block_new(&Ai, m, 1,
+				    &Bi, m, 1,
+				    &TA, 1, r,
+				    &TB, 1, r,
+				    &WT, 1, r,
+				    &TT, m, r,
 				    NULL);
 	if (Bk == NULL) {
 	    *err = E_ALLOC;
@@ -722,7 +729,7 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
     }
 
     if (!*err) {
-	P = gretl_matrix_alloc(nobs, 1);
+	P = gretl_matrix_alloc(n, 1);
 	if (P == NULL) {
 	    *err = E_ALLOC;
 	}
@@ -730,10 +737,10 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 
     set_cephes_hush(1);
 
-    for (i=0; i<nobs && !*err; i++) {
+    for (i=0; i<n && !*err; i++) {
 	int ABok = 1, pzero = 0;
 
-	for (j=0; j<dim && !*err; j++) {
+	for (j=0; j<m && !*err; j++) {
 	    Ai->val[j] = gretl_matrix_get(A, i, j);
 	    Bi->val[j] = gretl_matrix_get(B, i, j);
 	    ABok = !(isnan(Ai->val[j]) || isnan(Bi->val[j]));
@@ -1150,6 +1157,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     int r, n, m, npar;
     int do_score = (dP != NULL);
     double huge;
+    unsigned sz = 0;
     int t, i, j, iter;
 
     *err = ghk_input_check(C, A, B, U, dP);
@@ -1170,13 +1178,17 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 
     if (do_score) {
 	gretl_matrix_zero(dP);
+    }    
+
+    if (n >= 2) {
+	sz = n * m * r;
     }
 
     huge = libset_get_double(CONV_HUGE);
     set_cephes_hush(1);
 
 #if GHK2_OMP
-#pragma omp parallel if (r>8) private(i,j,t,iter,a,b,u,Bk,Bk2,dpj)
+#pragma omp parallel if (sz>OMP_GHK_MIN) private(i,j,t,iter,a,b,u,Bk,Bk2,dpj)
 #endif
     {
 	Bk = gretl_matrix_block_new(&a, 1, m,
