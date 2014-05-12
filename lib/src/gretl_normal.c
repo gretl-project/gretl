@@ -432,6 +432,27 @@ static int ghk_input_check (const gretl_matrix *C,
     return 0;
 }
 
+static void vector_diff (gretl_matrix *targ,
+			 const gretl_matrix *m1,
+			 const gretl_matrix *m2)
+{
+    int i, n = gretl_vector_get_length(targ);
+
+    for (i=0; i<n; i++) {
+	targ->val[i] = m1->val[i] - m2->val[i];
+    }
+}
+
+static void vector_subtract (gretl_matrix *targ,
+			     const gretl_matrix *src)
+{
+    int i, n = gretl_vector_get_length(targ);
+
+    for (i=0; i<n; i++) {
+	targ->val[i] -= src->val[i];
+    }
+}
+
 /*
   C  Lower triangular Cholesky factor of \Sigma, m x m
   A  Lower bound of rectangle, m x 1
@@ -466,8 +487,7 @@ static double GHK_1 (const gretl_matrix *C,
     }
 
     /* form WGT = TB - TA */
-    gretl_matrix_copy_values(WGT, TB);
-    gretl_matrix_subtract_from(WGT, TA);
+    vector_diff(WGT, TB, TA);
     gretl_matrix_zero(TT);
 
     for (i=0; i<r; i++) {
@@ -515,7 +535,7 @@ static double GHK_1 (const gretl_matrix *C,
 	}
 
 	/* accumulate weight */
-	gretl_matrix_subtract_from(TB, TA);
+	vector_subtract(TB, TA);
 	for (i=0; i<r; i++) {
 	    WGT->val[i] *= TB->val[i];
 	}
@@ -784,27 +804,6 @@ static void vector_copy_mul (gretl_matrix *targ,
 
     for (i=0; i<n; i++) {
 	targ->val[i] = w * src->val[i];
-    }
-}
-
-static void vector_diff (gretl_matrix *targ,
-			 const gretl_matrix *m1,
-			 const gretl_matrix *m2)
-{
-    int i, n = gretl_vector_get_length(targ);
-
-    for (i=0; i<n; i++) {
-	targ->val[i] = m1->val[i] - m2->val[i];
-    }
-}
-
-static void vector_subtract (gretl_matrix *targ,
-			     const gretl_matrix *src)
-{
-    int i, n = gretl_vector_get_length(targ);
-
-    for (i=0; i<n; i++) {
-	targ->val[i] -= src->val[i];
     }
 }
 
@@ -1134,7 +1133,7 @@ static gretl_matrix_block *ghk_block_alloc (int m, int npar,
     return B;
 }
 
-#define GHK2_OMP 0 /* can experiment here */
+#define GHK2_OMP 1 /* can experiment here */
 
 gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 			  const gretl_matrix *A,
@@ -1145,14 +1144,12 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 {
     gretl_matrix_block *Bk;
     gretl_matrix_block *Bk2;
-    gretl_matrix *a, *b;
-    gretl_matrix *u = NULL;
+    gretl_matrix *a, *b, *u;
     gretl_matrix *P = NULL;
     gretl_matrix *dpj = NULL;
     int r, n, m, npar;
     int do_score = (dP != NULL);
-    double huge, pj;
-    int ghk_err = 0;
+    double huge;
     int t, i, j, iter;
 
     *err = ghk_input_check(C, A, B, U, dP);
@@ -1165,19 +1162,10 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     m = C->rows;
     npar = m + m + m*(m+1)/2;
 
-    /* common work space for this function */
-    Bk = gretl_matrix_block_new(&a, 1, m,
-				&b, 1, m,
-				NULL);
-    if (Bk == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
     P = gretl_zero_matrix_new(n, 1);
     if (P == NULL) {
 	*err = E_ALLOC;
-	goto bailout;
+	return NULL;
     }
 
     if (do_score) {
@@ -1188,11 +1176,14 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     set_cephes_hush(1);
 
 #if GHK2_OMP
-#pragma omp parallel if (r>8) private(iter,u,Bk2,dpj,pj)
+#pragma omp parallel if (r>8) private(i,j,t,iter,a,b,u,Bk,Bk2,dpj)
 #endif
     {
-	u = gretl_matrix_alloc(m, 1);
-	if (u == NULL) {
+	Bk = gretl_matrix_block_new(&a, 1, m,
+				    &b, 1, m,
+				    &u, m, 1,
+				    NULL);
+	if (Bk == NULL) {
 	    *err = E_ALLOC;
 	}
 	Bk2 = ghk_block_alloc(m, npar, do_score);
@@ -1210,15 +1201,13 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 	    goto omp_end;
 	}
 
-	t = 0;
-
-	while (t < n) {
+#if GHK2_OMP
+#pragma omp for
+#endif
+	for (t=0; t<n; t++) {
 	    /* loop across observations */
 	    int err_t = 0;
 
-#if GHK2_OMP
-#pragma omp single
-#endif
 	    for (i=0; i<m; i++) {
 		/* transcribe and check bounds at current obs */
 		a->val[i] = gretl_matrix_get(A, t, i);
@@ -1227,7 +1216,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 		    err_t = E_MISSDATA;
 		    break;
 		} else if (b->val[i] < a->val[i]) {
-		    ghk_err = err_t = E_DATA;
+		    *err = err_t = E_DATA;
 		    break;
 		}
 	    }
@@ -1235,96 +1224,54 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 	    if (err_t == E_DATA) {
 		gretl_errmsg_sprintf("ghk: inconsistent bounds: B[%d,%d] < A[%d,%d]",
 				     t+1, i+1, t+1, i+1);
-		break;
 	    } else if (err_t == E_MISSDATA) {
-#if GHK2_OMP
-#pragma omp single
-#endif
-		{
-		    P->val[t] = 0.0/0.0; /* NaN */
-		    if (do_score) {
-			for (j=0; j<npar; j++) {
-			    gretl_matrix_set(dP, t, j, 0.0/0.0);
-			}
+		P->val[t] = 0.0/0.0; /* NaN */
+		if (do_score) {
+		    for (j=0; j<npar; j++) {
+			gretl_matrix_set(dP, t, j, 0.0/0.0);
 		    }
 		}
-		goto next_t;
 	    }
 
-#if GHK2_OMP
-#pragma omp for
-#endif
-	    for (iter=0; iter<r; iter++) {
+	    for (iter=0; iter<r && !err_t && !*err; iter++) {
 		/* Monte Carlo iterations, using successive columns of U */
 		gretl_matrix_extract_matrix(u, U, 0, iter, GRETL_MOD_NONE);
 		if (do_score) {
-		    pj = ghk_tj(C, a->val, b->val, u->val, dpj, Bk2, iter, 
-				huge, err);
-#if GHK2_OMP
-#pragma omp critical
-#endif
+		    P->val[t] += ghk_tj(C, a->val, b->val, u->val, dpj, Bk2, iter, 
+					huge, err);
 		    gretl_matrix_inscribe_matrix(dP, dpj, t, 0, GRETL_MOD_CUMULATE);
 		} else {
-		    pj = ghk_tj_prob(C, a->val, b->val, u->val, Bk2, huge, err);
-		}
-#if GHK2_OMP
-#pragma omp atomic
-#endif
-		P->val[t] += pj;
-	    }
-
-	    if (*err) {
-		break;
-	    }
-
-#if GHK2_OMP
-#pragma omp single
-#endif
-	    {
-		P->val[t] /= r;
-
-		if (do_score) {
-		    double x;
-
-		    for (j=0; j<npar; j++) {
-			x = gretl_matrix_get(dP, t, j);
-			gretl_matrix_set(dP, t, j, x / r);
-		    }
+		    P->val[t] += ghk_tj_prob(C, a->val, b->val, u->val, Bk2, huge, err);
 		}
 	    }
-
-	next_t:
-#if GHK2_OMP
-#pragma omp single
-	    t++;
-#else
-	    t++;
-#endif
 	}
 
     omp_end:
-	gretl_matrix_free(u);
+	gretl_matrix_block_destroy(Bk);
 	gretl_matrix_block_destroy(Bk2);
 	gretl_matrix_free(dpj);
     }
 
     set_cephes_hush(0);
 
-    if (do_score) {
-	reorder_dP(dP, m);
-    }
-
- bailout:
-
-    gretl_matrix_block_destroy(Bk);
-
-    if (!*err && ghk_err) {
-	*err = ghk_err;
-    }
-
     if (*err) {
 	gretl_matrix_free(P);
 	P = NULL;
+    } else {
+	for (t=0; t<n; t++) {
+	    P->val[t] /= r;
+	}		
+	if (do_score) {
+	    double x;
+
+	    for (t=0; t<n; t++) {
+		for (j=0; j<npar; j++) {
+		    x = gretl_matrix_get(dP, t, j);
+		    gretl_matrix_set(dP, t, j, x / r);
+		}
+	    }
+	    reorder_dP(dP, m);
+	}
     }
 
     return P;
