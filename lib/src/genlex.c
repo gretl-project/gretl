@@ -422,6 +422,7 @@ struct str_table funcs[] = {
     { F_SCATTER,   "mpiscatter" },
     { F_EASTER,    "easterday" },
     { F_GENSERIES, "genseries" },
+    { F_CURL,      "curl" },
     { 0,          NULL }
 };
 

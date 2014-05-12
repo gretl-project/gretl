@@ -278,6 +278,7 @@ enum {
     F_FIXNAME,
     F_MPI_RECV,
     F_EASTER,
+    F_CURL,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,

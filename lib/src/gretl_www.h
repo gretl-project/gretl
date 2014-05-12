@@ -28,7 +28,6 @@ typedef enum {
     SHOW_DBS,
     GRAB_NBO_DATA,
     GRAB_FILE,
-    QUERY,
     LIST_FUNCS,
     GRAB_FUNC,
     GRAB_PDF,
@@ -83,5 +82,9 @@ char *retrieve_public_file_as_buffer (const char *uri, size_t *len,
 				      int *err);
 
 int query_sourceforge (const char *query, char **getbuf);
+
+int gretl_curl (const char *url, const char *header, 
+		const char *postdata, int include,
+		char **pbuf);
 
 #endif /* GRETL_WWW_H */

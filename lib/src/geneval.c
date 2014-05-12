@@ -34,6 +34,10 @@
 #include "version.h"
 #include "csvdata.h"
 
+#ifdef USE_CURL
+# include "gretl_www.h"
+#endif
+
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
 #endif
@@ -6577,6 +6581,87 @@ static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static const char *optional_bundle_get (gretl_bundle *b, 
+					const char *key,
+					double *px,
+					int *err)
+{
+    const char *s = NULL;
+
+    if (!*err) {
+	/* proceed only if we haven't already hit an error */
+	if (px != NULL) {
+	    *px = gretl_bundle_get_scalar(b, key, err);
+	} else {
+	    s = gretl_bundle_get_string(b, key, err);
+	}
+	if (*err == E_DATA) {
+	    /* non-existence of item (E_DATA) is OK, but 
+	       wrong type (E_TYPES) is not
+	    */
+	    *err = 0;
+	}
+    }
+
+    return s;
+}
+
+static NODE *curl_bundle_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+#ifndef USE_CURL
+    gretl_errmsg_set(_("Internet access not supported"));
+    p->err = E_DATA;
+#else
+    if (ret != NULL) {
+	gretl_bundle *b = NULL;
+
+	if (n->t != U_ADDR) {
+	    p->err = E_TYPES;
+	} else {
+	    /* switch to 'content' sub-node */
+	    n = n->v.b1.b;
+	    if (n->t != BUNDLE) {
+		p->err = E_TYPES;
+	    } else {
+		b = n->v.b;
+	    }
+	}
+
+	if (!p->err) {
+	    const char *url = NULL;
+	    const char *header = NULL;
+	    const char *postdata = NULL;
+	    char *output = NULL;
+	    double xinclude = 0;
+
+	    url = gretl_bundle_get_string(b, "URL", &p->err);
+	    header = optional_bundle_get(b, "header", NULL, &p->err);
+	    postdata = optional_bundle_get(b, "postdata", NULL, &p->err);
+	    optional_bundle_get(b, "include", &xinclude, &p->err);
+
+	    if (!p->err) {
+		int include = (xinclude == 1.0);
+
+		p->err = gretl_curl(url, header, postdata, include,
+				    &output);
+	    }
+	    if (output != NULL) {
+		p->err = gretl_bundle_set_string(b, "output", output);
+		free(output);
+	    }
+	}
+
+	if (!p->err) {
+	    ret->v.xval = 0;
+	}
+    }
+#endif /* curl supported in libgretl */
+
+    return ret;
+}
+
 static NODE *type_string_node (NODE *n, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -10206,6 +10291,9 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, 0, BUNDLE, l, p);
 	}	    
+	break;
+    case F_CURL:
+	ret = curl_bundle_node(l, p);
 	break;
     case F_TYPESTR:
 	/* numerical type code to string */

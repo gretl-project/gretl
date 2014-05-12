@@ -275,8 +275,6 @@ static const char *print_option (int opt)
 	return "GRAB_NBO_DATA";
     case GRAB_FILE:
 	return "GRAB_FILE";
-    case QUERY:
-	return "QUERY";
     case LIST_FUNCS:
 	return "LIST_FUNCS";
     case GRAB_FUNC:
@@ -875,3 +873,123 @@ char *retrieve_public_file_as_buffer (const char *uri, size_t *len,
 
     return buf;
 }
+
+/* below: back-end to the implementation of the hansl "curl"
+   function
+*/
+
+struct GetBuf {
+    char **pbuf;
+    size_t written;
+};
+
+static size_t curl_bufwrite (void *buf, size_t sz, size_t nmemb, void *p)
+{
+    struct GetBuf *out = (struct GetBuf *) p;
+    char *mem;
+
+    if (out == NULL || out->pbuf == NULL || nmemb == 0) {
+	return 0;
+    }    
+
+    sz *= nmemb;
+    mem = realloc(*out->pbuf, out->written + sz + 1);
+
+    if (mem != NULL) {
+	memset(mem + out->written, 0, sz + 1);
+	*out->pbuf = mem;
+	mem = memcpy(mem + out->written, buf, sz);
+	out->written += sz;
+    }
+
+    return (mem == NULL)? 0 : nmemb;
+}
+
+/**
+ * gretl_curl:
+ * @url: complete URL: protocol, host and path.
+ * @header: optional HTTP header (or NULL).
+ * @postdata: string to send as data for POST (or NULL).
+ * @include: if non-zero, include the received header with
+ * the body output.
+ * @pbuf: location to receive the output.
+ *
+ * Somewhat flexible URI "grabber", allowing use of the POST
+ * method with header and data to be sent to the host.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int gretl_curl (const char *url, const char *header, 
+		const char *postdata, int include,
+		char **pbuf)
+{
+    CURL *curl;
+    struct curl_slist *hlist = NULL;
+    struct GetBuf getbuf = {
+	pbuf, /* pointer to buffer */
+	0     /* bytes written */
+    };
+    CURLcode res;
+    int err = 0;
+
+    err = gretl_curl_toggle(1);
+    if (err) {
+	return err;
+    }
+  
+    curl = curl_easy_init();
+    if (curl == NULL) {
+	gretl_errmsg_set("curl_easy_init failed");
+	return 1;
+    }
+
+    if (header != NULL) {
+	hlist = curl_slist_append(hlist, header);
+    }
+
+    if (getenv("GRETL_WWW_VERBOSE") != NULL) {
+	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+    }
+
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &getbuf);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_bufwrite);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+
+    if (include) {
+	curl_easy_setopt(curl, CURLOPT_HEADER, 1);
+    }  
+
+    if (hlist != NULL) {
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hlist);
+    }
+
+    if (postdata != NULL) {
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, (void *) postdata);
+    }
+
+    if (wproxy && *proxyhost != '\0') {
+	curl_easy_setopt(curl, CURLOPT_PROXY, proxyhost);
+    }
+
+    res = curl_easy_perform(curl);
+
+    if (res != CURLE_OK) {
+	gretl_errmsg_sprintf("cURL error %d (%s)", res, 
+			     curl_easy_strerror(res));
+	if (*pbuf != NULL) {
+	    free(*pbuf);
+	    *pbuf = NULL;
+	}
+	err = 1;
+    }
+
+    if (hlist != NULL) {
+	curl_slist_free_all(hlist);
+    }    
+    curl_easy_cleanup(curl);
+
+    return err;
+}
+
