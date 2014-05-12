@@ -555,7 +555,10 @@ static double GHK_1 (const gretl_matrix *C,
     return P;
 }
 
-#define OMP_GHK_MIN 60
+/* We enable OMP for GHK calculations when the total size of 
+   the problem exceeds this value.
+*/
+#define OMP_GHK_MIN 59
 
 /**
  * gretl_GHK:
@@ -576,7 +579,8 @@ static double GHK_1 (const gretl_matrix *C,
 
 /* Note: using openmp on this function requires thread-local
    storage of static variables in gretl_matrix.c, and at
-   present we can't arrange that on OS X */
+   present we can't arrange that on OS X 
+*/
 
 #if defined(_OPENMP) && !defined(OS_OSX)
 
@@ -668,7 +672,6 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	}
 
     omp_end:
-
 	if (ierr) {
 	    ghk_err = ierr;
 	}
@@ -819,9 +822,9 @@ static void vector_copy_mul (gretl_matrix *targ,
 */
 
 static double ghk_tj (const gretl_matrix *C,
-		      const double *a,
-		      const double *b,
-		      const double *u,
+		      const gretl_matrix *a,
+		      const gretl_matrix *b,
+		      const gretl_matrix *u,
 		      gretl_matrix *dWT,
 		      gretl_matrix_block *Bk,
 		      int iter,
@@ -855,30 +858,30 @@ static double ghk_tj (const gretl_matrix *C,
     den = C->val[0];
     gretl_matrix_reuse(dTT, npar, 1);
 
-    if (a[0] == -huge) {
+    if (a->val[0] == -huge) {
 	TA = 0.0;
     } else {
-	z = a[0] / den;
+	z = a->val[0] / den;
 	TA = normal_cdf(z);
 	dTA->val[0] = normal_pdf(z) / den;
 	dTA->val[2*m] = -normal_pdf(z) * z/den;
     }
 
-    if (b[0] == huge) {
+    if (b->val[0] == huge) {
 	TB = 1.0;
     } else {
-	z = b[0] / den;
+	z = b->val[0] / den;
 	TB = normal_cdf(z);
 	dTB->val[m] = normal_pdf(z) / den;
 	dTB->val[2*m] = -normal_pdf(z) * z/den;
     }
 
     WT = TB - TA;
-    x = TB - u[0] * (TB - TA);
+    x = TB - u->val[0] * (TB - TA);
     TT->val[0] = normal_cdf_inverse(x);
 
     fx = normal_pdf(TT->val[0]);
-    scaled_convex_combo(dTT, u[0], dTA, dTB, 1/fx);
+    scaled_convex_combo(dTT, u->val[0], dTA, dTB, 1/fx);
     vector_diff(dWT, dTB, dTA);
 
     /* first column of the gradient which refers to C */
@@ -909,15 +912,15 @@ static double ghk_tj (const gretl_matrix *C,
 
         den = gretl_matrix_get(C, j, j);
 
-	if (a[j] == -huge) {
+	if (a->val[j] == -huge) {
             TA = 0.0;
 	    gretl_matrix_zero(dTA);
 	} else {	    
-            x = (a[j] - mj) / den;
+            x = (a->val[j] - mj) / den;
             TA = normal_cdf(x);
 	    if (TA > 0.99999999999999) {
 		fprintf(stderr, "TA ~= 1.0, could be trouble (x=%g)\n", x);
-		fprintf(stderr, " (a[j]=%g, mj=%g, den=%g)\n", a[j], mj, den);
+		fprintf(stderr, " (a[j]=%g, mj=%g, den=%g)\n", a->val[j], mj, den);
 	    }
 	    fx = normal_pdf(x);
 	    dx->val[j] = 1;
@@ -928,11 +931,11 @@ static double ghk_tj (const gretl_matrix *C,
 
 	gretl_matrix_zero(dx);
 
- 	if (b[j] == huge) {
+ 	if (b->val[j] == huge) {
             TB = 1.0;
 	    gretl_matrix_zero(dTB);
 	} else {	    
-            x = (b[j] - mj) / den;
+            x = (b->val[j] - mj) / den;
             TB = normal_cdf(x);
 	    fx = normal_pdf(x);
 	    dx->val[m+j] = 1;
@@ -941,15 +944,15 @@ static double ghk_tj (const gretl_matrix *C,
 	    vector_copy_mul(dTB, dx, fx/den);
 	}
 
-	x = TB - u[j] * (TB - TA);
+	x = TB - u->val[j] * (TB - TA);
 	TT->val[j] = normal_cdf_inverse(x);
 	if (na(TT->val[j])) {
 	    fprintf(stderr, "TT is NA at j=%d (x=%g)\n", j, x);
-	    fprintf(stderr, " (TA=%.16g, TB=%.16g, u[j]=%g)\n", TA, TB, u[j]);
+	    fprintf(stderr, " (TA=%.16g, TB=%.16g, u[j]=%g)\n", TA, TB, u->val[j]);
 	}
 
 	fx = normal_pdf(TT->val[j]);
-	scaled_convex_combo(tmp, u[j], dTA, dTB, 1/fx);
+	scaled_convex_combo(tmp, u->val[j], dTA, dTB, 1/fx);
 	gretl_matrix_reuse(dTT, npar, j+1);
 	gretl_matrix_inscribe_matrix(dTT, tmp, 0, j, GRETL_MOD_TRANSPOSE);
 	vector_diff(tmp, dTB, dTA);
@@ -970,9 +973,9 @@ static double ghk_tj (const gretl_matrix *C,
 */
 
 static double ghk_tj_prob (const gretl_matrix *C,
-			   const double *a,
-			   const double *b,
-			   const double *u,
+			   const gretl_matrix *a,
+			   const gretl_matrix *b,
+			   const gretl_matrix *u,
 			   gretl_matrix_block *Bk,
 			   double huge,
 			   int *err)
@@ -990,22 +993,22 @@ static double ghk_tj_prob (const gretl_matrix *C,
     gretl_matrix_block_zero(Bk);
     den = C->val[0];
 
-    if (a[0] == -huge) {
+    if (a->val[0] == -huge) {
 	TA = 0.0;
     } else {
-	z = a[0] / den;
+	z = a->val[0] / den;
 	TA = normal_cdf(z);
     }
 
-    if (b[0] == huge) {
+    if (b->val[0] == huge) {
 	TB = 1.0;
     } else {
-	z = b[0] / den;
+	z = b->val[0] / den;
 	TB = normal_cdf(z);
     }
 
     WT = TB - TA;
-    x = TB - u[0] * (TB - TA);
+    x = TB - u->val[0] * (TB - TA);
     TT->val[0] = normal_cdf_inverse(x);
 
     for (j=1; j<m; j++) {
@@ -1021,21 +1024,21 @@ static double ghk_tj_prob (const gretl_matrix *C,
 
         den = gretl_matrix_get(C, j, j);
 
-	if (a[j] == -huge) {
+	if (a->val[j] == -huge) {
             TA = 0.0;
 	} else {	    
-            x = (a[j] - mj) / den;
+            x = (a->val[j] - mj) / den;
             TA = normal_cdf(x);
 	}
 
- 	if (b[j] == huge) {
+ 	if (b->val[j] == huge) {
             TB = 1.0;
 	} else {	    
-            x = (b[j] - mj) / den;
+            x = (b->val[j] - mj) / den;
             TB = normal_cdf(x);
 	}
 
-	x = TB - u[j] * (TB - TA);
+	x = TB - u->val[j] * (TB - TA);
 	TT->val[j] = normal_cdf_inverse(x);
 
 	if (WT > 0) {
@@ -1140,7 +1143,9 @@ static gretl_matrix_block *ghk_block_alloc (int m, int npar,
     return B;
 }
 
-#define GHK2_OMP 1 /* can experiment here */
+#if defined(_OPENMP) && !defined(OS_OSX)
+# define GHK2_OMP 1
+#endif
 
 gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 			  const gretl_matrix *A,
@@ -1187,7 +1192,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     huge = libset_get_double(CONV_HUGE);
     set_cephes_hush(1);
 
-#if GHK2_OMP
+#ifdef GHK2_OMP
 #pragma omp parallel if (sz>OMP_GHK_MIN) private(i,j,t,iter,a,b,u,Bk,Bk2,dpj)
 #endif
     {
@@ -1210,10 +1215,10 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 	    }
 	}
 	if (*err) {
-	    goto omp_end;
+	    goto calc_end;
 	}
 
-#if GHK2_OMP
+#ifdef GHK2_OMP
 #pragma omp for
 #endif
 	for (t=0; t<n; t++) {
@@ -1245,20 +1250,21 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 		}
 	    }
 
-	    for (iter=0; iter<r && !err_t && !*err; iter++) {
-		/* Monte Carlo iterations, using successive columns of U */
-		gretl_matrix_extract_matrix(u, U, 0, iter, GRETL_MOD_NONE);
-		if (do_score) {
-		    P->val[t] += ghk_tj(C, a->val, b->val, u->val, dpj, Bk2, iter, 
-					huge, err);
-		    gretl_matrix_inscribe_matrix(dP, dpj, t, 0, GRETL_MOD_CUMULATE);
-		} else {
-		    P->val[t] += ghk_tj_prob(C, a->val, b->val, u->val, Bk2, huge, err);
+	    if (!err_t) {
+		for (iter=0; iter<r && !*err; iter++) {
+		    /* Monte Carlo iterations, using successive columns of U */
+		    gretl_matrix_extract_matrix(u, U, 0, iter, GRETL_MOD_NONE);
+		    if (do_score) {
+			P->val[t] += ghk_tj(C, a, b, u, dpj, Bk2, iter, huge, err);
+			gretl_matrix_inscribe_matrix(dP, dpj, t, 0, GRETL_MOD_CUMULATE);
+		    } else {
+			P->val[t] += ghk_tj_prob(C, a, b, u, Bk2, huge, err);
+		    }
 		}
 	    }
 	}
 
-    omp_end:
+    calc_end:
 	gretl_matrix_block_destroy(Bk);
 	gretl_matrix_block_destroy(Bk2);
 	gretl_matrix_free(dpj);
