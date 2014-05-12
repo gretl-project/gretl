@@ -1,6 +1,8 @@
 version 1.9.91, in progress
 - Hush some gcc-4.9.0 warnings
 - Fix broken encoding of German translation
+- Fix bug in OS X (quartz) package: GDK could lose track of its
+  PNG loader, so graphs would not display
 - Build: update config.guess and config.sub from autotools git
 
 2014-05-02 version 1.9.90
