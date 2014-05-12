@@ -2080,20 +2080,20 @@
 	  embed double-quotes in the <lit>POST</lit> data.
 	</para>
 	<code>
-	  bundle req
-	  req.URL = "http://api.bls.gov/publicAPI/v1/timeseries/data/"
-	  req.include = 1
-	  req.header = "Content-Type: application/json"
-	  string s
-	  sprintf s, "{\"seriesid\":[\"LEU0254555900\"]}"
-	  req.postdata = s
+      bundle req
+      req.URL = "http://api.bls.gov/publicAPI/v1/timeseries/data/"
+      req.include = 1
+      req.header = "Content-Type: application/json"
+      string s
+      sprintf s, "{\"seriesid\":[\"LEU0254555900\"]}"
+      req.postdata = s
 
-	  curl(&amp;req)
-	  s = req.output
-	  string line
-	  loop while getline(s, line) --quiet
-	    printf "%s\n", line
-	  endloop
+      curl(&amp;req)
+      s = req.output
+      string line
+      loop while getline(s, line) --quiet
+        printf "%s\n", line
+      endloop
 	</code>
       </description>
     </function>
@@ -6239,10 +6239,11 @@
       this file, otherwise flags an error.  
     </para>
     <para>
-      In the case where <argname>fname</argname> starts with the
-      identifier of a supported internet protocol (<lit>http://</lit>,
-      <lit>ftp://</lit>, <lit>https://</lit>), libcurl is invoked to
-      download the resource.
+      If <argname>fname</argname> starts with the identifier of a
+      supported internet protocol (<lit>http://</lit>,
+      <lit>ftp://</lit> or <lit>https://</lit>), libcurl is invoked to
+      download the resource. See also <fncref targ="curl"/> for
+      more elaborate downloading operations.
     </para>
     <para>
       If the text to be read is not encoded in UTF-8, gretl will
