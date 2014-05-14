@@ -829,7 +829,6 @@ static double ghk_tj (const gretl_matrix *C,
 		      const double *u,
 		      gretl_matrix *dWT,
 		      gretl_matrix_block *Bk,
-		      int iter,
 		      double huge,
 		      int *err)
 {
@@ -892,7 +891,7 @@ static double ghk_tj (const gretl_matrix *C,
 
     for (j=1; j<m; j++) {
 	double mj = 0.0;
-	int k = 0;
+	int k = 0, flip = 0;
 
 	/* the "flip" switch implements a numerical trick
 	   that's needed to achieve acceptable precision when a[i]
@@ -900,7 +899,6 @@ static double ghk_tj (const gretl_matrix *C,
 	   so to exploit the greater accuracy of ndtr in the left-hand
 	   tail than in the right-hand one.
 	*/
-	int flip = 0;
 
 	gretl_matrix_reuse(TT, j, 1);
 	gretl_matrix_reuse(cj, 1, j);
@@ -1282,7 +1280,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 		    /* Monte Carlo iterations, using successive columns of U */
 		    uj = U->val + j * m;
 		    if (do_score) {
-			P->val[t] += ghk_tj(C, a, b, uj, dpj, Bk2, j, huge, err);
+			P->val[t] += ghk_tj(C, a, b, uj, dpj, Bk2, huge, err);
 			gretl_matrix_inscribe_matrix(dP, dpj, t, 0, GRETL_MOD_CUMULATE);
 		    } else {
 			P->val[t] += ghk_tj_prob(C, a, b, uj, Bk2, huge, err);
