@@ -222,5 +222,9 @@ void about_dialog (void)
 		     dialog);
     gtk_widget_grab_default(button);
 
+#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 12
+    gtk_window_set_titlebar((GtkWindow *) dialog, NULL);
+#endif
+
     gtk_widget_show_all(dialog);
 }
