@@ -89,7 +89,8 @@ enum {
     P_INTERPOLATE,
     P_BIPROBIT,
     P_REPROBIT,
-    P_PANURC
+    P_PANURC,
+    P_JSON_GET
 } plugin_codes;
 
 struct plugin_info {
@@ -144,7 +145,8 @@ struct plugin_info plugins[] = {
     { P_INTERPOLATE,     "interpolate" },
     { P_BIPROBIT,        "biprobit" },
     { P_REPROBIT,        "reprobit" },
-    { P_PANURC,          "panurc" }
+    { P_PANURC,          "panurc" },
+    { P_JSON_GET,        "json_get" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -270,6 +272,9 @@ struct plugin_function plugin_functions[] = {
 
     /* panel unit roots/cointegration */
     { "real_levin_lin", P_PANURC},
+
+    /* parsing JSON data */
+    { "json_get", P_JSON_GET},
 
     /* sentinel */
     { NULL, 0 }
