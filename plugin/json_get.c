@@ -30,7 +30,7 @@
 static int real_json_get (JsonParser *parser, const char *pathstr,
 			  int *n_objects, PRN *prn)
 {
-
+    GError *gerr = NULL;
     JsonNode *match, *node;
     JsonPath *path;
     GType ntype;
@@ -39,8 +39,22 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 
     *n_objects = 0;
     path = json_path_new();
-    json_path_compile(path, pathstr, NULL);
+    json_path_compile(path, pathstr, &gerr);
+
+    if (gerr != NULL) {
+	gretl_errmsg_sprintf("Couldn't compile JsonPath: %s",
+			     gerr->message);
+	g_error_free(gerr);
+	g_object_unref(path);
+	return E_DATA;
+    }   
+
     match = json_path_match(path, json_parser_get_root(parser));
+    if (match == NULL) {
+	gretl_errmsg_set("Failed to match JsonPath");
+	g_object_unref(path);
+	return E_DATA;
+    }
 
     if (JSON_NODE_HOLDS_ARRAY(match)) {
 	JsonArray *array;
@@ -74,13 +88,15 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 	if (!handled_type(ntype)) {
 	    /* can't handle it */
 	    err = E_DATA;
-	} else if (ntype == G_TYPE_STRING) {
-	    pputs(prn, json_node_get_string(match));
 	} else {
-	    x = json_node_get_double(match);
-	    pprintf(prn, "%.15g", x);
+	    if (ntype == G_TYPE_STRING) {
+		pputs(prn, json_node_get_string(match));
+	    } else {
+		x = json_node_get_double(match);
+		pprintf(prn, "%.15g", x);
+	    }
+	    *n_objects = 1;
 	}
-	*n_objects = 1;
     }
 
     g_object_unref(path);
@@ -101,7 +117,7 @@ char *json_get (const char *data, const char *path, int *n_objects,
     json_parser_load_from_data(parser, data, -1, &gerr);
 
     if (gerr != NULL) {
-	gretl_errmsg_sprintf("Unable to parse JSON input: %s",
+	gretl_errmsg_sprintf("Couldn't parse JSON input: %s",
 			     gerr->message);
 	g_error_free(gerr);
 	*err = E_DATA;
