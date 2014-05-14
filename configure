@@ -678,6 +678,8 @@ GTK3_LIBS
 GTK3_CFLAGS
 GTK2_LIBS
 GTK2_CFLAGS
+JSON_GLIB_LIBS
+JSON_GLIB_CFLAGS
 GLIB_LIBS
 GLIB_CFLAGS
 CURL_LIBS
@@ -900,6 +902,8 @@ CURL_CFLAGS
 CURL_LIBS
 GLIB_CFLAGS
 GLIB_LIBS
+JSON_GLIB_CFLAGS
+JSON_GLIB_LIBS
 GTK2_CFLAGS
 GTK2_LIBS
 GTK3_CFLAGS
@@ -1611,6 +1615,10 @@ Some influential environment variables:
   CURL_LIBS   linker flags for CURL, overriding pkg-config
   GLIB_CFLAGS C compiler flags for GLIB, overriding pkg-config
   GLIB_LIBS   linker flags for GLIB, overriding pkg-config
+  JSON_GLIB_CFLAGS
+              C compiler flags for JSON_GLIB, overriding pkg-config
+  JSON_GLIB_LIBS
+              linker flags for JSON_GLIB, overriding pkg-config
   GTK2_CFLAGS C compiler flags for GTK2, overriding pkg-config
   GTK2_LIBS   linker flags for GTK2, overriding pkg-config
   GTK3_CFLAGS C compiler flags for GTK3, overriding pkg-config
@@ -2745,6 +2753,7 @@ fake_gtkspinner="yes"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
+have_json_glib="no"
 try_odbc="no"
 have_odbc="no"
 try_mpi="yes"
@@ -17665,6 +17674,80 @@ $as_echo "yes" >&6; }
 fi
 fi
 
+if test "$PKG_CONFIG" != "no" ; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for JSON_GLIB" >&5
+$as_echo_n "checking for JSON_GLIB... " >&6; }
+
+if test -n "$JSON_GLIB_CFLAGS"; then
+    pkg_cv_JSON_GLIB_CFLAGS="$JSON_GLIB_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"json-glib-1.0 >= 0.14\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "json-glib-1.0 >= 0.14") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_JSON_GLIB_CFLAGS=`$PKG_CONFIG --cflags "json-glib-1.0 >= 0.14" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$JSON_GLIB_LIBS"; then
+    pkg_cv_JSON_GLIB_LIBS="$JSON_GLIB_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"json-glib-1.0 >= 0.14\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "json-glib-1.0 >= 0.14") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_JSON_GLIB_LIBS=`$PKG_CONFIG --libs "json-glib-1.0 >= 0.14" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        JSON_GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "json-glib-1.0 >= 0.14" 2>&1`
+        else
+	        JSON_GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "json-glib-1.0 >= 0.14" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$JSON_GLIB_PKG_ERRORS" >&5
+
+	have_json_glib="no"
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	have_json_glib="no"
+else
+	JSON_GLIB_CFLAGS=$pkg_cv_JSON_GLIB_CFLAGS
+	JSON_GLIB_LIBS=$pkg_cv_JSON_GLIB_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	have_json_glib="yes"
+fi
+fi
+
 if test "$prefer_gtk2" = "yes" ; then
 
 pkg_failed=no
@@ -23543,6 +23626,7 @@ Configuration:
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}
   ODBC support:                           ${have_odbc}
+  JSON parsing support:                   ${have_json_glib}
   Experimental audio support:             ${have_audio}
   Use xdg-utils in installation:          ${xdg_utils_msg}
   LAPACK libraries:

@@ -57,6 +57,7 @@ fake_gtkspinner="yes"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
+have_json_glib="no"
 try_odbc="no"
 have_odbc="no"
 try_mpi="yes"
@@ -612,6 +613,13 @@ if test "$PKG_CONFIG" != "no" ; then
 fi
 
 dnl
+dnl see if we have json-glib-1.0
+dnl
+if test "$PKG_CONFIG" != "no" ; then
+   PKG_CHECK_MODULES(JSON_GLIB, json-glib-1.0 >= 0.14, have_json_glib="yes", have_json_glib="no")
+fi
+
+dnl
 dnl Initial check for GTK availability
 dnl
 if test "$prefer_gtk2" = "yes" ; then
@@ -965,6 +973,7 @@ Configuration:
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}
   ODBC support:                           ${have_odbc}
+  JSON parsing support:                   ${have_json_glib}
   Experimental audio support:             ${have_audio}
   Use xdg-utils in installation:          ${xdg_utils_msg}
   LAPACK libraries:
