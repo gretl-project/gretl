@@ -30,6 +30,7 @@
 static int real_json_get (JsonParser *parser, const char *pathstr,
 			  int *n_objects, PRN *prn)
 {
+
     JsonNode *match, *node;
     JsonPath *path;
     GType ntype;

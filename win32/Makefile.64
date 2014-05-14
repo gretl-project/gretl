@@ -27,6 +27,7 @@ RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 # libraries
 GTKLIBS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs gtk+-win32-2.0)
 GLIBLIB := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs glib-2.0)
+JSON_LIB = $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs json-glib-1.0)
 RL_LIBS = -lreadline -lhistory
 GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview-2.0 -lxml2.dll -L$(imports)
 GRETLLIB = -L$(imports) -lgretl -lintl
@@ -37,7 +38,7 @@ CURL_LIBS = -lcurl.dll
 
 # flags/defines
 CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) -I$(zipdir) -I$(XML2_INC) $(RLIB_CFLAGS) 
-GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0 gtksourceview-2.0)
+GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0 gtksourceview-2.0 json-glib-1.0)
 
 ifeq ($(BUILDTYPE),cross)
   GRETL_LANG = cross_lang
@@ -163,7 +164,8 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/interpolate.dll \
 	plugins/biprobit.dll \
 	plugins/reprobit.dll \
-	plugins/panurc.dll
+	plugins/panurc.dll \
+	plugins/json_get.dll
 
 LIBSRC = adf_kpss.c \
 	bhhh_max.c \
@@ -546,6 +548,10 @@ plugins/reprobit.dll: reprobit.o dllinit.o
 plugins/panurc.dll: panurc.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GLIBLIB)
+	
+plugins/json_get.dll: json_get.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(JSON_LIB)	
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<

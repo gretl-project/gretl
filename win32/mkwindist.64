@@ -163,7 +163,8 @@ for f in \
 	libpng16-16.dll \
 	libreadline6.dll \
 	libxml2-2.dll \
-	zlib1.dll
+	zlib1.dll \
+	libjson-glib-1.0-0.dll
 do
     add_file ${SYSBIN}/$f gretl/$f
 done
