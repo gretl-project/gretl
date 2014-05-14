@@ -113,7 +113,7 @@ char *json_get (const char *data, const char *path, int *n_objects,
 
     parser = json_parser_new();
     if (parser == NULL) {
-	gretl_errmsg_set("json_parser_new returned NULL!\n");
+	gretl_errmsg_set("Weird: json_parser_new returned NULL!\n");
 	*err = 1;
 	return NULL;
     }
