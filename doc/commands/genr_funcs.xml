@@ -2031,19 +2031,16 @@
 	  Provides a somewhat flexible means of obtaining a text
 	  buffer containing data from an internet server, using
 	  libcurl. On input the bundle <argname>b</argname> must
-	  contain a string named <lit>URL</lit> which gives the
-	  full address of the resource on the target host. Other
-	  optional elements are as follows.
+	  contain a string named <quote><lit>URL</lit></quote> which
+	  gives the full address of the resource on the target
+	  host. Other optional elements are as follows.
 	</para>
 	<ilist>
-	  <li><para>
-	    <lit>header</lit>: a string specifying an HTTP header
-	    to be sent to the host.
+	  <li><para> <quote><lit>header</lit></quote>: a string
+	  specifying an HTTP header to be sent to the host.
 	  </para></li>
-	  <li><para>
-	    <lit>postdata</lit>: a string holding data to be sent to
-	    the host.
-	  </para></li>
+	  <li><para> <quote><lit>postdata</lit></quote>: a string
+	  holding data to be sent to the host.  </para></li>
 	</ilist>
 	<para>
 	  The <lit>header</lit> and <lit>postdata</lit> fields are
@@ -2063,7 +2060,7 @@
 	<para>
 	  On completion of the request, the text received from the
 	  server is added to the bundle under the key
-	  <lit>output</lit>.
+	  <quote><lit>output</lit></quote>.
 	</para>
 	<para>
 	  If an error occurs in formulating the request (for example
