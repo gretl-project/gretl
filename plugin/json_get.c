@@ -134,9 +134,8 @@ char *json_get (const char *data, const char *path, int *n_objects,
 	    if (!*err) {
 		ret = gretl_print_steal_buffer(prn);
 	    }
+	    gretl_print_destroy(prn);
 	}
-
-	gretl_print_destroy(prn);
     }
 
     if (n_objects != NULL) {
