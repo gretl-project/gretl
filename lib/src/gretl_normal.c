@@ -892,7 +892,15 @@ static double ghk_tj (const gretl_matrix *C,
 
     for (j=1; j<m; j++) {
 	double mj = 0.0;
-	int k = 0, flip = 0;
+	int k = 0;
+
+	/* the "flip" switch implements a numerical trick
+	   that's needed to achieve acceptable precision when a[i]
+	   is large: in that case, we flip the signs of a and b
+	   so to exploit the greater accuracy of ndtr in the left-hand
+	   tail than in the right-hand one.
+	*/
+	int flip = 0;
 
 	gretl_matrix_reuse(TT, j, 1);
 	gretl_matrix_reuse(cj, 1, j);
@@ -937,7 +945,7 @@ static double ghk_tj (const gretl_matrix *C,
 	gretl_matrix_zero(dx);
 
  	if (b->val[j] == huge) {
-            TB = 1.0;
+            TB = flip ? 0.0 : 1.0;
 	    gretl_matrix_zero(dTB);
 	} else {	    
             x = (b->val[j] - mj) / den;
