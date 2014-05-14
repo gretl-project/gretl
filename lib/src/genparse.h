@@ -351,6 +351,7 @@ enum {
     F_BCAST,
     F_ALLREDUCE,
     F_GENSERIES,
+    F_JSONGET,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,

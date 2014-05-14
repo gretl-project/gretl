@@ -4827,6 +4827,18 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 		strcat(ret->v.str, l->v.str);
 		strcat(ret->v.str, r->v.str);
 	    }
+	} else if (f == F_JSONGET) {
+	    char *(*jfunc) (const char *, const char *,
+			    int *, int *);
+	    void *handle;
+
+	    jfunc = get_plugin_function("json_get", &handle);
+	    if (jfunc == NULL) {
+		p->err = E_FOPEN;
+	    } else {
+		ret->v.str = jfunc(l->v.str, r->v.str, NULL, &p->err);
+		close_plugin(handle);
+	    }
 	} else {
 	    p->err = E_DATA;
 	}
@@ -10928,6 +10940,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_STRSTR:
+    case F_JSONGET:
 	if (l->t == STR && r->t == STR) {
 	    ret = two_string_func(l, r, t->t, p);
 	} else {

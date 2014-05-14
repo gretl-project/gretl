@@ -423,7 +423,8 @@ struct str_table funcs[] = {
     { F_EASTER,    "easterday" },
     { F_GENSERIES, "genseries" },
     { F_CURL,      "curl" },
-    { 0,          NULL }
+    { F_JSONGET,   "jsonget" },
+    { 0,           NULL }
 };
 
 struct str_table func_alias[] = {
@@ -433,7 +434,7 @@ struct str_table func_alias[] = {
     { F_LOG,       "logs" },
     { F_OBSLABEL,  "date" },
     { F_BACKTICK,  "$" },
-    { 0,          NULL }
+    { 0,           NULL }
 };
 
 int const_lookup (const char *s)
