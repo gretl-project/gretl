@@ -61,7 +61,12 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 
 	array = json_node_get_array(match);
 	node = json_array_get_element(array, 0);
-	ntype = json_node_get_value_type(node);
+	if (node == NULL) {
+	    gretl_errmsg_set("Failed to match JsonPath");
+	    ntype = 0;
+	} else {
+	    ntype = json_node_get_value_type(node);
+	}
 
 	if (!handled_type(ntype)) {
 	    /* can't handle it */
