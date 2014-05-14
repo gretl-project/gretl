@@ -33,6 +33,8 @@ LAPACK_LIBS = @LAPACK_LIBS@
 HAVE_AUDIO = @HAVE_AUDIO@
 FLITE_CFLAGS = @FLITE_CFLAGS@
 FLITE_LIBS = @FLITE_LIBS@
+JSON_GLIB_CFLAGS = @JSON_GLIB_CFLAGS@
+JSON_GLIB_LIBS = @JSON_GLIB_LIBS@
 
 ifeq ($(gtk_version),3.0)
   plugindir = $(libdir)/gretl-gtk3
@@ -168,6 +170,7 @@ GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	tramo-x12a.la 
 
 MAILER_PLUGIN = mailer.la
+JSON_PLUGIN = json_get.la
 
 ifeq ($(build_gui),yes)
   PLUGINS += $(GUI_DEPENDENT_PLUGINS)
@@ -186,6 +189,10 @@ ifeq ($(use_gsf),no)
   GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(GLIB_CFLAGS)
   GRETL_ZIP_LIBS := $(GLIB_LIBS) -lz
 endif
+
+ifneq ($(JSON_GLIB_LIBS),)
+  PLUGINS += $(JSON_PLUGIN)
+endif 
 
 # for now we'll build the gretlzip plugin regardless, since
 # libgsf-1.14.29 does not support setting of the zlib
@@ -218,7 +225,7 @@ DWDATA = $(topsrc)/plugin/data/dwdata.gz
 
 override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
 	$(XML_CFLAGS) $(GRETL_LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(AUDIO_CFLAGS) \
-	$(ODBC_CFLAGS) -I. 
+	$(ODBC_CFLAGS) $(JSON_GLIB_CFLAGS) -I. 
 
 %.lo: %.c
 	$(CCECHO)
@@ -324,6 +331,9 @@ interpolate.la: interpolate.lo
 
 panurc.la: panurc.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
+
+json_get.la: json_get.lo
+	$(LINK) -o $@ $< $(GRETLLIB) $(JSON_GLIB_LIBS)
 
 # plugins that require GTK+
 
