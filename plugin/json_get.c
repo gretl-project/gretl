@@ -32,29 +32,21 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 {
     GError *gerr = NULL;
     JsonNode *match, *node;
-    JsonPath *path;
     GType ntype;
     double x;
     int err = 0;
 
     *n_objects = 0;
-    path = json_path_new();
-    json_path_compile(path, pathstr, &gerr);
+
+    node = json_parser_get_root(parser);
+    match = json_path_query(pathstr, node, &gerr);
 
     if (gerr != NULL) {
-	gretl_errmsg_sprintf("Couldn't compile JsonPath: %s",
+	gretl_errmsg_sprintf("JsonPath query failed: %s",
 			     gerr->message);
 	g_error_free(gerr);
-	g_object_unref(path);
 	return E_DATA;
     }   
-
-    match = json_path_match(path, json_parser_get_root(parser));
-    if (match == NULL) {
-	gretl_errmsg_set("Failed to match JsonPath");
-	g_object_unref(path);
-	return E_DATA;
-    }
 
     if (JSON_NODE_HOLDS_ARRAY(match)) {
 	JsonArray *array;
@@ -104,7 +96,6 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 	}
     }
 
-    g_object_unref(path);
     json_node_free(match);
 
     return err;
@@ -118,7 +109,15 @@ char *json_get (const char *data, const char *path, int *n_objects,
     char *ret = NULL;
     int n = 0;
 
+    fprintf(stderr, "json_get, starting\n");
+
     parser = json_parser_new();
+    if (parser == NULL) {
+	gretl_errmsg_set("json_parser_new returned NULL!\n");
+	*err = 1;
+	return NULL;
+    }
+
     json_parser_load_from_data(parser, data, -1, &gerr);
 
     if (gerr != NULL) {
@@ -143,6 +142,8 @@ char *json_get (const char *data, const char *path, int *n_objects,
     }    
 
     g_object_unref(parser);
+
+    fprintf(stderr, "json_get, returning\n");
 
     return ret;
 }
