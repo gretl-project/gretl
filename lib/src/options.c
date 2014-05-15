@@ -798,6 +798,29 @@ static gretlopt get_short_opts (char *line, int ci, int *err)
     return ret;
 }
 
+/* Apparatus for pre-selecting options for a specified command */
+
+static gretlopt stored_opt;
+static int stored_opt_ci;
+
+int set_options_for_command (gretlopt opt, const char *cmdword)
+{
+    stored_opt = opt;
+    stored_opt_ci = gretl_command_number(cmdword);
+    fprintf(stderr, "storing opt %d for ci %d\n", opt, stored_opt_ci);
+    return 0;
+}
+
+static void maybe_get_stored_options (int ci, gretlopt *popt)
+{
+    if (ci == stored_opt_ci) {
+	fprintf(stderr, "ci %d: got stored opt %d\n", ci, stored_opt);
+	*popt |= stored_opt;
+	stored_opt = 0;
+	stored_opt_ci = 0;
+    }
+}
+
 /* Apparatus for setting and retrieving parameters associated
    with command options, as in --opt=val.  
 */
@@ -1394,7 +1417,7 @@ static void get_cmdword (const char *line, char *word)
 	    line += 2;
 	}
 	sscanf(line, "%8s", word);
-    } else if (!sscanf(line, "%*s <- %8s", word)) {
+    } else if (sscanf(line, "%*s <- %8s", word) != 1) {
 	sscanf(line, "%8s", word);
     }
 }
@@ -1457,13 +1480,15 @@ gretlopt get_gretl_options (char *line, int *err)
     gretlopt opt;
     char cmdword[9] = {0};
     int endblock = 0;
+    int storing = 0;
     int ci, myerr = 0;
 
     if (err != NULL) {
 	*err = 0;
     }
 
-    if (strlen(line) < 2 || *line == '#' || strchr(line, '-') == NULL) {
+    if (strlen(line) < 2 || *line == '#' || 
+	(stored_opt == 0 && strchr(line, '-') == NULL)) {
 	return 0;
     }
 
@@ -1477,6 +1502,7 @@ gretlopt get_gretl_options (char *line, int *err)
 	*cmdword = '\0';
 	get_cmdword(line + 6, cmdword);
     } else if (!strcmp(cmdword, "setopt")) {
+	storing = 1;
 	*cmdword = '\0';
 	get_cmdword(line + 7, cmdword);
     }	
@@ -1489,20 +1515,25 @@ gretlopt get_gretl_options (char *line, int *err)
     }
 
 #if OPTDEBUG
-    fprintf(stderr, "get gretl_options: '%s' -> ci = %d\n", cmdword, ci);
+    fprintf(stderr, "get gretl_options: '%s' -> ci=%d (storing = %d)\n", 
+	    cmdword, ci, storing);
 #endif
 
     /* some commands do not take a "flag", and "-%c" may have
        some other meaning */
-    if (ci == 0 || ci == GENR || ci == PRINTF) {
+    if (ci == 0 || ci == GENR || ci == PRINTF || ci == SETOPT) {
 	return oflags;
-    } else if (!endblock && (ci == GMM || ci == MLE || ci == NLS)) {
+    } else if (!endblock && !storing && (ci == GMM || ci == MLE || ci == NLS)) {
 	return oflags;
     }
 
     /* smpl: in some contexts options don't make sense */
     if (ci == SMPL && strchr(line, ';')) {
 	return oflags;
+    }
+
+    if (!storing) {
+	maybe_get_stored_options(ci, &oflags);
     }
 
     if (ci != SET && ci != SETINFO && ci != SMPL &&

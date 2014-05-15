@@ -35,6 +35,8 @@ const char *print_flags (gretlopt oflags, int ci);
 
 const char **get_opts_for_command (int ci, int *nopt);
 
+int set_options_for_command (gretlopt opt, const char *cmdword);
+
 int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn);
 
 int cluster_option_ok (int ci);

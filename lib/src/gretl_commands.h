@@ -136,6 +136,7 @@ typedef enum {
     SET,
     SETINFO,
     SETOBS,
+    SETOPT,
     SETMISS,
     SHELL,  
     SMPL,

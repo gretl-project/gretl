@@ -46,7 +46,6 @@
 #endif
 
 #include <errno.h>
-#include <glib.h>
 
 /* for the "shell" command */
 #ifndef WIN32
@@ -324,7 +323,8 @@ static int catch_system_alias (CMD *cmd)
                            c == MAKEPKG ||	\
 			   c == MODPRINT ||	\
                            c == NULLDATA ||	\
-                           c == SETMISS)
+                           c == SETMISS ||	\
+			   c == SETOPT)
 
 #define REQUIRES_ORDER(c) (c == ADF ||		\
                            c == ARCH ||		\
@@ -386,6 +386,7 @@ static int catch_system_alias (CMD *cmd)
                        c == SET ||		\
                        c == SETINFO ||		\
 	               c == SETOBS ||		\
+		       c == SETOPT ||		\
 	               c == SHELL ||		\
                        c == SPRINTF ||		\
 		       c == SSCANF ||		\
@@ -2041,7 +2042,6 @@ static int capture_param (CMD *cmd, const char *s)
 
 static int gretl_cmd_clear (CMD *cmd)
 {
-    cmd->ci = 0;
     cmd->err = 0;
     *cmd->word = '\0';
 
@@ -2059,7 +2059,12 @@ static int gretl_cmd_clear (CMD *cmd)
     cmd->auxlist = NULL;
 
     cmd_lag_info_destroy(cmd);
-    clear_option_params();
+
+    if (cmd->ci != SETOPT) {
+	clear_option_params();
+    }
+    
+    cmd->ci = 0;
 
     return cmd->err;
 }
@@ -3591,6 +3596,8 @@ static int effective_ci (const CMD *cmd)
 	} else if (!strcmp(cmd->param, "mpi")) {
 	    ci = MPI;
 	}
+    } else if (ci == SETOPT) {
+	ci = gretl_command_number(cmd->param);
     }
 
     return ci;
@@ -5672,6 +5679,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 		pprintf(prn, _("data frequency = %d\n"), dset->pd);
 	    }
 	}
+	break;
+
+    case SETOPT:
+	err = set_options_for_command(cmd->opt, cmd->param);
 	break;
 
     case SMPL:
