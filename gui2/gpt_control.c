@@ -3407,21 +3407,16 @@ static void audio_render_plot (png_plot *plot)
     const char *player = midiplayer;
 # endif
     int (*midi_play_graph) (const char *, const char *, const char *);
-    void *handle;
 
     if (plot_not_editable(plot)) {
 	return;
     }
 
-    midi_play_graph = gui_get_plugin_function("midi_play_graph", 
-					      &handle);
-    if (midi_play_graph == NULL) {
-        return;
+    midi_play_graph = gui_get_plugin_function("midi_play_graph");
+
+    if (midi_play_graph != NULL) {
+	(*midi_play_graph) (plot->spec->fname, gretl_dotdir(), player);
     }
-
-    (*midi_play_graph) (plot->spec->fname, gretl_dotdir(), player);
-
-    close_plugin(handle);
 }
 
 #endif

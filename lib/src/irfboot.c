@@ -218,14 +218,13 @@ re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock,
 		  int iter, int scount)
 {
     static int (*jbr) (GRETL_VAR *, const DATASET *) = NULL;
-    static void *handle = NULL;
     int err = 0;
 
     gretl_error_clear();
 
-    if (iter == 0) {
-	/* first round: open the Johansen plugin */
-	jbr = get_plugin_function("johansen_boot_round", &handle);
+    if (jbr == NULL) {
+	/* open the Johansen plugin */
+	jbr = get_plugin_function("johansen_boot_round");
 	if (jbr == NULL) {
 	    return E_FOPEN;
 	}
@@ -255,14 +254,6 @@ re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock,
 
     if (!err) {
 	err = recalculate_impulse_responses(b, v, targ, shock, iter);
-    }
-
-    if (iter == BOOT_ITERS - 1 || VAR_FATAL(err, iter, scount)) {
-	if (handle != NULL) {
-	    close_plugin(handle);
-	    handle = NULL;
-	    jbr = NULL;
-	}
     }
 
     return err;

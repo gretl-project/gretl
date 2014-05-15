@@ -2455,7 +2455,6 @@ static int import_octave (const char *fname, DATASET *dset,
 int import_other (const char *fname, GretlFileType ftype,
 		  DATASET *dset, gretlopt opt, PRN *prn)
 {
-    void *handle;
     FILE *fp;
     int (*importer) (const char *, DATASET *, 
 		     gretlopt, PRN *);
@@ -2478,15 +2477,15 @@ int import_other (const char *fname, GretlFileType ftype,
     }
 
     if (ftype == GRETL_WF1) {
-	importer = get_plugin_function("wf1_get_data", &handle);
+	importer = get_plugin_function("wf1_get_data");
     } else if (ftype == GRETL_DTA) {
-	importer = get_plugin_function("dta_get_data", &handle);
+	importer = get_plugin_function("dta_get_data");
     } else if (ftype == GRETL_SAV) {
-	importer = get_plugin_function("sav_get_data", &handle);
+	importer = get_plugin_function("sav_get_data");
     } else if (ftype == GRETL_SAS) {
-	importer = get_plugin_function("xport_get_data", &handle);
+	importer = get_plugin_function("xport_get_data");
     } else if (ftype == GRETL_JMULTI) {
-	importer = get_plugin_function("jmulti_get_data", &handle);
+	importer = get_plugin_function("jmulti_get_data");
     } else {
 	pprintf(prn, A_("Unrecognized data type"));
 	pputc(prn, '\n');
@@ -2497,7 +2496,6 @@ int import_other (const char *fname, GretlFileType ftype,
         err = 1;
     } else {
 	err = (*importer)(fname, dset, opt, prn);
-	close_plugin(handle);
     }
 
  bailout:
@@ -2526,7 +2524,6 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
 			int *list, char *sheetname,
 			DATASET *dset, gretlopt opt, PRN *prn)
 {
-    void *handle;
     FILE *fp;
     int (*importer) (const char*, int *, char *,
 		     DATASET *, gretlopt, PRN *);
@@ -2546,13 +2543,13 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     fclose(fp);
 
     if (ftype == GRETL_GNUMERIC) {
-	importer = get_plugin_function("gnumeric_get_data", &handle);
+	importer = get_plugin_function("gnumeric_get_data");
     } else if (ftype == GRETL_XLS) {
-	importer = get_plugin_function("xls_get_data", &handle);
+	importer = get_plugin_function("xls_get_data");
     } else if (ftype == GRETL_XLSX) {
-	importer = get_plugin_function("xlsx_get_data", &handle);
+	importer = get_plugin_function("xlsx_get_data");
     } else if (ftype == GRETL_ODS) {
-	importer = get_plugin_function("ods_get_data", &handle);
+	importer = get_plugin_function("ods_get_data");
     } else {
 	pprintf(prn, A_("Unrecognized data type"));
 	pputc(prn, '\n');
@@ -2569,7 +2566,6 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
 	}	
 
 	err = (*importer)(fname, list, sheetname, dset, opt, prn);
-	close_plugin(handle);
 
 	if (*thisdir != '\0') {
 	    /* come back out of dotdir? */

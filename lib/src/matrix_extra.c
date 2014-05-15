@@ -2032,25 +2032,19 @@ int gretl_matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
 			 gretl_vector *b, gretl_matrix *vcv, 
 			 gretl_vector *uhat, double *s2)
 {
-    void *handle = NULL;
     int (*matrix_mp_ols) (const gretl_vector *,
 			  const gretl_matrix *,
 			  gretl_vector *,
 			  gretl_matrix *,
 			  gretl_vector *,
 			  double *);
-    int err;
 
-    matrix_mp_ols = get_plugin_function("matrix_mp_ols", &handle);
+    matrix_mp_ols = get_plugin_function("matrix_mp_ols");
     if (matrix_mp_ols == NULL) {
 	return 1;
     }
 
-    err = (*matrix_mp_ols)(y, X, b, vcv, uhat, s2);
-
-    close_plugin(handle);
-
-    return err;
+    return (*matrix_mp_ols)(y, X, b, vcv, uhat, s2);
 }
 
 /* following: quadrature sources based on John Burkhart's GPL'd

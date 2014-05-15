@@ -2500,7 +2500,6 @@ static int get_model_id_from_vwin (windata_t *vwin)
 
 void add_leverage_data (windata_t *vwin)
 {
-    void *handle;
     unsigned char (*leverage_data_dialog) (void);
     gretl_matrix *m = (gretl_matrix *) vwin->data;
     unsigned char opt;
@@ -2508,13 +2507,10 @@ void add_leverage_data (windata_t *vwin)
 
     if (m == NULL) return;
 
-    leverage_data_dialog = gui_get_plugin_function("leverage_data_dialog",
-						   &handle);
+    leverage_data_dialog = gui_get_plugin_function("leverage_data_dialog");
     if (leverage_data_dialog == NULL) return;
 
     opt = leverage_data_dialog();
-    close_plugin(handle);
-
     if (opt == 0) return;
 
     err = add_leverage_values_to_dataset(dataset, m, opt);
@@ -2533,7 +2529,6 @@ void do_leverage (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    void *handle;
     gretl_matrix *(*model_leverage) (const MODEL *, DATASET *, 
 				     gretlopt, PRN *, int *);
     PRN *prn;
@@ -2544,19 +2539,16 @@ void do_leverage (GtkAction *action, gpointer p)
 	return;
     }
 
-    model_leverage = gui_get_plugin_function("model_leverage", 
-					     &handle);
+    model_leverage = gui_get_plugin_function("model_leverage");
     if (model_leverage == NULL) {
 	return;
     }
 
     if (bufopen(&prn)) {
-	close_plugin(handle);
 	return;
     }	
 	
     m = (*model_leverage)(pmod, dataset, OPT_NONE, prn, &err);
-    close_plugin(handle);
 
     if (err) {
 	gui_errmsg(err);
@@ -2579,7 +2571,6 @@ void do_vif (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     int (*print_vifs) (MODEL *, DATASET *, PRN *);
-    void *handle;
     DATASET *dset;
     PRN *prn;
     int err;
@@ -2590,20 +2581,18 @@ void do_vif (GtkAction *action, gpointer p)
 	return;
     }
 
-    print_vifs = gui_get_plugin_function("print_vifs", &handle);
+    print_vifs = gui_get_plugin_function("print_vifs");
     if (print_vifs == NULL) {
 	trim_dataset(pmod, 0);
 	return;
     }
 
     if (bufopen(&prn)) {
-	close_plugin(handle);
 	trim_dataset(pmod, 0);
 	return;
     }	
 	
     err = (*print_vifs)(pmod, dset, prn);
-    close_plugin(handle);
 
     if (err) {
 	gui_errmsg(err);
@@ -2688,7 +2677,6 @@ void do_qqplot (void)
 
 void do_kernel (void)
 {
-    void *handle;
     int (*kernel_density) (const double *, const DATASET *,
 			   double, const char *, gretlopt);
     gretlopt opt = OPT_NONE;
@@ -2710,8 +2698,7 @@ void do_kernel (void)
 	opt |= OPT_O;
     }
 
-    kernel_density = gui_get_plugin_function("kernel_density", 
-					     &handle);
+    kernel_density = gui_get_plugin_function("kernel_density"); 
     if (kernel_density == NULL) {
 	return;
     }
@@ -2719,7 +2706,6 @@ void do_kernel (void)
     err = (*kernel_density)(dataset->Z[v], dataset, bw, 
 			    dataset->varname[v],
 			    opt);
-    close_plugin(handle);
 
     gui_graph_handler(err);
 }
@@ -5060,7 +5046,6 @@ static void real_do_tramo_x12a (int v, int tramo)
     int oldv = dataset->v;
     int save_t1 = dataset->t1;
     int save_t2 = dataset->t2;
-    void *handle;
     int (*write_tx_data) (char *, int, DATASET *, gretlopt *, 
 			  int, GtkWindow *, void *);
     char outfile[MAXLEN] = {0};
@@ -5075,8 +5060,7 @@ static void real_do_tramo_x12a (int v, int tramo)
 	}
     }
 
-    write_tx_data = gui_get_plugin_function("write_tx_data", 
-					    &handle);
+    write_tx_data = gui_get_plugin_function("write_tx_data");
     if (write_tx_data == NULL) {
 	return;
     }
@@ -5085,8 +5069,6 @@ static void real_do_tramo_x12a (int v, int tramo)
 
     err = write_tx_data(outfile, v, dataset, &opt, tramo,
 			GTK_WINDOW(mdata->main), x12a_help); 
-
-    close_plugin(handle);
 
     dataset->t1 = save_t1;
     dataset->t2 = save_t2;
@@ -5129,19 +5111,16 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 
 static void run_x12a_script (const gchar *buf)
 {
-    void *handle;
     int (*func) (char *, const gchar *);
     char outfile[MAXLEN] = {0};
     int err = 0;
 
-    func = gui_get_plugin_function("exec_tx_script", 
-				   &handle);
+    func = gui_get_plugin_function("exec_tx_script");
     if (func == NULL) {
 	return;
     }
 
     err = func(outfile, buf);
-    close_plugin(handle);
 
     if (err) {
 	gui_errmsg(err);
@@ -5157,7 +5136,6 @@ static void run_x12a_script (const gchar *buf)
 void do_range_mean (void)
 {
     int v = mdata_active_var();
-    void *handle;
     int (*range_mean_graph) (int, const DATASET *, 
 			     gretlopt opt, PRN *);
     const char *opts[] = {
@@ -5176,21 +5154,17 @@ void do_range_mean (void)
 	return;
     }
 
-    range_mean_graph = gui_get_plugin_function("range_mean_graph", 
-					       &handle);
+    range_mean_graph = gui_get_plugin_function("range_mean_graph");
     if (range_mean_graph == NULL) {
 	return;
     }
 
     if (bufopen(&prn)) {
-	close_plugin(handle);
 	return; 
     }
 
     opt = active ? OPT_T : OPT_NONE;
     err = range_mean_graph(v, dataset, opt, prn);
-
-    close_plugin(handle);
 
     if (err) {
 	gui_errmsg(err);
@@ -5211,24 +5185,19 @@ void do_hurst (void)
 {
     gint err;
     int v = mdata_active_var();
-    void *handle;
     int (*hurst_exponent) (int, const DATASET *, gretlopt, PRN *);
     PRN *prn;
 
-    hurst_exponent = gui_get_plugin_function("hurst_exponent", 
-					     &handle);
+    hurst_exponent = gui_get_plugin_function("hurst_exponent");
     if (hurst_exponent == NULL) {
 	return;
     }
 
     if (bufopen(&prn)) {
-	close_plugin(handle);
 	return; 
     }
 
     err = hurst_exponent(v, dataset, OPT_NONE, prn);
-
-    close_plugin(handle);
 
     if (!err) {
 	/* plot generation handled in plugin */

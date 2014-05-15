@@ -736,13 +736,11 @@ static int nist_verbosity (GtkAction *action)
 
 void do_nistcheck (GtkAction *action)
 {
-    void *handle;
     int (*run_nist_tests)(const char *, const char *, int);
     gchar *datadir = NULL;
     gchar *fname = NULL;
     
-    run_nist_tests = gui_get_plugin_function("run_nist_tests", 
-					     &handle);
+    run_nist_tests = gui_get_plugin_function("run_nist_tests");
     if (run_nist_tests == NULL) {
 	return;
     }
@@ -751,8 +749,6 @@ void do_nistcheck (GtkAction *action)
     fname = g_strdup_printf("%snist.out", gretl_dotdir());
 
     (*run_nist_tests)(datadir, fname, nist_verbosity(action));
-
-    close_plugin(handle);
 
     view_file(fname, 0, 1, 78, 400, VIEW_CODEBOOK);
 
@@ -765,15 +761,12 @@ void do_nistcheck (GtkAction *action)
 void send_file (char *fullname)
 {
     int (*email_file) (const char *, const char *);
-    void *handle;
 
-    email_file = gui_get_plugin_function("email_file", &handle);
-    if (email_file == NULL) {
-        return;
+    email_file = gui_get_plugin_function("email_file");
+
+    if (email_file != NULL) {
+	email_file(fullname, gretl_dotdir());
     }
-    
-    email_file(fullname, gretl_dotdir());
-    close_plugin(handle);
 }
 
 #endif

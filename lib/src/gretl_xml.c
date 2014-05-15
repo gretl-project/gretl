@@ -1637,7 +1637,6 @@ int gretl_write_matrix_as_gdt (const char *fname,
 {
     gzFile fz = Z_NULL;
     char datname[MAXLEN];
-    void *handle = NULL;
     char *xmlbuf = NULL;
     int (*show_progress) (gint64, gint64, int) = NULL;
     gint64 sz = 0;
@@ -1661,7 +1660,7 @@ int gretl_write_matrix_as_gdt (const char *fname,
     }
 
     if (sz) {
-	show_progress = get_plugin_function("show_progress", &handle);
+	show_progress = get_plugin_function("show_progress");
 	if (show_progress == NULL) {
 	    sz = 0;
 	}
@@ -1722,7 +1721,6 @@ int gretl_write_matrix_as_gdt (const char *fname,
 
     if (sz) {
 	(*show_progress)(0, T, SP_FINISH);
-	close_plugin(handle);
     } 
 
     gzclose(fz);
@@ -2061,7 +2059,6 @@ static int real_write_gdt (const char *fname, const int *list,
     char startdate[OBSLEN], enddate[OBSLEN];
     char datname[MAXLEN], freqstr[32];
     char numstr[128], xmlbuf[256];
-    void *handle = NULL;
     int (*show_progress) (gint64, gint64, int) = NULL;
     gint64 dsize = 0;
     int i, t, v, nvars, ntabs;
@@ -2119,7 +2116,7 @@ static int real_write_gdt (const char *fname, const int *list,
     }
 
     if (progress) {
-	show_progress = get_plugin_function("show_progress", &handle);
+	show_progress = get_plugin_function("show_progress");
 	if (show_progress == NULL) {
 	    progress = 0;
 	} else {
@@ -2432,7 +2429,6 @@ static int real_write_gdt (const char *fname, const int *list,
 
     if (progress) {
 	(*show_progress)(0, dset->t2 - dset->t1 + 1, SP_FINISH);
-	close_plugin(handle);
     } 
 
     if (p15) free(p15);
@@ -2674,7 +2670,6 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
     xmlNodePtr cur;
     xmlChar *tmp;
     int n, i, t;
-    void *handle;
     int (*show_progress) (gint64, gint64, int) = NULL;
     int err = 0;
 
@@ -2697,7 +2692,7 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
     }
 
     if (progress > 0) {
-	show_progress = get_plugin_function("show_progress", &handle);
+	show_progress = get_plugin_function("show_progress");
 	if (show_progress == NULL) {
 	    progress = 0;
 	}
@@ -2815,7 +2810,6 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
 	fprintf(stderr, "finalizing progress bar (n = %d)\n", dset->n);
 #endif
 	(*show_progress)(0, dset->n, SP_FINISH);
-	close_plugin(handle);
     }
 
     if (!err && t != dset->n) {

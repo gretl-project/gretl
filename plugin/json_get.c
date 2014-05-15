@@ -17,6 +17,8 @@
  * 
  */
 
+/* parsing of JSON buffer using the json-glib library */
+
 #include "libgretl.h"
 #include "version.h"
 
@@ -46,7 +48,10 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 			     gerr->message);
 	g_error_free(gerr);
 	return E_DATA;
-    }   
+    }
+
+    /* in case we get floating-point output */
+    gretl_push_c_numeric_locale();
 
     if (JSON_NODE_HOLDS_ARRAY(match)) {
 	JsonArray *array;
@@ -96,10 +101,26 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 	}
     }
 
+    gretl_pop_c_numeric_locale();
+
     json_node_free(match);
 
     return err;
 }
+
+/*
+  @data: JSON buffer.
+  @path: the JsonPath to the target info.
+  @n_objects: location to receive the number of pieces
+  of information retrieved, or NULL.
+  @err: location to receive error code.
+
+  On success, returns an allocated string. If the "target"
+  is an array, the members are printed one per line. This
+  function handles target types of double, int or string;
+  in the case of doubles or ints, their string representation
+  is returned (using the C locale for doubles).
+*/
 
 char *json_get (const char *data, const char *path, int *n_objects,
 		int *err)
@@ -109,11 +130,9 @@ char *json_get (const char *data, const char *path, int *n_objects,
     char *ret = NULL;
     int n = 0;
 
-    fprintf(stderr, "json_get, starting\n");
-
     parser = json_parser_new();
     if (parser == NULL) {
-	gretl_errmsg_set("Weird: json_parser_new returned NULL!\n");
+	gretl_errmsg_set("json_parser_new returned NULL!\n");
 	*err = 1;
 	return NULL;
     }
@@ -142,8 +161,6 @@ char *json_get (const char *data, const char *path, int *n_objects,
     }    
 
     g_object_unref(parser);
-
-    fprintf(stderr, "json_get, returning\n");
 
     return ret;
 }

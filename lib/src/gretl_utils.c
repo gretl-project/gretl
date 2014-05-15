@@ -1970,6 +1970,7 @@ void libgretl_cleanup (void)
     kalman_cleanup();
     gnuplot_cleanup();
     bufgets_cleanup();
+    plugins_cleanup();
 #ifdef USE_CURL
     gretl_www_cleanup();
 #endif

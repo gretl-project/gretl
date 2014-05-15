@@ -4229,22 +4229,17 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 int call_pca_plugin (VMatrix *cmat, DATASET *dset, 
 		     gretlopt opt, PRN *prn)
 {
-    void *handle = NULL;
     int (*pca_from_cmatrix) (VMatrix *, DATASET *,
 			     gretlopt, PRN *);
-    int err = 0;
 
     gretl_error_clear();
     
-    pca_from_cmatrix = get_plugin_function("pca_from_cmatrix", &handle);
+    pca_from_cmatrix = get_plugin_function("pca_from_cmatrix");
     if (pca_from_cmatrix == NULL) {
         return 1;
     }
         
-    err = (*pca_from_cmatrix) (cmat, dset, opt, prn);
-    close_plugin(handle);
-    
-    return err;
+    return (*pca_from_cmatrix) (cmat, dset, opt, prn);
 }
 
 static int do_pca (int *list, DATASET *dset,

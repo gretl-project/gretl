@@ -2468,11 +2468,10 @@ static double get_QLR_pval (double test, int df, int k1, int k2,
 			    MODEL *pmod, PRN *prn)
 {
     double (*qlr_asy_pvalue) (double, int, double);
-    void *handle;
     double pi_1, pi_2, lam0;
     double pval;
 
-    qlr_asy_pvalue = get_plugin_function("qlr_asy_pvalue", &handle);
+    qlr_asy_pvalue = get_plugin_function("qlr_asy_pvalue");
 
     if (qlr_asy_pvalue == NULL) {
 	fputs(I_("Couldn't load plugin function\n"), stderr);
@@ -2484,8 +2483,6 @@ static double get_QLR_pval (double test, int df, int k1, int k2,
     lam0 = (pi_2*(1.0 - pi_1)) / (pi_1*(1.0 - pi_2));
 
     pval = (*qlr_asy_pvalue) (test, df, lam0);
-
-    close_plugin(handle);
 
     if (!na(pval)) {
 	pprintf(prn, _("Asymptotic p-value = %.4g for "
@@ -3541,7 +3538,6 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 int leverage_test (MODEL *pmod, DATASET *dset, 
 		   gretlopt opt, PRN *prn)
 {
-    void *handle;
     gretl_matrix *(*model_leverage) (const MODEL *, const DATASET *, 
 				     gretlopt, PRN *, int *);
     gretl_matrix *m;
@@ -3551,7 +3547,7 @@ int leverage_test (MODEL *pmod, DATASET *dset,
 	return E_OLSONLY;
     }
 
-    model_leverage = get_plugin_function("model_leverage", &handle);
+    model_leverage = get_plugin_function("model_leverage");
     if (model_leverage == NULL) {
 	return 1;
     }
@@ -3566,8 +3562,6 @@ int leverage_test (MODEL *pmod, DATASET *dset,
     }
 
     gretl_matrix_free(m);
-
-    close_plugin(handle);
 
     return err;
 }
@@ -3586,20 +3580,14 @@ int leverage_test (MODEL *pmod, DATASET *dset,
 
 int vif_test (MODEL *pmod, DATASET *dset, PRN *prn)
 {
-    void *handle;
     int (*print_vifs) (MODEL *, DATASET *, PRN *);
-    int err;
 
     gretl_error_clear();
 
-    print_vifs = get_plugin_function("print_vifs", &handle);
+    print_vifs = get_plugin_function("print_vifs");
     if (print_vifs == NULL) {
 	return 1;
     }
 
-    err = (*print_vifs)(pmod, dset, prn);
-
-    close_plugin(handle);
-
-    return err;
+    return (*print_vifs)(pmod, dset, prn);
 }

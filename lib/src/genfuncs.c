@@ -908,7 +908,6 @@ int seasonally_adjust_series (const double *x, double *y,
 			      DATASET *dset, int tramo,
 			      int use_log)
 {
-    void *handle;
     int (*adjust_series) (const double *, double *, 
 			  const DATASET *, int, int);
     int t1 = dset->t1;
@@ -941,7 +940,7 @@ int seasonally_adjust_series (const double *x, double *y,
 
     gretl_error_clear();
 
-    adjust_series = get_plugin_function("adjust_series", &handle);
+    adjust_series = get_plugin_function("adjust_series");
     
     if (adjust_series == NULL) {
 	err = E_FOPEN;
@@ -956,8 +955,6 @@ int seasonally_adjust_series (const double *x, double *y,
 
 	dset->t1 = save_t1;
 	dset->t2 = save_t2;
-
-	close_plugin(handle);
     }
 
     return err;
@@ -1963,21 +1960,16 @@ static void form_Qy (double *y, int T)
 static int mp_butterworth (const double *x, double *bw, int T,
 			   int order, double cutoff)
 {
-    void *handle;
     int (*mpfun) (const double *, double *, int, int, double);
-    int err = 0;
 
-    mpfun = get_plugin_function("mp_bw_filter", &handle);
+    mpfun = get_plugin_function("mp_bw_filter");
 
     if (mpfun == NULL) {
 	fputs(I_("Couldn't load plugin function\n"), stderr);
 	return E_FOPEN;
     }
 
-    err = (*mpfun) (x, bw, T, order, cutoff);
-    close_plugin(handle);
-
-    return err;
+    return (*mpfun) (x, bw, T, order, cutoff);
 }
 
 #if 0 
@@ -4554,7 +4546,6 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      const gretl_matrix *X, 
 			      int f, int *err)
 {
-    void *handle;
     gretl_matrix *(*chowlin) (const gretl_matrix *, 
 			      const gretl_matrix *, 
 			      int, int *);
@@ -4570,13 +4561,12 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 	return NULL;
     }
 
-    chowlin = get_plugin_function("chow_lin_interpolate", &handle);
+    chowlin = get_plugin_function("chow_lin_interpolate");
     
     if (chowlin == NULL) {
 	*err = E_FOPEN;
     } else {
 	ret = (*chowlin) (Y, X, f, err);
-	close_plugin(handle);
     }
     
     return ret;

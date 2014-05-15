@@ -568,10 +568,9 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 
     if (bs->flags & BOOT_GRAPH) {
 	int (*kdfunc) (const double *, int, const char *);
-	void *handle;
 	char label[48];
 
-	kdfunc = get_plugin_function("array_kernel_density", &handle);
+	kdfunc = get_plugin_function("array_kernel_density");
 	if (kdfunc == NULL) {
 	    return;
 	}
@@ -585,7 +584,6 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	} 
 
 	(*kdfunc)(xi, bs->B, label);
-	close_plugin(handle);
     }
 }
 

@@ -1039,7 +1039,6 @@ double entry_get_numeric_value (GtkWidget *w, EntryValType t)
 
 static void dw_lookup_call (dist_t *tab)
 {
-    void *handle = NULL;
     int (*dw)(int, int, gretl_matrix **) = NULL;
     gretl_vector *v = NULL;
     PRN *prn;
@@ -1055,18 +1054,16 @@ static void dw_lookup_call (dist_t *tab)
 	return;
     }    
 
-    dw = gui_get_plugin_function("dw_lookup", &handle);
+    dw = gui_get_plugin_function("dw_lookup");
     if (dw == NULL) {
 	return;
     }
 
     if (bufopen(&prn)) {
-	close_plugin(handle);
 	return;
     }  
 
     err = (*dw)(n, k, &v);
-    close_plugin(handle);
 
     if (!err) {
 	pprintf(prn, "%s, n = %d, k = %d\n\n",

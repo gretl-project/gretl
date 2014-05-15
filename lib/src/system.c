@@ -1581,7 +1581,6 @@ int
 equation_system_estimate (equation_system *sys, DATASET *dset, 
 			  gretlopt opt, PRN *prn)
 {
-    void *handle = NULL;
     int (*system_est) (equation_system *, DATASET *, 
 		       gretlopt, PRN *);
     int stest = 0;
@@ -1623,7 +1622,7 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
     err = sys_rearrange_eqn_lists(sys, dset);
 
     if (!err) {
-	system_est = get_plugin_function("system_estimate", &handle);
+	system_est = get_plugin_function("system_estimate");
 	if (system_est == NULL) {
 	    err = 1;
 	}
@@ -1647,10 +1646,6 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
     }
 
  system_bailout:
-
-    if (handle != NULL) {
-	close_plugin(handle);
-    }
 
     if (!err && !(sys->flags & SYSTEM_LIML1)) {
 	set_as_last_model(sys, GRETL_OBJ_SYS);

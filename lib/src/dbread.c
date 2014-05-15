@@ -1827,7 +1827,6 @@ static void ODBC_info_clear_all (void)
 
 int set_odbc_dsn (const char *line, PRN *prn)
 {
-    void *handle = NULL;
     int (*check_dsn) (ODBC_info *);
     char *dbname = NULL;
     char *uname = NULL;
@@ -1856,14 +1855,13 @@ int set_odbc_dsn (const char *line, PRN *prn)
 
     gretl_error_clear();
 
-    check_dsn = get_plugin_function("gretl_odbc_check_dsn", &handle);
+    check_dsn = get_plugin_function("gretl_odbc_check_dsn");
 
     if (check_dsn == NULL) {
         err = 1;
     } else {
 	got_plugin = 1;
-        err = (* check_dsn) (&gretl_odinfo);
-        close_plugin(handle);
+        err = (*check_dsn) (&gretl_odinfo);
     }
 
     if (err) {
@@ -2289,7 +2287,6 @@ static int odbc_count_new_vars (char **vnames, int nv,
 static int odbc_get_series (char *line, DATASET *dset, 
 			    PRN *prn)
 {
-    void *handle = NULL;
     int (*get_data) (ODBC_info *);
     char **vnames = NULL;
     char *format = NULL;
@@ -2339,13 +2336,12 @@ static int odbc_get_series (char *line, DATASET *dset,
 	fprintf(stderr, "SQL query: '%s'\n", gretl_odinfo.query);
 	gretl_error_clear();
 
-	get_data = get_plugin_function("gretl_odbc_get_data", &handle);
+	get_data = get_plugin_function("gretl_odbc_get_data");
 
 	if (get_data == NULL) {
 	    err = 1;
 	} else {
 	    err = (*get_data) (&gretl_odinfo);
-	    close_plugin(handle);
 	}
     }
 

@@ -1661,16 +1661,14 @@ double GED_cdf_inverse (double nu, double a)
 double johansen_trace_pval (int N, int det, int T, double tr)
 {
     double (*pvfunc) (double, int, int, int);
-    void *handle;
     double pv = NADBL;
 
-    pvfunc = get_plugin_function("trace_pvalue", &handle);
+    pvfunc = get_plugin_function("trace_pvalue");
 
     if (pvfunc == NULL) {
 	fputs(I_("Couldn't load plugin function\n"), stderr);
     } else {
 	pv = (*pvfunc) (tr, N, det, T);
-	close_plugin(handle);
     }
 
     return pv;
@@ -2567,11 +2565,10 @@ int batch_pvalue (const char *str, DATASET *dset, PRN *prn)
 
 gretl_matrix *gretl_get_DW (int n, int k, int *err)
 {
-    void *handle;
     int (*dw_lookup) (int, int, gretl_matrix **);
     gretl_matrix *m = NULL;
 
-    dw_lookup = get_plugin_function("dw_lookup", &handle);
+    dw_lookup = get_plugin_function("dw_lookup");
 
     if (dw_lookup == NULL) {
 	*err = E_FOPEN;
@@ -2579,7 +2576,6 @@ gretl_matrix *gretl_get_DW (int n, int k, int *err)
     }
 
     *err = (*dw_lookup) (n, k, &m);
-    close_plugin(handle);
 
     return m;
 }

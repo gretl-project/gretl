@@ -264,19 +264,13 @@ int gretl_zip_datafile (const char *fname, const char *path,
 			int level, GError **gerr)
 {
     int (*zfunc) (const char *, const char *, int, GError **);
-    void *handle = NULL;
-    int err = 0;
 
-    zfunc = get_plugin_function("gretl_native_zip_datafile", &handle);
+    zfunc = get_plugin_function("gretl_native_zip_datafile");
     if (zfunc == NULL) {
         return 1;
     }
 
-    err = (*zfunc)(fname, path, level, gerr);
-
-    close_plugin(handle);    
-
-    return err;
+    return (*zfunc)(fname, path, level, gerr);
 }
 
 #endif /* work-around for missing functionality in libgsf */
@@ -349,20 +343,14 @@ int gretl_unzip_datafile (const char *fname, const char *path, GError **gerr)
 int gretl_unzip_file (const char *fname, GError **gerr)
 {
     int (*zfunc) (const char *, GError **);
-    void *handle = NULL;
-    int err = 0;
 
-    zfunc = get_plugin_function("gretl_native_unzip_file", &handle);
+    zfunc = get_plugin_function("gretl_native_unzip_file");
     if (zfunc == NULL) {
 	/* error message handled by get_plugin_function() */
         return 1;
     }
 
-    err = (*zfunc)(fname, gerr);
-
-    close_plugin(handle);    
-
-    return err;
+    return (*zfunc)(fname, gerr);
 }
 
 /*
@@ -375,75 +363,51 @@ int gretl_make_zipfile (const char *fname, const char *path,
 			GError **gerr)
 {
     int (*zfunc) (const char *, const char *, GError **);
-    void *handle = NULL;
-    int err = 0;
 
-    zfunc = get_plugin_function("gretl_native_make_zipfile", &handle);
+    zfunc = get_plugin_function("gretl_native_make_zipfile");
     if (zfunc == NULL) {
         return 1;
     }
 
-    err = (*zfunc)(fname, path, gerr);
-
-    close_plugin(handle);    
-
-    return err;
+    return (*zfunc)(fname, path, gerr);
 }
 
 int gretl_unzip_session_file (const char *fname, gchar **zdirname, GError **gerr)
 {
     int (*zfunc) (const char *, gchar **, GError **);
-    void *handle = NULL;
-    int err = 0;
 
-    zfunc = get_plugin_function("gretl_native_unzip_session_file", &handle);
+    zfunc = get_plugin_function("gretl_native_unzip_session_file");
     if (zfunc == NULL) {
         return 1;
     }
 
-    err = (*zfunc)(fname, zdirname, gerr);
-
-    close_plugin(handle);    
-
-    return err;
+    return (*zfunc)(fname, zdirname, gerr);
 }
 
 int gretl_zip_datafile (const char *fname, const char *path,
 			int level, GError **gerr)
 {
     int (*zfunc) (const char *, const char *, int, GError **);
-    void *handle = NULL;
-    int err = 0;
 
-    zfunc = get_plugin_function("gretl_native_zip_datafile", &handle);
+    zfunc = get_plugin_function("gretl_native_zip_datafile");
     if (zfunc == NULL) {
         return 1;
     }
 
-    err = (*zfunc)(fname, path, level, gerr);
-
-    close_plugin(handle);    
-
-    return err;
+    return (*zfunc)(fname, path, level, gerr);
 }
 
 int gretl_unzip_datafile (const char *fname, const char *path,
 			  GError **gerr)
 {
     int (*zfunc) (const char *, const char *, GError **);
-    void *handle = NULL;
-    int err = 0;
 
-    zfunc = get_plugin_function("gretl_native_unzip_datafile", &handle);
+    zfunc = get_plugin_function("gretl_native_unzip_datafile");
     if (zfunc == NULL) {
         return 1;
     }
 
-    err = (*zfunc)(fname, path, gerr);
-
-    close_plugin(handle);    
-
-    return err;
+    return (*zfunc)(fname, path, gerr);
 }
 
 #endif /* zip/unzip variants */

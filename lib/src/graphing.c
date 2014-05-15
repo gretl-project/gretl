@@ -5180,38 +5180,26 @@ int rmplot (const int *list, DATASET *dset,
 {
     int (*range_mean_graph) (int, const DATASET *, 
 			     gretlopt, PRN *);
-    void *handle = NULL;
-    int err;
 
-    range_mean_graph = get_plugin_function("range_mean_graph", &handle);
+    range_mean_graph = get_plugin_function("range_mean_graph");
     if (range_mean_graph == NULL) {
 	return 1;
     }
 
-    err = range_mean_graph(list[1], dset, opt, prn);
-
-    close_plugin(handle);
-
-    return err;
+    return range_mean_graph(list[1], dset, opt, prn);
 }
 
 int 
 hurstplot (const int *list, DATASET *dset, gretlopt opt, PRN *prn)
 {
     int (*hurst_exponent) (int, const DATASET *, gretlopt, PRN *);
-    void *handle = NULL;
-    int err;
 
-    hurst_exponent = get_plugin_function("hurst_exponent", &handle);
+    hurst_exponent = get_plugin_function("hurst_exponent");
     if (hurst_exponent == NULL) {
 	return 1;
     }
 
-    err = hurst_exponent(list[1], dset, opt, prn);
-
-    close_plugin(handle);
-
-    return err;
+    return hurst_exponent(list[1], dset, opt, prn);
 }
 
 static void get_multiplot_layout (int n, int tseries,

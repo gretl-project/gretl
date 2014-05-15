@@ -140,8 +140,7 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
 gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, 
 			     gpointer p);
 
-void *gui_get_plugin_function (const char *funcname, 
-			       void **phandle);
+void *gui_get_plugin_function (const char *funcname);
 
 int get_imported_data (char *fname, int ftype, int append);
 

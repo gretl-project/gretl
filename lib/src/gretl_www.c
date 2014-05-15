@@ -71,7 +71,6 @@ struct urlinfo_ {
     char agent[32];          /* user-agent string */
     FILE *fp;                /* for saving content locally */
     int (*progfunc)();       /* progress indicator function */
-    void *phandle;           /* plugin handle */
     int pstarted;            /* progress bar status flag */
 };
 
@@ -98,7 +97,6 @@ static void urlinfo_init (urlinfo *u,
     u->verbose = getenv("GRETL_WWW_VERBOSE") != NULL;
 
     u->progfunc = NULL;
-    u->phandle = NULL;
     u->pstarted = 0;
 
     gretl_error_clear();
@@ -136,13 +134,10 @@ static void urlinfo_finalize (urlinfo *u, char **getbuf, int *err)
 static void urlinfo_set_show_progress (urlinfo *u)
 {
     int (*show_progress) (gint64, gint64, int) = NULL;
-    void *handle;
 
-    show_progress = get_plugin_function("show_progress", 
-					&handle);
+    show_progress = get_plugin_function("show_progress");
     if (show_progress != NULL) {
 	u->progfunc = show_progress;
-	u->phandle = handle;
     }
 }
 
@@ -168,7 +163,6 @@ static void stop_progress_bar (urlinfo *u)
 {
     if (u->progfunc != NULL) {
 	u->progfunc(0, 1024, SP_FINISH);
-	close_plugin(u->phandle);
     }
 }
 
@@ -785,7 +779,7 @@ static int proto_length (const char *s)
  * of the file on the server.
  *
  * Retrieves the specified resource and writes it to
- * @localname, if possible. Only handles http requests.
+ * @localname, if possible. Only handles HTTP requests.
  *
  * Returns: 0 on success, non-zero on failure.
  */

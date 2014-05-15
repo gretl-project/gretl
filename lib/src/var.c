@@ -2586,7 +2586,6 @@ int gretl_VECM_test (GRETL_VAR *vecm,
 		     gretlopt opt,
 		     PRN *prn)
 {
-    void *handle = NULL;
     int (*jfun) (GRETL_VAR *, gretl_restriction *,
 		 const DATASET *, gretlopt opt, PRN *);
     int err = 0;
@@ -2597,13 +2596,12 @@ int gretl_VECM_test (GRETL_VAR *vecm,
 
     gretl_error_clear();
 
-    jfun = get_plugin_function("vecm_test_restriction", &handle);
+    jfun = get_plugin_function("vecm_test_restriction");
     
     if (jfun == NULL) {
 	err = 1;
     } else {
 	err = (*jfun) (vecm, rset, dset, opt, prn);
-	close_plugin(handle);
     }
 
     return err;    
@@ -2613,19 +2611,17 @@ static int
 johansen_test_complete (GRETL_VAR *jvar, const DATASET *dset, 
 			gretlopt opt, PRN *prn)
 {
-    void *handle = NULL;
     int (*jfun) (GRETL_VAR *, const DATASET *, gretlopt, PRN *);
     int err = 0;
 
     gretl_error_clear();
     
-    jfun = get_plugin_function("johansen_coint_test", &handle);
+    jfun = get_plugin_function("johansen_coint_test");
 
     if (jfun == NULL) {
 	err = 1;
     } else {
 	err = (* jfun) (jvar, dset, opt, prn);
-	close_plugin(handle);
     }
     
     return err;
@@ -2635,20 +2631,18 @@ static int
 johansen_estimate_complete (GRETL_VAR *jvar, gretl_restriction *rset,
 			    const DATASET *dset, PRN *prn)
 {
-    void *handle = NULL;
     int (*jfun) (GRETL_VAR *, gretl_restriction *,
 		 const DATASET *, PRN *);
     int err = 0;
 
     gretl_error_clear();
 
-    jfun = get_plugin_function("johansen_estimate", &handle);
+    jfun = get_plugin_function("johansen_estimate");
 
     if (jfun == NULL) {
 	err = 1;
     } else {
 	err = (* jfun) (jvar, rset, dset, prn);
-	close_plugin(handle);
     }
 
     return err;

@@ -1149,12 +1149,10 @@ static int rank_sum_test (const double *x, const double *y,
 	pval = print_z_prob(z, prn);
     } else if (na >= 4 && nb >= 4 && nb <= 12) {
 	void (*cv) (int, int, PRN *);
-	void *handle;
 
-	cv = get_plugin_function("rank_sum_lookup", &handle);
+	cv = get_plugin_function("rank_sum_lookup");
 	if (cv != NULL) {
 	    (*cv)(na, nb, prn);
-	    close_plugin(handle);
 	}
     } else {
 	pprintf(prn, "  %s\n", 

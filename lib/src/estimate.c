@@ -3995,7 +3995,6 @@ MODEL arch_model (const int *list, int order, DATASET *dset,
 MODEL lad (const int *list, DATASET *dset)
 {
     MODEL mod;
-    void *handle;
     int (*lad_driver) (MODEL *, DATASET *);
 
     /* run an initial OLS to "set the model up" and check for errors.
@@ -4008,7 +4007,7 @@ MODEL lad (const int *list, DATASET *dset)
         return mod;
     }
 
-    lad_driver = get_plugin_function("lad_driver", &handle);
+    lad_driver = get_plugin_function("lad_driver");
 
     if (lad_driver == NULL) {
 	fputs(I_("Couldn't load plugin function\n"), stderr);
@@ -4017,8 +4016,6 @@ MODEL lad (const int *list, DATASET *dset)
     }
 
     (*lad_driver) (&mod, dset);
-    close_plugin(handle);
-
     set_model_id(&mod);
 
     return mod;
@@ -4044,7 +4041,6 @@ MODEL quantreg (const gretl_matrix *tau, const int *list,
 		DATASET *dset, gretlopt opt, PRN *prn)
 {
     MODEL mod;
-    void *handle;
     int (*rq_driver) (const gretl_matrix *, MODEL *, DATASET *,
 		      gretlopt, PRN *);
     gretlopt olsopt = (OPT_A | OPT_M);
@@ -4065,7 +4061,7 @@ MODEL quantreg (const gretl_matrix *tau, const int *list,
         return mod;
     }
 
-    rq_driver = get_plugin_function("rq_driver", &handle);
+    rq_driver = get_plugin_function("rq_driver");
 
     if (rq_driver == NULL) {
 	fputs(I_("Couldn't load plugin function\n"), stderr);
@@ -4074,8 +4070,6 @@ MODEL quantreg (const gretl_matrix *tau, const int *list,
     }
 
     (*rq_driver) (tau, &mod, dset, opt, prn);
-    close_plugin(handle);
-
     set_model_id(&mod);
 
     return mod;
@@ -4191,7 +4185,6 @@ MODEL arma (const int *list, const int *pqlags,
 			     const DATASET *, 
 			     int, gretlopt, PRN *);
     MODEL armod;
-    void *handle;
     int err = 0;
 
     gretl_model_init(&armod, dset);
@@ -4212,7 +4205,7 @@ MODEL arma (const int *list, const int *pqlags,
 	    return armod;
 	}
 
-	arma_x12_model = get_plugin_function("arma_x12_model", &handle);
+	arma_x12_model = get_plugin_function("arma_x12_model");
 
 	if (arma_x12_model == NULL) {
 	    err = E_FOPEN;
@@ -4220,7 +4213,7 @@ MODEL arma (const int *list, const int *pqlags,
 	    armod = (*arma_x12_model) (list, pqlags, dset, pdmax, opt, prn);
 	}
     } else {
-	arma_model = get_plugin_function("arma_model", &handle);
+	arma_model = get_plugin_function("arma_model");
 	if (arma_model == NULL) {
 	    err = E_FOPEN;
 	} else {
@@ -4233,8 +4226,6 @@ MODEL arma (const int *list, const int *pqlags,
 	armod.errcode = err;
 	return armod;
     }
-
-    close_plugin(handle);
 
     set_model_id(&armod);
 
@@ -4257,14 +4248,13 @@ MODEL garch (const int *list, DATASET *dset, gretlopt opt,
 	     PRN *prn)
 {
     MODEL mod;
-    void *handle;
     PRN *myprn;
     MODEL (*garch_model) (const int *, DATASET *, PRN *,
 			  gretlopt);
 
     gretl_error_clear();
 
-    garch_model = get_plugin_function("garch_model", &handle);
+    garch_model = get_plugin_function("garch_model");
 
     if (garch_model == NULL) {
 	gretl_model_init(&mod, dset);
@@ -4279,9 +4269,6 @@ MODEL garch (const int *list, DATASET *dset, gretlopt opt,
     }
 
     mod = (*garch_model) (list, dset, myprn, opt);
-
-    close_plugin(handle);
-
     set_model_id(&mod);
 
     return mod;
@@ -4300,7 +4287,6 @@ MODEL garch (const int *list, DATASET *dset, gretlopt opt,
 
 MODEL mp_ols (const int *list, DATASET *dset)
 {
-    void *handle = NULL;
     int (*mplsq)(const int *, const int *, const int *, 
 		 DATASET *, MODEL *, 
 		 gretlopt);
@@ -4308,7 +4294,7 @@ MODEL mp_ols (const int *list, DATASET *dset)
 
     gretl_model_init(&mpmod, dset);
 
-    mplsq = get_plugin_function("mplsq", &handle);
+    mplsq = get_plugin_function("mplsq");
     if (mplsq == NULL) {
 	mpmod.errcode = 1;
 	return mpmod;
@@ -4331,8 +4317,6 @@ MODEL mp_ols (const int *list, DATASET *dset)
 	mpmod.errcode = (*mplsq)(list, NULL, NULL, dset,  
 				 &mpmod, OPT_S); 
     }
-
-    close_plugin(handle);
 
     set_model_id(&mpmod);
 
@@ -4470,23 +4454,19 @@ MODEL arbond_model (const int *list, const char *ispec,
 		    const DATASET *dset, gretlopt opt, 
 		    PRN *prn)
 {
-    void *handle = NULL;
     MODEL (*arbond_estimate) (const int *, const char *, 
 			      const DATASET *, gretlopt, PRN *);
     MODEL mod;
 
     gretl_model_init(&mod, dset);
 
-    arbond_estimate = get_plugin_function("arbond_estimate", &handle);
+    arbond_estimate = get_plugin_function("arbond_estimate");
     if (arbond_estimate == NULL) {
 	mod.errcode = 1;
 	return mod;
     }
 
     mod = (*arbond_estimate)(list, ispec, dset, opt, prn);
-
-    close_plugin(handle);
-
     set_model_id(&mod);
 
     return mod;    
@@ -4511,7 +4491,6 @@ MODEL dpd_model (const int *list, const int *laglist,
 		 const char *ispec, const DATASET *dset, 
 		 gretlopt opt, PRN *prn)
 {
-    void *handle = NULL;
     MODEL (*dpd_estimate) (const int *, const int *,
 			   const char *, const DATASET *, 
 			   gretlopt, PRN *);
@@ -4519,16 +4498,13 @@ MODEL dpd_model (const int *list, const int *laglist,
 
     gretl_model_init(&mod, dset);
 
-    dpd_estimate = get_plugin_function("dpd_estimate", &handle);
+    dpd_estimate = get_plugin_function("dpd_estimate");
     if (dpd_estimate == NULL) {
 	mod.errcode = 1;
 	return mod;
     }
 
     mod = (*dpd_estimate)(list, laglist, ispec, dset, opt, prn);
-
-    close_plugin(handle);
-
     set_model_id(&mod);
 
     return mod;    
@@ -4549,21 +4525,15 @@ MODEL dpd_model (const int *list, const int *laglist,
 int anova (const int *list, const DATASET *dset, 
 	   gretlopt opt, PRN *prn)
 {
-    void *handle = NULL;
     int (*gretl_anova) (const int *, const DATASET *, 
 			gretlopt, PRN *);
-    int err;
 
-    gretl_anova = get_plugin_function("gretl_anova", &handle);
+    gretl_anova = get_plugin_function("gretl_anova");
     if (gretl_anova == NULL) {
 	return 1;
     }
 
-    err = (*gretl_anova)(list, dset, opt, prn);
-
-    close_plugin(handle);
-
-    return err;    
+    return (*gretl_anova)(list, dset, opt, prn);
 }
 
 

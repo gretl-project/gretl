@@ -567,7 +567,7 @@ void print_nist_summary (int ntests, int missing, int modelerrs,
 }
 
 # ifdef STANDALONE
-static void *get_mplsq (void **handle); 
+static void *get_mplsq (void); 
 # endif
 
 static
@@ -576,7 +576,6 @@ int run_gretl_mp_comparison (DATASET *dset,
 			     const int *zdigits, int *mpfails, 
 			     PRN *prn)
 {
-    void *handle = NULL;
     int (*mplsq)(const int *, const int *, const int *,
 		 const DATASET *, MODEL *, gretlopt);
     int *list = NULL, *polylist = NULL;
@@ -618,9 +617,9 @@ int run_gretl_mp_comparison (DATASET *dset,
     }
 
 #ifdef STANDALONE
-    mplsq = get_mplsq(&handle);
+    mplsq = get_mplsq();
 #else
-    mplsq = get_plugin_function("mplsq", &handle);  
+    mplsq = get_plugin_function("mplsq");  
 #endif  
     if (mplsq == NULL) {
         pputs(prn, "Couldn't load mplsq function\n");
@@ -632,7 +631,6 @@ int run_gretl_mp_comparison (DATASET *dset,
 		       &model, OPT_NONE); 
     }
 
-    close_plugin(handle);
     free(list);
     free(polylist);
 
@@ -1007,28 +1005,29 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 #  include <dlfcn.h>
 # endif
 
-static void *get_mplsq (void **handle)
+static void *get_mplsq (void)
 {
+    void *handle;
     void *funp;
 
 # ifdef _WIN32
-    *handle = LoadLibrary("plugins\\mp_ols.dll");
-    if (*handle == NULL) return NULL;
+    handle = LoadLibrary("plugins\\mp_ols.dll");
+    if (handle == NULL) return NULL;
 # else 
-    *handle = dlopen("../plugin/.libs/mp_ols.so", RTLD_LAZY);
-    if (*handle == NULL) {
+    handle = dlopen("../plugin/.libs/mp_ols.so", RTLD_LAZY);
+    if (handle == NULL) {
 	fputs(dlerror(), stderr);
 	return NULL;
     }
 # endif /* _WIN32 */
 
 # ifdef _WIN32
-    funp = GetProcAddress(*handle, "mplsq");
+    funp = GetProcAddress(handle, "mplsq");
 # else
-    funp = dlsym(*handle, "mplsq");
+    funp = dlsym(handle, "mplsq");
     if (funp == NULL) {
 	/* try munged version */
-	funp = dlsym(*handle, "_mplsq");
+	funp = dlsym(handle, "_mplsq");
 	if (funp == NULL) {
 	    fputs(dlerror(), stderr);
 	}
@@ -1036,8 +1035,7 @@ static void *get_mplsq (void **handle)
 # endif /* _WIN32 */ 
 
     if (funp == NULL) {
-	close_plugin(*handle);
-	*handle = NULL;
+	close_plugin(handle);
     }
 
     return funp;

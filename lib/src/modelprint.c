@@ -992,9 +992,8 @@ static void get_stock_yogo_critvals (int n, int K2, gretlopt opt,
 				     gretl_matrix **p2)
 {
     gretl_matrix *(*lookup) (int, int, int);
-    void *handle;
 
-    lookup = get_plugin_function("stock_yogo_lookup", &handle);
+    lookup = get_plugin_function("stock_yogo_lookup");
 
     if (lookup != NULL) {
 	if (opt & OPT_L) {
@@ -1005,7 +1004,6 @@ static void get_stock_yogo_critvals (int n, int K2, gretlopt opt,
 	    *p1 = (*lookup) (n, K2, 1);
 	    *p2 = (*lookup) (n, K2, 2);
 	}
-	close_plugin(handle);
     }
 }
 

@@ -2229,13 +2229,12 @@ MODEL biprobit_model (int *list, DATASET *dset,
 		      gretlopt opt, PRN *prn)
 {
     MODEL bpmod;
-    void *handle;
     MODEL (* biprobit_estimate) (const int *, DATASET *, 
 				 gretlopt, PRN *);
 
     gretl_error_clear();
 
-    biprobit_estimate = get_plugin_function("biprobit_estimate", &handle);
+    biprobit_estimate = get_plugin_function("biprobit_estimate");
 
     if (biprobit_estimate == NULL) {
 	gretl_model_init(&bpmod, dset);
@@ -2244,9 +2243,6 @@ MODEL biprobit_model (int *list, DATASET *dset,
     }
 
     bpmod = (*biprobit_estimate) (list, dset, opt, prn);
-
-    close_plugin(handle);
-
     set_model_id(&bpmod);
 
     return bpmod;
@@ -3440,13 +3436,12 @@ MODEL interval_model (int *list, DATASET *dset,
 		      gretlopt opt, PRN *prn)
 {
     MODEL intmod;
-    void *handle;
     MODEL (* interval_estimate) (int *, DATASET *, gretlopt, 
 				 PRN *);
 
     gretl_error_clear();
 
-    interval_estimate = get_plugin_function("interval_estimate", &handle);
+    interval_estimate = get_plugin_function("interval_estimate");
 
     if (interval_estimate == NULL) {
 	gretl_model_init(&intmod, dset);
@@ -3455,9 +3450,6 @@ MODEL interval_model (int *list, DATASET *dset,
     }
 
     intmod = (*interval_estimate) (list, dset, opt, prn);
-
-    close_plugin(handle);
-
     set_model_id(&intmod);
 
     return intmod;
@@ -3486,12 +3478,11 @@ MODEL tobit_model (const int *list, double llim, double rlim,
 {
     MODEL (* tobit_estimate) (const int *, double, double,
 			      DATASET *, gretlopt, PRN *);
-    void *handle;
     MODEL tmod;    
 
     gretl_error_clear();
 
-    tobit_estimate = get_plugin_function("tobit_via_intreg", &handle);
+    tobit_estimate = get_plugin_function("tobit_via_intreg");
     if (tobit_estimate == NULL) {
 	gretl_model_init(&tmod, dset);
 	tmod.errcode = E_FOPEN;
@@ -3499,8 +3490,6 @@ MODEL tobit_model (const int *list, double llim, double rlim,
     }
 
     tmod = (*tobit_estimate) (list, llim, rlim, dset, opt, prn);
-
-    close_plugin(handle);
     set_model_id(&tmod);
 
     return tmod;
@@ -3604,7 +3593,6 @@ MODEL duration_model (const int *list, DATASET *dset,
 		      gretlopt opt, PRN *prn)
 {
     MODEL dmod;
-    void *handle;
     int censvar = 0;
     int (* duration_estimate) (MODEL *, int, const DATASET *, 
 			       gretlopt, PRN *);
@@ -3618,8 +3606,7 @@ MODEL duration_model (const int *list, DATASET *dset,
         return dmod;
     }
 
-    duration_estimate = get_plugin_function("duration_estimate", 
-					    &handle);
+    duration_estimate = get_plugin_function("duration_estimate");
 
     if (duration_estimate == NULL) {
 	dmod.errcode = E_FOPEN;
@@ -3627,9 +3614,6 @@ MODEL duration_model (const int *list, DATASET *dset,
     }
 
     (*duration_estimate) (&dmod, censvar, dset, opt, prn);
-
-    close_plugin(handle);
-
     set_model_id(&dmod);
 
     return dmod;
@@ -3666,7 +3650,6 @@ MODEL count_model (const int *list, int ci, DATASET *dset,
 		   gretlopt opt, PRN *prn)
 {
     MODEL cmod;
-    void *handle;
     int *listcpy;
     int offvar;
     int (* count_data_estimate) (MODEL *, int, int,
@@ -3704,18 +3687,13 @@ MODEL count_model (const int *list, int ci, DATASET *dset,
         return cmod;
     }
 
-    count_data_estimate = get_plugin_function("count_data_estimate", 
-					      &handle);
-
+    count_data_estimate = get_plugin_function("count_data_estimate"); 
     if (count_data_estimate == NULL) {
 	cmod.errcode = E_FOPEN;
 	return cmod;
     }
 
     (*count_data_estimate) (&cmod, ci, offvar, dset, opt, prn);
-
-    close_plugin(handle);
-
     set_model_id(&cmod);
 
     return cmod;
@@ -3740,13 +3718,12 @@ MODEL heckit_model (const int *list, DATASET *dset,
 		    gretlopt opt, PRN *prn)
 {
     MODEL model;
-    void *handle;
     MODEL (* heckit_estimate) (const int *, DATASET *, 
 			       gretlopt, PRN *);
 
     gretl_error_clear();
 
-    heckit_estimate = get_plugin_function("heckit_estimate", &handle);
+    heckit_estimate = get_plugin_function("heckit_estimate");
     if (heckit_estimate == NULL) {
 	gretl_model_init(&model, dset);
 	model.errcode = E_FOPEN;
@@ -3754,9 +3731,6 @@ MODEL heckit_model (const int *list, DATASET *dset,
     }
 
     model = (*heckit_estimate) (list, dset, opt, prn);
-
-    close_plugin(handle);
-
     set_model_id(&model);
 
     return model;
@@ -3779,7 +3753,6 @@ MODEL reprobit_model (const int *list, DATASET *dset,
 		      gretlopt opt, PRN *prn)
 {
     MODEL model;
-    void *handle;
     MODEL (* reprobit_estimate) (const int *, DATASET *,
 				 gretlopt, PRN *);
     int err = 0;
@@ -3789,7 +3762,7 @@ MODEL reprobit_model (const int *list, DATASET *dset,
     if (!dataset_is_panel(dset)) {
 	err = E_PDWRONG;
     } else {	
-	reprobit_estimate = get_plugin_function("reprobit_estimate", &handle);
+	reprobit_estimate = get_plugin_function("reprobit_estimate");
 	if (reprobit_estimate == NULL) {
 	    err = E_FOPEN;
 	}
@@ -3802,9 +3775,6 @@ MODEL reprobit_model (const int *list, DATASET *dset,
     }
 
     model = (*reprobit_estimate) (list, dset, opt, prn);
-
-    close_plugin(handle);
-
     set_model_id(&model);
 
     return model;

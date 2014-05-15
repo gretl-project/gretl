@@ -707,7 +707,6 @@ double get_urc_pvalue (double tau, int n, int niv, int itv,
 		       gretlopt opt)
 {
     char datapath[FILENAME_MAX];
-    void *handle;
     double (*mackinnon_pvalue)(double, int, int, int, char *);
     double pval = NADBL;
     static int nodata;
@@ -716,7 +715,7 @@ double get_urc_pvalue (double tau, int n, int niv, int itv,
 	return pval;
     }
 
-    mackinnon_pvalue = get_plugin_function("mackinnon_pvalue", &handle);
+    mackinnon_pvalue = get_plugin_function("mackinnon_pvalue");
     if (mackinnon_pvalue == NULL) {
 	nodata = 1;
         return pval;
@@ -737,8 +736,6 @@ double get_urc_pvalue (double tau, int n, int niv, int itv,
     fprintf(stderr, "getting pval: tau=%g, n=%d, niv=%d, itv=%d: pval=%g\n",
 	    tau, n, niv, itv, pval);
 #endif
-
-    close_plugin(handle);
 
     if (*datapath == '\0') {
 	nodata = 1;
@@ -1174,7 +1171,6 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
     int (*get_IPS_critvals) (int, int, int, double *);
     int (*IPS_tbar_moments) (int, double *, double *);
     int (*IPS_tbar_rho_moments) (int, int, int, double *, double *);
-    void *handle = NULL;
     int Tmin = Ti[1], Tmax = Ti[1];
     int i, T, err = 0;
 
@@ -1192,7 +1188,7 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 	double E, V, Wtbar, Etbar = 0, Vtbar = 0;
 	int order_i;
 
-	IPS_tbar_rho_moments = get_plugin_function("IPS_tbar_rho_moments", &handle);
+	IPS_tbar_rho_moments = get_plugin_function("IPS_tbar_rho_moments");
 
 	if (IPS_tbar_rho_moments != NULL) {
 	    for (i=0; i<n && !err; i++) {
@@ -1216,7 +1212,7 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 	/* sample sizes differ: use IPS's Z_{tbar} */
 	double E, V, Ztbar, Etbar = 0, Vtbar = 0;
 
-	IPS_tbar_moments = get_plugin_function("IPS_tbar_moments", &handle);
+	IPS_tbar_moments = get_plugin_function("IPS_tbar_moments");
 
 	if (IPS_tbar_moments != NULL) {
 	    for (i=0; i<n && !err; i++) {
@@ -1240,7 +1236,7 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 	pprintf(prn, "N,T = (%d,%d)\n", n, Tmax);
 	pprintf(prn, "Im-Pesaran-Shin t-bar = %g\n", tbar);
 
-	get_IPS_critvals = get_plugin_function("get_IPS_critvals", &handle);
+	get_IPS_critvals = get_plugin_function("get_IPS_critvals");
 
 	if (get_IPS_critvals != NULL) {
 	    double a[] = { 0.1, 0.05, 0.01 };
@@ -1251,10 +1247,6 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 		print_critical_values(a, cv, ADF, prn);
 	    }
 	}
-    }
-
-    if (handle != NULL) {
-	close_plugin(handle);
     }
 
     return err;
@@ -1433,7 +1425,6 @@ int levin_lin_test (int vnum, const int *plist,
 {
     int (*real_levin_lin) (int, const int *, DATASET *, 
 			   gretlopt, PRN *);
-    void *handle;
     int panelmode;
     int err = 0;
 
@@ -1443,7 +1434,7 @@ int levin_lin_test (int vnum, const int *plist,
 	return E_BADOPT;
     }
 
-    real_levin_lin = get_plugin_function("real_levin_lin", &handle);
+    real_levin_lin = get_plugin_function("real_levin_lin");
 
     if (real_levin_lin == NULL) {
 	fputs(I_("Couldn't load plugin function\n"), stderr);
@@ -1453,7 +1444,6 @@ int levin_lin_test (int vnum, const int *plist,
 	int save_t2 = dset->t2;
  
 	err = (*real_levin_lin) (vnum, plist, dset, opt, prn);
-	close_plugin(handle);
 
 	dset->t1 = save_t1;
 	dset->t2 = save_t2;

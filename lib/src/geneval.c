@@ -4830,14 +4830,12 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 	} else if (f == F_JSONGET) {
 	    char *(*jfunc) (const char *, const char *,
 			    int *, int *);
-	    void *handle;
 
-	    jfunc = get_plugin_function("json_get", &handle);
+	    jfunc = get_plugin_function("json_get");
 	    if (jfunc == NULL) {
 		p->err = E_FOPEN;
 	    } else {
 		ret->v.str = jfunc(l->v.str, r->v.str, NULL, &p->err);
-		close_plugin(handle);
 	    }
 	} else {
 	    p->err = E_DATA;
@@ -6915,21 +6913,16 @@ static gretl_matrix *get_density_matrix (const double *x,
 {
     gretl_matrix *(*kdfunc) (const double *, const DATASET *,
 			     double, gretlopt, int *);
-    void *handle;
-    gretl_matrix *m = NULL;
     gretlopt opt;
 
-    kdfunc = get_plugin_function("kernel_density_matrix", &handle);
+    kdfunc = get_plugin_function("kernel_density_matrix");
     if (kdfunc == NULL) {
 	*err = E_FOPEN;
 	return NULL;
     }
 
     opt = ctrl ? OPT_O : OPT_NONE; 
-    m = (*kdfunc)(x, dset, bws, opt, err);
-    close_plugin(handle);
-
-    return m;
+    return (*kdfunc)(x, dset, bws, opt, err);
 }
 
 static int aggregate_discrete_check (const int *list, const DATASET *dset)

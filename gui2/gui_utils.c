@@ -504,15 +504,13 @@ void audio_render_window (windata_t *vwin, int key)
 {
     int (*read_window_text) (GtkWidget *, GtkWidget *, int, gpointer,
 			     const DATASET *, int (*)());
-    void *handle;
 
     if (vwin == NULL) {
 	stop_talking();
 	return;
     }
 
-    read_window_text = gui_get_plugin_function("read_window_text", 
-					       &handle);
+    read_window_text = gui_get_plugin_function("read_window_text");
     if (read_window_text == NULL) {
         return;
     }
@@ -526,8 +524,6 @@ void audio_render_window (windata_t *vwin, int key)
 	(*read_window_text) (vwin->listbox, vwin->text, vwin->role, 
 			     vwin->data, dataset, &should_stop_talking);
     }
-
-    close_plugin(handle);
 }
 
 #endif
@@ -986,7 +982,6 @@ static int datafile_missing (const char *fname)
 
 int get_imported_data (char *fname, int ftype, int append)
 {
-    void *handle = NULL;
     PRN *prn = NULL;
     int list[4] = {3, 0, 0, 0};
     int *plist = NULL;
@@ -1004,36 +999,27 @@ int get_imported_data (char *fname, int ftype, int append)
     misc_importer = NULL;
 
     if (ftype == GRETL_XLS) {
-	ss_importer = gui_get_plugin_function("xls_get_data",
-					      &handle);
+	ss_importer = gui_get_plugin_function("xls_get_data");
 	plist = list;
     } else if (ftype == GRETL_XLSX) {
-	ss_importer = gui_get_plugin_function("xlsx_get_data",
-					      &handle);
+	ss_importer = gui_get_plugin_function("xlsx_get_data");
 	plist = list;
     } else if (ftype == GRETL_GNUMERIC) {
-	ss_importer = gui_get_plugin_function("gnumeric_get_data",
-					      &handle);
+	ss_importer = gui_get_plugin_function("gnumeric_get_data");
 	plist = list;
     } else if (ftype == GRETL_ODS) {
-	ss_importer = gui_get_plugin_function("ods_get_data",
-					      &handle);
+	ss_importer = gui_get_plugin_function("ods_get_data");
 	plist = list;
     } else if (ftype == GRETL_DTA) {
-	misc_importer = gui_get_plugin_function("dta_get_data",
-						&handle);
+	misc_importer = gui_get_plugin_function("dta_get_data");
     } else if (ftype == GRETL_SAV) {
-	misc_importer = gui_get_plugin_function("sav_get_data",
-						&handle);
+	misc_importer = gui_get_plugin_function("sav_get_data");
     } else if (ftype == GRETL_SAS) {
-	misc_importer = gui_get_plugin_function("xport_get_data",
-						&handle);
+	misc_importer = gui_get_plugin_function("xport_get_data");
      } else if (ftype == GRETL_JMULTI) {
-	misc_importer = gui_get_plugin_function("jmulti_get_data",
-						&handle);
+	misc_importer = gui_get_plugin_function("jmulti_get_data");
     } else if (ftype == GRETL_WF1) {
-	misc_importer = gui_get_plugin_function("wf1_get_data",
-						&handle);
+	misc_importer = gui_get_plugin_function("wf1_get_data");
     } else {
 	errbox(_("Unrecognized data type"));
 	err = 1;
@@ -1085,7 +1071,6 @@ int get_imported_data (char *fname, int ftype, int append)
 
  bailout:
 
-    close_plugin(handle);
     gretl_print_destroy(prn);
 
     return err;
@@ -4866,12 +4851,11 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
     gtk_widget_show(item);
 }
 
-void *gui_get_plugin_function (const char *funcname, 
-			       void **phandle)
+void *gui_get_plugin_function (const char *funcname) 
 {
     void *func;
 
-    func = get_plugin_function(funcname, phandle);
+    func = get_plugin_function(funcname);
     if (func == NULL) {
 	errbox(gretl_errmsg_get());
     }

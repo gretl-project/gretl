@@ -96,60 +96,61 @@ enum {
 struct plugin_info {
     int pnum;
     const char *pname;
+    void *handle;
 };
 
 struct plugin_function {
-    const char *func;
-    int pnum;
+    const char *fname;
+    int pidx;
 };
 
 struct plugin_info plugins[] = {
-    { 0,                 NULL },
-    { P_XLS_IMPORT,      "excel_import" },
-    { P_XLSX_IMPORT,     "xlsx_import" },
-    { P_GNUMERIC_IMPORT, "gnumeric_import" },
-    { P_ODS_IMPORT,      "ods_import" },
-    { P_JOHANSEN,        "johansen" },
-    { P_VIF,             "vif" },
-    { P_LEVERAGE,        "leverage" },
-    { P_MP_OLS,          "mp_ols" },
-    { P_PCA,             "pca" },
-    { P_PROGRESS_BAR,    "progress_bar" },
-    { P_RANGE_MEAN,      "range-mean" },
-    { P_STATS_TABLES,    "stats_tables" },
-    { P_SYSEST,          "sysest" },
-    { P_TRAMO_X12A,      "tramo-x12a" },
-    { P_NISTCHECK,       "nistcheck" },
-    { P_ARMA,            "arma" },
-    { P_ARMA_X12,        "arma_x12" },
-    { P_GARCH,           "garch" },
-    { P_AUDIO,           "audio" },
-    { P_URCDIST,         "urcdist" },
-    { P_KERNEL,          "kernel" },
-    { P_FRACTAL,         "fractals" },
-    { P_POISSON,         "poisson" },
-    { P_MAILER,          "mailer" },
-    { P_EVIEWS_IMPORT,   "eviews_import" },
-    { P_STATA_IMPORT,    "stata_import" },
-    { P_SPSS_IMPORT,     "spss_import" },
-    { P_SAS_IMPORT,      "sas_import" },
-    { P_JMULTI_IMPORT,   "jmulti_import" },
-    { P_ZIPFILE,         "gretlzip" },
-    { P_ARBOND,          "arbond" },
-    { P_HECKIT,          "heckit" },
-    { P_ODBC,            "odbc_import" },
-    { P_QUANTREG,        "quantreg" },
-    { P_INTREG,          "interval" },
-    { P_ANOVA,           "anova" },
-    { P_DURATION,        "duration" },
-    { P_INTERPOLATE,     "interpolate" },
-    { P_BIPROBIT,        "biprobit" },
-    { P_REPROBIT,        "reprobit" },
-    { P_PANURC,          "panurc" },
-    { P_JSON_GET,        "json_get" }
+    { 0,                 NULL,              NULL },
+    { P_XLS_IMPORT,      "excel_import",    NULL },
+    { P_XLSX_IMPORT,     "xlsx_import",     NULL },
+    { P_GNUMERIC_IMPORT, "gnumeric_import", NULL },
+    { P_ODS_IMPORT,      "ods_import",      NULL },
+    { P_JOHANSEN,        "johansen",        NULL },
+    { P_VIF,             "vif",             NULL },
+    { P_LEVERAGE,        "leverage",        NULL },
+    { P_MP_OLS,          "mp_ols",          NULL },
+    { P_PCA,             "pca",             NULL },
+    { P_PROGRESS_BAR,    "progress_bar",    NULL },
+    { P_RANGE_MEAN,      "range-mean",      NULL },
+    { P_STATS_TABLES,    "stats_tables",    NULL },
+    { P_SYSEST,          "sysest",          NULL },
+    { P_TRAMO_X12A,      "tramo-x12a",      NULL },
+    { P_NISTCHECK,       "nistcheck",       NULL },
+    { P_ARMA,            "arma",            NULL },
+    { P_ARMA_X12,        "arma_x12",        NULL },
+    { P_GARCH,           "garch",           NULL },
+    { P_AUDIO,           "audio",           NULL },
+    { P_URCDIST,         "urcdist",         NULL },
+    { P_KERNEL,          "kernel",          NULL },
+    { P_FRACTAL,         "fractals",        NULL },
+    { P_POISSON,         "poisson",         NULL },
+    { P_MAILER,          "mailer",          NULL },
+    { P_EVIEWS_IMPORT,   "eviews_import",   NULL },
+    { P_STATA_IMPORT,    "stata_import",    NULL },
+    { P_SPSS_IMPORT,     "spss_import",     NULL },
+    { P_SAS_IMPORT,      "sas_import",      NULL },
+    { P_JMULTI_IMPORT,   "jmulti_import",   NULL },
+    { P_ZIPFILE,         "gretlzip",        NULL },
+    { P_ARBOND,          "arbond",          NULL },
+    { P_HECKIT,          "heckit",          NULL },
+    { P_ODBC,            "odbc_import",     NULL },
+    { P_QUANTREG,        "quantreg",        NULL },
+    { P_INTREG,          "interval",        NULL },
+    { P_ANOVA,           "anova",           NULL },
+    { P_DURATION,        "duration",        NULL },
+    { P_INTERPOLATE,     "interpolate",     NULL },
+    { P_BIPROBIT,        "biprobit",        NULL },
+    { P_REPROBIT,        "reprobit",        NULL },
+    { P_PANURC,          "panurc",          NULL },
+    { P_JSON_GET,        "json_get",        NULL }
 };  
 
-struct plugin_function plugin_functions[] = { 
+struct plugin_function plugin_table[] = { 
     /* data importers */
     { "xls_get_data",      P_XLS_IMPORT },
     { "xlsx_get_data",     P_XLSX_IMPORT },
@@ -280,18 +281,42 @@ struct plugin_function plugin_functions[] = {
     { NULL, 0 }
 };
 
-static const char *get_plugin_name_for_function (const char *func)
+static GHashTable *gretl_plugin_hash_init (void)
 {
-    int i, idx = 0;
+    GHashTable *ht;
+    int i;
 
-    for (i=0; plugin_functions[i].pnum > 0; i++) {
-	if (!strcmp(func, plugin_functions[i].func)) {
-	    idx = plugin_functions[i].pnum;
-	    break;
-	}
+    ht = g_hash_table_new(g_str_hash, g_str_equal);
+
+    for (i=0; plugin_table[i].fname != NULL; i++) {
+	g_hash_table_insert(ht, (gpointer) plugin_table[i].fname, 
+			    GINT_TO_POINTER(plugin_table[i].pidx));
     }
 
-    return plugins[idx].pname;
+    return ht;
+}
+
+static int plugin_index_lookup (const char *fname)
+{
+    static GHashTable *pht;
+    gpointer p;
+ 
+    if (fname == NULL) {
+	/* cleanup signal */
+	if (pht != NULL) {
+	    g_hash_table_destroy(pht);
+	    pht = NULL;
+	}
+	return 0;
+    }
+
+    if (pht == NULL) {
+	pht = gretl_plugin_hash_init();
+    }
+    
+    p = g_hash_table_lookup(pht, fname);
+
+    return p == NULL ? 0 : GPOINTER_TO_INT(p);
 }
 
 /**
@@ -356,7 +381,99 @@ void *gretl_dlsym (void *handle, const char *name)
 # define PLUGIN_EXT ".so"
 #endif
 
-static void *get_plugin_handle (const char *plugin)
+static void *get_plugin_handle_by_index (int idx)
+{
+    void *handle = plugins[idx].handle;
+
+    if (handle == NULL) {
+	/* not opened yet */
+	char pluginpath[MAXLEN];
+
+	strcpy(pluginpath, gretl_lib_path());
+#ifdef WIN32
+	append_dir(pluginpath, "plugins");
+#endif
+	strcat(pluginpath, plugins[idx].pname);
+	strcat(pluginpath, PLUGIN_EXT);
+
+	handle = gretl_dlopen(pluginpath, 0);
+	plugins[idx].handle = handle;
+    }
+
+    return handle;
+}
+
+static void *get_function_address (void *handle,
+				   const char *name)
+{
+    void *funp;
+
+#ifdef WIN32
+    funp = GetProcAddress(handle, name);
+#else
+    funp = dlsym(handle, name);
+    if (funp == NULL) {
+	char munged[64];
+
+	sprintf(munged, "_%s", name);
+	funp = dlsym(handle, munged);
+	if (funp == NULL) {
+	    fprintf(stderr, "%s\n", dlerror());
+	}
+    }
+#endif   
+
+    return funp;
+}
+
+void plugins_cleanup (void)
+{
+    int i, n = sizeof(plugins) / sizeof(plugins[0]);
+
+    for (i=1; i<n; i++) {
+	if (plugins[i].handle != NULL) {
+	    close_plugin(plugins[i].handle);
+	    plugins[i].handle = NULL;
+	}
+    }
+
+    plugin_index_lookup(NULL);
+}
+
+/**
+ * get_plugin_function:
+ * @funcname: name of function to access.
+ *
+ * Looks up @funcname in gretl's internal plugin table and
+ * attempts to open the plugin object file that offers the
+ * given function.
+ *
+ * Returns: function pointer, or NULL on failure.
+ */
+
+void *get_plugin_function (const char *funcname)
+{
+    void *funp = NULL;
+    int idx;
+
+    idx = plugin_index_lookup(funcname);
+
+    if (idx > 0) {
+	void *handle = get_plugin_handle_by_index(idx);
+
+	if (handle != NULL) {
+	    funp = get_function_address(handle, funcname);
+	}
+    }
+
+    if (funp == NULL) {
+	gretl_errmsg_set(_("Couldn't load plugin function"));
+    }
+
+    return funp;
+}
+
+static void *get_plugin_handle_by_name (const char *pname)
 {
     char pluginpath[MAXLEN];
 
@@ -364,69 +481,10 @@ static void *get_plugin_handle (const char *plugin)
 #ifdef WIN32
     append_dir(pluginpath, "plugins");
 #endif
-    strcat(pluginpath, plugin);
+    strcat(pluginpath, pname);
     strcat(pluginpath, PLUGIN_EXT);
 
     return gretl_dlopen(pluginpath, 0);
-}
-
-/**
- * get_plugin_function:
- * @funcname: name of function to access.
- * @handle: location to receive handle to shared object.
- *
- * Looks up @funcname in gretl's internal plugin table and
- * attempts to open the plugin object file that offers the
- * given function. If successful, the @handle argument 
- * receives the pointer obtained from dlopen() or 
- * equivalent, and this can be used to close the plugin
- * once the caller is finished with it; see close_plugin().
- *
- * Returns: function pointer, or NULL on failure.
- */
-
-void *get_plugin_function (const char *funcname, void **handle)
-{
-    void *funp;
-    const char *plugname;
-
-    plugname = get_plugin_name_for_function(funcname);
-    if (plugname == NULL) {
-	gretl_errmsg_set(_("Couldn't load plugin function"));
-	fprintf(stderr, "plugname == NULL for '%s'\n", funcname);
-	*handle = NULL;
-	return NULL;
-    }
-
-    *handle = get_plugin_handle(plugname);
-    if (*handle == NULL) {
-	fprintf(stderr, "handle == NULL for '%s'\n", plugname);
-	return NULL;
-    }
-
-#ifdef WIN32
-    funp = GetProcAddress(*handle, funcname);
-#else
-    funp = dlsym(*handle, funcname);
-    if (funp == NULL) {
-	char munged[64];
-
-	sprintf(munged, "_%s", funcname);
-	funp = dlsym(*handle, munged);
-	if (funp == NULL) {
-	    fprintf(stderr, "%s\n", dlerror());
-	}
-    }
-#endif   
-
-    if (funp == NULL) {
-	gretl_errmsg_set(_("Couldn't load plugin function"));
-	fprintf(stderr, "plugname = '%s' for function '%s'\n", plugname, funcname);
-	close_plugin(*handle);
-	*handle = NULL;
-    }
-
-    return funp;
 }
 
 void *get_packaged_C_function (const char *pkgname,
@@ -435,25 +493,12 @@ void *get_packaged_C_function (const char *pkgname,
 {
     void *funp;
 
-    *handle = get_plugin_handle(pkgname);
+    *handle = get_plugin_handle_by_name(pkgname);
     if (*handle == NULL) {
 	return NULL;
     }
 
-#ifdef WIN32
-    funp = GetProcAddress(*handle, funcname);
-#else
-    funp = dlsym(*handle, funcname);
-    if (funp == NULL) {
-	char munged[64];
-
-	sprintf(munged, "_%s", funcname);
-	funp = dlsym(*handle, munged);
-	if (funp == NULL) {
-	    fprintf(stderr, "%s\n", dlerror());
-	}
-    }
-#endif   
+    funp = get_function_address(*handle, funcname);
 
     if (funp == NULL) {
 	gretl_errmsg_set(_("Couldn't load plugin function"));
