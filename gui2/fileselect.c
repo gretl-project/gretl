@@ -750,63 +750,63 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 
 static void filesel_add_filter (GtkWidget *filesel,
 				const char *desc, 
-				const char *pat,
-				int *maxlen)
+				const char *pat)
 {
     GtkFileFilter *filt = gtk_file_filter_new();
 
-    if (maxlen != NULL) {
-	int n = g_utf8_strlen(desc, -1);
-	
-	if (n > *maxlen) {
-	    *maxlen = n;
-	}
-    }
-
     gtk_file_filter_set_name(filt, _(desc));
     gtk_file_filter_add_pattern(filt, pat);
-
     maybe_upcase_filter_pattern(filt, pat);
 
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
 }
 
+static void filesel_add_native_data_filter (GtkWidget *filesel)
+{
+    const char *desc = N_("Gretl datafiles (*.gdt, *.gdtb)");
+    GtkFileFilter *filt = gtk_file_filter_new();
+
+    gtk_file_filter_set_name(filt, _(desc));
+    gtk_file_filter_add_pattern(filt, "*.gdt");
+    gtk_file_filter_add_pattern(filt, "*.gdtb");
+
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
+}
+
 static void filesel_set_filters (GtkWidget *filesel, int action,
-				 FselDataSrc src, gpointer data,
-				 int *maxlen)
+				 FselDataSrc src, gpointer data)
 {
     if (action == OPEN_DATA || action == APPEND_DATA) {
-	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt", maxlen);
-	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb", maxlen);
-	filesel_add_filter(filesel, N_("CSV files (*.csv)"), "*.csv", maxlen);
-	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt", maxlen);
-	filesel_add_filter(filesel, N_("Gnumeric files (*.gnumeric)"), "*.gnumeric", maxlen);
-	filesel_add_filter(filesel, N_("Open Document files (*.ods)"), "*.ods", maxlen);
-	filesel_add_filter(filesel, N_("Excel files (*.xls)"), "*.xls", maxlen);
-	filesel_add_filter(filesel, N_("Excel files (*.xlsx)"), "*.xlsx", maxlen);
-	filesel_add_filter(filesel, N_("Stata files (*.dta)"), "*.dta", maxlen);
-	filesel_add_filter(filesel, N_("Eviews files (*.wf1)"), "*.wf1", maxlen);
-	filesel_add_filter(filesel, N_("SPSS files (*.sav)"), "*.sav", maxlen);
-	filesel_add_filter(filesel, N_("SAS xport files (*.xpt)"), "*.xpt", maxlen);
-	filesel_add_filter(filesel, N_("Octave files (*.m)"), "*.m", maxlen);
-	filesel_add_filter(filesel, N_("JMulTi files (*.dat)"), "*.dat", maxlen);
-	filesel_add_filter(filesel, N_("all files (*.*)"), "*", maxlen);
+	filesel_add_native_data_filter(filesel);
+	filesel_add_filter(filesel, N_("CSV files (*.csv)"), "*.csv");
+	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt");
+	filesel_add_filter(filesel, N_("Gnumeric files (*.gnumeric)"), "*.gnumeric");
+	filesel_add_filter(filesel, N_("Open Document files (*.ods)"), "*.ods");
+	filesel_add_filter(filesel, N_("Excel files (*.xls)"), "*.xls");
+	filesel_add_filter(filesel, N_("Excel files (*.xlsx)"), "*.xlsx");
+	filesel_add_filter(filesel, N_("Stata files (*.dta)"), "*.dta");
+	filesel_add_filter(filesel, N_("Eviews files (*.wf1)"), "*.wf1");
+	filesel_add_filter(filesel, N_("SPSS files (*.sav)"), "*.sav");
+	filesel_add_filter(filesel, N_("SAS xport files (*.xpt)"), "*.xpt");
+	filesel_add_filter(filesel, N_("Octave files (*.m)"), "*.m");
+	filesel_add_filter(filesel, N_("JMulTi files (*.dat)"), "*.dat");
+	filesel_add_filter(filesel, N_("all files (*.*)"), "*");
     } else if (action == OPEN_SCRIPT) {
-	filesel_add_filter(filesel, N_("gretl script files (*.inp)"), "*.inp", maxlen);
-	filesel_add_filter(filesel, N_("GNU R files (*.R)"), "*.R", maxlen);
-	filesel_add_filter(filesel, N_("gnuplot files (*.plt)"), "*.plt", maxlen);
-	filesel_add_filter(filesel, N_("GNU Octave files (*.m)"), "*.m", maxlen);
-	filesel_add_filter(filesel, N_("Python files (*.py)"), "*.py", maxlen);
+	filesel_add_filter(filesel, N_("gretl script files (*.inp)"), "*.inp");
+	filesel_add_filter(filesel, N_("GNU R files (*.R)"), "*.R");
+	filesel_add_filter(filesel, N_("gnuplot files (*.plt)"), "*.plt");
+	filesel_add_filter(filesel, N_("GNU Octave files (*.m)"), "*.m");
+	filesel_add_filter(filesel, N_("Python files (*.py)"), "*.py");
 	if (ox_support) {
-	    filesel_add_filter(filesel, N_("Ox files (*.ox)"), "*.ox", maxlen);
+	    filesel_add_filter(filesel, N_("Ox files (*.ox)"), "*.ox");
 	}
     } else if (action == OPEN_LABELS || action == OPEN_BARS) {
-	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt", maxlen);
-	filesel_add_filter(filesel, N_("all files (*.*)"), "*", maxlen);
+	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt");
+	filesel_add_filter(filesel, N_("all files (*.*)"), "*");
     } else if (action == SAVE_DATA || action == SAVE_DATA_AS ||
 	       action == SAVE_BOOT_DATA) {
-	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt", maxlen);
-	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb", maxlen);
+	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt");
+	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb");
     } else {
 	GtkFileFilter *filter = get_file_filter(action, data);
 
@@ -820,31 +820,6 @@ static void remember_folder (GtkFileChooser *chooser, char *savedir)
 
     strcpy(savedir, folder);
     g_free(folder);
-}
-
-/* this is a hack to work around breakage in GTK 2.24.6 */
-
-static void resize_combo (GtkWidget *w, gpointer data)
-{
-    gint *ivals = data;
-
-    if (ivals[0]) {
-	return;
-    } else if (GTK_IS_COMBO_BOX(w)) {
-	gtk_widget_set_size_request(w, ivals[1] * 8, -1);
-	ivals[0] = 1;
-    } else if (GTK_IS_CONTAINER(w)) {
-	gtk_container_foreach(GTK_CONTAINER(w), resize_combo,
-			      data);
-    } 
-}
-
-static void fix_filter_combo_size (GtkWidget *filesel, int maxlen)
-{
-    GtkWidget *ca = gtk_dialog_get_content_area(GTK_DIALOG(filesel));
-    gint ivals[] = { 0, maxlen };
-
-    gtk_container_foreach(GTK_CONTAINER(ca), resize_combo, ivals);
 }
 
 static void record_compress_level (GtkWidget *b, gpointer p)
@@ -892,16 +867,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
     GtkFileChooserAction fsel_action;
     const gchar *okstr;
     int remember = get_keep_folder();
-    int max_filter_len = 0;
-    int *lenptr = NULL;
     gint response;
-
-    if (gtk_major_version == 2 &&
-	gtk_minor_version == 24 &&
-	gtk_micro_version == 6) {
-	/* broken GTK version, 2.24.6 */
-	lenptr = &max_filter_len;
-    }
 
     if (SET_DIR_ACTION(action)) {
 	fsel_action = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
@@ -958,15 +924,11 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), startdir);
     } else {
 	if (action != SET_PROG && action != SET_OTHER) {
-	    filesel_set_filters(filesel, action, src, data, lenptr);
+	    filesel_set_filters(filesel, action, src, data);
 	}
 	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
 	filesel_maybe_set_current_name(GTK_FILE_CHOOSER(filesel), action,
 				       src, data);
-    }
-
-    if (max_filter_len > 0) {
-	fix_filter_combo_size(filesel, max_filter_len);
     }
 
     response = gtk_dialog_run(GTK_DIALOG(filesel));
