@@ -845,6 +845,7 @@ enable_build_doc
 enable_quiet_build
 enable_swap_ends
 enable_xdg
+enable_json
 enable_xdg_utils
 enable_pkgbuild
 enable_gnuplot_checks
@@ -1543,6 +1544,7 @@ Optional Features:
   --enable-quiet-build    Enable quiet building
   --enable-swap-ends      Build FRED database with swapped endianness
   --disable-xdg           Don't Install XDG files
+  --disable-json          Don't try to include JSON support
   --enable-xdg-utils      Use xdg-utils for installing XDG files [default=auto]
   --enable-pkgbuild       For building relocatable package (e.g. OS X)
   --disable-gnuplot-checks do not run checks for gnuplot
@@ -2753,6 +2755,7 @@ fake_gtkspinner="yes"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
+try_json_glib="yes"
 have_json_glib="no"
 try_odbc="no"
 have_odbc="no"
@@ -6406,6 +6409,15 @@ if test "${enable_xdg+set}" = set; then :
 then
   use_xdg=no
   try_xdg_utils=no
+fi
+fi
+
+
+# Check whether --enable-json was given.
+if test "${enable_json+set}" = set; then :
+  enableval=$enable_json; if test "$enableval" = "no"
+then
+  try_json_glib=no
 fi
 fi
 
@@ -17674,7 +17686,8 @@ $as_echo "yes" >&6; }
 fi
 fi
 
-if test "$PKG_CONFIG" != "no" ; then
+if test "$try_json_glib" = "yes" ; then
+   if test "$PKG_CONFIG" != "no" ; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JSON_GLIB" >&5
@@ -17746,6 +17759,16 @@ else
 $as_echo "yes" >&6; }
 	have_json_glib="yes"
 fi
+   fi
+   if test $have_json_glib = "no" ; then
+echo "
+The json-glib-1.0 library was not found, or the version found
+was not new enough. While we recommend including JSON support
+you can disable this by using the option --disable-json when
+running configure.
+"
+      exit 1
+   fi
 fi
 
 if test "$prefer_gtk2" = "yes" ; then

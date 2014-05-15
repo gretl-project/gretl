@@ -57,6 +57,7 @@ fake_gtkspinner="yes"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
+try_json_glib="yes"
 have_json_glib="no"
 try_odbc="no"
 have_odbc="no"
@@ -137,6 +138,13 @@ AC_ARG_ENABLE(xdg,
 then
   use_xdg=no
   try_xdg_utils=no
+fi])
+
+AC_ARG_ENABLE(json,
+[  --disable-json          Don't try to include JSON support],
+[if test "$enableval" = "no"
+then
+  try_json_glib=no
 fi])
 
 AC_ARG_ENABLE(xdg-utils,
@@ -609,14 +617,29 @@ dnl
 dnl glib 2.0 (needed even if not building GUI; we need 2.14 for regexp functions)
 dnl
 if test "$PKG_CONFIG" != "no" ; then
-   PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.14.0, have_glib2="yes", have_glib2="no")
+   PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.14.0,
+   have_glib2="yes",
+   have_glib2="no")
 fi
 
 dnl
-dnl see if we have json-glib-1.0
+dnl see if we have json-glib-1.0 (not a hard dependency, yet)
 dnl
-if test "$PKG_CONFIG" != "no" ; then
-   PKG_CHECK_MODULES(JSON_GLIB, json-glib-1.0 >= 0.14, have_json_glib="yes", have_json_glib="no")
+if test "$try_json_glib" = "yes" ; then
+   if test "$PKG_CONFIG" != "no" ; then
+      PKG_CHECK_MODULES(JSON_GLIB, json-glib-1.0 >= 0.14,
+      have_json_glib="yes", 
+      have_json_glib="no")
+   fi
+   if test $have_json_glib = "no" ; then
+echo "
+The json-glib-1.0 library was not found, or the version found
+was not new enough. While we recommend including JSON support
+you can disable this by using the option --disable-json when
+running configure.
+"
+      exit 1
+   fi 
 fi
 
 dnl
