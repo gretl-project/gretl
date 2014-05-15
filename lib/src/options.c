@@ -805,16 +805,32 @@ static int stored_opt_ci;
 
 int set_options_for_command (gretlopt opt, const char *cmdword)
 {
-    stored_opt = opt;
-    stored_opt_ci = gretl_command_number(cmdword);
-    fprintf(stderr, "storing opt %d for ci %d\n", opt, stored_opt_ci);
-    return 0;
+    int ci = gretl_command_number(cmdword);
+    int err = 0;
+
+    if (ci == 0) {
+	gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
+			     cmdword);
+	err = E_DATA;
+    } else if (opt == 0) {
+	err = E_ARGS;
+    } else {
+	stored_opt = opt;
+	stored_opt_ci = gretl_command_number(cmdword);
+#if OPTDEBUG
+	fprintf(stderr, "storing opt %d for ci %d\n", opt, stored_opt_ci);
+#endif
+    }
+
+    return err;
 }
 
 static void maybe_get_stored_options (int ci, gretlopt *popt)
 {
     if (ci == stored_opt_ci) {
+#if OPTDEBUG
 	fprintf(stderr, "ci %d: got stored opt %d\n", ci, stored_opt);
+#endif
 	*popt |= stored_opt;
 	stored_opt = 0;
 	stored_opt_ci = 0;

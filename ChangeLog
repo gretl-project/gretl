@@ -1,5 +1,6 @@
 version 1.9.91, in progress
 - Add new functions: curl(), nlines()
+- Add new command "setopt" for pre-setting of command options
 - Hush some gcc-4.9.0 warnings
 - Fix broken encoding of German translation
 - Fix bug in OS X (quartz) package: GDK could lose track of its

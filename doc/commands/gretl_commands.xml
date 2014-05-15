@@ -10730,6 +10730,49 @@
       
   </command>
 
+  <command name="setopt" section="Programming" context="cli"
+    label="Set options for the next command">
+
+    <usage>
+      <arguments>
+	<argument>cmdword</argument>
+	<argument>options</argument>
+      </arguments>
+      <examples>
+        <example>setopt mle --hessian</example>
+        <example>setopt ols --quiet</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	This command enables the pre-setting of options for the next
+	command. Ordinarily this is not required, but it may be useful
+	for the writers of functions when they want an argument to
+	their function to influence the behavior of a command within
+	the function.
+      </para>
+      <para>
+	For example, suppose a hansl function has a boolean
+	<quote><lit>quiet</lit></quote> parameter, and when the caller
+	supplies a non-zero argument the results of a certain OLS
+	regression executed within the function should not be printed.
+	In that case one can write:
+      </para>
+      <code>
+	if quiet
+	  setopt ols --quiet
+	endif
+	ols ...
+      </code>
+      <para>
+	Note that options set in this way are not persistent: they
+	apply only to the following command, assuming it matches
+	the <repl>cmdword</repl> argument.
+      </para>
+    </description> 
+  </command>
+
   <command name="shell" section="Utilities" 
     label="Execute shell commands" context="cli">
 
