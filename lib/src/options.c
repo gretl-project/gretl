@@ -1439,16 +1439,6 @@ static int end_block_ci (const char *s)
     return END;
 }
 
-#define ar1_alias(s) (!strcmp(s, "corc") || \
-		      !strcmp(s, "hilu") || \
-		      !strcmp(s, "pwe"))
-
-#define ols_alias(s) (!strcmp(s, "hccm"))
-
-#define smpl_alias(s) (!strcmp(s, "sample"))
-
-#define modtest_alias(s) (!strcmp(s, "lmtest"))
-
 /**
  * get_gretl_options:
  * @line: command line to parse.
@@ -1486,19 +1476,14 @@ gretlopt get_gretl_options (char *line, int *err)
     if (!strcmp(cmdword, "catch")) {
 	*cmdword = '\0';
 	get_cmdword(line + 6, cmdword);
-    }
+    } else if (!strcmp(cmdword, "setopt")) {
+	*cmdword = '\0';
+	get_cmdword(line + 7, cmdword);
+    }	
 
     if (!strcmp(cmdword, "end")) {
 	endblock = 1;
 	ci = end_block_ci(line);
-    } else if (ar1_alias(cmdword)) {
-	ci = AR1;
-    } else if (smpl_alias(cmdword)) {
-	ci = SMPL;
-    } else if (ols_alias(cmdword)) {
-	ci = OLS;
-    } else if (modtest_alias(cmdword)) {
-	ci = MODTEST;
     } else {
 	ci = gretl_command_number(cmdword);
     }

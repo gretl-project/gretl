@@ -779,7 +779,7 @@ static int proto_length (const char *s)
  * of the file on the server.
  *
  * Retrieves the specified resource and writes it to
- * @localname, if possible. Only handles HTTP requests.
+ * @localname, if possible.
  *
  * Returns: 0 on success, non-zero on failure.
  */

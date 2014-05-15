@@ -4953,6 +4953,18 @@
       </description>
     </function>
 
+    <function name="nlines" section="strings" output="scalar">
+      <fnargs>
+    <fnarg type="string">buf</fnarg>
+      </fnargs>    
+      <description>
+    <para>
+      Returns a count of the complete lines (that is, lines that
+      end with the newline character) in <argname>buf</argname>.
+    </para>
+      </description>
+    </function>
+
     <function name="nobs" section="stats" output="int">
       <fnargs>
     <fnarg type="series">y</fnarg>

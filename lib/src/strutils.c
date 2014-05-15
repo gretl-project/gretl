@@ -1053,6 +1053,30 @@ int count_fields (const char *s, const char *sep)
 }
 
 /**
+ * count_lines:
+ * @s: the string to process.
+ *
+ * Returns: the number of complete lines (lines ending
+ * with the newline character) in @s.
+ */
+
+int count_lines (const char *s)
+{
+    int nl = 0;
+
+    if (s != NULL) {
+	while (*s) {
+	    if (*s == '\n') {
+		nl++;
+	    }
+	    s++;
+	}
+    }
+
+    return nl;
+}
+
+/**
  * shift_string_left:
  * @str: the string to process.
  * @move: the number of places to shift.

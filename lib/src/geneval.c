@@ -4487,6 +4487,8 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	} else if (f == F_STRLEN) {
 	    /* ret->v.xval = strlen(s); */
 	    ret->v.xval = g_utf8_strlen(s, -1);
+	} else if (f == F_NLINES) {
+	    ret->v.xval = count_lines(s);
 	} else if (f == F_REMOVE) {
 	    ret->v.xval = gretl_remove(s);
 	} else if (f == F_TYPEOF) {
@@ -10784,6 +10786,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISSTRING:
     case F_ISNULL:
     case F_STRLEN:
+    case F_NLINES:
     case F_REMOVE:
     case F_TYPEOF:
 	if (l->t == STR) {

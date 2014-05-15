@@ -279,6 +279,7 @@ enum {
     F_MPI_RECV,
     F_EASTER,
     F_CURL,
+    F_NLINES,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
