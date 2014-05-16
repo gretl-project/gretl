@@ -644,7 +644,9 @@ char *get_built_in_string_by_name (const char *name)
 
     for (i=0; i<n; i++) {
 	if (!strcmp(name, built_ins[i].name)) {
-	    return built_ins[i].s;
+	    char *s = built_ins[i].s;
+
+	    return s != NULL ? s : "";
 	}
     }
 

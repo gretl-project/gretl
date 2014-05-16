@@ -470,11 +470,11 @@ printf "ma1 term = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
 \subsection{Indexed loop examples}
 
 Example \ref{loop-panel-script} shows an indexed loop in which the
-\cmd{smpl} is keyed to the index variable \verb+i+.  Suppose we have a
-panel dataset with observations on a number of hospitals for the years
-1991 to 2000 (where the year of the observation is indicated by a
-variable named \verb+year+).  We restrict the sample to each of these
-years in turn and print cross-sectional summary statistics for
+\cmd{smpl} is keyed to the index variable \texttt{t}.  Suppose we have
+a panel dataset with observations on a number of hospitals for the
+years 1991 to 2000 (where the year of the observation is indicated by
+a variable named \texttt{year}).  We restrict the sample to each of
+these years in turn and print cross-sectional summary statistics for
 variables 1 through 4.
 
 \begin{script}[htbp]
@@ -482,8 +482,8 @@ variables 1 through 4.
   \label{loop-panel-script}
 \begin{scode}
 open hospitals.gdt
-loop i=1991..2000
-  smpl (year=i) --restrict --replace
+loop t=1991..2000
+  smpl year==t --restrict --replace
   summary 1 2 3 4
 endloop
 \end{scode}

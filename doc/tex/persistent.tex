@@ -588,6 +588,10 @@ are as shown in Table~\ref{tab:pred-strings}.
 \label{tab:pred-strings}
 \end{table}
 
+To access these as ordinary string variables, prepend a dollar sign
+(as in \verb|$dotdir|); to use them in string-substitution mode,
+prepend the at-sign (\verb|@dotdir|).
+
 \subsection{Reading strings from the environment}
 
 In addition, it is possible to read into gretl's named strings,
@@ -600,7 +604,7 @@ variable as its argument.  For example:
 Generated string user
 ? string home = getenv("HOME")
 Generated string home
-? print "@user's home directory is @home"
+? printf "%s's home directory is %s\n", user, home
 cottrell's home directory is /home/cottrell
 \end{code}
 %
@@ -636,17 +640,10 @@ The \textsl{filename} field may be given as a string variable.  For
 example
 %
 \begin{code}
-? sprintf fname "%s/QNC.rts", x12adir
+? sprintf fname "%s/QNC.rts", $x12adir
 Generated string fname
 ? string foo = readfile(fname)
 Generated string foo
-\end{code}
-%
-The above could also be accomplished using the ``macro'' variant
-of a string variable, provided it is placed in quotation marks: 
-%
-\begin{code}
-string foo = readfile("@x12adir/QNC.rts")
 \end{code}
 
 \subsection{The \texttt{strstr} function}
