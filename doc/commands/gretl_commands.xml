@@ -10731,7 +10731,7 @@
   </command>
 
   <command name="setopt" section="Programming" context="cli"
-    label="Set options for the next command">
+    label="Set options for next command">
 
     <usage>
       <arguments>

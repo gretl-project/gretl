@@ -599,12 +599,6 @@ static built_in_string built_ins[] = {
     { "pkgdir",   NULL }
 };
 
-#ifdef WIN32
-static built_in_string dsep = { "dirsep", "\\" };
-#else
-static built_in_string dsep = { "dirsep", "/" };
-#endif
-
 void builtin_strings_cleanup (void)
 {
     int i, n = sizeof built_ins / sizeof built_ins[0];
@@ -649,15 +643,11 @@ void gretl_insert_builtin_string (const char *name, const char *s)
 
 char *get_built_in_string_by_name (const char *name)
 {
-    if (!strcmp(name, "dirsep")) {
-	return dsep.s;
-    } else {
-	int i, n = sizeof built_ins / sizeof built_ins[0];
+    int i, n = sizeof built_ins / sizeof built_ins[0];
 
-	for (i=0; i<n; i++) {
-	    if (!strcmp(name, built_ins[i].name)) {
-		return built_ins[i].s;
-	    }
+    for (i=0; i<n; i++) {
+	if (!strcmp(name, built_ins[i].name)) {
+	    return built_ins[i].s;
 	}
     }
 
