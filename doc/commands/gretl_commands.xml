@@ -10748,16 +10748,16 @@
       <para>
 	This command enables the pre-setting of options for the next
 	command. Ordinarily this is not required, but it may be useful
-	for the writers of functions when they want an argument to
-	their function to influence the behavior of a command within
-	the function.
+	for the writers of hansl functions when they wish to make
+	certain command options conditional on the value of an
+	argument supplied by the caller.
       </para>
       <para>
-	For example, suppose a hansl function has a boolean
-	<quote><lit>quiet</lit></quote> parameter, and when the caller
-	supplies a non-zero argument the results of a certain OLS
-	regression executed within the function should not be printed.
-	In that case one can write:
+	For example, suppose a function offers a boolean
+	<quote><lit>quiet</lit></quote> switch, whose intended effect
+	is to suppress the printing of results from a certain
+	regression executed within the function. In that case one
+	might write:
       </para>
       <code>
 	if quiet
@@ -10766,9 +10766,20 @@
 	ols ...
       </code>
       <para>
-	Note that options set in this way are not persistent: they
-	apply only to the following command, assuming it matches
-	the <repl>cmdword</repl> argument.
+	The <opt>quiet</opt> option will then be appended to
+	<lit>ols</lit> if and only if the variable <lit>quiet</lit>
+	has a non-zero value.
+      </para>
+      <para>
+	Two points should be noted regarding options set in this way.
+	First, they are compounded with any options attached to the
+	target command directly. So for example one might append the
+	<opt>hessian</opt> option to an <lit>mle</lit> command
+	unconditionally but use <lit>setopt</lit> to add
+	<opt>quiet</opt> conditionally. Second, the effects of
+	<lit>setopt</lit> are not persistent: they apply only to the
+	following command, assuming it matches the
+	<repl>cmdword</repl> argument.
       </para>
     </description> 
   </command>
