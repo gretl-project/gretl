@@ -928,6 +928,8 @@ int is_gretl_accessor (const char *s)
 
 static void look_up_dollar_word (const char *s, parser *p)
 {
+    char *bstr;
+
     if ((p->idnum = dvar_lookup(s)) > 0) {
 	p->sym = DVAR;
     } else if ((p->idnum = const_lookup(s)) > 0) {
@@ -940,6 +942,9 @@ static void look_up_dollar_word (const char *s, parser *p)
 	}
     } else if ((p->idnum = mvar_lookup(s)) > 0) {
 	p->sym = MVAR;
+    } else if ((bstr = get_built_in_string_by_name(s+1))) {
+	p->sym = STR;
+	p->idstr = gretl_strdup(bstr);
     } else {
 	undefined_symbol_error(s, p);
     }
@@ -1007,7 +1012,6 @@ static void look_up_word (const char *s, parser *p)
 		p->sym = DUM;
 	    } else {
 		GretlType vtype = 0;
-		char *bstr;
 
 		if ((p->idnum = current_series_index(p->dset, s)) >= 0) {
 		    p->sym = UVEC;
@@ -1030,10 +1034,6 @@ static void look_up_word (const char *s, parser *p)
 			p->sym = USTR;
 		    }
 		    p->idstr = gretl_strdup(s);
-		} else if ((bstr = get_built_in_string_by_name(s))) {
-		    /* FIXME should use $-accessors? */
-		    p->sym = STR;
-		    p->idstr = gretl_strdup(bstr);
 		} else if (gretl_get_object_by_name(s)) {
 		    p->sym = UOBJ;
 		    p->idstr = gretl_strdup(s);
