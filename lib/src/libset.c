@@ -24,7 +24,6 @@
 #include "usermat.h"
 #include "uservar.h"
 #include "matrix_extra.h"
-#include "gretl_string_table.h"
 #include "gretl_func.h"
 
 #ifdef _OPENMP
@@ -1195,8 +1194,6 @@ void shelldir_init (const char *s)
 	    *state->shelldir = '\0';
 	} 
     }
-
-    gretl_insert_builtin_string("shelldir", state->shelldir);
 }
 
 static int set_shelldir (const char *s)
@@ -1209,7 +1206,6 @@ static int set_shelldir (const char *s)
 
     if (*s == '\0') {
 	*state->shelldir = '\0';
-	gretl_insert_builtin_string("shelldir", state->shelldir);
     } else if (*s == '"') {
 	s++;
 	len = gretl_charpos('"', s);
@@ -1253,7 +1249,6 @@ static int set_shelldir (const char *s)
 
 	if (!err) {
 	    strcpy(state->shelldir, test);
-	    gretl_insert_builtin_string("shelldir", state->shelldir);
 	}
     }
 

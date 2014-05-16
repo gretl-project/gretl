@@ -593,9 +593,6 @@ static built_in_string built_ins[] = {
     { "tramo",    NULL },
     { "tramodir", NULL },
     { "seats",    NULL },
-    { "shelldir", NULL },
-    { "Rbin",     NULL },
-    { "Rlib",     NULL },
     { "pkgdir",   NULL }
 };
 

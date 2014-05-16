@@ -2017,8 +2017,6 @@ static void set_builtin_path_strings (int update)
     gretl_insert_builtin_string("gnuplot",  paths.gnuplot);
     gretl_insert_builtin_string("x12a",     paths.x12a);
     gretl_insert_builtin_string("tramo",    paths.tramo);
-    gretl_insert_builtin_string("Rbin",     paths.rbinpath);
-    gretl_insert_builtin_string("Rlib",     paths.rlibpath);
 
     if (!update) {
 	/* these only have to be done once */
