@@ -10766,9 +10766,9 @@
 	ols ...
       </code>
       <para>
-	The <opt>quiet</opt> option will then be appended to
-	<lit>ols</lit> if and only if the variable <lit>quiet</lit>
-	has a non-zero value.
+	The <opt>quiet</opt> option will then be applied to the
+	<lit>ols</lit> command if and only if the variable
+	<lit>quiet</lit> has a non-zero value.
       </para>
       <para>
 	Two points should be noted regarding options set in this way.
