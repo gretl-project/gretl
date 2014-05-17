@@ -35,4 +35,6 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
 double get_urc_pvalue (double tau, int n, int niv, 
 		       int itv, gretlopt opt);
 
+gretl_matrix *kpss_critvals (int T, int trend, int *err);
+
 #endif /* ADF_KPSS_H */

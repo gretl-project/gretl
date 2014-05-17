@@ -1567,7 +1567,28 @@ static double kpss_critval (double alpha, int T, int trend)
     double b[2];
 
     kpss_parms(alpha, trend, b);
+
     return b[0] + b[1]/T;
+}
+
+gretl_matrix *kpss_critvals (int T, int trend, int *err)
+{
+    gretl_matrix *m = NULL;
+
+    if (T < 5) {
+	*err = E_TOOFEW;
+    } else {
+	m = gretl_matrix_alloc(1, 3);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    m->val[0] = kpss_critval(0.10, T, trend);
+	    m->val[1] = kpss_critval(0.05, T, trend);
+	    m->val[2] = kpss_critval(0.01, T, trend);
+	}
+    }
+
+    return m;
 }
 
 #define PV_GT10 1.1
@@ -1743,9 +1764,6 @@ real_kpss_test (int order, int varno, DATASET *dset,
 	kinfo->pval = pval;
     } else {
 	/* testing individual time series */
-	if (pval == PV_GT10 || pval == PV_LT01) {
-	    pval = NADBL;
-	}
 	if (opt & OPT_V) {
 	    pprintf(prn, "  %s: %g\n", _("Robust estimate of variance"), s2);
 	    pprintf(prn, "  %s: %g\n", _("Sum of squares of cumulated residuals"), 
@@ -1782,10 +1800,8 @@ real_kpss_test (int order, int varno, DATASET *dset,
 	print_critical_values(a, cv, KPSS, prn);
 	if (pval == PV_GT10) {
 	    pprintf(prn, "%s > .10\n", _("P-value"));
-	    pval = NADBL; /* invalidate for record_test_result */
 	} else if (pval == PV_LT01) {
 	    pprintf(prn, "%s < .01\n", _("P-value"));
-	    pval = NADBL;
 	} else if (!xna(pval)) {
 	    pprintf(prn, "%s %.3f\n", _("Interpolated p-value"), pval);
 	}
@@ -1793,6 +1809,10 @@ real_kpss_test (int order, int varno, DATASET *dset,
     }
 
     if (kinfo == NULL) {
+	if (pval == PV_GT10 || pval == PV_LT01) {
+	    /* invalidate for record_test_result */
+	    pval = NADBL;
+	}
 	record_test_result(teststat, pval, "KPSS");
     }
 

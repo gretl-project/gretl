@@ -9669,6 +9669,22 @@ static NODE *two_scalars_func (NODE *l, NODE *r, int t, parser *p)
     return ret;    
 }
 
+static NODE *kpss_crit_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int T = node_get_int(l, p);
+	int trend = node_get_int(r, p);
+
+	if (!p->err) {
+	    ret->v.m = kpss_critvals(T, trend, &p->err);
+	}
+    }
+
+    return ret;    
+}
+
 static NODE *scalar_postfix_node (NODE *n, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -10660,9 +10676,14 @@ static NODE *eval (NODE *t, parser *p)
     case F_XMIN:
     case F_XMAX:
     case F_RANDINT:
+    case F_KPSSCRIT:
 	/* two scalars */
 	if (l->t == NUM && r->t == NUM) {
-	    ret = two_scalars_func(l, r, t->t, p);
+	    if (t->t == F_KPSSCRIT) {
+		ret = kpss_crit_node(l, r, p);
+	    } else {
+		ret = two_scalars_func(l, r, t->t, p);
+	    }
 	} else {
 	    p->err = E_TYPES;
 	} 

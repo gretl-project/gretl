@@ -3788,6 +3788,28 @@
 	  </seelist>
 	</para>
       </description>
+    </function>
+
+    <function name="kpsscrit" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="scalar">T</fnarg>
+	<fnarg type="scalar">trend</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a row vector containing critical values at the 10, 5
+	  and 1 percent levels for the KPSS test for stationarity of a
+	  time series. <argname>T</argname> should give the number of
+	  observations and <argname>trend</argname> should be 1 if
+	  the test includes a trend, 0 otherwise.
+	</para>
+	<para>
+	  The critical values given are based on the response surfaces
+	  estimated by <cite key="sephton95">Sephton (Economics
+	  Letters, 1995)</cite>. See also the <cmdref targ="kpss"/>
+	  command.
+ 	</para>
+      </description>
     </function> 
 
     <function name="ksimul" section="filters" output="matrix">

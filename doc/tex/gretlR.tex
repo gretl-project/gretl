@@ -425,13 +425,12 @@ wrote /home/cottrell/.gretl/vars.mat
 \end{code}
 However, we are now able to pull the results back into gretl by
 executing the following commands, either from the console or by
-creating a small script:\footnote{This example will work on Linux and
-  presumably on OSX without modifications. On the Windows platform,
-  you may have to substitute the ``\texttt{/}'' character with
-  ``$\backslash$''.}
+creating a small script:
 \begin{code}
-append @dotdir/compon.csv
-vars = mread("@dotdir/vars.mat")
+string fname 
+sprintf fname "%s/compon.csv", $dotdir
+append @fname
+vars = mread("vars.mat", 1)
 \end{code}
 The first command reads the estimated time-series components from a
 CSV file, which is the format that the passing mechanism employs for

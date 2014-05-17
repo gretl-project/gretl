@@ -353,6 +353,7 @@ enum {
     F_ALLREDUCE,
     F_GENSERIES,
     F_JSONGET,
+    F_KPSSCRIT,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,
