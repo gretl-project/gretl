@@ -1690,9 +1690,6 @@ double get_DW_pvalue_for_model (const MODEL *pmod, DATASET *dset,
 
     if (!*err) {
 	pv = gretl_model_get_double(&dwmod, "dw_pval");
-	if (na(pv)) {
-	    *err = E_DATA;
-	}
     }
 
     /* put back into dset what was there on input */

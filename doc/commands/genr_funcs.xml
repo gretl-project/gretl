@@ -132,9 +132,17 @@
     <function name="$dwpval" section="access" output="scalar">
       <description>
 	<para>
-	  Returns the p-value for the Durbin&ndash;Watson statistic for the
-	  model last estimated, if available.  This is computed using the
-	  Imhof procedure.
+	  Returns the p-value for the Durbin&ndash;Watson statistic
+	  for the model last estimated (if available), computed using
+	  the Imhof procedure.
+	</para>
+	<para>
+	  Due to the limited precision of computer arithmetic, the
+	  Imhof integral can go negative when the Durbin&ndash;Watson
+	  statistic is close to its lower bound. In that case the
+	  accessor returns <lit>NA</lit>; it is probably safe to
+	  assume that this means the true p-value is <quote>very
+	  small</quote>, although we are unable to quantify it.
 	</para>
       </description>
     </function>

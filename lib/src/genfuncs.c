@@ -3802,12 +3802,8 @@ static double imhof_integral (double arg, const double *lambda, int k,
 	*err = E_NOCONV;
     } else {
 	ret = 0.5 - int1 / (3.0 * M_PI);
-	if (ret < 0 && ret > -1.0e-14) {
-	    ret = 0.0;
-	} else if (ret < 0) {
+	if (ret < 0) {
 	    fprintf(stderr, "n = %d, Imhof integral gave negative value %g\n", n, ret);
-	    gretl_errmsg_set(_("Imhof integral gave negative value"));
-	    *err = E_DATA;
 	    ret = NADBL;
 	}
     }
@@ -3890,10 +3886,11 @@ double imhof (const gretl_matrix *m, double arg, int *err)
     return ret;
 }
 
-/* Implements the "dwpval" function in genr: given the residual vector
+/* Implements the $dwpval accessor: given the residual vector
    @u and the matrix of regressors, @X, calculates the Durbin-Watson
    statistic then finds its p-value via the Imhof/Koerts/Abrahamse
-   procedure.
+   procedure. If @pDW is non-NULL, the Durbin-Watson statstic is
+   written to that location.
 */
 
 double dw_pval (const gretl_matrix *u, const gretl_matrix *X, 

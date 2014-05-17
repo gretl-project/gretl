@@ -5952,7 +5952,7 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
 	break;
     }
 
-    if (na(x)) {
+    if (idx != M_DWPVAL && na(x)) {
 	*err = E_BADSTAT;
     }
 
