@@ -7565,7 +7565,7 @@ if ${lt_cv_prog_gnu_ld+:} false; then :
 else
   # I'd rather use --version here, but apparently some GNU lds only accept -v.
 case `$LD -v 2>&1 </dev/null` in
-*GNU* | *'with BFD'*)
+*GNU* | *'with BFD'* | *gcc*)
   lt_cv_prog_gnu_ld=yes
   ;;
 *)
