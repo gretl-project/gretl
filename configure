@@ -10791,6 +10791,10 @@ _lt_linker_boilerplate=`cat conftest.err`
 $RM -r conftest*
 
 
+## CAVEAT EMPTOR:
+## There is no encapsulation within the following macros, do not change
+## the running order or otherwise move them around unless you know exactly
+## what you are doing...
 if test -n "$compiler"; then
 
 lt_prog_compiler_no_builtin_flag=
@@ -11635,8 +11639,13 @@ _LT_EOF
 	  diet\ *) tmp_diet=yes;;	# linux-dietlibc with static linking (!diet-dyn)
 	esac
       fi
-      if $LD --help 2>&1 | $EGREP ': supported targets:.* elf' > /dev/null \
-	 && test "$tmp_diet" = no
+      tmp_elf_ok=no
+      if $LD --help 2>&1 | $EGREP ': supported targets:.* elf' > /dev/null ; then
+        tmp_elf_ok=yes # the original test in standard libtool.m4
+      elif $LD --help 2>&1 | $GREP 'mmic' > /dev/null ; then
+        tmp_elf_ok=yes # hack to support Intel icc in cross mode for Xeon Phi
+      fi
+      if test "$tmp_elf_ok" = yes && test "$tmp_diet" = no
       then
 	tmp_addflag=' $pic_flag'
 	tmp_sharedflag='-shared'
