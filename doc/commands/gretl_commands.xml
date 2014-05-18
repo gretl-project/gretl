@@ -5677,6 +5677,8 @@
 	article. When the test statistic lies between the 10 percent and 1
 	percent critical values a p-value is shown; this is obtained
 	by linear interpolation and should not be taken too literally.
+	See the <fncref targ="kpsscrit"/> function for a means of
+	obtaining these critical values programmatically.
       </para>
 
       <subhead context="cli">Panel data</subhead>

@@ -2961,7 +2961,12 @@ void do_dwpval (GtkAction *action, gpointer p)
 	gchar *title = gretl_window_title(_("Durbin-Watson"));
 
 	pprintf(prn, "%s = %g\n", _("Durbin-Watson statistic"), pmod->dw);
-	pprintf(prn, "%s = %g\n", _("p-value"), pv);
+	if (na(pv)) {
+	    pputs(prn, _("p-value is \"very small\" (the Imhof integral could not\n"
+			 "be evaluated so a definite value is not available)"));
+	} else {
+	    pprintf(prn, "%s = %g\n", _("p-value"), pv);
+	}
 	view_buffer_with_parent(vwin, prn, 78, 200, 
 				title, PRINT, NULL); 
 	g_free(title);

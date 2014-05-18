@@ -140,9 +140,11 @@
 	  Due to the limited precision of computer arithmetic, the
 	  Imhof integral can go negative when the Durbin&ndash;Watson
 	  statistic is close to its lower bound. In that case the
-	  accessor returns <lit>NA</lit>; it is probably safe to
-	  assume that this means the true p-value is <quote>very
-	  small</quote>, although we are unable to quantify it.
+	  accessor returns <lit>NA</lit>. Since any other failure mode
+	  results in an error being flagged it is probably safe to
+	  assume that an NA value means the true p-value is
+	  <quote>very small</quote>, although we are unable to
+	  quantify it.
 	</para>
       </description>
     </function>
