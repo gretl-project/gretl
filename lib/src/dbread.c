@@ -125,7 +125,7 @@ float retrieve_float (netfloat nf)
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    DATASET *dset, CompactMethod method, 
-			    int dbv, int *newdata, PRN *prn);
+			    int dbv, PRN *prn);
 
 static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
 {
@@ -481,8 +481,88 @@ open_native_db_files (const char *dname, FILE **f1, char *name1,
     return err;
 }
 
+static char *native_db_index_name (void)
+{
+    char *fname;
+
+    if (has_suffix(saved_db_name, ".bin")) {
+	fname = g_strdup(saved_db_name);
+	strcpy(fname + strlen(fname) - 3, "idx");
+    } else {
+	fname = g_strdup_printf("%s.idx", saved_db_name);
+    }
+
+    return fname;
+}
+
+static int db_match_glob (FILE *fp, 
+			  char *line, int linelen,
+			  GPatternSpec *pspec,
+			  char **S, int *err)
+{
+    char vname[VNAMELEN], l2[72];
+    int n = 0;
+
+    while (fgets(line, linelen, fp) && !*err) {
+	if (*line == '#') {
+	    continue;
+	}
+	if (gretl_scan_varname(line, vname) != 1) {
+	    break;
+	}
+	if (g_pattern_match_string(pspec, vname)) {
+	    if (S != NULL) {
+		S[n] = gretl_strdup(vname);
+	    }
+	    n++;
+	}
+	if (fgets(l2, sizeof l2, fp) == NULL) {
+	    *err = DB_PARSE_ERROR;
+	}
+    }
+
+    return n;
+}
+
+static char **native_db_match_series (const char *glob, int *nmatch,
+				      const char *idxname, int *err)
+{
+    GPatternSpec *pspec;
+    char **S = NULL;
+    FILE *fp = NULL;
+    char line[256];
+
+    fp = gretl_fopen(idxname, "rb");
+    if (fp == NULL) {
+	*err = E_FOPEN;
+	*nmatch = 0;
+	return NULL;
+    }
+
+    pspec = g_pattern_spec_new(glob);
+
+    *nmatch = db_match_glob(fp, line, sizeof line, pspec, NULL, err);
+
+    if (!*err && *nmatch > 0) {
+	S = strings_array_new(*nmatch);
+	if (S == NULL) {
+	    *nmatch = 0;
+	    *err = E_ALLOC;
+	} else {
+	    rewind(fp);
+	    db_match_glob(fp, line, sizeof line, pspec, S, err);
+	}
+    }
+
+    g_pattern_spec_free(pspec);
+    fclose(fp);
+
+    return S;
+}
+
 static int 
-get_native_series_info (const char *series, SERIESINFO *sinfo)
+get_native_series_info (const char *series, SERIESINFO *sinfo,
+			const char *idxname)
 {
     FILE *fp = NULL;
     char sername[VNAMELEN];
@@ -493,9 +573,9 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
     int gotit = 0, err = 0;
     int n;
 
-    err = open_native_db_files(saved_db_name, &fp, NULL, NULL, NULL);
-    if (err) {
-	return err;
+    fp = gretl_fopen(idxname, "rb");
+    if (fp == NULL) {
+	return E_FOPEN;
     }
 
     while (fgets(s1, sizeof s1, fp) && !gotit) {
@@ -552,67 +632,26 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 
 #ifdef USE_CURL
 
-static int 
-get_remote_series_info (const char *series, SERIESINFO *sinfo)
+static int remote_db_index_to_file (const char *fname)
 {
     char *buf = NULL;
-    char sername[VNAMELEN];
-    char s1[256], s2[72];
-    char stobs[16], endobs[16];
-    char pdc;
-    int gotit = 0;
-    int err = 0;
+    int err;
 
     err = retrieve_remote_db_index(saved_db_name, &buf);
-    if (err) {
-	return err;
-    }
 
-    sinfo->offset = 0;
+    if (!err) {
+	FILE *fp = gretl_fopen(fname, "wb");
 
-    bufgets_init(buf);
-
-    while (bufgets(s1, sizeof s1, buf) && !gotit) {
-	if (*s1 == '#') {
-	    continue;
-	}
-
-	if (gretl_scan_varname(s1, sername) != 1) {
-	    break;
-	}
-
-	if (strcmp(series, sername)) {
-	    continue;
-	}
-
-	gotit = 1;
-
-	if (bufgets(s2, sizeof s2, buf) == NULL) {
-	    err = DB_PARSE_ERROR;
-	    break;
-	} 
-
-	strcpy(sinfo->varname, sername);
-	get_native_series_comment(sinfo, s1);
-
-	if (sscanf(s2, "%c %10s %*s %10s %*s %*s %d", 
-		   &pdc, stobs, endobs, &sinfo->nobs) != 4) {
-	    gretl_errmsg_set(_("Failed to parse series information"));
-	    err = DB_PARSE_ERROR;
+	if (fp == NULL) {
+	    err = E_FOPEN;
 	} else {
-	    get_native_series_pd(sinfo, pdc);
-	    get_native_series_obs(sinfo, stobs, endobs);
-	    sinfo->t2 = sinfo->nobs - 1;
+	    fputs(buf, fp);
+	    fclose(fp);
+#if 1
+	    fprintf(stderr, "remote db index saved\n");
+#endif
 	}
-    }
-
-    bufgets_finalize(buf);
-
-    free(buf);
-
-    if (!gotit) {
-	gretl_errmsg_sprintf(_("Series not found, '%s'"), series);
-	err = DB_NO_SUCH_SERIES;
+	free(buf);
     }
 
     return err;
@@ -1930,17 +1969,16 @@ get_word_and_advance (char *s, char *word, size_t maxlen)
 
     while (isspace(*s)) s++;
 
-    *word = 0;
+    *word = '\0';
 
     while (*s && !isspace(*s)) {
 	if (i < maxlen) word[i++] = *s;
 	s++;
     }
 
-    word[i] = 0;
+    word[i] = '\0';
 
-    if (*word) return s;
-    else return NULL;
+    return (*word != '\0')? s : NULL;
 }
 
 static char *
@@ -2440,6 +2478,108 @@ static int update_sinfo_masked (SERIESINFO *sinfo, int nobs)
     return err;
 }
 
+static int get_one_db_series (const char *series, 
+			      DATASET *dset,
+			      CompactMethod method,
+			      const gretl_matrix *mask,
+			      const char *idxname,
+			      PRN *prn)
+{
+    CompactMethod this_method = method;
+    SERIESINFO sinfo;
+    double **dbZ;
+    int v, nobs;
+    int err = 0;
+
+    series_info_init(&sinfo);
+
+    /* see if the series is already in the dataset */
+    v = series_index(dset, series);
+    if (v < dset->v && method == COMPACT_NONE) {
+	this_method = series_get_compact_method(dset, v);
+    }
+
+#if DB_DEBUG
+    fprintf(stderr, "db_get_series: dset->v = %d, v = %d, series = '%s'\n", 
+	    dset->v, v, series);
+    fprintf(stderr, "this_var_method = %d\n", this_method);
+#endif
+
+    /* find the series information in the database */
+    if (saved_db_type == GRETL_RATS_DB) {
+	err = get_rats_series_info(series, &sinfo);
+    } else if (saved_db_type == GRETL_PCGIVE_DB) {
+	err = get_pcgive_series_info(series, &sinfo);
+    } else {
+	err = get_native_series_info(series, &sinfo, idxname);
+    } 
+
+    if (err) {
+	fprintf(stderr, "db_get_series: failed to get series info\n");
+	return 1;
+    }
+
+    if (mask != NULL) {
+	nobs = db_n_from_row_mask(mask, sinfo.nobs);
+    } else {
+	nobs = sinfo.nobs;
+    }
+
+    /* temporary dataset */
+    dbZ = new_dbZ(nobs);
+    if (dbZ == NULL) {
+	gretl_errmsg_set(_("Out of memory!"));
+	return E_ALLOC;
+    }
+
+#if DB_DEBUG
+    fprintf(stderr, "db_get_series: offset=%d, nobs=%d\n", 
+	    sinfo.offset, nobs);
+#endif
+
+    if (saved_db_type == GRETL_RATS_DB) {
+	err = get_rats_db_data(saved_db_name, &sinfo, dbZ);
+    } else if (saved_db_type == GRETL_PCGIVE_DB) {
+	err = get_pcgive_db_data(saved_db_name, &sinfo, dbZ);
+#ifdef USE_CURL
+    } else if (saved_db_type == GRETL_NATIVE_DB_WWW) {
+	err = get_remote_db_data(saved_db_name, &sinfo, dbZ);
+#endif
+    } else if (mask != NULL) {
+	err = get_native_db_data_masked(saved_db_name, &sinfo, dbZ, 
+					mask);
+    } else {
+	err = get_native_db_data(saved_db_name, &sinfo, dbZ);
+    } 
+
+#if DB_DEBUG
+    fprintf(stderr, "db_get_series: get_XXX_db_data gave %d\n", err);
+#endif
+
+    if (err == DB_MISSING_DATA) {
+	fprintf(stderr, "There were missing data\n");
+	err = 0;
+    }
+
+    if (!err && mask != NULL) {
+	err = update_sinfo_masked(&sinfo, nobs);
+    }
+
+    if (!err) {
+	err = cli_add_db_data(dbZ, &sinfo, dset, this_method, 
+			      v, prn);
+    }
+
+    free_dbZ(dbZ);
+
+    return err;
+}
+
+static int is_glob (const char *s)
+{
+    return strchr(s, '*') || strchr(s, '?');
+}
+
 /* main function for getting a series out of a database, using the
    command-line client or in script or console mode
 */
@@ -2448,10 +2588,11 @@ int db_get_series (char *line, DATASET *dset,
 		   gretlopt opt, PRN *prn)
 {
     const gretl_matrix *rowmask = NULL;
-    char series[VNAMELEN];
+    char **vnames = NULL;
+    char *idxname = NULL;
     CompactMethod method;
-    SERIESINFO sinfo;
-    double **dbZ;
+    int i, nnames = 0;
+    int from_scratch = 0;
     int err = 0;
 
     if (opt & OPT_O) {
@@ -2474,110 +2615,71 @@ int db_get_series (char *line, DATASET *dset,
     if (*saved_db_name == '\0') {
 	gretl_errmsg_set(_("No database has been opened"));
 	return 1;
-    }   
+    }
+
+    from_scratch = (dset->n == 0);
 
     line = get_compact_method_and_advance(line, &method);
 
-    /* now loop over variable names given on the line */
-
-    while ((line = get_word_and_advance(line, series, VNAMELEN-1)) && !err) {
-	int v, this_var_method = method; 
-	int nobs, newdata = 0;
-
-	series_info_init(&sinfo);
-
-	/* see if the series is already in the dataset */
-	v = series_index(dset, series);
-	if (v < dset->v && method == COMPACT_NONE) {
-	    this_var_method = series_get_compact_method(dset, v);
+    if (string_is_blank(line)) {
+	err = E_DATA;
+    } else {
+	/* get the variable names on the line */
+	vnames = gretl_string_split(line, &nnames, NULL);
+	if (vnames == NULL) {
+	    err = E_ALLOC;
 	}
+    }
 
-#if DB_DEBUG
-	fprintf(stderr, "db_get_series: dset->v = %d, v = %d, series = '%s'\n", 
-		dset->v, v, series);
-	fprintf(stderr, "this_var_method = %d\n", this_var_method);
-#endif
-
-	/* find the series information in the database */
-	if (saved_db_type == GRETL_RATS_DB) {
-	    err = get_rats_series_info(series, &sinfo);
-	} else if (saved_db_type == GRETL_PCGIVE_DB) {
-	    err = get_pcgive_series_info(series, &sinfo);
+    if (saved_db_type == GRETL_NATIVE_DB) {
+	idxname = native_db_index_name();
+    } else if (saved_db_type == GRETL_NATIVE_DB_WWW) {
 #ifdef USE_CURL
-	} else if (saved_db_type == GRETL_NATIVE_DB_WWW) {
-	    err = get_remote_series_info(series, &sinfo);
+	idxname = g_strdup_printf("%sdbtmp.idx", gretl_dotdir());
+	err = remote_db_index_to_file(idxname);
 #endif
-	} else {
-	    err = get_native_series_info(series, &sinfo);
-	} 
+    }
 
-	if (err) {
-	    fprintf(stderr, "db_get_series: failed to get series info\n");
-	    return 1;
-	}
+    /* and process them individually */
+    for (i=0; i<nnames && !err; i++) {
+	if (is_glob(vnames[i])) {
+	    if (saved_db_type == GRETL_NATIVE_DB ||
+		saved_db_type == GRETL_NATIVE_DB_WWW) {
+		char **tmp;
+		int j, nmatch;
 
-	if (rowmask != NULL) {
-	    nobs = db_n_from_row_mask(rowmask, sinfo.nobs);
-	} else {
-	    nobs = sinfo.nobs;
-	}
-
-	/* temporary dataset */
-	dbZ = new_dbZ(nobs);
-	if (dbZ == NULL) {
-	    gretl_errmsg_set(_("Out of memory!"));
-	    return 1;
-	}
-
-#if DB_DEBUG
-	fprintf(stderr, "db_get_series: offset=%d, nobs=%d\n", 
-		sinfo.offset, nobs);
-#endif
-
-	if (saved_db_type == GRETL_RATS_DB) {
-	    err = get_rats_db_data(saved_db_name, &sinfo, dbZ);
-	} else if (saved_db_type == GRETL_PCGIVE_DB) {
-	    err = get_pcgive_db_data(saved_db_name, &sinfo, dbZ);
-#ifdef USE_CURL
-	} else if (saved_db_type == GRETL_NATIVE_DB_WWW) {
-	    err = get_remote_db_data(saved_db_name, &sinfo, dbZ);
-#endif
-	} else if (rowmask != NULL) {
-	    err = get_native_db_data_masked(saved_db_name, &sinfo, dbZ, 
-					    rowmask);
-	} else {
-	    err = get_native_db_data(saved_db_name, &sinfo, dbZ);
-	} 
-
-#if DB_DEBUG
-	fprintf(stderr, "db_get_series: get_XXX_db_data gave %d\n", err);
-#endif
-
-	if (err == DB_MISSING_DATA) {
-	    fprintf(stderr, "There were missing data\n");
-	    err = 0;
-	}
-
-	if (!err && rowmask != NULL) {
-	    err = update_sinfo_masked(&sinfo, nobs);
-	}
-
-	if (!err) {
-	    err = cli_add_db_data(dbZ, &sinfo, dset, 
-				  this_var_method, v, 
-				  &newdata, prn);
-	}
-
-	/* free up temp stuff */
-	free_dbZ(dbZ);
-
-	if (!err && !(opt & OPT_Q)) {
-	    pprintf(prn, _("Series imported OK"));
-	    pputc(prn, '\n');
-	    if (newdata) {
-		print_smpl(dset, 0, prn);
+		tmp = native_db_match_series(vnames[i], &nmatch, 
+					     idxname, &err);
+		for (j=0; j<nmatch && !err; j++) {
+		    err = get_one_db_series(tmp[j], dset, method, 
+					    rowmask, idxname, prn);
+		}
+		strings_array_free(tmp, nmatch);
+	    } else {
+		err = E_DATA;
 	    }
+	} else {
+	    err = get_one_db_series(vnames[i], dset, method, 
+				    rowmask, idxname, prn);
 	}
+    }
+
+    strings_array_free(vnames, nnames);
+
+    if (!err && !(opt & OPT_Q)) {
+	pprintf(prn, _("Series imported OK"));
+	pputc(prn, '\n');
+	if (from_scratch) {
+	    print_smpl(dset, 0, prn);
+	}
+    }
+
+    if (idxname != NULL) {
+	if (saved_db_type == GRETL_NATIVE_DB_WWW) {
+	    /* this file is a temporary download */
+	    gretl_remove(idxname);
+	}
+	free(idxname);
     }
     
     return err;
@@ -2847,7 +2949,7 @@ init_datainfo_from_sinfo (DATASET *dset, SERIESINFO *sinfo)
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    DATASET *dset, CompactMethod method, 
-			    int dbv, int *newdata, PRN *prn)
+			    int dbv, PRN *prn)
 {
     double *xvec = NULL;
     int pad1 = 0, pad2 = 0;
@@ -2860,7 +2962,6 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	   initialize using sinfo */
 	init_datainfo_from_sinfo(dset, sinfo);
 	dset->v = 0; /* trigger for creating data array below */
-	*newdata = 1;
 	if (dset->pd != 1 || strcmp(dset->stobs, "1")) { 
 	    dset->structure = TIME_SERIES;
 	}
