@@ -1,7 +1,9 @@
 version 1.9.91, in progress
-- Add new functions: curl(), nlines(), kpsscrit()
+- Add new functions: curl(), jsonget(), nlines(), kpsscrit()
 - Add new command "setopt" for pre-setting of command options
 - Hush some gcc-4.9.0 warnings
+- "data" command: support globbing for names of series to fetch
+  from gretl native databases
 - Fix broken encoding of German translation
 - Fix bug in OS X (quartz) package: GDK could lose track of its
   PNG loader, so graphs would not display

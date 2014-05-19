@@ -2238,6 +2238,17 @@
 	<quote>first</quote> and <quote>sum</quote>.  If no method is
 	specified, the default is to use the average.
       </para>
+      <para>
+	In the case of native gretl databases (only), the
+	<quote>glob</quote> characters <lit>*</lit> and <lit>?</lit>
+	can be used in <repl>varlist</repl> to import series that
+	match the given pattern. For example, the following will
+	import all series in the database whose names begin with
+	<lit>cpi</lit>:
+      </para>
+      <code>
+	data cpi*
+      </code>
 
     </description>
 
