@@ -798,44 +798,10 @@ static gretlopt get_short_opts (char *line, int ci, int *err)
     return ret;
 }
 
-/* Apparatus for pre-selecting options for a specified command */
-
-static gretlopt stored_opt;
-static int stored_opt_ci;
-
-int set_options_for_command (gretlopt opt, const char *cmdword)
-{
-    int ci = gretl_command_number(cmdword);
-    int err = 0;
-
-    if (ci == 0) {
-	gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
-			     cmdword);
-	err = E_DATA;
-    } else if (opt == 0) {
-	err = E_ARGS;
-    } else {
-	stored_opt = opt;
-	stored_opt_ci = gretl_command_number(cmdword);
-#if OPTDEBUG
-	fprintf(stderr, "storing opt %d for ci %d\n", opt, stored_opt_ci);
-#endif
-    }
-
-    return err;
-}
-
-static void maybe_get_stored_options (int ci, gretlopt *popt)
-{
-    if (ci == stored_opt_ci) {
-#if OPTDEBUG
-	fprintf(stderr, "ci %d: got stored opt %d\n", ci, stored_opt);
-#endif
-	*popt |= stored_opt;
-	stored_opt = 0;
-	stored_opt_ci = 0;
-    }
-}
+enum {
+    OPT_SETOPT  = 1 << 0,
+    OPT_PERSIST = 1 << 1
+};
 
 /* Apparatus for setting and retrieving parameters associated
    with command options, as in --opt=val.  
@@ -847,6 +813,7 @@ struct optparm_ {
     int ci;
     gretlopt opt;
     char *val;
+    int flags;
 };
 
 static optparm *optparms;
@@ -864,7 +831,7 @@ static int n_parms;
  * with gretl command/option pairs.
  */
 
-void clear_option_params (void)
+void clear_option_params (int force)
 {
     int i;
 
@@ -875,6 +842,7 @@ void clear_option_params (void)
     for (i=0; i<n_parms; i++) {
 	free(optparms[i].val);
     }
+
     free(optparms);
     optparms = NULL;
     n_parms = 0;
@@ -940,6 +908,7 @@ static int real_push_option_param (int ci, gretlopt opt, char *val,
 	op->ci = ci;
 	op->opt = opt;
 	op->val = val;
+	op->flags = 0;
 	n_parms = n;
     }
 
@@ -1052,6 +1021,54 @@ int get_optval_int (int ci, gretlopt opt, int *err)
     }
 
     return ret;
+}
+
+/* Apparatus for pre-selecting options for a specified command */
+
+static gretlopt stored_opt;
+static int stored_opt_ci;
+
+int set_options_for_command (gretlopt opt, const char *cmdword,
+			     const char *param)
+{
+    int ci = gretl_command_number(cmdword);
+    int err = 0;
+
+    if (param != NULL && 
+	strcmp(param, "persist") &&
+	strcmp(param, "clear")) {
+	gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
+			     param);
+	return E_PARSE;
+    }
+
+    if (ci == 0) {
+	gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
+			     cmdword);
+	err = E_DATA;
+    } else if (opt == 0) {
+	err = E_ARGS;
+    } else {
+	stored_opt = opt;
+	stored_opt_ci = gretl_command_number(cmdword);
+#if OPTDEBUG
+	fprintf(stderr, "storing opt %d for ci %d\n", opt, stored_opt_ci);
+#endif
+    }
+
+    return err;
+}
+
+static void maybe_get_stored_options (int ci, gretlopt *popt)
+{
+    if (ci == stored_opt_ci) {
+#if OPTDEBUG
+	fprintf(stderr, "ci %d: got stored opt %d\n", ci, stored_opt);
+#endif
+	*popt |= stored_opt;
+	stored_opt = 0;
+	stored_opt_ci = 0;
+    }
 }
 
 int get_compression_option (int ci)

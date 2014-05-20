@@ -35,7 +35,8 @@ const char *print_flags (gretlopt oflags, int ci);
 
 const char **get_opts_for_command (int ci, int *nopt);
 
-int set_options_for_command (gretlopt opt, const char *cmdword);
+int set_options_for_command (gretlopt opt, const char *cmdword,
+			     const char *param);
 
 int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn);
 
@@ -73,7 +74,7 @@ int get_optval_int (int ci, gretlopt opt, int *err);
 
 int get_compression_option (int ci);
 
-void clear_option_params (void);
+void clear_option_params (int force);
 
 void option_flags_cleanup (void);
 

@@ -1973,6 +1973,20 @@ static void param_grab_quoted (CMD *cmd, const char *s)
     }
 }
 
+static int maybe_capture_param2 (CMD *cmd, const char *s)
+{
+    s += strspn(s, " ");
+    s += strcspn(s, " ");
+    s += strspn(s, " ");
+    
+    if (*s != '\0') {
+	free(cmd->parm2);
+	cmd->parm2 = gretl_strdup(s);
+    }
+
+    return 0;
+}
+
 /* Capture the next 'word' found following the initial command word
    (or the whole remainder of the line in some cases) as the parameter
    for @cmd.  Flag an error if the command requires a parameter but
@@ -2061,7 +2075,7 @@ static int gretl_cmd_clear (CMD *cmd)
     cmd_lag_info_destroy(cmd);
 
     if (cmd->ci != SETOPT) {
-	clear_option_params();
+	clear_option_params(0);
     }
     
     cmd->ci = 0;
@@ -2715,6 +2729,9 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 	cmd_set_nolist(cmd);
 	if (cmd->ci != GENR) {
 	    capture_param(cmd, rem);
+	}
+	if (!cmd->err && cmd->ci == SETOPT) {
+	    maybe_capture_param2(cmd, rem);
 	}
 	return cmd->err;
     } 
@@ -5682,7 +5699,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case SETOPT:
-	err = set_options_for_command(cmd->opt, cmd->param);
+	err = set_options_for_command(cmd->opt, cmd->param, cmd->parm2);
 	break;
 
     case SMPL:
