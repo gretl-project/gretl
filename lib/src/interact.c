@@ -2075,7 +2075,7 @@ static int gretl_cmd_clear (CMD *cmd)
     cmd_lag_info_destroy(cmd);
 
     if (cmd->ci != SETOPT) {
-	clear_option_params(0);
+	clear_option_params();
     }
     
     cmd->ci = 0;

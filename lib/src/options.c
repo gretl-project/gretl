@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "uservar.h"
+#include "gretl_func.h"
 
 #include <errno.h>
 
@@ -528,11 +529,16 @@ struct gretl_option gretl_opts[] = {
 
 static const char *get_longopt (int ci, gretlopt opt)
 {
-    int i;
+    int i, got_ci = 0;
 
     for (i=0; gretl_opts[i].ci; i++) {
-	if (gretl_opts[i].ci == ci && gretl_opts[i].o == opt) {
-	    return gretl_opts[i].longopt;
+	if (gretl_opts[i].ci == ci) {
+	    if (gretl_opts[i].o == opt) {
+		return gretl_opts[i].longopt;
+	    }
+	    got_ci = 1;
+	} else if (got_ci) {
+	    break;
 	}
     }
 
@@ -541,7 +547,7 @@ static const char *get_longopt (int ci, gretlopt opt)
 
 int cluster_option_ok (int ci)
 {
-    int i, found = 0;
+    int i, got_ci = 0;
 
     for (i=0; gretl_opts[i].ci; i++) {
 	if (gretl_opts[i].ci == ci) {
@@ -549,8 +555,8 @@ int cluster_option_ok (int ci)
 		!strcmp(gretl_opts[i].longopt, "cluster")) {
 		return 1;
 	    }
-	    found = 1;
-	} else if (found) {
+	    got_ci = 1;
+	} else if (got_ci) {
 	    break;
 	}
     }
@@ -561,7 +567,7 @@ int cluster_option_ok (int ci)
 int matrix_data_option (int ci, gretlopt opt)
 {
     if (opt & OPT_X) {
-	int i, found = 0;
+	int i, got_ci = 0;
 
 	for (i=0; gretl_opts[i].ci; i++) {
 	    if (gretl_opts[i].ci == ci) {
@@ -569,8 +575,8 @@ int matrix_data_option (int ci, gretlopt opt)
 		    !strcmp(gretl_opts[i].longopt, "matrix")) {
 		    return 1;
 		}
-		found = 1;
-	    } else if (found) {
+		got_ci = 1;
+	    } else if (got_ci) {
 		break;
 	    }
 	}
@@ -614,7 +620,7 @@ char **get_all_option_strings (int *pn)
 
 const char **get_opts_for_command (int ci, int *nopt)
 {
-    int i, j, n = 0;
+    int i, j, got_ci, n = 0;
     const char **ret = NULL;
 
     if (ci != OLS) {
@@ -635,10 +641,13 @@ const char **get_opts_for_command (int ci, int *nopt)
     ret = malloc(n * sizeof *ret);
     if (ret == NULL) return NULL;
 
-    j = 0;
+    j = got_ci = 0;
     for (i=0; gretl_opts[i].ci != 0; i++) {
 	if (gretl_opts[i].ci == ci) {
 	    ret[j++] = gretl_opts[i].longopt;
+	    got_ci = 1;
+	} else if (got_ci) {
+	    break;
 	}
     }
 
@@ -713,19 +722,22 @@ gretlopt opt_from_flag (unsigned char c)
 
 static int opt_is_valid (gretlopt opt, int ci, char c)
 {
-    int i;
+    int i, got_ci = 0;
 
     if (opt == OPT_O && vcv_opt_ok(ci)) {
 	return 1;
-    }
-
-    if (opt == OPT_Q && quiet_opt_ok(ci)) {
+    } else if (opt == OPT_Q && quiet_opt_ok(ci)) {
 	return 1;
     }    
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
-	if (ci == gretl_opts[i].ci && opt == gretl_opts[i].o) {
-	    return 1;
+	if (ci == gretl_opts[i].ci) {
+	    if (opt == gretl_opts[i].o) {
+		return 1;
+	    }
+	    got_ci = 1;
+	} else if (got_ci) {
+	    break;
 	}
     }
 
@@ -814,6 +826,7 @@ struct optparm_ {
     gretlopt opt;
     char *val;
     int flags;
+    int fd;
 };
 
 static optparm *optparms;
@@ -824,25 +837,69 @@ static int n_parms;
    accumulation of stale data in the record of option parameters.
 */
 
+static void clear_one_option (optparm *op)
+{
+    free(op->val);
+    op->val = NULL;
+    op->ci = 0;
+    op->opt = 0;
+    op->flags = 0;
+}
+
 /**
  * clear_option_params:
  *
- * Clears any ancillary parameter values currently associated 
- * with gretl command/option pairs.
+ * Clears any non-persistent ancillary parameter values
+ * currently associated with gretl command/option pairs.
  */
 
-void clear_option_params (int force)
+void clear_option_params (void)
 {
-    int i;
+    int i, fd = gretl_function_depth();
 
 #if OPTDEBUG > 1
-    fprintf(stderr, "clearing option params\n");
+    fprintf(stderr, "clear option params\n");
 #endif
+
+    for (i=0; i<n_parms; i++) {
+	if (optparms[i].fd == fd && !(optparms[i].flags & OPT_PERSIST)) {
+	    clear_one_option(&optparms[i]);
+	}
+    }
+}
+
+void destroy_option_params_at_level (int level)
+{
+    int i, n = n_parms;
+
+#if OPTDEBUG
+    fprintf(stderr, "destroy_option_params_at_level: %d\n", level);
+#endif
+
+    for (i=0; i<n_parms; i++) {
+	if (optparms[i].fd == level) {
+	    clear_one_option(&optparms[i]);
+	    n--;
+	}
+    }
+
+    if (n == 0) {
+	free(optparms);
+	optparms = NULL;
+    }
+
+    n_parms = n;
+}
+
+/* unconditionally clean up the entire optparm stack */
+
+void option_params_cleanup (void)
+{
+    int i;
 
     for (i=0; i<n_parms; i++) {
 	free(optparms[i].val);
     }
-
     free(optparms);
     optparms = NULL;
     n_parms = 0;
@@ -850,10 +907,25 @@ void clear_option_params (int force)
 
 static optparm *matching_optparm (int ci, gretlopt opt)
 {
+    int i, fd = gretl_function_depth();
+
+    for (i=0; i<n_parms; i++) {
+	if (optparms[i].ci == ci && 
+	    optparms[i].opt == opt &&
+	    optparms[i].fd == fd) {
+	    return &optparms[i];
+	}
+    }
+
+    return NULL;
+}
+
+static optparm *empty_optparm_slot (void)
+{
     int i;
 
     for (i=0; i<n_parms; i++) {
-	if (optparms[i].ci == ci && optparms[i].opt == opt) {
+	if (optparms[i].ci == 0) {
 	    return &optparms[i];
 	}
     }
@@ -862,16 +934,21 @@ static optparm *matching_optparm (int ci, gretlopt opt)
 }
 
 /* for a given @ci, @opt pair, determine its status with regard
-   to a parameter value: 0 = not allowed, 1 = allowed, 2 = required
+   to a parameter value: 0 = not allowed, 1 = optional, 2 = required
 */
 
 static int option_parm_status (int ci, gretlopt opt)
 {
-    int i;
+    int i, got_ci = 0;
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
-	if (gretl_opts[i].ci == ci && gretl_opts[i].o == opt) {
-	    return gretl_opts[i].parminfo;
+	if (gretl_opts[i].ci == ci) {
+	    if (gretl_opts[i].o == opt) {
+		return gretl_opts[i].parminfo;
+	    }
+	    got_ci = 1;
+	} else if (got_ci) {
+	    break;
 	}
     }
 
@@ -879,43 +956,63 @@ static int option_parm_status (int ci, gretlopt opt)
 }
 
 static int real_push_option_param (int ci, gretlopt opt, char *val,
-				   int checked)
+				   int checked, int flags)
 {
-    optparm *op;
+    int fd = gretl_function_depth();
     int n, err = 0;
+    optparm *op;
 
     if (!checked && option_parm_status(ci, opt) == OPT_NO_PARM)  {
 	return E_DATA;
     }
 
-    n = n_parms + 1;
-
     op = matching_optparm(ci, opt);
     if (op != NULL) {
-	/* got a match for the ci, opt pair already */
-	free(op->val);
-	op->val = val;
+	/* got a match for the (ci, opt) pair already */
+#if OPTDEBUG 
+	fprintf(stderr, "push_option_param: replacing (val='%s')\n", val);
+#endif
+	if (!(flags & OPT_SETOPT)) {
+	    free(op->val);
+	    op->val = val;
+	}
+	op->flags = flags;
 	return 0;
     }
 
+    op = empty_optparm_slot();
+    if (op != NULL) {
+	/* re-use a vacant slot */
+#if OPTDEBUG 
+	fprintf(stderr, "push_option_param: reusing empty (val='%s')\n", val);
+#endif
+	op->ci = ci;
+	op->opt = opt;
+	op->val = val;
+	op->flags = flags;
+	op->fd = fd;
+	return 0;
+    }    
+
+    /* we have to extend the array */
+    n = n_parms + 1;
     op = realloc(optparms, n * sizeof *op);
 
     if (op == NULL) {
 	err = E_ALLOC;
     } else {
+#if OPTDEBUG 
+	fprintf(stderr, "push_option_param: appending (val='%s')\n", val);
+#endif
 	optparms = op;
 	op = &optparms[n-1];
 	op->ci = ci;
 	op->opt = opt;
 	op->val = val;
-	op->flags = 0;
+	op->flags = flags;
+	op->fd = fd;
 	n_parms = n;
     }
-
-#if OPTDEBUG 
-    fprintf(stderr, "push_option_param: val='%s', n_parms=%d, "
-	    "err = %d\n", op->val, n_parms, err);
-#endif
 
     return err;
 }
@@ -937,7 +1034,7 @@ static int real_push_option_param (int ci, gretlopt opt, char *val,
 
 int push_option_param (int ci, gretlopt opt, char *val)
 {
-    return real_push_option_param(ci, opt, val, 0);
+    return real_push_option_param(ci, opt, val, 0, 0);
 }
 
 /**
@@ -1023,37 +1120,71 @@ int get_optval_int (int ci, gretlopt opt, int *err)
     return ret;
 }
 
-/* Apparatus for pre-selecting options for a specified command */
+static void clear_options_for_command (int ci)
+{
+    int i, fd = gretl_function_depth();
 
-static gretlopt stored_opt;
-static int stored_opt_ci;
+    for (i=0; i<n_parms; i++) {
+	if (optparms[i].fd == fd && optparms[i].ci == ci) {
+	    clear_one_option(&optparms[i]);
+	}
+    }
+}
+
+static void set_stored_options (int ci, gretlopt opt, int flags)
+{
+    int i, got_ci = 0;
+
+#if OPTDEBUG
+    fprintf(stderr, "setting stored options: ci = %d\n", ci);
+#endif
+
+    for (i=0; gretl_opts[i].o != 0; i++) {
+	if (ci == gretl_opts[i].ci) {
+	    if (opt & gretl_opts[i].o) {
+		real_push_option_param(ci, gretl_opts[i].o, NULL, 1, flags);
+	    }
+	    got_ci = 1;
+	} else if (got_ci) {
+	    break;
+	}
+    }
+}
+
+/* Apparatus for pre-selecting options for a specified command */
 
 int set_options_for_command (gretlopt opt, const char *cmdword,
 			     const char *param)
 {
     int ci = gretl_command_number(cmdword);
+    int flags = OPT_SETOPT;
+    int clear = 0;
     int err = 0;
-
-    if (param != NULL && 
-	strcmp(param, "persist") &&
-	strcmp(param, "clear")) {
-	gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
-			     param);
-	return E_PARSE;
-    }
 
     if (ci == 0) {
 	gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
 			     cmdword);
-	err = E_DATA;
+	return E_DATA;
+    }
+
+    if (param != NULL && *param != '\0') {
+	if (!strcmp(param, "persist")) {
+	    flags |= OPT_PERSIST;
+	} else if (!strcmp(param, "clear")) {
+	    clear = 1;
+	} else {
+	    gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
+				 param);
+	    return E_DATA;
+	}
+    }
+
+    if (clear) {
+	clear_options_for_command(ci);
     } else if (opt == 0) {
 	err = E_ARGS;
     } else {
-	stored_opt = opt;
-	stored_opt_ci = gretl_command_number(cmdword);
-#if OPTDEBUG
-	fprintf(stderr, "storing opt %d for ci %d\n", opt, stored_opt_ci);
-#endif
+	set_stored_options(ci, opt, flags);
     }
 
     return err;
@@ -1061,13 +1192,15 @@ int set_options_for_command (gretlopt opt, const char *cmdword,
 
 static void maybe_get_stored_options (int ci, gretlopt *popt)
 {
-    if (ci == stored_opt_ci) {
+    int i, fd = gretl_function_depth();
+
+    for (i=0; i<n_parms; i++) {
+	if (optparms[i].fd == fd && optparms[i].ci == ci) {
 #if OPTDEBUG
-	fprintf(stderr, "ci %d: got stored opt %d\n", ci, stored_opt);
+	    fprintf(stderr, "ci %d: got stored opt %d\n", ci, optparms[i].opt);
 #endif
-	*popt |= stored_opt;
-	stored_opt = 0;
-	stored_opt_ci = 0;
+	    *popt |= optparms[i].opt;
+	}
     }
 }
 
@@ -1112,7 +1245,7 @@ int set_optval_double (int ci, gretlopt opt, double x)
     sprintf(s, "%g", x);
     gretl_pop_c_numeric_locale();
 
-    return real_push_option_param(ci, opt, gretl_strdup(s), 1);
+    return real_push_option_param(ci, opt, gretl_strdup(s), 1, 0);
 }
 
 /**
@@ -1131,7 +1264,7 @@ int set_optval_int (int ci, gretlopt opt, int k)
 {
     char *s = gretl_strdup_printf("%d", k);
 
-    return real_push_option_param(ci, opt, s, 1);
+    return real_push_option_param(ci, opt, s, 1, 0);
 }
 
 /**
@@ -1148,7 +1281,7 @@ int set_optval_int (int ci, gretlopt opt, int k)
 
 int set_optval_string (int ci, gretlopt opt, const char *s)
 {
-    return real_push_option_param(ci, opt, gretl_strdup(s), 1);
+    return real_push_option_param(ci, opt, gretl_strdup(s), 1, 0);
 }
 
 /* valid_long_opt: this is (semi-) public because we have need of
@@ -1158,7 +1291,7 @@ int set_optval_string (int ci, gretlopt opt, const char *s)
 gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
 {
     gretlopt opt = OPT_NONE;
-    int i;
+    int i, got_ci = 0;
 
     *status = 0;
 
@@ -1176,10 +1309,14 @@ gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
 
     /* start by looking for an exact match */
     for (i=0; gretl_opts[i].o != 0; i++) {
-	if (ci == gretl_opts[i].ci && 
-	    !strcmp(s, gretl_opts[i].longopt)) {
-	    opt = gretl_opts[i].o;
-	    *status = gretl_opts[i].parminfo;
+	if (ci == gretl_opts[i].ci) {
+	    if (!strcmp(s, gretl_opts[i].longopt)) {
+		opt = gretl_opts[i].o;
+		*status = gretl_opts[i].parminfo;
+		break;
+	    }
+	    got_ci = 1;
+	} else if (got_ci) {
 	    break;
 	}
     }
@@ -1189,6 +1326,7 @@ gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
 	int optlen, slen = strlen(s);
 	int nmatch = 0;
 
+	got_ci = 0;
 	for (i=0; gretl_opts[i].o != 0; i++) {
 	    if (ci == gretl_opts[i].ci) {
 		optlen = strlen(gretl_opts[i].longopt);
@@ -1197,6 +1335,9 @@ gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
 		    *status = gretl_opts[i].parminfo;
 		    nmatch++;
 		}
+		got_ci = 1;
+	    } else if (got_ci) {
+		break;
 	    }
 	}
 	if (nmatch > 1) {
@@ -1350,7 +1491,7 @@ static int handle_optval (char *s, int ci, gretlopt opt, int status)
 
     if (!err) {
 	if (status == OPT_NEEDS_PARM || status == OPT_ACCEPTS_PARM) {
-	    err = real_push_option_param(ci, opt, val, 1);
+	    err = real_push_option_param(ci, opt, val, 1, 0);
 	} else {
 	    err = E_DATA;
 	}
@@ -1381,7 +1522,7 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 	match = 0;
 	*longopt = '\0';
 
-#if OPTDEBUG
+#if OPTDEBUG > 1
 	fprintf(stderr, "get_long_opts: s = '%s'\n", s);
 #endif
 
@@ -1512,6 +1653,7 @@ gretlopt get_gretl_options (char *line, int *err)
     gretlopt oflags = 0;
     gretlopt opt;
     char cmdword[9] = {0};
+    char *dashp = NULL;
     int endblock = 0;
     int storing = 0;
     int ci, myerr = 0;
@@ -1519,10 +1661,17 @@ gretlopt get_gretl_options (char *line, int *err)
     if (err != NULL) {
 	*err = 0;
     }
-
-    if (strlen(line) < 2 || *line == '#' || 
-	(stored_opt == 0 && strchr(line, '-') == NULL)) {
+    
+    if (strlen(line) < 2 || *line == '#') {
 	return 0;
+    }
+
+    dashp = strchr(line, '-');
+    if (dashp == NULL) {
+	/* no options in this line itself */
+	if (n_parms == 0) {
+	    return 0;
+	}
     }
 
 #if OPTDEBUG > 1
@@ -1567,6 +1716,11 @@ gretlopt get_gretl_options (char *line, int *err)
 
     if (!storing) {
 	maybe_get_stored_options(ci, &oflags);
+    }
+
+    if (dashp == NULL) {
+	/* no point in continuing */
+	return oflags;
     }
 
     if (ci != SET && ci != SETINFO && ci != SMPL &&
@@ -1656,7 +1810,7 @@ const char *print_flags (gretlopt oflags, int ci)
 {
     const char *parm;
     gretlopt opt;
-    int i;
+    int i, got_ci;
 
     if (ci == FUNDEBUG) {
 	/* options are for internal use only */
@@ -1691,23 +1845,29 @@ const char *print_flags (gretlopt oflags, int ci)
 	oflags &= ~OPT_Q; /* handled */
     }
 
+    got_ci = 0;
     for (i=0; gretl_opts[i].ci != 0; i++) {
-	opt = gretl_opts[i].o;
-	if (ci == gretl_opts[i].ci && (oflags & opt)) {
-	    pprintf(flagprn, " --%s", gretl_opts[i].longopt);
-	    if (gretl_opts[i].parminfo) {
-		parm = get_optval_string(ci, opt);
-		if (parm != NULL && *parm != '\0') {
-		    print_option_param(parm, flagprn);
+	if (ci == gretl_opts[i].ci) {
+	    opt = gretl_opts[i].o;
+	    if (oflags & opt) {
+		pprintf(flagprn, " --%s", gretl_opts[i].longopt);
+		if (gretl_opts[i].parminfo) {
+		    parm = get_optval_string(ci, opt);
+		    if (parm != NULL && *parm != '\0') {
+			print_option_param(parm, flagprn);
+		    }
 		}
 	    }
+	    got_ci = 1;
+	} else if (got_ci) {
+	    break;
 	}
     }
 
     return gretl_print_get_buffer(flagprn);
 }
 
-void option_flags_cleanup (void)
+void option_printing_cleanup (void)
 {
     gretl_print_destroy(flagprn);
     flagprn = NULL;

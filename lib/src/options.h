@@ -74,9 +74,13 @@ int get_optval_int (int ci, gretlopt opt, int *err);
 
 int get_compression_option (int ci);
 
-void clear_option_params (int force);
+void destroy_option_params_at_level (int level);
 
-void option_flags_cleanup (void);
+void clear_option_params (void);
+
+void option_params_cleanup (void);
+
+void option_printing_cleanup (void);
 
 gretlopt valid_long_opt (int ci, const char *s, OptStatus *status);
 

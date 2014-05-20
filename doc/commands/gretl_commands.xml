@@ -10748,21 +10748,23 @@
 
     <usage>
       <arguments>
-	<argument>cmdword</argument>
+	<argument>command</argument>
+	<argument optional="true">action</argument>
 	<argument>options</argument>
       </arguments>
       <examples>
         <example>setopt mle --hessian</example>
-        <example>setopt ols --quiet</example>
+        <example>setopt ols persist --quiet</example>
+	<example>setopt ols clear</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	This command enables the pre-setting of options for the next
-	command. Ordinarily this is not required, but it may be useful
-	for the writers of hansl functions when they wish to make
-	certain command options conditional on the value of an
+	This command enables the pre-setting of options for a
+	specified command. Ordinarily this is not required, but it may
+	be useful for the writers of hansl functions when they wish to
+	make certain command options conditional on the value of an
 	argument supplied by the caller.
       </para>
       <para>
@@ -10784,15 +10786,22 @@
 	<lit>quiet</lit> has a non-zero value.
       </para>
       <para>
-	Two points should be noted regarding options set in this way.
-	First, they are compounded with any options attached to the
-	target command directly. So for example one might append the
+	By default, options set in this way apply only to the
+	immediately following instance of <repl>command</repl>; 
+	they are not persistent. However if you give <lit>persist</lit>
+	as the value for <repl>action</repl> the options will
+	continue to apply to the given command until further notice.
+	The antidote to the <lit>persist</lit> action is
+	<lit>clear</lit>: this erases any stored setting for
+	the specified command.
+      </para>
+      <para>
+	It should be noted that options set via <lit>setopt</lit> are
+	compounded with any options attached to the target command
+	directly. So for example one might append the
 	<opt>hessian</opt> option to an <lit>mle</lit> command
 	unconditionally but use <lit>setopt</lit> to add
-	<opt>quiet</opt> conditionally. Second, the effects of
-	<lit>setopt</lit> are not persistent: they apply only to the
-	following command, assuming it matches the
-	<repl>cmdword</repl> argument.
+	<opt>quiet</opt> conditionally.
       </para>
     </description> 
   </command>

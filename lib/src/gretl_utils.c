@@ -1938,6 +1938,7 @@ void libgretl_session_cleanup (int mode)
     gretl_lists_cleanup();
     gretl_tests_cleanup();
     gretl_plotx(NULL, OPT_NONE);
+    option_params_cleanup();
 
     if (mode != SESSION_CLEAR_DATASET) {
 	destroy_user_vars();
@@ -1966,7 +1967,8 @@ void libgretl_cleanup (void)
     gretl_function_hash_cleanup();
     lapack_mem_free();
     forecast_matrix_cleanup();
-    option_flags_cleanup();
+    option_params_cleanup();
+    option_printing_cleanup();
     kalman_cleanup();
     gnuplot_cleanup();
     bufgets_cleanup();

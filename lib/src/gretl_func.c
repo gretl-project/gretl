@@ -569,6 +569,7 @@ static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
     int dbg = gretl_debugging_on();
     fncall *popcall = NULL;
 
+    destroy_option_params_at_level(fn_executing);
     fn_executing--;
 
     callstack = g_list_remove(callstack, call);
