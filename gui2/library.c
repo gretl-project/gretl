@@ -7143,9 +7143,6 @@ static gint block_deletion (GtkWidget *w, GdkEvent *event, gpointer p)
 
 static void handle_flush_callback (int finalize)
 {
-#if 0
-    return 0; /* wait till this is more robust? */
-#endif
     if (oh.prn != NULL) {
 	/* we have an output printer in place */
 	if (oh.vwin == NULL) {

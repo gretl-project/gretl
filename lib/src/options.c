@@ -1161,7 +1161,7 @@ int set_options_for_command (gretlopt opt, const char *cmdword,
     int clear = 0;
     int err = 0;
 
-    if (ci == 0) {
+    if (ci == 0 || ci == SETOPT) {
 	gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
 			     cmdword);
 	return E_DATA;
