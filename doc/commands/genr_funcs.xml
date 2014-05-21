@@ -1228,9 +1228,7 @@
 	  discarding any initial white space) to a floating-point
 	  number.  Unlike C's <lit>atof</lit>, however, the decimal
 	  character is always assumed (for reasons of portability) to
-	  be <quote>
-	  <lit>.</lit>
-	  </quote>. Any characters that follow
+	  be <quote><lit>.</lit></quote>. Any characters that follow
 	  the portion of <argname>s</argname> that converts to a
 	  floating-point number under this assumption are ignored.
 	</para>

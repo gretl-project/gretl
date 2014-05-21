@@ -3499,6 +3499,51 @@
 
   </command>
 
+  <command name="flush" section="Programming" context="cli">
+
+    <description>
+     <para>
+       This simple command (no arguments, no options) is intended for
+       use in time-consuming scripts that may be executed via the
+       gretl GUI (it is ignored by the command-line program), to give
+       the user a visual indication that things are moving along and
+       gretl is not <quote>frozen</quote>.
+     </para>
+     <para>
+       Ordinarily if you launch a script in the GUI no output is shown
+       until its execution is completed, but the effect of invoking
+       <lit>flush</lit> is as follows:
+     </para>
+     <ilist>
+       <li>
+	 <para>
+	   On the first invocation, gretl opens a window, displays the
+	   output so far, and appends the message
+	   <quote>Processing...</quote>.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   On subsequent invocations the text shown in the output
+	   window is updated, and a new <quote>processing</quote>
+	   message is appended.
+	 </para>
+       </li>
+     </ilist>
+     <para>
+       When execution of the script is completed any remaining output
+       is automatically flushed to the text window.
+     </para>
+     <para>
+       Please note, there is no point in using <lit>flush</lit> in
+       scripts that take less than (say) 5 seconds to execute. Also
+       note that this command should not be used at a point in the
+       script where there is no further output to be printed.
+     </para>
+    </description>
+
+  </command>
+
   <command name="foreign" section="Programming" 
     label="Non-native script" context="cli">
 

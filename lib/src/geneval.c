@@ -8705,6 +8705,26 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
     return ret;
 }
 
+static char *gen_series_line (const char *vname,
+			      const char *formula,
+			      parser *p)
+{
+    char *line = NULL;
+
+    if (!strncmp(formula, "varname(", 8)) {
+	char *tmp = generate_string(formula, p->dset, &p->err);
+	    
+	if (tmp != NULL) {
+	    line = g_strdup_printf("series %s=%s", vname, tmp);
+	    free(tmp);
+	}
+    } else {
+	line = g_strdup_printf("series %s=%s", vname, formula);
+    }
+
+    return line;
+}
+
 static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -8718,14 +8738,12 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 	const char *formula = r->v.str;
 	char *line;
 
-	line = malloc(9 + strlen(vname) + strlen(formula));
-	if (line == NULL) {
-	    p->err = E_ALLOC;
-	} else {
+	line = gen_series_line(vname, formula, p);
+
+	if (!p->err) {
 	    int vnum = -1;
 	    int err = 0;
 
-	    sprintf(line, "series %s=%s", vname, formula);
 	    err = generate(line, p->dset, OPT_NONE, p->prn);
 	    if (!err) {
 		vnum = current_series_index(p->dset, vname);
@@ -8734,7 +8752,7 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 	    if (ret != NULL) {
 		ret->v.xval = vnum;
 	    }
-	    free(line);
+	    g_free(line);
 	}
     }
 
