@@ -94,14 +94,14 @@ enum {
 } plugin_codes;
 
 struct plugin_info {
-    int pnum;
-    const char *pname;
-    void *handle;
+    int pnum;           /* index number of plugin */
+    const char *pname;  /* name of plugin */
+    void *handle;       /* handle obtained via dlopen or similar */
 };
 
-struct plugin_function {
-    const char *fname;
-    int pidx;
+struct plugin_function_info {
+    const char *name;   /* name of function */
+    int index;          /* index of the plugin that supplies it */
 };
 
 struct plugin_info plugins[] = {
@@ -150,7 +150,7 @@ struct plugin_info plugins[] = {
     { P_JSON_GET,        "json_get",        NULL }
 };  
 
-struct plugin_function plugin_table[] = { 
+struct plugin_function_info plugin_functions[] = { 
     /* data importers */
     { "xls_get_data",      P_XLS_IMPORT },
     { "xlsx_get_data",     P_XLSX_IMPORT },
@@ -288,20 +288,25 @@ static GHashTable *gretl_plugin_hash_init (void)
 
     ht = g_hash_table_new(g_str_hash, g_str_equal);
 
-    for (i=0; plugin_table[i].fname != NULL; i++) {
-	g_hash_table_insert(ht, (gpointer) plugin_table[i].fname, 
-			    GINT_TO_POINTER(plugin_table[i].pidx));
+    /* Record the plugin index of each plugin function
+       in a hash table under the key of the function
+       name, permitting quick look-up.
+    */
+
+    for (i=0; plugin_functions[i].name != NULL; i++) {
+	g_hash_table_insert(ht, (gpointer) plugin_functions[i].name, 
+			    GINT_TO_POINTER(plugin_functions[i].index));
     }
 
     return ht;
 }
 
-static int plugin_index_lookup (const char *fname)
+static int plugin_index_lookup (const char *name)
 {
     static GHashTable *pht;
-    gpointer p;
+    gpointer ptr;
  
-    if (fname == NULL) {
+    if (name == NULL) {
 	/* cleanup signal */
 	if (pht != NULL) {
 	    g_hash_table_destroy(pht);
@@ -311,12 +316,13 @@ static int plugin_index_lookup (const char *fname)
     }
 
     if (pht == NULL) {
+	/* construct hash table if not already done */
 	pht = gretl_plugin_hash_init();
     }
     
-    p = g_hash_table_lookup(pht, fname);
+    ptr = g_hash_table_lookup(pht, name);
 
-    return p == NULL ? 0 : GPOINTER_TO_INT(p);
+    return ptr == NULL ? 0 : GPOINTER_TO_INT(ptr);
 }
 
 /**
@@ -360,8 +366,9 @@ void *gretl_dlopen (const char *path, int now)
  * @handle: handle to shared object; see gretl_dlopen().
  * @name: name of symbol to look up.
  *
- * Cross-platform wrapper for obtaining a handle to
- * a named symbol in a shared object.
+ * Cross-platform wrapper for obtaining a pointer to
+ * a named symbol in a shared object represented by
+ * @handle.
  *
  * Returns: pointer corresponding to @name, or NULL.
  */
@@ -381,9 +388,9 @@ void *gretl_dlsym (void *handle, const char *name)
 # define PLUGIN_EXT ".so"
 #endif
 
-static void *get_plugin_handle_by_index (int idx)
+static void *get_plugin_handle_by_index (int i)
 {
-    void *handle = plugins[idx].handle;
+    void *handle = plugins[i].handle;
 
     if (handle == NULL) {
 	/* not opened yet */
@@ -393,11 +400,12 @@ static void *get_plugin_handle_by_index (int idx)
 #ifdef WIN32
 	append_dir(pluginpath, "plugins");
 #endif
-	strcat(pluginpath, plugins[idx].pname);
+	strcat(pluginpath, plugins[i].pname);
 	strcat(pluginpath, PLUGIN_EXT);
 
 	handle = gretl_dlopen(pluginpath, 0);
-	plugins[idx].handle = handle;
+	/* store the pointer we got */
+	plugins[i].handle = handle;
     }
 
     return handle;
@@ -437,6 +445,7 @@ void plugins_cleanup (void)
 	}
     }
 
+    /* tear down the plugin look-up hash table */
     plugin_index_lookup(NULL);
 }
 
@@ -453,13 +462,11 @@ void plugins_cleanup (void)
 
 void *get_plugin_function (const char *funcname)
 {
+    int i = plugin_index_lookup(funcname);
     void *funp = NULL;
-    int idx;
 
-    idx = plugin_index_lookup(funcname);
-
-    if (idx > 0) {
-	void *handle = get_plugin_handle_by_index(idx);
+    if (i > 0) {
+	void *handle = get_plugin_handle_by_index(i);
 
 	if (handle != NULL) {
 	    funp = get_function_address(handle, funcname);
@@ -473,7 +480,7 @@ void *get_plugin_function (const char *funcname)
     return funp;
 }
 
-static void *get_plugin_handle_by_name (const char *pname)
+static void *get_plugin_handle_by_name (const char *name)
 {
     char pluginpath[MAXLEN];
 
@@ -481,7 +488,7 @@ static void *get_plugin_handle_by_name (const char *pname)
 #ifdef WIN32
     append_dir(pluginpath, "plugins");
 #endif
-    strcat(pluginpath, pname);
+    strcat(pluginpath, name);
     strcat(pluginpath, PLUGIN_EXT);
 
     return gretl_dlopen(pluginpath, 0);

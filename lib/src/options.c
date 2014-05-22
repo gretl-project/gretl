@@ -815,35 +815,35 @@ enum {
     OPT_PERSIST = 1 << 1
 };
 
-/* Apparatus for setting and retrieving parameters associated
-   with command options, as in --opt=val.  
+/* The following apparatus is used for 
+
+   (a) setting and retrieving parameters associated with
+       command options, as in --opt=val, and 
+
+   (b) storing options for a specified command via the
+       "setopt" command (with or without parameters).
 */
 
-typedef struct optparm_ optparm;
+typedef struct stored_opt_ stored_opt;
 
-struct optparm_ {
-    int ci;
-    gretlopt opt;
-    char *val;
-    int flags;
-    int fd;
+struct stored_opt_ {
+    int ci;       /* index of the associated command */
+    gretlopt opt; /* option flag */
+    char *val;    /* option parameter value, or NULL */
+    int flags;    /* may include OPT_SETOPT, OPT_PERSIST */
+    int fd;       /* "function depth" at which registered */
 };
 
-static optparm *optparms;
-static int n_parms;
+static stored_opt *optinfo;
+static int n_stored_opts;
 
-/* Note: the following is called at the start of parse_command_line(),
-   via gretl_cmd_clear().  Hopefully this ensures that we won't get an
-   accumulation of stale data in the record of option parameters.
-*/
-
-static void clear_one_option (optparm *op)
+static void clear_one_option (stored_opt *so)
 {
-    free(op->val);
-    op->val = NULL;
-    op->ci = 0;
-    op->opt = 0;
-    op->flags = 0;
+    free(so->val);
+    so->val = NULL;
+    so->ci = 0;
+    so->opt = 0;
+    so->flags = 0;
 }
 
 /**
@@ -861,79 +861,80 @@ void clear_option_params (void)
     fprintf(stderr, "clear option params\n");
 #endif
 
-    for (i=0; i<n_parms; i++) {
-	if (optparms[i].fd == fd && !(optparms[i].flags & OPT_PERSIST)) {
-	    clear_one_option(&optparms[i]);
+    for (i=0; i<n_stored_opts; i++) {
+	if (optinfo[i].fd == fd && !(optinfo[i].flags & OPT_PERSIST)) {
+	    clear_one_option(&optinfo[i]);
 	}
     }
 }
 
 void destroy_option_params_at_level (int level)
 {
-    int i, n = n_parms;
+    int i, n = n_stored_opts;
 
 #if OPTDEBUG
     fprintf(stderr, "destroy_option_params_at_level: %d\n", level);
 #endif
 
-    for (i=0; i<n_parms; i++) {
-	if (optparms[i].fd == level) {
-	    clear_one_option(&optparms[i]);
+    for (i=0; i<n_stored_opts; i++) {
+	if (optinfo[i].fd == level) {
+	    clear_one_option(&optinfo[i]);
 	    n--;
 	}
     }
 
     if (n == 0) {
-	free(optparms);
-	optparms = NULL;
+	free(optinfo);
+	optinfo = NULL;
     }
 
-    n_parms = n;
+    n_stored_opts = n;
 }
 
-/* unconditionally clean up the entire optparm stack */
+/* unconditionally clean up the entire optinfo stack */
 
 void option_params_cleanup (void)
 {
     int i;
 
-    for (i=0; i<n_parms; i++) {
-	free(optparms[i].val);
+    for (i=0; i<n_stored_opts; i++) {
+	free(optinfo[i].val);
     }
-    free(optparms);
-    optparms = NULL;
-    n_parms = 0;
+
+    free(optinfo);
+    optinfo = NULL;
+    n_stored_opts = 0;
 }
 
-static optparm *matching_optparm (int ci, gretlopt opt)
+static stored_opt *matching_stored_opt (int ci, gretlopt opt)
 {
     int i, fd = gretl_function_depth();
 
-    for (i=0; i<n_parms; i++) {
-	if (optparms[i].ci == ci && 
-	    optparms[i].opt == opt &&
-	    optparms[i].fd == fd) {
-	    return &optparms[i];
+    for (i=0; i<n_stored_opts; i++) {
+	if (optinfo[i].ci == ci && 
+	    optinfo[i].opt == opt &&
+	    optinfo[i].fd == fd) {
+	    return &optinfo[i];
 	}
     }
 
     return NULL;
 }
 
-static optparm *empty_optparm_slot (void)
+static stored_opt *empty_stored_opt_slot (void)
 {
     int i;
 
-    for (i=0; i<n_parms; i++) {
-	if (optparms[i].ci == 0) {
-	    return &optparms[i];
+    for (i=0; i<n_stored_opts; i++) {
+	if (optinfo[i].ci == 0) {
+	    return &optinfo[i];
 	}
     }
 
     return NULL;
 }
 
-/* for a given @ci, @opt pair, determine its status with regard
+/* for a given (@ci, @opt) pair, determine its status with regard
    to a parameter value: 0 = not allowed, 1 = optional, 2 = required
 */
 
@@ -955,63 +956,63 @@ static int option_parm_status (int ci, gretlopt opt)
     return 0;
 }
 
-static int real_push_option_param (int ci, gretlopt opt, char *val,
-				   int checked, int flags)
+static int real_push_option (int ci, gretlopt opt, char *val,
+			     int checked, int flags)
 {
     int fd = gretl_function_depth();
     int n, err = 0;
-    optparm *op;
+    stored_opt *so;
 
     if (!checked && option_parm_status(ci, opt) == OPT_NO_PARM)  {
 	return E_DATA;
     }
 
-    op = matching_optparm(ci, opt);
-    if (op != NULL) {
+    so = matching_stored_opt(ci, opt);
+    if (so != NULL) {
 	/* got a match for the (ci, opt) pair already */
 #if OPTDEBUG 
 	fprintf(stderr, "push_option_param: replacing (val='%s')\n", val);
 #endif
 	if (!(flags & OPT_SETOPT)) {
-	    free(op->val);
-	    op->val = val;
+	    free(so->val);
+	    so->val = val;
 	}
-	op->flags = flags;
+	so->flags = flags;
 	return 0;
     }
 
-    op = empty_optparm_slot();
-    if (op != NULL) {
+    so = empty_stored_opt_slot();
+    if (so != NULL) {
 	/* re-use a vacant slot */
 #if OPTDEBUG 
 	fprintf(stderr, "push_option_param: reusing empty (val='%s')\n", val);
 #endif
-	op->ci = ci;
-	op->opt = opt;
-	op->val = val;
-	op->flags = flags;
-	op->fd = fd;
+	so->ci = ci;
+	so->opt = opt;
+	so->val = val;
+	so->flags = flags;
+	so->fd = fd;
 	return 0;
     }    
 
-    /* we have to extend the array */
-    n = n_parms + 1;
-    op = realloc(optparms, n * sizeof *op);
+    /* so we have to extend the array */
+    n = n_stored_opts + 1;
+    so = realloc(optinfo, n * sizeof *so);
 
-    if (op == NULL) {
+    if (so == NULL) {
 	err = E_ALLOC;
     } else {
 #if OPTDEBUG 
 	fprintf(stderr, "push_option_param: appending (val='%s')\n", val);
 #endif
-	optparms = op;
-	op = &optparms[n-1];
-	op->ci = ci;
-	op->opt = opt;
-	op->val = val;
-	op->flags = flags;
-	op->fd = fd;
-	n_parms = n;
+	optinfo = so;
+	so = &optinfo[n-1];
+	so->ci = ci;
+	so->opt = opt;
+	so->val = val;
+	so->flags = flags;
+	so->fd = fd;
+	n_stored_opts = n;
     }
 
     return err;
@@ -1034,7 +1035,7 @@ static int real_push_option_param (int ci, gretlopt opt, char *val,
 
 int push_option_param (int ci, gretlopt opt, char *val)
 {
-    return real_push_option_param(ci, opt, val, 0, 0);
+    return real_push_option(ci, opt, val, 0, 0);
 }
 
 /**
@@ -1049,9 +1050,9 @@ int push_option_param (int ci, gretlopt opt, char *val)
 
 const char *get_optval_string (int ci, gretlopt opt)
 {
-    optparm *op = matching_optparm(ci, opt);
+    stored_opt *so = matching_stored_opt(ci, opt);
 
-    return (op != NULL)? op->val : NULL;
+    return (so != NULL)? so->val : NULL;
 }
 
 /**
@@ -1066,14 +1067,14 @@ const char *get_optval_string (int ci, gretlopt opt)
 
 double get_optval_double (int ci, gretlopt opt)
 {
-    optparm *op = matching_optparm(ci, opt);
+    stored_opt *so = matching_stored_opt(ci, opt);
     double ret = NADBL;
 
-    if (op != NULL && op->val != NULL) {
-	if (numeric_string(op->val)) {
-	    ret = dot_atof(op->val);
+    if (so != NULL && so->val != NULL) {
+	if (numeric_string(so->val)) {
+	    ret = dot_atof(so->val);
 	} else {
-	    ret = gretl_scalar_get_value(op->val, NULL);
+	    ret = gretl_scalar_get_value(so->val, NULL);
 	}
     }
 
@@ -1095,15 +1096,15 @@ double get_optval_double (int ci, gretlopt opt)
 
 int get_optval_int (int ci, gretlopt opt, int *err)
 {
-    optparm *op = matching_optparm(ci, opt);
+    stored_opt *so = matching_stored_opt(ci, opt);
     int status = option_parm_status(ci, opt);
     int ret = 0;
 
-    if (op != NULL && op->val != NULL) {
-	if (integer_string(op->val)) {
-	    ret = atoi(op->val);
+    if (so != NULL && so->val != NULL) {
+	if (integer_string(so->val)) {
+	    ret = atoi(so->val);
 	} else {
-	    double x = gretl_scalar_get_value(op->val, err);
+	    double x = gretl_scalar_get_value(so->val, err);
 
 	    if (!*err) {
 		ret = (int) x;
@@ -1124,9 +1125,9 @@ static void clear_options_for_command (int ci)
 {
     int i, fd = gretl_function_depth();
 
-    for (i=0; i<n_parms; i++) {
-	if (optparms[i].fd == fd && optparms[i].ci == ci) {
-	    clear_one_option(&optparms[i]);
+    for (i=0; i<n_stored_opts; i++) {
+	if (optinfo[i].fd == fd && optinfo[i].ci == ci) {
+	    clear_one_option(&optinfo[i]);
 	}
     }
 }
@@ -1142,7 +1143,7 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
     for (i=0; gretl_opts[i].o != 0; i++) {
 	if (ci == gretl_opts[i].ci) {
 	    if (opt & gretl_opts[i].o) {
-		real_push_option_param(ci, gretl_opts[i].o, NULL, 1, flags);
+		real_push_option(ci, gretl_opts[i].o, NULL, 1, flags);
 	    }
 	    got_ci = 1;
 	} else if (got_ci) {
@@ -1151,7 +1152,8 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
     }
 }
 
-/* Apparatus for pre-selecting options for a specified command */
+/* Apparatus for pre-selecting options for a specified command,
+   using "setopt" */
 
 int set_options_for_command (gretlopt opt, const char *cmdword,
 			     const char *param)
@@ -1194,25 +1196,25 @@ static void maybe_get_stored_options (int ci, gretlopt *popt)
 {
     int i, fd = gretl_function_depth();
 
-    for (i=0; i<n_parms; i++) {
-	if (optparms[i].fd == fd && optparms[i].ci == ci) {
+    for (i=0; i<n_stored_opts; i++) {
+	if (optinfo[i].fd == fd && optinfo[i].ci == ci) {
 #if OPTDEBUG
-	    fprintf(stderr, "ci %d: got stored opt %d\n", ci, optparms[i].opt);
+	    fprintf(stderr, "ci %d: got stored opt %d\n", ci, optinfo[i].opt);
 #endif
-	    *popt |= optparms[i].opt;
+	    *popt |= optinfo[i].opt;
 	}
     }
 }
 
 int get_compression_option (int ci)
 {
-    optparm *op = matching_optparm(ci, OPT_Z);
+    stored_opt *so = matching_stored_opt(ci, OPT_Z);
     int level = 0;
 
-    if (op == NULL || op->val == NULL) {
+    if (so == NULL || so->val == NULL) {
 	return 1;
     } else {
-	level = atoi(op->val);
+	level = atoi(so->val);
 	if (level < 0) {
 	    return 0;
 	} else if (level > 9) {
@@ -1245,7 +1247,7 @@ int set_optval_double (int ci, gretlopt opt, double x)
     sprintf(s, "%g", x);
     gretl_pop_c_numeric_locale();
 
-    return real_push_option_param(ci, opt, gretl_strdup(s), 1, 0);
+    return real_push_option(ci, opt, gretl_strdup(s), 1, 0);
 }
 
 /**
@@ -1264,7 +1266,7 @@ int set_optval_int (int ci, gretlopt opt, int k)
 {
     char *s = gretl_strdup_printf("%d", k);
 
-    return real_push_option_param(ci, opt, s, 1, 0);
+    return real_push_option(ci, opt, s, 1, 0);
 }
 
 /**
@@ -1281,7 +1283,7 @@ int set_optval_int (int ci, gretlopt opt, int k)
 
 int set_optval_string (int ci, gretlopt opt, const char *s)
 {
-    return real_push_option_param(ci, opt, gretl_strdup(s), 1, 0);
+    return real_push_option(ci, opt, gretl_strdup(s), 1, 0);
 }
 
 /* valid_long_opt: this is (semi-) public because we have need of
@@ -1491,7 +1493,7 @@ static int handle_optval (char *s, int ci, gretlopt opt, int status)
 
     if (!err) {
 	if (status == OPT_NEEDS_PARM || status == OPT_ACCEPTS_PARM) {
-	    err = real_push_option_param(ci, opt, val, 1, 0);
+	    err = real_push_option(ci, opt, val, 1, 0);
 	} else {
 	    err = E_DATA;
 	}
@@ -1669,7 +1671,7 @@ gretlopt get_gretl_options (char *line, int *err)
     dashp = strchr(line, '-');
     if (dashp == NULL) {
 	/* no options in this line itself */
-	if (n_parms == 0) {
+	if (n_stored_opts == 0) {
 	    return 0;
 	}
     }
