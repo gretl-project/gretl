@@ -3801,7 +3801,7 @@
     <function name="kpsscrit" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="scalar">T</fnarg>
-	<fnarg type="scalar">trend</fnarg>
+	<fnarg type="bool">trend</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7763,17 +7763,19 @@
       </description>
     </function>
 
-    <function name="weekday" section="calendar" output="int">
+    <function name="weekday" section="calendar" output="asinput">
       <fnargs>
-	<fnarg type="int">year</fnarg>
-	<fnarg type="int">month</fnarg>
-	<fnarg type="int">day</fnarg>
+	<fnarg type="scalar-or-series">year</fnarg>
+	<fnarg type="scalar-or-series">month</fnarg>
+	<fnarg type="scalar-or-series">day</fnarg>
       </fnargs>    
       <description>
 	<para>
-	  Returns the day of the week (Sunday = 0, Monday = 1, etc.) for the
-	  date specified by the three arguments, or <lit>NA</lit> if the date
-	  is invalid.
+	  Returns the day of the week (Sunday = 0, Monday = 1, etc.)
+	  for the date(s) specified by the three arguments, or
+	  <lit>NA</lit> if the date is invalid. Note that all three
+	  arguments must be of the same type, either scalars
+	  (integers) or series.
 	</para>
       </description>
     </function>

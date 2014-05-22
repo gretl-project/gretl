@@ -7078,13 +7078,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	}
     } else if (f == F_WEEKDAY) {
 	post_process = 0;
-	if (l->t != NUM) {
-	    node_type_error(f, 1, NUM, l, p);
-	} else if (m->t != NUM) {
-	    node_type_error(f, 2, NUM, m, p);
-	} else if (r->t != NUM) {
-	    node_type_error(f, 3, NUM, r, p);
-	} else {
+	if (l->t == NUM && m->t == NUM && r->t == NUM) {
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL) {
 		int yr = l->v.xval;
@@ -7093,6 +7087,17 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
 		ret->v.xval = day_of_week(yr, mo, day, &p->err);
 	    }
+	} else if (l->t == VEC && m->t == VEC && r->t == VEC) {
+	    ret = aux_vec_node(p, p->dset->n);
+	    if (ret != NULL) {
+		p->err = fill_day_of_week_array(ret->v.xvec,
+						l->v.xvec,
+						m->v.xvec,
+						r->v.xvec,
+						p->dset);
+	    }
+	} else {
+	    p->err = E_TYPES;
 	}
     } else if (f == F_KDENSITY) {
 	if (l->t != VEC) {

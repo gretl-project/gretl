@@ -680,9 +680,11 @@ static const char *get_pd_string (DATASET *dset)
 	case 52:
 	    pdstr = N_("Weekly"); break;
 	case 5:
+	    pdstr = N_("Daily (5 days)"); break;
 	case 6:
+	    pdstr = N_("Daily (6 days)"); break;
 	case 7:
-	    pdstr = N_("Daily"); break;
+	    pdstr = N_("Daily (7 days)"); break;
 	case 10:
 	    pdstr = N_("Decennial"); break;
 	default:

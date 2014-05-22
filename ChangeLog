@@ -5,6 +5,9 @@ version 1.9.91, in progress
   hansl functions
 - "data" command: support globbing for names of series to fetch
   from gretl native databases
+- weekday() function: generalize to accept series arguments
+- $dwpval: return NA rather than flagging an error if we get a
+  negative Imhof integral (and adjust the doc)
 - Fix broken encoding of German translation
 - Fix bug in OS X (quartz) package: GDK could lose track of its
   PNG loader, so graphs would not display

@@ -179,4 +179,10 @@ gretl_matrix *aggregate_by (const double *x,
 
 int fill_dataset_dates_series (const DATASET *dset, double *x);
 
+int fill_day_of_week_array (double *dow,
+			    const double *y,
+			    const double *m, 
+			    const double *d,
+			    const DATASET *dset);
+
 #endif /* GENFUNCS_H */

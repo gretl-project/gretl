@@ -5485,3 +5485,22 @@ int fill_dataset_dates_series (const DATASET *dset, double *x)
     return err;
 }
 
+int fill_day_of_week_array (double *dow,
+			    const double *y,
+			    const double *m, 
+			    const double *d,
+			    const DATASET *dset)
+{
+    int yr, mo, day;
+    int t, err = 0;
+
+    for (t=dset->t1; t<=dset->t2 && !err; t++) {
+	yr = (int) y[t];
+	mo = (int) m[t];
+	day = (int) d[t];
+	dow[t] = day_of_week(yr, mo, day, &err);
+    }
+	
+    return err;
+}
+
