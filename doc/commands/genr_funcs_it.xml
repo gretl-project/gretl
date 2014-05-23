@@ -135,6 +135,18 @@
       relativa all'ultimo modello stimato, se disponibile. Tale
       valore è calcolato ramite la procedura di Imhof.
     </para>
+	<para>
+	  A causa della limitata precisione dell'aritmetica digitale,
+	  l'integrale di Imhof può diventare negativo quando la
+	  statistica di Durbin&ndash;Watson è vicina a 0. Se questo
+	  accade, l'accessore restituisce <lit>NA</lit>. Poiché
+	  qualsiasi altro malfunzionamento porta a un codice di
+	  errore, si può ritenere con una certa sicurezza che un
+	  valore NA indica che il p-value è
+	  <quote>piccolissimo</quote>, benché gretl non sia in grado
+	  di quantificarlo esattamente.
+	</para>
+
       </description>
     </function>
 
@@ -1233,15 +1245,14 @@
       <description>
     <para>
       Analoga alla funzione della libreria C con lo stesso
-      nome. Restituisce il risultato della conversione della
-      stringa <argname>s</argname> (o della porzione di essa che
-      segue qualsiasi spazio iniziale) in un numero a virgola
-      mobile. In modo diverso dalla funzione <lit>atof</lit> in C,
-      comunque, per questioni di portabilità, si assume sempre che
-      il carattere decimale sia
-      <quote><lit>.</lit></quote>. Qualsiasi carattere che segue
-      la porzione di <argname>s</argname> convertita in numero
-      decimale a virgola mobile sotto questa assunzione è
+      nome. Restituisce il risultato della conversione della stringa
+      <argname>s</argname> (o della porzione di essa che segue
+      qualsiasi spazio iniziale) in un numero a virgola mobile. In
+      modo diverso dalla funzione <lit>atof</lit> in C, comunque, per
+      questioni di portabilità, si assume sempre che il carattere
+      decimale sia <quote><lit>.</lit></quote>. Qualsiasi carattere
+      che segue la porzione di <argname>s</argname> convertita in
+      numero decimale a virgola mobile sotto questa assunzione è
       ignorata.
     </para>
     <para>
@@ -3699,6 +3710,28 @@
         <fncref targ="ksimul"/>
       </seelist>
     </para>
+      </description>
+    </function> 
+
+    <function name="kpsscrit" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="scalar">T</fnarg>
+	<fnarg type="bool">trend</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Restituisce un vettore riga contenente i valori critici al
+	  10, 5 e 1 percento per il test di stazionarietà
+	  KPSS. <argname>T</argname> deve contenere il numero di
+	  osservazioni e <argname>trend</argname> dev'essere 1 se il
+	  test include un trend e 0 altrimenti.
+	</para>
+	<para>
+	  I valori critici sono basati sulle superfici di risposta
+	  stimated da <cite key="sephton95">Sephton (Economics
+	  Letters, 1995)</cite>. Vedi anche il comando <cmdref
+	  targ="kpss"/>.
+ 	</para>
       </description>
     </function> 
 
@@ -7640,15 +7673,17 @@
 
     <function name="weekday" section="calendar" output="int">
       <fnargs>
-	<fnarg type="int">anno</fnarg>
-	<fnarg type="int">mese</fnarg>
-	<fnarg type="int">giorno</fnarg>
+	<fnarg type="scalar-or-series">anno</fnarg>
+	<fnarg type="scalar-or-series">mese</fnarg>
+	<fnarg type="scalar-or-series">giorno</fnarg>
       </fnargs>    
       <description>
 	<para>
 	  Fornisce il giorno della settimana (Domenica = 0, Lunedì =
 	  1, ecc.) corrispondente alla data specificata dai tre
-	  argomenti, o <lit>NA</lit> se la data non è valida.
+	  argomenti, o <lit>NA</lit> se la data non è valida. Si noti
+	  che i tre argomenti devono essere dello stesso tipo: o
+	  scalari, oppure serie.
 	</para>
       </description>
     </function>
