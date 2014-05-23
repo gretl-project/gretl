@@ -460,6 +460,7 @@ static void vector_subtract (gretl_matrix *targ,
   U  Random variates, m x r
 */
 
+#define GHK_DEBUG 0
 static double GHK_1 (const gretl_matrix *C, 
 		     const gretl_matrix *A, 
 		     const gretl_matrix *B, 
@@ -927,7 +928,9 @@ static double ghk_tj (const gretl_matrix *C,
 	} else {	    
             x = (a->val[j] - mj) / den;
 	    if (x > 8.0) {
+#if GHK_DEBUG
 		fprintf(stderr, "x=%.3f, flipping!\n", x);
+#endif
 		flip = 1;
 		TA = normal_cdf(-x);
 	    } else {
