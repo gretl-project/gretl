@@ -914,6 +914,25 @@ int backup_full_dataset (DATASET *dset)
     return 0;
 }
 
+static void destroy_full_dataset (DATASET *dset)
+{
+    if (fullset != NULL) {
+	if (fullset->varname == dset->varname) {
+	    fullset->varname = NULL;
+	}
+	if (fullset->varinfo == dset->varinfo) {
+	    fullset->varinfo = NULL;
+	}
+	if (fullset->descrip == dset->descrip) {
+	    fullset->descrip = NULL;
+	}
+	destroy_dataset(fullset);
+	fullset = NULL;
+    }
+
+    peerset = NULL;
+}
+
 int complex_subsampled (void)
 {
     return (fullset != NULL && fullset->Z != NULL);
@@ -1025,8 +1044,11 @@ copy_data_to_subsample (DATASET *subset, const DATASET *dset,
 	}
     }
 
-    strcpy(subset->stobs, "1");
-    sprintf(subset->endobs, "%d", subset->n);
+    if (subset->stobs[0] == '\0' || subset->endobs[0] == '\0') {
+	/* impose simple default if not already handled */
+	strcpy(subset->stobs, "1");
+	sprintf(subset->endobs, "%d", subset->n);
+    }
 }
 
 int get_restriction_mode (gretlopt opt)
@@ -1159,6 +1181,67 @@ make_panel_submask (char *mask, const DATASET *dset, int *err)
     free(umask);
 
     return np;
+}
+
+/* See if sub-sampling leaves 5- or 6-day daily when starting from
+   7-day, or 5-day when starting from 6-day data.
+*/
+
+static int mask_leaves_daily (char *mask, const DATASET *dset,
+			      double *sd0)
+{
+    char datestr[OBSLEN];
+    int we_delta = 0; /* weekend delta days */
+    long ed, ed0 = 0, edbak = 0;
+    int t, wd, ok = 1;
+    int started = 0;
+    int newpd = 0;
+
+    for (t=0; t<dset->n && ok; t++) {
+	if (mask[t]) {
+	    /* examine the included days */
+	    ntodate(datestr, t, dset);
+	    wd = weekday_from_date(datestr);
+	    wd = (wd == 0)? 7 : wd;
+	    ed = get_epoch_day(datestr);
+	    if (started) {
+		int delta = ed - edbak;
+
+		if (wd > 1) {
+		    /* not Monday */
+		    if (delta != 1) {
+			ok = 0;
+		    }
+		} else if (wd == 1) {
+		    /* Monday: preceded by weekend */
+		    if (delta != 2 && delta != 3) {
+			/* delta must be 2 or 3 */
+			ok = 0;
+		    } else if (we_delta == 0) {
+			/* record the first weekend delta */
+			we_delta = delta;
+		    } else if (delta != we_delta) {
+			/* deltas not consistent */
+			ok = 0;
+		    }
+		}
+	    } else if (wd == 7 || (dset->pd == 6 && wd == 6)) {
+		/* the first day doesn't work */
+		ok = 0;
+	    } else {
+		ed0 = ed;
+		started = 1;
+	    }
+	    edbak = ed;
+	}
+    }
+
+    if (ok) {
+	newpd = (we_delta == 3)? 5 : 6;
+	*sd0 = (double) ed0;
+    }
+
+    return newpd;
 }
 
 #define needs_string_arg(m) (m == SUBSAMPLE_RANDOM || \
@@ -1323,9 +1406,21 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 	    /* time series for single panel unit */
 	    subset->structure = SPECIAL_TIME_SERIES;
 	}
+    } else if (dated_daily_data(dset) && dset->pd > 5) {
+	/* are we able to reconstitute daily data? */
+	double sd0 = 0.0;
+	int newpd = mask_leaves_daily(mask, dset, &sd0);
+
+	if (newpd > 0) {
+	    subset->structure = TIME_SERIES;
+	    subset->pd = newpd;
+	    subset->sd0 = sd0;
+	    ntodate(subset->stobs, 0, subset);
+	    ntodate(subset->endobs, subset->n - 1, subset);
+	}
     }
 
-    /* set up the sub-sampled datainfo */
+    /* set up the sub-sampled dataset */
     err = start_new_Z(subset, OPT_R);
     if (err) { 
 	free(subset);
@@ -1356,9 +1451,13 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
     /* copy across data (and case markers, if any) */
     copy_data_to_subsample(subset, dset, dset->v, mask);
 
-    err = backup_full_dataset(dset);
-
-    subset->submask = copy_subsample_mask(mask, &err);
+    if (opt & OPT_T) {
+	/* --permanent */
+	destroy_full_dataset(dset);
+    } else {
+	err = backup_full_dataset(dset);
+	subset->submask = copy_subsample_mask(mask, &err);
+    }
 
     /* switch pointers */
     *dset = *subset;
@@ -1477,6 +1576,14 @@ static int restriction_uses_obs (const char *s)
 
 #endif
 
+static void destroy_restriction_string (DATASET *dset)
+{
+    if (dset->restriction != NULL) {
+	free(dset->restriction);
+	dset->restriction = NULL;
+    }
+}
+
 /* Make a string representing the sample restriction. This is
    for reporting purposes. Note that in some cases the
    incoming @restr string may be NULL, for instance if the
@@ -1489,10 +1596,7 @@ static int make_restriction_string (DATASET *dset, char *old,
     char *s = NULL;
     int n = 0, err = 0;
 
-    if (dset->restriction != NULL) {
-	free(dset->restriction);
-	dset->restriction = NULL;
-    }
+    destroy_restriction_string(dset);
 
     if (old != NULL) {
 	n = strlen(old);
@@ -1572,10 +1676,30 @@ int restrict_sample (const char *line, const int *list,
     char *oldmask = NULL;
     char *mask = NULL;
     int free_oldmask = 0;
+    int permanent = 0;
     int mode, err = 0;
     
     if (dset == NULL || dset->Z == NULL) {
 	return E_NODATA;
+    }
+
+    /* The --dummy, --no-missing, --random and --restrict options
+       are incompatible */
+    if (incompatible_options(opt, OPT_O | OPT_M | OPT_N | OPT_R)) {
+	return E_BADOPT;
+    }
+
+    if (opt & OPT_T) {
+	if (gretl_function_depth() > 0) {
+	    /* can't permanently shrink the dataset within a function */
+	    gretl_errmsg_set(_("The dataset cannot be modified at present"));
+	    return E_DATA;
+	} else if (!(opt & (OPT_O | OPT_M | OPT_N | OPT_R))) {
+	    /* we need some kind of restriction flag */
+	    return E_BADOPT;
+	} else {
+	    permanent = 1;
+	}
     }
 
     gretl_error_clear();
@@ -1641,14 +1765,14 @@ int restrict_sample (const char *line, const int *list,
     }
 
     if (!err && mask != NULL) {
+	int contiguous = 0;
 	int t1 = 0, t2 = 0;
-	int contig = 0;
 
-	if (mode != SUBSAMPLE_RANDOM) {
-	    contig = mask_contiguous(mask, dset, &t1, &t2);
+	if (!permanent && mode != SUBSAMPLE_RANDOM) {
+	    contiguous = mask_contiguous(mask, dset, &t1, &t2);
 	}
 
-	if (contig) {
+	if (contiguous) {
 	    /* The specified subsample consists of contiguous
 	       observations, so we'll just adjust the range, avoiding
 	       the overhead of creating a parallel dataset.
@@ -1672,7 +1796,11 @@ int restrict_sample (const char *line, const int *list,
 	free(oldmask);
     }
 
-    make_restriction_string(dset, oldrestr, line, mode);
+    if (permanent) {
+	destroy_restriction_string(dset);
+    } else {
+	make_restriction_string(dset, oldrestr, line, mode);
+    }
 
     return err;
 }
