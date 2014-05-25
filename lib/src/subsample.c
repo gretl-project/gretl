@@ -1683,9 +1683,13 @@ int restrict_sample (const char *line, const int *list,
 	return E_NODATA;
     }
 
-    /* The --dummy, --no-missing, --random and --restrict options
-       are incompatible */
-    if (incompatible_options(opt, OPT_O | OPT_M | OPT_N | OPT_R)) {
+    /* We'll accept the redundant combination of the options --dummy
+       (OPT_O) and --restrict (OPT_R), but other than that the options
+       --dummy, --restrict, --no-missing (OPT_M) and --random (OPT_N)
+       are all mutually incompatible.
+    */
+    if (incompatible_options(opt, OPT_O | OPT_M | OPT_N) ||
+	incompatible_options(opt, OPT_R | OPT_M | OPT_N)) {
 	return E_BADOPT;
     }
 

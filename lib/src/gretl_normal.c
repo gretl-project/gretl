@@ -453,6 +453,8 @@ static void vector_subtract (gretl_matrix *targ,
     }
 }
 
+#define GHK_DEBUG 0
+
 /*
   C  Lower triangular Cholesky factor of \Sigma, m x m
   A  Lower bound of rectangle, m x 1
@@ -460,7 +462,6 @@ static void vector_subtract (gretl_matrix *targ,
   U  Random variates, m x r
 */
 
-#define GHK_DEBUG 0
 static double GHK_1 (const gretl_matrix *C, 
 		     const gretl_matrix *A, 
 		     const gretl_matrix *B, 
