@@ -930,6 +930,13 @@ static void destroy_full_dataset (DATASET *dset)
 	fullset = NULL;
     }
 
+    dset->varname = NULL;
+    dset->varinfo = NULL;
+    dset->descrip = NULL;
+
+    free_Z(dset);
+    clear_datainfo(dset, CLEAR_SUBSAMPLE); 
+
     peerset = NULL;
 }
 
@@ -1183,51 +1190,81 @@ make_panel_submask (char *mask, const DATASET *dset, int *err)
     return np;
 }
 
-/* See if sub-sampling leaves 5- or 6-day daily when starting from
-   7-day, or 5-day when starting from 6-day data.
+static int add_daily_date_strings (char *selected, 
+				   const DATASET *dset,
+				   DATASET *subset)
+{
+    int err, t, i = 0;
+    
+    err = dataset_allocate_obs_markers(subset);
+
+    if (!err) {
+	subset->markers = DAILY_DATE_STRINGS;
+	for (t=0; t<dset->n; t++) {
+	    if (selected[t]) {
+		ntodate(subset->S[i++], t, dset);
+	    }
+	}
+    }
+
+    return err;
+}
+
+/* See if sub-sampling dated daily data leaves a useable daily dataset
+   (as in dropping weekends and/or holidays).
 */
 
-static int mask_leaves_daily (char *mask, const DATASET *dset,
-			      double *sd0)
+static int try_for_daily_subset (char *selected, 
+				 const DATASET *dset,
+				 DATASET *subset,
+				 gretlopt *optp)
 {
     char datestr[OBSLEN];
-    int we_delta = 0; /* weekend delta days */
     long ed, ed0 = 0, edbak = 0;
-    int t, wd, ok = 1;
+    int t, wd, ngaps = 0;
+    int delta, mon_delta;
+    int delta_max = 0;
     int started = 0;
-    int newpd = 0;
+    int any_sat = 0;
+    int newpd = 5;
+    int err = 0;
 
-    for (t=0; t<dset->n && ok; t++) {
-	if (mask[t]) {
-	    /* examine the included days */
+    if (dset->pd > 5) {
+	/* first pass: look at weekend status of included obs */
+	for (t=0; t<dset->n; t++) {
+	    if (selected[t]) {
+		wd = weekday_from_date(datestr);
+		if (wd == 0) {
+		    /* got a Sunday: result must be 7-day */
+		    newpd = 7;
+		    break;
+		} else if (wd == 6) {
+		    any_sat = 1;
+		}
+	    }
+	}
+	if (newpd == 5 && any_sat) {
+	    /* no Sundays, but got a Saurday: result
+	       must be 6-day data */
+	    newpd = 6;
+	}
+    }
+
+    /* determine expected "delta days" for Mondays */
+    mon_delta = (newpd == 7) ? 1 : (newpd == 6)? 2 : 3;
+
+    /* second pass: count the calendar gaps */
+    for (t=0; t<dset->n; t++) {
+	if (selected[t]) {
 	    ntodate(datestr, t, dset);
 	    wd = weekday_from_date(datestr);
-	    wd = (wd == 0)? 7 : wd;
 	    ed = get_epoch_day(datestr);
 	    if (started) {
-		int delta = ed - edbak;
-
-		if (wd > 1) {
-		    /* not Monday */
-		    if (delta != 1) {
-			ok = 0;
-		    }
-		} else if (wd == 1) {
-		    /* Monday: preceded by weekend */
-		    if (delta != 2 && delta != 3) {
-			/* delta must be 2 or 3 */
-			ok = 0;
-		    } else if (we_delta == 0) {
-			/* record the first weekend delta */
-			we_delta = delta;
-		    } else if (delta != we_delta) {
-			/* deltas not consistent */
-			ok = 0;
-		    }
+		delta = ed - edbak;
+		ngaps += (wd == 1)? (delta > mon_delta) : (delta > 1);
+		if (delta > delta_max) {
+		    delta_max = delta;
 		}
-	    } else if (wd == 7 || (dset->pd == 6 && wd == 6)) {
-		/* the first day doesn't work */
-		ok = 0;
 	    } else {
 		ed0 = ed;
 		started = 1;
@@ -1236,12 +1273,40 @@ static int mask_leaves_daily (char *mask, const DATASET *dset,
 	}
     }
 
-    if (ok) {
-	newpd = (we_delta == 3)? 5 : 6;
-	*sd0 = (double) ed0;
+    /* Now, we should probably restrict the proportion of
+       missing days for this treatment: for exclusion of
+       non-trading days 10 percent should be generous. 
+       But we'll also require that the maximum "daily
+       delta" be less than 10.
+    */
+
+    if (delta_max < 10) {
+	double keepfrac = subset->n / (double) dset->n;
+	double keepmin = 0.9 * newpd / (double) dset->pd;
+
+#if SUBDEBUG
+	fprintf(stderr, "*** daily: delta_max=%d, keepfrac=%.4f\n"
+		"keepmin=%.4f, ngaps=%d, newpd=%d\n", delta_max, keepfrac,
+		keepmin, ngaps, newpd);
+#endif
+
+	if (keepfrac >= keepmin) {
+	    if (dset->S == NULL && ngaps > 0) {
+		err = add_daily_date_strings(selected, dset, subset);
+		/* flag not to destroy subset date strings */
+		*optp |= OPT_P;
+	    }
+	    if (!err) {
+		subset->structure = TIME_SERIES;
+		subset->pd = newpd;
+		subset->sd0 = (double) ed0;
+		ntodate(subset->stobs, 0, subset);
+		ntodate(subset->endobs, subset->n - 1, subset);
+	    }
+	}
     }
 
-    return newpd;
+    return err;
 }
 
 #define needs_string_arg(m) (m == SUBSAMPLE_RANDOM || \
@@ -1272,7 +1337,7 @@ make_restriction_mask (int mode, const char *s,
 
     /* construct subsample mask in one of several possible ways */
 
-    if (mode == SUBSAMPLE_DROP_MISSING) {   
+    if (mode == SUBSAMPLE_DROP_MISSING) { 
 	err = make_missing_mask(list, dset, mask);
     } else if (mode == SUBSAMPLE_RANDOM) {
 	err = make_random_mask(s, oldmask, dset, mask);
@@ -1351,6 +1416,7 @@ int
 restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 {
     DATASET *subset;
+    gretlopt zopt = OPT_R;
     int err = 0;
 
     if (mask == RESAMPLED) {
@@ -1406,22 +1472,16 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 	    /* time series for single panel unit */
 	    subset->structure = SPECIAL_TIME_SERIES;
 	}
-    } else if (dated_daily_data(dset) && dset->pd > 5) {
-	/* are we able to reconstitute daily data? */
-	double sd0 = 0.0;
-	int newpd = mask_leaves_daily(mask, dset, &sd0);
-
-	if (newpd > 0) {
-	    subset->structure = TIME_SERIES;
-	    subset->pd = newpd;
-	    subset->sd0 = sd0;
-	    ntodate(subset->stobs, 0, subset);
-	    ntodate(subset->endobs, subset->n - 1, subset);
-	}
+    } else if (dated_daily_data(dset)) {
+	/* see if we can preserve daily time series */
+	err = try_for_daily_subset(mask, dset, subset, &zopt);
     }
 
-    /* set up the sub-sampled dataset */
-    err = start_new_Z(subset, OPT_R);
+    if (!err) {
+	/* set up the sub-sampled dataset */
+	err = start_new_Z(subset, zopt);
+    }
+
     if (err) { 
 	free(subset);
 	return err;
@@ -1633,10 +1693,6 @@ static int make_restriction_string (DATASET *dset, char *old,
 	dset->restriction = s;
     }
 
-    if (old != NULL) {
-	free(old);
-    }
-
     return err;
 }
 
@@ -1805,6 +1861,8 @@ int restrict_sample (const char *line, const int *list,
     } else {
 	make_restriction_string(dset, oldrestr, line, mode);
     }
+
+    free(oldrestr);
 
     return err;
 }

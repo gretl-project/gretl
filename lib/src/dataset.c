@@ -573,7 +573,8 @@ int allocate_Z (DATASET *dset, gretlopt opt)
 /**
  * start_new_Z:
  * @dset: pointer to dataset.
- * @opt: if includes OPT_R we're sub-sampling from a full data set.
+ * @opt: if includes OPT_R we're sub-sampling from a full data set;
+ * if includes OPT_P, do not null out dset->S and markers.
  *
  * Initializes the data array within @dset (adding the constant in
  * position 0).
@@ -600,8 +601,11 @@ int start_new_Z (DATASET *dset, gretlopt opt)
 	return E_ALLOC;
     }
 
-    dset->S = NULL;
-    dset->markers = NO_MARKERS;
+    if (!(opt & OPT_P)) {
+	dset->S = NULL;
+	dset->markers = NO_MARKERS;
+    }
+
     dset->descrip = NULL;
     dset->submask = NULL;
     dset->restriction = NULL;
