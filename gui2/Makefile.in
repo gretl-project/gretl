@@ -235,6 +235,7 @@ install-strip: $(PROG) install-data
 
 install-data: installdirs
 	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.xpm $(DESTDIR)$(gretldir)
+	$(INSTALL_DATA) $(topsrc)/gretl.appdata.xml $(DESTDIR)$(datarootdir)
 
 install-ui: installdirs
 	$(INSTALL_DATA) $(topsrc)/gui2/gretlmain.xml $(DESTDIR)$(uidir)
@@ -254,7 +255,8 @@ install-news: $(GRETL_NEWS) installdirs
 	$(INSTALL_DATA) $(GRETL_NEWS) $(DESTDIR)$(gretldir)
 
 installdirs:
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir) 
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(datarootdir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(langdir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(uidir)
