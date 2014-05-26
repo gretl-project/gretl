@@ -5707,7 +5707,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = restore_full_sample(dset, s);
 	} else if (cmd->opt) {
 	    err = restrict_sample(line, cmd->list, dset, 
-				  s, cmd->opt, prn);
+				  s, cmd->opt, prn, NULL);
 	} else { 
 	    err = set_sample(line, dset);
 	}

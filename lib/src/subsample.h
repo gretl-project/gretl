@@ -45,10 +45,12 @@ int add_dataset_to_model (MODEL *pmod, const DATASET *dset,
 
 int restrict_sample (const char *line, const int *list,  
 		     DATASET *dset, ExecState *state, 
-		     gretlopt opt, PRN *prn);
+		     gretlopt opt, PRN *prn,
+		     int *n_dropped);
 
 int 
-restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt);
+restrict_sample_from_mask (char *mask, DATASET *dset, 
+			   gretlopt opt, int *n_dropped);
 
 int complex_subsampled (void);
 

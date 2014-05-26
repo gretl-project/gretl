@@ -398,7 +398,11 @@ static int update_case_markers (const DATASET *dset)
 {
     int err = 0;
 
-    if (dset->markers && !fullset->markers) {
+    if (fullset->markers == DAILY_DATE_STRINGS) {
+	; /* don't mess with them */
+    } else if (dated_daily_data(fullset)) {
+	; /* again, don't mess! */
+    } else if (dset->markers && !fullset->markers) {
 	dataset_allocate_obs_markers(fullset);
 	if (fullset->S == NULL) {
 	    err = 1;
@@ -641,7 +645,7 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 	*/
 	if (state->submask != NULL) {
 	    err = restrict_sample_from_mask(state->submask, dset,
-					    OPT_NONE);
+					    OPT_NONE, NULL);
 	} else {
 	    int t1min, t2max;
 
@@ -1342,8 +1346,9 @@ static int try_for_daily_subset (char *selected,
 		subset->structure = TIME_SERIES;
 		subset->pd = newpd;
 		subset->sd0 = (double) ed0;
+		subset->t2 = subset->n - 1;
 		ntodate(subset->stobs, 0, subset);
-		ntodate(subset->endobs, subset->n - 1, subset);
+		ntodate(subset->endobs, subset->t2, subset);
 	    }
 	}
     }
@@ -1457,7 +1462,8 @@ static void finalize_panel_subset (DATASET *subset)
 */
 
 int 
-restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
+restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt,
+			   int *n_dropped)
 {
     DATASET *subset;
     gretlopt zopt = OPT_R;
@@ -1529,6 +1535,10 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
     if (err) { 
 	free(subset);
 	return err;
+    }
+
+    if (n_dropped != NULL) {
+	*n_dropped = dset->n - subset->n;
     }
 
 #if SUBDEBUG
@@ -1747,6 +1757,8 @@ static int make_restriction_string (DATASET *dset, char *old,
  * @list: list of variables in case of OPT_M (or %NULL).  
  * @opt: option flags.
  * @prn: printing apparatus.
+ * @n_dropped: location to receive count of dropped
+ * observations, or NULL.
  *
  * Sub-sample the data set, based on the criterion of skipping all
  * observations with missing data values (OPT_M); or using as a mask a
@@ -1770,7 +1782,8 @@ static int make_restriction_string (DATASET *dset, char *old,
 
 int restrict_sample (const char *line, const int *list,
 		     DATASET *dset, ExecState *state, 
-		     gretlopt opt, PRN *prn)
+		     gretlopt opt, PRN *prn,
+		     int *n_dropped)
 {
     char *oldrestr = NULL;
     char *oldmask = NULL;
@@ -1890,7 +1903,8 @@ int restrict_sample (const char *line, const int *list,
 #if SUBDEBUG
 	    fprintf(stderr, "restrict sample: using mask\n");
 #endif
-	    err = restrict_sample_from_mask(mask, dset, opt);
+	    err = restrict_sample_from_mask(mask, dset, opt, 
+					    n_dropped);
 	}
     }
 
@@ -2420,9 +2434,11 @@ static void pd_string (char *str, const DATASET *dset)
 	case 52:
 	    strcpy(str, _("weekly")); break;
 	case 5:
+	    strcpy(str, _("daily (5 days)")); break;
 	case 6:
+	    strcpy(str, _("daily (6 days)")); break;
 	case 7:
-	    strcpy(str, _("daily")); break;
+	    strcpy(str, _("daily (7 days)")); break;
 	case 10:
 	    strcpy(str, _("decennial")); break;
 	default:
@@ -2480,10 +2496,15 @@ void print_sample_status (const DATASET *dset, PRN *prn)
 
 	pprintf(prn, "%s: %d\n", _("Number of cross-sectional units"), nu);
 	pprintf(prn, "%s: %d\n", _("Number of time periods"), dset->pd);
-    }	
-    pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full range"), 
-	    dset->stobs, dset->endobs, dset->n);
-    print_sample_obs(dset, prn); 
+    }
+    if (dset->t1 == 0 && dset->t2 == dset->n - 1) {
+	pprintf(prn, "%s: %s - %s (n = %d)\n", _("Range"), 
+		dset->stobs, dset->endobs, dset->n);
+    } else {
+	pprintf(prn, "%s: %s - %s (n = %d)\n", _("Range"), 
+		dset->stobs, dset->endobs, dset->n);
+	print_sample_obs(dset, prn);
+    } 
 }
 
 /**
