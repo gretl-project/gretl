@@ -22,15 +22,6 @@
 #ifndef SUBSAMPLE_H
 #define SUBSAMPLE_H
 
-typedef enum {
-    SUBSAMPLE_NONE,
-    SUBSAMPLE_DROP_MISSING,
-    SUBSAMPLE_USE_DUMMY,
-    SUBSAMPLE_BOOLEAN,
-    SUBSAMPLE_RANDOM,
-    SUBSAMPLE_UNKNOWN
-} SubsampleMode;
-
 #define RESAMPLED ((char *) 0xdeadbeef)
 
 DATASET *fetch_full_dataset (void);

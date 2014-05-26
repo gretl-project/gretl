@@ -55,7 +55,8 @@ typedef enum {
     DS_RESTORE,
     DS_CLEAR,
     DS_RENUMBER,
-    DS_INSOBS
+    DS_INSOBS,
+    DS_PAD_DAILY
 } DatasetOp;
 
 typedef enum {

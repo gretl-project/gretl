@@ -33,6 +33,16 @@
 #define SUBDEBUG 0
 #define FULLDEBUG 0
 
+typedef enum {
+    SUBSAMPLE_NONE,
+    SUBSAMPLE_DROP_MISSING,
+    SUBSAMPLE_DROP_EMPTY,
+    SUBSAMPLE_USE_DUMMY,
+    SUBSAMPLE_BOOLEAN,
+    SUBSAMPLE_RANDOM,
+    SUBSAMPLE_UNKNOWN
+} SubsampleMode;
+
 /*
   The purpose of the static pointers below: When the user subsamples
   the current dataset in a non-trivial way -- i.e., by selecting cases
@@ -664,6 +674,36 @@ static int overlay_masks (char *targ, const char *src, int n)
     return sn;
 }
 
+/* write into @mask: 0 for observations at which _all_ variables
+   have missing values (ignoring "time" and "index"), 1 for
+   all other observations (that have at least one non-NA).
+*/
+
+static int make_empty_mask (const DATASET *dset, char *mask)
+{
+    int i, t;
+
+    for (t=0; t<dset->n; t++) {
+	mask[t] = 0;
+	for (i=1; i<dset->v; i++) {
+	    if (!series_is_hidden(dset, i) &&
+		strcmp(dset->varname[i], "time") &&
+		strcmp(dset->varname[i], "index") &&
+		!na(dset->Z[i][t])) {
+		mask[t] = 1;
+		break;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/* write into @mask: 0 for observations at which _any_ variable
+   (or any variable in @list, if @list is non-NULL) has a missing 
+   value, 1 for all other observations.
+*/
+
 static int 
 make_missing_mask (const int *list, const DATASET *dset, char *mask)
 {
@@ -695,7 +735,7 @@ make_missing_mask (const int *list, const DATASET *dset, char *mask)
     }
 
     return 0;
-} 
+}
 
 static int copy_dummy_to_mask (char *mask, const double *x, int n)
 {
@@ -1070,7 +1110,9 @@ int get_restriction_mode (gretlopt opt)
 	mode = SUBSAMPLE_RANDOM;
     } else if (opt & OPT_O) {
 	mode = SUBSAMPLE_USE_DUMMY;
-    } 
+    } else if (opt & OPT_A) {
+	mode = SUBSAMPLE_DROP_EMPTY;
+    }
 
     return mode;
 }
@@ -1339,6 +1381,8 @@ make_restriction_mask (int mode, const char *s,
 
     if (mode == SUBSAMPLE_DROP_MISSING) { 
 	err = make_missing_mask(list, dset, mask);
+    } else if (mode == SUBSAMPLE_DROP_EMPTY) {
+	err = make_empty_mask(dset, mask);
     } else if (mode == SUBSAMPLE_RANDOM) {
 	err = make_random_mask(s, oldmask, dset, mask);
     } else if (mode == SUBSAMPLE_USE_DUMMY) {
@@ -1744,8 +1788,8 @@ int restrict_sample (const char *line, const int *list,
        --dummy, --restrict, --no-missing (OPT_M) and --random (OPT_N)
        are all mutually incompatible.
     */
-    if (incompatible_options(opt, OPT_O | OPT_M | OPT_N) ||
-	incompatible_options(opt, OPT_R | OPT_M | OPT_N)) {
+    if (incompatible_options(opt, OPT_O | OPT_M | OPT_A | OPT_N) ||
+	incompatible_options(opt, OPT_R | OPT_M | OPT_A | OPT_N)) {
 	return E_BADOPT;
     }
 
@@ -1754,7 +1798,7 @@ int restrict_sample (const char *line, const int *list,
 	    /* can't permanently shrink the dataset within a function */
 	    gretl_errmsg_set(_("The dataset cannot be modified at present"));
 	    return E_DATA;
-	} else if (!(opt & (OPT_O | OPT_M | OPT_N | OPT_R))) {
+	} else if (!(opt & (OPT_O | OPT_M | OPT_A | OPT_N | OPT_R))) {
 	    /* we need some kind of restriction flag */
 	    return E_BADOPT;
 	} else {

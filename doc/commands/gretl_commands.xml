@@ -414,6 +414,9 @@
 	  <flag>--time-series</flag>
 	  <effect>see below</effect>
 	</option>
+	<option>
+	  <note>See below for additional specialized options</note>
+	</option>
       </options>
     </usage>
 
@@ -447,6 +450,12 @@
 	to treat the new data as time-invariant, but you can force gretl to
 	treat the new data as time series via the <opt>--time-series</opt>
 	option.  (This option is ignored in all other cases.)
+      </para>
+      <para>
+	The additional specialized options <opt>sheet</opt>,
+	<opt>coloffset</opt>, <opt>rowoffset</opt> and
+	<opt>fixed-cols</opt> work in the same way as with <cmdref
+	targ="open"/>; see that command for explanations.
       </para>
       <para>
 	See also <cmdref targ="join"/> for more sophisticated handling of
@@ -4678,8 +4687,9 @@
 	<li><para>Zoom: lets you select an area within the graph for
 	    closer inspection</para>
 	</li>
-	<li><para>Print: (on the Gnome desktop and MS Windows only)
-	    lets you print the graph directly</para>
+	<li><para>Print: (not available on all systems) lets you print
+	the graph directly
+         </para>
 	</li>
 	<li><para>Copy to clipboard: (MS Windows only) lets you paste
 	    the graph into Windows applications such as MS
@@ -7979,7 +7989,7 @@
 
     <gui-access>
       <menu-path>/File/Open data</menu-path>
-      <other-access>Drag a data file into gretl (MS Windows or Gnome)</other-access>
+      <other-access>Drag a data file onto gretl's main window</other-access>
     </gui-access>
 
   </command>

@@ -43,6 +43,8 @@ struct VARINFO_ {
     series_table *st;
 };
 
+static int pad_daily_data (DATASET *dset, int pd, PRN *prn);
+
 static int dataset_changed;
 
 /**
@@ -2940,6 +2942,8 @@ int dataset_op_from_string (const char *s)
 	op = DS_RENUMBER;
     } else if (!strcmp(s, "insobs")) {
 	op = DS_INSOBS;
+    } else if (!strcmp(s, "pad-daily")) {
+	op = DS_PAD_DAILY;
     }
 
     return op;
@@ -2954,6 +2958,11 @@ static int dataset_int_param (const char **ps, int op,
 
     if ((op == DS_COMPACT || op == DS_EXPAND) &&
 	!dataset_is_time_series(dset)) {
+	*err = E_PDWRONG;
+	return 0;
+    }
+
+    if (op == DS_PAD_DAILY && !dated_daily_data(dset)) {
 	*err = E_PDWRONG;
 	return 0;
     }
@@ -2989,6 +2998,11 @@ static int dataset_int_param (const char **ps, int op,
 	}
 
 	if (!ok) {
+	    *err = E_PDWRONG;
+	    gretl_errmsg_set("This conversion is not supported");
+	}
+    } else if (op == DS_PAD_DAILY) {
+	if (k < 5 || k > 7 || k < dset->pd) {
 	    *err = E_PDWRONG;
 	    gretl_errmsg_set("This conversion is not supported");
 	}
@@ -3190,7 +3204,8 @@ int renumber_series_with_checks (const char *s, int fixmax,
    dataset resample          500
    dataset clear 
    dataset renumber   orig   2  
-   dataset insobs     13
+   dataset insobs            13
+   dataset pad-daily         7
 
 */
 
@@ -3240,7 +3255,8 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     }
 
     if (op == DS_ADDOBS || op == DS_INSOBS || 
-	op == DS_COMPACT || op == DS_RESAMPLE) {
+	op == DS_COMPACT || op == DS_RESAMPLE ||
+	op == DS_PAD_DAILY) {
 	k = dataset_int_param(&s, op, dset, &err);
 	if (err) {
 	    return err;
@@ -3268,6 +3284,8 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	    interp = 1;
 	}
 	err = expand_data_set(dset, k, interp);
+    } else if (op == DS_PAD_DAILY) {
+	err = pad_daily_data(dset, k, prn);
     } else if (op == DS_TRANSPOSE) {
 	err = transpose_data(dset);
     } else if (op == DS_SORTBY) {
@@ -4116,4 +4134,99 @@ int is_panel_group_names_series (const DATASET *dset, int v)
     } else {
 	return 0;
     }
+}
+
+static int effective_daily_skip (int delta, int wd, int pd)
+{
+    int k, skip = delta - 1;
+
+    if (pd < 7) {
+	skip = 0;
+	for (k=1; k<delta; k++) {
+	    wd = (wd == 0)? 6 : wd - 1;
+	    if (pd == 6) {
+		skip += (wd != 0);
+	    } else {
+		skip += (wd != 0 && wd != 6);
+	    }
+	}
+    }
+
+    return skip;
+}
+
+/* If we get here we've already checked that @dset is dated daily
+   data, and that @pd is a valid daily periodicity greater than or
+   equal to the current dset->pd.
+*/
+
+static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
+{
+    DATASET *bigset = NULL;
+    char datestr[OBSLEN];
+    long ed, ed0, edbak = 0;
+    int wd, skip, totskip = 0;
+    int t, err = 0;
+
+    for (t=0; t<dset->n; t++) {
+	ntodate(datestr, t, dset);
+	if (t == 0) {
+	    ed0 = edbak = get_epoch_day(datestr);
+	} else {
+	    wd = weekday_from_date(datestr);
+	    ed = get_epoch_day(datestr);
+	    skip = effective_daily_skip(ed - edbak, wd, pd);
+	    totskip += skip;
+	    edbak = ed;
+	}
+    }
+
+    if (totskip == 0) {
+	pprintf(prn, "Dataset is already complete for %d-day calendar", pd);
+	return 0;
+    }
+
+    bigset = create_new_dataset(dset->v, dset->n + totskip, NO_MARKERS);
+
+    if (bigset == NULL) {
+	err = E_ALLOC;
+    } else {
+	int i, s = 0;
+
+	edbak = ed0;
+
+	for (t=0; t<dset->n; t++) {
+	    if (t > 0) {
+		ntodate(datestr, t, dset);
+		wd = weekday_from_date(datestr);
+		ed = get_epoch_day(datestr);
+		s += 1 + effective_daily_skip(ed - edbak, wd, pd);
+		edbak = ed;
+	    }
+	    for (i=1; i<dset->v; i++) {
+		bigset->Z[i][s] = dset->Z[i][t];
+	    }
+	}
+
+	bigset->varname = dset->varname;
+	bigset->varinfo = dset->varinfo;
+	bigset->descrip = dset->descrip;
+
+	bigset->pd = pd;
+	bigset->structure = TIME_SERIES;
+	bigset->sd0 = (double) ed0;
+	ntodate(bigset->stobs, 0, bigset);
+	ntodate(bigset->endobs, bigset->n - 1, bigset);
+
+	dset->varname = NULL;
+	dset->varinfo = NULL;
+	dset->descrip = NULL;
+	dataset_destroy_obs_markers(dset);
+	free_Z(dset);
+	clear_datainfo(dset, CLEAR_SUBSAMPLE); 
+
+	*dset = *bigset;
+    }
+
+    return err;
 }
