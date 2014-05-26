@@ -1,15 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti -->
 <application>
  <id type="desktop">gretl.desktop</id>
  <!--of the appdata-->
- <licence>CC0</licence>
+ <metadata_license>CC0-1.0</metadata_license>
+ <project_license>GPL-3.0+ and GFDL-1.1</project_license>
  <description>
-  <p>Gretl is an econometrics package.</p>
-  <p>More description.</p>
+  <p>
+    Gretl is an econometrics package, including a shared library, a 
+    command-line client program and a graphical user interface.
+  </p>
+  <p>
+    Gretl is user-friendly but also technically sophisticated. Users can
+    choose their preferred point on the spectrum from interactive point-and-click to
+    complex scripting, and can easily combine these approaches.
+  </p>
  </description>
  <url type="homepage">http://gretl.sourceforge.net/</url>
  <screenshots>
-  <screenshot type="default">FIXME.png</screenshot>
+  <!--FIXME-->
+  <screenshot type="default">http://gretl.sourceforge.net/gretl_screen.png</screenshot>
  </screenshots>
  <updatecontact>gretl-devel@lists.wfu.edu</updatecontact>
 </application>
