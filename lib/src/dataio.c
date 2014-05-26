@@ -2165,7 +2165,7 @@ int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
     const char *fname = NULL;
     int err;
 
-    err = incompatible_options(opt, OPT_D | OPT_T | OPT_F | OPT_A); 
+    err = incompatible_options(opt, OPT_D | OPT_T | OPT_F); 
     if (err) {
 	return err;
     }
@@ -2199,14 +2199,6 @@ int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
 	if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
 	    pprintf(prn, "Markers loaded OK\n");
 	}	
-    } else if (opt & OPT_A) {
-	if (!dated_daily_data(dset)) {
-	    err = E_PDWRONG;
-	} else if (complex_subsampled()) {
-	    gretl_errmsg_set(_("Sorry, can't do this with a sub-sampled dataset"));
-	} else {
-	    err = markers_from_daily_dates(dset);
-	}
     }
 
     return err;
