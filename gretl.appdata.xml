@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+ <id type="desktop">gretl.desktop</id>
+ <!--of the appdata-->
+ <licence>CC0</licence>
+ <description>
+  <p>Gretl is an econometrics package.</p>
+  <p>More description.</p>
+ </description>
+ <url type="homepage">http://gretl.sourceforge.net/</url>
+ <screenshots>
+  <screenshot type="default">FIXME.png</screenshot>
+ </screenshots>
+ <updatecontact>gretl-devel@lists.wfu.edu</updatecontact>
+</application>
