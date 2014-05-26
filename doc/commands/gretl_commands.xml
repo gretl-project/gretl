@@ -10933,12 +10933,20 @@
 	  <effect>restrict to valid observations</effect>
         </option>
         <option>
+	  <flag>--no-all-missing</flag>
+	  <effect>omit empty observations (see below)</effect>
+        </option>
+        <option>
 	  <flag>--contiguous</flag>
 	  <effect>see below</effect>
         </option>
         <option>
 	  <flag>--random</flag>
 	  <effect>form random sub-sample</effect>
+        </option>
+        <option>
+	  <flag>--permanent</flag>
+	  <effect>see below</effect>
         </option>
         <option>
 	  <flag>--balanced</flag>
@@ -10980,6 +10988,14 @@
 	if no <repl>varlist</repl> is given, observations are selected on
 	condition that <emphasis>all</emphasis> variables have valid
 	(non-missing) values.
+      </para>
+
+      <para>
+	With the <opt>--no-all-missing</opt> variant, observations are
+	selected on condition that at least one variable has a valid
+	(non-missing) value at that observation, or in other words
+	observations are discarded only if all variables have missing
+	values.
       </para>
 
       <para>
@@ -11042,6 +11058,17 @@
 	a balanced panel is reconstituted after sub-sampling, via the
 	insertion of <quote>missing rows</quote> if need be.  But note that it
 	is not always possible to comply with this request.  
+      </para>
+
+      <para>
+	By default, restrictions on the current sample range are
+	undoable: by doing <lit>smpl full</lit> you can restore
+	the unrestricted dataset. However, the <opt>permanent</opt>
+	flag can be used to substitute the restricted dataset for the
+	original. This option is only available in conjunction
+	with the <opt>restrict</opt>, <opt>dummy</opt>,
+	<opt>no-missing</opt>, <opt>no-all-missing</opt> or
+	<opt>random</opt> forms of <lit>smpl</lit>.
       </para>
 
       <para>
