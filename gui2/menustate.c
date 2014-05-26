@@ -739,11 +739,16 @@ void set_sample_label (DATASET *dset)
 	char t1str[OBSLEN], t2str[OBSLEN];
 	const char *pdstr = get_pd_string(dset);
 
-	if (tsubset && calendar_data(dset)) {
+	if (calendar_data(dset) && tsubset) {
 	    /* it's too verbose to print both full range and sample */
 	    ntodate(t1str, dset->t1, dset);
 	    ntodate(t2str, dset->t2, dset);
 	    sprintf(tmp, _("%s; sample %s - %s"), _(pdstr), t1str, t2str);
+	    gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
+	} else if (calendar_data(dset) && complex_subsampled()) {
+	    /* ditto, too verbose */
+	    sprintf(tmp, _("%s; sample %s - %s"), _(pdstr), dset->stobs, 
+		    dset->endobs);
 	    gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
 	} else {
 	    ntodate(t1str, 0, dset);

@@ -1600,10 +1600,18 @@ static int unit_get_last_obs (int u)
 static gboolean
 set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 {
-    const char *replace;
+    const char *extra;
     int err;
 
-    replace = (rset->opt & OPT_P)? " --replace" : "";
+    if ((rset->opt & OPT_P) && (rset->opt & OPT_T)) {
+	extra = " --replace --permanent";
+    } else if (rset->opt & OPT_P) {
+	extra = " --replace";
+    } else if (rset->opt & OPT_T) {
+	extra = " --permanent";
+    } else {
+	extra = "";
+    }
 
     if (rset->opt & OPT_R) {
 	/* boolean restriction */
@@ -1613,7 +1621,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	    return TRUE;
 	}
 
-	lib_command_sprintf("smpl %s --restrict%s", s, replace);
+	lib_command_sprintf("smpl %s --restrict%s", s, extra);
 	g_free(s);
 
 	if (parse_lib_command()) {
@@ -1630,7 +1638,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	gchar *dumv;
 
 	dumv = combo_box_get_active_text(GTK_COMBO_BOX(rset->combo));
-	lib_command_sprintf("smpl %s --dummy%s", dumv, replace);
+	lib_command_sprintf("smpl %s --dummy%s", dumv, extra);
 	g_free(dumv);
 
 	if (parse_lib_command()) {
@@ -1647,7 +1655,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	int subn;
 
 	subn = obs_button_get_value(rset->spin1);
-	lib_command_sprintf("smpl %d --random", subn);
+	lib_command_sprintf("smpl %d --random%s", subn, extra);
 	if (parse_lib_command()) {
 	    return TRUE;
 	}
@@ -2259,6 +2267,31 @@ static GtkWidget *add_dummies_combo (GList *dumlist,
     return combo;
 }
 
+static void toggle_smpl_permanence (GtkToggleButton *b,
+				    struct range_setting *rset)
+{
+    if (gtk_toggle_button_get_active(b)) {
+	rset->opt |= OPT_T;
+    } else {
+	rset->opt &= ~OPT_T;
+    }
+}
+
+static void add_smpl_permanent_check (GtkWidget *vbox, 
+				      struct range_setting *rset)
+{
+    GtkWidget *hbox, *check;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    check = gtk_check_button_new_with_label(_("Make this permanent"));
+    gtk_box_pack_start(GTK_BOX(hbox), check, FALSE, FALSE, 5);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), FALSE);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    g_signal_connect(G_OBJECT(check), "toggled",
+		     G_CALLBACK(toggle_smpl_permanence), rset);
+}
+
 void sample_range_dialog (GtkAction *action, gpointer p)
 {
     struct range_setting *rset = NULL;
@@ -2311,7 +2344,9 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     }
 
-    if (u != SMPLRAND) {
+    if (u == SMPLRAND) {
+	add_smpl_permanent_check(vbox, rset);
+    } else {
 	/* label that will show the number of observations */
 	rset->obslabel = gtk_label_new("");
 	gtk_box_pack_start(GTK_BOX(vbox), rset->obslabel, FALSE, FALSE, 5);
@@ -2726,6 +2761,9 @@ void sample_restrict_dialog (GtkAction *action, gpointer p)
 	g_signal_connect(G_OBJECT(w), "toggled",
 			 G_CALLBACK(toggle_replace_restrictions), rset);
     }
+
+    /* add checkbox for permanence of restriction */
+    add_smpl_permanent_check(vbox, rset);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));
 

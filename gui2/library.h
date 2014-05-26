@@ -86,7 +86,7 @@ int bool_subsample (gretlopt opt);
 
 int do_set_sample (void);
 
-void drop_all_missing (void);
+void drop_missing_data (void);
 
 void count_missing (void);
 

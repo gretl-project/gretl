@@ -1454,29 +1454,33 @@ void gui_warnmsg (int errcode)
     } 
 }
 
-/* OPT_M  drop all obs with missing data values 
+/* OPT_M  drop all obs with missing data values
+   OPT_A  drop obs with no valid data
    OPT_O  sample using dummy variable
    OPT_R  sample using boolean expression
    OPT_N  random sub-sample
    OPT_C  replace current restriction
+
+   OPT_T  restriction is permanent
 */
 
 int bool_subsample (gretlopt opt)
 {
     const char *msg;
     PRN *prn;
+    int n_dropped = 0;
     int err = 0;
 
     if (bufopen(&prn)) {
 	return 1;
     }
 
-    if (opt & OPT_M) {
+    if (opt & (OPT_M | OPT_A)) {
 	err = restrict_sample(NULL, NULL, dataset, NULL, 
-			      opt, prn);
+			      opt, prn, &n_dropped);
     } else {
 	err = restrict_sample(libline, NULL, dataset, NULL, 
-			      opt, prn);
+			      opt, prn, &n_dropped);
     }
 
     msg = gretl_print_get_buffer(prn);
@@ -1487,10 +1491,12 @@ int bool_subsample (gretlopt opt)
 	if (msg != NULL && *msg != '\0') {
 	    infobox(msg);
 	} else {
+	    infobox(_("Dropped %d observations"), n_dropped);
+	}
+	if (opt & OPT_T) {
+	    mark_dataset_as_modified();
+	} else {
 	    set_sample_label(dataset);
-	    if (opt & OPT_M) {
-		infobox(_("Sample now includes only complete observations"));
-	    }
 	}
     } 
 
@@ -1499,13 +1505,34 @@ int bool_subsample (gretlopt opt)
     return err;
 }
 
-void drop_all_missing (void)
+void drop_missing_data (void)
 {
-    int err = bool_subsample(OPT_M);
+    const char *opts[] = {
+	N_("Drop rows with at least one missing value"),
+	N_("Drop rows that have no valid data")
+    };
+    int permanent = 0;
+    gretlopt opt = 0;
+    int resp;
 
-    if (!err) {
-	lib_command_strcpy("smpl --no-missing");
-	record_command_verbatim();
+    resp = radio_dialog_with_check("gretl", _("Drop missing data"), 
+				   opts, 2, 0, 0,
+				   &permanent,
+				   _("Make this permanent"),
+				   NULL);
+
+    if (resp == 0 || resp == 1) {
+	int err;
+
+	opt = (resp == 0)? OPT_M : OPT_A;
+	if (permanent) {
+	    opt |= OPT_T;
+	}
+	err = bool_subsample(opt);
+	if (!err) {
+	    lib_command_sprintf("smpl%s", print_flags(opt, SMPL));
+	    record_command_verbatim();
+	}
     }
 }
 
@@ -8682,7 +8709,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
  	    gui_restore_sample(dset);
  	} else if (cmd->opt) {
  	    err = restrict_sample(line, cmd->list, dset,
- 				  NULL, cmd->opt, prn);
+ 				  NULL, cmd->opt, prn, NULL);
  	} else {
  	    err = set_sample(line, dset);
  	}

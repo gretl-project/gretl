@@ -4576,7 +4576,8 @@ static int set_sample_from_model (void *ptr, int role)
     /* then, if the model was subsampled, restore the subsample */
     if (!err) {
 	if (pmod != NULL && pmod->submask != NULL) {
-	    err = restrict_sample_from_mask(pmod->submask, dataset, OPT_NONE);
+	    err = restrict_sample_from_mask(pmod->submask, dataset, 
+					    OPT_NONE, NULL);
 	    range_set = 1;
 	} else {
 	    int t1 = 0, t2 = 0;

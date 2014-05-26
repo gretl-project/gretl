@@ -1701,8 +1701,8 @@ GtkActionEntry main_entries[] = {
     { "SMPLRAND", NULL, N_("R_andom sub-sample..."), NULL, NULL, G_CALLBACK(sample_range_dialog) },
     { "SampleWReplace", NULL, N_("_Resample with replacement..."), NULL, NULL, 
       G_CALLBACK(gui_resample_data) },
-    { "DropMissing", NULL, N_("Drop all obs with _missing values"), NULL, NULL, 
-      G_CALLBACK(drop_all_missing) },
+    { "DropMissing", NULL, N_("Drop observations with _missing values..."), NULL, NULL, 
+      G_CALLBACK(drop_missing_data) },
     { "CountMissing", NULL, N_("_Count missing values"), NULL, NULL, G_CALLBACK(count_missing) },
 
     /* Variable */
