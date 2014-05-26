@@ -112,6 +112,7 @@ tooldir = $(topsrc)/tools
 libsrc = $(topsrc)/lib/src
 clisrc = $(topsrc)/cli
 docdir = $(topsrc)/doc
+appdatadir = $(datarootdir)/appdata
 
 LANGDEPS = $(libsrc)/options.c \
            $(libsrc)/genlex.c \
@@ -235,7 +236,7 @@ install-strip: $(PROG) install-data
 
 install-data: installdirs
 	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.xpm $(DESTDIR)$(gretldir)
-	$(INSTALL_DATA) $(topsrc)/gretl.appdata.xml $(DESTDIR)$(datarootdir)
+	$(INSTALL_DATA) $(topsrc)/gretl.appdata.xml $(DESTDIR)$(appdatadir)
 
 install-ui: installdirs
 	$(INSTALL_DATA) $(topsrc)/gui2/gretlmain.xml $(DESTDIR)$(uidir)
@@ -256,7 +257,7 @@ install-news: $(GRETL_NEWS) installdirs
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir)
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(datarootdir)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(appdatadir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(langdir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(uidir)
