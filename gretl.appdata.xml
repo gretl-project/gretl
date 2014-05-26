@@ -18,8 +18,7 @@
  </description>
  <url type="homepage">http://gretl.sourceforge.net/</url>
  <screenshots>
-  <!--FIXME-->
-  <screenshot type="default">http://gretl.sourceforge.net/gretl_screen.png</screenshot>
+  <screenshot type="default">http://gretl.sourceforge.net/images/gretl_screen.png</screenshot>
  </screenshots>
  <updatecontact>gretl-devel@lists.wfu.edu</updatecontact>
 </application>
