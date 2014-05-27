@@ -10090,18 +10090,6 @@
 	    the comma) is the standard decimal separator.
 	  </para>
 	</li>
-	<li>
-	  <para><lit>halt_on_error</lit>: <lit>off</lit> or <lit>on</lit> (the
-	    default). By default, when an error is encountered in the course
-	    of executing a script, execution is halted (and if the
-	    command-line program is operating in batch mode, it exits with a
-	    non-zero return status).  You can force gretl to continue on error
-	    by setting <lit>halt_on_error</lit> to <lit>off</lit> (or by
-	    setting the environment variable <lit>GRETL_KEEP_GOING</lit> to
-	    1). If an error occurs while <quote>compiling</quote> a loop or
-	    user-defined function, however, execution is halted regardless.
-	  </para>
-	</li>
 	<li>	  
 	  <para><lit>loop_maxiter</lit>: one non-negative integer
 	  value (default 100000).  Sets the maximum number of
