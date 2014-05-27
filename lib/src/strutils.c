@@ -2182,13 +2182,18 @@ char *make_varname_unique (char *vname, int v, DATASET *dset)
 
 int fix_varname_duplicates (DATASET *dset)
 {
-    int dups = 0;
+    int msg_done, dups = 0;
     int i, j;
 
     for (i=1; i<dset->v; i++) {
+	msg_done = 0;
 	for (j=i+1; j<dset->v; j++) {
-	    if (strcmp(dset->varname[i], dset->varname[j]) == 0) {
-		fprintf(stderr, "'%s' duplicated variable name\n", dset->varname[i]);
+	    if (!strcmp(dset->varname[i], dset->varname[j])) {
+		if (!msg_done) {
+		    fprintf(stderr, "'%s' duplicated variable name\n", 
+			    dset->varname[i]);
+		    msg_done = 1;
+		}
 		dups = 1;
 		make_varname_unique(dset->varname[j], j, dset);
 	    }
