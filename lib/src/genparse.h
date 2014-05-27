@@ -406,7 +406,6 @@ enum {
     F_NRMAX,
     F_LOESS,
     F_GHK,
-    F_GHK2,
     F_QUADTAB,
     F_ISOCONV,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */

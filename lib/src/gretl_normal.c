@@ -821,8 +821,8 @@ static void vector_copy_mul (gretl_matrix *targ,
     }
 }
 
-/* New-style GHK computation for observation t, iteration j.
-   This variant computes the derivatives as well as the weight
+/* New-style GHK computation for observation t, iteration j,
+   including the derivatives.
 */
 
 static double ghk_tj (const gretl_matrix *C,
@@ -996,90 +996,6 @@ static double ghk_tj (const gretl_matrix *C,
     return WT;
 }
 
-/* New-style GHK computation for observation t, iteration j.
-   This variant computes weight only.
-*/
-
-static double ghk_tj_prob (const gretl_matrix *C,
-			   const gretl_matrix *a,
-			   const gretl_matrix *b,
-			   const double *u,
-			   gretl_matrix_block *Bk,
-			   double huge,
-			   int *err)
-{
-    gretl_matrix *cj = NULL;
-    gretl_matrix *TT = NULL;
-    double TA, TB, Tdiff, WT;
-    double z, x, den;
-    int m = C->rows;
-    int j, i;
-
-    cj = gretl_matrix_block_get_matrix(Bk, 0);
-    TT = gretl_matrix_block_get_matrix(Bk, 1);
-
-    gretl_matrix_block_zero(Bk);
-    den = C->val[0];
-
-    if (a->val[0] == -huge) {
-	TA = 0.0;
-    } else {
-	z = a->val[0] / den;
-	TA = normal_cdf(z);
-    }
-
-    if (b->val[0] == huge) {
-	TB = 1.0;
-    } else {
-	z = b->val[0] / den;
-	TB = normal_cdf(z);
-    }
-
-    WT = TB - TA;
-    x = TB - u[0] * WT;
-    TT->val[0] = normal_cdf_inverse(x);
-
-    for (j=1; j<m; j++) {
-	double mj = 0.0;
-
-	gretl_matrix_reuse(TT, j, 1);
-	gretl_matrix_reuse(cj, 1, j);
-
-	for (i=0; i<j; i++) {
-	    cj->val[i] = gretl_matrix_get(C, j, i);
-	    mj += cj->val[i] * TT->val[i];
-	}
-
-        den = gretl_matrix_get(C, j, j);
-
-	if (a->val[j] == -huge) {
-            TA = 0.0;
-	} else {	    
-            x = (a->val[j] - mj) / den;
-            TA = normal_cdf(x);
-	}
-
- 	if (b->val[j] == huge) {
-            TB = 1.0;
-	} else {	    
-            x = (b->val[j] - mj) / den;
-            TB = normal_cdf(x);
-	}
-
-	Tdiff = TB - TA;
-	x = TB - u[j] * Tdiff;
-	TT->val[j] = normal_cdf_inverse(x);
-
-	if (WT > 0) {
-	    WT *= Tdiff; /* accumulate weight */
-	} else {
-	    break;
-	}
-    }
-
-    return WT;
-}
-
 /* This function translates column positions
    for the derivatives of elements of C from the
    "horizontal vech" into the "proper vech"
@@ -1142,39 +1058,30 @@ static int reorder_dP (gretl_matrix *dP, int m)
     return 0;
 }
 
-static gretl_matrix_block *ghk_block_alloc (int m, int npar,
-					    int do_score)
+/* workspace for ghk_tj */
+
+static gretl_matrix_block *ghk_block_alloc (int m, int npar)
 {
     gretl_matrix_block *B = NULL;
-    
-    if (do_score) {
-	/* work space for ghk_tj, with score */
-	gretl_matrix *M[8] = {NULL};
+    gretl_matrix *M[8] = {NULL};
 
-	B = gretl_matrix_block_new(&M[0], 1, npar, /* dTA */
-				   &M[1], 1, npar, /* dTB */
-				   &M[2], 1, npar, /* dm */
-				   &M[3], 1, npar, /* dx */
-				   &M[4], 1, npar, /* tmp */
-				   &M[5], 1, m,    /* cj */
-				   &M[6], m, 1,    /* TT */
-				   &M[7], npar, m, /* dTT */
-				   NULL);
-    } else {
-	/* work space for ghk_tj, no score */
-	gretl_matrix *M[2] = {NULL};
-
-	B = gretl_matrix_block_new(&M[0], 1, m, /* cj */
-				   &M[1], m, 1, /* TT */
-				   NULL);
-    }
-
+    B = gretl_matrix_block_new(&M[0], 1, npar, /* dTA */
+			       &M[1], 1, npar, /* dTB */
+			       &M[2], 1, npar, /* dm */
+			       &M[3], 1, npar, /* dx */
+			       &M[4], 1, npar, /* tmp */
+			       &M[5], 1, m,    /* cj */
+			       &M[6], m, 1,    /* TT */
+			       &M[7], npar, m, /* dTT */
+			       NULL);
     return B;
 }
 
 #if defined(_OPENMP) && !defined(OS_OSX)
 # define GHK2_OMP 1
 #endif
+
+/* GHK including calculation of derivative */
 
 gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 			  const gretl_matrix *A,
@@ -1190,10 +1097,14 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     gretl_matrix *dpj = NULL;
     const double *uj;
     int r, n, m, npar;
-    int do_score = (dP != NULL);
     double huge;
     unsigned sz = 0;
     int t, i, j;
+
+    if (gretl_is_null_matrix(dP)) {
+	*err = E_DATA;
+	return NULL;
+    }
 
     *err = ghk_input_check(C, A, B, U, dP);
     if (*err) {
@@ -1211,9 +1122,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 	return NULL;
     }
 
-    if (do_score) {
-	gretl_matrix_zero(dP);
-    }    
+    gretl_matrix_zero(dP);
 
     if (n >= 2) {
 	sz = n * m * r;
@@ -1232,16 +1141,13 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 	if (Bk == NULL) {
 	    *err = E_ALLOC;
 	}
-	Bk2 = ghk_block_alloc(m, npar, do_score);
+	Bk2 = ghk_block_alloc(m, npar);
 	if (Bk2 == NULL) {
 	    *err = E_ALLOC;
 	}
-	dpj = NULL;
-	if (do_score) {
-	    dpj = gretl_matrix_alloc(1, npar);
-	    if (dpj == NULL) {
-		*err = E_ALLOC;
-	    }
+	dpj = gretl_matrix_alloc(1, npar);
+	if (dpj == NULL) {
+	    *err = E_ALLOC;
 	}
 	if (*err) {
 	    goto calc_end;
@@ -1272,10 +1178,8 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 				     t+1, i+1, t+1, i+1);
 	    } else if (err_t == E_MISSDATA) {
 		P->val[t] = 0.0/0.0; /* NaN */
-		if (do_score) {
-		    for (i=0; i<npar; i++) {
-			gretl_matrix_set(dP, t, i, 0.0/0.0);
-		    }
+		for (i=0; i<npar; i++) {
+		    gretl_matrix_set(dP, t, i, 0.0/0.0);
 		}
 	    }
 
@@ -1283,12 +1187,8 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 		for (j=0; j<r && !*err; j++) {
 		    /* Monte Carlo iterations, using successive columns of U */
 		    uj = U->val + j * m;
-		    if (do_score) {
-			P->val[t] += ghk_tj(C, a, b, uj, dpj, Bk2, huge, err);
-			gretl_matrix_inscribe_matrix(dP, dpj, t, 0, GRETL_MOD_CUMULATE);
-		    } else {
-			P->val[t] += ghk_tj_prob(C, a, b, uj, Bk2, huge, err);
-		    }
+		    P->val[t] += ghk_tj(C, a, b, uj, dpj, Bk2, huge, err);
+		    gretl_matrix_inscribe_matrix(dP, dpj, t, 0, GRETL_MOD_CUMULATE);
 		}
 	    }
 	}
@@ -1305,20 +1205,16 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 	gretl_matrix_free(P);
 	P = NULL;
     } else {
+	double x;
+
 	for (t=0; t<n; t++) {
 	    P->val[t] /= r;
-	}		
-	if (do_score) {
-	    double x;
-
-	    for (t=0; t<n; t++) {
-		for (i=0; i<npar; i++) {
-		    x = gretl_matrix_get(dP, t, i);
-		    gretl_matrix_set(dP, t, i, x / r);
-		}
+	    for (i=0; i<npar; i++) {
+		x = gretl_matrix_get(dP, t, i);
+		gretl_matrix_set(dP, t, i, x / r);
 	    }
-	    reorder_dP(dP, m);
 	}
+	reorder_dP(dP, m);
     }
 
     return P;
