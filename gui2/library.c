@@ -1505,6 +1505,47 @@ int bool_subsample (gretlopt opt)
     return err;
 }
 
+static int any_missing (void)
+{
+    int i, t;
+
+    for (i=1; i<dataset->v; i++) {
+	if (!series_is_hidden(dataset, i)) {
+	    for (t=0; t<dataset->n; t++) {
+		if (na(dataset->Z[i][t])) {
+		    return 1;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+static int any_all_missing (void)
+{
+    int vt = current_series_index(dataset, "time");
+    int vi = current_series_index(dataset, "index");
+    int i, t, allmiss;
+
+    for (t=0; t<dataset->n; t++) {
+	allmiss = 1;
+	for (i=1; i<dataset->v; i++) {
+	    if (!series_is_hidden(dataset, i) &&
+		i != vt && i != vi && 
+		!na(dataset->Z[i][t])) {
+		allmiss = 0;
+		break;
+	    }
+	}
+	if (allmiss) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 void drop_missing_data (void)
 {
     const char *opts[] = {
@@ -1513,10 +1554,19 @@ void drop_missing_data (void)
     };
     int permanent = 0;
     gretlopt opt = 0;
+    int deflt = 0;
     int resp;
 
+    if (!any_missing()) {
+	infobox(_("No missing data values"));
+	return;
+    } else if (!any_all_missing()) {
+	/* de-activate the second option */
+	deflt = -1;
+    }
+
     resp = radio_dialog_with_check("gretl", _("Drop missing data"), 
-				   opts, 2, 0, 0,
+				   opts, 2, deflt, 0,
 				   &permanent,
 				   _("Make this permanent"),
 				   NULL);
@@ -1545,23 +1595,6 @@ int do_set_sample (void)
     }
 
     return err;
-}
-
-static int any_missing (void)
-{
-    int i, t;
-
-    for (i=1; i<dataset->v; i++) {
-	if (!series_is_hidden(dataset, i)) {
-	    for (t=0; t<dataset->n; t++) {
-		if (na(dataset->Z[i][t])) {
-		    return 1;
-		}
-	    }
-	}
-    }
-
-    return 0;
 }
 
 void count_missing (void)
