@@ -1794,25 +1794,25 @@ static int row_is_padding (const DATASET *dset, int t, int vmax)
 static int open_gdt_write_stream (const char *fname, gretlopt opt,
 				  FILE **fpp, gzFile *fzp)
 {
-    int done = 0, err = 0;
+    int gzlevel = 0; /* or do we want 1 here? */
+    int err = 0;
 
     if (opt & OPT_Z) {
-	int level = get_compression_option(STORE);
-
-	if (level != 0) {
-	    *fzp = gretl_gzopen(fname, "wb");
-	    if (*fzp == NULL) {
-		err = E_FOPEN;
-	    } else {
-		gzsetparams(*fzp, level, Z_DEFAULT_STRATEGY);
-		done = 1;
-	    }
-	}
+	gzlevel = get_compression_option(STORE);
     }
 
-    if (!done && !err) {
+    if (gzlevel > 0) {
+	*fzp = gretl_gzopen(fname, "wb");
+	if (*fzp == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    gzsetparams(*fzp, gzlevel, Z_DEFAULT_STRATEGY);
+	}
+    } else {
 	*fpp = gretl_fopen(fname, "wb");
-	if (*fpp == NULL) err = E_FOPEN;
+	if (*fpp == NULL) {
+	    err = E_FOPEN;
+	}
     }
 
     return err;
@@ -2457,10 +2457,11 @@ int gretl_write_gdt (const char *fname, const int *list,
 		     const DATASET *dset, gretlopt opt, 
 		     int progress)
 {
+    int err = 0;
+
     if (has_suffix(fname, ".gdtb")) {
 	/* zipfile with gdt + binary */
 	gchar *zdir;
-	int err;
 
 	zdir = g_strdup_printf("%stmp-zip", gretl_dotdir());
 	err = gretl_mkdir(zdir);
@@ -2492,12 +2493,12 @@ int gretl_write_gdt (const char *fname, const int *list,
 	}
 
 	g_free(zdir);
-	return err;
     } else {
 	/* plain XML file */
-	return real_write_gdt(fname, list, dset, opt, progress);
+	err = real_write_gdt(fname, list, dset, opt, progress);
     }
 
+    return err;
 }
 
 static void transcribe_string (char *targ, const char *src, int maxlen)

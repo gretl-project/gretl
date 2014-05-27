@@ -915,12 +915,13 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
     fname = gretl_maybe_switch_dir(fname);
 
     if (fmt == GRETL_FMT_GDT || fmt == GRETL_FMT_BINARY) {
-	/* write native data file */
+	/* write native data file (.gdt or .gdtb) */
 	err = gretl_write_gdt(fname, list, dset, opt, progress);
 	goto write_exit;
     }
 
     if (fmt == GRETL_FMT_DB) {
+	/* native type database file */
 	err = write_db_data(fname, list, opt, dset);
 	goto write_exit;
     }
@@ -2132,29 +2133,6 @@ static int save_obs_markers_to_file (DATASET *dset, const char *fname)
 	    fprintf(fp, "%s\n", dset->S[i]);
 	}
 	fclose(fp);
-    }
-
-    return err;
-}
-
-static int markers_from_daily_dates (DATASET *dset)
-{
-    int err;
-
-    if (dset->markers == DAILY_DATE_STRINGS) {
-	/* no-op */
-	return 0;
-    }
-
-    err = dataset_allocate_obs_markers(dset);
-
-    if (!err) {
-	int t;
-
-	for (t=0; t<dset->n; t++) {
-	    calendar_date_string(dset->S[t], t, dset);
-	}	
-	dset->markers = DAILY_DATE_STRINGS;
     }
 
     return err;
