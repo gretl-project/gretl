@@ -2179,15 +2179,17 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 
 static void strip_illegals (char *s)
 {
-    int i;
+    char name[VNAMELEN] = {0};
+    int i, j = 0;
 
-    if (*s == '\0') return;
-
-    for (i=1; s[i]!='\0'; i++) {
-	if (!isalnum(s[i])) {
-	    s[i] = '_';
+    for (i=0; s[i] != '\0'; i++) {
+	if (isalnum(s[i])) {
+	    name[j++] = s[i];
 	}
     }
+
+    name[j] = '\0';
+    strcpy(s, name);
 }
 
 static int csv_reconfigure_for_markers (DATASET *dset)
@@ -2395,18 +2397,25 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	} else if (!joining(c) && cols_subset(c) && skip_data_column(c, k)) {
 	    ; /* no-op */
 	} else {
-	    if (*c->str == '\0') {
-		pprintf(prn, A_("   variable name %d is missing: aborting\n"), j);
-		pputs(prn, A_(csv_msg));
-		err = E_DATA;
-	    } else if (joining(c)) {
+	    if (joining(c)) {
 		handle_join_varname(c, k, &j);
 	    } else {
 		c->dset->varname[j][0] = '\0';
-		strncat(c->dset->varname[j], c->str, VNAMELEN - 1);
-		if (starts_number(*c->str)) {
+		if (*c->str == '\0') {
+		    fprintf(stderr, "variable name %d is missing\n", j);
+		    sprintf(c->dset->varname[j], "v%d", j);
+		} else if (numeric_string(c->str)) {
 		    numcount++;
 		} else {
+		    char *s = c->str;
+
+		    while (*s && !isalpha(*s)) s++;
+		    if (*s == '\0') {
+			fprintf(stderr, "variable name %d is garbage\n", j);
+			sprintf(c->dset->varname[j], "v%d", j);
+		    } else {
+			strncat(c->dset->varname[j], s, VNAMELEN - 1);
+		    }
 		    iso_to_ascii(c->dset->varname[j]);
 		    strip_illegals(c->dset->varname[j]);
 		    if (check_varname(c->dset->varname[j])) {

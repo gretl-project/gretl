@@ -2164,7 +2164,7 @@ char *make_varname_unique (char *vname, int v, DATASET *dset)
 	    }
 	}
 	if (conflict) {
-	    sprintf(tmp, "_%d", k);
+	    sprintf(tmp, "%d", k);
 	    vname[n] = '\0';
 	    strncat(vname, tmp, strlen(tmp));
 	} else {
