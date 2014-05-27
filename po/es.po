@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-05-06 09:48+0100\n"
-"PO-Revision-Date: 2014-05-21 17:34+0200\n"
+"PO-Revision-Date: 2014-05-27 14:52+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -13559,7 +13559,7 @@ msgstr "Matriz de correlación"
 
 #: gui2/menustate.c:473 gui2/menustate.c:567 gui2/selector.c:6376
 msgid "XY scatterplot"
-msgstr "Gráfico de dos variable XY"
+msgstr "Gráfico de dos variables XY"
 
 #: gui2/menustate.c:481 gui2/menustate.c:572
 msgid "Add logs"
