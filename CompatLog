@@ -1,3 +1,9 @@
+version 1.9.91
+
+The "set" variable halt_on_error is deprecated and will be
+removed at some point. To prevent a script from aborting on
+errors the "catch" command-modifier should be used instead.
+
 2014-05-02 version 1.9.90
 
 The "set" variable "RNG" has been removed: the RNG is the SFMT
