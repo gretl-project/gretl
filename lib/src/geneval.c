@@ -5987,8 +5987,13 @@ static gretl_matrix *real_matrix_from_list (const int *list,
 	    M = gretl_matrix_data_subset_special(list, dset, 
 						 mmask, &p->err);
 	} else {
-	    int missop = (libset_get_bool(SKIP_MISSING))? M_MISSING_SKIP :
-		M_MISSING_OK;
+	    int missop;
+
+	    if (libset_get_bool(SKIP_MISSING)) {
+		missop = M_MISSING_SKIP;
+	    } else {
+		missop = M_MISSING_OK;
+	    }
 
 	    M = gretl_matrix_data_subset(list, dset, dset->t1, dset->t2, 
 					 missop, &p->err);
