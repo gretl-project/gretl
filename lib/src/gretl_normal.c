@@ -782,7 +782,7 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 
 #endif /* OPENMP or not */
 
-/* below: revised version of GHK (plus score), currently in testing */
+/* below: revised version of GHK (plus score) */
 
 static void scaled_convex_combo (gretl_matrix *targ, double w,
 				 const gretl_matrix *m1,

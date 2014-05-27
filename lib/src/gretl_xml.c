@@ -1357,6 +1357,17 @@ int gretl_xml_child_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
     return ret;
 }
 
+static int represents_nan (const char *s)
+{
+    if (!strncmp(s, "nan", 3)) {
+	return 1;
+    } else if (!strncmp(s, "1.#IND", 6)) {
+	return 1;
+    } else if (!strncmp(s, "-1.#IND", 7)) {
+	return 1;
+    }
+}
+
 static int get_matrix_values_via_file (gretl_matrix *m, const char *s)
 {
     char *fname;
@@ -1387,6 +1398,7 @@ static int get_matrix_values_via_file (gretl_matrix *m, const char *s)
 	for (i=0; i<m->rows && !err; i++) {
 	    for (j=0; j<m->cols && !err; j++) {
 		if (fscanf(fp, "%lf", &x) != 1) {
+		    /* FIXME */
 		    err = E_DATA;
 		} else {
 		    gretl_matrix_set(m, i, j, x);
@@ -1516,12 +1528,16 @@ gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
 	for (i=0; i<rows && !*err; i++) {
 	    for (j=0; j<cols && !*err; j++) {
 		if (sscanf(p, "%lf", &x) != 1) {
-		    *err = E_DATA;
+		    if (represents_nan(p)) {
+			gretl_matrix_set(m, i, j, M_NA);
+		    } else {
+			*err = E_DATA;
+		    }
 		} else {
 		    gretl_matrix_set(m, i, j, x);
-		    p += strspn(p, " \r\n");
-		    p += strcspn(p, " \r\n");
 		}
+		p += strspn(p, " \r\n");
+		p += strcspn(p, " \r\n");
 	    }
 	}
     }
