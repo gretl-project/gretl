@@ -446,6 +446,41 @@ static int get_mask_count (const char *mask, int n)
     return k;
 }
 
+static void add_dataset_colnames (gretl_matrix *M,
+				  const int *list,
+				  const DATASET *dset)
+{
+    int i, vi, nv = list[0];
+    char **S;
+    int err;
+
+    /* we won't treat errors here as fatal */
+
+    if (nv != M->cols) {
+	/* "can't happen" */
+	return;
+    }
+
+    S = strings_array_new(nv);
+    if (S == NULL) {
+	return;
+    }
+
+    for (i=0; i<nv; i++) {
+	vi = list[i+1];
+	S[i] = gretl_strdup(dset->varname[vi]);
+	if (S[i] == NULL) {
+	    strings_array_free(S, nv);
+	    return;
+	}
+    }
+
+    err = gretl_matrix_set_colnames(M, S);
+    if (err) {
+	strings_array_free(S, nv);
+    }
+}
+
 static gretl_matrix *
 real_gretl_matrix_data_subset (const int *list, 
 			       const DATASET *dset,
@@ -457,7 +492,7 @@ real_gretl_matrix_data_subset (const int *list,
     int T, Tmax = t2 - t1 + 1;
     int k = list[0];
     int skip;
-    int j, s, t;
+    int j, vj, s, t;
 
     if (k <= 0 || Tmax <= 0) {
 	*err = E_DATA;
@@ -480,7 +515,8 @@ real_gretl_matrix_data_subset (const int *list,
     } else if (op == M_MISSING_SKIP || op == M_MISSING_ERROR) {
 	for (t=t1; t<=t2 && !*err; t++) {
 	    for (j=0; j<k; j++) {
-		x = dset->Z[list[j+1]][t];
+		vj = list[j+1];
+		x = dset->Z[vj][t];
 		if (na(x)) {
 		    if (op == M_MISSING_SKIP) {
 			T--;
@@ -512,7 +548,8 @@ real_gretl_matrix_data_subset (const int *list,
 	    skip = mask[t - t1];
 	} else if (op == M_MISSING_SKIP) {
 	    for (j=0; j<k; j++) {
-		x = dset->Z[list[j+1]][t];
+		vj = list[j+1];
+		x = dset->Z[vj][t];
 		if (na(x)) {
 		    skip = 1;
 		    break;
@@ -521,7 +558,8 @@ real_gretl_matrix_data_subset (const int *list,
 	}
 	if (!skip) {
 	    for (j=0; j<k; j++) {
-		x = dset->Z[list[j+1]][t];
+		vj = list[j+1];
+		x = dset->Z[vj][t];
 		gretl_matrix_set(M, s, j, x);
 	    }
 	    if (s == 0) {
@@ -553,9 +591,12 @@ real_gretl_matrix_data_subset (const int *list,
     if (*err) {
 	gretl_matrix_free(M);
 	M = NULL;
-    } else if (T == Tmax) {
-	gretl_matrix_set_t1(M, t1);
-	gretl_matrix_set_t2(M, t2);
+    } else {
+	if (T == Tmax) {
+	    gretl_matrix_set_t1(M, t1);
+	    gretl_matrix_set_t2(M, t2);
+	}
+	add_dataset_colnames(M, list, dset);
     }
 
     return M;
