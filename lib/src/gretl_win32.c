@@ -1462,3 +1462,33 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 
     return (char *) buf;
 }
+
+int win32_fscan_nan (FILE *fp)
+{
+    char test[5];
+
+    fscanf(fp, "%4s", test);
+
+    if (!strncmp(test, "nan", 3) ||
+	!strncmp(test, "-nan", 4)) {
+	return 1;
+    } else {
+	fprintf(stderr, "win32_fscan_nan: got '%s'\n", test);
+	return 0;
+    }
+}
+
+int win32_sscan_nan (const char *s)
+{
+    char test[5];
+
+    sscanf(s, "%4s", test);
+
+    if (!strncmp(test, "nan", 3) ||
+	!strncmp(test, "-nan", 4)) {
+	return 1;
+    } else {
+	fprintf(stderr, "win32_sscan_nan: got '%s'\n", test);
+	return 0;
+    }
+}

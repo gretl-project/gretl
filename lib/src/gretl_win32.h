@@ -78,6 +78,10 @@ int win32_check_for_program (const char *prog);
 char *strptime (const char *buf, const char *format, 
 		struct tm *timeptr);
 
+int win32_fscan_nan (FILE *fp);
+
+int win32_sscan_nan (const char *s);
+
 #endif /* WIN32 */
 
 #endif /* GRETL_WIN32_H */
