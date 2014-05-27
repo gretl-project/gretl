@@ -15,14 +15,14 @@ static doublereal c_b13 = -1.;
 /* lapack/blas functions called below */
 
 extern int dsyr_ (char *, integer *, doublereal *, doublereal *, 
-		  integer *, doublereal *, integer *, ftnlen);
+		  integer *, doublereal *, integer *);
 
 extern int dposv_ (char *, integer *, integer *, doublereal *, integer *, 
-		   doublereal *, integer *, integer *, ftnlen);
+		   doublereal *, integer *, integer *);
 
 extern int dgemv_ (char *, integer *, integer *, doublereal *, doublereal *, 
 		   integer *, doublereal *, integer *, doublereal *, 
-		   doublereal *, integer *, ftnlen);
+		   doublereal *, integer *);
 
 extern int dcopy_ (integer *, doublereal *, integer *, doublereal *, 
 		   integer *);
@@ -34,12 +34,10 @@ extern int daxpy_ (integer *, doublereal *, doublereal *, integer *,
 		   doublereal *, integer *);
 
 extern int dpotrs_ (char *, integer *, integer *, doublereal *, integer *, 
-		    doublereal *, integer *, integer *, ftnlen);
+		    doublereal *, integer *, integer *);
 
 extern doublereal ddot_ (integer *, doublereal *, integer *, doublereal *, 
 			 integer *);
-
-#if 1
 
 static int stepy_ (integer *n, integer *p, doublereal *a, 
 		   doublereal *d, doublereal *b, doublereal *ada, 
@@ -56,16 +54,15 @@ static int stepy_ (integer *n, integer *p, doublereal *a,
     }
 
     for (i=0; i<*n; i++) {
-	dsyr_("U", p, &d[i], &a[i * *p], &one, ada, p, (ftnlen) 1);
+	dsyr_("U", p, &d[i], &a[i * *p], &one, ada, p);
     }
 
     if (attempt == 0) {
-	dposv_("U", p, &one, ada, p, b, p, info, (ftnlen) 1);
+	dposv_("U", p, &one, ada, p, b, p, info);
 	if (*info != 0) {
 	    fprintf(stderr, "stepy: dposv gave info = %d\n", *info);
 	    attempt = 1;
 	    goto try_again;
-	    /* err = (*info > 0)? E_NOTPD : E_DATA; */
 	}
     } else {
 	gretl_matrix A, B;
@@ -87,45 +84,6 @@ static int stepy_ (integer *n, integer *p, doublereal *a,
 
     return err;
 }
-
-#else
-
-static int stepy_ (integer *n, integer *p, doublereal *a, 
-		   doublereal *d, doublereal *b, doublereal *ada, 
-		   integer *info)
-{
-    integer a_dim1 = *p, ada_dim1 = *p;
-    integer a_offset = 1 + a_dim1, ada_offset = 1 + ada_dim1;
-    integer i, j, k;
-    int err = 0;
-
-    /* Parameter adjustments */
-    --d; 
-    ada -= ada_offset;
-    a -= a_offset;
-
-    for (j = 1; j <= *p; ++j) {
-	for (k = 1; k <= *p; ++k) {
-	    ada[j + k * ada_dim1] = 0.0;
-	}
-    }
-
-    for (i = 1; i <= *n; ++i) {
-	dsyr_("U", p, &d[i], &a[i * a_dim1 + 1], &one, &ada[ada_offset],
-	      p, (ftnlen) 1);
-    }
-
-    dposv_("U", p, &one, &ada[ada_offset], p, b, p, info, (ftnlen) 1);
-
-    if (*info != 0) {
-	fprintf(stderr, "stepy: dposv gave info = %d\n", *info);
-	err = (*info > 0)? E_NOTPD : E_DATA;
-    }
-
-    return err;
-}
-
-#endif
 
 #define ITERSTEP 5
 
@@ -174,7 +132,7 @@ static int lpfnb_ (integer *n, integer *p, doublereal *a, doublereal *c__,
     nit[2] = 0;
     nit[3] = *n;
     dgemv_("N", p, n, &c_b4, &a[a_offset], p, &c__[1], &one, &zero, &y[1],
-	   &one, (ftnlen) 1);
+	   &one);
     for (i = 1; i <= *n; ++i) {
 	d__[i] = 1.;
     }
@@ -184,7 +142,7 @@ static int lpfnb_ (integer *n, integer *p, doublereal *a, doublereal *c__,
     }
     dcopy_(n, &c__[1], &one, &s[1], &one);
     dgemv_("T", p, n, &c_b13, &a[a_offset], p, &y[1], &one, &c_b4, &s[1],
-	   &one, (ftnlen) 1);
+	   &one);
     for (i = 1; i <= *n; ++i) {
 	if ((d1 = s[i], abs(d1)) < *eps) {
 	    d1 = s[i];
@@ -219,9 +177,9 @@ looptop:
 
 	dcopy_(p, &b[1], &one, &dy[1], &one);
 	dgemv_("N", p, n, &c_b13, &a[a_offset], p, &x[1], &one, &c_b4, &dy[1],
-		&one, (ftnlen) 1);
+		&one);
 	dgemv_("N", p, n, &c_b4, &a[a_offset], p, &dz[1], &one, &c_b4, &dy[1],
-		&one, (ftnlen) 1);
+		&one);
 	dcopy_(p, &dy[1], &one, &rhs[1], &one);
 	err = stepy_(n, p, &a[a_offset], &d__[1], &dy[1], &ada[ada_offset], info);
 	if (err) {
@@ -229,7 +187,7 @@ looptop:
 	}
 
 	dgemv_("T", p, n, &c_b4, &a[a_offset], p, &dy[1], &one, &c_b13, 
-	       &ds[1], &one, (ftnlen) 1);
+	       &ds[1], &one);
 	deltap = 1e20;
 	deltad = 1e20;
 
@@ -277,14 +235,13 @@ looptop:
 	    }
 	    dswap_(p, &rhs[1], &one, &dy[1], &one);
 	    dgemv_("N", p, n, &c_b4, &a[a_offset], p, &dr[1], &one, &c_b4,
-		   &dy[1], &one, (ftnlen) 1);
-	    dpotrs_("U", p, &one, &ada[ada_offset], p, &dy[1], p, info, 
-		    (ftnlen) 1);
+		   &dy[1], &one);
+	    dpotrs_("U", p, &one, &ada[ada_offset], p, &dy[1], p, info);
 	    if (*info != 0) {
 		fprintf(stderr, "lpfnb: dpotrs_ gave info = %d\n", *info);
 	    }
 	    dgemv_("T", p, n, &c_b4, &a[a_offset], p, &dy[1], &one, &zero, 
-		   &u[1], &one, (ftnlen) 1);
+		   &u[1], &one);
 	    deltap = 1e20;
 	    deltad = 1e20;
 	    for (i = 1; i <= *n; ++i) {
