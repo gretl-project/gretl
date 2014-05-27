@@ -685,14 +685,15 @@ static int overlay_masks (char *targ, const char *src, int n)
 
 static int make_empty_mask (const DATASET *dset, char *mask)
 {
+    int vt = current_series_index(dset, "time");
+    int vi = current_series_index(dset, "index");
     int i, t;
 
     for (t=0; t<dset->n; t++) {
 	mask[t] = 0;
 	for (i=1; i<dset->v; i++) {
 	    if (!series_is_hidden(dset, i) &&
-		strcmp(dset->varname[i], "time") &&
-		strcmp(dset->varname[i], "index") &&
+		i != vt && i != vi &&
 		!na(dset->Z[i][t])) {
 		mask[t] = 1;
 		break;
