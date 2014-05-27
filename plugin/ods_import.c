@@ -38,7 +38,7 @@
 
 #include "import_common.c"
 
-#define ODEBUG 1
+#define ODEBUG 0
 
 enum {
     ODS_NONE,     
@@ -442,7 +442,7 @@ static int real_read_cell (xmlNodePtr cur,
     *preadcol += nr;
 
 #if ODEBUG
-    fprintf(stderr, "reading: i=%d, j=%d, v=%d, t=%d\n",
+    fprintf(stderr, "real_read_cell: i=%d, j=%d, v=%d, t=%d\n",
 	    iread, jread, v, t);
 #endif
 
@@ -460,7 +460,7 @@ static int real_read_cell (xmlNodePtr cur,
 		*sheet->dset->varname[v] = '\0';
 		strncat(sheet->dset->varname[v], val, VNAMELEN - 1);
 		err = check_imported_varname(sheet->dset->varname[v],
-					     iread, jread, prn);
+					     v, iread, jread, prn);
 		free(val);
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_STRING, 
@@ -748,13 +748,16 @@ static int read_table_content (ods_sheet *sheet, PRN *prn)
     int i, nr, maxrow;
     int tabrow = 0, readrow = 0;
     int err = 0;
+
+#if ODEBUG
+    fprintf(stderr, "\n*** read_table_content ***\n");
+#endif
     
     if (sheet->seltab < 0 || sheet->seltab >= sheet->n_tables) {
 	return E_DATA;
     }
 
     tab = sheet->tables[sheet->seltab];
-
     err = analyse_top_left(sheet, tab);
 
     if (!err) {
@@ -769,6 +772,10 @@ static int read_table_content (ods_sheet *sheet, PRN *prn)
     cur = tab->node->xmlChildrenNode;
 
     gretl_push_c_numeric_locale();
+
+#if ODEBUG
+    fprintf(stderr, "starting read_data_row loop\n");
+#endif
 
     while (cur != NULL && !err && readrow < maxrow) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-row")) {
@@ -787,7 +794,7 @@ static int read_table_content (ods_sheet *sheet, PRN *prn)
     gretl_pop_c_numeric_locale();
 
 #if ODEBUG
-    fprintf(stderr, "read_table_content, returning %d\n", err);
+    fprintf(stderr, "read_table_content, returning %d\n\n", err);
 #endif
 
     return err;
@@ -802,8 +809,12 @@ get_table_dimensions (xmlNodePtr cur, ods_sheet *sheet)
     int cols, xoffset, xtrail;
     int rows, rchk;
     int err = 0;
-#if ODEBUG
+#if ODEBUG > 2
     int i = 0;
+#endif
+
+#if ODEBUG
+    fprintf(stderr, "** get_table_dimensions *** \n");
 #endif
 
     tab = ods_table_new(cur, &err);
@@ -849,7 +860,7 @@ get_table_dimensions (xmlNodePtr cur, ods_sheet *sheet)
 		}
 		rowp = rowp->next;
 	    }
-#if ODEBUG
+#if ODEBUG > 2
 	    fprintf(stderr, "row %d: cols = %d, trailing empty cols = %d\n", 
 		    ++i, cols, xtrail);
 #endif
@@ -874,6 +885,11 @@ get_table_dimensions (xmlNodePtr cur, ods_sheet *sheet)
     }
 
     tab->rows = rchk;
+
+#if ODEBUG
+    fprintf(stderr, "get_table_dimensions, done: rows=%d, err=%d\n\n", 
+	    tab->rows, err);
+#endif
 
     return err;
 }
@@ -1015,15 +1031,19 @@ static int set_ods_params_from_cli (ods_sheet *sheet,
     int gotlist = (list != NULL && list[0] == 3);
     int i;
 
+    sheet->seltab = 0; /* default to first */
+
     if (!gotname && !gotlist) {
-	sheet->seltab = 0;
+	/* no user specs */
 	sheet->xoffset = sheet->tables[0]->xoffset;
 	sheet->yoffset = sheet->tables[0]->yoffset;
 	return 0;
     }
 
-    /* invalidate this */
-    sheet->seltab = -1;
+    if (gotname || (gotlist && list[1] > 0)) {
+	/* invalidate this pro tem */
+	sheet->seltab = -1;
+    }
 
     if (gotname) {
 	for (i=0; i<sheet->n_tables; i++) {
@@ -1041,7 +1061,7 @@ static int set_ods_params_from_cli (ods_sheet *sheet,
     }
 
     if (gotlist) {
-	if (!gotname) {
+	if (!gotname && list[1] > 0) {
 	    /* convert to zero-based */
 	    sheet->seltab = list[1] - 1;
 	}
@@ -1052,6 +1072,8 @@ static int set_ods_params_from_cli (ods_sheet *sheet,
     if (sheet->seltab < 0 || sheet->seltab >= sheet->n_tables ||
 	sheet->xoffset < 0 || sheet->yoffset < 0) {
 	gretl_errmsg_set(_("Invalid argument for worksheet import"));
+	fprintf(stderr, "seltab=%d, xoffset=%d, yoffset=%d\n",
+		sheet->seltab, sheet->xoffset, sheet->yoffset); 
 	return E_DATA;
     }
 

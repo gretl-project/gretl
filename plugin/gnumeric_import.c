@@ -332,7 +332,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 			    ; /* keep going */
 			} else {
 			    err = check_imported_varname(sheet->varname[i],
-							 r, c, prn);
+							 i, r, c, prn);
 			}
 		    } else if (i == 0) {
 			/* first column, not first row */

@@ -313,9 +313,11 @@ static int xlsx_set_varname (xlsx_info *xinfo, int i, const char *s,
 	err = E_DATA;
     } else {
 	*xinfo->dset->varname[i] = '\0';
-	strncat(xinfo->dset->varname[i], s, VNAMELEN - 1);
+	if (s != NULL) {
+	    strncat(xinfo->dset->varname[i], s, VNAMELEN - 1);
+	}
 	err = check_imported_varname(xinfo->dset->varname[i], 
-				     row, col, prn);
+				     i, row, col, prn);
     }
 
     return err;
@@ -682,6 +684,8 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		    err = xlsx_set_value(xinfo, i, t, xval);
 		} else if (gotf) {
 		    xlsx_maybe_handle_formula(xinfo, formula, i, t);
+		} else if (row == xinfo->namerow) {
+		    err = xlsx_set_varname(xinfo, i, NULL, row, col, prn);
 		}
 	    } else if (stringcell == 2 && strval != NULL) {
 		free((char *) strval);

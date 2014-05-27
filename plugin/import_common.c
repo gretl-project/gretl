@@ -29,6 +29,8 @@
 
 #include "gretl_zip.h"
 
+#if 0
+
 static int check_imported_varname (char *vname, int row, int col,
 				   PRN *prn)
 {
@@ -66,6 +68,86 @@ static int check_imported_varname (char *vname, int row, int col,
 
     return (err)? E_DATA : 0;
 }
+
+#else
+
+static void strip_vname_illegals (char *s)
+{
+    char name[VNAMELEN] = {0};
+    int i, j = 0;
+
+    for (i=0; s[i] != '\0'; i++) {
+	if (isalnum(s[i])) {
+	    name[j++] = s[i];
+	}
+    }
+
+    name[j] = '\0';
+    strcpy(s, name);
+}
+
+static int missing_varname (void)
+{
+    gretl_errmsg_set("Variable name is missing");
+    return E_DATA;
+}
+
+/* The following is modeled on process_csv_varname() in csvdata.c,
+   adapted slightly for the specifics of the spreadsheet
+   importers.
+*/
+
+static int check_imported_varname (char *vname, int vnum,
+				   int row, int col,
+				   PRN *prn)
+{
+    int err = 0;
+
+    if (*vname == '\0') {
+	if (vnum > 0) {
+	    fprintf(stderr, "variable name %d is missing\n", vnum);
+	    sprintf(vname, "v%d", vnum);
+	} else {
+	    err = missing_varname();
+	}
+    } else if (numeric_string(vname)) {
+	err = check_varname(vname);
+    } else {
+	char *s, tmp[VNAMELEN];
+
+	strcpy(tmp, vname);
+	s = tmp;
+	*vname = '\0';
+	
+	while (*s && !isalpha(*s)) s++;
+	if (*s == '\0') {
+	    if (vnum > 0) {
+		fprintf(stderr, "variable name %d is garbage\n", vnum);
+		sprintf(vname, "v%d", vnum);
+	    } else {
+		err = missing_varname();
+	    }
+	} else {
+	    strncat(vname, s, VNAMELEN - 1);
+	}
+	iso_to_ascii(vname);
+	strip_vname_illegals(vname);
+	err = check_varname(vname);
+    }
+
+    if (err) {
+	err = E_DATA;
+	if (row >= 0 && col >= 0) {
+	    pprintf(prn, _("At row %d, column %d:\n"), row, col);
+	}
+	pputs(prn, gretl_errmsg_get());
+	// pputs(prn, _("\nPlease rename this variable and try again"));
+    }
+
+    return err;
+}
+
+#endif
 
 #ifndef EXCEL_IMPORTER /* FIXME? */
 

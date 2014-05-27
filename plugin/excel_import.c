@@ -1181,7 +1181,7 @@ static int check_all_varnames (wbook *book, xls_info *xi, PRN *prn)
 		/* pass along */
 		;
 	    } else {
-		int verr = check_imported_varname(test, i, j, prn);
+		int verr = check_imported_varname(test, 0, i, j, prn);
 
 		if (verr) {
 		    return verr;
