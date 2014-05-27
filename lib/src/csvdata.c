@@ -45,7 +45,8 @@ enum {
     CSV_REVERSED = 1 << 8,
     CSV_DOTSUB   = 1 << 9,
     CSV_ALLCOLS  = 1 << 10,
-    CSV_BOM      = 1 << 11
+    CSV_BOM      = 1 << 11,
+    CSV_VERBOSE  = 1 << 12
 };
 
 enum {
@@ -106,6 +107,7 @@ struct csvdata_ {
 #define csv_do_dotsub(c)          (c->flags & CSV_DOTSUB)
 #define csv_all_cols(c)           (c->flags & CSV_ALLCOLS)
 #define csv_has_bom(c)            (c->flags & CSV_BOM)
+#define csv_is_verbose(c)         (c->flags & CSV_VERBOSE)
 
 #define csv_set_trailing_comma(c)   (c->flags |= CSV_TRAIL)
 #define csv_unset_trailing_comma(c) (c->flags &= ~CSV_TRAIL)
@@ -119,6 +121,7 @@ struct csvdata_ {
 #define csv_set_dotsub(c)           (c->flags |= CSV_DOTSUB)
 #define csv_set_all_cols(c)         (c->flags |= CSV_ALLCOLS)
 #define csv_set_has_bom(c)          (c->flags |= CSV_BOM)
+#define csv_set_verbose(c)          (c->flags |= CSV_VERBOSE)
 
 #define csv_skip_bad(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
@@ -664,7 +667,7 @@ static int check_daily_dates (DATASET *dset, int *pd,
 		pprintf(prn, A_("Probably weekly data\n"));
 		*pd = dset->pd = 52;
 	    } else {
-		pprintf(prn, A_("Missing daily observations: %d\n"), nmiss);
+		pprintf(prn, A_("Missing daily rows: %d\n"), nmiss);
 	    }
 	}
     }
@@ -752,7 +755,9 @@ static int complete_qm_labels (DATASET *dset, int reversed,
 			       PRN *prn)
 {
     char bad[16], skip[8];
-    int t, s, yr, per, Ey, Ep;
+    int Ey; /* expected year */
+    int Ep; /* expected sub-period */
+    int t, s, yr, per;
     int pmin = 1;
     int pd, pd0;
     int ret = 1;
@@ -1750,20 +1755,24 @@ static int csv_missval (const char *str, int i, int t,
     int miss = 0;
 
     if (*str == '\0') {
-	if (t < 80 || *miss_shown < i) {
-	    pprintf(prn, A_("   the cell for variable %d, obs %d "
-			    "is empty: treating as missing value\n"), 
-		    i, t);
-	    *miss_shown += 1;
+	if (miss_shown != NULL) {
+	    if (t < 80 || *miss_shown < i) {
+		pprintf(prn, A_("   the cell for variable %d, obs %d "
+				"is empty: treating as missing value\n"), 
+			i, t);
+		*miss_shown += 1;
+	    }
 	}
 	miss = 1;
     }
 
     if (import_na_string(str)) {
-	if (t < 80 || *miss_shown < i) {
-	    pprintf(prn, A_("   warning: missing value for variable "
-			    "%d, obs %d\n"), i, t);
-	    *miss_shown += 1;
+	if (miss_shown != NULL) {
+	    if (t < 80 || *miss_shown < i) {
+		pprintf(prn, A_("   warning: missing value for variable "
+				"%d, obs %d\n"), i, t);
+		*miss_shown += 1;
+	    }
 	}
 	miss = 1;
     }
@@ -2192,6 +2201,39 @@ static void strip_illegals (char *s)
     strcpy(s, name);
 }
 
+static int process_csv_varname (char *vname, const char *src, int j,
+				int *numcount, PRN *prn)
+{
+    int err = 0;
+
+    *vname = '\0';
+
+    if (*src == '\0') {
+	fprintf(stderr, "variable name %d is missing\n", j);
+	sprintf(vname, "v%d", j);
+    } else if (numeric_string(src)) {
+	*numcount += 1;
+    } else {
+	const char *s = src;
+
+	while (*s && !isalpha(*s)) s++;
+	if (*s == '\0') {
+	    fprintf(stderr, "variable name %d is garbage\n", j);
+	    sprintf(vname, "v%d", j);
+	} else {
+	    strncat(vname, s, VNAMELEN - 1);
+	}
+	iso_to_ascii(vname);
+	strip_illegals(vname);
+	if (check_varname(vname)) {
+	    errmsg(1, prn);
+	    err = E_DATA;
+	}
+    }
+
+    return err;
+}
+
 static int csv_reconfigure_for_markers (DATASET *dset)
 {
     int err = dataset_allocate_obs_markers(dset);
@@ -2400,29 +2442,8 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	    if (joining(c)) {
 		handle_join_varname(c, k, &j);
 	    } else {
-		c->dset->varname[j][0] = '\0';
-		if (*c->str == '\0') {
-		    fprintf(stderr, "variable name %d is missing\n", j);
-		    sprintf(c->dset->varname[j], "v%d", j);
-		} else if (numeric_string(c->str)) {
-		    numcount++;
-		} else {
-		    char *s = c->str;
-
-		    while (*s && !isalpha(*s)) s++;
-		    if (*s == '\0') {
-			fprintf(stderr, "variable name %d is garbage\n", j);
-			sprintf(c->dset->varname[j], "v%d", j);
-		    } else {
-			strncat(c->dset->varname[j], s, VNAMELEN - 1);
-		    }
-		    iso_to_ascii(c->dset->varname[j]);
-		    strip_illegals(c->dset->varname[j]);
-		    if (check_varname(c->dset->varname[j])) {
-			errmsg(1, prn);
-			err = E_DATA;
-		    }
-		}
+		process_csv_varname(c->dset->varname[j], c->str, j,
+				    &numcount, prn);
 		j++;
 	    }
 	}
@@ -2495,6 +2516,7 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 {
     char *p;
     int miss_shown = 0;
+    int *missp = NULL;
     int t = 0, s = 0;
     int i, k, n, m;
     int err = 0;
@@ -2503,6 +2525,10 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 
     if (csv_has_bom(c)) {
 	fseek(fp, 3, SEEK_SET);
+    }
+
+    if (csv_is_verbose(c)) {
+	missp = &miss_shown;
     }
 
     while (csv_fgets(c, fp) && !err) {
@@ -2533,7 +2559,7 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 	    p = c->line + k - 1;
 	    *c->str = '\0';
 	    strncat(c->str, p, n);
-	    if (csv_missval(c->str, i, t+1, &miss_shown, prn)) {
+	    if (csv_missval(c->str, i, t+1, missp, prn)) {
 		c->dset->Z[i][t] = NADBL;
 	    } else {
 		c->dset->Z[i][t] = csv_atof(c, i, c->str);
@@ -2622,10 +2648,15 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 {
     char *p;
     int miss_shown = 0;
+    int *missp = NULL;
     int truncated = 0;
     int t = 0, s = 0;
     int i, j, k;
     int err = 0;
+
+    if (csv_is_verbose(c)) {
+	missp = &miss_shown;
+    }
 
     c->real_n = c->dset->n;
 
@@ -2669,7 +2700,7 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 		} else if (cols_subset(c) && skip_data_column(c, k)) {
 		    ; /* no-op */
 		} else {
-		    err = process_csv_obs(c, j++, t, &miss_shown, prn);
+		    err = process_csv_obs(c, j++, t, missp, prn);
 		}
 	    }
 	    if (!err) {
@@ -2888,8 +2919,13 @@ static int real_import_csv (const char *fname,
 
     if (join != NULL) {
 	c->jspec = join;
-    } else if (opt & OPT_A) {
-	csv_set_all_cols(c);
+    } else {
+        if (opt & OPT_A) {
+	    csv_set_all_cols(c);
+        }
+        if (opt & OPT_V) {
+            csv_set_verbose(c);
+        }
     }
 
     if (mprn != NULL) {

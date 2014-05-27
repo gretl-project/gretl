@@ -107,6 +107,7 @@ struct gretl_option gretl_opts[] = {
     { APPEND,   OPT_M, "rowmask", 2 },
     { APPEND,   OPT_L, "cols", 2 },
     { APPEND,   OPT_S, "sheet", 2 },
+    { APPEND,   OPT_V, "verbose", 0 },
     { ARBOND,   OPT_A, "asymptotic", 0 },
     { ARBOND,   OPT_D, "time-dummies", 1 },
     { ARBOND,   OPT_H, "orthdev", 0 },
@@ -381,6 +382,7 @@ struct gretl_option gretl_opts[] = {
     { OPEN,     OPT_W, "www", 0 },
     { OPEN,     OPT_L, "cols", 2 },
     { OPEN,     OPT_M, "rowmask", 2 },
+    { OPEN,     OPT_V, "verbose", 0 },
     { OUTFILE,  OPT_A, "append", 0 },
     { OUTFILE,  OPT_C, "close", 0 },
     { OUTFILE,  OPT_W, "write", 0 },
@@ -1208,23 +1210,37 @@ static void maybe_get_stored_options (int ci, gretlopt *popt)
     }
 }
 
+/* When writing data as gdt this is called conditionally on OPT_Z
+   being given, but when writing gdtb it is called unconditionally
+   (since the format of the latter is a zipfile in all cases).
+   The effects are then:
+
+   gdt: no compression applied by default; if --gzipped given
+   with no parameter, zlib level 1 used; if --gzipped given
+   with parameter, param value respected within range 0 to 9.
+
+   gdtb: zlib level 1 used by default, levels 0 to 9 can be
+   specified via --gzipped + param.
+*/
+
 int get_compression_option (int ci)
 {
     stored_opt *so = matching_stored_opt(ci, OPT_Z);
     int level = 0;
 
     if (so == NULL || so->val == NULL) {
-	return 1;
+	/* use zlib level 1 by default */
+	level = 1;
     } else {
 	level = atoi(so->val);
 	if (level < 0) {
-	    return 0;
+	    level = 0;
 	} else if (level > 9) {
-	    return 9;
-	} else {
-	    return level;
+	    level = 9;
 	}
     }
+
+    return level;
 }
 
 /* below: called via GUI */
