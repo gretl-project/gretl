@@ -38,6 +38,9 @@ gnuplot libxml2-devel curl-devel readline-devel gtksourceview3-devel
 #optional (did not work)
 sudo yum install libgsf-devel
 
+#optional (1.9.91 contrib. 2014-05-15)
+sudo yum install json-glib-devel
+
 # documentation build (optional)
 sudo yum install texlive libxslt-devel texlive-appendix 
 # language dependency for example
@@ -51,6 +54,10 @@ sudo apt-get install gnuplot libfftw3-dev liblapack-dev gfortran libxml2 \
  libcurl4-gnutls-dev
 
 # documentation build (optional)
+
+Ubuntu Precise (12.04) LTS (contrib. 2014-05-28)
+#optional (1.9.91 contrib. 2014-05-28)
+sudo apt-get install libjson-glib-dev
 
 Ubuntu natty (11.04) (contrib. 2011-09-23, helio_guilherme@hotmail.com)
 # dependencies
