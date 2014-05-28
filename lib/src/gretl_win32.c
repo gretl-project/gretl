@@ -1463,7 +1463,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
     return (char *) buf;
 }
 
-int win32_fscan_nan (FILE *fp)
+double win32_fscan_nonfinite (FILE *fp, int *err)
 {
     char test[5];
 
@@ -1471,14 +1471,18 @@ int win32_fscan_nan (FILE *fp)
 
     if (!strncmp(test, "nan", 3) ||
 	!strncmp(test, "-nan", 4)) {
-	return 1;
+	return M_NA;
+    } else if (!strncmp(test, "inf", 3)) {
+	return 1.0 / 0.0;
+    } else if (!strncmp(test, "-inf", 4)) {
+	return -1.0 / 0.0;
     } else {
-	fprintf(stderr, "win32_fscan_nan: got '%s'\n", test);
+	*err = E_DATA;
 	return 0;
     }
 }
 
-int win32_sscan_nan (const char *s)
+double win32_sscan_nonfinite (const char *s, int *err)
 {
     char test[5];
 
@@ -1486,9 +1490,25 @@ int win32_sscan_nan (const char *s)
 
     if (!strncmp(test, "nan", 3) ||
 	!strncmp(test, "-nan", 4)) {
-	return 1;
+	return M_NA;
+    } else if (!strncmp(test, "inf", 3)) {
+	return 1.0 / 0.0;
+    } else if (!strncmp(test, "-inf", 4)) {
+	return -1.0 / 0.0;
     } else {
-	fprintf(stderr, "win32_sscan_nan: got '%s'\n", test);
+	*err = E_DATA;
 	return 0;
     }
 }
+
+void win32_fprint_nonfinite (double x, FILE *fp)
+{
+    if (isnan(x) || na(x)) {
+	fputs("nan ", fp);
+    } else if (x < 0) {
+	fputs("-inf ", fp);
+    } else {
+	fputs("inf ", fp);
+    }
+}
+

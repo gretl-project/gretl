@@ -1167,6 +1167,7 @@ static void xml_put_user_matrix (user_var *u, FILE *fp)
 {
     gretl_matrix *M;
     const char **S;
+    double x;
     int i, j;
 
     if (u == NULL || u->ptr == NULL) {
@@ -1202,7 +1203,14 @@ static void xml_put_user_matrix (user_var *u, FILE *fp)
 
     for (i=0; i<M->rows; i++) {
 	for (j=0; j<M->cols; j++) {
-	    fprintf(fp, "%.16g ", gretl_matrix_get(M, i, j));
+	    x = gretl_matrix_get(M, i, j);
+#ifdef WIN32
+	    if (xna(x)) {
+		win32_fprint_nonfinite(x, fp);
+		continue;
+	    }
+#endif
+	    fprintf(fp, "%.16g ", x);
 	}
 	fputc('\n', fp);
     }

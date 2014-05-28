@@ -1386,10 +1386,9 @@ static int get_matrix_values_via_file (gretl_matrix *m, const char *s)
 	    for (j=0; j<m->cols && !err; j++) {
 		if (fscanf(fp, "%lf", &x) != 1) {
 #ifdef WIN32
-		    if (win32_fscan_nan(fp)) {
-			gretl_matrix_set(m, i, j, M_NA);
-		    } else {
-			err = E_DATA;
+		    x = win32_fscan_nonfinite(fp, &err);
+		    if (!err) {
+			gretl_matrix_set(m, i, j, x);
 		    }
 #else
 		    err = E_DATA;
@@ -1523,10 +1522,9 @@ gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
 	    for (j=0; j<cols && !*err; j++) {
 		if (sscanf(p, "%lf", &x) != 1) {
 #ifdef WIN32
-		    if (win32_sscan_nan(p)) {
-			gretl_matrix_set(m, i, j, M_NA);
-		    } else {
-			*err = E_DATA;
+		    x = win32_sscan_nonfinite(p, err);
+		    if (!*err) {
+			gretl_matrix_set(m, i, j, x);
 		    }
 #else
 		    *err = E_DATA;

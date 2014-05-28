@@ -500,7 +500,6 @@ real_gretl_matrix_data_subset (const int *list,
     }	
 
     *err = 0;
-
     T = Tmax;
 
     if (mask != NULL) {
@@ -573,20 +572,19 @@ real_gretl_matrix_data_subset (const int *list,
     }
 
     if (!*err && (mask != NULL || op == M_MISSING_OK)) {
-	for (j=0; j<k && !*err; j++) {
-	    for (t=0; t<T && !*err; t++) {
-		x = gretl_matrix_get(M, t, j);
-		if (na(x)) {
-		    if (op == M_MISSING_OK) {
-			/* convert NA to NAN */
-			gretl_matrix_set(M, t, j, M_NA);
-		    } else {
-			*err = E_MISSDATA;
-		    }
+	int n = k * T;
+
+	for (j=0; j<n && !*err; j++) {
+	    if (na(M->val[j])) {
+		if (op == M_MISSING_OK) {
+		    /* convert NA to NAN */
+		    M->val[j] = M_NA;
+		} else {
+		    *err = E_MISSDATA;
 		}
 	    }
 	}
-    }	
+    }
 
     if (*err) {
 	gretl_matrix_free(M);
@@ -596,7 +594,9 @@ real_gretl_matrix_data_subset (const int *list,
 	    gretl_matrix_set_t1(M, t1);
 	    gretl_matrix_set_t2(M, t2);
 	}
-	add_dataset_colnames(M, list, dset);
+	if (dset->varname != NULL) {
+	    add_dataset_colnames(M, list, dset);
+	}
     }
 
     return M;
@@ -1168,7 +1168,17 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname,
 		    n = fscanf(fp, "%lf", &x);
 		}
 		if (n != 1) {
+#ifdef WIN32
+		    if (fz) {
+			x = win32_sscan_nonfinite(p, err);
+		    } else {
+			x = win32_fscan_nonfinite(fp, err);
+		    }
+#else
 		    *err = E_DATA;
+#endif
+		}
+		if (*err) {
 		    fprintf(stderr, "error reading row %d, column %d\n", i+1, j+1);
 		} else {
 		    gretl_matrix_set(A, i, j, x);
@@ -1201,6 +1211,39 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname,
     return A;
 }
 
+#ifdef WIN32
+
+static void win32_xna_out (double x, gzFile fz, FILE *fp,
+			   char pad)
+{
+    if (isnan(x) || na(x)) {
+	if (fz) {
+	    gzputs(fz, "nan");
+	} else {
+	    fputs("nan", fp);
+	}
+    } else if (x < 0) {
+	if (fz) {
+	    gzputs(fz, "-inf");
+	} else {
+	    fputs("-inf", fp);
+	}
+    } else {
+	if (fz) {
+	    gzputs(fz, "inf");
+	} else {
+	    fputs("inf", fp);
+	}
+    }
+    if (fz) {
+	gzputc(fz, pad);
+    } else {
+	fputc(pad, fp);
+    }
+}
+
+#endif
+
 /**
  * gretl_matrix_write_as_text:
  * @A: matrix.
@@ -1223,7 +1266,8 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname,
     int i, j, err = 0;
     gzFile fz = Z_NULL;
     FILE *fp = NULL;
-    char d = '\t';
+    double x;
+    char pad, d = '\t';
     int gz;
 
     gz = has_suffix(fname, ".gz");
@@ -1235,14 +1279,14 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname,
 	if (gz) {
 	    fz = gretl_gzopen(targ, "w");
 	} else {
-	    fp = gretl_fopen(targ, "w");
+	    fp = gretl_fopen(targ, "wb");
 	}
     } else {
 	fname = gretl_maybe_switch_dir(fname);
 	if (gz) {
 	    fz = gretl_gzopen(fname, "w");
 	} else {
-	    fp = gretl_fopen(fname, "w");
+	    fp = gretl_fopen(fname, "wb");
 	}
     }
 
@@ -1258,20 +1302,20 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname,
 
     for (i=0; i<r; i++) {
 	for (j=0; j<c; j++) {
+	    pad = (j == c-1)? '\n' : d;
+	    x = gretl_matrix_get(A, i, j);
+#ifdef WIN32
+	    if (xna(x)) {
+		win32_xna_out(x, fz, fp, pad);
+		continue;
+	    }
+#endif
 	    if (fz) {
-		gzprintf(fz, "%26.18E", gretl_matrix_get(A, i, j));
-		if (j == c-1) {
-		    gzputc(fz, '\n'); 
-		} else {
-		    gzputc(fz, d);
-		}		
+		gzprintf(fz, "%26.18E", x);
+		gzputc(fz, pad);
 	    } else {
-		fprintf(fp, "%26.18E", gretl_matrix_get(A, i, j));
-		if (j == c-1) {
-		    fputc('\n', fp); 
-		} else {
-		    fputc(d, fp);
-		}
+		fprintf(fp, "%26.18E", x);
+		fputc(pad, fp);
 	    }
 	}
     }
