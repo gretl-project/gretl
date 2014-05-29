@@ -2192,7 +2192,7 @@ static void strip_illegals (char *s)
     int i, j = 0;
 
     for (i=0; s[i] != '\0'; i++) {
-	if (isalnum(s[i])) {
+	if (isalnum(s[i]) || s[i] == '_') {
 	    name[j++] = s[i];
 	}
     }

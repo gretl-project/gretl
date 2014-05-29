@@ -29,55 +29,13 @@
 
 #include "gretl_zip.h"
 
-#if 0
-
-static int check_imported_varname (char *vname, int row, int col,
-				   PRN *prn)
-{
-    int err;
-
-    gretl_charsub(vname, ' ', '_');
-
-    err = check_varname(vname);
-
-    if (err == VARNAME_BADCHAR) {
-	/* the first byte was OK: try overwriting illegal 
-	   characters with '_' 
-	*/
-	char *s = vname + 1;
-
-	while (*s) {
-	    if (!(isalpha((unsigned char) *s))  
-		&& !(isdigit((unsigned char) *s))
-		&& *s != '_') {
-		*s = '_';
-	    }
-	    s++;
-	}
-
-	err = 0;
-    }
-
-    if (err) {
-	if (row >= 0 && col >= 0) {
-	    pprintf(prn, _("At row %d, column %d:\n"), row, col);
-	}
-	pputs(prn, gretl_errmsg_get());
-	pputs(prn, _("\nPlease rename this variable and try again"));
-    }
-
-    return (err)? E_DATA : 0;
-}
-
-#else
-
 static void strip_vname_illegals (char *s)
 {
     char name[VNAMELEN] = {0};
     int i, j = 0;
 
     for (i=0; s[i] != '\0'; i++) {
-	if (isalnum(s[i])) {
+	if (isalnum(s[i]) || s[i] == '_') {
 	    name[j++] = s[i];
 	}
     }
@@ -141,13 +99,10 @@ static int check_imported_varname (char *vname, int vnum,
 	    pprintf(prn, _("At row %d, column %d:\n"), row, col);
 	}
 	pputs(prn, gretl_errmsg_get());
-	// pputs(prn, _("\nPlease rename this variable and try again"));
     }
 
     return err;
 }
-
-#endif
 
 #ifndef EXCEL_IMPORTER /* FIXME? */
 
