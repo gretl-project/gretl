@@ -1268,7 +1268,7 @@ int open_nulldata (DATASET *dset, int data_status, int length,
 	return E_ALLOC;
     }
 
-    /* allocate dataset */
+    /* allocate data storage */
     if (allocate_Z(dset, 0)) {
 	return E_ALLOC;
     }
@@ -1282,7 +1282,7 @@ int open_nulldata (DATASET *dset, int data_status, int length,
 	}
     }
 
-    if (gretl_messages_on()) {
+    if (prn != NULL && gretl_messages_on()) {
 	/* print basic info */
 	pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
 			"observations range: %s to %s\n"), 
