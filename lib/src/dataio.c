@@ -1549,25 +1549,56 @@ static int simple_range_match (const DATASET *targ, const DATASET *src,
     return ret;
 }
 
-#if 0
-static int markers_are_ints (const DATASET *dset)
+static int year_special_markers (const DATASET *dset,
+				 const DATASET *addset)
 {
+    char obs[OBSLEN];
     char *test;
-    int i;
+    int i, t, tmin, tmax;
+    int ret = 0;
+
+    /* See if we can match obs markers in @addset
+       against years in @dset: we'll try this if all
+       the markers in addset are integer strings and
+       we find that all of the ints are within the
+       observation range in @dset.
+    */
+
+    if (!dataset_is_time_series(dset) || dset->pd != 1) {
+	return 0;
+    }
+
+    if (dset->markers || !addset->markers) {
+	return 0;
+    }
 
     errno = 0;
 
-    for (i=0; i<dset->n; i++) {
-	strtol(dset->S[i], &test, 10);
+    for (i=0; i<addset->n; i++) {
+	t = strtol(addset->S[i], &test, 10);
 	if (*test || errno) {
 	    errno = 0;
 	    return 0;
 	}
+	if (i == 0) {
+	    tmin = tmax = t;
+	} else {
+	    if (t > tmax) tmax = t;
+	    if (t < tmin) tmin = t;
+	}
     }
 
-    return 1;
+    sprintf(obs, "%d", tmin);
+    tmin = dateton(obs, dset);
+    sprintf(obs, "%d", tmax);
+    tmax = dateton(obs, dset);
+
+    if (tmin >= 0 && tmax >= 0) {
+	ret = 1;
+    }
+
+    return ret;
 }
-#endif
 
 #define simple_structure(p) (p->structure == TIME_SERIES ||		\
 			     p->structure == SPECIAL_TIME_SERIES ||	\
@@ -1592,6 +1623,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 		       gretlopt opt, PRN *prn)
 {
     int dayspecial = 0;
+    int yrspecial = 0;
     int addsimple = 0;
     int addpanel = 0;
     int addvars = 0;
@@ -1646,8 +1678,11 @@ static int merge_data (DATASET *dset, DATASET *addset,
 
     if (!err && !addpanel && dset->markers != addset->markers) {
 	if (addset->n != dset->n) {
-	    merge_error(_("Inconsistency in observation markers\n"), prn);
-	    err = 1;
+	    yrspecial = year_special_markers(dset, addset);
+	    if (!yrspecial) {
+		merge_error(_("Inconsistency in observation markers\n"), prn);
+		err = 1;
+	    }
 	} else if (addset->markers && !dset->markers) {
 	    dataset_destroy_obs_markers(addset);
 	}
@@ -1746,6 +1781,18 @@ static int merge_data (DATASET *dset, DATASET *addset,
 			dset->Z[v][t] = NADBL;
 		    }
 		}
+	    } else if (yrspecial) {
+		int s;
+
+		if (newvar) {
+		    for (t=0; t<dset->n; t++) {
+			dset->Z[v][t] = NADBL;
+		    }
+		}
+		for (t=0; t<addset->n; t++) {
+		    s = dateton(addset->S[t], dset);
+		    dset->Z[v][s] = addset->Z[i][t];
+		}		
 	    } else {
 		for (t=0; t<dset->n; t++) {
 		    if (t >= offset && t - offset < addset->n) {

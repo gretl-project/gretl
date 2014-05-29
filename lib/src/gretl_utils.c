@@ -1154,7 +1154,7 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 	} else {
 	    err = switch_panel_orientation(dset);
 	}
-    }	
+    }
 
     return err;
 }
