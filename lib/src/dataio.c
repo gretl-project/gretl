@@ -1554,8 +1554,8 @@ static int year_special_markers (const DATASET *dset,
 {
     char obs[OBSLEN];
     char *test;
-    int i, t, tmin, tmax;
-    int ret = 0;
+    int tmin = 0, tmax = 0;
+    int i, t, ret = 0;
 
     /* See if we can match obs markers in @addset
        against years in @dset: we'll try this if all
