@@ -94,7 +94,7 @@ struct dw_opts_ {
     int tid;            /* panel: ID number of "period" variable */
     int *setvar;        /* pointer to variable currently being set */
     int *extra;         /* additional pointer to int variable */
-    GtkWidget *spinner; /* used for setting starting observation */
+    GtkWidget *pdspin;  /* used for setting custom time-series frequency */
     GList *vlist;       /* panel: list of candidates for uid, tid */
 };
 
@@ -540,18 +540,18 @@ static void dwiz_set_radio_opt (GtkWidget *w, dw_opts *opts)
 {
     int val = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
 
-    if (opts->spinner != NULL) {
+    if (opts->pdspin != NULL) {
 	if (val == PD_SPECIAL) {
 	    GtkAdjustment *adj = 
-		gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(opts->spinner));
+		gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(opts->pdspin));
 
-	    gtk_widget_set_sensitive(opts->spinner, TRUE);
+	    gtk_widget_set_sensitive(opts->pdspin, TRUE);
 	    val = (int) gtk_adjustment_get_value(adj);
 	    if (opts->extra != NULL) {
 		*opts->extra = SPECIAL_TIME_SERIES;
 	    }
 	} else {
-	    gtk_widget_set_sensitive(opts->spinner, FALSE);
+	    gtk_widget_set_sensitive(opts->pdspin, FALSE);
 	    if (opts->extra != NULL) {
 		*opts->extra = TIME_SERIES;
 	    }
@@ -631,7 +631,7 @@ static int default_start_decade (void)
     return d;
 }
 
-static void compute_default_ts_info (DATASET *dwinfo, int newdata)
+static void compute_default_ts_info (DATASET *dwinfo)
 {
 #if DWDEBUG
     char obsstr[OBSLEN];
@@ -716,7 +716,7 @@ static void compute_default_ts_info (DATASET *dwinfo, int newdata)
 
     dwinfo->sd0 = get_date_x(dwinfo->pd, dwinfo->stobs);
 
-    if (!newdata && dataset->structure == TIME_SERIES && 
+    if (dataset->structure == TIME_SERIES && 
 	dataset->pd == dwinfo->pd) {
 	/* make the current start the default */
 	dwinfo->t1 = dateton(dataset->stobs, dwinfo);
@@ -1110,64 +1110,56 @@ static void dw_set_t1 (GtkWidget *w, DATASET *dwinfo)
 #endif
 }
 
-/* spinner for either time-series starting observation or
-   custom time-series frequency */
+/* spinner for time-series starting observation */
 
-static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATASET *dwinfo, int step)
+static void add_startobs_spinner (GtkWidget *vbox,
+				  DATASET *dwinfo,
+				  int direction)
+
+{
+    GtkWidget *hbox, *label, *spin;
+    GtkAdjustment *adj;
+
+    if (direction == DW_FORWARD) {
+	compute_default_ts_info(dwinfo);
+    }
+
+    adj = (GtkAdjustment *) gtk_adjustment_new(dwinfo->t1, 
+					       0, dwinfo->n - 1,
+					       1, 10, 0);
+    g_signal_connect(G_OBJECT(adj), "value-changed", 
+		     G_CALLBACK(dw_set_t1), dwinfo);
+    spin = data_start_button(adj, dwinfo);
+    gtk_entry_set_activates_default(GTK_ENTRY(spin), TRUE);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new(_(ts_frequency_string(dwinfo)));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    gtk_widget_show_all(hbox);
+}
+
+/* spinner for selecting custom time-series frequency */
+
+static GtkWidget *frequency_spinner (GtkWidget *hbox, DATASET *dwinfo)
 {
     GtkAdjustment *adj;
     GtkWidget *spin;
-    int spinmin, spinmax, spinstart;
+    int pdmax = 1000; /* arbitrary */
 
-    if (step == DW_STARTING_OBS) {
-	/* we get here only if a time-series structure
-	   has been selected 
-	*/
-	GtkWidget *label = gtk_label_new(_(ts_frequency_string(dwinfo)));
-
-	gtk_widget_show(label);
-	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-
-	compute_default_ts_info(dwinfo, 0);
-	spinmin = 0;
-	spinmax = dwinfo->n - 1; /* FIXME may be too small? */
-	spinstart = dwinfo->t1;
-    } else {
-	/* custom time-series frequency */
-	spinmin = 1;
-	spinmax = 1000; /* arbitrary */
-	spinstart = dwinfo->pd;
-    } 
-
-    /* appropriate step size? */
-    adj = (GtkAdjustment *) gtk_adjustment_new(spinstart, spinmin, spinmax,
+    adj = (GtkAdjustment *) gtk_adjustment_new(dwinfo->pd, 1, pdmax,
 					       1, 10, 0);
 
-    if (step == DW_STARTING_OBS) {
-	g_signal_connect(G_OBJECT(adj), "value-changed", 
-			 G_CALLBACK(dw_set_t1), dwinfo);
-	spin = data_start_button(adj, dwinfo);
-    } else {	
-	g_signal_connect(G_OBJECT(adj), "value-changed", 
-			 G_CALLBACK(dw_set_custom_frequency), dwinfo);
-	spin = gtk_spin_button_new(adj, 1, 0);
-    } 
+    g_signal_connect(G_OBJECT(adj), "value-changed", 
+		     G_CALLBACK(dw_set_custom_frequency), dwinfo);
+    spin = gtk_spin_button_new(adj, 1, 0);
 
     gtk_entry_set_activates_default(GTK_ENTRY(spin), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 0);
     gtk_widget_show(spin);
 
     return spin;
-}
-
-static void dwiz_startobs_spinner (DATASET *dwinfo,
-				   GtkWidget *vbox)
-{
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
-
-    dwiz_spinner(hbox, dwinfo, DW_STARTING_OBS);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox);
 }
 
 /* Panel: callback for setting the number of cross-sectional units, n,
@@ -1334,7 +1326,7 @@ static void set_up_dw_opts (dw_opts *opts, int step,
 {
     opts->setvar = NULL;
     opts->extra = NULL;
-    opts->spinner = NULL;
+    opts->pdspin = NULL;
     opts->n_radios = 0;
 
     opts->deflt = dwiz_radio_default(dwinfo, step);
@@ -1401,10 +1393,10 @@ static void dwiz_build_radios (int step, DATASET *dwinfo,
 
 	if (step == DW_TS_FREQUENCY && i == opts->n_radios - 1) {
 	    /* time series, "other" (custom) frequency: need spinner */
-	    GtkWidget *freqspin = dwiz_spinner(hbox, dwinfo, step);
+	    GtkWidget *freqspin = frequency_spinner(hbox, dwinfo);
 
 	    gtk_widget_set_sensitive(freqspin, FALSE);
-	    opts->spinner = freqspin;
+	    opts->pdspin = freqspin;
 	} 
 
 	g_signal_connect(G_OBJECT(button), "clicked",
@@ -1626,6 +1618,7 @@ static void add_editing_option (GtkWidget *vbox, gretlopt *flags)
 
 static void dwiz_prepare_page (GtkNotebook *nb,
 			       gint step,
+			       gint direction,
 			       DATASET *dwinfo)
 {
     GtkWidget *page = gtk_notebook_get_nth_page(nb, step);
@@ -1656,7 +1649,7 @@ static void dwiz_prepare_page (GtkNotebook *nb,
 	}
 
 	if (step == DW_STARTING_OBS) {
-	    dwiz_startobs_spinner(dwinfo, page);
+	    add_startobs_spinner(page, dwinfo, direction);
 	    if (dataset != NULL && dataset->Z != NULL && 
 		dataset_is_daily(dwinfo)) {
 		maybe_add_missobs_purger(page, &opts->flags);
@@ -1715,7 +1708,7 @@ static void dwiz_back (GtkWidget *b, GtkWidget *dlg)
     dw_opts *opts = g_object_get_data(G_OBJECT(dlg), "opts");
 
     pg = dwiz_compute_step(pg, DW_BACK, dwinfo, opts);
-    dwiz_prepare_page(nb, pg, dwinfo);
+    dwiz_prepare_page(nb, pg, DW_BACK, dwinfo);
     gtk_notebook_set_current_page(nb, pg);
 }
 
@@ -1732,14 +1725,14 @@ static void dwiz_forward (GtkWidget *b, GtkWidget *dlg)
     if (pg == DW_SET_TYPE && any_panel(dwinfo) && !panel_possible(opts)) {
 	/* special case: called for panel but it won't work */
 	dwinfo->structure = dataset->structure;
-	dwiz_prepare_page(nb, DW_SET_TYPE, dwinfo);
+	dwiz_prepare_page(nb, DW_SET_TYPE, DW_BACK, dwinfo);
 	gtk_notebook_set_current_page(nb, DW_SET_TYPE);
 	return;
     }
 
     newpg = dwiz_compute_step(pg, DW_FORWARD, dwinfo, opts);
     if (newpg != pg) {
-	dwiz_prepare_page(nb, newpg, dwinfo);
+	dwiz_prepare_page(nb, newpg, DW_FORWARD, dwinfo);
 	gtk_notebook_set_current_page(nb, newpg);
     }
 }
@@ -1931,7 +1924,7 @@ static void data_structure_wizard (int create)
     build_dwiz_buttons(dialog, dwinfo);
     gtk_widget_show(nb);
 
-    dwiz_prepare_page(GTK_NOTEBOOK(nb), 0, dwinfo);
+    dwiz_prepare_page(GTK_NOTEBOOK(nb), 0, DW_FORWARD, dwinfo);
     gtk_notebook_set_current_page(GTK_NOTEBOOK(nb), 0);
 
     /* note: we can't use gtk_widget_show_all() here
