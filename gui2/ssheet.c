@@ -459,7 +459,11 @@ static void update_sheet_matrix (Spreadsheet *sheet)
     for (i=0; i<sheet->datarows; i++) {
 	for (j=0; j<sheet->datacols; j++) {
 	    gtk_tree_model_get(model, &iter, j + 1, &numstr, -1);
-	    x = atof(numstr); 
+	    if (!strcmp(numstr, "nan")) {
+		x = M_NA;
+	    } else {
+		x = atof(numstr);
+	    }
 	    gretl_matrix_set(sheet->matrix, i, j, x);
 	    g_free(numstr);
 	}
@@ -1866,7 +1870,11 @@ static int add_matrix_data_to_sheet (Spreadsheet *sheet)
     for (i=0; i<sheet->datarows; i++) {
 	for (j=0; j<sheet->datacols; j++) {
 	    x = gretl_matrix_get(sheet->matrix, i, j);
-	    sprintf(tmpstr, "%.*g", DBL_DIG, x);
+	    if (isnan(x)) {
+		strcpy(tmpstr, "nan");
+	    } else {
+		sprintf(tmpstr, "%.*g", DBL_DIG, x);
+	    }
 	    gtk_list_store_set(store, &iter, j + 1, tmpstr, -1);
 	}
 	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);

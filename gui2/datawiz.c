@@ -29,6 +29,14 @@
 
 #include "gretl_panel.h"
 
+/* The code here answers to (1) the "/Data/Dataset structure" menu item
+   in the main gretl window, (2) at one remove, the "/File/New data set"
+   main-window item, and (3) finalize_data_open() in gui_utils.c. where
+   a newly opened data file has been considered simply as undated,
+   non-panel data. In each case we're offering the user the chance to
+   impose time-series or panel structure.
+*/
+
 #define DWDEBUG 0
 
 #define PD_SPECIAL -1
@@ -112,8 +120,11 @@ static const char *wizcode_string (int code)
 
 static int translate_panel_vars (dw_opts *opts, int *uv, int *tv);
 
-/* initialize the "dummy" DATASET structure dwinfo, based
-   on the current data info */
+/* Initialize the "dummy" DATASET structure @dwinfo, based
+   on the current data info. This will just be a cross-section
+   unless the user has decided to modify an already-structured
+   dataset under /Data/Dataset structure.
+*/
 
 static void dwinfo_init (DATASET *dwinfo)
 {
@@ -637,10 +648,13 @@ static void compute_default_ts_info (DATASET *dwinfo, int newdata)
     }
     
     if (dwinfo->structure == CROSS_SECTION) {
+	/* can't get here? */
+	fprintf(stderr, "*** compute_default_ts_info: structure == CROSS_SECTION\n");
 	dwinfo->n = 500;
 	dwinfo->t1 = 0;
 	strcpy(dwinfo->stobs, "1");
     } else if (dwinfo->structure == SPECIAL_TIME_SERIES) {
+	/* do we actually handle non-unit periodicity? */
 	dwinfo->n = 500;
 	dwinfo->t1 = 0;
 	if (dwinfo->pd > 1) {
@@ -655,9 +669,9 @@ static void compute_default_ts_info (DATASET *dwinfo, int newdata)
 	    strcpy(dwinfo->stobs, "1");
 	}
     } else if (dwinfo->pd == 1) {
-	strcpy(dwinfo->stobs, "1500");
-	dwinfo->n = 600; 
-	dwinfo->t1 = 450; /* 1950, rollable back to 1500 */
+	strcpy(dwinfo->stobs, "1");
+	dwinfo->n = 2100; 
+	dwinfo->t1 = 1959; /* 1960 */
     } else if (dwinfo->pd == 10) {
 	int dd = default_start_decade();
 
@@ -671,12 +685,12 @@ static void compute_default_ts_info (DATASET *dwinfo, int newdata)
 	}
     } else if (dwinfo->pd == 4) {
 	strcpy(dwinfo->stobs, "1700:1");
-	dwinfo->n = 1300;
-	dwinfo->t1 = 1000;
+	dwinfo->n = 1400;
+	dwinfo->t1 = 1040; /* 1960:1 */
     } else if (dwinfo->pd == 12) {
 	strcpy(dwinfo->stobs, "1700:01");
-	dwinfo->n = 3900;
-	dwinfo->t1 = 3360;
+	dwinfo->n = 4200;
+	dwinfo->t1 = 3120; /* 1960:01 */
     } else if (dwinfo->pd == 24) {
 	strcpy(dwinfo->stobs, "1:01");
 	dwinfo->n = 1500;
@@ -694,21 +708,23 @@ static void compute_default_ts_info (DATASET *dwinfo, int newdata)
     } else if (dwinfo->pd == 5 ||
 	       dwinfo->pd == 6 ||
 	       dwinfo->pd == 7) {
-	strcpy(dwinfo->stobs, "1900/01/01");
+	strcpy(dwinfo->stobs, "1900-01-01");
 	dwinfo->n = 40000;
+	/* set default start to 1960-01-01 (a Friday) */
 	if (dwinfo->pd == 5) {
-	    dwinfo->t1 = 13046;
-	} else if (dwinfo->pd == 6) {
 	    dwinfo->t1 = 15654;
+	} else if (dwinfo->pd == 6) {
+	    dwinfo->t1 = 18784;
 	} else {
-	    dwinfo->t1 = 18263;
+	    dwinfo->t1 = 21914;
 	}
     }
 
     dwinfo->sd0 = get_date_x(dwinfo->pd, dwinfo->stobs);
 
     if (newdata) {
-	dwinfo->t2 = dwinfo->t1 + 49;
+	fprintf(stderr, "*** HERE newdata!?");
+	dwinfo->t2 = dwinfo->t1 + 49; /* huh? */
     } else if (dataset->structure == TIME_SERIES && 
 	       dataset->pd == dwinfo->pd) {
 	/* make the current start the default */
@@ -1113,6 +1129,9 @@ static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATASET *dwinfo, int step)
     int spinmin, spinmax, spinstart;
 
     if (step == DW_STARTING_OBS) {
+	/* we get here only if a time-series structure
+	   has been selected 
+	*/
 	GtkWidget *label = gtk_label_new(_(ts_frequency_string(dwinfo)));
 
 	gtk_widget_show(label);
@@ -1120,13 +1139,12 @@ static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATASET *dwinfo, int step)
 
 	compute_default_ts_info(dwinfo, 0);
 	spinmin = 0;
-	spinmax = dwinfo->n - 1;
-	spinmax = INT_MAX; /* new, FIXME */
+	spinmax = dwinfo->n - 1; /* FIXME may be too small? */
 	spinstart = dwinfo->t1;
     } else {
 	/* custom time-series frequency */
 	spinmin = 1;
-	spinmax = 100; /* arbitrary */
+	spinmax = 1000; /* arbitrary */
 	spinstart = dwinfo->pd;
     } 
 
