@@ -78,6 +78,8 @@ void destroy_option_params_at_level (int level);
 
 void clear_option_params (void);
 
+void setopt_cleanup (void);
+
 void option_params_cleanup (void);
 
 void option_printing_cleanup (void);

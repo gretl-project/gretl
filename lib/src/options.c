@@ -895,11 +895,40 @@ void destroy_option_params_at_level (int level)
     n_stored_opts = n;
 }
 
+/* clean up any options set via "setopt" */
+
+void setopt_cleanup (void)
+{
+    int i, n = n_stored_opts;
+
+#if OPTDEBUG
+    fprintf(stderr, "setopt_cleanup\n");
+#endif
+
+    for (i=0; i<n_stored_opts; i++) {
+	if (optinfo[i].flags & OPT_SETOPT) {
+	    clear_one_option(&optinfo[i]);
+	    n--;
+	}
+    }
+
+    if (n == 0) {
+	free(optinfo);
+	optinfo = NULL;
+    }
+
+    n_stored_opts = n;    
+}
+
 /* unconditionally clean up the entire optinfo stack */
 
 void option_params_cleanup (void)
 {
     int i;
+
+#if OPTDEBUG
+    fprintf(stderr, "option_params_cleanup\n");
+#endif
 
     for (i=0; i<n_stored_opts; i++) {
 	free(optinfo[i].val);
@@ -913,6 +942,11 @@ void option_params_cleanup (void)
 static stored_opt *matching_stored_opt (int ci, gretlopt opt)
 {
     int i, fd = gretl_function_depth();
+
+#if OPTDEBUG
+    fprintf(stderr, "matching_stored_opt: ci=%d, fd=%d, opt=%d, n_stored=%d\n",
+	    ci, fd, opt, n_stored_opts);
+#endif
 
     for (i=0; i<n_stored_opts; i++) {
 	if (optinfo[i].ci == ci && 
@@ -971,11 +1005,16 @@ static int real_push_option (int ci, gretlopt opt, char *val,
 	return E_DATA;
     }
 
+#if OPTDEBUG 
+    fprintf(stderr, "push_option_param: ci=%d, fd=%d, opt=%d,"
+	    " val='%s'\n", ci, fd, opt, val);
+#endif
+
     so = matching_stored_opt(ci, opt);
     if (so != NULL) {
 	/* got a match for the (ci, opt) pair already */
 #if OPTDEBUG 
-	fprintf(stderr, "push_option_param: replacing (val='%s')\n", val);
+	fprintf(stderr, " push_option_param: replacing\n");
 #endif
 	if (!(flags & OPT_SETOPT)) {
 	    free(so->val);
@@ -989,7 +1028,7 @@ static int real_push_option (int ci, gretlopt opt, char *val,
     if (so != NULL) {
 	/* re-use a vacant slot */
 #if OPTDEBUG 
-	fprintf(stderr, "push_option_param: reusing empty (val='%s')\n", val);
+	fprintf(stderr, " push_option_param: reusing empty\n");
 #endif
 	so->ci = ci;
 	so->opt = opt;
@@ -1007,7 +1046,7 @@ static int real_push_option (int ci, gretlopt opt, char *val,
 	err = E_ALLOC;
     } else {
 #if OPTDEBUG 
-	fprintf(stderr, "push_option_param: appending (val='%s')\n", val);
+	fprintf(stderr, " push_option_param: appending\n");
 #endif
 	optinfo = so;
 	so = &optinfo[n-1];

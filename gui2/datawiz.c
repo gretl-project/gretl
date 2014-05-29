@@ -30,8 +30,8 @@
 #include "gretl_panel.h"
 
 /* The code here answers to (1) the "/Data/Dataset structure" menu item
-   in the main gretl window, (2) at one remove, the "/File/New data set"
-   main-window item, and (3) finalize_data_open() in gui_utils.c. where
+   in the main gretl window; (2) at one remove, the "/File/New data set"
+   main-window item; and (3) finalize_data_open() in gui_utils.c. where
    a newly opened data file has been considered simply as undated,
    non-panel data. In each case we're offering the user the chance to
    impose time-series or panel structure.
@@ -646,15 +646,9 @@ static void compute_default_ts_info (DATASET *dwinfo, int newdata)
     if (dwinfo->pd < 0) {
 	dwinfo->pd = 1;
     }
-    
-    if (dwinfo->structure == CROSS_SECTION) {
-	/* can't get here? */
-	fprintf(stderr, "*** compute_default_ts_info: structure == CROSS_SECTION\n");
-	dwinfo->n = 500;
-	dwinfo->t1 = 0;
-	strcpy(dwinfo->stobs, "1");
-    } else if (dwinfo->structure == SPECIAL_TIME_SERIES) {
-	/* do we actually handle non-unit periodicity? */
+
+    if (dwinfo->structure == SPECIAL_TIME_SERIES) {
+	/* non-standard time series */
 	dwinfo->n = 500;
 	dwinfo->t1 = 0;
 	if (dwinfo->pd > 1) {
@@ -722,11 +716,8 @@ static void compute_default_ts_info (DATASET *dwinfo, int newdata)
 
     dwinfo->sd0 = get_date_x(dwinfo->pd, dwinfo->stobs);
 
-    if (newdata) {
-	fprintf(stderr, "*** HERE newdata!?");
-	dwinfo->t2 = dwinfo->t1 + 49; /* huh? */
-    } else if (dataset->structure == TIME_SERIES && 
-	       dataset->pd == dwinfo->pd) {
+    if (!newdata && dataset->structure == TIME_SERIES && 
+	dataset->pd == dwinfo->pd) {
 	/* make the current start the default */
 	dwinfo->t1 = dateton(dataset->stobs, dwinfo);
     }

@@ -1938,7 +1938,7 @@ void libgretl_session_cleanup (int mode)
     gretl_lists_cleanup();
     gretl_tests_cleanup();
     gretl_plotx(NULL, OPT_NONE);
-    option_params_cleanup();
+    setopt_cleanup();
 
     if (mode != SESSION_CLEAR_DATASET) {
 	destroy_user_vars();

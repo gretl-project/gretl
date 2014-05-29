@@ -769,7 +769,7 @@ static int cli_open_append (CMD *cmd, const char *line,
 
     if (!dbdata && cmd->ci != APPEND) {
 	cli_clear_data(cmd, dset, model);
-    } 
+    }
 
     if (opt & OPT_Q) {
 	/* --quiet, but in case we hit any problems below... */

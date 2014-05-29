@@ -4784,7 +4784,7 @@ static int lib_open_append (ExecState *s,
     int odbc = 0;
     int ftype;
     int err = 0;
-    
+
     if (cmd->ci == JOIN && (dset == NULL || dset->v == 0)) {
 	return E_NODATA;
     }
