@@ -922,7 +922,7 @@ static double ghk_tj (const gretl_matrix *C,
 
 static int *column_indices (int m)
 {
-    int i, j, pos, k = 0;
+    int i, j, k = 0;
     int *ndx;
 
     ndx = malloc((m * (m+1))/2 * sizeof *ndx);
@@ -932,8 +932,7 @@ static int *column_indices (int m)
 
     for (i=0; i<m; i++) {
 	for (j=0; j<=i; j++) {
-	    pos = j*(j+1)/2 + j*(m-j-1) + i;
-	    ndx[k++] = pos;
+	    ndx[k++] = j*(j+1)/2 + j*(m-j-1) + i;
 	}
     }
 
@@ -961,7 +960,10 @@ static int reorder_dP (gretl_matrix *dP, int m)
 
     gretl_matrix_extract_matrix(tmp, dP, 0, 2*m, GRETL_MOD_NONE);
 
-    for (j=0; j<nc; j++) {
+    /* the first and last two elements of the
+       vech never have to be moved */
+
+    for (j=2; j<nc-2; j++) {
 	if (ndx[j] != j) {
 	    k = ndx[j] + 2*m;
 	    for (i=0; i<dP->rows; i++) {
@@ -1133,7 +1135,9 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 		gretl_matrix_set(dP, t, i, x / r);
 	    }
 	}
-	reorder_dP(dP, m);
+	if (m > 2) {
+	    reorder_dP(dP, m);
+	}
     }
 
     return P;
