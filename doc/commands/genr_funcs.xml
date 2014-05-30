@@ -2898,13 +2898,22 @@
       </fnargs>    
       <description>
 	<para>
-	  Provides a mean of generating a series whose name is not
-	  known in advance (most likely, within a function).  The
-	  first argument gives the name of the series to create (or
-	  modify) and the second gives the expression or formula that
-	  defines the series. The return value from this function is
-	  the ID number of the series in the dataset, a value suitable
-	  for inclusion in a list.
+	  Provides the script writer with a convenient means of
+	  generating series whose names are not known in advance,
+	  and/or creating a series and appending it to a list in a
+	  single operation.
+	</para>
+	<para>
+	  The first argument gives the name of the series to create
+	  (or modify) and the second the expression or formula that
+	  defines the series; these can be string literals, string
+	  variables, or expressions that evaluate to strings. The
+	  second argument should be an expression of the sort that
+	  appears to the right of the equals sign when generating a
+	  series in the usual way.  The return value from this
+	  function is the ID number of the series in the dataset, a
+	  value suitable for inclusion in a list (or &minus;1 on
+	  failure).
 	</para>
 	<para>
 	  For example, suppose you want to add <math>n</math> random
@@ -2912,15 +2921,15 @@
 	  list. The following will do the job:
 	</para>
 	<code>
-	  list L = null
+	  list Normals = null
 	  string vname
 	  loop i=1..n --quiet
 	    sprintf vname "norm%d", i
-	    L += genseries(vname, "normal()")
+	    Normals += genseries(vname, "normal()")
 	  endloop
 	</code>
 	<para>
-	  On completion <lit>L</lit> will contain the series
+	  On completion <lit>Normals</lit> will contain the series
 	  <lit>norm1</lit>, <lit>norm2</lit> and so on.
 	</para>
       </description>
@@ -3164,9 +3173,8 @@
 	</para>
 	<para>
 	  As far as we know, there isn't an established name for this
-	  operation in matrix algebra. "Horizontal direct product" is
-	  the way this operation is called in the GAUSS programming
-	  language.
+	  operation in matrix algebra; it is called <quote>Horizontal
+	  direct product</quote> in the GAUSS programming language.
 	</para>
 	<para>
 	  Example: the code
@@ -3181,7 +3189,7 @@
 	</para>
 	<code>
           0    1    0    2    0    3 
-          -4    4   -5    5   -6    6 
+         -4    4   -5    5   -6    6 
 	</code>
       </description>
     </function>

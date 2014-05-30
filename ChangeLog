@@ -1,5 +1,6 @@
 version 1.9.91, in progress
-- Add new functions: curl(), jsonget(), nlines(), kpsscrit()
+- Add new functions: curl(), jsonget(), nlines(), kpsscrit(),
+  genseries()
 - Add new command "setopt" for pre-setting of command options
 - Add command "flush" for use with time-consuming scripts and
   hansl functions
@@ -7,6 +8,8 @@ version 1.9.91, in progress
   restriction permanent (not undoable)
 - "data" command: support globbing for names of series to fetch
   from gretl native databases
+- ghk() function: add an optional trailing argument to receive
+  the derivatives of the multivariate probabilities
 - weekday() function: generalize to accept series arguments
 - When creating a matrix from {list} or {dataset}, add the
   names of the variables as column names
