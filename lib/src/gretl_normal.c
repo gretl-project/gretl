@@ -591,6 +591,9 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 			 const gretl_matrix *U,
 			 int *err)
 {
+#ifdef GHK_OMP
+    unsigned sz = 0;
+#endif
     gretl_matrix_block *Bk = NULL;
     gretl_matrix *P = NULL;
     gretl_matrix *Ai, *Bi;
@@ -600,7 +603,6 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
     int m, n, r;
     int ierr, ghk_err = 0;
     int ABok, pzero;
-    unsigned sz = 0;
     int i, j;
 
     *err = ghk_input_check(C, A, B, U, NULL);
@@ -620,9 +622,11 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	return NULL;
     }
 
+#ifdef GHK_OMP
     if (n >= 2) {
 	sz = n * m * r;
     }
+#endif
 
     set_cephes_hush(1);
 
@@ -1001,6 +1005,9 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 			  gretl_matrix *dP,
 			  int *err)
 {
+#ifdef GHK_OMP
+    unsigned sz = 0;
+#endif
     gretl_matrix_block *Bk;
     gretl_matrix_block *Bk2;
     gretl_matrix *a, *b;
@@ -1009,7 +1016,6 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     const double *uj;
     int r, n, m, npar;
     double huge;
-    unsigned sz = 0;
     int t, i, j;
 
     if (gretl_is_null_matrix(dP)) {
@@ -1035,9 +1041,11 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 
     gretl_matrix_zero(dP);
 
+#ifdef GHK_OMP
     if (n >= 2) {
 	sz = n * m * r;
     }
+#endif
 
     huge = libset_get_double(CONV_HUGE);
     set_cephes_hush(1);
