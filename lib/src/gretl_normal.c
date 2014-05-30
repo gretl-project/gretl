@@ -399,6 +399,10 @@ double bvnorm_cdf (double rho, double a, double b)
 #endif
 }
 
+/* next: GHK apparatus with various helper functions */
+
+#define GHK_DEBUG 0
+
 static int ghk_input_check (const gretl_matrix *C,
 			    const gretl_matrix *A,
 			    const gretl_matrix *B,
@@ -452,8 +456,6 @@ static void vector_subtract (gretl_matrix *targ,
 	targ->val[i] -= src->val[i];
     }
 }
-
-#define GHK_DEBUG 0
 
 /*
   C  Lower triangular Cholesky factor of \Sigma, m x m
@@ -557,10 +559,14 @@ static double GHK_1 (const gretl_matrix *C,
     return P;
 }
 
-/* We enable OMP for GHK calculations when the total size of 
-   the problem exceeds this value.
+/* Should we enable OMP for GHK calculations? And if so,
+   what's the threshold problem size that makes use of
+   OMP worthwhile?
 */
-#define OMP_GHK_MIN 59
+#if defined(_OPENMP) && !defined(OS_OSX)
+# define GHK_OMP 1
+# define OMP_GHK_MIN 59
+#endif
 
 /**
  * gretl_GHK:
@@ -578,13 +584,6 @@ static double GHK_1 (const gretl_matrix *C,
  *
  * Returns: an n x 1 vector of probabilities.
  */
-
-/* Note: using openmp on this function requires thread-local
-   storage of static variables in gretl_matrix.c, and at
-   present we can't arrange that on OS X 
-*/
-
-#if defined(_OPENMP) && !defined(OS_OSX)
 
 gretl_matrix *gretl_GHK (const gretl_matrix *C,
 			 const gretl_matrix *A,
@@ -627,7 +626,9 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 
     set_cephes_hush(1);
 
+#ifdef GHK_OMP
 #pragma omp parallel if (sz>OMP_GHK_MIN) private(i,j,Bk,Ai,Bi,TA,TB,WT,TT,ABok,pzero,ierr)
+#endif
     {
 	Bk = gretl_matrix_block_new(&Ai, m, 1,
 				    &Bi, m, 1,
@@ -638,12 +639,14 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 				    NULL);
 	if (Bk == NULL) {
 	    ierr = E_ALLOC;
-	    goto omp_end;
+	    goto calc_end;
 	} else {
 	    ierr = 0;
 	}
 
-        #pragma omp for
+#ifdef GHK_OMP
+#pragma omp for
+#endif
 	for (i=0; i<n; i++) {
 	    ABok = 1; pzero = 0;
 
@@ -673,13 +676,13 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 	    }
 	}
 
-    omp_end:
+    calc_end:
 	if (ierr) {
 	    ghk_err = ierr;
 	}
 
 	gretl_matrix_block_destroy(Bk);
-    } /* end omp parallel */
+    } /* end (possibly) parallel section */
 
     set_cephes_hush(0);
 
@@ -691,96 +694,6 @@ gretl_matrix *gretl_GHK (const gretl_matrix *C,
 
     return P;
 }
-
-#else /* non-MP version */
-
-gretl_matrix *gretl_GHK (const gretl_matrix *C,
-			 const gretl_matrix *A,
-			 const gretl_matrix *B,
-			 const gretl_matrix *U,
-			 int *err)
-{
-    gretl_matrix *P = NULL;
-    gretl_matrix_block *Bk = NULL;
-    gretl_matrix *Ai, *Bi;
-    gretl_matrix *TA, *TB;
-    gretl_matrix *WT, *TT;
-    double huge;
-    int m, n, r;
-    int i, j;
-
-    *err = ghk_input_check(C, A, B, U, NULL);
-    if (*err) {
-	return NULL;
-    }
-
-    huge = libset_get_double(CONV_HUGE);
-
-    m = C->rows;
-    n = A->rows;
-    r = U->cols;
-
-    if (!*err) {
-	Bk = gretl_matrix_block_new(&Ai, m, 1,
-				    &Bi, m, 1,
-				    &TA, 1, r,
-				    &TB, 1, r,
-				    &WT, 1, r,
-				    &TT, m, r,
-				    NULL);
-	if (Bk == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    if (!*err) {
-	P = gretl_matrix_alloc(n, 1);
-	if (P == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    set_cephes_hush(1);
-
-    for (i=0; i<n && !*err; i++) {
-	int ABok = 1, pzero = 0;
-
-	for (j=0; j<m && !*err; j++) {
-	    Ai->val[j] = gretl_matrix_get(A, i, j);
-	    Bi->val[j] = gretl_matrix_get(B, i, j);
-	    ABok = !(isnan(Ai->val[j]) || isnan(Bi->val[j]));
-
-	    if (!ABok) {
-		/* If there are any NaNs in A or B, there's no
-		   point in continuing
-		*/
-		P->val[i] = 0.0/0.0; /* NaN */
-		break;
-	    } else if (Bi->val[j] < Ai->val[j]) {
-		gretl_errmsg_sprintf("ghk: inconsistent bounds: B[%d,%d] < A[%d,%d]",
-				     i+1, j+1, i+1, j+1);
-		*err = E_DATA;
-		gretl_matrix_free(P);
-		P = NULL;
-	    } else if (Bi->val[j] == Ai->val[j]) {
-		P->val[i] = 0.0;
-		pzero = 1;
-		break;
-	    }
-	}
-	if (!*err && !pzero && ABok) {
-	    P->val[i] = GHK_1(C, Ai, Bi, U, TA, TB, WT, TT, huge);
-	}
-    }
-
-    set_cephes_hush(0);
-
-    gretl_matrix_block_destroy(Bk);
-
-    return P;
-}
-
-#endif /* OPENMP or not */
 
 /* below: revised version of GHK (plus score) */
 
@@ -1079,10 +992,6 @@ static gretl_matrix_block *ghk_block_alloc (int m, int npar)
     return B;
 }
 
-#if defined(_OPENMP) && !defined(OS_OSX)
-# define GHK2_OMP 1
-#endif
-
 /* GHK including calculation of derivative */
 
 gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
@@ -1133,7 +1042,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
     huge = libset_get_double(CONV_HUGE);
     set_cephes_hush(1);
 
-#ifdef GHK2_OMP
+#ifdef GHK_OMP
 #pragma omp parallel if (sz>OMP_GHK_MIN) private(i,j,t,a,b,uj,Bk,Bk2,dpj)
 #endif
     {
@@ -1155,7 +1064,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 	    goto calc_end;
 	}
 
-#ifdef GHK2_OMP
+#ifdef GHK_OMP
 #pragma omp for
 #endif
 	for (t=0; t<n; t++) {
@@ -1199,7 +1108,7 @@ gretl_matrix *gretl_GHK2 (const gretl_matrix *C,
 	gretl_matrix_block_destroy(Bk);
 	gretl_matrix_block_destroy(Bk2);
 	gretl_matrix_free(dpj);
-    }
+    } /* end (possibly) parallel section */
 
     set_cephes_hush(0);
 
