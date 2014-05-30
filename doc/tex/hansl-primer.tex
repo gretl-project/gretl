@@ -123,7 +123,7 @@ or Gauss, some of which they are already confident with. Here,
 therefore, the focus is not so much on ``How do I do this?'', but
 rather on ``How do I do this \emph{in hansl}?''.
 
-As a consequence, this document aims as making the reader a reasonably
+As a consequence, this document aims at making the reader a reasonably
 proficient hansl user in a (relatively) short time; however, not all
 the features of hansl are illustrated; for those, interested readers
 should consult the \GCR{} and \GUG{}.
@@ -202,11 +202,11 @@ solution can be easily written, in matrix notation, as $\hat{\Pi} =
 (X'X)^{-1} X'Y$, where $Y$ contains your endogenous variables and $X$
 contains their lags plus other exogenous terms (typically, a constant
 term at least). But of course, you may choose to find the maximum of
-the concentrated likelihood $\mathcal{L} = -T/2 \ln|\hat{\Sigma}|$
+the concentrated likelihood $\mathcal{L} = -(T/2) \ln|\hat{\Sigma}|$
 numerically if you so wish.
 
-The following example contains a hansl script which performs the
-these actions:
+The following example contains a hansl script which performs these
+actions:
 \begin{enumerate}
 \item Reads data from a disk file.
 \item Performs some data transformation and simple visualization.

@@ -82,7 +82,7 @@ which has four different minima; $f(x, y) = (x^2+y-11)^2 +
   other ones if necessary.  Since in this case we are solving for a
   minimum our definition returns the negative of the Himmelblau
   function proper.
-\item We next set \verb|max verbose| to 1. This is another example of
+\item We next set \verb|max_verbose| to 1. This is another example of
   the usage of the \cmd{set} command; its meaning is ``let me see how
   the iterations go'' and it defaults to 0. By using the \cmd{set}
   command with appropriate parameters, you control several features of
@@ -200,7 +200,7 @@ The optimization methods hansl puts at your disposal are:
   numerical approximations to the gradient and the Hessian will be
   used, respectively. Other popular optimization methods (such as BHHH
   and the scoring algorithm) can be implemented by supplying to
-  \cmd{NRmax()}the appropriate curvature matrix $C(\cdot)$. This
+  \cmd{NRmax()} the appropriate curvature matrix $C(\cdot)$. This
   method is very efficient when it works, but is rather fragile: for
   example, if $C(x_i)$ happens to be non-negative definite at some
   iteration convergence may become problematic.
@@ -267,7 +267,12 @@ x = 1.0; beta(x) = 0.00000, analytical der. = -0.00000, numerical der. =       N
 
 Details on the algorithm used can be found in the \GCR. Suffice it to
 say here that you have a \texttt{fdjac\_quality} setting that goes
-from 0 to 2.
+from 0 to 2. The default value is to 0, which gives you
+forward-difference approximation: this is the fastest algorithm, but
+sometimes may not be precise enough. The value of 1 gives you
+bilateral difference, while 2 uses Richardson extrapolation. As you go
+up, you gain in accuracy, but the method becomes considerably more
+CPU-intensive.
 
 % \section{Random number generation}
 

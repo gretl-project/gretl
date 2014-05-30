@@ -39,7 +39,7 @@ Example:
 scalar x = 15
 
 # --- simple if ----------------------------------
-if x >= 10
+if x >= 100
    printf "%g is more than two digits long\n", x
 endif
 
@@ -58,7 +58,7 @@ elif x < 0
 elif floor(x) == x
    printf "%g is an integer\n", x
 else
-   printf "%g is positive integer\n", x
+   printf "%g is a positive number with a fractional part\n", x
 endif
 \end{code}
 
@@ -114,8 +114,8 @@ to the scalar \texttt{days} comes from the following pathway.
   operation \verb|m.={4,6,9,11}| (note the use of the ``dot'' operator
   to perform an element-by element comparison---see section
   \ref{sec:mat-op}); if \texttt{m} equals any of the elements in the
-  vector, the corresponding element of the result will be 1, and
-  0 otherwise;
+  vector, the corresponding element of the result will be 1, and 0
+  otherwise;
 \item The \cmd{maxr} function gives the maximum of this vector, so
   we're checking whether \texttt{m} is any one of the four values
   corresponding to 30-day months.
@@ -162,7 +162,7 @@ matrix B = upper(A.<0) ? -A : A
 \section{Loops}
 \label{sec:hr-loops}
 
-The basic hansl command for looping is (surprise) \cmd{loop}, and
+The basic hansl command for looping is (doh!) \cmd{loop}, and
 takes the form
 \begin{code}
 loop <control-expression> <options>
