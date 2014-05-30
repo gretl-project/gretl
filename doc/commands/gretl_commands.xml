@@ -10825,18 +10825,17 @@
       </code>
       <para>
 	The <opt>quiet</opt> option will then be applied to the
-	<lit>ols</lit> command if and only if the variable
+	next <lit>ols</lit> command if and only if the variable
 	<lit>quiet</lit> has a non-zero value.
       </para>
       <para>
 	By default, options set in this way apply only to the
-	immediately following instance of <repl>command</repl>; 
-	they are not persistent. However if you give <lit>persist</lit>
-	as the value for <repl>action</repl> the options will
-	continue to apply to the given command until further notice.
-	The antidote to the <lit>persist</lit> action is
-	<lit>clear</lit>: this erases any stored setting for
-	the specified command.
+	following instance of <repl>command</repl>; they are not
+	persistent. However if you give <lit>persist</lit> as the
+	value for <repl>action</repl> the options will continue to
+	apply to the given command until further notice.  The antidote
+	to the <lit>persist</lit> action is <lit>clear</lit>: this
+	erases any stored setting for the specified command.
       </para>
       <para>
 	It should be noted that options set via <lit>setopt</lit> are

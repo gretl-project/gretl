@@ -2993,6 +2993,7 @@
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="matrix">B</fnarg>
 	<fnarg type="matrix">U</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;dP</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3004,7 +3005,7 @@
 	<para>
 	  The argument <argname>C</argname> (<by r="m" c="m"/>) should give
 	  the Cholesky factor (lower triangular) of the covariance
-	  matrix of the <math>m</math> normal variates.  The arguments
+	  matrix of <math>m</math> normal variates.  The arguments
 	  <argname>A</argname> and <argname>B</argname> should both be <by
 	  r="n" c="m"/>, giving respectively the lower and upper bounds
 	  applying to the variates at each of <math>n</math>
@@ -3018,10 +3019,12 @@
 	  are <fncref targ="muniform"/> and <fncref targ="halton"/>.
 	</para>
 	<para>
-	  In the following example, the series <argname>P</argname>
-	  and <argname>Q</argname> should be numerically very similar
-	  to one another, <argname>P</argname> being the "true"
-	  probability and <argname>Q</argname> its GHK approximation:
+	  We illustrate below with a relatively simple case where the
+	  multivariate probabilities can be calculated
+	  analytically. The series <lit>P</lit> and <lit>Q</lit>
+	  should be numerically very similar to one another,
+	  <lit>P</lit> being the "true" probability and <lit>Q</lit>
+	  its GHK approximation:
 	</para>
 	<code>
 	  nulldata 20
@@ -3037,10 +3040,21 @@
 	  - cdf(D, rho, inf1, sup2) + cdf(D, rho, sup1, sup2)
 
 	  C = cholesky(V)
-	  U = muniform(2, 100)
+	  U = halton(2, 100)
 
 	  series Q = ghk(C, {inf1, inf2}, {sup1, sup2}, U)
 	</code>
+	<para>
+	  The optional <argname>dP</argname> argument can be used to
+	  retrieve the <by r="n" c="k"/> matrix of derivatives of the
+	  probabilities, where <math>k</math> equals 2<math>m</math> +
+	  <math>m</math>(<math>m</math> + 1)/2. The first
+	  <math>m</math> columns hold the derivatives with respect to
+	  the lower bounds, the next <math>m</math> those with respect
+	  to the upper bounds, and the remainder the derivatives with
+	  respect to the unique elements of the <math>C</math> matrix
+	  in <quote>vech</quote> order.
+	</para>
       </description>
     </function>
 
