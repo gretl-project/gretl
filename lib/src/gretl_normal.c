@@ -923,11 +923,11 @@ static double ghk_tj (const gretl_matrix *C,
 
         den = gretl_matrix_get(C, j, j);
 
-	if (a->val[j] == -huge) {
+	x = (a->val[j] - mj) / den;
+	if (x <= -huge) {
             TA = 0.0;
 	    gretl_matrix_zero(dTA);
 	} else {	    
-            x = (a->val[j] - mj) / den;
 	    if (x > 8.0) {
 #if GHK_DEBUG
 		fprintf(stderr, "x=%.3f, flipping!\n", x);
@@ -943,14 +943,14 @@ static double ghk_tj (const gretl_matrix *C,
 	    dx->val[inicol+j] -= x;
 	    vector_copy_mul(dTA, dx, fx/den);
 	}
-
+	
 	gretl_matrix_zero(dx);
 
- 	if (b->val[j] == huge) {
+	x = (b->val[j] - mj) / den;
+ 	if (x >= huge) {
             TB = flip ? 0.0 : 1.0;
 	    gretl_matrix_zero(dTB);
 	} else {	    
-            x = (b->val[j] - mj) / den;
 	    TB = normal_cdf(flip ? -x : x);
 	    fx = normal_pdf(x);
 	    dx->val[m+j] = 1;
@@ -972,9 +972,11 @@ static double ghk_tj (const gretl_matrix *C,
 	if (na(TT->val[j])) {
 	    fprintf(stderr, "TT is NA at j=%d (x=%g)\n", j, x);
 	    fprintf(stderr, " (TA=%.16g, TB=%.16g, u[j]=%g)\n", TA, TB, u[j]);
+	    fx = 0.0;
+	} else {
+	    fx = normal_pdf(TT->val[j]);
 	}
 
-	fx = normal_pdf(TT->val[j]);
 	if (fx < phi_min) {
 	    fprintf(stderr, "uh-oh, phi=%g\n", fx);
 	    gretl_matrix_zero(tmp);	    
