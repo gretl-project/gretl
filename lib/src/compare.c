@@ -342,7 +342,12 @@ static void print_compare (struct COMPARE *cmp,
 			   gretlopt opt,
 			   PRN *prn)
 {
-    if (!(opt & OPT_Q) && cmp->model_id >= 0) {
+    if (opt & OPT_Q) {
+	if (cmp->model_id >= 0) {
+	    pprintf(prn, _("Test on Model %d:"), cmp->model_id);
+	    pputc(prn, '\n');
+	}
+    } else if (cmp->model_id >= 0) {
 	if (opt & OPT_A) {
 	    /* --auto-omit: add vertical space */
 	    pputc(prn, '\n');
