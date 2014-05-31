@@ -13,6 +13,8 @@ version 1.9.91, in progress
 - weekday() function: generalize to accept series arguments
 - When creating a matrix from {list} or {dataset}, add the
   names of the variables as column names
+- Difference of means test: use Satterthwaite approximation if
+  the two variances are not assumed to be equal
 - $dwpval: return NA rather than flagging an error if we get a
   negative Imhof integral (and adjust the doc)
 - GUI dataset structure "wizard": allow annual data to start in

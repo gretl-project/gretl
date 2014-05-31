@@ -239,6 +239,9 @@ void free_vmatrix (VMatrix *vmat);
 int gretl_corrmx (int *list, const DATASET *dset, 
 		  gretlopt opt, PRN *prn);
 
+int satterthwaite_df (double v1, int n1,
+		      double v2, int n2);
+
 int means_test (const int *list, const DATASET *dset, 
 		gretlopt opt, PRN *prn);
 

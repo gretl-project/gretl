@@ -6622,20 +6622,20 @@
       </para>
       <para>
 	By default the test statistic is calculated on the assumption
-	that the variances are equal for the two variables; with the
+	that the variances are equal for the two variables. With the
 	<opt>--unequal-vars</opt> option the variances are assumed to
-	be different.  This will make a difference to the test
-	statistic only if there are different numbers of non-missing
-	observations for the two series.
+	be different; in this case the degrees of freedom for the test
+	statistic are approximated as per <cite
+	key="satter46">Satterthwaite (1946)</cite>.
       </para>
       <para context="gui">
-	Calculates the t statistic for the null hypothesis that the
-	population means are equal for two selected series, and
-	shows its p-value.  The command may be called with or without
-	the assumption that the variances are equal for the two
-	variables (although this will make a difference to the test
-	statistic only if there are different numbers of non-missing
-	observations for the two series.)
+	Calculates the t-test for the null hypothesis that the
+	population means are equal for two selected series, and shows
+	its p-value.  The command may be called with or without the
+	assumption that the variances are equal for the two variables.
+	In the latter case the degrees of freedom for the test are
+	approximated as per <cite key="satter46">Satterthwaite
+	(1946)</cite>.
       </para>
     </description>
 

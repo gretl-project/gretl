@@ -1497,11 +1497,80 @@ static void np_test (GtkWidget *w, test_t *test)
     }
 }
 
+static void do_two_means_test (double d0, 
+			       int n1, double xbar1, double s1,
+			       int n2, double xbar2, double s2,
+			       int common_variance,
+			       double *ptest,
+			       PRN *prn)
+{
+    double z, se, test, pv;
+    double v1 = s1 * s1;
+    double v2 = s2 * s2;
+    int df;
+
+    pprintf(prn, _("Null hypothesis: Difference of means = %g\n"), d0);
+    pputc(prn, '\n');
+
+    /* sample 1 info */
+    pprintf(prn, _("Sample 1:\n n = %d, mean = %g, s.d. = %g\n"),
+	    n1, xbar1, s1);
+    z = s1 / sqrt((double) n1);
+    pprintf(prn, _(" standard error of mean = %g\n"), z);
+    z *= tcrit95(n1 - 1);
+    pprintf(prn, _(" 95%% confidence interval for mean: %g to %g\n"), 
+	    xbar1 - z, xbar1 + z);
+    pputc(prn, '\n');
+
+    /* sample 2 info */
+    pprintf(prn, _("Sample 2:\n n = %d, mean = %g, s.d. = %g\n"),
+	    n2, xbar2, s2);
+    z = s2 / sqrt((double) n2);
+    pprintf(prn, _(" standard error of mean = %g\n"), z);
+    z *= tcrit95(n2 - 1);
+    pprintf(prn, _(" 95%% confidence interval for mean: %g to %g\n"), 
+	    xbar2 - z, xbar2 + z);
+    pputc(prn, '\n');
+
+    if (common_variance) {
+	double v;
+
+	v = ((n1-1) * v1 + (n2-1) * v2) / (n1 + n2 - 2);
+	se = sqrt(v / n1 + v / n2);
+	df = n1 + n2 - 2;
+    } else {
+	se = sqrt(v1/n1 + v2/n2);
+	df = satterthwaite_df(v1, n1, v2, n2);
+    }
+
+    test = (xbar1 - xbar2 - d0) / se;
+
+    if (d0 > 0.0) {
+	pprintf(prn, _("Test statistic: t(%d) = (%g - %g - %g)/%g = %g\n"),
+		df, xbar1, xbar2, d0, se, test);
+    } else if (d0 < 0.0) {
+	pprintf(prn, _("Test statistic: t(%d) = [(%g - %g) - (%g)]/%g = %g\n"),
+		df, xbar1, xbar2, d0, se, test);
+    } else {
+	pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"),
+		df, xbar1, xbar2, se, test);
+    }  
+
+    if (test > 0) {
+	pv = student_pvalue_2(df, test);
+    } else {
+	pv = student_pvalue_2(df, -test);
+    }
+    print_pv(prn, pv, pv / 2);    
+
+    *ptest = test;
+}
+
 static void do_h_test (test_t *test, double *x, int n1, int n2)
 {
-    double se, ts, pv, z;
+    double se, ts, pv;
     double gparm[2] = {0};
-    int j, grf;
+    int common, grf;
     PRN *prn;
 
     if (bufopen(&prn)) {
@@ -1582,91 +1651,18 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 	break;
 
     case TWO_MEANS:
-	pprintf(prn, _("Null hypothesis: Difference of means = %g\n"), x[4]);
-	pputc(prn, '\n');
-
-	pprintf(prn, _("Sample 1:\n n = %d, mean = %g, s.d. = %g\n"),
-		n1, x[0], x[1]);
-
-	z = x[1] / sqrt((double) n1);
-
-	pprintf(prn, _(" standard error of mean = %g\n"), z);
-	z *= tcrit95(n1 - 1);
-	pprintf(prn, _(" 95%% confidence interval for mean: %g to %g\n"), 
-		x[0] - z, x[0] + z);
-	pputc(prn, '\n');
-
-	pprintf(prn, _("Sample 2:\n n = %d, mean = %g, s.d. = %g\n"),
-		n2, x[2], x[3]);
-
-	z = x[3] / sqrt((double) n2);
-
-	pprintf(prn, _(" standard error of mean = %g\n"), z);
-	z *= tcrit95(n2 - 1);
-	pprintf(prn, _(" 95%% confidence interval for mean: %g to %g\n"), 
-		x[2] - z, x[2] + z);
-	pputc(prn, '\n');
-
-	if (button_is_active(test->check)) {
-	    /* the user specified a common variance */
-	    j = 1;
-	} else if (n1 < 30 || n2 < 30) {
-	    /* flag for warning: unequal variances and small samples */
-	    j = 2;
-	} else {
-	    j = 0;
-	}
-
-	if (j == 1) {
-	    ts = ((n1-1) * x[1] * x[1] + (n2-1) * x[3] * x[3]) / (n1 + n2 - 2);
-	    se = sqrt(ts / n1 + ts / n2);
-	} else {
-	    double v1 = x[1] * x[1] / n1;
-	    double v2 = x[3] * x[3] / n2;
-
-	    se = sqrt(v1 + v2);
-	}
-
-	ts = (x[0] - x[2] - x[4]) / se;
-
-	if (j == 1) {
-	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"),
-		    n1 + n2 - 2, x[0], x[2], se, ts);
-	    if (ts > 0) {
-		pv = student_pvalue_2(n1 + n2 - 2, ts);
-	    } else {
-		pv = student_pvalue_2(n1 + n2 - 2, -ts);
-	    }
-	    print_pv(prn, pv, 0.5 * pv);
-	    if (grf) {
+	common = button_is_active(test->check);
+	do_two_means_test(x[4], n1, x[0], x[1], n2, x[2], x[3],
+			  common, &ts, prn);
+	if (grf) {
+	    if (common) {
 		gparm[0] = n1 + n2 - 2;
 		htest_graph(T_DIST, ts, gparm);
-	    }
-	} else {
-	    if (x[4] > 0.0) {
-		pprintf(prn, _("Test statistic: z = (%g - %g - %g)/%g = %g\n"),
-			x[0], x[2], x[4], se, ts);
-	    } else if (x[4] < 0.0) {
-		pprintf(prn, _("Test statistic: z = [(%g - %g) - (%g)]/%g = %g\n"),
-			x[0], x[2], x[4], se, ts);
 	    } else {
-		pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"),
-			x[0], x[2], se, ts);
-	    }
-	    pv = normal_pvalue_2(ts);
-	    print_pv(prn, pv, pv / 2.0);
-	    if (grf) {
 		gparm[1] = 1;
 		htest_graph(NORMAL_DIST, ts, gparm);
 	    }
-	}
-	
-	if (j == 2) {
-	    pputc(prn, '\n');
-	    pprintf(prn, _("Warning: with small samples, asymptotic "
-			   "approximation may be poor\n"));
-	}
-
+	}	    
 	break;
 
     case TWO_VARIANCES:

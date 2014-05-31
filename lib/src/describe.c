@@ -5589,6 +5589,25 @@ int gretl_corrmx (int *list, const DATASET *dset,
     return 0;
 }
 
+/*
+  Satterthwaite, F.E. (1946). "An Approximate Distribution of Estimates 
+  of Variance Components". Biometrics Bulletin, 2, 6, pp. 110–114.
+
+  v = (s^2_1/n_1 + s^2_2/n_2)^2 /
+        [(s^_1/n1)^2 / (n_1 - 1) + (s^2_2/n_2)^2 / (n_2 - 1)]
+*/
+
+int satterthwaite_df (double v1, int n1,
+		      double v2, int n2)
+{
+    double rtnum = v1 / n1 + v2 / n2;
+    double d1 = (v1/n1) * (v1/n1) / (n1 - 1);
+    double d2 = (v2/n2) * (v2/n2) / (n2 - 1);
+    double v = rtnum * rtnum / (d1 + d2);
+
+    return (int) floor(v);
+}
+
 /**
  * means_test:
  * @list: gives the ID numbers of the variables to compare.
@@ -5651,13 +5670,16 @@ int means_test (const int *list, const DATASET *dset,
     v2 = s2 * s2;
 
     if (vardiff) {
+	/* do not assume the variances are equal */
 	se = sqrt((v1 / n1) + (v2 / n2));
+	df = satterthwaite_df(v1, n1, v2, n2);
     } else {
 	/* form pooled estimate of variance */
 	double sp2;
 
 	sp2 = ((n1-1) * v1 + (n2-1) * v2) / df;
 	se = sqrt(sp2 / n1 + sp2 / n2);
+	df = n1 + n2 - 2;
     }
 
     t = mdiff / se;
