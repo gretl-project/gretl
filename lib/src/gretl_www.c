@@ -906,7 +906,8 @@ static size_t curl_bufwrite (void *buf, size_t sz, size_t nmemb, void *p)
  * @postdata: string to send as data for POST (or NULL).
  * @include: if non-zero, include the received header with
  * the body output.
- * @pbuf: location to receive the output.
+ * @output: location to receive the output.
+ * @errmsg: location to receive cURL error message, or NULL.
  *
  * Somewhat flexible URI "grabber", allowing use of the POST
  * method with header and data to be sent to the host.
@@ -916,13 +917,13 @@ static size_t curl_bufwrite (void *buf, size_t sz, size_t nmemb, void *p)
 
 int gretl_curl (const char *url, const char *header, 
 		const char *postdata, int include,
-		char **pbuf)
+		char **output, char **errmsg)
 {
     CURL *curl;
     struct curl_slist *hlist = NULL;
     struct GetBuf getbuf = {
-	pbuf, /* pointer to buffer */
-	0     /* bytes written */
+	output, /* pointer to buffer */
+	0       /* bytes written */
     };
     CURLcode res;
     int err = 0;
@@ -970,13 +971,17 @@ int gretl_curl (const char *url, const char *header,
     res = curl_easy_perform(curl);
 
     if (res != CURLE_OK) {
-	gretl_errmsg_sprintf("cURL error %d (%s)", res, 
-			     curl_easy_strerror(res));
-	if (*pbuf != NULL) {
-	    free(*pbuf);
-	    *pbuf = NULL;
+	const char *cmsg = curl_easy_strerror(res);
+
+	gretl_errmsg_sprintf("cURL error %d (%s)", res, cmsg);
+	if (*output != NULL) {
+	    free(*output);
+	    *output = NULL;
 	}
-	err = 1;
+	if (errmsg != NULL) {
+	    *errmsg = gretl_strdup(cmsg);
+	}
+	err = E_DATA;
     }
 
     if (hlist != NULL) {

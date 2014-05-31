@@ -6633,6 +6633,7 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
 #else
     if (ret != NULL) {
 	gretl_bundle *b = NULL;
+	int curl_err = 0;
 
 	if (n->t != U_ADDR) {
 	    p->err = E_TYPES;
@@ -6651,6 +6652,7 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
 	    const char *header = NULL;
 	    const char *postdata = NULL;
 	    char *output = NULL;
+	    char *errmsg = NULL;
 	    double xinclude = 0;
 
 	    url = gretl_bundle_get_string(b, "URL", &p->err);
@@ -6661,17 +6663,20 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
 	    if (!p->err) {
 		int include = (xinclude == 1.0);
 
-		p->err = gretl_curl(url, header, postdata, include,
-				    &output);
+		curl_err = gretl_curl(url, header, postdata, include,
+				      &output, &errmsg);
 	    }
 	    if (output != NULL) {
 		p->err = gretl_bundle_set_string(b, "output", output);
 		free(output);
-	    }
+	    } else if (errmsg != NULL) {
+		p->err = gretl_bundle_set_string(b, "errmsg", errmsg);
+		free(errmsg);
+	    }		
 	}
 
 	if (!p->err) {
-	    ret->v.xval = 0;
+	    ret->v.xval = curl_err;
 	}
     }
 #endif /* curl supported in libgretl */

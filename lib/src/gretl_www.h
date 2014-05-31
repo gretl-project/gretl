@@ -85,6 +85,6 @@ int query_sourceforge (const char *query, char **getbuf);
 
 int gretl_curl (const char *url, const char *header, 
 		const char *postdata, int include,
-		char **pbuf);
+		char **output, char **errmsg);
 
 #endif /* GRETL_WWW_H */
