@@ -173,8 +173,8 @@
 	</para>
 	<code>
 	  err = $error
-	  if (err) 
-          printf "Got error %d (%s)\n", err, errmsg(err);
+	  if (err)
+	      printf "Got error %d (%s)\n", err, errmsg(err);
 	  endif
 	</code>
 	<para>
@@ -241,8 +241,7 @@
 	</para>
 	<para>
 	  For a VAR with <math>p</math> variables, the matrix has
-	  <math>p</math>
-	  <sup>2</sup> columns: the first <math>p</math>
+	  <math>p</math><sup>2</sup> columns: the first <math>p</math>
 	  columns contain the FEVD for the first variable in the VAR;
 	  the second <math>p</math> columns the FEVD for the second
 	  variable; and so on.  The (decimal) fraction of the forecast
@@ -359,9 +358,9 @@
 	  s0 = $jvbeta
 
 	  restrict --full
-	  b[1,1] = 1
-	  b[1,2] = -1
-	  b[1,3] + b[1,4] = 0
+	    b[1,1] = 1
+	    b[1,2] = -1
+	    b[1,3] + b[1,4] = 0
 	  end restrict
 	  s1 = $jvbeta
 
@@ -594,8 +593,7 @@
     <function name="$rsq" section="access" output="scalar">
       <description>
 	<para>
-	  Returns the unadjusted <math>R</math>
-	  <sup>2</sup> from the
+	  Returns the unadjusted <math>R</math><sup>2</sup> from the
 	  last estimated model, if available.
 	</para>
       </description>
@@ -789,7 +787,7 @@
 	</para>
 	<code>
 	  if $sysinfo.os == "linux"
-          # do something linux-specific
+              # do something linux-specific
 	  endif
 	</code>
       </description>
@@ -848,8 +846,7 @@
     <function name="$trsq" section="access" output="scalar">
       <description>
 	<para>
-	  Returns <math>TR</math>
-	  <sup>2</sup> (sample size times
+	  Returns <math>TR</math><sup>2</sup> (sample size times
 	  R-squared) from the last model, if available.
 	</para>
       </description>
@@ -925,8 +922,9 @@
 	<para>
 	  Returns an integer value that codes for the program version. The
 	  gretl version string takes the form <lit>x.y.z</lit> (for example,
-	  1.7.6).  The return value from this accessor is formed as
-	  <lit>10000*x + 100*y + z</lit>, so that 1.7.6 translates as 10706.
+	  1.9.10).  The return value from this accessor is formed as
+	  <lit>10000*x + 100*y + z</lit>, so that 1.9.10 translates as 
+          10910.
 	</para>
       </description>
     </function>
@@ -972,8 +970,7 @@
       <description>
 	<para>
 	  Following estimation of a VAR or VECM (only), returns
-	  <math>X'X</math>
-	  <sup>-1</sup>, where <math>X</math> is the common
+	  <math>X'X</math><sup>-1</sup>, where <math>X</math> is the common
 	  matrix of regressors used in each of the equations.  This accessor
 	  is not available for a VECM estimated with a restriction imposed on
 	  &agr;, the <quote>loadings</quote> matrix.
@@ -1374,11 +1371,9 @@
 	  \end{array} \right. \]
 	</para>
 	<para context="notex">
-	  The transformed series is 
-	  (<math>y</math>
-	  <sup>d</sup> - 1)/<math>d</math> for
-	  <math>d</math> not equal to zero, or log(<math>y</math>) for
-	  <math>d</math> = 0.
+	  The transformed series is (<math>y</math><sup>d</sup> -
+	  1)/<math>d</math> for <math>d</math> not equal to zero, or
+	  log(<math>y</math>) for <math>d</math> = 0.
 	</para>
       </description>
     </function>
@@ -1393,9 +1388,7 @@
 	  Reads a bundle from a text file. The string
 	  <argname>fname</argname> must contain the name of the file
 	  from which the bundle is to be read. If this name has the
-	  suffix <quote>
-	  <lit>.gz</lit>
-	  </quote> it is assumed that gzip
+	  suffix <quote><lit>.gz</lit></quote> it is assumed that gzip
 	  compression has been applied in writing the file.
 	</para>
 	<para>
@@ -2320,14 +2313,12 @@
 	<para> 
 	  The generated variables are automatically named according to
 	  the template
-	  <lit>D</lit>
-	  <repl>varname</repl>
-	  <lit>_</lit>
-	  <repl>i</repl> where
-	  <repl>varname</repl> is the name of the original series and
-	  <repl>i</repl> is a 1-based index.  The original portion of the name
-	  is truncated if necessary, and may be adjusted in case of
-	  non-uniqueness in the set of names thus constructed. 
+	  <lit>D</lit><repl>varname</repl><lit>_</lit><repl>i</repl>
+	  where <repl>varname</repl> is the name of the original
+	  series and <repl>i</repl> is a 1-based index.  The original
+	  portion of the name is truncated if necessary, and may be
+	  adjusted in case of non-uniqueness in the set of names thus
+	  constructed.
 	</para>
       </description>
     </function>
@@ -2490,11 +2481,9 @@
       </fnargs>
       <description>
 	<para>
-	  Returns <math>e</math>
-	  <sup>x</sup>. Note that in case of matrices
-	  the function acts element by element. For the matrix exponential
-	  function, see <fncref
-	  targ="mexp"/>.
+	  Returns <math>e</math><sup>x</sup>. Note that in case of
+	  matrices the function acts element by element. For the
+	  matrix exponential function, see <fncref targ="mexp"/>.
 	</para>
       </description>
     </function>
@@ -2570,16 +2559,13 @@
 	  \[ J_2 = \frac{8(f(x+h) - f(x-h)) - (f(x+2h) - f(x-2h))}{12h} \]
 	</para>
 	<para context="notex">
-	  <math>J</math>
-	  <sub>0</sub> = <math>(f(x+h) - f(x))/h</math>
+	  <math>J</math><sub>0</sub> = <math>(f(x+h) - f(x))/h</math>
 	</para>
 	<para context="notex">
-	  <math>J</math>
-	  <sub>1</sub> = <math>(f(x+h) - f(x-h))/2h</math>
+	  <math>J</math><sub>1</sub> = <math>(f(x+h) - f(x-h))/2h</math>
 	</para>
 	<para context="notex">
-	  <math>J</math>
-	  <sub>2</sub>  = <math>[8 (f(x+h) -  f(x-h)) -
+	  <math>J</math><sub>2</sub>  = <math>[8 (f(x+h) -  f(x-h)) -
 	  (f(x+2h) - f(x-2h))] /12h</math>
 	</para>
 	<para>
@@ -2665,38 +2651,19 @@
 	  \[ y_t = \sum_{i=0}^q a_i x_{t-i} + \sum_{i=1}^p b_i y_{t-i} \]
 	</para>
 	<para context="notex">
-	  <math>y</math>
-	  <sub>t
-	  </sub> = 
-	  <math>a</math>
-	  <sub>0</sub> 
-	  <math>x</math>
-	  <sub>t
-	  </sub> +
-	  <math>a</math>
-	  <sub>1</sub> 
-	  <math>x</math>
-	  <sub>t-1</sub> +
+	  <math>y</math><sub>t</sub> = 
+	  <math>a</math><sub>0</sub> <math>x</math><sub>t</sub> +
+	  <math>a</math><sub>1</sub> <math>x</math><sub>t-1</sub> +
 	  ...
-	  <math>a</math>
-	  <sub>q</sub> 
-	  <math>x</math>
-	  <sub>t-q</sub> +
-	  <math>b</math>
-	  <sub>1</sub> 
-	  <math>y</math>
-	  <sub>t-1</sub> +
+	  <math>a</math><sub>q</sub> <math>x</math><sub>t-q</sub> +
+	  <math>b</math><sub>1</sub> <math>y</math><sub>t-1</sub> +
 	  ...
-	  <math>b</math>
-	  <sub>p</sub> 
-	  <math>y</math>
-	  <sub>t-p</sub>
+	  <math>b</math><sub>p</sub><math>y</math><sub>t-p</sub>
 	</para>
 	<para>
 	  If argument <argname>x</argname> is a series, the result
 	  will be itself a series. Otherwise, if <argname>x</argname>
-	  is a matrix with <math>T
-	  </math> rows and <math>k</math>
+	  is a matrix with <math>T</math> rows and <math>k</math>
 	  columns, the result will be a matrix of the same size, in
 	  which the filtering is performed column by column.
 	</para>
@@ -2706,39 +2673,30 @@
 	  vectors or the keyword <lit>null</lit>.
 	</para>
 	<para>
-	  If <argname>a</argname> is a scalar, this is used
-	  as <math>a</math>
-	  <sub>0</sub> and implies <math>q=0</math>;
-	  if it is a vector of <math>q+1</math> elements, they contain
-	  the coefficients from <math>a</math>
-	  <sub>0</sub>
-	  to <math>a</math>
-	  <sub>q</sub>. If <argname>a</argname>
-	  is <lit>null</lit> or omitted, this is equivalent to
-	  setting <math>a</math>
-	  <sub>0</sub>
-	  <math>=1</math>
-	  and <math>q=0</math>.
+	  If <argname>a</argname> is a scalar, this is used as
+	  <math>a</math><sub>0</sub> and implies <math>q=0</math>; if
+	  it is a vector of <math>q+1</math> elements, they contain
+	  the coefficients from <math>a</math><sub>0</sub> to
+	  <math>a</math><sub>q</sub>. If <argname>a</argname> is
+	  <lit>null</lit> or omitted, this is equivalent to setting
+	  <math>a</math><sub>0</sub> <math>=1</math> and
+	  <math>q=0</math>.
 	</para>
 	<para>
-	  If <argname>b</argname> is a scalar, this is
-	  used as <math>b</math>
-	  <sub>1</sub> and
-	  implies <math>p=1</math>; if it is a vector
-	  of <math>p</math> elements, they contain the coefficients
-	  from <math>b</math>
-	  <sub>1</sub>
-	  to <math>b</math>
-	  <sub>p</sub>. If <argname>b</argname>
-	  is <lit>null</lit> or omitted, this is equivalent to
-	  setting <math>B(L)=1</math>.
+	  If <argname>b</argname> is a scalar, this is used as
+	  <math>b</math><sub>1</sub> and implies <math>p=1</math>; if
+	  it is a vector of <math>p</math> elements, they contain the
+	  coefficients from <math>b</math><sub>1</sub> to
+	  <math>b</math><sub>p</sub>. If <argname>b</argname> is
+	  <lit>null</lit> or omitted, this is equivalent to setting
+	  <math>B(L)=1</math>.
 	</para>
 	<para>
 	  The optional scalar argument <argname>y0</argname> is taken
 	  to represent all values of <math>y</math> prior to the
 	  beginning of sample (used only when <math>p>0</math>). If
-	  omitted, it is understood to be 0.  Pre-sample values
-	  of <argname>x</argname> are always assumed zero.
+	  omitted, it is understood to be 0.  Pre-sample values of
+	  <argname>x</argname> are always assumed zero.
 	</para>
 	<para>
 	  <seelist> 
@@ -2843,11 +2801,11 @@
       </fnargs>    
       <description>
 	<para>
-	  Floor function: returns the greatest integer less than or equal
-	  to <argname>x</argname>. Note: <fncref targ="int"/> and
-	  <lit>floor</lit> differ in their effect for negative arguments:
-	  <lit>int(-3.5)</lit> gives &minus;3, while
-	  <lit>floor(-3.5)</lit> gives &minus;4. 
+	  Returns the greatest integer less than or equal to
+	  <argname>x</argname>. Note: <fncref targ="int"/> and
+	  <lit>floor</lit> differ in their effect for negative
+	  arguments: <lit>int(-3.5)</lit> gives &minus;3, while
+	  <lit>floor(-3.5)</lit> gives &minus;4.
 	</para>
       </description>
     </function>
@@ -2870,11 +2828,9 @@
           \[\psi_i = \frac{\Gamma(i-d)}{\Gamma(-d) \Gamma(i+1)}\]
 	</para>
 	<para>
-	  Note that in theory fractional differentiation is an infinitely
-	  long filter. In practice, presample values of
-	  <math>y</math>
-	  <sub>t
-	  </sub> are assumed to be zero.
+	  Note that in theory fractional differentiation is an
+	  infinitely long filter. In practice, presample values of
+	  <math>y</math><sub>t</sub> are assumed to be zero.
 	</para>
       </description>
     </function>
@@ -2923,8 +2879,8 @@
 	  list Normals = null
 	  string vname
 	  loop i=1..n --quiet
-	    sprintf vname "norm%d", i
-	    Normals += genseries(vname, "normal()")
+	      sprintf vname "norm%d", i
+	      Normals += genseries(vname, "normal()")
 	  endloop
 	</code>
 	<para>
@@ -3031,8 +2987,8 @@
 	  multivariate probabilities can be calculated
 	  analytically. The series <lit>P</lit> and <lit>Q</lit>
 	  should be numerically very similar to one another,
-	  <lit>P</lit> being the "true" probability and <lit>Q</lit>
-	  its GHK approximation:
+	  <lit>P</lit> being the <quote>true</quote> probability and
+	  <lit>Q</lit> its GHK approximation:
 	</para>
 	<code>
 	  nulldata 20
@@ -3084,27 +3040,17 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns <math>A</math>
-	  <sup>+</sup>, the Moore&ndash;Penrose 
-	  or generalized inverse of <argname>A</argname>, computed
-	  via the singular value decomposition.
+	  Returns <math>A</math><sup>+</sup>, the Moore&ndash;Penrose
+	  or generalized inverse of <argname>A</argname>, computed via
+	  the singular value decomposition.
 	</para>
 	<para context="notex">
 	  This matrix has the properties <math>A</math>
-	  <math>A</math>
-	  <sup>+</sup> 
-	  <math>A</math>
-	  = <math>A</math> and <math>A</math>
-	  <sup>+</sup>
-	  <math>A</math>  
-	  <math>A</math>
-	  <sup>+</sup>
-	  = <math>A</math>
-	  <sup>+</sup> .
+	  <math>A</math><sup>+</sup> <math>A</math> = <math>A</math>
+	  and <math>A</math><sup>+</sup> <math>A</math>
+	  <math>A</math><sup>+</sup> = <math>A</math><sup>+</sup>.
 	  Moreover, the products <math>A</math>
-	  <math>A</math>
-	  <sup>+</sup> and <math>A</math>
-	  <sup>+</sup>
+	  <math>A</math><sup>+</sup> and <math>A</math><sup>+</sup>
 	  <math>A</math> are symmetric by construction.
 	</para>
 	<para context="tex">
@@ -3171,8 +3117,8 @@
 	  where $n = (j-1) m + l$.
 	</para>
 	<para>
-	  As far as we know, there isn't an established name for this
-	  operation in matrix algebra; it is called <quote>Horizontal
+	  As far as we know there isn't an established name for this
+	  operation in matrix algebra; it is called <quote>horizontal
 	  direct product</quote> in the GAUSS programming language.
 	</para>
 	<para>
@@ -3987,11 +3933,10 @@
 	<para> 
 	  When a list is returned, the individual variables are
 	  automatically named according to the template
-	  <lit>ld_</lit>
-	  <repl>varname</repl> where <repl>varname</repl> is the
-	  name of the original series.  The name is truncated if necessary,
-	  and may be adjusted in case of non-uniqueness in the set of names
-	  thus constructed.
+	  <lit>ld_</lit><repl>varname</repl> where
+	  <repl>varname</repl> is the name of the original series.
+	  The name is truncated if necessary, and may be adjusted in
+	  case of non-uniqueness in the set of names thus constructed.
 	</para> 
 	<para>
 	  <seelist> 
@@ -4071,11 +4016,10 @@
 	<para> 
 	  When a list is returned, the individual variables are
 	  automatically named according to the template
-	  <lit>l_</lit>
-	  <repl>varname</repl> where <repl>varname</repl> is the
-	  name of the original series.  The name is truncated if necessary,
-	  and may be adjusted in case of non-uniqueness in the set of names
-	  thus constructed.
+	  <lit>l_</lit><repl>varname</repl> where <repl>varname</repl>
+	  is the name of the original series.  The name is truncated
+	  if necessary, and may be adjusted in case of non-uniqueness
+	  in the set of names thus constructed.
 	</para> 
       </description>
     </function>
@@ -4157,12 +4101,10 @@
 	  matrix, the function is applied element by element.
 	</para>
 	<para context="notex">
-	  Returns the logistic function of the argument <argname>x</argname>,
-	  that is, <math>e</math>
-	  <sup>x</sup>/(1 +
-	  <math>e</math>
-	  <sup>x</sup>).  If <argname>x</argname> is a matrix,
-	  the function is applied element by element.
+	  Returns the logistic function of the argument
+	  <argname>x</argname>, that is, <math>e</math><sup>x</sup>/(1
+	  + <math>e</math><sup>x</sup>).  If <argname>x</argname> is a
+	  matrix, the function is applied element by element.
 	</para>
       </description>
     </function>
@@ -4198,8 +4140,10 @@
 	<para>
 	  Returns the long-run variance of <argname>y</argname>,
 	  calculated using a Bartlett kernel with window size
-	  <argname>k</argname>. If <argname>k</argname> is
-	  negative, <lit>int(T^(1/3))</lit> is used.
+	  <argname>k</argname>. The default window size, namely the
+	  integer part of the cube root of the sample size, can be
+	  selected by giving a negative value for
+	  <argname>k</argname>.
 	</para>
 	<para context="tex">
 	  In formulae: 
@@ -4349,18 +4293,15 @@
       </fnargs>
       <description>
 	<para>
-	  If <argname>x</argname> is a series, returns the (scalar) sample
-	  mean, skipping any missing observations.
+	  If <argname>x</argname> is a series, returns the (scalar)
+	  sample mean, skipping any missing observations.
 	</para>
 	<para>
-	  If <argname>x</argname> is a list, returns a series <math>y</math>
-	  such that <math>y</math>
-	  <sub>t
-	  </sub> is the mean of the values of
-	  the variables in the list at observation <math>t
-	  </math>, or
-	  <lit>NA</lit> if there are any missing values at <math>t
-	  </math>.
+	  If <argname>x</argname> is a list, returns a series
+	  <math>y</math> such that <math>y</math><sub>t</sub> is the
+	  mean of the values of the variables in the list at
+	  observation <math>t</math>, or <lit>NA</lit> if there are
+	  any missing values at <math>t</math>.
 	</para>
       </description>
     </function>
@@ -4422,7 +4363,7 @@
 	  Van Loan (1996)</cite>.
 	</para>
 	<para context="tex">
-	  Matrix exponential, 
+	  Computes the matrix exponential,
 	  \[ e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!}
 	  = \frac{I}{0!} + \frac{A}{1!} + \frac{A^2}{2!} + \frac{A^3}{3!}
 	  + \cdots\] 
@@ -4610,15 +4551,14 @@
 	  <argname>X</argname>.
 	</para>
 	<para>
-	  If the third argument is not <lit>null</lit>, the <by r="T" c="n"/>
-	  matrix <argname>U</argname> will contain the residuals. If the final
-	  argument is given and is not <lit>null</lit> then the
-	  <by r="k" c="k"/> matrix <argname>V</argname> will contain (a) the
-	  covariance matrix of the parameter estimates, if
-	  <argname>Y</argname> has just one column, or (b)
-	  <math>X'X</math>
-	  <sup>-1</sup> if <argname>Y</argname> has multiple
-	  columns.
+	  If the third argument is not <lit>null</lit>, the <by r="T"
+	  c="n"/> matrix <argname>U</argname> will contain the
+	  residuals. If the final argument is given and is not
+	  <lit>null</lit> then the <by r="k" c="k"/> matrix
+	  <argname>V</argname> will contain (a) the covariance matrix
+	  of the parameter estimates, if <argname>Y</argname> has just
+	  one column, or (b) <math>X'X</math><sup>-1</sup> if
+	  <argname>Y</argname> has multiple columns.
 	</para>
 	<para>
 	  By default, estimates are obtained via Cholesky decomposition, with
@@ -4768,9 +4708,7 @@
 	  Reads a matrix from a text file. The string
 	  <argname>fname</argname> must contain the name of the file
 	  from which the matrix is to be read. If this name has the
-	  suffix <quote>
-	  <lit>.gz</lit>
-	  </quote> it is assumed that gzip
+	  suffix <quote><lit>.gz</lit></quote> it is assumed that gzip
 	  compression has been applied in writing the file.
 	</para>
 	<para>
@@ -4796,9 +4734,7 @@
 	  <li>
             <para>
               The decimal separator must be the dot character,
-              <quote>
-		<lit>.</lit>
-		</quote>.
+              <quote><lit>.</lit></quote>.
             </para>
 	  </li>
 	</ilist>
@@ -4808,8 +4744,8 @@
 	  for in the user's <quote>dot</quote> directory. This is
 	  intended for use with the matrix-exporting functions offered
 	  in the context of the <cmdref targ="foreign"/> command. In
-	  this case the <argname>fname</argname> argument should be
-	  a plain filename, without any path component.
+	  this case the <argname>fname</argname> argument should be a
+	  plain filename, without any path component.
 	</para>
 	<para>
 	  Should an error occur (such as the file being badly formatted or
@@ -4857,10 +4793,10 @@
 	  <by r="T" c="k"/> matrix <argname>X</argname> subject to the
 	  linear restriction <math>RB</math> = <math>q</math>, where
 	  <math>B</math> denotes the stacked coefficient vector.
-	  <argname>R</argname> must have <math>k</math> *
-	  <math>n</math> columns; each row of this matrix represents a
-	  linear restriction. The number of rows in <argname>q</argname>
-	  must match the number of rows in <argname>R</argname>.
+	  <argname>R</argname> must have <math>kn</math> columns; each
+	  row of this matrix represents a linear restriction. The
+	  number of rows in <argname>q</argname> must match the number
+	  of rows in <argname>R</argname>.
 	</para>
 	<para>
 	  If the fifth argument is not <lit>null</lit>, the <by r="T"
@@ -4868,8 +4804,7 @@
 	  residuals. If the final argument is given and is not
 	  <lit>null</lit> then the <by r="k" c="k"/> matrix
 	  <argname>V</argname> will hold the restricted counterpart to
-	  the matrix <math>X'X</math>
-	  <sup>-1</sup>. The variance
+	  the matrix <math>X'X</math><sup>-1</sup>. The variance
 	  matrix of the estimates for equation <math>i</math> can be
 	  constructed by multiplying the appropriate sub-matrix of
 	  <argname>V</argname> by an estimate of the error variance
@@ -4983,10 +4918,8 @@
 	<para>
 	  An extension to the basic behavior of this function is
 	  available: if <argname>fname</argname> has the suffix
-	  <quote>
-	    <lit>.gz</lit>
-	    </quote> then the file is written
-	    with gzip compression.
+	  <quote><lit>.gz</lit></quote> then the file is written with
+	  gzip compression.
 	</para>
 	<para>
 	  <seelist>
@@ -5026,17 +4959,13 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the Nadaraya&ndash;Watson nonparametric estimator of the
-	  conditional mean of <argname>y</argname>
-	  given <argname>x</argname>. It returns a series holding the
-	  nonparametric estimate
-	  of <math>E(y</math>
-	  <sub>i</sub>
-	  <math>|x</math>
-	  <sub>i</sub>
-	  <math>)</math>
-	  for each nonmissing element of the
-	  series <argname>x</argname>.
+	  Returns the Nadaraya&ndash;Watson nonparametric estimator of
+	  the conditional mean of <argname>y</argname> given
+	  <argname>x</argname>. It returns a series holding the
+	  nonparametric estimate of
+	  <math>E(y</math><sub>i</sub><math>|x</math><sub>i</sub><math>)</math>
+	  for each nonmissing element of the series
+	  <argname>x</argname>.
 	</para>
 	<para context="tex">
 	  \[
@@ -5052,9 +4981,7 @@
 	</para>
 	<para context="notex">
 	  The kernel function <math>K</math> is given
-	  by <math>K = exp(-x</math>
-	  <sup>2</sup>
-	  <math> / 2h)</math>
+	  by <math>K = exp(-x</math><sup>2</sup><math> / 2h)</math>
 	  for <math>|x| &lt; T</math> and zero otherwise.
 	</para>
 	<para context="tex">
@@ -5070,8 +4997,7 @@
 	  is a parameter (a positive real number) given by the
 	  user. This is usually a small number: larger values
 	  of <argname>h</argname> make <math>m(x)</math> smoother; a
-	  popular choice is <math>n</math>
-	  <sup>-0.2</sup>. More
+	  popular choice is <math>n</math><sup>-0.2</sup>. More
 	  details are given in <guideref targ="sec:nadarwat"/>.
 	</para>
 	<para context="tex">
@@ -5095,9 +5021,7 @@
 	  this is interpreted as conventional syntax to obtain the
 	  leave-one-out estimator, that is a variant of the estimator
 	  that does not use the <math>i</math>-th observation for
-	  evaluating <math>m(x</math>
-	  <sub>i</sub>
-	  <math>)</math>. This
+	  evaluating <math>m(x</math><sub>i</sub><math>)</math>. This
 	  makes the Nadaraya&ndash;Watson estimator more robust
 	  numerically and its usage is normally advised when the
 	  estimator is computed for inference purposes. Of course, the
@@ -5199,11 +5123,12 @@
 	  Returns the Net Present Value of <argname>x</argname>,
 	  considered as a sequence of payments (negative) and receipts
 	  (positive), evaluated at annual discount rate
-	  <argname>r</argname>; <argname>r</argname> must be expressed
-	  as a number, not a percentage (5<lit>%</lit> = 0.05).  The first value
-	  is taken as dated <quote>now</quote> and is not discounted.
-	  To emulate an NPV function in which the first value is
-	  discounted, prepend zero to the input sequence.
+	  <argname>r</argname>, which must be expressed as a decimal
+	  fraction, not a percentage (0.05 rather than 5<lit>%</lit>).
+	  The first value is taken as dated <quote>now</quote> and is
+	  not discounted.  To emulate an NPV function in which the
+	  first value is discounted, prepend zero to the input
+	  sequence.
 	</para>
 	<para>
 	  Supported data frequencies are annual, quarterly, monthly, and
@@ -5298,12 +5223,11 @@
     <function name="obs" section="data-utils" output="series">
       <description>
 	<para>
-	  Returns a series of consecutive integers, setting 1 at the start
-	  of the dataset. Note that the result is invariant to
-	  subsampling. This function is especially useful with time-series
-	  datasets. Note: you can write <lit>t
-	  </lit> instead of
-	  <lit>obs</lit> with the same effect.
+	  Returns a series of consecutive integers, setting 1 at the
+	  start of the dataset. Note that the result is invariant to
+	  subsampling. This function is especially useful with
+	  time-series datasets. Note: you can write <lit>t</lit>
+	  instead of <lit>obs</lit> with the same effect.
 	</para>
 	<para>
 	  <seelist>
@@ -5320,11 +5244,10 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the observation label for observation <argname>t
-	  </argname>,
-	  where <argname>t
-	  </argname> is a 1-based index.  The inverse
-	  function is provided by <fncref targ="obsnum"/>.
+	  Returns the observation label for observation
+	  <argname>t</argname>, where <argname>t</argname> is a
+	  1-based index.  The inverse function is provided by <fncref
+	  targ="obsnum"/>.
 	</para>
       </description>
     </function>
@@ -5512,15 +5435,13 @@
 	  for the given series or vector. If the second argument is given,
 	  computes an estimate of the spectrum of <argname>x</argname> using a
 	  Bartlett lag window of the given bandwidth, up to a maximum of half
-	  the number of observations (<math>T
-	  </math>/2).
+	  the number of observations (<math>T</math>/2).
 	</para>
 	<para>
-	  Returns a matrix with two columns and <math>T
-	  </math>/2 rows: the
-	  first column holds the frequency, &omega;, from 2&pi;/<math>T
-	</math>
-	to &pi;, and the second the corresponding spectral density.
+	  Returns a matrix with two columns and <math>T</math>/2 rows:
+	  the first column holds the frequency, &omega;, from
+	  2&pi;/<math>T</math> to &pi;, and the second the
+	  corresponding spectral density.
 	</para>
       </description>
     </function>
@@ -5666,8 +5587,7 @@
 	  <math>p</math>, the vector <argname>a</argname> should contain
 	  <math>p</math> + 1 coefficients in ascending order, &ie; starting
 	  with the constant and ending with the coefficient on
-	  <math>x</math>
-	  <sup>p</sup>.
+	  <math>x</math><sup>p</sup>.
 	</para>
 	<para>
 	  If all the roots are real they are returned in a column vector of
@@ -5701,13 +5621,13 @@
       </fnargs>
       <description>
 	<para>
-	  Let the matrix <argname>X</argname> be <by r="T" c="k"/>, containing
-	  <math>T
-	  </math> observations on <math>k</math> variables.  The
-	  argument <argname>p</argname> must be a positive integer less than
-	  or equal to <math>k</math>. This function returns a <by r="T"
-          c="p"/> matrix, <math>P</math>, holding the first <math>p</math>
-	  principal components of <argname>X</argname>.
+	  Let the matrix <argname>X</argname> be <by r="T" c="k"/>,
+	  containing <math>T</math> observations on <math>k</math>
+	  variables.  The argument <argname>p</argname> must be a
+	  positive integer less than or equal to <math>k</math>. This
+	  function returns a <by r="T" c="p"/> matrix, <math>P</math>,
+	  holding the first <math>p</math> principal components of
+	  <argname>X</argname>.
 	</para>
 	<para>
 	  The optional third argument acts as a boolean switch: if it is
@@ -5718,19 +5638,13 @@
 	<para context="notex">
 	  The elements of <math>P</math> are computed as the sum from
 	  <math>i</math> to <math>k</math> of
-	  <math>Z</math>
-	  <sub>ti</sub> times
-	  <math>v</math>
-	  <sub>ji</sub>, where
-	  <math>Z</math>
-	  <sub>ti</sub> is the standardized value of
-	  variable <math>i</math> at observation <math>t
-	  </math> and
-	  <math>v</math>
-	  <sub>ji</sub> is the <math>j</math>th
+	  <math>Z</math><sub>ti</sub> times
+	  <math>v</math><sub>ji</sub>, where
+	  <math>Z</math><sub>ti</sub> is the standardized value of
+	  variable <math>i</math> at observation <math>t</math> and
+	  <math>v</math><sub>ji</sub> is the <math>j</math>th
 	  eigenvector of the correlation (or covariance) matrix of the
-	  <math>X</math>
-	  <sub>i</sub>s, with the eigenvectors ordered
+	  <math>X</math><sub>i</sub>s, with the eigenvectors ordered
 	  by decreasing value of the corresponding eigenvalues.
 	</para>
 	<para context="tex">
@@ -5820,7 +5734,7 @@
 	<para>
 	  Note: this function makes it possible to check whether a given
 	  variable (say, <lit>X</lit>) is time-invariant via the condition
-	  <lit>max(psd(X)) = 0</lit>.
+	  <lit>max(psd(X)) == 0</lit>.
 	</para> 
 	<para>
 	  <seelist>
@@ -5933,17 +5847,17 @@
       </examples>
       <description>
 	<para>
-	  <math>P</math>-value calculator. Returns 
-	  <equation status="inline" ascii="P(X > x)" tex="$P(X > x)$"/>,
-	  where the distribution <math>X</math> is determined by the
+	  <math>P</math>-value calculator. Returns <equation
+	  status="inline" ascii="P(X > x)" tex="$P(X > x)$"/>, where
+	  the distribution <math>X</math> is determined by the
 	  character <argname>c</argname>. Between the arguments
 	  <argname>c</argname> and <argname>x</argname>, zero or more
-	  additional arguments are required to specify the parameters of
-	  the distribution; see <fncref targ="cdf"/> for details.  The
-	  distributions supported by the <lit>pval</lit> function are
-	  the standard normal, <math>t
-	  </math>, Chi square, <math>F</math>,
-	  gamma, binomial, Poisson, Weibull and Generalized Error.
+	  additional arguments are required to specify the parameters
+	  of the distribution; see <fncref targ="cdf"/> for details.
+	  The distributions supported by the <lit>pval</lit> function
+	  are the standard normal, <math>t</math>, Chi square,
+	  <math>F</math>, gamma, binomial, Poisson, Weibull and
+	  Generalized Error.
 	</para>
 	<para>
 	  <seelist>
@@ -6074,8 +5988,7 @@
 	  function be represented as the product
 	  <math>f(x)W(x)</math>. The types of quadrature differ in the
 	  specification of the component <math>W(x)</math>: in the
-	  Hermite case this is exp(&minus;<math>x</math>
-	  <sup>2</sup>);
+	  Hermite case this is exp(&minus;<math>x</math><sup>2</sup>);
 	  in the Laguerre case, exp(&minus;<math>x</math>); and in the
 	  Legendre case simply <math>W(x)</math> = 1.
 	</para>
@@ -6090,17 +6003,13 @@
 	</para>
 	<para context="notex">
 	  For each specification of <math>W</math>, one can compute a
-	  set of nodes, <math>x</math>
-	  <sub>i</sub>, and weights,
-	  <math>w</math>
-	  <sub>i</sub>, such that the sum from
+	  set of nodes, <math>x</math><sub>i</sub>, and weights,
+	  <math>w</math><sub>i</sub>, such that the sum from
 	  <math>i</math>=1 to <math>n</math> of
-	  <math>w</math>
-	  <sub>i</sub>
-	  <math>f</math>(<math>x</math>
-	  <sub>i</sub>)
-	  approximates the desired integral. The method of <cite
-	  key="golub69">Golub and Welsch (1969)</cite> is used.
+	  <math>w</math><sub>i</sub>
+	  <math>f</math>(<math>x</math><sub>i</sub>) approximates the
+	  desired integral. The method of <cite key="golub69">Golub
+	  and Welsch (1969)</cite> is used.
 	</para>
 	<para context="tex">
 	  For each specification of $W(x)$, one can compute a set of
@@ -6396,11 +6305,9 @@
 	  Returns a series or vector with the ranks of
 	  <math>y</math>. The rank for observation <math>i</math> is
 	  the number of elements that are less than
-	  <math>y</math>
-	  <sub>i</sub> plus one half the number of
+	  <math>y</math><sub>i</sub> plus one half the number of
 	  elements that are equal to
-	  <math>y</math>
-	  <sub>i</sub>. (Intuitively, you may think of
+	  <math>y</math><sub>i</sub>. (Intuitively, you may think of
 	  chess points, where victory gives you one point and a draw
 	  gives you half a point.) One is added so the lowest rank is
 	  1 instead of 0.
@@ -6575,28 +6482,25 @@
       </fnargs>    
       <description>
 	<para>
-	  Resamples from <argname>x</argname> with replacement.  In the
-	  case of a series argument, each value of the returned series,
-	  <math>y</math>
-	  <sub>t
-	  </sub>, is drawn from among all the values
-	  of <math>x</math>
-	  <sub>t
-	  </sub> with equal probability.  When
-	  a matrix argument is given, each row of the returned matrix
-	  is drawn from the rows of <argname>x</argname> with equal
-	  probability.
+	  Resamples from <argname>x</argname> with replacement.  In
+	  the case of a series argument, each value of the returned
+	  series, <math>y</math><sub>t</sub>, is drawn from among all
+	  the values of <math>x</math><sub>t</sub> with equal
+	  probability.  When a matrix argument is given, each row of
+	  the returned matrix is drawn from the rows of
+	  <argname>x</argname> with equal probability.
 	</para>
 	<para>
-	  The optional argument <argname>b</argname> represents the block
-	  length for resampling by moving blocks.  If this argument is given
-	  it should be a positive integer greater than or equal to 2. The
-	  effect is that the output is composed by random selection with
-	  replacement from among all the possible contiguous sequences of
-	  length <argname>b</argname> in the input.  (In the case of matrix
-	  input, this means contiguous rows.) If the length of the data is not
-	  an integer multiple of the block length, the last selected block is
-	  truncated to fit.
+	  The optional argument <argname>b</argname> represents the
+	  block length for resampling by moving blocks.  If this
+	  argument is given it should be a positive integer greater
+	  than or equal to 2. The effect is that the output is
+	  composed by random selection with replacement from among all
+	  the possible contiguous sequences of length
+	  <argname>b</argname> in the input.  (In the case of matrix
+	  input, this means contiguous rows.) If the length of the
+	  data is not an integer multiple of the block length, the
+	  last selected block is truncated to fit.
 	</para>
       </description>
     </function>
@@ -6676,15 +6580,11 @@
 	  standard deviation, skipping any missing observations.
 	</para>
 	<para>
-	  If <argname>x</argname> is a list, returns a series <math>y</math>
-	  such that <math>y</math>
-	  <sub>t
-	  </sub> is the sample standard
-	  deviation of the values of the variables in the list at observation
-	  <math>t
-	  </math>, or <lit>NA</lit> if there are any missing values at
-	  <math>t
-	  </math>.
+	  If <argname>x</argname> is a list, returns a series
+	  <math>y</math> such that <math>y</math><sub>t</sub> is the
+	  sample standard deviation of the values of the variables in
+	  the list at observation <math>t</math>, or <lit>NA</lit> if
+	  there are any missing values at <math>t</math>.
 	</para>
 	<para>
 	  <seelist> 
@@ -6730,11 +6630,10 @@
 	<para> 
 	  When a list is returned, the individual variables are
 	  automatically named according to the template
-	  <lit>sd_</lit>
-	  <repl>varname</repl> where <repl>varname</repl> is the
-	  name of the original series.  The name is truncated if necessary,
-	  and may be adjusted in case of non-uniqueness in the set of names
-	  thus constructed.
+	  <lit>sd_</lit><repl>varname</repl> where
+	  <repl>varname</repl> is the name of the original series.
+	  The name is truncated if necessary, and may be adjusted in
+	  case of non-uniqueness in the set of names thus constructed.
 	</para> 
 	<para>
 	  <seelist> 
@@ -7118,9 +7017,10 @@
 	  characters.  If <argname>n</argname> is omitted the comparison
 	  proceeds as far as possible.
 	</para>
-	<para> Note that if you just want to compare two strings for
-	equality, that can be done without using a function, as in
-	<lit>if (s1 == s2) ...</lit>
+	<para> 
+	  Note that if you just want to compare two strings for
+	  equality, that can be done without using a function, as in
+	  <lit>if (s1 == s2) ...</lit>
 	</para>
       </description>
     </function>
@@ -7218,14 +7118,11 @@
 	  elements of the matrix.
 	</para> 
 	<para>
-	  If <argname>x</argname> is a list, returns a series <math>y</math>
-	  such that <math>y</math>
-	  <sub>t
-	  </sub> is the sum of the values of the
-	  variables in the list at observation <math>t
-	  </math>, or
-	  <lit>NA</lit> if there are any missing values at <math>t
-	  </math>.
+	  If <argname>x</argname> is a list, returns a series
+	  <math>y</math> such that <math>y</math><sub>t</sub> is the
+	  sum of the values of the variables in the list at
+	  observation <math>t</math>, or <lit>NA</lit> if there are
+	  any missing values at <math>t</math>.
 	</para> 
       </description>
     </function>
@@ -7368,32 +7265,27 @@
       <description>
 	<para>
 	  Solves a Toeplitz system of linear equations, that is
-	  <math>Tx = b</math> where <math>T
-	  </math> is a square matrix
-	  whose element <math>T
-	</math>
-	<sub>i,j</sub> equals
-	<math>c</math>
-	<sub>i-j</sub> for <equation status="inline"
-	ascii="i&gt;=j" tex="$i\ge j$"/> and
-	<math>r</math>
-	<sub>j-i</sub> for <equation status="inline"
-	ascii="i&lt;=j" tex="$i\le j$"/>. Note that the first
-	elements of <math>c</math> and <math>r</math> must be equal,
-	otherwise an error is returned. Upon successful completion,
-	the function returns the vector <math>x</math>.
+	  <math>Tx = b</math> where <math>T </math> is a square matrix
+	  whose element <math>T</math><sub>i,j</sub> equals
+	  <math>c</math><sub>i-j</sub> for 
+	  <equation status="inline"
+	  ascii="i&gt;=j" tex="$i\ge j$"/> 
+	  and <math>r</math><sub>j-i</sub> for 
+	  <equation status="inline" ascii="i&lt;=j"
+	  tex="$i\le j$"/>. 
+	  Note that the first elements of <math>c</math> and
+	  <math>r</math> must be equal, otherwise an error is
+	  returned. Upon successful completion, the function returns
+	  the vector <math>x</math>.
 	</para>
 	<para>
 	  The algorithm used here takes advantage of the special
-	  structure of the matrix <math>T
-	  </math>, which makes it much
+	  structure of the matrix <math>T</math>, which makes it much
 	  more efficient than other unspecialized algorithms,
 	  especially for large problems. Warning: in certain cases,
 	  the function may spuriously issue a singularity error when
-	  in fact the matrix <math>T
-	  </math> is nonsingular; this
-	  problem, however, cannot arise when <math>T
-	  </math> is
+	  in fact the matrix <math>T</math> is nonsingular; this
+	  problem, however, cannot arise when <math>T</math> is
 	  positive definite.
 	</para>
       </description>
@@ -7590,15 +7482,15 @@
 	  key="mackinnon96">James MacKinnon (1996)</cite>.
 	</para>
 	<para>
-	  The arguments are as follows: <argname>tau</argname> denotes the
-	  test statistic; <argname>n</argname> is the number of
+	  The arguments are as follows: <argname>tau</argname> denotes
+	  the test statistic; <argname>n</argname> is the number of
 	  observations (or 0 for an asymptotic result);
-	  <argname>niv</argname> is the number of potentially cointegrated
-	  variables when testing for cointegration (or 1 for a univariate
-	  unit-root test); and <argname>itv</argname> is a code for the
-	  model specification: 1 for no constant, 2 for constant
-	  included, 3 for constant and linear trend, 4 for constant and
-	  quadratic trend.
+	  <argname>niv</argname> is the number of potentially
+	  cointegrated variables when testing for cointegration (or 1
+	  for a univariate unit-root test); and <argname>itv</argname>
+	  is a code for the model specification: 1 for no constant, 2
+	  for constant included, 3 for constant and linear trend, 4
+	  for constant and quadratic trend.
 	</para>
 	<para>
 	  Note that if the test regression is <quote>augmented</quote>
@@ -7620,9 +7512,9 @@
       <description>
 	<para>
 	  Returns a vector containing the distinct elements of
-	  <argname>x</argname> sorted in ascending order.  If you wish to
-	  truncate the values to integers before applying this function,
-	  use the expression <lit>values(int(x))</lit>.
+	  <argname>x</argname> sorted in ascending order.  If you wish
+	  to truncate the values to integers before applying this
+	  function, use the expression <lit>values(int(x))</lit>.
 	</para>
 	<para>
 	  <seelist>
@@ -7644,20 +7536,18 @@
 	  variance, skipping any missing observations.
 	</para>
 	<para>
-	  If <argname>x</argname> is a list, returns a series <math>y</math>
-	  such that <math>y</math>
-	  <sub>t
-	  </sub> is the sample variance of the
-	  values of the variables in the list at observation <math>t
-	  </math>,
-	  or <lit>NA</lit> if there are any missing values at <math>t
-	  </math>.
+	  If <argname>x</argname> is a list, returns a series
+	  <math>y</math> such that <math>y</math><sub>t</sub> is the
+	  sample variance of the values of the variables in the list
+	  at observation <math>t</math>, or <lit>NA</lit> if there are
+	  any missing values at <math>t</math>.
 	</para>
 	<para>
-	  In each case the sum of squared deviations from the mean is divided
-	  by (<math>n</math> &minus; 1) for <math>n</math> &gt; 1. Otherwise
-	  the variance is given as zero if <math>n</math> = 1, or as
-	  <lit>NA</lit> if <math>n</math> = 0.
+	  In each case the sum of squared deviations from the mean is
+	  divided by (<math>n</math> &minus; 1) for <math>n</math>
+	  &gt; 1. Otherwise the variance is given as zero if
+	  <math>n</math> = 1, or as <lit>NA</lit> if <math>n</math> =
+	  0.
 	</para>
 	<para>
 	  <seelist>
@@ -7673,14 +7563,14 @@
       </fnargs>     
       <description>
 	<para>
-	  If given an integer argument, returns the name of the variable with ID
-	  number <argname>v</argname>, or generates an error if there is no
-	  such variable.
+	  If given an integer argument, returns the name of the
+	  variable with ID number <argname>v</argname>, or generates
+	  an error if there is no such variable.
 	</para>
 	<para>
-	  If given a list argument, returns a string containing the names of
-	  the variables in the list, separated by commas.  If the supplied
-	  list is empty, so is the returned string.
+	  If given a list argument, returns a string containing the
+	  names of the variables in the list, separated by commas.  If
+	  the supplied list is empty, so is the returned string.
 	</para>
       </description>
     </function>
@@ -7692,7 +7582,8 @@
       <description>
 	<para>
 	  Returns the ID number of the variable called
-	  <argname>varname</argname>, or NA is there is no such variable.
+	  <argname>varname</argname>, or NA is there is no such
+	  variable.
 	</para>
       </description>
     </function>
@@ -7711,8 +7602,7 @@
 		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)." 
 		    tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$."/>
 	  The coefficient matrix <argname>A</argname> is composed by
-	  stacking the <math>A</math>
-	  <sub>i</sub> matrices horizontally;
+	  stacking the <math>A</math><sub>i</sub> matrices horizontally;
 	  it is <by r="n" c="np"/>, with one row per equation. This
 	  corresponds to the first <math>n</math> rows of the matrix
 	  <lit>$compan</lit> provided by gretl's <lit>var</lit> and
@@ -7733,12 +7623,10 @@
 		    tex="$u_t = B' x_t + e_t$."/>
 	</para>
 	<para>
-	  The output matrix has <math>T
-	  </math> + <math>p</math> rows
-	  and <math>n</math> columns; it holds the initial <math>p</math>
-	  values of the endogenous variables plus <math>T
-	</math>
-	simulated values.
+	  The output matrix has <math>T</math> + <math>p</math> rows
+	  and <math>n</math> columns; it holds the initial
+	  <math>p</math> values of the endogenous variables plus
+	  <math>T</math> simulated values.
 	</para>
 	<para>
 	  <seelist> 
@@ -7808,18 +7696,15 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns a series <math>y</math> such that <math>y</math>
-	  <sub>t
-	  </sub>
-	  is the weighted mean of the values of the variables in list
-	  <argname>Y</argname> at observation <math>t
-	  </math>, the respective
-	  weights given by the values of the variables in list
-	  <argname>W</argname> at <math>t
-	  </math>.  The weights can therefore
-	  be time-varying. The lists <argname>Y</argname> and
-	  <argname>W</argname> must be of the same length and the weights must
-	  be non-negative.
+	  Returns a series <math>y</math> such that
+	  <math>y</math><sub>t</sub> is the weighted mean of the
+	  values of the variables in list <argname>Y</argname> at
+	  observation <math>t</math>, the respective weights given by
+	  the values of the variables in list <argname>W</argname> at
+	  <math>t</math>.  The weights can therefore be
+	  time-varying. The lists <argname>Y</argname> and
+	  <argname>W</argname> must be of the same length and the
+	  weights must be non-negative.
 	</para>
 	<para>
 	  <seelist> 
@@ -7837,18 +7722,15 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns a series <math>y</math> such that <math>y</math>
-	  <sub>t
-	  </sub>
-	  is the weighted sample standard deviation of the values of the
-	  variables in list <argname>Y</argname> at observation
-	  <math>t
-	  </math>, the respective weights given by the values of the
-	  variables in list <argname>W</argname> at <math>t
-	  </math>.  The
-	  weights can therefore be time-varying. The lists
-	  <argname>Y</argname> and <argname>W</argname> must be of the same
-	  length and the weights must be non-negative.
+	  Returns a series <math>y</math> such that
+	  <math>y</math><sub>t</sub> is the weighted sample standard
+	  deviation of the values of the variables in list
+	  <argname>Y</argname> at observation <math>t</math>, the
+	  respective weights given by the values of the variables in
+	  list <argname>W</argname> at <math>t</math>.  The weights
+	  can therefore be time-varying. The lists
+	  <argname>Y</argname> and <argname>W</argname> must be of the
+	  same length and the weights must be non-negative.
 	</para>
 	<para>
 	  <seelist> 
@@ -7866,18 +7748,15 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns a series <math>y</math> such that <math>y</math>
-	  <sub>t
-	  </sub>
-	  is the weighted sample variance of the values of the
-	  variables in list <argname>X</argname> at observation
-	  <math>t
-	  </math>, the respective weights given by the values of the
-	  variables in list <argname>W</argname> at <math>t
-	  </math>.  The
-	  weights can therefore be time-varying. The lists
-	  <argname>Y</argname> and <argname>W</argname> must be of the same
-	  length and the weights must be non-negative.
+	  Returns a series <math>y</math> such that
+	  <math>y</math><sub>t</sub> is the weighted sample variance
+	  of the values of the variables in list <argname>X</argname>
+	  at observation <math>t</math>, the respective weights given
+	  by the values of the variables in list <argname>W</argname>
+	  at <math>t</math>.  The weights can therefore be
+	  time-varying. The lists <argname>Y</argname> and
+	  <argname>W</argname> must be of the same length and the
+	  weights must be non-negative.
 	</para>
 	<para context="tex">
 	  The weighted sample variance is computed as
@@ -7943,17 +7822,14 @@
       </fnargs>     
       <description>
 	<para>
-	  Returns a list that references the squares and cross-products
-	  of the variables in list <argname>L</argname>.  Squares are
-	  named on the pattern <lit>sq_</lit>
-	  <repl>varname</repl> and
-	  cross-products on the pattern 
-	  <repl>var1</repl>
-	  <lit>_</lit>
-	  <repl>var2</repl>.  The input
-	  variable names are truncated if need be, and the output
-	  names may be adjusted in case of duplication
-	  of names in the returned list.
+	  Returns a list that references the squares and
+	  cross-products of the variables in list
+	  <argname>L</argname>.  Squares are named on the pattern
+	  <lit>sq_</lit><repl>varname</repl> and cross-products on the
+	  pattern <repl>var1</repl><lit>_</lit><repl>var2</repl>.  The
+	  input variable names are truncated if need be, and the
+	  output names may be adjusted in case of duplication of names
+	  in the returned list.
 	</para>
       </description>
     </function>
