@@ -2048,27 +2048,22 @@
 	  Provides a somewhat flexible means of obtaining a text
 	  buffer containing data from an internet server, using
 	  libcurl. On input the bundle <argname>b</argname> must
-	  contain a string named <quote>
-	  <lit>URL</lit>
-	  </quote> which
+	  contain a string named <quote> <lit>URL</lit> </quote> which
 	  gives the full address of the resource on the target
 	  host. Other optional elements are as follows.
 	</para>
 	<ilist>
 	  <li>
 	    <para> 
-	      <quote>
-		<lit>header</lit>
-		</quote>: a string
-		specifying an HTTP header to be sent to the host.
+	      <quote><lit>header</lit> </quote>: a string specifying
+	      an HTTP header to be sent to the host.
 	    </para>
 	  </li>
 	  <li>
 	    <para> 
-	      <quote>
-		<lit>postdata</lit>
-		</quote>: a string
-	    holding data to be sent to the host.  </para>
+	      <quote><lit>postdata</lit> </quote>: a string holding
+	      data to be sent to the host.
+	    </para>
 	  </li>
 	</ilist>
 	<para>
@@ -2089,17 +2084,20 @@
 	<para>
 	  On completion of the request, the text received from the
 	  server is added to the bundle under the key
-	  <quote>
-	    <lit>output</lit>
-	    </quote>.
+	  <quote><lit>output</lit></quote>.
 	</para>
 	<para>
 	  If an error occurs in formulating the request (for example
 	  there's no <lit>URL</lit> on input) the function fails,
-	  otherwise it returns zero. Note, however, that
+	  otherwise it returns 0 if the request succeeds or non-zero if
+	  it fails, in which case the error message from the curl
+	  library is added to the bundle under the key
+	  <quote><lit>errmsg</lit></quote>.  Note, however, that
 	  <quote>success</quote> in this sense does not necessarily
-	  mean that you got the data you wanted; you must check the
-	  content of the output buffer.
+	  mean you got the data you wanted; all it means is that some
+	  response was received from the server. You must check the
+	  content of the output buffer (which may in fact be a message
+	  such as <quote>Page not found</quote>).
 	</para>
 	<para>
 	  Here is an example of use: downloading some data from the
@@ -2115,13 +2113,14 @@
 	  string s
 	  sprintf s, "{\"seriesid\":[\"LEU0254555900\"]}"
 	  req.postdata = s
-
-	  curl(&amp;req)
-	  s = req.output
-	  string line
-	  loop while getline(s, line) --quiet
-          printf "%s\n", line
-	  endloop
+	  err = curl(&amp;req)
+	  if err == 0
+	      s = req.output
+	      string line
+	      loop while getline(s, line) --quiet
+	          printf "%s\n", line
+	      endloop
+	  endif
 	</code>
       </description>
     </function>
@@ -2973,7 +2972,7 @@
 	  string line
 	  scalar i = 1
 	  loop while getline(s, line)
-          printf "line %d = '%s'\n", i++, line
+	      printf "line %d = '%s'\n", i++, line
 	  endloop
 	</code>
 	<para>
@@ -2985,8 +2984,8 @@
 	  omitted altogether) as in
 	</para>
 	<code>
-	  getline(s, line)
-	  getline(s, null)
+	  getline(s, line) # get a single line
+	  getline(s, null) # clean up
 	</code>
 	<para>
 	  Note that although the reading position advances at each call
