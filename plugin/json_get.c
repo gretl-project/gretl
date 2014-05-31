@@ -58,6 +58,7 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 
     match = json_path_match(path, node);
     if (match == NULL) {
+	/* FIXME : maybe return empty string? */
 	g_object_unref(path);
 	return E_DATA;
     }	

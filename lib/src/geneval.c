@@ -6616,6 +6616,7 @@ static const char *optional_bundle_get (gretl_bundle *b,
 	    /* non-existence of item (E_DATA) is OK, but 
 	       wrong type (E_TYPES) is not
 	    */
+	    gretl_error_clear();
 	    *err = 0;
 	}
     }
