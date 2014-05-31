@@ -1003,16 +1003,19 @@ void textview_add_processing_message (GtkWidget *view)
 {
     const char *msg = N_("processing...\n");
     GtkTextBuffer *tbuf;
-    GtkTextIter iter; 
+    GtkTextIter iter;
+    GtkTextMark *mark;
 
     g_return_if_fail(GTK_IS_TEXT_VIEW(view));
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
     gtk_text_buffer_get_end_iter(tbuf, &iter);
-    gtk_text_buffer_create_mark(tbuf, "procmark", &iter, TRUE); 
+    mark = gtk_text_buffer_create_mark(tbuf, "procmark", &iter, TRUE); 
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
 					     _(msg), -1,
 					     "redtext", NULL);
+    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(view), mark, 0.0, 
+				 FALSE, 0, 0);
 }
 
 void textview_insert_file (windata_t *vwin, const char *fname)

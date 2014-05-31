@@ -35,6 +35,7 @@
 #include "menustate.h"
 #include "dlgutils.h"
 #include "ssheet.h"
+#include "toolbar.h"
 #include "treeutils.h"
 #include "lib_private.h"
 #include "cmd_private.h"
@@ -7176,9 +7177,11 @@ static void stop_button_set_sensitive (windata_t *vwin,
 }
 
 struct output_handler {
+    windata_t *srcwin;
     PRN *prn;
     windata_t *vwin;
     gulong handler_id;
+    gulong src_handler_id;
 };
 
 static struct output_handler oh;
@@ -7191,14 +7194,41 @@ static void clear_output_handler (void)
 	g_signal_handler_disconnect(G_OBJECT(oh.vwin->main),
 				    oh.handler_id);
     }
+    if (oh.srcwin != NULL) {
+	GtkWidget *srctop = vwin_toplevel(oh.srcwin);
+
+	g_signal_handler_disconnect(G_OBJECT(srctop),
+				    oh.src_handler_id);
+	vwin_sensitize_close_button(oh.srcwin, TRUE);
+    }
+    oh.srcwin = NULL;
     oh.prn = NULL;
     oh.vwin = NULL;
     oh.handler_id = 0;
+    oh.src_handler_id = 0;
 }
 
 static gint block_deletion (GtkWidget *w, GdkEvent *event, gpointer p)
 {
     return TRUE;
+}
+
+static void output_handler_set_block_deletion (void)
+{
+    GtkWidget *srctop = vwin_toplevel(oh.srcwin);
+
+    oh.handler_id = 
+	g_signal_connect(G_OBJECT(oh.vwin->main), 
+			 "delete-event", 
+			 G_CALLBACK(block_deletion), 
+			 NULL);
+    oh.src_handler_id = 
+	g_signal_connect(G_OBJECT(srctop), 
+			 "delete-event", 
+			 G_CALLBACK(block_deletion), 
+			 NULL);
+
+    vwin_sensitize_close_button(oh.srcwin, FALSE);
 }
 
 static void handle_flush_callback (int finalize)
@@ -7211,11 +7241,7 @@ static void handle_flush_callback (int finalize)
 	    /* stop the user from closing the output window
 	       until we're done */
 	    gtk_widget_set_sensitive(oh.vwin->mbar, FALSE);
-	    oh.handler_id = 
-		g_signal_connect(G_OBJECT(oh.vwin->main), 
-				 "delete-event", 
-				 G_CALLBACK(block_deletion), 
-				 NULL);
+	    output_handler_set_block_deletion();
 	    gretl_print_set_save_position(oh.prn);
 	    textview_add_processing_message(oh.vwin->text);
 	} else {
@@ -7269,6 +7295,7 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	    suppress_logo = 1;
 	}
     } else {
+	oh.srcwin = vwin;
 	oh.prn = prn;
     }
 

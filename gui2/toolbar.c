@@ -103,7 +103,8 @@ enum {
     EDITOR_ITEM,
     NOTES_ITEM,
     STOP_ITEM,
-    NEW_ITEM
+    NEW_ITEM,
+    CLOSE_ITEM
 } viewbar_flags;
 
 struct stock_maker {
@@ -675,7 +676,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_x12a_help), X12A_HELP_ITEM },
     { N_("Windows"), GRETL_STOCK_WINLIST, GNULL, 0 },
-    { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_file_viewer), 0 }
+    { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_file_viewer), CLOSE_ITEM }
 };
 
 static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
@@ -925,6 +926,8 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    g_object_set_data(G_OBJECT(vwin->mbar), "stop_button", button);
 	    /* nothing to stop yet */
 	    gtk_widget_set_sensitive(button, FALSE);
+	} else if (item->flag == CLOSE_ITEM) {
+	    g_object_set_data(G_OBJECT(vwin->mbar), "close_button", button);
 	}
     }
 
@@ -934,6 +937,18 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 
     if (vpane != NULL) {
 	g_object_set_data(G_OBJECT(vpane), "hpane", hpane);
+    }
+}
+
+void vwin_sensitize_close_button (windata_t *vwin, gboolean s)
+{
+    if (vwin != NULL && vwin->mbar != NULL) {
+	GtkWidget *w = g_object_get_data(G_OBJECT(vwin->mbar), 
+					 "close_button");
+	
+	if (w != NULL) {
+	    gtk_widget_set_sensitive(w, s);
+	}
     }
 }
 

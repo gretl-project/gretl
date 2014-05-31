@@ -1849,7 +1849,7 @@ windata_t *script_output_viewer_new (PRN *prn)
     text_table_setup(vwin->vbox, vwin->text);
 
     /* insert the text buffer from @prn */
-    buf = gretl_print_get_trimmed_buffer(prn);
+    buf = gretl_print_get_buffer(prn);
     if (buf != NULL && *buf != '\0') {
 	textview_set_text_colorized(vwin->text, buf);
     }
