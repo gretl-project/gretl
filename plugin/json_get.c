@@ -34,6 +34,7 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 {
     GError *gerr = NULL;
     JsonNode *match, *node;
+    JsonPath *path;
     GType ntype;
     double x;
     int err = 0;
@@ -41,14 +42,25 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
     *n_objects = 0;
 
     node = json_parser_get_root(parser);
-    match = json_path_query(pathstr, node, &gerr);
+    path = json_path_new();
 
-    if (gerr != NULL) {
-	gretl_errmsg_sprintf("JsonPath query failed: %s",
-			     gerr->message);
-	g_error_free(gerr);
+    if (!json_path_compile(path, pathstr, &gerr)) {
+	if (gerr != NULL) {
+	    gretl_errmsg_sprintf("Failed to compile JsonPath: %s",
+				 gerr->message);
+	    g_error_free(gerr);
+	} else {
+	    gretl_errmsg_set("Failed to compile JsonPath");
+	}	    
+	g_object_unref(path);
 	return E_DATA;
     }
+
+    match = json_path_match(path, node);
+    if (match == NULL) {
+	g_object_unref(path);
+	return E_DATA;
+    }	
 
     /* in case we get floating-point output */
     gretl_push_c_numeric_locale();
@@ -104,6 +116,7 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
     gretl_pop_c_numeric_locale();
 
     json_node_free(match);
+    g_object_unref(path);
 
     return err;
 }
