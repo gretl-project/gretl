@@ -116,83 +116,6 @@ void ms_biff_query_destroy (BiffQuery *bq)
     }
 }
 
-static void
-get_xtn_lens (guint32 *pre_len, guint32 *end_len, const guint8 *ptr, 
-	      gboolean ext_str, gboolean rich_str)
-{
-    *end_len = 0;
-    *pre_len = 0;
-
-    if (rich_str) { /* The data for this appears after the string */
-	guint16 formatting_runs = MS_OLE_GET_GUINT16 (ptr);
-	static int warned = FALSE;
-
-	(*end_len) += formatting_runs * 4; /* 4 bytes per */
-	(*pre_len) += 2;
-	ptr        += 2;
-
-	if (!warned) {
-	    printf ("FIXME: rich string support unimplemented:"
-		    "discarding %d runs\n", formatting_runs);
-	}
-	warned = TRUE;
-    }
-    if (ext_str) { /* NB this data always comes after the rich_str data */
-	guint32 len_ext_rst = MS_OLE_GET_GUINT32 (ptr); /* A byte length */
-	static int warned = FALSE;
-
-	(*end_len) += len_ext_rst;
-	(*pre_len) += 4;
-
-	if (!warned) {
-	    printf ("FIXME: extended string support unimplemented:"
-		    "ignoring %u bytes\n", len_ext_rst);
-	}
-	warned = TRUE;
-    }
-}
-
-static char *
-get_chars (char const *ptr, guint length, gboolean high_byte)
-{
-    char *ans;
-    guint32 lp;
-
-    if (high_byte) {
-	wchar_t *wc = g_new(wchar_t, length + 2);
-	size_t retlength;
-
-	ans = g_new(char, (length + 2) * 8);
-
-	for (lp = 0; lp < length; lp++) {
-	    guint16 c = MS_OLE_GET_GUINT16(ptr);
-
-	    ptr += 2;
-	    wc[lp] = c;
-	}
-
-	retlength = length;
-	g_free (wc);
-	if (retlength == (size_t)-1) {
-	    retlength = 0;
-	}
-	ans[retlength] = 0;
-	ans = g_realloc(ans, retlength + 2);
-    } else {
-	size_t outbytes = (length + 2) * 8;
-
-	ans = g_new(char, outbytes + 1);
-	for (lp = 0; lp < length; lp++) {
-	    unsigned u = *ptr++;
-
-	    ans[lp] = (u < 128)? u : '_';
-	}
-	ans[lp] = 0;
-    }
-
-    return ans;
-}
-
 static gboolean
 biff_string_get_flags (const guint8 *ptr, gboolean *word_chars,
 		       gboolean *extended, gboolean *rich)
@@ -214,46 +137,55 @@ biff_string_get_flags (const guint8 *ptr, gboolean *word_chars,
     }
 }
 
-static char *
-biff_get_text (guint8 const *pos, guint32 length, guint32 *byte_length)
+static char *biff_get_text (guint8 const *ptr, guint32 len)
 {
-    char *ans;
-    const guint8 *ptr;
-    guint32 byte_len;
+    char *ans = NULL;
     gboolean header;
     gboolean high_byte;
     gboolean ext_str;
     gboolean rich_str;
-    guint32 pre_len, end_len;
+    guint32 i;
 
-    if (byte_length == NULL) {
-	byte_length = &byte_len;
+    if (len == 0) {
+	return NULL;
     }
 
-    *byte_length = 0;
+    ans = (char *) g_new (char, len + 2);
 
-    if (!length) {
-	return 0;
+    header = biff_string_get_flags(ptr,
+				   &high_byte,
+				   &ext_str,
+				   &rich_str);
+
+    if (header)   ptr += 1;
+    if (rich_str) ptr += 2;
+    if (ext_str)  ptr += 4;
+
+    for (i=0; i<len; i++) {
+	guint16 c;
+	guint8 header;
+
+	if (((header = MS_OLE_GET_GUINT8(ptr)) & 0xf2) == 0) {
+	    high_byte  = (header & 0x1) != 0;
+	    ext_str    = (header & 0x4) != 0;
+	    rich_str   = (header & 0x8) != 0;
+	    ptr += 1;
+	    i--;
+	} else if (high_byte) {
+	    c = MS_OLE_GET_GUINT16(ptr);
+	    ptr += 2;
+	    ans[i] = (char) c;
+	} else {
+	    c = MS_OLE_GET_GUINT8(ptr);
+	    ptr += 1;
+	    ans[i] = (char) c;
+	}
     }
 
-    header = biff_string_get_flags(pos, &high_byte, &ext_str, &rich_str);
-    if (header) {
-	ptr = pos + 1;
-	(*byte_length)++;
+    if (i > 0) {
+	ans[i] = '\0';
     } else {
-	ptr = pos;
-    }
-
-    get_xtn_lens(&pre_len, &end_len, ptr, ext_str, rich_str);
-    ptr += pre_len;
-    (*byte_length) += pre_len + end_len;
-
-    if (!length) {
-	ans = g_new(char, 2);
 	g_warning("Warning unterminated string floating");
-    } else {
-	(*byte_length) += (high_byte ? 2 : 1) * length;
-	ans = get_chars((char *) ptr, length, high_byte);
     }
 
     return ans;
@@ -276,11 +208,12 @@ biff_boundsheet_data_new (BiffQuery *q, MsBiffVersion ver)
     }
 
     if (MS_OLE_GET_GUINT8(q->data + 4) == 0 &&
-	((MS_OLE_GET_GUINT8(q->data + 5)) & 0x3) == 0) { /* worksheet, visible */
+	((MS_OLE_GET_GUINT8(q->data + 5)) & 0x3) == 0) { 
+	/* worksheet, visible */
 	ans = g_malloc(sizeof *ans);
 	ans->streamStartPos = startpos;
 	ans->name = biff_get_text(q->data + 7, 
-				  MS_OLE_GET_GUINT8(q->data + 6), NULL);
+				  MS_OLE_GET_GUINT8(q->data + 6));
     }
 
     return ans; 
@@ -307,16 +240,16 @@ static MsBiffBofData *ms_biff_bof_data_new (BiffQuery *q)
 		ans->version = MS_BIFF_V7;
 		break;
 	    default:
-		printf ("Unknown BIFF sub-number in BOF %x\n", q->opcode);
+		printf("Unknown BIFF sub-number in BOF %x\n", q->opcode);
 		ans->version = MS_BIFF_V_UNKNOWN;
 	    }
 	    break;
 	}
 
 	default:
-	    printf ("Unknown BIFF number in BOF %x\n", q->opcode);
+	    printf("Unknown BIFF number in BOF %x\n", q->opcode);
 	    ans->version = MS_BIFF_V_UNKNOWN;
-	    printf ("Biff version %d\n", ans->version);
+	    printf("Biff version %d\n", ans->version);
 	}
 
 	switch (MS_OLE_GET_GUINT16(q->data + 2)) {
@@ -328,12 +261,12 @@ static MsBiffBofData *ms_biff_bof_data_new (BiffQuery *q)
 	case 0x0100: ans->type = MS_BIFF_TYPE_Workspace; break;
 	default:
 	    ans->type = MS_BIFF_TYPE_Unknown;
-	    printf ("Unknown BIFF type in BOF %x\n", 
-		    MS_OLE_GET_GUINT16 (q->data + 2));
+	    printf("Unknown BIFF type in BOF %x\n", 
+		   MS_OLE_GET_GUINT16 (q->data + 2));
 	    break;
 	}
     } else {
-	printf ("Not a BOF !\n");
+	printf("Not a BOF!\n");
 	ans->version = MS_BIFF_V_UNKNOWN;
 	ans->type = MS_BIFF_TYPE_Unknown;
     }
@@ -392,7 +325,7 @@ ms_excel_read_bof (BiffQuery *q, MsBiffBofData **version)
 	while (ms_biff_query_next (q) && q->opcode != BIFF_EOF)
 	    ;
 	if (q->opcode != BIFF_EOF)
-	    g_warning ("EXCEL: file format error.  Missing BIFF_EOF");
+	    g_warning ("XLS file format error. Missing BIFF_EOF");
     } else {
 	printf ("Unknown BOF (%x)\n", ver->type);
     }
@@ -649,8 +582,12 @@ int excel_book_get_info (const char *fname, wbook *book)
     if (book->byte_offsets == NULL) return 1;
 
     for (i=0; i<book->nsheets; i++) {
-	book->sheetnames[i] = bounds[i]->name;
-	tailstrip(book->sheetnames[i]);
+	if (bounds[i]->name == NULL) {
+	    book->sheetnames[i] = g_strdup("");
+	} else {
+	    book->sheetnames[i] = bounds[i]->name;
+	    tailstrip(book->sheetnames[i]);
+	}
 	book->byte_offsets[i] = bounds[i]->streamStartPos;
 	g_free(bounds[i]);
     }

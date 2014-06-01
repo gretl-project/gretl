@@ -558,6 +558,12 @@ static void check_for_date_formula (BiffQuery *q, wbook *book)
     }
 }
 
+/* Excel's NA() formula stores a "result" of 0.0, so if
+   we get a formula result of zero we need to check for
+   NA() and react accordingly. Use of NA() can be found
+   in XLS files downloaded from FRED.
+*/
+
 static int is_na_formula (unsigned char *ptr, wbook *book)
 {
     int version = book->version;
@@ -568,9 +574,9 @@ static int is_na_formula (unsigned char *ptr, wbook *book)
     sz = MS_OLE_GET_GUINT16(ptr);
 
     /* 0x42: indicates a built-in function
-       0x0a or 10: index of the NA() function
+       10 is the index of the BIFF NA() function
     */
-    if (sz == 4 && ptr[2] == 0x42 && ptr[4] == 0x0a) {
+    if (sz == 4 && ptr[2] == 0x42 && ptr[4] == 10) {
 	return 1;
     } else {
 	return 0;
@@ -797,16 +803,15 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 		}
 	    } else {
 		/* should have a floating-point result */
-		if (is_na_formula(q->data, book)) {
-		    val = -999;
-		} else {
-		    val = get_le_double(ptr);
-		}
-		dbprintf(" floating-point value = %g\n", val);
-		if (isnan(val)) {
-		    fprintf(stderr, "Got a NaN\n");
+		val = get_le_double(ptr);
+		if (val == 0.0 && is_na_formula(q->data, book)) {
+		    dbprintf("floating-point value = na()\n");
 		    prow->cells[j] = g_strdup("-999");
-		} else {
+		} else if (isnan(val)) {
+		    dbprintf("floating-point value is NaN\n");
+		    prow->cells[j] = g_strdup("-999");
+		} else {		    
+		    dbprintf(" floating-point value = %g\n", val);
 		    prow->cells[j] = g_strdup_printf("%.15g", val);
 		    if (i == book->row_offset + 1 && j == book->col_offset) {
 			/* could be a date formula? */
