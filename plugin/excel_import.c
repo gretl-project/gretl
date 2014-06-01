@@ -558,6 +558,25 @@ static void check_for_date_formula (BiffQuery *q, wbook *book)
     }
 }
 
+static int is_na_formula (unsigned char *ptr, wbook *book)
+{
+    int version = book->version;
+    int offset = (version < MS_BIFF_V5)? 16 : 20;
+    guint16 sz;
+
+    ptr += offset;
+    sz = MS_OLE_GET_GUINT16(ptr);
+
+    /* 0x42: indicates a built-in function
+       0x0a or 10: index of the NA() function
+    */
+    if (sz == 4 && ptr[2] == 0x42 && ptr[4] == 0x0a) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 #undef FORMAT_INFO
 
 static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
@@ -754,9 +773,11 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 	if (allocate_row_col(i, j, book, xi)) {
 	    return E_ALLOC;
 	} else {
+	    /* the result of the formula should be at offset 6 */
 	    ptr = q->data + 6;
 	    prow = xi->rows + i;
 	    if (ptr[6] == 0xff && ptr[7] == 0xff) {
+		/* string, boolean or error result */
 		unsigned char fcode = ptr[0];
 
 		if (fcode == 0x0) {
@@ -775,8 +796,12 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 		    prow->cells[j] = g_strdup("-999");
 		}
 	    } else {
-		/* floating-point */
-		val = get_le_double(ptr);
+		/* should have a floating-point result */
+		if (is_na_formula(q->data, book)) {
+		    val = -999;
+		} else {
+		    val = get_le_double(ptr);
+		}
 		dbprintf(" floating-point value = %g\n", val);
 		if (isnan(val)) {
 		    fprintf(stderr, "Got a NaN\n");
