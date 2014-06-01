@@ -478,6 +478,9 @@ static int is_date_format (int fmt)
 	ret = 1;
     } else if (fmt >= 50 && fmt <= 58) {
 	ret = 1;
+    } else if (fmt == 164) {
+	/* FRED uses this */
+	ret = 1;
     }
 
     return ret;
