@@ -2048,13 +2048,13 @@
 	<ilist>
 	  <li>
 	    <para> 
-	      <quote><lit>header</lit> </quote>: a string specifying
+	      <quote><lit>header</lit></quote>: a string specifying
 	      an HTTP header to be sent to the host.
 	    </para>
 	  </li>
 	  <li>
 	    <para> 
-	      <quote><lit>postdata</lit> </quote>: a string holding
+	      <quote><lit>postdata</lit></quote>: a string holding
 	      data to be sent to the host.
 	    </para>
 	  </li>
