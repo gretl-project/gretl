@@ -1527,7 +1527,18 @@ static int any_all_missing (void)
 {
     int vt = current_series_index(dataset, "time");
     int vi = current_series_index(dataset, "index");
-    int i, t, allmiss;
+    int i, t, allmiss, nv = 0;
+
+    for (i=1; i<dataset->v; i++) {
+	if (!series_is_hidden(dataset, i) &&
+	    i != vt && i != vi) {
+	    nv++;
+	}
+    }
+
+    if (nv < 2) {
+	return 0;
+    }
 
     for (t=0; t<dataset->n; t++) {
 	allmiss = 1;
@@ -1549,33 +1560,44 @@ static int any_all_missing (void)
 
 void drop_missing_data (void)
 {
-    const char *opts[] = {
-	N_("Drop rows with at least one missing value"),
-	N_("Drop rows that have no valid data")
-    };
     int permanent = 0;
-    gretlopt opt = 0;
-    int deflt = 0;
+    gretlopt opt = OPT_M;
     int resp;
 
-    if (!any_missing()) {
+    if (!any_missing_user_values(dataset)) {
 	infobox(_("No missing data values"));
 	return;
-    } else if (!any_all_missing()) {
-	/* de-activate the second option */
-	deflt = -1;
     }
 
-    resp = radio_dialog_with_check("gretl", _("Drop missing data"), 
-				   opts, 2, deflt, 0,
-				   &permanent,
-				   _("Make this permanent"),
-				   NULL);
+    if (any_all_missing()) {
+	const char *opts[] = {
+	    N_("Drop rows with at least one missing value"),
+	    N_("Drop rows that have no valid data")
+	};
+	int deflt = 0;
+
+	resp = radio_dialog_with_check("gretl", _("Drop missing data"), 
+				       opts, 2, deflt, 0,
+				       &permanent,
+				       _("Make this permanent"),
+				       NULL);
+	if (resp == 1) {
+	    opt = OPT_A;
+	}
+    } else {
+	const char *opts[] = {
+	    N_("Make this permanent"),
+	    NULL
+	};
+	
+	resp = checks_only_dialog("gretl", 
+				  _("Drop observations with missing values"),
+				  opts, 1, &permanent, 0, NULL);
+    }
 
     if (resp == 0 || resp == 1) {
 	int err;
 
-	opt = (resp == 0)? OPT_M : OPT_A;
 	if (permanent) {
 	    opt |= OPT_T;
 	}
