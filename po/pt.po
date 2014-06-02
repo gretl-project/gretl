@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-06-01 15:42-0400\n"
-"PO-Revision-Date: 2014-05-07 12:07+0100\n"
+"PO-Revision-Date: 2014-06-02 02:02+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -865,9 +865,9 @@ msgid "Probably weekly data\n"
 msgstr "Provavelmente são dados semanais\n"
 
 #: lib/src/csvdata.c:670
-#, fuzzy, c-format
+#, c-format
 msgid "Missing daily rows: %d\n"
-msgstr "Observações diárias omissas: %d\n"
+msgstr "Linhas diárias omissas: %d\n"
 
 #: lib/src/csvdata.c:924
 msgid "reversing the data!\n"
@@ -6720,17 +6720,14 @@ msgid "weekly"
 msgstr "semanal"
 
 #: lib/src/subsample.c:2438
-#, fuzzy
 msgid "daily (5 days)"
 msgstr "Diária (cinco dias)"
 
 #: lib/src/subsample.c:2440
-#, fuzzy
 msgid "daily (6 days)"
 msgstr "Diária (seis dias)"
 
 #: lib/src/subsample.c:2442
-#, fuzzy
 msgid "daily (7 days)"
 msgstr "Diária (sete dias)"
 
@@ -7449,7 +7446,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 7 de maio de 2014."
+"Tradução de 2 de junho de 2014."
 
 #: gui2/about.c:203
 msgid "News"
@@ -7597,14 +7594,14 @@ msgstr ""
 " n = %d, média = %g, desvio padrão = %g\n"
 
 #: gui2/calculator.c:1549
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: t(%d) = (%g - %g - %g)/%g = %g\n"
-msgstr "Estatística de teste: t(%d) = (%g - %g)/%g = %g\n"
+msgstr "Estatística de teste: t(%d) = (%g - %g - %g)/%g = %g\n"
 
 #: gui2/calculator.c:1552
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: t(%d) = [(%g - %g) - (%g)]/%g = %g\n"
-msgstr "Estatística de teste: z = [(%g - %g) - (%g)]/%g = %g\n"
+msgstr "Estatística de teste: t(%d) = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1555 gui2/calculator.c:1603
 #, c-format
@@ -9071,7 +9068,7 @@ msgstr "para"
 
 #: gui2/dialogs.c:2286
 msgid "Make this restriction permanent"
-msgstr ""
+msgstr "Tornar esta restrição permanente"
 
 #: gui2/dialogs.c:2319
 #, c-format
@@ -9557,9 +9554,8 @@ msgstr ""
 "Confirma escrever por cima?"
 
 #: gui2/fileselect.c:766
-#, fuzzy
 msgid "Gretl datafiles (*.gdt, *.gdtb)"
-msgstr "Ficheiro de dados gretl (*.gdt)"
+msgstr "Ficheiro de dados gretl (*.gdt, *.gdtb)"
 
 #: gui2/fileselect.c:781
 msgid "CSV files (*.csv)"
@@ -11276,9 +11272,8 @@ msgid "_Resample with replacement..."
 msgstr "_Reamostrar com substituição..."
 
 #: gui2/gretl.c:1704
-#, fuzzy
 msgid "Drop observations with _missing values..."
-msgstr "Descartar valores o_missos"
+msgstr "Descartar observações com valores o_missos..."
 
 #: gui2/gretl.c:1706
 msgid "_Count missing values"
@@ -12866,31 +12861,29 @@ msgid "Unspecified error"
 msgstr "Erro não especificado"
 
 #: gui2/library.c:1495
-#, fuzzy, c-format
+#, c-format
 msgid "Dropped %d observations"
-msgstr "Acrescentar observações"
+msgstr "Descartaram-se %d observações"
 
 #: gui2/library.c:1553
-#, fuzzy
 msgid "Drop rows with at least one missing value"
-msgstr "Descartar valores o_missos"
+msgstr "Descartar linhas com pelo menos um valor omisso"
 
 #: gui2/library.c:1554
 msgid "Drop rows that have no valid data"
-msgstr ""
+msgstr "Descartar linhas que não tenham dados válidos"
 
 #: gui2/library.c:1562 gui2/library.c:1613 gui2/library.c:1636
 msgid "No missing data values"
 msgstr "Sem valores omissos"
 
 #: gui2/library.c:1569
-#, fuzzy
 msgid "Drop missing data"
-msgstr "Sem valores omissos"
+msgstr "Descartar dados omissos"
 
 #: gui2/library.c:1572
 msgid "Make this permanent"
-msgstr ""
+msgstr "Tornar isto permanente"
 
 #: gui2/library.c:1604
 msgid "Show count of missing values at each observation"
@@ -13084,6 +13077,8 @@ msgid ""
 "p-value is \"very small\" (the Imhof integral could not\n"
 "be evaluated so a definite value is not available)"
 msgstr ""
+"O p valor é \"muito pequeno\" (não se conseguiu determinar\n"
+"o integral de IMhof portanto não se obteve um valor definido)"
 
 #: gui2/library.c:3234
 msgid "linear restrictions"
