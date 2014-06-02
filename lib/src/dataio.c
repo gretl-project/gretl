@@ -305,7 +305,8 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
 	int pos1, pos2;
 
 #if DATES_DEBUG
-	fprintf(stderr, "dateton: treating as regular numeric obs\n");
+	fprintf(stderr, "dateton: treating %s as regular numeric obs\n",
+		date);
 #endif
 	if (bad_date_string(date)) {
 	    return -1;
@@ -355,6 +356,10 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
 	gretl_errmsg_set(_("Observation number out of bounds"));
 	n = -1; 
     }
+
+#if DATES_DEBUG
+    fprintf(stderr, "dateton: returning %d\n", n);
+#endif
 
     return n;
 }
@@ -1363,12 +1368,61 @@ static int count_new_vars (const DATASET *dset, const DATASET *addinfo,
     return addvars;
 }
 
+static int year_special_markers (const DATASET *dset,
+				 const DATASET *addset)
+{
+    char *test;
+    int overlap = 0;
+    int i, t, err = 0;
+
+    /* See if we can match obs markers in @addset
+       against years in @dset: we'll try this if all
+       the markers in addset are integer strings, at
+       least some of them are within the obs range of
+       @dset, and none of them are outside of the
+       "sanity" range of 1 to 2500.
+    */
+
+    if (!dataset_is_time_series(dset) || dset->pd != 1) {
+	return 0;
+    }
+
+    if (dset->markers || !addset->markers) {
+	return 0;
+    }
+
+    errno = 0;
+
+    for (i=0; i<addset->n; i++) {
+	t = strtol(addset->S[i], &test, 10);
+	if (*test || errno) {
+	    errno = 0;
+	    err = 1;
+	    break;
+	}
+	if (t < 1 || t > 2500) {
+	    err = 1;
+	    break;
+	}
+	if (!overlap) {
+	    t = dateton(addset->S[i], dset);
+	    if (t >= 0 && t < dset->n) {
+		overlap = 1;
+	    }
+	}
+    }
+
+    return !err && overlap;
+}
+
 static int compare_ranges (const DATASET *targ,
 			   const DATASET *src,
-			   int *offset)
+			   int *offset,
+			   int *yrspecial)
 {
     int ed0 = dateton(targ->endobs, targ);
     int sd1, ed1, addobs = -1;
+    int range_err = 0;
 
     if (dataset_is_cross_section(targ) &&
 	dataset_is_cross_section(src) &&
@@ -1383,7 +1437,7 @@ static int compare_ranges (const DATASET *targ,
     sd1 = merge_dateton(src->stobs, targ);
     ed1 = merge_dateton(src->endobs, targ);
 
-#if 0
+#if DATES_DEBUG
     fprintf(stderr, "compare_ranges:\n"
 	    " targ->n = %d, src->n = %d\n"
 	    " targ->stobs = '%s', src->stobs = '%s'\n" 
@@ -1395,9 +1449,9 @@ static int compare_ranges (const DATASET *targ,
     if (sd1 < 0) {
 	/* case: new data start earlier than old */
 	if (ed1 < 0) {
-	    fprintf(stderr, "no overlap in ranges, can't merge\n");
+	    range_err = 1;
 	} else if (ed1 > ed0) {
-	    fprintf(stderr, "new data start earlier, end later, can't handle\n");
+	    range_err = 2;
 	} else {
 	    *offset = sd1;
 	    addobs = 0;
@@ -1431,8 +1485,22 @@ static int compare_ranges (const DATASET *targ,
 	}
     }
 
+    if (range_err) {
+	/* try another approach? */
+	*yrspecial = year_special_markers(targ, src);
+	if (*yrspecial) {
+	    addobs = 0;
+	}
+    }
+
     if (addobs < 0) {
-	fputs("compare_ranges: returning error\n", stderr);
+	if (range_err == 1) {
+	    fputs("compare_ranges: no overlap, can't merge\n", stderr);
+	} else if (range_err == 2) {
+	    fputs("compare ranges: new data start earlier, end later\n", stderr);
+	} else {
+	    fputs("compare_ranges: flagging error\n", stderr);
+	}
     }
 
     return addobs;
@@ -1549,55 +1617,49 @@ static int simple_range_match (const DATASET *targ, const DATASET *src,
     return ret;
 }
 
-static int year_special_markers (const DATASET *dset,
-				 const DATASET *addset)
+static int merge_lengthen_series (DATASET *dset,
+				  const DATASET *addset,
+				  int addobs,
+				  int offset)
 {
-    char obs[OBSLEN];
-    char *test;
-    int tmin = 0, tmax = 0;
-    int i, t, ret = 0;
+    int i, t, new_n = dset->n + addobs;
+    int err = 0;
 
-    /* See if we can match obs markers in @addset
-       against years in @dset: we'll try this if all
-       the markers in addset are integer strings and
-       we find that all of the ints are within the
-       observation range in @dset.
-    */
-
-    if (!dataset_is_time_series(dset) || dset->pd != 1) {
-	return 0;
-    }
-
-    if (dset->markers || !addset->markers) {
-	return 0;
-    }
-
-    errno = 0;
-
-    for (i=0; i<addset->n; i++) {
-	t = strtol(addset->S[i], &test, 10);
-	if (*test || errno) {
-	    errno = 0;
-	    return 0;
-	}
-	if (i == 0) {
-	    tmin = tmax = t;
-	} else {
-	    if (t > tmax) tmax = t;
-	    if (t < tmin) tmin = t;
+    if (dset->markers) {
+	err = extend_markers(dset, dset->n, new_n);
+	if (!err) {
+	    for (t=dset->n; t<new_n; t++) {
+		strcpy(dset->S[t], addset->S[t-offset]);
+	    }
 	}
     }
 
-    sprintf(obs, "%d", tmin);
-    tmin = dateton(obs, dset);
-    sprintf(obs, "%d", tmax);
-    tmax = dateton(obs, dset);
+    for (i=0; i<dset->v && !err; i++) {
+	double *x;
 
-    if (tmin >= 0 && tmax >= 0) {
-	ret = 1;
+	x = realloc(dset->Z[i], new_n * sizeof *x);
+	if (x == NULL) {
+	    err = E_ALLOC;
+	    break;
+	}
+
+	for (t=dset->n; t<new_n; t++) {
+	    if (i == 0) {
+		x[t] = 1.0;
+	    } else {
+		x[t] = NADBL;
+	    }
+	}
+	dset->Z[i] = x;
     }
 
-    return ret;
+    if (!err) { 
+	dset->n = new_n;
+	ntodate(dset->endobs, new_n - 1, dset);
+	dset->t2 = dset->n - 1;
+    }
+
+    return err;
 }
 
 #define simple_structure(p) (p->structure == TIME_SERIES ||		\
@@ -1631,6 +1693,10 @@ static int merge_data (DATASET *dset, DATASET *addset,
     int offset = 0;
     int err = 0;
 
+#if 1
+    debug_print_option_flags("merge_data", opt);
+#endif
+
     /* first see how many new vars we have */
     addvars = count_new_vars(dset, addset, prn);
     if (addvars < 0) {
@@ -1641,9 +1707,6 @@ static int merge_data (DATASET *dset, DATASET *addset,
 	fprintf(stderr, "special: merging daily data\n");
 	dayspecial = 1;
     }
-
-    /* below: had additional condition: simple_structure(dset)
-       relaxed this on 2009-05-15 */
 
     if (simple_range_match(dset, addset, &offset)) {
 	/* we'll allow undated data to be merged with the existing
@@ -1662,7 +1725,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 
     if (!err) {
 	if (!addsimple && !addpanel) {
-	    addobs = compare_ranges(dset, addset, &offset);
+	    addobs = compare_ranges(dset, addset, &offset, &yrspecial);
 	    fprintf(stderr, "addobs (1) = %d\n", addobs);
 	}
 	if (addobs <= 0 && addvars == 0) {
@@ -1673,17 +1736,14 @@ static int merge_data (DATASET *dset, DATASET *addset,
 
     if (!err && (addobs < 0 || addvars < 0)) {
 	merge_error(_("New data not conformable for appending\n"), prn);
-	err = 1;
+	err = E_DATA;
     }
 
     if (!err && !addpanel && dset->markers != addset->markers) {
-	if (addset->n != dset->n) {
-	    yrspecial = year_special_markers(dset, addset);
-	    if (!yrspecial) {
-		merge_error(_("Inconsistency in observation markers\n"), prn);
-		err = 1;
-	    }
-	} else if (addset->markers && !dset->markers) {
+	if (addset->n != dset->n && !yrspecial) {
+	    merge_error(_("Inconsistency in observation markers\n"), prn);
+	    err = E_DATA;
+	} else if (addset->markers && !dset->markers && !yrspecial) {
 	    dataset_destroy_obs_markers(addset);
 	}
     }
@@ -1696,42 +1756,9 @@ static int merge_data (DATASET *dset, DATASET *addset,
     /* if checks are passed, try merging the data */
 
     if (!err && addobs > 0) { 
-	int i, t, new_n = dset->n + addobs;
-
-	if (dset->markers) {
-	    err = extend_markers(dset, dset->n, new_n);
-	    if (!err) {
-		for (t=dset->n; t<new_n; t++) {
-		    strcpy(dset->S[t], addset->S[t - offset]);
-		}
-	    }
-	}
-
-	for (i=0; i<dset->v && !err; i++) {
-	    double *x;
-
-	    x = realloc(dset->Z[i], new_n * sizeof *x);
-	    if (x == NULL) {
-		err = 1;
-		break;
-	    }
-
-	    for (t=dset->n; t<new_n; t++) {
-		if (i == 0) {
-		    x[t] = 1.0;
-		} else {
-		    x[t] = NADBL;
-		}
-	    }
-	    dset->Z[i] = x;
-	}
-
-	if (err) { 
+	err = merge_lengthen_series(dset, addset, addobs, offset);
+	if (err) {
 	    merge_error(_("Out of memory!\n"), prn);
-	} else {
-	    dset->n = new_n;
-	    ntodate(dset->endobs, new_n - 1, dset);
-	    dset->t2 = dset->n - 1;
 	}
     }
 
@@ -1789,9 +1816,11 @@ static int merge_data (DATASET *dset, DATASET *addset,
 			dset->Z[v][t] = NADBL;
 		    }
 		}
-		for (t=0; t<addset->n; t++) {
-		    s = dateton(addset->S[t], dset);
-		    dset->Z[v][s] = addset->Z[i][t];
+		for (s=0; s<addset->n; s++) {
+		    t = dateton(addset->S[s], dset);
+		    if (t >= 0 && t < dset->n) {
+			dset->Z[v][t] = addset->Z[i][s];
+		    }
 		}		
 	    } else {
 		for (t=0; t<dset->n; t++) {
@@ -2465,10 +2494,15 @@ static int import_octave (const char *fname, DATASET *dset,
     if (err) {
 	pputs(prn, A_("Invalid data file\n"));
 	err = E_DATA;
-	goto oct_bailout;
-    } 
+    } else {
+	int merge = dset->Z != NULL;
+	gretlopt merge_opt = 0;
 
-    err = merge_or_replace_data(dset, &octset, opt, prn);
+	if (merge && (opt & OPT_T)) {
+	    merge_opt = OPT_T;
+	}
+	err = merge_or_replace_data(dset, &octset, merge_opt, prn);
+    }
 
  oct_bailout:
 
