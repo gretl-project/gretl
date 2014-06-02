@@ -3127,14 +3127,21 @@ static int real_import_csv (const char *fname,
 
     if (!joining(c)) {
 	/* not doing a special "join" operation */
-	err = merge_or_replace_data(dset, &c->dset, opt, prn);
+	int merge = dset->Z != NULL;
+	gretlopt merge_opt = 0;
+
+	if (merge && (opt & OPT_T)) {
+	    merge_opt = OPT_T;
+	}
+
+	err = merge_or_replace_data(dset, &c->dset, merge_opt, prn);
 
 	if (!err && newdata && c->descrip != NULL) {
 	    dset->descrip = c->descrip;
 	    c->descrip = NULL;
 	}
 
-	if (!err) {
+	if (!err && !merge) {
 	    dataset_add_import_info(dset, fname, GRETL_CSV);
 	}
     }

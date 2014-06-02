@@ -3402,11 +3402,16 @@ static int real_read_gdt (const char *fname, const char *srcname,
     }
 
     if (!err) {
+	gretlopt merge_opt = 0;
+
 	if (srcname == NULL) {
 	    srcname = fname;
 	}
+	if (dset->Z != NULL && (opt & OPT_T)) {
+	    merge_opt = OPT_T;
+	}
 	data_read_message(srcname, tmpset, prn);
-	err = merge_or_replace_data(dset, &tmpset, opt, prn);
+	err = merge_or_replace_data(dset, &tmpset, merge_opt, prn);
     }
 
  bailout:
