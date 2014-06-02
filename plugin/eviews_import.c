@@ -547,6 +547,7 @@ int wf1_get_data (const char *fname, DATASET *dset,
 	destroy_dataset(newset);
     } else {
 	int merge = (dset->Z != NULL);
+	gretlopt merge_opt = 0;
 	int nvtarg = newset->v - 1;
 
 	if (nvread < nvtarg) {
@@ -557,7 +558,11 @@ int wf1_get_data (const char *fname, DATASET *dset,
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}
 
-	err = merge_or_replace_data(dset, &newset, opt, prn);
+	if (merge && (opt & OPT_T)) {
+	    merge_opt = OPT_T;
+	}
+
+	err = merge_or_replace_data(dset, &newset, merge_opt, prn);
 
 	if (!err && !merge) {
 	    dataset_add_import_info(dset, fname, GRETL_WF1);

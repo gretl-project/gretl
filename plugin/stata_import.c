@@ -954,6 +954,7 @@ int dta_get_data (const char *fname, DATASET *dset,
 	}	
     } else {
 	int merge = (dset->Z != NULL);
+	gretlopt merge_opt = 0;
 	int nvtarg = newset->v - 1;
 
 	if (nvread < nvtarg) {
@@ -969,7 +970,11 @@ int dta_get_data (const char *fname, DATASET *dset,
 	    gretl_string_table_destroy(st);
 	}
 
-	err = merge_or_replace_data(dset, &newset, opt, prn);
+	if (merge && (opt & OPT_T)) {
+	    merge_opt = OPT_T;
+	}
+
+	err = merge_or_replace_data(dset, &newset, merge_opt, prn);
     
 	if (!err && !merge) {
 	    dataset_add_import_info(dset, fname, GRETL_DTA);

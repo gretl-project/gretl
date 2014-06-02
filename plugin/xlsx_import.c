@@ -1362,9 +1362,9 @@ static int finalize_xlsx_import (DATASET *dset,
 				 gretlopt opt,
 				 PRN *prn)
 {
-    int merge, err;
+    int merge = (dset->Z != NULL);
+    int err;
 
-    merge = (dset->Z != NULL);
     err = import_prune_columns(xinfo->dset);
 
     if (!err) {
@@ -1391,7 +1391,12 @@ static int finalize_xlsx_import (DATASET *dset,
     }
 
     if (!err) {
-	err = merge_or_replace_data(dset, &xinfo->dset, opt, prn);
+	gretlopt merge_opt = 0;
+
+	if (merge && (opt & OPT_T)) {
+	    merge_opt = OPT_T;
+	}
+	err = merge_or_replace_data(dset, &xinfo->dset, merge_opt, prn);
     } 
 
     if (!err && !merge) {
