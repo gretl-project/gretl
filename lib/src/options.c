@@ -2063,3 +2063,20 @@ int inapplicable_option_error (int ci, gretlopt opt)
     gretl_errmsg_sprintf("%s: inapplicable option", s);
     return E_BADOPT;
 }
+
+void debug_print_option_flags (const char *msg, gretlopt opt)
+{
+    fprintf(stderr, "%s: opt = %d\n", msg, opt);
+
+    if (opt) {
+	char c = 'A';
+	int i;
+
+	for (i=OPT_A; i<=OPT_Y; i*=2) {
+	    if (opt & i) {
+		fprintf(stderr, " includes OPT_%c (%d)\n", c, i);
+	    }
+	    c++;
+	}
+    }    
+}

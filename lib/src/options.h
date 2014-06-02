@@ -88,4 +88,6 @@ gretlopt valid_long_opt (int ci, const char *s, OptStatus *status);
 
 gretlopt valid_short_opt (int ci, char c);
 
+void debug_print_option_flags (const char *msg, gretlopt opt);
+
 #endif /* OPTIONS_H */
