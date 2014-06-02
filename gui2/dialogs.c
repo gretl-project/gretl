@@ -4000,7 +4000,6 @@ int real_radio_dialog (const char *title, const char *label,
     GtkWidget *button = NULL;
     GSList *group = NULL;
     int radio_val = deflt;
-    int radio_active = 1;
     int i, ret = GRETL_CANCEL;
 
     if (maybe_raise_dialog()) {
@@ -4018,26 +4017,14 @@ int real_radio_dialog (const char *title, const char *label,
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     }
 
-    if (deflt == -1) {
-	/* flag to make radio choice inactive, with the
-	   first "option" hard-wired */
-	radio_val = deflt = 0;
-	radio_active = 0;
-    }
-
     for (i=0; i<nopts; i++) {
 	button = gtk_radio_button_new_with_label(group, _(opts[i]));
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+	g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(i));
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_radio_opt), &radio_val);
 	if (i == deflt) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
-	}
-	if (radio_active) {
-	    g_signal_connect(G_OBJECT(button), "clicked",
-			     G_CALLBACK(set_radio_opt), &radio_val);
-	    g_object_set_data(G_OBJECT(button), "action", 
-			      GINT_TO_POINTER(i));
-	} else {
-	    gtk_widget_set_sensitive(button, FALSE);
 	}
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }

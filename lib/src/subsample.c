@@ -37,6 +37,7 @@ typedef enum {
     SUBSAMPLE_NONE,
     SUBSAMPLE_DROP_MISSING,
     SUBSAMPLE_DROP_EMPTY,
+    SUBSAMPLE_DROP_WKENDS,
     SUBSAMPLE_USE_DUMMY,
     SUBSAMPLE_BOOLEAN,
     SUBSAMPLE_RANDOM,
@@ -678,6 +679,25 @@ static int overlay_masks (char *targ, const char *src, int n)
     return sn;
 }
 
+static int make_weekday_mask (const DATASET *dset, char *mask)
+{
+    if (!dated_daily_data(dset) || 
+	dset->markers != 0 || dset->pd < 6) {
+	return E_PDWRONG;
+    } else {
+	char datestr[OBSLEN];
+	int t, wd;
+
+	for (t=0; t<dset->n; t++) {
+	    ntodate(datestr, t, dset);
+	    wd = weekday_from_date(datestr);
+	    mask[t] = (wd >= 1 && wd <= 5);
+	}
+	
+	return 0;
+    }
+}
+
 /* write into @mask: 0 for observations at which _all_ variables
    have missing values (ignoring "time" and "index"), 1 for
    all other observations (that have at least one non-NA).
@@ -1117,6 +1137,8 @@ int get_restriction_mode (gretlopt opt)
 	mode = SUBSAMPLE_USE_DUMMY;
     } else if (opt & OPT_A) {
 	mode = SUBSAMPLE_DROP_EMPTY;
+    } else if (opt & OPT_W) {
+	mode = SUBSAMPLE_DROP_WKENDS;
     }
 
     return mode;
@@ -1389,6 +1411,8 @@ make_restriction_mask (int mode, const char *s,
 	err = make_missing_mask(list, dset, mask);
     } else if (mode == SUBSAMPLE_DROP_EMPTY) {
 	err = make_empty_mask(dset, mask);
+    } else if (mode == SUBSAMPLE_DROP_WKENDS) {
+	err = make_weekday_mask(dset, mask);
     } else if (mode == SUBSAMPLE_RANDOM) {
 	err = make_random_mask(s, oldmask, dset, mask);
     } else if (mode == SUBSAMPLE_USE_DUMMY) {
@@ -1799,7 +1823,11 @@ int restrict_sample (const char *line, const int *list,
 
     /* We'll accept the redundant combination of the options --dummy
        (OPT_O) and --restrict (OPT_R), but other than that the options
-       --dummy, --restrict, --no-missing (OPT_M) and --random (OPT_N)
+       --dummy, 
+       --restrict, 
+       --no-missing (OPT_M), 
+       --no-all-missing (OPT_A) and
+       --random (OPT_N) 
        are all mutually incompatible.
     */
     if (incompatible_options(opt, OPT_O | OPT_M | OPT_A | OPT_N) ||
@@ -1808,6 +1836,7 @@ int restrict_sample (const char *line, const int *list,
     }
 
     if (opt & OPT_T) {
+	/* permanent */
 	if (gretl_function_depth() > 0) {
 	    /* can't permanently shrink the dataset within a function */
 	    gretl_errmsg_set(_("The dataset cannot be modified at present"));

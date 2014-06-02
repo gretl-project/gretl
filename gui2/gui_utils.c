@@ -921,6 +921,58 @@ void register_startup_data (const char *fname)
     real_register_data(DATAFILE_OPENED, fname, NULL);
 }
 
+static void maybe_offer_daily_options (void)
+{
+    gretlopt purge_opt = 0;
+    PRN *prn = NULL;
+
+    bufopen(&prn);
+
+    if (prn != NULL) {
+	int chk = analyse_daily_import(dataset, prn);
+	const char *buf = NULL;
+	int resp;
+
+	if (chk > 0) {
+	    buf = gretl_print_get_buffer(prn);
+	}
+
+	if (chk == 3) {
+	    const char *opts[] = {
+		N_("Leave the dataset as it is"),
+		N_("Delete the weekend rows"),
+		N_("Delete all blank rows")
+	    };
+
+	    resp = radio_dialog("gretl", _(buf), opts, 3, 
+				2, DAILY_PURGE, NULL);
+	    if (resp == 1) {
+		purge_opt = OPT_W;
+	    } else if (resp == 2) {
+		purge_opt = OPT_A;
+	    }
+	} else if (chk > 0) {
+	    const char *wkend_opt = N_("Delete the weekend rows");
+	    const char *wkday_opt = N_("Delete blank weekday rows");
+	    const char *opts[1] = {NULL};
+	    int purge = 1;
+
+	    opts[0] = chk == 1 ? wkend_opt : wkday_opt;
+	    resp = checks_only_dialog("gretl", _(buf), opts, 1,
+				      &purge, DAILY_PURGE, NULL);
+
+	    if (!canceled(resp) && purge) {
+		purge_opt = chk == 1 ? OPT_W : OPT_A;
+	    }
+	}
+	gretl_print_destroy(prn);
+    }
+
+    if (purge_opt) {
+	bool_subsample(purge_opt);
+    }
+}
+
 static void finalize_data_open (const char *fname, int ftype,
 				int import, int append, 
 				const int *list)
@@ -959,7 +1011,10 @@ static void finalize_data_open (const char *fname, int ftype,
 	if (resp == GRETL_YES) {
 	    data_structure_dialog();
 	}
-    }    
+    } else if (import && dated_daily_data(dataset) &&
+	       !dataset->markers) {
+	maybe_offer_daily_options();
+    }
 }
 
 static int datafile_missing (const char *fname)

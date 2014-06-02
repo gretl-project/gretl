@@ -115,6 +115,7 @@ enum extra_cmds {
     CLUSTER,
     GUI_FUNCS,
     MENU_ATTACH,
+    DAILY_PURGE,
     GUI_CMD_MAX
 };
 

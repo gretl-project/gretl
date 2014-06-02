@@ -148,6 +148,7 @@ static struct gui_help_item gui_help_items[] = {
     { GUI_FUNCS,      "gui-funcs" },
     { MENU_ATTACH,    "menu-attach" },
     { REPROBIT,       "reprobit" },
+    { DAILY_PURGE,    "daily-purge" },
     { -1,             NULL },
 };
 

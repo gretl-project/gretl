@@ -2194,6 +2194,32 @@
 
   </command>
 
+  <command name="daily-purge" section="Dataset" 
+	   label="Purge daily data" context="gui">
+    <description>
+      <para>
+	If a daily dataset is nominally on a 7-day calendar but
+	in fact only includes business-day data, it is recommended
+	that you delete the blank weekend rows, thereby switching
+	to a 5-day calendar.
+      </para>
+      <para>
+	If a business-daily dataset contains a relatively small number
+	of rows with no data entries (presumably due to trading
+	holidays) you may wish to delete these rows. In effect, this
+	means treating the missing values for holidays as non-existent
+	rather than truly <quote>missing</quote>, and treating the
+	trading days as forming a continuous time-series.
+      </para>
+      <para>
+	Note that if you take either of these options gretl will
+	nonetheless preserve the date information, and it will be
+	possible to reconstruct the full calendar dataset later
+	if that's required.
+      </para>
+    </description>
+  </command>
+
   <command name="data" section="Dataset" 
     label="Import from database" context="cli">
 

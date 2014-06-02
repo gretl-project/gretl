@@ -1457,6 +1457,7 @@ void gui_warnmsg (int errcode)
 
 /* OPT_M  drop all obs with missing data values
    OPT_A  drop obs with no valid data
+   OPT_W  drop weekends
    OPT_O  sample using dummy variable
    OPT_R  sample using boolean expression
    OPT_N  random sub-sample
@@ -1476,7 +1477,7 @@ int bool_subsample (gretlopt opt)
 	return 1;
     }
 
-    if (opt & (OPT_M | OPT_A)) {
+    if (opt & (OPT_M | OPT_A | OPT_W)) {
 	err = restrict_sample(NULL, NULL, dataset, NULL, 
 			      opt, prn, &n_dropped);
     } else {
@@ -7234,6 +7235,13 @@ static gint block_deletion (GtkWidget *w, GdkEvent *event, gpointer p)
 {
     return TRUE;
 }
+
+/* When we're in the process of "flushing" (a time-
+   consuming script is sending output to a window 
+   incrementally) we must ensure that neither the
+   output window nor its "parent" script window
+   get closed prematurely, otherwise we'll crash!
+*/
 
 static void output_handler_set_block_deletion (void)
 {

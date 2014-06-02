@@ -152,4 +152,6 @@ int transpose_data (DATASET *dset);
 void dataset_add_import_info (DATASET *dset, const char *fname,
 			      GretlFileType type);
 
+int analyse_daily_import (const DATASET *dset, PRN *prn);
+
 #endif /* DATAIO_H */
