@@ -38,6 +38,8 @@ void sync_scalars_window (void);
 
 void gui_new_matrix (GtkWidget *parent);
 
+void fncall_add_matrix (GtkWidget *parent);
+
 void edit_user_matrix_by_name (const char *name, GtkWidget *parent);
 
 void set_dataset_locked (gboolean s);

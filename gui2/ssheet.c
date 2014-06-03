@@ -3402,7 +3402,16 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
     strcpy(mdlg->spec->name, etxt);
     mdlg->spec->uselist = 0;
 
-    if (gtk_widget_is_sensitive(mdlg->numerics)) {
+    if (mdlg->formula != NULL && 
+	gtk_widget_is_sensitive(mdlg->formula)) {
+	etxt = gtk_entry_get_text(GTK_ENTRY(mdlg->formula));
+	if (etxt == NULL || *etxt == '\0') {
+	    errbox(_("The matrix formula is empty"));
+	    return;
+	}
+	mdlg->spec->formula = g_strdup(etxt);
+    } else if (mdlg->numerics != NULL && 
+	       gtk_widget_is_sensitive(mdlg->numerics)) {
 	double x;
 
 	etxt = gtk_entry_get_text(GTK_ENTRY(mdlg->ventry));
@@ -3411,13 +3420,6 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 	    return;
 	}
 	mdlg->spec->fill = x;
-    } else if (gtk_widget_is_sensitive(mdlg->formula)) {
-	etxt = gtk_entry_get_text(GTK_ENTRY(mdlg->formula));
-	if (etxt == NULL || *etxt == '\0') {
-	    errbox(_("The matrix formula is empty"));
-	    return;
-	}
-	mdlg->spec->formula = g_strdup(etxt);
     } else {
 	/* will select data series */
 	mdlg->spec->uselist = 1;
@@ -3440,20 +3442,6 @@ static gint choose_series (GtkWidget *w, struct mdialog *mdlg)
     return FALSE;
 }
 
-static gint choose_numeric (GtkWidget *w, struct mdialog *mdlg)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	if (mdlg->numerics != NULL) {
-	    gtk_widget_set_sensitive(mdlg->numerics, TRUE);
-	} 
-	if (mdlg->formula != NULL) {
-	    gtk_widget_set_sensitive(mdlg->formula, FALSE);
-	} 
-    } 
-
-    return FALSE;
-}
-
 static gint choose_formula (GtkWidget *w, struct mdialog *mdlg)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
@@ -3468,8 +3456,23 @@ static gint choose_formula (GtkWidget *w, struct mdialog *mdlg)
     return FALSE;
 }
 
+static gint choose_numeric (GtkWidget *w, struct mdialog *mdlg)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	if (mdlg->numerics != NULL) {
+	    gtk_widget_set_sensitive(mdlg->numerics, TRUE);
+	} 
+	if (mdlg->formula != NULL) {
+	    gtk_widget_set_sensitive(mdlg->formula, FALSE);
+	} 
+    } 
+
+    return FALSE;
+}
+
 static int new_matrix_dialog (struct gui_matrix_spec *spec,
-			      GtkWidget *parent)
+			      GtkWidget *parent,
+			      int fncall)
 {
     struct mdialog mdlg;
     GSList *group;
@@ -3516,65 +3519,13 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
     /* matrix construction options */
 
     /* option: build from series */
-
     hbox = gtk_hbox_new(FALSE, 5);
     rb = gtk_radio_button_new_with_label(NULL, _("Build from series"));
     g_signal_connect(G_OBJECT(rb), "clicked", G_CALLBACK(choose_series), &mdlg);
     gtk_box_pack_start(GTK_BOX(hbox), rb, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    /* option: build numerically */
-
-    hbox = gtk_hbox_new(FALSE, 5);
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
-    rb = gtk_radio_button_new_with_label(group, _("Build numerically"));
-    g_signal_connect(G_OBJECT(rb), "clicked", G_CALLBACK(choose_numeric), &mdlg);
-    gtk_box_pack_start(GTK_BOX(hbox), rb, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-
-    hbox = gtk_hbox_new(FALSE, 5);
-    tab = gtk_table_new(3, 2, FALSE);
-    gtk_table_set_col_spacing(GTK_TABLE(tab), 0, 5);
-    
-    w = gtk_label_new(_("Number of rows:"));
-    gtk_misc_set_alignment(GTK_MISC(w), 0, 1);
-    gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 0, 1);
-    w = gtk_spin_button_new_with_range(1, maxdim, 1);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), (gdouble) spec->rows);
-    g_signal_connect(G_OBJECT(w), "value-changed",
-		     G_CALLBACK(spin_call), &spec->rows);
-    gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, 0, 1);
-
-    w = gtk_label_new(_("Number of columns:"));
-    gtk_misc_set_alignment(GTK_MISC(w), 0, 1);
-    gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 1, 2);
-    w = gtk_spin_button_new_with_range(1, maxdim, 1);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), (gdouble) spec->cols);
-    g_signal_connect(G_OBJECT(w), "value-changed",
-		     G_CALLBACK(spin_call), &spec->cols);
-    gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, 1, 2);
-
-    w = gtk_label_new(_("Initial fill value:"));
-    gtk_misc_set_alignment(GTK_MISC(w), 0, 1);
-    gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 2, 3);
-    w = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(w), VNAMELEN-1);
-    gtk_entry_set_width_chars(GTK_ENTRY(w), VNAMELEN+3);
-    gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
-    gtk_entry_set_text(GTK_ENTRY(w), "0");
-    gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, 2, 3);
-    mdlg.ventry = w;
-
-    w = gtk_label_new(" ");
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), tab, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-
-    gtk_widget_set_sensitive(hbox, FALSE);
-    mdlg.numerics = hbox;
-
     /* option: build from formula */
-
     hbox = gtk_hbox_new(FALSE, 5);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
     rb = gtk_radio_button_new_with_label(group, _("Build from formula"));
@@ -3594,6 +3545,57 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
 
     gtk_widget_set_sensitive(w, FALSE);
     mdlg.formula = w;
+
+    if (!fncall) {
+	/* option: build numerically */
+	hbox = gtk_hbox_new(FALSE, 5);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
+	rb = gtk_radio_button_new_with_label(group, _("Build numerically"));
+	g_signal_connect(G_OBJECT(rb), "clicked", G_CALLBACK(choose_numeric), &mdlg);
+	gtk_box_pack_start(GTK_BOX(hbox), rb, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	tab = gtk_table_new(3, 2, FALSE);
+	gtk_table_set_col_spacing(GTK_TABLE(tab), 0, 5);
+    
+	w = gtk_label_new(_("Number of rows:"));
+	gtk_misc_set_alignment(GTK_MISC(w), 0, 1);
+	gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 0, 1);
+	w = gtk_spin_button_new_with_range(1, maxdim, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), (gdouble) spec->rows);
+	g_signal_connect(G_OBJECT(w), "value-changed",
+			 G_CALLBACK(spin_call), &spec->rows);
+	gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, 0, 1);
+
+	w = gtk_label_new(_("Number of columns:"));
+	gtk_misc_set_alignment(GTK_MISC(w), 0, 1);
+	gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 1, 2);
+	w = gtk_spin_button_new_with_range(1, maxdim, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), (gdouble) spec->cols);
+	g_signal_connect(G_OBJECT(w), "value-changed",
+			 G_CALLBACK(spin_call), &spec->cols);
+	gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, 1, 2);
+
+	w = gtk_label_new(_("Initial fill value:"));
+	gtk_misc_set_alignment(GTK_MISC(w), 0, 1);
+	gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 2, 3);
+	w = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(w), VNAMELEN-1);
+	gtk_entry_set_width_chars(GTK_ENTRY(w), VNAMELEN+3);
+	gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
+	gtk_entry_set_text(GTK_ENTRY(w), "0");
+	gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, 2, 3);
+	mdlg.ventry = w;
+
+	w = gtk_label_new(" ");
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), tab, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+	gtk_widget_set_sensitive(hbox, FALSE);
+	mdlg.numerics = hbox;
+    }
 
     /* control buttons */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
@@ -3664,10 +3666,10 @@ static int gui_matrix_from_list (selector *sr)
     return err;
 } 
 
-static int
-matrix_from_formula (struct gui_matrix_spec *s)
+static int matrix_from_formula (struct gui_matrix_spec *s)
 {
-    gchar *genline = g_strdup_printf("matrix %s = %s", s->name, s->formula);
+    gchar *genline = g_strdup_printf("matrix %s = %s", 
+				     s->name, s->formula);
     int err;
 
     err = generate(genline, dataset, OPT_NONE, NULL); 
@@ -3688,25 +3690,28 @@ matrix_from_formula (struct gui_matrix_spec *s)
     return err;
 }
 
-static int
-matrix_from_spec (struct gui_matrix_spec *s)
+static int matrix_from_spec (struct gui_matrix_spec *s)
 {
-    int err = 0;
+    gchar *genline;
+    int err;
 
-    s->m = gretl_matrix_alloc(s->rows, s->cols);
+    genline = g_strdup_printf("matrix %s = zeros(%d,%d) + %.15g",
+			      s->name, s->rows, s->cols, s->fill);
 
-    if (s->m == NULL) {
-	err = E_ALLOC;
-    } else {
-	gretl_matrix_fill(s->m, s->fill);
-	err = user_var_add_or_replace(s->name,
-				      GRETL_TYPE_MATRIX,
-				      s->m);
-    }
+    err = generate(genline, dataset, OPT_NONE, NULL); 
 
     if (err) {
 	gui_errmsg(err);
-    } 
+    } else {
+	s->m = get_matrix_by_name(s->name);
+	if (s->m == NULL) {
+	    err = 1;
+	} else {
+	    add_command_to_stack(genline);
+	}
+    }
+
+    g_free(genline);
 
     return err;
 }
@@ -3728,8 +3733,7 @@ static void gui_matrix_spec_init (struct gui_matrix_spec *s,
     }
 }
 
-static void gui_edit_matrix (gretl_matrix *m, const char *name,
-			     int block)
+static void gui_edit_matrix (gretl_matrix *m, const char *name)
 {
     Spreadsheet *sheet = NULL;
     int err = 0;
@@ -3759,10 +3763,10 @@ static void gui_edit_matrix (gretl_matrix *m, const char *name,
 	sheet->rownames = gretl_matrix_get_rownames(m);
 	sheet->datarows = gretl_matrix_rows(sheet->matrix);
 	sheet->datacols = gretl_matrix_cols(sheet->matrix);
-	real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, block);
+	real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, 0);
     }
 
-    if (!block && sheet != NULL) {
+    if (sheet != NULL) {
 	/* protect matrix from deletion while editing */
 	user_var *u = get_user_var_by_name(name);
 
@@ -3776,15 +3780,14 @@ static void gui_edit_matrix (gretl_matrix *m, const char *name,
    we are called */
 
 static void real_gui_new_matrix (gretl_matrix *m, const char *name,
-				 GtkWidget *parent)
+				 GtkWidget *parent, int fncall)
 {
     struct gui_matrix_spec spec;
-    int block = (m == NULL);
     int resp;
 
     gui_matrix_spec_init(&spec, m, name);
 
-    resp = new_matrix_dialog(&spec, parent);
+    resp = new_matrix_dialog(&spec, parent, fncall);
     if (canceled(resp)) {
 	return;
     }
@@ -3798,21 +3801,28 @@ static void real_gui_new_matrix (gretl_matrix *m, const char *name,
 	/* matrix from genr-style formula */
 	matrix_from_formula(&spec);
 	free(spec.formula);
-    } else {
+    } else if (!fncall) {
 	/* numerical specification: open editor if OK */
 	int err = matrix_from_spec(&spec);
 
 	if (!err) {
-	    gui_edit_matrix(spec.m, spec.name, block);
+	    gui_edit_matrix(spec.m, spec.name);
 	}
     }
 }
 
-/* callback for "Define matrix..." in main window */
+/* callback for "Define matrix..." in main window, and
+   also "+" to add matrix arg in fncall.c 
+*/
 
 void gui_new_matrix (GtkWidget *parent)
 {
-    real_gui_new_matrix(NULL, NULL, parent);
+    real_gui_new_matrix(NULL, NULL, parent, 0);
+}
+
+void fncall_add_matrix (GtkWidget *parent)
+{
+    real_gui_new_matrix(NULL, NULL, parent, 1);
 }
 
 void edit_user_matrix_by_name (const char *name, GtkWidget *parent)
@@ -3832,9 +3842,9 @@ void edit_user_matrix_by_name (const char *name, GtkWidget *parent)
     if (m == NULL) {
 	errbox(_("Couldn't open '%s'"), name);
     } else if (gretl_is_null_matrix(m)) {
-	real_gui_new_matrix(m, name, parent);
+	real_gui_new_matrix(m, name, parent, 0);
     } else {
-	gui_edit_matrix(m, name, 0);
+	gui_edit_matrix(m, name);
     }
 }
 
