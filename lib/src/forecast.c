@@ -2587,13 +2587,6 @@ FITRESID *get_forecast (MODEL *pmod, int t1, int t2, int pre_n,
 {
     FITRESID *fr;
 
-    /* Reject in case model was estimated using repacked daily
-       data: this case should be handled more elegantly */
-    if (gretl_model_get_int(pmod, "daily_repack")) {
-	*err = E_DATA;
-	return NULL;
-    }
-
     fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, err);
 
     if (!*err) {
@@ -2953,12 +2946,6 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	/* FIXME */
 	return E_NOTIMP;
     }    
-
-     /* Reject in case model was estimated using repacked daily
-       data: this case should be handled more elegantly */
-    if (gretl_model_get_int(pmod, "daily_repack")) {
-	return E_DATA;
-    }
 
     /* OPT_I for integrate: reject for non-OLS, or if the dependent 
        variable is not recognized as a first difference */
@@ -3543,11 +3530,6 @@ rolling_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
 	*err = E_DATA;
 	return NULL;
     }    
-
-    if (gretl_model_get_int(pmod, "daily_repack")) {
-	*err = E_DATA;
-	return NULL;
-    }
 
     /* check feasibility of forecast range */
     *err = rolling_fcast_adjust_obs(pmod, &t1, t2, k);

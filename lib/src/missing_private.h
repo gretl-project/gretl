@@ -30,10 +30,6 @@ int apply_reference_missmask (MODEL *pmod);
 
 int reference_missmask_present (void);
 
-int undo_daily_repack (MODEL *pmod, DATASET *dset);
-
-int repack_missing_daily_obs (MODEL *pmod, DATASET *dset);
-
 int model_adjust_sample (MODEL *pmod, int n, const double **Z, 
 			 int *misst);
 

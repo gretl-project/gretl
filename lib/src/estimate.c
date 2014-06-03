@@ -1209,17 +1209,11 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     /* react to presence of unhandled missing obs */
     if (missv) {
-	if (0 && dated_daily_data(dset)) {
-	    if (repack_missing_daily_obs(&mdl, dset)) {
-		return mdl;
-	    }
-	} else {
-	    gretl_errmsg_sprintf(_("Missing value encountered for "
-				   "variable %d, obs %d"), 
-				 missv, misst);
-	    mdl.errcode = E_DATA;
-	    return mdl;
-	} 
+	gretl_errmsg_sprintf(_("Missing value encountered for "
+			       "variable %d, obs %d"), 
+			     missv, misst);
+	mdl.errcode = E_DATA;
+	return mdl;
     }
 
     if (ci == WLS) {
@@ -1369,12 +1363,6 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
  lsq_abort:
-
-    /* If we reshuffled any missing observations, put them
-       back in their right places now */
-    if (gretl_model_get_int(&mdl, "daily_repack")) {
-	undo_daily_repack(&mdl, dset);
-    }
 
     if (!(opt & OPT_A)) {
 	/* if it's not an auxiliary regression, set an ID number
