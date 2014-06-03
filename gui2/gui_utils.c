@@ -1811,6 +1811,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	       role == EDIT_PKG_SAMPLE) {
 	vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
     } else if (role != IMPORT) {
+	fprintf(stderr, "HERE XX\n");
 	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
     }
 

@@ -1676,9 +1676,11 @@ static void select_first_editable_cell (Spreadsheet *sheet)
 
 static void set_ok_transforms (Spreadsheet *sheet)
 {
-    int z = gretl_is_zero_matrix(sheet->matrix);
-    int s = gretl_matrix_get_structure(sheet->matrix);
+    const gretl_matrix *m = sheet->matrix;
+    int z = gretl_is_zero_matrix(m);
+    int s = gretl_matrix_get_structure(m);
 
+    flip(sheet->ui, "/menubar/Fill/FillIdentity", m->rows == m->cols);
     flip(sheet->ui, "/menubar/Transform/ScalarMult", !z);
     flip(sheet->ui, "/menubar/Transform/ScalarDiv", !z);
     flip(sheet->ui, "/menubar/Transform/XTX", 

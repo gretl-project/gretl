@@ -6703,6 +6703,38 @@ void ts_plot_callback (void)
     do_graph_var(mdata_active_var());
 }
 
+static int do_per_unit_plots (int v)
+{
+    int T = dataset->pd;
+    int N = (dataset->t2 - dataset->t1 + 1) / T;
+    int ret = 0;
+
+    if (N >= 2) {
+	const double *x = dataset->Z[v];
+	int s0 = dataset->t1 / T;
+	int tvary;
+	int i, t, s;
+	
+	ret = 1;
+	for (i=0; i<N; i++) {
+	    s = s0 + i * T;
+	    tvary = 0;
+	    for (t=1; t<T; t++) {
+		if (x[s+t] != x[s]) {
+		    tvary = 1;
+		    break;
+		}
+	    }
+	    if (!tvary) {
+		ret = 0;
+		break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 void do_boxplot_var (int varnum, gretlopt opt)
 {
     gretlopt plotopt = OPT_NONE;
@@ -6712,9 +6744,11 @@ void do_boxplot_var (int varnum, gretlopt opt)
 	return;
     }
 
-    if (!(opt & OPT_S) && multi_unit_panel_sample(dataset)) {
+    if (!(opt & OPT_S) && dataset_is_panel(dataset)) {
 	/* note: OPT_S enforces a single plot */
-	plotopt = OPT_P;
+	if (do_per_unit_plots(varnum)) {
+	    plotopt = OPT_P;
+	}
     }
 
     if (opt & OPT_O) {
