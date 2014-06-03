@@ -543,7 +543,6 @@ int main (int argc, char **argv)
 #ifdef G_OS_WIN32
     char *callname = argv[0];
 #endif
-    int ftype = 0;
     char auxname[MAXLEN];
     char filearg[MAXLEN];
     GError *opterr = NULL;
@@ -637,7 +636,6 @@ int main (int argc, char **argv)
     }
 
     library_command_init();
-
     helpfile_init();
     session_init();
     init_fileptrs();
@@ -658,87 +656,17 @@ int main (int argc, char **argv)
 #endif
 
     if (argc > 1) {
-	/* Process what is presumably a filename argument
+	/* Record what is presumably a filename argument
 	   given on the command line (by now any options will
 	   have been extracted from the argv array).
 	*/
-	PRN *prn; 
-	int err = 0;
-
-	prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
-	if (err) {
-	    exit(EXIT_FAILURE);
-	}
-
-	*datafile = '\0';
-
 #ifdef G_OS_WIN32
-	if (filename_to_win32(datafile, filearg)) {
+	if (filename_to_win32(tryfile, filearg)) {
 	    exit(EXIT_FAILURE);
 	}
 #else
-	record_filearg(datafile, filearg);
+	record_filearg(tryfile, filearg);
 #endif
-
-	/* keep a copy of input filename */
-	strcpy(tryfile, datafile);
-
-	ftype = detect_filetype(datafile, OPT_P);
-
-	switch (ftype) {
-	case GRETL_XML_DATA:
-	case GRETL_BINARY_DATA:
-	    err = gretl_read_gdt(datafile, dataset, OPT_NONE, prn);
-	    break;
-	case GRETL_CSV:
-	    err = import_csv(datafile, dataset, OPT_NONE, prn);
-	    break;
-	case GRETL_XLS:
-	case GRETL_XLSX:    
-	case GRETL_GNUMERIC:
-	case GRETL_ODS:
-	case GRETL_DTA:
-	case GRETL_SAV:
-	case GRETL_SAS:
-	case GRETL_JMULTI:
-	case GRETL_OCTAVE:
-	case GRETL_WF1:
-	    err = get_imported_data(datafile, ftype, 0);
-	    break;
-	case GRETL_SCRIPT:
-	case GRETL_SESSION:
-	    get_runfile(datafile);
-	    *datafile = '\0';
-	    break;
-	case GRETL_NATIVE_DB:
-	case GRETL_RATS_DB:  
-	case GRETL_PCGIVE_DB:
-	    strcpy(auxname, datafile);
-	    *tryfile = '\0';
-	    *datafile = '\0';
-	    maybe_fix_dbname(auxname);
-	    optdb = auxname;
-	    break;
-	case GRETL_UNRECOGNIZED:
-	default:
-	    fprintf(stderr, "%s: unrecognized file type", tryfile);
-	    exit(EXIT_FAILURE);
-	    break;
-	}
-
-	if (err == E_CANCEL) {
-	    err = 0;
-	    ftype = 0;
-	    *tryfile = '\0';
-	    *datafile = '\0';
-	}
-
-	if (ftype != GRETL_SCRIPT && err) {
-	    errmsg(err, prn);
-	    exit(EXIT_FAILURE);
-	}
-
-	gretl_print_destroy(prn);
     }
 
 #if GUI_DEBUG
@@ -764,11 +692,6 @@ int main (int argc, char **argv)
     fprintf(stderr, "done make_main_window\n");
 #endif
 
-    if (have_data()) {
-	/* redundant? */
-	set_sample_label(dataset);
-    }
-
     add_files_to_menus();
 
 #if GUI_DEBUG
@@ -788,24 +711,8 @@ int main (int argc, char **argv)
     fprintf(stderr, "done setting GUI state\n");
 #endif
 
-    if (have_data()) {
-	register_startup_data(tryfile);
-	maybe_display_string_table();
-	*tryfile = '\0';
-    }
-
-    /* opening a script or session from the command line? */
-    if (*tryfile != '\0') { 
-	if (gretl_is_pkzip_file(tryfile)) {
-	    ftype = GRETL_SESSION;
-	}
-	if (ftype == GRETL_SESSION) {
-	    do_open_session();
-	} else if ((ftype = script_type(tryfile))) {
-	    do_open_script(ftype);
-	} else {
-	    do_open_script(EDIT_SCRIPT);
-	}
+    if (*tryfile != '\0') {
+	real_open_tryfile();
     }
 
     /* try opening specified database or package */

@@ -1261,6 +1261,21 @@ static int set_session_dirname (const char *zdirname)
     return err;
 }
 
+static void maybe_absolutize_tryfile (void)
+{
+    if (!g_path_is_absolute(tryfile)) {
+	char *tmp, dirname[FILENAME_MAX];
+
+	*dirname = '\0';
+	tmp = getcwd(dirname, FILENAME_MAX - 1);
+	if (tmp != NULL) {
+	    tmp = g_strdup(tryfile);
+	    build_path(tryfile, dirname, tmp, NULL);
+	    g_free(tmp);
+	}
+    }	
+}
+
 /* note: the name of the file to be opened is in the global var
    'tryfile' */
 
@@ -1292,6 +1307,11 @@ gboolean do_open_session (void)
 
     fprintf(stderr, I_("\nReading session file %s\n"), tryfile);
 
+    /* we're about to change directory: if tryfile is not
+       an absolute path we'll lose track of it 
+    */
+    maybe_absolutize_tryfile();
+    
     gretl_chdir(gretl_dotdir());
     err = gretl_unzip_session_file(tryfile, &zdirname, &gerr);
 

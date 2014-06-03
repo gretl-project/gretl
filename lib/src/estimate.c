@@ -1209,7 +1209,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     /* react to presence of unhandled missing obs */
     if (missv) {
-	if (dated_daily_data(dset)) {
+	if (0 && dated_daily_data(dset)) {
 	    if (repack_missing_daily_obs(&mdl, dset)) {
 		return mdl;
 	    }

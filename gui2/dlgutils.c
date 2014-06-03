@@ -270,13 +270,15 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 			 G_CALLBACK(dialog_unblock), NULL);
     }
 
-    if (parent == NULL) {
+    if (parent == NULL && mdata != NULL) {
 	parent = mdata->main;
     }
 
-    g_signal_connect(G_OBJECT(d), "show", 
-		     G_CALLBACK(gretl_dialog_set_destruction), 
-		     parent);
+    if (parent != NULL) {
+	g_signal_connect(G_OBJECT(d), "show", 
+			 G_CALLBACK(gretl_dialog_set_destruction), 
+			 parent);
+    }
 
     if (flags & GRETL_DLG_BLOCK) {
 	g_signal_connect(G_OBJECT(d), "show", 

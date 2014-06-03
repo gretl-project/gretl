@@ -3573,7 +3573,9 @@
        Please note, there is no point in using <lit>flush</lit> in
        scripts that take less than (say) 5 seconds to execute. Also
        note that this command should not be used at a point in the
-       script where there is no further output to be printed.
+       script where there is no further output to be printed, as the
+       <quote>processing</quote> message will then be misleading
+       to the user.
      </para>
     </description>
 

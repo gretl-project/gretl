@@ -1236,7 +1236,8 @@ gboolean do_open_data (windata_t *fwin, int code)
 	ftype = detect_filetype(tryfile, OPT_P);
     }
 
-    /* destroy the current data set, etc., unless we're explicitly appending */
+    /* destroy the current data set, etc., unless we're 
+       explicitly appending */
     if (!append) {
 	close_session(OPT_NONE); /* FIXME opt? */
     }
