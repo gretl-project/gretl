@@ -635,6 +635,7 @@ LIBOBJS
 USE_AVX
 USE_SSE2
 RLIB
+GTK_HUSH
 plugsub
 use_gsf
 swap_ends
@@ -18828,11 +18829,37 @@ fi
 
 
 
+GTK_HUSH=""
 if test "$gtk_version" = "3.0" ; then
    plugsub="gretl-gtk3"
+   CFLAGS=-Wno-deprecated-declarations
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether CC supports -Wno-deprecated-declarations" >&5
+$as_echo_n "checking whether CC supports -Wno-deprecated-declarations... " >&6; }
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+      GTK_HUSH=-Wno-deprecated-declarations
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 else
    plugsub="gretl-gtk2"
 fi
+
 
 
 
