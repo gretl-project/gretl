@@ -31,6 +31,9 @@ HAVE_GTK_SPINNER = yes
 # set this for an MPI-enabled build
 have_mpi = yes
 
+# set this if building using openblas
+use_openblas = yes
+
 # libxml2 includes: adjust to match your system
 XML2_INC = $(MGWDIR)/include/libxml2
 

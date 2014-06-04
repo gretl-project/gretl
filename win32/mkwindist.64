@@ -12,6 +12,7 @@ fi
 TOPDIR=".."
 THISDIR=`pwd`
 MPI=yes
+OPENBLAS=yes
 
 ########## CONFIGURE HERE ###################
 
@@ -136,7 +137,6 @@ done
 for f in \
 	intl.dll \
 	libatk-1.0-0.dll \
-	libblas-3.dll \
 	libcairo-2.dll \
 	libcairo-gobject-2.dll \
 	libcurl-4.dll \
@@ -154,7 +154,6 @@ for f in \
 	libgtksourceview-2.0-0.dll \
 	libgtk-win32-2.0-0.dll \
 	libiconv-2.dll \
-	liblapack-3.dll \
 	libmpfr-4.dll \
 	libpango-1.0-0.dll \
 	libpangocairo-1.0-0.dll \
@@ -168,6 +167,13 @@ for f in \
 do
     add_file ${SYSBIN}/$f gretl/$f
 done
+
+if [ $OPENBLAS = "yes" ] ; then
+  add_file ${SYSBIN}/libopenblas.dll gretl/libopenblas.dll
+else
+  add_file ${SYSBIN}/libblas-3.dll gretl/libblas-3.dll
+  add_file ${SYSBIN}/liblapack-3.dll gretl/liblapack-3.dll
+fi
 
 # system DLLs for threads/openmp, if required
 # add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
