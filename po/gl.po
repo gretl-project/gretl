@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.9.91)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-06-01 15:42-0400\n"
-"PO-Revision-Date: 2014-06-04 12:32+0100\n"
+"PO-Revision-Date: 2014-06-04 12:52+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -588,7 +588,7 @@ msgstr "Eliminación secuencial utilizando alfa= %.2f a dúas colas"
 #: lib/src/compare.c:1375
 #, c-format
 msgid " Dropping %-16s (p-value %.3f)\n"
-msgstr " Quitando %-16s (valor p %.3f)\n"
+msgstr " Prescindindo de %-16s (valor p %.3f)\n"
 
 #: lib/src/compare.c:1758 lib/src/estimate.c:2813 lib/src/gretl_model.c:3506
 #: lib/src/gretl_model.c:3512 lib/src/modelprint.c:776 gui2/library.c:2887
@@ -1818,7 +1818,8 @@ msgstr "Rango IQ"
 #: lib/src/describe.c:4833 lib/src/describe.c:4966 lib/src/describe.c:5067
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
-msgstr "Quitando *%s*: o rango da mostra non contén observacións correctas\n"
+msgstr ""
+"Prescindindo de *%s*: o rango da mostra non contén observacións correctas\n"
 
 #: lib/src/describe.c:5441
 msgid "corr: needs at least two non-constant arguments"
@@ -5160,7 +5161,7 @@ msgstr "%s, obs. %s:%s:%s"
 
 #: lib/src/modelprint.c:1870
 msgid "Missing or incomplete observations dropped"
-msgstr "Elimináronse as observacións perdidas ou incompletas"
+msgstr "Prescindiuse das observacións perdidas ou incompletas"
 
 #: lib/src/modelprint.c:1879 plugin/panurc.c:585
 #, c-format
@@ -6628,7 +6629,7 @@ msgstr "Non quedarían observacións!"
 
 #: lib/src/subsample.c:1425
 msgid "No observations were dropped!"
-msgstr "Non se quitou ningunha observación!"
+msgstr "Non se prescindiu de ningunha observación!"
 
 #: lib/src/subsample.c:1479
 msgid "--balanced option is invalid: the (full) dataset is not a panel"
@@ -8818,7 +8819,7 @@ msgstr "seccións cruzadas amontoadas"
 
 #: gui2/datawiz.c:608
 msgid "(dropping missing observations)"
-msgstr "(quitando as observacións perdidas)"
+msgstr "(prescindindo das observacións perdidas)"
 
 #: gui2/datawiz.c:817
 msgid "The unit and time index variables must be distinct"
@@ -13223,7 +13224,7 @@ msgstr "Eliminar realmente as últimas %d observacións?"
 
 #: gui2/library.c:5685
 msgid "gretl: drop observations"
-msgstr "Gretl: Quitar observacións"
+msgstr "Gretl: Prescindir de observacións"
 
 #: gui2/library.c:5699
 msgid "There are no extra observations to drop"
