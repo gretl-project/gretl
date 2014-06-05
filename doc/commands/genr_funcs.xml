@@ -787,7 +787,7 @@
 	</para>
 	<code>
 	  if $sysinfo.os == "linux"
-              # do something linux-specific
+	      # do something linux-specific
 	  endif
 	</code>
       </description>

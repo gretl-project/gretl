@@ -47,6 +47,7 @@ enum extra_cmds {
     VIEW_FILE,
     DATA_REPORT,
     SCRIPT_OUT,
+    FNCALL_OUT,
     CONSOLE,
     EDIT_HEADER,
     EDIT_SCRIPT,

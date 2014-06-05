@@ -1573,11 +1573,13 @@ static void set_genr_model_from_vwin (windata_t *vwin)
 
 static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 {
+    windata_t *outwin = NULL;
     ExecState state;
     GtkWidget *hbox;
     char fnline[MAXLINE];
     char *tmpname = NULL;
     const char *funname;
+    const char *title;
     gretl_bundle *bundle = NULL;
     int grab_bundle = 0;
     int show = 1;
@@ -1585,6 +1587,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     int i, err = 0;
 
     funname = user_function_name_by_index(cinfo->iface);
+    title = cinfo->label != NULL ? cinfo->label : funname;
     *fnline = 0;
 
     /* compose the function command-line */
@@ -1635,13 +1638,20 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	set_genr_model_from_vwin(cinfo->vwin);
     }
 
+    show = !user_func_is_noprint(cinfo->func);
     hbox = cinfo->top_hbox;
 
     if (hbox != NULL) {
 	start_wait_for_output(hbox, FALSE);
     }
 
-    err = gui_exec_line(&state, dataset);
+    if (0 && show) {
+	/* not ready yet */
+	err = exec_line_with_output_handler(&state, dataset,
+					    title, &outwin);
+    } else {
+	err = gui_exec_line(&state, dataset);
+    }
 
     if (hbox != NULL) {
 	stop_wait_for_output(hbox);
@@ -1667,8 +1677,6 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	}
     }
 
-    show = !user_func_is_noprint(cinfo->func);
-
     if (!err && bundle != NULL && !show) {
 	gretl_print_reset_buffer(prn);
 	if (try_exec_bundle_print_function(bundle, prn)) {
@@ -1688,14 +1696,13 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 
     if (!err && !show) {
 	gretl_print_destroy(prn);
-    } else {
-	const char *title = cinfo->label != NULL ?
-	    cinfo->label : funname;
-
+    } else if (outwin == NULL) {
 	view_buffer(prn, 80, 400, title, 
 		    (bundle == NULL)? PRINT : VIEW_BUNDLE,
 		    bundle);
     }
+
+    /* FIXME add bundle to existing outwin ? */
 
     free(tmpname);
 

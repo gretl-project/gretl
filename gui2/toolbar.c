@@ -725,7 +725,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
                         r == MAHAL || r == FCAST || \
 			r == LOESS || r == NADARWAT)
 
-#define split_ok(r) (r == SCRIPT_OUT)
+#define split_ok(r) (r == SCRIPT_OUT || FNCALL_OUT)
 
 /* Screen out unwanted menu items depending on the context; also
    adjust the callbacks associated with some items based on

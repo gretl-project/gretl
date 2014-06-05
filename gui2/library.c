@@ -7239,6 +7239,7 @@ struct output_handler {
     windata_t *vwin;
     gulong handler_id;
     gulong src_handler_id;
+    const char *title;
 };
 
 static struct output_handler oh;
@@ -7251,6 +7252,7 @@ static void clear_output_handler (void)
 	g_signal_handler_disconnect(G_OBJECT(oh.vwin->main),
 				    oh.handler_id);
     }
+
     if (oh.srcwin != NULL) {
 	GtkWidget *srctop = vwin_toplevel(oh.srcwin);
 
@@ -7258,11 +7260,13 @@ static void clear_output_handler (void)
 				    oh.src_handler_id);
 	vwin_sensitize_close_button(oh.srcwin, TRUE);
     }
+
     oh.srcwin = NULL;
     oh.prn = NULL;
     oh.vwin = NULL;
     oh.handler_id = 0;
     oh.src_handler_id = 0;
+    oh.title = NULL;
 }
 
 static gint block_deletion (GtkWidget *w, GdkEvent *event, gpointer p)
@@ -7274,25 +7278,29 @@ static gint block_deletion (GtkWidget *w, GdkEvent *event, gpointer p)
    consuming script is sending output to a window 
    incrementally) we must ensure that neither the
    output window nor its "parent" script window
-   get closed prematurely, otherwise we'll crash!
+   (if present) get closed prematurely, otherwise
+   we'll crash!
 */
 
 static void output_handler_set_block_deletion (void)
 {
-    GtkWidget *srctop = vwin_toplevel(oh.srcwin);
-
     oh.handler_id = 
 	g_signal_connect(G_OBJECT(oh.vwin->main), 
 			 "delete-event", 
 			 G_CALLBACK(block_deletion), 
 			 NULL);
-    oh.src_handler_id = 
-	g_signal_connect(G_OBJECT(srctop), 
-			 "delete-event", 
-			 G_CALLBACK(block_deletion), 
-			 NULL);
 
-    vwin_sensitize_close_button(oh.srcwin, FALSE);
+    if (oh.srcwin != NULL) {
+	GtkWidget *srctop = vwin_toplevel(oh.srcwin);
+
+	oh.src_handler_id = 
+	    g_signal_connect(G_OBJECT(srctop), 
+			     "delete-event", 
+			     G_CALLBACK(block_deletion), 
+			     NULL);
+
+	vwin_sensitize_close_button(oh.srcwin, FALSE);
+    }
 }
 
 static void handle_flush_callback (int finalize)
@@ -7301,7 +7309,7 @@ static void handle_flush_callback (int finalize)
 	/* we have an output printer in place */
 	if (oh.vwin == NULL) {
 	    /* no display window yet: make one */
-	    oh.vwin = script_output_viewer_new(oh.prn);
+	    oh.vwin = script_output_viewer_new(oh.title, oh.prn);
 	    /* stop the user from closing the output window
 	       until we're done */
 	    gtk_widget_set_sensitive(oh.vwin->mbar, FALSE);
@@ -7402,6 +7410,28 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 
     /* re-establish command echo (?) */
     set_gretl_echo(1);
+}
+
+int exec_line_with_output_handler (ExecState *s, 
+				   DATASET *dset,
+				   const char *title,
+				   windata_t **outwin)
+{
+    int err = 0;
+
+    oh.prn = s->prn;
+    oh.title = title;
+
+    err = gui_exec_line(s, dataset);
+
+    if (oh.vwin != NULL) {
+	*outwin = oh.vwin;
+	handle_flush_callback(1);
+    }
+
+    clear_output_handler();
+
+    return err;
 }
 
 static void run_R_script (gchar *buf, GtkWidget *parent)

@@ -327,6 +327,11 @@ void do_save_text (char *fname, MODEL *pmod);
 
 int gui_exec_line (ExecState *s, DATASET *dset);
 
+int exec_line_with_output_handler (ExecState *s, 
+				   DATASET *dset,
+				   const char *title,
+				   windata_t **outwin);
+
 void start_wait_for_output (GtkWidget *w, gboolean big);
 
 void stop_wait_for_output (GtkWidget *w);

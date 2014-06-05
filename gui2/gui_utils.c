@@ -1882,18 +1882,27 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 				   role, data);
 }
 
-windata_t *script_output_viewer_new (PRN *prn)
+windata_t *script_output_viewer_new (const char *title,
+				     PRN *prn)
 {
     windata_t *vwin;
-    gchar *title;
     const char *buf;
 
-    title = make_viewer_title(SCRIPT_OUT, NULL);
-    vwin = gretl_viewer_new_with_parent(NULL, 
-					SCRIPT_OUT, 
-					title, 
-					NULL);
-    g_free(title);
+    if (title != NULL) {
+	vwin = gretl_viewer_new_with_parent(NULL, 
+					    FNCALL_OUT, 
+					    title, 
+					    NULL);
+    } else {
+	gchar *tmp;
+
+	tmp = make_viewer_title(SCRIPT_OUT, NULL);
+	vwin = gretl_viewer_new_with_parent(NULL, 
+					    SCRIPT_OUT, 
+					    tmp, 
+					    NULL);
+	g_free(tmp);
+    }
 
     if (vwin == NULL) {
 	return NULL;
