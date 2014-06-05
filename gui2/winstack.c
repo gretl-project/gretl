@@ -1159,3 +1159,30 @@ void gretl_viewer_set_title (windata_t *vwin, const char *title)
 	gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     }
 }
+
+void vwin_record_toolbar_popup (windata_t *vwin, GtkWidget *menu)
+{
+    GList *plist;
+
+    plist = g_object_get_data(G_OBJECT(vwin->mbar), "toolbar-popups");
+    plist = g_list_append(plist, menu);
+    g_object_set_data(G_OBJECT(vwin->mbar), "toolbar-popups", plist);
+}
+
+static void trash_toolbar_popup (gpointer data, gpointer p)
+{
+    gtk_widget_destroy(GTK_WIDGET(data));
+}
+
+void vwin_free_toolbar_popups (windata_t *vwin)
+{
+    if (vwin->mbar != NULL) {
+	GList *plist;
+
+	plist = g_object_get_data(G_OBJECT(vwin->mbar), "toolbar-popups");
+	if (plist != NULL) {
+	    g_list_foreach(plist, trash_toolbar_popup, NULL);
+	}
+	g_list_free(plist);
+    }
+}

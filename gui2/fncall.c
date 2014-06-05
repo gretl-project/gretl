@@ -1645,7 +1645,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	start_wait_for_output(hbox, FALSE);
     }
 
-    if (0 && show) { /* Almost ready! */
+    if (show) {
 	/* allow the "flush" mechanism to operate */
 	err = exec_line_with_output_handler(&state, dataset,
 					    title, &outwin);
@@ -1993,12 +1993,23 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
     int argc, iopt = -1;
     int err = 0;
 
-    if (strchr(aname, ':') != NULL) {
-	/* extract option */
-	sscanf(aname, "%31[^:]:%d", funname, &iopt);
+    if (aname != NULL) {
+	if (strchr(aname, ':') != NULL) {
+	    /* extract option */
+	    sscanf(aname, "%31[^:]:%d", funname, &iopt);
+	} else {
+	    /* name but no option present */
+	    strcpy(funname, aname);
+	}
     } else {
-	/* no option present */
-	strcpy(funname, aname);
+	gchar *pf = get_bundle_plot_function(b);
+
+	if (pf == NULL) {
+	    return E_DATA;
+	} else {
+	    strcpy(funname, pf);
+	    g_free(pf);
+	}
     }
 
     func = get_user_function_by_name(funname);

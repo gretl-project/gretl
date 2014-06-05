@@ -684,7 +684,10 @@ void *bundled_item_get_data (bundled_item *item, GretlType *type,
 			     int *size)
 {
     *type = item->type;
-    *size = item->size;
+
+    if (size != NULL) {
+	*size = item->size;
+    }
 
     return item->data;
 }

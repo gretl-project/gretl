@@ -142,6 +142,10 @@ gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event,
 
 GtkWidget *make_bundle_content_menu (windata_t *vwin);
 
+GtkWidget *make_bundle_plot_menu (windata_t *vwin);
+
+GtkWidget *make_bundle_save_menu (windata_t *vwin);
+
 void *gui_get_plugin_function (const char *funcname);
 
 int get_imported_data (char *fname, int ftype, int append);

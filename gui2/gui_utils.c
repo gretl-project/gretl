@@ -70,7 +70,6 @@
 
 static void set_up_model_view_menu (windata_t *vwin);
 static void add_system_menu_items (windata_t *vwin, int vecm);
-static void add_bundle_menu_items (windata_t *vwin);
 static void add_x12_output_menu_item (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
@@ -382,37 +381,6 @@ static const gchar *sys_ui =
     "    <menu action='Analysis'>"
     "      <menu action='Forecasts'/>"
     "    </menu>"
-    "  </menubar>"
-    "</ui>";
-
-static GtkActionEntry bundle_items[] = {
-    { "File", NULL, N_("_File"), NULL, NULL, NULL },  
-    { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save text as..."), NULL, NULL, 
-      G_CALLBACK(model_output_save) }, 
-    { "SaveAsIcon", NULL, N_("Save bundle to session as _icon"), NULL, NULL, 
-      G_CALLBACK(bundle_add_as_icon) },
-    { "SaveAndClose", NULL, N_("Save bundle as icon and cl_ose"), NULL, NULL, 
-      G_CALLBACK(bundle_add_as_icon) },
-    { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
-    { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
-    { "Save", NULL, N_("_Save"), NULL, NULL, NULL }, 
-    { "Graph", NULL, N_("_Graph"), NULL, NULL, NULL }, 
-};
-
-static gint n_bundle_items = G_N_ELEMENTS(bundle_items);
-
-static const gchar *bundle_ui =
-    "<ui>"
-    "  <menubar>"
-    "    <menu action='File'>"
-    "      <menuitem action='SaveAs'/>"
-    "      <menuitem action='SaveAsIcon'/>"
-    "      <menuitem action='SaveAndClose'/>"
-    "      <menuitem action='Print'/>"
-    "      <menuitem action='Close'/>"
-    "    </menu>"
-    "    <menu action='Save'/>"
-    "    <menu action='Graph'/>"
     "  </menubar>"
     "</ui>";
 
@@ -1520,11 +1488,14 @@ void free_windata (GtkWidget *w, gpointer data)
 	    g_object_unref(vwin->ui);
 	}
 
+	/* toolbar popups? */
+	if (vwin->mbar != NULL) {
+	    vwin_free_toolbar_popups(vwin);
+	}
+
 	/* tabbed toolbar */
-	if (window_is_tab(vwin)) {
-	    if (vwin->mbar != NULL) {
-		g_object_unref(vwin->mbar);
-	    }
+	if (window_is_tab(vwin) && vwin->mbar != NULL) {
+	    g_object_unref(vwin->mbar);
 	}
 
 	/* data specific to certain windows */
@@ -1801,11 +1772,6 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 			     G_CALLBACK(check_VAR_menu), vwin);
 	}
 	gretl_object_ref(data, (role == SYSTEM)? GRETL_OBJ_SYS : GRETL_OBJ_VAR);
-    } else if (role == VIEW_BUNDLE) {
-	/* FIXME: move to new-style toolbar */
-	vwin_add_ui(vwin, bundle_items, n_bundle_items, bundle_ui);
-	add_bundle_menu_items(vwin);
-	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
     } else if (role == VIEW_PKG_CODE || role == VIEW_MODELTABLE) {
 	vwin_add_viewbar(vwin, 0);
     } else if (role == EDIT_PKG_CODE ||
@@ -4515,63 +4481,6 @@ static void add_bundled_item_to_menu (gpointer key,
 				      gpointer value, 
 				      gpointer data)
 {
-    windata_t *vwin = data;
-    GtkActionEntry item;
-    gchar *label;
-    const char *typestr = "?";
-    const char *note;
-    char keystr[64];
-    GretlType type;
-    void *val;
-    int size = 0;
-
-    val = bundled_item_get_data((bundled_item *) value, &type, &size);
-    if (val == NULL) {
-	/* shouldn't be possible */
-	return;
-    }
-
-    if (type == GRETL_TYPE_STRING || type == GRETL_TYPE_MATRIX_REF) {
-	/* not very useful in GUI? */
-	return;
-    }
-
-    if (type == GRETL_TYPE_MATRIX) {
-	gretl_matrix *m = (gretl_matrix *) val;
-
-	if (gretl_is_null_matrix(m)) {
-	    return;
-	}
-    }
-
-    if (type == GRETL_TYPE_SERIES && size != dataset->n) {
-	type = GRETL_TYPE_MATRIX;
-    }
-
-    typestr = gretl_arg_type_name(type);
-    note = bundled_item_get_note((bundled_item *) value);
-    double_underscores(keystr, (gchar *) key);
-
-    if (note != NULL) {
-	label = g_strdup_printf("%s (%s: %s)", keystr, 
-				typestr, note);
-    } else {
-	label = g_strdup_printf("%s (%s)", keystr, typestr);
-    }
-
-    action_entry_init(&item);    
-    item.name = (gchar *) key;
-    item.label = label;
-    item.callback = G_CALLBACK(save_bundled_item_call);
-    vwin_menu_add_item(vwin, "/menubar/Save", &item);
-
-    g_free(label);
-}
-
-static void add_bundled_item_to_menu_2 (gpointer key, 
-					gpointer value, 
-					gpointer data)
-{
     GtkWidget *menu = data;
     GtkAction *action;
     GtkWidget *item;
@@ -4584,18 +4493,14 @@ static void add_bundled_item_to_menu_2 (gpointer key,
     int size = 0;
 
     val = bundled_item_get_data((bundled_item *) value, &type, &size);
-    if (val == NULL) {
-	/* shouldn't be possible */
-	return;
-    }
 
-    if (type == GRETL_TYPE_STRING || type == GRETL_TYPE_MATRIX_REF) {
-	/* not very useful in GUI? */
+    if (val == NULL || type == GRETL_TYPE_STRING || 
+	type == GRETL_TYPE_MATRIX_REF) {
 	return;
     }
 
     if (type == GRETL_TYPE_MATRIX) {
-	gretl_matrix *m = (gretl_matrix *) val;
+	gretl_matrix *m = val;
 
 	if (gretl_is_null_matrix(m)) {
 	    return;
@@ -4628,46 +4533,76 @@ static void add_bundled_item_to_menu_2 (gpointer key,
     g_free(label);
 }
 
+static void check_for_saveable (gpointer key, 
+				gpointer value, 
+				gpointer data)
+{
+    int *pn = (int *) data;
+    GretlType type;
+    void *val;
+
+    val = bundled_item_get_data((bundled_item *) value, &type, NULL);
+    if (val == NULL) {
+	/* "can't happen" */
+	return;
+    }
+
+    if (type == GRETL_TYPE_STRING || type == GRETL_TYPE_MATRIX_REF) {
+	/* not very useful in GUI? */
+	return;
+    }
+
+    if (type == GRETL_TYPE_MATRIX) {
+	gretl_matrix *m = val;
+
+	if (gretl_is_null_matrix(m)) {
+	    /* no use to man nor beast? */
+	    return;
+	}
+    }
+
+    *pn += 1;
+}
+
+static int any_saveable_content (gretl_bundle *b)
+{
+    int n = gretl_bundle_get_n_keys(b);
+
+    if (n > 0) {
+	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(b);
+
+	n = 0;
+	g_hash_table_foreach(ht, check_for_saveable, &n);
+    }
+
+    return n;
+}
+
 GtkWidget *make_bundle_content_menu (windata_t *vwin)
 {
     gretl_bundle *bundle = vwin->data;
-    int n = gretl_bundle_get_n_keys(bundle);
     GtkWidget *menu = NULL;
 
-    if (n > 0) {
+    if (any_saveable_content(bundle)) {
 	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
 
 	menu = gtk_menu_new();
 	g_object_set_data(G_OBJECT(menu), "vwin", vwin);
-	g_hash_table_foreach(ht, add_bundled_item_to_menu_2, menu);
+	g_hash_table_foreach(ht, add_bundled_item_to_menu, menu);
     }
 
     return menu;
 }
 
-static void add_bundle_menu_items (windata_t *vwin)
+GtkWidget *make_bundle_plot_menu (windata_t *vwin)
 {
     gretl_bundle *bundle = vwin->data;
-    int n = gretl_bundle_get_n_keys(bundle);
-    gchar *plotfunc = NULL;
-
-    if (n > 0) {
-	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
-
-	if (get_user_var_by_data(bundle)) {
-	    /* bundle is already saved by name */
-	    flip(vwin->ui, "/menubar/File/SaveAsIcon", FALSE);
-	    flip(vwin->ui, "/menubar/File/SaveAndClose", FALSE);
-	}
-
-	g_hash_table_foreach(ht, add_bundled_item_to_menu, vwin);
-    }
+    gchar *plotfunc;
+    GtkWidget *menu = NULL;
 
     plotfunc = get_bundle_plot_function(bundle);
 
     if (plotfunc != NULL) {
-	/* a package-created bundle with a plot function */
-	GtkActionEntry item;
 	ufunc *fun = NULL;
 	const char **S = NULL;
 	int ng = 0;
@@ -4680,34 +4615,58 @@ static void add_bundle_menu_items (windata_t *vwin)
 	    S = fn_param_value_labels(fun, 1, &ng);
 	}
 
-	action_entry_init(&item);
-	
 	if (S != NULL) {
 	    /* the plotfunc has some options available */
+	    GtkAction *action;
+	    GtkWidget *item;
 	    gchar *aname;
 	    int i;
 
+	    menu = gtk_menu_new();
+
 	    for (i=0; i<ng; i++) {
 		aname = g_strdup_printf("%s:%d", plotfunc, i);
-		item.name = aname;
-		item.label = S[i];
-		item.callback = G_CALLBACK(bundle_plot_call);
-		vwin_menu_add_item(vwin, "/menubar/Graph", &item);
+		action = gtk_action_new(aname, S[i], NULL, NULL);
+		g_signal_connect(G_OBJECT(action), "activate", 
+				 G_CALLBACK(bundle_plot_call),
+				 vwin);
+		item = gtk_action_create_menu_item(action); 
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 		g_free(aname);
 	    }		
-	} else {
-	    /* no options to show */
-	    item.name = plotfunc;
-	    item.label = _("show plot");
-	    item.callback = G_CALLBACK(bundle_plot_call);
-	    vwin_menu_add_item(vwin, "/menubar/Graph", &item);
 	}
-
 	g_free(plotfunc);
-    } else {
-	/* no plotting capability for this bundle */
-	flip(vwin->ui, "/menubar/Graph", FALSE);
     }
+
+    return menu;
+}
+
+GtkWidget *make_bundle_save_menu (windata_t *vwin)
+{
+    gretl_bundle *bundle = vwin->data;
+    GtkWidget *menu = gtk_menu_new();
+    GtkAction *action;
+    GtkWidget *item;
+
+    action = gtk_action_new("SaveAs", _("_Save text..."), 
+			    NULL, NULL);
+    g_signal_connect(G_OBJECT(action), "activate", 
+		     G_CALLBACK(model_output_save), vwin);
+    item = gtk_action_create_menu_item(action); 
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+    action = gtk_action_new("SaveAsIcon", _("Save bundle to session as _icon"), 
+			    NULL, NULL);
+    g_signal_connect(G_OBJECT(action), "activate", 
+		     G_CALLBACK(bundle_add_as_icon), vwin);
+    item = gtk_action_create_menu_item(action); 
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+    if (get_user_var_by_data(bundle)) {
+	gtk_widget_set_sensitive(item, FALSE);
+    }
+
+    return menu;
 }
 
 static int set_sample_from_model (void *ptr, int role)

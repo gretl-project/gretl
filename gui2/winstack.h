@@ -28,6 +28,11 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 void vwin_winlist_popup (GtkWidget *src, GdkEvent *event, 
 			 windata_t *vwin);
 
+void vwin_record_toolbar_popup (windata_t *vwin,
+				GtkWidget *menu);
+
+void vwin_free_toolbar_popups (windata_t *vwin);
+
 gboolean window_list_exit_check (void);
 
 windata_t *get_editor_for_file (const char *filename);

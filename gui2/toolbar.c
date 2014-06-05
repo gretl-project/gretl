@@ -33,6 +33,7 @@
 #include "fileselect.h"
 #include "winstack.h"
 #include "tabwin.h"
+#include "fncall.h"
 #include "toolbar.h"
 
 #include "uservar.h"
@@ -586,9 +587,25 @@ static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == VIEW_SERIES) {
 	series_view_graph(w, vwin);
+    } else if (vwin->role == VIEW_BUNDLE) {
+	exec_bundle_plot_function(vwin->data, NULL);
     } else {
 	do_nonparam_plot(vwin);
     }
+}
+
+static int bundle_plot_ok (windata_t *vwin)
+{
+    gretl_bundle *b = vwin->data;
+    gchar *pf = get_bundle_plot_function(b);
+    int ret = 0;
+
+    if (pf != NULL) {
+	ret = 1;
+	g_free(pf);
+    }
+
+    return ret;
 }
 
 static void activate_script_help (GtkWidget *widget, windata_t *vwin)
@@ -626,7 +643,7 @@ static int edit_script_popup_item (GretlToolItem *item)
 
 static void set_plot_icon (GretlToolItem *item, int role)
 {
-    if (role == LOESS || role == NADARWAT) {
+    if (role == LOESS || role == NADARWAT || role == VIEW_BUNDLE) {
 	item->icon = GRETL_STOCK_SCATTER;
     } else if (dataset_is_time_series(dataset)) {
 	item->icon = GRETL_STOCK_TS;
@@ -643,11 +660,11 @@ static void vwin_cut_callback (GtkWidget *w, windata_t *vwin)
 }
 
 static GretlToolItem viewbar_items[] = {
-    { N_("Bundle..."), GRETL_STOCK_BUNDLE, NULL, BUNDLE_ITEM },
     { N_("New window"), GTK_STOCK_NEW, G_CALLBACK(toolbar_new_callback), NEW_ITEM },
     { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
     { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(vwin_save_callback), SAVE_ITEM },
     { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(save_as_callback), SAVE_AS_ITEM },
+    { N_("Save bundle content..."), GRETL_STOCK_BUNDLE, NULL, BUNDLE_ITEM },
     { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
     { N_("Show/hide"), GRETL_STOCK_PIN, G_CALLBACK(session_notes_callback), NOTES_ITEM },
     { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
@@ -706,7 +723,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 	               r != EDIT_NOTES && \
 	               r != EDIT_PKG_CODE && \
 		       r != EDIT_PKG_SAMPLE && \
-	               r != CONSOLE)
+		       r != CONSOLE && \
+		       r != VIEW_BUNDLE)
 
 #define help_ok(r) (r == LEVERAGE || \
 		    r == COINT2 || \
@@ -723,7 +741,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 #define sort_ok(r) (r == VIEW_SERIES)
 
 #define plot_ok(r) (r == VIEW_SERIES || \
-		    r == LOESS || r == NADARWAT)
+		    r == LOESS || \
+		    r == NADARWAT)
 
 #define add_data_ok(r) (r == PCA || r == LEVERAGE || \
                         r == MAHAL || r == FCAST || \
@@ -771,7 +790,11 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     } else if (!sortby_ok && f == SORT_BY_ITEM) {
 	return NULL;
     } else if (!plot_ok(r) && f == PLOT_ITEM) {
-	return NULL;
+	if (r == VIEW_BUNDLE && bundle_plot_ok(vwin)) {
+	    ; /* alright then */
+	} else {
+	    return NULL;
+	}
     } else if (!split_ok(r) && f == SPLIT_ITEM) {
 	return NULL;
     } else if (!format_ok && f == FORMAT_ITEM) {
@@ -798,7 +821,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     } else if (r != EDIT_NOTES && f == NOTES_ITEM) {
 	return NULL;
     } else if (r != VIEW_BUNDLE && f == BUNDLE_ITEM) {
-	return NULL; /* FIXME */
+	return NULL;
     } else if (f == SAVE_AS_ITEM) {
 	if (!save_as_ok(r)) {
 	    return NULL;
@@ -814,8 +837,23 @@ static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
 {
     GtkWidget *menu = NULL;
 
-    if (item->flag == BUNDLE_ITEM && vwin->role == VIEW_BUNDLE) {
-	menu = make_bundle_content_menu(vwin);
+    if (vwin->role == VIEW_BUNDLE) {
+	if (item->flag == BUNDLE_ITEM) {
+	    menu = make_bundle_content_menu(vwin);
+	} else if (item->flag == PLOT_ITEM) {
+	    menu = make_bundle_plot_menu(vwin);
+	} else if (item->flag == SAVE_ITEM) {
+	    menu = make_bundle_save_menu(vwin);
+	    if (menu != NULL) {
+		item->tip = N_("Save...");
+	    }
+	}
+    }
+
+    if (menu != NULL) {
+	/* don't leak: record pointer to menu so it can
+	   be destroyed when the window is closed */
+	vwin_record_toolbar_popup(vwin, menu);
     }
 
     return menu;
@@ -934,11 +972,11 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    continue;
 	}
 
-	if (item->func != NULL) {
+	/* is there anything to hook up, in context */
+	menu = tool_item_get_menu(item, vwin);
+	if (menu == NULL && item->func != NULL) {
 	    func = tool_item_get_callback(item, vwin, latex_ok, sortby_ok,
 					  format_ok, save_ok);
-	} else {
-	    menu = tool_item_get_menu(item, vwin);
 	}
 	if (func == NULL && menu == NULL) {
 	    continue;
@@ -959,7 +997,7 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	}
 
 	if (item->flag == SAVE_ITEM) { 
-	    if (vwin->role != CONSOLE) {
+	    if (vwin->role != CONSOLE && vwin->role != VIEW_BUNDLE) {
 		/* nothing to save just yet */
 		g_object_set_data(G_OBJECT(vwin->mbar), "save_button", button); 
 		gtk_widget_set_sensitive(button, FALSE);
