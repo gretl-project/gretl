@@ -1645,8 +1645,8 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	start_wait_for_output(hbox, FALSE);
     }
 
-    if (0 && show) {
-	/* not ready yet */
+    if (0 && show) { /* Almost ready! */
+	/* allow the "flush" mechanism to operate */
 	err = exec_line_with_output_handler(&state, dataset,
 					    title, &outwin);
     } else {
@@ -1697,12 +1697,19 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     if (!err && !show) {
 	gretl_print_destroy(prn);
     } else if (outwin == NULL) {
+	/* output window not already shown */
 	view_buffer(prn, 80, 400, title, 
 		    (bundle == NULL)? PRINT : VIEW_BUNDLE,
 		    bundle);
+    } else {
+	/* an output window has already been opened
+	   via "flush" */
+	if (bundle != NULL) {
+	    outwin->role = VIEW_BUNDLE;
+	    outwin->data = bundle;
+	}
+	vwin_add_viewbar(outwin, VIEWBAR_HAS_TEXT);
     }
-
-    /* FIXME add bundle to existing outwin ? */
 
     free(tmpname);
 

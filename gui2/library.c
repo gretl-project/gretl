@@ -7248,7 +7248,9 @@ static void clear_output_handler (void)
 {
     if (oh.vwin != NULL) {
 	maybe_view_session();
-	gtk_widget_set_sensitive(oh.vwin->mbar, TRUE);
+	if (oh.vwin->mbar != NULL) {
+	    gtk_widget_set_sensitive(oh.vwin->mbar, TRUE);
+	}
 	g_signal_handler_disconnect(G_OBJECT(oh.vwin->main),
 				    oh.handler_id);
     }
@@ -7267,6 +7269,11 @@ static void clear_output_handler (void)
     oh.handler_id = 0;
     oh.src_handler_id = 0;
     oh.title = NULL;
+}
+
+static int output_handler_is_clear (void)
+{
+    return oh.prn == NULL;
 }
 
 static gint block_deletion (GtkWidget *w, GdkEvent *event, gpointer p)
@@ -7312,7 +7319,9 @@ static void handle_flush_callback (int finalize)
 	    oh.vwin = script_output_viewer_new(oh.title, oh.prn);
 	    /* stop the user from closing the output window
 	       until we're done */
-	    gtk_widget_set_sensitive(oh.vwin->mbar, FALSE);
+	    if (oh.vwin->mbar != NULL) {
+		gtk_widget_set_sensitive(oh.vwin->mbar, FALSE);
+	    }
 	    output_handler_set_block_deletion();
 	    gretl_print_set_save_position(oh.prn);
 	    textview_add_processing_message(oh.vwin->text);
@@ -7366,7 +7375,7 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	if (kid != NULL) {
 	    suppress_logo = 1;
 	}
-    } else {
+    } else if (output_handler_is_clear()) {
 	oh.srcwin = vwin;
 	oh.prn = prn;
     }
@@ -7419,17 +7428,21 @@ int exec_line_with_output_handler (ExecState *s,
 {
     int err = 0;
 
-    oh.prn = s->prn;
-    oh.title = title;
+    if (output_handler_is_clear()) {
+	oh.prn = s->prn;
+	oh.title = title;
+    }
 
     err = gui_exec_line(s, dataset);
 
-    if (oh.vwin != NULL) {
+    if (oh.prn == s->prn && oh.vwin != NULL) {
 	*outwin = oh.vwin;
 	handle_flush_callback(1);
     }
 
-    clear_output_handler();
+    if (oh.prn == s->prn) {
+	clear_output_handler();
+    }
 
     return err;
 }

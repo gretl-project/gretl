@@ -131,10 +131,12 @@ enum {
 };
 
 static GretlToolItem series_items[] = {
-    { N_("Add..."), GTK_STOCK_ADD,    G_CALLBACK(sheet_show_popup),    SHEET_ADD_BTN },
-    { N_("Apply"),  GTK_STOCK_APPLY,  G_CALLBACK(get_data_from_sheet), SHEET_APPLY_BTN },
+    { N_("Add..."), GTK_STOCK_ADD,    G_CALLBACK(sheet_show_popup), 
+      SHEET_ADD_BTN },
+    { N_("Apply"),  GTK_STOCK_APPLY,  G_CALLBACK(get_data_from_sheet), 
+      SHEET_APPLY_BTN },
     { N_("Windows"), GRETL_STOCK_WINLIST, GNULL, 0 },
-    { N_("Close"),  GTK_STOCK_CLOSE,  G_CALLBACK(maybe_exit_sheet),    0 }
+    { N_("Close"),  GTK_STOCK_CLOSE,  G_CALLBACK(maybe_exit_sheet), 0 }
 };
 
 static GretlToolItem scalar_items[] = {

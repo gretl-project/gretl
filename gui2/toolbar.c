@@ -55,6 +55,7 @@
 #include "../pixmaps/mini.split_v.xpm"
 #include "../pixmaps/mini.winlist.xpm"
 #include "../pixmaps/mini.spreadsheet.xpm"
+#include "../pixmaps/mini.bundle.xpm"
 
 /* for main-window toolbar */
 #include "../pixmaps/mini.calc.xpm"
@@ -104,7 +105,8 @@ enum {
     NOTES_ITEM,
     STOP_ITEM,
     NEW_ITEM,
-    CLOSE_ITEM
+    CLOSE_ITEM,
+    BUNDLE_ITEM
 } viewbar_flags;
 
 struct stock_maker {
@@ -134,6 +136,7 @@ void gretl_stock_icons_init (void)
 	{ mini_split_v_xpm, GRETL_STOCK_SPLIT_V },
 	{ mini_winlist_xpm, GRETL_STOCK_WINLIST },
 	{ mini_spreadsheet_xpm, GRETL_STOCK_SHEET },
+	{ mini_bundle_xpm, GRETL_STOCK_BUNDLE },
 	{ mini_db_xpm, GRETL_STOCK_DB},
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
 	{ mini_table_xpm, GRETL_STOCK_TABLE},
@@ -640,6 +643,7 @@ static void vwin_cut_callback (GtkWidget *w, windata_t *vwin)
 }
 
 static GretlToolItem viewbar_items[] = {
+    { N_("Bundle..."), GRETL_STOCK_BUNDLE, NULL, BUNDLE_ITEM },
     { N_("New window"), GTK_STOCK_NEW, G_CALLBACK(toolbar_new_callback), NEW_ITEM },
     { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
     { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(vwin_save_callback), SAVE_ITEM },
@@ -732,9 +736,9 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
    context.
 */
 
-static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin, 
-				    int latex_ok, int sortby_ok,
-				    int format_ok, int save_ok)
+static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin, 
+					 int latex_ok, int sortby_ok,
+					 int format_ok, int save_ok)
 {
     GCallback func = item->func;
     int f = item->flag;
@@ -793,6 +797,8 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != EDIT_NOTES && f == NOTES_ITEM) {
 	return NULL;
+    } else if (r != VIEW_BUNDLE && f == BUNDLE_ITEM) {
+	return NULL; /* FIXME */
     } else if (f == SAVE_AS_ITEM) {
 	if (!save_as_ok(r)) {
 	    return NULL;
@@ -802,6 +808,17 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
     }
 
     return func;
+}
+
+static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
+{
+    GtkWidget *menu = NULL;
+
+    if (item->flag == BUNDLE_ITEM && vwin->role == VIEW_BUNDLE) {
+	menu = make_bundle_content_menu(vwin);
+    }
+
+    return menu;
 }
 
 GtkWidget *gretl_toolbar_new (void)
@@ -852,20 +869,42 @@ GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
     return GTK_WIDGET(item);
 }
 
+static void tool_item_popup (GtkWidget *src, GdkEvent *event, 
+			     GtkWidget *menu)
+{
+    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
+		   event->button.button, event->button.time);
+}
+
 static GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 				       GCallback func,
+				       GtkWidget *menu,
 				       windata_t *vwin,
 				       gint pos)
 {
     GtkToolItem *item;
 
-    item = gtk_tool_button_new_from_stock(tool->icon);
+    if (menu != NULL) {
+	GtkWidget *img, *button = gtk_button_new();
+
+	item = gtk_tool_item_new();
+	gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+	img = gtk_image_new_from_stock(tool->icon, GTK_ICON_SIZE_MENU);
+	gtk_container_add(GTK_CONTAINER(button), img);
+	gtk_container_add(GTK_CONTAINER(item), button);
+	g_signal_connect(G_OBJECT(button), "button-press-event", 
+			 G_CALLBACK(tool_item_popup), menu);
+    } else {
+	item = gtk_tool_button_new_from_stock(tool->icon);
+	g_signal_connect(G_OBJECT(item), "clicked", func, vwin);
+    }
+
     if (tool->flag == NEW_ITEM && window_is_tab(vwin)) {
 	gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("New tab"));
     } else {
 	gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
     }
-    g_signal_connect(G_OBJECT(item), "clicked", func, vwin);
+
     gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, pos);
 
     return GTK_WIDGET(item);
@@ -879,11 +918,15 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
     int save_ok = (flags & VIEWBAR_EDITABLE);
     GtkWidget *hpane = NULL, *vpane = NULL;
     GtkWidget *button;
+    GtkWidget *menu;
     GretlToolItem *item;
     GCallback func;
     int i;
  
     for (i=0; i<n_viewbar_items; i++) {
+	func = NULL;
+	menu = NULL;
+
 	item = &viewbar_items[i];
 
 	if (winlist_item(item)) {
@@ -891,9 +934,13 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    continue;
 	}
 
-	func = item_get_callback(item, vwin, latex_ok, sortby_ok,
-				 format_ok, save_ok);
-	if (func == NULL) {
+	if (item->func != NULL) {
+	    func = tool_item_get_callback(item, vwin, latex_ok, sortby_ok,
+					  format_ok, save_ok);
+	} else {
+	    menu = tool_item_get_menu(item, vwin);
+	}
+	if (func == NULL && menu == NULL) {
 	    continue;
 	}
 
@@ -901,7 +948,7 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    set_plot_icon(item, vwin->role);
 	}
 
-	button = vwin_toolbar_insert(item, func, vwin, -1);
+	button = vwin_toolbar_insert(item, func, menu, vwin, -1);
 
 	if (func == (GCallback) split_pane_callback) {
 	    if (hpane == NULL) {
@@ -1005,7 +1052,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
 		func = NULL;
 	    }
 	} else {
-	    func = item_get_callback(item, vwin, 0, 0, 0, 0);
+	    func = tool_item_get_callback(item, vwin, 0, 0, 0, 0);
 	}
 	if (func != G_CALLBACK(NULL)) {
 	    if (func == G_CALLBACK(text_paste)) {

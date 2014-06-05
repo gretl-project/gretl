@@ -1099,6 +1099,9 @@ void vwin_pack_toolbar (windata_t *vwin)
 	if (window_is_tab(vwin)) {
 	    /* here we're re-packing vwin->mbar: move it up top */
 	    gtk_box_reorder_child(GTK_BOX(vwin->vbox), hbox, 0);
+	} else if (vwin->text != NULL) {
+	    /* adding vwin->mbar "late" */
+	    gtk_box_reorder_child(GTK_BOX(vwin->vbox), hbox, 0);
 	}
 	gtk_widget_show_all(hbox);
     }

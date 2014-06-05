@@ -1802,6 +1802,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	}
 	gretl_object_ref(data, (role == SYSTEM)? GRETL_OBJ_SYS : GRETL_OBJ_VAR);
     } else if (role == VIEW_BUNDLE) {
+	/* FIXME: move to new-style toolbar */
 	vwin_add_ui(vwin, bundle_items, n_bundle_items, bundle_ui);
 	add_bundle_menu_items(vwin);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
@@ -1888,6 +1889,11 @@ windata_t *script_output_viewer_new (const char *title,
     windata_t *vwin;
     const char *buf;
 
+    /* @title is non-NULL only if we're coming from
+       "flush" as applied to the calling of a
+       packaged function (fncall.c)
+    */
+
     if (title != NULL) {
 	vwin = gretl_viewer_new_with_parent(NULL, 
 					    FNCALL_OUT, 
@@ -1908,7 +1914,9 @@ windata_t *script_output_viewer_new (const char *title,
 	return NULL;
     }
 
-    vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
+    if (title == NULL) {
+	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
+    }
     create_text(vwin, SCRIPT_WIDTH, 450, 0, FALSE);
     text_set_word_wrap(vwin->text, 0);
     text_table_setup(vwin->vbox, vwin->text);
@@ -4560,6 +4568,83 @@ static void add_bundled_item_to_menu (gpointer key,
     g_free(label);
 }
 
+static void add_bundled_item_to_menu_2 (gpointer key, 
+					gpointer value, 
+					gpointer data)
+{
+    GtkWidget *menu = data;
+    GtkAction *action;
+    GtkWidget *item;
+    gchar *label;
+    const char *typestr = "?";
+    const char *note;
+    char keystr[64];
+    GretlType type;
+    void *val;
+    int size = 0;
+
+    val = bundled_item_get_data((bundled_item *) value, &type, &size);
+    if (val == NULL) {
+	/* shouldn't be possible */
+	return;
+    }
+
+    if (type == GRETL_TYPE_STRING || type == GRETL_TYPE_MATRIX_REF) {
+	/* not very useful in GUI? */
+	return;
+    }
+
+    if (type == GRETL_TYPE_MATRIX) {
+	gretl_matrix *m = (gretl_matrix *) val;
+
+	if (gretl_is_null_matrix(m)) {
+	    return;
+	}
+    }
+
+    if (type == GRETL_TYPE_SERIES && size != dataset->n) {
+	type = GRETL_TYPE_MATRIX;
+    }
+
+    typestr = gretl_arg_type_name(type);
+    note = bundled_item_get_note((bundled_item *) value);
+    double_underscores(keystr, (gchar *) key);
+
+    if (note != NULL) {
+	label = g_strdup_printf("%s (%s: %s)", keystr, 
+				typestr, note);
+    } else {
+	label = g_strdup_printf("%s (%s)", keystr, typestr);
+    }
+
+    action = gtk_action_new(key, label, NULL, NULL);
+    g_signal_connect(G_OBJECT(action), "activate", 
+		     G_CALLBACK(save_bundled_item_call),
+		     g_object_get_data(G_OBJECT(menu), "vwin"));
+
+    item = gtk_action_create_menu_item(action); 
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+    g_free(label);
+}
+
+GtkWidget *make_bundle_content_menu (windata_t *vwin)
+{
+    gretl_bundle *bundle = vwin->data;
+    int n = gretl_bundle_get_n_keys(bundle);
+    GtkWidget *menu = NULL;
+
+    if (n > 0) {
+	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
+
+	menu = gtk_menu_new();
+	g_object_set_data(G_OBJECT(menu), "vwin", vwin);
+	g_hash_table_foreach(ht, add_bundled_item_to_menu_2, menu);
+    }
+
+    return menu;
+}
+
 static void add_bundle_menu_items (windata_t *vwin)
 {
     gretl_bundle *bundle = vwin->data;
@@ -4912,8 +4997,8 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
 
     item = gtk_menu_item_new_with_label(label);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-    g_signal_connect (G_OBJECT(item), "activate",
-		      G_CALLBACK(callback), data);
+    g_signal_connect(G_OBJECT(item), "activate",
+		     G_CALLBACK(callback), data);
     gtk_widget_show(item);
 }
 

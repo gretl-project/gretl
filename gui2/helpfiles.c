@@ -74,8 +74,7 @@ enum {
 static GretlToolItem help_tools[] = {
     { N_("Larger"), GTK_STOCK_ZOOM_IN, G_CALLBACK(text_larger), 0},
     { N_("Smaller"), GTK_STOCK_ZOOM_OUT, G_CALLBACK(text_smaller), 0},
-    { N_("Show English help"), GRETL_STOCK_EN, G_CALLBACK(en_help_callback), 
-      EN_ITEM },
+    { N_("Show English help"), GRETL_STOCK_EN, G_CALLBACK(en_help_callback), EN_ITEM },
     { N_("Windows"), GRETL_STOCK_WINLIST, GNULL, 0 },
     { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_help_viewer), 0 }
 };
