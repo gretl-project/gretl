@@ -875,17 +875,30 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str)
     gtk_widget_set_tooltip_text(w, str);
 }
 
-void vwin_toolbar_insert_winlist (windata_t *vwin)
+static GtkToolItem *gretl_menu_button (const char *icon,
+				       const char *tip,
+				       GtkWidget **pw)
 {
     GtkWidget *img, *button = gtk_button_new();
     GtkToolItem *item = gtk_tool_item_new();
 
-    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
+    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tip));
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, 
-				   GTK_ICON_SIZE_MENU);
+    img = gtk_image_new_from_stock(icon, GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_container_add(GTK_CONTAINER(item), button);
+    *pw = button;
+
+    return item;
+}
+
+void vwin_toolbar_insert_winlist (windata_t *vwin)
+{
+    GtkWidget *button;
+    GtkToolItem *item;
+
+    item = gretl_menu_button(GRETL_STOCK_WINLIST, N_("Windows"),
+			     &button);
     g_signal_connect(G_OBJECT(button), "button-press-event", 
 		     G_CALLBACK(vwin_winlist_popup), vwin);
     gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, -1);
@@ -923,24 +936,21 @@ static GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
     GtkToolItem *item;
 
     if (menu != NULL) {
-	GtkWidget *img, *button = gtk_button_new();
-
-	item = gtk_tool_item_new();
-	gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-	img = gtk_image_new_from_stock(tool->icon, GTK_ICON_SIZE_MENU);
-	gtk_container_add(GTK_CONTAINER(button), img);
-	gtk_container_add(GTK_CONTAINER(item), button);
+	/* make and insert a button that pops down a menu */
+	GtkWidget *button;
+	
+	item = gretl_menu_button(tool->icon, tool->tip, &button);
 	g_signal_connect(G_OBJECT(button), "button-press-event", 
 			 G_CALLBACK(tool_item_popup), menu);
     } else {
+	/* make and insert a regular callback button */
 	item = gtk_tool_button_new_from_stock(tool->icon);
 	g_signal_connect(G_OBJECT(item), "clicked", func, vwin);
-    }
-
-    if (tool->flag == NEW_ITEM && window_is_tab(vwin)) {
-	gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("New tab"));
-    } else {
-	gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
+	if (tool->flag == NEW_ITEM && window_is_tab(vwin)) {
+	    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("New tab"));
+	} else {
+	    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
+	}
     }
 
     gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, pos);
@@ -968,11 +978,16 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	item = &viewbar_items[i];
 
 	if (winlist_item(item)) {
+	    /* the window-list item is special */
 	    vwin_toolbar_insert_winlist(vwin);
 	    continue;
 	}
 
-	/* is there anything to hook up, in context */
+	/* Is there anything to hook up, in context? We
+	   try first for a menu to attach to the toolbar
+	   button; failing that we test for a "direct"
+	   callback function.
+	*/
 	menu = tool_item_get_menu(item, vwin);
 	if (menu == NULL && item->func != NULL) {
 	    func = tool_item_get_callback(item, vwin, latex_ok, sortby_ok,

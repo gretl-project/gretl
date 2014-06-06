@@ -1643,6 +1643,7 @@ static gchar *make_viewer_title (int role, const char *fname)
     case EDIT_PYTHON:
 	title = g_strdup(_("gretl: edit Python script")); break;
     case SCRIPT_OUT:
+    case FNCALL_OUT:
 	title = g_strdup(_("gretl: script output")); break;
     case VIEW_DATA:
 	title = g_strdup(_("gretl: display data")); break;
@@ -1849,30 +1850,25 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 				   role, data);
 }
 
-windata_t *script_output_viewer_new (const char *title,
-				     PRN *prn)
+/* hansl_output_viewer_new: here we're creating an output
+   window for use with the script "flush" mechanism; that
+   is, incremental display of script output.
+*/
+
+windata_t *hansl_output_viewer_new (PRN *prn, int mode,
+				    const char *title)
 {
     windata_t *vwin;
     const char *buf;
 
-    /* @title is non-NULL only if we're coming from
-       "flush" as applied to the calling of a
-       packaged function (fncall.c)
-    */
-
     if (title != NULL) {
-	vwin = gretl_viewer_new_with_parent(NULL, 
-					    FNCALL_OUT, 
-					    title, 
-					    NULL);
+	vwin = gretl_viewer_new_with_parent(NULL, mode,
+					    title, NULL);
     } else {
-	gchar *tmp;
+	gchar *tmp = make_viewer_title(mode, NULL);
 
-	tmp = make_viewer_title(SCRIPT_OUT, NULL);
-	vwin = gretl_viewer_new_with_parent(NULL, 
-					    SCRIPT_OUT, 
-					    tmp, 
-					    NULL);
+	vwin = gretl_viewer_new_with_parent(NULL, mode,
+					    tmp, NULL);
 	g_free(tmp);
     }
 
@@ -1880,7 +1876,8 @@ windata_t *script_output_viewer_new (const char *title,
 	return NULL;
     }
 
-    if (title == NULL) {
+    if (mode != FNCALL_OUT) {
+	/* in the FNCALL case we defer adding a "viewbar" */
 	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
     }
     create_text(vwin, SCRIPT_WIDTH, 450, 0, FALSE);

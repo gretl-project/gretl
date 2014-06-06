@@ -7233,13 +7233,20 @@ static void stop_button_set_sensitive (windata_t *vwin,
     }
 }
 
+/* struct to handle "flush" in the course of script execution: this
+   may occur when we're executing a (time consuming) script in the
+   "normal" way, or when the user calls a function from a function
+   package via the GUI
+*/
+
 struct output_handler {
-    windata_t *srcwin;
-    PRN *prn;
-    windata_t *vwin;
-    gulong handler_id;
-    gulong src_handler_id;
-    const char *title;
+    PRN *prn;              /* printer to which output is going */
+    windata_t *vwin;       /* output window */
+    windata_t *srcwin;     /* script window from which launched, or NULL */
+    gulong handler_id;     /* signal ID for @vwin */
+    gulong src_handler_id; /* signal ID for @srcwin, if present */
+    const char *title;     /* applies only when coming from fncall.c */
+    int mode;              /* either SCRIPT_OUT or FNCALL_OUT */
 };
 
 static struct output_handler oh;
@@ -7263,15 +7270,16 @@ static void clear_output_handler (void)
 	vwin_sensitize_close_button(oh.srcwin, TRUE);
     }
 
-    oh.srcwin = NULL;
     oh.prn = NULL;
     oh.vwin = NULL;
+    oh.srcwin = NULL;
     oh.handler_id = 0;
     oh.src_handler_id = 0;
     oh.title = NULL;
+    oh.mode = 0;
 }
 
-static int output_handler_is_clear (void)
+static int output_handler_is_free (void)
 {
     return oh.prn == NULL;
 }
@@ -7297,6 +7305,11 @@ static void output_handler_set_block_deletion (void)
 			 G_CALLBACK(block_deletion), 
 			 NULL);
 
+    if (oh.vwin->mbar != NULL) {
+	/* knock out any close button */
+	gtk_widget_set_sensitive(oh.vwin->mbar, FALSE);
+    }
+
     if (oh.srcwin != NULL) {
 	GtkWidget *srctop = vwin_toplevel(oh.srcwin);
 
@@ -7313,15 +7326,13 @@ static void output_handler_set_block_deletion (void)
 static void handle_flush_callback (int finalize)
 {
     if (oh.prn != NULL) {
-	/* we have an output printer in place */
+	/* we have a flushable printer in place */
 	if (oh.vwin == NULL) {
 	    /* no display window yet: make one */
-	    oh.vwin = script_output_viewer_new(oh.title, oh.prn);
+	    oh.vwin = hansl_output_viewer_new(oh.prn, oh.mode,
+					      oh.title);
 	    /* stop the user from closing the output window
 	       until we're done */
-	    if (oh.vwin->mbar != NULL) {
-		gtk_widget_set_sensitive(oh.vwin->mbar, FALSE);
-	    }
 	    output_handler_set_block_deletion();
 	    gretl_print_set_save_position(oh.prn);
 	    textview_add_processing_message(oh.vwin->text);
@@ -7375,9 +7386,10 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	if (kid != NULL) {
 	    suppress_logo = 1;
 	}
-    } else if (output_handler_is_clear()) {
+    } else if (output_handler_is_free()) {
+	oh.prn = prn;	
 	oh.srcwin = vwin;
-	oh.prn = prn;
+	oh.mode = SCRIPT_OUT;
     }
 
     hbox = gtk_widget_get_parent(vwin->mbar);
@@ -7428,9 +7440,10 @@ int exec_line_with_output_handler (ExecState *s,
 {
     int err = 0;
 
-    if (output_handler_is_clear()) {
+    if (output_handler_is_free()) {
 	oh.prn = s->prn;
 	oh.title = title;
+	oh.mode = FNCALL_OUT;
     }
 
     err = gui_exec_line(s, dataset);

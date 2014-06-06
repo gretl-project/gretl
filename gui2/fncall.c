@@ -1571,6 +1571,50 @@ static void set_genr_model_from_vwin (windata_t *vwin)
     set_genr_model(vwin->data, type);
 }
 
+/* Compose the command line that calls a packaged function with the
+   appropriate arguments, if any, and possible assignment of the
+   return value, if any.
+*/
+
+static void compose_fncall_line (char *line, 
+				 call_info *cinfo,
+				 const char *funname,
+				 char **tmpname,
+				 int *grab_bundle)
+{
+    *line = '\0';
+    
+    if (cinfo->ret != NULL) {
+	strcat(line, cinfo->ret);
+	strcat(line, " = ");
+    } else if (cinfo->rettype == GRETL_TYPE_BUNDLE) {
+	/* the function offers a bundle return but this has not been
+	   assigned by the user; make a special arrangement to grab
+	   the bundle for GUI purposes
+	*/
+	*tmpname = temp_name_for_bundle();
+	strcat(line, *tmpname);
+	strcat(line, " = ");
+	*grab_bundle = 1;
+    }	
+
+    strcat(line, funname);
+    strcat(line, "(");
+
+    if (cinfo->args != NULL) {
+	int i;
+
+	for (i=0; i<cinfo->n_params; i++) {
+	    strcat(line, cinfo->args[i]);
+	    if (i < cinfo->n_params - 1) {
+		strcat(line, ", ");
+	    }
+	}
+    }
+
+    strcat(line, ")");
+}
+
 static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 {
     windata_t *outwin = NULL;
@@ -1584,40 +1628,13 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     int grab_bundle = 0;
     int show = 1;
     int orig_v = dataset->v;
-    int i, err = 0;
+    int err = 0;
 
     funname = user_function_name_by_index(cinfo->iface);
     title = cinfo->label != NULL ? cinfo->label : funname;
-    *fnline = 0;
 
-    /* compose the function command-line */
-
-    if (cinfo->ret != NULL) {
-	strcat(fnline, cinfo->ret);
-	strcat(fnline, " = ");
-    } else if (cinfo->rettype == GRETL_TYPE_BUNDLE) {
-	/* make a special arrangement to grab the returned
-	   bundle for GUI purposes 
-	*/
-	tmpname = temp_name_for_bundle();
-	strcat(fnline, tmpname);
-	strcat(fnline, " = ");
-	grab_bundle = 1;
-    }	
-
-    strcat(fnline, funname);
-    strcat(fnline, "(");
-
-    if (cinfo->args != NULL) {
-	for (i=0; i<cinfo->n_params; i++) {
-	    strcat(fnline, cinfo->args[i]);
-	    if (i < cinfo->n_params - 1) {
-		strcat(fnline, ", ");
-	    }
-	}
-    }
-
-    strcat(fnline, ")");
+    compose_fncall_line(fnline, cinfo, funname,
+			&tmpname, &grab_bundle);
 
     if (!grab_bundle && strncmp(funname, "GUI", 3)) {
 	pprintf(prn, "? %s\n", fnline);
@@ -1650,6 +1667,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	err = exec_line_with_output_handler(&state, dataset,
 					    title, &outwin);
     } else {
+	/* execute invisibly */
 	err = gui_exec_line(&state, dataset);
     }
 
@@ -1660,8 +1678,6 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     if (cinfo->flags & MODEL_CALL) {
 	unset_genr_model();
     }
-
-    /* destroy any "ARG" vars or matrices that were created? */
 
     if (!err && cinfo->rettype == GRETL_TYPE_BUNDLE) {
 	if (grab_bundle) {
@@ -1697,7 +1713,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     if (!err && !show) {
 	gretl_print_destroy(prn);
     } else if (outwin == NULL) {
-	/* output window not already shown */
+	/* output window not already in place */
 	view_buffer(prn, 80, 400, title, 
 		    (bundle == NULL)? PRINT : VIEW_BUNDLE,
 		    bundle);
@@ -1708,6 +1724,8 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	    outwin->role = VIEW_BUNDLE;
 	    outwin->data = bundle;
 	}
+	/* in this case the output window will not
+	   yet have a toolbar: we add one now */
 	vwin_add_viewbar(outwin, VIEWBAR_HAS_TEXT);
     }
 

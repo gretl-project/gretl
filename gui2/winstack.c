@@ -1160,6 +1160,12 @@ void gretl_viewer_set_title (windata_t *vwin, const char *title)
     }
 }
 
+/* When we add popup menus as callbacks for buttons on @vwin's
+   toolbar, we want to record pointers to them so we're
+   able to destroy them when @vwin is closed, otherwise
+   we'd be leaking memory.
+*/
+
 void vwin_record_toolbar_popup (windata_t *vwin, GtkWidget *menu)
 {
     GList *plist;
