@@ -48,6 +48,12 @@
 #include <errno.h>
 #include <gmp.h>
 
+/* not ready yet */
+#if 0 /* !defined(WIN32) && !defined(OS_OSX) */
+# define DETECT_BLAS 1
+int detect_blas_variant (void);
+#endif
+
 static void gretl_tests_cleanup (void);
 
 /**
@@ -2338,3 +2344,121 @@ int check_for_program (const char *prog)
 }
 
 #endif /* WIN32 or not */
+
+#ifdef DETECT_BLAS
+
+static int real_detect_blas (const char *s)
+{
+    char found[5] = "nnnn";
+    char line[512];
+    int i = 0;
+    int ret = 0;
+
+    *line = '\0';
+
+    while (*s) {
+	if (*s == '\n') {
+	    line[i] = '\0';
+	    if (strstr(line, "libmkl")) {
+		found[3] = 'y';
+	    } else if (strstr(line, "openblas") ||
+		strstr(line, "OpenBLAS")) {
+		found[2] = 'y';
+	    } else if (strstr(line, "atlas")) {
+		found[1] = 'y';
+	    } else if (strstr(line, "libblas")) {
+		found[0] = 'y';
+	    }
+	    *line = '\0';
+	    i = 0;
+	} else {
+	    line[i++] = *s;
+	}
+	s++;
+    }
+
+    fprintf(stderr, "detect blas: ");
+
+    if (strcmp(found, "nnny") == 0) {
+	fprintf(stderr, "MKL");
+	ret = 4;
+    } else if (strcmp(found, "nnyn") == 0) {
+	fprintf(stderr, "OpenBLAS");
+	ret = 3;
+    } else if (strcmp(found, "nynn") == 0) {
+	fprintf(stderr, "ATLAS");
+	ret = 2;
+    } else if (strcmp(found, "ynnn") == 0) {
+	fprintf(stderr, "Netlib");
+	ret = 1;
+    } else if (strcmp(found, "nnnn") == 0) {
+	fprintf(stderr, "found no relevant libs!\n");
+    } else {
+	fprintf(stderr, "confused, found too many libs!\n");
+    }
+
+    return ret;
+}
+
+static gchar *gretlcli_path (void)
+{
+    gchar *tmp = g_strdup(gretl_home());
+    gchar *p = strstr(tmp, "/share/gretl");
+    gchar *ret;
+
+    if (p != NULL) {
+	*p = '\0';
+	ret = g_strdup_printf("%s/bin/gretlcli", tmp);
+    } else {
+	ret = g_strdup("gretlcli");
+    }
+
+    g_free(tmp);
+
+    return ret;
+}
+
+/* this can't be called from libgretl_init() because that's too early
+   for path information to be available; we need to find somewhere
+   else to call it
+*/
+
+int detect_blas_variant (void)
+{
+    gchar *argv[3];
+    gchar *prog;
+    gchar *sout = NULL;
+    gchar *errout = NULL;
+    gint status = 0;
+    GError *gerr = NULL;
+    int variant = 0;
+
+    prog = gretlcli_path();
+
+    argv[0] = "ldd";
+    argv[1] = prog;
+    argv[2] = NULL;
+
+    g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
+		 NULL, NULL, &sout, &errout,
+		 &status, &gerr);
+
+    if (gerr != NULL) {
+	fprintf(stderr, "%s\n", gerr->message); 
+	g_error_free(gerr);
+    } else if (status != 0) {
+	fprintf(stderr, "%s exited with status %d\n", argv[0], status);
+    } else if (sout != NULL) {
+	variant = real_detect_blas(sout);
+    } else {
+	fprintf(stderr, "%s: %s\n", argv[0], "Got no output");
+    }
+
+    g_free(sout);
+    g_free(errout);
+    g_free(prog);
+
+    return variant;
+}
+
+#endif /* DETECT_BLAS (not for Windows or Mac) */
