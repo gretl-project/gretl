@@ -699,24 +699,43 @@ static int make_weekday_mask (const DATASET *dset, char *mask)
 }
 
 /* write into @mask: 0 for observations at which _all_ variables
-   have missing values (ignoring "time" and "index"), 1 for
-   all other observations (that have at least one non-NA).
+   (or all variables in @list, if @list is non-NULL) have missing 
+   values, 1 for all other observations (that have at least one 
+   non-NA). (Refinement: if no list is given, we ignore the generic
+   variables "time" and "index".)
 */
 
-static int make_empty_mask (const DATASET *dset, char *mask)
+static int 
+make_empty_mask (const int *list, const DATASET *dset, char *mask)
 {
-    int vt = current_series_index(dset, "time");
-    int vi = current_series_index(dset, "index");
-    int i, t;
+    int i, vi, t, vt;
 
-    for (t=0; t<dset->n; t++) {
-	mask[t] = 0;
-	for (i=1; i<dset->v; i++) {
-	    if (!series_is_hidden(dset, i) &&
-		i != vt && i != vi &&
-		!na(dset->Z[i][t])) {
-		mask[t] = 1;
-		break;
+    if (list != NULL && list[0] > 0) {
+	/* check specified list of variables */
+	for (t=0; t<dset->n; t++) {
+	    mask[t] = 0;
+	    for (i=1; i<=list[0]; i++) {
+		vi = list[i];
+		if (!na(dset->Z[vi][t])) {
+		    mask[t] = 1;
+		    break;
+		}
+	    }
+	}
+    } else {
+	/* check (almost) all variables */
+	vt = current_series_index(dset, "time");
+	vi = current_series_index(dset, "index");
+
+	for (t=0; t<dset->n; t++) {
+	    mask[t] = 0;
+	    for (i=1; i<dset->v; i++) {
+		if (!series_is_hidden(dset, i) &&
+		    i != vt && i != vi &&
+		    !na(dset->Z[i][t])) {
+		    mask[t] = 1;
+		    break;
+		}
 	    }
 	}
     }
@@ -1410,7 +1429,7 @@ make_restriction_mask (int mode, const char *s,
     if (mode == SUBSAMPLE_DROP_MISSING) { 
 	err = make_missing_mask(list, dset, mask);
     } else if (mode == SUBSAMPLE_DROP_EMPTY) {
-	err = make_empty_mask(dset, mask);
+	err = make_empty_mask(list, dset, mask);
     } else if (mode == SUBSAMPLE_DROP_WKENDS) {
 	err = make_weekday_mask(dset, mask);
     } else if (mode == SUBSAMPLE_RANDOM) {
