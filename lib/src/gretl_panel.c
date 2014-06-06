@@ -2002,7 +2002,13 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
     }
 
     if (pan->opt & OPT_U) {
+	double r;
+
 	pmod->sigma = sqrt(pmod->ess / (re_n - (pmod->ncoeff - 1)));
+	r = gretl_corr(pmod->t1, pmod->t2, y, yhat, NULL);
+	if (!na(r)) {
+	    gretl_model_set_double(pmod, "corr-rsq", r * r);
+	}
     }
 
     pmod->full_n = n;

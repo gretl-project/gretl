@@ -635,6 +635,7 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
     double ws2 = gretl_model_get_double(pmod, "within-variance");
     double bs2 = gretl_model_get_double(pmod, "between-variance");
     double theta = gretl_model_get_double(pmod, "gls-theta");
+    double rsq = gretl_model_get_double(pmod, "corr-rsq");
 
     if (na(ws2) || na(bs2)) {
 	return;
@@ -647,6 +648,9 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s = %g\n", _("'Between' variance"), bs2);
 	if (!na(theta)) {
 	    pprintf(prn, "%s = %g\n", _("theta used for quasi-demeaning"), theta);
+	}
+	if (!na(rsq)) {
+	    pprintf(prn, "corr(y,yhat)^2 = %g\n", rsq);
 	}
 	pputc(prn, '\n');
     } else if (tex_format(prn)) {
