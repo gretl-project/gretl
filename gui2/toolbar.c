@@ -920,10 +920,28 @@ GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
     return GTK_WIDGET(item);
 }
 
-static void tool_item_popup (GtkWidget *src, GdkEvent *event, 
+static void button_menu_pos (GtkMenu *menu,
+			     gint *x,
+			     gint *y,
+			     gboolean *push_in,
+			     gpointer data)
+{
+    GtkWidget *button = data;
+    gint wx, wy, tx, ty;
+
+    gdk_window_get_origin(gtk_widget_get_window(button), &wx, &wy);
+    gtk_widget_translate_coordinates(button, gtk_widget_get_toplevel(button), 
+				     0, 0, &tx, &ty);
+    *x = wx + tx;
+    *y = wy + ty + 26;
+    *push_in = TRUE;
+}
+
+static void tool_item_popup (GtkWidget *button, GdkEvent *event, 
 			     GtkWidget *menu)
 {
-    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
+    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, 
+		   button_menu_pos, button,
 		   event->button.button, event->button.time);
 }
 
