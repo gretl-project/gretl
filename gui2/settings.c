@@ -1868,7 +1868,7 @@ static int common_read_rc_setup (void)
     set_panel_hccme(hc_panel);
     set_garch_robust_vcv(hc_garch);
 
-    err = gretl_set_paths(&paths);
+    err = gretl_set_paths(&paths, 0);
     if (err) {
 	/* tell the user, then turn off the special alarm */
 	gui_errmsg(err);
