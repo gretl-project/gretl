@@ -48,10 +48,12 @@
 #include <errno.h>
 #include <gmp.h>
 
-/* not ready yet */
-#if 0 /* !defined(WIN32) && !defined(OS_OSX) */
+/* not quite ready yet */
+#if 0
+#if !defined(WIN32) && !defined(OS_OSX)
 # define DETECT_BLAS 1
 int detect_blas_variant (void);
+#endif
 #endif
 
 static void gretl_tests_cleanup (void);
@@ -1876,6 +1878,9 @@ void libgretl_init (void)
     gretl_xml_init();
     gretl_stopwatch_init();
     mpf_set_default_prec(get_mp_bits());
+#ifdef DETECT_BLAS
+    detect_blas_variant();
+#endif
 }
 
 #ifdef HAVE_MPI
@@ -2377,51 +2382,28 @@ static int real_detect_blas (const char *s)
 	s++;
     }
 
-    fprintf(stderr, "detect blas: ");
+    fputs("detect blas: ", stderr);
 
     if (strcmp(found, "nnny") == 0) {
-	fprintf(stderr, "MKL");
+	fputs("MKL\n", stderr);
 	ret = 4;
     } else if (strcmp(found, "nnyn") == 0) {
-	fprintf(stderr, "OpenBLAS");
+	fputs("OpenBLAS\n", stderr);
 	ret = 3;
     } else if (strcmp(found, "nynn") == 0) {
-	fprintf(stderr, "ATLAS");
+	fputs("ATLAS\n", stderr);
 	ret = 2;
     } else if (strcmp(found, "ynnn") == 0) {
-	fprintf(stderr, "Netlib");
+	fputs("Netlib\n", stderr);
 	ret = 1;
     } else if (strcmp(found, "nnnn") == 0) {
-	fprintf(stderr, "found no relevant libs!\n");
+	fputs("found no relevant libs!\n", stderr);
     } else {
-	fprintf(stderr, "confused, found too many libs!\n");
+	fputs("confused, found too many libs!\n", stderr);
     }
 
     return ret;
 }
-
-static gchar *gretlcli_path (void)
-{
-    gchar *tmp = g_strdup(gretl_home());
-    gchar *p = strstr(tmp, "/share/gretl");
-    gchar *ret;
-
-    if (p != NULL) {
-	*p = '\0';
-	ret = g_strdup_printf("%s/bin/gretlcli", tmp);
-    } else {
-	ret = g_strdup("gretlcli");
-    }
-
-    g_free(tmp);
-
-    return ret;
-}
-
-/* this can't be called from libgretl_init() because that's too early
-   for path information to be available; we need to find somewhere
-   else to call it
-*/
 
 int detect_blas_variant (void)
 {
@@ -2433,7 +2415,7 @@ int detect_blas_variant (void)
     GError *gerr = NULL;
     int variant = 0;
 
-    prog = gretlcli_path();
+    prog = g_strdup(GRETL_PREFIX "/bin/gretlcli");
 
     argv[0] = "ldd";
     argv[1] = prog;
