@@ -67,6 +67,7 @@ struct ConfigPaths_ {
     char mpi_hosts[MAXLEN];
     char dbhost[64];
     char pngfont[128];
+    int no_dotdir;
 };
 
 void set_string_table_written (void);
@@ -132,7 +133,7 @@ int has_system_prefix (const char *fname, SearchType stype);
 
 void show_paths (void);
 
-int gretl_set_paths (ConfigPaths *paths, int no_dotdir);
+int gretl_set_paths (ConfigPaths *paths);
 
 int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt);
 
@@ -210,8 +211,7 @@ void gretl_set_current_dir (const char *s);
 void set_gretl_png_font (const char *s);
 
 void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
-				 char *dbproxy, int *use_proxy,
-				 int *no_dotdir);
+				 char *dbproxy, int *use_proxy);
 
 #ifdef WIN32
 

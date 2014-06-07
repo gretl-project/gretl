@@ -3061,13 +3061,14 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
    (and only then).  Subsequent updates to paths via the GUI (if any) 
    are handled by the function gretl_update_paths().
 
-   The @no_dotdir parameter is used only when gretlcli is operating in
-   "slave" mode (e.g. under a webserver). It forces gretl to use
-   paths.workdir as the "dotdir" rather than using a directory under
-   the executing user's HOME.  See http://gretl.sourceforge.net/slave/
+   The no_dotdir member of cpaths is used only when gretlcli is
+   operating in "slave" mode (e.g. under a webserver). It forces gretl
+   to use paths.workdir as the "dotdir" rather than using a directory
+   under the executing user's HOME.  See
+   http://gretl.sourceforge.net/slave/
 */
 
-int gretl_set_paths (ConfigPaths *cpaths, int no_dotdir)
+int gretl_set_paths (ConfigPaths *cpaths)
 {
     int err0 = 0, err1 = 0;
     int retval = 0;
@@ -3078,13 +3079,13 @@ int gretl_set_paths (ConfigPaths *cpaths, int no_dotdir)
 
     initialize_gretldir(cpaths->gretldir, OPT_NONE);
 
-    if (!no_dotdir) {
+    if (!cpaths->no_dotdir) {
 	err0 = initialize_dotdir();
     }
 
     copy_paths_with_fallback(cpaths);
 
-    if (no_dotdir) {
+    if (cpaths->no_dotdir) {
 	strcpy(paths.dotdir, paths.workdir);
     }    
 
@@ -3382,8 +3383,7 @@ static void handle_use_cwd (int use_cwd, ConfigPaths *cpaths)
 #define PROXLEN 64
 
 void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
-				 char *dbproxy, int *use_proxy,
-				 int *no_dotdir)
+				 char *dbproxy, int *use_proxy)
 {
     char line[MAXLEN], key[32], val[MAXLEN];
 
@@ -3411,7 +3411,7 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 	} else if (!strcmp(key, "userdir")) {
 	    strncat(cpaths->workdir, val, MAXLEN - 1);
 	} else if (!strcmp(key, "no_dotdir")) {
-	    *no_dotdir = rc_bool(val);
+	    cpaths->no_dotdir = rc_bool(val);
 	} else if (!strcmp(key, "shellok")) {
 	    libset_set_bool(SHELL_OK, rc_bool(val));
 	} else if (!strcmp(key, "usecwd")) {
@@ -3496,7 +3496,6 @@ int cli_read_rc (void)
     char rcfile[FILENAME_MAX];
     char dbproxy[PROXLEN] = {0};
     int use_proxy = 0;
-    int no_dotdir = 0;
     FILE *fp;
     int err = 0;
 
@@ -3506,15 +3505,14 @@ int cli_read_rc (void)
     if (fp == NULL) {
 	err = E_FOPEN;
     } else {
-	get_gretl_config_from_file(fp, &cpaths, dbproxy, &use_proxy,
-				   &no_dotdir);
+	get_gretl_config_from_file(fp, &cpaths, dbproxy, &use_proxy);
 	fclose(fp);
     }
 
     if (err) {
-	gretl_set_paths(&cpaths, no_dotdir);
+	gretl_set_paths(&cpaths);
     } else {
-	err = gretl_set_paths(&cpaths, no_dotdir);
+	err = gretl_set_paths(&cpaths);
     }
 
 #ifdef USE_CURL
