@@ -994,9 +994,11 @@ void textview_delete_processing_message (GtkWidget *view)
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
     mark = gtk_text_buffer_get_mark(tbuf, "procmark");
-    gtk_text_buffer_get_iter_at_mark(tbuf, &i0, mark);
-    gtk_text_buffer_get_end_iter(tbuf, &i1);
-    gtk_text_buffer_delete(tbuf, &i0, &i1);
+    if (mark != NULL) {
+	gtk_text_buffer_get_iter_at_mark(tbuf, &i0, mark);
+	gtk_text_buffer_get_end_iter(tbuf, &i1);
+	gtk_text_buffer_delete(tbuf, &i0, &i1);
+    }
 }
 
 void textview_add_processing_message (GtkWidget *view)

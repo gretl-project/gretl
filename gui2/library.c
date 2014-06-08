@@ -7182,9 +7182,11 @@ int waiting_for_output (void)
 
 void start_wait_for_output (GtkWidget *w, gboolean big)
 {
-    GtkWidget *spinner = g_object_get_data(G_OBJECT(w), "spinner");
+    GtkWidget *spinner;
 
     g_return_if_fail(GTK_IS_BOX(w));
+
+    spinner = g_object_get_data(G_OBJECT(w), "spinner");
 
     if (spinner == NULL) {
 	spinner = gtk_spinner_new();

@@ -1667,7 +1667,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	err = exec_line_with_output_handler(&state, dataset,
 					    title, &outwin);
     } else {
-	/* execute invisibly */
+	/* execute "invisibly" */
 	err = gui_exec_line(&state, dataset);
     }
 
