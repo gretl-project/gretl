@@ -84,6 +84,10 @@ double win32_sscan_nonfinite (const char *s, int *err);
 
 void win32_fprint_nonfinite (double x, FILE *fp);
 
+void win32_stopwatch_init (void);
+
+double win32_stopwatch (void);
+
 #endif /* WIN32 */
 
 #endif /* GRETL_WIN32_H */

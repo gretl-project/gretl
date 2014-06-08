@@ -1512,3 +1512,26 @@ void win32_fprint_nonfinite (double x, FILE *fp)
     }
 }
 
+static LARGE_INTEGER timer_freq;
+static LARGE_INTEGER wt0;
+
+void win32_stopwatch_init (void)
+{
+    QueryPerformanceFrequency(&timer_freq);
+    QueryPerformanceCounter(&wt0);
+}
+
+double win32_stopwatch (void)
+{
+    LARGE_INTEGER wt1, wdt;
+    gint64 gdt;
+
+    QueryPerformanceCounter(&wt1);
+    gdt = wt1.QuadPart - wt0.QuadPart;
+    gdt *= 1000000;
+    gdt /= timer_freq.QuadPart;
+    wt0 = wt1;
+
+    return 1.0e6 * (double) gdt;
+} 
+
