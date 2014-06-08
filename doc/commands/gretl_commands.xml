@@ -10926,6 +10926,7 @@
 	<altform><lit>smpl</lit> <repl>dumvar</repl> <lit>--dummy</lit></altform>
 	<altform><lit>smpl</lit> <repl>condition</repl> <lit>--restrict</lit></altform>
 	<altform><lit>smpl</lit> <lit>--no-missing [ </lit><repl>varlist</repl> <lit>]</lit></altform>
+	<altform><lit>smpl</lit> <lit>--no-all-missing [ </lit><repl>varlist</repl> <lit>]</lit></altform>
 	<altform><lit>smpl</lit> <lit>--contiguous [ </lit><repl>varlist</repl> <lit>]</lit></altform>
 	<altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
 	<altform><lit>smpl full</lit></altform>
@@ -10980,37 +10981,36 @@
 
     <description>
       <para>
-	Resets the sample range.  The new range can be defined in several
-	ways.  In the first alternate form (and the first two examples) above,
-	<repl>startobs</repl> and <repl>endobs</repl> must be consistent with
-	the periodicity of the data.  Either one may be replaced by a
-	semicolon to leave the value unchanged.  In the second form, the
-	integers <repl>i</repl> and <repl>j</repl> (which may be positive or
-	negative, and should be signed) are taken as offsets relative to the
-	existing sample range. In the third form <repl>dummyvar</repl> must be
-	an indicator variable with values 0 or 1 at each observation; the
-	sample will be restricted to observations where the value is 1. The
-	fourth form, using <opt>--restrict</opt>, restricts the sample to
-	observations that satisfy the given Boolean condition (which is
-	specified according to the syntax of the <cmdref targ="genr"/>
-	command).
+	Resets the sample range.  The new range can be defined in
+	several ways.  In the first alternate form (and the first two
+	examples) above, <repl>startobs</repl> and <repl>endobs</repl>
+	must be consistent with the periodicity of the data.  Either
+	one may be replaced by a semicolon to leave the value
+	unchanged.  In the second form, the integers <repl>i</repl>
+	and <repl>j</repl> (which may be positive or negative, and
+	should be signed) are taken as offsets relative to the
+	existing sample range. In the third form <repl>dummyvar</repl>
+	must be an indicator variable with values 0 or 1 at each
+	observation; the sample will be restricted to observations
+	where the value is 1. The fourth form, using
+	<opt>--restrict</opt>, restricts the sample to observations
+	that satisfy the given Boolean condition (which is specified
+	according to the syntax of the <cmdref targ="genr"/> command).
       </para>
 
       <para>
-	With the <opt>--no-missing</opt> form, if <repl>varlist</repl> is
-	specified observations are selected on condition that all variables in
-	<repl>varlist</repl> have valid values at that observation; otherwise,
-	if no <repl>varlist</repl> is given, observations are selected on
-	condition that <emphasis>all</emphasis> variables have valid
-	(non-missing) values.
-      </para>
-
-      <para>
-	With the <opt>--no-all-missing</opt> variant, observations are
-	selected on condition that at least one variable has a valid
-	(non-missing) value at that observation, or in other words
-	observations are discarded only if all variables have missing
-	values.
+	The options <opt>--no-missing</opt> and
+	<opt>--no-all-missing</opt> may be used to exclude from the
+	sample observations for which data are missing. The first
+	variant excludes those rows in the dataset for which at least
+	one variable has a missing value, while the second excludes
+	just those rows on which <emphasis>all</emphasis> variables
+	have missing values. In each case the test is confined to the
+	variables in <repl>varlist</repl> if this argument is given,
+	otherwise it is applied to all series&mdash;with the
+	qualification that in the case of <opt>--no-all-missing</opt>
+	and no <repl>varlist</repl>, the generic variables
+	<lit>index</lit> and <lit>time</lit> are ignored.
       </para>
 
       <para>

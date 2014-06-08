@@ -3760,10 +3760,12 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
 
     ed->gui_nlines = ed->gui_nlabels = ed->gui_narrows = 0;
 
-    if (allocate_line_widgets(ed, spec->n_lines)) {
-	plot_editor_destroy(ed);
-	return NULL;
-    }    
+    if (spec->code != PLOT_STACKED_BAR) {
+	if (allocate_line_widgets(ed, spec->n_lines)) {
+	    plot_editor_destroy(ed);
+	    return NULL;
+	}
+    }   
 
     if (allocate_label_widgets(ed, spec->n_labels)) {
 	plot_editor_destroy(ed);
@@ -3839,7 +3841,7 @@ GtkWidget *plot_add_editor (png_plot *plot)
 	gpt_tab_XY(editor, spec, 2);
     }
 
-    if (spec->lines != NULL) {
+    if (spec->lines != NULL && spec->code != PLOT_STACKED_BAR) {
 	gpt_tab_lines(editor, spec, 0);
     }
 

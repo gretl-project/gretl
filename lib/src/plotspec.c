@@ -1307,8 +1307,14 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    }
 	}
 
+	if (spec->code == PLOT_STACKED_BAR) {
+	    /* stacked-bar histogram: special case */
+	    fprintf(fp, "'-' using 2 title \"%s\"", line->title);
+	    goto end_print_line;
+	}
+
 	if (na(line->scale)) {
-	    fprintf(fp, "%s ", line->formula); 
+	    fprintf(fp, "%s ", line->formula);
 	} else if (line->scale == 1.0) {
 	    fputs("'-' using 1", fp);
 	    if (line->ncols == 5) {
@@ -1374,6 +1380,8 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	if (line->whiskwidth > 0) {
 	    fprintf(fp, " whiskerbars %g", line->whiskwidth);
 	}
+
+    end_print_line:
 
 	if (more_lines(spec, i, skipline)) {
 	    fputs(", \\", fp);

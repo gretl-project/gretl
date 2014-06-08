@@ -1318,7 +1318,8 @@ static int get_gpt_marker (const char *line, char *label,
                         p == PLOT_MULTI_SCATTER || \
                         p == PLOT_PANEL || \
                         p == PLOT_TRI_GRAPH || \
-                        p == PLOT_BI_GRAPH)
+                        p == PLOT_BI_GRAPH || \
+			p == PLOT_STACKED_BAR)
 
 static int get_gpt_data (GPT_SPEC *spec, int datacols, int do_markers, 
 			 const char *buf)

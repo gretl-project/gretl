@@ -3576,8 +3576,6 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
 
     gtk_widget_show_all(dlg);
 
-    
-
     if (resp < 0) {
 	/* cancelled */
 	*horizon = 0;

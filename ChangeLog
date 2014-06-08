@@ -5,7 +5,8 @@ version 1.9.91, in progress
 - Add command "flush" for use with time-consuming scripts and
   hansl functions
 - "smpl" command: add a --permanent option to make a sample
-  restriction permanent (not undoable)
+  restriction permanent (not undoable); also add an option
+  --no-all-missing to complement --no-missing
 - "data" command: support globbing for names of series to fetch
   from gretl native databases
 - ghk() function: add an optional trailing argument to receive

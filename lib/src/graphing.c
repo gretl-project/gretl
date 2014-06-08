@@ -128,6 +128,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_QQ,             "QQ plot" },
     { PLOT_USER,           "user-defined plot" },
     { PLOT_XCORRELOGRAM,   "cross-correlogram" },
+    { PLOT_STACKED_BAR,    "stacked-bars" },
     { PLOT_TYPE_MAX,       NULL }
 };
 
@@ -5847,6 +5848,7 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
     gretl_matrix *V;
     gchar *title;
     int i, t, v, histo;
+    PlotType ptype;
     int err = 0;
 
     V = gretl_VAR_get_FEVD_matrix(var, targ, periods, dset, &err);
@@ -5854,13 +5856,14 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
 	return E_ALLOC;
     }
 
-    fp = open_plot_input_file(PLOT_REGULAR, &err);
+    histo = (opt & OPT_H)? 1 : 0;
+    ptype = histo ? PLOT_STACKED_BAR : PLOT_REGULAR;
+
+    fp = open_plot_input_file(ptype, &err);
     if (err) {
 	gretl_matrix_free(V);
 	return err;
     }
-
-    histo = (opt & OPT_H)? 1 : 0;
 
     v = gretl_VAR_get_variable_number(var, targ);
 
@@ -5872,6 +5875,7 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
 
     if (histo) {
 	fputs("set key outside\n", fp);
+	fputs("# literal lines = 3\n", fp);
 	fputs("set style fill solid 0.35\n", fp);
 	fputs("set style histogram rowstacked\n", fp);
 	fputs("set style data histogram\n", fp);
@@ -5887,9 +5891,9 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
     for (i=0; i<var->neqns; i++) {
 	v = gretl_VAR_get_variable_number(var, i);
 	if (histo) {
-	    fprintf(fp, "'-' using 2 title '%s'", dset->varname[v]);
+	    fprintf(fp, "'-' using 2 title \"%s\"", dset->varname[v]);
 	} else {
-	    fprintf(fp, "'-' using 1:2 title '%s' w lines", dset->varname[v]);
+	    fprintf(fp, "'-' using 1:2 title \"%s\" w lines", dset->varname[v]);
 	}
 	if (i < var->neqns - 1) {
 	    fputs(", \\\n", fp);
