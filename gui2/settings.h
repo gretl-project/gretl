@@ -39,6 +39,10 @@ void set_session_prompt (int val);
 
 int get_keep_folder (void);
 
+void set_script_output_policy (int p, windata_t *vwin);
+
+int get_script_output_policy (void);
+
 int write_rc (void);
 
 void dump_rc (void);

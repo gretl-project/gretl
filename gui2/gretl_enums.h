@@ -279,4 +279,10 @@ enum auto_dummies {
     PANEL_TIME_DUMMIES
 };
 
+enum script_output_policies {
+    OUTPUT_NEW_WINDOW,
+    OUTPUT_REPLACE,
+    OUTPUT_APPEND
+};
+
 #endif /* GRETL_ENUMS_H */

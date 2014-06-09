@@ -7186,9 +7186,10 @@ int waiting_for_output (void)
 */
 
 struct output_handler {
-    PRN *prn;              /* printer to which output is going */
-    windata_t *vwin;       /* output window */
-    gulong handler_id;     /* signal ID for @vwin */
+    PRN *prn;            /* printer to which output is going */
+    windata_t *vwin;     /* output window */
+    gulong handler_id;   /* signal ID for @vwin */
+    int stopped;         /* flag for premature termination */
 };
 
 static struct output_handler oh;
@@ -7240,6 +7241,7 @@ static void clear_output_handler (void)
     oh.prn = NULL;
     oh.vwin = NULL;
     oh.handler_id = 0;
+    oh.stopped = 0;
 }
 
 static int output_handler_is_free (void)
@@ -7329,15 +7331,46 @@ void finalize_script_output_window (int role, gpointer data)
 {
     if (oh.vwin != NULL) {
 	handle_flush_callback(1);
-	if (role > 0) {
-	    oh.vwin->role = role;
+	if (oh.stopped) {
+	    gtk_widget_destroy(oh.vwin->main);
+	    oh.vwin = NULL;
+	} else {
+	    if (role > 0) {
+		oh.vwin->role = role;
+	    }
+	    if (data != NULL) {
+		oh.vwin->data = data;
+	    }
+	    vwin_add_viewbar(oh.vwin, VIEWBAR_HAS_TEXT);
 	}
-	if (data != NULL) {
-	    oh.vwin->data = data;
-	}
-	vwin_add_viewbar(oh.vwin, VIEWBAR_HAS_TEXT);
     }
+
     clear_output_handler();
+}
+
+static int maybe_stop_script (void)
+{
+    int resp, stop = 0;
+
+    if (oh.vwin != NULL) {
+	gtk_widget_hide(oh.vwin->main);
+    }
+
+    resp = yes_no_dialog (_("gretl: open data"), 
+			  _("Opening a new data file will automatically\n"
+			    "close the current one.  Any unsaved work\n"
+			    "will be lost.  Proceed to open data file?"), 0);
+
+    if (resp == GRETL_YES) {
+	if (oh.vwin != NULL) {
+	    gretl_viewer_present(oh.vwin);
+	}
+    } else {
+	stop = 1;
+	oh.stopped = 1;
+    }
+
+    return stop;
 }
 
 /* Execute a script from the buffer in a viewer window.  The script
@@ -7362,7 +7395,7 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	if (kid != NULL) {
 	    suppress_logo = 1;
 	}
-    } else {
+    } else if (get_script_output_policy() == OUTPUT_NEW_WINDOW) {
 	err = start_script_output_handler(prn, SCRIPT_OUT,
 					  NULL, NULL);
 	if (err) {
@@ -8478,20 +8511,10 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	      ftype == GRETL_RATS_DB || ftype == GRETL_PCGIVE_DB ||
 	      ftype == GRETL_ODBC);
 
-    if (data_status & HAVE_DATA) {
-	if (!dbdata && cmd->ci != APPEND) {
-	    if (data_status & MODIFIED_DATA) {
-		/* Requested by Sven: is it a good idea? */
-		int resp = 
-		    yes_no_dialog (_("gretl: open data"), 
-				   _("Opening a new data file will automatically\n"
-				     "close the current one.  Any unsaved work\n"
-				     "will be lost.  Proceed to open data file?"), 0);
-
-		if (resp != GRETL_YES) {
-		    return 1;
-		}
-	    } 
+    if ((data_status & MODIFIED_DATA) && !dbdata && cmd->ci != APPEND) {
+	/* Requested by Sven: is it a good idea? */
+	if (maybe_stop_script()) {
+	    return 1;
 	}
     }
 

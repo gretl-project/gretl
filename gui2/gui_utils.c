@@ -1691,17 +1691,36 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
     }
 }
 
+/* for use with reuseable script output window */
+static windata_t *script_out;
+
+static gboolean nullify_script_out (GtkWidget *w, windata_t **pvwin)
+{
+    *pvwin = NULL;
+    return FALSE;
+}
+
+void set_reuseable_output_window (int policy, windata_t *vwin)
+{
+    if (policy == OUTPUT_NEW_WINDOW) {
+	script_out = NULL;
+    } else {
+	script_out = vwin;
+	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
+			 G_CALLBACK(nullify_script_out), &script_out);
+    }
+}
+
 static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
 {
-    int sticky = (vwin->flags & VWIN_STICKY);
+    int policy = get_script_output_policy();
     GtkTextBuffer *buf;
     const char *newtext;
 
     newtext = gretl_print_get_buffer(prn);
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
-    if (sticky) {
-	/* append to previous content */
+    if (policy == OUTPUT_APPEND) {
 	GtkTextMark *mark;
 	GtkTextIter iter;
 
@@ -1719,7 +1738,6 @@ static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
     }
 
     gretl_print_destroy(prn);
-
     gtk_window_present(GTK_WINDOW(vwin->main));
 
     return vwin;
@@ -1731,21 +1749,15 @@ void set_model_save_state (windata_t *vwin, gboolean s)
     flip(vwin->ui, "/menubar/File/SaveAndClose", s);
 }
 
-static gboolean nullify_script_out (GtkWidget *w, windata_t **pvwin)
-{
-    *pvwin = NULL;
-    return FALSE;
-}
-
 windata_t *
 view_buffer_with_parent (windata_t *parent, PRN *prn, 
 			 int hsize, int vsize, 
 			 const char *title, int role, 
 			 gpointer data) 
 {
-    static windata_t *script_out;
-    windata_t *vwin;
+    /* int policy = get_script_output_policy(); */
     int width = 0, nlines = 0;
+    windata_t *vwin;
 
     if (role == SCRIPT_OUT && script_out != NULL) {
 	return reuse_script_out(script_out, prn);
@@ -1814,7 +1826,6 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	    /* partial output window for script */
 	    vwin_add_child((windata_t *) data, vwin);
 	}
-	/* register destruction of script output viewer */
 	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 			 G_CALLBACK(nullify_script_out), &script_out);
 	script_out = vwin;

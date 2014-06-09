@@ -101,6 +101,8 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 windata_t *hansl_output_viewer_new (PRN *prn, int mode,
 				    const char *title);
 
+void set_reuseable_output_window (int policy, windata_t *vwin);
+
 gchar *gretl_window_title (const char *s);
 
 gchar *title_from_filename (const char *fname, gboolean prepend);

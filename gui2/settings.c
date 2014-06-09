@@ -109,6 +109,7 @@ static int session_prompt = 1;
 static int keep_folder = 1;
 static int tabbed_editor;
 static int tabbed_models;
+static int script_output_policy;
 char gpcolors[64];
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
@@ -309,6 +310,8 @@ RCVAR rc_vars[] = {
       INVISET | INTSET, 0, TAB_NONE, NULL },
     { "main_y", "main window y position", NULL, &main_y, 
       INVISET | INTSET, 0, TAB_NONE, NULL },
+    { "script_output_policy", "stickiness of output", NULL, &script_output_policy, 
+      INVISET | INTSET, 0, TAB_NONE, NULL },
     { "HC_by_default", N_("Use robust covariance matrix by default"), NULL,
       &hc_by_default, BOOLSET, 0, TAB_VCV, NULL },
     { "HC_xsect", N_("For cross-sectional data"), NULL, hc_xsect, 
@@ -392,6 +395,23 @@ void set_session_prompt (int val)
 int get_keep_folder (void)
 {
     return keep_folder;
+}
+
+void set_script_output_policy (int p, windata_t *vwin)
+{
+    script_output_policy = p;
+
+    if (script_output_policy < 0 || 
+	script_output_policy > OUTPUT_APPEND) {
+	script_output_policy = OUTPUT_NEW_WINDOW;
+    }
+
+    set_reuseable_output_window(p, vwin);
+}
+
+int get_script_output_policy (void)
+{
+    return script_output_policy;
 }
 
 #ifdef G_OS_WIN32
