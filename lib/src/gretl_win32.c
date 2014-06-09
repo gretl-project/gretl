@@ -1523,15 +1523,15 @@ void win32_stopwatch_init (void)
 
 double win32_stopwatch (void)
 {
-    LARGE_INTEGER wt1, wdt;
-    gint64 gdt;
+    LARGE_INTEGER wt1;
+    gint64 dt;
 
     QueryPerformanceCounter(&wt1);
-    gdt = wt1.QuadPart - wt0.QuadPart;
-    gdt *= 1000000;
-    gdt /= timer_freq.QuadPart;
+    dt = wt1.QuadPart - wt0.QuadPart;
+    dt *= 1000000;
+    dt /= timer_freq.QuadPart;
     wt0 = wt1;
 
-    return 1.0e6 * (double) gdt;
+    return (double) dt / 1.0e6;
 } 
 

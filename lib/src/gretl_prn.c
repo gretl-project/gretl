@@ -675,7 +675,7 @@ int gretl_print_set_save_position (PRN *prn)
     if (prn == NULL || prn->buf == NULL) {
 	return E_DATA;
     } else {
-	prn->savepos = prn->blen; /* was strlen(prn->buf) */
+	prn->savepos = prn->blen;
 	return 0;
     }
 }

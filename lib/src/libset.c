@@ -2593,7 +2593,7 @@ DEBUG_OUTPUT get_debug_output_func (void)
     return dbg_output;
 }
 
-/* support for GUI Stop button */
+/* support for GUI "Stop" button */
 
 static QUERY_STOP query_stop;
 
