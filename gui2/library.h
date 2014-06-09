@@ -332,13 +332,13 @@ int exec_line_with_output_handler (ExecState *s,
 				   const char *title,
 				   windata_t **outwin);
 
-void start_wait_for_output (GtkWidget *w, gboolean big);
+void finalize_script_output_window (int role, gpointer data);
 
-void stop_wait_for_output (GtkWidget *w);
+void start_wait_for_output (GtkWidget *w);
 
 int waiting_for_output (void);
 
-int output_flush_in_progress (void);
+int vwin_is_busy (windata_t *vwin);
 
 /* other */
 

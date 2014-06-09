@@ -3808,7 +3808,7 @@ static int view_session_deferred;
 
 static void auto_view_session (void)
 {
-    if (output_flush_in_progress()) {
+    if (waiting_for_output()) {
 	view_session_deferred = 1;
     } else {
 	view_session();

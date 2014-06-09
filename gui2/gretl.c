@@ -2430,7 +2430,6 @@ static int script_stopper (int set)
 	/* set the stop signal */
 	stop = 1;
     } else if (stop) {
-	warnbox(_("Execution aborted by request"));
 	ret = 1;
 	stop = 0;
     }

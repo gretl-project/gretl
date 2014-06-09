@@ -617,6 +617,10 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
     guint upkey = event->keyval;
     int editing = vwin_is_editing(vwin);
 
+    if (vwin_is_busy(vwin)) {
+	return TRUE;
+    }
+
     if (is_control_key(event->keyval)) {
 	return FALSE;
     }
@@ -1850,9 +1854,11 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 				   role, data);
 }
 
-/* hansl_output_viewer_new: here we're creating an output
-   window for use with the script "flush" mechanism; that
-   is, incremental display of script output.
+/* hansl_output_viewer_new: here we're creating a window
+   that will display script output, allowing for the
+   possibility that it may take a while for the (full)
+   output to appear, and the script "flush" mechanism
+   may be operating to produce incremental display.
 */
 
 windata_t *hansl_output_viewer_new (PRN *prn, int mode,
@@ -1876,10 +1882,7 @@ windata_t *hansl_output_viewer_new (PRN *prn, int mode,
 	return NULL;
     }
 
-    if (mode != FNCALL_OUT) {
-	/* in the FNCALL case we defer adding a "viewbar" */
-	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
-    }
+    vwin_add_tmpbar(vwin);
     create_text(vwin, SCRIPT_WIDTH, 450, 0, FALSE);
     text_set_word_wrap(vwin->text, 0);
     text_table_setup(vwin->vbox, vwin->text);

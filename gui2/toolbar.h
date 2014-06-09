@@ -53,6 +53,6 @@ GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
 
 void vwin_toolbar_insert_winlist (windata_t *vwin);
 
-void vwin_sensitize_close_button (windata_t *vwin, gboolean s);
+void vwin_add_tmpbar (windata_t *vwin);
 
 #endif /* TOOLBAR_H */

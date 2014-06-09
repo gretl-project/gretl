@@ -1619,7 +1619,6 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 {
     windata_t *outwin = NULL;
     ExecState state;
-    GtkWidget *hbox;
     char fnline[MAXLINE];
     char *tmpname = NULL;
     const char *funname;
@@ -1656,10 +1655,9 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     }
 
     show = !user_func_is_noprint(cinfo->func);
-    hbox = cinfo->top_hbox;
 
-    if (hbox != NULL) {
-	start_wait_for_output(hbox, FALSE);
+    if (close_on_OK) {
+	gtk_widget_hide(cinfo->dlg);
     }
 
     if (show) {
@@ -1669,10 +1667,6 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     } else {
 	/* execute "invisibly" */
 	err = gui_exec_line(&state, dataset);
-    }
-
-    if (hbox != NULL) {
-	stop_wait_for_output(hbox);
     }
 
     if (cinfo->flags & MODEL_CALL) {
@@ -1721,12 +1715,10 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	/* an output window has already been opened
 	   via "flush" */
 	if (bundle != NULL) {
-	    outwin->role = VIEW_BUNDLE;
-	    outwin->data = bundle;
+	    finalize_script_output_window(VIEW_BUNDLE, bundle);
+	} else {
+	    finalize_script_output_window(0, NULL); 
 	}
-	/* in this case the output window will not
-	   yet have a toolbar: we add one now */
-	vwin_add_viewbar(outwin, VIEWBAR_HAS_TEXT);
     }
 
     free(tmpname);

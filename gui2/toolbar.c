@@ -104,7 +104,6 @@ enum {
     SPLIT_ITEM,
     EDITOR_ITEM,
     NOTES_ITEM,
-    STOP_ITEM,
     NEW_ITEM,
     CLOSE_ITEM,
     BUNDLE_ITEM
@@ -668,7 +667,6 @@ static GretlToolItem viewbar_items[] = {
     { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
     { N_("Show/hide"), GRETL_STOCK_PIN, G_CALLBACK(session_notes_callback), NOTES_ITEM },
     { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
-    { N_("Stop"), GTK_STOCK_STOP, G_CALLBACK(do_stop_script), STOP_ITEM },
     { N_("Cut"), GTK_STOCK_CUT, G_CALLBACK(vwin_cut_callback), EDIT_ITEM }, 
     { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(vwin_copy_callback), COPY_ITEM }, 
     { N_("Paste"), GTK_STOCK_PASTE, G_CALLBACK(text_paste), EDIT_ITEM },
@@ -703,10 +701,6 @@ static GretlToolItem viewbar_items[] = {
 static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define exec_ok(r) (vwin_editing_script(r) || \
-		    r == VIEW_SCRIPT || \
-	            r == EDIT_PKG_SAMPLE)
-
-#define stop_ok(r) (r == EDIT_SCRIPT || \
 		    r == VIEW_SCRIPT || \
 	            r == EDIT_PKG_SAMPLE)
 
@@ -763,9 +757,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     int f = item->flag;
     int r = vwin->role;
 
-    if (!stop_ok(r) && f == STOP_ITEM) {
-	return NULL;
-    } else if (!edit_ok(r) && f == EDIT_ITEM) {
+    if (!edit_ok(r) && f == EDIT_ITEM) {
 	return NULL;
     } else if (!open_ok(r) && f == OPEN_ITEM) {
 	return NULL;
@@ -1040,12 +1032,6 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    if (strstr(vwin->fname, "script_tmp")) {
 		gtk_widget_set_sensitive(button, FALSE);
 	    }
-	} else if (item->flag == STOP_ITEM) {
-	    g_object_set_data(G_OBJECT(vwin->mbar), "stop_button", button);
-	    /* nothing to stop yet */
-	    gtk_widget_set_sensitive(button, FALSE);
-	} else if (item->flag == CLOSE_ITEM) {
-	    g_object_set_data(G_OBJECT(vwin->mbar), "close_button", button);
 	}
     }
 
@@ -1055,18 +1041,6 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 
     if (vpane != NULL) {
 	g_object_set_data(G_OBJECT(vpane), "hpane", hpane);
-    }
-}
-
-void vwin_sensitize_close_button (windata_t *vwin, gboolean s)
-{
-    if (vwin != NULL && vwin->mbar != NULL) {
-	GtkWidget *w = g_object_get_data(G_OBJECT(vwin->mbar), 
-					 "close_button");
-	
-	if (w != NULL) {
-	    gtk_widget_set_sensitive(w, s);
-	}
     }
 }
 
@@ -1264,5 +1238,33 @@ void add_mainwin_toolbar (GtkWidget *vbox)
     hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), mdata->mbar, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+}
+
+/* add a temporary top-bar for use in a script output
+   window, while we're waiting for the output */
+
+void vwin_add_tmpbar (windata_t *vwin)
+{
+    GretlToolItem item = {
+	N_("Stop"), 
+	GTK_STOCK_STOP, 
+	G_CALLBACK(do_stop_script), 
+	0
+    };
+    GtkWidget *hbox, *label, *tmp;
+
+    hbox = gtk_hbox_new(FALSE, 0);
+    g_object_set_data(G_OBJECT(vwin->main), "top-hbox", hbox);
+
+    label = gtk_label_new(_("Processing..."));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+
+    tmp = gretl_toolbar_new();
+    gretl_toolbar_insert(tmp, &item, item.func, NULL, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
+    start_wait_for_output(hbox);
+    gtk_widget_show_all(hbox);
 }
 

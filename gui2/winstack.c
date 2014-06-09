@@ -25,6 +25,10 @@
 #include "tabwin.h"
 #include "winstack.h"
 
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20
+# include "spinner.h"
+#endif
+
 #if defined(MAC_INTEGRATION) && defined(PKGBUILD)
 # define MAC_HIDE_UNHIDE
 #endif
@@ -1076,6 +1080,14 @@ static void menu_bar_add_winlist (windata_t *vwin)
     gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 }
 
+static void destroy_hbox_child (GtkWidget *w, gpointer p)
+{
+    if (GTK_IS_SPINNER(w)) {
+	gtk_spinner_stop(GTK_SPINNER(w));
+    }
+    gtk_widget_destroy(w);
+}
+
 void vwin_pack_toolbar (windata_t *vwin)
 {
     if (vwin->topmain != NULL) {
@@ -1085,25 +1097,32 @@ void vwin_pack_toolbar (windata_t *vwin)
 	    menu_bar_add_winlist(vwin);
 	}
     } else {
-	GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
+	GtkWidget *hbox;
 
-	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
-	if (vwin->role == VIEW_MODEL || vwin->role == VAR ||
-	    vwin->role == VECM) {
-	    /* model viewer: the menubar extends full-length */
-	    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, TRUE, TRUE, 0);
-	    menu_bar_add_winlist(vwin);
-	} else {
+	hbox = g_object_get_data(G_OBJECT(vwin->main), "top-hbox");
+
+	if (hbox != NULL) {
+	    gtk_container_foreach(GTK_CONTAINER(hbox), destroy_hbox_child, NULL);
 	    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+	    gtk_widget_show_all(hbox);
+	} else {
+	    hbox = gtk_hbox_new(FALSE, 0);
+	    gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
+
+	    if (vwin->role == VIEW_MODEL || vwin->role == VAR ||
+		vwin->role == VECM) {
+		/* model viewer: the menubar extends full-length */
+		gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, TRUE, TRUE, 0);
+		menu_bar_add_winlist(vwin);
+	    } else {
+		gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+	    }
+	    if (window_is_tab(vwin)) {
+		/* here we're re-packing vwin->mbar: move it up top */
+		gtk_box_reorder_child(GTK_BOX(vwin->vbox), hbox, 0);
+	    }
+	    gtk_widget_show_all(hbox);
 	}
-	if (window_is_tab(vwin)) {
-	    /* here we're re-packing vwin->mbar: move it up top */
-	    gtk_box_reorder_child(GTK_BOX(vwin->vbox), hbox, 0);
-	} else if (vwin->text != NULL) {
-	    /* adding vwin->mbar "late" */
-	    gtk_box_reorder_child(GTK_BOX(vwin->vbox), hbox, 0);
-	}
-	gtk_widget_show_all(hbox);
     }
 }
 

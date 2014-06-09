@@ -1435,14 +1435,18 @@ void dataset_info (void)
 
 void gui_errmsg (int errcode)
 {
-    const char *msg = errmsg_get_with_default(errcode);
-
-    if (msg != NULL && *msg != '\0') {
-	errbox(msg);
-	/* avoid duplicating this error message */
-	gretl_error_clear();
+    if (errcode == E_STOP) {
+	gui_warnmsg(errcode);
     } else {
-	errbox(_("Unspecified error"));
+	const char *msg = errmsg_get_with_default(errcode);
+
+	if (msg != NULL && *msg != '\0') {
+	    errbox(msg);
+	    /* avoid duplicating this error message */
+	    gretl_error_clear();
+	} else {
+	    errbox(_("Unspecified error"));
+	}
     }
 }
 
@@ -7175,66 +7179,6 @@ int waiting_for_output (void)
     return script_wait;
 }
 
-/* Start a spinner as visual indication that there's
-   something going on: the argument @w should be of
-   type GTK_BOX, into which a spinner may be packed.
-*/
-
-void start_wait_for_output (GtkWidget *w, gboolean big)
-{
-    GtkWidget *spinner;
-
-    g_return_if_fail(GTK_IS_BOX(w));
-
-    spinner = g_object_get_data(G_OBJECT(w), "spinner");
-
-    if (spinner == NULL) {
-	spinner = gtk_spinner_new();
-	if (big) {
-	    gtk_widget_set_size_request(spinner, 24, 24);
-	}
-	gtk_box_pack_end(GTK_BOX(w), spinner, FALSE, FALSE, 5);
-	g_object_set_data(G_OBJECT(w), "spinner", spinner);
-    }
-
-    gtk_widget_show(spinner);
-    gtk_spinner_start(GTK_SPINNER(spinner));
-    script_wait = 1;
-
-    while (gtk_events_pending()) {
-	gtk_main_iteration();
-    }
-}
-
-/* done: stop spinner */
-
-void stop_wait_for_output (GtkWidget *w)
-{
-    GtkWidget *spinner = g_object_get_data(G_OBJECT(w), "spinner");
-
-    if (spinner != NULL) {
-	gtk_spinner_stop(GTK_SPINNER(spinner));
-	gtk_widget_hide(spinner);
-    }
-
-    gdk_flush();
-    script_wait = 0;
-    maybe_sensitize_iconview();
-}
-
-static void stop_button_set_sensitive (windata_t *vwin,
-				       gboolean s)
-{
-    if (vwin != NULL && vwin->mbar != NULL) {
-	GtkWidget *b = g_object_get_data(G_OBJECT(vwin->mbar), 
-					 "stop_button");
-
-	if (b != NULL) {
-	    gtk_widget_set_sensitive(b, s);
-	}
-    }
-}
-
 /* struct to handle "flush" in the course of script execution: this
    may occur when we're executing a (time consuming) script in the
    "normal" way, or when the user calls a function from a function
@@ -7244,41 +7188,58 @@ static void stop_button_set_sensitive (windata_t *vwin,
 struct output_handler {
     PRN *prn;              /* printer to which output is going */
     windata_t *vwin;       /* output window */
-    windata_t *srcwin;     /* script window from which launched, or NULL */
     gulong handler_id;     /* signal ID for @vwin */
-    gulong src_handler_id; /* signal ID for @srcwin, if present */
-    const char *title;     /* applies only when coming from fncall.c */
-    int mode;              /* either SCRIPT_OUT or FNCALL_OUT */
 };
 
 static struct output_handler oh;
+
+/* done with busy spinner */
+
+static void stop_wait_for_output (GtkWidget *w, gpointer p)
+{
+    gdk_flush();
+    script_wait = 0;
+    maybe_sensitize_iconview();
+}
+
+/* Start a spinner as visual indication that there's
+   something going on: the argument @w should be of
+   type GTK_BOX, into which a spinner may be packed.
+*/
+
+void start_wait_for_output (GtkWidget *w)
+{
+    GtkWidget *spinner;
+
+    g_return_if_fail(GTK_IS_BOX(w));
+
+    spinner = gtk_spinner_new();
+    gtk_widget_set_size_request(spinner, 24, 24);
+    gtk_box_pack_end(GTK_BOX(w), spinner, FALSE, FALSE, 5);
+    gtk_widget_show(spinner);
+    gtk_spinner_start(GTK_SPINNER(spinner));
+    script_wait = 1;
+
+    g_signal_connect(G_OBJECT(spinner), "destroy",
+		     G_CALLBACK(stop_wait_for_output),
+		     NULL);
+
+    while (gtk_events_pending()) {
+	gtk_main_iteration();
+    }
+}
 
 static void clear_output_handler (void)
 {
     if (oh.vwin != NULL) {
 	maybe_view_session();
-	if (oh.vwin->mbar != NULL) {
-	    gtk_widget_set_sensitive(oh.vwin->mbar, TRUE);
-	}
 	g_signal_handler_disconnect(G_OBJECT(oh.vwin->main),
 				    oh.handler_id);
     }
 
-    if (oh.srcwin != NULL) {
-	GtkWidget *srctop = vwin_toplevel(oh.srcwin);
-
-	g_signal_handler_disconnect(G_OBJECT(srctop),
-				    oh.src_handler_id);
-	vwin_sensitize_close_button(oh.srcwin, TRUE);
-    }
-
     oh.prn = NULL;
     oh.vwin = NULL;
-    oh.srcwin = NULL;
     oh.handler_id = 0;
-    oh.src_handler_id = 0;
-    oh.title = NULL;
-    oh.mode = 0;
 }
 
 static int output_handler_is_free (void)
@@ -7293,65 +7254,34 @@ static gint block_deletion (GtkWidget *w, GdkEvent *event, gpointer p)
 
 /* When we're in the process of "flushing" (a time-
    consuming script is sending output to a window 
-   incrementally) we must ensure that neither the
-   output window nor its "parent" script window
-   (if present) get closed prematurely, otherwise
-   we'll crash!
+   incrementally) we must ensure that the output window
+   doesn't get closed prematurely (?)
 */
 
-static void output_handler_set_block_deletion (void)
+static void output_handler_block_deletion (void)
 {
     oh.handler_id = 
 	g_signal_connect(G_OBJECT(oh.vwin->main), 
 			 "delete-event", 
 			 G_CALLBACK(block_deletion), 
 			 NULL);
-
-    if (oh.vwin->mbar != NULL) {
-	/* knock out any close button */
-	gtk_widget_set_sensitive(oh.vwin->mbar, FALSE);
-    }
-
-    if (oh.srcwin != NULL) {
-	GtkWidget *srctop = vwin_toplevel(oh.srcwin);
-
-	oh.src_handler_id = 
-	    g_signal_connect(G_OBJECT(srctop), 
-			     "delete-event", 
-			     G_CALLBACK(block_deletion), 
-			     NULL);
-
-	vwin_sensitize_close_button(oh.srcwin, FALSE);
-    }
 }
 
 static void handle_flush_callback (int finalize)
 {
-    if (oh.prn != NULL) {
-	/* we have a flushable printer in place */
-	if (oh.vwin == NULL) {
-	    /* no display window yet: make one */
-	    oh.vwin = hansl_output_viewer_new(oh.prn, oh.mode,
-					      oh.title);
-	    /* stop the user from closing the output window
-	       until we're done */
-	    output_handler_set_block_deletion();
-	    gretl_print_set_save_position(oh.prn);
-	    textview_add_processing_message(oh.vwin->text);
-	} else {
-	    /* use existing display window */
-	    char *buf = gretl_print_get_chunk(oh.prn);
+    if (oh.vwin != NULL) {
+	/* we have a "flushable" window in place */
+	char *buf = gretl_print_get_chunk(oh.prn);
 
-	    textview_delete_processing_message(oh.vwin->text);
-	    textview_append_text_colorized(oh.vwin->text, buf, 0);
-	    free(buf);
-	    if (finalize) {
-		gretl_print_destroy(oh.prn);
-	    } else {
-		/* prepare for another chunk of output */
-		textview_add_processing_message(oh.vwin->text);
-		gretl_print_set_save_position(oh.prn);
-	    }
+	textview_delete_processing_message(oh.vwin->text);
+	textview_append_text_colorized(oh.vwin->text, buf, 0);
+	free(buf);
+	if (finalize) {
+	    gretl_print_destroy(oh.prn);
+	} else {
+	    /* prepare for another chunk of output */
+	    textview_add_processing_message(oh.vwin->text);
+	    gretl_print_set_save_position(oh.prn);
 	}
 	/* ensure that the GUI gets updated */
 	while (gtk_events_pending()) {
@@ -7360,9 +7290,54 @@ static void handle_flush_callback (int finalize)
     }
 }
 
-int output_flush_in_progress (void)
+int vwin_is_busy (windata_t *vwin)
 {
-    return oh.vwin != NULL;
+    return vwin != NULL && vwin == oh.vwin;
+}
+
+static int start_script_output_handler (PRN *prn, int mode,
+					const char *title,
+					windata_t **outwin)
+{
+    int err = 0;
+
+    if (!output_handler_is_free()) {
+	/* we're messed up! */
+	errbox("Script already running?!");
+	err = 1;
+    } else {
+	windata_t *vwin;
+
+	vwin = hansl_output_viewer_new(prn, mode, title);
+	if (vwin == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    oh.prn = prn;
+	    oh.vwin = vwin;
+	    gretl_print_set_save_position(oh.prn);
+	    if (outwin != NULL) {
+		*outwin = vwin;
+	    }
+	    output_handler_block_deletion();
+	}
+    }
+
+    return err;
+}
+
+void finalize_script_output_window (int role, gpointer data)
+{
+    if (oh.vwin != NULL) {
+	handle_flush_callback(1);
+	if (role > 0) {
+	    oh.vwin->role = role;
+	}
+	if (data != NULL) {
+	    oh.vwin->data = data;
+	}
+	vwin_add_viewbar(oh.vwin, VIEWBAR_HAS_TEXT);
+    }
+    clear_output_handler();
 }
 
 /* Execute a script from the buffer in a viewer window.  The script
@@ -7373,7 +7348,6 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 			       gboolean selection)
 {
     windata_t *kid = NULL;
-    GtkWidget *hbox;
     PRN *prn;
     int save_batch;
     int err;
@@ -7388,23 +7362,18 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	if (kid != NULL) {
 	    suppress_logo = 1;
 	}
-    } else if (output_handler_is_free()) {
-	oh.prn = prn;	
-	oh.srcwin = vwin;
-	oh.mode = SCRIPT_OUT;
+    } else {
+	err = start_script_output_handler(prn, SCRIPT_OUT,
+					  NULL, NULL);
+	if (err) {
+	    gretl_print_destroy(prn);
+	    return;
+	}
     }
 
-    hbox = gtk_widget_get_parent(vwin->mbar);
-
-    stop_button_set_sensitive(vwin, TRUE);
-    start_wait_for_output(hbox, TRUE);
     save_batch = gretl_in_batch_mode();
-
     err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
-
     gretl_set_batch_mode(save_batch);
-    stop_wait_for_output(hbox);
-    stop_button_set_sensitive(vwin, FALSE);
 
     refresh_data();
     suppress_logo = 0;
@@ -7412,7 +7381,7 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     if (kid != NULL) {
 	send_output_to_kid(kid, prn);
     } else if (oh.vwin != NULL) {
-	handle_flush_callback(1);
+	finalize_script_output_window(0, NULL);
     } else {
 	/* In the @selection case, arrange for the new 
 	   script output window to take on the "kid" role
@@ -7429,8 +7398,6 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	record_command_verbatim();
     }
 
-    clear_output_handler();
-
     /* re-establish command echo (?) */
     set_gretl_echo(1);
 }
@@ -7440,23 +7407,13 @@ int exec_line_with_output_handler (ExecState *s,
 				   const char *title,
 				   windata_t **outwin)
 {
-    int err = 0;
+    int err;
 
-    if (output_handler_is_free()) {
-	oh.prn = s->prn;
-	oh.title = title;
-	oh.mode = FNCALL_OUT;
-    }
+    err = start_script_output_handler(s->prn, FNCALL_OUT,
+				      title, outwin);
 
-    err = gui_exec_line(s, dataset);
-
-    if (oh.prn == s->prn && oh.vwin != NULL) {
-	*outwin = oh.vwin;
-	handle_flush_callback(1);
-    }
-
-    if (oh.prn == s->prn) {
-	clear_output_handler();
+    if (!err) {
+	err = gui_exec_line(s, dataset);
     }
 
     return err;
