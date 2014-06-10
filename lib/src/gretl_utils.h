@@ -174,8 +174,10 @@ void *gretl_aligned_malloc (size_t size, size_t alignment);
 
 void gretl_aligned_free (void *mem);
 
-/* search in path */
+/* search in path, etc. */
 
 int check_for_program (const char *prog);
+
+const char *blas_variant_string (void);
 
 #endif /* GRETL_UTILS_H */
