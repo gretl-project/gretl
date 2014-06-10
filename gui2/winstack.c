@@ -85,6 +85,17 @@ static GtkWidget *window_from_action (GtkAction *action)
     return w;
 }
 
+static windata_t *vwin_from_action (GtkAction *action)
+{
+    GtkWidget *w = window_from_action(action);
+    
+    if (w != NULL) {
+	return g_object_get_data(G_OBJECT(w), "vwin");
+    }
+
+    return NULL;
+}
+
 /* callback to bring a selected window to the top */
 
 static void gretl_window_raise (GtkAction *action, gpointer data)
@@ -771,17 +782,13 @@ real_get_browser_for_database (const char *filename, int code)
     if (n_listed_windows > 1) {
 	GList *list = gtk_action_group_list_actions(window_group);
 	windata_t *vwin;
-	GtkWidget *w;
 
 	while (list != NULL && ret == NULL) {
-	    w = window_from_action((GtkAction *) list->data);
-	    if (w != NULL) {
-		vwin = g_object_get_data(G_OBJECT(w), "vwin");
-		if (vwin != NULL && db_role_matches(vwin, code)) {
-		    if (!strncmp(filename, vwin->fname, 
-				 strlen(vwin->fname))) {
-			ret = vwin;
-		    }
+	    vwin = vwin_from_action((GtkAction *) list->data);
+	    if (vwin != NULL && db_role_matches(vwin, code)) {
+		if (!strncmp(filename, vwin->fname, 
+			     strlen(vwin->fname))) {
+		    ret = vwin;
 		}
 	    }
 	    list = list->next;
@@ -809,15 +816,11 @@ windata_t *get_viewer_for_data (const gpointer data)
     if (n_listed_windows > 1) {
 	GList *list = gtk_action_group_list_actions(window_group);
 	windata_t *vwin;
-	GtkWidget *w;
 
 	while (list != NULL && ret == NULL) {
-	    w = window_from_action((GtkAction *) list->data);
-	    if (w != NULL) {
-		vwin = g_object_get_data(G_OBJECT(w), "vwin");
-		if (vwin != NULL && vwin->data == data) {
-		    ret = vwin;
-		}
+	    vwin = vwin_from_action((GtkAction *) list->data);
+	    if (vwin != NULL && vwin->data == data) {
+		ret = vwin;
 	    }
 	    list = list->next;
 	}
@@ -834,15 +837,32 @@ windata_t *get_browser_for_role (int role)
     if (n_listed_windows > 1) {
 	GList *list = gtk_action_group_list_actions(window_group);
 	windata_t *vwin;
-	GtkWidget *w;
 
 	while (list != NULL && ret == NULL) {
-	    w = window_from_action((GtkAction *) list->data);
-	    if (w != NULL) {
-		vwin = g_object_get_data(G_OBJECT(w), "vwin");
-		if (vwin != NULL && vwin->role == role) {
-		    ret = vwin;
-		}
+	    vwin = vwin_from_action((GtkAction *) list->data);
+	    if (vwin != NULL && vwin->role == role) {
+		ret = vwin;
+	    }
+	    list = list->next;
+	}
+	g_list_free(list);
+    }
+
+    return ret;
+}
+
+int get_script_output_number (void)
+{
+    int ret = 0;
+
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_group);
+	windata_t *vwin;
+
+	while (list != NULL) {
+	    vwin = vwin_from_action((GtkAction *) list->data);
+	    if (vwin != NULL && vwin->role == SCRIPT_OUT) {
+		ret++;
 	    }
 	    list = list->next;
 	}

@@ -1611,6 +1611,17 @@ void vwin_set_filename (windata_t *vwin, const char *fname)
     strcpy(vwin->fname, fname);
 }
 
+static gchar *script_output_title (void)
+{
+    int n = get_script_output_number();
+
+    if (n > 0) {
+	return g_strdup_printf(_("gretl: script output %d"), n+1);
+    } else {
+	return g_strdup(_("gretl: script output"));
+    }
+}
+
 static gchar *make_viewer_title (int role, const char *fname)
 {
     gchar *title = NULL;
@@ -1648,7 +1659,8 @@ static gchar *make_viewer_title (int role, const char *fname)
 	title = g_strdup(_("gretl: edit Python script")); break;
     case SCRIPT_OUT:
     case FNCALL_OUT:
-	title = g_strdup(_("gretl: script output")); break;
+	title = script_output_title();
+	break;
     case VIEW_DATA:
 	title = g_strdup(_("gretl: display data")); break;
     default:

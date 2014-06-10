@@ -49,6 +49,8 @@ GtkWidget *get_window_for_data (const gpointer data);
 
 GtkWidget *get_window_for_plot (const char *plotfile);
 
+int get_script_output_number (void);
+
 void maybe_close_window_for_user_var (const gpointer data,
 				      GretlObjType otype);
 
