@@ -48,14 +48,6 @@
 #include <errno.h>
 #include <gmp.h>
 
-/* not quite ready yet */
-#if 0
-#if !defined(WIN32) && !defined(OS_OSX)
-# define DETECT_BLAS 1
-int detect_blas_variant (void);
-#endif
-#endif
-
 static void gretl_tests_cleanup (void);
 
 /**
@@ -1752,6 +1744,10 @@ double gretl_stopwatch (void)
 
 #elif defined(_OPENMP)
 
+/* note: on Windows omp_get_wtime() has only
+   millisecond resolution; fancy footwork is
+   required to get anything better */
+
 static double omp_dt0;
 
 static void gretl_omp_stopwatch_init (void)
@@ -1865,9 +1861,6 @@ void libgretl_init (void)
     gretl_xml_init();
     gretl_stopwatch_init();
     mpf_set_default_prec(get_mp_bits());
-#ifdef DETECT_BLAS
-    detect_blas_variant();
-#endif
 }
 
 #ifdef HAVE_MPI
@@ -2337,14 +2330,23 @@ int check_for_program (const char *prog)
 
 #endif /* WIN32 or not */
 
-#ifdef DETECT_BLAS
+enum {
+    BLAS_UNKNOWN,
+    BLAS_NETLIB,
+    BLAS_ATLAS,
+    BLAS_OPENBLAS,
+    BLAS_MKL,
+    BLAS_VECLIB
+};
+
+#if !defined(WIN32) && !defined(OS_OSX)
 
 static int real_detect_blas (const char *s)
 {
     char found[5] = "nnnn";
     char line[512];
     int i = 0;
-    int ret = 0;
+    int ret = BLAS_UNKNOWN;
 
     *line = '\0';
 
@@ -2373,16 +2375,16 @@ static int real_detect_blas (const char *s)
 
     if (strcmp(found, "nnny") == 0) {
 	fputs("MKL\n", stderr);
-	ret = 4;
+	ret = BLAS_MKL;
     } else if (strcmp(found, "nnyn") == 0) {
 	fputs("OpenBLAS\n", stderr);
-	ret = 3;
+	ret = BLAS_OPENBLAS;
     } else if (strcmp(found, "nynn") == 0) {
 	fputs("ATLAS\n", stderr);
-	ret = 2;
+	ret = BLAS_ATLAS;
     } else if (strcmp(found, "ynnn") == 0) {
 	fputs("Netlib\n", stderr);
-	ret = 1;
+	ret = BLAS_NETLIB;
     } else if (strcmp(found, "nnnn") == 0) {
 	fputs("found no relevant libs!\n", stderr);
     } else {
@@ -2392,7 +2394,7 @@ static int real_detect_blas (const char *s)
     return ret;
 }
 
-int detect_blas_variant (void)
+static int detect_blas_variant (void)
 {
     gchar *argv[3];
     gchar *prog;
@@ -2430,4 +2432,47 @@ int detect_blas_variant (void)
     return variant;
 }
 
-#endif /* DETECT_BLAS (not for Windows or Mac) */
+#endif /* not Windows or Mac */
+
+static int blas_variant_code (void)
+{
+#if defined(WIN32)
+# ifdef OPENBLAS_BUILD
+    return BLAS_OPENBLAS;
+# else
+    return BLAS_NETLIB;
+# endif
+#elif defined(OS_OSX)
+    return BLAS_VECLIB;
+#else
+    /* not a packaged build: we have to check */
+    static int bver = -1;
+
+    if (bver < 0) {
+	bver = detect_blas_variant();
+    }
+
+    return bver;
+#endif
+}
+
+const char *blas_variant_string (void)
+{
+    int bver = blas_variant_code();
+
+    if (bver == BLAS_NETLIB) {
+	return "netlib";
+    } else if (bver == BLAS_ATLAS) {
+	return "atlas";
+    } else if (bver == BLAS_OPENBLAS) {
+	return "openblas";
+    } else if (bver == BLAS_MKL) {
+	return "mkl";
+    } else if (bver == BLAS_VECLIB) {
+	return "veclib";
+    } else {
+	return "unknown";
+    }
+}
+
+
