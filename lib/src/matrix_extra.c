@@ -1444,7 +1444,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	mt2 = gretl_matrix_get_t2(m);
     }
 
-    /* @plain != 0 means skip the header stuff */
+    /* @plain means skip the header stuff */
 
     if (msg != NULL && *msg != '\0' && !plain) {
 	pprintf(prn, "%s (%d x %d)", msg, m->rows, m->cols);
@@ -1598,6 +1598,62 @@ static void maybe_print_col_heads (const gretl_matrix *m,
     }
 }
 
+/* Return an array of char holding 1s for columns in
+   @m that are all integers, 0s otherwise. Except
+   that if we find that either none or all the columns
+   if @m are composed of integers we scratch the
+   array and signal the result via the @intcast pointer.
+*/
+
+static char *get_intcols (const gretl_matrix *m,
+			  int *intcast)
+{
+    char *ret = malloc(m->cols);
+
+    if (ret != NULL) {
+	double x;
+	int i, j, n = 0;
+
+	for (j=0; j<m->cols; j++) {
+	    ret[j] = 1;
+	    for (i=0; i<m->rows; i++) {
+		x = gretl_matrix_get(m, i, j);
+		if (x != floor(x)) {
+		    ret[j] = 0;
+		    break;
+		}
+	    }
+	    n += ret[j];
+	}
+	if (n == 0 || n == m->cols) {
+	    /* no, or all, integer columns */
+	    free(ret);
+	    ret = NULL;
+	    *intcast = n > 0;
+	}
+    }
+
+    return ret;
+}
+
+/* Take a format which is designed for floating-point
+   values and convert it for use with integers: preserve
+   the width but discard the precision, and change the
+   trailing 'f', 'g' or whatever to 'd'.
+*/
+
+static void revise_integer_format (char *ifmt)
+{
+    char *p = strchr(ifmt, '.');
+
+    if (p != NULL) {
+	*p = '\0';
+	strncat(p, "d", 1);
+    } else {
+	ifmt[strlen(ifmt)-1] = 'd';
+    }
+}
+
 /**
  * gretl_matrix_print_with_format:
  * @m: matrix to print.
@@ -1629,21 +1685,38 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 	real_matrix_print_to_prn(m, NULL, 1, NULL, NULL, prn);
     } else {
 	const char **rownames = NULL;
+	char *ifmt = NULL, *xfmt = NULL;
+	char *intcols = NULL;
 	int llen = 0, intcast = 0;
 	double x;
+	int cpos = strlen(fmt) - 1;
 	int i, j, c;
 
-	c = fmt[strlen(fmt)-1];
+	c = fmt[cpos];
+
 	if (c == 'd' || c == 'u' || c == 'x' || c == 'l') {
 	    intcast = 1;
+	} else if (c == 'v') {
+	    /* "variant" column format */
+	    intcols = get_intcols(m, &intcast);
 	}
+
+	xfmt = gretl_strdup(fmt);
+
+	if (intcast || intcols) {
+	    ifmt = gretl_strdup(fmt);
+	    if (c == 'v') {
+		revise_integer_format(ifmt);
+		xfmt[cpos] = 'g';
+	    }
+	} 
 
 	rownames = gretl_matrix_get_rownames(m);
 	if (rownames != NULL) {
 	    llen = max_label_length(rownames, m->rows);
 	}
 
-	maybe_print_col_heads(m, fmt, wid, prec, intcast, llen, prn);
+	maybe_print_col_heads(m, xfmt, wid, prec, intcast, llen, prn);
 
 	for (i=0; i<m->rows; i++) {
 	    if (rownames != NULL) {
@@ -1651,28 +1724,35 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 	    }
 	    for (j=0; j<m->cols; j++) {
 		x = gretl_matrix_get(m, i, j);
+		if (intcols != NULL) {
+		    intcast = intcols[j];
+		}
 		if (intcast) {
 		    if (wid >= 0 && prec >= 0) {
-			pprintf(prn, fmt, wid, prec, (int) x);
+			pprintf(prn, ifmt, wid, prec, (int) x);
 		    } else if (wid >= 0 || prec >= 0) {
 			c = (wid >= 0)? wid : prec;
-			pprintf(prn, fmt, c, (int) x);
+			pprintf(prn, ifmt, c, (int) x);
 		    } else {
-			pprintf(prn, fmt, (int) x);
+			pprintf(prn, ifmt, (int) x);
 		    }
 		} else {
 		    if (wid >= 0 && prec >= 0) {
-			pprintf(prn, fmt, wid, prec, x);
+			pprintf(prn, xfmt, wid, prec, x);
 		    } else if (wid >= 0 || prec >= 0) {
 			c = (wid >= 0)? wid : prec;
-			pprintf(prn, fmt, c, x);
+			pprintf(prn, xfmt, c, x);
 		    } else {
-			pprintf(prn, fmt, x);
+			pprintf(prn, xfmt, x);
 		    }
 		}
 	    }
 	    pputc(prn, '\n');
 	}
+
+	free(intcols);
+	free(ifmt);
+	free(xfmt);
     }
 }
 

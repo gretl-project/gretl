@@ -274,7 +274,7 @@ get_printf_format_chunk (const char *s, int *fc,
 			 int *len, int *wstar, int *pstar,
 			 int *err)
 {
-    const char *cnvchars = "eEfgGduxs";
+    const char *cnvchars = "eEfgGduxsv";
     const char *numchars = "0123456789";
     char *chunk = NULL;
     const char *p = s;
@@ -469,6 +469,11 @@ static int print_arg (const char **pfmt, const char **pargs,
 
     free(arg);
 
+    if (!err && fc == 'v' && m == NULL) {
+	/* 'v' for variant is for matrices only */
+	err = E_PARSE;
+    }	
+
     if (err) {
 	goto bailout;
     } 
@@ -476,7 +481,7 @@ static int print_arg (const char **pfmt, const char **pargs,
     if (got_scalar && na(x)) {
 	fc = fmt[flen - 1] = 's';
 	str = gretl_strdup("NA");
-    }	
+    }
 
     /* do the actual printing */
 
