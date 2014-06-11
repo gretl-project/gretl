@@ -2837,6 +2837,9 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	case F_COLS:
 	    ret->v.xval = m->cols;
 	    break;
+	case F_VECLEN:
+	    ret->v.xval = gretl_vector_get_length(m);
+	    break;
 	case F_DET:
 	case F_LDET:
 	    ret->v.xval = user_matrix_get_determinant(m, tmpmat, f, &p->err);
@@ -10579,6 +10582,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_ROWS:
     case F_COLS:
+    case F_VECLEN:
     case F_DET:
     case F_LDET:
     case F_TRACE:
