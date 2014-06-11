@@ -38,6 +38,8 @@ void cursor_to_top (windata_t *vwin);
 
 void cursor_to_mark (windata_t *vwin, GtkTextMark *mark);
 
+void scroll_to_foot (windata_t *vwin);
+
 gint get_char_width (GtkWidget *widget);
 
 GtkTextBuffer *gretl_text_buf_new (void);

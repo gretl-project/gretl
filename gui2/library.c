@@ -7189,6 +7189,7 @@ struct output_handler {
     PRN *prn;            /* printer to which output is going */
     windata_t *vwin;     /* output window */
     gulong handler_id;   /* signal ID for @vwin */
+    int flushing;        /* is the writer using "flush"? 1/0 */
     int stopped;         /* flag for premature termination */
 };
 
@@ -7241,6 +7242,7 @@ static void clear_output_handler (void)
     oh.prn = NULL;
     oh.vwin = NULL;
     oh.handler_id = 0;
+    oh.flushing = 0;
     oh.stopped = 0;
 }
 
@@ -7279,11 +7281,15 @@ static void handle_flush_callback (int finalize)
 	textview_append_text_colorized(oh.vwin->text, buf, 0);
 	free(buf);
 	if (finalize) {
+	    if (oh.flushing) {
+		scroll_to_foot(oh.vwin);
+	    }
 	    gretl_print_destroy(oh.prn);
 	} else {
 	    /* prepare for another chunk of output */
 	    textview_add_processing_message(oh.vwin->text);
 	    gretl_print_set_save_position(oh.prn);
+	    oh.flushing = 1;
 	}
 	/* ensure that the GUI gets updated */
 	while (gtk_events_pending()) {
