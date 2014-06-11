@@ -1563,3 +1563,4 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 
     return sysinfo_bundle;
 }
+
