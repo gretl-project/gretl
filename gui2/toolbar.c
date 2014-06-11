@@ -1251,13 +1251,10 @@ void vwin_add_tmpbar (windata_t *vwin)
 	G_CALLBACK(do_stop_script), 
 	0
     };
-    GtkWidget *hbox, *label, *tmp;
+    GtkWidget *hbox, *tmp;
 
     hbox = gtk_hbox_new(FALSE, 0);
     g_object_set_data(G_OBJECT(vwin->main), "top-hbox", hbox);
-
-    label = gtk_label_new(_("Processing..."));
-    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 
     tmp = gretl_toolbar_new();
     gretl_toolbar_insert(tmp, &item, item.func, NULL, 0);
