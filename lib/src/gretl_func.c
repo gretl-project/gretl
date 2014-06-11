@@ -28,6 +28,7 @@
 #include "gretl_xml.h"
 #include "cmd_private.h"
 #include "gretl_string_table.h"
+#include "gretl_array.h"
 #include "uservar.h"
 #include "flow_control.h"
 #include "kalman.h"
@@ -149,7 +150,9 @@ struct fnpkg_ {
 				 t == GRETL_TYPE_SERIES_REF ||	\
 				 t == GRETL_TYPE_MATRIX_REF ||	\
 				 t == GRETL_TYPE_BUNDLE_REF ||  \
-	                         t == GRETL_TYPE_BUNDLE)
+	                         t == GRETL_TYPE_BUNDLE ||	\
+				 t == GRETL_TYPE_ARRAY ||	\
+				 t == GRETL_TYPE_ARRAY_REF)
 
 enum {
     ARG_OPTIONAL = 1 << 0,
@@ -171,6 +174,7 @@ struct fnarg {
 	char *str;        /* string arg */
 	int *list;        /* list arg */
 	gretl_bundle *b;  /* anonymous bundle pointer */
+	gretl_array *a;   /* array argument */
     } val;
 };
 
@@ -358,6 +362,9 @@ static struct fnarg *fn_arg_new (const char *name, GretlType type,
     } else if (type == GRETL_TYPE_BUNDLE || 
 	       type == GRETL_TYPE_BUNDLE_REF) {
 	arg->val.b = (gretl_bundle *) p;
+    } else if (type == GRETL_TYPE_ARRAY ||
+	       type == GRETL_TYPE_ARRAY_REF) {
+	arg->val.a = (gretl_array *) p;
     } else {
 	*err = E_TYPES;
 	free(arg);
@@ -1270,11 +1277,13 @@ const char *gretl_arg_type_name (GretlType type)
     case GRETL_TYPE_USERIES:    return "series";
     case GRETL_TYPE_MATRIX:     return "matrix";	
     case GRETL_TYPE_LIST:       return "list";
-    case GRETL_TYPE_BUNDLE:     return "bundle";	
+    case GRETL_TYPE_BUNDLE:     return "bundle";
+    case GRETL_TYPE_ARRAY:      return "array";	 /* FIXME */
     case GRETL_TYPE_SCALAR_REF: return "scalar *";
     case GRETL_TYPE_SERIES_REF: return "series *";
     case GRETL_TYPE_MATRIX_REF: return "matrix *";
     case GRETL_TYPE_BUNDLE_REF: return "bundle *";
+    case GRETL_TYPE_ARRAY_REF:  return "array *"; /* FIXME */	
     case GRETL_TYPE_STRING:     return "string";
     case GRETL_TYPE_VOID:       return "void";
     case GRETL_TYPE_NONE:       return "null";
@@ -1301,6 +1310,8 @@ static const char *arg_type_xml_string (int t)
 	return "matrixref";
     } else if (t == GRETL_TYPE_BUNDLE_REF) {
 	return "bundleref";
+    } else if (t == GRETL_TYPE_ARRAY_REF) {
+	return "arrayref";
     } else {
 	return gretl_arg_type_name(t);
     }
@@ -1328,6 +1339,15 @@ GretlType gretl_type_from_string (const char *s)
     if (!strcmp(s, "seriesref"))  return GRETL_TYPE_SERIES_REF;
     if (!strcmp(s, "matrixref"))  return GRETL_TYPE_MATRIX_REF;
     if (!strcmp(s, "bundleref"))  return GRETL_TYPE_BUNDLE_REF;
+
+    if (!strcmp(s, "strings"))   return GRETL_TYPE_ARRAY;
+    if (!strcmp(s, "matrices"))  return GRETL_TYPE_ARRAY;
+    if (!strcmp(s, "bundles"))   return GRETL_TYPE_ARRAY;
+
+    if (!strcmp(s, "strings *"))   return GRETL_TYPE_ARRAY_REF;
+    if (!strcmp(s, "matrices *"))  return GRETL_TYPE_ARRAY_REF;
+    if (!strcmp(s, "bundles *"))   return GRETL_TYPE_ARRAY_REF;
+    if (!strcmp(s, "arrayref"))    return GRETL_TYPE_ARRAY_REF;
 
     return 0;
 }
@@ -5557,7 +5577,9 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		err = copy_as_arg(fp->name, fp->type, arg->val.m); 
 	    }
 	} else if (fp->type == GRETL_TYPE_BUNDLE) {
-	    err = copy_as_arg(fp->name, fp->type, arg->val.b); 
+	    err = copy_as_arg(fp->name, fp->type, arg->val.b);
+	} else if (fp->type == GRETL_TYPE_ARRAY) {
+	    err = copy_as_arg(fp->name, fp->type, arg->val.a);
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    err = localize_list(call, arg, fp, dset);
 	} else if (fp->type == GRETL_TYPE_STRING) {
@@ -5816,6 +5838,27 @@ static int handle_bundle_return (fncall *call, void *ptr, int copy)
     return err;
 }
 
+static int handle_array_return (fncall *call, void *ptr, int copy)
+{
+    const char *name = call->retname;
+    gretl_array *ret = NULL;
+    int err = 0;
+
+    if (copy) {
+	gretl_array *a = get_array_by_name(name);
+
+	if (a != NULL) {
+	    ret = gretl_array_copy(a, &err);
+	} 
+    } else {
+	ret = gretl_array_pull_from_stack(name, &err);
+    }
+
+    *(gretl_array **) ptr = ret;
+
+    return err;
+}
+
 static void replace_caller_series (int targ, int src, DATASET *dset)
 {
     int t;
@@ -6036,6 +6079,8 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    err = unlocalize_list(call->retname, NULL, dset);
 	} else if (rtype == GRETL_TYPE_BUNDLE) {
 	    err = handle_bundle_return(call, ret, copy);
+	} else if (rtype == GRETL_TYPE_ARRAY) {
+	    err = handle_array_return(call, ret, copy);
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    err = handle_string_return(call->retname, ret);
 	} 
@@ -6677,6 +6722,8 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 		*(gretl_matrix **) retval = ptr;
 	    } else if (type == GRETL_TYPE_BUNDLE) {
 		*(gretl_bundle **) retval = ptr;
+	    } else if (type == GRETL_TYPE_ARRAY) {
+		*(gretl_array **) retval = ptr;
 	    }
 	}
     }

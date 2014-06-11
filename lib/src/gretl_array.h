@@ -53,4 +53,12 @@ int gretl_array_append_bundle (gretl_array *A,
 			       gretl_bundle *b,
 			       int copy);
 
+gretl_array *gretl_array_copy (const gretl_array *A,
+			       int *err);
+
+gretl_array *get_array_by_name (const char *name);
+
+gretl_array *gretl_array_pull_from_stack (const char *name,
+					  int *err);
+
 #endif /* GRETL_ARRAY_H_ */

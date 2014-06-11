@@ -114,11 +114,12 @@ enum {
 	      BUNDLE,     /* gretl bundle (hash table) */
               BOBJ,       /* object inside a bundle */
 	      BMEMB,      /* object in bundle (dot notation) */
+	      ARRAY,      /* generic array object */
 	      FARGS,	  /* set of n function arguments */
               WLIST,      /* wildcard list spec */
               EMPTY,      /* "null" */
-	      ABSENT,
-  /* 90 */    DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
+  /* 90 */    ABSENT,
+              DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */
 	      UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
@@ -127,8 +128,8 @@ enum {
               INC,        /* increment */
               DEC,        /* decrement */
 	      QUERY,      /* ternary "?" expression */
-	      UNDEF,      /* undefined (in "query" context only) */
-  /* 100 */   EOT,	  /* end of transmission */
+  /* 100 */   UNDEF,      /* undefined (in "query" context only) */
+              EOT,	  /* end of transmission */
 	      UNK 
 };
 

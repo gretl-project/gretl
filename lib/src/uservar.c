@@ -23,6 +23,7 @@
 #include "gretl_func.h"
 #include "usermat.h"
 #include "gretl_string_table.h"
+#include "gretl_array.h"
 #include "libset.h"
 #include "monte_carlo.h"
 #include "uservar.h"
@@ -124,6 +125,12 @@ static user_var *user_var_new (const char *name, int type, void *value)
 	    } else {
 		u->ptr = value;
 	    }
+	} else if (type == GRETL_TYPE_ARRAY) {
+	    if (value == NULL) {
+		u->ptr = NULL; /* FIXME */
+	    } else {
+		u->ptr = value;
+	    }
 	}
     }
 
@@ -144,6 +151,8 @@ static void uvar_free_value (user_var *u)
     } else if (u->type == GRETL_TYPE_STRING) {
 	bufgets_finalize(u->ptr);
 	free(u->ptr);
+    } else if (u->type == GRETL_TYPE_ARRAY) {
+	gretl_array_destroy(u->ptr);
     } else {
 	/* scalar, list */
 	free(u->ptr);
@@ -579,6 +588,8 @@ int user_var_localize (const char *origname,
 	type = GRETL_TYPE_MATRIX;
     } else if (type == GRETL_TYPE_BUNDLE_REF) {
 	type = GRETL_TYPE_BUNDLE;
+    } else if (type == GRETL_TYPE_ARRAY_REF) {
+	type = GRETL_TYPE_ARRAY;
     }
 
     u = get_user_var_of_type_by_name(origname, type);
@@ -617,6 +628,8 @@ int user_var_unlocalize (const char *localname,
 	type = GRETL_TYPE_MATRIX;
     } else if (type == GRETL_TYPE_BUNDLE_REF) {
 	type = GRETL_TYPE_BUNDLE;
+    } else if (type == GRETL_TYPE_ARRAY_REF) {
+	type = GRETL_TYPE_ARRAY;
     }
 
     u = get_user_var_of_type_by_name(localname, type);
@@ -945,7 +958,14 @@ int copy_as_arg (const char *param_name, GretlType type, void *value)
 	if (!err) {
 	    copyval = bcpy;
 	}
-    }	
+    } else if (type == GRETL_TYPE_ARRAY) {
+	gretl_array *acpy = gretl_array_copy((gretl_array*) value,
+					     &err);
+	
+	if (!err) {
+	    copyval = acpy;
+	}
+    }
 
     if (!err) {
  	err = real_user_var_add(param_name, type, copyval, OPT_A);
@@ -1111,6 +1131,7 @@ int delete_user_vars_of_type (GretlType type, PRN *prn)
 
     if (type == GRETL_TYPE_MATRIX ||
 	type == GRETL_TYPE_BUNDLE ||
+	type == GRETL_TYPE_ARRAY  ||
 	type == GRETL_TYPE_STRING ||
 	type == GRETL_TYPE_DOUBLE ||
 	type == GRETL_TYPE_LIST) {

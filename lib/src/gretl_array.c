@@ -18,6 +18,7 @@
  */
  
 #include "libgretl.h"
+#include "uservar.h"
 #include "gretl_array.h"
 
 union array_data {
@@ -398,4 +399,80 @@ int gretl_array_append_bundle (gretl_array *A,
     return err;
 }
 
+gretl_array *gretl_array_copy (const gretl_array *A,
+			       int *err)
+{
+    gretl_array *Acpy = NULL;
 
+    if (A != NULL) {
+	Acpy = gretl_array_new(A->type, A->n, err);
+
+	if (!*err) {
+	    int i;
+
+	    if (A->type == GRETL_TYPE_STRING) {
+		for (i=0; i<A->n && !*err; i++) {
+		    Acpy->data.S[i] = gretl_strdup(A->data.S[i]);
+		    if (Acpy->data.S[i] == NULL) {
+			*err = E_ALLOC;
+		    }
+		}
+	    } else if (A->type == GRETL_TYPE_MATRIX) {
+		for (i=0; i<A->n && !*err; i++) {
+		    Acpy->data.M[i] = gretl_matrix_copy(A->data.M[i]);
+		    if (Acpy->data.M[i] == NULL) {
+			*err = E_ALLOC;
+		    }
+		}
+	    } else {
+		for (i=0; i<A->n && !*err; i++) {
+		    Acpy->data.B[i] = 
+			gretl_bundle_copy(A->data.B[i], err);
+		}
+	    }
+	}
+    }
+
+    return Acpy;
+}
+
+/**
+ * get_array_by_name:
+ * @name: the name to look up.
+ *
+ * Returns: pointer to a saved array, if found, else NULL.
+ */
+
+gretl_array *get_array_by_name (const char *name)
+{
+    gretl_array *a = NULL;
+
+    if (name != NULL && *name != '\0') {
+	user_var *u = get_user_var_of_type_by_name(name, GRETL_TYPE_ARRAY);
+
+	if (u != NULL) {
+	    a = user_var_get_value(u);
+	}
+    }
+
+    return a;
+}
+
+gretl_array *gretl_array_pull_from_stack (const char *name,
+					  int *err)
+{
+    gretl_array *a = NULL;
+    user_var *u;
+
+    u = get_user_var_of_type_by_name(name, GRETL_TYPE_ARRAY);
+
+    if (u != NULL) {
+	a = user_var_unstack_value(u);
+    }
+
+    if (a == NULL) {
+	*err = E_DATA;
+    } 
+
+    return a;
+}
