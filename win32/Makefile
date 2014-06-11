@@ -191,6 +191,7 @@ LIBSRC = adf_kpss.c \
 	gensyntax.c \
         gmm.c \
 	graphing.c \
+	gretl_array.c \
 	gretl_bfgs.c \
 	gretl_bundle.c \
 	gretl_commands.c \
@@ -548,7 +549,7 @@ plugins/reprobit.dll: reprobit.o dllinit.o
 plugins/panurc.dll: panurc.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GLIBLIB)
-	
+
 plugins/json_get.dll: json_get.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(JSON_LIB)

@@ -23,6 +23,7 @@
 #include "uservar.h"
 #include "gretl_func.h"
 #include "gretl_bundle.h"
+#include "gretl_array.h"
 
 #define GENDEBUG 0
 
@@ -546,6 +547,7 @@ union val {
     gretl_matrix *m;
     matrix_subspec *mspec;
     gretl_bundle *b;
+    gretl_array *a;
 };
 
 enum {
@@ -586,13 +588,14 @@ enum {
     P_LHSTR   = 1 << 19, /* there was a pre-existing LHS string */
     P_LHMAT   = 1 << 20, /* there was a pre-existing LHS matrix */
     P_LHBUN   = 1 << 21, /* there was a pre-existing LHS bundle */
-    P_QUIET   = 1 << 22, /* don't print any messages or labels */
-    P_GETSTR  = 1 << 23, /* state: flag acceptance of plain strings */
-    P_SLAVE   = 1 << 24, /* running as "slave" of NLS/MLE/GMM */
-    P_LHPTR   = 1 << 25, /* left-hand side: pointer type wanted */
-    P_MMASK   = 1 << 26, /* genr result is masked matrix */
-    P_SLICING = 1 << 27, /* calculating matrix slice (temporary) */
-    P_LAGPRSE = 1 << 28  /* parsing lag spec (temporary) */
+    P_LHARR   = 1 << 22, /* there was a pre-existing LHS array */
+    P_QUIET   = 1 << 23, /* don't print any messages or labels */
+    P_GETSTR  = 1 << 24, /* state: flag acceptance of plain strings */
+    P_SLAVE   = 1 << 25, /* running as "slave" of NLS/MLE/GMM */
+    P_LHPTR   = 1 << 26, /* left-hand side: pointer type wanted */
+    P_MMASK   = 1 << 27, /* genr result is masked matrix */
+    P_SLICING = 1 << 28, /* calculating object slice (temporary) */
+    P_LAGPRSE = 1 << 29  /* parsing lag spec (temporary) */
 };
 
 struct lhinfo {
@@ -651,7 +654,7 @@ NODE *expr (parser *s);
 NODE *newdbl (double x);
 NODE *newempty (void);
 NODE *obs_node (parser *p);
-NODE *msl_node_direct (parser *p);
+NODE *slice_node_direct (parser *p);
 void context_error (int c, parser *p);
 void undefined_symbol_error (const char *s, parser *p);
 const char *getsymb (int t, const parser *p);

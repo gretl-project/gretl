@@ -81,6 +81,7 @@
 #define ubundle_node(n) (n->t == BUNDLE && n->vname != NULL)
 #define ulist_node(n)   (n->t == LIST && n->vname != NULL)
 #define ustring_node(n) (n->t == STR && n->vname != NULL)
+#define uarray_node(n)  (n->t == ARRAY && n->vname != NULL)
 #define useries_node(n) (n->t == VEC && n->vnum >= 0)
 #define uvar_node(n) (n->vname != NULL)
 
@@ -100,6 +101,7 @@
 #define lhlist(p) (p->flags & P_LHLIST)
 #define lhstr(p) (p->flags & P_LHSTR)
 #define lhbundle(p) (p->flags & P_LHBUN)
+#define lharray(p) (p->flags & P_LHARR)
 
 #define compiled(p) (p->flags & P_EXEC)
 
@@ -132,6 +134,8 @@ static const char *typestr (int t)
 	return "list";
     case BUNDLE:
 	return "bundle";
+    case ARRAY:
+	return "array";
     case EMPTY:
 	return "empty";
     default:
@@ -266,6 +270,8 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 	    free_mspec(t->v.mspec);
 	} else if (t->t == BUNDLE) {
 	    gretl_bundle_destroy(t->v.b);
+	} else if (t->t == ARRAY) {
+	    gretl_array_destroy(t->v.a);
 	}
     }
 
@@ -464,6 +470,18 @@ static NODE *newbundle (void)
     return n;
 }
 
+static NODE *newarray (void)
+{  
+    NODE *n = new_node(ARRAY);
+
+    if (n != NULL) {
+	n->flags = TMP_NODE;
+	n->v.a = NULL;
+    }
+
+    return n;
+}
+
 /* push an auxiliary evaluation node onto the stack of
    such nodes */
 
@@ -514,6 +532,8 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	    ret = newstring();
 	} else if (t == BUNDLE) {
 	    ret = newbundle();
+	} else if (t == ARRAY) {
+	    ret = newarray();
 	} else if (t == EMPTY) {
 	    ret = newempty();
 	}
@@ -605,6 +625,11 @@ static NODE *aux_string_node (parser *p)
 static NODE *aux_bundle_node (parser *p)
 {
     return get_aux_node(p, BUNDLE, 0, 0);
+}
+
+static NODE *aux_array_node (parser *p)
+{
+    return get_aux_node(p, ARRAY, 0, 0);
 }
 
 static NODE *aux_empty_node (parser *p)
@@ -6058,6 +6083,9 @@ static void *arg_get_data (NODE *n, int ref, GretlType *type)
     } else if (n->t == BUNDLE) {
 	*type = ref ? GRETL_TYPE_BUNDLE_REF : GRETL_TYPE_BUNDLE;
 	data = n->v.b;
+    } else if (n->t == ARRAY) {
+	*type = ref ? GRETL_TYPE_ARRAY_REF : GRETL_TYPE_ARRAY;
+	data = n->v.a;
     } else if (n->t == STR) {
 	*type = GRETL_TYPE_STRING;
 	data = n->v.str;
@@ -6083,7 +6111,9 @@ static int check_uaddr_type (NODE *u, parser *p)
     } else if (umatrix_node(n)) {
 	; /* OK */
     } else if (ubundle_node(n)) {
-	; /* OK */	
+	; /* OK */
+    } else if (uarray_node(n)) {
+	; /* OK */
     } else {
 	pputs(p->prn, _("Wrong type of operand for unary '&'"));
 	pputc(p->prn, '\n');
@@ -6095,7 +6125,8 @@ static int check_uaddr_type (NODE *u, parser *p)
 
 #define ok_ufunc_sym(s) (s == NUM || s == VEC || s == MAT || \
                          s == LIST || s == U_ADDR || s == DUM || \
-                         s == STR || s == EMPTY || s == BUNDLE)
+                         s == STR || s == EMPTY || s == BUNDLE || \
+			 s == ARRAY)
 
 /* evaluate a user-defined function */
 
@@ -6215,6 +6246,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	double *Xret = NULL;
 	gretl_matrix *mret = NULL;
 	gretl_bundle *bret = NULL;
+	gretl_array *aret = NULL;
 	char *sret = NULL;
 	int *iret = NULL;
 	void *retp = NULL;
@@ -6231,6 +6263,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    retp = &sret;
 	} else if (rtype == GRETL_TYPE_BUNDLE) {
 	    retp = &bret;
+	} else if (rtype == GRETL_TYPE_ARRAY) {
+	    retp = &aret;
 	}
 
 	if ((p->flags & P_UFRET) && 
@@ -6288,6 +6322,15 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    }
 		    ret->t = BUNDLE;
 		    ret->v.b = bret;
+		}
+	    } else if (rtype == GRETL_TYPE_ARRAY) {
+		ret = aux_array_node(p);
+		if (ret != NULL) {
+		    if (is_tmp_node(ret)) {
+			gretl_array_destroy(ret->v.a);
+		    }
+		    ret->t = ARRAY;
+		    ret->v.a = aret;
 		}
 	    }		
 	}
@@ -9754,6 +9797,8 @@ static void node_reattach_data (NODE *n, parser *p)
 	data = n->v.b = get_bundle_by_name(n->vname);
     } else if (ustring_node(n)) {
 	data = n->v.str = get_string_by_name(n->vname);
+    } else if (uarray_node(n)) {
+	data = n->v.a = get_array_by_name(n->vname);
     }
 
     if (!p->err && data == NULL) {
@@ -9931,6 +9976,7 @@ static NODE *eval (NODE *t, parser *p)
     case STR:
     case LIST:
     case BUNDLE:
+    case ARRAY:
 	if (compiled(p) && starting(p) && uvar_node(t)) {
 	    node_reattach_data(t, p);
 	}
@@ -11214,6 +11260,8 @@ static void printnode (NODE *t, parser *p)
 	}
     } else if (t->t == BUNDLE) {
 	gretl_bundle_print(t->v.b, p->prn);
+    } else if (t->t == ARRAY) {
+	gretl_array_print(t->v.a, p->prn);
     } else if (t->t == UOBJ) {
 	pprintf(p->prn, "%s", t->v.str);
     } else if (t->t == DVAR) {
@@ -11449,7 +11497,7 @@ static void get_lh_mspec (parser *p)
 # if LHDEBUG
 	fprintf(stderr, "subp->input='%s'\n", subp->input);
 # endif
-	subp->tree = msl_node_direct(subp);
+	subp->tree = slice_node_direct(subp);
 	free(s);
     }
 
@@ -11526,8 +11574,8 @@ static void process_lhs_substr (const char *lname, char c, parser *p)
 
     if (p->lh.t == VEC) {
 	get_lh_obsnum(p);
-    } else if (p->lh.t == MAT) {
-	get_lh_mspec(p);
+    } else if (p->lh.t == MAT || p->lh.t == ARRAY) {
+	get_lh_mspec(p); /* FIXME array */
     } else if (p->lh.t == BUNDLE) {
 	/* substr should be key string; handled later */
 	if (c != 0) {
@@ -11593,6 +11641,8 @@ static void do_decl (parser *p)
 		    type = GRETL_TYPE_STRING;
 		} else if (p->targ == BUNDLE) {
 		    type = GRETL_TYPE_BUNDLE;
+		} else if (p->targ == ARRAY) {
+		    type = GRETL_TYPE_ARRAY; /* FIXME */
 		} else if (p->targ == LIST) {
 		    type = GRETL_TYPE_LIST;
 		} else {
@@ -11640,7 +11690,7 @@ static NODE *lhs_copy_node (parser *p)
 static void parser_try_print (parser *p)
 {
     if (p->lh.v == 0 && p->lh.m0 == NULL && !lhlist(p) && 
-	!lhstr(p) && !lhscalar(p) && !lhbundle(p)) {
+	!lhstr(p) && !lhscalar(p) && !lhbundle(p) && !lharray(p)) {
 	/* varname on left is not the name of a current variable */
 	p->err = E_EQN;
     } else if (p->lh.substr != NULL) {
@@ -11743,6 +11793,8 @@ static void maybe_do_type_errmsg (const char *name, int t)
 	    tstr = "bundle";
 	} else if (t == LIST) {
 	    tstr = "list";
+	} else if (t == ARRAY) {
+	    tstr = "array";
 	}
 
 	if (tstr != NULL) {
@@ -11786,6 +11838,13 @@ static void maybe_set_matrix_target (parser *p)
     if (n > 1 && p->rhs[n-1] == '}') {
 	p->targ = MAT;
     }
+}
+
+static int ok_array_decl (const char *s) 
+{
+    return !strncmp(s, "strings ", 8) ||
+	!strncmp(s, "matrices ", 9) ||
+	!strncmp(s, "bundles ", 8);
 }
 
 /* process the left-hand side of a genr formula */
@@ -11847,7 +11906,11 @@ static void pre_process (parser *p, int flags)
     } else if (!strncmp(s, "bundle ", 7)) {
 	p->targ = BUNDLE;
 	s += 7;
-    }
+    } else if (ok_array_decl(s)) {
+	p->targ = ARRAY;
+	s += strcspn(s, " ");
+	s += strspn(s, " ");
+    }	
 
     if (p->targ == VEC && p->dset->n == 0) {
 	no_data_error(p);
@@ -12701,7 +12764,8 @@ static int edit_list (parser *p)
 
 #define ok_return_type(t) (t == NUM || t == VEC || t == MAT || \
 			   t == LIST || t == DUM || t == EMPTY || \
-                           t == STR || t == BUNDLE || t == U_ADDR)
+                           t == STR || t == BUNDLE || t == ARRAY || \
+			   t == U_ADDR)
 
 static int gen_check_return_type (parser *p)
 {
@@ -12720,7 +12784,8 @@ static int gen_check_return_type (parser *p)
     if ((p->dset == NULL || p->dset->n == 0) && 
 	r->t != MAT && r->t != NUM && 
 	r->t != STR && r->t != BUNDLE &&
-	r->t != U_ADDR && r->t != EMPTY) {
+	r->t != U_ADDR && r->t != EMPTY &&
+	r->t != ARRAY) {
 	no_data_error(p);
 	return p->err;
     }
@@ -12769,6 +12834,10 @@ static int gen_check_return_type (parser *p)
 	}
     } else if (p->targ == BOBJ || p->targ == BMEMB) {
 	if (!ok_bundled_type(r->t)) {
+	    p->err = E_TYPES;
+	}
+    } else if (p->targ == ARRAY) {
+	if (r->t != ARRAY && r->t != EMPTY) {
 	    p->err = E_TYPES;
 	}
     } else {

@@ -476,3 +476,9 @@ gretl_array *gretl_array_pull_from_stack (const char *name,
 
     return a;
 }
+
+int gretl_array_print (gretl_array *A, PRN *prn)
+{
+    pputs(prn, "array\n"); /* FIXME */
+    return 0;
+}

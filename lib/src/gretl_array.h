@@ -61,4 +61,6 @@ gretl_array *get_array_by_name (const char *name);
 gretl_array *gretl_array_pull_from_stack (const char *name,
 					  int *err);
 
+int gretl_array_print (gretl_array *A, PRN *prn);
+
 #endif /* GRETL_ARRAY_H_ */

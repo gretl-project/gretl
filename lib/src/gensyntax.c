@@ -102,6 +102,9 @@ static NODE *newref (parser *p, int t)
 	} else if (t == BUNDLE) {
 	    n->vname = p->idstr;
 	    n->v.b = p->uval;
+	} else if (t == ARRAY) {
+	    n->vname = p->idstr;
+	    n->v.a = p->uval;
 	} else if (t == USTR) {
 	    n->t = STR;
 	    n->vname = p->idstr;
@@ -292,6 +295,7 @@ static NODE *base (parser *p, NODE *up)
     case ULIST:
     case WLIST:
     case BUNDLE:
+    case ARRAY:
     case USTR:
     case UNUM_P:
     case UNUM_M:
@@ -792,8 +796,8 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
     }
 }
 
-#define set_matrix_slice_on(p) (p->flags |= P_SLICING)
-#define set_matrix_slice_off(p) (p->flags &= ~P_SLICING)
+#define set_slice_on(p) (p->flags |= P_SLICING)
+#define set_slice_off(p) (p->flags &= ~P_SLICING)
 
 #define set_lag_parse_on(p) (p->flags |= P_LAGPRSE)
 #define set_lag_parse_off(p) (p->flags &= ~P_LAGPRSE)
@@ -806,7 +810,7 @@ static void get_slice_parts (NODE *t, parser *p)
     fprintf(stderr, "get_slice_parts, p->sym = %d\n", p->sym);
 #endif  
 
-    set_matrix_slice_on(p);
+    set_slice_on(p);
 
     if (p->sym == G_LBR) {
 	lex(p);
@@ -832,7 +836,7 @@ static void get_slice_parts (NODE *t, parser *p)
 	    t->v.b2.r = newempty();
 	    t->v.b2.r->t = ABSENT;
 	    lex(p);
-	    set_matrix_slice_off(p);
+	    set_slice_off(p);
 	    return;
 	}
 	if (p->sym == P_COM) {
@@ -870,7 +874,7 @@ static void get_slice_parts (NODE *t, parser *p)
 	expected_symbol_error(cexp, p);
     }
 
-    set_matrix_slice_off(p);
+    set_slice_off(p);
 }
 
 static void attach_child (NODE *parent, NODE *child, int k, int i,
@@ -1567,10 +1571,10 @@ NODE *expr (parser *p)
     return t;
 }
 
-/* for use when we need to evaluate a sub-matrix specification
-   on the left-hand side of a genr formula */
+/* for use when we need to evaluate a sub-matrix or sub-array
+   specification on the left-hand side of a genr formula */
 
-NODE *msl_node_direct (parser *p)
+NODE *slice_node_direct (parser *p)
 {
     NODE *t;
 

@@ -1027,6 +1027,8 @@ static void look_up_word (const char *s, parser *p)
 			p->sym = UMAT;
 		    } else if (vtype == GRETL_TYPE_BUNDLE) {
 			p->sym = BUNDLE;
+		    } else if (vtype == GRETL_TYPE_ARRAY) {
+			p->sym = ARRAY;
 		    } else if (vtype == GRETL_TYPE_STRING) {
 			p->sym = USTR;
 		    } else if (vtype == GRETL_TYPE_LIST) {
@@ -1689,6 +1691,8 @@ const char *getsymb (int t, const parser *p)
 	    return p->idstr;
 	} else if (t == BUNDLE) {
 	    return p->idstr;
+	} else if (t == ARRAY) {
+	    return p->idstr;
 	} else if (t == UMAT || t == UOBJ) {
 	    return p->idstr;
 	} else if (t == CON) {
@@ -1711,6 +1715,8 @@ const char *getsymb (int t, const parser *p)
 	    return "UNUM";
 	} else if (t == BUNDLE) {
 	    return "BUNDLE";
+	} else if (t == ARRAY) {
+	    return "ARRAY";
 	} else if (t == UMAT) {
 	    return "UMAT";
 	} else if (t == UOBJ) {

@@ -196,6 +196,7 @@ LIBSRC = adf_kpss.c \
 	gensyntax.c \
         gmm.c \
 	graphing.c \
+	gretl_array.c \
 	gretl_bfgs.c \
 	gretl_bundle.c \
 	gretl_commands.c \
