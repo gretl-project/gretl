@@ -26,6 +26,7 @@
 #include "gretl_func.h"
 #include "matrix_extra.h"
 #include "uservar.h"
+#include "gretl_array.h"
 #include "gretl_string_table.h"
 
 #include <time.h>
@@ -1829,6 +1830,7 @@ static void print_listed_objects (const char *s,
     const int *list;
     const char *p;
     gretl_bundle *b;
+    gretl_array *a;
     char *name;
     int err = 0;
 
@@ -1841,6 +1843,8 @@ static void print_listed_objects (const char *s,
 	    print_varlist(name, list, dset, prn);
 	} else if ((b = get_bundle_by_name(name)) != NULL) {
 	    gretl_bundle_print(b, prn);
+	} else if ((a = get_array_by_name(name)) != NULL) {
+	    gretl_array_print(a, prn);
 	} else if ((p = get_string_by_name(name)) != NULL) {
 	    pputs(prn, p);
 	    pputc(prn, '\n');

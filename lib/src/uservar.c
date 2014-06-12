@@ -79,11 +79,14 @@ static double *na_ptr (void)
     return px;
 }
 
-static user_var *user_var_new (const char *name, int type, void *value)
+static user_var *user_var_new (const char *name, int type, 
+			       void *value, int *err)
 {
     user_var *u = malloc(sizeof *u);
 
-    if (u != NULL) {
+    if (u == NULL) {
+	*err = E_ALLOC;
+    } else {
 	u->type = type;
 	u->level = gretl_function_depth();
 	u->flags = 0;
@@ -125,12 +128,13 @@ static user_var *user_var_new (const char *name, int type, void *value)
 	    } else {
 		u->ptr = value;
 	    }
-	} else if (type == GRETL_TYPE_ARRAY) {
+	} else if (gretl_array_type(type)) {
 	    if (value == NULL) {
-		u->ptr = NULL; /* FIXME */
+		u->ptr = gretl_array_new(type, 0, err);
 	    } else {
 		u->ptr = value;
 	    }
+	    u->type = GRETL_TYPE_ARRAY;
 	}
     }
 
@@ -222,8 +226,10 @@ static int real_user_var_add (const char *name,
 			      void *value, 
 			      gretlopt opt)
 {
-    user_var *u = user_var_new(name, type, value);
+    user_var *u;
     int err = 0;
+
+    u = user_var_new(name, type, value, &err);
 
     /* We use OPT_P for a private variable, OPT_A
        when adding as a function argument, OPT_S
@@ -234,9 +240,7 @@ static int real_user_var_add (const char *name,
     fprintf(stderr, "real_user_var_add: '%s'\n", name);
 #endif
 
-    if (u == NULL) {
-	err = E_ALLOC;
-    } else {
+    if (!err) {
 	err = resize_uvar_stack(n_vars + 1);
 	if (!err) {
 	    if (opt & OPT_P) {
@@ -259,8 +263,6 @@ static int real_user_var_add (const char *name,
 	!(type == GRETL_TYPE_BUNDLE && bname_is_temp(name))) {
 	return (*user_var_callback)(name, type, UVAR_ADD);
     }
-
-    /* FIXME GUI scalars callback? */
 
     return err;
 }
@@ -736,6 +738,23 @@ char *user_string_resize (const char *name, size_t len, int *err)
     return (char *) u->ptr;
 }
 
+static int check_array_type_compat (GretlType type,
+				    user_var *u)
+{
+    int err = 0;
+
+    if (u->type != GRETL_TYPE_ARRAY) {
+	err = E_TYPES;
+    } else {
+	/* we also need a more specific check here */
+	if (type != gretl_array_get_type(u->ptr)) {
+	    err = E_TYPES;
+	}
+    }    
+
+    return err;
+}
+
 int user_var_add_or_replace (const char *name,
 			     GretlType type,
 			     void *value)
@@ -743,10 +762,15 @@ int user_var_add_or_replace (const char *name,
     user_var *u = get_user_var_by_name(name);
     int err = 0;
 
-    if (u != NULL && u->type != type) {
-	err = E_TYPES;
-    } else if (u != NULL) {
- 	err = user_var_replace_value(u, value);
+    if (u != NULL) {
+	if (gretl_array_type(type)) {
+	    err = check_array_type_compat(type, u);
+	} else if (u->type != type) {
+	    err = E_TYPES;
+	}
+	if (!err) {
+	    err = user_var_replace_value(u, value);
+	}
     } else {
 	err = real_user_var_add(name, type, value, OPT_NONE);
     }

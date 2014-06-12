@@ -426,6 +426,7 @@ struct str_table funcs[] = {
     { F_NLINES,    "nlines" },
     { F_KPSSCRIT,  "kpsscrit" },
     { F_VECLEN,    "veclen" },
+    { F_ARRAY,     "array" },
     { 0,           NULL }
 };
 
@@ -1144,6 +1145,9 @@ static void word_check_next_char (parser *p)
 	} else if (p->sym == MVAR && model_data_list(p->idnum)) {
 	    /* element of accessor list */
 	    p->sym = MLISTELEM;
+	} else if (p->sym == ARRAY) {
+	    /* element of array */
+	    p->sym = ARRAYELEM;
 	} else if (p->sym == BUNDLE) {
 	    /* object from bundle */
 	    p->sym = BOBJ;
@@ -1672,6 +1676,8 @@ const char *getsymb (int t, const parser *p)
 	return "BMEMB";
     } else if (t == LISTELEM) {
 	return "LISTELEM";
+    } else if (t == ARRAYELEM) {
+	return "ARRAYELEM";
     } else if (t == VEC) {
 	return "VEC";
     } else if (t == MAT) {

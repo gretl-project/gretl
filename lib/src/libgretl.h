@@ -126,18 +126,25 @@ typedef enum {
     GRETL_TYPE_BUNDLE_REF,
     GRETL_TYPE_ARRAY,
     GRETL_TYPE_ARRAY_REF,
+    GRETL_TYPE_STRING_ARRAY,
+    GRETL_TYPE_MATRIX_ARRAY,
+    GRETL_TYPE_BUNDLE_ARRAY,
     GRETL_TYPE_VOID
 } GretlType;
 
-#define gretl_scalar_type(t) (t == GRETL_TYPE_BOOL || \
-                              t == GRETL_TYPE_INT || \
-			      t == GRETL_TYPE_OBS || \
+#define gretl_scalar_type(t) (t == GRETL_TYPE_BOOL ||	\
+                              t == GRETL_TYPE_INT ||	\
+			      t == GRETL_TYPE_OBS ||	\
 			      t == GRETL_TYPE_DOUBLE)
 
-#define gretl_ref_type(t) (t == GRETL_TYPE_SCALAR_REF || \
-			   t == GRETL_TYPE_SERIES_REF || \
-			   t == GRETL_TYPE_MATRIX_REF || \
+#define gretl_ref_type(t) (t == GRETL_TYPE_SCALAR_REF ||	\
+			   t == GRETL_TYPE_SERIES_REF ||	\
+			   t == GRETL_TYPE_MATRIX_REF ||	\
 			   t == GRETL_TYPE_BUNDLE_REF)
+
+#define gretl_array_type(t) (t == GRETL_TYPE_STRING_ARRAY ||	\
+			     t == GRETL_TYPE_MATRIX_ARRAY ||	\
+			     t == GRETL_TYPE_BUNDLE_ARRAY)
 
 enum ts_codes {
     CROSS_SECTION,

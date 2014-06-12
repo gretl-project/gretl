@@ -24,11 +24,15 @@ typedef struct gretl_array_ gretl_array;
 
 void gretl_array_destroy (gretl_array *A);
 
+void gretl_array_void_content (gretl_array *A);
+
 gretl_array *gretl_array_new (GretlType type, int n, int *err);
 
-void *gretl_array_get_member (gretl_array *A, int i, 
-			      GretlType *type,
-			      int *err);
+void *gretl_array_get_element (gretl_array *A, int i, 
+			       GretlType *type,
+			       int *err);
+
+GretlType gretl_array_get_type (gretl_array *A);
 
 int gretl_array_set_string (gretl_array *A, int i, 
 			    char *s, int copy);
@@ -55,6 +59,9 @@ int gretl_array_append_bundle (gretl_array *A,
 
 gretl_array *gretl_array_copy (const gretl_array *A,
 			       int *err);
+
+int gretl_array_copy_as (const char *name, const char *copyname,
+			 GretlType copytype);
 
 gretl_array *get_array_by_name (const char *name);
 

@@ -1278,13 +1278,18 @@ const char *gretl_arg_type_name (GretlType type)
     case GRETL_TYPE_MATRIX:     return "matrix";	
     case GRETL_TYPE_LIST:       return "list";
     case GRETL_TYPE_BUNDLE:     return "bundle";
-    case GRETL_TYPE_ARRAY:      return "array";	 /* FIXME */
+    case GRETL_TYPE_ARRAY:      return "array";	 /* FIXME? */
     case GRETL_TYPE_SCALAR_REF: return "scalar *";
     case GRETL_TYPE_SERIES_REF: return "series *";
     case GRETL_TYPE_MATRIX_REF: return "matrix *";
     case GRETL_TYPE_BUNDLE_REF: return "bundle *";
-    case GRETL_TYPE_ARRAY_REF:  return "array *"; /* FIXME */	
+    case GRETL_TYPE_ARRAY_REF:  return "array *"; /* FIXME? */	
     case GRETL_TYPE_STRING:     return "string";
+
+    case GRETL_TYPE_STRING_ARRAY: return "strings";
+    case GRETL_TYPE_MATRIX_ARRAY: return "matrices";
+    case GRETL_TYPE_BUNDLE_ARRAY: return "bundles";
+
     case GRETL_TYPE_VOID:       return "void";
     case GRETL_TYPE_NONE:       return "null";
     default:
@@ -1340,10 +1345,11 @@ GretlType gretl_type_from_string (const char *s)
     if (!strcmp(s, "matrixref"))  return GRETL_TYPE_MATRIX_REF;
     if (!strcmp(s, "bundleref"))  return GRETL_TYPE_BUNDLE_REF;
 
-    if (!strcmp(s, "strings"))   return GRETL_TYPE_ARRAY;
-    if (!strcmp(s, "matrices"))  return GRETL_TYPE_ARRAY;
-    if (!strcmp(s, "bundles"))   return GRETL_TYPE_ARRAY;
+    if (!strcmp(s, "strings"))   return GRETL_TYPE_STRING_ARRAY;
+    if (!strcmp(s, "matrices"))  return GRETL_TYPE_MATRIX_ARRAY;
+    if (!strcmp(s, "bundles"))   return GRETL_TYPE_BUNDLE_ARRAY;
 
+    /* FIXME */
     if (!strcmp(s, "strings *"))   return GRETL_TYPE_ARRAY_REF;
     if (!strcmp(s, "matrices *"))  return GRETL_TYPE_ARRAY_REF;
     if (!strcmp(s, "bundles *"))   return GRETL_TYPE_ARRAY_REF;

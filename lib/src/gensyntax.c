@@ -334,7 +334,7 @@ static NODE *base (parser *p, NODE *up)
 	}
 	if (up->t == OBS || up->t == DOBS) {
 	    t = obs_node(p);
-	} else if (up->t == LISTELEM) {
+	} else if (up->t == LISTELEM || up->t == ARRAYELEM) {
 	    lex(p);
 	    t = expr(p);
 	}
@@ -1162,6 +1162,13 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b2.r = base(p, t);
 	}
+    } else if (sym == ARRAYELEM) {
+	t = newb2(sym, NULL, NULL);
+	if (t != NULL) {
+	    t->v.b2.l = newref(p, ARRAY);
+	    lex(p);
+	    t->v.b2.r = base(p, t);
+	}	
     } else if (sym == BOBJ) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {

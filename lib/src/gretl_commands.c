@@ -181,6 +181,9 @@ static struct gretl_cmd gretl_cmd_aliases[] = {
     { GENR, "matrix" },  
     { GENR, "string" },
     { GENR, "bundle" },
+    { GENR, "strings" },
+    { GENR, "matrices" },
+    { GENR, "bundles" },
     { ARMA, "arma" },
     { NC,   NULL }
 };

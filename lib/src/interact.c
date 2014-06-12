@@ -1548,6 +1548,7 @@ static int print_name_ok (const char *s, CMD *cmd)
 	    t == GRETL_TYPE_DOUBLE ||
 	    t == GRETL_TYPE_STRING ||
 	    t == GRETL_TYPE_BUNDLE ||
+	    t == GRETL_TYPE_ARRAY ||
 	    !strcmp(s, "scalars")) {
 	    cmd->parm2 = gretl_str_expand(&cmd->parm2, s, " ");
 	    cmd->list[0] -= 1;
@@ -2850,6 +2851,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 	    t == GRETL_TYPE_MATRIX ||
 	    t == GRETL_TYPE_BUNDLE ||
 	    t == GRETL_TYPE_STRING ||
+	    t == GRETL_TYPE_ARRAY ||
 	    !strcmp(rem, "kalman")) {
 	    /* special for deleting a named matrix, string, ... */
 	    cmd_param_grab_string(cmd, rem);
