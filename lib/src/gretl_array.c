@@ -222,7 +222,7 @@ void *gretl_array_get_element (gretl_array *A, int i,
     /* FIXME: between here and geneval.c, decide what exactly
        we want to do about copying or not when we grab an
        array element, to avoid both memory corruption and
-       wasted cycles/leakages. Right now we copy here,
+       wasted cycles/leakage. Right now we copy here,
        unconditionally, but that's probably a bad idea.
     */
 
