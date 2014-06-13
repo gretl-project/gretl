@@ -54,6 +54,9 @@ typedef enum {
 				    r == GRETL_TYPE_LIST ||   \
 				    r == GRETL_TYPE_STRING || \
 				    r == GRETL_TYPE_BUNDLE || \
+				    r == GRETL_TYPE_STRINGS ||  \
+				    r == GRETL_TYPE_MATRICES || \
+				    r == GRETL_TYPE_BUNDLES ||	\
 				    r == GRETL_TYPE_VOID)
 
 typedef struct ufunc_ ufunc;

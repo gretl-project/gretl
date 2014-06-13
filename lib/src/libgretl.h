@@ -126,9 +126,12 @@ typedef enum {
     GRETL_TYPE_BUNDLE_REF,
     GRETL_TYPE_ARRAY,
     GRETL_TYPE_ARRAY_REF,
-    GRETL_TYPE_STRING_ARRAY,
-    GRETL_TYPE_MATRIX_ARRAY,
-    GRETL_TYPE_BUNDLE_ARRAY,
+    GRETL_TYPE_STRINGS,
+    GRETL_TYPE_MATRICES,
+    GRETL_TYPE_BUNDLES,
+    GRETL_TYPE_STRINGS_REF,
+    GRETL_TYPE_MATRICES_REF,
+    GRETL_TYPE_BUNDLES_REF,
     GRETL_TYPE_VOID
 } GretlType;
 
@@ -137,14 +140,17 @@ typedef enum {
 			      t == GRETL_TYPE_OBS ||	\
 			      t == GRETL_TYPE_DOUBLE)
 
-#define gretl_ref_type(t) (t == GRETL_TYPE_SCALAR_REF ||	\
-			   t == GRETL_TYPE_SERIES_REF ||	\
-			   t == GRETL_TYPE_MATRIX_REF ||	\
-			   t == GRETL_TYPE_BUNDLE_REF)
+#define gretl_ref_type(t) (t == GRETL_TYPE_SCALAR_REF ||   \
+	                   t == GRETL_TYPE_SERIES_REF ||   \
+	                   t == GRETL_TYPE_MATRIX_REF ||   \
+	                   t == GRETL_TYPE_BUNDLE_REF ||   \
+			   t == GRETL_TYPE_STRINGS_REF ||  \
+			   t == GRETL_TYPE_MATRICES_REF || \
+			   t == GRETL_TYPE_BUNDLES_REF)
 
-#define gretl_array_type(t) (t == GRETL_TYPE_STRING_ARRAY ||	\
-			     t == GRETL_TYPE_MATRIX_ARRAY ||	\
-			     t == GRETL_TYPE_BUNDLE_ARRAY)
+#define gretl_array_type(t) (t == GRETL_TYPE_STRINGS ||  \
+			     t == GRETL_TYPE_MATRICES || \
+			     t == GRETL_TYPE_BUNDLES)
 
 enum ts_codes {
     CROSS_SECTION,

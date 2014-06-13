@@ -62,6 +62,8 @@
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
 #define is_tmp_node(n) (n != NULL && (n->flags & TMP_NODE))
 
+#define mark_node_fragile(n) (n->flags &= ~TMP_NODE)
+
 #define nullmat_ok(f) (f == F_ROWS || f == F_COLS || f == F_DET || \
 		       f == F_LDET || f == F_DIAG || f == F_TRANSP || \
 		       f == F_VEC || f == F_VECH || f == F_UNVECH || \
@@ -220,6 +222,35 @@ static int in_tree (NODE *t, NODE *n)
 
     return 0;
 }
+
+/* A word on "aux" nodes. These come in two "flavors" which
+   might be described as "robust" and "fragile" respectively.
+
+   A robust node (identified by the TMP_NODE flag) is one
+   whose data pointer is independently allocated. With such
+   a node it's OK simply to "pass on" the pointer in
+   assignment, and if it's not passed on it should be freed
+   on completion of "genr". (So note: if it's assigned 
+   elsewhere, the pointer on the aux node itself must then 
+   be set to NULL.)
+
+   A fragile node is one whose data pointer is not
+   independently allocated; it actually "belongs to someone
+   else". In assignment, then, it must be deeply copied,
+   and it must _not_ be freed on completion of genr.
+
+   Obviously, it's necessary to be careful in handling
+   fragile nodes, but the advantage of allowing them
+   is that they cut down on wasteful deep-copying of objects
+   that may be used in calculation, without being modified,
+   on the fly.
+
+   Note that the way we have things at present aux string
+   nodes are always supposed to be robust. So if a function 
+   here "acquires" a string that in fact belongs to some 
+   persistent object, it must be strdup'd before it's placed
+   on an aux string node.
+*/
 
 static void free_tree (NODE *t, parser *p, const char *msg)
 {
@@ -458,24 +489,24 @@ static NODE *newstring (void)
     return n;
 }
 
-static NODE *newbundle (void)
+static NODE *newbundle (int tmp)
 {  
     NODE *n = new_node(BUNDLE);
 
     if (n != NULL) {
-	n->flags = TMP_NODE;
+	n->flags = (tmp)? TMP_NODE : 0;
 	n->v.b = NULL;
     }
 
     return n;
 }
 
-static NODE *newarray (void)
+static NODE *newarray (int tmp)
 {  
     NODE *n = new_node(ARRAY);
 
     if (n != NULL) {
-	n->flags = TMP_NODE;
+	n->flags = (tmp)? TMP_NODE : 0;
 	n->v.a = NULL;
     }
 
@@ -531,9 +562,9 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	} else if (t == STR) {
 	    ret = newstring();
 	} else if (t == BUNDLE) {
-	    ret = newbundle();
+	    ret = newbundle(tmp);
 	} else if (t == ARRAY) {
-	    ret = newarray();
+	    ret = newarray(tmp);
 	} else if (t == EMPTY) {
 	    ret = newempty();
 	}
@@ -617,19 +648,29 @@ static NODE *aux_mspec_node (parser *p)
     return get_aux_node(p, MSPEC, 0, 0);
 }
 
+/* note: a string placed on an aux_string_node
+   should always be strdup'd; the node takes
+   ownership unconditionally 
+*/
+
 static NODE *aux_string_node (parser *p)
 {
-    return get_aux_node(p, STR, 0, 0);
+    return get_aux_node(p, STR, 0, 1);
 }
 
 static NODE *aux_bundle_node (parser *p)
+{
+    return get_aux_node(p, BUNDLE, 0, 1);
+}
+
+static NODE *bundle_pointer_node (parser *p)
 {
     return get_aux_node(p, BUNDLE, 0, 0);
 }
 
 static NODE *aux_array_node (parser *p)
 {
-    return get_aux_node(p, ARRAY, 0, 0);
+    return get_aux_node(p, ARRAY, 0, 1);
 }
 
 static NODE *aux_empty_node (parser *p)
@@ -2862,9 +2903,6 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	case F_COLS:
 	    ret->v.xval = m->cols;
 	    break;
-	case F_VECLEN:
-	    ret->v.xval = gretl_vector_get_length(m);
-	    break;
 	case F_DET:
 	case F_LDET:
 	    ret->v.xval = user_matrix_get_determinant(m, tmpmat, f, &p->err);
@@ -4061,15 +4099,15 @@ static NODE *get_array_element (NODE *l, NODE *r, parser *p)
 		if (type == GRETL_TYPE_STRING) {
 		    ret = aux_string_node(p);
 		    if (ret != NULL) {
-			ret->v.str = data;
+			ret->v.str = gretl_strdup(data);
 		    }
 		} else if (type == GRETL_TYPE_MATRIX) {
-		    ret = aux_matrix_node(p);
+		    ret = matrix_pointer_node(p);
 		    if (ret != NULL) {
 			ret->v.m = data;
 		    }		    
 		} else if (type == GRETL_TYPE_BUNDLE) {
-		    ret = aux_bundle_node(p);
+		    ret = bundle_pointer_node(p);
 		    if (ret != NULL) {
 			ret->v.b = data;
 		    }			    
@@ -4573,30 +4611,45 @@ static NODE *object_status (NODE *n, int f, parser *p)
     return ret;
 }
 
-/* return scalar node holding the length of the list associated
-   with node @n
+/* return scalar node holding the number of elements in
+   the object associated with node @n
 */
 
-static NODE *list_length_node (NODE *n, parser *p)
+static NODE *n_elements_node (NODE *n, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	if (n->t == STR) {
-	    int *list = get_list_by_name(n->v.str);
+	if (n->t == MAT) {
+	    gretl_matrix *m = n->v.m;
 
-	    if (list != NULL) {
-		ret->v.xval = list[0];
-	    } else {
-		node_type_error(F_LISTLEN, 1, LIST, n, p);
-	    }
-	} else {
+	    ret->v.xval = m->rows * m->cols;
+	} else if (n->t == ARRAY) {
+	    gretl_array *a = n->v.a;
+
+	    ret->v.xval = gretl_array_get_length(a);
+	} else if (n->t == BUNDLE) {
+	    gretl_bundle *b = n->v.b;
+
+	    ret->v.xval = gretl_bundle_get_n_keys(b);
+	} else if (ok_list_node(n)) {
 	    int *list = node_get_list(n, p);
 
 	    if (list != NULL) {
 		ret->v.xval = list[0];
 		free(list);
 	    }
+	} else if (n->t == STR) {
+	    /* backward compatibility: _name_ of list */
+	    int *list = get_list_by_name(n->v.str);
+
+	    if (list != NULL) {
+		ret->v.xval = list[0];
+	    } else {
+		p->err = E_TYPES;
+	    }
+	} else {
+	    p->err = E_TYPES;
 	}
     }
 
@@ -6302,13 +6355,12 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    retp = &sret;
 	} else if (rtype == GRETL_TYPE_BUNDLE) {
 	    retp = &bret;
-	} else if (rtype == GRETL_TYPE_ARRAY) {
+	} else if (gretl_array_type(rtype)) {
 	    retp = &aret;
 	}
 
-	if ((p->flags & P_UFRET) && 
-	    (rtype == GRETL_TYPE_DOUBLE || rtype == GRETL_TYPE_SERIES)) {
-	    /* pick up description of generated var, if any */
+	if ((p->flags & P_UFRET) && rtype == GRETL_TYPE_SERIES) {
+	    /* pick up description of generated series, if any */
 	    pdescrip = &descrip;
 	}
 
@@ -6362,7 +6414,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    ret->t = BUNDLE;
 		    ret->v.b = bret;
 		}
-	    } else if (rtype == GRETL_TYPE_ARRAY) {
+	    } else if (gretl_array_type(rtype)) {
 		ret = aux_array_node(p);
 		if (ret != NULL) {
 		    if (is_tmp_node(ret)) {
@@ -6611,7 +6663,7 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	ret = matrix_pointer_node(p);
 	if (ret != NULL) {
 	    ret->v.m = (gretl_matrix *) val;
-	    ret->flags &= ~TMP_NODE; /* don't free content! */
+	    mark_node_fragile(ret);
 	}
     } else if (type == GRETL_TYPE_MATRIX_REF) {
 	ret = matrix_pointer_node(p);
@@ -10695,7 +10747,6 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_ROWS:
     case F_COLS:
-    case F_VECLEN:
     case F_DET:
     case F_LDET:
     case F_TRACE:
@@ -10935,12 +10986,8 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 1, STR, l, p);
 	}
 	break;
-    case F_LISTLEN:
-	if (ok_list_node(l) || l->t == STR) {
-	    ret = list_length_node(l, p);
-	} else {
-	    node_type_error(t->t, 1, LIST, l, p);
-	}
+    case F_NELEM:
+	ret = n_elements_node(l, p);
 	break;
     case F_INLIST:
 	if (ok_list_node(l)) {
@@ -11916,11 +11963,11 @@ static int ok_array_decl (parser *p, const char *s)
     p->lh.atype = 0;
 
     if (!strncmp(s, "strings ", 8)) {
-	p->lh.atype = GRETL_TYPE_STRING_ARRAY;
+	p->lh.atype = GRETL_TYPE_STRINGS;
     } else if (!strncmp(s, "matrices ", 9)) {
-	p->lh.atype = GRETL_TYPE_MATRIX_ARRAY;
+	p->lh.atype = GRETL_TYPE_MATRICES;
     } else if (!strncmp(s, "bundles ", 8)) {
-	p->lh.atype = GRETL_TYPE_BUNDLE_ARRAY;
+	p->lh.atype = GRETL_TYPE_BUNDLES;
     }
 
     return p->lh.atype != 0;
@@ -12770,7 +12817,7 @@ static void edit_array (parser *p)
 	return;
     }
 
-    if (r->flags & TMP_NODE) {
+    if (is_tmp_node(r)) {
 	/* it's OK to steal the result */
 	copy = 0;
     }
@@ -13333,7 +13380,7 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == STR) {
 	edit_string(p);
     } else if (p->targ == BUNDLE) {
-	if ((r->flags & TMP_NODE) || (p->flags & P_UFRET)) {
+	if (is_tmp_node(r) || (p->flags & P_UFRET)) {
 	    /* bundle created on the fly */
 	    p->err = user_var_add_or_replace(p->lh.name,
 					     GRETL_TYPE_BUNDLE,
@@ -13355,7 +13402,7 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == ARRAY) {
 	if (p->lh.substr != NULL || p->op != B_ASN) {
 	    edit_array(p);
-	} else if ((r->flags & TMP_NODE) || (p->flags & P_UFRET)) {
+	} else if (is_tmp_node(r) || (p->flags & P_UFRET)) {
 	    /* array created on the fly */
 	    p->err = user_var_add_or_replace(p->lh.name,
 					     p->lh.atype,
@@ -13536,7 +13583,12 @@ void gen_save_or_print (parser *p, PRN *prn)
 	    if (p->ret->t == MAT) {
 		gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
 	    } else if (p->ret->t == LIST) {
-		gretl_list_print(p->lh.name, p->dset, p->prn);
+		if (p->lh.name[0] != '\0') {
+		    gretl_list_print(get_list_by_name(p->lh.name),
+				     p->dset, p->prn);
+		} else {
+		    gretl_list_print(p->ret->v.ivec, p->dset, p->prn);
+		}
 	    } else if (p->ret->t == STR) {
 		if (p->lh.name[0] != '\0') {
 		    pprintf(p->prn, "%s\n", get_string_by_name(p->lh.name));

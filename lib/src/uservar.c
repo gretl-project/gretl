@@ -23,6 +23,7 @@
 #include "gretl_func.h"
 #include "usermat.h"
 #include "gretl_string_table.h"
+#include "matrix_extra.h"
 #include "gretl_array.h"
 #include "libset.h"
 #include "monte_carlo.h"
@@ -565,6 +566,13 @@ int user_var_set_name (user_var *uvar, const char *name)
     }
 }
 
+static int array_ref_type (GretlType type)
+{
+    return type == GRETL_TYPE_STRINGS_REF ||
+	type == GRETL_TYPE_MATRICES_REF ||
+	type == GRETL_TYPE_BUNDLES_REF;
+}
+
 /**
  * user_var_localize:
  * @origname: name of variable at caller level.
@@ -590,7 +598,7 @@ int user_var_localize (const char *origname,
 	type = GRETL_TYPE_MATRIX;
     } else if (type == GRETL_TYPE_BUNDLE_REF) {
 	type = GRETL_TYPE_BUNDLE;
-    } else if (type == GRETL_TYPE_ARRAY_REF) {
+    } else if (array_ref_type(type)) {
 	type = GRETL_TYPE_ARRAY;
     }
 
@@ -630,7 +638,7 @@ int user_var_unlocalize (const char *localname,
 	type = GRETL_TYPE_MATRIX;
     } else if (type == GRETL_TYPE_BUNDLE_REF) {
 	type = GRETL_TYPE_BUNDLE;
-    } else if (type == GRETL_TYPE_ARRAY_REF) {
+    } else if (array_ref_type(type)) {
 	type = GRETL_TYPE_ARRAY;
     }
 
@@ -940,6 +948,7 @@ int copy_matrix_as (const gretl_matrix *m, const char *newname,
 int copy_as_arg (const char *param_name, GretlType type, void *value)
 {
     void *copyval = NULL;
+    GretlType cpytype = type;
     int err = 0;
 
     if (type == GRETL_TYPE_MATRIX) {
@@ -976,23 +985,22 @@ int copy_as_arg (const char *param_name, GretlType type, void *value)
 	    copyval = px;
 	}
     } else if (type == GRETL_TYPE_BUNDLE) {
-	gretl_bundle *bcpy = gretl_bundle_copy((gretl_bundle *) value,
-					       &err);
+	gretl_bundle *bcpy = gretl_bundle_copy(value, &err);
 
 	if (!err) {
 	    copyval = bcpy;
 	}
-    } else if (type == GRETL_TYPE_ARRAY) {
-	gretl_array *acpy = gretl_array_copy((gretl_array*) value,
-					     &err);
+    } else if (gretl_array_type(type)) {
+	gretl_array *acpy = gretl_array_copy(value, &err);
 	
 	if (!err) {
 	    copyval = acpy;
+	    cpytype = gretl_array_get_type(acpy);
 	}
     }
 
     if (!err) {
- 	err = real_user_var_add(param_name, type, copyval, OPT_A);
+ 	err = real_user_var_add(param_name, cpytype, copyval, OPT_A);
     }
 
     return err;
@@ -2006,4 +2014,32 @@ int deserialize_user_vars (const char *dirname)
     }
 	    
     return err;
+}
+
+int print_user_var_by_name (const char *name,
+			    const DATASET *dset,
+			    PRN *prn)
+{
+    user_var *u = get_user_var_by_name(name);
+
+    if (u == NULL || u->ptr == NULL) {
+	return E_DATA;
+    }
+
+    if (u->type == GRETL_TYPE_DOUBLE) {
+	print_scalar_by_name(name, prn);
+    } else if (u->type == GRETL_TYPE_MATRIX) {
+	gretl_matrix_print_to_prn(u->ptr, name, prn);
+    } else if (u->type == GRETL_TYPE_BUNDLE) {
+	gretl_bundle_print(u->ptr, prn);
+    } else if (u->type == GRETL_TYPE_ARRAY) {
+	gretl_array_print(u->ptr, prn);
+    } else if (u->type == GRETL_TYPE_LIST) {
+	gretl_list_print(u->ptr, dset, prn);
+    } else if (u->type == GRETL_TYPE_STRING) {
+	pputs(prn, (char *) u->ptr);
+	pputc(prn, '\n');
+    }
+
+    return 0;
 }

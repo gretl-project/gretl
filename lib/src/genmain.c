@@ -858,8 +858,16 @@ char *generate_string (const char *s, DATASET *dset, int *err)
     *err = realgen(s, &p, dset, NULL, P_STRING | P_PRIVATE);
 
     if (!*err) {
-	if (p.ret->t == STR) {
-	    ret = gretl_strdup(p.ret->v.str);
+	NODE *n = p.ret;
+
+	if (n->t == STR) {
+	    if (n->flags & TMP_NODE) {
+		/* steal the generated string */
+		ret = n->v.str;
+		n->v.str = NULL;
+	    } else {
+		ret = gretl_strdup(n->v.str);
+	    }
 	} else {
 	    *err = E_TYPES;
 	}

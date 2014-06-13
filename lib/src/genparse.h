@@ -225,7 +225,7 @@ enum {
     F_ISLIST,	 
     F_ISSTRING,
     F_ISNULL,
-    F_LISTLEN,
+    F_NELEM,
     F_PDF,
     F_PVAL,
     F_CDF,
@@ -280,7 +280,6 @@ enum {
     F_EASTER,
     F_CURL,
     F_NLINES,
-    F_VECLEN,
     F_ARRAY,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,

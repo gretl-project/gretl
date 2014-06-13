@@ -303,7 +303,7 @@ struct str_table funcs[] = {
     { F_ISLIST,   "islist" },
     { F_ISSTRING, "isstring" },
     { F_ISNULL,   "isnull" },
-    { F_LISTLEN,  "nelem" },
+    { F_NELEM,    "nelem" },
     { F_PDF,      "pdf" },
     { F_CDF,      "cdf" },
     { F_INVCDF,   "invcdf" },
@@ -425,7 +425,6 @@ struct str_table funcs[] = {
     { F_JSONGET,   "jsonget" },
     { F_NLINES,    "nlines" },
     { F_KPSSCRIT,  "kpsscrit" },
-    { F_VECLEN,    "veclen" },
     { F_ARRAY,     "array" },
     { 0,           NULL }
 };

@@ -134,7 +134,7 @@ int replace_list_by_name (const char *targ, const int *src);
 
 int remember_list (const int *list, const char *name, PRN *prn);
 
-void gretl_list_print (const char *lname, 
+void gretl_list_print (const int *list, 
 		       const DATASET *dset,
 		       PRN *prn);
 
