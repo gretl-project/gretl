@@ -36,9 +36,12 @@ strict order:
   start with a letter and can contain only letters, numerals and the
   underscore character.  You will get an error if you try to define a
   function having the same name as an existing gretl command.
-\item The functions's \textsl{parameters}, in the form of a
-  comma-separated list enclosed in parentheses.  This may be run
-  into the function name, or separated by white space as shown.
+\item The function's \textsl{parameters}, in the form of a
+  comma-separated list enclosed in parentheses.  This may be run into
+  the function name, or separated by white space as shown.  In case
+  the function takes no arguments (unusual, but acceptable) this
+  should be indicated by placing the keyword \texttt{void} between
+  the parameter-list parentheses.
 \end{enumerate}
 
 Function parameters can be of any of the types shown
@@ -1168,7 +1171,8 @@ keyword. For example:
 # old style
 function triple (series x)
   y = 3*x
-  return series y # note the "series" here
+  # note the "series" below: don't do that any more!
+  return series y
 end function
 
 # new style
