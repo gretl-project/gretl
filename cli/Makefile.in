@@ -46,7 +46,7 @@ ifeq ($(have_readline),yes)
   RL_OBJ = complete.o
 endif
 ifeq ($(have_mpi),yes)
-  MPICLI = gretlcli-mpi$(EXEEXT)
+  MPICLI = gretlmpi$(EXEEXT)
   INSTALL_MPI = install-mpi
 endif
 
@@ -96,7 +96,7 @@ $(CLI): .deps $(OBJS)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(OBJS) \
 	$(GRETLLIB) $(READLINE_LIBS)
 
-gretlcli-mpi: .deps $(MPIOBJ)
+gretlmpi: .deps $(MPIOBJ)
 	$(MPILD_ECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(MPICCV) $(LDFLAGS) -o $@ $(MPIOBJ) \
 	$(GRETLLIB) $(MPILINK)

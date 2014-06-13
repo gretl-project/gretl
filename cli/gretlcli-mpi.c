@@ -135,7 +135,7 @@ static void mpi_exit (int err)
 
 static void usage (int err)
 {
-    printf("gretlcli-mpi %s\n", GRETL_VERSION);
+    printf("gretlmpi %s\n", GRETL_VERSION);
     printf(_("This program should be run under mpiexec, and requires "
 	     "the name of a\nscript file as argument.\n"));
     printf(_("Options:\n"
@@ -151,7 +151,7 @@ static void usage (int err)
 
 static void gretl_mpi_abort (char *line)
 {
-    fprintf(stderr, _("\ngretlcli-mpi: error executing script: halting\n"));
+    fprintf(stderr, _("\ngretlmpi: error executing script: halting\n"));
     fprintf(stderr, "> %s\n", line);
     mpi_exit(1);
 }
@@ -294,7 +294,7 @@ static int maybe_get_input_line_continuation (char *line)
 static void maybe_print_intro (int id)
 {
     if (id == 0) {
-	printf("gretlcli-mpi %s\n", GRETL_VERSION);
+	printf("gretlmpi %s\n", GRETL_VERSION);
 	session_time(NULL);
     }
 }

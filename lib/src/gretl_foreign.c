@@ -409,7 +409,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    qopt = g_strdup("");
 	}
 	
-	cmd = g_strdup_printf("%s%s%s \"%sgretlcli-mpi\"%s%s \"%s\"",
+	cmd = g_strdup_printf("%s%s%s \"%sgretlmpi\"%s%s \"%s\"",
 			      mpiexec, hostbit, npbit, gretl_home(), rngbit,
 			      qopt, gretl_mpi_filename());
 
@@ -593,9 +593,9 @@ static gchar *gretl_mpi_binary (void)
 
     if (p != NULL) {
 	*p = '\0';
-	ret = g_strdup_printf("%s/bin/gretlcli-mpi", tmp);
+	ret = g_strdup_printf("%s/bin/gretlmpi", tmp);
     } else {
-	ret = g_strdup("gretlcli-mpi");
+	ret = g_strdup("gretlmpi");
     }
 
     g_free(tmp);
