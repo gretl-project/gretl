@@ -24,13 +24,9 @@
 #include "libset.h"
 #include "forecast.h"
 #include "gretl_func.h"
-#include "matrix_extra.h"
 #include "uservar.h"
-#include "gretl_array.h"
-#include "gretl_string_table.h"
 
 #include <time.h>
-#include <glib.h>
 
 #define PDEBUG 0
 
@@ -1795,60 +1791,15 @@ void maybe_list_vars (const DATASET *dset, PRN *prn)
     }
 }
 
-static void print_varlist (const char *name, const int *list, 
-			   const DATASET *dset, PRN *prn)
-{
-    int i, v, len = 0;
-
-    if (list[0] == 0) {
-	pprintf(prn, " %s\n", _("list is empty"));
-    } else {
-	len += pprintf(prn, " %s: ", name);
-	for (i=1; i<=list[0]; i++) {
-	    v = list[i];
-	    if (v == LISTSEP) {
-		len += pputs(prn, "; ");
-	    } else if (v >= 0 && v < dset->v) {
-		len += pprintf(prn, "%s ", dset->varname[v]);
-	    } else {
-		len += pprintf(prn, "%d ", v);
-	    }
-	    if (i < list[0] && len > 68) {
-		pputs(prn, " \\\n ");
-		len = 0;
-	    }
-	}
-	pputc(prn, '\n');
-    }
-}
-
 static void print_listed_objects (const char *s, 
 				  const DATASET *dset, 
 				  PRN *prn)
 {
-    const gretl_matrix *m;
-    const int *list;
-    const char *p;
-    gretl_bundle *b;
-    gretl_array *a;
     char *name;
     int err = 0;
 
     while ((name = gretl_word_strdup(s, &s, OPT_NONE, &err)) != NULL) {
-	if (gretl_is_scalar(name)) {
-	    print_scalar_by_name(name, prn);
-	} else if ((m = get_matrix_by_name(name)) != NULL) {
-	    gretl_matrix_print_to_prn(m, name, prn);
-	} else if ((list = get_list_by_name(name)) != NULL) {
-	    print_varlist(name, list, dset, prn);
-	} else if ((b = get_bundle_by_name(name)) != NULL) {
-	    gretl_bundle_print(b, prn);
-	} else if ((a = get_array_by_name(name)) != NULL) {
-	    gretl_array_print(a, prn);
-	} else if ((p = get_string_by_name(name)) != NULL) {
-	    pputs(prn, p);
-	    pputc(prn, '\n');
-	} 
+	print_user_var_by_name(name, dset, prn);
 	free(name);
     }
 }

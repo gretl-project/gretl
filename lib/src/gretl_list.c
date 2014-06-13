@@ -2575,24 +2575,20 @@ int *gretl_list_build (const char *s, const DATASET *dset, int *err)
 
 /**
  * gretl_list_print:
- * @lname: name of list.
+ * @list: list to print.
  * @dset: dataset information.
  * @prn: gretl printing struct.
  * 
  * Prints to @prn the given @list of variables, by name.
  */
 
-void gretl_list_print (const char *lname, const DATASET *dset,
+void gretl_list_print (const int *list, const DATASET *dset,
 		       PRN *prn)
 {
-    const int *list = get_list_by_name(lname);
     int testlen = 62;
     int i, li, len = 0;
 
-    if (list == NULL) {
-	pprintf(prn, _("Unknown variable '%s'"), lname);
-	pputc(prn, '\n');
-    } else if (list[0] == 0) {
+    if (list == NULL || list[0] == 0) {
 	pputs(prn, "null\n");
     } else {
 	for (i=1; i<=list[0]; i++) {
