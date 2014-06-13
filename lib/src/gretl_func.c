@@ -138,21 +138,25 @@ struct fnpkg_ {
 
 /* acceptable types for parameters of user-defined functions */
 
-#define ok_function_arg_type(t) (t == GRETL_TYPE_BOOL ||	\
-				 t == GRETL_TYPE_INT ||		\
-				 t == GRETL_TYPE_OBS ||		\
-				 t == GRETL_TYPE_DOUBLE ||	\
-				 t == GRETL_TYPE_SERIES ||	\
-				 t == GRETL_TYPE_LIST ||	\
-				 t == GRETL_TYPE_MATRIX ||	\
-				 t == GRETL_TYPE_STRING ||	\
-				 t == GRETL_TYPE_SCALAR_REF ||	\
-				 t == GRETL_TYPE_SERIES_REF ||	\
-				 t == GRETL_TYPE_MATRIX_REF ||	\
-				 t == GRETL_TYPE_BUNDLE_REF ||  \
-	                         t == GRETL_TYPE_BUNDLE ||	\
-				 t == GRETL_TYPE_ARRAY ||	\
-				 t == GRETL_TYPE_ARRAY_REF)
+#define ok_function_arg_type(t) (t == GRETL_TYPE_BOOL ||		\
+				 t == GRETL_TYPE_INT ||			\
+				 t == GRETL_TYPE_OBS ||			\
+				 t == GRETL_TYPE_DOUBLE ||		\
+				 t == GRETL_TYPE_SERIES ||		\
+				 t == GRETL_TYPE_LIST ||		\
+				 t == GRETL_TYPE_MATRIX ||		\
+				 t == GRETL_TYPE_STRING ||		\
+				 t == GRETL_TYPE_BUNDLE ||		\
+				 t == GRETL_TYPE_SCALAR_REF ||		\
+				 t == GRETL_TYPE_SERIES_REF ||		\
+				 t == GRETL_TYPE_MATRIX_REF ||		\
+				 t == GRETL_TYPE_BUNDLE_REF ||		\
+				 t == GRETL_TYPE_STRINGS ||		\
+				 t == GRETL_TYPE_MATRICES ||		\
+				 t == GRETL_TYPE_BUNDLES||		\
+				 t == GRETL_TYPE_STRINGS_REF ||		\
+				 t == GRETL_TYPE_MATRICES_REF ||	\
+				 t == GRETL_TYPE_BUNDLES_REF)
 
 enum {
     ARG_OPTIONAL = 1 << 0,
@@ -301,6 +305,23 @@ int gretl_function_depth (void)
     return fn_executing;
 }
 
+static void adjust_array_arg_type (struct fnarg *arg)
+{
+    GretlType t = gretl_array_get_type(arg->val.a);
+
+    if (arg->type == GRETL_TYPE_ARRAY_REF) {
+	if (t == GRETL_TYPE_STRINGS) {
+	    arg->type = GRETL_TYPE_STRINGS_REF;
+	} else if (t == GRETL_TYPE_MATRICES) {
+	    arg->type = GRETL_TYPE_MATRICES_REF;
+	} else {
+	    arg->type = GRETL_TYPE_BUNDLES_REF;
+	}
+    } else {
+	arg->type = t;
+    }
+}
+
 /**
  * fn_arg_new:
  * @name: name of argument (or NULL for an anonymous argument).
@@ -365,6 +386,7 @@ static struct fnarg *fn_arg_new (const char *name, GretlType type,
     } else if (type == GRETL_TYPE_ARRAY ||
 	       type == GRETL_TYPE_ARRAY_REF) {
 	arg->val.a = (gretl_array *) p;
+	adjust_array_arg_type(arg);
     } else {
 	*err = E_TYPES;
 	free(arg);
@@ -1278,17 +1300,19 @@ const char *gretl_arg_type_name (GretlType type)
     case GRETL_TYPE_MATRIX:     return "matrix";	
     case GRETL_TYPE_LIST:       return "list";
     case GRETL_TYPE_BUNDLE:     return "bundle";
-    case GRETL_TYPE_ARRAY:      return "array";	 /* FIXME? */
+    case GRETL_TYPE_ARRAY:      return "array";
     case GRETL_TYPE_SCALAR_REF: return "scalar *";
     case GRETL_TYPE_SERIES_REF: return "series *";
     case GRETL_TYPE_MATRIX_REF: return "matrix *";
     case GRETL_TYPE_BUNDLE_REF: return "bundle *";
-    case GRETL_TYPE_ARRAY_REF:  return "array *"; /* FIXME? */	
     case GRETL_TYPE_STRING:     return "string";
 
-    case GRETL_TYPE_STRING_ARRAY: return "strings";
-    case GRETL_TYPE_MATRIX_ARRAY: return "matrices";
-    case GRETL_TYPE_BUNDLE_ARRAY: return "bundles";
+    case GRETL_TYPE_STRINGS:      return "strings";
+    case GRETL_TYPE_MATRICES:     return "matrices";
+    case GRETL_TYPE_BUNDLES:      return "bundles";
+    case GRETL_TYPE_STRINGS_REF:  return "strings *";
+    case GRETL_TYPE_MATRICES_REF: return "matrices *";
+    case GRETL_TYPE_BUNDLES_REF:  return "bundles *";
 
     case GRETL_TYPE_VOID:       return "void";
     case GRETL_TYPE_NONE:       return "null";
@@ -1315,8 +1339,12 @@ static const char *arg_type_xml_string (int t)
 	return "matrixref";
     } else if (t == GRETL_TYPE_BUNDLE_REF) {
 	return "bundleref";
-    } else if (t == GRETL_TYPE_ARRAY_REF) {
-	return "arrayref";
+    } else if (t == GRETL_TYPE_STRINGS_REF) {
+	return "stringsref";
+    } else if (t == GRETL_TYPE_MATRICES_REF) {
+	return "matricesref";
+    } else if (t == GRETL_TYPE_BUNDLES_REF) {
+	return "bundlesref";
     } else {
 	return gretl_arg_type_name(t);
     }
@@ -1345,22 +1373,25 @@ GretlType gretl_type_from_string (const char *s)
     if (!strcmp(s, "matrixref"))  return GRETL_TYPE_MATRIX_REF;
     if (!strcmp(s, "bundleref"))  return GRETL_TYPE_BUNDLE_REF;
 
-    if (!strcmp(s, "strings"))   return GRETL_TYPE_STRING_ARRAY;
-    if (!strcmp(s, "matrices"))  return GRETL_TYPE_MATRIX_ARRAY;
-    if (!strcmp(s, "bundles"))   return GRETL_TYPE_BUNDLE_ARRAY;
+    if (!strcmp(s, "strings"))   return GRETL_TYPE_STRINGS;
+    if (!strcmp(s, "matrices"))  return GRETL_TYPE_MATRICES;
+    if (!strcmp(s, "bundles"))   return GRETL_TYPE_BUNDLES;
 
-    /* FIXME */
-    if (!strcmp(s, "strings *"))   return GRETL_TYPE_ARRAY_REF;
-    if (!strcmp(s, "matrices *"))  return GRETL_TYPE_ARRAY_REF;
-    if (!strcmp(s, "bundles *"))   return GRETL_TYPE_ARRAY_REF;
-    if (!strcmp(s, "arrayref"))    return GRETL_TYPE_ARRAY_REF;
+    if (!strcmp(s, "strings *"))   return GRETL_TYPE_STRINGS_REF;
+    if (!strcmp(s, "matrices *"))  return GRETL_TYPE_MATRICES_REF;
+    if (!strcmp(s, "bundles *"))   return GRETL_TYPE_BUNDLES_REF;
+
+    if (!strcmp(s, "stringsref"))  return GRETL_TYPE_STRINGS_REF;
+    if (!strcmp(s, "matricesref")) return GRETL_TYPE_MATRICES_REF;
+    if (!strcmp(s, "bundlesref"))  return GRETL_TYPE_BUNDLES_REF;
 
     return 0;
 }
 
-static int return_type_from_string (const char *s)
+static GretlType return_type_from_string (const char *s,
+					  int *err)
 {
-    int t;
+    GretlType t;
 
     if (!strcmp(s, "void")) {
 	/* not OK as arg type, but OK as return */
@@ -1369,7 +1400,17 @@ static int return_type_from_string (const char *s)
 	t = gretl_type_from_string(s);
     }
 
-    return (ok_function_return_type(t))? t : 0;
+    if (t == 0) {
+	gretl_errmsg_set(_("Missing return type"));
+	*err = E_PARSE;
+    } else {
+	if (!ok_function_return_type(t)) {
+	    gretl_errmsg_set(_("Invalid return type for function"));
+	    *err = E_TYPES;
+	}
+    }
+
+    return t;
 }
 
 /* backward compatibility for nasty old numeric type references */
@@ -1488,33 +1529,6 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
     if (!err && n != fun->n_params) {
 	err = E_DATA;
     }
-
-    return err;
-}
-
-/* we use this only with old-style function definitions */
-
-static int func_read_return (xmlNodePtr node, ufunc *fun,
-			     char **retname)
-{
-    char *field = NULL;
-    int err = 0;
-
-    if (gretl_xml_get_prop_as_string(node, "name", &field)) {
-	*retname = field;
-	field = NULL;
-    } else {
-	fprintf(stderr, "return value: couldn't get name\n");
-	err = E_DATA;
-    }
-
-    if (!err && gretl_xml_get_prop_as_string(node, "type", &field)) {
-	fun->rettype = param_field_to_type(field);
-	free(field);
-    } else {
-	fprintf(stderr, "return value: couldn't get type\n");
-	err = E_DATA;
-    }    
 
     return err;
 }
@@ -1744,29 +1758,6 @@ static int attach_ufunc_to_package (ufunc *fun, fnpkg *pkg)
     return err;
 }
 
-/* We got an old-style function definition from XML,
-   in which the return type and name were recorded
-   in the 'header'.  Having recorded the return type
-   we now append a return statement.
-*/
-
-static int ufunc_add_return_statement (ufunc *fun,
-				       const char *retname)
-{
-    char *s = malloc(8 + strlen(retname));
-    int err = 0;
-
-    if (s == NULL) {
-	err = E_ALLOC;
-    } else {
-	sprintf(s, "return %s", retname);
-	err = strings_array_add(&fun->lines, &fun->n_lines, s);
-	free(s);
-    }
-
-    return err;
-}
-
 /* read a single user-function definition from XML file: if the
    function is a child of a package, the @pkg argument will
    be non-NULL
@@ -1776,7 +1767,6 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 {
     ufunc *fun = ufunc_new();
     xmlNodePtr cur;
-    char *retname = NULL;
     char *tmp;
     int err = 0;
 
@@ -1797,10 +1787,14 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     }
 
     if (gretl_xml_get_prop_as_string(node, "type", &tmp)) {
-	fun->rettype = return_type_from_string(tmp);
+	fun->rettype = return_type_from_string(tmp, &err);
 	free(tmp);
     } else {
 	fun->rettype = GRETL_TYPE_VOID;
+    }
+
+    if (err) {
+	return err;
     }
 
     if (gretl_xml_get_prop_as_bool(node, "private")) {
@@ -1849,24 +1843,12 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 			fun->name);
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "return")) {
-	    /* support old-style functions */
-	    err = func_read_return(cur, fun, &retname);
-	    if (err) {
-		fprintf(stderr, "%s: error parsing function return value\n",
-			fun->name);
-	    }
+	    gretl_errmsg_set("Old-style function definitions no longer supported");
+	    err = E_DATA;
 	} else if (!xmlStrcmp(cur->name, (XUC) "code")) {
 	    err = func_read_code(cur, doc, fun);
 	}
 	cur = cur->next;
-    }
-
-    if (retname != NULL) {
-	/* backward compat */
-	if (!err) {
-	    err = ufunc_add_return_statement(fun, retname);
-	}
-	free(retname);
     }
 
     if (!err) {
@@ -4694,10 +4676,10 @@ static void trash_param_info (char *name, fn_param *param)
 
 static int parse_function_param (char *s, fn_param *param, int i)
 {
+    GretlType type;
     char tstr[22] = {0};
     char *name;
-    int type, len;
-    int nvals = 0;
+    int len, nvals = 0;
     int err = 0;
 
 #if FNPARSE_DEBUG
@@ -4714,7 +4696,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	while (isspace(*s)) s++;
     }
 
-    /* get parameter type -- required */
+    /* get parameter type, required */
 
     len = gretl_namechar_spn(s);
     if (len > 21) {
@@ -4746,7 +4728,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	return err;
     }
 
-    /* now get the parameter name -- required */
+    /* now get the required parameter name */
     
     while (isspace(*s)) s++;
 
@@ -4857,109 +4839,24 @@ static void arg_tail_strip (char *s)
     }
 }
 
-/* Here we're parsing what follows "function ".  The expectation
-   is that we get <return-type> <funcname> (<args>), but we also
-   support the old-style <funcname> (<args>).
-*/
-
-static int parse_fn_definition (char *fname, 
-				fn_param **pparams,
-				int *pnp,
-				int *rettype,
-				const char *str, 
-				ufunc **pfun, 
-				PRN *prn)
+static int parse_function_parameters (const char *str,
+				      fn_param **pparams,
+				      int *pnp,
+				      const char *fname,
+				      PRN *prn)
 {
     fn_param *params = NULL;
-    char *p, *s = NULL;
-    int i, j, len, np = 0;
+    char *p, *s;
+    int i, j, np = 0;
     int err = 0;
 
-#if FNPARSE_DEBUG > 1
-    fprintf(stderr, "parse_fn_definition:\n '%s'\n", str);
-#endif
-
-    len = strlen(str);
-    if (str[len-1] != ')') {
-	/* somehow we didn't get a properly terminated 
-	   param list */
-	return E_PARSE;
-    }
-
-    /* skip to next word */
-    while (isspace(*str)) str++;
-
-    /* and find its length */
-    len = gretl_namechar_spn(str);
-
-    if (len == 0 || len >= FN_NAMELEN) {
-	return E_PARSE;
-    }
-
-    if (len <= 8) {
-	/* see if we have a type specifier: is so, record
-	   it and move on to the next word
-	*/
-	char typeword[9] = {0};
-	int t;
-
-	strncat(typeword, str, len);
-	t = return_type_from_string(typeword);
-
-	if (t > 0) {
-	    if (!ok_function_return_type(t)) {
-		gretl_errmsg_set("Invalid return type for function");
-		return E_TYPES;
-	    } else {		
-		*rettype = t;
-		str += len;
-		str += strspn(str, " ");
-		len = gretl_namechar_spn(str);
-		if (len == 0 || len >= FN_NAMELEN) {
-		    return E_PARSE;
-		}
-	    }
-	}
-    }
-	    
-    if (*fname == '\0') {
-	char fmt[8] = "%31s";
-
-	if (len < FN_NAMELEN - 1) {
-	    sprintf(fmt, "%%%ds", len);
-	}
-	if (sscanf(str, fmt, fname) != 1) {
-	    err = E_PARSE;
-	}
-	if (!err) {
-	    err = check_func_name(fname, pfun, prn);
-	}
-    }
-
-    if (err) {
-	return err;
-    }
-
-    str += len;
-
-    if (*str == '\0') {
-	/* void function */
-	return 0;
-    }
-
-    /* move to next bit and make a copy */
-    str += strspn(str, " (");
-    if (*str == '\0') {
-	return E_PARSE;
-    } else {
-	s = gretl_strdup(str);
-	if (s == NULL) {
-	    return E_ALLOC;
-	}
-    }
+    s = gretl_strdup(str);
+    if (s == NULL) {
+	return E_ALLOC;
+    }    
 
     if (!strcmp(s, ")")) {
-	/* void function "foo()" */
+	/* we got a void function "foo()" */
 	free(s);
 	return 0;
     }
@@ -5052,28 +4949,53 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     fn_param *params = NULL;
     int nf, n_params = 0;
     int rettype = 0;
-    char fname[FN_NAMELEN];
     char s1[FN_NAMELEN];
     char s2[FN_NAMELEN];
+    char *p = NULL, *fname = NULL;
     int err = 0;
 
     nf = sscanf(line, "function %31s %31s", s1, s2);
-    if (nf <= 0) {
-	return E_PARSE;
-    } 
 
-    if (nf == 2) {
-	if (!strcmp(s2, "clear") || !strcmp(s2, "delete")) {
-	    return maybe_delete_function(s1, prn);
+    if (nf != 2) {
+	err = E_PARSE;
+    } else if (!strcmp(s2, "clear") || !strcmp(s2, "delete")) {
+	return maybe_delete_function(s1, prn);
+    }
+
+    /* If we didn't get a special such as "function foo delete",
+       then @s1 should contain the return type and @s2 the
+       name -- possibly with the '(' that starts the args stuck
+       onto it.
+    */
+
+    if (!err) {
+	rettype = return_type_from_string(s1, &err);
+    }
+
+    if (!err) {
+	fname = s2;
+	p = strchr(fname, '(');
+	if (p != NULL) {
+	    *p = '\0';
 	}
-    } 
+	err = check_func_name(fname, &fun, prn);
+    }
 
-    /* the following takes care of replacing an existing function
-       of the same name, if any */
+    if (!err) {
+	/* now for the args bit */
+	p = strchr(line, '(');
+	if (p == NULL || strchr(p, ')') == NULL) {
+	    err = E_PARSE;
+	} else {
+	    p++; /* skip the left paren */
+	}
+    }
 
-    *fname = '\0';
-    err = parse_fn_definition(fname, &params, &n_params, &rettype,
-			      line + 8, &fun, prn);
+    if (!err) {
+	err = parse_function_parameters(p, &params, &n_params, 
+					fname, prn);
+    }
+
     if (err) {
 	pprintf(prn, "> %s\n", line);
     }
@@ -5097,56 +5019,6 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 	current_fdef = NULL;
     }
     
-    return err;
-}
-
-/* not reading from XML, but from script or other
-   direct user input */
-
-static int parse_function_return (ufunc *fun, const char *line)
-{
-    const char *s = line + 6; /* skip "return" */
-    char s1[16], s2[VNAMELEN];
-    char fmt[12];
-    int type, err = 0;
-
-#if FNPARSE_DEBUG
-    fprintf(stderr, "parse_function_return: line = '%s'\n", line);
-#endif
-
-    sprintf(fmt, "%%%ds %%%ds", 15, VNAMELEN-1);
-    *s1 = *s2 = '\0';
-    sscanf(s, fmt, s1, s2);
-    type = return_type_from_string(s1);
-
-    if (type > 0 && fun->rettype != GRETL_TYPE_NONE) {
-	gretl_errmsg_sprintf("%s: return type is already defined",
-			     fun->name);
-	err = E_PARSE;
-    } else if (fun->rettype != GRETL_TYPE_NONE) {
-	/* new-style: the return type was pre-defined, and
-	   we treat a "return " line as a normal line 
-	*/
-	err = strings_array_add(&fun->lines, &fun->n_lines, line);
-    } else {
-	/* old-style: we didn't get a return type at the start of the
-	   definition, and it should be specified inline here
-	*/
-	if (type == 0) {
-	    gretl_errmsg_sprintf("%s: missing a valid return type\n", 
-				 fun->name);
-	    err = E_TYPES;
-	} else {
-	    err = check_varname(s2);
-	    if (!err) {
-		err = ufunc_add_return_statement(fun, s2);
-	    }
-	    if (!err) {
-		fun->rettype = type;
-	    }
-	}
-    } 
-
     return err;
 }
 
@@ -5308,8 +5180,6 @@ int gretl_function_append_line (const char *line)
 	}
 	set_compiling_off();
 	return 0; /* handled */
-    } else if (function_return_line(line) && !ignore_line(fun)) {
-	err = parse_function_return(fun, line);
     } else {
 	err = strings_array_add(&fun->lines, &fun->n_lines, line);
 	if (!err) {
@@ -5584,7 +5454,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    }
 	} else if (fp->type == GRETL_TYPE_BUNDLE) {
 	    err = copy_as_arg(fp->name, fp->type, arg->val.b);
-	} else if (fp->type == GRETL_TYPE_ARRAY) {
+	} else if (gretl_array_type(fp->type)) {
 	    err = copy_as_arg(fp->name, fp->type, arg->val.a);
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    err = localize_list(call, arg, fp, dset);
@@ -6015,7 +5885,12 @@ maybe_set_return_description (fncall *call, int rtype,
 }
 
 #define types_match(pt,rt) ((pt==GRETL_TYPE_SERIES_REF && rt==GRETL_TYPE_SERIES) || \
-                            (pt==GRETL_TYPE_MATRIX_REF && rt==GRETL_TYPE_MATRIX))
+                            (pt==GRETL_TYPE_MATRIX_REF && rt==GRETL_TYPE_MATRIX) || \
+			    (pt==GRETL_TYPE_BUNDLE_REF && rt==GRETL_TYPE_BUNDLE) || \
+			    (pt==GRETL_TYPE_STRINGS_REF && rt==GRETL_TYPE_STRINGS) || \
+			    (pt==GRETL_TYPE_MATRICES_REF && rt==GRETL_TYPE_MATRIX) || \
+			    (pt==GRETL_TYPE_BUNDLES_REF && rt==GRETL_TYPE_BUNDLE))
+
 
 static int is_pointer_arg (fncall *call, fnargs *args, int rtype)
 {
@@ -6036,9 +5911,9 @@ static int is_pointer_arg (fncall *call, fnargs *args, int rtype)
     return 0;
 }
 
-#define needs_datainfo(t) (t == GRETL_TYPE_SERIES || \
-                           t == GRETL_TYPE_LIST || \
-                           t == GRETL_TYPE_SERIES_REF)
+#define needs_dataset(t) (t == GRETL_TYPE_SERIES || \
+			  t == GRETL_TYPE_LIST ||   \
+			  t == GRETL_TYPE_SERIES_REF)
 
 static int 
 function_assign_returns (fncall *call, fnargs *args, int rtype, 
@@ -6060,7 +5935,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	gretl_errmsg_sprintf("Function %s did not provide the specified return value",
 			     u->name);
 	*perr = err = E_UNKVAR;
-    } else if (*perr == 0 && needs_datainfo(rtype) && dset == NULL) {
+    } else if (*perr == 0 && needs_dataset(rtype) && dset == NULL) {
 	/* "can't happen" */
 	*perr = err = E_DATA;
     }
@@ -6085,7 +5960,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    err = unlocalize_list(call->retname, NULL, dset);
 	} else if (rtype == GRETL_TYPE_BUNDLE) {
 	    err = handle_bundle_return(call, ret, copy);
-	} else if (rtype == GRETL_TYPE_ARRAY) {
+	} else if (gretl_array_type(rtype)) {
 	    err = handle_array_return(call, ret, copy);
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    err = handle_string_return(call->retname, ret);
@@ -6110,7 +5985,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
     for (i=0; i<args->argc; i++) {
 	arg = args->arg[i];
 	fp = &u->params[i];
-	if (needs_datainfo(fp->type) && dset == NULL) {
+	if (needs_dataset(fp->type) && dset == NULL) {
 	    err = E_DATA;
 	} else if (gretl_ref_type(fp->type)) {
 	    if (arg->type == GRETL_TYPE_BUNDLE_REF &&
@@ -6728,7 +6603,7 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 		*(gretl_matrix **) retval = ptr;
 	    } else if (type == GRETL_TYPE_BUNDLE) {
 		*(gretl_bundle **) retval = ptr;
-	    } else if (type == GRETL_TYPE_ARRAY) {
+	    } else if (gretl_array_type(type)) {
 		*(gretl_array **) retval = ptr;
 	    }
 	}
