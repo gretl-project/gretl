@@ -291,7 +291,6 @@ static NODE *base (parser *p, NODE *up)
     case DVAR:
     case MVAR:
     case OBS:
-    case DOBS:
     case ULIST:
     case WLIST:
     case BUNDLE:
@@ -300,8 +299,8 @@ static NODE *base (parser *p, NODE *up)
     case UNUM_P:
     case UNUM_M:
     case UNDEF:
-	if (p->sym == OBS || p->sym == DOBS) {
-	    fprintf(stderr, "*** HERE 1: sym OBS or DOBS\n");
+	if (p->sym == OBS) {
+	    fprintf(stderr, "*** HERE 1: sym OBS\n");
 	}
 	t = newref(p, p->sym);
 	lex(p);
@@ -332,9 +331,9 @@ static NODE *base (parser *p, NODE *up)
 	if (up == NULL) {
 	    goto deferr;
 	}
-	if (up->t == OBS || up->t == DOBS) {
+	if (up->t == OBS) {
 	    t = obs_node(p);
-	} else if (up->t == LISTELEM || up->t == ARRAYELEM) {
+	} else if (up->t == ELEMENT) {
 	    lex(p);
 	    t = expr(p);
 	}
@@ -1117,13 +1116,13 @@ static NODE *powterm (parser *p)
 		next = G_LBR;
 	    }
 	}
-    } else if (sym == LAG || sym == OBS || sym == DOBS) {
+    } else if (sym == LAG || sym == OBS) {
 	if (sym == LAG) {
 	    set_lag_parse_on(p);
 	}
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newref(p, sym == DOBS ? DVAR : UVEC);
+	    t->v.b2.l = newref(p, p->upsym);
 	    lex(p);
 	    t->v.b2.r = base(p, t);
 	}
@@ -1151,24 +1150,13 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b2.r = get_final_string_arg(p, t, sym, 1);
 	}
-    } else if (sym == LISTELEM || sym == MLISTELEM) {
-	t = newb2(LISTELEM, NULL, NULL);
+    } else if (sym == ELEMENT) {
+	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    if (sym == LISTELEM) {
-		t->v.b2.l = newref(p, ULIST);
-	    } else {
-		t->v.b2.l = newref(p, MVAR);
-	    }
+	    t->v.b2.l = newref(p, p->upsym);
 	    lex(p);
 	    t->v.b2.r = base(p, t);
 	}
-    } else if (sym == ARRAYELEM) {
-	t = newb2(sym, NULL, NULL);
-	if (t != NULL) {
-	    t->v.b2.l = newref(p, ARRAY);
-	    lex(p);
-	    t->v.b2.r = base(p, t);
-	}	
     } else if (sym == BOBJ) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {

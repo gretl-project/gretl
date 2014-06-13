@@ -10375,7 +10375,6 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case OBS:
-    case DOBS:
 	if (l->t != VEC) {
 	    node_type_error(t->t, 1, VEC, l, p);
 	} else if (!scalar_node(r) && r->t != STR) {
@@ -10409,12 +10408,11 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix sub-slice, x:y, or lag range, 'p to q' */
 	ret = process_subslice(l, r, p);
 	break;
-    case LISTELEM:
-    case ARRAYELEM:
+    case ELEMENT:
 	/* list or array, plus scalar */
 	if (r->t != NUM) {
 	    node_type_error(t->t, 2, NUM, r, p);
-	} else if (t->t == ARRAYELEM) {
+	} else if (l->t == ARRAY) {
 	    ret = get_array_element(l, r, p);
 	} else {
 	    ret = get_named_list_element(l, r, p);
@@ -13494,6 +13492,7 @@ static void parser_init (parser *p, const char *str,
 
     p->obs = 0;
     p->sym = 0;
+    p->upsym = 0;
     p->ch = 0;
     p->xval = 0.0;
     p->idnum = 0;

@@ -1106,6 +1106,7 @@ static void word_check_next_char (parser *p)
     if (p->ch) fprintf(stderr, "word_check_next_char: ch = '%c'\n", p->ch);
     else fprintf(stderr, "word_check_next_char: ch = NUL\n");
 #endif
+    p->upsym = 0;
 
     if (p->ch == '(') {
 	/* series (lag) or function */
@@ -1113,6 +1114,7 @@ static void word_check_next_char (parser *p)
 	    if (p->idnum > 0 && p->idnum == p->lh.v) {
 		p->flags |= P_AUTOREG;
 	    }
+	    p->upsym = UVEC;
 	    p->sym = LAG;
 	} else if (p->sym == MVAR && model_data_matrix(p->idnum)) {
 	    /* old-style "$coeff(x1)" etc. */
@@ -1126,6 +1128,7 @@ static void word_check_next_char (parser *p)
 	    p->err = E_PARSE;
 	} 
     } else if (p->ch == '[') {
+	p->upsym = p->sym;
 	if (p->sym == UMAT) {
 	    /* slice of user matrix */
 	    p->sym = MSL;
@@ -1138,16 +1141,16 @@ static void word_check_next_char (parser *p)
 	    p->sym = OBS;
 	} else if (p->sym == DVAR && dollar_series(p->idnum)) {
 	    /* observation from "dollar" series */
-	    p->sym = DOBS;
+	    p->sym = OBS;
 	} else if (p->sym == ULIST) {
 	    /* element of list */
-	    p->sym = LISTELEM;
+	    p->sym = ELEMENT;
 	} else if (p->sym == MVAR && model_data_list(p->idnum)) {
 	    /* element of accessor list */
-	    p->sym = MLISTELEM;
+	    p->sym = ELEMENT;
 	} else if (p->sym == ARRAY) {
 	    /* element of array */
-	    p->sym = ARRAYELEM;
+	    p->sym = ELEMENT;
 	} else if (p->sym == BUNDLE) {
 	    /* object from bundle */
 	    p->sym = BOBJ;
@@ -1642,7 +1645,7 @@ const char *getsymb (int t, const parser *p)
     }
 
     /* yes, well */
-    if (t == OBS || t == DOBS) {
+    if (t == OBS) {
 	return "OBS";
     } else if (t == MSL) {
 	return "MSL";
@@ -1674,10 +1677,8 @@ const char *getsymb (int t, const parser *p)
 	return "BOBJ";
     } else if (t == BMEMB) {
 	return "BMEMB";
-    } else if (t == LISTELEM) {
-	return "LISTELEM";
-    } else if (t == ARRAYELEM) {
-	return "ARRAYELEM";
+    } else if (t == ELEMENT) {
+	return "ELEMENT";
     } else if (t == VEC) {
 	return "VEC";
     } else if (t == MAT) {

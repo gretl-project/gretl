@@ -95,12 +95,11 @@ enum {
 	      VEC,	  /* series, evaluated */
 	      MAT,	  /* matrix, evaluated */
 	      OBS,	  /* observation from a series */
-	      DOBS,       /* observation from "dollar" series */
               MSL,	  /* matrix plus subspec */
               DMSL,	  /* "dollar" matrix plus subspec */
 	      DMSTR,	  /* "dollar" matrix plus string subspec */
-  /* 70 */    MSL2,	  /* unevaluated matrix subspec */
-	      MSPEC,	  /* evaluated matrix subspec */
+              MSL2,	  /* unevaluated matrix subspec */
+  /* 70 */    MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
               LAG,        /* variable plus lag length */	  
@@ -109,30 +108,28 @@ enum {
               OVAR,	  /* object variable: variable "under" an object */
               LIST,	  /* list, evaluated */
 	      LISTVAR,    /* variable in list, dot syntax */
-  /* 80 */    LISTELEM,   /* list member, [...] syntax) */
-	      MLISTELEM,  /* accessor list member, [...] syntax) */
-              ARRAYELEM,  /* element of array */
-	      STR,	  /* string */
+              ELEMENT,    /* element of list, array [...] syntax) */
+  /* 80 */    STR,	  /* string */
 	      BUNDLE,     /* gretl bundle (hash table) */
               BOBJ,       /* object inside a bundle */
 	      BMEMB,      /* object in bundle (dot notation) */
 	      ARRAY,      /* generic array object */
 	      FARGS,	  /* set of n function arguments */
               WLIST,      /* wildcard list spec */
-  /* 90 */    EMPTY,      /* "null" */
+              EMPTY,      /* "null" */
               ABSENT,
               DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
-	      EROOT,	  /* dummy root for (...) expression */
+  /* 90 */    EROOT,	  /* dummy root for (...) expression */
 	      UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
 	      USTR,       /* string variable */
 	      IVEC,       /* array of ints, not a varlist */
               INC,        /* increment */
               DEC,        /* decrement */
-  /* 100 */   QUERY,      /* ternary "?" expression */
+              QUERY,      /* ternary "?" expression */
               UNDEF,      /* undefined (in "query" context only) */
               EOT,	  /* end of transmission */
-	      UNK 
+  /* 100 */   UNK 
 };
 
 /* functions: don't collide with the enumeration above */
@@ -481,8 +478,8 @@ enum {
 
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSL2 || s == SUBSL || s == LAG || \
-                   s == OBS || s == BOBJ || s == LISTELEM || \
-                   s == ARRAYELEM || s == BMEMB || s == DOBS)
+                   s == OBS || s == BOBJ || s == ELEMENT || \
+                   s == BMEMB)
 
 #define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
                   s == G_LPR || s == EROOT)
@@ -634,6 +631,7 @@ struct parser_ {
     /* below: parser state variables */
     int obs;
     int sym;
+    int upsym;
     int ch;
     double xval;
     int idnum;
