@@ -59,6 +59,13 @@ int gretl_array_append_bundle (gretl_array *A,
 			       gretl_bundle *b,
 			       int copy);
 
+int gretl_array_append_array (gretl_array *A1,
+			      const gretl_array *A2);
+
+gretl_array *gretl_arrays_join (gretl_array *A,
+				gretl_array *B,
+				int *err);
+
 gretl_array *gretl_array_copy (const gretl_array *A,
 			       int *err);
 

@@ -4145,6 +4145,30 @@ static NODE *bundle_op (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+/* Binary operator applied to two arrays: at present only '+'
+   (for appending) is supported.
+*/
+
+static NODE *array_op (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_array_node(p);
+
+    if (ret != NULL && starting(p)) {
+	gretl_array *al = l->v.a;
+	gretl_array *ar = r->v.a;
+
+	if (!p->err) {
+	    if (f == B_ADD) {
+		ret->v.a = gretl_arrays_join(al, ar, &p->err);
+	    } else {
+		p->err = E_TYPES;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* in case we switched the LHS and RHS in a boolean comparison */
 
 static int reversed_comp (int f)
@@ -10159,6 +10183,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = scalar_calc(l, r, t->t, p);
 	} else if (l->t == BUNDLE && r->t == BUNDLE) {
 	    ret = bundle_op(l, r, t->t, p);
+	} else if (l->t == ARRAY && r->t == ARRAY) {
+	    ret = array_op(l, r, t->t, p);
 	} else if (stringvec_node(l) && stringvec_node(r)) {
 	    ret = stringvec_calc(l, r, t->t, p);
 	} else if (series_calc_nodes(l, r)) {
@@ -12797,8 +12823,9 @@ static void edit_array (parser *p)
     /* Assignment of something other than an array to an array:
        possible valid cases are (a) setting a specified
        element of the LHS array, or (b) doing "+=" to append
-       an element. At present these are mutually exclusive:
-       you can't do "+=" on an array _element_ yet.
+       an element (or an array of the same type). At present 
+       these are mutually exclusive: you can't do "+=" on an
+       array _element_ yet.
     */
 
     /* preliminary checks */
@@ -12834,13 +12861,15 @@ static void edit_array (parser *p)
 	    p->err = E_TYPES;
 	}
     } else {
-	/* appending an element */
+	/* appending */
 	if (r->t == STR) {
 	    p->err = gretl_array_append_string(A, r->v.str, copy);
 	} else if (r->t == MAT) {
 	    p->err = gretl_array_append_matrix(A, r->v.m, copy);
 	} else if (r->t == BUNDLE) {
 	    p->err = gretl_array_append_bundle(A, r->v.b, copy);
+	} else if (r->t == ARRAY) {
+	    p->err = gretl_array_append_array(A, r->v.a);
 	} else {
 	    p->err = E_TYPES;
 	}	
@@ -13062,7 +13091,7 @@ static int gen_check_return_type (parser *p)
 	    if (r->t != ARRAY && r->t != EMPTY) {
 		p->err = E_TYPES;
 	    }
-	} else if (!array_element_type(r->t)) {
+	} else if (r->t != ARRAY && !array_element_type(r->t)) {
 	    p->err = E_TYPES;
 	}
     } else {

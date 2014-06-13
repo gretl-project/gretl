@@ -90,23 +90,31 @@ static int array_allocate_content (gretl_array *A)
     }
 }
 
-static int array_extend_content (gretl_array *A)
+static int array_extend_content (gretl_array *A, int plus)
 {
-    void **data;
-    int n = A->n + 1;
-    int err = 0;
-
-    data = realloc(A->data, n * sizeof *A->data);
-    
-    if (data == NULL) {
-	err = E_ALLOC;
+    if (plus == 0) {
+	return 0; /* no-op */
+    } else if (plus < 0) {
+	return E_DATA;
     } else {
-	data[n-1] = NULL;
-	A->data = data;
-	A->n = n;
-    }
+	void **data;
+	int n = A->n + plus;
+	int i, err = 0;
 
-    return err;
+	data = realloc(A->data, n * sizeof *A->data);
+    
+	if (data == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=A->n; i<n-1; i++) {
+		data[i] = NULL;
+	    }
+	    A->data = data;
+	    A->n = n;
+	}
+
+	return err;
+    }
 }
 
 /* Create a new array of type @type. The idea is that it's OK
@@ -286,7 +294,7 @@ int gretl_array_append_string (gretl_array *A,
     } else if (A->type != GRETL_TYPE_STRINGS) {
 	err = E_TYPES;
     } else {
-	err = array_extend_content(A);
+	err = array_extend_content(A, 1);
 	if (!err) {
 	    err = set_string(A, A->n - 1, s, copy);
 	}
@@ -328,7 +336,7 @@ int gretl_array_append_matrix (gretl_array *A,
     } else if (A->type != GRETL_TYPE_MATRICES) {
 	err = E_TYPES;
     } else {
-	err = array_extend_content(A);
+	err = array_extend_content(A, 1);
 	if (!err) {
 	    err = set_matrix(A, A->n - 1, m, copy);
 	}
@@ -370,7 +378,7 @@ int gretl_array_append_bundle (gretl_array *A,
     } else if (A->type != GRETL_TYPE_BUNDLES) {
 	err = E_TYPES;
     } else {
-	err = array_extend_content(A);
+	err = array_extend_content(A, 1);
 	if (!err) {
 	    err = set_bundle(A, A->n - 1, b, copy);
 	}
@@ -380,20 +388,22 @@ int gretl_array_append_bundle (gretl_array *A,
 }
 
 static int 
-gretl_array_copy_content (gretl_array *Acpy, const gretl_array *A)
+gretl_array_copy_content (gretl_array *Acpy, const gretl_array *A,
+			  int write_offset)
 {
-    int i, err = 0;
+    int i, j, err = 0;
 
     for (i=0; i<A->n && !err; i++) {
 	if (A->data[i] != NULL) {
+	    j = i + write_offset;
 	    if (A->type == GRETL_TYPE_STRINGS) {
-		Acpy->data[i] = gretl_strdup(A->data[i]);
+		Acpy->data[j] = gretl_strdup(A->data[i]);
 	    } else if (A->type == GRETL_TYPE_MATRICES) {
-		Acpy->data[i] = gretl_matrix_copy(A->data[i]);
+		Acpy->data[j] = gretl_matrix_copy(A->data[i]);
 	    } else {
-		Acpy->data[i] = gretl_bundle_copy(A->data[i], &err);
+		Acpy->data[j] = gretl_bundle_copy(A->data[i], &err);
 	    }
-	    if (Acpy->data[i] == NULL) {
+	    if (Acpy->data[j] == NULL) {
 		err = E_ALLOC;
 	    }
 	}
@@ -410,11 +420,66 @@ gretl_array *gretl_array_copy (const gretl_array *A,
     if (A != NULL) {
 	Acpy = gretl_array_new(A->type, A->n, err);
 	if (!*err) {
-	    *err = gretl_array_copy_content(Acpy, A);
+	    *err = gretl_array_copy_content(Acpy, A, 0);
 	}
     }
 
     return Acpy;
+}
+
+/* respond to A1 += A2 */
+
+int gretl_array_append_array (gretl_array *A1,
+			      const gretl_array *A2)
+{
+    int old_n = 0, err = 0;
+
+    if (A1 == NULL || A2 == NULL) {
+	err = E_DATA;
+    } else if (A1->type != A2->type) {
+	err = E_TYPES;
+    } else {
+	old_n = A1->n;
+	err = array_extend_content(A1, A2->n);	
+    }
+
+    if (!err) {
+	err = gretl_array_copy_content(A1, A2, old_n);
+    }
+
+    return err;
+}
+
+gretl_array *gretl_arrays_join (gretl_array *A,
+				gretl_array *B,
+				int *err)
+{
+    gretl_array *C = NULL;
+
+    if (A == NULL || B == NULL) {
+	*err = E_DATA;
+    } else if (A->type != B->type) {
+	*err = E_TYPES;
+    } else {
+	int n = A->n + B->n;
+
+	C = gretl_array_new(A->type, n, err);
+    }
+
+    if (!*err) {
+	*err = gretl_array_copy_content(C, A, 0);
+    }
+
+    if (!*err) {
+	*err = gretl_array_copy_content(C, B, A->n);
+    }
+
+    if (*err && C != NULL) {
+	gretl_array_destroy(C);
+	C = NULL;
+    }
+
+    return C;
 }
 
 /**
@@ -464,7 +529,7 @@ int gretl_array_copy_as (const char *name, const char *copyname,
 	    A1->n = A0->n;
 	    err = array_allocate_content(A1);
 	    if (!err) {
-		err = gretl_array_copy_content(A1, A0);
+		err = gretl_array_copy_content(A1, A0, 0);
 	    }
 	}
     } else {
