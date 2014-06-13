@@ -1,4 +1,8 @@
-version 1.9.91
+version 1.9.91, in progress
+
+The "old-style" syntax for defining a function that was in
+force prior to gretl 1.8.4 (August 2009) is no longer
+supported.
 
 The "set" variable halt_on_error is deprecated and will be
 removed at some point. To prevent a script from aborting on

@@ -9,10 +9,11 @@ called via the command line, in the context of a script, or (if
 packaged appropriately, see section~\ref{sec:func-packages}) via the
 program's graphical interface.
 
-The syntax for defining a function looks like this:\footnote{The
-  syntax given here differs from the standard prior to gretl
-  version 1.8.4.  For reasons of backward compatibility the old syntax
-  is still supported; see section~\ref{sec:old-func} for details.}
+The syntax for defining a function looks like this:\footnote{A
+  somewhat different syntax was in force prior to gretl version 1.8.4,
+  and remained acceptable up to version 1.9.90. The old syntax is no
+  longer supported; see section~\ref{sec:old-func} for details on
+  updating.}
 
 \begin{raggedright}
 \texttt{function} \textsl{return-type} \textsl{function-name}
@@ -1156,11 +1157,9 @@ available before long.
 \label{sec:old-func}
 
 As mentioned at the start of this chapter, different rules were in
-force for defining functions prior to gretl 1.8.4. While the old
-syntax is still supported to date, this may not always be the
-case. But it is straightforward to convert a function to the new
-style. The only thing that must be changed for compatibility with the
-new syntax is the declaration of the function's return
+force for defining functions prior to gretl 1.8.4. It is
+straightforward to convert an old function to the new style. The only
+thing that must be changed is the declaration of the function's return
 type. Previously this was placed inline in the \texttt{return}
 statement, whereas now it is placed right after the \texttt{function}
 keyword. For example:
