@@ -46,6 +46,10 @@
  <gentext key="rvec"          text="row vector"/>
  <gentext key="list"          text="list"/>
  <gentext key="string"        text="string"/>
+ <gentext key="listetc"       text="list, matrix, bundle or array"/>
+ <gentext key="strings"       text="array of strings"/>
+ <gentext key="matrices"      text="array of matrices"/>
+ <gentext key="bundles"       text="array of bundles"/>
  <gentext key="char"          text="character"/>
  <gentext key="coeffname"     text="name of coefficient"/>
  <gentext key="sslist"        text="scalar, series or list"/>

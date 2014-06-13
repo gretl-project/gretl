@@ -5041,12 +5041,13 @@
 
     <function name="nelem" section="data-utils" output="int">
       <fnargs>
-	<fnarg type="list">L</fnarg>
+	<fnarg type="listetc">L</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the number of members in the list
-	  <argname>L</argname>.
+	  Returns the number of elements in the argument, which
+	  may be a list, a matrix, a bundle, or an array (but not a
+	  series).
 	</para>
       </description>
     </function>

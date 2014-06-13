@@ -47,6 +47,10 @@
  <gentext key="rvec"          text="vettore riga"/>
  <gentext key="list"          text="lista"/>
  <gentext key="string"        text="stringa"/>
+ <gentext key="listetc"       text="list, matrix, bundle or array"/>
+ <gentext key="strings"       text="array of strings"/>
+ <gentext key="matrices"      text="array of matrices"/>
+ <gentext key="bundles"       text="array of bundles"/>
  <gentext key="char"          text="carattere"/>
  <gentext key="coeffname"     text="nome del coefficiente"/>
  <gentext key="sslist"        text="scalare, serie o lista"/>
