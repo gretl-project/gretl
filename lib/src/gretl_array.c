@@ -431,7 +431,7 @@ int gretl_array_set_list (gretl_array *A, int i,
     return err;
 }
 
-/* respond to A[i] += L */
+/* respond to A += L */
 
 int gretl_array_append_list (gretl_array *A,
 			     int *L, int copy)
@@ -516,6 +516,8 @@ int gretl_array_append_array (gretl_array *A1,
 
     return err;
 }
+
+/* respond to C = A + B */
 
 gretl_array *gretl_arrays_join (gretl_array *A,
 				gretl_array *B,
