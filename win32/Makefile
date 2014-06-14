@@ -51,7 +51,7 @@ else
 endif
 
 ifeq ($(have_mpi),yes)
-  MPICLI = gretlcli-mpi.exe
+  MPICLI = gretlmpi.exe
   MPI_LIB = -lmsmpi
 endif
 
@@ -342,7 +342,7 @@ all: buildstamp dirs dlls/libprob.dll dlls/libgretl.dll \
 gretlcli.exe: $(CLIOBJ)
 	$(CC) -o $@ $^ $(LIBS) $(RL_LIBS) -lz -lmingwex -s
 
-gretlcli-mpi.exe: gretlcli-mpi.o
+gretlmpi.exe: gretlcli-mpi.o
 	$(CC) -o $@ $< $(MPI_LIB) $(LIBS) -lz -lmingwex -s
 
 gretl.exe: $(GUIOBJ) gretlres.o

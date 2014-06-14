@@ -120,7 +120,7 @@ done
 add_file gretlcli.exe gretl/gretlcli.exe
 add_file gretl.exe gretl/gretl.exe
 if [ $MPI = "yes" ] ; then
-  add_file gretlcli-mpi.exe gretl/gretlcli-mpi.exe
+  add_file gretlmpi.exe gretl/gretlmpi.exe
 fi
 
 # home-made dynamic libs
