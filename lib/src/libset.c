@@ -1984,6 +1984,7 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*var = &state->horizon;
     } else if (!strcmp(s, LOOP_MAXITER)) {
 	*min = 0;
+	*max = INT_MAX - 1;
 	*var = &state->loop_maxiter;
     } else if (!strcmp(s, VECM_NORM)) {
 	*min = 0;

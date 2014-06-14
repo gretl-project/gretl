@@ -1295,7 +1295,7 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
 #if LOOP_DEBUG
 # define MAX_FOR_TIMES  10
 #else
-# define MAX_FOR_TIMES  5000000
+# define MAX_FOR_TIMES  50000000
 #endif
 
 static int loop_count_too_high (LOOPSET *loop)
@@ -1314,6 +1314,8 @@ static int loop_count_too_high (LOOPSET *loop)
 	if (maxit > 0 && nt > maxit) {
 	    gretl_errmsg_sprintf(_("Reached maximum iterations, %d"),
 				 maxit);
+	    gretl_errmsg_append(_("You can use \"set loop_maxiter\" "
+				  "to increase the limit"));
 	    loop->err = 1;
 	}
     }
