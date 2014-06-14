@@ -88,9 +88,15 @@ static struct extmap action_map[] = {
     { FILE_OP_MAX,       NULL }
 };
 
+static int gdtb_save;
+
 static const char *get_extension_for_action (int action, gpointer data)
 {
     const char *s = NULL;
+
+    if (gdtb_save) {
+	return ".gdtb";
+    }
 
     if (action == EXPORT_GDT) {
 	return ".gdt";
@@ -858,6 +864,20 @@ static void add_compression_level_option (GtkWidget *filesel)
 				      hbox);
 }
 
+static void check_native_save_filter (GtkWidget *filesel)
+{
+    GtkFileFilter *filter;
+    const gchar *filter_name;
+
+    /* we need to know if .gdt or .gdtb was chosen */
+	
+    filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(filesel));
+    filter_name = gtk_file_filter_get_name(filter);
+    if (strstr(filter_name, "gdtb") != NULL) {
+	gdtb_save = 1;
+    }
+}
+
 static void gtk_file_selector (int action, FselDataSrc src, 
 			       gpointer data, GtkWidget *parent) 
 {
@@ -868,6 +888,8 @@ static void gtk_file_selector (int action, FselDataSrc src,
     const gchar *okstr;
     int remember = get_keep_folder();
     gint response;
+
+    gdtb_save = 0;
 
     if (SET_DIR_ACTION(action)) {
 	fsel_action = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
@@ -935,11 +957,16 @@ static void gtk_file_selector (int action, FselDataSrc src,
 
     if (response == GTK_RESPONSE_ACCEPT) {
 	gchar *fname;
-	
+
+	if (action == SAVE_DATA || action == SAVE_DATA_AS) {
+	    check_native_save_filter(filesel);
+	}
+
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filesel));
 	if (remember) {
 	    remember_folder(GTK_FILE_CHOOSER(filesel), savedir);
 	}
+
 	gtk_widget_destroy(filesel);
 	filesel = NULL;
 
