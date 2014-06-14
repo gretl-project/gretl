@@ -897,6 +897,7 @@ static int scan_scalar (char *targ, const char **psrc,
 			int fc, int width, DATASET *dset, 
 			int *ns)
 {
+    int intscan = (fc == 'd');
     char *endp = NULL;
     long k = 0;
     double x = 0;
@@ -904,7 +905,7 @@ static int scan_scalar (char *targ, const char **psrc,
 
     errno = 0;
 
-    if (fc == 'd') {
+    if (intscan) {
 	k = strtol(*psrc, &endp, 10);
     } else {
 	x = strtod(*psrc, &endp);
@@ -929,10 +930,13 @@ static int scan_scalar (char *targ, const char **psrc,
 	}
     }
 
+    /* "genr" operates in the C locale regardless */
+    gretl_push_c_numeric_locale();
+
     if (!errno && endp != *psrc) {
 	char *genline;
 
-	if (fc == 'd') {
+	if (intscan) {
 	    genline = gretl_strdup_printf("%s=%ld", targ, k);
 	} else {
 	    genline = gretl_strdup_printf("%s=%.16g", targ, x);
@@ -946,6 +950,9 @@ static int scan_scalar (char *targ, const char **psrc,
 	}
 	free(genline);
     }
+
+    /* match the above call */
+    gretl_pop_c_numeric_locale();
 
     *psrc = endp;
 
