@@ -5496,12 +5496,17 @@ static NODE *isconst_node (NODE *l, NODE *r, parser *p)
 
 /* Series on left, scalar or string on right, as in
    x[23] or somevar["CA"]. We return the selected
-   scalar value from the series.
+   scalar value from the series -- unless the series
+   is string-valued, in which case we return the
+   string value for the given observation.
 */
 
 static NODE *series_obs (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    int strval = stringvec_node(l);
+    NODE *ret;
+
+    ret = strval ? aux_string_node(p) : aux_scalar_node(p);
 
     if (ret != NULL) {
 	int t = -1; /* invalid */
@@ -5516,15 +5521,22 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
 	    }
 	}
 
-	if (p->err) {
-	    return ret;
-	}
+	if (!p->err) {
+	    if (t >= 0 && t < p->dset->n) {
+		if (strval) {
+		    const char *s =
+			series_get_string_for_obs(p->dset, l->vnum, t);
 
-	if (t >= 0 && t < p->dset->n) {
-	    ret->v.xval = l->v.xvec[t];
-	    ret->vnum = l->vnum; /* added 2013-09-14 */
-	} else {
-	    ret->v.xval = NADBL;
+		    ret->v.str = gretl_strdup(s);
+		} else {
+		    ret->v.xval = l->v.xvec[t];
+		}
+		ret->vnum = l->vnum; /* added 2013-09-14 */
+	    } else if (strval) {
+		ret->v.str = gretl_strdup("");
+	    } else {
+		ret->v.xval = NADBL;
+	    }
 	}
     }
 

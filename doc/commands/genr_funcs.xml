@@ -6886,7 +6886,7 @@
 	  Reads values from <argname>src</argname> under the control
 	  of <argname>format</argname> and assigns these values to one
 	  or more trailing arguments, indicated by the dots above.
-	  Returns the number of values assigned. This is a simplifed
+	  Returns the number of values assigned. This is a simplified
 	  version of the <lit>sscanf</lit> function in the C
 	  programming language.
 	</para>
@@ -6933,11 +6933,7 @@
 	<para>
 	  In addition to <lit>%s</lit> conversion for strings, a
 	  simplified version of the C format
-	  <lit>%</lit>
-	  <repl>N</repl>
-	  <lit>[</lit>
-	  <repl>chars</repl>
-	  <lit>]</lit>
+	  <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit>
 	  is available.  In this format <repl>N</repl> is the maximum
 	  number of characters to read and <repl>chars</repl> is a set
 	  of acceptable characters, enclosed in square brackets:
