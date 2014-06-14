@@ -154,6 +154,7 @@ struct fnpkg_ {
 				 t == GRETL_TYPE_STRINGS ||		\
 				 t == GRETL_TYPE_MATRICES ||		\
 				 t == GRETL_TYPE_BUNDLES||		\
+				 t == GRETL_TYPE_LISTS ||		\
 				 t == GRETL_TYPE_STRINGS_REF ||		\
 				 t == GRETL_TYPE_MATRICES_REF ||	\
 				 t == GRETL_TYPE_BUNDLES_REF)
@@ -314,8 +315,10 @@ static void adjust_array_arg_type (struct fnarg *arg)
 	    arg->type = GRETL_TYPE_STRINGS_REF;
 	} else if (t == GRETL_TYPE_MATRICES) {
 	    arg->type = GRETL_TYPE_MATRICES_REF;
-	} else {
+	} else if (t == GRETL_TYPE_BUNDLES) {
 	    arg->type = GRETL_TYPE_BUNDLES_REF;
+	} else if (t == GRETL_TYPE_LISTS) {
+	    arg->type = GRETL_TYPE_LISTS_REF;
 	}
     } else {
 	arg->type = t;
@@ -1310,9 +1313,12 @@ const char *gretl_arg_type_name (GretlType type)
     case GRETL_TYPE_STRINGS:      return "strings";
     case GRETL_TYPE_MATRICES:     return "matrices";
     case GRETL_TYPE_BUNDLES:      return "bundles";
+    case GRETL_TYPE_LISTS:        return "lists";
+	
     case GRETL_TYPE_STRINGS_REF:  return "strings *";
     case GRETL_TYPE_MATRICES_REF: return "matrices *";
     case GRETL_TYPE_BUNDLES_REF:  return "bundles *";
+    case GRETL_TYPE_LISTS_REF:    return "lists *";
 
     case GRETL_TYPE_VOID:       return "void";
     case GRETL_TYPE_NONE:       return "null";
@@ -1345,6 +1351,8 @@ static const char *arg_type_xml_string (int t)
 	return "matricesref";
     } else if (t == GRETL_TYPE_BUNDLES_REF) {
 	return "bundlesref";
+    } else if (t == GRETL_TYPE_LISTS_REF) {
+	return "listsref";
     } else {
 	return gretl_arg_type_name(t);
     }
@@ -1376,14 +1384,17 @@ GretlType gretl_type_from_string (const char *s)
     if (!strcmp(s, "strings"))   return GRETL_TYPE_STRINGS;
     if (!strcmp(s, "matrices"))  return GRETL_TYPE_MATRICES;
     if (!strcmp(s, "bundles"))   return GRETL_TYPE_BUNDLES;
+    if (!strcmp(s, "lists"))     return GRETL_TYPE_LISTS;
 
     if (!strcmp(s, "strings *"))   return GRETL_TYPE_STRINGS_REF;
     if (!strcmp(s, "matrices *"))  return GRETL_TYPE_MATRICES_REF;
     if (!strcmp(s, "bundles *"))   return GRETL_TYPE_BUNDLES_REF;
+    if (!strcmp(s, "lists *"))     return GRETL_TYPE_LISTS_REF;
 
     if (!strcmp(s, "stringsref"))  return GRETL_TYPE_STRINGS_REF;
     if (!strcmp(s, "matricesref")) return GRETL_TYPE_MATRICES_REF;
     if (!strcmp(s, "bundlesref"))  return GRETL_TYPE_BUNDLES_REF;
+    if (!strcmp(s, "listsref"))    return GRETL_TYPE_LISTS_REF;
 
     return 0;
 }
@@ -5888,8 +5899,9 @@ maybe_set_return_description (fncall *call, int rtype,
                             (pt==GRETL_TYPE_MATRIX_REF && rt==GRETL_TYPE_MATRIX) || \
 			    (pt==GRETL_TYPE_BUNDLE_REF && rt==GRETL_TYPE_BUNDLE) || \
 			    (pt==GRETL_TYPE_STRINGS_REF && rt==GRETL_TYPE_STRINGS) || \
-			    (pt==GRETL_TYPE_MATRICES_REF && rt==GRETL_TYPE_MATRIX) || \
-			    (pt==GRETL_TYPE_BUNDLES_REF && rt==GRETL_TYPE_BUNDLE))
+			    (pt==GRETL_TYPE_MATRICES_REF && rt==GRETL_TYPE_MATRICES) || \
+			    (pt==GRETL_TYPE_BUNDLES_REF && rt==GRETL_TYPE_BUNDLES) || \
+			    (pt==GRETL_TYPE_LISTS_REF && rt==GRETL_TYPE_LISTS))
 
 
 static int is_pointer_arg (fncall *call, fnargs *args, int rtype)
@@ -5913,7 +5925,9 @@ static int is_pointer_arg (fncall *call, fnargs *args, int rtype)
 
 #define needs_dataset(t) (t == GRETL_TYPE_SERIES || \
 			  t == GRETL_TYPE_LIST ||   \
-			  t == GRETL_TYPE_SERIES_REF)
+			  t == GRETL_TYPE_SERIES_REF || \
+			  t == GRETL_TYPE_LISTS || \
+			  t == GRETL_TYPE_LISTS_REF)
 
 static int 
 function_assign_returns (fncall *call, fnargs *args, int rtype, 

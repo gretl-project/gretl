@@ -4099,6 +4099,7 @@ static NODE *get_array_element (NODE *l, NODE *r, parser *p)
 		if (type == GRETL_TYPE_STRING) {
 		    ret = aux_string_node(p);
 		    if (ret != NULL) {
+			/* aux string node must be robust */
 			ret->v.str = gretl_strdup(data);
 		    }
 		} else if (type == GRETL_TYPE_MATRIX) {
@@ -4111,7 +4112,13 @@ static NODE *get_array_element (NODE *l, NODE *r, parser *p)
 		    if (ret != NULL) {
 			ret->v.b = data;
 		    }			    
-		}
+		} else if (type == GRETL_TYPE_LIST) {
+		    ret = aux_list_node(p);
+		    if (ret != NULL) {
+			/* aux list node must be robust */
+			ret->v.ivec = gretl_list_copy(data);
+		    }
+		}		    
 	    }
 	}
     } else {
@@ -12006,6 +12013,8 @@ static int ok_array_decl (parser *p, const char *s)
 	p->lh.atype = GRETL_TYPE_MATRICES;
     } else if (!strncmp(s, "bundles ", 8)) {
 	p->lh.atype = GRETL_TYPE_BUNDLES;
+    } else if (!strncmp(s, "lists ", 6)) {
+	p->lh.atype = GRETL_TYPE_LISTS;
     }
 
     return p->lh.atype != 0;
@@ -12869,6 +12878,8 @@ static void edit_array (parser *p)
 	    p->err = gretl_array_set_matrix(A, idx, r->v.m, copy);
 	} else if (r->t == BUNDLE) {
 	    p->err = gretl_array_set_bundle(A, idx, r->v.b, copy);
+	} else if (r->t == LIST) {
+	    p->err = gretl_array_set_list(A, idx, r->v.ivec, copy);
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -12880,6 +12891,8 @@ static void edit_array (parser *p)
 	    p->err = gretl_array_append_matrix(A, r->v.m, copy);
 	} else if (r->t == BUNDLE) {
 	    p->err = gretl_array_append_bundle(A, r->v.b, copy);
+	} else if (r->t == LIST) {
+	    p->err = gretl_array_append_list(A, r->v.ivec, copy);
 	} else if (r->t == ARRAY) {
 	    p->err = gretl_array_append_array(A, r->v.a);
 	} else {
@@ -12891,6 +12904,7 @@ static void edit_array (parser *p)
 	if (r->t == STR) r->v.str = NULL;
 	else if (r->t == MAT) r->v.m = NULL;
 	else if (r->t == BUNDLE) r->v.b = NULL;
+	else if (r->t == LIST) r->v.ivec = NULL;
     }
 }
 
@@ -13022,7 +13036,8 @@ static int edit_list (parser *p)
     return p->err;
 }
 
-#define array_element_type(t) (t == STR || t == MAT || t == BUNDLE)
+#define array_element_type(t) (t == STR || t == MAT || \
+			       t == BUNDLE || t == LIST)
 
 #define ok_return_type(t) (t == NUM || t == VEC || t == MAT || \
 			   t == LIST || t == DUM || t == EMPTY || \

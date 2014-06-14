@@ -39,7 +39,9 @@ static void gretl_array_destroy_data (gretl_array *A)
     int i;
 
     if (A->data != NULL) {
-	if (A->type == GRETL_TYPE_STRINGS) {
+	if (A->type == GRETL_TYPE_STRINGS ||
+	    A->type == GRETL_TYPE_LISTS) {
+	    /* a simple "free" will do */
 	    for (i=0; i<A->n; i++) {
 		free(A->data[i]);
 	    }
@@ -129,7 +131,8 @@ gretl_array *gretl_array_new (GretlType type, int n, int *err)
 
     if (type != GRETL_TYPE_STRINGS &&
 	type != GRETL_TYPE_MATRICES &&
-	type != GRETL_TYPE_BUNDLES) {
+	type != GRETL_TYPE_BUNDLES &&
+	type != GRETL_TYPE_LISTS) {
 	*err = E_TYPES;
 	return NULL;
     } else if (n < 0) {
@@ -182,10 +185,15 @@ void *gretl_array_get_element (gretl_array *A, int i,
 	    if (A->data[i] == NULL) {
 		A->data[i] = gretl_null_matrix_new();
 	    }	    
-	} else {
+	} else if (A->type == GRETL_TYPE_BUNDLES) {
 	    *type = GRETL_TYPE_BUNDLE;
 	    if (A->data[i] == NULL) {
 		A->data[i] = gretl_bundle_new();
+	    }	    
+	} else {
+	    *type = GRETL_TYPE_LIST;
+	    if (A->data[i] == NULL) {
+		A->data[i] = gretl_list_new(0);
 	    }	    
 	}
 	ret = A->data[i];
@@ -250,6 +258,23 @@ static int set_bundle (gretl_array *A, int i,
 	A->data[i] = gretl_bundle_copy(b, &err);
     } else {
 	A->data[i] = b;
+    }
+
+    return err;
+}
+
+static int set_list (gretl_array *A, int i,
+		     int *L, int copy)
+{
+    int err = 0;
+
+    if (copy) {
+	A->data[i] = gretl_list_copy(L);
+	if (A->data[i] == NULL) {
+	    err = E_ALLOC;
+	}	
+    } else {
+	A->data[i] = L;
     }
 
     return err;
@@ -387,6 +412,46 @@ int gretl_array_append_bundle (gretl_array *A,
     return err;
 }
 
+/* respond to A[i] = L */
+
+int gretl_array_set_list (gretl_array *A, int i, 
+			  int *L, int copy)
+{
+    int err = 0;
+
+    if (A == NULL || i < 0 || i >= A->n) {
+	err = E_DATA;
+    } else if (A->type != GRETL_TYPE_LISTS) {
+	err = E_TYPES;
+    } else {
+	free(A->data[i]);
+	err = set_list(A, i, L, copy);
+    }
+
+    return err;
+}
+
+/* respond to A[i] += L */
+
+int gretl_array_append_list (gretl_array *A,
+			     int *L, int copy)
+{
+    int err = 0;
+
+    if (A == NULL) {
+	err = E_DATA;
+    } else if (A->type != GRETL_TYPE_LISTS) {
+	err = E_TYPES;
+    } else {
+	err = array_extend_content(A, 1);
+	if (!err) {
+	    err = set_list(A, A->n - 1, L, copy);
+	}
+    }
+
+    return err;
+}
+
 static int 
 gretl_array_copy_content (gretl_array *Acpy, const gretl_array *A,
 			  int write_offset)
@@ -400,8 +465,10 @@ gretl_array_copy_content (gretl_array *Acpy, const gretl_array *A,
 		Acpy->data[j] = gretl_strdup(A->data[i]);
 	    } else if (A->type == GRETL_TYPE_MATRICES) {
 		Acpy->data[j] = gretl_matrix_copy(A->data[i]);
-	    } else {
+	    } else if (A->type == GRETL_TYPE_BUNDLES) {
 		Acpy->data[j] = gretl_bundle_copy(A->data[i], &err);
+	    } else {
+		Acpy->data[j] = gretl_list_copy(A->data[i]);
 	    }
 	    if (Acpy->data[j] == NULL) {
 		err = E_ALLOC;
