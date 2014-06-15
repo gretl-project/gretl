@@ -1419,22 +1419,176 @@ static int utf8_ok (FILE *fp, int pos)
     return ret;
 }
 
-/* check for leading BOM (thanks a lot, Microsoft!) */
+enum {
+    UTF_8 = 1,
+    UTF_16,
+    UTF_32
+};
 
-static void check_for_bom (FILE *fp, csvdata *c, PRN *prn)
+static gchar *csv_file_get_content (const char *fname,
+				    gsize *bytes,
+				    PRN *prn,
+				    int *err)
 {
-    unsigned char buf[4];
-    int n;
+    GError *gerr = NULL;
+    gchar *buf = NULL;
+    int ok = 0;
 
-    n = fread(buf, 1, 4, fp);
+    if (!g_utf8_validate(fname, -1, NULL)) {
+	gchar *tmp;
 
-    if (n == 4 && buf[0] == 0xEF && buf[1] == 0xBB && buf[2] == 0xBF) {
-	pputs(prn, "file starts with BOM!\n");
+	tmp = g_locale_to_utf8(fname, -1, NULL, bytes, NULL);
+	if (tmp != NULL) {
+	    ok = g_file_get_contents(tmp, &buf, bytes, &gerr);
+	    g_free(tmp);
+	}
+    } else {
+	ok = g_file_get_contents(fname, &buf, bytes, &gerr);
+    }
+
+    if (ok) {
+	pprintf(prn, "got content, %" G_GSIZE_FORMAT " bytes\n", *bytes);
+    } else {
+	*err = E_FOPEN;
+	if (gerr != NULL) {
+	    gretl_errmsg_set(gerr->message);
+	    g_error_free(gerr);
+	}
+    }
+
+    return buf;
+}
+
+static int csv_file_set_content (const char *fname, 
+				 const gchar *buf,
+				 gsize buflen)
+{
+    GError *gerr = NULL;
+    int ok = 0;
+    int err = 0;
+
+    if (!g_utf8_validate(fname, -1, NULL)) {
+	gsize bytes = 0;
+	gchar *tmp;
+
+	tmp = g_locale_to_utf8(fname, -1, NULL, &bytes, NULL);
+	if (tmp != NULL) {
+	    ok = g_file_set_contents(tmp, buf, buflen, &gerr);
+	    g_free(tmp);
+	}
+    } else {
+	ok = g_file_set_contents(fname, buf, buflen, &gerr);
+    }
+
+    if (!ok) {
+	err = E_FOPEN;
+	if (gerr != NULL) {
+	    gretl_errmsg_set(gerr->message);
+	    g_error_free(gerr);
+	}
+    }
+
+    return err;
+}
+
+static int csv_recode_input (FILE **fpp,
+			     const char *fname,
+			     gchar **pfname,
+			     int ucode,
+			     PRN *prn)
+{
+    gchar *buf = NULL;
+    gsize bytes = 0;
+    int err = 0;
+
+    /* the current stream is not useable */
+    fclose(*fpp);
+    *fpp = NULL;
+
+    /* get entire content of file */
+    buf = csv_file_get_content(fname, &bytes, prn, &err);
+
+    if (!err) {
+	const gchar *fromset = 
+	    (ucode == UTF_32)? "UTF-32" : "UTF-16";
+	GError *gerr = NULL;
+	gchar *altname = NULL;
+	gchar *trbuf = NULL;
+	gsize written = 0;
+
+	/* recode buffer to UTF-8 */
+	trbuf = g_convert(buf, bytes, "UTF-8", fromset,
+			  NULL, &written, &gerr);
+
+	if (gerr != NULL) {
+	    err = E_DATA;
+	    gretl_errmsg_set(gerr->message);
+	    g_error_free(gerr);
+	} else {
+	    /* write recoded text to file and open stream if OK */
+	    pprintf(prn, "recoded: %" G_GSIZE_FORMAT " bytes\n", written);
+	    altname = g_strdup_printf("%srecode_tmp.u8",
+					gretl_dotdir());
+	    err = csv_file_set_content(altname, trbuf, written);
+	    if (!err) {
+		*fpp = gretl_fopen(altname, "rb");
+		if (*fpp == NULL) {
+		    gretl_remove(altname);
+		    err = E_FOPEN;
+		} else {
+		    pputs(prn, "switched to recoded input\n");
+		    *pfname = altname;
+		    altname = NULL;
+		}
+	    }
+	}
+
+	g_free(trbuf);
+	g_free(altname);
+    }
+
+    g_free(buf);
+
+    return err;
+}
+
+static int csv_unicode_check (FILE *fp, csvdata *c, PRN *prn)
+{
+    unsigned char b[4];
+    int n = fread(b, 1, 4, fp);
+    int ucode = 0;
+
+    if (n == 4) {
+	if (b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF) {
+	    pputs(prn, "got UTF-8 BOM\n");
+	    ucode = UTF_8;
+	} else if (b[0] == 0xFE && b[1] == 0xFF) {
+	    pputs(prn, "got UTF-16BE, will try recoding\n");
+	    ucode = UTF_16;
+	} else if (b[0] == 0xFF && b[1] == 0xFE) {
+	    if (b[2] == 0 && b[3] == 0) {
+		pputs(prn, "got UTF-32LE, will try recoding\n");
+		ucode = UTF_32;
+	    } else {
+		pputs(prn, "got UTF-16LE, will try recoding\n");
+		ucode = UTF_16;
+	    }
+	} else if (b[0] == 0 && b[1] == 0 &&
+		   b[0] == 0xFE && b[1] == 0xFF) {
+	    pputs(prn, "got UTF-32BE, will try recoding\n");
+	    ucode = UTF_32;
+	}
+    }
+
+    if (ucode == UTF_8) {
 	csv_set_has_bom(c);
-	fseek(fp, 3, SEEK_SET); 
+	fseek(fp, 3, SEEK_SET);
+	ucode = 0;
     } else {
 	rewind(fp);
     }
+
+    return ucode;
 }
 
 /* The function below checks for the maximum line length in the given
@@ -1454,9 +1608,6 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
     int crlf = 0, lines = 0;
 
     csv_set_trailing_comma(cdata); /* just provisionally */
-
-    /* check for leading BOM (oh, Microsoft!) */
-    check_for_bom(fp, cdata, prn);
 
     while ((c = fgetc(fp)) != EOF) {
 	if (c == 0x0d) {
@@ -2875,6 +3026,8 @@ static int real_import_csv (const char *fname,
     FILE *fp = NULL;
     PRN *mprn = NULL;
     int newdata = (dset->Z == NULL);
+    gchar *altname = NULL;
+    int recode = 0;
     int popit = 0;
     int i, err = 0;
 
@@ -2899,6 +3052,14 @@ static int real_import_csv (const char *fname,
     if (c == NULL) {
 	err = E_ALLOC;
 	goto csv_bailout;
+    }
+
+    recode = csv_unicode_check(fp, c, prn);
+    if (recode) {
+	err = csv_recode_input(&fp, fname, &altname, recode, prn);
+	if (err) {
+	    goto csv_bailout;
+	}
     }
 
     if (cols != NULL) {
@@ -3156,6 +3317,11 @@ static int real_import_csv (const char *fname,
 	c->jspec->c = c;
     } else {
 	csvdata_free(c);
+    }
+
+    if (altname != NULL) {
+	gretl_remove(altname);
+	g_free(altname);
     }
 
     if (err == E_ALLOC) {
