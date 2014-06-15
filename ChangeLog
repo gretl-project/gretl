@@ -9,6 +9,8 @@ version 1.9.91, in progress
   --no-all-missing to complement --no-missing
 - "data" command: support globbing for names of series to fetch
   from gretl native databases
+- Importing "CSV" etc: handle UTF-16 and UTF-32 by recoding, if
+  recognized via Byte Order Mark
 - ghk() function: add an optional trailing argument to receive
   the derivatives of the multivariate probabilities
 - weekday() function: generalize to accept series arguments
