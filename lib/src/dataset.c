@@ -4065,10 +4065,12 @@ int steal_string_table (DATASET *l_dset, int lvar,
 static void maybe_adjust_label (DATASET *dset, int v, 
 				char **S, int ns)
 {
-    int i, len = 2 * ns; /* ", " */
+    int i, len = 3 * ns; /* "=" + ", " */
 
-    for (i=0; i<ns; i++) {
-	len += strlen(S[i]) + 2 + floor(log10(1.0 + i));
+    if (len < MAXLABEL) {
+	for (i=0; i<ns; i++) {
+	    len += strlen(S[i]) + 1 + floor(log10(1.0 + i));
+	}
     }
 
     if (len < MAXLABEL) {

@@ -358,7 +358,7 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
     int total, valid, missing;
     char word[64];
     double f, cumf = 0;
-    char **labels = NULL;
+    int strvals = 0;
 
     if (freq == NULL) {
 	return;
@@ -379,23 +379,26 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
     } 
 
     if (varno > 0 && dset != NULL && is_string_valued(dset, varno)) {
-	int n_labels;
-
-	labels = series_get_string_vals(dset, varno, &n_labels);
-	if (n_labels != freq->numbins) {
-	    labels = NULL;
-	}
+	strvals = 1;
     }
 
     if (freq->discrete) {
+	const char *s;
+	double dval;
+
 	pputs(prn, _("\n          frequency    rel.     cum.\n\n"));
 
 	for (k=0; k<=K; k++) {
-	    if (labels != NULL) {
-		*word = '\0';
-		gretl_utf8_strncat(word, labels[k], 8);
-	    } else {
-		sprintf(word, "%4g", freq->midpt[k]);
+	    dval = freq->midpt[k];
+	    *word = '\0';
+	    if (strvals) {
+		s = series_get_string_for_value(dset, varno, dval);
+		if (s != NULL) {
+		    gretl_utf8_strncat(word, s, 8);
+		}
+	    }
+	    if (*word == '\0') {
+		sprintf(word, "%4g", dval);
 	    }
 	    pputs(prn, word);
 	    nlw = 10 - strlen(word);
