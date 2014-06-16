@@ -124,6 +124,8 @@ static const char *typestr (int t)
 	return "scalar";
     case VEC:
 	return "series";
+    case UVEC:
+	return "named series";
     case MAT:
 	return "matrix";
     case UMAT:
@@ -8951,6 +8953,52 @@ static NODE *gen_array_node (NODE *n, parser *p)
     return ret;
 }
 
+static NODE *get_series_stringvals (NODE *n, parser *p)
+{
+    NODE *ret = aux_array_node(p);
+
+    if (!p->err) {
+	int v = n->vnum;
+
+	if (!is_string_valued(p->dset, v)) {
+	    ret->v.a = gretl_array_new(GRETL_TYPE_STRINGS, 0, &p->err);
+	} else {
+	    int n_strs = 0;
+	    char **S;
+
+	    S = series_get_string_vals(p->dset, v, &n_strs);
+	    if (!p->err) {
+		ret->v.a = gretl_array_from_strings(S, n_strs, 1,
+						    &p->err);
+	    }
+	}
+    }
+
+    return ret;
+}
+
+static NODE *stringify_series (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL) {
+	gretl_array *A = r->v.a;
+	char **S;
+	int ns = 0;
+
+	S = gretl_array_get_strings(A, &ns);
+
+	if (S == NULL) {
+	    p->err = E_DATA;
+	} else {
+	    ret->v.xval = 
+		series_set_string_vals(p->dset, l->vnum, S, ns);
+	}
+    }
+
+    return ret;
+}
+
 enum {
     FORK_L,
     FORK_R,
@@ -11237,6 +11285,24 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_ARRAY:
 	ret = gen_array_node(l, p);
+	break;
+    case F_STRVALS:
+	if (!useries_node(l)) {
+	    node_type_error(t->t, 0, UVEC, l, p);
+	} else {
+	    ret = get_series_stringvals(l, p);
+	}
+	break;
+    case F_STRINGIFY:
+	if (!useries_node(l) || r->t != ARRAY) {
+	    int l_ok = useries_node(l);
+
+	    node_type_error(t->t, l_ok ? 2 : 1,
+			    l_ok ? UVEC : ARRAY,
+			    l_ok ? r : l, p);
+	} else {
+	    ret = stringify_series(l, r, p);
+	}
 	break;
     default: 
 	printf("eval: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),

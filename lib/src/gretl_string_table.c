@@ -69,7 +69,7 @@ static gretl_string_table *gretl_string_table_alloc (void)
 /**
  * gretl_string_table_new:
  * @list: list of series IDs whose values are to be 
- * given a string representation. or NULL. 
+ * given a string representation, or NULL. 
  * 
  * These values in @list should correspond to the 0-based indices 
  * of the series in question within the dataset.  For example, 
@@ -233,10 +233,14 @@ int *series_table_map (series_table *st_from, series_table *st_to)
  * should not be modified in any way.
  */
 
-const char **series_table_get_strings (series_table *st, int *n_strs)
+char **series_table_get_strings (series_table *st, int *n_strs)
 {
-    *n_strs = st->n_strs;
-    return (const char **) st->strs;
+    if (st != NULL) {
+	*n_strs = st->n_strs;
+	return st->strs;
+    } else {
+	return NULL;
+    }
 }
 
 /**

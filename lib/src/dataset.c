@@ -3849,8 +3849,10 @@ void series_decrement_stack_level (DATASET *dset, int i)
 
 void series_attach_string_table (DATASET *dset, int i, void *ptr)
 {
-    series_set_discrete(dset, i, 1);
-    dset->varinfo[i]->st = ptr;
+    if (dset != NULL && i > 0 && i < dset->v) {
+	series_set_discrete(dset, i, 1);
+	dset->varinfo[i]->st = ptr;
+    }
 }
 
 void series_destroy_string_table (DATASET *dset, int i)
@@ -3886,7 +3888,7 @@ int is_string_valued (const DATASET *dset, int i)
  * @i: index number of series.
  *
  * Returns: the string table attched to series @i or NULL if
- * there is no such table.
+ * there is no such table. 
  */
 
 series_table *series_get_string_table (const DATASET *dset, int i)
@@ -4018,10 +4020,10 @@ double series_decode_string (const DATASET *dset, int i, const char *s)
  * you need to modify them.
  */
 
-const char **series_get_string_vals (const DATASET *dset, int i,
+char **series_get_string_vals (const DATASET *dset, int i,
 				     int *n_strs)
 {
-    const char **strs = NULL;
+    char **strs = NULL;
     int n = 0;
 
     if (i > 0 && i < dset->v && dset->varinfo[i]->st != NULL) {
@@ -4060,6 +4062,110 @@ int steal_string_table (DATASET *l_dset, int lvar,
     return 0;
 }
 
+static void maybe_adjust_label (DATASET *dset, int v, 
+				char **S, int ns)
+{
+    int i, len = 2 * ns; /* ", " */
+
+    for (i=0; i<ns; i++) {
+	len += strlen(S[i]) + 2 + floor(log10(1.0 + i));
+    }
+
+    if (len < MAXLABEL) {
+	char *s = dset->varinfo[v]->label;
+	char bit[8];
+
+	*s = '\0';
+	for (i=0; i<ns; i++) {
+	    sprintf(bit, "%d=", i+1);
+	    strcat(s, bit);
+	    strcat(s, S[i]);
+	    if (i < ns - 1) {
+		strcat(s, ", ");
+	    }
+	}
+    }
+}
+
+/* here we're trying to set strings values on a series from
+   scratch */
+
+int series_set_string_vals (DATASET *dset, int i,
+			    char **S, int ns)
+{
+    gretl_matrix *vals = NULL;
+    int err = 0;
+
+    if (S == NULL || dset == NULL || i < 1 || i >= dset->n) {
+	return E_DATA;
+    }
+
+    /* get sorted vector of unique values */
+    vals = gretl_matrix_values(dset->Z[i], dset->n, OPT_S, &err);
+
+    if (!err) {
+	int i, nvals = gretl_vector_get_length(vals);
+
+	if (ns != nvals) {
+	    /* we want exactly one string per (non-missing) value */
+	    gretl_errmsg_sprintf("Wrong number of strings, %d: should be %d",
+				 ns, nvals);
+	    err = E_DATA;
+	} else {
+	    /* the values should be successive 1-based integers */
+	    double x0 = gretl_vector_get(vals, 0);
+	    double x1 = gretl_vector_get(vals, nvals - 1);
+
+	    if (x0 != 1.0 || x1 != nvals) {
+		gretl_errmsg_set("The series values must be successive integers");
+		err = E_DATA;
+	    }
+	    for (i=1; i<nvals && !err; i++) {
+		x1 = gretl_vector_get(vals, i);
+		if (x1 != x0 + 1.0) {
+		    gretl_errmsg_set("The series values must be successive integers");
+		    err = E_DATA;
+		}
+		x0 = x1;
+	    }
+	    /* and the strings should all be UTF8 */
+	    for (i=0; i<ns && !err; i++) {
+		if (!g_utf8_validate(S[i], -1, NULL)) {
+		    gretl_errmsg_sprintf("String %d is not valid UTF-8", i+1);
+		    err = E_DATA;
+		}
+	    }
+	}
+    }
+
+    if (!err) {
+	char **Scpy = strings_array_dup(S, ns);
+	series_table *st = NULL;
+
+	if (Scpy == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    st = series_table_new(Scpy, ns);
+	    if (st == NULL) {
+		err = E_ALLOC;
+		strings_array_free(Scpy, ns);
+	    }
+	}
+	if (!err) {
+	    if (dset->varinfo[i]->st != NULL) {
+		series_table_destroy(dset->varinfo[i]->st);
+	    }
+	    series_set_discrete(dset, i, 1);
+	    dset->varinfo[i]->st = st;
+	    maybe_adjust_label(dset, i, S, ns);
+	}
+    }
+
+    gretl_matrix_free(vals);
+
+    return err;
+}
+
 int set_panel_groups_name (DATASET *dset, const char *vname)
 {
     if (dset->pangrps != NULL) {
@@ -4071,9 +4177,11 @@ int set_panel_groups_name (DATASET *dset, const char *vname)
     return (dset->pangrps == NULL)? E_ALLOC : 0;
 }
 
-char const **get_panel_group_names (DATASET *dset)
+/* don't modify the returned value */
+
+char **get_panel_group_names (DATASET *dset)
 {
-    char const **S = NULL;
+    char **S = NULL;
 
     if (dataset_is_panel(dset) && dset->pangrps != NULL) {
 	int n, v = current_series_index(dset, dset->pangrps);
@@ -4099,7 +4207,7 @@ int panel_group_names_ok (const DATASET *dset)
 	int n, v = current_series_index(dset, dset->pangrps);
 
 	if (v > 0 && v < dset->v) {
-	    char const **S = series_get_string_vals(dset, v, &n);
+	    char **S = series_get_string_vals(dset, v, &n);
 
 	    if (S != NULL && n == dset->n / dset->pd) {
 		ret = 1;
@@ -4116,7 +4224,7 @@ const char *panel_group_names_varname (const DATASET *dset)
 	int n, v = current_series_index(dset, dset->pangrps);
 
 	if (v > 0 && v < dset->v) {
-	    char const **S = series_get_string_vals(dset, v, &n);
+	    char **S = series_get_string_vals(dset, v, &n);
 
 	    if (S != NULL && n == dset->n / dset->pd) {
 		return dset->pangrps;

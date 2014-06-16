@@ -1227,8 +1227,8 @@ static gchar *file_get_content (const char *fname,
 #ifdef WIN32
     gchar *tmp = NULL;
 
-    err = maybe_recode_path(fname, &tmp, 1);
-    if (!err) {
+    *err = maybe_recode_path(fname, &tmp, 1);
+    if (!*err) {
 	if (tmp != NULL) {
 	    ok = g_file_get_contents(tmp, &buf, bytes, &gerr);
 	    g_free(tmp);

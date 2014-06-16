@@ -28,9 +28,14 @@ void gretl_array_void_content (gretl_array *A);
 
 gretl_array *gretl_array_new (GretlType type, int n, int *err);
 
+gretl_array *gretl_array_from_strings (char **S, int n, 
+				       int copy, int *err);
+
 void *gretl_array_get_element (gretl_array *A, int i, 
 			       GretlType *type,
 			       int *err);
+
+char **gretl_array_get_strings (gretl_array *A, int *ns);
 
 GretlType gretl_array_get_type (gretl_array *A);
 

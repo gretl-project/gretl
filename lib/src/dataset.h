@@ -505,17 +505,20 @@ const char *series_get_string_for_value (const DATASET *dset, int i,
 
 int series_set_string_val (DATASET *dset, int i, int t, const char *s);
 
+int series_set_string_vals (DATASET *dset, int i, 
+			    char **S, int ns);
+
 double series_decode_string (const DATASET *dset, int i, const char *s);
 
-const char **series_get_string_vals (const DATASET *dset, int i,
-				     int *n_strs);
+char **series_get_string_vals (const DATASET *dset, int i,
+			       int *n_strs);
 
 int steal_string_table (DATASET *l_dset, int lvar,
 			DATASET *r_dset, int rvar);
 
 int set_panel_groups_name (DATASET *dset, const char *vname);
 
-char const **get_panel_group_names (DATASET *dset);
+char **get_panel_group_names (DATASET *dset);
 
 int panel_group_names_ok (const DATASET *dset);
 

@@ -49,7 +49,7 @@ const char *series_table_get_string (series_table *st, double val);
 
 int series_table_add_string (series_table *st, const char *s);
 
-const char **series_table_get_strings (series_table *st, int *n_strs);
+char **series_table_get_strings (series_table *st, int *n_strs);
 
 int *series_table_map (series_table *st_from, series_table *st_to);
 

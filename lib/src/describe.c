@@ -2336,7 +2336,8 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
 		       0, OPT_D | OPT_X, err); 
 
     if (rvarno > 0 && dset != NULL && is_string_valued(dset, rvarno)) {
-	tab->rlabels = series_get_string_vals(dset, rvarno, &n_labels_chk);
+	tab->rlabels = (const char **) 
+	    series_get_string_vals(dset, rvarno, &n_labels_chk);
 	if (n_labels_chk != rowfreq->numbins) {
 	    tab->rlabels = NULL;
 	}
@@ -2347,7 +2348,8 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
 			   0, OPT_D | OPT_X, err); 
 	
 	if (cvarno > 0 && dset != NULL && is_string_valued(dset, cvarno)) {
-	    tab->clabels = series_get_string_vals(dset, cvarno, &n_labels_chk);
+	    tab->clabels = (const char **)
+		series_get_string_vals(dset, cvarno, &n_labels_chk);
 	    if (n_labels_chk != colfreq->numbins) {
 		tab->clabels = NULL;
 	    }

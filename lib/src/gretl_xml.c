@@ -2391,7 +2391,7 @@ static int real_write_gdt (const char *fname, const int *list,
     alt_puts("</observations>\n", fp, fz);
 
     if ((ntabs = string_table_count(dset, list, nvars)) > 0) {
-	const char **strs;
+	char **strs;
 	int j, n_strs;
 
 	if (gz) {

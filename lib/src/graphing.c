@@ -5462,7 +5462,7 @@ static int panel_overlay_ts_plot (const int vnum,
     gchar *literal = NULL;
     gchar *title = NULL;
     const double *obs = NULL;
-    char const **grpnames = NULL;
+    char **grpnames = NULL;
     int nv, panel_labels = 0;
     int single_series;
     int use = 0, strip = 0;

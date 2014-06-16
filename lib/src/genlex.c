@@ -426,6 +426,8 @@ struct str_table funcs[] = {
     { F_NLINES,    "nlines" },
     { F_KPSSCRIT,  "kpsscrit" },
     { F_ARRAY,     "array" },
+    { F_STRVALS,   "strvals" },
+    { F_STRINGIFY, "stringify" },
     { 0,           NULL }
 };
 

@@ -281,6 +281,7 @@ enum {
     F_CURL,
     F_NLINES,
     F_ARRAY,
+    F_STRVALS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
@@ -355,6 +356,7 @@ enum {
     F_GENSERIES,
     F_JSONGET,
     F_KPSSCRIT,
+    F_STRINGIFY,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,

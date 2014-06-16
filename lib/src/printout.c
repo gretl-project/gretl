@@ -358,7 +358,7 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
     int total, valid, missing;
     char word[64];
     double f, cumf = 0;
-    const char **labels = NULL;
+    char **labels = NULL;
 
     if (freq == NULL) {
 	return;

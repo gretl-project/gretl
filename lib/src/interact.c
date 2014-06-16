@@ -5032,7 +5032,7 @@ static int do_debug_command (ExecState *state, const char *param,
 static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 {
     const char *byvar = get_optval_string(cmd->ci, OPT_B);
-    const char **labels = NULL;
+    char **labels = NULL;
     gretl_matrix *xvals = NULL;
     const double *x;
     int i, v, nvals = 0;

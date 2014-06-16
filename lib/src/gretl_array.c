@@ -160,6 +160,43 @@ gretl_array *gretl_array_new (GretlType type, int n, int *err)
     return A;
 }
 
+gretl_array *gretl_array_from_strings (char **S, int n,
+				       int copy, int *err)
+{
+    gretl_array *A;
+
+    A = gretl_array_new(GRETL_TYPE_STRINGS, 0, err);
+
+    if (A != NULL) {
+	if (copy) {
+	    A->data = (void **) strings_array_dup(S, n);
+	    if (A->data == NULL) {
+		*err = E_ALLOC;
+	    }
+	} else {
+	    A->data = (void **) S;
+	}
+	if (!*err) {
+	    A->n = n;
+	}
+    }
+
+    return A;
+}
+
+/* note: don't modify the returned value */
+
+char **gretl_array_get_strings (gretl_array *A, int *ns)
+{
+    if (A->type == GRETL_TYPE_STRINGS) {
+	*ns = A->n;
+	return (char **) A->data;
+    } else {
+	*ns = 0;
+	return NULL;
+    }
+}
+
 void *gretl_array_get_element (gretl_array *A, int i, 
 			       GretlType *type,
 			       int *err)
