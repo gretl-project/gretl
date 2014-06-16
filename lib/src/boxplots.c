@@ -795,7 +795,9 @@ static int real_boxplots (const int *list, char **bools,
 
 	if (haslabels) {
 	    int n_labels;
-	    labels = series_get_string_vals(dset, list[2], &n_labels);
+
+	    labels = (const char **)
+		series_get_string_vals(dset, list[2], &n_labels);
 	}
     } 
 
@@ -814,8 +816,9 @@ static int real_boxplots (const int *list, char **bools,
 
 	if (s != NULL && strncmp(s, "residual for ", 13) == 0 &&
 	    gretl_scan_varname(s + 13, yname) == 1) {
-	    grp->title = gretl_strdup_printf(_("Regression residuals (= observed - fitted %s)"), 
-					     yname);
+	    grp->title = 
+		gretl_strdup_printf(_("Regression residuals (= observed - fitted %s)"), 
+				    yname);
 	} else {
 	    grp->title = gretl_strdup(dset->varname[list[1]]);
 	}
