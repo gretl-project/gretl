@@ -81,6 +81,12 @@ int force_language (int langid);
 
 int test_locale (const char *langstr);
 
+int gretl_recode_file (const char *path1, 
+		       const char *path2,
+		       const char *from_set, 
+		       const char *to_set,
+		       PRN *prn);
+
 #ifdef ENABLE_NLS
 
 char *iso_gettext (const char *msgid);

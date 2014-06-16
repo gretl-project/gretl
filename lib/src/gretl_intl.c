@@ -1211,3 +1211,129 @@ int get_translated_width (const char *str)
     return w;
 }
 
+/* utility functionality: recoding of an entire file:
+   we start with a couple of static "helpers"
+*/
+
+static gchar *file_get_content (const char *fname,
+				gsize *bytes,
+				PRN *prn,
+				int *err)
+{
+    GError *gerr = NULL;
+    gchar *buf = NULL;
+    int ok = 0;
+
+#ifdef WIN32
+    gchar *tmp = NULL;
+
+    err = maybe_recode_path(fname, &tmp, 1);
+    if (!err) {
+	if (tmp != NULL) {
+	    ok = g_file_get_contents(tmp, &buf, bytes, &gerr);
+	    g_free(tmp);
+	} else {
+	    ok = g_file_get_contents(fname, &buf, bytes, &gerr);
+	}
+    }
+#else
+    ok = g_file_get_contents(fname, &buf, bytes, &gerr);
+#endif
+
+    if (ok) {
+	pprintf(prn, "got content, %" G_GSIZE_FORMAT " bytes\n", *bytes);
+    } else {
+	*err = E_FOPEN;
+	if (gerr != NULL) {
+	    gretl_errmsg_set(gerr->message);
+	    g_error_free(gerr);
+	}
+    }
+
+    return buf;
+}
+
+static int file_set_content (const char *fname, 
+			     const gchar *buf,
+			     gsize buflen)
+{
+    GError *gerr = NULL;
+    int ok = 0;
+    int err = 0;
+
+#ifdef WIN32
+    gchar *tmp = NULL;
+
+    err = maybe_recode_path(fname, &tmp, 1);
+    if (!err) {
+	if (tmp != NULL) {
+	    ok = g_file_set_contents(tmp, buf, buflen, &gerr);
+	    g_free(tmp);
+	} else {
+	    ok = g_file_set_contents(fname, buf, buflen, &gerr);
+	}
+    }
+#else
+    ok = g_file_set_contents(fname, buf, buflen, &gerr);
+#endif
+
+    if (!ok) {
+	err = E_FOPEN;
+	if (gerr != NULL) {
+	    gretl_errmsg_set(gerr->message);
+	    g_error_free(gerr);
+	}
+    }
+
+    return err;
+}
+
+/**
+ * gretl_recode_file:
+ * @path1: path to original file.
+ * @path2: path to file to be written.
+ * @from_set: the codeset of the original file.
+ * @to_set: the codeset for the recoded file.
+ * @prn: gretl printer (for a few comments) or NULL.
+ *
+ * Returns: 0 on success or non-zero code on error.
+ */
+
+int gretl_recode_file (const char *path1, const char *path2,
+		       const char *from_set, const char *to_set,
+		       PRN *prn)
+{
+    gchar *buf = NULL;
+    gsize bytes = 0;
+    int err = 0;
+
+    /* get entire content of original file */
+    buf = file_get_content(path1, &bytes, prn, &err);
+
+    if (!err) {
+	GError *gerr = NULL;
+	gchar *trbuf = NULL;
+	gsize written = 0;
+
+	/* recode the buffer */
+	trbuf = g_convert(buf, bytes, to_set, from_set,
+			  NULL, &written, &gerr);
+
+	if (gerr != NULL) {
+	    err = E_DATA;
+	    gretl_errmsg_set(gerr->message);
+	    g_error_free(gerr);
+	} else {
+	    /* write recoded text to file */
+	    pprintf(prn, "recoded: %" G_GSIZE_FORMAT " bytes\n", written);
+	    err = file_set_content(path2, trbuf, written);
+	}
+
+	g_free(trbuf);
+    }
+
+    g_free(buf);
+
+    return err;
+}
+

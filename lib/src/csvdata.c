@@ -1425,71 +1425,11 @@ enum {
     UTF_32
 };
 
-static gchar *csv_file_get_content (const char *fname,
-				    gsize *bytes,
-				    PRN *prn,
-				    int *err)
-{
-    GError *gerr = NULL;
-    gchar *buf = NULL;
-    int ok = 0;
-
-    if (!g_utf8_validate(fname, -1, NULL)) {
-	gchar *tmp;
-
-	tmp = g_locale_to_utf8(fname, -1, NULL, bytes, NULL);
-	if (tmp != NULL) {
-	    ok = g_file_get_contents(tmp, &buf, bytes, &gerr);
-	    g_free(tmp);
-	}
-    } else {
-	ok = g_file_get_contents(fname, &buf, bytes, &gerr);
-    }
-
-    if (ok) {
-	pprintf(prn, "got content, %" G_GSIZE_FORMAT " bytes\n", *bytes);
-    } else {
-	*err = E_FOPEN;
-	if (gerr != NULL) {
-	    gretl_errmsg_set(gerr->message);
-	    g_error_free(gerr);
-	}
-    }
-
-    return buf;
-}
-
-static int csv_file_set_content (const char *fname, 
-				 const gchar *buf,
-				 gsize buflen)
-{
-    GError *gerr = NULL;
-    int ok = 0;
-    int err = 0;
-
-    if (!g_utf8_validate(fname, -1, NULL)) {
-	gsize bytes = 0;
-	gchar *tmp;
-
-	tmp = g_locale_to_utf8(fname, -1, NULL, &bytes, NULL);
-	if (tmp != NULL) {
-	    ok = g_file_set_contents(tmp, buf, buflen, &gerr);
-	    g_free(tmp);
-	}
-    } else {
-	ok = g_file_set_contents(fname, buf, buflen, &gerr);
-    }
-
-    if (!ok) {
-	err = E_FOPEN;
-	if (gerr != NULL) {
-	    gretl_errmsg_set(gerr->message);
-	    g_error_free(gerr);
-	}
-    }
-
-    return err;
-}
+/* If we got a UTF-16 or UTF-32 BOM, try recoding to
+   UTF-8 before parsing data. We write the recoded text
+   to a temporary file in the user's "dotdir" (and
+   then delete that file once we're done).
+*/
 
 static int csv_recode_input (FILE **fpp,
 			     const char *fname,
@@ -1497,60 +1437,51 @@ static int csv_recode_input (FILE **fpp,
 			     int ucode,
 			     PRN *prn)
 {
-    gchar *buf = NULL;
-    gsize bytes = 0;
+    const gchar *from_set = 
+	(ucode == UTF_32)? "UTF-32" : "UTF-16";
+    gchar *altname = NULL;
     int err = 0;
 
-    /* the current stream is not useable */
+    /* the current stream is not useable as is,
+       so shut it down
+    */
     fclose(*fpp);
     *fpp = NULL;
 
-    /* get entire content of file */
-    buf = csv_file_get_content(fname, &bytes, prn, &err);
+    /* we'll recode to a temp file in dotdir */
+    altname = g_strdup_printf("%srecode_tmp.u8", gretl_dotdir());
+
+    err = gretl_recode_file(fname, altname, 
+			    from_set, "UTF-8",
+			    prn);
 
     if (!err) {
-	const gchar *fromset = 
-	    (ucode == UTF_32)? "UTF-32" : "UTF-16";
-	GError *gerr = NULL;
-	gchar *altname = NULL;
-	gchar *trbuf = NULL;
-	gsize written = 0;
-
-	/* recode buffer to UTF-8 */
-	trbuf = g_convert(buf, bytes, "UTF-8", fromset,
-			  NULL, &written, &gerr);
-
-	if (gerr != NULL) {
-	    err = E_DATA;
-	    gretl_errmsg_set(gerr->message);
-	    g_error_free(gerr);
+	/* try reattaching the stream */
+	*fpp = gretl_fopen(altname, "rb");
+	if (*fpp == NULL) {
+	    gretl_remove(altname);
+	    err = E_FOPEN;
 	} else {
-	    /* write recoded text to file and open stream if OK */
-	    pprintf(prn, "recoded: %" G_GSIZE_FORMAT " bytes\n", written);
-	    altname = g_strdup_printf("%srecode_tmp.u8",
-					gretl_dotdir());
-	    err = csv_file_set_content(altname, trbuf, written);
-	    if (!err) {
-		*fpp = gretl_fopen(altname, "rb");
-		if (*fpp == NULL) {
-		    gretl_remove(altname);
-		    err = E_FOPEN;
-		} else {
-		    pputs(prn, "switched to recoded input\n");
-		    *pfname = altname;
-		    altname = NULL;
-		}
-	    }
+	    pputs(prn, "switched to recoded input\n");
+	    *pfname = altname;
+	    altname = NULL;
 	}
-
-	g_free(trbuf);
-	g_free(altname);
     }
 
-    g_free(buf);
+    g_free(altname);
 
     return err;
 }
+
+/* Check the first 4 bytes of "CSV" input for a Byte Order
+   Mark. If we find the UTF-8 BOM (typically written by
+   Microsoft tools), simply record the fact so that we can
+   skip it on reading. But if we find a BOM indicating a
+   16-bit or 32-bit unicode encoding, flag this by returning
+   a non-zero @ucode value; in that case we'll attempt a
+   full recording of the input (via GLib) before we start
+   reading data.
+*/
 
 static int csv_unicode_check (FILE *fp, csvdata *c, PRN *prn)
 {

@@ -161,14 +161,34 @@ int get_stdio_use_utf8 (void)
 
 #define FDEBUG 0
 
-/* Try to handle both possible 'cases of need': we should be using 
-   UTF-8 but the path is not in UTF-8, or the path is in UTF-8
-   but should be in locale encoding.
-*/
+/**
+ * maybe_recode_path:
+ * @path: original path.
+ * @pconv: location to receive recoded path.
+ * @want_utf8: should be 1 if a UTF-8 path is wanted
+ * unconditionally; 0 if a path in the (non-UTF-8)
+ * locale is wanted unconditionally, or -1 if the
+ * target codeset should be determined by libgretl's
+ * reckoning of what is needed for use with the C library's
+ * stdio functions that take path arguments.
+ *
+ * Note that if it turns out that @path is already valid,
+ * then nothing is assigned to @pconv; in this case the
+ * function returns 0.
+ *
+ * Returns: 0 on success (either @path did not need to be
+ * recoded, or it was successfully recoded into @pconv), or
+ * a non-zero code on error.
+ */
 
-static int maybe_recode_path (const char *path, int want_utf8, char **pconv)
+int maybe_recode_path (const char *path, char **pconv, int want_utf8)
 {
     int err = 0;
+
+    if (want_utf8 == -1) {
+	/* automatic */
+	want_utf8 = stdio_use_utf8;
+    }
 
 #if FDEBUG
     fprintf(stderr, "maybe_recode_path: want_utf8 = %d\n", want_utf8);
@@ -231,7 +251,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
     fprintf(stderr, "gretl_fopen: got '%s'\n", fname);
 #endif
 
-    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
+    err = maybe_recode_path(fname, &fconv, -1);
 
     if (!err) {
 	if (fconv != NULL) {
@@ -336,7 +356,7 @@ int gretl_test_fopen (const char *fname, const char *mode)
     int err;
 
     gretl_error_clear();
-    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
+    err = maybe_recode_path(fname, &fconv, -1);
 
     if (err) {
 	gretl_error_clear();
@@ -397,7 +417,7 @@ FILE *gretl_fopen_with_recode (const char *fname, const char *mode,
     fprintf(stderr, "gretl_fopen_with_recode: got '%s'\n", fname);
 #endif
 
-    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
+    err = maybe_recode_path(fname, &fconv, -1);
 
     if (!err) {
 	if (fconv != NULL) {
@@ -445,7 +465,7 @@ int gretl_open (const char *pathname, int flags)
 
     gretl_error_clear();
 
-    err = maybe_recode_path(pathname, stdio_use_utf8, &pconv);
+    err = maybe_recode_path(pathname, &pconv, -1);
 
     if (!err) {
 	if (pconv != NULL) {
@@ -482,7 +502,7 @@ int gretl_stat (const char *fname, struct stat *buf)
 
     gretl_error_clear();
 
-    err = maybe_recode_path(fname, stdio_use_utf8, &pconv);
+    err = maybe_recode_path(fname, &pconv, -1);
     
     if (err) {
 	/* emulate 'stat' */
@@ -518,10 +538,10 @@ int gretl_rename (const char *oldpath, const char *newpath)
 
     gretl_error_clear();
 
-    err = maybe_recode_path(oldpath, stdio_use_utf8, &oldconv);
+    err = maybe_recode_path(oldpath, &oldconv, -1);
 
     if (!err) {
-	err = maybe_recode_path(newpath, stdio_use_utf8, &newconv);
+	err = maybe_recode_path(newpath, &newconv, -1);
     }
 
     if (!err) {
@@ -570,7 +590,7 @@ int gretl_remove (const char *path)
     int ret = -1;
     int err;
 
-    err = maybe_recode_path(path, stdio_use_utf8, &pconv);
+    err = maybe_recode_path(path, &pconv, -1);
 
     if (!err) {
 	if (pconv != NULL) {
@@ -585,7 +605,7 @@ int gretl_remove (const char *path)
     /* allow for the possibility that we're trying to remove a
        directory on win32 -> use g_remove */
     if (ret == -1) {
-	err = maybe_recode_path(path, 1, &pconv);
+	err = maybe_recode_path(path, &pconv, 1);
 	if (!err) {
 	    if (pconv != NULL) {
 		ret = g_remove(pconv);
@@ -620,7 +640,7 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
 
     gretl_error_clear();
 
-    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
+    err = maybe_recode_path(fname, &fconv, -1);
 
     if (!err) {
 	if (fconv != NULL) {
@@ -646,7 +666,7 @@ static gzFile gretl_try_gzopen (const char *fname, const char *mode)
 
     gretl_error_clear();
 
-    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
+    err = maybe_recode_path(fname, &fconv, -1);
 
     if (!err) {
 	if (fconv != NULL) {
@@ -690,7 +710,7 @@ int gretl_chdir (const char *path)
     }
 #endif
 
-    err = maybe_recode_path(path, stdio_use_utf8, &pconv);
+    err = maybe_recode_path(path, &pconv, -1);
 
     if (!err) {
 	if (pconv != NULL) {
@@ -953,7 +973,7 @@ int gretl_write_access (char *fname)
 
     gretl_error_clear();
 
-    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
+    err = maybe_recode_path(fname, &fconv, -1);
     if (err) {
 	return err;
     }
