@@ -4998,7 +4998,7 @@ void do_freq_dist (void)
 
 	if (bufopen(&prn) == 0) {
 	    tmp = gretl_window_title(_("frequency distribution"));
-	    print_freq(freq, 0, NULL, prn);
+	    print_freq(freq, v, dataset, prn);
 	    view_buffer(prn, 78, 340, tmp, FREQ, NULL);
 	    g_free(tmp);
 	}
