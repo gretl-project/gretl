@@ -508,6 +508,8 @@ void gretl_matrix_serialize (const gretl_matrix *m,
     fputs("</gretl-matrix>\n", fp); 
 }
 
+#if 0 /* not used at present, but might be useful! */
+
 /**
  * gretl_matrix_deserialize:
  * @buf: character buffer containing serialization of a gretl matrix.
@@ -553,6 +555,8 @@ gretl_matrix *gretl_matrix_deserialize (const char *buf,
 
     return m;
 }
+
+#endif
 
 /**
  * gretl_xml_get_prop_as_int:

@@ -710,18 +710,40 @@ void gretl_array_serialize (gretl_array *A, FILE *fp)
 	    gretl_arg_type_name(A->type), A->n); 
 
     if (A->type == GRETL_TYPE_STRINGS) {
-	; /* FIXME */
+	for (i=0; i<A->n; i++) {
+	    if (A->data[i] == NULL) {
+		fputs("<string placeholder=\"true\"/>\n", fp);
+	    } else {
+		gretl_xml_put_tagged_string("string", 
+					    A->data[i],
+					    fp);
+	    }
+	}
     } else if (A->type == GRETL_TYPE_MATRICES) {
 	for (i=0; i<A->n; i++) {
-	    gretl_matrix_serialize(A->data[i], NULL, fp);
+	    if (A->data[i] == NULL) {
+		fputs("<gretl-matrix placeholder=\"true\"/>\n", fp);
+	    } else {
+		gretl_matrix_serialize(A->data[i], NULL, fp);
+	    }
 	}
     } else if (A->type == GRETL_TYPE_BUNDLES) {
 	for (i=0; i<A->n; i++) {
-	    gretl_bundle_serialize(A->data[i], NULL, fp);
+	    if (A->data[i] == NULL) {
+		fputs("<gretl-bundle placeholder=\"true\"/>\n", fp);
+	    } else {
+		gretl_bundle_serialize(A->data[i], NULL, fp);
+	    }
 	}
     } else if (A->type == GRETL_TYPE_LISTS) {
 	for (i=0; i<A->n; i++) {
-	    gretl_list_serialize(A->data[i], NULL, fp);
+	    if (A->data[i] == NULL) {
+		fputs("<list placeholder=\"true\"/>\n", fp);
+	    } else {
+		gretl_xml_put_tagged_list("list", 
+					  A->data[i],
+					  fp);
+	    }
 	}
     }	
 

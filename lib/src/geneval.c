@@ -97,7 +97,8 @@
 #define null_or_empty(n) (n == NULL || n->t == EMPTY)
 
 #define ok_bundled_type(t) (t == NUM || t == STR || t == MAT || \
-			    t == VEC || t == BUNDLE || t == U_ADDR) 
+			    t == VEC || t == BUNDLE || t == U_ADDR || \
+			    t == ARRAY) 
 
 #define lhscalar(p) (p->flags & P_LHSCAL)
 #define lhlist(p) (p->flags & P_LHLIST)
