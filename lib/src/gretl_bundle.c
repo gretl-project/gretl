@@ -1439,7 +1439,7 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 		    if (child == NULL) {
 			err = E_DATA;
 		    } else {
-			a = deserialize_array(child, doc, &err);
+			a = gretl_array_deserialize(child, doc, &err);
 			if (!err) {
 			    err = bundle_donate_data(b, key, a, type, size);
 			}

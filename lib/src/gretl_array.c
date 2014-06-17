@@ -702,6 +702,10 @@ int gretl_array_print (gretl_array *A, PRN *prn)
     return 0;
 }
 
+/* Called from gretl_bundle.c when serializing a bundle
+   which contains one or more arrays.
+*/
+
 void gretl_array_serialize (gretl_array *A, FILE *fp)
 {
     int i;
@@ -749,3 +753,37 @@ void gretl_array_serialize (gretl_array *A, FILE *fp)
 
     fputs("</gretl-array>\n", fp); 
 }
+
+#if 0 /* not yet */
+
+/* For internal use only: @p1 should be of type xmlNodePtr and @p2
+   should be an xmlDocPtr. We suppress the actual pointer types in the
+   prototype so that it's possible for a module to include
+   gretl_array.h without including the full libxml headers.
+*/
+
+gretl_array *gretl_array_deserialize (void *p1, void *p2,
+				      int *err)
+{
+    xmlNodePtr node = p1;
+    xmlDocPtr doc = p2;
+    xmlNodePtr cur = node->xmlChildrenNode;
+    gretl_array *A = gretl_array_new();
+
+    if (A == NULL) {
+	*err = E_ALLOC;
+    } else {
+	// *err = real_load_array(A, cur, doc);
+	*err = 1; /* FIXME ! */
+	if (*err) {
+	    fprintf(stderr, "gretl_array_deserialize: "
+		    "array is broken (err = %d)\n", *err);
+	    gretl_array_destroy(A);
+	    A = NULL;
+	}
+    }
+
+    return A;
+}
+
+#endif /* not yet */
