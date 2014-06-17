@@ -4132,7 +4132,7 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 	} else if (item->type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *m = (gretl_matrix *) item->ptr;
 
-	    gretl_xml_put_matrix(m, NULL, fp);
+	    gretl_matrix_serialize(m, NULL, fp);
 	} else {
 	    ; /* no-op: not handled */
 	}

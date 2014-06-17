@@ -6721,7 +6721,13 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	if (ret != NULL) {
 	    ret->v.b = gretl_bundle_copy((gretl_bundle *) val,
 					 &p->err);
-	} 
+	}
+    } else if (type == GRETL_TYPE_ARRAY) {
+	ret = aux_array_node(p);
+	if (ret != NULL) {
+	    ret->v.a = gretl_array_copy((gretl_array *) val,
+					&p->err);
+	}	
     } else if (type == GRETL_TYPE_CMPLX_ARRAY) {
 	ret = aux_matrix_node(p);
 	if (ret != NULL) {
@@ -6981,8 +6987,11 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	case BUNDLE:
 	    ptr = n->v.b;
 	    type = GRETL_TYPE_BUNDLE;
-	    err = p->err;
 	    break;
+	case ARRAY:
+	    ptr = n->v.a;
+	    type = GRETL_TYPE_ARRAY;
+	    break;	    
 	default:
 	    err = E_DATA;
 	    break;

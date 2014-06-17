@@ -1512,6 +1512,17 @@ void win32_fprint_nonfinite (double x, FILE *fp)
     }
 }
 
+void win32_pprint_nonfinite (double x, PRN *prn)
+{
+    if (isnan(x) || na(x)) {
+	pputs(prn, "nan ");
+    } else if (x < 0) {
+	pputs(prn, "-inf ");
+    } else {
+	pputs(prn, "inf ");
+    }
+}
+
 static LARGE_INTEGER timer_freq;
 static LARGE_INTEGER wt0;
 

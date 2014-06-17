@@ -875,7 +875,6 @@ static int pprintf_init (PRN *prn)
     return ret;
 }
 
-
 /**
  * pprintf:
  * @prn: gretl printing struct.

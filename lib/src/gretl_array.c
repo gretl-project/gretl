@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "uservar.h"
 #include "gretl_func.h"
+#include "gretl_xml.h"
 #include "gretl_array.h"
 
 /**
@@ -699,4 +700,30 @@ int gretl_array_print (gretl_array *A, PRN *prn)
     }
 
     return 0;
+}
+
+void gretl_array_serialize (gretl_array *A, FILE *fp)
+{
+    int i;
+
+    fprintf(fp, "<gretl-array type=\"%s\" length=\"%d\">\n",
+	    gretl_arg_type_name(A->type), A->n); 
+
+    if (A->type == GRETL_TYPE_STRINGS) {
+	; /* FIXME */
+    } else if (A->type == GRETL_TYPE_MATRICES) {
+	for (i=0; i<A->n; i++) {
+	    gretl_matrix_serialize(A->data[i], NULL, fp);
+	}
+    } else if (A->type == GRETL_TYPE_BUNDLES) {
+	for (i=0; i<A->n; i++) {
+	    gretl_bundle_serialize(A->data[i], NULL, fp);
+	}
+    } else if (A->type == GRETL_TYPE_LISTS) {
+	for (i=0; i<A->n; i++) {
+	    gretl_list_serialize(A->data[i], NULL, fp);
+	}
+    }	
+
+    fputs("</gretl-array>\n", fp); 
 }

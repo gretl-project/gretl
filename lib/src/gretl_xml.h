@@ -38,28 +38,20 @@ void gretl_xml_put_double (const char *tag, double x, FILE *fp);
 void gretl_xml_put_double_array (const char *tag, double *x, int n,
 				 FILE *fp);
 
-void gretl_xml_put_strings_array (const char *tag, const char **strs, int n,
-				  FILE *fp);
+void gretl_xml_put_strings_array (const char *tag, const char **strs, 
+				  int n, FILE *fp);
 
 void gretl_xml_put_strings_array_quoted (const char *tag, 
 					 const char **strs, int n,
 					 FILE *fp);
 
-void gretl_xml_put_named_list (const char *name, const int *list, FILE *fp);
-
-void gretl_xml_put_tagged_list (const char *tag, const int *list, FILE *fp);
+void gretl_xml_put_tagged_list (const char *tag, const int *list, 
+				FILE *fp);
 
 int gretl_xml_put_tagged_string (const char *tag, const char *str, 
 				 FILE *fp);
 
 int gretl_xml_put_raw_string (const char *str, FILE *fp);
-
-void gretl_xml_put_matrix (const gretl_matrix *m, const char *name, 
-			   FILE *fp);
-
-void gretl_xml_put_matrix_to_prn (const gretl_matrix *m, 
-				  const char *name, 
-				  PRN *prn);
 
 int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
 			       int *i);
@@ -119,14 +111,17 @@ gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
 
 int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask);
 
-char *gretl_xml_serialize_matrix (const gretl_matrix *m, const char *name);
-
-gretl_matrix *gretl_xml_deserialize_matrix (const char *buf, int size, 
-					    int *err);
-
 #endif /* FULL_XML_HEADERS */
 
-int gretl_write_matrix_as_gdt (const char *fname, 
+void gretl_matrix_serialize (const gretl_matrix *m, 
+			     const char *name, 
+			     FILE *fp);
+
+void gretl_list_serialize (const int *list, 
+			   const char *name,
+			   FILE *fp);
+
+int gretl_matrix_write_as_gdt (const char *fname, 
 			       const gretl_matrix *X,
 			       const char **varnames, 
 			       const char **labels);

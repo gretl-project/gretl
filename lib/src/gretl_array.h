@@ -90,4 +90,6 @@ gretl_array *gretl_array_pull_from_stack (const char *name,
 
 int gretl_array_print (gretl_array *A, PRN *prn);
 
+void gretl_array_serialize (gretl_array *A, FILE *fp);
+
 #endif /* GRETL_ARRAY_H_ */

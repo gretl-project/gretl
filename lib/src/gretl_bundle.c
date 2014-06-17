@@ -23,10 +23,9 @@
 #include "gretl_func.h"
 #include "libset.h"
 #include "uservar.h"
+#include "gretl_array.h"
 #include "gretl_xml.h"
 #include "gretl_foreign.h"
-
-#include <glib.h>
 
 #define BDEBUG 0
 
@@ -59,7 +58,8 @@ static gretl_bundle *sysinfo_bundle;
 
 static int real_bundle_set_data (gretl_bundle *b, const char *key,
 				 void *ptr, GretlType type,
-				 int size, const char *note);
+				 int size, int copy,
+				 const char *note);
 
 int gretl_bundle_set_name (gretl_bundle *b, const char *name)
 {
@@ -103,14 +103,16 @@ int type_can_be_bundled (GretlType type)
 	    type == GRETL_TYPE_MATRIX ||
 	    type == GRETL_TYPE_MATRIX_REF ||
 	    type == GRETL_TYPE_SERIES ||
-	    type == GRETL_TYPE_BUNDLE);
+	    type == GRETL_TYPE_BUNDLE ||
+	    type == GRETL_TYPE_ARRAY);
 }
 
 /* allocate and fill out a 'value' (type plus data pointer) that will
    be inserted into a bundle's hash table */
 
 static bundled_item *bundled_item_new (GretlType type, void *ptr, 
-				       int size, const char *note,
+				       int size, int copy,
+				       const char *note,
 				       int *err)
 {
     bundled_item *item = malloc(sizeof *item);
@@ -132,20 +134,43 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
 	    }
 	    break;
 	case GRETL_TYPE_STRING:	
-	    item->data = gretl_strdup((char *) ptr);
+	    if (copy) {
+		item->data = gretl_strdup((char *) ptr);
+	    } else {
+		item->data = ptr;
+	    }
 	    break;
 	case GRETL_TYPE_MATRIX:
-	    item->data = gretl_matrix_copy((gretl_matrix *) ptr);
+	    if (copy) {
+		item->data = gretl_matrix_copy((gretl_matrix *) ptr);
+	    } else {
+		item->data = ptr;
+	    }
 	    break;
 	case GRETL_TYPE_MATRIX_REF:
 	    item->data = ptr;
 	    break;
 	case GRETL_TYPE_SERIES:
-	    item->data = copyvec((const double *) ptr, size);
+	    if (copy) {
+		item->data = copyvec((const double *) ptr, size);
+	    } else {
+		item->data = ptr;
+	    }
 	    item->size = size;
 	    break;
 	case GRETL_TYPE_BUNDLE:
-	    item->data = gretl_bundle_copy((gretl_bundle *) ptr, err);
+	    if (copy) {
+		item->data = gretl_bundle_copy((gretl_bundle *) ptr, err);
+	    } else {
+		item->data = ptr;
+	    }
+	    break;
+	case GRETL_TYPE_ARRAY:
+	    if (copy) {
+		item->data = gretl_array_copy((gretl_array *) ptr, err);
+	    } else {
+		item->data = ptr;
+	    }
 	    break;
 	default:
 	    *err = E_TYPES;
@@ -193,6 +218,9 @@ static void bundled_item_destroy (gpointer data)
 	break;
     case GRETL_TYPE_BUNDLE:
 	gretl_bundle_destroy((gretl_bundle *) item->data);
+	break;
+    case GRETL_TYPE_ARRAY:
+	gretl_array_destroy((gretl_array*) item->data);
 	break;
     default:
 	break;
@@ -564,7 +592,7 @@ int gretl_bundle_set_payload_matrix (gretl_bundle *bundle,
 				     const gretl_matrix *m)
 {
     return real_bundle_set_data(bundle, "payload", (void *) m,
-				GRETL_TYPE_MATRIX, 0, NULL);
+				GRETL_TYPE_MATRIX, 0, 1, NULL);
 }
 
 /**
@@ -719,7 +747,8 @@ void *gretl_bundle_get_content (gretl_bundle *bundle)
 
 static int real_bundle_set_data (gretl_bundle *b, const char *key,
 				 void *ptr, GretlType type,
-				 int size, const char *note)
+				 int size, int copy, 
+				 const char *note)
 {
     bundled_item *item = NULL;
     int err;
@@ -729,7 +758,7 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
     if (err) {
 	gretl_errmsg_sprintf("'%s': invalid key string", key);
     } else {
-	item = bundled_item_new(type, ptr, size, note, &err);
+	item = bundled_item_new(type, ptr, size, copy, note, &err);
     }
 
     if (!err) {
@@ -743,6 +772,13 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
     }
 
     return err;
+}
+
+static int bundle_donate_data (gretl_bundle *b, const char *key,
+			       void *ptr, GretlType type,
+			       int size)
+{
+    return real_bundle_set_data(b, key, ptr, type, size, 0, NULL);
 }
 
 /**
@@ -770,7 +806,8 @@ int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
     if (bundle == NULL) {
 	err = E_UNKVAR;
     } else {
-	err = real_bundle_set_data(bundle, key, ptr, type, size, NULL);
+	err = real_bundle_set_data(bundle, key, ptr, type, 
+				   size, 1, NULL);
     }
 
     return err;
@@ -964,7 +1001,7 @@ static void copy_new_bundled_item (gpointer key, gpointer value, gpointer p)
     if (!gretl_bundle_has_data(targ, (const char *) key)) {
 	real_bundle_set_data(targ, (const char *) key,
 			     item->data, item->type,
-			     item->size, item->note);
+			     item->size, 1, item->note);
     }
 }
 
@@ -978,7 +1015,7 @@ static void copy_bundled_item (gpointer key, gpointer value, gpointer p)
 
     real_bundle_set_data(targ, (const char *) key,
 			 item->data, item->type,
-			 item->size, item->note);
+			 item->size, 1, item->note);
 }
 
 /* Create a new bundle as the union of two existing bundles:
@@ -1093,6 +1130,7 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 {
     bundled_item *item = value;
     const gchar *kstr = key;
+    gretl_array *a;
     gretl_matrix *m;
     double x;
     char *s;
@@ -1134,6 +1172,16 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
     case GRETL_TYPE_SERIES:
 	pprintf(prn, " %s (%s: length %d)", kstr, 
 		gretl_arg_type_name(item->type), item->size);
+	break;
+    case GRETL_TYPE_ARRAY:
+	a = item->data;
+	{
+	    GretlType t = gretl_array_get_type(a);
+	    int n = gretl_array_get_length(a);
+
+	    pprintf(prn, " %s = array of %s, length %d", kstr, 
+		    gretl_arg_type_name(t), n);
+	}
 	break;
     default:
 	break;
@@ -1231,7 +1279,7 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 {
     const char *key = keyp;
     bundled_item *item = value;
-    PRN *prn = p;
+    FILE *fp = p;
     int j;
 
     if (item->type == GRETL_TYPE_STRING) {
@@ -1243,63 +1291,82 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 	} 
     }
 
-    pprintf(prn, "<bundled-item key=\"%s\" type=\"%s\"", key,
+    fprintf(fp, "<bundled-item key=\"%s\" type=\"%s\"", key,
 	    gretl_arg_type_name(item->type));
 
     if (item->note != NULL) {
-	pprintf(prn, " note=\"%s\"", item->note);
+	fprintf(fp, " note=\"%s\"", item->note);
     } 
 
     if (item->size > 0) {
-	pprintf(prn, " size=\"%d\">\n", item->size);
+	fprintf(fp, " size=\"%d\">\n", item->size);
     } else if (item->type == GRETL_TYPE_STRING) {
-	pputc(prn, '>');
+	fputc('>', fp);
     } else {
-	pputs(prn, ">\n");
+	fputs(">\n", fp);
     }
 
     if (item->type == GRETL_TYPE_DOUBLE) {
 	double x = *(double *) item->data;
 	
 	if (na(x)) {
-	    pputs(prn, "NA");
+	    fputs("NA", fp);
 	} else {
-	    pprintf(prn, "%.15g", x);
+	    fprintf(fp, "%.16g", x);
 	}
     } else if (item->type == GRETL_TYPE_SERIES) {
 	double *vals = (double *) item->data;
 
 	for (j=0; j<item->size; j++) {
 	    if (na(vals[j])) {
-		pputs(prn, "NA ");
+		fputs("NA ", fp);
 	    } else {
-		pprintf(prn, "%.15g ", vals[j]);
+		fprintf(fp, "%.16g ", vals[j]);
 	    }
 	}	    
     } else if (item->type == GRETL_TYPE_STRING) {
-	pputs(prn, (char *) item->data);
+	fputs((char *) item->data, fp);
     } else if (item->type == GRETL_TYPE_MATRIX) {
 	gretl_matrix *m = (gretl_matrix *) item->data;
 
-	gretl_xml_put_matrix_to_prn(m, NULL, prn);
+	gretl_matrix_serialize(m, NULL, fp);
+    } else if (item->type == GRETL_TYPE_BUNDLE) {
+	gretl_bundle *b = (gretl_bundle *) item->data;
+
+	gretl_bundle_serialize(b, NULL, fp);
+    } else if (item->type == GRETL_TYPE_ARRAY) {
+	gretl_array *a = (gretl_array *) item->data;
+
+	gretl_array_serialize(a, fp);
     } else {
 	fprintf(stderr, "bundle -> XML: skipping %s\n", key);
     }
 
-    pputs(prn, "</bundled-item>\n");    
+    fputs("</bundled-item>\n", fp);    
 }
 
-void xml_put_bundle (gretl_bundle *b, const char *name, PRN *prn)
+void gretl_bundle_serialize (gretl_bundle *b, const char *name, 
+			     FILE *fp)
 {
-    if (b->creator != NULL && *b->creator != '\0') {
-	pprintf(prn, "<gretl-bundle name=\"%s\" creator=\"%s\">\n", 
+    if (name == NULL) {
+	fputs("<gretl-bundle>\n", fp);
+    } else if (b->creator != NULL && *b->creator != '\0') {
+	fprintf(fp, "<gretl-bundle name=\"%s\" creator=\"%s\">\n", 
 		name, b->creator);
     } else {
-	pprintf(prn, "<gretl-bundle name=\"%s\">\n", name);
+	fprintf(fp, "<gretl-bundle name=\"%s\">\n", name);
     }
-    g_hash_table_foreach(b->ht, xml_put_bundled_item, prn);
-    pputs(prn, "</gretl-bundle>\n"); 
+
+    if (b->ht != NULL) {
+	g_hash_table_foreach(b->ht, xml_put_bundled_item, fp);
+    }
+
+    fputs("</gretl-bundle>\n", fp); 
 }
+
+static gretl_bundle *real_deserialize_bundle (xmlNodePtr node, 
+					      xmlDocPtr doc,
+					      int *err);
 
 static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 {
@@ -1330,15 +1397,13 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 		    if (!gretl_xml_node_get_trimmed_string(cur, doc, &s)) {
 			err = E_DATA;
 		    } else {
-			err = gretl_bundle_set_data(b, key, s, type, size);
-			free(s);
+			err = bundle_donate_data(b, key, s, type, size);
 		    }
 		} else if (type == GRETL_TYPE_SERIES) {
 		    double *xvec = gretl_xml_get_double_array(cur, doc, &size, &err);
 
 		    if (!err) {
-			err = gretl_bundle_set_data(b, key, xvec, type, size);
-			free(xvec);
+			err = bundle_donate_data(b, key, xvec, type, size);
 		    }
 		} else if (type == GRETL_TYPE_MATRIX) {
 		    xmlNodePtr child = cur->xmlChildrenNode;
@@ -1349,10 +1414,37 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 		    } else {
 			m = gretl_xml_get_matrix(child, doc, &err);
 			if (!err) {
-			    err = gretl_bundle_set_data(b, key, m, type, size);
-			    gretl_matrix_free(m);
+			    err = bundle_donate_data(b, key, m, type, size);
 			}
 		    }
+		} else if (type == GRETL_TYPE_BUNDLE) {
+		    xmlNodePtr child = cur->xmlChildrenNode;
+		    gretl_bundle *bchild;
+
+		    if (child == NULL) {
+			err = E_DATA;
+		    } else {
+			bchild = real_deserialize_bundle(child, doc, &err);
+			if (!err) {
+			    err = bundle_donate_data(b, key, bchild, type, size);
+			}
+		    }
+		} else if (type == GRETL_TYPE_ARRAY) {
+#if 1
+		    fprintf(stderr, "bundle: array content, not handled yet!\n");
+#else /* not yet */
+		    xmlNodePtr child = cur->xmlChildrenNode;
+		    gretl_array *a;
+
+		    if (child == NULL) {
+			err = E_DATA;
+		    } else {
+			a = deserialize_array(child, doc, &err);
+			if (!err) {
+			    err = bundle_donate_data(b, key, a, type, size);
+			}
+		    }
+#endif		    
 		} else {
 		    fprintf(stderr, "bundle: ignoring unhandled type %d\n", type);
 		}
@@ -1376,6 +1468,28 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
     return err;
 }
 
+static gretl_bundle *real_deserialize_bundle (xmlNodePtr node, 
+					      xmlDocPtr doc,
+					      int *err)
+{
+    xmlNodePtr cur = node->xmlChildrenNode;
+    gretl_bundle *b = gretl_bundle_new();
+
+    if (b == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = load_bundled_items(b, cur, doc);
+	if (*err) {
+	    fprintf(stderr, "real_deserialize_bundle: "
+		    "bundle is broken (err = %d)\n", *err);
+	    gretl_bundle_destroy(b);
+	    b = NULL;
+	}
+    }
+
+    return b;
+}
+
 /* For internal use only, called from uservar.c: @p1 should be of
    type xmlNodePtr and @p2 should be an xmlDocPtr. We suppress the
    actual pointer types in the prototype so that it's possible for a
@@ -1386,31 +1500,18 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 int load_bundle_from_xml (void *p1, void *p2, const char *name,
 			  const char *creator)
 {
-    xmlNodePtr node = (xmlNodePtr) p1;
-    xmlDocPtr doc = (xmlDocPtr) p2;
-    xmlNodePtr cur = node->xmlChildrenNode;
     gretl_bundle *b;
     int err = 0;
 
-    b = gretl_bundle_new();
-    if (b == NULL) {
-	return E_ALLOC;
-    }
-
     fprintf(stderr, "load_bundle_from_xml: '%s'\n", name);
 
-    if (creator != NULL && *creator != '\0') {
-	b->creator = gretl_strdup(creator);
-    }
-
-    err = load_bundled_items(b, cur, doc);
+    b = real_deserialize_bundle(p1, p2, &err);
 
     if (!err) {
+	if (creator != NULL && *creator != '\0') {
+	    b->creator = gretl_strdup(creator);
+	}
 	err = user_var_add(name, GRETL_TYPE_BUNDLE, b);
-	fprintf(stderr, "gretl_bundle_push: err = %d\n", err);
-    } else {
-	gretl_bundle_destroy(b);
-	fprintf(stderr, "bundle is broken (err = %d)\n", err);
     }
 
     return err;
@@ -1420,7 +1521,7 @@ int gretl_bundle_write_as_xml (gretl_bundle *b, const char *fname,
 			       int to_dotdir)
 {
     char fullname[FILENAME_MAX];
-    PRN *prn;
+    FILE *fp;
     int err = 0;
 
     if (to_dotdir) {
@@ -1430,12 +1531,13 @@ int gretl_bundle_write_as_xml (gretl_bundle *b, const char *fname,
 	gretl_maybe_switch_dir(fullname);
     }
 
-    prn = gretl_print_new_with_filename(fullname, &err);
+    fp = gretl_fopen(fullname, "wb");
 
-    if (!err) {
-	pputs(prn, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-	xml_put_bundle(b, "temp", prn);
-	gretl_print_destroy(prn);
+    if (fp == NULL) {
+	err = E_FOPEN;
+    } else {
+	gretl_xml_header(fp);
+	gretl_bundle_serialize(b, "temp", fp);
     }
 
     return err;

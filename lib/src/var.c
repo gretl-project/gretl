@@ -4269,20 +4269,20 @@ static void johansen_serialize (JohansenInfo *j, FILE *fp)
 
     fputs(">\n", fp);
 
-    gretl_xml_put_matrix(j->R0, "u", fp);
-    gretl_xml_put_matrix(j->R1, "v", fp);
-    gretl_xml_put_matrix(j->S00, "Suu", fp);
-    gretl_xml_put_matrix(j->S11, "Svv", fp);
-    gretl_xml_put_matrix(j->S01, "Suv", fp);
-    gretl_xml_put_matrix(j->evals, "evals", fp);
-    gretl_xml_put_matrix(j->Beta, "Beta", fp);
-    gretl_xml_put_matrix(j->Alpha, "Alpha", fp);
-    gretl_xml_put_matrix(j->Bvar, "Bvar", fp);
-    gretl_xml_put_matrix(j->Bse, "Bse", fp);
-    gretl_xml_put_matrix(j->R, "R", fp);
-    gretl_xml_put_matrix(j->q, "q", fp);
-    gretl_xml_put_matrix(j->Ra, "Ra", fp);
-    gretl_xml_put_matrix(j->qa, "qa", fp);
+    gretl_matrix_serialize(j->R0, "u", fp);
+    gretl_matrix_serialize(j->R1, "v", fp);
+    gretl_matrix_serialize(j->S00, "Suu", fp);
+    gretl_matrix_serialize(j->S11, "Svv", fp);
+    gretl_matrix_serialize(j->S01, "Suv", fp);
+    gretl_matrix_serialize(j->evals, "evals", fp);
+    gretl_matrix_serialize(j->Beta, "Beta", fp);
+    gretl_matrix_serialize(j->Alpha, "Alpha", fp);
+    gretl_matrix_serialize(j->Bvar, "Bvar", fp);
+    gretl_matrix_serialize(j->Bse, "Bse", fp);
+    gretl_matrix_serialize(j->R, "R", fp);
+    gretl_matrix_serialize(j->q, "q", fp);
+    gretl_matrix_serialize(j->Ra, "Ra", fp);
+    gretl_matrix_serialize(j->qa, "qa", fp);
 
     fputs("</gretl-johansen>\n", fp);
 }
@@ -4329,17 +4329,17 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 
     if (var->X != NULL && var->Y != NULL) {
 	/* could be fiddly to reconstruct, needed for IRF bootstrap */
-	gretl_xml_put_matrix(var->X, "X", fp);
-	gretl_xml_put_matrix(var->Y, "Y", fp);
+	gretl_matrix_serialize(var->X, "X", fp);
+	gretl_matrix_serialize(var->Y, "Y", fp);
     }  
 
     if (var->ord != NULL) {
-	gretl_xml_put_matrix(var->ord, "ord", fp);
+	gretl_matrix_serialize(var->ord, "ord", fp);
     }
 
     if (var->ci == VECM) {
 	/* this is hard to reconstruct for VECMs */
-	gretl_xml_put_matrix(var->A, "A", fp);
+	gretl_matrix_serialize(var->A, "A", fp);
     }
 
     gretl_pop_c_numeric_locale();

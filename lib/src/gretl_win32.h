@@ -84,6 +84,8 @@ double win32_sscan_nonfinite (const char *s, int *err);
 
 void win32_fprint_nonfinite (double x, FILE *fp);
 
+void win32_pprint_nonfinite (double x, PRN *prn);
+
 void win32_stopwatch_init (void);
 
 double win32_stopwatch (void);

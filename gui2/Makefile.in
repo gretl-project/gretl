@@ -194,7 +194,7 @@ HACK_SRC = gtkfontselhack.c fontfilter.c
 HACK_HDR = gtkfontselhack.h fontfilter.h
 HACK_OBJ = gtkfontselhack.o fontfilter.o
 
-all: $(PROG) $(GRETL_LANG)
+all: $(PROG) $(GRETL_LANG) $(GRETL_NEWS)
 
 %.o: %.c
 	$(CCECHO)

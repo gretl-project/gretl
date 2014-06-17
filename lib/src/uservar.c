@@ -1218,57 +1218,9 @@ char *temp_name_for_bundle (void)
 
 static void xml_put_user_matrix (user_var *u, FILE *fp)
 {
-    gretl_matrix *M;
-    const char **S;
-    double x;
-    int i, j;
-
-    if (u == NULL || u->ptr == NULL) {
-	return;
+    if (u != NULL && u->ptr != NULL) {
+	gretl_matrix_serialize(u->ptr, u->name, fp);
     }
-
-    M = u->ptr;
-
-    fprintf(fp, "<gretl-matrix name=\"%s\" rows=\"%d\" cols=\"%d\"", 
-	    u->name, M->rows, M->cols);
-
-    S = gretl_matrix_get_colnames(M);
-
-    if (S != NULL) {
-	fputs(" colnames=\"", fp);
-	for (j=0; j<M->cols; j++) {
-	    fputs(S[j], fp);
-	    fputc((j < M->cols - 1)? ' ' : '"', fp);
-	}
-    } 
-
-    S = gretl_matrix_get_rownames(M);
-
-    if (S != NULL) {
-	fputs(" rownames=\"", fp);
-	for (j=0; j<M->rows; j++) {
-	    fputs(S[j], fp);
-	    fputc((j < M->rows - 1)? ' ' : '"', fp);
-	}
-    }     
-
-    fputs(">\n", fp);
-
-    for (i=0; i<M->rows; i++) {
-	for (j=0; j<M->cols; j++) {
-	    x = gretl_matrix_get(M, i, j);
-#ifdef WIN32
-	    if (xna(x)) {
-		win32_fprint_nonfinite(x, fp);
-		continue;
-	    }
-#endif
-	    fprintf(fp, "%.16g ", x);
-	}
-	fputc('\n', fp);
-    }
-
-    fputs("</gretl-matrix>\n", fp); 
 }
 
 /**
@@ -1307,7 +1259,7 @@ void print_scalars (PRN *prn)
 	if (uvars[i]->type == GRETL_TYPE_DOUBLE &&
 	    uvars[i]->level == level) {
 	    x = *(double *) uvars[i]->ptr;
-	    pprintf(prn, " %*s = %.15g\n", maxlen, uvars[i]->name, x);
+	    pprintf(prn, " %*s = %.16g\n", maxlen, uvars[i]->name, x);
 	}
     }
 
@@ -1716,7 +1668,7 @@ static void write_user_scalars (FILE *fp)
     for (i=0; i<n_vars; i++) {
 	if (uvars[i]->type == GRETL_TYPE_DOUBLE) {
 	    x = *(double *) uvars[i]->ptr;
-	    fprintf(fp, " <gretl-scalar name=\"%s\" value=\"%.15g\"/>\n", 
+	    fprintf(fp, " <gretl-scalar name=\"%s\" value=\"%.16g\"/>\n", 
 		    uvars[i]->name, x);
 	}
     }
@@ -1739,26 +1691,24 @@ static void write_user_lists (FILE *fp)
 
     for (i=0; i<n_vars; i++) {
 	if (uvars[i]->type == GRETL_TYPE_LIST) {
-	    gretl_xml_put_named_list(uvars[i]->name, 
-				     uvars[i]->ptr, 
-				     fp);
+	    gretl_list_serialize(uvars[i]->ptr,
+				 uvars[i]->name,
+				 fp);
 	}
     }
 }
 
 static void write_user_bundles (FILE *fp)
 {
-    PRN *prn = gretl_print_new_with_stream(fp);
     int i;
 
     for (i=0; i<n_vars; i++) {
 	if (uvars[i]->type == GRETL_TYPE_BUNDLE) {
-	    xml_put_bundle(uvars[i]->ptr, uvars[i]->name, prn);
+	    gretl_bundle_serialize(uvars[i]->ptr, 
+				   uvars[i]->name, 
+				   fp);
 	}
     }
-
-    gretl_print_detach_stream(prn);
-    gretl_print_destroy(prn);
 }
 
 static int read_user_scalars (xmlDocPtr doc, xmlNodePtr cur) 

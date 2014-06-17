@@ -1192,7 +1192,7 @@ int bootstrap_save_data (const char *fname)
 	return err;
     }
 
-    err = gretl_write_matrix_as_gdt(fname, bs_data, (const char **) S, 
+    err = gretl_matrix_write_as_gdt(fname, bs_data, (const char **) S, 
 				    NULL);
 
     gretl_matrix_free(bs_data);

@@ -3381,8 +3381,8 @@ int equation_system_serialize (equation_system *sys,
 	xml_print_identity(sys->idents[i], fp);
     }    
 
-    gretl_xml_put_matrix(sys->R, "R", fp);
-    gretl_xml_put_matrix(sys->q, "q", fp);
+    gretl_matrix_serialize(sys->R, "R", fp);
+    gretl_matrix_serialize(sys->q, "q", fp);
 
     fputs("</gretl-equation-system>\n", fp);
 
