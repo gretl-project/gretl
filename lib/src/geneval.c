@@ -2666,7 +2666,7 @@ static NODE *bundle_text_write (NODE *l, NODE *m, NODE *r, parser *p)
 	    return NULL;
 	}
 
-	ret->v.xval = gretl_bundle_write_as_xml(l->v.b, s, export);
+	ret->v.xval = gretl_bundle_write_to_file(l->v.b, s, export);
     } else {
 	ret = aux_scalar_node(p);
     }
@@ -3205,8 +3205,8 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 						   &p->err);
 	    break;
 	case F_BREAD:
-	    ret->v.b = gretl_bundle_read_from_xml(n->v.str, import, 
-						  &p->err);
+	    ret->v.b = gretl_bundle_read_from_file(n->v.str, import, 
+						   &p->err);
 	    break;
 	default:
 	    break;

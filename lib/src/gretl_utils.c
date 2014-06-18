@@ -2388,7 +2388,7 @@ static int real_detect_blas (const char *s)
     } else if (strcmp(found, "nnnn") == 0) {
 	fputs("found no relevant libs!\n", stderr);
     } else {
-	fputs("confused, found too many libs!\n", stderr);
+	fputs("confused, found too many blas libs!\n", stderr);
     }
 
     return ret;

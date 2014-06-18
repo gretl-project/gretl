@@ -4170,13 +4170,13 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
 
     while (cur != NULL && !*err) {
 	if (!xmlStrcmp(cur->name, (XUC) "lags")) {
-	    var->lags = gretl_xml_node_get_list(cur, doc, err);
+	    var->lags = gretl_xml_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "ylist")) {
-	    var->ylist = gretl_xml_node_get_list(cur, doc, err);
+	    var->ylist = gretl_xml_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "xlist")) {
-	    var->xlist = gretl_xml_node_get_list(cur, doc, err);
+	    var->xlist = gretl_xml_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "rlist")) {
-	    var->rlist = gretl_xml_node_get_list(cur, doc, err);
+	    var->rlist = gretl_xml_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Fvals")) {
 	    var->Fvals = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Ivals")) {

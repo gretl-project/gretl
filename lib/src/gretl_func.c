@@ -29,6 +29,7 @@
 #include "cmd_private.h"
 #include "gretl_string_table.h"
 #include "gretl_array.h"
+#include "gretl_typemap.h"
 #include "uservar.h"
 #include "flow_control.h"
 #include "kalman.h"
@@ -311,15 +312,7 @@ static void adjust_array_arg_type (struct fnarg *arg)
     GretlType t = gretl_array_get_type(arg->val.a);
 
     if (arg->type == GRETL_TYPE_ARRAY_REF) {
-	if (t == GRETL_TYPE_STRINGS) {
-	    arg->type = GRETL_TYPE_STRINGS_REF;
-	} else if (t == GRETL_TYPE_MATRICES) {
-	    arg->type = GRETL_TYPE_MATRICES_REF;
-	} else if (t == GRETL_TYPE_BUNDLES) {
-	    arg->type = GRETL_TYPE_BUNDLES_REF;
-	} else if (t == GRETL_TYPE_LISTS) {
-	    arg->type = GRETL_TYPE_LISTS_REF;
-	}
+	arg->type = gretl_type_get_ref_type(t);
     } else {
 	arg->type = t;
     }
@@ -1283,50 +1276,6 @@ static int no_scalar_default (fn_param *fp)
     return ret;
 }
 
-/**
- * gretl_arg_type_name:
- * @type: a gretl type.
- *
- * Returns: the name of a gretl type that is valid as a 
- * function argument or return value.
- */
-
-const char *gretl_arg_type_name (GretlType type)
-{
-    switch (type) {
-    case GRETL_TYPE_BOOL:       return "bool";
-    case GRETL_TYPE_INT:        return "int";
-    case GRETL_TYPE_OBS:        return "obs";
-    case GRETL_TYPE_DOUBLE:     return "scalar";
-    case GRETL_TYPE_SERIES:     return "series";
-    case GRETL_TYPE_USERIES:    return "series";
-    case GRETL_TYPE_MATRIX:     return "matrix";	
-    case GRETL_TYPE_LIST:       return "list";
-    case GRETL_TYPE_BUNDLE:     return "bundle";
-    case GRETL_TYPE_ARRAY:      return "array";
-    case GRETL_TYPE_SCALAR_REF: return "scalar *";
-    case GRETL_TYPE_SERIES_REF: return "series *";
-    case GRETL_TYPE_MATRIX_REF: return "matrix *";
-    case GRETL_TYPE_BUNDLE_REF: return "bundle *";
-    case GRETL_TYPE_STRING:     return "string";
-
-    case GRETL_TYPE_STRINGS:      return "strings";
-    case GRETL_TYPE_MATRICES:     return "matrices";
-    case GRETL_TYPE_BUNDLES:      return "bundles";
-    case GRETL_TYPE_LISTS:        return "lists";
-	
-    case GRETL_TYPE_STRINGS_REF:  return "strings *";
-    case GRETL_TYPE_MATRICES_REF: return "matrices *";
-    case GRETL_TYPE_BUNDLES_REF:  return "bundles *";
-    case GRETL_TYPE_LISTS_REF:    return "lists *";
-
-    case GRETL_TYPE_VOID:       return "void";
-    case GRETL_TYPE_NONE:       return "null";
-    default:
-	return "invalid";
-    }
-}
-
 /* handling of XML function packages */
 
 enum {
@@ -1354,49 +1303,8 @@ static const char *arg_type_xml_string (int t)
     } else if (t == GRETL_TYPE_LISTS_REF) {
 	return "listsref";
     } else {
-	return gretl_arg_type_name(t);
+	return gretl_type_get_name(t);
     }
-}
-
-GretlType gretl_type_from_string (const char *s)
-{
-    if (!strcmp(s, "bool"))     return GRETL_TYPE_BOOL;
-    if (!strcmp(s, "boolean"))  return GRETL_TYPE_BOOL;
-    if (!strcmp(s, "int"))      return GRETL_TYPE_INT;
-    if (!strcmp(s, "obs"))      return GRETL_TYPE_OBS;
-    if (!strcmp(s, "scalar"))   return GRETL_TYPE_DOUBLE;
-    if (!strcmp(s, "series"))   return GRETL_TYPE_SERIES;
-    if (!strcmp(s, "matrix"))   return GRETL_TYPE_MATRIX;
-    if (!strcmp(s, "list"))     return GRETL_TYPE_LIST;
-    if (!strcmp(s, "string"))   return GRETL_TYPE_STRING;
-    if (!strcmp(s, "bundle"))   return GRETL_TYPE_BUNDLE;
-
-    if (!strcmp(s, "scalar *"))  return GRETL_TYPE_SCALAR_REF;
-    if (!strcmp(s, "series *"))  return GRETL_TYPE_SERIES_REF;
-    if (!strcmp(s, "matrix *"))  return GRETL_TYPE_MATRIX_REF;
-    if (!strcmp(s, "bundle *"))  return GRETL_TYPE_BUNDLE_REF;
-
-    if (!strcmp(s, "scalarref"))  return GRETL_TYPE_SCALAR_REF;
-    if (!strcmp(s, "seriesref"))  return GRETL_TYPE_SERIES_REF;
-    if (!strcmp(s, "matrixref"))  return GRETL_TYPE_MATRIX_REF;
-    if (!strcmp(s, "bundleref"))  return GRETL_TYPE_BUNDLE_REF;
-
-    if (!strcmp(s, "strings"))   return GRETL_TYPE_STRINGS;
-    if (!strcmp(s, "matrices"))  return GRETL_TYPE_MATRICES;
-    if (!strcmp(s, "bundles"))   return GRETL_TYPE_BUNDLES;
-    if (!strcmp(s, "lists"))     return GRETL_TYPE_LISTS;
-
-    if (!strcmp(s, "strings *"))   return GRETL_TYPE_STRINGS_REF;
-    if (!strcmp(s, "matrices *"))  return GRETL_TYPE_MATRICES_REF;
-    if (!strcmp(s, "bundles *"))   return GRETL_TYPE_BUNDLES_REF;
-    if (!strcmp(s, "lists *"))     return GRETL_TYPE_LISTS_REF;
-
-    if (!strcmp(s, "stringsref"))  return GRETL_TYPE_STRINGS_REF;
-    if (!strcmp(s, "matricesref")) return GRETL_TYPE_MATRICES_REF;
-    if (!strcmp(s, "bundlesref"))  return GRETL_TYPE_BUNDLES_REF;
-    if (!strcmp(s, "listsref"))    return GRETL_TYPE_LISTS_REF;
-
-    return 0;
 }
 
 static GretlType return_type_from_string (const char *s,
@@ -1846,7 +1754,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 	    if (pkg->help != NULL) {
 		free(pkg->help);
 	    }
-	    gretl_xml_node_get_string(cur, doc, &pkg->help);
+	    pkg->help = gretl_xml_get_string(cur, doc);
 	} else if (!xmlStrcmp(cur->name, (XUC) "params")) {
 	    err = func_read_params(cur, doc, fun);
 	    if (err) {
@@ -1972,7 +1880,7 @@ static int write_function_xml (ufunc *fun, FILE *fp)
     }
 
     fprintf(fp, "<gretl-function name=\"%s\" type=\"%s\"", 
-	    fun->name, gretl_arg_type_name(rtype));
+	    fun->name, gretl_type_get_name(rtype));
 
     if (function_is_private(fun)) {
 	fputs(" private=\"1\"", fp);
@@ -2073,7 +1981,7 @@ static void print_function_start (ufunc *fun, PRN *prn)
     if (fun->rettype == GRETL_TYPE_NONE) {
 	pos += pprintf(prn, "function void %s ", fun->name);
     } else {
-	const char *typestr = gretl_arg_type_name(fun->rettype);
+	const char *typestr = gretl_type_get_name(fun->rettype);
 
 	pos += pprintf(prn, "function %s %s ", typestr, fun->name);
     }
@@ -2092,7 +2000,7 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	if (fp->flags & ARG_CONST) {
 	    pputs(prn, "const ");
 	}
-	s = gretl_arg_type_name(fp->type);
+	s = gretl_type_get_name(fp->type);
 	if (s[strlen(s) - 1] == '*') {
 	    pprintf(prn, "%s%s", s, fp->name);
 	} else {
@@ -2845,11 +2753,11 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 		for (j=0; j<u->n_params && !err; j++) {
 		    if (j == 0 && u->params[j].type != GRETL_TYPE_BUNDLE_REF) {
 			pprintf(prn, "%s: first param type must be %s\n",
-				attr, gretl_arg_type_name(GRETL_TYPE_BUNDLE_REF));
+				attr, gretl_type_get_name(GRETL_TYPE_BUNDLE_REF));
 			err = E_TYPES;
 		    } else if (j == 1 && u->params[j].type != GRETL_TYPE_INT) {
 			pprintf(prn, "%s: second param type must be %s\n",
-				attr, gretl_arg_type_name(GRETL_TYPE_INT));
+				attr, gretl_type_get_name(GRETL_TYPE_INT));
 			err = E_TYPES;
 		    } else if (j > 1 && !fn_param_optional(u, j) &&
 			       na(fn_param_default(u, j))) {
@@ -5895,15 +5803,6 @@ maybe_set_return_description (fncall *call, int rtype,
     }
 }
 
-#define types_match(pt,rt) ((pt==GRETL_TYPE_SERIES_REF && rt==GRETL_TYPE_SERIES) || \
-                            (pt==GRETL_TYPE_MATRIX_REF && rt==GRETL_TYPE_MATRIX) || \
-			    (pt==GRETL_TYPE_BUNDLE_REF && rt==GRETL_TYPE_BUNDLE) || \
-			    (pt==GRETL_TYPE_STRINGS_REF && rt==GRETL_TYPE_STRINGS) || \
-			    (pt==GRETL_TYPE_MATRICES_REF && rt==GRETL_TYPE_MATRICES) || \
-			    (pt==GRETL_TYPE_BUNDLES_REF && rt==GRETL_TYPE_BUNDLES) || \
-			    (pt==GRETL_TYPE_LISTS_REF && rt==GRETL_TYPE_LISTS))
-
-
 static int is_pointer_arg (fncall *call, fnargs *args, int rtype)
 {
     ufunc *u = call->fun;
@@ -5912,10 +5811,9 @@ static int is_pointer_arg (fncall *call, fnargs *args, int rtype)
 	int i;
 
 	for (i=0; i<args->argc; i++) {
-	    if (types_match(u->params[i].type, rtype)) {
-		if (!strcmp(u->params[i].name, call->retname)) {
-		    return 1;
-		}
+	    if (rtype == gretl_type_get_ref_type(u->params[i].type) &&
+		!strcmp(u->params[i].name, call->retname)) {
+		return 1;
 	    }
 	}
     }
@@ -6258,8 +6156,8 @@ static int check_function_args (ufunc *u, fnargs *args, PRN *prn)
 	    ; /* OK ("null" was passed as argument) */
 	} else if (fp->type != arg->type) {
 	    pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"), 
-		    u->name, i + 1, gretl_arg_type_name(arg->type), 
-		    gretl_arg_type_name(fp->type));
+		    u->name, i + 1, gretl_type_get_name(arg->type), 
+		    gretl_type_get_name(fp->type));
 	    err = E_TYPES;
 	}
 
@@ -6460,7 +6358,7 @@ static int handle_return_statement (fncall *call,
 	    /* returning a named variable */
 	    call->retname = gretl_strndup(s, len);
 	} else {
-	    const char *typestr = gretl_arg_type_name(fun->rettype);
+	    const char *typestr = gretl_type_get_name(fun->rettype);
 	    char formula[MAXLINE];
 	    
 	    sprintf(formula, "%s $retval=%s", typestr, s);
@@ -7056,7 +6954,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 	pputc(prn, '\n');
 	for (i=0; i<fun->n_params; i++) {
 	    pprintf(prn, " %s (%s", 
-		    fun->params[i].name, gretl_arg_type_name(fun->params[i].type));
+		    fun->params[i].name, gretl_type_get_name(fun->params[i].type));
 	    if (fun->params[i].descrip != NULL) {
 		pprintf(prn, ": %s)\n", fun->params[i].descrip);
 	    } else {
@@ -7075,7 +6973,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
     }      
 
     if (fun->rettype != GRETL_TYPE_NONE && fun->rettype != GRETL_TYPE_VOID) {
-	pprintf(prn, "%s\n\n", gretl_arg_type_name(fun->rettype));
+	pprintf(prn, "%s\n\n", gretl_type_get_name(fun->rettype));
     } else {
 	pputs(prn, "none\n\n");
     }

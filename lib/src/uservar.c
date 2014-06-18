@@ -27,6 +27,7 @@
 #include "gretl_array.h"
 #include "libset.h"
 #include "monte_carlo.h"
+#include "gretl_typemap.h"
 #include "uservar.h"
 
 #define UVDEBUG 0
@@ -570,7 +571,8 @@ static int array_ref_type (GretlType type)
 {
     return type == GRETL_TYPE_STRINGS_REF ||
 	type == GRETL_TYPE_MATRICES_REF ||
-	type == GRETL_TYPE_BUNDLES_REF;
+	type == GRETL_TYPE_BUNDLES_REF ||
+	type == GRETL_TYPE_LISTS_REF;
 }
 
 /**
@@ -591,6 +593,12 @@ int user_var_localize (const char *origname,
 {
     user_var *u;
     int err = 0;
+
+    if (array_ref_type(type)) {
+	type = GRETL_TYPE_ARRAY;
+    } else {
+	type = gretl_type_get_plain_type(type);
+    }
 
     if (type == GRETL_TYPE_SCALAR_REF) {
 	type = GRETL_TYPE_DOUBLE;
@@ -1178,7 +1186,7 @@ int delete_user_vars_of_type (GretlType type, PRN *prn)
 
 	if (!err && gretl_messages_on()) {
 	    pprintf(prn, "Deleted all variables of type %s\n",
-		    gretl_arg_type_name(type));
+		    gretl_type_get_name(type));
 	}
     } else {
 	err = E_DATATYPE;
@@ -1739,8 +1747,6 @@ static int read_user_scalars (xmlDocPtr doc, xmlNodePtr cur)
 static int read_user_matrices (xmlDocPtr doc, xmlNodePtr cur) 
 {
     gretl_matrix *m;
-    char *colnames;
-    char *rownames;
     char *name;
     int err = 0;
 
@@ -1752,20 +1758,10 @@ static int read_user_matrices (xmlDocPtr doc, xmlNodePtr cur)
 	    if (name == NULL) {
 		err = 1;
 	    } else {
-		colnames = rownames = NULL;
-		m = xml_get_user_matrix(cur, doc, &colnames, 
-					&rownames, &err);
+		m = gretl_xml_get_matrix(cur, doc, &err);
 		if (m != NULL) {
 		    err = user_var_add(name, GRETL_TYPE_MATRIX, m);
-		    if (!err && colnames != NULL) {
-			umatrix_set_names_from_string(m, colnames, 0);
-		    }
-		    if (!err && rownames != NULL) {
-			umatrix_set_names_from_string(m, rownames, 1);
-		    }		    
 		}
-		free(colnames);
-		free(rownames);
 		free(name);
 	    }
 	}
@@ -1788,7 +1784,7 @@ static int read_user_lists (xmlDocPtr doc, xmlNodePtr cur)
 	    if (!gretl_xml_get_prop_as_string(cur, "name", &name)) {
 		err = E_DATA;
 	    } else {
-		list = gretl_xml_node_get_list(cur, doc, &err);
+		list = gretl_xml_get_list(cur, doc, &err);
 		if (!err) {
 		    err = user_var_add(name, GRETL_TYPE_LIST, list);
 		}
@@ -1811,18 +1807,22 @@ static int read_user_bundles (xmlDocPtr doc, xmlNodePtr cur)
 
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (XUC) "gretl-bundle")) {
-	    char *name, *creator = NULL;
+	    char *name = (char *) xmlGetProp(cur, (XUC) "name");
 
-	    name = (char *) xmlGetProp(cur, (XUC) "name");
 	    if (name == NULL) {
 		err = 1;
 	    } else {
-		creator = (char *) xmlGetProp(cur, (XUC) "creator");
-		err = load_bundle_from_xml(cur, doc, name, creator);
-		free(name);
-		if (creator != NULL) {
-		    free(creator);
+		char *creator = NULL;
+		gretl_bundle *b;
+		
+		b = gretl_bundle_deserialize(cur, doc, &err);
+		if (!err) {
+		    creator = (char *) xmlGetProp(cur, (XUC) "creator");
+		    gretl_bundle_set_creator(b, creator);
+		    err = user_var_add(name, GRETL_TYPE_BUNDLE, b);
 		}
+		free(name);
+		free(creator);
 	    }
 	}
 	cur = cur->next;

@@ -3306,11 +3306,11 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     i = j = 0;
     while (cur != NULL && !*err) {
 	if (!xmlStrcmp(cur->name, (XUC) "eqnlist")) {
-	    sys->lists[i++] = gretl_xml_node_get_list(cur, doc, err); 
+	    sys->lists[i++] = gretl_xml_get_list(cur, doc, err); 
 	} else if (!xmlStrcmp(cur->name, (XUC) "endog_vars")) {
-	    sys->ylist = gretl_xml_node_get_list(cur, doc, err);
+	    sys->ylist = gretl_xml_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "instr_vars")) {
-	    sys->ilist = gretl_xml_node_get_list(cur, doc, err);
+	    sys->ilist = gretl_xml_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "identity")) {
 	    sys->idents[j++] = sys_retrieve_identity(cur, err); 
 	} else if (!xmlStrcmp(cur->name, (XUC) "R")) {

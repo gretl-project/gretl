@@ -20,12 +20,12 @@
 #include "libgretl.h"
 #include "gretl_typemap.h"
 
-struct {
+struct type_map {
     GretlType sing;
     GretlType sref;
     GretlType plural;
     GretlType pref;
-} type_map;
+};
 
 static struct type_map gretl_type_map[] = {
     { GRETL_TYPE_MATRIX,   GRETL_TYPE_MATRIX_REF, 
@@ -35,12 +35,16 @@ static struct type_map gretl_type_map[] = {
     { GRETL_TYPE_STRING,   0,
       GRETL_TYPE_STRINGS,  GRETL_TYPE_STRINGS_REF},
     { GRETL_TYPE_LIST,     0, 
-      GRETL_TYPE_LISTS,    GRETL_TYPE_LISTS_REF}
+      GRETL_TYPE_LISTS,    GRETL_TYPE_LISTS_REF},
+    { GRETL_TYPE_SERIES,   GRETL_TYPE_SERIES_REF, 0, 0},
+    { GRETL_TYPE_DOUBLE,   GRETL_TYPE_SCALAR_REF, 0, 0},
 };
 
 GretlType gretl_type_get_plural (GretlType type)
 {
     int i, n = G_N_ELEMENTS(gretl_type_map);
+
+    if (type == 0) return 0;
 
     for (i=0; i<n; i++) {
 	if (type == gretl_type_map[i].sing) {
@@ -55,6 +59,8 @@ GretlType gretl_type_get_singular (GretlType type)
 {
     int i, n = G_N_ELEMENTS(gretl_type_map);
 
+    if (type == 0) return 0;
+
     for (i=0; i<n; i++) {
 	if (type == gretl_type_map[i].plural) {
 	    return gretl_type_map[i].sing;
@@ -68,12 +74,19 @@ GretlType gretl_type_get_ref_type (GretlType type)
 {
     int i, n = G_N_ELEMENTS(gretl_type_map);
 
+    if (type == 0) return 0;
+
     for (i=0; i<n; i++) {
 	if (type == gretl_type_map[i].sing) {
 	    return gretl_type_map[i].sref;
 	}
 	if (type == gretl_type_map[i].plural) {
 	    return gretl_type_map[i].pref;
+	}
+	if (type == gretl_type_map[i].sref ||
+	    type == gretl_type_map[i].pref) {
+	    /* allow no-op */
+	    return type;
 	}	
     }
 
@@ -84,13 +97,20 @@ GretlType gretl_type_get_plain_type (GretlType type)
 {
     int i, n = G_N_ELEMENTS(gretl_type_map);
 
+    if (type == 0) return 0;
+
     for (i=0; i<n; i++) {
 	if (type == gretl_type_map[i].sref) {
 	    return gretl_type_map[i].sing;
 	}
 	if (type == gretl_type_map[i].pref) {
 	    return gretl_type_map[i].plural;
-	}    
+	}
+	if (type == gretl_type_map[i].sing ||
+	    type == gretl_type_map[i].plural) {
+	    /* allow no-op */
+	    return type;
+	}   
     }
 
     return 0;

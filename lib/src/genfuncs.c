@@ -24,6 +24,7 @@
 #include "monte_carlo.h"
 #include "gretl_panel.h"
 #include "gretl_fft.h"
+#include "gretl_typemap.h"
 #include "estim_private.h"
 #include "../../cephes/cephes.h"
 
@@ -4621,7 +4622,7 @@ int list_ok_dollar_vars (DATASET *dset, PRN *prn)
 	}
 
 	if (!err && type != GRETL_TYPE_NONE) {
-	    const char *typestr = gretl_arg_type_name(type);
+	    const char *typestr = gretl_type_get_name(type);
 
 	    if (!na(x)) {
 		pprintf(prn, " %s (%s: %g)\n", mvarname(i), typestr, x);

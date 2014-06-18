@@ -34,6 +34,7 @@
 #include "texprint.h"
 #include "gretl_xml.h"
 #include "gretl_string_table.h"
+#include "gretl_typemap.h"
 #include "dbread.h"
 #include "gretl_foreign.h"
 #include "boxplots.h"

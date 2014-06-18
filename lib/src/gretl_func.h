@@ -203,10 +203,6 @@ int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname);
 
 void gretl_functions_cleanup (void);
 
-const char *gretl_arg_type_name (GretlType type);
-
-GretlType gretl_type_from_string (const char *s);
-
 fnargs *fn_args_new (int argc);
 
 void fn_args_free (fnargs *args);

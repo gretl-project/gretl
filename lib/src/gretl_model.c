@@ -4706,7 +4706,7 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 		;
 	    } else if (!strcmp(key, "yvals")) {
 		/* backward compatibility for mnlogit models */
-		int *list = gretl_xml_node_get_list(cur, doc, &err);
+		int *list = gretl_xml_get_list(cur, doc, &err);
 
 		if (!err && list != NULL) {
 		    gretl_matrix *yv = data_list_to_matrix(list);
@@ -4717,7 +4717,7 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 		}
 		free(list);
 	    } else {
-		int *list = gretl_xml_node_get_list(cur, doc, &err);
+		int *list = gretl_xml_get_list(cur, doc, &err);
 
 		if (!err && list != NULL) {
 		    err = gretl_model_set_list_as_data(pmod, key, list);
@@ -4809,7 +4809,7 @@ static int arinfo_from_xml (xmlNodePtr node, xmlDocPtr doc,
 
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "arlist")) {
-	    pmod->arinfo->arlist = gretl_xml_node_get_list(cur, doc, &err);
+	    pmod->arinfo->arlist = gretl_xml_get_list(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "rho")) {
 	    pmod->arinfo->rho = gretl_xml_get_double_array(cur, doc, &n, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "sderr")) {
@@ -4939,7 +4939,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	} else if (!xmlStrcmp(cur->name, (XUC) "vcv")) {
 	    pmod->vcv = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "list")) {
-	    pmod->list = gretl_xml_node_get_list(cur, doc, err);
+	    pmod->list = gretl_xml_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "tests")) {
 	    *err = attach_model_tests_from_xml(pmod, cur);
 	} else if (!xmlStrcmp(cur->name, (XUC) "params")) {
