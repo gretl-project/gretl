@@ -92,4 +92,7 @@ int gretl_array_print (gretl_array *A, PRN *prn);
 
 void gretl_array_serialize (gretl_array *A, FILE *fp);
 
+gretl_array *gretl_array_deserialize (void *p1, void *p2,
+				      int *err);
+
 #endif /* GRETL_ARRAY_H_ */

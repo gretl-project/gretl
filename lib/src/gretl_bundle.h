@@ -131,15 +131,16 @@ void gretl_bundle_void_content (gretl_bundle *bundle);
 void gretl_bundle_serialize (gretl_bundle *b, const char *name, 
 			     FILE *fp);
 
-int load_bundle_from_xml (void *p1, void *p2, const char *name,
-			  const char *creator);
+gretl_bundle *gretl_bundle_deserialize (void *p1, void *p2, 
+					int *err);
 
-int gretl_bundle_write_as_xml (gretl_bundle *b, const char *fname,
-			       int to_dotdir);
+int gretl_bundle_write_to_file (gretl_bundle *b, 
+				const char *fname,
+				int to_dotdir);
 
-gretl_bundle *gretl_bundle_read_from_xml (const char *fname, 
-					  int import,
-					  int *err);
+gretl_bundle *gretl_bundle_read_from_file (const char *fname, 
+					   int from_dotdir,
+					   int *err);
 
 gretl_bundle *gretl_bundle_read_from_buffer (const char *buf, 
 					     int len,

@@ -16,11 +16,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+
+#define FULL_XML_HEADERS 1
  
 #include "libgretl.h"
 #include "uservar.h"
 #include "gretl_func.h"
 #include "gretl_xml.h"
+#include "gretl_typemap.h"
 #include "gretl_array.h"
 
 /**
@@ -213,23 +216,20 @@ void *gretl_array_get_element (gretl_array *A, int i,
     if (A == NULL || i < 0 || i >= A->n) {
 	*err = E_DATA;
     } else {
+	*type = gretl_type_get_singular(A->type);
 	if (A->type == GRETL_TYPE_STRINGS) {
-	    *type = GRETL_TYPE_STRING;
 	    if (A->data[i] == NULL) {
 		A->data[i] = gretl_strdup("");
 	    }
 	} else if (A->type == GRETL_TYPE_MATRICES) {
-	    *type = GRETL_TYPE_MATRIX;
 	    if (A->data[i] == NULL) {
 		A->data[i] = gretl_null_matrix_new();
 	    }	    
 	} else if (A->type == GRETL_TYPE_BUNDLES) {
-	    *type = GRETL_TYPE_BUNDLE;
 	    if (A->data[i] == NULL) {
 		A->data[i] = gretl_bundle_new();
 	    }	    
 	} else {
-	    *type = GRETL_TYPE_LIST;
 	    if (A->data[i] == NULL) {
 		A->data[i] = gretl_list_new(0);
 	    }	    
@@ -694,7 +694,7 @@ gretl_array *gretl_array_pull_from_stack (const char *name,
 int gretl_array_print (gretl_array *A, PRN *prn)
 {
     if (A != NULL) {
-	const char *s = gretl_arg_type_name(A->type);
+	const char *s = gretl_type_get_name(A->type);
 
 	pprintf(prn, _("Array of %s, length %d\n"), s, A->n);
     }
@@ -708,53 +708,75 @@ int gretl_array_print (gretl_array *A, PRN *prn)
 
 void gretl_array_serialize (gretl_array *A, FILE *fp)
 {
+    GretlType type;
+    const char *subname;
     int i;
 
-    fprintf(fp, "<gretl-array type=\"%s\" length=\"%d\">\n",
-	    gretl_arg_type_name(A->type), A->n); 
+    type = gretl_type_get_singular(A->type);
+    subname = gretl_type_get_name(type);
 
-    if (A->type == GRETL_TYPE_STRINGS) {
-	for (i=0; i<A->n; i++) {
-	    if (A->data[i] == NULL) {
-		fputs("<string placeholder=\"true\"/>\n", fp);
-	    } else {
-		gretl_xml_put_tagged_string("string", 
-					    A->data[i],
-					    fp);
-	    }
+    fprintf(fp, "<gretl-array type=\"%s\" length=\"%d\">\n",
+	    gretl_type_get_name(A->type), A->n); 
+
+    for (i=0; i<A->n; i++) {
+	if (A->data[i] == NULL) {
+	    fprintf(fp, "<%s placeholder=\"true\"/>\n", subname);
+	} else if (type == GRETL_TYPE_STRING) {
+	    gretl_xml_put_tagged_string("string", 
+					A->data[i],
+					fp);
+	} else if (type == GRETL_TYPE_MATRIX) {
+	    gretl_matrix_serialize(A->data[i], NULL, fp);
+	} else if (type == GRETL_TYPE_BUNDLE) {
+	    gretl_bundle_serialize(A->data[i], NULL, fp);
+	} else if (type == GRETL_TYPE_LIST) {
+	    gretl_xml_put_tagged_list("list", 
+				      A->data[i],
+				      fp);
 	}
-    } else if (A->type == GRETL_TYPE_MATRICES) {
-	for (i=0; i<A->n; i++) {
-	    if (A->data[i] == NULL) {
-		fputs("<gretl-matrix placeholder=\"true\"/>\n", fp);
-	    } else {
-		gretl_matrix_serialize(A->data[i], NULL, fp);
-	    }
-	}
-    } else if (A->type == GRETL_TYPE_BUNDLES) {
-	for (i=0; i<A->n; i++) {
-	    if (A->data[i] == NULL) {
-		fputs("<gretl-bundle placeholder=\"true\"/>\n", fp);
-	    } else {
-		gretl_bundle_serialize(A->data[i], NULL, fp);
-	    }
-	}
-    } else if (A->type == GRETL_TYPE_LISTS) {
-	for (i=0; i<A->n; i++) {
-	    if (A->data[i] == NULL) {
-		fputs("<list placeholder=\"true\"/>\n", fp);
-	    } else {
-		gretl_xml_put_tagged_list("list", 
-					  A->data[i],
-					  fp);
-	    }
-	}
-    }	
+    }	    
 
     fputs("</gretl-array>\n", fp); 
 }
 
-#if 0 /* not yet */
+static int name_matches_array_type (char *s, GretlType type)
+{
+    return (gretl_type_from_string(s) == type);
+}
+
+static int deserialize_array_elements (gretl_array *A,
+				       xmlNodePtr cur,
+				       xmlDocPtr doc)
+{
+    GretlType type = gretl_type_get_singular(A->type);
+    int i = 0, err = 0;
+
+    while (cur != NULL && !err && i < A->n) {
+	if (!name_matches_array_type((char *) cur->name, type)) {
+	    fprintf(stderr, "deserialize array: mismatched element\n");
+	    err = E_DATA;
+	} else if (gretl_xml_get_prop_as_bool(cur, "placeholder")) {
+	    ; /* empty element: no-op */
+	} else if (A->type == GRETL_TYPE_STRINGS) {
+	    A->data[i] = gretl_xml_get_string(cur, doc);
+	} else if (A->type == GRETL_TYPE_MATRICES) {
+	    A->data[i] = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (A->type == GRETL_TYPE_BUNDLES) {
+	    A->data[i] = gretl_bundle_deserialize(cur, doc, &err);
+	} else if (A->type == GRETL_TYPE_LISTS) {
+	    A->data[i] = gretl_xml_get_list(cur, doc, &err);
+	}
+	i++;
+	cur = cur->next;
+    }
+
+    if (!err && i != A->n) {
+	fprintf(stderr, "deserialize array: array is corrupted\n");
+	err = E_DATA;
+    }
+
+    return err;
+}
 
 /* For internal use only: @p1 should be of type xmlNodePtr and @p2
    should be an xmlDocPtr. We suppress the actual pointer types in the
@@ -767,17 +789,33 @@ gretl_array *gretl_array_deserialize (void *p1, void *p2,
 {
     xmlNodePtr node = p1;
     xmlDocPtr doc = p2;
-    xmlNodePtr cur = node->xmlChildrenNode;
-    gretl_array *A = gretl_array_new();
+    GretlType type = 0;
+    int n = 0;
+    gretl_array *A = NULL;
 
-    if (A == NULL) {
-	*err = E_ALLOC;
+    if (xmlStrcmp(node->name, (XUC) "gretl-array")) {
+	fprintf(stderr, "deserialize array: node is not gretl-array!\n");
+	*err = E_DATA;
     } else {
-	// *err = real_load_array(A, cur, doc);
-	*err = 1; /* FIXME ! */
+	type = gretl_xml_get_type_property(node);
+	if (type == 0) {
+	    fprintf(stderr, "deserialize array: couldn't get array type\n");
+	    *err = E_DATA;
+	}
+    }
+
+    if (!*err && !gretl_xml_get_prop_as_int(node, "length", &n)) {
+	fprintf(stderr, "deserialize array: couldn't get length\n");
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+	A = gretl_array_new(type, n, err);
+    }
+
+    if (A != NULL && n > 0) {
+	*err = deserialize_array_elements(A, node->xmlChildrenNode, doc);
 	if (*err) {
-	    fprintf(stderr, "gretl_array_deserialize: "
-		    "array is broken (err = %d)\n", *err);
 	    gretl_array_destroy(A);
 	    A = NULL;
 	}
@@ -785,5 +823,3 @@ gretl_array *gretl_array_deserialize (void *p1, void *p2,
 
     return A;
 }
-
-#endif /* not yet */
