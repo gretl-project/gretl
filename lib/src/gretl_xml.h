@@ -48,13 +48,10 @@ void gretl_xml_put_strings_array_quoted (const char *tag,
 void gretl_xml_put_tagged_list (const char *tag, const int *list, 
 				FILE *fp);
 
-int gretl_xml_put_raw_string (const char *str, FILE *fp);
+int gretl_xml_put_string (const char *str, FILE *fp);
 
 int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
 			       int *i);
-
-int gretl_xml_get_prop_as_char (xmlNodePtr node, const char *tag,
-				char *c);
 
 int gretl_xml_get_prop_as_uchar (xmlNodePtr node, const char *tag,
 				 unsigned char *u);
@@ -110,9 +107,9 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask);
 
 #endif /* FULL_XML_HEADERS */
 
-int gretl_xml_put_tagged_string (const char *tag, 
-				 const char *str, 
-				 FILE *fp);
+void gretl_xml_put_tagged_string (const char *tag, 
+				  const char *str, 
+				  FILE *fp);
 
 void gretl_xml_put_tagged_list (const char *tag, 
 				const int *list, 

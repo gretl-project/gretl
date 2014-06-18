@@ -1327,7 +1327,7 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 	    }
 	}	    
     } else if (item->type == GRETL_TYPE_STRING) {
-	gretl_xml_put_raw_string((char *) item->data, fp);
+	gretl_xml_put_string((char *) item->data, fp);
     } else if (item->type == GRETL_TYPE_MATRIX) {
 	gretl_matrix *m = (gretl_matrix *) item->data;
 

@@ -261,89 +261,7 @@ void gretl_xml_put_double_array (const char *tag, double *x, int n,
 }
 
 /**
- * gretl_xml_put_strings_array:
- * @tag: name to give array.
- * @strs: array of strings to put.
- * @n: number of strings in @strs.
- * @fp: file to which to write.
- * 
- */
-
-void gretl_xml_put_strings_array (const char *tag, const char **strs, 
-				  int n, FILE *fp)
-{
-    int i;
-
-    fprintf(fp, "<%s count=\"%d\">\n", tag, n);
-    for (i=0; i<n; i++) {
-	fprintf(fp, "%s ", strs[i]);
-    }
-    fprintf(fp, "</%s>\n", tag); 
-}
-
-/**
- * gretl_xml_put_strings_array_quoted:
- * @tag: name to give array.
- * @strs: array of strings to put.
- * @n: number of strings in @strs.
- * @fp: file to which to write.
- * 
- */
-
-void gretl_xml_put_strings_array_quoted (const char *tag, 
-					 const char **strs, int n,
-					 FILE *fp)
-{
-    int i;
-
-    fprintf(fp, "<%s count=\"%d\">\n", tag, n);
-    for (i=0; i<n; i++) {
-	fprintf(fp, "\"%s\" ", strs[i]);
-    }
-    fprintf(fp, "</%s>\n", tag); 
-}
-
-/**
- * gretl_xml_put_tagged_string:
- * @tag: name to give string.
- * @str: string to put.
- * @fp: file to which to write.
- * 
- * Write @str to @fp, enclosed in simple starting and ending 
- * tags specified by @tag.  If @str needs to have XML-special
- * characters escaped, this will be done automatically.
- * If @str is NULL, this is considered a no-op.
- *
- * Returns: 0 on success, non-zero error code on failure.
- */
-
-int gretl_xml_put_tagged_string (const char *tag, const char *str, 
-				 FILE *fp)
-{
-    int err = 0;
-
-    if (str == NULL) {
-	return 0;
-    }
-
-    if (gretl_xml_validate(str)) {
-	fprintf(fp, "<%s>%s</%s>\n", tag, str, tag);
-    } else {
-	char *xstr = gretl_xml_encode(str);
-
-	if (xstr != NULL) {
-	    fprintf(fp, "<%s>%s</%s>\n", tag, xstr, tag);
-	    free(xstr);
-	} else {
-	    err = E_ALLOC;
-	}
-    }
-
-    return err;
-}
-
-/**
- * gretl_xml_put_raw_string:
+ * gretl_xml_put_string:
  * @str: string to put.
  * @fp: file to which to write.
  * 
@@ -354,7 +272,7 @@ int gretl_xml_put_tagged_string (const char *tag, const char *str,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int gretl_xml_put_raw_string (const char *str, FILE *fp)
+int gretl_xml_put_string (const char *str, FILE *fp)
 {
     int err = 0;
 
@@ -376,6 +294,74 @@ int gretl_xml_put_raw_string (const char *str, FILE *fp)
     }
 
     return err;
+}
+
+/**
+ * gretl_xml_put_strings_array:
+ * @tag: name to give array.
+ * @strs: array of strings to put.
+ * @n: number of strings in @strs.
+ * @fp: file to which to write.
+ * 
+ */
+
+void gretl_xml_put_strings_array (const char *tag, const char **strs, 
+				  int n, FILE *fp)
+{
+    int i;
+
+    fprintf(fp, "<%s count=\"%d\">\n", tag, n);
+    for (i=0; i<n; i++) {
+	gretl_xml_put_string(strs[i], fp);
+	fputc(' ', fp);
+    }
+    fprintf(fp, "</%s>\n", tag); 
+}
+
+/**
+ * gretl_xml_put_strings_array_quoted:
+ * @tag: name to give array.
+ * @strs: array of strings to put.
+ * @n: number of strings in @strs.
+ * @fp: file to which to write.
+ * 
+ */
+
+void gretl_xml_put_strings_array_quoted (const char *tag, 
+					 const char **strs, int n,
+					 FILE *fp)
+{
+    int i;
+
+    fprintf(fp, "<%s count=\"%d\">\n", tag, n);
+    for (i=0; i<n; i++) {
+	fputc('"', fp);
+	gretl_xml_put_string(strs[i], fp);
+	fputs("\" ", fp);
+    }
+    fprintf(fp, "</%s>\n", tag); 
+}
+
+/**
+ * gretl_xml_put_tagged_string:
+ * @tag: name to give string.
+ * @str: string to put.
+ * @fp: file to which to write.
+ * 
+ * Write @str to @fp, enclosed in simple starting and ending 
+ * tags specified by @tag.  If @str needs to have XML-special
+ * characters escaped, this will be done automatically.
+ * If @str is NULL, this is considered a no-op.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+void gretl_xml_put_tagged_string (const char *tag, const char *str, 
+				  FILE *fp)
+{
+    fprintf(fp, "<%s>", tag);
+    gretl_xml_put_string(str, fp);
+    fprintf(fp, "</%s>\n", tag);
 }
 
 /**
@@ -577,31 +563,6 @@ int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
 
     if (tmp != NULL) {
 	*i = atoi((const char *) tmp);
-	free(tmp);
-	ret = 1;
-    }
-
-    return ret;
-}
-
-/**
- * gretl_xml_get_prop_as_char:
- * @node: XML node pointer.
- * @tag: name by which character property is known.
- * @c: location to write value.
- * 
- * Returns: 1 if a char is found and read successfully, 0
- * otherwise.
- */
-
-int gretl_xml_get_prop_as_char (xmlNodePtr node, const char *tag,
-				char *c)
-{
-    xmlChar *tmp = xmlGetProp(node, (XUC) tag);
-    int ret = 0;
-
-    if (tmp != NULL) {
-	*c = (char) atoi((const char *) tmp);
 	free(tmp);
 	ret = 1;
     }

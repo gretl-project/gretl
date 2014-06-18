@@ -1960,7 +1960,7 @@ static int write_function_xml (ufunc *fun, FILE *fp)
 	    fputs("  ", fp);
 	}
 	maybe_correct_line(fun->lines[i]);
-	gretl_xml_put_raw_string(fun->lines[i], fp);
+	gretl_xml_put_string(fun->lines[i], fp);
 	fputc('\n', fp);
     }
 
@@ -2521,13 +2521,13 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 
     if (pkg->help != NULL) {
 	fputs("<help>\n", fp);
-	gretl_xml_put_raw_string(trim_text(pkg->help), fp);
+	gretl_xml_put_string(trim_text(pkg->help), fp);
 	fputs("\n</help>\n", fp);
     } 
 
     if (pkg->gui_help != NULL) {
 	fputs("<gui-help>\n", fp);
-	gretl_xml_put_raw_string(trim_text(pkg->gui_help), fp);
+	gretl_xml_put_string(trim_text(pkg->gui_help), fp);
 	fputs("\n</gui-help>\n", fp);
     }     
 
@@ -2545,7 +2545,7 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 
     if (pkg->sample != NULL) {
 	fputs("<sample-script>\n", fp);
-	gretl_xml_put_raw_string(trim_text(pkg->sample), fp);
+	gretl_xml_put_string(trim_text(pkg->sample), fp);
 	fputs("\n</sample-script>\n", fp);	
     }
 
