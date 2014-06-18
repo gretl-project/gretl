@@ -67,15 +67,19 @@ int gretl_xml_get_prop_as_string (xmlNodePtr node, const char *tag,
 
 int gretl_xml_get_prop_as_bool (xmlNodePtr node, const char *tag);
 
+GretlType gretl_xml_get_type_property (xmlNodePtr node);
+
 int gretl_xml_node_get_int (xmlNodePtr node, xmlDocPtr doc, int *i);
 
 int gretl_xml_node_get_double (xmlNodePtr node, xmlDocPtr doc, 
 			       double *x);
 
-int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err);
+int *gretl_xml_get_list (xmlNodePtr node, xmlDocPtr doc, int *err);
 
 int gretl_xml_node_get_string (xmlNodePtr node, xmlDocPtr doc, 
 			       char **pstr);
+
+char *gretl_xml_get_string (xmlNodePtr node, xmlDocPtr doc);
 
 int gretl_xml_node_get_trimmed_string (xmlNodePtr node, xmlDocPtr doc, 
 				       char **pstr);
@@ -101,10 +105,6 @@ int gretl_xml_child_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
 
 gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, 
 				    int *err);
-
-gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc, 
-				   char **colnames, char **rownames,
-				   int *err);
 
 int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask);
 

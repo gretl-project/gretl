@@ -23,6 +23,7 @@
 #include "gretl_xml.h"
 #include "gretl_panel.h"
 #include "gretl_func.h"
+#include "gretl_typemap.h"
 #include "gretl_string_table.h"
 #include "dbread.h"
 #include "swap_bytes.h"
@@ -221,7 +222,7 @@ void gretl_xml_put_int (const char *tag, int i, FILE *fp)
  * @x: value to put (as attribute)
  * @fp: file to which to write.
  * 
- * Writes to @fp a string of the form "\%s=\%.15g" if the value of
+ * Writes to @fp a string of the form "\%s=\%.16g" if the value of
  * @x is valid, otherwise "\%s=NA".
  */
 
@@ -230,7 +231,7 @@ void gretl_xml_put_double (const char *tag, double x, FILE *fp)
     if (na(x)) {
 	fprintf(fp, "%s=\"NA\" ", tag);
     } else {
-	fprintf(fp, "%s=\"%.15g\" ", tag, x);
+	fprintf(fp, "%s=\"%.16g\" ", tag, x);
     }
 }
 
@@ -253,7 +254,7 @@ void gretl_xml_put_double_array (const char *tag, double *x, int n,
 	if (na(x[i])) {
 	    fputs("NA ", fp);
 	} else {
-	    fprintf(fp, "%.15g ", x[i]);
+	    fprintf(fp, "%.16g ", x[i]);
 	}
     }
     fprintf(fp, "</%s>\n", tag);    
@@ -689,6 +690,32 @@ int gretl_xml_get_prop_as_string (xmlNodePtr node, const char *tag,
 }
 
 /**
+ * gretl_xml_get_type_property:
+ * @node: XML node pointer.
+ * 
+ * Returns: the gretl type identifier associated with the
+ * property tagged "type" on @node, or 0 on failure.
+ */
+
+GretlType gretl_xml_get_type_property (xmlNodePtr node)
+{
+    char *tmp = (char *) xmlGetProp(node, (XUC) "type");
+    GretlType type = 0;
+
+    if (tmp != NULL) {
+	if (!strncmp(tmp, "gretl-", 6)) {
+	    /* allow, e.g. "gretl-matrix" for "matrix" */
+	    type = gretl_type_from_string(tmp + 6);
+	} else {
+	    type = gretl_type_from_string(tmp);
+	}
+	free(tmp);
+    }
+
+    return type;
+}
+
+/**
  * gretl_xml_get_prop_as_bool:
  * @node: XML node pointer.
  * @tag: name by which property is known.
@@ -799,6 +826,20 @@ int gretl_xml_node_get_string (xmlNodePtr node, xmlDocPtr doc,
 }
 
 /**
+ * gretl_xml_get_string:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * 
+ * Returns: allocated copy of the string content of @node, or
+ * NULL on error.
+ */
+
+char *gretl_xml_get_string (xmlNodePtr node, xmlDocPtr doc)
+{
+    return (char *) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+}
+
+/**
  * gretl_xml_node_get_trimmed_string:
  * @node: XML node pointer.
  * @doc: XML document pointer.
@@ -843,7 +884,7 @@ int gretl_xml_node_get_trimmed_string (xmlNodePtr node, xmlDocPtr doc,
 }
 
 /**
- * gretl_xml_node_get_list:
+ * gretl_xml_get_list:
  * @node: XML node pointer.
  * @doc: XML document pointer.
  * @err: location to receive error code.
@@ -852,7 +893,7 @@ int gretl_xml_node_get_trimmed_string (xmlNodePtr node, xmlDocPtr doc,
  * failure.
  */
 
-int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
+int *gretl_xml_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
 {
     xmlChar *tmp;
     const char *p;
@@ -1349,28 +1390,54 @@ static int get_matrix_values_via_file (gretl_matrix *m, const char *s)
     return err;
 }
 
+static int maybe_add_matrix_labels (gretl_matrix *m, 
+				    const char *s,
+				    int byrow)
+{
+    int n, err = 0;
+
+    n = (byrow)? m->rows : m->cols;
+
+    if (s != NULL && s != '\0') {
+	char **S;
+	int ns;
+
+	S = gretl_string_split(s, &ns, " \n\t");
+	if (S == NULL) {
+	    err = E_ALLOC;
+	} else if (ns != n) {
+	    err = E_NONCONF;
+	    strings_array_free(S, ns);
+	} else if (byrow) {
+	    gretl_matrix_set_rownames(m, S);
+	} else {
+	    gretl_matrix_set_colnames(m, S);
+	} 
+    }
+
+    return err;
+}
+
 /**
- * xml_get_user_matrix:
+ * gretl_xml_get_matrix:
  * @node: XML node pointer.
  * @doc: XML document pointer.
- * @colnames: location to receive column labels, if present.
- * @rownames: location to receive row labels, if present.
  * @err: location to receive error code.
  * 
  * Returns: allocated gretl matrix read from @node, or %NULL 
  * on failure.
  */
 
-gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc, 
-				   char **colnames, char **rownames,
-				   int *err)
+gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, 
+				    int *err)
 {
     gretl_matrix *m = NULL;
+    char *names;
     xmlChar *tmp;
     const char *p;
     double x;
     int rows, cols;
-    int t1 = 0, t2 = 0;
+    int t1 = -1, t2 = -1;
     int i, j;
 
     tmp = xmlGetProp(node, (XUC) "rows");
@@ -1427,18 +1494,20 @@ gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
 	free(tmp);
     }
 
-    if (colnames != NULL) {
-	*colnames = (char *) xmlGetProp(node, (XUC) "colnames");
-    }
-
-    if (rownames != NULL) {
-	*rownames = (char *) xmlGetProp(node, (XUC) "rownames");
-    }
-
     m = gretl_matrix_alloc(rows, cols);
     if (m == NULL) {
 	*err = E_ALLOC;
 	return NULL;
+    }
+
+    names = (char *) xmlGetProp(node, (XUC) "colnames");
+    if (names != NULL) {
+	maybe_add_matrix_labels(m, names, 0);
+    }
+
+    names = (char *) xmlGetProp(node, (XUC) "rownames");
+    if (names != NULL) {
+	maybe_add_matrix_labels(m, names, 1);
     }
 
     tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
@@ -1487,27 +1556,13 @@ gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
 	gretl_matrix_free(m);
 	m = NULL;
     } else {
-	gretl_matrix_set_t1(m, t1);
-	gretl_matrix_set_t2(m, t2);
+	if (t1 >= 0 && t2 >= t1) {
+	    gretl_matrix_set_t1(m, t1);
+	    gretl_matrix_set_t2(m, t2);
+	}
     }
 
     return m;
-}
-
-/**
- * gretl_xml_get_matrix:
- * @node: XML node pointer.
- * @doc: XML document pointer.
- * @err: location to receive error code.
- * 
- * Returns: allocated gretl matrix read from @node, or %NULL 
- * on failure.
- */
-
-gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, 
-				    int *err)
-{
-    return xml_get_user_matrix(node, doc, NULL, NULL, err);
 }
 
 /**
