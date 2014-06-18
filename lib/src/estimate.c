@@ -1428,6 +1428,7 @@ MODEL ar1_model (const int *list, DATASET *dset,
     rho = estimate_rho(list, dset, opt, prn, &err);
 
     if (err) {
+	gretl_model_init(&mdl, NULL);
 	mdl.errcode = err;
 	return mdl;
     } else {
