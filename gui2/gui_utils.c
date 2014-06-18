@@ -29,6 +29,7 @@
 #include "matrix_extra.h"
 #include "bootstrap.h"
 #include "gretl_foreign.h"
+#include "gretl_typemap.h"
 #include "uservar.h"
 
 #include <sys/stat.h>
@@ -4440,7 +4441,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 
 	blurb = g_strdup_printf("%s (%s) from bundle\n"
 				"Name (max. %d characters):",
-				key, gretl_arg_type_name(type),
+				key, gretl_type_get_name(type),
 				VNAMELEN - 1);
 	resp = object_name_entry_dialog(vname, type, blurb, &show,
 					vwin->main);
@@ -4532,7 +4533,7 @@ static void add_bundled_item_to_menu (gpointer key,
 	type = GRETL_TYPE_MATRIX;
     }
 
-    typestr = gretl_arg_type_name(type);
+    typestr = gretl_type_get_name(type);
     note = bundled_item_get_note((bundled_item *) value);
     double_underscores(keystr, (gchar *) key);
 

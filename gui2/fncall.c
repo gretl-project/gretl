@@ -27,6 +27,7 @@
 #include "cmd_private.h"
 #include "gretl_www.h"
 #include "gretl_xml.h"
+#include "gretl_typemap.h"
 #include "database.h"
 #include "guiprint.h"
 #include "ssheet.h"
@@ -1261,7 +1262,7 @@ static void function_call_dialog (call_info *cinfo)
 				     (desc != NULL)? desc :
 				     parname);
 	} else {
-	    const char *astr = gretl_arg_type_name(ptype);
+	    const char *astr = gretl_type_get_name(ptype);
 
 	    if (desc != NULL && strstr(desc, astr)) {
 		argtxt = g_strdup_printf("%s", desc);
@@ -1352,7 +1353,7 @@ static void function_call_dialog (call_info *cinfo)
 	label = gtk_label_new(_("selection (or new variable)"));
 	add_table_cell(tbl, label, 1, 2, ++row);
 
-	label = gtk_label_new(gretl_arg_type_name(cinfo->rettype));
+	label = gtk_label_new(gretl_type_get_name(cinfo->rettype));
 	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
 	add_table_cell(tbl, label, 0, 1, ++row);
 

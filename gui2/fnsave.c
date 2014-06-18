@@ -39,6 +39,7 @@
 #endif
 
 #include "gretl_func.h"
+#include "gretl_typemap.h"
 
 #define PKG_DEBUG 0
 #define NENTRIES 4
