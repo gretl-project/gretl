@@ -762,7 +762,7 @@ static int write_session_xml (const char *datname)
 	if (xmlname != objname) {
 	    free(xmlname);
 	}	
-	gretl_xml_put_raw_string(session.texts[i]->buf, fp);
+	gretl_xml_put_string(session.texts[i]->buf, fp);
 	fputs("</session-text>\n", fp);
     }    
     fputs(" </texts>\n", fp);
@@ -773,7 +773,7 @@ static int write_session_xml (const char *datname)
 	} else {
 	    fputs("<notes>", fp);
 	}
-	gretl_xml_put_raw_string(session.notes, fp);
+	gretl_xml_put_string(session.notes, fp);
 	fputs("</notes>\n", fp);
     } 
 

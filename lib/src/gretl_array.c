@@ -741,6 +741,11 @@ void gretl_array_serialize (gretl_array *A, FILE *fp)
 
 static int name_matches_array_type (char *s, GretlType type)
 {
+    if (!strncmp(s, "gretl-", 6)) {
+	/* we're expecting "short-form" type strings */
+	s += 6;
+    }
+
     return (gretl_type_from_string(s) == type);
 }
 
@@ -753,10 +758,11 @@ static int deserialize_array_elements (gretl_array *A,
 
     while (cur != NULL && !err && i < A->n) {
 	if (!name_matches_array_type((char *) cur->name, type)) {
-	    fprintf(stderr, "deserialize array: mismatched element\n");
+	    fprintf(stderr, "deserialize array: mismatched element '%s'\n",
+		    (char *) cur->name);
 	    err = E_DATA;
 	} else if (gretl_xml_get_prop_as_bool(cur, "placeholder")) {
-	    ; /* empty element: no-op */
+	    ; /* null array element: no-op */
 	} else if (A->type == GRETL_TYPE_STRINGS) {
 	    A->data[i] = gretl_xml_get_string(cur, doc);
 	} else if (A->type == GRETL_TYPE_MATRICES) {
