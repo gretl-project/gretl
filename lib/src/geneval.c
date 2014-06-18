@@ -12037,7 +12037,8 @@ static void maybe_do_type_errmsg (const char *name, int t)
 	}
 
 	if (tstr != NULL) {
-	    gretl_errmsg_sprintf(_("The variable %s is of type %s"), 
+	    gretl_errmsg_sprintf(_("The variable %s is of type %s, "
+				   "not acceptable in context"), 
 				 name, tstr);
 	}
     }
