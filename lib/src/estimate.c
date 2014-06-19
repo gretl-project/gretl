@@ -3591,7 +3591,7 @@ static int modelvar_iszero (const MODEL *pmod, const double *x)
     return 1;
 }
 
-/* From the position of the first regressorto end of list, omits
+/* From the position of the first regressor to end of list, omits
    variables with all zero observations and re-packs the rest of
    them */
 
@@ -4152,62 +4152,60 @@ MODEL quantreg (const gretl_matrix *tau, const int *list,
     return mod;
 }
 
+#ifndef WIN32
+
+static void gretl_glib_grab_output (const char *prog,
+				    char **sout)
+{
+    gchar *argv[] = { (gchar *) prog, NULL };
+    gboolean ok;
+
+    ok = g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
+		      NULL, NULL, sout, NULL,
+		      NULL, NULL);
+
+    if (!ok && *sout != NULL) {
+	g_free(*sout);
+	*sout = NULL;
+    }
+}
+
+#endif
+
 /*
  * get_x12a_maxpd:
  *
  * Retrieve the highest data frequency handled by X-12-ARIMA,
  * which may vary depending on how the program was built.
  * This may be relevant when executing the gretl arima
- * command with gthe option to use X-12-ARIMA.
+ * command with the option to use X-12-ARIMA.
  */
 
 int get_x12a_maxpd (void)
 {
     static int n;
 
-#ifdef WIN32
-    if (n == 0) {
-	char *sout = NULL;
-
-	gretl_win32_grab_output(gretl_x12_arima(), &sout);
-
-	if (sout != NULL) {
-	    char *p = strstr(sout, "PSP = ");
-
-	    if (p != NULL) {
-		n = atoi(p + 6);
-	    } 
-	    free(sout);
-	}
-
-	if (n <= 0) {
-	    n = 12;
-	}
-    }
-#else
     if (n == 0) {
 	const char *x12a = gretl_x12_arima();
-	gchar *argv[] = { (gchar *) x12a, NULL };
-	gchar *sout = NULL;
-	int ok;
+	char *sout = NULL;
+	char *p = NULL;
 
-	ok = g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
-			  NULL, NULL, &sout, NULL,
-			  NULL, NULL);
-	if (ok && sout != NULL) {
-	    char *p = strstr(sout, "PSP = ");
-
-	    if (p != NULL) {
-		n = atoi(p + 6);
-	    } 
-	}
-	g_free(sout);
-
+#ifdef WIN32
+	gretl_win32_grab_output(x12a, &sout);
+#else
+	gretl_glib_grab_output(x12a, &sout);
+#endif
+	if (sout != NULL) {
+	    p = strstr(sout, "PSP = ");
+	}	
+	if (p != NULL) {
+	    n = atoi(p + 6);
+	} 	
+	free(sout);
 	if (n <= 0) {
 	    n = 12;
 	}
     }
-#endif
 
     return n;
 }
