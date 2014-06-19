@@ -99,6 +99,7 @@ struct gretl_option gretl_opts[] = {
     { AR1,      OPT_B, "no-corc", 0 },
     { AR1,      OPT_H, "hilu", 0 },
     { AR1,      OPT_P, "pwe", 0 },
+    { AR1,      OPT_L, "loose", 0 },
     { APPEND,   OPT_A, "all-cols", 0 },
     { APPEND,   OPT_T, "time-series", 0 },
     { APPEND,   OPT_R, "rowoffset", 2 },
