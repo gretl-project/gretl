@@ -4188,7 +4188,6 @@ int get_x12a_maxpd (void)
     if (n == 0) {
 	const char *x12a = gretl_x12_arima();
 	char *sout = NULL;
-	char *p = NULL;
 
 #ifdef WIN32
 	gretl_win32_grab_output(x12a, &sout);
@@ -4196,10 +4195,11 @@ int get_x12a_maxpd (void)
 	gretl_glib_grab_output(x12a, &sout);
 #endif
 	if (sout != NULL) {
-	    p = strstr(sout, "PSP = ");
-	}	
-	if (p != NULL) {
-	    n = atoi(p + 6);
+	    char *p = strstr(sout, "PSP = ");
+
+	    if (p != NULL) {
+		n = atoi(p + 6);
+	    }
 	} 	
 	free(sout);
 	if (n <= 0) {
