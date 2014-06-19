@@ -115,9 +115,12 @@ static int z_to_xyz (int v1, int v2, int v3,
 
 /* graph one or two y variables against a given x variable */
 
-static int graphyzx (const double *y1, const double *y2, const double *x, 
-		     int n, const char *yname, const char *y2name,
-		     const char *xname, gretlopt opt, PRN *prn)
+static int graphyzx (const double *y1, const double *y2, 
+		     const double *x, int n, 
+		     const char *yname, 
+		     const char *y2name,
+		     const char *xname, 
+		     gretlopt opt, PRN *prn)
 {
     int ix, iy1, iy2, lx, ly, xzero, yzero;
     int nrows, nr2, nc2, ls, lw, t1, t2;

@@ -2121,11 +2121,12 @@ static int hilu_plot (double *ssr, double *rho, int n)
     return finalize_plot_input_file(fp);
 }
 
-static double autores (MODEL *pmod, const double **Z, gretlopt opt)
+/* calculation of rhohat for use with CORC/PWE */
+
+static double autores (MODEL *pmod, DATASET *dset, gretlopt opt)
 {
-    int t, v, t1 = pmod->t1;
+    int t, i, v, t1 = pmod->t1;
     double x, num = 0.0, den = 0.0;
-    double rhohat;
 
     if (!(opt & OPT_P)) {
 	/* not using Prais-Winsten */
@@ -2133,23 +2134,196 @@ static double autores (MODEL *pmod, const double **Z, gretlopt opt)
     }
 
     for (t=t1; t<=pmod->t2; t++) {
-	x = Z[pmod->list[1]][t];
-	for (v=0; v<pmod->ncoeff; v++) {
-	    x -= pmod->coeff[v] * Z[pmod->list[v+2]][t];
+	v = pmod->list[1];
+	x = dset->Z[v][t];
+	for (i=0; i<pmod->ncoeff; i++) {
+	    v = pmod->list[i+2];
+	    x -= pmod->coeff[i] * dset->Z[v][t];
 	}
 	pmod->uhat[t] = x;
 	if (t > t1) {
 	    num += pmod->uhat[t] * pmod->uhat[t-1];
 	    den += pmod->uhat[t-1] * pmod->uhat[t-1];
 	}
-    } 
+    }
 
-    rhohat = num / den;
-
-    return rhohat;
+    return num / den;
 }
 
-#define AR_DEBUG 0
+static int rho_val_ends_row (double r)
+{
+    double endval = -0.8;
+    double slop = .001;
+    int i;
+
+    for (i=0; i<7; i++) {
+	if (endval - slop < r && r < endval + slop) {
+	    return 1;
+	}
+	endval += 0.3;
+    }
+
+    return 0;
+}
+
+static void hilu_print_iter (double r, double ess, int iter, 
+			     double *ssr, double *rh,
+			     int *ip, int asciiplot,
+			     PRN *prn)
+{
+    char num[16];
+    int chk;
+		
+    sprintf(num, "%f", 100 * fabs(r));
+    chk = atoi(num);
+
+    if (chk == 99 || chk % 10 == 0) {
+	/* we're not printing all 199 values */
+	if (asciiplot) {
+	    ssr[*ip] = ess;
+	    rh[*ip] = r;
+	    *ip += 1;
+	}
+	pprintf(prn, " %5.2f %#12.6g", r, ess);
+	if (rho_val_ends_row(r)) {
+	    pputc(prn, '\n');
+	} else {
+	    bufspace(3, prn);
+	}
+    } 
+}
+
+static void hilu_header (PRN *prn)
+{
+    int i;
+
+    pputs(prn, "\n   ");
+
+    for (i=0; i<3; i++) {
+	pputs(prn, "rho");
+	bufspace(10, prn);
+	pputs(prn, _("ESS"));
+	if (i < 2) {
+	    pputs(prn, "      ");
+	}
+    }
+
+    pputc(prn, '\n');
+}
+
+static double hilu_search (const int *list, DATASET *dset,
+			   MODEL *pmod, gretlopt opt,
+			   PRN *prn)
+{
+    double *rh = NULL, *ssr = NULL;
+    double essmin = 1.0e200;
+    double ess, r, hl_rho;
+    int quiet = (opt & OPT_Q);
+    int niceplot = (opt & OPT_G);
+    int iter = 0, i = 0;
+    int nplot = 0;
+
+    if (!quiet) {
+	/* allocate arrays for recording plot info */
+	nplot = niceplot ? 199 : 21;
+	ssr = malloc(2 * nplot * sizeof *ssr);
+	if (ssr == NULL) {
+	    pmod->errcode = E_ALLOC;
+	    return NADBL;
+	}
+	rh = ssr + nplot;
+	/* and print header */
+	hilu_header(prn);
+    }
+
+    for (r = -0.990; r < 1.0; r += .01, iter++) {
+	clear_model(pmod);
+
+	*pmod = ar1_lsq(list, dset, OLS, OPT_A, r);
+	if (pmod->errcode) {
+	    free(ssr);
+	    return NADBL;
+	}
+
+	ess = pmod->ess;
+
+	if (!quiet) {
+	    hilu_print_iter(r, ess, iter, ssr, rh, &i, 
+			    !niceplot, prn);
+	    if (niceplot) {
+		/* record full data for plotting */
+		ssr[i] = ess;
+		rh[i++] = r;
+	    }	    
+	}
+
+	if (iter == 0 || ess < essmin) {
+	    essmin = ess;
+	    hl_rho = r;
+	}
+    } /* end of basic iteration */
+	
+    if (hl_rho > 0.989) {
+	/* try exploring this funny region? */
+	for (r = 0.99; r <= 0.999; r += .001) {
+	    clear_model(pmod);
+	    *pmod = ar1_lsq(list, dset, OLS, OPT_A, r);
+	    if (pmod->errcode) {
+		free(ssr);
+		return NADBL;
+	    }
+	    ess = pmod->ess;
+	    if (ess < essmin) {
+		essmin = ess;
+		hl_rho = r;
+	    }
+	}
+    }
+
+    if (hl_rho > 0.9989) {
+	/* this even funnier one? */
+	for (r = 0.9991; r <= 0.9999; r += .0001) {
+	    clear_model(pmod);
+	    *pmod = ar1_lsq(list, dset, OLS, OPT_A, r);
+	    if (pmod->errcode) {
+		free(ssr);
+		return NADBL;
+	    }
+	    ess = pmod->ess;
+	    if (ess < essmin) {
+		essmin = ess;
+		hl_rho = r;
+	    }
+	}
+    }
+
+    if (!quiet) {
+	pprintf(prn, _("\n\nESS is minimized for rho = %g\n\n"), hl_rho);
+	if (niceplot) {
+	    hilu_plot(ssr, rh, nplot);
+	} else {
+	    /* ascii plot */
+	    graphyx(ssr, rh, nplot, "ESS", "RHO", prn); 
+	    pputs(prn, "\n");
+	}
+    }
+
+    free(ssr);
+
+    return hl_rho;
+}
+
+static void corc_header (gretlopt opt, PRN *prn)
+{
+    if (opt & OPT_H) {
+	pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n"));
+    } else {
+	pputs(prn, _("\nPerforming iterative calculation of rho...\n\n"));
+    }
+
+    pputs(prn, _("                 ITER       RHO        ESS"));
+    pputc(prn, '\n');
+}
 
 /*
  * estimate_rho:
@@ -2173,187 +2347,110 @@ static double autores (MODEL *pmod, const double **Z, gretlopt opt)
 static double estimate_rho (const int *list, DATASET *dset,
 			    gretlopt opt, PRN *prn, int *err)
 {
-    double rho = 0.0, rho0 = 0.0, diff;
-    double finalrho = 0.0, essmin = 1.0e8;
-    double ess, ssr[199], rh[199]; 
-    int iter, nn = 0;
-    int t1 = dset->t1, t2 = dset->t2;
-    gretlopt lsqopt = OPT_A;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int quiet = (opt & OPT_Q);
-    int ascii = !(opt & OPT_G);
+    double rho = 0.0;
     MODEL armod;
 
-    *err = list_adjust_sample(list, &dset->t1, &dset->t2, dset, NULL);
+    *err = list_adjust_sample(list, &dset->t1, &dset->t2, 
+			      dset, NULL);
     if (*err) {
 	goto bailout;
     }
 
     gretl_model_init(&armod, dset);
 
-    if (opt & OPT_P) {
-	/* Prais-Winsten treatment of first observation */
-	lsqopt |= OPT_P;
-    } 
-
     if (opt & OPT_H) { 
 	/* Do Hildreth-Lu first */
-	for (rho = -0.990, iter = 0; rho < 1.0; rho += .01, iter++) {
-	    clear_model(&armod);
-	    armod = ar1_lsq(list, dset, OLS, OPT_A, rho);
-	    if ((*err = armod.errcode)) {
-		clear_model(&armod);
-		goto bailout;
-	    }
-	    ess = armod.ess;
-	    if (ascii && !quiet) {
-		char num[16];
-		int chk;
-		
-		if (iter == 0) {
-		    pprintf(prn, "\n RHO       %s      RHO       %s      "
-			    "RHO       %s      RHO       %s     \n",
-			    _("ESS"), _("ESS"), _("ESS"), _("ESS"));
-		}
-		sprintf(num, "%f", 100 * fabs(rho));
-		chk = atoi(num);
-		if (chk == 99 || chk % 10 == 0) {
-		    ssr[nn] = ess;
-		    rh[nn++] = rho;
-		    pprintf(prn, "%5.2f %10.4g", rho, ess);
-		    if (nn % 4 == 0) {
-			pputc(prn, '\n');
-		    } else {
-			bufspace(3, prn);
-		    }
-		} 
-	    } else if (!quiet) {
-		ssr[nn] = ess;
-		rh[nn++] = rho;
-	    }
-	    if (iter == 0 || ess < essmin) {
-		essmin = ess;
-		finalrho = rho;
-	    }
-	} /* end of basic iteration */
-	
-	if (finalrho > 0.989) {
-	    /* try exploring this funny region? */
-	    for (rho = 0.99; rho <= 0.999; rho += .001) {
-		clear_model(&armod);
-		armod = ar1_lsq(list, dset, OLS, OPT_A, rho);
-		if ((*err = armod.errcode)) {
-		    clear_model(&armod);
-		    goto bailout;
-		}
-		ess = armod.ess;
-		if (ess < essmin) {
-		    essmin = ess;
-		    finalrho = rho;
-		}
-	    }
-	}
+	double hl_rho = hilu_search(list, dset, &armod, opt, prn);
 
-	if (finalrho > 0.9989) {
-	    /* this even funnier one? */
-	    for (rho = 0.9991; rho <= 0.9999; rho += .0001) {
-		clear_model(&armod);
-		armod = ar1_lsq(list, dset, OLS, OPT_A, rho);
-		if ((*err = armod.errcode)) {
-		    clear_model(&armod);
-		    goto bailout;
-		}
-		ess = armod.ess;
-		if (ess < essmin) {
-		    essmin = ess;
-		    finalrho = rho;
-		}
-	    }
-	}
-
-	rho0 = rho = finalrho;
-	if (!quiet) {
-	    pprintf(prn, _("\n\nESS is minimum for rho = %g\n\n"), rho);
-	    if (ascii) {
-		graphyx(ssr, rh, nn, "ESS", "RHO", prn); 
-		pputs(prn, "\n");
-	    } else {
-		hilu_plot(ssr, rh, nn);
-	    }
+	if (na(hl_rho)) {
+	    *err = armod.errcode;
+	} else {
+	    rho = hl_rho;
 	}
     } else { 
-	/* Go straight to Cochrane-Orcutt (or Prais-Winsten) */
+	/* Initialize Cochrane-Orcutt (or Prais-Winsten) */
 	armod = lsq(list, dset, OLS, OPT_A);
 	if (!armod.errcode && armod.dfd == 0) {
 	    armod.errcode = E_DF;
 	}
-	if ((*err = armod.errcode)) {
-	    clear_model(&armod);
-	    goto bailout;
+	if (!armod.errcode) {
+	    rho = armod.rho;
 	}
-	rho0 = rho = armod.rho;
     }
 
-    if (na(rho)) {
-	*err = E_NOCONV;
-	clear_model(&armod);
-	goto bailout;
-    }
+    if (armod.errcode) {
+	*err = armod.errcode;
+    } else if (!(opt & OPT_H) || !(opt & OPT_B)) {
+	/* either not Hildreth-Lu, or Hildreth-Lu but CORC
+	   fine-tuning is wanted (has not been suppressed
+	   via OPT_B)
+	*/
+	gretlopt lsqopt = OPT_A;
+	double essdiff, edsmall = 5.0e-8;
+	double ess0 = armod.ess;
+	double rho0 = rho;
+	double rdsmall = (opt & OPT_L)? 0.001 : 1.0e-6;
+	int iter = 0, itermax = 100;
+	int converged = 0;
 
-    if (!(opt & OPT_H) || !(opt & OPT_B)) {
+	if (opt & OPT_P) {
+	    /* Prais-Winsten */
+	    lsqopt |= OPT_P;
+	} 	
+
 	if (!quiet) {
-	    if (opt & OPT_H) {
-		pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n"));
-	    } else {
-		pputs(prn, _("\nPerforming iterative calculation of rho...\n\n"));
-	    }
-
-	    pputs(prn, _("                 ITER       RHO        ESS"));
-	    pputc(prn, '\n');
+	    corc_header(opt, prn);
 	}
 
-	iter = 0;
-	diff = 1.0;
-
-	while (diff > 0.001) {
+	while (++iter <= itermax && !converged) {
 	    clear_model(&armod);
 	    armod = ar1_lsq(list, dset, OLS, lsqopt, rho);
-#if AR_DEBUG
-	    fprintf(stderr, "armod: t1=%d, first two uhats: %g, %g\n",
-		    armod.t1, 
-		    armod.uhat[armod.t1],
-		    armod.uhat[armod.t1+1]);
-#endif
 	    if ((*err = armod.errcode)) {
-		clear_model(&armod);
-		goto bailout;
+		break;
 	    }
+
 	    if (!quiet) {
-		pprintf(prn, "          %10d %12.5f", ++iter, rho);
-		pprintf(prn, "   %g\n", armod.ess);
+		pprintf(prn, "          %10d %12.5f", iter, rho);
+		pprintf(prn, "   %#.6g\n", armod.ess);
 	    }
 
-	    rho = autores(&armod, (const double **) dset->Z, opt);
+	    rho = autores(&armod, dset, opt);
 
-#if AR_DEBUG
-	    pputs(prn, "AR1 model (using rho-transformed data)\n");
-	    printmodel(&armod, dset, OPT_NONE, prn);
-	    pprintf(prn, "autores gives rho = %g\n", rho);
-#endif
-
-	    if (rho > .99999 || rho < -.99999) {
-		*err = E_NOCONV;
-		clear_model(&armod);
-		goto bailout;
+	    if (armod.ess == 0.0) {
+		converged = 1;
+	    } else {
+		essdiff = (ess0 - armod.ess) / ess0;
+		if (essdiff < edsmall) {
+		    converged = 1;
+		} else if (fabs(rho - rho0) < rdsmall) {
+		    converged = 1;
+		}
 	    }
 
-	    diff = (rho > rho0)? rho - rho0 : rho0 - rho;
+	    ess0 = armod.ess;
 	    rho0 = rho;
-	    if (iter == 30) break;
+	}
+
+	if (converged && (rho >= 1.0 || rho <= -1.0)) {
+	    gretl_errmsg_sprintf(_("%s: rho = %g, error is unbounded"),
+				 "ar1", rho);
+	    converged = 0;
+	}
+
+	if (!converged) {
+	    *err = E_NOCONV;
 	}
 
 	if (!quiet) {
-	    pprintf(prn, "          %10d %12.5f", ++iter, rho);
-	    pprintf(prn, "   %g\n", armod.ess);
+	    if (*err) {
+		pputc(prn, '\n');
+	    } else {
+		pprintf(prn, "          %10d %12.5f", iter, rho);
+		pprintf(prn, "   %#.6g\n", armod.ess);
+	    }
 	}
     }
 
@@ -2361,8 +2458,8 @@ static double estimate_rho (const int *list, DATASET *dset,
 
  bailout:
 
-    dset->t1 = t1;
-    dset->t2 = t2;
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
     if (*err) {
 	rho = NADBL;
@@ -4524,5 +4621,3 @@ int anova (const int *list, const DATASET *dset,
 
     return (*gretl_anova)(list, dset, opt, prn);
 }
-
-
