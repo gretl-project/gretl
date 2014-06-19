@@ -551,6 +551,10 @@
 	  <flag>--no-corc</flag>
 	  <effect>do not fine-tune results with Cochrane-Orcutt</effect>
 	</option>
+	<option>
+	  <flag>--loose</flag>
+	  <effect>use looser convergence criterion</effect>
+	</option>
       </options>
       <examples>
         <example>ar1 1 0 2 4 6 7</example>
@@ -561,16 +565,19 @@
 
     <description>
       <para>
-	Computes feasible GLS estimates for a model in which the error term is
-	assumed to follow a first-order autoregressive process.
+	Computes feasible GLS estimates for a model in which the error
+	term is assumed to follow a first-order autoregressive
+	process.
       </para>
       <para>
 	The default method is the Cochrane&ndash;Orcutt iterative
 	procedure; see for example section 9.4 of <cite
-	key="ramanathan02">Ramanathan (2002)</cite>. Iteration is
-	terminated when successive estimates of the autocorrelation
-	coefficient do not differ by more than 0.001 or after 20
-	iterations.
+	key="ramanathan02">Ramanathan (2002)</cite>. The criterion for
+	convergence is that successive estimates of the
+	autocorrelation coefficient do not differ by more than 1e-6,
+	or if the <opt>--loose</opt> option is given, by more than
+	0.001. If this is not achieved within 100 iterations an error
+	is flagged.
       </para>
       <para>
 	If the <opt>--pwe</opt> option is given, the
@@ -582,11 +589,12 @@
 	(2000)</cite> for details.
       </para>
       <para>
-	If the <opt>--hilu</opt> option is given, the Hildreth&ndash;Lu search
-	procedure is used.  The results are then fine-tuned using the
-	Cochrane&ndash;Orcutt method, unless the <opt>--no-corc</opt> flag is
-	specified. The <opt>--no-corc</opt> option is ignored for estimators
-	other than Hildreth&ndash;Lu.
+	If the <opt>--hilu</opt> option is given, the
+	Hildreth&ndash;Lu search procedure is used.  The results are
+	then fine-tuned using the Cochrane&ndash;Orcutt method, unless
+	the <opt>--no-corc</opt> flag is specified. The
+	<opt>--no-corc</opt> option is ignored for estimators other
+	than Hildreth&ndash;Lu.
       </para>
     </description>
 
