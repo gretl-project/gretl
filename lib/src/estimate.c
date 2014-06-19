@@ -2325,6 +2325,20 @@ static void corc_header (gretlopt opt, PRN *prn)
     pputc(prn, '\n');
 }
 
+/* unlike plain CORC, PWE needs the term sqrt(1 - rho^2) */
+
+static int pwe_error (double rho, int quiet, int iter, PRN *prn)
+{
+    gretl_errmsg_sprintf(_("Prais-Winsten: invalid rho value %g "
+			   "(explosive error)"), rho);
+    if (!quiet) {
+	pprintf(prn, "          %10d %12.5f", iter, rho);
+	pprintf(prn, "        NA\n");
+    }
+
+    return E_NOCONV;
+}
+
 /*
  * estimate_rho:
  * @list: dependent variable plus list of regressors.
@@ -2334,11 +2348,11 @@ static void corc_header (gretlopt opt, PRN *prn)
  *       fine-tuning of Hildreth-Lu results, OPT_G to generate
  *       a gnuplot graph of the search in Hildreth-Lu case.
  * @prn: gretl printing struct.
- * @err: location to receeve error code.
+ * @err: location to receive error code.
  *
  * Estimate the quasi-differencing coefficient for use with the
  * Cochrane-Orcutt, Hildreth-Lu or Prais-Winsten procedures for
- * handling first-order serial correlation.  Print a trace of the
+ * handling first-order serial correlation. Print a trace of the
  * search for rho.
  * 
  * Returns: rho estimate on successful completion, #NADBL on error.
@@ -2350,6 +2364,7 @@ static double estimate_rho (const int *list, DATASET *dset,
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int quiet = (opt & OPT_Q);
+    int pwe = (opt & OPT_P);
     double rho = 0.0;
     MODEL armod;
 
@@ -2382,18 +2397,13 @@ static double estimate_rho (const int *list, DATASET *dset,
 	   fine-tuning is wanted (has not been suppressed
 	   via OPT_B)
 	*/
-	gretlopt lsqopt = OPT_A;
+	gretlopt lsqopt = pwe ? (OPT_A | OPT_P) : OPT_A;
 	double essdiff, edsmall = 5.0e-8;
 	double ess0 = armod.ess;
 	double rho0 = rho;
 	double rdsmall = (opt & OPT_L)? 0.001 : 1.0e-6;
 	int iter = 0, itermax = 100;
 	int converged = 0;
-
-	if (opt & OPT_P) {
-	    /* Prais-Winsten */
-	    lsqopt |= OPT_P;
-	} 	
 
 	if (!quiet) {
 	    corc_header(opt, prn);
@@ -2412,6 +2422,11 @@ static double estimate_rho (const int *list, DATASET *dset,
 	    }
 
 	    rho = autores(&armod, dset, opt);
+
+	    if (pwe && fabs(rho) >= 1.0) {
+		*err = pwe_error(rho, quiet, iter + 1, prn);
+		break;
+	    }
 
 	    if (armod.ess == 0.0) {
 		converged = 1;
@@ -2434,7 +2449,7 @@ static double estimate_rho (const int *list, DATASET *dset,
 	    converged = 0;
 	}
 
-	if (!converged) {
+	if (!converged && !*err) {
 	    *err = E_NOCONV;
 	}
 
