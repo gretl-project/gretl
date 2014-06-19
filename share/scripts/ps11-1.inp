@@ -47,7 +47,7 @@ genr essb = sum(uhatb*uhatb)
 criteria(essb, 5, 2)
 smpl 1960 1989
 # cubic Model C
-ar1 calwage 0 time tsq t3
+ar1 calwage 0 time tsq t3 --loose
 # obtain predicted value
 fcast 1990 1994 yhatc --static
 # reset sample range and regress actual against predicted calwage
@@ -60,7 +60,7 @@ genr essc = sum(uhatc*uhatc)
 criteria(essc, 5, 2)
 smpl 1960 1989
 # linear-log Model D
-ar1 calwage 0 l_time
+ar1 calwage 0 l_time --loose
 # obtain predicted value
 fcast 1990 1994 yhatd --static
 # reset sample range and regress actual against predicted calwage
@@ -73,7 +73,7 @@ genr essd = sum(uhatd*uhatd)
 criteria(essd, 5, 2)
 smpl 1960 1989
 # reciprocal Model E
-ar1 calwage 0 invt
+ar1 calwage 0 invt --loose
 # obtain predicted value
 fcast 1990 1994 yhate --static
 # reset sample range and regress actual against predicted calwage
