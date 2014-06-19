@@ -2325,8 +2325,9 @@ static void corc_header (gretlopt opt, PRN *prn)
     pputc(prn, '\n');
 }
 
-/* unlike plain CORC, PWE needs the term sqrt(1 - rho^2), so
-   we really cannot proceed if |rho| >= 1.0
+/* Unlike plain CORC, PWE needs the term sqrt(1 - rho^2), so
+   we really cannot proceed if |rho| >= 1.0, even just to see
+   where rho ends up, as we now do with CORC.
 */
 
 static int pwe_error (double rho, int quiet, int iter, PRN *prn)
