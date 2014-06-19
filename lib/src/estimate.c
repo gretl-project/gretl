@@ -2153,7 +2153,7 @@ static double autores (MODEL *pmod, DATASET *dset, gretlopt opt)
 static int rho_val_ends_row (double r)
 {
     double endval = -0.8;
-    double slop = .001;
+    double slop = .0001;
     int i;
 
     for (i=0; i<7; i++) {
@@ -2363,13 +2363,7 @@ static double estimate_rho (const int *list, DATASET *dset,
 
     if (opt & OPT_H) { 
 	/* Do Hildreth-Lu first */
-	double hl_rho = hilu_search(list, dset, &armod, opt, prn);
-
-	if (na(hl_rho)) {
-	    *err = armod.errcode;
-	} else {
-	    rho = hl_rho;
-	}
+	rho = hilu_search(list, dset, &armod, opt, prn);
     } else { 
 	/* Initialize Cochrane-Orcutt (or Prais-Winsten) */
 	armod = lsq(list, dset, OLS, OPT_A);
