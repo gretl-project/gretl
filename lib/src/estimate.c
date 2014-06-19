@@ -3370,7 +3370,7 @@ MODEL ar_model (const int *list, DATASET *dset,
 		gretlopt opt, PRN *prn)
 {
     double diff, ess, tss, xx;
-    int i, j, t, t1, t2, vc, yno, ryno, iter;
+    int i, j, vi, t, t1, t2, vc, yno, ryno, iter;
     int k, maxlag, v = dset->v;
     int *arlist = NULL, *rholist = NULL;
     int *reglist = NULL, *reglist2 = NULL;
@@ -3469,14 +3469,15 @@ MODEL ar_model (const int *list, DATASET *dset,
 	/* and rho-transform the data */
 	ryno = vc = v + i;
 	for (i=1; i<=reglist[0]; i++) {
+	    vi = reglist[i];
 	    for (t=0; t<dset->n; t++) {
 		if (t < t1 + maxlag || t > t2) {
 		    dset->Z[vc][t] = NADBL;
 		} else {
-		    xx = dset->Z[reglist[i]][t];
+		    xx = dset->Z[vi][t];
 		    for (j=1; j<=arlist[0]; j++) {
 			k = arlist[j];
-			xx -= rhomod.coeff[j-1] * dset->Z[reglist[i]][t-k];
+			xx -= rhomod.coeff[j-1] * dset->Z[vi][t-k];
 		    }
 		    dset->Z[vc][t] = xx;
 		}
@@ -3489,11 +3490,7 @@ MODEL ar_model (const int *list, DATASET *dset,
 	ar = lsq(reglist2, dset, OLS, OPT_A);
 
         if (iter > 1) {
-	    diff = 100 * (ar.ess - ess) / ess;
-	}
-
-        if (diff < 0.0) {
-	    diff = -diff;
+	    diff = fabs(100 * (ar.ess - ess) / ess);
 	}
 
 	ess = ar.ess;
