@@ -113,7 +113,6 @@ static void regress (MODEL *pmod, double *xpy,
 		     double ysum, double ypy, 
 		     const DATASET *dset, 
 		     double rho, gretlopt opt);
-static int hatvar (MODEL *pmod, int n, const DATASET *dset);
 static void omitzero (MODEL *pmod, const DATASET *dset,
 		      gretlopt opt);
 static int lagdepvar (const int *list, const DATASET *dset); 
@@ -410,7 +409,7 @@ static int compute_ar_stats (MODEL *pmod, const DATASET *dset,
     return 0;
 }
 
-/* calculation of WLS stats in agreement with GNU R */
+/* calculation of WLS stats (in agreement with GNU R) */
 
 static void get_wls_stats (MODEL *pmod, const DATASET *dset)
 {
@@ -952,7 +951,7 @@ double *gretl_XTX (const MODEL *pmod, const DATASET *dset, int *err)
     return xpx;
 }
 
-static int gretl_choleski_regress (MODEL *pmod, const DATASET *dset,
+static int gretl_cholesky_regress (MODEL *pmod, const DATASET *dset,
 				   double rho, int pwe, gretlopt opt)
 {
     double ysum = 0.0, ypy = 0.0;
@@ -1293,7 +1292,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
     } else {
-	gretl_choleski_regress(&mdl, dset, rho, pwe, opt);
+	gretl_cholesky_regress(&mdl, dset, rho, pwe, opt);
 	if (mdl.errcode == E_SINGULAR && !jackknife) {
 	    /* near-perfect collinearity is better handled by QR */
 	    model_free_storage(&mdl);
@@ -1440,7 +1439,7 @@ static int make_ess (MODEL *pmod, const DATASET *dset)
 {
     int i, t, yno = pmod->list[1], l0 = pmod->list[0];
     int nwt = pmod->nwt;
-    double yhat, resid;
+    double yhat, ut;
 
     pmod->ess = 0.0;
 
@@ -1455,11 +1454,11 @@ static int make_ess (MODEL *pmod, const DATASET *dset)
 	for (i=2; i<=l0; i++) {
 	    yhat += pmod->coeff[i-2] * dset->Z[pmod->list[i]][t];
 	}
-	resid = dset->Z[yno][t] - yhat;
+	ut = dset->Z[yno][t] - yhat;
 	if (nwt) {
-	    resid *= sqrt(dset->Z[nwt][t]);
+	    ut *= sqrt(dset->Z[nwt][t]);
 	}
-	pmod->ess += resid * resid;
+	pmod->ess += ut * ut;
     }
 
     return 0;
@@ -1565,10 +1564,10 @@ static void compute_r_squared (MODEL *pmod, const DATASET *dset,
 /*
   diaginv: solves for the diagonal elements of X'X inverse.
 
-  xpx = Cholesky-decomposed X'X
-  tmp = work array, length >= nv
-  diag = diagonal elements of {X'X}^{-1} (output)
-  nv = number of regression coefficients = length of diag
+  @xpx = Cholesky-decomposed X'X
+  @tmp = work array, length >= nv
+  @diag = diagonal elements of {X'X}^{-1} (output)
+  @nv = number of regression coefficients = length of diag
 */
 
 static void diaginv (const double *xpx, double *tmp, double *diag, 
@@ -1716,6 +1715,37 @@ static int cholbeta (MODEL *pmod, double *xpy, double *rss)
     return 0; 
 }
 
+/* compute fitted values and residuals */
+
+static int hatvars (MODEL *pmod, const DATASET *dset)
+{
+    int yno = pmod->list[1];
+    int xno, i, t;
+    double x;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (model_missing(pmod, t)) {
+	    continue;
+	}
+	pmod->yhat[t] = 0.0;
+        for (i=0; i<pmod->ncoeff; i++) {
+            xno = pmod->list[i+2];
+	    x = dset->Z[xno][t];
+	    if (pmod->nwt) {
+		x *= sqrt(dset->Z[pmod->nwt][t]);
+	    }
+            pmod->yhat[t] += pmod->coeff[i] * x;
+        }
+	x = dset->Z[yno][t];
+	if (pmod->nwt) {
+	    x *= sqrt(dset->Z[pmod->nwt][t]);
+	}
+        pmod->uhat[t] = x - pmod->yhat[t];
+    }
+
+    return 0;
+}
+
 /*
   regress: takes X'X (pmod->xpx) and X'y (@xpy) and
   computes OLS estimates and associated statistics.
@@ -1736,20 +1766,19 @@ static void regress (MODEL *pmod, double *xpy,
 		     double rho, gretlopt opt)
 {
     int ifc = pmod->ifc;
-    int n = pmod->full_n;
     double zz, rss = 0.0;
     double s2 = 0.0;
     double *diag = NULL;
     int i, err = 0;
 
-    for (i=0; i<n; i++) {
+    for (i=0; i<pmod->full_n; i++) {
 	pmod->yhat[i] = pmod->uhat[i] = NADBL;
     }    
 
     zz = ysum * ysum / pmod->nobs;
     pmod->tss = ypy - zz;
 
-    /*  Cholesky-decompose X'X and find the coefficients */
+    /* Cholesky-decompose X'X and find the coefficients */
     err = cholbeta(pmod, xpy, &rss);
     if (err) {
         pmod->errcode = err;
@@ -1788,7 +1817,8 @@ static void regress (MODEL *pmod, double *xpy,
 	pmod->rsq = pmod->adjrsq = NADBL;
     } 
 
-    hatvar(pmod, n, dset); 
+    hatvars(pmod, dset); 
+
     if (pmod->errcode) return;
 
     if (!(opt & OPT_B)) {
@@ -1937,6 +1967,7 @@ int makevcv (MODEL *pmod, double sigma)
 
 double dwstat (int order, MODEL *pmod, const DATASET *dset)
 {
+    const double *w = NULL;
     double ut, u1;
     double num = 0.0;
     double den = 0.0;
@@ -1949,6 +1980,7 @@ double dwstat (int order, MODEL *pmod, const DATASET *dset)
     t1 = pmod->t1 + order;
 
     if (pmod->nwt) {
+	w = dset->Z[pmod->nwt];
 	ut = pmod->uhat[t1 - 1];
 	if (!na(ut)) {
 	    den += ut * ut;
@@ -1961,8 +1993,7 @@ double dwstat (int order, MODEL *pmod, const DATASET *dset)
         ut = pmod->uhat[t];
         u1 = pmod->uhat[t-1];
         if (na(ut) || na(u1) ||
-	    (pmod->nwt && (dset->Z[pmod->nwt][t] == 0.0 || 
-			   dset->Z[pmod->nwt][t-1] == 0.0))) { 
+	    (w != NULL && (w[t] == 0.0 || w[t-1] == 0.0))) { 
 	    continue;
 	}
         num += (ut - u1) * (ut - u1);
@@ -1978,21 +2009,16 @@ double dwstat (int order, MODEL *pmod, const DATASET *dset)
 
 static double altrho (int order, int t1, int t2, const double *uhat)
 {
-    double *ut, *u1;    
     int t, n, len = t2 - (t1 + order) + 1;
+    double *ut, *u1;    
     double uht, uh1, rho;
 
-    ut = malloc(len * sizeof *ut);
+    ut = malloc(2 * len * sizeof *ut);
     if (ut == NULL) {
 	return NADBL;
     }
 
-    u1 = malloc(len * sizeof *u1);
-    if (u1 == NULL) {
-	free(ut);
-	return NADBL;
-    }
-
+    u1 = ut + len;
     n = 0;
 
     for (t=t1+order; t<=t2; t++) { 
@@ -2008,7 +2034,6 @@ static double altrho (int order, int t1, int t2, const double *uhat)
     rho = gretl_corr(0, n - 1, ut, u1, NULL);
 
     free(ut);
-    free(u1);
 
     return rho;
 }
@@ -2028,7 +2053,7 @@ static double altrho (int order, int t1, int t2, const double *uhat)
 
 double rhohat (int order, int t1, int t2, const double *uhat)
 {
-    double ut, u1, uu = 0.0, xx = 0.0;
+    double ut, u1, num = 0.0, den = 0.0;
     double rho;
     int t;
 
@@ -2038,56 +2063,22 @@ double rhohat (int order, int t1, int t2, const double *uhat)
         if (na(ut) || na(u1)) {
 	    continue;
 	}
-        uu += ut * u1;
-        xx += u1 * u1;
+        num += ut * u1;
+        den += u1 * u1;
     }
 
-    if (xx < DBL_EPSILON) {
+    if (den < DBL_EPSILON) {
 	return NADBL;
     }
 
-    rho = uu / xx;
+    rho = num / den;
 
     if (rho > 1.0 || rho < -1.0) {
+	/* out of bounds, try again */
 	rho = altrho(order, t1, t2, uhat);
     }
 
     return rho;
-}
-
-/* compute fitted values and residuals */
-
-static int hatvar (MODEL *pmod, int n, const DATASET *dset)
-{
-    int yno = pmod->list[1];
-    int xno, i, t;
-    double x;
-
-    for (t=0; t<n; t++) {
-	pmod->yhat[t] = pmod->uhat[t] = NADBL;
-    }
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (model_missing(pmod, t)) {
-	    continue;
-	}
-	pmod->yhat[t] = 0.0;
-        for (i=0; i<pmod->ncoeff; i++) {
-            xno = pmod->list[i+2];
-	    x = dset->Z[xno][t];
-	    if (pmod->nwt) {
-		x *= sqrt(dset->Z[pmod->nwt][t]);
-	    }
-            pmod->yhat[t] += pmod->coeff[i] * x;
-        }
-	x = dset->Z[yno][t];
-	if (pmod->nwt) {
-	    x *= sqrt(dset->Z[pmod->nwt][t]);
-	}
-        pmod->uhat[t] = x - pmod->yhat[t];
-    }
-
-    return 0;
 }
 
 static int hilu_plot (double *ssr, double *rho, int n)
@@ -2125,8 +2116,11 @@ static int hilu_plot (double *ssr, double *rho, int n)
 
 static double autores (MODEL *pmod, DATASET *dset, gretlopt opt)
 {
-    int t, i, v, t1 = pmod->t1;
-    double x, num = 0.0, den = 0.0;
+    double *uhat = pmod->uhat;
+    double ut, num = 0.0, den = 0.0;
+    int yno = pmod->list[1];
+    int t1 = pmod->t1;
+    int t, i, v;
 
     if (!(opt & OPT_P)) {
 	/* not using Prais-Winsten */
@@ -2134,33 +2128,30 @@ static double autores (MODEL *pmod, DATASET *dset, gretlopt opt)
     }
 
     for (t=t1; t<=pmod->t2; t++) {
-	v = pmod->list[1];
-	x = dset->Z[v][t];
+	ut = dset->Z[yno][t];
 	for (i=0; i<pmod->ncoeff; i++) {
 	    v = pmod->list[i+2];
-	    x -= pmod->coeff[i] * dset->Z[v][t];
+	    ut -= pmod->coeff[i] * dset->Z[v][t];
 	}
-	pmod->uhat[t] = x;
+	uhat[t] = ut;
 	if (t > t1) {
-	    num += pmod->uhat[t] * pmod->uhat[t-1];
-	    den += pmod->uhat[t-1] * pmod->uhat[t-1];
+	    num += uhat[t] * uhat[t-1];
+	    den += uhat[t-1] * uhat[t-1];
 	}
     }
 
     return num / den;
 }
 
-static int rho_val_ends_row (double r)
+static int rho_val_ends_row (int k)
 {
-    double endval = -0.8;
-    double slop = .0001;
-    int i;
+    int i, endval = -80; /* rho = -0.80 */
 
     for (i=0; i<7; i++) {
-	if (endval - slop < r && r < endval + slop) {
+	if (k == endval) {
 	    return 1;
 	}
-	endval += 0.3;
+	endval += 30;
     }
 
     return 0;
@@ -2171,21 +2162,23 @@ static void hilu_print_iter (double r, double ess, int iter,
 			     int *ip, int asciiplot,
 			     PRN *prn)
 {
-    char num[16];
-    int chk;
+    char num[8];
+    int k;
 		
-    sprintf(num, "%f", 100 * fabs(r));
-    chk = atoi(num);
+    sprintf(num, "%.1f", 100 * r);
+    k = atoi(num);
 
-    if (chk == 99 || chk % 10 == 0) {
-	/* we're not printing all 199 values */
+    /* we'll not print all 199 rho values */
+
+    if (k == -99 || k == 99 || k % 10 == 0) {
 	if (asciiplot) {
+	    /* recording a subset of values */
 	    ssr[*ip] = ess;
 	    rh[*ip] = r;
 	    *ip += 1;
 	}
 	pprintf(prn, " %5.2f %#12.6g", r, ess);
-	if (rho_val_ends_row(r)) {
+	if (rho_val_ends_row(k)) {
 	    pputc(prn, '\n');
 	} else {
 	    bufspace(3, prn);
@@ -2236,7 +2229,7 @@ static double hilu_search (const int *list, DATASET *dset,
 	hilu_header(prn);
     }
 
-    for (r = -0.990; r < 1.0; r += .01, iter++) {
+    for (r = -0.99; r < 1.0; r += .01, iter++) {
 	clear_model(pmod);
 
 	*pmod = ar1_lsq(list, dset, OLS, OPT_A, r);
@@ -2401,7 +2394,7 @@ static double estimate_rho (const int *list, DATASET *dset,
 	   via OPT_B)
 	*/
 	gretlopt lsqopt = pwe ? (OPT_A | OPT_P) : OPT_A;
-	double essdiff, edsmall = 5.0e-8;
+	double edsmall = 5.0e-8;
 	double ess0 = armod.ess;
 	double rho0 = rho;
 	double rdsmall = (opt & OPT_L)? 0.001 : 1.0e-6;
@@ -2433,18 +2426,15 @@ static double estimate_rho (const int *list, DATASET *dset,
 
 	    if (armod.ess == 0.0) {
 		converged = 1;
-	    } else {
-		essdiff = (ess0 - armod.ess) / ess0;
-		if (essdiff < edsmall) {
-		    converged = 1;
-		} else if (fabs(rho - rho0) < rdsmall) {
-		    converged = 1;
-		}
+	    } else if ((ess0 - armod.ess) / ess0 < edsmall) {
+		converged = 1;
+	    } else if (fabs(rho - rho0) < rdsmall) {
+		converged = 1;
 	    }
 
 	    ess0 = armod.ess;
 	    rho0 = rho;
-	}
+	} /* end Cochrane-Orcutt iteration */
 
 	if (converged && (rho >= 1.0 || rho <= -1.0)) {
 	    gretl_errmsg_sprintf(_("%s: rho = %g, error is unbounded"),
@@ -3610,8 +3600,11 @@ static int modelvar_iszero (const MODEL *pmod, const double *x)
 }
 
 /* From the position of the first regressor to end of list, omits
-   variables with all zero observations and re-packs the rest of
-   them */
+   variables with all-zero observations and repacks the rest of
+   them. If the regression in question is not just an auxiliary
+   one (OPT_A), records the list of dropped variables, if any,
+   on @pmod.
+*/
 
 static void omitzero (MODEL *pmod, const DATASET *dset,
 		      gretlopt opt)
@@ -3676,35 +3669,31 @@ static void omitzero (MODEL *pmod, const DATASET *dset,
 
 static int lagdepvar (const int *list, const DATASET *dset) 
 {
-    char depvar[VNAMELEN], othervar[VNAMELEN];
-    char *p;
+    const char *p, *yname, *xname;
+    int xno, yno = list[1];
     int i, t, ret = 0;
 
-    strcpy(depvar, dset->varname[list[1]]);
+    yname = dset->varname[yno];
 
-    for (i=2; i<=list[0]; i++) {
+    for (i=2; i<=list[0] && !ret; i++) {
 	if (list[i] == LISTSEP) {
 	    break;
 	}
-	strcpy(othervar, dset->varname[list[i]]);
-	p = strrchr(othervar, '_');
+	xno = list[i];	
+	xname = dset->varname[xno];
+	p = strrchr(xname, '_');
 	if (p != NULL && isdigit(*(p + 1))) {
-	    /* looks like a lag */
-	    size_t len = strlen(othervar) - strlen(p);
+	    /* this looks like a lag */
+	    size_t len = strlen(xname) - strlen(p);
 
-	    if (!strncmp(depvar, othervar, len)) {
-		int gotlag = 1;
-
+	    if (!strncmp(yname, xname, len)) {
 		/* strong candidate for lagged depvar, but make sure */
+		ret = i;
 		for (t=dset->t1+1; t<=dset->t2; t++) {
-		    if (dset->Z[list[1]][t-1] != dset->Z[list[i]][t]) {
-			gotlag = 0;
+		    if (dset->Z[yno][t-1] != dset->Z[xno][t]) {
+			ret = 0; /* nope */
 			break;
 		    }
-		}
-		if (gotlag) {
-		    ret = i;
-		    break;
 		}
 	    }
 	}
@@ -4218,8 +4207,8 @@ int get_x12a_maxpd (void)
 	    if (p != NULL) {
 		n = atoi(p + 6);
 	    }
+	    free(sout);
 	} 	
-	free(sout);
 	if (n <= 0) {
 	    n = 12;
 	}
