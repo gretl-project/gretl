@@ -21,10 +21,10 @@
 #include "gretl_typemap.h"
 
 struct type_map {
-    GretlType sing;
-    GretlType sref;
-    GretlType plural;
-    GretlType pref;
+    GretlType std;     /* a "standard" type: non-array, non-reference */
+    GretlType stdref;  /* the "reference" form of the standard type, if any */
+    GretlType plural;  /* the associated array type, if any */
+    GretlType plref;   /* reference form of array type, if any */
 };
 
 static struct type_map gretl_type_map[] = {
@@ -47,7 +47,7 @@ GretlType gretl_type_get_plural (GretlType type)
     if (type == 0) return 0;
 
     for (i=0; i<n; i++) {
-	if (type == gretl_type_map[i].sing) {
+	if (type == gretl_type_map[i].std) {
 	    return gretl_type_map[i].plural;
 	}
     }
@@ -63,7 +63,7 @@ GretlType gretl_type_get_singular (GretlType type)
 
     for (i=0; i<n; i++) {
 	if (type == gretl_type_map[i].plural) {
-	    return gretl_type_map[i].sing;
+	    return gretl_type_map[i].std;
 	}
     }
 
@@ -77,15 +77,15 @@ GretlType gretl_type_get_ref_type (GretlType type)
     if (type == 0) return 0;
 
     for (i=0; i<n; i++) {
-	if (type == gretl_type_map[i].sing) {
-	    return gretl_type_map[i].sref;
+	if (type == gretl_type_map[i].std) {
+	    return gretl_type_map[i].stdref;
 	}
 	if (type == gretl_type_map[i].plural) {
-	    return gretl_type_map[i].pref;
+	    return gretl_type_map[i].plref;
 	}
-	if (type == gretl_type_map[i].sref ||
-	    type == gretl_type_map[i].pref) {
-	    /* allow no-op */
+	if (type == gretl_type_map[i].stdref ||
+	    type == gretl_type_map[i].plref) {
+	    /* allow pass-through */
 	    return type;
 	}	
     }
@@ -100,15 +100,15 @@ GretlType gretl_type_get_plain_type (GretlType type)
     if (type == 0) return 0;
 
     for (i=0; i<n; i++) {
-	if (type == gretl_type_map[i].sref) {
-	    return gretl_type_map[i].sing;
+	if (type == gretl_type_map[i].stdref) {
+	    return gretl_type_map[i].std;
 	}
-	if (type == gretl_type_map[i].pref) {
+	if (type == gretl_type_map[i].plref) {
 	    return gretl_type_map[i].plural;
 	}
-	if (type == gretl_type_map[i].sing ||
+	if (type == gretl_type_map[i].std ||
 	    type == gretl_type_map[i].plural) {
-	    /* allow no-op */
+	    /* allow pass-through */
 	    return type;
 	}   
     }

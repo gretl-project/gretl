@@ -660,7 +660,7 @@ static double bs_F_test (const gretl_matrix *b,
     return test;
 }
 
-#if 0
+#if 0 /* mot used */
 
 static char *squarable_cols_mask (const gretl_matrix *X, int *n)
 {
@@ -789,7 +789,7 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
     return err;
 }
 
-#endif
+#endif /* not used */
 
 static void print_test_round (boot *bs, int i, double test, PRN *prn)
 {
