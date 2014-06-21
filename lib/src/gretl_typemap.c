@@ -161,42 +161,82 @@ const char *gretl_type_get_name (GretlType type)
 
 GretlType gretl_type_from_string (const char *s)
 {
-    if (!strcmp(s, "bool"))     return GRETL_TYPE_BOOL;
-    if (!strcmp(s, "boolean"))  return GRETL_TYPE_BOOL;
-    if (!strcmp(s, "int"))      return GRETL_TYPE_INT;
-    if (!strcmp(s, "obs"))      return GRETL_TYPE_OBS;
-    if (!strcmp(s, "scalar"))   return GRETL_TYPE_DOUBLE;
-    if (!strcmp(s, "series"))   return GRETL_TYPE_SERIES;
-    if (!strcmp(s, "matrix"))   return GRETL_TYPE_MATRIX;
-    if (!strcmp(s, "list"))     return GRETL_TYPE_LIST;
-    if (!strcmp(s, "string"))   return GRETL_TYPE_STRING;
-    if (!strcmp(s, "bundle"))   return GRETL_TYPE_BUNDLE;
-    if (!strcmp(s, "array"))    return GRETL_TYPE_ARRAY;
+    const char *p;
 
-    if (!strcmp(s, "scalar *"))  return GRETL_TYPE_SCALAR_REF;
-    if (!strcmp(s, "series *"))  return GRETL_TYPE_SERIES_REF;
-    if (!strcmp(s, "matrix *"))  return GRETL_TYPE_MATRIX_REF;
-    if (!strcmp(s, "bundle *"))  return GRETL_TYPE_BUNDLE_REF;
-
-    if (!strcmp(s, "scalarref"))  return GRETL_TYPE_SCALAR_REF;
-    if (!strcmp(s, "seriesref"))  return GRETL_TYPE_SERIES_REF;
-    if (!strcmp(s, "matrixref"))  return GRETL_TYPE_MATRIX_REF;
-    if (!strcmp(s, "bundleref"))  return GRETL_TYPE_BUNDLE_REF;
-
-    if (!strcmp(s, "strings"))   return GRETL_TYPE_STRINGS;
-    if (!strcmp(s, "matrices"))  return GRETL_TYPE_MATRICES;
-    if (!strcmp(s, "bundles"))   return GRETL_TYPE_BUNDLES;
-    if (!strcmp(s, "lists"))     return GRETL_TYPE_LISTS;
-
-    if (!strcmp(s, "strings *"))   return GRETL_TYPE_STRINGS_REF;
-    if (!strcmp(s, "matrices *"))  return GRETL_TYPE_MATRICES_REF;
-    if (!strcmp(s, "bundles *"))   return GRETL_TYPE_BUNDLES_REF;
-    if (!strcmp(s, "lists *"))     return GRETL_TYPE_LISTS_REF;
-
-    if (!strcmp(s, "stringsref"))  return GRETL_TYPE_STRINGS_REF;
-    if (!strcmp(s, "matricesref")) return GRETL_TYPE_MATRICES_REF;
-    if (!strcmp(s, "bundlesref"))  return GRETL_TYPE_BUNDLES_REF;
-    if (!strcmp(s, "listsref"))    return GRETL_TYPE_LISTS_REF;
+    if (!strncmp(s, "matrix", 6)) {
+	p = s + 6;
+	if (*p == '\0') {
+	    return GRETL_TYPE_MATRIX;
+	} else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
+	    return GRETL_TYPE_MATRIX_REF;
+	}
+    } else if (!strncmp(s, "series", 6)) {
+	p = s + 6;
+	if (*p == '\0') {
+	    return GRETL_TYPE_SERIES;
+	} else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
+	    return GRETL_TYPE_SERIES_REF;
+	}
+    } else if (!strncmp(s, "scalar", 6)) {	
+	p = s + 6;
+	if (*p == '\0') {
+	    return GRETL_TYPE_DOUBLE;
+	} else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
+	    return GRETL_TYPE_SCALAR_REF;
+	}
+    } else if (!strncmp(s, "bundle", 6)) {
+	p = s + 6;
+	if (*p == 's') {
+	    p++;
+	    if (*p == '\0') {
+		return GRETL_TYPE_BUNDLES;
+	    } else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
+		return GRETL_TYPE_BUNDLES_REF;
+	    }
+	} else if (*p == '\0') {
+	    return GRETL_TYPE_BUNDLE;
+	} else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
+	    return GRETL_TYPE_BUNDLE_REF;
+	}
+    } else if (!strncmp(s, "string", 6)) {
+	p = s + 6;
+	if (*p == 's') {
+	    p++;
+	    if (*p == '\0') {
+		return GRETL_TYPE_STRINGS;
+	    } else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
+		return GRETL_TYPE_STRINGS_REF;
+	    }
+	} else if (*p == '\0') {
+	    return GRETL_TYPE_STRINGS;
+	}
+    } else if (!strncmp(s, "matrices", 8)) {
+	p = s + 8;
+	if (*p == '\0') {
+	    return GRETL_TYPE_MATRICES;
+	} else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
+	    return GRETL_TYPE_MATRICES_REF;
+	}
+    } else if (!strncmp(s, "list", 4)) {
+	p = s + 4;
+	if (*p == 's') {
+	    p++;
+	    if (*p == '\0') {
+		return GRETL_TYPE_LISTS;
+	    } else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
+		return GRETL_TYPE_LISTS_REF;
+	    }
+	} else if (*p == '\0') {
+	    return GRETL_TYPE_LIST;
+	}
+    } else {
+	/* aliases */
+	if (!strcmp(s, "bool"))     return GRETL_TYPE_BOOL;
+	if (!strcmp(s, "boolean"))  return GRETL_TYPE_BOOL;
+	if (!strcmp(s, "int"))      return GRETL_TYPE_INT;
+	if (!strcmp(s, "obs"))      return GRETL_TYPE_OBS;
+	if (!strcmp(s, "array"))    return GRETL_TYPE_ARRAY;
+    }
 
     return 0;
 }

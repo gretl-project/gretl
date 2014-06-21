@@ -66,6 +66,8 @@ struct str_table dummies[] = {
     { 0,        NULL }
 };
 
+/* dvars: dataset-related accessors */
+
 struct str_table dvars[] = {
     { R_NOBS,      "$nobs" },
     { R_NVARS,     "$nvars" },
@@ -93,6 +95,8 @@ struct str_table dvars[] = {
     { R_HUGE,      "$huge" },
     { 0,           NULL },
 };
+
+/* mvars: model-related accessors */
 
 struct str_table mvars[] = {
     { M_ESS,     "$ess" },

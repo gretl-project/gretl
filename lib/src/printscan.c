@@ -555,41 +555,20 @@ static int print_arg (const char **pfmt, const char **pargs,
 
 static int handle_sprintf_output (const char *targ,
 				  const char *buf,
-				  size_t buflen,
 				  PRN *prn)
 {
-    int hasquote = double_quote_position(buf) >= 0;
-    size_t lhslen = strlen(targ);
-    char *tmp = NULL;
+    char *tmp = malloc(strlen(targ) + 8);
     int err = 0;
-
-    if (hasquote) {
-	/* the string we want to set contains a double-quote
-	   character, so we'll have to pass it to "genr" as
-	   a string variable, not literally 
-	*/
-	gretl_insert_builtin_string("pstmp", buf);
-	tmp = malloc(lhslen + 8);
-    } else {
-	tmp = malloc(lhslen + buflen + 4);
-    }
 
     if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
-	if (hasquote) {
-	    sprintf(tmp, "%s=$pstmp", targ);
-	} else {
-	    sprintf(tmp, "%s=\"%s\"", targ, buf);
-	}
+	gretl_insert_builtin_string("pstmp", buf);
+	sprintf(tmp, "%s=$pstmp", targ);
 	err = generate(tmp, NULL, OPT_NONE, prn);
 	free(tmp);
-    }
-
-    if (hasquote) {
-	/* destroy temporary built-in */
 	gretl_insert_builtin_string("pstmp", NULL);
-    }
+    }    
 
     return err;
 }
@@ -650,15 +629,14 @@ static int real_do_printf (const char *targ, const char *format,
 
     if (!err) {
 	const char *buf = gretl_print_get_buffer(prn);
-	size_t buflen = strlen(buf);
 
 	if (nchars != NULL) {
-	    *nchars = buflen;
+	    *nchars = strlen(buf);
 	}
 
 	if (ci == SPRINTF) {
 	    /* sprintf: output to a string variable */
-	    handle_sprintf_output(targ, buf, buflen, prn);
+	    handle_sprintf_output(targ, buf, prn);
 	} else {
 	    /* plain printf: output to @inprn */
 	    pputs(inprn, buf);
