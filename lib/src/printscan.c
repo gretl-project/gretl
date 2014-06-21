@@ -472,7 +472,7 @@ static int print_arg (const char **pfmt, const char **pargs,
     if (!err && fc == 'v' && m == NULL) {
 	/* 'v' for variant is for matrices only */
 	err = E_PARSE;
-    }	
+    }
 
     if (err) {
 	goto bailout;
@@ -543,8 +543,19 @@ static int print_arg (const char **pfmt, const char **pargs,
     } else if (free_v) {
 	dataset_drop_last_variables(dset, 1);
     }
+
+#if PSDEBUG
+    fprintf(stderr, "print_arg: returning %d\n", err);
+#endif	
     
     return err;
+}
+
+static int ok_uvar_type (user_var *uvar)
+{
+    GretlType type = user_var_get_type(uvar);
+
+    return type == GRETL_TYPE_STRING;
 }
 
 static user_var *get_stringvar_target (const char *targ, 
@@ -558,8 +569,7 @@ static user_var *get_stringvar_target (const char *targ,
 	*err = E_PARSE;
     } else {
 	uvar = get_user_var_by_name(targ);
-	if (uvar != NULL && 
-	    user_var_get_type(uvar) != GRETL_TYPE_STRING) {
+	if (uvar != NULL && !ok_uvar_type(uvar)) {
 	    *err = E_TYPES;
 	    return NULL;
 	}
@@ -589,30 +599,20 @@ static int real_do_printf (const char *targ, const char *format,
 			   PRN *inprn, int *nchars, int t)
 {
     PRN *prn = NULL;
-    user_var *uvar = NULL;
-    int sp, err = 0;
+    int sp = (targ != NULL);
+    int err = 0;
 
     gretl_error_clear();
 
 #if PSDEBUG
-    fprintf(stderr, "do_printf:\n");
+    fprintf(stderr, "real_do_printf:\n");
     fprintf(stderr, " targ = '%s'\n", targ);
     fprintf(stderr, " format = '%s'\n", format);
     fprintf(stderr, " args = '%s'\n", args);
 #endif
 
-    sp = targ != NULL;
-
-    if (sp) {
-	/* sprintf: we need a target string variable */
-	uvar = get_stringvar_target(targ, dset, inprn, &err);
-	if (err) {
-	    return err;
-	}
-    }
-
-    /* Even for printf we'll buffer the output locally in 
-       case there's an error part way through the printing.
+    /* We'll buffer the output locally in case there's an
+       error part-way through the printing.
     */
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
     if (err) {
@@ -639,27 +639,35 @@ static int real_do_printf (const char *targ, const char *format,
 	}
 
 	if (q != NULL && *q != '\0') {
-	    pprintf(prn, "\nunmatched argument '%s'", q);
+	    pprintf(inprn, "\n%s: ", sp ? "sprintf" : "printf");
+	    pprintf(inprn, _("unprocessed argument(s): '%s'"), q);
 	    err = E_PARSE;
 	}
     }
 
     if (!err) {
 	const char *buf = gretl_print_get_buffer(prn);
+	size_t buflen = strlen(buf);
 
 	if (nchars != NULL) {
-	    *nchars = strlen(buf);
+	    *nchars = buflen;
 	}
 
 	if (sp) {
-	    char *tmp = gretl_strdup(buf);
+	    /* sprintf: output going to a string variable */
+	    size_t targlen = strlen(targ);
+	    char *genline;
 
-	    if (tmp == NULL) {
+	    genline = malloc(targlen + buflen + 4);
+	    if (genline == NULL) {
 		err = E_ALLOC;
 	    } else {
-		user_var_replace_value(uvar, tmp);
+		sprintf(genline, "%s=\"%s\"", targ, buf);
+		err = generate(genline, dset, OPT_NONE, prn);
+		free(genline);
 	    }
 	} else {
+	    /* plain printf: just output to @inprn */
 	    pputs(inprn, buf);
 	}
     } else if (!sp) {
@@ -1169,6 +1177,8 @@ static char *formulate_sprintf_call (const char *s, int *err)
     int n = gretl_namechar_spn(s);
 
     /* @s should look something like 'myvar "%g", x' */
+
+    fprintf(stderr, "sprintf: '%s'\n", s);
     
     if (n == 0 || n >= VNAMELEN) {
 	*err = E_PARSE;
@@ -1178,6 +1188,9 @@ static char *formulate_sprintf_call (const char *s, int *err)
 
 	strncat(vname, s, n);
 	s += n;
+	if (*s == '[') {
+	    fprintf(stderr, "sprintf: dealing with array member?\n");
+	}
 	call = calloc(m, 1);
 	if (call == NULL) {
 	    *err = E_ALLOC;
@@ -1212,6 +1225,18 @@ static char *formulate_sprintf_call (const char *s, int *err)
 #define USE_COMMAND_FORM 1
 
 #if USE_COMMAND_FORM
+
+static int detect_str_array_element (const char *s, char *targ)
+{
+    const char *p = strchr(s, ' ');
+    
+    if (p != NULL && *(p-1) == ']') {
+	strncat(targ, s, p - s);
+	return 1;
+    }
+
+    return 0;
+}
 
 /* split line into format and args, copying both parts */
 
@@ -1253,6 +1278,12 @@ static int split_printf_line (const char *s, char *targ, int *sp,
     }
 
     s += strspn(s, " ");
+
+    if (*s == '[' && detect_str_array_element(s, targ)) {
+	s += strcspn(s, " ");
+	s += strspn(s, " ");
+    }
+
     if (*s != '"') {
 	return E_PARSE;
     }
@@ -1300,10 +1331,15 @@ static int printf_driver (const char *line, DATASET *dset, PRN *prn)
 {
     char *format = NULL;
     char *args = NULL;
-    char targ[VNAMELEN];
+    char targ[VNAMELEN + 8];
     int err, sp = 0;
 
     err = split_printf_line(line, targ, &sp, &format, &args);
+
+#if PSDEBUG
+    fprintf(stderr, "printf_driver, after split line: targ='%s', err=%d\n", 
+	    targ, err);
+#endif
 
     if (!err) {
 	char *vname = sp ? targ : NULL;
