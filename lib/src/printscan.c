@@ -27,6 +27,7 @@
 
 #include <errno.h>
 
+#define SPRINTF_TARGLEN 64
 #define PSDEBUG 0
 
 /* For the point of "x *= (1 + 0x1p-52)" below, see
@@ -1226,13 +1227,18 @@ static char *formulate_sprintf_call (const char *s, int *err)
 
 #if USE_COMMAND_FORM
 
-static int detect_str_array_element (const char *s, char *targ)
+static int get_array_index (const char *s, char *targ)
 {
     const char *p = strchr(s, ' ');
     
     if (p != NULL && *(p-1) == ']') {
-	strncat(targ, s, p - s);
-	return 1;
+	size_t n = strlen(targ) + (p - s) + 1;
+
+	if (n < SPRINTF_TARGLEN) {
+	    /* let's not overflow @targ */
+	    strncat(targ, s, p - s);
+	    return 1;
+	}
     }
 
     return 0;
@@ -1260,31 +1266,38 @@ static int split_printf_line (const char *s, char *targ, int *sp,
 #endif
 
     if (*sp) {
-	/* need a target name */
+	/* sprintf: we need a "target": this should be the name
+	   of an existing string variable, an unused name that
+	   can be given to a new string variable, or perhaps a
+	   string indicating an element of an array of strings,
+	   such as "S[4]" or a more complex variant thereof.
+	   We start by looking for a legit variable name, and
+	   then allow appending an [...] index expression.
+	*/
 	s += strspn(s, " ");
 	err = extract_varname(targ, s, &n);
-	if (!err && n == 0) {
-	    err = E_PARSE;
-	}
-	if (err) {
-	    return err;
+	if (err || n == 0) {
+	    return E_PARSE;
 	}
 	s += n;
-	/* allow comma after target */
+	/* allow for attached [...] */
+	if (*s == '[' && get_array_index(s, targ)) {
+	    s += strcspn(s, " ");
+	}	
+	/* allow (not required) comma after target */
 	s += strspn(s, " ");
 	if (*s == ',') {
 	    s++;
 	}
     }
 
+    /* skip white space */
     s += strspn(s, " ");
 
-    if (*s == '[' && detect_str_array_element(s, targ)) {
-	s += strcspn(s, " ");
-	s += strspn(s, " ");
-    }
-
     if (*s != '"') {
+	/* We should now find a format, in string literal form,
+	   or maybe (FIXME) accept a string variable/expression?
+	*/
 	return E_PARSE;
     }
 
@@ -1327,11 +1340,13 @@ static int split_printf_line (const char *s, char *targ, int *sp,
     return 0;
 }
 
+/* note: still in USE_COMMAND_FORM context */
+
 static int printf_driver (const char *line, DATASET *dset, PRN *prn)
 {
     char *format = NULL;
     char *args = NULL;
-    char targ[VNAMELEN + 8];
+    char targ[SPRINTF_TARGLEN];
     int err, sp = 0;
 
     err = split_printf_line(line, targ, &sp, &format, &args);
