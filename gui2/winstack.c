@@ -614,6 +614,11 @@ gboolean window_list_exit_check (void)
 			     r == VIEW_LOG ||		\
 			     r == VIEW_SCRIPT ||	\
 	                     r == TEXTBOOK_DATA ||	\
+			     r == PS_FILES ||		\
+			     r == NATIVE_DB ||		\
+			     r == REMOTE_DB ||		\
+			     r == FUNC_FILES ||		\
+			     r == REMOTE_FUNC_FILES ||	\
 			     r == CONSOLE)
 
 
