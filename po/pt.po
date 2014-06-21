@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-06-21 12:58-0400\n"
-"PO-Revision-Date: 2014-06-02 02:02+0100\n"
+"PO-Revision-Date: 2014-06-21 19:59+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -2088,7 +2088,7 @@ msgid "ESS"
 msgstr "ESS"
 
 #: lib/src/estimate.c:2294
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
@@ -2127,12 +2127,12 @@ msgstr "                 ITER       RHO        ESS"
 #: lib/src/estimate.c:2328
 #, c-format
 msgid "Prais-Winsten: invalid rho value %g (explosive error)"
-msgstr ""
+msgstr "Prais-Winsten: valor inválido para rho %g (erro explosivo)"
 
 #: lib/src/estimate.c:2440
 #, c-format
 msgid "%s: rho = %g, error is unbounded"
-msgstr ""
+msgstr "%s: rho = %g, o erro é ilimitado"
 
 #: lib/src/estimate.c:2883 lib/src/gretl_model.c:3464 lib/src/modelprint.c:785
 msgid "Pesaran-Taylor test for heteroskedasticity"
@@ -2254,9 +2254,8 @@ msgstr ""
 "parâmetros para a função %s (%d)"
 
 #: lib/src/geneval.c:8946
-#, fuzzy
 msgid "array: no type was specified"
-msgstr "%s: não foi especificado um sistema"
+msgstr "array: não foi especificado um tipo"
 
 #: lib/src/geneval.c:9727
 #, c-format
@@ -2320,9 +2319,9 @@ msgid "Unmatched '%c'\n"
 msgstr "'%c' sem par\n"
 
 #: lib/src/geneval.c:12040
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is of type %s, not acceptable in context"
-msgstr "A variável %s é do tipo %s"
+msgstr "A variável %s é do tipo %s, não aceitável no contexto"
 
 #: lib/src/geneval.c:12212
 #, c-format
@@ -2345,9 +2344,9 @@ msgid "'%s' : not implemented for strings"
 msgstr "'%s' : não está implementado para cadeias de texto"
 
 #: lib/src/geneval.c:12349
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' : not implemented for arrays"
-msgstr "'%s' : não está implementado para matrizes"
+msgstr "'%s' : não está implementado para arrays"
 
 #: lib/src/geneval.c:12356 lib/src/geneval.c:12370
 #, c-format
@@ -2923,7 +2922,7 @@ msgstr "com ajuste de mínimos quadrados"
 #: lib/src/gretl_array.c:699
 #, c-format
 msgid "Array of %s, length %d\n"
-msgstr ""
+msgstr "Array de %s, comprimento %d\n"
 
 #: lib/src/gretl_bfgs.c:401 lib/src/gretl_bfgs.c:440
 msgid "Failed to compute numerical Hessian"
@@ -3197,14 +3196,12 @@ msgid "MPI is already initialized"
 msgstr "MPI já está inicializado"
 
 #: lib/src/gretl_func.c:1323
-#, fuzzy
 msgid "Missing function return type"
-msgstr "gretl: referência de função"
+msgstr "Falta o tipo de retorno da função"
 
 #: lib/src/gretl_func.c:1327
-#, fuzzy
 msgid "Invalid return type for function"
-msgstr "Argumento inválido para a função"
+msgstr "Valor de retorno inválido para a função"
 
 #: lib/src/gretl_func.c:2335 lib/src/gretl_func.c:2395
 #: lib/src/gretl_func.c:2471 lib/src/gretl_utils.c:1639
@@ -5734,7 +5731,7 @@ msgstr "Atingido o máximo de iterações, %d"
 
 #: lib/src/monte_carlo.c:1317
 msgid "You can use \"set loop_maxiter\" to increase the limit"
-msgstr ""
+msgstr "Você pode usar \"set loop maxiter\" para aumentar o limite"
 
 #: lib/src/monte_carlo.c:1933
 msgid "progressive loop: model must be of constant size"
@@ -6532,7 +6529,7 @@ msgstr "norma"
 #: lib/src/printscan.c:646
 #, c-format
 msgid "unprocessed argument(s): '%s'"
-msgstr ""
+msgstr "argumento(s) não processado(s): '%s'"
 
 #: lib/src/printscan.c:875
 #, c-format
@@ -7462,13 +7459,13 @@ msgstr ""
 " -s ou --single-rng  Usar um único RNG, e não um por processo.\n"
 
 #: cli/gretlcli-mpi.c:154
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "gretlmpi: error executing script: halting\n"
 msgstr ""
 "\n"
-"gretlcli-mpi: erro ao executar sequência de comandos: terminando\n"
+"gretlmpi: erro ao executar sequência de comandos: terminando\n"
 
 #: gui2/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -7486,7 +7483,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 2 de junho de 2014."
+"Tradução de 21 de junho de 2014."
 
 #: gui2/about.c:203
 msgid "News"
@@ -12178,22 +12175,20 @@ msgid "Couldn't open temp file"
 msgstr "Não se conseguiu abrir ficheiro temporário"
 
 #: gui2/gui_utils.c:915
-#, fuzzy
 msgid "Leave the dataset as it is"
-msgstr "Gravar para conjunto de dados:"
+msgstr "Deixar o conjunto de dados como está"
 
 #: gui2/gui_utils.c:916 gui2/gui_utils.c:928
 msgid "Delete the weekend rows"
-msgstr ""
+msgstr "Apagar as linhas de fim-de-semana"
 
 #: gui2/gui_utils.c:917
-#, fuzzy
 msgid "Delete all blank rows"
-msgstr "Eliminou-se o escalar %s"
+msgstr "Apagar todas as linhas vazias"
 
 #: gui2/gui_utils.c:929
 msgid "Delete blank weekday rows"
-msgstr ""
+msgstr "Apagar as linhas da semana vazias"
 
 #: gui2/gui_utils.c:979 gui2/gui_utils.c:1240 gui2/library.c:7365
 msgid "gretl: open data"
@@ -12247,9 +12242,9 @@ msgid "gretl: untitled"
 msgstr "gretl: sem nome"
 
 #: gui2/gui_utils.c:1620
-#, fuzzy, c-format
+#, c-format
 msgid "gretl: script output %d"
-msgstr "gretl: saída da sequência de comandos"
+msgstr "gretl: saída da sequência de comandos %d"
 
 #: gui2/gui_utils.c:1622 gui2/gui_utils.c:5081 gui2/gui_utils.c:5232
 msgid "gretl: script output"
@@ -12563,9 +12558,8 @@ msgid "to %s"
 msgstr "para %s"
 
 #: gui2/gui_utils.c:4673
-#, fuzzy
 msgid "_Save text..."
-msgstr "_Guardar texto como..."
+msgstr "_Guardar texto..."
 
 #: gui2/gui_utils.c:4680
 msgid "Save bundle to session as _icon"
@@ -12942,9 +12936,8 @@ msgid "Make this permanent"
 msgstr "Tornar isto permanente"
 
 #: gui2/library.c:1599
-#, fuzzy
 msgid "Drop observations with missing values"
-msgstr "Descartar observações com valores o_missos..."
+msgstr "Descartar observações com valores omissos"
 
 #: gui2/library.c:1631
 msgid "Show count of missing values at each observation"
@@ -14638,9 +14631,8 @@ msgid "Arrange icons"
 msgstr "Organizar ícones"
 
 #: gui2/session.c:151 gui2/session.c:3210
-#, fuzzy
 msgid "Add matrix..."
-msgstr "Acrescentar como matriz..."
+msgstr "Acrescentar matriz..."
 
 #: gui2/session.c:153 gui2/session.c:3214
 msgid "Close window"
@@ -15525,23 +15517,20 @@ msgid "Saved matrix as %s"
 msgstr "Matriz gravada como %s"
 
 #: gui2/toolbar.c:568
-#, fuzzy
 msgid "Always goes to a new window"
-msgstr "Mover para uma nova janela"
+msgstr "Vai sempre para uma nova janela"
 
 #: gui2/toolbar.c:569
-#, fuzzy
 msgid "Replaces output in this window"
-msgstr "Substituir as funções mostradas"
+msgstr "Substitui a saída nesta janela"
 
 #: gui2/toolbar.c:570
 msgid "Adds to output in this window"
-msgstr ""
+msgstr "Acrescenta à saída nesta janela"
 
 #: gui2/toolbar.c:572
-#, fuzzy
 msgid "New script output:"
-msgstr "gretl: saída da sequência de comandos"
+msgstr "Nova saída da sequência de comandos:"
 
 #: gui2/toolbar.c:662
 msgid "New window"
@@ -15556,9 +15545,8 @@ msgid "Save as..."
 msgstr "Gravar como..."
 
 #: gui2/toolbar.c:666
-#, fuzzy
 msgid "Save bundle content..."
-msgstr "Guardar \"bundle\" como ícone e sair (_o)"
+msgstr "Guardar conteúdo do \"bundle\"..."
 
 #: gui2/toolbar.c:668
 msgid "Show/hide"
