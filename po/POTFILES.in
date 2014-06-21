@@ -22,6 +22,7 @@ lib/src/genmain.c
 lib/src/gensyntax.c
 lib/src/gmm.c
 lib/src/graphing.c
+lib/src/gretl_array.c
 lib/src/gretl_bfgs.c
 lib/src/gretl_bundle.c
 lib/src/gretl_commands.c
@@ -41,6 +42,7 @@ lib/src/gretl_paths.c
 lib/src/gretl_prn.c
 lib/src/gretl_restrict.c
 lib/src/gretl_string_table.c
+lib/src/gretl_typemap.c
 lib/src/gretl_untar.c
 lib/src/gretl_utils.c
 lib/src/gretl_win32.c
@@ -165,6 +167,7 @@ plugin/jalpha.c
 plugin/jmulti_import.c
 plugin/johansen.c
 plugin/jrestrict.c
+plugin/json_get.c
 plugin/kernel.c
 plugin/leverage.c
 plugin/liml.c

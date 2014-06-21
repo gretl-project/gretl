@@ -1320,7 +1320,7 @@ static GretlType return_type_from_string (const char *s,
     }
 
     if (t == 0) {
-	gretl_errmsg_set(_("Missing return type"));
+	gretl_errmsg_set(_("Missing function return type"));
 	*err = E_PARSE;
     } else {
 	if (!ok_function_return_type(t)) {
