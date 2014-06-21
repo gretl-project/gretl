@@ -23,6 +23,7 @@
 #include "libset.h"
 #include "gretl_func.h"
 #include "matrix_extra.h"
+#include "gretl_string_table.h"
 #include "uservar.h"
 
 #include <errno.h>
@@ -552,14 +553,55 @@ static int print_arg (const char **pfmt, const char **pargs,
     return err;
 }
 
+static int handle_sprintf_output (const char *targ,
+				  const char *buf,
+				  size_t buflen,
+				  PRN *prn)
+{
+    int hasquote = double_quote_position(buf) >= 0;
+    size_t lhslen = strlen(targ);
+    char *tmp = NULL;
+    int err = 0;
+
+    if (hasquote) {
+	/* the string we want to set contains a double-quote
+	   character, so we'll have to pass it to "genr" as
+	   a string variable, not literally 
+	*/
+	gretl_insert_builtin_string("pstmp", buf);
+	tmp = malloc(lhslen + 8);
+    } else {
+	tmp = malloc(lhslen + buflen + 4);
+    }
+
+    if (tmp == NULL) {
+	err = E_ALLOC;
+    } else {
+	if (hasquote) {
+	    sprintf(tmp, "%s=$pstmp", targ);
+	} else {
+	    sprintf(tmp, "%s=\"%s\"", targ, buf);
+	}
+	err = generate(tmp, NULL, OPT_NONE, prn);
+	free(tmp);
+    }
+
+    if (hasquote) {
+	/* destroy temporary built-in */
+	gretl_insert_builtin_string("pstmp", NULL);
+    }
+
+    return err;
+}
+
 /* supports both printf and sprintf */
 
 static int real_do_printf (const char *targ, const char *format,
 			   const char *args, DATASET *dset, 
 			   PRN *inprn, int *nchars, int t)
 {
+    int ci = (targ != NULL) ? SPRINTF : PRINTF;
     PRN *prn = NULL;
-    int sp = (targ != NULL);
     int err = 0;
 
     gretl_error_clear();
@@ -571,8 +613,9 @@ static int real_do_printf (const char *targ, const char *format,
     fprintf(stderr, " args = '%s'\n", args);
 #endif
 
-    /* We'll buffer the output locally in case there's an
-       error part-way through the printing.
+    /* Even when doing printf, we'll buffer the output
+       locally in case there's an error part-way through
+       the printing.
     */
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
     if (err) {
@@ -599,7 +642,7 @@ static int real_do_printf (const char *targ, const char *format,
 	}
 
 	if (q != NULL && *q != '\0') {
-	    pprintf(inprn, "\n%s: ", sp ? "sprintf" : "printf");
+	    pprintf(inprn, "\n%s: ", gretl_command_word(ci));
 	    pprintf(inprn, _("unprocessed argument(s): '%s'"), q);
 	    err = E_PARSE;
 	}
@@ -613,24 +656,14 @@ static int real_do_printf (const char *targ, const char *format,
 	    *nchars = buflen;
 	}
 
-	if (sp) {
+	if (ci == SPRINTF) {
 	    /* sprintf: output to a string variable */
-	    size_t lhslen = strlen(targ);
-	    char *genline;
-
-	    genline = malloc(lhslen + buflen + 4);
-	    if (genline == NULL) {
-		err = E_ALLOC;
-	    } else {
-		sprintf(genline, "%s=\"%s\"", targ, buf);
-		err = generate(genline, dset, OPT_NONE, prn);
-		free(genline);
-	    }
+	    handle_sprintf_output(targ, buf, buflen, prn);
 	} else {
 	    /* plain printf: output to @inprn */
 	    pputs(inprn, buf);
 	}
-    } else if (!sp) {
+    } else if (ci == PRINTF) {
 	pputc(inprn, '\n');
     }
 
@@ -1149,12 +1182,44 @@ static int get_array_index (const char *s, char *targ)
     return 0;
 }
 
-/* split line into format and args, copying both parts */
+static int get_printf_format (const char **ps, char **format)
+{
+    const char *s = *ps;
+    int n, err = 0;
+
+    if (*s != '"') {
+	/* At present we insist that the format is a string literal:
+	   FIXME accept a string variable/expression?
+	*/
+	return E_PARSE;
+    }
+
+    s++;
+    n = double_quote_position(s);
+
+    if (n < 0) {
+	/* malformed format string */
+	err = E_PARSE;
+    } else if (n > 0) {
+	/* non-empty format */
+	*format = gretl_strndup(s, n);
+	if (*format == NULL) {
+	    err = E_ALLOC;
+	}
+	s += n;
+    }
+
+    /* advance pointer if needed */
+    *ps = s;
+
+    return err;
+}
+
+/* split @s into format and args, copying both parts */
 
 static int split_printf_line (const char *s, char *targ, int ci,
 			      char **format, char **args)
 {
-    const char *p;
     int n, err = 0;
 
     if (ci == SPRINTF) {
@@ -1175,39 +1240,19 @@ static int split_printf_line (const char *s, char *targ, int ci,
 	if (*s == '[' && get_array_index(s, targ)) {
 	    s += strcspn(s, " ");
 	}	
-	/* allow (not required) comma after target */
+	/* allow (not required) comma after target,
+	   and skip white space */
 	s += strspn(s, " ");
 	if (*s == ',') {
 	    s++;
+	    s += strspn(s, " ");
 	}
-	/* skip white space */
-	s += strspn(s, " ");
     }
 
-    if (*s != '"') {
-	/* We should now find a format, in string literal form,
-	   or maybe (FIXME) accept a string variable/expression?
-	*/
-	return E_PARSE;
-    }
-
-    s++;
-    p = s;
-    n = double_quote_position(s);
-
-    if (n < 0) {
-	/* malformed format string */
-	return E_PARSE;
-    } else if (n == 0) {
-	/* empty format string */
-	return 0;
-    }
-
-    s += n;
-
-    *format = gretl_strndup(p, n);
-    if (*format == NULL) {
-	return E_ALLOC;
+    /* We should now find a format string */
+    err = get_printf_format(&s, format);
+    if (err) {
+	return err;
     }
 
     s++;
@@ -1216,22 +1261,20 @@ static int split_printf_line (const char *s, char *targ, int ci,
     if (*s != ',') {
 	/* empty args */
 	*args = NULL;
-	return 0;
-    }
-
-    s++;
-    s += strspn(s, " ");
-
-    *args = gretl_strdup(s);
-    if (*args == NULL) {
-	return E_ALLOC;
+    } else {
+	s++;
+	s += strspn(s, " ");
+	*args = gretl_strdup(s);
+	if (*args == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     return 0;
 }
 
-static int printf_driver (const char *line, int ci,
-			  DATASET *dset, PRN *prn)
+static int printf_driver (const char *line, int ci, DATASET *dset, 
+			  PRN *prn)
 {
     char targ[SPRINTF_TARGLEN];
     char *format = NULL;
@@ -1264,15 +1307,15 @@ static int sscanf_driver (const char *line, DATASET *dset, PRN *prn)
 	warned = 1;
     }
 
-    tmp = gretl_strdup_printf("sscanf(%s)", line);
+    tmp = malloc(strlen(line) + 9);
 
     if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
+	sprintf(tmp, "sscanf(%s)", line);
 	err = generate(tmp, dset, OPT_O, prn);
+	free(tmp);
     }
-
-    free(tmp);
 
     return err;
 }
@@ -1280,30 +1323,19 @@ static int sscanf_driver (const char *line, DATASET *dset, PRN *prn)
 /* apparatus to support the command-forms of printf, sprintf 
    and sscanf */
 
-int do_printscan_command (const char *line, DATASET *dset, PRN *prn)
+int do_printscan_command (int ci, const char *line, 
+			  DATASET *dset, PRN *prn)
 {
-    int ci, err = 0;
+    int err;
 
-    if (!strncmp(line, "printf ", 7)) {
-	ci = PRINTF;
-	line += 7;
-    } else if (!strncmp(line, "sprintf ", 8)) {
-	ci = SPRINTF;
-	line += 8;
-    } else if (!strncmp(line, "sscanf ", 7)) {
-	ci = SSCANF;
-	line += 7;
+    /* skip the command word and following space */
+    line += strcspn(line, " ");
+    line += strspn(line, " ");
+    
+    if (ci == PRINTF || ci == SPRINTF) {
+	err = printf_driver(line, ci, dset, prn);
     } else {
-	err = E_DATA;
-    }
-
-    if (!err) {
-	line += strspn(line, " ");
-	if (ci == PRINTF || ci == SPRINTF) {
-	    err = printf_driver(line, ci, dset, prn);
-	} else {
-	    err = sscanf_driver(line, dset, prn);
-	}
+	err = sscanf_driver(line, dset, prn);
     }
 
     return err;

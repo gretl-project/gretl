@@ -26,7 +26,8 @@ int do_printf (const char *targ, const char *format, const char *args,
 int do_sscanf (const char *src, const char *format, const char *args,
 	       DATASET *dset, int *n_items);
 
-int do_printscan_command (const char *line, DATASET *dset, PRN *prn);
+int do_printscan_command (int ci, const char *line, DATASET *dset, 
+			  PRN *prn);
 
 int generate_obs_markers (const char *s, DATASET *dset);
 
