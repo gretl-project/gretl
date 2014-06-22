@@ -238,6 +238,6 @@ GretlType gretl_type_from_string (const char *s)
 	if (!strcmp(s, "array"))    return GRETL_TYPE_ARRAY;
     }
 
-    return 0;
+    return GRETL_TYPE_NONE;
 }
 

@@ -38,6 +38,8 @@
 #include <errno.h>
 #include <glib.h>
 
+#define OLDFUN_COMPAT
+
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
 #define EXEC_DEBUG 0    /* debugging of function execution */
 #define UDEBUG 0        /* debug handling of args */
@@ -1308,9 +1310,14 @@ static const char *arg_type_xml_string (int t)
 }
 
 static GretlType return_type_from_string (const char *s,
-					  int *err)
+					  int *err,
+					  PRN *prn)
 {
     GretlType t;
+
+    if (*s == '\0') {
+	return GRETL_TYPE_NONE;
+    }
 
     if (!strcmp(s, "void")) {
 	/* not OK as arg type, but OK as return */
@@ -1319,14 +1326,19 @@ static GretlType return_type_from_string (const char *s,
 	t = gretl_type_from_string(s);
     }
 
-    if (t == 0) {
-	gretl_errmsg_set(_("Missing function return type"));
-	*err = E_PARSE;
-    } else {
-	if (!ok_function_return_type(t)) {
-	    gretl_errmsg_set(_("Invalid return type for function"));
-	    *err = E_TYPES;
+    if (t == GRETL_TYPE_NONE) {
+	if (prn != NULL) {
+	    /* backward compatibility */
+	    pputs(prn, "Warning: missing function return type!\n"
+		  "This will be an error in gretl 1.10\n");
+	    pputc(prn, '\n');
+	} else {
+	    gretl_errmsg_set(_("Missing function return type"));
+	    *err = E_PARSE;
 	}
+    } else if (!ok_function_return_type(t)) {
+	gretl_errmsg_set(_("Invalid return type for function"));
+	*err = E_TYPES;
     }
 
     return t;
@@ -1600,7 +1612,6 @@ static void real_function_package_unload (fnpkg *pkg, int full)
 #endif
 
     /* unload children? */
-
     if (full) {
 	for (i=0; i<n_ufuns; i++) {
 	    if (ufuns[i]->pkg == pkg) {
@@ -1610,7 +1621,6 @@ static void real_function_package_unload (fnpkg *pkg, int full)
     }  
 
     /* remove this package from the array of loaded packages */
-
     for (i=0; i<n_pkgs; i++) {
 	if (pkgs[i] == pkg) {
 	    for (j=i; j<n_pkgs-1; j++) {
@@ -1706,7 +1716,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     }
 
     if (gretl_xml_get_prop_as_string(node, "type", &tmp)) {
-	fun->rettype = return_type_from_string(tmp, &err);
+	fun->rettype = return_type_from_string(tmp, &err, NULL);
 	free(tmp);
     } else {
 	fun->rettype = GRETL_TYPE_VOID;
@@ -4868,16 +4878,18 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     fn_param *params = NULL;
     int nf, n_params = 0;
     int rettype = 0;
-    char s1[FN_NAMELEN];
-    char s2[FN_NAMELEN];
+    char s1[FN_NAMELEN] = {0};
+    char s2[FN_NAMELEN] = {0};
     char *p = NULL, *fname = NULL;
     int err = 0;
 
     nf = sscanf(line, "function %31s %31s", s1, s2);
 
-    if (nf != 2) {
-	err = E_PARSE;
-    } else if (!strcmp(s2, "clear") || !strcmp(s2, "delete")) {
+    if (*s1 == '\0' && *s2 == '\0') {
+	return E_PARSE;
+    }
+
+    if (nf == 2 && (!strcmp(s2, "clear") || !strcmp(s2, "delete"))) {
 	return maybe_delete_function(s1, prn);
     }
 
@@ -4887,12 +4899,20 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
        onto it.
     */
 
-    if (!err) {
-	rettype = return_type_from_string(s1, &err);
+    /* aside from backward compatibility, nf != 2 would be
+       an unequivocal error */
+
+    if (nf == 2) {
+	rettype = return_type_from_string(s1, &err, prn);
     }
 
     if (!err) {
-	fname = s2;
+	if (rettype == 0) {
+	    /* backward compatibility */
+	    fname = s1;
+	} else {
+	    fname = s2;
+	}
 	p = strchr(fname, '(');
 	if (p != NULL) {
 	    *p = '\0';
@@ -5060,6 +5080,43 @@ static void python_check (const char *line)
     }
 }
 
+#ifdef OLDFUN_COMPAT
+
+static int maybe_check_return (ufunc *fun, const char *s)
+{
+    int done = 0;
+    int err = 0;
+
+    if (!strncmp(s, "return ", 7)) {
+	GretlType type;
+	char tword[10];
+
+	s += 7;
+	sscanf(s, "%9s", tword);
+	if ((type = gretl_type_from_string(tword))) {
+	    char *tmp;
+
+	    tmp = g_strdup_printf("return%s", s + strlen(tword));
+	    fun->rettype = type;
+	    err = strings_array_add(&fun->lines, &fun->n_lines, tmp);
+	    g_free(tmp);
+	    done = 1;
+	}
+    }
+
+    if (!done) {
+	err = strings_array_add(&fun->lines, &fun->n_lines, s);
+    }
+
+    if (!err) {
+	python_check(s);
+    }
+
+    return err;
+}
+
+#endif
+
 /**
  * gretl_function_append_line:
  * @line: line of code to append.
@@ -5091,6 +5148,11 @@ int gretl_function_append_line (const char *line)
 	    gretl_errmsg_sprintf("%s: empty function", fun->name);
 	    err = 1;
 	}
+#ifdef OLDFUN_COMPAT
+	if (fun->rettype == 0) {
+	    fun->rettype = GRETL_TYPE_VOID;
+	}
+#endif
 	set_compiling_off();
     } else if (!strncmp(line, "quit", 4)) {
 	/* abort compilation */
@@ -5099,6 +5161,10 @@ int gretl_function_append_line (const char *line)
 	}
 	set_compiling_off();
 	return 0; /* handled */
+#ifdef OLDFUN_COMPAT
+    } else if (fun->rettype == GRETL_TYPE_NONE) {
+	err = maybe_check_return(fun, line);
+#endif
     } else {
 	err = strings_array_add(&fun->lines, &fun->n_lines, line);
 	if (!err) {
