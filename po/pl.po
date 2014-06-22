@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.9.15cvs
+# Polish translation for gretl-1.9.91cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.umk.pl>, 2004 - 2014
 # Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2014
@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.9.15\n"
+"Project-Id-Version: gretl-1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-06-21 12:58-0400\n"
-"PO-Revision-Date: 2014-04-28 09:46+0100\n"
+"PO-Revision-Date: 2014-06-22 22:46+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -299,7 +299,6 @@ msgid "Step %d: cointegrating regression\n"
 msgstr "Krok %d: równanie kointegrujące\n"
 
 #: lib/src/adf_kpss.c:2240
-#, fuzzy
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -865,9 +864,9 @@ msgid "Probably weekly data\n"
 msgstr "Prawdopodobnie dane tygodniowe\n"
 
 #: lib/src/csvdata.c:670
-#, fuzzy, c-format
+#, c-format
 msgid "Missing daily rows: %d\n"
-msgstr "Brakujące dzienne obserwacje: %d\n"
+msgstr "Brakujące dzienne wiersze: %d\n"
 
 #: lib/src/csvdata.c:924
 msgid "reversing the data!\n"
@@ -1471,9 +1470,8 @@ msgstr "Brak pamięci!"
 #: lib/src/dbread.c:1748 lib/src/geneval.c:6821
 #: lib/src/gretl_string_table.c:831 lib/src/interact.c:4486 cli/gretlcli.c:711
 #: cli/gretlcli-mpi.c:541
-#, fuzzy
 msgid "Internet access not supported"
-msgstr "częstość %d nie jest obsługiwana"
+msgstr "Dostęp do internetu nie jest obsługiwany"
 
 #: lib/src/dbread.c:1928 lib/src/subsample.c:2113 lib/src/subsample.c:2130
 msgid "error reading smpl line"
@@ -2090,7 +2088,7 @@ msgid "ESS"
 msgstr "ESS"
 
 #: lib/src/estimate.c:2294
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
@@ -2129,12 +2127,12 @@ msgstr "                 ITER       RHO        ESS"
 #: lib/src/estimate.c:2328
 #, c-format
 msgid "Prais-Winsten: invalid rho value %g (explosive error)"
-msgstr ""
+msgstr "Prais-Winsten: invalid rho value %g (explosive error)"
 
 #: lib/src/estimate.c:2440
 #, c-format
 msgid "%s: rho = %g, error is unbounded"
-msgstr ""
+msgstr "%s: rho = %g, error is unbounded"
 
 #: lib/src/estimate.c:2883 lib/src/gretl_model.c:3464 lib/src/modelprint.c:785
 msgid "Pesaran-Taylor test for heteroskedasticity"
@@ -2228,13 +2226,12 @@ msgid "Generated series %s (ID %d)"
 msgstr "Wygenerowano serie %s (ID %d)"
 
 #: lib/src/geneval.c:1568 lib/src/gretl_foreign.c:99
-#, fuzzy
 msgid "MPI is not supported in this gretl build"
-msgstr "%s: lokalny jest nie wspomagany przez system"
+msgstr "MPI nie jest obsługiwane w trybie gretl build"
 
 #: lib/src/geneval.c:1578
 msgid "The MPI library is not loaded"
-msgstr ""
+msgstr "Biblioteka MPT nie jest załadowana"
 
 #: lib/src/geneval.c:4007 lib/src/interact.c:1601
 #, c-format
@@ -2259,9 +2256,8 @@ msgstr ""
 "liczbie parametrów dla funkcji %s (%d)"
 
 #: lib/src/geneval.c:8946
-#, fuzzy
 msgid "array: no type was specified"
-msgstr "%s: niewyspecyfikowany system"
+msgstr "Tablica: nie wyspecyfikowano typu"
 
 #: lib/src/geneval.c:9727
 #, c-format
@@ -2325,9 +2321,9 @@ msgid "Unmatched '%c'\n"
 msgstr "Niedopasowany '%c'\n"
 
 #: lib/src/geneval.c:12040
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is of type %s, not acceptable in context"
-msgstr "Zmienna '%s' jest typu %s"
+msgstr "Zmienna '%s' jest typu %s, nie akceptowalny kontekst"
 
 #: lib/src/geneval.c:12212
 #, c-format
@@ -2350,9 +2346,9 @@ msgid "'%s' : not implemented for strings"
 msgstr "'%s' : nie jest zaimplementowane dla łańcuchów"
 
 #: lib/src/geneval.c:12349
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' : not implemented for arrays"
-msgstr "'%s' :nie jest zaimplementowane dla macierzy"
+msgstr "'%s' :nie jest zaimplementowane dla tablic"
 
 #: lib/src/geneval.c:12356 lib/src/geneval.c:12370
 #, c-format
@@ -2930,7 +2926,7 @@ msgstr "z wyrównanymi wartościami"
 #: lib/src/gretl_array.c:699
 #, c-format
 msgid "Array of %s, length %d\n"
-msgstr ""
+msgstr "Array of %s, length %d\n"
 
 #: lib/src/gretl_bfgs.c:401 lib/src/gretl_bfgs.c:440
 msgid "Failed to compute numerical Hessian"
@@ -2999,13 +2995,12 @@ msgid "no such item"
 msgstr "nie ten element"
 
 #: lib/src/gretl_bundle.c:1575
-#, fuzzy
 msgid "xmlParseMemory failed"
-msgstr "xmlParseFile - błąd dla %s"
+msgstr "Błąd xmlParseMemory"
 
 #: lib/src/gretl_bundle.c:1581
 msgid "xmlDocGetRootElement failed"
-msgstr ""
+msgstr "Błąd xmlDocGetRootElement"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3200,19 +3195,16 @@ msgid "Warning"
 msgstr "Uwaga"
 
 #: lib/src/gretl_foreign.c:93
-#, fuzzy
 msgid "MPI is already initialized"
-msgstr "Model już jest zapisany"
+msgstr "MPI już jest zainstalowany"
 
 #: lib/src/gretl_func.c:1323
-#, fuzzy
 msgid "Missing function return type"
-msgstr "gretl: opis funkcji gretla"
+msgstr "Missing function return type"
 
 #: lib/src/gretl_func.c:1327
-#, fuzzy
 msgid "Invalid return type for function"
-msgstr "Błąd w restrykcjach"
+msgstr "Invalid return type for function"
 
 #: lib/src/gretl_func.c:2335 lib/src/gretl_func.c:2395
 #: lib/src/gretl_func.c:2471 lib/src/gretl_utils.c:1639
@@ -3494,9 +3486,8 @@ msgid "failed"
 msgstr "nieudany"
 
 #: lib/src/gretl_model.c:3809
-#, fuzzy
 msgid "parameter"
-msgstr "Parametry: "
+msgstr "Parametr"
 
 #: lib/src/gretl_model.c:3813 gui2/calculator.c:1999
 msgid "dfn"
@@ -3550,9 +3541,9 @@ msgid "The model exhibits an exact linear fit"
 msgstr "The model exhibits an exact linear fit"
 
 #: lib/src/gretl_mpi.c:390
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid MPI rank %d"
-msgstr "Błędny rząd opóźnienia %d"
+msgstr "Błędny MPI rank %d"
 
 #: lib/src/gretl_panel.c:1022
 msgid ""
@@ -4425,7 +4416,7 @@ msgid "Pseudo-random number generator seeded with %d\n"
 msgstr "Stała startowa do generowania liczb pseudolosowych wynosi: %d\n"
 
 #: lib/src/libset.c:1770
-#, fuzzy, c-format
+#, c-format
 msgid "set: unknown variable '%s'"
 msgstr "Nieznana zmienna '%s'"
 
@@ -6747,17 +6738,14 @@ msgid "weekly"
 msgstr "tygodniowe"
 
 #: lib/src/subsample.c:2486
-#, fuzzy
 msgid "daily (5 days)"
 msgstr "Dzienne (tydzień 5-dniowy)"
 
 #: lib/src/subsample.c:2488
-#, fuzzy
 msgid "daily (6 days)"
 msgstr "Dzienne (tydzień 6-dniowy)"
 
 #: lib/src/subsample.c:2490
-#, fuzzy
 msgid "daily (7 days)"
 msgstr "Dzienne (tydzień 7-dniowy)"
 
@@ -7436,13 +7424,13 @@ msgid ""
 msgstr ""
 
 #: cli/gretlcli-mpi.c:154
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "gretlmpi: error executing script: halting\n"
 msgstr ""
 "\n"
-"gretlcli: Błąd skryptu; przerwano wykonanie zadania\n"
+"gretlmpi: Błąd skryptu; przerwano wykonanie zadania\n"
 
 #: gui2/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -7609,14 +7597,14 @@ msgstr ""
 " n = %d, średnia = %g, odch. std. = %g\n"
 
 #: gui2/calculator.c:1549
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: t(%d) = (%g - %g - %g)/%g = %g\n"
-msgstr "Statystyka testowa: t(%d) = (%g - %g)/%g = %g\n"
+msgstr "Statystyka testowa: t(%d) = (%g - %g - %g)/%g = %g\n"
 
 #: gui2/calculator.c:1552
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: t(%d) = [(%g - %g) - (%g)]/%g = %g\n"
-msgstr "Statystyka testowa: z = [(%g - %g) - (%g)]/%g = %g\n"
+msgstr "Statystyka testowa: t(%d) = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1555 gui2/calculator.c:1603
 #, c-format
@@ -9082,7 +9070,7 @@ msgstr "do"
 
 #: gui2/dialogs.c:2286
 msgid "Make this restriction permanent"
-msgstr ""
+msgstr "Dodaj stałe restrykcje"
 
 #: gui2/dialogs.c:2319
 #, c-format
@@ -9568,9 +9556,8 @@ msgstr ""
 "Czy nadpiać istniejący plik?"
 
 #: gui2/fileselect.c:772
-#, fuzzy
 msgid "Gretl datafiles (*.gdt, *.gdtb)"
-msgstr "pliki danych gretla (*.gdt)"
+msgstr "pliki danych gretla (*.gdt, *.gdtb)"
 
 #: gui2/fileselect.c:787
 msgid "CSV files (*.csv)"
@@ -10120,8 +10107,8 @@ msgid ""
 "To update the menu attachment, you should\n"
 "(a) save this package, and (b) restart gretl."
 msgstr ""
-"To update the menu attachment, you should\n"
-"(a) save this package, and (b) restart gretl."
+"Aby zaktualizować menu załącznika, należy \n"
+"(a) zapisać ten pakiet, i (b) restartować gretla."
 
 #: gui2/fnsave.c:1681
 msgid "gretl: extra properties"
@@ -11287,7 +11274,6 @@ msgid "_Resample with replacement..."
 msgstr "_Losowanie próby z powtórzeniami..."
 
 #: gui2/gretl.c:1611
-#, fuzzy
 msgid "Drop observations with _missing values..."
 msgstr "Pomija obserwacje z _brakującymi danymi"
 
@@ -11641,7 +11627,7 @@ msgstr "_Skróty klawiszowe"
 
 #: gui2/gretl.c:1719
 msgid "_Hansl primer"
-msgstr ""
+msgstr "_Hansl primer - Elementarz Jasia (ABC skryptów)"
 
 #: gui2/gretl.c:1720
 msgid "Check for _updates"
@@ -12160,21 +12146,20 @@ msgid "Couldn't open temp file"
 msgstr "Nie można otworzyć pliku temp"
 
 #: gui2/gui_utils.c:915
-#, fuzzy
 msgid "Leave the dataset as it is"
-msgstr "Zapisz do bazy danych:"
+msgstr "Pozostawić zbiór danych taki jaki jest"
 
 #: gui2/gui_utils.c:916 gui2/gui_utils.c:928
 msgid "Delete the weekend rows"
-msgstr ""
+msgstr "Usunięto weekendowe wiersze"
 
 #: gui2/gui_utils.c:917
 msgid "Delete all blank rows"
-msgstr ""
+msgstr "Usunięto puste wiersze "
 
 #: gui2/gui_utils.c:929
 msgid "Delete blank weekday rows"
-msgstr ""
+msgstr "Usunięto puste wiersze w dni robocze"
 
 #: gui2/gui_utils.c:979 gui2/gui_utils.c:1240 gui2/library.c:7365
 msgid "gretl: open data"
@@ -12228,9 +12213,9 @@ msgid "gretl: untitled"
 msgstr "gretl: bez nazwy"
 
 #: gui2/gui_utils.c:1620
-#, fuzzy, c-format
+#, c-format
 msgid "gretl: script output %d"
-msgstr "gretl: wyniki skryptu"
+msgstr "gretl: wyniki skryptu %d"
 
 #: gui2/gui_utils.c:1622 gui2/gui_utils.c:5081 gui2/gui_utils.c:5232
 msgid "gretl: script output"
@@ -12544,7 +12529,6 @@ msgid "to %s"
 msgstr "na impuls %s"
 
 #: gui2/gui_utils.c:4673
-#, fuzzy
 msgid "_Save text..."
 msgstr "_Zapisz tekst jako..."
 
@@ -12899,36 +12883,33 @@ msgid "Unspecified error"
 msgstr "Bliżej nieokreślony błąd"
 
 #: gui2/library.c:1500
-#, fuzzy, c-format
+#, c-format
 msgid "Dropped %d observations"
-msgstr "Dodaj obserwacje"
+msgstr "Opuszczono %d obserwacji"
 
 #: gui2/library.c:1573 gui2/library.c:1640 gui2/library.c:1663
 msgid "No missing data values"
 msgstr "W bazie nie ma brakujących danych"
 
 #: gui2/library.c:1579
-#, fuzzy
 msgid "Drop rows with at least one missing value"
-msgstr "Pomija obserwacje z _brakującymi danymi"
+msgstr "Pominięto wiersze z conajmniej jedną brakującą informacją"
 
 #: gui2/library.c:1580
 msgid "Drop rows that have no valid data"
-msgstr ""
+msgstr "Pominięto wiersze z brakującymi danymi"
 
 #: gui2/library.c:1584
-#, fuzzy
 msgid "Drop missing data"
-msgstr "W bazie nie ma brakujących danych"
+msgstr "Pominięto brakujące dane"
 
 #: gui2/library.c:1587 gui2/library.c:1594
 msgid "Make this permanent"
-msgstr ""
+msgstr "Czy wykonywać zawsze"
 
 #: gui2/library.c:1599
-#, fuzzy
 msgid "Drop observations with missing values"
-msgstr "Pomija obserwacje z _brakującymi danymi"
+msgstr "Pomija obserwacje z brakującymi danymi"
 
 #: gui2/library.c:1631
 msgid "Show count of missing values at each observation"
@@ -13121,6 +13102,8 @@ msgid ""
 "p-value is \"very small\" (the Imhof integral could not\n"
 "be evaluated so a definite value is not available)"
 msgstr ""
+"p-value is \"very small\" (the Imhof integral could not\n"
+"be evaluated so a definite value is not available)"
 
 #: gui2/library.c:3261
 msgid "linear restrictions"
@@ -14621,9 +14604,8 @@ msgid "Arrange icons"
 msgstr "Uporządkuj ikony"
 
 #: gui2/session.c:151 gui2/session.c:3210
-#, fuzzy
 msgid "Add matrix..."
-msgstr "Dodaj jako macierz..."
+msgstr "Dodaj macierz..."
 
 #: gui2/session.c:153 gui2/session.c:3214
 msgid "Close window"
@@ -15000,18 +14982,16 @@ msgid "Path to Python executable"
 msgstr "Ścieżka dla program PYTHON"
 
 #: gui2/settings.c:274
-#, fuzzy
 msgid "Path to mpiexec"
-msgstr "Ścieżka dla Programu Rterm.exe"
+msgstr "Ścieżka dla mpiexec"
 
 #: gui2/settings.c:276
 msgid "Path to MPI hosts file"
-msgstr ""
+msgstr "Ścieżka dla plików hosta MPI"
 
 #: gui2/settings.c:278
-#, fuzzy
 msgid "Installed MPI variant"
-msgstr "wszystkie warianty"
+msgstr "Zainstalowano MPI"
 
 #: gui2/settings.c:281
 msgid "Database server name"
@@ -15107,7 +15087,7 @@ msgstr "Programy"
 
 #: gui2/settings.c:1213
 msgid "MPI"
-msgstr ""
+msgstr "MPI"
 
 #: gui2/settings.c:1215
 msgid "HCCME"
@@ -15386,9 +15366,8 @@ msgid "No undo information available"
 msgstr "Brak informacji do cofnięcia"
 
 #: gui2/textbuf.c:1018
-#, fuzzy
 msgid "processing...\n"
-msgstr "_Otwórz sesję..."
+msgstr "przetwarzanie...\n"
 
 #: gui2/textbuf.c:1560
 msgid "Gretl Command Reference"
@@ -15508,23 +15487,20 @@ msgid "Saved matrix as %s"
 msgstr "Macierz zapisano jako %s"
 
 #: gui2/toolbar.c:568
-#, fuzzy
 msgid "Always goes to a new window"
-msgstr "Przenieś do nowego okna"
+msgstr "Zawsze przenieś do nowego okna"
 
 #: gui2/toolbar.c:569
-#, fuzzy
 msgid "Replaces output in this window"
-msgstr "Pokaż zamienione funkcje"
+msgstr "Zastąp wyniki w tym oknie"
 
 #: gui2/toolbar.c:570
 msgid "Adds to output in this window"
-msgstr ""
+msgstr "Dodano wyniki w tym oknie"
 
 #: gui2/toolbar.c:572
-#, fuzzy
 msgid "New script output:"
-msgstr "gretl: wyniki skryptu"
+msgstr "Nowy skrypt wyników:"
 
 #: gui2/toolbar.c:662
 msgid "New window"
@@ -15539,9 +15515,8 @@ msgid "Save as..."
 msgstr "Zapisz jako..."
 
 #: gui2/toolbar.c:666
-#, fuzzy
 msgid "Save bundle content..."
-msgstr "Zapisz bundle jako ikonę i zamknij okno"
+msgstr "Zapisz bundle jako ..."
 
 #: gui2/toolbar.c:668
 msgid "Show/hide"
@@ -15628,7 +15603,6 @@ msgid "Help on command"
 msgstr "Pomoc dla poleceń"
 
 #: gui2/toolbar.c:840
-#, fuzzy
 msgid "Save..."
 msgstr "Zapisz jako..."
 
@@ -16904,84 +16878,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "list is empty"
-#~ msgstr "Lista jest pusta"
-
-#~ msgid "_Graph"
-#~ msgstr "_Wykres"
-
-#~ msgid "Running a script replaces text"
-#~ msgstr "Wyniki wykonanego skryptu zastępują ten tekst"
-
-#~ msgid "Running a script adds to text"
-#~ msgstr "Wyniki wykonanego skryptu uzupełnią ten tekst"
-
-#~ msgid "   variable name %d is missing: aborting\n"
-#~ msgstr "   nazwa zmiennej %d jest błędna: polecenie przerwano\n"
-
-#~ msgid "Imhof integral gave negative value"
-#~ msgstr "Imituje całkowitą ujemna wartość"
-
-#~ msgid "daily"
-#~ msgstr "dzienne"
-
-#~ msgid "Full range"
-#~ msgstr "Pełny zakres danych"
-
-#~ msgid "Test statistic: z = (%g - %g - %g)/%g = %g\n"
-#~ msgstr "Statystyka testowa: z = (%g - %g - %g)/%g = %g\n"
-
-#~ msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-#~ msgstr "Uwaga: dla małej próby asymptotyczna aproksymacja bedzie słaba\n"
-
-#~ msgid "Sample now includes only complete observations"
-#~ msgstr "Teraz próba zawiera tylko kompletne obserwacje"
-
-#~ msgid "Daily"
-#~ msgstr "Dzienne"
-
-#~ msgid ""
-#~ "\n"
-#~ "Please rename this variable and try again"
-#~ msgstr ""
-#~ "\n"
-#~ "Zmień nazwę zmiennej i spróbuj ponownie"
-
-#~ msgid "_Function files"
-#~ msgstr "Pliki pakietów _funkcji"
-
-#~ msgid "Tell me about gretl updates"
-#~ msgstr "Powiadom o aktualizacji oprogramowania"
-
-#~ msgid ""
-#~ "New files are available from the gretl web site.\n"
-#~ "These files have a combined size of %u bytes.\n"
-#~ "\n"
-#~ "Would you like to exit from gretl and update your installation now?\n"
-#~ "(You can run gretl_updater.exe later if you prefer.)"
-#~ msgstr ""
-#~ "Nowa wersja gretla dostępna jest na stronie internetowej.\n"
-#~ "Pliki mają łącznie %u b.\n"
-#~ "\n"
-#~ "Czy chcesz zakończyć pracę gretla i zainstalować aktualną wersję teraz?\n"
-#~ "(Jeśli wolisz możesz uruchomić gretl_updater.exe później.)"
-
-#~ msgid ""
-#~ "New files are available from the gretl web site\n"
-#~ "http://gretl.sourceforge.net/"
-#~ msgstr ""
-#~ "Nowa wersja gretla dostępna jest na stronie internetowej:\n"
-#~ "http://gretl.sourceforge.net i http://www.kufel.torun.pl"
-
-#~ msgid ""
-#~ "You may want to let the system administrator know\n"
-#~ "that new files are available from the gretl web site\n"
-#~ "http://gretl.sourceforge.net/"
-#~ msgstr ""
-#~ "Skontaktuj się z administratorem sytemu w celu sprawdzenia\n"
-#~ "czy dostępne są nowe pliki programu na stronach:\n"
-#~ "http://gretl.sourceforge.net/ i http://www.kufel.torun.pl"
-
-#~ msgid "This file is part of the gretl update notification system\n"
-#~ msgstr "Ten plik jest częścią systemu aktualizacji baz danych gretla\n"
