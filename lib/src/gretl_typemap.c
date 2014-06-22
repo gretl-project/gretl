@@ -208,7 +208,7 @@ GretlType gretl_type_from_string (const char *s)
 		return GRETL_TYPE_STRINGS_REF;
 	    }
 	} else if (*p == '\0') {
-	    return GRETL_TYPE_STRINGS;
+	    return GRETL_TYPE_STRING;
 	}
     } else if (!strncmp(s, "matrices", 8)) {
 	p = s + 8;
