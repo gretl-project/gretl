@@ -1,12 +1,13 @@
 version 1.9.91, in progress
 
-The "old-style" syntax for defining a function that was in
-force prior to gretl 1.8.4 (August 2009) is no longer
-supported. See the chapter titled "User-defined functions"
-in the Gretl User's Guide for details.
+The "old-style" syntax for defining a function that was the
+standard prior to gretl 1.8.4 (August 2009) is now officially
+deprecated, and support will be removed in gretl 1.10. See
+the chapter titled "User-defined functions" in the User's 
+Guide for details.
 
 The "set" variable halt_on_error is deprecated and will be
-removed at some point. To prevent a script from aborting on
+removed in gretl 1.10. To prevent a script from aborting on
 errors the "catch" command-modifier should be used instead.
 
 2014-05-02 version 1.9.90
