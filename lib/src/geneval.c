@@ -6276,19 +6276,21 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     const char *funname = l->v.str;
     fnargs *args = NULL;
     ufunc *uf = NULL;
+    GretlType rtype;
     int i, nparam, argc = 0;
-    int rtype = GRETL_TYPE_NONE;
 
     /* first find the function */
     uf = get_user_function_by_name(funname);
+
     if (uf == NULL) {
 	fprintf(stderr, "%s: couldn't find a function of this name\n", funname);
 	p->err = E_DATA;
+    } else {
+	rtype = user_func_get_return_type(uf);
     }
 
     if (!p->err && !(p->flags & P_VOID)) {
 	/* check that the function returns something suitable */
-	rtype = user_func_get_return_type(uf);
 	if (!ok_function_return_type(rtype) || rtype == GRETL_TYPE_VOID) {
 	    fprintf(stderr, "eval_ufunc: %s: invalid return type %d\n", 
 		    funname, rtype);

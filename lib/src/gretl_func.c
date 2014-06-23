@@ -214,8 +214,6 @@ static int compiling_python;
 #define function_is_plugin(f)  (f->flags & UFUN_PLUGIN)
 #define function_is_noprint(f) (f->flags & UFUN_NOPRINT)
 
-#define null_return(t) (t == 0 || t == GRETL_TYPE_VOID)
-
 struct flag_and_key {
     int flag;
     const char *key;
@@ -1310,14 +1308,10 @@ static const char *arg_type_xml_string (int t)
 }
 
 static GretlType return_type_from_string (const char *s,
-					  int *err,
-					  PRN *prn)
+					  int from_xml,
+					  int *err)
 {
     GretlType t;
-
-    if (*s == '\0') {
-	return GRETL_TYPE_NONE;
-    }
 
     if (!strcmp(s, "void")) {
 	/* not OK as arg type, but OK as return */
@@ -1327,15 +1321,14 @@ static GretlType return_type_from_string (const char *s,
     }
 
     if (t == GRETL_TYPE_NONE) {
-	if (prn != NULL) {
-	    /* backward compatibility */
-	    pputs(prn, "Warning: missing function return type!\n"
-		  "This will be an error in gretl 1.10\n");
-	    pputc(prn, '\n');
-	} else {
-	    gretl_errmsg_set(_("Missing function return type"));
-	    *err = E_PARSE;
+#ifdef OLDFUN_COMPAT
+	/* temporary reprieve for reading straight hansl */
+	if (!from_xml) {
+	    return 0;
 	}
+#endif
+	gretl_errmsg_set(_("Missing function return type"));
+	*err = E_PARSE;
     } else if (!ok_function_return_type(t)) {
 	gretl_errmsg_set(_("Invalid return type for function"));
 	*err = E_TYPES;
@@ -1344,39 +1337,19 @@ static GretlType return_type_from_string (const char *s,
     return t;
 }
 
-/* backward compatibility for nasty old numeric type references */
-
-static int arg_type_from_int (const char *s)
+static GretlType param_field_to_type (const char *s, 
+				      const char *funname,
+				      int *err)
 {
-    int i = atoi(s);
+    GretlType t = gretl_type_from_string(s);
 
-    switch (i) {
-    case 1: return GRETL_TYPE_DOUBLE;
-    case 2: return GRETL_TYPE_SERIES;
-    case 3: return GRETL_TYPE_LIST;
-    case 4: return GRETL_TYPE_MATRIX;
-    case 5: return GRETL_TYPE_BOOL;
-    case 6: return GRETL_TYPE_INT;
-    case 7: return GRETL_TYPE_SCALAR_REF;
-    case 8: return GRETL_TYPE_SERIES_REF;
-    case 9: return GRETL_TYPE_MATRIX_REF;
+    if (!ok_function_arg_type(t)) {
+	gretl_errmsg_sprintf("function %s: invalid parameter type '%s'", 
+			     funname, s);
+	*err = E_INVARG;
     }
 
-    return GRETL_TYPE_NONE;
-}
-
-static int param_field_to_type (const char *s)
-{
-#if FNPARSE_DEBUG
-    fprintf(stderr, "param_field_to_type: looking at '%s'\n", s);
-#endif
-
-    if (isdigit(*s)) {
-	/* backward compat */
-	return arg_type_from_int(s);
-    } else {
-	return gretl_type_from_string(s);
-    }
+    return t;
 }    
 
 /* read the parameter info for a function from XML file */
@@ -1420,7 +1393,7 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 		break;
 	    }
 	    if (gretl_xml_get_prop_as_string(cur, "type", &field)) {
-		param->type = param_field_to_type(field);
+		param->type = param_field_to_type(field, fun->name, &err);
 		free(field);
 		if (gretl_scalar_type(param->type)) {
 		    double x;
@@ -1716,7 +1689,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     }
 
     if (gretl_xml_get_prop_as_string(node, "type", &tmp)) {
-	fun->rettype = return_type_from_string(tmp, &err, NULL);
+	fun->rettype = return_type_from_string(tmp, 1, &err);
 	free(tmp);
     } else {
 	fun->rettype = GRETL_TYPE_VOID;
@@ -4883,7 +4856,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     char *p = NULL, *fname = NULL;
     int err = 0;
 
-    nf = sscanf(line, "function %31s %31s", s1, s2);
+    nf = sscanf(line, "function %31s %31[^( ]", s1, s2);
 
     if (*s1 == '\0' && *s2 == '\0') {
 	return E_PARSE;
@@ -4895,28 +4868,31 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 
     /* If we didn't get a special such as "function foo delete",
        then @s1 should contain the return type and @s2 the
-       name -- possibly with the '(' that starts the args stuck
-       onto it.
+       name.
+
+       Aside from backward compatibility, nf != 2 would be
+       an outright error.
     */
 
-    /* aside from backward compatibility, nf != 2 would be
-       an unequivocal error */
-
     if (nf == 2) {
-	rettype = return_type_from_string(s1, &err, prn);
+	fname = s2;
+	rettype = return_type_from_string(s1, 0, &err);
     }
 
-    if (!err) {
-	if (rettype == 0) {
-	    /* backward compatibility */
-	    fname = s1;
-	} else {
-	    fname = s2;
-	}
+#ifdef OLDFUN_COMPAT
+    if (!err && rettype == 0) {
+	pputs(prn, "Warning: missing function return type!\n"
+	      "This will be an error in gretl 1.10\n");
+	pputc(prn, '\n');
+	fname = s1;
 	p = strchr(fname, '(');
 	if (p != NULL) {
 	    *p = '\0';
 	}
+    }
+#endif	
+
+    if (!err) {
 	err = check_func_name(fname, &fun, prn);
     }
 
@@ -5084,19 +5060,20 @@ static void python_check (const char *line)
 
 static int maybe_check_return (ufunc *fun, const char *s)
 {
+    const char *p = s;
     int done = 0;
     int err = 0;
 
-    if (!strncmp(s, "return ", 7)) {
+    if (!strncmp(p, "return ", 7)) {
 	GretlType type;
 	char tword[10];
 
-	s += 7;
-	sscanf(s, "%9s", tword);
+	p += 7;
+	sscanf(p, "%9s", tword);
 	if ((type = gretl_type_from_string(tword))) {
 	    char *tmp;
 
-	    tmp = g_strdup_printf("return%s", s + strlen(tword));
+	    tmp = g_strdup_printf("return%s", p + strlen(tword));
 	    fun->rettype = type;
 	    err = strings_array_add(&fun->lines, &fun->n_lines, tmp);
 	    g_free(tmp);
@@ -5142,6 +5119,7 @@ int gretl_function_append_line (const char *line)
     }
 
     if (string_is_blank(line)) {
+	/* note: preserve line numbering */
 	err = strings_array_add(&fun->lines, &fun->n_lines, "");
     } else if (end_of_function(line) && !ignore_line(fun)) {
 	if (fun->n_lines == 0) {
@@ -5149,7 +5127,7 @@ int gretl_function_append_line (const char *line)
 	    err = 1;
 	}
 #ifdef OLDFUN_COMPAT
-	if (fun->rettype == 0) {
+	if (fun->rettype == GRETL_TYPE_NONE) {
 	    fun->rettype = GRETL_TYPE_VOID;
 	}
 #endif
@@ -5908,7 +5886,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    rtype, call->retname);
 #endif
 
-    if (*perr == 0 && !null_return(rtype) && call->retname == NULL) {
+    if (*perr == 0 && rtype != GRETL_TYPE_VOID && call->retname == NULL) {
 	/* missing return value */
 	gretl_errmsg_sprintf("Function %s did not provide the specified return value",
 			     u->name);
@@ -6389,8 +6367,6 @@ static void set_function_error_message (int err, ufunc *u,
     }
 }
 
-#define void_function(f) (f->rettype == 0 || f->rettype == GRETL_TYPE_VOID)
-
 static int handle_return_statement (fncall *call,
 				    ExecState *state,
 				    DATASET *dset,
@@ -6406,16 +6382,20 @@ static int handle_return_statement (fncall *call,
 
     s += strspn(s, " ");
 
-    if (*s == '\0' && void_function(fun)) {
-	/* plain "return" from void function: OK */
-	return 0;
-    } else if (*s == '\0' && !void_function(fun)) {
+    if (fun->rettype == GRETL_TYPE_VOID) {
+	if (*s == '\0') {
+	    ; /* plain "return" from void function: OK */
+	} else {
+	    gretl_errmsg_sprintf("%s, line %d: non-null return value '%s' is not valid", 
+				 fun->name, lineno, s);
+	    err = E_TYPES;
+	}
+	return err; /* handled */
+    }
+
+    if (*s == '\0') {
 	gretl_errmsg_sprintf("%s, line %d: return value is missing", fun->name, 
 			     lineno);
-	err = E_TYPES;
-    } else if (*s != '\0' && void_function(fun)) {
-	gretl_errmsg_sprintf("%s, line %d: non-null return value '%s' is not valid", 
-			     fun->name, lineno, s);
 	err = E_TYPES;
     } else {
 	int len = gretl_namechar_spn(s);
@@ -7147,5 +7127,3 @@ int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname)
 
     return ret;
 }
-
-
