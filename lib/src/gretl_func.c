@@ -1308,7 +1308,6 @@ static const char *arg_type_xml_string (int t)
 }
 
 static GretlType return_type_from_string (const char *s,
-					  int from_xml,
 					  int *err)
 {
     GretlType t;
@@ -1320,17 +1319,16 @@ static GretlType return_type_from_string (const char *s,
 	t = gretl_type_from_string(s);
     }
 
-    if (t == GRETL_TYPE_NONE) {
-#ifdef OLDFUN_COMPAT
-	/* temporary reprieve for reading straight hansl */
-	if (!from_xml) {
-	    return 0;
+    if (!ok_function_return_type(t)) {
+	if (*s == '\0') {
+	    gretl_errmsg_sprintf(_("Missing function return type"));
+	} else if (t == GRETL_TYPE_NONE) {
+	    gretl_errmsg_sprintf(_("Expected a function return type, found '%s'"),
+				 s);
+	} else {
+	    gretl_errmsg_sprintf(_("%s: invalid return type for function"),
+				 s);
 	}
-#endif
-	gretl_errmsg_set(_("Missing function return type"));
-	*err = E_PARSE;
-    } else if (!ok_function_return_type(t)) {
-	gretl_errmsg_set(_("Invalid return type for function"));
 	*err = E_TYPES;
     }
 
@@ -1689,7 +1687,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     }
 
     if (gretl_xml_get_prop_as_string(node, "type", &tmp)) {
-	fun->rettype = return_type_from_string(tmp, 1, &err);
+	fun->rettype = return_type_from_string(tmp, &err);
 	free(tmp);
     } else {
 	fun->rettype = GRETL_TYPE_VOID;
@@ -4833,6 +4831,41 @@ static int parse_function_parameters (const char *str,
     return err;
 }
 
+static int get_two_words (const char *s, char *w1, char *w2,
+			  int *err)
+{
+    int nf = 0;
+
+    if (strncmp(s, "function ", 9)) {
+	*err = E_PARSE;
+    } else {
+	int n;
+
+	*w1 = *w2 = '\0';
+
+	s += 9;
+	s += strspn(s, " ");
+	n = strcspn(s, " (");
+
+	if (n == 0 || n >= FN_NAMELEN) {
+	    *err = E_PARSE;
+	} else {
+	    strncat(w1, s, n);
+	    nf++;
+	    s += n;
+	    s += strspn(s, " ");
+	    n = strcspn(s, " (");
+	}
+
+	if (n > 0 && n < FN_NAMELEN) {
+	    strncat(w2, s, n);
+	    nf++;
+	}
+    }
+
+    return nf;
+}
+
 /**
  * gretl_start_compiling_function:
  * @line: command line.
@@ -4851,15 +4884,15 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     fn_param *params = NULL;
     int nf, n_params = 0;
     int rettype = 0;
-    char s1[FN_NAMELEN] = {0};
-    char s2[FN_NAMELEN] = {0};
+    char s1[FN_NAMELEN];
+    char s2[FN_NAMELEN];
     char *p = NULL, *fname = NULL;
     int err = 0;
 
-    nf = sscanf(line, "function %31s %31[^( ]", s1, s2);
+    nf = get_two_words(line, s1, s2, &err);
 
-    if (*s1 == '\0' && *s2 == '\0') {
-	return E_PARSE;
+    if (err) {
+	return err;
     }
 
     if (nf == 2 && (!strcmp(s2, "clear") || !strcmp(s2, "delete"))) {
@@ -4876,7 +4909,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 
     if (nf == 2) {
 	fname = s2;
-	rettype = return_type_from_string(s1, 0, &err);
+	rettype = return_type_from_string(s1, &err);
     }
 
 #ifdef OLDFUN_COMPAT
@@ -4885,10 +4918,6 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 	      "This will be an error in gretl 1.10\n");
 	pputc(prn, '\n');
 	fname = s1;
-	p = strchr(fname, '(');
-	if (p != NULL) {
-	    *p = '\0';
-	}
     }
 #endif	
 
