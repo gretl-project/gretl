@@ -35,7 +35,6 @@ else
   SYSBIN=${SYSBASE}/bin
   SYSTRANS=${SYSBASE}/share/locale
   SYSTHEME=${SYSBASE}/share/themes
-  SYSTRANS=c:/mingw/share/locale
   # C:/Program Files/Inno Setup 5/ISCC.exe
   INNO_CMD="c:/progra~1/innose~1/iscc.exe"
 fi

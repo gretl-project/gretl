@@ -12,6 +12,7 @@ fi
 TOPDIR=".."
 THISDIR=`pwd`
 MPI=yes
+OPENBLAS=yes
 
 ########## CONFIGURE HERE ###################
 
@@ -20,14 +21,20 @@ if [ "$BUILDTYPE" = "cross" ] ; then
   ADDONS=/home/cottrell/stats/gretl-addons
   HLPDIR=${TOPDIR}/share
   DOCDIR=${TOPDIR}/build/doc/tex
-  SYSBIN=/opt/cross-tools/mingw32/bin
+  SYSBASE=/opt/cross-tools/mingw32
+  SYSBIN=${SYSBASE}/bin
+  SYSTRANS=${SYSBASE}/share/locale
+  SYSTHEME=${SYSBASE}/share/themes
   INNO_CMD="wine c:/innodir/ISCC.exe"
 else
   WINFILES=/mingw/winbuild
   ADDONS=${WINFILES}/gretl-addons
   HLPDIR=${WINFILES}/help
   DOCDIR=${WINFILES}/doc
-  SYSBIN=c:/mingw/bin
+  SYSBASE=c:/mingw
+  SYSBIN=${SYSBASE}/bin
+  SYSTRANS=${SYSBASE}/share/locale
+  SYSTHEME=${SYSBASE}/share/themes
   # C:/Program Files/Inno Setup 5/ISCC.exe
   INNO_CMD="c:/progra~1/innose~1/iscc.exe"
 fi
@@ -74,8 +81,6 @@ echo "DATE `date`" >> windist/MANIFEST
 rm -rf windist/gretl
 
 # make gretl directory structure
-mkdir -p windist
-mkdir -p windist/gretl
 mkdir -p windist/gretl/data
 mkdir -p windist/gretl/data/misc
 mkdir -p windist/gretl/data/greene
@@ -94,6 +99,22 @@ mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/plugins/data
 mkdir -p windist/gretl/ui
 
+mkdir -p windist/gretl/share/themes/Emacs/gtk-2.0-key
+mkdir -p windist/gretl/share/themes/Default/gtk-2.0-key
+mkdir -p windist/gretl/share/themes/MS-Windows/gtk-2.0
+mkdir -p windist/gretl/share/themes/Raleigh/gtk-2.0
+
+mkdir -p windist/gretl/lib/gtk-2.0/modules
+mkdir -p windist/gretl/lib/gtk-2.0/2.10.0/engines
+mkdir -p windist/gretl/etc/gtk-2.0
+
+# gretl and GTK translations
+LANGS=`cat ${TOPDIR}/po/LINGUAS | grep -v ^#`
+for lang in $LANGS ; do
+  mkdir -p windist/gretl/locale/${lang}/LC_MESSAGES
+  mkdir -p windist/gretl/share/locale/$lang/LC_MESSAGES
+done
+
 # put binaries in place
 add_file gretlcli.exe gretl/gretlcli.exe
 add_file gretl.exe gretl/gretl.exe
@@ -111,32 +132,63 @@ for f in plugins/*.dll ; do
     add_file $f gretl/plugins/`basename $f`
 done
 
-# gretl translations
-LANGS=`cat ${TOPDIR}/po/LINGUAS | grep -v ^#`
-for lang in $LANGS ; do
-   mkdir -p windist/gretl/locale/${lang}/LC_MESSAGES
-done
-
-# auxiliary dlls (this did include freetype6.dll)
+# GTK and other basic dlls
 for f in \
-    libgmp-10.dll libmpfr-4.dll readline5.dll history5.dll \
-    libblas-3.dll liblapack-3.dll libfftw3-3.dll
-do
-    add_file ${WINFILES}/misc-dll/$f gretl/$f
-done
-
-# more auxiliary dlls
-for f in \
-    libxml2-2.dll libiconv-2.dll intl.dll libcurl-4.dll \
-    libgtksourceview-2.0-0.dll libffi-6.dll libcairo-2.dll \
-    libjson-glib-1.0-0.dll
+	intl.dll \
+	libatk-1.0-0.dll \
+	libcairo-2.dll \
+	libcairo-gobject-2.dll \
+	libcurl-4.dll \
+	libffi-6.dll \
+	libfftw3-3.dll \
+	libgailutil-18.dll \
+	libgdk_pixbuf-2.0-0.dll \
+	libgdk-win32-2.0-0.dll \
+	libgio-2.0-0.dll \
+	libglib-2.0-0.dll \
+	libgmodule-2.0-0.dll \
+	libgmp-10.dll \
+	libgobject-2.0-0.dll \
+	libgthread-2.0-0.dll \
+	libgtksourceview-2.0-0.dll \
+	libgtk-win32-2.0-0.dll \
+	libiconv-2.dll \
+	libmpfr-4.dll \
+	libpango-1.0-0.dll \
+	libpangocairo-1.0-0.dll \
+	libpangowin32-1.0-0.dll \
+	libpng14-14.dll \
+	readline5.dll \
+	history5.dll \
+	libxml2-2.dll \
+	zlib1.dll \
+	libjson-glib-1.0-0.dll
 do
     add_file ${SYSBIN}/$f gretl/$f
 done
 
+if [ $OPENBLAS = "yes" ] ; then
+  add_file ${SYSBIN}/libopenblas.dll gretl/libopenblas.dll
+else
+  add_file ${SYSBIN}/libblas-3.dll gretl/libblas-3.dll
+  add_file ${SYSBIN}/liblapack-3.dll gretl/liblapack-3.dll
+fi
+
 # system DLLs for threads/openmp, if required
 add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
 add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
+
+# GTK aux. files
+add_file $WINFILES/auxfiles/locale.alias gretl/share/locale/locale.alias
+add_file $SYSTHEME/Emacs/gtk-2.0-key/gtkrc gretl/share/themes/Emacs/gtk-2.0-key/gtkrc
+add_file $SYSTHEME/Default/gtk-2.0-key/gtkrc gretl/share/themes/Default/gtk-2.0-key/gtkrc
+add_file $WINFILES/auxfiles/gtkrc gretl/share/themes/MS-Windows/gtk-2.0/gtkrc
+add_file $SYSTHEME/Raleigh/gtk-2.0/gtkrc gretl/share/themes/Raleigh/gtk-2.0/gtkrc
+
+add_file $SYSBASE/lib/gtk-2.0/modules/libgail.dll gretl/lib/gtk-2.0/modules/libgail.dll
+add_file $SYSBASE/lib/gtk-2.0/2.10.0/engines/libpixmap.dll gretl/lib/gtk-2.0/2.10.0/engines/libpixmap.dll
+add_file $SYSBASE/lib/gtk-2.0/2.10.0/engines/libwimp.dll gretl/lib/gtk-2.0/2.10.0/engines/libwimp.dll
+add_file $SYSBASE/etc/gtk-2.0/im-multipress.conf gretl/etc/gtk-2.0/im-multipress.conf
 
 # XML UI-definition files
 for f in ${TOPDIR}/gui2/*.xml ; do
@@ -276,6 +328,8 @@ fi
 make -C mo
 for lang in $LANGS ; do
   add_file mo/$lang.mo gretl/locale/$lang/LC_MESSAGES/gretl.mo
+  add_file $SYSTRANS/$lang/LC_MESSAGES/glib20.mo gretl/share/locale/$lang/LC_MESSAGES/glib20.mo
+  add_file $SYSTRANS/$lang/LC_MESSAGES/gtk20.mo gretl/share/locale/$lang/LC_MESSAGES/gtk20.mo
 done
 
 # misc files
@@ -283,33 +337,18 @@ add_file ${TOPDIR}/plugin/data/urcdata.gz gretl/plugins/data/urcdata.gz
 add_file ${TOPDIR}/plugin/data/dwdata.gz gretl/plugins/data/dwdata.gz
 add_file gretl_website.url gretl/gretl_website.url
 
-# add GTK runtime and gnuplot distribution: note that we move
-# into the "windist" subdir first
-# RTFILE=gtk-runtime.tar.gz
-RTFILE=gtk-2.24-runtime.tgz
+# cd into distribution subdirectory
 cd windist
-if [ ! -f ${WINFILES}/${RTFILE} ] ; then
-  echo "Couldn't find ${RTFILE}"
-  exit 1
-else 
-  process_tarball ${WINFILES}/${RTFILE}
-fi
+WINDIST=`pwd`
 
-# additional GTK-related runtime files (includes intl.dll,
-# libpng, zlib)
-if [ -f ${WINFILES}/gtk-3rdparty.tgz ] ; then
-  process_tarball ${WINFILES}/gtk-3rdparty.tgz
-fi
-
-if [ ! -f ${WINFILES}/gp463w32.tar.gz ] ; then
-  echo "Couldn't find gp463w32.tar.gz"
+if [ ! -f ${WINFILES}/gp465w32.tar.gz ] ; then
+  echo "Couldn't find gp465w32.tar.gz"
   exit 1
 else
-  process_tarball ${WINFILES}/gp463w32.tar.gz
+  process_tarball ${WINFILES}/gp465w32.tar.gz
 fi
 
 # add the approved gretl addons
-WINDIST=`pwd`
 cd gretl/functions
 for f in gig ivpanel SVAR ; do
   if [ ! -f ${ADDONS}/${f}/${f}.zip ] ; then
@@ -319,6 +358,7 @@ for f in gig ivpanel SVAR ; do
     process_addon ${ADDONS}/$f/$f.zip
   fi
 done
+
 cd $WINDIST
 
 make gretl.iss
