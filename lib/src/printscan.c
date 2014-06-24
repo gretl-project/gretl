@@ -620,9 +620,10 @@ static int real_do_printf (const char *targ, const char *format,
 	    }
 	}
 
-	if (q != NULL && *q != '\0') {
+	if (!err && q != NULL && *q != '\0') {
 	    pprintf(inprn, "\n%s: ", gretl_command_word(ci));
 	    pprintf(inprn, _("unprocessed argument(s): '%s'"), q);
+	    pputc(prn, '\n');
 	    err = E_PARSE;
 	}
     }
