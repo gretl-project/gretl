@@ -13539,8 +13539,11 @@ static int save_generated_var (parser *p, PRN *prn)
 	    edit_array(p);
 	} else if (is_tmp_node(r) || (p->flags & P_UFRET)) {
 	    /* array created on the fly */
+	    GretlType atype = p->lh.atype > 0 ? p->lh.atype :
+		gretl_array_get_type(r->v.a);
+
 	    p->err = user_var_add_or_replace(p->lh.name,
-					     p->lh.atype,
+					     atype,
 					     r->v.a);
 	    if (!p->err) {
 		/* avoid destroying the returned array */

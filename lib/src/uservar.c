@@ -84,7 +84,14 @@ static double *na_ptr (void)
 static user_var *user_var_new (const char *name, int type, 
 			       void *value, int *err)
 {
-    user_var *u = malloc(sizeof *u);
+    user_var *u;
+
+    if (value == NULL || type == GRETL_TYPE_NONE) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    u = malloc(sizeof *u);
 
     if (u == NULL) {
 	*err = E_ALLOC;
@@ -137,10 +144,15 @@ static user_var *user_var_new (const char *name, int type,
 		u->ptr = value;
 	    }
 	    u->type = GRETL_TYPE_ARRAY;
+	} else {
+	    *err = E_DATA;
 	}
     }
 
     if (u->ptr == NULL) {
+	if (!*err) {
+	    *err = E_ALLOC;
+	}
 	free(u);
 	u = NULL;
     }
