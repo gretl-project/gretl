@@ -138,15 +138,17 @@ const char *errmsg_get_with_default (int err)
 #if EDEBUG
     fprintf(stderr, "errmsg_get_with_default: msg='%s'\n",
 	    gretl_errmsg);
-#endif    
+#endif
 
-    if (*gretl_errmsg != '\0') {
-	ret = gretl_errmsg;
-    } else {
-	const char *deflt = look_up_errmsg(err);
+    if (err > 0 && err < E_MAX) {
+	if (*gretl_errmsg != '\0') {
+	    ret = gretl_errmsg;
+	} else {
+	    const char *deflt = look_up_errmsg(err);
 
-	if (deflt != NULL) {
-	    ret = _(deflt);
+	    if (deflt != NULL) {
+		ret = _(deflt);
+	    }
 	}
     }
 
