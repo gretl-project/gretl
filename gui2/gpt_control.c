@@ -5039,6 +5039,35 @@ static int get_terminal (char *s)
 
 #endif /* !G_OS_WIN32 */
 
+#ifdef MAC_NATIVE
+
+#include <sys/stat.h>
+
+static void mac_do_gp_script (const char *plotfile)
+{
+    gchar *tmp;
+    FILE *fp;
+
+    tmp = g_strdup_printf("%sgp3d.sh", gretl_dotdir());
+    fp = fopen(tmp, "w");
+
+    if (fp != NULL) {
+	gchar *cmd;
+
+	fputs("#!/bin/sh\n", fp);
+	fprintf(fp, "\"%s\" \"%s\"\n", gretl_gnuplot_path(), plotfile);
+	fclose(fp);
+	chmod(tmp, S_IRUSR | S_IWUSR | S_IXUSR);
+	cmd = g_strdup_printf("open -a Terminal.app \"%s\"", tmp);
+	system(cmd);
+	free(cmd);
+    }
+
+    free(tmp);
+}
+
+#endif
+
 void launch_gnuplot_interactive (const char *plotfile)
 {
 #if defined(G_OS_WIN32)
@@ -5054,17 +5083,17 @@ void launch_gnuplot_interactive (const char *plotfile)
     create_child_process(gpline);
     g_free(gpline);
 #elif defined(MAC_NATIVE)
-    gchar *gpline;
 
     if (plotfile == NULL) {
+	gchar *gpline;
+
 	gpline = g_strdup_printf("open -a Terminal.app \"%s.sh\"",
 				 gretl_gnuplot_path());
+	system(gpline);
+	g_free(gpline);    
     } else {
-	gpline = g_strdup_printf("open -a Terminal.app \"%s.sh\" \"%s\"",
-				 gretl_gnuplot_path(), plotfile);
+	mac_do_gp_script(plotfile);
     }	
-    system(gpline);
-    g_free(gpline);    
 #else 
     char term[16];
     char fname[MAXLEN];
