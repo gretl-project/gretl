@@ -1964,6 +1964,7 @@ void libgretl_cleanup (void)
     gnuplot_cleanup();
     bufgets_cleanup();
     plugins_cleanup();
+    gretl_bundle_cleanup();
 #ifdef USE_CURL
     gretl_www_cleanup();
 #endif
@@ -2204,6 +2205,10 @@ int check_for_program (const char *prog)
 {
     int ret = 0;
 
+    if (prog == NULL || *prog == '\0') {
+	return 0;
+    }
+
     if (has_suffix(prog, ".exe")) {
 	ret = win32_check_for_program(prog);
     } else {
@@ -2263,7 +2268,11 @@ int check_for_program (const char *prog)
     int found = 0;
     int i, ndirs;
 
-    if (prog != NULL && *prog == '/') {
+    if (prog == NULL || *prog == '\0') {
+	return 0;
+    }
+
+    if (*prog == '/') {
 	return is_executable(prog, myid, mygrp);
     }
 

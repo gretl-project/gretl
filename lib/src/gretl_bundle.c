@@ -1641,3 +1641,11 @@ gretl_bundle *get_sysinfo_bundle (int *err)
     return sysinfo_bundle;
 }
 
+void gretl_bundle_cleanup (void)
+{
+    if (sysinfo_bundle != NULL) {
+	gretl_bundle_destroy(sysinfo_bundle);
+	sysinfo_bundle = NULL;
+    }
+}
+

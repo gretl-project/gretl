@@ -150,6 +150,8 @@ int bundle_contains_data (gretl_bundle *b, void *data);
 
 gretl_bundle *get_sysinfo_bundle (int *err);
 
+void gretl_bundle_cleanup (void);
+
 #endif /* GRETL_BUNDLE_H_ */
 
 
