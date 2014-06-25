@@ -32,7 +32,6 @@ RL_LIBS = -lreadline -lhistory
 GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview-2.0 -lxml2.dll -L$(imports)
 GRETLLIB = -L$(imports) -lgretl -lintl
 LIBS = -lm $(GRETLLIB) -ladvapi32
-LAPACK_LIBS = -llapack.dll -lblas.dll
 FFTW_LIBS = -lfftw3
 CURL_LIBS = -lcurl.dll
 
@@ -53,6 +52,12 @@ endif
 ifeq ($(have_mpi),yes)
   MPICLI = gretlmpi.exe
   MPI_LIB = -lmsmpi
+endif
+
+ifeq ($(use_openblas),yes)
+  LAPACK_LIBS = -lopenblas.dll
+else
+  LAPACK_LIBS = -llapack.dll -lblas.dll
 endif
 
 # source paths
