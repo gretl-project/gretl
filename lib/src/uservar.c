@@ -86,7 +86,7 @@ static user_var *user_var_new (const char *name, int type,
 {
     user_var *u;
 
-    if (value == NULL || type == GRETL_TYPE_NONE) {
+    if (type == GRETL_TYPE_NONE) {
 	*err = E_DATA;
 	return NULL;
     }
