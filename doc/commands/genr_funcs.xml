@@ -3698,13 +3698,13 @@
 
     <function name="kdensity" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="series">x</fnarg>
+	<fnarg type="series-or-vec">x</fnarg>
 	<fnarg type="scalar" optional="true">scale</fnarg>
 	<fnarg type="bool" optional="true">control</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Computes a kernel density estimate for the series
+	  Computes a kernel density estimate for the series or vector
 	  <argname>x</argname>. The returned matrix has two columns, the
 	  first holding a set of evenly spaced abscissae and the second
 	  the estimated density at each of these points.

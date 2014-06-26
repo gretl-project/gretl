@@ -7113,23 +7113,38 @@ static const char *ptr_node_get_matrix_name (NODE *t, parser *p)
     return name;
 }
 
-static gretl_matrix *get_density_matrix (const double *x, 
-					 const DATASET *dset, 
-					 double bws, int ctrl,
-					 int *err)
+static gretl_matrix *get_density_matrix (NODE *t, double bws,
+					 int ctrl, parser *p)
 {
-    gretl_matrix *(*kdfunc) (const double *, const DATASET *,
-			     double, gretlopt, int *);
-    gretlopt opt;
+    gretl_matrix *(*kdfunc) (const double *, int, double, 
+			     gretlopt, int *);
+    gretlopt opt = ctrl ? OPT_O : OPT_NONE;
+    gretl_matrix *m = NULL;
+    const double *x = NULL;
+    int n;
 
-    kdfunc = get_plugin_function("kernel_density_matrix");
-    if (kdfunc == NULL) {
-	*err = E_FOPEN;
-	return NULL;
+    if (t->t == VEC) {
+	n = sample_size(p->dset);
+	x = t->v.xvec + p->dset->t1;
+    } else {
+	n = gretl_vector_get_length(t->v.m);
+	if (n == 0) {
+	    p->err = E_TYPES;
+	} else {
+	    x = t->v.m->val;
+	}
     }
 
-    opt = ctrl ? OPT_O : OPT_NONE; 
-    return (*kdfunc)(x, dset, bws, opt, err);
+    if (!p->err) {
+	kdfunc = get_plugin_function("kernel_density_matrix");
+	if (kdfunc == NULL) {
+	    p->err = E_FOPEN;
+	} else {
+	    m = (*kdfunc)(x, n, bws, opt, &p->err);
+	}
+    }
+
+    return m;
 }
 
 static int aggregate_discrete_check (const int *list, const DATASET *dset)
@@ -7305,19 +7320,17 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    p->err = E_TYPES;
 	}
     } else if (f == F_KDENSITY) {
-	if (l->t != VEC) {
+	if (l->t != VEC && l->t != MAT) {
 	    node_type_error(f, 1, VEC, l, p);
 	} else if (m->t != NUM && m->t != EMPTY) {
 	    node_type_error(f, 2, NUM, m, p);
 	} else if (r->t != NUM && r->t != EMPTY) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
-	    const double *x = l->v.xvec;
 	    double bws = (m->t != EMPTY)? m->v.xval : 1.0;
 	    int ctrl = (r->t != EMPTY)? (int) r->v.xval : 0;
 
-	    A = get_density_matrix(x, p->dset, bws,
-				   ctrl, &p->err);
+	    A = get_density_matrix(l, bws, ctrl, p);
 	}
     } else if (f == F_MONTHLEN) {
 	post_process = 0;

@@ -2765,14 +2765,15 @@ void do_qqplot (void)
 
 void do_kernel (void)
 {
-    int (*kernel_density) (const double *, const DATASET *,
-			   double, const char *, gretlopt);
+    int (*kernel_density) (const double *, int, double, 
+			   const char *, gretlopt);
     gretlopt opt = OPT_NONE;
     double bw = 1.0;
     int v = mdata_active_var();
+    int T = sample_size(dataset);
     int resp, err = 0;
 
-    if (sample_size(dataset) < 30) {
+    if (T < 30) {
 	gui_errmsg(E_TOOFEW);
 	return;
     }
@@ -2787,15 +2788,15 @@ void do_kernel (void)
     }
 
     kernel_density = gui_get_plugin_function("kernel_density"); 
-    if (kernel_density == NULL) {
-	return;
+
+    if (kernel_density != NULL) {
+	const double *y = dataset->Z[v] + dataset->t1;
+
+	err = (*kernel_density)(y, T, bw, 
+				dataset->varname[v],
+				opt);
+	gui_graph_handler(err);
     }
-
-    err = (*kernel_density)(dataset->Z[v], dataset, bw, 
-			    dataset->varname[v],
-			    opt);
-
-    gui_graph_handler(err);
 }
 
 static int chow_cusum_ci (GtkAction *action)

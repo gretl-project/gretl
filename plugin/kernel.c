@@ -251,42 +251,43 @@ static int set_kernel_params (kernel_info *kinfo,
 
 #define MINOBS 30
 
-static double *
-get_sorted_x (const double *y, const DATASET *dset,
-	      int *pn, int *err)
+static double *get_sorted_x (const double *y, int *pn, int *err)
 {
-    int len = sample_size(dset);
-    double *x = malloc(len * sizeof *x);
-    int n;
+    double *x = malloc(*pn * sizeof *x);
+    int i, n = 0;
 
     if (x == NULL) {
 	*err = E_ALLOC;
 	return NULL;
-    } 
+    }
 
-    n = transcribe_array(x, y, dset);
+    for (i=0; i<*pn; i++) {
+	if (!xna(y[i])) {
+	    x[n++] = y[i];
+	}
+    }
+
     if (n < MINOBS) {
 	*err = E_TOOFEW;
 	free(x);
-	return NULL;
-    } 
-
-    qsort(x, n, sizeof *x, gretl_compare_doubles);
-
-    *pn = n;
+	x = NULL;
+    } else {
+	qsort(x, n, sizeof *x, gretl_compare_doubles);
+	*pn = n;
+    }
     
     return x;
 }
 
 int 
-kernel_density (const double *y, const DATASET *dset,
-		double bwscale, const char *label,
-		gretlopt opt)
+kernel_density (const double *y, int n, double bwscale, 
+		const char *label, gretlopt opt)
 {
-    kernel_info kinfo;
+    kernel_info kinfo = {0};
     int err = 0;
 
-    kinfo.x = get_sorted_x(y, dset, &kinfo.n, &err);
+    kinfo.n = n;
+    kinfo.x = get_sorted_x(y, &kinfo.n, &err);
     if (err) {
 	return err;
     }
@@ -303,13 +304,14 @@ kernel_density (const double *y, const DATASET *dset,
 }
 
 gretl_matrix * 
-kernel_density_matrix (const double *y, const DATASET *dset,
-		       double bwscale, gretlopt opt, int *err)
+kernel_density_matrix (const double *y, int n, double bwscale, 
+		       gretlopt opt, int *err)
 {
     gretl_matrix *m = NULL;
-    kernel_info kinfo;
+    kernel_info kinfo = {0};
 
-    kinfo.x = get_sorted_x(y, dset, &kinfo.n, err);
+    kinfo.n = n;
+    kinfo.x = get_sorted_x(y, &kinfo.n, err);
     if (*err) {
 	return NULL;
     }
@@ -328,7 +330,7 @@ kernel_density_matrix (const double *y, const DATASET *dset,
 int 
 array_kernel_density (const double *x, int n, const char *label)
 {
-    kernel_info kinfo;
+    kernel_info kinfo = {0};
     int err = 0;
 
     if (n < MINOBS) {
@@ -346,7 +348,3 @@ array_kernel_density (const double *x, int n, const char *label)
 
     return err;
 }
-
-
-
-
