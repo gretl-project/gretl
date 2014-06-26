@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-06-21 12:58-0400\n"
-"PO-Revision-Date: 2014-05-27 14:52+0200\n"
+"PO-Revision-Date: 2014-06-26 10:13+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -864,9 +864,9 @@ msgid "Probably weekly data\n"
 msgstr "Probablemente son datos semanales\n"
 
 #: lib/src/csvdata.c:670
-#, fuzzy, c-format
+#, c-format
 msgid "Missing daily rows: %d\n"
-msgstr "Observaciones diarias ausentes: %d\n"
+msgstr "Filas diarias ausentes: %d\n"
 
 #: lib/src/csvdata.c:924
 msgid "reversing the data!\n"
@@ -2091,7 +2091,7 @@ msgid "ESS"
 msgstr "SCR"
 
 #: lib/src/estimate.c:2294
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
@@ -2130,12 +2130,12 @@ msgstr "           ITERACIÓN   RHO        SCR"
 #: lib/src/estimate.c:2328
 #, c-format
 msgid "Prais-Winsten: invalid rho value %g (explosive error)"
-msgstr ""
+msgstr "Prais-Winsten: valor rho no válido %g (error explosivo)"
 
 #: lib/src/estimate.c:2440
 #, c-format
 msgid "%s: rho = %g, error is unbounded"
-msgstr ""
+msgstr "%s: rho = %g, el error no está acotado"
 
 #: lib/src/estimate.c:2883 lib/src/gretl_model.c:3464 lib/src/modelprint.c:785
 msgid "Pesaran-Taylor test for heteroskedasticity"
@@ -2257,9 +2257,8 @@ msgstr ""
 " parámetros para la función %s (%d)"
 
 #: lib/src/geneval.c:8946
-#, fuzzy
 msgid "array: no type was specified"
-msgstr "%s: No se ha especificado ningún sistema"
+msgstr "array: no se ha especificado ningún tipo"
 
 #: lib/src/geneval.c:9727
 #, c-format
@@ -2323,9 +2322,9 @@ msgid "Unmatched '%c'\n"
 msgstr "'%c' no corresponde\n"
 
 #: lib/src/geneval.c:12040
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is of type %s, not acceptable in context"
-msgstr "La variable %s es de tipo %s"
+msgstr "La variable %s es de tipo %s, no es aceptable en este contexto"
 
 #: lib/src/geneval.c:12212
 #, c-format
@@ -2348,9 +2347,9 @@ msgid "'%s' : not implemented for strings"
 msgstr "'%s' : no está preparado para cadenas de caracteres"
 
 #: lib/src/geneval.c:12349
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' : not implemented for arrays"
-msgstr "'%s' : no está preparado para matrices"
+msgstr "'%s' : no está preparado para arrays"
 
 #: lib/src/geneval.c:12356 lib/src/geneval.c:12370
 #, c-format
@@ -2934,7 +2933,7 @@ msgstr "con ajuste mínimo-cuadrático"
 #: lib/src/gretl_array.c:699
 #, c-format
 msgid "Array of %s, length %d\n"
-msgstr ""
+msgstr "Array de %s, longitud %d\n"
 
 #: lib/src/gretl_bfgs.c:401 lib/src/gretl_bfgs.c:440
 msgid "Failed to compute numerical Hessian"
@@ -3213,14 +3212,12 @@ msgid "MPI is already initialized"
 msgstr "MPI ya se ha inicializado"
 
 #: lib/src/gretl_func.c:1323
-#, fuzzy
 msgid "Missing function return type"
-msgstr "gretl: Guía de Funciones"
+msgstr "Falta el tipo de resultado de la función"
 
 #: lib/src/gretl_func.c:1327
-#, fuzzy
 msgid "Invalid return type for function"
-msgstr "Argumento no válido para la función"
+msgstr "El tipo de resultado de la función no es válido"
 
 #: lib/src/gretl_func.c:2335 lib/src/gretl_func.c:2395
 #: lib/src/gretl_func.c:2471 lib/src/gretl_utils.c:1639
@@ -5755,7 +5752,7 @@ msgstr "Se ha alcanzado el número máximo de iteraciones, %d"
 
 #: lib/src/monte_carlo.c:1317
 msgid "You can use \"set loop_maxiter\" to increase the limit"
-msgstr ""
+msgstr "Puede usar \"set loop_maxiter\" para incrementar el límite"
 
 #: lib/src/monte_carlo.c:1933
 msgid "progressive loop: model must be of constant size"
@@ -6564,7 +6561,7 @@ msgstr "norma"
 #: lib/src/printscan.c:646
 #, c-format
 msgid "unprocessed argument(s): '%s'"
-msgstr ""
+msgstr "argumento(s) no procesado(s): '%s'"
 
 #: lib/src/printscan.c:875
 #, c-format
@@ -6792,19 +6789,16 @@ msgid "weekly"
 msgstr "semanal"
 
 #: lib/src/subsample.c:2486
-#, fuzzy
 msgid "daily (5 days)"
-msgstr "Diarios (5 días)"
+msgstr "diarios (5 días) "
 
 #: lib/src/subsample.c:2488
-#, fuzzy
 msgid "daily (6 days)"
-msgstr "Diarios (6 días)"
+msgstr "diarios (6 días)"
 
 #: lib/src/subsample.c:2490
-#, fuzzy
 msgid "daily (7 days)"
-msgstr "Diarios (7 días)"
+msgstr "diarios (7 días)"
 
 #: lib/src/subsample.c:2492
 msgid "decennial"
@@ -7493,13 +7487,13 @@ msgstr ""
 " -s o --single-rng  Usar un solo RNG, en lugar de uno para cada proceso.\n"
 
 #: cli/gretlcli-mpi.c:154
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "gretlmpi: error executing script: halting\n"
 msgstr ""
 "\n"
-"gretlcli-mpi: error al ejecutar un guion: parando\n"
+"gretlmpi: error al ejecutar un guion: parando\n"
 
 #: gui2/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -7669,14 +7663,14 @@ msgstr ""
 " n = %d, media = %g, d.t. = %g\n"
 
 #: gui2/calculator.c:1549
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: t(%d) = (%g - %g - %g)/%g = %g\n"
-msgstr "Estadístico de contraste: t(%d) = (%g - %g)/%g = %g\n"
+msgstr "Estadístico de contraste: t(%d) = (%g - %g - %g)/%g = %g\n"
 
 #: gui2/calculator.c:1552
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: t(%d) = [(%g - %g) - (%g)]/%g = %g\n"
-msgstr "Estadístico de contraste: z = [(%g - %g) - (%g)]/%g = %g\n"
+msgstr "Estadístico de contraste: t(%d) = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1555 gui2/calculator.c:1603
 #, c-format
@@ -9145,7 +9139,7 @@ msgstr "a"
 
 #: gui2/dialogs.c:2286
 msgid "Make this restriction permanent"
-msgstr ""
+msgstr "Hacer que esta restricción sea permanente"
 
 #: gui2/dialogs.c:2319
 #, c-format
@@ -9631,9 +9625,8 @@ msgstr ""
 "¿Desea sobreescribirlo?"
 
 #: gui2/fileselect.c:772
-#, fuzzy
 msgid "Gretl datafiles (*.gdt, *.gdtb)"
-msgstr "Ficheros de datos de Gretl (*.gdt)"
+msgstr "Ficheros de datos de Gretl (*.gdt, *.gdtb)"
 
 #: gui2/fileselect.c:787
 msgid "CSV files (*.csv)"
@@ -11350,9 +11343,8 @@ msgid "_Resample with replacement..."
 msgstr "Re_muestrear con reemplazamiento..."
 
 #: gui2/gretl.c:1611
-#, fuzzy
 msgid "Drop observations with _missing values..."
-msgstr "_Quitar todas las obs. con valores ausentes"
+msgstr "_Quitar todas las observaciones con valores ausentes..."
 
 #: gui2/gretl.c:1613
 msgid "_Count missing values"
@@ -12219,22 +12211,20 @@ msgid "Couldn't open temp file"
 msgstr "No se pudo abrir un fichero temporal"
 
 #: gui2/gui_utils.c:915
-#, fuzzy
 msgid "Leave the dataset as it is"
-msgstr "Guardar en el conjunto de datos:"
+msgstr "Dejar el conjunto de datos como está"
 
 #: gui2/gui_utils.c:916 gui2/gui_utils.c:928
 msgid "Delete the weekend rows"
-msgstr ""
+msgstr "Borrar las filas de fin de semana"
 
 #: gui2/gui_utils.c:917
-#, fuzzy
 msgid "Delete all blank rows"
-msgstr "Se ha borrado el escalar %s"
+msgstr "Borrar todas las filas que están en blanco"
 
 #: gui2/gui_utils.c:929
 msgid "Delete blank weekday rows"
-msgstr ""
+msgstr "Borrar las filas de fin de semana que están en blanco"
 
 #: gui2/gui_utils.c:979 gui2/gui_utils.c:1240 gui2/library.c:7365
 msgid "gretl: open data"
@@ -12288,9 +12278,9 @@ msgid "gretl: untitled"
 msgstr "gretl: sin nombre"
 
 #: gui2/gui_utils.c:1620
-#, fuzzy, c-format
+#, c-format
 msgid "gretl: script output %d"
-msgstr "gretl: resultados de guion"
+msgstr "gretl: resultados de guion %d"
 
 #: gui2/gui_utils.c:1622 gui2/gui_utils.c:5081 gui2/gui_utils.c:5232
 msgid "gretl: script output"
@@ -12604,9 +12594,8 @@ msgid "to %s"
 msgstr "a %s"
 
 #: gui2/gui_utils.c:4673
-#, fuzzy
 msgid "_Save text..."
-msgstr "_Guardar el texto como..."
+msgstr "_Guardar texto..."
 
 #: gui2/gui_utils.c:4680
 msgid "Save bundle to session as _icon"
@@ -12959,36 +12948,33 @@ msgid "Unspecified error"
 msgstr "Error no especificado"
 
 #: gui2/library.c:1500
-#, fuzzy, c-format
+#, c-format
 msgid "Dropped %d observations"
-msgstr "A_ñadir observaciones"
+msgstr "Se han quitado %d observaciones"
 
 #: gui2/library.c:1573 gui2/library.c:1640 gui2/library.c:1663
 msgid "No missing data values"
 msgstr "No hay valores de datos ausentes"
 
 #: gui2/library.c:1579
-#, fuzzy
 msgid "Drop rows with at least one missing value"
-msgstr "_Quitar todas las obs. con valores ausentes"
+msgstr "Quitar las observaciones que tienen al menos un valor ausente"
 
 #: gui2/library.c:1580
 msgid "Drop rows that have no valid data"
-msgstr ""
+msgstr "Quitar las filas que no tienen ningún dato válido"
 
 #: gui2/library.c:1584
-#, fuzzy
 msgid "Drop missing data"
-msgstr "No hay valores de datos ausentes"
+msgstr "Quitar los datos ausentes"
 
 #: gui2/library.c:1587 gui2/library.c:1594
 msgid "Make this permanent"
-msgstr ""
+msgstr "Hacer esto permanente"
 
 #: gui2/library.c:1599
-#, fuzzy
 msgid "Drop observations with missing values"
-msgstr "_Quitar todas las obs. con valores ausentes"
+msgstr "Quitar las observaciones con valores ausentes"
 
 #: gui2/library.c:1631
 msgid "Show count of missing values at each observation"
@@ -13183,6 +13169,8 @@ msgid ""
 "p-value is \"very small\" (the Imhof integral could not\n"
 "be evaluated so a definite value is not available)"
 msgstr ""
+"El valor p es \"muy pequeño\" (la integral de Imhof no\n"
+"ha podido ser evaluada así que no hay un valor definido disponible)"
 
 #: gui2/library.c:3261
 msgid "linear restrictions"
@@ -14679,9 +14667,8 @@ msgid "Arrange icons"
 msgstr "Ordenar iconos"
 
 #: gui2/session.c:151 gui2/session.c:3210
-#, fuzzy
 msgid "Add matrix..."
-msgstr "Añadir como matriz..."
+msgstr "Añadir matriz..."
 
 #: gui2/session.c:153 gui2/session.c:3214
 msgid "Close window"
@@ -15568,23 +15555,20 @@ msgid "Saved matrix as %s"
 msgstr "Matriz guardada como %s"
 
 #: gui2/toolbar.c:568
-#, fuzzy
 msgid "Always goes to a new window"
-msgstr "Mover a una ventana nueva"
+msgstr "Ir siempre a una nueva ventana"
 
 #: gui2/toolbar.c:569
-#, fuzzy
 msgid "Replaces output in this window"
-msgstr "Reemplazar las funciones mostradas"
+msgstr "Reemplaza los resultados en esta ventana"
 
 #: gui2/toolbar.c:570
 msgid "Adds to output in this window"
-msgstr ""
+msgstr "Añade a los resultados en esta ventana"
 
 #: gui2/toolbar.c:572
-#, fuzzy
 msgid "New script output:"
-msgstr "gretl: resultados de guion"
+msgstr "Nuevo resultado de guion:"
 
 #: gui2/toolbar.c:662
 msgid "New window"
@@ -15599,9 +15583,8 @@ msgid "Save as..."
 msgstr "Guardar como..."
 
 #: gui2/toolbar.c:666
-#, fuzzy
 msgid "Save bundle content..."
-msgstr "Guardar el bundle c_omo icono y cerrar"
+msgstr "Guardar el contenido del bundle..."
 
 #: gui2/toolbar.c:668
 msgid "Show/hide"
