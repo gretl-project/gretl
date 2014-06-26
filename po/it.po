@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.15\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-06-21 12:58-0400\n"
-"PO-Revision-Date: 2014-05-07 09:41+0200\n"
+"PO-Revision-Date: 2014-06-26 12:53+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -2133,12 +2133,12 @@ msgstr "                 ITER       RHO        ESS"
 #: lib/src/estimate.c:2328
 #, c-format
 msgid "Prais-Winsten: invalid rho value %g (explosive error)"
-msgstr ""
+msgstr "Prais-Winsten: valore di rho non valido (%g: errori esplosivi)"
 
 #: lib/src/estimate.c:2440
 #, c-format
 msgid "%s: rho = %g, error is unbounded"
-msgstr ""
+msgstr "%s: rho = %g, l'errore è illimitato"
 
 #: lib/src/estimate.c:2883 lib/src/gretl_model.c:3464 lib/src/modelprint.c:785
 msgid "Pesaran-Taylor test for heteroskedasticity"
@@ -2934,7 +2934,7 @@ msgstr "con adattamento ai minimi quadrati"
 #: lib/src/gretl_array.c:699
 #, c-format
 msgid "Array of %s, length %d\n"
-msgstr ""
+msgstr "Array di %s, lunghezza %d\n"
 
 #: lib/src/gretl_bfgs.c:401 lib/src/gretl_bfgs.c:440
 msgid "Failed to compute numerical Hessian"
@@ -5741,7 +5741,7 @@ msgstr "Raggiunto il massimo numero di iterazioni, %d"
 
 #: lib/src/monte_carlo.c:1317
 msgid "You can use \"set loop_maxiter\" to increase the limit"
-msgstr ""
+msgstr "È possibile usare \"set loop maxiter\" per aumentare il limite"
 
 #: lib/src/monte_carlo.c:1933
 msgid "progressive loop: model must be of constant size"
@@ -6540,7 +6540,7 @@ msgstr "norma"
 #: lib/src/printscan.c:646
 #, c-format
 msgid "unprocessed argument(s): '%s'"
-msgstr ""
+msgstr "argomento/i non processato/i: %s"
 
 #: lib/src/printscan.c:875
 #, c-format
@@ -9111,7 +9111,7 @@ msgstr "-"
 
 #: gui2/dialogs.c:2286
 msgid "Make this restriction permanent"
-msgstr ""
+msgstr "Restrizione permanente"
 
 #: gui2/dialogs.c:2319
 #, c-format
@@ -12198,7 +12198,7 @@ msgstr "Dati salvati con il nome %s"
 
 #: gui2/gui_utils.c:916 gui2/gui_utils.c:928
 msgid "Delete the weekend rows"
-msgstr ""
+msgstr "Elimina le righe corrispondenti ai fine settimana"
 
 #: gui2/gui_utils.c:917
 #, fuzzy
@@ -12207,7 +12207,7 @@ msgstr "Eliminato lo scalare %s"
 
 #: gui2/gui_utils.c:929
 msgid "Delete blank weekday rows"
-msgstr ""
+msgstr "Elimina le righe infrasettimanali vuote"
 
 #: gui2/gui_utils.c:979 gui2/gui_utils.c:1240 gui2/library.c:7365
 msgid "gretl: open data"
@@ -12950,7 +12950,7 @@ msgstr "_Scarta valori mancanti"
 
 #: gui2/library.c:1580
 msgid "Drop rows that have no valid data"
-msgstr ""
+msgstr "Elimina righe senza valori validi"
 
 #: gui2/library.c:1584
 #, fuzzy
@@ -12959,7 +12959,7 @@ msgstr "Nessun valore mancante nei dati"
 
 #: gui2/library.c:1587 gui2/library.c:1594
 msgid "Make this permanent"
-msgstr ""
+msgstr "Rendi permanente"
 
 #: gui2/library.c:1599
 #, fuzzy
@@ -13159,6 +13159,8 @@ msgid ""
 "p-value is \"very small\" (the Imhof integral could not\n"
 "be evaluated so a definite value is not available)"
 msgstr ""
+"il p-value è infinitesimo (è stato impossibile valutare\n"
+"l'integrale di Imhof e quindi un valore non è disponibile)"
 
 #: gui2/library.c:3261
 msgid "linear restrictions"
@@ -15562,7 +15564,7 @@ msgstr "Sostituisci le funzioni mostrate"
 
 #: gui2/toolbar.c:570
 msgid "Adds to output in this window"
-msgstr ""
+msgstr "Aggiungi all'output in questa finestra"
 
 #: gui2/toolbar.c:572
 #, fuzzy
