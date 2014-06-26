@@ -659,6 +659,17 @@ int gnuplot_has_wxt (void)
     return !err;
 }
 
+int gnuplot_has_qt (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set term qt");
+    }
+
+    return !err;
+}
+
 int gnuplot_png_terminal (void)
 {
     static int ret = -1;
@@ -4111,6 +4122,8 @@ int gnuplot_3d (int *list, const char *literal,
 #ifndef WIN32
     if (gnuplot_has_wxt()) {
 	fputs("set term wxt\n", fq);
+    } else if (gnuplot_has_qt()) {
+	fputs("set term qt\n", fq);
     } else if (gnuplot_has_x11()) {
 	fputs("set term x11\n", fq);
     } else if (gnuplot_has_aqua()) {

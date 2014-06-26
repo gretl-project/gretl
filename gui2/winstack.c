@@ -622,9 +622,11 @@ gboolean window_list_exit_check (void)
 			     r == CONSOLE)
 
 
-static int keep_window_open (GtkWidget *w)
+static int keep_window_open (GtkWidget *w, gretlopt opt)
 {
     const gchar *wname = gtk_widget_get_name(w);
+
+    /* FIXME maybe keep plot windows open if opt & OPT_P? */
 
     if (wname != NULL && strcmp(wname, "pkg-editor") == 0) {
 	return 1;
@@ -638,7 +640,7 @@ static int keep_window_open (GtkWidget *w)
    close ones that need to stay open!
 */
 
-void close_session_windows (void)
+void close_session_windows (gretlopt opt)
 {
     if (n_listed_windows > 1) {
 	GList *list = gtk_action_group_list_actions(window_group);
@@ -659,7 +661,7 @@ void close_session_windows (void)
 		    /* tabbed script editor stays open, but tabbed model
 		       viewer should be closed */
 		    tabwin_close_models_viewer(w);
-		} else if (w != NULL && !keep_window_open(w)) {
+		} else if (w != NULL && !keep_window_open(w, opt)) {
 		    gtk_widget_destroy(w);
 		}
 	    }

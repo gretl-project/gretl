@@ -1639,6 +1639,7 @@ static void session_clear_data (DATASET *pdinfo)
 
 void close_session (gretlopt opt)
 {
+    int preserve = (opt & OPT_P)? 1 : 0;
     int logcode = LOG_NULL;
     int iview = 0;
 
@@ -1669,12 +1670,12 @@ void close_session (gretlopt opt)
     session.show_notes = 0;
     commands_recorded = 0;
 
-    close_session_windows();
+    close_session_windows(opt);
     selector_cleanup();
     function_call_cleanup();
     edit_dialog_special_get_text(NULL);
 
-    if (opt & OPT_P) {
+    if (preserve) {
 	/* preserve non-dataset items */
 	libgretl_session_cleanup(SESSION_CLEAR_DATASET);
     } else {

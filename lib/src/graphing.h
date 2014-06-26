@@ -342,7 +342,11 @@ double gnuplot_time_from_date (const char *s,
 double gnuplot_version (void);
 
 #ifndef WIN32
+
 int gnuplot_has_wxt (void);
+
+int gnuplot_has_qt (void);
+
 #endif
 
 #endif /* GRAPHING_H */

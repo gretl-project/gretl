@@ -54,7 +54,7 @@ int get_script_output_number (void);
 void maybe_close_window_for_user_var (const gpointer data,
 				      GretlObjType otype);
 
-void close_session_windows (void);
+void close_session_windows (gretlopt opt);
 
 void cascade_session_windows (void);
 
