@@ -3522,7 +3522,7 @@ static double real_apply_func (double x, int f, parser *p)
 
     errno = 0;
 
-    if (na(x)) {
+    if (xna(x)) {
 	switch (f) {
 	case F_MISSING:
 	    return 1.0;
@@ -3530,7 +3530,7 @@ static double real_apply_func (double x, int f, parser *p)
 	case F_MISSZERO:
 	    return 0.0;
 	default:
-	    if (na(x)) {
+	    if (xna(x)) {
 		return NADBL;
 	    }
 	}
