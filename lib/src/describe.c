@@ -2630,6 +2630,26 @@ Xtab *single_crosstab (const int *list, const DATASET *dset,
     return tab;
 }
 
+static int just_record_freq_test (const FreqDist *freq)
+{
+    double pval = NADBL;
+
+    if (freq->dist == D_NORMAL) {
+	pval = chisq_cdf_comp(2, freq->test);
+    } else if (freq->dist == D_GAMMA) {
+	pval = normal_pvalue_2(freq->test);
+    }
+
+    if (na(pval)) {
+	return E_NAN;
+    } else {
+	record_test_result(freq->test, pval, 
+			   (freq->dist == D_NORMAL)? 
+			   "normality" : "gamma");
+	return 0;
+    }
+}
+
 int model_error_dist (const MODEL *pmod, DATASET *dset, 
 		      gretlopt opt, PRN *prn)
 {
@@ -2644,6 +2664,7 @@ int model_error_dist (const MODEL *pmod, DATASET *dset,
     }
 
     err = gretl_model_get_normality_test(pmod, prn);
+
     if (!err) {
 	return 0;
     } else if (LIMDEP(pmod->ci)) {
@@ -2668,7 +2689,9 @@ int model_error_dist (const MODEL *pmod, DATASET *dset,
     }
 
     if (!err) {
-	if (opt & OPT_Q) {
+	if (opt & OPT_I) {
+	    err = just_record_freq_test(freq);
+	} else if (opt & OPT_Q) {
 	    print_freq_test(freq, prn);
 	} else {
 	    print_freq(freq, 0, NULL, prn); 

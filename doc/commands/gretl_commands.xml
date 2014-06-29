@@ -1585,6 +1585,10 @@
 	  <flag>--verbose</flag>
 	  <effect>print extra details of regressions</effect>
 	</option>
+	<option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
+	</option>
       </options>
       <examples>
 	<example>coint 4 y x1 x2</example>
@@ -1644,9 +1648,10 @@
 	the set of radio buttons in the Cointegration dialog box.
       </para>
 
-      <para><emphasis>P-</emphasis>values for this test are based on
-      <cite key="mackinnon96">MacKinnon (1996)</cite>.  The
-      relevant code is included by kind permission of the author.
+      <para>
+	<emphasis>P-</emphasis>values for this test are based on <cite
+	key="mackinnon96">MacKinnon (1996)</cite>.  The relevant code
+	is included by kind permission of the author.
       </para>
     </description>
 
@@ -7119,6 +7124,10 @@
 	  <flag>--quiet</flag>
 	  <effect>don't print details</effect>
         </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
+        </option>
       </options>
     </usage>
 
@@ -7168,11 +7177,13 @@
 	implicit in the AR(1) specification.
       </para>
       <para>
-	By default, the program prints the auxiliary regression on which the
-	test statistic is based, where applicable.  This may be suppressed by
-	using the <opt>--quiet</opt> flag.  The test statistic and its p-value
-	may be retrieved using the accessors <lit>$test</lit> and
-	<lit>$pvalue</lit> respectively.
+	By default, the program prints the auxiliary regression on
+	which the test statistic is based, where applicable.  This may
+	be suppressed by using the <opt>--quiet</opt> flag (minimal
+	printed output) or the <opt>--silent</opt> flag (no printed
+	output).  The test statistic and its p-value may be retrieved
+	using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
+	respectively.
       </para>
       <para>
 	When a model has been estimated by two-stage least squares (see

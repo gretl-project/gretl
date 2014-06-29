@@ -899,10 +899,13 @@ static int real_adf_test (int varno, int order, int niv,
 	   regression, represented by "eg_opt".
 	*/
 	int verbose = (opt & OPT_V);
+	int silent = (opt & OPT_I);
 
 	eg_opt = opt;
 	opt = OPT_N;
-	if (verbose) {
+	if (silent) {
+	    opt |= OPT_I;
+	} else if (verbose) {
 	    opt |= OPT_V;
 	}
     }
@@ -1070,7 +1073,7 @@ static int real_adf_test (int varno, int order, int niv,
 	    ainfo->pval = pv;
 	}
 
-	if (!(opt & OPT_Q) && !(flags & ADF_PANEL)) {
+	if (!(opt & (OPT_Q | OPT_I)) && !(flags & ADF_PANEL)) {
 	    print_adf_results(order, order_max, DFt, pv, &dfmod, dfnum, 
 			      dset->varname[varno], &blurb_done, flags,
 			      itv, niv, nseas, opt, auto_order, prn);
@@ -2146,6 +2149,8 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
     int detcode = UR_CONST;
     int i, nv, k = 0;
     int step = 1;
+    int skip = 0;
+    int silent = 0;
     int *clist = NULL;
     int err = 0;
 
@@ -2177,9 +2182,17 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
 	adf_opt |= OPT_V;
     }
 
+    /* or silence? */
+    if (opt & OPT_I) {
+	adf_opt |= OPT_I;
+	silent = skip = 1;
+    } else if (opt & OPT_S) {
+	skip = 1;
+    }
+
     gretl_model_init(&cmod, dset);
 
-    if (!(opt & OPT_S)) {
+    if (!skip) {
 	/* start by testing all candidate vars for unit root */
 	coint_set_sample(clist, nv, order, dset);
 	for (i=1; i<=nv; i++) {
@@ -2193,10 +2206,12 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
 	}
     }
 
-    if (step == 1) {
-	pputc(prn, '\n');
+    if (!silent) {
+	if (step == 1) {
+	    pputc(prn, '\n');
+	}
+	pprintf(prn, _("Step %d: cointegrating regression\n"), step++);
     }
-    pprintf(prn, _("Step %d: cointegrating regression\n"), step++);
 
 #if EG_MIN_SAMPLE
     test_t1 = dset->t1;
@@ -2212,8 +2227,10 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
 	goto bailout;
     }
 
-    cmod.aux = AUX_COINT;
-    printmodel(&cmod, dset, OPT_NONE, prn);
+    if (!silent) {
+	cmod.aux = AUX_COINT;
+	printmodel(&cmod, dset, OPT_NONE, prn);
+    }
 
     /* add residuals from cointegrating regression to data set */
     err = dataset_add_allocated_series(dset, cmod.uhat);
@@ -2225,8 +2242,10 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
     strcpy(dset->varname[k], "uhat");
     cmod.uhat = NULL;
 
-    pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
-	    step, dset->varname[k]);
+    if (!silent) {
+	pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
+		step, dset->varname[k]);
+    }
 
 #if EG_MIN_SAMPLE
     dset->t1 = test_t1;
@@ -2237,11 +2256,13 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
     real_adf_test(k, order, nv, dset, adf_opt, 
 		  ADF_EG_TEST | ADF_EG_RESIDS, NULL, prn); 
 
-    pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
-		 "(a) The unit-root hypothesis is not rejected for the individual"
-		 " variables, and\n(b) the unit-root hypothesis is rejected for the "
-		 "residuals (uhat) from the \n    cointegrating regression.\n"));
-    pputc(prn, '\n');
+    if (!silent) {
+	pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
+		     "(a) The unit-root hypothesis is not rejected for the individual"
+		     " variables, and\n(b) the unit-root hypothesis is rejected for the "
+		     "residuals (uhat) from the \n    cointegrating regression.\n"));
+	pputc(prn, '\n');
+    }
 
  bailout:
     

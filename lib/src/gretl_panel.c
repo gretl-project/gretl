@@ -3728,7 +3728,7 @@ static void print_wald_test (double W, int df, double pval,
  * @pmod: panel model to be tested.
  * @dset: information on the (panel) data set.
  * @opt: may contain OPT_S to attach the test result
- * to @pmod.
+ * to @pmod, OPT_I for silent operation.
  * @prn: for printing details of iterations (or %NULL).
  *
  * Performs a Wald test for the null hypothesis that the 
@@ -3778,7 +3778,9 @@ int groupwise_hetero_test (MODEL *pmod, DATASET *dset,
     } else {
 	double pval = chisq_cdf_comp(df, W);
 
-	print_wald_test(W, df, pval, &pan, uvar, s2, prn);
+	if (!(opt & OPT_I)) {
+	    print_wald_test(W, df, pval, &pan, uvar, s2, prn);
+	}
 
 	if (opt & OPT_S) {
 	    ModelTest *test = model_test_new(GRETL_TEST_GROUPWISE);

@@ -37,8 +37,8 @@
  * model_test_driver:
  * @param: auxiliary parameter for some uses.
  * @dset: dataset struct.
- * @opt: controls which test(s) will be performed; %OPT_Q
- * gives less verbose results.
+ * @opt: controls which test(s) will be performed; OPT_Q
+ * gives less verbose results, OPT_I gives silent operation.
  * @prn: gretl printing struct.
  * 
  * Performs some subset of gretl's "modtest" tests on the
@@ -51,7 +51,7 @@ int model_test_driver (const char *param, DATASET *dset,
 		       gretlopt opt, PRN *prn)
 {
     GretlObjType type;
-    gretlopt testopt;
+    gretlopt testopt = OPT_NONE;
     void *ptr;
     int k = 0;
     int err = 0;
@@ -84,7 +84,11 @@ int model_test_driver (const char *param, DATASET *dset,
 	}
     }
 
-    testopt = (opt & OPT_Q)? OPT_Q : OPT_NONE;
+    if (opt & OPT_I) {
+	testopt = OPT_I | OPT_Q;
+    } else if (opt & OPT_Q) {
+	testopt = OPT_Q;
+    }
 
     /* non-linearity (squares) */
     if (!err && (opt & OPT_S)) {

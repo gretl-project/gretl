@@ -3191,8 +3191,9 @@ static int *ensure_const_augment_list (const MODEL *pmod, int aux,
  * @pmod: pointer to model.
  * @dset: dataset struct.
  * @opt: if flags include OPT_S, save results to model; OPT_Q
- * means don't print the auxiliary regression;  OPT_B means
- * do the simpler Breusch-Pagan variant.
+ * means don't print the auxiliary regression; OPT_B means
+ * do the simpler Breusch-Pagan variant; OPT_I means run
+ * silently.
  * @prn: gretl printing struct.
  *
  * Runs White's test for heteroskedasticity on the given model.
@@ -3310,11 +3311,13 @@ int whites_test (MODEL *pmod, DATASET *dset,
 	    testopt = OPT_X;
 	}
 
-	if (opt & OPT_Q) {
-	    print_whites_test(LM, df, pval, opt, prn);
-	} else {
-	    white.opt |= testopt;
-	    printmodel(&white, dset, OPT_NONE, prn);
+	if (!(opt & OPT_I)) {
+	    if (opt & OPT_Q) {
+		print_whites_test(LM, df, pval, opt, prn);
+	    } else {
+		white.opt |= testopt;
+		printmodel(&white, dset, OPT_NONE, prn);
+	    }
 	}
 
 	if (opt & OPT_S) {
@@ -3760,13 +3763,14 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 
     record_test_result(LM, pv, "ARCH");
 
-    if (V != NULL) {
-	/* V will be NULL if --quiet is in force */
-	print_arch_regression(b, V, T, order, opt, prn);
-    }
-
-    if (opt & OPT_Q) {
-	arch_test_print_simple(order, LM, pv, opt, prn);
+    if (!(opt & OPT_I)) {
+	if (V != NULL) {
+	    /* V will be NULL if --quiet is in force */
+	    print_arch_regression(b, V, T, order, opt, prn);
+	}
+	if (opt & OPT_Q) {
+	    arch_test_print_simple(order, LM, pv, opt, prn);
+	}
     }
 
     if ((opt & OPT_S) || !(opt & OPT_Q)) {
@@ -3881,7 +3885,7 @@ static int real_arch_test (const double *u, int T, int order,
  * @order: lag order for ARCH process.
  * @dset: dataset struct.
  * @opt: if flags include OPT_S, save test results to model;
- * if OPT_Q, be less verbose.
+ * if OPT_Q, be less verbose; if OPT_I, be silent.
  * @prn: gretl printing struct.
  *
  * Tests @pmod for AutoRegressive Conditional Heteroskedasticity.  

@@ -955,19 +955,20 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 	}
 
 	pval = chisq_cdf_comp(df, trsq);
-
 	aux.aux = aux_code;
 
-	if (opt & OPT_Q) {
-	    nonlin_test_header(aux_code, prn);
-	} else {
-	    printmodel(&aux, dset, opt, prn);
-	    pputc(prn, '\n');
+	if (!(opt & OPT_I)) {
+	    /* OPT_I = --silent */
+	    if (opt & OPT_Q) {
+		nonlin_test_header(aux_code, prn);
+	    } else {
+		printmodel(&aux, dset, opt, prn);
+		pputc(prn, '\n');
+	    }
+	    pprintf(prn, "  %s: TR^2 = %g,\n  ", _("Test statistic"), trsq);
+	    pprintf(prn, "%s = P(%s(%d) > %g) = %g\n\n", 
+		    _("with p-value"), _("Chi-square"), df, trsq, pval);
 	}
-
-	pprintf(prn, "  %s: TR^2 = %g,\n  ", _("Test statistic"), trsq);
-	pprintf(prn, "%s = P(%s(%d) > %g) = %g\n\n", 
-		_("with p-value"), _("Chi-square"), df, trsq, pval);
 
 	if (opt & OPT_S) {
 	    ModelTest *test;
@@ -998,7 +999,8 @@ real_nonlinearity_test (MODEL *pmod, int *list,
  * @pmod: pointer to original model.
  * @dset: dataset struct.
  * @aux: AUX_SQ for squares or AUX_LOG for logs
- * @opt: if contains OPT_S, save test results to model.
+ * @opt: if contains OPT_S, save test results to model; if
+ * contains OPT_I, run silently.
  * @prn: gretl printing struct.
  *
  * Run an auxiliary regression to test @pmod for nonlinearity,
@@ -2152,7 +2154,7 @@ static int lb_autocorr_test (MODEL *pmod, int order,
  * @order: lag order for test.
  * @dset: dataset struct.
  * @opt: if flags include OPT_S, save test results to model;
- * if OPT_Q, be less verbose.
+ * if OPT_Q, be less verbose; if OPT_I, be silent.
  * @prn: gretl printing struct.
  *
  * Tests the given model for autocorrelation of order equal to
@@ -2280,7 +2282,9 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 	LMF = ((RSSx - RSSxe) / RSSxe) * dfd / order;
 	pval = snedecor_cdf_comp(order, dfd, LMF);
 
-	if (pmod->aux != AUX_VAR) {
+	if (pmod->aux == AUX_VAR || (opt & OPT_I)) {
+	    ; /* don't print anything here */
+	} else {
 	    if (opt & OPT_Q) {
 		bg_test_header(order, prn, 0);
 	    } else {
@@ -3341,19 +3345,21 @@ int comfac_test (MODEL *pmod, DATASET *dset,
 	double Ftest = ((SSRr - SSRu)/dfn) / (SSRu/dfd);
 	double pval = snedecor_cdf_comp(dfn, dfd, Ftest);
 
-	if (!(opt & OPT_Q)) {
-	    cmod.aux = AUX_COMFAC;
-	    printmodel(&cmod, dset, OPT_S, prn);
+	if (!(opt & OPT_I)) {
+	    if (!(opt & OPT_Q)) {
+		cmod.aux = AUX_COMFAC;
+		printmodel(&cmod, dset, OPT_S, prn);
+		pputc(prn, '\n');
+	    }
+
+	    pputs(prn, _("Test of common factor restriction"));
+	    pputs(prn, "\n\n");
+
+	    pprintf(prn, "  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
+		    "F", dfn, dfd, Ftest);
+	    pprintf(prn, _("with p-value = %g\n"), pval);
 	    pputc(prn, '\n');
 	}
-
-	pputs(prn, _("Test of common factor restriction"));
-	pputs(prn, "\n\n");
-
-	pprintf(prn, "  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
-		"F", dfn, dfd, Ftest);
-	pprintf(prn, _("with p-value = %g\n"), pval);
-	pputc(prn, '\n');
 
 	if (opt & OPT_S) {
 	    ModelTest *test;
