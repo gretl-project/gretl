@@ -854,17 +854,17 @@ join oecd.csv  UK --tkey="Period,Q%q-%Y" --data=Value --filter="Country==\"Unite
 
 Note the use of the format codes \verb|%q| for the quarter and
 \verb|%Y| for the 4-digit year. A touch of elegance could
-have been added by storing the invariant part of the \cmd{join}
-command into a string and then using string substitution, as in
+have been added by storing the invariant options to \cmd{join} using
+the \cmd{setopt} command, as in
 
 \begin{footnotesize}
 \begin{verbatim}
-sprintf optstr "--tkey=\"Period,Q%%q-%%Y\" --data=Value"
-
-join oecd.csv FRA @optstr --filter="Country==\"France\""
-join oecd.csv GER @optstr --filter="Country==\"Germany\""
-join oecd.csv ITA @optstr --filter="Country==\"Italy\""
-join oecd.csv  UK @optstr --filter="Country==\"United Kingdom\""
+setopt join persist --tkey="Period,Q%q-%Y" --data=Value
+join oecd.csv FRA --filter="Country==\"France\""
+join oecd.csv GER --filter="Country==\"Germany\""
+join oecd.csv ITA --filter="Country==\"Italy\""
+join oecd.csv  UK --filter="Country==\"United Kingdom\""
+setopt join clear
 \end{verbatim}
 \end{footnotesize}
 
@@ -873,14 +873,15 @@ rewriting the sequence of joins as a loop, as in
 
 \begin{footnotesize}
 \begin{verbatim}
-sprintf optstr "--tkey=\"Period,Q%%q-%%Y\" --data=Value"
 sprintf countries "France Germany Italy \"United Kingdom\""
 sprintf vnames "FRA GER ITA UK"
+setopt join persist --tkey="Period,Q%q-%Y" --data=Value
 
 loop foreach i @countries
   string vname = strsplit(vnames, i)
-  join oecd.csv @vname @optstr --filter="Country==\"$i\""
+  join oecd.csv @vname --filter="Country==\"$i\""
 endloop
+setopt join clear
 \end{verbatim}
 \end{footnotesize}
 \section{Special handling of time columns}

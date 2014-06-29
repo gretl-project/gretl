@@ -12,6 +12,7 @@ version 1.9.91, in progress
 - "ar1" estimation: better error message(s) on failure; also
   tighten the convergence criterion but add a --loose option
   for backward compatibility
+- "modtest" and "coint" commands: add --silent option for each
 - Importing "CSV" etc: handle UTF-16 and UTF-32 by recoding, if
   recognized via Byte Order Mark
 - ghk() function: add an optional trailing argument to receive
