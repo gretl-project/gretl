@@ -5055,7 +5055,7 @@ static void mac_do_gp_script (const char *plotfile)
 	gchar *cmd;
 
 	fputs("#!/bin/sh\n", fp);
-	fprintf(fp, "\"%s\" \"%s\"\n", gretl_gnuplot_path(), plotfile);
+	fprintf(fp, "\"%s.sh\" \"%s\"\n", gretl_gnuplot_path(), plotfile);
 	fclose(fp);
 	chmod(tmp, S_IRUSR | S_IWUSR | S_IXUSR);
 	cmd = g_strdup_printf("open -a Terminal.app \"%s\"", tmp);
