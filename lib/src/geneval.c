@@ -3522,7 +3522,7 @@ static double real_apply_func (double x, int f, parser *p)
 
     errno = 0;
 
-    if (xna(x)) {
+    if (na(x)) {
 	switch (f) {
 	case F_MISSING:
 	    return 1.0;
@@ -3530,7 +3530,7 @@ static double real_apply_func (double x, int f, parser *p)
 	case F_MISSZERO:
 	    return 0.0;
 	default:
-	    if (xna(x)) {
+	    if (na(x)) {
 		return NADBL;
 	    }
 	}
@@ -13426,6 +13426,11 @@ static int save_generated_var (parser *p, PRN *prn)
 	} else {
 	    /* a new scalar */
 	    x = (r->t == MAT)? r->v.m->val[0] : r->v.xval;
+#if SCALARS_ENSURE_FINITE
+	    if (!isfinite(x)) {
+		x = NADBL;
+	    }
+#endif
 	    p->err = gretl_scalar_add(p->lh.name, x);
 	}
     } else if (p->targ == VEC) {

@@ -4122,10 +4122,10 @@ int gnuplot_3d (int *list, const char *literal,
 #ifndef WIN32
     if (gnuplot_has_wxt()) {
 	fputs("set term wxt\n", fq);
-    } else if (gnuplot_has_qt()) {
-	fputs("set term qt\n", fq);
     } else if (gnuplot_has_x11()) {
 	fputs("set term x11\n", fq);
+    } else if (gnuplot_has_qt()) {
+	fputs("set term qt\n", fq);
     } else if (gnuplot_has_aqua()) {
 	/* can't do rotation, but it's all we have */
 	fputs("set term aqua\n", fq);
