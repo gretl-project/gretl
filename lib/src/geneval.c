@@ -4129,7 +4129,20 @@ static NODE *get_array_element (NODE *l, NODE *r, parser *p)
     }
 
     return ret;
-}    
+}
+
+static NODE *print_array_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (starting(p)) {
+	ret->v.xval = gretl_array_print_full(n->v.a, 
+					     p->dset,
+					     p->prn);
+    }
+
+    return ret;
+} 
 
 /* Binary operator applied to two bundles: at present only '+'
    (for union) is supported.
@@ -5046,17 +5059,27 @@ static const char *advance_to_split (const char *s)
     return (n == m)? NULL : s + n;
 }
 
-static NODE *gretl_strsplit (NODE *l, NODE *r, parser *p)
+static NODE *strsplit_node (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_string_node(p);
+    NODE *ret = NULL;
 
-    if (ret != NULL && starting(p)) {
+    if (starting(p)) {
 	const char *s = l->v.str;
-	int k = node_get_int(r, p);
+	int k = 0;
 
-	if (k < 1) {
-	    p->err = E_DATA;
+	if (r->t != EMPTY) {
+	    k = node_get_int(r, p);
+	    if (k < 1) {
+		p->err = E_DATA;
+	    } else {
+		ret = aux_string_node(p);
+	    }
 	} else {
+	    ret = aux_array_node(p);
+	}
+
+	if (!p->err && k > 0) {
+	    /* returning a single string */
 	    const char *q;
 	    int i;
 
@@ -5071,11 +5094,21 @@ static NODE *gretl_strsplit (NODE *l, NODE *r, parser *p)
 		}
 	    }
 	    ret->v.str = gretl_strndup(s, strcspn(s, " \t\r\n"));
-	} 
+	    if (!p->err && ret->v.str == NULL) {
+		p->err = E_ALLOC;
+	    }
+	} else if (!p->err) {
+	    /* returning an array of strings */
+	    char **S;
+	    int ns = 0;
 
-	if (!p->err && ret->v.str == NULL) {
-	    p->err = E_ALLOC;
+	    S = gretl_string_split_quoted(s, &ns, NULL, &p->err);
+	    if (!p->err) {
+		ret->v.a = gretl_array_from_strings(S, ns, 0, &p->err);
+	    }
 	}
+    } else {
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -11250,8 +11283,8 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_STRSPLIT:
-	if (l->t == STR && r->t == NUM) {
-	    ret = gretl_strsplit(l, r, p);
+	if (l->t == STR && empty_or_num(r)) {
+	    ret = strsplit_node(l, r, p);
 	} else {
 	    node_type_error(t->t, (l->t == STR)? 2 : 1,
 			    (l->t == STR)? NUM : STR,
@@ -11327,6 +11360,13 @@ static NODE *eval (NODE *t, parser *p)
 			    l_ok ? r : l, p);
 	} else {
 	    ret = stringify_series(l, r, p);
+	}
+	break;
+    case F_PRINTARRAY:
+	if (l->t == ARRAY) {
+	    ret = print_array_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, ARRAY, l, p);
 	}
 	break;
     default: 

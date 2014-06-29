@@ -7022,18 +7022,23 @@
       </description>
     </function>
 
-    <function name="strsplit" section="strings" output="string">
+    <function name="strsplit" section="strings" output="string-or-strings">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-	<fnarg type="int">i</fnarg>
+	<fnarg optional="true" type="int">i</fnarg>
       </fnargs>  
       <description>
 	<para>
-	  Returns space-separated element <argname>i</argname> from
-	  the string <argname>s</argname>. The index
-	  <argname>i</argname> is 1-based, and it is an error if
-	  <argname>i</argname> is less than 1. In case
-	  <argname>s</argname> contains no spaces and
+	  With no second argument, returns the array of strings
+	  that results from the splitting of <argname>s</argname>
+	  on white space.
+	</para>
+	<para>
+	  If the second argument is provide, returns space-separated
+	  element <argname>i</argname> from the string
+	  <argname>s</argname>. The index <argname>i</argname> is
+	  1-based, and it is an error if <argname>i</argname> is less
+	  than 1. In case <argname>s</argname> contains no spaces and
 	  <argname>i</argname> equals 1, a copy of the entire input
 	  string is returned; otherwise, in case <argname>i</argname>
 	  exceeds the number of space-separated elements an empty

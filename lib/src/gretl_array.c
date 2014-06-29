@@ -24,6 +24,7 @@
 #include "gretl_func.h"
 #include "gretl_xml.h"
 #include "gretl_typemap.h"
+#include "matrix_extra.h"
 #include "gretl_array.h"
 
 /**
@@ -697,6 +698,40 @@ int gretl_array_print (gretl_array *A, PRN *prn)
 	const char *s = gretl_type_get_name(A->type);
 
 	pprintf(prn, _("Array of %s, length %d\n"), s, A->n);
+    }
+
+    return 0;
+}
+
+int gretl_array_print_full (gretl_array *A, const DATASET *dset,
+			    PRN *prn)
+{
+    if (A != NULL) {
+	const char *s = gretl_type_get_name(A->type);
+	int i;
+
+	/* FIXME this may need some more work */
+
+	pprintf(prn, _("Array of %s, length %d\n"), s, A->n);
+
+	for (i=0; i<A->n; i++) {
+	    void *data = A->data[i];
+
+	    if (data == NULL) {
+		pprintf(prn, "%d: null\n", i + 1);
+	    } else if (A->type == GRETL_TYPE_STRINGS) {
+		pprintf(prn, "%d: %s\n", i + 1, (char *) data);
+	    } else if (A->type == GRETL_TYPE_MATRICES) {
+		char numstr[8];
+
+		sprintf(numstr, "%d", i + 1);
+		gretl_matrix_print_to_prn(data, numstr, prn);
+	    } else if (A->type == GRETL_TYPE_BUNDLES) {
+		gretl_bundle_print(data, prn);
+	    } else if (A->type == GRETL_TYPE_LISTS) {
+		gretl_list_print(data, dset, prn);
+	    }
+	}
     }
 
     return 0;
