@@ -3684,8 +3684,22 @@ gboolean select_repday (GtkComboBox *menu, int *repday)
 enum {
     NO_METHODS_SET,
     SOME_METHODS_SET,
-    ALL_METHODS_SET
+    ALL_METHODS_SET,
+    SINGLE_SERIES
 };
+
+static int method_selected (int i, CompactMethod *method)
+{
+    if (i == 0) {
+	return *method == COMPACT_NONE || *method == COMPACT_AVG;
+    } else if (i == 1) {
+	return *method == COMPACT_SUM;
+    } else if (i == 2) {
+	return *method == COMPACT_EOP;
+    } else {
+	return *method == COMPACT_SOP;
+    }
+}
 
 static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 				    int current_pd, int methods_set,
@@ -3720,7 +3734,8 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
     for (i=0; i<4; i++) {
 	button = gtk_radio_button_new_with_label(group, _(cstrs[i]));
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), (i == 0));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), 
+				     method_selected(i, method));
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_compact_type), method);
 	g_object_set_data(G_OBJECT(button), "action", 
@@ -3767,20 +3782,26 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
     }
 }
 
-static int compact_methods_set (void)
+static int compact_methods_set (CompactMethod *method)
 {
-    int i, nmeth = 0;
+    int i, m, nset = 0;
     int ret = NO_METHODS_SET;
 
+    if (dataset->v == 2) {
+	*method = series_get_compact_method(dataset, 1);
+	return SINGLE_SERIES;
+    }
+
     for (i=1; i<dataset->v; i++) {
-	if (series_get_compact_method(dataset, i) != COMPACT_NONE) {
-	    nmeth++;
+	m = series_get_compact_method(dataset, i);
+	if (m != COMPACT_NONE) {
+	    nset++;
 	}
     }
 
-    if (nmeth == dataset->v - 1) {
+    if (nset == dataset->v - 1) {
 	ret = ALL_METHODS_SET;
-    } else if (nmeth > 0) {
+    } else if (nset > 0) {
 	ret = SOME_METHODS_SET;
     }
 
@@ -3847,7 +3868,7 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
 	    *target_pd = 7;
 	    show_pd_buttons = 1;
 	}
-	methods_set = compact_methods_set();
+	methods_set = compact_methods_set(method);
     }
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
