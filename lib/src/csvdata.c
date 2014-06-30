@@ -863,10 +863,12 @@ static int all_day_ones (DATASET *dset)
     for (t=1; t<dset->n; t++) {
 	if (atoi(dset->S[t]) != 1) {
 	    return 0;
+	} else if (t > 31) {
+	    return 1;
 	}
     }
 
-    return 1;
+    return 0;
 }
 
 enum date_orders {
@@ -883,13 +885,10 @@ static int get_date_order (int f0, int fn, DATASET *dset)
     } else if (f0 > 12 || fn > 12) {
 	/* first field must be day */
 	return DDMMYYYY;
+    } else if (f0 == 1 && fn == 1 && all_day_ones(dset)) {
+	/* start-of-period dates, day first? */
+	return DDMMYYYY;
     } else {
-	if (f0 == 1 && fn == 1) {
-	    /* start-of-period dates, day first? */
-	    if (all_day_ones(dset)) {
-		return DDMMYYYY;
-	    }
-	}
 	/* could be wrong here */
 	return MMDDYYYY;
     }
