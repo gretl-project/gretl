@@ -853,13 +853,29 @@ static int compress_daily (DATASET *dset, int pd)
     return 0;
 }
 
+/* check for all 1s in first column of dates: this may
+   indicate start-of-period dates, day first */
+
+static int all_day_ones (DATASET *dset)
+{
+    int t;
+
+    for (t=1; t<dset->n; t++) {
+	if (atoi(dset->S[t]) != 1) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
 enum date_orders {
     YYYYMMDD = 1,
     MMDDYYYY,
     DDMMYYYY
 };
 
-int get_date_order (int f0, int fn) 
+static int get_date_order (int f0, int fn, DATASET *dset) 
 {
     if (f0 > 31 || fn > 31) {
 	/* first field must be year */
@@ -868,6 +884,12 @@ int get_date_order (int f0, int fn)
 	/* first field must be day */
 	return DDMMYYYY;
     } else {
+	if (f0 == 1 && fn == 1) {
+	    /* start-of-period dates, day first? */
+	    if (all_day_ones(dset)) {
+		return DDMMYYYY;
+	    }
+	}
 	/* could be wrong here */
 	return MMDDYYYY;
     }
@@ -954,7 +976,7 @@ static int csv_daily_date_check (DATASET *dset, int *reversed,
 	int mon2, day2;
 	int pd, ret = 0;
 
-	dorder = get_date_order(d1[0], d2[0]);
+	dorder = get_date_order(d1[0], d2[0], dset);
 
     tryagain:
 
