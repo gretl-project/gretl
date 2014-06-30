@@ -133,7 +133,8 @@ struct csvdata_ {
 #define joining(c) (c->jspec != NULL)
 
 static int
-time_series_label_check (DATASET *dset, int reversed, char *skipstr, PRN *prn);
+time_series_label_check (DATASET *dset, int reversed, char *skipstr, 
+			 int convert_pd, PRN *prn);
 
 static int format_uses_quarterly (char *fmt);
 
@@ -728,11 +729,32 @@ static int check_daily_dates (DATASET *dset, int *pd,
     }
 
 #if DAY_DEBUG
-    fprintf(stderr, "check_daily_dates: pd = %d, reversed = %d, err = %d\n", 
+    fprintf(stderr, "check_daily_dates: daily pd = %d, reversed = %d, err = %d\n", 
 	    dset->pd, *reversed, err);
 #endif
 
     return (err)? -1 : dset->pd;
+}
+
+/* convert from daily date label to a lower frequency --
+   annual, monthly or quarterly -- if @pd indicates this
+   is required 
+*/
+
+static void convert_daily_label (char *targ, const char *src,
+				 int pd)
+{
+    int y, m, d;
+
+    sscanf(src, YMD_READ_FMT, &y, &m, &d);
+
+    if (pd == 1) {
+	sprintf(targ, "%d", y);
+    } else if (pd == 12) {
+	sprintf(targ, "%d:%02d", y, m);
+    } else if (pd == 4) {
+	sprintf(targ, "%d:%d", y, m / 3 + (m % 3 != 0));
+    } 
 }
 
 /* There's a special case (ugh!) where observation strings are
@@ -749,12 +771,13 @@ static int check_daily_dates (DATASET *dset, int *pd,
 
 #define fakequarter(m) (m==3 || m==6 || m==9 || m==12) 
 
-static int complete_qm_labels (DATASET *dset, int reversed,
-			       char *skipstr, int *ppd, 
-			       const char *fmt,
-			       PRN *prn)
+static int consistent_qm_labels (DATASET *dset, int reversed,
+				 int convert_pd, char *skipstr,
+				 int *ppd, const char *fmt,
+				 PRN *prn)
 {
     char bad[16], skip[8];
+    char label[OBSLEN];
     int Ey; /* expected year */
     int Ep; /* expected sub-period */
     int t, s, yr, per;
@@ -766,8 +789,15 @@ static int complete_qm_labels (DATASET *dset, int reversed,
 
  restart:
 
-    s = (reversed)? (dset->n - 1) : 0;
-    if (sscanf(dset->S[s], fmt, &yr, &per) != 2) {
+    s = reversed ? (dset->n - 1) : 0;
+
+    if (convert_pd) {
+	convert_daily_label(label, dset->S[s], pd);
+    } else {
+	strcpy(label, dset->S[s]);
+    }
+
+    if (sscanf(label, fmt, &yr, &per) != 2) {
 	return 0;
     }
 
@@ -775,26 +805,30 @@ static int complete_qm_labels (DATASET *dset, int reversed,
 	s = (reversed)? (dset->n - 1 - t) : t;
 	Ey = (per == pd)? yr + 1 : yr;
 	Ep = (per == pd)? pmin : per + pmin;
-	if (sscanf(dset->S[s], fmt, &yr, &per) != 2) {
+	if (convert_pd) {
+	    convert_daily_label(label, dset->S[s], pd);
+	} else {
+	    strcpy(label, dset->S[s]);
+	}
+	if (sscanf(label, fmt, &yr, &per) != 2) {
 	    ret = 0;
 	} else if (Ep == 1 && pd == pd0 && per == pd + 1 
 		   && skipstr != NULL) {
 	    *skip = *bad = '\0';
-	    strncat(skip, dset->S[s] + 4, 7); 
-	    strncat(bad, dset->S[s], OBSLEN-1); 
+	    strncat(skip, label + 4, 7); 
+	    strncat(bad, label, OBSLEN-1); 
 	    pd = pd0 + 1;
 	    goto restart;
 	} else if (per == Ep + 2 && pmin == 1 && fakequarter(per)) {
 	    *bad = '\0';
-	    strncat(bad, dset->S[s], OBSLEN-1); 
+	    strncat(bad, label, OBSLEN-1); 
 	    pmin = 3;
 	    goto restart;
 	} else if (yr != Ey || per != Ep) {
 	    ret = 0;
 	}
 	if (!ret) {
-	    pprintf(prn, "   %s: not a consistent date\n", 
-		    dset->S[s]);
+	    pprintf(prn, "   %s: not a consistent date\n", label);
 	    break;
 	}
     }
@@ -814,8 +848,11 @@ static int complete_qm_labels (DATASET *dset, int reversed,
     return ret;
 }
 
-static int complete_year_labels (const DATASET *dset, int reversed)
+static int consistent_year_labels (const DATASET *dset, 
+				   int convert_pd,
+				   int reversed)
 {
+    char label[OBSLEN];
     int s, t, yr, yrbak;
     int ret = 1;
 
@@ -824,7 +861,12 @@ static int complete_year_labels (const DATASET *dset, int reversed)
 
     for (t=1; t<dset->n; t++) {
 	s = (reversed)? (dset->n - 1 - t) : t;
-	yr = atoi(dset->S[s]);
+	if (convert_pd) {
+	    convert_daily_label(label, dset->S[s], 1);
+	    yr = atoi(label);
+	} else {
+	    yr = atoi(dset->S[s]);
+	}
 	if (yr != yrbak + 1) {
 	    ret = 0;
 	    break;
@@ -833,24 +875,6 @@ static int complete_year_labels (const DATASET *dset, int reversed)
     }
 
     return ret;
-}
-
-static int compress_daily (DATASET *dset, int pd)
-{
-    int t, yr, mon, day;
-
-    for (t=0; t<dset->n; t++) {
-	sscanf(dset->S[t], YMD_READ_FMT, &yr, &mon, &day);
-	if (pd == 1) {
-	    sprintf(dset->S[t], "%d", yr);
-	} else if (pd == 12) {
-	    sprintf(dset->S[t], "%d:%02d", yr, mon);
-	} else if (pd == 4) {
-	    sprintf(dset->S[t], "%d:%d", yr, mon / 3 + (mon % 3 != 0));
-	} 
-    }
-
-    return 0;
 }
 
 /* check for all 1s in first column of dates: this may
@@ -864,6 +888,7 @@ static int all_day_ones (DATASET *dset)
 	if (atoi(dset->S[t]) != 1) {
 	    return 0;
 	} else if (t > 31) {
+	    /* "1" can't mean January */
 	    return 1;
 	}
     }
@@ -1024,11 +1049,21 @@ static int csv_daily_date_check (DATASET *dset, int *reversed,
 			ret = -1;
 		    }
 		} else {
-		    compress_daily(dset, pd);
+		    int convert_pd = 0;
+
+		    if (pd == 1 || pd == 4 || pd == 12) {
+			convert_pd = pd;
+		    }
 		    ret = time_series_label_check(dset, 
 						  *reversed,
 						  skipstr, 
+						  convert_pd, 
 						  prn);
+		    if (ret < 0 && dorder == MMDDYYYY) {
+			retransform_daily_dates(dset);
+			dorder = DDMMYYYY;
+			goto tryagain;
+		    }			
 		}
 	    } 
 	    return ret;
@@ -1047,7 +1082,6 @@ static int pd_from_date_label (const char *lbl, char *year, char *subp,
     int len = strlen(lbl);
     int try, pd = -1;
 
-    *year = '\0';
     strncat(year, lbl, 4);
     try = atoi(year);
 
@@ -1100,19 +1134,30 @@ static int pd_from_date_label (const char *lbl, char *year, char *subp,
 }
 
 static int time_series_label_check (DATASET *dset, int reversed,
-				    char *skipstr, PRN *prn)
+				    char *skipstr, int convert_pd,
+				    PRN *prn)
 {
     char year[5], sub[3];
     char format[8] = {0};
     char *lbl1 = dset->S[0];
     char *lbl2 = dset->S[dset->n - 1];
+    char *label;
     int pd = -1;
 
-    pd = pd_from_date_label((reversed)? lbl2 : lbl1, year, sub, 
-			    format, prn);
+    *year = *sub = '\0';
+    label = reversed ? lbl2 : lbl1;
+
+    if (convert_pd) {
+	char altobs[OBSLEN];
+
+	convert_daily_label(altobs, label, convert_pd);
+	pd = pd_from_date_label(altobs, year, sub, format, prn);
+    } else {
+	pd = pd_from_date_label(label, year, sub, format, prn);
+    }
 
     if (pd == 1) {
-	if (complete_year_labels(dset, reversed)) {
+	if (consistent_year_labels(dset, reversed, convert_pd)) {
 	    dset->pd = pd;
 	    strcpy(dset->stobs, year);
 	    dset->sd0 = atof(dset->stobs);
@@ -1124,9 +1169,11 @@ static int time_series_label_check (DATASET *dset, int reversed,
     } else if (pd == 4 || pd == 12) {
 	int savepd = pd;
 
-	if (complete_qm_labels(dset, reversed, skipstr, &pd, format, prn)) {
+	if (consistent_qm_labels(dset, reversed, convert_pd, 
+				 skipstr, &pd, format, prn)) {
 	    dset->pd = pd;
 	    if (savepd == 12 && pd == 4) {
+		/* switched monthly to quarterly */
 		int s = atoi(sub) / 3;
 
 		sprintf(dset->stobs, "%s:%d", year, s);
@@ -1351,7 +1398,7 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
     int pd = -1;
 
     if (skipstr != NULL && *skipstr != '\0') {
-	return time_series_label_check(dset, *reversed, skipstr, prn);
+	return time_series_label_check(dset, *reversed, skipstr, 0, prn);
     }
 
     pprintf(prn, A_("   first row label \"%s\", last label \"%s\"\n"), 
@@ -1386,7 +1433,7 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
 	    isdigit((unsigned char) lbl1[2]) && 
 	    isdigit((unsigned char) lbl1[3])) {
 	    *reversed = dates_maybe_reversed(lbl1, lbl2, prn);
-	    pd = time_series_label_check(dset, *reversed, skipstr, prn);
+	    pd = time_series_label_check(dset, *reversed, skipstr, 0, prn);
 	} else {
 	    pputs(prn, A_("   definitely not a four-digit year\n"));
 	}
