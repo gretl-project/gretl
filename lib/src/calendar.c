@@ -205,7 +205,7 @@ char *ymd_extended_from_epoch_day (long ed, int *err)
 
     myerr = real_ymd_from_epoch_day(ed, &y, &m, &d);
 
-    if (!err) {
+    if (!myerr) {
 	ret = calloc(12, 1);
 	if (ret == NULL) {
 	    myerr = E_ALLOC;
