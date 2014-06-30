@@ -3788,7 +3788,10 @@ static int compact_methods_set (CompactMethod *method)
     int ret = NO_METHODS_SET;
 
     if (dataset->v == 2) {
-	*method = series_get_compact_method(dataset, 1);
+	m = series_get_compact_method(dataset, 1);
+	if (m != COMPACT_NONE) {
+	    *method = m;
+	}
 	return SINGLE_SERIES;
     }
 
@@ -3839,17 +3842,17 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
 				   (spd == 4)? _("quarterly") : _("monthly"),
 				   (*target_pd == 4)? _("a quarterly"): _("an annual"));
     } else {
-	/* compacting whole data set */
+	/* compacting the whole dataset */
 	if (spd == 4) {
 	    *target_pd = 1;
 	    labelstr = g_strdup(_("Compact quarterly data to annual"));
 	} else if (spd == 12) {
-	    /* source data are monthly */
+	    /* the source data are monthly */
 	    labelstr = g_strdup(_("Compact monthly data to:"));
 	    *target_pd = 4;
 	    show_pd_buttons = 1;
 	} else if (spd >= 5 && spd <= 7) {
-	    /* source data are daily */
+	    /* the source data are daily */
 	    if (dated_daily_data(dataset)) {
 		labelstr = g_strdup(_("Compact daily data to:"));
 		show_pd_buttons = 1;

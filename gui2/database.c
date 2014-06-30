@@ -3069,6 +3069,7 @@ void do_compact_data_set (void)
 
     if (method == COMPACT_NONE) {
 	/* the user cancelled */
+	fprintf(stderr, "canceled!\n");
 	return;
     }
 
