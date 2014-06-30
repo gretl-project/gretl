@@ -154,7 +154,7 @@ static int graphyzx (const double *y1, const double *y2,
     xzero = yzero = 0;
 
     /* set the number of rows to be used */
-    if (opt & OPT_O) {
+    if (opt & OPT_T) {
 	nrows = 40;
     } else {
 	nrows = (y2 != NULL)? 16 : 18;
