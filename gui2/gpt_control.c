@@ -5041,29 +5041,15 @@ static int get_terminal (char *s)
 
 #ifdef MAC_NATIVE
 
-#include <sys/stat.h>
-
 static void mac_do_gp_script (const char *plotfile)
 {
-    gchar *tmp;
-    FILE *fp;
-
-    tmp = g_strdup_printf("%sgp3d.sh", gretl_dotdir());
-    fp = fopen(tmp, "w");
-
-    if (fp != NULL) {
-	gchar *cmd;
-
-	fputs("#!/bin/sh\n", fp);
-	fprintf(fp, "\"%s.sh\" \"%s\"\n", gretl_gnuplot_path(), plotfile);
-	fclose(fp);
-	chmod(tmp, S_IRUSR | S_IWUSR | S_IXUSR);
-	cmd = g_strdup_printf("open -a Terminal.app \"%s\"", tmp);
-	system(cmd);
-	free(cmd);
+    gchar *buf = NULL;
+    gsize sz = 0;
+    
+    if (g_file_get_contents(plotfile, &buf, &sz, NULL)) {
+	run_gp_script(buf);
+	g_free(buf);
     }
-
-    free(tmp);
 }
 
 #endif
@@ -5083,7 +5069,6 @@ void launch_gnuplot_interactive (const char *plotfile)
     create_child_process(gpline);
     g_free(gpline);
 #elif defined(MAC_NATIVE)
-
     if (plotfile == NULL) {
 	gchar *gpline;
 
