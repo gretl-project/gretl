@@ -29,10 +29,6 @@
 # include "spinner.h"
 #endif
 
-#if defined(MAC_INTEGRATION) && defined(PKGBUILD)
-# define MAC_HIDE_UNHIDE
-#endif
-
 #include "uservar.h"
 
 #define WDEBUG 0
@@ -259,7 +255,7 @@ static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event,
 	window_list_popup(w, (GdkEvent *) event, data);
 	return TRUE;
     }
-# ifdef MAC_HIDE_UNHIDE
+# ifdef GRETL_MACINT
     if (cmd_key(event) && mac_hide_unhide(event)) {
 	return TRUE;
     }
