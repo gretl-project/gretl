@@ -698,6 +698,13 @@ gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int tmpmat,
 {
     gretl_matrix *R = NULL;
 
+    if (f == F_CHOL && !gretl_is_null_matrix(m) &&
+	!gretl_matrix_is_symmetric(m)) {
+	gretl_errmsg_set(_("Matrix is not symmetric"));
+	*err = E_DATA;
+	return NULL;
+    }
+
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
     } else if (tmpmat) {
