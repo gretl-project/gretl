@@ -1644,6 +1644,7 @@ static gchar *make_viewer_title (int role, const char *fname)
     case VIEW_SCRIPT:	
     case VIEW_FILE:
     case VIEW_CODEBOOK:
+    case VIEW_DOC:
 	title = title_from_filename(fname, TRUE);
 	break;
     case EDIT_NOTES:
@@ -1937,7 +1938,6 @@ view_file_with_title (const char *filename, int editable, int del_file,
 		      const char *given_title)
 {
     windata_t *vwin;
-    ViewbarFlags vflags = 0;
     FILE *fp;
 
     /* first check that we can open the specified file */
@@ -1967,15 +1967,19 @@ view_file_with_title (const char *filename, int editable, int del_file,
 
     strcpy(vwin->fname, filename);
 
-    if (editable) {
-	vflags = VIEWBAR_EDITABLE;
-    }
+    if (role != VIEW_DOC) {
+	ViewbarFlags vflags = 0;
 
-    if (text_out_ok(role)) {
-	vflags |= VIEWBAR_HAS_TEXT;
-    }
+	if (editable) {
+	    vflags = VIEWBAR_EDITABLE;
+	}
 
-    vwin_add_viewbar(vwin, vflags);
+	if (text_out_ok(role)) {
+	    vflags |= VIEWBAR_HAS_TEXT;
+	}
+
+	vwin_add_viewbar(vwin, vflags);
+    }
 
     if (textview_use_highlighting(role) || editable) {
 	create_source(vwin, hsize, vsize, editable);

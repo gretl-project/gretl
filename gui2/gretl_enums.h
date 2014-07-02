@@ -45,6 +45,7 @@ enum extra_cmds {
     VIEW_PKG_CODE,
     VIEW_BUNDLE,
     VIEW_FILE,
+    VIEW_DOC,
     DATA_REPORT,
     SCRIPT_OUT,
     FNCALL_OUT,

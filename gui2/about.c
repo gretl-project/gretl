@@ -59,7 +59,7 @@ static void license_callback (GtkWidget *w, gpointer p)
     gchar *fname;
 
     fname = g_strdup_printf("%sCOPYING", gretl_home());
-    view_file(fname, 0, 0, 78, 350, VIEW_FILE);
+    view_file(fname, 0, 0, 78, 350, VIEW_DOC);
     g_free(fname);
 }
 
@@ -68,7 +68,7 @@ static void relnotes_callback (GtkWidget *w, gpointer p)
     gchar *fname;
 
     fname = g_strdup_printf("%sNEWS", gretl_home());
-    view_file(fname, 0, 0, 78, 350, VIEW_FILE);
+    view_file(fname, 0, 0, 78, 350, VIEW_DOC);
     g_free(fname);
 }
 
