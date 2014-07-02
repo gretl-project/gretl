@@ -395,13 +395,14 @@ delta should be no greater than the specified lag, $p$.\footnote{The
   quarterly data as well as monthly. The idea could be generalized to
   cover weekly or daily data without much difficulty.}
 
-This filter condition may be satisfied by more than one release, 
-but only the latest of those will actually be the vintage that was 
-current at the end of the $n$-th month after the observation period,
-so we add the option \option{aggr=max(realtime\_start\_date)}. 
-If instead you want to target the release at the \emph{beginning} of 
-the $n$-th month you would have to use a slightly more complicated 
-filter function. 
+This filter condition may be satisfied by more than one release, but
+only the latest of those will actually be the vintage that was current
+at the end of the $n$-th month after the observation period, so we add
+the option
+\option{aggr=max(realtime\textunderscore{}start\textunderscore{}date)}.
+If instead you want to target the release at the \emph{beginning} of
+the $n$-th month you would have to use a slightly more complicated
+filter function.
 
 \subsection{An illustration}
 
