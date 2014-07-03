@@ -4873,20 +4873,23 @@
     label="3-dimensional plots">
 
     <description>
-      <para>you can manipulate the 3-D plot with the mouse (rotate it,
-      and expand or shrink the axes).</para>
-
-      <para>In composing a 3-D plot, note that the Z-axis will be
-	shown as the vertical axis.  Thus if you have some dependent
-	variable that you think may be influenced by two independent
-	variables, you should put the dependent variable on the
-	Z-axis, and the independent variables on the X and Y
-	axes.</para>  
-
-      <para>Unlike most other gretl graphs, 3-D plots are controlled
-	by gnuplot rather than gretl itself.  The gretl graph-editing
-	menu is not available.</para>
-
+      <para>
+	If the <quote>Make plot interactive</quote> button is
+	available and checked, you can manipulate the 3-D plot with
+	the mouse (rotate it, and expand or shrink the axes).
+      </para>
+      <para>
+	In composing a 3-D plot, note that the Z-axis will be shown as
+	the vertical axis.  Thus if you have some dependent variable
+	that you think may be influenced by two independent variables,
+	you should put the dependent variable on the Z-axis, and the
+	independent variables on the X and Y axes.
+      </para>  
+      <para>
+	Unlike most other gretl graphs, an interactive 3-D plot is
+	controlled by gnuplot rather than gretl itself. The gretl
+	graph-editing menu is not available.
+      </para>
     </description>
   </command>
 
