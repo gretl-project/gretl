@@ -129,6 +129,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_USER,           "user-defined plot" },
     { PLOT_XCORRELOGRAM,   "cross-correlogram" },
     { PLOT_STACKED_BAR,    "stacked-bars" },
+    { PLOT_3D,             "3-D plot" },
     { PLOT_TYPE_MAX,       NULL }
 };
 
@@ -288,16 +289,16 @@ double gnuplot_version (void)
 # ifdef WIN64
 double gnuplot_version (void)
 {
-    /* As of the gretl 1.9.13 release, the package for
-       64-bit Windows includes gnuplot 4.7 (CVS) */
-    return 4.7;
+    /* As of 2014-07-03, the package for 64-bit Windows
+       includes gnuplot 5.0 (CVS) */
+    return 5.0;
 }
 # else
 double gnuplot_version (void)
 {
-    /* As of the gretl 1.9.13 release, the package for 
-       32-bit Windows includes gnuplot 4.6.3 */
-    return 4.63;
+    /* As of 2014-07-03, the package for 32-bit Windows
+       includes gnuplot 5.0 (CVS) */
+    return 5.0;
 }
 # endif
 
@@ -454,7 +455,7 @@ static void get_gp_flags (gnuplot_info *gi, gretlopt opt,
 
 static void printvars (FILE *fp, int t, 
 		       const int *list, 
-		       const double **Z,
+		       const DATASET *dset,
 		       const double *x, 
 		       const char *label, 
 		       const char *date,
@@ -471,7 +472,7 @@ static void printvars (FILE *fp, int t,
     }
 
     for (i=1; i<=list[0]; i++) {
-	xt = Z[list[i]][t];
+	xt = dset->Z[list[i]][t];
 	if (na(xt)) {
 	    fputs("? ", fp);
 	} else {
@@ -632,17 +633,6 @@ static int gnuplot_has_x11 (void)
 
     if (err == -1) {
 	err = gnuplot_test_command("set term x11");
-    }
-
-    return !err;
-}
-
-static int gnuplot_has_aqua (void)
-{
-    static int err = -1; 
-
-    if (err == -1) {
-	err = gnuplot_test_command("set term aqua");
     }
 
     return !err;
@@ -923,7 +913,12 @@ void write_plot_line_styles (int ptype, FILE *fp)
     int i;
 
     if (gnuplot_version() >= 5.0) {
-	if (frequency_plot_code(ptype)) {
+	if (ptype == PLOT_3D) {
+	    for (i=0; i<2; i++) {
+		print_rgb_hash(cstr, &user_color[i]);
+		fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
+	    }
+	} else if (frequency_plot_code(ptype)) {
 	    print_rgb_hash(cstr, &user_color[BOXCOLOR]);
 	    fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
 	    fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
@@ -943,7 +938,12 @@ void write_plot_line_styles (int ptype, FILE *fp)
 		    SHADECOLOR + 1, cstr);
 	}	
     } else {
-	if (frequency_plot_code(ptype)) {
+	if (ptype == PLOT_3D) {
+	    for (i=0; i<2; i++) {
+		print_rgb_hash(cstr, &user_color[i]);
+		fprintf(fp, "set style line %d lc rgb \"%s\"\n", i+1, cstr);
+	    }
+	} else if (frequency_plot_code(ptype)) {
 	    print_rgb_hash(cstr, &user_color[BOXCOLOR]);
 	    fprintf(fp, "set style line 1 lc rgb \"%s\"\n", cstr);
 	    fputs("set style line 2 lc rgb \"#000000\"\n", fp);
@@ -2620,8 +2620,7 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 		maybe_print_panel_jot(t, dset, fp);
 	    }
 
-	    printvars(fp, t, datlist, (const double **) dset->Z, 
-		      gi->x, label, date, xoff);
+	    printvars(fp, t, datlist, dset, gi->x, label, date, xoff);
 	}
 
 	fputs("e\n", fp);
@@ -4044,21 +4043,21 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
     return finalize_plot_input_file(fp);
 }
 
-static int get_3d_output_file (FILE **fpp)
+static FILE *get_3d_output_file (int *err)
 {
+    FILE *fp = NULL;
     char fname[MAXLEN];
-    int err = 0;
 
     sprintf(fname, "%sgpttmp.plt", gretl_dotdir());
-    *fpp = gretl_fopen(fname, "w");
+    fp = gretl_fopen(fname, "w");
 
-    if (*fpp == NULL) {
-	err = E_FOPEN;
+    if (fp == NULL) {
+	*err = E_FOPEN;
     } else {
 	set_gretl_plotfile(fname);
     }
 
-    return err;
+    return fp;
 }
 
 static gchar *maybe_get_surface (const int *list, 
@@ -4104,7 +4103,8 @@ static gchar *maybe_get_surface (const int *list,
  * @list: list of variables to plot, by ID number: Y, X, Z
  * @literal: literal command(s) to pass to gnuplot (or NULL)
  * @dset: pointer to dataset.
- * @opt: may include OPT_F to force display of fitted surface.
+ * @opt: may include OPT_F to force display of fitted surface;
+ * may include OPT_I to force an interactive (rotatable) plot.
  *
  * Writes a gnuplot plot file to display a 3D plot (Z on
  * the vertical axis, X and Y on base plane).
@@ -4115,85 +4115,86 @@ static gchar *maybe_get_surface (const int *list,
 int gnuplot_3d (int *list, const char *literal,
 		DATASET *dset, gretlopt opt)
 {
-    FILE *fq = NULL;
+    FILE *fp = NULL;
     int t, t1 = dset->t1, t2 = dset->t2;
-    int orig_t1 = dset->t1, orig_t2 = dset->t2;
+    int save_t1 = dset->t1, save_t2 = dset->t2;
     int lo = list[0];
     int datlist[4];
-    int addstyle = 0;
+    int interactive = (opt & OPT_I);
+    const char *term = NULL;
     gchar *surface = NULL;
+    int err = 0;
 
     if (lo != 3) {
 	fprintf(stderr, "gnuplot_3d needs three variables (only)\n");
 	return E_DATA;
     }
 
-    if (get_3d_output_file(&fq)) {
-	return E_FOPEN;
-    }
-
     list_adjust_sample(list, &t1, &t2, dset, NULL);
 
     /* if resulting sample range is empty, complain */
     if (t1 >= t2) {
-	fclose(fq);
 	return E_MISSDATA;
+    }
+
+#ifndef WIN32
+    if (interactive) {
+	/* On Windows we let the gnuplot terminal default to
+	   "win"; on other systems we need a suitable
+	   terminal for interactive 3-D display.
+	*/
+	if (gnuplot_has_wxt()) {
+	    term = "wxt";
+	} else if (gnuplot_has_x11()) {
+	    term = "x11";
+	} else if (gnuplot_has_qt()) {
+	    term = "qt";
+	} else {
+	    /* out of luck */
+	    interactive = 0;
+	}
+    }
+#endif
+
+    if (interactive) {
+	fp = get_3d_output_file(&err);
+    } else {
+	fp = open_plot_input_file(PLOT_3D, &err);
+    }
+
+    if (err) {
+	return err;
     }
 
     dset->t1 = t1;
     dset->t2 = t2;
 
-#ifndef WIN32
-    if (gnuplot_has_wxt()) {
-	fputs("set term wxt\n", fq);
-    } else if (gnuplot_has_x11()) {
-	fputs("set term x11\n", fq);
-    } else if (gnuplot_has_qt()) {
-	fputs("set term qt\n", fq);
-    } else if (gnuplot_has_aqua()) {
-	/* can't do rotation, but it's all we have */
-	fputs("set term aqua\n", fq);
-    } else {
-	fclose(fq);
-	return E_EXTERNAL;
+    if (interactive) {
+	if (term != NULL) {
+	    fprintf(fp, "set term %s\n", term);
+	}
+	write_plot_line_styles(PLOT_3D, fp);
     }
-#endif
 
     gretl_push_c_numeric_locale();
 
-    /* try to ensure we don't get "invisible" green datapoints */
-    if (gnuplot_version() >= 5.0) {
-	fputs("set linetype 2 lc rgb \"#0000ff\"\n", fq);
-    } else {
-	fputs("set style line 2 lc rgb \"#0000ff\"\n", fq);
-    }
-    addstyle = 1;
-    
-    print_axis_label('x', series_get_graph_name(dset, list[2]), fq);
-    print_axis_label('y', series_get_graph_name(dset, list[1]), fq);
-    print_axis_label('z', series_get_graph_name(dset, list[3]), fq);
+    print_axis_label('x', series_get_graph_name(dset, list[2]), fp);
+    print_axis_label('y', series_get_graph_name(dset, list[1]), fp);
+    print_axis_label('z', series_get_graph_name(dset, list[3]), fp);
 
-    gnuplot_missval_string(fq);
+    gnuplot_missval_string(fp);
 
     if (literal != NULL && *literal != 0) {
-	print_gnuplot_literal_lines(literal, fq);
+	print_gnuplot_literal_lines(literal, fp);
     }
 
     surface = maybe_get_surface(list, dset, opt);
 
     if (surface != NULL) {
-	if (addstyle) {
-	    fprintf(fq, "splot %s, \\\n'-' title '' w p ls 2\n", surface);
-	} else {
-	    fprintf(fq, "splot %s, \\\n'-' title '' w p lt 3\n", surface);
-	}
+	fprintf(fp, "splot %s, \\\n'-' title '' w p\n", surface);
 	g_free(surface);
     } else {
-	if (addstyle) {
-	    fputs("splot '-' title '' w p ls 2\n", fq);
-	} else {
-	    fputs("splot '-' title '' w p lt 3\n", fq);
-	}
+	fputs("splot '-' title '' w p\n", fp);
     }
 
     datlist[0] = 3;
@@ -4207,19 +4208,22 @@ int gnuplot_3d (int *list, const char *literal,
 	if (dset->markers) {
 	    label = dset->S[t];
 	}
-	printvars(fq, t, datlist, (const double **) dset->Z, 
-		  NULL, label, NULL, 0.0);
+	printvars(fp, t, datlist, dset, NULL, label, NULL, 0.0);
     }	
-    fputs("e\n", fq);
+    fputs("e\n", fp);
 
     gretl_pop_c_numeric_locale();
 
-    dset->t1 = orig_t1;
-    dset->t2 = orig_t2;
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
-    fclose(fq);
+    if (interactive) {
+	fclose(fp);
+    } else {
+	err = finalize_plot_input_file(fp);
+    }
 
-    return 0;
+    return err;
 }
 
 static void print_freq_test_label (char *s, int teststat, 
