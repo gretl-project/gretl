@@ -255,7 +255,6 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
 
     ZeroMemory(&si, sizeof si);
     ZeroMemory(&pi, sizeof pi);  
-
     si.cb = sizeof si;
 
     if (console_app) {
@@ -281,7 +280,7 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
 	WaitForSingleObject(pi.hProcess, INFINITE); 
 	if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
 	    if (exitcode != 0) {
-		gretl_errmsg_sprintf("%s: exit code %d\n", cmdline, 
+		gretl_errmsg_sprintf("%s: exit code %d", cmdline, 
 				     exitcode);
 		err = 1;
 	    }
