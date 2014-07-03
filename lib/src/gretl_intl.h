@@ -50,6 +50,7 @@ typedef enum {
     LANG_DE,
     LANG_EL,
     LANG_IT,
+    LANG_JA,
     LANG_PL,
     LANG_PT,
     LANG_PT_BR,
