@@ -1,4 +1,5 @@
 version 1.9.91, in progress
+- Add Japanese translation (thanks to Shintaro Nakagawa)
 - Add new functions: curl(), jsonget(), nlines(), kpsscrit(),
   genseries()
 - Add new command "setopt" for pre-setting of command options
