@@ -37,6 +37,7 @@ SYSBIN=${SYSBASE}/bin
 SYSTRANS=${SYSBASE}/share/locale
 SYSTHEME=${SYSBASE}/share/themes
 SYSSV=${SYSBASE}/share/gtksourceview-2.0
+GPDIST=${WINFILES}/gp50w64.tar.gz
 
 #############################################
 
@@ -333,11 +334,11 @@ add_file gretl_website.url gretl/gretl_website.url
 cd windist
 WINDIST=`pwd`
 
-if [ ! -f ${WINFILES}/gp47w64.tar.gz ] ; then
-  echo "Couldn't find gp47w64.tar.gz"
+if [ ! -f ${GPDIST} ] ; then
+  echo "Couldn't find ${GPDIST}"
   exit 1
 else
-  process_tarball ${WINFILES}/gp47w64.tar.gz
+  process_tarball ${GPDIST}
 fi
 
 # add the approved gretl addons
