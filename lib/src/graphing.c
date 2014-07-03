@@ -4151,7 +4151,7 @@ int gnuplot_3d (int *list, const char *literal,
 	    term = "qt";
 	} else {
 	    /* out of luck */
-	    interactive = 0;
+	    return E_EXTERNAL;
 	}
     }
 #endif
