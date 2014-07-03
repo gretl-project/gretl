@@ -180,8 +180,8 @@ struct png_bounds_t {
 typedef struct linestyle_ linestyle;
 
 struct linestyle_ {
+    /* we may want more elements here at some point */
     char rgb[8];
-    int type;
 };
 
 #define MAX_STYLES N_GP_COLORS
@@ -495,7 +495,8 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 		flags = GPT_XL;
 	    } else if (strstr(fline, "extra-large")) {
 		flags = GPT_XXL;
-	    } else if (!strncmp(fline, "set style line", 14)) {
+	    } else if (!strncmp(fline, "set style line", 14) ||
+		       !strncmp(fline, "set linetype", 12)) {
 		add_line_styles = 0;
 	    } else if (!strncmp(fline, "plot", 4)) {
 		break;
@@ -775,8 +776,6 @@ static int term_uses_utf8 (int ttype)
     }
 }
 
-#define is_color_line(s) (strstr(s, "set style line") && strstr(s, "rgb"))
-
 void filter_gnuplot_file (int ttype, int latin, int mono,
 			  FILE *fpin, FILE *fpout)
 {
@@ -795,7 +794,8 @@ void filter_gnuplot_file (int ttype, int latin, int mono,
 	}
 
 	if (mono) {
-	    if (is_color_line(pline)) {
+	    if ((strstr(pline, "set style line") || strstr(pline, "set linetype"))
+		&& strstr(pline, "rgb")) {
 		continue;
 	    } else if (strstr(pline, "set style fill solid")) {
 		fputs("set style fill solid 0.3\n", fpout);
@@ -1774,14 +1774,23 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     char val[MAXLEN] = {0};
 
     if (!strncmp(s, "set style line", 14)) {
-	/* e.g. set style line 1 lc rgb "#ff0000 lt 6" */
-	int n, idx = 0, lt = LT_AUTO;
+	/* e.g. set style line 1 lc rgb "#ff0000" */
+	int n, idx = 0;
 	char rgb[8] = {0};
 
-	n = sscanf(s + 14, " %d lc rgb \"%7s\" lt %d", &idx, rgb, &lt);
-	if (n >= 2 && idx > 0 && idx <= MAX_STYLES) {
+	n = sscanf(s + 14, " %d lc rgb \"%7s\"", &idx, rgb);
+	if (n == 2 && idx > 0 && idx <= MAX_STYLES) {
 	    strcpy(styles[idx-1].rgb, rgb);
-	    styles[idx-1].type = (n == 3)? lt : LT_AUTO;
+	}
+	return 0;
+    } else if (!strncmp(s, "set linetype", 12)) {
+	/* e.g. set linetype 1 lc rgb "#ff0000" */
+	int n, idx = 0;
+	char rgb[8] = {0};
+
+	n = sscanf(s + 12, " %d lc rgb \"%7s\"", &idx, rgb);
+	if (n == 2 && idx > 0 && idx <= MAX_STYLES) {
+	    strcpy(styles[idx-1].rgb, rgb);
 	}
 	return 0;
     }
@@ -2392,7 +2401,6 @@ static void check_for_plot_size (GPT_SPEC *spec, gchar *buf)
 static void linestyle_init (linestyle *ls)
 {
     ls->rgb[0] = '\0';
-    ls->type = LT_AUTO;
 }
 
 #define plot_needs_obs(c) (c != PLOT_ELLIPSE && \

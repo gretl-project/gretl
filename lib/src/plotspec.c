@@ -968,10 +968,7 @@ static void print_linestyle (const GPT_SPEC *spec, int i, FILE *fp)
 
     if (i < spec->n_lines) {
 	line = &spec->lines[i];
-	if (*line->rgb != '\0' && line->type != LT_AUTO) {
-	    fprintf(fp, "lc rgb \"%s\" lt %d\n", line->rgb, line->type);
-	    done = 1;
-	} else if (*line->rgb != '\0') {
+	if (*line->rgb != '\0') {
 	    fprintf(fp, "lc rgb \"%s\"\n", line->rgb);
 	    done = 1;
 	}
