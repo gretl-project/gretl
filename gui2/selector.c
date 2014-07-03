@@ -5483,7 +5483,10 @@ static void build_selector_switches (selector *sr)
     } else if (sr->ci == CORR) {	
 	tmp = gtk_check_button_new_with_label(_("Ensure uniform sample size"));
 	pack_switch(tmp, sr, verbose, FALSE, OPT_U, 0);
-    } 
+    } else if (sr->ci == GR_3D) {
+	tmp = gtk_check_button_new_with_label(_("Make plot interactive"));
+	pack_switch(tmp, sr, TRUE, FALSE, OPT_I, 0);
+    }
 
     if (sr->ci == ARMA) {
 	sr->hess_button = 
@@ -6646,6 +6649,12 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
 	build_selector_switches(sr);
     }
 
+#if !defined(MAC_NATIVE) || !defined(PKGBUILD)
+    if (ci == GR_3D) {
+	build_selector_switches(sr);
+    }
+#endif
+
     /* radio buttons for some */
     if (want_radios(sr)) {
 	build_selector_radios(sr);
@@ -6659,7 +6668,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     /* plus lag selection stuff, if relevant */
     if (dataset_lags_ok(dataset)) {
 	if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY || \
-	    ci == SCATTERS || ci == GR_3D || ci == GR_XYZ) {
+	    ci == SCATTERS || ci == GR_XYZ) {
 	    unhide_lags_switch(sr);
 	}
 	if (MODEL_CODE(ci) && ci != ARMA) {

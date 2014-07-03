@@ -6329,10 +6329,22 @@ void fit_actual_plot (GtkAction *action, gpointer p)
     trim_dataset(pmod, origv);
 }
 
+static void adjust_3d_plot_option (gretlopt *opt)
+{
+#if defined(MAC_NATIVE) && defined(PKGBUILD)
+    /* We don't have a fully interactive gnuplot terminal
+       (you can't rotate plots wirh aquaterm) */
+    ;
+#else
+    *opt |= OPT_I;
+#endif
+}
+
 void fit_actual_splot (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
+    gretlopt plotopt = OPT_F;
     DATASET *dset;
     int origv = dataset->v;
     int *xlist = NULL;
@@ -6362,12 +6374,15 @@ void fit_actual_splot (GtkAction *action, gpointer p)
 
     free(xlist);
 
-    err = gnuplot_3d(list, NULL, dset, OPT_F);
+    adjust_3d_plot_option(&plotopt);
+    err = gnuplot_3d(list, NULL, dset, plotopt);
 
     if (err) {
 	gui_errmsg(err);
-    } else {
+    } else if (plotopt & OPT_I) {
 	launch_gnuplot_interactive(gretl_plotfile());
+    } else {
+	register_graph();
     }
 
     trim_dataset(pmod, origv);
@@ -6962,6 +6977,7 @@ int do_graph_from_selector (selector *sr)
 int do_splot_from_selector (selector *sr)
 {
     const char *buf = selector_list(sr);
+    gretlopt opt = selector_get_opts(sr);
     int *list;
     int err = 0;
 
@@ -6970,12 +6986,14 @@ int do_splot_from_selector (selector *sr)
 	return err;
     }
 
-    err = gnuplot_3d(list, NULL, dataset, OPT_NONE);
+    err = gnuplot_3d(list, NULL, dataset, opt);
 
     if (err) {
 	gui_errmsg(err);
-    } else {
+    } else if (opt & OPT_I) {
 	launch_gnuplot_interactive(gretl_plotfile());
+    } else {
+	register_graph();
     }
 
     free(list);

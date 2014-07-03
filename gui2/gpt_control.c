@@ -1308,7 +1308,8 @@ static int get_gpt_marker (const char *line, char *label,
                       p == PLOT_TRI_GRAPH || \
                       p == PLOT_BI_GRAPH || \
 		      p == PLOT_ELLIPSE || \
-		      p == PLOT_RQ_TAU)
+		      p == PLOT_RQ_TAU || \
+		      p == PLOT_3D)
 
 /* graphs where we don't attempt to find data coordinates */
 
@@ -1319,7 +1320,8 @@ static int get_gpt_marker (const char *line, char *label,
                         p == PLOT_PANEL || \
                         p == PLOT_TRI_GRAPH || \
                         p == PLOT_BI_GRAPH || \
-			p == PLOT_STACKED_BAR)
+			p == PLOT_STACKED_BAR || \
+			p == PLOT_3D)
 
 static int get_gpt_data (GPT_SPEC *spec, int datacols, int do_markers, 
 			 const char *buf)
@@ -1982,7 +1984,7 @@ static void get_plot_nobs (GPT_SPEC *spec, const char *buf, int *do_markers)
 	    continue;
 	}
 
-	if (!strncmp(line, "plot", 4)) {
+	if (!strncmp(line, "plot", 4) || !strncmp(line, "splot", 5)) {
 	    started = 0;
 	}
 
@@ -2285,15 +2287,16 @@ static int
 plot_get_data_and_markers (GPT_SPEC *spec, const char *buf, 
 			   int datacols, int do_markers)
 {
+    size_t dsize = spec->nobs * datacols * sizeof *spec->data;
     int err = 0;
 
 #if GPDEBUG
-    fprintf(stderr, "allocating: nobs=%d, datacols=%d, size=%d\n", 
-	    spec->nobs, datacols, spec->nobs * datacols * sizeof *spec->data);
+    fprintf(stderr, "allocating: nobs=%d, datacols=%d, dsize=%d\n", 
+	    (int) spec->nobs, datacols, (int) dsize);
 #endif  
 
     /* allocate for the plot data... */
-    spec->data = mymalloc(spec->nobs * datacols * sizeof *spec->data);
+    spec->data = mymalloc(dsize);
     if (spec->data == NULL) {
 	err = E_ALLOC;
     }
