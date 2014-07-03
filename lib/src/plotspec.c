@@ -960,7 +960,11 @@ static void print_linestyle (const GPT_SPEC *spec, int i, FILE *fp)
     GPT_LINE *line;
     int done = 0;
 
-    fprintf(fp, "set style line %d ", i+1);
+    if (gnuplot_version() >= 5.0) {
+	fprintf(fp, "set linetype %d ", i+1);
+    } else {
+	fprintf(fp, "set style line %d ", i+1);
+    }
 
     if (i < spec->n_lines) {
 	line = &spec->lines[i];
@@ -999,33 +1003,60 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
 {
     char cstr[8];
     int i;
-    
-    if (frequency_plot_code(spec->code)) {
-	const gretlRGB *color = get_graph_color(BOXCOLOR);
 
-	print_rgb_hash(cstr, color);
-	fprintf(fp, "set style line 1 lc rgb \"%s\"\n", cstr);
-	fputs("set style line 2 lc rgb \"#000000\"\n", fp);
-    } else if (spec->code == PLOT_RQ_TAU) {
-	fputs("set style line 1 lc rgb \"#000000\"\n", fp);
-	for (i=1; i<BOXCOLOR; i++) {
-	    print_linestyle(spec, i, fp);
+    if (gnuplot_version() >= 5.0) {
+	if (frequency_plot_code(spec->code)) {
+	    const gretlRGB *color = get_graph_color(BOXCOLOR);
+
+	    print_rgb_hash(cstr, color);
+	    fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
+	    fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
+	} else if (spec->code == PLOT_RQ_TAU) {
+	    fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
+	    for (i=1; i<BOXCOLOR; i++) {
+		print_linestyle(spec, i, fp);
+	    }
+	} else {
+	    for (i=0; i<BOXCOLOR; i++) {
+		print_linestyle(spec, i, fp);
+	    }
+	}
+
+	if (spec->nbars > 0 || any_filledcurve(spec)) {
+	    const gretlRGB *color = get_graph_color(SHADECOLOR);
+
+	    print_rgb_hash(cstr, color);
+	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", 
+		    SHADECOLOR + 1, cstr);
 	}
     } else {
-	for (i=0; i<BOXCOLOR; i++) {
-	    print_linestyle(spec, i, fp);
+	if (frequency_plot_code(spec->code)) {
+	    const gretlRGB *color = get_graph_color(BOXCOLOR);
+
+	    print_rgb_hash(cstr, color);
+	    fprintf(fp, "set style line 1 lc rgb \"%s\"\n", cstr);
+	    fputs("set style line 2 lc rgb \"#000000\"\n", fp);
+	} else if (spec->code == PLOT_RQ_TAU) {
+	    fputs("set style line 1 lc rgb \"#000000\"\n", fp);
+	    for (i=1; i<BOXCOLOR; i++) {
+		print_linestyle(spec, i, fp);
+	    }
+	} else {
+	    for (i=0; i<BOXCOLOR; i++) {
+		print_linestyle(spec, i, fp);
+	    }
 	}
+
+	if (spec->nbars > 0 || any_filledcurve(spec)) {
+	    const gretlRGB *color = get_graph_color(SHADECOLOR);
+
+	    print_rgb_hash(cstr, color);
+	    fprintf(fp, "set style line %d lc rgb \"%s\"\n", 
+		    SHADECOLOR + 1, cstr);
+	}
+
+	fputs("set style increment user\n", fp);
     }
-
-    if (spec->nbars > 0 || any_filledcurve(spec)) {
-	const gretlRGB *color = get_graph_color(SHADECOLOR);
-
-	print_rgb_hash(cstr, color);
-	fprintf(fp, "set style line %d lc rgb \"%s\"\n", 
-		SHADECOLOR + 1, cstr);
-    }
-
-    fputs("set style increment user\n", fp);
 }
 
 static int print_point_type (GPT_LINE *line)

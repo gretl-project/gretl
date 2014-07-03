@@ -288,8 +288,8 @@ double gnuplot_version (void)
 # ifdef WIN64
 double gnuplot_version (void)
 {
-    /* As of the gretl 1.9.13 release, the package for 
-       64-bit Windows includes gnuplot 4.7 */
+    /* As of the gretl 1.9.13 release, the package for
+       64-bit Windows includes gnuplot 4.7 (CVS) */
     return 4.7;
 }
 # else
@@ -921,28 +921,52 @@ void write_plot_line_styles (int ptype, FILE *fp)
 {
     char cstr[8];
     int i;
-    
-    if (frequency_plot_code(ptype)) {
-	print_rgb_hash(cstr, &user_color[BOXCOLOR]);
-	fprintf(fp, "set style line 1 lc rgb \"%s\"\n", cstr);
-	fputs("set style line 2 lc rgb \"#000000\"\n", fp);
-    } else if (ptype == PLOT_RQ_TAU) {
-	fputs("set style line 1 lc rgb \"#000000\"\n", fp);
-	for (i=1; i<BOXCOLOR; i++) {
-	    print_rgb_hash(cstr, &user_color[i]);
-	    fprintf(fp, "set style line %d lc rgb \"%s\"\n", i+1, cstr);
-	}
-    } else {
-	for (i=0; i<BOXCOLOR; i++) {
-	    print_rgb_hash(cstr, &user_color[i]);
-	    fprintf(fp, "set style line %d lc rgb \"%s\"\n", i+1, cstr);
-	}
-	print_rgb_hash(cstr, &user_color[SHADECOLOR]);
-	fprintf(fp, "set style line %d lc rgb \"%s\"\n", 
-		SHADECOLOR + 1, cstr);
-    }
 
-    fputs("set style increment user\n", fp);
+    if (gnuplot_version() >= 5.0) {
+	if (frequency_plot_code(ptype)) {
+	    print_rgb_hash(cstr, &user_color[BOXCOLOR]);
+	    fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
+	    fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
+	} else if (ptype == PLOT_RQ_TAU) {
+	    fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
+	    for (i=1; i<BOXCOLOR; i++) {
+		print_rgb_hash(cstr, &user_color[i]);
+		fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
+	    }
+	} else {
+	    for (i=0; i<BOXCOLOR; i++) {
+		print_rgb_hash(cstr, &user_color[i]);
+		fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
+	    }
+	    print_rgb_hash(cstr, &user_color[SHADECOLOR]);
+	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", 
+		    SHADECOLOR + 1, cstr);
+	}	
+    } else {
+	if (frequency_plot_code(ptype)) {
+	    print_rgb_hash(cstr, &user_color[BOXCOLOR]);
+	    fprintf(fp, "set style line 1 lc rgb \"%s\"\n", cstr);
+	    fputs("set style line 2 lc rgb \"#000000\"\n", fp);
+	} else if (ptype == PLOT_RQ_TAU) {
+	    fputs("set style line 1 lc rgb \"#000000\"\n", fp);
+	    for (i=1; i<BOXCOLOR; i++) {
+		print_rgb_hash(cstr, &user_color[i]);
+		fprintf(fp, "set style line %d lc rgb \"%s\"\n", i+1, cstr);
+	    }
+	} else {
+	    for (i=0; i<BOXCOLOR; i++) {
+		print_rgb_hash(cstr, &user_color[i]);
+		fprintf(fp, "set style line %d lc rgb \"%s\"\n", i+1, cstr);
+	    }
+	    print_rgb_hash(cstr, &user_color[SHADECOLOR]);
+	    fprintf(fp, "set style line %d lc rgb \"%s\"\n", 
+		    SHADECOLOR + 1, cstr);
+	}
+
+	if (gnuplot_version() < 5.0) {
+	    fputs("set style increment user\n", fp);
+	}
+    }
 }
 
 #ifdef WIN32
@@ -1140,11 +1164,11 @@ static const char *real_png_term_line (PlotType ptype,
     write_png_size_string(size_string, ptype, flags, scale);
 
     if (pngterm == GP_PNG_CAIRO) {
-	sprintf(png_term_line, "set term pngcairo%s%s",
+	sprintf(png_term_line, "set term pngcairo%s%s noenhanced",
 		font_string, size_string);
 	strcat(png_term_line, "\nset encoding utf8");
     } else {
-	sprintf(png_term_line, "set term png%s%s%s",
+	sprintf(png_term_line, "set term png%s%s%s noenhanced",
 		truecolor_string, font_string, size_string); 
     }
 
@@ -1230,9 +1254,9 @@ const char *get_gretl_emf_term_line (PlotType ptype, int color)
     strcpy(tline, "set term emf ");
 
     if (color) {
-	strcat(tline, "color ");
+	strcat(tline, "color noenhanced ");
     } else {
-	strcat(tline, "mono dash ");
+	strcat(tline, "mono dash noenhanced ");
     }
 
     /* font spec */
@@ -4138,7 +4162,11 @@ int gnuplot_3d (int *list, const char *literal,
     gretl_push_c_numeric_locale();
 
     /* try to ensure we don't get "invisible" green datapoints */
-    fprintf(fq, "set style line 2 lc rgb \"#0000ff\"\n");
+    if (gnuplot_version() >= 5.0) {
+	fputs("set linetype 2 lc rgb \"#0000ff\"\n", fq);
+    } else {
+	fputs("set style line 2 lc rgb \"#0000ff\"\n", fq);
+    }
     addstyle = 1;
     
     print_axis_label('x', series_get_graph_name(dset, list[2]), fq);
