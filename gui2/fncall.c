@@ -228,18 +228,24 @@ static GtkWidget *label_hbox (call_info *cinfo, GtkWidget *w,
 {
     GtkWidget *hbox, *lbl;
     gchar *label = NULL;
+    gchar *vstr = NULL;
     gchar *buf = NULL;
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 5);
 
-    function_package_get_properties(cinfo->pkg, "label",
-				    &label, NULL);
-    buf = g_markup_printf_escaped("<span weight=\"bold\">%s</span>", 
-				  (label != NULL)? label : fallback);
+    function_package_get_properties(cinfo->pkg, 
+				    "label", &label,
+				    "version", &vstr,
+				    NULL);
+    buf = g_markup_printf_escaped("<span weight=\"bold\">%s %s</span>", 
+				  (label != NULL)? label : fallback,
+				  vstr);
     lbl = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl), buf);
+
     g_free(buf);
+    g_free(vstr);
 
     cinfo->label = label;
 
