@@ -1,4 +1,4 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
  * 
@@ -838,6 +838,11 @@ static void gfn_to_script_callback (GtkWidget *w, function_info *finfo)
 
 static void gfn_to_spec_callback (GtkWidget *w, function_info *finfo)
 {
+    if (finfo->pkg == NULL) {
+	warnbox("No package has been defined yet");
+	return;
+    }
+
     file_selector_with_parent(SAVE_GFN_SPEC, FSEL_DATA_MISC, 
 			      finfo, finfo->dlg);
 }
@@ -1671,6 +1676,11 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 
     if (finfo->extra != NULL) {
 	gtk_window_present(GTK_WINDOW(finfo->extra));
+	return;
+    }
+
+    if (finfo->pkg == NULL) {
+	warnbox("No package has been defined yet");
 	return;
     }
 
