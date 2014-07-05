@@ -621,8 +621,7 @@ void builtin_strings_cleanup (void)
 
 void gretl_insert_builtin_string (const char *name, const char *s)
 {
-    int n = sizeof built_ins / sizeof built_ins[0];
-    int m;
+    int i, n = sizeof built_ins / sizeof built_ins[0];
 
     for (i=0; i<n; i++) {
 	if (!strcmp(name, built_ins[i].name)) {
