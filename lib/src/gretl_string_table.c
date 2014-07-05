@@ -622,15 +622,18 @@ void builtin_strings_cleanup (void)
 void gretl_insert_builtin_string (const char *name, const char *s)
 {
     int n = sizeof built_ins / sizeof built_ins[0];
-    int i, m;
+    int m;
 
     for (i=0; i<n; i++) {
 	if (!strcmp(name, built_ins[i].name)) {
 	    free(built_ins[i].s);
 	    if (s == NULL) {
 		built_ins[i].s = NULL;
+	    } else if (!strcmp(name, "pstmp")) {
+		built_ins[i].s = gretl_strdup(s);
 	    } else {
-		m = strlen(s);
+		int m = strlen(s);
+
 		if (s[m-1] == SLASH) {
 		    /* drop trailing dir separator for paths */
 		    built_ins[i].s = gretl_strndup(s, m - 1);
