@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "gretl_func.h"
 #include "gretl_string_table.h"
 #include "texprint.h"
 
@@ -1483,6 +1484,68 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
 # define NAME_MAX 255
 #endif
 
+static char *gretl_addon_get_path (const char *name)
+{
+    char *ret = NULL;
+    char path[FILENAME_MAX];
+    double version, maxver = 0;
+    char **dirs;
+    int i, n_dirs, err;
+
+    *path = '\0';
+
+    dirs = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
+
+    for (i=0; i<n_dirs; i++) {
+	const char *fndir = dirs[i];
+	struct dirent *dirent;
+	const char *dname;
+	DIR *dir;
+	int found_here = 0;
+	
+	if ((dir = gretl_opendir(fndir)) == NULL) {
+	    continue;
+	}
+
+	while ((dirent = readdir(dir)) != NULL && !found_here) {
+	    dname = dirent->d_name;
+	    if (!strcmp(dname, name)) {
+		sprintf(path, "%s%c%s%c%s.gfn", fndir, SLASH, 
+			dname, SLASH, dname);
+		err = gretl_test_fopen(path, "r");
+		if (!err) {
+		    version = function_package_get_version(path);
+		    if (!na(version) && version > maxver) {
+			maxver = version;
+			free(ret);
+			ret = gretl_strdup(path);
+		    }
+		} else {
+		    *path = '\0';
+		}
+		found_here = 1;
+	    }
+	}
+
+	closedir(dir);
+    }
+
+    strings_array_free(dirs, n_dirs);
+
+    return ret;
+}
+
+static int is_addon (const char *name)
+{
+    if (!strcmp(name, "gig") ||
+	!strcmp(name, "SVAR") ||
+	!strcmp(name, "ivpanel")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /**
  * gretl_function_package_get_path:
  * @name: the name of the package to find, without the .gfn extension.
@@ -1508,16 +1571,13 @@ char *gretl_function_package_get_path (const char *name,
     int err, found = 0;
     int i, n_dirs;
 
-    /* FIXME: for addons in particular we should allow for
-       the possibility that a package is present in more
-       then one version, in which case we should check for
-       the most recent version. (The addon may have been
-       supplied with the gretl package but then an update
-       installed into the user's file-space. Conversely,
-       an update to the entire gretl installation may have
-       put in place a verson more recent than a personal
-       download, if any.)
-    */
+    if (type == PKG_ALL && is_addon(name)) {
+	type = PKG_SUBDIR;
+    }
+
+    if (type == PKG_SUBDIR) {
+	return gretl_addon_get_path(name);
+    }
 
     *path = '\0';
 
@@ -1832,7 +1892,6 @@ static int get_gfn_special (char *fname)
 	p = strstr(pkgname, ".gfn");
 	*p = '\0';
 	pkgpath = gretl_function_package_get_path(pkgname, PKG_ALL);
-
 	if (pkgpath != NULL) {
 	    strcpy(fname, pkgpath);
 	    free(pkgpath);
