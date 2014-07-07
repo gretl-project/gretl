@@ -1501,13 +1501,13 @@ static char *gretl_addon_get_path (const char *name)
 	struct dirent *dirent;
 	const char *dname;
 	DIR *dir;
-	int found_here = 0;
+	int found = 0;
 	
 	if ((dir = gretl_opendir(fndir)) == NULL) {
 	    continue;
 	}
 
-	while ((dirent = readdir(dir)) != NULL && !found_here) {
+	while ((dirent = readdir(dir)) != NULL && !found) {
 	    dname = dirent->d_name;
 	    if (!strcmp(dname, name)) {
 		sprintf(path, "%s%c%s%c%s.gfn", fndir, SLASH, 
@@ -1520,10 +1520,8 @@ static char *gretl_addon_get_path (const char *name)
 			free(ret);
 			ret = gretl_strdup(path);
 		    }
-		} else {
-		    *path = '\0';
 		}
-		found_here = 1;
+		found = 1;
 	    }
 	}
 

@@ -42,6 +42,7 @@ const char *ivpanel_translations[] = {
 };
 
 const char *SVAR_translations[] = {
+    N_("SVAR"),
     N_("AB-model"),
     N_("Bootstrap alpha"),
     N_("Bootstrap replications"),

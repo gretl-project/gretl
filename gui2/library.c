@@ -6375,12 +6375,12 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     free(xlist);
 
     adjust_3d_plot_option(&plotopt);
-    err = gnuplot_3d(list, NULL, dset, plotopt);
+    err = gnuplot_3d(list, NULL, dset, &plotopt);
 
     if (err) {
 	gui_errmsg(err);
     } else if (plotopt & OPT_I) {
-	launch_gnuplot_interactive(gretl_plotfile());
+	gnuplot_view_3d(gretl_plotfile());
     } else {
 	register_graph();
     }
@@ -6986,12 +6986,12 @@ int do_splot_from_selector (selector *sr)
 	return err;
     }
 
-    err = gnuplot_3d(list, NULL, dataset, opt);
+    err = gnuplot_3d(list, NULL, dataset, &opt);
 
     if (err) {
 	gui_errmsg(err);
     } else if (opt & OPT_I) {
-	launch_gnuplot_interactive(gretl_plotfile());
+	gnuplot_view_3d(gretl_plotfile());
     } else {
 	register_graph();
     }

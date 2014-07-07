@@ -275,7 +275,13 @@ double gnuplot_version (void)
 	if (ok && sout != NULL) {
 	    if (!strncmp(sout, "gnuplot ", 8)) {
 		/* e.g. "gnuplot 4.7 patchlevel 0" */
+		char *s = strstr(sout, "patchlevel");
+		int plev;
+
 		vnum = dot_atof(sout + 8);
+		if (s != NULL && sscanf(s + 10, "%d", &plev) == 1) {
+		    vnum += plev / 100.0;
+		}
 	    }
 	    g_free(sout);
 	}
@@ -4105,6 +4111,8 @@ static gchar *maybe_get_surface (const int *list,
  * @dset: pointer to dataset.
  * @opt: may include OPT_F to force display of fitted surface;
  * may include OPT_I to force an interactive (rotatable) plot.
+ * Note that OPT_I may be removed on output if a suitable
+ * gnuplot terminal is not present.
  *
  * Writes a gnuplot plot file to display a 3D plot (Z on
  * the vertical axis, X and Y on base plane).
@@ -4113,14 +4121,14 @@ static gchar *maybe_get_surface (const int *list,
  */
 
 int gnuplot_3d (int *list, const char *literal,
-		DATASET *dset, gretlopt opt)
+		DATASET *dset, gretlopt *opt)
 {
     FILE *fp = NULL;
     int t, t1 = dset->t1, t2 = dset->t2;
     int save_t1 = dset->t1, save_t2 = dset->t2;
     int lo = list[0];
     int datlist[4];
-    int interactive = (opt & OPT_I);
+    int interactive = (*opt & OPT_I);
     const char *term = NULL;
     gchar *surface = NULL;
     int err = 0;
@@ -4148,10 +4156,15 @@ int gnuplot_3d (int *list, const char *literal,
 	} else if (gnuplot_has_x11()) {
 	    term = "x11";
 	} else if (gnuplot_has_qt()) {
-	    term = "qt";
+	    if (gnuplot_version() <= 4.65) {
+		*opt &= ~OPT_I;
+		interactive = 0;
+	    } else {
+		term = "qt";
+	    }
 	} else {
-	    /* out of luck */
-	    return E_EXTERNAL;
+	    *opt &= ~OPT_I;
+	    interactive = 0;
 	}
     }
 #endif
@@ -4188,7 +4201,7 @@ int gnuplot_3d (int *list, const char *literal,
 	print_gnuplot_literal_lines(literal, fp);
     }
 
-    surface = maybe_get_surface(list, dset, opt);
+    surface = maybe_get_surface(list, dset, *opt);
 
     if (surface != NULL) {
 	fprintf(fp, "splot %s, \\\n'-' title '' w p\n", surface);
@@ -4218,6 +4231,7 @@ int gnuplot_3d (int *list, const char *literal,
     dset->t2 = save_t2;
 
     if (interactive) {
+	fputs("pause mouse close\n", fp);
 	fclose(fp);
     } else {
 	err = finalize_plot_input_file(fp);
