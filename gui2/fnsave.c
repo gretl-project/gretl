@@ -839,7 +839,7 @@ static void gfn_to_script_callback (GtkWidget *w, function_info *finfo)
 static void gfn_to_spec_callback (GtkWidget *w, function_info *finfo)
 {
     if (finfo->pkg == NULL) {
-	warnbox("No package has been defined yet");
+	warnbox(_("Please save your package first"));
 	return;
     }
 
@@ -1680,7 +1680,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     }
 
     if (finfo->pkg == NULL) {
-	warnbox("No package has been defined yet");
+	warnbox(_("Please save your package first"));
 	return;
     }
 

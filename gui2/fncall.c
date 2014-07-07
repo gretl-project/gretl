@@ -234,10 +234,19 @@ static GtkWidget *label_hbox (call_info *cinfo, GtkWidget *w,
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 5);
 
-    function_package_get_properties(cinfo->pkg, 
-				    "label", &label,
-				    "version", &vstr,
-				    NULL);
+    if (cinfo->label == NULL) {
+	function_package_get_properties(cinfo->pkg, 
+					"label", &label,
+					"version", &vstr,
+					NULL);
+	cinfo->label = label;
+    } else {
+	label = cinfo->label;
+	function_package_get_properties(cinfo->pkg, 
+					"version", &vstr,
+					NULL);
+    }
+
     buf = g_markup_printf_escaped("<span weight=\"bold\">%s %s</span>", 
 				  (label != NULL)? label : fallback,
 				  vstr);
@@ -246,8 +255,6 @@ static GtkWidget *label_hbox (call_info *cinfo, GtkWidget *w,
 
     g_free(buf);
     g_free(vstr);
-
-    cinfo->label = label;
 
     gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
     gtk_widget_show(lbl);
@@ -1830,7 +1837,8 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
     }
 }
 
-static void maybe_set_gui_interface (const char *gname,
+static void maybe_set_gui_interface (fnpkg *pkg,
+				     const char *gname,
 				     call_info *cinfo)
 {
     const char *iface;
@@ -1841,6 +1849,9 @@ static void maybe_set_gui_interface (const char *gname,
 	if (iface != NULL && !strcmp(iface, gname)) {
 	    cinfo->iface = cinfo->publist[i];
 	    cinfo->flags |= SHOW_GUI_MAIN;
+	    function_package_get_properties(pkg, "name",
+					    &cinfo->label,
+					    NULL);
 	    break;
 	}
     }
@@ -1930,7 +1941,7 @@ void call_function_package (const char *fname, windata_t *vwin,
 	function_package_get_properties(pkg, "gui-main",
 					&gmain, NULL);
 	if (gmain != NULL) {
-	    maybe_set_gui_interface(gmain, cinfo);
+	    maybe_set_gui_interface(pkg, gmain, cinfo);
 	    free(gmain);
 	}
     }
