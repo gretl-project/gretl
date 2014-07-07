@@ -1206,7 +1206,11 @@ void run_gp_script (gchar *buf)
 
     /* don't remove the temp script before gnuplot has
        had a chance to read it */
+#ifdef G_OS_WIN32
+    Sleep(1000);
+#else
     sleep(1);
+#endif
     gretl_remove(tmpfile);
     g_free(tmpfile);
 }
