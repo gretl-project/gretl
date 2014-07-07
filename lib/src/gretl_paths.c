@@ -1508,6 +1508,17 @@ char *gretl_function_package_get_path (const char *name,
     int err, found = 0;
     int i, n_dirs;
 
+    /* FIXME: for addons in particular we should allow for
+       the possibility that a package is present in more
+       then one version, in which case we should check for
+       the most recent version. (The addon may have been
+       supplied with the gretl package but then an update
+       installed into the user's file-space. Conversely,
+       an update to the entire gretl installation may have
+       put in place a verson more recent than a personal
+       download, if any.)
+    */
+
     *path = '\0';
 
     dirs = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
