@@ -4213,6 +4213,42 @@ int get_function_file_header (const char *fname, char **pdesc,
     return err;
 }
 
+double function_package_get_version (const char *fname)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr node;
+    double version = NADBL;
+    int err;
+
+    err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
+ 
+    if (!err) {
+	xmlNodePtr sub;
+	int found = 0;
+	
+	node = node->xmlChildrenNode;
+	while (node != NULL && !found) {
+	    if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
+		sub = node->xmlChildrenNode;
+		while (sub != NULL && !found) {
+		    if (!xmlStrcmp(sub->name, (XUC) "version")) {
+			gretl_xml_node_get_double(sub, doc, &version);
+			found = 1;
+		    }
+		    sub = sub->next;
+		}
+	    }
+	    node = node->next;
+	}
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+    }
+
+    return version;
+}
+
 /**
  * gretl_is_public_user_function:
  * @name: name to test.
@@ -5894,6 +5930,8 @@ static int is_pointer_arg (fncall *call, fnargs *args, int rtype)
     return 0;
 }
 
+#define null_return(t) (t == GRETL_TYPE_VOID || t == GRETL_TYPE_NONE)
+
 #define needs_dataset(t) (t == GRETL_TYPE_SERIES || \
 			  t == GRETL_TYPE_LIST ||   \
 			  t == GRETL_TYPE_SERIES_REF || \
@@ -5915,7 +5953,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    rtype, call->retname);
 #endif
 
-    if (*perr == 0 && rtype != GRETL_TYPE_VOID && call->retname == NULL) {
+    if (*perr == 0 && !null_return(rtype) && call->retname == NULL) {
 	/* missing return value */
 	gretl_errmsg_sprintf("Function %s did not provide the specified return value",
 			     u->name);
