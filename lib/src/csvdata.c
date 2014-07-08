@@ -1211,7 +1211,7 @@ static int dates_maybe_reversed (const char *s1, const char *s2,
     return ret;
 }
 
-/* e.g. "M1 1957", "M12 2009", with spaces removed */
+/* e.g. "M1 1957", "M12 2009" */
 
 static int fix_IFS_data_labels (DATASET *dset)
 {
@@ -1220,37 +1220,28 @@ static int fix_IFS_data_labels (DATASET *dset)
     int ret = 0;
 
     if ((*s1 == 'M' || *s1 == 'Q') && *s2 == *s1) {
-	const char *dig = "0123456789";
 	int n1 = strlen(s1);
 	int n2 = strlen(s2);
 
-	if ((n1 == 6 || n1 == 7) && (n2 == 6 || n2 == 7) &&
-	    strspn(s1 + 1, dig) == n1 - 1 &&
-	    strspn(s2 + 1, dig) == n2 - 1) {
-	    char sp[3], tmp[8], *s;
+	if ((n1 == 7 || n1 == 8) && (n2 == 7 || n2 == 8) &&
+	    isdigit(s1[1]) && isdigit(s2[1])) {
 	    int pmax = (*s1 == 'M')? 12 : 4;
+	    char c, tmp[8], *s;
 	    int y, p, pbak = 0;
 	    int i, n, doit = 1;
 
 	    for (i=0; i<dset->n; i++) {
 		s = dset->S[i];
-		if (*s != *s1) {
-		    doit = 0;
-		    break;
-		}
 		n = strlen(s);
-		if (n != 6 && n != 7) {
+		if (n != 7 && n != 8) {
 		    doit = 0;
 		    break;
 		}
-		if (strspn(s + 1, dig) != n - 1) {
+		n = sscanf(s, "%c%d %d", &c, &p, &y);
+		if (n != 3 || c != *s1) {
 		    doit = 0;
 		    break;
 		}
-		y = atoi(s + n - 4);
-		*sp = '\0';
-		strncat(sp, s + 1, n - 5);
-		p = atoi(sp);
 		if (y < 1800 || y > 2500 || p <= 0 || p > pmax) {
 		    doit = 0;
 		    break;
@@ -1265,11 +1256,7 @@ static int fix_IFS_data_labels (DATASET *dset)
 	    if (doit) {
 		for (i=0; i<dset->n; i++) {
 		    s = dset->S[i];
-		    n = strlen(s);
-		    y = atoi(s + n - 4);
-		    *sp = '\0';
-		    strncat(sp, s + 1, n - 5);
-		    p = atoi(sp);
+		    sscanf(s, "%c%d %d", &c, &p, &y);
 		    if (pmax == 12) {
 			sprintf(tmp, "%d:%02d", y, p);
 		    } else {

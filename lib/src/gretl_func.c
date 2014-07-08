@@ -5955,8 +5955,8 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 
     if (*perr == 0 && !null_return(rtype) && call->retname == NULL) {
 	/* missing return value */
-	gretl_errmsg_sprintf("Function %s did not provide the specified return value",
-			     u->name);
+	gretl_errmsg_sprintf("Function %s did not provide the specified return value\n"
+			     "(expected %s)", u->name, gretl_type_get_name(rtype));
 	*perr = err = E_UNKVAR;
     } else if (*perr == 0 && needs_dataset(rtype) && dset == NULL) {
 	/* "can't happen" */
