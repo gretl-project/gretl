@@ -96,8 +96,6 @@ char *alt_gettext (const char *msgid);
 
 void set_gretl_charset (void);
 
-void get_suitable_tex_encoding (char *encfile);
-
 char *sprint_l2_to_ascii (char *targ, const char *s, size_t len);
 
 int get_utf_width (const char *str, int width);

@@ -68,8 +68,6 @@ char *tex_modify_exponent (char *s);
 
 void set_gretl_tex_preamble (void);
 
-void set_tex_use_utf (int s);
-
 void set_tex_use_pdf (const char *prog);
 
 int get_tex_use_pdf (void);

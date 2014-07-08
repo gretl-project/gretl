@@ -1256,13 +1256,6 @@ static void landscape_modify_line (char *line)
     }
 }
 
-static int tex_use_utf = 1;
-
-void set_tex_use_utf (int s)
-{
-    tex_use_utf = s;
-}
-
 void gretl_tex_preamble (PRN *prn, int fmt)
 {
     char* lang = getenv("LANG");
@@ -1314,15 +1307,7 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 	pputs(prn, "{article}\n");
 
 #ifdef ENABLE_NLS
-	if (!tex_use_utf) {
-	    /* not currently activated, but maybe allow a "set" variable? */
-	    char encfile[16];
-
-	    get_suitable_tex_encoding(encfile);
-	    pprintf(prn, "\\usepackage[%s]{inputenc}\n", encfile);
-	} else {
-	    pputs(prn, "\\usepackage[utf8]{inputenc}\n");
-	}
+	pputs(prn, "\\usepackage[utf8]{inputenc}\n");
 #endif
 
 	if (lang != NULL && !strncmp(lang, "ru", 2)) {
