@@ -2923,10 +2923,6 @@ static int conditional_line (LOOPSET *loop, int j)
     return loop->cmds[j].ci == IF || loop->cmds[j].ci == ELIF;
 }
 
-#define COMPILE_IF 1 /* should be OK now? */
-
-#if COMPILE_IF 
-
 static int do_compile_conditional (LOOPSET *loop, int j)
 {
     if ((loop->cmds[j].ci == IF || loop->cmds[j].ci == ELIF) &&
@@ -2936,8 +2932,6 @@ static int do_compile_conditional (LOOPSET *loop, int j)
 	return 0;
     }
 }
-
-#endif	
 
 static int block_model (CMD *cmd)
 {
@@ -3055,7 +3049,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	       for "if" or "elif" conditions that may be already
 	       compiled, or that should now be compiled
 	    */
-#if COMPILE_IF
 	    if (conditional_compiled(loop, j)) {
 		err = parse_command_line(line, cmd, dset, &loop->cmds[j].genr);
 	    } else if (do_compile_conditional(loop, j)) {
@@ -3069,9 +3062,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    } else {
 		err = parse_command_line(line, cmd, dset, NULL);
 	    }
-#else
-	    err = parse_command_line(line, cmd, dset, NULL);
-#endif
 
 #if LOOP_DEBUG
 	    fprintf(stderr, "    after: '%s'\n", line);
