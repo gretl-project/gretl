@@ -186,8 +186,13 @@ static void print_tree (NODE *t, parser *p, int level)
 	print_tree(t->v.b1.b, p, level);
     }
 
-    fprintf(stderr, "%d: node at %p (type %03d, %s, flags %d), vname='%s'\n",
-	    level, (void *) t, t->t, getsymb(t->t, NULL), t->flags, t->vname);
+    if (t->vname != NULL) {
+	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d), vname='%s'\n",
+		level, (void *) t, t->t, getsymb(t->t, NULL), t->flags, t->vname);
+    } else {
+	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d)\n",
+		level, (void *) t, t->t, getsymb(t->t, NULL), t->flags);
+    }	
 }
 
 #endif
@@ -385,7 +390,6 @@ static NODE *newvec (int n, int tmp)
 	int i;
 
 	b->flags = (tmp)? TMP_NODE : 0;
-	b->v.xvec = NULL;
 	if (n > 0) {
 	    b->v.xvec = malloc(n * sizeof *b->v.xvec);
 	    if (b->v.xvec == NULL) {
@@ -396,6 +400,8 @@ static NODE *newvec (int n, int tmp)
 		    b->v.xvec[i] = NADBL;
 		}
 	    }		
+	} else {
+	    b->v.xvec = NULL;
 	}
     }
 
@@ -570,15 +576,21 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	    ret = newarray(tmp);
 	} else if (t == EMPTY) {
 	    ret = newempty();
+	} else {
+	    p->err = E_DATA;
 	}
 
-	if (ret == NULL) {
-	    p->err = (t == 0)? E_DATA : E_ALLOC;
-	} else if (add_aux_node(p, ret)) {
-	    free_tree(ret, p, "On error");
-	    ret = NULL;
+	if (!p->err) {
+	    if (ret == NULL) {
+		p->err = E_ALLOC;
+	    } else if (add_aux_node(p, ret)) {
+		free_tree(ret, p, "On error");
+		ret = NULL;
+	    }
 	} 
     } else if (p->aux == NULL) {
+	/* p->aux should already be allocated */
+	fprintf(stderr, "get_aux_node: FAILED on p->aux == NULL\n");
 	p->err = E_DATA;
     } else {
 	while (p->aux[p->aux_i] == NULL) {
@@ -10184,8 +10196,13 @@ static NODE *eval (NODE *t, parser *p)
     }
 
 #if EDEBUG
-    fprintf(stderr, "eval: incoming node %p ('%s', vname=%s)\n", 
-	    (void *) t, getsymb(t->t, p), t->vname);
+    if (t->vname != NULL) {
+	fprintf(stderr, "eval: incoming node %p ('%s', vname=%s)\n", 
+		(void *) t, getsymb(t->t, p), t->vname);
+    } else {
+	fprintf(stderr, "eval: incoming node %p ('%s')\n", 
+		(void *) t, getsymb(t->t, p));
+    }	
 #endif
 
     if (!p->err && eval_left(t->t)) {
@@ -11971,6 +11988,7 @@ static NODE *lhs_copy_node (parser *p)
 	} else {
 	    n->v.m = p->lh.m0;
 	}
+	n->flags |= CPY_NODE;
     }
 
     return n;
@@ -12453,11 +12471,6 @@ static void pre_process (parser *p, int flags)
     if ((p->op == INC || p->op == DEC) && *s != '\0') {
 	p->err = E_PARSE;
     }
-
-    /* pointer for use in label */
-    if (p->op == B_ASN) {
-	p->rhs = s;
-    } 
 }
 
 /* tests for saving variable */
@@ -12851,7 +12864,7 @@ static void edit_matrix (parser *p)
     }
 
 #if EDEBUG
-    fprintf(stderr, "edit_matrix: m = %p\n", (void *) m);
+    fprintf(stderr, "edit_matrix: replacement m = %p\n", (void *) m);
 #endif
 
     spec = p->lh.mspec;
@@ -13823,8 +13836,8 @@ void gen_cleanup (parser *p)
     int protect = reusable(p);
 
 #if EDEBUG
-    fprintf(stderr, "gen cleanup on %p: reusable = %d, err = %d\n", 
-	    p, reusable(p) ? 1 : 0, p->err);
+    fprintf(stderr, "gen cleanup on %p: protect = %d, err = %d\n", 
+	    p, protect ? 1 : 0, p->err);
 #endif
 
     if (p->err && (p->flags & P_COMPILE)) {
@@ -13833,9 +13846,11 @@ void gen_cleanup (parser *p)
 
     if (protect) {
 	/* just do limited cleanup */
-	if (!in_tree(p->tree, p->ret)) {
-	    free_tree(p->ret, p, "p->ret");
-	    p->ret = NULL;
+	if (p->ret != NULL) {
+	    if ((p->ret->flags & CPY_NODE) || !in_tree(p->tree, p->ret)) {
+		free_tree(p->ret, p, "p->ret");
+		p->ret = NULL;
+	    }
 	}
     } else {
 	if (p->ret != p->tree) {
@@ -13848,7 +13863,8 @@ void gen_cleanup (parser *p)
 
 	if (p->subp != NULL) {
 	    /* since the parent genr will not be run again,
-	       wipe the "reusable" flags from its subp */
+	       wipe the "reusable" flags from its subp 
+	    */
 	    p->subp->flags &= ~P_COMPILE;
 	    p->subp->flags &= ~P_EXEC;
 	    parser_free_aux_nodes(p->subp);
@@ -13904,7 +13920,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     int t;
 
 #if LHDEBUG || EDEBUG
-    fprintf(stderr, "*** realgen: task = %s\n", (flags & P_COMPILE)?
+    fprintf(stderr, "\n*** realgen: task = %s\n", (flags & P_COMPILE)?
 	    "compile" : (flags & P_EXEC)? "exec" : "normal");
 #endif
 
@@ -13963,8 +13979,8 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     }
 
 #if EDEBUG
-    fprintf(stderr, "realgen: p->tree at %p, type %d\n", (void *) p->tree, 
-	    p->tree->t);
+    fprintf(stderr, "realgen: p->tree at %p, type %d (%s)\n", (void *) p->tree, 
+	    p->tree->t, getsymb(p->tree->t, p));
     if (p->ch == '\0') {
 	fprintf(stderr, " p->ch = NUL, p->sym = %d\n", p->sym);
     } else {

@@ -1695,6 +1695,8 @@ const char *getsymb (int t, const parser *p)
 	return "UNDEF";
     } else if (t == NUM) {
 	return "NUM";
+    } else if (t == ABSENT) {
+	return "ABSENT";
     }
 
     if (p != NULL) {
