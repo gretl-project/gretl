@@ -1022,7 +1022,7 @@ static void look_up_word (const char *s, parser *p)
 		GretlType vtype = 0;
 
 		if ((p->idnum = current_series_index(p->dset, s)) >= 0) {
-		    p->sym = UVEC;
+		    p->sym = USERIES;
 		    p->idstr = gretl_strdup(s);
 		} else if (!strcmp(s, "time")) {
 		    p->sym = DUM;
@@ -1116,11 +1116,11 @@ static void word_check_next_char (parser *p)
 
     if (p->ch == '(') {
 	/* series (lag) or function */
-	if (p->sym == UVEC) {
+	if (p->sym == USERIES) {
 	    if (p->idnum > 0 && p->idnum == p->lh.v) {
 		p->flags |= P_AUTOREG;
 	    }
-	    p->upsym = UVEC;
+	    p->upsym = USERIES;
 	    p->sym = LAG;
 	} else if (p->sym == MVAR && model_data_matrix(p->idnum)) {
 	    /* old-style "$coeff(x1)" etc. */
@@ -1142,7 +1142,7 @@ static void word_check_next_char (parser *p)
 		   could_be_matrix(p->idnum)) {
 	    /* slice of $ matrix */
 	    p->sym = DMSL;
-	} else if (p->sym == UVEC) {
+	} else if (p->sym == USERIES) {
 	    /* observation from series */
 	    p->sym = OBS;
 	} else if (p->sym == DVAR && dollar_series(p->idnum)) {
@@ -1659,8 +1659,8 @@ const char *getsymb (int t, const parser *p)
 	return "DMSL";
     } else if (t == DMSTR) {
 	return "DMSTR";
-    } else if (t == MSL2) {
-	return "MSL2";
+    } else if (t == MSLRAW) {
+	return "MSLRAW";
     } else if (t == MSPEC) {
 	return "MSPEC";
     } else if (t == SUBSL) {
@@ -1685,8 +1685,8 @@ const char *getsymb (int t, const parser *p)
 	return "BMEMB";
     } else if (t == ELEMENT) {
 	return "ELEMENT";
-    } else if (t == VEC) {
-	return "VEC";
+    } else if (t == SERIES) {
+	return "SERIES";
     } else if (t == MAT) {
 	return "MAT";
     } else if (t == EROOT) {
@@ -1695,12 +1695,10 @@ const char *getsymb (int t, const parser *p)
 	return "UNDEF";
     } else if (t == NUM) {
 	return "NUM";
-    } else if (t == ABSENT) {
-	return "ABSENT";
     }
 
     if (p != NULL) {
-	if (t == UVEC) {
+	if (t == USERIES) {
 	    return p->dset->varname[p->idnum];
 	} else if (t == UNUM) {
 	    return p->idstr;
@@ -1724,8 +1722,8 @@ const char *getsymb (int t, const parser *p)
 	    return p->idstr;
 	}
     } else {
-	if (t == UVEC) {
-	    return "UVEC";
+	if (t == USERIES) {
+	    return "USERIES";
 	} else if (t == UNUM) {
 	    return "UNUM";
 	} else if (t == BUNDLE) {

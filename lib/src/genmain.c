@@ -35,7 +35,7 @@ static void write_scalar_message (const parser *p, PRN *prn)
 {
     double x = gretl_scalar_get_value(p->lh.name, NULL);
 
-    if (p->flags & P_LHSCAL) {
+    if (p->lh.t == NUM) {
 	pprintf(prn, _("Replaced scalar %s"), p->lh.name);
     } else {
 	pprintf(prn, _("Generated scalar %s"), p->lh.name);
@@ -62,7 +62,7 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	} else {
 	    write_scalar_message(p, prn);
 	}
-    } else if (p->targ == VEC) {
+    } else if (p->targ == SERIES) {
 	if (p->lh.v < oldv) {
 	    pprintf(prn, _("Replaced series %s (ID %d)"),
 		    p->lh.name, p->lh.v);
@@ -71,22 +71,22 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 		    p->lh.name, p->lh.v);
 	}
     } else if (p->targ == MAT) {
-	if ((p->flags & P_LHMAT) && p->lh.substr != NULL && 
+	if (p->lh.t == MAT && p->lh.substr != NULL && 
 	    *p->lh.substr != '\0') {
 	    pprintf(prn, _("Modified matrix %s"), p->lh.name);
-	} else if (p->flags & P_LHMAT) {
+	} else if (p->lh.t == MAT) {
 	    pprintf(prn, _("Replaced matrix %s"), p->lh.name);
 	} else {
 	    pprintf(prn, _("Generated matrix %s"), p->lh.name);
 	}
     } else if (p->targ == LIST) {
-	if (p->flags & P_LHLIST) {
+	if (p->lh.t == LIST) {
 	    pprintf(prn, _("Replaced list %s"), p->lh.name);
 	} else {
 	    pprintf(prn, _("Generated list %s"), p->lh.name);
 	}
     } else if (p->targ == STR) {
-	if (p->flags & P_LHSTR) {
+	if (p->lh.t == STR) {
 	    pprintf(prn, _("Replaced string %s"), p->lh.name);
 	} else {
 	    pprintf(prn, _("Generated string %s"), p->lh.name);
@@ -145,7 +145,7 @@ static void gen_write_label (parser *p, int oldv)
     const char *src = "";
     size_t len = 0;
 
-    if (p->targ != VEC) {
+    if (p->targ != SERIES) {
 	/* this is relevant only for series */
 	return;
     }
@@ -160,7 +160,7 @@ static void gen_write_label (parser *p, int oldv)
 
     *tmp = '\0';
 
-    if (p->lh.v < oldv && p->targ == VEC) {
+    if (p->lh.v < oldv && p->targ == SERIES) {
 	int m = get_model_count();
 
 	if (m > 0) {
@@ -586,7 +586,7 @@ static int gen_special (const char *s, const char *line,
 	strcpy(p->lh.name, s);
 	p->lh.v = series_index(dset, s);
 	p->dset = dset;
-	p->targ = VEC;
+	p->targ = SERIES;
 	p->flags = 0;
 	p->err = 0;
 	p->prn = prn;
@@ -667,7 +667,6 @@ static int is_gen_special (const char *s, char *spec, const char **rem)
 #define gen_verbose(f) (!(f & P_PRINT) && \
                         !(f & P_DISCARD) && \
                         !(f & P_PRIVATE) && \
-                        !(f & P_VOID) && \
                         !(f & P_QUIET) && \
                         !(f & P_DECL))
 
@@ -677,6 +676,7 @@ int generate (const char *line, DATASET *dset, gretlopt opt,
     char vname[VNAMELEN];
     const char *subline = NULL;
     int oldv, flags = 0;
+    int targtype = UNK;
     parser p;
 
     if (opt & OPT_P) {
@@ -686,7 +686,7 @@ int generate (const char *line, DATASET *dset, gretlopt opt,
 
     if (opt & OPT_O) {
 	/* no assignment */
-	flags |= P_VOID;
+	targtype = EMPTY;
     }
 
     if (opt & OPT_Q) {
@@ -705,16 +705,15 @@ int generate (const char *line, DATASET *dset, gretlopt opt,
 	return dataset_stack_variables(vname, subline, dset, prn);
     }
 
-    realgen(line, &p, dset, prn, flags);
+    realgen(line, &p, dset, prn, flags, targtype);
 
-    if (!(flags & P_VOID)) {
+    if (!p.err && targtype != EMPTY) {
 	gen_save_or_print(&p, prn);
-    }
-
-    if (!p.err && gen_verbose(p.flags)) {
-	gen_write_label(&p, oldv);
-	if (!(opt & OPT_Q)) {
-	    gen_write_message(&p, oldv, prn);
+	if (!p.err && gen_verbose(p.flags)) {
+	    gen_write_label(&p, oldv);
+	    if (!(opt & OPT_Q)) {
+		gen_write_message(&p, oldv, prn);
+	    }
 	}
     }
 
@@ -741,7 +740,7 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
     parser p;
     double x = NADBL;
 
-    *err = realgen(s, &p, dset, NULL, P_SCALAR | P_PRIVATE);
+    *err = realgen(s, &p, dset, NULL, P_PRIVATE, NUM);
 
     if (!*err) {
 	if (p.ret->t == MAT) {
@@ -776,12 +775,12 @@ double *generate_series (const char *s, DATASET *dset, PRN *prn,
     parser p;
     double *x = NULL;
 
-    *err = realgen(s, &p, dset, prn, P_SERIES | P_PRIVATE);
+    *err = realgen(s, &p, dset, prn, P_PRIVATE, SERIES);
 
     if (!*err) {
 	NODE *n = p.ret;
 
-	if (n->t == VEC) {
+	if (n->t == SERIES) {
 	    if (n->flags & TMP_NODE) {
 		/* steal the generated series */
 		x = n->v.xvec;
@@ -809,7 +808,7 @@ gretl_matrix *generate_matrix (const char *s, DATASET *dset,
     gretl_matrix *m = NULL;
     parser p;
 
-    *err = realgen(s, &p, dset, NULL, P_MATRIX | P_PRIVATE);
+    *err = realgen(s, &p, dset, NULL, P_PRIVATE, MAT);
 
     if (!*err) {
 	NODE *n = p.ret;
@@ -848,6 +847,32 @@ gretl_matrix *generate_matrix (const char *s, DATASET *dset,
     return m;
 }
 
+matrix_subspec *generate_mspec (const char *s, PRN *prn, 
+				int *err)
+{
+    matrix_subspec *mspec = NULL;
+    parser p;
+
+    *err = realgen(s, &p, NULL, prn, P_PRIVATE, MSPEC);
+
+    if (!*err) {
+	NODE *n = p.ret;
+
+	if (n->t == MSPEC) {
+	    mspec = n->v.mspec;
+	    n->v.mspec = NULL;
+	} else {
+	    *err = E_TYPES;
+	}
+    } else if (*err == 1) {
+	*err = E_PARSE;
+    }
+
+    gen_cleanup(&p);
+
+    return mspec;
+}
+
 /* retrieve a string result directly */
 
 char *generate_string (const char *s, DATASET *dset, int *err)
@@ -855,7 +880,7 @@ char *generate_string (const char *s, DATASET *dset, int *err)
     parser p;
     char *ret = NULL;
 
-    *err = realgen(s, &p, dset, NULL, P_STRING | P_PRIVATE);
+    *err = realgen(s, &p, dset, NULL, P_PRIVATE, STR);
 
     if (!*err) {
 	NODE *n = p.ret;
@@ -887,7 +912,7 @@ int *generate_list (const char *s, DATASET *dset, int *err)
     parser p;
     int *ret = NULL;
 
-    *err = realgen(s, &p, dset, NULL, P_LIST | P_PRIVATE);
+    *err = realgen(s, &p, dset, NULL, P_PRIVATE, LIST);
 
     if (!*err) {
 	NODE *n = p.ret;
@@ -900,7 +925,7 @@ int *generate_list (const char *s, DATASET *dset, int *err)
 	    } else {
 		ret = gretl_list_copy(nlist);
 	    }
-	} else if (n->t == VEC && n->vnum >= 0) {
+	} else if (n->t == SERIES && n->vnum >= 0) {
 	    ret = gretl_list_new(1);
 	    if (ret != NULL) {
 		ret[1] = n->vnum;
@@ -927,6 +952,7 @@ parser *genr_compile (const char *s, DATASET *dset,
 {
     parser *p = malloc(sizeof *p);
     int flags = P_COMPILE;
+    int targtype = UNK;
 
 #if GDEBUG
     fprintf(stderr, "\n*** genr_compile: s = '%s'\n", s);
@@ -942,16 +968,15 @@ parser *genr_compile (const char *s, DATASET *dset,
     }
 
     if (opt & OPT_O) {
-	flags |= P_VOID;
+	targtype = EMPTY;
+    } else if (opt & OPT_S) {
+	targtype = NUM;
     }
 
-    if (opt & OPT_S) {
-	flags |= P_SCALAR;
-    }
-
-    *err = realgen(s, p, dset, NULL, flags);
+    *err = realgen(s, p, dset, NULL, flags, targtype);
 
     if (*err) {
+	p->flags = 0;
 	gen_cleanup(p);
 	free(p);
 	p = NULL;
@@ -973,9 +998,9 @@ int execute_genr (parser *p, DATASET *dset, PRN *prn)
 	    (void *) p, p->lh.name, (void *) dset->Z, (void *) prn);
 #endif
 
-    realgen(NULL, p, dset, prn, P_EXEC);
+    realgen(NULL, p, dset, prn, P_EXEC, UNK);
 
-    if (!p->err && !(p->flags & P_VOID)) {
+    if (!p->err && p->targ != EMPTY) {
 	gen_save_or_print(p, prn);
     } 
 
@@ -992,8 +1017,8 @@ double evaluate_if_cond (parser *p, DATASET *dset, int *err)
 {
     double x = NADBL;
 
-    *err = realgen(NULL, p, dset, NULL, 
-		   P_EXEC | P_SCALAR | P_PRIVATE);
+    *err = realgen(NULL, p, dset, NULL,  P_EXEC | P_PRIVATE, 
+		   NUM);
 
     if (!*err) {
 	if (p->ret->t == MAT) {
@@ -1002,7 +1027,7 @@ double evaluate_if_cond (parser *p, DATASET *dset, int *err)
 	    if (gretl_matrix_is_scalar(m)) {
 		x = p->ret->v.m->val[0];
 	    } else if (!gretl_is_null_matrix(m)) {
-		fprintf(stderr, "generate_scalar: got %d x %d matrix\n",
+		fprintf(stderr, "evaluate_if_cond: got %d x %d matrix\n",
 			m->rows, m->cols);
 		*err = E_TYPES;
 	    }
@@ -1042,7 +1067,7 @@ int genr_get_output_type (const parser *p)
     if (!p->err) {
 	if (p->targ == NUM) {
 	    t = GRETL_TYPE_DOUBLE;
-	} else if (p->targ == VEC) {
+	} else if (p->targ == SERIES) {
 	    t = GRETL_TYPE_SERIES;
 	} else if (p->targ == MAT) {
 	    t = GRETL_TYPE_MATRIX;

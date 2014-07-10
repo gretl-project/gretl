@@ -79,8 +79,8 @@ static NODE *newref (parser *p, int t)
     NODE *n = new_node(t);
 
     if (n != NULL) {
-	if (t == UVEC) {
-	    n->t = VEC;
+	if (t == USERIES) {
+	    n->t = SERIES;
 	    n->vnum = p->idnum;
 	    n->v.xvec = p->dset->Z[n->vnum];
 	    n->vname = p->idstr;
@@ -284,7 +284,7 @@ static NODE *base (parser *p, NODE *up)
 	lex(p);
 	break;
     case UNUM: 
-    case UVEC:
+    case USERIES:
     case UMAT:
     case UOBJ:
     case CON: 
@@ -411,7 +411,7 @@ static NODE *listvar_node (parser *p)
 	    free(p->idstr);
 	    p->idstr = NULL;
 	    p->idnum = v;
-	    ret = newref(p, UVEC);
+	    ret = newref(p, USERIES);
 	    if (ret == NULL) {
 		p->err = E_ALLOC;
 	    } else {
@@ -832,8 +832,7 @@ static void get_slice_parts (NODE *t, parser *p)
 	}
 	if (p->sym == G_RBR) {
 	    /* no comma, no second arg string: may be OK */
-	    t->v.b2.r = newempty();
-	    t->v.b2.r->t = ABSENT;
+	    t->v.b2.r = NULL;
 	    lex(p);
 	    set_slice_off(p);
 	    return;
@@ -1137,7 +1136,7 @@ static NODE *powterm (parser *p)
 	    } else {
 		t->v.b2.l = newref(p, MVAR);
 	    }
-	    t->v.b2.r = newb2(MSL2, NULL, NULL);
+	    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
 	    if (t->v.b2.r != NULL) {
 		lex(p);
 		get_slice_parts(t->v.b2.r, p);
@@ -1208,7 +1207,7 @@ static NODE *powterm (parser *p)
 	    if (sub) {
 		t = newb2(MSL, t, NULL);
 		if (t != NULL) {
-		    t->v.b2.r = newb2(MSL2, NULL, NULL);
+		    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
 		    if (t->v.b2.r != NULL) {
 			lex(p);
 			get_slice_parts(t->v.b2.r, p);
@@ -1245,7 +1244,7 @@ static NODE *powterm (parser *p)
 	/* support func(args)[slice] */
 	t = newb2(MSL, t, NULL);
 	if (t != NULL) {
-	    t->v.b2.r = newb2(MSL2, NULL, NULL);
+	    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
 	    if (t->v.b2.r != NULL) {
 		get_slice_parts(t->v.b2.r, p);
 	    }
@@ -1573,7 +1572,7 @@ NODE *slice_node_direct (parser *p)
 {
     NODE *t;
 
-    t = newb2(MSL2, NULL, NULL);
+    t = newb2(MSLRAW, NULL, NULL);
     if (t != NULL) {
 	lex(p);
 	get_slice_parts(t, p);
