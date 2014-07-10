@@ -589,16 +589,16 @@ enum {
 };
 
 struct lhinfo {
-    int t;                 /* type of pre-existing LHS variable */
+    int t;                 /* type of pre-existing LHS variable, if any */
     char name[VNAMELEN];   /* name of LHS variable */   
     char label[MAXLABEL];  /* descriptive string for series */
-    int v;                 /* ID number for series */
+    int v;                 /* ID number of pre-existing LHS series */
     int obs;               /* specific obs number in series */
     gretl_matrix *m0;      /* original LHS matrix (or NULL) */
-    gretl_matrix *m1;      /* computed LHS matrix */
-    char *substr;          /* obs or selection string */
+    gretl_matrix *m1;      /* computed LHS matrix (or NULL) */
+    char *substr;          /* obs or matrix/array selection string */
     matrix_subspec *mspec; /* evaluated submatrix spec */
-    GretlType atype;       /* type of array, if any */
+    GretlType atype;       /* type of LHS array, if any */
 };
 
 typedef struct parser_ parser;
@@ -680,10 +680,6 @@ int x_sectional_weighted_stat (double *x, const int *list,
 /* in geneval.c, used only internally */
 double dvar_get_scalar (int i, const DATASET *dset,
 			char *label);
-
-/* in genmain.c, intenal only */
-matrix_subspec *generate_mspec (const char *s, PRN *prn,
-				int *err);
 
 /* helper functions for manual, gretl.lang file */
 int gen_func_count (void);

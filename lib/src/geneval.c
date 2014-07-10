@@ -17,7 +17,7 @@
  * 
  */
 
-/* syntax tree evaluator for 'genr' and related commands */
+/* syntax tree evaluator for "genr" */
 
 #include "genparse.h"
 #include "monte_carlo.h"
@@ -11801,16 +11801,6 @@ static void get_lh_mspec (parser *p)
 	    "compiling" : "running");
 #endif
 
-#if 0 /* just testing */
-    if (p->lh.mspec != NULL) {
-	free_mspec(p->lh.mspec, p);
-    }
-    char *s = g_strdup_printf("[%s]", p->lh.substr);
-    p->lh.mspec = generate_mspec(s, p->prn, &p->err);
-    fprintf(stderr, "HERE err = %d\n", p->err);
-    g_free(s);
-#else
-
     if (p->subp != NULL) {
 	/* we're executing a previously compiled parser */
 #ifndef TRY_SAVE_AUX
@@ -11849,7 +11839,6 @@ static void get_lh_mspec (parser *p)
 	    }
 	}
     }
-#endif
 }
 
 /* Given a string [...], parse and evaluate it as a series observation
@@ -13533,7 +13522,8 @@ static int save_generated_var (parser *p, PRN *prn)
 		/* align using matrix "t1" value */
 		for (t=mt1; t<mt1 + k && t<=p->dset->t2; t++) {
 		    if (t >= p->dset->t1) {
-			Z[v][t] = xy_calc(Z[v][t], m->val[t - mt1], p->op, SERIES, p);
+			Z[v][t] = xy_calc(Z[v][t], m->val[t - mt1], p->op, 
+					  SERIES, p);
 		    }
 		}
 	    }
@@ -13904,7 +13894,8 @@ static void autoreg_error (parser *p, int t)
 	    t, p->dset->t1);
 
     if (p->ret != NULL && p->ret->t != SERIES) {
-	fprintf(stderr, " ret type != SERIES (=%d), p->err = %d\n", p->ret->t, p->err);
+	fprintf(stderr, " ret type != SERIES (=%d), p->err = %d\n", 
+		p->ret->t, p->err);
     } else if (p->ret == NULL) {
 	fprintf(stderr, " ret = NULL, p->err = %d\n", p->err);
     }
@@ -14050,7 +14041,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	    } 
 	}
     } else {
-	/* standard non-dynamic variant */
+	/* standard non-dynamic evaluation */
 	p->ret = eval(p->tree, p);
     }
 

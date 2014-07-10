@@ -847,32 +847,6 @@ gretl_matrix *generate_matrix (const char *s, DATASET *dset,
     return m;
 }
 
-matrix_subspec *generate_mspec (const char *s, PRN *prn, 
-				int *err)
-{
-    matrix_subspec *mspec = NULL;
-    parser p;
-
-    *err = realgen(s, &p, NULL, prn, P_PRIVATE, MSPEC);
-
-    if (!*err) {
-	NODE *n = p.ret;
-
-	if (n->t == MSPEC) {
-	    mspec = n->v.mspec;
-	    n->v.mspec = NULL;
-	} else {
-	    *err = E_TYPES;
-	}
-    } else if (*err == 1) {
-	*err = E_PARSE;
-    }
-
-    gen_cleanup(&p);
-
-    return mspec;
-}
-
 /* retrieve a string result directly */
 
 char *generate_string (const char *s, DATASET *dset, int *err)
