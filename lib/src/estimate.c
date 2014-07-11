@@ -698,6 +698,7 @@ static int XTX_XTy (const int *list, int t1, int t2,
     const double *xj = NULL;
     double x, pw1;
     int i, j, t, m;
+    int err = 0;
 
     /* Prais-Winsten term */
     if (qdiff && pwe) {
@@ -804,64 +805,7 @@ static int XTX_XTy (const int *list, int t1, int t2,
 		xpy[i-2] = x;
 	    }
 	}
-    } else if (mask == NULL) {
-	/* plain data, no missing obs mask */
-#if defined(_OPENMP)
-	int k = lmax - lmin + 1;
-	guint64 T = t2 - t1 + 1;
-	guint64 fpm = T * (k*k + k)/2;
-	int vi, err = 0;
-
-	if (!libset_use_openmp(fpm)) {
-	    goto st_mode;
-	}
-#pragma omp parallel for private(i, j, t, vi, x)
-	for (i=lmin; i<=lmax; i++) {
-	    vi = list[i];
-	    for (j=i; j<=lmax; j++) {
-		x = 0.0;
-		for (t=t1; t<=t2; t++) {
-		    x += dset->Z[vi][t] * dset->Z[list[j]][t];
-		}
-		if (i == j && x < DBL_EPSILON) {
-		    err = E_SINGULAR;
-		}
-		xpx[ijton(i-lmin, j-lmin, k)] = x;
-	    }
-	    if (xpy != NULL) {
-		x = 0.0;
-		for (t=t1; t<=t2; t++) {
-		    x += y[t] * dset->Z[vi][t];
-		}
-		xpy[i-2] = x;
-	    }
-	}
-	return err;
-    
-    st_mode:
-#endif
-	for (i=lmin; i<=lmax; i++) {
-	    xi = dset->Z[list[i]];
-	    for (j=i; j<=lmax; j++) {
-		xj = dset->Z[list[j]];
-		x = 0.0;
-		for (t=t1; t<=t2; t++) {
-		    x += xi[t] * xj[t];
-		}
-		if (i == j && x < DBL_EPSILON) {
-		    return E_SINGULAR;
-		}
-		xpx[m++] = x;
-	    }
-	    if (xpy != NULL) {
-		x = 0.0;
-		for (t=t1; t<=t2; t++) {
-		    x += y[t] * xi[t];
-		}
-		xpy[i-2] = x;
-	    }
-	}
-    } else {
+    } else if (mask != NULL) {
 	/* plain data, but with missing obs mask */
 	for (i=lmin; i<=lmax; i++) {
 	    xi = dset->Z[list[i]];
@@ -888,9 +832,70 @@ static int XTX_XTy (const int *list, int t1, int t2,
 		xpy[i-2] = x;
 	    }
 	}
+    } else {
+	/* plain data, no missing obs mask */
+#if defined(_OPENMP)
+	int vi, k = lmax - lmin + 1;
+	guint64 T = t2 - t1 + 1;
+	guint64 fpm = T * (k*k + k)/2;
+	int done = 0;
+
+	if (!libset_use_openmp(fpm)) {
+	    goto st_mode;
+	}
+
+#pragma omp parallel for private(i, j, t, vi, x)
+	for (i=lmin; i<=lmax; i++) {
+	    vi = list[i];
+	    for (j=i; j<=lmax; j++) {
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    x += dset->Z[vi][t] * dset->Z[list[j]][t];
+		}
+		if (i == j && x < DBL_EPSILON) {
+		    err = E_SINGULAR;
+		}
+		xpx[ijton(i-lmin, j-lmin, k)] = x;
+	    }
+	    if (xpy != NULL) {
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    x += y[t] * dset->Z[vi][t];
+		}
+		xpy[i-2] = x;
+	    }
+	}
+	done = 1;
+    
+    st_mode:
+#endif /* OPENMP */
+
+	if (!done) {
+	    for (i=lmin; i<=lmax; i++) {
+		xi = dset->Z[list[i]];
+		for (j=i; j<=lmax; j++) {
+		    xj = dset->Z[list[j]];
+		    x = 0.0;
+		    for (t=t1; t<=t2; t++) {
+			x += xi[t] * xj[t];
+		    }
+		    if (i == j && x < DBL_EPSILON) {
+			return E_SINGULAR;
+		    }
+		    xpx[m++] = x;
+		}
+		if (xpy != NULL) {
+		    x = 0.0;
+		    for (t=t1; t<=t2; t++) {
+			x += y[t] * xi[t];
+		    }
+		    xpy[i-2] = x;
+		}
+	    }
+	}
     }
 
-    return 0; 
+    return err; 
 }
 
 /**
