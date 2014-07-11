@@ -2200,13 +2200,14 @@ static char *get_csv_descrip (csvdata *c, FILE *fp)
 {
     char *line = c->line;
     char *desc = NULL;
-    size_t len;
+    size_t llen, totlen;
 
     while (csv_fgets(c, fp)) {
 	tailstrip(line);
+	llen = strlen(line);
 	if (desc == NULL) {
-	    len = strlen(line) + 3;
-	    desc = malloc(len);
+	    totlen = llen + 4;
+	    desc = malloc(totlen);
 	    if (desc == NULL) {
 		return NULL;
 	    }
@@ -2214,8 +2215,8 @@ static char *get_csv_descrip (csvdata *c, FILE *fp)
 	} else {
 	    char *tmp;
 
-	    len = strlen(desc) + strlen(line) + 3;
-	    tmp = realloc(desc, len);
+	    totlen = strlen(desc) + llen + 4;
+	    tmp = realloc(desc, totlen);
 	    if (tmp == NULL) {
 		free(desc);
 		return NULL;
