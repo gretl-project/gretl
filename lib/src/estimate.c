@@ -834,11 +834,11 @@ static int XTX_XTy (const int *list, int t1, int t2,
 	}
     } else {
 	/* plain data, no missing obs mask */
+	int done = 0;
 #if defined(_OPENMP)
 	int vi, k = lmax - lmin + 1;
 	guint64 T = t2 - t1 + 1;
 	guint64 fpm = T * (k*k + k)/2;
-	int done = 0;
 
 	if (!libset_use_openmp(fpm)) {
 	    goto st_mode;
