@@ -467,14 +467,17 @@ void gretl_model_set_name (MODEL *pmod, const char *name);
 
 const char *gretl_model_get_name (const MODEL *pmod);
 
-double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx, 
-			       DATASET *dset, int *err);
+double gretl_model_get_scalar (const MODEL *pmod, 
+			       ModelDataIndex idx, 
+			       DATASET *dset, 
+			       int *err);
 
-double *
-gretl_model_get_series (MODEL *pmod, const DATASET *dset, 
-			ModelDataIndex idx, int *err);
+int gretl_model_get_series (double *x, MODEL *pmod, 
+			    const DATASET *dset, 
+			    ModelDataIndex idx);
 
-gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx, 
+gretl_matrix *gretl_model_get_matrix (MODEL *pmod, 
+				      ModelDataIndex idx, 
 				      int *err);
 
 double 

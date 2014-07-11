@@ -1008,26 +1008,6 @@ static double real_get_obj_scalar (void *p, GretlObjType type,
     return x;
 }
 
-static double *
-real_get_obj_series (void *p, GretlObjType type, int idx,
-		     const DATASET *dset, int *err)
-{
-    double *x = NULL;
-
-    if (idx <= 0) {
-	*err = 1;
-	return x;
-    }
-
-    if (type == GRETL_OBJ_EQN) {
-	MODEL *pmod = (MODEL *) p;
-
-	x = gretl_model_get_series(pmod, dset, idx, err);
-    } 
-
-    return x;
-}
-
 /* find out what sort of object we're dealing with, and call
    the appropriate function to get the requested matrix 
 */
@@ -1280,25 +1260,26 @@ double saved_object_get_scalar (const char *oname, int idx,
     return ret;
 }
 
-double *saved_object_get_series (const char *oname, int idx,
-				 const DATASET *dset, 
-				 int *err)
+int saved_object_get_series (double *x, const char *oname, 
+			     int idx, const DATASET *dset)
 {
-    double *x = NULL;
-    stacker *smatch;
+    int err = 0;
 
-    smatch = find_smatch(oname);
+    if (idx <= 0) {
+	err = E_DATA;
+    } else {
+	stacker *smatch = find_smatch(oname);
 
-    if (smatch != NULL) {
-	x = real_get_obj_series(smatch->ptr, smatch->type, idx, 
-				dset, err);
+	if (smatch == NULL || smatch->type != GRETL_OBJ_EQN) {
+	    err = E_BADSTAT;
+	} else {
+	    MODEL *pmod = (MODEL *) smatch->ptr;
+
+	    err = gretl_model_get_series(x, pmod, dset, idx);
+	}
     }
 
-    if (x == NULL && !*err) {
-	*err = E_BADSTAT;
-    }
-
-    return x;
+    return err;
 }
 
 /* starting point for getting a matrix from a saved model

@@ -5961,6 +5961,7 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
 
 /**
  * gretl_model_get_series:
+ * @x: series to fill (must be of length dset->n).
  * @pmod: pointer to target model.
  * @dset: dataset information.
  * @idx: index for the series that is wanted.
@@ -5970,16 +5971,14 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
  * example, regression residuals); @idx must be greater than
  * %M_ELEM_MAX and less than %M_SERIES_MAX.
  * 
- * Returns: the allocated series, or %NULL on failure,
- * in which case @err will contain a non-zero error code.
+ * Returns: 0 on success, non-zero code on error.
  */
 
-double *
-gretl_model_get_series (MODEL *pmod, const DATASET *dset, 
-			ModelDataIndex idx, int *err)
+int gretl_model_get_series (double *x, MODEL *pmod, 
+			    const DATASET *dset, 
+			    ModelDataIndex idx)
 {
     const double *src = NULL;
-    double *x = NULL;
     int t;
 
     if (pmod->t2 - pmod->t1 + 1 > dset->n || 
@@ -5992,13 +5991,11 @@ gretl_model_get_series (MODEL *pmod, const DATASET *dset,
 	       (idx == M_H)?
 	       _("Can't retrieve ht: data set has changed") :
 	       _("Can't retrieve series: data set has changed"));
-	*err = E_BADSTAT;
-	return NULL;
+	return E_BADSTAT;
     }
 
     if (pmod->ci == BIPROBIT && (idx == M_UHAT || idx == M_YHAT)) {
-	*err = E_BADSTAT;
-	return NULL;
+	return E_BADSTAT;
     }
 
     if (idx == M_UHAT) {
@@ -6014,14 +6011,12 @@ gretl_model_get_series (MODEL *pmod, const DATASET *dset,
     }
 
     if (src == NULL && idx != M_SAMPLE) {
-	*err = E_BADSTAT;
-	return NULL;
+	return E_BADSTAT;
     }
 
-    x = malloc(dset->n * sizeof *x);
+    /* allow for internal "just testing" usage */
     if (x == NULL) {
-	*err = E_ALLOC;
-	return NULL;
+	return 0;
     }
 
     if (idx == M_SAMPLE) {
@@ -6042,7 +6037,7 @@ gretl_model_get_series (MODEL *pmod, const DATASET *dset,
 	}
     }
 	    
-    return x;
+    return 0;
 }
 
 static gretl_matrix *
@@ -6254,10 +6249,8 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 
     if (pmod == NULL) {
 	*err = E_BADSTAT;
-	return M;
+	return NULL;
     }
-
-    if (*err) return M;
 
     if ((idx == M_UHAT || idx == M_YHAT) && pmod->ci == BIPROBIT) {
 	/* special: matrices with 2 columns */
