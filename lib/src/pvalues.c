@@ -2002,7 +2002,7 @@ double gretl_get_pdf (int dist, const double *parm, double x)
  * @n: number of elements in @x.
  *
  * On input, @x contains an array of abscissae at which the
- * PDF specified by @dist and @parm should be evaluated.  On
+ * PDF specified by @dist and @parm should be evaluated. On
  * output it contains the corresponding PDF values.
  * 
  * Returns: 0 on success, non-zero on error.
@@ -2252,7 +2252,8 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 }
 
 /**
- * gretl_get_random_series:
+ * gretl_fill_random_series:
+ * @x: series to fill (must be of length dset->n).
  * @dist: distribution code.
  * @parm: array holding either one or two scalar 
  * parameter values, depending on the distribution.
@@ -2263,39 +2264,24 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
  * @dset: dataset information.
  * @err: location to receive error code.
  *
- * Produces a random series conforming to the distribution
+ * Fills @x with random values conforming to the distribution
  * given by @dist, which may require specification of either
  * one or two parameters. These parameters are either
  * given as (scalar) elements of @parm, or they may vary
  * by observation, in which case they are given as the
- * elements of @serp1 or @serp2.
+ * elements of @vecp1 or @vecp2.
  *
- * Returns: the array of pseudo-random values, or %NULL
- * on error.
+ * Returns: 0 on success, non-zero code on error.
  */
 
-double *gretl_get_random_series (int dist, const double *parm,
-				 const double *vecp1, 
-				 const double *vecp2,
-				 const DATASET *dset,
-				 int *err)
+int gretl_fill_random_series (double *x, int dist, 
+			      const double *parm,
+			      const double *vecp1, 
+			      const double *vecp2,
+			      const DATASET *dset)
 {
-    double *x = malloc(dset->n * sizeof *x);
-
-    if (x == NULL) {
-	*err = E_ALLOC;
-    } else {
-	int t;
-
-	for (t=0; t<dset->n; t++) {
-	    x[t] = NADBL;
-	}
-
-	*err = gretl_fill_random_array(x, dset->t1, dset->t2, dist,
-				       parm, vecp1, vecp2);
-    }
-
-    return x;
+    return gretl_fill_random_array(x, dset->t1, dset->t2, 
+				   dist, parm, vecp1, vecp2);
 }
 
 gretl_matrix *gretl_get_random_matrix (int dist, const double *parm,

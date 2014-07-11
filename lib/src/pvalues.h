@@ -124,11 +124,11 @@ double gretl_get_cdf_inverse (int dist, const double *parm, double a);
 
 double gretl_get_critval (int dist, const double *parm, double a);
 
-double *gretl_get_random_series (int dist, const double *parm,
-				 const double *vecp1, 
-				 const double *vecp2, 
-				 const DATASET *dset,
-				 int *err);
+int gretl_fill_random_series (double *x, int dist, 
+			      const double *parm,
+			      const double *vecp1, 
+			      const double *vecp2, 
+			      const DATASET *dset);
 
 gretl_matrix *gretl_get_random_matrix (int dist, const double *parm,
 				       int rows, int cols, 
