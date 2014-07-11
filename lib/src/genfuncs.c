@@ -4580,7 +4580,6 @@ int list_ok_dollar_vars (DATASET *dset, PRN *prn)
     for (i=R_MAX+1; i<M_MAX; i++) {
 	GretlType type = GRETL_TYPE_NONE;
 	double x = NADBL;
-	double *px = NULL;
 	gretl_matrix *m = NULL;
 	int *list = NULL;
 	int err = 0;
@@ -4592,7 +4591,7 @@ int list_ok_dollar_vars (DATASET *dset, PRN *prn)
 	    }
 	} else if (i > M_SCALAR_MAX && i < M_SERIES_MAX) {
 	    type = GRETL_TYPE_SERIES;
-	    px = saved_object_get_series(NULL, i, dset, &err);
+	    err = saved_object_get_series(NULL, NULL, i, dset);
 	    if (err) {
 		if (i == M_UHAT || i == M_YHAT || i == M_SIGMA) {
 		    /* maybe the result is a matrix? */
@@ -4629,7 +4628,6 @@ int list_ok_dollar_vars (DATASET *dset, PRN *prn)
 	    } else {
 		pprintf(prn, " %s (%s)\n", mvarname(i), typestr);
 	    }
-	    free(px);
 	    gretl_matrix_free(m);
 	    free(list);
 	    nm++;

@@ -1028,6 +1028,10 @@ void destroy_genr (parser *p)
 #endif
 
     if (p != NULL) {
+	if (p->flags & P_AUXDONE) {
+	    /* avoid double-freeing */
+	    p->lh.mspec = NULL;
+	}
 	p->flags = 0;
 	gen_cleanup(p);
 	free(p);

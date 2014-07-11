@@ -548,6 +548,7 @@ union val {
     matrix_subspec *mspec;
     gretl_bundle *b;
     gretl_array *a;
+    void *ptr;
 };
 
 enum {

@@ -56,7 +56,10 @@
 # define LHDEBUG 0
 #endif
 
-/* #define TRY_SAVE_AUX */
+/* This should now be just about good, but let's play safe
+   for the moment (2014-07-11)
+*/
+#define TRY_SAVE_AUX 0
 
 #define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
 #define SERIES_ENSURE_FINITE 1  /* debatable */
@@ -144,18 +147,12 @@ static const char *typestr (int t)
     }
 }
 
-static void free_mspec (matrix_subspec *spec, parser *p)
+static void free_mspec (matrix_subspec *spec)
 {
-    int nullit = spec == p->lh.mspec;
-
     if (spec != NULL) {
 	free(spec->rslice);
 	free(spec->cslice);
 	free(spec);
-    }
-
-    if (nullit) {
-	p->lh.mspec = NULL;
     }
 }
 
@@ -308,7 +305,7 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 	} else if (t->t == MAT) {
 	    gretl_matrix_free(t->v.m);
 	} else if (t->t == MSPEC) {
-	    free_mspec(t->v.mspec, p);
+	    free_mspec(t->v.mspec);
 	} else if (t->t == BUNDLE) {
 	    gretl_bundle_destroy(t->v.b);
 	} else if (t->t == ARRAY) {
@@ -519,6 +516,31 @@ static NODE *newarray (int tmp)
     return n;
 }
 
+static void clear_tmp_node_data (NODE *n)
+{
+    int nullify = 1;
+
+    if (n->t == LIST) {
+	free(n->v.ivec);
+    } else if (n->t == MAT) {
+	gretl_matrix_free(n->v.m);
+    } else if (n->t == MSPEC) {
+	free_mspec(n->v.mspec);
+    } else if (n->t == BUNDLE) {
+	gretl_bundle_destroy(n->v.b);
+    } else if (n->t == ARRAY) {
+	gretl_array_destroy(n->v.a);
+    } else if (n->t == STR) {
+	free(n->v.str);
+    } else {
+	nullify = 0;
+    }
+
+    if (nullify) {
+	n->v.ptr = NULL;
+    }
+}
+
 /* push an auxiliary evaluation node onto the stack of
    such nodes */
 
@@ -547,6 +569,12 @@ static int add_aux_node (parser *p, NODE *t)
 static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 {
     NODE *ret = NULL;
+
+#if EDEBUG
+    fprintf(stderr, "get_aux_node: p=%p, starting=%d, auxdone=%d, n_aux=%d\n",
+	    (void *) p, starting(p) ? 1 : 0, (p->flags & P_AUXDONE)? 1 : 0,
+	    p->n_aux);
+#endif
 
     if (starting(p) && !(p->flags & P_AUXDONE)) {
 	if (t == NUM) {
@@ -587,13 +615,19 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	} 
     } else if (p->aux == NULL) {
 	/* p->aux should already be allocated */
-	fprintf(stderr, "get_aux_node: FAILED on p->aux == NULL\n");
+	fprintf(stderr, "get_aux_node FAILED: p->aux = NULL\n");
+	p->err = E_DATA;
+    } else if (p->aux_i >= p->n_aux) {
+	fprintf(stderr, "get_aux_node FAILED: index out of bounds!\n");
 	p->err = E_DATA;
     } else {
-	while (p->aux[p->aux_i] == NULL) {
- 	    p->aux_i += 1;
- 	}
- 	ret = p->aux[p->aux_i];
+	ret = p->aux[p->aux_i];
+	if (ret == NULL) {
+	    fprintf(stderr, "get_aux_node FAILED: got NULL node\n");
+	    p->err = E_DATA;
+	} else if (is_tmp_node(ret) && starting(p)) {
+	    clear_tmp_node_data(ret);
+	}
 	p->aux_i += 1;
     }
 
@@ -610,13 +644,23 @@ static void no_data_error (parser *p)
     p->err = E_NODATA;
 }
 
-static NODE *aux_series_node (parser *p, int n)
+static NODE *aux_series_node (parser *p)
 {
     if (p->dset == NULL || p->dset->n == 0) {
 	no_data_error(p);
 	return NULL;
     } else {
-	return get_aux_node(p, SERIES, n, 1);
+	return get_aux_node(p, SERIES, p->dset->n, 1);
+    }
+}
+
+static NODE *aux_empty_series_node (parser *p)
+{
+    if (p->dset == NULL || p->dset->n == 0) {
+	no_data_error(p);
+	return NULL;
+    } else {
+	return get_aux_node(p, SERIES, 0, 1);
     }
 }
 
@@ -637,14 +681,7 @@ static NODE *aux_list_node (parser *p)
 
 static NODE *aux_matrix_node (parser *p)
 {
-    NODE *n = get_aux_node(p, MAT, 0, 1);
-
-    if ((p->flags & P_AUXDONE) && n->v.m != NULL) {
-	gretl_matrix_free(n->v.m);
-	n->v.m = NULL;
-    }
-
-    return n;
+    return get_aux_node(p, MAT, 0, 1);
 }
 
 static NODE *matrix_pointer_node (parser *p)
@@ -654,14 +691,7 @@ static NODE *matrix_pointer_node (parser *p)
 
 static NODE *aux_mspec_node (parser *p)
 {
-    NODE *n = get_aux_node(p, MSPEC, 0, 0);
-
-    if ((p->flags & P_AUXDONE) && n->v.mspec != NULL) {
-	free_mspec(n->v.mspec, p);
-	n->v.mspec = NULL;
-    }
-    
-    return n;
+    return get_aux_node(p, MSPEC, 0, 0);
 }
 
 /* note: a string placed on an aux_string_node
@@ -955,54 +985,32 @@ static double scalar_pdist (int t, int d, const double *parm,
     return x;
 }
 
-static double *full_length_NA_vec (parser *p)
-{
-    double *x = malloc(p->dset->n * sizeof *x);
-    int t;
-
-    if (x == NULL) {
-	p->err = E_ALLOC;
-    } else {
-	for (t=0; t<p->dset->n; t++) {
-	    x[t] = NADBL;
-	}
-    }
-
-    return x;
-}
-
 /* @parm contains an array of scalar parameters;
    @argvec contains a series of argument values.
 */
 
-static double *series_pdist (int f, int d, 
-			     double *parm, int np,
-			     const double *argvec,
-			     parser *p)
+static int series_pdist (double *x, int f, int d, 
+			 double *parm, int np,
+			 const double *argvec,
+			 parser *p)
 {
-    double *xvec;
     int t;
-
-    xvec = full_length_NA_vec(p);
-    if (xvec == NULL) {
-	return NULL;
-    }
 
     if (f == F_PDF) {
 	/* fast treatment, for pdf only at this point */
 	int n = sample_size(p->dset);
 
 	for (t=p->dset->t1; t<=p->dset->t2; t++) {
-	    xvec[t] = argvec[t];
+	    x[t] = argvec[t];
 	}
-	gretl_fill_pdf_array(d, parm, xvec + p->dset->t1, n);
+	gretl_fill_pdf_array(d, parm, x + p->dset->t1, n);
     } else {
 	for (t=p->dset->t1; t<=p->dset->t2; t++) {
-	    xvec[t] = scalar_pdist(f, d, parm, np, argvec[t], p);
+	    x[t] = scalar_pdist(f, d, parm, np, argvec[t], p);
 	}
     }
 
-    return xvec;
+    return 0;
 }
 
 /* @parm contains an array of zero to two scalar parameters;
@@ -1238,7 +1246,7 @@ static NODE *bvnorm_node (NODE *n, parser *p)
 		p->err = E_INVARG;
 	    } else if (avec != NULL || bvec != NULL) {
 		mode = 1;
-		ret = aux_series_node(p, p->dset->n);
+		ret = aux_series_node(p);
 	    } else if (amat != NULL || bmat != NULL) {
 		mode = 2;
 		ret = aux_matrix_node(p);
@@ -1432,7 +1440,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	if (mrgen) {
 	    ret = aux_matrix_node(p);
 	} else if (rgen || argvec != NULL) {
-	    ret = aux_series_node(p, 0);
+	    ret = aux_series_node(p);
 	} else if (argmat != NULL) {
 	    ret = aux_matrix_node(p);
 	} else {
@@ -1444,16 +1452,17 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	}
 
 	if (rgen) {
-	    ret->v.xvec = gretl_get_random_series(d, parm, 
-						  parmvec[0], parmvec[1], 
-						  p->dset, &p->err);
+	    p->err = gretl_fill_random_series(ret->v.xvec, d, parm, 
+					      parmvec[0], parmvec[1], 
+					      p->dset);
 	} else if (mrgen) {
 	    ret->v.m = gretl_get_random_matrix(d, parm, rows, cols, 
 					       &p->err);
 	} else if (rgen1) {
 	    ret->v.xval = gretl_get_random_scalar(d, parm, &p->err);
 	} else if (argvec != NULL) {
-	    ret->v.xvec = series_pdist(n->t, d, parm, np, argvec, p);
+	    p->err = series_pdist(ret->v.xvec, n->t, d, parm, np,
+				  argvec, p);
 	} else if (argmat != NULL) {
 	    ret->v.m = matrix_pdist(n->t, d, parm, np, argmat, p);
 	} else {
@@ -1847,7 +1856,7 @@ static NODE *series_string_calc (NODE *l, NODE *r, int f, parser *p)
 	return NULL;
     }
 
-    ret = aux_series_node(p, p->dset->n);
+    ret = aux_series_node(p);
     if (ret == NULL) {
 	return NULL;
     }
@@ -1877,7 +1886,7 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
     double xt = 0, yt = 0;
     int t, t1, t2;
 
-    ret = aux_series_node(p, p->dset->n);
+    ret = aux_series_node(p);
     if (ret == NULL) {
 	return NULL;
     }
@@ -1927,7 +1936,7 @@ static NODE *stringvec_calc (NODE *l, NODE *r, int f, parser *p)
 	return NULL;
     }
 
-    ret = aux_series_node(p, p->dset->n);
+    ret = aux_series_node(p);
     if (ret == NULL) {
 	return NULL;
     }
@@ -3718,11 +3727,11 @@ static NODE *matrix_isnan_node (NODE *n, parser *p)
 
 static NODE *apply_series_func (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_series_node(p, p->dset->n);
+    NODE *ret = aux_series_node(p);
     int t, t1, t2;
 
     if (ret != NULL) {
-	/* AC: changed for autoreg case, 2007/7/1 */
+	/* AC: changed for autoreg case, 2007-07-01 */
 	const double *x;
 
 	if (n->t == SERIES) {
@@ -3912,7 +3921,7 @@ static NODE *trend_node (parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	ret = aux_series_node(p, 0);
+	ret = aux_empty_series_node(p);
 	if (!p->err) {
 	    p->err = gen_time(p->dset, 1);
 	}
@@ -3920,7 +3929,7 @@ static NODE *trend_node (parser *p)
 	    ret->vname = gretl_strdup("time");
 	    ret->vnum = series_index(p->dset, "time");
 	    ret->v.xvec = p->dset->Z[ret->vnum];
-	    ret->flags = 0; /* wipe out TMP flag */
+	    mark_node_fragile(ret);
 	}
     }
 
@@ -4226,7 +4235,7 @@ static int reversed_comp (int f)
 static NODE *list_bool_comp (NODE *l, NODE *r, int f, int reversed,
 			     parser *p)
 {
-    NODE *ret = aux_series_node(p, p->dset->n);
+    NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(l, p);
@@ -4345,7 +4354,7 @@ static NODE *num_string_comp (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *list_to_series_func (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_series_node(p, p->dset->n);
+    NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(n, p);
@@ -4365,7 +4374,7 @@ static NODE *list_to_series_func (NODE *n, int f, parser *p)
 
 static NODE *series_list_calc (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_series_node(p, p->dset->n);
+    NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(r, p);
@@ -4402,7 +4411,7 @@ static NODE *series_list_calc (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *list_matrix_series_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_series_node(p, p->dset->n);
+    NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(l, p);
@@ -4419,7 +4428,7 @@ static NODE *list_matrix_series_func (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *list_list_series_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_series_node(p, p->dset->n);
+    NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *llist = node_get_list(l, p);
@@ -4441,7 +4450,7 @@ static NODE *list_list_series_func (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *list_ok_func (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_series_node(p, p->dset->n);
+    NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(n, p);
@@ -4477,7 +4486,7 @@ static NODE *list_ok_func (NODE *n, int f, parser *p)
 static NODE *
 series_fill_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_series_node(p, p->dset->n);
+    NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
 	double x, y;
@@ -5188,7 +5197,7 @@ static NODE *isodate_node (NODE *l, NODE *r, parser *p)
 	    }
 	} else {
 	    /* epoch day node is series */
-	    ret = aux_series_node(p, p->dset->n);
+	    ret = aux_series_node(p);
 	    if (ret != NULL) {
 		double xt;
 		int t;
@@ -5623,7 +5632,7 @@ static NODE *series_ljung_box (NODE *l, NODE *r, parser *p)
 
 static NODE *series_polyfit (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_series_node(p, p->dset->n);
+    NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
 	const double *x = l->v.xvec;
@@ -5681,7 +5690,7 @@ static NODE *series_movavg (NODE *l, NODE *m, NODE *r, parser *p)
 	ctrl = 1;
     }
 
-    ret = aux_series_node(p, p->dset->n);
+    ret = aux_series_node(p);
     if (ret == NULL) {
 	return NULL;
     }
@@ -5704,7 +5713,7 @@ static NODE *series_lag (NODE *l, NODE *r, parser *p)
     int t1, t2;
 
     if (!p->err) {
-	ret = aux_series_node(p, p->dset->n);
+	ret = aux_series_node(p);
     }
 
     if (ret == NULL) {
@@ -5721,7 +5730,7 @@ static NODE *series_lag (NODE *l, NODE *r, parser *p)
 
 static NODE *series_sort_by (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_series_node(p, p->dset->n);
+    NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
 	if (l->t == SERIES && r->t == SERIES) {
@@ -5736,7 +5745,7 @@ static NODE *series_sort_by (NODE *l, NODE *r, parser *p)
 
 static NODE *vector_sort (NODE *l, int f, parser *p)
 {
-    NODE *ret = (l->t == SERIES)? aux_series_node(p, p->dset->n) :
+    NODE *ret = (l->t == SERIES)? aux_series_node(p) :
 	aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
@@ -5902,7 +5911,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	return NULL;
     }
 
-    ret = aux_series_node(p, p->dset->n);
+    ret = aux_series_node(p);
 
     if (ret != NULL) {
 	gretl_matrix *tmp = NULL;
@@ -6463,7 +6472,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    ret->v.xval = xret;
 		}
 	    } else if (rtype == GRETL_TYPE_SERIES) {
-		ret = aux_series_node(p, 0);
+		ret = aux_empty_series_node(p);
 		if (ret != NULL) {
 		    if (ret->v.xvec != NULL) {
 			free(ret->v.xvec);
@@ -6752,7 +6761,6 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	ret = matrix_pointer_node(p);
 	if (ret != NULL) {
 	    ret->v.m = (gretl_matrix *) val;
-	    mark_node_fragile(ret);
 	}
     } else if (type == GRETL_TYPE_MATRIX_REF) {
 	ret = matrix_pointer_node(p);
@@ -6781,7 +6789,7 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	const double *x = val;
 
 	if (size == p->dset->n) {
-	    ret = aux_series_node(p, p->dset->n);
+	    ret = aux_series_node(p);
 	    if (ret != NULL) {
 		int t;
 
@@ -7349,7 +7357,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		ret->v.xval = day_of_week(yr, mo, day, &p->err);
 	    }
 	} else if (l->t == SERIES && m->t == SERIES && r->t == SERIES) {
-	    ret = aux_series_node(p, p->dset->n);
+	    ret = aux_series_node(p);
 	    if (ret != NULL) {
 		p->err = fill_day_of_week_array(ret->v.xvec,
 						l->v.xvec,
@@ -7428,7 +7436,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else if (r->t != NUM) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
-	    ret = aux_series_node(p, p->dset->n);
+	    ret = aux_series_node(p);
 	    if (!p->err) {
 		p->err = butterworth_filter(l->v.xvec, ret->v.xvec, p->dset,
 					    m->v.xval, r->v.xval);
@@ -7511,7 +7519,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else if (r->t != NUM) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
-	    ret = aux_series_node(p, p->dset->n);
+	    ret = aux_series_node(p);
 	    if (!p->err) {
 		p->err = nadaraya_watson(l->v.xvec, m->v.xvec,
 					 r->v.xval, p->dset, 
@@ -7771,7 +7779,7 @@ static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
 		}
 	    }
 	} else {
-	    ret = aux_series_node(p, p->dset->n);
+	    ret = aux_series_node(p);
 	    if (!p->err) {
 		int t;
 
@@ -7838,7 +7846,7 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
 	    }
 	}
     } else if (r->t == SERIES) {
-	ret = aux_series_node(p, p->dset->n);
+	ret = aux_series_node(p);
 	if (ret != NULL) {
 	    const double *x = r->v.xvec;
 	    int t1 = (autoreg(p))? p->obs : p->dset->t1;
@@ -7980,7 +7988,7 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 
     if (!p->err) {
 	if (src->t == SERIES) {
-	    ret = aux_series_node(p, p->dset->n);
+	    ret = aux_series_node(p);
 	} else if (src->t == MAT) {
 	    ret = aux_matrix_node(p);
 	} else {
@@ -8125,7 +8133,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    ret = aux_series_node(p, p->dset->n);
+	    ret = aux_series_node(p);
 	}
 
 	if (!p->err) {
@@ -8206,7 +8214,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		}
 	    } else if (x != NULL) {
 		/* series output */
-		ret = aux_series_node(p, p->dset->n);
+		ret = aux_series_node(p);
 		if (!p->err) {
 		    p->err = filter_series(x, ret->v.xvec, p->dset, A, C, y0);
 		}
@@ -8602,7 +8610,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
 	if (!p->err) {
-	    ret = aux_series_node(p, p->dset->n);
+	    ret = aux_series_node(p);
 	    if (ret != NULL) {
 		p->err = gretl_loess(y, x, poly_order, bandwidth,
 				     opt, p->dset, ret->v.xvec);
@@ -9108,7 +9116,7 @@ static int vec_branch (const double *c, parser *p)
    a SERIES type on output.
 */
 
-static NODE *query_eval_vec (const double *c, NODE *n, parser *p)
+static NODE *query_eval_series (const double *c, NODE *n, parser *p)
 {
     NODE *l = NULL, *r = NULL, *ret = NULL;
     double *xvec = NULL, *yvec = NULL;
@@ -9149,7 +9157,7 @@ static NODE *query_eval_vec (const double *c, NODE *n, parser *p)
 	}
     }
 
-    ret = aux_series_node(p, p->dset->n);
+    ret = aux_series_node(p);
 
     t1 = (autoreg(p))? p->obs : p->dset->t1;
     t2 = (autoreg(p))? p->obs : p->dset->t2;
@@ -9290,7 +9298,7 @@ static NODE *ternary_return_node (NODE *n, parser *p)
     } else if (n->t == SERIES) {
 	int t, T = p->dset->n;
 
-	ret = aux_series_node(p, T);
+	ret = aux_series_node(p);
 	if (ret != NULL) {
 	    for (t=0; t<T; t++) {
 		ret->v.xvec[t] = n->v.xvec[t];
@@ -9388,7 +9396,7 @@ static NODE *eval_query (NODE *t, parser *p)
     }
 
     if (vec != NULL) {
-	ret = query_eval_vec(vec, t, p);
+	ret = query_eval_series(vec, t, p);
     } else if (m != NULL) {
 	ret = query_eval_matrix(m, t, p);
     } else {
@@ -9486,36 +9494,29 @@ static int date_series_ok (const DATASET *dset)
     }
 }
 
-static double *dvar_get_series (int i, const DATASET *dset, 
-				int *err)
+static int dvar_get_series (double *x, int i, const DATASET *dset)
 {
-    double *x = NULL;
-    int YMD = calendar_data(dset);
-    int t;
+    int t, YMD = calendar_data(dset);
+    int err = 0;
 
     if (dset == NULL || dset->n == 0) {
-	*err = E_NODATA;
-	return NULL;
+	return E_NODATA;
     }
 
     if (i == R_OBSMIN && dset->pd < 2) {
-	*err = E_PDWRONG;
-	return NULL;
+	return E_PDWRONG;
     }    
 
     if (i == R_OBSMIC && !YMD) {
-	*err = E_PDWRONG;
-	return NULL;
+	return E_PDWRONG;
     }
 
     if (i == R_PUNIT && !dataset_is_panel(dset)) {
-	*err = E_PDWRONG;
-	return NULL;
+	return E_PDWRONG;
     }
 
     if (i == R_DATES && !date_series_ok(dset)) {
-	*err = E_PDWRONG;
-	return NULL;
+	return E_PDWRONG;
     }
 
     if (i == R_OBSMAJ) {
@@ -9524,12 +9525,6 @@ static double *dvar_get_series (int i, const DATASET *dset,
 	} else if (dataset_is_panel(dset)) {
 	    i = R_PUNIT;
 	}
-    }
-
-    x = malloc(dset->n * sizeof *x);
-    if (x == NULL) {
-	*err = E_ALLOC;
-	return NULL;
     }
 
     if (i == R_INDEX) {
@@ -9544,10 +9539,10 @@ static double *dvar_get_series (int i, const DATASET *dset,
 	char obs[12];
 	int y, m, d;
 
-	for (t=0; t<dset->n && !*err; t++) {
+	for (t=0; t<dset->n && !err; t++) {
 	    ntodate(obs, t, dset);
 	    if (sscanf(obs, YMD_READ_FMT, &y, &m, &d) != 3) {
-		*err = E_DATA;
+		err = E_DATA;
 	    } else if (i ==  R_OBSMAJ) {
 		x[t] = y;
 	    } else if (i == R_OBSMIN) {
@@ -9575,16 +9570,12 @@ static double *dvar_get_series (int i, const DATASET *dset,
 	    x[t] = min;
 	}
     } else if (i == R_DATES) {
-	*err = fill_dataset_dates_series(dset, x);
-	if (*err) {
-	    free(x);
-	    x = NULL;
-	}
+	err = fill_dataset_dates_series(dset, x);
     } else {
-	*err = E_DATA;
+	err = E_DATA;
     }
 
-    return x;
+    return err;
 }
 
 static gretl_matrix *dvar_get_matrix (int i, int *err)
@@ -9663,10 +9654,9 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 					      p->lh.label);
 	    }
 	} else if (dvar_series(idx)) {
-	    ret = aux_series_node(p, 0);
+	    ret = aux_series_node(p);
 	    if (ret != NULL) {
-		ret->v.xvec = dvar_get_series(idx, p->dset,
-					      &p->err);
+		p->err = dvar_get_series(ret->v.xvec, idx, p->dset);
 	    }
 	} else if (dvar_variant(idx)) {
 	    GretlType type = get_last_test_type();
@@ -9881,7 +9871,7 @@ static NODE *object_var_node (NODE *t, parser *p)
 	if (vtype == GRETL_TYPE_DOUBLE) {
 	    ret = aux_scalar_node(p);
 	} else if (vtype == GRETL_TYPE_SERIES) {
-	    ret = aux_series_node(p, 0);
+	    ret = aux_series_node(p);
 	} else if (vtype == GRETL_TYPE_LIST) {
 	    ret = aux_list_node(p);
 	} else if (vtype == GRETL_TYPE_STRING) {
@@ -9896,8 +9886,7 @@ static NODE *object_var_node (NODE *t, parser *p)
 	    ret->v.xval = saved_object_get_scalar(oname, idx, p->dset, 
 						  &p->err);
 	} else if (vtype == GRETL_TYPE_SERIES) {
-	    ret->v.xvec = saved_object_get_series(oname, idx, p->dset,
-						  &p->err);
+	    p->err = saved_object_get_series(ret->v.xvec, oname, idx, p->dset);
 	} else if (vtype == GRETL_TYPE_LIST) {
 	    ret->v.ivec = saved_object_get_list(oname, idx, &p->err);
 	} else if (vtype == GRETL_TYPE_STRING) {
@@ -11765,8 +11754,7 @@ static void nullify_aux_return (parser *p)
 
 static void add_child_parser (parser *p)
 {
-    int flags = (p->flags & P_COMPILE)? P_COMPILE : 0;
-    char *s;
+    char *s = NULL;
 
     p->subp = malloc(sizeof *p->subp);
     if (p->subp == NULL) {
@@ -11781,6 +11769,8 @@ static void add_child_parser (parser *p)
     }
 
     if (!p->err) {
+	int flags = (p->flags & P_COMPILE)? P_COMPILE : 0;
+
 	sprintf(s, "[%s]", p->lh.substr);
 	parser_init(p->subp, s, p->dset, p->prn, flags, MSPEC);
 	p->subp->tree = slice_node_direct(p->subp);
@@ -11803,9 +11793,6 @@ static void get_lh_mspec (parser *p)
 
     if (p->subp != NULL) {
 	/* we're executing a previously compiled parser */
-#ifndef TRY_SAVE_AUX
-	parser_free_aux_nodes(p->subp);
-#endif
 	parser_reinit(p->subp, p->dset, p->prn);
     } else {
 	/* starting from scratch */
@@ -11822,20 +11809,20 @@ static void get_lh_mspec (parser *p)
 	    fprintf(stderr, "Error in subp eval = %d\n", ps->err);
 	    p->err = ps->err;
 	} else {
-	    /* free previous result, if any, and appropriate the
-	       mspec result from current evaluation */
-	    if (p->lh.mspec != NULL) {
-		free_mspec(p->lh.mspec, p);
-	    }
-	    p->lh.mspec = ps->ret->v.mspec;
-#if LHDEBUG > 1
-	    print_mspec(p->lh.mspec);
-#endif
-	    nullify_aux_return(ps); /* don't double-free */
-	    free(ps->ret);
-	    ps->ret = NULL;
 	    if (ps->flags & P_SAVEAUX) {
 		ps->flags |= P_AUXDONE;
+	    }
+	    if (ps->flags & P_AUXDONE) {
+		p->lh.mspec = ps->ret->v.mspec;
+	    } else {
+		if (p->lh.mspec != NULL) {
+		    /* free previous result */
+		    free_mspec(p->lh.mspec);
+		}
+		p->lh.mspec = ps->ret->v.mspec;
+		nullify_aux_return(ps); /* don't double-free */
+		free(ps->ret);
+		ps->ret = NULL;
 	    }
 	}
     }
@@ -13628,7 +13615,7 @@ static int save_generated_var (parser *p, PRN *prn)
 static void parser_reinit (parser *p, DATASET *dset, PRN *prn) 
 {
     /* flags that should be reinstated if they were
-       present at compile time, or in previous exec 
+       set at compile time, or in previous execution 
     */
     int saveflags[] = { 
 	P_PRINT, P_NATEST, P_AUTOREG,
@@ -13645,7 +13632,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	}
     }
 
-#ifdef TRY_SAVE_AUX
+#if TRY_SAVE_AUX
     if (prevflags & P_COMPILE) {
 	p->flags |= P_SAVEAUX;
     }
@@ -13808,25 +13795,31 @@ void gen_save_or_print (parser *p, PRN *prn)
     } 
 }
 
+static void parser_destroy_child (parser *p)
+{
+    p->subp->flags = 0;
+    gen_cleanup(p->subp);
+    free(p->subp);
+    p->subp = NULL;
+}
+
 void gen_cleanup (parser *p)
 {
     int save_aux = (p->flags & P_AUXDONE);
     int save_tree = reusable(p);
 
 #if EDEBUG
-    fprintf(stderr, "gen cleanup on %p: save_tree = %d, err = %d\n", 
-	    p, save_tree ? 1 : 0, p->err);
+    fprintf(stderr, "gen cleanup on %p: save_aux=%d, save_tree=%d\n", 
+	    p, save_aux ? 1 : 0, save_tree ? 1 : 0);
 #endif
 
     if (p->err && (p->flags & P_COMPILE)) {
 	save_aux = save_tree = 0;
     }
 
-#ifdef TRY_SAVE_AUX
     if (!save_aux) {
 	parser_free_aux_nodes(p);
     }
-#endif
 
     if (save_aux) {
 	/* implies save_tree: do minimal clean-up */
@@ -13842,28 +13835,24 @@ void gen_cleanup (parser *p)
 		p->ret = NULL;
 	    }
 	}
+	if (p->subp != NULL) {
+	    gen_cleanup(p->subp);
+	}
     } else {
-	/* do complete clean-up */
+	/* do full clean-up */
+	if (p->subp != NULL) {
+	    parser_destroy_child(p);
+	}
+
 	if (p->ret != p->tree) {
 	    free_tree(p->tree, p, "p->tree");
 	}
 
 	free_tree(p->ret, p, "p->ret");
 	free(p->lh.substr);
-	free_mspec(p->lh.mspec, p);
-
-	if (p->subp != NULL) {
-	    /* since the parent genr will not be run again,
-	       wipe the "reusable" flags from its subp 
-	    */
-	    p->subp->flags = 0;
-#ifndef TRY_SAVE_AUX
-	    parser_free_aux_nodes(p->subp);
-#endif
-	    gen_cleanup(p->subp);
-	    free(p->subp);
-	    p->subp = NULL;
-	}  
+	if (p->lh.mspec != NULL) {
+	    free_mspec(p->lh.mspec);
+	}
     }
 }
 
@@ -14055,10 +14044,6 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     printnode(p->ret, p);
     pputc(prn, '\n');
 # endif
-#endif
-
-#ifndef TRY_SAVE_AUX
-    parser_free_aux_nodes(p);
 #endif
 
 #if 1
