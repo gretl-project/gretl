@@ -5965,7 +5965,6 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
  * @pmod: pointer to target model.
  * @dset: dataset information.
  * @idx: index for the series that is wanted.
- * @err: location to receive error code (required).
  * 
  * Retrieves from @pmod a copy of a specified series (for
  * example, regression residuals); @idx must be greater than

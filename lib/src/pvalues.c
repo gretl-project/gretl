@@ -2262,7 +2262,6 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
  * @vecp2: series containing values for second param,
  * or %NULL.
  * @dset: dataset information.
- * @err: location to receive error code.
  *
  * Fills @x with random values conforming to the distribution
  * given by @dist, which may require specification of either
