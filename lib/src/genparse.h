@@ -621,6 +621,7 @@ struct parser_ {
     int n_aux;         /* the number of the above */
     int aux_i;         /* the current ID of the above */
     /* below: parser state variables */
+    int callcount;
     int obs;
     int sym;
     int upsym;

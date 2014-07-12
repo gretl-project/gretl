@@ -59,7 +59,7 @@
 /* This should now be just about good, but let's play safe
    for the moment (2014-07-11)
 */
-#define TRY_SAVE_AUX 0
+#define TRY_SAVE_AUX 1
 
 #define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
 #define SERIES_ENSURE_FINITE 1  /* debatable */
@@ -13270,19 +13270,7 @@ static int gen_allocate_storage (parser *p)
 	if (p->dset == NULL || p->dset->Z == NULL) {
 	    p->err = E_DATA;
 	} else {
-	    p->err = dataset_add_series(p->dset, 1);
-	}
-	if (!p->err) {
-	    int t;
-
-	    p->lh.v = p->dset->v - 1;
-	    for (t=0; t<p->dset->n; t++) {
-		p->dset->Z[p->lh.v][t] = NADBL;
-	    }
-#if EDEBUG
-	    fprintf(stderr, "gen_allocate_storage: added series #%d (%s)\n",
-		    p->lh.v, p->lh.name);
-#endif
+	    p->err = dataset_add_NA_series(p->dset);
 	}
     }
 
@@ -13380,10 +13368,12 @@ static int save_generated_var (parser *p, PRN *prn)
     double x;
     int t, v = 0;
 
-    /* test for type mismatch errors */
-    gen_check_return_type(p);
-    if (p->err) {
-	return p->err;
+    if (p->callcount < 2) {
+	/* test for type mismatch errors */
+	gen_check_return_type(p);
+	if (p->err) {
+	    return p->err;
+	}
     }
 
 #if EDEBUG
@@ -13624,19 +13614,24 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     };
     int i, prevflags = p->flags;
 
-    p->flags = (P_START | P_PRIVATE | P_EXEC);
+    if (p->callcount > 2) {
+	/* the flags will have stabilized by now */
+	p->flags |= P_START;
+    } else {
+	p->flags = (P_START | P_PRIVATE | P_EXEC);
 
-    for (i=0; saveflags[i] > 0; i++) {
-	if (prevflags & saveflags[i]) {
-	    p->flags |= saveflags[i];
+	for (i=0; saveflags[i] > 0; i++) {
+	    if (prevflags & saveflags[i]) {
+		p->flags |= saveflags[i];
+	    }
 	}
-    }
 
 #if TRY_SAVE_AUX
-    if (prevflags & P_COMPILE) {
-	p->flags |= P_SAVEAUX;
-    }
+	if (prevflags & P_COMPILE) {
+	    p->flags |= P_SAVEAUX;
+	}
 #endif
+    }
 
     p->dset = dset;
     p->prn = prn;
@@ -13665,6 +13660,16 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     fprintf(stderr, "parser_reinit: p->subp=%p, targ=%d, lhname='%s', op=%d\n", 
 	    (void *) p->subp, p->targ, p->lh.name, p->op);
 #endif
+
+    if (p->callcount > 2) {
+	if (p->targ == MAT && *p->lh.name != '\0') {
+	    p->lh.m0 = get_matrix_by_name(p->lh.name);
+	}
+	if (p->subp != NULL) {
+	    get_lh_mspec(p);
+	}
+	return;
+    }	
 
     if (p->targ == MAT) {
 	/* matrix target: check the LH name again */
@@ -13736,6 +13741,7 @@ static void parser_init (parser *p, const char *str,
 
     p->subp = NULL;
 
+    p->callcount = 0;
     p->obs = 0;
     p->sym = 0;
     p->upsym = 0;
@@ -14034,6 +14040,10 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	p->ret = eval(p->tree, p);
     }
 
+    if (p->flags & P_EXEC) {
+	p->callcount += 1;
+    }
+
     if (p->flags & P_SAVEAUX) {
 	p->flags |= P_AUXDONE;
     }
@@ -14046,9 +14056,9 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 # endif
 #endif
 
-#if 1
-    gen_check_errvals(p);
-#endif
+    if (p->callcount < 2) {
+	gen_check_errvals(p);
+    }
 
     return p->err;
 }
