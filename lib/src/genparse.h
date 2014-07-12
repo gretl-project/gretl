@@ -586,7 +586,8 @@ enum {
     P_SLICING = 1 << 15, /* calculating object slice (temporary) */
     P_LAGPRSE = 1 << 16, /* parsing lag spec (temporary) */
     P_AUXDONE = 1 << 17, /* experimental */
-    P_SAVEAUX = 1 << 18  /* ditto */ 
+    P_SAVEAUX = 1 << 18, /* also experimental */
+    P_DELTAN  = 1 << 19  /* flag for change in series length */
 };
 
 struct lhinfo {
@@ -622,6 +623,7 @@ struct parser_ {
     int aux_i;         /* the current ID of the above */
     /* below: parser state variables */
     int callcount;
+    int dset_n;
     int obs;
     int sym;
     int upsym;

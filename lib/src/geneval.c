@@ -374,6 +374,20 @@ static NODE *newmdef (int k)
     return n;
 }
 
+static double *na_array (int n)
+{
+    double *x = malloc(n * sizeof *x);
+    int i;
+
+    if (x != NULL) {
+	for (i=0; i<n; i++) {
+	    x[i] = NADBL;
+	}
+    }
+
+    return x;
+}
+
 /* new node to hold array of doubles */
 
 static NODE *newseries (int n, int tmp)
@@ -381,19 +395,13 @@ static NODE *newseries (int n, int tmp)
     NODE *b = new_node(SERIES);
 
     if (b != NULL) {
-	int i;
-
 	b->flags = (tmp)? TMP_NODE : 0;
 	if (n > 0) {
-	    b->v.xvec = malloc(n * sizeof *b->v.xvec);
+	    b->v.xvec = na_array(n);
 	    if (b->v.xvec == NULL) {
 		free(b);
 		b = NULL;
-	    } else {
-		for (i=0; i<n; i++) {
-		    b->v.xvec[i] = NADBL;
-		}
-	    }		
+	    }
 	} else {
 	    b->v.xvec = NULL;
 	}
@@ -516,7 +524,7 @@ static NODE *newarray (int tmp)
     return n;
 }
 
-static void clear_tmp_node_data (NODE *n)
+static void clear_tmp_node_data (NODE *n, parser *p)
 {
     int nullify = 1;
 
@@ -532,6 +540,21 @@ static void clear_tmp_node_data (NODE *n)
 	gretl_array_destroy(n->v.a);
     } else if (n->t == STR) {
 	free(n->v.str);
+    } else if (n->t == SERIES) {
+	/* preserve any existing tmp series, unless the
+	   dataset series length has changed 
+	*/
+	if (p->flags & P_DELTAN) {
+	    free(n->v.xvec);
+	    n->v.xvec = NULL;
+	    if (p->dset->n > 0) {
+		n->v.xvec = na_array(p->dset_n);
+		if (n->v.xvec == NULL) {
+		    p->err = E_ALLOC;
+		}
+	    }
+	}
+	nullify = 0;
     } else {
 	nullify = 0;
     }
@@ -626,7 +649,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	    fprintf(stderr, "get_aux_node FAILED: got NULL node\n");
 	    p->err = E_DATA;
 	} else if (is_tmp_node(ret) && starting(p)) {
-	    clear_tmp_node_data(ret);
+	    clear_tmp_node_data(ret, p);
 	}
 	p->aux_i += 1;
     }
@@ -3731,7 +3754,6 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
     int t, t1, t2;
 
     if (ret != NULL) {
-	/* AC: changed for autoreg case, 2007-07-01 */
 	const double *x;
 
 	if (n->t == SERIES) {
@@ -12492,15 +12514,16 @@ static int series_compatible (const gretl_matrix *m, parser *p)
     return ok;
 }
 
-/* below: note that node we're checking is p->ret, which may differ in
-   type from the target to which it will be assigned/converted
+/* below: note that the node we're checking is p->ret, which may
+   differ in type from the target to which it will be
+   assigned/converted
 */
 
 static void gen_check_errvals (parser *p)
 {
-    NODE *n = p->ret;
+    NODE *r = p->ret;
 
-    if (n == NULL || (n->t == SERIES && n->v.xvec == NULL)) {
+    if (r == NULL || (r->t == SERIES && r->v.xvec == NULL)) {
 	return;
     }
 
@@ -12509,22 +12532,22 @@ static void gen_check_errvals (parser *p)
 	return;
     }
 
-    if (n->t == NUM) {
-	if (!isfinite(n->v.xval)) {
+    if (r->t == NUM) {
+	if (!isfinite(r->v.xval)) {
 #if SCALARS_ENSURE_FINITE
-	    n->v.xval = NADBL;
+	    r->v.xval = NADBL;
 	    set_gretl_warning(W_GENMISS);
 #else
 	    set_gretl_warning(W_GENNAN);
 #endif
 	}
-    } else if (n->t == SERIES) {
+    } else if (r->t == SERIES) {
 	int t;
 
 	for (t=p->dset->t1; t<=p->dset->t2; t++) {
-	    if (!isfinite(n->v.xvec[t])) {
+	    if (!isfinite(r->v.xvec[t])) {
 #if SERIES_ENSURE_FINITE
-		n->v.xvec[t] = NADBL;
+		r->v.xvec[t] = NADBL;
 		set_gretl_warning(W_GENMISS);
 #else
 		set_gretl_warning(W_GENNAN);
@@ -12532,9 +12555,10 @@ static void gen_check_errvals (parser *p)
 		break;
 	    }
 	}
-    } else if (n->t == MAT) {
-	const gretl_matrix *m = n->v.m;
-	int i, k = gretl_matrix_rows(m) * gretl_matrix_cols(m);
+    } else if (r->t == MAT) {
+	/* note: but p->targ != MAT */
+	const gretl_matrix *m = r->v.m;
+	int i, k = m->rows * m->cols;
 	
 	if (p->targ == NUM && k == 1) {
 	    if (!isfinite(m->val[0])) {
@@ -12546,6 +12570,7 @@ static void gen_check_errvals (parser *p)
 #endif
 	    }		
 	} else {
+	    /* should we be doing this?? */
 	    /* convert any NAs to NaNs */
 	    for (i=0; i<k; i++) {
 		if (na(m->val[i])) {
@@ -12685,7 +12710,12 @@ static gretl_matrix *matrix_from_scratch (parser *p, int tmp,
 	m = gretl_matrix_from_scalar(p->ret->v.xval);
 	if (m == NULL) {
 	    p->err = E_ALLOC;
-	} 
+	} else if (xna(m->val[0])) {
+	    set_gretl_warning(W_GENNAN);
+	    if (prechecked != NULL) {
+		*prechecked = 1;
+	    }
+	}
     } else {
 	m = grab_or_copy_matrix_result(p, prechecked);
     }
@@ -12769,10 +12799,10 @@ static void assign_to_matrix (parser *p, int *prechecked)
     p->lh.m1 = m;
 }
 
-/* assigning to an existing (whole) LHS matrix, but using '+=' or
-   some such modified/inflected assignment */
+/* assigning to an existing (whole) LHS matrix, but using '+=',
+   '*=' or some such modified/inflected assignment */
 
-static void assign_to_matrix_mod (parser *p)
+static void assign_to_matrix_mod (parser *p, int *prechecked)
 {
     user_var *uvar;
     gretl_matrix *m = NULL;
@@ -12792,12 +12822,20 @@ static void assign_to_matrix_mod (parser *p)
     if (!p->err) {
 	if (p->op == B_DOTASN) {
 	    if (p->ret->t == NUM) {
-		gretl_matrix_fill(a, p->ret->v.xval);
+		double x = p->ret->v.xval;
+
+		if (na(x)) {
+		    x = M_NA;
+		    set_gretl_warning(W_GENNAN);
+		}
+		gretl_matrix_fill(a, x);
+		*prechecked = 1;
 		return;
 	    } else {
 		p->err = E_TYPES;
 	    }
 	} else {
+	    /* we need to start by retrieving a matrix result in @b */
 	    b = matrix_from_scratch(p, 1, NULL);
 	    if (b != NULL) {
 		m = real_matrix_calc(a, b, p->op, &p->err);
@@ -12915,7 +12953,7 @@ static void edit_matrix (parser *p)
     } 
 
     if (!p->err) {
-	/* Write new submatrix m into place: note that we come here
+	/* Write new submatrix @m into place: note that we come here
 	   directly if none of the special conditions above are
 	   satisfied -- for example, if the newly generated value
 	   is a matrix and the task is straight assignment. Also
@@ -13260,7 +13298,7 @@ static int gen_check_return_type (parser *p)
 }
 
 /* allocate storage if saving a series to the dataset: 
-   lh.v == 0 means that the LHS variable does not already 
+   lh.v == 0 means that the LHS series does not already 
    exist
 */
 
@@ -13271,6 +13309,9 @@ static int gen_allocate_storage (parser *p)
 	    p->err = E_DATA;
 	} else {
 	    p->err = dataset_add_NA_series(p->dset);
+	    if (!p->err) {
+		p->lh.v = p->dset->v - 1;
+	    }
 	}
     }
 
@@ -13368,8 +13409,8 @@ static int save_generated_var (parser *p, PRN *prn)
     double x;
     int t, v = 0;
 
-    if (p->callcount < 2) {
-	/* test for type mismatch errors */
+    if (p->callcount == 0) {
+	/* first exec: test for type mismatch errors */
 	gen_check_return_type(p);
 	if (p->err) {
 	    return p->err;
@@ -13531,10 +13572,13 @@ static int save_generated_var (parser *p, PRN *prn)
 	    assign_to_matrix(p, &prechecked);
 	} else if (p->lh.substr == NULL) {
 	    /* inflected assignment to entire existing matrix */
-	    assign_to_matrix_mod(p);
+	    assign_to_matrix_mod(p, &prechecked);
 	} else {
 	    /* assignment to submatrix of original */
 	    edit_matrix(p);
+	    prechecked = 1;
+	}
+	if (!prechecked && p->callcount > 0 && r->t == MAT) {
 	    prechecked = 1;
 	}
 	if (!prechecked && gretl_matrix_xna_check(p->lh.m1)) {
@@ -13614,9 +13658,10 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     };
     int i, prevflags = p->flags;
 
-    if (p->callcount > 2) {
-	/* the flags will have stabilized by now */
+    if (p->callcount > 1) {
+	/* the flags should basically have stabilized by now */
 	p->flags |= P_START;
+	p->flags &= ~P_DELTAN;
     } else {
 	p->flags = (P_START | P_PRIVATE | P_EXEC);
 
@@ -13625,13 +13670,13 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 		p->flags |= saveflags[i];
 	    }
 	}
+    }
 
 #if TRY_SAVE_AUX
-	if (prevflags & P_COMPILE) {
-	    p->flags |= P_SAVEAUX;
-	}
-#endif
+    if (prevflags & P_COMPILE) {
+	p->flags |= P_SAVEAUX;
     }
+#endif
 
     p->dset = dset;
     p->prn = prn;
@@ -13657,55 +13702,54 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     }
 
 #if EDEBUG
-    fprintf(stderr, "parser_reinit: p->subp=%p, targ=%d, lhname='%s', op=%d\n", 
-	    (void *) p->subp, p->targ, p->lh.name, p->op);
+    fprintf(stderr, "parser_reinit: targ=%d, lhname='%s', op=%d, callcount=%d\n", 
+	    p->targ, p->lh.name, p->op, p->callcount);
 #endif
 
-    if (p->callcount > 2) {
-	if (p->targ == MAT && *p->lh.name != '\0') {
-	    p->lh.m0 = get_matrix_by_name(p->lh.name);
+    /* maybe update LHS matrix spec or series observation
+       number */
+    if (p->targ == MAT && *p->lh.name != '\0') {
+	p->lh.m0 = get_matrix_by_name(p->lh.name);
+    }
+    if (p->subp != NULL) {
+	get_lh_mspec(p);
+    } else if (p->lh.obs >= 0) {
+	get_lh_obsnum(p);
+    }
+
+    if (p->targ == SERIES && p->lh.v >= p->dset->v) {
+	/* recorded series ID is no longer valid */
+	p->lh.v = 0;
+    }    
+
+    if (p->flags & P_AUXDONE) {
+	int dset_n = dset != NULL ? dset->n : 0;
+
+	if (dset_n != p->dset_n) {
+	    p->dset_n = dset_n;
+	    p->flags |= P_DELTAN;
 	}
-	if (p->subp != NULL) {
-	    get_lh_mspec(p);
-	}
+    }   
+
+    if (p->callcount > 1) {
 	return;
     }	
 
-    if (p->targ == MAT) {
-	/* matrix target: check the LH name again */
-	if (*p->lh.name != '\0') {
-	    p->lh.m0 = get_matrix_by_name(p->lh.name);
-	}
-    } else if (p->targ == NUM) {
-	/* scalar target, also check LH name */
+    if (p->targ == NUM) {
+	/* scalar target, check LH name */
 	if (*p->lh.name != '\0' && gretl_is_scalar(p->lh.name)) {
 	    p->lh.t = NUM;
-	}
-	if (p->lh.substr != NULL) {
-	    /* reevaluate obs string */
-	    process_lhs_substr(NULL, 0, p);
 	}
     } else if (p->targ == LIST) {
 	/* list target, check LH name */
 	if (*p->lh.name != '\0' && get_list_by_name(p->lh.name)) {
 	    p->lh.t = LIST;
 	}
-    } else if (p->targ == SERIES) {
-	if (p->lh.v >= p->dset->v) {
-	    /* recorded series ID is no longer valid */
-	    p->lh.v = 0;
-	}
     } else if (p->targ == STR) {
-	/* FIXME is this wanted */
 	if (*p->lh.name != '\0' && get_string_by_name(p->lh.name)) {
 	    p->lh.t = STR;
 	}
     }	
-
-    /* LHS matrix subspec: re-evaluate */
-    if (p->subp != NULL) {
-	get_lh_mspec(p);
-    }    
 }
 
 static void parser_init (parser *p, const char *str, 
@@ -13714,6 +13758,7 @@ static void parser_init (parser *p, const char *str,
 {
     p->point = p->rhs = p->input = str;
     p->dset = dset;
+    p->dset_n = dset != NULL ? dset->n : 0;
     p->prn = prn;
     p->flags = flags | P_START;
     p->targ = targtype;
@@ -14040,9 +14085,11 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	p->ret = eval(p->tree, p);
     }
 
+#if 0 /* not yet! */
     if (p->flags & P_EXEC) {
 	p->callcount += 1;
     }
+#endif
 
     if (p->flags & P_SAVEAUX) {
 	p->flags |= P_AUXDONE;
@@ -14056,9 +14103,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 # endif
 #endif
 
-    if (p->callcount < 2) {
-	gen_check_errvals(p);
-    }
+    gen_check_errvals(p);
 
     return p->err;
 }
