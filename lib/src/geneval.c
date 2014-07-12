@@ -547,7 +547,7 @@ static void clear_tmp_node_data (NODE *n, parser *p)
 	if (p->flags & P_DELTAN) {
 	    free(n->v.xvec);
 	    n->v.xvec = NULL;
-	    if (p->dset->n > 0) {
+	    if (p->dset_n > 0) {
 		n->v.xvec = na_array(p->dset_n);
 		if (n->v.xvec == NULL) {
 		    p->err = E_ALLOC;
@@ -662,9 +662,10 @@ static NODE *aux_scalar_node (parser *p)
     return get_aux_node(p, NUM, 0, 0);
 }
 
-static void no_data_error (parser *p)
+static int no_data_error (parser *p)
 {
     p->err = E_NODATA;
+    return E_NODATA;
 }
 
 static NODE *aux_series_node (parser *p)
@@ -12232,7 +12233,7 @@ static void pre_process (parser *p, int flags)
 	s += strcspn(s, " ") + 1;
     }	
 
-    if (p->targ == SERIES && p->dset->n == 0) {
+    if (p->targ == SERIES && p->dset_n == 0) {
 	no_data_error(p);
 	return;
     }
@@ -12558,7 +12559,7 @@ static void gen_check_errvals (parser *p)
     } else if (r->t == MAT) {
 	/* note: but p->targ != MAT */
 	const gretl_matrix *m = r->v.m;
-	int i, k = m->rows * m->cols;
+	int i, k = gretl_matrix_rows(m) * gretl_matrix_cols(m);
 	
 	if (p->targ == NUM && k == 1) {
 	    if (!isfinite(m->val[0])) {
@@ -13198,33 +13199,33 @@ static int edit_list (parser *p)
 static int gen_check_return_type (parser *p)
 {
     NODE *r = p->ret;
-
-#if EDEBUG
-    fprintf(stderr, "gen_check_return_type: targ = %d; ret at %p, type %d\n", 
-	    p->targ, (void *) r, (r == NULL)? -999 : r->t);
-#endif
+    int err = 0;
 
     if (r == NULL) {
 	fprintf(stderr, "gen_check_return_type: p->ret = NULL!\n");
-	return (p->err = E_DATA);
+	return E_DATA;
     }
+
+#if EDEBUG
+    fprintf(stderr, "gen_check_return_type: targ = %d; ret at %p, type %d\n", 
+	    p->targ, (void *) r, r->t);
+#endif
 
     if ((p->dset == NULL || p->dset->n == 0) && 
 	r->t != MAT && r->t != NUM && 
 	r->t != STR && r->t != BUNDLE &&
 	r->t != U_ADDR && r->t != EMPTY &&
 	r->t != ARRAY) {
-	no_data_error(p);
-	return p->err;
+	return no_data_error(p);
     }
 
     if (!ok_return_type(r->t)) {
-	return (p->err = E_TYPES);
+	return E_TYPES;
     }
 
     if (r->t == SERIES && r->v.xvec == NULL) {
 	fprintf(stderr, "got SERIES return with xvec == NULL!\n");
-	return (p->err = E_DATA);
+	return E_DATA;
     }
 
     if (p->targ == NUM) {
@@ -13233,7 +13234,7 @@ static int gen_check_return_type (parser *p)
 	} else if (r->t == STR && p->lh.obs >= 0) {
 	    ; /* a string value might be acceptable */
 	} else {
-	    p->err = E_TYPES;
+	    err = E_TYPES;
 	}
     } else if (p->targ == SERIES) {
 	/* result must be scalar, series, or conformable matrix */
@@ -13241,60 +13242,49 @@ static int gen_check_return_type (parser *p)
 	    ; /* OK */
 	} else if (r->t == MAT) {
 	    if (!series_compatible(r->v.m, p)) {
-		p->err = E_TYPES;
+		err = E_TYPES;
 	    }
 	} else {
-	    p->err = E_TYPES;
+	    err = E_TYPES;
 	}
     } else if (p->targ == MAT) {
 	; /* no-op: leave targ alone */
     } else if (p->targ == LIST) {
 	if (r->t != EMPTY && !ok_list_node(r)) {
-	    p->err = E_TYPES;
+	    err = E_TYPES;
 	} 
     } else if (p->targ == STR) {
 	if (r->t != EMPTY && r->t != STR && r->t != NUM) {
-	    p->err = E_TYPES;
+	    err = E_TYPES;
 	}
     } else if (p->targ == BUNDLE) {
 	if (r->t != BUNDLE && r->t != EMPTY) {
-	    p->err = E_TYPES;
+	    err = E_TYPES;
 	}
     } else if (p->targ == BOBJ || p->targ == BMEMB) {
 	if (!ok_bundled_type(r->t)) {
-	    p->err = E_TYPES;
+	    err = E_TYPES;
 	}
     } else if (p->targ == ARRAY) {
 	if (p->lh.substr == NULL && p->op == B_ASN) {
 	    if (r->t != ARRAY && r->t != EMPTY) {
-		p->err = E_TYPES;
+		err = E_TYPES;
 	    }
 	} else if (r->t != ARRAY && !array_element_type(r->t)) {
-	    p->err = E_TYPES;
-	}
-    } else {
-	/* target type was not specified: set it now, based
-	   on the type of the object we computed */
-	if (r->t == LIST) {
-	    p->targ = LIST;
-	} else if (scalar_matrix_node(r)) {
-	    /* cast a 1 x 1 matrix to a scalar */
-	    p->targ = NUM;
-	} else {
-	    p->targ = r->t;
+	    err = E_TYPES;
 	}
     }
 
-    if (p->err == E_TYPES) {
+    if (err == E_TYPES) {
 	maybe_do_type_errmsg(p->lh.name, p->lh.t);
     }	
 
 #if EDEBUG
     fprintf(stderr, "gen_check_return_type: returning with p->err = %d\n", 
-	    p->err);
+	    err);
 #endif
 
-    return p->err;
+    return err;
 }
 
 /* allocate storage if saving a series to the dataset: 
@@ -13411,11 +13401,22 @@ static int save_generated_var (parser *p, PRN *prn)
 
     if (p->callcount == 0) {
 	/* first exec: test for type mismatch errors */
-	gen_check_return_type(p);
+	p->err = gen_check_return_type(p);
 	if (p->err) {
 	    return p->err;
 	}
-    }
+    } 
+
+    if (p->targ == UNK) {
+	if (r->t == LIST) {
+	    p->targ = LIST;
+	} else if (scalar_matrix_node(r)) {
+	    /* cast a 1 x 1 matrix to a scalar */
+	    p->targ = NUM;
+	} else {
+	    p->targ = r->t;
+	}
+    }	
 
 #if EDEBUG
     fputs("save_generated_var:\n ", stderr);
@@ -13731,7 +13732,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	}
     }   
 
-    if (p->callcount > 1) {
+    if (p->callcount > 2) {
 	return;
     }	
 
@@ -14085,11 +14086,9 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	p->ret = eval(p->tree, p);
     }
 
-#if 0 /* not yet! */
     if (p->flags & P_EXEC) {
 	p->callcount += 1;
     }
-#endif
 
     if (p->flags & P_SAVEAUX) {
 	p->flags |= P_AUXDONE;
