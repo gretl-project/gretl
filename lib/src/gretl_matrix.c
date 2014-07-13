@@ -80,11 +80,18 @@ struct gretl_matrix_block_ {
 #define is_block_matrix(m) (m->info == (matrix_info *) INFO_INVALID)
 
 #ifdef USE_SIMD
+static void *mval_malloc (size_t sz)
+{
+    if (sz % 16) {
+	/* forestall invalid reads by openblas */
+	sz += 8;
+    }
 # if defined(USE_AVX)
-#  define mval_malloc(sz) _mm_malloc(sz,32)
+    return _mm_malloc(sz,32);
 # else
-#  define mval_malloc(sz) _mm_malloc(sz,16)
+    return _mm_malloc(sz,16);
 # endif
+}
 #else
 # define mval_malloc(sz) malloc(sz)
 #endif
