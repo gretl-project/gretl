@@ -53,6 +53,8 @@ struct matrix_subspec_ {
 
 #define gretl_is_matrix(s) (get_matrix_by_name(s) != NULL)
 
+matrix_subspec *matrix_subspec_new (void);
+
 GList *get_named_matrix_list (void);
 
 gretl_matrix *get_matrix_by_name (const char *name);

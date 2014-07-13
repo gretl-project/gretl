@@ -322,6 +322,17 @@ int assign_scalar_to_submatrix (gretl_matrix *M, double x,
     return err;
 }
 
+matrix_subspec *matrix_subspec_new (void)
+{
+    matrix_subspec *spec = malloc(sizeof *spec);
+
+    if (spec != NULL) {
+	spec->rslice = spec->cslice = NULL;
+    }
+
+    return spec;
+}
+
 static int matrix_insert_diagonal (gretl_matrix *M, 
 				   const gretl_matrix *S,
 				   int mr, int mc)
