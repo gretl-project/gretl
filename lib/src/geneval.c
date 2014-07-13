@@ -59,7 +59,7 @@
 /* There are some special cases that need fixing before this 
    is safe for general use (2014-07-13)
 */
-// #define TRY_SAVE_AUX 1
+#define TRY_SAVE_AUX 1
 
 #define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
 #define SERIES_ENSURE_FINITE 1  /* debatable */
@@ -567,12 +567,16 @@ static void clear_tmp_node_data (NODE *n, parser *p)
     }
 }
 
+/* We allow here for some equivocation in type between
+   1 x 1 matrices and scalars in the course of executing
+   a compiled parser with saved aux nodes.
+*/
+
 static void maybe_switch_node_type (NODE *n, int type, 
 				    int tmp, parser *p)
 {
     if (n->t == MAT && type == NUM) {
 	/* switch aux node @n from matrix to scalar */
-	fprintf(stderr, "saved aux node: n->t = MAT but type = NUM\n");
 	if (is_tmp_node(n)) {
 	    gretl_matrix_free(n->v.m);
 	}
@@ -583,16 +587,15 @@ static void maybe_switch_node_type (NODE *n, int type,
 	n->vname = NULL;	
     } else if (n->t == NUM && type == MAT) {
 	/* switch @n from scalar to matrix */
-	fprintf(stderr, "saved aux node: n->t = NUM but type = MAT\n");
 	n->t = MAT;
 	n->v.m = NULL;
 	n->flags = tmp ? TMP_NODE : 0;
     } else {
+	/* any other discrepancy presumably means that
+	   things have gone badly wrong
+	*/
+	gretl_errmsg_set("internal genr error: aux node type mix-up!");
 	p->err = E_DATA;
-    }
-
-    if (p->err) {
-	gretl_errmsg_set("internal genr error: aux node type mix-up");
     }
 }
 
