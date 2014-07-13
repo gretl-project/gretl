@@ -5083,6 +5083,9 @@ static gretl_matrix *real_aggregate_by (const double *x,
 		    tmpset->t2 = ni;
 		    fx = generate_scalar(usercall, tmpset, err);
 		}
+		if (na(fx)) {
+		    fx = M_NA;
+		}
 		gretl_matrix_set(m, ii, ny+k+countcol, fx);
 	    }
 	}

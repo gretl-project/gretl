@@ -56,10 +56,10 @@
 # define LHDEBUG 0
 #endif
 
-/* This should now be just about good, but let's play safe
-   for the moment (2014-07-11)
+/* There are some special cases that need fixing before this 
+   is safe for general use (2014-07-13)
 */
-#define TRY_SAVE_AUX 1
+/* #define TRY_SAVE_AUX 1 */
 
 #define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
 #define SERIES_ENSURE_FINITE 1  /* debatable */
@@ -648,7 +648,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	if (ret == NULL) {
 	    fprintf(stderr, "get_aux_node FAILED: got NULL node\n");
 	    p->err = E_DATA;
-	} else if (is_tmp_node(ret) && starting(p)) {
+	} else if (starting(p) && is_tmp_node(ret)) {
 	    clear_tmp_node_data(ret, p);
 	}
 	p->aux_i += 1;
@@ -6754,6 +6754,11 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	val = gretl_bundle_get_data(l->v.b, key, &type, &size, &p->err);
     }
 
+    /* FIXME saving aux nodes: the type of a named bundle element
+       may not stay constant over loop iterations: a matrix can
+       go 1 x 1 an hence turn into a scalar
+    */
+
     if (p->err) {
 	return ret;
     }
@@ -12775,6 +12780,7 @@ static void assign_to_matrix (parser *p, int *prechecked)
 	if (p->ret->t == NUM) {
 	    x = p->ret->v.xval;
 	    m->val[0] = na(x)? M_NA : x;
+	    *prechecked = 1;
 	} else if (p->ret->t == SERIES) {
 	    int i, s = p->dset->t1;
 
@@ -12782,6 +12788,7 @@ static void assign_to_matrix (parser *p, int *prechecked)
 		x = p->ret->v.xvec[s++];
 		m->val[i] = na(x)? M_NA : x;
 	    }
+	    *prechecked = 1;
 	} else {
 	    p->err = gretl_matrix_copy_data(m, p->ret->v.m);
 	}
@@ -13709,7 +13716,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 
     /* maybe update LHS matrix spec or series observation
        number */
-    if (p->targ == MAT && *p->lh.name != '\0') {
+    if ((p->targ == MAT || p->lh.m0 != NULL)  && *p->lh.name != '\0') {
 	p->lh.m0 = get_matrix_by_name(p->lh.name);
     }
     if (p->subp != NULL) {
@@ -14086,9 +14093,11 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	p->ret = eval(p->tree, p);
     }
 
+#if 1
     if (p->flags & P_EXEC) {
 	p->callcount += 1;
     }
+#endif
 
     if (p->flags & P_SAVEAUX) {
 	p->flags |= P_AUXDONE;
