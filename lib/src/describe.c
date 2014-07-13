@@ -3766,7 +3766,7 @@ LWE_init (struct LWE_helper *L, const gretl_matrix *X, int m)
 
 static double LWE_calc (const gretl_matrix *X, int m, int *err)
 {
-    struct LWE_helper L;
+    struct LWE_helper L = {0};
     double d = 0, dd = 1.0;
     double eps = 1.0e-05;
     double f, incr, incl, deriv, h;

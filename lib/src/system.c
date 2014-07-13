@@ -3686,7 +3686,7 @@ static int sys_add_structural_form (equation_system *sys)
     int ni = sys->nidents;
     int n = ne + ni;
     double x = 0.0;
-    int type, col;
+    int type, col = 0;
     int i, j, vj, lag;
     int err = 0;
 
