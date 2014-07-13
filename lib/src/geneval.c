@@ -59,7 +59,7 @@
 /* There are some special cases that need fixing before this 
    is safe for general use (2014-07-13)
 */
-/* #define TRY_SAVE_AUX 1 */
+// #define TRY_SAVE_AUX 1
 
 #define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
 #define SERIES_ENSURE_FINITE 1  /* debatable */
@@ -147,12 +147,15 @@ static const char *typestr (int t)
     }
 }
 
-static void free_mspec (matrix_subspec *spec)
+static void free_mspec (matrix_subspec *spec, parser *p)
 {
     if (spec != NULL) {
 	free(spec->rslice);
 	free(spec->cslice);
 	free(spec);
+	if (p != NULL) {
+	    p->lh.mspec = NULL;
+	}
     }
 }
 
@@ -305,7 +308,7 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 	} else if (t->t == MAT) {
 	    gretl_matrix_free(t->v.m);
 	} else if (t->t == MSPEC) {
-	    free_mspec(t->v.mspec);
+	    free_mspec(t->v.mspec, p);
 	} else if (t->t == BUNDLE) {
 	    gretl_bundle_destroy(t->v.b);
 	} else if (t->t == ARRAY) {
@@ -439,7 +442,7 @@ static NODE *newmat (int tmp)
     NODE *n = new_node(MAT);
 
     if (n != NULL) {
-	n->flags = (tmp)? TMP_NODE : 0;
+	n->flags = tmp ? TMP_NODE : 0;
 	n->v.m = NULL;
     }
 
@@ -533,7 +536,7 @@ static void clear_tmp_node_data (NODE *n, parser *p)
     } else if (n->t == MAT) {
 	gretl_matrix_free(n->v.m);
     } else if (n->t == MSPEC) {
-	free_mspec(n->v.mspec);
+	free_mspec(n->v.mspec, NULL);
     } else if (n->t == BUNDLE) {
 	gretl_bundle_destroy(n->v.b);
     } else if (n->t == ARRAY) {
@@ -561,6 +564,35 @@ static void clear_tmp_node_data (NODE *n, parser *p)
 
     if (nullify) {
 	n->v.ptr = NULL;
+    }
+}
+
+static void maybe_switch_node_type (NODE *n, int type, 
+				    int tmp, parser *p)
+{
+    if (n->t == MAT && type == NUM) {
+	/* switch aux node @n from matrix to scalar */
+	fprintf(stderr, "saved aux node: n->t = MAT but type = NUM\n");
+	if (is_tmp_node(n)) {
+	    gretl_matrix_free(n->v.m);
+	}
+	n->t = NUM;
+	n->v.xval = NADBL;
+	n->flags = 0;
+	n->vnum = NO_VNUM;
+	n->vname = NULL;	
+    } else if (n->t == NUM && type == MAT) {
+	/* switch @n from scalar to matrix */
+	fprintf(stderr, "saved aux node: n->t = NUM but type = MAT\n");
+	n->t = MAT;
+	n->v.m = NULL;
+	n->flags = tmp ? TMP_NODE : 0;
+    } else {
+	p->err = E_DATA;
+    }
+
+    if (p->err) {
+	gretl_errmsg_set("internal genr error: aux node type mix-up");
     }
 }
 
@@ -648,8 +680,12 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	if (ret == NULL) {
 	    fprintf(stderr, "get_aux_node FAILED: got NULL node\n");
 	    p->err = E_DATA;
-	} else if (starting(p) && is_tmp_node(ret)) {
-	    clear_tmp_node_data(ret, p);
+	} else if (starting(p)) {
+	    if (ret->t != t) {
+		maybe_switch_node_type(ret, t, tmp, p);
+	    } else if (is_tmp_node(ret)) {
+		clear_tmp_node_data(ret, p);
+	    }
 	}
 	p->aux_i += 1;
     }
@@ -3420,14 +3456,12 @@ static void print_mspec (matrix_subspec *mspec)
 
 static matrix_subspec *build_mspec (NODE *l, NODE *r, int *err)
 {
-    matrix_subspec *spec = malloc(sizeof *spec);
+    matrix_subspec *spec = matrix_subspec_new();
 
     if (spec == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
-
-    spec->rslice = spec->cslice = NULL;
 
     if (l->t == DUM) {
 	if (l->v.idnum == DUM_DIAG) {
@@ -11845,7 +11879,7 @@ static void get_lh_mspec (parser *p)
 	    } else {
 		if (p->lh.mspec != NULL) {
 		    /* free previous result */
-		    free_mspec(p->lh.mspec);
+		    free_mspec(p->lh.mspec, NULL);
 		}
 		p->lh.mspec = ps->ret->v.mspec;
 		nullify_aux_return(ps); /* don't double-free */
@@ -13910,7 +13944,7 @@ void gen_cleanup (parser *p)
 	free_tree(p->ret, p, "p->ret");
 	free(p->lh.substr);
 	if (p->lh.mspec != NULL) {
-	    free_mspec(p->lh.mspec);
+	    free_mspec(p->lh.mspec, p);
 	}
     }
 }
