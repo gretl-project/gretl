@@ -111,16 +111,15 @@ enum {
               ELEMENT,    /* element of list, array [...] syntax) */
   /* 80 */    STR,	  /* string */
 	      BUNDLE,     /* gretl bundle (hash table) */
-              BOBJ,       /* object inside a bundle */
-	      BMEMB,      /* object in bundle (dot notation) */
+	      BMEMB,      /* member of bundle */
 	      ARRAY,      /* generic array object */
 	      FARGS,	  /* set of n function arguments */
               WLIST,      /* wildcard list spec */
               EMPTY,      /* "null" or empty arg slot */
               DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */
-  /* 90 */    UFUN,	  /* user-defined function */
-	      RFUN,       /* GNU R function */
+	      UFUN,	  /* user-defined function */
+  /* 90 */    RFUN,       /* GNU R function */
 	      USTR,       /* string variable */
 	      IVEC,       /* array of ints, not a varlist */
               INC,        /* increment */
@@ -479,8 +478,7 @@ enum {
 
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSLRAW || s == SUBSL || s == LAG || \
-                   s == OBS || s == BOBJ || s == ELEMENT || \
-                   s == BMEMB)
+                   s == OBS || s == BMEMB || s == ELEMENT)
 
 #define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
                   s == G_LPR || s == EROOT)
@@ -585,9 +583,10 @@ enum {
     P_MMASK   = 1 << 14, /* genr result is masked matrix */
     P_SLICING = 1 << 15, /* calculating object slice (temporary) */
     P_LAGPRSE = 1 << 16, /* parsing lag spec (temporary) */
-    P_AUXDONE = 1 << 17, /* experimental */
-    P_SAVEAUX = 1 << 18, /* also experimental */
-    P_DELTAN  = 1 << 19  /* flag for change in series length */
+    P_SAVEAUX = 1 << 17, /* indicates try aux node compilation */
+    P_AUXDONE = 1 << 18, /* indicates aux nodes compiled */
+    P_DELTAN  = 1 << 19, /* flag for change in series length */
+    P_LHBKVAR = 1 << 20  /* LHS bundle key is string variable */  
 };
 
 struct lhinfo {

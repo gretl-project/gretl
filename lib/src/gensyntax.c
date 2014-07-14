@@ -470,11 +470,10 @@ static void unwrap_string_arg (parser *p)
 static NODE *get_final_string_arg (parser *p, NODE *t, int sym, 
 				   int eat_last)
 {
-    char p0 = (sym == BOBJ)? '[' : '(';
-    char p1 = (sym == BOBJ)? ']' : ')';
+    char p0 = '(', p1 = ')';
     const char *src = NULL;
     int n, wrapped = 0;
-    int strsym = STR;
+    int strvar = 0;
 
     while (p->ch == ' ') {
 	parser_getc(p);
@@ -565,18 +564,12 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	    unwrap_string_arg(p);
 	} else if (sym != F_ISSTRING && sym != F_ISNULL) {
 	    /* not quoted: give priority to string variables
-	       unless we need the names of string variables 
+	       unless we need the _names_ of string variables 
 	       rather then their content
 	    */
-	    char *ustr = get_string_by_name(p->idstr);
-
-	    if (ustr != NULL) {
-		p->uval = gretl_strdup(ustr);
-		if (p->uval == NULL) {
-		    p->err = E_ALLOC;
-		} else {
-		    strsym = USTR;
-		}
+	    p->uval = get_string_by_name(p->idstr);
+	    if (p->uval != NULL) {
+		strvar = 1;
 	    }
 	}
     }
@@ -587,7 +580,7 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 
     if (p->err) {
 	return NULL;
-    } else if (strsym == USTR) {
+    } else if (strvar) {
 	return newref(p, USTR);
     } else {
 	return newstr(p->idstr);
@@ -705,38 +698,96 @@ static NODE *get_middle_string_arg (parser *p, int opt)
 
 static NODE *get_bundle_member_name (parser *p)
 {
-    int i, n = gretl_namechar_spn(p->point);
+    NODE *ret = NULL;
+    const char *s = p->point;
+    int n_extra = 0;
+    int strvar = 0;
+    int i, n = 0;
 
-    if (*(p->point + n) == '[') {
-	/* support "[...]" spec following member name */
-	const char *s = p->point + (++n);
-	int br = 1;
+#if SDEBUG
+    fprintf(stderr, "get_bundle_member_name: p->ch='%c'\n", p->ch);
+#endif
 
-	while (*s && br > 0) {
-	    if (*s == '[') br++;
-	    else if (*s == ']') br--;
-	    n++;
+    if (p->ch == '.') {
+	/* using bundle dot notation */
+	n = gretl_namechar_spn(s);
+	if (*(s + n) == '[') {
+	    /* support "[...]" spec following member name */
+	    const char *q = s + (++n);
+	    int br = 1;
+
+	    while (*q && br > 0) {
+		if (*q == '[') br++;
+		else if (*q == ']') br--;
+		n++;
+		q++;
+	    }
+
+	    if (br != 0) {
+		unmatched_symbol_error('[', p);
+	    }
+	}
+    } else if (p->ch == '[') {
+	/* using bracketed key notation */
+	if (*s == '"') {
+	    /* key is quoted string literal */
+	    parser_getc(p);
 	    s++;
+	    if (strchr(s, '"') == NULL) {
+		p->err = E_PARSE;
+	    } else {
+		n = strcspn(s, "\"");
+		n_extra = 2;
+		s += n + 1;
+	    }
+	} else {
+	    /* try for a string variable */
+	    n = gretl_namechar_spn(s);
+	    if (n == 0 || n >= VNAMELEN) {
+		p->err = E_PARSE;
+	    } else {
+		strvar = 1;
+		n_extra = 1;
+		s += n;
+	    }
 	}
-
-	if (br != 0) {
+	if (!p->err && *s != ']') {
 	    unmatched_symbol_error('[', p);
-	    return NULL;
+	}
+    }
+	
+    if (!p->err) {
+	p->idstr = gretl_strndup(p->point, n);
+	if (p->idstr == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    n += n_extra;
+	    for (i=0; i<=n; i++) {
+		parser_getc(p);
+	    }
+	    lex(p);
 	}
     }
 
-    p->idstr = gretl_strndup(p->point, n);
-    if (p->idstr == NULL) {
-	p->err = E_ALLOC;
-	return NULL;
+#if SDEBUG
+    fprintf(stderr, " %s = '%s'\n", strvar ? "key-vname" : "key", p->idstr);
+#endif
+    
+    if (!p->err) {
+	if (strvar) {
+	    p->uval = get_string_by_name(p->idstr);
+	    if (p->uval == NULL) {
+		gretl_errmsg_sprintf(_("%s: not a string variable"), p->idstr);
+		p->err = E_DATA;
+	    } else {
+		ret = newref(p, USTR);
+	    }
+	} else {
+	    ret = newstr(p->idstr);
+	}
     }
 
-    for (i=0; i<=n; i++) {
-	parser_getc(p);
-    }
-    lex(p);
-
-    return newstr(p->idstr);
+    return ret;
 }
 
 static void get_matrix_def (NODE *t, parser *p, int *sub)
@@ -1155,13 +1206,6 @@ static NODE *powterm (parser *p)
 	    t->v.b2.l = newref(p, p->upsym);
 	    lex(p);
 	    t->v.b2.r = base(p, t);
-	}
-    } else if (sym == BOBJ) {
-	t = newb2(sym, NULL, NULL);
-	if (t != NULL) {
-	    t->v.b2.l = newref(p, BUNDLE);
-	    lex(p);
-	    t->v.b2.r = get_final_string_arg(p, t, sym, 1);
 	}
     } else if (sym == BMEMB) {
 	t = newb2(sym, NULL, NULL);

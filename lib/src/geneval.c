@@ -2550,7 +2550,7 @@ static NODE *scalar_transpose_node (NODE *n, parser *p)
 
 /* We're looking at a string argument that is supposed to represent
    a function call: we'll do a rudimentary heuristic check here.
-   FIXME this should be more rigorous.
+   FIXME this should be more rigorous?
 */
 
 static int is_function_call (const char *s)
@@ -6791,11 +6791,6 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	val = gretl_bundle_get_data(l->v.b, key, &type, &size, &p->err);
     }
 
-    /* FIXME saving aux nodes: the type of a named bundle element
-       may not stay constant over loop iterations: a matrix can
-       go 1 x 1 an hence turn into a scalar
-    */
-
     if (p->err) {
 	return ret;
     }
@@ -7036,27 +7031,18 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     GretlType type;
     void *ptr = NULL;
     char *key = NULL;
-    int free_key = 0;
     int size = 0;
     int err = 0;
 
     bundle = get_bundle_by_name(name);
 
-    if (bundle == NULL) {
-	err = E_UNKVAR;
-    } else if (p->targ == BMEMB) {
-	key = p->lh.substr;
-    } else if (*p->lh.substr == '"') {
-	key = gretl_strdup(p->lh.substr);
-	if (key == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    gretl_unquote(key, &err);
-	    free_key = 1;
-	}
-    } else if (gretl_is_string(p->lh.substr)) {
-	key = (char *) get_string_by_name(p->lh.substr);
+    if (p->flags & P_LHBKVAR) {
+	key = get_string_by_name(p->lh.substr);
     } else {
+	key = p->lh.substr;
+    }
+
+    if (bundle == NULL || key == NULL) {
 	err = E_DATA;
     }
 
@@ -7064,6 +7050,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     fprintf(stderr, "set_named_bundle_value: %s[\"%s\"]\n", name, key);
 #endif
 
+#if 0
     if (!err && p->op != B_ASN) {
 	/* e.g. bundle.member += foo: note that right now we don't
 	   reach here: for bundles and their members, we choke off 
@@ -7072,6 +7059,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	*/
 	type = gretl_bundle_get_type(bundle, key, &err);
     }
+#endif
 
     if (!err) {
 	switch (n->t) {
@@ -7117,10 +7105,6 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 
     if (!err) {
 	err = gretl_bundle_set_data(bundle, key, ptr, type, size);
-    }
-
-    if (free_key) {
-	free(key);
     }
 
     return err;
@@ -10136,7 +10120,7 @@ static void node_reattach_data (NODE *n, parser *p)
     }
 
     if (!p->err && data == NULL) {
-	p->err = E_UNKVAR;
+	p->err = E_DATA;
     }
 }
 
@@ -10691,12 +10675,11 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = get_named_list_element(l, r, p);
 	}
 	break;
-    case BOBJ:
     case BMEMB:
     case F_INBUNDLE:
 	/* name of bundle plus string */
 	if (l->t == BUNDLE && r->t == STR) {
-	    if (t->t == BOBJ || t->t == BMEMB) {
+	    if (t->t == BMEMB) {
 		ret = get_named_bundle_value(l, r, p);
 	    } else {
 		ret = test_bundle_key(l, r, p);
@@ -11756,51 +11739,34 @@ static int get_op (char *s)
     return 0;
 }
 
-/* extract a substring [...] from the left-hand side
-   of a genr expression */
+/* extract a substring in [], or following a dot, on the 
+   left-hand side of an assignment expression 
+*/
 
-static void get_lhs_substr (char *str, parser *p)
+static void get_lhs_substr (char *src, parser *p)
 {
-    char *q, *s = strchr(str, '[');
+    char *sub = gretl_strdup(src + 1);
 
 #if EDEBUG
-    fprintf(stderr, "get_lhs_substr: str = '%s'\n", str);
+    fprintf(stderr, "get_lhs_substr: src = '%s'\n", src);
 #endif
 
-    q = gretl_strdup(s + 1);
-    if (q == NULL) {
+    if (sub == NULL) {
 	p->err = E_ALLOC;
     } else {
-	int n = strlen(q);
+	if (*src == '[') {
+	    int n = strlen(sub);
 
-	if (q[n-1] != ']') {
-	    /* error message */
-	    p->err = E_PARSE;
-	} else {
-	    q[n-1] = '\0';
+	    if (sub[n-1] != ']') {
+		p->err = E_PARSE;
+	    } else {
+		sub[n-1] = '\0';
+	    }
 	}
-	p->lh.substr = q;
+	p->lh.substr = sub;
     }
 
-    *s = '\0';
-}
-
-static void get_lhs_dotstr (char *str, parser *p)
-{
-    char *q, *s = strchr(str, '.');
-
-    q = gretl_strdup(s + 1);
-    if (q == NULL) {
-	p->err = E_ALLOC;
-    } else {
-	p->lh.substr = q;
-    }
-
-#if EDEBUG
-    fprintf(stderr, "get_lhs_dotstr: '%s'\n", p->lh.substr);
-#endif
-
-    *s = '\0';
+    *src = '\0';
 }
 
 static void nullify_aux_return (parser *p)
@@ -11925,14 +11891,16 @@ static void get_lh_obsnum (parser *p)
     }
 }
 
-/* check validity of "[...]" on the LHS, and evaluate
+/* check validity of "[...]" or "." on the LHS, and evaluate
    the expression if needed */
 
-static void process_lhs_substr (const char *lname, char c, parser *p)
+static void process_lhs_substr (const char *lname, 
+				char subchar, 
+				parser *p)
 {
 #if LHDEBUG || EDEBUG
-    fprintf(stderr, "process_lhs_substr: p->lh.t = %d, substr = '%s'\n", 
-	    p->lh.t, p->lh.substr);
+    fprintf(stderr, "process_lhs_substr: p->lh.t=%d, substr='%s', subchar='%c'\n", 
+	    p->lh.t, p->lh.substr, subchar);
 #endif
 
     if (p->lh.t == SERIES) {
@@ -11944,21 +11912,24 @@ static void process_lhs_substr (const char *lname, char c, parser *p)
 	*/
 	get_lh_mspec(p);
     } else if (p->lh.t == BUNDLE) {
-	/* targetting a bundle element (substr should be 
-	   a key string, handled later) */
-	if (c != 0) {
-	    p->targ = (c == '.')? BMEMB : BOBJ;
+	/* targetting a bundle element via its key */
+	if (p->lh.substr[0] == '"') {
+	    /* a string literal */
+	    gretl_unquote(p->lh.substr, &p->err);
+	} else if (subchar == '[') {
+	    /* should be a string variable */
+	    p->flags |= P_LHBKVAR;
 	}
+	p->targ = BMEMB;
     } else if (p->lh.t == UNK) {
 	if (lname != NULL) {
 	    undefined_symbol_error(lname, p);
 	}
 	p->err = E_UNKVAR;
     } else {
-	if (c != 0) {
-	    gretl_errmsg_sprintf(_("The symbol '%c' is not valid in this context\n"), c);
-	}
-	p->err = E_DATA;
+	gretl_errmsg_sprintf(_("The symbol '%c' is not valid in this context\n"), 
+			     subchar);
+	p->err = E_PARSE;
     }	
 }
 
@@ -12174,7 +12145,7 @@ static int overwrite_type_check (parser *p)
 
     if (p->targ == NUM && p->lh.t == SERIES && p->lh.obs >= 0) {
 	; /* OK */
-    } else if ((p->targ == BOBJ || p->targ == BMEMB) && p->lh.t == BUNDLE) {
+    } else if (p->targ == BMEMB && p->lh.t == BUNDLE) {
 	; /* OK */
     } else if (p->targ != p->lh.t) {
 	/* don't overwrite one type with another */
@@ -12227,8 +12198,9 @@ static void pre_process (parser *p, int flags)
 {
     const char *s = p->input;
     char test[GENSTRLEN];
-    char opstr[3] = {0};
+    char *lhsub = NULL;
     char subchar = 0;
+    char opstr[3] = {0};
     int v, newvar = 1;
 
     while (isspace(*s)) s++;
@@ -12298,12 +12270,9 @@ static void pre_process (parser *p, int flags)
 
     /* grab LHS obs string, matrix slice, or bundle element, 
        if present */
-    if (strchr(test, '[') != NULL) {
-	subchar = '[';
-	get_lhs_substr(test, p);
-    } else if (strchr(test, '.') != NULL) {
-	subchar = '.';
-	get_lhs_dotstr(test, p);
+    if ((lhsub = strchr(test, '[')) || (lhsub = strchr(test, '.'))) {
+	subchar = *lhsub;
+	get_lhs_substr(lhsub, p);
     }
 
     if (p->err) {
@@ -13305,7 +13274,7 @@ static int gen_check_return_type (parser *p)
 	if (r->t != BUNDLE && r->t != EMPTY) {
 	    err = E_TYPES;
 	}
-    } else if (p->targ == BOBJ || p->targ == BMEMB) {
+    } else if (p->targ == BMEMB) {
 	if (!ok_bundled_type(r->t)) {
 	    err = E_TYPES;
 	}
@@ -13650,7 +13619,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    /* assignment from pre-existing named bundle */
 	    p->err = gretl_bundle_copy_as(p->rhs, p->lh.name);
 	}
-    } else if (p->targ == BOBJ || p->targ == BMEMB) {
+    } else if (p->targ == BMEMB) {
 	/* saving an object into a bundle */
 	p->err = set_named_bundle_value(p->lh.name, r, p);
     } else if (p->targ == ARRAY) {
@@ -13699,7 +13668,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     int saveflags[] = { 
 	P_PRINT, P_NATEST, P_AUTOREG,
 	P_SLAVE, P_LHPTR, P_DISCARD, 
-	P_AUXDONE, 0
+	P_LHBKVAR, P_AUXDONE, 0
     };
     int i, prevflags = p->flags;
 

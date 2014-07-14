@@ -1158,8 +1158,8 @@ static void word_check_next_char (parser *p)
 	    /* element of array */
 	    p->sym = ELEMENT;
 	} else if (p->sym == BUNDLE) {
-	    /* object from bundle */
-	    p->sym = BOBJ;
+	    /* member from bundle */
+	    p->sym = BMEMB;
 	} else {
 	    p->err = E_PARSE;
 	} 
@@ -1679,8 +1679,6 @@ const char *getsymb (int t, const parser *p)
 	return "EMPTY";
     } else if (t == LISTVAR) {
 	return "LISTVAR";
-    } else if (t == BOBJ) {
-	return "BOBJ";
     } else if (t == BMEMB) {
 	return "BMEMB";
     } else if (t == ELEMENT) {
