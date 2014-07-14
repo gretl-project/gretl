@@ -7032,13 +7032,16 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     void *ptr = NULL;
     char *key = NULL;
     int size = 0;
+    int donate = 0;
     int err = 0;
 
     bundle = get_bundle_by_name(name);
 
     if (p->flags & P_LHBKVAR) {
+	/* substr is the name of a string variable */
 	key = get_string_by_name(p->lh.substr);
     } else {
+	/* substr is just a plain string */
 	key = p->lh.substr;
     }
 
@@ -7070,10 +7073,12 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	case STR:
 	    ptr = n->v.str;
 	    type = GRETL_TYPE_STRING;
+	    donate = is_tmp_node(n);
 	    break;
 	case MAT:
 	    ptr = n->v.m;
 	    type = GRETL_TYPE_MATRIX;
+	    donate = is_tmp_node(n);
 	    break;
 	case U_ADDR:
 	    n = n->v.b1.b;
@@ -7088,6 +7093,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	    ptr = n->v.xvec;
 	    type = GRETL_TYPE_SERIES;
 	    size = p->dset->n;
+	    donate = is_tmp_node(n);
 	    break;
 	case BUNDLE:
 	    ptr = n->v.b;
@@ -7096,6 +7102,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	case ARRAY:
 	    ptr = n->v.a;
 	    type = GRETL_TYPE_ARRAY;
+	    donate = is_tmp_node(n);
 	    break;	    
 	default:
 	    err = E_DATA;
@@ -7104,7 +7111,14 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     }
 
     if (!err) {
-	err = gretl_bundle_set_data(bundle, key, ptr, type, size);
+	if (donate) {
+	    /* it's OK to hand over the data pointer */
+	    err = gretl_bundle_donate_data(bundle, key, ptr, type, size);
+	    n->v.ptr = NULL;
+	} else {
+	    /* the data must be copied into the bundle */
+	    err = gretl_bundle_set_data(bundle, key, ptr, type, size);
+	}
     }
 
     return err;

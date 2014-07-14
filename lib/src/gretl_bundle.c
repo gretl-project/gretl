@@ -193,13 +193,15 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
     return item;
 }
 
-#if 0 /* not yet */
-
 static int bundled_item_replace_data (bundled_item *item,
 				      GretlType type, void *ptr, 
 				      int size, int copy)
 {
     int err = 0;
+
+    if (ptr == item->data) {
+	return 0;
+    }
 
     if (item->type == GRETL_TYPE_DOUBLE) {
 	double *dp = item->data;
@@ -258,8 +260,6 @@ static int bundled_item_replace_data (bundled_item *item,
 
     return err;
 }
-
-#endif
 
 /* callback invoked when a bundle's hash table is destroyed */
 
@@ -831,12 +831,10 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 	item = g_hash_table_lookup(b->ht, key);
 	if (item != NULL) {
 	    replace = 1;
-#if 0 /* not yet */
 	    if (item->type == type) {
 		return bundled_item_replace_data(item, type, ptr, 
 						 size, copy);
 	    }
-#endif
 	}
 	item = bundled_item_new(type, ptr, size, copy, note, &err);
     }
@@ -854,11 +852,29 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
     return err;
 }
 
-static int bundle_donate_data (gretl_bundle *b, const char *key,
-			       void *ptr, GretlType type,
-			       int size)
+/**
+ * gretl_bundle_donate_data:
+ * @bundle: target bundle.
+ * @key: name of key to create or replace.
+ * @ptr: data pointer.
+ * @type: type of data.
+ * @size: if @type == GRETL_TYPE_SERIES, the length of
+ * the series, otherwise 0.
+ * 
+ * Sets the data type and pointer to be associated with @key in 
+ * the bundle given by @name. If @key is already present in
+ * the bundle's hash table the original value is replaced
+ * and destroyed. The value of @ptr is transcribed into the
+ * bundle, which therefore "takes ownership" of the data;
+ * compare gretl_bundle_set_data;
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
+int gretl_bundle_donate_data (gretl_bundle *bundle, const char *key,
+			      void *ptr, GretlType type, int size)
 {
-    return real_bundle_set_data(b, key, ptr, type, size, 0, NULL);
+    return real_bundle_set_data(bundle, key, ptr, type, size, 0, NULL);
 }
 
 /**
@@ -873,7 +889,8 @@ static int bundle_donate_data (gretl_bundle *b, const char *key,
  * Sets the data type and pointer to be associated with @key in 
  * the bundle given by @name. If @key is already present in
  * the bundle's hash table the original value is replaced
- * and destroyed.
+ * and destroyed. The content of @ptr is copied into the
+ * bundle; compare gretl_bundle_donate_data().
  *
  * Returns: 0 on success, error code on error.
  */
@@ -1473,13 +1490,13 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 		    if (!gretl_xml_node_get_trimmed_string(cur, doc, &s)) {
 			err = E_DATA;
 		    } else {
-			err = bundle_donate_data(b, key, s, type, size);
+			err = gretl_bundle_donate_data(b, key, s, type, size);
 		    }
 		} else if (type == GRETL_TYPE_SERIES) {
 		    double *xvec = gretl_xml_get_double_array(cur, doc, &size, &err);
 
 		    if (!err) {
-			err = bundle_donate_data(b, key, xvec, type, size);
+			err = gretl_bundle_donate_data(b, key, xvec, type, size);
 		    }
 		} else if (type == GRETL_TYPE_MATRIX) {
 		    xmlNodePtr child = cur->xmlChildrenNode;
@@ -1490,7 +1507,7 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 		    } else {
 			m = gretl_xml_get_matrix(child, doc, &err);
 			if (!err) {
-			    err = bundle_donate_data(b, key, m, type, size);
+			    err = gretl_bundle_donate_data(b, key, m, type, size);
 			}
 		    }
 		} else if (type == GRETL_TYPE_BUNDLE) {
@@ -1502,7 +1519,7 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 		    } else {
 			baby = gretl_bundle_deserialize(child, doc, &err);
 			if (!err) {
-			    err = bundle_donate_data(b, key, baby, type, size);
+			    err = gretl_bundle_donate_data(b, key, baby, type, size);
 			}
 		    }
 		} else if (type == GRETL_TYPE_ARRAY) {
@@ -1514,7 +1531,7 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 		    } else {
 			a = gretl_array_deserialize(child, doc, &err);
 			if (!err) {
-			    err = bundle_donate_data(b, key, a, type, size);
+			    err = gretl_bundle_donate_data(b, key, a, type, size);
 			}
 		    }
 		} else {

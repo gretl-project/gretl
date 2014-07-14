@@ -81,6 +81,9 @@ void *bundled_item_get_data (bundled_item *item, GretlType *type,
 
 const char *bundled_item_get_note (bundled_item *item);
 
+int gretl_bundle_donate_data (gretl_bundle *bundle, const char *key,
+			      void *ptr, GretlType type, int size);
+
 int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
 			   void *ptr, GretlType type, int size);
 
