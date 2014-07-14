@@ -1442,7 +1442,8 @@ int gretl_is_scalar (const char *name)
  *
  * Returns: the value of string variable @name, or %NULL
  * if there is no such variable. Note that this is the
- * actual string value, not a copy thereof.
+ * actual string value, not a copy thereof, compare
+ * copy_string_by_name().
  */
 
 char *get_string_by_name (const char *name)
@@ -1456,6 +1457,41 @@ char *get_string_by_name (const char *name)
     } else {
 	return get_built_in_string_by_name(name);
     }
+}
+
+/**
+ * copy_string_by_name:
+ * @name: the name of the string variable to access.
+ * @err: location to receive error code.
+ *
+ * Returns: a copy of the value of string variable @name, 
+ * or %NULL on failure.
+ */
+
+char *copy_string_by_name (const char *name, int *err)
+{
+    user_var *u;
+    const char *s;
+    char *ret = NULL;
+
+    u = get_user_var_of_type_by_name(name, GRETL_TYPE_STRING);
+
+    if (u != NULL) {
+	s = u->ptr;
+    } else {
+	s = get_built_in_string_by_name(name);
+    }
+
+    if (s == NULL) {
+	*err = E_DATA;
+    } else {
+	ret = gretl_strdup(s);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    return ret;
 }
 
 /**

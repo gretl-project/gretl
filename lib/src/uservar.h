@@ -161,6 +161,8 @@ void print_scalar_by_name (const char *name, PRN *prn);
 
 char *get_string_by_name (const char *name);
 
+char *copy_string_by_name (const char *name, int *err);
+
 int gretl_is_string (const char *name);
 
 int is_user_string (const char *name);
