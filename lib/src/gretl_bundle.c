@@ -193,6 +193,74 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
     return item;
 }
 
+#if 0 /* not yet */
+
+static int bundled_item_replace_data (bundled_item *item,
+				      GretlType type, void *ptr, 
+				      int size, int copy)
+{
+    int err = 0;
+
+    if (item->type == GRETL_TYPE_DOUBLE) {
+	double *dp = item->data;
+
+	*dp = *(double *) ptr;
+    } else if (item->type == GRETL_TYPE_STRING) {
+	free(item->data);
+	if (copy) {
+	    item->data = gretl_strdup((char *) ptr);
+	} else {
+	    item->data = ptr;
+	}
+    } else if (item->type == GRETL_TYPE_MATRIX) {
+	gretl_matrix_free(item->data);
+	if (copy) {
+	    item->data = gretl_matrix_copy((gretl_matrix *) ptr);
+	} else {
+	    item->data = ptr;
+	}
+    } else if (item->type == GRETL_TYPE_MATRIX_REF) {
+	item->data = ptr;
+    } else if (item->type == GRETL_TYPE_SERIES) {
+	free(item->data);
+	if (copy) {
+	    item->data = copyvec((const double *) ptr, size);
+	} else {
+	    item->data = ptr;
+	}
+	item->size = size;
+    } else if (item->type == GRETL_TYPE_BUNDLE) {
+	gretl_bundle_destroy((gretl_bundle *) item->data);
+	if (copy) {
+	    item->data = gretl_bundle_copy((gretl_bundle *) ptr, &err);
+	} else {
+	    item->data = ptr;
+	}
+    } else if (item->type == GRETL_TYPE_ARRAY) {
+	gretl_array_destroy((gretl_array*) item->data);
+	if (copy) {
+	    item->data = gretl_array_copy((gretl_array *) ptr, &err);
+	} else {
+	    item->data = ptr;
+	}	
+    } else {
+	return E_DATA;
+    }
+
+    if (!err && item->data == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (item->note != NULL) {
+	free(item->note);
+	item->note = NULL;
+    }
+
+    return err;
+}
+
+#endif
+
 /* callback invoked when a bundle's hash table is destroyed */
 
 static void bundled_item_destroy (gpointer data)
@@ -753,20 +821,30 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 				 const char *note)
 {
     bundled_item *item = NULL;
-    int err;
+    int err, replace = 0;
 
     err = strlen(key) >= VNAMELEN ? E_DATA : 0;
 
     if (err) {
 	gretl_errmsg_sprintf("'%s': invalid key string", key);
     } else {
+	item = g_hash_table_lookup(b->ht, key);
+	if (item != NULL) {
+	    replace = 1;
+#if 0 /* not yet */
+	    if (item->type == type) {
+		return bundled_item_replace_data(item, type, ptr, 
+						 size, copy);
+	    }
+#endif
+	}
 	item = bundled_item_new(type, ptr, size, copy, note, &err);
     }
 
     if (!err) {
 	gchar *k = g_strdup(key);
 
-	if (g_hash_table_lookup(b->ht, key) != NULL) {
+	if (replace) {
 	    g_hash_table_replace(b->ht, k, item);
 	} else {
 	    g_hash_table_insert(b->ht, k, item);
