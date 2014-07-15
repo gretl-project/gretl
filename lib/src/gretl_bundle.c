@@ -193,6 +193,19 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
     return item;
 }
 
+static void release_matrix_pointer (gretl_matrix **pm)
+{
+    const void *data = *pm;
+
+    if (get_user_var_by_data(data) == NULL) {
+	/* the bundle now has the only pointer to
+	   this matrix */
+	gretl_matrix_free(*pm);
+    }
+
+    *pm = NULL;
+}
+
 static int bundled_item_replace_data (bundled_item *item,
 				      GretlType type, void *ptr, 
 				      int size, int copy)
@@ -222,6 +235,7 @@ static int bundled_item_replace_data (bundled_item *item,
 	    item->data = ptr;
 	}
     } else if (item->type == GRETL_TYPE_MATRIX_REF) {
+	release_matrix_pointer((gretl_matrix **) &item->data);
 	item->data = ptr;
     } else if (item->type == GRETL_TYPE_SERIES) {
 	free(item->data);
@@ -284,7 +298,7 @@ static void bundled_item_destroy (gpointer data)
 	gretl_matrix_free((gretl_matrix *) item->data);
 	break;
     case GRETL_TYPE_MATRIX_REF:
-	item->data = NULL;
+	release_matrix_pointer((gretl_matrix **) &item->data);
 	break;
     case GRETL_TYPE_BUNDLE:
 	gretl_bundle_destroy((gretl_bundle *) item->data);
