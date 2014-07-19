@@ -45,7 +45,8 @@ typedef enum {
     SHEET_ADD_OBS_OK    = 1 << 3,
     SHEET_USE_COMMA     = 1 << 4,
     SHEET_MODIFIED      = 1 << 5,
-    SHEET_COLNAME_MOD   = 1 << 6
+    SHEET_COLNAME_MOD   = 1 << 6,
+    SHEET_CUSTOM_FMT    = 1 << 7
 } SheetFlags;
 
 enum {
@@ -92,13 +93,14 @@ typedef struct {
     guint point;
     int *edits;
     int *inserts;
+    int digits;
+    char numfmt[8];
 } Spreadsheet;
 
 #define editing_series(s) (s->cmd == SHEET_EDIT_VARLIST || \
                            s->cmd == SHEET_EDIT_DATASET || \
                            s->cmd == SHEET_NEW_DATASET)
 
-#define MATRIX_DIGITS DBL_DIG
 #define SERIES_DIGITS 8
 
 static void set_up_sheet_column (GtkTreeViewColumn *column, gint width, 
@@ -109,6 +111,7 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet);
 
 static void matrix_fill_callback (GtkAction *action, gpointer data);
 static void matrix_props_callback (GtkAction *action, gpointer data);
+static void matrix_format_callback (GtkAction *action, gpointer data);
 static void matrix_edit_callback (GtkAction *action, gpointer data);
 static int update_sheet_from_matrix (Spreadsheet *sheet);
 static void size_matrix_window (Spreadsheet *sheet);
@@ -151,13 +154,14 @@ static int n_scalar_items = G_N_ELEMENTS(scalar_items);
 const gchar *matrix_ui = 
     "<ui>"
     "  <menubar>"
+    "    <menu action='View'>"
+    "      <menuitem action='ViewFmt'/>"
+    "      <menuitem action='ViewProps'/>"
+    "    </menu>"
     "    <menu action='Fill'>"
     "      <menuitem action='FillIdentity'/>"
     "      <menuitem action='FillUniform'/>"
     "      <menuitem action='FillNormal'/>"
-    "    </menu>"
-    "    <menu action='Properties'>"
-    "      <menuitem action='PropsView'/>"
     "    </menu>"
     "    <menu action='Transform'>"
     "      <menuitem action='XTX'/>"
@@ -171,12 +175,13 @@ const gchar *matrix_ui =
     "</ui>";
 
 static GtkActionEntry matrix_items[] = {
+    { "View", NULL, N_("_View"), NULL, NULL },
+    { "ViewFmt", NULL, N_("_Format..."), NULL, NULL, G_CALLBACK(matrix_format_callback) },
+    { "ViewProps", NULL, N_("_Properties"), NULL, NULL, G_CALLBACK(matrix_props_callback) },
     { "Fill", NULL, N_("_Fill"), NULL, NULL, NULL },
     { "FillIdentity", NULL, N_("_Identity matrix"), NULL, NULL, G_CALLBACK(matrix_fill_callback) },
     { "FillUniform", NULL, N_("_Uniform random"), NULL, NULL, G_CALLBACK(matrix_fill_callback) },
     { "FillNormal", NULL, N_("_Normal random"), NULL, NULL, G_CALLBACK(matrix_fill_callback) },
-    { "Properties", NULL, N_("_Properties"), NULL, NULL, NULL },
-    { "PropsView", NULL, N_("_View"), NULL, NULL, G_CALLBACK(matrix_props_callback) },
     { "Transform", NULL, N_("_Transform"), NULL, NULL, NULL },
     { "XTX", NULL, N_("_X'X"), NULL, NULL, G_CALLBACK(matrix_edit_callback) },
     { "Transpose", NULL, N_("_Transpose"), NULL, NULL, G_CALLBACK(matrix_edit_callback) },
@@ -551,6 +556,12 @@ static void update_sheet_matrix_element (Spreadsheet *sheet,
     int i = atoi(path_string);
     int j = colnum - 1;
     double x = atof(new_text);
+
+    if (!strcmp(new_text, "nan")) {
+	x = M_NA;
+    } else {
+	x = atof(new_text);
+    }
 
     gretl_matrix_set(sheet->matrix, i, j, x);
 }
@@ -1377,7 +1388,7 @@ static void scalars_changed_callback (void)
 	    if (na(x)) {
 		*val = '\0';
 	    } else {
-		sprintf(val, "%.*g", DBL_DIG, x);
+		sprintf(val, sheet->numfmt, sheet->digits, x);
 	    }
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter, 0, vname, 1, val, 
@@ -1800,7 +1811,7 @@ static int update_sheet_from_matrix (Spreadsheet *sheet)
 	    if (x == -0.0) {
 		x = 0.0;
 	    }
-	    sprintf(tmpstr, "%.*g", MATRIX_DIGITS, x);
+	    sprintf(tmpstr, sheet->numfmt, sheet->digits, x);
 	    gtk_list_store_set(store, &iter, j + 1, tmpstr, -1);
 	}
 	if (i1 < sheet->matrix->rows) {
@@ -1877,7 +1888,7 @@ static int add_matrix_data_to_sheet (Spreadsheet *sheet)
 	    if (isnan(x)) {
 		strcpy(tmpstr, "nan");
 	    } else {
-		sprintf(tmpstr, "%.*g", DBL_DIG, x);
+		sprintf(tmpstr, sheet->numfmt, sheet->digits, x);
 	    }
 	    gtk_list_store_set(store, &iter, j + 1, tmpstr, -1);
 	}
@@ -1887,6 +1898,34 @@ static int add_matrix_data_to_sheet (Spreadsheet *sheet)
     set_ok_transforms(sheet);
 
     return 0;
+}
+
+static void reformat_sheet_matrix (Spreadsheet *sheet)
+{
+    gchar tmpstr[32];
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    GtkListStore *store;
+    GtkTreeIter iter;
+    double x;
+    int i, j;
+
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+    for (i=0; i<sheet->datarows; i++) {
+	for (j=0; j<sheet->datacols; j++) {
+	    x = gretl_matrix_get(sheet->matrix, i, j);
+	    if (isnan(x)) {
+		strcpy(tmpstr, "nan");
+	    } else {
+		sprintf(tmpstr, sheet->numfmt, sheet->digits, x);
+	    }
+	    gtk_list_store_set(store, &iter, j + 1, tmpstr, -1);
+	}
+	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+    }
+
+    gtk_tree_view_columns_autosize(view);
 }
 
 static int add_scalars_to_sheet (Spreadsheet *sheet)
@@ -1919,7 +1958,7 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
 	if (na(x)) {
 	    *val = '\0';
 	} else {
-	    sprintf(val, "%.*g", DBL_DIG, x);
+	    sprintf(val, sheet->numfmt, sheet->digits, x);
 	}
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, vname, 1, val, 
@@ -2027,7 +2066,8 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
 		if (na(dataset->Z[vi][t])) {
 		    *numstr = '\0';
 		} else {
-		    sprintf(numstr, "%.*g", SERIES_DIGITS, dataset->Z[vi][t]);
+		    sprintf(numstr, sheet->numfmt, sheet->digits, 
+			    dataset->Z[vi][t]);
 		}
 		gtk_list_store_set(store, &iter, i, numstr, -1);
 	    }
@@ -2735,9 +2775,14 @@ static Spreadsheet *spreadsheet_new (SheetCmd c, int varnum)
 
     sheet->mname[0] = '\0';
 
+    strcpy(sheet->numfmt, "%.*g");
+
     if (c == SHEET_EDIT_MATRIX || c == SHEET_EDIT_SCALARS) {
+	sheet->digits = DBL_DIG;
 	return sheet;
     }
+
+    sheet->digits = SERIES_DIGITS;
 
     sheet->orig_nobs = sample_size(dataset);
     if (sheet->orig_nobs < dataset->n) {
@@ -3901,4 +3946,147 @@ int dataset_locked (void)
     }
 
     return locked;
+}
+
+struct format_adjuster {
+    int digits;
+    char fmtchar;
+    gboolean custom;
+    GtkWidget *spin;
+    GtkWidget *combo;
+    Spreadsheet *sheet;
+};
+
+static void sheet_toggle_custom (GtkWidget *w, struct format_adjuster *fa)
+{
+    gboolean std = button_is_active(w);
+
+    fa->custom = !std;
+    gtk_widget_set_sensitive(fa->spin, fa->custom);
+    gtk_widget_set_sensitive(fa->combo, fa->custom);
+}
+
+static char lastchar (const char *s)
+{
+    int n = strlen(s);
+
+    return s[n-1];
+}
+
+static void reformat_sheet_callback (GtkButton *b, struct format_adjuster *fa)
+{
+    Spreadsheet *sheet = fa->sheet;
+
+    if (fa->custom) {
+	fa->digits = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(fa->spin));
+	fa->fmtchar = gtk_combo_box_get_active(GTK_COMBO_BOX(fa->combo)) == 0 ?
+	    'g' : 'f';
+    }
+
+    if (!(sheet->flags & SHEET_CUSTOM_FMT) && !fa->custom) {
+	/* no change */
+	return;
+    } else if (fa->custom && fa->digits == sheet->digits &&
+	       fa->fmtchar == lastchar(sheet->numfmt)) {
+	/* no change */
+	return;
+    }
+
+    if (fa->custom) {
+	sheet->flags |= SHEET_CUSTOM_FMT;
+	sheet->digits = fa->digits;
+	strcpy(sheet->numfmt, fa->fmtchar == 'g' ? "%.*g" : "%.*f");
+    } else {
+	sheet->flags &= ~SHEET_CUSTOM_FMT;
+	sheet->digits = DBL_DIG;
+	strcpy(sheet->numfmt, "%.*g");
+    }
+
+    reformat_sheet_matrix(sheet);
+}
+
+static void sheet_number_format_dialog (Spreadsheet *sheet)
+{
+    struct format_adjuster fa;
+    GtkWidget *dlg, *vbox;
+    GtkWidget *tmp, *hbox;
+    GtkWidget *b1, *b2;
+    GSList *group;
+    int std = 1;
+
+    dlg = gretl_dialog_new(_("gretl: data format"), sheet->win,
+			   GRETL_DLG_BLOCK);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+
+    if (sheet->flags & SHEET_CUSTOM_FMT) {
+	std = 0;
+    }
+
+    fa.digits = sheet->digits;
+    fa.fmtchar = lastchar(sheet->numfmt);
+    fa.sheet = sheet;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("Select data format"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+
+    /* standard format radio option */
+    hbox = gtk_hbox_new(FALSE, 5);
+    b1 = gtk_radio_button_new_with_label(NULL, _("Standard format"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), std);
+    gtk_box_pack_start(GTK_BOX(hbox), b1, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+
+    /* custom format radio option */
+    hbox = gtk_hbox_new(FALSE, 5);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("Show"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), !std);
+    gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 5);
+
+    /* with spinner for number of digits */
+    fa.spin = gtk_spin_button_new_with_range(1, 16, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(fa.spin), sheet->digits);
+    gtk_widget_set_sensitive(fa.spin, !std);
+    gtk_box_pack_start(GTK_BOX(hbox), fa.spin, FALSE, FALSE, 0);
+
+    /* and selector for digits / decimal places */
+    fa.combo = gtk_combo_box_text_new();
+    combo_box_append_text(fa.combo, _("significant figures"));
+    combo_box_append_text(fa.combo, _("decimal places"));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(fa.combo), 
+			     fa.fmtchar == 'g' ? 0 : 1);
+    gtk_widget_set_sensitive(fa.combo, !std);
+    gtk_box_pack_start(GTK_BOX(hbox), fa.combo, FALSE, FALSE, 5);
+
+    /* connect toggle signal */
+    g_signal_connect(G_OBJECT(b1), "toggled",
+                     G_CALLBACK(sheet_toggle_custom), &fa);
+
+    /* pack the custom line */
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
+
+    /* Cancel button */
+    cancel_delete_button(hbox, dlg);
+   
+    /* OK button */
+    tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(reformat_sheet_callback), &fa);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(delete_widget), dlg);
+    gtk_widget_grab_default(tmp);
+
+    gtk_widget_show_all(dlg);
+}
+
+static void matrix_format_callback (GtkAction *action, gpointer data)
+{
+    Spreadsheet *sheet = (Spreadsheet *) data;
+
+    sheet_number_format_dialog(sheet);
 }
