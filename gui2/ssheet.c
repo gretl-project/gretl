@@ -3948,9 +3948,12 @@ int dataset_locked (void)
     return locked;
 }
 
+/* mechanism for reformatting displayed matrix */
+
 struct format_adjuster {
     int digits;
     char fmtchar;
+    char oldfmt;
     gboolean custom;
     GtkWidget *spin;
     GtkWidget *combo;
@@ -3966,36 +3969,27 @@ static void sheet_toggle_custom (GtkWidget *w, struct format_adjuster *fa)
     gtk_widget_set_sensitive(fa->combo, fa->custom);
 }
 
-static char lastchar (const char *s)
-{
-    int n = strlen(s);
-
-    return s[n-1];
-}
-
 static void reformat_sheet_callback (GtkButton *b, struct format_adjuster *fa)
 {
     Spreadsheet *sheet = fa->sheet;
+
+    if (!(sheet->flags & SHEET_CUSTOM_FMT) && !fa->custom) {
+	/* no change */
+	return;
+    }    
 
     if (fa->custom) {
 	fa->digits = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(fa->spin));
 	fa->fmtchar = gtk_combo_box_get_active(GTK_COMBO_BOX(fa->combo)) == 0 ?
 	    'g' : 'f';
-    }
-
-    if (!(sheet->flags & SHEET_CUSTOM_FMT) && !fa->custom) {
-	/* no change */
-	return;
-    } else if (fa->custom && fa->digits == sheet->digits &&
-	       fa->fmtchar == lastchar(sheet->numfmt)) {
-	/* no change */
-	return;
-    }
-
-    if (fa->custom) {
-	sheet->flags |= SHEET_CUSTOM_FMT;
-	sheet->digits = fa->digits;
-	strcpy(sheet->numfmt, fa->fmtchar == 'g' ? "%.*g" : "%.*f");
+	if (fa->digits == sheet->digits && fa->fmtchar == fa->oldfmt) {
+	    /* no change */
+	    return;
+	} else {
+	    sheet->flags |= SHEET_CUSTOM_FMT;
+	    sheet->digits = fa->digits;
+	    strcpy(sheet->numfmt, fa->fmtchar == 'g' ? "%.*g" : "%.*f");
+	}
     } else {
 	sheet->flags &= ~SHEET_CUSTOM_FMT;
 	sheet->digits = DBL_DIG;
@@ -4003,6 +3997,13 @@ static void reformat_sheet_callback (GtkButton *b, struct format_adjuster *fa)
     }
 
     reformat_sheet_matrix(sheet);
+}
+
+static char lastchar (const char *s)
+{
+    int n = strlen(s);
+
+    return s[n-1];
 }
 
 static void sheet_number_format_dialog (Spreadsheet *sheet)
@@ -4024,7 +4025,7 @@ static void sheet_number_format_dialog (Spreadsheet *sheet)
     }
 
     fa.digits = sheet->digits;
-    fa.fmtchar = lastchar(sheet->numfmt);
+    fa.fmtchar = fa.oldfmt = lastchar(sheet->numfmt);
     fa.sheet = sheet;
 
     hbox = gtk_hbox_new(FALSE, 5);
