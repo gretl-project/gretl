@@ -399,9 +399,15 @@ int numeric_string (const char *str)
 	return 0;
     }
 
-    if (!strcmp(str, "inf") || !strcmp(str, "nan")) {
-	/* could be variable names: they are not valid numbers */
-	return 0;
+    if (strlen(str) == 3) {
+	char screen[4];
+
+	strcpy(screen, str);
+	gretl_lower(screen);
+	if (!strcmp(screen, "inf") || !strcmp(screen, "nan")) {
+	    /* could be variable names: they are not valid numbers */
+	    return 0;
+	}
     }
 
     gretl_push_c_numeric_locale();
