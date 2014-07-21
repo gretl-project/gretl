@@ -2546,16 +2546,11 @@ static char *rightmost (char *s1, char *s2)
 
 void win32_set_gretldir (const char *progname)
 {
-    int err;
+    int done = 0;
 
     *paths.gretldir = '\0';
 
-    /* we'll try the registry first */
-    err = read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", paths.gretldir);
-    if (!err) {
-	slash_terminate(paths.gretldir);
-	return;
-    }
+    /* try using @progname (= argv[0] when gretl was started) */
 
     if (g_path_is_absolute(progname)) {
 	strncat(paths.gretldir, progname, MAXLEN - 1);
@@ -2583,8 +2578,21 @@ void win32_set_gretldir (const char *progname)
 
 	if (s != NULL) {
 	    *(s+1) = '\0';
+	    done = 1;
 	}
-    }	
+    }
+
+    if (!done) {
+	/* try the registry */
+	char tmp[MAXLEN];
+	int err;
+
+	err = read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", tmp);
+	if (!err) {
+	    strcpy(paths.gretldir, tmp);
+	    slash_terminate(paths.gretldir);
+	}
+    }
 }
 
 #else /* !WIN32 */

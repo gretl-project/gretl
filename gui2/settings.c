@@ -2035,6 +2035,11 @@ static void win32_read_gretlrc (void)
 
     fp = gretl_fopen(rcfile, "r");
 
+#if 1
+    fprintf(stderr, "rcfile: '%s' (%s)\n", rcfile,
+	    fp == NULL ? "not found" : "found");
+#endif
+
     if (fp == NULL) {
 	/* not necessarily an error: may be starting from scratch */
 	return;
@@ -2122,7 +2127,7 @@ int read_win32_config (int debug)
 				  value);
 	} 
 
-	if (debug) {
+	if (debug && *value != '\0') {
 	    fprintf(stderr, "reg: err = %d, '%s' -> '%s'\n", regerr, rcvar->key,
 		    value);
 	}
