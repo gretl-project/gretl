@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-06-21 12:58-0400\n"
-"PO-Revision-Date: 2014-07-22 16:34+0200\n"
+"PO-Revision-Date: 2014-07-22 16:40+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -10207,15 +10207,15 @@ msgstr "Ayuda de texto:"
 
 #: gui2/fnsave.c:1916
 msgid "Edit function code"
-msgstr "Editar código de función"
+msgstr "Editar el código de una función"
 
 #: gui2/fnsave.c:1929
 msgid "Save as script"
-msgstr "Guardar como guion de instrucciones"
+msgstr "Guardar como un guion de instrucciones"
 
 #: gui2/fnsave.c:1937
 msgid "Edit sample script"
-msgstr "Editar guion de ejemplo"
+msgstr "Editar el guion de ejemplo"
 
 #: gui2/fnsave.c:1943
 msgid "Add/remove functions"
@@ -10227,7 +10227,7 @@ msgstr "Propiedades extra"
 
 #: gui2/fnsave.c:1955
 msgid "Write spec file"
-msgstr "Escribir archivo spec"
+msgstr "Escribir un archivo spec"
 
 #: gui2/fnsave.c:1962
 msgid "Upload package to server on save"
