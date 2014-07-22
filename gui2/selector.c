@@ -1839,10 +1839,10 @@ static void add_to_rvars1 (GtkTreeModel *model, GtkTreePath *path,
     if (MODEL_CODE(sr->ci)) {
 	/* don't add the regressand to the list of regressors */
 	gint xnum, ynum;
-    
+
 	gtk_tree_model_get(model, iter, COL_ID, &xnum, -1);
 	ynum = selector_get_depvar_number(sr);
-	if (xnum == ynum) {
+	if (ynum >= 0 && xnum == ynum) {
 	    return;
 	}
     }
@@ -2907,7 +2907,8 @@ static int get_rvars2_data (selector *sr, int rows, int context)
 
 	gtk_tree_model_get(model, &iter, COL_ID, &exog, COL_LAG, &lag, -1);
 
-	if (IV_MODEL(sr->ci) && exog == ynum && lag == 0) { /* HECKIT? */
+	if (IV_MODEL(sr->ci) && exog == ynum && lag == 0) {
+	    /* HECKIT? */
 	    errbox(_("You can't use the dependent variable as an instrument"));
 	    err = 1;
 	    break;
