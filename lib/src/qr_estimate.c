@@ -381,6 +381,8 @@ double hac_weight (int kern, int h, int i)
     return w;
 }
 
+#define NW_DEBUG 0
+
 /* Newey and West's data-based bandwidth selection, based on
    the exposition in A. Hall, "Generalized Method of Moments"
    (Oxford, 2005), p. 82.
@@ -402,6 +404,10 @@ int newey_west_bandwidth (const gretl_matrix *f, int kern, int *h, double *bt)
 
     T = f->rows;
     q = f->cols;
+
+#if NW_DEBUG
+    gretl_matrix_print(f, "f, in newey_west_bandwidth");
+#endif
 
     if (kern == KERNEL_BARTLETT) {
 	n = (int) pow((double) T, 2.0 / 9);
@@ -450,11 +456,17 @@ int newey_west_bandwidth (const gretl_matrix *f, int kern, int *h, double *bt)
     p = 1.0 / (2.0 * v[kern] + 1);
     g = cg[kern] * pow((sv / s0) * (sv / s0), p);
 
+#if NW_DEBUG
+    fprintf(stderr, " cg[kern] = %g, n = %d, sv = %g, s0 = %g sv/s0 = %g\n", 
+	    cg[kern], n, sv, s0, sv/s0);
+#endif
+
     *bt = g * pow((double) T, p);
     *h = (int) floor(*bt);
 
-#if 0
-    fprintf(stderr, "bt = %g, h = %d\n", *bt, *h);
+#if NW_DEBUG
+    fprintf(stderr, " kern=%d, T=%d, p=%g, g=%g, bt=%g, h=%d\n", 
+	    kern, T, p, g, *bt, *h);
 #endif
     
  bailout:
@@ -487,6 +499,11 @@ static double *prewhiten_uhat (const double *u, int T, double *pa)
 	a = sgn * 0.97;
     }
 
+#if NW_DEBUG
+    fprintf(stderr, "prewhiten_uhat: a = %g\n", a);
+#endif
+
+    uw[0] = 0; /* = 0, or u[0], or what ?? */
     for (t=1; t<T; t++) {
 	uw[t] = u[t] - a * u[t-1];
     } 
@@ -508,6 +525,11 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
     double wj, uu;
     double a = 0, bt = 0;
     double *u = NULL;
+
+#if NW_DEBUG
+    fprintf(stderr, "*** HAC: kern = %d, prewhiten = %d ***\n", 
+	    kern, prewhiten);
+#endif
 
     if (prewhiten) {
 	u = prewhiten_uhat(uhat->val, T, &a);
@@ -531,7 +553,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
     /* determine the bandwidth setting */
 
     if (data_based_hac_bandwidth()) {
-	gretl_matrix umat;
+	gretl_matrix umat = {0};
 
 	gretl_matrix_init(&umat);
 	umat.rows = T;
