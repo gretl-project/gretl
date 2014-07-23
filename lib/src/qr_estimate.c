@@ -390,11 +390,13 @@ double hac_weight (int kern, int h, int i)
 
 int newey_west_bandwidth (const gretl_matrix *f, int kern, int *h, double *bt)
 {
+    /* kernel-specific parameter, c_\gamma */
     const double cg[] = { 1.4117, 2.6614, 1.3221 };
+    /* kernel-specific parameter, \nu */
     const double v[] = { 1, 2, 2 };
     double g, p, s0, sv;
-    double *s = NULL, *c = NULL;
-    int n, T, q;
+    double *s, *c;
+    int n, T, q, i0 = 0;
     int i, j, t;
     int err = 0;
 
@@ -409,6 +411,7 @@ int newey_west_bandwidth (const gretl_matrix *f, int kern, int *h, double *bt)
     gretl_matrix_print(f, "f, in newey_west_bandwidth");
 #endif
 
+    /* kernel- and T-specific parameter, n */
     if (kern == KERNEL_BARTLETT) {
 	n = (int) pow((double) T, 2.0 / 9);
     } else if (kern == KERNEL_PARZEN) {
@@ -417,21 +420,26 @@ int newey_west_bandwidth (const gretl_matrix *f, int kern, int *h, double *bt)
 	n = (int) pow((double) T, 2.0 / 25);
     }
 
-    s = malloc((n + 1) * sizeof *s);
-    c = malloc(T * sizeof *c);
-
-    if (s == NULL || c == NULL) {
+    s = malloc((n + 1 + T) * sizeof *s);
+    if (s == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
+    c = s + n + 1;
+
+    /* ??? */
+    if (q > 1) i0 = 1;
+
     for (t=0; t<T; t++) {
 	c[t] = 0.0;
-	for (i=0; i<q; i++) {
-	    /* equal weighting here? */
+	for (i=i0; i<q; i++) {
+	    /* equal h-weights here? */
 	    c[t] += gretl_matrix_get(f, t, i);
 	}
     }
+
+    /* calculate \hat{\sigma}_j, j = 0,1,...n */
 
     for (j=0; j<=n; j++) {
 	s[j] = 0.0;
@@ -472,7 +480,6 @@ int newey_west_bandwidth (const gretl_matrix *f, int kern, int *h, double *bt)
  bailout:
 
     free(s);
-    free(c);
 
     return err;
 }
@@ -553,6 +560,19 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
     /* determine the bandwidth setting */
 
     if (data_based_hac_bandwidth()) {
+#if 0 /* experimental: we're messed up here */
+	gretl_matrix *f = gretl_matrix_alloc(T, k);
+	double zt;
+
+	for (j=0; j<k; j++) {
+	    for (t=0; t<T; t++) {
+		zt = gretl_matrix_get(X, t, j);
+		gretl_matrix_set(f, t, j, zt * u[t]);
+	    }
+	}
+	*err = newey_west_bandwidth(f, kern, &p, &bt);
+	gretl_matrix_free(f);
+#else
 	gretl_matrix umat = {0};
 
 	gretl_matrix_init(&umat);
@@ -560,6 +580,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
 	umat.cols = 1;
 	umat.val = u;
 	*err = newey_west_bandwidth(&umat, kern, &p, &bt);
+#endif
 	if (*err) {
 	    goto bailout;
 	}
