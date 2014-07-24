@@ -2339,6 +2339,21 @@ static void strip_illegals (char *s)
     strcpy(s, name);
 }
 
+static int intercept_nan_as_name (const char *s)
+{
+    if (strlen(s) == 3) {
+	char screen[4];
+
+	strcpy(screen, s);
+	gretl_lower(screen);
+	if (!strcmp(screen, "nan")) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static int process_csv_varname (char *vname, const char *src, int j,
 				int *numcount, PRN *prn)
 {
@@ -2346,7 +2361,12 @@ static int process_csv_varname (char *vname, const char *src, int j,
 
     *vname = '\0';
 
-    if (*src == '\0') {
+    if (intercept_nan_as_name(src)) {
+	gretl_errmsg_sprintf(_("If '%s' is intended as the name of a variable, "
+			       "please change it --\nstrings of this sort usually "
+			       "mean 'not a number'."), src);
+	err = E_DATA;
+    } else if (*src == '\0') {
 	fprintf(stderr, "variable name %d is missing\n", j);
 	sprintf(vname, "v%d", j);
     } else if (numeric_string(src)) {
@@ -2580,8 +2600,8 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	    if (joining(c)) {
 		handle_join_varname(c, k, &j);
 	    } else {
-		process_csv_varname(c->dset->varname[j], c->str, j,
-				    &numcount, prn);
+		err = process_csv_varname(c->dset->varname[j], c->str, j,
+					  &numcount, prn);
 		j++;
 	    }
 	}
