@@ -1175,27 +1175,9 @@ static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
 #endif
 
     if (!err) {
-	gretl_matrix *U = NULL;
-	gretl_matrix *S = NULL;
-	gretl_matrix *V = NULL;
-	gretl_matrix *tmp = NULL;
-	int amod = 0;
-
-	err = gretl_matrix_SVD(A, &U, &S, &V);
+	err = maybe_limit_VAR_coeffs(A);
 	if (err) {
 	    goto bailout;
-	}
-
-	for (i=0; i<k; i++) {
-	    if (S->val[i] > 0.97) {
-		S->val[i] = 0.97;
-		amod = 1;
-	    }
-	}
-
-	if (amod) {
-	    tmp = gretl_matrix_dot_op(U, S, '*', &err);
-	    gretl_matrix_multiply(tmp, V, A);
 	}
 
 #if GMM_DEBUG
@@ -1221,11 +1203,6 @@ static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
 		gretl_matrix_set(E, t, i, eti - b->val[i]);
 	    }
 	}
-
-	gretl_matrix_free(U);
-	gretl_matrix_free(S);
-	gretl_matrix_free(V);
-	gretl_matrix_free(tmp);
     }
 
  bailout:
@@ -1282,7 +1259,7 @@ static int gmm_HAC (gretl_matrix *E, gretl_matrix *V, hac_info *hinfo)
     }
 
     if (data_based_hac_bandwidth()) {
-	err = newey_west_bandwidth(E, hinfo->kern, &hinfo->h,
+	err = newey_west_bandwidth(E, NULL, hinfo->kern, &hinfo->h,
 				   &hinfo->bt);
 	if (err) {
 	    return err;
