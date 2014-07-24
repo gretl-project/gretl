@@ -61,7 +61,7 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 	/* FIXME : maybe return empty string? */
 	g_object_unref(path);
 	return E_DATA;
-    }	
+    }
 
     /* in case we get floating-point output */
     gretl_push_c_numeric_locale();
@@ -71,6 +71,9 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 
 	array = json_node_get_array(match);
 	node = json_array_get_element(array, 0);
+
+    repeat:
+
 	if (node == NULL) {
 	    gretl_errmsg_set("Failed to match JsonPath");
 	    ntype = 0;
@@ -79,8 +82,15 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 	}
 
 	if (!handled_type(ntype)) {
-	    /* can't handle it */
-	    err = E_DATA;
+	    if (JSON_NODE_HOLDS_ARRAY(node)) {
+		array = json_node_get_array(node);
+		node = json_array_get_element(array, 0);
+		goto repeat;
+	    } else {
+		gretl_errmsg_sprintf("Unhandled array type '%s'", 
+				     g_type_name(ntype));
+		err = E_DATA;
+	    }
 	} else {
 	    int i, n = json_array_get_length(array);
 
@@ -101,7 +111,8 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
     } else {
 	ntype = json_node_get_value_type(match);
 	if (!handled_type(ntype)) {
-	    /* can't handle it */
+	    gretl_errmsg_sprintf("Unhandled object type '%s'", 
+				 g_type_name(ntype));
 	    err = E_DATA;
 	} else {
 	    if (ntype == G_TYPE_STRING) {
