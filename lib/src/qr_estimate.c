@@ -394,23 +394,10 @@ static int lag_trunc_param (int kern, int T)
     }
 }
 
-/* weights for the elements of X_t * u_t (?) */
-
-static gretl_matrix *newey_west_w (int k)
-{
-    gretl_matrix *w = gretl_unit_matrix_new(k, 1);
-
-    if (w != NULL && k > 1) {
-	w->val[0] = 0;
-    }
-
-    return w;
-}
-
 /* Newey and West's data-based bandwidth selection, based on
    the exposition in A. Hall, "Generalized Method of Moments"
    (Oxford, 2005), p. 82, and Newey and West's 1994 paper in
-   Review of Economic Studies.
+   Review of Economic Studies, pp. 634-5.
 */
 
 int newey_west_bandwidth (const gretl_matrix *f, 
@@ -642,10 +629,15 @@ static int nw_prewhiten (gretl_matrix *H, gretl_matrix **pA)
     return err;
 }
 
-/* form the matrix H, such that H_t = X_t * u_t */
+/* Form the matrix H, such that H_t = X_t * u_t. In
+   addition, if @pw is non-NULL and the first column 
+   of @X is constant, then write into @pw a vector of
+   1s with the first element set to zero.
+*/
 
 static gretl_matrix *newey_west_H (const gretl_matrix *X, 
-				   const gretl_matrix *u)
+				   const gretl_matrix *u,
+				   gretl_matrix **pw)
 {
     gretl_matrix *H = NULL;
 
@@ -660,10 +652,26 @@ static gretl_matrix *newey_west_H (const gretl_matrix *X,
 	H = gretl_matrix_alloc(T, k);
 
 	if (H != NULL) {
+	    int make_w = (pw != NULL && k > 1);
+
 	    for (j=0; j<k; j++) {
 		for (t=0; t<T; t++) {
 		    xtj = gretl_matrix_get(X, t, j);
 		    gretl_matrix_set(H, t, j, xtj * u->val[t]);
+		    if (make_w && j == 0 && t > 0) {
+			if (xtj != gretl_matrix_get(X, t-1, j)) {
+			    make_w = 0;
+			}
+		    }
+		}
+	    }
+
+	    if (make_w) {
+		gretl_matrix *w = gretl_unit_matrix_new(k, 1);
+
+		if (w != NULL) {
+		    w->val[0] = 0;
+		    *pw = w;
 		}
 	    }
 	}
@@ -682,6 +690,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
     gretl_matrix *Gj = NULL;
     gretl_matrix *H = NULL;
     gretl_matrix *A = NULL;
+    gretl_matrix *w = NULL;
     int prewhiten = libset_get_bool(PREWHITEN);
     int data_based = data_based_hac_bandwidth();
     int kern = libset_get_int(HAC_KERNEL);
@@ -704,9 +713,9 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
 
     if (prewhiten || data_based) {
 	if (oldstyle) {
-	    H = newey_west_H(NULL, uhat);
+	    H = newey_west_H(NULL, uhat, NULL);
 	} else {
-	    H = newey_west_H(X, uhat);
+	    H = newey_west_H(X, uhat, &w);
 	}
 	if (H == NULL) {
 	    *err = E_ALLOC;
@@ -734,10 +743,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
     /* determine the bandwidth setting */
 
     if (data_based) {
-	gretl_matrix *w = newey_west_w(k); /* FIXME? */
-
 	*err = newey_west_bandwidth(H, w, kern, &p, &bt);
-	gretl_matrix_free(w);
 	if (*err) {
 	    goto bailout;
 	}
@@ -812,6 +818,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
     gretl_matrix_free(Gj);
     gretl_matrix_free(H);
     gretl_matrix_free(A);
+    gretl_matrix_free(w);
 
     if (*err && XOX != NULL) {
 	gretl_matrix_free(XOX);
