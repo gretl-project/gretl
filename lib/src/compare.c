@@ -1019,7 +1019,7 @@ int nonlinearity_test (MODEL *pmod, DATASET *dset, ModelAuxCode aux,
     const int orig_nvar = dset->v; 
     int err = 0;
 
-    if (!command_ok_for_model(ADD, 0, pmod->ci)) {
+    if (!command_ok_for_model(ADD, 0, pmod)) {
 	return E_NOTIMP;
     }
 
@@ -1155,7 +1155,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 	return E_DATA;
     }
 
-    if (!command_ok_for_model(ADD, opt, orig->ci)) {
+    if (!command_ok_for_model(ADD, opt, orig)) {
 	return E_NOTIMP;
     }
 
@@ -1517,7 +1517,7 @@ static int omit_test_precheck (MODEL *pmod, gretlopt opt)
 
     if (pmod == NULL || pmod->list == NULL) {
 	err = E_DATA;
-    } else if (!command_ok_for_model(OMIT, 0, pmod->ci)) {
+    } else if (!command_ok_for_model(OMIT, 0, pmod)) {
 	err = E_NOTIMP;
     } else if (omit_options_inconsistent(pmod, opt)) {
 	err = E_BADOPT;

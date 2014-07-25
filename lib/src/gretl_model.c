@@ -5070,21 +5070,22 @@ void swap_models (MODEL *targ, MODEL *src)
  * command_ok_for_model:
  * @test_ci: index of command to be tested.
  * @opt: option for command to be tested.
- * @mci: command index of a gretl model (for example,
- * %OLS, %WLS or %AR1).
+ * @pmod: the gretl model in question.
  *
  * Check to see if the model-related command in question is
  * meaningful and acceptable in the context of the estimator
- * identified by the command index @mci. Note, though, that 
- * this function may give a "false positive": to be quite sure, 
- * we may need to know more about the model (e.g. specific 
- * options used).  See also model_test_ok().
+ * associated with @pmod. Note, though, that this function may 
+ * give a "false positive": to be quite sure, we may need to
+ * know more about the model (e.g. specific options used).  
+ * See also model_test_ok().
  * 
  * Returns: 1 if the command seems OK, otherwise 0.
  */
 
-int command_ok_for_model (int test_ci, gretlopt opt, int mci)
+int command_ok_for_model (int test_ci, gretlopt opt, 
+			  const MODEL *pmod)
 {
+    int mci = pmod->ci;
     int ok = 1;
 
     if (mci == NLS && test_ci == FCAST) {
@@ -5108,6 +5109,8 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 	if (mci == ARMA || mci == GARCH || 
 	    mci == HECKIT || mci == INTREG) {
 	    ok = 0;
+	} else if (mci == PANEL && (pmod->opt & OPT_B)) {
+	    ok = 0;
 	} else if (opt & OPT_L) {
 	    /* --lm variant: OLS only? */
 	    ok = (mci == OLS);
@@ -5116,6 +5119,9 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 
     case OMIT:
 	if (mci == ARMA || mci == GARCH || mci == INTREG) {
+	    ok = 0;
+	} else if (mci == PANEL && (pmod->opt & OPT_B)) {
+	    /* the "between" model */
 	    ok = 0;
 	}
 	break;
@@ -5201,7 +5207,7 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 int model_test_ok (int ci, gretlopt opt, const MODEL *pmod, 
 		   const DATASET *dset)
 {
-    int ok = command_ok_for_model(ci, opt, pmod->ci);
+    int ok = command_ok_for_model(ci, opt, pmod);
 
     if (ok && pmod->missmask != NULL) {
 	/* can't do these with embedded missing obs */

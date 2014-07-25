@@ -378,7 +378,8 @@ MODEL *gretl_model_copy (const MODEL *pmod);
 
 void swap_models (MODEL *targ, MODEL *src);
 
-int command_ok_for_model (int test_ci, gretlopt opt, int mci);
+int command_ok_for_model (int test_ci, gretlopt opt, 
+			  const MODEL *pmod);
 
 int model_test_ok (int ci, gretlopt opt, const MODEL *pmod, 
 		   const DATASET *dset);

@@ -2723,7 +2723,7 @@ static void add_model_dataset_items (windata_t *vwin)
 static void add_model_tex_items (windata_t *vwin)
 {
     MODEL *pmod = (MODEL *) vwin->data;
-    int eqn_ok = command_ok_for_model(EQNPRINT, 0, pmod->ci);
+    int eqn_ok = command_ok_for_model(EQNPRINT, 0, pmod);
     GtkActionGroup *actions;
     GError *err = NULL;
     int imod = 0;

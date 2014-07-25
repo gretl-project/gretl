@@ -2735,7 +2735,7 @@ gretl_sum_test (const int *list, MODEL *pmod, DATASET *dset,
 	return E_DATA;
     }
 
-    if (!command_ok_for_model(COEFFSUM, 0, pmod->ci)) {
+    if (!command_ok_for_model(COEFFSUM, 0, pmod)) {
 	return E_NOTIMP;
     }
 
