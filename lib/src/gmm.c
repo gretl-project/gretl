@@ -1175,7 +1175,7 @@ static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
 #endif
 
     if (!err) {
-	err = maybe_limit_VAR_coeffs(A);
+	err = maybe_limit_VAR_coeffs(A, NULL, NULL, NULL);
 	if (err) {
 	    goto bailout;
 	}
@@ -1192,7 +1192,7 @@ static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
 
 	/* Now "whiten" E using A~ */
 	for (t=1; t<T; t++) {
-	    /* re-use 'b' for fitted values */
+	    /* re-use @b for fitted values */
 	    gretl_matrix_multiply(A, e, b);
 	    for (i=0; i<k; i++) {
 		/* retrieve current value */

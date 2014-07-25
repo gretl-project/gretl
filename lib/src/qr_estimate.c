@@ -350,6 +350,8 @@ static void wtw (gretl_matrix *wt, const gretl_matrix *X,
     }
 }
 
+/* special handling for quadratic spectral kernel */
+
 double qs_hac_weight (double bt, int i)
 {
     double di = i / bt;
@@ -510,7 +512,7 @@ static int hac_recolor (gretl_matrix *XOX, gretl_matrix *A)
 	double aij;
 	int i, j;
 
-	/* since we won't need A hereafter, make A into (I - A) */
+	/* we won't need A hereafter, so make A into (I - A) */
 	for (i=0; i<k; i++) {
 	    for (j=0; j<k; j++) {
 		aij = gretl_matrix_get(A, i, j);
@@ -536,7 +538,45 @@ static int hac_recolor (gretl_matrix *XOX, gretl_matrix *A)
     return err;
 }
 
-int maybe_limit_VAR_coeffs (gretl_matrix *A)
+static int revise_VAR_residuals (gretl_matrix *A,
+				 gretl_matrix *Y,
+				 gretl_matrix *X,
+				 gretl_matrix *E)
+{
+    gretl_matrix *Xt, *Pt;
+    double yti;
+    int k = X->cols;
+    int T = X->rows;
+    int i, t;
+
+    Xt = gretl_matrix_alloc(1, k);
+    Pt = gretl_matrix_alloc(1, k);
+
+    if (Xt == NULL || Pt == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=0; t<T; t++) {
+	for (i=0; i<k; i++) {
+	    Xt->val[i] = gretl_matrix_get(X, t, i);
+	}
+	gretl_matrix_multiply(Xt, A, Pt);
+	for (i=0; i<k; i++) {
+	    yti = gretl_matrix_get(Y, t, i);
+	    gretl_matrix_set(E, t, i, yti - Pt->val[i]);
+	}	    
+    }
+
+    gretl_matrix_free(Xt);
+    gretl_matrix_free(Pt);
+
+    return 0;
+}
+
+int maybe_limit_VAR_coeffs (gretl_matrix *A,
+			    gretl_matrix *Y,
+			    gretl_matrix *X,
+			    gretl_matrix *E)
 {
     gretl_matrix *U = NULL;
     gretl_matrix *S = NULL;
@@ -560,6 +600,10 @@ int maybe_limit_VAR_coeffs (gretl_matrix *A)
 	    T = gretl_matrix_dot_op(U, S, '*', &err);
 	    gretl_matrix_multiply(T, V, A);
 	}
+    }
+
+    if (amod && X != NULL && Y != NULL && E != NULL) {
+	err = revise_VAR_residuals(A, Y, X, E);
     }
 
     gretl_matrix_free(U);
@@ -601,6 +645,11 @@ static int nw_prewhiten (gretl_matrix *H, gretl_matrix **pA)
     /* estimate VAR */
     err = gretl_matrix_multi_ols(H0, H1, A, U, NULL);
 
+    /* apply the "0.97 limit" if needed */
+    if (!err) {
+	err = maybe_limit_VAR_coeffs(A, H0, H1, U);
+    }    
+
     if (!err) {
 	/* replace incoming H with VAR residuals */
 	for (j=0; j<k; j++) {
@@ -612,10 +661,7 @@ static int nw_prewhiten (gretl_matrix *H, gretl_matrix **pA)
 	}
     }
 
-    /* apply the "0.97 limit" if needed */
-    if (!err) {
-	err = maybe_limit_VAR_coeffs(A);
-    }
+    gretl_matrix_print(H, "prewhitened H");
 
     if (!err) {
 	*pA = gretl_matrix_copy(A);

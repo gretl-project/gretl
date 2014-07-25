@@ -28,7 +28,10 @@ double hac_weight (int kern, int h, int i);
 
 double qs_hac_weight (double bt, int i);
 
-int maybe_limit_VAR_coeffs (gretl_matrix *A);
+int maybe_limit_VAR_coeffs (gretl_matrix *A,
+			    gretl_matrix *Y,
+			    gretl_matrix *X,
+			    gretl_matrix *E);
 
 int newey_west_bandwidth (const gretl_matrix *f, 
 			  const gretl_matrix *w,
