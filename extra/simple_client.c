@@ -21,7 +21,7 @@
 
 #include <gretl/libgretl.h>   
 
-void noalloc(void)
+void noalloc (void)
 {
     printf("Couldn't allocate memory.\n");
     exit(EXIT_FAILURE);
@@ -76,11 +76,8 @@ int main (void)
 
     for (i=0; i<dataset->n; i++) {
 	dset_set_data(dataset, 1, i, z1[i]);
-    }
-
-    for (i=0; i<dataset->n; i++) {
 	dset_set_data(dataset, 2, i, z2[i]);
-    }    
+    }
 
     /* Set up the "list", which is fed to the regression function.
        The first element of list represents the length of the list
@@ -114,8 +111,7 @@ int main (void)
     }
 
     /* Otherwise give this model an ID number for reference */
-    ++model_count;
-    model->ID = model_count;
+    model->ID = ++model_count;
 
     /* and print the regression results */
     printmodel(model, dataset, OPT_NONE, prn);
