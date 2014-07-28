@@ -142,7 +142,7 @@ static int maybe_record_lag_info (parser *p)
 static void gen_write_label (parser *p, int oldv)
 {
     char tmp[MAXLABEL];
-    const char *src;
+    const char *src = "";
 
     if (p->targ != SERIES) {
 	/* this is relevant only for series */
