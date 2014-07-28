@@ -3784,7 +3784,7 @@ int series_get_stack_level (const DATASET *dset, int i)
 void series_set_mtime (DATASET *dset, int i)
 {
     if (i > 0 && i < dset->v) {
-	dset->varinfo[i]->mtime = g_get_monotonic_time();
+	dset->varinfo[i]->mtime = gretl_monotonic_time();
     }
 }
 

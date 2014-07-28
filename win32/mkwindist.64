@@ -37,7 +37,8 @@ SYSBIN=${SYSBASE}/bin
 SYSTRANS=${SYSBASE}/share/locale
 SYSTHEME=${SYSBASE}/share/themes
 SYSSV=${SYSBASE}/share/gtksourceview-2.0
-GPDIST=${WINFILES}/gp50w64.tar.gz
+# GPDIST=${WINFILES}/gp50w64.tar.gz
+GPDIST=${WINFILES}/gp466w64.tar.gz
 
 #############################################
 

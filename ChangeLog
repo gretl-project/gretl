@@ -1,4 +1,4 @@
-version 1.9.91, in progress
+2014-07-28 version 1.9.91
 - Add Japanese translation (thanks to Shintaro Nakagawa)
 - Add new functions: curl(), jsonget(), nlines(), kpsscrit(),
   genseries()
@@ -39,7 +39,7 @@ version 1.9.91, in progress
   its documentation)
 - Build: update config.guess and config.sub from autotools git
 - Windows build: update to gtk 2.24.24; update gnuplot version
-  to 5.0 rc1
+  to 4.6.6
 
 2014-05-02 version 1.9.90
 - GUI reorganization: move the Function packages menu from

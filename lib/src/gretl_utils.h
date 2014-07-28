@@ -180,4 +180,6 @@ int check_for_program (const char *prog);
 
 const char *blas_variant_string (void);
 
+gint64 gretl_monotonic_time (void);
+
 #endif /* GRETL_UTILS_H */

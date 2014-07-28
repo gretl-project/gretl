@@ -2484,4 +2484,15 @@ const char *blas_variant_string (void)
     }
 }
 
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28 && defined(OS_OSX)
+# include <mach/mach_time.h>
+#endif
 
+gint64 gretl_monotonic_time (void)
+{
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28 && defined(OS_OSX)
+    return (gint64) mach_absolute_time();
+#else
+    return g_get_monotonic_time();
+#endif
+}

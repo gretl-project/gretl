@@ -5295,7 +5295,7 @@ void set_model_id (MODEL *pmod)
 {
     if (pmod->errcode == 0) {
 	pmod->ID = ++gretl_model_count;
-	pmod->esttime = g_get_monotonic_time();
+	pmod->esttime = gretl_monotonic_time();
     }
 }
 
@@ -6489,5 +6489,3 @@ void maybe_suppress_time_dummies (MODEL *pmod, int ndum)
 	gretl_model_set_int(pmod, "skipdums", ndum);
     }
 }
-	
-
