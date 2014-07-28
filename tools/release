@@ -7,11 +7,9 @@ Local:
 * Update src/Changelog and src/CompatLog with the current date
 * Commit the above changes to CVS
 * Rebuild and publish the PDF docs
-* make dist ; and put the new gretl-N.M.P.tar.bz2 where it needs
-  to go, for building RPM
-* Build the gretl RPM
-* Make the MS Windows installer
-* Make the Mac OS X installers
+* "make dist" to create the new gretl-N.M.P.tar.bz2
+* Make the MS Windows installers (32- and 64-bit)
+* Make the Mac OS X installers (intel-X11, ppc, quartz)
 * Get all the packages in place for upload to SF.
 
 Remote:
@@ -20,7 +18,7 @@ Remote:
   binary packages. Upload a README. Use the SF File
   Manager to mark the new files as the default downloads.
 * Also make a new versioned subdirectory of "addons" and
-  upload the .zip addon files if need be.
+  upload the .zip addon files, if need be.
 
 Local:
 * Update all the web docs (this is automated: ./update_html)
@@ -29,4 +27,4 @@ Local:
 * Send a message to gretl-announce
 
 Allin Cottrell
-April 2011
+last revised, July 2014
