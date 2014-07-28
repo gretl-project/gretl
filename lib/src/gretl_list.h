@@ -99,8 +99,7 @@ int reglist_check_for_const (int *list, const DATASET *dset);
 int gretl_list_const_pos (const int *list, int minpos, 
 			  const DATASET *dset);
 
-int list_members_replaced (const int *list, const DATASET *dset,
-			   int ref_id);
+int list_members_replaced (const MODEL *pmod, const DATASET *dset);
 
 int gretl_list_separator_position (const int *list);
 

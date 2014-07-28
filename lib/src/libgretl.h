@@ -357,6 +357,7 @@ typedef struct MODEL_ {
     char *depvar;                /* name of dependent var in special cases */
     int nparams;                 /* number of named model parameters */
     char **params;               /* for named model parameters */
+    gint64 esttime;              /* time of estimation */
     int ntests;                  /* number of attached test results */
     ModelTest *tests;            /* attached hypothesis test results */
     DATASET *dataset;            /* for handling models estimated on a

@@ -2711,6 +2711,7 @@ void gretl_model_init (MODEL *pmod, const DATASET *dset)
     pmod->ifc = 0;
     pmod->nwt = 0;
     pmod->aux = AUX_NONE;
+    pmod->esttime = 0;
 
     model_stats_init(pmod);
 
@@ -5294,6 +5295,7 @@ void set_model_id (MODEL *pmod)
 {
     if (pmod->errcode == 0) {
 	pmod->ID = ++gretl_model_count;
+	pmod->esttime = g_get_monotonic_time();
     }
 }
 

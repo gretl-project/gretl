@@ -142,8 +142,7 @@ static int maybe_record_lag_info (parser *p)
 static void gen_write_label (parser *p, int oldv)
 {
     char tmp[MAXLABEL];
-    const char *src = "";
-    size_t len = 0;
+    const char *src;
 
     if (p->targ != SERIES) {
 	/* this is relevant only for series */
@@ -158,15 +157,8 @@ static void gen_write_label (parser *p, int oldv)
 
     maybe_record_lag_info(p);
 
-    *tmp = '\0';
-
     if (p->lh.v < oldv && p->targ == SERIES) {
-	int m = get_model_count();
-
-	if (m > 0) {
-	    sprintf(tmp, _("Replaced after model %d: "), m);
-	    len = strlen(tmp);
-	}
+	series_set_mtime(p->dset, p->lh.v);
     }
 
     if (*p->lh.label != '\0' && (p->flags & P_UFRET)) {
@@ -177,8 +169,10 @@ static void gen_write_label (parser *p, int oldv)
 	src = p->rhs;
     }
 
-    if (strlen(src) > MAXLABEL - 1 - len) {
-	strncat(tmp, src, MAXLABEL - 4 - len);
+    *tmp = '\0';
+
+    if (strlen(src) > MAXLABEL - 1) {
+	strncat(tmp, src, MAXLABEL - 4);
 	strcat(tmp, "...");
     } else {
 	strncat(tmp, src, MAXLABEL - 1);

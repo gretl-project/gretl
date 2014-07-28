@@ -39,6 +39,7 @@ struct VARINFO_ {
     int transform;
     int lag;
     char compact_method;
+    gint64 mtime;
     char stack_level; /* FIXME should be int? */
     series_table *st;
 };
@@ -301,6 +302,7 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->transform = 0;
     vinfo->lag = 0;
     vinfo->compact_method = COMPACT_NONE;
+    vinfo->mtime = 0;
     vinfo->stack_level = gretl_function_depth();
     vinfo->st = NULL;
 }
@@ -3774,6 +3776,22 @@ int series_get_stack_level (const DATASET *dset, int i)
 {
     if (i >= 0 && i < dset->v) {
 	return dset->varinfo[i]->stack_level;
+    } else {
+	return 0;
+    }
+}
+
+void series_set_mtime (DATASET *dset, int i)
+{
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->mtime = g_get_monotonic_time();
+    }
+}
+
+gint64 series_get_mtime (const DATASET *dset, int i)
+{
+    if (i > 0 && i < dset->v) {
+	return dset->varinfo[i]->mtime;
     } else {
 	return 0;
     }

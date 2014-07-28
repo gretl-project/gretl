@@ -3233,7 +3233,7 @@ int whites_test (MODEL *pmod, DATASET *dset,
 	return E_NOTIMP;
     }
 
-    if ((err = list_members_replaced(pmod->list, dset, pmod->ID))) {
+    if ((err = list_members_replaced(pmod, dset))) {
 	return err;
     }
 

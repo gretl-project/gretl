@@ -1028,7 +1028,7 @@ int nonlinearity_test (MODEL *pmod, DATASET *dset, ModelAuxCode aux,
     }
 
     /* check for changes in original list members */
-    err = list_members_replaced(pmod->list, dset, pmod->ID);
+    err = list_members_replaced(pmod, dset);
     if (err) {
 	return err;
     }
@@ -1169,7 +1169,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     }
 
     /* check for changes in original list members */
-    err = list_members_replaced(orig->list, dset, orig->ID);
+    err = list_members_replaced(orig, dset);
     if (err) {
 	return err;
     }
@@ -1561,7 +1561,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
     }
 
     /* check that vars to omit have not been redefined */
-    if ((err = list_members_replaced(orig->list, dset, orig->ID))) {
+    if ((err = list_members_replaced(orig, dset))) {
 	return err;
     }
 
@@ -1673,7 +1673,7 @@ double get_DW_pvalue_for_model (const MODEL *pmod, DATASET *dset,
 	*err = E_BADSTAT;
     } else {
 	/* check that relevant vars have not been redefined */
-	*err = list_members_replaced(pmod->list, dset, pmod->ID);
+	*err = list_members_replaced(pmod, dset);
     }
 
     if (!*err) {
@@ -3258,7 +3258,7 @@ int comfac_test (MODEL *pmod, DATASET *dset,
     }
 
     /* check for changes in original list members */
-    err = list_members_replaced(pmod->list, dset, pmod->ID);
+    err = list_members_replaced(pmod, dset);
     if (err) {
 	return err;
     }

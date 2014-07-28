@@ -297,14 +297,16 @@ double gnuplot_version (void)
 {
     /* As of 2014-07-03, the package for 64-bit Windows
        includes gnuplot 5.0 (CVS) */
-    return 5.0;
+    /* return 5.0; */
+    return 4.66;
 }
 # else
 double gnuplot_version (void)
 {
     /* As of 2014-07-03, the package for 32-bit Windows
        includes gnuplot 5.0 (CVS) */
-    return 5.0;
+    /* return 5.0; */
+    return 4.66;
 }
 # endif
 

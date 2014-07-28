@@ -1995,51 +1995,37 @@ int gretl_list_insert_list_minus (int **targ, const int *src, int pos)
 
 /**
  * list_members_replaced:
- * @list: an array of integer variable ID numbers, the first element
- * of which holds a count of the number of elements following.
+ * @pmod: the model whose list is to be tested.
  * @dset: dataset information.
- * @ref_id: ID number of reference #MODEL.
  *
- * Checks whether any variable in @list has been redefined via
- * gretl's %genr command since a previous model (identified by
- * @ref_id) was estimated.
+ * Checks whether any variable used in @pmod has been redefined
+ * since the model in question was estimated.
  *
- * Returns: 1 if any variables have been replaced, 0 otherwise.
+ * Returns: non-zero if any variables have been replaced, 0 otherwise.
  */
 
-int list_members_replaced (const int *list, const DATASET *dset,
-			   int ref_id)
+int list_members_replaced (const MODEL *pmod, const DATASET *dset)
 {
     const char *errmsg = N_("Can't do this: some vars in original "
 			    "model have been redefined");
-    const char *label;
-    char rword[16];
-    int j, mc, repl;
+    int i, vi;
 
-    if (ref_id == 0) {
-	mc = get_model_count();
-    } else {
-	mc = ref_id;
+    if (pmod->list == NULL) {
+	return 0;
     }
 
-    for (j=1; j<=list[0]; j++) {
-	if (list[j] == LISTSEP) {
+    for (i=1; i<=pmod->list[0]; i++) {
+	vi = pmod->list[i];
+	if (vi == LISTSEP) {
 	    continue;
 	}
-	if (list[j] >= dset->v) {
+	if (vi >= dset->v) {
 	    gretl_errmsg_set(_(errmsg));
 	    return E_DATA;
 	}
-	label = series_get_label(dset, list[j]);
-	*rword = '\0';
-	sscanf(label, "%15s", rword);
-	if (!strcmp(rword, _("Replaced"))) {
-	    repl = 0;
-	    sscanf(label, "%*s %*s %*s %d", &repl);
-	    if (repl >= mc) {
-		gretl_errmsg_set(_(errmsg));
-		return E_DATA;
-	    }
+	if (series_get_mtime(dset, vi) > pmod->esttime) {
+	    gretl_errmsg_set(_(errmsg));
+	    return E_DATA;
 	}
     }
 

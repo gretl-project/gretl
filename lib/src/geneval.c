@@ -56,10 +56,10 @@
 # define LHDEBUG 0
 #endif
 
-/* There are some special cases that need fixing before this 
-   is safe for general use (2014-07-13)
+/* 2014-07-28: I think this is OK now, but for the 1.9.91 release
+   we'll play safe and disable it.
 */
-#define TRY_SAVE_AUX 1
+#define TRY_SAVE_AUX 0
 
 #define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
 #define SERIES_ENSURE_FINITE 1  /* debatable */
@@ -13606,9 +13606,11 @@ static int save_generated_var (parser *p, PRN *prn)
 	    edit_matrix(p);
 	    prechecked = 1;
 	}
+#if TRY_SAVE_AUX
 	if (!prechecked && p->callcount > 0 && r->t == MAT) {
 	    prechecked = 1;
 	}
+#endif
 	if (!prechecked && gretl_matrix_xna_check(p->lh.m1)) {
 	    set_gretl_warning(W_GENNAN);
 	}
