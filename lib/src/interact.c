@@ -4306,10 +4306,10 @@ static void print_info (gretlopt opt, DATASET *dset, PRN *prn)
    if anything went wrong, and reset gretl_errno to zero.
 
    If we're looping (that is, if a loop is in progress at the
-   current level of function execution), that's all, but if
-   not then:
+   current level of function execution) and @loop_force is 0,
+   that's all, but if not then:
 
-   (a) print the model (this requires special handling inside
+   (a) print the model (this may require special handling inside
    loops); 
 
    (b) if the user has employed the "name <- command" mechanism,
@@ -4325,14 +4325,14 @@ static void print_info (gretlopt opt, DATASET *dset, PRN *prn)
 */
 
 static int print_save_model (MODEL *pmod, DATASET *dset,
-			     gretlopt opt, PRN *prn, 
-			     ExecState *s)
+			     gretlopt opt, int loop_force,
+			     PRN *prn, ExecState *s)
 {
     int err = pmod->errcode;
 
     if (!err) {
 	set_gretl_errno(0);
-	if (!gretl_looping_currently()) {
+	if (!gretl_looping_currently() || loop_force) {
 	    int havename = *s->cmd->savename != '\0';
 
 	    if (havename) {
@@ -4988,7 +4988,8 @@ static int do_end_restrict (ExecState *s, DATASET *dset)
 		if (opt & (OPT_Q | OPT_S)) {
 		    printopt = OPT_Q;
 		}
-		print_save_model(s->pmod, dset, printopt, s->prn, s);
+		print_save_model(s->pmod, dset, printopt, 1, 
+				 s->prn, s);
 	    }
 	}
     } else {
@@ -5182,7 +5183,7 @@ static int add_omit_save (CMD *cmd)
 	/* not saving if given the --lm option */
 	return !(cmd->opt & OPT_L);
     } else {
-	/* omit: not saving if given the --wald option */
+	/* omit: not saving if given the --test-only option */
 	return !(cmd->opt & OPT_W);
     }
 }
@@ -5743,13 +5744,13 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case WLS:
 	clear_model(model);
 	*model = lsq(cmd->list, dset, cmd->ci, cmd->opt);
-	err = print_save_model(model, dset, cmd->opt, prn, s);
+	err = print_save_model(model, dset, cmd->opt, 0, prn, s);
 	break;
 	
     case MPOLS:
 	clear_model(model);
 	*model = mp_ols(cmd->list, dset);
-	err = print_save_model(model, dset, cmd->opt, prn, s);
+	err = print_save_model(model, dset, cmd->opt, 0, prn, s);
 	break;
 
     case AR:
@@ -5768,7 +5769,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    *model = arch_model(cmd->list, cmd->order, dset,
 				cmd->opt);
 	}
-	err = print_save_model(model, dset, cmd->opt, prn, s);
+	err = print_save_model(model, dset, cmd->opt, 0, prn, s);
 	break;
 
     case ARBOND:
@@ -5835,7 +5836,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = 1;
 	    break;
 	}
-	err = print_save_model(model, dset, cmd->opt, prn, s);
+	err = print_save_model(model, dset, cmd->opt, 0, prn, s);
 	break;
 
     case GMM:
@@ -5887,7 +5888,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 		}
 		clear_model(model);
 		*model = mymod;
-		print_save_model(model, dset, popt, prn, s);
+		print_save_model(model, dset, popt, 1, prn, s);
 	    } 
 	} else if (cmd->ci == ADD) {
 	    err = add_test(model, cmd->list, dset, cmd->opt, prn);
@@ -6010,7 +6011,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 		   !strcmp(cmd->param, "gmm")) {
 	    clear_model(model);
 	    *model = nl_model(dset, cmd->opt, prn);
-	    err = print_save_model(model, dset, cmd->opt, prn, s);
+	    err = print_save_model(model, dset, cmd->opt, 0, prn, s);
 	} else if (!strcmp(cmd->param, "restrict")) {
 	    err = do_end_restrict(s, dset);
 	} else if (!strcmp(cmd->param, "foreign")) {
