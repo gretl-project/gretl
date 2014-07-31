@@ -388,7 +388,10 @@ double hac_weight (int kern, int h, int i)
 static int lag_trunc_param (int kern, int T)
 {
     if (kern == KERNEL_BARTLETT) {
-	return (int) pow((double) T, 2.0 / 9);
+	/* Newey and West (1994) */
+	return (int) 4.0 * (pow((double) T/100.0, 2.0 / 9));
+	/* Hall gives "O(T^{2/9})" */
+	/* return (int) pow((double) T, 2.0 / 9); */
     } else if (kern == KERNEL_PARZEN) {
 	return (int) pow((double) T, 4.0 / 25);
     } else {
@@ -397,102 +400,89 @@ static int lag_trunc_param (int kern, int T)
 }
 
 /* Newey and West's data-based bandwidth selection, based on
-   the exposition in A. Hall, "Generalized Method of Moments"
-   (Oxford, 2005), p. 82, and Newey and West's 1994 paper in
-   Review of Economic Studies, pp. 634-5.
+   the exposition in their 1994 paper in Review of Economic
+   Studies, pp. 634-5. See also A. Hall, "Generalized Method
+   of Moments" (Oxford, 2005), p. 82.
 */
 
-int newey_west_bandwidth (const gretl_matrix *f, 
+int newey_west_bandwidth (const gretl_matrix *H, 
 			  const gretl_matrix *w,
-			  int kern, int *h, double *bt)
+			  int kern, int *m, double *b)
 {
-    /* kernel-specific parameter, c_\gamma: prior to
-       2014-07-24 we were using the value 1.4117 for the
-       Bartlett kernel, as printed in Hall's book, but
-       this seems to be a typo.
-    */
+    /* kernel-specific parameter, c_\gamma */
     const double cg[] = { 1.1447, 2.6614, 1.3221 };
-    double *sigma = NULL;
-    double ftw0, ftwj, wi;
+    double sigma;
+    double htw0, htwj, wi;
     double s1, s0, g, p;
-    int T = f->rows;
-    int q = f->cols;
+    int T = H->rows;
+    int k = H->cols;
     int n, i, j, t;
     int err = 0;
 
-#if NW_DEBUG
-    gretl_matrix_print(f, "f, in newey_west_bandwidth");
-#endif
-
     n = lag_trunc_param(kern, T);
-    sigma = malloc((n + 1) * sizeof *sigma);
-
-    if (sigma == NULL) {
-	return E_ALLOC;
-    }
 
     /* calculate sigma_0 */
-    sigma[0] = 0;
+    sigma = 0;
     for (t=1; t<T; t++) {
-	ftw0 = 0.0;
-	for (i=0; i<q; i++) {
+	htw0 = 0.0;
+	for (i=0; i<k; i++) {
 	    wi = w != NULL ? w->val[i] : 1.0;
-	    ftw0 += gretl_matrix_get(f, t, i) * wi;
+	    htw0 += gretl_matrix_get(H, t, i) * wi;
 	}
-	sigma[0] += ftw0 * ftw0;
+	sigma += htw0 * htw0;
     }
-    sigma[0] /= T-1;
+    sigma /= T-1;
 
     /* initialize \hat{s}^{(1)} and \hat{s}^{(0)} */
     s1 = 0;
-    s0 = sigma[0];
+    s0 = sigma;
+
+#if NW_DEBUG
+    fprintf(stderr, "T = %d, sigma0 = %g\n", T, sigma);
+#endif
 
     /* calculate \sigma_1 to \sigma_n and cumulate the \hat{s} values */
     for (j=1; j<=n; j++) {
-	sigma[j] = 0.0;
+	sigma = 0;
 	for (t=j+1; t<T; t++) {
-	    ftw0 = ftwj = 0.0;
-	    for (i=0; i<q; i++) {
+	    htw0 = htwj = 0.0;
+	    for (i=0; i<k; i++) {
 		wi = w != NULL ? w->val[i] : 1.0;
-		ftw0 += gretl_matrix_get(f, t, i) * wi;
-		ftwj += gretl_matrix_get(f, t-j, i) * wi;
+		htw0 += gretl_matrix_get(H, t, i) * wi;
+		htwj += gretl_matrix_get(H, t-j, i) * wi;
 	    }
-	    sigma[j] += ftw0 * ftwj;
+	    sigma += htw0 * htwj;
 	}
-	sigma[j] /= T-1;
+	sigma /= T-1;
 	if (kern == KERNEL_BARTLETT) {
-	    s1 += 2 * j * sigma[j];
+	    s1 += 2 * j * sigma;
 	} else {
-	    s1 += 2 * j * j * sigma[j];
+	    s1 += 2 * j * j * sigma;
 	}
-	s0 += 2 * sigma[j];
-    }
-
+	s0 += 2 * sigma;
 #if NW_DEBUG
-    for (j=0; j<=n; j++) {
-	fprintf(stderr, "sigma[%d] = %.8g\n", j, sigma[j]);
-    }
+	fprintf(stderr, "sigma[%d] = %g\n", j, sigma);
 #endif
+    }
 
     p = (kern == KERNEL_BARTLETT)? 1.0/3.0 : 1.0/5.0;
     g = cg[kern] * pow((s1 / s0) * (s1 / s0), p);
-    *bt = g * pow((double) T, p);
-    *h = (int) floor(*bt);
+    *b = g * pow((double) T, p);
+    *m = (int) floor(*b);
 
 #if NW_DEBUG
-    fprintf(stderr, "s1=%.8g, s0=%.8g, gamma=%.8g, bt=%.8g, h=%d\n",
-	    s1, s0, g, *bt, *h);
+    fprintf(stderr, "s1=%g, s0=%g, gamma=%g, b=%g, m=%d\n",
+	    s1, s0, g, *b, *m);
 #endif
 
-    if (*bt > T/2.0) {
+    if (*b > T / 2.0) {
 	/* FIXME arbitrary truncation in case this method has gone
 	   wonky! */
-	fprintf(stderr, "newey_west_bandwidth: got wonky result %g\n", *bt);
-	*bt = T/2.0;
-	*h = (int) floor(*bt);
+	fprintf(stderr, "newey_west_bandwidth: invalid result %d (s^(0)=%g)\n", 
+		*m, s0);
+	*b = T / 2.0;
+	*m = (int) floor(*b);
     }
-    
-    free(sigma);
 
     return err;
 }
@@ -578,27 +568,27 @@ int maybe_limit_VAR_coeffs (gretl_matrix *A,
 			    gretl_matrix *X,
 			    gretl_matrix *E)
 {
-    gretl_matrix *U = NULL;
-    gretl_matrix *S = NULL;
-    gretl_matrix *V = NULL;
+    gretl_matrix *B = NULL;
+    gretl_matrix *D = NULL;
+    gretl_matrix *C = NULL;
     gretl_matrix *T = NULL;
     int i, k = A->rows;
     int amod = 0;
     int err;
 
-    err = gretl_matrix_SVD(A, &U, &S, &V);
+    err = gretl_matrix_SVD(A, &B, &D, &C);
 
     if (!err) {
 	for (i=0; i<k; i++) {
-	    if (S->val[i] > 0.97) {
-		S->val[i] = 0.97;
+	    if (D->val[i] > 0.97) {
+		D->val[i] = 0.97;
 		amod = 1;
 	    }
 	}
 	if (amod) {
 	    /* "shrink" A */
-	    T = gretl_matrix_dot_op(U, S, '*', &err);
-	    gretl_matrix_multiply(T, V, A);
+	    T = gretl_matrix_dot_op(B, D, '*', &err);
+	    gretl_matrix_multiply(T, C, A);
 	}
     }
 
@@ -606,9 +596,9 @@ int maybe_limit_VAR_coeffs (gretl_matrix *A,
 	err = revise_VAR_residuals(A, Y, X, E);
     }
 
-    gretl_matrix_free(U);
-    gretl_matrix_free(S);
-    gretl_matrix_free(V);
+    gretl_matrix_free(B);
+    gretl_matrix_free(D);
+    gretl_matrix_free(C);
     gretl_matrix_free(T);
 
     return err;
@@ -661,7 +651,10 @@ static int nw_prewhiten (gretl_matrix *H, gretl_matrix **pA)
 	}
     }
 
+#if NW_DEBUG
+    gretl_matrix_print(A, "prewhite A-hat");
     gretl_matrix_print(H, "prewhitened H");
+#endif
 
     if (!err) {
 	*pA = gretl_matrix_copy(A);
@@ -685,40 +678,35 @@ static gretl_matrix *newey_west_H (const gretl_matrix *X,
 				   const gretl_matrix *u,
 				   gretl_matrix **pw)
 {
-    gretl_matrix *H = NULL;
+    gretl_matrix *H;
+    double xtj;
+    int T = X->rows;
+    int k = X->cols;
+    int j, t;
 
-    if (X == NULL) {
-	H = gretl_matrix_copy(u);
-    } else {
-	double xtj;
-	int T = X->rows;
-	int k = X->cols;
-	int j, t;
+    H = gretl_matrix_alloc(T, k);
 
-	H = gretl_matrix_alloc(T, k);
+    if (H != NULL) {
+	int make_w = (pw != NULL && k > 1);
 
-	if (H != NULL) {
-	    int make_w = (pw != NULL && k > 1);
-
-	    for (j=0; j<k; j++) {
-		for (t=0; t<T; t++) {
-		    xtj = gretl_matrix_get(X, t, j);
-		    gretl_matrix_set(H, t, j, xtj * u->val[t]);
-		    if (make_w && j == 0 && t > 0) {
-			if (xtj != gretl_matrix_get(X, t-1, j)) {
-			    make_w = 0;
-			}
+	for (j=0; j<k; j++) {
+	    for (t=0; t<T; t++) {
+		xtj = gretl_matrix_get(X, t, j);
+		gretl_matrix_set(H, t, j, xtj * u->val[t]);
+		if (make_w && j == 0 && t > 0) {
+		    if (xtj != gretl_matrix_get(X, t-1, j)) {
+			make_w = 0;
 		    }
 		}
 	    }
+	}
 
-	    if (make_w) {
-		gretl_matrix *w = gretl_unit_matrix_new(k, 1);
+	if (make_w) {
+	    gretl_matrix *w = gretl_unit_matrix_new(k, 1);
 
-		if (w != NULL) {
-		    w->val[0] = 0;
-		    *pw = w;
-		}
+	    if (w != NULL) {
+		w->val[0] = 0;
+		*pw = w;
 	    }
 	}
     }
@@ -750,26 +738,16 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
 	    kern, prewhiten);
 #endif
 
-    /* Prior to 2014-07-24 we did prewhitening and data-based
-       bandwidth selection based on the residuals alone. I'm
-       preserving that as an option here for now, for testing
-       purposes, pending a full resolution of this issue.
-    */
-    int oldstyle = 0;
-
     if (prewhiten || data_based) {
-	if (oldstyle) {
-	    H = newey_west_H(NULL, uhat, NULL);
-	} else {
-	    H = newey_west_H(X, uhat, &w);
-	}
-	if (H == NULL) {
-	    *err = E_ALLOC;
-	    return NULL;
-	}
+	H = newey_west_H(X, uhat, &w);
+    } else {
+	H = newey_west_H(X, uhat, NULL);
     }
 
-    if (prewhiten) {
+    if (H == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    } else if (prewhiten) {
 	*err = nw_prewhiten(H, &A);
     }
 
@@ -801,28 +779,15 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
     }
 
     if (!*err) {
-	const gretl_matrix *Z = X;
-	const double *u = uhat->val;
-	double wj, uu;
+	double wj;
 
-	if ((prewhiten || data_based) && !oldstyle) {
-	    /* X and uhat are already combined in H */
-	    Z = H;
-	    u = NULL;
-	}
-	    
 	for (j=0; j<=p; j++) {
 	    /* cumulate running sum of Gamma-hat terms */
 	    gretl_matrix_zero(Gj);
 
 	    for (t=j; t<T; t++) {
 		/* W(t)-transpose * W(t-j) */
-		wtw(Wtj, Z, k, t, j);
-		if (u != NULL) {
-		    uu = u[t] * u[t-j];
-		    gretl_matrix_multiply_by_scalar(Wtj, uu);
-		}
-		/* DM equation (9.36), p. 363 */
+		wtw(Wtj, H, k, t, j);
 		gretl_matrix_add_to(Gj, Wtj);
 	    }
 
@@ -837,7 +802,6 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
 		gretl_matrix_multiply_by_scalar(Gj, wj);
 	    }
 
-	    /* DM equation (9.38), p. 364 */
 	    gretl_matrix_add_to(XOX, Gj);
 	}
     }
@@ -860,9 +824,9 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
 
  bailout:
 
+    gretl_matrix_free(H);
     gretl_matrix_free(Wtj);
     gretl_matrix_free(Gj);
-    gretl_matrix_free(H);
     gretl_matrix_free(A);
     gretl_matrix_free(w);
 
@@ -922,6 +886,11 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
 	gretl_model_set_full_vcv_info(pmod, vi.vmaj, vi.vmin,
 				      vi.order, vi.flags,
 				      vi.bw);
+	if (!na(vi.bw)) {
+	    gretl_model_set_double(pmod, "hac_bw", vi.bw);
+	} else {
+	    gretl_model_set_double(pmod, "hac_bw", (double) vi.order);
+	}
     }	
 
     gretl_matrix_free(X);
