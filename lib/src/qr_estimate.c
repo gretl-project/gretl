@@ -385,12 +385,21 @@ double hac_weight (int kern, int h, int i)
 
 #define NW_DEBUG 0
 
-static int lag_trunc_param (int kern, int T)
+/* Newey and West's parameter 'n' for truncation when
+   calculating s^(0) and s^(1) in the course of doing
+   the data-determined bandwidth thing.
+*/
+
+static int lag_trunc_param (int kern, int prewhitened, int T)
 {
     if (kern == KERNEL_BARTLETT) {
 	/* Newey and West (1994) */
-	return (int) 4.0 * (pow((double) T/100.0, 2.0 / 9));
-	/* Hall gives "O(T^{2/9})" */
+	if (prewhitened) {
+	    return (int) (3.0 * pow(T/100.0, 2.0 / 9));
+	} else {
+	    return (int) (4.0 * pow(T/100.0, 2.0 / 9));
+	}
+	/* Hall just gives "O(T^{2/9})" */
 	/* return (int) pow((double) T, 2.0 / 9); */
     } else if (kern == KERNEL_PARZEN) {
 	return (int) pow((double) T, 4.0 / 25);
@@ -407,7 +416,8 @@ static int lag_trunc_param (int kern, int T)
 
 int newey_west_bandwidth (const gretl_matrix *H, 
 			  const gretl_matrix *w,
-			  int kern, int *m, double *b)
+			  int kern, int prewhitened,
+			  int *m, double *b)
 {
     /* kernel-specific parameter, c_\gamma */
     const double cg[] = { 1.1447, 2.6614, 1.3221 };
@@ -419,7 +429,7 @@ int newey_west_bandwidth (const gretl_matrix *H,
     int n, i, j, t;
     int err = 0;
 
-    n = lag_trunc_param(kern, T);
+    n = lag_trunc_param(kern, prewhitened, T);
 
     /* calculate sigma_0 */
     sigma = 0;
@@ -502,7 +512,7 @@ static int hac_recolor (gretl_matrix *XOX, gretl_matrix *A)
 	double aij;
 	int i, j;
 
-	/* we won't need A hereafter, so make A into (I - A) */
+	/* we won't need A hereafter, so make A into (I-A) */
 	for (i=0; i<k; i++) {
 	    for (j=0; j<k; j++) {
 		aij = gretl_matrix_get(A, i, j);
@@ -514,8 +524,10 @@ static int hac_recolor (gretl_matrix *XOX, gretl_matrix *A)
     }
 
     if (!err) {
-	/* S = (I-A)^{-1} * XOX * (I-A)^{-1}' */
-	err = gretl_matrix_qform(A, GRETL_MOD_NONE,
+	/* S = (I-A)^{-1} * XOX * (I-A)^{-1}', but note
+	   that our A is the transpose of Newey and West's
+	*/
+	err = gretl_matrix_qform(A, GRETL_MOD_TRANSPOSE,
 				 XOX, S, GRETL_MOD_NONE);
     }
 
@@ -767,7 +779,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
     /* determine the bandwidth setting */
 
     if (data_based) {
-	*err = newey_west_bandwidth(H, w, kern, &p, &bt);
+	*err = newey_west_bandwidth(H, w, kern, prewhiten, &p, &bt);
 	if (*err) {
 	    goto bailout;
 	}
