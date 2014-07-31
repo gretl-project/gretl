@@ -1259,8 +1259,8 @@ static int gmm_HAC (gretl_matrix *E, gretl_matrix *V, hac_info *hinfo)
     }
 
     if (data_based_hac_bandwidth()) {
-	err = newey_west_bandwidth(E, NULL, hinfo->kern, &hinfo->h,
-				   &hinfo->bt);
+	err = newey_west_bandwidth(E, NULL, hinfo->kern, hinfo->whiten,
+				   &hinfo->h, &hinfo->bt);
 	if (err) {
 	    return err;
 	}
@@ -1292,7 +1292,7 @@ static int gmm_HAC (gretl_matrix *E, gretl_matrix *V, hac_info *hinfo)
     }
 
     if (hinfo->whiten) {
-	/* now we "re-color" */
+	/* now we have to recolor */
 	double aij;
 	int j;
 
@@ -1307,8 +1307,8 @@ static int gmm_HAC (gretl_matrix *E, gretl_matrix *V, hac_info *hinfo)
 
 	err = gretl_invert_general_matrix(A);
 
-	/* form V = (I-A)^{-1} * V * (I-A)^{-1}' */
 	if (!err) {
+	    /* form V = (I-A)^{-1} * V * (I-A)^{-1}' */
 	    gretl_matrix_copy_values(Tmp, V);
 	    gretl_matrix_qform(A, GRETL_MOD_NONE,
 			       Tmp, V, GRETL_MOD_NONE);

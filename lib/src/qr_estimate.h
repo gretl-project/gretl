@@ -35,7 +35,8 @@ int maybe_limit_VAR_coeffs (gretl_matrix *A,
 
 int newey_west_bandwidth (const gretl_matrix *f, 
 			  const gretl_matrix *w,
-			  int kern, int *h, double *bt);
+			  int kern, int prewhitened,
+			  int *h, double *bt);
 
 gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
 		       VCVInfo *vi, int *err);

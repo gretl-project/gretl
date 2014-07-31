@@ -2446,29 +2446,45 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
 {
     int r = m->rows;
     int c = m->cols;
-    int i, j, k = 0;
-    double *val;
-    size_t sz = r * c * sizeof *val;
+    int i, j;
 
-    val = mval_malloc(sz);
-    if (val == NULL) {
-	return E_ALLOC;
-    }
+    if (r == c) {
+	double mij, mji;
+	int n = r - 1;
 
-    memcpy(val, m->val, sz);
-
-    m->rows = c;
-    m->cols = r;
-
-    for (j=0; j<c; j++) {
-	for (i=0; i<r; i++) {
-	    gretl_matrix_set(m, j, i, val[k++]);
+	for (i=0; i<n; i++) {
+	    for (j=i+1; j<c; j++) {
+		mij = gretl_matrix_get(m, i, j);
+		mji = gretl_matrix_get(m, j, i);
+		gretl_matrix_set(m, i, j, mji);
+		gretl_matrix_set(m, j, i, mij);
+	    }
 	}
+    } else {	
+	size_t sz = r * c * sizeof(double);
+	double *val;
+	int k = 0;
+
+	val = mval_malloc(sz);
+	if (val == NULL) {
+	    return E_ALLOC;
+	}
+
+	memcpy(val, m->val, sz);
+
+	m->rows = c;
+	m->cols = r;
+
+	for (j=0; j<c; j++) {
+	    for (i=0; i<r; i++) {
+		gretl_matrix_set(m, j, i, val[k++]);
+	    }
+	}
+	
+	mval_free(val);
     }
 
     gretl_matrix_destroy_info(m);
-
-    mval_free(val);
 
     return 0;
 }
