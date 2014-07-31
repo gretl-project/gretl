@@ -56,10 +56,10 @@
 # define LHDEBUG 0
 #endif
 
-/* 2014-07-28: I think this is OK now, but for the 1.9.91 release
-   we'll play safe and disable it.
+/* 2014-07-29: I think this is OK now, but it was disabled for
+   the 1.9.91 release. AC.
 */
-#define TRY_SAVE_AUX 0
+#define TRY_SAVE_AUX 1
 
 #define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
 #define SERIES_ENSURE_FINITE 1  /* debatable */

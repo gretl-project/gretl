@@ -1,3 +1,7 @@
+version 1.9.92, in progress
+- Enable faster execution of assignment statements in loops
+- Fix bug: "omit" would not print full estimates in a loop
+
 2014-07-28 version 1.9.91
 - Add Japanese translation (thanks to Shintaro Nakagawa)
 - Add new functions: curl(), jsonget(), nlines(), kpsscrit(),
