@@ -2490,6 +2490,7 @@ const char *blas_variant_string (void)
 # else
 
 #include <time.h>
+#include <unistd.h>
 
 static gint64 posix_monotonic_time (void)
 {
