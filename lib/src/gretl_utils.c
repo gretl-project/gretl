@@ -2484,14 +2484,45 @@ const char *blas_variant_string (void)
     }
 }
 
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28 && defined(OS_OSX)
-# include <mach/mach_time.h>
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28
+# ifdef OS_OSX
+#  include <mach/mach_time.h>
+# else
+
+#include <time.h>
+
+static gint64 posix_monotonic_time (void)
+{
+    static int clockid = CLOCK_REALTIME;
+    static gboolean checked;
+    struct timespec ts;
+
+    if (!checked) {
+	if (sysconf(_SC_MONOTONIC_CLOCK) >= 0) {
+	    clockid = CLOCK_MONOTONIC;
+	}
+	checked = TRUE;
+    }
+
+    clock_gettime(clockid, &ts);
+
+    g_assert(G_GINT64_CONSTANT(-315569520000000000) < ts.tv_sec &&
+	     ts.tv_sec < G_GINT64_CONSTANT(315569520000000000));
+
+    return (((gint64) ts.tv_sec) * 1000000) + (ts.tv_nsec / 1000);
+}
+
+# endif
 #endif
 
 gint64 gretl_monotonic_time (void)
 {
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28 && defined(OS_OSX)
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28
+# ifdef OS_OSX
     return (gint64) mach_absolute_time();
+# else
+    return posix_monotonic_time();
+# endif
 #else
     return g_get_monotonic_time();
 #endif
