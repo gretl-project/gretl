@@ -157,6 +157,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Have Jacobi SVD in Lapack 3.2 or higher */
 #undef HAVE_LAPACK_3_2
 
+/* Have clock_getttime in libc or librt */
+#undef HAVE_CLOCK_GETTIME
+
 /* Use the GNU R shared library */
 #undef USE_RLIB
 
