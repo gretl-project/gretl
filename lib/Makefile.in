@@ -26,6 +26,7 @@ RLIB_CFLAGS = @RLIB_CFLAGS@
 DARWIN_RPATH = @DARWIN_RPATH@
 SSE2_CFLAGS = @SSE2_CFLAGS@
 AVX_CFLAGS = @AVX_CFLAGS@
+RT_LIB = @RT_LIB@
 
 use_curl = @use_curl@
 ifeq ($(use_curl),yes)
@@ -84,7 +85,7 @@ INSTALLDIRS = $(DESTDIR)$(libdir) $(DESTDIR)$(includedir) $(DESTDIR)$(pkgconfigd
 LIBGRETL = libgretl-1.0.la 
 
 LIBS = $(LAPACK_LIBS) -lm -ldl -lz $(XML_LIBS) \
-	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS) $(CURL_LIBS) $(GSF_LIBS)
+	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS) $(CURL_LIBS) $(GSF_LIBS) $(RT_LIB)
 
 #### End of system configuration section. ####
 
