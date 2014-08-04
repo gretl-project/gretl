@@ -1219,6 +1219,11 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
 
     gretl_model_set_coeff_separator(pmod, dset->varname[bp->depvar2], bp->k1);
 
+    if (pmod->xpx != NULL) {
+	free(pmod->xpx);
+	pmod->xpx = NULL;
+    }
+
     err = biprobit_vcv(pmod, bp, dset, opt);
 
     if (!err) {

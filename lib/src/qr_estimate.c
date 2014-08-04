@@ -488,8 +488,8 @@ int newey_west_bandwidth (const gretl_matrix *H,
     if (*b > T / 2.0) {
 	/* FIXME arbitrary truncation in case this method has gone
 	   wonky! */
-	fprintf(stderr, "newey_west_bandwidth: invalid result %d (s^(0)=%g)\n", 
-		*m, s0);
+	fprintf(stderr, "newey_west_bandwidth (PW=%d): invalid result %d (s^(0)=%g)\n", 
+		prewhitened, *m, s0);
 	*b = T / 2.0;
 	*m = (int) floor(*b);
     }
@@ -524,7 +524,7 @@ static int hac_recolor (gretl_matrix *XOX, gretl_matrix *A)
     }
 
     if (!err) {
-	/* S = (I-A)^{-1} * XOX * (I-A)^{-1}', but note
+	/* NW: "S = (I-A)^{-1} * XOX * (I-A)^{-1}'", but note
 	   that our A is the transpose of Newey and West's
 	*/
 	err = gretl_matrix_qform(A, GRETL_MOD_TRANSPOSE,

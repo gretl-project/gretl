@@ -230,6 +230,7 @@ static int arma_x12 = 0;
 static int arma_hessian = 1;
 static int arima_xdiff = 1;
 static int selvar;
+static int y2var;
 static int offvar;
 static int censvar;
 static int jrank = 1;
@@ -403,6 +404,7 @@ void clear_selector (void)
     default_y = -1;
     default_order = 0;
     selvar = 0;
+    y2var = 0;
     offvar = 0;
     censvar = 0;
     wtvar = 0;
@@ -613,6 +615,19 @@ static void retrieve_heckit_info (MODEL *pmod, int *gotinst)
     }    
 }
 
+static void retrieve_biprobit_info (MODEL *pmod, int *gotinst)
+{
+    /* the biprobit list takes the form:
+       y1 y2 x1 ; x2
+    */
+    if (pmod->list != NULL && pmod->list[0] > 2) {
+	y2var = pmod->list[2];
+    }
+    free(instlist);
+    instlist = gretl_model_get_secondary_list(pmod);
+    *gotinst = instlist != NULL;
+}
+
 static void retrieve_tobit_info (MODEL *pmod)
 {
     double x0 = gretl_model_get_double(pmod, "llimit");
@@ -644,7 +659,7 @@ void selector_from_model (windata_t *vwin)
     }
 
     if (ci == VIEW_MODEL) {
-	/* single-equation model */
+	/* single-equation model (mostly) */
 	MODEL *pmod = (MODEL *) ptr;
 	int sel_ci = pmod->ci;
 	int cv, dv = -1, gotinst = 0;
@@ -765,6 +780,8 @@ void selector_from_model (windata_t *vwin)
 	    }
 	} else if (pmod->ci == TOBIT) {
 	    retrieve_tobit_info(pmod);
+	} else if (pmod->ci == BIPROBIT) {
+	    retrieve_biprobit_info(pmod, &gotinst);
 	}
 
 	if (pmod->opt & OPT_R) {
@@ -4289,6 +4306,15 @@ static int get_nonparam_xvar (void)
     return 0;
 }
 
+static int get_setvar_value (int v)
+{
+    if (v > 0 && v < dataset->v) {
+	return v;
+    } else {
+	return 0;
+    }
+}
+
 /* selector for auxiliary series of some kind */
 
 static void extra_var_box (selector *sr)
@@ -4298,16 +4324,18 @@ static void extra_var_box (selector *sr)
     sr->extra[0] = entry_with_label_and_chooser(sr, NULL, 0,
 						set_extra_var_callback);
 
-    if (sr->ci == WLS && wtvar > 0 && wtvar < dataset->v) {
-	setvar = wtvar;
-    } else if (sr->ci == HECKIT && selvar > 0 && selvar < dataset->v) {
-	setvar = selvar;
-    } else if (sr->ci == INTREG && hivar > 0 && hivar < dataset->v) {
-	setvar = hivar;
-    } else if (sr->ci == COUNTMOD && offvar > 0 && offvar < dataset->v) {
-	setvar = offvar;
-    } else if (sr->ci == DURATION && censvar > 0 && censvar < dataset->v) {
-	setvar = censvar;
+    if (sr->ci == WLS) {
+	setvar = get_setvar_value(wtvar);
+    } else if (sr->ci == HECKIT) {
+	setvar = get_setvar_value(selvar);
+    } else if (sr->ci == INTREG) {
+	setvar = get_setvar_value(hivar);
+    } else if (sr->ci == COUNTMOD) {
+	setvar = get_setvar_value(offvar);
+    } else if (sr->ci == DURATION) {
+	setvar = get_setvar_value(censvar);
+    } else if (sr->ci == BIPROBIT) {
+	setvar = get_setvar_value(y2var);
     } else if (NONPARAM_CODE(sr->ci)) {
 	setvar = get_nonparam_xvar();
     }	

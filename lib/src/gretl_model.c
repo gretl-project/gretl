@@ -1719,6 +1719,25 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		}
 	    }
 	}
+    } else if (pmod->ci == BIPROBIT) {
+	/* not sure what we ought to do here, but for now we'll
+	   return the list of regressors for the first equation
+	*/
+	nx = 0;
+	for (i=3; i<=pmod->list[0]; i++) {
+	    if (pmod->list[i] == LISTSEP) {
+		nx = i - 3;
+		break;
+	    }
+	}
+	if (nx > 0) {
+	    list = gretl_list_new(nx);
+	    if (list != NULL) {
+		for (i=1; i<=nx; i++) {
+		    list[i] = pmod->list[i+2];
+		}
+	    }
+	}
     } else if (ordered_model(pmod)) {
 	nx = pmod->list[0] - 1;
 	list = gretl_list_new(nx);
