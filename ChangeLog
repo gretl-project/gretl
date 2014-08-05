@@ -3,6 +3,8 @@ version 1.9.92, in progress
 - Fix bug: "omit" would not print full estimates in a loop
 - Fix bug: crash when using "Edit/modify model" in GUI for a
   biprobit model
+- Fix bug: "catch" for genr in loops not always setting $error
+  value
 
 2014-07-28 version 1.9.91
 - Add Japanese translation (thanks to Shintaro Nakagawa)
