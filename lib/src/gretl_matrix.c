@@ -2984,7 +2984,7 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
     fputc('\n', stderr);
 }
 
-#define DEFAULT_EQTOL 1.5e-12
+#define DEFAULT_EQTOL 1.0e-9 /* was 1.5e-12 */
 
 static double eq_tol = DEFAULT_EQTOL;
 
@@ -2997,7 +2997,7 @@ static double eq_tol = DEFAULT_EQTOL;
  * gretl_invert_symmetric_matrix()).  The tolerance is the maximum
  * relative difference between corresponding off-diagonal elements that
  * is acceptable in a supposedly "symmetric" matrix.  The default
- * value is 1.5e-12.
+ * value is 1.0e-9.
  */
 
 void gretl_matrix_set_equals_tolerance (double tol)

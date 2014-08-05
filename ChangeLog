@@ -1,6 +1,8 @@
 version 1.9.92, in progress
 - Enable faster execution of assignment statements in loops
 - Fix bug: "omit" would not print full estimates in a loop
+- Fix bug: crash when using "Edit/modify model" in GUI for a
+  biprobit model
 
 2014-07-28 version 1.9.91
 - Add Japanese translation (thanks to Shintaro Nakagawa)
