@@ -2794,6 +2794,7 @@ static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 	    j, loop_cmd_catch(loop, j));
 #endif
     if (loop_cmd_catch(loop, j)) {
+	set_gretl_errno(err);
 	err = 0;
     } else if (!libset_get_bool(HALT_ON_ERR)) {
 	errmsg(err, prn);
