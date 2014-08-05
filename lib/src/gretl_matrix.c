@@ -2984,7 +2984,7 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
     fputc('\n', stderr);
 }
 
-#define DEFAULT_EQTOL 1.0e-9 /* was 1.5e-12 */
+#define DEFAULT_EQTOL 1.0e-9 /* 2014-08-05: was 1.5e-12 */
 
 static double eq_tol = DEFAULT_EQTOL;
 
