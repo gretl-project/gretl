@@ -917,20 +917,33 @@ int gretl_rand_int_minmax (int *a, int n, int min, int max)
 	    a[i] = min;
 	}
     } else {
+	int offset = 0;
+
+	if (min < 0) {
+	    offset = -min;
+	    max += offset;
+	    min += offset;
+	}
+
 	for (i=0; i<n; i++) {
-	    a[i] = mt_int_range(min, max + 1);
+	    a[i] = mt_int_range(min, max + 1) - offset;
 	}
     }
 
     return err;
 }
 
-static int already_selected (double *a, int n, double val)
+static int already_selected (double *a, int n, double val,
+			     int offset)
 {
     int i;
 
     for (i=0; i<n; i++) {
-	if (a[i] == val) {
+	if (offset > 0) {
+	    if (a[i] == val - offset) {
+		return 1;
+	    }
+	} else if (a[i] == val) {
 	    return 1;
 	}
     }
@@ -967,17 +980,23 @@ int gretl_rand_uniform_int_minmax (double *a, int t1, int t2,
 	    a[t] = min;
 	}
     } else {
+	int i = 0, offset = 0;
 	double x;
-	int i = 0;
+
+	if (min < 0) {
+	    offset = -min;
+	    max += offset;
+	    min += offset;
+	}
 
 	for (t=t1; t<=t2; t++) {
 	    x = mt_int_range(min, max + 1);
 	    if (opt & OPT_O) {
-		while (already_selected(a, i, x)) {
+		while (already_selected(a, i, x, offset)) {
 		    x = mt_int_range(min, max + 1);
 		}
 	    }
-	    a[t] = x;
+	    a[t] = x - offset;
 	    i++;
 	}
     }
