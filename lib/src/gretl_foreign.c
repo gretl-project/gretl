@@ -1338,7 +1338,7 @@ static void write_R_io_funcs (FILE *fp)
     fputs("  } else if (is.matrix(x)) {\n", fp);
     fputs("    fname <- paste(prefix, sx, \".mat\", sep=\"\")\n", fp);
     fputs("    write(dim(x), fname)\n", fp);
-    fputs("    write(t(x), file=fname, ncolumns=ncol(x), append=TRUE)\n", fp);
+    fputs("    write(format(t(x), digits=15), file=fname, ncolumns=ncol(x), append=TRUE)\n", fp);
     fputs("  }\n", fp);
     fputs("  gretlmsg <- paste(\"wrote\", fname, \"\\n\")\n", fp);
     fputs("  cat(gretlmsg)\n", fp);
