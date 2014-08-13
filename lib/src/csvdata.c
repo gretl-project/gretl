@@ -3298,8 +3298,13 @@ static int real_import_csv (const char *fname,
 	int merge = dset->Z != NULL;
 	gretlopt merge_opt = 0;
 
-	if (merge && (opt & OPT_T)) {
-	    merge_opt = OPT_T;
+	if (merge) {
+	    if (opt & OPT_T) {
+		merge_opt |= OPT_T;
+	    }
+	    if (opt & OPT_U) {
+		merge_opt |= OPT_U;
+	    }
 	}
 
 	err = merge_or_replace_data(dset, &c->dset, merge_opt, prn);

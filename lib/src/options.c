@@ -109,6 +109,7 @@ struct gretl_option gretl_opts[] = {
     { APPEND,   OPT_L, "cols", 2 },
     { APPEND,   OPT_S, "sheet", 2 },
     { APPEND,   OPT_V, "verbose", 0 },
+    { APPEND,   OPT_U, "update-overlap", 0 },
     { ARBOND,   OPT_A, "asymptotic", 0 },
     { ARBOND,   OPT_D, "time-dummies", 1 },
     { ARBOND,   OPT_H, "orthdev", 0 },

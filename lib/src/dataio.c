@@ -1672,7 +1672,8 @@ static int merge_lengthen_series (DATASET *dset,
  * @dset: dataset struct.
  * @addset: dataset to be merged in.
  * @opt: may include OPT_T to force a time-series interpretation
- * when appending to a panel dataset.
+ * when appending to a panel dataset; may include OPT_U to update
+ * values of overlapping observations.
  * @prn: print struct to accept messages.
  * 
  * Attempt to merge the content of a newly opened data file into
@@ -1684,6 +1685,8 @@ static int merge_lengthen_series (DATASET *dset,
 static int merge_data (DATASET *dset, DATASET *addset,
 		       gretlopt opt, PRN *prn)
 {
+    int update_overlap = (opt & OPT_U);
+    int orig_n = dset->n;
     int dayspecial = 0;
     int yrspecial = 0;
     int addsimple = 0;
@@ -1765,9 +1768,9 @@ static int merge_data (DATASET *dset, DATASET *addset,
     if (!err && addpanel) {
 	err = panel_append_special(addvars, dset, addset, 
 				   opt, prn);
-    } else if (!err) { 
+    } else if (!err) {
 	int k = dset->v;
-	int i, t;
+	int i, t, tmin = 0;
 
 	if (addvars > 0 && dataset_add_series(dset, addvars)) {
 	    merge_error(_("Out of memory!\n"), prn);
@@ -1776,12 +1779,10 @@ static int merge_data (DATASET *dset, DATASET *addset,
 
 	for (i=1; i<addset->v && !err; i++) {
 	    int v = series_index(dset, addset->varname[i]);
-	    int newvar = 0;
+	    int newvar = v >= k;
 
-	    if (v >= k) {
-		/* a new variable */
+	    if (newvar) {
 		v = k++;
-		newvar = 1;
 		strcpy(dset->varname[v], addset->varname[i]);
 		copy_varinfo(dset->varinfo[v], addset->varinfo[i]);
 		if (is_string_valued(addset, i) &&
@@ -1793,7 +1794,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 		    series_attach_string_table(dset, v, st);
 		    series_attach_string_table(addset, i, NULL);
 		}
-	    } 
+	    }
 
 	    if (dayspecial) {
 		char obs[OBSLEN];
@@ -1823,7 +1824,12 @@ static int merge_data (DATASET *dset, DATASET *addset,
 		    }
 		}		
 	    } else {
-		for (t=0; t<dset->n; t++) {
+		if (!newvar && !update_overlap) {
+		    tmin = orig_n;
+		} else {
+		    tmin = 0;
+		}
+		for (t=tmin; t<dset->n; t++) {
 		    if (t >= offset && t - offset < addset->n) {
 			dset->Z[v][t] = addset->Z[i][t - offset];
 		    } else if (newvar) {
