@@ -106,17 +106,13 @@ element. A few more examples are given in table \ref{tab:printf-ex}.
 \label{sec:sprintf}
 
 A closely related effect can be achieved via the \cmd{sprintf}
-function: instead of being printed directly the result is stored in a
-named string variable, as in
+command: instead of being printed directly the result is stored in a
+named string variable (given as the first argument), as in
 \begin{code}
-  string G = sprintf("x = %*.*f\n", width, precision, x)
+  sprintf G, "x = %*.*f\n", width, precision, x
 \end{code}
 after which the variable \texttt{G} can be the object of further
 processing.
-
-\tip{Both \cmd{printf} and \cmd{sprintf} started their career as
-  commands. Both of them can now be used as functions too. It's likely
-  that at some point \cmd{sprintf} will retain the function form only.}
 
 \subsection{Output to a file}
 \label{sec:outfile}
