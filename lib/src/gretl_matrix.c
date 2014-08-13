@@ -11427,6 +11427,8 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
     m = (amod)? A->cols : A->rows;
     k = (amod)? A->rows : A->cols;
 
+    fprintf(stderr, "gretl_matrix_qform:m = %d, k = %d\n", m, k);
+
     if (k != X->rows) {
 	fprintf(stderr, "gretl_matrix_qform: %s is (%d x %d) but X is (%d x %d)\n", 
 		(amod)? "A'" : "A", m, k, X->rows, X->cols);

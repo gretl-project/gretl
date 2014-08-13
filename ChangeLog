@@ -4,7 +4,7 @@ version 1.9.92, in progress
 - Fix bug: crash when using "Edit/modify model" in GUI for a
   biprobit model
 - Fix bug: "catch" for genr in loops not always setting $error
-  value
+  value on error
 - Fix bug: incorrect behavior of randgen() for uniform values
   when the given lower bound is negative 
 
