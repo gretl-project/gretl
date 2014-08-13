@@ -1770,7 +1770,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 				   opt, prn);
     } else if (!err) {
 	int k = dset->v;
-	int i, t, tmin = 0;
+	int i, t;
 
 	if (addvars > 0 && dataset_add_series(dset, addvars)) {
 	    merge_error(_("Out of memory!\n"), prn);
@@ -1779,7 +1779,13 @@ static int merge_data (DATASET *dset, DATASET *addset,
 
 	for (i=1; i<addset->v && !err; i++) {
 	    int v = series_index(dset, addset->varname[i]);
-	    int newvar = v >= k;
+	    int tmin, newvar = v >= k;
+
+	    if (!newvar && !update_overlap) {
+		tmin = orig_n;
+	    } else {
+		tmin = 0;
+	    }
 
 	    if (newvar) {
 		v = k++;
@@ -1800,7 +1806,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 		char obs[OBSLEN];
 		int s;
 
-		for (t=0; t<dset->n; t++) {
+		for (t=tmin; t<dset->n; t++) {
 		    ntodate(obs, t, dset);
 		    s = dateton(obs, addset);
 		    if (s >= 0 && s < addset->n) {
@@ -1819,16 +1825,11 @@ static int merge_data (DATASET *dset, DATASET *addset,
 		}
 		for (s=0; s<addset->n; s++) {
 		    t = dateton(addset->S[s], dset);
-		    if (t >= 0 && t < dset->n) {
+		    if (t >= tmin && t < dset->n) {
 			dset->Z[v][t] = addset->Z[i][s];
 		    }
 		}		
 	    } else {
-		if (!newvar && !update_overlap) {
-		    tmin = orig_n;
-		} else {
-		    tmin = 0;
-		}
 		for (t=tmin; t<dset->n; t++) {
 		    if (t >= offset && t - offset < addset->n) {
 			dset->Z[v][t] = addset->Z[i][t - offset];
@@ -1871,8 +1872,7 @@ static void maybe_fix_calendar_dates (DATASET *dset)
  * merge_or_replace_data:
  * @dset0: original dataset struct.
  * @pdset1: new dataset struct.
- * @opt: may include OPT_T when appending to a panel dataset,
- * to force a time-series interpretation of the added data.
+ * @opt: zero or more option flags.
  * @prn: print struct to accept messages.
  *
  * Given a newly-created dataset, pointed to by @pdset1, either 
@@ -1894,7 +1894,15 @@ int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
     if (dset0->Z != NULL) {
 	/* we have an existing dataset into which the new data
 	   should be merged */
-	err = merge_data(dset0, *pdset1, opt, prn);
+	gretlopt merge_opt = OPT_NONE;
+
+	if (opt & OPT_T) {
+	    merge_opt |= OPT_T;
+	}
+	if (opt & OPT_U) {
+	    merge_opt |= OPT_U;
+	}
+	err = merge_data(dset0, *pdset1, merge_opt, prn);
 	destroy_dataset(*pdset1);
     } else {
 	/* starting from scratch */

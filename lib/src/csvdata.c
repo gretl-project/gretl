@@ -3294,20 +3294,10 @@ static int real_import_csv (const char *fname,
     }
 
     if (!joining(c)) {
+	int merge = (dset->Z != NULL);
+
 	/* not doing a special "join" operation */
-	int merge = dset->Z != NULL;
-	gretlopt merge_opt = 0;
-
-	if (merge) {
-	    if (opt & OPT_T) {
-		merge_opt |= OPT_T;
-	    }
-	    if (opt & OPT_U) {
-		merge_opt |= OPT_U;
-	    }
-	}
-
-	err = merge_or_replace_data(dset, &c->dset, merge_opt, prn);
+	err = merge_or_replace_data(dset, &c->dset, opt, prn);
 
 	if (!err && newdata && c->descrip != NULL) {
 	    dset->descrip = c->descrip;

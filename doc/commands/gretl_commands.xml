@@ -415,6 +415,10 @@
 	  <effect>see below</effect>
 	</option>
 	<option>
+	  <flag>--update-overlap</flag>
+	  <effect>see below</effect>
+	</option>
+	<option>
 	  <note>See below for additional specialized options</note>
 	</option>
       </options>
@@ -450,6 +454,16 @@
 	to treat the new data as time-invariant, but you can force gretl to
 	treat the new data as time series via the <opt>--time-series</opt>
 	option.  (This option is ignored in all other cases.)
+      </para>
+      <para>
+	When a data file is selected for appending, there may be an
+	area of overlap with the existing dataset; that is, one or
+	more series may have one or more observations in common across
+	the two sources. If the option <opt>update-overlap</opt> is
+	given, the <lit>append</lit> operation will replace any
+	overlapping observations with the values from the selected
+	data file, otherwise the values currently in place will be
+	unaffected.
       </para>
       <para>
 	The additional specialized options <opt>sheet</opt>,

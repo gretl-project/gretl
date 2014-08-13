@@ -664,7 +664,6 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	int i, j, t;
 	int ts_markers = 0;
 	int merge = (dset->Z != NULL);
-	gretlopt merge_opt = 0;
 	char **ts_S = NULL;
 	int blank_cols = 0;
 	int missvals = 0;
@@ -794,11 +793,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	    import_ts_check(newset);
 	}
 
-	if (merge && (opt & OPT_T)) {
-	    merge_opt = OPT_T;
-	}
-
-	err = merge_or_replace_data(dset, &newset, merge_opt, prn);
+	err = merge_or_replace_data(dset, &newset, opt, prn);
 
 	if (!err && !merge) {
 	    dataset_add_import_info(dset, fname, GRETL_GNUMERIC);

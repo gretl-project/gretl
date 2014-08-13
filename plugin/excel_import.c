@@ -1555,7 +1555,6 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 		  DATASET *dset, gretlopt opt, PRN *prn)
 {
     int gui = (opt & OPT_G);
-    gretlopt merge_opt = 0;
     wbook xbook;
     wbook *book = &xbook;
     xls_info xlsi;
@@ -1759,11 +1758,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	reverse_data(newset, prn);
     }
 
-    if (merge && (opt & OPT_T)) {
-	merge_opt = OPT_T;
-    }
-
-    err = merge_or_replace_data(dset, &newset, merge_opt, prn);
+    err = merge_or_replace_data(dset, &newset, opt, prn);
 
     if (!err && !merge) {
 	dataset_add_import_info(dset, fname, GRETL_XLS);

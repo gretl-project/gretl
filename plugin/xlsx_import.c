@@ -1391,12 +1391,7 @@ static int finalize_xlsx_import (DATASET *dset,
     }
 
     if (!err) {
-	gretlopt merge_opt = 0;
-
-	if (merge && (opt & OPT_T)) {
-	    merge_opt = OPT_T;
-	}
-	err = merge_or_replace_data(dset, &xinfo->dset, merge_opt, prn);
+	err = merge_or_replace_data(dset, &xinfo->dset, opt, prn);
     } 
 
     if (!err && !merge) {
