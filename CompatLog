@@ -1,3 +1,11 @@
+version 1.9.92, in progress
+
+The behavior of the "append" command: by default, this now
+strictly appends (series and/or observations). The old
+behavior, whereby overlapping data-points are updated from
+the specified data file, now requires the --update-overlap
+option.
+
 2014-07-28 version 1.9.91
 
 The "old-style" syntax for defining a function that was the
