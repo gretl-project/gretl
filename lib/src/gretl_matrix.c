@@ -5877,7 +5877,9 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	break;
     }
 
+#if defined(_OPENMP)
  finish:
+#endif
 
     if (errno) {
 	gretl_matrix_free(c);
@@ -10826,7 +10828,7 @@ static int *get_exact_list (const gretl_matrix *R)
     }
 
     if (list != NULL) {
-	int col, k = 1;
+	int col = 0, k = 1;
 
 	for (i=0; i<R->rows && k<=n_exact; i++) {
 	    n = 0;

@@ -6386,7 +6386,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     const char *funname = l->v.str;
     fnargs *args = NULL;
     ufunc *uf = NULL;
-    GretlType rtype;
+    GretlType rtype = 0;
     int i, nparam, argc = 0;
 
     /* first find the function */
