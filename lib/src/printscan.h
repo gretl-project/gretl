@@ -23,6 +23,9 @@
 int do_printf (const char *targ, const char *format, const char *args,
 	       DATASET *dset, PRN *prn, int *nchars);
 
+char *do_sprintf_function (const char *format, const char *args,
+			   DATASET *dset, int *err);
+
 int do_sscanf (const char *src, const char *format, const char *args,
 	       DATASET *dset, int *n_items);
 

@@ -672,6 +672,65 @@ int do_printf (const char *targ, const char *format, const char *args,
     return real_do_printf(targ, format, args, dset, prn, nchars, -1);
 }
 
+/**
+ * do_sprintf_function:
+ * @format: format string.
+ * @args: list of arguments as string.
+ * @dset: dataset struct.
+ * @err: location to receive error code.
+ *
+ * Implements the hansl-function form of sprintf.
+ *
+ * Returns: constructed string, or NULL on error.
+ */
+
+char *do_sprintf_function (const char *format, const char *args,
+			   DATASET *dset, int *err)
+{
+    const char *p = format;
+    const char *q = args;
+    char *buf = NULL;
+    PRN *prn;
+
+    if (format == NULL || *format == '\0') {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
+    if (*err) {
+	return NULL;
+    }    
+
+    while (*p && !*err) {
+	if (*p == '%' && *(p+1) == '%') {
+	    pputc(prn, '%');
+	    p += 2;
+	} else if (*p == '%') {
+	    *err = print_arg(&p, &q, dset, -1, prn);
+	} else if (*p == '\\') {
+	    *err = printf_escape(*(p+1), prn);
+	    p += 2;
+	} else {
+	    pputc(prn, *p);
+	    p++;
+	}
+    }
+
+    if (!*err && q != NULL && *q != '\0') {
+	gretl_errmsg_sprintf(_("unprocessed argument(s): '%s'"), q);
+	*err = E_PARSE;
+    }
+
+    if (!*err) {
+	buf = gretl_print_steal_buffer(prn);
+    }
+
+    gretl_print_destroy(prn);
+
+    return buf;
+}
+
 /* below: sscanf apparatus */
 
 struct bracket_scan {

@@ -7716,7 +7716,13 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
 static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret;
+
+    if (f == F_SPRINTF) {
+	ret = aux_string_node(p);
+    } else {
+	ret = aux_scalar_node(p);
+    }
 
     if (ret != NULL) {
 	const char *fmt = m->v.str;
@@ -7725,21 +7731,8 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	int n = 0;
 
 	if (l != NULL) {
-	    /* note: this doesn't apply for printf */
-	    if (f == F_SPRINTF) {
-		if (ustring_node(l)) {
-		    /* for the first argument to sprintf we need to
-		       pass the name of a string variable, not its
-		       value
-		    */
-		    lstr = l->vname;
-		} else {
-		    p->err = E_TYPES;
-		}
-	    } else {
-		/* but for sscanf it's the value we want */
-		lstr = l->v.str;
-	    }
+	    /* sscanf only */
+	    lstr = l->v.str;
 	}
 
 	if (!p->err) {
@@ -7749,11 +7742,11 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    if (f == F_SSCANF) {
 		p->err = do_sscanf(lstr, fmt, args, p->dset, &n);
 	    } else if (f == F_SPRINTF) {
-		p->err = do_printf(lstr, fmt, args, p->dset, p->prn, &n);
+		ret->v.str = do_sprintf_function(fmt, args, p->dset, &p->err);
 	    } else {
 		p->err = do_printf(NULL, fmt, args, p->dset, p->prn, &n);
 	    }
-	    if (!p->err) {
+	    if (f != F_SPRINTF && !p->err) {
 		ret->v.xval = n;
 	    }
 	}
@@ -11116,19 +11109,13 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_PRINTF:
+    case F_SPRINTF:	
 	if (l->t == STR && empty_or_string(r)) {
 	    ret = eval_print_scan(NULL, l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, STR, NULL, p);
 	}
 	break;	
-    case F_SPRINTF:
-	if (l->t == STR && m->t == STR && empty_or_string(r)) {
-	    ret = eval_print_scan(l, m, r, t->t, p);
-	} else {
-	    node_type_error(t->t, 0, STR, NULL, p);
-	}
-	break;		
     case F_SSCANF:
 	if (l->t == STR && m->t == STR && r->t == STR) {
 	    ret = eval_print_scan(l, m, r, t->t, p);

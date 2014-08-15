@@ -6857,6 +6857,22 @@
       </description>
     </function>
 
+    <function name="sprintf" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">format</fnarg>
+	<fnarg type="varargs"/>
+      </fnargs>     
+      <description>
+	<para>
+	  The returned string is constructed by printing the values of
+	  the trailing arguments, indicated by the dots above, under
+	  the control of <argname>format</argname>. See the help for
+	  the <cmdref targ="printf"/> command for details regarding
+	  the format and other arguments.
+	</para>
+      </description>
+    </function>
+
     <function name="sqrt" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
