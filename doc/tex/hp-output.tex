@@ -106,10 +106,10 @@ element. A few more examples are given in table \ref{tab:printf-ex}.
 \label{sec:sprintf}
 
 A closely related effect can be achieved via the \cmd{sprintf}
-command: instead of being printed directly the result is stored in a
-named string variable (given as the first argument), as in
+function: instead of being printed directly the result is stored in a
+named string variable, as in
 \begin{code}
-  sprintf G, "x = %*.*f\n", width, precision, x
+  string G = sprintf("x = %*.*f\n", width, precision, x)
 \end{code}
 after which the variable \texttt{G} can be the object of further
 processing.
