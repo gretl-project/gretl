@@ -313,6 +313,9 @@ install-data: installdirs install-cfg
 install-cfg: ../gretl.pc
 	$(INSTALL_DATA) $< $(DESTDIR)$(pkgconfigdir)
 
+install-lib: $(LIBGRETL)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $< $(DESTDIR)$(libdir)/$<
+
 installdirs:
 	$(topsrc)/tools/mkinstalldirs $(INSTALLDIRS)
 
