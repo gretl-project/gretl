@@ -133,7 +133,7 @@ static struct gretl_cmd_new gretl_cmds_new[] = {
     { ORTHDEV,  "orthdev",  CI_LIST },
     { OUTFILE,  "outfile",  CI_PARM1 },
     { PANEL,    "panel",    CI_LIST },
-    { PCA,      "pca",      CI_LIST },
+    { PCA,      "pca",      CI_LIST | CI_DOALL },
     { PERGM,    "pergm",    CI_LIST | CI_LLEN1 | CI_ORD2 },
     { PLOT,     "textplot", CI_LIST },    
     { POISSON,  "poisson",  CI_LIST },
@@ -1151,6 +1151,15 @@ static int get_param (cmd_info *c)
     } else {
 	c->param = merge_toks_l_to_r(c, pos);
     }
+
+    /* "dataset" command: remove the list-wanted flag if
+       the param doesn't require a list */
+    if (c->ci == DATAMOD) {
+	if (strcmp(c->param, "sortby") && 
+	    strcmp(c->param, "dsortby")) {
+	    c->ciflags ^= CI_LIST;
+	}
+    }
 		
     return c->err;
 }
@@ -2034,9 +2043,14 @@ static int cinfo_process_command_list (cmd_info *c, DATASET *dset)
 
     if (dset != NULL && *lstr != '\0') {
 	vlist = generate_list(lstr, dset, &c->err);
+	if (c->err && c->ci == PRINT) {
+	    /* the terms may be names of non-series variables */
+	    c->ciflags ^= CI_LIST;
+	    c->ciflags ^= CI_DOALL;
+	    c->ciflags |= CI_ADHOC;
+	    c->err = 0;
+	}
     }
-
-    /* FIXME "print" command: needs type flexibility */
 
     if (c->ci == MPOLS && vlist != NULL && ilist != NULL) {
 	/* legacy mpols special */
@@ -2316,6 +2330,7 @@ static int assemble_command (cmd_info *cinfo, DATASET *dset)
 	    /* printing string literal */
 	    cinfo->ciflags |= CI_PARM1;
 	} else {
+	    /* assume for now that we're printing series */
 	    cinfo->ciflags |= (CI_LIST | CI_DOALL);
 	}
     } else if (cinfo->ci == BXPLOT) {
