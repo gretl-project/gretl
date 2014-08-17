@@ -880,6 +880,11 @@ int *generate_list (const char *s, DATASET *dset, int *err)
     parser p;
     int *ret = NULL;
 
+    if (dset == NULL) {
+	*err = E_NODATA;
+	return NULL;
+    }
+
     *err = realgen(s, &p, dset, NULL, P_PRIVATE, LIST);
 
     if (!*err) {
@@ -898,6 +903,11 @@ int *generate_list (const char *s, DATASET *dset, int *err)
 	    if (ret != NULL) {
 		ret[1] = n->vnum;
 	    }
+	} else if (n->t == NUM && n->v.xval >= 0 && n->v.xval < dset->v) {
+	    ret = gretl_list_new(1);
+	    if (ret != NULL) {
+		ret[1] = n->v.xval;
+	    }	    
 	} else {
 	    *err = E_TYPES;
 	}
