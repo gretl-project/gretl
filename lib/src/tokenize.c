@@ -822,10 +822,12 @@ static void mark_option_tokens (cmd_info *c)
 		}
 	    } else if (prevtok->type == TOK_OPT) {
 		/* previous token is 'joined' */
+		printf("prev is TOK_OPT, tok is %d\n",tok->type); 
 		if (tok->type == TOK_EQUALS) {
 		    tok->type = TOK_OPTEQ;
 		} else if (tok->type == TOK_DASH ||
-			   tok->type == TOK_NAME) {
+			   tok->type == TOK_NAME ||
+			   tok->type == TOK_INT) {
 		    tok->type = TOK_OPT; /* continuation of option */
 		}
 	    }
@@ -1152,14 +1154,20 @@ static int get_param (cmd_info *c)
 	c->param = merge_toks_l_to_r(c, pos);
     }
 
-    /* "dataset" command: remove the list-wanted flag if
-       the param doesn't require a list */
     if (c->ci == DATAMOD) {
+	/* "dataset" command: remove the list-wanted flag if
+	   the parameter doesn't require a list */
 	if (strcmp(c->param, "sortby") && 
 	    strcmp(c->param, "dsortby")) {
 	    c->ciflags ^= CI_LIST;
 	}
-    }
+    } else if (c->ci == SMPL) {
+	/* "smpl" command: drop the requirement for a second param
+	   if the first is "full" */
+	if (!strcmp(c->param, "full")) {
+	    c->ciflags ^= CI_PARM2;
+	}
+    }	
 		
     return c->err;
 }
@@ -2115,10 +2123,10 @@ static int cinfo_process_command_list (cmd_info *c, DATASET *dset)
 
     if (dset != NULL && *lstr != '\0') {
 	vlist = generate_list(lstr, dset, &c->err);
-	if (c->err && c->ci == PRINT) {
+	if (c->err && (c->ci == PRINT || c->ci == DELEET)) {
 	    /* the terms may be names of non-series variables */
 	    c->ciflags ^= CI_LIST;
-	    c->ciflags ^= CI_DOALL;
+	    c->ciflags &= ~CI_DOALL;
 	    c->ciflags |= CI_ADHOC;
 	    c->err = 0;
 	}
