@@ -12263,8 +12263,9 @@
 
     <description>
       <para>
-	By default, prints a listing of the (series) variables currently
-	available.  <cmd>list</cmd> and <cmd>ls</cmd> are synonyms.
+	By default, prints a listing of the (series) variables
+	currently available; <cmd>ls</cmd> may be used as an alias for
+	this command.
       </para>
       <para>
 	If the <opt>--scalars</opt> option is given, prints a listing
