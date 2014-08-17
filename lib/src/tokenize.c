@@ -62,7 +62,7 @@ static struct gretl_cmd_new gretl_cmds_new[] = {
     { CORR,     "corr",     CI_LIST | CI_DOALL },     
     { CORRGM,   "corrgm",   CI_LIST | CI_LLEN1 | CI_ORD2 },   
     { CUSUM,    "cusum",    0 },
-    { DATA,     "data",     CI_LIST },
+    { DATA,     "data",     CI_ADHOC }, /* special: needs whole line */
     { DATAMOD,  "dataset",  CI_PARM1 | CI_LIST | CI_PARM2 }, /* ? */
     { DELEET,   "delete",   CI_LIST },
     { DIFF,     "diff",     CI_LIST },
@@ -126,7 +126,7 @@ static struct gretl_cmd_new gretl_cmds_new[] = {
     { NEGBIN,   "negbin",   CI_LIST },
     { NLS,      "nls",      CI_EXPR | CI_BLOCK },
     { NORMTEST, "normtest", CI_LIST | CI_LLEN1 },
-    { NULLDATA, "nulldata", CI_PARM1 }, /* convert to ORD1? */
+    { NULLDATA, "nulldata", CI_PARM1 }, /* maybe convert to ORD1? */
     { OLS,      "ols",      CI_LIST },     
     { OMIT,     "omit",     CI_LIST },
     { OPEN,     "open",     CI_PARM1 },
@@ -166,7 +166,7 @@ static struct gretl_cmd_new gretl_cmds_new[] = {
     { SSCANF,   "sscanf",   CI_PARM1 | CI_PARM2 | CI_VARGS },
     { STORE,    "store",    CI_PARM1 | CI_LIST | CI_DOALL },   
     { SUMMARY,  "summary",  CI_LIST | CI_DOALL },
-    { SYSTEM,   "system",   CI_PARM1 | CI_BLOCK },
+    { SYSTEM,   "system",   CI_PARM1 | CI_BLOCK }, /* "method" param optional */
     { TABPRINT, "tabprint", 0 }, /* special, handled later */
     { TOBIT,    "tobit",    CI_LIST },
     { IVREG,    "tsls",     CI_LIST },
@@ -274,7 +274,7 @@ struct cmd_token_ {
     char flag;       /* zero or more of TokenFlags */
 }; 
 
-#define param_optional(c) (c == SET || c == HELP || c == RESTRICT)
+#define param_optional(c) (c == SET || c == HELP || c == RESTRICT || c == SYSTEM)
 #define parm2_optional(c) (c == SET || c == GNUPLOT || c == BXPLOT || c == SETOPT)
 
 #define not_catchable(c) (c == IF || c == ENDIF || c == ELIF)
@@ -1770,18 +1770,34 @@ static void get_separator_range (int ci, int *minsep, int *maxsep)
    comand-word
 */
 
-static int is_varname (const char *s)
+#ifdef STANDALONE
+
+static int is_varname (const char *s, DATASET *dset)
 {
     return !strcmp(s, "vname");
 }
 
-static int test_for_genr (cmd_info *c, int i)
+#else
+
+static int is_varname (const char *s, DATASET *dset)
+{
+    if (current_series_index(dset, s) >= 0) {
+	return 1;
+    } else if (gretl_is_user_var(s)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+#endif
+
+static int test_for_genr (cmd_info *c, int i, DATASET *dset)
 {
     cmd_token *toks = c->toks;
     char *s = toks[i].s;
     
-    if (is_varname(s)) {
-	/* FIXME */
+    if (is_varname(s, dset)) {
 	c->ci = GENR;
     } else if (toks[i].type == TOK_NAME && c->ntoks > i + 1) {
 	cmd_token *nexttok = &toks[i+1];
@@ -1797,12 +1813,22 @@ static int test_for_genr (cmd_info *c, int i)
 	} else if (nexttok->type == TOK_BRSTR && token_joined(nexttok)) {
 	    /* assignment to array or series element(s) */
 	    c->ci = GENR;
-	} else if (!strcmp(s, "list") && c->ntoks > i + 2) {
-	    nexttok = &toks[i+2];
-	    if (nexttok->type == TOK_EQUALS || nexttok->type == TOK_EQMOD) {
+	} else if (!strcmp(s, "list") && c->ntoks > i + 1) {
+	    if (c->ntoks == i + 2) {
+		/* bare declaration, as in "list L" */
 		c->ci = GENR;
+	    } else {
+		/* may be "list L = ..." or similar */
+		nexttok = &toks[i+2];
+		if (nexttok->type == TOK_EQUALS || nexttok->type == TOK_EQMOD) {
+		    c->ci = GENR;
+		}
 	    }
-	} 
+	} else if (function_lookup(s) || get_user_function_by_name(s)) {
+	    /* function call, no assignment */
+	    c->ci = GENR;
+	    c->opt |= OPT_O;
+	}
     }
 
     return c->ci;
@@ -1848,7 +1874,8 @@ static int try_for_command_alias (const char *s, gretlopt *opt)
 /* if we have enough tokens ready, try to determine the
    current command index */
 
-static int try_for_command_index (cmd_info *cinfo)
+static int try_for_command_index (cmd_info *cinfo,
+				  DATASET *dset)
 {
     cmd_token *toks = cinfo->toks;
     int i = min_token_index(cinfo);
@@ -1882,7 +1909,7 @@ static int try_for_command_index (cmd_info *cinfo)
     }
 
     if (cinfo->ci <= 0 && cinfo->ntoks < 4) {
-	cinfo->ci = test_for_genr(cinfo, i);
+	cinfo->ci = test_for_genr(cinfo, i, dset);
     }
 
     if (cinfo->ci > 0) {
@@ -1891,11 +1918,6 @@ static int try_for_command_index (cmd_info *cinfo)
 	    cinfo->ciflags = CI_EXPR;
 	} else {
 	    cinfo->ciflags = gretl_command_get_flags(cinfo->ci);
-#if CDEBUG > 1
-	    if (cinfo->ciflags & CI_LIST) {
-		printf("command takes list\n");
-	    }
-#endif
 	}
     }
 
@@ -2243,7 +2265,8 @@ static int check_for_list (cmd_info *c)
 
 #define MAY_START_NUMBER(c) (c == '.' || c == '-' || c == '+')
 
-static int tokenize_line (cmd_info *cinfo, const char *line)
+static int tokenize_line (cmd_info *cinfo, const char *line,
+			  DATASET *dset)
 {
     char tok[FN_NAMELEN];
     const char *s = line;
@@ -2319,7 +2342,7 @@ static int tokenize_line (cmd_info *cinfo, const char *line)
 
 	if (!skipped && cinfo->ci == 0 && cinfo->ntoks > 0) {
 	    /* use current info to determine command index? */
-	    try_for_command_index(cinfo);
+	    try_for_command_index(cinfo, dset);
 	}
 
 	if (cinfo->ciflags & CI_EXPR) {
@@ -2603,7 +2626,7 @@ int main (int argc, char **argv)
 	}
 
 	if (*line != '\0') {
-	    err = tokenize_line(&cinfo, line);
+	    err = tokenize_line(&cinfo, line, dset);
 	    if (!err) {
 		err = assemble_command(&cinfo, dset);
 	    }
@@ -2652,7 +2675,7 @@ int test_tokenize (char *line, CMD *cmd, DATASET *dset, void *ptr)
     }
 
     if (!err && *line != '\0') {
-	err = tokenize_line(&cinfo, line);
+	err = tokenize_line(&cinfo, line, dset);
 	if (!err) {
 	    err = assemble_command(&cinfo, dset);
 	}
