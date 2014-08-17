@@ -8,7 +8,8 @@ version 1.9.92, in progress
   value on error
 - Fix bug: incorrect behavior of randgen() for uniform values
   when the given lower bound is negative
-- "append" command: add option --update-overlap 
+- "append" command: add option --update-overlap
+- "varlist" command: deprecate "list" as an alias for this
 
 2014-07-28 version 1.9.91
 - Add Japanese translation (thanks to Shintaro Nakagawa)
