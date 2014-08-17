@@ -57,7 +57,7 @@ scalar se_a = $stderr(sc_a)
 scalar se_m = $stderr(sc_m)
 
 set echo off
-print "
+print ""
 printf "constant        = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
 printf "ar1 coefficient = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
 printf "ma1 coefficient = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
