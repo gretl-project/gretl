@@ -1808,6 +1808,43 @@ static int test_for_genr (cmd_info *c, int i)
     return c->ci;
 }
 
+/* bodge for testing */
+static void deprecate_alias (const char *bad, const char *good, int cmd);
+
+static int try_for_command_alias (const char *s, gretlopt *opt)
+{
+    int ci = 0;
+
+    if (!strcmp(s, "exit")) {
+	ci = QUIT;
+	*opt = OPT_X;
+    } else if (!strcmp(s, "ls")) {
+	ci = VARLIST;
+    } else if (!strcmp(s, "pooled")) {
+	deprecate_alias("pooled", "ols", 1);
+	ci = OLS;
+    } else if (!strcmp(s, "equations")) {
+	ci = EQUATION;
+	*opt |= OPT_M;
+    } else if (*s == '!' || !strcmp(s, "launch")) {
+	ci = SHELL;
+    } else if (!strcmp(s, "fcasterr")) {
+	deprecate_alias("fcasterr", "fcast", 1);
+	ci = FCAST; 	 
+    } else if (!strcmp(s, "continue")) {
+	ci = FUNDEBUG;
+	*opt |= OPT_C;
+    } else if (!strcmp(s, "next")) {
+	ci = FUNDEBUG;
+	*opt |= OPT_N;
+    } else if (!strcmp(s, "undebug")) {
+	ci = FUNDEBUG;
+	*opt |= OPT_Q;
+    }
+
+    return ci;
+}
+
 /* if we have enough tokens ready, try to determine the
    current command index */
 
@@ -1822,6 +1859,10 @@ static int try_for_command_index (cmd_info *cinfo)
     }
 
     cinfo->ci = gretl_command_number(toks[i].s);
+
+    if (cinfo->ci == 0) {
+	cinfo->ci = try_for_command_alias(toks[i].s, &cinfo->opt);
+    }
 
 #if CDEBUG > 1
     if (cinfo->ci > 0) {
@@ -1994,7 +2035,11 @@ static int cinfo_process_command_list (cmd_info *c, DATASET *dset)
 	tok = &c->toks[i];
 	if (tok->type == TOK_SEMIC) {
 	    scount++;
-	    if (c->ci == ARMA && ns == 2) {
+	    if (c->ci == LAGS && scount == 1) {
+		/* the separator that follows the optional number
+		   of lags to create */
+		tok->flag |= TOK_DONE;
+	    } else if (c->ci == ARMA && ns == 2) {
 		if (scount == 1) {
 		    gretl_list_append_term(&ilist, LISTSEP);
 		    tok->flag |= TOK_DONE;
@@ -2036,6 +2081,11 @@ static int cinfo_process_command_list (cmd_info *c, DATASET *dset)
 		tok->flag |= TOK_DONE;
 		j++;
 	    }
+	}
+	if (j == 1 && (c->ciflags & CI_LLEN1)) {
+	    break;
+	} else if (j == 2 && (c->ciflags & CI_LLEN2)) {
+	    break;
 	}
     }
 
