@@ -77,7 +77,7 @@ static struct gretl_cmd_new gretl_cmds_new[] = {
     { ENDIF,    "endif",    0 },
     { ENDLOOP,  "endloop",  0 },
     { EQNPRINT, "eqnprint", 0 }, /* special, handled later */
-    { EQUATION, "equation", CI_LIST },
+    { EQUATION, "equation", CI_LIST }, /* FIXME is CI_LIST right? */
     { ESTIMATE, "estimate", CI_PARM1 | CI_PARM2 }, /* params optional */
     { FCAST,    "fcast",    CI_ADHOC },
     { FLUSH,    "flush",    0 },
@@ -275,7 +275,8 @@ struct cmd_token_ {
 }; 
 
 #define param_optional(c) (c == SET || c == HELP || c == RESTRICT || c == SYSTEM)
-#define parm2_optional(c) (c == SET || c == GNUPLOT || c == BXPLOT || c == SETOPT)
+#define parm2_optional(c) (c == SET || c == GNUPLOT || c == BXPLOT || \
+			   c == SETOPT || c == ESTIMATE)
 
 #define not_catchable(c) (c == IF || c == ENDIF || c == ELIF)
 
@@ -1845,13 +1846,13 @@ static int test_for_genr (cmd_info *c, int i, DATASET *dset)
 /* bodge for testing */
 static void deprecate_alias (const char *bad, const char *good, int cmd);
 
-static int try_for_command_alias (const char *s, gretlopt *opt)
+static int try_for_command_alias (const char *s, cmd_info *cinfo)
 {
     int ci = 0;
 
     if (!strcmp(s, "exit")) {
 	ci = QUIT;
-	*opt = OPT_X;
+	cinfo->opt = OPT_X;
     } else if (!strcmp(s, "ls")) {
 	ci = VARLIST;
     } else if (!strcmp(s, "pooled")) {
@@ -1859,7 +1860,7 @@ static int try_for_command_alias (const char *s, gretlopt *opt)
 	ci = OLS;
     } else if (!strcmp(s, "equations")) {
 	ci = EQUATION;
-	*opt |= OPT_M;
+	cinfo->opt |= OPT_M;
     } else if (*s == '!' || !strcmp(s, "launch")) {
 	ci = SHELL;
     } else if (!strcmp(s, "fcasterr")) {
@@ -1867,13 +1868,13 @@ static int try_for_command_alias (const char *s, gretlopt *opt)
 	ci = FCAST; 	 
     } else if (!strcmp(s, "continue")) {
 	ci = FUNDEBUG;
-	*opt |= OPT_C;
+	cinfo->opt |= OPT_C;
     } else if (!strcmp(s, "next")) {
 	ci = FUNDEBUG;
-	*opt |= OPT_N;
+	cinfo->opt |= OPT_N;
     } else if (!strcmp(s, "undebug")) {
 	ci = FUNDEBUG;
-	*opt |= OPT_Q;
+	cinfo->opt |= OPT_Q;
     }
 
     return ci;
@@ -1883,6 +1884,7 @@ static int try_for_command_alias (const char *s, gretlopt *opt)
    current command index */
 
 static int try_for_command_index (cmd_info *cinfo,
+				  const char *s,
 				  DATASET *dset)
 {
     cmd_token *toks = cinfo->toks;
@@ -1893,10 +1895,15 @@ static int try_for_command_index (cmd_info *cinfo,
 	return 0;
     }
 
-    cinfo->ci = gretl_command_number(toks[i].s);
-
-    if (cinfo->ci == 0) {
-	cinfo->ci = try_for_command_alias(toks[i].s, &cinfo->opt);
+    if (*s == '(') {
+	; /* a function call? */
+    } else if (cinfo->ntoks > i+1 && (toks[i+1].flag & TOK_JOINED)) {
+	; /* a function call? */
+    } else {
+	cinfo->ci = gretl_command_number(toks[i].s);
+	if (cinfo->ci == 0) {
+	    cinfo->ci = try_for_command_alias(toks[i].s, cinfo);
+	}
     }
 
 #if CDEBUG > 1
@@ -1926,6 +1933,10 @@ static int try_for_command_index (cmd_info *cinfo,
 	    cinfo->ciflags = CI_EXPR;
 	} else {
 	    cinfo->ciflags = gretl_command_get_flags(cinfo->ci);
+	    if (cinfo->ci == EQUATION && (cinfo->opt & OPT_M)) {
+		cinfo->ciflags ^= CI_LIST;
+		cinfo->ciflags |= CI_ADHOC;
+	    }
 	}
     }
 
@@ -2350,7 +2361,7 @@ static int tokenize_line (cmd_info *cinfo, const char *line,
 
 	if (!skipped && cinfo->ci == 0 && cinfo->ntoks > 0) {
 	    /* use current info to determine command index? */
-	    try_for_command_index(cinfo, dset);
+	    try_for_command_index(cinfo, s + n, dset);
 	}
 
 	if (cinfo->ciflags & CI_EXPR) {
