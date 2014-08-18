@@ -121,7 +121,8 @@ enum loop_command_codes {
     LOOP_CMD_NOSUB   = 1 << 3, /* no @-substitution this line */
     LOOP_CMD_NOOPT   = 1 << 4, /* no option flags in this line */
     LOOP_CMD_CATCH   = 1 << 5, /* "catch" flag present */
-    LOOP_CMD_COND    = 1 << 6  /* compiled conditional */
+    LOOP_CMD_COND    = 1 << 6, /* compiled conditional */
+    LOOP_CMD_DONE    = 1 << 7  /* progressive loop command parsed */
 };
 
 struct loop_command_ {
@@ -1759,14 +1760,14 @@ static int loop_store_start (LOOPSET *loop, const char *names,
     return err;
 }
 
-static int loop_store_update (LOOPSET *loop, int lno,
+static int loop_store_update (LOOPSET *loop, int j,
 			      const char *names, const char *fname,
 			      gretlopt opt)
 {
     LOOP_STORE *lstore = &loop->store;
     int i, t, err = 0;
 
-    if (lstore->lineno >= 0 && lstore->lineno != lno) {
+    if (lstore->lineno >= 0 && lstore->lineno != j) {
 	gretl_errmsg_set("Only one 'store' command is allowed in a "
 			 "progressive loop");
 	return E_DATA;
@@ -1778,9 +1779,10 @@ static int loop_store_update (LOOPSET *loop, int lno,
 	if (err) {
 	    return err;
 	}
+	lstore->lineno = j;
+	loop->cmds[j].flags |= LOOP_CMD_DONE;
     }
 
-    lstore->lineno = lno;
     t = lstore->n;
 
     if (t >= lstore->dset->n) {
@@ -1972,47 +1974,54 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
    allocation first.
 */
 
-static int loop_print_update (LOOP_PRINT *lprn, const char *names) 
+static int loop_print_update (LOOPSET *loop, int j, const char *names) 
 {
-    mpf_t m;
-    double x;
-    int i, err = 0;
+    LOOP_PRINT *lprn;
+    int err = 0;
 
-    if (lprn->names == NULL) {
+    lprn = get_loop_print_by_line(loop, j, &err);
+
+    if (!err && lprn->names == NULL) {
 	/* not started yet */
 	err = loop_print_start(lprn, names);
-	if (err) {
-	    return err;
+	if (!err) {
+	    loop->cmds[j].flags |= LOOP_CMD_DONE;
 	}
     }
 
-    mpf_init(m);
+    if (!err) {
+	mpf_t m;
+	double x;
+	int i;
+
+	mpf_init(m);
     
-    for (i=0; i<lprn->nvars; i++) {
-	if (lprn->na[i]) {
-	    continue;
+	for (i=0; i<lprn->nvars; i++) {
+	    if (lprn->na[i]) {
+		continue;
+	    }
+	    x = gretl_scalar_get_value(lprn->names[i], &err);
+	    if (err) {
+		break;
+	    }
+	    if (na(x)) {
+		lprn->na[i] = 1;
+		continue;
+	    }
+	    mpf_set_d(m, x); 
+	    mpf_add(lprn->sum[i], lprn->sum[i], m);
+	    mpf_mul(m, m, m);
+	    mpf_add(lprn->ssq[i], lprn->ssq[i], m);
+	    if (!na(lprn->xbak[i]) && realdiff(x, lprn->xbak[i])) {
+		lprn->diff[i] = 1;
+	    }
+	    lprn->xbak[i] = x;
 	}
-	x = gretl_scalar_get_value(lprn->names[i], &err);
-	if (err) {
-	    break;
-	}
-	if (na(x)) {
-	    lprn->na[i] = 1;
-	    continue;
-	}
-	mpf_set_d(m, x); 
-	mpf_add(lprn->sum[i], lprn->sum[i], m);
-	mpf_mul(m, m, m);
-	mpf_add(lprn->ssq[i], lprn->ssq[i], m);
-	if (!na(lprn->xbak[i]) && realdiff(x, lprn->xbak[i])) {
-	    lprn->diff[i] = 1;
-	}
-	lprn->xbak[i] = x;
+
+	mpf_clear(m);
+
+	lprn->n += 1;
     }
-
-    mpf_clear(m);
-
-    lprn->n += 1;
 
     return err;
 }
@@ -2786,6 +2795,7 @@ static int loop_next_command (char *targ, LOOPSET *loop, int *pj)
 #define loop_cmd_noopt(l,j) (l->cmds[j].flags & LOOP_CMD_NOOPT)
 #define loop_cmd_catch(l,j) (l->cmds[j].flags & LOOP_CMD_CATCH)
 #define conditional_compiled(l,j) (l->cmds[j].flags & LOOP_CMD_COND)
+#define cmd_preparsed(l,j) (l->cmds[j].flags & LOOP_CMD_DONE)
 
 static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 {
@@ -2866,7 +2876,7 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 	if (cmd->opt == OPT_NONE) {
 	    /* record: no options are present on this line */
 	    loop->cmds[j].flags |= LOOP_CMD_NOOPT;
-	} 
+	}
     }
 
     if (cmd->flags & CMD_CATCH) {
@@ -2955,9 +2965,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
     PRN *prn = s->prn;
     MODEL *pmod;
     LOOP_MODEL *lmod;
-    LOOP_PRINT *lprn;
     char errline[MAXLINE];
     int indent0;
+    int progressive;
     int show_activity = 0;
     int j, err = 0;
 
@@ -2972,8 +2982,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
     }
 
     indent0 = gretl_if_state_record();
+    progressive = loop_is_progressive(loop);
 
-    set_loop_on(loop_is_quiet(loop), loop_is_progressive(loop));
+    set_loop_on(loop_is_quiet(loop), progressive);
 
 #if LOOP_DEBUG
     fprintf(stderr, "loop_exec: loop = %p\n", (void *) loop);
@@ -2994,7 +3005,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 
 	pmod = NULL;
 	lmod = NULL;
-	lprn = NULL;
 
 	if (gretl_echo_on() && indexed_loop(loop) && !loop_is_quiet(loop)) {
 	    print_loop_progress(loop, dset, prn);
@@ -3060,6 +3070,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		    loop->cmds[j].genr = ifgen;
 		    loop->cmds[j].flags |= LOOP_CMD_COND;
 		}
+	    } else if (cmd_preparsed(loop, j)) {
+		cmd->ci = loop->cmds[j].ci;
 	    } else {
 		err = parse_command_line(line, cmd, dset, NULL);
 	    }
@@ -3117,7 +3129,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		; /* implicit break */
 	    } else if (plain_model_ci(cmd->ci)) {
 		/* model may need special handling */
-		if (loop_is_progressive(loop) && !(cmd->opt & OPT_Q)) {
+		if (progressive && !(cmd->opt & OPT_Q)) {
 		    lmod = get_loop_model_by_line(loop, j, &err);
 		} else if (model_print_deferred(cmd->opt)) {
 		    pmod = get_model_record_by_line(loop, j, &err);
@@ -3130,12 +3142,12 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		    int moderr = check_gretl_errno();
 
 		    if (moderr) {
-			if (loop_is_progressive(loop) || model_print_deferred(cmd->opt)) {
+			if (progressive || model_print_deferred(cmd->opt)) {
 			    err = moderr;
 			} else {
 			    errmsg(moderr, prn);
 			}
-		    } else if (loop_is_progressive(loop) && !(cmd->opt & OPT_Q)) {
+		    } else if (progressive && !(cmd->opt & OPT_Q)) {
 			err = loop_model_update(lmod, s->model);
 			set_as_last_model(s->model, GRETL_OBJ_EQN);
 		    } else if (model_print_deferred(cmd->opt)) {
@@ -3147,16 +3159,20 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 			loop_print_save_model(s->model, dset, prn, s);
 		    }
 		}
-	    } else if (cmd->ci == PRINT && *cmd->param == '\0' &&
-		       loop_is_progressive(loop)) {
-		lprn = get_loop_print_by_line(loop, j, &err);
-		if (!err) {
-		    err = loop_print_update(lprn, cmd->parm2);
+	    } else if (cmd->ci == PRINT && progressive && !loop_literal(loop, j)) {
+		if (cmd_preparsed(loop, j)) {
+		    err = loop_print_update(loop, j, NULL);
+		} else {
+		    err = loop_print_update(loop, j, cmd->parm2);
 		}
-	    } else if (cmd->ci == STORE && loop_is_progressive(loop)) {
-		err = loop_store_update(loop, j, cmd->parm2, cmd->param,
-					cmd->opt);
-	    } else if (loop_is_progressive(loop) && not_ok_in_progloop(cmd->ci)) {
+	    } else if (cmd->ci == STORE && progressive) {
+		if (cmd_preparsed(loop, j)) {
+		    err = loop_store_update(loop, j, NULL, NULL, 0);
+		} else {
+		    err = loop_store_update(loop, j, cmd->parm2, cmd->param,
+					    cmd->opt);
+		}
+	    } else if (progressive && not_ok_in_progloop(cmd->ci)) {
 		gretl_errmsg_sprintf(_("%s: not implemented in 'progressive' loops"),
 				     cmd->word);
 		err = 1;
