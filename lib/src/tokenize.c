@@ -1,3 +1,8 @@
+/* Code for the "new tokenizer", intended to replace the command
+   parser in interact.c. As of August 2014 this code is under
+   testing.
+*/
+
 #include "libgretl.h"
 #include "gretl_func.h"
 #include "uservar.h"
@@ -19,7 +24,8 @@ typedef enum {
     CI_ADHOC = 1 << 11, /* needs special-purpose parser */
     CI_DOALL = 1 << 12, /* operates on all series if no list given */
     CI_NOOPT = 1 << 13, /* command never takes any options */
-    CI_BLOCK = 1 << 14  /* command starts a block */
+    CI_BLOCK = 1 << 14, /* command starts a block */
+    CI_FFORM = 1 << 15  /* command also has function-form */
 } CIFlags;
 
 int gretl_command_get_flags (int ci);
@@ -28,13 +34,13 @@ int gretl_command_get_flags (int ci);
 
 /* start of what should be in commands.c */
 
-struct gretl_cmd_new {
+struct gretl_cmd {
     int cnum;
     const char *cword;
     CIFlags flags;
 };
 
-static struct gretl_cmd_new gretl_cmds_new[] = {
+static struct gretl_cmd gretl_cmds[] = {
     { SEMIC,    ";",        0 },     
     { ADD,      "add",      CI_LIST },
     { ADF,      "adf",      CI_ORD1 | CI_LIST }, 
@@ -178,23 +184,36 @@ static struct gretl_cmd_new gretl_cmds_new[] = {
     { NC,       NULL,       0 }
 }; 
 
+#define has_function_form(c) (gretl_cmds[c].flags & CI_FFORM)
+
 int gretl_command_get_flags (int ci)
 {
     if (ci >= 0 && ci < NC) {
-	return gretl_cmds_new[ci].flags;
+	return gretl_cmds[ci].flags;
     } else {
 	return 0;
     }
 }
 
-/* end commands.c */
+static void check_for_shadowed_commands (void)
+{
+    int i;
+
+    for (i=1; i<NC; i++) {
+	if (function_lookup(gretl_cmds[i].cword)) {
+	    gretl_cmds[i].flags |= CI_FFORM;
+	}
+    }
+}
+
+/* end commands.c material */
 
 /* prototype tokenizer for gretl commands, April 2010 
    partially updated October 2010; updated again August
    2013; and again August 2014.
 */
 
-#define CDEBUG 2
+#define CDEBUG 0
 
 enum {
     TOK_JOINED = 1 << 0, /* token is joined on the left (no space) */
@@ -202,7 +221,8 @@ enum {
 } TokenFlags;
 
 enum {
-    C_CATCH   = 1 << 0
+    C_CATCH = 1 << 0, /* has "catch" modifier */
+    C_PROG  = 1 << 1  /* exec is within a "progressive" loop */
 };
 
 enum {
@@ -246,7 +266,7 @@ struct cmd_info_ {
     int context;     /* for block commands, index of current context */
     int ciflags;     /* status flags pertaining to @ci */
     gretlopt opt;    /* option(s) for command */
-    int flags;       /* status flags for command invocation (only C_CATCH so far)  */
+    int flags;       /* status flags for command invocation */
     int order;       /* lag order, where appropriate */
     int aux;         /* auxiliary int (e.g. VECM rank) */
     int cstart;      /* token index of start of 'real' command */
@@ -268,9 +288,11 @@ struct cmd_token_ {
     char flag;       /* zero or more of TokenFlags */
 }; 
 
-#define param_optional(c) (c == SET || c == HELP || c == RESTRICT || c == SYSTEM)
+#define param_optional(c) (c == SET || c == HELP || c == RESTRICT || \
+			   c == SMPL || c == SYSTEM || c == FUNCERR)
 #define parm2_optional(c) (c == SET || c == GNUPLOT || c == BXPLOT || \
 			   c == SETOPT || c == ESTIMATE)
+#define vargs_optional(c) (c == PRINTF || c == SPRINTF)
 
 #define not_catchable(c) (c == IF || c == ENDIF || c == ELIF)
 
@@ -425,7 +447,7 @@ static void cmd_info_clear (cmd_info *c)
 	free(c->auxlist);
 	c->auxlist = NULL;
     }    
-} 
+}
 
 static int real_add_token (cmd_info *c, const char *tok,
 			   const char *lp, char type, char flag)
@@ -621,14 +643,36 @@ static int namechar_spn (const char *s)
     return strspn(s, ok);
 }
 
+static int wild_spn (const char *s)
+{
+    const char *ok = "abcdefghijklmnopqrstuvwxyz"
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	"0123456789_*";
+    
+    return strspn(s, ok);
+}
+
+static int closing_quote_pos (const char *s)
+{
+    int n = 0;
+
+    while (*s) {
+	if (*s == '"' && *(s-1) != '\\') {
+	    return n;
+	}
+	s++;
+	n++;
+    }
+
+    return -1;
+}
+
 static int matching_delim (int ltype)
 {
     if (ltype == '(') {
 	return ')';
     } else if (ltype == '{') {
 	return '}';
-    } else if (ltype == '"') {
-	return '"';
     } else {
 	return ']';
     }
@@ -636,26 +680,34 @@ static int matching_delim (int ltype)
 
 static int closing_delimiter_pos (const char *s)
 {
-    int targ = matching_delim(*s);
-    int n = 0;
+    if (*s == '"') {
+	return closing_quote_pos(s + 1);
+    } else {
+	int ltype = *s;
+	int targ = matching_delim(ltype);
+	int quoted = 0;
+	int net = 1, n = 0;
 
-    s++;
-
-    while (*s) {
-	if (*s == targ) {
-	    if (targ == '"') {
-		if (*(s-1) != '\\') {
-		    return n;
-		}
-	    } else {
-		return n;
-	    }
-	}
 	s++;
-	n++;
-    }
+	while (*s) {
+	    if (*s == '"') {
+		quoted = !quoted;
+	    } else if (!quoted) {
+		if (*s == ltype) {
+		    net++;
+		} else if (*s == targ) {
+		    net--;
+		    if (net == 0) {
+			return n;
+		    }
+		}
+	    }
+	    s++;
+	    n++;
+	}
 
-    return -1;
+	return -1;
+    }
 }
 
 /* determine the index of the first 'real command' token, beyond 
@@ -789,13 +841,16 @@ static void mark_option_tokens (cmd_info *c)
 		    prevtok->flag |= TOK_DONE;
 		}
 	    } else if (prevtok->type == TOK_OPT) {
-		/* previous token is 'joined' */
 		if (tok->type == TOK_EQUALS) {
 		    tok->type = TOK_OPTEQ;
 		} else if (tok->type == TOK_DASH ||
 			   tok->type == TOK_NAME ||
 			   tok->type == TOK_INT) {
-		    tok->type = TOK_OPT; /* continuation of option */
+		    tok->type = TOK_OPT; /* continuation of option flag */
+		}
+	    } else if (prevtok->type == TOK_OPTEQ) {
+		if (tok->type == TOK_NAME) {
+		    tok->type = TOK_OPTVAL;
 		}
 	    }
 	}
@@ -1107,6 +1162,9 @@ static int get_param (cmd_info *c)
 	    c->err = E_ARGS;
 	    fprintf(stderr, "%s: required param is missing\n", 
 		    c->toks[c->cstart].s);
+	} else if (c->ci == SMPL) {
+	    /* allow the null form of "smpl" */
+	    c->ciflags &= ~CI_PARM2;
 	}
 	return c->err;
     }
@@ -1159,14 +1217,16 @@ static int get_parm2 (cmd_info *c)
     tok = &c->toks[pos];
 
     if (c->ciflags & CI_VARGS) {
-	/* check for trailing comma: the token we want will
-	   precede this */
-	if (tok->type != TOK_COMMA) {
-	    c->err = E_PARSE;
-	    return c->err;
-	} else {
+	/* check for trailing comma: if it's present, the 
+	   token we want will precede it */
+	if (tok->type == TOK_COMMA) {
 	    tok->flag |= TOK_DONE;
 	    pos--;
+	} else if (vargs_optional(c->ci)) {
+	    c->ciflags ^= CI_VARGS;
+	} else {
+	    c->err = E_PARSE;
+	    return c->err;
 	}
     }
 
@@ -1381,6 +1441,8 @@ static int handle_command_preamble (cmd_info *c)
     return c->err;
 }
 
+#if CDEBUG
+
 /* check for an undigested would-be string substitution */
 
 static int got_atstr (cmd_info *c)
@@ -1395,8 +1457,6 @@ static int got_atstr (cmd_info *c)
 
     return 0;
 }
-
-#if CDEBUG
 
 static void expr_line_out (cmd_info *c)
 {
@@ -1827,30 +1887,34 @@ static int try_for_command_alias (const char *s, cmd_info *cinfo)
     return ci;
 }
 
-/* if we have enough tokens ready, try to determine the
+static char peek_next_char (cmd_info *cinfo, int i)
+{
+    const char *s;
+
+    s = cinfo->toks[i].lp + strlen(cinfo->toks[i].s);
+    s += strspn(s, " ");
+    return *s;
+}
+
+/* if we have enough tokens parsed, try to determine the
    current command index */
 
-static int try_for_command_index (cmd_info *cinfo,
-				  const char *s,
+static int try_for_command_index (cmd_info *cinfo, int i,
 				  DATASET *dset)
 {
     cmd_token *toks = cinfo->toks;
-    int i = min_token_index(cinfo);
 
-    if (i >= cinfo->ntoks) {
-	/* not ready to test */
-	return 0;
-    }
+    cinfo->ci = gretl_command_number(toks[i].s);
 
-    if (*s == '(') {
-	; /* a function call? */
-    } else if (cinfo->ntoks > i+1 && (toks[i+1].flag & TOK_JOINED)) {
-	; /* a function call? */
-    } else {
-	cinfo->ci = gretl_command_number(toks[i].s);
-	if (cinfo->ci == 0) {
-	    cinfo->ci = try_for_command_alias(toks[i].s, cinfo);
-	}
+    if (cinfo->ci > 0 && has_function_form(cinfo->ci)) {
+	/* disambiguate command versus function */
+	if (peek_next_char(cinfo, i) == '(') {
+	    /* must be function form, not command proper */
+	    cinfo->ci = 0;
+	    goto gentest;
+	}	
+    } else if (cinfo->ci == 0) {
+	cinfo->ci = try_for_command_alias(toks[i].s, cinfo);
     }
 
 #if CDEBUG > 1
@@ -1870,6 +1934,8 @@ static int try_for_command_index (cmd_info *cinfo,
 	cinfo->ci = cinfo->context;
     }
 
+ gentest:
+
     if (cinfo->ci <= 0 && cinfo->ntoks < 4) {
 	cinfo->ci = test_for_genr(cinfo, i, dset);
     }
@@ -1883,6 +1949,11 @@ static int try_for_command_index (cmd_info *cinfo,
 	    if (cinfo->ci == EQUATION && (cinfo->opt & OPT_M)) {
 		cinfo->ciflags ^= CI_LIST;
 		cinfo->ciflags |= CI_ADHOC;
+	    }
+	    if (cinfo->ci == STORE && (cinfo->flags & C_PROG)) {
+		cinfo->ciflags ^= CI_LIST;
+		cinfo->ciflags ^= CI_DOALL;
+		cinfo->ciflags |= CI_EXTRA;
 	    }
 	}
     }
@@ -2124,13 +2195,15 @@ static int cinfo_process_command_list (cmd_info *c, DATASET *dset)
 	}
     }
 
+#if CDEBUG
     printf("cinfo_process_command_list (err=%d): lstr='%s'\n", c->err, lstr);
+#endif
 
     if (dset != NULL && *lstr != '\0') {
 	vlist = generate_list(lstr, dset, &c->err);
 	if (c->err && (c->ci == PRINT || c->ci == DELEET)) {
 	    /* the terms may be names of non-series variables */
-	    c->ciflags ^= CI_LIST;
+	    c->ciflags &= ~CI_LIST;
 	    c->ciflags &= ~CI_DOALL;
 	    c->ciflags |= CI_ADHOC;
 	    c->err = 0;
@@ -2162,7 +2235,9 @@ static int cinfo_process_command_list (cmd_info *c, DATASET *dset)
     free(ilist);
     free(vlist);
 
+#if CDEBUG
     printf("cinfo_process_command_list: returning err = %d\n", c->err);
+#endif
 
     return c->err;
 }
@@ -2200,6 +2275,15 @@ static int handle_command_extra (cmd_info *c)
 		}
 	    }
 	}
+    } else if (c->ci == STORE) {
+	/* in progressive loop, 'extra' goes into parm2 */
+	for (i=c->cstart+1; i<c->ntoks; i++) {
+	    tok = &c->toks[i];
+	    if (!token_done(tok) && tok->type == TOK_NAME) {
+		tok->flag |= TOK_DONE;
+		c->parm2 = gretl_str_expand(&c->parm2, tok->s, " ");
+	    }
+	}	
     }
 
     return c->err;
@@ -2285,6 +2369,7 @@ static int tokenize_line (cmd_info *cinfo, const char *line,
     const char *s = line;
     char *vtok;
     int n, m, pos = 0;
+    int wild_ok = 0;
     int err = 0;
 
 #if CDEBUG
@@ -2298,6 +2383,11 @@ static int tokenize_line (cmd_info *cinfo, const char *line,
 
 	if (*s == '#') {
 	    break;
+	} else if (wild_ok && (isalpha(*s) || *s == '*')) {
+	    n = 1 + wild_spn(s+1);
+	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
+	    strncat(tok, s, m);
+	    err = push_string_token(cinfo, tok, s, pos);	    
 	} else if (isalpha(*s) || *s == '$' || *s == '@') {
 	    /* regular, dollar or string identifier */
 	    n = 1 + namechar_spn(s+1);
@@ -2355,10 +2445,20 @@ static int tokenize_line (cmd_info *cinfo, const char *line,
 
 	if (!skipped && cinfo->ci == 0 && cinfo->ntoks > 0) {
 	    /* use current info to determine command index? */
-	    try_for_command_index(cinfo, s + n, dset);
+	    int imin = min_token_index(cinfo);
+
+	    if (cinfo->ntoks > imin) {
+		try_for_command_index(cinfo, imin, dset);
+		if (cinfo->ci == PRINT && peek_next_char(cinfo, imin) != '"') {
+		    cinfo->ciflags |= CI_LIST;
+		}
+	    }
 	}
 
-	if (cinfo->ciflags & CI_EXPR) {
+	if (cinfo->ciflags & CI_LIST) {
+	    /* flag acceptance of wildcard expressions */
+	    wild_ok = 1;
+	} else if (cinfo->ciflags & CI_EXPR) {
 	    /* the remainder of line will be parsed elsewhere */
 	    break;
 	} else if ((cinfo->ciflags & CI_ADHOC) && (cinfo->ciflags & CI_NOOPT)) {
@@ -2414,7 +2514,7 @@ static int assemble_command (cmd_info *cinfo, DATASET *dset)
     if (cinfo->ci == PRINT) {
 	if (first_arg_quoted(cinfo)) {
 	    /* printing string literal */
-	    cinfo->ciflags |= CI_PARM1;
+	    cinfo->ciflags = CI_PARM1;
 	} else {
 	    /* assume for now that we're printing series */
 	    cinfo->ciflags |= (CI_LIST | CI_DOALL);
@@ -2452,6 +2552,10 @@ static int assemble_command (cmd_info *cinfo, DATASET *dset)
     } else if (cinfo->ci == SET) {
 	if (cinfo->opt & (OPT_F | OPT_T)) {
 	    /* from file, to file */
+	    cinfo->ciflags = 0;
+	}
+    } else if (cinfo->ci == OUTFILE) {
+	if (cinfo->opt == OPT_C) {
 	    cinfo->ciflags = 0;
 	}
     }
@@ -2501,7 +2605,6 @@ static int assemble_command (cmd_info *cinfo, DATASET *dset)
     }
 
     if (!cinfo->err && (cinfo->ciflags & CI_LIST)) {
-	printf("assemble: doing check_for_list\n");
 	check_for_list(cinfo);
     }
 
@@ -2515,7 +2618,9 @@ static int assemble_command (cmd_info *cinfo, DATASET *dset)
 
  bailout:
 
+#if CDEBUG
     print_tokens(cinfo);
+#endif
 
     if (cinfo->ci == END) {
 	/* FIXME placement */
@@ -2543,11 +2648,16 @@ int test_tokenize (char *line, CMD *cmd, DATASET *dset, void *ptr)
     }    
 
     if (!initted) {
+	check_for_shadowed_commands();
 	err = cmd_info_init(&cinfo);
 	initted = 1;
     }
 
     if (!err && *line != '\0') {
+	if (cmd->flags & CMD_PROG) {
+	    /* execution in progressive loop */
+	    cinfo.flags |= C_PROG;
+	}
 	err = tokenize_line(&cinfo, line, dset);
 	if (!err) {
 	    err = assemble_command(&cinfo, dset);
