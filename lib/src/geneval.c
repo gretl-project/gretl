@@ -10090,6 +10090,17 @@ static int series_calc_nodes (NODE *l, NODE *r)
     return ret;
 }
 
+static int cast_series_to_list (parser *p, short f)
+{
+    if (p->targ == LIST) {
+	return (f == F_LOG || f == F_DIFF ||
+		f == F_LDIFF || f == F_SDIFF ||
+		f == F_ODEV);
+    } else {
+	return 0;
+    }
+}
+
 static void reattach_series (NODE *n, parser *p)
 {
     int v = n->vnum;
@@ -10560,7 +10571,11 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);
 	} else if (l->t == SERIES) {
-	    ret = apply_series_func(l, t->t, p);
+	    if (cast_series_to_list(p, t->t)) {
+		apply_list_func(l, t->t, p);
+	    } else {
+		ret = apply_series_func(l, t->t, p);
+	    }
 	} else if (l->t == MAT) {
 	    ret = apply_matrix_func(l, t->t, p);
 	} else if (ok_list_node(l) && t->t == F_LOG) {
@@ -10710,8 +10725,10 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_LDIFF:
     case F_SDIFF:
-    case F_ODEV:	
-	if (l->t == SERIES || (t->t != F_ODEV && l->t == MAT)) {
+    case F_ODEV:
+	if (l->t == SERIES && cast_series_to_list(p, t->t)) {
+	    ret = apply_list_func(l, t->t, p);
+	} else if (l->t == SERIES || (t->t != F_ODEV && l->t == MAT)) {
 	    ret = series_series_func(l, r, t->t, p);
 	} else if (ok_list_node(l)) {
 	    ret = apply_list_func(l, t->t, p);
@@ -10759,7 +10776,11 @@ static NODE *eval (NODE *t, parser *p)
     case F_RANKING:
 	/* series or matrix argument */
 	if (l->t == SERIES) {
-	    ret = series_series_func(l, r, t->t, p);
+	    if (cast_series_to_list(p, t->t)) {
+		ret = apply_list_func(l, t->t, p);
+	    } else {
+		ret = series_series_func(l, r, t->t, p);
+	    }
 	} else if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
 	} else if (t->t == F_DIFF && ok_list_node(l)) {
