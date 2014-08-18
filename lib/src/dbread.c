@@ -2022,6 +2022,29 @@ get_compact_method_and_advance (char *s, CompactMethod *method)
     return p;
 }
 
+static CompactMethod compact_method_from_option (int *err)
+{
+    const char *s = get_optval_string(DATA, OPT_C);
+    CompactMethod method = COMPACT_NONE;
+
+    if (s == NULL || *s == '\0') {
+	*err = E_PARSE;
+    } else if (!strcmp(s, "average")) {
+	method = COMPACT_AVG;
+    } else if (!strcmp(s, "sum")) {
+	method = COMPACT_SUM;
+    } else if (!strcmp(s, "first")) {
+	method = COMPACT_SOP;
+    } else if (!strcmp(s, "last")) {
+	method = COMPACT_EOP;
+    } else {
+	gretl_errmsg_sprintf(_("field '%s' in command is invalid"), s);
+	*err = E_PARSE;
+    }
+
+    return method;
+}
+
 static double **new_dbZ (int n)
 {
     double **Z;
@@ -2340,10 +2363,6 @@ static int odbc_get_series (char *line, DATASET *dset,
 	return 1;
     }
 
-    /* skip "data" plus following space */
-    line += strcspn(line, " ");
-    line += strspn(line, " ");
-
     /* get "series" field */
     vnames = odbc_get_varnames(&line, &err);
     if (err) {
@@ -2595,6 +2614,12 @@ int db_get_series (char *line, DATASET *dset,
     int from_scratch = 0;
     int err = 0;
 
+    if (!strncmp(line, "data ", 5)) {
+	/* old-style parser */
+	line += 5;
+	line += strspn(line, " ");
+    }
+
     if (opt & OPT_O) {
 	return odbc_get_series(line, dset, prn);
     }
@@ -2619,25 +2644,34 @@ int db_get_series (char *line, DATASET *dset,
 
     from_scratch = (dset->n == 0);
 
-    line = get_compact_method_and_advance(line, &method);
-
-    if (string_is_blank(line)) {
-	err = E_DATA;
+    if (opt & OPT_C) {
+	/* new-style: compaction method supplied as option */
+	method = compact_method_from_option(&err);
     } else {
-	/* get the variable names on the line */
-	vnames = gretl_string_split(line, &nnames, NULL);
-	if (vnames == NULL) {
-	    err = E_ALLOC;
+	line = get_compact_method_and_advance(line, &method);
+    }
+
+    if (!err) {
+	if (string_is_blank(line)) {
+	    err = E_DATA;
+	} else {
+	    /* get the variable names on the line */
+	    vnames = gretl_string_split(line, &nnames, NULL);
+	    if (vnames == NULL) {
+		err = E_ALLOC;
+	    }
 	}
     }
 
-    if (saved_db_type == GRETL_NATIVE_DB) {
-	idxname = native_db_index_name();
-    } else if (saved_db_type == GRETL_NATIVE_DB_WWW) {
+    if (!err) {
+	if (saved_db_type == GRETL_NATIVE_DB) {
+	    idxname = native_db_index_name();
+	} else if (saved_db_type == GRETL_NATIVE_DB_WWW) {
 #ifdef USE_CURL
-	idxname = g_strdup_printf("%sdbtmp.idx", gretl_dotdir());
-	err = remote_db_index_to_file(idxname);
+	    idxname = g_strdup_printf("%sdbtmp.idx", gretl_dotdir());
+	    err = remote_db_index_to_file(idxname);
 #endif
+	}
     }
 
     /* and process them individually */
