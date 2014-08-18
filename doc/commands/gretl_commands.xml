@@ -8130,7 +8130,10 @@
       <para>
 	The <opt>--close</opt> flag is used to close an output
 	file that was previously opened as above.  Output will then
-	revert to the default stream.
+	revert to the default stream. Note that since only one file
+	can be opened via <lit>outfile</lit> at any given time, no
+	filename argument need (nor should) be supplied with this
+	variant of the command.
       </para>
       <para>
 	In the first example command above, the file
