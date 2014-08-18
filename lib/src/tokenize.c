@@ -1,12 +1,6 @@
-#ifdef STANDALONE
-# include <gretl/libgretl.h>
-# include <gretl/gretl_func.h>
-# include <gretl/uservar.h>
-#else
-# include "libgretl.h"
-# include "gretl_func.h"
-# include "uservar.h"
-#endif
+#include "libgretl.h"
+#include "gretl_func.h"
+#include "uservar.h"
 
 /* start of what should be in commands.h */
 
@@ -768,33 +762,6 @@ static char *merge_toks_r_to_l (cmd_info *c, int k2)
     return fuse_tokens(c, k1, k2, n);
 }
 
-static void rejoin_list_toks (cmd_info *c, int k1, int *k2,
-			      char *targ, int j)
-{
-    cmd_token *tok;
-    int i;
-
-    if (j > 0) {
-	strcat(targ, " ");
-    }
-
-    for (i=k1; i<c->ntoks; i++) {
-	tok = &c->toks[i];
-	if (i > k1 && (!token_joined(tok) || token_done(tok))) {
-	    break;
-	}
-	*k2 = i;
-	if (tok->type == TOK_PRSTR) {
-	    strcat(targ, "(");
-	    strcat(targ, tok->s);
-	    strcat(targ, ")");
-	} else {
-	    strcat(targ, tok->s);
-	}
-	mark_token_done(c->toks[i]);
-    }
-}
-
 /* Mark short options (e.g. "-o") and long options (e.g. "--robust"),
    which may be followed by "=".  At this step we're just marking the
    tokens on a purely syntactical basis.
@@ -823,7 +790,6 @@ static void mark_option_tokens (cmd_info *c)
 		}
 	    } else if (prevtok->type == TOK_OPT) {
 		/* previous token is 'joined' */
-		printf("prev is TOK_OPT, tok is %d\n",tok->type); 
 		if (tok->type == TOK_EQUALS) {
 		    tok->type = TOK_OPTEQ;
 		} else if (tok->type == TOK_DASH ||
@@ -1674,14 +1640,6 @@ static void print_tokens (cmd_info *c)
 	printf("* order = %d\n", c->order);
     }
 
-#ifdef STANDALONE
-    if (c->err == E_ARGS) {
-	/* list not constructed, presumably */
-	printf("*** error (%s) forgiven ;-)\n", errmsg_get_with_default(c->err));
-	c->err = 0;
-    }
-#endif
-
     if (c->err) {
 	printf("*** error = %d (%s)\n\n", c->err, errmsg_get_with_default(c->err));
 	return;
@@ -1773,21 +1731,6 @@ static void get_separator_range (int ci, int *minsep, int *maxsep)
 
 #endif
 
-/* determine if the command-line is a "genr"-type expression,
-   which will be directed to a separate parser -- this gets
-   invoked if we haven't been able to find a recognizable
-   comand-word
-*/
-
-#ifdef STANDALONE
-
-static int is_varname (const char *s, DATASET *dset)
-{
-    return !strcmp(s, "vname");
-}
-
-#else
-
 static int is_varname (const char *s, DATASET *dset)
 {
     if (current_series_index(dset, s) >= 0) {
@@ -1799,7 +1742,11 @@ static int is_varname (const char *s, DATASET *dset)
     }
 }
 
-#endif
+/* determine if the command-line is a "genr"-type expression,
+   which will be directed to a separate parser -- this gets
+   invoked if we haven't been able to find a recognizable
+   comand-word
+*/
 
 static int test_for_genr (cmd_info *c, int i, DATASET *dset)
 {
@@ -2049,6 +1996,53 @@ static int try_auxlist_term (cmd_info *c, cmd_token *tok, int scount)
 	return 1;
     } else {
 	return 0;
+    }
+}
+
+static int panel_gmm_special (cmd_info *c, const char *s)
+{
+    if (c->ci == ARBOND || c->ci == DPANEL) {
+	if (!strcmp(s, "GMM") || !strcmp(s, "GMMlevel")) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static void rejoin_list_toks (cmd_info *c, int k1, int *k2,
+			      char *lstr, int j)
+{
+    cmd_token *tok;
+    int i;
+
+    if (j > 0) {
+	strcat(lstr, " ");
+    }
+
+    for (i=k1; i<c->ntoks; i++) {
+	tok = &c->toks[i];
+	if (i > k1 && (!token_joined(tok) || token_done(tok))) {
+	    break;
+	}
+	*k2 = i;
+	if (tok->type == TOK_PRSTR) {
+	    strcat(lstr, "(");
+	    strcat(lstr, tok->s);
+	    strcat(lstr, ")");
+	} else if (i < c->ntoks - 1 && panel_gmm_special(c, tok->s)) {
+	    cmd_token *next = &c->toks[i+1];
+	    char *tmp;
+
+	    tmp = gretl_strdup_printf("%s(%s)", tok->s, next->s);
+	    c->param = gretl_str_expand(&c->param, tmp, " ");
+	    free(tmp);
+	    mark_token_done(c->toks[i]);
+	    *k2 = ++i;
+	} else {
+	    strcat(lstr, tok->s);
+	}
+	mark_token_done(c->toks[i]);
     }
 }
 
@@ -2533,146 +2527,6 @@ static int assemble_command (cmd_info *cinfo, DATASET *dset)
     return cinfo->err;
 }
 
-#ifdef STANDALONE
-
-/* this functionality is handled in the CLI and GUI programs;
-   we need it here for testing multi-line commands
-*/
-
-int maybe_continue_line (char *line, FILE *fp, int *pn)
-{
-    int n = strlen(line);
-    int i, cont, err = 0;
-
-    if (line[n-1] == '\n') {
-	line[n-1] = '\0';
-	n--;
-    }    
-
-    while (!err) {
-	cont = 0;
-	for (i=n-1; i>=0; i--) {
-	    if (line[i] == '\\' || line[i] == ',') {
-		cont = 1;
-		break;
-	    } else if (!isspace(line[i])) {
-		break;
-	    }
-	}
-
-	if (cont == 0) {
-	    break;
-	} else {
-	    char nextline[MAXLINE];
-	    char *s;
-	    int m;
-
-	    if (fgets(nextline, sizeof nextline, fp) == NULL) {
-		err = E_PARSE;
-	    } else {
-		s = nextline;
-		m = strspn(s, " ") - 1;
-		if (m > 0) {
-		    s += m;
-		}
-		n += strlen(s) + 1;
-		if (n >= MAXLINE) {
-		    err = E_DATA;
-		} 
-	    }
-
-	    if (!err) {
-		strcat(line, "\n");
-		strcat(line, s);
-		n = strlen(line);
-		if (line[n-1] == '\n') {
-		    line[n-1] = '\0';
-		    n--;
-		}		
-	    }
-	}
-    }
-
-    *pn = n;
-
-    return err;
-}
-
-int main (int argc, char **argv)
-{
-    FILE *fp;
-    char line[MAXLINE];
-    char *scriptname = NULL;
-    DATASET *dset = NULL;
-    cmd_info cinfo;
-    CMD *cmd; /* needed for comment-filtering */
-    int n, err = 0;
-
-    if (argc < 2) {
-        fprintf(stderr, "Please give a filename\n");
-        exit(EXIT_FAILURE);
-    }
-
-    scriptname = argv[1];
-
-    fp = fopen(scriptname, "r");
-    if (fp == NULL) {
-        fprintf(stderr, "Couldn't open '%s'\n", scriptname);
-        exit(EXIT_FAILURE);
-    }
-
-    libgretl_init();
-
-    if (argc == 3) {
-	char *dataname = argv[2];
-
-	dset = datainfo_new();
-	err = gretl_read_native_data(dataname, dset);
-	if (err) {
-	    fprintf(stderr, "Couldn't open '%s'\n", dataname);
-	    exit(EXIT_FAILURE);
-	}
-    }
-
-    cmd = gretl_cmd_new();
-    err = cmd_info_init(&cinfo);
-
-    while (!err && fgets(line, sizeof line, fp)) {
-	err = maybe_continue_line(line, fp, &n);
-
-	if (filter_comments(line, cmd)) {
-	    continue;
-	}
-
-	if (*line != '\0') {
-	    err = tokenize_line(&cinfo, line, dset);
-	    if (!err) {
-		err = assemble_command(&cinfo, dset);
-	    }
-	}
-
-	if (err) {
-	    printf("err = %d on '%s'\n", err, line);
-	}
-
-	if (cinfo.ci == QUIT) {
-	    break;
-	}
-
-	cmd_info_clear(&cinfo);
-    }
-
-    fclose(fp);
-
-    cmd_info_destroy(&cinfo);
-    gretl_cmd_destroy(cmd);
-    libgretl_cleanup();
-
-    return 0;
-}
-
-#else
-
 int test_tokenize (char *line, CMD *cmd, DATASET *dset, void *ptr)
 {
     static cmd_info cinfo;
@@ -2708,5 +2562,3 @@ int test_tokenize (char *line, CMD *cmd, DATASET *dset, void *ptr)
 
     return err;
 }
-
-#endif
