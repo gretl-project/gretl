@@ -10,6 +10,8 @@ version 1.9.92, in progress
   when the given lower bound is negative
 - "append" command: add option --update-overlap
 - "varlist" command: deprecate "list" as an alias for this
+- "data" command: use --compact option in place of ad hoc
+  "(compact=method)" syntax
 
 2014-07-28 version 1.9.91
 - Add Japanese translation (thanks to Shintaro Nakagawa)

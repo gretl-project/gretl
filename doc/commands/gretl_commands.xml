@@ -2256,6 +2256,11 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--compact</flag>
+	  <optparm>method</optparm>
+	  <effect>specify compaction method</effect>
+	</option>	
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>don't report results except on error</effect>
 	</option>
@@ -2291,7 +2296,7 @@
 	If the series to be read are of higher frequency than the working
 	data set, you may specify a compaction method as below:</para>
       <code>
-	data (compact=average) LHUR PUNEW
+	data LHUR PUNEW --compact=average
       </code>
       <para>
 	The four available compaction methods are <quote>average</quote>

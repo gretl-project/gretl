@@ -6,6 +6,10 @@ behavior, whereby overlapping data-points are updated from
 the specified data file, now requires the --update-overlap
 option.
 
+When specifying a compaction method with the "data" command
+you should now use the new --compact option. The old syntax,
+of the form "(compact=method)", is now deprecated.
+
 The alias "list" for the "varlist" command is now deprecated
 and will be removed in gretl 1.10 (the alias "ls" is still
 acceptable).
