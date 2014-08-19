@@ -251,7 +251,9 @@ int llc_test_driver (const char *parm, const int *list,
     int p0 = -1;
     int err = 0;
 
-    if (*parm == '{') {
+    if (parm == NULL) {
+	err = E_DATA;
+    } else if (*parm == '{') {
 	m = generate_matrix(parm, dset, &err);
 	if (!err) {
 	    plist = gretl_list_from_vector(m, &err);

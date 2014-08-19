@@ -536,8 +536,14 @@ static int real_setmiss (double missval, int varno,
 int set_miss (const int *list, const char *param, 
 	      DATASET *dset, PRN *prn)
 {
-    double missval = atof(param);
     int i, vi, count, ret = 0;
+    double missval;
+
+    if (param == NULL) {
+	return 0;
+    }
+
+    missval = atof(param);
 
     if (list == NULL || list[0] == 0) {
 	count = real_setmiss(missval, 0, dset);

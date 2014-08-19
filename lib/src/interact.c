@@ -450,6 +450,17 @@ static int catch_system_alias (CMD *cmd)
 			  c == SQUARE ||	\
 	                  c == ORTHDEV)
 
+
+static int has_param (const CMD *cmd)
+{
+    return cmd->param != NULL && *cmd->param != '\0';
+}
+
+static int has_parm2 (const CMD *cmd)
+{
+    return cmd->parm2 != NULL && *cmd->parm2 != '\0';
+}
+
 /* given an assignment such as "foo <- command", extract
    the first field and record it in the "savename"
    member of CMD.
@@ -1145,8 +1156,7 @@ static int cmd_full_list (const DATASET *dset, CMD *cmd)
     int nv = 0, err = 0;
     int *list;
 
-    if (cmd->ci == PRINT && cmd->parm2 != NULL &&
-	*cmd->parm2 != '\0') {
+    if (cmd->ci == PRINT && has_parm2(cmd)) {
 	/* no-op */
 	return 0;
     }
@@ -1889,7 +1899,7 @@ static int check_datamod_command (CMD *cmd, const char *s)
 
 static int check_end_command (CMD *cmd)
 {
-    if (cmd->param != NULL && *cmd->param != 0) {
+    if (has_param(cmd)) {
 	int cmdcode = gretl_command_number(cmd->param);
 
 	if (cmdcode == LOOP) {
@@ -1995,7 +2005,7 @@ static int capture_param (CMD *cmd, const char *s)
 {
     /* if param has already been written by some special
        routine, don't overwrite it */
-    if (*cmd->param != '\0') {
+    if (has_param(cmd)) {
 	if (cmd->ci == DATAMOD) {
 	    check_datamod_command(cmd, s);
 	}
@@ -2060,6 +2070,7 @@ static int gretl_cmd_clear (CMD *cmd)
     cmd_unset_nolist(cmd);
 
     if (cmd->list == NULL || cmd->param == NULL || cmd->parm2 == NULL) {
+	/* FIXME */
 	cmd->err = E_ALLOC;
     } else {
 	cmd->list[0] = 0;
@@ -2685,7 +2696,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     }
 
     /* special: list <listname> delete */
-    if (cmd->ci == DELEET && *cmd->parm2 != '\0') {
+    if (cmd->ci == DELEET && has_parm2(cmd)) {
 	cmd_set_nolist(cmd);
 	return cmd->err;
     }
@@ -2922,6 +2933,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     /* double-check that allocation hasn't failed */
     if (cmd->err == 0 && (cmd->list == NULL || cmd->param == NULL || 
 			  cmd->parm2 == NULL)) {
+	/* FIXME */
 	cmd->err = E_ALLOC;
     }
 
@@ -3653,14 +3665,14 @@ cmd_print_list (const CMD *cmd, const DATASET *dset,
     nsep = n_separators(cmd->list);
 
     if (cmd->ci == LAGS) {
-	if (cmd->param[0] != '\0') {
+	if (has_param(cmd)) {
 	    *plen += pprintf(prn, " %s;", cmd->param);
 	}
-    } else if (cmd->param[0] != '\0' && !hold_param(cmd->ci)) {
+    } else if (has_param(cmd) && !hold_param(cmd->ci)) {
 	*plen += print_command_param(cmd->param, prn);
     }
 
-    if (cmd->ci == VECM && cmd->parm2 != NULL) {
+    if (cmd->ci == VECM && has_parm2(cmd)) {
 	*plen += pprintf(prn, " %s", cmd->parm2);
     }
 
@@ -3708,7 +3720,8 @@ static int command_is_silent (const CMD *cmd, const char *line)
 	return 1;
     }
 
-    if (cmd->ci == SET && !strcmp(cmd->param, "echo") &&
+    if (cmd->ci == SET && cmd->param != NULL &&
+	!strcmp(cmd->param, "echo") &&
 	gretl_function_depth() > 0) {
 	return 1;
     }
@@ -3873,7 +3886,7 @@ static void real_echo_cmd (const CMD *cmd, const DATASET *dset,
     } 
 
     /* print parameter after list, if wanted */
-    if (print_param_last(cmd->ci) && *cmd->param != '\0') {
+    if (print_param_last(cmd->ci) && has_param(cmd)) {
 	len = strlen(cmd->param) + 1;
 	if (llen + len > LINELEN) {
 	    pputs(prn, " \\\n ");
@@ -4203,7 +4216,7 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	fprintf(stderr, _("Output is already diverted to '%s'\n"),
 		outname);
 	return 1;
-    } else if (*fname == '\0') {
+    } else if (fname == NULL || *fname == '\0') {
 	return E_ARGS;
     } else if (!strcmp(fname, "null")) {
 	if (gretl_messages_on()) {
@@ -4374,7 +4387,7 @@ static int model_test_check (CMD *cmd, DATASET *dset, PRN *prn)
 {
     int err = last_model_test_ok(cmd->ci, cmd->opt, dset, prn);
 
-    if (err == E_DATA && cmd->ci == RESTRICT && *cmd->param == '\0') {
+    if (err == E_DATA && cmd->ci == RESTRICT && has_param(cmd)) {
 	/* try for a not-yet estimated anonymous system */
 	if (get_anonymous_equation_system() != NULL) {
 	    gretl_error_clear();
@@ -5616,7 +5629,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case PRINT:
-	if (cmd->param != NULL && *cmd->param != '\0') {
+	if (has_param(cmd)) {
 	    do_print_string(cmd->param, prn);
 	} else {
 	    printdata(cmd->list, cmd->parm2, dset, cmd->opt, prn);
@@ -5723,7 +5736,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case STORE:
 	if (dset == NULL || dset->Z == NULL) {
 	    err = E_NODATA;
-	} else if (*cmd->param == '\0') {
+	} else if (!has_param(cmd)) {
 	    pputs(prn, _("store: no filename given\n"));
 	    err = E_PARSE;
 	}
@@ -5951,7 +5964,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case RESTRICT:
 	/* joint hypothesis test on model */
 	if (s->rset == NULL) {
-	    if (*cmd->param == '\0') {
+	    if (!has_param(cmd)) {
 		/* if param is non-blank, we're restricting a named system */
 		err = model_test_check(cmd, dset, prn);
 		if (err) break;
@@ -6274,7 +6287,7 @@ int get_command_index (char *line, CMD *cmd)
 
     cmd->ci = 0;
     cmd->opt = OPT_NONE;
-    *cmd->parm2 = *cmd->param = '\0';
+    *cmd->parm2 = *cmd->param = '\0'; /* FIXME */
 
     while (isspace(*line)) {
 	line++;

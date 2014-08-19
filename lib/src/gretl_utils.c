@@ -1225,7 +1225,7 @@ int gretl_int_from_string (const char *s, int *err)
     double x;
     int n = 0;
 
-    if (s == NULL || *s == 0) {
+    if (s == NULL || *s == '\0') {
 	*err = E_DATA;
 	return 0;
     }

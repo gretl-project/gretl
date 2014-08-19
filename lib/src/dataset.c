@@ -2918,6 +2918,10 @@ int dataset_op_from_string (const char *s)
 {
     int op = DS_NONE;
 
+    if (s == NULL || *s == '\0') {
+	return DS_NONE;
+    }
+
     if (!strcmp(s, "addobs")) {
 	op = DS_ADDOBS;
     } else if (!strcmp(s, "compact")) {
@@ -3018,18 +3022,19 @@ static int compact_data_set_wrapper (const char *s, DATASET *dset,
 {
     CompactMethod method = COMPACT_AVG;
 
-    s += strspn(s, " ");
-
-    if (!strcmp(s, "sum")) {
-	method = COMPACT_SUM;
-    } else if (!strcmp(s, "first") || !strcmp(s, "sop")) {
-	method = COMPACT_SOP;
-    } else if (!strcmp(s, "last") || !strcmp(s, "eop")) {
-	method = COMPACT_EOP;
-    } else if (!strcmp(s, "avg") || !strcmp(s, "average")) {
-	method = COMPACT_AVG;
-    } else if (*s != '\0') {
-	return E_PARSE;
+    if (s != NULL) {
+	s += strspn(s, " ");
+	if (!strcmp(s, "sum")) {
+	    method = COMPACT_SUM;
+	} else if (!strcmp(s, "first") || !strcmp(s, "sop")) {
+	    method = COMPACT_SOP;
+	} else if (!strcmp(s, "last") || !strcmp(s, "eop")) {
+	    method = COMPACT_EOP;
+	} else if (!strcmp(s, "avg") || !strcmp(s, "average")) {
+	    method = COMPACT_AVG;
+	} else if (*s != '\0') {
+	    return E_PARSE;
+	}
     }
 
     return compact_data_set(dset, k, method, 0, 0);
@@ -3212,7 +3217,7 @@ int renumber_series_with_checks (const char *s, int fixmax,
 */
 
 int modify_dataset (DATASET *dset, int op, const int *list, 
-		    const char *s, PRN *prn)
+		    const char *param, PRN *prn)
 {
     static int resampled;
     int k = 0, err = 0;
@@ -3259,7 +3264,11 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     if (op == DS_ADDOBS || op == DS_INSOBS || 
 	op == DS_COMPACT || op == DS_RESAMPLE ||
 	op == DS_PAD_DAILY) {
-	k = dataset_int_param(&s, op, dset, &err);
+	if (param == NULL) {
+	    err = E_ARGS;
+	} else {
+	    k = dataset_int_param(&param, op, dset, &err);
+	}
 	if (err) {
 	    return err;
 	}
@@ -3278,11 +3287,12 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     } else if (op == DS_INSOBS) {
 	err = insert_obs(k, dset, prn);
     } else if (op == DS_COMPACT) {
-	err = compact_data_set_wrapper(s, dset, k);
+	err = compact_data_set_wrapper(param, dset, k);
     } else if (op == DS_EXPAND) {
-	int interp = 0, n = strlen(s);
+	int n = (param == NULL)? 0 : strlen(param);
+	int interp = 0;
 
-	if (n > 0 && !strncmp(s, "interpolate", n)) {
+	if (n > 0 && !strncmp(param, "interpolate", n)) {
 	    interp = 1;
 	}
 	err = expand_data_set(dset, k, interp);

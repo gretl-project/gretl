@@ -213,7 +213,8 @@ static void check_for_shadowed_commands (void)
    2013; and again August 2014.
 */
 
-#define CDEBUG 2
+#define CDEBUG 0
+#define CECHO 0
 
 enum {
     TOK_JOINED = 1 << 0, /* token is joined on the left (no space) */
@@ -1731,6 +1732,68 @@ static void print_tokens (cmd_info *c)
 
 #endif /* CDEBUG */
 
+#if CECHO
+
+static void echo_varargs (cmd_info *c)
+{
+    int n = strlen(c->toks[c->ntoks-1].s);
+    const char *v = c->toks[c->ntoks-1].lp;
+    
+    c->vstart = v + n;
+    printf("%s", c->vstart);
+}
+
+static void echo_tokens (cmd_info *c)
+{
+    cmd_token *tok, *toks = c->toks;
+    int i, nt = c->ntoks;
+
+    printf("+++ echo: ");
+
+    if (c->ci != c->context) {
+	if (c->flags & C_CATCH) {
+	    printf("catch ");
+	} else if (*c->savename != '\0') {
+	    printf("\"%s\" <- ", c->savename);
+	}
+    }
+
+    if (c->ciflags & (CI_EXPR | CI_ADHOC)) {
+	c->vstart = c->toks[c->cstart].lp;
+	printf("%s\n", c->vstart);	
+	return;
+    }
+
+    for (i=0; i<nt; i++) {
+	tok = &toks[i];
+	if (tok->type == TOK_QUOTED) {
+	    printf("\"%s\"", tok->s);
+	} else if (tok->type == TOK_PRSTR) {
+	    printf("(%s)", tok->s);
+	} else if (tok->type == TOK_CBSTR) {
+	    printf("{%s}", tok->s);
+	} else if (tok->type == TOK_BRSTR) {
+	    printf("[%s]", tok->s);
+	} else {
+	    printf("%s", tok->s);
+	}
+	if (i < nt - 1) {
+	    tok = &toks[i+1];
+	    if (!token_joined(tok)) {
+		putchar(' ');
+	    }
+	}
+    }
+
+    if (c->ciflags & CI_VARGS) {
+	echo_varargs(c);
+    }
+
+    putchar('\n');
+}
+
+#endif /* CECHO */
+
 static int check_for_stray_tokens (cmd_info *c)
 {
     if (!(c->ciflags & (CI_EXPR | CI_ADHOC))) {
@@ -2676,6 +2739,12 @@ int test_tokenize (char *line, CMD *cmd, DATASET *dset, void *ptr)
     if (err) {
 	printf("+++ shadow: err = %d on '%s'\n", err, line);
     }
+
+#if CECHO
+    if (!err) {
+	echo_tokens(&cinfo);
+    }
+#endif
 
     cmd_info_clear(&cinfo);
 
