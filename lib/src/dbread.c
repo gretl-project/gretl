@@ -1981,10 +1981,10 @@ get_word_and_advance (char *s, char *word, size_t maxlen)
     return (*word != '\0')? s : NULL;
 }
 
-static char *
-get_compact_method_and_advance (char *s, CompactMethod *method)
+static const char *
+get_compact_method_and_advance (const char *s, CompactMethod *method)
 {
-    char *p;
+    const char *p;
 
     *method = COMPACT_NONE;
 
@@ -2172,7 +2172,7 @@ static int parse_odbc_format (char *fmt)
     return err;
 }
 
-static char *odbc_get_query (char *s, int *err)
+static char *odbc_get_query (const char *s, int *err)
 {
     char *query = NULL;
     const char *p;
@@ -2204,11 +2204,11 @@ static char *odbc_get_query (char *s, int *err)
    otherwise we're restricted to one.
 */
 
-static char **odbc_get_varnames (char **line, int *err)
+static char **odbc_get_varnames (const char **line, int *err)
 {
     char **vnames = NULL;
     char vname[VNAMELEN];
-    char *s = *line;
+    const char *s = *line;
     int len, loop_ok = 0, nv = 0;
 
     if (strstr(s, "query=")) {
@@ -2345,7 +2345,7 @@ static int odbc_count_new_vars (char **vnames, int nv,
 
 /* data series [obs-format=format-string] [query=]query-string */
 
-static int odbc_get_series (char *line, DATASET *dset, 
+static int odbc_get_series (const char *line, DATASET *dset, 
 			    PRN *prn)
 {
     int (*get_data) (ODBC_info *);
@@ -2603,7 +2603,7 @@ static int is_glob (const char *s)
    command-line client or in script or console mode
 */
 
-int db_get_series (char *line, DATASET *dset, 
+int db_get_series (const char *line, DATASET *dset, 
 		   gretlopt opt, PRN *prn)
 {
     const gretl_matrix *rowmask = NULL;

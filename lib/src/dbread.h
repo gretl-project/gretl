@@ -115,7 +115,7 @@ int set_odbc_dsn (const char *line, PRN *prn);
 
 int db_set_sample (const char *s, DATASET *dset);
 
-int db_get_series (char *line, DATASET *datainfo, 
+int db_get_series (const char *line, DATASET *datainfo, 
 		   gretlopt opt, PRN *prn);
 
 int db_delete_series_by_name (char *line, PRN *prn);
