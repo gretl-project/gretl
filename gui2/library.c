@@ -46,6 +46,7 @@
 #include "gretl_xml.h"
 #include "gretl_panel.h"
 #include "gretl_foreign.h"
+#include "gretl_help.h"
 #include "uservar.h"
 #include "csvdata.h"
 #include "matrix_extra.h"
