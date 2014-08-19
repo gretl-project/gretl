@@ -213,7 +213,7 @@ static void check_for_shadowed_commands (void)
    2013; and again August 2014.
 */
 
-#define CDEBUG 0
+#define CDEBUG 2
 
 enum {
     TOK_JOINED = 1 << 0, /* token is joined on the left (no space) */
@@ -852,8 +852,12 @@ static void mark_option_tokens (cmd_info *c)
 		if (tok->type == TOK_NAME) {
 		    tok->type = TOK_OPTVAL;
 		}
+	    } else if (prevtok->type == TOK_OPTVAL) {
+		if (tok->type == TOK_NAME) {
+		    tok->type = TOK_OPTVAL;
+		}
 	    }
-	}
+	}		
     }
 }
 
@@ -2558,7 +2562,12 @@ static int assemble_command (cmd_info *cinfo, DATASET *dset)
 	if (cinfo->opt == OPT_C) {
 	    cinfo->ciflags = 0;
 	}
-    }
+    } else if (cinfo->ci == GNUPLOT) {
+	if (cinfo->opt & OPT_D) {
+	    /* we got the input=... option */
+	    cinfo->ciflags = 0;
+	}
+    }	
 
     /* legacy stuff */
 
