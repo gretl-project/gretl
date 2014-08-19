@@ -46,7 +46,6 @@
 #include "gretl_xml.h"
 #include "gretl_func.h"
 #include "matrix_extra.h"
-#include "cmd_private.h"
 #include "uservar.h"
 #include "gretl_zip.h"
 
