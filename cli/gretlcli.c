@@ -31,6 +31,7 @@
 #include "system.h"
 #include "gretl_restrict.h"
 #include "gretl_func.h"
+#include "gretl_help.h"
 #include "libset.h"
 #include "cmd_private.h"
 #include "flow_control.h"
@@ -75,6 +76,75 @@ static FILE *pop_input_file (void);
 static int cli_saved_object_action (const char *line, 
 				    DATASET *dset, 
 				    PRN *prn);
+
+static int parse_options (int *pargc, char ***pargv, gretlopt *popt, 
+			  double *scriptval, char *fname)
+{
+    char **argv;
+    int argc, gotfile = 0;
+    gretlopt opt = OPT_NONE;
+    int err = 0;
+
+    *fname = '\0';
+
+    if (pargv == NULL) {
+	return 0;
+    }
+
+    argc = *pargc;
+    argv = *pargv;
+
+    while (*++argv) {
+	const char *s = *argv;
+
+	if (!strcmp(s, "-e") || !strncmp(s, "--english", 9)) { 
+	    opt |= OPT_ENGLISH;
+	} else if (!strcmp(s, "-b") || !strncmp(s, "--batch", 7)) {
+	    opt |= OPT_BATCH;
+	} else if (!strcmp(s, "-h") || !strcmp(s, "--help")) { 
+	    opt |= OPT_HELP;
+	} else if (!strcmp(s, "-v") || !strcmp(s, "--version")) { 
+	    opt |= OPT_VERSION;
+	} else if (!strcmp(s, "-r") || !strncmp(s, "--run", 5)) { 
+	    opt |= OPT_RUNIT;
+	} else if (!strcmp(s, "-d") || !strncmp(s, "--db", 4)) { 
+	    opt |= OPT_DBOPEN;
+	} else if (!strcmp(s, "-w") || !strncmp(s, "--webdb", 7)) { 
+	    opt |= OPT_WEBDB;
+	} else if (!strcmp(s, "-c") || !strncmp(s, "--dump", 6)) {
+	    opt |= OPT_DUMP;
+	} else if (!strcmp(s, "-q") || !strcmp(s, "--quiet")) { 
+	    opt |= OPT_QUIET;
+	} else if (!strcmp(s, "-m") || !strcmp(s, "--makepkg")) { 
+	    opt |= OPT_MAKEPKG;
+	} else if (!strncmp(s, "--scriptopt=", 12)) {
+	    *scriptval = atof(s + 12);
+	} else if (*s == '-') {
+	    /* not a valid option */
+	    err = E_DATA;
+	    break;
+	} else if (!gotfile) {
+	    strncat(fname, s, MAXLEN - 1);
+	    gotfile = 1;
+	}
+
+	argc--;
+    }
+
+    if (!err) {
+	err = incompatible_options(opt, OPT_BATCH | OPT_RUNIT | 
+				   OPT_DBOPEN | OPT_WEBDB | OPT_MAKEPKG);
+	if (!err) {
+	    err = incompatible_options(opt, OPT_ENGLISH | OPT_BASQUE);
+	}
+    }
+
+    *pargc = argc;
+    *pargv = argv;
+    *popt = opt;
+
+    return err;
+}
 
 static void usage (int err)
 {
@@ -444,7 +514,7 @@ int main (int argc, char *argv[])
     } else {
 	gretlopt opt;
 
-	err = parseopt(&argc, &argv, &opt, &scriptval, filearg);
+	err = parse_options(&argc, &argv, &opt, &scriptval, filearg);
 
 	if (!err && (opt & (OPT_DBOPEN | OPT_WEBDB))) {
 	    /* catch GUI-only options */

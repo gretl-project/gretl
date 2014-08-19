@@ -32,6 +32,7 @@
 #include "system.h"
 #include "gretl_restrict.h"
 #include "gretl_func.h"
+#include "gretl_help.h"
 #include "libset.h"
 #include "cmd_private.h"
 #include "flow_control.h"

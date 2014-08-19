@@ -86,15 +86,10 @@ int get_command_index (char *line, CMD *cmd);
 
 int command_number (const char *cmd);
 
-int cli_help (const char *cmdword, gretlopt opt, PRN *prn);
-
-int parseopt (int *pargc, char ***pargv, gretlopt *popt, 
-	      double *scriptval, char *fname);
-
-void echo_command (const CMD *cmd, const DATASET *dset, 
+void echo_command (CMD *cmd, const DATASET *dset, 
 		   const char *line, PRN *prn);
 
-void gretl_record_command (const CMD *cmd, const DATASET *dset, 
+void gretl_record_command (CMD *cmd, const DATASET *dset, 
 			   const char *line, PRN *prn);
 
 void safe_print_line (const char *line, int *plen, PRN *prn);
