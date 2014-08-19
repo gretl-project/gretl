@@ -3,11 +3,7 @@
    testing.
 */
 
-#include "libgretl.h"
-#include "gretl_func.h"
-#include "uservar.h"
-
-/* start of what should be in commands.h */
+/* start of what maybe should be in commands.h */
 
 typedef enum {
     CI_LIST  = 1 << 0,  /* list may be present */
@@ -32,7 +28,7 @@ int gretl_command_get_flags (int ci);
 
 /* end commands.h */
 
-/* start of what should be in commands.c */
+/* start of what maybe should be in commands.c */
 
 struct gretl_cmd {
     int cnum;
@@ -222,11 +218,6 @@ enum {
 } TokenFlags;
 
 enum {
-    C_CATCH = 1 << 0, /* has "catch" modifier */
-    C_PROG  = 1 << 1  /* exec is within a "progressive" loop */
-};
-
-enum {
     TOK_NAME,    /* potentially valid identifier */
     TOK_ATSTR,   /* '@' plus potentially valid identifier */
     TOK_DOLSTR,  /* '$' plus potentially valid identifier */
@@ -251,7 +242,7 @@ enum {
     TOK_BRSTR,   /* string in square brackets */
     TOK_CBSTR,   /* string in curly braces */
     TOK_OPTDASH, /* dash preceding an option flag */
-    TOK_OPTEQ,   /* '=' that joins option to value */
+    TOK_OPTEQ,   /* '=' that joins option flag to value */
     TOK_OPTVAL,  /* value attached to option flag */
     TOK_AST,     /* single asterisk */
     TOK_SYMB,    /* symbols, not otherwise handled */
@@ -1075,7 +1066,7 @@ static int token_to_param (cmd_info *c, int pos, int i)
     return c->err;
 }
 
-/* look for, e.g., "-f filename" */
+/* legacy: look for, e.g., "-f filename" */
 
 static int dash_char_index (cmd_info *c, const char *s)
 {
@@ -1422,7 +1413,7 @@ static int handle_command_preamble (cmd_info *c)
 	    c->err = E_DATA;
 	    return c->err;
 	} else {
-	    c->flags |= C_CATCH;
+	    c->flags |= CMD_CATCH;
 	    mark_token_done(c->toks[0]);
 	    pos = 1;
 	}
@@ -1660,7 +1651,7 @@ static void print_tokens (cmd_info *c)
 # endif
 
     if (c->ci != c->context) {
-	if (c->flags & C_CATCH) {
+	if (c->flags & CMD_CATCH) {
 	    printf("* catching errors\n");
 	} else if (*c->savename != '\0') {
 	    printf("* assignment to '%s'\n", c->savename);
@@ -1751,7 +1742,7 @@ static void echo_tokens (cmd_info *c)
     printf("+++ echo: ");
 
     if (c->ci != c->context) {
-	if (c->flags & C_CATCH) {
+	if (c->flags & CMD_CATCH) {
 	    printf("catch ");
 	} else if (*c->savename != '\0') {
 	    printf("\"%s\" <- ", c->savename);
@@ -2017,7 +2008,7 @@ static int try_for_command_index (cmd_info *cinfo, int i,
 		cinfo->ciflags ^= CI_LIST;
 		cinfo->ciflags |= CI_ADHOC;
 	    }
-	    if (cinfo->ci == STORE && (cinfo->flags & C_PROG)) {
+	    if (cinfo->ci == STORE && (cinfo->flags & CMD_PROG)) {
 		cinfo->ciflags ^= CI_LIST;
 		cinfo->ciflags ^= CI_DOALL;
 		cinfo->ciflags |= CI_EXTRA;
@@ -2728,7 +2719,7 @@ int test_tokenize (char *line, CMD *cmd, DATASET *dset, void *ptr)
     if (!err && *line != '\0') {
 	if (cmd->flags & CMD_PROG) {
 	    /* execution in progressive loop */
-	    cinfo.flags |= C_PROG;
+	    cinfo.flags |= CMD_PROG;
 	}
 	err = tokenize_line(&cinfo, line, dset);
 	if (!err) {
@@ -2750,3 +2741,4 @@ int test_tokenize (char *line, CMD *cmd, DATASET *dset, void *ptr)
 
     return err;
 }
+
