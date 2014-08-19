@@ -5,7 +5,7 @@
 */
 
 struct Laginfo_ {
-    int *reflist;    /* list of distinct var for which we'll generate lags */
+    int *reflist;    /* list of distinct vars for which we'll generate lags */
     int **lag_lists; /* list of lags to be generated, per var */
     int *srclist;    /* "shadow" of command list, with "source" IDs in place
 			of lag vars IDs */
