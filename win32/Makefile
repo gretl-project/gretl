@@ -206,6 +206,7 @@ LIBSRC = adf_kpss.c \
 	gretl_foreign.c \
 	gretl_func.c \
 	gretl_intl.c \
+	gretl_help.c \
 	gretl_list.c \
 	gretl_matrix.c \
 	gretl_model.c \
