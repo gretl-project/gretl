@@ -2490,6 +2490,10 @@ int batch_pvalue (const char *str, DATASET *dset, PRN *prn)
     int dist;
     int i, n, m;
     int err = 0;
+
+    if (str == NULL || *str == '\0') {
+	return E_ARGS;
+    }
     
     if (!strncmp(str, "pvalue ", 7)) {
 	str += 7;
