@@ -58,10 +58,6 @@
 #define CMD_DEBUG 0
 #define LAGS_DBG 0
 
-#ifdef TEST_TOKENIZE
-# include "tokenize.c"
-#endif
-
 #include "laginfo.c"
 
 typedef struct {
@@ -2602,10 +2598,6 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 	    return cmd->err;
 	}
     }
-
-#ifdef TEST_TOKENIZE
-    test_tokenize(line, cmd, dset, ptr);
-#endif
 
     /* check for "catch" */
     maybe_set_catch_flag(line, cmd);
