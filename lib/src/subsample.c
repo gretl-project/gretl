@@ -2109,6 +2109,7 @@ int set_sample (const char *line, DATASET *dset)
 #endif
 	
     if (nf == 1) {
+	/* implicitly just setting the starting observation */
 	if (sscanf(line, "%63s", newstart) != 1) {
 	    gretl_errmsg_set(_("error reading smpl line"));
 	    return 1;
