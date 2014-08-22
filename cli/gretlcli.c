@@ -1003,6 +1003,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	    set_gretl_errno(err);
 	    catch = 1;
 	}
+	echo_command(cmd, dset, line, prn);
         errmsg(err, prn);
 	return (catch)? 0 : err;
     }
