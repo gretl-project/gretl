@@ -301,7 +301,7 @@ int spearman_rho (const int *list, const DATASET *dset,
     int vx, vy, m;
     int err;
 
-    if (list[0] != 2) {
+    if (list == NULL || list[0] != 2) {
 	pputs(prn, _("This command requires two variables\n"));
 	return 1;
     }
@@ -540,7 +540,7 @@ int kendall_tau (const int *list, const DATASET *dset,
     int t, nn = 0;
     int err = 0;
 
-    if (list[0] != 2) {
+    if (list == NULL || list[0] != 2) {
 	pputs(prn, _("This command requires two variables\n"));
 	return 1;
     }
