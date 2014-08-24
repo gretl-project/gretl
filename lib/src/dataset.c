@@ -3201,7 +3201,7 @@ int renumber_series_with_checks (const char *s, int fixmax,
 
 /* alternate forms:
 
-           op         list   s
+           @op        @list  @param
    dataset addobs            24
    dataset compact           1
    dataset compact           4 last
@@ -3227,7 +3227,7 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     }
 
 #if 0
-    fprintf(stderr, "modify_dataset: op=%d, s='%s'\n", op, s);
+    fprintf(stderr, "modify_dataset: op=%d, param='%s'\n", op, param);
     printlist(list, "list");
 #endif
 
