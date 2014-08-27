@@ -341,7 +341,6 @@ struct gretl_option gretl_opts[] = {
     { MODPRINT, OPT_T, "tex", 0 },
     { MODELTAB, OPT_C, "complete", 0 },
     { MODELTAB, OPT_O, "output", 2 },
-    { MPOLS,    OPT_O, "vcv", 0 },
     { MPOLS,    OPT_S, "simple-print", 0 },
     { NEGBIN,   OPT_G, "opg", 0 },
     { NEGBIN,   OPT_M, "model1", 0 },
@@ -349,7 +348,6 @@ struct gretl_option gretl_opts[] = {
     { NEGBIN,   OPT_C, "cluster", 2 },
     { NEGBIN,   OPT_V, "verbose", 0 },
     { NLS,      OPT_N, "numerical", 0 },
-    { NLS,      OPT_O, "vcv", 0 },
     { NLS,      OPT_R, "robust", 0 },
     { NLS,      OPT_V, "verbose", 0 },
     { NORMTEST, OPT_A, "all", 0 },
@@ -399,7 +397,6 @@ struct gretl_option gretl_opts[] = {
     { PANEL,    OPT_I, "iterate", 0 },
     { PANEL,    OPT_M, "matrix-diff", 0 },
     { PANEL,    OPT_N, "nerlove", 0 },
-    { PANEL,    OPT_O, "vcv", 0 },
     { PANEL,    OPT_P, "pooled", 0 },
     { PANEL,    OPT_R, "robust", 0 },
     { PANEL,    OPT_S, "silent", 0 },
@@ -1188,13 +1185,27 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
     fprintf(stderr, "setting stored options: ci = %d\n", ci);
 #endif
 
+    if (vcv_opt_ok(ci) && (opt & OPT_O)) {
+	real_push_option(ci, OPT_O, NULL, 1, flags);
+	opt &= ~OPT_O; /* handled */
+    }
+
+    if (quiet_opt_ok(ci) && (opt & OPT_Q)) {
+	real_push_option(ci, OPT_Q, NULL, 1, flags);
+	opt &= ~OPT_Q; /* handled */
+    } 
+
+    if (opt == 0) {
+	return;
+    }
+
     for (i=0; gretl_opts[i].o != 0; i++) {
 	if (ci == gretl_opts[i].ci) {
 	    if (opt & gretl_opts[i].o) {
 		real_push_option(ci, gretl_opts[i].o, NULL, 1, flags);
 	    }
-	    got_ci = 1;
-	} else if (got_ci) {
+	    got_ci = ci;
+	} else if (got_ci > 0 && ci != got_ci) {
 	    break;
 	}
     }
