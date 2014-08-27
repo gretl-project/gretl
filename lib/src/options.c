@@ -1360,7 +1360,7 @@ int set_optval_string (int ci, gretlopt opt, const char *s)
 }
 
 /* valid_long_opt: this is (semi-) public because we have need of
-   it in the experimental command tokenizer
+   it in the new command tokenizer
 */
 
 gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
