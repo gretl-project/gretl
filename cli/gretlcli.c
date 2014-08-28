@@ -512,7 +512,7 @@ int main (int argc, char *argv[])
     if (argc < 2) {
 	load_datafile = 0;
     } else {
-	gretlopt opt;
+	gretlopt opt = 0;
 
 	err = parse_options(&argc, &argv, &opt, &scriptval, filearg);
 

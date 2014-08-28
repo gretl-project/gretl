@@ -2503,7 +2503,7 @@ int dataset_stack_variables (const char *vname, const char *line,
     double *bigx = NULL;
     int i, v1 = 0, v2 = 0, nv = 0;
     int done = 0;
-    int maxok, offset;
+    int maxok, offset = 0;
     int oldn, bign, genv;
     int err = 0;
 
@@ -4302,7 +4302,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 {
     DATASET *bigset = NULL;
     char datestr[OBSLEN];
-    long ed, ed0, edbak = 0;
+    long ed, ed0 = 0, edbak = 0;
     int wd, skip, totskip = 0;
     int t, err = 0;
 

@@ -2215,7 +2215,7 @@ static double hilu_search (const int *list, DATASET *dset,
 {
     double *rh = NULL, *ssr = NULL;
     double essmin = 1.0e200;
-    double ess, r, hl_rho;
+    double ess, r, hl_rho = 0;
     int quiet = (opt & OPT_Q);
     int niceplot = (opt & OPT_G);
     int iter = 0, i = 0;
