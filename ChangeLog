@@ -1,6 +1,8 @@
 version 1.9.92, in progress
 - Enable faster execution of assignment statements in loops
 - Add and document function-form of "sprintf"
+- Fix bug: correct the procedure for recoloring following
+  prewhitening in the context of the Newey-West HAC estimator
 - Fix bug: "omit" would not print full estimates in a loop
 - Fix bug: crash when using "Edit/modify model" in GUI for a
   biprobit model
