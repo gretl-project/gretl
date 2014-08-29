@@ -266,17 +266,10 @@ the limits of an approximate 90 percent confidence interval for the
 median.  This is obtained by the bootstrap method, which can take a
 while if the data series is very long.
 
-After each variable specified in the boxplot command, a parenthesized
-boolean expression may be added, to limit the sample for the variable
-in question.  A space must be inserted between the variable name or
-number and the expression.  Suppose you have salary figures for men
-and women, and you have a dummy variable \verb+GENDER+ with value 1
-for men and 0 for women.  In that case you could draw comparative
-boxplots with the following line in the boxplots dialog:
-
-\begin{code}
-salary (GENDER=1) salary (GENDER=0)
-\end{code}
+For details on constructing boxplots, see the entry for \cmd{boxplot}
+in the \GCR\, or use the \textsf{Help} button that appears when you
+select one of the boxplot items under the menu item ``View, Graph
+specified vars'' in the main gretl window.
 
 %%% Local Variables: 
 %%% mode: latex
