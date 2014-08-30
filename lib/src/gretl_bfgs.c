@@ -1639,7 +1639,7 @@ static int user_gen_setup (umax *u,
     if (u->gentype == GRETL_TYPE_MATRIX) {
 	sprintf(formula, "matrix $umax=%s", fncall);
     } else {
-	sprintf(formula, "$umax=%s", fncall);
+	sprintf(formula, "scalar $umax=%s", fncall);
     }
 
     u->gf = genr_compile(formula, dset, OPT_P, &err);
@@ -1776,6 +1776,7 @@ double user_NR (gretl_matrix *b,
 
     *err = user_gen_setup(u, fncall, gradcall, hesscall, dset);
     if (*err) {
+	fprintf(stderr, "user_NR: failed on user_gen_setup\n");
 	return NADBL;
     }
 
