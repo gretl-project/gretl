@@ -1122,6 +1122,9 @@ static void word_check_next_char (parser *p)
 	    }
 	    p->upsym = USERIES;
 	    p->sym = LAG;
+	} else if (p->sym == ULIST) {
+	    p->upsym = ULIST;
+	    p->sym = LAG;
 	} else if (p->sym == MVAR && model_data_matrix(p->idnum)) {
 	    /* old-style "$coeff(x1)" etc. */
 	    p->sym = DMSTR;

@@ -1489,7 +1489,7 @@ int dataset_rename_series (DATASET *dset, int v, const char *name)
 {
     int err = 0;
 
-    if (v < 0 || v >= dset->v || name == NULL) {
+    if (v <= 0 || v >= dset->v || name == NULL) {
 	err = E_DATA;
     } else if (object_is_const(dset->varname[v]) ||
 	series_is_parent(dset, v)) {

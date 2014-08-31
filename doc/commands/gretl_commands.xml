@@ -2542,9 +2542,9 @@
 	In the third form, the <opt>--type</opt> option must be
 	accompanied by one of the following type-names:
 	<lit>matrix</lit>, <lit>bundle</lit>, <lit>string</lit>,
-	<lit>list</lit>, or <lit>scalar</lit>. The effect is to delete
-	all variables of the given type. In this case no argument
-	other than the option should be given.
+	<lit>list</lit>, <lit>scalar</lit> or <lit>array</lit>. The
+	effect is to delete all variables of the given type. In this
+	case no argument other than the option should be given.
       </para>
     </description>
 

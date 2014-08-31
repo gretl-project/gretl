@@ -4001,31 +4001,59 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	int *list = NULL;
-	int lv;
+	int *list = NULL, *srclist = NULL;
+	int i, imin = 1, imax = 1;
+	int lv = 0;
 
-	if (l->t != SERIES || l->vnum < 0 || 
-	    (r->t != IVEC && r->t != NUM)) {
+	if (!useries_node(l) && !ulist_node(l)) {
+	    /* we need a named series or list on the left */
 	    p->err = E_TYPES;
+	} else if (r->t != IVEC && r->t != NUM) {
+	    /* we need one or more integers on the right */
+	    p->err = E_TYPES;
+	}
+
+	if (p->err) {
 	    return NULL;
 	}
 
-	lv = l->vnum;
-
-	if (r->t == IVEC) {
-	    int minlag = -r->v.ivec[0];
-	    int maxlag = -r->v.ivec[1];
-
-	    list = laggenr_from_to(lv, minlag, maxlag,
-				   p->dset, &p->err);
+	if (ulist_node(l)) {
+	    srclist = l->v.ivec;
+	    imax = srclist[0];
 	} else {
-	    int lag = -r->v.xval;
+	    lv = l->vnum;
+	}
 
-	    lv = laggenr(lv, lag, p->dset);
-	    if (lv > 0) {
-		list = gretl_list_new(1);
-		if (list != NULL) {
-		    list[1] = lv;
+	for (i=imin; i<=imax && !p->err; i++) {
+	    if (srclist != NULL) {
+		lv = srclist[i];
+	    }
+	    if (r->t == IVEC) {
+		int minlag = -r->v.ivec[0];
+		int maxlag = -r->v.ivec[1];
+
+		if (list == NULL) {
+		    list = laggenr_from_to(lv, minlag, maxlag,
+					   p->dset, &p->err);
+		} else {
+		    int *tmp;
+
+		    tmp = laggenr_from_to(lv, minlag, maxlag,
+					   p->dset, &p->err);
+		    if (!p->err) {
+			p->err = gretl_list_add_list(&list, tmp);
+			free(tmp);
+		    }
+		}		    
+	    } else {
+		int lag = -r->v.xval;
+
+		lv = laggenr(lv, lag, p->dset);
+		if (lv > 0) {
+		    list = gretl_list_append_term(&list, lv);
+		    if (list == NULL) {
+			p->err = E_ALLOC;
+		    }
 		}
 	    }
 	}

@@ -1794,17 +1794,19 @@ void maybe_list_vars (const DATASET *dset, PRN *prn)
     }
 }
 
-static void print_listed_objects (const char *s, 
-				  const DATASET *dset, 
-				  PRN *prn)
+static int print_listed_objects (const char *s, 
+				 const DATASET *dset, 
+				 PRN *prn)
 {
     char *name;
     int err = 0;
 
     while ((name = gretl_word_strdup(s, &s, OPT_NONE, &err)) != NULL) {
-	print_user_var_by_name(name, dset, prn);
+	err = print_user_var_by_name(name, dset, prn);
 	free(name);
     }
+
+    return err;
 }
 
 static int adjust_print_list (int *list, int *screenvar,
@@ -2114,7 +2116,7 @@ int printdata (const int *list, const char *mstr,
  endprint:
 
     if (!err && mstr != NULL) {
-	print_listed_objects(mstr, dset, prn);
+	err = print_listed_objects(mstr, dset, prn);
     }
 
     free(plist);
