@@ -279,6 +279,14 @@ static int catch_command_alias (char *line, CMD *cmd)
 	}
     } else if (*s == '!' || !strcmp(s, "launch")) {
 	cmd->ci = SHELL;
+    } else if (!strcmp(s, "addobs")) { 	 
+	char *tmp = gretl_strdup(line); 	 
+	  	 
+	deprecate_alias("addobs", "dataset addobs", 0); 	 
+	strcpy(line, "dataset "); 	 
+	strcat(line, tmp); 	 
+	cmd->ci = DATAMOD; 	 
+	free(tmp);
     } else if (!strcmp(s, "fcasterr")) {
 	deprecate_alias("fcasterr", "fcast", 1);
 	cmd->ci = FCAST; 	 
