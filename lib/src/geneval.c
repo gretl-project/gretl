@@ -12149,6 +12149,10 @@ static int check_private_varname (const char *s)
 	"0123456789_$";
     int n = 0, err = 0;
 
+    if (strlen(s) >= VNAMELEN) {
+	return E_DATA;
+    }
+
     if (isalpha(*s) || *s == '$') {
 	n = strspn(s, ok);
     }

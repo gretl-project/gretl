@@ -99,15 +99,20 @@ double get_date_x (int pd, const char *obs)
 int check_varname (const char *varname)
 {
     int testchar = 'a';
-    int ret = 0;
+    int firstbad = 0;
+    int err = 0;
 
     gretl_error_clear();
 
-    if (gretl_reserved_word(varname)) {
-	ret = VARNAME_RESERVED;
+    if (strlen(varname) >= VNAMELEN) {
+	gretl_errmsg_set(_("Varname exceeds the maximum of 31 characters"));
+	err = E_DATA;
+    } else if (gretl_reserved_word(varname)) {
+	err = E_DATA;
     } else if (!(isalpha((unsigned char) *varname))) {
+	firstbad = 1;
 	testchar = *varname;
-        ret = VARNAME_FIRSTCHAR;
+        err = E_DATA;
     } else {
 	const char *p = varname;
 
@@ -116,7 +121,7 @@ int check_varname (const char *varname)
 		&& !(isdigit((unsigned char) *p))
 		&& *p != '_') {
 		testchar = *p;
-		ret = VARNAME_BADCHAR;
+		err = E_DATA;
 	    }
 	    p++;
 	}
@@ -124,7 +129,7 @@ int check_varname (const char *varname)
 
     if (testchar != 'a') {
 	if (isprint((unsigned char) testchar)) {
-	    if (ret == VARNAME_FIRSTCHAR) {
+	    if (firstbad) {
 		gretl_errmsg_sprintf(_("First char of varname '%s' is bad\n"
 				       "(first must be alphabetical)"), 
 				     varname);
@@ -134,7 +139,7 @@ int check_varname (const char *varname)
 				     varname, (unsigned char) testchar);
 	    }
 	} else {
-	    if (ret == VARNAME_FIRSTCHAR) {
+	    if (firstbad) {
 		gretl_errmsg_sprintf(_("First char of varname (0x%x) is bad\n"
 				       "(first must be alphabetical)"), 
 				     (unsigned) testchar);
@@ -146,7 +151,7 @@ int check_varname (const char *varname)
 	}
     }
 
-    return ret;
+    return err;
 }   
 
 static int bad_date_string (const char *s)

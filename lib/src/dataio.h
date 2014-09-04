@@ -53,12 +53,6 @@ typedef enum {
     CLEAR_SUBSAMPLE       /* dataset is sub-sampled: clear partially */
 } DataClearCode;
 
-typedef enum {
-    VARNAME_RESERVED = 1, /* vername is a gretl reserved name */
-    VARNAME_FIRSTCHAR,    /* first character is not alphabetical */
-    VARNAME_BADCHAR       /* illegal character in second or subsequent place */
-} GretlVarnameError;
-
 #define SPREADSHEET_IMPORT(f) (f == GRETL_XLS ||	\
 			       f == GRETL_XLSX ||	\
 			       f == GRETL_GNUMERIC ||	\
