@@ -10,9 +10,8 @@ When specifying a compaction method with the "data" command
 you should now use the new --compact option. The old syntax,
 of the form "(compact=method)", is now deprecated.
 
-The alias "list" for the "varlist" command is now deprecated
-and will be removed in gretl 1.10 (the alias "ls" is still
-acceptable).
+The alias of "addobs" for "dataset addobs" is officially 
+deprecated and will likely be removed in gretl 1.10.
 
 2014-07-28 version 1.9.91
 
@@ -60,11 +59,8 @@ of a command calls for a scalar numerical value; if a command
 claims to accept a date or observation string as an argument,
 it still does.
 
-The following old, undocumented command aliases have finally
-been removed:
-
-"addobs"   (use "dataset addobs")
-"import"   (use "open")
+The following old, undocumented alias of "import" for the
+"open" command has been removed.
 
 2013-03-15 version 1.9.12
 
