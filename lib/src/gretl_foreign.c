@@ -413,6 +413,12 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 			      mpiexec, hostbit, npbit, gretl_home(), rngbit,
 			      qopt, gretl_mpi_filename());
 
+	if (opt & OPT_D) {
+	    pputs(prn, "gretl mpi command:\n ");
+	    pputs(prn, cmd);
+	    pputc(prn, '\n');
+	}
+
 	err = gretl_win32_grab_output(cmd, &sout);
 	if (sout != NULL && *sout != '\0') {
 	    pputs(prn, sout);
@@ -565,20 +571,16 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 
 #ifdef HAVE_MPI
 
-#define MPI_DEBUG 0
-
-#if MPI_DEBUG
-static void print_mpi_command (char **argv)
+static void print_mpi_command (char **argv, PRN *prn)
 {
     int i;
 
-    fputs("gretl/MPI argv array:\n ", stderr);
+    pputs(prn, "gretl mpi command:\n ");
     for (i=0; argv[i] != NULL; i++) {
-	fprintf(stderr, "%s ", argv[i]);
+	pprintf(prn, "%s ", argv[i]);
     }
-    fputc('\n', stderr);
+    pputc(prn, '\n');
 }
-#endif
 
 /* The following should probably be redundant on Linux but may
    be needed for the OS X package, where the gretl bin
@@ -659,9 +661,10 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	argv[i++] = (char *) gretl_mpi_filename();
 	argv[i] = NULL;
 
-#if MPI_DEBUG
-	print_mpi_command(argv);
-#endif
+	if (opt & OPT_D) {
+	    print_mpi_command(argv, prn);
+	}
+
 	err = lib_run_prog_sync(argv, opt, prn);
 	g_free(mpiprog);
     }
