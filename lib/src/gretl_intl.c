@@ -1151,6 +1151,35 @@ char *utf8_to_cp (const char *s)
     return ret;
 }
 
+char *utf8_to_rtf (const char *s, int *err)
+{
+    const char *nextp, *p = s;
+    short int k;
+    PRN *prn;
+    char *ret = NULL;
+
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
+    if (*err) {
+	return NULL;
+    }
+ 
+    while (*p) {
+	nextp = g_utf8_next_char(p);
+	if (nextp - p > 1) {
+	    k = (short) g_utf8_get_char(p);
+	    pprintf(prn, "\\u%d?", k);
+	} else {
+	    pputc(prn, *p);
+	}
+	p = nextp;
+    }
+
+    ret = gretl_print_steal_buffer(prn);
+    gretl_print_destroy(prn);
+
+    return ret;
+}
+
 #define ascii_ctrl(a) (a == '\t' || a == '\n' || \
                        a == '\r' || a == CTRLZ)
 

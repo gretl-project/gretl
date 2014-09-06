@@ -64,6 +64,8 @@ const char *lang_string_from_id (int langid);
 
 char *utf8_to_cp (const char *s);
 
+char *utf8_to_rtf (const char *s, int *err);
+
 char *utf8_to_latin (const char *s);
 
 int iso_latin_version (void);
