@@ -231,9 +231,17 @@ int prn_to_clipboard (PRN *prn, int fmt)
 #endif
 
     if (!utf8_ok && string_is_utf8((const unsigned char *) buf)) {
-	trbuf = strip_utf8(buf);
+	if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
+	    trbuf = utf8_to_rtf(buf);
+	} else {
+	    trbuf = strip_utf8(buf);
+	}
     } else {
 	trbuf = buf;
+    }
+
+    if (trbuf == NULL) {
+	return E_ALLOC;
     }
 
     if (fmt == GRETL_FORMAT_RTF_TXT) {

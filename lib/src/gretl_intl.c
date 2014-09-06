@@ -1151,15 +1151,17 @@ char *utf8_to_cp (const char *s)
     return ret;
 }
 
-char *utf8_to_rtf (const char *s, int *err)
+char *utf8_to_rtf (const char *s)
 {
     const char *nextp, *p = s;
     short int k;
     PRN *prn;
     char *ret = NULL;
+    int err = 0;
 
-    prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
-    if (*err) {
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+
+    if (prn == NULL) {
 	return NULL;
     }
  
