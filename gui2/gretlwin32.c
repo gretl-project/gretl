@@ -322,11 +322,12 @@ void gretl_win32_init (const char *progname, int debug)
     }
 }
 
-static int win_copy_buf (char *buf, int fmt)
+static int win_copy_buf (char *buf, int fmt, int encoding_done)
 {
     HGLOBAL winclip;
     LPTSTR ptr;
     char *winbuf = NULL;
+    gchar *trbuf = NULL;
     unsigned clip_format;
     size_t len;
 
@@ -342,16 +343,17 @@ static int win_copy_buf (char *buf, int fmt)
 
     EmptyClipboard();
 
-    strip_unicode_minus(buf);
-
-    if ((fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT) &&
-	string_is_utf8((const unsigned char *) buf)) {
-	gchar *tr = my_locale_from_utf8(buf);
-
-	if (tr != NULL) {
-	    winbuf = dosify_buffer(tr, fmt);
-	    g_free(tr);
+    if (!encoding_done) {
+	strip_unicode_minus(buf);
+	if ((fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT) &&
+	    string_is_utf8((const unsigned char *) buf)) {
+	    trbuf = my_locale_from_utf8(buf);
 	}
+    }
+
+    if (trbuf != NULL) {
+	winbuf = dosify_buffer(trbuf, fmt);
+	g_free(trbuf);
     } else {
 	winbuf = dosify_buffer(buf, fmt);
     }
@@ -377,19 +379,17 @@ static int win_copy_buf (char *buf, int fmt)
     }
 
     SetClipboardData(clip_format, winclip);
-
     CloseClipboard();
-
     free(winbuf);
 
     return 0;
 }
 
-int prn_to_clipboard (PRN *prn, int fmt)
+int prn_to_clipboard (PRN *prn, int fmt, int encoding_done)
 {
     char *buf = gretl_print_steal_buffer(prn);
 
-    return win_copy_buf(buf, fmt);
+    return win_copy_buf(buf, fmt, encoding_done);
 }
 
 static char *fname_from_fullname (char *fullname)

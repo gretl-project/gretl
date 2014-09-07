@@ -346,6 +346,7 @@ void text_replace (GtkWidget *w, windata_t *vwin)
 
 static int special_text_handler (windata_t *vwin, guint fmt, int what)
 {
+    int encoding_done = 0;
     int cmd = vwin->role;
     PRN *prn = NULL;
     int err = 0;
@@ -415,6 +416,24 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	err = special_print_model_table(prn);
     } 
 
+#if 1 /* experimental */
+    if (!err && (fmt & GRETL_FORMAT_RTF)) {
+	const char *buf = gretl_print_get_buffer(prn);
+	   
+	if (string_is_utf8((const unsigned char *) buf)) {
+	    char *trbuf = utf8_to_rtf(buf);
+		
+	    if (trbuf == NULL) {
+		err = E_ALLOC;
+	    } else {
+		/* re-fit @prn with a correctly encoded buffer */
+		gretl_print_replace_buffer(prn, trbuf);
+		encoding_done = 1;
+	    }
+	}
+    }
+#endif
+
     if (err) {
 	gui_errmsg(err);
     } else {
@@ -422,7 +441,7 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	    /* TeX only: there's no RTF preview option */
 	    view_latex(prn);
 	} else if (what == W_COPY) {
-	    prn_to_clipboard(prn, fmt);
+	    prn_to_clipboard(prn, fmt, encoding_done);
 	} else if (what == W_SAVE) {
 	    int action;
 
@@ -611,7 +630,8 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 	textprn = gretl_print_new_with_buffer(cpybuf);
 
 	if (action == W_COPY) {
-	    prn_to_clipboard(textprn, fmt);
+	    /* FIXME */
+	    prn_to_clipboard(textprn, fmt, 0);
 	} else {
 	    int fcode = (fmt == GRETL_FORMAT_RTF_TXT)? 
 		SAVE_RTF : SAVE_OUTPUT;

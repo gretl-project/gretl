@@ -441,14 +441,26 @@ void set_alt_gettext_mode (PRN *prn)
 {
     gettext_mode = GETTEXT_DEFAULT;
 
+    /* As of 2014-09-07, we'll handle RTF by (a) getting
+       gettext to write UTF-8 (forcing it if necessary)
+       then (b) using utf8_to_rtf() to convert to ASCII
+       plus \uXXXX codes, as per the spec for RTF >= 1.5.
+       (It would be nice if gettext were able to generate
+       the latter directly, but it can't.)
+
+       Note: this means that RTF should not be written to
+       file directly: a bufferized PRN should be used
+       first so that the buffer can be sent through
+       utf8_to_rtf(); then it can be written to file.
+    */
+
     if (prn != NULL && !native_utf8) {
 	if (gretl_in_gui_mode()) {
-	    if (rtf_format(prn) || csv_format(prn) || 
-		printing_to_standard_stream(prn)) {
+	    if (csv_format(prn) || printing_to_standard_stream(prn)) {
 		gettext_mode = GETTEXT_FORCE_LOCALE;
 	    }
-	} else if (tex_format(prn)) {
-	    /* CLI mode, writing TeX */
+	} else if (tex_format(prn) || rtf_format(prn)) {
+	    /* CLI mode, writing TeX or RTF */
 	    gettext_mode = GETTEXT_FORCE_UTF8;
 	}
     }

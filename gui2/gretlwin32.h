@@ -42,7 +42,7 @@ void gretl_win32_debug_init (int debug);
 
 void gretl_win32_init (const char *progname, int debug);
 
-int prn_to_clipboard (PRN *prn, int copycode);
+int prn_to_clipboard (PRN *prn, int fmt, int encoding_done);
 
 int send_file (char *fullname);
 

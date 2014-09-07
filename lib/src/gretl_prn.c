@@ -603,6 +603,33 @@ char *gretl_print_steal_buffer (PRN *prn)
 }
 
 /**
+ * gretl_print_replace_buffer:
+ * @prn: printing struct.
+ * 
+ * If @prn currently has a printing buffer in place,
+ * destroy the original and replace it with @buf. Note
+ * that @prn should not be used for further printing after
+ * this operation; also note that @prn "takes ownership"
+ * of @buf, which will be freed when @prn is destroyed.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int gretl_print_replace_buffer (PRN *prn, char *buf)
+{
+    int err = 0;
+
+    if (prn == NULL || prn->buf == NULL) {
+	err = E_DATA;
+    } else {
+	free(prn->buf);
+	prn->buf = buf;
+    }
+
+    return err;
+}
+
+/**
  * gretl_print_read_tempfile:
  * @prn: printing struct.
  * 

@@ -205,7 +205,7 @@ static char *strip_utf8 (char *buf)
    in gretlwin32.c
 */
 
-int prn_to_clipboard (PRN *prn, int fmt)
+int prn_to_clipboard (PRN *prn, int fmt, int encoding_done)
 {
     char *buf = gretl_print_steal_buffer(prn);
     const char *cset = NULL;
@@ -230,7 +230,8 @@ int prn_to_clipboard (PRN *prn, int fmt)
     fprintf(stderr, "prn_to_clipboard, fmt = %d, utf8_ok = %d\n", fmt, utf8_ok);
 #endif
 
-    if (!utf8_ok && string_is_utf8((const unsigned char *) buf)) {
+    if (!encoding_done && !utf8_ok && 
+	string_is_utf8((const unsigned char *) buf)) {
 	if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
 	    trbuf = utf8_to_rtf(buf);
 	} else {
