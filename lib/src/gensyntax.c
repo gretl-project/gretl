@@ -256,6 +256,7 @@ static void expected_symbol_error (int c, parser *p)
 
 static void unmatched_symbol_error (int c, parser *p)
 {
+    fprintf(stderr, "*** gensyntax: unmatched_symbol_error (%c)\n", c);
     parser_print_input(p);
     pprintf(p->prn, _("Unmatched '%c'\n"), c);
     p->err = E_PARSE;
@@ -833,7 +834,7 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 	cexp = '{';
     }
 
-    if (cexp == 0) {
+    if (!p->err && cexp == 0) {
 	if (p->sym == G_RCB) {
 	    lex(p);
 	} else {
