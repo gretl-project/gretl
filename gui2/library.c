@@ -248,7 +248,7 @@ static char *cmd_to_buf (CMD *cmd, DATASET *dset, const char *line)
     bufopen(&cmdprn);
 
     if (cmdprn != NULL) {
-	gretl_record_command(cmd, dataset, libline, cmdprn);
+	gretl_record_command(cmd, dataset, line, cmdprn);
 	buf = gretl_print_steal_buffer(cmdprn);
 	gretl_print_destroy(cmdprn);
     }
@@ -8940,7 +8940,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     if ((s->flags & CONSOLE_EXEC) && !err) {
 	/* log the specific command */
 	char *buf = cmd_to_buf(cmd, dataset, line);
-
+	
 	if (buf != NULL) {
 	    lib_command_strcpy(buf);
 	    record_command_verbatim();
