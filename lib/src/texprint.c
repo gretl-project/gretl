@@ -1124,30 +1124,6 @@ static PRN *make_tex_prn (int ID, char *fname,
     return prn;
 }
 
-static PRN *make_alt_prn (int ID, char *fname, int fmt, int *err)
-{
-    char fullname[FILENAME_MAX];
-    PRN *prn;
-
-    if (*fname == '\0') {
-	const char *ext = fmt == GRETL_FORMAT_CSV ? ".csv" : "rtf";
-
-	sprintf(fullname, "%smodel_%d.%s", gretl_workdir(), ID, ext);
-	strcpy(fname, fullname);
-    } else {
-	gretl_maybe_switch_dir(fname);
-	strcpy(fullname, fname);       
-    }
-
-    prn = gretl_print_new_with_filename(fullname, err);
-
-    if (prn != NULL) {
-	gretl_print_set_format(prn, fmt);
-    }
-
-    return prn;
-}
-
 /* mechanism for customizing gretl's tex preamble */
 
 static char tex_preamble_file[MAXLEN];
@@ -1668,9 +1644,44 @@ int texprint (MODEL *pmod, const DATASET *dset, char *fname,
     return err;
 }
 
+static void make_full_model_filename (char *fullname,
+				      char *fname,
+				      int ID,
+				      const char *ext)
+{
+    if (*fname == '\0') {
+	sprintf(fullname, "%smodel_%d.%s", gretl_workdir(), ID, ext);
+	strcpy(fname, fullname);
+    } else {
+	gretl_maybe_switch_dir(fname);
+	strcpy(fullname, fname);       
+    }
+}
+
+static void out_crlf (const char *buf, FILE *fp)
+{
+    const char *p = buf;
+
+#ifdef G_OS_WIN32
+    /* fputs should take care of CR, LF */
+    fputs(p, fp);
+#else
+    while (*p) {
+	if (*p == '\n') {
+	    fputs("\r\n", fp);
+	} else {
+	    fputc(*p, fp);
+	}
+	p++;
+    }
+#endif
+}
+
 int rtfprint (MODEL *pmod, const DATASET *dset, char *fname, 
 	      gretlopt opt)
 {
+    const char *buf = NULL;
+    char *trbuf = NULL;
     PRN *prn;
     int err = 0;
 
@@ -1678,14 +1689,66 @@ int rtfprint (MODEL *pmod, const DATASET *dset, char *fname,
 	return E_NOTIMP;
     }
 
-    prn = make_alt_prn(pmod->ID, fname, GRETL_FORMAT_RTF, &err);
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
 
     if (!err) {
+	gretl_print_set_format(prn, GRETL_FORMAT_RTF);
 	err = printmodel(pmod, dset, opt, prn);
+    }
+
+    if (!err) {
+	buf = gretl_print_get_buffer(prn);
+	if (!gretl_is_ascii(buf)) {
+	    trbuf = utf8_to_rtf(buf);
+	    if (trbuf == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    }
+
+    if (!err) {
+	char fullname[FILENAME_MAX];
+	FILE *fp;
+
+	make_full_model_filename(fullname, fname, pmod->ID, 
+				 "rtf");
+	fp = gretl_fopen(fullname, "w");
+
+	if (fp == NULL) {
+	    err = E_FOPEN;
+	} else if (trbuf != NULL) {
+	    out_crlf(trbuf, fp);
+	} else {
+	    out_crlf(buf, fp);
+	}
+
+	if (fp != NULL) {
+	    fclose(fp);
+	}
+    }
+    
+    if (trbuf != NULL) {
+	free(trbuf);
+    }
+
+    if (prn != NULL) {
 	gretl_print_destroy(prn);
     }
 
     return err;
+}
+
+static void out_native (const char *buf, FILE *fp)
+{
+#ifdef G_OS_WIN32
+    if (!gretl_is_ascii(buf)) {
+	/* output UTF-8 BOM */
+	fputc(0xEF, fp);
+	fputc(0xBB, fp);
+	fputc(0xBF, fp);
+    }
+#endif
+    fputs(buf, fp);
 }
 
 int csvprint (MODEL *pmod, const DATASET *dset, char *fname, 
@@ -1698,10 +1761,34 @@ int csvprint (MODEL *pmod, const DATASET *dset, char *fname,
 	return E_NOTIMP;
     }
 
-    prn = make_alt_prn(pmod->ID, fname, GRETL_FORMAT_CSV, &err);
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
 
     if (!err) {
+	gretl_print_set_format(prn, GRETL_FORMAT_CSV);
 	err = printmodel(pmod, dset, opt, prn);
+    }
+
+    if (!err) {
+	const char *buf = gretl_print_get_buffer(prn);
+	char fullname[FILENAME_MAX];
+	FILE *fp;
+
+	make_full_model_filename(fullname, fname, pmod->ID, 
+				 "csv");
+	fp = gretl_fopen(fullname, "w");
+
+	if (fp == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    out_native(buf, fp);
+	}
+
+	if (fp != NULL) {
+	    fclose(fp);
+	}
+    }
+    
+    if (prn != NULL) {
 	gretl_print_destroy(prn);
     }
 

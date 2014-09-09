@@ -456,7 +456,7 @@ void set_alt_gettext_mode (PRN *prn)
 
     if (prn != NULL && !native_utf8) {
 	if (gretl_in_gui_mode()) {
-	    if (csv_format(prn) || printing_to_standard_stream(prn)) {
+	    if (printing_to_standard_stream(prn)) {
 		gettext_mode = GETTEXT_FORCE_LOCALE;
 	    }
 	} else if (tex_format(prn) || rtf_format(prn)) {
