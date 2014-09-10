@@ -322,14 +322,11 @@ void gretl_win32_init (const char *progname, int debug)
     }
 }
 
-static int win_copy_buf (char *buf, int fmt, int encoding_done)
+int prn_to_clipboard (PRN *prn, int fmt)
 {
-    HGLOBAL winclip;
-    LPTSTR ptr;
-    char *winbuf = NULL;
-    gchar *trbuf = NULL;
-    unsigned clip_format;
-    size_t len;
+    char *buf = gretl_print_steal_buffer(prn);
+    char *modbuf = NULL;
+    int err = 0;
 
     if (buf == NULL || *buf == '\0') {
 	errbox(_("Copy buffer was empty"));
@@ -343,53 +340,41 @@ static int win_copy_buf (char *buf, int fmt, int encoding_done)
 
     EmptyClipboard();
 
-    if (!encoding_done) {
-	strip_unicode_minus(buf);
-	if ((fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT) &&
-	    string_is_utf8((const unsigned char *) buf)) {
-	    trbuf = my_locale_from_utf8(buf);
+    err = maybe_post_process_buffer(buf, fmt, W_COPY, &modbuf);
+
+    if (!err) {
+	HGLOBAL winclip;
+	LPTSTR ptr;
+	unsigned clip_format;
+	char *winbuf;
+	size_t len;
+
+	winbuf = modbuf != NULL ? modbuf : buf;
+	len = strlen(winbuf) + 1; 
+	winclip = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(TCHAR));        
+
+	ptr = GlobalLock(winclip);
+	memcpy(ptr, winbuf, len);
+	GlobalUnlock(winclip); 
+
+	if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) { 
+	    clip_format = RegisterClipboardFormat("Rich Text Format");
+	} else if (fmt == GRETL_FORMAT_CSV) {
+	    clip_format = RegisterClipboardFormat("CSV");
+	} else {
+	    clip_format = CF_TEXT;
 	}
-    }
 
-    if (trbuf != NULL) {
-	winbuf = dosify_buffer(trbuf, fmt);
-	g_free(trbuf);
-    } else {
-	winbuf = dosify_buffer(buf, fmt);
-    }
-
-    if (winbuf == NULL) {
+	SetClipboardData(clip_format, winclip);
 	CloseClipboard();
-	return 1;
     }
 
-    len = strlen(winbuf) + 1; 
-    winclip = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(TCHAR));        
-
-    ptr = GlobalLock(winclip);
-    memcpy(ptr, winbuf, len);
-    GlobalUnlock(winclip); 
-
-    if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) { 
-	clip_format = RegisterClipboardFormat("Rich Text Format");
-    } else if (fmt == GRETL_FORMAT_CSV) {
-	clip_format = RegisterClipboardFormat("CSV");
-    } else {
-	clip_format = CF_TEXT;
-    }
-
-    SetClipboardData(clip_format, winclip);
     CloseClipboard();
-    free(winbuf);
 
-    return 0;
-}
+    free(buf);
+    free(modbuf);
 
-int prn_to_clipboard (PRN *prn, int fmt, int encoding_done)
-{
-    char *buf = gretl_print_steal_buffer(prn);
-
-    return win_copy_buf(buf, fmt, encoding_done);
+    return err;
 }
 
 static char *fname_from_fullname (char *fullname)

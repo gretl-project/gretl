@@ -344,9 +344,23 @@ void text_replace (GtkWidget *w, windata_t *vwin)
     replace_string_dialog(vwin);
 }
 
+static int prep_prn_for_file_save (PRN *prn, int fmt)
+{
+    const char *orig = gretl_print_get_buffer(prn);
+    char *modbuf;
+    int err;
+    
+    err = maybe_post_process_buffer(orig, fmt, W_SAVE, &modbuf);
+
+    if (!err && modbuf != NULL) {
+	gretl_print_replace_buffer(prn, modbuf);
+    }
+
+    return err;
+}
+
 static int special_text_handler (windata_t *vwin, guint fmt, int what)
 {
-    int encoding_done = 0;
     int cmd = vwin->role;
     PRN *prn = NULL;
     int err = 0;
@@ -400,7 +414,8 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	    err = E_DATA;
 	} else {
 	    GRETL_VAR *var = (GRETL_VAR *) parent->data;
-	    int h = vwin->active_var; /* here records preferred horizon */
+	    /* here active_var records preferred horizon */
+	    int h = vwin->active_var;
 
 	    if (cmd == VAR_IRF) {
 		gretl_VAR_print_all_impulse_responses(var, dataset, h, prn);
@@ -416,23 +431,9 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	err = special_print_model_table(prn);
     } 
 
-#if 1 /* experimental */
-    if (!err && (fmt & GRETL_FORMAT_RTF)) {
-	const char *buf = gretl_print_get_buffer(prn);
-	   
-	if (string_is_utf8((const unsigned char *) buf)) {
-	    char *trbuf = utf8_to_rtf(buf);
-		
-	    if (trbuf == NULL) {
-		err = E_ALLOC;
-	    } else {
-		/* re-fit @prn with a correctly encoded buffer */
-		gretl_print_replace_buffer(prn, trbuf);
-		encoding_done = 1;
-	    }
-	}
+    if (!err && what == W_SAVE) {
+	err = prep_prn_for_file_save(prn, fmt);
     }
-#endif
 
     if (err) {
 	gui_errmsg(err);
@@ -441,7 +442,7 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	    /* TeX only: there's no RTF preview option */
 	    view_latex(prn);
 	} else if (what == W_COPY) {
-	    prn_to_clipboard(prn, fmt, encoding_done);
+	    prn_to_clipboard(prn, fmt);
 	} else if (what == W_SAVE) {
 	    int action;
 
@@ -552,27 +553,6 @@ static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
     return cpy;
 }
 
-static gchar *maybe_amend_save_buffer (gchar *inbuf, int fmt)
-{
-    const gchar *cset;
-    gchar *outbuf = inbuf;
-
-    if (!g_get_charset(&cset)) {
-	/* not native UTF-8 */ 
-	strip_unicode_minus(inbuf);
-	outbuf = my_locale_from_utf8(inbuf);
-	free(inbuf);
-	inbuf = outbuf;
-    }     
-    
-    if (fmt == GRETL_FORMAT_RTF_TXT) {
-	outbuf = dosify_buffer(inbuf, fmt);
-	free(inbuf);
-    }
-
-    return outbuf;
-}
-
 int multiple_formats_ok (windata_t *vwin)
 {
     int r = vwin->role;
@@ -594,6 +574,33 @@ int multiple_formats_ok (windata_t *vwin)
     }
 }
 
+static PRN *make_prn_for_buf (gchar *buf, int fmt, int action,
+			      int *err)
+{
+    char *modbuf = NULL;
+    PRN *prn = NULL;
+
+    if (action == W_SAVE) {
+	*err = maybe_post_process_buffer(buf, fmt, action, &modbuf);
+    }
+
+    if (*err) {
+	g_free(buf);
+    } else {
+	if (modbuf != NULL) {
+	    prn = gretl_print_new_with_buffer(modbuf);
+	    g_free(buf);
+	} else {
+	    prn = gretl_print_new_with_buffer(buf);
+	}
+	if (prn == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    return prn;
+}
+
 /* copying text from gretl windows */
 
 #define SPECIAL_FORMAT(f) ((f & GRETL_FORMAT_TEX) || \
@@ -601,7 +608,7 @@ int multiple_formats_ok (windata_t *vwin)
 
 static void window_copy_or_save (windata_t *vwin, guint fmt, int action) 
 {
-    gchar *cpybuf = NULL;
+    gchar *buf = NULL;
 
     if (vwin->role == VIEW_MODEL && fmt == GRETL_FORMAT_CSV) {
 	special_text_handler(vwin, fmt, action);
@@ -611,35 +618,32 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 	       fmt == GRETL_FORMAT_RTF) {
 	copy_vars_formatted(vwin, fmt, action);
     } else if (fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT) {
-	cpybuf = text_window_get_copy_buf(vwin, 0);
+	buf = text_window_get_copy_buf(vwin, 0);
     } else if (fmt == GRETL_FORMAT_SELECTION) {
-	cpybuf = text_window_get_copy_buf(vwin, 1);
+	buf = text_window_get_copy_buf(vwin, 1);
 	fmt = GRETL_FORMAT_TXT;
     }
 
-    if (cpybuf != NULL) {
-	PRN *textprn;
+    if (buf != NULL) {
+	/* handle the last two cases above */
+	PRN *prn;
+	int err = 0;
 
-	if (action == W_SAVE) {
-	    cpybuf = maybe_amend_save_buffer(cpybuf, fmt);
-	    if (cpybuf == NULL) {
-		return;
+	prn = make_prn_for_buf(buf, fmt, action, &err);
+
+	if (!err) {
+	    if (action == W_COPY) {
+		prn_to_clipboard(prn, fmt);
+	    } else {
+		/* saving to file */
+		int fcode = (fmt == GRETL_FORMAT_RTF_TXT)? 
+		    SAVE_RTF : SAVE_OUTPUT;
+
+		file_selector_with_parent(fcode, FSEL_DATA_PRN, prn, 
+					  vwin_toplevel(vwin));
 	    }
+	    gretl_print_destroy(prn);
 	}
-
-	textprn = gretl_print_new_with_buffer(cpybuf);
-
-	if (action == W_COPY) {
-	    /* FIXME */
-	    prn_to_clipboard(textprn, fmt, 0);
-	} else {
-	    int fcode = (fmt == GRETL_FORMAT_RTF_TXT)? 
-		SAVE_RTF : SAVE_OUTPUT;
-
-	    file_selector_with_parent(fcode, FSEL_DATA_PRN, textprn, 
-				      vwin_toplevel(vwin));
-	}
-	gretl_print_destroy(textprn);
     }	
 }
 
@@ -773,19 +777,23 @@ void system_print_buf (const gchar *buf, FILE *fp)
    endings and (optional) RTF monospaced font spec.
 */
 
-char *dosify_buffer (const char *buf, int format)
+static char *dosify_buffer (const char *buf, int format, 
+			    int write_bom)
 {
-    int extra = 0, nlines = 0;
-    int rtf = (format == GRETL_FORMAT_RTF_TXT);
-    char *targ, *q;
-    const char *p;
     const char *rtf_preamble = "{\\rtf1\n"
 	"{\\fonttbl{\\f0\\fnil\\fprq1\\fcharset1 Courier New;}}\n"
 	"\\f0\\fs18\n";
-    int rtf_add_bytes = strlen(rtf_preamble) + 4;
+    int extra = 0, nlines = 0;
+    int add_rtf = 0;
+    char *targ, *q;
+    const char *p;
 
     if (buf == NULL || *buf == '\0') {
 	return NULL;
+    }
+
+    if (format == GRETL_FORMAT_RTF_TXT) {
+	add_rtf = 1;
     }
 
     p = buf;
@@ -794,9 +802,11 @@ char *dosify_buffer (const char *buf, int format)
     }
     extra = nlines + 1;
 
-    if (rtf) {
+    if (write_bom) {
+	extra += 3;
+    } else if (add_rtf) {
 	extra *= 5;
-	extra += rtf_add_bytes;
+	extra += strlen(rtf_preamble) + 4;
     }
 
     targ = malloc(strlen(buf) + extra);
@@ -804,7 +814,12 @@ char *dosify_buffer (const char *buf, int format)
 	return NULL;
     }
 
-    if (rtf) {
+    if (write_bom) {
+	targ[0] = 0xEF;
+	targ[1] = 0xBB;
+	targ[2] = 0xBF;
+	q = targ + 3;
+    } else if (add_rtf) {
 	strcpy(targ, rtf_preamble);
 	q = targ + strlen(targ);
     } else {
@@ -814,7 +829,7 @@ char *dosify_buffer (const char *buf, int format)
     p = buf;
     while (*p) {
 	if (*p == '\n') {
-	    if (rtf) {
+	    if (add_rtf) {
 		*q++ = '\\';
 		*q++ = 'p';
 		*q++ = 'a';
@@ -829,11 +844,79 @@ char *dosify_buffer (const char *buf, int format)
     } 
     *q = 0;
 
-    if (rtf) {
+    if (add_rtf) {
 	strcat(q, "}\n");
     }
 
     return targ;
 }
+
+int maybe_post_process_buffer (const char *buf, int fmt, 
+			       int action, char **modbuf)
+{
+#ifdef G_OS_WIN32
+    int write_bom = 0;
+#endif
+    int rtf_output = 0;
+    int utf8_coded = 0;
+    char *trbuf = NULL;
+    char *final = NULL;
+    int err = 0;
+
+    if ((fmt & GRETL_FORMAT_RTF) || fmt == GRETL_FORMAT_RTF_TXT) {
+	rtf_output = 1;
+    }
+
+    if (string_is_utf8((const unsigned char *) buf)) {
+	utf8_coded = 1;
+    }
+
+    /* If @buf is UTF-8, recode if we're writing RTF,
+       on any platform.
+    */
+    if (utf8_coded && rtf_output) {
+	trbuf = utf8_to_rtf(buf);
+    }
+
+#ifdef G_OS_WIN32
+    if (utf8_coded && !rtf_output) {
+	/* FIXME TeX? */
+	write_bom = 1;
+    }
+#endif	
+    
+
+#ifdef G_OS_WIN32
+    /* On Windows, do we want to "dosify" here regardless
+       of the format? (It seems we do this at present.)
+       If we're writing to file, it would be enough to
+       open it in mode "w" (not "wb") to achieve the
+       desired effect.
+    */
+    if (trbuf != NULL) {
+	final = dosify_buffer(trbuf, fmt, write_bom);
+    } else {
+	final = dosify_buffer(buf, fmt, write_bom);
+    }
+#else
+    /* Not on Windows: dosify only if we're doing RTF */
+    if (rtf_output) {
+	if (trbuf != NULL) {
+	    final = dosify_buffer(trbuf, fmt, 0);
+	} else {
+	    final = dosify_buffer(buf, fmt, 0);
+	}
+    }
+#endif
+
+    if (trbuf != NULL && trbuf != final) {
+	free(trbuf);
+    }
+
+    *modbuf = final;
+	
+    return err;
+}
+
 
 

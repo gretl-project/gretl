@@ -180,6 +180,8 @@ static void gretl_clipboard_set (int fmt)
     }
 }
 
+#if 0
+
 /* We call this when a buffer to be copied as RTF contains
    non-ASCII characters but validates as UTF-8. Note that the 
    UTF-8 minus sign does not recode correctly into Windows 
@@ -201,16 +203,16 @@ static char *strip_utf8 (char *buf)
     }
 }
 
+#endif
+
 /* note: there's a Windows-specific counterpart to this
    in gretlwin32.c
 */
 
-int prn_to_clipboard (PRN *prn, int fmt, int encoding_done)
+int prn_to_clipboard (PRN *prn, int fmt)
 {
     char *buf = gretl_print_steal_buffer(prn);
-    const char *cset = NULL;
-    gchar *trbuf = NULL;
-    int utf8_ok = 1;
+    char *modbuf = NULL;
     int err = 0;
 
     if (buf == NULL || *buf == '\0') {
@@ -219,46 +221,19 @@ int prn_to_clipboard (PRN *prn, int fmt, int encoding_done)
 
     gretl_clipboard_free();
 
-    if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
-	/* UTF-8 will never work in RTF */
-	utf8_ok = 0;
-    } else if (fmt == GRETL_FORMAT_TXT && !g_get_charset(&cset)) {
-	utf8_ok = 0;
-    }
+    err = maybe_post_process_buffer(buf, fmt, W_COPY, &modbuf);
 
-#if CLIPDEBUG
-    fprintf(stderr, "prn_to_clipboard, fmt = %d, utf8_ok = %d\n", fmt, utf8_ok);
-#endif
-
-    if (!encoding_done && !utf8_ok && 
-	string_is_utf8((const unsigned char *) buf)) {
-	if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
-	    trbuf = utf8_to_rtf(buf);
+    if (!err) {
+	if (modbuf != NULL) {
+	    clipboard_buf = modbuf;
 	} else {
-	    trbuf = strip_utf8(buf);
+	    clipboard_buf = buf;
 	}
-    } else {
-	trbuf = buf;
-    }
-
-    if (trbuf == NULL) {
-	return E_ALLOC;
-    }
-
-    if (fmt == GRETL_FORMAT_RTF_TXT) {
-	clipboard_buf = dosify_buffer(trbuf, fmt);
-    } else {
-	clipboard_buf = gretl_strdup(trbuf);
-    }
-
-    if (trbuf != buf) {
-	g_free(trbuf);
-    }
-
-    if (clipboard_buf == NULL) {
-	err = 1;
-    } else {
 	gretl_clipboard_set(fmt);
+    }
+
+    if (buf != clipboard_buf) {
+	free(buf);
     }
 
     return err;

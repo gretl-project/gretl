@@ -46,7 +46,8 @@ void window_print (GtkAction *action, windata_t *vwin);
 
 void system_print_buf (const gchar *buf, FILE *fp);
 
-char *dosify_buffer (const char *buf, int format);
+int maybe_post_process_buffer (const char *buf, int fmt, 
+			       int action, char **modbuf);
 
 char *strip_unicode_minus (char *s);
 

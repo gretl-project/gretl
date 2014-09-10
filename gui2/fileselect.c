@@ -263,6 +263,9 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
     } else {
 	gchar *trbuf;
 
+	/* FIXME which cases come here and do
+	   they want this treatment? */
+
 	if (!g_get_charset(&cset)) {
 	    /* UTF-8 minuses not wanted for locale */
 	    strip_unicode_minus(buf);

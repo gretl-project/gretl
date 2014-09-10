@@ -2070,7 +2070,7 @@ static int real_csv_to_clipboard (const int *list)
 
     err = data_to_buf_as_csv(list, opt, prn);
     if (!err) {
-	err = prn_to_clipboard(prn, GRETL_FORMAT_CSV, 0);
+	err = prn_to_clipboard(prn, GRETL_FORMAT_CSV);
 	if (err) {
 	    fprintf(stderr, "prn_to_clipboard: err = %d\n", err);
 	}
@@ -2169,7 +2169,7 @@ int matrix_to_clipboard_as_csv (const gretl_matrix *m,
 	    return 1;
 	} else {
 	    matrix_print_as_csv(m, prn);
-	    prn_to_clipboard(prn, GRETL_FORMAT_CSV, 0);
+	    prn_to_clipboard(prn, GRETL_FORMAT_CSV);
 	    gretl_print_destroy(prn);
 	}
     }
@@ -2195,7 +2195,7 @@ int scalars_to_clipboard_as_csv (GtkWidget *parent)
 	} else {
 	    err = scalars_to_prn(prn);
 	    if (!err) {
-		prn_to_clipboard(prn, GRETL_FORMAT_CSV, 0);
+		prn_to_clipboard(prn, GRETL_FORMAT_CSV);
 	    }
 	    gretl_print_destroy(prn);
 	}
@@ -2251,8 +2251,7 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 
 	if (!err) {
 	    if (action == W_COPY) {
-		/* FIXME? */
-		err = prn_to_clipboard(prn, fmt, 0);
+		err = prn_to_clipboard(prn, fmt);
 	    } else if (fmt == GRETL_FORMAT_RTF) {
 		file_selector(SAVE_RTF, FSEL_DATA_PRN, prn);
 	    } else {

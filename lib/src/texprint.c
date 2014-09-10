@@ -1663,7 +1663,7 @@ static void out_crlf (const char *buf, FILE *fp)
     const char *p = buf;
 
 #ifdef G_OS_WIN32
-    /* fputs should take care of CR, LF */
+    /* fputs on Windows should take care of CR, LF */
     fputs(p, fp);
 #else
     while (*p) {
@@ -1692,11 +1692,13 @@ int rtfprint (MODEL *pmod, const DATASET *dset, char *fname,
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
 
     if (!err) {
+	/* print the model to buffer first */
 	gretl_print_set_format(prn, GRETL_FORMAT_RTF);
 	err = printmodel(pmod, dset, opt, prn);
     }
 
     if (!err) {
+	/* recode if necessary */
 	buf = gretl_print_get_buffer(prn);
 	if (!gretl_is_ascii(buf)) {
 	    trbuf = utf8_to_rtf(buf);
@@ -1707,6 +1709,9 @@ int rtfprint (MODEL *pmod, const DATASET *dset, char *fname,
     }
 
     if (!err) {
+	/* now send to file, converting LF to CR + LF
+	   as we go, if required 
+	*/
 	char fullname[FILENAME_MAX];
 	FILE *fp;
 
@@ -1742,7 +1747,8 @@ static void out_native (const char *buf, FILE *fp)
 {
 #ifdef G_OS_WIN32
     if (!gretl_is_ascii(buf)) {
-	/* output UTF-8 BOM */
+	/* Windows: if the text is UTF-8, prepend
+	   the UTF-8 BOM */
 	fputc(0xEF, fp);
 	fputc(0xBB, fp);
 	fputc(0xBF, fp);
@@ -1764,11 +1770,13 @@ int csvprint (MODEL *pmod, const DATASET *dset, char *fname,
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
 
     if (!err) {
+	/* print to buffer first */
 	gretl_print_set_format(prn, GRETL_FORMAT_CSV);
 	err = printmodel(pmod, dset, opt, prn);
     }
 
     if (!err) {
+	/* then send to file */
 	const char *buf = gretl_print_get_buffer(prn);
 	char fullname[FILENAME_MAX];
 	FILE *fp;
