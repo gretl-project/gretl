@@ -790,9 +790,9 @@ void tabwin_navigate (windata_t *vwin, guint key)
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
     GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
 
-    if (key == GDK_less) {
+    if (key == GDK_less || key == GDK_Page_Up) {
 	gtk_notebook_prev_page(notebook);
-    } else if (key == GDK_greater) {
+    } else if (key == GDK_greater || key == GDK_Page_Down) {
 	gtk_notebook_next_page(notebook);
     } else {
 	/* numeric value, 1 to 9 */

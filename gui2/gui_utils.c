@@ -682,7 +682,8 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	}
 	if (window_is_tab(vwin)) {
 	    /* note: still conditional on Ctrl */
-	    if (upkey == GDK_greater || upkey == GDK_less) {
+	    if (upkey == GDK_greater || upkey == GDK_less || 
+		upkey == GDK_Page_Up || upkey == GDK_Page_Down) {
 		tabwin_navigate(vwin, upkey);
 		return TRUE;
 	    }
