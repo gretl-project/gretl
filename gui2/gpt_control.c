@@ -2067,7 +2067,7 @@ static int grab_fit_coeffs (GPT_SPEC *spec, const char *s)
 {
     gretl_matrix *b = NULL;
     int k, f = spec->fit;
-    int n, err = 0;
+    int n = 0, err = 0;
 
     k = (f == PLOT_FIT_CUBIC)? 4 : (f == PLOT_FIT_QUADRATIC)? 3 : 2;
 
@@ -2081,6 +2081,7 @@ static int grab_fit_coeffs (GPT_SPEC *spec, const char *s)
     }
 
     gretl_push_c_numeric_locale();
+
     if (k == 2) {
 	n = sscanf(s, "%lf + %lf", &b->val[0], &b->val[1]);
     } else if (k == 3) {
@@ -2090,6 +2091,7 @@ static int grab_fit_coeffs (GPT_SPEC *spec, const char *s)
 	n = sscanf(s, "%lf + %lf*x + %lf*x**2 + %lf", &b->val[0], 
 		   &b->val[1], &b->val[2], &b->val[3]);
     }
+
     gretl_pop_c_numeric_locale();
 
     if (n != k) {

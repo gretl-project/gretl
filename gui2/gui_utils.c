@@ -5093,6 +5093,8 @@ void run_foreign_script (gchar *buf, int lang)
 
 #else /* some non-Windows functions follow */
 
+#ifndef OS_OSX
+
 static int alt_show (const char *uri)
 {
     GError *err = NULL;
@@ -5107,6 +5109,8 @@ static int alt_show (const char *uri)
 
     return ret;
 }
+
+#endif
 
 int browser_open (const char *url)
 {

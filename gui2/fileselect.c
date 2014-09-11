@@ -240,11 +240,9 @@ static void script_window_update (windata_t *vwin, const char *fname)
 static void 
 save_editable_content (int action, const char *fname, windata_t *vwin)
 {
-    const gchar *cset;
+    gchar *buf = textview_get_text(vwin->text);
     FILE *fp;
-    gchar *buf;
 
-    buf = textview_get_text(vwin->text);
     if (buf == NULL) {
 	errbox("Couldn't retrieve buffer");
 	return;

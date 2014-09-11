@@ -602,9 +602,6 @@ static int make_gp_output (void)
 
 static int real_display_gpage (void)
 {
-#ifndef G_OS_WIN32
-    const char *viewer;
-#endif
     char *fname;
     int err = 0;
 
@@ -619,8 +616,11 @@ static int real_display_gpage (void)
 #elif defined(OS_OSX)
     err = osx_open_file(fname);
 #else
-    viewer = (gpage.term == GP_TERM_PDF)? "viewpdf" : "viewps";
-    err = gretl_fork(viewer, fname);
+    if (gpage.term == GP_TERM_PDF) {
+	err = gretl_fork("viewpdf", fname);
+    } else {
+	err = gretl_fork("viewps", fname);
+    }
 #endif
 
     return err;
