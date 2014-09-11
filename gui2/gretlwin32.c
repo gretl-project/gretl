@@ -361,6 +361,8 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	    clip_format = RegisterClipboardFormat("Rich Text Format");
 	} else if (fmt == GRETL_FORMAT_CSV) {
 	    clip_format = RegisterClipboardFormat("CSV");
+	} else if (!gretl_is_ascii(winbuf)) {
+	    clip_format = CF_UNICODETEXT;
 	} else {
 	    clip_format = CF_TEXT;
 	}
