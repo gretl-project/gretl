@@ -106,7 +106,8 @@ enum {
     NOTES_ITEM,
     NEW_ITEM,
     CLOSE_ITEM,
-    BUNDLE_ITEM
+    BUNDLE_ITEM,
+    FIND_ITEM
 } viewbar_flags;
 
 struct stock_maker {
@@ -661,16 +662,16 @@ static void vwin_cut_callback (GtkWidget *w, windata_t *vwin)
 static GretlToolItem viewbar_items[] = {
     { N_("New window"), GTK_STOCK_NEW, G_CALLBACK(toolbar_new_callback), NEW_ITEM },
     { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
-    { N_("Save (Ctrl-S)"), GTK_STOCK_SAVE, G_CALLBACK(vwin_save_callback), SAVE_ITEM },
+    { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(vwin_save_callback), SAVE_ITEM },
     { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(save_as_callback), SAVE_AS_ITEM },
     { N_("Save bundle content..."), GRETL_STOCK_BUNDLE, NULL, BUNDLE_ITEM },
     { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
     { N_("Show/hide"), GRETL_STOCK_PIN, G_CALLBACK(session_notes_callback), NOTES_ITEM },
-    { N_("Run (Ctrl-R)"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
+    { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
     { N_("Cut"), GTK_STOCK_CUT, G_CALLBACK(vwin_cut_callback), EDIT_ITEM }, 
-    { N_("Copy (Ctrl-C)"), GTK_STOCK_COPY, G_CALLBACK(vwin_copy_callback), COPY_ITEM }, 
+    { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(vwin_copy_callback), COPY_ITEM }, 
     { N_("Paste"), GTK_STOCK_PASTE, G_CALLBACK(text_paste), EDIT_ITEM },
-    { N_("Find... (Ctrl-F)"), GTK_STOCK_FIND, G_CALLBACK(text_find), 0 },
+    { N_("Find..."), GTK_STOCK_FIND, G_CALLBACK(text_find), FIND_ITEM },
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, G_CALLBACK(text_replace), EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, G_CALLBACK(text_undo), EDIT_ITEM },
     { N_("Redo"), GTK_STOCK_REDO, G_CALLBACK(text_redo), EDIT_ITEM },
@@ -896,6 +897,31 @@ void vwin_toolbar_insert_winlist (windata_t *vwin)
     gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, -1);
 }
 
+static void gretl_tool_item_set_tip (GtkWidget *item,
+				     GretlToolItem *tool)
+{
+    const char *accel = NULL;
+
+    if (tool->flag == EXEC_ITEM) {
+	accel = "Ctrl-R";
+    } else if (tool->flag == COPY_ITEM) {
+	accel = "Ctrl-C";
+    } else if (tool->flag == SAVE_ITEM) {
+	accel = "Ctrl-S";
+    } else if (tool->flag == FIND_ITEM) {
+	accel = "Ctrl-F";
+    }
+
+    if (accel != NULL) {
+	gchar *s = g_strdup_printf("%s (%s)", _(tool->tip), accel);
+
+	gtk_widget_set_tooltip_text(item, s);
+	g_free(s);
+    } else {
+	gtk_widget_set_tooltip_text(item, _(tool->tip));
+    }    
+}
+
 GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
 				 GretlToolItem *tool,
 				 GCallback func,
@@ -905,7 +931,7 @@ GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
     GtkToolItem *item;
 
     item = gtk_tool_button_new_from_stock(tool->icon);
-    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
+    gretl_tool_item_set_tip(GTK_WIDGET(item), tool);
     g_signal_connect(G_OBJECT(item), "clicked", func, data);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, pos);
 
@@ -959,7 +985,7 @@ static GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 	if (tool->flag == NEW_ITEM && window_is_tab(vwin)) {
 	    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("New tab"));
 	} else {
-	    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tool->tip));
+	    gretl_tool_item_set_tip(GTK_WIDGET(item), tool);
 	}
     }
 
