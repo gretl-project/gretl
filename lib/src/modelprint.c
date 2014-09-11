@@ -2153,6 +2153,7 @@ static void model_format_start (PRN *prn)
 	} 
 	pputs(prn, "\\begin{center}\n");
     } else if (rtf_format(prn)) {
+	gretl_print_set_has_minus(prn);
 	if (rtf_doc_format(prn)) {
 	    pputs(prn, "{\\rtf1\\par\n\\qc ");
 	} else {
@@ -2880,7 +2881,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	key[11] = "Hannan--Quinn";
 	key[12] = "$\\hat{\\rho}$";
 	key[13] = "Durbin--Watson";
-    } else if (!rtf && gretl_print_has_minus(prn)) {
+    } else if (gretl_print_has_minus(prn)) {
 	/* print a 'real' minus sign? */
 	mtab.minus = MINUS_UTF;
     }
@@ -3399,9 +3400,16 @@ static void rtf_print_double (double xx, PRN *prn)
     char numstr[32];
 
     xx = screen_zero(xx);
-    sprintf(numstr, "%.*g", GRETL_DIGITS, xx);
-    gretl_fix_exponent(numstr);
-    pprintf(prn, " \\qc %s\\cell", numstr);
+
+    if (xx < 0 && gretl_print_has_minus(prn)) {
+	sprintf(numstr, "%.*g", GRETL_DIGITS, fabs(xx));
+	gretl_fix_exponent(numstr);
+	pprintf(prn, " \\qc −%s\\cell", numstr);
+    } else {
+	sprintf(numstr, "%.*g", GRETL_DIGITS, xx);
+	gretl_fix_exponent(numstr);
+	pprintf(prn, " \\qc %s\\cell", numstr);
+    }
 }
 
 static void rtf_print_coeff (const model_coeff *mc, PRN *prn)

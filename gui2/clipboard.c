@@ -108,7 +108,7 @@ static void gretl_clipboard_get (GtkClipboard *clip,
     }
 
     if (info != TARGET_UTF8_STRING) {
-	/* remove any Unicode minuses */
+	/* remove any Unicode minuses (?) */
 	strip_unicode_minus(str);
     }
 
@@ -179,31 +179,6 @@ static void gretl_clipboard_set (int fmt)
 	fprintf(stderr, "Failed to initialize clipboard\n");
     }
 }
-
-#if 0
-
-/* We call this when a buffer to be copied as RTF contains
-   non-ASCII characters but validates as UTF-8. Note that the 
-   UTF-8 minus sign does not recode correctly into Windows 
-   codepages, so if it's present we have to remove it first, 
-   then see if there's anything non-ASCII left to handle.
-*/
-
-static char *strip_utf8 (char *buf)
-{
-    strip_unicode_minus(buf);
-
-    if (string_is_utf8((const unsigned char *) buf)) {
-#if CLIPDEBUG
-	fprintf(stderr, "strip_utf8: stage 2, recoding\n");
-#endif
-	return utf8_to_cp(buf);
-    } else {
-	return buf;
-    }
-}
-
-#endif
 
 /* note: there's a Windows-specific counterpart to this
    in gretlwin32.c

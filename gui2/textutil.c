@@ -773,16 +773,15 @@ void system_print_buf (const gchar *buf, FILE *fp)
 
 /* Convert a buffer to DOS/Windows text format, optionally
    adding minimal RTF formatting. This function does not
-   take charge of text re-encoding, it just handles line
+   take charge of text re-encoding, it just handles CR + LF
    endings and (optional) RTF monospaced font spec.
 */
 
-static char *dosify_buffer (const char *buf, int format, 
-			    int write_bom)
+static char *dosify_buffer (const char *buf, int format)
 {
-    const char *rtf_preamble = "{\\rtf1\n"
-	"{\\fonttbl{\\f0\\fnil\\fprq1\\fcharset1 Courier New;}}\n"
-	"\\f0\\fs18\n";
+    const char *rtf_preamble = "{\\rtf1\r\n"
+	"{\\fonttbl{\\f0\\fnil\\fprq1\\fcharset1 Courier New;}}\r\n"
+	"\\f0\\fs18\r\n";
     int extra = 0, nlines = 0;
     int add_rtf = 0;
     char *targ, *q;
@@ -802,11 +801,9 @@ static char *dosify_buffer (const char *buf, int format,
     }
     extra = nlines + 1;
 
-    if (write_bom) {
-	extra += 3;
-    } else if (add_rtf) {
+    if (add_rtf) {
 	extra *= 5;
-	extra += strlen(rtf_preamble) + 4;
+	extra += strlen(rtf_preamble) + 5;
     }
 
     targ = malloc(strlen(buf) + extra);
@@ -814,12 +811,7 @@ static char *dosify_buffer (const char *buf, int format,
 	return NULL;
     }
 
-    if (write_bom) {
-	targ[0] = 0xEF;
-	targ[1] = 0xBB;
-	targ[2] = 0xBF;
-	q = targ + 3;
-    } else if (add_rtf) {
+    if (add_rtf) {
 	strcpy(targ, rtf_preamble);
 	q = targ + strlen(targ);
     } else {
@@ -827,8 +819,18 @@ static char *dosify_buffer (const char *buf, int format,
     }
 
     p = buf;
+
     while (*p) {
-	if (*p == '\n') {
+	int pplus = 1;
+	int nl = 0;
+
+	if (*p == '\r' && *(p+1) == '\n') {
+	    nl = 1; pplus = 2;
+	} else if (*p == '\n') {
+	    nl = 1;
+	}
+
+	if (nl) {
 	    if (add_rtf) {
 		*q++ = '\\';
 		*q++ = 'p';
@@ -840,23 +842,43 @@ static char *dosify_buffer (const char *buf, int format,
 	} else {
 	    *q++ = *p;
 	}
-	p++;
-    } 
-    *q = 0;
+
+	p += pplus;
+    }
+ 
+    *q = '\0';
 
     if (add_rtf) {
-	strcat(q, "}\n");
+	strcat(q, "}\r\n");
     }
 
     return targ;
 }
 
+#ifdef G_OS_WIN32
+
+#define plain_text(f) (f & (GRETL_FORMAT_TXT | GRETL_FORMAT_CSV | GRETL_FORMAT_TAB))
+
+static char *prepend_bom (const char *orig)
+{
+    char *buf = malloc(strlen(orig) + 4);
+
+    if (buf != NULL) {
+	buf[0] = 0xEF;
+	buf[1] = 0xBB;
+	buf[2] = 0xBF;
+	buf[3] = 0;
+	strcat(buf, orig);
+    }
+ 
+    return buf;
+}
+
+#endif
+
 int maybe_post_process_buffer (const char *buf, int fmt, 
 			       int action, char **modbuf)
 {
-#ifdef G_OS_WIN32
-    int write_bom = 0;
-#endif
     int rtf_output = 0;
     int utf8_coded = 0;
     char *trbuf = NULL;
@@ -871,43 +893,53 @@ int maybe_post_process_buffer (const char *buf, int fmt,
 	utf8_coded = 1;
     }
 
-    /* If @buf is UTF-8, recode if we're writing RTF,
-       on any platform.
-    */
-    if (utf8_coded && rtf_output) {
-	trbuf = utf8_to_rtf(buf);
-    }
-
-#ifdef G_OS_WIN32
-    if (utf8_coded && !rtf_output) {
-	/* FIXME TeX? */
-	write_bom = 1;
-    }
-#endif	
-    
-
-#ifdef G_OS_WIN32
-    /* On Windows, do we want to "dosify" here regardless
-       of the format? (It seems we do this at present.)
-       If we're writing to file, it would be enough to
-       open it in mode "w" (not "wb") to achieve the
-       desired effect.
-    */
-    if (trbuf != NULL) {
-	final = dosify_buffer(trbuf, fmt, write_bom);
-    } else {
-	final = dosify_buffer(buf, fmt, write_bom);
-    }
-#else
-    /* Not on Windows: dosify only if we're doing RTF */
     if (rtf_output) {
-	if (trbuf != NULL) {
-	    final = dosify_buffer(trbuf, fmt, 0);
+	/* When writing RTF, recode if required and ensure
+	   CR + LF.
+	*/
+	if (utf8_coded) {
+	    trbuf = utf8_to_rtf(buf);
+	    if (trbuf == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+	if (!err) {
+	    if (trbuf != NULL) {
+		final = dosify_buffer(trbuf, fmt);
+	    } else {
+		final = dosify_buffer(buf, fmt);
+	    }
+	    if (final == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+	goto finish;
+    }
+
+#ifdef G_OS_WIN32
+    if (plain_text(fmt)) {
+	if (utf8_coded) {
+	    trbuf = prepend_bom(buf);
+	    if (trbuf == NULL) {
+		err = E_ALLOC;
+	    }	    
+	}
+	if (!err && action == W_COPY) {
+	    if (trbuf != NULL) {
+		final = dosify_buffer(trbuf, fmt);
+	    } else {
+		final = dosify_buffer(buf, fmt);
+	    }
+	    if (final == NULL) {
+		err = E_ALLOC;
+	    }
 	} else {
-	    final = dosify_buffer(buf, fmt, 0);
+	    final = trbuf;
 	}
     }
 #endif
+
+ finish:
 
     if (trbuf != NULL && trbuf != final) {
 	free(trbuf);

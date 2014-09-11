@@ -257,6 +257,9 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	return;
     }
 
+#if 1 /* 2014-09-11: just keep any UTF-8 */
+    system_print_buf(buf, fp);
+#else /* what we used to do */
     if (action == SAVE_SCRIPT) {
 	/* don't mess with encoding */
 	system_print_buf(buf, fp);
@@ -277,6 +280,7 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	    g_free(trbuf);
 	}
     }
+#endif
 
     g_free(buf);
     fclose(fp);
@@ -296,7 +300,18 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 
 static void filesel_save_prn_buffer (PRN *prn, const char *fname)
 {
-    FILE *fp = gretl_fopen(fname, "w");
+    int fmt = prn_format(prn);
+    FILE *fp;
+
+    /* if @prn is in RTF, use binary mode to avoid messing
+       with pre-set line endings 
+    */
+
+    if ((fmt & GRETL_FORMAT_RTF) || fmt == GRETL_FORMAT_RTF_TXT) {
+	fp = gretl_fopen(fname, "wb");
+    } else {
+	fp = gretl_fopen(fname, "w");
+    }
 
     if (fp == NULL) {
 	file_write_errbox(fname);

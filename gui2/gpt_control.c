@@ -766,10 +766,14 @@ static int term_uses_utf8 (int ttype)
 {
     if (ttype == GP_TERM_PNG || 
 	ttype == GP_TERM_SVG ||
+	ttype == GP_TERM_EMF ||
 	ttype == GP_TERM_PLT) {
 	return 1;
     } else if (ttype == GP_TERM_PDF && 
 	       gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
+	return 1;
+    } else if (ttype == GP_TERM_EPS &&
+	       gnuplot_eps_terminal() == GP_EPS_CAIRO) {
 	return 1;
     } else {
 	return 0;
@@ -862,11 +866,11 @@ static int revise_plot_file (GPT_SPEC *spec,
 
     if (non_ascii_gp_file(fpin)) {
 	/* plot contains UTF-8 strings */
-	if (!term_uses_utf8(ttype)) {
+	if (term_uses_utf8(ttype)) {
+	    fputs("set encoding utf8\n", fpout);
+	} else {
 	    latin = iso_latin_version();
 	    maybe_print_gp_encoding(ttype, latin, fpout);
-	} else {
-	    fputs("set encoding utf8\n", fpout);
 	}
     }
 
