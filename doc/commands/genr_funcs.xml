@@ -3596,6 +3596,20 @@
       </description>
     </function>
 
+    <function name="isdiscrete" section="data-utils" output="int">
+      <fnargs>
+	<fnarg type="string">name</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  If <argname>name</argname> is the identifier for a
+	  currently defined series, returns 1 if the series is
+	  discrete-valued, otherwise 0. If <argname>name</argname>
+	  does not identify a series, returns <lit>NA</lit>.
+	</para>
+      </description>
+    </function>
+
     <function name="isnan" section="data-utils" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-matrix">x</fnarg>
