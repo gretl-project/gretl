@@ -14,6 +14,8 @@ version 1.9.92, in progress
 - "varlist" command: deprecate "list" as an alias for this
 - "data" command: use --compact option in place of ad hoc
   "(compact=method)" syntax
+- MS Windows: improve handling of non-ASCII text in RTF output
+  and when putting data on the clipboard
 
 2014-07-28 version 1.9.91
 - Add Japanese translation (thanks to Shintaro Nakagawa)
