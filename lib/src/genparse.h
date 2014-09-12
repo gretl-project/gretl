@@ -219,9 +219,7 @@ enum {
     F_RCOND,
     F_RANK, 
     F_OBSNUM,
-    F_ISSERIES,
-    F_ISLIST,	 
-    F_ISSTRING,
+    F_ISDISCR,
     F_ISNULL,
     F_NELEM,
     F_PDF,
@@ -442,8 +440,7 @@ enum {
 #define funcn_symb(s) (s > F3_MAX && s < FN_MAX)
 
 /* function with single string argument */
-#define string_arg_func(s) (s == F_ISSERIES || s == F_ISNULL || \
-			    s == F_ISLIST   || s == F_ISSTRING || \
+#define string_arg_func(s) (s == F_ISNULL || s == F_ISDISCR || \
 			    s == F_OBSNUM || s == F_BACKTICK || \
 			    s == F_VARNUM || s == F_ARGNAME || \
                             s == F_REMOVE || s == F_TYPEOF || \

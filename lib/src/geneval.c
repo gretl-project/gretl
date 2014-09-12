@@ -4722,18 +4722,18 @@ static NODE *object_status (NODE *n, int f, parser *p)
 
 	ret->v.xval = NADBL;
 
-	if (f == F_ISSERIES) {
-	    ret->v.xval = gretl_is_series(s, p->dset);
-	} else if (f == F_ISLIST) {
-	    ret->v.xval = gretl_is_list(s);
-	} else if (f == F_ISSTRING) {
-	    ret->v.xval = gretl_is_string(s);
-	} else if (f == F_ISNULL) {
+	if (f == F_ISNULL) {
 	    ret->v.xval = 1;
 	    if (gretl_is_series(s, p->dset)) {
 		ret->v.xval = 0.0;
 	    } else if (gretl_is_user_var(s)) {
 		ret->v.xval = 0.0;
+	    }
+	} else if (f == F_ISDISCR) {
+	    int v = current_series_index(p->dset, s);
+	    
+	    if (v >= 0) {
+		ret->v.xval = series_is_discrete(p->dset, v);
 	    }
 	} else if (f == F_OBSNUM) {
 	    int t = get_observation_number(s, p->dset);
@@ -11226,9 +11226,7 @@ static NODE *eval (NODE *t, parser *p)
 	ret = matrix_def_node(t, p);
 	break;
     case F_OBSNUM:
-    case F_ISSERIES:
-    case F_ISLIST:
-    case F_ISSTRING:
+    case F_ISDISCR:	
     case F_ISNULL:
     case F_STRLEN:
     case F_NLINES:
