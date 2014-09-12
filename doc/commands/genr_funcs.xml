@@ -3602,8 +3602,8 @@
       </fnargs>
       <description>
 	<para>
-	  If <argname>name</argname> is the identifier for a
-	  currently defined series, returns 1 if the series is maked as
+	  If <argname>name</argname> is the identifier for a currently
+	  defined series, returns 1 if the series is marked as
 	  discrete-valued, otherwise 0. If <argname>name</argname>
 	  does not identify a series, returns <lit>NA</lit>.
 	</para>
