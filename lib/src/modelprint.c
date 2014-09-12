@@ -3129,7 +3129,7 @@ static void set_csv_delim (PRN *prn)
     sprintf(test, "%.1f", 1.0);
 
     if (test[1] == ',') {
-	gretl_print_set_delim(prn, ';');
+	gretl_print_set_delim(prn, '\t');
     } else {
 	gretl_print_set_delim(prn, ',');
     }

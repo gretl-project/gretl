@@ -401,6 +401,7 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 				  get_tex_eqn_opt(), 
 				  prn);
 	} else {
+	    /* RTF or CSV */
 	    err = printmodel(pmod, dataset, OPT_NONE, prn);
 	}
     } else if (cmd == VAR || cmd == VECM) {
