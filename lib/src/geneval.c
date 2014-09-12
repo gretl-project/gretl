@@ -5632,7 +5632,7 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *isconst_or_dum_node (NODE *l, NODE *r, parser *p, int f)
 {
-    if (r->t == EMPTY || f == F_ISDUMMY) {
+    if (f == F_ISDUMMY || r->t == EMPTY) {
 	return series_scalar_func(l, f, p);
     } else if (l->t == MAT) {
 	node_type_error(f, 1, SERIES, l, p);
