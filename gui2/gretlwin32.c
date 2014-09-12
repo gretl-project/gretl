@@ -354,14 +354,14 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	winbuf = modbuf != NULL ? modbuf : buf;
 
 	if (!rtf_format(prn) && !gretl_is_ascii(winbuf)) {
-	    /* for Windows clipboard, recode to UTF-16 */
+	    /* for Windows clipboard, recode UTF-8 to UTF-16 */
 	    ubuf = g_utf8_to_utf16(winbuf, -1, NULL, &wrote, NULL);
 	}
 
 	if (ubuf != NULL) {
 	    winbuf = ubuf;
 	    sz = (wrote + 1) * sizeof(gunichar2);
-	} else {		
+	} else {
 	    sz = strlen(winbuf) + 1;
 	}
 
