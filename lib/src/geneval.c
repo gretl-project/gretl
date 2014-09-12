@@ -5515,6 +5515,9 @@ series_scalar_func (NODE *n, int f, parser *p)
 	case F_ISCONST:
 	    ret->v.xval = gretl_isconst(t1, t2, x);
 	    break;
+	case F_ISDUMMY:
+	    ret->v.xval = gretl_isdummy(t1, t2, x);
+	    break;
 	case F_T1:
 	    ret->v.xval = series_get_start(0, p->dset->n - 1, x);
 	    break;
@@ -5627,18 +5630,18 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *isconst_node (NODE *l, NODE *r, parser *p)
+static NODE *isconst_or_dum_node (NODE *l, NODE *r, parser *p, int f)
 {
-    if (r->t == EMPTY) {
-	return series_scalar_func(l, F_ISCONST, p);
+    if (r->t == EMPTY || f == F_ISDUMMY) {
+	return series_scalar_func(l, f, p);
     } else if (l->t == MAT) {
-	node_type_error(F_ISCONST, 1, SERIES, l, p);
+	node_type_error(f, 1, SERIES, l, p);
 	return NULL;
     } else if (!dataset_is_panel(p->dset)) {
 	p->err = E_PDWRONG;
 	return NULL;
     } else {
-	return series_scalar_scalar_func(l, r, F_ISCONST, p);
+	return series_scalar_scalar_func(l, r, f, p);
     }
 }
 
@@ -10869,10 +10872,11 @@ static NODE *eval (NODE *t, parser *p)
     case F_LRVAR:
     case F_NPV:
     case F_ISCONST:
+    case F_ISDUMMY:
 	/* takes series and scalar arg, returns scalar */
 	if (l->t == SERIES || l->t == MAT) {
-	    if (t->t == F_ISCONST) {
-		ret = isconst_node(l, r, p);
+	    if (t->t == F_ISCONST || t->t == F_ISDUMMY ) {
+		ret = isconst_or_dum_node(l, r, p, t->t);
 	    } else if (scalar_node(r)) {
 		if (t->t == F_QUANTILE && l->t == MAT) {
 		    ret = matrix_quantiles_node(l, r, p);

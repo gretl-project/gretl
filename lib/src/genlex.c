@@ -304,6 +304,7 @@ struct str_table funcs[] = {
     { F_NRMAX,    "NRmax" },
     { F_OBSNUM,   "obsnum" },
     { F_ISDISCR,  "isdiscrete" },
+    { F_ISDUMMY,  "isdummy"},
     { F_ISNULL,   "isnull" },
     { F_NELEM,    "nelem" },
     { F_PDF,      "pdf" },

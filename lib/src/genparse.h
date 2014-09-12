@@ -220,6 +220,7 @@ enum {
     F_RANK, 
     F_OBSNUM,
     F_ISDISCR,
+    F_ISDUMMY,
     F_ISNULL,
     F_NELEM,
     F_PDF,
