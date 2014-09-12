@@ -3536,6 +3536,32 @@
       </description>
     </function>
 
+    <function name="isdiscrete" section="data-utils" output="int">
+      <fnargs>
+	<fnarg type="string">nome</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se <argname>nome</argname> è l'identificatore per una serie
+	  esistente, ritorna 1 se la serie è stata dichiarata come
+	  discreta e 0 altrimenti. Se <argname>nome</argname>
+	  non identifica una serie, ritorna <lit>NA</lit>.
+	</para>
+      </description>
+    </function>
+
+    <function name="isdummy" section="data-utils" output="int">
+      <fnargs>
+	<fnarg type="series-or-vec">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se tutti i valori contenuti in <argname>x</argname> sono 0 o
+	  1 (o mancanti), ritorna il numero di 1, altrimenti 0.
+	</para>
+      </description>
+    </function>
+
     <function name="isnan" section="data-utils" output="asinput">
       <fnargs>
     <fnarg type="scalar-or-matrix">x</fnarg>

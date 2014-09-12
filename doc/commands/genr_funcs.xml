@@ -3603,9 +3603,21 @@
       <description>
 	<para>
 	  If <argname>name</argname> is the identifier for a
-	  currently defined series, returns 1 if the series is
+	  currently defined series, returns 1 if the series is maked as
 	  discrete-valued, otherwise 0. If <argname>name</argname>
 	  does not identify a series, returns <lit>NA</lit>.
+	</para>
+      </description>
+    </function>
+
+    <function name="isdummy" section="data-utils" output="int">
+      <fnargs>
+	<fnarg type="series-or-vec">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  If all the values contained in <argname>x</argname> are 0 or
+	  1 (or missing), returns the number of ones, otherwise 0.
 	</para>
       </description>
     </function>
