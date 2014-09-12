@@ -2308,10 +2308,12 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 	    }
 
 	    pputc(prn, '\n');
-	    record_test_result(LMF, pval, _("autocorrelation"));
 	}
 
+	record_test_result(LMF, pval, _("autocorrelation"));
+
 	if (opt & OPT_S) {
+	    /* save the test onto @pmod */
 	    ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);
 
 	    if (test != NULL) {
