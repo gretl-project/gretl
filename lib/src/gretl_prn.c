@@ -1255,7 +1255,13 @@ int plain_format (PRN *prn)
 
 int rtf_format (PRN *prn)
 {
-    return (prn != NULL && (prn->format & GRETL_FORMAT_RTF));
+    if (prn != NULL) {
+	if (prn->format & (GRETL_FORMAT_RTF | GRETL_FORMAT_RTF_TXT)) {
+	    return 1;
+	}
+    }
+
+    return 0;
 }
 
 /**
