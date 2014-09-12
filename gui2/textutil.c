@@ -858,7 +858,19 @@ static char *dosify_buffer (const char *buf, int format)
 #ifdef G_OS_WIN32
 
 #define plain_text(f) (f & (GRETL_FORMAT_TXT | GRETL_FORMAT_CSV | GRETL_FORMAT_TAB))
-#define want_bom(f) (f == GRETL_FORMAT_TXT)
+
+static int want_bom (int fmt, int action)
+{
+    /* Note sure about this, but for now if we're saving 
+       "plain text" to file in UTF-8, we'll leave it in
+       UTF-8 and prepend the UTF-8 BOM.
+    */
+    if (action == W_SAVE && fmt == GRETL_FORMAT_TXT) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
 
 static char *prepend_bom (const char *orig)
 {
@@ -886,7 +898,7 @@ int maybe_post_process_buffer (const char *buf, int fmt,
     char *final = NULL;
     int err = 0;
 
-    if ((fmt & GRETL_FORMAT_RTF) || fmt == GRETL_FORMAT_RTF_TXT) {
+    if (fmt & (GRETL_FORMAT_RTF | GRETL_FORMAT_RTF_TXT)) {
 	rtf_output = 1;
     }
 
@@ -919,7 +931,7 @@ int maybe_post_process_buffer (const char *buf, int fmt,
 
 #ifdef G_OS_WIN32
     if (plain_text(fmt)) {
-	if (utf8_coded && want_bom(fmt)) {
+	if (utf8_coded && want_bom(fmt, action)) {
 	    trbuf = prepend_bom(buf);
 	    if (trbuf == NULL) {
 		err = E_ALLOC;
