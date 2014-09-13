@@ -234,6 +234,9 @@ static int in_tree (NODE *t, NODE *n)
     return 0;
 }
 
+/* determine if data @ptr of type @type is on a node 
+   anywhere in tree @t */
+
 static int data_in_tree (NODE *t, short type, void *ptr)
 {
     if (t == NULL || ptr == NULL) {
