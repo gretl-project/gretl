@@ -150,12 +150,13 @@ static const char *typestr (int t)
 static void free_mspec (matrix_subspec *spec, parser *p)
 {
     if (spec != NULL) {
+	if (p != NULL && spec == p->lh.mspec) {
+	    /* avoid double-freeing */
+	    p->lh.mspec = NULL;
+	}	    
 	free(spec->rslice);
 	free(spec->cslice);
 	free(spec);
-	if (p != NULL) {
-	    p->lh.mspec = NULL;
-	}
     }
 }
 
@@ -228,6 +229,38 @@ static int in_tree (NODE *t, NODE *n)
 	if (in_tree(t->v.b2.r, n)) return 1;
     } else if (b1sym(t->t)) {
 	if (in_tree(t->v.b1.b, n)) return 1;
+    }
+
+    return 0;
+}
+
+static int data_in_tree (NODE *t, short type, void *ptr)
+{
+    if (t == NULL || ptr == NULL) {
+	return 0;
+    }
+
+    if (t->t == type && t->v.ptr == ptr) {
+	return 1;
+    }
+
+    if (bnsym(t->t)) {
+	int i;
+
+	for (i=0; i<t->v.bn.n_nodes; i++) {
+	    if (data_in_tree(t->v.bn.n[i], type, ptr)) {
+		return 1;
+	    }
+	}
+    } else if (b3sym(t->t)) {
+	if (data_in_tree(t->v.b3.l, type, ptr)) return 1;
+	if (data_in_tree(t->v.b3.m, type, ptr)) return 1;
+	if (data_in_tree(t->v.b3.r, type, ptr)) return 1;
+    } else if (b2sym(t->t)) {
+	if (data_in_tree(t->v.b2.l, type, ptr)) return 1;
+	if (data_in_tree(t->v.b2.r, type, ptr)) return 1;
+    } else if (b1sym(t->t)) {
+	if (data_in_tree(t->v.b1.b, type, ptr)) return 1;
     }
 
     return 0;
@@ -536,7 +569,7 @@ static void clear_tmp_node_data (NODE *n, parser *p)
     } else if (n->t == MAT) {
 	gretl_matrix_free(n->v.m);
     } else if (n->t == MSPEC) {
-	free_mspec(n->v.mspec, NULL);
+	free_mspec(n->v.mspec, p);
     } else if (n->t == BUNDLE) {
 	gretl_bundle_destroy(n->v.b);
     } else if (n->t == ARRAY) {
@@ -13963,6 +13996,15 @@ void gen_cleanup (parser *p)
 	}
     } else {
 	/* do full clean-up */
+	if (p->lh.mspec != NULL && p->subp != NULL) {
+	    if (data_in_tree(p->subp->tree, MSPEC, p->lh.mspec)) {
+		p->lh.mspec = NULL;
+	    } else if (p->subp->ret != p->subp->tree &&
+		       data_in_tree(p->subp->ret, MSPEC, p->lh.mspec)) {
+		p->lh.mspec = NULL;
+	    }
+	}
+
 	if (p->subp != NULL) {
 	    parser_destroy_child(p);
 	}
@@ -13973,6 +14015,7 @@ void gen_cleanup (parser *p)
 
 	free_tree(p->ret, p, "p->ret");
 	free(p->lh.substr);
+
 	if (p->lh.mspec != NULL) {
 	    free_mspec(p->lh.mspec, p);
 	}
