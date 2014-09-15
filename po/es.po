@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-06-21 12:58-0400\n"
-"PO-Revision-Date: 2014-07-22 16:40+0200\n"
+"PO-Revision-Date: 2014-09-15 10:22+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -5322,7 +5322,7 @@ msgstr "pendiente en la media"
 
 #: lib/src/modelprint.c:2226 lib/src/modelprint.c:4382
 msgid "estimate"
-msgstr "estimación"
+msgstr "Estimación"
 
 #: lib/src/modelprint.c:2230 lib/src/modelprint.c:2234
 #: lib/src/modelprint.c:3612 lib/src/modelprint.c:4330
@@ -12696,7 +12696,7 @@ msgstr "Predicción"
 
 #: gui2/helpfiles.c:162
 msgid "Printing"
-msgstr "Impresión"
+msgstr "Presentación"
 
 #: gui2/helpfiles.c:163
 msgid "Programming"
