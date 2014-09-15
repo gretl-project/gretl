@@ -13,6 +13,9 @@ of the form "(compact=method)", is now deprecated.
 The alias of "addobs" for "dataset addobs" is officially 
 deprecated and will likely be removed in gretl 1.10.
 
+The functions isstring(), islist() and isseries(), deprecated
+since gretl 1.9.11, have now been removed.
+
 2014-07-28 version 1.9.91
 
 The "old-style" syntax for defining a function that was the

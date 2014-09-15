@@ -1,4 +1,5 @@
 version 1.9.92, in progress
+- Add new functions: isdiscrete(), isdummy()
 - Enable faster execution of assignment statements in loops
 - Add and document function-form of "sprintf"
 - Fix bug: correct the procedure for recoloring following
