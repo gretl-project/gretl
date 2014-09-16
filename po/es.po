@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-06-21 12:58-0400\n"
-"PO-Revision-Date: 2014-09-16 16:39+0200\n"
+"PO-Revision-Date: 2014-09-16 17:02+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -4600,7 +4600,7 @@ msgstr "Varianza 'entre' (between)"
 
 #: lib/src/modelprint.c:650 lib/src/modelprint.c:671 lib/src/modelprint.c:679
 msgid "theta used for quasi-demeaning"
-msgstr "theta usado para quasi-demeaning (casi quitar la media)"
+msgstr "theta usado para quasi-demeaning (cuasi-centrado de los datos)"
 
 #: lib/src/modelprint.c:745
 #, c-format
