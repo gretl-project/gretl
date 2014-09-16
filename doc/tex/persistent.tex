@@ -422,11 +422,11 @@ returned if the offset is greater than the length of the string in
 question.
 
 To add to the end of an existing string you can use the operator
-\texttt{+=}, as in
+\verb|~=|, as in
 %
 \begin{code}
 string s1 = "some stuff I want to "
-string s1 += "save"
+string s1 ~= "save"
 \end{code}
 or you can use the \verb|~| operator to join two or more strings, as
 in

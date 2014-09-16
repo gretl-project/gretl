@@ -563,7 +563,9 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
     if (!varargs_func(sym)) {
 	if (wrapped) {
 	    unwrap_string_arg(p);
-	} else if (sym != F_ISDISCR && sym != F_ISNULL) {
+	} else if (sym != F_ISDISCR && 
+		   sym != F_ISNULL &&
+		   sym != F_ISSTRING) {
 	    /* not quoted: give priority to string variables
 	       unless we need the _names_ of string variables 
 	       rather then their content
