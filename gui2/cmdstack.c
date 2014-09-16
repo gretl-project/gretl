@@ -18,6 +18,7 @@
  */
 
 #include "gretl.h"
+#include "textbuf.h"
 #include "cmdstack.h"
 #include "lib_private.h"
 #include "session.h"
@@ -48,6 +49,55 @@ static int n_cmds;                 /* number of commands logged */
 static int prev_ID;                /* keep track of model ID */
 static int session_open;           /* are we doing the session file
 				      thing? (0/1) */
+
+/* Called in response to the refresh/reload button in the viewer
+   window for the command log: retrieve the updated log content.
+   Display of any error messages is handled by the caller, which
+   is also responsible for freeing the value returned by this
+   function.
+*/
+
+gchar *get_logfile_content (int *err)
+{
+    gchar *s = NULL;
+
+    if (n_cmds > 0) {
+	*err = gretl_file_get_contents(logname, &s, NULL);
+    }
+
+    return s;
+}
+
+/* called from the main window /Tools menu */
+
+static GtkWidget *logview;
+
+void view_command_log (void)
+{
+    if (!session_open && n_cmds == 0) {
+	warnbox(_("The command log is empty"));
+    } else if (logview != NULL) {
+	gtk_window_present(GTK_WINDOW(logview));
+    } else {
+	windata_t *vwin;
+
+	vwin = view_file(logname, 0, 0, 78, 370, VIEW_LOG);
+	logview = vwin->main;
+	g_signal_connect(G_OBJECT(vwin->main), "destroy",
+			 G_CALLBACK(gtk_widget_destroyed), &logview);
+    }
+}
+
+static void send_entry_to_window (const char *s)
+{
+    windata_t *vwin = g_object_get_data(G_OBJECT(logview),
+					"vwin");
+
+    textview_append_text(vwin->text, s);
+    if (s[strlen(s)-1] != '\n') {
+	textview_append_text(vwin->text, "\n");
+    }
+}
 
 /* Close down the logfile writing apparatus.  If we were writing to a
    temporary file, this will be deleted by gretl_print_destroy.
@@ -175,6 +225,10 @@ static int real_write_log_entry (const char *s)
 	gretl_print_flush_stream(logprn);
     }
 
+    if (logview != NULL) {
+	send_entry_to_window(s);
+    }
+
     return err;
 }
 
@@ -238,35 +292,6 @@ int add_model_command_to_stack (const char *s, int model_ID)
     }
 
     return err;
-}
-
-/* Called in response to the refresh/reload button in the viewer
-   window for the command log: retrieve the updated log content.
-   Display of any error messages is handled by the caller, which
-   is also responsible for freeing the value returned by this
-   function.
-*/
-
-gchar *get_logfile_content (int *err)
-{
-    gchar *s = NULL;
-
-    if (n_cmds > 0) {
-	*err = gretl_file_get_contents(logname, &s, NULL);
-    }
-
-    return s;
-}
-
-/* called from the main window /Tools menu */
-
-void view_command_log (void)
-{
-    if (!session_open && n_cmds == 0) {
-	warnbox(_("The command log is empty"));
-    } else {
-	view_file(logname, 0, 0, 78, 370, VIEW_LOG);
-    }
 }
 
 /* 

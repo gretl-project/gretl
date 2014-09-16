@@ -1032,6 +1032,18 @@ void textview_add_processing_message (GtkWidget *view)
 				 FALSE, 0, 0);
 }
 
+void textview_append_text (GtkWidget *view, const char *text)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextIter iter;
+
+    g_return_if_fail(GTK_IS_TEXT_VIEW(view));
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    gtk_text_buffer_get_end_iter(tbuf, &iter);
+    gtk_text_buffer_insert(tbuf, &iter, text, -1);
+}
+
 void textview_insert_file (windata_t *vwin, const char *fname)
 {
     FILE *fp;

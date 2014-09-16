@@ -293,32 +293,9 @@ static void script_index (GtkWidget *w, windata_t *vwin)
     display_files(PS_FILES, NULL);
 }
 
-static void cmd_log_refresh (GtkWidget *w, windata_t *vwin)
-{
-    gchar *newtext;
-    int err = 0;
-
-    newtext = get_logfile_content(&err);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	GtkTextBuffer *buf;
-
-	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-	gtk_text_buffer_set_text(buf, "", -1);
-	if (newtext != NULL) {
-	    textview_set_text(vwin->text, newtext);
-	    g_free(newtext);
-	}
-    }
-}
-
 static void toolbar_refresh (GtkWidget *w, windata_t *vwin)
 {
-    if (vwin->role == VIEW_LOG) {
-	cmd_log_refresh(w, vwin);
-    } else if (vwin->role == VIEW_SERIES) {
+    if (vwin->role == VIEW_SERIES) {
 	series_view_refresh(w, vwin);
     }
 }
@@ -803,7 +780,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != COEFFINT && f == ALPHA_ITEM) {
 	return NULL;
-    } else if (r != VIEW_LOG && r != VIEW_SERIES && f == REFRESH_ITEM) {
+    } else if (r != VIEW_SERIES && f == REFRESH_ITEM) {
 	return NULL;
     } else if (r != EDIT_GP && f == GP_HELP_ITEM) {
 	return NULL;
