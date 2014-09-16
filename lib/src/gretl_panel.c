@@ -1007,15 +1007,16 @@ static void print_panel_coeff (const MODEL *pmod,
 
 static void print_re_model_top (const panelmod_t *pan, PRN *prn)
 {
-    pputs(prn, "Variance estimators:\n");
-    pprintf(prn, " between = %g\n", pan->s2b);
-    pprintf(prn, " within = %g\n", pan->s2e);
+    pprintf(prn, "%s = %g\n", _("'Between' variance"), pan->s2b);
+    pprintf(prn, "%s = %g\n", _("'Within' variance"), pan->s2e);
 
     if (pan->balanced) {
-	pprintf(prn, "theta used for quasi-demeaning = %g\n", pan->theta);
+	pprintf(prn, "%s = %g\n", _("theta used for quasi-demeaning"),
+		pan->theta);
     } else {
 	pputs(prn, "Panel is unbalanced: theta varies across units\n");
     }
+
     pputc(prn, '\n');
 
     pputs(prn,
