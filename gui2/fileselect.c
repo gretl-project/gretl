@@ -390,9 +390,13 @@ static char *suggested_savename (const char *fname)
 
     sfx = strrchr(s, '.');
 
-    if (sfx != NULL && (strlen(sfx) == 4 || !strcmp(sfx, ".gnumeric"))) {
-	if (strcmp(sfx, ".gdt")) {
-	    strcpy(sfx, ".gdt");
+    if (sfx != NULL) {
+	if (strlen(sfx) == 4 || 
+	    !strcmp(sfx, ".xlsx") ||
+	    !strcmp(sfx, ".gnumeric")) {
+	    if (strcmp(sfx, ".gdt")) {
+		strcpy(sfx, ".gdt");
+	    }
 	}
     }
 
