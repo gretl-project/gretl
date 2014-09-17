@@ -774,7 +774,7 @@ static void convert_daily_label (char *targ, const char *src,
 static int consistent_qm_labels (DATASET *dset, int reversed,
 				 int convert_pd, char *skipstr,
 				 int *ppd, const char *fmt,
-				 PRN *prn)
+				 int *extra_zero, PRN *prn)
 {
     char bad[16], skip[8];
     char label[OBSLEN];
@@ -805,11 +805,13 @@ static int consistent_qm_labels (DATASET *dset, int reversed,
 	s = (reversed)? (dset->n - 1 - t) : t;
 	Ey = (per == pd)? yr + 1 : yr;
 	Ep = (per == pd)? pmin : per + pmin;
+
 	if (convert_pd) {
 	    convert_daily_label(label, dset->S[s], pd);
 	} else {
 	    strcpy(label, dset->S[s]);
 	}
+
 	if (sscanf(label, fmt, &yr, &per) != 2) {
 	    ret = 0;
 	} else if (Ep == 1 && pd == pd0 && per == pd + 1 
@@ -824,9 +826,16 @@ static int consistent_qm_labels (DATASET *dset, int reversed,
 	    strncat(bad, label, OBSLEN-1); 
 	    pmin = 3;
 	    goto restart;
+	} else if (pd == 12 && Ep == 5 && per == 1 && yr == Ey + 1) {
+	    /* apparently monthly but really quarterly? */
+	    pprintf(prn, "   \"%s\": quarterly date with spurious zero?\n", label);
+	    *extra_zero = 1;
+	    *ppd = pd0 = pd = 4;
+	    goto restart;
 	} else if (yr != Ey || per != Ep) {
 	    ret = 0;
 	}
+
 	if (!ret) {
 	    pprintf(prn, "   %s: not a consistent date\n", label);
 	    break;
@@ -1168,14 +1177,24 @@ static int time_series_label_check (DATASET *dset, int reversed,
 	}
     } else if (pd == 4 || pd == 12) {
 	int savepd = pd;
+	int extra_zero = 0;
 
 	if (consistent_qm_labels(dset, reversed, convert_pd, 
-				 skipstr, &pd, format, prn)) {
+				 skipstr, &pd, format, 
+				 &extra_zero, prn)) {
 	    dset->pd = pd;
 	    if (savepd == 12 && pd == 4) {
-		/* switched monthly to quarterly */
-		int s = atoi(sub) / 3;
+		/* we switched the interpretation from
+		   monthly to quarterly */
+		int s;
 
+		if (extra_zero) {
+		    /* e.g. 1960Q1 written as 1960:01 */
+		    s = atoi(sub + 1);
+		} else {
+		    /* e.g. 1960Q1 written as 1960:03 */
+		    s = atoi(sub) / 3;
+		}
 		sprintf(dset->stobs, "%s:%d", year, s);
 	    } else {
 		sprintf(dset->stobs, "%s:%s", year, sub);
