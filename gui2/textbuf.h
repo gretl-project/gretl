@@ -117,4 +117,6 @@ void textview_add_processing_message (GtkWidget *view);
 
 void textview_delete_processing_message (GtkWidget *view);
 
+void textview_format_paragraph (GtkWidget *view);
+
 #endif /* TEXTBUF_H */

@@ -1765,6 +1765,218 @@ help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
     return FALSE;
 }
 
+static void reformat_para (char *buf, int maxlen)
+{
+    char *p = buf;
+    char *line;
+    int i, n;
+
+    g_strchomp(g_strchug(buf));
+
+    /* normalize spaces, removing any existing line breaks */
+
+    while (*p) {
+	if (*p == ' ' || *p == '\n' || *p == '\t') {
+	    *p = ' ';
+	    n = strspn(p + 1, " \t\n");
+	    if (n > 0) {
+		g_strchug(p + 1);
+		p += n;
+	    }
+	}
+	p++;
+    }
+
+    line = p = buf;
+    n = 0;
+
+    /* insert line breaks to give lines of length up
+       to @maxlen */
+
+    while (*p++) {
+	n++;
+	if (n > maxlen) {
+	    /* back up to first available break-point */
+	    for (i=n-1; i>0; i--) {
+		if (line[i] == ' ') {
+		    line[i] = '\n';
+		    p = line = &line[i+1];
+		    n = 0;
+		}
+		if (n == 0) {
+		    break;
+		}
+	    }
+	}
+    }
+}
+
+static gboolean prev_double_nl (GtkTextIter *pos,
+				GtkTextIter *start)
+{
+    GtkTextIter cpos = *pos;
+    int nlcount = 0;
+    gunichar c;
+    gboolean ret = 0;
+
+    if (gtk_text_iter_get_char(pos) == '\n') {
+	nlcount = 1;
+    }
+
+    while (gtk_text_iter_backward_char(&cpos)) {
+	c = gtk_text_iter_get_char(&cpos);
+	if (c == '\n') {
+	    if (++nlcount == 2) {
+		*start = cpos;
+		gtk_text_iter_forward_chars(start, 2);
+		ret = 1;
+		break;
+	    }
+	} else if (!isspace(c)) {
+	    nlcount = 0;
+	}
+    }
+
+    return ret;
+}
+
+static gboolean next_double_nl (GtkTextIter *pos,
+				GtkTextIter *end)
+{
+    GtkTextIter cpos = *pos;
+    int nlcount = 0;
+    gunichar c;
+    gboolean ret = 0;
+
+    if (gtk_text_iter_get_char(pos) == '\n') {
+	nlcount = 1;
+    }    
+
+    while (gtk_text_iter_forward_char(&cpos)) {
+	c = gtk_text_iter_get_char(&cpos);
+	if (c == '\n') {
+	    if (++nlcount == 2) {
+		*end = cpos;
+		gtk_text_iter_backward_char(end);
+		ret = 1;
+		break;
+	    }
+	} else if (!isspace(c)) {
+	    nlcount = 0;
+	}
+    }
+
+    return ret;
+}
+
+static int not_in_para (GtkTextBuffer *buf,
+			GtkTextIter *pos)
+{
+    GtkTextIter cpos = *pos;
+    int got_nonspace = 0;
+    gunichar c;
+
+    /* We're "not in a paragraph" if the current
+       cursor position is bracketed by newlines,
+       with no non-space character intervening.
+    */
+
+    c = gtk_text_iter_get_char(&cpos);
+
+    if (c == '\n') {
+	/* back up char-by-char */
+	while (gtk_text_iter_backward_char(&cpos)) {
+	    c = gtk_text_iter_get_char(&cpos);
+	    if (c == '\n') {
+		break;
+	    } else if (!isspace(c)) {
+		got_nonspace = 1;
+		break;
+	    }
+	}
+    } else if (isspace(c)) {
+	/* crawl forward to newline */
+	while (gtk_text_iter_forward_char(&cpos)) {
+	    c = gtk_text_iter_get_char(&cpos);
+	    if (c == '\n') {
+		break;
+	    } else if (!isspace(c)) {
+		got_nonspace = 1;
+		break;
+	    }
+	}
+	if (!got_nonspace) {
+	    /* try backwards */
+	    cpos = *pos;
+	    while (gtk_text_iter_backward_char(&cpos)) {
+		c = gtk_text_iter_get_char(&cpos);
+		if (c == '\n') {
+		    break;
+		} else if (!isspace(c)) {
+		    got_nonspace = 1;
+		    break;
+		}
+	    }
+	}	    
+    } else {
+	got_nonspace = 1;
+    }
+
+    return !got_nonspace;
+}
+
+static gboolean textbuf_get_para_limits (GtkTextBuffer *buf,
+					 GtkTextIter *pos,
+					 GtkTextIter *start,
+					 GtkTextIter *end)
+{
+    if (not_in_para(buf, pos)) {
+	return FALSE;
+    }
+
+    if (!prev_double_nl(pos, start)) {
+	gtk_text_buffer_get_start_iter(buf, start);
+    }
+
+    if (!next_double_nl(pos, end)) {
+	gtk_text_buffer_get_end_iter(buf, end);
+    }    
+
+    return TRUE;
+}
+
+void textview_format_paragraph (GtkWidget *view)
+{
+    GtkTextBuffer *buf;
+    GtkTextIter pos, start, end;
+    gchar *para = NULL;
+
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+
+    /* find where the cursor is */
+    gtk_text_buffer_get_iter_at_mark(buf, &pos, 
+				     gtk_text_buffer_get_insert(buf));
+
+    /* find start and end of paragraph, if we're in one */
+    if (!textbuf_get_para_limits(buf, &pos, &start, &end)) {
+	return;
+    }
+
+    /* grab the para text */
+    para = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
+
+    if (para != NULL && !string_is_blank(para)) {
+	// fprintf(stderr, "para:\n'%s'\n", para);
+	reformat_para(para, 72);
+	gtk_text_buffer_begin_user_action(buf);
+	gtk_text_buffer_delete(buf, &start, &end);
+	gtk_text_buffer_insert(buf, &start, para, -1);
+	gtk_text_buffer_end_user_action(buf);
+	g_free(para);
+	
+    }
+}
+
 gchar *textview_get_current_line (GtkWidget *view)
 {
     GtkTextBuffer *buf;

@@ -703,6 +703,10 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		tabwin_navigate(vwin, k);
 		return TRUE;
 	    }
+	} else if (vwin->role == EDIT_HEADER) {
+	    if (upkey == GDK_Q) {
+		textview_format_paragraph(vwin->text);
+	    }
 	}
     }
 
