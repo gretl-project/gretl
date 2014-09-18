@@ -1873,7 +1873,7 @@ static int not_in_para (GtkTextBuffer *buf,
 			GtkTextIter *pos)
 {
     GtkTextIter cpos = *pos;
-    int got_nonspace = 0;
+    int got_text = 0;
     gunichar c;
 
     /* We're "not in a paragraph" if the current
@@ -1883,46 +1883,46 @@ static int not_in_para (GtkTextBuffer *buf,
 
     c = gtk_text_iter_get_char(&cpos);
 
-    if (c == '\n') {
-	/* back up char-by-char */
+    if (!isspace(c)) {
+	got_text = 1;
+    } else if (c == '\n') {
+	/* crawl backwards to newline or text */
 	while (gtk_text_iter_backward_char(&cpos)) {
 	    c = gtk_text_iter_get_char(&cpos);
 	    if (c == '\n') {
 		break;
 	    } else if (!isspace(c)) {
-		got_nonspace = 1;
+		got_text = 1;
 		break;
 	    }
 	}
     } else if (isspace(c)) {
-	/* crawl forward to newline */
+	/* crawl forward to newline or text */
 	while (gtk_text_iter_forward_char(&cpos)) {
 	    c = gtk_text_iter_get_char(&cpos);
 	    if (c == '\n') {
 		break;
 	    } else if (!isspace(c)) {
-		got_nonspace = 1;
+		got_text = 1;
 		break;
 	    }
 	}
-	if (!got_nonspace) {
-	    /* try backwards */
+	if (!got_text) {
+	    /* OK, try backwards */
 	    cpos = *pos;
 	    while (gtk_text_iter_backward_char(&cpos)) {
 		c = gtk_text_iter_get_char(&cpos);
 		if (c == '\n') {
 		    break;
 		} else if (!isspace(c)) {
-		    got_nonspace = 1;
+		    got_text = 1;
 		    break;
 		}
 	    }
 	}	    
-    } else {
-	got_nonspace = 1;
     }
 
-    return !got_nonspace;
+    return !got_text;
 }
 
 static gboolean textbuf_get_para_limits (GtkTextBuffer *buf,
