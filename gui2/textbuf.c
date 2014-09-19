@@ -1966,7 +1966,6 @@ void textview_format_paragraph (GtkWidget *view)
     para = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
 
     if (para != NULL && !string_is_blank(para)) {
-	// fprintf(stderr, "para:\n'%s'\n", para);
 	reformat_para(para, 72);
 	gtk_text_buffer_begin_user_action(buf);
 	gtk_text_buffer_delete(buf, &start, &end);

@@ -1817,8 +1817,13 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
     }
 
+    /* In some cases we may want to avoid producing a window
+       that is much wider than the text to be dislayed
+    */
+
     if (role != VIEW_PKG_CODE && 
 	role != EDIT_PKG_CODE &&
+	role != EDIT_PKG_SAMPLE &&
 	role != SCRIPT_OUT) {
 	gretl_print_get_size(prn, &width, &nlines);
 	if (width > 0 && width + 2 < hsize) {
