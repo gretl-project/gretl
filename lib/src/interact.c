@@ -950,6 +950,7 @@ static int print_save_model (MODEL *pmod, DATASET *dset,
 	set_gretl_errno(0);
 	if (!gretl_looping_currently() || loop_force) {
 	    int havename = *s->cmd->savename != '\0';
+	    int window = (opt & OPT_W) != 0;
 
 	    if (havename) {
 		gretl_model_set_name(pmod, s->cmd->savename);
@@ -957,8 +958,8 @@ static int print_save_model (MODEL *pmod, DATASET *dset,
 	    printmodel(pmod, dset, opt, prn);
 	    attach_subsample_to_model(pmod, dset);
 	    s->pmod = maybe_stack_model(pmod, s->cmd, prn, &err);
-	    if (!err && s->callback != NULL && havename && 
-		gretl_in_gui_mode()) {
+	    if (!err && gretl_in_gui_mode() && s->callback != NULL && 
+		(havename || window)) {
 		s->callback(s, s->pmod, GRETL_OBJ_EQN);
 	    }
 	}

@@ -571,7 +571,8 @@ static void print_overdisp_test (const MODEL *pmod, PRN *prn)
 
 static void print_duration_alpha (const MODEL *pmod, PRN *prn)
 {
-    if ((pmod->opt & OPT_W) && plain_format(prn)) {
+    if ((pmod->opt & OPT_B) && plain_format(prn)) {
+	/* Weibull */
 	double a = 1.0 / pmod->coeff[pmod->ncoeff - 1];
 	double sa = a * a * pmod->sderr[pmod->ncoeff - 1];
 
@@ -887,7 +888,7 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("Fixed-effects");
 	} else if (pmod->opt & OPT_U) {
 	    return N_("Random-effects (GLS)");
-	} else if (pmod->opt & OPT_W) {
+	} else if (pmod->opt & OPT_H) {
 	    if (gretl_model_get_int(pmod, "iters")) {
 		return N_("Maximum Likelihood");
 	    } else {
@@ -2045,7 +2046,7 @@ static void print_model_heading (const MODEL *pmod,
     /* VCV variants */
     print_model_vcv_info(pmod, dset, prn);
 
-    if (pmod->ci == PANEL && (pmod->opt & OPT_W) && !pmod->aux) {
+    if (pmod->ci == PANEL && (pmod->opt & OPT_H) && !pmod->aux) {
 	/* WLS on panel data */
 	if (tex) {
 	    pputs(prn, "\\\\\n");
@@ -2467,12 +2468,12 @@ static void maybe_print_jll (const MODEL *pmod, int lldig, PRN *prn)
 
 #define weighted_model(m) (m->ci == HSK || m->ci == ARCH || \
 			   (m->ci == WLS && !gretl_model_get_int(m, "wt_dummy")) || \
-                           (m->ci == PANEL && (m->opt & OPT_W)))
+                           (m->ci == PANEL && (m->opt & OPT_H)))
 
-#define panel_ML_model(m) (m->ci == PANEL && (m->opt & OPT_W) && \
+#define panel_ML_model(m) (m->ci == PANEL && (m->opt & OPT_H) && \
 			   gretl_model_get_int(m, "iters"))
 
-#define non_weighted_panel(m) (m->ci == PANEL && !(m->opt & OPT_W))
+#define non_weighted_panel(m) (m->ci == PANEL && !(m->opt & OPT_H))
 
 #define MID_STATS 14
 

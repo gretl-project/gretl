@@ -1009,6 +1009,37 @@ static void delete_icon_for_data (void *data)
     }
 }
 
+static int show_model_in_window (void *ptr, GretlObjType type)
+{ 
+    char *name;
+    PRN *prn;
+
+    if (type != GRETL_OBJ_EQN && type != GRETL_OBJ_VAR) {
+	return 1;
+    }
+
+    if (bufopen(&prn)) {
+	return 1;
+    }
+
+    gretl_object_compose_unique_name(ptr, type);
+    name = gretl_object_get_name(ptr, type);
+
+    if (type == GRETL_OBJ_EQN) {
+	MODEL *pmod = (MODEL *) ptr;
+
+	printmodel(pmod, dataset, OPT_NONE, prn);
+	view_model(prn, pmod, name);
+    } else if (type == GRETL_OBJ_VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) ptr;
+
+	gretl_VAR_print(var, dataset, OPT_NONE, prn);
+	view_buffer(prn, 78, 450, name, var->ci, var);
+    }
+
+    return 0;
+}
+
 /* Callback (indirect) from libgretl for a model created via 
    script command. When this function is called, the model
    in question has already been stacked; it is just a matter
@@ -1021,8 +1052,13 @@ int add_model_to_session_callback (void *ptr, GretlObjType type)
     char *name = gretl_object_get_name(ptr, type);
     int ret = 0;
 
+    if (name == NULL || *name == '\0') {
+	/* we got the --window callback */
+	return show_model_in_window(ptr, type);
+    }
+
     /* are we replacing a session model's content? */
-    targ = get_session_model_by_name(name); 
+    targ = get_session_model_by_name(name);
 
     if (targ != NULL) {
 	windata_t *vwin = get_viewer_for_data(targ->ptr);

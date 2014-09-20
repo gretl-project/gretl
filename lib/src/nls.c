@@ -3428,8 +3428,8 @@ static int ivreg_weights_setup (nlspec *spec, const int *ilist,
     gretl_matrix *V;
     int err;
 
-    if (opt & OPT_W) {
-	mname = get_optval_string(IVREG, OPT_W);
+    if (opt & OPT_H) {
+	mname = get_optval_string(IVREG, OPT_H);
     }
 
     if (mname != NULL) {

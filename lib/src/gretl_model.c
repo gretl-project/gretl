@@ -4999,10 +4999,26 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	pmod->nparams = np;
     }
 
-    if (!*err && pmod->ci == GARCH && (pmod->opt & OPT_E)) {
-	/* compat for garch with standardized residuals */
-	pmod->opt &= ~OPT_E;
-	pmod->opt |= OPT_Z;
+    if (!*err && pmod->opt != 0) {
+	/* compat for some options whose flags have been changed */
+	if (pmod->opt & OPT_E) {
+	    if (pmod->ci == GARCH) {
+		/* standardized residuals */
+		pmod->opt &= ~OPT_E;
+		pmod->opt |= OPT_Z;
+	    }
+	}
+	if (pmod->opt & OPT_W) {
+	    if (pmod->ci == PANEL || pmod->ci == IVREG) {
+		/* weights */
+		pmod->opt &= ~OPT_W;
+		pmod->opt |= OPT_H;
+	    } else if (pmod->ci == DURATION) {
+		/* Weibull */
+		pmod->opt &= ~OPT_W;
+		pmod->opt |= OPT_B;
+	    }
+	}
     }
 
     if (!*err && pmod->list != NULL) {

@@ -4416,10 +4416,10 @@ MODEL mp_ols (const int *list, DATASET *dset)
 
 static int check_panel_options (gretlopt opt)
 {
-    if ((opt & OPT_U) && (opt & OPT_W)) {
+    if ((opt & OPT_U) && (opt & OPT_H)) {
 	/* can't specify random effects + weighted least squares */
 	return E_BADOPT;
-    } else if ((opt & OPT_T) && !(opt & OPT_W)) {
+    } else if ((opt & OPT_T) && !(opt & OPT_H)) {
 	/* iterate option requires weighted least squares option */
 	return E_BADOPT;
     } else if ((opt & OPT_N) && !(opt & OPT_U)) {
@@ -4443,9 +4443,9 @@ static int check_panel_options (gretlopt opt)
  * @dset: dataset struct.
  * @opt: can include OPT_Q (quiet estimation), OPT_S
  * (silent estimation), OPT_R (random effects model),
- * OPT_W (weights based on the error variance for the
+ * OPT_H (weights based on the error variance for the
  * respective cross-sectional units), OPT_I (iterate, only
- * available in conjunction with OPT_W).
+ * available in conjunction with OPT_H).
  * @prn: printing struct (or NULL).
  *
  * Calculate estimates for a panel dataset, using fixed
@@ -4464,7 +4464,7 @@ MODEL panel_model (const int *list, DATASET *dset,
     if (check_panel_options(opt)) {
 	gretl_model_init(&mod, dset);
 	mod.errcode = E_BADOPT;
-    } else if (opt & OPT_W) {
+    } else if (opt & OPT_H) {
 	mod = panel_wls_by_unit(list, dset, opt, prn);
     } else {
 	mod = real_panel_model(list, dset, opt, prn);
@@ -4501,7 +4501,7 @@ MODEL ivreg (const int *list, DATASET *dset, gretlopt opt)
 
     if (!err) {
 	/* two-step, iterate and weights options are GMM-only */
-	err = option_prereq_missing(opt, OPT_T | OPT_I | OPT_W, OPT_G);
+	err = option_prereq_missing(opt, OPT_T | OPT_I | OPT_H, OPT_G);
     }
     
     if (err) {

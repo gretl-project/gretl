@@ -742,7 +742,7 @@ void selector_from_model (windata_t *vwin)
 		model_opt |= OPT_F;
 	    } else if (pmod->opt & OPT_U) {
 		model_opt |= OPT_U;
-	    } else if (pmod->opt & OPT_W) {
+	    } else if (pmod->opt & OPT_H) {
 		sel_ci = PANEL_WLS;
 	    } else if (pmod->opt & OPT_B) {
 		sel_ci = PANEL_B;
@@ -4754,7 +4754,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     } else if (ci == ANOVA) {
 	dlgy -= 60;
     } else if (ci == PANEL_WLS) {
-	sr->opts |= OPT_W;
+	sr->opts |= OPT_H;
     } else if (VEC_CODE(ci)) {
 	dlgy = 450;
 	if (ci == VAR || ci == VECM) {
@@ -5928,7 +5928,7 @@ static void build_panel_radios (selector *sr)
     GSList *group;
     gboolean fe = TRUE;
 
-    if (sr->opts & OPT_W) {
+    if (sr->opts & OPT_H) {
 	/* panel weighted least squares */
 	return;
     }

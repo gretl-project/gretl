@@ -3678,7 +3678,7 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
 	    set_model_id(&mdl);
 	}
 	gretl_model_set_int(&mdl, "n_included_units", pan.effn);
-	mdl.opt |= OPT_W;
+	mdl.opt |= OPT_H; /* --unit-weights */
 	mdl.nwt = 0;
 
 	if (opt & OPT_I) {

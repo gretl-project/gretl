@@ -747,9 +747,9 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	} else if (orig->opt & OPT_U) {
 	    /* random effects */
 	    myopt |= OPT_U;
-	} else if (orig->opt & OPT_W) {
+	} else if (orig->opt & OPT_H) {
 	    /* unit weights */
-	    myopt |= OPT_W;
+	    myopt |= OPT_H;
 	    if (gretl_model_get_int(orig, "iters")) {
 		myopt |= OPT_I;
 	    }

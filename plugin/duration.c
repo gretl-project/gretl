@@ -649,7 +649,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     } else if (dinfo->dist == DUR_LOGNORM) {
 	pmod->opt |= OPT_Z;
     } else {
-	pmod->opt |= OPT_W; /* Weibull */
+	pmod->opt |= OPT_B; /* Weibull */
     }
 
     if (censvar > 0) {

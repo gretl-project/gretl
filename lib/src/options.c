@@ -29,6 +29,8 @@
 
 #define vcv_opt_ok(c) (MODEL_COMMAND(c) || c == ADD || c == OMIT)
 
+#define window_opt_ok(c) (MODEL_COMMAND(c))
+
 /* commands for which --quiet (= OPT_Q) is applicable */
 
 #define quiet_opt_ok(c) (MODEL_COMMAND(c) ||	\
@@ -183,7 +185,7 @@ struct gretl_option gretl_opts[] = {
     { DPANEL,   OPT_X, "dpdstyle", 0 },
     { DUMMIFY,  OPT_F, "drop-first", 0 },
     { DUMMIFY,  OPT_L, "drop-last", 0 },
-    { DURATION, OPT_W, "weibull", 0 },
+    { DURATION, OPT_B, "weibull", 0 },
     { DURATION, OPT_E, "exponential", 0 },
     { DURATION, OPT_L, "loglogistic", 0 },
     { DURATION, OPT_Z, "lognormal", 0 },
@@ -271,7 +273,7 @@ struct gretl_option gretl_opts[] = {
     { IVREG,    OPT_R, "robust", 0 },  
     { IVREG,    OPT_S, "save", 0 },
     { IVREG,    OPT_T, "two-step", 0 },
-    { IVREG,    OPT_W, "weights", 2 },
+    { IVREG,    OPT_H, "weights", 2 },
     { IVREG,    OPT_X, "no-tests", 0 },
     { IVREG,    OPT_C, "cluster", 2 },
     { JOIN,     OPT_I, "ikey", 2 },
@@ -371,6 +373,7 @@ struct gretl_option gretl_opts[] = {
     { OLS,      OPT_S, "simple-print", 0 },
     { OLS,      OPT_V, "anova", 0 },
     { OLS,      OPT_C, "cluster", 2 },
+    { OLS,      OPT_W, "window", 0 },
     { OMIT,     OPT_A, "auto", 1 },
     { OMIT,     OPT_B, "both", 0 },
     { OMIT,     OPT_X, "chi-square", 0 },
@@ -398,7 +401,6 @@ struct gretl_option gretl_opts[] = {
     { PANEL,    OPT_B, "between", 0 },
     { PANEL,    OPT_D, "time-dummies", 1 },
     { PANEL,    OPT_F, "fixed-effects", 0 },
-    { PANEL,    OPT_H, "hausman-reg", 0 }, /* backward compatibility */
     { PANEL,    OPT_I, "iterate", 0 },
     { PANEL,    OPT_M, "matrix-diff", 0 },
     { PANEL,    OPT_N, "nerlove", 0 },
@@ -407,7 +409,7 @@ struct gretl_option gretl_opts[] = {
     { PANEL,    OPT_S, "silent", 0 },
     { PANEL,    OPT_U, "random-effects", 0 },
     { PANEL,    OPT_V, "verbose", 0 },
-    { PANEL,    OPT_W, "unit-weights", 0 },
+    { PANEL,    OPT_H, "unit-weights", 0 },
     { POISSON,  OPT_R, "robust", 0 },
     { POISSON,  OPT_C, "cluster", 2 },
     { POISSON,  OPT_V, "verbose", 0 },
@@ -647,6 +649,7 @@ const char **get_opts_for_command (int ci, int *nopt)
 	/* widely applicable options which are "attached" to OLS */
 	n += vcv_opt_ok(ci);
 	n += quiet_opt_ok(ci);
+	n += window_opt_ok(ci);
     }
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
@@ -678,6 +681,9 @@ const char **get_opts_for_command (int ci, int *nopt)
 	if (quiet_opt_ok(ci)) {
 	    ret[j++] = "quiet";
 	}
+	if (window_opt_ok(ci)) {
+	    ret[j++] = "window";
+	}	
     }
 
     *nopt = n;
@@ -744,7 +750,9 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
 	return 1;
     } else if (opt == OPT_Q && quiet_opt_ok(ci)) {
 	return 1;
-    }    
+    } else if (opt == OPT_W && window_opt_ok(ci)) {
+	return 1;
+    }
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
 	if (ci == gretl_opts[i].ci) {
@@ -1151,6 +1159,11 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
 	opt &= ~OPT_Q; /* handled */
     }
 
+    if (window_opt_ok(ci) && (opt & OPT_W)) {
+	real_push_option(ci, OPT_W, NULL, 1, flags);
+	opt &= ~OPT_W; /* handled */
+    }
+
     if (opt == 0) {
 	return;
     }
@@ -1339,6 +1352,10 @@ gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
 	return OPT_Q;
     }
 
+    if (window_opt_ok(ci) && !strcmp(s, "window")) {
+	return OPT_W;
+    }
+
     /* start by looking for an exact match */
     for (i=0; gretl_opts[i].o != 0; i++) {
 	if (ci == gretl_opts[i].ci) {
@@ -1500,6 +1517,11 @@ const char *print_flags (gretlopt oflags, int ci)
     if ((oflags & OPT_Q) && quiet_opt_ok(ci)) {
 	pputs(flagprn, " --quiet");
 	oflags &= ~OPT_Q; /* handled */
+    }
+
+    if ((oflags & OPT_W) && window_opt_ok(ci)) {
+	pputs(flagprn, " --window");
+	oflags &= ~OPT_W; /* handled */
     }
 
     got_ci = 0;
