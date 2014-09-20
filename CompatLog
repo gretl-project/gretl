@@ -1,4 +1,4 @@
-version 1.9.92, in progress
+2014-09-20 version 1.9.92
 
 The behavior of the "append" command: by default, this now
 strictly appends (series and/or observations). The old

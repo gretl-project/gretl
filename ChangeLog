@@ -1,4 +1,4 @@
-version 1.9.92, in progress
+2014-09-20 version 1.9.92
 - Add new functions: isdiscrete(), isdummy()
 - Enable faster execution of assignment statements in loops
 - Add and document function-form of "sprintf"
@@ -12,7 +12,6 @@ version 1.9.92, in progress
 - Fix bug: incorrect behavior of randgen() for uniform values
   when the given lower bound is negative
 - "append" command: add option --update-overlap
-- "varlist" command: deprecate "list" as an alias for this
 - "data" command: use --compact option in place of ad hoc
   "(compact=method)" syntax
 - MS Windows: improve handling of non-ASCII text in RTF output
