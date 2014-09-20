@@ -27,16 +27,17 @@ typedef enum {
     OPT_AMBIGUOUS
 } OptStatus;
 
-gretlopt get_gretl_options (char *line, int *err);
-
 gretlopt opt_from_flag (unsigned char c);
 
 const char *print_flags (gretlopt oflags, int ci);
 
 const char **get_opts_for_command (int ci, int *nopt);
 
-int set_options_for_command (gretlopt opt, const char *cmdword,
-			     const char *param);
+int set_options_for_command (const char *cmdword,
+			     const char *param,
+			     gretlopt opt);
+
+void maybe_get_stored_options (int ci, gretlopt *popt);
 
 int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn);
 
@@ -76,11 +77,11 @@ int get_compression_option (int ci);
 
 void destroy_option_params_at_level (int level);
 
-void clear_option_params (void);
+void clear_stored_options_for_command (int ci);
+
+void stored_options_cleanup (void);
 
 void setopt_cleanup (void);
-
-void option_params_cleanup (void);
 
 void option_printing_cleanup (void);
 

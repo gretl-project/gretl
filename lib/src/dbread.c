@@ -1919,15 +1919,9 @@ int set_odbc_dsn (const char *line, PRN *prn)
     return err;
 }
 
-int db_set_sample (const char *s, DATASET *dset)
+int db_set_sample (const char *start, const char *stop, DATASET *dset)
 {
-    char start[OBSLEN], stop[OBSLEN];
     int t1 = 0, t2 = 0;
-
-    if (sscanf(s, "%10s %10s", start, stop) != 2) {
-	gretl_errmsg_set(_("error reading smpl line"));
-	return 1;
-    }
 
     if (strcmp(start, ";")) {
 	t1 = dateton(start, dset);
@@ -1962,8 +1956,8 @@ int db_set_sample (const char *s, DATASET *dset)
     return 0;
 }
 
-static char *
-get_word_and_advance (char *s, char *word, size_t maxlen)
+static const char *
+get_word_and_advance (const char *s, char *word, size_t maxlen)
 {
     size_t i = 0;
 
@@ -2741,7 +2735,7 @@ static void maybe_fclose (FILE *fp)
 
 #define DBUFLEN 1024
 
-static int db_delete_series (char *line, const int *list,
+static int db_delete_series (const char *line, const int *list,
 			     const char *fname, PRN *prn)
 {
     dbnumber buf[DBUFLEN];
@@ -2898,7 +2892,7 @@ static int db_delete_series (char *line, const int *list,
     return err;
 }
 
-int db_delete_series_by_name (char *line, PRN *prn)
+int db_delete_series_by_name (const char *line, PRN *prn)
 {
     return db_delete_series(line, NULL, NULL, prn);
 }

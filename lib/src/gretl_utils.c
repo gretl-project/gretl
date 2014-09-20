@@ -916,9 +916,11 @@ static void maybe_fix_daily_start (long *ed, int pd)
 
 #define recognized_ts_frequency(f) (f == 4 || f == 12 || f == 24)
 
-static int process_starting_obs (char *stobs, int pd, int *pstructure,
-				 double *psd0, int *pdated)
+static int process_starting_obs (const char *stobs_in, int pd, 
+				 int *pstructure, double *psd0,
+				 int *pdated)
 {
+    char stobs[OBSLEN];
     int structure = *pstructure;
     double sd0 = 0.0;
     int maybe_tseries = 1;
@@ -930,6 +932,9 @@ static int process_starting_obs (char *stobs, int pd, int *pstructure,
 	structure == STACKED_CROSS_SECTION) {
 	maybe_tseries = 0;
     }
+
+    *stobs = '\0';
+    strncat(stobs, stobs_in, OBSLEN - 1);
 
     /* truncate stobs if not a calendar date */
 
@@ -1014,7 +1019,8 @@ static int process_starting_obs (char *stobs, int pd, int *pstructure,
 
 /**
  * set_obs:
- * @line: command line.
+ * @parm1: first parameter.
+ * @parm2: second parameter.
  * @dset: dataset struct.
  * @opt: %OPT_S for stacked time-series, %OPT_C for stacked cross-section,
  * %OPT_T for time series, %OPT_X for cross section, %OPT_P to set
@@ -1028,10 +1034,10 @@ static int process_starting_obs (char *stobs, int pd, int *pstructure,
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int set_obs (const char *line, DATASET *dset, gretlopt opt)
+int set_obs (const char *parm1, const char *parm2,
+	     DATASET *dset, gretlopt opt)
 {
-    char pdstr[VNAMELEN];
-    char stobs[OBSLEN];
+    const char *stobs = NULL;
     int structure = STRUCTURE_UNKNOWN;
     double sd0 = dset->sd0;
     int pd, dated = 0;
@@ -1057,33 +1063,31 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 	return switch_panel_orientation(dset);
     }    
 
-    if (!strcmp(line, "setobs")) {
+    if (opt == OPT_NONE && parm1 == NULL && parm2 == NULL) {
 	/* we'll just print current obs info */
 	return 0;
     }
 
+    if (parm1 == NULL || parm2 == NULL) {
+	return E_ARGS;
+    }
+
     if (opt & OPT_P) {
-	return set_panel_structure_from_line(line, dset);
+	return set_panel_structure_from_varnames(parm1, parm2, dset);
     } else if (opt & OPT_G) {
 	/* --panel-groups */
-	return set_panel_group_strings(line, dset);
+	return set_panel_group_strings(parm1, parm2, dset);
     }
 
     /* now we get down to business */
 
-    if (sscanf(line, "%*s %15s %10s", pdstr, stobs) != 2) {
-	gretl_errmsg_set(_("Failed to parse line as frequency, startobs"));
-	return E_PARSE;
-    }
-
-    pd = gretl_int_from_string(pdstr, &err);
+    pd = gretl_int_from_string(parm1, &err);
     if (!err && pd < 1) {
 	gretl_errmsg_sprintf(_("frequency (%d) does not make seem to make sense"), pd);
-	err = E_DATA;
+	return E_DATA;
     }
-    if (err) {
-	return err;
-    }
+
+    stobs = parm2;
 
     /* if an explicit structure option was passed in, respect it */
     if (opt == OPT_X) {
@@ -1155,6 +1159,78 @@ int set_obs (const char *line, DATASET *dset, gretlopt opt)
 	    err = switch_panel_orientation(dset);
 	}
     }
+
+    return err;
+}
+
+/**
+ * simple_set_obs:
+ * @dset: pointer to data information struct.
+ * @pd: data frequency.
+ * @stobs: string representation of starting observation.
+ * @opt: options flags.
+ * 
+ * See the "setobs" command.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int simple_set_obs (DATASET *dset, int pd, const char *stobs, 
+		    gretlopt opt)
+{
+    int structure = STRUCTURE_UNKNOWN;
+    double sd0 = dset->sd0;
+    int dated = 0;
+    int panel = 0;
+    int err = 0;
+
+    if (opt == OPT_X) {
+	structure = CROSS_SECTION;
+    } else if (opt == OPT_T) {
+	structure = TIME_SERIES;
+    } else if (opt == OPT_S) {
+	structure = STACKED_TIME_SERIES;
+	panel = 1;
+    } else if (opt == OPT_C) {
+	structure = STACKED_CROSS_SECTION;
+	panel = 1;
+    } else if (opt == OPT_N) {
+	structure = SPECIAL_TIME_SERIES;
+    } else if (opt == OPT_I) {
+	/* --panel-time */
+	structure = TIME_SERIES;
+    }
+
+    err = process_starting_obs(stobs, pd, &structure, &sd0, &dated);
+
+    if (err) {
+	return err;
+    }
+
+    if (panel && dset->n % pd != 0) {
+	int sts = structure == STACKED_TIME_SERIES;
+
+	gretl_errmsg_sprintf(_("Panel datasets must be balanced.\n"
+			       "The number of observations (%d) is not a multiple\n"
+			       "of the number of %s (%d)."), 
+			     dset->n, sts ? _("periods") : _("units"), pd);
+	return E_DATA;
+    }
+
+    if (dated) {
+	/* replace any existing markers with date strings */
+	dataset_destroy_obs_markers(dset);
+    } else if (structure == TIME_SERIES && (pd == 1 || pd == 4 || pd == 12)) {
+	/* force use of regular time-series obs labels */
+	dataset_destroy_obs_markers(dset);
+    }
+
+    dset->pd = pd;
+    dset->structure = structure;
+    dset->sd0 = sd0;
+
+    ntodate(dset->stobs, 0, dset); 
+    ntodate(dset->endobs, dset->n - 1, dset);
 
     return err;
 }
@@ -1929,6 +2005,8 @@ void libgretl_session_cleanup (int mode)
     gretl_lists_cleanup();
     gretl_tests_cleanup();
     gretl_plotx(NULL, OPT_NONE);
+
+    /* scrub options set via "setopt" */
     setopt_cleanup();
 
     if (mode != SESSION_CLEAR_DATASET) {
@@ -1958,7 +2036,7 @@ void libgretl_cleanup (void)
     gretl_function_hash_cleanup();
     lapack_mem_free();
     forecast_matrix_cleanup();
-    option_params_cleanup();
+    stored_options_cleanup();
     option_printing_cleanup();
     kalman_cleanup();
     gnuplot_cleanup();

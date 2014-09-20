@@ -35,7 +35,7 @@
 
 /*
  * model_test_driver:
- * @param: auxiliary parameter for some uses.
+ * @order: lag order for --autocorr and --arch.
  * @dset: dataset struct.
  * @opt: controls which test(s) will be performed; OPT_Q
  * gives less verbose results, OPT_I gives silent operation.
@@ -47,7 +47,7 @@
  * Returns: 0 on successful completion, error code on error.
  */
 
-int model_test_driver (const char *param, DATASET *dset, 
+int model_test_driver (int order, DATASET *dset, 
 		       gretlopt opt, PRN *prn)
 {
     GretlObjType type;
@@ -78,10 +78,7 @@ int model_test_driver (const char *param, DATASET *dset,
 
     if (opt & (OPT_A | OPT_H)) {
 	/* autocorrelation and arch: lag order */
-	k = atoi(param);
-	if (k == 0) {
-	    k = dset->pd;
-	}
+	k = order > 0 ? order : dset->pd;
     }
 
     if (opt & OPT_I) {
@@ -193,7 +190,7 @@ static int get_chow_dummy (const char *s, const DATASET *dset,
 
 /*
  * chow_test_driver:
- * @line: command line for parsing.
+ * @param: parameter (observation or name of dummy)
  * @pmod: pointer to model to be tested.
  * @dset: dataset struct.
  * @opt: if flags include OPT_S, save test results to model;
@@ -204,27 +201,20 @@ static int get_chow_dummy (const char *s, const DATASET *dset,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int chow_test_driver (const char *line, MODEL *pmod, DATASET *dset, 
+int chow_test_driver (const char *param, MODEL *pmod, DATASET *dset, 
 		      gretlopt opt, PRN *prn)
 {
-    char chowstr[VNAMELEN];
-    char fmt[16];
     int chowparm = 0;
     int err = 0;
 
-    /* chowstr should hold either an observation at which to
-       split the sample, or the name of a dummy variable
-       to be used to divide the sample (if given OPT_D)
-    */
+    if (param == NULL || *param == '\0') {
+	return E_DATA;
+    }
 
-    sprintf(fmt, "%%*s %%%ds", VNAMELEN-1);
-
-    if (sscanf(line, fmt, chowstr) != 1) {
-	err = E_PARSE;
-    } else if (opt & OPT_D) {
-	chowparm = get_chow_dummy(chowstr, dset, &err);
+    if (opt & OPT_D) {
+	chowparm = get_chow_dummy(param, dset, &err);
     } else {
-	chowparm = dateton(chowstr, dset);
+	chowparm = dateton(param, dset);
     }
 
     if (!err) {
@@ -238,12 +228,12 @@ int chow_test_driver (const char *line, MODEL *pmod, DATASET *dset,
     return err;
 }
 
-/* The @parm here may contain a scalar or a matrix: in either case,
+/* The @param here may contain a scalar or a matrix: in either case,
    convert to a list of lag-orders before handing off to the real
    Levin-Lin-Chu code.
 */
 
-int llc_test_driver (const char *parm, const int *list, 
+int llc_test_driver (const char *param, const int *list, 
 		     DATASET *dset, gretlopt opt, PRN *prn)
 {
     gretl_matrix *m = NULL;
@@ -251,21 +241,21 @@ int llc_test_driver (const char *parm, const int *list,
     int p0 = -1;
     int err = 0;
 
-    if (parm == NULL) {
+    if (param == NULL) {
 	err = E_DATA;
-    } else if (*parm == '{') {
-	m = generate_matrix(parm, dset, &err);
+    } else if (*param == '{') {
+	m = generate_matrix(param, dset, &err);
 	if (!err) {
 	    plist = gretl_list_from_vector(m, &err);
 	}
 	gretl_matrix_free(m);
-    } else if (gretl_is_matrix(parm)) {
-	m = get_matrix_by_name(parm);
+    } else if (gretl_is_matrix(param)) {
+	m = get_matrix_by_name(param);
 	plist = gretl_list_from_vector(m, &err);
-    } else if (integer_string(parm)) {
-	p0 = atoi(parm);
-    } else if (gretl_is_scalar(parm)) {
-	p0 = gretl_scalar_get_value(parm, NULL);
+    } else if (integer_string(param)) {
+	p0 = atoi(param);
+    } else if (gretl_is_scalar(param)) {
+	p0 = gretl_scalar_get_value(param, NULL);
     } else {
 	err = E_DATA;
     }
@@ -284,18 +274,18 @@ int llc_test_driver (const char *parm, const int *list,
     return err;
 }
 
-/* parse the tau vector out of @parm before calling the
+/* parse the tau vector out of @param before calling the
    "real" quantreg function
 */
 
-MODEL quantreg_driver (const char *parm, const int *list, 
+MODEL quantreg_driver (const char *param, const int *list, 
 		       DATASET *dset, gretlopt opt, PRN *prn)
 {
     gretl_vector *tau;
     MODEL mod;
     int err = 0;
 
-    tau = generate_matrix(parm, dset, &err);
+    tau = generate_matrix(param, dset, &err);
 
     if (!err && gretl_vector_get_length(tau) == 0) {
 	err = E_DATA;
@@ -420,14 +410,12 @@ MODEL tobit_driver (const int *list, DATASET *dset,
  * Returns: 0 on success, non-zero on failure.
  */
 
-int do_modprint (const char *line, gretlopt opt, PRN *prn)
+int do_modprint (const char *mname, const char *names, 
+		 gretlopt opt, PRN *prn)
 {
     gretl_matrix *coef_se = NULL;
     gretl_matrix *addstats = NULL;
-    char *parnames = NULL;
-    char *litstr = NULL;
-    const char *s;
-    char name[VNAMELEN];
+    const char *parnames = NULL;
     int err = 0;
 
     err = incompatible_options(opt, OPT_C | OPT_R | OPT_T);
@@ -435,60 +423,37 @@ int do_modprint (const char *line, gretlopt opt, PRN *prn)
 	return err;
     }
 
-    /* skip the command word, if present */
-    s = line;
-    s += strspn(s, " ");
-    if (!strncmp(s, "modprint ", 9)) {
-	s += 9;
+    if (mname == NULL || names == NULL) {
+	return E_ARGS;
     }
 
-    /* first up, name of k x 2 matrix */
-    if (gretl_scan_varname(s, name) == 1) {
-	coef_se = get_matrix_by_name(name);
-	if (coef_se == NULL) {
-	    err = E_UNKVAR;
-	} else if (gretl_matrix_cols(coef_se) != 2) {
-	    gretl_errmsg_set(_("modprint: the first matrix argument must have 2 columns"));
-	    err = E_DATA;
-	}
-    } else {
-	err = E_PARSE;
+    /* first, name of k x 2 matrix */
+    coef_se = get_matrix_by_name(mname);
+    if (coef_se == NULL) {
+	err = E_UNKVAR;
+    } else if (gretl_matrix_cols(coef_se) != 2) {
+	gretl_errmsg_set(_("modprint: the first matrix argument must have 2 columns"));
+	err = E_DATA;
     }
-
+ 
     if (!err) {
-	/* second up, string containing names */
-	s += strspn(s, " ");
-	s += strlen(name);
-	s += strspn(s, " ");
-	if (*s == '"') {
+	/* second, string containing names */
+	if (strchr(names, ' ') || strchr(names, ',')) {
 	    /* got a string literal */
-	    litstr = gretl_quoted_string_strdup(s, &s);
-	    if (litstr == NULL) {
-		err = E_PARSE;
-	    } else {
-		parnames = litstr;
-		s += strspn(s, " ");
-	    }
-	} else if (gretl_scan_varname(s, name) == 1) {
-	    parnames = (char *) get_string_by_name(name);
-	    if (parnames == NULL) {
-		err = E_UNKVAR;
-	    } else {
-		/* advance past string name */
-		s += strspn(s, " ");
-		s += strlen(name);
-		s += strspn(s, " ");
-	    }
+	    parnames = names;
+	} else if (get_string_by_name(names)) {
+	    parnames = get_string_by_name(names);
 	} else {
 	    err = E_PARSE;
 	}
     }
 
-    if (!err) {
+    if (!err && (opt & OPT_A)) {
 	/* optional third field: extra matrix */
-	if (*s != '\0') {
-	    gretl_scan_varname(s, name);
-	    addstats = get_matrix_by_name(name);
+	const char *aname = get_optval_string(MODPRINT, OPT_A);
+
+	if (aname != NULL) {
+	    addstats = get_matrix_by_name(aname);
 	    if (addstats == NULL) {
 		err = E_UNKVAR;
 	    }	    
@@ -508,11 +473,10 @@ int do_modprint (const char *line, gretlopt opt, PRN *prn)
 		fmt |= GRETL_FORMAT_DOC;
 	    }
 	}
+
 	gretl_print_set_format(prn, fmt);
 	err = print_model_from_matrices(coef_se, addstats, parnames, prn);
     }
-
-    free(litstr);
 
     return err;
 }

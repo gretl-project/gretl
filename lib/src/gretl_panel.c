@@ -1007,16 +1007,15 @@ static void print_panel_coeff (const MODEL *pmod,
 
 static void print_re_model_top (const panelmod_t *pan, PRN *prn)
 {
-    pprintf(prn, "%s = %g\n", _("'Between' variance"), pan->s2b);
-    pprintf(prn, "%s = %g\n", _("'Within' variance"), pan->s2e);
+    pputs(prn, "Variance estimators:\n");
+    pprintf(prn, " between = %g\n", pan->s2b);
+    pprintf(prn, " within = %g\n", pan->s2e);
 
     if (pan->balanced) {
-	pprintf(prn, "%s = %g\n", _("theta used for quasi-demeaning"),
-		pan->theta);
+	pprintf(prn, "theta used for quasi-demeaning = %g\n", pan->theta);
     } else {
 	pputs(prn, "Panel is unbalanced: theta varies across units\n");
     }
-
     pputc(prn, '\n');
 
     pputs(prn,
@@ -4692,38 +4691,20 @@ static int check_index_values (const double *x, int n)
     return 0;
 }
 
-static int uv_tv_from_line (const char *line, const DATASET *dset,
-			    int *uv, int *tv)
+static int uv_tv_from_varnames (const char *uname, const char *tname, 
+				const DATASET *dset, int *uv, int *tv)
 {
-    char uvname[VNAMELEN];
-    char tvname[VNAMELEN];
-    char fmt[12];
-    int err = 0;
-
-    sprintf(fmt, "%%%ds %%%ds", VNAMELEN-1, VNAMELEN-1);
-    
-    if (sscanf(line, fmt, uvname, tvname) != 2) {
-	return E_PARSE;
-    }
-
-    *uv = series_index(dset, uvname);
-    if (*uv == dset->v) {
-	/* FIXME "not a series" */
-	gretl_errmsg_sprintf(_("Unknown variable '%s'"), uvname);
-	err = E_UNKVAR;
+    *uv = current_series_index(dset, uname);
+    if (*uv <= 0) {
+	return E_DATA;
     } 
 
-    if (err) {
-	return err;
-    }
-
-    *tv = series_index(dset, tvname);
-    if (*tv == dset->v) {
-	gretl_errmsg_sprintf(_("Unknown variable '%s'"), tvname);
-	err = E_UNKVAR;
+    *tv = current_series_index(dset, tname);
+    if (*tv <= 0) {
+	return E_DATA;
     } 
 
-    return err;
+    return 0;
 }
 
 #if PDEBUG
@@ -4920,17 +4901,15 @@ int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
     return err;
 }
 
-int set_panel_structure_from_line (const char *line, DATASET *dset)
+int 
+set_panel_structure_from_varnames (const char *uname, const char *tname,
+				   DATASET *dset)
 {
     int n = dset->n;
     int uv = 0, tv = 0;
     int err = 0;
 
-    if (!strncmp(line, "setobs", 6)) {
-	line += 7;
-    }
-
-    err = uv_tv_from_line(line, dset, &uv, &tv);
+    err = uv_tv_from_varnames(uname, tname, dset, &uv, &tv);
 
     if (!err) {
 	err = check_index_values(dset->Z[uv], n);
@@ -4969,60 +4948,37 @@ static int group_uniqueness_check (char **S, int n)
    series is set on the 'pangrps' member of @dset, and the
    names are then used in panel graphs where appropriate.
 
-   @line should contain: (a) the name of a series, either an
+   @vname should contain the name of a series, either an
    existing one (which will be overwritten) or a new one to
-   create; and (b) either a string literal or the name of
-   a string variable, which in either case should hold N
-   space-separated strings, where N is the number of panel
-   groups.
+   create; and @grpnames should be either a string literal or 
+   the name of a string variable, which in either case should
+   hold N space-separated strings, where N is the number of
+   panel groups.
 */
 
-int set_panel_group_strings (const char *line, DATASET *dset)
+int set_panel_group_strings (const char *vname,
+			     const char *grpnames,
+			     DATASET *dset)
 {
-    char vname[VNAMELEN];
-    char strname[VNAMELEN];
-    char *namestr = NULL;
+    const char *namestr = NULL;
     char **S = NULL;
     int ng = dset->n / dset->pd;
     int v, orig_v = dset->v;
-    int freeit = 0;
     int err = 0;
 
-    if (!strncmp(line, "setobs", 6)) {
-	line += 7;
-	line += strspn(line, " ");
+    if (vname == NULL || *vname == '\0' ||
+	grpnames == NULL || *grpnames == '\0') {
+	return E_DATA;
     }
 
-    if (sscanf(line, "%31s", vname) != 1) {
-	err = E_PARSE;
+    if (strchr(grpnames, ' ')) {
+	/* group names as string literal */
+	namestr = grpnames;
+    } else if (gretl_is_string(grpnames)) {
+	/* group names in a string variable */
+	namestr = get_string_by_name(grpnames);
     } else {
-	/* get the string containing the names */
-	line += strcspn(line, " ");
-	line += strspn(line, " ");
-	if (*line == '"') {
-	    /* got a string literal */
-	    const char *s = strchr(line + 1, '"');
-	    
-	    if (s == NULL) {
-		err = E_PARSE;
-	    } else {
-		namestr = gretl_strndup(line + 1, s - line - 1);
-		if (namestr == NULL) {
-		    err = E_ALLOC;
-		} else {
-		    freeit = 1;
-		}
-	    }
-	} else {
-	    /* should be the name of a string variable */
-	    if (sscanf(line, "%31s", strname) != 1) {
-		err = E_PARSE;
-	    } else if (!gretl_is_string(strname)) {
-		err = E_DATA;
-	    } else {
-		namestr = get_string_by_name(strname);
-	    }
-	}
+	err = E_DATA;
     }
     
     if (namestr != NULL) {
@@ -5043,9 +4999,6 @@ int set_panel_group_strings (const char *line, DATASET *dset)
 	}
 	if (!err) {
 	    err = group_uniqueness_check(S, ng);
-	}
-	if (freeit) {
-	    free(namestr);
 	}
     }
 

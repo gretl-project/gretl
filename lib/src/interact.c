@@ -56,23 +56,9 @@
 #endif
 
 #define CMD_DEBUG 0
-#define LAGS_DBG 0
+#define ECHO_DEBUG 0
 
-#include "laginfo.c"
-
-typedef struct {
-    int v;                /* ID number of series */
-    int *vlist;           /* or list of series */
-    char name[VNAMELEN];  /* name of series of list */
-    int lmin;             /* minimum lag */
-    int lmax;             /* maximum lag */
-    int *laglist;         /* list of specific lags */
-} LAGVAR;
-
-#define cmd_set_nolist(c) (c->flags |= CMD_NOLIST)
-#define cmd_unset_nolist(c) (c->flags &= ~CMD_NOLIST)
-
-static void get_optional_filename (const char *s, CMD *cmd);
+#include "tokenize.c"
 
 #define bare_quote(p,s)   (*p == '"' && (p-s==0 || *(p-1) != '\\'))
 #define starts_comment(p) (*p == '/' && *(p+1) == '*')
@@ -172,7 +158,6 @@ int filter_comments (char *s, CMD *cmd)
 
     if (filt) {
 	/* the whole line is a comment */
-	cmd_set_nolist(cmd);
 	cmd->ci = CMD_COMMENT;
     }
 
@@ -186,265 +171,6 @@ int filter_comments (char *s, CMD *cmd)
     return filt;
 }
 
-/* as in, e.g., "lags 4 ; <varlist>" but we allow the leading
-   parameter to be given as a pre-defined scalar variable
-   instead of a numeric constant
-*/
-
-static int get_lags_param (CMD *cmd, char **ps)
-{
-    int k = gretl_charpos(';', *ps);
-    int ret = 0;
-
-    if (k > 0) {
-	char *tmp = gretl_strndup(*ps, k-1);
-	int lag = positive_int_from_string(tmp);
-
-	if (lag < 0 && gretl_is_scalar(tmp)) {
-	    lag = gretl_scalar_get_value(tmp, NULL);
-	    free(tmp);
-	    tmp = g_strdup_printf("%d", lag);
-	}
-
-	free(cmd->param);
-	cmd->param = tmp;
-	*ps = *ps + k + 1;
-	ret = 1;
-    }
-
-    return ret;
-}
-
-static void deprecate_alias (const char *bad, const char *good, int cmd)
-{
-    const char *tag = cmd ? "command" : "construction";
-
-    gretl_warnmsg_sprintf("\"%s\": obsolete %s; please use \"%s\"",
-			  bad, tag, good);
-}
-
-/* catch aliased command words and assign cmd->ci; return
-   cmd->ci if alias caught, else 0. */
-
-static int catch_command_alias (char *line, CMD *cmd)
-{
-    char *s = cmd->word;
-
-    cmd->ci = 0;
-
-    if (!strcmp(line, "exit")) {
-	strcpy(s, "quit");
-	cmd->ci = QUIT;
-	cmd->opt = OPT_X;
-    } else if (!strcmp(s, "ls")) {
-	cmd->ci = VARLIST;
-    } else if (!strcmp(s, "pooled")) {
-	deprecate_alias("pooled", "ols", 1);
-	cmd->ci = OLS;
-    } else if (!strcmp(line, "smpl full")) {
-	strcpy(line, "smpl");
-	cmd->opt = OPT_F;
-    } else if (!strcmp(s, "equations")) {
-	cmd->ci = EQUATION;
-	cmd->opt |= OPT_M;
-    } else if (!strcmp(s, "graph")) { 
-	deprecate_alias("graph", "textplot", 1);
-	cmd->ci = PLOT; 	 
-    } else if (!strcmp(s, "plot")) {
-	deprecate_alias("plot", "textplot", 1);
-	cmd->ci = PLOT; 	 
-	cmd->opt = OPT_S;
-    } else if (!strcmp(s, "list")) {
-	char lname[VNAMELEN];
-	char fmt[24];
-
-	if (string_is_blank(line + 4)) {
-	    cmd->ci = VARLIST;
-	    strcpy(line, "varlist");
-	} else if (gretl_string_ends_with(line, "delete")) {
-	    sprintf(fmt, "list %%%ds delete", VNAMELEN - 1);
-	    if (sscanf(line, fmt, lname)) {
-		free(cmd->parm2);
-		cmd->parm2 = gretl_strdup(lname);
-		cmd->ci = DELEET;
-	    }
-	} else {
-	    if (gretl_string_ends_with(line, "print")) {
-		sprintf(fmt, "list %%%ds", VNAMELEN - 1);
-		if (sscanf(line, fmt, lname)) {
-		    strcpy(line, lname);
-		}
-	    } 
-	    cmd->ci = GENR;
-	}
-    } else if (*s == '!' || !strcmp(s, "launch")) {
-	cmd->ci = SHELL;
-    } else if (!strcmp(s, "addobs")) { 	 
-	char *tmp = gretl_strdup(line); 	 
-	  	 
-	deprecate_alias("addobs", "dataset addobs", 0); 	 
-	strcpy(line, "dataset "); 	 
-	strcat(line, tmp); 	 
-	cmd->ci = DATAMOD; 	 
-	free(tmp);
-    } else if (!strcmp(s, "fcasterr")) {
-	deprecate_alias("fcasterr", "fcast", 1);
-	cmd->ci = FCAST; 	 
-    } else if (!strcmp(s, "continue")) {
-	cmd->ci = FUNDEBUG;
-	cmd->opt |= OPT_C;
-    } else if (!strcmp(s, "next")) {
-	cmd->ci = FUNDEBUG;
-	cmd->opt |= OPT_N;
-    } else if (!strcmp(s, "undebug")) {
-	cmd->ci = FUNDEBUG;
-	cmd->opt |= OPT_Q;
-    }
-
-    return cmd->ci;
-}
-
-static int catch_system_alias (CMD *cmd)
-{
-    cmd->ci = 0;
-    
-    if (!strcmp(cmd->word, "equation")) {
-	cmd->ci = EQUATION;
-    } else if (!strcmp(cmd->word, "equations")) {
-	cmd->ci = EQUATION;
-	cmd->opt |= OPT_M;
-    }
-
-    return cmd->ci;
-}
-
-#define REQUIRES_PARAM(c) (c == DATAMOD ||	\
-                           c == FUNC ||		\
-                           c == LOOP ||		\
-                           c == MAKEPKG ||	\
-			   c == MODPRINT ||	\
-                           c == NULLDATA ||	\
-                           c == SETMISS ||	\
-			   c == SETOPT)
-
-#define REQUIRES_ORDER(c) (c == ADF ||		\
-                           c == ARCH ||		\
-                           c == COINT ||	\
-                           c == COINT2 ||	\
-                           c == KPSS ||		\
-			   c == LEVINLIN ||	\
-                           c == NULLDATA ||	\
-                           c == VAR ||		\
-                           c == VECM)
-
-#define NO_VARLIST(c) (c == APPEND ||		\
-                       c == BREAK ||		\
-                       c == CHOW ||		\
-		       c == CLEAR ||		\
-	               c == CUSUM ||		\
-                       c == DATA ||		\
-                       c == END ||		\
-	               c == ENDLOOP ||		\
-                       c == ESTIMATE ||		\
-	               c == EQNPRINT ||		\
-	               c == FCAST ||		\
-		       c == FLUSH ||		\
-		       c == FOREIGN ||		\
-                       c == FUNC ||		\
-                       c == FUNCERR ||		\
-                       c == FUNCRET ||		\
-		       c == FUNDEBUG ||		\
-	               c == GENR ||		\
-                       c == GMM ||		\
-		       c == GRAPHPG ||		\
-	               c == HAUSMAN ||		\
-                       c == HELP ||		\
-                       c == INCLUDE ||		\
-    	               c == INFO ||		\
-		       c == JOIN ||		\
-                       c == KALMAN ||		\
-                       c == LEVERAGE ||		\
-                       c == LOOP ||		\
-		       c == MAKEPKG ||		\
-		       c == MARKERS ||		\
-                       c == MLE ||		\
-                       c == MODELTAB ||		\
-                       c == MODPRINT ||		\
-                       c == MODTEST ||		\
-		       c == MPI ||		\
-                       c == NLS ||		\
-                       c == NULLDATA ||		\
-		       c == OPEN ||		\
-                       c == OUTFILE ||		\
-                       c == PRINTF ||		\
-	               c == PVAL ||		\
-                       c == QLRTEST ||		\
-	               c == QUIT ||		\
-                       c == RENAME ||		\
-                       c == RESET ||		\
-                       c == RESTRICT ||		\
-	               c == RUN ||		\
-                       c == SET ||		\
-                       c == SETINFO ||		\
-	               c == SETOBS ||		\
-		       c == SETOPT ||		\
-	               c == SHELL ||		\
-                       c == SPRINTF ||		\
-		       c == SSCANF ||		\
-                       c == SYSTEM ||		\
-                       c == TABPRINT ||		\
-                       c == VARLIST ||		\
-                       c == VIF)
-
-#define USES_LISTSEP(c) (c == AR ||		\
-                         c == ARBOND ||		\
-                         c == ARMA ||		\
-                         c == BIPROBIT ||	\
-                         c == COINT2 ||		\
-			 c == DPANEL ||		\
-                         c == EQUATION ||	\
-                         c == GARCH ||		\
-                         c == HECKIT ||		\
-                         c == IVREG ||		\
-                         c == MPOLS ||		\
-                         c == POISSON ||	\
-			 c == NEGBIN ||		\
-			 c == DURATION ||	\
-                         c == PRINT ||		\
-                         c == SCATTERS ||	\
-                         c == VAR ||		\
-                         c == VECM ||		\
-                         c == XTAB)
-
-#define DOUBLE_SEP_OK(c) (c == ARBOND ||	\
-                          c == DPANEL ||	\
-                          c == ARMA ||		\
-                          c == COINT2 ||	\
-			  c == VECM) 
-
-#define NEEDS_LISTSEP(c) (c == AR ||		\
-                          c == ARBOND ||	\
-                          c == ARMA ||		\
-			  c == DPANEL ||	\
-                          c == GARCH ||		\
-                          c == HECKIT ||	\
-                          c == IVREG)
-
-#define DEFAULTS_TO_FULL_LIST(c) (c == CORR ||		\
-                                  c == DIFF ||		\
-                                  c == LDIFF ||		\
-                                  c == LABELS ||	\
-                                  c == LAGS ||		\
-                                  c == LOGS ||		\
-                                  c == PCA ||		\
-                                  c == PRINT ||		\
-                                  c == SDIFF ||		\
-                                  c == SMPL ||		\
-                                  c == SQUARE ||	\
-                                  c == ORTHDEV ||	\
-                                  c == STORE ||		\
-                                  c == SUMMARY)
-
 #define MODIFIES_LIST(c) (c == DIFF ||		\
 			  c == DUMMIFY ||	\
 			  c == LDIFF ||		\
@@ -454,1361 +180,15 @@ static int catch_system_alias (CMD *cmd)
 			  c == SQUARE ||	\
 	                  c == ORTHDEV)
 
-
 static int has_param (const CMD *cmd)
 {
     return cmd->param != NULL && *cmd->param != '\0';
 }
 
-static int has_parm2 (const CMD *cmd)
-{
-    return cmd->parm2 != NULL && *cmd->parm2 != '\0';
-}
-
-/* given an assignment such as "foo <- command", extract
-   the first field and record it in the "savename"
-   member of CMD.
+/* Look for a line with an "implicit genr", such as
+   y = 3*x, x += 10, etc. This is use din nls.c to
+   assess auxiliary genrs in nls, mle, gmm.
 */
-
-static void maybe_extract_savename (char *s, CMD *cmd)
-{
-    char savename[32], test[4];
-    int n;
-
-    *cmd->savename = '\0';
-
-#if CMD_DEBUG > 1
-    fprintf(stderr, "** testing for savename: '%s'\n", s);
-#endif
-
-    if (*s == '"') {
-	n = sscanf(s, "\"%31[^\"]\" <- %3s", savename, test);
-    } else {
-	n = sscanf(s, "%31s <- %3s", savename, test);
-    } 
-
-    if (n == 2) {
-	char *p = strstr(s + strlen(savename), " <- ");
-
-	strcpy(cmd->savename, savename);
-	p += 4;
-	p += strspn(p, " ");
-	n = p - s;
-	shift_string_left(s, n);
-    }
-
-#if CMD_DEBUG > 1
-    fprintf(stderr, "** after test for savename: '%s'\n", s);
-#endif
-}
-
-static const char *maybe_skip_savename (const char *s)
-{
-    char savename[32], test[4];
-    int n;
-
-    if (*s == '"') {
-	n = sscanf(s, "\"%31[^\"]\" <- %3s", savename, test);
-    } else {
-	n = sscanf(s, "%31s <- %3s", savename, test);
-    } 
-
-    if (n == 2) {
-	s = strstr(s + strlen(savename), " <- ");
-	s += 4;
-    }
-
-    return s;
-}
-
-static inline void maybe_set_catch_flag (char *s, CMD *cmd)
-{
-    if (strncmp(s, "catch ", 6) == 0) {
-	/* the next two lines added 2012-12-27 */
-	set_gretl_errno(0);
-	gretl_error_clear();
-	cmd->flags |= CMD_CATCH;
-	shift_string_left(s, 6);
-    } else if (!cmd->context) {
-	cmd->flags &= ~CMD_CATCH;
-    }
-}
-
-/* grab a filename, possibly prepending userdir */
-
-static int filename_to_param (CMD *cmd, const char *s, 
-			      int *len, int *quoted)
-{
-    char *fname;
-
-    while (isspace(*s)) s++;
-
-    if (*s == '"' || *s == '\'') {
-	char *p = strchr(s + 1, *s);
-
-	if (p == NULL) {
-	    return E_PARSE;
-	}
-	*len = p - s - 1;
-	if (*len == 0) {
-	    return E_PARSE;
-	}
-	*quoted = 1;
-    } else {
-	*len = strcspn(s, " ");
-    }
-
-    free(cmd->param);
-    cmd->param = NULL;
-
-    fname = gretl_strndup(s + *quoted, *len);
-    if (fname == NULL) {
-	return E_ALLOC;
-    }
-
-    if (libset_get_bool(USE_CWD) || fname_has_path(fname)) {
-	cmd->param = fname;
-    } else if (cmd->ci == OUTFILE && !strcmp(fname, "null")) {
-	cmd->param = fname;
-    } else {
-	cmd->param = gretl_strdup_printf("%s%s", gretl_workdir(), fname);
-	free(fname);
-	if (cmd->param == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
-    return 0;
-}
-
-static int get_maybe_quoted_filename (CMD *cmd, char **ps)
-{
-    int err, len = 0;
-    int quoted = 0;
-
-    err = filename_to_param(cmd, *ps, &len, &quoted);
-    if (err) {
-	return err;
-    }
-
-    *ps = *ps + len + 2 * quoted;
-
-    return 0;
-} 
-
-static void grab_gnuplot_literal_block (char *s, CMD *cmd)
-{
-    s = strchr(s, '{');
-    if (s != NULL) {
-	free(cmd->param);
-	cmd->param = gretl_strdup(s);
-	*s = '\0';
-    }
-}
-
-static int boxplot_booleans_present (const char *s)
-{
-    int ret = 0;
-
-    /* Note: the '(' character might appear inside a gnuplot
-       literal block, "{...}", in which case it should not be 
-       taken as indicating that boolean conditions are present
-       on the command line.
-    */
-
-    if (strchr(s, '(')) {
-	int braced = 0;
-
-	while (*s && !ret) {
-	    if (*s == '{') {
-		braced++;
-	    } else if (*s == '}') {
-		braced--;
-	    } else if (!braced && *s == '(') {
-		ret = 1;
-	    }
-	    s++;
-	}
-    }
-
-    return ret;
-}
-
-static int is_special_lag_field (const char *s)
-{
-    if (*s == '{') {
-	return 1;
-    } else if (isalpha(*s) && gretl_is_matrix(s)) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-/* Check that any "{xxx}" or matrix fields are in appropriate 
-   positions; also see if there _are_ any of the latter.
-*/
-
-static int gappy_lags_check (char **S, int ns, int *specials, int ci)
-{
-    int i, err = 0;
-
-    if (ci == ARMA && ns != 2 && ns != 3) {
-	err = E_PARSE;
-    } else if (ci == DPANEL && ns != 1) {
-	err = E_PARSE;
-    } else if (ci == VAR && ns != 1) {
-	err = E_PARSE;
-    }
-
-    for (i=0; i<ns && !err; i++) {
-	if (is_special_lag_field(S[i])) {
-	    if (i != 0 && i != ns - 1) {
-		err = E_PARSE;
-	    } else if (i == 0) {
-		specials[0] = 1;
-	    } else {
-		specials[1] = i;
-	    }
-	}
-    }
-
-    return err;
-}
-
-/* push onto array *pS a string of length len starting at s */
-
-static int push_lag_field (char ***pS, const char *s, int len, int *ns)
-{
-    char *chunk = gretl_strndup(s, len);
-    int err = 0;
-
-    if (chunk == NULL) {
-	err = E_ALLOC;
-    } else {
-	err = strings_array_add(pS, ns, chunk);
-	free(chunk);
-    }
-
-    return err;
-}
-
-#define no_specials(s) (s[0] == 0 && s[1] == 0)
-
-/* For some commands -- notably ar(i)ma -- we allow for
-   a lag specification taking the form of integers in
-   braces or a named matrix, permitting "gappy" lags.
-   Here we split such specifications into their
-   components.
-*/
-
-static char **split_lag_fields (char *s, int *ns, 
-				int *specials, CMD *cmd,
-				char **rem)
-{
-    char *q, *p = s;
-    char **S = NULL;
-    int n;
-
-    if (cmd->ci == VAR) {
-	while (*p == ' ') p++;
-    }
-
-    while (*p && !cmd->err) {
-	if (cmd->ci == VAR && *p == ' ') {
-	    *rem = p;
-	    break;
-	}		
-	while (*p == ' ') p++;
-	if (*p == ';') {
-	    /* reached the end of the portion of the command line
-	       subject to special treatment */
-	    *rem = p;
-	    break;
-	} else if (*p == '{') {
-	    q = strchr(p, '}');
-	    if (q == NULL) {
-		cmd->err = E_PARSE;
-	    } else {
-		n = strcspn(p, "}");
-		cmd->err = push_lag_field(&S, p, n + 1, ns);
-		if (cmd->ci == VAR) {
-		    *rem = q + 1;
-		    break;
-		}
-		p = q;
-	    }
-	} else {
-	    n = strcspn(p, " {};");
-	    if (n == 0) {
-		cmd->err = E_PARSE;
-	    } else {
-		cmd->err = push_lag_field(&S, p, n, ns);
-		p += n - 1;
-	    }
-	}
-	p++;
-    }
-
-    if (!cmd->err) {
-	cmd->err = gappy_lags_check(S, *ns, specials, cmd->ci);
-    }
-
-    if (cmd->err || no_specials(specials)) {
-	strings_array_free(S, *ns);
-	S = NULL;
-    }
-
-    return S;
-}
-
-/* here we have only one field to worry about, specifying the 
-   lag pattern for the dependent variable(s) */
-
-static void handle_single_lagvec (CMD *cmd, const char *lspec,
-				  char *line, const char *rem)
-{
-    if (*lspec == '{') {
-	cmd->auxlist = gretl_list_from_string(lspec, &cmd->err);
-    } else {
-	gretl_matrix *m = get_matrix_by_name(lspec);
-
-	if (m == NULL) {
-	    cmd->err = E_UNKVAR;
-	} else {
-	    cmd->auxlist = gretl_list_from_vector(m, &cmd->err);
-	}
-    }
-
-    if (!cmd->err) {
-	int lmin = 0, lmax = 0;
-
-	cmd->err = gretl_list_min_max(cmd->auxlist, &lmin, &lmax);
-	if (!cmd->err && lmin < 1) {
-	    cmd->err = E_DATA;
-	}
-
-	if (!cmd->err) {
-	    char *tmp, numstr[16];
-
-	    while (*rem == ' ') rem++;
-	    /* we have to copy here since @rem is actually
-	       a pointer into @line */
-	    tmp = gretl_strdup(rem);
-
-	    if (tmp == NULL) {
-		cmd->err = E_ALLOC;
-	    } else {
-		sprintf(numstr, "%d ", lmax);
-		*line = '\0';
-		strcat(line, numstr);
-		strcat(line, tmp);
-		free(tmp);
-	    }
-	}
-    }
-}
-
-/* we may have a "special" (gappy) lag spec for the AR term(s) 
-   and/or the MA terms
-*/
-
-static void handle_arma_lags (CMD *cmd, char **S,
-			      int ns, int *specials,
-			      char *line, char *rem)
-{
-    int *plist = NULL, *qlist = NULL;
-    const char *lspec;
-    char *tmp = NULL;
-
-    if (specials[0]) {
-	lspec = S[0];
-	if (*lspec == '{') {
-	    plist = gretl_list_from_string(lspec, &cmd->err);
-	} else {
-	    gretl_matrix *m = get_matrix_by_name(lspec);
-
-	    if (m == NULL) {
-		cmd->err = E_UNKVAR;
-	    } else {
-		plist = gretl_list_from_vector(m, &cmd->err);
-	    }
-	}
-    }
-
-    if (specials[1] && !cmd->err) {
-	lspec = S[ns-1];
-	if (*lspec == '{') {
-	    qlist = gretl_list_from_string(lspec, &cmd->err);
-	} else {
-	    gretl_matrix *m = get_matrix_by_name(lspec);
-
-	    if (m == NULL) {
-		cmd->err = E_UNKVAR;
-	    } else {
-		qlist = gretl_list_from_vector(m, &cmd->err);
-	    }
-	}
-    }
-
-    if (!cmd->err) {
-	/* form the full list to pass to arma */
-	if (plist != NULL && qlist == NULL) {
-	    cmd->auxlist = plist;
-	} else if (qlist != NULL) {
-	    cmd->auxlist = gretl_lists_join_with_separator(plist, qlist);
-	    if (cmd->auxlist == NULL) {
-		cmd->err = E_ALLOC;
-	    }	    
-	} 
-    }
-
-    if (!cmd->err) {
-	tmp = gretl_strdup(rem);
-	if (tmp == NULL) {
-	    cmd->err = E_ALLOC;
-	} else {
-	    *line = '\0';
-	}
-    }	
-
-    if (!cmd->err) {
-	int lmin = 0, lmax = 0;
-	char numstr[16];
-
-	if (plist != NULL) {
-	    cmd->err = gretl_list_min_max(plist, &lmin, &lmax);
-	    if (!cmd->err && lmin < 1) {
-		cmd->err = E_DATA;
-	    }
-	    if (!cmd->err) {
-		sprintf(numstr, "%d ", lmax);
-		strcat(line, numstr);
-	    }
-	} else {
-	    sprintf(numstr, "%s ", S[0]);
-	    strcat(line, numstr);
-	}
-
-	if (ns == 3) {
-	    /* ARIMA d spec */
-	    sprintf(numstr, "%s ", S[1]);
-	    strcat(line, numstr);
-	}
-
-	if (qlist != NULL) {
-	    cmd->err = gretl_list_min_max(qlist, &lmin, &lmax);
-	    if (!cmd->err && lmin < 1) {
-		cmd->err = E_DATA;
-	    }	    
-	    if (!cmd->err) {
-		sprintf(numstr, "%d ", lmax);
-		strcat(line, numstr);
-	    }
-	} else {
-	    sprintf(numstr, "%s ", S[ns-1]);
-	    strcat(line, numstr);
-	}
-
-	strcat(line, tmp);
-    }
-
-    free(tmp);
-
-    if (plist != cmd->auxlist) {
-	free(plist);
-    }
-
-    if (qlist != cmd->auxlist) {
-	free(qlist);
-    }    
-}
-
-static int maybe_rewrite_lags (char *s, CMD *cmd)
-{
-    char **S = NULL;
-    char *line = s;   /* save the starting point */
-    char *rem = NULL; /* will point to remainder of line */
-    int specials[2] = {0};
-    int ns = 0;
-
-    if (!strncmp(line, "arma ", 5)) {
-	s += 5;
-    } else if (!strncmp(s, "arima ", 6)) {
-	s += 6;
-    } else if (!strncmp(s, "dpanel ", 7)) {
-	s += 7;
-    } else if (!strncmp(s, "var ", 4)) {
-	s += 4;
-    }
-
-#if LAGS_DBG
-    fprintf(stderr, "looking at '%s'\n", s);
-#endif
-
-    S = split_lag_fields(s, &ns, specials, cmd, &rem);
-    if (S == NULL) {
-	return cmd->err;
-    }
-
-#if LAGS_DBG
-    int i;
-    for (i=0; i<ns; i++) {
-	fprintf(stderr, "S[%d] = '%s'\n", i, S[i]);
-    }
-#endif
-
-    /* save original command line for echo, before modifying */
-    free(cmd->parm2);
-    cmd->parm2 = gretl_strdup(line);
-
-    if (cmd->ci == ARMA) {
-	handle_arma_lags(cmd, S, ns, specials, s, rem);
-    } else {
-	handle_single_lagvec(cmd, S[0], s, rem);
-    }
-
-    strings_array_free(S, ns);
-
-#if LAGS_DBG
-    fprintf(stderr, "revised line = '%s'\n", line);
-#endif
-
-    return cmd->err;
-}
-
-static char *got_gmm_spec (char *s)
-{
-    /* return whichever variant is found first */
-    char *p1 = strstr(s, "GMM(");
-    char *p2 = strstr(s, "GMMlevel(");
-
-    if (p1 != NULL && p2 == NULL) {
-	return p1;
-    } else if (p2 != NULL && p1 == NULL) {
-	return p2;
-    } else if (p1 != NULL && p2 != NULL) {
-	return (p2 - p1 > 0)? p1 : p2;
-    } else {
-	return NULL;
-    }
-}
-
-/* pluck the specification for "block-diagonal" instruments out of an
-   arbond command line, and put it in the command's "param" field for
-   subsequent special processing in arbond.c */
-
-static void grab_arbond_diag (char *s, CMD *cmd)
-{
-    char *param = NULL;
-    char *s0, *p, *q;
-    int k;
-
-    s0 = s = strrchr(s, ';');
-
-    while ((s = got_gmm_spec(s)) != NULL) {
-	p = strchr(s, ')');
-	if (p == NULL) {
-	    cmd->err = E_PARSE;
-	} else {
-	    p++;
-	    k = p - s;
-	    q = gretl_strndup(s, k);
-	    param = gretl_str_expand(&param, q, " ");
-	    if (param == NULL) {
-		cmd->err = E_ALLOC;
-	    }
-	    free(q);
-	    while (*p == ' ') {
-		p++; k++;
-	    }
-	    shift_string_left(s, k);
-	}
-	if (cmd->err) {
-	    break;
-	}
-    }
-
-    if (param != NULL) {
-	free(cmd->param);
-	cmd->param = param;
-	tailstrip(s0);
-    }
-}
-
-#define LAG_DEBUG 0
-
-static int lag_from_lstr (const char *s, int *err)
-{
-    int lsign = 1, lag = 0;
-
-    *err = 0;
-
-    if (!strcmp(s, "0")) {
-	/* lag zero = contemp. value */
-	lsign = 1;
-    } else if (isalpha(*s)) {
-	lsign = -1;
-    } else if (*s == '-') {
-	lsign = 1;
-	s++;
-    } else if (*s == '+') {
-	lsign = -1;
-	s++;
-    } else {
-	*err = 1;
-    }
-
-    if (!*err) {
-	if (isdigit(*s)) {
-	    lag = atoi(s);
-	} else if (gretl_is_scalar(s)) {
-	    lag = gretl_scalar_get_value(s, NULL);
-	} else {
-	    *err = 1;
-	}
-    }
-
-    if (!*err) {
-	lag = lsign * lag;
-    }
-
-    return lag;
-}
-
-static int get_contiguous_lags (LAGVAR *lv,
-				const char *l1str, 
-				const char *l2str)
-{
-    int err = 0;
-
-    lv->lmin = lag_from_lstr(l1str, &err);
-
-    if (!err) {
-	lv->lmax = lag_from_lstr(l2str, &err);
-    }
-
-    return err;
-}
-
-static int parse_lagvar (const char *s, LAGVAR *lv, 
-			 const DATASET *dset)
-{
-    char l1str[16], l2str[16];
-    char fmt[32];
-    int i, err = 1;
-
-    lv->v = 0;
-    lv->vlist = NULL;
-    *lv->name = '\0';
-    lv->lmin = 0;
-    lv->lmax = 0;
-    lv->laglist = NULL;
-
-    sprintf(fmt, "%%%d[^(](%%%ds", VNAMELEN - 1, 15);
-
-    if (sscanf(s, fmt, lv->name, l1str) != 2) {
-	return err;
-    }
-
-#if LAG_DEBUG
-    fprintf(stderr, "parse_lagvar: name = '%s'\n", lv->name);
-#endif
-
-    lv->v = current_series_index(dset, lv->name);
-    if (lv->v <= 0) {
-	lv->vlist = get_list_by_name(lv->name);
-	if (lv->vlist == NULL) {
-	    return err;
-	} else {
-	    lv->v = 0;
-	}
-    }
-
-    sprintf(fmt, "%%%d[^(](%%%ds to %%%d[^)])", VNAMELEN - 1, 15, 15);
-
-    if (sscanf(s, fmt, lv->name, l1str, l2str) == 3) {
-	err = get_contiguous_lags(lv, l1str, l2str);
-    } else if (strchr(l1str, ',') != NULL) {
-	lv->laglist = gretl_list_from_string(strchr(s, '('), &err);
-	if (lv->laglist != NULL) {
-	    for (i=1; i<=lv->laglist[0]; i++) {
-		lv->laglist[i] = -lv->laglist[i];
-	    }
-	    err = 0;
-	}
-    } else {
-	sprintf(fmt, "%%%d[^(](%%%d[^ )]", VNAMELEN - 1, 15);
-	sscanf(s, fmt, lv->name, l1str);
-	lv->lmin = lv->lmax = lag_from_lstr(l1str, &err);
-    }
-
-#if LAG_DEBUG
-    fprintf(stderr, "parse_lagvar: s = '%s'\n", s);
-    fprintf(stderr, " lmin = %d, lmax = %d\n",
-	    lv->lmin, lv->lmax);
-    if (lv->laglist != NULL) {
-	printlist(lv->laglist, "lv->laglist");
-    }
-#endif
-
-    return err;
-}
-
-static int cmd_full_list (const DATASET *dset, CMD *cmd)
-{
-    int nv = 0, err = 0;
-    int *list;
-
-    if (cmd->ci == PRINT && has_parm2(cmd)) {
-	/* no-op */
-	return 0;
-    }
-
-    if (cmd->flags & CMD_NULLIST) {
-	/* no-op */
-	cmd->flags ^= CMD_NULLIST;
-	return 0;
-    }
-
-    list = full_var_list(dset, &nv);
-
-    if (list == NULL) {
-	if (nv > 0) {
-	    err = E_ALLOC;
-	}
-    } else {
-	free(cmd->list);
-	cmd->list = list;
-    }
-
-    return err;
-}
-
-static int expand_command_list (CMD *cmd, int add)
-{
-    int i, oldn = cmd->list[0];
-    int *list;
-
-    list = realloc(cmd->list, (oldn + add) * sizeof *list);
-
-    if (list == NULL) {
-	cmd->err = E_ALLOC;
-	return 1;
-    }
-
-    /* one of the added vars was "already assumed" */
-    list[0] += (add - 1);
-
-    /* avoid uninitialized values */
-    for (i=oldn+1; i<=list[0]; i++) {
-	list[i] = 0;
-    }
-    
-    cmd->list = list;
-
-    return 0;
-}
-
-/* Get the total number of lags and set the increment for
-   generating successive lags.  Allows for mixed leads
-   and lags. */
-
-static int get_n_lags (LAGVAR *lv, int *incr)
-{
-    int nl = 0;
-
-    if (lv->laglist != NULL) {
-	nl = lv->laglist[0];
-	*incr = 0;
-    } else if (lv->lmax >= lv->lmin) {
-	nl = lv->lmax - lv->lmin + 1;
-	*incr = 1;
-    } else {
-	nl = lv->lmin - lv->lmax + 1;
-	*incr = -1;
-    }
-
-    return nl;
-}
-
-/* see if we have a valid specification for automatically adding
-   lags of a given series (or named list of series) to the 
-   command list 
-*/
-
-int auto_lag_ok (const char *s, int *lpos,
-		 DATASET *dset, CMD *cmd)
-{
-    LAGVAR lagvar;
-    int i, j, nlags;
-    int *vlist = NULL;
-    int unilist[2] = {1, 0};
-    int llen = *lpos;
-    int lincr = 1;
-    int ok = 1;
-	
-    if (parse_lagvar(s, &lagvar, dset)) {
-	ok = 0;
-	goto bailout;
-    }
-
-    if (lagvar.vlist != NULL) {
-	/* we got a list of series to process */
-	if (lagvar.vlist[0] <= 0) {
-	    cmd->err = E_DATA;
-	    ok = 0;
-	    goto bailout;
-	} 
-	vlist = lagvar.vlist;
-    } else {
-	/* we got a single series */
-	unilist[1] = lagvar.v;
-	vlist = unilist;
-    }
-
-    /* number of lags per series */
-    nlags = get_n_lags(&lagvar, &lincr);
-
-#if LAG_DEBUG
-    if (lagvar.laglist != NULL) {
-	fprintf(stderr, "auto lags: n=%d, incr=%d\n", nlags, lincr);
-    } else {
-	fprintf(stderr, "auto lags: last=%d, first=%d, n=%d, incr=%d\n",
-		lagvar.lmax, lagvar.lmin, nlags, lincr);
-    }
-#endif
-
-    if (nlags <= 0) {
-	cmd->err = E_PARSE;
-	ok = 0;
-    } else {
-	int totlags = vlist[0] * nlags;
-
-	if (totlags > 1 && expand_command_list(cmd, totlags)) {
-	    ok = 0;
-	}
-    }
-
-    for (j=1; j<=vlist[0] && ok; j++) {
-	int vj = vlist[j];
-
-	for (i=0; i<nlags && ok; i++) {
-	    int order, lv;
-
-	    if (lagvar.laglist != NULL) {
-		order = lagvar.laglist[i+1];
-	    } else {
-		order = lagvar.lmin + i * lincr;
-	    }
-
-	    lv = laggenr(vj, order, dset);
-
-#if LAG_DEBUG
-	    fprintf(stderr, "laggenr for var %d (%s), lag %d, gave lv = %d\n",
-		    vj, dset->varname[vj], order, lv);
-#endif
-	    if (lv < 0) {
-		cmd->err = 1;
-		gretl_errmsg_set(_("generation of lag variable failed"));
-		ok = 0;
-	    } else {
-		/* Record info regarding the auto-generation of lags
-		   so that we'll be able to echo the command properly --
-		   see the echo_cmd() function.  Note: 'lagvar.v' is the
-		   "source" variable; 'lv' is the ID number of the
-		   generated lag.
-		*/
-		cmd->list[llen++] = lv;
-		cmd->err = list_lag_info_add(vj, order, lv, llen - 1, cmd);
-		if (cmd->err) {
-		    ok = 0;
-		}
-	    }
-	}
-    }
-
-    if (ok) {
-	*lpos = llen;
-    }
-
- bailout:
-
-    if (lagvar.laglist != NULL) {
-	free(lagvar.laglist);
-    }
-
-    return ok;
-} 
-
-static void parse_laglist_spec (const char *s, int *order, char **lname,
-				int *vnum, const DATASET *dset)
-{
-    int len = strcspn(s, ",;");
-    int err = 0;
-
-    if (len < strlen(s)) {
-	char ostr[VNAMELEN] = {0};
-	char word[32] = {0};
-	char fmt[12];
-	int v;
-
-	sprintf(fmt, "%%%d[^ ,;]", VNAMELEN - 1);
-
-	sscanf(s, fmt, ostr);
-	if (isdigit(*ostr)) {
-	    *order = atoi(ostr);
-	} else if (gretl_is_scalar(ostr)) {
-	    *order = gretl_scalar_get_value(ostr, NULL);
-	} else {
-	    ; /* FIXME error condition */
-	}
-	sscanf(s + len + 1, "%31[^ )]", word);
-	v = series_index(dset, word);
-	if (v < dset->v) {
-	    *vnum = v;
-	} else {
-	    *lname = gretl_word_strdup(s + len + 1, NULL, 
-				       OPT_NONE, &err);
-	}
-    } else {
-	*lname = gretl_word_strdup(s, NULL, OPT_NONE, &err);
-    }
-}
-
-static char *get_transform_param (const char *s, int *err)
-{
-    const char *p = s;
-    int inparen = 1;
-
-    while (*p) {
-	if (*p == '(') {
-	    inparen++;
-	} else if (*p == ')') {
-	    inparen--;
-	}
-	if (inparen == 0) {
-	    break;
-	}
-	p++;
-    }
-
-    if (inparen == 0 && p - s > 0) {
-	return gretl_strndup(s, p - s);
-    } else {
-	*err = E_PARSE;
-	return NULL;
-    }
-}
-
-static int auto_transform_ok (const char *s, int *lpos,
-			      DATASET *dset, CMD *cmd)
-{
-    char fword[9];
-    int *genlist = NULL;
-    int trans = 0;
-    int order = 0;
-    gretlopt opt = OPT_NONE;
-    int ok = 1;
-
-    if (sscanf(s, "%8[^(](", fword)) {
-	char *param = NULL;
-	int *gotlist;
-	int vnum = 0;
-
-	if (!strcmp(fword, "cross")) {
-	    strcpy(fword, "square");
-	    opt = OPT_O;
-	} else if (!strcmp(fword, "log")) {
-	    strcpy(fword, "logs");
-	}
-
-	trans = gretl_command_number(fword);
-	if (!MODIFIES_LIST(trans)) {
-	    trans = 0;
-	}
-
-	if (trans > 0) {
-	    s = strchr(s, '(') + 1;
-
-	    if (trans == LAGS) {
-		parse_laglist_spec(s, &order, &param, &vnum,
-				   dset);
-	    } else {
-		param = get_transform_param(s, &cmd->err);
-	    }
-
-	    if (param != NULL) {
-		/* try for a named list */
-		gotlist = get_list_by_name(param);
-		if (gotlist != NULL) {
-		    genlist = gretl_list_copy(gotlist);
-		} else {
-		    vnum = series_index(dset, param);
-		    if (vnum == dset->v) {
-			vnum = 0;
-		    }
-		}
-		free(param);
-	    } 
-
-	    if (genlist == NULL && vnum > 0) {
-		/* try for a single variable */
-		genlist = gretl_list_new(1);
-		if (genlist != NULL) {
-		    genlist[1] = vnum;
-		}
-	    }
-	}
-    }
-
-    if (genlist == NULL) {
-	cmd->err = E_PARSE;
-	return 0;
-    }	
-
-    if (trans == LOGS) {
-	cmd->err = list_loggenr(genlist, dset);
-    } else if (trans == DIFF || trans == LDIFF || trans == SDIFF) {
-	cmd->err = list_diffgenr(genlist, trans, dset);
-    } else if (trans == ORTHDEV) {
-	cmd->err = list_orthdev(genlist, dset);
-    } else if (trans == SQUARE) {
-	cmd->err = list_xpxgenr(&genlist, dset, opt);
-    } else if (trans == LAGS) {
-	cmd->err = list_laggenr(&genlist, order, dset, OPT_NONE);
-    } else if (trans == DUMMIFY) {
-	cmd->err = list_dumgenr(&genlist, dset, OPT_F);
-    }
-
-    if (!cmd->err) {
-	cmd->list[0] -= 1;
-	cmd->err = gretl_list_insert_list(&cmd->list, genlist, *lpos);
-	if (!cmd->err) {
-	    *lpos += genlist[0];
-	}
-    }
-
-    if (cmd->err) {
-	ok = 0;
-    }
-
-    free(genlist);
-
-    return ok;
-} 
-
-static int add_time_ok (const char *s, int *lpos,
-			DATASET *dset, CMD *cmd)
-{
-    int ok = 0;
-
-    if (!strcmp(s, "time")) {
-	if (cmd->ci == GNUPLOT) {
-	    cmd->list[0] -= 1;
-	    cmd->opt |= OPT_T;
-	    ok = 1; /* handled */
-	} else {
-	    cmd->err = gen_time(dset, 1);
-	    if (!cmd->err) {
-		cmd->list[*lpos] = series_index(dset, "time");
-		*lpos += 1;
-		ok = 1; /* handled */
-	    }
-	}
-    }
-
-    return ok;
-}
-
-static int wildcard_expand (const char *s, int *lpos,
-			    const DATASET *dset, CMD *cmd)
-{
-    int err = 0, ok = 0;
-
-    if (strchr(s, '*') != NULL) {
-	int *wildlist = varname_match_list(dset, s, &err);
-
-	if (wildlist != NULL) {
-	    int k, nw = wildlist[0];
-	    int llen = *lpos;
-
-	    if (expand_command_list(cmd, nw)) {
-		return 0;
-	    }
-	    for (k=1; k<=nw; k++) {
-		cmd->list[llen++] = wildlist[k];
-	    }
-	    free(wildlist);
-	    *lpos = llen;
-	    ok = 1;
-	}
-    }
-
-    return ok;
-}
-
-static int print_name_ok (const char *s, CMD *cmd)
-{
-    int ok = 0;
-
-    if (cmd->ci == PRINT) {
-	GretlType t = user_var_get_type_by_name(s);
-
-	if (t == GRETL_TYPE_MATRIX ||
-	    t == GRETL_TYPE_DOUBLE ||
-	    t == GRETL_TYPE_STRING ||
-	    t == GRETL_TYPE_BUNDLE ||
-	    t == GRETL_TYPE_ARRAY ||
-	    !strcmp(s, "scalars")) {
-	    cmd->parm2 = gretl_str_expand(&cmd->parm2, s, " ");
-	    cmd->list[0] -= 1;
-	    ok = 1;
-	}
-    }
-
-    return ok;
-}
-
-static int delete_name_ok (const char *s, CMD *cmd)
-{
-    char bname[VNAMELEN];
-    char fmt[10];
-    int ok = 0;
-
-    sprintf(fmt, "%%%d[^[.]", VNAMELEN - 1);
-
-    if (sscanf(s, fmt, bname) == 1 &&
-	gretl_is_bundle(bname)) {
-	free(cmd->param);
-	cmd->param = gretl_strdup(s);
-	cmd->list[0] -= 1;
-	ok = 1;
-    }
-
-    return ok;
-}
-
-static void parse_rename_cmd (const char *s, CMD *cmd, 
-			      const DATASET *dset)
-{
-    int vtest, vtarg;
-    char targ[VNAMELEN];
-    char newname[VNAMELEN];
-    char fmt[10], numstr[8];
-
-    sprintf(fmt, "%%%ds %%%ds", VNAMELEN-1, VNAMELEN-1);
-
-    if (sscanf(s, fmt, targ, newname) != 2) {
-	cmd->err = E_PARSE;
-	return;
-    }
-
-    if (isdigit(*targ)) {
-	vtarg = atoi(targ);
-	if (vtarg >= dset->v || vtarg < 1) {
-	    cmd->err = E_DATA;
-	    gretl_errmsg_sprintf(_("Variable number %d is out of bounds"), vtarg);
-	    return;
-	}
-    } else {
-	/* we're given the name of a variable? */
-	vtarg = series_index(dset, targ);
-	if (vtarg >= dset->v) {
-	    cmd->err = E_UNKVAR;
-	    return;
-	}
-    } 
-
-    vtest = series_index(dset, newname);
-    if (vtest == vtarg) {
-	; /* no-op */
-    } else if (vtest < dset->v) {
-	gretl_errmsg_sprintf(_("A series named %s already exists"), newname);
-	cmd->err = E_DATA;
-	return;
-    }
-
-    if (vtest != vtarg) {
-	if (check_varname(newname)) {
-	    cmd->err = E_DATA;
-	    return;
-	}
-	if (gretl_type_from_name(newname, dset)) {
-	    cmd->err = E_TYPES;
-	    return;
-	}
-    }
-
-    /* write newname into cmd->param */
-    free(cmd->param);
-    cmd->param = gretl_strdup(newname);
-
-    /* write target ID into cmd->parm2 */
-    sprintf(numstr, "%d", vtarg);
-    free(cmd->parm2);
-    cmd->parm2 = gretl_strdup(numstr);
-
-    if (cmd->param == NULL || cmd->parm2 == NULL) {
-	cmd->err = E_ALLOC;
-    }
-}
-
-static void parse_outfile_cmd (const char *s, CMD *cmd)
-{
-    int len = 0, quoted = 0;
-
-    while (isspace(*s)) {
-	s++;
-    }
-
-    if (*s) {
-	cmd->err = filename_to_param(cmd, s, &len, &quoted);
-    }
-}
-
-static int small_positive_int (const char *s)
-{
-    if (integer_string(s)) {
-	int k = atoi(s);
-
-	if (k > 0 && k <= 10) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-static void handle_spreadsheet_params (const char *rem, CMD *cmd)
-{
-    int err = 0;
-
-    if (cmd->opt & OPT_O) {
-	/* odbc: spreadsheet-specific options not acceptable */
-	err = incompatible_options(cmd->opt, OPT_O | OPT_C |
-				   OPT_R | OPT_S);
-    } else if (cmd->opt & OPT_W) {
-	/* web database: ditto */
-	err = incompatible_options(cmd->opt, OPT_W | OPT_C |
-				   OPT_R | OPT_S);
-    }
-
-    if (!err) {
-	err = incompatible_options(cmd->opt, OPT_O | OPT_W);
-    }
-
-    if (!err && (cmd->opt & (OPT_R | OPT_C | OPT_S))) {
-	/* row offset, column offset, sheet name/number */
-	int r0 = 0, c0 = 0;
-	const char *s = NULL;
-
-	if (cmd->opt & OPT_R) {
-	    /* --rowoffset */
-	    r0 = get_optval_int(cmd->ci, OPT_R, &err);
-	}
-
-	if (!err && (cmd->opt & OPT_C)) {
-	    /* --coloffset */
-	    c0 = get_optval_int(cmd->ci, OPT_C, &err);
-	}
-
-	if (!err && (cmd->opt & OPT_S)) {
-	    /* --sheet */
-	    s = get_optval_string(cmd->ci, OPT_S);
-	    if (s == NULL) {
-		err = E_DATA;
-	    } 
-	}
-
-	if (!err) {
-	    int slist[4] = {3, 0, c0, r0};
-
-	    free(cmd->list);
-	    cmd->list = gretl_list_copy(slist);
-	    if (cmd->list == NULL) {
-		err = E_ALLOC;
-	    } else {
-		if (small_positive_int(s)) {
-		    /* take the --sheet spec as giving a sheet
-		       number (1-based) */
-		    cmd->list[1] = atoi(s);
-		} else if (s != NULL) {
-		    /* take it as giving a sheet name */
-		    free(cmd->parm2);
-		    cmd->parm2 = gretl_strdup(s);
-		    if (cmd->parm2 == NULL) {
-			err = E_ALLOC;
-		    }
-		}
-	    }
-	}
-    }
-
-    cmd->err = err;
-}
-
-#define FIELDLEN 512
-
-static int get_field_length (const char *s)
-{
-    const char *p = s;
-    int inparen = 0;
-    int len = 0;
-
-    while (*p) {
-	if (*p == '(') {
-	    inparen++;
-	} else if (*p == ')') {
-	    inparen--;
-	}
-	if (!inparen && *p == ' ') {
-	    break;
-	}
-	p++;
-	len++;
-    }
-
-    if (len >= FIELDLEN) {
-	fprintf(stderr, "list field in command is too long "
-		"(len = %d, max = %d)\n", len, FIELDLEN);
-	fprintf(stderr, "s = '%s'\n", s);
-	gretl_errmsg_set("Overflow in command list field");
-	len = -1;
-    }
-
-    return len;
-}
-
-static int get_next_field (char *field, const char *s)
-{
-    int len, err = 0;
-
-    *field = '\0';
-
-#if CMD_DEBUG
-    fprintf(stderr, "get_next_field: input = '%s'\n", s);
-#endif
-
-    while (*s == ' ') s++;
-
-    len = get_field_length(s);
-
-    if (len >= 0) {
-	strncat(field, s, len);
-    } else {
-	err = E_DATA;
-    }
-
-#if CMD_DEBUG
-    fprintf(stderr, "get_next_field: got '%s'\n", field);
-#endif
-
-    return err;
-}
-
-/* look for a line with an "implicit genr", such as
-   y = 3*x, x += 10, etc. */
 
 int plausible_genr_start (const char *s, const DATASET *dset)
 {
@@ -1835,703 +215,21 @@ int plausible_genr_start (const char *s, const DATASET *dset)
     return ret;
 }
 
-/* if we find a semicolon without a preceding or following space,
-   insert a space so that we can count the fields in the line
-   correctly */
-
-static int fix_semicolon_separation (char *s, CMD *cmd)
+static int ends_foreign_block (const char *s)
 {
-    int len = strlen(s);
-    int i, j;
+    s += strspn(s, " \t");
 
-    for (i=0; i<len-1; i++) {
-	if ((s[i] != ' ' && s[i+1] == ';') ||
-	    (s[i] == ';' && s[i+1] && s[i+1] != ' ')) {
-	    if (len < MAXLINE - 1) {
-		for (j=len; j>i+1; j--) {
-		    s[j] = s[j-1];
-		}
-		s[i+1] = ' ';
-		s[len + 1] = '\0';
-		len++;
-	    } else {
-		cmd->err = E_TOOLONG;
-		break;
-	    }
-	} 
-    }
-
-    return len;
-}
-
-static int check_datamod_command (CMD *cmd, const char *s)
-{
-    cmd->aux = dataset_op_from_string(cmd->param);
-
-    if (cmd->aux == DS_NONE) {
-	cmd->err = E_PARSE;
-    } else if (cmd->aux != DS_SORTBY && cmd->aux != DS_DSORTBY) {
-	/* skip param word and space */
-	s += strcspn(s, " ");
-	s += strspn(s, " ");
-	free(cmd->param);
-	cmd->param = gretl_strdup(s);
-	if (cmd->param == NULL) {
-	    cmd->err = E_ALLOC;
-	} 
-    }
-
-#if CMD_DEBUG
-    fprintf(stderr, "check_datamod_command: param='%s', aux = %d\n", 
-	    cmd->param, cmd->aux);
-#endif
-
-    return cmd->err;
-}
-
-/* apparatus for checking that the "end" command is valid */
-
-#define COMMAND_CAN_END(c) (c == FOREIGN ||	\
-			    c == FUNC ||	\
-                            c == GMM ||		\
-                            c == KALMAN ||	\
-                            c == MLE ||		\
-			    c == MPI ||		\
-                            c == NLS ||		\
-			    c == RESTRICT ||	\
-			    c == SYSTEM)
-
-static int check_end_command (CMD *cmd)
-{
-    if (has_param(cmd)) {
-	int cmdcode = gretl_command_number(cmd->param);
-
-	if (cmdcode == LOOP) {
-	    cmd->ci = ENDLOOP;
-	} else if (!COMMAND_CAN_END(cmdcode)) {
-	    cmd->err = 1;
-	    gretl_errmsg_sprintf(_("command 'end %s' not recognized"), 
-				 cmd->param);
-	}
-    } else {
-	cmd->err = 1;
-	gretl_errmsg_set(_("end: nothing to end")); 
-    }
-
-    return cmd->err;
-}
-
-static void cmd_param_grab_string (CMD *cmd, const char *s)
-{
-    free(cmd->param);
-    cmd->param = gretl_strdup(s);
-    if (cmd->param == NULL) {
-	cmd->err = E_ALLOC;
-    }
-}
-
-static void cmd_param_grab_word (CMD *cmd, const char *s)
-{
-    int n = strcspn(s, " =\n\t");
-
-    if (n > 0) {
-	free(cmd->param);
-	cmd->param = gretl_strndup(s, n);
-	if (cmd->param == NULL) {
-	    cmd->err = E_ALLOC;
-	} 
-    }
-}
-
-static void param_grab_braced (CMD *cmd, const char *s)
-{
-    if (*s == '{') {
-	const char *p = strchr(s, '}');
-
-	if (p == NULL) {
-	    cmd->err = E_PARSE;
-	} else {
-	    int n = p - s + 1;
-
-	    free(cmd->param);
-	    cmd->param = gretl_strndup(s, n);
-	    if (cmd->param == NULL) {
-		cmd->err = E_ALLOC;
-	    } 
-	}	    
-    } else {
-	cmd_param_grab_word(cmd, s);
-    }
-}
-
-static void param_grab_quoted (CMD *cmd, const char *s)
-{
-    if (*s == '"') {
-	const char *p = strchr(s+1, '"');
-
-	if (p == NULL) {
-	    cmd->err = E_PARSE;
-	} else {
-	    int n = p - s - 1;
-
-	    free(cmd->param);
-	    cmd->param = gretl_strndup(s+1, n);
-	    if (cmd->param == NULL) {
-		cmd->err = E_ALLOC;
-	    } 
-	}	    
-    } else {
-	cmd_param_grab_word(cmd, s);
-    }
-}
-
-static int maybe_capture_param2 (CMD *cmd, const char *s)
-{
-    s += strspn(s, " ");
-    s += strcspn(s, " ");
-    s += strspn(s, " ");
-    
-    if (*s != '\0') {
-	free(cmd->parm2);
-	cmd->parm2 = gretl_strdup(s);
-    }
-
-    return 0;
-}
-
-/* Capture the next 'word' found following the initial command word
-   (or the whole remainder of the line in some cases) as the parameter
-   for @cmd.  Flag an error if the command requires a parameter but
-   none is found.
-*/
-
-static int capture_param (CMD *cmd, const char *s)
-{
-    /* if param has already been written by some special
-       routine, don't overwrite it */
-    if (has_param(cmd)) {
-	if (cmd->ci == DATAMOD) {
-	    check_datamod_command(cmd, s);
-	}
-	return cmd->err;
-    }
-
-    s += strspn(s, " ");
-
-    if (string_is_blank(s)) {
-	if (REQUIRES_PARAM(cmd->ci) || REQUIRES_ORDER(cmd->ci)) {
-	    cmd->err = E_PARSE;
-	    gretl_errmsg_sprintf(_("%s: required parameter is missing"),
-				 cmd->word);
-	}
-    } else {
-	if (cmd->ci == PRINT || cmd->ci == FUNCERR || 
-	    cmd->ci == DELEET || cmd->ci == HELP ||
-	    cmd->ci == EQUATION) {
-	    /* grab the whole remainder of line */
-	    cmd_param_grab_string(cmd, s);
-	} else if (cmd->ci == QUANTREG || cmd->ci == LEVINLIN) {
-	    param_grab_braced(cmd, s);
-	} else if (cmd->ci == OPEN || cmd->ci == APPEND ||
-		   cmd->ci == JOIN) {
-	    param_grab_quoted(cmd, s);
-	} else {
-	    /* grab one 'word' */
-	    cmd_param_grab_word(cmd, s);
-	}
-#if CMD_DEBUG
-	fprintf(stderr, "capture_param: s='%s', param='%s'\n",
-		s, cmd->param);
-#endif
-	if (REQUIRES_ORDER(cmd->ci) && cmd->ci != LEVINLIN) {
-	    cmd->order = gretl_int_from_string(cmd->param, &cmd->err);
-	    if (cmd->err) {
-		gretl_errmsg_sprintf(_("%s: expected an integer order"),
-				     cmd->word);
-		cmd->err = E_PARSE;
-	    }
-	}
-    }
-
-    if (cmd->ci == DATAMOD) {
-	check_datamod_command(cmd, s);
-    } else if (cmd->ci == END) {
-	check_end_command(cmd);
-    }
-
-#if CMD_DEBUG
-    fprintf(stderr, "capture_param: returning %d\n", cmd->err);
-#endif
-
-    return cmd->err;
-}
-
-static int gretl_cmd_clear (CMD *cmd)
-{
-    cmd->err = 0;
-    *cmd->word = '\0';
-
-    cmd_unset_nolist(cmd);
-
-    if (cmd->list == NULL || cmd->param == NULL || cmd->parm2 == NULL) {
-	/* FIXME */
-	cmd->err = E_ALLOC;
-    } else {
-	cmd->list[0] = 0;
-	*cmd->param = '\0';
-	*cmd->parm2 = '\0';
-    }
-
-    free(cmd->auxlist);
-    cmd->auxlist = NULL;
-
-    cmd_lag_info_destroy(cmd);
-
-    if (cmd->ci != SETOPT) {
-	clear_option_params();
-    }
-    
-    cmd->ci = 0;
-
-    return cmd->err;
-}
-
-static int resize_command_list (CMD *cmd, int nf)
-{
-    int *list;
-    int i;
-
-    if (nf < 0) {
-	return 0;
-    }
-
-    list = realloc(cmd->list, (1 + nf) * sizeof *cmd->list);
-
-    if (list == NULL) {
-	cmd->err = E_ALLOC;
-    } else {
-	list[0] = nf;
-	for (i=1; i<=nf; i++) {
-	    list[i] = 0;
-	}
-	cmd->list = list;
-    }
-
-    return cmd->err;
-}
-
-/* below: count fields, considering space as the field separator but
-   only in case the material is not 'glued together' with parentheses
-*/
-
-int count_free_fields (const char *s)
-{
-    const char *p = s;
-    int inparen = 0;
-    int nf = 0;
-
-#if CMD_DEBUG
-    fprintf(stderr, "count_free_fields: looking at '%s'\n", s);
-#endif
-
-    if (s != NULL) {
-	while (*s) {
-	    if (!inparen && *s != ' ' && (s == p || *(s-1) == ' ')) {
-		/* non-space preceded by space, or at start */
-		nf++;
-	    }
-	    if (*s == '(') {
-		inparen++;
-	    } else if (*s == ')') {
-		inparen--;
-	    }
-	    s++;
-	}
-    }
-
-#if CMD_DEBUG
-    fprintf(stderr, "count_free_fields: nf = %d\n", nf);
-#endif
-	    
-    return nf;
-}
-
-static int get_sepcount (const char *s)
-{
-    int c = 0;
-
-    while (*s++) {
-	if (*s == ';') c++;
-    }
-
-    return c;
-}
-
-#define semi_special(c) (c == ARBOND || c == DPANEL)
-
-static int handle_semicolon (int *k, int *ints_ok, int *poly, 
-			     int *sepcount, CMD *cmd)
-{
-    int ok = 0;
-
-    if (USES_LISTSEP(cmd->ci)) {
-	cmd->list[*k] = LISTSEP;
-	*k += 1;
-	*sepcount -= 1;
-	if (*ints_ok) {
-	    if (*sepcount == 0 || (*sepcount == 1 && semi_special(cmd->ci))) {
-		*ints_ok = 0;
-	    }
-	}	
-	if (cmd->ci == MPOLS) { 	 
-	    *poly = 1; 	 
-	}
-	ok = 1;
-    } 
-
-    return ok;
-}
-
-static int get_id_or_int (const char *s, int *k, int ints_ok, int poly,
-			  const DATASET *dset, CMD *cmd)
-{
-    char *test;
-    int v, ok = 0;
-
-    errno = 0;
-
-    v = strtol(s, &test, 10);
-    if (*test != '\0' || errno == ERANGE) {
-	return 0;
-    } 
-
-    if (!ints_ok && !poly && v >= dset->v) {
-	cmd->err = E_UNKVAR;
-	gretl_errmsg_sprintf(_("%d is not a valid variable number"), v);
-    } else {
-	cmd->list[*k] = v;
-	*k += 1;
-	ok = 1;
-    }
-
-    return ok;
-}
-
-static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
-				   DATASET *dset, CMD *cmd)
-{
-    int *xlist;
-    int v, k = *pk;
-    int ok = 0;
-
-#if CMD_DEBUG
-    fprintf(stderr, "parse_alpha_list_field: s = '%s', ci = %d (%s)\n", 
-	    s, cmd->ci, cmd->word);
-#endif
-
-    if (ints_ok) {
-	v = gretl_int_from_string(s, &cmd->err);
-	if (!cmd->err) {
-	    cmd->list[k++] = v;
-	    ok = 1;
-	}
-    } else if ((v = series_index(dset, s)) < dset->v) {
-	cmd->list[k++] = v;
-	ok = 1;
-    } else if ((xlist = get_list_by_name(s)) != NULL) {
-	if (cmd->list[0] == 1 && xlist[0] == 0) {
-	    cmd->list[0] = 0;
-	    cmd->flags |= CMD_NULLIST;
-	    ok = 1;
-	} else {
-	    cmd->list[0] -= 1;
-	    cmd->err = gretl_list_insert_list(&cmd->list, xlist, k);
-	    if (!cmd->err) { 
-		k += xlist[0];
-		ok = 1;
-	    }
-	}
-    } else if (strchr(s, '(') != NULL) {
-	if (auto_lag_ok(s, &k, dset, cmd)) {
-	    /* lag specification, e.g. 'var(-1)' */
-	    ok = 1;
-	} else if (auto_transform_ok(s, &k, dset, cmd)) {
-	    /* automated transformations such as 'logs(list)' */
-	    ok = 1;	
-	}
-    } else if (add_time_ok(s, &k, dset, cmd)) {
-	ok = 1;	
-    } else if (wildcard_expand(s, &k, dset, cmd)) {
-	ok = 1;
-    } else if (cmd->ci == PRINT && print_name_ok(s, cmd)) {
-	ok = 1;
-    } else if (cmd->ci == DELEET && delete_name_ok(s, cmd)) {
-	ok = 1;
-    }
-
-    *pk = k;
-
-    if (!ok && cmd->err == 0) {
-	if (user_var_get_type_by_name(s)) {
-	    gretl_errmsg_sprintf(_("'%s' is not the name of a series"), s);
-	    cmd->err = E_DATATYPE;
-	} else {
-	    gretl_errmsg_sprintf(_("'%s' is not the name of a variable"), s);
-	    cmd->err = E_UNKVAR;
-	}
-    }
-
-    return ok;
-}
-
-static int sepcount_error (int ci, int nsep)
-{
-    int err = 0;
-
-    if (NEEDS_LISTSEP(ci) && nsep == 0) {
-	err = E_ARGS;
-    } else if (!USES_LISTSEP(ci) && nsep > 0) {
-	err = E_PARSE;
-    } else if (!DOUBLE_SEP_OK(ci) && nsep == 2) {
-	err = E_PARSE;
-    } else if (nsep > 2) {
-	err = E_PARSE;
-    }
-
-    return err;
-}
-
-static int ends_block (const char *s, const char *blocktype)
-{
     if (!strncmp(s, "end ", 4)) {
 	s += 3;
 	s += strspn(s, " \t");
-	if (!strncmp(s, blocktype, strlen(blocktype))) {
+	if (!strncmp(s, "foreign", 7)) {
+	    return 1;
+	} else if (!strncmp(s, "mpi", 3)) {
 	    return 1;
 	}
     }
 
     return 0;
-}
-
-/* Get the first word out of line.  In general this should be a
-   command word (starting with a alphabetical character), but there
-   are a few special case: shell commands start with the "!" escape;
-   restriction specifications may start with "-" (as in "-b1 + b2 =
-   0") or a numerical multiplier. 
-
-   In addition the beginning of the line may take the form of
-   a save to a named object as in "foo <- command".
-*/
-
-static int get_first_word (const char *line, char *cnext, CMD *cmd)
-{
-    int n, ret = 0;
-
-    *cmd->word = '\0';
-
-    if (!cmd->context && gretl_function_depth() == 0) {
-	if (strstr(line, " <- ") != NULL) {
-	    line = maybe_skip_savename(line);
-	}
-    } 
-
-    n = gretl_namechar_spn(line);
-
-    if (cmd->context == RESTRICT && n == 0) {
-	/* non-alpha may be OK */
-	ret = !string_is_blank(line);
-    } else if (*line == '!') {
-	/* shell escape */
-	strcpy(cmd->word, "!");
-	ret = 1;
-    } else if (n > 0) {
-	/* got some alphabetical stuff */
-	if (n > FN_NAMELEN - 1) {
-	    n = FN_NAMELEN - 1;
-	}
-	strncat(cmd->word, line, n);
-	*cnext = line[n];
-	ret = 1;
-    } else if (!string_is_blank(line)) {
-	/* must be garbage? */
-	cmd->err = E_PARSE;
-    }
-
-    return ret;
-}
-
-/* For commands that need a list: @line is the portion of the command
-   line we're reading from and @nf is the number of fields to be
-   processed.  
-*/
-
-static int process_command_list (CMD *cmd, const char *line, int nf,
-				 DATASET *dset)
-{
-    char field[FIELDLEN] = {0};
-    int poly = 0, ints_ok = 0;
-    int sepcount;
-    int j, k;
-
-    /* get a count of ';' separators in line */
-    sepcount = get_sepcount(line);
-    cmd->err = sepcount_error(cmd->ci, sepcount);
-    if (cmd->err) {
-	return cmd->err;
-    }
-
-    /* allocate space for the command list */
-    if (resize_command_list(cmd, nf)) {
-	return cmd->err;
-    }    
-
-    if (cmd->ci == AR || cmd->ci == ARBOND || cmd->ci == DPANEL ||
-	cmd->ci == ARMA || cmd->ci == GARCH) {
-	/* flag acceptance of plain ints in list */
-	ints_ok = 1;
-    } else if (matrix_data_option(cmd->ci, cmd->opt)) {
-	/* the list refers to columns of a matrix */
-	ints_ok = 1;
-    }
-
-    for (j=1, k=1; j<=nf; j++) {
-	int ok = 0;
-
-	/* special: optional width for correlogram, periodogram */
-	if ((cmd->ci == CORRGM || cmd->ci == PERGM ||
-	     cmd->ci == FRACTINT) && j == 2) {
-	    cmd->list[0] = 1;
-	    cmd_param_grab_word(cmd, line);
-	    break;
-	} else if (cmd->ci == XCORRGM && j == 3) {
-	    cmd->list[0] = 2;
-	    cmd_param_grab_word(cmd, line);
-	    break;
-	}	    
-
-	cmd->err = get_next_field(field, line);
-	if (cmd->err) {
-	    break;
-	}
-
-	if (isalpha((unsigned char) *field)) {
-	    ok = parse_alpha_list_field(field, &k, ints_ok, dset, cmd);
-	} else if (*field == '*') {
-	    ok = wildcard_expand(field, &k, dset, cmd);
-	} else if (isdigit(*field)) {
-	    ok = get_id_or_int(field, &k, ints_ok, poly, dset, cmd);
-	} else if (*field == ';') {
-	    ok = handle_semicolon(&k, &ints_ok, &poly, &sepcount, cmd);
-	} 
-
-	if (!ok) {
-	    if (cmd->err == 0) {
-		cmd->err = 1;
-	    } 
-	    if (!gretl_errmsg_is_set()) {
-		if (*field == '=' && cmd->ci != GENR) {
-		    gretl_errmsg_sprintf(_("'%s' may not be used as a "
-					   "variable name"), cmd->word);
-		} else {
-		    gretl_errmsg_sprintf(_("field '%s' in command is invalid"), 
-					 field);
-		}
-	    }
-	    break;
-	}
-
-	/* advance for next read */
-	line += strlen(field) + 1;
-    }
-
-    if (cmd->err) {
-	return cmd->err;
-    }
-
-    /* commands that can take a specified list, but where if the
-       list is null or just ";" we want to operate on all variables
-    */    
-    if (DEFAULTS_TO_FULL_LIST(cmd->ci)) {
-	if (cmd->list[0] == 0) {
-	    if (cmd->ci == SMPL) {
-		/* "smpl" accepts an empty list as "all vars", with
-		   the --no-missing or --contiguous options, so
-		   leave well alone */
-		;
-	    } else if (cmd->ci == SUMMARY && (cmd->opt & OPT_X)) {
-		/* summary with --matrix option: leave alone */
-		;
-	    } else {
-		cmd_full_list(dset, cmd);
-	    }
-	    /* suppress echo of the list -- may be too long */
-	    cmd_set_nolist(cmd);
-	}
-    } else if (cmd->ci != SETMISS && 
-	       cmd->ci != PRINT &&
-	       cmd->ci != GNUPLOT &&
-	       cmd->ci != SCATTERS &&
-	       cmd->ci != BXPLOT &&
-	       cmd->ci != DELEET) {
-	/* the command needs a list but doesn't have one */
-	if (cmd->list[0] == 0) {
-	    cmd->err = E_ARGS;
-	}
-    }
-
-    if (NEEDS_TWO_VARS(cmd->ci) && cmd->list[0] == 1) {
-	cmd->err = E_ARGS;
-    }
-
-    if (!cmd->err && cmd->ci == GNUPLOT && cmd->list[0] < 2) {
-	/* check the list for the gnuplot command */
-	if (cmd->opt & (OPT_D | OPT_X)) {
-	    ; /* OK: non-empty list not required */
-	} else if (cmd->opt & OPT_T) {
-	    /* time-series otion: only one series needed */
-	    if (cmd->list[0] < 1) {
-		cmd->err = E_ARGS;
-	    }
-	} else {
-	    /* all other cases: we need at least two series */
-	    cmd->err = E_ARGS;
-	}
-    }
-
-    if (!cmd->err && cmd->ci == SCATTERS && cmd->list[0] < 2) {
-	/* check the list for the scatters command */
-	if ((cmd->opt & OPT_X) && (cmd->opt & OPT_T)) {
-	    ; /* non-empty list not required */
-	} else {
-	    /* all other cases: we need at least two series */
-	    cmd->err = E_ARGS;
-	}
-    }
-
-    if (!cmd->err && cmd->ci == BXPLOT && cmd->list[0] < 1) {
-	/* check the list for the boxplot command */
-	if (cmd->opt & OPT_X) {
-	    ; /* matrix: non-empty list not required */
-	} else {
-	    /* all other cases: we need at least one series */
-	    cmd->err = E_ARGS;
-	}
-    }    
-
-    /* check list for duplicated variables? */
-    if (!cmd->err && !cmd_nolist(cmd)) {
-	int dupv = gretl_list_duplicates(cmd->list, cmd->ci);
-
-	if (dupv >= 0) {
-	    printlist(cmd->list, "cmd->list with duplicate(s)");
-	    cmd->err = E_DATA;
-	    gretl_errmsg_sprintf(_("variable %d duplicated in the "
-				   "command list."), dupv);
-	} 
-    }
-
-    return cmd->err;
 }
 
 /**
@@ -2549,14 +247,7 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
 
 int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr) 
 {
-    char *rem = NULL;
-    char cnext = 0;
-    int nf;
-
-    if (gretl_cmd_clear(cmd)) {
-	return cmd->err;
-    }
-
+    gretl_cmd_clear(cmd);
     gretl_error_clear();
 
 #if CMD_DEBUG
@@ -2583,10 +274,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     }
 #endif
 
-    if (cmd->context == FOREIGN && 
-	!ends_block(line, "foreign") &&
-	!ends_block(line, "mpi")) {
-	cmd_set_nolist(cmd);
+    if (cmd->context == FOREIGN && !ends_foreign_block(line)) {
 	cmd->opt = OPT_NONE;
 	cmd->ci = FOREIGN;
 	return 0;
@@ -2607,349 +295,11 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 	}
     }
 
-    /* check for "catch" */
-    maybe_set_catch_flag(line, cmd);
-
-    if (!cmd_noopt(cmd)) {
-	/* extract any options */
-	cmd->opt = get_gretl_options(line, &cmd->err);
-	if (cmd->err) {
-	    return cmd->err;
-	}
-    }
-
-    if (!cmd->context) {
-	if (gretl_function_depth() == 0 && strstr(line, " <- ") != NULL) {
-	    /* extract "savename" for storing an object? */
-	    maybe_extract_savename(line, cmd);
-	} else {
-	    *cmd->savename = '\0';
-	}
-    } 
-
-    /* maybe there's no command here? */
-    if (!get_first_word(line, &cnext, cmd)) {
-	cmd_set_nolist(cmd);
-	cmd->ci = CMD_NULL;
-	return cmd->err;
-    }
-
-    if (!cmd->context) {
-	/* replace simple aliases and a few specials */
-	catch_command_alias(line, cmd);
-    } else if (cmd->context == SYSTEM) {
-	catch_system_alias(cmd);
-    }
-
-    /* subsetted commands (e.g. "deriv" in relation to "nls") */
-    if (!strcmp(cmd->word, "end")) {
-	cmd->context = 0;
-    } else if (cmd->context && cmd->ci != EQUATION) {
-	/* "equation" occurs in the SYSTEM context, but it is
-	   a command in its own right, so don't overwrite 
-	   cmd->ci with cmd->context
-	*/
-	cmd->ci = cmd->context;
-    }
-
-    if (cmd->ci == 0) {
-	if (!strcmp(cmd->word, "elif") && cnext == '(') {
-	    /* bodge: temporary reprieve for SVAR */
-	    cmd->ci = ELIF;
-	} else if (cnext != '(') {
-	    /* regular command, not a function call */
-	    cmd->ci = gretl_command_number(cmd->word);
-	}
-	if (cmd->ci == 0) {
-	    if (plausible_genr_start(line, dset)) {
-		cmd->ci = GENR;
-	    } else if (function_lookup(cmd->word)) {
-		cmd->ci = GENR;
-		cmd->opt = OPT_O;
-	    } else if (get_user_function_by_name(cmd->word)) {
-		cmd->ci = GENR;
-		cmd->opt = OPT_O;
-	    } else if (gretl_if_state_false()) {
-		cmd_set_nolist(cmd);
-		cmd->ci = CMD_MASKED;
-		return 0;
-	    } else {
-		cmd->err = 1;
-		if (gretl_command_number(cmd->word) == 0) {
-		    gretl_errmsg_sprintf(_("command '%s' not recognized"), 
-					 cmd->word);
-		}
-		goto cmd_exit;
-	    }
-	}
-    }
-
-#if CMD_DEBUG
-    fprintf(stderr, "cmd->ci = %d\n", cmd->ci);
-#endif
-
-    /* if, else, endif controls: should this come earlier? */
-    if (flow_control(line, dset, cmd, ptr)) {
-	cmd_set_nolist(cmd);
-	cmd->ci = CMD_MASKED;
-	return cmd->err;
-    }
-
-    /* special: list <listname> delete */
-    if (cmd->ci == DELEET && has_parm2(cmd)) {
-	cmd_set_nolist(cmd);
-	return cmd->err;
-    }
-
-    /* advance beyond the first 'word' on the line (contiguous
-       non-space characters), skip a following space if there is
-       one, and record our read position as 'rem'
-    */
-    rem = line + strcspn(line, " ");
-    if (*rem != '\0') {
-	rem++;
-    }
-
-    if (cmd->ci == EQNPRINT || cmd->ci == TABPRINT) {
-	/* TeX printing commands can take a filename parameter,
-	   but that's all
-	*/
-	get_optional_filename(rem, cmd);
-	return cmd->err;
-    } else if (cmd->ci == OUTFILE) {
-	/* the "outfile" command may have a filename */
-	parse_outfile_cmd(rem, cmd);
-    } else if (cmd->ci == RENAME) {
-	/* the "rename" command calls for a variable number and a
-	   new name */
-	parse_rename_cmd(rem, cmd, dset);
-    } else if (cmd->ci == OPEN || cmd->ci == APPEND) {
-	/* "open" and "append" may have spreadsheet parameters */
-	handle_spreadsheet_params(rem, cmd);
-	if (cmd->err) {
-	    return cmd->err;
-	}
-    } 
-
-    /* commands that never take a list of variables */
-    if (NO_VARLIST(cmd->ci) || 
-	(cmd->ci == DELEET && (cmd->opt & (OPT_D | OPT_T))) ||
-	(cmd->ci == EQUATION && (cmd->opt & OPT_M))) { 
-	cmd_set_nolist(cmd);
-	if (cmd->ci != GENR) {
-	    capture_param(cmd, rem);
-	}
-	if (!cmd->err && cmd->ci == SETOPT) {
-	    maybe_capture_param2(cmd, rem);
-	}
-	return cmd->err;
-    } 
-
-    /* now for some commands which may or may not take a list:
-       we can return early in the no-list cases 
-    */
-
-    if (cmd->ci == PRINT) {
-	/* no list in string literal variant */
-	if (strstr(line, "\"")) {
-	    cmd_set_nolist(cmd);
-	    capture_param(cmd, rem);
-	    return cmd->err;
-	} else if (cmd->flags & CMD_PROG) {
-	    /* print in progressive loop */
-	    free(cmd->parm2);
-	    cmd->parm2 = gretl_strdup(rem);
-	    if (cmd->parm2 == NULL) {
-		cmd->err = E_ALLOC;
-	    }
-	    return cmd->err;
-	}
-    } else if (cmd->ci == SMPL) {
-	/* SMPL may take a list, but only in case of OPT_M,
-	   "--no-missing", or OPT_C, "--contiguous" */
-	if (!(cmd->opt & (OPT_M | OPT_C))) {
-	    cmd_set_nolist(cmd);
-	    return cmd->err;
-	}
-    } else if (cmd->ci == BXPLOT) {
-	/* boxplots take a list, but if there are Boolean conditions
-	   embedded, the line has to be parsed specially */
-	if (boxplot_booleans_present(line)) {
-	    cmd_set_nolist(cmd);
-	    return cmd->err;
-	}
-    } else if (cmd->ci == OMIT) {
-	/* OMIT typically takes a list, but can be given without args
-	   to omit the last variable */
-	if (string_is_blank(line + 4)) {
-	    cmd_set_nolist(cmd);
-	    return cmd->err;
-	} 
-    } else if (cmd->ci == XTAB) {
-	/* XTAB generally takes a list, but not with the --matrix option */
-	if (cmd->opt & OPT_M) {
-	    cmd_set_nolist(cmd);
-	    return cmd->err;
-	} 
-    } else if (cmd->ci == DATAMOD) {
-	/* dataset-modifying commands */
-	capture_param(cmd, rem);
-	if (cmd->aux != DS_SORTBY && 
-	    cmd->aux != DS_DSORTBY) {
-	    cmd_set_nolist(cmd);
-	    return cmd->err;
-	}
-    } else if (cmd->ci == STORE && (cmd->flags & CMD_PROG)) {
-	/* store in progressive loop */
-	cmd->err = get_maybe_quoted_filename(cmd, &rem);
-	if (!cmd->err) {
-	    free(cmd->parm2);
-	    cmd->parm2 = gretl_strdup(rem);
-	    if (cmd->parm2 == NULL) {
-		cmd->err = E_ALLOC;
-	    }
-	}
-	return cmd->err;
-    }	
-
-    /* OK, now we're definitely doing a list-oriented command;
-       we begin by taking care of a few specials 
-    */
-
-    if (cmd->ci == GNUPLOT || cmd->ci == BXPLOT) {
-	/* we may have a block of stuff to pass literally
-	   to gnuplot */
-	grab_gnuplot_literal_block(rem, cmd);
-    } else if (cmd->ci == ARMA || cmd->ci == DPANEL || cmd->ci == VAR) {
-	/* allow for specific "gappy" lags */
-	maybe_rewrite_lags(line, cmd);
-    } 
-
-    /* fix lines that contain a semicolon stuck to another element */
-    fix_semicolon_separation(rem, cmd);
-    if (cmd->err) {
-	return cmd->err;
-    }
-
-    /* arbond special: if there's a block-diagonal instruments
-       portion to the command, grab that in literal form for
-       later processing. Note that this modifies @line, cutting
-       out the special GMM() bits and storing them in cmd->param.
-    */
-    if ((cmd->ci == ARBOND || cmd->ci == DPANEL) && get_sepcount(line) == 2) {
-	grab_arbond_diag(line, cmd);
-	if (cmd->err) {
-	    return cmd->err;
-	}
-    } 
-
-    /* find the number of space-separated fields remaining
-       in the command line
-    */
-    nf = count_free_fields(rem);
-
-#if CMD_DEBUG
-    fprintf(stderr, "nf=%d, remainder='%s'\n", nf, rem);
-#endif
-
-    if (cmd->ci == DELEET && nf == 1) {
-	GretlType t = user_var_get_type_by_name(rem);
-
-	if (t == GRETL_TYPE_DOUBLE ||
-	    t == GRETL_TYPE_MATRIX ||
-	    t == GRETL_TYPE_BUNDLE ||
-	    t == GRETL_TYPE_STRING ||
-	    t == GRETL_TYPE_ARRAY ||
-	    !strcmp(rem, "kalman")) {
-	    /* special for deleting a named matrix, string, ... */
-	    cmd_param_grab_string(cmd, rem);
-	    goto cmd_exit;
-	}
-    }
-
-    /* specials where there's something that goes into "param",
-       before the first semicolon */
-    if (cmd->ci == LAGS) {
-	if (get_lags_param(cmd, &rem)) {
-	    nf = count_fields(rem, NULL);
-	} 
-    }    
-
-    /* "store" is a special case since the filename that comes
-       before the list may be quoted, and have spaces in it */
-    if (cmd->ci == STORE && nf > 0) {
-	cmd->err = get_maybe_quoted_filename(cmd, &rem);
-	if (cmd->err) {
-	    goto cmd_exit;
-	} else {
-	    nf = count_free_fields(rem);
-	}
-    }
-
-    /* "setmiss" takes a value to be interpreted as missing;
-       this are captured in cmd->param, as is the 'order' for
-       a command that needs same
-    */
-    if (REQUIRES_ORDER(cmd->ci) || cmd->ci == SETMISS) {
-	capture_param(cmd, rem);
-	if (cmd->err) {
-	    goto cmd_exit;
-	} else {
-	    rem += strlen(cmd->param) + 1;
-	    nf--;
-	} 
-    }
-
-    if (cmd->ci == QUANTREG) {
-	/* quantreg requires a tau specification */
-	capture_param(cmd, rem);
-	if (cmd->err) {
-	    goto cmd_exit;
-	} else {
-	    rem += strlen(cmd->param) + 1;
-	    nf = count_free_fields(rem);
-	} 
-    } else if (cmd->ci == DATAMOD) {
-	/* at this point, must be doing a dataset operation that
-	   requires a list argument (e.g. sorting) */
-	rem += strspn(rem, " ");
-	rem += strcspn(rem, " ");
-	nf--;
-    } else if (cmd->ci == VECM) { 
-	free(cmd->parm2);
-	cmd->parm2 = gretl_word_strdup(rem, NULL, OPT_NONE, &cmd->err);
-	rem += strlen(cmd->parm2) + 1;
-	nf--;
-    }
-
-    /* By now we're looking at a command that takes a list,
-       which either has been specified already or needs to
-       be filled out automatically */
-
-    cmd->err = process_command_list(cmd, rem, nf, dset);
-
- cmd_exit:
-
-    /* double-check that allocation hasn't failed */
-    if (cmd->err == 0 && (cmd->list == NULL || cmd->param == NULL || 
-			  cmd->parm2 == NULL)) {
-	/* FIXME */
-	cmd->err = E_ALLOC;
-    }
-
-#if CMD_DEBUG
-    printlist(cmd->list, "cmd->list");
-    fprintf(stderr, "cmd->err = %d, context=%d\n", cmd->err,
-	    cmd->context);
-#endif
+    cmd->err = real_parse_command(line, cmd, dset, 0, ptr);
 
     if (cmd->err) {
 	cmd->context = 0;
     }
-
-#if CMD_DEBUG
-    fprintf(stderr, "parsed: '%s'\n", line);
-#endif
 
     return cmd->err;
 }
@@ -3058,9 +408,8 @@ int gretl_shell_grab (const char *arg, char **sout)
     return gretl_shell_sync(arg, sout, NULL);
 }
 
-static int gretl_shell (const char *arg, PRN *prn)
+static int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
 {
-    int async = 0;
     int err = 0;
     
     if (arg == NULL || *arg == '\0') {
@@ -3072,16 +421,10 @@ static int gretl_shell (const char *arg, PRN *prn)
 	return 1;
     }
 
-    if (!strncmp(arg, "launch ", 7)) {
-	async = 1;
-	arg += 7;
-    } else if (*arg == '!') {
-	arg++;
-    }
-
     arg += strspn(arg, " \t");
 
-    if (async) {
+    if (opt & OPT_A) {
+	/* "launch" */
 	err = gretl_shell_async(arg, prn);
     } else {
 	err = gretl_shell_sync(arg, NULL, prn);
@@ -3092,7 +435,7 @@ static int gretl_shell (const char *arg, PRN *prn)
 
 #endif /* ! WIN32 */
 
-#define SAFELEN 78
+#define SAFELEN 78 /* ? */
 
 static void trim_to_length (char *s)
 {
@@ -3138,178 +481,70 @@ void safe_print_line (const char *line, int *plen, PRN *prn)
     }
 }
 
-static int print_command_param (const char *s, PRN *prn)
+static void new_trim_to_length (char *s, int len)
 {
-    int ret = 0;
+    int n = strlen(s);
 
-    if (*s != '{' && strchr(s, ' ') != NULL) {
-	ret += pprintf(prn, " \"%s\"", s);
-    } else {
-	ret += pprintf(prn, " %s", s);
-    }
+    if (n > len) {
+	int i, bp = 0, quoted = 0;
 
-    return ret;
-}
-
-static int 
-cmd_list_print_var (const CMD *cmd, int i, const DATASET *dset,
-		    int gotsep, PRN *prn)
-{
-    int src, v = cmd->list[i];
-    int imin = (MODEL_COMMAND(cmd->ci))? 1 : 0;
-    int bytes = 0;
-
-    if (v > 0 && i > imin && is_auto_generated_lag(i, cmd->list, cmd->linfo)) {
-	if (is_first_lag(i, cmd->list, gotsep, cmd->linfo, &src)) {
-	    bytes += print_lags_by_varnum(src, cmd->linfo, dset, 
-					  gotsep, prn);
-	} else if (cmd->ci == EQUATION && i == 1) {
-	    pputc(prn, ' ');
-	    bytes += 1 + pputs(prn, dset->varname[v]);
-	}
-    } else {
-	pputc(prn, ' ');
-	bytes += 1 + pputs(prn, dset->varname[v]);
-    }
-
-    return bytes;
-}
-
-static int more_coming (const CMD *cmd, int i, int gotsep)
-{
-    int ret = 0;
-
-    if (cmd->opt) {
-	ret = 1;
-    } else if (cmd->linfo == NULL) {
-	ret = (i < cmd->list[0]);
-    } else {
-	int j;
-
-	for (j=i+1; j<=cmd->list[0] && !ret; j++) {
-	    if (!is_auto_generated_lag(j, cmd->list, cmd->linfo) ||
-		is_first_lag(j, cmd->list, gotsep, cmd->linfo, NULL)) {
-		ret = 1;
+	for (i=0; i<n; i++) {
+	    if (s[i] == '"' && (i == 0 || s[i-1] != '\\')) {
+		quoted = !quoted;
+	    } 
+	    if (!quoted && i < len && s[i] == ' ') {
+		bp = i;
 	    }
 	}
+	if (bp > 0) {
+	    s[bp] = '\0';
+	}
     }
-
-    return ret;
 }
 
-static int n_separators (const int *list)
+#define TESTLEN 256
+#define LINELEN 70
+
+static void reflow_line (const char *line, const CMD *cmd,
+			 const char *leader, PRN *prn)
 {
-    int i, nsep = 0;
+    int maxline = LINELEN;
 
-    for (i=2; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
-	    nsep++;
-	}
+    if (leader != NULL) {
+	maxline -= 2;
+	pputs(prn, leader);
     }
 
-    return nsep;
-}
-
-static int effective_ci (const CMD *cmd)
-{
-    int ci = cmd->ci;
-
-    if (ci == END) {
-	if (!strcmp(cmd->param, "nls")) {
-	    ci = NLS;
-	} else if (!strcmp(cmd->param, "mle")) {
-	    ci = MLE;
-	} else if (!strcmp(cmd->param, "gmm")) {
-	    ci = GMM;
-	} else if (!strcmp(cmd->param, "restrict")) {
-	    ci = RESTRICT;
-	} else if (!strcmp(cmd->param, "foreign")) {
-	    ci = FOREIGN;
-	} else if (!strcmp(cmd->param, "kalman")) {
-	    ci = KALMAN;
-	} else if (!strcmp(cmd->param, "mpi")) {
-	    ci = MPI;
-	}
-    } else if (ci == SETOPT) {
-	ci = gretl_command_number(cmd->param);
+    if (cmd->ciflags & CI_EXPR) {
+	/* "genr"-type lines: be more generous? */
+	maxline += 10;
     }
 
-    return ci;
-}
+    if (strlen(line) < maxline) {
+	pputs(prn, line);
+    } else {
+	const char *p = line;
+	char buf[TESTLEN];
+	int linenum = 0;
 
-#define listsep_switch(c) (c == AR || c == MPOLS)
-
-#define hold_param(c) (c == IVREG || c == AR || c == ARBOND ||		\
-		       c == DPANEL || c == ARMA || c == CORRGM ||	\
-		       c == PERGM || c == SCATTERS || c == MPOLS ||	\
-                       c == GNUPLOT || c == GARCH || c == EQUATION ||	\
-		       c == POISSON || c == XCORRGM || c == HECKIT ||	\
-		       c == NEGBIN || c == DURATION || c == FRACTINT)
-
-#define TESTLEN 62
-#define LINELEN 78
-
-static void
-cmd_print_list (const CMD *cmd, const DATASET *dset,  
-		int *plen, PRN *prn)
-{
-    char numstr[12];
-    int use_varnames = (cmd->ci != AR && cmd->ci != DELEET);
-    int nsep, gotsep, i;
-
-    if (cmd->list == NULL || cmd->list[0] == 0) {
-	return;
-    }
-    
-    if (dset == NULL) {
-	use_varnames = 0;
-    } else if (matrix_data_option(cmd->ci, cmd->opt)) {
-	/* using columns of a matrix */
-	use_varnames = 0;
-    }	
-
-    nsep = n_separators(cmd->list);
-
-    if (cmd->ci == LAGS) {
-	if (has_param(cmd)) {
-	    *plen += pprintf(prn, " %s;", cmd->param);
-	}
-    } else if (has_param(cmd) && !hold_param(cmd->ci)) {
-	*plen += print_command_param(cmd->param, prn);
-    }
-
-    if (cmd->ci == VECM && has_parm2(cmd)) {
-	*plen += pprintf(prn, " %s", cmd->parm2);
-    }
-
-    gotsep = 0;
-
-    for (i=1; i<=cmd->list[0]; i++) {
-
-	if (cmd->list[i] == LISTSEP) {
-	    *plen += pputs(prn, " ;");
-	    gotsep++;
-	    if (listsep_switch(cmd->ci) && gotsep == nsep) {
-		use_varnames = !use_varnames;
-	    } 
-	    continue;
-	}
-
-	if (use_varnames) {
-	    *plen += cmd_list_print_var(cmd, i, dset, gotsep, prn);
-	} else {
-	    sprintf(numstr, " %d", cmd->list[i]);
-	    *plen += pputs(prn, numstr);
-	}
-
-	if (*plen > TESTLEN && more_coming(cmd, i, gotsep)) {
-	    pputs(prn, " \\\n "); 
-	    *plen = 1;
+	while (*p) {
+	    *buf = '\0';
+	    strncat(buf, p, TESTLEN - 1);
+	    new_trim_to_length(buf, maxline);
+	    p += strlen(buf);
+	    if (!string_is_blank(buf)) {
+		if (linenum > 0 && leader != NULL) {
+		    pputs(prn, "  ");
+		}
+		pputs(prn, (*buf == ' ')? buf + 1 : buf);
+		if (*p) {
+		    pputs(prn, " \\\n");
+		}
+	    }
+	    linenum++;
 	}
     }
 }
-
-#define ECHO_DEBUG 0
 
 static int command_is_silent (const CMD *cmd, const char *line)
 {
@@ -3343,32 +578,8 @@ static int command_is_silent (const CMD *cmd, const char *line)
     return 0;
 }
 
-#define rewritten_lags(c) ((c->ci == ARMA || c->ci == DPANEL || c->ci == VAR) && \
-                           c->parm2 != NULL &&				\
-			   *c->parm2 != '\0')
-
-/* these commands have sub-lists that may contain either
-   numerical values or the names of scalar variables:
-   this can't be handled properly by the list-printing
-   mechanism */
-
-#define dont_print_list(c) ((c->flags & CMD_NOLIST) ||	\
-			    c->ci == ARBOND ||		\
-			    c->ci == ARMA ||		\
-			    c->ci == DPANEL ||		\
-			    c->ci == GARCH ||		\
-			    c->ci == OPEN)
-
-#define print_param_last(c) (c == ARBOND ||	\
-			     c == DPANEL ||	\
-			     c == DELEET ||	\
-	                     c == CORRGM ||	\
-                             c == PERGM ||	\
-	                     c == FRACTINT ||	\
-                             c == XCORRGM)
-
 /*
- * real_echo_cmd:
+ * real_echo_command:
  * @cmd: pointer to #CMD struct.
  * @dset: pointer to dataset.
  * @line: "raw" command line associated with @cmd.
@@ -3381,15 +592,15 @@ static int command_is_silent (const CMD *cmd, const char *line)
  * contexts) to record a command that was executed interactively.
  */
 
-static void real_echo_cmd (CMD *cmd, const DATASET *dset, 
-			   const char *line, int recording, 
-			   PRN *prn)
+static void real_echo_command (CMD *cmd, const DATASET *dset, 
+			       const char *line, int recording, 
+			       PRN *prn)
 {
+    const char *leader = NULL;
     int compiling = 0;
-    int skiplist = 0;
-    int len, llen = 0;
 
-    if (line == NULL || prn == NULL || cmd->ci > NC) {
+    if (line == NULL || *line == '\0' ||
+	prn == NULL || cmd->ci > NC) {
 	return;
     }
 
@@ -3398,14 +609,14 @@ static void real_echo_cmd (CMD *cmd, const DATASET *dset,
     }
 
 #if ECHO_DEBUG
-    fprintf(stderr, "echo_cmd:\n*** line='%s'\n param='%s' extra='%s'\n", 
+    fprintf(stderr, "echo_cmd:\n*** line='%s'\n param='%s' oarm2='%s'\n", 
 	    line, cmd->param, cmd->parm2);
-    fprintf(stderr, " cmd->opt=%d, recording=%d, compiling=%d, nolist=%d\n",
-	    cmd->opt, recording, compiling, cmd_nolist(cmd));
-    fprintf(stderr, " cmd->word = '%s'\n", cmd->word);
-    fprintf(stderr, " cmd->ci = %d, context = %d\n", cmd->ci, cmd->context);
+    fprintf(stderr, " cmd->opt=%d, recording=%d, compiling=%d\n",
+	    cmd->opt, recording, compiling);
+    fprintf(stderr, " cmd->ci = %d (%s), context = %d\n", cmd->ci, 
+	    gretl_command_word(cmd->ci), cmd->context);
     fprintf(stderr, " cmd->savename = '%s'\n", cmd->savename);
-    if (!cmd_nolist(cmd)) {
+    if (cmd->list != NULL) {
 	printlist(cmd->list, "cmd->list");
     }
 #endif
@@ -3416,250 +627,46 @@ static void real_echo_cmd (CMD *cmd, const DATASET *dset,
 	return;
     }
 
-    /* in a progressive loop, do not apply the usual echo procedure
-       for commands whose list may pertain to a temporary loop-special
-       dataset */
-    if (gretl_looping_progressive()) {
-	if (cmd->ci == PRINT || cmd->ci == STORE) {
-	    pprintf(prn, "? %s\n", line);
-	    return;
-	} 
-    }
+    /* FIXME foreign lines? */
 
-    /* special case: "store" command: record as comment */
-    if (recording && cmd->ci == STORE) {
-	pprintf(prn, "# store '%s'", cmd->param);
-	if (cmd->opt) { 
-	    const char *flagstr = print_flags(cmd->opt, cmd->ci);
-
-	    pputs(prn, flagstr);
+    /* print leading string before echo? */
+    if (recording) {
+	if (cmd->ci == STORE) {
+	    leader = "# ";
 	}
-	pputc(prn, '\n');
-	return;
-    }
-
-    /* print leading string before echo? only if not recording */
-    if (!recording) {
-	if (compiling) {
-	    llen += pputs(prn, "> ");
-	} else {
-	    llen += pputs(prn, "? ");
-	}
-    }
-
-    /* special: printing a list */
-    if (cmd->ci == PRINT && !strcmp(cmd->word, "list")) {
-	pprintf(prn, "list %s print\n", cmd->parm2);
-	return;
-    }
-
-    if (*line == '\0') {
-	return;
-    }
-
-    /* command is preceded by a "savename" to which an object will
-       be assigned */
-    if (*cmd->savename && !cmd->context && cmd->ci != END) {
-	if (strchr(cmd->savename, ' ') != NULL) {
-	    pprintf(prn, "\"%s\" <- ", cmd->savename);
-	    llen += strlen(cmd->savename) + 6;
-	} else {
-	    pprintf(prn, "%s <- ", cmd->savename);
-	    llen += strlen(cmd->savename) + 4;
-	}
-    }
-
-    skiplist = dont_print_list(cmd) || rewritten_lags(cmd);
-
-    if (skiplist) {
-	const char *s = line;
-	
-	if (rewritten_lags(cmd)) {
-	    s = cmd->parm2;
-	}
-	if (strlen(s) > SAFELEN - 2) {
-	    safe_print_line(s, &llen, prn);
-	} else {
-	    llen += pputs(prn, s);
-	}
+    } else if (compiling) {
+	leader = "> ";
     } else {
-	if (cmd->ci == EQUATION) {
-	    llen += pprintf(prn, " %s", cmd->word);
-	} else {
-	    llen += pprintf(prn, "%s", cmd->word);
-	}
-	cmd_print_list(cmd, dset, &llen, prn);
-    } 
-
-    /* print parameter after list, if wanted */
-    if (print_param_last(cmd->ci) && has_param(cmd)) {
-	len = strlen(cmd->param) + 1;
-	if (llen + len > LINELEN) {
-	    pputs(prn, " \\\n ");
-	    llen = 0;
-	}	    
-	pputc(prn, ' ');
-	pputs(prn, cmd->param);
-	llen += len;
+	leader = "? ";
     }
 
-    /* add printout of any options to the command */
-    if (cmd->opt) {
-	const char *flagstr;
-
-	flagstr = print_flags(cmd->opt, effective_ci(cmd));
-	if (flagstr != NULL) {
-	    len = strlen(flagstr);
-	    if (llen + len > LINELEN) {
-		pputs(prn, " \\\n ");
-	    }	    
-	    pputs(prn, flagstr);
-	}
-    }
-
+    reflow_line(line, cmd, leader, prn);
     pputc(prn, '\n');
+
     gretl_print_flush_stream(prn);
 }
 
-void echo_command (CMD *cmd, const DATASET *dset, 
-		   const char *line, PRN *prn)
+void gretl_echo_command (CMD *cmd, const DATASET *dset, 
+			 const char *line, PRN *prn)
 {
-    real_echo_cmd(cmd, dset, line, 0, prn);
+    real_echo_command(cmd, dset, line, 0, prn);
 }
 
 void gretl_record_command (CMD *cmd, const DATASET *dset, 
 			   const char *line, PRN *prn)
 {
-    real_echo_cmd(cmd, dset, line, 1, prn);
+    real_echo_command(cmd, dset, line, 1, prn);
 }
 
-/* Look for a flag of the form " -x" which occurs outside of any
-   quotes: if found, return a pointer to the flag.
-*/
-
-static const char *flag_present (const char *s, char f, int *quoted)
+static int set_var_info (int v, const char *parm1, const char *parm2,
+			 gretlopt opt, DATASET *dset)
 {
-    const char *p = s;
-    int inquote = 0;
-    const char *ret = NULL;
-
-#if CMD_DEBUG
-    fprintf(stderr, "flag_present: looking at '%s'\n", s);
-#endif
-
-    while (*s) {
-	if (*s == '"') {
-	    inquote = !inquote;
-	}
-	if (!inquote) {
-	    /* we're looking for, e.g., "-f", either at the
-	       start of the input string or preceded by a
-	       space -- and followed by something
-	    */
-	    if ((s == p || *(s-1) == ' ') && strlen(s) >= 3 &&
-		*s == '-' && *(s+1) == f) {
-		s += 2;
-		s += strspn(s, " ");
-		/* have we got some following text? */
-		if (*s == '"' && *(s+1)) {
-		    *quoted = 1;
-		    ret = s + 1;
-		}
-		if (*s != '"' && *s != '\0') {
-		    *quoted = 0;
-		    ret = s;
-		}
-	    } 
-	}
-	if (ret != NULL) {
-	    break;
-	}
-	s++;
-    }
-
-#if CMD_DEBUG
-    fprintf(stderr, "flag_present: returning '%s'\n", ret);
-#endif
-
-    return ret;
-}
-
-static char *get_flag_field  (const char *s, char f)
-{
-    char *ret = NULL;
-    int quoted = 0;
-
-    if ((s = flag_present(s, f, &quoted)) != NULL) {
-	const char *p = s;
-	int len = 0;
-
-	while (*p) {
-	    if (quoted && *p == '"') break;
-	    if (!quoted && isspace(*p)) break;
-	    p++;
-	    len++;
-	}
-
-	ret = gretl_strndup(s, len);
-    }
-
-    return ret;
-}
-
-/* grab filename for TeX output, if applicable */
-
-static void get_optional_filename (const char *s, CMD *cmd)
-{
-    char *p = get_flag_field(s, 'f');
-
-    if (p != NULL && *p != '\0') {
-	free(cmd->param);
-	if (libset_get_bool(USE_CWD) || fname_has_path(p)) {
-	    cmd->param = p;
-	} else {
-	    cmd->param = gretl_strdup_printf("%s%s", gretl_workdir(), p);
-	    free(p);
-	}
-    }
-}
-
-static int set_var_info (const char *line, gretlopt opt, 
-			 DATASET *dset)
-{
-    char *p, vname[VNAMELEN];
-    int v, err = 0;
+    int err = 0;
 
     if (dset == NULL || dset->varinfo == NULL) {
 	return E_NODATA;
-    }
-
-    /* skip command word plus space */
-    line += strcspn(line, " ");
-    line += strspn(line, " ");
-
-    if (gretl_scan_varname(line, vname) != 1) {
-	return E_PARSE;
-    }
-
-    /* skip varname, but not following space */
-    line += strcspn(line, " ");
-
-    if (gretl_is_scalar(vname)) {
-	v = gretl_scalar_get_value(vname, NULL);
-	if (v < 0 || v >= dset->v) {
-	    return E_UNKVAR;
-	}
-    } else if (integer_string(vname)) {
-	v = atoi(vname);
-	if (v < 0 || v >= dset->v) {
-	    return E_UNKVAR;
-	}	
-    } else {
-	v = series_index(dset, vname);
-	if (v < 0 || v >= dset->v) {
-	    gretl_errmsg_sprintf(_("Unknown variable '%s'"), vname);
-	    return E_UNKVAR;
-	}
+    } else if (v <= 0 || v >= dset->v) {
+	return E_DATA;
     }
 
     if (opt & OPT_D) {
@@ -3676,13 +683,9 @@ static int set_var_info (const char *line, gretlopt opt,
 	} else {
 	    series_record_label(dset, v, s);
 	}
-    } else if (strstr(line, " -d ")) {
+    } else if (parm1 != NULL) {
 	/* backward compatibility */
-	p = get_flag_field(line, 'd');
-	if (p != NULL) {
-	    series_record_label(dset, v, p);
-	    free(p);
-	}
+	series_record_label(dset, v, parm1);	
     }
 
     if (opt & OPT_G) {
@@ -3693,13 +696,9 @@ static int set_var_info (const char *line, gretlopt opt,
 	} else {
 	    series_record_display_name(dset, v, s);
 	}
-    } else if (strstr(line, " -n ")) {
+    } else if (parm2 != NULL) {
 	/* backward compatibility */
-	p = get_flag_field(line, 'n');
-	if (p != NULL) {
-	    series_record_display_name(dset, v, p);
-	    free(p);
-	}
+	series_record_display_name(dset, v, parm2);
     }    
 
     return err;
@@ -3708,15 +707,17 @@ static int set_var_info (const char *line, gretlopt opt,
 static void showlabels (const int *list, const DATASET *dset, PRN *prn)
 {
     const char *label;
-    int i, v, nl = 0;
+    int i, v, vmax, nl = 0;
 
     if (dset == NULL || dset->v == 0) {
 	pprintf(prn, _("No series are defined\n"));
 	return;
     }
 
-    for (i=1; i<=list[0]; i++) {
-	v = list[i];
+    vmax = list == NULL ? dset->v - 1 : list[0];
+
+    for (i=1; i<=vmax; i++) {
+	v = list == NULL ? i : list[i];
 	if (v >= 0 && v < dset->v) {
 	    label = series_get_label(dset, v);
 	    if (*label != '\0') {
@@ -3732,8 +733,8 @@ static void showlabels (const int *list, const DATASET *dset, PRN *prn)
 
     pprintf(prn, _("Listing labels for variables:\n"));
 
-    for (i=1; i<=list[0]; i++) {
-	v = list[i];
+    for (i=1; i<=vmax; i++) {
+	v = list == NULL ? i : list[i];
 	if (v >= 0 && v < dset->v) {
 	    label = series_get_label(dset, v);
 	    if (*label != '\0') {
@@ -3741,21 +742,7 @@ static void showlabels (const int *list, const DATASET *dset, PRN *prn)
 	    }
 	}
     }
-}
 
-static void do_print_string (char *str, PRN *prn)
-{
-    size_t len;
-
-    if (*str == '"') str++;
-
-    len = strlen(str);
-
-    if (str[len-1] == '"') {
-	str[len-1] = 0;
-    }
-
-    pputs(prn, str);
     pputc(prn, '\n');
 }
 
@@ -3887,14 +874,25 @@ int call_pca_plugin (VMatrix *cmat, DATASET *dset,
 static int do_pca (int *list, DATASET *dset,
 		   gretlopt opt, PRN *prn)
 {
+    int freelist = 0;
     int err = 0;
 
-    if (list[0] > 0) {
-	VMatrix *cmat;
+    if (list != NULL && list[0] == 0) {
+	return 0;
+    }
+
+    if (list == NULL) {
+	list = full_var_list(dset, NULL);
+	freelist = 1;
+    }
+
+    if (list != NULL) {
+	VMatrix *cmat = NULL;
 
 	/* adding OPT_U ensures a uniform sample for the
 	   correlation or covariance matrix */
 	cmat = corrlist(list, dset, opt | OPT_U, &err);
+
 	if (!err) {
 	    err = call_pca_plugin(cmat, dset, opt, prn);
 	    if (!err && (opt & (OPT_O | OPT_A))) {
@@ -3902,6 +900,9 @@ static int do_pca (int *list, DATASET *dset,
 		maybe_list_vars(dset, prn);
 	    }
 	    free_vmatrix(cmat);
+	}
+	if (freelist) {
+	    free(list);
 	}
     }
 
@@ -4087,10 +1088,6 @@ static int lib_try_http (const char *s, char *fname, int *http)
 {
     int err = 0;
 
-    /* skip past command word */
-    s += strcspn(s, " ");
-    s += strspn(s, " ");
-
     if (strncmp(s, "http://", 7) == 0) {
 #ifdef USE_CURL
 	err = retrieve_public_file(s, fname);
@@ -4266,9 +1263,9 @@ static int lib_join_data (ExecState *s,
 	OPT_T, /* tconv-fmt: format for "tconvert" */ 
 	0 
     };
-    const char *param;
-    char *p, *okey = NULL, *filter = NULL;
-    char *varname = NULL, *dataname = NULL;
+    char *okey = NULL, *filter = NULL;
+    const char *varname;
+    char *dataname = NULL;
     char *auxname = NULL;
     char *tconvstr = NULL;
     char *tconvfmt = NULL;
@@ -4286,22 +1283,8 @@ static int lib_join_data (ExecState *s,
 	}
     }
 
-    p = strstr(s->line, s->cmd->param);
-    if (p == NULL) {
-	return E_DATA;
-    }
-
-    p += strlen(s->cmd->param);
-    p += strspn(p, " \"");
-    if (*p == '\0') {
-	return E_ARGS;
-    } else if (strlen(p) != gretl_namechar_spn(p)) {
-	return E_PARSE;
-    }
-
     tseries = dataset_is_time_series(dset);
-
-    varname = gretl_strdup(p);
+    varname = s->cmd->parm2;
     
     if (current_series_index(dset, varname) < 0) {
 	err = check_varname(varname);
@@ -4312,6 +1295,7 @@ static int lib_join_data (ExecState *s,
 
     for (i=0; opts[i] && !err; i++) {
 	gretlopt jopt = opts[i];
+	const char *param;
 
 	if (opt & jopt) {
 	    param = get_optval_string(JOIN, jopt);
@@ -4377,7 +1361,6 @@ static int lib_join_data (ExecState *s,
     free(okey);
     free(filter);
     free(dataname);
-    free(varname);
     free(auxname);
     free(tconvstr);
     free(tconvfmt);
@@ -4394,7 +1377,6 @@ static int lib_open_append (ExecState *s,
 {
     CMD *cmd = s->cmd;
     gretlopt opt = cmd->opt;
-    char *line = s->line;
     PRN *vprn = prn;
     int quiet = (opt & OPT_Q);
     int http = 0;
@@ -4425,7 +1407,7 @@ static int lib_open_append (ExecState *s,
 	odbc = 1;
     }
 
-    err = lib_try_http(line, newfile, &http);
+    err = lib_try_http(cmd->param, newfile, &http);
     if (err) {
 	errmsg(err, prn);
 	return err;
@@ -4433,8 +1415,8 @@ static int lib_open_append (ExecState *s,
 
     if (!http && !odbc) {
 	/* not using http or ODBC */
-	err = getopenfile(line, newfile, (opt & OPT_W)?
-			  OPT_W : OPT_NONE);
+	err = get_full_filename(cmd->param, newfile, (opt & OPT_W)?
+				OPT_W : OPT_NONE);
 	if (err) {
 	    errmsg(err, prn);
 	    return err;
@@ -4485,7 +1467,7 @@ static int lib_open_append (ExecState *s,
     } else if (ftype == GRETL_XML_DATA) {
 	err = gretl_read_gdt(newfile, dset, opt, vprn);
     } else if (ftype == GRETL_ODBC) {
-	err = set_odbc_dsn(line, vprn);
+	err = set_odbc_dsn(cmd->param, vprn);
     } else if (dbdata) {
 	err = set_db_name(newfile, ftype, vprn);
     } else {
@@ -4746,46 +1728,65 @@ static void exec_state_prep (ExecState *s)
     s->pmod = NULL;
 }
 
-static int param_to_order (const char *s)
+int gretl_delete_variables (int *list,
+			    const char *param,
+			    gretlopt opt,
+			    DATASET *dset,
+			    int *renumber,
+			    PRN *prn)
 {
-    if (s == NULL || *s == '\0') {
-	/* giving an order is optional */
-	return 0;
-    } else if (integer_string(s)) {
-	return atoi(s);
-    } else if (gretl_is_scalar(s)) {
-	return (int) gretl_scalar_get_value(s, NULL);
-    } else {
-	return -1;
-    }
-}
+    int err;
 
-static GretlType get_type_for_deletion (const char *param, int *err)
-{
-    GretlType type = 0;
+    err = incompatible_options(opt, OPT_T | OPT_D | OPT_F);
 
-    if (param != NULL && *param != '\0') {
-	/* not compatible with the type-deletion option */
-	*err = E_DATA;
-    } else {
-	const char *s = get_optval_string(DELEET, OPT_T);
-
-	if (s == NULL) {
-	    *err = E_ARGS;
-	} else {
-	    type = gretl_type_from_string(s);
+    if (!err) {
+	if (opt & OPT_T) {
+	    /* delete all vars of given type */
+	    if (list != NULL || param != NULL) {
+		err = E_BADOPT;
+	    }
+	} else if (opt & OPT_D) {
+	    /* delete named vars from database */
+	    if (list != NULL || param == NULL) {
+		err = E_BADOPT;
+	    }
 	}
     }
 
-    return type;
+    if (err) {
+	return err;
+    }
+
+    if (opt & OPT_T) {
+	const char *s = get_optval_string(DELEET, OPT_T);
+
+	if (s == NULL) {
+	    err = E_ARGS;
+	} else {
+	    GretlType type = gretl_type_from_string(s);
+
+	    err = delete_user_vars_of_type(type, prn);
+	}
+    } else if (opt & OPT_D) {
+	err = db_delete_series_by_name(param, prn);
+    } else if (param != NULL) {
+	err = gretl_delete_var_by_name(param, prn);
+    } else if (list != NULL) {
+	/* delete listed series from dataset */
+	if (renumber == NULL && !(opt & OPT_F)) {
+	    /* lacking the --force option */
+	    pputs(prn, _("You cannot delete series in this context\n"));
+	    err = E_DATA;
+	} else {
+	    err = dataset_drop_listed_variables(list, dset, 
+						renumber, prn);
+	}	    
+    } else {
+	err = E_DATA;
+    }
+
+    return err;
 }
-
-#define can_continue(c) (c == ARMA || c == GARCH || c == GMM || \
-                         c == MLE || c == NLS)
-
-#define want_param_to_order(c) (c == CORRGM || c == XCORRGM ||	\
-				c == PERGM || c == LAGS ||	\
-				c == FRACTINT)
 
 /* OMIT and ADD: if we're estimating a revised model, should
    we be saving it as the "last model", or are we just treating 
@@ -4945,10 +1946,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	cmd->opt |= OPT_P; /* panel pooled OLS flag */
     }
 
-    if (want_param_to_order(cmd->ci)) {
-	cmd->order = param_to_order(cmd->param);
-    }
-
 #if 0
     fprintf(stderr, "gretl_cmd_exec: '%s'\n", line);
 #endif
@@ -5054,7 +2051,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case FCAST:
-	err = do_forecast(line, dset, cmd->opt, prn);
+	err = do_forecast(cmd->param, dset, cmd->opt, prn);
 	break;
 
     case FREQ:
@@ -5080,15 +2077,16 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case ESTIMATE:
-	err = estimate_named_system(line, dset, cmd->opt, prn);
+	err = estimate_named_system(cmd->param, cmd->parm2, dset, 
+				    cmd->opt, prn);
 	break;
 
     case FUNC:
-	err = gretl_start_compiling_function(line, prn);
+	err = gretl_start_compiling_function(cmd->param, prn);
 	break;
 
     case GENR:
-	err = generate(line, dset, cmd->opt, prn);
+	err = generate(cmd->vstart, dset, cmd->opt, prn);
 	break;
 
     case PCA:
@@ -5096,12 +2094,12 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case DATA:
-	err = db_get_series(line, dset, cmd->opt, prn);
+	err = db_get_series(cmd->param, dset, cmd->opt, prn);
 	break;
 
     case DATAMOD:
-	err = modify_dataset(dset, cmd->aux, cmd->list, cmd->param, 
-			     prn);
+	err = modify_dataset(dset, cmd->auxint, cmd->list, 
+			     cmd->parm2, prn);
 	if (!err) { 
 	    schedule_callback(s);
 	} 
@@ -5184,18 +2182,19 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case RENAME:
-	err = dataset_rename_series(dset, atoi(cmd->parm2), cmd->param);
+	err = dataset_rename_series(dset, cmd->auxint, cmd->parm2);
 	if (!err) {
 	    maybe_list_vars(dset, prn);
 	}
 	break;
 
     case SET:
-	err = execute_set_line(line, dset, cmd->opt, prn);
+	err = execute_set(cmd->param, cmd->parm2, dset, cmd->opt, prn);
 	break;
 
     case SETINFO:
-	err = set_var_info(line, cmd->opt, dset);
+	err = set_var_info(cmd->list[1], cmd->param, cmd->parm2, 
+			   cmd->opt, dset);
 	break;
 
     case SETMISS:
@@ -5235,21 +2234,26 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case PRINT:
-	if (has_param(cmd)) {
-	    do_print_string(cmd->param, prn);
+	if (cmd->opt & OPT_L) {
+	    err = printdata(NULL, cmd->param, dset, OPT_NONE, prn);
+	} else if (cmd->param != NULL) {
+	    /* directly printing a string literal */
+	    pputs(prn, cmd->param);
+	    pputc(prn, '\n');
 	} else {
-	    printdata(cmd->list, cmd->parm2, dset, cmd->opt, prn);
+	    err = printdata(cmd->list, cmd->parm2, dset, cmd->opt, prn);
 	}
 	break;
 
     case PRINTF:
     case SPRINTF:
     case SSCANF:
-	err = do_printscan_command(cmd->ci, line, dset, prn); 	 
+	err = do_printscan_command(cmd->ci, cmd->param, cmd->parm2,
+				   cmd->vstart, dset, prn); 	 
 	break;
 
     case PVAL:
-	err = batch_pvalue(line, dset, prn);
+	err = batch_pvalue(cmd->param, dset, prn);
 	break;
 
     case SUMMARY:
@@ -5268,7 +2272,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break; 
 
     case XTAB:
-	if (cmd->opt & OPT_M) {
+	if (cmd->opt & OPT_X) {
 	    err = crosstab_from_matrix(cmd->opt, prn);
 	} else {
 	    err = crosstab(cmd->list, dset, cmd->opt, prn);
@@ -5304,7 +2308,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case SETOBS:
-	err = set_obs(line, dset, cmd->opt);
+	err = set_obs(cmd->param, cmd->parm2, dset, cmd->opt);
 	if (!err) {
 	    if (dset->n > 0) {
 		if (!(cmd->opt & (OPT_I | OPT_G))) {
@@ -5318,17 +2322,20 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case SETOPT:
-	err = set_options_for_command(cmd->opt, cmd->param, cmd->parm2);
+	err = set_options_for_command(cmd->param, cmd->parm2, cmd->opt);
+	if (!err && gretl_messages_on()) {
+	    pprintf(prn, "Set option(s) for command \"%s\"\n", cmd->param);
+	}
 	break;
 
     case SMPL:
 	if (cmd->opt == OPT_F) {
 	    err = restore_full_sample(dset, s);
 	} else if (cmd->opt) {
-	    err = restrict_sample(line, cmd->list, dset, 
+	    err = restrict_sample(cmd->param, cmd->list, dset, 
 				  s, cmd->opt, prn, NULL);
 	} else { 
-	    err = set_sample(line, dset);
+	    err = set_sample(cmd->param, cmd->parm2, dset);
 	}
 	if (!err) {
 	    print_smpl(dset, get_full_length_n(), prn);
@@ -5352,7 +2359,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case SHELL:
-	err = gretl_shell(line, prn);
+	err = gretl_shell(cmd->vstart, cmd->opt, prn);
 	break;
 
     case OLS:
@@ -5457,7 +2464,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case GMM:
     case MLE:
     case NLS:
-	err = nl_parse_line(cmd->ci, line, dset, prn);
+	err = nl_parse_line(cmd->ci, cmd->vstart, dset, prn);
 	if (!err) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	} 
@@ -5465,13 +2472,18 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case FOREIGN:
     case MPI:
-	err = foreign_append_line(line, cmd->opt, prn);
-	if (!err) {
-	    gretl_cmd_set_context(cmd, FOREIGN);
+	if (cmd->context == FOREIGN) {
+	    err = foreign_append(line);
+	} else {
+	    err = foreign_start(cmd->ci, cmd->param, cmd->opt, prn);
+	    if (!err) {
+		gretl_cmd_set_context(cmd, FOREIGN);
+	    }
 	}
 	break;
 
     case KALMAN:
+	/* tokenizer: @line arg OK for now */
 	err = kalman_parse_line(line, dset, cmd->opt);
 	if (!err && (cmd->opt == OPT_NONE)) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
@@ -5529,7 +2541,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->ci == RESET) {
 	    err = reset_test(model, dset, cmd->opt, prn);
 	} else if (cmd->ci == CHOW) {
-	    err = chow_test_driver(line, model, dset, cmd->opt, prn);
+	    err = chow_test_driver(cmd->param, model, dset, cmd->opt, prn);
 	} else if (cmd->ci == QLRTEST) {
 	    err = QLR_test(model, dset, cmd->opt, prn);
 	} else if (cmd->ci == VIF) { 
@@ -5546,7 +2558,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case MODTEST:
-	err = model_test_driver(cmd->param, dset, cmd->opt, prn);
+	err = model_test_driver(cmd->order, dset, cmd->opt, prn);
 	break;
 
     case LEVERAGE:
@@ -5575,8 +2587,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 		err = model_test_check(cmd, dset, prn);
 		if (err) break;
 	    }
-	    s->rset = restriction_set_start(line, cmd->opt, &err);
+	    s->rset = restriction_set_start(cmd->param, cmd->opt, &err);
 	    if (!err) {
+		/* FIXME redundant? */
 		gretl_cmd_set_context(cmd, RESTRICT);
 	    }
 	} else {
@@ -5590,11 +2603,13 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case SYSTEM:
 	if (s->sys == NULL) {
 	    /* no equation system is defined currently */
-	    s->sys = equation_system_start(line, cmd->savename, cmd->opt, &err);
+	    s->sys = equation_system_start(cmd->param, cmd->savename, 
+					   cmd->opt, &err);
 	    if (!err) {
 		gretl_cmd_set_context(cmd, SYSTEM);
 	    }
 	} else {
+	    /* tokenize: use of @line OK here? */
 	    err = system_parse_line(s->sys, line, dset);
 	    if (err) {
 		s->sys = NULL;
@@ -5646,12 +2661,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    s->var = gretl_VAR(cmd->order, cmd->auxlist, cmd->list, 
 			       dset, cmd->opt, prn, &err);
 	} else {
-	    int rank = gretl_int_from_string(cmd->parm2, &err);
-
-	    if (!err) {
-		s->var = gretl_VECM(cmd->order, rank, cmd->list, dset, 
-				    cmd->opt, prn, &err);
-	    }
+	    s->var = gretl_VECM(cmd->order, cmd->auxint, cmd->list, 
+				dset, cmd->opt, prn, &err);
 	}
 	if (!err && s->var != NULL) {
 	    save_var_vecm(s);
@@ -5661,9 +2672,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case RUN:
     case INCLUDE:
 	if (cmd->ci == RUN) {
-	    err = getopenfile(line, readfile, OPT_S);
+	    err = get_full_filename(cmd->param, readfile, OPT_S);
 	} else {
-	    err = getopenfile(line, readfile, OPT_I);
+	    err = get_full_filename(cmd->param, readfile, OPT_I);
 	    cmd->opt |= OPT_Q;
 	}
 	if (err) { 
@@ -5696,28 +2707,12 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case DELEET:
-	if (cmd->list != NULL && cmd->list[0] > 0) {
-	    if (cmd->opt & OPT_F) {
-		/* got the --force option */
-		err = dataset_drop_listed_variables(cmd->list, dset, 
-						    NULL, prn);
-	    } else {
-		pputs(prn, _("You cannot delete series in this context\n"));
-		err = 1;
-	    }
-	} else if (cmd->opt & OPT_T) {
-	    GretlType type = get_type_for_deletion(cmd->param, &err);
-
-	    if (!err) {
-		err = delete_user_vars_of_type(type, prn);
-	    }
-	} else {
-	    err = gretl_delete_var_by_name(cmd->param, prn);
-	}
+	err = gretl_delete_variables(cmd->list, cmd->param, cmd->opt,
+				     dset, NULL, prn);
 	break;
 
     case MODPRINT:
-	err = do_modprint(line, cmd->opt, prn);
+	err = do_modprint(cmd->param, cmd->parm2, cmd->opt, prn);
 	break;
 
     case GNUPLOT:
@@ -5737,9 +2732,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    }
 	} else if (cmd->ci == SCATTERS) {
 	    err = multi_scatters(cmd->list, dset, cmd->opt);
-	} else if (cmd_nolist(cmd)) {
-	    err = boolean_boxplots(line, cmd->param, dset, cmd->opt);
-	} else {
+	} else if (cmd->ci == BXPLOT) {
 	    err = boxplots(cmd->list, cmd->param, dset, cmd->opt);
 	}
 	break;
@@ -5749,16 +2742,21 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (gretl_in_gui_mode()) {
 	    schedule_callback(s);
 	} else {
-	    pprintf(prn, _("%s: command not available\n"), cmd->word);
+	    pprintf(prn, _("%s: command not available\n"), 
+		    gretl_command_word(cmd->ci));
 	}
 	break;
 
     default:
-	if (*cmd->word != '\0') {
-	    pprintf(prn, _("Sorry, the %s command is not yet implemented "
-			   "in libgretl\n"), cmd->word);
-	} else {
-	    pprintf(prn, "What?\n");
+	{
+	    const char *word = gretl_command_word(cmd->ci);
+
+	    if (*word != '\0') {
+		pprintf(prn, _("Sorry, the %s command is not yet implemented "
+			       "in libgretl\n"), word);
+	    } else {
+		pprintf(prn, "What?\n");
+	    }
 	}
 	err = 1;
 	break;
@@ -5849,29 +2847,6 @@ int maybe_exec_line (ExecState *s, DATASET *dset)
     return err;
 }
 
-static int could_be_varname (const char *s)
-{
-    int n = gretl_namechar_spn(s);
-    char word[VNAMELEN];
-
-    if (n > 0 && n < VNAMELEN) {
-	*word = '\0';
-	strncat(word, s, n);
-	if (check_varname(word) == 0) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-static int is_endloop (const char *s)
-{
-    char s1[4], s2[5];
-
-    return sscanf(s, "%3s %4s", s1, s2) == 2 && !strcmp(s2, "loop");
-}
-
 /**
  * get_command_index:
  * @line: command line.
@@ -5888,16 +2863,9 @@ static int is_endloop (const char *s)
 
 int get_command_index (char *line, CMD *cmd)
 {
-    char cnext = 0;
-    int done = 0;
+    int err = 0;
 
-    cmd->ci = 0;
-    cmd->opt = OPT_NONE;
-    *cmd->parm2 = *cmd->param = '\0'; /* FIXME */
-
-    while (isspace(*line)) {
-	line++;
-    }
+    gretl_cmd_clear(cmd);
 
 #if CMD_DEBUG
     fprintf(stderr, "get_command_index: line='%s'\n", line);
@@ -5907,68 +2875,32 @@ int get_command_index (char *line, CMD *cmd)
 	return 0;
     }
 
-    if (!strncmp(line, "catch ", 6)) {
-	line += 6;
-    }
+    err = real_parse_command(line, cmd, NULL, 1, NULL);
 
-    if (!get_first_word(line, &cnext, cmd)) {
-	if (*line == '$' || *line == '@') {
-	    /* most plausible possibility? */
-	    strcpy(cmd->word, "genr");
+    if (!err && cmd->ci == 0) {
+	/* maybe genr via series name? */
+	const char *s = cmd->toks[0].s;
+
+	if (s != NULL && strlen(s) == gretl_namechar_spn(s)) {
 	    cmd->ci = GENR;
-	} else {
-	    /* FIXME watch out for fallout! (2012-03-01) */
-	    cmd_set_nolist(cmd);
-	    cmd->ci = CMD_NULL;
-#if CMD_DEBUG
-	    fprintf(stderr, "get_command_word: got nothing!\n");
-#endif
-	    return E_PARSE; /* return 0 */
 	}
     }
 
-#if CMD_DEBUG
-    fprintf(stderr, " got command word = '%s'\n", cmd->word);
-#endif
+    if (!err && cmd->ci == 0) {
+	/* FIXME watch out for fallout! (2012-03-01) */
+	cmd->ci = CMD_NULL;
+	err = E_PARSE;
+    }
 
-    if (!strcmp(cmd->word, "end")) {
-	if (is_endloop(line)) {
-	    deprecate_alias("end loop", "endloop", 0);
-	    cmd->ci = ENDLOOP;
-	} else {
-	    cmd->context = 0;
-	    cmd->ci = END;
-	}
-	done = 1;
+    if (err) {
+	return err;
+    }
+
+    if (cmd->ci == END) {
+	cmd->context = 0;
     } else if (cmd->context) {
 	cmd->ci = cmd->context;
-	done = 1;
-    } else if (catch_command_alias(line, cmd)) {
-#if CMD_DEBUG
-	fprintf(stderr, " caught command alias, ci = %d\n", cmd->ci);
-#endif
-	done = 1;
-    } 
-
-    if (!done) {
-	cmd->ci = gretl_command_number(cmd->word);
-#if CMD_DEBUG
-	fprintf(stderr, " gretl_command_number(%s) gave %d\n", cmd->word, cmd->ci);
-#endif
-	if (cmd->ci == 0) {
-	    if (could_be_varname(line)) {
-		cmd->ci = GENR;
-	    } else if (get_user_function_by_name(cmd->word)) {
-		cmd->ci = GENR;
-		cmd->opt = OPT_O;
-	    } else {
-		cmd->err = 1;
-		gretl_errmsg_sprintf(_("command '%s' not recognized"), 
-				     cmd->word);
-		return 1;
-	    }
-	}
-    }
+    }	
 
     if (cmd->ci == NLS || cmd->ci == MLE ||
 	cmd->ci == GMM || cmd->ci == FOREIGN ||
@@ -5983,77 +2915,6 @@ int get_command_index (char *line, CMD *cmd)
 #endif
 
     return 0;
-}
-
-int gretl_cmd_init (CMD *cmd)
-{
-    cmd->ci = 0;
-    cmd->err = 0;
-    cmd->context = 0;
-    cmd->order = 0;
-    cmd->aux = 0;
-    cmd->flags = 0;
-    *cmd->word = '\0';
-    *cmd->savename = '\0';
-
-    cmd->list = NULL;
-    cmd->param = NULL;
-    cmd->parm2 = NULL;
-    cmd->auxlist = NULL;
-    cmd->linfo = NULL;
-
-    /* make 'list', 'param' and 'extra' blank rather than NULL
-       for safety (in case they are dereferenced) */
-
-    cmd->list = gretl_null_list();
-    if (cmd->list == NULL) {
-	cmd->err = E_ALLOC;
-    }
-
-    if (cmd->err == 0) {
-	cmd->param = calloc(1, 1);
-	if (cmd->param == NULL) {
-	    cmd->err = E_ALLOC;
-	}
-    }
-
-    if (cmd->err == 0) {
-	cmd->parm2 = calloc(1, 1);
-	if (cmd->parm2 == NULL) {
-	    free(cmd->param);
-	    cmd->param = NULL;
-	    cmd->err = E_ALLOC;
-	}
-    }    
-
-    return cmd->err;
-}
-
-void gretl_cmd_free (CMD *cmd)
-{
-    free(cmd->list);
-    free(cmd->param);
-    free(cmd->parm2);
-    free(cmd->auxlist);
-
-    cmd_lag_info_destroy(cmd);
-}
-
-void gretl_cmd_destroy (CMD *cmd)
-{
-    gretl_cmd_free(cmd);
-    free(cmd);
-}
-
-CMD *gretl_cmd_new (void)
-{
-    CMD *cmd = malloc(sizeof *cmd);
-
-    if (cmd != NULL) {
-	gretl_cmd_init(cmd);
-    }
-
-    return cmd;
 }
 
 void gretl_cmd_set_context (CMD *cmd, int ci)
@@ -6144,9 +3005,10 @@ void gretl_exec_state_init (ExecState *s,
 void function_state_init (CMD *cmd, ExecState *state, int *indent0)
 {
     cmd->list = NULL;
+    cmd->auxlist = NULL;
     cmd->param = NULL;
     cmd->parm2 = NULL;
-    cmd->linfo = NULL;
+    /* FIXME tokenize more needed? */
 
     state->cmd = NULL;
     state->model = NULL;

@@ -82,9 +82,7 @@ void gui_graph_handler (int err);
 
 /* sample-related functions */
 
-int bool_subsample (gretlopt opt);
-
-int do_set_sample (void);
+int bool_subsample (const char *param, gretlopt opt);
 
 void drop_missing_data (void);
 
@@ -279,6 +277,8 @@ void do_graph_var (int varnum);
 
 void do_boxplot_var (int varnum, gretlopt opt);
 
+int do_regular_boxplot (selector *sr);
+
 int do_factorized_boxplot (selector *sr);
 
 void ts_plot_callback (void);
@@ -290,8 +290,6 @@ int do_graph_from_selector (selector *sr);
 int do_splot_from_selector (selector *sr);
 
 void plot_from_selection (int code);
-
-void do_box_graph (GtkWidget *w, dialog_t *dlg);
 
 int do_dummy_graph (selector *sr);
 

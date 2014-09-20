@@ -74,15 +74,6 @@ typedef struct {
 #define unset_show_mean(g)    (g->flags &= ~BOX_SHOW_MEAN)
 #define unset_do_intervals(g) (g->flags &= ~BOX_INTERVALS)
 
-#define BPSTRLEN 128
-
-static char boxplots_string[BPSTRLEN];
-
-const char *get_last_boxplots_string (void)
-{
-    return boxplots_string;
-}
-
 static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 			   double limit)
 {
@@ -312,20 +303,6 @@ median_interval (double *x, int n, double *low, double *high)
     free(medians);
 
     return err;
-}
-
-static int special_varcount (const char *s)
-{
-    char test[36];
-    int n = 0;
-
-    while (sscanf(s, "%35s", test) == 1) {
-	if (*test != '(') n++;
-	s += strspn(s, " ");
-	s += strlen(test);
-    }
-
-    return n;
 }
 
 static void plotgroup_destroy (PLOTGROUP *grp)
@@ -716,13 +693,12 @@ static int transcribe_array_factorized (PLOTGROUP *grp, int i,
 }
 
 static int factorized_boxplot_check (const int *list, 
-				     char **bools, 
 				     int *haslabels,
 				     const DATASET *dset)
 {
     int err = 0;
 
-    if (list[0] != 2 || bools != NULL) {
+    if (list[0] != 2) {
 	err = E_DATA;
     } else {
 	int v2 = list[2];
@@ -756,7 +732,7 @@ static int all_missing (int t1, int t2, const double *x)
 /* build the boxplot group data structure, then pass it to 
    gnuplot_do_boxplot to write the command file */
 
-static int real_boxplots (const int *list, char **bools, 
+static int real_boxplots (const int *list,
 			  const char *literal,
 			  const DATASET *dset,
 			  gretlopt opt)
@@ -788,7 +764,7 @@ static int real_boxplots (const int *list, char **bools,
     }
 
     if (opt & OPT_Z) {
-	err = factorized_boxplot_check(list, bools, &haslabels, dset);
+	err = factorized_boxplot_check(list, &haslabels, dset);
 	if (err) {
 	    return err;
 	} 
@@ -809,8 +785,8 @@ static int real_boxplots (const int *list, char **bools,
     if (*grp->ylabel != '\0' && *grp->xlabel != '\0') {
 	grp->title = gretl_strdup_printf(_("Distribution of %s by %s"),
 					 grp->ylabel, grp->xlabel);
-    } else if (list[0] == 1 && bools == NULL) {
-	/* doing a single, standard plot */
+    } else if (list[0] == 1) {
+	/* doing a single plot */
 	const char *s = series_get_label(dset, list[1]);
 	char yname[VNAMELEN];
 
@@ -883,10 +859,7 @@ static int real_boxplots (const int *list, char **bools,
 	if (opt & OPT_Z) {
 	    plot->bool = gretl_strdup_printf("%g", grp->dvals->val[i]);
 	    grp->n_bools += 1;
-	} else if (bools != NULL && bools[i] != NULL) {
-	    plot->bool = bools[i];
-	    grp->n_bools += 1;
-	} 
+	}
 
 	k++; /* increment the actually used plot index */
     }
@@ -942,7 +915,7 @@ static int panel_group_boxplots (int vnum, const DATASET *dset,
 	}
     }
 
-    err = real_boxplots(list, NULL, NULL, gdset, opt);
+    err = real_boxplots(list, NULL, gdset, opt);
 
     destroy_dataset(gdset);
     free(list);
@@ -956,7 +929,7 @@ static int panel_group_boxplots (int vnum, const DATASET *dset,
  * @dset: dataset struct.
  * @opt: may include OPT_P for a plot by panel group (in which
  * case @list should have just one member), or OPT_Z for a
- * "factorized" plot (@list should have exactly three members),
+ * "factorized" plot (@list should have exactly two members),
  * and/or OPT_L to set the limit for outliers.
  *
  * Constructs a boxplot command file for use with gnuplot.
@@ -977,186 +950,9 @@ int boxplots (const int *list, const char *literal,
 	    err = panel_group_boxplots(list[1], dset, opt);
 	}
     } else {
-	err = real_boxplots(list, NULL, literal, dset, opt);
+	err = real_boxplots(list, literal, dset, opt);
     }
 
-    return err;
-}
-
-/* remove extra spaces around operators in boxplots line */
-
-static char *boxplots_fix_parentheses (const char *line, int *err)
-{
-    char *s, *p;
-    int inparen = 0;
-    int i, flen, len = strlen(line);
-
-    /* make room to insert space before parens, if needed */
-    flen = len;
-    for (i=0; i<len; i++) {
-	if (i > 0 && line[i] == '(' && line[i-1] != ' ') {
-	    flen++;
-	}
-    }
-
-    s = malloc(flen + 1);
-    if (s == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    p = s;
-    for (i=0; i<len; i++) {
-	if (line[i] == '(') {
-	    if (i > 0 && line[i-1] != ' ') {
-		*p++ = ' ';
-	    }
-	    inparen = 1;
-	}
-	if (line[i] == ')') {
-	    if (inparen == 1) {
-		inparen = 0;
-	    } else {
-		*err = E_PARSE;
-		free(s);
-		return NULL;
-	    }
-	}
-	if (inparen && line[i] == ' ') ;
-	else *p++ = line[i];
-    }
-
-    *p = 0;
-
-    return s;
-}
-
-int boolean_boxplots (const char *line, const char *literal,
-		      DATASET *dset, gretlopt opt)
-{
-    int i, k, v, nvars, nbool;
-    int n = dset->n;
-    int origv = dset->v;
-    char *tok, *s = NULL;
-    char **bools = NULL;
-    int *list = NULL;
-    int err = 0;
-
-    if (!strncmp(line, "boxplots ", 9)) {
-	line += 9;
-    } else if (!strncmp(line, "boxplot ", 8)) {
-	line += 8;
-    }
-
-    s = boxplots_fix_parentheses(line, &err);
-
-    if (!err) {
-	nvars = special_varcount(s);
-	if (nvars == 0) {
-	    err = E_ARGS;
-	}
-    }
-
-    if (!err) {
-	list = gretl_list_new(nvars);
-	bools = strings_array_new(nvars);
-	if (list == NULL || bools == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (err) {
-	free(list);
-	free(bools);
-	free(s);
-	return err;
-    }
-
-    i = nbool = 0;
-
-    /* record the command string */
-    *boxplots_string = '\0';
-    strncat(boxplots_string, s, BPSTRLEN - 1);
-
-    while (!err && (tok = strtok((i)? NULL : s, " "))) {
-	if (tok[0] == '(') {
-	    if (i) {
-		bools[i-1] = gretl_strdup(tok);
-		nbool++;
-	    } else {
-		err = E_DATA;
-	    }
-	} else {
-	    if (isdigit(tok[0])) { 
-		v = atoi(tok);
-		if (v < origv) {
-		    list[++i] = v;
-		} else {
-		    gretl_errmsg_sprintf(_("got invalid variable number %d"), v);
-		    err = E_DATA;
-		}
-	    } else if (isalpha(tok[0])) {
-		v = current_series_index(dset, tok);
-		if (v >= 0) {
-		    list[++i] = v;
-		} else {
-		    gretl_errmsg_sprintf(_("got invalid varname '%s'"), tok);
-		    err = E_DATA;
-		}
-	    } else {
-		gretl_errmsg_sprintf(_("got invalid field '%s'"), tok);
-		err = E_DATA; 
-	    }
-	}
-    }
-
-    /* Now we add nbool new variables, with ID numbers origv,
-       origv + 1, and so on.  These are the original variables
-       that have boolean conditions attached, masked by those
-       conditions. 
-    */
-
-    k = origv;
-    nbool = 0;
-
-    for (i=0; i<nvars && !err; i++) {
-	char formula[80];
-	
-	if (bools[i] == NULL) {
-	    continue;
-	}
-
-	sprintf(formula, "bool_%d = %s", i, bools[i]);
-	err = generate(formula, dset, OPT_P, NULL);
-
-	if (!err) {
-	    int t, vi = list[i+1];
-
-	    for (t=0; t<n; t++) {
-		if (dset->Z[k][t] == 1.0) {
-		    dset->Z[k][t] = dset->Z[vi][t];
-		} else { 
-		    dset->Z[k][t] = NADBL;
-		}
-	    }
-	    strcpy(dset->varname[k], dset->varname[vi]);
-	    list[i+1] = k++;
-	    nbool++;
-	}
-    }
-
-    if (!err) {
-	err = real_boxplots(list, bools, literal, dset, opt);
-    } 
-    
-    free(list);
-    free(bools); /* the bool[i]s are now attached to the plots */
-    free(s);
-
-    if (nbool) {
-	dataset_drop_last_variables(dset, nbool);
-    }
-    
     return err;
 }
 

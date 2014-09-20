@@ -570,10 +570,9 @@ int gretl_shell_grab (const char *arg, char **sout)
     return run_cmd_with_pipes(arg, sout, NULL, SHELL_RUN);
 }
 
-int gretl_shell (const char *arg, PRN *prn)
+int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
 {
     UINT winret;
-    int async = 0;
     int err = 0;
 
     if (arg == NULL || *arg == '\0') {
@@ -585,16 +584,9 @@ int gretl_shell (const char *arg, PRN *prn)
 	return 1;
     }
 
-    if (!strncmp(arg, "launch ", 7)) {
-	async = 1;
-	arg += 7;
-    } else if (*arg == '!') {
-	arg++;
-    }
-
     arg += strspn(arg, " \t");
 
-    if (async) {
+    if (opt & OPT_A) {
 	winret = WinExec(arg, SW_SHOWNORMAL);
 	if (winret <= 31) {
 	    err = 1;

@@ -1834,65 +1834,44 @@ eqn_restriction_set_start (const char *line, MODEL *pmod,
 }
 
 gretl_restriction *
-restriction_set_start (const char *line, gretlopt opt, int *err)
+restriction_set_start (const char *target, gretlopt opt, int *err)
 {
     gretl_restriction *rset = NULL;
-    char *name = NULL;
-    GretlObjType type;
+    GretlObjType type = 0;
     void *ptr = NULL;
 
 #if RDEBUG
-    fprintf(stderr, "restriction_set_start: line='%s'\n", line);
+    fprintf(stderr, "restriction_set_start: target='%s'\n", target);
 #endif
 
-    if (!strncmp(line, "restrict ", 9)) {
-	name = get_system_name_from_line(line + 9);
-    }
-
-    if (name != NULL) {
+    if (target != NULL) {
 	/* get pointer to named object */
-	*err = gretl_get_object_and_type(name, &ptr, &type);
+	*err = gretl_get_object_and_type(target, &ptr, &type);
 	if (ptr == NULL) {
-	    gretl_errmsg_sprintf("'%s': unrecognized name", name);
+	    gretl_errmsg_sprintf("'%s': unrecognized target", target);
 	}
     } else {
 	/* get pointer to last-estimated model */
 	ptr = get_last_model(&type);
-    }
-
-    if (ptr == NULL) {
-	*err = E_DATA;
-	goto bailout;
-    }
-
-#if RDEBUG
-    fprintf(stderr, " restriction: ptr = %p, type = %d\n", ptr, type);
-#endif
-
-    if (type != GRETL_OBJ_EQN && type != GRETL_OBJ_SYS &&
-	type != GRETL_OBJ_VAR) {
-	*err = E_DATA;
-	goto bailout;
-    }
-
-    rset = restriction_set_new(ptr, type, opt);
-    if (rset == NULL) {
-	*err = E_ALLOC;
-    }
-
-    if (!*err && name == NULL) {
-	*err = real_restriction_set_parse_line(rset, line, NULL, 1);
-	if (*err) {
-	    rset = NULL;
-	    if (*err == E_PARSE) {
-		gretl_errmsg_sprintf(_("parse error in '%s'\n"), line);
-	    }
+	if (ptr == NULL) {
+	    *err = E_DATA;
 	}
     }
 
- bailout:
-
-    free(name);
+    if (!*err) {
+#if RDEBUG
+	fprintf(stderr, " restriction: ptr = %p, type = %d\n", ptr, type);
+#endif
+	if (type != GRETL_OBJ_EQN && type != GRETL_OBJ_SYS &&
+	    type != GRETL_OBJ_VAR) {
+	    *err = E_DATA;
+	} else {
+	    rset = restriction_set_new(ptr, type, opt);
+	    if (rset == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+    }
 
     return rset;
 }

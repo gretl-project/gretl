@@ -183,8 +183,8 @@ int set_csv_na_write_string (const char *s);
 const char *get_csv_na_read_string (void);
 int set_csv_na_read_string (const char *s);
 
-int execute_set_line (const char *line, DATASET *dset, 
-		      gretlopt opt, PRN *prn);
+int execute_set (const char *setobj, const char *setarg,
+		 DATASET *dset, gretlopt opt, PRN *prn);
 
 void set_iter_print_func (ITER_PRINT_FUNC func);
 int iter_print_callback (int i, PRN *prn);

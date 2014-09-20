@@ -39,9 +39,13 @@ int panel_tsls_robust_vcv (MODEL *pmod, const DATASET *dset);
 
 int set_panel_structure_from_vars (int uv, int tv, DATASET *dset);
 
-int set_panel_structure_from_line (const char *line, DATASET *dset);
+int set_panel_structure_from_varnames (const char *uname, 
+				       const char *tname,
+				       DATASET *dset);
 
-int set_panel_group_strings (const char *line, DATASET *dset);
+int set_panel_group_strings (const char *vname,
+			     const char *grpnames,
+			     DATASET *dset);
 
 int switch_panel_orientation (DATASET *dset);
 

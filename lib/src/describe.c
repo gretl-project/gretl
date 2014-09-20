@@ -2439,7 +2439,7 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
     double x;
     int err = 0;
 
-    mname = get_optval_string(XTAB, OPT_M);
+    mname = get_optval_string(XTAB, OPT_X);
     if (mname == NULL) {
 	return E_DATA;
     }    
@@ -5163,22 +5163,36 @@ int list_summary (const int *list, int wgtvar,
 		  const DATASET *dset, 
 		  gretlopt opt, PRN *prn)
 {
-    Summary *summ;
+    Summary *summ = NULL;
     int err = 0;
 
-    if (list != NULL && list[0] == 0) {
-	return 0;
-    }
-
-    if (wgtvar == 0) {
-	/* no weights */
-	summ = get_summary(list, dset, opt, prn, &err);
+    if (list != NULL) {
+	if (list[0] == 0) {
+	    return 0;
+	}
+	if (wgtvar == 0) {
+	    /* no weights */
+	    summ = get_summary(list, dset, opt, prn, &err);
+	} else {
+	    summ = get_summary_weighted(list, dset, wgtvar, 
+					opt, prn, &err);
+	}
     } else {
-	summ = get_summary_weighted(list, dset, wgtvar, opt, 
-				    prn, &err);
-    }
+	int *tmplist = full_var_list(dset, NULL);
 
-    if (!err) {
+	if (tmplist != NULL) {
+	    if (wgtvar == 0) {
+		/* no weights */
+		summ = get_summary(tmplist, dset, opt, prn, &err);
+	    } else {
+		summ = get_summary_weighted(tmplist, dset, wgtvar, 
+					    opt, prn, &err);
+	    }
+	    free(tmplist);
+	}
+    }	    
+
+    if (summ != NULL) {
 	print_summary(summ, dset, prn);
 	free_summary(summ);
     }
@@ -5596,22 +5610,30 @@ void print_corrmat (VMatrix *corr, const DATASET *dset, PRN *prn)
 int gretl_corrmx (int *list, const DATASET *dset, 
 		  gretlopt opt, PRN *prn)
 {
-    VMatrix *corr;
+    VMatrix *corr = NULL;
     int err = 0;
 
-    if (list[0] == 0) {
-	return 0;
+    if (list != NULL) {
+	if (list[0] == 0) {
+	    return 0;
+	} else {
+	    corr = corrlist(list, dset, opt, &err);
+	}
+    } else {
+	int *tmplist = full_var_list(dset, NULL);
+
+	if (tmplist != NULL) {
+	    corr = corrlist(tmplist, dset, opt, &err);
+	    free(tmplist);
+	}
     }
 
-    corr = corrlist(list, dset, opt, &err);
-    if (err) {
-	return err;
+    if (corr != NULL) {
+	print_corrmat(corr, dset, prn);
+	free_vmatrix(corr);
     }
 
-    print_corrmat(corr, dset, prn);
-    free_vmatrix(corr);
-
-    return 0;
+    return err;
 }
 
 /*

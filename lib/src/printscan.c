@@ -1203,137 +1203,7 @@ int do_sscanf (const char *src, const char *format, const char *args,
     return err;
 }
 
-static int get_array_index (const char *s, char *targ)
-{
-    const char *p = strchr(s, ' ');
-    
-    if (p != NULL && *(p-1) == ']') {
-	size_t n = strlen(targ) + (p - s) + 1;
-
-	if (n < SPRINTF_TARGLEN) {
-	    /* let's not overflow @targ */
-	    strncat(targ, s, p - s);
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-static int get_printf_format (const char **ps, char **format)
-{
-    const char *s = *ps;
-    int n, err = 0;
-
-    if (*s != '"') {
-	/* At present we insist that the format is a string literal:
-	   FIXME accept a string variable/expression?
-	*/
-	return E_PARSE;
-    }
-
-    s++;
-    n = double_quote_position(s);
-
-    if (n < 0) {
-	/* malformed format string */
-	err = E_PARSE;
-    } else if (n > 0) {
-	/* non-empty format */
-	*format = gretl_strndup(s, n);
-	if (*format == NULL) {
-	    err = E_ALLOC;
-	}
-	s += n;
-    }
-
-    /* advance pointer if needed */
-    *ps = s;
-
-    return err;
-}
-
-/* split @s into format and args, copying both parts */
-
-static int split_printf_line (const char *s, char *targ, int ci,
-			      char **format, char **args)
-{
-    int n, err = 0;
-
-    if (ci == SPRINTF) {
-	/* sprintf: we need a "target": this should be the name
-	   of an existing string variable, an unused name that
-	   can be given to a new string variable, or perhaps a
-	   string indicating an element of an array of strings,
-	   such as "S[4]" or a more complex variant thereof.
-	   We start by looking for a legit variable name, and
-	   then allow appending an [...] index expression.
-	*/
-	err = extract_varname(targ, s, &n);
-	if (err || n == 0) {
-	    return E_PARSE;
-	}
-	s += n;
-	/* allow for attached [...] */
-	if (*s == '[' && get_array_index(s, targ)) {
-	    s += strcspn(s, " ");
-	}	
-	/* allow (not required) comma after target,
-	   and skip white space */
-	s += strspn(s, " ");
-	if (*s == ',') {
-	    s++;
-	    s += strspn(s, " ");
-	}
-    }
-
-    /* We should now find a format string */
-    err = get_printf_format(&s, format);
-    if (err) {
-	return err;
-    }
-
-    s++;
-    s += strspn(s, " ");
-
-    if (*s != ',') {
-	/* empty args */
-	*args = NULL;
-    } else {
-	s++;
-	s += strspn(s, " ");
-	*args = gretl_strdup(s);
-	if (*args == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
-    return 0;
-}
-
-static int printf_driver (const char *line, int ci, DATASET *dset, 
-			  PRN *prn)
-{
-    char targ[SPRINTF_TARGLEN];
-    char *format = NULL;
-    char *args = NULL;
-    int err;
-
-    err = split_printf_line(line, targ, ci, &format, &args);
-
-    if (!err) {
-	char *vname = (ci == SPRINTF)? targ : NULL;
-
-	err = do_printf(vname, format, args, dset, prn, NULL);
-    }
-
-    free(format);
-    free(args);
-    
-    return err;
-}
-
-static int sscanf_driver (const char *line, DATASET *dset, PRN *prn)
+static int sscanf_driver (const char *args, DATASET *dset, PRN *prn)
 {
     static int warned;
     char *tmp;
@@ -1345,12 +1215,12 @@ static int sscanf_driver (const char *line, DATASET *dset, PRN *prn)
 	warned = 1;
     }
 
-    tmp = malloc(strlen(line) + 9);
+    tmp = malloc(strlen(args) + 9);
 
     if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
-	sprintf(tmp, "sscanf(%s)", line);
+	sprintf(tmp, "sscanf(%s)", args);
 	err = generate(tmp, dset, OPT_O, prn);
 	free(tmp);
     }
@@ -1361,19 +1231,17 @@ static int sscanf_driver (const char *line, DATASET *dset, PRN *prn)
 /* apparatus to support the command-forms of printf, sprintf 
    and sscanf */
 
-int do_printscan_command (int ci, const char *line, 
-			  DATASET *dset, PRN *prn)
+int do_printscan_command (int ci, const char *parm1, const char *parm2,
+			  const char *vargs, DATASET *dset, PRN *prn)
 {
     int err;
 
-    /* skip the command word and following space */
-    line += strcspn(line, " ");
-    line += strspn(line, " ");
-    
-    if (ci == PRINTF || ci == SPRINTF) {
-	err = printf_driver(line, ci, dset, prn);
+    if (ci == PRINTF) {
+	err = do_printf(NULL, parm1, vargs, dset, prn, NULL);
+    } else if (ci == SPRINTF) {
+	err = do_printf(parm1, parm2, vargs, dset, prn, NULL);
     } else {
-	err = sscanf_driver(line, dset, prn);
+	err = sscanf_driver(vargs, dset, prn);
     }
 
     return err;

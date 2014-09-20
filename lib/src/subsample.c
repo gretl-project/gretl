@@ -917,7 +917,7 @@ static int make_random_mask (const char *s, const char *oldmask,
 	}
     }	
 
-    if (err) {
+    if (err && err != E_PARSE) {
 	gretl_errmsg_sprintf(_("Invalid number of cases %d"), subn);
 	return err;
     }	
@@ -1795,7 +1795,7 @@ static int make_restriction_string (DATASET *dset, char *old,
 }
 
 /* restrict_sample: 
- * @line: command line (or %NULL).  
+ * @param: restriction string (or %NULL).  
  * @dset: dataset struct.
  * @state: structure representing program state (or %NULL).
  * @list: list of variables in case of OPT_M (or %NULL).  
@@ -1824,7 +1824,7 @@ static int make_restriction_string (DATASET *dset, char *old,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int restrict_sample (const char *line, const int *list,
+int restrict_sample (const char *param, const int *list,
 		     DATASET *dset, ExecState *state, 
 		     gretlopt opt, PRN *prn,
 		     int *n_dropped)
@@ -1871,16 +1871,10 @@ int restrict_sample (const char *line, const int *list,
     gretl_error_clear();
 
 #if FULLDEBUG || SUBDEBUG
-    fprintf(stderr, "\nrestrict_sample: '%s'\n", line);
+    fprintf(stderr, "\nrestrict_sample: param='%s'\n", param);
     fprintf(stderr, " dset=%p, state=%p, fullset=%p\n", (void *) dset, 
 	    (void *) state, (void *) fullset);
 #endif
-
-    if (line != NULL) {
-	/* skip the command word */
-	line += strcspn(line, " ");
-	line += strspn(line, " ");
-    }
 
     if (opt & OPT_C) {
 	return set_contiguous_sample(list, dset, opt);
@@ -1911,8 +1905,8 @@ int restrict_sample (const char *line, const int *list,
     }
 
     if (mode == SUBSAMPLE_BOOLEAN && fullset != NULL && 
-	oldmask != NULL && restriction_uses_obs(line)) {
-	mask = precompute_mask(line, oldmask, dset, prn, &err);
+	oldmask != NULL && restriction_uses_obs(param)) {
+	mask = precompute_mask(param, oldmask, dset, prn, &err);
     }
 
     /* restore the full data range, for housekeeping purposes */
@@ -1926,7 +1920,7 @@ int restrict_sample (const char *line, const int *list,
 
     if (mask == NULL) {
 	/* not already handled by "precompute" above */
-	err = make_restriction_mask(mode, line, list, dset, 
+	err = make_restriction_mask(mode, param, list, dset, 
 				    oldmask, &mask, prn);
     }
 
@@ -1966,7 +1960,7 @@ int restrict_sample (const char *line, const int *list,
     if (permanent) {
 	destroy_restriction_string(dset);
     } else {
-	make_restriction_string(dset, oldrestr, line, mode);
+	make_restriction_string(dset, oldrestr, param, mode);
     }
 
     free(oldrestr);
@@ -1996,20 +1990,28 @@ static int panel_round (const DATASET *dset, int t, int code)
 
 static int smpl_get_int (const char *s, DATASET *dset, int *err)
 {
-    int k;
+    int k = -1;
 
     if (integer_string(s)) {
 	k = atoi(s);
-    } else if (gretl_is_scalar(s)) {
-	k = gretl_scalar_get_value(s, NULL);
     } else {
-	k = (int) generate_scalar(s, dset, err);
+	double x;
+
+	if (gretl_is_scalar(s)) {
+	    x = gretl_scalar_get_value(s, NULL);
+	} else {
+	    x = generate_scalar(s, dset, err);
+	}
+
+	if (!xna(x) && x < INT_MAX) {
+	    k = (int) x;
+	}
     }
 
     return k;
 }
 
-static int get_sample_limit (char *s, DATASET *dset, int code)
+static int get_sample_limit (const char *s, DATASET *dset, int code)
 {
     int ret = -1;
     int err = 0;
@@ -2065,12 +2067,10 @@ static void maybe_clear_range_error (int t, DATASET *dset)
     }
 }
 
-int set_sample (const char *line, DATASET *dset)
+int set_sample (const char *start, const char *stop, DATASET *dset)
 {
     int nf, new_t1 = dset->t1, new_t2 = dset->t2;
     int tmin = 0, tmax = 0;
-    char newstart[64];
-    char newstop[64];
 
     if (dset == NULL) {
 	return E_NODATA;
@@ -2078,14 +2078,11 @@ int set_sample (const char *line, DATASET *dset)
 
     gretl_error_clear();
 
-    line += strcspn(line, " ");
-    line += strspn(line, " ");
-
-    nf = count_fields(line, NULL);
+    nf = (start != NULL) + (stop != NULL);
 
 #if SUBDEBUG
-    fprintf(stderr, "set_sample: line='%s', nf=%d, dset=%p\n", 
-	    line, nf, (void *) dset);
+    fprintf(stderr, "set_sample: start='%s', stop='%s', dset=%p\n", 
+	    newstart, newstop, (void *) dset);
     if (dset != NULL) {
 	fprintf(stderr, "dset->v = %d, dset->n = %d, pd = %d\n",
 		dset->v, dset->n, dset->pd);
@@ -2094,7 +2091,7 @@ int set_sample (const char *line, DATASET *dset)
 
     if (nf == 2 && dset->n == 0) {
 	/* database special */
-	return db_set_sample(line, dset);
+	return db_set_sample(start, stop, dset);
     }
 
     if (nf == 0) {
@@ -2109,31 +2106,24 @@ int set_sample (const char *line, DATASET *dset)
 #endif
 	
     if (nf == 1) {
-	/* implicitly just setting the starting observation */
-	if (sscanf(line, "%63s", newstart) != 1) {
-	    gretl_errmsg_set(_("error reading smpl line"));
-	    return 1;
-	} else {
-	    new_t1 = get_sample_limit(newstart, dset, SMPL_T1);
-	    if (new_t1 < tmin || new_t1 > tmax) {
-		maybe_clear_range_error(new_t1, dset);
-		gretl_errmsg_set(_("error in new starting obs"));
-		return 1;
-	    }
-	    dset->t1 = new_t1;
-	    return 0;
+	/* implicitly just setting the starting observation? */
+	if (start == NULL) {
+	    return E_ARGS;
 	}
+	new_t1 = get_sample_limit(start, dset, SMPL_T1);
+	if (new_t1 < tmin || new_t1 > tmax) {
+	    maybe_clear_range_error(new_t1, dset);
+	    gretl_errmsg_set(_("error in new starting obs"));
+	    return 1;
+	}
+	dset->t1 = new_t1;
+	return 0;
     }
 
-    /* now we're looking at nf = 2 (2 fields) case */
+    /* now we're looking at the 2 fields case */
 
-    if (sscanf(line, "%63s %63s", newstart, newstop) != 2) {
-	gretl_errmsg_set(_("error reading smpl line"));
-	return 1;
-    }
-
-    if (strcmp(newstart, ";")) {
-	new_t1 = get_sample_limit(newstart, dset, SMPL_T1);
+    if (strcmp(start, ";")) {
+	new_t1 = get_sample_limit(start, dset, SMPL_T1);
 	if (new_t1 < tmin || new_t1 > tmax) {
 	    maybe_clear_range_error(new_t1, dset);
 	    gretl_errmsg_set(_("error in new starting obs"));
@@ -2141,8 +2131,8 @@ int set_sample (const char *line, DATASET *dset)
 	}	
     }
 
-    if (strcmp(newstop, ";")) {
-	new_t2 = get_sample_limit(newstop, dset, SMPL_T2);
+    if (strcmp(stop, ";")) {
+	new_t2 = get_sample_limit(stop, dset, SMPL_T2);
 	if (new_t2 < tmin || new_t2 > tmax) {
 	    maybe_clear_range_error(new_t2, dset);
 	    gretl_errmsg_set(_("error in new ending obs"));

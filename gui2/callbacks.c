@@ -33,8 +33,6 @@
 #include "datawiz.h"
 #include "winstack.h"
 
-#include "boxplots.h"
-
 static void doubleclick_action (windata_t *vwin)
 {
     switch (vwin->role) {
@@ -366,6 +364,8 @@ static int selector_callback_code (const gchar *s)
 	return SCATTERS;
     if (!strcmp(s, "MultiTS"))
 	return TSPLOTS;
+    if (!strcmp(s, "GR_BOX"))
+	return GR_BOX;
     if (!strcmp(s, "GR_FBOX"))
 	return GR_FBOX;
     if (!strcmp(s, "VLAGSEL"))
@@ -443,6 +443,8 @@ void selector_callback (GtkAction *action, gpointer data)
 			 NULL);
     } else if (ci == TSPLOTS) {
 	simple_selection(ci, _("gretl: define graph"), do_scatters, NULL);
+    } else if (ci == GR_BOX) {
+	simple_selection(ci, _("gretl: define graph"), do_regular_boxplot, NULL);
     } else if (ci == SPEARMAN) {
 	char title[64];
 	
@@ -470,8 +472,6 @@ static int gretl_callback_code (const gchar *s)
 	return VSETMISS;
     if (!strcmp(s, "GSETMISS")) 
 	return GSETMISS;
-    if (!strcmp(s, "GR_BOX")) 
-	return GR_BOX;
     if (!strcmp(s, "gmm")) 
 	return GMM;
     if (!strcmp(s, "mle")) 
@@ -527,13 +527,6 @@ void gretl_callback (GtkAction *action, gpointer data)
 	title = N_("gretl: missing code");
 	query = N_("Enter value to be read as \"missing\":");
 	okfunc = do_global_setmiss;
-	break;
-    case GR_BOX:
-	title = N_("gretl: boxplots");
-	query = N_("Specify variables to plot:");
-	okfunc = do_box_graph;
-	click = VARCLICK_INSERT_NAME;
-	defstr = get_last_boxplots_string();
 	break;
     case GMM:
 	title = N_("gretl: GMM");

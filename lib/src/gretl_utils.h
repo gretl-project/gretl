@@ -78,7 +78,11 @@ int true_const (int v, const DATASET *dset);
 
 char *format_obs (char *obs, int maj, int min, int pd);
 
-int set_obs (const char *line, DATASET *dset, gretlopt opt);
+int set_obs (const char *parm1, const char *parm2,
+	     DATASET *dset, gretlopt opt);
+
+int simple_set_obs (DATASET *dset, int pd, const char *stobs, 
+		    gretlopt opt);
 
 /* sorting and comparison */
 

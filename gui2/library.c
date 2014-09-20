@@ -323,7 +323,7 @@ static int real_record_lib_command (int model_ID)
 
 #if CMD_DEBUG
     fprintf(stderr, "record_lib_command:\n");
-    fprintf(stderr, " libcmd.word: '%s'\n", libcmd.word);
+    fprintf(stderr, " libcmd.ci: %d\n", libcmd.ci);
     fprintf(stderr, " libcmd.param: '%s'\n", libcmd.param);
     fprintf(stderr, " libcmd.opt: %d\n", (int) libcmd.opt);
     fprintf(stderr, " line: '%s'\n", libline);
@@ -842,7 +842,6 @@ int do_coint (selector *sr)
     GRETL_VAR *jvar = NULL;
     const char *flagstr = NULL;
     PRN *prn;
-    int order = 0;
     int err = 0;
 
     if (buf == NULL) return 1;
@@ -860,13 +859,11 @@ int do_coint (selector *sr)
 	return 1;
     }
 
-    order = atoi(libcmd.param);
-
     if (action == COINT) {
-	err = engle_granger_test(order, libcmd.list, dataset, 
+	err = engle_granger_test(libcmd.order, libcmd.list, dataset, 
 				 libcmd.opt, prn);
     } else {
-	jvar = johansen_test(order, libcmd.list, dataset, 
+	jvar = johansen_test(libcmd.order, libcmd.list, dataset, 
 			     libcmd.opt, prn);
 	if (jvar == NULL) {
 	    err = E_DATA;
@@ -1471,7 +1468,7 @@ void gui_warnmsg (int errcode)
    OPT_T  restriction is permanent
 */
 
-int bool_subsample (gretlopt opt)
+int bool_subsample (const char *param, gretlopt opt)
 {
     const char *msg;
     PRN *prn;
@@ -1486,7 +1483,7 @@ int bool_subsample (gretlopt opt)
 	err = restrict_sample(NULL, NULL, dataset, NULL, 
 			      opt, prn, &n_dropped);
     } else {
-	err = restrict_sample(libline, NULL, dataset, NULL, 
+	err = restrict_sample(param, NULL, dataset, NULL, 
 			      opt, prn, &n_dropped);
     }
 
@@ -1607,23 +1604,12 @@ void drop_missing_data (void)
 	if (permanent) {
 	    opt |= OPT_T;
 	}
-	err = bool_subsample(opt);
+	err = bool_subsample(NULL, opt);
 	if (!err) {
 	    lib_command_sprintf("smpl%s", print_flags(opt, SMPL));
 	    record_command_verbatim();
 	}
     }
-}
-
-int do_set_sample (void)
-{
-    int err = set_sample(libline, dataset);
-
-    if (!err) {
-	mark_session_changed();
-    }
-
-    return err;
 }
 
 void count_missing (void)
@@ -3348,7 +3334,8 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	    startline = g_strdup_printf("system method=%s", 
 					system_method_short_string(method));
 	    /* FIXME opt? */
-	    my_sys = equation_system_start(startline, NULL, OPT_NONE, &err);
+	    my_sys = equation_system_start(startline + 7, NULL, 
+					   OPT_NONE, &err);
 	}
 
 	if (err) {
@@ -3822,7 +3809,7 @@ static int real_do_model (int action)
 		     libcmd.opt, prn);
 	break;
     case ARCH:
-	*pmod = arch_model(libcmd.list, atoi(libcmd.param), dataset, 
+	*pmod = arch_model(libcmd.list, libcmd.order, dataset, 
 			   libcmd.opt); 
 	break;
     case GARCH:
@@ -3946,6 +3933,12 @@ int do_model (selector *sr)
     libcmd.opt = opt | addopt;
     flagstr = print_flags(libcmd.opt, ci);
     lib_command_sprintf("%s %s%s", estimator, buf, flagstr);
+
+#if 0
+    fprintf(stderr, "\nmodel command elements:\n");
+    fprintf(stderr, "estimator: '%s'\n", estimator);
+    fprintf(stderr, "selector_list: '%s'\n\n", buf);
+#endif
 
     if (ci == ANOVA) {
 	return do_straight_anova();
@@ -4286,12 +4279,8 @@ int do_vector_model (selector *sr)
 	}	
     } else if (action == VECM) {
 	/* Vector Error Correction Model */
-	int rank = gretl_int_from_string(libcmd.parm2, &err);
-
-	if (!err) {
-	    var = gretl_VECM(libcmd.order, rank, libcmd.list, 
-			     dataset, libcmd.opt, prn, &err);
-	}
+	var = gretl_VECM(libcmd.order, libcmd.auxint, libcmd.list, 
+			 dataset, libcmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, var);
 	}
@@ -6818,35 +6807,31 @@ int do_scatters (selector *sr)
     return err;
 }
 
-void do_box_graph (GtkWidget *w, dialog_t *dlg)
+int do_regular_boxplot (selector *sr)
 {
-    const char *buf = edit_dialog_get_text(dlg);
-    gretlopt opt = edit_dialog_get_opt(dlg);
+    const char *buf = selector_list(sr);
+    gretlopt opt = selector_get_opts(sr);
     int err;
 
-    if (buf == NULL || *buf == '\0') {
-	return;
+    if (buf == NULL) {
+	return 1;
     }
 
-    if (strchr(buf, '(')) {
-	err = boolean_boxplots(buf, NULL, dataset, opt);
-    } else {
-	lib_command_sprintf("boxplot %s%s", 
-			    (opt & OPT_O)? "--notches " : "", buf);
-	if (parse_lib_command()) {
-	    return;
-	}
-	err = boxplots(libcmd.list, NULL, dataset, opt);
-	if (!err) {
-	    record_lib_command();
-	}
+    lib_command_sprintf("boxplot %s%s", buf,
+			(opt & OPT_O)? " --notches " : "");
+
+    if (parse_lib_command()) {
+	return 1;
     }
 
+    err = boxplots(libcmd.list, NULL, dataset, opt);
     gui_graph_handler(err);
-    
+
     if (!err) {
-	edit_dialog_close(dlg);
+	record_lib_command();
     }
+
+    return 0;
 }
 
 int do_factorized_boxplot (selector *sr)
@@ -6875,6 +6860,7 @@ int do_factorized_boxplot (selector *sr)
 
     err = boxplots(libcmd.list, NULL, dataset, OPT_Z);
     gui_graph_handler(err);
+
     if (!err) {
 	record_lib_command();
     }
@@ -7061,7 +7047,7 @@ void plot_from_selection (int code)
     int cancel = 0;
 
     liststr = main_window_selection_as_string();
-    if (liststr == NULL || *liststr == 0) {
+    if (liststr == NULL || *liststr == '\0') {
 	return;
     }
 
@@ -8302,8 +8288,6 @@ int execute_script (const char *runfile, const char *buf,
 	gui_script_logo(prn);
     }
 
-    *libcmd.word = '\0';
-
     gretl_exec_state_init(&state, 0, line, &libcmd, model, prn);
     set_iter_print_func(NULL);
     indent0 = gretl_if_state_record();
@@ -8479,10 +8463,6 @@ static int gui_try_http (const char *s, char *fname, int *http)
 {
     int err = 0;
 
-    /* skip past command word */
-    s += strcspn(s, " ");
-    s += strspn(s, " ");
-
     if (strncmp(s, "http://", 7) == 0) {
 	err = retrieve_public_file(s, fname);
 	if (!err) {
@@ -8498,7 +8478,6 @@ static int script_open_append (ExecState *s, DATASET *dset,
 {
     gretlopt opt = s->cmd->opt;
     PRN *vprn = prn;
-    char *line = s->line;
     CMD *cmd = s->cmd;
     char myfile[MAXLEN] = {0};
     int http = 0, dbdata = 0;
@@ -8509,7 +8488,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	return 0;
     }
 
-    err = gui_try_http(line, myfile, &http);
+    err = gui_try_http(cmd->param, myfile, &http);
     if (err) {
 	gui_errmsg(err);
 	return err;
@@ -8517,8 +8496,8 @@ static int script_open_append (ExecState *s, DATASET *dset,
 
     if (!http && !(opt & OPT_O)) {
 	/* not using http or ODBC */
-	err = getopenfile(line, myfile, (opt & OPT_W)? 
-			  OPT_W : OPT_NONE);
+	err = get_full_filename(cmd->param, myfile, (opt & OPT_W)? 
+				OPT_W : OPT_NONE);
 	if (err) {
 	    gui_errmsg(err);
 	    return err;
@@ -8568,7 +8547,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
     } else if (OTHER_IMPORT(ftype)) {
 	err = import_other(myfile, ftype, dset, opt, vprn);
     } else if (ftype == GRETL_ODBC) {
-	err = set_odbc_dsn(line, vprn);
+	err = set_odbc_dsn(cmd->param, vprn);
     } else if (dbdata) {
 	err = set_db_name(myfile, ftype, vprn);
     } else {
@@ -8628,7 +8607,8 @@ static int script_open_append (ExecState *s, DATASET *dset,
     return err;
 }
 
-#define try_gui_help(c) (c->param != NULL && *c->param != '\0' && !c->opt)
+#define try_gui_help(c) (c->param != NULL && *c->param != '\0' && \
+			 c->parm2 == NULL && !c->opt)
 
 /* gui_exec_line: this is called from the gretl console, from the
    command "minibuffer", from execute_script(), and when initiating a
@@ -8755,60 +8735,32 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	break;
 
     case DELEET:
-	if (cmd->opt & OPT_D) {
-	    /* delete from database */
-	    err = db_delete_series_by_name(cmd->param, prn);
-	    if (!err) {
-		sync_db_windows();
-	    }
-	} else if (cmd->opt & OPT_T) {
-	    /* delete all by type (not series) */
-	    err = gretl_cmd_exec(s, dset);
-	} else if (*cmd->param != '\0') {
-	    /* note that this does not catch the case where objects
-	       are deleted within a loop; but that is handled via
-	       callbacks from libgretl
-	    */
-	    if (gretl_is_matrix(cmd->param)) {
-		err = session_user_var_destroy_by_name(cmd->param,
-						       GRETL_OBJ_MATRIX);
-	    } else if (gretl_is_bundle(cmd->param)) {
-		err = session_user_var_destroy_by_name(cmd->param,
-						       GRETL_OBJ_BUNDLE);
-	    } else {
-		err = gretl_delete_var_by_name(cmd->param, prn);
-	    }
-	} else if (*cmd->parm2 != '\0') {
-	    /* "extra" means we got "list <listname> delete" */
-	    if (get_list_by_name(cmd->parm2)) {
-		err = user_var_delete_by_name(cmd->parm2, prn);
-	    } else {
-		err = E_UNKVAR;
-	    }
-	} else {
-	    /* here we're deleting series */
+	if (cmd->list != NULL) {
 	    if (dataset_locked()) {
-		/* error message handled */
+		err = E_DATA; /* error message handled */
 		break;
 	    } else {
-		int nv = 0;
-
 		maybe_prune_delete_list(cmd->list);
-		err = dataset_drop_listed_variables(cmd->list, dset, 
-						    &nv, prn);
-		if (!err) {
-		    if (nv > 0) {
-			pputs(prn, _("Take note: variables have been renumbered"));
-			pputc(prn, '\n');
-			maybe_list_vars(dset, prn);
-		    }
-		    maybe_clear_selector(cmd->list);
+	    }
+	}
+	if (!err) {
+	    int renumber = 0;
+
+	    err = gretl_delete_variables(cmd->list, cmd->param,
+					 cmd->opt, dset, &renumber,
+					 prn);
+	    if (err) {
+		errmsg(err, prn);
+	    } else {
+		if (renumber) {
+		    pputs(prn, _("Take note: variables have been renumbered"));
+		    pputc(prn, '\n');
+		    maybe_list_vars(dset, prn);
+		} else if (cmd->opt & OPT_D) {
+		    sync_db_windows();
 		}
 	    }
 	}
-	if (err) {
-	    errmsg(err, prn);
-	} 
 	break;
 
     case HELP:
@@ -8817,10 +8769,10 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	    if (err) {
 		/* fallback */
 		err = 0;
-		cli_help(cmd->param, cmd->opt, prn);
+		cli_help(cmd->param, cmd->parm2, cmd->opt, prn);
 	    }
 	} else {
-	    cli_help(cmd->param, cmd->opt, prn);
+	    cli_help(cmd->param, cmd->parm2, cmd->opt, prn);
 	}
 	break;
 
@@ -8855,9 +8807,9 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     case RUN:
     case INCLUDE:
 	if (cmd->ci == INCLUDE) {
-	    err = getopenfile(line, runfile, OPT_I);
+	    err = get_full_filename(cmd->param, runfile, OPT_I);
 	} else {
-	    err = getopenfile(line, runfile, OPT_S);
+	    err = get_full_filename(cmd->param, runfile, OPT_S);
 	}
 	if (err) { 
 	    errmsg(err, prn);
@@ -8896,10 +8848,10 @@ int gui_exec_line (ExecState *s, DATASET *dset)
  	if (cmd->opt == OPT_F) {
  	    gui_restore_sample(dset);
  	} else if (cmd->opt) {
- 	    err = restrict_sample(line, cmd->list, dset,
+ 	    err = restrict_sample(cmd->param, cmd->list, dset,
  				  NULL, cmd->opt, prn, NULL);
  	} else {
- 	    err = set_sample(line, dset);
+ 	    err = set_sample(cmd->param, cmd->parm2, dset);
  	}
   	if (err) {
   	    errmsg(err, prn);
@@ -8923,10 +8875,10 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	break;
 
     case DATAMOD:
-	if (cmd->aux == DS_CLEAR) {
+	if (cmd->auxint == DS_CLEAR) {
 	    close_session(cmd->opt);
 	    break;
-	} else if (cmd->aux == DS_RENUMBER) {
+	} else if (cmd->auxint == DS_RENUMBER) {
 	    err = script_renumber_series(cmd->param, dset, prn);
 	    break;
 	}
@@ -8940,7 +8892,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     if ((s->flags & CONSOLE_EXEC) && !err) {
 	/* log the specific command */
 	char *buf = cmd_to_buf(cmd, dataset, line);
-	
+
 	if (buf != NULL) {
 	    lib_command_strcpy(buf);
 	    record_command_verbatim();

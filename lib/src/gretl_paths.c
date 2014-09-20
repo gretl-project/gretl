@@ -1647,7 +1647,7 @@ char *gretl_function_package_get_path (const char *name,
  * is a hansl script.
  * 
  * Elementary path-searching: try adding various paths to the given
- * @fname and see if it can be opened. Usually called by getopenfile().
+ * @fname and see if it can be opened. Usually called by get_full_filename().
  * If @fname does not have a dot-extension we may also try adding
  * an appropriate gretl extension in case no file is found.
  *
@@ -1833,27 +1833,6 @@ char *gretl_addpath (char *fname, int script)
     return NULL;
 }
 
-static int get_quoted_filename (const char *s, char *fname)
-{
-    int ret = 0;
-
-    if (*s == '"' || *s == '\'') {
-	const char *p = strchr(s + 1, *s);
-
-	if (p != NULL) {
-	    size_t len = p - s;
-
-	    if (len > 0) {
-		*fname = 0;
-		strncat(fname, s+1, len-1);
-		ret = 1;
-	    } 
-	}
-    }
-
-    return ret;
-}
-
 static int substitute_homedir (char *fname)
 {
     char *homedir = getenv("HOME");
@@ -1901,67 +1880,64 @@ static int get_gfn_special (char *fname)
 }
 
 /**
- * getopenfile:
- * @line: command line (e.g. "open foo").
- * @fname: filename to be filled out.
- * @opt: if includes OPT_W, treat as web filename and don't
- * try to add path; if OPT_S, treat as a script; if OPT_I
- * we're responding to the "include" command.
+ * get_full_filename:
+ * @fname: input filename.
+ * @fullname: filename to be filled out: must be at least #MAXLEN bytes.
+ * @opt: if OPT_S, treat as a script; if OPT_I we're responding
+ * to the "include" command; if OPT_W to pass @fname through as is.
  * 
- * Elementary path-searching: try adding various paths to the given
- * @fname and see if it can be opened.
+ * Includes elementary path-searching: try adding various paths to the
+ * given @fname, if appropriate, and see if it can be opened. For
+ * internal gretl use.
  *
- * Returns: 0 on successful parsing of @line, 1 on error.
+ * Returns: 0 on success, non-zero on error.
  */
 
-int getopenfile (const char *line, char *fname, gretlopt opt)
+int get_full_filename (const char *fname, char *fullname, gretlopt opt)
 {
     int script = (opt & (OPT_S | OPT_I))? 1 : 0;
-    int got_quoted;
-    char *test;
+    char *test = NULL;
 
-    /* skip past command word */
-    line += strcspn(line, " ");
-    line += strspn(line, " ");
+    *fullname = '\0';
 
-    got_quoted = get_quoted_filename(line, fname);
-
-    if (!got_quoted && sscanf(line, "%s", fname) != 1) {
-	return E_PARSE;
+    if (fname == NULL || *fname == '\0') {
+	return E_DATA;
     }
+
+    strncat(fullname, fname, MAXLEN - 1);
 
     if (opt & OPT_W) {
 	return 0;
     }
 
     /* handle tilde == HOME */
-    if (fname[0] == '~' && fname[1] == '/') {
-	substitute_homedir(fname);
+    if (fullname[0] == '~' && fullname[1] == '/') {
+	substitute_homedir(fullname);
     }
 
-    if (g_path_is_absolute(fname)) {
+    if (g_path_is_absolute(fullname)) {
 	return 0;
     }
 
-    if (has_suffix(fname, ".gfn") && get_gfn_special(fname)) {
+    if (has_suffix(fullname, ".gfn") && get_gfn_special(fullname)) {
 	return 0;
     }
 
     /* try a basic path search on this filename */
 #if SEARCH_DEBUG
-    fprintf(stderr, "getopenfile: calling addpath on '%s'\n", fname);
+    fprintf(stderr, "get_full_filename: calling addpath on '%s'\n", fullname);
 #endif
-    test = gretl_addpath(fname, script);
+    test = gretl_addpath(fullname, script);
 #if SEARCH_DEBUG
-    fprintf(stderr, "getopenfile: after: '%s'\n", fname);
+    fprintf(stderr, "get_full_filename: after: '%s'\n", fullname);
 #endif
 
     if (test != NULL && (opt & OPT_S)) {
-	int spos = gretl_slashpos(fname);
+	int spos = gretl_slashpos(fullname);
 
 	if (spos) {
 	    *current_dir = '\0';
-	    strncat(current_dir, fname, spos + 1);
+	    strncat(current_dir, fullname, spos + 1);
 	} else {
 	    current_dir[0] = '.';
 	    current_dir[1] = SLASH;

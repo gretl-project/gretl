@@ -1560,7 +1560,7 @@ GtkActionEntry main_entries[] = {
     { "ImpulsePlot", NULL, N_("X-Y with _impulses..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "FactorPlot", NULL, N_("X-Y with _factor separation..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "FrischPlot", NULL, N_("X-Y with _control..."), NULL, NULL, G_CALLBACK(selector_callback) },
-    { "GR_BOX", NULL, N_("_Boxplots..."), NULL, NULL, G_CALLBACK(gretl_callback) },
+    { "GR_BOX", NULL, N_("_Boxplots..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "GR_FBOX", NULL, N_("_Factorized boxplot..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "GR_QQ", NULL, N_("_Q-Q plot..."), NULL, NULL, G_CALLBACK(menu_op_action) },
     { "ThreeDPlot", NULL, N_("_3D plot..."), NULL, NULL, G_CALLBACK(selector_callback) },

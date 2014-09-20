@@ -80,14 +80,15 @@ void gretl_cmd_set_opt (CMD *cmd, gretlopt opt);
 
 int filter_comments (char *s, CMD *cmd);
 
-int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr); 
+int parse_command_line (char *line, CMD *cmd, DATASET *dset, 
+			void *ptr); 
 
 int get_command_index (char *line, CMD *cmd);
 
 int command_number (const char *cmd);
 
-void echo_command (CMD *cmd, const DATASET *dset, 
-		   const char *line, PRN *prn);
+void gretl_echo_command (CMD *cmd, const DATASET *dset, 
+			 const char *line, PRN *prn);
 
 void gretl_record_command (CMD *cmd, const DATASET *dset, 
 			   const char *line, PRN *prn);
@@ -102,6 +103,13 @@ int call_pca_plugin (VMatrix *cmat, DATASET *dset,
 int gretl_shell_grab (const char *arg, char **sout);
 
 void set_plot_produced (void);
+
+int gretl_delete_variables (int *list,
+			    const char *param,
+			    gretlopt opt,
+			    DATASET *dset,
+			    int *renumber,
+			    PRN *prn);
 
 #endif /* INTERACT_H */
 

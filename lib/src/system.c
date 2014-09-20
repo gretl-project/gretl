@@ -972,9 +972,9 @@ char *get_system_name_from_line (const char *s)
     return name;
 }
 
-/* parse a system estimation method out of a command line */
+/* parse a system estimation method out of parameter @s */
 
-static int get_estimation_method_from_line (const char *s)
+static int sys_get_estimator (const char *s)
 {
     const char *p = strstr(s, "method");
     int method = -1;
@@ -997,70 +997,45 @@ static int get_estimation_method_from_line (const char *s)
     return method;
 }
 
-/* parse "system name=<name>", with or without spaces around the '='
-   and with or without double-quotes around <name>
-*/
-
-static char *old_style_name_from_line (const char *line,
-				       int *err)
+static int parse_sys_start_param (const char *s,
+				  int *method,
+				  char **name)
 {
-    const char *s;
-    char *ret = NULL;
-    int len = 0;
+    int len = strlen(s);
+    int err = 0;
 
-    if (!strncmp(line, "system", 6)) {
-	line += 6;
+    if (len > 7 && !strncmp(s, "method=", 7)) {
+	char mstr[9];
+	
+	*mstr = '\0';
+	strncat(mstr, s + 7, 8);
+	gretl_lower(mstr);
+	*method = system_method_from_string(mstr);
+	if (*method == SYS_METHOD_MAX) {
+	    /* invalid method was given */
+	    gretl_errmsg_set(_(badsystem));
+	    err = E_DATA;
+	}
+    } else if (len > 5 && !strncmp(s, "name=", 5)) {
+	*name = gretl_strdup(s + 5);
+	gretl_unquote(*name, &err);
+    } else {
+	err = E_PARSE;
     }
 
-    line += strspn(line, " ");
-    
-    if (!strncmp(line, "name", 4)) {
-	s = line + 4;
-	s += strspn(s, " "); /* eat space before '=' */
-	if (*s != '=') {
-	    *err = E_PARSE;
-	    return NULL;
-	}
-	s++;
-	s += strspn(s, " "); /* eat space after '=' */
-	if (*s == '"') {
-	    /* quoted name */
-	    char *p = strchr(s + 1, '"');
-
-	    if (p == NULL) {
-		*err = E_PARSE;
-	    } else {
-		s++;
-		len = p - s;
-	    }
-	} else {
-	    /* unquoted name */
-	    len = strcspn(s, " ");
-	}
-    }
-
-    if (len > 0) {
-	if (len >= MAXSAVENAME) {
-	    /* name too long */
-	    len = MAXSAVENAME - 1;
-	}
-	ret = gretl_strndup(s, len);
-    }
-
-    return ret;
+    return err;
 }
 
 /**
  * equation_system_start:
- * @line: command line.
- * @name: On input, name to be given to system, if any (otherwise
- * may be NULL or an empty string). On output, if non-NULL, the name 
- * given via "name=foo" mechanism in @line, if present.
+ * @param: may incude an estimation method spec.
+ * @name: the name to be given to system, if any, otherwise NULL
+ * or an empty string.
  * @opt: may include OPT_I for iterative estimation (will be
  * ignored if the the estimation method does not support it).
  * @err: location to receive error code.
  * 
- * Start compiling an equation system. Either @line must contain
+ * Start compiling an equation system. Either @param must contain
  * an estimation method or the system must be given a name.
  * If a method is given, the system will be estimated as soon as its 
  * definition is complete. If a name is given, the system definition 
@@ -1068,65 +1043,40 @@ static char *old_style_name_from_line (const char *line,
  * methods. If both a name and an estimation method are given, the system
  * is both estimated and saved.
  *
- * The name may be given via the @name argument, or (for backward
- * compatibility) it may be given via "name=foo" in @line. In the
- * latter case, if @name is non-NULL, the name extracted from
- * @line is written into that variable on output. The variable
- * must be able to hold up to %MAXSAVENAME bytes.
- * 
  * Returns: pointer to a new equation system, or %NULL on error.
  */
 
-equation_system *equation_system_start (const char *line, 
-					char *name, 
+equation_system *equation_system_start (const char *param, 
+					const char *name, 
 					gretlopt opt,
 					int *err)
 {
     equation_system *sys = NULL;
-    char *sysname = NULL;
-    int anon_sys = 0;
-    int method;
+    char *oldname = NULL;
+    int method = -1;
 
 #if SYSDEBUG > 1
-    fprintf(stderr, "equation_system_start: '%s'\n", line);
+    fprintf(stderr, "equation_system_start\n");
 #endif
 
-    method = get_estimation_method_from_line(line);
-
-    if (method == SYS_METHOD_MAX) {
-	/* invalid method was given */
-	gretl_errmsg_set(_(badsystem));
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (name != NULL && *name != '\0') {
-	/* "foo <- system" */
-	sysname = gretl_strdup(name);
-    } else {
-	/* backward compatibility */
-	sysname = old_style_name_from_line(line, err);
+    if (param != NULL) {
+	*err = parse_sys_start_param(param, &method, &oldname);
 	if (*err) {
 	    return NULL;
 	}
     }
 
-    if (sysname == NULL) {
-	/* no name was specified: treat the system as "anonymous" */
-	sysname = gretl_strdup("$system");
-	anon_sys = 1;
-    }
-
-    if (strstr(line, "save=")) {
-	/* obsolete: e.g. "save=fitted" */
-	*err = E_PARSE;
-    }
-
-    if (!*err) {
-	sys = equation_system_new(method, sysname, err);
-	if (!*err && anon_sys) {
+    if (name != NULL && *name != '\0') {
+	sys = equation_system_new(method, name, err);
+    } else if (oldname != NULL) {
+	sys = equation_system_new(method, oldname, err);
+	free(oldname);
+    } else {
+	/* treat the system as "anonymous" */
+	sys = equation_system_new(method, "$system", err);
+	if (!*err) {
 	    push_anon_system(sys);
-	}
+	}	    
     }
 
     if (sys != NULL) {
@@ -1139,20 +1089,9 @@ equation_system *equation_system_start (const char *line,
     }
 
 #if SYSDEBUG > 1
-    fprintf(stderr, "new system '%s' at %p, flags = %d\n", sysname, 
+    fprintf(stderr, "new system '%s' at %p, flags = %d\n", sys->name, 
 	    (void *) sys, sys->flags);
 #endif
-
-    if (sysname != NULL) {
-	if (name != NULL) {
-	    if (anon_sys) {
-		*name = '\0';
-	    } else if (*name == '\0') {
-		strcpy(name, sysname);
-	    }
-	}
-	free(sysname);
-    }
 
     return sys;
 }
@@ -2243,20 +2182,11 @@ int equation_system_finalize (equation_system *sys, DATASET *dset,
    line is simply "estimate". 
 */
 
-int estimate_named_system (const char *line, DATASET *dset, 
-			   gretlopt opt, PRN *prn)
+int estimate_named_system (const char *sysname, const char *param,
+			   DATASET *dset, gretlopt opt, PRN *prn)
 {
     equation_system *sys = NULL;
-    char *sysname = NULL;
     int err = 0;
-
-    if (!strcmp(line, "estimate")) {
-	line += 8;
-    } else if (!strncmp(line, "estimate ", 9)) {
-	line += 9;
-    }
-
-    sysname = get_system_name_from_line(line);
 
 #if SYSDEBUG
     fprintf(stderr, "*** estimate_named_system: '%s'\n", sysname);
@@ -2273,7 +2203,6 @@ int estimate_named_system (const char *line, DATASET *dset,
 	    gretl_errmsg_sprintf(_("'%s': unrecognized name"), sysname);
 	    err = E_DATA;
 	}
-	free(sysname);
     } else {
 	/* no name given: try "last model"? */
 	GretlObjType type;
@@ -2300,9 +2229,11 @@ int estimate_named_system (const char *line, DATASET *dset,
 #endif
 
     if (!err) {
-	int method = get_estimation_method_from_line(line);
+	int method;
 
-	if (method < 0 || method >= SYS_METHOD_MAX) {
+	if (param != NULL) {
+	    method = sys_get_estimator(param);
+	} else {
 	    method = sys->method;
 	}
 

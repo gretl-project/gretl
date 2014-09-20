@@ -682,7 +682,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	}
 	if (window_is_tab(vwin)) {
 	    /* note: still conditional on Ctrl */
-	    if (upkey == GDK_greater || upkey == GDK_less || 
+	    if (upkey == GDK_greater || upkey == GDK_less ||
 		upkey == GDK_Page_Up || upkey == GDK_Page_Down) {
 		tabwin_navigate(vwin, upkey);
 		return TRUE;
@@ -702,10 +702,6 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    if (k > 0) {
 		tabwin_navigate(vwin, k);
 		return TRUE;
-	    }
-	} else if (vwin->role == EDIT_HEADER) {
-	    if (upkey == GDK_Q) {
-		textview_format_paragraph(vwin->text);
 	    }
 	}
     }
@@ -947,7 +943,7 @@ static void maybe_offer_daily_options (void)
     }
 
     if (purge_opt) {
-	bool_subsample(purge_opt);
+	bool_subsample(NULL, purge_opt);
     }
 }
 
@@ -1817,13 +1813,8 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
     }
 
-    /* In some cases we may want to avoid producing a window
-       that is much wider than the text to be dislayed
-    */
-
     if (role != VIEW_PKG_CODE && 
 	role != EDIT_PKG_CODE &&
-	role != EDIT_PKG_SAMPLE &&
 	role != SCRIPT_OUT) {
 	gretl_print_get_size(prn, &width, &nlines);
 	if (width > 0 && width + 2 < hsize) {
@@ -5119,7 +5110,7 @@ static int alt_show (const char *uri)
     return ret;
 }
 
-#endif
+#endif /* not used on Mac */
 
 int browser_open (const char *url)
 {

@@ -94,8 +94,8 @@ struct equation_system_ {
     liml_data *ldata;           /* extra info from LIML estimation */
 };
 
-equation_system *equation_system_start (const char *line, 
-					char *name,
+equation_system *equation_system_start (const char *param, 
+					const char *name,
 					gretlopt opt,
 					int *err);
 
@@ -122,7 +122,8 @@ equation_system_estimate (equation_system *sys,
 			  DATASET *dset, 
 			  gretlopt opt, PRN *prn);
 
-int estimate_named_system (const char *line, 
+int estimate_named_system (const char *sysname, 
+			   const char *param,
 			   DATASET *dset, 
 			   gretlopt opt, PRN *prn);
 

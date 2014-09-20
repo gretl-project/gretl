@@ -28,7 +28,9 @@ typedef enum {
     LANG_MPI
 } ForeignLangs;
 
-int foreign_append_line(const char *line, gretlopt opt, PRN *prn);
+int foreign_start (int ci, const char *param, gretlopt opt, PRN *prn);
+
+int foreign_append (const char *line);
 
 int foreign_execute (const DATASET *dset, gretlopt opt, PRN *prn);
 

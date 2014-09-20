@@ -25,7 +25,11 @@
 
 #define OPTDEBUG 0
 
+/* commands for which --vcv (= OPT_O) is applicable */
+
 #define vcv_opt_ok(c) (MODEL_COMMAND(c) || c == ADD || c == OMIT)
+
+/* commands for which --quiet (= OPT_Q) is applicable */
 
 #define quiet_opt_ok(c) (MODEL_COMMAND(c) ||	\
 			 c == ADD ||		\
@@ -528,7 +532,7 @@ struct gretl_option gretl_opts[] = {
     { WLS,      OPT_R, "robust", 0 },
     { XCORRGM,  OPT_U, "plot", 2 },
     { XTAB,     OPT_C, "column", 0 },
-    { XTAB,     OPT_M, "matrix", 2 },
+    { XTAB,     OPT_X, "matrix", 2 },
     { XTAB,     OPT_R, "row", 0 },
     { XTAB,     OPT_Z, "zeros", 0 },
     { 0,        0L,    NULL, 0 }
@@ -570,6 +574,13 @@ int cluster_option_ok (int ci)
 
     return 0;
 }
+
+/* used in tokenize.c: detects the case where a command
+   has an option of the form --matrix=foo, indicating that
+   the columns of a named matrix replace the dataset
+   series that the comand would otherwise require as
+   arguments
+*/
 
 int matrix_data_option (int ci, gretlopt opt)
 {
@@ -624,6 +635,8 @@ char **get_all_option_strings (int *pn)
     
     return optstrs;
 }
+
+/* used in checking command documentation */
 
 const char **get_opts_for_command (int ci, int *nopt)
 {
@@ -702,10 +715,6 @@ struct flag_match flag_matches[] = {
     { 0L,   '\0' }
 };
 
-static const char *ok_flags = "abcdefghijklmnopqrstuvwxyz";
-
-#define isflag(c) (c && (strchr(ok_flags, c) != NULL))
-
 /**
  * opt_from_flag:
  *
@@ -724,7 +733,7 @@ gretlopt opt_from_flag (unsigned char c)
 	}
     }
 
-    return 0L;
+    return OPT_NONE;
 }
 
 static int opt_is_valid (gretlopt opt, int ci, char c)
@@ -753,68 +762,6 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
     } 
 
     return 0;
-}
-
-/* See if at point @p (at which we've found '-') in string @s we
-   might be at the start of an option flag: the previous character
-   must be a space, and we must not be inside a quoted string.
-*/
-
-static int maybe_opt_start (char *s, char *p)
-{
-    int i, n = p - s;
-    int quoted = 0;
-
-    if (n > 0 && !isspace(*(p-1))) {
-	return 0;
-    }
-
-    for (i=0; i<n; i++) {
-	if (s[i] == '"' && (i == 0 || s[i-1] != '\\')) {
-	    quoted = !quoted;
-	}
-    }
-
-    return !quoted;
-}
-
-static gretlopt get_short_opts (char *line, int ci, int *err)
-{
-    char *s = line;
-    gretlopt opt, ret = 0L;
-
-    while ((s = strchr(s, '-')) != NULL) {
-	char *p = s + 1;
-	int i, n = 0;
-
-	if (maybe_opt_start(line, s)) {
-	    n = strspn(p, ok_flags);
-	    if (n > 0) {
-		if (isspace(p[n]) || p[n] == '\0') {
-		    for (i=0; i<n; i++) {
-			opt = opt_from_flag(p[i]);
-			if (!opt_is_valid(opt, ci, p[i])) {
-			    if (err != NULL) {
-				*err = 1;
-			    }
-			    return 0L;
-			}
-			ret |= opt;
-		    }
-		} else {
-		    n = 0;
-		}
-	    }
-	}
-
-	if (n > 0) {
-	    gretl_delete(s, 0, n + 1);
-	} else {
-	    s++;
-	}
-    }
-
-    return ret;
 }
 
 enum {
@@ -854,26 +801,32 @@ static void clear_one_option (stored_opt *so)
 }
 
 /**
- * clear_option_params:
+ * clear_stored_options_for_command:
+ * @ci: target command index.
  *
- * Clears any non-persistent ancillary parameter values
- * currently associated with gretl command/option pairs.
+ * Clears any (non-persistent) option information currently
+ * associated with the given command, identified by its
+ * index.
  */
 
-void clear_option_params (void)
+void clear_stored_options_for_command (int ci)
 {
     int i, fd = gretl_function_depth();
 
 #if OPTDEBUG > 1
-    fprintf(stderr, "clear option params\n");
+    fprintf(stderr, "clearing stored options for %s\n",
+	    gretl_command_word(ci));
 #endif
 
     for (i=0; i<n_stored_opts; i++) {
-	if (optinfo[i].fd == fd && !(optinfo[i].flags & OPT_PERSIST)) {
+	if (optinfo[i].fd == fd && optinfo[i].ci == ci &&
+	    !(optinfo[i].flags & OPT_PERSIST)) {
 	    clear_one_option(&optinfo[i]);
 	}
     }
 }
+
+/* called on exiting a user-defined function */
 
 void destroy_option_params_at_level (int level)
 {
@@ -898,7 +851,26 @@ void destroy_option_params_at_level (int level)
     n_stored_opts = n;
 }
 
-/* clean up any options set via "setopt" */
+/* unconditionally clean up the entire optinfo stack */
+
+void stored_options_cleanup (void)
+{
+    int i;
+
+#if OPTDEBUG
+    fprintf(stderr, "stored_options_cleanup\n");
+#endif
+
+    for (i=0; i<n_stored_opts; i++) {
+	free(optinfo[i].val);
+    }
+
+    free(optinfo);
+    optinfo = NULL;
+    n_stored_opts = 0;
+}
+
+/* scrub just those options set via "setopt" */
 
 void setopt_cleanup (void)
 {
@@ -923,31 +895,12 @@ void setopt_cleanup (void)
     n_stored_opts = n;    
 }
 
-/* unconditionally clean up the entire optinfo stack */
-
-void option_params_cleanup (void)
-{
-    int i;
-
-#if OPTDEBUG
-    fprintf(stderr, "option_params_cleanup\n");
-#endif
-
-    for (i=0; i<n_stored_opts; i++) {
-	free(optinfo[i].val);
-    }
-
-    free(optinfo);
-    optinfo = NULL;
-    n_stored_opts = 0;
-}
-
 static stored_opt *matching_stored_opt (int ci, gretlopt opt)
 {
     int i, fd = gretl_function_depth();
 
 #if OPTDEBUG
-    fprintf(stderr, "matching_stored_opt: ci=%d, fd=%d, opt=%d, n_stored=%d\n",
+    fprintf(stderr, "matching_stored_opt? ci=%d, fd=%d, opt=%d, n_stored=%d\n",
 	    ci, fd, opt, n_stored_opts);
 #endif
 
@@ -1009,8 +962,8 @@ static int real_push_option (int ci, gretlopt opt, char *val,
     }
 
 #if OPTDEBUG 
-    fprintf(stderr, "push_option_param: ci=%d, fd=%d, opt=%d,"
-	    " val='%s'\n", ci, fd, opt, val);
+    fprintf(stderr, "push_option_param: ci=%d (%s), fd=%d, opt=%d,"
+	    " val='%s'\n", ci, gretl_command_word(ci), fd, opt, val);
 #endif
 
     so = matching_stored_opt(ci, opt);
@@ -1183,7 +1136,9 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
     int i, got_ci = 0;
 
 #if OPTDEBUG
-    fprintf(stderr, "setting stored options: ci = %d\n", ci);
+    fprintf(stderr, "setting stored options for %s (%d): ", 
+	    gretl_command_word(ci), ci);
+    debug_print_option_flags(NULL, opt);
 #endif
 
     if (vcv_opt_ok(ci) && (opt & OPT_O)) {
@@ -1194,7 +1149,7 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
     if (quiet_opt_ok(ci) && (opt & OPT_Q)) {
 	real_push_option(ci, OPT_Q, NULL, 1, flags);
 	opt &= ~OPT_Q; /* handled */
-    } 
+    }
 
     if (opt == 0) {
 	return;
@@ -1215,15 +1170,16 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
 /* Apparatus for pre-selecting options for a specified command,
    using "setopt" */
 
-int set_options_for_command (gretlopt opt, const char *cmdword,
-			     const char *param)
+int set_options_for_command (const char *cmdword,
+			     const char *param,
+			     gretlopt opt)
 {
-    int ci = gretl_command_number(cmdword);
+    int target_ci = gretl_command_number(cmdword);
     int flags = OPT_SETOPT;
     int clear = 0;
     int err = 0;
 
-    if (ci == 0 || ci == SETOPT) {
+    if (target_ci == 0 || target_ci == SETOPT) {
 	gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
 			     cmdword);
 	return E_DATA;
@@ -1242,17 +1198,17 @@ int set_options_for_command (gretlopt opt, const char *cmdword,
     }
 
     if (clear) {
-	clear_options_for_command(ci);
+	clear_options_for_command(target_ci);
     } else if (opt == 0) {
 	err = E_ARGS;
     } else {
-	set_stored_options(ci, opt, flags);
+	set_stored_options(target_ci, opt, flags);
     }
 
     return err;
 }
 
-static void maybe_get_stored_options (int ci, gretlopt *popt)
+void maybe_get_stored_options (int ci, gretlopt *popt)
 {
     int i, fd = gretl_function_depth();
 
@@ -1457,381 +1413,6 @@ gretlopt valid_short_opt (int ci, char c)
     }
 	
     return opt;
-}
-
-#define OPTVAL_ESCAPE 1
-
-#if OPTVAL_ESCAPE
-
-static char *get_quoted_optval (char *s, int *len)
-{
-    char *val = NULL;
-    char *p = s;
-    int n = 0, nesc = 0;
-
-    while (*p) {
-	if (*p == '"') {
-	    if (*(p-1) != '\\') {
-		break;
-	    } else {
-		nesc++;
-	    }
-	} 
-	n++;
-	p++;
-    }
-
-    if (*p == '"') {
-	val = calloc(n - nesc + 1, 1);
-	n = 0;
-	while (*s) {
-	    if (*s == '"' && *(s-1) != '\\') {
-		break;
-	    } else if (*s == '\\' && *(s+1) == '"') {
-		; /* skip the backslash */
-	    } else {
-		val[n++] = *s;
-	    }
-	    s++;
-	}
-	*len = n + nesc;
-    }
-	    
-    return val;
-}
-
-#else
-
-static char *get_quoted_optval (char *s, int *len)
-{
-    int n = strcspn(s, "\"");
-    char *val = NULL;
-
-    if (n >= 0 && *(s + n) == '"') {
-	val = gretl_strndup(s, n);
-	*len = n;
-    }
-	    
-    return val;
-}
-
-#endif
-
-/* extract an option parameter value following '=' */
-
-static int handle_optval (char *s, int ci, gretlopt opt, int status)
-{
-    char *p = s + 1; /* skip '=' */
-    char *val = NULL;
-    int len = 0, quoted = 0;
-    int err = 0;
-
-    if (*p == '"') {
-	/* handle a quoted value (e.g. a filename) */
-	quoted = 1;
-	p++;
-	val = get_quoted_optval(p, &len);
-	if (val == NULL) {
-	    err = E_PARSE;
-	}
-    } else if (*p != '\0') {
-	/* plain unquoted value */
-	len = strcspn(p, " =");
-	if (len > 0) {
-	    val = gretl_strndup(p, len);
-	} else {
-	    err = E_PARSE;
-	}
-    } else {
-	err = E_PARSE;
-    }
-
-    if (!err) {
-	/* there shouldn't be anything "stuck onto" the end of
-	   an option parameter */
-	p += len + quoted;
-	if (*p != '\0' && *p != ' ') {
-	    gretl_errmsg_sprintf(_("field '%s' in command is invalid"), p);
-	    err = E_PARSE;
-	}
-    }
-
-#if OPTDEBUG
-    fprintf(stderr, "handle_optval: got val = '%s'\n", val);
-#endif
-
-    if (val == NULL && !err) {
-	/* allocation must have failed */
-	err = E_ALLOC;
-    } 
-
-    if (!err) {
-	if (status == OPT_NEEDS_PARM || status == OPT_ACCEPTS_PARM) {
-	    err = real_push_option(ci, opt, val, 1, 0);
-	} else {
-	    err = E_DATA;
-	}
-    }
-
-    if (err) {
-	free(val);
-    } else {
-	gretl_delete(s, 0, 1 + len + 2 * quoted);
-    }
-
-    return err;
-}
-
-/* Crawl along @line looking for long-style option flags, possibly
-   with associated parameter values; check options for validity
-   in context.
-*/
-  
-static gretlopt get_long_opts (char *line, int ci, int *err)
-{
-    char *s = line;
-    char longopt[32];
-    OptStatus status = 0;
-    gretlopt match, ret = OPT_NONE;
-
-    while ((s = strstr(s, "--")) != NULL) {
-	match = 0;
-	*longopt = '\0';
-
-#if OPTDEBUG > 1
-	fprintf(stderr, "get_long_opts: s = '%s'\n", s);
-#endif
-
-	if (maybe_opt_start(line, s)) {
-	    sscanf(s + 2, "%31[^ =]", longopt);
-	    match = valid_long_opt(ci, longopt, &status);
-	    if (match > 0) {
-		/* recognized an acceptable option flag */
-		ret |= match;
-	    } else if (status == OPT_AMBIGUOUS) {
-		/* abbreviation matches more than one option */
-		gretl_errmsg_sprintf(_("Ambiguous option '--%s'"), longopt);
-		fprintf(stderr, " line='%s', ci = %d\n", line, ci);
-		*err = 1;
-		return OPT_NONE;
-	    } else {		
-		/* not a valid flag, or not applicable in context */
-		gretl_errmsg_sprintf(_("Invalid option '--%s'"), longopt);
-		fprintf(stderr, " line='%s', ci = %d\n", line, ci);
-		*err = 1;
-		return OPT_NONE;
-	    } 
-	}
-
-	if (match > 0) {
-	    gretl_delete(s, 0, 2 + strlen(longopt));
-	    if (*s == '=') {
-		/* got a param value: is it OK? */
-		if (status == OPT_NO_PARM) {
-		    *err = E_PARSE;
-		} else {
-		    *err = handle_optval(s, ci, match, status);
-		}
-	    } else if (status == OPT_NEEDS_PARM) {
-		/* we need a param value but there's none */
-		gretl_errmsg_sprintf(_("The option '--%s' requires a parameter"), 
-				     longopt);
-		*err = E_PARSE;
-	    }
-	    if (*err) {
-		return OPT_NONE;
-	    }	    
-	} else {
-	    s += 2;
-	}
-    }
-
-    return ret;
-}
-
-/* Try to get the command word, skipping a possible assignment to a
-   named object as in "<objectname> <- command", and bearing in mind
-   that <objectname> may have embedded spaces (in which case it will
-   be wrapped in quotes).
-*/
-
-static void get_cmdword (const char *line, char *word)
-{
-    if (*line == '"') {
-	/* skip to closing quote */
-	line++;
-	line += strcspn(line, "\"");
-	if (*line) line++;
-	line += strspn(line, " ");
-	if (!strncmp(line, "<-", 2)) {
-	    line += 2;
-	}
-	sscanf(line, "%8s", word);
-    } else if (sscanf(line, "%*s <- %8s", word) != 1) {
-	sscanf(line, "%8s", word);
-    }
-}
-
-static void tail_strip (char *s)
-{
-    int i, n = strlen(s);
-
-    for (i=n-1; i>0; i--) {
-	if (s[i] == ' ') {
-	    s[i] = '\0';
-	}
-	else break;
-    }
-}
-
-static int end_block_ci (const char *s)
-{
-    if (strlen(s) > 4) {
-	char word[9];
-
-	sscanf(s + 4, "%8s", word);
-	if (!strcmp(word, "nls")) {
-	    return NLS;
-	} else if (!strcmp(word, "mle")) {
-	    return MLE;
-	} else if (!strcmp(word, "gmm")) {
-	    return GMM;
-	} else if (!strcmp(word, "restrict")) {
-	    return RESTRICT;
-	} else if (!strcmp(word, "kalman")) {
-	    return KALMAN;
-	} else if (!strcmp(word, "foreign")) {
-	    return FOREIGN;
-	} else if (!strcmp(word, "system")) {
-	    return SYSTEM;
-	} else if (!strcmp(word, "mpi")) {
-	    return MPI;
-	}
-    }
-
-    return END;
-}
-
-/**
- * get_gretl_options:
- * @line: command line to parse.
- * @err: location for error code, which is set to 1 in case any 
- * invalid options are found, else set to 0.
- * 
- * Check for option flags in @line: if found, chop them out and set
- * the return value accordingly. 
- *
- * Returns: the options found in the line.
- */
-
-gretlopt get_gretl_options (char *line, int *err)
-{
-    gretlopt oflags = 0;
-    gretlopt opt;
-    char cmdword[9] = {0};
-    char *dashp = NULL;
-    int endblock = 0;
-    int storing = 0;
-    int ci, myerr = 0;
-
-    if (err != NULL) {
-	*err = 0;
-    }
-    
-    if (strlen(line) < 2 || *line == '#') {
-	return 0;
-    }
-
-    dashp = strchr(line, '-');
-    if (dashp == NULL) {
-	/* no options in this line itself */
-	if (n_stored_opts == 0) {
-	    return 0;
-	}
-    }
-
-#if OPTDEBUG > 1
-    fprintf(stderr, "get_gretl_options, starting: '%s'\n", line);
-#endif
-
-    get_cmdword(line, cmdword);
-
-    if (!strcmp(cmdword, "catch")) {
-	*cmdword = '\0';
-	get_cmdword(line + 6, cmdword);
-    } else if (!strcmp(cmdword, "setopt")) {
-	storing = 1;
-	*cmdword = '\0';
-	get_cmdword(line + 7, cmdword);
-    }	
-
-    if (!strcmp(cmdword, "end")) {
-	endblock = 1;
-	ci = end_block_ci(line);
-    } else {
-	ci = gretl_command_number(cmdword);
-    }
-
-#if OPTDEBUG
-    fprintf(stderr, "get gretl_options: '%s' -> ci=%d (storing = %d)\n", 
-	    cmdword, ci, storing);
-#endif
-
-    /* some commands do not take a "flag", and "-%c" may have
-       some other meaning */
-    if (ci == 0 || ci == GENR || ci == PRINTF || ci == SETOPT) {
-	return oflags;
-    } else if (!endblock && !storing && (ci == GMM || ci == MLE || ci == NLS)) {
-	return oflags;
-    }
-
-    /* smpl: in some contexts options don't make sense */
-    if (ci == SMPL && strchr(line, ';')) {
-	return oflags;
-    }
-
-    if (!storing) {
-	maybe_get_stored_options(ci, &oflags);
-    }
-
-    if (dashp == NULL) {
-	/* no point in continuing */
-	return oflags;
-    }
-
-    if (ci != SET && ci != SETINFO && ci != SMPL &&
-	ci != TABPRINT && ci != EQNPRINT) {
-	/* try for short-form options (e.g. "-o"): but note that
-	   with some commands there's the possibility of collision
-	   between short options and other syntactical elements,
-	   so we only recognize long-form options.
-	*/
-	opt = get_short_opts(line, ci, (ci == SMPL)? NULL : &myerr);
-	if (!myerr && opt) {
-	    oflags |= opt;
-	}
-    }
-
-    /* try for long-form options (e.g. "--vcv") */
-    if (!myerr) {
-	opt = get_long_opts(line, ci, &myerr);
-	if (!myerr && opt) {
-	    oflags |= opt;
-	}
-    }
-
-    /* strip trailing whitespace after processing */
-    tail_strip(line);
-
-#if OPTDEBUG > 1
-    fprintf(stderr, "get_gretl_options, done: '%s'\n", line);
-#endif
-
-    if (err != NULL) {
-	*err = myerr;
-    }
-
-    return oflags;
 }
 
 static void print_option_param (const char *s, PRN *prn)
@@ -2083,17 +1664,29 @@ int inapplicable_option_error (int ci, gretlopt opt)
 
 void debug_print_option_flags (const char *msg, gretlopt opt)
 {
-    fprintf(stderr, "%s: opt = %d\n", msg, opt);
+    if (msg != NULL && *msg != '\0') {
+	fprintf(stderr, "%s: ", msg);
+    }
 
-    if (opt) {
+    if (opt == 0) {
+	fprintf(stderr, "opt=0\n");
+    } else {
 	char c = 'A';
-	int i;
+	int i, started = 0;
+
+	fprintf(stderr, "opt=%d (", opt);
 
 	for (i=OPT_A; i<=OPT_Y; i*=2) {
 	    if (opt & i) {
-		fprintf(stderr, " includes OPT_%c (%d)\n", c, i);
+		if (started) {
+		    fputc('|', stderr);
+		}
+		fprintf(stderr, "OPT_%c", c);
+		started = 1;
 	    }
 	    c++;
 	}
-    }    
+
+	fputs(")\n", stderr);
+    }
 }

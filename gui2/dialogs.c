@@ -674,8 +674,8 @@ static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
 	};
 	int resp;
 
-	resp = radio_dialog(NULL, _("decimal point character:"), 
-	                    opts, 2, 0, 0, vwin_toplevel(vwin));
+	resp = radio_dialog(NULL, _("decimal point character:"),
+			    opts, 2, 0, 0, vwin_toplevel(vwin));
 	if (resp < 0) {
 	    return;
 	} else if (resp == 0) {
@@ -1651,50 +1651,37 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	    return TRUE;
 	}
 
-	lib_command_sprintf("smpl %s --restrict%s", s, extra);
-	g_free(s);
-
-	if (parse_lib_command()) {
-	    return TRUE;
-	}
-
-	err = bool_subsample(rset->opt);
+	err = bool_subsample(s, rset->opt);
 	if (!err) {
-	    record_lib_command();
+	    lib_command_sprintf("smpl %s --restrict%s", s, extra);
+	    record_command_verbatim();
 	    gtk_widget_destroy(rset->dlg);
-	} 	
+	}
+	g_free(s);
     } else if (rset->opt & OPT_O) {
 	/* sampling using a dummy var */
 	gchar *dumv;
 
 	dumv = combo_box_get_active_text(GTK_COMBO_BOX(rset->combo));
-	lib_command_sprintf("smpl %s --dummy%s", dumv, extra);
-	g_free(dumv);
-
-	if (parse_lib_command()) {
-	    return TRUE;
-	}	
-
-	err = bool_subsample(rset->opt);
+	err = bool_subsample(dumv, rset->opt);
 	if (!err) {
-	    record_lib_command();
+	    lib_command_sprintf("smpl %s --dummy%s", dumv, extra);
+	    record_command_verbatim();
 	    gtk_widget_destroy(rset->dlg);
 	} 
+	g_free(dumv);
     } else if (rset->opt & OPT_N) {
 	/* random subsample */
-	int subn;
+	int subn = obs_button_get_value(rset->spin1);
+	gchar *nstr = g_strdup_printf("%d", subn);
 
-	subn = obs_button_get_value(rset->spin1);
-	lib_command_sprintf("smpl %d --random%s", subn, extra);
-	if (parse_lib_command()) {
-	    return TRUE;
-	}
-
-	err = bool_subsample(rset->opt);
+	err = bool_subsample(nstr, rset->opt);
 	if (!err) {
-	    record_lib_command();
+	    lib_command_sprintf("smpl %d --random%s", subn, extra);
+	    record_command_verbatim();
 	    gtk_widget_destroy(rset->dlg);
-	} 
+	}
+	g_free(nstr);
     } else {
 	GtkSpinButton *button;
 	char s1[OBSLEN], s2[OBSLEN];
@@ -1726,17 +1713,15 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	}
 
 	if (t1 != dataset->t1 || t2 != dataset->t2) {
-	    lib_command_sprintf("smpl %s %s", s1, s2);
-	    if (parse_lib_command()) {
-		return TRUE;
-	    }
-	    err = do_set_sample();
+	    err = set_sample(s1, s2, dataset);
 	    if (err) {
 		gui_errmsg(err);
 	    } else {
-		record_lib_command();
+		lib_command_sprintf("smpl %s %s", s1, s2);
+		record_command_verbatim();
 		gtk_widget_destroy(rset->dlg);
 		set_sample_label(dataset);
+		mark_session_changed();
 	    }
 	} else {
 	    /* no change */

@@ -128,7 +128,8 @@ int gretl_isdir (const char *path);
 
 char *gretl_addpath (char *fname, int script);
 
-int getopenfile (const char *line, char *fname, gretlopt opt);
+int get_full_filename (const char *fname, char *fullname, 
+		       gretlopt opt);
 
 int fname_has_path (const char *fname);
 

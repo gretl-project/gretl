@@ -128,6 +128,7 @@ enum loop_command_codes {
 struct loop_command_ {
     char *line;
     int ci;
+    gretlopt opt;
     char flags;
     GENERATOR *genr;
 };
@@ -343,20 +344,6 @@ loop_delta (LOOPSET *loop, DATASET *dset, int *err)
 				 expr);
 	}
     }
-}
-
-static gretlopt get_loop_opts (ExecState *s, int *err)
-{
-    gretlopt opt = OPT_NONE;
-
-    if (compile_level > 0) {
-	/* options will not have been parsed out already */
-	opt = get_gretl_options(s->line, err);
-    } else {
-	opt = s->cmd->opt;
-    }
-
-    return opt;
 }
 
 static void set_loop_opts (LOOPSET *loop, gretlopt opt)
@@ -1390,6 +1377,7 @@ static void loop_cmds_init (LOOPSET *loop, int i1, int i2)
     for (i=i1; i<i2; i++) {
 	loop->cmds[i].line = NULL;
 	loop->cmds[i].ci = 0;
+	loop->cmds[i].opt = 0;
 	loop->cmds[i].flags = 0;
 	loop->cmds[i].genr = NULL;
     }
@@ -2063,6 +2051,7 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 
     len = strlen(s->line);
 
+#if 0 /* FIXME not needed with new tokenizer? */
     if (s->cmd->opt) {
 	flagstr = print_flags(s->cmd->opt, s->cmd->ci);
 	len += strlen(flagstr);
@@ -2071,6 +2060,7 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 	    err = 1;
 	}
     }
+#endif
 
     if (!err) {
 	if (flagstr != NULL) {
@@ -2159,12 +2149,20 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
 
     if (s->cmd->ci == LOOP) {
 	/* starting from scratch */
-	gretlopt opt = get_loop_opts(s, &err);
+	char *spec = s->cmd->param;
+	gretlopt opt = s->cmd->opt;
 	int nested = 0;
 
+#if 1 /* testing */
+	if (spec == NULL) {
+	    fprintf(stderr, "gretl_loop_append_line: loop line unparsed\n");
+	    abort();
+	}
+#endif
+
 	if (!err) {
-	    newloop = start_new_loop(s->line, loop, dset, 
-				     opt, &nested, &err);
+	    newloop = start_new_loop(spec, loop, dset, opt, 
+				     &nested, &err);
 #if LOOP_DEBUG
 	    fprintf(stderr, "got LOOP: newloop at %p (err = %d)\n", 
 		    (void *) newloop, err);
@@ -2413,20 +2411,13 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
     }
 
     for (i=0; i<loop->n_cmds; i++) {
-	gretlopt opt = OPT_NONE;
+	gretlopt opt = loop->cmds[i].opt;
 	int ci = loop->cmds[i].ci;
 
 #if LOOP_DEBUG
 	fprintf(stderr, "print_loop_results: loop command %d: %s\n", 
 		i, loop->cmds[i].line);
 #endif
-
-	if (plain_model_ci(ci)) {
-	    char linecpy[MAXLINE];
-
-	    strcpy(linecpy, loop->cmds[i].line);
-	    opt = get_gretl_options(linecpy, NULL);
-	}	    
 
 	if (!loop_is_progressive(loop) && ci == OLS) {
 	    if (model_print_deferred(opt)) {
@@ -2879,6 +2870,8 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 	}
     }
 
+    loop->cmds[j].opt = cmd->opt;
+
     if (cmd->flags & CMD_CATCH) {
 	loop->cmds[j].flags |= LOOP_CMD_CATCH;
     }
@@ -3105,7 +3098,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 			pputc(prn, '\n');
 		    }
 		} else if (!loop_is_quiet(loop)) {
-		    echo_command(cmd, dset, line, prn);
+		    gretl_echo_command(cmd, dset, line, prn);
 		}
 	    }
 
@@ -3174,7 +3167,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		}
 	    } else if (progressive && not_ok_in_progloop(cmd->ci)) {
 		gretl_errmsg_sprintf(_("%s: not implemented in 'progressive' loops"),
-				     cmd->word);
+				     gretl_command_word(cmd->ci));
 		err = 1;
 	    } else if (cmd->ci == GENR) {
 		if (subst || (cmd->opt & OPT_O)) {
@@ -3185,9 +3178,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		    if (!loop_is_verbose(loop)) {
 			cmd->opt |= OPT_Q;
 		    }
-		    err = generate(line, dset, cmd->opt, prn);
+		    err = generate(cmd->vstart, dset, cmd->opt, prn);
 		} else {
-		    err = add_loop_genr(loop, j, line, dset);
+		    err = add_loop_genr(loop, j, cmd->vstart, dset);
 		    if (!err) {
 			err = execute_genr(loop->cmds[j].genr, dset, prn);
 		    }

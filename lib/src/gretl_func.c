@@ -6066,7 +6066,6 @@ static void record_obs_info (obsinfo *o, DATASET *dset)
 static int restore_obs_info (obsinfo *oi, DATASET *dset)
 {
     gretlopt opt = OPT_NONE;
-    char tmp[128];
 
     if (oi->structure == CROSS_SECTION) {
 	opt = OPT_X;
@@ -6078,9 +6077,7 @@ static int restore_obs_info (obsinfo *oi, DATASET *dset)
 	opt = OPT_N;
     } 
 
-    sprintf(tmp, "setobs %d %s", oi->pd, oi->stobs);
-
-    return set_obs(tmp, dset, opt);
+    return simple_set_obs(dset, oi->pd, oi->stobs, opt);
 }
 
 /* do the basic housekeeping that is required when a function exits:

@@ -23,11 +23,6 @@
 int boxplots (const int *list, const char *literal,
 	      const DATASET *dset, gretlopt opt);
 
-int boolean_boxplots (const char *line, const char *literal,
-		      DATASET *dset, gretlopt opt);
-
 int boxplot_numerical_summary (const char *fname, PRN *prn);
-
-const char *get_last_boxplots_string (void);
 
 #endif /* BOXPLOTS_H */

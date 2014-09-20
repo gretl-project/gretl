@@ -180,6 +180,7 @@ static struct gretl_cmd gretl_cmd_aliases[] = {
     { GENR, "scalar" },  
     { GENR, "matrix" },  
     { GENR, "string" },
+    { GENR, "list" },
     { GENR, "bundle" },
     { GENR, "strings" },
     { GENR, "matrices" },

@@ -261,7 +261,6 @@ static void maybe_unrestrict_dataset (void)
 static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 			      GtkWidget *dlg)
 {
-    char setline[64];
     char record[128];
     gretlopt opt = OPT_NONE;
     int create = (opts->flags & DW_CREATE);
@@ -337,8 +336,6 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	strcpy(dwinfo->stobs, "1");
     }
 
-    sprintf(setline, "setobs %d %s", dwinfo->pd, dwinfo->stobs);
-
     if (dwinfo->structure == TIME_SERIES) {
 	opt = OPT_T;
     } else if (dwinfo->structure == STACKED_TIME_SERIES) {
@@ -351,15 +348,16 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	opt = OPT_N;
     }
 
-    err = set_obs(setline, dataset, opt);
+    err = simple_set_obs(dataset, dwinfo->pd, dwinfo->stobs, opt);
 
 #if DWDEBUG
-    fprintf(stderr, "setline = '%s', opt = %d; set_obs returned %d\n", 
-	    setline, opt, err);
+    fprintf(stderr, "pd=%d, stobs='%s', opt=%d; set_obs returned %d\n", 
+	    dwinfo->pd, dwinfo->stobs, opt, err);
 #endif
 
     if (!err) {
-	sprintf(record, "%s%s", setline, print_flags(opt, SETOBS));
+	sprintf(record, "%d %s%s", dwinfo->pd, dwinfo->stobs, 
+		print_flags(opt, SETOBS));
     }
 
  finalize:

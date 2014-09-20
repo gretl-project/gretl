@@ -851,10 +851,7 @@ static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 {
     GtkWidget *b = NULL;
 
-    if (dlg->ci == GR_BOX && opt == OPT_O) {
-	b = gretl_option_check_button(_("Show interval for median"),
-				      &dlg->opt, opt);
-    } else if (opt == OPT_T) {
+    if (opt == OPT_T) {
 	b = gretl_option_check_button(_("Iterated estimation"),
 				      &dlg->opt, opt); /* OPT_T vs OPT_I?? */
 	if (pmod != NULL && (pmod->opt & OPT_I)) {

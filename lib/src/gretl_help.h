@@ -20,6 +20,7 @@
 #ifndef GRETL_HELP_H
 #define GRETL_HELP_H
 
-int cli_help (const char *cmdword, gretlopt opt, PRN *prn);
+int cli_help (const char *hlpword, const char *param,
+	      gretlopt opt, PRN *prn);
 
 #endif

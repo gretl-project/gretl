@@ -6,17 +6,13 @@
 #include "gretl_restrict.h"
 #include "gretl_func.h"
 
-typedef struct Laginfo_ Laginfo;
-
 typedef enum {
-    CMD_NOLIST  = 1 << 0, /* command doesn't have a list of variables */
-    CMD_IGNORE  = 1 << 1, /* line should be ignored */
-    CMD_NULLIST = 1 << 2, /* command has been given a null list on input */
-    CMD_SUBST   = 1 << 3, /* string substitution has been done on command */
-    CMD_PROG    = 1 << 4, /* command is in context of progressive loop */
-    CMD_CATCH   = 1 << 5, /* error from command should be "caught" */
-    CMD_NOSUB   = 1 << 6, /* no @-substitution wanted (pre-checked) */
-    CMD_NOOPT   = 1 << 7  /* no options present (pre-checked) */
+    CMD_IGNORE  = 1 << 0, /* line should be ignored */
+    CMD_SUBST   = 1 << 1, /* string substitution has been done on command */
+    CMD_PROG    = 1 << 2, /* command is in context of progressive loop */
+    CMD_CATCH   = 1 << 3, /* error from command should be "caught" */
+    CMD_NOSUB   = 1 << 4, /* no @-substitution called for (pre-checked) */
+    CMD_NOOPT   = 1 << 5  /* no options present (pre-checked) */
 } CmdFlags;
 
 #define cmd_nolist(c)  (c->flags & CMD_NOLIST)
@@ -25,23 +21,28 @@ typedef enum {
 #define cmd_nosub(c)   (c->flags & CMD_NOSUB)
 #define cmd_noopt(c)   (c->flags & CMD_NOOPT)
 
+typedef struct cmd_token_ cmd_token;
+
 struct CMD_ {
-    char word[FN_NAMELEN];      /* command word */
-    int ci;                     /* command index number */
-    int err;                    /* error code */
-    int context;                /* context for subsetted commands */
-    gretlopt opt;               /* option flags */
-    int order;                  /* lag order, for various commands */
-    int aux;                    /* auxiliary int (e.g. for VECM rank) */
-    CmdFlags flags;             /* internal flags */
-    char *param;                /* general-purpose parameter to command */
-    char *parm2;                /* second parameter for some special uses */
-    int *list;                  /* list of variables by ID number */
-    int *auxlist;               /* auxiliary list for some uses */
+    int ci;          /* current command index */
+    int err;         /* error code */
+    int context;     /* for block commands, index of current context */
+    int ciflags;     /* status flags pertaining to @ci */
+    gretlopt opt;    /* option(s) for command */
+    int flags;       /* status flags for command invocation */
+    int order;       /* lag order, where appropriate */
+    int auxint;      /* auxiliary int (e.g. VECM rank) */
+    int cstart;      /* token index of start of 'real' command */
+    int ntoks;       /* number of tokens actually used */
+    int nt_alloced;  /* number of tokens allocated */
+    cmd_token *toks;    /* tokens */
+    const char *vstart; /* pointer to where in line varargs or expr start */
+    char *param;     /* basic parameter string */
+    char *parm2;     /* second parameter string */
+    int *list;       /* list of series and/or control integers */
+    int *auxlist;    /* needed for "gappy" lag lists */
     char savename[MAXSAVENAME]; /* for object-saving mechanism */
-    Laginfo *linfo;             /* struct for recording info on automatically
-                                   generated lags */
-};
+}; 
 
 typedef void (*EXEC_CALLBACK) (ExecState *, void *, GretlObjType type);
 

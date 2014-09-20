@@ -190,6 +190,7 @@ struct set_vars_ {
 
 /* global state */
 set_vars *state;
+static int seed_is_set;
 static int gretl_debug;
 static int user_mp_bits;
 static int R_functions;
@@ -1200,10 +1201,6 @@ static int set_shelldir (const char *s)
 {
     int len = 0, err = 0;
 
-    /* skip past "set shelldir" and space */
-    s += 12;
-    s += strspn(s, " ");
-
     if (*s == '\0') {
 	*state->shelldir = '\0';
     } else if (*s == '"') {
@@ -1270,10 +1267,6 @@ static int set_workdir (const char *s)
 	gretl_errmsg_set("set workdir: cannot be done inside a function");
 	return 1;
     }
-
-    /* skip past "set workdir" and space */
-    s += 11;
-    s += strspn(s, " ");
 
     if (*s == '\0') {
 	err = E_DATA;
@@ -1451,13 +1444,23 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_int(SIMD_MN_MIN, prn, opt);
 
     if (opt & OPT_D) {
+	/* display only */
 	libset_print_bool(SHELL_OK, prn, opt);
 	if (*state->shelldir) {
 	    pprintf(prn, " shelldir = '%s'\n", state->shelldir);
 	} else {
 	    pputs(prn, " shelldir = unset\n");
 	}
-    } 
+    } else {
+	/* saving to file */
+	if (*state->shelldir) {
+	    if (strchr(state->shelldir, ' ')) {
+		pprintf(prn, "set shelldir \"%s\"\n", state->shelldir);
+	    } else {
+		pprintf(prn, "set shelldir %s\n", state->shelldir);
+	    }
+	}
+    }	
 
     libset_print_bool(USE_CWD, prn, opt);
     libset_print_bool(SKIP_MISSING, prn, opt);
@@ -1493,7 +1496,9 @@ static int print_settings (PRN *prn, gretlopt opt)
 	pprintf(prn, " seed = %u\n", gretl_rand_get_seed());
 	pprintf(prn, " normal_rand = %s\n", libset_option_string(NORMAL_RAND));
     } else {
-	pprintf(prn, "set seed %u\n", gretl_rand_get_seed());
+	if (seed_is_set) {
+	    pprintf(prn, "set seed %u\n", gretl_rand_get_seed());
+	}
 	pprintf(prn, "set normal_rand %s\n", libset_option_string(NORMAL_RAND));
     }
     if (gretl_mpi_initialized()) {
@@ -1566,8 +1571,9 @@ static int libset_query_settings (const char *s, PRN *prn)
 	    pprintf(prn, "%s: matrix, currently null\n", s);
 	}
     } else if (!strcmp(s, "seed")) {
-	pprintf(prn, "%s: unsigned int, currently %u\n",
-		s, state->seed ? state->seed : gretl_rand_get_seed());
+	pprintf(prn, "%s: unsigned int, currently %u (%s)\n",
+		s, state->seed ? state->seed : gretl_rand_get_seed(),
+		seed_is_set ? "set by user" : "automatic");
     } else if (!strcmp(s, "csv_delim")) {
 	pprintf(prn, "%s: named character, currently \"%s\"\n", s,
 		arg_from_delim(data_delim));
@@ -1642,12 +1648,10 @@ static int check_set_bool (const char *setobj, const char *setarg)
     }
 }
 
-int execute_set_line (const char *line, DATASET *dset, 
-		      gretlopt opt, PRN *prn)
+int execute_set (const char *setobj, const char *setarg,
+		 DATASET *dset, gretlopt opt, PRN *prn)
 {
-    char setobj[32], setarg[32], junk[8];
-    int k, argc, err = E_PARSE;
-    double x;
+    int k, argc, err;
 
     check_for_state();
 
@@ -1655,40 +1659,28 @@ int execute_set_line (const char *line, DATASET *dset,
 	return write_or_read_settings(opt, prn);
     }
 
-    *setobj = *setarg = *junk = '\0';
+    argc = (setobj != NULL) + (setarg != NULL);
 
-    argc = sscanf(line, "%*s %31s %31s %7s", setobj, setarg, junk);
-
-    if (argc <= 0) {
+    if (argc == 0) {
 	return print_settings(prn, OPT_D);
     }
 
-    if (argc > 1) {
-	/* specials which need the whole line (FIXME) */
-	if (!strcmp(setobj, "shelldir")) {
-	    return set_shelldir(line);
-	} else if (!strcmp(setobj, "workdir")) {
-	    return set_workdir(line);
-	}
-    }
-
-    if (argc == 3) {
-	/* got some extraneous stuff */
-	return err;
-    }
+    /* set error default */
+    err = E_PARSE;
 
     if (argc == 1) {
-	if (!strcmp(setobj, ECHO)) {
-	    state->flags |= STATE_ECHO_ON;
-	    err = 0;
-	} else if (!strcmp(setobj, "stopwatch")) {
+	if (!strcmp(setobj, "stopwatch")) {
 	    gretl_stopwatch();
-	    err = 0;
+	    return 0;
 	} else {
 	    return libset_query_settings(setobj, prn);
 	}
     } else if (argc == 2) {
-	if (!strcmp(setobj, "csv_write_na") || !strcmp(setobj, "csv_na")) {
+	if (!strcmp(setobj, "shelldir")) {
+	    return set_shelldir(setarg);
+	} else if (!strcmp(setobj, "workdir")) {
+	    return set_workdir(setarg);
+	} else if (!strcmp(setobj, "csv_write_na") || !strcmp(setobj, "csv_na")) {
 	    return set_csv_na_write_string(setarg);
 	} else if (!strcmp(setobj, "csv_read_na")) {
 	    return set_csv_na_read_string(setarg);
@@ -1702,8 +1694,8 @@ int execute_set_line (const char *line, DATASET *dset,
 
 	if (libset_boolvar(setobj)) {
 	    if (!strcmp(setobj, SHELL_OK)) {
-		pprintf(prn, "You can only set this variable "
-			"via the gretl GUI\n");
+		pprintf(prn, "'%s': this must be set via the gretl GUI\n", setobj);
+		err = E_DATA;
 	    } else if (!strcmp(setobj, USE_OPENMP)) {
 #if defined(_OPENMP)
 		err = check_set_bool(setobj, setarg);
@@ -1724,6 +1716,8 @@ int execute_set_line (const char *line, DATASET *dset,
 		libset_set_double(setobj, NADBL);
 		err = 0;
 	    } else {
+		double x;
+
 		err = libset_get_scalar(NULL, setarg, NULL, &x);
 		if (!err) {
 		    err = libset_set_double(setobj, x);
@@ -1745,6 +1739,7 @@ int execute_set_line (const char *line, DATASET *dset,
 			    _("Pseudo-random number generator seeded with %d\n"), k);
 		}
 		state->seed = k;
+		seed_is_set = 1;
 	    }
 	} else if (!strcmp(setobj, HORIZON)) {
 	    /* horizon for VAR impulse responses */
@@ -2700,6 +2695,36 @@ int libset_write_script (const char *fname)
     return err;
 }
 
+static char *get_quoted_arg (const char *s, int *err)
+{
+    const char *p;
+    int n = 0, matched = 0;
+    char *ret = NULL;
+
+    p = s = strchr(s, '"') + 1;
+
+    while (*p) {
+	if (*p == '"') {
+	    matched = 1;
+	    break;
+	} else {
+	    n++;
+	}
+	p++;
+    }
+
+    if (!matched) {
+	*err = E_PARSE;
+    } else {
+	ret = gretl_strndup(s, n);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    return ret;
+}
+
 /* If @prn is non-NULL we're called via the "set" command.
    Otherwise we're called by the gretl session apparatus.
 */
@@ -2724,14 +2749,29 @@ static int real_libset_read_script (const char *fname,
     }
 
     if (!err) {
-	char line[1024];
+	char setobj[32], setarg[32], line[1024];
+	int nf;
 
 	while (fgets(line, sizeof line, fp)) {
 	    if (*line == '#' || string_is_blank(line)) {
 		continue;
 	    }
 	    tailstrip(line);
-	    err = execute_set_line(line, NULL, OPT_NONE, prn);
+	    nf = sscanf(line, "%*s %31s %31s", setobj, setarg);
+	    if (nf == 1) {
+		err = execute_set(setobj, NULL, NULL, OPT_NONE, prn);
+	    } else if (nf == 2) {
+		if (*setarg == '"') {
+		    char *q = get_quoted_arg(line, &err);
+
+		    if (!err) {
+			err = execute_set(setobj, q, NULL, OPT_NONE, prn);
+			free(q);
+		    }
+		} else {
+		    err = execute_set(setobj, setarg, NULL, OPT_NONE, prn);
+		}
+	    }
 	    if (err && prn != NULL) {
 		break;
 	    }

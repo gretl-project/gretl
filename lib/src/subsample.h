@@ -43,7 +43,7 @@ int attach_subsample_to_model (MODEL *pmod, const DATASET *dset);
 int add_dataset_to_model (MODEL *pmod, const DATASET *dset,
 			  gretlopt opt);
 
-int restrict_sample (const char *line, const int *list,  
+int restrict_sample (const char *param, const int *list,  
 		     DATASET *dset, ExecState *state, 
 		     gretlopt opt, PRN *prn,
 		     int *n_dropped);
@@ -60,7 +60,7 @@ void set_dataset_resampled (DATASET *dset);
 
 int dataset_is_resampled (const DATASET *dset);
 
-int set_sample (const char *line, DATASET *dset);
+int set_sample (const char *start, const char *stop, DATASET *dset);
 
 int restore_full_sample (DATASET *dset, ExecState *state);
 

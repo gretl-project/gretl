@@ -48,6 +48,8 @@
 #define LDEBUG 0
 #define VLDEBUG 0
 
+#define LIST_USE_VNAMES 1
+
 enum {
     SR_LVARS  = 1,
     SR_RVARS1,
@@ -84,6 +86,8 @@ struct _selector {
     int n_rows;
     gretlopt opts;
     char *cmdlist;
+    size_t cmdsize;
+    size_t cmdlen;
     gpointer data;
     int (*callback)();
 };
@@ -162,6 +166,7 @@ enum {
                          c == VECM || \
                          c == VLAGSEL || \
                          c == WLS || \
+			 c == GR_BOX || \
                          c == XTAB)
 
 #define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM || \
@@ -819,15 +824,16 @@ void selector_from_model (windata_t *vwin)
 	veclist = gretl_list_copy(var->ylist);
 
 	free(vecxlist);
+	vecxlist = NULL;
+
 	if (var->rlist != NULL) {
 	    vecxlist = gretl_lists_join_with_separator(var->xlist,
 						       var->rlist);
-	} else {
+	} else if (var->xlist != NULL) {
 	    vecxlist = gretl_list_copy(var->xlist);
 	}
 
 	set_lag_prefs_from_VAR(var->lags, vecxlist);
-
 	default_order = var->order;
 
 	if (ci == VECM) {
@@ -2450,26 +2456,74 @@ enum cmdlist_codes {
 
 static int add_to_cmdlist (selector *sr, const char *add)
 {
-    int n = strlen(sr->cmdlist);
-    char *cmdlist = NULL;
+    size_t addlen = strlen(add);
+    size_t req = sr->cmdlen + addlen + 1;
     int err = 0;
 
-    if (n % MAXLEN > MAXLEN - 32) {
-	int blocks = 2 + n / MAXLEN;
+    if (req > sr->cmdsize) {
+	size_t newsize = sr->cmdsize + MAXLEN;
+	char *tmp = NULL;
 
-	cmdlist = realloc(sr->cmdlist, blocks * MAXLEN);
-	if (cmdlist == NULL) {
-	    err = 1;
+	if (newsize < req) {
+	    newsize = req;
+	}
+
+	tmp = realloc(sr->cmdlist, newsize);
+	if (tmp == NULL) {
+	    err = E_ALLOC;
 	} else {
-	    sr->cmdlist = cmdlist;
+	    sr->cmdlist = tmp;
+	    sr->cmdsize = newsize;
 	}
     }
 
     if (!err) {
 	strcat(sr->cmdlist, add);
+	sr->cmdlen += addlen;
     }
 
     return err;
+}
+
+/* append a space followed by either the ID number or
+   the name of the series */
+
+static void cmdlist_append_series (selector *sr,
+				   const char *s0,
+				   int id)
+{
+    char idstr[8];
+
+    if (s0 != NULL) {
+	add_to_cmdlist(sr, s0);
+    }
+
+#if LIST_USE_VNAMES
+    if (id > 0 && id < dataset->v) {
+	add_to_cmdlist(sr, dataset->varname[id]);
+    } else {
+	sprintf(idstr, "%d", id);
+	add_to_cmdlist(sr, idstr);
+    }	
+#else
+    sprintf(idstr, "%d", id);
+    add_to_cmdlist(sr, idstr);
+#endif
+}
+
+static void print_list_element (char *targ,
+				const char *s0,
+				int id)
+{
+#if LIST_USE_VNAMES
+    if (id > 0 && id < dataset->v) {
+	sprintf(targ, "%s%s", s0, dataset->varname[id]);
+    } else {
+	sprintf(targ, "%s%d", s0, id);
+    }
+#else
+    sprintf(targ, "%s%d", s0, id);
+#endif
 }
 
 static char *arma_lag_string (char *targ, const char *s)
@@ -2578,43 +2632,35 @@ static void read_ellipse_alpha (selector *sr)
    command line.
 */
 
-static char *
+static gchar *
 discrete_lags_string (const char *vname, const int *laglist,
 		      char context)
 {
-    int len = strlen(vname) + 4;
-    gchar *tmp;
-    char *s;
-    int i, li;
-    int err = 0;
+    gchar *ret = NULL;
+    int nlags = laglist[0];
+    int i, li, len;
+    char tmp[64];
 
-    s = malloc(len + laglist[0] * 6);
+    /* allow 3 for space, '(' and ')' */
+    len = 1 + nlags * (strlen(vname) + 3);
 
-    if (s != NULL) {
-	sprintf(s, " %s(", vname);
-	for (i=1; i<=laglist[0]; i++) {
+    for (i=1; i<=nlags; i++) {
+	li = laglist[i];
+	sprintf(tmp, "%d", li);
+	len += strlen(tmp) + (li > 0);
+    }
+
+    ret = g_malloc0(len);
+
+    if (ret != NULL) {
+	for (i=1; i<=nlags; i++) {
 	    li = laglist[i];
-	    if (li > 999) {
-		err = 1;
-		break;
-	    }
-	    tmp = g_strdup_printf("%s%d", (li > 0)? "-" : "", li);
-	    strcat(s, tmp);
-	    if (i < laglist[0]) {
-		strcat(s, ", ");
-	    } else {
-		strcat(s, ")");
-	    }
-	    g_free(tmp);
-	}
-
-	if (err) {
-	    free(s);
-	    s = NULL;
+	    sprintf(tmp, " %s(%s%d)", vname, (li > 0)? "-" : "", li);
+	    strcat(ret, tmp);
 	}
     }
 
-    return s;
+    return ret;
 }  
 
 int selector_get_VAR_order (const selector *sr)
@@ -2654,13 +2700,17 @@ static char *get_lagpref_string (int v, char context,
 	s = g_strdup_printf(" %s(%s%d)", vname, (lmin > 0)? "-" : "",
 			    lmin);
     } else if (context != LAG_Y_X && context != LAG_Y_W) {
+#if LIST_USE_VNAMES
+	s = g_strdup_printf(" %s", vname);
+#else
 	s = g_strdup_printf(" %d", v);
+#endif
     }
 
 #if LDEBUG
     if (s != NULL) {
-	fprintf(stderr, "get_lagpref_string (v=%d, context=%d):\n"
-		" constructed s = '%s'\n", v, (int) context, s);
+	fprintf(stderr, "get_lagpref_string for v=%d (%s), context=%d:\n"
+		" constructed s = '%s'\n", v, vname, (int) context, s);
     }
 #endif
 
@@ -2697,6 +2747,7 @@ static int maybe_resize_exog_recorder_lists (selector *sr, int n)
 	if (USE_ZLIST(sr->ci)) {
 	    newlist = gretl_list_resize(&instlist, n);
 	} else {
+	    /* FIXME not needed for VECM? */
 	    newlist = gretl_list_resize(&vecxlist, n);
 	}
 	if (newlist == NULL) {
@@ -2731,7 +2782,7 @@ static void get_rvars1_data (selector *sr, int rows, int context)
 	   list blank in case it overflows 
 	*/
 	return;
-    }   
+    }
 
     sr->n_left = 0;
 
@@ -2748,16 +2799,16 @@ static void get_rvars1_data (selector *sr, int rows, int context)
 
 	if (context) {
 	    rvstr = get_lagpref_string(rvar, context, sr);
+	    if (rvstr == NULL) {
+		sr->error = E_ALLOC;
+		break;
+	    } else {
+		add_to_cmdlist(sr, rvstr);
+		g_free(rvstr);
+		added++;
+	    }
 	} else {
-	    rvstr = g_strdup_printf(" %d", rvar);
-	}
-
-	if (rvstr == NULL) {
-	    sr->error = E_ALLOC;
-	    break;
-	} else {
-	    add_to_cmdlist(sr, rvstr);
-	    g_free(rvstr);
+	    cmdlist_append_series(sr, " ", rvar);
 	    added++;
 	}
 
@@ -2783,45 +2834,23 @@ static void get_rvars1_data (selector *sr, int rows, int context)
     }
 }
 
-static int veclist_add_term (int **listp, int *jp, int v)
-{
-    int n = (*listp)[0];
-
-    if (*jp > n) {
-	gretl_list_append_term(listp, v);
-	if (*listp == NULL) {
-	    return E_ALLOC;
-	} else {
-	    *jp += 1;
-	}
-    } else {
-	(*listp)[*jp] = v;
-	*jp += 1;
-    }
-
-    return 0;
-}
-
 /* VECM: parse out the exogenous vars as either restricted
-   or unrestricted.  Right now we don't attempt to combine
-   this with auto lag selection ("Lags" button), but maybe
-   we should */
+   or unrestricted */
 
 static int get_vecm_exog_list (selector *sr, int rows, 
 			       GtkTreeModel *mod)
 {
     GtkTreeIter iter;
-    int *xlist = NULL, *zlist = NULL;
-    gchar *flag = NULL;
-    gchar *tmp = NULL;
-    int lag, i, j = 1;
-    int v, err = 0;
+    int *xlist = NULL;
+    int *rlist = NULL;
+    int i, v;
+    int err = 0;
 
     gtk_tree_model_get_iter_first(mod, &iter);
 
     for (i=0; i<rows && !err; i++) {
-	flag = NULL;
-	lag = 0;
+	gchar *flag = NULL;
+	int lag = 0;
 
 	gtk_tree_model_get(mod, &iter, COL_ID, &v, COL_LAG, &lag, 
 			   COL_FLAG, &flag, -1);
@@ -2844,44 +2873,45 @@ static int get_vecm_exog_list (selector *sr, int rows,
 		}
 	    } else if (*flag == 'R') {
 		/* restricted terms */
-		gretl_list_append_term(&zlist, v);
-		if (zlist == NULL) {
+		gretl_list_append_term(&rlist, v);
+		if (rlist == NULL) {
 		    err = E_ALLOC;
 		}		
 	    } else {
 		err = E_DATA;
 	    }
-	    g_free(flag);
 	} 
 
+	g_free(flag);
 	gtk_tree_model_iter_next(mod, &iter);
     }
 
     if (!err) {
 	if (xlist != NULL) {
-	    tmp = gretl_list_to_string(xlist);
-	    add_to_cmdlist(sr, tmp);
-	    g_free(tmp);
-	    for (i=1; i<=xlist[0] && !err; i++) {
-		v = xlist[i];
-		err = veclist_add_term(&vecxlist, &j, v);
+	    for (i=1; i<=xlist[0]; i++) {
+		cmdlist_append_series(sr, " ", xlist[i]);
 	    }
-	    free(xlist);
 	} 
-
-	if (zlist != NULL && !err) {
+	if (rlist != NULL) {
 	    add_to_cmdlist(sr, " ;");
-	    tmp = gretl_list_to_string(zlist);
-	    add_to_cmdlist(sr, tmp);
-	    g_free(tmp);
-	    err = veclist_add_term(&vecxlist, &j, LISTSEP);
-	    for (i=1; i<=zlist[0] && !err; i++) {
-		v = zlist[i];
-		err = veclist_add_term(&vecxlist, &j, v);
-	    }
-	    free(zlist);	    
+	    for (i=1; i<=rlist[0]; i++) {
+		cmdlist_append_series(sr, " ", rlist[i]);
+	    }	    
+	}
+
+	free(vecxlist);
+	vecxlist = NULL;
+
+	if (xlist != NULL && rlist != NULL) {
+	    vecxlist = gretl_lists_join_with_separator(xlist, rlist);
+	} else if (xlist != NULL) {
+	    vecxlist = xlist;
+	    xlist = NULL;
 	}
     }
+
+    free(xlist);
+    free(rlist);
 
     if (err) {
 	gui_errmsg(err);
@@ -2938,12 +2968,11 @@ static int get_rvars2_data (selector *sr, int rows, int context)
 
 	if (context) {
 	    tmp = get_lagpref_string(exog, context, sr);
+	    add_to_cmdlist(sr, tmp);
+	    g_free(tmp);
 	} else {
-	    tmp = g_strdup_printf(" %d", exog);
+	    cmdlist_append_series(sr, " ", exog);
 	}
-
-	add_to_cmdlist(sr, tmp);
-	g_free(tmp);
 
 	if (reclist != NULL) {
 	    reclist[j++] = exog;
@@ -3156,7 +3185,6 @@ static void maybe_read_var_hac_option (selector *sr)
 static void parse_extra_widgets (selector *sr, char *endbit)
 {
     const gchar *txt = NULL;
-    char numstr[8];
     int k = 0;
 
     if (offer_cluster_option(sr->ci)) {
@@ -3239,32 +3267,40 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     }
 
     if (sr->ci == ANOVA) {
-	sprintf(numstr, " %d", k);
-	add_to_cmdlist(sr, numstr);
+	/* treatment var */
+	cmdlist_append_series(sr, " ", k);
     } else if (sr->ci == WLS || THREE_VARS_CODE(sr->ci)) {
-	sprintf(numstr, "%d ", k);
-	add_to_cmdlist(sr, numstr);
+	/* weight or y-axis var */
+	cmdlist_append_series(sr, NULL, k);
+	add_to_cmdlist(sr, " ");
 	if (sr->ci == WLS) {
 	    wtvar = k;
 	}
     } else if (sr->ci == INTREG) {
-	sprintf(numstr, " %d ", k);
-	add_to_cmdlist(sr, numstr);
+	/* upper-bound var */
+	cmdlist_append_series(sr, " ", k);
+	add_to_cmdlist(sr, " ");
 	hivar = k;
     } else if (sr->ci == COUNTMOD) {
-	sprintf(endbit, " ; %d", k);
+	/* offset variable */
+	print_list_element(endbit, " ; ", k);
 	offvar = k;
     } else if (sr->ci == DURATION) {
-	sprintf(endbit, " ; %d", k);
+	/* censoring variable */
+	print_list_element(endbit, " ; ", k);
 	censvar = k;
     } else if (sr->ci == HECKIT) {
-	sprintf(endbit, " %d", k);
+	/* selection variable */
+	print_list_element(endbit, " ", k);
 	selvar = k;
     } else if (sr->ci == BIPROBIT) {
-	sprintf(endbit, " %d", k);
+	/* depvar #2 */
+	print_list_element(endbit, " ", k);
     } else if (NONPARAM_CODE(sr->ci)) {
-	sprintf(endbit, " %d", k);
+	/* independent var */
+	print_list_element(endbit, " ", k);
     } else if (sr->ci == AR) {
+	/* lags */
 	free(arlags);
 	arlags = gretl_strdup(txt);
 	add_to_cmdlist(sr, txt);
@@ -3314,25 +3350,23 @@ static void parse_depvar_widget (selector *sr, char *endbit,
 	topslot_empty(sr->ci);
 	sr->error = 1;
     } else {
-	char numstr[8];
-
 	if (sr->ci == GR_XY || sr->ci == GR_IMP) {
-	    sprintf(endbit, " %d", ynum);
+	    print_list_element(endbit, " ", ynum);
 	} else if (sr->ci == BIPROBIT) {
-	    sprintf(numstr, "%d", ynum);
-	    add_to_cmdlist(sr, numstr);
+	    cmdlist_append_series(sr, NULL, ynum);
 	    add_to_cmdlist(sr, endbit);
 	    *endbit = '\0';
 	} else {
-	    sprintf(numstr, "%d", ynum);
-	    add_to_cmdlist(sr, numstr);
+	    cmdlist_append_series(sr, NULL, ynum);
 	}
+
 	if (select_lags_depvar(sr->ci) && dataset_lags_ok(dataset)) {
 	    *dvlags = get_lagpref_string(ynum, LAG_Y_X, NULL);
 	    if (USE_ZLIST(sr->ci)) {
 		*idvlags = get_lagpref_string(ynum, LAG_Y_W, NULL);
 	    }
 	}
+
 	if (sr->default_check != NULL) {
 	    if (button_is_active(sr->default_check)) {
 		default_y = ynum;
@@ -3348,7 +3382,6 @@ static void parse_depvar_widget (selector *sr, char *endbit,
 static void parse_third_var_slot (selector *sr)
 {
     const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sr->rvars1));
-    char numstr[8];
 
     if (txt == NULL || *txt == '\0') {
 	if (sr->ci == ANOVA) {
@@ -3365,8 +3398,8 @@ static void parse_third_var_slot (selector *sr)
     } else {
 	int v = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->rvars1), 
 						  "data"));
-	sprintf(numstr, " %d", v);
-	add_to_cmdlist(sr, numstr);
+
+	cmdlist_append_series(sr, " ", v);
     }
 }
 
@@ -3403,7 +3436,7 @@ static void get_anova_list (selector *sr)
 static void compose_cmdlist (selector *sr)
 {
     gint rows = 0, realrows = 0;
-    char endbit[32] = {0};
+    char endbit[64] = {0};
     char *dvlags = NULL;
     char *idvlags = NULL;
     int context = 0;
@@ -3411,10 +3444,13 @@ static void compose_cmdlist (selector *sr)
 
     sr->error = 0;
     sr->cmdlist = mymalloc(MAXLEN); 
+
     if (sr->cmdlist == NULL) {
 	return;
     }
 
+    sr->cmdsize = MAXLEN;
+    sr->cmdlen = 0;
     *sr->cmdlist = '\0';
 
     if (sr->ci == INTREG) {
@@ -4780,6 +4816,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     }
 
     sr->cmdlist = NULL;
+    sr->cmdlen = sr->cmdsize = 0;
     sr->callback = callback;
 
     sr->active_var = 0;
@@ -5515,7 +5552,10 @@ static void build_selector_switches (selector *sr)
     } else if (sr->ci == GR_3D) {
 	tmp = gtk_check_button_new_with_label(_("Make plot interactive"));
 	pack_switch(tmp, sr, TRUE, FALSE, OPT_I, 0);
-    }
+    } else if (sr->ci == GR_BOX) {
+	tmp = gtk_check_button_new_with_label(_("Show interval for median"));
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_O, 0);
+    }	
 
     if (sr->ci == ARMA) {
 	sr->hess_button = 
@@ -6932,7 +6972,7 @@ add_to_rvars1_from_named_list (selector *sr, const int *list,
     }
 }
 
-static void maybe_set_tsplot_vars (selector *sr)
+static void maybe_set_plot_vars (selector *sr)
 {
     int mc = mdata_selection_count();
 
@@ -7200,8 +7240,8 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 	select_singleton(sr);
     } else if (sr->ci == DEFINE_LIST) {
 	maybe_set_listdef_vars(sr);
-    } else if (sr->ci == TSPLOTS) {
-	maybe_set_tsplot_vars(sr);
+    } else if (sr->ci == TSPLOTS || sr->ci == GR_BOX) {
+	maybe_set_plot_vars(sr);
     }
 
     if (nleft == 0) {

@@ -1,3 +1,6 @@
+version 1.10.0, in progress
+- Replace old command-line parser with new "tokenizer"
+
 2014-09-20 version 1.9.92
 - Add new functions: isdiscrete(), isdummy()
 - Enable faster execution of assignment statements in loops

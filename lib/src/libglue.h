@@ -20,16 +20,16 @@
 #ifndef LIBGLUE_H
 #define LIBGLUE_H
 
-int model_test_driver (const char *param, DATASET *dset, 
+int model_test_driver (int order, DATASET *dset, 
 		       gretlopt opt, PRN *prn);
 
-int chow_test_driver (const char *line, MODEL *pmod, 
+int chow_test_driver (const char *param, MODEL *pmod, 
 		      DATASET *dset, gretlopt opt, PRN *prn);
 
-int llc_test_driver (const char *parm, const int *list, 
+int llc_test_driver (const char *param, const int *list, 
 		     DATASET *dset, gretlopt opt, PRN *prn);
 
-MODEL quantreg_driver (const char *parm, const int *list, 
+MODEL quantreg_driver (const char *param, const int *list, 
 		       DATASET *dset, gretlopt opt, PRN *prn);
 
 MODEL logit_probit (int *list, DATASET *dset, 
@@ -58,6 +58,7 @@ int list_summary_driver (const int *list,
 			 gretlopt opt,
 			 PRN *prn);
 
-int do_modprint (const char *line, gretlopt opt, PRN *prn);
+int do_modprint (const char *mname, const char *names, 
+		 gretlopt opt, PRN *prn);
 
 #endif /* LIBGLUE_H */

@@ -125,12 +125,11 @@ static int got_setvar_line (const char *s, int n, char *line)
 /* special case: the user has done "help set @setvar" */	
 
 static int do_set_help (const char *setvar, FILE *fp, 
-			char *line, PRN *prn, 
-			int recode)
+			int recode, PRN *prn)
 {
-    char s[9];
+    char s[9], line[HELPLEN];
     int n = strlen(setvar);
-    int count = 0;
+    int ok = 0, count = 0;
 
     while (count < 2 && fgets(line, HELPLEN, fp) != NULL) {
 	if (*line != '#') {
@@ -159,158 +158,27 @@ static int do_set_help (const char *setvar, FILE *fp,
 	}
     }
 
-    return (count > 0 && count < 999);
+    ok = count > 0 && count < 999;
+
+    if (!ok) {
+	pprintf(prn, _("%s: sorry, no help available.\n"), setvar);
+    }
+
+    return ok;
 }
 
-/* Is @s "set ", and if so, is @word the name of a variable that can be
-   set via the 'set' command?  We try looking it up in libset.c.
-   FIXME: there are some "special case" set variables that are not
-   found via the function is_libset_var() at present.
-*/
-
-static int is_set_item_help (char *s, char *word, PRN *prn)
+static int output_help_text (const char *cmd, FILE *fp,
+			     int recode, PRN *prn)
 {
-    if (!strncmp(s, "set ", 4)) {
-	if (sscanf(s + 4, "%31s", word) == 1) {
-	    if (!strcmp(word, "stopwatch")) {
-		strcpy(s, "$stopwatch");
-		*word = '\0';
-	    } else if (is_libset_var(word)) {
-		s[3] = '\0';
-		return 1;
-	    } else {
-		pprintf(prn, "'%s' is not a settable variable\n", word);
-		return -1;
-	    }
-	}
-    }
+    char word[16], line[HELPLEN];
+    int ok = 0;
 
-    return 0;
-}
-
-static int is_help_alias (char *s)
-{
-    int ret = 0;
-
-    if (!strcmp(s, "addobs")) {
-	strcpy(s, "dataset");
-	ret = 1;
-    }
-
-    return ret;
-}
-
-/**
- * cli_help:
- * @cmdword: the command on which help is wanted.
- * @opt: may include %OPT_F to give priority to functions
- * rather than commands.
- * @prn: pointer to gretl printing struct.
- *
- * Searches in the gretl helpfile for help on @cmdword and, 
- * if help is found, prints it to @prn.  If @cmdword is %NULL, 
- * lists the valid commands.
- *
- * Returns: 0 on success, 1 if the helpfile was not found or the
- * requested topic was not found.
- */
-
-int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
-{
-    static int recode = -1;
-    char helpfile[FILENAME_MAX];
-    FILE *fp;
-    int noword, funhelp = (opt & OPT_F);
-    char word[12], needle[32]; 
-    char setvar[32], line[HELPLEN];
-    int i, j, ok = 0;
-
-    noword = (cmdword == NULL || *cmdword == '\0');
-
-    *needle = *setvar = '\0';
-
-    if (!noword) {
-	strncat(needle, cmdword, 31);
-    }
-
-    if (noword && !funhelp) {
-	pputs(prn, _("\nValid gretl commands are:\n"));
-	j = 1;
-	for (i=1; i<NC; i++) {
-	    if (HIDDEN_COMMAND(i)) {
-		continue;
-	    }
-	    pprintf(prn, "%-9s", gretl_command_word(i));
-	    if (j % 8 == 0) {
-		pputc(prn, '\n');
-	    } else {
-		pputc(prn, ' ');
-	    }
-	    j++;
-	}
-
-	pputs(prn, _("\n\nFor help on a specific command, type: help cmdname"));
-	pputs(prn, _(" (e.g. help smpl)\n"));
-	pputs(prn, _("You can also do 'help functions' for a list of functions\n"));
-
-	return 0;
-    }
-
-    if ((noword && funhelp) || !strcmp(needle, "functions")) {
-	sprintf(helpfile, "%s%s", gretl_home(), _("genrcli.hlp"));
-	return func_help_topics(helpfile, prn);
-    }
-
-    if (!funhelp) {
-	ok = gretl_command_number(needle) > 0;
-	if (!ok) {
-	    ok = is_help_alias(needle);
-	}
-	if (!ok) {
-	    ok = is_set_item_help(needle, setvar, prn);
-	    if (ok < 0) {
-		/* unrecognized "help set foo" */
-		return 1;
-	    } 
-	}
-    } 
-
-    if (ok) {
-	strcpy(helpfile, helpfile_path(GRETL_CLI_HELPFILE));
-    } else if (genr_function_word(needle)) {
-	sprintf(helpfile, "%sgenrcli.hlp", gretl_home());
-    } else if (gretl_is_public_user_function(needle)) {
-	return user_function_help(needle, OPT_NONE, prn);
-    } else {
-	pprintf(prn, _("\"%s\" is not a gretl command.\n"), needle);
-	return 1;
-    }
-
-    if ((fp = gretl_fopen(helpfile, "r")) == NULL) {
-	printf(_("Unable to access the file %s.\n"), helpfile);
-	return 1;
-    } 
-
-    if (!gretl_in_gui_mode() && recode < 0) {
-	recode = maybe_need_recode();
-    }
-
-    if (*setvar != '\0') {
-	ok = do_set_help(setvar, fp, line, prn, recode);
-	if (!ok) {
-	    pprintf(prn, _("%s: sorry, no help available.\n"), cmdword);
-	}
-	fclose(fp);
-	return 0;
-    }
-
-    ok = 0;
     while (fgets(line, sizeof line, fp) != NULL) {
 	if (*line != '#') {
 	    continue;
 	}
-	sscanf(line + 2, "%10s", word);
-	if (!strcmp(needle, word)) {
+	sscanf(line + 2, "%15s", word);
+	if (!strcmp(cmd, word)) {
 	    ok = 1;
 	    pprintf(prn, "\n%s\n", word);
 	    while (fgets(line, sizeof line, fp)) {
@@ -324,7 +192,118 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
     }
 
     if (!ok) {
-	pprintf(prn, _("%s: sorry, no help available.\n"), needle);
+	pprintf(prn, _("%s: sorry, no help available.\n"), cmd);
+    }
+
+    return ok;
+}
+
+static void do_help_on_help (PRN *prn)
+{
+    int i, j;
+
+    pputs(prn, _("\nValid gretl commands are:\n"));
+    j = 1;
+    for (i=1; i<NC; i++) {
+	if (HIDDEN_COMMAND(i)) {
+	    continue;
+	}
+	pprintf(prn, "%-9s", gretl_command_word(i));
+	if (j % 8 == 0) {
+	    pputc(prn, '\n');
+	} else {
+	    pputc(prn, ' ');
+	}
+	j++;
+    }
+
+    pputs(prn, _("\n\nFor help on a specific command, type: help cmdname"));
+    pputs(prn, _(" (e.g. help smpl)\n"));
+    pputs(prn, _("You can also do 'help functions' for a list of functions\n"));
+}
+
+/**
+ * cli_help:
+ * @hlpword: the word (usually a command) on which help is wanted.
+ * @param: parameter usable when @hlpword is "set".
+ * @opt: may include %OPT_F to give priority to functions
+ * rather than commands.
+ * @prn: pointer to gretl printing struct.
+ *
+ * Searches in the gretl helpfile for help on @hlpword and, 
+ * if help is found, prints it to @prn.  If @hlpword is %NULL, 
+ * lists the valid commands.
+ *
+ * Returns: 0 on success, 1 if the helpfile was not found or the
+ * requested topic was not found.
+ */
+
+int cli_help (const char *hlpword, const char *param,
+	      gretlopt opt, PRN *prn)
+{
+    static int recode = -1;
+    char helpfile[FILENAME_MAX];
+    FILE *fp;
+    int noword, funhelp = (opt & OPT_F);
+    int ok = 0;
+
+    noword = (hlpword == NULL || *hlpword == '\0');
+
+    /* @param should be NULL unless hlpword is "set" */
+    if ((noword || strcmp(hlpword, "set")) && param != NULL) {
+	return 1;
+    }
+
+    if (noword && !funhelp) {
+	do_help_on_help(prn);
+	return 0; /* handled */
+    }
+
+    if ((noword && funhelp) || !strcmp(hlpword, "functions")) {
+	sprintf(helpfile, "%s%s", gretl_home(), _("genrcli.hlp"));
+	return func_help_topics(helpfile, prn); /* handled */
+    }
+
+    if (!funhelp) {
+	int ci = gretl_command_number(hlpword);
+	
+	if (ci == SET && param != NULL) {
+	    ok = is_libset_var(param);
+	    if (!ok) {
+		pprintf(prn, _("%s: sorry, no help available.\n"), param);
+		return 1;
+	    }
+	} else {
+	    ok = ci > 0;
+	}
+    } 
+
+    if (ok) {
+	strcpy(helpfile, helpfile_path(GRETL_CLI_HELPFILE));
+    } else if (genr_function_word(hlpword)) {
+	sprintf(helpfile, "%sgenrcli.hlp", gretl_home());
+    } else if (gretl_is_public_user_function(hlpword)) {
+	return user_function_help(hlpword, OPT_NONE, prn);
+    } else {
+	pprintf(prn, _("\"%s\" is not a gretl command.\n"), hlpword);
+	return 1;
+    }
+
+    if ((fp = gretl_fopen(helpfile, "r")) == NULL) {
+	printf(_("Unable to access the file %s.\n"), helpfile);
+	return 1;
+    } 
+
+    if (!gretl_in_gui_mode() && recode < 0) {
+	recode = maybe_need_recode();
+    }
+
+    /* actually output the relevant help text */
+
+    if (param != NULL) {
+	ok = do_set_help(param, fp, recode, prn);
+    } else {
+	ok = output_help_text(hlpword, fp, recode, prn);
     }
 
     fclose(fp);

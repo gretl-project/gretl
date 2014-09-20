@@ -363,7 +363,7 @@ static int maybe_get_input_line_continuation (char *line)
 	    strcpy(tmp, line_read);
 #else
 	    fgets(tmp, MAXLINE, stdin); 
-#endif /* HAVE_READLINE */
+#endif
 	}
 
 	if (*tmp != '\0') {
@@ -737,7 +737,8 @@ static void cli_exec_callback (ExecState *s, void *ptr,
     int ci = s->cmd->ci;
 
     if (ci == MODELTAB || ci == GRAPHPG) {
-	pprintf(s->prn, _("%s: command not available\n"), s->cmd->word);
+	pprintf(s->prn, _("%s: command not available\n"), 
+		gretl_command_word(ci));
     } else if (ci == OPEN) {
 	char *fname = (char *) ptr;
 
@@ -767,10 +768,6 @@ static int cli_try_http (const char *s, char *fname, int *http)
 {
     int err = 0;
 
-    /* skip past command word */
-    s += strcspn(s, " ");
-    s += strspn(s, " ");
-
     if (strncmp(s, "http://", 7) == 0) {
 #ifdef USE_CURL
 	err = retrieve_public_file(s, fname);
@@ -786,9 +783,8 @@ static int cli_try_http (const char *s, char *fname, int *http)
     return err;
 }
 
-static int cli_open_append (CMD *cmd, const char *line, 
-			    DATASET *dset, MODEL *model,
-			    PRN *prn)
+static int cli_open_append (CMD *cmd, DATASET *dset, 
+			    MODEL *model, PRN *prn)
 {
     gretlopt opt = cmd->opt;
     PRN *vprn = prn;
@@ -798,7 +794,7 @@ static int cli_open_append (CMD *cmd, const char *line,
     int ftype;
     int err = 0;
 
-    err = cli_try_http(line, newfile, &http);
+    err = cli_try_http(cmd->param, newfile, &http);
     if (err) {
 	errmsg(err, prn);
 	return err;
@@ -806,8 +802,8 @@ static int cli_open_append (CMD *cmd, const char *line,
 
     if (!http && !(opt & OPT_O)) {
 	/* not using http or ODBC */
-	err = getopenfile(line, newfile, (opt & OPT_W)?
-			  OPT_W : OPT_NONE);
+	err = get_full_filename(cmd->param, newfile, (opt & OPT_W)?
+				OPT_W : OPT_NONE);
 	if (err) {
 	    errmsg(err, prn);
 	    return err;
@@ -856,7 +852,7 @@ static int cli_open_append (CMD *cmd, const char *line,
     } else if (OTHER_IMPORT(ftype)) {
 	err = import_other(newfile, ftype, dset, opt, vprn);
     } else if (ftype == GRETL_ODBC) {
-	err = set_odbc_dsn(line, vprn);
+	err = set_odbc_dsn(cmd->param, vprn);
     } else if (dbdata) {
 	err = set_db_name(newfile, ftype, vprn);
     } else {
@@ -953,6 +949,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     MODEL *model = s->model;
     int old_runit = runit;
     char runfile[MAXLEN];
+    int renumber = 0;
     int err = 0;
 
 #if 0
@@ -1003,7 +1000,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	    set_gretl_errno(err);
 	    catch = 1;
 	}
-	echo_command(cmd, dset, line, prn);
+	gretl_echo_command(cmd, dset, line, prn);
         errmsg(err, prn);
 	return (catch)? 0 : err;
     }
@@ -1038,7 +1035,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	/* accumulating loop commands */
 	if (gretl_echo_on() && (!gretl_compiling_loop() || batch || runit)) {
 	    /* straight visual echo */
-	    echo_command(cmd, dset, line, prn);
+	    gretl_echo_command(cmd, dset, line, prn);
 	}
 	err = gretl_loop_append_line(s, dset);
 	if (err) {
@@ -1054,7 +1051,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	if (cmd->ci == FUNC && runit > 1) {
 	    ; /* don't echo */
 	} else if (batch || runit) {
-	    echo_command(cmd, dset, line, prn);
+	    gretl_echo_command(cmd, dset, line, prn);
 	}
     }
 
@@ -1065,46 +1062,25 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     switch (cmd->ci) {
 
     case DELEET:
-	if (cmd->opt & OPT_D) {
-	    /* delete from database */
-	    err = db_delete_series_by_name(cmd->param, prn);
-	} else if (cmd->opt & OPT_T) {
-	    /* delete all by type (not series) */
-	    err = gretl_cmd_exec(s, dset);
-	} else if (*cmd->param != '\0') {
-	    /* got a named non-series variable */
-	    err = gretl_delete_var_by_name(cmd->param, prn);
-	} else if (*cmd->parm2 != '\0') {
-	    /* "extra" means we got "list <listname> delete" */
-	    if (get_list_by_name(cmd->parm2)) {
-		err = user_var_delete_by_name(cmd->parm2, prn);
-	    } else {
-		err = E_UNKVAR;
-	    }
-	} else {
-	    /* list of series? */
-	    int nv = 0;
-
-	    err = dataset_drop_listed_variables(cmd->list, dset, 
-						&nv, prn);
-	    if (!err && nv > 0 && !batch) {
-		pputs(prn, _("Take note: variables have been renumbered"));
-		pputc(prn, '\n');
-		maybe_list_vars(dset, prn);
-	    }
-	}
+	err = gretl_delete_variables(cmd->list, cmd->param,
+				     cmd->opt, dset, &renumber,
+				     prn);
 	if (err) {
 	    errmsg(err, prn);
-	} 
+	} else if (renumber && !batch) {
+	    pputs(prn, _("Take note: variables have been renumbered"));
+	    pputc(prn, '\n');
+	    maybe_list_vars(dset, prn);
+	}
 	break;
 
     case HELP:
-	cli_help(cmd->param, cmd->opt, prn);
+	cli_help(cmd->param, cmd->parm2, cmd->opt, prn);
 	break;
 
     case OPEN:
     case APPEND:
-	err = cli_open_append(cmd, line, dset, model, prn);
+	err = cli_open_append(cmd, dset, model, prn);
 	break;
 
     case NULLDATA:
@@ -1146,9 +1122,9 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     case RUN:
     case INCLUDE:
 	if (cmd->ci == INCLUDE) {
-	    err = getopenfile(line, runfile, OPT_I);
+	    err = get_full_filename(cmd->param, runfile, OPT_I);
 	} else {
-	    err = getopenfile(line, runfile, OPT_S);
+	    err = get_full_filename(cmd->param, runfile, OPT_S);
 	}
 	if (err) { 
 	    errmsg(err, prn);
@@ -1195,11 +1171,11 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	break;
 
     case DATAMOD:
-	if (cmd->aux == DS_CLEAR) {
+	if (cmd->auxint == DS_CLEAR) {
 	    err = cli_clear_data(cmd, dset, model);
 	    pputs(prn, _("Dataset cleared\n"));
 	    break;
-	} else if (cmd->aux == DS_RENUMBER) {
+	} else if (cmd->auxint == DS_RENUMBER) {
 	    err = cli_renumber_series(cmd->param, dset, prn);
 	    break;
 	}

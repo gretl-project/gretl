@@ -23,7 +23,7 @@
 typedef struct gretl_restriction_ gretl_restriction;
 
 gretl_restriction *
-restriction_set_start (const char *line, gretlopt opt, int *err);
+restriction_set_start (const char *target, gretlopt opt, int *err);
 
 gretl_restriction *
 cross_restriction_set_start (const char *line, equation_system *sys);

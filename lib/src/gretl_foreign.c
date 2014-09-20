@@ -2191,36 +2191,49 @@ static int run_R_lib (const DATASET *dset,
 
 #endif /* USE_RLIB */
 
-static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
+/**
+ * foreign_start:
+ * @ci: either FOREIGN or MPI.
+ * @param: string specifying language, for FOREIGN.
+ * @opt: may include %OPT_V for verbose operation.
+ * @prn: struct for printing output.
+ *
+ * Starts a new "foreign" block if no such block is
+ * currently defined.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int foreign_start (int ci, const char *param, gretlopt opt, 
+		   PRN *prn)
 {
     int err = 0;
 
+    if (foreign_started) {
+	gretl_errmsg_set("foreign: a block is already started");
+	return E_DATA;
+    }
+
     foreign_opt = OPT_NONE;
 
-    if (!strncmp(line, "foreign ", 8)) {
-	char lang[16];
+    if (ci == FOREIGN) {
+	if (param == NULL || *param == '\0') {
+	    err = E_ARGS;
+	} else {
+	    char lang[16];
 
-	line += 8;
-	line += strspn(line, " ");
-	if (!strncmp(line, "language", 8)) {
-	    line += 8;
-	    line += strspn(line, " =");
-	    if (sscanf(line, "%15s", lang) == 1) {
+	    if (sscanf(param, "language=%15s", lang) == 1) {
 		err = set_foreign_lang(lang, prn);
 	    } else {
 		err = E_PARSE;
 	    }
-	} else {
-	    err = E_PARSE;
 	}
-    } else if (!strncmp(line, "mpi", 3)) {
+    } else if (ci == MPI) {
 	err = set_foreign_lang("mpi", prn);
-    } else {
-	/* we'll default to R for now */
-	foreign_lang = LANG_R;
     }
-
+	    
     if (!err) {
+	foreign_started = 1;
 	foreign_opt = opt;
     }
 
@@ -2228,43 +2241,32 @@ static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
 }
 
 /**
- * foreign_append_line:
- * @line: command line.
- * @opt: may include %OPT_V for verbose operation
- * @prn: struct for printing output.
+ * foreign_append:
+ * @line: line to append.
  *
  * Appends @line to an internally stored block of "foreign"
- * commands, or starts a new block if no such block is
- * currently defined.
+ * commands, if such a block is currently defined.
  * 
  * Returns: 0 on success, non-zero on error.
  */
 
-int foreign_append_line (const char *line, gretlopt opt, PRN *prn)
+int foreign_append (const char *line)
 {
     int err = 0;
 
-    if (string_is_blank(line)) {
-	return 0;
-    }
-
 #if 0
-    fprintf(stderr, "foreign_append_line: '%s'\n", line);
+    fprintf(stderr, "foreign_append: '%s'\n", line);
 #endif
 
     if (!foreign_started) {
-	/* starting from scratch */
-	err = foreign_block_init(line, opt, prn);
-	if (!err) {
-	    foreign_started = 1;
-	}
-    } else {
-	/* appending */
+	gretl_errmsg_set("foreign: no block is in progress");
+	err = E_DATA;
+    } else if (!string_is_blank(line)) {
 	err = strings_array_add(&foreign_lines, &foreign_n_lines, line);
 	if (err) {
 	    destroy_foreign();
 	}
-    }	
+    }
 
     return err;
 }
