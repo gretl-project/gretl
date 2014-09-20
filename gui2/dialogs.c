@@ -655,23 +655,6 @@ static void destroy_format_dialog (GtkWidget *w, struct format_info *finfo)
     free(finfo);
 }
 
-#if 0
-
-static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
-{
-    gtk_widget_hide(finfo->dialog);
-
-    if (finfo->action == W_COPY) {
-	window_copy(finfo->vwin, finfo->format);
-    } else {
-	window_save(finfo->vwin, finfo->format);
-    }
-
-    gtk_widget_destroy(finfo->dialog);
-}
-
-#else
-
 static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
 {
     windata_t *vwin = finfo->vwin;
@@ -686,13 +669,13 @@ static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
 	format == GRETL_FORMAT_CSV &&
 	get_local_decpoint() == ',') {
 	const char *opts[] = {
-	    N_("Use decimal point (.) with comma separation"),
-	    N_("Use decimal comma with TAB separation")
+	    N_("period (.)"),
+	    N_("comma (,)")
 	};
 	int resp;
 
-	resp = radio_dialog(NULL, NULL, opts, 2,
-			    0, 0, vwin_toplevel(vwin));
+	resp = radio_dialog(NULL, _("decimal point character:"), 
+	                    opts, 2, 0, 0, vwin_toplevel(vwin));
 	if (resp < 0) {
 	    return;
 	} else if (resp == 0) {
@@ -714,8 +697,6 @@ static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
 	gretl_pop_c_numeric_locale();
     }    
 }
-
-#endif
 
 static int preferred_format (int f, int multi)
 {
