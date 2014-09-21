@@ -2222,6 +2222,26 @@ static void check_for_comment (const char *s, int *incomm)
     }
 }
 
+static int line_broken (const char *s)
+{
+    int ret = 0;
+
+    if (*s != '\0') {
+	int i, n = strlen(s);
+
+	for (i=n-1; i>0; i--) {
+	    if (s[i] == '\\' || s[i] == ',') {
+		ret = 1;
+		break;
+	    } else if (!isspace(s[i])) {
+		break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static void normalize_indent (GtkTextBuffer *tbuf, 
 			      const gchar *buf,
 			      GtkTextIter *start,
@@ -2230,6 +2250,7 @@ static void normalize_indent (GtkTextBuffer *tbuf,
     int this_indent = 0;
     int next_indent = 0;
     char word[9], line[1024];
+    char lastline[1024];
     const char *ins;
     int incomment = 0;
     int inforeign = 0;
@@ -2241,9 +2262,12 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 
     gtk_text_buffer_delete(tbuf, start, end);
 
+    lastline[0] = '\0';
     bufgets_init(buf);
 
     while (bufgets(line, sizeof line, buf)) {
+	int handled = 0;
+
 	if (string_is_blank(line)) {
 	    gtk_text_buffer_insert(tbuf, start, line, -1);
 	    continue;
@@ -2267,20 +2291,25 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 		    inforeign = 0;
 		} else {
 		    gtk_text_buffer_insert(tbuf, start, line, -1);
-		    continue;
+		    handled = 1;
 		}
 	    } else {
 		adjust_indent(word, &this_indent, &next_indent);
 	    }
 	}
-	nsp = this_indent * tabwidth;
-	if (incomment == 2) {
-	    nsp += 3;
+	if (!handled) {
+	    nsp = this_indent * tabwidth;
+	    if (incomment == 2) {
+		nsp += 3;
+	    } else if (line_broken(lastline)) {
+		nsp += 2;
+	    }
+	    for (i=0; i<nsp; i++) {
+		gtk_text_buffer_insert(tbuf, start, " ", -1);
+	    }
+	    gtk_text_buffer_insert(tbuf, start, ins, -1);
 	}
-	for (i=0; i<nsp; i++) {
-	    gtk_text_buffer_insert(tbuf, start, " ", -1);
-	}
-	gtk_text_buffer_insert(tbuf, start, ins, -1);
+	strcpy(lastline, line);
     }
 
     bufgets_finalize(buf); 
