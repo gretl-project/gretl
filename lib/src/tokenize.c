@@ -251,11 +251,18 @@ static void check_for_shadowed_commands (void)
     }
 }
 
+/* The difference between TOK_JOINED and TOK_NOGAP below is that we
+   don't count a comma with no gap to its left as JOINED, since it's
+   generally punctuation, but we do record it as NOGAP, since this
+   info can be relevant when reconstructing an option parameter.
+*/
+
 enum {
     TOK_JOINED = 1 << 0, /* token is joined on the left (no space) */
-    TOK_DONE   = 1 << 1, /* token has been handled */
-    TOK_QUOTED = 1 << 2, /* token was found in double quotes */
-    TOK_IGNORE = 1 << 3  /* token not actually wanted, ignored */
+    TOK_NOGAP  = 1 << 1, /* as TOK_JOINED but including joined comma */
+    TOK_DONE   = 1 << 2, /* token has been handled */
+    TOK_QUOTED = 1 << 3, /* token was found in double quotes */
+    TOK_IGNORE = 1 << 4  /* token not actually wanted, ignored */
 } TokenFlags;
 
 enum {
@@ -506,9 +513,12 @@ static int real_add_token (CMD *c, const char *tok,
 static int push_token (CMD *c, const char *tok, const char *s, 
 		       int pos, char type, char flag)
 {
-    if (type != TOK_COMMA && pos > 0 && !isspace(*(s-1))) {
-	flag |= TOK_JOINED;
-    }
+    if (pos > 0 && !isspace(*(s-1))) {
+	flag |= TOK_NOGAP;
+	if (type != TOK_COMMA) {
+	    flag |= TOK_JOINED;
+	}
+    }    
 
     return real_add_token(c, tok, s, type, flag);
 }
@@ -854,6 +864,25 @@ static char *fuse_tokens (CMD *c, int k1, int k2, int n)
     return ret;
 }
 
+static char *merge_option_toks_l_to_r (CMD *c, int k1)
+{
+    cmd_token *tok = &c->toks[k1];
+    int n = real_toklen(tok) + 1;
+    int i, k2 = k1;
+
+    for (i=k1+1; i<c->ntoks; i++) {
+	tok = &c->toks[i];
+	if ((tok->flag & TOK_NOGAP) && !token_done(tok)) {
+	    n += real_toklen(tok);
+	    k2 = i;
+	} else {
+	    break;
+	}
+    }
+
+    return fuse_tokens(c, k1, k2, n);
+}
+
 /* Merge tokens from position k1 rightward, stopping at the
    first token that is not left-joined.
 */
@@ -913,7 +942,7 @@ static void mark_option_tokens (CMD *c)
 
     for (i=1; i<c->ntoks; i++) {
 	tok = &c->toks[i];
-	if (token_joined(tok)) {
+	if (tok->flag & TOK_NOGAP) {
 	    prevtok = &c->toks[i-1];
 	    if (!token_joined(prevtok)) {
 		if (prevtok->type == TOK_DDASH) {
@@ -959,6 +988,17 @@ static cmd_token *next_joined_token (CMD *c, int i)
     return NULL;
 }
 
+static cmd_token *next_nogap_token (CMD *c, int i)
+{
+    if (i < c->ntoks - 1) {
+	if (c->toks[i+1].flag & TOK_NOGAP) {
+	    return &c->toks[i+1];
+	}
+    }
+
+    return NULL;
+}
+
 static int handle_option_value (CMD *c, int i, gretlopt opt,
 				OptStatus status)
 {
@@ -989,15 +1029,19 @@ static int handle_option_value (CMD *c, int i, gretlopt opt,
     if (getval) {
 	char *val = NULL;
 
-	nexttok = next_joined_token(c, i + 1);
+	nexttok = next_nogap_token(c, i + 1);
 	if (nexttok == NULL) {
 	    c->err = E_PARSE;
 	} else if (delimited_type(nexttok->type)) {
 	    val = gretl_strdup(nexttok->s);
 	    nexttok->flag |= TOK_DONE;
 	} else {
-	    val = merge_toks_l_to_r(c, i + 2);
+	    val = merge_option_toks_l_to_r(c, i + 2);
 	}
+
+#if CDEBUG > 1
+	fprintf(stderr, "option '--%s': param='%s'\n", tok->s, val);
+#endif
 
 	if (val != NULL) {
 	    c->err = push_option_param(c->ci, opt, val);
