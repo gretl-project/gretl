@@ -775,7 +775,8 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATASET *dset,
 
 	if (pmod->aux == AUX_ARCH) {
 	    make_cname(dset->varname[pmod->list[j]], targ);
-	} else if (pmod->ci == PANEL && (pmod->opt & OPT_W)) {
+	} else if (pmod->ci == PANEL && (pmod->opt & OPT_H)) {
+	    /* --unit-weights */
 	    strcpy(targ, dset->varname[pmod->list[j]]);
 	} else if (NONLIST_MODEL(pmod->ci) ||
 		   pmod->ci == ARMA || pmod->ci == PANEL || 
@@ -4534,7 +4535,7 @@ static int gretl_model_set_int_compat (MODEL *pmod,
 	} else if (!strcmp(key, "random-effects")) {
 	    pmod->opt |= OPT_U;
 	} else if (!strcmp(key, "unit-weights")) {
-	    pmod->opt |= OPT_W;
+	    pmod->opt |= OPT_H;
 	}
     } else if (pmod->ci == AR1) {
 	if (!strcmp(key, "hilu")) {
