@@ -5131,8 +5131,9 @@ static void real_do_tramo_x12a (int v, int tramo)
     int save_t1 = dataset->t1;
     int save_t2 = dataset->t2;
     int (*write_tx_data) (char *, int, DATASET *, gretlopt *, 
-			  int, GtkWindow *, void *);
+			  int, int *, GtkWindow *, void *);
     char outfile[MAXLEN] = {0};
+    int warning = 0;
     int graph_ok = 1;
     int err = 0;
 
@@ -5152,7 +5153,8 @@ static void real_do_tramo_x12a (int v, int tramo)
     series_adjust_sample(dataset->Z[v], &dataset->t1, &dataset->t2);
 
     err = write_tx_data(outfile, v, dataset, &opt, tramo,
-			GTK_WINDOW(mdata->main), x12a_help); 
+			&warning, GTK_WINDOW(mdata->main),
+			x12a_help); 
 
     dataset->t1 = save_t1;
     dataset->t2 = save_t2;
@@ -5160,10 +5162,9 @@ static void real_do_tramo_x12a (int v, int tramo)
     if (err) {
 	gui_errmsg(err);
 	graph_ok = 0;
-    } else if (opt & OPT_W) {
+    } else if (warning) {
 	/* got a warning from x12a */
 	display_x12a_warning(outfile);
-	opt ^= OPT_W;
     } else if (opt & OPT_S) {
 	/* created x12a spec file for editing */
 	view_file(outfile, 1, 0, 78, 370, EDIT_X12A);

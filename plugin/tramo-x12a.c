@@ -1398,6 +1398,7 @@ int exec_tx_script (char *outname, const gchar *buf)
 int write_tx_data (char *fname, int varnum, 
 		   DATASET *dset, 
 		   gretlopt *opt, int tramo,
+		   int *warning,
 		   GtkWindow *mainwin,
 		   void (*help_func))
 {
@@ -1530,7 +1531,7 @@ int write_tx_data (char *fname, int varnum,
 	    /* first check the .err file for warnings */
 	    sprintf(fname, "%s%c%s.err", workdir, SLASH, vname);
 	    if (got_x12a_warning(fname)) {
-		*opt |= OPT_W;
+		*warning = 1;
 	    }
 	    /* then set the output filename */
 	    sprintf(fname, "%s%c%s.out", workdir, SLASH, vname); 
