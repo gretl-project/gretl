@@ -1,6 +1,6 @@
-/* Code for the "new tokenizer", intended to replace the command
-   parser in interact.c. As of August 2014 this code is under
-   testing.
+/* Code for the "new tokenizer", which replaced the old command
+   parser in interact.c in September 2014, following the 1.9.92
+   release of gretl.
 */
 
 #define CDEBUG 0
