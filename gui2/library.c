@@ -6297,8 +6297,9 @@ void fit_actual_plot (GtkAction *action, gpointer p)
     }
 
     plotlist[0] = 3;
-    plotlist[1] = dset->v - 1; /* last var added (fitted vals) */
 
+    /* last var added (fitted vals) */
+    plotlist[1] = dset->v - 1;
     /* depvar from regression */
     plotlist[2] = gretl_model_get_depvar(pmod);
 
