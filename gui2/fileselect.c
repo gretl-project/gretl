@@ -844,8 +844,10 @@ static void remember_folder (GtkFileChooser *chooser, char *savedir)
 {
     gchar *folder = gtk_file_chooser_get_current_folder(chooser);
 
-    strcpy(savedir, folder);
-    g_free(folder);
+    if (folder != NULL) {
+	strcpy(savedir, folder);
+	g_free(folder);
+    }
 }
 
 static void record_compress_level (GtkWidget *b, gpointer p)
