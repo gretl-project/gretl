@@ -2034,7 +2034,6 @@ static int check_list_sepcount (int ci, int nsep)
     case GARCH:
     case HECKIT:
     case IVREG:
-    case SCATTERS:
 	minsep = maxsep = 1;
 	break;
     case ARBOND:
@@ -2056,6 +2055,7 @@ static int check_list_sepcount (int ci, int nsep)
     case VAR:
     case XTAB:
     case LAGS:
+    case SCATTERS:
 	maxsep = 1;
 	break;
     default:

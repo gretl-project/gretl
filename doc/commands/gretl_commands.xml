@@ -10018,7 +10018,7 @@
       <para>
 	If the dataset is time-series, then the second sub-list can be
 	omitted, in which case it will implicitly be taken as "time",
-	so you can plot multiple time series in separated sub-graphs
+	so you can plot multiple time series in separated sub-graphs.
       </para>
     </description>
 
