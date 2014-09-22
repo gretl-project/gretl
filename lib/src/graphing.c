@@ -3517,9 +3517,14 @@ int gnuplot (const int *plotlist, const char *literal,
 	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, _("fitted"));
     } else if (gi.flags & GPT_FA) {
 	/* this is a fitted vs actual plot */
+	/* try reversing here: 2014-09-22 */
+	int tmp = list[1];
+
+	list[1] = list[2];
+	list[2] = tmp;
 	set_withstr(&gi, 1, withstr);
-	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 2, \\\n", _("fitted"), withstr);
-	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 1\n", _("actual"), withstr);	
+	fprintf(fp, " '-' using 1:($2) title \"%s\" %s, \\\n", _("actual"), withstr);
+	fprintf(fp, " '-' using 1:($2) title \"%s\" %s\n", _("fitted"), withstr);	
     } else {
 	/* all other cases */
 	int lmax = (gi.flags & GPT_TIMEFMT)? list[0] : list[0] - 1;
