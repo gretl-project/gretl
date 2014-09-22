@@ -5567,7 +5567,7 @@ static int panel_overlay_ts_plot (const int vnum,
 	}
     }
 
-    s0 = dset->t1 * dset->pd;
+    s0 = dset->t1;
 
     for (i=0; i<nunits; i++) {
 	s = s0 + i * T;
