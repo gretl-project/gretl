@@ -359,16 +359,18 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	}
 
 	if (ubuf != NULL) {
-	    winbuf = ubuf;
 	    sz = (wrote + 1) * sizeof(gunichar2);
 	} else {
 	    sz = strlen(winbuf) + 1;
 	}
-
-	winclip = GlobalAlloc(GMEM_MOVEABLE, sz);	
+	winclip = GlobalAlloc(GMEM_MOVEABLE, sz);
 	ptr = GlobalLock(winclip);
-	memcpy(ptr, winbuf, sz);
-	GlobalUnlock(winclip);
+	if (ubuf != NULL) {
+	    memcpy(ptr, ubuf, sz);
+	} else {
+	    memcpy(ptr, winbuf, sz);
+	}
+	GlobalUnlock(winclip);    
 
 	if (ubuf != NULL) {
 	    clip_format = CF_UNICODETEXT;
