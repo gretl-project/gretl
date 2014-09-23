@@ -781,11 +781,49 @@ void mark_dataset_as_modified (void)
     }
 }
 
-static void gui_record_data_opening (const char *fname, const int *list)
+char *gretl_basename (char *dest, const char *src, int addscore)
+{
+    const char *p = strrchr(src, SLASH);
+
+    if (p != NULL) {
+	/* take last part of src filename */
+	strcpy(dest, p + 1);
+    } else {
+	strcpy(dest, src);
+    }
+
+    if (addscore) {
+	/* double any underscores in dest */
+	char mod[MAXSTR];
+	int n = strlen(dest);
+	int i, j = 0;
+
+	for (i=0; i<=n; i++) {
+	    if (dest[i] == '_') {
+		mod[j++] = '_';
+	    } 
+	    mod[j++] = dest[i];
+	}
+	strcpy(dest, mod);
+    }
+
+    return dest;
+}
+
+static void gui_record_data_opening (const char *fname, 
+				     const int *list)
 {
     const char *recname = (fname != NULL)? fname : datafile;
 
-    if (strchr(recname, ' ') != NULL) {
+    if (data_status & BOOK_DATA) {
+	/* don't print the (platform-dependent) full
+	   path to a datafile packaged with gretl
+	*/
+	char basename[MAXSTR];
+
+	gretl_basename(basename, recname, 0);
+	lib_command_sprintf("open %s", basename);
+    } else if (strchr(recname, ' ') != NULL) {
 	lib_command_sprintf("open \"%s\"", recname);
     } else {
 	lib_command_sprintf("open %s", recname);
@@ -825,7 +863,7 @@ static void gui_record_data_opening (const char *fname, const int *list)
 
 static void real_register_data (int flag, const char *user_fname, 
 				const int *list)
-{    
+{   
     /* basic accounting */
     data_status |= HAVE_DATA;
     orig_vars = dataset->v;

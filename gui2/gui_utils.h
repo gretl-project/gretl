@@ -153,6 +153,8 @@ void *gui_get_plugin_function (const char *funcname);
 
 int get_imported_data (char *fname, int ftype, int append);
 
+char *gretl_basename (char *dest, const char *src, int addscore);
+
 char *double_underscores (char *targ, const char *src);
 
 void verbose_gerror_report (GError *gerr, const char *src);

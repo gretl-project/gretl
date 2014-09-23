@@ -173,35 +173,6 @@ void rc_save_file_lists (FILE *fp)
     rc_print_filelist(FILE_LIST_WDIR, fp);
 }    
 
-static char *endbit (char *dest, const char *src, int addscore)
-{
-    const char *p = strrchr(src, SLASH);
-
-    if (p != NULL) {
-	/* take last part of src filename */
-	strcpy(dest, p + 1);
-    } else {
-	strcpy(dest, src);
-    }
-
-    if (addscore) {
-	/* double any underscores in dest */
-	char mod[MAXSTR];
-	int n = strlen(dest);
-	int i, j = 0;
-
-	for (i=0; i<=n; i++) {
-	    if (dest[i] == '_') {
-		mod[j++] = '_';
-	    } 
-	    mod[j++] = dest[i];
-	}
-	strcpy(dest, mod);
-    }
-
-    return dest;
-}
-
 static void clear_files_list (int ftype, char **filep)
 {
     guint *id;
@@ -525,7 +496,8 @@ static void real_add_files_to_menus (int ftype)
 		continue;
 	    } else {
 		aname = g_strdup_printf("%s %d", fword, k);
-		alabel = g_strdup_printf("%d. %s", k+1, endbit(tmp, fname, 1));
+		alabel = g_strdup_printf("%d. %s", k+1, 
+					 gretl_basename(tmp, fname, 1));
 		entry.name = aname;
 		entry.label = alabel;
 		id[i] = vwin_menu_add_item_unique(mdata, aname, mpath[j], &entry);
