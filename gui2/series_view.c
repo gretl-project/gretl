@@ -340,6 +340,14 @@ static int sort_points (const void *a, const void *b)
     return (pa->val > pb->val) - (pa->val < pb->val);
 }
 
+static int sort_points_down (const void *a, const void *b)
+{
+    const data_point *pa = (const data_point *) a;
+    const data_point *pb = (const data_point *) b;
+     
+    return (pa->val < pb->val) - (pa->val > pb->val);
+}
+
 static int unsort_points (const void *a, const void *b)
 {
     const data_point *pa = (const data_point *) a;
@@ -378,9 +386,38 @@ void series_view_toggle_sort (GtkWidget *w, windata_t *vwin)
     single_series_view_print(vwin);
 }
 
+static int select_series_view_sorter (series_view *sview,
+				      windata_t *vwin,
+				      gretlopt *opt)
+{
+    dialog_opts *opts;
+    const char *strs[] = {
+	N_("Ascending"),
+	N_("Descending")
+    };
+    gretlopt vals[] = {
+	OPT_NONE,
+	OPT_D
+    };
+    int v = 0;
+
+    opts = dialog_opts_new(2, OPT_TYPE_RADIO,
+			   opt, vals, strs);
+
+    if (opts != NULL) {
+	v = select_var_from_list_with_opt(sview->list, 
+					  _("Variable to sort by"),
+					  opts, 0, vwin->main);
+	dialog_opts_free(opts);
+    }
+
+    return v;
+}
+
 void multi_series_view_sort_by (GtkWidget *w, windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
+    gretlopt opt = OPT_NONE;
     int v;
 
     if (sview == NULL || sview->list == NULL) {
@@ -401,18 +438,23 @@ void multi_series_view_sort_by (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    v = select_var_from_list(sview->list, _("Variable to sort by"),
-			     vwin->main);
-    if (v < 0) {
-	/* canceled */
+    v = select_series_view_sorter(sview, vwin, &opt);
+    if (v <= 0) {
+	/* canceled or failed */
 	return;
     }
 
     sview->sortvar = v;
     series_view_fill_points(sview);
 
-    qsort(sview->points, sview->npoints, 
-	  sizeof sview->points[0], sort_points);
+    if (opt == OPT_D) {
+	qsort(sview->points, sview->npoints, 
+	      sizeof sview->points[0], sort_points_down);
+    } else {
+	qsort(sview->points, sview->npoints, 
+	      sizeof sview->points[0], sort_points);
+    }
+
     sview->sorted = 1;
     sview->view = VIEW_CUSTOM;
     multi_series_view_print_sorted(vwin);
