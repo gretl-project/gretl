@@ -5346,7 +5346,7 @@ static int panel_means_ts_plot (const int vnum,
     strcpy(gset->varname[1], dset->varname[vnum]);
     series_set_display_name(gset, 1, series_get_display_name(dset, vnum));
 
-    s0 = dset->t1 * dset->pd;
+    s0 = dset->t1;
 
     for (t=0; t<T; t++) {
 	double xit, xsum = 0.0;
