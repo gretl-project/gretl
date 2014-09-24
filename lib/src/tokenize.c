@@ -476,7 +476,8 @@ static void gretl_cmd_clear (CMD *c)
 }
 
 static int real_add_token (CMD *c, const char *tok,
-			   const char *lp, char type, char flag)
+			   const char *lp, char type, 
+			   char flag)
 {
     int n = c->ntoks;
     int err = 0;
@@ -627,7 +628,8 @@ static int push_quoted_token (CMD *c, const char *s,
 	int i = 0;
 
 	if (c->ci == PRINT) {
-	    tok = gretl_strndup(p, len);
+	    *tok = '\0';
+	    strncat(tok, p, len);
 	} else if (c->ci == PRINTF || c->ci == SPRINTF) {
 	    /* format strings: don't mess! */
 	    while (*p) {
