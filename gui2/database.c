@@ -1918,6 +1918,8 @@ static int get_target_in_home (char *targ, int code,
     return err;
 }
 
+#ifndef OS_OSX
+
 static void get_system_target (char *targ, int code, 
 			       const char *objname,
 			       const char *ext)
@@ -1933,6 +1935,8 @@ static void get_system_target (char *targ, int code,
     strcat(targ, objname);
     strcat(targ, ext);
 }
+
+#endif
 
 enum {
     REAL_INSTALL,
