@@ -3665,11 +3665,11 @@ static int gui_matrix_from_list (selector *sr)
 	errbox("No variables are selected");
 	return 1;
     } else {
-	list = gretl_list_from_string(buf, &err);
+	list = command_list_from_string(buf, &err);
     }
 
     if (err) {
-	gui_errmsg(err);
+	/* error message handled already */
 	return err;
     }
 

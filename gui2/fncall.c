@@ -642,7 +642,7 @@ static int do_make_list (selector *sr)
 	    return 0;
 	}
     } else {
-	list = gretl_list_from_string(buf, &err);
+	list = command_list_from_string(buf, &err);
     }
 
     if (err) {

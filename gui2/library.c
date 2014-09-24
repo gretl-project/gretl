@@ -406,26 +406,15 @@ int parse_lib_command (void)
 /* checks command line @s for errors, and if OK returns 
    an allocated copy of the command list */
 
-static int *command_list_from_string (char *s)
+int *command_list_from_string (const char *s, int *err)
 {
-    CMD mycmd;
     int *list = NULL;
-    int err;
 
-    err = gretl_cmd_init(&mycmd);
+    list = generate_list(s, dataset, err);
 
-    if (!err) {
-	err = parse_command_line(s, &mycmd, dataset, NULL);
-	if (!err) {
-	    list = gretl_list_copy(mycmd.list);
-	}
-    }
-
-    if (err) {
-	gui_errmsg(err);
+    if (*err) {
+	gui_errmsg(*err);
     } 
-
-    gretl_cmd_free(&mycmd);
 
     return list;    
 }
@@ -2272,7 +2261,7 @@ int do_VAR_omit (selector *sr)
 	return 1;
     }
 
-    omitlist = gretl_list_from_string(buf, &err);
+    omitlist = command_list_from_string(buf, &err);
 
     if (!err) {
 	if (opt & OPT_W) {
@@ -3344,10 +3333,8 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	}
 
 	if (!strncmp(bufline, "equation ", 9)) {
-	    slist = command_list_from_string(bufline);
-	    if (slist == NULL) {
-		err = 1;
-	    } else {
+	    slist = command_list_from_string(bufline + 9, &err);
+	    if (slist != NULL) {
 		err = equation_system_append(my_sys, slist);
 		free(slist);
 		if (err) {
@@ -5777,6 +5764,7 @@ void add_logs_etc (int ci, int varnum)
 	const char *flagstr;
 	int i, resp, quit = 0;
 
+	/* from main window selection */
 	list = gretl_list_from_string(liststr, &err);
 	if (err) {
 	    gui_errmsg(err);
@@ -6967,21 +6955,15 @@ int do_splot_from_selector (selector *sr)
 {
     const char *buf = selector_list(sr);
     gretlopt opt = selector_get_opts(sr);
-    // int *list;
+    int *list = NULL;
     int err = 0;
 
-#if 1
-    lib_command_sprintf("gnuplot %s", buf);
-    err = parse_lib_command();
-#else
-    /* FIXME new selector behavior */
-    list = gretl_list_from_string(buf, &err);
-#endif
+    list = command_list_from_string(buf, &err);
     if (err) {
 	return err;
     }
 
-    err = gnuplot_3d(libcmd.list, NULL, dataset, &opt);
+    err = gnuplot_3d(list, NULL, dataset, &opt);
 
     if (err) {
 	gui_errmsg(err);
@@ -6991,7 +6973,7 @@ int do_splot_from_selector (selector *sr)
 	register_graph();
     }
 
-    // free(list);
+    free(list);
 
     return err;
 }
@@ -7015,6 +6997,7 @@ static int maybe_reorder_list (char *liststr)
     int *list;
     int err = 0;
 
+    /* note: @liststr comes from main window selection */
     list = gretl_list_from_string(liststr, &err);
 
     if (err) {

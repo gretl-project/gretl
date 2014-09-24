@@ -2111,7 +2111,7 @@ int csv_to_clipboard (GtkWidget *parent)
     liststr = get_selector_storelist();
 
     if (liststr != NULL) {
-	int *list = gretl_list_from_string(liststr, &err);	
+	int *list = command_list_from_string(liststr, &err);	
 
 	if (list != NULL) {
 	    cancel = csv_options_dialog(COPY_CSV, GRETL_OBJ_DSET,

@@ -57,6 +57,8 @@ int parse_lib_command (void);
 
 int record_lib_command (void);
 
+int *command_list_from_string (const char *s, int *err);
+
 int execute_script (const char *runfile, const char *buf,
 		    PRN *prn, int exec_code);
 
