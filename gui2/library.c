@@ -6967,15 +6967,21 @@ int do_splot_from_selector (selector *sr)
 {
     const char *buf = selector_list(sr);
     gretlopt opt = selector_get_opts(sr);
-    int *list;
+    // int *list;
     int err = 0;
 
+#if 1
+    lib_command_sprintf("gnuplot %s", buf);
+    err = parse_lib_command();
+#else
+    /* FIXME new selector behavior */
     list = gretl_list_from_string(buf, &err);
+#endif
     if (err) {
 	return err;
     }
 
-    err = gnuplot_3d(list, NULL, dataset, &opt);
+    err = gnuplot_3d(libcmd.list, NULL, dataset, &opt);
 
     if (err) {
 	gui_errmsg(err);
@@ -6985,7 +6991,7 @@ int do_splot_from_selector (selector *sr)
 	register_graph();
     }
 
-    free(list);
+    // free(list);
 
     return err;
 }
