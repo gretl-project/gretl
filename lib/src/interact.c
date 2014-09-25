@@ -186,7 +186,7 @@ static int has_param (const CMD *cmd)
 }
 
 /* Look for a line with an "implicit genr", such as
-   y = 3*x, x += 10, etc. This is use din nls.c to
+   y = 3*x, x += 10, etc. This is used in nls.c to
    assess auxiliary genrs in nls, mle, gmm.
 */
 
