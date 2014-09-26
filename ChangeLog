@@ -1,5 +1,10 @@
 version 1.10.0, in progress
 - Replace old command-line parser with new "tokenizer"
+- Fix bug: GUI panel plot failed if the start of the sample
+  range was advanced
+- Fix bug: crash on attempting to open a file from the "Recent"
+  list within the GTK file chooser
+- Build for 64-bit Windows: update to OpenBLAS 2.11
 
 2014-09-20 version 1.9.92
 - Add new functions: isdiscrete(), isdummy()
