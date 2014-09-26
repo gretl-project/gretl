@@ -365,23 +365,44 @@ static void series_view_unsort (series_view *sview)
 
 void series_view_toggle_sort (GtkWidget *w, windata_t *vwin)
 {
+    const char *opts[] = {
+	N_("Ascending"),
+	N_("Descending"),
+	N_("Original order")
+    };
     series_view *sview = (series_view *) vwin->data;
+    int sort_opt;
     
     if (series_view_allocate(sview)) {
 	return;
     }
 
-    if (!sview->sorted) {
+    sort_opt = radio_dialog(NULL, _("Sort order:"), opts, 
+			    3, 0, 0, vwin->main);
+    
+    if (sort_opt < 0) {
+	return;
+    } else if (sort_opt == 2) {
+	/* dataset order */
+	if (!sview->sorted) {
+	    return; /* no-op */
+	} else {
+	    qsort(sview->points, sview->npoints, 
+		  sizeof sview->points[0], unsort_points);
+	    sview->sorted = 0;
+	    sview->view = VIEW_STANDARD;
+	}
+    } else if (sort_opt == 0) {
 	qsort(sview->points, sview->npoints, 
 	      sizeof sview->points[0], sort_points);
 	sview->sorted = 1;
 	sview->view = VIEW_CUSTOM;
     } else {
 	qsort(sview->points, sview->npoints, 
-	      sizeof sview->points[0], unsort_points);
-	sview->sorted = 0;
-	sview->view = VIEW_STANDARD;
-    }	
+	      sizeof sview->points[0], sort_points_down);
+	sview->sorted = 1;
+	sview->view = VIEW_CUSTOM;
+    }
 
     single_series_view_print(vwin);
 }
@@ -393,15 +414,17 @@ static int select_series_view_sorter (series_view *sview,
     dialog_opts *opts;
     const char *strs[] = {
 	N_("Ascending"),
-	N_("Descending")
+	N_("Descending"),
+	N_("Original order")
     };
     gretlopt vals[] = {
 	OPT_NONE,
-	OPT_D
+	OPT_D,
+	OPT_O
     };
     int v = 0;
 
-    opts = dialog_opts_new(2, OPT_TYPE_RADIO,
+    opts = dialog_opts_new(3, OPT_TYPE_RADIO,
 			   opt, vals, strs);
 
     if (opts != NULL) {
@@ -424,16 +447,6 @@ void multi_series_view_sort_by (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    if (sview->sorted && sview->points != NULL) {
-	/* toggle back to unsorted */
-	qsort(sview->points, sview->npoints, 
-	      sizeof sview->points[0], unsort_points);
-	sview->sorted = 0;
-	sview->view = VIEW_STANDARD;
-	multi_series_view_print(vwin);
-	return;
-    }
-
     if (series_view_allocate(sview)) {
 	return;
     }
@@ -444,20 +457,33 @@ void multi_series_view_sort_by (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    sview->sortvar = v;
-    series_view_fill_points(sview);
-
-    if (opt == OPT_D) {
-	qsort(sview->points, sview->npoints, 
-	      sizeof sview->points[0], sort_points_down);
+    if (opt == OPT_O) {
+	if (!sview->sorted) {
+	    return; /* no-op */
+	} else if (sview->points != NULL) {
+	    /* toggle back to unsorted */
+	    qsort(sview->points, sview->npoints, 
+		  sizeof sview->points[0], unsort_points);
+	    sview->sorted = 0;
+	    sview->view = VIEW_STANDARD;
+	    multi_series_view_print(vwin);
+	}
     } else {
-	qsort(sview->points, sview->npoints, 
-	      sizeof sview->points[0], sort_points);
-    }
+	sview->sortvar = v;
+	series_view_fill_points(sview);
 
-    sview->sorted = 1;
-    sview->view = VIEW_CUSTOM;
-    multi_series_view_print_sorted(vwin);
+	if (opt == OPT_D) {
+	    qsort(sview->points, sview->npoints, 
+		  sizeof sview->points[0], sort_points_down);
+	} else {
+	    qsort(sview->points, sview->npoints, 
+		  sizeof sview->points[0], sort_points);
+	}
+
+	sview->sorted = 1;
+	sview->view = VIEW_CUSTOM;
+	multi_series_view_print_sorted(vwin);
+    }
 }
 
 void series_view_graph (GtkWidget *w, windata_t *vwin)
