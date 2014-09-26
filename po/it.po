@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-09-26 10:59-0400\n"
-"PO-Revision-Date: 2014-09-16 09:27+0200\n"
+"PO-Revision-Date: 2014-09-26 21:40+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1011,6 +1011,8 @@ msgid ""
 "If '%s' is intended as the name of a variable, please change it --\n"
 "strings of this sort usually mean 'not a number'."
 msgstr ""
+"Se '%s' è il nome di una variabile, meglio cambiarlo --\n"
+"stringhe del genere di solito stanno per 'valore non numerico'"
 
 #: lib/src/csvdata.c:2572
 msgid "scanning for variable names...\n"
@@ -1155,7 +1157,7 @@ msgstr "La lunghezza della serie non coincide col dataset"
 
 #: lib/src/dataio.c:108
 msgid "Varname exceeds the maximum of 31 characters"
-msgstr ""
+msgstr "La lunghezza massima del nome di una variabile è di 32 caratteri"
 
 #: lib/src/dataio.c:133
 #, c-format
@@ -3208,14 +3210,14 @@ msgid "Missing function return type"
 msgstr "Manca il tipo del ritorno della funzione"
 
 #: lib/src/gretl_func.c:1326
-#, fuzzy, c-format
+#, c-format
 msgid "Expected a function return type, found '%s'"
-msgstr "Al posto di \"%c\" è stato trovato \"%s\"\n"
+msgstr "È stato trovato '%s' anziché un tipo di ritorno funzione"
 
 #: lib/src/gretl_func.c:1329
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid return type for function"
-msgstr "Il tipo di ritorno della funzione non è valido"
+msgstr "%s: il tipo di ritorno della funzione non è valido"
 
 #: lib/src/gretl_func.c:2316 lib/src/gretl_func.c:2376
 #: lib/src/gretl_func.c:2452 lib/src/gretl_utils.c:1715
@@ -6960,9 +6962,8 @@ msgid "Ambiguous matrix index"
 msgstr "Indice di matrice ambiguo"
 
 #: lib/src/usermat.c:714
-#, fuzzy
 msgid "Matrix is not symmetric"
-msgstr "La matrice non è definita positiva"
+msgstr "La matrice non è simmetrica"
 
 #: lib/src/usermat.c:936
 msgid "Matrix decomposition failed"
@@ -9960,9 +9961,8 @@ msgid "Can't find the function '%s'"
 msgstr "Non trovo la funzione \"%s\""
 
 #: gui2/fnsave.c:842 gui2/fnsave.c:1683
-#, fuzzy
 msgid "Please save your package first"
-msgstr "Aprire un file di dati per prima cosa"
+msgstr "Salvare il pacchetto per prima cosa"
 
 #: gui2/fnsave.c:998
 msgid "private"
@@ -14159,7 +14159,7 @@ msgstr "Mostra graduatorie"
 
 #: gui2/selector.c:5553
 msgid "Make plot interactive"
-msgstr ""
+msgstr "Rendi il grafico interattivo"
 
 #: gui2/selector.c:5556
 msgid "Show interval for median"
@@ -14527,14 +14527,12 @@ msgid "default"
 msgstr "predefinito"
 
 #: gui2/series_view.c:371 gui2/series_view.c:418
-#, fuzzy
 msgid "Original order"
-msgstr "ordine dei ritardi"
+msgstr "Ordine originale"
 
 #: gui2/series_view.c:380
-#, fuzzy
 msgid "Sort order:"
-msgstr "Ordine AR:"
+msgstr "Ordine:"
 
 #: gui2/series_view.c:432
 msgid "Variable to sort by"
@@ -15103,9 +15101,8 @@ msgid "Apply"
 msgstr "Applica"
 
 #: gui2/ssheet.c:179
-#, fuzzy
 msgid "_Format..."
-msgstr "_Previsione..."
+msgstr "_Formato..."
 
 #  Mi sono adeguato al termine usato nella finestra Aiuto di GNOME
 #: gui2/ssheet.c:180
@@ -15812,7 +15809,7 @@ msgstr "regressori"
 
 #: plugin/addons-i18n.c:45
 msgid "SVAR"
-msgstr ""
+msgstr "SVAR"
 
 #: plugin/addons-i18n.c:46
 msgid "AB-model"
