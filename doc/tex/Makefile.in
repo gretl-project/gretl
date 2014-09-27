@@ -64,6 +64,7 @@ TEXSRC = cli.tex \
 	system.tex \
 	operators.tex \
 	realtime.tex \
+	optshort.tex \
 	hp-hello.tex \
 	hp-matrices.tex \
 	hp-output.tex \
