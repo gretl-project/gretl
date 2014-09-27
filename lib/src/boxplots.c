@@ -81,27 +81,37 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 {
     double p[3] = {0.25, 0.5, 0.75};
 
-    if (n == 1) {
-	plt->wmin = plt->min = x[0];
-	plt->wmax = plt->max = x[0];
-	plt->median = x[0];
-	plt->lq = plt->uq = x[0];
+    if (n <= 3) {
+	int i;
+
+	if (n == 1) {
+	    plt->wmin = plt->min = x[0];
+	    plt->wmax = plt->max = x[0];
+	    plt->mean = plt->median = NADBL;
+	    plt->lq = plt->uq = NADBL;
+	} else if (n == 2) {
+	    plt->wmin = plt->min = x[0];
+	    plt->wmax = plt->max = x[1];
+	    plt->mean = (x[0] + x[1]) / 2.0;
+	    plt->median = plt->lq = plt->uq = NADBL;
+	} else {
+	    plt->wmin = plt->min = x[0];
+	    plt->wmax = plt->max = x[2];
+	    plt->median = x[1];
+	    plt->lq = plt->uq = NADBL;
+	    plt->mean = (x[0] + x[1] + x[2]) / 3.0;
+	}
+
+	plt->outliers = gretl_vector_alloc(n);
+
+	if (plt->outliers != NULL) {
+	    for (i=0; i<n; i++) {
+		gretl_vector_set(plt->outliers, i, x[i]);
+	    }
+	}	
+	
 	return;
-    } else if (n == 2) {
-	plt->wmin = plt->min = x[0];
-	plt->wmax = plt->max = x[1];
-	plt->median = (x[0] + x[1]) / 2.0;
-	plt->lq = x[0];
-	plt->uq = x[1];
-	return;
-    } else if (n == 3) {
-	plt->wmin = plt->min = x[0];
-	plt->wmax = plt->max = x[2];
-	plt->median = x[1];
-	plt->lq = (x[0] + x[1]) / 2.0;
-	plt->uq = (x[1] + x[2]) / 2.0;
-	return;
-    }	
+    }
 
     plt->wmin = plt->min = x[0];
     plt->wmax = plt->max = x[n-1];
@@ -111,6 +121,15 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
     plt->lq = p[0];
     plt->median = p[1];
     plt->uq = p[2];
+
+    if (na(plt->lq) || na(plt->uq)) {
+	/* ensure that Q1 and Q3 are either both present
+	   or both missing
+	*/
+	plt->lq = plt->uq = NADBL;
+    }
+
+    plt->mean = gretl_mean(0, n - 1, x);
 
     if (limit > 0) {
 	double d = limit * (plt->uq - plt->lq);
@@ -148,28 +167,29 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
     }
 }
 
-static void six_numbers (BOXPLOT *plt, int do_mean, PRN *prn)
+static void six_numbers (BOXPLOT *p, int do_mean, PRN *prn)
 {
+    double vals[5] = {p->min, p->lq, p->median, p->uq, p->max};
+    int i;
+
     if (do_mean) {
-	pprintf(prn, "%#9.5g", plt->mean);
+	if (na(p->mean)) {
+	    pprintf(prn, "%9s", "NA");
+	} else {
+	    pprintf(prn, "%#9.5g", p->mean);
+	}
     }
 
-    pprintf(prn, "%#9.5g", plt->min);
-    if (na(plt->lq)) {
-	pprintf(prn, "%9s", "NA");
-    } else {
-	pprintf(prn, "%#9.5g", plt->lq);
+    for (i=0; i<5; i++) {
+	if (na(vals[i])) {
+	    pprintf(prn, "%9s", "NA");
+	} else {
+	    pprintf(prn, "%#9.5g", vals[i]);
+	}
     }
-    pprintf(prn, "%#9.5g", plt->median);
-    if (na(plt->uq)) {
-	pprintf(prn, "%9s", "NA");
-    } else {
-	pprintf(prn, "%#9.5g", plt->uq);
-    }   
-    pprintf(prn, "%#9.5g", plt->max);
 
-    if (plt->n > 0) {
-	pprintf(prn, "  (n=%d)\n", plt->n);
+    if (p->n > 0) {
+	pprintf(prn, "  (n=%d)\n", p->n);
     } else {
 	pputc(prn, '\n');
     }
@@ -204,15 +224,22 @@ static void box_stats_leader (PLOTGROUP *grp, int i, int offset,
 
 static int has_mean (PLOTGROUP *grp)
 {
+    BOXPLOT *plt;
     int i;
 
     for (i=0; i<grp->nplots; i++) {
-	if (na(grp->plots[i].mean)) {
-	    return 0;
+	plt = &grp->plots[i];
+	if (na(plt->mean)) {
+	    if (plt->n == 1) {
+		plt->mean = plt->min;
+	    }
+	}
+	if (!na(plt->mean)) {
+	    return 1;
 	}
     }
 
-    return 1;
+    return 0;
 }
 
 static int get_format_offset (PLOTGROUP *grp)
@@ -654,7 +681,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 	fputc('\n', fp);
     }
 
-    /* data for quartiles and whiskers */
+    /* data for quartiles and whiskers, plus plot->n */
     for (i=0; i<np; i++) {
 	bp = &grp->plots[i];
 	if (na(bp->wmin)) bp->wmin = bp->min;
@@ -670,14 +697,18 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 	} else {
 	    fprintf(fp, " %g", bp->uq);
 	}
-	fprintf(fp, " %g\n", bp->wmax);
+	fprintf(fp, " %g %d\n", bp->wmax, bp->n);
     }
     fputs("e\n", fp);
 
     /* data for median */
     for (i=0; i<np; i++) {
 	bp = &grp->plots[i];
-	fprintf(fp, "%d %g\n", i+1, bp->median);
+	if (na(bp->median)) {
+	    fprintf(fp, "%d ?\n", i+1);
+	} else {
+	    fprintf(fp, "%d %g\n", i+1, bp->median);
+	}
     }
     fputs("e\n", fp);
 
@@ -685,7 +716,11 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 	/* data for mean */
 	for (i=0; i<np; i++) {
 	    bp = &grp->plots[i];
-	    fprintf(fp, "%d %g\n", i+1, bp->mean);
+	    if (na(bp->mean)) {
+		fprintf(fp, "%d ?\n", i+1);
+	    } else {
+		fprintf(fp, "%d %g\n", i+1, bp->mean);
+	    }
 	}
 	fputs("e\n", fp);
     } else if (do_intervals(grp)) {
@@ -884,7 +919,6 @@ static int real_boxplots (const int *list,
 	}
 
 	plot = &grp->plots[k]; /* note: k rather than i */
-	plot->mean = gretl_mean(0, n - 1, grp->x);
 	qsort(grp->x, n, sizeof *grp->x, gretl_compare_doubles);
 	quartiles_etc(grp->x, n, plot, grp->limit);
 	
@@ -1084,11 +1118,15 @@ static int read_plot_outliers (PLOTGROUP *grp, char *line,
 static int scan_five (BOXPLOT *plot, int *j, const char *s)
 {
     char lq[16], uq[16];
-    int nf;
+    int nf, nobs = 0;
 
-    nf = sscanf(s, "%d %lf %15s %15s %lf", j, &plot->min, 
-		lq, uq, &plot->max);
-    if (nf == 5) {
+    nf = sscanf(s, "%d %lf %15s %15s %lf %d", j, &plot->min, 
+		lq, uq, &plot->max, &nobs);
+
+    if (nf >= 5) {
+	if (nf == 6) {
+	    plot->n = nobs;
+	}
 	if (!strcmp(lq, "?")) {
 	    plot->lq = NADBL;
 	} else {
@@ -1100,7 +1138,26 @@ static int scan_five (BOXPLOT *plot, int *j, const char *s)
 	} else {
 	    nf--;
 	    nf += sscanf(uq, "%lf", &plot->uq);	    
-	}	
+	}
+    }
+
+    return nf;
+}
+
+static int scan_two (int *j, double *x, const char *s)
+{
+    char test[16];
+    int nf;
+
+    nf = sscanf(s, "%d %15s", j, test);
+
+    if (nf == 2) {
+	if (!strcmp(test, "?")) {
+	    *x = NADBL;
+	} else {
+	    nf--;
+	    nf += sscanf(test, "%lf", x);
+	}
     }
 
     return nf;
@@ -1128,20 +1185,20 @@ static int read_plot_data_block (PLOTGROUP *grp, char *line,
 	    nf = scan_five(plot, &j, line);
 	} else if (*block == 1) {
 	    /* median */
-	    nf = sscanf(line, "%d %lf", &j, &plot->median);
+	    nf = scan_two(&j, &plot->median, line);
 	} else if (*block == 2) {
 	    /* mean, or lower bound of c.i. */
 	    if (do_intervals(grp)) {
-		nf = sscanf(line, "%d %lf", &j, &plot->conf[0]);
+		nf = scan_two(&j, &plot->conf[0], line);
 	    } else {
-		nf = sscanf(line, "%d %lf", &j, &plot->mean);
+		nf = scan_two(&j, &plot->mean, line);
 	    }
 	} else if (*block == 3) {
 	    /* upper bound of c.i. */
-	    nf = sscanf(line, "%d %lf", &j, &plot->conf[1]);
+	    nf = scan_two(&j, &plot->conf[1], line);
 	}
 
-	if (nf != targ || j != i + 1) {
+	if (nf < targ || j != i + 1) {
 	    /* data read screwed up */
 	    err = E_DATA;
 	} else if (fgets(line, lsize, fp) == NULL) {
