@@ -167,13 +167,18 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
     }
 }
 
+/* backward compatibility, for when we were writing NAs into
+   gretl boxplot files using "%g"
+*/
+#define bpna(x) (na(x) || x > 1.0e308)
+
 static void six_numbers (BOXPLOT *p, int do_mean, PRN *prn)
 {
     double vals[5] = {p->min, p->lq, p->median, p->uq, p->max};
     int i;
 
     if (do_mean) {
-	if (na(p->mean)) {
+	if (bpna(p->mean)) {
 	    pprintf(prn, "%9s", "NA");
 	} else {
 	    pprintf(prn, "%#9.5g", p->mean);
@@ -181,7 +186,7 @@ static void six_numbers (BOXPLOT *p, int do_mean, PRN *prn)
     }
 
     for (i=0; i<5; i++) {
-	if (na(vals[i])) {
+	if (bpna(vals[i])) {
 	    pprintf(prn, "%9s", "NA");
 	} else {
 	    pprintf(prn, "%#9.5g", vals[i]);
