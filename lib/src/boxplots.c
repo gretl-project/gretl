@@ -60,6 +60,8 @@ typedef struct {
     const char *literal;
 } PLOTGROUP;
 
+#define BDEBUG 0
+
 #define show_mean(g)    (g->flags & BOX_SHOW_MEAN)
 #define do_intervals(g) (g->flags & BOX_INTERVALS)
 #define whiskerbars(g)  (g->flags & BOX_WHISKBARS)
@@ -78,6 +80,28 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 			   double limit)
 {
     double p[3] = {0.25, 0.5, 0.75};
+
+    if (n == 1) {
+	plt->wmin = plt->min = x[0];
+	plt->wmax = plt->max = x[0];
+	plt->median = x[0];
+	plt->lq = plt->uq = x[0];
+	return;
+    } else if (n == 2) {
+	plt->wmin = plt->min = x[0];
+	plt->wmax = plt->max = x[1];
+	plt->median = (x[0] + x[1]) / 2.0;
+	plt->lq = x[0];
+	plt->uq = x[1];
+	return;
+    } else if (n == 3) {
+	plt->wmin = plt->min = x[0];
+	plt->wmax = plt->max = x[2];
+	plt->median = x[1];
+	plt->lq = (x[0] + x[1]) / 2.0;
+	plt->uq = (x[1] + x[2]) / 2.0;
+	return;
+    }	
 
     plt->wmin = plt->min = x[0];
     plt->wmax = plt->max = x[n-1];
@@ -130,8 +154,19 @@ static void six_numbers (BOXPLOT *plt, int do_mean, PRN *prn)
 	pprintf(prn, "%#9.5g", plt->mean);
     }
 
-    pprintf(prn, "%#9.5g%#9.5g%#9.5g%#9.5g%#9.5g", plt->min, 
-	    plt->lq, plt->median, plt->uq, plt->max);
+    pprintf(prn, "%#9.5g", plt->min);
+    if (na(plt->lq)) {
+	pprintf(prn, "%9s", "NA");
+    } else {
+	pprintf(prn, "%#9.5g", plt->lq);
+    }
+    pprintf(prn, "%#9.5g", plt->median);
+    if (na(plt->uq)) {
+	pprintf(prn, "%9s", "NA");
+    } else {
+	pprintf(prn, "%#9.5g", plt->uq);
+    }   
+    pprintf(prn, "%#9.5g", plt->max);
 
     if (plt->n > 0) {
 	pprintf(prn, "  (n=%d)\n", plt->n);
@@ -353,6 +388,11 @@ static int plotgroup_factor_setup (PLOTGROUP *grp,
 	grp->nplots = gretl_vector_get_length(grp->dvals);
     }
 
+#if BDEBUG
+    fprintf(stderr, "plotgroup_factor_setup, nplots=%d\n", grp->nplots);
+    gretl_matrix_print(grp->dvals, "discrete vals");
+#endif
+
     return err;
 }
 
@@ -399,6 +439,7 @@ static PLOTGROUP *plotgroup_new (const int *list,
 
     if (!err) {
 	if (opt & OPT_Z) {
+	    /* --factorized */
 	    if (dset != NULL) {
 		strcpy(grp->ylabel, dset->varname[list[1]]);
 		strcpy(grp->xlabel, dset->varname[list[2]]);
@@ -478,13 +519,11 @@ static void get_box_y_range (PLOTGROUP *grp, double gyrange,
     }
 }
 
-static int write_gnuplot_boxplot (PLOTGROUP *grp, 
-				  gretlopt opt, 
-				  const char **labels)
+static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 {
     FILE *fp = NULL;
     BOXPLOT *bp;
-    int n = grp->nplots;
+    int np = grp->nplots;
     double lpos, h, gyrange;
     double ymin, ymax;
     int anybool, n_outliers;
@@ -513,7 +552,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp,
     get_box_y_range(grp, gyrange, &ymin, &ymax);
 
     if (opt & (OPT_Z | OPT_P)) {
-	if (n > 1 && n <= 30) {
+	if (np > 1 && np <= 30) {
 	    set_use_xtics(grp);
 	}
     } 
@@ -523,10 +562,11 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp,
     } 
 
     fputs("set nokey\n", fp);
+    fputs("set datafile missing \"?\"\n", fp);
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "set xrange [0:%d]\n", n + 1);
+    fprintf(fp, "set xrange [0:%d]\n", np + 1);
     fprintf(fp, "set yrange [%g:%g]\n", ymin, ymax);
 
     if (*grp->ylabel != '\0') {
@@ -537,7 +577,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp,
 	fprintf(fp, "set xlabel \"%s\"\n", grp->xlabel);
     }    
 
-    if (n > 30) {
+    if (np > 30) {
 	lwidth = 1;
     } else {
 	fputs("set ytics nomirror\n", fp);
@@ -545,17 +585,14 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp,
 
 	if (use_xtics(grp)) {
 	    fputs("set xtics (", fp);
-	    for (i=0; i<n; i++) {
+	    for (i=0; i<np; i++) {
+		bp = &grp->plots[i];
 		if (opt & OPT_Z) {
-		    if (labels==NULL) {
-			fprintf(fp, "\"%g\" %d", grp->dvals->val[i], i+1);
-		    } else {
-			fprintf(fp, "\"%s\" %d", labels[i], i+1);
-		    }
+		    fprintf(fp, "\"%s\" %d", bp->bool, i+1);
 		} else {
-		    fprintf(fp, "\"%s\" %d", grp->plots[i].varname, i+1);
+		    fprintf(fp, "\"%s\" %d", bp->varname, i+1);
 		}
-		if (i < n - 1) {
+		if (i < np - 1) {
 		    fputs(", ", fp);
 		} else {
 		    fputs(") scale 0.0\n", fp);
@@ -564,15 +601,16 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp,
 	    fputs("set xtics nomirror\n", fp);
 	} else {
 	    fputs("set noxtics\n", fp);
-	    if (n > 1 || anybool) {
+	    if (np > 1 || anybool) {
 		fprintf(fp, "set bmargin %d\n", (anybool)? 4 : 3);
-		for (i=0; i<n; i++) {
+		for (i=0; i<np; i++) {
+		    bp = &grp->plots[i];
 		    fprintf(fp, "set label \"%s\" at %d,%g center\n", 
-			    grp->plots[i].varname, i+1, lpos);
+			    bp->varname, i+1, lpos);
 		    if (grp->plots[i].bool != NULL) {
 			/* FIXME positioning? */
 			fprintf(fp, "set label \"%s\" at %d,%g center\n", 
-				grp->plots[i].bool, i+1, lpos - .8 * h);
+				bp->bool, i+1, lpos - .8 * h);
 		    }
 		}
 	    }
@@ -617,16 +655,27 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp,
     }
 
     /* data for quartiles and whiskers */
-    for (i=0; i<n; i++) {
+    for (i=0; i<np; i++) {
 	bp = &grp->plots[i];
 	if (na(bp->wmin)) bp->wmin = bp->min;
 	if (na(bp->wmax)) bp->wmax = bp->max;
-	fprintf(fp, "%d %g %g %g %g\n", i+1, bp->wmin, bp->lq, bp->uq, bp->wmax);
+	fprintf(fp, "%d %g", i+1, bp->wmin);
+	if (na(bp->lq)) {
+	    fputs(" ?", fp);
+	} else {
+	    fprintf(fp, " %g", bp->lq);
+	}
+	if (na(bp->uq)) {
+	    fputs(" ?", fp);
+	} else {
+	    fprintf(fp, " %g", bp->uq);
+	}
+	fprintf(fp, " %g\n", bp->wmax);
     }
     fputs("e\n", fp);
 
     /* data for median */
-    for (i=0; i<n; i++) {
+    for (i=0; i<np; i++) {
 	bp = &grp->plots[i];
 	fprintf(fp, "%d %g\n", i+1, bp->median);
     }
@@ -634,20 +683,20 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp,
 
     if (show_mean(grp)) {
 	/* data for mean */
-	for (i=0; i<n; i++) {
+	for (i=0; i<np; i++) {
 	    bp = &grp->plots[i];
 	    fprintf(fp, "%d %g\n", i+1, bp->mean);
 	}
 	fputs("e\n", fp);
     } else if (do_intervals(grp)) {
 	/* data for lower median bound */
-	for (i=0; i<n; i++) {
+	for (i=0; i<np; i++) {
 	    bp = &grp->plots[i];
 	    fprintf(fp, "%d %g\n", i+1, bp->conf[0]);
 	}
 	fputs("e\n", fp);
 	/* data for upper median bound */
-	for (i=0; i<n; i++) {
+	for (i=0; i<np; i++) {
 	    bp = &grp->plots[i];
 	    fprintf(fp, "%d %g\n", i+1, bp->conf[1]);
 	}
@@ -658,7 +707,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp,
 	int j, nout;
 
 	fprintf(fp, "# auxdata %d 2\n", n_outliers);
-	for (i=0; i<n; i++) {
+	for (i=0; i<np; i++) {
 	    bp = &grp->plots[i];
 	    if (bp->outliers != NULL) {
 		nout = gretl_vector_get_length(bp->outliers);
@@ -699,8 +748,10 @@ static int factorized_boxplot_check (const int *list,
     int err = 0;
 
     if (list[0] != 2) {
+	/* exactly two variables needed */
 	err = E_DATA;
     } else {
+	/* the second of which must be discrete */
 	int v2 = list[2];
 	
 	if (!series_is_discrete(dset, v2) &&
@@ -708,9 +759,9 @@ static int factorized_boxplot_check (const int *list,
 	    gretl_errmsg_set(_("You must supply two variables, the second of "
 			       "which is discrete"));
 	    err = E_DATA;
+	} else {
+	    *haslabels = is_string_valued(dset, v2);
 	}
-
-	*haslabels = is_string_valued(dset, v2);
     }
 
     return err;
@@ -738,11 +789,11 @@ static int real_boxplots (const int *list,
 			  gretlopt opt)
 {
     PLOTGROUP *grp;
+    const char **labels = NULL;
     double lim = NADBL;
     int i, k, np;
+    int haslabels = 0;
     int err = 0;
-    int haslabels;
-    const char **labels = NULL;
 
     if (opt & OPT_L) {
 	/* we should have an explicit outlier limit */
@@ -764,12 +815,11 @@ static int real_boxplots (const int *list,
     }
 
     if (opt & OPT_Z) {
+	/* --factorized */
 	err = factorized_boxplot_check(list, &haslabels, dset);
 	if (err) {
 	    return err;
-	} 
-
-	if (haslabels) {
+	} else if (haslabels) {
 	    int n_labels;
 
 	    labels = (const char **)
@@ -821,12 +871,13 @@ static int real_boxplots (const int *list,
 	}
 
 	if (n < 2) {
+	    /* less than two observations */
 	    if (grp->nplots == 1) {
 		/* we'll be out of data */
 		err = E_DATA;
 		break;
-	    } else {
-		/* discard this plot */
+	    } else if (n == 0) {
+		/* discard this particular plot */
 		grp->nplots -= 1;
 		continue;
 	    }
@@ -857,7 +908,11 @@ static int real_boxplots (const int *list,
 	strcpy(plot->varname, vname);
 
 	if (opt & OPT_Z) {
-	    plot->bool = gretl_strdup_printf("%g", grp->dvals->val[i]);
+	    if (labels != NULL) {
+		plot->bool = gretl_strdup(labels[i]);
+	    } else {
+		plot->bool = gretl_strdup_printf("%g", grp->dvals->val[i]);
+	    }
 	    grp->n_bools += 1;
 	}
 
@@ -868,7 +923,7 @@ static int real_boxplots (const int *list,
 	if (!do_intervals(grp)) {
 	    set_show_mean(grp);
 	}
-	err = write_gnuplot_boxplot(grp, opt, labels);
+	err = write_gnuplot_boxplot(grp, opt);
     }
 
     plotgroup_destroy(grp);   
@@ -1026,6 +1081,31 @@ static int read_plot_outliers (PLOTGROUP *grp, char *line,
     return err;
 }
 
+static int scan_five (BOXPLOT *plot, int *j, const char *s)
+{
+    char lq[16], uq[16];
+    int nf;
+
+    nf = sscanf(s, "%d %lf %15s %15s %lf", j, &plot->min, 
+		lq, uq, &plot->max);
+    if (nf == 5) {
+	if (!strcmp(lq, "?")) {
+	    plot->lq = NADBL;
+	} else {
+	    nf--;
+	    nf += sscanf(lq, "%lf", &plot->lq);
+	}
+	if (!strcmp(uq, "?")) {
+	    plot->uq = NADBL;
+	} else {
+	    nf--;
+	    nf += sscanf(uq, "%lf", &plot->uq);	    
+	}	
+    }
+
+    return nf;
+}
+
 /* read data out of a boxplots file in order to reconstruct
    numerical summary */
 
@@ -1041,11 +1121,11 @@ static int read_plot_data_block (PLOTGROUP *grp, char *line,
 	plot = &grp->plots[i];
 	targ = 2; /* the number of values we should read */
 	nf = 0;   /* the number of values actually read */
+
 	if (*block == 0) {
 	    /* min, Q1, Q3, max */
 	    targ = 5;
-	    nf = sscanf(line, "%d %lf %lf %lf %lf", 
-			&j, &plot->min, &plot->lq, &plot->uq, &plot->max);
+	    nf = scan_five(plot, &j, line);
 	} else if (*block == 1) {
 	    /* median */
 	    nf = sscanf(line, "%d %lf", &j, &plot->median);
@@ -1060,6 +1140,7 @@ static int read_plot_data_block (PLOTGROUP *grp, char *line,
 	    /* upper bound of c.i. */
 	    nf = sscanf(line, "%d %lf", &j, &plot->conf[1]);
 	}
+
 	if (nf != targ || j != i + 1) {
 	    /* data read screwed up */
 	    err = E_DATA;

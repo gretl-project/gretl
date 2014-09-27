@@ -4126,7 +4126,7 @@ int series_set_string_vals (DATASET *dset, int i,
     gretl_matrix *vals = NULL;
     int err = 0;
 
-    if (S == NULL || dset == NULL || i < 1 || i >= dset->n) {
+    if (S == NULL || dset == NULL || i < 1 || i >= dset->v) {
 	return E_DATA;
     }
 
