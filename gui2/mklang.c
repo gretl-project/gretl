@@ -33,6 +33,10 @@ const char *gretl_data_types[] = {
     "list",
     "string",
     "bundle",
+    "strings",
+    "matrices",
+    "bundles",
+    "lists",
     "null",
     "void",
     NULL
