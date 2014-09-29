@@ -21,7 +21,7 @@ void iconview_menubar_state (gboolean s);
 
 void main_menus_enable (gboolean s);
 
-GtkWidget *build_var_popup (void);
+GtkWidget *build_var_popup (int selvar);
 GtkWidget *build_selection_popup (void);
 
 void clear_sample_label (void);

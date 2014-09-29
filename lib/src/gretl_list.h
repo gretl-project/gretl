@@ -48,7 +48,15 @@ int *gretl_list_from_string (const char *str, int *err);
 
 int *gretl_list_from_vector (const gretl_vector *v, int *err);
 
+int *gretl_list_from_varnames (const char *str, 
+			       const DATASET *dset,
+			       int *err);
+
 char *gretl_list_to_string (const int *list);
+
+char *gretl_list_to_string_full (const int *list, 
+				 const DATASET *dset,
+				 int *err);
 
 char *gretl_list_to_lags_string (const int *list, int *err);
 

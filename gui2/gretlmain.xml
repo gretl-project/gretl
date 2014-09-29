@@ -146,7 +146,6 @@
       <menuitem action="UnitDums"/>
       <menuitem action="TimeDums"/>
       <menuitem action="RangeDum"/>
-      <menuitem action="dummify"/>
       <separator/>
       <menuitem action="GENR"/>
       <menuitem action="NewMatrix"/>

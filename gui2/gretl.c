@@ -1593,8 +1593,6 @@ GtkActionEntry main_entries[] = {
     { "UnitDums", NULL, N_("_Unit dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
     { "TimeDums", NULL, N_("_Time dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
     { "RangeDum", NULL, N_("_Observation range dummy"), NULL, NULL, G_CALLBACK(range_dummy_dialog) },
-    { "dummify", NULL, N_("Dummies for selected _discrete variables"), NULL, NULL, 
-      G_CALLBACK(logs_etc_callback) },
     { "NewMatrix", NULL, N_("_Define matrix..."), NULL, NULL, G_CALLBACK(new_matrix_callback) },
 
     /* Sample */
@@ -2388,7 +2386,8 @@ main_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 {
     if (right_click(event)) {
 	/* ignore all but right-clicks */
-	int selcount = vwin_selection_count(mdata, NULL);
+	int selvar = 0;
+	int selcount = vwin_selection_count(mdata, &selvar);
 
 	if (mdata->popup) {
 	    gtk_widget_destroy(mdata->popup);
@@ -2396,7 +2395,7 @@ main_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 	}
 
 	if (selcount == 1) {
-	    mdata->popup = build_var_popup();
+	    mdata->popup = build_var_popup(selvar);
 	} else if (selcount > 1) {
 	    mdata->popup = build_selection_popup();
 	}

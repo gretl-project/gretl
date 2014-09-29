@@ -2938,6 +2938,37 @@
 
   </command>
 
+  <command name="dummify" section="Transformations" context="gui"
+    label="Create sets of dummies">
+
+    <description>
+      <para>
+	The <quote>dummify</quote> operation is available only
+	for discrete-valued series. Its effect is to create a
+	set of dummy variables coding for the distinct values
+	present in the series.
+      </para>
+      <para>
+	For example suppose one has a series named <lit>race</lit>,
+	with values 1 for <quote>white</quote>, 2 for
+	<quote>black</quote>, 3 for <quote>hispanic</quote> and 4 for
+	<quote>other</quote>. To dummify this series means to create 4
+	dummy variables: the first has value 1 for all observations at
+	which race = 1, zero otherwise; the second has value 1 for all
+	observations at which race = 2, zero otherwise; and so on.
+      </para>
+      <para>
+	In practice it's likely that for a discrete series with
+	<math>k</math> categories you will want to create only
+	<math>k</math> &minus; 1 dummies, to avoid falling into
+	the so-called <quote>dummy variable trap</quote>. Hence you
+	have the option of dropping either the lowest or the
+	highest value from the coding.
+      </para>
+    </description>
+
+  </command>
+
   <command name="dummify" section="Transformations" 
     label="Create sets of dummies" context="cli">
 
@@ -2991,6 +3022,10 @@
 	ols y dummify(x)
       </code>
     </description>
+
+    <gui-access>
+      <other-access>Main window pop-up menu (single selection)</other-access>
+    </gui-access>
 
   </command>
 

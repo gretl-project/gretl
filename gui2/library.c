@@ -637,53 +637,58 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	flagstr = print_flags(opt, ci);
     }
 
-    switch (ci) {
-    case CORR:
-	lib_command_sprintf("corr%s%s", liststr, flagstr);
-	strcat(title, _("correlation matrix"));
-	break;
-    case ALL_CORR:
+    if (ci == ALL_CORR) {
+	/* correlation matrix, all series */
 	lib_command_strcpy("corr");
 	strcat(title, _("correlation matrix"));
 	ci = CORR;
-	break;
-    case PCA:
-	lib_command_sprintf("pca%s%s", liststr, flagstr);
-	strcat(title, _("principal components"));
-	break;
-    case MAHAL:
-	lib_command_sprintf("mahal%s", liststr);
-	hsize = 60;
-	strcat(title, _("Mahalanobis distances"));
-	break;
-    case XTAB:
-	lib_command_sprintf("xtab %s%s", liststr, flagstr);
-	strcat(title, _("cross tabulation"));
-	vsize = 340;
-	break;
-    case SUMMARY:
-	lib_command_sprintf("summary%s", liststr);
-	strcat(title, _("summary statistics"));
-	break;
-    case ALL_SUMMARY:
+    } else if (ci == ALL_SUMMARY) {
+	/* summary stats, all series */
 	lib_command_strcpy("summary");
 	strcat(title, _("summary statistics"));
 	ci = SUMMARY;
-	break;
-    case VAR_SUMMARY:
+    } else if (ci == VAR_SUMMARY) {
+	/* summary stats, single series */
 	lib_command_sprintf("summary %s", selected_varname());
 	strcat(title, _("summary stats: "));
 	strcat(title, selected_varname());
 	ci = SUMMARY;
 	vsize = 300;
-	break;
-    case NORMTEST:
+    } else if (ci == NORMTEST) {
+	/* normality test, single series */
 	lib_command_sprintf("normtest %s --all", selected_varname());
 	strcat(title, _("normality test"));
 	vsize = 300;
-	break;
-    default:
-	break;
+    } else if (liststr == NULL) {
+	/* beyond here we need a list */
+	err = E_DATA;
+    } else {
+	switch (ci) {
+	case CORR:
+	    lib_command_sprintf("corr%s%s", liststr, flagstr);
+	    strcat(title, _("correlation matrix"));
+	    break;
+	case PCA:
+	    lib_command_sprintf("pca%s%s", liststr, flagstr);
+	    strcat(title, _("principal components"));
+	    break;
+	case MAHAL:
+	    lib_command_sprintf("mahal%s", liststr);
+	    hsize = 60;
+	    strcat(title, _("Mahalanobis distances"));
+	    break;
+	case XTAB:
+	    lib_command_sprintf("xtab %s%s", liststr, flagstr);
+	    strcat(title, _("cross tabulation"));
+	    vsize = 340;
+	    break;
+	case SUMMARY:
+	    lib_command_sprintf("summary%s", liststr);
+	    strcat(title, _("summary statistics"));
+	    break;
+	default:
+	    break;
+	}
     }
 
     if (parse_lib_command() || bufopen(&prn)) {
@@ -5718,7 +5723,7 @@ static int dummify_dialog (gretlopt *opt)
 
     ret = radio_dialog(_("gretl: create dummy variables"), 
 		       _("Encoding variables as dummies"), 
-		       opts, 3, 0, 0, NULL);
+		       opts, 3, 0, DUMMIFY, NULL);
 
     *opt = (ret == 1)? OPT_F : (ret == 2)? OPT_L : OPT_NONE;
 
@@ -5760,41 +5765,14 @@ void add_logs_etc (int ci, int varnum)
 	}
     } else if (ci == DUMMIFY) {
 	gretlopt opt = OPT_NONE;
-	int *list = NULL;
 	const char *flagstr;
-	int i, resp, quit = 0;
+	int resp;
 
-	/* from main window selection */
-	list = gretl_list_from_string(liststr, &err);
-	if (err) {
-	    gui_errmsg(err);
+	resp = dummify_dialog(&opt);
+	if (canceled(resp)) {
 	    free(liststr);
 	    return;
 	}
-
-	for (i=1; i<=list[0]; i++) {
-	    if (!series_is_discrete(dataset, list[i])) {
-		err++; 
-	    }
-	}
-
-	if (err < list[0]) {
-	    resp = dummify_dialog(&opt);
-	    if (canceled(resp)) {
-		quit = 1;
-	    }
-	} else {
-	    errbox(_("No discrete variables were selected"));
-	    quit = 1;
-	}
-
-	free(list);
-
-	if (quit) {
-	    free(liststr);
-	    return;
-	}
-
 	flagstr = print_flags(opt, ci);
 	lib_command_sprintf("dummify%s%s", liststr, flagstr);
     } else {

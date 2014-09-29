@@ -732,6 +732,58 @@ int *gretl_list_from_string (const char *str, int *err)
 }
 
 /**
+ * gretl_list_from_varnames:
+ * @str: string holding space-separated series names.
+ * @dset: pointer to dataset.
+ * @err: location to receive error code.
+ *
+ * Returns: an allocated gretl list holding the ID numbers of
+ * the series named in @str, or NULL on failure.
+ */
+
+int *gretl_list_from_varnames (const char *str, 
+			       const DATASET *dset,
+			       int *err)
+{
+    int *list = NULL;
+    char **S;
+    int n = 0;
+
+    if (str == NULL || count_fields(str, NULL) < 1) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    S = gretl_string_split(str, &n, NULL);
+    if (S == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    list = gretl_list_new(n);
+
+    if (list == NULL) {
+	*err = E_ALLOC;
+    } else {
+	int i, vi;
+
+	for (i=0; i<n; i++) {
+	    vi = current_series_index(dset, S[i]);
+	    if (vi < 0) {
+		*err = E_UNKVAR;
+		break;
+	    } else {
+		list[i+1] = vi;
+	    }
+	}
+    }
+
+    strings_array_free(S, n);
+
+    return list;
+}
+
+/**
  * gretl_list_from_vector:
  * @v: source vector.
  *
@@ -833,6 +885,64 @@ char *gretl_list_to_string (const int *list)
 }
 
 /**
+ * gretl_list_to_string_full:
+ * @list: array of integers.
+ * @dset: dataset information.
+ * @err: location to receive error code.
+ * 
+ * Returns: allocated string representation of @list, with ID
+ * numbers replaced by series names, or NULL on failure.
+ */
+
+char *gretl_list_to_string_full (const int *list, 
+				 const DATASET *dset,
+				 int *err)
+{
+    char *buf = NULL;
+    int len = 1;
+    int i, vi;
+
+    if (list == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (list[0] == 0) {
+	return gretl_strdup("");
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	vi = list[i];
+	if (vi == LISTSEP) {
+	    len += 2;
+	} else if (vi >= 0 && vi < dset->v) {
+	    len += strlen(dset->varname[vi]) + 1;
+	} else {
+	    *err = E_DATA;
+	    return NULL;
+	}
+    }
+
+    buf = calloc(len, 1);
+
+    if (buf == NULL) {
+	*err = E_ALLOC;
+    } else {
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (vi == LISTSEP) {
+		strcat(buf, " ;");
+	    } else {
+		strcat(buf, " ");
+		strcat(buf, dset->varname[vi]);
+	    }
+	}
+    }   
+	
+    return buf;
+}
+
+/**
  * gretl_list_get_names:
  * @list: array of integers.
  * @dset: dataset information.
@@ -841,8 +951,7 @@ char *gretl_list_to_string (const int *list)
  * Prints the names of the members of @list of integers into 
  * a newly allocated string, separated by commas.
  *
- * Returns: The string representation of the list on success,
- * or NULL on failure.
+ * Returns: allocated string on success or NULL on failure.
  */
 
 char *gretl_list_get_names (const int *list, const DATASET *dset,

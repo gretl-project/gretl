@@ -380,6 +380,8 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	add_logs_etc(LOGS, v);
     } else if (!strcmp(item, _("Add difference"))) {
 	add_logs_etc(DIFF, v);
+    } else if (!strcmp(item, _("Dummify..."))) {
+	add_logs_etc(DUMMIFY, v);
     } else if (!strcmp(item, _("Define new variable..."))) { 
 	genr_callback();
     }
@@ -493,7 +495,7 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     return FALSE;
 }
 
-GtkWidget *build_var_popup (void)
+GtkWidget *build_var_popup (int selvar)
 {
     const char *items[] = {
 	N_("Display values"),
@@ -511,6 +513,7 @@ GtkWidget *build_var_popup (void)
 	NULL,
 	N_("Add log"),
 	N_("Add difference"),
+	N_("Dummify..."),
 	N_("Define new variable...")
     };
     GtkWidget *menu;
@@ -545,6 +548,10 @@ GtkWidget *build_var_popup (void)
 	    /* skip boxplot option */
 	    continue;
 	}
+	if (i == 15 && !series_is_discrete(dataset, selvar)) {
+	    /* skip dummify option */
+	    continue;
+	}	
 	item = gtk_menu_item_new_with_label(_(items[i]));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(var_popup_click),
