@@ -612,20 +612,23 @@ static int do_make_list (selector *sr)
     const char *msg = NULL;
     PRN *prn = NULL;
     int *list = NULL;
+    int empty = 0;
     int nl, err = 0;
 
+    if (lname == NULL || *lname == '\0') {
+	errbox(_("No name was given for the list"));
+	return 1;
+    } 
+
     if (data != NULL) {
+	/* called from fncall.c */
 	GtkWidget *entry = GTK_WIDGET(data);
 
 	cinfo = g_object_get_data(G_OBJECT(entry), "cinfo");
 	aux = gtk_widget_get_parent(entry);
     }
 
-    if (lname == NULL || *lname == 0) {
-	errbox(_("No name was given for the list"));
-	return 1;
-    } 
-
+    /* record initial status */
     nl = n_user_lists();
 
     if (buf == NULL || *buf == '\0') {
@@ -636,6 +639,8 @@ static int do_make_list (selector *sr)
 	    list = gretl_null_list();
 	    if (list == NULL) {
 		err = E_ALLOC;
+	    } else {
+		empty = 1;
 	    }
 	} else {
 	    /* canceled */
@@ -669,6 +674,8 @@ static int do_make_list (selector *sr)
     }
 
     if (!err) {
+	lib_command_sprintf("list %s =%s", lname, empty ? " null" : buf);
+	record_command_verbatim();
 	gtk_widget_hide(selector_get_window(sr));
 	if (cinfo != NULL) {
 	    if (n_user_lists() > nl) {

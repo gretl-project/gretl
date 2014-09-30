@@ -502,7 +502,7 @@ void add_mahalanobis_data (windata_t *vwin)
 				descrip, DS_COPY_VALUES);
 
     if (!err) {
-	liststr = gretl_list_to_string(mlist);
+	liststr = gretl_list_to_string(mlist, dataset, &err);
 	if (liststr != NULL) {
 	    lib_command_sprintf("mahal%s --save", liststr);
 	    record_command_verbatim();
@@ -524,8 +524,9 @@ void add_pca_data (windata_t *vwin)
     } else if (dataset->v > oldv) {
 	int addv = dataset->v - oldv;
 	gretlopt opt = (addv == cmat->dim)? OPT_A : OPT_O;
-	char *liststr = gretl_list_to_string(cmat->list);
-	
+	char *liststr;
+
+	liststr = gretl_list_to_string(cmat->list, dataset, &err);
 	if (liststr != NULL) {
 	    lib_command_sprintf("pca%s%s", liststr, print_flags(opt, PCA));
 	    record_command_verbatim();
@@ -4291,45 +4292,47 @@ int do_vector_model (selector *sr)
     return err;
 }
 
-static char *alt_list_buf (const int *inlist, int fit)
+static char *alt_list_buf (const int *src, int fit,
+			   int *err)
 {
     char *buf;
+    int yvar = src[1];
+    int xvar = src[3];
     int list[5];
-    int src = inlist[2];
-    int v;
+    int addv;
 
     if (fit == PLOT_FIT_QUADRATIC) {
-	v = xpxgenr(src, src, dataset);
+	addv = xpxgenr(xvar, xvar, dataset);
     } else {
-	v = invgenr(src, dataset);
+	addv = invgenr(xvar, dataset);
     }
 
-    if (v < 0) {
+    if (addv < 0) {
 	nomem();
 	return NULL;
     }
 
     if (fit == PLOT_FIT_QUADRATIC) {
 	list[0] = 4;
-	list[1] = inlist[1];
-	list[2] = inlist[2];
-	list[3] = inlist[3];
-	list[4] = v;
+	list[1] = yvar;
+	list[2] = 0;
+	list[3] = xvar;
+	list[4] = addv;
     } else {
 	list[0] = 3;
-	list[1] = inlist[1];
-	list[2] = v;
-	list[3] = inlist[3];
+	list[1] = yvar;
+	list[2] = 0;
+	list[3] = addv;
     }	
 
-    buf = gretl_list_to_string(list);
-
-    if (buf == NULL) {
-	nomem();
-    }
+    buf = gretl_list_to_string(list, dataset, err);
 
     return buf;
 }
+
+/* called from gpt_control.c: the incoming @list should
+   be of the form {3, Y, 0, X}
+*/
 
 void do_graph_model (const int *list, int fit)
 {
@@ -4339,18 +4342,19 @@ void do_graph_model (const int *list, int fit)
     int orig_v = dataset->v;
     int err = 0;
 
-    if (list == NULL || list[1] >= dataset->v || list[2] >= dataset->v) {
+    if (list == NULL) {
 	gui_errmsg(E_DATA);
 	return;
     }
 
     if (fit == PLOT_FIT_QUADRATIC || fit == PLOT_FIT_INVERSE) {
-	buf = alt_list_buf(list, fit);
+	buf = alt_list_buf(list, fit, &err);
     } else {
-	buf = gretl_list_to_string(list);
+	buf = gretl_list_to_string(list, dataset, &err);
     }
 
-    if (buf == NULL) {
+    if (err) {
+	gui_errmsg(err);
 	return;
     }
 
@@ -6488,58 +6492,53 @@ static int maybe_prune_delete_list (int *list)
     return pruned;
 }
 
-static void real_delete_vars (int id, int *dlist)
+static void real_delete_vars (int selvar)
 {
     int err, renumber, pruned = 0;
+    const char *vname = NULL;
     char *liststr = NULL;
-    char *msg = NULL;
+    gchar *msg = NULL;
 
     if (dataset_locked()) {
 	return;
     }
 
-    if (id > 0) {
-	/* delete single specified var */
-	int testlist[2];
+    if (selvar > 0) {
+	/* deleting a single specified series */
+	int testlist[2] = {1, selvar};
 
-	testlist[0] = 1;
-	testlist[1] = id;
+	vname = dataset->varname[selvar];
 
 	if (maybe_prune_delete_list(testlist)) {
-	    errbox(_("Cannot delete %s; variable is in use"), 
-		   dataset->varname[id]);
+	    errbox(_("Cannot delete %s; variable is in use"), vname);
 	    return;
 	} else {
-	    msg = g_strdup_printf(_("Really delete %s?"), dataset->varname[id]);
+	    msg = g_strdup_printf(_("Really delete %s?"), vname);
 	}
-    } else if (dlist == NULL) {
-	/* delete vars selected in main window */
+    } else {
+	/* deleting multiple series selected in main window */
 	liststr = main_window_selection_as_string();
 	if (liststr == NULL) {
 	    return;
-	} else if (vwin_selection_count(mdata, NULL) > 8) {
-	    msg = g_strdup(_("Really delete the selected variables?"));
 	} else {
-	    msg = g_strdup_printf(_("Really delete %s?"), liststr);
+	    msg = g_strdup(_("Really delete the selected variables?"));
 	}
-    } else {
-	/* delete vars in dlist */
-	liststr = gretl_list_to_string(dlist);
     }
 
     if (msg != NULL) {
-	if (yes_no_dialog(_("gretl: delete"), msg, 0) != GRETL_YES) {
-	    g_free(msg);
-	    if (liststr != NULL) {
-		free(liststr);
-	    }
+	/* ask for confirmation */
+	int resp;
+
+	resp = yes_no_dialog(_("gretl: delete"), msg, 0);
+	g_free(msg);
+	if (resp != GRETL_YES) {
+	    free(liststr);
 	    return;
 	}
-	g_free(msg);
     }
 
-    if (id > 0) {
-	lib_command_sprintf("delete %d", id);
+    if (vname != NULL) {
+	lib_command_sprintf("delete %s", vname);
     } else {
 	lib_command_sprintf("delete%s", liststr);
 	free(liststr);  
@@ -6549,7 +6548,7 @@ static void real_delete_vars (int id, int *dlist)
 	return;
     }
 
-    if (id == 0) {
+    if (selvar == 0) {
 	pruned = maybe_prune_delete_list(libcmd.list);
     }
 
@@ -6572,20 +6571,18 @@ static void real_delete_vars (int id, int *dlist)
 	    infobox(_("Take note: variables have been renumbered"));
 	}
 	maybe_clear_selector(libcmd.list);
-	if (dlist == NULL) {
-	    mark_dataset_as_modified();
-	}
+	mark_dataset_as_modified();
     }
 }
 
 void delete_single_var (int id)
 {
-    real_delete_vars(id, NULL);
+    real_delete_vars(id);
 }
 
 void delete_selected_vars (void)
 {
-    real_delete_vars(0, NULL);
+    real_delete_vars(0);
 }
 
 static int regular_ts_plot (int v)
@@ -6976,7 +6973,7 @@ static int maybe_reorder_list (char *liststr)
     int err = 0;
 
     /* note: @liststr comes from main window selection */
-    list = gretl_list_from_string(liststr, &err);
+    list = gretl_list_from_varnames(liststr, dataset, &err);
 
     if (err) {
 	return err;
@@ -6989,6 +6986,7 @@ static int maybe_reorder_list (char *liststr)
 	}
 
 	if (xvar != list[list[0]]) {
+	    /* re-order if xvar is not in last place */
 	    int tmp = list[list[0]];
 	    int pos = list_position(xvar, list);
 	    int i;
@@ -6996,13 +6994,13 @@ static int maybe_reorder_list (char *liststr)
 	    list[list[0]] = xvar;
 	    list[pos] = tmp;
 	    *liststr = '\0';
-	    for (i=1; i<=list[0]; i++) {
-		char numstr[8];
 
-		sprintf(numstr, " %d", list[i]);
-		strcat(liststr, numstr);
+	    for (i=1; i<=list[0]; i++) {
+		strcat(liststr, " ");
+		strcat(liststr, dataset->varname[list[i]]);
 	    }
 	}
+
 	free(list);
     }
 

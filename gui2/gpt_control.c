@@ -2257,21 +2257,17 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 }
 
 /* We got a special comment supposedly indicating the name and ID
-   number of the independent variable, X, in an OLS fitted line.  Here
-   we check this info for validity: @vname should be the name of a
-   bona fide series variable, and its ID number should match the given
-   @v.  We return 1 if this checks out OK, otherwise 0.
+   number of the X or Y variable in an OLS fitted line. Here we check
+   this info for validity: @vname should be the name of a bona fide
+   series variable, and its ID number should match the given @v.  We
+   return 1 if this works out OK, otherwise 0.
 */
 
-static int plot_ols_var_ok (const char *vname)
+static int plot_ols_var_ok (const char *vname, int v)
 {
-    int v = current_series_index(dataset, vname);
+    int vcheck = current_series_index(dataset, vname);
 
-    if (v >= 0 && !strcmp(dataset->varname[v], vname)) {
-	return 1;
-    }
-
-    return 0;
+    return vcheck == v;
 }
 
 static void maybe_set_add_fit_ok (GPT_SPEC *spec)
@@ -2541,12 +2537,12 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
 	    if (sscanf(gpline + 6, fmt, vname, &v) == 2) {
 		if (gpline[2] == 'X') {
-		    if (plot_ols_var_ok(vname)) {
-			reglist[2] = v;
+		    if (plot_ols_var_ok(vname, v)) {
+			reglist[3] = v;
 		    }
 		} else { 
 		    /* 'Y' */
-		    if (reglist[2] > 0 && plot_ols_var_ok(vname)) {
+		    if (reglist[3] > 0 && plot_ols_var_ok(vname, v)) {
 			reglist[0] = 3;
 			reglist[1] = v;
 		    }

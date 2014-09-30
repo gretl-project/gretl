@@ -2023,7 +2023,7 @@ static void real_make_mainwin_list (const int *list,
     if (err) {
 	gui_errmsg(err);
     } else {
-	lstr = gretl_list_to_string(list);
+	lstr = gretl_list_to_string(list, dataset, &err);
     }
 
     if (lstr != NULL) {

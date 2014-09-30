@@ -568,7 +568,7 @@ static void retrieve_arma_info (MODEL *pmod)
 	if (mask != NULL) {
 	    laglist = lag_list_from_mask(mask, arma_p);
 	    if (laglist != NULL) {
-		arlags = gretl_list_to_string(laglist);
+		arlags = gretl_list_to_numeric_string(laglist);
 		free(laglist);
 	    }
 	}
@@ -583,7 +583,7 @@ static void retrieve_arma_info (MODEL *pmod)
 	    laglist = lag_list_from_mask(mask, arma_q);
 	    if (laglist != NULL) {
 		free(malags);
-		malags = gretl_list_to_string(laglist);
+		malags = gretl_list_to_numeric_string(laglist);
 		free(laglist);
 	    }
 	} 
@@ -596,7 +596,7 @@ static void retrieve_AR_lags_info (MODEL *pmod)
     arlags = NULL;
 
     if (pmod->arinfo != NULL && pmod->arinfo->arlist != NULL) {
-	arlags = gretl_list_to_string(pmod->arinfo->arlist);
+	arlags = gretl_list_to_numeric_string(pmod->arinfo->arlist);
     }
 }
 
@@ -7299,66 +7299,6 @@ simple_selection_for_viewer (int ci, const char *title, int (*callback)(),
     return sr;
 }
 
-struct list_maker {
-    char *liststr;
-    size_t len;
-    int overflow;
-};
-
-static void selection_strlen (GtkTreeModel *model, GtkTreePath *path,
-			      GtkTreeIter *iter, struct list_maker *lmkr)
-{
-    gchar *varnum = NULL;
-
-    gtk_tree_model_get(model, iter, COL_ID, &varnum, -1);
-    lmkr->len += strlen(varnum) + 1;
-    g_free(varnum);
-
-    if (lmkr->len > MAXLEN - 32) {
-	lmkr->overflow = 1;
-    }
-}
-
-static void selection_add_item (GtkTreeModel *model, GtkTreePath *path,
-				GtkTreeIter *iter, struct list_maker *lmkr)
-{
-    gchar *varnum = NULL;
-
-    gtk_tree_model_get(model, iter, COL_ID, &varnum, -1);
-    strcat(lmkr->liststr, " ");
-    strcat(lmkr->liststr, varnum);
-    g_free(varnum);
-}
-
-char *main_window_selection_as_string (void) 
-{
-    struct list_maker lmkr = {NULL, 1, 0};
-    GtkTreeSelection *select;
-    char *ret = NULL;
-
-    select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
-
-    gtk_tree_selection_selected_foreach(select, 
-					(GtkTreeSelectionForeachFunc) 
-					selection_strlen,
-					&lmkr); 
-    if (lmkr.overflow) {
-	errbox(_("Too many items were selected"));
-    } else {
-	lmkr.liststr = mymalloc(lmkr.len);
-	if (lmkr.liststr != NULL) {
-	    lmkr.liststr[0] = '\0';
-	    gtk_tree_selection_selected_foreach(select, 
-						(GtkTreeSelectionForeachFunc) 
-						selection_add_item,
-						&lmkr);
-	    ret = lmkr.liststr;
-	} 
-    }	
-
-    return ret;
-}
-
 static gchar *get_or_set_storelist (const char *s, int reset)
 {
     static gchar *storelist;
@@ -8499,7 +8439,7 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 	if (laglist != NULL) {
 	    /* we got a list of specific lags for variable vi: convert
 	       to a string for putting into a text entry box */
-	    vlj->lspec = gretl_list_to_string(laglist);
+	    vlj->lspec = gretl_list_to_numeric_string(laglist);
 	    vlj->lmin = laglist[1];
 	    vlj->lmax = laglist[laglist[0]];
 	} else {

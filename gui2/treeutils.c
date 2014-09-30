@@ -771,3 +771,17 @@ int *main_window_selection_as_list (void)
 
     return list;
 }
+
+char *main_window_selection_as_string (void)
+{
+    int *list = main_window_selection_as_list();
+    char *liststr = NULL;
+
+    if (list != NULL) {
+	int err = 0;
+
+	liststr = gretl_list_to_string(list, dataset, &err);
+    }
+
+    return liststr;
+}

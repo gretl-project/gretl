@@ -57,8 +57,6 @@ void selector_set_varnum (int v);
 
 void selector_from_model (windata_t *vwin);
 
-char *main_window_selection_as_string (void);
-
 void data_export_selection_wrapper (int file_code);
 
 void functions_selection_wrapper (void);

@@ -31,7 +31,9 @@ gboolean tree_model_iter_prev (GtkTreeModel *mod, GtkTreeIter *iter);
 gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 			windata_t *win);
 
-int *main_window_selection_as_list (void); 
+int *main_window_selection_as_list (void);
+
+char *main_window_selection_as_string (void);
 
 void set_main_colheads_clickable (gboolean s);
 
