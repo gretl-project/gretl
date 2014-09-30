@@ -240,7 +240,7 @@ gint bufopen (PRN **pprn)
     return err;
 }
 
-static char *cmd_to_buf (CMD *cmd, DATASET *dset, const char *line)
+static char *cmd_to_buf (CMD *cmd, const char *line)
 {
     PRN *cmdprn = NULL;
     char *buf = NULL;
@@ -248,7 +248,7 @@ static char *cmd_to_buf (CMD *cmd, DATASET *dset, const char *line)
     bufopen(&cmdprn);
 
     if (cmdprn != NULL) {
-	gretl_record_command(cmd, dataset, line, cmdprn);
+	gretl_record_command(cmd, line, cmdprn);
 	buf = gretl_print_steal_buffer(cmdprn);
 	gretl_print_destroy(cmdprn);
     }
@@ -283,12 +283,8 @@ static char *cmd_to_buf (CMD *cmd, DATASET *dset, const char *line)
 
    Why bother with the more complex variant? First, parsing the
    command line may expose an error which we'll then be able to
-   catch. Second, some pieces of GUI apparatus (notably the model
-   specification dialog) produce a command "list" in numerical form
-   (ID numbers of series), but it makes for a more comprehensible log
-   entry to cash out such lists using the names of the series -- as is
-   done by echo_cmd. And echo_cmd also automatically breaks overly
-   long lines, making for better legibility. (FIXME doc here)
+   catch. In addition, gretl_record_command() automatically breaks
+   overly long lines, making for better legibility.
 
    IMPORTANT: when the second command-logging method is used,
    parse_lib_command() must always be called before
@@ -329,7 +325,7 @@ static int real_record_lib_command (int model_ID)
     fprintf(stderr, " line: '%s'\n", libline);
 #endif
 
-    buf = cmd_to_buf(&libcmd, dataset, libline);
+    buf = cmd_to_buf(&libcmd, libline);
 
     if (buf == NULL) {
 	err = 1;
@@ -350,7 +346,7 @@ static int real_record_lib_command (int model_ID)
 
 /* log a command in @libline that has been pre-parsed */
 
-int record_lib_command (void)
+static int record_lib_command (void)
 {
     return real_record_lib_command(0);
 }
@@ -387,7 +383,7 @@ int record_model_command_verbatim (int model_ID)
    not of itself record (or execute) the command 
 */
 
-int parse_lib_command (void)
+static int parse_lib_command (void)
 {
     int err;
 
@@ -395,7 +391,7 @@ int parse_lib_command (void)
     fprintf(stderr, "parse_lib_command: '%s'\n", libline);
 #endif
 
-    err = parse_command_line(libline, &libcmd, dataset, NULL); 
+    err = parse_gui_command(libline, &libcmd, dataset); 
     if (err) {
 	gui_errmsg(err);
     } 
@@ -753,14 +749,12 @@ static void do_qq_xyplot (const char *buf, gretlopt opt)
     int err;
 
     lib_command_sprintf("qqplot%s", buf);
-    err = parse_lib_command();
 
+    err = qq_plot(libcmd.list, dataset, opt);
+    gui_graph_handler(err);
+    
     if (!err) {
-	err = qq_plot(libcmd.list, dataset, opt);
-	gui_graph_handler(err);
-	if (!err) {
-	    record_lib_command();
-	}
+	record_command_verbatim();
     }     
 }
 
@@ -2521,7 +2515,7 @@ void do_arch (GtkAction *action, gpointer p)
 	gretl_print_destroy(prn);
     } else {
 	update_model_tests(vwin);
-	lib_command_sprintf("modtest --arch %d", order);
+	lib_command_sprintf("modtest %d --arch", order);
 	record_model_command_verbatim(pmod->ID);
 	view_buffer_with_parent(vwin, prn, 78, 400, 
 				_("gretl: ARCH test"), 
@@ -8858,7 +8852,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
     if ((s->flags & CONSOLE_EXEC) && !err) {
 	/* log the specific command */
-	char *buf = cmd_to_buf(cmd, dataset, line);
+	char *buf = cmd_to_buf(cmd, line);
 
 	if (buf != NULL) {
 	    lib_command_strcpy(buf);

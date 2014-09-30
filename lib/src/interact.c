@@ -102,7 +102,7 @@ static int strip_inline_comments (char *s)
 /* filter_comments: strip comments out of line; return non-zero if
    the whole line is a comment */
 
-int filter_comments (char *s, CMD *cmd)
+static int filter_comments (char *s, CMD *cmd)
 {
     char tmp[MAXLINE];
     char *p = s;
@@ -486,18 +486,26 @@ static void new_trim_to_length (char *s, int len)
     int n = strlen(s);
 
     if (n > len) {
-	int i, bp = 0, quoted = 0;
+	int i, quoted = 0;
+	int bp0 = 0, bp1 = 0;
 
-	for (i=0; i<n; i++) {
-	    if (s[i] == '"' && (i == 0 || s[i-1] != '\\')) {
+	for (i=1; i<n-1; i++) {
+	    if (s[i] == '"' && s[i-1] != '\\') {
 		quoted = !quoted;
 	    } 
-	    if (!quoted && i < len && s[i] == ' ') {
-		bp = i;
+	    if (!quoted && s[i] == ' ') {
+		if (i < len) {
+		    bp0 = i;
+		} else {
+		    bp1 = i;
+		    break;
+		}
 	    }
 	}
-	if (bp > 0) {
-	    s[bp] = '\0';
+	if (bp0 > 0) {
+	    s[bp0] = '\0';
+	} else if (bp1 > 0) {
+	    s[bp1] = '\0';
 	}
     }
 }
@@ -518,6 +526,9 @@ static void reflow_line (const char *line, const CMD *cmd,
     if (cmd->ciflags & CI_EXPR) {
 	/* "genr"-type lines: be more generous? */
 	maxline += 10;
+    } else if (gretl_in_gui_mode()) {
+	/* we can handle a little more width */
+	maxline += 4;
     }
 
     if (strlen(line) < maxline) {
@@ -581,7 +592,6 @@ static int command_is_silent (const CMD *cmd, const char *line)
 /*
  * real_echo_command:
  * @cmd: pointer to #CMD struct.
- * @dset: pointer to dataset.
  * @line: "raw" command line associated with @cmd.
  * @recording: echo is going to command log (0/1).
  * @prn: pointer to gretl printing struct.
@@ -592,9 +602,8 @@ static int command_is_silent (const CMD *cmd, const char *line)
  * contexts) to record a command that was executed interactively.
  */
 
-static void real_echo_command (CMD *cmd, const DATASET *dset, 
-			       const char *line, int recording, 
-			       PRN *prn)
+static void real_echo_command (CMD *cmd, const char *line, 
+			       int recording, PRN *prn)
 {
     const char *leader = NULL;
     int compiling = 0;
@@ -646,16 +655,14 @@ static void real_echo_command (CMD *cmd, const DATASET *dset,
     gretl_print_flush_stream(prn);
 }
 
-void gretl_echo_command (CMD *cmd, const DATASET *dset, 
-			 const char *line, PRN *prn)
+void gretl_echo_command (CMD *cmd, const char *line, PRN *prn)
 {
-    real_echo_command(cmd, dset, line, 0, prn);
+    real_echo_command(cmd, line, 0, prn);
 }
 
-void gretl_record_command (CMD *cmd, const DATASET *dset, 
-			   const char *line, PRN *prn)
+void gretl_record_command (CMD *cmd, const char *line, PRN *prn)
 {
-    real_echo_command(cmd, dset, line, 1, prn);
+    real_echo_command(cmd, line, 1, prn);
 }
 
 static int set_var_info (int v, const char *parm1, const char *parm2,

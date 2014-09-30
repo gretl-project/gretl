@@ -3098,7 +3098,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 			pputc(prn, '\n');
 		    }
 		} else if (!loop_is_quiet(loop)) {
-		    gretl_echo_command(cmd, dset, line, prn);
+		    gretl_echo_command(cmd, line, prn);
 		}
 	    }
 

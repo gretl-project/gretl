@@ -1000,7 +1000,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	    set_gretl_errno(err);
 	    catch = 1;
 	}
-	gretl_echo_command(cmd, dset, line, prn);
+	gretl_echo_command(cmd, line, prn);
         errmsg(err, prn);
 	return (catch)? 0 : err;
     }
@@ -1035,13 +1035,13 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	/* accumulating loop commands */
 	if (gretl_echo_on() && (!gretl_compiling_loop() || batch || runit)) {
 	    /* straight visual echo */
-	    gretl_echo_command(cmd, dset, line, prn);
+	    gretl_echo_command(cmd, line, prn);
 	}
 	err = gretl_loop_append_line(s, dset);
 	if (err) {
 	    errmsg(err, prn);
 	} else if (!batch && !runit) {
-	    gretl_record_command(cmd, dset, line, cmdprn);
+	    gretl_record_command(cmd, line, cmdprn);
 	}
 	return err;
     }
@@ -1051,7 +1051,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	if (cmd->ci == FUNC && runit > 1) {
 	    ; /* don't echo */
 	} else if (batch || runit) {
-	    gretl_echo_command(cmd, dset, line, prn);
+	    gretl_echo_command(cmd, line, prn);
 	}
     }
 
@@ -1188,7 +1188,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 
     if (!err && cmd->ci != QUIT && gretl_echo_on() && !batch && !old_runit) {
 	/* record a successful interactive command */
-	gretl_record_command(cmd, dset, line, cmdprn);
+	gretl_record_command(cmd, line, cmdprn);
     }
 
     if (err) {

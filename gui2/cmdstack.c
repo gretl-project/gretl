@@ -202,6 +202,72 @@ static int logfile_init (void)
     }
 }
 
+static void log_trim_to_length (char *s, int len)
+{
+    int n = strlen(s);
+
+    if (n > len) {
+	int i, quoted = 0;
+	int bp0 = 0, bp1 = 0;
+
+	for (i=1; i<n-1; i++) {
+	    if (s[i] == '"' && s[i-1] != '\\') {
+		quoted = !quoted;
+	    } 
+	    if (!quoted && s[i] == ' ') {
+		if (i < len) {
+		    bp0 = i;
+		} else {
+		    bp1 = i;
+		    break;
+		}
+	    }
+	}
+	if (bp0 > 0) {
+	    s[bp0] = '\0';
+	} else if (bp1 > 0) {
+	    s[bp1] = '\0';
+	}
+    }
+}
+
+#define LOG_MAXLINE 74
+#define TESTLEN 256
+
+static void reflow_log_line (const char *line, PRN *prn)
+{
+    int maxline = LOG_MAXLINE;
+
+    if (strlen(line) < maxline) {
+	pputs(prn, line);
+    } else {
+	const char *p = line;
+	char buf[TESTLEN];
+	int linenum = 0;
+
+	while (*p) {
+	    *buf = '\0';
+	    strncat(buf, p, TESTLEN - 1);
+	    if (linenum > 0) {
+		log_trim_to_length(buf, maxline - 2);
+	    } else {
+		log_trim_to_length(buf, maxline);
+	    }
+	    p += strlen(buf);
+	    if (!string_is_blank(buf)) {
+		if (linenum > 0) {
+		    pputs(prn, "  ");
+		}
+		pputs(prn, (*buf == ' ')? buf + 1 : buf);
+		if (*p) {
+		    pputs(prn, " \\\n");
+		}
+	    }
+	    linenum++;
+	}
+    }
+}
+
 static int real_write_log_entry (const char *s)
 {
     int err = 0;
@@ -218,7 +284,11 @@ static int real_write_log_entry (const char *s)
     if (!err) {
 	int n = strlen(s);
 
-	pputs(logprn, s);
+	if (n <= LOG_MAXLINE) {
+	    pputs(logprn, s);
+	} else {
+	    reflow_log_line(s, logprn);
+	}
 	if (s[n-1] != '\n') {
 	    pputc(logprn, '\n');
 	}
@@ -258,7 +328,6 @@ int add_command_to_stack (const char *s)
 	if (strlen(s) > 2 && *s != '#' && 
 	    strncmp(s, "help", 4) &&
 	    strncmp(s, "info", 4) &&
-	    strncmp(s, "list", 4) &&
 	    strncmp(s, "open", 4) &&
 	    strncmp(s, "quit", 4)) {
 	    set_commands_recorded();

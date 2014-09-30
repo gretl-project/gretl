@@ -743,7 +743,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	    set_gretl_errno(err);
 	    catch = 1;
 	}
-	gretl_echo_command(cmd, dset, line, prn);
+	gretl_echo_command(cmd, line, prn);
         errmsg(err, prn);
 	return (catch)? 0 : err;
     }
@@ -773,7 +773,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	/* accumulating loop commands */
 	if (gretl_echo_on()) {
 	    /* straight visual echo */
-	    gretl_echo_command(cmd, dset, line, prn);
+	    gretl_echo_command(cmd, line, prn);
 	}
 	err = gretl_loop_append_line(s, dset);
 	if (err) {
@@ -787,7 +787,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	if (cmd->ci == FUNC && runit > 1) {
 	    ; /* don't echo */
 	} else {
-	    gretl_echo_command(cmd, dset, line, prn);
+	    gretl_echo_command(cmd, line, prn);
 	}
     }
 

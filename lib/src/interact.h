@@ -78,20 +78,19 @@ gretlopt gretl_cmd_get_opt (const CMD *cmd);
 
 void gretl_cmd_set_opt (CMD *cmd, gretlopt opt);
 
-int filter_comments (char *s, CMD *cmd);
-
 int parse_command_line (char *line, CMD *cmd, DATASET *dset, 
-			void *ptr); 
+			void *ptr);
+
+int parse_gui_command (const char *line, CMD *cmd, 
+		       DATASET *dset);
 
 int get_command_index (char *line, CMD *cmd);
 
 int command_number (const char *cmd);
 
-void gretl_echo_command (CMD *cmd, const DATASET *dset, 
-			 const char *line, PRN *prn);
+void gretl_echo_command (CMD *cmd, const char *line, PRN *prn);
 
-void gretl_record_command (CMD *cmd, const DATASET *dset, 
-			   const char *line, PRN *prn);
+void gretl_record_command (CMD *cmd, const char *line, PRN *prn);
 
 void safe_print_line (const char *line, int *plen, PRN *prn);
 

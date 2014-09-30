@@ -3361,17 +3361,23 @@ static int assemble_command (CMD *cmd, DATASET *dset)
     return cmd->err;
 }
 
+static void maybe_init_shadow (void)
+{
+    static int shadow_initted;
+
+    if (!shadow_initted) {
+	check_for_shadowed_commands();
+	shadow_initted = 1;
+    }
+}    
+
 static int real_parse_command (const char *line, CMD *cmd, 
 			       DATASET *dset, int idx_only,
 			       void *ptr)
 {
-    static int initted;
     int err = 0;
 
-    if (!initted) {
-	check_for_shadowed_commands();
-	initted = 1;
-    }
+    maybe_init_shadow();
 
     if (*line != '\0') {
 	err = tokenize_line(cmd, line, dset, idx_only);
@@ -3417,6 +3423,33 @@ static int real_parse_command (const char *line, CMD *cmd,
 
     if (err) {
 	fprintf(stderr, "+++ tokenizer: err=%d on '%s'\n", err, line);
+    }
+
+    return err;
+}
+
+/* Here we're parsing a command line that was assembled via the gretl
+   GUI (menus and dialogs). We can take some shortcuts in this case,
+   since we don't have to worry about filtering comments, carrying out
+   string substitution, or "if-state" conditionality.
+*/
+
+int parse_gui_command (const char *line, CMD *cmd, DATASET *dset)
+{
+    int err = 0;
+
+    maybe_init_shadow();
+
+    if (*line != '\0') {
+	err = tokenize_line(cmd, line, dset, 0);
+	if (!err) {
+	    err = assemble_command(cmd, dset);
+	}
+    }
+
+    if (err) {
+	fprintf(stderr, "+++ parse_gui_command: err=%d on '%s'\n", 
+		err, line);
     }
 
     return err;
