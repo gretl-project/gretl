@@ -31,6 +31,7 @@ lib/src/gretl_errors.c
 lib/src/gretl_fft.c
 lib/src/gretl_foreign.c
 lib/src/gretl_func.c
+lib/src/gretl_help.c
 lib/src/gretl_intl.c
 lib/src/gretl_list.c
 lib/src/gretl_matrix.c
@@ -75,6 +76,7 @@ lib/src/strutils.c
 lib/src/subsample.c
 lib/src/system.c
 lib/src/texprint.c
+lib/src/tokenize.c
 lib/src/transforms.c
 lib/src/tsls.c
 lib/src/usermat.c
