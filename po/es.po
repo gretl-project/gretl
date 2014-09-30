@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-09-30 13:27-0400\n"
-"PO-Revision-Date: 2014-09-16 17:02+0200\n"
+"POT-Creation-Date: 2014-09-30 12:26-0400\n"
+"PO-Revision-Date: 2014-09-30 19:32+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.4\n"
+"X-Generator: Lokalize 1.5\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: lib/src/adf_kpss.c:313
@@ -508,18 +508,14 @@ msgid "LM test"
 msgstr "Contraste LM (Multiplicador de Lagrange)"
 
 #: lib/src/compare.c:399
-#, fuzzy, c-format
-msgid "Adding variables improved %d of %d information criteria.\n"
-msgstr ""
-"Al añadir variables mejoraron %d de los %d estadísticos de selección de "
-"modelos considerados.\n"
+#, c-format
+msgid "Adding variables improved %d of %d Information Criteria.\n"
+msgstr "Al añadir variables mejoraron %d de %d criterios de información.\n"
 
 #: lib/src/compare.c:402
-#, fuzzy, c-format
-msgid "Omitting variables improved %d of %d information criteria.\n"
-msgstr ""
-"Al omitir variables mejoraron %d de los %d estadísticos de selección de "
-"modelos considerados.\n"
+#, c-format
+msgid "Omitting variables improved %d of %d Information Criteria.\n"
+msgstr "Al omitir variables mejoraron %d de %d criterios de información.\n"
 
 #: lib/src/compare.c:551 lib/src/vartest.c:807 lib/src/vartest.c:1094
 msgid "omit"
@@ -1008,6 +1004,8 @@ msgid ""
 "If '%s' is intended as the name of a variable, please change it --\n"
 "strings of this sort usually mean 'not a number'."
 msgstr ""
+"Si '%s' es el nombre de una variable, por favor cámbielo --\n"
+"cadenas de caracteres de este tipo normalmente significan 'no número'."
 
 #: lib/src/csvdata.c:2572
 msgid "scanning for variable names...\n"
@@ -1156,7 +1154,7 @@ msgstr "El tamaño de la serie no casa con el del conjunto de datos"
 
 #: lib/src/dataio.c:108
 msgid "Varname exceeds the maximum of 31 characters"
-msgstr ""
+msgstr "El nombre de variable excede el máximo de 31 caracteres"
 
 #: lib/src/dataio.c:133
 #, c-format
@@ -3212,14 +3210,14 @@ msgid "Missing function return type"
 msgstr "Falta el tipo de resultado de la función"
 
 #: lib/src/gretl_func.c:1326
-#, fuzzy, c-format
+#, c-format
 msgid "Expected a function return type, found '%s'"
-msgstr "Se esperaba '%c' pero se encontró '%s'\n"
+msgstr "Se esperaba un tipo de resultado de una función, pero se encontró '%s'"
 
 #: lib/src/gretl_func.c:1329
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid return type for function"
-msgstr "El tipo de resultado de la función no es válido"
+msgstr "%s: el tipo de resultado de la función no es válido"
 
 #: lib/src/gretl_func.c:2316 lib/src/gretl_func.c:2376
 #: lib/src/gretl_func.c:2452 lib/src/gretl_utils.c:1715
@@ -6969,9 +6967,9 @@ msgid "Invalid option '--%s'"
 msgstr "La opción '--%s' no es válida"
 
 #: lib/src/tokenize.c:1144
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid option '-%c'"
-msgstr "La opción '--%s' no es válida"
+msgstr "La opción '-%c' no es válida"
 
 #: lib/src/transforms.c:144
 #, c-format
@@ -7060,9 +7058,8 @@ msgid "Ambiguous matrix index"
 msgstr "Índice de matriz ambiguo"
 
 #: lib/src/usermat.c:714
-#, fuzzy
 msgid "Matrix is not symmetric"
-msgstr "La matriz no es definida positiva"
+msgstr "La matriz no es simétrica"
 
 #: lib/src/usermat.c:936
 msgid "Matrix decomposition failed"
@@ -10062,9 +10059,8 @@ msgid "Can't find the function '%s'"
 msgstr "No puedo encontrar la función '%s'"
 
 #: gui2/fnsave.c:842 gui2/fnsave.c:1683
-#, fuzzy
 msgid "Please save your package first"
-msgstr "Por favor, abra primero un archivo de datos"
+msgstr "Por favor, guarde primero su paquete de funciones"
 
 #: gui2/fnsave.c:998
 msgid "private"
@@ -13575,7 +13571,7 @@ msgstr "Añadir diferencias"
 
 #: gui2/menustate.c:383 gui2/menustate.c:516
 msgid "Dummify..."
-msgstr ""
+msgstr "Hacer variables ficticias..."
 
 #: gui2/menustate.c:385 gui2/menustate.c:489 gui2/menustate.c:517
 #: gui2/menustate.c:583
@@ -14239,7 +14235,7 @@ msgstr "Mostrar los rankings"
 
 #: gui2/selector.c:5546
 msgid "Make plot interactive"
-msgstr ""
+msgstr "Hacer el gráfico interactivo"
 
 #: gui2/selector.c:5549
 msgid "Show interval for median"
@@ -14602,14 +14598,12 @@ msgid "default"
 msgstr "por defecto"
 
 #: gui2/series_view.c:371 gui2/series_view.c:418
-#, fuzzy
 msgid "Original order"
-msgstr "orden de retardos"
+msgstr "Orden original"
 
 #: gui2/series_view.c:380
-#, fuzzy
 msgid "Sort order:"
-msgstr "Orden AR:"
+msgstr "Orden de ordenación:"
 
 #: gui2/series_view.c:432
 msgid "Variable to sort by"
@@ -15183,9 +15177,8 @@ msgid "Apply"
 msgstr "Aplicar"
 
 #: gui2/ssheet.c:179
-#, fuzzy
 msgid "_Format..."
-msgstr "_Predicciones..."
+msgstr "_Formato..."
 
 #: gui2/ssheet.c:180
 msgid "_Properties"
@@ -15891,7 +15884,7 @@ msgstr "regresores"
 
 #: plugin/addons-i18n.c:45
 msgid "SVAR"
-msgstr ""
+msgstr "SVAR"
 
 #: plugin/addons-i18n.c:46
 msgid "AB-model"
