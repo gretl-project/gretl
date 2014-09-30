@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-09-30 12:26-0400\n"
+"POT-Creation-Date: 2014-09-30 13:27-0400\n"
 "PO-Revision-Date: 2014-04-28 09:53+0100\n"
 "Last-Translator: Pavla Nikolovova <nikolovova@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -72,20 +72,20 @@ msgid "(max was %d, criterion %s)"
 msgstr "(maximum bylo %d)"
 
 #: lib/src/adf_kpss.c:402 gui2/library.c:928 gui2/library.c:1147
-#: gui2/selector.c:6104 plugin/panurc.c:234
+#: gui2/selector.c:6097 plugin/panurc.c:234
 msgid "test without constant"
 msgstr "test bez konstanty"
 
-#: lib/src/adf_kpss.c:403 gui2/selector.c:6105 plugin/panurc.c:235
+#: lib/src/adf_kpss.c:403 gui2/selector.c:6098 plugin/panurc.c:235
 msgid "test with constant"
 msgstr "test s konstantou"
 
 #: lib/src/adf_kpss.c:404 gui2/library.c:930 gui2/library.c:941
-#: gui2/library.c:1149 gui2/selector.c:6106 plugin/panurc.c:236
+#: gui2/library.c:1149 gui2/selector.c:6099 plugin/panurc.c:236
 msgid "with constant and trend"
 msgstr "s konstantou a trendem"
 
-#: lib/src/adf_kpss.c:405 gui2/selector.c:6107
+#: lib/src/adf_kpss.c:405 gui2/selector.c:6100
 msgid "with constant and quadratic trend"
 msgstr "s konstantou a kvadratickým trendem"
 
@@ -97,7 +97,7 @@ msgstr "s konstantou a kvadratickým trendem"
 #: lib/src/modelprint.c:2265 lib/src/modelprint.c:2909
 #: lib/src/modelprint.c:4022 lib/src/modelprint.c:4337
 #: lib/src/modelprint.c:5215 lib/src/modelprint.c:5217 lib/src/vartest.c:1102
-#: gui2/dialogs.c:5573 gui2/library.c:3033 plugin/anova.c:153
+#: gui2/dialogs.c:5573 gui2/library.c:3035 plugin/anova.c:153
 #: plugin/anova.c:155 plugin/johansen.c:1579 plugin/johansen.c:1580
 #: plugin/johansen.c:1599 plugin/johansen.c:1625
 msgid "p-value"
@@ -188,7 +188,7 @@ msgstr "Logitový test"
 msgid "Unit"
 msgstr "Jednotka"
 
-#: lib/src/adf_kpss.c:1344 lib/src/gretl_model.c:3840 gui2/selector.c:7844
+#: lib/src/adf_kpss.c:1344 lib/src/gretl_model.c:3840 gui2/selector.c:7838
 msgid "lag order"
 msgstr "řád zpoždění"
 
@@ -403,7 +403,7 @@ msgstr "střední hodnota"
 msgid "group"
 msgstr "skupina"
 
-#: lib/src/boxplots.c:799 gui2/library.c:6815
+#: lib/src/boxplots.c:799 gui2/library.c:6817
 msgid "You must supply two variables, the second of which is discrete"
 msgstr "Musíte zadat dvě proměnné, z nichž druhá musí být diskrétní"
 
@@ -513,12 +513,12 @@ msgstr "LM test"
 
 #: lib/src/compare.c:399
 #, fuzzy, c-format
-msgid "Adding variables improved %d of %d Information Criteria.\n"
+msgid "Adding variables improved %d of %d information criteria.\n"
 msgstr "Přidáním proměnných se vylepšilo %d z %d statistik pro výběr modelu.\n"
 
 #: lib/src/compare.c:402
 #, fuzzy, c-format
-msgid "Omitting variables improved %d of %d Information Criteria.\n"
+msgid "Omitting variables improved %d of %d information criteria.\n"
 msgstr "Ubráním proměnných se vylepšilo %d z %d statistik pro výběr modelu.\n"
 
 #: lib/src/compare.c:551 lib/src/vartest.c:807 lib/src/vartest.c:1094
@@ -532,7 +532,7 @@ msgstr "přidat"
 #: lib/src/compare.c:910 lib/src/compare.c:2238 lib/src/graphing.c:3411
 #: lib/src/graphing.c:3423 lib/src/graphing.c:3502 lib/src/graphing.c:5217
 #: lib/src/gretl_panel.c:3820 lib/src/printout.c:1260 gui2/guiprint.c:1534
-#: gui2/guiprint.c:1594 gui2/library.c:6145 plugin/leverage.c:306
+#: gui2/guiprint.c:1594 gui2/library.c:6147 plugin/leverage.c:306
 msgid "residual"
 msgstr "reziduum"
 
@@ -576,15 +576,15 @@ msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr " Odstranit %-16s (p-hodnota %.3f)\n"
 
 #: lib/src/compare.c:1760 lib/src/estimate.c:2906 lib/src/gretl_model.c:3527
-#: lib/src/gretl_model.c:3533 lib/src/modelprint.c:781 gui2/library.c:2891
+#: lib/src/gretl_model.c:3533 lib/src/modelprint.c:781 gui2/library.c:2893
 msgid "squares only"
 msgstr "pouze druhé mocniny"
 
-#: lib/src/compare.c:1763 lib/src/gretl_model.c:3529 gui2/library.c:2892
+#: lib/src/compare.c:1763 lib/src/gretl_model.c:3529 gui2/library.c:2894
 msgid "cubes only"
 msgstr "pouze třetí mocniny"
 
-#: lib/src/compare.c:1766 gui2/library.c:2890
+#: lib/src/compare.c:1766 gui2/library.c:2892
 msgid "squares and cubes"
 msgstr "druhé a třetí mocniny"
 
@@ -1145,7 +1145,7 @@ msgstr ""
 msgid "Outer dataset: read %d columns and %d rows\n"
 msgstr ""
 
-#: lib/src/csvdata.c:5383 gui2/library.c:4061
+#: lib/src/csvdata.c:5383 gui2/library.c:4063
 msgid "Series length does not match the dataset"
 msgstr "Délka řady neodpovídá datovému souboru"
 
@@ -1389,7 +1389,7 @@ msgstr "Nahrazeno"
 msgid "series"
 msgstr "řada"
 
-#: lib/src/dataset.c:2884 lib/src/dataset.c:2904 gui2/library.c:5682
+#: lib/src/dataset.c:2884 lib/src/dataset.c:2904 gui2/library.c:5684
 msgid "The data set is currently sub-sampled.\n"
 msgstr "Nyní pracujete s podmožinou výběru.\n"
 
@@ -1474,7 +1474,7 @@ msgid "Out of memory!"
 msgstr "Nedostatek paměti!"
 
 #: lib/src/dbread.c:1748 lib/src/geneval.c:7002
-#: lib/src/gretl_string_table.c:833 lib/src/interact.c:1106 cli/gretlcli.c:778
+#: lib/src/gretl_string_table.c:833 lib/src/interact.c:1110 cli/gretlcli.c:778
 #: cli/gretlcli-mpi.c:539
 #, fuzzy
 msgid "Internet access not supported"
@@ -1484,7 +1484,7 @@ msgstr "frekvence %d není podporována"
 msgid "Invalid null sample"
 msgstr "Neplatný nulový výběr"
 
-#: lib/src/dbread.c:2035 lib/src/flow_control.c:281 lib/src/interact.c:1197
+#: lib/src/dbread.c:2035 lib/src/flow_control.c:281 lib/src/interact.c:1201
 #: lib/src/options.c:1196 lib/src/options.c:1207
 #, c-format
 msgid "field '%s' in command is invalid"
@@ -2023,7 +2023,7 @@ msgid "Test for normality of %s:"
 msgstr "Test normality %s"
 
 #: lib/src/discrete.c:1200 lib/src/geneval.c:7340 lib/src/gretl_list.c:1590
-#: lib/src/interact.c:1663
+#: lib/src/interact.c:1667
 #, c-format
 msgid "The variable '%s' is not discrete"
 msgstr "Proměnná '%s' není diskrétní"
@@ -2372,7 +2372,7 @@ msgstr ""
 msgid "Bare declarations are not allowed here"
 msgstr "%s: zde není povolené dělení"
 
-#: lib/src/genfuncs.c:919 gui2/library.c:5133
+#: lib/src/genfuncs.c:919 gui2/library.c:5135
 msgid "Input must be a monthly or quarterly time series"
 msgstr "Vstup musí být časová řada s periodou měsíc nebo čtvrt roku"
 
@@ -2657,7 +2657,7 @@ msgstr "PO"
 msgid "std. dev"
 msgstr "směr. odch."
 
-#: lib/src/graphing.c:516 gui2/library.c:6848
+#: lib/src/graphing.c:516 gui2/library.c:6850
 msgid "You must supply three variables, the last of which is discrete"
 msgstr "Musíte zadat tři proměnné, z nichž poslední je diskrétní"
 
@@ -2725,7 +2725,7 @@ msgstr "skutečné"
 
 #: lib/src/graphing.c:3517 lib/src/graphing.c:3527 lib/src/printout.c:1259
 #: gui2/guiprint.c:957 gui2/guiprint.c:1534 gui2/guiprint.c:1594
-#: gui2/library.c:4176
+#: gui2/library.c:4178
 msgid "fitted"
 msgstr "vyrovnané"
 
@@ -2901,7 +2901,7 @@ msgstr "Bartlettovo okno, délka %d"
 msgid "log scale"
 msgstr "logaritmické měřítko"
 
-#: lib/src/graphing.c:6858 gui2/library.c:816 gui2/library.c:2712
+#: lib/src/graphing.c:6858 gui2/library.c:816 gui2/library.c:2714
 msgid "Q-Q plot"
 msgstr "Q-Q graf"
 
@@ -3220,7 +3220,7 @@ msgstr "Neplatný argument pro funkci"
 
 #: lib/src/gretl_func.c:2316 lib/src/gretl_func.c:2376
 #: lib/src/gretl_func.c:2452 lib/src/gretl_utils.c:1715
-#: lib/src/interact.c:1058 gui2/dialogs.c:5342 plugin/tramo-x12a.c:768
+#: lib/src/interact.c:1062 gui2/dialogs.c:5342 plugin/tramo-x12a.c:768
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Nebylo možné oteřít %s"
@@ -3909,7 +3909,7 @@ msgid "Restricted estimates"
 msgstr "Odhady modelu s omezením"
 
 #: lib/src/gretl_restrict.c:1919 lib/src/modelprint.c:2772
-#: lib/src/printout.c:1249 gui2/library.c:6030
+#: lib/src/printout.c:1249 gui2/library.c:6032
 msgid "Standard error of the regression"
 msgstr "Standardní chyba regrese"
 
@@ -4002,7 +4002,7 @@ msgstr ""
 msgid "The shell command is not activated."
 msgstr "Příkaz shellu nebyl aktivován."
 
-#: lib/src/gretl_string_table.c:925 lib/src/interact.c:1032
+#: lib/src/gretl_string_table.c:925 lib/src/interact.c:1036
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
 msgstr "Maximální délka příkazové řádky (%d bytů) byla překročena\n"
@@ -4196,123 +4196,123 @@ msgstr "Nebyla nalezena žádná pozorování"
 msgid "Couldn't open '%s'"
 msgstr "Nebylo možné otevřít '%s'"
 
-#: lib/src/interact.c:720 lib/src/printout.c:1738
+#: lib/src/interact.c:724 lib/src/printout.c:1738
 msgid "No series are defined\n"
 msgstr "Nejsou definovány žádné řady\n"
 
-#: lib/src/interact.c:741
+#: lib/src/interact.c:745
 msgid "Listing labels for variables:\n"
 msgstr "Vypisuji popisky proměnných:\n"
 
-#: lib/src/interact.c:802
+#: lib/src/interact.c:806
 msgid "Output is not currently diverted to file\n"
 msgstr "Výstup momentálně není transformován do souboru\n"
 
-#: lib/src/interact.c:808
+#: lib/src/interact.c:812
 #, c-format
 msgid "Closed output file '%s'\n"
 msgstr "Byl zavřen výstupní soubor '%s'\n"
 
-#: lib/src/interact.c:816
+#: lib/src/interact.c:820
 #, c-format
 msgid "Output is already diverted to '%s'\n"
 msgstr "Výstup už byl transformován do '%s'\n"
 
-#: lib/src/interact.c:823
+#: lib/src/interact.c:827
 msgid "Now discarding output\n"
 msgstr "Nyní odstraňuji výstup\n"
 
-#: lib/src/interact.c:845
+#: lib/src/interact.c:849
 #, c-format
 msgid "Couldn't open %s for writing\n"
 msgstr "Nebylo možné otevřít %s pro psaní\n"
 
-#: lib/src/interact.c:851
+#: lib/src/interact.c:855
 #, c-format
 msgid "Now writing output to '%s'\n"
 msgstr "Nyní zapisuji výstup do '%s'\n"
 
-#: lib/src/interact.c:853
+#: lib/src/interact.c:857
 #, c-format
 msgid "Now appending output to '%s'\n"
 msgstr "Nyní připojuji výstup do '%s'\n"
 
-#: lib/src/interact.c:924
+#: lib/src/interact.c:928
 msgid "No data information is available.\n"
 msgstr "Žádné informace o datech nejsou k dispozici.\n"
 
-#: lib/src/interact.c:1144
+#: lib/src/interact.c:1148
 #, fuzzy, c-format
 msgid "%s: invalid input '%s'\n"
 msgstr "platné hodnoty"
 
-#: lib/src/interact.c:1346 lib/src/interact.c:1354
+#: lib/src/interact.c:1350 lib/src/interact.c:1358
 #, fuzzy
 msgid "Inner key is missing"
 msgstr "Chybí jméno proměnné"
 
-#: lib/src/interact.c:1402 lib/src/interact.c:1408 lib/src/interact.c:1530
-#: lib/src/interact.c:1536
+#: lib/src/interact.c:1406 lib/src/interact.c:1412 lib/src/interact.c:1534
+#: lib/src/interact.c:1540
 #, fuzzy, c-format
 msgid "The \"%s\" command cannot be used in this context"
 msgstr "příkaz '%s' je v tomto kontextu neplatný"
 
-#: lib/src/interact.c:1498 cli/gretlcli.c:875 cli/gretlcli-mpi.c:624
-#: gui2/library.c:8531
+#: lib/src/interact.c:1502 cli/gretlcli.c:875 cli/gretlcli-mpi.c:624
+#: gui2/library.c:8533
 #, c-format
 msgid "Read datafile %s\n"
 msgstr "Načíst datový soubor %s\n"
 
-#: lib/src/interact.c:1688
+#: lib/src/interact.c:1692
 #, fuzzy, c-format
 msgid "Summary statistics for %s, by value of %s"
 msgstr "Popisné statistiky"
 
-#: lib/src/interact.c:1786 lib/src/monte_carlo.c:2885
+#: lib/src/interact.c:1790 lib/src/monte_carlo.c:2885
 msgid "You cannot delete series in this context\n"
 msgstr "V tomto kontextu nemůžete vymazat řadu\n"
 
-#: lib/src/interact.c:1862
+#: lib/src/interact.c:1866
 #, c-format
 msgid "Model printed to %s\n"
 msgstr "Model byl vytištěn do %s\n"
 
-#: lib/src/interact.c:2056
+#: lib/src/interact.c:2060
 msgid "You can't end a loop here, you haven't started one\n"
 msgstr "Zde nemůžete ukončit cyklus, žádný jste nezačali\n"
 
-#: lib/src/interact.c:2173
+#: lib/src/interact.c:2177
 msgid "This command requires one variable.\n"
 msgstr "Tento příkaz vyžaduje jednu proměnnou.\n"
 
-#: lib/src/interact.c:2327
+#: lib/src/interact.c:2331
 #, c-format
 msgid "data frequency = %d\n"
 msgstr "frekvence dat = %d\n"
 
-#: lib/src/interact.c:2361
+#: lib/src/interact.c:2365
 msgid "store: no filename given\n"
 msgstr "uložit: nebylo zadáno jméno souboru\n"
 
-#: lib/src/interact.c:2409
+#: lib/src/interact.c:2413
 msgid "This estimator requires panel data"
 msgstr "Tento odhad vyžaduje panelová data"
 
-#: lib/src/interact.c:2582
+#: lib/src/interact.c:2586
 msgid "Couldn't format model\n"
 msgstr "Nepodařilo se formátovat model\n"
 
-#: lib/src/interact.c:2699 cli/gretlcli.c:1146 cli/gretlcli-mpi.c:880
-#: gui2/library.c:8790
+#: lib/src/interact.c:2703 cli/gretlcli.c:1146 cli/gretlcli-mpi.c:880
+#: gui2/library.c:8792
 msgid "Infinite loop detected in script\n"
 msgstr "Ve skriptu byl detekován nekonečný cyklus\n"
 
-#: lib/src/interact.c:2753 cli/gretlcli.c:740 cli/gretlcli-mpi.c:501
+#: lib/src/interact.c:2757 cli/gretlcli.c:740 cli/gretlcli-mpi.c:501
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: příkaz není k dispozici\n"
 
-#: lib/src/interact.c:2763
+#: lib/src/interact.c:2767
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 msgstr "Bohužel, příkaz %s ještě nebyl implementován v libgretl\n"
@@ -4447,11 +4447,11 @@ msgstr "Pozorování cenzorovaná zprava"
 msgid "sigma"
 msgstr "sigma"
 
-#: lib/src/modelprint.c:305 lib/src/modelprint.c:2773 gui2/library.c:6015
+#: lib/src/modelprint.c:305 lib/src/modelprint.c:2773 gui2/library.c:6017
 msgid "Unadjusted R-squared"
 msgstr "Neadjustovaný koeficient determinace"
 
-#: lib/src/modelprint.c:312 lib/src/modelprint.c:2771 gui2/library.c:6010
+#: lib/src/modelprint.c:312 lib/src/modelprint.c:2771 gui2/library.c:6012
 msgid "Sum of squared residuals"
 msgstr "Součet čtverců reziduí"
 
@@ -4598,7 +4598,7 @@ msgid "Augmented regression for common factor test"
 msgstr "Rozšířená regrese pro test nulových omezení"
 
 #: lib/src/modelprint.c:832 lib/src/system.c:97 lib/src/varprint.c:1057
-#: lib/src/varprint.c:1066 lib/src/varprint.c:1074 gui2/selector.c:3682
+#: lib/src/varprint.c:1066 lib/src/varprint.c:1074 gui2/selector.c:3675
 msgid "OLS"
 msgstr "OLS"
 
@@ -4615,11 +4615,11 @@ msgstr "WLS (ARCH)"
 msgid "Heteroskedasticity-corrected"
 msgstr "Opravená heteroskedasticita"
 
-#: lib/src/modelprint.c:836 lib/src/modelprint.c:4875 gui2/selector.c:5000
+#: lib/src/modelprint.c:836 lib/src/modelprint.c:4875 gui2/selector.c:4993
 msgid "AR"
 msgstr "AR"
 
-#: lib/src/modelprint.c:837 lib/src/modelprint.c:950 gui2/selector.c:3742
+#: lib/src/modelprint.c:837 lib/src/modelprint.c:950 gui2/selector.c:3735
 msgid "LAD"
 msgstr "LAD"
 
@@ -4627,23 +4627,23 @@ msgstr "LAD"
 msgid "High-Precision OLS"
 msgstr "OLS s vysokou přesností"
 
-#: lib/src/modelprint.c:839 lib/src/modelprint.c:938 gui2/selector.c:3694
+#: lib/src/modelprint.c:839 lib/src/modelprint.c:938 gui2/selector.c:3687
 msgid "Probit"
 msgstr "Probit"
 
-#: lib/src/modelprint.c:840 lib/src/modelprint.c:930 gui2/selector.c:3688
+#: lib/src/modelprint.c:840 lib/src/modelprint.c:930 gui2/selector.c:3681
 msgid "Logit"
 msgstr "Logit"
 
-#: lib/src/modelprint.c:841 gui2/selector.c:3700
+#: lib/src/modelprint.c:841 gui2/selector.c:3693
 msgid "Tobit"
 msgstr "Tobit"
 
-#: lib/src/modelprint.c:842 gui2/selector.c:3702
+#: lib/src/modelprint.c:842 gui2/selector.c:3695
 msgid "Heckit"
 msgstr "Heckit"
 
-#: lib/src/modelprint.c:843 gui2/selector.c:3847
+#: lib/src/modelprint.c:843 gui2/selector.c:3840
 msgid "Poisson"
 msgstr "Poisson"
 
@@ -4667,11 +4667,11 @@ msgstr "ML"
 msgid "GMM"
 msgstr "GMM"
 
-#: lib/src/modelprint.c:849 gui2/selector.c:3706
+#: lib/src/modelprint.c:849 gui2/selector.c:3699
 msgid "Logistic"
 msgstr "Logistické"
 
-#: lib/src/modelprint.c:850 gui2/selector.c:3734 plugin/addons-i18n.c:14
+#: lib/src/modelprint.c:850 gui2/selector.c:3727 plugin/addons-i18n.c:14
 msgid "GARCH"
 msgstr "GARCH"
 
@@ -4683,7 +4683,7 @@ msgstr "Intervalové odhady"
 msgid "Dynamic panel"
 msgstr "Dynamický panel"
 
-#: lib/src/modelprint.c:853 gui2/selector.c:3704
+#: lib/src/modelprint.c:853 gui2/selector.c:3697
 msgid "Bivariate probit"
 msgstr "Dvourozměrný probit"
 
@@ -4699,7 +4699,7 @@ msgstr "Arellano-Bond"
 msgid "Hildreth--Lu"
 msgstr "Hildreth--Lu"
 
-#: lib/src/modelprint.c:867 gui2/selector.c:6025
+#: lib/src/modelprint.c:867 gui2/selector.c:6018
 msgid "Hildreth-Lu"
 msgstr "Hildreth-Lu"
 
@@ -4707,7 +4707,7 @@ msgstr "Hildreth-Lu"
 msgid "Prais--Winsten"
 msgstr "Prais--Winsten"
 
-#: lib/src/modelprint.c:870 gui2/selector.c:6021
+#: lib/src/modelprint.c:870 gui2/selector.c:6014
 msgid "Prais-Winsten"
 msgstr "Prais-Winsten"
 
@@ -4715,7 +4715,7 @@ msgstr "Prais-Winsten"
 msgid "Cochrane--Orcutt"
 msgstr "Cochrane--Orcutt"
 
-#: lib/src/modelprint.c:873 gui2/selector.c:6017
+#: lib/src/modelprint.c:873 gui2/selector.c:6010
 msgid "Cochrane-Orcutt"
 msgstr "Cochrane-Orcutt"
 
@@ -4723,7 +4723,7 @@ msgstr "Cochrane-Orcutt"
 msgid "ARMAX"
 msgstr "ARMAX"
 
-#: lib/src/modelprint.c:880 gui2/selector.c:3730 plugin/tramo_options.c:702
+#: lib/src/modelprint.c:880 gui2/selector.c:3723 plugin/tramo_options.c:702
 msgid "ARIMA"
 msgstr "ARIMA"
 
@@ -4779,11 +4779,11 @@ msgstr "Iterovaný GMM"
 msgid "1-step GMM"
 msgstr "Jednokrokový GMM"
 
-#: lib/src/modelprint.c:926 gui2/selector.c:3690
+#: lib/src/modelprint.c:926 gui2/selector.c:3683
 msgid "Ordered Logit"
 msgstr "Pořádkový logit"
 
-#: lib/src/modelprint.c:928 gui2/selector.c:3692
+#: lib/src/modelprint.c:928 gui2/selector.c:3685
 msgid "Multinomial Logit"
 msgstr "Multinomiální logit"
 
@@ -4792,7 +4792,7 @@ msgstr "Multinomiální logit"
 msgid "Random-effects probit"
 msgstr "Náhodné efekty"
 
-#: lib/src/modelprint.c:936 gui2/selector.c:3696
+#: lib/src/modelprint.c:936 gui2/selector.c:3689
 msgid "Ordered Probit"
 msgstr "Pořádkový probit"
 
@@ -4918,11 +4918,11 @@ msgstr "Hodnota < 10 může indikovat slabé instrumentální proměnné"
 msgid "Instrumented"
 msgstr "Instrumentováno"
 
-#: lib/src/modelprint.c:1194 gui2/selector.c:4484 gui2/selector.c:7901
+#: lib/src/modelprint.c:1194 gui2/selector.c:4477 gui2/selector.c:7895
 msgid "Instruments"
 msgstr "Instrumentální proměnné"
 
-#: lib/src/modelprint.c:1263 lib/src/modelprint.c:1265 gui2/selector.c:5541
+#: lib/src/modelprint.c:1263 lib/src/modelprint.c:1265 gui2/selector.c:5534
 msgid "Asymptotic standard errors"
 msgstr "Asymptotické směrodatné chyby"
 
@@ -5047,7 +5047,7 @@ msgstr "Přebytečné instrumentální proměnné"
 #: lib/src/modelprint.c:1629 lib/src/modelprint.c:1929
 #: lib/src/modelprint.c:1932 lib/src/modelprint.c:1942
 #: lib/src/modelprint.c:1945 lib/src/modelprint.c:1980 gui2/model_table.c:1127
-#: gui2/model_table.c:1225 gui2/selector.c:4158
+#: gui2/model_table.c:1225 gui2/selector.c:4151
 msgid "Dependent variable"
 msgstr "Závisle proměnná"
 
@@ -5181,7 +5181,7 @@ msgstr "škálované %s (Koenkerova robustní varianta)"
 msgid "scaled %s"
 msgstr "škálované %s"
 
-#: lib/src/modelprint.c:2021 gui2/selector.c:3771
+#: lib/src/modelprint.c:2021 gui2/selector.c:3764
 msgid "Selection variable"
 msgstr "Proměnná určující podvýběr"
 
@@ -5344,11 +5344,11 @@ msgstr "Směrodatná odchylka závisle proměnné"
 msgid "Akaike information criterion"
 msgstr "Akaikovo informační kritérium"
 
-#: lib/src/modelprint.c:2779 gui2/library.c:6045
+#: lib/src/modelprint.c:2779 gui2/library.c:6047
 msgid "Schwarz Bayesian criterion"
 msgstr "Schwarzovo Bayesovské kritérium"
 
-#: lib/src/modelprint.c:2780 gui2/library.c:6050
+#: lib/src/modelprint.c:2780 gui2/library.c:6052
 msgid "Hannan-Quinn Information Criterion"
 msgstr "Hannan-Quinnovo Informační Kritérium"
 
@@ -5400,7 +5400,7 @@ msgstr "P-hodnota(F)"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2831 lib/src/system.c:4503 lib/src/system.c:4510
 #: lib/src/texprint.c:1083 lib/src/varprint.c:1093 lib/src/varprint.c:1102
-#: gui2/library.c:6035 plugin/johansen.c:1567
+#: gui2/library.c:6037 plugin/johansen.c:1567
 msgid "Log-likelihood"
 msgstr "Logaritmus věrohodnosti"
 
@@ -5425,7 +5425,7 @@ msgid "rho"
 msgstr "rho (koeficient autokorelace)"
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2841 gui2/library.c:3026
+#: lib/src/modelprint.c:2841 gui2/library.c:3028
 msgid "Durbin-Watson"
 msgstr "Durbin-Watsonova statistika"
 
@@ -5571,7 +5571,7 @@ msgstr "Frekvence"
 msgid "AR (seasonal)"
 msgstr "AR (sezónní)"
 
-#: lib/src/modelprint.c:4915 gui2/selector.c:5002
+#: lib/src/modelprint.c:4915 gui2/selector.c:4995
 msgid "MA"
 msgstr "MA"
 
@@ -5918,7 +5918,7 @@ msgid ""
 msgstr ""
 "Výběr je příliš malý pro výpočet p-hodnoty založený na normálním rozdělení\n"
 
-#: lib/src/nonparam.c:577 gui2/selector.c:5765
+#: lib/src/nonparam.c:577 gui2/selector.c:5758
 msgid "Kendall's tau"
 msgstr "Kendallovo tau"
 
@@ -6035,12 +6035,12 @@ msgid "Prob"
 msgstr "pravděpodobnost"
 
 #: lib/src/objstack.c:663 lib/src/objstack.c:699 lib/src/objstack.c:701
-#: gui2/selector.c:3736
+#: gui2/selector.c:3729
 msgid "VAR"
 msgstr "VAR"
 
 #: lib/src/objstack.c:665 lib/src/objstack.c:705 lib/src/objstack.c:707
-#: gui2/selector.c:3740
+#: gui2/selector.c:3733
 msgid "VECM"
 msgstr "VECM"
 
@@ -6996,7 +6996,7 @@ msgstr "Počet instrumentů (%d) přesahuje počet pozorování (%d)"
 msgid "The first-stage fitted values for %s are all zero"
 msgstr "Predikované hodnoty z prvního stupně pro %s jsou všechny nulové"
 
-#: lib/src/tsls.c:1499 gui2/selector.c:2959
+#: lib/src/tsls.c:1499 gui2/selector.c:2952
 msgid "You can't use the dependent variable as an instrument"
 msgstr "Závisle proměnnou nemůžete použít jako instrument"
 
@@ -7342,20 +7342,20 @@ msgstr ""
 msgid "writing session output to %s%s\n"
 msgstr "zapisuji výstup relace do %s%s\n"
 
-#: cli/gretlcli.c:1022 cli/gretlcli-mpi.c:765 gui2/library.c:8656
+#: cli/gretlcli.c:1022 cli/gretlcli-mpi.c:765 gui2/library.c:8658
 #, c-format
 msgid "Command '%s' ignored; not valid within equation system\n"
 msgstr "Příkaz '%s' byl ignorován; není platný v rámci systému rovnic\n"
 
-#: cli/gretlcli.c:1030 gui2/library.c:8664
+#: cli/gretlcli.c:1030 gui2/library.c:8666
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
 msgstr "Zadejte příkazy pro cyklus. Napište 'endloop' pro vystoupení z cyklu\n"
 
-#: cli/gretlcli.c:1071 gui2/library.c:6565 gui2/library.c:8717
+#: cli/gretlcli.c:1071 gui2/library.c:6567 gui2/library.c:8719
 msgid "Take note: variables have been renumbered"
 msgstr "Upozornění: proměnné byly přečíslovány"
 
-#: cli/gretlcli.c:1089 cli/gretlcli-mpi.c:821 gui2/library.c:8751
+#: cli/gretlcli.c:1089 cli/gretlcli-mpi.c:821 gui2/library.c:8753
 msgid "Data series length count missing or invalid\n"
 msgstr "Chybějící nebo neplatná délka časové řady\n"
 
@@ -7369,7 +7369,7 @@ msgid "commands saved as %s\n"
 msgstr "příkazy uloženy jako %s\n"
 
 #: cli/gretlcli.c:1139 cli/gretlcli.c:1154 cli/gretlcli-mpi.c:873
-#: cli/gretlcli-mpi.c:888 gui2/library.c:8785
+#: cli/gretlcli-mpi.c:888 gui2/library.c:8787
 #, c-format
 msgid "Error reading %s\n"
 msgstr "Chyba při čtení %s\n"
@@ -7793,7 +7793,7 @@ msgstr "Proměnná %d"
 #: gui2/calculator.c:2345 gui2/guiprint.c:742 gui2/guiprint.c:765
 #: gui2/guiprint.c:787 gui2/guiprint.c:1062 gui2/guiprint.c:1089
 #: gui2/guiprint.c:1116 gui2/guiprint.c:1923 gui2/guiprint.c:1973
-#: gui2/selector.c:7879
+#: gui2/selector.c:7873
 msgid "Variable"
 msgstr "Proměnná"
 
@@ -7969,7 +7969,7 @@ msgstr "gretl: grafy rozdělení"
 msgid "gretl: add random variable"
 msgstr "gretl: přidat náhodnou veličinu"
 
-#: gui2/calculator.c:3023 gui2/selector.c:7249 gui2/selector.c:7252
+#: gui2/calculator.c:3023 gui2/selector.c:7243 gui2/selector.c:7246
 msgid "No suitable data are available"
 msgstr "Žádná vhodná data nejsou k dispozici"
 
@@ -8018,7 +8018,7 @@ msgid "Sorry, this item not yet implemented!"
 msgstr "Bohužel, tato položka ještě nebyla implementována!"
 
 #: gui2/callbacks.c:338 gui2/callbacks.c:509 gui2/callbacks.c:667
-#: gui2/selector.c:6407
+#: gui2/selector.c:6400
 msgid "gretl: add var"
 msgstr "gretl: přidat proměnnou"
 
@@ -8034,18 +8034,18 @@ msgstr "gretl: test kointegrace"
 msgid "gretl: VAR"
 msgstr "gretl: VAR"
 
-#: gui2/callbacks.c:396 gui2/library.c:3236 gui2/library.c:4272
+#: gui2/callbacks.c:396 gui2/library.c:3238 gui2/library.c:4274
 #: gui2/selector.c:845
 msgid "gretl: VECM"
 msgstr "gretl: VECM"
 
-#: gui2/callbacks.c:399 gui2/library.c:4264
+#: gui2/callbacks.c:399 gui2/library.c:4266
 msgid "gretl: VAR lag selection"
 msgstr "gretl: výběr zpožděných proměnných pro VAR"
 
 #: gui2/callbacks.c:428 gui2/callbacks.c:442 gui2/callbacks.c:445
 #: gui2/callbacks.c:447 gui2/callbacks.c:595 gui2/callbacks.c:604
-#: gui2/library.c:7027 gui2/toolbar.c:1171
+#: gui2/library.c:7029 gui2/toolbar.c:1171
 msgid "gretl: define graph"
 msgstr "gretl: definovat graf"
 
@@ -8058,15 +8058,15 @@ msgstr "gretl: testy modelů"
 msgid "rank correlation"
 msgstr "pořadové korelace"
 
-#: gui2/callbacks.c:458 gui2/selector.c:3753
+#: gui2/callbacks.c:458 gui2/selector.c:3746
 msgid "Loess"
 msgstr "Loess"
 
-#: gui2/callbacks.c:458 gui2/library.c:4035 gui2/selector.c:3755
+#: gui2/callbacks.c:458 gui2/library.c:4037 gui2/selector.c:3748
 msgid "Nadaraya-Watson"
 msgstr "Loess"
 
-#: gui2/callbacks.c:511 gui2/callbacks.c:661 gui2/selector.c:6408
+#: gui2/callbacks.c:511 gui2/callbacks.c:661 gui2/selector.c:6401
 msgid "Enter formula for new variable"
 msgstr "Zadejte vzorec pro novou proměnnou"
 
@@ -8119,7 +8119,7 @@ msgstr "gretl: nelineární nejmenší čtverce"
 msgid "NLS: Specify function, and derivatives if possible:"
 msgstr "NLS: Specifikujte funkci a, pokud je to možné, i derivace:"
 
-#: gui2/callbacks.c:553 gui2/callbacks.c:649 gui2/library.c:3385
+#: gui2/callbacks.c:553 gui2/callbacks.c:649 gui2/library.c:3387
 msgid "gretl: simultaneous equations system"
 msgstr "gretl: simultánní systém rovnic"
 
@@ -9027,7 +9027,7 @@ msgstr "Skupiny"
 msgid "Periods"
 msgstr "Období"
 
-#: gui2/dialogs.c:2098 gui2/selector.c:7935
+#: gui2/dialogs.c:2098 gui2/selector.c:7929
 msgid "to"
 msgstr "pro"
 
@@ -9387,7 +9387,7 @@ msgstr "možnosti tabulky modelu"
 msgid "column headings"
 msgstr "názvy sloupců"
 
-#: gui2/dialogs.c:5185 gui2/selector.c:5791
+#: gui2/dialogs.c:5185 gui2/selector.c:5784
 msgid "Show p-values"
 msgstr "Ukázat p-hodnoty"
 
@@ -9480,19 +9480,19 @@ msgstr "Přidat seznam endogenních proměnných"
 msgid "Add list of instruments"
 msgstr "Přidat seznam instrumentálních proměnných"
 
-#: gui2/dlgutils.c:855 gui2/dlgutils.c:1020 gui2/selector.c:3953
+#: gui2/dlgutils.c:855 gui2/dlgutils.c:1020 gui2/selector.c:3946
 msgid "Iterated estimation"
 msgstr "Iterovaný odhad"
 
-#: gui2/dlgutils.c:861 gui2/selector.c:5505
+#: gui2/dlgutils.c:861 gui2/selector.c:5498
 msgid "Show details of iterations"
 msgstr "Ukázat podrobnosti iterací"
 
-#: gui2/dlgutils.c:864 gui2/selector.c:5439
+#: gui2/dlgutils.c:864 gui2/selector.c:5432
 msgid "Robust standard errors"
 msgstr "Robustní směrodatné chyby"
 
-#: gui2/dlgutils.c:870 gui2/selector.c:5638
+#: gui2/dlgutils.c:870 gui2/selector.c:5631
 msgid "Use bootstrap"
 msgstr "Použít bootstrap"
 
@@ -9500,11 +9500,11 @@ msgstr "Použít bootstrap"
 msgid "Show full restricted estimates"
 msgstr "Ukázat odhady se všemi omezeními"
 
-#: gui2/dlgutils.c:1018 gui2/selector.c:3951 gui2/selector.c:5969
+#: gui2/dlgutils.c:1018 gui2/selector.c:3944 gui2/selector.c:5962
 msgid "One-step estimation"
 msgstr "Jednokrokový odhad"
 
-#: gui2/dlgutils.c:1019 gui2/selector.c:3952 gui2/selector.c:5973
+#: gui2/dlgutils.c:1019 gui2/selector.c:3945 gui2/selector.c:5966
 msgid "Two-step estimation"
 msgstr "Dvoukrokový odhad"
 
@@ -9914,7 +9914,7 @@ msgstr "přidat řadu"
 msgid "Enter name=formula for new series"
 msgstr "Zadejte jméno=vzorec pro novou řadu"
 
-#: gui2/fncall.c:760 gui2/library.c:6067
+#: gui2/fncall.c:760 gui2/library.c:6069
 msgid "add scalar"
 msgstr "přidat skalární veličinu"
 
@@ -9922,7 +9922,7 @@ msgstr "přidat skalární veličinu"
 msgid "Enter name=formula for new scalar"
 msgstr "Zadejte jméno=vzorec pro novou skalární veličinu"
 
-#: gui2/fncall.c:1164 gui2/selector.c:6420
+#: gui2/fncall.c:1164 gui2/selector.c:6413
 msgid "New variable"
 msgstr "Nová proměnná"
 
@@ -10188,7 +10188,7 @@ msgstr ""
 "musí být kratší než 32 znaků, musí obsahovat pouze\n"
 "ASCII písmena, číslovky a '_', a musí končit \".gfn\""
 
-#: gui2/fnsave.c:2281 gui2/library.c:7777
+#: gui2/fnsave.c:2281 gui2/library.c:7779
 msgid "OK to overwrite?"
 msgstr "Skutečně přepsat?"
 
@@ -10495,7 +10495,7 @@ msgstr "Ukázat sloupce"
 msgid "NBER recessions"
 msgstr "NBER recese"
 
-#: gui2/gpt_dialog.c:2121 gui2/selector.c:4177
+#: gui2/gpt_dialog.c:2121 gui2/selector.c:4170
 msgid "Set as default"
 msgstr "Nastavit jako výchozí"
 
@@ -10508,7 +10508,7 @@ msgstr "čára %d"
 msgid "No formula was given"
 msgstr "Nebyl zadán žádný vzorec"
 
-#: gui2/gpt_dialog.c:2513 gui2/selector.c:4447
+#: gui2/gpt_dialog.c:2513 gui2/selector.c:4440
 msgid "Remove"
 msgstr "Odstranit"
 
@@ -12143,7 +12143,7 @@ msgstr "Vymazána skalární veličina %s"
 msgid "Delete blank weekday rows"
 msgstr ""
 
-#: gui2/gui_utils.c:1018 gui2/gui_utils.c:1279 gui2/library.c:7332
+#: gui2/gui_utils.c:1018 gui2/gui_utils.c:1279 gui2/library.c:7334
 msgid "gretl: open data"
 msgstr "gretl: otevřít data"
 
@@ -12162,7 +12162,7 @@ msgstr ""
 msgid "gretl: import %s data"
 msgstr "gretl: importovat %s data"
 
-#: gui2/gui_utils.c:1280 gui2/library.c:7333
+#: gui2/gui_utils.c:1280 gui2/library.c:7335
 msgid ""
 "Opening a new data file will automatically\n"
 "close the current one.  Any unsaved work\n"
@@ -12245,8 +12245,8 @@ msgstr "gretl: editovat Octave skript"
 msgid "gretl: edit Python script"
 msgstr "gretl: editovat Octave skript"
 
-#: gui2/gui_utils.c:1706 gui2/library.c:6392 gui2/library.c:6427
-#: gui2/library.c:6431
+#: gui2/gui_utils.c:1706 gui2/library.c:6394 gui2/library.c:6429
+#: gui2/library.c:6433
 msgid "gretl: display data"
 msgstr "gretl: ukázat data"
 
@@ -12421,17 +12421,17 @@ msgstr "rozklad rozptylu"
 msgid "gretl: forecasts"
 msgstr "gretl: předpovědi"
 
-#: gui2/gui_utils.c:4075 gui2/gui_utils.c:4086 gui2/library.c:2976
-#: gui2/library.c:2997
+#: gui2/gui_utils.c:4075 gui2/gui_utils.c:4086 gui2/library.c:2978
+#: gui2/library.c:2999
 msgid "gretl: autocorrelation"
 msgstr "gretl: autokorelace"
 
-#: gui2/gui_utils.c:4076 gui2/gui_utils.c:4097 gui2/library.c:2502
-#: gui2/library.c:2521
+#: gui2/gui_utils.c:4076 gui2/gui_utils.c:4097 gui2/library.c:2504
+#: gui2/library.c:2523
 msgid "gretl: ARCH test"
 msgstr "gretl: ARCH test"
 
-#: gui2/gui_utils.c:4077 gui2/library.c:2977
+#: gui2/gui_utils.c:4077 gui2/library.c:2979
 msgid "Lag order for test:"
 msgstr "Řád zpoždění pro test:"
 
@@ -12543,7 +12543,7 @@ msgstr ""
 "Přejete si obnovit podvýběr, na kterém\n"
 "byl proveden odhad modelu?"
 
-#: gui2/gui_utils.c:4913 gui2/library.c:4747
+#: gui2/gui_utils.c:4913 gui2/library.c:4749
 #, c-format
 msgid "A series named %s already exists"
 msgstr "Řada jménem %s už existuje"
@@ -12748,7 +12748,7 @@ msgstr "Nepodařilo se stáhnout soubor"
 msgid "gretl: iteration info"
 msgstr "gretl: informace o iteraci"
 
-#: gui2/library.c:477 gui2/library.c:484 gui2/library.c:5807
+#: gui2/library.c:477 gui2/library.c:484 gui2/library.c:5809
 msgid "Error adding variables"
 msgstr "Chyba při přidávání proměnných"
 
@@ -12770,7 +12770,7 @@ msgstr "popisné statistiky"
 msgid "summary stats: "
 msgstr "popisné statistiky:"
 
-#: gui2/library.c:657 gui2/library.c:4810
+#: gui2/library.c:657 gui2/library.c:4812
 msgid "normality test"
 msgstr "test normality"
 
@@ -12853,7 +12853,7 @@ msgstr "gretl: KPSS test"
 msgid "gretl: Levin-Lin-Chu test"
 msgstr "gretl: Levin-Lin-Chuův test"
 
-#: gui2/library.c:1363 gui2/library.c:5467
+#: gui2/library.c:1363 gui2/library.c:5469
 msgid "Lag order:"
 msgstr "Řád zpoždění:"
 
@@ -12991,7 +12991,7 @@ msgstr ""
 "(Menu dat, Upravit data), nebo můžete zkrátit rozsah\n"
 "výběru, přes který byl proveden odhad (Menu výběru)."
 
-#: gui2/library.c:2154 gui2/selector.c:7376
+#: gui2/library.c:2154 gui2/selector.c:7370
 msgid "No variables are selected"
 msgstr "Žádné proměnné nebyly vybrány"
 
@@ -13003,113 +13003,113 @@ msgstr "gretl: Waldův test vynechání"
 msgid "gretl: LM test"
 msgstr "gretl: LM test"
 
-#: gui2/library.c:2288 gui2/library.c:4256
+#: gui2/library.c:2288 gui2/library.c:4258
 msgid "gretl: vector autoregression"
 msgstr "gretl: vektorová autoregrese"
 
-#: gui2/library.c:2437
+#: gui2/library.c:2439
 msgid "gretl: LM test "
 msgstr "gretl: LM test "
 
-#: gui2/library.c:2440 gui2/library.c:2444 gui2/library.c:2448
+#: gui2/library.c:2442 gui2/library.c:2446 gui2/library.c:2450
 msgid "(heteroskedasticity)"
 msgstr "(heteroskedasticita)"
 
-#: gui2/library.c:2456
+#: gui2/library.c:2458
 msgid "gretl: groupwise heteroskedasticity"
 msgstr "gretl: heteroskedasticita mezi skupinami"
 
-#: gui2/library.c:2462
+#: gui2/library.c:2464
 msgid "(non-linearity)"
 msgstr "(nelinearita)"
 
-#: gui2/library.c:2470
+#: gui2/library.c:2472
 msgid "gretl: common factor test"
 msgstr "gretl: test nulových omezení"
 
-#: gui2/library.c:2503
+#: gui2/library.c:2505
 msgid "Lag order for ARCH test:"
 msgstr "Řád zpoždění pro ARCH test:"
 
-#: gui2/library.c:2550
+#: gui2/library.c:2552
 msgid "gretl: panel model diagnostics"
 msgstr "gretl: panelová diagnostika modelu"
 
-#: gui2/library.c:2624
+#: gui2/library.c:2626
 msgid "gretl: leverage and influence"
 msgstr "gretl: leverage a vlivná pozorování"
 
-#: gui2/library.c:2666
+#: gui2/library.c:2668
 msgid "gretl: collinearity"
 msgstr "gretl: kolinearita"
 
-#: gui2/library.c:2692 gui2/menustate.c:358
+#: gui2/library.c:2694 gui2/menustate.c:358
 msgid "Gini coefficient"
 msgstr "Giniho koeficient"
 
-#: gui2/library.c:2703
+#: gui2/library.c:2705
 msgid "use sample mean and variance for normal quantiles"
 msgstr "použít výběrovou střední hodnotu a rozptyl pro normální kvantily"
 
-#: gui2/library.c:2704
+#: gui2/library.c:2706
 msgid "standardize the data"
 msgstr "standardizovat data"
 
-#: gui2/library.c:2705
+#: gui2/library.c:2707
 msgid "raw quantiles versus N(0, 1)"
 msgstr "obecné kvantily v porovnání s N(0, 1)"
 
-#: gui2/library.c:2713
+#: gui2/library.c:2715
 msgid "Normal Q-Q plot"
 msgstr "Normální Q-Q graf"
 
-#: gui2/library.c:2805
+#: gui2/library.c:2807
 msgid "This test only implemented for OLS models"
 msgstr "Tento test je implementován pouze pro OLS modely"
 
-#: gui2/library.c:2873
+#: gui2/library.c:2875
 msgid "gretl: Chow test output"
 msgstr "gretl: výstup Chowova testu"
 
-#: gui2/library.c:2875
+#: gui2/library.c:2877
 msgid "gretl: QLR test output"
 msgstr "gretl: výstup QLR testu"
 
-#: gui2/library.c:2877
+#: gui2/library.c:2879
 msgid "gretl: CUSUM test output"
 msgstr "gretl: výstup CUSUM testu"
 
-#: gui2/library.c:2878
+#: gui2/library.c:2880
 msgid "gretl: CUSUMSQ test output"
 msgstr "gretl: výstup CUSUMQ testu"
 
-#: gui2/library.c:2893
+#: gui2/library.c:2895
 msgid "all variants"
 msgstr "všechny varianty"
 
-#: gui2/library.c:2904 gui2/library.c:2955
+#: gui2/library.c:2906 gui2/library.c:2957
 msgid "gretl: RESET test"
 msgstr "gretl: RESET test"
 
-#: gui2/library.c:2905
+#: gui2/library.c:2907
 msgid "RESET specification test"
 msgstr "RESET test specifikace"
 
-#: gui2/library.c:3028
+#: gui2/library.c:3030
 msgid "Durbin-Watson statistic"
 msgstr "Durbin-Watsonova statistika"
 
-#: gui2/library.c:3030
+#: gui2/library.c:3032
 msgid ""
 "p-value is \"very small\" (the Imhof integral could not\n"
 "be evaluated so a definite value is not available)"
 msgstr ""
 
-#: gui2/library.c:3238
+#: gui2/library.c:3240
 msgid "linear restrictions"
 msgstr "lineární omezení"
 
-#: gui2/library.c:3434
+#: gui2/library.c:3436
 msgid ""
 "Please note: the decimal character must be '.'\n"
 "in this context"
@@ -13117,189 +13117,189 @@ msgstr ""
 "Prosím povšimněte si: desetinný ukazatel musí být '.'\n"
 "v tomto kontextu"
 
-#: gui2/library.c:3708 gui2/library.c:5579 gui2/selector.c:6464
+#: gui2/library.c:3710 gui2/library.c:5581 gui2/selector.c:6457
 msgid "ANOVA"
 msgstr "ANOVA"
 
-#: gui2/library.c:3822
+#: gui2/library.c:3824
 msgid "Sorry, not implemented yet!"
 msgstr "Bohužel, ještě nebylo implementováno!"
 
-#: gui2/library.c:3838
+#: gui2/library.c:3840
 msgid "gretl: GARCH"
 msgstr "gretl: GARCH"
 
-#: gui2/library.c:4034
+#: gui2/library.c:4036
 msgid "loess"
 msgstr "loess"
 
-#: gui2/library.c:4188
+#: gui2/library.c:4190
 #, c-format
 msgid "%s versus %s with loess fit"
 msgstr "%s versus %s s předpovědí loess"
 
-#: gui2/library.c:4191
+#: gui2/library.c:4193
 #, c-format
 msgid "%s versus %s with Nadaraya_Watson fit"
 msgstr "%s versus %s (předpovědí Nadaraya_Watson)"
 
-#: gui2/library.c:4702
+#: gui2/library.c:4704
 #, c-format
 msgid "Set %d values to \"missing\""
 msgstr "Nastavit hodnoty %d na \"chybějící\""
 
-#: gui2/library.c:4705 gui2/library.c:4733
+#: gui2/library.c:4707 gui2/library.c:4735
 msgid "Didn't find any matching observations"
 msgstr "Nebyla nalezena žádná odpovídající pozorování"
 
-#: gui2/library.c:4730
+#: gui2/library.c:4732
 #, c-format
 msgid "Set %d observations to \"missing\""
 msgstr "Nastavit pozorování %d na \"chybějící\""
 
-#: gui2/library.c:4858
+#: gui2/library.c:4860
 msgid "gretl: residual dist."
 msgstr "gretl: rozdělení reziduí"
 
-#: gui2/library.c:4923
+#: gui2/library.c:4925
 #, c-format
 msgid "range %g to %g"
 msgstr "rozsah %g do %g"
 
-#: gui2/library.c:4924
+#: gui2/library.c:4926
 #, c-format
 msgid "%s (n = %d, %s)"
 msgstr "%s (n = %d, %s)"
 
-#: gui2/library.c:4926 gui2/library.c:4981
+#: gui2/library.c:4928 gui2/library.c:4983
 msgid "frequency distribution"
 msgstr "frekvenční rozdělení"
 
-#: gui2/library.c:5096
+#: gui2/library.c:5098
 msgid "gretl: TRAMO analysis"
 msgstr "gretl: TRAMO analýza"
 
-#: gui2/library.c:5097
+#: gui2/library.c:5099
 msgid "gretl: X-12-ARIMA analysis"
 msgstr "gretl: X-12-ARIMA analýza"
 
-#: gui2/library.c:5217
+#: gui2/library.c:5219
 msgid "Trim maximum and minimum in sub-samples"
 msgstr "Odstranit maximum a minimum v podsouborech"
 
-#: gui2/library.c:5225
+#: gui2/library.c:5227
 msgid "gretl: range-mean graph"
 msgstr "gretl: graf středního rozpětí"
 
-#: gui2/library.c:5254
+#: gui2/library.c:5256
 msgid "gretl: range-mean statistics"
 msgstr "gretl: statistika středního rozpětí"
 
-#: gui2/library.c:5284
+#: gui2/library.c:5286
 msgid "gretl: Hurst exponent"
 msgstr "gretl: Hurstův exponent"
 
-#: gui2/library.c:5302
+#: gui2/library.c:5304
 msgid "correlogram"
 msgstr "korelogram"
 
-#: gui2/library.c:5304
+#: gui2/library.c:5306
 msgid "Maximum lag:"
 msgstr "Maximální zpoždění:"
 
-#: gui2/library.c:5424
+#: gui2/library.c:5426
 msgid "periodogram"
 msgstr "periodogram"
 
-#: gui2/library.c:5459
+#: gui2/library.c:5461
 msgid "gretl: fractional integration"
 msgstr "gretl: částečná integrace"
 
-#: gui2/library.c:5534 gui2/toolbar.c:465
+#: gui2/library.c:5536 gui2/toolbar.c:465
 msgid "gretl: coefficient confidence intervals"
 msgstr "gretl: konfidenční intervaly koeficientů"
 
-#: gui2/library.c:5547
+#: gui2/library.c:5549
 msgid "Data set is gone"
 msgstr "Soubor dat už neexistuje"
 
-#: gui2/library.c:5556
+#: gui2/library.c:5558
 msgid "Error generating covariance matrix"
 msgstr "Chyba při vytváření kovarianční matice"
 
-#: gui2/library.c:5560
+#: gui2/library.c:5562
 msgid "gretl: coefficient covariances"
 msgstr "gretl: kovariance koeficientů"
 
-#: gui2/library.c:5692
+#: gui2/library.c:5694
 #, c-format
 msgid "Really delete the last %d observations?"
 msgstr "Opravdu smazat posledních %d pozorování"
 
-#: gui2/library.c:5694
+#: gui2/library.c:5696
 msgid "gretl: drop observations"
 msgstr "gretl: odstranit pozorování"
 
-#: gui2/library.c:5708
+#: gui2/library.c:5710
 msgid "There are no extra observations to drop"
 msgstr "Nejsou žádná pozorování navíc, která by bylo možné odstranit"
 
-#: gui2/library.c:5716
+#: gui2/library.c:5718
 msgid "Encode all values"
 msgstr "Kódovat všechny hodnoty"
 
-#: gui2/library.c:5717
+#: gui2/library.c:5719
 msgid "Skip the lowest value"
 msgstr "Vynechat nejnižší hodnotu"
 
-#: gui2/library.c:5718
+#: gui2/library.c:5720
 msgid "Skip the highest value"
 msgstr "Vynechat nejvyšší hodnotu"
 
-#: gui2/library.c:5722
+#: gui2/library.c:5724
 msgid "gretl: create dummy variables"
 msgstr "gretl: vytvořit indikátorovou proměnnou"
 
-#: gui2/library.c:5723
+#: gui2/library.c:5725
 msgid "Encoding variables as dummies"
 msgstr "Kódovat proměnné jako indikátorové"
 
-#: gui2/library.c:5752
+#: gui2/library.c:5754
 msgid "gretl: generate lags"
 msgstr "gretl: generovat zpožděné proměnné"
 
-#: gui2/library.c:5753
+#: gui2/library.c:5755
 msgid "Number of lags to create:"
 msgstr "Počet zpožděných proměnných, které se mají vytvořit"
 
-#: gui2/library.c:5959
+#: gui2/library.c:5961
 #, c-format
 msgid "residual from VAR system, equation %d"
 msgstr "rezidua ze systému VAR, rovnice %d"
 
-#: gui2/library.c:5962
+#: gui2/library.c:5964
 #, c-format
 msgid "residual from VECM system, equation %d"
 msgstr "rezidua ze systému VECM, rovnice %d"
 
-#: gui2/library.c:5965
+#: gui2/library.c:5967
 #, c-format
 msgid "system residual, equation %d"
 msgstr "reziduum systému, rovnice %d"
 
-#: gui2/library.c:6020
+#: gui2/library.c:6022
 msgid "T*R-squared"
 msgstr "T*Koeficient determinace"
 
-#: gui2/library.c:6025
+#: gui2/library.c:6027
 msgid "degrees of freedom"
 msgstr "stupně volnosti"
 
-#: gui2/library.c:6040
+#: gui2/library.c:6042
 msgid "Akaike Information Criterion"
 msgstr "Akaikeho Informační Kritérium"
 
-#: gui2/library.c:6061
+#: gui2/library.c:6063
 #, fuzzy, c-format
 msgid ""
 "Statistic from model %d\n"
@@ -13310,87 +13310,87 @@ msgstr ""
 "%s (hodnota = %g)\n"
 "Jméno (max. 15 znaků):"
 
-#: gui2/library.c:6160
+#: gui2/library.c:6162
 msgid "standardized residual"
 msgstr "standardizované reziduum"
 
-#: gui2/library.c:6211
+#: gui2/library.c:6213
 #, c-format
 msgid "predicted %s"
 msgstr "předpovídané %s"
 
-#: gui2/library.c:6507
+#: gui2/library.c:6509
 #, c-format
 msgid "Cannot delete %s; variable is in use"
 msgstr "Nelze smazat %s; proměnná se právě používá"
 
-#: gui2/library.c:6510 gui2/session.c:2432
+#: gui2/library.c:6512 gui2/session.c:2432
 #, c-format
 msgid "Really delete %s?"
 msgstr "Opravdu vymazat %s?"
 
-#: gui2/library.c:6518
+#: gui2/library.c:6520
 msgid "Really delete the selected variables?"
 msgstr "Opravdu vymazat vybrané proměnné?"
 
-#: gui2/library.c:6526 gui2/session.c:2434
+#: gui2/library.c:6528 gui2/session.c:2434
 msgid "gretl: delete"
 msgstr "gretl: vymazat"
 
-#: gui2/library.c:6550
+#: gui2/library.c:6552
 msgid "Cannot delete the specified variables"
 msgstr "Nelze vymazat určené proměnné"
 
-#: gui2/library.c:6553
+#: gui2/library.c:6555
 msgid "Cannot delete all of the specified variables"
 msgstr "Nelze vymazat všechny určené proměnné"
 
-#: gui2/library.c:6877
+#: gui2/library.c:6879
 msgid "You must supply three variables"
 msgstr "Musíte zadat tři proměnné"
 
-#: gui2/library.c:6965 gui2/selector.c:3812 gui2/selector.c:4115
+#: gui2/library.c:6967 gui2/selector.c:3805 gui2/selector.c:4108
 msgid "X-axis variable"
 msgstr "proměnná osy X"
 
-#: gui2/library.c:7022
+#: gui2/library.c:7024
 msgid "on a single graph"
 msgstr "na jednoduchém grafu"
 
-#: gui2/library.c:7023
+#: gui2/library.c:7025
 msgid "in separate small graphs"
 msgstr "na oddělených malých grafech"
 
-#: gui2/library.c:7028
+#: gui2/library.c:7030
 msgid "Plot the series"
 msgstr "Vykreslit řadu"
 
-#: gui2/library.c:7080
+#: gui2/library.c:7082
 #, fuzzy, c-format
 msgid "%s: no valid values"
 msgstr "platné hodnoty"
 
-#: gui2/library.c:7431
+#: gui2/library.c:7433
 msgid "Non-interactive (just get output)"
 msgstr "Není interaktivní (pouze výstup)"
 
-#: gui2/library.c:7432
+#: gui2/library.c:7434
 msgid "Interactive R session"
 msgstr "Interaktivnáí relace R"
 
-#: gui2/library.c:7438 gui2/library.c:7443
+#: gui2/library.c:7440 gui2/library.c:7445
 msgid "R mode"
 msgstr "R mód"
 
-#: gui2/library.c:7440
+#: gui2/library.c:7442
 msgid "pre-load data"
 msgstr "načíst data"
 
-#: gui2/library.c:7651 plugin/leverage.c:106 plugin/pca.c:89
+#: gui2/library.c:7653 plugin/leverage.c:106 plugin/pca.c:89
 msgid "gretl: save data"
 msgstr "gretl: uložit data"
 
-#: gui2/library.c:7652
+#: gui2/library.c:7654
 msgid ""
 "The data set is currently sub-sampled.\n"
 "Would you like to restore the full range?"
@@ -13398,11 +13398,11 @@ msgstr ""
 "Momentálně pracujete s podmnožinou výběru.\n"
 "Přejete si obnovit plný rozsah?"
 
-#: gui2/library.c:7655
+#: gui2/library.c:7657
 msgid "gretl: Compact data"
 msgstr "gretl: Kompaktovat data"
 
-#: gui2/library.c:7656
+#: gui2/library.c:7658
 msgid ""
 "The data set is currently sub-sampled.\n"
 "You must restore the full range before compacting.\n"
@@ -13412,11 +13412,11 @@ msgstr ""
 "Před kompaktováním musíte obnovit plný rozsah.\n"
 "Obnovit nyní plný rozsah?"
 
-#: gui2/library.c:7660
+#: gui2/library.c:7662
 msgid "gretl: Expand data"
 msgstr "gretl: Expandovat data"
 
-#: gui2/library.c:7661
+#: gui2/library.c:7663
 msgid ""
 "The data set is currently sub-sampled.\n"
 "You must restore the full range before expanding.\n"
@@ -13426,11 +13426,11 @@ msgstr ""
 "Před expandováním musíte obnovit plný rozsah.\n"
 "Obnovit nyní plný rozsah?"
 
-#: gui2/library.c:7680
+#: gui2/library.c:7682
 msgid "gretl: transpose data"
 msgstr "gretl: transponovat data"
 
-#: gui2/library.c:7681
+#: gui2/library.c:7683
 msgid ""
 "Transposing means that each variable becomes interpreted\n"
 "as an observation, and each observation as a variable.\n"
@@ -13440,39 +13440,39 @@ msgstr ""
 "jako pozorování a každé pozorování jako proměnná.\n"
 "Přejete si pokračovat?"
 
-#: gui2/library.c:7693
+#: gui2/library.c:7695
 msgid "Data transposed"
 msgstr "Data byla transponována"
 
-#: gui2/library.c:7712 gui2/series_view.c:369 gui2/series_view.c:416
+#: gui2/library.c:7714 gui2/series_view.c:369 gui2/series_view.c:416
 msgid "Ascending"
 msgstr "Vzestupně"
 
-#: gui2/library.c:7713 gui2/series_view.c:370 gui2/series_view.c:417
+#: gui2/library.c:7715 gui2/series_view.c:370 gui2/series_view.c:417
 msgid "Descending"
 msgstr "Sestupně"
 
-#: gui2/library.c:7729
+#: gui2/library.c:7731
 msgid "Select sort key"
 msgstr "Vybrat klíč uspořádání"
 
-#: gui2/library.c:7748
+#: gui2/library.c:7750
 msgid "resample dataset"
 msgstr "opakovat výběr"
 
-#: gui2/library.c:7751
+#: gui2/library.c:7753
 msgid "Resampling with replacement"
 msgstr "Opakovat výběr s nahrazováním"
 
-#: gui2/library.c:7752
+#: gui2/library.c:7754
 msgid "Number of cases"
 msgstr "Počet případů"
 
-#: gui2/library.c:7820
+#: gui2/library.c:7822
 msgid "gretl: revised data set"
 msgstr "gretl: revidovaný soubor dat"
 
-#: gui2/library.c:7821
+#: gui2/library.c:7823
 msgid ""
 "You have saved a reduced version of the current data set.\n"
 "Do you want to switch to the reduced version now?"
@@ -13480,11 +13480,11 @@ msgstr ""
 "Uložili jste redukovanou verzi aktualního souboru dat.\n"
 "Přejete si nyní přepnout na redukovanou verzi?"
 
-#: gui2/library.c:8151 gui2/library.c:8241
+#: gui2/library.c:8153 gui2/library.c:8243
 msgid "No commands to execute"
 msgstr "Žádné příkazy k vykonání"
 
-#: gui2/library.c:8319
+#: gui2/library.c:8321
 msgid ""
 "\n"
 "Error executing script: halting\n"
@@ -13492,11 +13492,11 @@ msgstr ""
 "\n"
 "Chyba při vykonávání skriptu: čekám\n"
 
-#: gui2/library.c:8352
+#: gui2/library.c:8354
 msgid "Unterminated comment in script"
 msgstr "Neukončený komentář ve skriptu"
 
-#: gui2/library.c:8765
+#: gui2/library.c:8767
 msgid "Script done\n"
 msgstr "Skript vykonán\n"
 
@@ -13564,7 +13564,7 @@ msgstr ""
 msgid "Define new variable..."
 msgstr "Definovat novou proměnnou..."
 
-#: gui2/menustate.c:420 gui2/selector.c:5550
+#: gui2/menustate.c:420 gui2/selector.c:5543
 msgid "Ensure uniform sample size"
 msgstr "Zajistit jednotnou velikost výběru"
 
@@ -13572,7 +13572,7 @@ msgstr "Zajistit jednotnou velikost výběru"
 msgid "Correlation matrix"
 msgstr "Korelační matice"
 
-#: gui2/menustate.c:475 gui2/menustate.c:574 gui2/selector.c:6448
+#: gui2/menustate.c:475 gui2/menustate.c:574 gui2/selector.c:6441
 msgid "XY scatterplot"
 msgstr "XY diagram"
 
@@ -13641,7 +13641,7 @@ msgstr "Model přidán do tabulky"
 msgid "HSK"
 msgstr "HSK"
 
-#: gui2/model_table.c:408 gui2/selector.c:3732 plugin/addons-i18n.c:7
+#: gui2/model_table.c:408 gui2/selector.c:3725 plugin/addons-i18n.c:7
 msgid "ARCH"
 msgstr "ARCH"
 
@@ -13794,530 +13794,530 @@ msgstr "Musíte vybrat proměnnou osy Y"
 msgid "You must select a lower bound variable"
 msgstr "Musíte vybrat proměnnou dolní meze"
 
-#: gui2/selector.c:2426 gui2/selector.c:3522
+#: gui2/selector.c:2426 gui2/selector.c:3515
 msgid "You must select a dependent variable"
 msgstr "Musíte vybrat závisle proměnnou"
 
-#: gui2/selector.c:2993
+#: gui2/selector.c:2986
 msgid "You must specify a quantile"
 msgstr "Musíte specifikovat kvantil"
 
-#: gui2/selector.c:3006
+#: gui2/selector.c:2999
 msgid "Invalid quantile specification"
 msgstr "Neplatná specifikace kvantilu"
 
-#: gui2/selector.c:3145 gui2/selector.c:5171
+#: gui2/selector.c:3138 gui2/selector.c:5164
 msgid "Cluster"
 msgstr ""
 
-#: gui2/selector.c:3231
+#: gui2/selector.c:3224
 msgid "You must select a weight variable"
 msgstr "Musíte vybrat váhovou proměnnou"
 
-#: gui2/selector.c:3234
+#: gui2/selector.c:3227
 msgid "You must specify a list of lags"
 msgstr "Musíte specifikovat seznam zpoždených proměnných"
 
-#: gui2/selector.c:3237
+#: gui2/selector.c:3230
 msgid "You must specify a selection variable"
 msgstr "Musíte určit proměnnou, která charakterizuje podvýběr"
 
-#: gui2/selector.c:3240
+#: gui2/selector.c:3233
 msgid "You must specify a second dependent variable"
 msgstr "Musíte vybrat druhou závisle proměnnou"
 
-#: gui2/selector.c:3243
+#: gui2/selector.c:3236
 msgid "You must specify an upper bound variable"
 msgstr "Musíte určit proměnnou horní meze"
 
-#: gui2/selector.c:3246
+#: gui2/selector.c:3239
 msgid "You must specify a treatment variable"
 msgstr "Musíte určit cílovou proměnnou"
 
-#: gui2/selector.c:3249
+#: gui2/selector.c:3242
 msgid "You must specify an independent variable"
 msgstr "Musíte vybrat nezávisle proměnnou"
 
-#: gui2/selector.c:3391
+#: gui2/selector.c:3384
 msgid "You must select a Z-axis variable"
 msgstr "Musíte vybrat proměnnou osy Z"
 
-#: gui2/selector.c:3393
+#: gui2/selector.c:3386
 msgid "You must select a factor variable"
 msgstr "Musíte vybrat faktorovou proměnnou "
 
-#: gui2/selector.c:3395
+#: gui2/selector.c:3388
 msgid "You must select a control variable"
 msgstr "Musíte vybrat kontrolní proměnnou"
 
-#: gui2/selector.c:3518
+#: gui2/selector.c:3511
 msgid "You must select two or more endogenous variables"
 msgstr "Musíte vybrat dvě nebo více endogenních proměnných"
 
-#: gui2/selector.c:3526
+#: gui2/selector.c:3519
 msgid "You must specify a public interface"
 msgstr "Musíte specifikovat veřejné rozhraní"
 
-#: gui2/selector.c:3566
+#: gui2/selector.c:3559
 msgid "You must specify a set of instrumental variables"
 msgstr "Musíte specifikovat soubor instrumentálních proměnných"
 
-#: gui2/selector.c:3569
+#: gui2/selector.c:3562
 msgid "You must specify regressors for the selection equation"
 msgstr "Musíte specifikovat nezávisle proměnné pro rovnici určující podvýběr"
 
-#: gui2/selector.c:3684
+#: gui2/selector.c:3677
 msgid "Heteroskedasticity corrected"
 msgstr "Heteroskedasticita opravena"
 
-#: gui2/selector.c:3686
+#: gui2/selector.c:3679
 msgid "AR(1)"
 msgstr ""
 
-#: gui2/selector.c:3698
+#: gui2/selector.c:3691
 #, fuzzy
 msgid "Random effects (binary) probit"
 msgstr "Náhodné efekty"
 
-#: gui2/selector.c:3708
+#: gui2/selector.c:3701
 msgid "Count data model"
 msgstr "Model s diskrétními daty"
 
-#: gui2/selector.c:3710
+#: gui2/selector.c:3703
 msgid "Duration model"
 msgstr "Model trvání"
 
-#: gui2/selector.c:3712
+#: gui2/selector.c:3705
 msgid "Panel model"
 msgstr "Panelový model"
 
-#: gui2/selector.c:3714
+#: gui2/selector.c:3707
 msgid "Groupwise WLS"
 msgstr "WLS po skupinách"
 
-#: gui2/selector.c:3716
+#: gui2/selector.c:3709
 msgid "Between-groups model"
 msgstr "Model mezi skupinami"
 
-#: gui2/selector.c:3718
+#: gui2/selector.c:3711
 msgid "Dynamic panel model"
 msgstr "Dynamický panelový model"
 
-#: gui2/selector.c:3720
+#: gui2/selector.c:3713
 msgid "Weighted least squares"
 msgstr "Vážené nejmenší čtverce"
 
-#: gui2/selector.c:3722
+#: gui2/selector.c:3715
 msgid "Two-stage least squares"
 msgstr "Dvoustupňové nejmenší čtverce"
 
-#: gui2/selector.c:3724
+#: gui2/selector.c:3717
 msgid "Limited information maximum likelihood"
 msgstr "Maximální věrohodnost s neúplnou informací"
 
-#: gui2/selector.c:3726
+#: gui2/selector.c:3719
 msgid "Generalized method of moments"
 msgstr "Zobecněná momentová metoda"
 
-#: gui2/selector.c:3728
+#: gui2/selector.c:3721
 msgid "Autoregressive model"
 msgstr "Autoregresivní model"
 
-#: gui2/selector.c:3738
+#: gui2/selector.c:3731
 msgid "VAR lag selection"
 msgstr "VAR výběr zpožděných proměnných"
 
-#: gui2/selector.c:3744
+#: gui2/selector.c:3737
 msgid "Quantile regression"
 msgstr "Kvantilová regrese"
 
-#: gui2/selector.c:3746
+#: gui2/selector.c:3739
 msgid "Interval regression"
 msgstr "Intervalová regrese"
 
-#: gui2/selector.c:3749
+#: gui2/selector.c:3742
 msgid "Cointegration"
 msgstr "Kointegrace"
 
-#: gui2/selector.c:3751
+#: gui2/selector.c:3744
 msgid "Multiple precision OLS"
 msgstr "OLS s vyšší přesností"
 
-#: gui2/selector.c:3765
+#: gui2/selector.c:3758
 msgid "Weight variable"
 msgstr "Váhová proměnná"
 
-#: gui2/selector.c:3767
+#: gui2/selector.c:3760
 msgid "Offset variable"
 msgstr "Offsetová proměnná"
 
-#: gui2/selector.c:3769
+#: gui2/selector.c:3762
 msgid "Censoring variable"
 msgstr "Cenzorující proměnná"
 
-#: gui2/selector.c:3773
+#: gui2/selector.c:3766
 #, fuzzy
 msgid "Dependent variable 2"
 msgstr "Závisle proměnná"
 
-#: gui2/selector.c:3775
+#: gui2/selector.c:3768
 msgid "List of AR lags"
 msgstr "Seznam AR zpoždění"
 
-#: gui2/selector.c:3777
+#: gui2/selector.c:3770
 msgid "Desired quantile(s)"
 msgstr "Požadovaný kvantil (kvantily)"
 
-#: gui2/selector.c:3779
+#: gui2/selector.c:3772
 msgid "Upper bound variable"
 msgstr "Proměnná horní meze"
 
-#: gui2/selector.c:3783 gui2/selector.c:3811
+#: gui2/selector.c:3776 gui2/selector.c:3804
 msgid "Y-axis variable"
 msgstr "Proměnná osy Y"
 
-#: gui2/selector.c:3785
+#: gui2/selector.c:3778
 msgid "Treatment variable"
 msgstr "Cílová proměnná"
 
-#: gui2/selector.c:3788
+#: gui2/selector.c:3781
 msgid "Independent variable"
 msgstr "Nezávisle proměnná"
 
-#: gui2/selector.c:3799 gui2/selector.c:6505
+#: gui2/selector.c:3792 gui2/selector.c:6498
 msgid "Y-axis variables"
 msgstr "Proměnné osy Y"
 
-#: gui2/selector.c:3801 gui2/selector.c:6507
+#: gui2/selector.c:3794 gui2/selector.c:6500
 msgid "X-axis variables"
 msgstr "Proměnné osy X"
 
-#: gui2/selector.c:3848
+#: gui2/selector.c:3841
 msgid "NegBin 2"
 msgstr "NegBin 2"
 
-#: gui2/selector.c:3849
+#: gui2/selector.c:3842
 msgid "NegBin 1"
 msgstr "NegBin 1"
 
-#: gui2/selector.c:3855 gui2/selector.c:3909
+#: gui2/selector.c:3848 gui2/selector.c:3902
 msgid "Distribution:"
 msgstr "Rozdělení"
 
-#: gui2/selector.c:3900
+#: gui2/selector.c:3893
 msgid "Weibull"
 msgstr "Weibullovo"
 
-#: gui2/selector.c:3901
+#: gui2/selector.c:3894
 msgid "Exponential"
 msgstr "Exponenciální"
 
-#: gui2/selector.c:3902
+#: gui2/selector.c:3895
 msgid "Log-logistic"
 msgstr "Log-logistické"
 
-#: gui2/selector.c:3903
+#: gui2/selector.c:3896
 msgid "Log-normal"
 msgstr "Log-normální"
 
-#: gui2/selector.c:4089 gui2/selector.c:4163
+#: gui2/selector.c:4082 gui2/selector.c:4156
 msgid "Choose"
 msgstr "Vybrat"
 
-#: gui2/selector.c:4112
+#: gui2/selector.c:4105
 msgid "Variable to plot"
 msgstr "Proměnná, která se má vykreslit"
 
-#: gui2/selector.c:4152
+#: gui2/selector.c:4145
 msgid "Lower bound variable"
 msgstr "Proměnná dolní meze"
 
-#: gui2/selector.c:4154
+#: gui2/selector.c:4147
 msgid "Response variable"
 msgstr "Závisle proměnná"
 
-#: gui2/selector.c:4156
+#: gui2/selector.c:4149
 #, fuzzy
 msgid "Dependent variable 1"
 msgstr "Závisle proměnná"
 
-#: gui2/selector.c:4216
+#: gui2/selector.c:4209
 msgid "lag order:"
 msgstr "počet zpožděných proměnných:"
 
-#: gui2/selector.c:4217
+#: gui2/selector.c:4210
 #, fuzzy
 msgid "rank:"
 msgstr "hodnost"
 
-#: gui2/selector.c:4241
+#: gui2/selector.c:4234
 msgid "maximum lag:"
 msgstr "maximální zpoždění:"
 
-#: gui2/selector.c:4256
+#: gui2/selector.c:4249
 #, fuzzy
 msgid "Number of cointegrating vectors"
 msgstr "beta (kointegrační vektory)"
 
-#: gui2/selector.c:4282
+#: gui2/selector.c:4275
 msgid "ARCH order:"
 msgstr "řád ARCH:"
 
-#: gui2/selector.c:4287 gui2/selector.c:5006
+#: gui2/selector.c:4280 gui2/selector.c:4999
 msgid "AR order:"
 msgstr "řád AR:"
 
-#: gui2/selector.c:4313
+#: gui2/selector.c:4306
 msgid "Z-axis variable"
 msgstr "Proměnná osy Z"
 
-#: gui2/selector.c:4315
+#: gui2/selector.c:4308
 msgid "Factor (discrete)"
 msgstr "Faktor (diskrétní)"
 
-#: gui2/selector.c:4317
+#: gui2/selector.c:4310
 msgid "Control variable"
 msgstr "Kontrolní proměnná"
 
-#: gui2/selector.c:4319
+#: gui2/selector.c:4312
 msgid "Block variable (optional)"
 msgstr "Bloková proměnná (nepovinné)"
 
-#: gui2/selector.c:4428
+#: gui2/selector.c:4421
 msgid "Add"
 msgstr "Přidat"
 
-#: gui2/selector.c:4440
+#: gui2/selector.c:4433
 msgid "All ->"
 msgstr "Vše ->"
 
-#: gui2/selector.c:4459 gui2/selector.c:6267
+#: gui2/selector.c:4452 gui2/selector.c:6260
 msgid "lags..."
 msgstr "zpožděné proměnné..."
 
-#: gui2/selector.c:4482
+#: gui2/selector.c:4475
 msgid "Exogenous variables"
 msgstr "Exogenní proměnná"
 
-#: gui2/selector.c:4486
+#: gui2/selector.c:4479
 #, fuzzy
 msgid "Selection regressors"
 msgstr "Nezávisle proměnné určující podvýběr"
 
-#: gui2/selector.c:4488
+#: gui2/selector.c:4481
 #, fuzzy
 msgid "Equation 2 regressors"
 msgstr "Nezávisle proměnné první rovnice"
 
-#: gui2/selector.c:4490
+#: gui2/selector.c:4483
 msgid "Helper functions"
 msgstr "Pomocné funkce"
 
-#: gui2/selector.c:4551
+#: gui2/selector.c:4544
 msgid "left bound"
 msgstr "levá mez"
 
-#: gui2/selector.c:4552
+#: gui2/selector.c:4545
 msgid "right bound"
 msgstr "pravá mez"
 
-#: gui2/selector.c:4586
+#: gui2/selector.c:4579
 msgid "Polynomial order"
 msgstr "Řád polynomu"
 
-#: gui2/selector.c:4601
+#: gui2/selector.c:4594
 msgid "Bandwidth"
 msgstr "Šířka pásu"
 
-#: gui2/selector.c:4608
+#: gui2/selector.c:4601
 msgid "Use robust weights"
 msgstr "Použíz robustní váhy"
 
-#: gui2/selector.c:4609
+#: gui2/selector.c:4602
 msgid "Use \"leave one out\""
 msgstr "Použít \"jedno vynechat\""
 
-#: gui2/selector.c:4932
+#: gui2/selector.c:4925
 msgid "GARCH p:"
 msgstr "GARCH p:"
 
-#: gui2/selector.c:4933
+#: gui2/selector.c:4926
 msgid "ARCH q:"
 msgstr "ARCH q:"
 
-#: gui2/selector.c:4958
+#: gui2/selector.c:4951
 msgid "Non-seasonal"
 msgstr "Nesezónní"
 
-#: gui2/selector.c:4959
+#: gui2/selector.c:4952
 msgid "Seasonal"
 msgstr "Sezónní"
 
-#: gui2/selector.c:5001
+#: gui2/selector.c:4994
 msgid "I"
 msgstr ""
 
-#: gui2/selector.c:5007
+#: gui2/selector.c:5000
 msgid "Difference:"
 msgstr "Diference:"
 
-#: gui2/selector.c:5008
+#: gui2/selector.c:5001
 msgid "MA order:"
 msgstr "Řád MA:"
 
-#: gui2/selector.c:5030 gui2/selector.c:5059
+#: gui2/selector.c:5023 gui2/selector.c:5052
 msgid "or specific lags"
 msgstr "nebo specifické zpožděné proměnné"
 
-#: gui2/selector.c:5376
+#: gui2/selector.c:5369
 msgid "Bits per floating-point value"
 msgstr "Bity na hodnotu s plovoucí desetinnou čárkou"
 
-#: gui2/selector.c:5415
+#: gui2/selector.c:5408
 msgid "Quadrature points"
 msgstr ""
 
-#: gui2/selector.c:5437
+#: gui2/selector.c:5430
 msgid "Robust standard errors/intervals"
 msgstr "Robustní standardní chyby/intervaly"
 
-#: gui2/selector.c:5498 gui2/selector.c:5502 gui2/selector.c:5510
+#: gui2/selector.c:5491 gui2/selector.c:5495 gui2/selector.c:5503
 msgid "Include a constant"
 msgstr "Zahrnout konstantu"
 
-#: gui2/selector.c:5512
+#: gui2/selector.c:5505
 msgid "Include a trend"
 msgstr "Zahrnout trend"
 
-#: gui2/selector.c:5515
+#: gui2/selector.c:5508
 msgid "Show details of regressions"
 msgstr "Ukázat detaily regrese"
 
-#: gui2/selector.c:5518
+#: gui2/selector.c:5511
 msgid "Include seasonal dummies"
 msgstr "Zahrnout sezónní indikátorové proměnné"
 
-#: gui2/selector.c:5526
+#: gui2/selector.c:5519
 msgid "Test down from maximum lag order"
 msgstr "Testovat maximální řád zpoždění"
 
-#: gui2/selector.c:5528
+#: gui2/selector.c:5521
 msgid "Skip initial DF tests"
 msgstr "Přeskočit úvodní DF testy"
 
-#: gui2/selector.c:5531
+#: gui2/selector.c:5524
 msgid "Iterated weighted least squares"
 msgstr "Iterované vážené nejmenší čtverce"
 
-#: gui2/selector.c:5534 gui2/selector.c:5537
+#: gui2/selector.c:5527 gui2/selector.c:5530
 msgid "Include time dummies"
 msgstr "Zahrnout časové indikátorové proměnné"
 
-#: gui2/selector.c:5539
+#: gui2/selector.c:5532
 msgid "Include levels equations (GMM-SYS)"
 msgstr "Zahrnuje rovnice úrovní (GMM-SYS)"
 
-#: gui2/selector.c:5544
+#: gui2/selector.c:5537
 msgid "Show zeros explicitly"
 msgstr "Ukázat explicitně nuly"
 
-#: gui2/selector.c:5547
+#: gui2/selector.c:5540
 msgid "Show rankings"
 msgstr "Ukázat pořadí"
 
-#: gui2/selector.c:5553
+#: gui2/selector.c:5546
 msgid "Make plot interactive"
 msgstr ""
 
-#: gui2/selector.c:5556
+#: gui2/selector.c:5549
 msgid "Show interval for median"
 msgstr "Ukázat interval pro medián"
 
-#: gui2/selector.c:5562
+#: gui2/selector.c:5555
 msgid "Parameter covariance matrix via Hessian"
 msgstr "Kovarianční matice parametrů pomocí Hessiánu"
 
-#: gui2/selector.c:5564
+#: gui2/selector.c:5557
 msgid "Difference the independent variables"
 msgstr "Diferencuj nezávisle proměnné"
 
-#: gui2/selector.c:5568
+#: gui2/selector.c:5561
 msgid "Use X-12-ARIMA"
 msgstr "Použít X-12-ARIMA"
 
-#: gui2/selector.c:5574
+#: gui2/selector.c:5567
 msgid "Standardize the residuals"
 msgstr "Standardizovat rezidua"
 
-#: gui2/selector.c:5576
+#: gui2/selector.c:5569
 msgid "Use Fiorentini et al algorithm"
 msgstr "Použít algoritmus Fiorentini et al"
 
-#: gui2/selector.c:5611
+#: gui2/selector.c:5604
 msgid "Show lagged variables"
 msgstr "Ukázat zpožděné proměnné"
 
-#: gui2/selector.c:5694
+#: gui2/selector.c:5687
 msgid "Compute standard errors"
 msgstr "Vypočítat standardní chyby"
 
-#: gui2/selector.c:5699
+#: gui2/selector.c:5692
 msgid "Compute confidence intervals"
 msgstr "Vypočítat konfidenční intervaly"
 
-#: gui2/selector.c:5722
+#: gui2/selector.c:5715
 msgid "Automatic maximum"
 msgstr "Automatické maximum"
 
-#: gui2/selector.c:5727
+#: gui2/selector.c:5720
 msgid "Specified maximum"
 msgstr "Určené maximum"
 
-#: gui2/selector.c:5744 gui2/toolbar.c:470
+#: gui2/selector.c:5737 gui2/toolbar.c:470
 msgid "Confidence level"
 msgstr "Konfidenční úroveň"
 
-#: gui2/selector.c:5761
+#: gui2/selector.c:5754
 msgid "Spearman's rho"
 msgstr "Spearmanovo rho"
 
-#: gui2/selector.c:5774
+#: gui2/selector.c:5767
 msgid "Use correlation matrix"
 msgstr "Použít korelační matici"
 
-#: gui2/selector.c:5778
+#: gui2/selector.c:5771
 msgid "Use covariance matrix"
 msgstr "Použít kovarianční matici"
 
-#: gui2/selector.c:5787
+#: gui2/selector.c:5780
 msgid "Show slopes at mean"
 msgstr "Vypočítat elasticity (v průměru)"
 
-#: gui2/selector.c:5806
+#: gui2/selector.c:5799
 msgid "Use points"
 msgstr "Použít body"
 
-#: gui2/selector.c:5810
+#: gui2/selector.c:5803
 msgid "Use lines"
 msgstr "Použít čáry"
 
-#: gui2/selector.c:5865
+#: gui2/selector.c:5858
 msgid "Estimate augmented model"
 msgstr "Odhadnout rozšířený model"
 
-#: gui2/selector.c:5869
+#: gui2/selector.c:5862
 msgid "LM test using auxiliary regression"
 msgstr "LM test za použití pomocných regresí"
 
-#: gui2/selector.c:5882
+#: gui2/selector.c:5875
 msgid "Estimate reduced model"
 msgstr "Odhadnout redukovaný model"
 
-#: gui2/selector.c:5886
+#: gui2/selector.c:5879
 msgid "Wald test, based on covariance matrix"
 msgstr "Waldův test, založený na kovarianční matici"
 
-#: gui2/selector.c:5899
+#: gui2/selector.c:5892
 msgid ""
 "Sequential elimination of variables\n"
 "using two-sided p-value:"
@@ -14325,270 +14325,270 @@ msgstr ""
 "Sekvenční eliminace proměnných\n"
 "za použití oboustranné p-hodnoty:"
 
-#: gui2/selector.c:5908
+#: gui2/selector.c:5901
 msgid "Test only selected variables"
 msgstr "Testovat pouze vybrané proměnné"
 
-#: gui2/selector.c:5940 plugin/addons-i18n.c:37
+#: gui2/selector.c:5933 plugin/addons-i18n.c:37
 msgid "Fixed effects"
 msgstr "Pevné efekty"
 
-#: gui2/selector.c:5944
+#: gui2/selector.c:5937
 msgid "Random effects"
 msgstr "Náhodné efekty"
 
-#: gui2/selector.c:5949
+#: gui2/selector.c:5942
 msgid "Swamy-Arora"
 msgstr "Swamy-Arora"
 
-#: gui2/selector.c:5950
+#: gui2/selector.c:5943
 msgid "Nerlove"
 msgstr "Nerlove"
 
-#: gui2/selector.c:5987
+#: gui2/selector.c:5980
 msgid "Maximum likelihood estimation"
 msgstr "Odhad maximální věrohodností"
 
-#: gui2/selector.c:5991
+#: gui2/selector.c:5984
 msgid "2-step estimation"
 msgstr "dvoukrokový odhad"
 
-#: gui2/selector.c:6000
+#: gui2/selector.c:5993
 msgid "Plain numerical values"
 msgstr "Obyčejné numerické hodnoty"
 
-#: gui2/selector.c:6004
+#: gui2/selector.c:5997
 msgid "Show row percentages"
 msgstr "Ukázat procenta vzhledem k řádku"
 
-#: gui2/selector.c:6008
+#: gui2/selector.c:6001
 msgid "Show column percentages"
 msgstr " Ukázat procenta vzhledem k sloupci"
 
-#: gui2/selector.c:6028
+#: gui2/selector.c:6021
 msgid "Fine-tune using Cochrane-Orcutt"
 msgstr "Kalibrovat pomocí Cochrane-Ortcutta"
 
-#: gui2/selector.c:6053 gui2/selector.c:6065
+#: gui2/selector.c:6046 gui2/selector.c:6058
 msgid "Exact Maximum Likelihood"
 msgstr "Přesná Maximální Věrohodnost"
 
-#: gui2/selector.c:6066
+#: gui2/selector.c:6059
 msgid "Conditional Maximum Likelihood"
 msgstr "Podmíněná Maximální Věrohodnost"
 
-#: gui2/selector.c:6134
+#: gui2/selector.c:6127
 msgid "No constant"
 msgstr "Bez konstanty"
 
-#: gui2/selector.c:6135
+#: gui2/selector.c:6128
 msgid "Restricted constant"
 msgstr "Konstanta s omezeními"
 
-#: gui2/selector.c:6136
+#: gui2/selector.c:6129
 msgid "Unrestricted constant"
 msgstr "Konstanta bez omezení"
 
-#: gui2/selector.c:6137
+#: gui2/selector.c:6130
 msgid "Restricted trend"
 msgstr "Trend s omezeními"
 
-#: gui2/selector.c:6138
+#: gui2/selector.c:6131
 msgid "Unrestricted trend"
 msgstr "Trend bez omezení"
 
-#: gui2/selector.c:6169
+#: gui2/selector.c:6162
 msgid "CSV"
 msgstr "CSV"
 
-#: gui2/selector.c:6170
+#: gui2/selector.c:6163
 msgid "gretl datafile (.gdt)"
 msgstr "datové soubory gretlu (.gdt)"
 
-#: gui2/selector.c:6171
+#: gui2/selector.c:6164
 #, fuzzy
 msgid "gretl binary datafile (.gdtb)"
 msgstr "datové soubory gretlu (.gdt)"
 
-#: gui2/selector.c:6172
+#: gui2/selector.c:6165
 msgid "gretl database (.bin)"
 msgstr "databázové soubory gretlu (.bin)"
 
-#: gui2/selector.c:6173
+#: gui2/selector.c:6166
 msgid "GNU R"
 msgstr "GNU R"
 
-#: gui2/selector.c:6174
+#: gui2/selector.c:6167
 msgid "Octave"
 msgstr "Octave"
 
-#: gui2/selector.c:6175
+#: gui2/selector.c:6168
 msgid "JMulTi"
 msgstr "JMulTi"
 
-#: gui2/selector.c:6176
+#: gui2/selector.c:6169
 msgid "PcGive"
 msgstr "PcGive"
 
-#: gui2/selector.c:6198
+#: gui2/selector.c:6191
 msgid "Select format"
 msgstr "Vybrat formát"
 
-#: gui2/selector.c:6450
+#: gui2/selector.c:6443
 msgid "plot with impulses"
 msgstr "vykreslit s impulzy"
 
-#: gui2/selector.c:6452
+#: gui2/selector.c:6445
 msgid "3D plot"
 msgstr "3D graf"
 
-#: gui2/selector.c:6454
+#: gui2/selector.c:6447
 msgid "multiple scatterplots"
 msgstr "vícečetné diagramy"
 
-#: gui2/selector.c:6456
+#: gui2/selector.c:6449
 msgid "factorized plot"
 msgstr "faktorizovaný graf"
 
-#: gui2/selector.c:6458
+#: gui2/selector.c:6451
 msgid "factorized boxplot"
 msgstr "faktorizovaný okénkový graf"
 
-#: gui2/selector.c:6460
+#: gui2/selector.c:6453
 msgid "scatterplot with control"
 msgstr "diagram s kontrolní proměnnou"
 
-#: gui2/selector.c:6462
+#: gui2/selector.c:6455
 msgid "functions to package"
 msgstr "funkce pro balíček"
 
-#: gui2/selector.c:6497
+#: gui2/selector.c:6490
 msgid "Variables to test"
 msgstr "Proměnné k testování"
 
-#: gui2/selector.c:6499
+#: gui2/selector.c:6492
 msgid "Endogenous variables"
 msgstr "Endogenní proměnné"
 
-#: gui2/selector.c:6501
+#: gui2/selector.c:6494
 #, fuzzy
 msgid "Equation 1 regressors"
 msgstr "Nezávisle proměnné první rovnice"
 
-#: gui2/selector.c:6503 gui2/selector.c:7875
+#: gui2/selector.c:6496 gui2/selector.c:7869
 msgid "Regressors"
 msgstr "Regresory"
 
-#: gui2/selector.c:6509
+#: gui2/selector.c:6502
 msgid "Public functions"
 msgstr "Veřejné funkce"
 
-#: gui2/selector.c:6765
+#: gui2/selector.c:6758
 msgid "Select variables for logging"
 msgstr "Vybrat proměnné pro zlogaritmování"
 
-#: gui2/selector.c:6767
+#: gui2/selector.c:6760
 msgid "Select variables for lagging"
 msgstr "Vybrat proměnné pro zpoždění"
 
-#: gui2/selector.c:6769
+#: gui2/selector.c:6762
 msgid "Select variables to square"
 msgstr "Vybrat proměnné pro umocnění"
 
-#: gui2/selector.c:6771
+#: gui2/selector.c:6764
 msgid "Select variables to difference"
 msgstr "Vybrat proměnné pro diferenci"
 
-#: gui2/selector.c:6773
+#: gui2/selector.c:6766
 msgid "Select variables to log-difference"
 msgstr "Vybrat proměnné pro logaritimickou diferenci"
 
-#: gui2/selector.c:6775
+#: gui2/selector.c:6768
 msgid "Select variables to add"
 msgstr "Vybrat proměnné, které se mají přidat"
 
-#: gui2/selector.c:6778
+#: gui2/selector.c:6771
 msgid "Select variables to omit"
 msgstr "Vybrat proměnné, které se mají vynechat"
 
-#: gui2/selector.c:6780
+#: gui2/selector.c:6773
 msgid "Select coefficients to sum"
 msgstr "Vybrat koeficienty pro součet"
 
-#: gui2/selector.c:6782
+#: gui2/selector.c:6775
 msgid "Select two variables"
 msgstr "Vybrat dvě proměnné"
 
-#: gui2/selector.c:6784
+#: gui2/selector.c:6777
 msgid "Select one or two variables"
 msgstr "Vybrat jednu nebo dvě proměnné"
 
-#: gui2/selector.c:6786
+#: gui2/selector.c:6779
 msgid "Confidence region: select two variables"
 msgstr "Konfidenční oblast: vybrat dvě proměnné"
 
-#: gui2/selector.c:6788
+#: gui2/selector.c:6781
 msgid "Select variables to display"
 msgstr "Vybrat proměnné, které se mají ukázat"
 
-#: gui2/selector.c:6792
+#: gui2/selector.c:6785
 msgid "Select variables to plot"
 msgstr "Vybrat proměnné, které se mají vykreslit"
 
-#: gui2/selector.c:6801
+#: gui2/selector.c:6794
 msgid "Select variables to save"
 msgstr "Vybrat proměnné, které se mají uložit"
 
-#: gui2/selector.c:6803
+#: gui2/selector.c:6796
 msgid "Select variables to copy"
 msgstr "Vybrat proměnné, které se mají kopírovat"
 
-#: gui2/selector.c:6805
+#: gui2/selector.c:6798
 msgid "Define named list"
 msgstr "Definovat pojmenovaný seznam"
 
-#: gui2/selector.c:7039
+#: gui2/selector.c:7033
 #, fuzzy
 msgid "Name of list"
 msgstr "Jméno seznamu:"
 
-#: gui2/selector.c:7434
+#: gui2/selector.c:7428
 msgid "Copy data"
 msgstr "Kopírovat data"
 
-#: gui2/selector.c:7434
+#: gui2/selector.c:7428
 msgid "Export data"
 msgstr "Exportovat data"
 
-#: gui2/selector.c:7453
+#: gui2/selector.c:7447
 msgid "Save functions"
 msgstr "Uložit funkce"
 
-#: gui2/selector.c:7475
+#: gui2/selector.c:7469
 msgid "Edit package list"
 msgstr "Upravit seznam balíčků"
 
-#: gui2/selector.c:7859
+#: gui2/selector.c:7853
 msgid "Lags of endogenous variables"
 msgstr "Zpoždění endogenních proměnných"
 
-#: gui2/selector.c:7881
+#: gui2/selector.c:7875
 msgid "lags"
 msgstr "zpožděné proměnné"
 
-#: gui2/selector.c:7887
+#: gui2/selector.c:7881
 msgid "or"
 msgstr "nebo"
 
-#: gui2/selector.c:7889
+#: gui2/selector.c:7883
 msgid "specific lags"
 msgstr "specifické zpožděné proměnné"
 
-#: gui2/selector.c:7904
+#: gui2/selector.c:7898
 msgid "Lags of dependent variable"
 msgstr "Zpoždění závisle proměnné"
 
-#: gui2/selector.c:7915
+#: gui2/selector.c:7909
 msgid "default"
 msgstr "výchozí"
 

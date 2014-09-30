@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl revision 1.395\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-09-30 12:26-0400\n"
+"POT-Creation-Date: 2014-09-30 13:27-0400\n"
 "PO-Revision-Date: 2014-07-03 13:32+0900\n"
 "Last-Translator: \n"
 "Language-Team: Shintaro Nakagawa <s-nakagawa@shimonoseki-cu.ac.jp>\n"
@@ -70,20 +70,20 @@ msgid "(max was %d, criterion %s)"
 msgstr "(最大ラグ次数は%d、判定基準は%sを用いた)"
 
 #: lib/src/adf_kpss.c:402 gui2/library.c:928 gui2/library.c:1147
-#: gui2/selector.c:6104 plugin/panurc.c:234
+#: gui2/selector.c:6097 plugin/panurc.c:234
 msgid "test without constant"
 msgstr "定数項を付けずに検定"
 
-#: lib/src/adf_kpss.c:403 gui2/selector.c:6105 plugin/panurc.c:235
+#: lib/src/adf_kpss.c:403 gui2/selector.c:6098 plugin/panurc.c:235
 msgid "test with constant"
 msgstr "定数項付きの検定"
 
 #: lib/src/adf_kpss.c:404 gui2/library.c:930 gui2/library.c:941
-#: gui2/library.c:1149 gui2/selector.c:6106 plugin/panurc.c:236
+#: gui2/library.c:1149 gui2/selector.c:6099 plugin/panurc.c:236
 msgid "with constant and trend"
 msgstr "定数項及びトレンド項付きの検定"
 
-#: lib/src/adf_kpss.c:405 gui2/selector.c:6107
+#: lib/src/adf_kpss.c:405 gui2/selector.c:6100
 msgid "with constant and quadratic trend"
 msgstr "定数項と二次トレンド項付きの検定"
 
@@ -95,7 +95,7 @@ msgstr "定数項と二次トレンド項付きの検定"
 #: lib/src/modelprint.c:2265 lib/src/modelprint.c:2909
 #: lib/src/modelprint.c:4022 lib/src/modelprint.c:4337
 #: lib/src/modelprint.c:5215 lib/src/modelprint.c:5217 lib/src/vartest.c:1102
-#: gui2/dialogs.c:5573 gui2/library.c:3033 plugin/anova.c:153
+#: gui2/dialogs.c:5573 gui2/library.c:3035 plugin/anova.c:153
 #: plugin/anova.c:155 plugin/johansen.c:1579 plugin/johansen.c:1580
 #: plugin/johansen.c:1599 plugin/johansen.c:1625
 msgid "p-value"
@@ -185,7 +185,7 @@ msgstr ""
 msgid "Unit"
 msgstr ""
 
-#: lib/src/adf_kpss.c:1344 lib/src/gretl_model.c:3840 gui2/selector.c:7844
+#: lib/src/adf_kpss.c:1344 lib/src/gretl_model.c:3840 gui2/selector.c:7838
 msgid "lag order"
 msgstr "ラグ次数"
 
@@ -394,7 +394,7 @@ msgstr "平均"
 msgid "group"
 msgstr ""
 
-#: lib/src/boxplots.c:799 gui2/library.c:6815
+#: lib/src/boxplots.c:799 gui2/library.c:6817
 msgid "You must supply two variables, the second of which is discrete"
 msgstr "必ず２つの変数を入力し、かつ、２つめの変数は離散変数を選んで下さい"
 
@@ -500,14 +500,14 @@ msgstr "LM検定"
 
 #: lib/src/compare.c:399
 #, fuzzy, c-format
-msgid "Adding variables improved %d of %d Information Criteria.\n"
+msgid "Adding variables improved %d of %d information criteria.\n"
 msgstr ""
 "変数を追加することにより改善できるモデル選択統計量は、%d個（全%d個のうち）で"
 "す\n"
 
 #: lib/src/compare.c:402
 #, fuzzy, c-format
-msgid "Omitting variables improved %d of %d Information Criteria.\n"
+msgid "Omitting variables improved %d of %d information criteria.\n"
 msgstr ""
 "変数を取り除くことにより改善できるモデル選択統計量は、%d個（全%d個のうち）で"
 "す\n"
@@ -523,7 +523,7 @@ msgstr "追加"
 #: lib/src/compare.c:910 lib/src/compare.c:2238 lib/src/graphing.c:3411
 #: lib/src/graphing.c:3423 lib/src/graphing.c:3502 lib/src/graphing.c:5217
 #: lib/src/gretl_panel.c:3820 lib/src/printout.c:1260 gui2/guiprint.c:1534
-#: gui2/guiprint.c:1594 gui2/library.c:6145 plugin/leverage.c:306
+#: gui2/guiprint.c:1594 gui2/library.c:6147 plugin/leverage.c:306
 msgid "residual"
 msgstr ""
 
@@ -567,15 +567,15 @@ msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr " 落とします: %-16s (p値 %.3f)\n"
 
 #: lib/src/compare.c:1760 lib/src/estimate.c:2906 lib/src/gretl_model.c:3527
-#: lib/src/gretl_model.c:3533 lib/src/modelprint.c:781 gui2/library.c:2891
+#: lib/src/gretl_model.c:3533 lib/src/modelprint.c:781 gui2/library.c:2893
 msgid "squares only"
 msgstr "二乗項のみ"
 
-#: lib/src/compare.c:1763 lib/src/gretl_model.c:3529 gui2/library.c:2892
+#: lib/src/compare.c:1763 lib/src/gretl_model.c:3529 gui2/library.c:2894
 msgid "cubes only"
 msgstr "三乗項のみ"
 
-#: lib/src/compare.c:1766 gui2/library.c:2890
+#: lib/src/compare.c:1766 gui2/library.c:2892
 msgid "squares and cubes"
 msgstr "二乗項と三乗項のみ"
 
@@ -1117,7 +1117,7 @@ msgstr ""
 msgid "Outer dataset: read %d columns and %d rows\n"
 msgstr "外部データセット: %d 列、%d 行を読み込みます\n"
 
-#: lib/src/csvdata.c:5383 gui2/library.c:4061
+#: lib/src/csvdata.c:5383 gui2/library.c:4063
 msgid "Series length does not match the dataset"
 msgstr "系列の長さがデータセットにマッチしません"
 
@@ -1358,7 +1358,7 @@ msgstr "置換しました"
 msgid "series"
 msgstr ""
 
-#: lib/src/dataset.c:2884 lib/src/dataset.c:2904 gui2/library.c:5682
+#: lib/src/dataset.c:2884 lib/src/dataset.c:2904 gui2/library.c:5684
 msgid "The data set is currently sub-sampled.\n"
 msgstr "データセットは現在、サブサンプルされています\n"
 
@@ -1443,7 +1443,7 @@ msgid "Out of memory!"
 msgstr "メモリーが足りません!"
 
 #: lib/src/dbread.c:1748 lib/src/geneval.c:7002
-#: lib/src/gretl_string_table.c:833 lib/src/interact.c:1106 cli/gretlcli.c:778
+#: lib/src/gretl_string_table.c:833 lib/src/interact.c:1110 cli/gretlcli.c:778
 #: cli/gretlcli-mpi.c:539
 msgid "Internet access not supported"
 msgstr "インターネットにアクセスできません"
@@ -1452,7 +1452,7 @@ msgstr "インターネットにアクセスできません"
 msgid "Invalid null sample"
 msgstr "有効でないヌル(null)・サンプル"
 
-#: lib/src/dbread.c:2035 lib/src/flow_control.c:281 lib/src/interact.c:1197
+#: lib/src/dbread.c:2035 lib/src/flow_control.c:281 lib/src/interact.c:1201
 #: lib/src/options.c:1196 lib/src/options.c:1207
 #, c-format
 msgid "field '%s' in command is invalid"
@@ -1976,7 +1976,7 @@ msgid "Test for normality of %s:"
 msgstr "正規性の検定: %s"
 
 #: lib/src/discrete.c:1200 lib/src/geneval.c:7340 lib/src/gretl_list.c:1590
-#: lib/src/interact.c:1663
+#: lib/src/interact.c:1667
 #, c-format
 msgid "The variable '%s' is not discrete"
 msgstr "変数'%s'は、離散変数ではありません"
@@ -2320,7 +2320,7 @@ msgstr "タイプ・エラー:  %sは文字列値です"
 msgid "Bare declarations are not allowed here"
 msgstr ""
 
-#: lib/src/genfuncs.c:919 gui2/library.c:5133
+#: lib/src/genfuncs.c:919 gui2/library.c:5135
 msgid "Input must be a monthly or quarterly time series"
 msgstr "インプットは、必ず、月次または四半期の時系列にして下さい"
 
@@ -2606,7 +2606,7 @@ msgstr ""
 msgid "std. dev"
 msgstr ""
 
-#: lib/src/graphing.c:516 gui2/library.c:6848
+#: lib/src/graphing.c:516 gui2/library.c:6850
 msgid "You must supply three variables, the last of which is discrete"
 msgstr ""
 "必ず３つの変数を指定して下さい。また、3つの内の最後の変数は離散変数にして下さ"
@@ -2676,7 +2676,7 @@ msgstr ""
 
 #: lib/src/graphing.c:3517 lib/src/graphing.c:3527 lib/src/printout.c:1259
 #: gui2/guiprint.c:957 gui2/guiprint.c:1534 gui2/guiprint.c:1594
-#: gui2/library.c:4176
+#: gui2/library.c:4178
 msgid "fitted"
 msgstr ""
 
@@ -2852,7 +2852,7 @@ msgstr "バートレット窓, 長さ: %d"
 msgid "log scale"
 msgstr "対数スケール"
 
-#: lib/src/graphing.c:6858 gui2/library.c:816 gui2/library.c:2712
+#: lib/src/graphing.c:6858 gui2/library.c:816 gui2/library.c:2714
 msgid "Q-Q plot"
 msgstr "Q-Qプロット"
 
@@ -3165,7 +3165,7 @@ msgstr "関数の戻り値の型が有効な型ではありません"
 
 #: lib/src/gretl_func.c:2316 lib/src/gretl_func.c:2376
 #: lib/src/gretl_func.c:2452 lib/src/gretl_utils.c:1715
-#: lib/src/interact.c:1058 gui2/dialogs.c:5342 plugin/tramo-x12a.c:768
+#: lib/src/interact.c:1062 gui2/dialogs.c:5342 plugin/tramo-x12a.c:768
 #, c-format
 msgid "Couldn't open %s"
 msgstr "%sを開けません"
@@ -3836,7 +3836,7 @@ msgid "Restricted estimates"
 msgstr "制約付き推定値"
 
 #: lib/src/gretl_restrict.c:1919 lib/src/modelprint.c:2772
-#: lib/src/printout.c:1249 gui2/library.c:6030
+#: lib/src/printout.c:1249 gui2/library.c:6032
 msgid "Standard error of the regression"
 msgstr ""
 
@@ -3919,7 +3919,7 @@ msgstr ""
 msgid "The shell command is not activated."
 msgstr "このシェル・コマンドはアクティ米とされません"
 
-#: lib/src/gretl_string_table.c:925 lib/src/interact.c:1032
+#: lib/src/gretl_string_table.c:925 lib/src/interact.c:1036
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
 msgstr "コマンドラインの最大長 (%d bytes) を越えました\n"
@@ -4112,122 +4112,122 @@ msgstr "観測値は、見つかりませんでした"
 msgid "Couldn't open '%s'"
 msgstr "'%s'を開けません"
 
-#: lib/src/interact.c:720 lib/src/printout.c:1738
+#: lib/src/interact.c:724 lib/src/printout.c:1738
 msgid "No series are defined\n"
 msgstr "系列が見つかりませんでした\n"
 
-#: lib/src/interact.c:741
+#: lib/src/interact.c:745
 msgid "Listing labels for variables:\n"
 msgstr "変数のラベルのリストを作成: \n"
 
-#: lib/src/interact.c:802
+#: lib/src/interact.c:806
 msgid "Output is not currently diverted to file\n"
 msgstr "現在、アウトプットはファイルに出力されません\n"
 
-#: lib/src/interact.c:808
+#: lib/src/interact.c:812
 #, c-format
 msgid "Closed output file '%s'\n"
 msgstr "アウトプットファイル'%s'を閉じました\n"
 
-#: lib/src/interact.c:816
+#: lib/src/interact.c:820
 #, c-format
 msgid "Output is already diverted to '%s'\n"
 msgstr ""
 
-#: lib/src/interact.c:823
+#: lib/src/interact.c:827
 msgid "Now discarding output\n"
 msgstr "アウトプットを削除します\n"
 
-#: lib/src/interact.c:845
+#: lib/src/interact.c:849
 #, c-format
 msgid "Couldn't open %s for writing\n"
 msgstr "%sを書き込み用に開くことが出来ません\n"
 
-#: lib/src/interact.c:851
+#: lib/src/interact.c:855
 #, c-format
 msgid "Now writing output to '%s'\n"
 msgstr "出力を'%s'に書き込んでいます\n"
 
-#: lib/src/interact.c:853
+#: lib/src/interact.c:857
 #, c-format
 msgid "Now appending output to '%s'\n"
 msgstr "出力を'%s'に追加しています\n"
 
-#: lib/src/interact.c:924
+#: lib/src/interact.c:928
 msgid "No data information is available.\n"
 msgstr "データ情報が利用できません\n"
 
-#: lib/src/interact.c:1144
+#: lib/src/interact.c:1148
 #, c-format
 msgid "%s: invalid input '%s'\n"
 msgstr "%s: 有効でない入力 '%s'\n"
 
-#: lib/src/interact.c:1346 lib/src/interact.c:1354
+#: lib/src/interact.c:1350 lib/src/interact.c:1358
 msgid "Inner key is missing"
 msgstr "内部キーがありません"
 
-#: lib/src/interact.c:1402 lib/src/interact.c:1408 lib/src/interact.c:1530
-#: lib/src/interact.c:1536
+#: lib/src/interact.c:1406 lib/src/interact.c:1412 lib/src/interact.c:1534
+#: lib/src/interact.c:1540
 #, c-format
 msgid "The \"%s\" command cannot be used in this context"
 msgstr "\"%s\"コマンドは、この文脈では利用できません"
 
-#: lib/src/interact.c:1498 cli/gretlcli.c:875 cli/gretlcli-mpi.c:624
-#: gui2/library.c:8531
+#: lib/src/interact.c:1502 cli/gretlcli.c:875 cli/gretlcli-mpi.c:624
+#: gui2/library.c:8533
 #, c-format
 msgid "Read datafile %s\n"
 msgstr "次のデータファイルを読み込みます %s \n"
 
-#: lib/src/interact.c:1688
+#: lib/src/interact.c:1692
 #, c-format
 msgid "Summary statistics for %s, by value of %s"
 msgstr ""
 
-#: lib/src/interact.c:1786 lib/src/monte_carlo.c:2885
+#: lib/src/interact.c:1790 lib/src/monte_carlo.c:2885
 msgid "You cannot delete series in this context\n"
 msgstr "この場合は、系列を削除できません\n"
 
-#: lib/src/interact.c:1862
+#: lib/src/interact.c:1866
 #, c-format
 msgid "Model printed to %s\n"
 msgstr "モデルを %s にプリントしました\n"
 
-#: lib/src/interact.c:2056
+#: lib/src/interact.c:2060
 msgid "You can't end a loop here, you haven't started one\n"
 msgstr "ここではループを終了できません。まだ、ループが開始されていません\n"
 
-#: lib/src/interact.c:2173
+#: lib/src/interact.c:2177
 msgid "This command requires one variable.\n"
 msgstr "このコマンドには１つの変数が必要です\n"
 
-#: lib/src/interact.c:2327
+#: lib/src/interact.c:2331
 #, c-format
 msgid "data frequency = %d\n"
 msgstr "データの頻度 = %d\n"
 
-#: lib/src/interact.c:2361
+#: lib/src/interact.c:2365
 msgid "store: no filename given\n"
 msgstr "store: ファイル名が与えられていません\n"
 
-#: lib/src/interact.c:2409
+#: lib/src/interact.c:2413
 msgid "This estimator requires panel data"
 msgstr "この推定には、パネル・データが必要です"
 
-#: lib/src/interact.c:2582
+#: lib/src/interact.c:2586
 msgid "Couldn't format model\n"
 msgstr "モデルを初期化できませんでした\n"
 
-#: lib/src/interact.c:2699 cli/gretlcli.c:1146 cli/gretlcli-mpi.c:880
-#: gui2/library.c:8790
+#: lib/src/interact.c:2703 cli/gretlcli.c:1146 cli/gretlcli-mpi.c:880
+#: gui2/library.c:8792
 msgid "Infinite loop detected in script\n"
 msgstr "スクリプトに無限ループが見つかりました\n"
 
-#: lib/src/interact.c:2753 cli/gretlcli.c:740 cli/gretlcli-mpi.c:501
+#: lib/src/interact.c:2757 cli/gretlcli.c:740 cli/gretlcli-mpi.c:501
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: コマンドは利用できません\n"
 
-#: lib/src/interact.c:2763
+#: lib/src/interact.c:2767
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 msgstr "すみません。%sコマンドは、まだlibgretlで実装されていません\n"
@@ -4361,11 +4361,11 @@ msgstr ""
 msgid "sigma"
 msgstr ""
 
-#: lib/src/modelprint.c:305 lib/src/modelprint.c:2773 gui2/library.c:6015
+#: lib/src/modelprint.c:305 lib/src/modelprint.c:2773 gui2/library.c:6017
 msgid "Unadjusted R-squared"
 msgstr ""
 
-#: lib/src/modelprint.c:312 lib/src/modelprint.c:2771 gui2/library.c:6010
+#: lib/src/modelprint.c:312 lib/src/modelprint.c:2771 gui2/library.c:6012
 msgid "Sum of squared residuals"
 msgstr ""
 
@@ -4512,7 +4512,7 @@ msgid "Augmented regression for common factor test"
 msgstr ""
 
 #: lib/src/modelprint.c:832 lib/src/system.c:97 lib/src/varprint.c:1057
-#: lib/src/varprint.c:1066 lib/src/varprint.c:1074 gui2/selector.c:3682
+#: lib/src/varprint.c:1066 lib/src/varprint.c:1074 gui2/selector.c:3675
 msgid "OLS"
 msgstr "最小二乗法(OLS)"
 
@@ -4529,11 +4529,11 @@ msgstr ""
 msgid "Heteroskedasticity-corrected"
 msgstr "不均一分散を修正した推定"
 
-#: lib/src/modelprint.c:836 lib/src/modelprint.c:4875 gui2/selector.c:5000
+#: lib/src/modelprint.c:836 lib/src/modelprint.c:4875 gui2/selector.c:4993
 msgid "AR"
 msgstr "AR"
 
-#: lib/src/modelprint.c:837 lib/src/modelprint.c:950 gui2/selector.c:3742
+#: lib/src/modelprint.c:837 lib/src/modelprint.c:950 gui2/selector.c:3735
 msgid "LAD"
 msgstr "最小絶対偏差(LAD)推定"
 
@@ -4541,23 +4541,23 @@ msgstr "最小絶対偏差(LAD)推定"
 msgid "High-Precision OLS"
 msgstr "高精度OLS"
 
-#: lib/src/modelprint.c:839 lib/src/modelprint.c:938 gui2/selector.c:3694
+#: lib/src/modelprint.c:839 lib/src/modelprint.c:938 gui2/selector.c:3687
 msgid "Probit"
 msgstr "プロビット・モデル"
 
-#: lib/src/modelprint.c:840 lib/src/modelprint.c:930 gui2/selector.c:3688
+#: lib/src/modelprint.c:840 lib/src/modelprint.c:930 gui2/selector.c:3681
 msgid "Logit"
 msgstr "ロジット・モデル"
 
-#: lib/src/modelprint.c:841 gui2/selector.c:3700
+#: lib/src/modelprint.c:841 gui2/selector.c:3693
 msgid "Tobit"
 msgstr "トービット・モデル"
 
-#: lib/src/modelprint.c:842 gui2/selector.c:3702
+#: lib/src/modelprint.c:842 gui2/selector.c:3695
 msgid "Heckit"
 msgstr "ヘックマンの選択モデル(Heckit)"
 
-#: lib/src/modelprint.c:843 gui2/selector.c:3847
+#: lib/src/modelprint.c:843 gui2/selector.c:3840
 msgid "Poisson"
 msgstr "ポワソン"
 
@@ -4581,11 +4581,11 @@ msgstr ""
 msgid "GMM"
 msgstr ""
 
-#: lib/src/modelprint.c:849 gui2/selector.c:3706
+#: lib/src/modelprint.c:849 gui2/selector.c:3699
 msgid "Logistic"
 msgstr "ロジスティック回帰"
 
-#: lib/src/modelprint.c:850 gui2/selector.c:3734 plugin/addons-i18n.c:14
+#: lib/src/modelprint.c:850 gui2/selector.c:3727 plugin/addons-i18n.c:14
 msgid "GARCH"
 msgstr ""
 
@@ -4597,7 +4597,7 @@ msgstr ""
 msgid "Dynamic panel"
 msgstr "ダイナミック・パネル"
 
-#: lib/src/modelprint.c:853 gui2/selector.c:3704
+#: lib/src/modelprint.c:853 gui2/selector.c:3697
 msgid "Bivariate probit"
 msgstr "2変量プロビット・モデル"
 
@@ -4613,7 +4613,7 @@ msgstr ""
 msgid "Hildreth--Lu"
 msgstr "Hildreth--Lu法"
 
-#: lib/src/modelprint.c:867 gui2/selector.c:6025
+#: lib/src/modelprint.c:867 gui2/selector.c:6018
 msgid "Hildreth-Lu"
 msgstr "Hildreth-Lu法"
 
@@ -4621,7 +4621,7 @@ msgstr "Hildreth-Lu法"
 msgid "Prais--Winsten"
 msgstr ""
 
-#: lib/src/modelprint.c:870 gui2/selector.c:6021
+#: lib/src/modelprint.c:870 gui2/selector.c:6014
 msgid "Prais-Winsten"
 msgstr "プレス＝ウィンステン（Prais-Winsten）法"
 
@@ -4629,7 +4629,7 @@ msgstr "プレス＝ウィンステン（Prais-Winsten）法"
 msgid "Cochrane--Orcutt"
 msgstr ""
 
-#: lib/src/modelprint.c:873 gui2/selector.c:6017
+#: lib/src/modelprint.c:873 gui2/selector.c:6010
 msgid "Cochrane-Orcutt"
 msgstr "コクラン＝オーカット（Cochrane-Orcutt）法"
 
@@ -4637,7 +4637,7 @@ msgstr "コクラン＝オーカット（Cochrane-Orcutt）法"
 msgid "ARMAX"
 msgstr ""
 
-#: lib/src/modelprint.c:880 gui2/selector.c:3730 plugin/tramo_options.c:702
+#: lib/src/modelprint.c:880 gui2/selector.c:3723 plugin/tramo_options.c:702
 msgid "ARIMA"
 msgstr "自己回帰和分移動平均(ARIMA)"
 
@@ -4693,11 +4693,11 @@ msgstr ""
 msgid "1-step GMM"
 msgstr "1ステップ GMM"
 
-#: lib/src/modelprint.c:926 gui2/selector.c:3690
+#: lib/src/modelprint.c:926 gui2/selector.c:3683
 msgid "Ordered Logit"
 msgstr "順序ロジット・モデル"
 
-#: lib/src/modelprint.c:928 gui2/selector.c:3692
+#: lib/src/modelprint.c:928 gui2/selector.c:3685
 msgid "Multinomial Logit"
 msgstr "多項ロジット・モデル"
 
@@ -4705,7 +4705,7 @@ msgstr "多項ロジット・モデル"
 msgid "Random-effects probit"
 msgstr "変量効果プロビット"
 
-#: lib/src/modelprint.c:936 gui2/selector.c:3696
+#: lib/src/modelprint.c:936 gui2/selector.c:3689
 msgid "Ordered Probit"
 msgstr "順序プロビット・モデル"
 
@@ -4827,11 +4827,11 @@ msgstr ""
 msgid "Instrumented"
 msgstr "内生変数(instrumented)"
 
-#: lib/src/modelprint.c:1194 gui2/selector.c:4484 gui2/selector.c:7901
+#: lib/src/modelprint.c:1194 gui2/selector.c:4477 gui2/selector.c:7895
 msgid "Instruments"
 msgstr "操作変数"
 
-#: lib/src/modelprint.c:1263 lib/src/modelprint.c:1265 gui2/selector.c:5541
+#: lib/src/modelprint.c:1263 lib/src/modelprint.c:1265 gui2/selector.c:5534
 msgid "Asymptotic standard errors"
 msgstr "漸近標準誤差"
 
@@ -4955,7 +4955,7 @@ msgstr ""
 #: lib/src/modelprint.c:1629 lib/src/modelprint.c:1929
 #: lib/src/modelprint.c:1932 lib/src/modelprint.c:1942
 #: lib/src/modelprint.c:1945 lib/src/modelprint.c:1980 gui2/model_table.c:1127
-#: gui2/model_table.c:1225 gui2/selector.c:4158
+#: gui2/model_table.c:1225 gui2/selector.c:4151
 msgid "Dependent variable"
 msgstr "従属変数"
 
@@ -5089,7 +5089,7 @@ msgstr ""
 msgid "scaled %s"
 msgstr ""
 
-#: lib/src/modelprint.c:2021 gui2/selector.c:3771
+#: lib/src/modelprint.c:2021 gui2/selector.c:3764
 msgid "Selection variable"
 msgstr "選択変数"
 
@@ -5247,11 +5247,11 @@ msgstr ""
 msgid "Akaike information criterion"
 msgstr ""
 
-#: lib/src/modelprint.c:2779 gui2/library.c:6045
+#: lib/src/modelprint.c:2779 gui2/library.c:6047
 msgid "Schwarz Bayesian criterion"
 msgstr ""
 
-#: lib/src/modelprint.c:2780 gui2/library.c:6050
+#: lib/src/modelprint.c:2780 gui2/library.c:6052
 msgid "Hannan-Quinn Information Criterion"
 msgstr "Hannan-Quinn情報量規準"
 
@@ -5303,7 +5303,7 @@ msgstr ""
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2831 lib/src/system.c:4503 lib/src/system.c:4510
 #: lib/src/texprint.c:1083 lib/src/varprint.c:1093 lib/src/varprint.c:1102
-#: gui2/library.c:6035 plugin/johansen.c:1567
+#: gui2/library.c:6037 plugin/johansen.c:1567
 msgid "Log-likelihood"
 msgstr ""
 
@@ -5328,7 +5328,7 @@ msgid "rho"
 msgstr ""
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:2841 gui2/library.c:3026
+#: lib/src/modelprint.c:2841 gui2/library.c:3028
 msgid "Durbin-Watson"
 msgstr ""
 
@@ -5471,7 +5471,7 @@ msgstr "頻度"
 msgid "AR (seasonal)"
 msgstr "AR(季節)"
 
-#: lib/src/modelprint.c:4915 gui2/selector.c:5002
+#: lib/src/modelprint.c:4915 gui2/selector.c:4995
 msgid "MA"
 msgstr ""
 
@@ -5808,7 +5808,7 @@ msgid ""
 "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr "標本は、正規分布にもとづいてp値を計算するには小さすぎます\n"
 
-#: lib/src/nonparam.c:577 gui2/selector.c:5765
+#: lib/src/nonparam.c:577 gui2/selector.c:5758
 msgid "Kendall's tau"
 msgstr ""
 
@@ -5923,12 +5923,12 @@ msgid "Prob"
 msgstr "確率"
 
 #: lib/src/objstack.c:663 lib/src/objstack.c:699 lib/src/objstack.c:701
-#: gui2/selector.c:3736
+#: gui2/selector.c:3729
 msgid "VAR"
 msgstr "ベクトル自己回帰モデル(VAR)"
 
 #: lib/src/objstack.c:665 lib/src/objstack.c:705 lib/src/objstack.c:707
-#: gui2/selector.c:3740
+#: gui2/selector.c:3733
 msgid "VECM"
 msgstr "ベクトル誤差修正モデル(VECM)"
 
@@ -6861,7 +6861,7 @@ msgstr ""
 msgid "The first-stage fitted values for %s are all zero"
 msgstr ""
 
-#: lib/src/tsls.c:1499 gui2/selector.c:2959
+#: lib/src/tsls.c:1499 gui2/selector.c:2952
 msgid "You can't use the dependent variable as an instrument"
 msgstr "従属変数を操作変数として使うことは出来ません"
 
@@ -7197,23 +7197,23 @@ msgstr "出力をストアするファイル名をタイプして下さい(enter
 msgid "writing session output to %s%s\n"
 msgstr "セッションのアウトプットを  %s%s に書き込んでいます\n"
 
-#: cli/gretlcli.c:1022 cli/gretlcli-mpi.c:765 gui2/library.c:8656
+#: cli/gretlcli.c:1022 cli/gretlcli-mpi.c:765 gui2/library.c:8658
 #, c-format
 msgid "Command '%s' ignored; not valid within equation system\n"
 msgstr ""
 "コマンド '%s' は、無視されました: 連立方程式の中では有効ではありません\n"
 
-#: cli/gretlcli.c:1030 gui2/library.c:8664
+#: cli/gretlcli.c:1030 gui2/library.c:8666
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
 msgstr ""
 "ループするコマンドを入力して下さい。ループを出るには 'endloop' と入力して下さ"
 "い\n"
 
-#: cli/gretlcli.c:1071 gui2/library.c:6565 gui2/library.c:8717
+#: cli/gretlcli.c:1071 gui2/library.c:6567 gui2/library.c:8719
 msgid "Take note: variables have been renumbered"
 msgstr "注意：変数は番号付けし直されました"
 
-#: cli/gretlcli.c:1089 cli/gretlcli-mpi.c:821 gui2/library.c:8751
+#: cli/gretlcli.c:1089 cli/gretlcli-mpi.c:821 gui2/library.c:8753
 msgid "Data series length count missing or invalid\n"
 msgstr ""
 
@@ -7227,7 +7227,7 @@ msgid "commands saved as %s\n"
 msgstr "コマンドは %s として保存しました\n"
 
 #: cli/gretlcli.c:1139 cli/gretlcli.c:1154 cli/gretlcli-mpi.c:873
-#: cli/gretlcli-mpi.c:888 gui2/library.c:8785
+#: cli/gretlcli-mpi.c:888 gui2/library.c:8787
 #, c-format
 msgid "Error reading %s\n"
 msgstr "%sの読み込み中にエラーが発生しました\n"
@@ -7649,7 +7649,7 @@ msgstr "変数ID %d"
 #: gui2/calculator.c:2345 gui2/guiprint.c:742 gui2/guiprint.c:765
 #: gui2/guiprint.c:787 gui2/guiprint.c:1062 gui2/guiprint.c:1089
 #: gui2/guiprint.c:1116 gui2/guiprint.c:1923 gui2/guiprint.c:1973
-#: gui2/selector.c:7879
+#: gui2/selector.c:7873
 msgid "Variable"
 msgstr "変数"
 
@@ -7825,7 +7825,7 @@ msgstr "gretl: 確率分布のグラフ"
 msgid "gretl: add random variable"
 msgstr "gretl: ランダム変数の追加"
 
-#: gui2/calculator.c:3023 gui2/selector.c:7249 gui2/selector.c:7252
+#: gui2/calculator.c:3023 gui2/selector.c:7243 gui2/selector.c:7246
 msgid "No suitable data are available"
 msgstr "分析に適したデータセットが存在しません"
 
@@ -7874,7 +7874,7 @@ msgid "Sorry, this item not yet implemented!"
 msgstr "この項目は、まだ実装されていません！ごめんなさい"
 
 #: gui2/callbacks.c:338 gui2/callbacks.c:509 gui2/callbacks.c:667
-#: gui2/selector.c:6407
+#: gui2/selector.c:6400
 msgid "gretl: add var"
 msgstr "gretl: 変数の追加"
 
@@ -7890,18 +7890,18 @@ msgstr "gretl: 共和分検定"
 msgid "gretl: VAR"
 msgstr "gretl: ベクトル自己回帰モデル(VAR)"
 
-#: gui2/callbacks.c:396 gui2/library.c:3236 gui2/library.c:4272
+#: gui2/callbacks.c:396 gui2/library.c:3238 gui2/library.c:4274
 #: gui2/selector.c:845
 msgid "gretl: VECM"
 msgstr "gretl: ベクトル誤差修正モデル(VECM)"
 
-#: gui2/callbacks.c:399 gui2/library.c:4264
+#: gui2/callbacks.c:399 gui2/library.c:4266
 msgid "gretl: VAR lag selection"
 msgstr "gretl: VARラグ選択"
 
 #: gui2/callbacks.c:428 gui2/callbacks.c:442 gui2/callbacks.c:445
 #: gui2/callbacks.c:447 gui2/callbacks.c:595 gui2/callbacks.c:604
-#: gui2/library.c:7027 gui2/toolbar.c:1171
+#: gui2/library.c:7029 gui2/toolbar.c:1171
 msgid "gretl: define graph"
 msgstr "gretl: グラフの設定"
 
@@ -7914,15 +7914,15 @@ msgstr "gretl: モデルの検定"
 msgid "rank correlation"
 msgstr "順位相関"
 
-#: gui2/callbacks.c:458 gui2/selector.c:3753
+#: gui2/callbacks.c:458 gui2/selector.c:3746
 msgid "Loess"
 msgstr "局所重み付け多項式回帰(Loess)"
 
-#: gui2/callbacks.c:458 gui2/library.c:4035 gui2/selector.c:3755
+#: gui2/callbacks.c:458 gui2/library.c:4037 gui2/selector.c:3748
 msgid "Nadaraya-Watson"
 msgstr ""
 
-#: gui2/callbacks.c:511 gui2/callbacks.c:661 gui2/selector.c:6408
+#: gui2/callbacks.c:511 gui2/callbacks.c:661 gui2/selector.c:6401
 msgid "Enter formula for new variable"
 msgstr "新しい変数の定義式を入力して下さい"
 
@@ -7978,7 +7978,7 @@ msgstr ""
 "非線型最小二乗法: 関数を入力して下さい。また、可能ならば導関数も入力して下さ"
 "い:"
 
-#: gui2/callbacks.c:553 gui2/callbacks.c:649 gui2/library.c:3385
+#: gui2/callbacks.c:553 gui2/callbacks.c:649 gui2/library.c:3387
 msgid "gretl: simultaneous equations system"
 msgstr "gretl: 同時方程式モデル"
 
@@ -8878,7 +8878,7 @@ msgstr ""
 msgid "Periods"
 msgstr ""
 
-#: gui2/dialogs.c:2098 gui2/selector.c:7935
+#: gui2/dialogs.c:2098 gui2/selector.c:7929
 msgid "to"
 msgstr ""
 
@@ -9236,7 +9236,7 @@ msgstr "モデル比較表オプション"
 msgid "column headings"
 msgstr "列の見出し"
 
-#: gui2/dialogs.c:5185 gui2/selector.c:5791
+#: gui2/dialogs.c:5185 gui2/selector.c:5784
 msgid "Show p-values"
 msgstr "p値を表示する"
 
@@ -9328,19 +9328,19 @@ msgstr "内生変数のリストを追加"
 msgid "Add list of instruments"
 msgstr "操作変数のリストを追加"
 
-#: gui2/dlgutils.c:855 gui2/dlgutils.c:1020 gui2/selector.c:3953
+#: gui2/dlgutils.c:855 gui2/dlgutils.c:1020 gui2/selector.c:3946
 msgid "Iterated estimation"
 msgstr "繰り返し推定"
 
-#: gui2/dlgutils.c:861 gui2/selector.c:5505
+#: gui2/dlgutils.c:861 gui2/selector.c:5498
 msgid "Show details of iterations"
 msgstr "繰り返し計算の詳細を表示する"
 
-#: gui2/dlgutils.c:864 gui2/selector.c:5439
+#: gui2/dlgutils.c:864 gui2/selector.c:5432
 msgid "Robust standard errors"
 msgstr "頑健標準誤差を使用する"
 
-#: gui2/dlgutils.c:870 gui2/selector.c:5638
+#: gui2/dlgutils.c:870 gui2/selector.c:5631
 msgid "Use bootstrap"
 msgstr "ブートストラップを使用する"
 
@@ -9348,11 +9348,11 @@ msgstr "ブートストラップを使用する"
 msgid "Show full restricted estimates"
 msgstr ""
 
-#: gui2/dlgutils.c:1018 gui2/selector.c:3951 gui2/selector.c:5969
+#: gui2/dlgutils.c:1018 gui2/selector.c:3944 gui2/selector.c:5962
 msgid "One-step estimation"
 msgstr "1ステップ推定"
 
-#: gui2/dlgutils.c:1019 gui2/selector.c:3952 gui2/selector.c:5973
+#: gui2/dlgutils.c:1019 gui2/selector.c:3945 gui2/selector.c:5966
 msgid "Two-step estimation"
 msgstr "2ステップ推定"
 
@@ -9753,7 +9753,7 @@ msgstr "系列を追加"
 msgid "Enter name=formula for new series"
 msgstr ""
 
-#: gui2/fncall.c:760 gui2/library.c:6067
+#: gui2/fncall.c:760 gui2/library.c:6069
 msgid "add scalar"
 msgstr "スカラーを追加する"
 
@@ -9761,7 +9761,7 @@ msgstr "スカラーを追加する"
 msgid "Enter name=formula for new scalar"
 msgstr ""
 
-#: gui2/fncall.c:1164 gui2/selector.c:6420
+#: gui2/fncall.c:1164 gui2/selector.c:6413
 msgid "New variable"
 msgstr "変数の新規作成"
 
@@ -10017,7 +10017,7 @@ msgid ""
 "ASCII letters, numbers and '_', and must end with \".gfn\""
 msgstr ""
 
-#: gui2/fnsave.c:2281 gui2/library.c:7777
+#: gui2/fnsave.c:2281 gui2/library.c:7779
 msgid "OK to overwrite?"
 msgstr "上書きしても、よろしいですか？"
 
@@ -10324,7 +10324,7 @@ msgstr "網掛けバーを表示"
 msgid "NBER recessions"
 msgstr "全米経済研究所景気後退期データ"
 
-#: gui2/gpt_dialog.c:2121 gui2/selector.c:4177
+#: gui2/gpt_dialog.c:2121 gui2/selector.c:4170
 msgid "Set as default"
 msgstr "デフォルトとして設定"
 
@@ -10337,7 +10337,7 @@ msgstr "線　%d:"
 msgid "No formula was given"
 msgstr "数式が与えられていません"
 
-#: gui2/gpt_dialog.c:2513 gui2/selector.c:4447
+#: gui2/gpt_dialog.c:2513 gui2/selector.c:4440
 msgid "Remove"
 msgstr "削除"
 
@@ -11956,7 +11956,7 @@ msgstr "空の行を全て削除"
 msgid "Delete blank weekday rows"
 msgstr "空の平日(weekday)の行を全て削除"
 
-#: gui2/gui_utils.c:1018 gui2/gui_utils.c:1279 gui2/library.c:7332
+#: gui2/gui_utils.c:1018 gui2/gui_utils.c:1279 gui2/library.c:7334
 msgid "gretl: open data"
 msgstr "gretl: データファイルを開く"
 
@@ -11975,7 +11975,7 @@ msgstr ""
 msgid "gretl: import %s data"
 msgstr "gretl: %sデータのインポート"
 
-#: gui2/gui_utils.c:1280 gui2/library.c:7333
+#: gui2/gui_utils.c:1280 gui2/library.c:7335
 msgid ""
 "Opening a new data file will automatically\n"
 "close the current one.  Any unsaved work\n"
@@ -12056,8 +12056,8 @@ msgstr "gretl: Octaveスクリプトの編集"
 msgid "gretl: edit Python script"
 msgstr "gretl: Pythonスクリプトの編集"
 
-#: gui2/gui_utils.c:1706 gui2/library.c:6392 gui2/library.c:6427
-#: gui2/library.c:6431
+#: gui2/gui_utils.c:1706 gui2/library.c:6394 gui2/library.c:6429
+#: gui2/library.c:6433
 msgid "gretl: display data"
 msgstr "gretl: データ表示"
 
@@ -12230,17 +12230,17 @@ msgstr ""
 msgid "gretl: forecasts"
 msgstr "gretl: 予測"
 
-#: gui2/gui_utils.c:4075 gui2/gui_utils.c:4086 gui2/library.c:2976
-#: gui2/library.c:2997
+#: gui2/gui_utils.c:4075 gui2/gui_utils.c:4086 gui2/library.c:2978
+#: gui2/library.c:2999
 msgid "gretl: autocorrelation"
 msgstr "gretl: 自己相関"
 
-#: gui2/gui_utils.c:4076 gui2/gui_utils.c:4097 gui2/library.c:2502
-#: gui2/library.c:2521
+#: gui2/gui_utils.c:4076 gui2/gui_utils.c:4097 gui2/library.c:2504
+#: gui2/library.c:2523
 msgid "gretl: ARCH test"
 msgstr "gretl: ARCH検定"
 
-#: gui2/gui_utils.c:4077 gui2/library.c:2977
+#: gui2/gui_utils.c:4077 gui2/library.c:2979
 msgid "Lag order for test:"
 msgstr "検定するラグ次数:"
 
@@ -12344,7 +12344,7 @@ msgstr ""
 "\n"
 "このモデルが推定された標本を復元しますか?"
 
-#: gui2/gui_utils.c:4913 gui2/library.c:4747
+#: gui2/gui_utils.c:4913 gui2/library.c:4749
 #, c-format
 msgid "A series named %s already exists"
 msgstr "%sという名前の系列は既に存在しています"
@@ -12549,7 +12549,7 @@ msgstr "ファイルのダウンロードに失敗しました"
 msgid "gretl: iteration info"
 msgstr "gretl: 繰り返し乗法"
 
-#: gui2/library.c:477 gui2/library.c:484 gui2/library.c:5807
+#: gui2/library.c:477 gui2/library.c:484 gui2/library.c:5809
 msgid "Error adding variables"
 msgstr "変数の追加中にエラーが発生しました"
 
@@ -12571,7 +12571,7 @@ msgstr "要約統計量"
 msgid "summary stats: "
 msgstr "要約統計量:"
 
-#: gui2/library.c:657 gui2/library.c:4810
+#: gui2/library.c:657 gui2/library.c:4812
 msgid "normality test"
 msgstr "正規性の検定"
 
@@ -12653,7 +12653,7 @@ msgstr "gretl: KPSS検定"
 msgid "gretl: Levin-Lin-Chu test"
 msgstr "gretl: Levin-Lin-Chu検定"
 
-#: gui2/library.c:1363 gui2/library.c:5467
+#: gui2/library.c:1363 gui2/library.c:5469
 msgid "Lag order:"
 msgstr "ラグ次数:"
 
@@ -12784,7 +12784,7 @@ msgstr ""
 "（Dataメニューから）観測を追加するか\n"
 "（Sampleメニューから）標本の範囲を制限するなどしてください"
 
-#: gui2/library.c:2154 gui2/selector.c:7376
+#: gui2/library.c:2154 gui2/selector.c:7370
 msgid "No variables are selected"
 msgstr "変数が選択されていません"
 
@@ -12796,301 +12796,301 @@ msgstr ""
 msgid "gretl: LM test"
 msgstr "gretl: LM検定"
 
-#: gui2/library.c:2288 gui2/library.c:4256
+#: gui2/library.c:2288 gui2/library.c:4258
 msgid "gretl: vector autoregression"
 msgstr "gretl: ベクトル自己回帰モデル(VAR)"
 
-#: gui2/library.c:2437
+#: gui2/library.c:2439
 msgid "gretl: LM test "
 msgstr "gretl: LM検定"
 
-#: gui2/library.c:2440 gui2/library.c:2444 gui2/library.c:2448
+#: gui2/library.c:2442 gui2/library.c:2446 gui2/library.c:2450
 msgid "(heteroskedasticity)"
 msgstr "(不均一分散)"
 
-#: gui2/library.c:2456
+#: gui2/library.c:2458
 msgid "gretl: groupwise heteroskedasticity"
 msgstr "gretl: グループ間の不均一分散"
 
-#: gui2/library.c:2462
+#: gui2/library.c:2464
 msgid "(non-linearity)"
 msgstr "(非線型性)"
 
-#: gui2/library.c:2470
+#: gui2/library.c:2472
 msgid "gretl: common factor test"
 msgstr "gretl: 共通因子検定"
 
-#: gui2/library.c:2503
+#: gui2/library.c:2505
 msgid "Lag order for ARCH test:"
 msgstr "ARCH検定のラグ次数:"
 
-#: gui2/library.c:2550
+#: gui2/library.c:2552
 msgid "gretl: panel model diagnostics"
 msgstr "gretl: パネル・モデル診断"
 
-#: gui2/library.c:2624
+#: gui2/library.c:2626
 msgid "gretl: leverage and influence"
 msgstr "gretl: テコ比と影響力"
 
-#: gui2/library.c:2666
+#: gui2/library.c:2668
 msgid "gretl: collinearity"
 msgstr "gretl: 共線性"
 
-#: gui2/library.c:2692 gui2/menustate.c:358
+#: gui2/library.c:2694 gui2/menustate.c:358
 msgid "Gini coefficient"
 msgstr "ジニ係数"
 
-#: gui2/library.c:2703
+#: gui2/library.c:2705
 msgid "use sample mean and variance for normal quantiles"
 msgstr "標本平均および標本分散と同じ平均と分散を持つ正規分布の分位数を使用する"
 
-#: gui2/library.c:2704
+#: gui2/library.c:2706
 msgid "standardize the data"
 msgstr "データを正規化する"
 
-#: gui2/library.c:2705
+#: gui2/library.c:2707
 msgid "raw quantiles versus N(0, 1)"
 msgstr "データの分位数を加工せずに、正規分布N(0,1)の分位数に対して描く"
 
-#: gui2/library.c:2713
+#: gui2/library.c:2715
 msgid "Normal Q-Q plot"
 msgstr "正規Q-Qプロット"
 
-#: gui2/library.c:2805
+#: gui2/library.c:2807
 msgid "This test only implemented for OLS models"
 msgstr "この検定は、OLSモデルに対してのみ実装されています"
 
-#: gui2/library.c:2873
+#: gui2/library.c:2875
 msgid "gretl: Chow test output"
 msgstr "gretl: チョウ検定結果"
 
-#: gui2/library.c:2875
+#: gui2/library.c:2877
 msgid "gretl: QLR test output"
 msgstr "gretl: QLR検定アウトプット"
 
-#: gui2/library.c:2877
+#: gui2/library.c:2879
 msgid "gretl: CUSUM test output"
 msgstr "gretl: CUSUM検定アウトプット"
 
-#: gui2/library.c:2878
+#: gui2/library.c:2880
 msgid "gretl: CUSUMSQ test output"
 msgstr "gretl: CUSUMSQ検定アウトプット"
 
-#: gui2/library.c:2893
+#: gui2/library.c:2895
 msgid "all variants"
 msgstr "全てのケースをテストする"
 
-#: gui2/library.c:2904 gui2/library.c:2955
+#: gui2/library.c:2906 gui2/library.c:2957
 msgid "gretl: RESET test"
 msgstr "gretl: RESET検定"
 
-#: gui2/library.c:2905
+#: gui2/library.c:2907
 msgid "RESET specification test"
 msgstr "RESET検定"
 
-#: gui2/library.c:3028
+#: gui2/library.c:3030
 msgid "Durbin-Watson statistic"
 msgstr "ダービン＝ワトソン（Durbin-Watson）統計量"
 
-#: gui2/library.c:3030
+#: gui2/library.c:3032
 msgid ""
 "p-value is \"very small\" (the Imhof integral could not\n"
 "be evaluated so a definite value is not available)"
 msgstr ""
 
-#: gui2/library.c:3238
+#: gui2/library.c:3240
 msgid "linear restrictions"
 msgstr "線型制約"
 
-#: gui2/library.c:3434
+#: gui2/library.c:3436
 msgid ""
 "Please note: the decimal character must be '.'\n"
 "in this context"
 msgstr "注意: この文脈では、小数点を表す記号は、'.'でなければなりません"
 
-#: gui2/library.c:3708 gui2/library.c:5579 gui2/selector.c:6464
+#: gui2/library.c:3710 gui2/library.c:5581 gui2/selector.c:6457
 msgid "ANOVA"
 msgstr ""
 
-#: gui2/library.c:3822
+#: gui2/library.c:3824
 msgid "Sorry, not implemented yet!"
 msgstr "まだ実装されていません！ごめんなさい"
 
-#: gui2/library.c:3838
+#: gui2/library.c:3840
 msgid "gretl: GARCH"
 msgstr ""
 
-#: gui2/library.c:4034
+#: gui2/library.c:4036
 msgid "loess"
 msgstr ""
 
-#: gui2/library.c:4188
+#: gui2/library.c:4190
 #, c-format
 msgid "%s versus %s with loess fit"
 msgstr "%s 対 %s (局所重み付け回帰フィット付)"
 
-#: gui2/library.c:4191
+#: gui2/library.c:4193
 #, c-format
 msgid "%s versus %s with Nadaraya_Watson fit"
 msgstr "%s 対 %s (Nadaraya-Watsonフィット付)"
 
-#: gui2/library.c:4702
+#: gui2/library.c:4704
 #, c-format
 msgid "Set %d values to \"missing\""
 msgstr "%d個の値を\"missing\"(欠損)と設定します"
 
-#: gui2/library.c:4705 gui2/library.c:4733
+#: gui2/library.c:4707 gui2/library.c:4735
 msgid "Didn't find any matching observations"
 msgstr ""
 
-#: gui2/library.c:4730
+#: gui2/library.c:4732
 #, c-format
 msgid "Set %d observations to \"missing\""
 msgstr "%d 個の観測を \"missing\"(欠損)と設定します"
 
-#: gui2/library.c:4858
+#: gui2/library.c:4860
 msgid "gretl: residual dist."
 msgstr "gretl: 残差分布"
 
-#: gui2/library.c:4923
+#: gui2/library.c:4925
 #, c-format
 msgid "range %g to %g"
 msgstr "範囲 %g から %g"
 
-#: gui2/library.c:4924
+#: gui2/library.c:4926
 #, c-format
 msgid "%s (n = %d, %s)"
 msgstr ""
 
-#: gui2/library.c:4926 gui2/library.c:4981
+#: gui2/library.c:4928 gui2/library.c:4983
 msgid "frequency distribution"
 msgstr "度数分布"
 
-#: gui2/library.c:5096
+#: gui2/library.c:5098
 msgid "gretl: TRAMO analysis"
 msgstr "gretl: TRAMO分析"
 
-#: gui2/library.c:5097
+#: gui2/library.c:5099
 msgid "gretl: X-12-ARIMA analysis"
 msgstr "gretl: X-12-ARIMA分析"
 
-#: gui2/library.c:5217
+#: gui2/library.c:5219
 msgid "Trim maximum and minimum in sub-samples"
 msgstr "サブサンプルの中の最大値と最小値は除いて処理する"
 
-#: gui2/library.c:5225
+#: gui2/library.c:5227
 msgid "gretl: range-mean graph"
 msgstr "gretl: レンジ(range)・平均グラフ"
 
-#: gui2/library.c:5254
+#: gui2/library.c:5256
 msgid "gretl: range-mean statistics"
 msgstr "gretl: レンジ(range)・平均統計"
 
-#: gui2/library.c:5284
+#: gui2/library.c:5286
 msgid "gretl: Hurst exponent"
 msgstr "gretl: ハースト指数"
 
-#: gui2/library.c:5302
+#: gui2/library.c:5304
 msgid "correlogram"
 msgstr "コレログラム"
 
-#: gui2/library.c:5304
+#: gui2/library.c:5306
 msgid "Maximum lag:"
 msgstr "最大ラグ:"
 
-#: gui2/library.c:5424
+#: gui2/library.c:5426
 msgid "periodogram"
 msgstr "ピリオドグラム"
 
-#: gui2/library.c:5459
+#: gui2/library.c:5461
 msgid "gretl: fractional integration"
 msgstr "gretl: 分数積分"
 
-#: gui2/library.c:5534 gui2/toolbar.c:465
+#: gui2/library.c:5536 gui2/toolbar.c:465
 msgid "gretl: coefficient confidence intervals"
 msgstr "gretl: 係数信頼区間"
 
-#: gui2/library.c:5547
+#: gui2/library.c:5549
 msgid "Data set is gone"
 msgstr "データセットがありません"
 
-#: gui2/library.c:5556
+#: gui2/library.c:5558
 msgid "Error generating covariance matrix"
 msgstr "共分散行列の作成中にエラーが発生しました"
 
-#: gui2/library.c:5560
+#: gui2/library.c:5562
 msgid "gretl: coefficient covariances"
 msgstr "gretl: 係数共分散"
 
-#: gui2/library.c:5692
+#: gui2/library.c:5694
 #, c-format
 msgid "Really delete the last %d observations?"
 msgstr "本当に、最後の%d個の観測を削除してよろしいですか?"
 
-#: gui2/library.c:5694
+#: gui2/library.c:5696
 msgid "gretl: drop observations"
 msgstr "gretl: 観測を落とす"
 
-#: gui2/library.c:5708
+#: gui2/library.c:5710
 msgid "There are no extra observations to drop"
 msgstr ""
 
-#: gui2/library.c:5716
+#: gui2/library.c:5718
 msgid "Encode all values"
 msgstr "全ての値についてダミー変数を設定"
 
-#: gui2/library.c:5717
+#: gui2/library.c:5719
 msgid "Skip the lowest value"
 msgstr "最低値をスキップ"
 
-#: gui2/library.c:5718
+#: gui2/library.c:5720
 msgid "Skip the highest value"
 msgstr "最高値をスキップ"
 
-#: gui2/library.c:5722
+#: gui2/library.c:5724
 msgid "gretl: create dummy variables"
 msgstr "gretl: ダミー変数の作成"
 
-#: gui2/library.c:5723
+#: gui2/library.c:5725
 msgid "Encoding variables as dummies"
 msgstr "ダミー変数への変換方法"
 
-#: gui2/library.c:5752
+#: gui2/library.c:5754
 msgid "gretl: generate lags"
 msgstr "gretl: ラグの作成"
 
-#: gui2/library.c:5753
+#: gui2/library.c:5755
 msgid "Number of lags to create:"
 msgstr "何次のラグまで作りますか:"
 
-#: gui2/library.c:5959
+#: gui2/library.c:5961
 #, c-format
 msgid "residual from VAR system, equation %d"
 msgstr "VARモデルからの残差, 式 %d"
 
-#: gui2/library.c:5962
+#: gui2/library.c:5964
 #, c-format
 msgid "residual from VECM system, equation %d"
 msgstr "VECMモデルからの残差, 式 %d"
 
-#: gui2/library.c:5965
+#: gui2/library.c:5967
 #, c-format
 msgid "system residual, equation %d"
 msgstr ""
 
-#: gui2/library.c:6020
+#: gui2/library.c:6022
 msgid "T*R-squared"
 msgstr ""
 
-#: gui2/library.c:6025
+#: gui2/library.c:6027
 msgid "degrees of freedom"
 msgstr ""
 
-#: gui2/library.c:6040
+#: gui2/library.c:6042
 msgid "Akaike Information Criterion"
 msgstr ""
 
-#: gui2/library.c:6061
+#: gui2/library.c:6063
 #, c-format
 msgid ""
 "Statistic from model %d\n"
@@ -13101,87 +13101,87 @@ msgstr ""
 "%s (値 = %g)\n"
 "名称 (最大%d文字):"
 
-#: gui2/library.c:6160
+#: gui2/library.c:6162
 msgid "standardized residual"
 msgstr "標準化残差"
 
-#: gui2/library.c:6211
+#: gui2/library.c:6213
 #, c-format
 msgid "predicted %s"
 msgstr ""
 
-#: gui2/library.c:6507
+#: gui2/library.c:6509
 #, c-format
 msgid "Cannot delete %s; variable is in use"
 msgstr "%sを削除できません。変数は利用中です"
 
-#: gui2/library.c:6510 gui2/session.c:2432
+#: gui2/library.c:6512 gui2/session.c:2432
 #, c-format
 msgid "Really delete %s?"
 msgstr "本当に%sを削除しますか？"
 
-#: gui2/library.c:6518
+#: gui2/library.c:6520
 msgid "Really delete the selected variables?"
 msgstr "選択された変数を本当に削除してもよろしいですか?"
 
-#: gui2/library.c:6526 gui2/session.c:2434
+#: gui2/library.c:6528 gui2/session.c:2434
 msgid "gretl: delete"
 msgstr "gretl: 削除"
 
-#: gui2/library.c:6550
+#: gui2/library.c:6552
 msgid "Cannot delete the specified variables"
 msgstr "指定された変数を削除できませんでした"
 
-#: gui2/library.c:6553
+#: gui2/library.c:6555
 msgid "Cannot delete all of the specified variables"
 msgstr "指定された変数の全てを削除できませんでした"
 
-#: gui2/library.c:6877
+#: gui2/library.c:6879
 msgid "You must supply three variables"
 msgstr "必ず３つの変数を指定して下さい"
 
-#: gui2/library.c:6965 gui2/selector.c:3812 gui2/selector.c:4115
+#: gui2/library.c:6967 gui2/selector.c:3805 gui2/selector.c:4108
 msgid "X-axis variable"
 msgstr "X軸の変数"
 
-#: gui2/library.c:7022
+#: gui2/library.c:7024
 msgid "on a single graph"
 msgstr ""
 
-#: gui2/library.c:7023
+#: gui2/library.c:7025
 msgid "in separate small graphs"
 msgstr ""
 
-#: gui2/library.c:7028
+#: gui2/library.c:7030
 msgid "Plot the series"
 msgstr "この系列をプロット"
 
-#: gui2/library.c:7080
+#: gui2/library.c:7082
 #, c-format
 msgid "%s: no valid values"
 msgstr "%s: 有効な値がありません"
 
-#: gui2/library.c:7431
+#: gui2/library.c:7433
 msgid "Non-interactive (just get output)"
 msgstr ""
 
-#: gui2/library.c:7432
+#: gui2/library.c:7434
 msgid "Interactive R session"
 msgstr ""
 
-#: gui2/library.c:7438 gui2/library.c:7443
+#: gui2/library.c:7440 gui2/library.c:7445
 msgid "R mode"
 msgstr "Rモード"
 
-#: gui2/library.c:7440
+#: gui2/library.c:7442
 msgid "pre-load data"
 msgstr ""
 
-#: gui2/library.c:7651 plugin/leverage.c:106 plugin/pca.c:89
+#: gui2/library.c:7653 plugin/leverage.c:106 plugin/pca.c:89
 msgid "gretl: save data"
 msgstr "gretl: データの保存"
 
-#: gui2/library.c:7652
+#: gui2/library.c:7654
 msgid ""
 "The data set is currently sub-sampled.\n"
 "Would you like to restore the full range?"
@@ -13189,11 +13189,11 @@ msgstr ""
 "データセットは現在、サブサンプルされています\n"
 "全範囲に戻しますか?"
 
-#: gui2/library.c:7655
+#: gui2/library.c:7657
 msgid "gretl: Compact data"
 msgstr "gretl: データのコンパクト化"
 
-#: gui2/library.c:7656
+#: gui2/library.c:7658
 msgid ""
 "The data set is currently sub-sampled.\n"
 "You must restore the full range before compacting.\n"
@@ -13203,11 +13203,11 @@ msgstr ""
 "期種を変換する前にサブサンプルを解除し全範囲に戻す必要があります\n"
 "全範囲に戻しますか？"
 
-#: gui2/library.c:7660
+#: gui2/library.c:7662
 msgid "gretl: Expand data"
 msgstr "gretl: データの拡張"
 
-#: gui2/library.c:7661
+#: gui2/library.c:7663
 msgid ""
 "The data set is currently sub-sampled.\n"
 "You must restore the full range before expanding.\n"
@@ -13217,11 +13217,11 @@ msgstr ""
 "期種を変換する前にサブサンプルを解除し全範囲に戻す必要があります\n"
 "全範囲に戻しますか？"
 
-#: gui2/library.c:7680
+#: gui2/library.c:7682
 msgid "gretl: transpose data"
 msgstr "gretl: データの転置"
 
-#: gui2/library.c:7681
+#: gui2/library.c:7683
 msgid ""
 "Transposing means that each variable becomes interpreted\n"
 "as an observation, and each observation as a variable.\n"
@@ -13231,39 +13231,39 @@ msgstr ""
 "各変数を観測として解釈し、各観測を変数として解釈することです\n"
 "データを転置しますか？"
 
-#: gui2/library.c:7693
+#: gui2/library.c:7695
 msgid "Data transposed"
 msgstr ""
 
-#: gui2/library.c:7712 gui2/series_view.c:369 gui2/series_view.c:416
+#: gui2/library.c:7714 gui2/series_view.c:369 gui2/series_view.c:416
 msgid "Ascending"
 msgstr ""
 
-#: gui2/library.c:7713 gui2/series_view.c:370 gui2/series_view.c:417
+#: gui2/library.c:7715 gui2/series_view.c:370 gui2/series_view.c:417
 msgid "Descending"
 msgstr ""
 
-#: gui2/library.c:7729
+#: gui2/library.c:7731
 msgid "Select sort key"
 msgstr "並べ替えのキーを選択して下さい"
 
-#: gui2/library.c:7748
+#: gui2/library.c:7750
 msgid "resample dataset"
 msgstr "データセットの再サンプル"
 
-#: gui2/library.c:7751
+#: gui2/library.c:7753
 msgid "Resampling with replacement"
 msgstr "置換による再サンプリング"
 
-#: gui2/library.c:7752
+#: gui2/library.c:7754
 msgid "Number of cases"
 msgstr "ケース（case）の数"
 
-#: gui2/library.c:7820
+#: gui2/library.c:7822
 msgid "gretl: revised data set"
 msgstr "gretl: 改訂されたデータセット"
 
-#: gui2/library.c:7821
+#: gui2/library.c:7823
 msgid ""
 "You have saved a reduced version of the current data set.\n"
 "Do you want to switch to the reduced version now?"
@@ -13271,11 +13271,11 @@ msgstr ""
 "現在のデータセットの縮小版を保存しました\n"
 "縮小版に切り替えますか?"
 
-#: gui2/library.c:8151 gui2/library.c:8241
+#: gui2/library.c:8153 gui2/library.c:8243
 msgid "No commands to execute"
 msgstr "実行するコマンドがありません"
 
-#: gui2/library.c:8319
+#: gui2/library.c:8321
 msgid ""
 "\n"
 "Error executing script: halting\n"
@@ -13283,11 +13283,11 @@ msgstr ""
 "\n"
 "スクリプトの実行中にエラーが生じました: 停止します\n"
 
-#: gui2/library.c:8352
+#: gui2/library.c:8354
 msgid "Unterminated comment in script"
 msgstr ""
 
-#: gui2/library.c:8765
+#: gui2/library.c:8767
 msgid "Script done\n"
 msgstr "スクリプトを実行しました\n"
 
@@ -13355,7 +13355,7 @@ msgstr ""
 msgid "Define new variable..."
 msgstr "新しい変数を定義..."
 
-#: gui2/menustate.c:420 gui2/selector.c:5550
+#: gui2/menustate.c:420 gui2/selector.c:5543
 msgid "Ensure uniform sample size"
 msgstr "標本のサイズを揃える"
 
@@ -13363,7 +13363,7 @@ msgstr "標本のサイズを揃える"
 msgid "Correlation matrix"
 msgstr "相関行列"
 
-#: gui2/menustate.c:475 gui2/menustate.c:574 gui2/selector.c:6448
+#: gui2/menustate.c:475 gui2/menustate.c:574 gui2/selector.c:6441
 msgid "XY scatterplot"
 msgstr "XY散布図"
 
@@ -13434,7 +13434,7 @@ msgstr "モデルがモデル比較表に追加されました"
 msgid "HSK"
 msgstr ""
 
-#: gui2/model_table.c:408 gui2/selector.c:3732 plugin/addons-i18n.c:7
+#: gui2/model_table.c:408 gui2/selector.c:3725 plugin/addons-i18n.c:7
 msgid "ARCH"
 msgstr ""
 
@@ -13585,789 +13585,789 @@ msgstr "Y軸の変数を必ず選んで下さい"
 msgid "You must select a lower bound variable"
 msgstr "下限変数を必ず選んで下さい"
 
-#: gui2/selector.c:2426 gui2/selector.c:3522
+#: gui2/selector.c:2426 gui2/selector.c:3515
 msgid "You must select a dependent variable"
 msgstr "従属変数を必ず選んで下さい"
 
-#: gui2/selector.c:2993
+#: gui2/selector.c:2986
 msgid "You must specify a quantile"
 msgstr "分位(quantile)を必ず指定して下さい"
 
-#: gui2/selector.c:3006
+#: gui2/selector.c:2999
 msgid "Invalid quantile specification"
 msgstr ""
 
-#: gui2/selector.c:3145 gui2/selector.c:5171
+#: gui2/selector.c:3138 gui2/selector.c:5164
 msgid "Cluster"
 msgstr ""
 
-#: gui2/selector.c:3231
+#: gui2/selector.c:3224
 msgid "You must select a weight variable"
 msgstr "ウェイト変数を必ず選んで下さい"
 
-#: gui2/selector.c:3234
+#: gui2/selector.c:3227
 msgid "You must specify a list of lags"
 msgstr "ラグのリストを必ず設定して下さい"
 
-#: gui2/selector.c:3237
+#: gui2/selector.c:3230
 msgid "You must specify a selection variable"
 msgstr "選択変数を必ず選んで下さい"
 
-#: gui2/selector.c:3240
+#: gui2/selector.c:3233
 msgid "You must specify a second dependent variable"
 msgstr "２つめの従属変数を必ず指定して下さい"
 
-#: gui2/selector.c:3243
+#: gui2/selector.c:3236
 msgid "You must specify an upper bound variable"
 msgstr "上限変数を必ず選んで下さい"
 
-#: gui2/selector.c:3246
+#: gui2/selector.c:3239
 msgid "You must specify a treatment variable"
 msgstr "処置変数を必ず指定して下さい"
 
-#: gui2/selector.c:3249
+#: gui2/selector.c:3242
 msgid "You must specify an independent variable"
 msgstr "独立変数を必ず指定して下さい"
 
-#: gui2/selector.c:3391
+#: gui2/selector.c:3384
 msgid "You must select a Z-axis variable"
 msgstr "Z軸の変数を必ず選んで下さい"
 
-#: gui2/selector.c:3393
+#: gui2/selector.c:3386
 msgid "You must select a factor variable"
 msgstr "グループ分け変数を必ず設定して下さい"
 
-#: gui2/selector.c:3395
+#: gui2/selector.c:3388
 msgid "You must select a control variable"
 msgstr "コントロール変数を必ず指定して下さい"
 
-#: gui2/selector.c:3518
+#: gui2/selector.c:3511
 msgid "You must select two or more endogenous variables"
 msgstr "必ず２個以上の内生変数を選択して下さい"
 
-#: gui2/selector.c:3526
+#: gui2/selector.c:3519
 msgid "You must specify a public interface"
 msgstr "パブリック・インターフェイスを必ず指定して下さい"
 
-#: gui2/selector.c:3566
+#: gui2/selector.c:3559
 msgid "You must specify a set of instrumental variables"
 msgstr "操作変数の集合を必ず指定して下さい"
 
-#: gui2/selector.c:3569
+#: gui2/selector.c:3562
 msgid "You must specify regressors for the selection equation"
 msgstr "セレクション方程式の回帰変数を必ず指定して下さい"
 
-#: gui2/selector.c:3684
+#: gui2/selector.c:3677
 msgid "Heteroskedasticity corrected"
 msgstr "不均一分散を修正した推定"
 
-#: gui2/selector.c:3686
+#: gui2/selector.c:3679
 msgid "AR(1)"
 msgstr "１階の自己回帰仮定(AR(1))"
 
-#: gui2/selector.c:3698
+#: gui2/selector.c:3691
 msgid "Random effects (binary) probit"
 msgstr "変量効果(2項)プロビット"
 
-#: gui2/selector.c:3708
+#: gui2/selector.c:3701
 msgid "Count data model"
 msgstr "カウント・データ・モデル"
 
-#: gui2/selector.c:3710
+#: gui2/selector.c:3703
 msgid "Duration model"
 msgstr "デュレーション・モデル"
 
-#: gui2/selector.c:3712
+#: gui2/selector.c:3705
 msgid "Panel model"
 msgstr "パネルモデル"
 
-#: gui2/selector.c:3714
+#: gui2/selector.c:3707
 msgid "Groupwise WLS"
 msgstr "Groupwise加重最小二乗法"
 
-#: gui2/selector.c:3716
+#: gui2/selector.c:3709
 msgid "Between-groups model"
 msgstr "グループ間変動モデル(Betweenモデル)"
 
-#: gui2/selector.c:3718
+#: gui2/selector.c:3711
 msgid "Dynamic panel model"
 msgstr "ダイナミック・パネル・モデル"
 
-#: gui2/selector.c:3720
+#: gui2/selector.c:3713
 msgid "Weighted least squares"
 msgstr "加重最小二乗法"
 
-#: gui2/selector.c:3722
+#: gui2/selector.c:3715
 msgid "Two-stage least squares"
 msgstr "二段階最小二乗法(2SLS)"
 
-#: gui2/selector.c:3724
+#: gui2/selector.c:3717
 msgid "Limited information maximum likelihood"
 msgstr "制限情報最尤法(LIML)"
 
-#: gui2/selector.c:3726
+#: gui2/selector.c:3719
 msgid "Generalized method of moments"
 msgstr "一般化モーメント法(GMM)"
 
-#: gui2/selector.c:3728
+#: gui2/selector.c:3721
 msgid "Autoregressive model"
 msgstr "自己回帰モデル"
 
-#: gui2/selector.c:3738
+#: gui2/selector.c:3731
 msgid "VAR lag selection"
 msgstr "VARラグ選択"
 
-#: gui2/selector.c:3744
+#: gui2/selector.c:3737
 msgid "Quantile regression"
 msgstr "区分回帰(Quantile regression)"
 
-#: gui2/selector.c:3746
+#: gui2/selector.c:3739
 msgid "Interval regression"
 msgstr "区間回帰"
 
-#: gui2/selector.c:3749
+#: gui2/selector.c:3742
 msgid "Cointegration"
 msgstr "共和分検定"
 
-#: gui2/selector.c:3751
+#: gui2/selector.c:3744
 msgid "Multiple precision OLS"
 msgstr "任意精度OLS"
 
-#: gui2/selector.c:3765
+#: gui2/selector.c:3758
 msgid "Weight variable"
 msgstr "ウェイト変数"
 
-#: gui2/selector.c:3767
+#: gui2/selector.c:3760
 msgid "Offset variable"
 msgstr "オフセット項"
 
-#: gui2/selector.c:3769
+#: gui2/selector.c:3762
 msgid "Censoring variable"
 msgstr "打ち切り変数"
 
-#: gui2/selector.c:3773
+#: gui2/selector.c:3766
 msgid "Dependent variable 2"
 msgstr "従属変数2"
 
-#: gui2/selector.c:3775
+#: gui2/selector.c:3768
 msgid "List of AR lags"
 msgstr "ARラグのリスト"
 
-#: gui2/selector.c:3777
+#: gui2/selector.c:3770
 msgid "Desired quantile(s)"
 msgstr "望ましい区分平均値(複数可)"
 
-#: gui2/selector.c:3779
+#: gui2/selector.c:3772
 msgid "Upper bound variable"
 msgstr "上限変数"
 
-#: gui2/selector.c:3783 gui2/selector.c:3811
+#: gui2/selector.c:3776 gui2/selector.c:3804
 msgid "Y-axis variable"
 msgstr "Y軸の変数"
 
-#: gui2/selector.c:3785
+#: gui2/selector.c:3778
 msgid "Treatment variable"
 msgstr "処置変数"
 
-#: gui2/selector.c:3788
+#: gui2/selector.c:3781
 msgid "Independent variable"
 msgstr "説明変数"
 
-#: gui2/selector.c:3799 gui2/selector.c:6505
+#: gui2/selector.c:3792 gui2/selector.c:6498
 msgid "Y-axis variables"
 msgstr "Y軸の変数（複数選択可）"
 
-#: gui2/selector.c:3801 gui2/selector.c:6507
+#: gui2/selector.c:3794 gui2/selector.c:6500
 msgid "X-axis variables"
 msgstr "X軸の変数（複数選択可）"
 
-#: gui2/selector.c:3848
+#: gui2/selector.c:3841
 msgid "NegBin 2"
 msgstr ""
 
-#: gui2/selector.c:3849
+#: gui2/selector.c:3842
 msgid "NegBin 1"
 msgstr ""
 
-#: gui2/selector.c:3855 gui2/selector.c:3909
+#: gui2/selector.c:3848 gui2/selector.c:3902
 msgid "Distribution:"
 msgstr "確率分布:"
 
-#: gui2/selector.c:3900
+#: gui2/selector.c:3893
 msgid "Weibull"
 msgstr "ワイブル(Weibull)"
 
-#: gui2/selector.c:3901
+#: gui2/selector.c:3894
 msgid "Exponential"
 msgstr "指数分布"
 
-#: gui2/selector.c:3902
+#: gui2/selector.c:3895
 msgid "Log-logistic"
 msgstr "対数ロジスティック"
 
-#: gui2/selector.c:3903
+#: gui2/selector.c:3896
 msgid "Log-normal"
 msgstr "対数正規"
 
-#: gui2/selector.c:4089 gui2/selector.c:4163
+#: gui2/selector.c:4082 gui2/selector.c:4156
 msgid "Choose"
 msgstr "選択"
 
-#: gui2/selector.c:4112
+#: gui2/selector.c:4105
 msgid "Variable to plot"
 msgstr "グラフを描く変数"
 
-#: gui2/selector.c:4152
+#: gui2/selector.c:4145
 msgid "Lower bound variable"
 msgstr "下限変数"
 
-#: gui2/selector.c:4154
+#: gui2/selector.c:4147
 msgid "Response variable"
 msgstr ""
 
-#: gui2/selector.c:4156
+#: gui2/selector.c:4149
 msgid "Dependent variable 1"
 msgstr "従属変数1"
 
-#: gui2/selector.c:4216
+#: gui2/selector.c:4209
 msgid "lag order:"
 msgstr "ラグ次数:"
 
-#: gui2/selector.c:4217
+#: gui2/selector.c:4210
 msgid "rank:"
 msgstr "ランク:"
 
-#: gui2/selector.c:4241
+#: gui2/selector.c:4234
 msgid "maximum lag:"
 msgstr "最大ラグ:"
 
-#: gui2/selector.c:4256
+#: gui2/selector.c:4249
 msgid "Number of cointegrating vectors"
 msgstr ""
 
-#: gui2/selector.c:4282
+#: gui2/selector.c:4275
 msgid "ARCH order:"
 msgstr "ARCH 次数:"
 
-#: gui2/selector.c:4287 gui2/selector.c:5006
+#: gui2/selector.c:4280 gui2/selector.c:4999
 msgid "AR order:"
 msgstr "AR次数:"
 
-#: gui2/selector.c:4313
+#: gui2/selector.c:4306
 msgid "Z-axis variable"
 msgstr "Z軸の変数"
 
-#: gui2/selector.c:4315
+#: gui2/selector.c:4308
 msgid "Factor (discrete)"
 msgstr "グループ分けダミー"
 
-#: gui2/selector.c:4317
+#: gui2/selector.c:4310
 msgid "Control variable"
 msgstr "コントロール変数"
 
-#: gui2/selector.c:4319
+#: gui2/selector.c:4312
 msgid "Block variable (optional)"
 msgstr "ブロック変数(オプション)"
 
-#: gui2/selector.c:4428
+#: gui2/selector.c:4421
 msgid "Add"
 msgstr "追加"
 
-#: gui2/selector.c:4440
+#: gui2/selector.c:4433
 msgid "All ->"
 msgstr "全て ->"
 
-#: gui2/selector.c:4459 gui2/selector.c:6267
+#: gui2/selector.c:4452 gui2/selector.c:6260
 msgid "lags..."
 msgstr "ラグ..."
 
-#: gui2/selector.c:4482
+#: gui2/selector.c:4475
 msgid "Exogenous variables"
 msgstr "外生変数"
 
-#: gui2/selector.c:4486
+#: gui2/selector.c:4479
 msgid "Selection regressors"
 msgstr "選択の説明変数"
 
-#: gui2/selector.c:4488
+#: gui2/selector.c:4481
 msgid "Equation 2 regressors"
 msgstr "方程式2の説明変数"
 
-#: gui2/selector.c:4490
+#: gui2/selector.c:4483
 msgid "Helper functions"
 msgstr "ヘルパー関数"
 
-#: gui2/selector.c:4551
+#: gui2/selector.c:4544
 msgid "left bound"
 msgstr "左側境界"
 
-#: gui2/selector.c:4552
+#: gui2/selector.c:4545
 msgid "right bound"
 msgstr "右側境界"
 
-#: gui2/selector.c:4586
+#: gui2/selector.c:4579
 msgid "Polynomial order"
 msgstr "多項式次数"
 
-#: gui2/selector.c:4601
+#: gui2/selector.c:4594
 msgid "Bandwidth"
 msgstr "バンド幅"
 
-#: gui2/selector.c:4608
+#: gui2/selector.c:4601
 msgid "Use robust weights"
 msgstr "頑健なウェイトを使用する"
 
-#: gui2/selector.c:4609
+#: gui2/selector.c:4602
 msgid "Use \"leave one out\""
 msgstr "\"leave one out\"を使用する"
 
-#: gui2/selector.c:4932
+#: gui2/selector.c:4925
 msgid "GARCH p:"
 msgstr ""
 
-#: gui2/selector.c:4933
+#: gui2/selector.c:4926
 msgid "ARCH q:"
 msgstr ""
 
-#: gui2/selector.c:4958
+#: gui2/selector.c:4951
 msgid "Non-seasonal"
 msgstr "非季節"
 
-#: gui2/selector.c:4959
+#: gui2/selector.c:4952
 msgid "Seasonal"
 msgstr "季節"
 
-#: gui2/selector.c:5001
+#: gui2/selector.c:4994
 msgid "I"
 msgstr ""
 
-#: gui2/selector.c:5007
+#: gui2/selector.c:5000
 msgid "Difference:"
 msgstr "階差次数:"
 
-#: gui2/selector.c:5008
+#: gui2/selector.c:5001
 msgid "MA order:"
 msgstr "MA次数:"
 
-#: gui2/selector.c:5030 gui2/selector.c:5059
+#: gui2/selector.c:5023 gui2/selector.c:5052
 msgid "or specific lags"
 msgstr "または、ラグを個別に指定"
 
-#: gui2/selector.c:5376
+#: gui2/selector.c:5369
 msgid "Bits per floating-point value"
 msgstr "浮動小数点数のビット数"
 
-#: gui2/selector.c:5415
+#: gui2/selector.c:5408
 msgid "Quadrature points"
 msgstr ""
 
-#: gui2/selector.c:5437
+#: gui2/selector.c:5430
 msgid "Robust standard errors/intervals"
 msgstr "頑健標準誤差/区間を使用"
 
-#: gui2/selector.c:5498 gui2/selector.c:5502 gui2/selector.c:5510
+#: gui2/selector.c:5491 gui2/selector.c:5495 gui2/selector.c:5503
 msgid "Include a constant"
 msgstr "定数項を含む"
 
-#: gui2/selector.c:5512
+#: gui2/selector.c:5505
 msgid "Include a trend"
 msgstr "トレンド項を含む"
 
-#: gui2/selector.c:5515
+#: gui2/selector.c:5508
 msgid "Show details of regressions"
 msgstr "回帰の詳細を表示する"
 
-#: gui2/selector.c:5518
+#: gui2/selector.c:5511
 msgid "Include seasonal dummies"
 msgstr "季節ダミーを含む"
 
-#: gui2/selector.c:5526
+#: gui2/selector.c:5519
 msgid "Test down from maximum lag order"
 msgstr "最大ラグ次数から順に検定する"
 
-#: gui2/selector.c:5528
+#: gui2/selector.c:5521
 msgid "Skip initial DF tests"
 msgstr "最初のDF検定をスキップする"
 
-#: gui2/selector.c:5531
+#: gui2/selector.c:5524
 msgid "Iterated weighted least squares"
 msgstr "繰り返し加重最小二乗法"
 
-#: gui2/selector.c:5534 gui2/selector.c:5537
+#: gui2/selector.c:5527 gui2/selector.c:5530
 msgid "Include time dummies"
 msgstr "時点ダミーを含む"
 
-#: gui2/selector.c:5539
+#: gui2/selector.c:5532
 msgid "Include levels equations (GMM-SYS)"
 msgstr ""
 
-#: gui2/selector.c:5544
+#: gui2/selector.c:5537
 msgid "Show zeros explicitly"
 msgstr "ゼロ(0)の場合も省略しないで表示する"
 
-#: gui2/selector.c:5547
+#: gui2/selector.c:5540
 msgid "Show rankings"
 msgstr "ランキングを表示する"
 
-#: gui2/selector.c:5553
+#: gui2/selector.c:5546
 msgid "Make plot interactive"
 msgstr ""
 
-#: gui2/selector.c:5556
+#: gui2/selector.c:5549
 msgid "Show interval for median"
 msgstr "中央値(median)の信頼区間を表示する"
 
-#: gui2/selector.c:5562
+#: gui2/selector.c:5555
 msgid "Parameter covariance matrix via Hessian"
 msgstr "ヘッシアン(Hessian)によるパラメータ共分散行列"
 
-#: gui2/selector.c:5564
+#: gui2/selector.c:5557
 msgid "Difference the independent variables"
 msgstr "説明変数の階差を取る"
 
-#: gui2/selector.c:5568
+#: gui2/selector.c:5561
 msgid "Use X-12-ARIMA"
 msgstr "X-12-ARIMAを使用する"
 
-#: gui2/selector.c:5574
+#: gui2/selector.c:5567
 msgid "Standardize the residuals"
 msgstr "残差を標準化する"
 
-#: gui2/selector.c:5576
+#: gui2/selector.c:5569
 msgid "Use Fiorentini et al algorithm"
 msgstr "Fiorentini et alのアルゴリズムを用いる "
 
-#: gui2/selector.c:5611
+#: gui2/selector.c:5604
 msgid "Show lagged variables"
 msgstr "ラグ付き変数を表示"
 
-#: gui2/selector.c:5694
+#: gui2/selector.c:5687
 msgid "Compute standard errors"
 msgstr "標準誤差を計算"
 
-#: gui2/selector.c:5699
+#: gui2/selector.c:5692
 msgid "Compute confidence intervals"
 msgstr "信頼区間を計算"
 
-#: gui2/selector.c:5722
+#: gui2/selector.c:5715
 msgid "Automatic maximum"
 msgstr "最大値を自動設定"
 
-#: gui2/selector.c:5727
+#: gui2/selector.c:5720
 msgid "Specified maximum"
 msgstr "最大値を指定"
 
-#: gui2/selector.c:5744 gui2/toolbar.c:470
+#: gui2/selector.c:5737 gui2/toolbar.c:470
 msgid "Confidence level"
 msgstr "信頼水準"
 
-#: gui2/selector.c:5761
+#: gui2/selector.c:5754
 msgid "Spearman's rho"
 msgstr "スピアマン(Spearman)のrho"
 
-#: gui2/selector.c:5774
+#: gui2/selector.c:5767
 msgid "Use correlation matrix"
 msgstr "相関行列を使用"
 
-#: gui2/selector.c:5778
+#: gui2/selector.c:5771
 msgid "Use covariance matrix"
 msgstr "共分散行列を使用"
 
-#: gui2/selector.c:5787
+#: gui2/selector.c:5780
 msgid "Show slopes at mean"
 msgstr "平均での限界効果（slope at mean）を表示する"
 
-#: gui2/selector.c:5806
+#: gui2/selector.c:5799
 msgid "Use points"
 msgstr "マーカーを使用"
 
-#: gui2/selector.c:5810
+#: gui2/selector.c:5803
 msgid "Use lines"
 msgstr "線を使用"
 
-#: gui2/selector.c:5865
+#: gui2/selector.c:5858
 msgid "Estimate augmented model"
 msgstr "変数を追加したモデルを推定する"
 
-#: gui2/selector.c:5869
+#: gui2/selector.c:5862
 msgid "LM test using auxiliary regression"
 msgstr "補助回帰を用いてLM検定を行う"
 
-#: gui2/selector.c:5882
+#: gui2/selector.c:5875
 msgid "Estimate reduced model"
 msgstr "変数を減らしたモデルを推定する"
 
-#: gui2/selector.c:5886
+#: gui2/selector.c:5879
 msgid "Wald test, based on covariance matrix"
 msgstr "共分散行列にもとづくワルド(Wald)検定を行う"
 
-#: gui2/selector.c:5899
+#: gui2/selector.c:5892
 msgid ""
 "Sequential elimination of variables\n"
 "using two-sided p-value:"
 msgstr "右の両側p値を用いた変数の逐次消去を行う:"
 
-#: gui2/selector.c:5908
+#: gui2/selector.c:5901
 msgid "Test only selected variables"
 msgstr "選択された変数のみについて検定する"
 
-#: gui2/selector.c:5940 plugin/addons-i18n.c:37
+#: gui2/selector.c:5933 plugin/addons-i18n.c:37
 msgid "Fixed effects"
 msgstr "固定効果"
 
-#: gui2/selector.c:5944
+#: gui2/selector.c:5937
 msgid "Random effects"
 msgstr "変量効果（ランダム効果）"
 
-#: gui2/selector.c:5949
+#: gui2/selector.c:5942
 msgid "Swamy-Arora"
 msgstr ""
 
-#: gui2/selector.c:5950
+#: gui2/selector.c:5943
 msgid "Nerlove"
 msgstr ""
 
-#: gui2/selector.c:5987
+#: gui2/selector.c:5980
 msgid "Maximum likelihood estimation"
 msgstr "最尤法による推定"
 
-#: gui2/selector.c:5991
+#: gui2/selector.c:5984
 msgid "2-step estimation"
 msgstr "2段階推定"
 
-#: gui2/selector.c:6000
+#: gui2/selector.c:5993
 msgid "Plain numerical values"
 msgstr "個数をカウント"
 
-#: gui2/selector.c:6004
+#: gui2/selector.c:5997
 msgid "Show row percentages"
 msgstr "行ごとに各列の割合(%)を表示"
 
-#: gui2/selector.c:6008
+#: gui2/selector.c:6001
 msgid "Show column percentages"
 msgstr "列ごとに各行の割合(%)を表示"
 
-#: gui2/selector.c:6028
+#: gui2/selector.c:6021
 msgid "Fine-tune using Cochrane-Orcutt"
 msgstr "コクラン＝オーカット法を用いてファイン・チューニングする"
 
-#: gui2/selector.c:6053 gui2/selector.c:6065
+#: gui2/selector.c:6046 gui2/selector.c:6058
 msgid "Exact Maximum Likelihood"
 msgstr "厳密最尤法(Exact ML)"
 
-#: gui2/selector.c:6066
+#: gui2/selector.c:6059
 msgid "Conditional Maximum Likelihood"
 msgstr "条件付き最尤法(Conditional ML)"
 
-#: gui2/selector.c:6134
+#: gui2/selector.c:6127
 msgid "No constant"
 msgstr "定数項なし"
 
-#: gui2/selector.c:6135
+#: gui2/selector.c:6128
 msgid "Restricted constant"
 msgstr "制約付きの定数項"
 
-#: gui2/selector.c:6136
+#: gui2/selector.c:6129
 msgid "Unrestricted constant"
 msgstr "制約のない定数項"
 
-#: gui2/selector.c:6137
+#: gui2/selector.c:6130
 msgid "Restricted trend"
 msgstr "制約付きのトレンド"
 
-#: gui2/selector.c:6138
+#: gui2/selector.c:6131
 msgid "Unrestricted trend"
 msgstr "制約のないトレンド"
 
-#: gui2/selector.c:6169
+#: gui2/selector.c:6162
 msgid "CSV"
 msgstr ""
 
-#: gui2/selector.c:6170
+#: gui2/selector.c:6163
 msgid "gretl datafile (.gdt)"
 msgstr "Gretl データファイル"
 
-#: gui2/selector.c:6171
+#: gui2/selector.c:6164
 msgid "gretl binary datafile (.gdtb)"
 msgstr "Gretlバイナリー・データファイル (*.gdtb)"
 
-#: gui2/selector.c:6172
+#: gui2/selector.c:6165
 msgid "gretl database (.bin)"
 msgstr "Gretlデータベース (.bin)"
 
-#: gui2/selector.c:6173
+#: gui2/selector.c:6166
 msgid "GNU R"
 msgstr ""
 
-#: gui2/selector.c:6174
+#: gui2/selector.c:6167
 msgid "Octave"
 msgstr ""
 
-#: gui2/selector.c:6175
+#: gui2/selector.c:6168
 msgid "JMulTi"
 msgstr ""
 
-#: gui2/selector.c:6176
+#: gui2/selector.c:6169
 msgid "PcGive"
 msgstr ""
 
-#: gui2/selector.c:6198
+#: gui2/selector.c:6191
 msgid "Select format"
 msgstr "データの書式を選択"
 
-#: gui2/selector.c:6450
+#: gui2/selector.c:6443
 msgid "plot with impulses"
 msgstr "インパルス付きプロット"
 
-#: gui2/selector.c:6452
+#: gui2/selector.c:6445
 msgid "3D plot"
 msgstr "3次元プロット"
 
-#: gui2/selector.c:6454
+#: gui2/selector.c:6447
 msgid "multiple scatterplots"
 msgstr "散布図を並べて作図"
 
-#: gui2/selector.c:6456
+#: gui2/selector.c:6449
 msgid "factorized plot"
 msgstr "グループ別プロット"
 
-#: gui2/selector.c:6458
+#: gui2/selector.c:6451
 msgid "factorized boxplot"
 msgstr "グループ別箱ひげ図"
 
-#: gui2/selector.c:6460
+#: gui2/selector.c:6453
 msgid "scatterplot with control"
 msgstr "コントロール付き散布図"
 
-#: gui2/selector.c:6462
+#: gui2/selector.c:6455
 msgid "functions to package"
 msgstr "関数をパッケージへ"
 
-#: gui2/selector.c:6497
+#: gui2/selector.c:6490
 msgid "Variables to test"
 msgstr "検定する変数"
 
-#: gui2/selector.c:6499
+#: gui2/selector.c:6492
 msgid "Endogenous variables"
 msgstr "内生変数"
 
-#: gui2/selector.c:6501
+#: gui2/selector.c:6494
 msgid "Equation 1 regressors"
 msgstr "方程式1の説明変数"
 
-#: gui2/selector.c:6503 gui2/selector.c:7875
+#: gui2/selector.c:6496 gui2/selector.c:7869
 msgid "Regressors"
 msgstr "説明変数（回帰変数）"
 
-#: gui2/selector.c:6509
+#: gui2/selector.c:6502
 msgid "Public functions"
 msgstr "パブリック関数"
 
-#: gui2/selector.c:6765
+#: gui2/selector.c:6758
 msgid "Select variables for logging"
 msgstr "ログを取る変数を選択して下さい"
 
-#: gui2/selector.c:6767
+#: gui2/selector.c:6760
 msgid "Select variables for lagging"
 msgstr "ラグを取る変数を選択して下さい"
 
-#: gui2/selector.c:6769
+#: gui2/selector.c:6762
 msgid "Select variables to square"
 msgstr "2乗する変数を選択して下さい"
 
-#: gui2/selector.c:6771
+#: gui2/selector.c:6764
 msgid "Select variables to difference"
 msgstr "階差を取る変数を選択して下さい"
 
-#: gui2/selector.c:6773
+#: gui2/selector.c:6766
 msgid "Select variables to log-difference"
 msgstr "対数階差を取る変数を選択して下さい"
 
-#: gui2/selector.c:6775
+#: gui2/selector.c:6768
 msgid "Select variables to add"
 msgstr "追加する変数を選択して下さい"
 
-#: gui2/selector.c:6778
+#: gui2/selector.c:6771
 msgid "Select variables to omit"
 msgstr "取り除く変数を選択して下さい"
 
-#: gui2/selector.c:6780
+#: gui2/selector.c:6773
 msgid "Select coefficients to sum"
 msgstr "係数の合計を計算する変数を選択して下さい"
 
-#: gui2/selector.c:6782
+#: gui2/selector.c:6775
 msgid "Select two variables"
 msgstr "2つの変数を選択して下さい"
 
-#: gui2/selector.c:6784
+#: gui2/selector.c:6777
 msgid "Select one or two variables"
 msgstr "変数を1つ、あるいは2つ、選んで下さい"
 
-#: gui2/selector.c:6786
+#: gui2/selector.c:6779
 msgid "Confidence region: select two variables"
 msgstr "信頼域: 2つの変数を選択して下さい"
 
-#: gui2/selector.c:6788
+#: gui2/selector.c:6781
 msgid "Select variables to display"
 msgstr "表示する変数を選択して下さい"
 
-#: gui2/selector.c:6792
+#: gui2/selector.c:6785
 msgid "Select variables to plot"
 msgstr "グラフを描く変数を選んで下さい"
 
-#: gui2/selector.c:6801
+#: gui2/selector.c:6794
 msgid "Select variables to save"
 msgstr "保存する変数を選んで下さい"
 
-#: gui2/selector.c:6803
+#: gui2/selector.c:6796
 msgid "Select variables to copy"
 msgstr "コピーする変数を選択して下さい"
 
-#: gui2/selector.c:6805
+#: gui2/selector.c:6798
 msgid "Define named list"
 msgstr "変数リストを定義する"
 
-#: gui2/selector.c:7039
+#: gui2/selector.c:7033
 msgid "Name of list"
 msgstr "リストの名称"
 
-#: gui2/selector.c:7434
+#: gui2/selector.c:7428
 msgid "Copy data"
 msgstr "データのコピー"
 
-#: gui2/selector.c:7434
+#: gui2/selector.c:7428
 msgid "Export data"
 msgstr "データをエクスポートする"
 
-#: gui2/selector.c:7453
+#: gui2/selector.c:7447
 msgid "Save functions"
 msgstr "関数を保存"
 
-#: gui2/selector.c:7475
+#: gui2/selector.c:7469
 msgid "Edit package list"
 msgstr "パッケージ・リストを編集"
 
-#: gui2/selector.c:7859
+#: gui2/selector.c:7853
 msgid "Lags of endogenous variables"
 msgstr "内生変数のラグ"
 
-#: gui2/selector.c:7881
+#: gui2/selector.c:7875
 msgid "lags"
 msgstr "ラグを指定"
 
-#: gui2/selector.c:7887
+#: gui2/selector.c:7881
 msgid "or"
 msgstr "または"
 
-#: gui2/selector.c:7889
+#: gui2/selector.c:7883
 msgid "specific lags"
 msgstr "個別にラグを指定"
 
-#: gui2/selector.c:7904
+#: gui2/selector.c:7898
 msgid "Lags of dependent variable"
 msgstr "被説明変数のラグ"
 
-#: gui2/selector.c:7915
+#: gui2/selector.c:7909
 msgid "default"
 msgstr ""
 
