@@ -2171,11 +2171,11 @@ int do_add_omit (selector *sr)
     flagstr = print_flags(opt, ci);
 
     if (ci == ADD) {
-        lib_command_sprintf("add %s%s", buf, flagstr);
+        lib_command_sprintf("add%s%s", buf, flagstr);
     } else if (buf == NULL) {
 	lib_command_sprintf("omit %s", flagstr);
     } else {
-        lib_command_sprintf("omit %s%s", buf, flagstr);
+        lib_command_sprintf("omit%s%s", buf, flagstr);
     }
 
     if (parse_lib_command() || bufopen(&prn)) {
