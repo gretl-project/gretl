@@ -3440,6 +3440,9 @@ int parse_gui_command (const char *line, CMD *cmd, DATASET *dset)
 
     maybe_init_shadow();
 
+    gretl_cmd_clear(cmd);
+    gretl_error_clear();
+
     if (*line != '\0') {
 	err = tokenize_line(cmd, line, dset, 0);
 	if (!err) {
