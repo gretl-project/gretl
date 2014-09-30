@@ -396,11 +396,11 @@ static void print_compare (struct COMPARE *cmp,
     if (cmp->score >= 0) {
 	pputs(prn, "  ");
 	if (cmp->ci == ADD) {
-	    pprintf(prn, _("Adding variables improved %d of %d Information "
-			   "Criteria.\n"), cmp->score, C_MAX);
+	    pprintf(prn, _("Adding variables improved %d of %d information "
+			   "criteria.\n"), cmp->score, C_MAX);
 	} else {
-	    pprintf(prn, _("Omitting variables improved %d of %d Information "
-			   "Criteria.\n"), cmp->score, C_MAX);
+	    pprintf(prn, _("Omitting variables improved %d of %d information "
+			   "criteria.\n"), cmp->score, C_MAX);
 	}
     } 
 
