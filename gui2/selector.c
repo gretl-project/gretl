@@ -48,8 +48,6 @@
 #define LDEBUG 0
 #define VLDEBUG 0
 
-#define LIST_USE_VNAMES 1
-
 enum {
     SR_LVARS  = 1,
     SR_RVARS1,
@@ -135,6 +133,8 @@ enum {
 #define FNPKG_CODE(c) (c == SAVE_FUNCTIONS || c == EDIT_FUNCTIONS)
 
 #define SHOW_LISTS_CODE(c) (c == SUMMARY || c == CORR || c == MAHAL || c == PCA)
+
+#define LIST_USE_INTS(c) (c == ELLIPSE)
 
 #define WANT_TOGGLES(c) (c == DPANEL || \
                          c == ARMA || \
@@ -2498,32 +2498,29 @@ static void cmdlist_append_series (selector *sr,
 	add_to_cmdlist(sr, s0);
     }
 
-#if LIST_USE_VNAMES
-    if (id > 0 && id < dataset->v) {
+    if (LIST_USE_INTS(sr->ci)) {
+	sprintf(idstr, "%d", id);
+	add_to_cmdlist(sr, idstr);
+    } else if (id > 0 && id < dataset->v) {
 	add_to_cmdlist(sr, dataset->varname[id]);
     } else {
 	sprintf(idstr, "%d", id);
 	add_to_cmdlist(sr, idstr);
     }	
-#else
-    sprintf(idstr, "%d", id);
-    add_to_cmdlist(sr, idstr);
-#endif
 }
 
-static void print_list_element (char *targ,
+static void print_list_element (selector *sr,
+				char *targ,
 				const char *s0,
 				int id)
 {
-#if LIST_USE_VNAMES
-    if (id > 0 && id < dataset->v) {
+    if (LIST_USE_INTS(sr->ci)) {
+	sprintf(targ, "%s%d", s0, id);
+    } else if (id > 0 && id < dataset->v) {
 	sprintf(targ, "%s%s", s0, dataset->varname[id]);
     } else {
 	sprintf(targ, "%s%d", s0, id);
     }
-#else
-    sprintf(targ, "%s%d", s0, id);
-#endif
 }
 
 static char *arma_lag_string (char *targ, const char *s)
@@ -2622,7 +2619,7 @@ static void read_ellipse_alpha (selector *sr)
 	double cval;
 
 	cval = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[0]));
-	sprintf(s, "%g ", 1 - cval);
+	sprintf(s, "%g", 1 - cval);
 	add_to_cmdlist(sr, s);
     }
 }
@@ -2700,11 +2697,7 @@ static char *get_lagpref_string (int v, char context,
 	s = g_strdup_printf(" %s(%s%d)", vname, (lmin > 0)? "-" : "",
 			    lmin);
     } else if (context != LAG_Y_X && context != LAG_Y_W) {
-#if LIST_USE_VNAMES
 	s = g_strdup_printf(" %s", vname);
-#else
-	s = g_strdup_printf(" %d", v);
-#endif
     }
 
 #if LDEBUG
@@ -3283,22 +3276,22 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	hivar = k;
     } else if (sr->ci == COUNTMOD) {
 	/* offset variable */
-	print_list_element(endbit, " ; ", k);
+	print_list_element(sr, endbit, " ; ", k);
 	offvar = k;
     } else if (sr->ci == DURATION) {
 	/* censoring variable */
-	print_list_element(endbit, " ; ", k);
+	print_list_element(sr, endbit, " ; ", k);
 	censvar = k;
     } else if (sr->ci == HECKIT) {
 	/* selection variable */
-	print_list_element(endbit, " ", k);
+	print_list_element(sr, endbit, " ", k);
 	selvar = k;
     } else if (sr->ci == BIPROBIT) {
 	/* depvar #2 */
-	print_list_element(endbit, " ", k);
+	print_list_element(sr, endbit, " ", k);
     } else if (NONPARAM_CODE(sr->ci)) {
 	/* independent var */
-	print_list_element(endbit, " ", k);
+	print_list_element(sr, endbit, " ", k);
     } else if (sr->ci == AR) {
 	/* lags */
 	free(arlags);
@@ -3351,7 +3344,7 @@ static void parse_depvar_widget (selector *sr, char *endbit,
 	sr->error = 1;
     } else {
 	if (sr->ci == GR_XY || sr->ci == GR_IMP) {
-	    print_list_element(endbit, " ", ynum);
+	    print_list_element(sr, endbit, " ", ynum);
 	} else if (sr->ci == BIPROBIT) {
 	    cmdlist_append_series(sr, NULL, ynum);
 	    add_to_cmdlist(sr, endbit);
@@ -6836,6 +6829,7 @@ static int add_omit_list (gpointer p, selector *sr)
 	}
 
 	for (i=0; i<nc; i++) {
+	    /* note: special case, not using varnames as such */
 	    gretl_model_get_param_name(pmod, dataset, i, pname);
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter, 
