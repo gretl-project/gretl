@@ -836,7 +836,7 @@ static int integer_length (int k)
 }
 
 /**
- * gretl_list_to_string:
+ * gretl_list_to_numeric_string:
  * @list: array of integers.
  * 
  * Prints the given @list of integers into a newly
@@ -847,7 +847,7 @@ static int integer_length (int k)
  * or NULL on failure.
  */
 
-char *gretl_list_to_string (const int *list)
+char *gretl_list_to_numeric_string (const int *list)
 {
     char *buf;
     int i, len = 1;
@@ -885,18 +885,22 @@ char *gretl_list_to_string (const int *list)
 }
 
 /**
- * gretl_list_to_string_full:
+ * gretl_list_to_string:
  * @list: array of integers.
- * @dset: dataset information.
+ * @dset: pointer to dataset.
  * @err: location to receive error code.
  * 
  * Returns: allocated string representation of @list, with ID
- * numbers replaced by series names, or NULL on failure.
+ * numbers cashed out as series names (and with one leading
+ * space), or NULL on failure. The list separator #LISTSEP,
+ * is accepted in the incoming @list, otherwise all terms
+ * must be integers in the range 0 to the greatest current
+ * series ID within @dset.
  */
 
-char *gretl_list_to_string_full (const int *list, 
-				 const DATASET *dset,
-				 int *err)
+char *gretl_list_to_string (const int *list, 
+			    const DATASET *dset,
+			    int *err)
 {
     char *buf = NULL;
     int len = 1;
