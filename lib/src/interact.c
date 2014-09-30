@@ -541,10 +541,14 @@ static void reflow_line (const char *line, const CMD *cmd,
 	while (*p) {
 	    *buf = '\0';
 	    strncat(buf, p, TESTLEN - 1);
-	    new_trim_to_length(buf, maxline);
+	    if (linenum > 0 && leader == NULL) {
+		new_trim_to_length(buf, maxline - 2);
+	    } else {
+		new_trim_to_length(buf, maxline);
+	    }
 	    p += strlen(buf);
 	    if (!string_is_blank(buf)) {
-		if (linenum > 0 && leader != NULL) {
+		if (linenum > 0) {
 		    pputs(prn, "  ");
 		}
 		pputs(prn, (*buf == ' ')? buf + 1 : buf);
