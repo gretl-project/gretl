@@ -185,4 +185,9 @@ int fill_day_of_week_array (double *dow,
 			    const double *d,
 			    const DATASET *dset);
 
+int catcode_from_dummies (double *y, 
+			  const int *list,
+			  int catbase,
+			  const DATASET *dset);
+
 #endif /* GENFUNCS_H */
