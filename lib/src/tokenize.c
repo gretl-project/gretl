@@ -2012,7 +2012,7 @@ static int check_for_stray_tokens (CMD *c)
 	for (i=0; i<c->ntoks && !c->err; i++) {
 	    tok = &c->toks[i];
 	    if (!token_done(tok) && !legacy_accept_strays(c, i)) {
-		gretl_errmsg_sprintf("parse error at unexpected token '%s'",
+		gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"),
 				     tok->s);
 		c->err = E_PARSE;
 	    }
@@ -2067,7 +2067,7 @@ static int check_list_sepcount (int ci, int nsep)
     if (nsep < minsep) {
 	err = E_ARGS;
     } else if (nsep > maxsep) {
-	gretl_errmsg_sprintf("parse error at unexpected token '%s'",
+	gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"),
 			     ";");
 	err = E_PARSE;
     }
@@ -3007,7 +3007,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    n = 1;
 	    skipped = 1;
 	} else {
-	    gretl_errmsg_sprintf("Unexpected symbol '%c'", *s);
+	    gretl_errmsg_sprintf(_("Unexpected symbol '%c'"), *s);
 	    err = E_PARSE;
 	}
 
@@ -3043,7 +3043,12 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    break;
 	}
 
-	if (cmd->ci == DELEET || cmd->ci == GENR || (cmd->ciflags & CI_LIST)) {
+	if (cmd->ntoks > 1 && !strcmp(cmd->toks[0].s, "list")) {
+	    /* FIXME, bodge */
+	    wild_ok = 1;
+	}
+
+	if (cmd->ci == DELEET || (cmd->ciflags & CI_LIST)) {
 	    /* flag acceptance of wildcard expressions */
 	    wild_ok = 1;
 	} else if ((cmd->ciflags & CI_EXPR) && !(cmd->ciflags & CI_LCHK)) {
