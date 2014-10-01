@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-09-30 13:27-0400\n"
-"PO-Revision-Date: 2014-06-21 19:59+0100\n"
+"PO-Revision-Date: 2014-09-30 22:44+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -510,16 +510,14 @@ msgid "LM test"
 msgstr "Teste LM"
 
 #: lib/src/compare.c:399
-#, fuzzy, c-format
+#, c-format
 msgid "Adding variables improved %d of %d information criteria.\n"
-msgstr ""
-"Acrescentar variáveis melhorou %d de %d estatísticas de seleção de modelo.\n"
+msgstr "Acrescentar variáveis melhorou %d de %d critérios de informação.\n"
 
 #: lib/src/compare.c:402
-#, fuzzy, c-format
+#, c-format
 msgid "Omitting variables improved %d of %d information criteria.\n"
-msgstr ""
-"Omitir variáveis melhorou %d de %d estatísticas de seleção de modelo.\n"
+msgstr "Omitir variáveis melhorou %d de %d critérios de informação.\n"
 
 #: lib/src/compare.c:551 lib/src/vartest.c:807 lib/src/vartest.c:1094
 msgid "omit"
@@ -1007,6 +1005,8 @@ msgid ""
 "If '%s' is intended as the name of a variable, please change it --\n"
 "strings of this sort usually mean 'not a number'."
 msgstr ""
+"Se '%s' é suposto ser o nome de uma variável, por favor altere-o --\n"
+"texto deste tipo normalmente significa 'não é um número'."
 
 #: lib/src/csvdata.c:2572
 msgid "scanning for variable names...\n"
@@ -1152,7 +1152,7 @@ msgstr "O comprimento da série não é o mesmo que o do conjunto de dados"
 
 #: lib/src/dataio.c:108
 msgid "Varname exceeds the maximum of 31 characters"
-msgstr ""
+msgstr "O nome de variável excede o máximo de 31 caracteres"
 
 #: lib/src/dataio.c:133
 #, c-format
@@ -3196,14 +3196,14 @@ msgid "Missing function return type"
 msgstr "Falta o tipo de retorno da função"
 
 #: lib/src/gretl_func.c:1326
-#, fuzzy, c-format
+#, c-format
 msgid "Expected a function return type, found '%s'"
-msgstr "Esperado '%c' mas encontrou-se '%s'\n"
+msgstr "Esperava-se o tipo de retorno de função mas encontrou-se '%s'"
 
 #: lib/src/gretl_func.c:1329
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid return type for function"
-msgstr "Valor de retorno inválido para a função"
+msgstr "%s: valor de retorno inválido para a função"
 
 #: lib/src/gretl_func.c:2316 lib/src/gretl_func.c:2376
 #: lib/src/gretl_func.c:2452 lib/src/gretl_utils.c:1715
@@ -6939,9 +6939,9 @@ msgid "Invalid option '--%s'"
 msgstr "opção inválida '--'%s'"
 
 #: lib/src/tokenize.c:1144
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid option '-%c'"
-msgstr "opção inválida '--'%s'"
+msgstr "Opção inválida '-%c'"
 
 #: lib/src/transforms.c:144
 #, c-format
@@ -7029,9 +7029,8 @@ msgid "Ambiguous matrix index"
 msgstr "Índice de matriz ambíguo"
 
 #: lib/src/usermat.c:714
-#, fuzzy
 msgid "Matrix is not symmetric"
-msgstr "A matriz não é definida positiva"
+msgstr "A matriz não é simétrica"
 
 #: lib/src/usermat.c:936
 msgid "Matrix decomposition failed"
@@ -7436,7 +7435,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 21 de junho de 2014."
+"Tradução de 30 de setembro de 2014."
 
 #: gui2/about.c:203
 msgid "News"
@@ -10028,9 +10027,8 @@ msgid "Can't find the function '%s'"
 msgstr "Não se encontrou a função '%s'"
 
 #: gui2/fnsave.c:842 gui2/fnsave.c:1683
-#, fuzzy
 msgid "Please save your package first"
-msgstr "Por favor primeiro abra um ficheiro de dados"
+msgstr "Por favor grave primeiro o pacote"
 
 #: gui2/fnsave.c:998
 msgid "private"
@@ -13536,7 +13534,7 @@ msgstr "Acrescentar diferença"
 
 #: gui2/menustate.c:383 gui2/menustate.c:516
 msgid "Dummify..."
-msgstr ""
+msgstr "Auxiliares..."
 
 #: gui2/menustate.c:385 gui2/menustate.c:489 gui2/menustate.c:517
 #: gui2/menustate.c:583
@@ -14202,7 +14200,7 @@ msgstr "Mostrar classificações (\"rankings\")"
 
 #: gui2/selector.c:5546
 msgid "Make plot interactive"
-msgstr ""
+msgstr "Tornar o gráfico interativo"
 
 #: gui2/selector.c:5549
 msgid "Show interval for median"
@@ -14565,14 +14563,12 @@ msgid "default"
 msgstr "omissão"
 
 #: gui2/series_view.c:371 gui2/series_view.c:418
-#, fuzzy
 msgid "Original order"
-msgstr "ordem de desfasamento"
+msgstr "Ordem original"
 
 #: gui2/series_view.c:380
-#, fuzzy
 msgid "Sort order:"
-msgstr "ordem AR:"
+msgstr "Critério de ordenação:"
 
 #: gui2/series_view.c:432
 msgid "Variable to sort by"
@@ -15146,7 +15142,7 @@ msgstr "Aplicar"
 #: gui2/ssheet.c:179
 #, fuzzy
 msgid "_Format..."
-msgstr "_Predições..."
+msgstr "_Formato..."
 
 #: gui2/ssheet.c:180
 msgid "_Properties"
@@ -15851,7 +15847,7 @@ msgstr "regressores"
 
 #: plugin/addons-i18n.c:45
 msgid "SVAR"
-msgstr ""
+msgstr "SVAR"
 
 #: plugin/addons-i18n.c:46
 msgid "AB-model"
