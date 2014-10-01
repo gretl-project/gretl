@@ -357,7 +357,6 @@ enum {
     F_KPSSCRIT,
     F_STRINGIFY,
     F_PRINTARRAY,
-    F_CATCODE,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,

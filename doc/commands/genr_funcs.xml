@@ -1491,35 +1491,6 @@
       </description>
     </function>
 
-    <function name="catcode" section="transforms" output="series">
-      <fnargs>
-	<fnarg type="list">L</fnarg>
-	<fnarg optional="true" type="int">base</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  This function performs the inverse operation of <fncref
-	  targ="dummify"/>. The argument <argname>L</argname> should
-	  be a list comprising a full set of 0/1 dummy variables
-	  coding for the value of some characteristic, such that the
-	  sum of the values of the elements of <argname>L</argname> is
-	  1 at each observation.
-	</para>
-	<para>
-	  The return value is, by default, a series whose value is 1
-	  if the first member of <argname>L</argname> has value 1, 2
-	  if the second member of <argname>L</argname> has value 1,
-	  and so on. The optional argument <argname>base</argname> can
-	  be used to modify this. For example, if you supply a value
-	  of 0 for <argname>base</argname>, the returned series has
-	  value 0 for observations where the first member of
-	  <argname>L</argname> has value 1, 1 for observations where
-	  the second member of <argname>L</argname> has value 1, and
-	  so on.
-	</para>
-      </description>
-    </function>
-
     <function name="cdemean" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -2350,10 +2321,6 @@
 	  portion of the name is truncated if necessary, and may be
 	  adjusted in case of non-uniqueness in the set of names thus
 	  constructed.
-	</para>
-	<para>
-	  For the inverse operation of this function, see <fncref
-	  targ="catcode"/>.
 	</para>
       </description>
     </function>

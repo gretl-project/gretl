@@ -3897,27 +3897,6 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *catcode_func (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret = aux_series_node(p);
-
-    if (ret != NULL) {
-	const int *list = l->v.ivec;
-	int catbase = 1;
-
-	if (!null_or_empty(r)) {
-	    catbase = node_get_int(r, p);
-	}
-
-	if (!p->err) {
-	    p->err = catcode_from_dummies(ret->v.xvec, list, catbase,
-					  p->dset);
-	}
-    }
-
-    return ret;
-}
-
 /* argument is series or list; value returned is list in either
    case */
 
@@ -10683,16 +10662,6 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
-    case F_CATCODE:
-	/* the inverse operation of dummify */
-	if (l->t == LIST && empty_or_num(r)) {
-	    ret = catcode_func(l, r, p);
-	} else if (l->t != LIST) {
-	    node_type_error(t->t, 1, LIST, l, p);
-	} else {
-	    node_type_error(t->t, 2, NUM, r, p);
-	}
-	break;	
     case F_MISSZERO:
     case F_ZEROMISS:
 	/* one series or scalar argument needed */

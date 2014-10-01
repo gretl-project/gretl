@@ -5506,42 +5506,4 @@ int fill_day_of_week_array (double *dow,
     return err;
 }
 
-int catcode_from_dummies (double *y,
-			  const int *list,
-			  int catbase,
-			  const DATASET *dset)
-{
-    double xit;
-    int t, i, missing, pos;
-    int nl = list[0];
-    int err = 0;
-
-    for (t=dset->t1; t<=dset->t2; t++) {
-	missing = 0;
-	pos = -1;
-	y[t] = 0.0;
-	for (i=1; i<=nl; i++) {
-	    xit = dset->Z[list[i]][t];
-	    if (na(xit)) {
-		missing++;
-	    } else if (xit == 1.0) {
-		pos = i - 1;
-		y[t] += 1.0;
-	    } else if (xit != 0) {
-		err = E_DATA;
-		break;
-	    }
-	}
-	if (missing == nl) {
-	    y[t] = NADBL;
-	} else if (missing > 0 || y[t] != 1.0) {
-	    err = E_DATA;
-	    break;
-	} else {
-	    y[t] = pos + catbase;
-	}
-    }
-
-    return err;
-}
 

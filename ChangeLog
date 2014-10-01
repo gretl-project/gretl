@@ -1,6 +1,5 @@
 version 1.10.0, in progress
 - Replace old command-line parser with new "tokenizer"
-- Add new function, catcode()
 - Fix bug: GUI panel plot failed if the start of the sample
   range was advanced
 - Fix bug: crash on attempting to open a file from the "Recent"
