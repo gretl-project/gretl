@@ -3043,7 +3043,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    break;
 	}
 
-	if (cmd->ci == DELEET || (cmd->ciflags & CI_LIST)) {
+	if (cmd->ci == DELEET || cmd->ci == GENR || (cmd->ciflags & CI_LIST)) {
 	    /* flag acceptance of wildcard expressions */
 	    wild_ok = 1;
 	} else if ((cmd->ciflags & CI_EXPR) && !(cmd->ciflags & CI_LCHK)) {

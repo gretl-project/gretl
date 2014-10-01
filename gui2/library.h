@@ -252,6 +252,8 @@ void do_remove_obs (void);
 
 void add_logs_etc (int ci, int varnum);
 
+void add_discrete_dummies (int varnum);
+
 void logs_etc_callback (GtkAction *action);
 
 void add_system_resid (GtkAction *action, gpointer p);

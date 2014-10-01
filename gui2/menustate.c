@@ -381,7 +381,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     } else if (!strcmp(item, _("Add difference"))) {
 	add_logs_etc(DIFF, v);
     } else if (!strcmp(item, _("Dummify..."))) {
-	add_logs_etc(DUMMIFY, v);
+	add_discrete_dummies(v);
     } else if (!strcmp(item, _("Define new variable..."))) { 
 	genr_callback();
     }

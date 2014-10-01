@@ -5584,6 +5584,136 @@ void do_anova (GtkAction *action, gpointer p)
     }
 }
 
+static int *get_discrete_list (void)
+{
+    double **Z = dataset->Z;
+    int *dlist = NULL;
+    int i;
+
+    for (i=1; i<dataset->v; i++) {
+	if (gretl_isdummy(dataset->t1, dataset->t2, Z[i])) {
+	    continue;
+	} else if (series_is_discrete(dataset, i)) {
+	    dlist = gretl_list_append_term(&dlist, i);
+	} else if (0 && gretl_isdiscrete(dataset->t1, dataset->t2, Z[i])) {
+	    /* FIXME? */
+	    dlist = gretl_list_append_term(&dlist, i);
+	}
+    }
+
+    return dlist;
+}
+
+/* for use when we have more than one candidate series
+   to select from */
+
+static int dummify_target_dialog (const int *dlist, 
+				  gretlopt *opt)
+{
+    dialog_opts *opts;
+    const char *strs[] = {
+	N_("Encode all values"),
+	N_("Skip the lowest value"),
+	N_("Skip the highest value")
+    };
+    gretlopt vals[] = {
+	OPT_NONE,
+	OPT_F,
+	OPT_L
+    };
+    int v = 0;
+
+    opts = dialog_opts_new(3, OPT_TYPE_RADIO,
+			   opt, vals, strs);
+
+    if (opts != NULL) {
+	v = select_var_from_list_with_opt(dlist, 
+					  _("Variable to dummify"),
+					  opts, DUMMIFY, NULL);
+	dialog_opts_free(opts);
+    }
+
+    return v;
+}
+
+static int dummify_option_dialog (int selvar, gretlopt *opt)
+{
+    const char *opts[] = {
+	N_("Encode all values"),
+	N_("Skip the lowest value"),
+	N_("Skip the highest value")
+    };
+    gchar *label;
+    int ret;
+
+    if (selvar > 0) {
+	label = g_strdup_printf(_("Encoding %s as dummies"),
+				dataset->varname[selvar]);
+    } else {
+	label = g_strdup(_("Encoding variables as dummies"));
+    }
+
+    ret = radio_dialog(_("gretl: create dummy variables"), 
+		       label, opts, 3, 0, DUMMIFY, NULL);
+
+    g_free(label);
+
+    *opt = (ret == 1)? OPT_F : (ret == 2)? OPT_L : OPT_NONE;
+
+    return ret;
+}
+
+void add_discrete_dummies (int target)
+{
+    gretlopt opt = OPT_NONE;
+    int resp;
+
+    if (target > 0) {
+	/* pre-selected target series (right-click) */
+	resp = dummify_option_dialog(target, &opt);
+	if (canceled(resp)) {
+	    target = 0;
+	}	
+    } else {
+	/* coming from main window menu */
+	int *dlist = get_discrete_list();
+
+	if (dlist == NULL) {
+	    infobox("No discrete series are available");
+	} else if (dlist[0] == 1) {
+	    target = dlist[1];
+	    resp = dummify_option_dialog(target, &opt);
+	    if (canceled(resp)) {
+		target = 0;
+	    }	    
+	} else {
+	    target = dummify_target_dialog(dlist, &opt);
+	    free(dlist);
+	}
+    }
+
+    if (target > 0) {
+	int *list = gretl_list_new(1);
+	int err;
+
+	list[1] = target;
+	err = list_dumgenr(&list, dataset, opt);
+	free(list);
+
+	if (err) {
+	    errbox(_("Error adding variables"));
+	} else {
+	    const char *flags = print_flags(opt, DUMMIFY);
+	    const char *vname = dataset->varname[target];
+
+	    lib_command_sprintf("dummify %s%s", vname, flags);
+	    record_command_verbatim();
+	    populate_varlist();
+	    mark_dataset_as_modified();
+	}
+    }
+}
+
 static int dummies_code (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
@@ -5594,6 +5724,8 @@ static int dummies_code (GtkAction *action)
 	return PANEL_UNIT_DUMMIES;
     else if (!strcmp(s, "TimeDums"))
 	return PANEL_TIME_DUMMIES;
+    else if (!strcmp(s, "dummify"))
+	return DISCRETE_DUMMIES;
     else
 	return 0;
 }
@@ -5604,7 +5736,10 @@ void add_dummies (GtkAction *action)
     int u = dummies_code(action);
     gint err;
 
-    if (u == TS_DUMMIES) {
+    if (u == DISCRETE_DUMMIES) {
+	add_discrete_dummies(0);
+	return;
+    } else if (u == TS_DUMMIES) {
 	lib_command_strcpy("genr dummy");
 	err = dummy(dataset, 0) == 0;
     } else if (dataset_is_panel(dataset)) {
@@ -5710,24 +5845,6 @@ void do_remove_obs (void)
     }
 }
 
-static int dummify_dialog (gretlopt *opt)
-{
-    const char *opts[] = {
-	N_("Encode all values"),
-	N_("Skip the lowest value"),
-	N_("Skip the highest value")
-    };
-    int ret;
-
-    ret = radio_dialog(_("gretl: create dummy variables"), 
-		       _("Encoding variables as dummies"), 
-		       opts, 3, 0, DUMMIFY, NULL);
-
-    *opt = (ret == 1)? OPT_F : (ret == 2)? OPT_L : OPT_NONE;
-
-    return ret;
-}
-
 void add_logs_etc (int ci, int varnum)
 {
     char *liststr;
@@ -5761,18 +5878,6 @@ void add_logs_etc (int ci, int varnum)
 	} else {
 	    lib_command_sprintf("lags%s", liststr);
 	}
-    } else if (ci == DUMMIFY) {
-	gretlopt opt = OPT_NONE;
-	const char *flagstr;
-	int resp;
-
-	resp = dummify_dialog(&opt);
-	if (canceled(resp)) {
-	    free(liststr);
-	    return;
-	}
-	flagstr = print_flags(opt, ci);
-	lib_command_sprintf("dummify%s%s", liststr, flagstr);
     } else {
 	lib_command_sprintf("%s%s", gretl_command_word(ci), liststr);
     }
@@ -5797,8 +5902,6 @@ void add_logs_etc (int ci, int varnum)
 	err = list_xpxgenr(&tmplist, dataset, OPT_NONE);
     } else if (ci == DIFF || ci == LDIFF || ci == SDIFF) {
 	err = list_diffgenr(tmplist, ci, dataset);
-    } else if (ci == DUMMIFY) {
-	err = list_dumgenr(&tmplist, dataset, libcmd.opt);
     }
 
     free(tmplist);
@@ -5829,8 +5932,6 @@ static int logs_etc_code (GtkAction *action)
 	return LDIFF;
     else if (!strcmp(s, "sdiff")) 
 	return SDIFF;
-    else if (!strcmp(s, "dummify")) 
-	return DUMMIFY;
     else
 	return LOGS;
 }

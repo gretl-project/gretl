@@ -277,7 +277,8 @@ enum calc_functions {
 enum auto_dummies {
     TS_DUMMIES,
     PANEL_UNIT_DUMMIES,
-    PANEL_TIME_DUMMIES
+    PANEL_TIME_DUMMIES,
+    DISCRETE_DUMMIES
 };
 
 enum script_output_policies {
