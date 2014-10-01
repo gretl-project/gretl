@@ -1538,7 +1538,15 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	    if (s >= pmod->t1 && s <= ma_smax) {
 		DPRINTF(("  MA: lag %d, e[%d] = %g, theta[%d] = %g\n", i, s, 
 			 pmod->uhat[s], i, theta[i]));
-		yh += theta[i] * pmod->uhat[s];
+		if (na(pmod->uhat[s])) {
+		    char obsstr[OBSLEN];
+		    
+		    ntodate(obsstr, s, dset);
+		    fprintf(stderr, "Uh oh, pmod->uhat[%d] is missing! (%s)\n", 
+			    s, obsstr);
+		} else {
+		    yh += theta[i] * pmod->uhat[s];
+		}
 	    } else if (fc->eps != NULL) {
 		DPRINTF(("  MA: lag %d, ehat[%d] = %g, theta[%d] = %g\n", i, s, 
 			 fc->eps[s], i, theta[i]));
