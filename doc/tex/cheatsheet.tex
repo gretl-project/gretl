@@ -190,6 +190,36 @@ Note that this method does not require scripting at all. In fact, you
 might as well use the GUI Menu ``Add/Define new variable'' for the
 same purpose, with the same syntax.
 
+\subsection{Generating a discrete variable out of a set of dummies}
+
+\emph{Problem:} The \cmd{dummify} function (also available as a
+command) generates a set of mutually exclusive dummies from a discrete
+variable. The reverse functionality, however, seems to be absent.
+
+\emph{Solution:}
+\begin{code}
+series x = lincomb(D, seq(1, nelem(D)))
+\end{code}
+
+\emph{Comment:} Suppose you have a list \texttt{D} of mutually
+exclusive dummies, that is a full set of 0/1 variables coding for the
+value of some characteristic, such that the sum of the values of the
+elements of \texttt{D} is 1 at each observation. This is, by the way,
+exactly what the \cmd{dummify} command produces.  The reverse job of
+\cmd{dummify} can be performed neatly by using the \cmd{lincomb}
+function.
+
+The code above multiplies the first dummy variable in the list
+\texttt{D} by 1, the second one by 2, and so on. Hence, the return
+value is a series whose value is $i$ if and only if the $i$-th member
+of \texttt{D} has value 1.
+
+If you want your coding to start from 0 instead of 1, you'll have to
+modify the code snippet above into
+\begin{code}
+series x = lincomb(D, seq(0, nelem(D)-1))
+\end{code}
+
 \subsection{Generating an ARMA(1,1)}
 
 \emph{Problem:} Generate $y_t = 0.9 y_{t-1} + \varepsilon_t - 0.5
