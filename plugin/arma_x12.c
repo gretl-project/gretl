@@ -592,35 +592,15 @@ static int *arma_info_get_x_list (arma_info *ainfo)
 static void 
 make_x12a_date_string (int t, const DATASET *dset, char *str)
 {
-    double dx;
-    int yr, subper = 0;
-    char *s;
-
     if (non_yearly_frequency(dset->pd)) {
 	int maj = t / dset->pd + 1;
 	int min = t % dset->pd + 1;
 
 	sprintf(str, "%d.%d", maj, min);
-	return;
-    } 
-
-    dx = date_as_double(t, dset->pd, dset->sd0);
-    yr = (int) dx;
-
-    sprintf(str, "%g", dx);
-    s = strchr(str, '.');
-
-    if (s != NULL) {
-	subper = atoi(s + 1);
-    } else if (dset->pd > 1) {
-	subper = 1;
-    } 
-
-    if (subper > 0) {
-	sprintf(str, "%d.%d", yr, subper);
     } else {
-	sprintf(str, "%d", yr);
-    }    
+	ntodate(str, t, dset);
+	gretl_charsub(str, ':', '.');
+    }
 }
 
 static void x12_pdq_string (arma_info *ainfo, FILE *fp)
@@ -726,7 +706,7 @@ static int write_arma_spc_file (const char *fname,
 #if 0
 	fprintf(stderr, "x12a: doing forecast: nfcast = %d\n", nfcast);
 #endif
-    } 
+    }
 
     output_series_to_spc(ylist, dset, t1, tmax, fp);
 
@@ -848,10 +828,12 @@ MODEL arma_x12_model (const int *list, const int *pqspec,
 #endif
     int err = 0;
 
+#if 0
     if (dset->t2 < dset->n - 1) {
 	/* FIXME this is temporary (OPT_F -> generate forecast) */
 	opt |= OPT_F;
     }
+#endif
 
     ainfo = &ainfo_s;
     arma_info_init(ainfo, opt | OPT_X, pqspec, dset);
