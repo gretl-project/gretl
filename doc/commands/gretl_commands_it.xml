@@ -2932,6 +2932,39 @@
 
   </command>
 
+  <command name="dummify" section="Transformations" context="gui"
+    label="Create sets of dummies">
+
+    <description>
+      <para>
+	L'operazione <quote>dummify</quote> è disponibile solo per
+	variabili discrete. Ha l'effetto di creare un insieme di
+	variabili dummy (binarie) per ognuno dei valori presenti nella
+	variabile.
+      </para>
+      <para>
+	Come esempio, si immagini di avere una variabile chiamata
+	<lit>statociv</lit>, con valori 1 per
+	<quote>celibe/nubile</quote>, 2 per <quote>coniugato</quote>,
+	3 per <quote>separato/divorziato</quote> e 4 per
+	<quote>vedovo</quote>. L'operazione di cui stiamo parlando
+	creerebbe 4 variabili binarie: la prima avrebbe valore 1 per
+	chi non si è mai sposato e zero per gli altri; la seconda
+	avrebbe valore 1 per chi è sposato e zero per gli altri, e
+	così via.
+      </para>
+      <para>
+	Nella pratica, per una serie discreta con <math>k</math>
+	categorie di solito il numero di dummy che vengono create è
+	<math>k</math> &minus; 1, per evitare la cosiddetta
+	<quote>trappola delle dummy</quote>. Di conseguenza, vi
+	offriamo l'opzione di saltare il valore più alto o quello più
+	basso della codifica.
+      </para>
+    </description>
+
+  </command>
+
   <command name="dummify" section="Transformations" label="Crea variabili dummy" context="cli">
 
     <usage>
