@@ -5901,15 +5901,33 @@
 	<fnarg type="symmat">A</fnarg>
       </fnargs>
       <description>
-    <para>
-      Calcola la forma quadratica <equation status="inline"
-      ascii="Y = xAx'" tex="$Y = x A x'$"/>. L'uso di questa
-      funzione al posto della consueta moltiplicazione matriciale
-      garantisce maggiore velocità e accuratezza. Se le dimensioni
-      di <argname>x</argname> e <argname>A</argname> non sono
-      compatibili o se <argname>A</argname> non è simmetrica
-      viene restituito un messaggio d'errore.
-    </para>
+	<para context="notex">
+	  Calcola la forma quadratica <equation status="inline"
+	  ascii="Y = xAx'" tex="$Y = x A x'$"/>. L'uso di questa
+	  funzione al posto della consueta moltiplicazione matriciale
+	  garantisce maggiore velocità e accuratezza nel caso generico
+	  in cui <argname>A</argname> sia una qualche matrice
+	  simmetrica. Tuttavia, nel caso particolare in cui
+	  <argname>A</argname> sia la matrice identità, la semplice
+	  espressione <lit>x'x</lit> ha prestazioni molto migliori di
+	  <lit>qform(x',I(rows(x))</lit>.
+	</para>
+	<para context="tex">
+	  Calcola la forma quadratica <equation status="inline"
+	  ascii="Y = xAx'" tex="$Y = x A x'$"/>. L'uso di questa
+	  funzione al posto della consueta moltiplicazione matriciale
+	  garantisce maggiore velocità e accuratezza nel caso generico
+	  in cui <argname>A</argname> sia una qualche matrice
+	  simmetrica. Tuttavia, nel caso particolare <equation
+	  status="inline" ascii="A = I" tex="$A = I$"/>, la semplice
+	  espressione <lit>x'x</lit> ha prestazioni molto migliori di
+	  <lit>qform(x',I(rows(x))</lit>.
+	</para>
+	<para>
+	  Se le dimensioni di <argname>x</argname> e
+	  <argname>A</argname> non sono compatibili o se
+	  <argname>A</argname> non è simmetrica viene restituito un
+	  messaggio d'errore. </para>
       </description>
     </function>
 

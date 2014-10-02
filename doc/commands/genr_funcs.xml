@@ -5936,14 +5936,30 @@
 	<fnarg type="symmat">A</fnarg>
       </fnargs>
       <description>
+	<para context="notex">
+	  Computes the quadratic form <equation status="inline"
+	  ascii="Y = xAx'" tex="$Y = x A x'$"/>.  Using this function
+	  instead of ordinary matrix multiplication guarantees more
+	  speed and better accuracy, when <argname>A</argname> is a
+	  generic symmetric matrix. However, in the special case when
+	  <argname>A</argname> is the identity matrix, the simple
+	  expression <lit>x'x</lit> performs much better than
+	  <lit>qform(x',I(rows(x))</lit>.
+	</para>
+	<para context="tex">
+	  Computes the quadratic form <equation status="inline"
+	  ascii="Y = xAx'" tex="$Y = x A x'$"/>.  Using this function
+	  instead of ordinary matrix multiplication guarantees more
+	  speed and better accuracy, when <argname>A</argname> is a
+	  generic symmetric matrix.  However, in the special case <equation
+	  status="inline" ascii="A = I" tex="$A = I$"/>, the simple
+	  expression <lit>x'x</lit> performs much better than
+	  <lit>qform(x',I(rows(x))</lit>.
+	</para>
 	<para>
-	  Computes the quadratic form 
-	  <equation status="inline" ascii="Y = xAx'"
-		    tex="$Y = x A x'$"/>. Using this function instead of ordinary
-	  matrix multiplication guarantees more speed and better accuracy.
-	  If <argname>x</argname> and <argname>A</argname> are not
-	  conformable, or <argname>A</argname> is not symmetric, an error
-	  is returned.
+	If <argname>x</argname> and <argname>A</argname> are not
+	conformable, or <argname>A</argname> is not symmetric, an error
+	is returned.
 	</para>
       </description>
     </function>
