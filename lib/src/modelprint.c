@@ -3445,7 +3445,11 @@ static void rtf_print_coeff (const model_coeff *mc, PRN *prn)
     rtf_print_double(mc->se, prn); 
 
     if (!na(mc->tval)) {
-	pprintf(prn, " \\qc %.4f\\cell", mc->tval);
+	if (mc->tval < 0 && gretl_print_has_minus(prn)) {
+	    pprintf(prn, " \\qc −%.4f\\cell", -mc->tval);
+	} else {
+	    pprintf(prn, " \\qc %.4f\\cell", mc->tval);
+	}
     } else {
 	pprintf(prn, " \\qc %s\\cell", A_("undefined"));
     }
