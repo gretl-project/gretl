@@ -55,7 +55,7 @@ third-party data that are in reverse order (most recent first).
 \emph{Solution:}
 \begin{code}
 setobs 1 1 --cross-section
-genr sortkey = -obs
+series sortkey = -obs
 dataset sortby sortkey
 setobs 1 1950 --time-series
 \end{code}
@@ -72,7 +72,7 @@ If you have a dataset that is mostly the right way round, but a
 particular variable is wrong, you can reverse that variable as
 follows:
 \begin{code}
-genr x = sortby(-obs, x)
+x = sortby(-obs, x)
 \end{code}
 
 
@@ -96,7 +96,7 @@ to preserve a subsampled version of the dataset. Alternative solutions
 based on the \cmd{ok} function, such as
 \begin{code}
 list X = x1 x2 x3
-genr sel = ok(X)
+series sel = ok(X)
 smpl sel --restrict
 \end{code}
 are perhaps less obvious, but more flexible. Pick your poison.
@@ -173,7 +173,7 @@ which $d_t = 1$.
 
 \emph{Solution:}
 \begin{code}
-  genr d = (t=="1984:2")
+  series d = (t=="1984:2")
 \end{code}
 
 \emph{Comment:} The internal variable \texttt{t} is used to refer to
@@ -183,7 +183,7 @@ labels you can use the corresponding label. For example, if you open the
 dataset \texttt{mrw.gdt}, supplied with gretl among the
 examples, a dummy variable for Italy could be generated via
 \begin{code}
-  genr DIta = (t=="Italy")
+  series DIta = (t=="Italy")
 \end{code}
 
 Note that this method does not require scripting at all. In fact, you
@@ -473,7 +473,7 @@ genr time
 series minute = int(time/60) + 1
 series second = time % 60
 setobs minute second --panel
-genr rv = psd(y)^2
+series rv = psd(y)^2
 setobs 1 1
 smpl second==1 --restrict
 store foo rv
