@@ -4,6 +4,7 @@
 */
 
 #define CDEBUG 0
+#define TDEBUG 0
 
 /* allow deprecated "addobs" for "dataset addobs"? */
 #define ALLOW_ADDOBS 1
@@ -482,6 +483,10 @@ static int real_add_token (CMD *c, const char *tok,
     int n = c->ntoks;
     int err = 0;
 
+#if TDEBUG
+    fprintf(stderr, "real_add_token: '%s'\n", tok);
+#endif
+
     if (n == c->nt_alloced - 1) {
 	/* we've used all the existing slots */
 	int i, nt_new = c->nt_alloced * 2;
@@ -785,16 +790,16 @@ static int closing_delimiter_pos (const char *s)
 
 static int min_token_index (CMD *c)
 {
-    int pos = 0;
+    int pos = 0, apos = 1;
 
     if (c->toks[0].type == TOK_CATCH) {
+	/* advance everything by one place */
 	pos = 1;
+	apos = 2;
     }
 
-    /* FIXME restrict the test below to commands that support
-       TOK_ASSIGN: models and graphs? */
-
-    if (c->ntoks > pos + 1 && c->toks[pos+1].type == TOK_ASSIGN) {
+    if (c->ntoks > apos && c->toks[apos].type == TOK_ASSIGN) {
+	/* advance by assignment target and operator */
 	pos += 2;
     }
 
@@ -2286,8 +2291,14 @@ static int try_for_command_index (CMD *cmd, int i,
 		cmd->ciflags |= CI_EXTRA;
 	    }
 	    if (cmd->ci == GENR && !strcmp(test, "list")) {
-		/* probably "genr" but might be a special */
-		cmd->ciflags |= CI_LCHK;
+		if (peek_next_char(cmd, i) == '\0') {
+		    /* just "list" by itself */
+		    cmd->ci = VARLIST;
+		    cmd->ciflags = 0;
+		} else {
+		    /* probably "genr" but might be a special */
+		    cmd->ciflags |= CI_LCHK;
+		}
 	    }
 	    if (idx_only && cmd->ci == END && peek_loop_param(cmd, i)) {
 		deprecate_alias("end loop", "endloop", 0);
@@ -2299,9 +2310,9 @@ static int try_for_command_index (CMD *cmd, int i,
     return cmd->ci;
 }
 
-/* Tricky, because "list" can be a type-word, but by itself
-   it's a venerable alias for "varlist"; and in addition it
-   can start "list <listname> {print|delete}".
+/* Tricky, because "list" can be a type-word (and hence an
+   alias for "genr", but it can start a command, as in
+   "list <listname> {print|delete}".
 */
 
 static int detect_list_command (CMD *c)
@@ -2309,14 +2320,7 @@ static int detect_list_command (CMD *c)
     int k = c->cstart;
     int ret = 0;
 
-    if (c->ntoks == k + 1) {
-	if (!strcmp(c->toks[k].s, "list")) {
-	    mark_token_done(c->toks[k]);
-	    c->ci = VARLIST;
-	    c->ciflags = 0;
-	    ret = 1;
-	}
-    } else if (c->ntoks == k + 3) {
+    if (c->ntoks == k + 3) {
 	const char *cword = c->toks[k+2].s;
 
 	if (!strcmp(c->toks[k].s, "list") && 
@@ -2893,6 +2897,26 @@ static int check_for_list (CMD *cmd)
     return cmd->err;
 }
 
+/* @cmd has the CI_LCHK (ambiguity) flag set: see if
+   we're able to disambiguate by this point
+*/
+
+static int scrub_list_check (CMD *cmd)
+{
+    int maxtoks = cmd->toks[0].type == TOK_CATCH ? 4 : 3;
+
+    if (cmd->ntoks == maxtoks) {
+	const char *s = cmd->toks[maxtoks-1].s;
+
+	if (strcmp(s, "print") && strcmp(s, "delete")) {
+	    cmd->ciflags ^= CI_LCHK;
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 #define MAY_START_NUMBER(c) (c == '.' || c == '-' || c == '+')
 
 /* tokenize_line: parse @line into a set of tokens on a
@@ -2915,7 +2939,7 @@ static int tokenize_line (CMD *cmd, const char *line,
     int want_fname = 0;
     int err = 0;
 
-#if CDEBUG
+#if CDEBUG || TDEBUG
     fprintf(stderr, "*** %s: line = '%s'\n", 
 	    idx_only ? "get_command_index" : "parse_command_line", line);
 #endif
@@ -2960,7 +2984,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    /* left-hand delimiter that needs to be paired */
 	    n = closing_delimiter_pos(s);
 	    if (n < 0) {
-		gretl_errmsg_set("missing closing delimiter");
+		gretl_errmsg_sprintf(_("Unmatched '%c'\n"), *s);
 		err = E_PARSE;
 	    } else if (n < FN_NAMELEN) {
 		strncat(tok, s+1, n);
@@ -2978,7 +3002,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 	} else if (*s == '"') {
 	    n = closing_quote_pos(s, cmd->ci);
 	    if (n < 0) {
-		gretl_errmsg_set("missing closing quote");
+		gretl_errmsg_sprintf(_("Unmatched '%c'\n"), '"');
 		err = E_PARSE;
 	    } else {
 		err = push_quoted_token(cmd, s, n, pos);
@@ -3028,6 +3052,10 @@ static int tokenize_line (CMD *cmd, const char *line,
 
 	    if (cmd->ntoks > imin) {
 		try_for_command_index(cmd, imin, dset, idx_only);
+#if TDEBUG
+		fprintf(stderr, "ntoks=%d, imin=%d, try_for_command_index gave %d\n",
+			cmd->ntoks, imin, cmd->ci);
+#endif
 		if (cmd->ci == PRINT && peek_next_char(cmd, imin) != '"') {
 		    cmd->ciflags |= CI_LIST;
 		}
@@ -3046,9 +3074,9 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    break;
 	}
 
-	if (cmd->ntoks > 1 && !strcmp(cmd->toks[0].s, "list")) {
-	    /* FIXME, bodge */
-	    wild_ok = 1;
+	if (cmd->ciflags & CI_LCHK) {
+	    /* handle ambiguity of "list ..." */
+	    wild_ok = !scrub_list_check(cmd);
 	}
 
 	if (cmd->ci == DELEET || (cmd->ciflags & CI_LIST)) {
