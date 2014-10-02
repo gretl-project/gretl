@@ -791,6 +791,9 @@ static int min_token_index (CMD *c)
 	pos = 1;
     }
 
+    /* FIXME restrict the test below to commands that support
+       TOK_ASSIGN: models and graphs? */
+
     if (c->ntoks > pos + 1 && c->toks[pos+1].type == TOK_ASSIGN) {
 	pos += 2;
     }
