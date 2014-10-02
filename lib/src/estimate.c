@@ -3750,6 +3750,8 @@ static void print_arch_regression (const gretl_matrix *b,
 	    sprintf(names[i], "alpha(%d)", i);
 	}
 
+	/* is a df correction wanted here? */
+
 	print_coeffs(b->val, se, (const char **) names, 
 		     k, T - k, ARCH, prn);
     }

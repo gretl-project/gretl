@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "gretl_xml.h"
 #include "matrix_extra.h"
+#include "libset.h"
 
 /**
  * SECTION:gretl_model
@@ -5436,10 +5437,27 @@ double coeff_pval (int ci, double x, int df)
     double p = NADBL;
 
     if (!xna(x)) {
-	if (ci == MODPRINT || ASYMPTOTIC_MODEL(ci)) {
+	if (df == 0 || ci == MODPRINT || ASYMPTOTIC_MODEL(ci)) {
 	    p = normal_pvalue_2(x);
 	} else {
 	    p = student_pvalue_2(df, x);
+	}
+    }
+
+    return p;
+}
+
+double model_coeff_pval (const MODEL *pmod, double x)
+{
+    double p = NADBL;
+
+    if (!xna(x)) {
+	if (ASYMPTOTIC_MODEL(pmod->ci) ||
+	    ((pmod->opt & OPT_R) && libset_get_bool("robust_z"))) {
+	    p = normal_pvalue_2(x);
+	} else {
+	    /* AR model ?? */
+	    p = student_pvalue_2(pmod->dfd, x);
 	}
     }
 

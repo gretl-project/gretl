@@ -436,6 +436,8 @@ int mle_criteria (MODEL *pmod, int addk);
 
 double coeff_pval (int ci, double x, int df);
 
+double model_coeff_pval (const MODEL *pmod, double x);
+
 int exact_fit_check (const MODEL *pmod, PRN *prn);
 
 void maybe_suppress_time_dummies (MODEL *pmod, int ndum);

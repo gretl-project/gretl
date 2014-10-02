@@ -723,7 +723,7 @@ static int least_significant_coeff (const MODEL *pmod)
     }
 
     if (tmin < 3.2) {
-	x = coeff_pval(pmod->ci, tmin, pmod->dfd);
+	x = model_coeff_pval(pmod, tmin);
 	if (!na(x) && x > .10) {
 	    return pmod->list[k+2];
 	}
@@ -2139,6 +2139,8 @@ static int use_zscore (const MODEL *pmod)
 	return 0;
     } else if (ASYMPTOTIC_MODEL(pmod->ci)) {
 	return 1;
+    } else if ((pmod->opt & OPT_R) && libset_get_bool("robust_z")) {
+	return 1;
     } else {
 	return 0;
     }
@@ -3375,7 +3377,7 @@ prepare_model_coeff (const MODEL *pmod, const DATASET *dset,
 	    mc->pval = gretl_model_get_double(pmod, "dfpval");
 	    mc->df_pval = 1;
 	} else {	
-	    mc->pval = coeff_pval(pmod->ci, mc->tval, pmod->dfd);
+	    mc->pval = model_coeff_pval(pmod, mc->tval);
 	}
     }
 
@@ -4454,7 +4456,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 		pval = gretl_model_get_double(pmod, "dfpval");
 	    } else if (!intervals) {
 		/* regular p-value */
-		pval = coeff_pval(pmod->ci, tval, dfd);
+		pval = model_coeff_pval(pmod, tval);
 	    } 
 	}
 	for (j=0; j<ncols; j++) {

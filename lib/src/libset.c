@@ -71,7 +71,8 @@ enum {
     STATE_BFGS_RSTEP      = 1 << 18, /* use Richardson method in BFGS numerical
 					gradient */
     STATE_DPDSTYLE_ON     = 1 << 19, /* emulate dpd in dynamic panel data models */
-    STATE_OPENMP_ON       = 1 << 20  /* using openmp */
+    STATE_OPENMP_ON       = 1 << 20, /* using openmp */
+    STATE_ROBUST_Z        = 1 << 21  /* use z- not t-score with HCCM/HAC */
 };    
 
 /* for values that really want a non-negative integer */
@@ -155,6 +156,7 @@ struct set_vars_ {
 			   !strcmp(s, BFGS_RSTEP) || \
 			   !strcmp(s, DPDSTYLE) || \
 			   !strcmp(s, USE_DCMT) || \
+			   !strcmp(s, ROBUST_Z) || \
 			   !strcmp(s, USE_OPENMP))
 
 #define libset_double(s) (!strcmp(s, CONV_HUGE) || \
@@ -2082,6 +2084,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_DPDSTYLE_ON;
     } else if (!strcmp(s, USE_OPENMP)) {
 	return STATE_OPENMP_ON;
+    } else if (!strcmp(s, ROBUST_Z)) {
+	return STATE_ROBUST_Z;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
 		"variable '%s'\n", s);	
