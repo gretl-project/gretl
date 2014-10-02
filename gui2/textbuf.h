@@ -101,6 +101,8 @@ gboolean help_popup_handler (GtkWidget *w, GdkEventButton *event,
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable);
 
+void create_console (windata_t *vwin, int hsize, int vsize);
+
 void sourceview_insert_file (windata_t *vwin, const char *fname);
 
 void sourceview_insert_buffer (windata_t *vwin, const char *buf);

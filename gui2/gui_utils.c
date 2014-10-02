@@ -2103,7 +2103,7 @@ windata_t *console_window (int hsize, int vsize)
     }
 
     vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
-    create_text(vwin, hsize, vsize, 0, 1);
+    create_console(vwin, hsize, vsize);
     text_table_setup(vwin->vbox, vwin->text);
 
     /* catch some special keystrokes */

@@ -3508,6 +3508,67 @@ void create_text (windata_t *vwin, int hsize, int vsize,
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), editable);
 }
 
+static GtkTextTagTable *gretl_console_tags_new (void)
+{
+    GtkTextTagTable *table;
+    GtkTextTag *tag;
+
+    table = gtk_text_tag_table_new(); 
+
+    tag = gtk_text_tag_new("bluetext");
+    g_object_set(tag, "foreground", "blue", NULL);
+    gtk_text_tag_table_add(table, tag);
+    
+    tag = gtk_text_tag_new("redtext");
+    g_object_set(tag, "foreground", "red", NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    return table;
+}
+
+void create_console (windata_t *vwin, int hsize, int vsize)
+{
+    static GtkTextTagTable *console_tags = NULL;
+    GtkSourceBuffer *sbuf;
+    GtkTextView *view;
+    int cw;
+
+    if (console_tags == NULL) {
+	console_tags = gretl_console_tags_new();
+    }
+
+    sbuf = gtk_source_buffer_new(console_tags);
+    gtk_source_buffer_set_highlight_matching_brackets(sbuf, TRUE);
+
+    vwin->text = gtk_source_view_new_with_buffer(sbuf);
+    vwin->sbuf = sbuf;
+
+    view = GTK_TEXT_VIEW(vwin->text);
+
+    gtk_text_view_set_wrap_mode(view, GTK_WRAP_NONE);
+    gtk_text_view_set_left_margin(view, 4);
+    gtk_text_view_set_right_margin(view, 4);
+
+    gtk_widget_modify_font(GTK_WIDGET(vwin->text), fixed_font);
+
+    cw = get_char_width(vwin->text);
+    set_source_tabs(vwin->text, cw);
+
+    if (hsize > 0) {
+	hsize *= cw;
+	hsize += 48; /* ?? */
+    }
+
+    if (hsize > 0 && vsize > 0) {
+	GtkWidget *vmain = vwin_toplevel(vwin);
+
+	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);
+    }
+
+    gtk_text_view_set_editable(view, TRUE);
+    gtk_text_view_set_cursor_visible(view, TRUE);
+}
+
 void text_set_word_wrap (GtkWidget *w, gboolean wrap)
 {
     if (wrap) {
