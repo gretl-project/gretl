@@ -1705,8 +1705,10 @@ MODEL arma_model (const int *list, const int *pqspec,
 	maybe_allow_missvals(ainfo);
 	err = arma_adjust_sample(ainfo, dset, &missv, &misst);
 	if (err) {
-	    gretl_errmsg_sprintf(_("Missing value encountered for "
-				   "variable %d, obs %d"), missv, misst);
+	    if (missv > 0 && misst > 0) {
+		gretl_errmsg_sprintf(_("Missing value encountered for "
+				       "variable %d, obs %d"), missv, misst);
+	    }
 	} else if (missv > 0) {
 	    set_arma_missvals(ainfo);
 	}

@@ -485,6 +485,11 @@ static int arma_adjust_sample (arma_info *ainfo,
 	}
     }
 
+    if (t2 < t1) {
+	gretl_errmsg_set(_("No usable data were found"));
+	return E_MISSDATA;
+    }
+
     missing = 0;
 
     /* check for missing obs within the adjusted sample range */
