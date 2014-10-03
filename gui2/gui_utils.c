@@ -2338,7 +2338,10 @@ void viewer_set_editable (windata_t *vwin)
 gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 {
     if (vwin_content_changed(vwin)) {
-	int resp = yes_no_dialog("gretl", _("Save changes?"), 1);
+	int resp = yes_no_dialog_with_parent("gretl", 
+					     _("Save changes?"), 
+					     1,
+					     vwin_toplevel(vwin));
 
 	if (resp == GRETL_CANCEL) {
 	    /* cancel -> don't save, but also don't close */

@@ -245,6 +245,14 @@ static void tabwin_tab_close (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
+    if (tabwin->role == EDIT_SCRIPT && vwin_content_changed(vwin)) {
+	gint cancel = query_save_text(NULL, NULL, vwin);
+
+	if (cancel) {
+	    return;
+	}
+    }
+
     /* note: vwin->mbar is packed under tabwin, so it will not
        get destroyed automatically when the page is removed
     */
