@@ -495,6 +495,17 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     return FALSE;
 }
 
+static int series_is_dummifiable (int v)
+{
+    if (!series_is_discrete(dataset, v)) {
+	return 0;
+    } else if (gretl_isdummy(0, dataset->n-1, dataset->Z[v])) {
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
 GtkWidget *build_var_popup (int selvar)
 {
     const char *items[] = {
@@ -548,7 +559,7 @@ GtkWidget *build_var_popup (int selvar)
 	    /* skip boxplot option */
 	    continue;
 	}
-	if (i == 15 && !series_is_discrete(dataset, selvar)) {
+	if (i == 15 && !series_is_dummifiable(selvar)) {
 	    /* skip dummify option */
 	    continue;
 	}	
