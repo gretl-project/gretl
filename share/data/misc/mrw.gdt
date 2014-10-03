@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE gretldata SYSTEM "gretldata.dtd">
 
-<gretldata name="mrw" frequency="1" startobs="1" endobs="121" type="cross-section">
+<gretldata version="1.3" name="mrw" frequency="1" startobs="1" endobs="121" type="cross-section">
 <description>
 Data from N. Gregory Mankiw, David Romer and David N. Weil,
 &quot;A contribution to the empirics of economic growth,&quot;
@@ -21,12 +21,15 @@ but noticeable).</description>
 <variables count="9">
 <variable name="nonoil"
  label="dummy: = 1 for non-oil producers"
+ discrete="true"
 />
 <variable name="intermed"
  label="dummy: = 1 for countries with fairly good data"
+ discrete="true"
 />
 <variable name="OECD"
  label="dummy: = 1 for OECD countries"
+ discrete="true"
 />
 <variable name="gdp60"
  label="GDP per adult, 1960"
@@ -67,7 +70,7 @@ but noticeable).</description>
 <obs label="IvoryCoa">1 1 0 1386 1704 5.1 4.3 12.4 2.3 </obs>
 <obs label="Kenya">1 1 0 944 1329 4.8 3.4 17.4 2.4 </obs>
 <obs label="Lesotho">0 0 0 431 1483 6.8 1.9 12.6 2 </obs>
-<obs label="Liberia">1 0 0 863 944 3.3 3.0 21.5 2.5 </obs>
+<obs label="Liberia">1 0 0 863 944 3.3 3 21.5 2.5 </obs>
 <obs label="Madagasc">1 1 0 1194 975 1.4 2.2 7.1 2.6 </obs>
 <obs label="Malawi">1 1 0 455 823 4.8 2.4 13.2 0.6 </obs>
 <obs label="Mali">1 1 0 737 710 2.1 2.2 7.3 1 </obs>
@@ -76,7 +79,7 @@ but noticeable).</description>
 <obs label="Morocco">1 1 0 1030 2348 5.8 2.5 8.3 3.6 </obs>
 <obs label="Mozambiq">1 0 0 1420 1035 1.4 2.7 6.1 0.7 </obs>
 <obs label="Niger">1 0 0 539 841 4.4 2.6 10.3 0.5 </obs>
-<obs label="Nigeria">1 1 0 1055 1186 2.8 2.4 12.0 2.3 </obs>
+<obs label="Nigeria">1 1 0 1055 1186 2.8 2.4 12 2.3 </obs>
 <obs label="Rwanda">1 0 0 460 696 4.5 2.8 7.9 0.4 </obs>
 <obs label="Senegal">1 1 0 1392 1450 2.5 2.3 9.6 1.7 </obs>
 <obs label="SierraLe">1 0 0 511 805 3.4 1.6 10.9 1.7 </obs>
@@ -84,7 +87,7 @@ but noticeable).</description>
 <obs label="SAfrica">1 1 0 4768 7064 3.9 2.3 21.6 3 </obs>
 <obs label="Sudan">1 0 0 1254 1038 1.8 2.6 13.2 2 </obs>
 <obs label="Swazilan">0 0 0 817 NA 7.2 NA 17.7 3.7 </obs>
-<obs label="Tanzania">1 1 0 383 710 5.3 2.9 18.0 0.5 </obs>
+<obs label="Tanzania">1 1 0 383 710 5.3 2.9 18 0.5 </obs>
 <obs label="Togo">1 0 0 777 978 3.4 2.5 15.5 2.9 </obs>
 <obs label="Tunisia">1 1 0 1623 3661 5.6 2.4 13.8 4.3 </obs>
 <obs label="Uganda">1 0 0 601 667 3.5 3.1 4.1 1.1 </obs>
@@ -92,29 +95,29 @@ but noticeable).</description>
 <obs label="Zambia">1 1 0 1410 1217 2.1 2.7 31.7 2.4 </obs>
 <obs label="Zimbabwe">1 1 0 1187 2107 5.1 2.8 21.1 4.4 </obs>
 <obs label="Afghanis">0 0 0 1224 NA 1.6 NA 6.9 0.9 </obs>
-<obs label="Bahrain">0 0 0 NA NA NA NA 30.0 12.1 </obs>
+<obs label="Bahrain">0 0 0 NA NA NA NA 30 12.1 </obs>
 <obs label="Banglade">1 1 0 846 1221 4 2.6 6.8 3.2 </obs>
 <obs label="Burma">1 1 0 517 1031 4.5 1.7 11.4 3.5 </obs>
-<obs label="HongKong">1 1 0 3085 13372 8.9 3.0 19.9 7.2 </obs>
+<obs label="HongKong">1 1 0 3085 13372 8.9 3 19.9 7.2 </obs>
 <obs label="India">1 1 0 978 1339 3.6 2.4 16.8 5.1 </obs>
 <obs label="Iran">0 0 0 3606 7400 6.3 3.4 18.4 6.5 </obs>
 <obs label="Iraq">0 0 0 4916 5626 3.8 3.2 16.2 7.4 </obs>
 <obs label="Israel">1 1 0 4802 10450 5.9 2.8 28.5 9.5 </obs>
-<obs label="Japan">1 1 1 3493 13893 6.8 1.2 36.0 10.9 </obs>
+<obs label="Japan">1 1 1 3493 13893 6.8 1.2 36 10.9 </obs>
 <obs label="Jordan">1 1 0 2183 4312 5.4 2.7 17.6 10.8 </obs>
 <obs label="SKorea">1 1 0 1285 4775 7.9 2.7 22.3 10.2 </obs>
 <obs label="Kuwait">0 0 0 77881 25635 2.4 6.8 9.5 9.6 </obs>
 <obs label="Malaysia">1 1 0 2154 5788 7.1 3.2 23.2 7.3 </obs>
-<obs label="Nepal">1 0 0 833 974 2.6 2.0 5.9 2.3 </obs>
+<obs label="Nepal">1 0 0 833 974 2.6 2 5.9 2.3 </obs>
 <obs label="Oman">0 0 0 NA 15584 NA 3.3 15.6 2.7 </obs>
-<obs label="Pakistan">1 1 0 1077 2175 5.8 3.0 12.2 3 </obs>
-<obs label="Philippi">1 1 0 1668 2430 4.5 3.0 14.9 10.6 </obs>
+<obs label="Pakistan">1 1 0 1077 2175 5.8 3 12.2 3 </obs>
+<obs label="Philippi">1 1 0 1668 2430 4.5 3 14.9 10.6 </obs>
 <obs label="SaudiAra">0 0 0 6731 11057 6.1 4.1 12.8 3.1 </obs>
 <obs label="Singapor">1 1 0 2793 14678 9.2 2.6 32.2 9 </obs>
 <obs label="SriLanka">1 1 0 1794 2482 3.7 2.4 14.8 8.3 </obs>
-<obs label="Syria">1 1 0 2382 6042 6.7 3.0 15.9 8.8 </obs>
+<obs label="Syria">1 1 0 2382 6042 6.7 3 15.9 8.8 </obs>
 <obs label="Taiwan">0 0 0 NA NA 8 NA 20.7 0 </obs>
-<obs label="Thailand">1 1 0 1308 3220 6.7 3.1 18.0 4.4 </obs>
+<obs label="Thailand">1 1 0 1308 3220 6.7 3.1 18 4.4 </obs>
 <obs label="UAR">0 0 0 NA 18513 NA NA 26.5 0 </obs>
 <obs label="Yemen">0 0 0 NA 1918 NA 2.5 17.2 0.6 </obs>
 <obs label="Austria">1 1 1 5939 13327 3.6 0.4 23.4 8 </obs>
@@ -122,10 +125,10 @@ but noticeable).</description>
 <obs label="Cyprus">0 0 0 2948 NA 5.2 NA 31.2 8.2 </obs>
 <obs label="Denmark">1 1 1 8551 16491 3.2 0.6 26.6 10.7 </obs>
 <obs label="Finland">1 1 1 6527 13779 3.7 0.7 36.9 11.5 </obs>
-<obs label="France">1 1 1 7215 15027 3.9 1.0 26.2 8.9 </obs>
+<obs label="France">1 1 1 7215 15027 3.9 1 26.2 8.9 </obs>
 <obs label="WGermany">1 1 1 7695 15297 3.3 0.5 28.5 8.4 </obs>
 <obs label="Greece">1 1 1 2257 6868 5.1 0.7 29.3 7.9 </obs>
-<obs label="Iceland">0 0 0 8091 NA 3.9 NA 29.0 10.2 </obs>
+<obs label="Iceland">0 0 0 8091 NA 3.9 NA 29 10.2 </obs>
 <obs label="Ireland">1 1 1 4411 8675 3.8 1.1 25.9 11.4 </obs>
 <obs label="Italy">1 1 1 4913 11082 3.8 0.6 24.9 7.1 </obs>
 <obs label="Luxembou">0 0 0 9015 NA 2.8 NA 26.9 5 </obs>
@@ -133,38 +136,38 @@ but noticeable).</description>
 <obs label="Netherla">1 1 1 7689 13177 3.6 1.4 25.8 10.7 </obs>
 <obs label="Norway">1 1 1 7938 19723 4.3 0.7 29.1 10 </obs>
 <obs label="Portugal">1 1 1 2272 5827 4.4 0.6 22.5 5.8 </obs>
-<obs label="Spain">1 1 1 3766 9903 4.9 1.0 17.7 8 </obs>
+<obs label="Spain">1 1 1 3766 9903 4.9 1 17.7 8 </obs>
 <obs label="Sweden">1 1 1 7802 15237 3.1 0.4 24.5 7.9 </obs>
 <obs label="Switzerl">1 1 1 10308 15881 2.5 0.8 29.7 4.8 </obs>
 <obs label="Turkey">1 1 1 2274 4444 5.2 2.5 20.2 5.5 </obs>
 <obs label="UK">1 1 1 7634 13331 2.5 0.3 18.4 8.9 </obs>
 <obs label="Barbados">0 0 0 3165 NA 4.8 NA 19.5 12.1 </obs>
-<obs label="Canada">1 1 1 10286 17935 4.2 2.0 23.3 10.6 </obs>
+<obs label="Canada">1 1 1 10286 17935 4.2 2 23.3 10.6 </obs>
 <obs label="CostaRic">1 1 0 3360 4492 4.7 3.5 14.7 7 </obs>
 <obs label="Dominica">1 1 0 1939 3308 5.1 2.9 17.1 5.8 </obs>
-<obs label="ElSalvad">1 1 0 2042 1997 3.3 3.3 8.0 3.9 </obs>
+<obs label="ElSalvad">1 1 0 2042 1997 3.3 3.3 8 3.9 </obs>
 <obs label="Guatemal">1 1 0 2481 3034 3.9 3.1 8.8 2.4 </obs>
 <obs label="Haiti">1 1 0 1096 1237 1.8 1.3 7.1 1.9 </obs>
 <obs label="Honduras">1 1 0 1430 1822 4 3.1 13.8 3.7 </obs>
 <obs label="Jamaica">1 1 0 2726 3080 2.1 1.6 20.6 11.2 </obs>
 <obs label="Mexico">1 1 0 4229 7380 5.5 3.3 19.5 6.6 </obs>
 <obs label="Nicaragu">1 1 0 3195 3978 4.1 3.3 14.5 5.8 </obs>
-<obs label="Panama">1 1 0 2423 5021 5.9 3.0 26.1 11.6 </obs>
+<obs label="Panama">1 1 0 2423 5021 5.9 3 26.1 11.6 </obs>
 <obs label="Trinidad">1 1 0 9253 11285 2.7 1.9 20.4 8.8 </obs>
 <obs label="USA">1 1 1 12362 18988 3.2 1.5 21.1 11.9 </obs>
 <obs label="Argentin">1 1 0 4852 5533 2.1 1.5 25.3 5 </obs>
 <obs label="Bolivia">1 1 0 1618 2055 3.3 2.4 13.3 4.9 </obs>
 <obs label="Brazil">1 1 0 1842 5563 7.3 2.9 23.2 4.7 </obs>
 <obs label="Chile">1 1 0 5189 5533 2.6 2.3 29.7 7.7 </obs>
-<obs label="Colombia">1 1 0 2672 4405 5 3.0 18.0 6.1 </obs>
+<obs label="Colombia">1 1 0 2672 4405 5 3 18 6.1 </obs>
 <obs label="Ecuador">1 1 0 2198 4504 5.7 2.8 24.4 7.2 </obs>
 <obs label="Guyana">0 0 0 2761 NA 1.1 NA 32.4 11.7 </obs>
 <obs label="Paraguay">1 1 0 1951 3914 5.5 2.7 11.7 4.4 </obs>
-<obs label="Peru">1 1 0 3310 3775 3.5 2.9 12.0 8 </obs>
+<obs label="Peru">1 1 0 3310 3775 3.5 2.9 12 8 </obs>
 <obs label="Surinam">0 0 0 3226 NA 4.5 NA 19.4 8.1 </obs>
 <obs label="Uruguay">1 1 0 5119 5495 0.9 0.6 11.8 7 </obs>
 <obs label="Venezuel">1 1 0 10367 6336 1.9 3.8 11.4 7 </obs>
-<obs label="Australi">1 1 1 8440 13409 3.8 2.0 31.5 9.8 </obs>
+<obs label="Australi">1 1 1 8440 13409 3.8 2 31.5 9.8 </obs>
 <obs label="Fiji">0 0 0 3634 NA 4.2 NA 20.6 8.1 </obs>
 <obs label="Indonesi">1 1 0 879 2159 5.5 1.9 13.9 4.1 </obs>
 <obs label="NZ">1 1 1 9523 12308 2.7 1.7 22.5 11.9 </obs>
