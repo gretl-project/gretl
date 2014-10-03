@@ -1,7 +1,7 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE gretldata SYSTEM "gretldata.dtd">
 
-<gretldata name="data6-4" frequency="1" startobs="1" endobs="49" type="cross-section">
+<gretldata version="1.3" name="data6-4" frequency="1" startobs="1" endobs="49" type="cross-section">
 <description>
 DATA6-4:  Data on salaries and employment characteristics of 49
     employees in a certain company.  Data compiled by Susan Wong
@@ -12,13 +12,18 @@ DATA6-4:  Data on salaries and employment characteristics of 49
 </description>
 <variables count="4">
 <variable name="WAGE"
- label="Wage rate per month (Range 981 - 3833)"/>
+ label="Wage rate per month (Range 981 - 3833)"
+/>
 <variable name="EDUC"
- label="Yrs of education &gt; 8th grade when hired (Range 1 - 11)"/>
+ label="Yrs of education &gt; 8th grade when hired (Range 1 - 11)"
+ discrete="true"
+/>
 <variable name="EXPER"
- label="Number of years at the company (Range 1 - 23)"/>
+ label="Number of years at the company (Range 1 - 23)"
+/>
 <variable name="AGE"
- label="Age of employee (25 - 64)"/>
+ label="Age of employee (25 - 64)"
+/>
 </variables>
 <observations count="49" labels="false">
 <obs>1345 6 2 38 </obs>
