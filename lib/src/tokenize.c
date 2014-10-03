@@ -3445,7 +3445,12 @@ static int real_parse_command (const char *line, CMD *cmd,
 	   blocked, return.
 	*/
 	if (!err && flow_control(line, dset, cmd, ptr)) {
-	    cmd->ci = CMD_MASKED;
+	    if (cmd->err) {
+		/* we hit an error evaluating the if state */
+		err = cmd->err;
+	    } else {
+		cmd->ci = CMD_MASKED;
+	    }
 	    goto parse_exit;
 	}	   
 
