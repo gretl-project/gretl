@@ -1371,7 +1371,7 @@ static char *rebrace_string (const char *s, int *err)
 }
 
 static int 
-looks_like_list_token (cmd_token *tok, const DATASET *dset)
+looks_like_list_token (CMD *c, cmd_token *tok, const DATASET *dset)
 {
     if (tok->type != TOK_QUOTED) {
 	/* heuristic for a token that forms part of a series
@@ -1382,6 +1382,14 @@ looks_like_list_token (cmd_token *tok, const DATASET *dset)
 	    strchr(tok->s, '*') != NULL ||
 	    current_series_index(dset, tok->s) >= 0) {
 	    return 1;
+	} else if (get_list_by_name(tok->s)) {
+	    /* should be treated as list, not param, iff
+	       this is a genuine "delete" command, not
+	       "list foo delete"
+	    */
+	    if (!strcmp(c->toks[c->cstart].s, "delete")) {
+		return 1;
+	    }
 	}
     }
 
@@ -1420,7 +1428,7 @@ static int get_param (CMD *c, const DATASET *dset)
 
     if (c->ci == DELEET) {
 	/* experimental */
-	if (looks_like_list_token(tok, dset)) {
+	if (looks_like_list_token(c, tok, dset)) {
 	    c->ciflags &= ~CI_PARM1;
 	    c->ciflags |= CI_LIST;
 	    return 0;
@@ -2909,6 +2917,7 @@ static int scrub_list_check (CMD *cmd)
 	const char *s = cmd->toks[maxtoks-1].s;
 
 	if (strcmp(s, "print") && strcmp(s, "delete")) {
+	    /* cmd must be a "genr" instance */
 	    cmd->ciflags ^= CI_LCHK;
 	    return 1;
 	}
