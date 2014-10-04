@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-09-30 13:27-0400\n"
-"PO-Revision-Date: 2014-09-26 21:40+0200\n"
+"PO-Revision-Date: 2014-10-01 22:27+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -509,18 +509,14 @@ msgid "LM test"
 msgstr "Test LM"
 
 #: lib/src/compare.c:399
-#, fuzzy, c-format
+#, c-format
 msgid "Adding variables improved %d of %d information criteria.\n"
-msgstr ""
-"L'aggiunta delle variabili ha migliorato %d delle %d statistiche di "
-"selezione del modello.\n"
+msgstr "L'aggiunta delle variabili ha migliorato %d dei %d criteri di informazione.\n"
 
 #: lib/src/compare.c:402
-#, fuzzy, c-format
+#, c-format
 msgid "Omitting variables improved %d of %d information criteria.\n"
-msgstr ""
-"L'omissione delle variabili ha migliorato %d delle %d statistiche di "
-"selezione del modello.\n"
+msgstr "L'omissione delle variabili ha migliorato %d dei %d criteri di informazione.\n"
 
 #  Lasciare non tradotto, viene usato per le label di variabili in cui si sono
 #  salvati i risultati di test di omissione/aggiunta variabili.
@@ -6942,9 +6938,9 @@ msgid "Invalid option '--%s'"
 msgstr "Opzione non valida '--%s'"
 
 #: lib/src/tokenize.c:1144
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid option '-%c'"
-msgstr "Opzione non valida '--%s'"
+msgstr "Opzione non valida '-%c'"
 
 #: lib/src/transforms.c:144
 #, c-format
@@ -13553,7 +13549,7 @@ msgstr "Aggiungi differenze"
 
 #: gui2/menustate.c:383 gui2/menustate.c:516
 msgid "Dummify..."
-msgstr ""
+msgstr "Crea dummy..."
 
 #: gui2/menustate.c:385 gui2/menustate.c:489 gui2/menustate.c:517
 #: gui2/menustate.c:583
