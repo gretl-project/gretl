@@ -967,6 +967,9 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     }
 
     if (string_is_blank(line)) {
+	if (gretl_echo_space()) {
+	    pputc(prn, '\n');
+	}
 	return 0;
     }
 

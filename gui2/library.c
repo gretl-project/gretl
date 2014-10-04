@@ -8276,7 +8276,11 @@ static void gui_output_line (const char *line, ExecState *s, PRN *prn)
 	pprintf(prn, "%s\n", line);
     } else if (*line == '#') {
 	pprintf(prn, "%s\n", line);
-    } else if (!string_is_blank(line)) {
+    } else if (string_is_blank(line)) {
+	if (gretl_echo_space()) {
+	    pputc(prn, '\n');
+	}
+    } else {
 	if (!coding) {
 	    pputs(prn, "? ");
 	}

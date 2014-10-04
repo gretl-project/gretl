@@ -162,6 +162,7 @@ int gretl_in_gui_mode (void);
 
 void set_gretl_echo (int e);
 int gretl_echo_on (void);
+int gretl_echo_space (void);
 
 void set_gretl_messages (int e);
 int gretl_messages_on (void);

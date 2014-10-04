@@ -72,7 +72,8 @@ enum {
 					gradient */
     STATE_DPDSTYLE_ON     = 1 << 19, /* emulate dpd in dynamic panel data models */
     STATE_OPENMP_ON       = 1 << 20, /* using openmp */
-    STATE_ROBUST_Z        = 1 << 21  /* use z- not t-score with HCCM/HAC */
+    STATE_ROBUST_Z        = 1 << 21, /* use z- not t-score with HCCM/HAC */
+    STATE_ECHO_SPACE      = 1 << 22
 };    
 
 /* for values that really want a non-negative integer */
@@ -122,7 +123,6 @@ struct set_vars_ {
     int fdjac_qual;             /* quality of "fdjac" function */
 };
 
-#define ECHO "echo"
 #define MESSAGES "messages"
 #define WARNINGS "warnings"
 #define GRETL_DEBUG "debug"
@@ -136,8 +136,7 @@ struct set_vars_ {
 #define OMP_MNK_MIN "omp_mnk_min"
 #define OMP_N_THREADS "omp_num_threads"
 
-#define libset_boolvar(s) (!strcmp(s, ECHO) || \
-                           !strcmp(s, MESSAGES) || \
+#define libset_boolvar(s) (!strcmp(s, MESSAGES) || \
                            !strcmp(s, WARNINGS) || \
                            !strcmp(s, FORCE_DECP) || \
 			   !strcmp(s, FORCE_HC) || \
@@ -654,6 +653,12 @@ int gretl_echo_on (void)
     return flag_to_bool(state, STATE_ECHO_ON);
 }
 
+int gretl_echo_space (void)
+{
+    if (check_for_state()) return 0;
+    return flag_to_bool(state, STATE_ECHO_SPACE);
+}
+
 void set_gretl_messages (int e)
 {
     if (check_for_state()) return;
@@ -1140,6 +1145,47 @@ static int set_initvals (const char *mname, PRN *prn)
     return err;
 }
 
+static int set_echo_status (const char *arg)
+{
+    int err = 0;
+
+    if (check_for_state()) {
+	return 1;
+    }
+
+    if (!strcmp(arg, "on")) {
+	state->flags |= STATE_ECHO_ON;
+    } else if (!strcmp(arg, "off")) {
+	state->flags &= ~STATE_ECHO_ON;
+	state->flags &= ~STATE_ECHO_SPACE;
+    } else if (!strcmp(arg, "space")) {
+	state->flags |= STATE_ECHO_SPACE;
+    } else if (!strcmp(arg, "full")) {
+	state->flags |= STATE_ECHO_ON;
+	state->flags |= STATE_ECHO_SPACE;
+    } else {
+	err = E_INVARG;
+    }
+	
+    return err;
+}
+
+static const char *get_echo_status (void)
+{
+    if (check_for_state()) {
+	return "on";
+    } else if ((state->flags & STATE_ECHO_ON) && 
+	       (state->flags & STATE_ECHO_SPACE)) {
+	return "full";
+    } else if (state->flags & STATE_ECHO_ON) {
+	return "on";
+    } else if (state->flags & STATE_ECHO_SPACE) {
+	return "space";
+    } else {
+	return "off";
+    }
+}
+
 static int set_matmask (const char *vname, const DATASET *dset,
 			PRN *prn)
 {
@@ -1428,8 +1474,14 @@ static int print_settings (PRN *prn, gretlopt opt)
 	pprintf(prn, "set csv_read_na %s\n", get_csv_na_read_string());
     }
 
-    libset_print_int(CSV_DIGITS, prn, opt);	    
-    libset_print_bool(ECHO, prn, opt);
+    libset_print_int(CSV_DIGITS, prn, opt);
+
+    if (opt & OPT_D) {
+	pprintf(prn, " echo = %s\n", get_echo_status());
+    } else {
+	pprintf(prn, "set echo %s\n", get_echo_status());
+    }
+	    
     libset_print_bool(FORCE_DECP, prn, opt);
     libset_print_bool(HALT_ON_ERR, prn, opt);
     libset_print_int(LOOP_MAXITER, prn, opt);
@@ -1534,7 +1586,9 @@ static int libset_query_settings (const char *s, PRN *prn)
 {
     int err = 0;
 
-    if (libset_boolvar(s)) {
+    if (!strcmp(s, "echo")) {
+	pprintf(prn, "%s: code, currently '%s'\n", s, get_echo_status());
+    } else if (libset_boolvar(s)) {
 	pprintf(prn, "%s: boolean (on/off), currently %s\n", 
 		s, libset_get_bool(s)? "on" : "off");
     } else if (coded_intvar(s)) {
@@ -1692,6 +1746,8 @@ int execute_set (const char *setobj, const char *setarg,
 	    return set_initvals(setarg, prn);
 	} else if (!strcmp(setobj, "matrix_mask")) {
 	    return set_matmask(setarg, dset, prn);
+	} else if (!strcmp(setobj, "echo")) {
+	    return set_echo_status(setarg);
 	}
 
 	if (libset_boolvar(setobj)) {
@@ -2048,9 +2104,7 @@ int libset_set_int (const char *key, int val)
 
 static int boolvar_get_flag (const char *s)
 {
-    if (!strcmp(s, ECHO)) {
-	return STATE_ECHO_ON;
-    } else if (!strcmp(s, MESSAGES)) {
+    if (!strcmp(s, MESSAGES)) {
 	return STATE_MSGS_ON;
     } else if (!strcmp(s, WARNINGS)) {
 	return STATE_WARN_ON;
