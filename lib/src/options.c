@@ -426,6 +426,7 @@ struct gretl_option gretl_opts[] = {
     { PLOT,     OPT_S, "time-series", 0 },
     { PLOT,     OPT_T, "tall", 0 },
     { PRINT,    OPT_O, "byobs", 0 },
+    { PRINT,    OPT_L, "list", 0 },
     { PRINT,    OPT_N, "no-dates", 0 },
     { PRINT,    OPT_U, "numeric", 0 },
     { PROBIT,   OPT_P, "p-values", 0 },

@@ -163,7 +163,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { PERGM,    "pergm",    CI_LIST | CI_LLEN1 | CI_ORD2 },
     { PLOT,     "textplot", CI_LIST },    
     { POISSON,  "poisson",  CI_LIST },
-    { PRINT,    "print",    0 }, /* special: handled later */
+    { PRINT,    "print",    CI_INFL }, /* special: handled later */
     { PRINTF,   "printf",   CI_PARM1 | CI_VARGS },
     { PROBIT,   "probit",   CI_LIST },
     { PVAL,     "pvalue",   CI_ADHOC | CI_NOOPT },
@@ -1426,7 +1426,7 @@ static int get_param (CMD *c, const DATASET *dset)
 
     tok = &c->toks[pos];
 
-    if (c->ci == DELEET) {
+    if (c->ci == DELEET && !(c->opt & OPT_L)) {
 	/* experimental */
 	if (looks_like_list_token(c, tok, dset)) {
 	    c->ciflags &= ~CI_PARM1;
@@ -2318,41 +2318,6 @@ static int try_for_command_index (CMD *cmd, int i,
     return cmd->ci;
 }
 
-/* Tricky, because "list" can be a type-word (and hence an
-   alias for "genr", but it can start a command, as in
-   "list <listname> {print|delete}".
-*/
-
-static int detect_list_command (CMD *c)
-{
-    int k = c->cstart;
-    int ret = 0;
-
-    if (c->ntoks == k + 3) {
-	const char *cword = c->toks[k+2].s;
-
-	if (!strcmp(c->toks[k].s, "list") && 
-	    (!strcmp(cword, "delete") ||
-	     !strcmp(cword, "print"))) {
-	    mark_token_done(c->toks[k]);
-	    mark_token_done(c->toks[k+2]);
-	    c->ci = strcmp(cword, "print") ? DELEET : PRINT;
-	    c->ciflags = CI_PARM1;
-	    c->opt = OPT_L; /* unused at present */
-	    ret = 1;
-	}
-    }
-
-#if CDEBUG > 1
-    if (ret) {
-	fprintf(stderr, "detected list command: revised ci = %d (%s)\n",
-		c->ci, gretl_command_word(c->ci));
-    }
-#endif
-
-    return ret;
-}
-
 /* Get a count of any tokens not marked as 'done'. */
 
 static int count_remaining_toks (CMD *c)
@@ -2912,18 +2877,25 @@ static int check_for_list (CMD *cmd)
 static int scrub_list_check (CMD *cmd)
 {
     int maxtoks = cmd->toks[0].type == TOK_CATCH ? 4 : 3;
+    int ret = 0;
 
     if (cmd->ntoks == maxtoks) {
 	const char *s = cmd->toks[maxtoks-1].s;
+	int ci = gretl_command_number(s);
 
-	if (strcmp(s, "print") && strcmp(s, "delete")) {
-	    /* cmd must be a "genr" instance */
+	if (ci == DELEET || ci == PRINT) {
+	    cmd->toks[maxtoks-1].flag |= TOK_DONE;
+	    cmd->ci = ci;
+	    cmd->opt = OPT_L;
+	    cmd->ciflags = CI_PARM1;
+	    ret = 1;
+	} else {
 	    cmd->ciflags ^= CI_LCHK;
-	    return 1;
+	    ret = 1;
 	}
     }
 
-    return 0;
+    return ret;
 }
 
 #define MAY_START_NUMBER(c) (c == '.' || c == '-' || c == '+')
@@ -3277,6 +3249,11 @@ static void handle_option_inflections (CMD *cmd)
 	    /* --db */
 	    cmd->ciflags = CI_ADHOC;
 	}
+    } else if (cmd->ci == PRINT) {
+	if (cmd->opt == OPT_L) {
+	    /* --list */
+	    cmd->ciflags = CI_PARM1;
+	}
     }
 }
 
@@ -3284,7 +3261,6 @@ static int assemble_command (CMD *cmd, DATASET *dset)
 {
     /* defer handling option(s) till param is known? */
     int options_later = cmd->ci == SETOPT;
-    int listcmd = 0;
 
     if (cmd->ntoks == 0) {
 	return cmd->err;
@@ -3302,11 +3278,6 @@ static int assemble_command (CMD *cmd, DATASET *dset)
 	handle_command_preamble(cmd);
     }
 
-    if (!cmd->err && (cmd->ciflags & CI_LCHK)) {
-	cmd->ciflags ^= CI_LCHK;
-	listcmd = detect_list_command(cmd);
-    }
-
     if (cmd->err) {
 	goto bailout;
     }
@@ -3316,11 +3287,11 @@ static int assemble_command (CMD *cmd, DATASET *dset)
 	cmd->ciflags |= CI_L1INT;
     } 
 
-    if (cmd->ci == PRINT) {
+    if (cmd->ci == PRINT && !(cmd->opt & OPT_L)) {
 	if (first_arg_quoted(cmd)) {
 	    /* printing a string literal */
 	    cmd->ciflags = CI_PARM1;
-	} else if (!listcmd) {
+	} else {
 	    /* assume for now that we're printing series */
 	    cmd->ciflags |= (CI_LIST | CI_DOALL);
 	}
