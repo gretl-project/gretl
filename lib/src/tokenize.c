@@ -90,7 +90,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { CUSUM,    "cusum",    0 },
     { DATA,     "data",     CI_ADHOC }, /* special: needs whole line */
     { DATAMOD,  "dataset",  CI_PARM1 | CI_LIST | CI_PARM2 | CI_NOOPT },
-    { DELEET,   "delete",   CI_PARM1 }, /* or CI_LIST */
+    { DELEET,   "delete",   CI_PARM1 | CI_INFL }, /* or CI_LIST */
     { DIFF,     "diff",     CI_LIST },
     { DIFFTEST, "difftest", CI_LIST | CI_LLEN2 },
     { DISCRETE, "discrete", CI_LIST },
@@ -3267,6 +3267,14 @@ static void handle_option_inflections (CMD *cmd)
     } else if (cmd->ci == OPEN) {
 	if (cmd->opt & OPT_O) {
 	    /* --odbc */
+	    cmd->ciflags = CI_ADHOC;
+	}
+    } else if (cmd->ci == DELEET) {
+	if (cmd->opt == OPT_T) {
+	    /* --type=... */
+	    cmd->ciflags = 0;
+	} else if (cmd->opt == OPT_D) {
+	    /* --db */
 	    cmd->ciflags = CI_ADHOC;
 	}
     }
