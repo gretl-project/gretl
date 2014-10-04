@@ -10971,11 +10971,12 @@
 
     <description>
       <para>
-	A <cmd>!</cmd>, or the keyword <cmd>launch</cmd>, at the beginning
-	of a command line is interpreted as an escape to the user's shell.
-	Thus arbitrary shell commands can be executed from within
-	<program>gretl</program>.  When <cmd>!</cmd> is used, the external
-	command is executed synchronously.  That is,
+	An exclamation mark, <cmd>!</cmd>, or the keyword
+	<cmd>launch</cmd>, at the beginning of a command line is
+	interpreted as an escape to the user's shell.  Thus arbitrary
+	shell commands can be executed from within
+	<program>gretl</program>.  When <cmd>!</cmd> is used, the
+	external command is executed synchronously.  That is,
 	<program>gretl</program> waits for it to complete before
 	proceeding.  If you want to start another program from within
 	<program>gretl</program> and not wait for its completion
