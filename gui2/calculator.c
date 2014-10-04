@@ -1493,7 +1493,19 @@ static void np_test (GtkWidget *w, test_t *test)
 	gchar *title = g_strdup_printf("gretl: %s", _("nonparametric test"));
 
 	view_buffer(prn, 78, 380, title, PRINT, NULL);
-	g_free(title);			       
+	g_free(title);
+	/* record successful command */
+	if (test->code == NP_DIFF) {
+	    lib_command_sprintf("difftest %s %s%s", 
+				dataset->varname[v1],
+				dataset->varname[v2], 
+				print_flags(opt, DIFFTEST));
+	    record_command_verbatim();
+	} else if (test->code == NP_RUNS) {
+	    lib_command_sprintf("runs %s%s", dataset->varname[v1],
+				print_flags(opt, RUNS));
+	    record_command_verbatim();
+	}
     }
 }
 
