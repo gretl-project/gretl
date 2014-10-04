@@ -827,7 +827,6 @@ char *retrieve_file_content (const char *fname, const char *codeset,
 #ifdef USE_CURL
 	content = retrieve_public_file_as_buffer(fname, &len, err);
 	if (!*err && !g_utf8_validate(content, len, NULL)) {
-	    fprintf(stderr, "retrieve_file_content: not UTF-8, try recoding\n");
 	    content = recode_content(content, codeset, err);
 	}
 #else
@@ -851,6 +850,11 @@ char *retrieve_file_content (const char *fname, const char *codeset,
 	} else if (!g_utf8_validate(content, len, NULL)) {
 	    content = recode_content(content, codeset, err);
 	}
+    }
+
+    if (*err && content != NULL) {
+	free(content);
+	content = NULL;
     }
 
     return content;

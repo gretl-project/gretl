@@ -181,6 +181,10 @@ char *json_get (const char *data, const char *path, int *n_objects,
 	}
     }
 
+    if (*err) {
+	fprintf(stderr, "json_get: err = %d\n", *err);
+    }
+
     if (n_objects != NULL) {
 	*n_objects = n;
     }    

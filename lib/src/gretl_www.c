@@ -57,10 +57,12 @@ static char proxyhost[128];
 static char sffiles[DBHLEN] = "downloads.sourceforge.net";
 static char sfweb[DBHLEN]   = "gretl.sourceforge.net";
 
+#define URLLEN 1024
+
 typedef struct urlinfo_ urlinfo;
 
 struct urlinfo_ {
-    char url[1024];          /* the URL */
+    char url[URLLEN];        /* the URL */
     int err;                 /* error code */
     int verbose;             /* verbosity level */
     int saveopt;             /* if saving data: to buffer or file? */
@@ -80,6 +82,7 @@ static void urlinfo_init (urlinfo *u,
 			  const char *localfile)
 {
     u->url[0] = '\0';
+
     if (hostname != NULL) {
 	sprintf(u->url, "http://%s", hostname);
     }
@@ -110,6 +113,12 @@ static void urlinfo_init (urlinfo *u,
 #ifdef WIN32
     strcat(u->agent, "w");
 #endif
+}
+
+static void urlinfo_set_url (urlinfo *u, const char *url)
+{
+    u->url[0] = '\0';
+    strncat(u->url, url, URLLEN - 1);
 }
 
 static void urlinfo_finalize (urlinfo *u, char **getbuf, int *err)
@@ -180,18 +189,22 @@ static int grow_read_buffer (urlinfo *u, size_t bgot)
     if (newbuf == NULL) {
 	return E_ALLOC;
     } else {
-	size_t addlen = newlen - u->buflen;
+	size_t zerolen = newlen - u->datalen;
 
 	/* zero the additional memory chunk */
-	memset(newbuf + u->datalen, 0, addlen);
+	memset(newbuf + u->datalen, 0, zerolen);
 	u->getbuf = newbuf;
 	u->buflen = newlen;
+#if WDEBUG
+	fprintf(stderr, "u->getbuf realloc'd at %p (len %d)\n", 
+		(void *) u->getbuf, (int) u->buflen);
+#endif
 	return 0;
     }
 }
 
-static size_t write_func (void *buf, size_t size, size_t nmemb, 
-			  void *data)
+static size_t gretl_write_func (void *buf, size_t size, size_t nmemb, 
+				void *data)
 {
     urlinfo *u = (urlinfo *) data;
     size_t bgot = size * nmemb;
@@ -218,6 +231,9 @@ static size_t write_func (void *buf, size_t size, size_t nmemb,
     } else if (u->saveopt == SAVE_TO_BUFFER) {
 	if (u->getbuf == NULL) {
 	    u->getbuf = calloc(WBUFSIZE, 1);
+#if WDEBUG
+	    fprintf(stderr, "u->getbuf started at %p\n", (void *) u->getbuf);
+#endif
 	    if (u->getbuf == NULL) {
 		u->err = E_ALLOC;
 		return 0;
@@ -362,7 +378,7 @@ static int curl_get (urlinfo *u)
 	    fprintf(stderr, "curl_get: %s\n", u->url);
 	}
 	curl_easy_setopt(curl, CURLOPT_URL, u->url);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_func);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, gretl_write_func);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, u);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, u->agent);
@@ -572,7 +588,7 @@ int upload_function_package (const char *login, const char *pass,
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, u.agent);
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, u.verbose);
 	if (saveopt == SAVE_TO_BUFFER) {
-	    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_func);
+	    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, gretl_write_func);
 	    curl_easy_setopt(curl, CURLOPT_FILE, &u);
 	}
 
@@ -808,7 +824,7 @@ int retrieve_public_file (const char *uri, char *localname)
 	urlinfo u;
 
 	urlinfo_init(&u, NULL, SAVE_TO_FILE, localname);
-	strcpy(u.url, uri);
+	urlinfo_set_url(&u, uri);
 	if (gretl_in_gui_mode()) {
 	    urlinfo_set_show_progress(&u);
 	}
@@ -850,7 +866,7 @@ char *retrieve_public_file_as_buffer (const char *uri, size_t *len,
 	urlinfo u;
 
 	urlinfo_init(&u, NULL, SAVE_TO_BUFFER, NULL);
-	strcpy(u.url, uri);
+	urlinfo_set_url(&u, uri);
 	*err = curl_get(&u);
 	urlinfo_finalize(&u, &buf, err);
 	*len = (*err)? 0 : u.datalen;
