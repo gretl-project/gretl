@@ -107,7 +107,8 @@ enum {
     NEW_ITEM,
     CLOSE_ITEM,
     BUNDLE_ITEM,
-    FIND_ITEM
+    FIND_ITEM,
+    CLEAR_ITEM
 } viewbar_flags;
 
 struct stock_maker {
@@ -256,6 +257,11 @@ static void file_open_callback (GtkWidget *w, windata_t *vwin)
 static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
 {
     do_new_script(vwin->role);
+}
+
+static void clear_text_callback (GtkWidget *w, windata_t *vwin)
+{
+    textview_set_text(vwin->text, "");
 }
 
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
@@ -641,6 +647,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
     { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(vwin_save_callback), SAVE_ITEM },
     { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(save_as_callback), SAVE_AS_ITEM },
+    { N_("Clear"), GTK_STOCK_CLEAR, G_CALLBACK(clear_text_callback), CLEAR_ITEM },
     { N_("Save bundle content..."), GRETL_STOCK_BUNDLE, NULL, BUNDLE_ITEM },
     { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
     { N_("Show/hide"), GRETL_STOCK_PIN, G_CALLBACK(session_notes_callback), NOTES_ITEM },
@@ -722,6 +729,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define split_ok(r) (r == SCRIPT_OUT || FNCALL_OUT)
 
+#define clear_ok(r) (r == VIEW_LOG)
+
 /* Screen out unwanted menu items depending on the context; also
    adjust the callbacks associated with some items based on
    context.
@@ -740,6 +749,8 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     } else if (!open_ok(r) && f == OPEN_ITEM) {
 	return NULL;
     } else if (!new_ok(r) && f == NEW_ITEM) {
+	return NULL;
+    } else if (!clear_ok(r) && f == CLEAR_ITEM) {
 	return NULL;
     } else if (!exec_ok(r) && f == EXEC_ITEM) {
 	return NULL;
