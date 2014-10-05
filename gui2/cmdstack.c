@@ -50,6 +50,8 @@ static int prev_ID;                /* keep track of model ID */
 static int session_open;           /* are we doing the session file
 				      thing? (0/1) */
 
+static int logfile_init (void);
+
 /* Called in response to the refresh/reload button in the viewer
    window for the command log: retrieve the updated log content.
    Display of any error messages is handled by the caller, which
@@ -74,17 +76,22 @@ static GtkWidget *logview;
 
 void view_command_log (void)
 {
-    if (!session_open && n_cmds == 0) {
-	warnbox(_("The command log is empty"));
-    } else if (logview != NULL) {
+    if (logview != NULL) {
 	gtk_window_present(GTK_WINDOW(logview));
     } else {
 	windata_t *vwin;
+	int err = 0;
 
-	vwin = view_file(logname, 0, 0, 78, 370, VIEW_LOG);
-	logview = vwin->main;
-	g_signal_connect(G_OBJECT(vwin->main), "destroy",
-			 G_CALLBACK(gtk_widget_destroyed), &logview);
+	if (logprn == NULL) {
+	    err = logfile_init();
+	}
+
+	if (!err) {
+	    vwin = view_file(logname, 0, 0, 78, 370, VIEW_LOG);
+	    logview = vwin->main;
+	    g_signal_connect(G_OBJECT(vwin->main), "destroy",
+			     G_CALLBACK(gtk_widget_destroyed), &logview);
+	}
     }
 }
 
