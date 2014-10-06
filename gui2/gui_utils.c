@@ -1117,7 +1117,14 @@ int get_imported_data (char *fname, int ftype, int append)
 	err = E_CANCEL;
 	goto bailout;
     } else {
-	const char *buf = gretl_print_get_buffer(prn);
+	char *buf = gretl_print_steal_buffer(prn);
+
+	if (buf != NULL && *buf != '\0') {
+	    if (strlen(buf) >= MAXLEN) {
+		buf[MAXLEN-4] = '\0';
+		strcat(buf + MAXLEN - 4, "...");
+	    }
+	}
 
 	if (err) {
 	    if (buf != NULL && *buf != '\0') {
@@ -1134,6 +1141,8 @@ int get_imported_data (char *fname, int ftype, int append)
 	    }
 	    finalize_data_open(fname, ftype, 1, append, plist);
 	}
+
+	free(buf);
     }
 
  bailout:
