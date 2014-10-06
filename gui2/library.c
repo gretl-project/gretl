@@ -1484,7 +1484,7 @@ int bool_subsample (const char *param, gretlopt opt)
 	if (msg != NULL && *msg != '\0') {
 	    infobox(msg);
 	} else {
-	    infobox(_("Dropped %d observations"), n_dropped);
+	    infobox_printf(_("Dropped %d observations"), n_dropped);
 	}
 	if (opt & OPT_T) {
 	    mark_dataset_as_modified();
@@ -3437,14 +3437,14 @@ void errmsg_plus (int err, const char *plus)
 
 	if (*s1 != '\0' && *s2 != '\0' && strcmp(s1, s2)) {
 	    if (s3 != NULL) {
-		errbox("%s\n\n%s", s1, _(s3));
+		errbox_printf("%s\n\n%s", s1, _(s3));
 	    } else {   
-		errbox("%s\n\n%s", s1, s2);
+		errbox_printf("%s\n\n%s", s1, s2);
 	    }
 	    handled = 1;
 	} else if (*s1 == '\0' && *s2 != '\0') {
 	    if (s3 != NULL) {
-		errbox("%s\n\n%s", s2, _(s3));
+		errbox_printf("%s\n\n%s", s2, _(s3));
 	    } else {
 		errbox(s2);
 	    }
@@ -4699,7 +4699,7 @@ void do_global_setmiss (GtkWidget *w, dialog_t *dlg)
     edit_dialog_close(dlg);
 
     if (count) {
-	infobox(_("Set %d values to \"missing\""), count);
+	infobox_printf(_("Set %d values to \"missing\""), count);
 	mark_dataset_as_modified();
     } else {
 	errbox(_("Didn't find any matching observations"));
@@ -4727,7 +4727,7 @@ void do_variable_setmiss (GtkWidget *w, dialog_t *dlg)
     edit_dialog_close(dlg);
 
     if (count) {
-	infobox(_("Set %d observations to \"missing\""), count);
+	infobox_printf(_("Set %d observations to \"missing\""), count);
 	mark_dataset_as_modified();
     } else {
 	errbox(_("Didn't find any matching observations"));
@@ -4744,7 +4744,7 @@ int do_rename_variable (int v, const char *newname)
     }
 
     if (gretl_is_series(newname, dataset)) {
-	errbox(_("A series named %s already exists"), newname);
+	errbox_printf(_("A series named %s already exists"), newname);
 	err = E_DATA;
     } else {
 	err = gui_validate_varname(newname, GRETL_TYPE_SERIES);
@@ -6605,7 +6605,7 @@ static void real_delete_vars (int selvar)
 	vname = dataset->varname[selvar];
 
 	if (maybe_prune_delete_list(testlist)) {
-	    errbox(_("Cannot delete %s; variable is in use"), vname);
+	    errbox_printf(_("Cannot delete %s; variable is in use"), vname);
 	    return;
 	} else {
 	    msg = g_strdup_printf(_("Really delete %s?"), vname);
@@ -7178,7 +7178,7 @@ static int all_missing (int v)
 	} 
     }
 
-    warnbox(_("%s: no valid values"), dataset->varname[v]);
+    warnbox_printf(_("%s: no valid values"), dataset->varname[v]);
     return 1;
 }
 

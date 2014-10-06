@@ -498,7 +498,7 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
 				  &err);
 
     if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
-	errbox("Error printing:\n%s", err->message);
+	errbox_printf("Error printing:\n%s", err->message);
 	g_error_free(err);
     } else if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
 	if (settings != NULL) {
@@ -642,7 +642,7 @@ void gtk_print_graph (const char *fname, GtkWidget *parent)
 				  GTK_WINDOW(parent), &err);
 
     if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
-	errbox("Error printing:\n%s", err->message);
+	errbox_printf("Error printing:\n%s", err->message);
 	g_error_free(err);
     } else if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
 	if (settings != NULL) {

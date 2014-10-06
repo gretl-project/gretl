@@ -69,7 +69,7 @@ int validate_filename_for_glib (const gchar *fname, gchar **fconv)
 	fclose(fp);
     } else {
 	err = E_FOPEN;
-	errbox(_("Can't open %s for reading"), fname);
+	errbox_printf(_("Can't open %s for reading"), fname);
     }
 
     return err;

@@ -344,7 +344,7 @@ static void add_matrix_callback (GtkWidget *w, windata_t *vwin)
 		    gretl_matrix_free(m);
 		    gui_errmsg(err);
 		} else {
-		    infobox(_("Saved matrix as %s"), mname);
+		    infobox_printf(_("Saved matrix as %s"), mname);
 		}
 	    }
 	}

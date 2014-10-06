@@ -486,7 +486,7 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
     }
 
     if (!err && object_errs > 0) {
-	errbox("%d session object(s) could not be rebuilt", object_errs);
+	errbox_printf("%d session object(s) could not be rebuilt", object_errs);
     }
 
     return err;

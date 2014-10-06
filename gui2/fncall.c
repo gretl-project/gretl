@@ -201,8 +201,8 @@ static int check_args (call_info *cinfo)
 		if (fn_param_optional(cinfo->func, i)) {
 		    cinfo->args[i] = g_strdup("null");
 		} else {
-		    errbox(_("Argument %d (%s) is missing"), i + 1,
-			   fn_param_name(cinfo->func, i));
+		    errbox_printf(_("Argument %d (%s) is missing"), i + 1,
+				  fn_param_name(cinfo->func, i));
 		    return 1;
 		}
 	    }
@@ -2244,8 +2244,8 @@ static int query_addons_dir (const char *pkgname, char *sfdir)
     free(buf);
 
     if (err) {
-	errbox("Couldn't find %s for gretl %d.%d.%d",
-	       pkgname, v1, v2, v3);
+	errbox_printf("Couldn't find %s for gretl %d.%d.%d",
+		      pkgname, v1, v2, v3);
     } 
 
     return err;
@@ -3085,8 +3085,8 @@ int revise_package_status (const gchar *pkgname,
 	    gchar *tmp = g_strdup_printf(_("Adding %s under %s."), 
 					 label, ustr);
 
-	    infobox("%s\n%s", tmp, 
-		    _("This change will take effect when you restart gretl"));
+	    infobox_printf("%s\n%s", tmp, 
+			   _("This change will take effect when you restart gretl"));
 	    g_free(ustr);
 	    g_free(tmp);
 	} else {

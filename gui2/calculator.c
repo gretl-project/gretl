@@ -2221,7 +2221,7 @@ static void populate_stats (GtkWidget *w, gpointer p)
     }
 
     if (n == 0) {		
-	errbox(_("Data missing for variable '%s'"), dataset->varname[vx]);
+	errbox_printf(_("Data missing for variable '%s'"), dataset->varname[vx]);
 	return;
     }
 

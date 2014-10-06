@@ -2835,7 +2835,7 @@ static void empty_dataset_guard (void)
     }
 
     if (empty) {
-	infobox(_("Warning: series %s is empty"), dataset->varname[1]);
+	infobox_printf(_("Warning: series %s is empty"), dataset->varname[1]);
     } else if (miss) {
 	infobox(_("Warning: there were missing observations"));
     }
@@ -3920,7 +3920,7 @@ void edit_user_matrix_by_name (const char *name, GtkWidget *parent)
     }
 
     if (m == NULL) {
-	errbox(_("Couldn't open '%s'"), name);
+	errbox_printf(_("Couldn't open '%s'"), name);
     } else if (gretl_is_null_matrix(m)) {
 	real_gui_new_matrix(m, name, parent, 0);
     } else {

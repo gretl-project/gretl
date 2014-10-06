@@ -1039,7 +1039,7 @@ static int check_serinfo (char *str, char *sername, int *nobs)
 	!isdigit((unsigned char) *endobs) ||
 	(pdc != 'M' && pdc != 'A' && pdc != 'Q' && pdc != 'U' &&
 	 pdc != 'D' && pdc != 'B')) {
-	errbox(_("Database parse error at variable '%s'"), sername);
+	errbox_printf(_("Database parse error at variable '%s'"), sername);
 	fprintf(stderr, "%s: stobs='%s', endobs='%s', pdc='%c', nobs = %d\n",
 		sername, stobs, endobs, pdc, *nobs);
 	err = 1;
@@ -1116,8 +1116,8 @@ static int add_local_db_series_list (windata_t *vwin)
 
 	len = strlen(line1);
 	if (line1[len-1] != '\n') {
-	    errbox("Database index line is too long: max is %d characters",
-		   DB_LINELEN - 1);
+	    errbox_printf("Database index line is too long: max is %d characters",
+			  DB_LINELEN - 1);
 	    break;
 	}
 

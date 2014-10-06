@@ -5282,7 +5282,23 @@ static void msgbox (const char *msg, int msgtype)
     }    
 }
 
-void errbox (const char *template, ...)
+void errbox (const char *err)
+{
+    char msg[MAXLEN];
+
+    *msg = '\0';
+
+    if (strlen(err) >= MAXLEN) {
+	strncat(msg, err, MAXLEN - 4);
+	strcat(msg, "...");
+    } else {
+	strcpy(msg, err);
+    }
+
+    msgbox(msg, GTK_MESSAGE_ERROR);
+}
+
+void errbox_printf (const char *template, ...)
 {
     char msg[MAXLEN];
     va_list args;
@@ -5299,7 +5315,23 @@ void errbox (const char *template, ...)
     msgbox(msg, GTK_MESSAGE_ERROR);
 }
 
-void infobox (const char *template, ...)
+void infobox (const char *info)
+{
+    char msg[MAXLEN];
+
+    *msg = '\0';
+
+    if (strlen(info) >= MAXLEN) {
+	strncat(msg, info, MAXLEN - 4);
+	strcat(msg, "...");
+    } else {
+	strcpy(msg, info);
+    }
+
+    msgbox(msg, GTK_MESSAGE_INFO);
+}
+
+void infobox_printf (const char *template, ...)
 {
     char msg[MAXLEN];
     va_list args;
@@ -5311,7 +5343,23 @@ void infobox (const char *template, ...)
     msgbox(msg, GTK_MESSAGE_INFO);
 }
 
-void warnbox (const char *template, ...)
+void warnbox (const char *warn)
+{
+    char msg[MAXLEN];
+
+    *msg = '\0';
+
+    if (strlen(warn) >= MAXLEN) {
+	strncat(msg, warn, MAXLEN - 4);
+	strcat(msg, "...");
+    } else {
+	strcpy(msg, warn);
+    }
+
+    msgbox(msg, GTK_MESSAGE_WARNING);
+}
+
+void warnbox_printf (const char *template, ...)
 {
     char msg[MAXLEN];
     va_list args;
@@ -5339,7 +5387,7 @@ void file_read_errbox (const char *fname)
     } else {
 	gchar *uname = my_filename_to_utf8(fname);
 
-	errbox(_("Couldn't open %s"), uname);
+	errbox_printf(_("Couldn't open %s"), uname);
 	g_free(uname);
     }
 }
@@ -5353,7 +5401,7 @@ void file_write_errbox (const char *fname)
     } else {
 	gchar *uname = my_filename_to_utf8(fname);
 
-	errbox(_("Couldn't write to %s"), uname);
+	errbox_printf(_("Couldn't write to %s"), uname);
 	g_free(uname);
     }
 }
@@ -5713,7 +5761,7 @@ static void hc_ok_callback (GtkWidget *w, struct hc_opts *h)
 	    if (*s == '\0') {
 		warnbox(_("Please specify a cluster variable"));
 	    } else {
-		errbox(_("'%s' is not a known series"), s);
+		errbox_printf(_("'%s' is not a known series"), s);
 	    }
 	    return;
 	}

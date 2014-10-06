@@ -934,7 +934,7 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 
 	    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
 	    gtk_tree_selection_selected_foreach(sel, fix_selected_row, vwin);
-	    infobox(_("Found %d function file(s)"), nfn - nfn0);
+	    infobox_printf(_("Found %d function file(s)"), nfn - nfn0);
 	    g_object_set_data(G_OBJECT(vwin->listbox), "nfn", GINT_TO_POINTER(nfn));
 	    if (resp > 0) {
 		g_object_set_data(G_OBJECT(vwin->listbox), "keepdir", GINT_TO_POINTER(1));
@@ -1046,10 +1046,10 @@ static void show_addon_info (GtkWidget *w, gpointer data)
 	}
 
 	if (local != NULL) {
-	    infobox("%s:\n%s\n%s", pkgname, descrip, local);
+	    infobox_printf("%s:\n%s\n%s", pkgname, descrip, local);
 	    g_free(local);
 	} else {
-	    infobox("%s:\n%s", pkgname, descrip);
+	    infobox_printf("%s:\n%s", pkgname, descrip);
 	}
     }
 

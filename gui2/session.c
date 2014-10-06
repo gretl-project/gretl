@@ -2426,8 +2426,8 @@ static void maybe_delete_session_object (gui_obj *obj)
     }
 
     if (busy) {
-	warnbox(_("%s: please close this object's window first"),
-		obj->name);
+	warnbox_printf(_("%s: please close this object's window first"),
+		       obj->name);
     } else {	    
 	gchar *msg = g_strdup_printf(_("Really delete %s?"), obj->name);
 
@@ -2578,7 +2578,8 @@ static int rename_session_object (gui_obj *obj, const char *newname)
     }
 
     if (err) {
-	errbox(_("'%s': there is already an object of this name"), newname);
+	errbox_printf(_("'%s': there is already an object of this name"), 
+		      newname);
     } else {
 	free(obj->name);
 	obj->name = g_strdup(newname);
@@ -2603,7 +2604,8 @@ static int copy_session_object (gui_obj *obj, const char *cpyname)
     } 
 
     if (oldp != NULL) {
-	errbox(_("'%s': there is already an object of this name"), cpyname);
+	errbox_printf(_("'%s': there is already an object of this name"), 
+		      cpyname);
     } else if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
 	SESSION_GRAPH *g0 = obj->data;
 

@@ -672,7 +672,7 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 	/* the package may not be saved yet */
 	fun = get_user_function_by_name(funname);
 	if (fun == NULL) {
-	    errbox(_("Can't find the function '%s'"), funname);
+	    errbox_printf(_("Can't find the function '%s'"), funname);
 	}
     }
 
@@ -2155,7 +2155,7 @@ static int validate_package_file (const char *fname, int verbose)
 	    errbox(buf);
 	    err = 1;
 	} else if (verbose) {
-	    infobox(_("%s: validated against DTD OK"), pkgname);
+	    infobox_printf(_("%s: validated against DTD OK"), pkgname);
 	} else {
 	    fprintf(stderr, "%s: validated against DTD OK\n", pkgname);
 	}

@@ -2149,7 +2149,7 @@ int gretl_fork (const char *progvar, const char *arg)
 #endif
 
     if (prog == NULL) {
-	errbox("Internal error: variable %s is undefined", progvar);
+	errbox_printf("Internal error: variable %s is undefined", progvar);
 	return 1;
     }
     

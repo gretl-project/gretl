@@ -1117,14 +1117,7 @@ int get_imported_data (char *fname, int ftype, int append)
 	err = E_CANCEL;
 	goto bailout;
     } else {
-	char *buf = gretl_print_steal_buffer(prn);
-
-	if (buf != NULL && *buf != '\0') {
-	    if (strlen(buf) >= MAXLEN) {
-		buf[MAXLEN-4] = '\0';
-		strcat(buf + MAXLEN - 4, "...");
-	    }
-	}
+	const char *buf = gretl_print_get_buffer(prn);
 
 	if (err) {
 	    if (buf != NULL && *buf != '\0') {
@@ -1141,8 +1134,6 @@ int get_imported_data (char *fname, int ftype, int append)
 	    }
 	    finalize_data_open(fname, ftype, 1, append, plist);
 	}
-
-	free(buf);
     }
 
  bailout:
@@ -1991,7 +1982,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     /* first check that we can open the specified file */
     fp = gretl_fopen(filename, "r");
     if (fp == NULL) {
-	errbox(_("Can't open %s for reading"), filename);
+	errbox_printf(_("Can't open %s for reading"), filename);
 	return NULL;
     } else {
 	fclose(fp);
@@ -4961,21 +4952,22 @@ int real_gui_validate_varname (const char *name, GretlType t,
     
     if (n > VNAMELEN - 1) {
 	strncat(namebit, name, VNAMELEN - 1);
-	errbox(_("Variable name %s... is too long\n"
-		 "(the max is %d characters)"), namebit,
-	       VNAMELEN - 1);
+	errbox_printf(_("Variable name %s... is too long\n"
+			"(the max is %d characters)"), namebit,
+		      VNAMELEN - 1);
 	err = 1;
     } else if (!(isalpha(*name))) {
-	errbox(_("First char of name ('%c') is bad\n"
-		 "(first must be alphabetical)"), *name);
+	errbox_printf(_("First char of name ('%c') is bad\n"
+			"(first must be alphabetical)"), *name);
 	err = 1;
     } else {
 	for (i=1; i<n && !err; i++) {
 	    c = (unsigned char) name[i];
 	
 	    if ((!(isalpha(c)) && !(isdigit(c)) && c != '_') || c > 127) {
-		errbox(_("Name contains an illegal char (in place %d)\n"
-			 "Use only unaccented letters, digits and underscore"), i + 1);
+		errbox_printf(_("Name contains an illegal char (in place %d)\n"
+				"Use only unaccented letters, digits and underscore"), 
+			      i + 1);
 		err = 1;
 	    }
 	}
@@ -5272,7 +5264,7 @@ static void run_prog_sync (char **argv)
     } else if (status != 0) {
 	if (errout != NULL) {
 	    if (*errout == '\0') {
-		errbox("%s exited with status %d", argv[0], status);
+		errbox_printf("%s exited with status %d", argv[0], status);
 	    } else if (strlen(errout) < MAXLEN) {
 		errbox(errout);
 	    } else {

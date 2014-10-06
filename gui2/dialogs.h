@@ -36,11 +36,17 @@ typedef struct dialog_t_ dialog_t;
 void copy_format_dialog (windata_t *vwin, int action);
 #endif
 
-void errbox (const char *template, ...);
+void errbox (const char *err);
 
-void infobox (const char *template, ...);
+void errbox_printf (const char *template, ...);
 
-void warnbox (const char *template, ...);
+void infobox (const char *info);
+
+void infobox_printf (const char *template, ...);
+
+void warnbox (const char *warn);
+
+void warnbox_printf (const char *template, ...);
 
 void maybe_warn (void);
 

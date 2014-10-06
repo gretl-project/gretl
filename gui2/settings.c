@@ -751,7 +751,7 @@ static void set_tramo_status (void)
     }
 
     if (tramo_ok && !ok && gui_up) {
-	warnbox("Invalid path for %s", "TRAMO");
+	warnbox_printf("Invalid path for %s", "TRAMO");
     }
 
     tramo_ok = ok;
@@ -794,7 +794,7 @@ static void set_x12a_status (void)
     }
 
     if (x12a_ok && !ok && gui_up) {
-	warnbox("Invalid path for %s", "X-12-ARIMA");
+	warnbox_printf("Invalid path for %s", "X-12-ARIMA");
     }
 
     x12a_ok = ok;

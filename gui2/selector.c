@@ -1248,7 +1248,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
 static int binary_var_check (int v, const char *vname)
 {
     if (!gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[v])) {
-	errbox(_("The variable '%s' is not a 0/1 variable."), vname);
+	errbox_printf(_("The variable '%s' is not a 0/1 variable."), vname);
 	return 1;
     }
 
