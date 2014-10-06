@@ -175,7 +175,7 @@ const gchar *matrix_ui =
     "</ui>";
 
 static GtkActionEntry matrix_items[] = {
-    { "View", NULL, N_("_View"), NULL, NULL },
+    { "View", NULL, N_("_View"), NULL, NULL, NULL },
     { "ViewFmt", NULL, N_("_Format..."), NULL, NULL, G_CALLBACK(matrix_format_callback) },
     { "ViewProps", NULL, N_("_Properties"), NULL, NULL, G_CALLBACK(matrix_props_callback) },
     { "Fill", NULL, N_("_Fill"), NULL, NULL, NULL },
