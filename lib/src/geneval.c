@@ -630,7 +630,9 @@ static void maybe_switch_node_type (NODE *n, int type,
 	/* any other discrepancy presumably means that
 	   things have gone badly wrong
 	*/
-	gretl_errmsg_set("internal genr error: aux node type mix-up!");
+	fprintf(stderr, "aux node mismatch: n->t = %d (%s), type = %d (%s), tmp = %d\n",
+		n->t, getsymb(n->t, NULL), type, getsymb(type, NULL), tmp);
+	gretl_errmsg_set("internal genr error: aux node mismatch");
 	p->err = E_DATA;
     }
 }
@@ -665,8 +667,9 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
     NODE *ret = NULL;
 
 #if EDEBUG
-    fprintf(stderr, "get_aux_node: p=%p, starting=%d, auxdone=%d, n_aux=%d\n",
-	    (void *) p, starting(p) ? 1 : 0, (p->flags & P_AUXDONE)? 1 : 0,
+    fprintf(stderr, "get_aux_node: p=%p, t=%s, tmp=%d, starting=%d, "
+	    "auxdone=%d, n_aux=%d\n", (void *) p, getsymb(t, NULL), tmp,
+	    starting(p) ? 1 : 0, (p->flags & P_AUXDONE)? 1 : 0,
 	    p->n_aux);
 #endif
 
@@ -10276,10 +10279,6 @@ static NODE *bool_node (int s, parser *p)
 
     if (n != NULL) {
 	n->v.xval = s;
-	if (p->flags & P_SAVEAUX) {
-	    /* cancel this */
-	    p->flags &= ~P_SAVEAUX;
-	}
     }
 
     return n;
@@ -10356,12 +10355,18 @@ static NODE *eval (NODE *t, parser *p)
 	if (r_return(t->t)) {
 	    r = raw_node(t, 2);
 	} else {
-	    if ((t->t == B_AND || t->t == B_OR) && l != NULL && l->t == NUM) {
+	    if (t->t == B_AND || t->t == B_OR) {
 		/* logical operators: avoid redundant evaluations */
-		if (t->t == B_AND && node_is_false(l, p)) {
-		    r = bool_node(0, p);
-		} else if (t->t == B_OR && node_is_true(l, p)) {
-		    r = bool_node(1, p);
+		if (l != NULL && l->t == NUM) {
+		    if (t->t == B_AND && node_is_false(l, p)) {
+			r = bool_node(0, p);
+		    } else if (t->t == B_OR && node_is_true(l, p)) {
+			r = bool_node(1, p);
+		    }
+		}
+		if (p->flags & P_SAVEAUX) {
+		    /* cancel this */
+		    p->flags &= ~P_SAVEAUX;
 		}
 	    }
 	    if (r == NULL && !p->err) {
