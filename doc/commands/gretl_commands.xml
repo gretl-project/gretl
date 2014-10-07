@@ -3648,9 +3648,15 @@
        The following illustrates the intended use of <lit>flush</lit>:
      </para>
      <code>
+       scalar n = 10
        loop i=1..n
            # do some time-consuming operation
+           loop 100
+               a = mnormal(200,200)
+               b = inv(a)
+           endloop
            # print some results
+           printf "Iteration %2d done\n", i
            if i &lt; n
                flush
            endif
