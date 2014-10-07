@@ -1180,6 +1180,15 @@ static stacker *find_smatch (const char *oname)
 	}
     }
 
+    if (smatch != NULL && smatch->type == GRETL_OBJ_EQN) {
+	MODEL *pmod = smatch->ptr;
+
+	if (pmod == NULL || pmod->errcode) {
+	    fprintf(stderr, "find_smatch: duff model data!\n");
+	    smatch = NULL;
+	}
+    }
+
     return smatch;
 }
 
@@ -1753,4 +1762,3 @@ void gretl_saved_objects_cleanup (void)
 	last_model.type = 0;
     }
 }
-

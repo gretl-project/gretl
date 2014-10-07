@@ -2595,6 +2595,11 @@ FITRESID *get_forecast (MODEL *pmod, int t1, int t2, int pre_n,
 {
     FITRESID *fr;
 
+    if (pmod->errcode) {
+	*err = E_DATA;
+	return NULL;
+    }
+
     fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, err);
 
     if (!*err) {

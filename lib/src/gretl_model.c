@@ -1668,7 +1668,7 @@ int *gretl_model_get_x_list (const MODEL *pmod)
     int *list = NULL;
     int i, nx;
 
-    if (pmod == NULL) {
+    if (pmod == NULL || pmod->errcode || pmod->list == NULL) {
 	return NULL;
     }
 
