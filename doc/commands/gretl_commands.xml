@@ -3644,6 +3644,18 @@
        <quote>processing</quote> message will then be misleading
        to the user.
      </para>
+     <para>
+       The following illustrates the intended use of <lit>flush</lit>:
+     </para>
+     <code>
+       loop i=1..n
+           # do some time-consuming operation
+           # print some results
+           if i &lt; n
+               flush
+           endif
+       endloop
+     </code>
     </description>
 
   </command>
