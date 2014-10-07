@@ -3603,6 +3603,74 @@
 
   </command>
 
+  <command name="flush" section="Programming" context="cli">
+
+    <description>
+     <para>
+       Questo smplice comando non ha argomenti né opzioni; è pensato
+       per l'esecuzione di script, la cui esecuzione richieda qualche
+       tempo, attraverso l'interfaccia grafica (la versione di gretl
+       da linea di comando lo ignora). L'idea è di fornire all'utente
+       un'indicazione visuale che sta succedendo qualcosa e il
+       programma non si è <quote>piantato</quote>.
+     </para>
+     <para>
+       Normalmente, quando uno script viene fatto girare nel client
+       grafico, non viene mostrato alcun output finché l'esecuzione
+       non è completa; se perà si usa  <lit>flush</lit> l'effetto
+       prodotto è il seguente:
+     </para>
+     <ilist>
+       <li>
+	 <para>
+	   Alla prima invocazione, gretl apre una finestra, mostra
+	   l'output prodotto fino a quel momento, e aggiunge il
+	   messaggio <quote>elaborazione in corso...</quote>.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   Ad ogni invocazione successiva, il testo mostrato nella
+	   finestra di output viene aggiornato e un nuovo messaggio
+	   <quote>elaborazione in corso</quote> viene aggiunto.
+	 </para>
+       </li>
+     </ilist>
+     <para>
+       Tutto il resto dell'output viene automaticamente mostrato al
+       completamenteo dell'esecuzione dello script.
+     </para>
+     <para>
+       Attenzione: non ha senso usare <lit>flush</lit> in script la
+       cui esecuzione richiede pochi secondi. Inoltre, bisognerebbe
+       evitare di usare questo comando in un punto dello script dove
+       non c'è più output da mostrare, perché il messaggio
+       <quote>elaborazione in corso</quote> risulterebbe fuorviante.
+     </para>
+     <para>
+       L'uso che abbiamo in mente per il comando <lit>flush</lit> è
+       esemplificato dal seguente frammento:
+     </para>
+     <code>
+       set echo off
+       scalar n = 10
+       loop i=1..n
+           # qualcosa che richiede del tempo
+           loop 100 --quiet
+               a = mnormal(200,200)
+               b = inv(a)
+           endloop
+           # stampa qualcosa in output
+           printf "Iterazione %2d fatta\n", i
+           if i &lt; n
+               flush
+           endif
+       endloop
+     </code>
+    </description>
+
+  </command>
+
   <command name="foreign" section="Programming"
     label="Script esterni" context="cli">
 

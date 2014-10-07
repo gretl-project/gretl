@@ -3648,10 +3648,11 @@
        The following illustrates the intended use of <lit>flush</lit>:
      </para>
      <code>
+       set echo off
        scalar n = 10
        loop i=1..n
            # do some time-consuming operation
-           loop 100
+           loop 100 --quiet
                a = mnormal(200,200)
                b = inv(a)
            endloop
