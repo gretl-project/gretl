@@ -1404,9 +1404,7 @@ static GretlToolItem files_items[] = {
     { N_("Delete"),         GTK_STOCK_DELETE,     G_CALLBACK(browser_del_func),  BTN_DEL },
     { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
     { N_("Local machine"),  GTK_STOCK_HOME,       NULL,                          BTN_HOME },
-    { N_("New"),            GTK_STOCK_NEW,        G_CALLBACK(new_package_callback), BTN_NEW },
-    { N_("Windows"),        GRETL_STOCK_WINLIST,  GNULL, 0 },
-    { N_("Close"),          GTK_STOCK_CLOSE,      G_CALLBACK(close_files_viewer), BTN_CLOSE }
+    { N_("New"),            GTK_STOCK_NEW,        G_CALLBACK(new_package_callback), BTN_NEW }
 };
 
 static int n_files_items = G_N_ELEMENTS(files_items);
@@ -1501,9 +1499,7 @@ static void make_files_toolbar (windata_t *vwin)
 
     for (i=0; i<n_files_items; i++) {
 	item = &files_items[i];
-	if (winlist_item(item)) {
-	    vwin_toolbar_insert_winlist(vwin);
-	} else if (files_item_get_callback(item, vwin->role)) {
+	if (files_item_get_callback(item, vwin->role)) {
 	    button = gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, -1);
 	    if (item->flag == BTN_ADD) {
 		g_object_set_data(G_OBJECT(vwin->mbar), "add-button", button);
@@ -1513,6 +1509,7 @@ static void make_files_toolbar (windata_t *vwin)
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+    menu_bar_add_winlist(vwin);
     vwin_add_finder(vwin);
     gtk_widget_show_all(hbox);
 }

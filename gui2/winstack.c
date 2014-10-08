@@ -23,6 +23,7 @@
 #include "guiprint.h"
 #include "session.h"
 #include "tabwin.h"
+#include "toolbar.h"
 #include "winstack.h"
 
 #if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20
@@ -1068,10 +1069,39 @@ GtkWidget *vwin_toplevel (windata_t *vwin)
     return vwin->topmain != NULL ? vwin->topmain : vwin->main;
 }
 
-static void menu_bar_add_winlist (windata_t *vwin)
+void vwin_toolbar_add_winlist (windata_t *vwin,
+			       GtkWidget *button,
+			       GtkWidget *hbox)
+{
+    GtkWidget *img, *tbar;
+    GtkToolItem *item;
+
+    item = gtk_tool_item_new();
+    tbar = gretl_toolbar_new();
+    
+    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, GTK_ICON_SIZE_MENU);
+    gtk_container_add(GTK_CONTAINER(button), img);
+    gtk_container_add(GTK_CONTAINER(item), button);    
+
+    g_signal_connect(G_OBJECT(button), "button-press-event", 
+		     G_CALLBACK(vwin_winlist_popup), vwin);
+    gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
+    gtk_widget_show_all(tbar);
+    gtk_box_pack_end(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
+}
+
+void menu_bar_add_winlist (windata_t *vwin)
 {
     GtkWidget *img, *button = gtk_button_new();
     GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
+
+    if (GTK_IS_TOOLBAR(vwin->mbar)) {
+	/* let's try to blend in stylistically */
+	vwin_toolbar_add_winlist(vwin, button, hbox);
+	return;
+    }
 
 #if GTK_MAJOR_VERSION == 3 || MAC_NATIVE
     /* looks better with Adwaita */

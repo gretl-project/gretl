@@ -74,9 +74,7 @@ enum {
 static GretlToolItem help_tools[] = {
     { N_("Larger"), GTK_STOCK_ZOOM_IN, G_CALLBACK(text_larger), 0},
     { N_("Smaller"), GTK_STOCK_ZOOM_OUT, G_CALLBACK(text_smaller), 0},
-    { N_("Show English help"), GRETL_STOCK_EN, G_CALLBACK(en_help_callback), EN_ITEM },
-    { N_("Windows"), GRETL_STOCK_WINLIST, GNULL, 0 },
-    { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_help_viewer), 0 }
+    { N_("Show English help"), GRETL_STOCK_EN, G_CALLBACK(en_help_callback), EN_ITEM }
 };
 
 static gint n_help_tools = G_N_ELEMENTS(help_tools);
@@ -993,18 +991,14 @@ void set_up_helpview_menu (windata_t *hwin)
 	if (!SHOW_EN_BUTTON(hwin->role) && item->flag == EN_ITEM) {
 	    continue;
 	}
-	if (winlist_item(item)) {
-	    vwin_toolbar_insert_winlist(hwin);
-	} else {
-	    gretl_toolbar_insert(hwin->mbar, item, item->func,
-				 hwin, -1);
-	}
+	gretl_toolbar_insert(hwin->mbar, item, item->func, hwin, -1);
     }	
 
     gtk_box_pack_start(GTK_BOX(hwin->vbox), hbox, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), hwin->mbar, FALSE, FALSE, 0);
 
-     if (SHOW_FINDER(hwin->role)) {
+    menu_bar_add_winlist(hwin);
+    if (SHOW_FINDER(hwin->role)) {
 	vwin_add_finder(hwin);
     }
 

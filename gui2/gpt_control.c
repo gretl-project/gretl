@@ -306,7 +306,6 @@ static void close_plot_callback (GtkWidget *w, png_plot *plot)
 }
 
 static GretlToolItem plotbar_items[] = {
-    { N_("Close"),       GTK_STOCK_CLOSE,     G_CALLBACK(close_plot_callback), 0 },
     { N_("Windows"),     GRETL_STOCK_WINLIST, G_CALLBACK(window_list_popup), 0 },
     { N_("Edit"),        GTK_STOCK_EDIT,      G_CALLBACK(graph_edit_callback), 0 },
     { N_("Zoom..."),     GTK_STOCK_ZOOM_IN,   G_CALLBACK(graph_zoom_callback), 0 },

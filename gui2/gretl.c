@@ -1320,7 +1320,6 @@ static void make_main_window (void)
 #endif
     GtkWidget *box, *dlabel;
     GtkWidget *align;
-    GtkWidget *menu;
     const char *titles[] = {
 	N_("ID #"), 
 	N_("Variable name"), 
@@ -1356,13 +1355,15 @@ static void make_main_window (void)
     gtk_window_set_default_size(GTK_WINDOW(mdata->main), 
 				mainwin_width, mainwin_height);
 
-    menu = make_main_menu();
-    if (menu == NULL) {
+    mdata->mbar = make_main_menu();
+    if (mdata->mbar == NULL) {
 	exit(EXIT_FAILURE);
     }
 
     /* put the main menu bar in place */
-    gtk_box_pack_start(GTK_BOX(mdata->vbox), menu, FALSE, TRUE, 0);
+    box = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box), mdata->mbar, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(mdata->vbox), box, FALSE, FALSE, 0);
 
 #ifdef MAC_INTEGRATION
     mac_mgr = add_mac_menu();
@@ -1427,6 +1428,7 @@ static void make_main_window (void)
     fprintf(stderr, "  set_app_font done\n");
 #endif
 
+    menu_bar_add_winlist(mdata);
     add_mainwin_toolbar(mdata->vbox);
 
 #if GUI_DEBUG

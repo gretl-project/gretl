@@ -58,6 +58,8 @@ void close_session_windows (gretlopt opt);
 
 void cascade_session_windows (void);
 
+void menu_bar_add_winlist (windata_t *vwin);
+
 windata_t *vwin_new (int role, gpointer data);
 
 int highest_numbered_variable_in_winstack (void);
