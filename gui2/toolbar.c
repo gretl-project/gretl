@@ -52,8 +52,13 @@
 #include "../pixmaps/mini.pin.xpm"
 #include "../pixmaps/mini.alpha.xpm"
 #include "../pixmaps/mini.en.xpm"
+#if 0
+#include "../pixmaps/split-horizontal.xpm"
+#include "../pixmaps/split-vertical.xpm"
+#else
 #include "../pixmaps/mini.split_h.xpm"
 #include "../pixmaps/mini.split_v.xpm"
+#endif
 #include "../pixmaps/mini.winlist.xpm"
 #include "../pixmaps/mini.spreadsheet.xpm"
 #include "../pixmaps/mini.bundle.xpm"

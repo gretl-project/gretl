@@ -1602,8 +1602,10 @@ int last_model_test_ok (int ci, gretlopt opt, const DATASET *dset,
 
     if (type == GRETL_OBJ_EQN) {
 	MODEL *pmod = (MODEL *) ptr;
-  
-	if (!model_test_ok(ci, opt, pmod, dset)) {
+
+	if (pmod->errcode) {
+	    err = E_DATA;
+	} else if (!model_test_ok(ci, opt, pmod, dset)) {
 	    err = E_NOTIMP;
 	}
 	if (model_sample_problem(pmod, dset)) {

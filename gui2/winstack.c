@@ -1069,12 +1069,34 @@ GtkWidget *vwin_toplevel (windata_t *vwin)
     return vwin->topmain != NULL ? vwin->topmain : vwin->main;
 }
 
-void vwin_toolbar_add_winlist (windata_t *vwin,
-			       GtkWidget *button,
-			       GtkWidget *hbox)
+#define PACK_DEBUG 0
+
+static void toolbar_add_winlist (windata_t *vwin,
+				 GtkWidget *button,
+				 GtkWidget *hbox)
 {
     GtkWidget *img, *tbar;
     GtkToolItem *item;
+    int tabbed = 0;
+
+#if PACK_DEBUG
+    fprintf(stderr, "toolbar_add_winlist\n");
+#endif
+
+    if (window_is_tab(vwin)) {
+	if (widget_get_int(vwin_toplevel(vwin), "have_winlist")) {
+#if PACK_DEBUG
+	    fprintf(stderr, " skipping!\n");
+#endif
+	    return;
+	} else {
+	    tabbed = 1;
+	}
+    }
+
+#if PACK_DEBUG
+    fprintf(stderr, " proceeding!\n");
+#endif
 
     item = gtk_tool_item_new();
     tbar = gretl_toolbar_new();
@@ -1090,6 +1112,10 @@ void vwin_toolbar_add_winlist (windata_t *vwin,
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     gtk_widget_show_all(tbar);
     gtk_box_pack_end(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
+
+    if (tabbed) {
+	widget_set_int(vwin_toplevel(vwin), "have_winlist", 1);
+    }
 }
 
 void menu_bar_add_winlist (windata_t *vwin)
@@ -1099,9 +1125,13 @@ void menu_bar_add_winlist (windata_t *vwin)
 
     if (GTK_IS_TOOLBAR(vwin->mbar)) {
 	/* let's try to blend in stylistically */
-	vwin_toolbar_add_winlist(vwin, button, hbox);
+	toolbar_add_winlist(vwin, button, hbox);
 	return;
     }
+
+#if PACK_DEBUG
+    fprintf(stderr, "menu_bar_add_winlist\n");
+#endif
 
 #if GTK_MAJOR_VERSION == 3 || MAC_NATIVE
     /* looks better with Adwaita */
@@ -1130,6 +1160,7 @@ void menu_bar_add_winlist (windata_t *vwin)
 		     G_CALLBACK(window_list_popup), 
 		     vwin_toplevel(vwin));
     gtk_widget_show_all(button);
+    /* pack into parent of mbar */
     gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 }
 
@@ -1143,15 +1174,25 @@ static void destroy_hbox_child (GtkWidget *w, gpointer p)
 
 void vwin_pack_toolbar (windata_t *vwin)
 {
+#if PACK_DEBUG
+    fprintf(stderr, "vwin_pack_toolbar: topmain=%p, window_is_tab=%d\n",
+	    (void *) vwin->topmain, window_is_tab(vwin));
+#endif
+
     if (vwin->topmain != NULL) {
 	/* @vwin is embedded in a tabbed window */
 	tabwin_register_toolbar(vwin);
+	fprintf(stderr, " n_siblings = %d\n", viewer_n_siblings(vwin));
 	if (vwin->role == VIEW_MODEL && viewer_n_siblings(vwin) == 0) {
 	    menu_bar_add_winlist(vwin);
 	}
     } else {
 	GtkWidget *hbox;
 
+	/* check for presence of a temporary top hbox -- as
+	   in a script output window that's waiting for full
+	   output
+	*/
 	hbox = g_object_get_data(G_OBJECT(vwin->main), "top-hbox");
 
 	if (hbox != NULL) {
@@ -1171,12 +1212,17 @@ void vwin_pack_toolbar (windata_t *vwin)
 		gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
 	    }
 	    if (window_is_tab(vwin)) {
-		/* here we're re-packing vwin->mbar: move it up top */
+		/* here we're re-packing vwin->mbar: move it up top,
+		   and ensure it has a winlist item alongside */
 		gtk_box_reorder_child(GTK_BOX(vwin->vbox), hbox, 0);
+		/* FIXME only if needed! */
+		// menu_bar_add_winlist(vwin);
 	    }
 	    gtk_widget_show_all(hbox);
 	}
     }
+
+    /* FIXME do the add_winlist thing here */
 }
 
 windata_t *gretl_browser_new (int role, const gchar *title)
