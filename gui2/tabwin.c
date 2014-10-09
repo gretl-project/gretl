@@ -26,7 +26,7 @@
 # include "gretlwin32.h"
 #endif
 
-#define TDEBUG 1
+#define TDEBUG 0
 
 struct tabwin_t_ {
     int role;             /* what's tabwin doing? */ 
@@ -927,7 +927,7 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 
     /* add box for toolbar, pack it, drop extra ref., then
        remove the "tabbed" flag (note that the tabbed flag
-       is wanted so that vwin_pack_toolbar() will put the
+       is wanted so that vwin_pack_toolbar will put the
        toolbar up top)
     */
     vwin_pack_toolbar(vwin);
@@ -1029,6 +1029,7 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
     g_object_ref(vwin->mbar);
     box = gtk_widget_get_parent(vwin->mbar);
     gtk_container_remove(GTK_CONTAINER(box), vwin->mbar);
+    gtk_widget_destroy(box);
 
     /* create new vwin->main, etc. */
     vwin->main = gtk_hbox_new(FALSE, 0);

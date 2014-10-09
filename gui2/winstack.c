@@ -24,6 +24,7 @@
 #include "session.h"
 #include "tabwin.h"
 #include "toolbar.h"
+#include "cmdstack.h"
 #include "winstack.h"
 
 #if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20
@@ -133,7 +134,9 @@ static const gchar *window_list_icon (int role)
 	id = GTK_STOCK_EXECUTE;
     } else if (role == OPEN_SESSION) {
 	id = GRETL_STOCK_ICONS;
-    } else if (role == PRINT || role == SCRIPT_OUT) {
+    } else if (role == PRINT || 
+	       role == SCRIPT_OUT ||
+	       role == VIEW_LOG) {
 	id = GRETL_STOCK_PAGE;
     } else if (role == SSHEET) {
 	id = GRETL_STOCK_TABLE;
@@ -468,6 +471,57 @@ static gboolean winlist_popup_done (GtkMenuShell *mshell,
     return FALSE;
 }
 
+static void add_cascade_item (GtkWidget *menu,
+			      GtkWidget *item)
+{
+    GtkWidget *image;
+
+    item = gtk_image_menu_item_new_with_label(_("Arrange"));
+    image = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, 
+				     GTK_ICON_SIZE_MENU);
+    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), 
+				  image);
+    g_signal_connect(G_OBJECT(item), "activate", 
+		     G_CALLBACK(cascade_session_windows), 
+		     NULL);
+    gtk_widget_show(item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+}
+
+static void add_log_item (GtkWidget *menu, 
+			  GtkWidget *item)
+{
+    GtkWidget *image;
+
+    item = gtk_image_menu_item_new_with_label(_("command log"));
+    image = gtk_image_new_from_stock(GRETL_STOCK_PAGE, 
+				     GTK_ICON_SIZE_MENU);
+    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), 
+				  image);
+    g_signal_connect(G_OBJECT(item), "activate", 
+		     G_CALLBACK(view_command_log), 
+		     NULL);
+    gtk_widget_show(item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+}
+
+static void add_iconview_item (GtkWidget *menu,
+			       GtkWidget *item)
+{
+    GtkWidget *image;
+
+    item = gtk_image_menu_item_new_with_label(_("icon view"));
+    image = gtk_image_new_from_stock(GRETL_STOCK_ICONS, 
+				     GTK_ICON_SIZE_MENU);
+    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), 
+				  image);
+    g_signal_connect(G_OBJECT(item), "activate", 
+		     G_CALLBACK(view_session), 
+		     NULL);
+    gtk_widget_show(item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+}
+
 /* pop up a list of open windows from which the user can
    select one to raise and focus */
 
@@ -478,8 +532,11 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     GdkEventType evtype;
     GList *wlist = gtk_action_group_list_actions(window_group);
     GList *list;
-    GtkWidget *item, *win = NULL;
+    GtkWidget *item, *lwin;
+    GtkWidget *thiswin = NULL;
     GtkAction *action;
+    int log_up = 0;
+    int icons_up = 0;
 
     if (menu != NULL) {
 	/* we need to make sure this is up to date */
@@ -490,7 +547,7 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     if (n_listed_windows > 1) {
 	wlist = g_list_sort(wlist, sort_window_list);
 	if (data != NULL) {
-	    win = GTK_WIDGET(data);
+	    thiswin = GTK_WIDGET(data);
 	}
     }
 
@@ -499,8 +556,14 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 
     while (list) {
 	action = (GtkAction *) list->data;
-	if (win != NULL) {
-	    maybe_revise_action_label(action, win);
+	lwin = window_from_action(action);
+	if (is_command_log_viewer(lwin)) {
+	    log_up = 1;
+	} else if (widget_is_iconview(lwin)) {
+	    icons_up = 1;
+	}
+	if (thiswin != NULL) {
+	    maybe_revise_action_label(action, thiswin);
 	}
 	gtk_action_set_accel_path(action, NULL);
 	item = gtk_action_create_menu_item(action);
@@ -512,25 +575,25 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     g_list_free(wlist);
 
     if (n_listed_windows > 1) {
-	/* add "cascade" menu item */
-	GtkWidget *image;
-
-	item = gtk_image_menu_item_new_with_label(_("Arrange"));
-	image = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, 
-					 GTK_ICON_SIZE_MENU);
-	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), 
-				      image);
-	g_signal_connect(G_OBJECT(item), "activate", 
-			 G_CALLBACK(cascade_session_windows), 
-			 NULL);
-	gtk_widget_show(item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	add_cascade_item(menu, item);
     }
 
-    if (win != NULL) {
+    if (!log_up || !icons_up) {
+	item = gtk_separator_menu_item_new();
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	if (!log_up) {
+	    add_log_item(menu, item);
+	}
+	if (!icons_up) {
+	    add_iconview_item(menu, item);
+	}
+    }
+
+    if (thiswin != NULL) {
 	g_signal_connect(G_OBJECT(menu), "deactivate", 
 			 G_CALLBACK(winlist_popup_done),
-			 win);
+			 thiswin);
     }
 
     evtype = event != NULL ? event->type : 0;
@@ -1069,15 +1132,12 @@ GtkWidget *vwin_toplevel (windata_t *vwin)
     return vwin->topmain != NULL ? vwin->topmain : vwin->main;
 }
 
-#define PACK_DEBUG 0
-
-static void toolbar_add_winlist (windata_t *vwin,
-				 GtkWidget *button,
-				 GtkWidget *hbox)
+static void real_add_winlist (windata_t *vwin, GtkWidget *hbox)
 {
-    GtkWidget *img, *tbar;
+    GtkWidget *button, *img, *tbar;
     GtkToolItem *item;
 
+    button = gtk_button_new();
     item = gtk_tool_item_new();
     tbar = gretl_toolbar_new();
     
@@ -1094,62 +1154,14 @@ static void toolbar_add_winlist (windata_t *vwin,
     gtk_box_pack_end(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
 }
 
-static void set_winlist_button_style (GtkWidget *button,
-				      windata_t *vwin)
-{
-#if GTK_MAJOR_VERSION == 3 || MAC_NATIVE
-    /* looks better with Adwaita */
-    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-#elif GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION >= 16
-    /* doesn't work with gtk 3.2.4 or 3.4.0 */
-    GtkStyle *style = gtk_widget_get_style(vwin->mbar);
-    GValue val = {0};
-
-    g_value_init(&val, G_TYPE_INT);
-    gtk_style_get_style_property(style,
-				 GTK_TYPE_MENU_BAR,
-				 "shadow-type", 
-				 &val);
-    if (g_value_get_int(&val) == GTK_SHADOW_NONE) {
-	gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    }
-    g_value_unset(&val);
-#endif
-}
-
 void menu_bar_add_winlist (windata_t *vwin)
 {
     GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
-    GtkWidget *button;
 
-    if (widget_get_int(hbox, "have_winlist")) {
-	fprintf(stderr, "menu_bar_add_winlist: already there\n");
-	return;
+    if (!widget_get_int(hbox, "have_winlist")) {
+	real_add_winlist(vwin, hbox);
+	widget_set_int(hbox, "have_winlist", 1);
     }
-
-    button = gtk_button_new();
-
-    if (GTK_IS_TOOLBAR(vwin->mbar)) {
-	/* let's try to blend in stylistically */
-	toolbar_add_winlist(vwin, button, hbox);
-    } else {
-	GtkWidget *img;
-
-	set_winlist_button_style(button, vwin);
-
-	img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, 
-				   GTK_ICON_SIZE_MENU);
-	gtk_container_add(GTK_CONTAINER(button), img);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(button), _("Windows"));
-	g_signal_connect(G_OBJECT(button), "button-press-event",
-			 G_CALLBACK(window_list_popup), 
-			 vwin_toplevel(vwin));
-	gtk_widget_show_all(button);
-	/* pack into parent of mbar */
-	gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-    }
-
-    widget_set_int(hbox, "have_winlist", 1);
 }
 
 static void destroy_hbox_child (GtkWidget *w, gpointer p)
@@ -1169,18 +1181,13 @@ static int want_winlist (windata_t *vwin)
 
 void vwin_pack_toolbar (windata_t *vwin)
 {
-#if PACK_DEBUG
-    fprintf(stderr, "vwin_pack_toolbar: topmain=%p, window_is_tab=%d\n",
-	    (void *) vwin->topmain, window_is_tab(vwin));
-#endif
-
     if (vwin->topmain != NULL) {
 	/* @vwin is embedded in a tabbed window */
 	tabwin_register_toolbar(vwin);
     } else {
 	GtkWidget *hbox;
 
-	/* check for presence of a temporary top hbox -- as
+	/* check for presence of a temporary "top-hbox" -- as
 	   in a script output window that's waiting for full
 	   output
 	*/
@@ -1202,8 +1209,7 @@ void vwin_pack_toolbar (windata_t *vwin)
 		gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
 	    }
 	    if (window_is_tab(vwin)) {
-		/* here we're re-packing vwin->mbar: move it up top,
-		   and ensure it has a winlist item alongside */
+		/* here we're re-packing vwin->mbar: move it up top */
 		gtk_box_reorder_child(GTK_BOX(vwin->vbox), hbox, 0);
 	    }
 	    gtk_widget_show_all(hbox);
@@ -1212,8 +1218,6 @@ void vwin_pack_toolbar (windata_t *vwin)
 
     if (want_winlist(vwin)) {
 	menu_bar_add_winlist(vwin);
-    } else {
-	fprintf(stderr, "vwin_pack_toolbar: winlist already there\n");
     }
 }
 

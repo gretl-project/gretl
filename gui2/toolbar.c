@@ -1054,7 +1054,6 @@ void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
     viewbar_add_items(vwin, flags);
 
     vwin_pack_toolbar(vwin);
-    menu_bar_add_winlist(vwin);
 }
 
 static void remove_child (GtkWidget *child, GtkWidget *cont)

@@ -95,6 +95,11 @@ void view_command_log (void)
     }
 }
 
+int is_command_log_viewer (GtkWidget *w)
+{
+    return w != NULL && w == logview;
+}
+
 static void send_entry_to_window (const char *s)
 {
     windata_t *vwin = g_object_get_data(G_OBJECT(logview),

@@ -30,6 +30,8 @@ gchar *get_logfile_content (int *err);
 
 void view_command_log (void);
 
+int is_command_log_viewer (GtkWidget *w);
+
 void set_session_log (const char *dirname, int code);
 
 void maybe_suspend_session_log (void);

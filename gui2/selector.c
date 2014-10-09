@@ -1930,31 +1930,45 @@ static void remove_from_right (GtkWidget *w, selector *sr,
     GtkTreePath *path;
     GtkTreeIter iter, last;
     int context = 0;
-    int nsel = 0;
+    int *sellist = NULL;
+    int ridx, nrows = 0;
 
     if (model == NULL || selection == NULL) {
 	return;
     }
 
-    /* get to the last row */
+    /* determine the number of rows in the list box, create a
+       list of selected row indices, and navigate to the last row
+    */
     if (gtk_tree_model_get_iter_first(model, &iter)) {
-	last = iter;
-	nsel = 1;
-	while (gtk_tree_model_iter_next(model, &iter)) {
-	    last = iter;
-	    nsel++;
+	if (gtk_tree_selection_iter_is_selected(selection, &iter)) {
+	    sellist = gretl_list_append_term(&sellist, nrows);
 	}
-    } else {
+	last = iter;
+	nrows++;
+	while (gtk_tree_model_iter_next(model, &iter)) {
+	    if (gtk_tree_selection_iter_is_selected(selection, &iter)) {
+		sellist = gretl_list_append_term(&sellist, nrows);
+	    }	    
+	    last = iter;
+	    nrows++;
+	}
+    }
+
+    if (nrows == 0 || sellist == NULL) {
+	/* "can't happen", but... */
 	return;
     }
 
     context = lag_context_from_widget(GTK_WIDGET(view));
     
-    /* work back up, deleting selected rows */
+    /* work back upward, deleting the selected rows */
     path = gtk_tree_model_get_path(model, &last);
+
     while (1) {
+	ridx = gtk_tree_path_get_indices(path)[0];
 	if (gtk_tree_model_get_iter(model, &last, path) &&
-	    gtk_tree_selection_iter_is_selected(selection, &last)) {
+	    in_gretl_list(sellist, ridx)) {
 	    if (context) {
 		gint v, lag;
 
@@ -1962,7 +1976,7 @@ static void remove_from_right (GtkWidget *w, selector *sr,
 		remove_specific_lag(v, lag, context);
 	    }
 	    gtk_list_store_remove(GTK_LIST_STORE(model), &last);
-	    nsel--;
+	    nrows--;
 	}
 	if (!gtk_tree_path_prev(path)) {
 	    break;
@@ -1971,11 +1985,11 @@ static void remove_from_right (GtkWidget *w, selector *sr,
 
     if (sr->add_button != NULL &&
 	!gtk_widget_is_sensitive(sr->add_button) &&
-	!selection_at_max(sr, nsel)) {
+	!selection_at_max(sr, nrows)) {
 	gtk_widget_set_sensitive(sr->add_button, TRUE);
     }
 
-    if (nsel == 0) {
+    if (nrows == 0) {
 	/* the listbox is now empty */
 	if (context && sr->lags_button != NULL) {
 	    gtk_widget_set_sensitive(sr->lags_button, FALSE);
@@ -1984,6 +1998,8 @@ static void remove_from_right (GtkWidget *w, selector *sr,
 	    xdiff_button_set_sensitive(sr, FALSE);
 	}
     }
+
+    free(sellist);
 }
 
 static void remove_from_rvars1_callback (GtkWidget *w, selector *sr)
