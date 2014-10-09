@@ -3535,7 +3535,11 @@ static void compose_cmdlist (selector *sr)
 	warnbox(_("You must specify a public interface"));
 	sr->error = 1;
 	return;
-    } 
+    } else if (MODEL_CODE(sr->ci) && rows < 1) {
+	warnbox(_("You must specify an independent variable"));
+	sr->error = 1;
+	return;
+    }	
 
     if (realrows > 0) {
 	maybe_resize_recorder_lists(sr, realrows);
