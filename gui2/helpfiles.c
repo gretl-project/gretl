@@ -46,7 +46,6 @@ static char *en_cli_helpfile;
 
 static windata_t *real_do_help (int idx, int pos, int role);
 static void en_help_callback (GtkWidget *w, windata_t *hwin);
-static void delete_help_viewer (GtkWidget *w, windata_t *hwin);
 static char *funcs_helpfile (void);
 static void helpwin_set_topic_index (windata_t *hwin, int idx);
 
@@ -680,11 +679,6 @@ static void en_help_callback (GtkWidget *w, windata_t *hwin)
     }
 
     real_do_help(idx, pos, role);
-}
-
-static void delete_help_viewer (GtkWidget *w, windata_t *hwin) 
-{
-    gtk_widget_destroy(hwin->main); 
 }
 
 static void normalize_base (GtkWidget *w, gpointer p)

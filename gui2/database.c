@@ -793,11 +793,6 @@ static void build_db_popup (windata_t *vwin, int cb, int del)
     }
 }
 
-static void db_close (GtkWidget *w, windata_t *vwin)
-{
-    gtk_widget_destroy(vwin->main);
-}
-
 enum {
     DEL_BTN = 1,
     CB_BTN

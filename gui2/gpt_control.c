@@ -32,6 +32,7 @@
 #include "boxplots.h"
 #include "dlgutils.h"
 #include "winstack.h"
+#include "toolbar.h"
 
 #define GPDEBUG 0
 #define POINTS_DEBUG 0
@@ -235,46 +236,6 @@ double plot_get_ymin (png_plot *plot)
 
 /* apparatus for graph toolbar */
 
-static void gp_button_sizing (GtkWidget *w)
-{
-    static int style_done;
-
-    gtk_widget_set_name(w, "gp_button");
-
-    if (!style_done) {
-	gtk_rc_parse_string("style \"gp-style\"\n{\n"
-			    "  GtkWidget::focus-padding = 1\n"
-			    "  GtkWidget::focus-line-width = 0\n"
-			    "  xthickness = 2\n"
-			    "  ythickness = 1\n"
-			    "}\n"
-			    "widget \"*.gp_button\" style \"gp-style\"");
-	style_done = 1;
-    }
-}
-
-static GtkWidget *small_tool_button (GretlToolItem *item,
-				     png_plot *plot)
-{
-    GtkWidget *img, *button = gtk_button_new();
-
-    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    gp_button_sizing(button);
-    img = gtk_image_new_from_stock(item->icon, GTK_ICON_SIZE_MENU);
-    gtk_container_add(GTK_CONTAINER(button), img);
-    gtk_widget_set_tooltip_text(GTK_WIDGET(button), _(item->tip));
-    if (!strcmp(item->icon, GRETL_STOCK_WINLIST)) {
-	g_signal_connect(G_OBJECT(button), "button-press-event", 
-			 item->func, plot->shell);
-    } else {
-	g_signal_connect(G_OBJECT(button), "clicked", 
-			 item->func, plot);
-    }
-    gtk_widget_show_all(button);
-
-    return button;
-}
-
 static void graph_enlarge_callback (GtkWidget *w, png_plot *plot)
 {
     plot_do_rescale(plot, 1);
@@ -290,35 +251,47 @@ static void graph_edit_callback (GtkWidget *w, png_plot *plot)
     start_editing_png_plot(plot);
 }
 
-static void graph_zoom_callback (GtkWidget *w, png_plot *plot)
-{
-    prepare_for_zoom(plot);
-}
-
 static void show_pdf_callback (GtkWidget *w, png_plot *plot)
 {
     graph_display_pdf(plot->spec);
 }
 
-static void close_plot_callback (GtkWidget *w, png_plot *plot)
+static void plot_winlist_popup (GtkWidget *w, png_plot *plot)
 {
-    gtk_widget_destroy(plot->shell);
+    window_list_popup(w, NULL, plot->shell);
+}
+
+static void gp_toolbar_relief (GtkWidget *w)
+{
+    static int style_done;
+
+    gtk_widget_set_name(w, "gp_toolbar");
+
+    if (!style_done) {
+	gtk_rc_parse_string("style \"gp-style\"\n{\n"
+			    "  GtkToolbar::shadow-type = GTK_SHADOW_NONE\n"
+			    "}\n"
+			    "widget \"*.gp_toolbar\" style \"gp-style\"");
+	style_done = 1;
+    }
 }
 
 static GretlToolItem plotbar_items[] = {
-    { N_("Windows"),     GRETL_STOCK_WINLIST, G_CALLBACK(window_list_popup), 0 },
-    { N_("Edit"),        GTK_STOCK_EDIT,      G_CALLBACK(graph_edit_callback), 0 },
-    { N_("Zoom..."),     GTK_STOCK_ZOOM_IN,   G_CALLBACK(graph_zoom_callback), 0 },
-    { N_("Display PDF"), GRETL_STOCK_PDF,     G_CALLBACK(show_pdf_callback), 0 },
+    { N_("Bigger"),      GRETL_STOCK_BIGGER,  G_CALLBACK(graph_enlarge_callback), 0 },
     { N_("Smaller"),     GRETL_STOCK_SMALLER, G_CALLBACK(graph_shrink_callback), 0 },
-    { N_("Bigger"),      GRETL_STOCK_BIGGER,  G_CALLBACK(graph_enlarge_callback), 0 }
+    { N_("Display PDF"), GRETL_STOCK_PDF,     G_CALLBACK(show_pdf_callback), 0 },
+    { N_("Edit"),        GTK_STOCK_EDIT,      G_CALLBACK(graph_edit_callback), 0 },
+    { N_("Windows"),     GRETL_STOCK_WINLIST, G_CALLBACK(plot_winlist_popup), 0 }
 };
 
 static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
 {
-    GtkWidget *button;
+    GtkWidget *tbar, *button;
     GretlToolItem *item;
     int i, n = G_N_ELEMENTS(plotbar_items);
+
+    tbar = gretl_toolbar_new();
+    gp_toolbar_relief(tbar);
 
     for (i=0; i<n; i++) {
 	item = &plotbar_items[i];
@@ -326,24 +299,21 @@ static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
 	    plot_not_editable(plot)) {
 	    continue;
 	}
-	if (item->func == G_CALLBACK(graph_zoom_callback)) {
-	    /* not ready yet */
-	    continue;
-	}
 	if ((item->func == G_CALLBACK(graph_enlarge_callback) ||
 	     item->func == G_CALLBACK(graph_shrink_callback)) &&
 	    (plot_not_editable(plot) || 
 	     gnuplot_png_terminal() != GP_PNG_CAIRO)) {
 	    continue;
-	}
-	button = small_tool_button(item, plot);
-	gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+	}	
+	button = gretl_toolbar_insert(tbar, item, item->func, plot, -1);
 	if (item->func == G_CALLBACK(graph_enlarge_callback)) {
 	    plot->up_icon = button;
 	} else if (item->func == G_CALLBACK(graph_shrink_callback)) {
 	    plot->down_icon = button;
-	}
-    }	
+	}	
+    }
+
+    gtk_box_pack_start(GTK_BOX(hbox), tbar, FALSE, FALSE, 5);
 }
 
 /* end apparatus for graph toolbar */

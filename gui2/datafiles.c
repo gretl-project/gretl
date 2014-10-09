@@ -1155,11 +1155,6 @@ static void new_package_callback (GtkWidget *w, gpointer p)
     functions_selection_wrapper();
 }
 
-static void close_files_viewer (GtkWidget *w, windata_t *vwin)
-{
-    gtk_widget_destroy(vwin->main);
-} 
-
 static void build_datafiles_popup (windata_t *vwin)
 {
     if (vwin->popup == NULL) {

@@ -459,6 +459,7 @@ static void split_pane_callback (GtkWidget *w, windata_t *vwin)
 	GtkWidget *paned;
 
 	paned = g_object_get_data(G_OBJECT(vwin->vbox), "paned");
+
 	if (paned != NULL) {
 	    /* currently in split-view mode: so rejoin */
 	    vertical = GTK_IS_HPANED(paned);
@@ -1170,17 +1171,6 @@ static void tbar_open_data (void)
     display_files(TEXTBOOK_DATA, NULL);
 }
 
-#define GUG_ICON 0
-
-#if GUG_ICON
-
-static void tbar_users_guide (void)
-{
-    display_pdf_help(NULL);
-}
-
-#endif
-
 static void tbar_command_ref (void)
 {
     plain_text_cmdref(NULL);
@@ -1238,9 +1228,6 @@ static GretlToolItem mainbar_items[] = {
     { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(gretl_console), 0 },
     { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(tbar_iconview), 0 },
     { N_("function packages"),  GRETL_STOCK_FUNC,    G_CALLBACK(tbar_show_funcs), 0 },
-#if GUG_ICON
-    { N_("user's guide"),       GRETL_STOCK_PDF,     G_CALLBACK(tbar_users_guide), 0 },
-#endif
     { N_("command reference"),  GTK_STOCK_HELP,      G_CALLBACK(tbar_command_ref), 0 },
     { N_("X-Y graph"),          GRETL_STOCK_SCATTER, G_CALLBACK(tbar_xy_graph), 0 },
     { N_("OLS model"),          GRETL_STOCK_MODEL,   G_CALLBACK(tbar_model), 0 },
