@@ -1,0 +1,63 @@
+/* XPM */
+
+/* 
+Artist: Yusuke Kamiyamane
+Iconset: Fugue Icons (3560 icons)
+License: CC Attribution 4.0 
+  http://creativecommons.org/licenses/by/4.0/
+*/
+
+static char *mini_join_h_xpm[] = {
+/* columns rows colors chars-per-pixel */
+"16 16 33 1 ",
+"  c #2446AB",
+". c #2345AF",
+"X c #2F49AB",
+"o c #2A4CBE",
+"O c #3052B5",
+"+ c #3557D2",
+"@ c #3F61E5",
+"# c #4264C8",
+"$ c #5678DC",
+"% c #6486EC",
+"& c #E1E1E1",
+"* c gray89",
+"= c #E6E6E6",
+"- c #E7E7E7",
+"; c #E9E9E9",
+": c #EAEAEA",
+"> c gray92",
+", c #ECECEC",
+"< c gray93",
+"1 c #EFEFEF",
+"2 c #F1F1F1",
+"3 c #F3F3F3",
+"4 c #F4F4F4",
+"5 c gray96",
+"6 c #F8F8F8",
+"7 c #F9F9F9",
+"8 c gray98",
+"9 c #FBFBFB",
+"0 c gray99",
+"q c #FDFDFD",
+"w c #FEFEFE",
+"e c #FFFFFF",
+"r c None",
+/* pixels */
+"rrrrrrrrrrrrrrrr",
+"reeeeeeeeeeeeerr",
+"reeee7eeeeee7err",
+"re77e77777777err",
+"r7577757777777rr",
+"r7777577757577rr",
+"%%%%%%%%%%%%%%%r",
+"$5333333333355$r",
+"#3>>,>>>>,,,,3#r",
+"O,>>,53335,>>,Or",
+" ,*>5     3**, r",
+".>&&>33333>&*>.r",
+"o>&&&&&&&&&&&>or",
+"+>>*>**>>*>*>>+r",
+"X@@@@@@@@@@@@@Xr",
+"rrrrrrrrrrrrrrrr"
+};

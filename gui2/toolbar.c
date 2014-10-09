@@ -52,13 +52,10 @@
 #include "../pixmaps/mini.pin.xpm"
 #include "../pixmaps/mini.alpha.xpm"
 #include "../pixmaps/mini.en.xpm"
-#if 0
-#include "../pixmaps/split-horizontal.xpm"
-#include "../pixmaps/split-vertical.xpm"
-#else
 #include "../pixmaps/mini.split_h.xpm"
 #include "../pixmaps/mini.split_v.xpm"
-#endif
+#include "../pixmaps/mini.join_h.xpm"
+#include "../pixmaps/mini.join_v.xpm"
 #include "../pixmaps/mini.winlist.xpm"
 #include "../pixmaps/mini.spreadsheet.xpm"
 #include "../pixmaps/mini.bundle.xpm"
@@ -141,6 +138,8 @@ void gretl_stock_icons_init (void)
 	{ mini_en_xpm, GRETL_STOCK_EN },
 	{ mini_split_h_xpm, GRETL_STOCK_SPLIT_H },
 	{ mini_split_v_xpm, GRETL_STOCK_SPLIT_V },
+	{ mini_join_h_xpm, GRETL_STOCK_JOIN_H },
+	{ mini_join_v_xpm, GRETL_STOCK_JOIN_V },
 	{ mini_winlist_xpm, GRETL_STOCK_WINLIST },
 	{ mini_spreadsheet_xpm, GRETL_STOCK_SHEET },
 	{ mini_bundle_xpm, GRETL_STOCK_BUNDLE },
@@ -439,16 +438,41 @@ static void split_pane_callback (GtkWidget *w, windata_t *vwin)
 	hb = w;
     }
 
+    /* Note: by "vertical" here we mean that the split runs vertically,
+       dividing the pane into left- and right-hand sections; otherwise
+       the split runs horizontally.
+    */
+
     if (g_object_get_data(G_OBJECT(vwin->vbox), "sw") != NULL) {
-	/* currently in single-view mode */
+	/* currently in single-view mode: so split */
 	viewer_split_pane(vwin, vertical);
 	gtk_widget_set_sensitive(vb, vertical);
 	gtk_widget_set_sensitive(hb, !vertical);
-    } else if (g_object_get_data(G_OBJECT(vwin->vbox), "paned") != NULL) {
-	/* currently in split-view mode */
-	viewer_close_pane(vwin);
-	gtk_widget_set_sensitive(hb, TRUE);
-	gtk_widget_set_sensitive(vb, TRUE);
+	if (vertical) {
+	    gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(vb), 
+					 GRETL_STOCK_JOIN_V);
+	} else {
+	    gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(hb), 
+					 GRETL_STOCK_JOIN_H);
+	}
+    } else {
+	GtkWidget *paned;
+
+	paned = g_object_get_data(G_OBJECT(vwin->vbox), "paned");
+	if (paned != NULL) {
+	    /* currently in split-view mode: so rejoin */
+	    vertical = GTK_IS_HPANED(paned);
+	    viewer_close_pane(vwin);
+	    gtk_widget_set_sensitive(hb, TRUE);
+	    gtk_widget_set_sensitive(vb, TRUE);
+	    if (vertical) {
+		gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(vb), 
+					     GRETL_STOCK_SPLIT_V);
+	    } else {
+		gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(hb), 
+					     GRETL_STOCK_SPLIT_H);
+	    }
+	}
     }
 }
 
