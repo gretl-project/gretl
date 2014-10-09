@@ -1077,26 +1077,6 @@ static void toolbar_add_winlist (windata_t *vwin,
 {
     GtkWidget *img, *tbar;
     GtkToolItem *item;
-    int tabbed = 0;
-
-#if PACK_DEBUG
-    fprintf(stderr, "toolbar_add_winlist\n");
-#endif
-
-    if (window_is_tab(vwin)) {
-	if (widget_get_int(vwin_toplevel(vwin), "have_winlist")) {
-#if PACK_DEBUG
-	    fprintf(stderr, " skipping!\n");
-#endif
-	    return;
-	} else {
-	    tabbed = 1;
-	}
-    }
-
-#if PACK_DEBUG
-    fprintf(stderr, " proceeding!\n");
-#endif
 
     item = gtk_tool_item_new();
     tbar = gretl_toolbar_new();
@@ -1112,27 +1092,11 @@ static void toolbar_add_winlist (windata_t *vwin,
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     gtk_widget_show_all(tbar);
     gtk_box_pack_end(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
-
-    if (tabbed) {
-	widget_set_int(vwin_toplevel(vwin), "have_winlist", 1);
-    }
 }
 
-void menu_bar_add_winlist (windata_t *vwin)
+static void set_winlist_button_style (GtkWidget *button,
+				      windata_t *vwin)
 {
-    GtkWidget *img, *button = gtk_button_new();
-    GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
-
-    if (GTK_IS_TOOLBAR(vwin->mbar)) {
-	/* let's try to blend in stylistically */
-	toolbar_add_winlist(vwin, button, hbox);
-	return;
-    }
-
-#if PACK_DEBUG
-    fprintf(stderr, "menu_bar_add_winlist\n");
-#endif
-
 #if GTK_MAJOR_VERSION == 3 || MAC_NATIVE
     /* looks better with Adwaita */
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
@@ -1151,17 +1115,41 @@ void menu_bar_add_winlist (windata_t *vwin)
     }
     g_value_unset(&val);
 #endif
+}
 
-    img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, 
+void menu_bar_add_winlist (windata_t *vwin)
+{
+    GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
+    GtkWidget *button;
+
+    if (widget_get_int(hbox, "have_winlist")) {
+	fprintf(stderr, "menu_bar_add_winlist: already there\n");
+	return;
+    }
+
+    button = gtk_button_new();
+
+    if (GTK_IS_TOOLBAR(vwin->mbar)) {
+	/* let's try to blend in stylistically */
+	toolbar_add_winlist(vwin, button, hbox);
+    } else {
+	GtkWidget *img;
+
+	set_winlist_button_style(button, vwin);
+
+	img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, 
 				   GTK_ICON_SIZE_MENU);
-    gtk_container_add(GTK_CONTAINER(button), img);
-    gtk_widget_set_tooltip_text(GTK_WIDGET(button), _("Windows"));
-    g_signal_connect(G_OBJECT(button), "button-press-event",
-		     G_CALLBACK(window_list_popup), 
-		     vwin_toplevel(vwin));
-    gtk_widget_show_all(button);
-    /* pack into parent of mbar */
-    gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(button), img);
+	gtk_widget_set_tooltip_text(GTK_WIDGET(button), _("Windows"));
+	g_signal_connect(G_OBJECT(button), "button-press-event",
+			 G_CALLBACK(window_list_popup), 
+			 vwin_toplevel(vwin));
+	gtk_widget_show_all(button);
+	/* pack into parent of mbar */
+	gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+    }
+
+    widget_set_int(hbox, "have_winlist", 1);
 }
 
 static void destroy_hbox_child (GtkWidget *w, gpointer p)
@@ -1170,6 +1158,13 @@ static void destroy_hbox_child (GtkWidget *w, gpointer p)
 	gtk_spinner_stop(GTK_SPINNER(w));
     }
     gtk_widget_destroy(w);
+}
+
+static int want_winlist (windata_t *vwin)
+{
+    GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
+
+    return !widget_get_int(hbox, "have_winlist");
 }
 
 void vwin_pack_toolbar (windata_t *vwin)
@@ -1182,10 +1177,6 @@ void vwin_pack_toolbar (windata_t *vwin)
     if (vwin->topmain != NULL) {
 	/* @vwin is embedded in a tabbed window */
 	tabwin_register_toolbar(vwin);
-	fprintf(stderr, " n_siblings = %d\n", viewer_n_siblings(vwin));
-	if (vwin->role == VIEW_MODEL && viewer_n_siblings(vwin) == 0) {
-	    menu_bar_add_winlist(vwin);
-	}
     } else {
 	GtkWidget *hbox;
 
@@ -1207,7 +1198,6 @@ void vwin_pack_toolbar (windata_t *vwin)
 		vwin->role == VECM) {
 		/* model viewer: the menubar extends full-length */
 		gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, TRUE, TRUE, 0);
-		menu_bar_add_winlist(vwin);
 	    } else {
 		gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
 	    }
@@ -1215,14 +1205,16 @@ void vwin_pack_toolbar (windata_t *vwin)
 		/* here we're re-packing vwin->mbar: move it up top,
 		   and ensure it has a winlist item alongside */
 		gtk_box_reorder_child(GTK_BOX(vwin->vbox), hbox, 0);
-		/* FIXME only if needed! */
-		// menu_bar_add_winlist(vwin);
 	    }
 	    gtk_widget_show_all(hbox);
 	}
     }
 
-    /* FIXME do the add_winlist thing here */
+    if (want_winlist(vwin)) {
+	menu_bar_add_winlist(vwin);
+    } else {
+	fprintf(stderr, "vwin_pack_toolbar: winlist already there\n");
+    }
 }
 
 windata_t *gretl_browser_new (int role, const gchar *title)

@@ -26,12 +26,12 @@
 # include "gretlwin32.h"
 #endif
 
-#define TDEBUG 0
+#define TDEBUG 1
 
 struct tabwin_t_ {
     int role;             /* what's tabwin doing? */ 
     GtkWidget *main;      /* top-level GTK window */
-    GtkWidget *mbox;      /* horizontal box to hold menu bar */
+    GtkWidget *hbox;      /* horizontal box to hold menu bar */
     GtkWidget *mbar;      /* menu bar */
     GtkWidget *tabs;      /* notebook for tabs */
     GtkWidget *dialog;    /* associated dialog */
@@ -155,9 +155,10 @@ static void viewer_tab_show_closer (GtkNotebook *notebook,
 static void tabwin_remove_toolbar (tabwin_t *tabwin)
 {
 #if TDEBUG
-    fprintf(stderr, "*** removing toolbar at %p\n", (void *) tabwin->mbar);
+    fprintf(stderr, "*** tabwin_remove_toolbar: removing toolbar at %p\n", 
+	    (void *) tabwin->mbar);
 #endif
-    gtk_container_remove(GTK_CONTAINER(tabwin->mbox), 
+    gtk_container_remove(GTK_CONTAINER(tabwin->hbox), 
 			 tabwin->mbar);
     tabwin->mbar = NULL;
 }
@@ -165,9 +166,10 @@ static void tabwin_remove_toolbar (tabwin_t *tabwin)
 static void tabwin_insert_toolbar (tabwin_t *tabwin, windata_t *vwin)
 {
 #if TDEBUG
-    fprintf(stderr, "*** inserting toolbar at %p\n", (void *) vwin->mbar);
+    fprintf(stderr, "*** tabwin_insert_toolbar: inserting toolbar at %p\n", 
+	    (void *) vwin->mbar);
 #endif
-    gtk_box_pack_start(GTK_BOX(tabwin->mbox), vwin->mbar, 
+    gtk_box_pack_start(GTK_BOX(tabwin->hbox), vwin->mbar, 
 		       TRUE, TRUE, 0);
     gtk_widget_show_all(vwin->mbar);
     tabwin->mbar = vwin->mbar;
@@ -561,8 +563,8 @@ static tabwin_t *make_tabbed_viewer (int role)
     gtk_container_add(GTK_CONTAINER(tabwin->main), vbox);
 
     /* box to hold menu bar */
-    tabwin->mbox = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), tabwin->mbox, FALSE, FALSE, 0);
+    tabwin->hbox = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), tabwin->hbox, FALSE, FALSE, 0);
     tabwin->mbar = NULL;
 
     /* notebook with its signal handlers */
@@ -683,7 +685,7 @@ void tabwin_register_toolbar (windata_t *vwin)
 		      GUINT_TO_POINTER(handler_id));
 
 #if TDEBUG
-    fprintf(stderr, "*** register_toolbar: vwin=%p has toolbar=%p\n",
+    fprintf(stderr, "*** tabwin_register_toolbar: vwin=%p has toolbar=%p\n",
 	    (void *) vwin, (void *) vwin->mbar);
 #endif
 
