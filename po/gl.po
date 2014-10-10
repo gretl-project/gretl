@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Gretl (1.9.91)\n"
+"Project-Id-Version: Gretl (1.9.92)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-09-30 13:27-0400\n"
-"PO-Revision-Date: 2014-06-23 17:36+0100\n"
+"PO-Revision-Date: 2014-09-30 22:44+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -508,18 +508,14 @@ msgid "LM test"
 msgstr "Proba LM (multiplicador de Lagrange)"
 
 #: lib/src/compare.c:399
-#, fuzzy, c-format
+#, c-format
 msgid "Adding variables improved %d of %d information criteria.\n"
-msgstr ""
-"Ao engadir variables melloraron %d dos %d estatísticos de selección de "
-"modelos.\n"
+msgstr "Ao engadir variables melloraron %d dos %d criterios de información.\n"
 
 #: lib/src/compare.c:402
-#, fuzzy, c-format
+#, c-format
 msgid "Omitting variables improved %d of %d information criteria.\n"
-msgstr ""
-"Ao omitir variables melloraron %d dos %d estatísticos de selección de "
-"modelos.\n"
+msgstr "Ao omitir variables melloraron %d dos %d criterios de información.\n"
 
 #: lib/src/compare.c:551 lib/src/vartest.c:807 lib/src/vartest.c:1094
 msgid "omit"
@@ -1004,6 +1000,8 @@ msgid ""
 "If '%s' is intended as the name of a variable, please change it --\n"
 "strings of this sort usually mean 'not a number'."
 msgstr ""
+"Se '%s' proponse como nome dunha variable, modifíquese --\n"
+"cadeas desta clase xeralmente significan 'non numérico'."
 
 #: lib/src/csvdata.c:2572
 msgid "scanning for variable names...\n"
@@ -1150,7 +1148,7 @@ msgstr "O tamaño da serie non coincide co do conxunto de datos"
 
 #: lib/src/dataio.c:108
 msgid "Varname exceeds the maximum of 31 characters"
-msgstr ""
+msgstr "O nome da variable excede o máximo de 31 caracteres"
 
 #: lib/src/dataio.c:133
 #, c-format
@@ -1314,7 +1312,7 @@ msgstr "Constante xerada automaticamente"
 #: gui2/gui_utils.c:5348 gui2/toolbar.c:1175 gui2/toolbar.c:1184
 #: gui2/toolbar.c:1193
 msgid "Please open a data file first"
-msgstr "Abra primeiro un ficheiro de datos"
+msgstr "Abra antes un ficheiro de datos"
 
 #: lib/src/dataset.c:1447 lib/src/gretl_utils.c:1792
 #, c-format
@@ -3200,14 +3198,14 @@ msgid "Missing function return type"
 msgstr "Tipo de resultado de función perdido"
 
 #: lib/src/gretl_func.c:1326
-#, fuzzy, c-format
+#, c-format
 msgid "Expected a function return type, found '%s'"
-msgstr "Agardábase '%c' pero atopouse '%s'\n"
+msgstr "Agardábase un tipo de resultado de función, atopouse '%s'"
 
 #: lib/src/gretl_func.c:1329
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid return type for function"
-msgstr "Tipo de resultado incorrecto para a función"
+msgstr "%s: Tipo de resultado incorrecto para a función"
 
 #: lib/src/gretl_func.c:2316 lib/src/gretl_func.c:2376
 #: lib/src/gretl_func.c:2452 lib/src/gretl_utils.c:1715
@@ -5830,7 +5828,7 @@ msgstr "Non se especificou ningunha función de regresión"
 #: lib/src/nls.c:2880
 msgid "You cannot supply both a \"params\" line and analytical derivatives"
 msgstr ""
-"Non poden indicarse ambas cosas, unha liña de \"parámetros\" e derivadas "
+"Non poden indicarse ambas cousas, unha liña de \"parámetros\" e derivadas "
 "analíticas"
 
 #: lib/src/nls.c:2890
@@ -6934,9 +6932,9 @@ msgid "Invalid option '--%s'"
 msgstr "Opción '--%s' incorrecta"
 
 #: lib/src/tokenize.c:1144
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid option '-%c'"
-msgstr "Opción '--%s' incorrecta"
+msgstr "Opción '-%c' incorrecta"
 
 #: lib/src/transforms.c:144
 #, c-format
@@ -7024,9 +7022,8 @@ msgid "Ambiguous matrix index"
 msgstr "Índice de matriz ambiguo"
 
 #: lib/src/usermat.c:714
-#, fuzzy
 msgid "Matrix is not symmetric"
-msgstr "Non é unha matriz definida positiva"
+msgstr "A matriz non é simétrica"
 
 #: lib/src/usermat.c:936
 msgid "Matrix decomposition failed"
@@ -9341,7 +9338,7 @@ msgstr "Intentar pegar os datos desde a área de transferencia?"
 
 #: gui2/dialogs.c:4241
 msgid "Clear current dataset first"
-msgstr "Primeiro libre o conxunto de datos actual"
+msgstr "Libre antes o conxunto de datos actual"
 
 #: gui2/dialogs.c:4252
 msgid "Try appending to current dataset"
@@ -10040,9 +10037,8 @@ msgid "Can't find the function '%s'"
 msgstr "Non podo atoparse a función '%s'"
 
 #: gui2/fnsave.c:842 gui2/fnsave.c:1683
-#, fuzzy
 msgid "Please save your package first"
-msgstr "Abra primeiro un ficheiro de datos"
+msgstr "Garde antes o seu paquete"
 
 #: gui2/fnsave.c:998
 msgid "private"
@@ -13549,7 +13545,7 @@ msgstr "Engadir diferenzas"
 
 #: gui2/menustate.c:383 gui2/menustate.c:516
 msgid "Dummify..."
-msgstr ""
+msgstr "Converter en ficticia..."
 
 #: gui2/menustate.c:385 gui2/menustate.c:489 gui2/menustate.c:517
 #: gui2/menustate.c:583
@@ -14213,7 +14209,7 @@ msgstr "Amosar as clasificacións"
 
 #: gui2/selector.c:5546
 msgid "Make plot interactive"
-msgstr ""
+msgstr "Facer a gráfica interactiva"
 
 #: gui2/selector.c:5549
 msgid "Show interval for median"
@@ -14576,14 +14572,12 @@ msgid "default"
 msgstr "por defecto"
 
 #: gui2/series_view.c:371 gui2/series_view.c:418
-#, fuzzy
 msgid "Original order"
-msgstr "Orde de retardo"
+msgstr "Orde orixinal"
 
 #: gui2/series_view.c:380
-#, fuzzy
 msgid "Sort order:"
-msgstr "Orde AR:"
+msgstr "Orde de clasificación:"
 
 #: gui2/series_view.c:432
 msgid "Variable to sort by"
@@ -14703,7 +14697,7 @@ msgstr "O paquete está baleiro"
 #: gui2/session.c:2429
 #, c-format
 msgid "%s: please close this object's window first"
-msgstr "%s: peche primeiro a xanela deste obxecto"
+msgstr "%s: peche antes a xanela deste obxecto"
 
 #: gui2/session.c:2581 gui2/session.c:2606
 #, c-format
@@ -15158,9 +15152,8 @@ msgid "Apply"
 msgstr "Aplicar"
 
 #: gui2/ssheet.c:179
-#, fuzzy
 msgid "_Format..."
-msgstr "_Predicións..."
+msgstr "_Formatar..."
 
 #: gui2/ssheet.c:180
 msgid "_Properties"
@@ -15303,7 +15296,7 @@ msgstr "Gretl: Editar datos"
 
 #: gui2/ssheet.c:3340
 msgid "Please add a variable to the dataset first"
-msgstr "Engadir primeiro unha variable ao conxunto de datos"
+msgstr "Engadir antes unha variable ao conxunto de datos"
 
 #: gui2/ssheet.c:3438
 msgid "You must give the matrix a name"
@@ -15865,7 +15858,7 @@ msgstr "regresores"
 
 #: plugin/addons-i18n.c:45
 msgid "SVAR"
-msgstr ""
+msgstr "SVAR"
 
 #: plugin/addons-i18n.c:46
 msgid "AB-model"
