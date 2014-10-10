@@ -3608,8 +3608,7 @@ static void set_pane_text_properties (GtkTextView *w)
     gtk_text_view_set_cursor_visible(w, FALSE);
 }
 
-/* limited to script output window at present: divide the
-   window into two panes */
+/* divide a text window into two panes */
 
 void viewer_split_pane (windata_t *vwin, int vertical)
 {
