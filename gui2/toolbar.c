@@ -755,7 +755,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
                         r == MAHAL || r == FCAST || \
 			r == LOESS || r == NADARWAT)
 
-#define split_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT || vwin_editing_script(r))
+#define split_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT || \
+                     r == VIEW_LOG || vwin_editing_script(r))
 
 #define clear_ok(r) (r == VIEW_LOG)
 
