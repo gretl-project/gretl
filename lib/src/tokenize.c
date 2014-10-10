@@ -1515,6 +1515,14 @@ static int get_parm2 (CMD *c, int options_later)
 
     tok = &c->toks[pos];
 
+#if 1 /* any bad fallout here? */
+    if (token_joined(tok)) {
+	c->parm2 = merge_toks_r_to_l(c, pos);
+    } else {
+	c->parm2 = tok->s;
+	tok->flag |= TOK_DONE;
+    }
+#else
     if (delimited_type(tok->type)) {
 	c->parm2 = tok->s;
 	tok->flag |= TOK_DONE;
@@ -1524,6 +1532,7 @@ static int get_parm2 (CMD *c, int options_later)
     } else {
 	c->parm2 = merge_toks_r_to_l(c, pos);
     }
+#endif
 
     return c->err;
 }
@@ -3007,7 +3016,8 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
 	    strncat(tok, s, m);
 	    err = push_numeric_token(cmd, tok, s, pos);
-	} else if (isspace(*s)) {	    
+	} else if (isspace(*s) || *s == (char) 0xA0) {
+	    /* handle stupid "non-breaking space" here too */
 	    n = 1;
 	    skipped = 1;
 	} else if (*s == '@' && (idx_only || gretl_if_state_false())) {
