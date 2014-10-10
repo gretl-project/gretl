@@ -3596,16 +3596,22 @@ void text_table_setup (GtkWidget *vbox, GtkWidget *w)
     gtk_widget_show(sw);
 }
 
-static void set_pane_text_properties (GtkTextView *w)
+static void set_pane_text_properties (GtkTextView *w2,
+				      GtkTextView *w1)
 {
-    gtk_text_view_set_wrap_mode(w, 0);
-    gtk_text_view_set_left_margin(w, 4);
-    gtk_text_view_set_right_margin(w, 4);
+    gtk_text_view_set_wrap_mode(w2, 0);
+    gtk_text_view_set_left_margin(w2, 4);
+    gtk_text_view_set_right_margin(w2, 4);
 
-    gtk_widget_modify_font(GTK_WIDGET(w), fixed_font);
+    gtk_widget_modify_font(GTK_WIDGET(w2), fixed_font);
 
-    gtk_text_view_set_editable(w, FALSE);
-    gtk_text_view_set_cursor_visible(w, FALSE);
+    if (gtk_text_view_get_editable(w1)) {
+	gtk_text_view_set_editable(w2, TRUE);
+	gtk_text_view_set_cursor_visible(w2, TRUE);
+    } else {
+	gtk_text_view_set_editable(w2, FALSE);
+	gtk_text_view_set_cursor_visible(w2, FALSE);
+    }
 }
 
 /* divide a text window into two panes */
@@ -3640,8 +3646,15 @@ void viewer_split_pane (windata_t *vwin, int vertical)
     g_object_set_data(G_OBJECT(vwin->vbox), "sw", NULL);
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view1));
-    view2 = gtk_text_view_new_with_buffer(tbuf);
-    set_pane_text_properties(GTK_TEXT_VIEW(view2));
+
+    if (GTK_IS_SOURCE_VIEW(view1)) {
+	view2 = gtk_source_view_new_with_buffer(GTK_SOURCE_BUFFER(tbuf));
+    } else {
+	view2 = gtk_text_view_new_with_buffer(tbuf);
+    }
+
+    set_pane_text_properties(GTK_TEXT_VIEW(view2),
+			     GTK_TEXT_VIEW(view1));
 
     g_signal_connect(G_OBJECT(view2), "button-press-event", 
 		     G_CALLBACK(text_popup_handler), vwin);
@@ -3690,4 +3703,3 @@ void viewer_close_pane (windata_t *vwin)
     gtk_widget_show(sw);
     g_object_unref(sw);
 }
-
