@@ -93,6 +93,10 @@ int gretl_array_print (gretl_array *A, PRN *prn);
 int gretl_array_print_full (gretl_array *A, const DATASET *dset,
 			    PRN *prn);
 
+char *gretl_array_print_to_dotdir (gretl_array *A, 
+				   const DATASET *dset,
+				   int *err);
+
 void gretl_array_serialize (gretl_array *A, FILE *fp);
 
 gretl_array *gretl_array_deserialize (void *p1, void *p2,

@@ -432,7 +432,8 @@ struct str_table funcs[] = {
     { F_ARRAY,     "array" },
     { F_STRVALS,   "strvals" },
     { F_STRINGIFY, "stringify" },
-    { F_PRINTARRAY, "printarray" },
+    { F_PUTARRAY,  "putarray" },
+    { F_DOTWRITE,  "dotwrite" },
     { 0,           NULL }
 };
 

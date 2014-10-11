@@ -4275,14 +4275,25 @@ static NODE *get_array_element (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *print_array_node (NODE *n, parser *p)
+static NODE *output_array_node (NODE *n, parser *p, int f)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret = NULL;
 
-    if (starting(p)) {
-	ret->v.xval = gretl_array_print_full(n->v.a, 
-					     p->dset,
-					     p->prn);
+    if (f == F_DOTWRITE) {
+	ret = aux_string_node(p);
+	if (!p->err) {
+	    ret->v.str = 
+		gretl_array_print_to_dotdir(n->v.a, 
+					    p->dset, 
+					    &p->err);
+	}
+    } else {
+	ret = aux_scalar_node(p);
+	if (!p->err) {
+	    ret->v.xval = gretl_array_print_full(n->v.a, 
+						 p->dset,
+						 p->prn);
+	}
     }
 
     return ret;
@@ -11512,9 +11523,10 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = stringify_series(l, r, p);
 	}
 	break;
-    case F_PRINTARRAY:
+    case F_PUTARRAY:
+    case F_DOTWRITE:
 	if (l->t == ARRAY) {
-	    ret = print_array_node(l, p);
+	    ret = output_array_node(l, p, t->t);
 	} else {
 	    node_type_error(t->t, 0, ARRAY, l, p);
 	}
