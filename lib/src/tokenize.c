@@ -216,7 +216,7 @@ static struct gretl_cmd gretl_cmds[] = {
 #define param_optional(c) (c == SET || c == HELP || c == RESTRICT || \
 			   c == SMPL || c == SYSTEM || c == FUNCERR)
 
-#define parm2_optional(c) (c == SET || c == GNUPLOT || c == SETOPT || \
+#define parm2_optional(c) (c == SET || c == SETOPT || \
 			   c == ESTIMATE || c == HELP)
 
 #define vargs_optional(c) (c == PRINTF || c == SPRINTF)
@@ -1515,24 +1515,13 @@ static int get_parm2 (CMD *c, int options_later)
 
     tok = &c->toks[pos];
 
-#if 1 /* any bad fallout here? */
+    /* revised 2014-10-11 */
     if (token_joined(tok)) {
 	c->parm2 = merge_toks_r_to_l(c, pos);
     } else {
 	c->parm2 = tok->s;
 	tok->flag |= TOK_DONE;
     }
-#else
-    if (delimited_type(tok->type)) {
-	c->parm2 = tok->s;
-	tok->flag |= TOK_DONE;
-    } else if (!token_joined(tok)) {
-	c->parm2 = tok->s;
-	tok->flag |= TOK_DONE;
-    } else {
-	c->parm2 = merge_toks_r_to_l(c, pos);
-    }
-#endif
 
     return c->err;
 }
@@ -3195,9 +3184,11 @@ static int post_process_spreadsheet_options (CMD *cmd)
 static void post_process_rename_param (CMD *cmd,
 				       DATASET *dset)
 {
-    int id = current_series_index(dset, cmd->param);
-
-    cmd->auxint = id;
+    if (integer_string(cmd->param)) {
+	cmd->auxint = atoi(cmd->param);
+    } else {
+	cmd->auxint = current_series_index(dset, cmd->param);
+    }
 }
 
 /* check the commands that have the CI_INFL flag:

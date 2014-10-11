@@ -640,8 +640,6 @@ static void real_echo_command (CMD *cmd, const char *line,
 	return;
     }
 
-    /* FIXME foreign lines? */
-
     /* print leading string before echo? */
     if (recording) {
 	if (cmd->ci == STORE) {
@@ -653,7 +651,13 @@ static void real_echo_command (CMD *cmd, const char *line,
 	leader = "? ";
     }
 
-    reflow_line(line, cmd, leader, prn);
+    if (cmd->context == FOREIGN) {
+	pputs(prn, leader);
+	pputs(prn, line);
+    } else {
+	reflow_line(line, cmd, leader, prn);
+    }
+
     pputc(prn, '\n');
 
     gretl_print_flush_stream(prn);
