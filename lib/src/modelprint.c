@@ -3844,7 +3844,7 @@ static struct printval **allocate_printvals (int n, int m)
 }
 
 static int get_ar_data (const MODEL *pmod, double **pb,
-			double **pse, int *pk, int *dfd)
+			double **pse, int *pk)
 {
     double *b, *se;
     int i, k, err = 0;
@@ -3857,10 +3857,6 @@ static int get_ar_data (const MODEL *pmod, double **pb,
     }
 
     k = pmod->arinfo->arlist[0];
-
-    if (k > 1) {
-	*dfd = pmod->dfd + (pmod->ncoeff - k);
-    } 
 
     b = malloc((pmod->ncoeff + k) * sizeof *b);
     se = malloc((pmod->ncoeff + k) * sizeof *se);
@@ -4360,7 +4356,6 @@ static int plain_print_coeffs (const MODEL *pmod,
     int hlen;
     double tval, pval = 0.0;
     int n, d, nc = pmod->ncoeff;
-    int dfd = pmod->dfd;
     int show_slope, adfnum = -1;
     int intervals = 0;
     int dotlen, namelen = 0;
@@ -4376,7 +4371,7 @@ static int plain_print_coeffs (const MODEL *pmod,
     if (pmod->ci == AR || pmod->ci == ARCH) {
 	k = 0;
 	if (pmod->ci == AR) {
-	    err = get_ar_data(pmod, &xb, &xse, &k, &dfd);
+	    err = get_ar_data(pmod, &xb, &xse, &k);
 	} else {
 	    err = get_arch_data(pmod, &xb, &xse, &k);
 	}

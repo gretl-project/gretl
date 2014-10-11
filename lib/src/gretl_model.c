@@ -5455,8 +5455,16 @@ double model_coeff_pval (const MODEL *pmod, double x)
 	if (ASYMPTOTIC_MODEL(pmod->ci) ||
 	    ((pmod->opt & OPT_R) && libset_get_bool("robust_z"))) {
 	    p = normal_pvalue_2(x);
+	} else if (pmod->ci == AR) {
+	    /* backward compat (?) */
+	    int k = pmod->arinfo->arlist[0];
+	    int dfd = pmod->dfd;
+
+	    if (k > 1) {
+		dfd += pmod->ncoeff - k;
+	    }
+	    p = student_pvalue_2(dfd, x);
 	} else {
-	    /* AR model ?? */
 	    p = student_pvalue_2(pmod->dfd, x);
 	}
     }
