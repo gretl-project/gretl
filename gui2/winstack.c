@@ -460,11 +460,13 @@ static gboolean winlist_popup_done (GtkMenuShell *mshell,
     windata_t *vwin = window_get_active_vwin(window);
 
     if (vwin != NULL) {
+	/* don't leave focus on the winlist button */
 	if (vwin->role == VIEW_MODEL || 
 	    vwin->role == VAR || 
 	    vwin->role == VECM) {
-	    /* don't leave focus on the winlist button */
 	    gtk_widget_grab_focus(vwin->text);
+	} else if (vwin == mdata) {
+	    gtk_widget_grab_focus(vwin->listbox);
 	}
     }
 
@@ -546,10 +548,11 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 
     if (n_listed_windows > 1) {
 	wlist = g_list_sort(wlist, sort_window_list);
-	if (data != NULL) {
-	    thiswin = GTK_WIDGET(data);
-	}
     }
+
+    if (data != NULL) {
+	thiswin = GTK_WIDGET(data);
+    }    
 
     menu = gtk_menu_new();
     list = wlist;
@@ -562,7 +565,7 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 	} else if (widget_is_iconview(lwin)) {
 	    icons_up = 1;
 	}
-	if (thiswin != NULL) {
+	if (n_listed_windows > 1 && thiswin != NULL) {
 	    maybe_revise_action_label(action, thiswin);
 	}
 	gtk_action_set_accel_path(action, NULL);
