@@ -504,6 +504,10 @@ static void gretl_loop_destroy (LOOPSET *loop)
 	return;
     }
 
+#ifdef SHOW_STRUCTURE
+    fprintf(stderr, "destroying LOOPSET at %p\n", (void *) loop);
+#endif
+
     for (i=0; i<loop->n_children; i++) {
 	gretl_loop_destroy(loop->children[i]);
 	loop->children[i] = NULL;
@@ -1235,7 +1239,7 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
 
     gretl_error_clear();
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG || defined(SHOW_STRUCTURE)
     fprintf(stderr, "start_new_loop: inloop=%p, line='%s'\n", 
 	    (void *) inloop, s);
 #endif
@@ -1260,7 +1264,7 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
 	return NULL;
     }
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG || defined(SHOW_STRUCTURE)
     fprintf(stderr, " added loop at %p (%s)\n", (void *) loop,
 	    (*nested)? "nested" : "independent");
 #endif
@@ -2035,9 +2039,8 @@ static int add_more_loop_commands (LOOPSET *loop)
 
 static int real_append_line (ExecState *s, LOOPSET *loop)
 {
-    const char *flagstr = NULL;
     int n = loop->n_cmds;
-    int len, err = 0;
+    int err = 0;
 
 #if LOOP_DEBUG
     fprintf(stderr, "real_append_line: s->line = '%s'\n", s->line);
@@ -2049,36 +2052,13 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 	}
     }
 
-    len = strlen(s->line);
+    loop->cmds[n].line = gretl_strdup(s->line);
 
-#if 0 /* FIXME not needed with new tokenizer? */
-    if (s->cmd->opt) {
-	flagstr = print_flags(s->cmd->opt, s->cmd->ci);
-	len += strlen(flagstr);
-	if (len >= MAXLINE) {
-	    gretl_errmsg_set("loop: line is too long");
-	    err = 1;
-	}
-    }
-#endif
-
-    if (!err) {
-	if (flagstr != NULL) {
-	    loop->cmds[n].line = malloc(len + 1);
-	} else {
-	    loop->cmds[n].line = gretl_strdup(s->line);
-	}
-	if (loop->cmds[n].line == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    if (flagstr != NULL) {
-		sprintf(loop->cmds[n].line, "%s%s", s->line, flagstr);
-	    }
-	    compress_spaces(loop->cmds[n].line);
-	}
-    }
-
-    if (!err) {
+    if (loop->cmds[n].line == NULL) {
+	err = E_ALLOC;
+    } else {
+	/* FIXME: is this (still) wanted */
+	compress_spaces(loop->cmds[n].line);
 	if (s->cmd->ci == PRINT && (!loop_is_progressive(loop) || strchr(s->line, '"'))) {
 	    /* printing a literal string, not a variable's value */
 	    loop->cmds[n].flags |= LOOP_CMD_LIT;
@@ -2116,12 +2096,7 @@ static void destroy_loop_stack (void)
  * @s: program execution state.
  * @dset: dataset struct.
  *
- * Add command line to accumulated loop buffer.  This may be
- * called "starting from cold", in which case the "line"
- * member of @s will have been parsed and any options
- * extracted to s->cmd->opt.  But it may also be called in
- * the process of ongoing loop compilation, and in that
- * case option flags will not have been processed already.
+ * Add the command line @s->line to accumulated loop buffer.
  *
  * Returns: 0 on success, non-zero code on error.
  */

@@ -4988,6 +4988,11 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 	}
     }
 
+#ifdef SHOW_STRUCTURE
+    fprintf(stderr, "started compiling function '%s' (err = %d)\n",
+	    fname, err);
+#endif
+
     if (!err) {
 	strcpy(fun->name, fname);
 	fun->params = params;
@@ -5078,7 +5083,7 @@ static int check_function_structure (ufunc *fun)
 #endif
 
     for (i=0; i<fun->n_lines && !err; i++) {
-#if 0
+#if 0 || defined(SHOW_STRUCTURE)
 	fprintf(stderr, "line[%d] = '%s'\n", i, fun->lines[i]);
 #endif
 	/* avoid losing comment lines */
@@ -5223,6 +5228,13 @@ int gretl_function_append_line (const char *line)
 	/* finished composing function */
 	err = check_function_structure(fun);
     }
+
+#ifdef SHOW_STRUCTURE
+    if (!compiling) {
+	fprintf(stderr, "function '%s': finished compiling, err = %d\n",
+		fun->name, err);
+    }
+#endif
 
     if (err && !editing) {
 	ufunc_unload(fun);
@@ -6188,7 +6200,8 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
     push_program_state();
 
     callstack = g_list_append(callstack, call);
-#if EXEC_DEBUG
+
+#if EXEC_DEBUG || defined(SHOW_STRUCTURE)
     fprintf(stderr, "start_fncall: added call to %s, depth now %d\n", 
 	    call->fun->name, g_list_length(callstack));
 #endif
