@@ -931,8 +931,6 @@ static void too_long (void)
 			   "(%d bytes) exceeded\n"), MAXLINE);
 }
 
-#define PRINTF_SPECIAL 0
-
 int substitute_named_strings (char *line, int *subst)
 {
     char sname[VNAMELEN];
@@ -963,9 +961,6 @@ int substitute_named_strings (char *line, int *subst)
 	    if (*s == '"' && (bs % 2 == 0)) {
 		/* reached end of (s)printf format string */
 		in_format = 0;
-#if PRINTF_SPECIAL
-		break;
-#endif
 	    }
 	    if (*s == '\\') {
 		bs++;
