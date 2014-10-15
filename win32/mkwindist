@@ -21,7 +21,7 @@ if [ "$BUILDTYPE" = "cross" ] ; then
   ADDONS=/home/cottrell/stats/gretl-addons
   HLPDIR=${TOPDIR}/share
   DOCDIR=${TOPDIR}/build/doc/tex
-  SYSBASE=/opt/cross-tools/mingw32
+  SYSBASE=/opt/win32/i686-pc-mingw32
   INNO_CMD="wine c:/innodir/ISCC.exe"
 else
   WINFILES=/mingw/winbuild
@@ -176,7 +176,7 @@ else
 fi
 
 # system DLLs for threads/openmp, if required
-add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
+# add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
 add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
 
 # GTK theme files, standard

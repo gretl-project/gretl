@@ -5,9 +5,9 @@ BUILDTYPE = cross
 
 ifeq ($(BUILDTYPE),cross)
   # directory containing the cross tools
-  MGWDIR = /opt/cross-tools/mingw32
-  # prefix for mingw tools (e.g. mingw32-gcc)
-  MGW_PREFIX = mingw32-
+  MGWDIR = /opt/win32/i686-pc-mingw32
+  # prefix for mingw tools
+  MGW_PREFIX = i686-pc-mingw32-
   # msgfmt command for producing win32 messages file
   WIN32_MSGFMT = wine c:/bin/msgfmt.exe 
   # location of pkgconfig files
