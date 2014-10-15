@@ -156,6 +156,7 @@ static int add_line_widget (plot_editor *ed);
 static int add_label_widget (plot_editor *ed);
 static int add_arrow_widget (plot_editor *ed);
 static void plot_editor_set_fontname (plot_editor *ed, const char *name);
+static int line_get_point_type (GPT_LINE *line, int i);
 
 /* graph color selection apparatus */
 
@@ -792,12 +793,25 @@ static void maybe_set_point_type (GPT_LINE *line, GtkWidget *w, int i)
 
     if (ptsel != NULL && gtk_widget_is_sensitive(ptsel)) {
 	int pt = gtk_combo_box_get_active(GTK_COMBO_BOX(ptsel));
-	int ptdef = (line->type == LT_AUTO)? i : line->type - 1;
+#if 1
+	int pt0 = line_get_point_type(line, i);
+
+	if (pt != pt0) {
+	    int ptdef = (line->type == LT_AUTO)? i : line->type - 1;
+
+	    if (pt == ptdef) {
+		line->ptype = 0;
+	    } else {
+		line->ptype = pt + 1;
+	    }
+	}
+#else
 
 	if (pt != ptdef) {
 	    /* point-type is not just the default */
 	    line->ptype = pt + 1;
 	}
+#endif
     }
 }
 
@@ -2627,7 +2641,7 @@ static GtkWidget *point_types_combo (void)
     return ptsel;
 }
 
-static int line_get_point_style (GPT_LINE *line, int i)
+static int line_get_point_type (GPT_LINE *line, int i)
 {
     if (line->ptype > 0) {
 	/* a specific point-style has been selected: convert
@@ -2881,7 +2895,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	} else {
 	    GtkWidget *ptsel = point_types_combo();
 	    int lt = gp_style_index(line->style, stylist);
-	    int hp, pt = line_get_point_style(line, i);
+	    int hp, pt = line_get_point_type(line, i);
 
 	    set_combo_box_strings_from_stylist(ed->stylecombo[i], stylist);
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->stylecombo[i]), lt);
