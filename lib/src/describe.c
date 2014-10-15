@@ -4647,7 +4647,7 @@ void free_summary (Summary *summ)
     free(summ);
 }
 
-/**
+/***
  * summary_new:
  * @list: list of variables we want summary statistics for
  * @wv: weighting variable (0=no weights)
@@ -4657,18 +4657,29 @@ void free_summary (Summary *summ)
  * things inside it 
  */
 
-static Summary *summary_new (const int *list, int wv, gretlopt opt)
+static Summary *summary_new (const int *list, int wv, 
+			     gretlopt opt, int *err)
 {
     Summary *s;
-    int nv = list[0];
+    int nv;
+
+    if (list == NULL) {
+	fprintf(stderr, "summary_new: list is NULL\n");
+	*err = E_DATA;
+	return NULL;
+    }
+
+    nv = list[0];
 
     s = malloc(sizeof *s);
     if (s == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
     s->list = gretl_list_copy(list);
     if (s->list == NULL) {
+	*err = E_ALLOC;
 	free(s);
 	return NULL;
     }
@@ -4680,6 +4691,7 @@ static Summary *summary_new (const int *list, int wv, gretlopt opt)
 
     s->stats = malloc(11 * nv * sizeof *s->stats);
     if (s->stats == NULL) {
+	*err = E_ALLOC;
 	free_summary(s);
 	return NULL;
     }
@@ -4809,9 +4821,8 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
     Summary *s;
     int i, t;
 
-    s = summary_new(list, wtvar, opt);
+    s = summary_new(list, wtvar, opt, err);
     if (s == NULL) {
-	*err = E_ALLOC;
 	return NULL;
     }
 
@@ -4946,9 +4957,8 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
     double *x;
     int i, t;
 
-    s = summary_new(list, 0, opt);
+    s = summary_new(list, 0, opt, err);
     if (s == NULL) {
-	*err = E_ALLOC;
 	return NULL;
     }
 
@@ -5064,10 +5074,8 @@ Summary *get_summary (const int *list, const DATASET *dset,
     Summary *s;
     int i, nmax;
 
-    s = summary_new(list, 0, opt);
-
+    s = summary_new(list, 0, opt, err);
     if (s == NULL) {
-	*err = E_ALLOC;
 	return NULL;
     }
 
@@ -5461,6 +5469,12 @@ VMatrix *corrlist (int *list, const DATASET *dset,
     int flag = (opt & OPT_C)? COVMAT : CORRMAT;
     VMatrix *v;
     int i, m, mm;
+
+    if (list == NULL) {
+	fprintf(stderr, "corrlist: list is NULL\n");
+	*err = E_DATA;
+	return NULL;
+    }
 
     v = vmatrix_new();
     if (v == NULL) {
