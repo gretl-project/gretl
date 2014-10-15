@@ -688,8 +688,15 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	}
     }
 
-    if (parse_lib_command() || bufopen(&prn)) {
+    if (err || parse_lib_command() || bufopen(&prn)) {
 	return;
+    }
+
+    if (libcmd.list == NULL) {
+	libcmd.list = full_var_list(dataset, NULL);
+	if (libcmd.list == NULL) {
+	    return;
+	}
     }
 
     switch (ci) {
