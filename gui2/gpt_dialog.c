@@ -793,7 +793,6 @@ static void maybe_set_point_type (GPT_LINE *line, GtkWidget *w, int i)
 
     if (ptsel != NULL && gtk_widget_is_sensitive(ptsel)) {
 	int pt = gtk_combo_box_get_active(GTK_COMBO_BOX(ptsel));
-#if 1
 	int pt0 = line_get_point_type(line, i);
 
 	if (pt != pt0) {
@@ -805,13 +804,6 @@ static void maybe_set_point_type (GPT_LINE *line, GtkWidget *w, int i)
 		line->ptype = pt + 1;
 	    }
 	}
-#else
-
-	if (pt != ptdef) {
-	    /* point-type is not just the default */
-	    line->ptype = pt + 1;
-	}
-#endif
     }
 }
 
