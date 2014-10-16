@@ -15,7 +15,7 @@
 #define HAVE_MPFR 1
 
 /* openblas? */
-/* #define OPENBLAS_BUILD 1 */
+#define OPENBLAS_BUILD 1
 
 /* openmp? */
 #define OPENMP_BUILD 1

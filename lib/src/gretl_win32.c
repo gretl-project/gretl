@@ -327,28 +327,13 @@ int gretl_spawn (char *cmdline)
 static char *win_special_path (int folder)
 {
     TCHAR dpath[MAX_PATH];
-    LPITEMIDLIST id_list;
-    DWORD result;
-    LPMALLOC allocator;
-    char *ret = NULL;
 
-    if (SHGetSpecialFolderLocation(NULL, folder | CSIDL_FLAG_CREATE, 
-				   &id_list) != S_OK) {
+    if (SHGetFolderPath(NULL, folder | CSIDL_FLAG_CREATE,
+			NULL, 0, dpath) != S_OK) {
 	return NULL;
     }
 
-    result = SHGetPathFromIDList(id_list, dpath);
-
-    if (result) {
-	ret = gretl_strdup(dpath);
-    }
-
-    if (SHGetMalloc(&allocator) == S_OK) {
-	allocator->lpVtbl->Free(allocator, id_list);
-	allocator->lpVtbl->Release(allocator);
-    }
-
-    return ret;
+    return gretl_strdup(dpath);
 }
 
 char *desktop_path (void)
@@ -640,10 +625,17 @@ int win32_write_access (char *path)
     if (!err) {
 	/* build a trustee and get the file's DACL */
 	BuildTrusteeWithSid(&t, sid);
+#ifdef _WIN64
 	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT, 
 				   DACL_SECURITY_INFORMATION, 
 				   NULL, NULL, &dacl, NULL, 
 				   (void **) &sd);
+#else
+	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT, 
+				   DACL_SECURITY_INFORMATION, 
+				   NULL, NULL, &dacl, NULL, 
+				   &sd);
+#endif
 	err = (ret != ERROR_SUCCESS);
     }
 
