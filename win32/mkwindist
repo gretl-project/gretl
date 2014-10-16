@@ -12,7 +12,7 @@ fi
 TOPDIR=".."
 THISDIR=`pwd`
 MPI=yes
-OPENBLAS=no
+OPENBLAS=yes
 
 ########## CONFIGURE HERE ###################
 

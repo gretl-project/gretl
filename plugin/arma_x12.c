@@ -24,10 +24,8 @@
 #include "libset.h"
 #include "arma_priv.h"
 
-#include <glib.h>
-
 #ifdef WIN32
-# include <windows.h>
+# include "gretl_win32.h"
 # include <io.h>
 #endif
 

@@ -22,6 +22,10 @@
 #include "matrix_extra.h"
 #include "libset.h"
 
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
 #include <errno.h>
 
 /**

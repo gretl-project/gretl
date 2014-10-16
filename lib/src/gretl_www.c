@@ -19,10 +19,6 @@
 
 /* gretl_www.c for gretl -- uses libcurl API */
 
-#ifdef WIN32
-# include <winsock2.h>
-#endif
-
 #include "libgretl.h"
 #include "libset.h"
 #include "build.h"

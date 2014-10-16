@@ -17,9 +17,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include <glib.h>
-#include "zlib.h"
-
 #ifdef S_IFLNK
 # define LSTAT   lstat
 #else

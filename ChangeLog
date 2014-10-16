@@ -5,6 +5,7 @@ version 1.10.0, in progress
 - Fix bug: crash on attempting to open a file from the "Recent"
   list within the GTK file chooser
 - Build for 64-bit Windows: update to OpenBLAS 2.11
+- Builf for 32-bit Windows: update compiler to gcc 4.8.3
 
 2014-09-20 version 1.9.92
 - Add new functions: isdiscrete(), isdummy()

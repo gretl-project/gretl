@@ -28,17 +28,17 @@
 # include "config.h"
 #endif
 
+#define FULL_XML_HEADERS
+#include "libgretl.h"
+
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
-#define FULL_XML_HEADERS
-
-#include "libgretl.h"
-#include "dbread.h"
-
-#include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
 #define GNULL (gconstpointer) NULL
 

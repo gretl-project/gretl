@@ -17,8 +17,6 @@
  * 
  */
 
-#include <gtk/gtk.h>
-
 #define FULL_XML_HEADERS
 
 #include "libgretl.h"
@@ -27,7 +25,12 @@
 #include "csvdata.h"
 #include "importer.h"
 
-#include <glib.h>
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
+#include <gtk/gtk.h>
+
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>

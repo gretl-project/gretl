@@ -30,8 +30,11 @@
 #include "gretl_panel.h"
 #include "missing_private.h"
 
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
 #include <unistd.h>
-#include <glib.h>
 
 #define GP_DEBUG 0
 

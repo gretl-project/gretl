@@ -29,6 +29,10 @@
 #include "swap_bytes.h"
 #include "gretl_zip.h"
 
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>

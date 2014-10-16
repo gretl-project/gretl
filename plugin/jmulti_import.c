@@ -1,10 +1,7 @@
 /*
    Reader for JMulTi data files.
-   Allin Cottrell, Aigust 2006
+   Allin Cottrell, August 2006
 */
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "libgretl.h"
 #include "version.h"

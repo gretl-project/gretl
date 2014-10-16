@@ -1,10 +1,9 @@
 /* simple .tar.gz extractor for gretl -- based on untgz.c from zlib
-   distribution.  We use this both as part of libgretl and in the
-   STANDALONE gretl updater program for Windows.
+   distribution.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "libgretl.h"
+
 #include <string.h>
 #include <time.h>
 #include <errno.h>
@@ -15,14 +14,6 @@
 #include <unistd.h>
 #include <utime.h>
 #include <dirent.h>
-
-#include "zlib.h"
-
-#ifdef STANDALONE
-# include "updater.h"
-#else
-# include "strutils.h"
-#endif
 
 #ifdef WIN32
 #  ifndef F_OK
@@ -72,7 +63,6 @@ struct tar_header
     char devmajor[8];		/* 329 */
     char devminor[8];		/* 337 */
     char prefix[155];		/* 345 */
-				/* 500 */
 };
 
 union tar_buffer {
@@ -144,10 +134,6 @@ static int makedir (char *path)
     return 1;
 }
 
-#ifndef STANDALONE /* building as part of library */
-# define errbox(s) gretl_errmsg_set(s);
-#endif
-
 static int untar (gzFile in)
 {
     union tar_buffer buffer;
@@ -163,12 +149,12 @@ static int untar (gzFile in)
 	len = gzread(in, &buffer, BLOCKSIZE);
 
 	if (len < 0) {
-	    errbox(gzerror(in, &err));
+	    gretl_errmsg_set(gzerror(in, &err));
 	    return 1;
 	}
 
 	if (len != BLOCKSIZE) {
-	    errbox("gzread: incomplete block read");
+	    gretl_errmsg_set("gzread: incomplete block read");
 	    return 1;
 	}
       
@@ -241,20 +227,16 @@ static int untar (gzFile in)
 
 int gretl_untar (const char *fname)
 {
-    gzFile fz = gzopen(fname, "rb");
+    gzFile fz = gretl_gzopen(fname, "rb");
     int err = 0;
 
     if (fz == NULL) {
-	char buf[512];
-
-	sprintf(buf, "Couldn't gzopen %s", fname);
-	errbox(buf);
-	return 1;
+	gretl_errmsg_sprintf("Couldn't gzopen %s", fname);
+	err = E_FOPEN;
+    } else {
+	err = untar(fz);
+	gzclose(fz);
     }
-
-    err = untar(fz);
-
-    gzclose(fz);
 
     return err;
 }

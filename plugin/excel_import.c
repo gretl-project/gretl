@@ -19,17 +19,19 @@
 
 /* Originally based on the Gnumeric excel plugin by Michael Meeks */
 
-#include <gtk/gtk.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <errno.h>
-
 #include "libgretl.h"
 #include "version.h"
 #include "csvdata.h"
+
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
+#include <gtk/gtk.h>
+
+#include <string.h>
+#include <time.h>
+#include <errno.h>
 
 #include "importer.h"
 #include "biff.h"

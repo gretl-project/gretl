@@ -21,6 +21,10 @@
 #include "version.h"
 #include "dbread.h"
 
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
 #include <sql.h>
 #include <sqlext.h>
 #include <sqltypes.h>

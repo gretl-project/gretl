@@ -19,12 +19,10 @@
 
 /* import data from EViews workfiles */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "libgretl.h"
 #include "version.h"
+
+#include <string.h>
 
 #if WORDS_BIGENDIAN
 # include "swap_bytes.h"

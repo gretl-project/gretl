@@ -19,11 +19,6 @@
 
 /* command-line client program for libgretl */
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <dirent.h>
-
 #include "libgretl.h"
 #include "version.h"
 #include "monte_carlo.h"
@@ -45,8 +40,10 @@
 # include "gretl_www.h"
 #endif
 
+#include <dirent.h>
+
 #ifdef WIN32
-# include <windows.h>
+# include "gretl_win32.h"
 #else
 # include <sys/stat.h>
 # include <sys/types.h>

@@ -26,14 +26,12 @@
 # include "gretl_mpi.h"
 #endif
 
-#include <glib.h>
-
 #ifdef USE_RLIB
 # include <Rinternals.h> /* for SEXP and friends */
 #endif
 
 #ifdef G_OS_WIN32
-# include <windows.h>
+# include "gretl_win32.h"
 #else
 # include <signal.h>
 #endif

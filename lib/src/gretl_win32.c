@@ -23,9 +23,7 @@
 #include "libset.h"
 #include "gretl_www.h"
 
-#include <glib.h>
-
-#include <windows.h>
+#include "gretl_win32.h"
 #include <shlobj.h>
 #include <aclapi.h>
 

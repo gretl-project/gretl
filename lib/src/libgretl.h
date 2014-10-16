@@ -24,6 +24,10 @@
 # include "config.h"
 #endif
 
+#ifdef WIN32
+# include "winconfig.h"
+#endif
+
 #ifdef HAVE_VASPRINTF
 # define _GNU_SOURCE
 # include <stdio.h>
@@ -47,10 +51,6 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif
-
-#ifdef WIN32
-# include "winconfig.h"
 #endif
 
 #ifdef WIN32
@@ -401,9 +401,6 @@ typedef struct MODEL_ {
 #include "nls.h"
 #include "missing.h"
 #include "transforms.h"
-#ifdef WIN32
-# include "gretl_win32.h"
-#endif
 
 #ifdef  __cplusplus
 }

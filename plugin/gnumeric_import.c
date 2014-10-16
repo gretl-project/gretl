@@ -17,8 +17,6 @@
  * 
  */
 
-#include <gtk/gtk.h>
-
 #define FULL_XML_HEADERS
 
 #include "libgretl.h"
@@ -26,6 +24,8 @@
 #include "gretl_xml.h"
 #include "importer.h"
 #include "csvdata.h"
+
+#include <gtk/gtk.h>
 
 #undef IDEBUG
 

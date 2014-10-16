@@ -30,11 +30,13 @@
 #include "tsls.h"
 #include "nls.h"
 
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
 #if defined(_OPENMP)
 # include <omp.h>
 #endif
-
-#include <glib.h>
 
 /**
  * SECTION:estimate

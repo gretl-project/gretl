@@ -22,20 +22,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-
-#include <stdarg.h>
-#include <stdint.h>
-
-#include <glib.h>
-
 #include "libgretl.h"
 #include "version.h"
 #include "gretl_string_table.h"
 #include "swap_bytes.h"
+
+#include <string.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <stdint.h>
 
 #define SPSS_DEBUG 0
 

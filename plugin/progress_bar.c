@@ -19,15 +19,13 @@
 
 /* progress bar implementation for gretl */
 
-#include <gtk/gtk.h>
+#include "libgretl.h"
 
-#ifdef UPDATER
-# include <stdio.h>
-# include <stdlib.h>
-# include "updater.h"
-#else
-# include "libgretl.h"
+#ifdef WIN32
+# include "gretl_win32.h"
 #endif
+
+#include <gtk/gtk.h>
 
 typedef struct _ProgressData {
     GtkWidget *window;
@@ -43,24 +41,10 @@ static void destroy_progress (GtkWidget *widget, ProgressData **ppdata)
     *ppdata = NULL;
 }
 
-#ifdef UPDATER
-
-static void cancel_progress (GtkWidget *widget, ProgressData *pdata)
-{
-    *pdata->cancel = 1;
-    gtk_widget_destroy(pdata->window);
-}
-
-#endif
-
 static ProgressData *build_progress_window (int flag, int *cancel)
 {
     ProgressData *pdata;
     GtkWidget *align, *vbox;
-#ifdef UPDATER
-    GtkWidget *separator;
-    GtkWidget *button;
-#endif
 
     pdata = malloc(sizeof *pdata);
     if (pdata == NULL) {
@@ -97,21 +81,6 @@ static ProgressData *build_progress_window (int flag, int *cancel)
     /* Create the GtkProgressBar */
     pdata->pbar = gtk_progress_bar_new();
     gtk_container_add(GTK_CONTAINER(align), pdata->pbar);
-
-    /* Add separator and cancel button? */
-#ifdef UPDATER
-    separator = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(vbox), separator, FALSE, FALSE, 0);
-
-    button = gtk_button_new_with_label(_("Cancel"));
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(cancel_progress),
-		     pdata);
-    gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
-
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_widget_grab_default(button);
-#endif
 
     gtk_widget_show_all(pdata->window);
 

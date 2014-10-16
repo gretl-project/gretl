@@ -17,11 +17,6 @@
  * 
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <glib.h>
-
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -29,6 +24,11 @@
 #ifdef WIN32
 # include "winconfig.h"
 #endif
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <glib.h>
 
 #include "gretl_zip.h"
 #include "strutils.h"

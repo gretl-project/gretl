@@ -33,6 +33,10 @@
 # include "gretl_www.h"
 #endif
 
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
 #ifdef _OPENMP
 # include <omp.h>
 #endif

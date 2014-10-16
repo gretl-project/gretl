@@ -25,6 +25,10 @@
 #include "genparse.h"
 #include "csvdata.h"
 
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
 #include <errno.h>
 
 #define CDEBUG 0

@@ -78,6 +78,7 @@
 #include "cmdstack.h"
 #include "filelists.h"
 #include "fnsave.h"
+#include "dbread.h"
 
 #if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20
 # include "spinner.h"

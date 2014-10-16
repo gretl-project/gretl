@@ -19,11 +19,6 @@
 
 #undef CHILD_DEBUG
 
-#ifdef _WIN64
-# include <pango/pangowin32.h>
-# include <gdk/gdkwin32.h>
-#endif
-
 #include "gretl.h"
 #include "gretlwin32.h"
 #include "textutil.h"
@@ -34,10 +29,8 @@
 
 #include <dirent.h>
 
-#ifndef _WIN64
-# include <pango/pangowin32.h>
-# include <gdk/gdkwin32.h>
-#endif
+#include <pango/pangowin32.h>
+#include <gdk/gdkwin32.h>
 
 /* extra Windows headers */
 #include <mapi.h>

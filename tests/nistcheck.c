@@ -20,14 +20,11 @@
 /* nistcheck -- program to check libgretl estimation functions against
    the NIST reference datasets for linear regression. */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <float.h>
-
 #include "libgretl.h"
 #include "version.h"
+
+#include <string.h>
+#include <float.h>
 
 #ifdef LONGLEY_ONLY
 # define MAX_DIGITS 12

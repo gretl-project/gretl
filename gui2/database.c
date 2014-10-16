@@ -23,16 +23,17 @@
 #include "boxplots.h"
 #include "database.h"
 #include "datafiles.h"
+#include "gretl_xml.h"
 #include "gretl_www.h"
 #include "gretl_untar.h"
 #include "gretl_zip.h"
-#include "gretl_xml.h"
 #include "menustate.h"
 #include "treeutils.h"
 #include "winstack.h"
 #include "toolbar.h"
 #include "dlgutils.h"
 #include "fncall.h"
+#include "dbread.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

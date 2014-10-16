@@ -49,7 +49,9 @@
 #include <errno.h>
 
 /* for the "shell" command */
-#ifndef WIN32
+#ifdef WIN32
+# include "gretl_win32.h"
+#else
 # ifdef HAVE_PATHS_H
 #  include <paths.h>
 # endif

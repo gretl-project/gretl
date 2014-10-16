@@ -26,12 +26,6 @@
   10 and 11.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-
-#include <glib.h>
-
 #include "libgretl.h"
 #include "version.h"
 #include "gretl_string_table.h"

@@ -19,18 +19,19 @@
 
 /* gretl audio graph plugin */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-
 #include "libgretl.h"
 #include "version.h"
+
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
+#include <string.h>
+#include <ctype.h>
 
 #include "miditypes.h"
 #include "midi_utils.h"
 
-#include <glib.h>
 #include <gtk/gtk.h>
 
 #define ADEBUG 0

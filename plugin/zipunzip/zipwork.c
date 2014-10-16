@@ -6,14 +6,13 @@
   license information.
 */
 
+#include "zunz_private.h"
+
 #include <ctype.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
-
-#include "zunz_private.h"
-#include "zlib.h"
 
 /* Read a new block from the current input file; update the crc and
    input file size; check for over-sized files.

@@ -90,7 +90,8 @@
 /* Use the GNU R shared library */
 #define USE_RLIB 1
 
-/* #define WINVER 0x0500 */ /* XP */
+/* require XP */
+#define _WIN32_WINNT 0x0501
 
 /* sapi speech support */
 /* #undef WIN32_SAPI */

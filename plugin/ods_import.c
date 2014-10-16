@@ -17,22 +17,22 @@
  * 
  */
 
-#include <gtk/gtk.h>
-
 #define FULL_XML_HEADERS
-
 #include "libgretl.h"
 #include "version.h"
 #include "gretl_xml.h"
 #include "csvdata.h"
 #include "importer.h"
 
-#include <glib.h>
 #include <errno.h>
 
-#ifndef G_OS_WIN32
+#ifdef WIN32
+# include "gretl_win32.h"
+#else
 # include <unistd.h>
 #endif
+
+#include <gtk/gtk.h>
 
 #define ODS_IMPORTER
 

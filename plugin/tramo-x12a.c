@@ -23,6 +23,10 @@
 #include "version.h"
 #include "estim_private.h"
 
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
 #include <gtk/gtk.h>
 #include "tramo_x12a.h"
 

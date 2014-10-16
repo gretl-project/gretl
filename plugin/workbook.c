@@ -21,10 +21,6 @@
   Mostly borrowed from Gnumeric's Excel importer, written by Michael Meeks
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <glib.h>
-
 #include "libgretl.h"
 
 #include "importer.h"
