@@ -1453,8 +1453,8 @@ static int lib_open_append (ExecState *s,
 	if (ftype == GRETL_CSV) {
 	    err = lib_join_data(s, newfile, dset, opt, prn);
 	} else {
-	    /* only CSV allowed for now */
-	    err = E_NOTIMP;
+	    gretl_errmsg_set("Only CSV files are supported for now");
+	    err = E_DATA;
 	}
 	if (err) {
 	    errmsg(err, prn);
