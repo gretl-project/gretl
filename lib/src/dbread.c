@@ -124,8 +124,8 @@ float retrieve_float (netfloat nf)
 #endif
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
-			    DATASET *dset, CompactMethod method, 
-			    int dbv, PRN *prn);
+			    DATASET *dset, CompactMethod cmethod,
+			    int interpolate, int dbv, PRN *prn);
 
 static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
 {
@@ -1649,6 +1649,8 @@ static double *interpolate_db_series (const double *src,
     return ret;
 }
 
+#define EXPAND_DEBUG 0
+
 /* Expand a single series from a database, for importation 
    into a working dataset of higher frequency.  At present
    this is permitted only for the cases:
@@ -1695,6 +1697,11 @@ double *expand_db_series (const double *src, SERIESINFO *sinfo,
 	}
     }
 
+#if EXPAND_DEBUG
+    fprintf(stderr, "expand_db_series 1: mult=%d, newn=%d, sinfo->stobs='%s'\n",
+	    mult, newn, sinfo->stobs);
+#endif
+
     if (err) {
 	return NULL;
     }
@@ -1717,6 +1724,11 @@ double *expand_db_series (const double *src, SERIESINFO *sinfo,
     strcpy(sinfo->stobs, stobs);
     sinfo->pd = target_pd;
     sinfo->nobs = newn;
+
+#if EXPAND_DEBUG
+    fprintf(stderr, "expand_db_series 2: sinfo->pd=%d, sinfo->stobs='%s'\n",
+	    sinfo->pd, sinfo->stobs);
+#endif
 
     return x;
 }
@@ -2493,12 +2505,13 @@ static int update_sinfo_masked (SERIESINFO *sinfo, int nobs)
 
 static int get_one_db_series (const char *series, 
 			      DATASET *dset,
-			      CompactMethod method,
+			      CompactMethod cmethod,
+			      int interpolate, 
 			      const gretl_matrix *mask,
 			      const char *idxname,
 			      PRN *prn)
 {
-    CompactMethod this_method = method;
+    CompactMethod this_method = cmethod;
     SERIESINFO sinfo;
     double **dbZ;
     int v, nobs;
@@ -2508,7 +2521,7 @@ static int get_one_db_series (const char *series,
 
     /* see if the series is already in the dataset */
     v = series_index(dset, series);
-    if (v < dset->v && method == COMPACT_NONE) {
+    if (v < dset->v && cmethod == COMPACT_NONE) {
 	this_method = series_get_compact_method(dset, v);
     }
 
@@ -2566,7 +2579,7 @@ static int get_one_db_series (const char *series,
     } 
 
 #if DB_DEBUG
-    fprintf(stderr, "db_get_series: get_XXX_db_data gave %d\n", err);
+    fprintf(stderr, "db_get_series: get_db_data gave %d\n", err);
 #endif
 
     if (err == DB_MISSING_DATA) {
@@ -2580,7 +2593,7 @@ static int get_one_db_series (const char *series,
 
     if (!err) {
 	err = cli_add_db_data(dbZ, &sinfo, dset, this_method, 
-			      v, prn);
+			      interpolate, v, prn);
     }
 
     free_dbZ(dbZ);
@@ -2603,9 +2616,10 @@ int db_get_series (const char *line, DATASET *dset,
     const gretl_matrix *rowmask = NULL;
     char **vnames = NULL;
     char *idxname = NULL;
-    CompactMethod method;
+    CompactMethod cmethod;
     int i, nnames = 0;
     int from_scratch = 0;
+    int interpolate = 0;
     int err = 0;
 
     if (!strncmp(line, "data ", 5)) {
@@ -2619,6 +2633,7 @@ int db_get_series (const char *line, DATASET *dset,
     }
 
     if (opt & OPT_M) {
+	/* FIXME this is undocumented: is it useful? */
 	err = db_get_row_mask(&rowmask);
 	if (err) {
 	    return err;
@@ -2640,9 +2655,9 @@ int db_get_series (const char *line, DATASET *dset,
 
     if (opt & OPT_C) {
 	/* new-style: compaction method supplied as option */
-	method = compact_method_from_option(&err);
+	cmethod = compact_method_from_option(&err);
     } else {
-	line = get_compact_method_and_advance(line, &method);
+	line = get_compact_method_and_advance(line, &cmethod);
     }
 
     if (!err) {
@@ -2668,7 +2683,12 @@ int db_get_series (const char *line, DATASET *dset,
 	}
     }
 
-    /* and process them individually */
+    if (!err && (opt & OPT_I)) {
+	interpolate = 1;
+    }
+
+    /* now process the db series individually */
+
     for (i=0; i<nnames && !err; i++) {
 	if (is_glob(vnames[i])) {
 	    if (saved_db_type == GRETL_NATIVE_DB ||
@@ -2679,16 +2699,18 @@ int db_get_series (const char *line, DATASET *dset,
 		tmp = native_db_match_series(vnames[i], &nmatch, 
 					     idxname, &err);
 		for (j=0; j<nmatch && !err; j++) {
-		    err = get_one_db_series(tmp[j], dset, method, 
-					    rowmask, idxname, prn);
+		    err = get_one_db_series(tmp[j], dset, cmethod, 
+					    interpolate, rowmask, 
+					    idxname, prn);
 		}
 		strings_array_free(tmp, nmatch);
 	    } else {
 		err = E_DATA;
 	    }
 	} else {
-	    err = get_one_db_series(vnames[i], dset, method, 
-				    rowmask, idxname, prn);
+	    err = get_one_db_series(vnames[i], dset, cmethod,
+				    interpolate, rowmask,
+				    idxname, prn);
 	}
     }
 
@@ -2976,8 +2998,8 @@ init_datainfo_from_sinfo (DATASET *dset, SERIESINFO *sinfo)
 }
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
-			    DATASET *dset, CompactMethod method, 
-			    int dbv, PRN *prn)
+			    DATASET *dset, CompactMethod cmethod, 
+			    int interpolate, int dbv, PRN *prn)
 {
     double *xvec = NULL;
     int pad1 = 0, pad2 = 0;
@@ -3016,8 +3038,11 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    dset->n, dset->v, dbv);
 #endif
 
-    /* is the frequency of the new var higher? */
-    if (sinfo->pd > dset->pd) {
+    if (sinfo->pd < dset->pd) {
+	/* the series needs to be expanded */
+	xvec = expand_db_series(dbZ[1], sinfo, dset->pd, interpolate);
+    } else if (sinfo->pd > dset->pd) {
+	/* the series needs to be compacted */
 	if (dset->pd != 1 && dset->pd != 4 &&
 	    sinfo->pd != 12) {
 	    gretl_errmsg_set(_("Sorry, can't handle this conversion yet!"));
@@ -3026,13 +3051,13 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    }
 	    return 1;
 	}
-	if (method == COMPACT_NONE) {
-	    method = COMPACT_AVG;
+	if (cmethod == COMPACT_NONE) {
+	    cmethod = COMPACT_AVG;
 	    pprintf(prn, _("%s: using default compaction method: averaging"), 
 		    sinfo->varname);
 	    pputc(prn, '\n');
 	}
-	xvec = compact_db_series(dbZ[1], sinfo, dset->pd, method);
+	xvec = compact_db_series(dbZ[1], sinfo, dset->pd, cmethod);
 	if (xvec == NULL) {
 	    gretl_errmsg_set(_("Out of memory!"));
 	    if (new) {
@@ -3049,7 +3074,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     /* common stuff for adding a var */
     strcpy(dset->varname[dbv], sinfo->varname);
     series_set_label(dset, dbv, sinfo->descrip);
-    series_set_compact_method(dset, dbv, method);
+    series_set_compact_method(dset, dbv, cmethod);
     get_db_padding(sinfo, dset, &pad1, &pad2);
 
     if (pad1 > 0) {
