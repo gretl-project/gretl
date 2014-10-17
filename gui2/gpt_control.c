@@ -1704,6 +1704,25 @@ static void fix_old_roots_plot (GPT_SPEC *spec)
     strcpy(spec->ytics, "none");
 }
 
+static int unhandled_gp_line_error (const char *s)
+{
+    int n = strlen(s);
+#if 0
+    /* FIXME "native" vs user-defined plots? */
+    errbox(_("Failed to parse gnuplot file"));
+#endif
+    if (s[n-1] == '\n') {
+	char *tmp = gretl_strndup(s, n-1);
+
+	fprintf(stderr, "unhandled gnuplot command: '%s'\n", tmp);
+	free(tmp);
+    } else {
+	fprintf(stderr, "unhandled gnuplot command: '%s'\n", s);
+    }
+
+    return 1;
+}
+
 static int parse_gp_unset_line (GPT_SPEC *spec, const char *s)
 {
     char key[16] = {0};
@@ -1725,8 +1744,7 @@ static int parse_gp_unset_line (GPT_SPEC *spec, const char *s)
     }
 
     if (err) {
-	errbox(_("Failed to parse gnuplot file"));
-	fprintf(stderr, "parse_gp_unset_line: bad line '%s'\n", s);
+	unhandled_gp_line_error(s);
     }
 
     return err;
@@ -1775,9 +1793,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     }
 
     if (sscanf(s + 4, "%11s", key) != 1) {
-	errbox(_("Failed to parse gnuplot file"));
-	fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
-	return 1;
+	return unhandled_gp_line_error(s);
     }
 
 #if GPDEBUG
@@ -1852,27 +1868,19 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 
     if (strstr(key, "range")) {
 	if (read_plotspec_range(key, val, spec)) {
-	    errbox(_("Failed to parse gnuplot file"));
-	    fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
-	    return 1;
+	    return unhandled_gp_line_error(s);
 	}
     } else if (!strcmp(key, "logscale")) {
 	if (read_plot_logscale(val, spec)) {
-	    errbox(_("Failed to parse gnuplot file"));
-	    fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
-	    return 1;
+	    return unhandled_gp_line_error(s);
 	}
     } else if (!strcmp(key, "format")) {
 	if (read_plot_format(val, spec, 0)) {
-	    errbox(_("Failed to parse gnuplot file"));
-	    fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
-	    return 1;
+	    return unhandled_gp_line_error(s);
 	}
     } else if (!strcmp(key, "timefmt")) {
 	if (read_plot_format(val, spec, 1)) {
-	    errbox(_("Failed to parse gnuplot file"));
-	    fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
-	    return 1;
+	    return unhandled_gp_line_error(s);
 	}	
     } else if (!strcmp(key, "title")) {
 	strcpy(spec->titles[0], val);
@@ -2596,10 +2604,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     /* then get the "plot" lines */
     if (strncmp(gpline, "plot ", 5) ||
-	(strlen(gpline) < 10 && bufgets(gpline, MAXLEN - 1, buf) == NULL)) {	
-	errbox(_("Failed to parse gnuplot file"));
-	fprintf(stderr, "bad gnuplot line: '%s'\n", gpline);
-	err = 1;
+	(strlen(gpline) < 10 && bufgets(gpline, MAXLEN - 1, buf) == NULL)) {
+	err = unhandled_gp_line_error(gpline);
 	goto bailout;
     }
 
