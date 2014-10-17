@@ -2259,6 +2259,10 @@
 	  <flag>--compact</flag>
 	  <optparm>method</optparm>
 	  <effect>specify compaction method</effect>
+	</option>
+	<option>
+	  <flag>--interpolate</flag>
+	  <effect>do interpolation for low-frequency data</effect>
 	</option>	
 	<option>
 	  <flag>--quiet</flag>
@@ -2294,7 +2298,7 @@
       </para>
       <para>
 	If the series to be read are of higher frequency than the working
-	data set, you may specify a compaction method as below:</para>
+	dataset, you may specify a compaction method as below:</para>
       <code>
 	data LHUR PUNEW --compact=average
       </code>
@@ -2304,6 +2308,17 @@
 	<quote>last</quote> (uses the last observation),
 	<quote>first</quote> and <quote>sum</quote>.  If no method is
 	specified, the default is to use the average.
+      </para>
+      <para>
+	If the series to be read are of lower frequency than the
+	working dataset, the default is to repeat the values of the
+	added data as required, but the <opt>interpolate</opt> option
+	can be used to request interpolation using the method of <cite
+	key="chowlin71">Chow and Lin (1971)</cite>: the regressors are
+	a constant and quadratic trend and an AR(1) disturbance
+	process is assumed. Note, however, that this option is
+	available only for conversion from quarterly data to monthly
+	or annual data to quarterly.
       </para>
       <para>
 	In the case of native gretl databases (only), the

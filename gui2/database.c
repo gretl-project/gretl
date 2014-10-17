@@ -211,17 +211,17 @@ static int expand_data_dialog (int src_pd, int targ_pd, int *interpol,
 	(targ_pd == 12 && src_pd == 4)) {
 	/* interpolation is an option */
 	const char *opts[] = {
-	    N_("Interpolate higher frequency values"),
-	    N_("Repeat the lower frequency values")
+	    N_("Repeat the lower frequency values"),
+	    N_("Interpolate higher frequency values")
 	};
 
 	resp = radio_dialog("gretl", _("Adding a lower frequency series to a\n"
 				       "higher frequency dataset"),
 			    opts, 2, 0, EXPAND, parent);
-	if (resp == 0) {
+	if (resp == 1) {
 	    *interpol = 1;
 	    resp = GRETL_YES;
-	} else if (resp == 1) {
+	} else if (resp == 0) {
 	    resp = GRETL_YES;
 	}
     } else {
