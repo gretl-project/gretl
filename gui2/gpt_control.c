@@ -96,7 +96,7 @@ enum {
 #define plot_has_regression_list(p) (p->spec->reglist != NULL)
 
 #define labels_frozen(p)        (p->spec->flags & GPT_PRINT_MARKERS)
-#define cant_do_labels(p)       (p->status & PLOT_NO_MARKERS)
+#define cant_do_labels(p)       (p->err || (p->status & PLOT_NO_MARKERS))
 
 #define plot_show_cursor_label(p) (p->status & PLOT_CURSOR_LABEL)
 
@@ -3874,7 +3874,7 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if (pdf_ok && !strcmp(plot_items[i], "Print...")) {
+	if ((plot->err || pdf_ok) && !strcmp(plot_items[i], "Print...")) {
 	    /* Print... is currently very funky for graphs.  If
 	       we're able to display PDF, bypass this option */
 	    i++;
@@ -4186,12 +4186,10 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 	plot->popup = NULL;
     }
 
-    if (!plot->err) {
-	if (right_click(event)) {
-	    build_plot_menu(plot);
-	    gtk_menu_popup(GTK_MENU(plot->popup), NULL, NULL, NULL, NULL,
-			   event->button, event->time);
-	}
+    if (right_click(event)) {
+	build_plot_menu(plot);
+	gtk_menu_popup(GTK_MENU(plot->popup), NULL, NULL, NULL, NULL,
+		       event->button, event->time);
     }
 
     return TRUE;
@@ -4789,12 +4787,11 @@ static int gnuplot_show_png (const char *fname, const char *name,
 #if GTK_MAJOR_VERSION < 3
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(plot->statusbar), FALSE);
 #endif
+
     plot->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(plot->statusbar),
 					     "plot_message");
-    if (!plot->err) {
-	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar),
-			   plot->cid, _(" Right-click on graph for menu"));
-    }
+    gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar),
+		       plot->cid, _(" Right-click on graph for menu"));
     
     if (plot_has_xrange(plot)) {
 	g_signal_connect(G_OBJECT(plot->canvas), "motion-notify-event",
