@@ -1,11 +1,19 @@
 version 1.10.0, in progress
 - Replace old command-line parser with new "tokenizer"
+- GUI command log: make the log window more accessible, and
+  make it refresh automatically
+- GUI design: standardize the position of the window list
+  button, and make it more functional
 - Fix bug: GUI panel plot failed if the start of the sample
   range was advanced
 - Fix bug: crash on attempting to open a file from the "Recent"
   list within the GTK file chooser
+- Fix bug: user-defined plots could generate an error dialog
+  even if they display OK
 - Build for 64-bit Windows: update to OpenBLAS 2.11
-- Builf for 32-bit Windows: update compiler to gcc 4.8.3
+- Build for 32-bit Windows: update compiler to gcc 4.8.3 and
+  substitute OpenBlas for netlib version
+- Both Windows build: update to GTK 2.24.25
 
 2014-09-20 version 1.9.92
 - Add new functions: isdiscrete(), isdummy()
