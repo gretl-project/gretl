@@ -212,8 +212,6 @@ static int try_regenerate_var (int v, const char *s)
     PRN *prn;
     int err;
 
-    /* FIXME use gretl_command_sprintf, etc? */
-
     if (bufopen(&prn)) {
 	return 0;
     }
@@ -224,6 +222,9 @@ static int try_regenerate_var (int v, const char *s)
 
     if (err) {
 	errbox(gretl_print_get_buffer(prn));
+    } else {
+	lib_command_strcpy(line);
+	record_command_verbatim();
     }
 
     gretl_print_destroy(prn);
@@ -250,7 +251,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 
     if (vset->changed[VSET_VARNAME]) {
 	newstr = entry_get_trimmed_text(vset->name_entry);
-	/* note: do_rename_var() logs the corresponding command */
+	/* note: do_rename_variable() logs the corresponding command */
 	err = do_rename_variable(v, newstr);
 	g_free(newstr);
     }
@@ -261,6 +262,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	    err = try_regenerate_var(v, newstr);
 	} else {
 	    series_record_label(dataset, v, newstr);
+	    record_varlabel_change(v, 1, 0);
 	}
 	g_free(newstr);
     }
@@ -273,6 +275,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	    err = E_DATA;
 	} else {
 	    series_record_display_name(dataset, v, newstr);
+	    record_varlabel_change(v, 0, 1);
 	}
 	g_free(newstr);
     }
@@ -299,9 +302,6 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
     }  
 
     if (!err) {
-	if (vset->changed[VSET_LABEL] || vset->changed[VSET_DISPLAY]) {
-	    record_varlabel_change(v);
-	}
 	if (vset->changed[VSET_IDNUM]) {
 	    ival = spinner_get_int(vset->id_spin);
 	    dataset_renumber_variable(v, ival, dataset);

@@ -1203,10 +1203,10 @@ static void record_filter_command (filter_info *finfo)
 
     if (trend) {
 	s = fcmd + strlen(fcmd);
-	sprintf(s, "setinfo %s -d \"%s\"\n", finfo->save_t, finfo->label_t);
+	sprintf(s, "setinfo %s --description=\"%s\"\n", finfo->save_t, finfo->label_t);
     } else if (cycle) {
 	s = fcmd + strlen(fcmd);
-	sprintf(s, "setinfo %s -d \"%s\"\n", finfo->save_c, finfo->label_c);
+	sprintf(s, "setinfo %s --description=\"%s\"\n", finfo->save_c, finfo->label_c);
     }	
 
     if (trend && cycle) {
@@ -1214,7 +1214,7 @@ static void record_filter_command (filter_info *finfo)
 	sprintf(s, "series %s = %s - %s\n", finfo->save_c, finfo->vname, 
 		finfo->save_t);
 	s = fcmd + strlen(fcmd);
-	sprintf(s, "setinfo %s -d \"%s\"\n", finfo->save_c, finfo->label_c);
+	sprintf(s, "setinfo %s --description=\"%s\"\n", finfo->save_c, finfo->label_c);
     }
 
     add_command_to_stack(fcmd);

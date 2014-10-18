@@ -302,56 +302,50 @@ static const char *trimmed_db_name (const char *fname)
 
 static void record_db_open_command (dbwrapper *dw)
 {
-    const char *current_db = get_db_name();
-
     if (dw->fname != NULL) {
-	int quotes = (strchr(dw->fname, ' ') != NULL);
-	char *dbname = NULL;
+	const char *current_db = get_db_name();
+	char *dbpath;
 
 	if (dw->dbtype == GRETL_PCGIVE_DB) {
-	    if (quotes) {
-		dbname = g_strdup_printf("\"%s.bn7\"", dw->fname);
-	    } else {
-		dbname = g_strdup(dw->fname);
-	    }
+	    dbpath = g_strdup_printf("%s.bn7", dw->fname);
 	} else if (dw->dbtype == GRETL_NATIVE_DB) {
-	    const char *tmp = trimmed_db_name(dw->fname);
-
-	    if (tmp != NULL) {
-		dbname = g_strdup_printf("%s.bin", tmp);
-	    } else if (quotes) {
-		dbname = g_strdup_printf("\"%s.bin\"", tmp);
-	    } else {
-		dbname = g_strdup_printf("%s.bin", dw->fname);
-	    }
-	} else if (dw->dbtype == GRETL_NATIVE_DB_WWW) {
-	    dbname = g_strdup(dw->fname);
+	    dbpath = g_strdup_printf("%s.bin", dw->fname);
 	} else {
-	    if (quotes) {
-		dbname = g_strdup_printf("\"%s\"", dw->fname);
-	    } else {
-		dbname = g_strdup(dw->fname);
+	    dbpath = g_strdup(dw->fname);
+	}
+
+	/* record the "open" command if the database in
+	   question is not already open */
+
+	if (strcmp(current_db, dbpath)) {
+	    int err = set_db_name(dbpath, dw->dbtype, NULL);
+	    int done = 0;
+
+	    if (!err && dw->dbtype == GRETL_NATIVE_DB) {
+		const char *s = trimmed_db_name(dbpath);
+
+		if (s != NULL) {
+		    lib_command_sprintf("open %s", s);
+		    done = 1;
+		}
+	    }
+
+	    if (!err && !done) {
+		if (dw->dbtype == GRETL_NATIVE_DB_WWW) {
+		    lib_command_sprintf("open %s --www", dbpath);
+		} else if (strchr(dbpath, ' ') != NULL) {
+		    lib_command_sprintf("open \"%s\"", dbpath);
+		} else {
+		    lib_command_sprintf("open %s", dbpath);
+		}
+	    }
+
+	    if (!err) {
+		record_command_verbatim();
 	    }
 	}
 
-	if (dw->dbtype == GRETL_NATIVE_DB_WWW) {
-	    lib_command_sprintf("open %s --www", dbname);
-	} else {
-	    lib_command_sprintf("open %s", dbname);
-	}
-
-#if 0
-	/* FIXME full path vs basename */
-	fprintf(stderr, "current_db='%s', dbname='%s'\n",
-		current_db, dbname);
-#endif
-
-	if (strcmp(current_db, dbname)) {
-	    record_command_verbatim();
-	    set_db_name(dbname, dw->dbtype, NULL);
-	}
-
-	g_free(dbname);
+	g_free(dbpath);
     }
 }
 

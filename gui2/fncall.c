@@ -34,6 +34,7 @@
 #include "datafiles.h"
 #include "toolbar.h"
 #include "obsbutton.h"
+#include "cmdstack.h"
 #include "fncall.h"
 
 #define FCDEBUG 0
@@ -1688,6 +1689,20 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     } else {
 	/* execute "invisibly" */
 	err = gui_exec_line(&state, dataset);
+    }
+
+    if (!err) {
+	int ID = 0;
+
+	if (cinfo->flags & MODEL_CALL) {
+	    ID = get_genr_model_ID();
+	}
+	if (ID > 0) {
+	    add_model_command_to_stack(fnline, ID);
+	} else {
+	    lib_command_strcpy(fnline);
+	    record_command_verbatim();
+	}
     }
 
     if (cinfo->flags & MODEL_CALL) {

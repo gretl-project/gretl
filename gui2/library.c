@@ -4768,12 +4768,17 @@ int do_rename_variable (int v, const char *newname)
     return err;
 }
 
-int record_varlabel_change (int v)
+int record_varlabel_change (int v, int desc, int gname)
 {
-    lib_command_sprintf("setinfo %s --description=\"%s\" --graph-name=\"%s\"", 
-			dataset->varname[v],
-			series_get_label(dataset, v), 
-			series_get_display_name(dataset, v));
+    if (desc) {
+	lib_command_sprintf("setinfo %s --description=\"%s\"", 
+			    dataset->varname[v],
+			    series_get_label(dataset, v));
+    } else if (gname) {
+	lib_command_sprintf("setinfo %s --graph-name=\"%s\"", 
+			    dataset->varname[v],
+			    series_get_display_name(dataset, v));
+    }	
 
     return record_command_verbatim();
 }

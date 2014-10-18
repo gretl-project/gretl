@@ -212,7 +212,7 @@ void do_edit_label (GtkWidget *w, dialog_t *dlg);
 
 int do_rename_variable (int v, const char *newname);
 
-int record_varlabel_change (int v);
+int record_varlabel_change (int v, int desc, int gname);
 
 void do_resid_freq (GtkAction *action, gpointer p);
 

@@ -1708,11 +1708,6 @@ static int unhandled_gp_line_error (const char *s)
 {
     int n = strlen(s);
 
-#if 0
-    /* FIXME "native" vs user-defined plots? */
-    errbox(_("Failed to parse gnuplot file"));
-#endif
-
     if (s[n-1] == '\n') {
 	char *tmp = gretl_strndup(s, n-1);
 

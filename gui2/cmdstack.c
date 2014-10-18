@@ -319,10 +319,25 @@ static int real_write_log_entry (const char *s)
 
 int add_command_to_stack (const char *s)
 {
+    char test[6];
     int err;
 
     if (s == NULL || *s == '\0') {
 	return 1;
+    }
+
+    *test = '\0';
+    strncat(test, s, 5);
+
+    if (gretl_namechar_spn(test) == 4 && isspace(test[4])) {
+	test[4] = '\0';
+    } else {
+	test[0] = '\0';
+    }
+
+    if (!strcmp(test, "quit") || !strcmp(test, "exit")) {
+	/* don't record console exit */
+	return 0;
     }
 
     /* not a model command, so zero out record of
@@ -338,10 +353,9 @@ int add_command_to_stack (const char *s)
 	n_cmds++;
 
 	if (strlen(s) > 2 && *s != '#' && 
-	    strncmp(s, "help", 4) &&
-	    strncmp(s, "info", 4) &&
-	    strncmp(s, "open", 4) &&
-	    strncmp(s, "quit", 4)) {
+	    strcmp(test, "help") &&
+	    strcmp(test, "info") &&
+	    strcmp(test, "open")) {
 	    set_commands_recorded();
 	}
     }
