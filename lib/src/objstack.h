@@ -74,6 +74,8 @@ GretlObjType get_last_model_type (void);
 
 void *get_genr_model (GretlObjType *type);
 
+int get_genr_model_ID (void);
+
 MODEL *get_model_by_name (const char *mname);
 
 MODEL *get_model_by_ID (int ID);

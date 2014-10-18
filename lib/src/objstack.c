@@ -1157,6 +1157,17 @@ void *get_genr_model (GretlObjType *type)
     return genr_model.ptr;
 }
 
+int get_genr_model_ID (void)
+{
+    if (genr_model.ptr != NULL && genr_model.type == GRETL_OBJ_EQN) {
+	MODEL *pmod = genr_model.ptr;
+
+	return pmod->ID;
+    } else {
+	return 0;
+    }
+}
+
 static stacker *find_smatch (const char *oname)
 {
     stacker *smatch = NULL;
