@@ -302,36 +302,56 @@ static const char *trimmed_db_name (const char *fname)
 
 static void record_db_open_command (dbwrapper *dw)
 {
+    const char *current_db = get_db_name();
+
     if (dw->fname != NULL) {
 	int quotes = (strchr(dw->fname, ' ') != NULL);
+	char *dbname = NULL;
 
 	if (dw->dbtype == GRETL_PCGIVE_DB) {
 	    if (quotes) {
-		lib_command_sprintf("open \"%s.bn7\"", dw->fname);
+		dbname = g_strdup_printf("\"%s.bn7\"", dw->fname);
 	    } else {
-		lib_command_sprintf("open %s.bn7", dw->fname);
+		dbname = g_strdup(dw->fname);
 	    }
 	} else if (dw->dbtype == GRETL_NATIVE_DB) {
 	    const char *tmp = trimmed_db_name(dw->fname);
 
 	    if (tmp != NULL) {
-		lib_command_sprintf("open %s.bin", tmp);
+		dbname = g_strdup_printf("%s.bin", tmp);
 	    } else if (quotes) {
-		lib_command_sprintf("open \"%s.bin\"", dw->fname);
+		dbname = g_strdup_printf("\"%s.bin\"", tmp);
 	    } else {
-		lib_command_sprintf("open %s.bin", dw->fname);
+		dbname = g_strdup_printf("%s.bin", dw->fname);
 	    }
 	} else if (dw->dbtype == GRETL_NATIVE_DB_WWW) {
-	    lib_command_sprintf("open %s --www", dw->fname);
+	    dbname = g_strdup(dw->fname);
 	} else {
 	    if (quotes) {
-		lib_command_sprintf("open \"%s\"", dw->fname);
+		dbname = g_strdup_printf("\"%s\"", dw->fname);
 	    } else {
-		lib_command_sprintf("open %s", dw->fname);
+		dbname = g_strdup(dw->fname);
 	    }
 	}
 
-	record_command_verbatim();
+	if (dw->dbtype == GRETL_NATIVE_DB_WWW) {
+	    lib_command_sprintf("open %s --www", dbname);
+	} else {
+	    lib_command_sprintf("open %s", dbname);
+	}
+
+#if 0
+	/* FIXME full path vs basename */
+	fprintf(stderr, "current_db='%s', dbname='%s'\n",
+		current_db, dbname);
+#endif
+
+	if (strcmp(current_db, dbname)) {
+	    record_command_verbatim();
+	    set_db_name(dbname, dw->dbtype, NULL);
+	}
+
+	g_free(dbname);
     }
 }
 
@@ -436,10 +456,11 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 
 	/* record successful importation in command log */
 	if (compact && (cstr = compact_method_string(method)) != NULL) {
-	    lib_command_sprintf("data (compact=%s) %s", cstr,
-				sinfo->varname);
+	    lib_command_sprintf("data %s --compact=%s", sinfo->varname,
+				cstr);
+	} else if (interpol) {
+	    lib_command_sprintf("data %s --interpolate", sinfo->varname);
 	} else {
-	    /* FIXME: handle expand/interpolate option */
 	    lib_command_sprintf("data %s", sinfo->varname);
 	}
 
