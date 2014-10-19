@@ -2677,7 +2677,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (!strcmp(cmd->param, "mpi")) {
 	    err = foreign_execute(dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "plot")) {
-	    err = gretl_plot_finalize(line, cmd->opt);
+	    err = gretl_plot_finalize(line, dset, cmd->opt);
 	} else {
 	    err = 1;
 	}

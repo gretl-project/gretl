@@ -22,6 +22,7 @@
 
 int gretl_plot_append_line (const char *s, const DATASET *dset);
 
-int gretl_plot_finalize (const char *s, gretlopt opt);
+int gretl_plot_finalize (const char *s, const DATASET *dset,
+			 gretlopt opt);
 
 #endif

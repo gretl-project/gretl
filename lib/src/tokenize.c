@@ -1055,7 +1055,11 @@ static int handle_option_value (CMD *c, int i, gretlopt opt,
 #endif
 
 	if (val != NULL) {
-	    c->err = push_option_param(c->ci, opt, val);
+	    if (c->ci == PLOT) {
+		c->err = push_option_param(GNUPLOT, opt, val);
+	    } else {
+		c->err = push_option_param(c->ci, opt, val);
+	    }
 	    if (c->err) {
 		free(val);
 	    }
