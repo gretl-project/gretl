@@ -161,7 +161,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { PANEL,    "panel",    CI_LIST },
     { PCA,      "pca",      CI_LIST | CI_DOALL },
     { PERGM,    "pergm",    CI_LIST | CI_LLEN1 | CI_ORD2 },
-    { PLOT,     "textplot", CI_LIST },    
+    { PLOT,     "plot",     CI_BLOCK },    
     { POISSON,  "poisson",  CI_LIST },
     { PRINT,    "print",    CI_INFL }, /* special: handled later */
     { PRINTF,   "printf",   CI_PARM1 | CI_VARGS },
@@ -194,6 +194,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { SUMMARY,  "summary",  CI_LIST | CI_DOALL },
     { SYSTEM,   "system",   CI_PARM1 | CI_BLOCK },
     { TABPRINT, "tabprint", 0 }, /* special, handled later */
+    { TEXTPLOT, "textplot", CI_LIST },  
     { TOBIT,    "tobit",    CI_LIST },
     { IVREG,    "tsls",     CI_LIST },
     { VAR,      "var",      CI_ORD1 | CI_LIST },

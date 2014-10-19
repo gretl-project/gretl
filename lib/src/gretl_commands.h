@@ -148,6 +148,7 @@ typedef enum {
     SUMMARY,
     SYSTEM,
     TABPRINT,
+    TEXTPLOT,
     TOBIT,
     IVREG,
     VAR,

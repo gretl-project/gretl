@@ -38,6 +38,7 @@
 #include "dbread.h"
 #include "gretl_foreign.h"
 #include "boxplots.h"
+#include "gretl_plot.h"
 #include "kalman.h"
 #include "flow_control.h"
 #include "libglue.h"
@@ -2173,7 +2174,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	}
 	break;
 
-    case PLOT:
+    case TEXTPLOT:
 	err = textplot(cmd->list, dset, cmd->opt, prn);
 	break;
 
@@ -2508,6 +2509,13 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	}
 	break;
 
+    case PLOT:
+	err = gretl_plot_append_line(line, dset);
+	if (!err && !cmd->context) {
+	    gretl_cmd_set_context(cmd, cmd->ci);
+	}
+	break;	
+
     case ADD:
     case OMIT:
 	if (get_last_model_type() == GRETL_OBJ_VAR) {
@@ -2668,6 +2676,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = kalman_parse_line(line, dset, cmd->opt);
 	} else if (!strcmp(cmd->param, "mpi")) {
 	    err = foreign_execute(dset, cmd->opt, prn);
+	} else if (!strcmp(cmd->param, "plot")) {
+	    err = gretl_plot_finalize(line, cmd->opt);
 	} else {
 	    err = 1;
 	}
@@ -2922,7 +2932,7 @@ int get_command_index (char *line, CMD *cmd)
 
     if (cmd->ci == NLS || cmd->ci == MLE ||
 	cmd->ci == GMM || cmd->ci == FOREIGN ||
-	cmd->ci == KALMAN) {
+	cmd->ci == KALMAN || cmd->ci == PLOT) {
 	cmd->context = cmd->ci;
     } else if (cmd->ci == MPI) {
 	cmd->context = FOREIGN;

@@ -2493,24 +2493,6 @@ int kalman_parse_line (const char *line, const DATASET *dset,
     return err;
 }
 
-#if 0
-static void kalman_timestamp_matrix (gretl_matrix *m,
-				     const DATASET *dset)
-{
-    if (K->y != NULL) {
-	int t1 = K->y->t1;
-	int t2 = K->y->t2;
-
-	if (t1 > 0 && t1 < dset->n &&
-	    t2 > 0 && t2 <= dset->n &&
-	    t2 > t1) {
-	    m->t1 = t1;
-	    m->t2 = t2;
-	}
-    }
-}
-#endif
-
 static gretl_matrix *series_export_matrix (kalman *K,
 					   const char *name,
 					   const DATASET *dset,
