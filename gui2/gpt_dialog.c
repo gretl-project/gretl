@@ -588,9 +588,6 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 	g_free(title);
     }
 
-    /* FIXME: when changing from no fit case to showing a fit,
-       adjust the key position option, which may be disabled */
-
     /* also re-jig the "Lines" tab entries for the fitted line */
 
     if (ed->fitformula != NULL && ed->fitlegend != NULL) {
