@@ -25,10 +25,15 @@
   
 #include "libgretl.h"
 #include "uservar.h"
-#include "gretl_typemap.h"
+#include "usermat.h"
+#include "libglue.h"
 #include "gretl_plot.h"
 
 #define PDEBUG 1
+
+#if PDEBUG
+# include "gretl_typemap.h"
+#endif
 
 typedef struct gretl_plot_ {
     int in_progress;
@@ -61,8 +66,10 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
     int free_list = 0;
     int i, err = 0;
 
+    plot.opt |= opt;
+
     if (plot.datasource == NULL || plot.datatype == 0) {
-	/* FIXME maybe this should be OK? */
+	/* FIXME maybe this should be made OK? */
 	fprintf(stderr, "plot has no data source\n");
 	return E_DATA;
     } else {
@@ -76,6 +83,9 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
 	    list = gretl_list_new(1);
 	    list[1] = current_series_index(dset, plot.datasource);
 	    free_list = 1;
+	} else if (plot.datatype == GRETL_TYPE_MATRIX) {
+	    plot.opt |= OPT_X;
+	    push_option_param(GNUPLOT, OPT_X, plot.datasource);
 	}
     }
 
@@ -90,7 +100,7 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
 	litlen += strlen(plot.lines[i]);
     }
 
-    if (litlen > 0) {
+    if (!err && litlen > 0) {
 	litlen += 2 * plot.nlines + 4;
 	literal = malloc(litlen);
 	if (literal == NULL) {
@@ -109,8 +119,18 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
     }	    
 
     if (!err) {
-	err = gnuplot(list, literal, dset, plot.opt | opt);
+#if PDEBUG
+	printlist(list, "execute_plot list");
+#endif
+	if (plot.opt & OPT_X) {
+	    err = matrix_command_driver(GNUPLOT, NULL, literal, 
+					dset, plot.opt, NULL);
+	} else {
+	    err = gnuplot(list, literal, dset, plot.opt);
+	}
     }
+
+    free(literal);
 
     if (free_list) {
 	free(list);
