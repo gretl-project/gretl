@@ -232,6 +232,28 @@ static int check_plot_option (const char *s)
     return err;
 }
 
+static int plot_printf (const char *s, const DATASET *dset)
+{
+    char *genline;
+    char *genout;
+    int err = 0;
+
+    genline = g_strdup_printf("sprintf(%s)", s);
+    genout = generate_string(genline, (DATASET *) dset, &err);
+
+    if (err) {
+	fprintf(stderr, "plot_printf error: genline='%s'\n", 
+		genline);
+    } else {
+	strings_array_add(&plot.lines, &plot.nlines, genout);
+	free(genout);
+    }
+
+    g_free(genline);
+
+    return err;
+}
+
 int gretl_plot_append_line (const char *s, const DATASET *dset)
 {
     char field[64];
@@ -273,8 +295,7 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
     } else if (!strcmp(field, "literal")) {
 	err = strings_array_add(&plot.lines, &plot.nlines, s);
     } else if (!strcmp(field, "printf")) {
-	fprintf(stderr, "got printf '%s'\n", s);
-	fprintf(stderr, " (not implemented yet)\n");
+	err = plot_printf(s, dset);
     } else {
 	fprintf(stderr, "plot: invalid field '%s'\n", field);
 	err = E_PARSE;
