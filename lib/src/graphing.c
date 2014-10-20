@@ -1782,6 +1782,8 @@ static int gnuplot_make_graph (void)
     graph_file_written = 0;
     fmt = specified_gp_output_format();
 
+    fprintf(stderr, "HERE, fmt=%d\n", fmt);
+
     if (fmt == GP_TERM_PLT) {
 	/* no-op: just the gnuplot commands are wanted */
 	graph_file_written = 1;
@@ -7016,7 +7018,7 @@ int qq_plot (const int *list, const DATASET *dset, gretlopt opt)
  * @list: list of variables by ID number: Y, X, control.
  * @literal: extra gnuplot commands or %NULL.
  * @dset: dataset struct.
- * @opt: use %OPT_G for GUI graph.
+ * @opt: can add "gnuplot" options.
  *
  * Constructs a scatterplot of modified Y against modified X,
  * where the modification consists in taking the residuals from
