@@ -40,6 +40,7 @@ lib/src/gretl_mpi.c
 lib/src/gretl_normal.c
 lib/src/gretl_panel.c
 lib/src/gretl_paths.c
+lib/src/gretl_plot.c
 lib/src/gretl_prn.c
 lib/src/gretl_restrict.c
 lib/src/gretl_string_table.c
