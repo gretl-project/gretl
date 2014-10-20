@@ -2884,7 +2884,10 @@ int bufgets_init (const char *buf)
     readbuf *tmp = matching_buffer(buf);
     int i, err = 0;
 
-    if (tmp != NULL) {
+    if (buf == NULL) {
+	fprintf(stderr, "bufgets_init: got NULL argument\n");
+	return 1;
+    } else if (tmp != NULL) {
 	fprintf(stderr, "GRETL ERROR: buffer at %p is already "
 		"initialized\n", (void *) buf);
 	return 1;

@@ -90,7 +90,7 @@ static int translate_fit_option (void)
     }
 
     if (!err) {
-	/* substitute the specific "fit" flag */
+	/* substitute the specific old-time "fit" flag */
 	plot.opt &= ~OPT_F;
 	plot.opt |= fitopt;
     }
@@ -149,7 +149,7 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
     /* In the following code block we turn the array of "literal"
        lines from "plot" into the form
  
-      { literal 1; literal 2; ...}
+       { literal 1; literal 2; ...}
 
        which is the form wanted by the gnuplot() function at
        present. For future reference, it would be more efficient to
@@ -176,7 +176,7 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
     }
 
     if (!err && list != NULL && list[0] == 1) {
-	/* default to time-series interpretation? */
+	/* default to time-series plot? */
 	if (dataset_is_time_series(dset)) {
 	    plot.opt |= OPT_T;
 	}
@@ -350,21 +350,11 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
     char field[64];
     int err = 0;
 
-    s = get_plot_field_and_advance(s, field, 64, 0, &err);
-
-    if (!strcmp(field, "plot")) {
-	/* directive to start a plot block */
-	if (plot.in_progress) {
-	    clear_plot();
-	    return E_PARSE;
-	} else {
-	    plot.in_progress = 1;
-	    set_effective_plot_ci(PLOT);
-	    return 0;
-	}
-    } else if (!plot.in_progress) {
-	return E_PARSE;
+    if (!plot.in_progress) {
+	return E_DATA;
     }
+
+    s = get_plot_field_and_advance(s, field, 64, 0, &err);
 
     if (!strcmp(field, "option")) {
 	s = get_plot_field_and_advance(s, field, 64, 1, &err);
@@ -393,6 +383,33 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
 
     if (err) {
 	clear_plot();
+    }
+
+    return err;
+}
+
+int gretl_plot_start (const char *s)
+{
+    char field[8];
+    int err = 0;
+
+#if PDEBUG
+    fprintf(stderr, "gretl_plot_start: '%s'\n", s);
+#endif
+
+    s = get_plot_field_and_advance(s, field, 8, 1, &err);
+
+    if (!strcmp(field, "plot")) {
+	/* directive to start a plot block */
+	if (plot.in_progress) {
+	    clear_plot();
+	    err = E_DATA;
+	} else {
+	    plot.in_progress = 1;
+	    set_effective_plot_ci(PLOT);
+	}
+    } else {
+	err = E_PARSE;
     }
 
     return err;

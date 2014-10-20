@@ -161,7 +161,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { PANEL,    "panel",    CI_LIST },
     { PCA,      "pca",      CI_LIST | CI_DOALL },
     { PERGM,    "pergm",    CI_LIST | CI_LLEN1 | CI_ORD2 },
-    { PLOT,     "plot",     CI_BLOCK },    
+    { PLOT,     "plot",     CI_BLOCK | CI_EXPR },    
     { POISSON,  "poisson",  CI_LIST },
     { PRINT,    "print",    CI_INFL }, /* special: handled later */
     { PRINTF,   "printf",   CI_PARM1 | CI_VARGS },
@@ -222,7 +222,7 @@ static struct gretl_cmd gretl_cmds[] = {
 
 #define vargs_optional(c) (c == PRINTF || c == SPRINTF)
 
-#define expr_keep_cmdword(c) (c == GMM || c == MLE || c == NLS)
+#define expr_keep_cmdword(c) (c == GMM || c == MLE || c == NLS || c == PLOT)
 
 #define has_function_form(c) (gretl_cmds[c].flags & CI_FFORM)
 

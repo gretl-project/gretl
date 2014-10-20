@@ -8480,6 +8480,11 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     int ci = s->cmd->ci;
     int err = 0;
 
+    if (ci == END && s->cmd->param != NULL && 
+	!strcmp(s->cmd->param, "plot")) {
+	ci = PLOT;
+    }
+
     if (ci == FLUSH) {
 	handle_flush_callback(0);
     } else if (ptr != NULL && type == GRETL_OBJ_EQN) {

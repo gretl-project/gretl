@@ -624,7 +624,7 @@ static void real_echo_command (CMD *cmd, const char *line,
 	compiling = 1;
     }
 
-#if ECHO_DEBUG
+#if 1 || ECHO_DEBUG
     fprintf(stderr, "echo_cmd:\n*** line='%s'\n param='%s' oarm2='%s'\n", 
 	    line, cmd->param, cmd->parm2);
     fprintf(stderr, " cmd->opt=%d, recording=%d, compiling=%d\n",
@@ -1568,7 +1568,6 @@ static int callback_scheduled (ExecState *s)
 static void callback_exec (ExecState *s, char *fname, int err)
 {
     if (!err && s->callback != NULL) {
-
 	if (s->cmd->ci == OPEN) {
 	    s->callback(s, fname, 0);
 	} else {
@@ -1897,6 +1896,7 @@ static void maybe_schedule_graph_callback (ExecState *s)
 
     if (graph_written_to_file()) {
 	if (gui_mode && *s->cmd->savename != '\0') {
+	    /* FIXME? */
 	    pprintf(s->prn, "Warning: ignoring \"%s <-\"\n", s->cmd->savename);
 	}	
 	report_plot_written(s->prn);
@@ -2510,7 +2510,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case PLOT:
-	err = gretl_plot_append_line(line, dset);
+	if (!cmd->context) {
+	    err = gretl_plot_start(cmd->vstart);
+	} else {
+	    err = gretl_plot_append_line(line, dset);
+	}
 	if (!err && !cmd->context) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	}

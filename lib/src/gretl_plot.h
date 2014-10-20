@@ -20,6 +20,8 @@
 #ifndef GRETL_PLOT_H_
 #define GRETL_PLOT_H_
 
+int gretl_plot_start (const char *s);
+
 int gretl_plot_append_line (const char *s, const DATASET *dset);
 
 int gretl_plot_finalize (const char *s, const DATASET *dset,

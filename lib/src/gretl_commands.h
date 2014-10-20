@@ -192,7 +192,6 @@ typedef enum {
 			c == NORMTEST || \
                         c == PCA || \
                         c == PERGM || \
-                        c == PLOT || \
                         c == PRINT || \
                         c == PRINTF || \
                         c == PVAL || \
@@ -202,6 +201,7 @@ typedef enum {
                         c == RUNS || \
                         c == SPEARMAN || \
                         c == SUMMARY || \
+                        c == TEXTPLOT || \
                         c == VIF || \
                         c == VARTEST || \
                         c == XCORRGM || \
@@ -223,6 +223,7 @@ typedef enum {
                               c == VIF)
 
 #define GRAPHING_COMMAND(c) (c == GNUPLOT || \
+                             c == PLOT || \
 			     c == BXPLOT ||  \
 			     c == SCATTERS || \
 			     c == CORRGM || \
