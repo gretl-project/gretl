@@ -961,11 +961,43 @@ static int option_parm_status (int ci, gretlopt opt)
     return 0;
 }
 
+/* Handle the case where we got input on the pattern
+   
+   --option-with-param=eval(foo)
+
+   where "foo" is the name of a string variable and the
+   option parameter should be set to the value of that
+   variable.
+*/
+
+static int maybe_evaluate_optval (stored_opt *so)
+{
+    char *s = so->val;
+    int n = strlen(s);
+
+    if (!strncmp(s, "eval(", 5) && s[n-1] == ')') {
+	char *sname = gretl_strndup(s + 5, n - 6);
+
+	if (sname != NULL) {
+	    const char *tmp = get_string_by_name(sname);
+
+	    if (tmp != NULL) {
+		free(so->val);
+		so->val = gretl_strdup(tmp);
+	    }
+	    free(sname);
+	}
+    }
+
+    return 0;
+}
+
 static int real_push_option (int ci, gretlopt opt, char *val,
 			     int checked, int flags)
 {
     int fd = gretl_function_depth();
     int n, err = 0;
+    int val_set = 0;
     stored_opt *so;
 
     if (!checked && option_parm_status(ci, opt) == OPT_NO_PARM)  {
@@ -978,6 +1010,7 @@ static int real_push_option (int ci, gretlopt opt, char *val,
 #endif
 
     so = matching_stored_opt(ci, opt);
+
     if (so != NULL) {
 	/* got a match for the (ci, opt) pair already */
 #if OPTDEBUG 
@@ -986,12 +1019,14 @@ static int real_push_option (int ci, gretlopt opt, char *val,
 	if (!(flags & OPT_SETOPT)) {
 	    free(so->val);
 	    so->val = val;
+	    val_set = 1;
 	}
 	so->flags = flags;
-	return 0;
+	goto finish;
     }
 
     so = empty_stored_opt_slot();
+
     if (so != NULL) {
 	/* re-use a vacant slot */
 #if OPTDEBUG 
@@ -1000,9 +1035,10 @@ static int real_push_option (int ci, gretlopt opt, char *val,
 	so->ci = ci;
 	so->opt = opt;
 	so->val = val;
+	val_set = 1;
 	so->flags = flags;
 	so->fd = fd;
-	return 0;
+	goto finish;
     }    
 
     /* so we have to extend the array */
@@ -1020,9 +1056,16 @@ static int real_push_option (int ci, gretlopt opt, char *val,
 	so->ci = ci;
 	so->opt = opt;
 	so->val = val;
+	val_set = 1;
 	so->flags = flags;
 	so->fd = fd;
 	n_stored_opts = n;
+    }
+
+ finish:
+
+    if (val_set && so->val != NULL) {
+	maybe_evaluate_optval(so);
     }
 
     return err;
