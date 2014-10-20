@@ -17,10 +17,24 @@
  * 
  */
 
-/* 2014-10-19: embryonic form of a "plot" block command. Right now
-   it's assumed that a data source (series, list of matrix) is
-   provided, but it could be generalized to handle the case of
-   a fully user-defined plot.
+/* Implementation of "plot" block command. Current set-up:
+
+   The block must start with "plot" (possibly preceded by the GUI
+   "savename <- " apparatus).
+
+   Required element: "data foo" where "foo" is the name of a single
+   series, a list or a matrix.
+
+   Optional elements: zero or more "option" lines; zero or more
+   "literal" lines; and zero or more "printf" lines, which turn into
+   literal lines once the printf is cashed out.
+
+   Option lines take the form "option flag" or "option flag=val"
+   depending on whether the option takes a paraneter or not
+   The usual double-dash before the option flag is not required.
+
+   Literal and printf lines are assembled into a "literal" block
+   which is then passed to gnuplot().
 */
   
 #include "libgretl.h"
