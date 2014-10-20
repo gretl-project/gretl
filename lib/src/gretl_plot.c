@@ -55,6 +55,47 @@ static void clear_plot (void)
     strings_array_free(plot.lines, plot.nlines);
     plot.lines = NULL;
     plot.nlines = 0;
+    set_effective_plot_ci(GNUPLOT);
+}
+
+/* Translate "new-style" plot option --fit=whatever to
+   the legacy coding used by gnuplot() in graphing.c
+   The legacy stuff should be trashed at some point!
+*/
+
+static int translate_fit_option (void)
+{
+    const char *fitstr = get_optval_string(PLOT, OPT_F);
+    gretlopt fitopt = 0;
+    int err = 0;
+
+    if (fitstr == NULL) {
+	err = E_DATA;
+    } else if (!strcmp(fitstr, "inverse")) {
+	fitopt = OPT_I;
+    } else if (!strcmp(fitstr, "loess")) {
+	fitopt = OPT_L;
+    } else if (!strcmp(fitstr, "quadratic")) {
+	fitopt = OPT_Q;
+    } else if (!strcmp(fitstr, "linear")) {
+	fitopt = OPT_N;
+    } else if (!strcmp(fitstr, "cubic")) {
+	fitopt = OPT_B;
+    } else if (!strcmp(fitstr, "semilog")) {
+	fitopt = OPT_E;
+    } else if (!strcmp(fitstr, "none")) {
+	fitopt = OPT_S;
+    } else {
+	err = E_BADOPT;
+    }
+
+    if (!err) {
+	/* substitute the specific "fit" flag */
+	plot.opt &= ~OPT_F;
+	plot.opt |= fitopt;
+    }
+
+    return err;
 }
 
 static int execute_plot (const DATASET *dset, gretlopt opt)
@@ -66,6 +107,14 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
     int i, err = 0;
 
     plot.opt |= opt;
+
+    if (plot.opt & OPT_F) {
+	/* --fit=whatever */
+	err = translate_fit_option();
+	if (err) {
+	    return err;
+	}
+    }
 
     if (plot.datasource == NULL || plot.datatype == 0) {
 	/* FIXME maybe this should be made OK? */
@@ -79,6 +128,7 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
 	if (plot.datatype == GRETL_TYPE_LIST) {
 	    list = get_list_by_name(plot.datasource);
 	} else if (plot.datatype == GRETL_TYPE_SERIES) {
+	    /* convert to singleton list */
 	    list = gretl_list_new(1);
 	    list[1] = current_series_index(dset, plot.datasource);
 	    free_list = 1;
@@ -96,6 +146,17 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
 	litlen += strlen(plot.lines[i]);
     }
 
+    /* In the following code block we turn the array of "literal"
+       lines from "plot" into the form
+ 
+      { literal 1; literal 2; ...}
+
+       which is the form wanted by the gnuplot() function at
+       present. For future reference, it would be more efficient to
+       revise gnuplot() so that it accepts an array of strings as
+       input.
+    */
+
     if (!err && litlen > 0) {
 	litlen += 2 * plot.nlines + 4;
 	literal = malloc(litlen);
@@ -112,7 +173,14 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
 #if PDEBUG
 	fprintf(stderr, "composed literal: '%s'\n", literal);
 #endif
-    }	    
+    }
+
+    if (!err && list != NULL && list[0] == 1) {
+	/* default to time-series interpretation? */
+	if (dataset_is_time_series(dset)) {
+	    plot.opt |= OPT_T;
+	}
+    }
 
     if (!err) {
 	if (plot.datatype == GRETL_TYPE_MATRIX) {
@@ -131,33 +199,6 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
     }
 
     return err;
-}
-
-static const char *
-get_plot_field_and_advance (const char *s, char *field, size_t maxlen)
-{
-    const char *p = s;
-    size_t i = 0;
-
-    while (isspace(*s)) s++;
-
-    *field = '\0';
-
-    while (*s && !isspace(*s)) {
-	if (i < maxlen) {
-	    field[i++] = *s;
-	} else {
-	    fprintf(stderr, "plot field: overflow!\n");
-	    *field = '\0';
-	    return p;
-	}
-	s++;
-    }
-
-    field[i] = '\0';
-    s += strspn(s, " \t\r\n");
-
-    return s;
 }
 
 static int check_plot_data_source (const char *s, 
@@ -214,10 +255,10 @@ static int check_plot_option (const char *s)
 	char *flag = gretl_strndup(s, p - s);
 
 	param = gretl_strdup(p + 1);
-	opt = valid_long_opt(GNUPLOT, flag, &status);
+	opt = valid_long_opt(PLOT, flag, &status);
 	free(flag);
     } else {
-	opt = valid_long_opt(GNUPLOT, s, &status);
+	opt = valid_long_opt(PLOT, s, &status);
     }
 
     if (opt == OPT_NONE) {
@@ -232,7 +273,7 @@ static int check_plot_option (const char *s)
     } else {
 	plot.opt |= opt;
 	if (param != NULL) {
-	    err = push_option_param(GNUPLOT, opt, param);
+	    err = push_option_param(PLOT, opt, param);
 	    if (err) {
 		fprintf(stderr, "plot option: error pushing param: '%s'\n", s);
 	    } else {
@@ -268,18 +309,57 @@ static int plot_printf (const char *s, const DATASET *dset)
     return err;
 }
 
+static const char *
+get_plot_field_and_advance (const char *s, char *field, 
+			    size_t maxlen, int last,
+			    int *err)
+{
+    const char *p = s;
+    size_t i = 0;
+
+    while (isspace(*s)) s++;
+
+    *field = '\0';
+
+    while (*s && !isspace(*s)) {
+	if (i < maxlen) {
+	    field[i++] = *s;
+	} else {
+	    fprintf(stderr, "plot field: overflow!\n");
+	    *field = '\0';
+	    return p;
+	}
+	s++;
+    }
+
+    field[i] = '\0';
+    s += strspn(s, " \t\r\n");
+
+    if (*field == '\0') {
+	*err = E_ARGS;
+    } else if (last && *s != '\0') {
+	gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"), s);
+	*err = E_PARSE;
+    }
+
+    return s;
+}
+
 int gretl_plot_append_line (const char *s, const DATASET *dset)
 {
     char field[64];
     int err = 0;
 
-    s = get_plot_field_and_advance(s, field, 64);
+    s = get_plot_field_and_advance(s, field, 64, 0, &err);
 
     if (!strcmp(field, "plot")) {
+	/* directive to start a plot block */
 	if (plot.in_progress) {
+	    clear_plot();
 	    return E_PARSE;
 	} else {
 	    plot.in_progress = 1;
+	    set_effective_plot_ci(PLOT);
 	    return 0;
 	}
     } else if (!plot.in_progress) {
@@ -287,24 +367,20 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
     }
 
     if (!strcmp(field, "option")) {
-	s = get_plot_field_and_advance(s, field, 64);
-	if (*field == '\0' || *s != '\0') {
-	    err = E_PARSE;
-	} else {
+	s = get_plot_field_and_advance(s, field, 64, 1, &err);
+	if (!err) {
 	    err = check_plot_option(field);
-	}
-	if (err) {
-	    fprintf(stderr, "Invalid plot option '%s'\n", field);
+	    if (err) {
+		fprintf(stderr, "Invalid plot option '%s'\n", field);
+	    }
 	}
     } else if (!strcmp(field, "data")) {
-	s = get_plot_field_and_advance(s, field, 64);
-	if (*field == '\0' || *s != '\0') {
-	    err = E_PARSE;
-	} else {
+	s = get_plot_field_and_advance(s, field, 64, 1, &err);
+	if (!err) {
 	    err = check_plot_data_source(field, dset);
-	}
-	if (err) {
-	    fprintf(stderr, "Invalid plot data source '%s'\n", field);
+	    if (err) {
+		fprintf(stderr, "Invalid plot data source '%s'\n", field);
+	    }	    
 	}
     } else if (!strcmp(field, "literal")) {
 	err = strings_array_add(&plot.lines, &plot.nlines, s);
@@ -313,6 +389,10 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
     } else {
 	fprintf(stderr, "plot: invalid field '%s'\n", field);
 	err = E_PARSE;
+    }
+
+    if (err) {
+	clear_plot();
     }
 
     return err;

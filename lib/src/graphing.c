@@ -327,6 +327,13 @@ static int gp_list_pos (const char *s, const int *list,
     return in_gretl_list(list, k);
 }
 
+static int plot_ci = GNUPLOT;
+
+void set_effective_plot_ci (int ci)
+{
+    plot_ci = ci;
+}
+
 /* When we get from the user something like 
 
    --with-lines=foo,bar
@@ -340,7 +347,7 @@ static int gp_set_non_point_info (gnuplot_info *gi,
 				  const DATASET *dset,
 				  gretlopt opt)
 {
-    const char *s = get_optval_string(GNUPLOT, opt);
+    const char *s = get_optval_string(plot_ci, opt);
     int withval = W_POINTS;
     int i, imax = gi->withlist[0];
 
@@ -385,7 +392,7 @@ static int gp_set_non_point_info (gnuplot_info *gi,
 static int plain_lines_spec (gretlopt opt)
 {
     if ((opt & OPT_O) && !(opt & (OPT_M | OPT_P))) {
-	return get_optval_string(GNUPLOT, OPT_O) == NULL;
+	return get_optval_string(plot_ci, OPT_O) == NULL;
     } else {
 	return 0;
     }
@@ -1551,7 +1558,7 @@ static int got_none_option (const char *s)
 
 static const char *plot_output_option (PlotType p, int *pci)
 {
-    int ci = GNUPLOT;
+    int ci = plot_ci;
     const char *s;
 
     /* set a more specific command index based on 
@@ -7140,7 +7147,7 @@ int is_auto_fit_string (const char *s)
 
 int gnuplot_process_file (gretlopt opt, PRN *prn)
 {
-    const char *inname = get_optval_string(GNUPLOT, OPT_D);
+    const char *inname = get_optval_string(plot_ci, OPT_D);
     FILE *fp, *fq;
     int err = 0;
 
