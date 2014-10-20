@@ -624,7 +624,7 @@ static void real_echo_command (CMD *cmd, const char *line,
 	compiling = 1;
     }
 
-#if 1 || ECHO_DEBUG
+#if ECHO_DEBUG
     fprintf(stderr, "echo_cmd:\n*** line='%s'\n param='%s' oarm2='%s'\n", 
 	    line, cmd->param, cmd->parm2);
     fprintf(stderr, " cmd->opt=%d, recording=%d, compiling=%d\n",
