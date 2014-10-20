@@ -6993,7 +6993,7 @@ int do_xyz_graph (selector *sr)
     }
 
     err = xy_plot_with_control(libcmd.list, NULL, 
-			       dataset, OPT_G);
+			       dataset, OPT_NONE);
     gui_graph_handler(err);
     if (!err) {
 	record_lib_command();
