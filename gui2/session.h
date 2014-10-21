@@ -66,7 +66,7 @@ int widget_is_iconview (GtkWidget *w);
 
 const char *get_session_dirname (void);
 
-int real_add_text_to_session (PRN *prn, const char *tname);
+int real_add_text_to_session (PRN *prn, int pos, const char *tname);
 
 void save_output_as_text_icon (windata_t *vwin);
 

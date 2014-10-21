@@ -91,11 +91,11 @@ int maybe_save_graph (const char *name, int ci, PRN *prn)
     return err;
 }
 
-int save_text_buffer (const char *name, PRN *prn)
+int save_text_buffer (const char *name, PRN *prn, int pos)
 {
     int add, err = 0;
 
-    add = real_add_text_to_session(prn, name);
+    add = real_add_text_to_session(prn, pos, name);
 
     if (add == ADD_OBJECT_FAIL) {
 	err = 1;

@@ -7443,10 +7443,10 @@ static int maybe_stop_script (void)
 	gtk_widget_hide(oh.vwin->main);
     }
 
-    resp = yes_no_dialog (_("gretl: open data"), 
-			  _("Opening a new data file will automatically\n"
-			    "close the current one.  Any unsaved work\n"
-			    "will be lost.  Proceed to open data file?"), 0);
+    resp = yes_no_dialog(_("gretl: open data"), 
+			 _("Opening a new data file will automatically\n"
+			   "close the current one.  Any unsaved work\n"
+			   "will be lost.  Proceed to open data file?"), 0);
 
     if (resp == GRETL_YES) {
 	if (oh.vwin != NULL) {
@@ -8709,6 +8709,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
     char runfile[MAXLEN];
+    int ppos = -1;
     int err = 0;
 
 #if CMD_DEBUG
@@ -8802,7 +8803,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
     /* Set up to save output to a specific buffer, if wanted */
     if (*cmd->savename != '\0' && TEXTSAVE_OK(cmd->ci)) {
-	gretl_print_set_save_position(prn);
+	ppos = gretl_print_tell(prn);
     } 
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);
@@ -8987,12 +8988,8 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     }
 
     /* save specific output buffer? */
-    if (*cmd->savename != '\0' && TEXTSAVE_OK(cmd->ci)) {
-	if (!err) {
-	    save_text_buffer(cmd->savename, prn);
-	} else {
-	    gretl_print_unset_save_position(prn);
-	}
+    if (!err && *cmd->savename != '\0' && TEXTSAVE_OK(cmd->ci)) {
+	save_text_buffer(cmd->savename, prn, ppos);
     }
 
     return err;

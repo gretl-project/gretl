@@ -593,10 +593,10 @@ static SESSION_TEXT *get_session_text_by_name (const char *name)
     return NULL;
 }
 
-int real_add_text_to_session (PRN *prn, const char *tname)
+int real_add_text_to_session (PRN *prn, int pos, const char *tname)
 {
     SESSION_TEXT *text = get_session_text_by_name(tname);
-    char *buf = gretl_print_get_chunk(prn);
+    char *buf = gretl_print_get_chunk_at(prn, pos);
     int replace = 0;
 
     if (buf == NULL) {

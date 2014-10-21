@@ -22,7 +22,7 @@
 
 int maybe_save_graph (const char *name, int ci, PRN *prn);
 
-int save_text_buffer (const char *name, PRN *prn);
+int save_text_buffer (const char *name, PRN *prn, int pos);
 
 int gui_saved_object_action (const char *line, PRN *prn);
 
