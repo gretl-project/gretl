@@ -1287,7 +1287,7 @@ MODEL biprobit_estimate (const int *list, DATASET *dset,
     mod.errcode = bp_do_maxlik(bp, opt, prn);
 
     if (!mod.errcode) {
-	biprobit_fill_model(&mod, bp, dset, opt);
+	mod.errcode = biprobit_fill_model(&mod, bp, dset, opt);
     }
 
     bp_container_destroy(bp);
