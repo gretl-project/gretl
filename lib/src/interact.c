@@ -255,6 +255,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 
 #if CMD_DEBUG
     fprintf(stderr, "parse_command_line: '%s'\n", line);
+    fprintf(stderr, " nosub = %d\n", cmd_nosub(cmd) ? 1 : 0);
 #endif
 
     if (!cmd_nosub(cmd)) {

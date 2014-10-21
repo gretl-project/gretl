@@ -2790,8 +2790,8 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
 				     CMD *cmd)
 {
 #if LOOP_DEBUG
-    fprintf(stderr, "loop_info_to_cmd: j=%d, cmd->ci=%d (%s)\n",
-	    j, cmd->ci, gretl_command_word(cmd->ci));
+    fprintf(stderr, "loop_info_to_cmd: j=%d: '%s'\n",
+	    j, loop->cmds[j].line);
 #endif
     
     if (loop_is_progressive(loop)) {
@@ -2838,6 +2838,11 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
 static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 				     CMD *cmd, int *subst)
 {
+#if LOOP_DEBUG
+    fprintf(stderr, "cmd_info_to_loop: j=%d: '%s'\n",
+	    j, loop->cmds[j].line);
+#endif
+
     if (!loop_cmd_nosub(loop, j)) {
 	/* this loop line has not already been marked as
 	   free of @-substitution
@@ -2862,6 +2867,11 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
     if (cmd->flags & CMD_CATCH) {
 	loop->cmds[j].flags |= LOOP_CMD_CATCH;
     }
+
+#if LOOP_DEBUG    
+    fprintf(stderr, " loop-flagged: nosub %d\n",
+	    loop_cmd_nosub(loop, j)? 1 : 0);
+#endif	 
 }
 
 static int loop_delete_object (CMD *cmd, PRN *prn)
@@ -3034,9 +3044,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    }
 
 	    /* transcribe loop -> cmd */
-	    if (cmd->ci > 0) {
-		loop_info_to_cmd(loop, j, cmd);
-	    }
+	    loop_info_to_cmd(loop, j, cmd);
 
 	    /* call the full command parser, with special treatment
 	       for "if" or "elif" conditions that may be already
