@@ -40,6 +40,7 @@
 #include "libgretl.h"
 #include "uservar.h"
 #include "usermat.h"
+#include "libset.h"
 #include "gretl_plot.h"
 
 #define PDEBUG 1
@@ -432,12 +433,26 @@ int gretl_plot_start (const char *s)
 int gretl_plot_finalize (const char *s, const DATASET *dset, 
 			 gretlopt opt)
 {
+    gretlopt otest = opt;
     int err;
 
 #if PDEBUG
-    fprintf(stderr, "gretl_plot_finalize: '%s'\n", s);
+    fprintf(stderr, "gretl_plot_finalize: '%s' (opt=%d)\n", s, opt);
 #endif
-    err = execute_plot(dset, opt);
+
+    otest &= ~OPT_U;
+    otest &= ~OPT_G;
+
+    if (otest != OPT_NONE) {
+	/* besides the internal OPT_G, we'll only accept 
+	   the --output=... option here 
+	*/
+	gretl_errmsg_sprintf(_("%s: inapplicable option"), "end plot");
+	err = E_BADOPT;
+    } else {
+	err = execute_plot(dset, opt);
+    }
+    
     clear_plot();
 
     return err;

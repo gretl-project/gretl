@@ -1722,8 +1722,8 @@ int option_prereq_missing (gretlopt opt, gretlopt test,
  * @ci: command index.
  * @opt: bad option flag.
  *
- * Flags an error: to be used when @opt is not applicable in the
- * context of command @ci, in context.
+ * Flags an error: to be used when @opt is not applicable
+ * for command @ci, in context.
  *
  * Returns: %E_BADOPT.
  */
@@ -1732,7 +1732,7 @@ int inapplicable_option_error (int ci, gretlopt opt)
 {
     const char *s = print_flags(opt, ci);
 
-    gretl_errmsg_sprintf("%s: inapplicable option", s);
+    gretl_errmsg_sprintf(_("%s: inapplicable option"), s);
     return E_BADOPT;
 }
 

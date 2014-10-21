@@ -406,20 +406,31 @@ static void get_gp_flags (gnuplot_info *gi, gretlopt opt,
     gi->flags = 0;
 
     if (opt & OPT_R) {
+	/* internal option for residual plot */
 	gi->flags |= GPT_RESIDS;
     } else if (opt & OPT_F) {
+	/* internal option for fitted-actual plot */
 	gi->flags |= GPT_FA;
     }
 
+    if (opt & OPT_G) {
+	/* internal option, saving as icon */
+	gi->flags |= GPT_ICON;
+    }
+
     if (opt & OPT_Z) {
+	/* --dummy */
 	gi->flags |= GPT_DUMMY;
     } else if (opt & OPT_C) {
+	/* --control */
 	gi->flags |= GPT_XYZ;
     } else {
 	if (opt & OPT_S) {
+	    /* --suppress-fitted */
 	    gi->flags |= GPT_FIT_OMIT;
 	}
 	if (opt & OPT_T) {
+	    /* --time-series */
 	    gi->flags |= GPT_IDX;
 	    /* there's no xvar in @list */
 	    n_yvars++;
@@ -436,12 +447,15 @@ static void get_gp_flags (gnuplot_info *gi, gretlopt opt,
 
     if (gi->withlist != NULL) {
 	if (opt & OPT_M) {
+	    /* --with-impulses */
 	    gp_set_non_point_info(gi, list, dset, OPT_M);
 	}
 	if (opt & OPT_O) {
+	    /* --with-lines */
 	    gp_set_non_point_info(gi, list, dset, OPT_O);
 	}
 	if (opt & OPT_P) {
+	    /* --with-lp */
 	    gp_set_non_point_info(gi, list, dset, OPT_P);
 	}
     }
@@ -1647,8 +1661,10 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags,
     } else if (optname != NULL) {
 	/* --output=filename specified */
 	interactive = 0;
+    } else if (flags & GPT_ICON) {
+	interactive = 1;
     } else {
-	/* defaults */
+	/* default */
 	interactive = !gretl_in_batch_mode();
     }
 
@@ -1781,8 +1797,6 @@ static int gnuplot_make_graph (void)
 
     graph_file_written = 0;
     fmt = specified_gp_output_format();
-
-    fprintf(stderr, "HERE, fmt=%d\n", fmt);
 
     if (fmt == GP_TERM_PLT) {
 	/* no-op: just the gnuplot commands are wanted */

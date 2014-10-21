@@ -52,7 +52,8 @@ typedef enum {
     GPT_POLAR          = 1 << 24, /* plot is in polar mode */
     GPT_XL             = 1 << 25, /* large */
     GPT_XXL            = 1 << 26, /* extra-large */
-    GPT_TIMEFMT        = 1 << 27  /* using gnuplot "timefmt" */
+    GPT_TIMEFMT        = 1 << 27, /* using gnuplot "timefmt" */
+    GPT_ICON           = 1 << 28  /* saving plot "as icon" */
 } GptFlags; 
 
 typedef struct gretlRGB_ gretlRGB;

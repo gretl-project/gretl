@@ -1905,6 +1905,43 @@ static void maybe_schedule_graph_callback (ExecState *s)
     }
 }
 
+static int execute_plot_call (CMD *cmd, DATASET *dset,
+			      char *line, PRN *prn)
+{
+    gretlopt opt = cmd->opt;
+    int err = 0;
+
+    if (gretl_in_gui_mode() && *cmd->savename != '\0') {
+	/* saving plot "as icon": add internal option to 
+	   override production of a "gpttmp" file 
+	*/
+	opt |= OPT_G;
+    }
+
+    if (cmd->ci == END) {
+	/* end of a plot block */
+	err = gretl_plot_finalize(line, dset, opt);
+    } else if (opt & OPT_X) {
+	err = matrix_command_driver(cmd->ci, cmd->list, cmd->param, 
+				    dset, opt, prn);
+    } else if (cmd->ci == GNUPLOT) {
+	if (opt & OPT_D) {
+	    err = gnuplot_process_file(opt, prn);
+	} else if (opt & OPT_C) {
+	    err = xy_plot_with_control(cmd->list, cmd->param, 
+				       dset, opt);
+	} else {
+	    err = gnuplot(cmd->list, cmd->param, dset, opt);
+	}
+    } else if (cmd->ci == SCATTERS) {
+	err = multi_scatters(cmd->list, dset, opt);
+    } else if (cmd->ci == BXPLOT) {
+	err = boxplots(cmd->list, cmd->param, dset, opt);
+    }
+
+    return err;
+}
+
 static void maybe_print_error_message (CMD *cmd, int err, PRN *prn)
 {
     if (gretl_function_depth() > 0) {
@@ -2681,7 +2718,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (!strcmp(cmd->param, "mpi")) {
 	    err = foreign_execute(dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "plot")) {
-	    err = gretl_plot_finalize(line, dset, cmd->opt);
+	    err = execute_plot_call(cmd, dset, line, prn);
 	} else {
 	    err = 1;
 	}
@@ -2750,23 +2787,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case GNUPLOT:
     case BXPLOT:
     case SCATTERS:
-	if (cmd->opt & OPT_X) {
-	    err = matrix_command_driver(cmd->ci, cmd->list, cmd->param, 
-					dset, cmd->opt, prn);
-	} else if (cmd->ci == GNUPLOT) {
-	    if (cmd->opt & OPT_D) {
-		err = gnuplot_process_file(cmd->opt, prn);
-	    } else if (cmd->opt & OPT_C) {
-		err = xy_plot_with_control(cmd->list, cmd->param, 
-					   dset, cmd->opt);
-	    } else {
-		err = gnuplot(cmd->list, cmd->param, dset, cmd->opt);
-	    }
-	} else if (cmd->ci == SCATTERS) {
-	    err = multi_scatters(cmd->list, dset, cmd->opt);
-	} else if (cmd->ci == BXPLOT) {
-	    err = boxplots(cmd->list, cmd->param, dset, cmd->opt);
-	}
+	err = execute_plot_call(cmd, dset, NULL, prn);
 	break;
 
     case MODELTAB:
