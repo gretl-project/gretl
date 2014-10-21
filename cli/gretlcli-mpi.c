@@ -400,7 +400,11 @@ int main (int argc, char *argv[])
     }
 
     runit = 0;
-    sprintf(line, "run %s\n", runfile);
+    if (strchr(runfile, ' ')) {
+	sprintf(line, "run \"%s\"", runfile);
+    } else {
+	sprintf(line, "run %s", runfile);
+    }
     state.flags |= INIT_EXEC;
     err = cli_exec_line(&state, id, dset, progopt, cmdprn);
     state.flags ^= INIT_EXEC;

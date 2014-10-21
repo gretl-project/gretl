@@ -643,8 +643,12 @@ int main (int argc, char *argv[])
 	runit = 0;
 	if (makepkg) {
 	    set_gretl_echo(0);
-	} 
-	sprintf(line, "run %s\n", runfile);
+	}
+	if (strchr(runfile, ' ')) {
+	    sprintf(line, "run \"%s\"", runfile);
+	} else {
+	    sprintf(line, "run %s", runfile);
+	}
 	err = cli_exec_line(&state, dset, cmdprn);
 	if (err && fb == NULL) {
 	    exit(EXIT_FAILURE);
