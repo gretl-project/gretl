@@ -2783,12 +2783,17 @@ static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 /* Based on the stored flags in the loop-line record, set
    or unset some flags for the command parser: this can 
    reduce the amount of work the parser has to do on each
-   iteration of a loop.
+   iteration of a loop. FIXME: broken and/or obsolete?
 */
 
 static inline void loop_info_to_cmd (LOOPSET *loop, int j,
 				     CMD *cmd)
 {
+#if LOOP_DEBUG
+    fprintf(stderr, "loop_info_to_cmd: j=%d, cmd->ci=%d (%s)\n",
+	    j, cmd->ci, gretl_command_word(cmd->ci));
+#endif
+    
     if (loop_is_progressive(loop)) {
 	cmd->flags |= CMD_PROG;
     } else {
@@ -2817,6 +2822,13 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
     } else if (!cmd->context) {
 	cmd->flags &= ~CMD_CATCH;
     }
+
+#if LOOP_DEBUG    
+    fprintf(stderr, " flagged: nosub %d, noopt %d, catch %d\n",
+	    (cmd->flags & CMD_NOSUB)? 1 : 0,
+	    (cmd->flags & CMD_NOOPT)? 1 : 0,
+	    (cmd->flags & CMD_CATCH)? 1 : 0);
+#endif	    
 }
 
 /* Based on the parsed info in @cmd, maybe modify some flags in
@@ -2982,8 +2994,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    int subst = 0;
 
 #if LOOP_DEBUG
-	    fprintf(stderr, " j=%d, line='%s', compiled = %d\n", j, line,
-	            genr_compiled(loop, j));
+	    fprintf(stderr, "iter=%d, j=%d, line='%s', compiled = %d\n",
+		    loop->iter, j, line, genr_compiled(loop, j));
 #endif
 	    strcpy(errline, line);
 
@@ -3022,7 +3034,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    }
 
 	    /* transcribe loop -> cmd */
-	    loop_info_to_cmd(loop, j, cmd);
+	    if (cmd->ci > 0) {
+		loop_info_to_cmd(loop, j, cmd);
+	    }
 
 	    /* call the full command parser, with special treatment
 	       for "if" or "elif" conditions that may be already
