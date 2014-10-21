@@ -1402,7 +1402,7 @@ void lex (parser *p)
 	case ' ':
 	case '\t':
 	case '\r':
-        case '\n': 
+        case '\n':
 	    parser_getc(p);
 	    break;
         case '+': 
@@ -1413,10 +1413,16 @@ void lex (parser *p)
 	    p->sym = B_SUB;
 	    parser_getc(p);
 	    return;
-        case '*': 
+        case '*':
 	    if (p->targ == LIST) {
-		/* treat '*' as wildcard */
-		getword(p);
+		/* allow for '*' as wildcard */
+		if (*(p->point - 2) == ' ' &&
+		    (bare_data_type(p->sym) || closing_sym(p->sym) ||
+		     (p->sym == LAG))) {
+		    p->sym = B_LCAT;
+		} else {
+		    getword(p);
+		}
 		return;
 	    }
 	    parser_getc(p);
@@ -1614,6 +1620,7 @@ void lex (parser *p)
 		parser_getc(p);
 		return;
 	    }
+
 	    if (p->targ == LIST && *(p->point - 2) == ' ' && 
 		(bare_data_type(p->sym) || closing_sym(p->sym) ||
 		 (p->sym == LAG))) {
