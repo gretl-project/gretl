@@ -43,7 +43,7 @@
 #include "libset.h"
 #include "gretl_plot.h"
 
-#define PDEBUG 1
+#define PDEBUG 0
 
 #if PDEBUG
 # include "gretl_typemap.h"
@@ -284,7 +284,7 @@ static int check_plot_option (const char *s)
 	err = E_BADOPT;
     } else if (status == OPT_NEEDS_PARM && param == NULL) {
 	fprintf(stderr, "plot option: missing param: '%s'\n", s);
-	err = E_BADOPT;
+	err = E_ARGS;
     } else {
 	plot.opt |= opt;
 	if (param != NULL) {
