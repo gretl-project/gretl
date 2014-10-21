@@ -738,18 +738,62 @@ void gretl_print_unset_save_position (PRN *prn)
 
 char *gretl_print_get_chunk (PRN *prn)
 {
-    int maxpos = prn->blen; /* was strlen(prn->buf) */
-    char *buf;
+    int maxpos = prn->blen;
+    char *ret;
 
     if (prn == NULL || prn->buf == NULL ||
 	prn->savepos < 0 || prn->savepos > maxpos) {
 	return NULL;
     }
 
-    buf = gretl_strdup(prn->buf + prn->savepos);
+    ret = gretl_strdup(prn->buf + prn->savepos);
     prn->savepos = -1;
 
-    return buf;
+    return ret;
+}
+
+/**
+ * gretl_print_get_chunk_at:
+ * @prn: printing struct.
+ * @pos: the byte poistion at which to start.
+ * 
+ * Retrieves a copy of the buffer associated with @prn,
+ * starting at the offset from the start of the buffer 
+ * specified by @pos.
+ *
+ * Returns: allocated buffer on success, or NULL on error.
+ */
+
+char *gretl_print_get_chunk_at (PRN *prn, int pos)
+{
+    int maxpos = prn->blen;
+    char *ret;
+
+    if (prn == NULL || prn->buf == NULL ||
+	pos < 0 || pos > maxpos) {
+	return NULL;
+    }
+
+    ret = gretl_strdup(prn->buf + pos);
+
+    return ret;
+}
+
+/**
+ * gretl_print_tell:
+ * @prn: printing struct.
+ * 
+ * Returns: the current write position, if @prn
+ * has a buffer attached, otherwise -1.
+ */
+
+int gretl_print_tell (PRN *prn)
+{
+    if (prn == NULL || prn->buf == NULL) {
+	return -1;
+    } else {
+	return prn->blen;
+    }
 }
 
 static void set_default_csv_delim (PRN *prn)

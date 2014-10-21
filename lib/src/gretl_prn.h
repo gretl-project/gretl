@@ -97,6 +97,10 @@ void gretl_print_unset_save_position (PRN *prn);
 
 char *gretl_print_get_chunk (PRN *prn);
 
+char *gretl_print_get_chunk_at (PRN *prn, int pos);
+
+int gretl_print_tell (PRN *prn);
+
 void gretl_print_set_format (PRN *prn, PrnFormat format);
 
 void gretl_print_toggle_doc_flag (PRN *prn);
