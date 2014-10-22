@@ -1922,7 +1922,8 @@ static plotbars *parse_bars_file (const char *fname,
     /* first count the data lines */
 
     while (fgets(line, sizeof line, fp)) {
-	if (*line == '#') {
+
+	if (*line == '#' || strlen(line) < 2 ) {
 	    continue;
 	} else if (sscanf(line, "%d:%d %d:%d", &d1, &d2, &d3, &d4) == 4) {
 	    ncolon++;
@@ -1941,7 +1942,7 @@ static plotbars *parse_bars_file (const char *fname,
     } else if (ncolon > 0 && ndash > 0) {
 	*err = E_DATA;
     } else {
-	bars = plotbars_new(n);
+	bars = plotbars_new(ncolon + ndash);
 	if (bars == NULL) {
 	    *err = E_ALLOC;
 	}
@@ -1956,7 +1957,7 @@ static plotbars *parse_bars_file (const char *fname,
 	/* now read, check, convert and record the date pairs */
 
 	while (fgets(line, sizeof line, fp) && !*err) {
-	    if (*line == '#') {
+	    if (*line == '#' || strlen(line) < 2 ) {
 		continue;
 	    }
 	    if (ncolon) {
