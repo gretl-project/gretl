@@ -394,6 +394,15 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
 		fprintf(stderr, "Invalid plot option '%s'\n", field);
 	    }
 	}
+    } else if (!strcmp(field, "options")) {
+	while (1) {
+	    s = get_plot_field_and_advance(s, field, 64, 0, &err);
+	    if (err || *s == '\0') {
+		break;
+	    } else {
+		err = check_plot_option(field);
+	    }
+	}
     } else if (!strcmp(field, "literal")) {
 	err = strings_array_add(&plot.lines, &plot.nlines, s);
     } else if (!strcmp(field, "printf")) {
