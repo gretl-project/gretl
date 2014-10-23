@@ -24,16 +24,22 @@
    parameter: the name of the variable that supplies the data to
    be plotted. This can be a single series, a list or a matrix.
 
-   Optional elements: zero or more "option" lines; zero or more
-   "literal" lines; and zero or more "printf" lines (which turn into
-   literal lines once the printf is cashed out).
+   Optional elements: 
+
+   * zero or more "option" lines, holding a single option each
+
+   * zero or more "options" lines holding one or more options
+   each
+
+   * zero or more "literal" lines, to be passed literally to
+   gnuplot
+
+   * zero or more "printf" lines (which turn into "literal"
+   lines once the printf is cashed out)
 
    Option lines take the form "option flag" or "option flag=val"
    depending on whether the option takes a paraneter or not.
    The usual double-dash before the option flag is not required.
-
-   Literal and printf lines are assembled into a "literal" block
-   which is then passed to gnuplot().
 
    The block ends with "end plot". The --output=whatever option
    may be appended to the ending line.
@@ -327,19 +333,30 @@ static int plot_printf (const char *s, const DATASET *dset)
     return err;
 }
 
+enum {
+    LAST_FIELD = 1,
+    EMPTY_OK
+};
+
 static const char *
 get_plot_field_and_advance (const char *s, char *field, 
-			    size_t maxlen, int last,
+			    size_t maxlen, int flag,
 			    int *err)
 {
     const char *p = s;
+    int quoted = 0;
     size_t i = 0;
 
     while (isspace(*s)) s++;
 
     *field = '\0';
 
-    while (*s && !isspace(*s)) {
+    while (*s) {
+	if (*s == '"') {
+	    quoted = !quoted;
+	} else if (!quoted && isspace(*s)) {
+	    break;
+	}
 	if (i < maxlen) {
 	    field[i++] = *s;
 	} else {
@@ -353,9 +370,9 @@ get_plot_field_and_advance (const char *s, char *field,
     field[i] = '\0';
     s += strspn(s, " \t\r\n");
 
-    if (*field == '\0') {
+    if (*field == '\0' && flag != EMPTY_OK) {
 	*err = E_ARGS;
-    } else if (last && *s != '\0') {
+    } else if (flag == LAST_FIELD && *s != '\0') {
 	gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"), s);
 	*err = E_PARSE;
     }
@@ -373,7 +390,7 @@ get_plot_field_and_advance (const char *s, char *field,
 
 int gretl_plot_append_line (const char *s, const DATASET *dset)
 {
-    char field[64];
+    char field[128];
     int err = 0;
 
     if (!plot.in_progress) {
@@ -384,10 +401,10 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
     fprintf(stderr, "gretl_plot_append_line: '%s'\n", s);
 #endif
 
-    s = get_plot_field_and_advance(s, field, 64, 0, &err);
+    s = get_plot_field_and_advance(s, field, 16, 0, &err);
 
     if (!strcmp(field, "option")) {
-	s = get_plot_field_and_advance(s, field, 64, 1, &err);
+	s = get_plot_field_and_advance(s, field, 128, LAST_FIELD, &err);
 	if (!err) {
 	    err = check_plot_option(field);
 	    if (err) {
@@ -395,13 +412,16 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
 	    }
 	}
     } else if (!strcmp(field, "options")) {
+	int flag = 0;
+	
 	while (1) {
-	    s = get_plot_field_and_advance(s, field, 64, 0, &err);
-	    if (err || *s == '\0') {
+	    s = get_plot_field_and_advance(s, field, 128, flag, &err);
+	    if (err || *field == '\0') {
 		break;
 	    } else {
 		err = check_plot_option(field);
 	    }
+	    flag = EMPTY_OK;
 	}
     } else if (!strcmp(field, "literal")) {
 	err = strings_array_add(&plot.lines, &plot.nlines, s);
