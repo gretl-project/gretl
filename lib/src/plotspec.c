@@ -1930,8 +1930,6 @@ static plotbars *parse_bars_file (const char *fname,
 	    ndash++;
 	} else {
 	    nother++;
-	} else {
-	    break;
 	}
     }
 
