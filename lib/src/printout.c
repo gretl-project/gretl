@@ -1801,6 +1801,15 @@ static int print_listed_objects (const char *s,
     char *name;
     int err = 0;
 
+    if (!strcmp(s, "$sysinfo")) {
+	gretl_bundle *b = get_sysinfo_bundle(&err);
+
+	if (b != NULL) {
+	    gretl_bundle_print(b, prn);
+	}
+	return err;
+    }
+
     while ((name = gretl_word_strdup(s, &s, OPT_NONE, &err)) != NULL) {
 	err = print_user_var_by_name(name, dset, prn);
 	free(name);
