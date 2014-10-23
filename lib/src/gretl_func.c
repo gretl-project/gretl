@@ -6227,9 +6227,7 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 static void func_exec_callback (ExecState *s, void *ptr,
 				GretlObjType type)
 {
-    int ci = s->cmd->ci;
-
-    if (ci == FLUSH || GRAPHING_COMMAND(ci)) {
+    if (s->cmd->ci == FLUSH || is_plotting_command(s->cmd)) {
 	/* we permit "reach-back" into the GUI for these */
 	EXEC_CALLBACK gc = get_gui_callback();
 

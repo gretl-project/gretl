@@ -8480,11 +8480,6 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     int ci = s->cmd->ci;
     int err = 0;
 
-    if (ci == END && s->cmd->param != NULL && 
-	!strcmp(s->cmd->param, "plot")) {
-	ci = PLOT;
-    }
-
     if (ci == FLUSH) {
 	handle_flush_callback(0);
     } else if (ptr != NULL && type == GRETL_OBJ_EQN) {
@@ -8510,7 +8505,7 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 	err = modeltab_parse_line(s->line, s->cmd->opt, s->prn);
     } else if (ci == GRAPHPG) {
 	err = graph_page_parse_line(s->line, s->cmd->opt);
-    } else if (GRAPHING_COMMAND(ci)) {
+    } else if (is_plotting_command(s->cmd)) {
 	if (*s->cmd->savename != '\0') {
 	    maybe_save_graph(s->cmd->savename, ci, s->prn);
 	} else {

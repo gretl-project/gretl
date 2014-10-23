@@ -1891,6 +1891,19 @@ void set_plot_produced (void)
     plot_ok = 1;
 }
 
+int is_plotting_command (CMD *cmd)
+{
+    if (GRAPHING_COMMAND(cmd->ci)) {
+	return 1;
+    } else if (cmd->ci == END &&
+	       cmd->param != NULL &&
+	       !strcmp(cmd->param, "plot")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static void maybe_schedule_graph_callback (ExecState *s)
 {
     int gui_mode = gretl_in_gui_mode();
