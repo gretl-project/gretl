@@ -1273,14 +1273,35 @@ int set_options_for_command (const char *cmdword,
     return err;
 }
 
+#if OPTDEBUG
+
+static char option_flag_char (gretlopt opt)
+{
+    char c = 'A';
+    int i;
+
+    for (i=OPT_A; i<=OPT_Y; i*=2) {
+	if (opt == i) {
+	    return c;
+	}
+	c++;
+    }
+
+    return '?';
+}
+
+#endif
+
 void maybe_get_stored_options (int ci, gretlopt *popt)
 {
     int i, fd = gretl_function_depth();
 
     for (i=0; i<n_stored_opts; i++) {
-	if (optinfo[i].fd == fd && optinfo[i].ci == ci) {
+	if (optinfo[i].fd == fd && optinfo[i].ci == ci &&
+	    (optinfo[i].flags & OPT_SETOPT)) {
 #if OPTDEBUG
-	    fprintf(stderr, "ci %d: got stored opt %d\n", ci, optinfo[i].opt);
+	    fprintf(stderr, "ci %d: got stored OPT_%c\n",
+		    ci, option_flag_char(optinfo[i].opt));
 #endif
 	    *popt |= optinfo[i].opt;
 	}

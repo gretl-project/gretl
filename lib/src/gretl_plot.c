@@ -20,10 +20,9 @@
 /* Implementation of "plot" block command. Current set-up:
 
    The block must start with "plot" (possibly preceded by the GUI
-   "savename <- " apparatus).
-
-   Required element: "data foo" where "foo" is the name of a single
-   series, a list or a matrix.
+   "savename <- " apparatus). This line also has a required
+   parameter: the name of a variable that supplies the data to
+   be plotted. This can be a single series, a list or a matrix.
 
    Optional elements: zero or more "option" lines; zero or more
    "literal" lines; and zero or more "printf" lines, which turn into
@@ -35,6 +34,10 @@
 
    Literal and printf lines are assembled into a "literal" block
    which is then passed to gnuplot().
+
+   The block ends with "end plot". The --output=whatever option
+   may be appended to ending line (but any other options must
+   be placed within the block as described above).
 */
   
 #include "libgretl.h"
@@ -43,7 +46,7 @@
 #include "libset.h"
 #include "gretl_plot.h"
 
-#define PDEBUG 1
+#define PDEBUG 0
 
 #if PDEBUG
 # include "gretl_typemap.h"
@@ -216,13 +219,13 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
     return err;
 }
 
+/* we'll accept a single series, list or matrix as the
+   "datasource" for a plot block */
+
 static int check_plot_data_source (const char *s, 
 				   const DATASET *dset)
 {
     int err = 0;
-
-    /* we'll accept a single series, list or matrix as
-       the plot's "datasource" */
 
     if (plot.datatype != 0) {
 	/* duplicated data spec */
@@ -263,6 +266,7 @@ static int check_plot_option (const char *s)
     int err = 0;
 
     if (!strncmp(s, "--", 2)) {
+	/* tolerate option dashes? */
 	s += 2;
     }
 
@@ -360,6 +364,14 @@ get_plot_field_and_advance (const char *s, char *field,
     return s;
 }
 
+/**
+ * gretl_plot_append_line:
+ * @s: the line to append.
+ * @dset: pointer to dataset.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
 int gretl_plot_append_line (const char *s, const DATASET *dset)
 {
     char field[64];
@@ -399,6 +411,14 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
     return err;
 }
 
+/**
+ * gretl_plot_start:
+ * @param: name of the variable supplying the data.
+ * @dset: pointer to dataset.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
 int gretl_plot_start (const char *param, const DATASET *dset)
 {
     int err = 0;
@@ -422,33 +442,26 @@ int gretl_plot_start (const char *param, const DATASET *dset)
     return err;
 }
 
+/**
+ * gretl_plot_finalize:
+ * @s: unused.
+ * @dset: pointer to dataset.
+ * @opt: may contain OPT_U (output spec).
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
 int gretl_plot_finalize (const char *s, const DATASET *dset, 
 			 gretlopt opt)
 {
-    gretlopt otest = opt;
     int err;
 
 #if PDEBUG
-    fprintf(stderr, "gretl_plot_finalize: '%s' (opt=%d)\n", s, opt);
+    fprintf(stderr, "gretl_plot_finalize: '%s'\n", s);
+    debug_print_option_flags("end plot", opt);
 #endif
 
-    otest &= ~OPT_U;
-    otest &= ~OPT_G;
-    otest &= ~OPT_F; /* why ?? */
-
-    if (otest != OPT_NONE) {
-	/* besides the internal OPT_G, we'll only accept 
-	   the --output=... option here 
-	*/
-	gretl_errmsg_sprintf(_("%s: inapplicable option"), "end plot");
-	fprintf(stderr, "otest = %d\n", otest);
-	if (otest & OPT_G) fprintf(stderr, " opt includes OPT_G\n");
-	if (otest & OPT_F) fprintf(stderr, " opt includes OPT_F\n");
-	err = E_BADOPT;
-    } else {
-	err = execute_plot(dset, opt);
-    }
-    
+    err = execute_plot(dset, opt);
     clear_plot();
 
     return err;
