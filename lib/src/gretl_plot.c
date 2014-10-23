@@ -43,7 +43,7 @@
 #include "libset.h"
 #include "gretl_plot.h"
 
-#define PDEBUG 0
+#define PDEBUG 1
 
 #if PDEBUG
 # include "gretl_typemap.h"
@@ -225,7 +225,7 @@ static int check_plot_data_source (const char *s,
        the plot's "datasource" */
 
     if (plot.datatype != 0) {
-	/* duplicated "data" line */
+	/* duplicated data spec */
 	err = E_DATA;
     } else {
 	int id = current_series_index(dset, s);
@@ -369,6 +369,10 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
 	return E_DATA;
     }
 
+#if PDEBUG
+    fprintf(stderr, "gretl_plot_append_line: '%s'\n", s);
+#endif
+
     s = get_plot_field_and_advance(s, field, 64, 0, &err);
 
     if (!strcmp(field, "option")) {
@@ -378,14 +382,6 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
 	    if (err) {
 		fprintf(stderr, "Invalid plot option '%s'\n", field);
 	    }
-	}
-    } else if (!strcmp(field, "data")) {
-	s = get_plot_field_and_advance(s, field, 64, 1, &err);
-	if (!err) {
-	    err = check_plot_data_source(field, dset);
-	    if (err) {
-		fprintf(stderr, "Invalid plot data source '%s'\n", field);
-	    }	    
 	}
     } else if (!strcmp(field, "literal")) {
 	err = strings_array_add(&plot.lines, &plot.nlines, s);
@@ -403,28 +399,24 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
     return err;
 }
 
-int gretl_plot_start (const char *s)
+int gretl_plot_start (const char *param, const DATASET *dset)
 {
-    char field[8];
     int err = 0;
 
 #if PDEBUG
-    fprintf(stderr, "gretl_plot_start: '%s'\n", s);
+    fprintf(stderr, "gretl_plot_start: '%s'\n", param);
 #endif
 
-    s = get_plot_field_and_advance(s, field, 8, 1, &err);
-
-    if (!strcmp(field, "plot")) {
-	/* directive to start a plot block */
-	if (plot.in_progress) {
-	    clear_plot();
-	    err = E_DATA;
-	} else {
-	    plot.in_progress = 1;
-	    set_effective_plot_ci(PLOT);
-	}
+    if (plot.in_progress) {
+	clear_plot();
+	err = E_DATA;
     } else {
-	err = E_PARSE;
+	err = check_plot_data_source(param, dset);
+    }
+
+    if (!err) {
+	plot.in_progress = 1;
+	set_effective_plot_ci(PLOT);
     }
 
     return err;
@@ -442,12 +434,16 @@ int gretl_plot_finalize (const char *s, const DATASET *dset,
 
     otest &= ~OPT_U;
     otest &= ~OPT_G;
+    otest &= ~OPT_F; /* why ?? */
 
     if (otest != OPT_NONE) {
 	/* besides the internal OPT_G, we'll only accept 
 	   the --output=... option here 
 	*/
 	gretl_errmsg_sprintf(_("%s: inapplicable option"), "end plot");
+	fprintf(stderr, "otest = %d\n", otest);
+	if (otest & OPT_G) fprintf(stderr, " opt includes OPT_G\n");
+	if (otest & OPT_F) fprintf(stderr, " opt includes OPT_F\n");
 	err = E_BADOPT;
     } else {
 	err = execute_plot(dset, opt);

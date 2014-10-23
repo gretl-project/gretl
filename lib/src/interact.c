@@ -1920,7 +1920,7 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
     }
 
     if (cmd->ci == END) {
-	/* end of a plot block */
+	/* end of a "plot" block */
 	err = gretl_plot_finalize(line, dset, opt);
     } else if (opt & OPT_X) {
 	err = matrix_command_driver(cmd->ci, cmd->list, cmd->param, 
@@ -2549,7 +2549,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case PLOT:
 	if (!cmd->context) {
-	    err = gretl_plot_start(cmd->vstart);
+	    err = gretl_plot_start(cmd->param, dset);
 	} else {
 	    err = gretl_plot_append_line(line, dset);
 	}
