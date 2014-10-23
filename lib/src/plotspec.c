@@ -1906,8 +1906,8 @@ static plotbars *parse_bars_file (const char *fname,
     char line[128];
     int ncolon = 0;
     int ndash = 0;
+    int nother = 0;
     int d1, d2, d3, d4;
-    int n = 0;
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
@@ -1922,24 +1922,29 @@ static plotbars *parse_bars_file (const char *fname,
     /* first count the data lines */
 
     while (fgets(line, sizeof line, fp)) {
-
-	if (*line == '#' || strlen(line) < 2 ) {
+	if (*line == '#' || string_is_blank(line)) {
 	    continue;
 	} else if (sscanf(line, "%d:%d %d:%d", &d1, &d2, &d3, &d4) == 4) {
 	    ncolon++;
 	} else if (sscanf(line, "%d-%d %d-%d", &d1, &d2, &d3, &d4) == 4) {
 	    ndash++;
 	} else {
+	    nother++;
+	} else {
 	    break;
 	}
-	n++;
     }
 
     /* initial check and allocation */
 
-    if (n == 0 || (ncolon == 0 && ndash == 0)) {
+    if (nother > 0) {
+	/* non-comment, non-blank, non-parseable cruft found */
+	*err = E_DATA;
+    } else if (ncolon == 0 && ndash == 0) {
+	/* no parseable data found */
 	*err = E_DATA;
     } else if (ncolon > 0 && ndash > 0) {
+	/* unparseable mash-up found */
 	*err = E_DATA;
     } else {
 	bars = plotbars_new(ncolon + ndash);
@@ -1957,7 +1962,7 @@ static plotbars *parse_bars_file (const char *fname,
 	/* now read, check, convert and record the date pairs */
 
 	while (fgets(line, sizeof line, fp) && !*err) {
-	    if (*line == '#' || strlen(line) < 2 ) {
+	    if (*line == '#' || string_is_blank(line)) {
 		continue;
 	    }
 	    if (ncolon) {
