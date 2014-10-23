@@ -5237,7 +5237,7 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
     return ret;
 }
 
-static void msgbox (const char *msg, int msgtype)
+static void msgbox (const char *msg, int msgtype, GtkWidget *parent)
 {
     const gchar *titles[] = {
 	N_("gretl: error"),
@@ -5247,6 +5247,7 @@ static void msgbox (const char *msg, int msgtype)
     const gchar *title;
     gchar *trmsg = NULL;
     GtkWidget *dialog;
+    GtkWindow *pwin;
 
     if (msg == NULL) {
 	return;
@@ -5258,9 +5259,11 @@ static void msgbox (const char *msg, int msgtype)
 	gsize bytes;
 
 	trmsg = g_locale_to_utf8(msg, -1, NULL, &bytes, NULL);
-    }   
+    }
 
-    dialog = gtk_message_dialog_new(NULL, /* GTK_WINDOW(mdata->main) */
+    pwin = parent != NULL ? GTK_WINDOW(parent) : NULL;
+
+    dialog = gtk_message_dialog_new(pwin,
 				    0,    /* or GTK_DIALOG_DESTROY_WITH_PARENT? */
 				    msgtype,
 				    GTK_BUTTONS_CLOSE,
@@ -5295,7 +5298,7 @@ void errbox (const char *err)
 	strcpy(msg, err);
     }
 
-    msgbox(msg, GTK_MESSAGE_ERROR);
+    msgbox(msg, GTK_MESSAGE_ERROR, NULL);
 }
 
 void errbox_printf (const char *template, ...)
@@ -5304,7 +5307,7 @@ void errbox_printf (const char *template, ...)
     va_list args;
 
     if (template == NULL) {
-	msgbox("Error", 1);
+	msgbox("Error", 1, NULL);
 	return;
     }
 
@@ -5312,7 +5315,7 @@ void errbox_printf (const char *template, ...)
     vsnprintf(msg, MAXLEN, template, args);
     va_end(args);
 
-    msgbox(msg, GTK_MESSAGE_ERROR);
+    msgbox(msg, GTK_MESSAGE_ERROR, NULL);
 }
 
 void infobox (const char *info)
@@ -5328,7 +5331,7 @@ void infobox (const char *info)
 	strcpy(msg, info);
     }
 
-    msgbox(msg, GTK_MESSAGE_INFO);
+    msgbox(msg, GTK_MESSAGE_INFO, NULL);
 }
 
 void infobox_printf (const char *template, ...)
@@ -5340,7 +5343,7 @@ void infobox_printf (const char *template, ...)
     vsnprintf(msg, MAXLEN, template, args);
     va_end(args);
 
-    msgbox(msg, GTK_MESSAGE_INFO);
+    msgbox(msg, GTK_MESSAGE_INFO, NULL);
 }
 
 void warnbox (const char *warn)
@@ -5356,7 +5359,7 @@ void warnbox (const char *warn)
 	strcpy(msg, warn);
     }
 
-    msgbox(msg, GTK_MESSAGE_WARNING);
+    msgbox(msg, GTK_MESSAGE_WARNING, NULL);
 }
 
 void warnbox_printf (const char *template, ...)
@@ -5368,13 +5371,13 @@ void warnbox_printf (const char *template, ...)
     vsnprintf(msg, MAXLEN, template, args);
     va_end(args);
 
-    msgbox(msg, GTK_MESSAGE_WARNING);
+    msgbox(msg, GTK_MESSAGE_WARNING, NULL);
 }
 
 void maybe_warn (void)
 {
     if (check_gretl_warning()) {
-	msgbox(gretl_warnmsg_get(), GTK_MESSAGE_WARNING);
+	msgbox(gretl_warnmsg_get(), GTK_MESSAGE_WARNING, NULL);
     }
 }
 
