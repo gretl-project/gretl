@@ -438,15 +438,17 @@ void force_english_help (void)
 
 void set_fixed_font (const char *fontname)
 {
-    if (fixed_font != NULL) {
-	pango_font_description_free(fixed_font);
-    }
-    
-    if (fontname != NULL && fontname != fixedfontname) {
+    if (fontname == NULL) {
+	/* initial set-up */
+	fixed_font = pango_font_description_from_string(fixedfontname);
+    } else if (strcmp(fontname, fixedfontname)) {
+	if (fixed_font != NULL) {
+	    pango_font_description_free(fixed_font);
+	}
 	strcpy(fixedfontname, fontname);
+	fixed_font = pango_font_description_from_string(fixedfontname);
+	infobox(_("This change will apply to newly opened windows"));
     }
-
-    fixed_font = pango_font_description_from_string(fixedfontname);
 }
 
 #ifndef G_OS_WIN32
@@ -2297,6 +2299,8 @@ static void font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
 {
     gchar *fontname = gtk_font_chooser_get_font(fc);
 
+    gtk_widget_hide(GTK_WIDGET(fc));
+
     if (fontname != NULL && *fontname != '\0') {
 	int mono = widget_get_int(fc, "mono");
 
@@ -2386,6 +2390,7 @@ static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
     gchar *fontname;
 
     fontname = gtk_fontsel_hack_dialog_get_font_name(fs);
+    gtk_widget_hide(GTK_WIDGET(fs));
 
     if (fontname != NULL && *fontname != '\0') {
 	int filter = gtk_fontsel_hack_dialog_get_filter(fs); 
