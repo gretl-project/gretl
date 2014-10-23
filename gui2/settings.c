@@ -442,6 +442,7 @@ void set_fixed_font (const char *fontname)
 	/* initial set-up */
 	fixed_font = pango_font_description_from_string(fixedfontname);
     } else if (strcmp(fontname, fixedfontname)) {
+	/* changed via the GUI */
 	if (fixed_font != NULL) {
 	    pango_font_description_free(fixed_font);
 	}
