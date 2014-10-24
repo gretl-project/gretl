@@ -4489,8 +4489,8 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 				"Name (max. %d characters):",
 				key, gretl_type_get_name(type),
 				VNAMELEN - 1);
-	resp = object_name_entry_dialog(vname, type, blurb, &show,
-					vwin->main);
+	resp = object_name_entry_dialog(vname, type, blurb, 
+					&show, vwin->main);
 	g_free(blurb);
 
 	if (resp < 0) {
@@ -4499,9 +4499,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	}
 
 	if (type == GRETL_TYPE_DOUBLE) {
-	    double x = *(double *) val;
-		
-	    err = gretl_scalar_add(vname, x);
+	    err = user_var_add_or_replace(vname, GRETL_TYPE_DOUBLE, val);
 	} else if (type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *orig = (gretl_matrix *) val;
 	    gretl_matrix *m = gretl_matrix_copy(orig);
@@ -4509,18 +4507,18 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	    if (m == NULL) {
 		err = E_ALLOC;
 	    } else {
-		err = user_var_add(vname, GRETL_TYPE_MATRIX, m);
+		err = user_var_add_or_replace(vname, GRETL_TYPE_MATRIX, m);
 	    }
 	} else if (type == GRETL_TYPE_SERIES) {
 	    double *x = (double *) val;
 	    gretl_matrix *m;
 
 	    m = gretl_vector_from_array(x, size, GRETL_MOD_NONE);
-	    err = user_var_add(vname, GRETL_TYPE_MATRIX, m);
+	    err = user_var_add_or_replace(vname, GRETL_TYPE_MATRIX, m);
 	} else if (type == GRETL_TYPE_STRING) {
 	    char *s = gretl_strdup((char *) val);
 
-	    err = user_var_add(vname, GRETL_TYPE_STRING, s);
+	    err = user_var_add_or_replace(vname, GRETL_TYPE_STRING, s);
 	}
 
 	if (show && !err) {
@@ -4938,17 +4936,20 @@ static int object_overwrite_ok (const char *name, GretlType t)
     g_free(msg);
 
     return (resp == GRETL_YES);
-}	    
+}
 
-int real_gui_validate_varname (const char *name, GretlType t,
-			       int allow_overwrite)
+/* note: returns non-zero if the varname is not acceptable */	    
+
+static int real_gui_validate_varname (const char *name, 
+				      GretlType t,
+				      int allow_overwrite)
 {
     int i, n = strlen(name);
     char namebit[VNAMELEN];
     unsigned char c;
     int err = 0;
 
-    *namebit = 0;
+    *namebit = '\0';
     
     if (n > VNAMELEN - 1) {
 	strncat(namebit, name, VNAMELEN - 1);
@@ -4974,14 +4975,16 @@ int real_gui_validate_varname (const char *name, GretlType t,
     }
 
     if (!err && t != GRETL_TYPE_NONE) {
-	/* check for collisions */
+	/* check for variable type collisions */
 	GretlType t0 = gretl_type_from_name(name, dataset);
 
 	if (t0 != GRETL_TYPE_NONE) {
+	    /* there's already a variable of this name */
 	    if (t == t0 && allow_overwrite) {
+		/* the types agree: overwrite? */
 		err = !object_overwrite_ok(name, t);
 	    } else {
-		/* won't work */
+		/* the types disgree: won't work */
 		gchar *msg = exists_string(name, t0);
 		
 		errbox(msg);
@@ -4990,19 +4993,36 @@ int real_gui_validate_varname (const char *name, GretlType t,
 	    }
 	}
     }
-	
 
     return err;
 }
 
-int gui_validate_varname (const char *name, GretlType t)
+/* The "gui_validate_varname" family: both functions below check the
+   putative @name for legality as a gretl variable name and return
+   non-zero if it's not legal. In addition, both return non-zero if
+   the name is valid but belongs to an existing variable of a type
+   other than @type.
+
+   They diverge in this respect:
+
+   gui_validate_varname_strict: unconditionally returns non-zero
+   if there's an existing variable of the same name, even if it's
+   of type @type.
+
+   gui_validate_varname: checks with the user whether overwriting is
+   OK in the case where a variable of type @type already exists; if
+   so, it's assumed that the distinction between adding a variable and
+   adding a new variable is handled by the caller.
+*/
+
+int gui_validate_varname_strict (const char *name, GretlType type)
 {
-    return real_gui_validate_varname(name, t, 1);
+    return real_gui_validate_varname(name, type, 0);
 }
 
-int gui_validate_varname_strict (const char *name, GretlType t)
+int gui_validate_varname (const char *name, GretlType type)
 {
-    return real_gui_validate_varname(name, t, 0);
+    return real_gui_validate_varname(name, type, 1);
 }
 
 gint popup_menu_handler (GtkWidget *widget, GdkEventButton *event,

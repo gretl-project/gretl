@@ -2407,6 +2407,7 @@ range_dummy_callback (GtkWidget *w, struct range_setting *rset)
 	return FALSE;
     }
 
+    /* FIXME USERIES vs SERIES? */
     err = gui_validate_varname(vname, GRETL_TYPE_USERIES);
     if (err) {
 	return FALSE;
@@ -5409,7 +5410,8 @@ void file_write_errbox (const char *fname)
     }
 }
 
-static void name_entry_finalize (GtkWidget *w, GtkWidget *dlg)
+static void 
+name_entry_finalize (GtkWidget *w, GtkWidget *dlg)
 {
     GtkWidget *entry = g_object_get_data(G_OBJECT(dlg), "entry");
     char *name = g_object_get_data(G_OBJECT(dlg), "name");

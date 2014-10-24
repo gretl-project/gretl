@@ -159,7 +159,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *dlg)
 	return;
     }
 
-    dataset->varname[1][0] = 0;
+    dataset->varname[1][0] = '\0';
     strncat(dataset->varname[1], buf, VNAMELEN - 1);
 
     edit_dialog_close(dlg);
