@@ -647,7 +647,7 @@ static void compute_default_ts_info (DATASET *dwinfo)
 
     if (dwinfo->structure == SPECIAL_TIME_SERIES) {
 	/* non-standard time series */
-	dwinfo->n = 500;
+	dwinfo->n = 9999 * dwinfo->pd;
 	dwinfo->t1 = 0;
 	if (dwinfo->pd > 1) {
 	    int p = dwinfo->pd;
@@ -1113,7 +1113,6 @@ static void dw_set_t1 (GtkWidget *w, DATASET *dwinfo)
 static void add_startobs_spinner (GtkWidget *vbox,
 				  DATASET *dwinfo,
 				  int direction)
-
 {
     GtkWidget *hbox, *label, *spin;
     GtkAdjustment *adj;
