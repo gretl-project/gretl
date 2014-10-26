@@ -237,6 +237,50 @@ static void script_window_update (windata_t *vwin, const char *fname)
     }
 }
 
+static void log_view_save_as (const char *fname, windata_t *vwin)
+{
+    char basename[128];
+    gchar *msg;
+    int resp;
+
+    gretl_basename(basename, fname, 0);
+    msg = g_strdup_printf("Open %s in the script editor?", basename);
+
+    resp = yes_no_dialog_with_parent(NULL, msg, 0,
+				     vwin_toplevel(vwin));
+    g_free(msg);
+
+    if (resp == GRETL_YES) {
+	strcpy(tryfile, fname);
+	if (view_script(tryfile, 1, EDIT_SCRIPT) != NULL) {
+	    strcpy(scriptfile, tryfile);
+	    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
+	    gretl_set_current_dir(scriptfile);
+	}
+    }
+}
+
+gchar *pre_trim_buffer (gchar *s)
+{
+    gchar *ret = s;
+    int n = 0;
+
+    if (*s == '#') {
+	while (*s) {
+	    if (*s == '#') {
+		n++;
+	    }
+	    if (n == 3 && *s == '\n') {
+		ret = s + 1;
+		break;
+	    }
+	    s++;
+	}
+    }
+
+    return ret;
+}
+
 static void 
 save_editable_content (int action, const char *fname, windata_t *vwin)
 {
@@ -255,38 +299,25 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	return;
     }
 
-#if 1 /* 2014-09-11: just keep any UTF-8 */
-    system_print_buf(buf, fp);
-#else /* what we used to do */
-    if (action == SAVE_SCRIPT) {
-	/* don't mess with encoding */
-	system_print_buf(buf, fp);
+    if (vwin->role == VIEW_LOG) {
+	gchar *lbuf = pre_trim_buffer(buf);
+
+	system_print_buf(lbuf, fp);
     } else {
-	gchar *trbuf;
-
-	/* FIXME which cases come here and do
-	   they want this treatment? */
-
-	if (!g_get_charset(&cset)) {
-	    /* UTF-8 minuses not wanted for locale */
-	    strip_unicode_minus(buf);
-	}
-
-	trbuf = my_locale_from_utf8(buf);
-	if (trbuf != NULL) {
-	    system_print_buf(trbuf, fp);
-	    g_free(trbuf);
-	}
+	system_print_buf(buf, fp);
     }
-#endif
 
     g_free(buf);
     fclose(fp);
-    
+
     if (action == SAVE_SCRIPT) {
-	strcpy(scriptfile, fname);
-	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
-	script_window_update(vwin, fname);
+	if (vwin->role == VIEW_LOG) {
+	    log_view_save_as(fname, vwin);
+	} else {
+	    strcpy(scriptfile, fname);
+	    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
+	    script_window_update(vwin, fname);
+	}
     } else if (action == SAVE_GP_CMDS || 
 	       action == SAVE_R_CMDS ||
 	       action == SAVE_OX_CMDS ||
