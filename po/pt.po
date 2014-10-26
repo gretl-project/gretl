@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-10-23 11:25-0400\n"
-"PO-Revision-Date: 2014-09-30 22:44+0100\n"
+"PO-Revision-Date: 2014-10-26 16:30+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -3833,9 +3833,9 @@ msgid "gretlcmd.hlp"
 msgstr "gretlcmd.hlp"
 
 #: lib/src/gretl_plot.c:359 lib/src/tokenize.c:2030 lib/src/tokenize.c:2085
-#, fuzzy, c-format
+#, c-format
 msgid "Parse error at unexpected token '%s'"
-msgstr "Erro de interpretação em '%s'"
+msgstr "Erro de interpretação em chave inesperada '%s'"
 
 #: lib/src/gretl_prn.c:273
 #, c-format
@@ -6078,9 +6078,9 @@ msgid "Warning: option%s ignored outside of loop"
 msgstr "Aviso: opção%s ignorada fora do ciclo"
 
 #: lib/src/options.c:1756
-#, fuzzy, c-format
+#, c-format
 msgid "%s: inapplicable option"
-msgstr "Opções incompatíveis"
+msgstr "%s: opção não aplicável"
 
 #: lib/src/plotspec.c:208 lib/src/plotspec.c:231
 msgid "lines"
@@ -6954,9 +6954,9 @@ msgid "Invalid option '-%c'"
 msgstr "Opção inválida '-%c'"
 
 #: lib/src/tokenize.c:3018
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected symbol '%c'"
-msgstr "Esperado %s mas encontrou-se %s"
+msgstr "Símbolo '%c' inesperado"
 
 #: lib/src/transforms.c:144
 #, c-format
@@ -7450,7 +7450,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 30 de setembro de 2014."
+"Tradução de 26 de outubro de 2014."
 
 #: gui2/about.c:203
 msgid "News"
@@ -11222,9 +11222,8 @@ msgid "_Observation range dummy"
 msgstr "Auxiliar de intervalo de _observação"
 
 #: gui2/gretl.c:1598
-#, fuzzy
 msgid "Dummies for _discrete variable..."
-msgstr "Variáveis auxiliares para as variáveis _discretas seleccionadas"
+msgstr "Variáveis auxiliares para variáveis _discretas..."
 
 #: gui2/gretl.c:1600
 msgid "_Define matrix..."
@@ -13229,14 +13228,13 @@ msgid "Skip the highest value"
 msgstr "Ignorar o valor mais alto"
 
 #: gui2/library.c:5644
-#, fuzzy
 msgid "Variable to dummify"
-msgstr "Variável para traçar gráfico"
+msgstr "Variável para atribuir variáveis auxiliares"
 
 #: gui2/library.c:5663
-#, fuzzy, c-format
+#, c-format
 msgid "Encoding %s as dummies"
-msgstr "Codificando as variáveis como sendo auxiliares"
+msgstr "Codificando %s como sendo variáveis auxiliares"
 
 #: gui2/library.c:5666
 msgid "Encoding variables as dummies"
@@ -15053,7 +15051,7 @@ msgstr "Preferência de manual PDF"
 
 #: gui2/settings.c:450
 msgid "This change will apply to newly opened windows"
-msgstr ""
+msgstr "Esta alteração será aplicada na abertura de novas janelas"
 
 #: gui2/settings.c:819
 msgid "You seem to be running gretl as root.  Do you really want to do this?"
@@ -15163,7 +15161,6 @@ msgid "Apply"
 msgstr "Aplicar"
 
 #: gui2/ssheet.c:179
-#, fuzzy
 msgid "_Format..."
 msgstr "_Formato..."
 
@@ -15745,9 +15742,8 @@ msgid "Arrange"
 msgstr "Organizar"
 
 #: gui2/winstack.c:498
-#, fuzzy
 msgid "command log"
-msgstr "Registo de _Comandos"
+msgstr "registo de comandos"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
@@ -15978,9 +15974,8 @@ msgid "user-specified values"
 msgstr "valores fornecidos pelo utilizador"
 
 #: plugin/arma_common.c:489
-#, fuzzy
 msgid "No usable data were found"
-msgstr "Não se encontraram dados numéricos"
+msgstr "Não se encontraram dados utilizáveis"
 
 #: plugin/arma_common.c:689 plugin/arma_common.c:770
 msgid "Error in arma command"
