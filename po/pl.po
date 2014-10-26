@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.9.91cvs
+# Polish translation for gretl-1.10.0cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.umk.pl>, 2004 - 2014
 # Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2014
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-10-23 11:25-0400\n"
-"PO-Revision-Date: 2014-06-22 22:46+0100\n"
+"PO-Revision-Date: 2014-10-26 12:46+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -506,18 +506,15 @@ msgid "LM test"
 msgstr "Test LM"
 
 #: lib/src/compare.c:399
-#, fuzzy, c-format
+#, c-format
 msgid "Adding variables improved %d of %d information criteria.\n"
-msgstr ""
-"Dodanie zmiennych poprawiło %d z %d kryteriów informacyjnych (AIC, BIC, "
-"HQC).\n"
+msgstr "Dodanie zmiennych poprawiło %d z %d kryteriów informacyjnych (AIC, "
+"BIC, HQC).\n"
 
 #: lib/src/compare.c:402
-#, fuzzy, c-format
+#, c-format
 msgid "Omitting variables improved %d of %d information criteria.\n"
-msgstr ""
-"Pominięcie zmiennych poprawiło %d z %d kryteriów informacyjnych (AIC, BIC, "
-"HQC).\n"
+msgstr "Pominięcie zmiennych poprawiło %d z %d kryteriów informacyjnych (AIC, BIC, HQC).\n"
 
 #: lib/src/compare.c:551 lib/src/vartest.c:807 lib/src/vartest.c:1094
 msgid "omit"
@@ -1002,6 +999,8 @@ msgid ""
 "If '%s' is intended as the name of a variable, please change it --\n"
 "strings of this sort usually mean 'not a number'."
 msgstr ""
+"Jeśli '% s' jest pomyślana jako nazwy zmiennej, należy ją zmienić --\n"
+"tego rodzaju łańcuchy zwykle oznaczają 'not a number'."
 
 #: lib/src/csvdata.c:2576
 msgid "scanning for variable names...\n"
@@ -1146,7 +1145,7 @@ msgstr "Długość serii nie jest zgodne z bazą danych"
 
 #: lib/src/dataio.c:108
 msgid "Varname exceeds the maximum of 31 characters"
-msgstr ""
+msgstr "Nazwa zmiennej przekracza maksymalne 31 znaków"
 
 #: lib/src/dataio.c:133
 #, c-format
@@ -3199,14 +3198,14 @@ msgid "Missing function return type"
 msgstr "Missing function return type"
 
 #: lib/src/gretl_func.c:1326
-#, fuzzy, c-format
+#, c-format
 msgid "Expected a function return type, found '%s'"
-msgstr "Oczekiwano '%c' lecz znaleziono '%s'\n"
+msgstr "Oczekiwany typ funkcji, znaleziono '%s'"
 
 #: lib/src/gretl_func.c:1329
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid return type for function"
-msgstr "Invalid return type for function"
+msgstr "%s: błędny typ funkcji"
 
 #: lib/src/gretl_func.c:2316 lib/src/gretl_func.c:2376
 #: lib/src/gretl_func.c:2452 lib/src/gretl_utils.c:1719
@@ -3827,9 +3826,9 @@ msgid "gretlcmd.hlp"
 msgstr "gretlcmd.hlp"
 
 #: lib/src/gretl_plot.c:359 lib/src/tokenize.c:2030 lib/src/tokenize.c:2085
-#, fuzzy, c-format
+#, c-format
 msgid "Parse error at unexpected token '%s'"
-msgstr "Błędna analiza w '%s'\n"
+msgstr "Błędny znak w '%s'"
 
 #: lib/src/gretl_prn.c:273
 #, c-format
@@ -5664,11 +5663,11 @@ msgstr "Zakres maksymalnej liczby iteracji, %d"
 
 #: lib/src/monte_carlo.c:1309
 msgid "You can use \"set loop_maxiter\" to increase the limit"
-msgstr ""
+msgstr "Należy użyć polecenia \"set loop_maxiter\", aby zwiększyć limit"
 
 #: lib/src/monte_carlo.c:1927
 msgid "progressive loop: model must be of constant size"
-msgstr ""
+msgstr "progressive loop: model must be of constant size"
 
 #: lib/src/monte_carlo.c:2119
 msgid "Sorry, this command is not available in loop mode"
@@ -6059,13 +6058,13 @@ msgid "Warning: option%s ignored outside of loop"
 msgstr "Uwaga: opcja %s jest ignorowana poza pętlą"
 
 #: lib/src/options.c:1756
-#, fuzzy, c-format
+#, c-format
 msgid "%s: inapplicable option"
-msgstr "Sprzeczne opcje"
+msgstr "%s: sprzeczna opcja"
 
 #: lib/src/plotspec.c:208 lib/src/plotspec.c:231
 msgid "lines"
-msgstr "Linie"
+msgstr "linie"
 
 #: lib/src/plotspec.c:209
 msgid "points"
@@ -6188,7 +6187,7 @@ msgstr ""
 #: lib/src/printout.c:323
 msgid "Test for null hypothesis of normal distribution"
 msgstr ""
-"Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny.Test "
+"Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny. Test "
 "Doornika-Hansena (1994)- transformowana skośność i kurtoza."
 
 #: lib/src/printout.c:330
@@ -6455,7 +6454,7 @@ msgstr "norm"
 #: lib/src/printscan.c:625 lib/src/printscan.c:721
 #, c-format
 msgid "unprocessed argument(s): '%s'"
-msgstr ""
+msgstr "unprocessed argument(s): '%s'"
 
 #: lib/src/pvalues.c:1748 gui2/calculator.c:1208
 msgid "Standard normal distribution"
@@ -6927,14 +6926,14 @@ msgid "Invalid option '--%s'"
 msgstr "Błędna opcja '--%s'"
 
 #: lib/src/tokenize.c:1153
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid option '-%c'"
-msgstr "Błędna opcja '--%s'"
+msgstr "Błędna opcja '-%c'"
 
 #: lib/src/tokenize.c:3018
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected symbol '%c'"
-msgstr "oczekiwane %s, lecz znaleziono %s"
+msgstr "Nieakceptowany symbol '%c'"
 
 #: lib/src/transforms.c:144
 #, c-format
@@ -7024,9 +7023,8 @@ msgid "Ambiguous matrix index"
 msgstr "Niejednoznaczny indeks macierzy"
 
 #: lib/src/usermat.c:714
-#, fuzzy
 msgid "Matrix is not symmetric"
-msgstr "Macierz jest niedodatnio określona"
+msgstr "Macierz nie jest symetryczna"
 
 #: lib/src/usermat.c:936
 msgid "Matrix decomposition failed"
@@ -7380,6 +7378,8 @@ msgid ""
 "This program should be run under mpiexec, and requires the name of a\n"
 "script file as argument.\n"
 msgstr ""
+"Ten program powinien być prowadzony pod mpiexec\n"
+"i wymaga nazwy pliku skryptu jako argumentu.\n"
 
 #: cli/gretlcli-mpi.c:139
 #, c-format
@@ -7391,6 +7391,12 @@ msgid ""
 " -e or --english     Force use of English rather than translation.\n"
 " -s or --single-rng  Use a single RNG, not one per process.\n"
 msgstr ""
+"Options:\n"
+" -h or --help        Pokazuje parametry i kończy pracę.\n"
+" -v or --version     Pokazuje wersję i kończy pracę.\n"
+" -q or --quiet       Nie pokazuje logo przy starcie.\n"
+" -e or --english     Force use of English rather than translation.\n"
+" -s or --single-rng  Use a single RNG, not one per process.\n"
 
 #: cli/gretlcli-mpi.c:152
 #, c-format
@@ -7422,7 +7428,7 @@ msgstr ""
 
 #: gui2/about.c:203
 msgid "News"
-msgstr ""
+msgstr "Co nowego?"
 
 #: gui2/about.c:210
 msgid "License"
@@ -9993,9 +9999,8 @@ msgid "Can't find the function '%s'"
 msgstr "Nie znaleziono funkcji '%s'"
 
 #: gui2/fnsave.c:842 gui2/fnsave.c:1683
-#, fuzzy
 msgid "Please save your package first"
-msgstr "Proszę najpierw otworzyć plik danych"
+msgstr "Proszę najpierw zapisać pakiet funkcji"
 
 #: gui2/fnsave.c:998
 msgid "private"
@@ -11190,9 +11195,8 @@ msgid "_Observation range dummy"
 msgstr "_zmienna 0-1 względem obserwacji"
 
 #: gui2/gretl.c:1598
-#, fuzzy
 msgid "Dummies for _discrete variable..."
-msgstr "zmienne 0-1 dla wybranych dyskretnych zmiennych"
+msgstr "zmienne 0-1 dla wybranych _dyskretnych zmiennych"
 
 #: gui2/gretl.c:1600
 msgid "_Define matrix..."
@@ -13203,14 +13207,13 @@ msgid "Skip the highest value"
 msgstr "Opuścić najwyższą wartość zm. dyskretnej"
 
 #: gui2/library.c:5644
-#, fuzzy
 msgid "Variable to dummify"
-msgstr "Zmienna dla wykresu"
+msgstr "Zmienna typu dummify"
 
 #: gui2/library.c:5663
-#, fuzzy, c-format
+#, c-format
 msgid "Encoding %s as dummies"
-msgstr "Kodowanie zmiennych dyskretnych jako zestawu zmiennych 0-1"
+msgstr "Kodowanie zmiennej dyskretnej %s jako zestaw zmiennych 0-1"
 
 #: gui2/library.c:5666
 msgid "Encoding variables as dummies"
@@ -13526,7 +13529,7 @@ msgstr "Dodaj pierwsze różnice zmiennej"
 
 #: gui2/menustate.c:383 gui2/menustate.c:527
 msgid "Dummify..."
-msgstr ""
+msgstr "Dodaj zmienne 0-1 dla dyskretnej zmiennej"
 
 #: gui2/menustate.c:385 gui2/menustate.c:489 gui2/menustate.c:528
 #: gui2/menustate.c:594
@@ -14194,7 +14197,7 @@ msgstr "Pełne wyniki rankingu"
 
 #: gui2/selector.c:5566
 msgid "Make plot interactive"
-msgstr ""
+msgstr "Make plot interactive"
 
 #: gui2/selector.c:5569
 msgid "Show interval for median"
@@ -14366,7 +14369,7 @@ msgstr "Nieograniczony trend"
 
 #: gui2/selector.c:6182
 msgid "CSV"
-msgstr "CSV"
+msgstr "danych typu CSV"
 
 #: gui2/selector.c:6183
 msgid "gretl datafile (.gdt)"
@@ -14557,14 +14560,12 @@ msgid "default"
 msgstr "domyślnie"
 
 #: gui2/series_view.c:371 gui2/series_view.c:418
-#, fuzzy
 msgid "Original order"
-msgstr "rząd opóźnienia"
+msgstr "Orygnalny porządek"
 
 #: gui2/series_view.c:380
-#, fuzzy
 msgid "Sort order:"
-msgstr "Rząd AR:"
+msgstr "Porządek sortowania:"
 
 #: gui2/series_view.c:432
 msgid "Variable to sort by"
@@ -15031,7 +15032,7 @@ msgstr "Manual w formacie PDF"
 
 #: gui2/settings.c:450
 msgid "This change will apply to newly opened windows"
-msgstr ""
+msgstr "Zmiana ta będzie miała zastosowanie do nowo otwartych okien"
 
 #: gui2/settings.c:819
 msgid "You seem to be running gretl as root.  Do you really want to do this?"
@@ -15138,9 +15139,8 @@ msgid "Apply"
 msgstr "Zastosuj"
 
 #: gui2/ssheet.c:179
-#, fuzzy
 msgid "_Format..."
-msgstr "_Prognoza..."
+msgstr "_Format..."
 
 #: gui2/ssheet.c:180
 msgid "_Properties"
@@ -15152,7 +15152,7 @@ msgstr "_Wypełnij"
 
 #: gui2/ssheet.c:182
 msgid "_Identity matrix"
-msgstr "Macierzą jednostkową"
+msgstr "Macierzą _jednostkową"
 
 #: gui2/ssheet.c:183
 msgid "_Uniform random"
@@ -15720,9 +15720,8 @@ msgid "Arrange"
 msgstr "Uporządkuj okna"
 
 #: gui2/winstack.c:498
-#, fuzzy
 msgid "command log"
-msgstr "Pokaż _dziennik poleceń"
+msgstr "dziennik poleceń"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
@@ -15846,7 +15845,7 @@ msgstr "Regresory"
 
 #: plugin/addons-i18n.c:45
 msgid "SVAR"
-msgstr ""
+msgstr "SVAR"
 
 #: plugin/addons-i18n.c:46
 msgid "AB-model"
@@ -15952,9 +15951,8 @@ msgid "user-specified values"
 msgstr "Własne-specyficzne wartości"
 
 #: plugin/arma_common.c:489
-#, fuzzy
 msgid "No usable data were found"
-msgstr "Nie znaleziono numerycznych danych"
+msgstr "Nie znaleziono użytecznych danych"
 
 #: plugin/arma_common.c:689 plugin/arma_common.c:770
 msgid "Error in arma command"
@@ -16877,69 +16875,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "The command log is empty"
-#~ msgstr "Dziennik poleceń jest pusty"
-
-#~ msgid "Failed to parse gnuplot file"
-#~ msgstr "Błąd w analizowanym pliku gnuplot"
-
-#~ msgid "user's guide"
-#~ msgstr "manual gretla"
-
-#~ msgid "Cancel"
-#~ msgstr "Anuluj"
-
-#~ msgid "No discrete variables were selected"
-#~ msgstr "Brak wyselekcjonowanych dyskretnych zmiennych"
-
-#~ msgid "Too many items were selected"
-#~ msgstr "Za dużo wybranych pozycji"
-
-#~ msgid "got invalid variable number %d"
-#~ msgstr "otrzymano błędny numer zmiennej %d"
-
-#~ msgid "got invalid varname '%s'"
-#~ msgstr "otrzymano błędną nazwę zmiennej '%s'"
-
-#~ msgid "error reading smpl line"
-#~ msgstr "Błąd wczytania lini z poleceniem zakresu próby (smpl)"
-
-#~ msgid "Replaced after model %d: "
-#~ msgstr "Zamieniono model %d: "
-
-#~ msgid "Failed to parse line as frequency, startobs"
-#~ msgstr "Błędny parametry okresowości, startowej obserwacji"
-
-#~ msgid "generation of lag variable failed"
-#~ msgstr "błąd generowania zmiennej opóźnionej"
-
-#~ msgid "command 'end %s' not recognized"
-#~ msgstr "polecenie 'end %s' jest nie rozpoznawalne"
-
-#~ msgid "end: nothing to end"
-#~ msgstr "end: nic nie kończy"
-
-#~ msgid "%s: required parameter is missing"
-#~ msgstr "%s: brak wymaganego parametru"
-
-#~ msgid "%s: expected an integer order"
-#~ msgstr "%s: oczekiwano całkowitej wartości"
-
-#~ msgid "%d is not a valid variable number"
-#~ msgstr "%d nie jest prawidłowym numerem zmiennej"
-
-#~ msgid "'%s' is not the name of a series"
-#~ msgstr "'%s' nie jest nazwą serii"
-
-#~ msgid "'%s' is not the name of a variable"
-#~ msgstr "'%s' nie jest nazwą zmiennej"
-
-#~ msgid "Ambiguous option '--%s'"
-#~ msgstr "Niejednoznaczne opcja '--%s'"
-
-#~ msgid "gretl: boxplots"
-#~ msgstr "gretl: wykres pudełkowy"
-
-#~ msgid "Specify variables to plot:"
-#~ msgstr "Wyspecyfikuj zmienne do wykresu:"
