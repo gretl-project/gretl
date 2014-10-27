@@ -6822,7 +6822,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     if (dset != NULL) {
 	/* restore the sample that was in place on entry */
-	if (complex_subsampled()) {
+	if (dataset_is_complex_subsampled(dset)) {
 	    if (state.submask == NULL) {
 		/* we were not sub-sampled on entry */
 		restore_full_sample(dset, NULL);

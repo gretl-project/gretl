@@ -54,6 +54,8 @@ restrict_sample_from_mask (char *mask, DATASET *dset,
 
 int complex_subsampled (void);
 
+int dataset_is_complex_subsampled (const DATASET *dset);
+
 int get_full_length_n (void);
 
 void set_dataset_resampled (DATASET *dset);

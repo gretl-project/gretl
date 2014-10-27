@@ -5080,7 +5080,7 @@ static gretl_matrix *real_aggregate_by (const double *x,
 		if (builtin != NULL) {
 		    fx = (*builtin)(0, ni-1, tmp);
 		} else {
-		    tmpset->t2 = ni;
+		    tmpset->t2 = ni-1;
 		    fx = generate_scalar(usercall, tmpset, err);
 		}
 		if (na(fx)) {

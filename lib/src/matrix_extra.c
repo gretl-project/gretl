@@ -498,10 +498,10 @@ real_gretl_matrix_data_subset (const int *list,
     int skip;
     int j, vj, s, t;
 
-    if (k <= 0 || Tmax <= 0) {
+    if (k <= 0 || Tmax <= 0 || t2 >= dset->n) {
 	*err = E_DATA;
 	return NULL;
-    }	
+    }
 
     *err = 0;
     T = Tmax;

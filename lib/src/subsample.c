@@ -598,6 +598,11 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 	return restore_full_easy(dset, state);
     }
 
+    if (dset != peerset) {
+	fprintf(stderr, "restore_full_sample: dset is not peerset!\n");
+	return E_DATA;
+    }
+
 #if FULLDEBUG || SUBDEBUG
     fprintf(stderr, "\nrestore_full_sample: dset=%p, state=%p, fullset=%p\n", 
 	    (void *) dset, (void *) state, (void *) fullset);
@@ -1032,6 +1037,12 @@ int complex_subsampled (void)
 int get_full_length_n (void)
 {
     return (fullset != NULL) ? fullset->n : 0;
+}
+
+int dataset_is_complex_subsampled (const DATASET *dset)
+{
+    return (fullset != NULL && fullset->Z != NULL &&
+	    dset == peerset);
 }
 
 /* When sub-sampling on some boolean criterion, check to see if we can
@@ -1513,6 +1524,12 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt,
     gretlopt zopt = OPT_R;
     int err = 0;
 
+    if (dset->auxiliary) {
+	fprintf(stderr, "restrict_sample_from_mask: attempting to restrict "
+		"an auxiliary data\n");
+	return E_DATA;
+    }
+
     if (mask == RESAMPLED) {
 	fprintf(stderr, "restrict_sample_from_mask: got RESAMPLED!\n");
 	return E_DATA;
@@ -1964,6 +1981,11 @@ int restrict_sample (const char *param, const int *list,
     }
 
     free(oldrestr);
+
+#if SUBDEBUG
+    fprintf(stderr, "restrict sample: dset: t1=%d, t2=%d, n=%d\n",
+	    dset->t1, dset->t2, dset->n);
+#endif    
 
     return err;
 }
