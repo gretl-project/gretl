@@ -5831,18 +5831,19 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns a series holding the sum over time of
-	  variable <argname>y</argname> for each cross-sectional unit,
-	  the values being repeated for each period. Missing
-	  observations are skipped in calculating the sums.
+	  This function is applicable only if the current dataset has
+	  a panel structure. It returns a series holding the sum over
+	  time of variable <argname>y</argname> for each
+	  cross-sectional unit, the values being repeated for each
+	  period. Missing observations are skipped in calculating the
+	  sums.
 	</para>
 	<para context="tex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the sum over time of variable
-	  <argname>y</argname> for each cross-sectional unit; that is, 
-	  \[ S_i = \sum_{t=1}^{T_i} y_{i,t}\] 
-	  where $T_i$ is the number of valid observations for unit $i$.
+	  This function is applicable only if the current dataset has
+	  a panel structure. It computes the sum over time of variable
+	  <argname>y</argname> for each cross-sectional unit; that is,
+	  \[ S_i = \sum_{t=1}^{T_i} y_{i,t}\] where $T_i$ is the
+	  number of valid observations for unit $i$.
 	</para>
 	<para>
 	  If the optional second argument is provided then

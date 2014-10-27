@@ -44,7 +44,8 @@
             transforms | access | calendar) "math" 
    output  (scalar | series | matrix | smatrix | string | seebelow |
             rvec | cvec | list | asinput | scalar-or-series | int |
-            scalar-or-matrix | matrix-or-bundle | bundle) "series"
+            scalar-or-matrix | matrix-or-bundle | bundle |
+	    string-or-strings) "series"
    altout  (none | scalar | series | rvec | matrix | list) "none"
 >
 
@@ -59,7 +60,7 @@
                matrixref | seriesref | bundleref |anyfloat | scalar-or-series | 
 	       series-or-vec | series-or-mat | list | coeffname | string | char | sslist | 
                series-or-list | smlist | pscalar | seebelow | fncall |
-               anyfloat-or-list | list-or-string | scalar-or-vec |
+               anyfloat-or-list | list-or-string | listetc | scalar-or-vec |
                int-or-list | scalar-or-matrix | int | bool | pdmat |
                bundle | varargs) "series"
     optional  (true | false) "false"
