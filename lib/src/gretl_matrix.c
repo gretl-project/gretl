@@ -6145,7 +6145,7 @@ gretl_matrix *gretl_matrix_column_sum (const gretl_matrix *m, int *err)
 
 static double row_prod (const gretl_matrix *m, int i)
 {
-    double x, ret = 1.0;
+    double ret = 1.0;
     int j;
 
     if (i < 0 || i >= m->rows) {
@@ -6153,15 +6153,7 @@ static double row_prod (const gretl_matrix *m, int i)
     }
 
     for (j=0; j<m->cols; j++) {
-	x = gretl_matrix_get(m, i, j);
-	if (x == 0.0) {
-	    ret = 0;
-	    break; 
-	} else if (xna(x) || xna(ret)) {
-	    ret = M_NA;
-	} else {
-	    ret *= x;
-	}
+	ret *= gretl_matrix_get(m, i, j);
     }
 
     return ret;
@@ -6171,7 +6163,7 @@ static double row_prod (const gretl_matrix *m, int i)
 
 static double col_prod (const gretl_matrix *m, int j)
 {
-    double x, ret = 1.0;
+    double ret = 1.0;
     int i;
 
     if (j < 0 || j >= m->cols) {
@@ -6179,15 +6171,7 @@ static double col_prod (const gretl_matrix *m, int j)
     }
 
     for (i=0; i<m->rows; i++) {
-	x = gretl_matrix_get(m, i, j);
-	if (x == 0.0) {
-	    ret = 0;
-	    break; 
-	} else if (xna(x) || xna(ret)) {
-	    ret = M_NA;
-	} else {
-	    ret *= x;
-	}
+	ret *= gretl_matrix_get(m, i, j);
     }
 
     return ret;
