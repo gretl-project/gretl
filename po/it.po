@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-10-23 11:25-0400\n"
-"PO-Revision-Date: 2014-10-01 22:27+0200\n"
+"PO-Revision-Date: 2014-10-27 14:37+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -3840,9 +3840,9 @@ msgid "gretlcmd.hlp"
 msgstr "gretlcmd.hlp.it"
 
 #: lib/src/gretl_plot.c:359 lib/src/tokenize.c:2030 lib/src/tokenize.c:2085
-#, fuzzy, c-format
+#, c-format
 msgid "Parse error at unexpected token '%s'"
-msgstr "Errore di lettura in '%s'"
+msgstr "Errore di parsing a '%s' (token inatteso)"
 
 #: lib/src/gretl_prn.c:273
 #, c-format
@@ -6087,9 +6087,9 @@ msgid "Warning: option%s ignored outside of loop"
 msgstr "Attenzione: opzione %s ignorata al di fuori del loop"
 
 #: lib/src/options.c:1756
-#, fuzzy, c-format
+#, c-format
 msgid "%s: inapplicable option"
-msgstr "Opzioni incompatibili"
+msgstr "%s: opzione inapplicabile"
 
 #: lib/src/plotspec.c:208 lib/src/plotspec.c:231
 msgid "lines"
@@ -6956,9 +6956,9 @@ msgid "Invalid option '-%c'"
 msgstr "Opzione non valida '-%c'"
 
 #: lib/src/tokenize.c:3018
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected symbol '%c'"
-msgstr "Al posto di %s è stato trovato %s"
+msgstr "Simbolo inaspettato '%c'"
 
 #: lib/src/transforms.c:144
 #, c-format
@@ -11227,9 +11227,8 @@ msgid "_Observation range dummy"
 msgstr "Dummy per intervallo"
 
 #: gui2/gretl.c:1598
-#, fuzzy
 msgid "Dummies for _discrete variable..."
-msgstr "Dummy per le variabili _discrete selezionate"
+msgstr "Dummy per variabile discreta..."
 
 #: gui2/gretl.c:1600
 msgid "_Define matrix..."
@@ -13246,14 +13245,13 @@ msgid "Skip the highest value"
 msgstr "Salta il valore massimo"
 
 #: gui2/library.c:5644
-#, fuzzy
 msgid "Variable to dummify"
-msgstr "Variabile da disegnare"
+msgstr "Variabile per cui creare le dummy"
 
 #: gui2/library.c:5663
-#, fuzzy, c-format
+#, c-format
 msgid "Encoding %s as dummies"
-msgstr "Codifica delle variabili come dummy"
+msgstr "Codifica di %s come dummy"
 
 #: gui2/library.c:5666
 msgid "Encoding variables as dummies"
@@ -15079,7 +15077,7 @@ msgstr "Preferenze sulle guide PDF"
 
 #: gui2/settings.c:450
 msgid "This change will apply to newly opened windows"
-msgstr ""
+msgstr "Questa modifica avrà effetto nelle finestre aperte d'ora in poi"
 
 #: gui2/settings.c:819
 msgid "You seem to be running gretl as root.  Do you really want to do this?"
@@ -15769,9 +15767,8 @@ msgid "Arrange"
 msgstr "Riordina"
 
 #: gui2/winstack.c:498
-#, fuzzy
 msgid "command log"
-msgstr "_Visualizza log comandi"
+msgstr "log di comandi"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
@@ -16001,9 +15998,8 @@ msgid "user-specified values"
 msgstr "valori forniti dall'utente"
 
 #: plugin/arma_common.c:489
-#, fuzzy
 msgid "No usable data were found"
-msgstr "Non sono stati trovati dati numerici"
+msgstr "Non sono stati trovati dati utilizzabili"
 
 #: plugin/arma_common.c:689 plugin/arma_common.c:770
 msgid "Error in arma command"
