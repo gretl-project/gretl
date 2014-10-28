@@ -252,7 +252,7 @@ panel of Table~\ref{tab:csv}.
 Note that key variables are treated conceptually as integers. If a
 specified key contains fractional values these are truncated.
 
-Three extensions of the basic key mechanism are available.
+Two extensions of the basic key mechanism are available.
 \begin{itemize}
 \item If the outer dataset contains a relevant key variable but it
   goes under a different name from the inner key, you can use the
@@ -284,35 +284,70 @@ Three extensions of the basic key mechanism are available.
   join foo.csv x --ikey=key1,Lkey2 --okey=key1,Rkey2
   join foo.csv x --ikey=key1,Lkey2 --okey=,Rkey2
   \end{code}
-
-\item The example shown in Table~\ref{tab:csv} is an instance of a 1
-  to 1 match, in the sense that applying the matching criterion
-  produces exactly one value of the variable \texttt{xh} corresponding
-  to each row of the inner dataset. Two other possibilities arise.
-
-  First, it may be that some rows in the inner dataset have no match
-  on the right: by default such observations get \texttt{NA} for the
-  imported data. In some cases, the appropriate value to record in the
-  absence of a match may be zero rather than \texttt{NA}. For example,
-  consider a query on ``number of hours worked'' when the inner
-  dataset contains individuals and the outer file contains data on
-  jobs: if an individual does not appear in the jobs file, the number
-  of hours worked is implicitly zero. In such cases gretl's
-  \texttt{misszero()} function can be used to adjust the imported
-  data.
-
-  Second, some left-hand rows may have more than one match on the
-  right; we refer to this as 1 to $n$ matching. In that case it is
-  necessary to specify an ``aggregation method''. This is the job
-  of the \verb|--aggr| option, discussed below.
-
 \end{itemize}
+
+\subsection{The number of key-matches}
+
+The example shown in Table~\ref{tab:csv} is an instance of a 1 to 1
+match, in the sense that applying the matching criterion produces
+exactly one value of the variable \texttt{xh} corresponding to each
+row of the inner dataset. Two other possibilities arise: it may be
+that some rows in the inner dataset have no match on the right, and/or
+some rows on the left have multiple matches on the right. The latter
+case (``1 to $n$ matching'') is addressed in detail in the next
+section; here we discuss the former.
+
+The case where there's no match on the right is handled differently
+depending on whether the join operation is adding a new series to the
+inner dataset or modifying an existing one. If it's a new series, then
+the unmatched rows automatically get \texttt{NA} for the imported
+data. If, on the other hand, the join is pulling in values for a
+series that is already present on the left, only matched rows will be
+updated---or in other words, we do \textit{not} overwite an existing
+value on the left with \texttt{NA} in the case where there's no match
+on the right.
+
+These default behaviors may not produce the desired effect in every
+case but gretl provides the equipment to modify the effect if need be.
+We will illustrate with two scenarios.
+
+First, consider adding a new series recording ``number of hours
+worked'' when the inner dataset contains individuals and the outer
+file contains data on jobs. If an individual does not appear in the
+jobs file, we may want to take her hours worked as implicitly zero. In
+this case gretl's \texttt{misszero()} function can be used to turn
+\texttt{NA} into 0 in the imported data.
+
+Second, consider updating a series via join, when the outer file is
+presumed to contain all available updated values, such that ``no
+match'' should be taken as an implicit \texttt{NA}. In this case we
+want the (presumably out-of-date) values on any unmatched rows to be
+overwritten with \texttt{NA}. Let the series in question be called
+\texttt{x} (both on the left and the right) and let the common key be
+called \texttt{pid}. The solution is then
+\begin{code}
+join update.csv tmpvar --data=x --ikey=pid
+x = tmpvar
+\end{code}
+In a more complicated case one might use the \texttt{smpl} command to
+limit the sample range before assigning \texttt{tmpvar} to \texttt{x},
+or use the conditional assignment operator \texttt{?:}.
+
+One further point should be mentioned here. Given some missing values
+in an imported series you may sometimes want to know whether (a) 
+the \texttt{NA}s were explicitly represented in the outer data file or
+(b) they arose due to ``no match''. You can find this out by using
+a method described in the following section, namely the \texttt{count}
+variant of the aggregation option: this will give you a series with 0
+values for all and only unmatched rows.
 
 \section{Aggregation}
 \label{sec:join-aggr}
 
-The \verb|--aggr| option for 1 to $n$ matching of rows takes a single
-argument, which must be one of the following:
+In the case of 1 to $n$ matching of rows ($n > 1$) the user must
+specify an ``aggregation method''; that is, a method for mapping from
+$n$ rows down to one. This is handled by the \verb|--aggr| option
+which requires a single argument from the following list:
 
 \begin{center}
 \begin{tabular}{ll}
