@@ -1368,13 +1368,11 @@ static int lib_join_data (ExecState *s,
     }
 
     if (!err) {
-	PRN *vprn = (opt & OPT_V)? prn : NULL;
-
 	err = join_from_csv(newfile, varname, dset, 
 			    ikeyvars, okey, filter,
 			    dataname, aggr, seqval, 
 			    auxname, tconvstr,
-			    tconvfmt, opt, vprn);
+			    tconvfmt, opt, prn);
     }	
 
     free(ikeyvars);
@@ -1453,6 +1451,7 @@ static int lib_open_append (ExecState *s,
 
     if (cmd->ci == JOIN) {
 	if (ftype == GRETL_CSV) {
+	    dset->modflag = 0;
 	    err = lib_join_data(s, newfile, dset, opt, prn);
 	} else {
 	    gretl_errmsg_set("Only CSV files are supported for now");
@@ -2026,7 +2025,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case JOIN:
     case OPEN:
 	err = lib_open_append(s, dset, readfile, prn);
-	if (!err && cmd->ci == OPEN) {
+	if (!err) {
 	    schedule_callback(s);
 	}
 	break;

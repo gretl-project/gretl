@@ -3468,6 +3468,8 @@ struct joiner_ {
     obskey *auto_keys;  /* struct to hold info on obs-based key(s) */
     DATASET *l_dset;    /* the left-hand or inner dataset */
     DATASET *r_dset;    /* the right-hand or outer temporary dataset */
+    int newvar;         /* is the target series newly added? (0/1) */
+    int modified;       /* has an existing series been modified? */
 };
 
 typedef struct joiner_ joiner;
@@ -3518,6 +3520,8 @@ static joiner *joiner_new (int nrows)
     if (jr != NULL) {
 	jr->n_rows = nrows;
 	jr->n_unique = 0;
+	jr->newvar = 0;
+	jr->modified = 0;
 	jr->keys = NULL;
 	jr->key_freq = NULL;
 	jr->key_row = NULL;
@@ -4195,7 +4199,7 @@ static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
 
 static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
 			  double *xmatch, double *auxmatch, 
-			  int *err)
+			  int *nomatch, int *err)
 {
     double x, xa;
     int imin, imax, pos;
@@ -4215,6 +4219,7 @@ static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
 
     if (pos < 0) {
 	/* (primary) inner key value not found */
+	*nomatch = 1;
 	return jr->aggr == AGGR_COUNT ? 0 : NADBL;
     }
 
@@ -4466,6 +4471,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 
     for (t=dset->t1; t<=dset->t2 && !err; t++) {
 	int missing = 0;
+	int nomatch = 0;
 	double z;
 
 	err = get_inner_key_values(jr, t, ikeyvars, &key, &key2, &missing);
@@ -4476,7 +4482,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 	    continue;
 	}
 
-	z = aggr_value(jr, key, key2, xmatch, auxmatch, &err);
+	z = aggr_value(jr, key, key2, xmatch, auxmatch, &nomatch, &err);
 #if AGGDEBUG
 	if (na(z)) {
 	    fprintf(stderr, " aggr_value: got NA (keys=%d,%d, err=%d)\n", 
@@ -4490,7 +4496,16 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v)
 	    z = maybe_adjust_string_code(rst, lst, z, &err);
 	}
 	if (!err) {
-	    dset->Z[v][t] = z;
+	    if (jr->newvar) {
+		dset->Z[v][t] = z;
+	    } else if (z != dset->Z[v][t]) {
+		if (nomatch && !na(dset->Z[v][t])) {
+		    ; /* leave existing data alone (?) */
+		} else {
+		    dset->Z[v][t] = z;
+		    jr->modified += 1;
+		}
+	    }
 	}
     }
 
@@ -4511,7 +4526,7 @@ static int join_transcribe_data (joiner *jr, int v)
     DATASET *dset = jr->l_dset;
     double zi;
     int strcheck = 0;
-    int i, err = 0;
+    int i, t, err = 0;
 
     if (jr->valcol > 0) {
 	rst = series_get_string_table(jr->r_dset, jr->valcol);
@@ -4525,7 +4540,13 @@ static int join_transcribe_data (joiner *jr, int v)
 	    zi = maybe_adjust_string_code(rst, lst, zi, &err);
 	}
 	if (!err) {
-	    dset->Z[v][dset->t1 + i] = zi;
+	    t = dset->t1 + i;
+	    if (jr->newvar) {
+		dset->Z[v][t] = zi;
+	    } else if (zi != dset->Z[v][t]) {
+		dset->Z[v][t] = zi;
+		jr->modified += 1;
+	    }
 	}
     }
 
@@ -5316,7 +5337,7 @@ int join_from_csv (const char *fname,
 
     if (!err) {
 	err = real_import_csv(fname, dset, NULL, NULL,
-			      &jspec, opt, prn);
+			      &jspec, opt, verbose ? prn : NULL);
 #if CDEBUG > 1
 	if (!err) {
 	    print_outer_dataset(jspec.c->dset, fname);
@@ -5393,6 +5414,9 @@ int join_from_csv (const char *fname,
     if (!err && targvar < 0) {
 	/* we need to add a new series on the left */
 	err = add_target_series(varname, dset, &targvar);
+	if (!err) {
+	    jr->newvar = 1;
+	}
     }   
 
     if (!err) {
@@ -5402,6 +5426,11 @@ int join_from_csv (const char *fname,
 	    err = aggregate_data(jr, ikeyvars, targvar);
 	}
     }
+
+#if CDEBUG
+    fprintf(stderr, "join: newvar = %d, modified = %d\n",
+	    jr->newvar, jr->modified);
+#endif    
 
     if (!err && dset->v > orig_v && jr->valcol > 0) {
 	/* we added a new series */
@@ -5413,6 +5442,19 @@ int join_from_csv (const char *fname,
 
     if (err) {
 	dataset_drop_last_variables(dset, dset->v - orig_v);
+    } else {
+	if (jr->newvar || jr->modified) {
+	    dset->modflag = 1;
+	}
+	if (gretl_messages_on()) {
+	    if (jr->newvar) {
+		pputs(prn, _("Data appended OK\n"));
+	    } else if (jr->modified) {
+		pputs(prn, "Data modified OK\n");
+	    } else {
+		pputs(prn, "No changes were nade to the dataset\n");
+	    }
+	}
     }
 
  bailout:

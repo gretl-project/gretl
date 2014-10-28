@@ -8482,6 +8482,12 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 
     if (ci == FLUSH) {
 	handle_flush_callback(0);
+    } else if (ci == JOIN) {
+	if (dataset->modflag) {
+	    mark_dataset_as_modified();
+	    populate_varlist();
+	    dataset->modflag = 0;
+	}
     } else if (ptr != NULL && type == GRETL_OBJ_EQN) {
 	add_model_to_session_callback(ptr, type);
     } else if (ptr != NULL && type == GRETL_OBJ_VAR) {

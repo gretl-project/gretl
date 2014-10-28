@@ -408,7 +408,8 @@ void datainfo_init (DATASET *dset)
     dset->varname = NULL;
     dset->varinfo = NULL;    
 
-    dset->markers = NO_MARKERS;  
+    dset->markers = NO_MARKERS;
+    dset->modflag = 0;
 
     dset->S = NULL;
     dset->descrip = NULL;
