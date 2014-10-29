@@ -108,6 +108,8 @@ enum {
 		       c == MLOGIT || c == IV_LIML || c == IV_GMM || \
 		       c == COUNTMOD)
 
+#define MODEL_NEEDS_X(c) (MODEL_CODE(c) && !(c == ARMA || c == GARCH))
+
 #define IV_MODEL(c) (c == IVREG || c == IV_LIML || c == IV_GMM)
 
 #define NONPARAM_CODE(c) (c == LOESS || c == NADARWAT)
@@ -3535,7 +3537,7 @@ static void compose_cmdlist (selector *sr)
 	warnbox(_("You must specify a public interface"));
 	sr->error = 1;
 	return;
-    } else if (MODEL_CODE(sr->ci) && rows < 1) {
+    } else if (MODEL_NEEDS_X(sr->ci) && rows < 1) {
 	warnbox(_("You must specify an independent variable"));
 	sr->error = 1;
 	return;
