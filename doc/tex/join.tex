@@ -289,13 +289,13 @@ Two extensions of the basic key mechanism are available.
 \subsection{The number of key-matches}
 
 The example shown in Table~\ref{tab:csv} is an instance of a 1 to 1
-match, in the sense that applying the matching criterion produces
-exactly one value of the variable \texttt{xh} corresponding to each
-row of the inner dataset. Two other possibilities arise: it may be
-that some rows in the inner dataset have no match on the right, and/or
-some rows on the left have multiple matches on the right. The latter
-case (``1 to $n$ matching'') is addressed in detail in the next
-section; here we discuss the former.
+match: applying the matching criterion produces exactly one value of
+the variable \texttt{xh} corresponding to each row of the inner
+dataset. Two other possibilities arise: it may be that some rows in
+the inner dataset have no match on the right, and/or some rows on the
+left have multiple matches on the right. The latter case (``1 to $n$
+matching'') is addressed in detail in the next section; here we
+discuss the former.
 
 The case where there's no match on the right is handled differently
 depending on whether the join operation is adding a new series to the
@@ -307,16 +307,17 @@ updated---or in other words, we do \textit{not} overwite an existing
 value on the left with \texttt{NA} in the case where there's no match
 on the right.
 
-These default behaviors may not produce the desired effect in every
-case but gretl provides the equipment to modify the effect if need be.
-We will illustrate with two scenarios.
+These defaults may not produce the desired results in every case but
+gretl provides the means to modify the effect if need be.  We will
+illustrate with two scenarios.
 
 First, consider adding a new series recording ``number of hours
 worked'' when the inner dataset contains individuals and the outer
 file contains data on jobs. If an individual does not appear in the
-jobs file, we may want to take her hours worked as implicitly zero. In
-this case gretl's \texttt{misszero()} function can be used to turn
-\texttt{NA} into 0 in the imported data.
+jobs file, we may want to take her hours worked as implicitly zero
+rather than \texttt{NA}. In this case gretl's \texttt{misszero()}
+function can be used to turn \texttt{NA} into 0 in the imported
+series.
 
 Second, consider updating a series via join, when the outer file is
 presumed to contain all available updated values, such that ``no
@@ -329,9 +330,11 @@ called \texttt{pid}. The solution is then
 join update.csv tmpvar --data=x --ikey=pid
 x = tmpvar
 \end{code}
-In a more complicated case one might use the \texttt{smpl} command to
-limit the sample range before assigning \texttt{tmpvar} to \texttt{x},
-or use the conditional assignment operator \texttt{?:}.
+As a new variable, \texttt{tmpvar} will get \texttt{NA} for all
+unmatched rows; we then transcribe its values into \texttt{x}.  In a
+more complicated case one might use the \texttt{smpl} command to limit
+the sample range before assigning \texttt{tmpvar} to \texttt{x}, or
+use the conditional assignment operator \texttt{?:}.
 
 One further point should be mentioned here. Given some missing values
 in an imported series you may sometimes want to know whether (a) 
