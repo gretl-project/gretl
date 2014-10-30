@@ -1975,6 +1975,51 @@ static int read_binary_data (const char *fname, DATASET *dset,
     return err;
 }
 
+static int read_binary_data_subset (const char *fname,
+				    DATASET *dset,
+				    int order,
+				    int fullv,
+				    const int *vlist)
+{
+    char *bname;
+    FILE *fp;
+    int err = 0;
+
+    bname = switch_ext_new(fname, "bin");
+    fp = gretl_fopen(bname, "rb");
+
+    if (fp == NULL) {
+	err = E_FOPEN;
+    } else {
+	int T = dset->n;
+	long offset = T * sizeof(double);
+	size_t got;
+	int i, k = 1;
+	    
+	err = read_binary_header(fp, order);
+	
+	for (i=1; i<fullv && !err; i++) {
+	    if (in_gretl_list(vlist, i)) {
+		got = fread(dset->Z[k++], sizeof(double), T, fp);
+		if (got != T) {
+		    err = E_DATA;
+		}
+	    } else {
+		fseek(fp, offset, SEEK_CUR);
+	    }
+	}
+	fclose(fp);
+    }
+
+    free(bname);
+
+    if (!err && order != G_BYTE_ORDER) {
+	gdt_swap_endianness(dset);
+    }
+
+    return err;
+}
+
 static void write_binary_order (FILE *fp)
 {
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
@@ -2596,6 +2641,197 @@ static int process_varlist (xmlNodePtr node, DATASET *dset)
     return err;
 }
 
+static int series_wanted (const char *name, const char **vnames, int nv)
+{
+    int i;
+
+    for (i=0; i<nv; i++) {
+	if (vnames[i] != NULL && !strcmp(name, vnames[i])) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static int n_series_wanted (const char **vnames, int nv)
+{
+    int i, n = 0;
+
+    for (i=0; i<nv; i++) {
+	if (vnames[i] != NULL) {
+	    n++;
+	}
+    }
+
+    return n;
+}
+
+static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
+				   const char **vnames, int nv,
+				   int *fullv, int **pvlist)
+{
+    xmlNodePtr vars_node, cur;
+    xmlChar *tmp = xmlGetProp(node, (XUC) "count");
+    int *vlist = NULL;
+    int nv_wanted = 0;
+    int nv_found = 0;
+    int i, k, err = 0;
+
+    if (tmp != NULL) {
+	if (sscanf((char *) tmp, "%d", fullv) != 1) {
+	    err = E_DATA;
+	}
+	free(tmp);
+    } else {
+	err = E_DATA;
+    }
+
+    if (err) {
+	return err;
+    }
+
+    cur = node->xmlChildrenNode;
+    while (cur && xmlIsBlankNode(cur)) {
+	cur = cur->next;
+    }
+
+    if (cur == NULL) {
+	gretl_errmsg_set(_("Got no variables"));
+	return E_DATA;
+    }
+
+    vars_node = cur;
+    nv_wanted = n_series_wanted(vnames, nv);
+    nv_found = 0;
+
+    /* first pass: check for matches */
+    while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (XUC) "variable")) {
+	    tmp = xmlGetProp(cur, (XUC) "name");
+	    if (tmp != NULL) {
+		if (series_wanted((const char *) tmp, vnames, nv)) {
+		    nv_found++;
+		}
+		free(tmp);
+	    }
+	}	    
+	cur = cur->next;
+    }
+
+    if (nv_found < nv_wanted) {
+	return E_DATA;
+    }
+
+    /* allocate dataset */
+    dset->v = nv_wanted + 1;
+    if (!err && dataset_allocate_varnames(dset)) {
+	err = E_ALLOC;
+    }
+    if (!err) {
+	dset->Z = malloc(dset->v * sizeof *dset->Z);
+	if (dset->Z == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+    if (!err) {
+	vlist = gretl_list_new(nv_wanted);
+	if (vlist == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
+	return err;
+    }
+
+    /* second pass: actually read the info */
+
+    cur = vars_node;
+    k = i = 1;
+    
+    while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (XUC) "variable")) {
+	    int wanted = 0;
+	    
+	    tmp = xmlGetProp(cur, (XUC) "name");
+	    if (tmp != NULL) {
+		if (series_wanted((const char *) tmp, vnames, nv)) {
+		    wanted = 1;
+		    transcribe_string(dset->varname[k], (char *) tmp, VNAMELEN);
+		    vlist[k] = i;
+		}
+		free(tmp);
+	    } else {
+		return E_DATA;
+	    }
+
+	    if (!wanted) {
+		i++;
+		cur = cur->next;
+		continue;
+	    }
+
+	    tmp = xmlGetProp(cur, (XUC) "label");
+	    if (tmp != NULL) {
+		series_set_label(dset, k, (char *) tmp);
+		free(tmp);
+	    }
+
+	    tmp = xmlGetProp(cur, (XUC) "displayname");
+	    if (tmp != NULL) {
+		series_set_display_name(dset, k, (char *) tmp);
+		free(tmp);
+	    }
+
+	    tmp = xmlGetProp(cur, (XUC) "parent");
+	    if (tmp != NULL) {
+		series_set_parent(dset, k, (char *) tmp); 
+		free(tmp);
+	    }
+
+	    tmp = xmlGetProp(cur, (XUC) "transform");
+	    if (tmp != NULL) {
+		int ci = gretl_command_number((char *) tmp);
+
+		series_set_transform(dset, k, ci);
+		free(tmp);
+	    }
+	    tmp = xmlGetProp(cur, (XUC) "lag");
+	    if (tmp != NULL) {
+		series_set_lag(dset, k, atoi((char *) tmp));
+		free(tmp);
+	    }
+
+	    tmp = xmlGetProp(cur, (XUC) "compact-method");
+	    if (tmp != NULL) {
+		series_set_compact_method(dset, k, compact_string_to_int((char *) tmp));
+		free(tmp);
+	    }
+
+	    tmp = xmlGetProp(cur, (XUC) "discrete");
+	    if (tmp != NULL) {
+		if (!strcmp((char *) tmp, "true")) {
+		    series_set_flag(dset, k, VAR_DISCRETE);
+		}
+		free(tmp);
+	    }
+
+	    tmp = xmlGetProp(cur, (XUC) "role");
+	    if (tmp != NULL) {
+		free(tmp);
+	    }
+
+	    i++;
+	    k++;
+	}
+	
+	cur = cur->next;
+    }
+   
+    return err;
+}
+
 static int process_values (DATASET *dset, int t, char *s)
 {
     char *test;
@@ -2625,6 +2861,51 @@ static int process_values (DATASET *dset, int t, char *s)
 	}
 	if (t < dset->n) {
 	    dset->Z[i][t] = x;
+	}
+    }	
+
+    if (err && !gretl_errmsg_is_set()) {
+	gretl_errmsg_sprintf(_("Failed to parse data values at obs %d"), t+1);
+    }
+
+    return err;
+}
+
+static int process_values_subset (DATASET *dset, int t, char *s,
+				  int bigv, const int *vlist)
+{
+    char *test;
+    double x;
+    int i, k = 1;
+    int err = 0;
+
+    gretl_error_clear();
+
+    for (i=1; i<bigv && !err; i++) {
+	while (isspace(*s)) s++;
+	if (!in_gretl_list(vlist, i)) {
+	    s += strcspn(s, " \t\r\n");
+	} else {
+	    x = strtod(s, &test);
+	    if (errno) {
+		if (SMALLVAL(x)) {
+		    errno = 0; /* underflow, OK */
+		} else {
+		    fprintf(stderr, "%s: %d: bad data\n", __FILE__, __LINE__);
+		    perror(NULL);
+		    err = 1;
+		}
+	    } else if (!strncmp(test, "NA", 2)) {
+		x = NADBL;
+		s = test + 2;
+	    } else if (*test != '\0' && !isspace(*test)) {
+		err = 1;
+	    } else {
+		s = test;
+	    }
+	    if (t < dset->n) {
+		dset->Z[k++][t] = x;
+	    }
 	}
     }	
 
@@ -2794,6 +3075,125 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
     return err;
 }
 
+static int read_observations_subset (xmlDocPtr doc,
+				     xmlNodePtr node, 
+				     DATASET *dset,
+				     int binary,
+				     const char *fname,
+				     int fullv,
+				     const int *vlist)
+{
+    xmlNodePtr cur;
+    xmlChar *tmp;
+    int n, i, t;
+    int err = 0;
+
+    tmp = xmlGetProp(node, (XUC) "count");
+    if (tmp == NULL) {
+	return E_DATA;
+    } 
+
+    if (sscanf((char *) tmp, "%d", &n) == 1) {
+	dset->n = n;
+	free(tmp);
+    } else {
+	gretl_errmsg_set(_("Failed to parse number of observations"));
+	free(tmp);
+	return E_DATA;
+    }
+
+    if (dset->endobs[0] == '\0') {
+	sprintf(dset->endobs, "%d", dset->n);
+    }
+
+    dset->t2 = dset->n - 1;
+
+    for (i=0; i<dset->v; i++) {
+	dset->Z[i] = malloc(dset->n * sizeof **dset->Z);
+	if (dset->Z[i] == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    for (t=0; t<dset->n; t++) {
+	dset->Z[0][t] = 1.0;
+    }
+
+    if (binary) {
+	err = read_binary_data_subset(fname, dset, binary, fullv, vlist);
+	if (!dset->markers) {
+	    goto bailout;
+	}
+    }
+
+    /* now get individual obs info: labels and values */
+    cur = node->xmlChildrenNode;
+    while (cur && xmlIsBlankNode(cur)) {
+	cur = cur->next;
+    }
+
+    if (cur == NULL) {
+	gretl_errmsg_set(_("Got no observations\n"));
+	return E_DATA;
+    }
+
+    t = 0;
+    while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (XUC) "obs")) {
+
+	    if (dset->markers) {
+		tmp = xmlGetProp(cur, (XUC) "label");
+		if (tmp) {
+		    transcribe_string(dset->S[t], (char *) tmp, OBSLEN);
+		    free(tmp);
+		} else {
+		    gretl_errmsg_sprintf(_("Case marker missing at obs %d"), t+1);
+		    return E_DATA;
+		}
+	    }
+
+	    if (binary) {
+		t++;
+		continue;
+	    }
+
+	    tmp = xmlNodeListGetRawString(doc, cur->xmlChildrenNode, 1);
+
+	    if (tmp) {
+		if (process_values_subset(dset, t, (char *) tmp,
+					  fullv, vlist)) {
+		    return 1;
+		}
+		free(tmp);
+		t++;
+	    } else if (dset->v > 1) {
+		gretl_errmsg_sprintf(_("Values missing at observation %d"), t+1);
+		err = E_DATA;
+		goto bailout;
+	    } else {
+		t++;
+	    }
+	}	   
+ 
+	cur = cur->next;
+
+	if (cur != NULL && t == dset->n) {
+	    /* got too many observations */
+	    t = dset->n + 1;
+	    goto bailout;
+	}
+    }
+
+ bailout:
+
+    if (!err && t != dset->n) {
+	gretl_errmsg_set(_("Number of observations does not match declaration"));
+	err = E_DATA;
+    }
+
+    return err;
+}
+
 static int owner_id (const DATASET *dset, const char *s)
 {
     int i;
@@ -2807,24 +3207,26 @@ static int owner_id (const DATASET *dset, const char *s)
     return -1;
 }
 
-static int process_string_tables (xmlDocPtr doc, xmlNodePtr node, 
-				  DATASET *dset)
+static int process_string_tables (xmlDocPtr doc,
+				  xmlNodePtr node, 
+				  DATASET *dset,
+				  int subset)
 {
-    xmlNodePtr cur;
+    xmlNodePtr cur = NULL;
     xmlChar *tmp;
     int ntabs = 0;
     int err = 0;
 
     tmp = xmlGetProp(node, (XUC) "count");
+
     if (tmp == NULL) {
-	return E_DATA;
-    } 
-
-    if (sscanf((char *) tmp, "%d", &ntabs) != 1) {
 	err = E_DATA;
+    } else {
+	if (sscanf((char *) tmp, "%d", &ntabs) != 1) {
+	    err = E_DATA;
+	}
+	free(tmp);
     }
-
-    free(tmp);
 
     if (!err) {
 	cur = node->xmlChildrenNode;
@@ -2851,21 +3253,21 @@ static int process_string_tables (xmlDocPtr doc, xmlNodePtr node,
 		err = E_DATA;
 	    } else {
 		v = owner_id(dset, (const char *) owner);
-		if (v <= 0) {
+		if (v <= 0 && !subset) {
 		    err = E_DATA;
 		}
 	    }
-	    if (!err) {
+	    if (v > 0) {
 		strs = gretl_xml_get_strings_array(cur, doc, &n_strs, 
 						   0, &err);
-	    }
-	    if (!err) {
-		st = series_table_new(strs, n_strs);
-		if (st == NULL) {
-		    strings_array_free(strs, n_strs);
-		    err = E_ALLOC;
-		} else {
-		    series_attach_string_table(dset, v, st);
+		if (!err) {
+		    st = series_table_new(strs, n_strs);
+		    if (st == NULL) {
+			strings_array_free(strs, n_strs);
+			err = E_ALLOC;
+		    } else {
+			series_attach_string_table(dset, v, st);
+		    }
 		}
 	    }
 	    free(owner);
@@ -3324,7 +3726,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	    if (!gotvars) {
 		gretl_errmsg_set(_("Variables information is missing"));
 		err = 1;
-	    } else if (process_string_tables(doc, cur, tmpset)) {
+	    } else if (process_string_tables(doc, cur, tmpset, 0)) {
 		err = 1;
 	    }	    
 	} else if (!xmlStrcmp(cur->name, (XUC) "panel-info")) {
@@ -3414,6 +3816,150 @@ static int real_read_gdt (const char *fname, const char *srcname,
     return err;
 }
 
+static int real_read_gdt_subset (const char *fname,
+				 DATASET *dset,
+				 const char **vnames,
+				 int nv) 
+{
+    DATASET *tmpset;
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur;
+    int *vlist = NULL;
+    int gotvars = 0, gotobs = 0;
+    int caldata = 0;
+    int in_c_locale = 0;
+    int binary = 0;
+    int fullv = 0;
+    int err = 0;
+
+    gretl_error_clear();
+
+    tmpset = datainfo_new();
+    if (tmpset == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    err = gretl_xml_open_doc_root(fname, "gretldata", &doc, &cur);
+    if (err) {
+	goto bailout;
+    }
+
+    /* set some datainfo parameters */
+
+    err = xml_get_data_structure(cur, &tmpset->structure);
+    if (err) {
+	goto bailout;
+    } 
+
+    err = xml_get_data_frequency(cur, &tmpset->pd, &tmpset->structure);
+    if (err) {
+	goto bailout;
+    }   
+
+    gretl_push_c_numeric_locale();
+    in_c_locale = 1;
+
+    strcpy(tmpset->stobs, "1");
+    caldata = dataset_is_daily(tmpset) || dataset_is_weekly(tmpset);
+
+    err = xml_get_startobs(cur, &tmpset->sd0, tmpset->stobs, caldata);
+    if (err) {
+	goto bailout;
+    }     
+
+    *tmpset->endobs = '\0';
+    caldata = calendar_data(tmpset);
+
+    err = xml_get_endobs(cur, tmpset->endobs, caldata);
+    if (err) {
+	goto bailout;
+    }
+
+    binary = gdt_binary_order(cur);
+
+#if GDT_DEBUG
+    fprintf(stderr, "starting to walk XML tree...\n");
+#endif
+
+    /* Now walk the tree */
+    cur = cur->xmlChildrenNode;
+    while (cur != NULL && !err) {
+        if (!xmlStrcmp(cur->name, (XUC) "variables")) {
+	    if (process_varlist_subset(cur, tmpset, vnames, nv,
+				       &fullv, &vlist)) {
+		err = 1;
+	    } else {
+		gotvars = 1;
+	    }
+	} else if (!xmlStrcmp(cur->name, (XUC) "observations")) {
+	    if (!gotvars) {
+		gretl_errmsg_set(_("Variables information is missing"));
+		err = 1;
+	    } else if (read_observations_subset(doc, cur, tmpset, 
+						binary, fname,
+						fullv, vlist)) {
+		err = 1;
+	    } else {
+		gotobs = 1;
+	    }
+	} else if (!xmlStrcmp(cur->name, (XUC) "string-tables")) {
+	    if (!gotvars) {
+		gretl_errmsg_set(_("Variables information is missing"));
+		err = 1;
+	    } else if (process_string_tables(doc, cur, tmpset, 1)) {
+		err = 1;
+	    }	    
+	}
+	if (!err) {
+	    cur = cur->next;
+	}
+    }
+
+#if GDT_DEBUG
+    fprintf(stderr, "done walking XML tree...\n");
+#endif
+
+    if (!err && !gotvars) {
+	gretl_errmsg_set(_("Variables information is missing"));
+	err = 1;
+    }
+
+    if (!err && !gotobs) {
+	gretl_errmsg_set(_("No observations were found"));
+	err = 1;
+    }
+
+    if (!err && caldata && tmpset->S != NULL) {
+	check_for_daily_date_strings(tmpset);
+    }
+
+ bailout:
+
+    if (in_c_locale) {
+	gretl_pop_c_numeric_locale();
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+    }
+
+    free(vlist);
+
+    if (!err) {
+	*dset = *tmpset;
+	free(tmpset);
+    } else {
+	destroy_dataset(tmpset);
+    }
+
+#if GDT_DEBUG
+    fprintf(stderr, "gretl_read_gdt_subset: returning %d\n", err);
+#endif
+
+    return err;
+}
+
 /**
  * gretl_read_gdt:
  * @fname: name of file to open for reading.
@@ -3466,6 +4012,59 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
     } else {
 	/* plain XML file */
 	return real_read_gdt(fname, NULL, dset, opt, prn);
+    }
+}
+
+/**
+ * gretl_read_gdt_subset:
+ * @fname: name of file to open for reading.
+ * @dset: dataset struct.
+ * @vnames: array of names of series to extract.
+ * @nv: the number of elements in @vnames.
+ * 
+ * Read specified series from native file into @dset.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ */
+
+int gretl_read_gdt_subset (const char *fname, DATASET *dset, 
+			   const char **vnames, int nv)
+{
+    if (has_suffix(fname, ".gdtb")) {
+	/* zipfile with gdt + binary */
+	GError *gerr = NULL;
+	gchar *zdir;
+	int err;
+
+	zdir = g_strdup_printf("%stmp-unzip", gretl_dotdir());
+	err = gretl_mkdir(zdir);
+
+	if (!err) {
+	    err = gretl_unzip_datafile(fname, zdir, &gerr);
+	    if (gerr != NULL && err == 0) {
+		err = 1;
+	    } 
+	    if (err) {
+		if (gerr != NULL) {
+		    gretl_errmsg_set(gerr->message);
+		    g_error_free(gerr);
+		} else {
+		    gretl_errmsg_ensure("Problem opening data file");
+		}
+	    } else {
+		char xmlfile[FILENAME_MAX];
+
+		build_path(xmlfile, zdir, "data.xml", NULL);
+		err = real_read_gdt_subset(xmlfile, dset, vnames, nv);
+	    }
+	    gretl_deltree(zdir);
+	}
+
+	g_free(zdir);
+	return err;
+    } else {
+	/* plain XML file */
+	return real_read_gdt_subset(fname, dset, vnames, nv);
     }
 }
 
