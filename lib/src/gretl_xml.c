@@ -4022,7 +4022,8 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
  * @vnames: array of names of series to extract.
  * @nv: the number of elements in @vnames.
  * 
- * Read specified series from native file into @dset.
+ * Read specified series from native file into @dset,
+ * which should be "empty" on input.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
  */
