@@ -1941,45 +1941,11 @@ static int read_binary_header (FILE *fp, int order)
     return err;
 }
 
-static int read_binary_data (const char *fname, DATASET *dset,
-			     int order)
-{
-    char *bname;
-    FILE *fp;
-    size_t got;
-    int T = dset->n;
-    int i, err = 0;
-
-    bname = switch_ext_new(fname, "bin");
-    fp = gretl_fopen(bname, "rb");
-
-    if (fp == NULL) {
-	err = E_FOPEN;
-    } else {
-	err = read_binary_header(fp, order);
-	for (i=1; i<dset->v && !err; i++) {
-	    got = fread(dset->Z[i], sizeof(double), T, fp);
-	    if (got != T) {
-		err = E_DATA;
-	    }
-	}
-	fclose(fp);
-    }
-
-    free(bname);
-
-    if (!err && order != G_BYTE_ORDER) {
-	gdt_swap_endianness(dset);
-    }
-
-    return err;
-}
-
-static int read_binary_data_subset (const char *fname,
-				    DATASET *dset,
-				    int order,
-				    int fullv,
-				    const int *vlist)
+static int read_binary_data (const char *fname, 
+			     DATASET *dset,
+			     int order,
+			     int fullv,
+			     const int *vlist)
 {
     char *bname;
     FILE *fp;
@@ -1995,11 +1961,11 @@ static int read_binary_data_subset (const char *fname,
 	long offset = T * sizeof(double);
 	size_t got;
 	int i, k = 1;
-	    
+
 	err = read_binary_header(fp, order);
-	
+
 	for (i=1; i<fullv && !err; i++) {
-	    if (in_gretl_list(vlist, i)) {
+	    if (vlist == NULL || in_gretl_list(vlist, i)) {
 		got = fread(dset->Z[k++], sizeof(double), T, fp);
 		if (got != T) {
 		    err = E_DATA;
@@ -2691,6 +2657,10 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 	return err;
     }
 
+#if GDT_DEBUG
+    fprintf(stderr, "process_varlist_subset: fullv = %d\n", fullv);
+#endif
+
     cur = node->xmlChildrenNode;
     while (cur && xmlIsBlankNode(cur)) {
 	cur = cur->next;
@@ -2719,11 +2689,16 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 	cur = cur->next;
     }
 
+#if GDT_DEBUG
+    fprintf(stderr, " nv_wanted = %d, nv_found = %d\n", nv_wanted, nv_found);
+#endif
+
     if (nv_found < nv_wanted) {
 	return E_DATA;
     }
 
-    /* allocate dataset */
+    /* allocate the dataset content */
+
     dset->v = nv_wanted + 1;
     if (!err && dataset_allocate_varnames(dset)) {
 	err = E_ALLOC;
@@ -2734,8 +2709,9 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 	    err = E_ALLOC;
 	}
     }
+
     if (!err) {
-	vlist = gretl_list_new(nv_wanted);
+	*pvlist = vlist = gretl_list_new(nv_wanted);
 	if (vlist == NULL) {
 	    err = E_ALLOC;
 	}
@@ -2828,51 +2804,14 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 	
 	cur = cur->next;
     }
-   
-    return err;
-}
-
-static int process_values (DATASET *dset, int t, char *s)
-{
-    char *test;
-    double x;
-    int i, err = 0;
-
-    gretl_error_clear();
-
-    for (i=1; i<dset->v && !err; i++) {
-	while (isspace(*s)) s++;
-	x = strtod(s, &test);
-	if (errno) {
-	    if (SMALLVAL(x)) {
-		errno = 0; /* underflow, OK */
-	    } else {
-		fprintf(stderr, "%s: %d: bad data\n", __FILE__, __LINE__);
-		perror(NULL);
-		err = 1;
-	    }
-	} else if (!strncmp(test, "NA", 2)) {
-	    x = NADBL;
-	    s = test + 2;
-	} else if (*test != '\0' && !isspace(*test)) {
-	    err = 1;
-	} else {
-	    s = test;
-	}
-	if (t < dset->n) {
-	    dset->Z[i][t] = x;
-	}
-    }	
-
-    if (err && !gretl_errmsg_is_set()) {
-	gretl_errmsg_sprintf(_("Failed to parse data values at obs %d"), t+1);
-    }
 
     return err;
 }
 
-static int process_values_subset (DATASET *dset, int t, char *s,
-				  int bigv, const int *vlist)
+static int process_values (DATASET *dset, 
+			   int t, char *s,
+			   int fullv, 
+			   const int *vlist)
 {
     char *test;
     double x;
@@ -2881,9 +2820,9 @@ static int process_values_subset (DATASET *dset, int t, char *s,
 
     gretl_error_clear();
 
-    for (i=1; i<bigv && !err; i++) {
+    for (i=1; i<fullv && !err; i++) {
 	while (isspace(*s)) s++;
-	if (!in_gretl_list(vlist, i)) {
+	if (vlist != NULL && !in_gretl_list(vlist, i)) {
 	    s += strcspn(s, " \t\r\n");
 	} else {
 	    x = strtod(s, &test);
@@ -2916,7 +2855,7 @@ static int process_values_subset (DATASET *dset, int t, char *s,
     return err;
 }
 
-#define GDT_DEBUG 0
+#define GDT_DEBUG 2
 
 static int read_observations (xmlDocPtr doc, xmlNodePtr node, 
 			      DATASET *dset, long progress,
@@ -2983,7 +2922,7 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
     }
 
     if (binary) {
-	err = read_binary_data(fname, dset, binary);
+	err = read_binary_data(fname, dset, binary, dset->v, NULL);
 	if (!dset->markers) {
 	    goto bailout;
 	}
@@ -3031,7 +2970,7 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
 	    tmp = xmlNodeListGetRawString(doc, cur->xmlChildrenNode, 1);
 
 	    if (tmp) {
-		if (process_values(dset, t, (char *) tmp)) {
+		if (process_values(dset, t, (char *) tmp, dset->v, NULL)) {
 		    return 1;
 		}
 		free(tmp);
@@ -3120,7 +3059,7 @@ static int read_observations_subset (xmlDocPtr doc,
     }
 
     if (binary) {
-	err = read_binary_data_subset(fname, dset, binary, fullv, vlist);
+	err = read_binary_data(fname, dset, binary, fullv, vlist);
 	if (!dset->markers) {
 	    goto bailout;
 	}
@@ -3160,8 +3099,7 @@ static int read_observations_subset (xmlDocPtr doc,
 	    tmp = xmlNodeListGetRawString(doc, cur->xmlChildrenNode, 1);
 
 	    if (tmp) {
-		if (process_values_subset(dset, t, (char *) tmp,
-					  fullv, vlist)) {
+		if (process_values(dset, t, (char *) tmp, fullv, vlist)) {
 		    return 1;
 		}
 		free(tmp);
