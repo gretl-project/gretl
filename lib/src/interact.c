@@ -1450,11 +1450,15 @@ static int lib_open_append (ExecState *s,
     }
 
     if (cmd->ci == JOIN) {
-	if (ftype == GRETL_CSV) {
+	if (ftype == GRETL_CSV || ftype == GRETL_XML_DATA ||
+	    ftype == GRETL_BINARY_DATA) {
 	    dset->modflag = 0;
+	    if (ftype != GRETL_CSV) {
+		opt |= OPT_G;
+	    }
 	    err = lib_join_data(s, newfile, dset, opt, prn);
 	} else {
-	    gretl_errmsg_set("Only CSV files are supported for now");
+	    gretl_errmsg_set("Only CSV and gdt[b] files are supported for now");
 	    err = E_DATA;
 	}
 	if (err) {
@@ -1483,7 +1487,7 @@ static int lib_open_append (ExecState *s,
 				 dset, opt, vprn);
     } else if (OTHER_IMPORT(ftype)) {
 	err = import_other(newfile, ftype, dset, opt, vprn);
-    } else if (ftype == GRETL_XML_DATA) {
+    } else if (ftype == GRETL_XML_DATA || ftype == GRETL_BINARY_DATA) {
 	err = gretl_read_gdt(newfile, dset, opt, vprn);
     } else if (ftype == GRETL_ODBC) {
 	err = set_odbc_dsn(cmd->param, vprn);

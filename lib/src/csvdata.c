@@ -23,6 +23,7 @@
 #include "usermat.h"
 #include "uservar.h"
 #include "genparse.h"
+#include "gretl_xml.h"
 #include "csvdata.h"
 
 #ifdef WIN32
@@ -72,6 +73,7 @@ struct csvjoin_ {
     char colnums[JOIN_MAXCOL];
     int *timecols;
     csvdata *c;
+    DATASET *dset;
 };    
 
 struct csvdata_ {
@@ -315,7 +317,7 @@ static csvdata *csvdata_new (DATASET *dset)
     } else {
 	c->delim = get_data_export_delimiter();
 	c->decpoint = get_data_export_decpoint();
-	if (dset->Z != NULL) {
+	if (dset != NULL && dset->Z != NULL) {
 	    c->flags |= CSV_HAVEDATA;
 	}
 #if CDEBUG
@@ -3049,13 +3051,12 @@ static int real_import_csv (const char *fname,
 			    const char *cols, 
 			    const char *rows,
 			    csvjoin *join,
-			    gretlopt opt, 
+			    gretlopt opt,
 			    PRN *prn)
 {
     csvdata *c = NULL;
     FILE *fp = NULL;
     PRN *mprn = NULL;
-    int newdata = (dset->Z == NULL);
     gchar *altname = NULL;
     int recode = 0;
     int popit = 0;
@@ -3110,6 +3111,7 @@ static int real_import_csv (const char *fname,
 
     if (join != NULL) {
 	c->jspec = join;
+	c->flags |= CSV_HAVEDATA;
     } else {
         if (opt & OPT_A) {
 	    csv_set_all_cols(c);
@@ -3317,7 +3319,7 @@ static int real_import_csv (const char *fname,
     }
 
     if (!joining(c)) {
-	int merge = (dset->Z != NULL);
+	int newdata = (dset->Z == NULL);
 
 	/* not doing a special "join" operation */
 	err = merge_or_replace_data(dset, &c->dset, opt, prn);
@@ -3327,7 +3329,7 @@ static int real_import_csv (const char *fname,
 	    c->descrip = NULL;
 	}
 
-	if (!err && !merge) {
+	if (!err && newdata) {
 	    dataset_add_import_info(dset, fname, GRETL_CSV);
 	}
     }
@@ -3807,6 +3809,15 @@ static int join_row_wanted (jr_filter *filter, int i)
     return ret;
 }
 
+static DATASET *outer_dataset (csvjoin *jspec)
+{
+    if (jspec->c != NULL) {
+	return jspec->c->dset;
+    } else {
+	return jspec->dset;
+    }
+}
+
 #define using_auto_keys(j) (j->auto_keys->timefmt != NULL)
 
 static joiner *build_joiner (csvjoin *jspec, 
@@ -3818,7 +3829,7 @@ static joiner *build_joiner (csvjoin *jspec,
 			     int *err)
 {
     joiner *jr = NULL;
-    DATASET *r_dset = jspec->c->dset;
+    DATASET *r_dset = outer_dataset(jspec);
     int keycol  = jspec->colnums[JOIN_KEY];
     int valcol  = jspec->colnums[JOIN_VAL];
     int key2col = jspec->colnums[JOIN_KEY2];
@@ -4077,7 +4088,7 @@ static int joiner_sort (joiner *jr)
 
 static void joiner_print (joiner *jr)
 {
-    const char **labels = NULL;
+    char **labels = NULL;
     jr_row *row;
     int i;
 
@@ -5004,7 +5015,7 @@ static int join_data_type_check (csvjoin *jspec,
 				 int targvar, 
 				 AggrType aggr)
 {
-    DATASET *r_dset = jspec->c->dset;
+    DATASET *r_dset = outer_dataset(jspec);
     int valcol = jspec->colnums[JOIN_VAL];
     int lstr = -1, rstr = -1;
     int err = 0;
@@ -5041,7 +5052,7 @@ static int aggregation_type_check (csvjoin *jspec, AggrType aggr)
 	/* the aggregation method requires numerical data: flag
 	   an error if we got strings instead 
 	*/
-	const DATASET *dset = jspec->c->dset;
+	const DATASET *dset = outer_dataset(jspec);
 	int aggcol = 0;
 
 	if (jspec->colnums[JOIN_AUX] > 0) {
@@ -5105,11 +5116,12 @@ static int key_types_error (int lstr, int rstr)
     return E_TYPES;
 }
 
-static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
+static int set_up_outer_keys (csvjoin *jspec, const DATASET *l_dset,
 			      gretlopt opt, const int *ikeyvars, 
 			      int *okeyvars, obskey *auto_keys, 
 			      int *str_keys)
 {
+    const DATASET *r_dset = outer_dataset(jspec);
     int lstr, rstr;
     int err = 0;
 
@@ -5125,7 +5137,7 @@ static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
 
     if (opt & OPT_K) {
 	/* time key on right */
-	rstr = is_string_valued(jspec->c->dset, okeyvars[1]);
+	rstr = is_string_valued(r_dset, okeyvars[1]);
 	auto_keys->keycol = okeyvars[1];
 	if (!rstr) {
 	    /* flag the need to convert to string later */
@@ -5133,8 +5145,8 @@ static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
 	}
     } else {
 	/* regular key(s) on right */
-	lstr = is_string_valued(dset, ikeyvars[1]);
-	rstr = is_string_valued(jspec->c->dset, okeyvars[1]);
+	lstr = is_string_valued(l_dset, ikeyvars[1]);
+	rstr = is_string_valued(r_dset, okeyvars[1]);
 
 	if (lstr != rstr) {
 	    err = key_types_error(lstr, rstr);
@@ -5143,8 +5155,8 @@ static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
 	}
 
 	if (!err && okeyvars[2] > 0) {
-	    lstr = is_string_valued(dset, ikeyvars[2]);
-	    rstr = is_string_valued(jspec->c->dset, okeyvars[2]);
+	    lstr = is_string_valued(l_dset, ikeyvars[2]);
+	    rstr = is_string_valued(r_dset, okeyvars[2]);
 	    if (lstr != rstr) {
 		err = key_types_error(lstr, rstr);
 	    } else if (lstr) {
@@ -5156,9 +5168,56 @@ static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
     return err;
 }
 
+static int join_import_gdt (const char *fname, 
+			    csvjoin *join,
+			    gretlopt opt)
+{
+    char **vnames = NULL;
+    int i, vi, nv = 0;
+    int err = 0;
+    
+    /* form array of unique wanted series names */
+    for (i=0; i<JOIN_MAXCOL && !err; i++) {
+	if (join->colnames[i] != NULL) {
+	    err = strings_array_add_uniq(&vnames, &nv, join->colnames[i]);
+	}
+    }
+
+    if (!err) {
+	join->dset = datainfo_new();
+	if (join->dset == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	err = gretl_read_gdt_subset(fname, join->dset,
+				    (const char **) vnames,
+				    nv, opt);
+    }
+
+    if (!err) {
+	/* match up the imported series with their roles */
+	for (i=0; i<JOIN_MAXCOL && !err; i++) {
+	    if (join->colnames[i] != NULL) {
+		vi = current_series_index(join->dset, join->colnames[i]);
+		if (vi < 0) {
+		    err = E_DATA;
+		} else {
+		    join->colnums[i] = vi;
+		}
+	    }
+	}
+    }
+
+    strings_array_free(vnames, nv);
+
+    return err;
+}
+
 /**
  * join_from_csv:
- * @fname: name of delimited text data file.
+ * @fname: name of data file.
  * @varname: name of variable to create or modify.
  * @dset: pointer to dataset.
  * @ikeyvars: list of 1 or 2 "inner" key variables, or NULL.
@@ -5174,8 +5233,8 @@ static int set_up_outer_keys (csvjoin *jspec, const DATASET *dset,
  * @opt: may contain OPT_V for verbose operation.
  * @prn: gretl printing struct (or NULL).
  * 
- * Opens a delimited text data file and carries out a "join" operation
- * to pull data into the current working dataset.
+ * Opens a delimited text data file or gdt file and carries out a 
+ * "join" operation to pull data into the current working dataset.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
  */
@@ -5195,6 +5254,7 @@ int join_from_csv (const char *fname,
 		   gretlopt opt,
 		   PRN *prn)
 {
+    DATASET *outer_dset = NULL;
     csvjoin jspec = {0};
     joiner *jr = NULL;
     jr_filter *filter = NULL;
@@ -5336,11 +5396,19 @@ int join_from_csv (const char *fname,
      */
 
     if (!err) {
-	err = real_import_csv(fname, dset, NULL, NULL,
-			      &jspec, opt, verbose ? prn : NULL);
+	if (opt & OPT_G) {
+	    /* FIXME OPT_M? */
+	    err = join_import_gdt(fname, &jspec, OPT_NONE);
+	} else {
+	    err = real_import_csv(fname, NULL, NULL, NULL,
+				  &jspec, opt, verbose ? prn : NULL);
+	}
+	if (!err) {
+	    outer_dset = outer_dataset(&jspec);
+	}
 #if CDEBUG > 1
 	if (!err) {
-	    print_outer_dataset(jspec.c->dset, fname);
+	    print_outer_dataset(outer_dset, fname);
 	}
 #endif
 	if (!err) {
@@ -5356,7 +5424,7 @@ int join_from_csv (const char *fname,
 
     if (!err && verbose) {
 	pprintf(prn, _("Outer dataset: read %d columns and %d rows\n"),
-		jspec.c->dset->v - 1, jspec.c->dset->n);
+		outer_dset->v - 1, outer_dset->n);
     }
 
     /* Step 5: set up keys and check for conformability errors */
@@ -5367,7 +5435,7 @@ int join_from_csv (const char *fname,
     }
 
     if (!err && n_keys == 0 && dataset_is_time_series(dset)) {
-	err = auto_keys_check(dset, jspec.c->dset, opt, tkeyfmt,
+	err = auto_keys_check(dset, outer_dset, opt, tkeyfmt,
 			      &auto_keys, &n_keys);
     }
 
@@ -5465,11 +5533,17 @@ int join_from_csv (const char *fname,
     if (auto_keys.timefmt != NULL) {
 	free(auto_keys.timefmt);
     }
+
     if (jspec.timecols != NULL) {
 	free(jspec.timecols);
-    }    
+    }
 
-    csvdata_free(jspec.c);
+    if (jspec.c != NULL) {
+	csvdata_free(jspec.c);
+    } else if (jspec.dset != NULL) {
+	destroy_dataset(jspec.dset);
+    }
+    
     joiner_destroy(jr);
     jr_filter_destroy(filter);
 

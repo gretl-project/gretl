@@ -2612,7 +2612,7 @@ static int series_wanted (const char *name, const char **vnames, int nv)
     int i;
 
     for (i=0; i<nv; i++) {
-	if (vnames[i] != NULL && !strcmp(name, vnames[i])) {
+	if (!strcmp(name, vnames[i])) {
 	    return 1;
 	}
     }
@@ -2620,18 +2620,7 @@ static int series_wanted (const char *name, const char **vnames, int nv)
     return 0;
 }
 
-static int n_series_wanted (const char **vnames, int nv)
-{
-    int i, n = 0;
-
-    for (i=0; i<nv; i++) {
-	if (vnames[i] != NULL) {
-	    n++;
-	}
-    }
-
-    return n;
-}
+#define GDT_DEBUG 0
 
 static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 				   const char **vnames, int nv,
@@ -2640,7 +2629,6 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
     xmlNodePtr vars_node, cur;
     xmlChar *tmp = xmlGetProp(node, (XUC) "count");
     int *vlist = NULL;
-    int nv_wanted = 0;
     int nv_found = 0;
     int i, k, err = 0;
 
@@ -2657,8 +2645,10 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 	return err;
     }
 
+    *fullv += 1; /* allow for const */
+
 #if GDT_DEBUG
-    fprintf(stderr, "process_varlist_subset: fullv = %d\n", fullv);
+    fprintf(stderr, "process_varlist_subset: fullv = %d\n", *fullv);
 #endif
 
     cur = node->xmlChildrenNode;
@@ -2672,7 +2662,6 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
     }
 
     vars_node = cur;
-    nv_wanted = n_series_wanted(vnames, nv);
     nv_found = 0;
 
     /* first pass: check for matches */
@@ -2690,16 +2679,16 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
     }
 
 #if GDT_DEBUG
-    fprintf(stderr, " nv_wanted = %d, nv_found = %d\n", nv_wanted, nv_found);
+    fprintf(stderr, " nv_wanted = %d, nv_found = %d\n", nv, nv_found);
 #endif
 
-    if (nv_found < nv_wanted) {
+    if (nv_found < nv) {
 	return E_DATA;
     }
 
     /* allocate the dataset content */
 
-    dset->v = nv_wanted + 1;
+    dset->v = nv + 1;
     if (!err && dataset_allocate_varnames(dset)) {
 	err = E_ALLOC;
     }
@@ -2711,7 +2700,7 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
     }
 
     if (!err) {
-	*pvlist = vlist = gretl_list_new(nv_wanted);
+	*pvlist = vlist = gretl_list_new(nv);
 	if (vlist == NULL) {
 	    err = E_ALLOC;
 	}
@@ -2854,8 +2843,6 @@ static int process_values (DATASET *dset,
 
     return err;
 }
-
-#define GDT_DEBUG 2
 
 static int read_observations (xmlDocPtr doc, xmlNodePtr node, 
 			      DATASET *dset, long progress,
@@ -3020,7 +3007,8 @@ static int read_observations_subset (xmlDocPtr doc,
 				     int binary,
 				     const char *fname,
 				     int fullv,
-				     const int *vlist)
+				     const int *vlist,
+				     gretlopt opt)
 {
     xmlNodePtr cur;
     xmlChar *tmp;
@@ -3039,6 +3027,20 @@ static int read_observations_subset (xmlDocPtr doc,
 	gretl_errmsg_set(_("Failed to parse number of observations"));
 	free(tmp);
 	return E_DATA;
+    }
+
+    if (opt & OPT_M) {
+	tmp = xmlGetProp(node, (XUC) "labels");
+	if (tmp) {
+	    if (!strcmp((char *) tmp, "true")) {
+		if (dataset_allocate_obs_markers(dset)) {
+		    return E_ALLOC;
+		}
+	    }
+	    free(tmp);
+	} else {
+	    return E_DATA;
+	}
     }
 
     if (dset->endobs[0] == '\0') {
@@ -3100,7 +3102,7 @@ static int read_observations_subset (xmlDocPtr doc,
 
 	    if (tmp) {
 		if (process_values(dset, t, (char *) tmp, fullv, vlist)) {
-		    return 1;
+		    return E_DATA;
 		}
 		free(tmp);
 		t++;
@@ -3757,7 +3759,8 @@ static int real_read_gdt (const char *fname, const char *srcname,
 static int real_read_gdt_subset (const char *fname,
 				 DATASET *dset,
 				 const char **vnames,
-				 int nv) 
+				 int nv,
+				 gretlopt opt) 
 {
     DATASET *tmpset;
     xmlDocPtr doc = NULL;
@@ -3836,7 +3839,7 @@ static int real_read_gdt_subset (const char *fname,
 		err = 1;
 	    } else if (read_observations_subset(doc, cur, tmpset, 
 						binary, fname,
-						fullv, vlist)) {
+						fullv, vlist, opt)) {
 		err = 1;
 	    } else {
 		gotobs = 1;
@@ -3959,6 +3962,8 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
  * @dset: dataset struct.
  * @vnames: array of names of series to extract.
  * @nv: the number of elements in @vnames.
+ * @opt: may include OPT_M to retrieve the observation
+ * markers associated with the data, if any.
  * 
  * Read specified series from native file into @dset,
  * which should be "empty" on input.
@@ -3967,7 +3972,8 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
  */
 
 int gretl_read_gdt_subset (const char *fname, DATASET *dset, 
-			   const char **vnames, int nv)
+			   const char **vnames, int nv,
+			   gretlopt opt)
 {
     if (has_suffix(fname, ".gdtb")) {
 	/* zipfile with gdt + binary */
@@ -3994,7 +4000,8 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 		char xmlfile[FILENAME_MAX];
 
 		build_path(xmlfile, zdir, "data.xml", NULL);
-		err = real_read_gdt_subset(xmlfile, dset, vnames, nv);
+		err = real_read_gdt_subset(xmlfile, dset, vnames,
+					   nv, opt);
 	    }
 	    gretl_deltree(zdir);
 	}
@@ -4003,7 +4010,7 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 	return err;
     } else {
 	/* plain XML file */
-	return real_read_gdt_subset(fname, dset, vnames, nv);
+	return real_read_gdt_subset(fname, dset, vnames, nv, opt);
     }
 }
 

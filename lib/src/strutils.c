@@ -1576,6 +1576,53 @@ int strings_array_add (char ***pS, int *n, const char *p)
 }
 
 /**
+ * strings_array_add_uniq:
+ * @pS: pointer to strings array.
+ * @n: location of present number of strings in array.
+ * @p: string to test for addition to array.
+ *
+ * If the array does not already include a copy of @p,
+ * allocates storage for an extra member of @pS and adds a
+ * copy of string @p in the last position. On successful
+ * addition the content of @n is incremented by 1.
+ * 
+ * Returns: 0 on success, %E_ALLOC on failure.
+ */
+
+int strings_array_add_uniq (char ***pS, int *n, const char *p)
+{
+    char **Tmp, **S = *pS;
+    int m = *n;
+    int i;
+
+    for (i=0; i<m; i++) {
+	if (S[i] != NULL && strcmp(S[i], p) == 0) {
+	    return 0; /* no-op */
+	}
+    }
+
+    Tmp = realloc(*pS, (m + 1) * sizeof *Tmp);
+    if (Tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    *pS = Tmp;
+
+    if (p != NULL) {
+	Tmp[m] = gretl_strdup(p);
+	if (Tmp[m] == NULL) {
+	    return E_ALLOC;
+	}
+    } else {
+	Tmp[m] = NULL;
+    }
+    
+    *n += 1;
+
+    return 0;
+}
+
+/**
  * strings_array_new_with_length:
  * @nstrs: number of strings in array.
  * @len: number of bytes per string.

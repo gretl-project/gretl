@@ -843,17 +843,6 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
 	vprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
     }
 
-#if 0 /* testing */
-    if (ftype == GRETL_XML_DATA) {
-	const char *vnames[] = {
-	    "ENROLL", "REV", "INCOME"
-	};
-	int nv = 3;
-
-	err = gretl_read_gdt_subset(newfile, dset, vnames, nv);
-    } else 
-#endif
-
     if (ftype == GRETL_XML_DATA || ftype == GRETL_BINARY_DATA) {
 	err = gretl_read_gdt(newfile, dset, opt, vprn);
     } else if (ftype == GRETL_CSV) {
