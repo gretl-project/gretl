@@ -5527,13 +5527,11 @@ static double real_clogit_fi (int T, int k, int r,
 	ret = 1.0;
     } else if (k == 1) {
 	ret = 0.0;
-	for (i=0; i<r; i++) {
-	    if (i < T) {
-		x = exp(gretl_vector_get(z, i));
-		ret += x;
-		if (do_score) {
-		    gretl_vector_set(df, i, x);
-		}
+	for (i=0; i<T; i++) {
+	    x = exp(gretl_vector_get(z, i));
+	    ret += x;
+	    if (do_score) {
+		gretl_vector_set(df, i, x);
 	    }
 	}
     } else if (k == 2) {
@@ -5577,8 +5575,8 @@ static double real_clogit_fi (int T, int k, int r,
 	}
 	ret = exp(ret);
 	if (do_score) {
-	    for (i=0; i<r; i++) {
-		gretl_vector_set(df, i, (i<T) ? ret : 0);
+	    for (i=0; i<T; i++) {
+		gretl_vector_set(df, i, ret);
 	    }
 	}
     } else {
