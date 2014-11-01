@@ -2934,6 +2934,44 @@ static int do_compile_conditional (LOOPSET *loop, int j)
     }
 }
 
+static int model_command_post_process (ExecState *s,
+				       DATASET *dset,
+				       LOOPSET *loop,
+				       int j)
+{
+    int prog = loop_is_progressive(loop);
+    int moderr = check_gretl_errno();
+    int err = 0;
+
+    if (moderr) {
+	if (prog || model_print_deferred(s->cmd->opt)) {
+	    err = moderr;
+	} else {
+	    errmsg(moderr, s->prn);
+	}
+    } else if (prog && !(s->cmd->opt & OPT_Q)) {
+	LOOP_MODEL *lmod = get_loop_model_by_line(loop, j, &err);
+
+	if (!err) {
+	    err = loop_model_update(lmod, s->model);
+	    set_as_last_model(s->model, GRETL_OBJ_EQN);
+	}
+    } else if (model_print_deferred(s->cmd->opt)) {
+	MODEL *pmod = get_model_record_by_line(loop, j, &err);
+
+	if (!err) {
+	    swap_models(s->model, pmod);
+	    pmod->ID = j + 1;
+	    set_as_last_model(pmod, GRETL_OBJ_EQN);
+	    model_count_minus();
+	}
+    } else {
+	loop_print_save_model(s->model, dset, s->prn, s);
+    }
+
+    return err;
+}
+
 static int block_model (CMD *cmd)
 {
     return cmd->ci == END && 
@@ -2953,8 +2991,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
     char *line = s->line;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
-    MODEL *pmod;
-    LOOP_MODEL *lmod;
     char errline[MAXLINE];
     int indent0;
     int progressive;
@@ -2962,7 +2998,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
     int j, err = 0;
 
     /* for the benefit of the caller: register the fact that execution
-       of this loop is now under way */
+       of this loop is already under way */
     loop_execute = 0;
 
     if (loop == NULL) {
@@ -2973,7 +3009,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 
     indent0 = gretl_if_state_record();
     progressive = loop_is_progressive(loop);
-
     set_loop_on(loop_is_quiet(loop), progressive);
 
 #if LOOP_DEBUG
@@ -2992,9 +3027,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	fprintf(stderr, "*** top of loop: iter = %d\n", loop->iter);
 #endif
 	j = -1;
-
-	pmod = NULL;
-	lmod = NULL;
 
 	if (gretl_echo_on() && indexed_loop(loop) && !loop_is_quiet(loop)) {
 	    print_loop_progress(loop, dset, prn);
@@ -3118,36 +3150,10 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    } else if (cmd->ci == ENDLOOP) {
 		; /* implicit break */
 	    } else if (plain_model_ci(cmd->ci)) {
-		/* model may need special handling */
-		if (progressive && !(cmd->opt & OPT_Q)) {
-		    lmod = get_loop_model_by_line(loop, j, &err);
-		} else if (model_print_deferred(cmd->opt)) {
-		    pmod = get_model_record_by_line(loop, j, &err);
-		}
-		/* estimate the model called for */
+		err = gretl_cmd_exec(s, dset);
 		if (!err) {
-		    err = gretl_cmd_exec(s, dset);
-		}
-		if (!err) {
-		    int moderr = check_gretl_errno();
-
-		    if (moderr) {
-			if (progressive || model_print_deferred(cmd->opt)) {
-			    err = moderr;
-			} else {
-			    errmsg(moderr, prn);
-			}
-		    } else if (progressive && !(cmd->opt & OPT_Q)) {
-			err = loop_model_update(lmod, s->model);
-			set_as_last_model(s->model, GRETL_OBJ_EQN);
-		    } else if (model_print_deferred(cmd->opt)) {
-			swap_models(s->model, pmod);
-			pmod->ID = j + 1;
-			set_as_last_model(pmod, GRETL_OBJ_EQN);
-			model_count_minus();
-		    } else {
-			loop_print_save_model(s->model, dset, prn, s);
-		    }
+		    /* model may need special handling */
+		    err = model_command_post_process(s, dset, loop, j);
 		}
 	    } else if (cmd->ci == PRINT && progressive && !loop_literal(loop, j)) {
 		if (cmd_preparsed(loop, j)) {
