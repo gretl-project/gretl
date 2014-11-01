@@ -8843,7 +8843,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     } else if (t->t == HF_CLOGFI) {
 	const char *dfname = NULL;
 	gretl_matrix *z = NULL;
-	int T, K;
+	int T = 0, K = 0;
 
 	if (k < 3 || k > 4) {
 	    n_args_error(k, 4, t->t, p);
