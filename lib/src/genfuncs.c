@@ -5630,8 +5630,9 @@ double clogit_fi (int T, int k, gretl_matrix *z,
 	    if (df == NULL) {
 		*err = E_ALLOC;
 		return NADBL;
+	    } else {
+		newmat = 1;
 	    }
-	    newmat = 1;
 	}
     }
 
