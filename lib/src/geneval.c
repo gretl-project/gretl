@@ -8840,6 +8840,57 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret->v.m = gretl_quadrule_matrix_new(order, method, 
 						 a, b, &p->err);
 	} 
+    } else if (t->t == HF_CLOGFI) {
+	const char *dfname = NULL;
+	gretl_matrix *z = NULL;
+	int T, K;
+
+	if (k < 3 || k > 4) {
+	    n_args_error(k, 4, t->t, p);
+	} 
+	
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i == 0) {
+		if (scalar_node(e)) {
+		    T = node_get_int(e, p);
+		} else {
+		    node_type_error(t->t, 1, NUM, e, p);
+		}
+	    } else if (i == 1) {
+		if (scalar_node(e)) {
+		    K = node_get_int(e, p);
+		} else {
+		    node_type_error(t->t, 2, NUM, e, p);
+		}
+	    } else if (i == 2) {
+		if (e->t == MAT) {
+		    z = e->v.m;
+		} else {
+		    node_type_error(t->t, 3, MAT, e, p);
+		}
+	    } else if (i == 3) {
+		/* optional matrix-pointer for storing the
+		   derivative wrt z */
+		if (e->t == EMPTY) {
+		    ; /* OK */
+		} else if (e->t != U_ADDR) {
+		    node_type_error(t->t, 4, U_ADDR, e, p);
+		} else { 
+		    dfname = ptr_node_get_matrix_name(e, p);
+		}
+	    }
+	}
+
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
+
+	if (!p->err) {
+	    ret->v.xval = clogit_fi(T, K, z, dfname, &p->err);
+	} 
     }
 
     return ret;
@@ -11257,6 +11308,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_LOESS:
     case F_GHK:
     case F_QUADTAB:
+    case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;

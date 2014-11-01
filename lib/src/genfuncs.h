@@ -185,4 +185,7 @@ int fill_day_of_week_array (double *dow,
 			    const double *d,
 			    const DATASET *dset);
 
+double clogit_fi (int T, int k, gretl_matrix *z, 
+		  const char *dfname, int *err);
+
 #endif /* GENFUNCS_H */

@@ -411,6 +411,7 @@ enum {
     F_GHK,
     F_QUADTAB,
     F_ISOCONV,
+    HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
