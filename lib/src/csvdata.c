@@ -5216,7 +5216,7 @@ static int join_import_gdt (const char *fname,
 }
 
 /**
- * join_from_csv:
+ * gretl_join_data:
  * @fname: name of data file.
  * @varname: name of variable to create or modify.
  * @dset: pointer to dataset.
@@ -5239,20 +5239,20 @@ static int join_import_gdt (const char *fname,
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int join_from_csv (const char *fname,
-		   const char *varname,
-		   DATASET *dset, 
-		   const int *ikeyvars,
-		   const char *okey,
-		   const char *filtstr,
-		   const char *dataname,
-		   AggrType aggr,
-		   int seqval,
-		   const char *auxname,
-		   const char *tconvstr,
-		   const char *tconvfmt,
-		   gretlopt opt,
-		   PRN *prn)
+int gretl_join_data (const char *fname,
+		     const char *varname,
+		     DATASET *dset, 
+		     const int *ikeyvars,
+		     const char *okey,
+		     const char *filtstr,
+		     const char *dataname,
+		     AggrType aggr,
+		     int seqval,
+		     const char *auxname,
+		     const char *tconvstr,
+		     const char *tconvfmt,
+		     gretlopt opt,
+		     PRN *prn)
 {
     DATASET *outer_dset = NULL;
     csvjoin jspec = {0};

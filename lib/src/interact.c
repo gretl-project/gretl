@@ -1368,11 +1368,11 @@ static int lib_join_data (ExecState *s,
     }
 
     if (!err) {
-	err = join_from_csv(newfile, varname, dset, 
-			    ikeyvars, okey, filter,
-			    dataname, aggr, seqval, 
-			    auxname, tconvstr,
-			    tconvfmt, opt, prn);
+	err = gretl_join_data(newfile, varname, dset, 
+			      ikeyvars, okey, filter,
+			      dataname, aggr, seqval, 
+			      auxname, tconvstr,
+			      tconvfmt, opt, prn);
     }	
 
     free(ikeyvars);

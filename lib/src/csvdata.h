@@ -43,20 +43,20 @@ int test_markers_for_dates (DATASET *dset,
 
 void reverse_data (DATASET *dset, PRN *prn);
 
-int join_from_csv (const char *fname,
-		   const char *varname,
-		   DATASET *dset, 
-		   const int *ikeyvars,
-		   const char *okey,
-		   const char *filter,
-		   const char *dataname,
-		   AggrType agg,
-		   int seqval,
-		   const char *auxname,
-		   const char *tconvstr,
-		   const char *tconvfmt,
-		   gretlopt opt,
-		   PRN *prn);
+int gretl_join_data (const char *fname,
+		     const char *varname,
+		     DATASET *dset, 
+		     const int *ikeyvars,
+		     const char *okey,
+		     const char *filter,
+		     const char *dataname,
+		     AggrType agg,
+		     int seqval,
+		     const char *auxname,
+		     const char *tconvstr,
+		     const char *tconvfmt,
+		     gretlopt opt,
+		     PRN *prn);
 
 void normalize_join_colname (char *targ, const char *src, int k);
 
