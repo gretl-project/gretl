@@ -8806,7 +8806,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
     } else if (t->t == F_QUADTAB) {
-	int order = -1, method = 0;
+	int order = -1, method = 1;
 	double a = NADBL;
 	double b = NADBL;
 
