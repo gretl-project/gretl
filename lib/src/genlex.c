@@ -434,7 +434,6 @@ struct str_table funcs[] = {
     { F_STRINGIFY, "stringify" },
     { F_PUTARRAY,  "putarray" },
     { F_DOTWRITE,  "dotwrite" },
-    { HF_CLOGFI,   "_clogitfi" },
     { 0,           NULL }
 };
 
@@ -445,6 +444,11 @@ struct str_table func_alias[] = {
     { F_LOG,       "logs" },
     { F_OBSLABEL,  "date" },
     { F_BACKTICK,  "$" },
+    { 0,           NULL }
+};
+
+struct str_table hidden_funcs[] = {
+    { HF_CLOGFI,   "_clogitfi" },
     { 0,           NULL }
 };
 
@@ -492,6 +496,11 @@ static GHashTable *gretl_function_hash_init (void)
 	g_hash_table_insert(ht, (gpointer) funcs[i].str, 
 			    GINT_TO_POINTER(funcs[i].id));
     }
+
+    for (i=0; hidden_funcs[i].str != NULL; i++) {
+	g_hash_table_insert(ht, (gpointer) hidden_funcs[i].str, 
+			    GINT_TO_POINTER(hidden_funcs[i].id));
+    }    
 
     return ht;
 }
