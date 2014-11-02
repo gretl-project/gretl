@@ -2526,6 +2526,25 @@ int gretl_looping_quietly (void)
     return (state->flags & STATE_LOOP_QUIET)? 1 : 0;
 }
 
+static int iter_depth;
+
+void gretl_iteration_push (void)
+{
+    iter_depth++;
+}
+
+void gretl_iteration_pop (void)
+{
+    if (iter_depth > 0) {
+	iter_depth--;
+    }
+}
+
+int gretl_iteration_depth (void)
+{
+    return iter_depth;
+}
+
 int gretl_looping_progressive (void)
 {
     return (state->flags & STATE_LOOP_PROG)? 1 : 0;

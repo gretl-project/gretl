@@ -154,6 +154,10 @@ int gretl_looping_currently (void);
 int gretl_looping_quietly (void);
 int gretl_looping_progressive (void);
 
+void gretl_iteration_push (void);
+void gretl_iteration_pop (void);
+int gretl_iteration_depth (void);
+
 void gretl_set_batch_mode (int b);
 int gretl_in_batch_mode (void);
 
