@@ -2128,12 +2128,10 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
 	gretlopt opt = s->cmd->opt;
 	int nested = 0;
 
-#if 1 /* testing */
 	if (spec == NULL) {
-	    fprintf(stderr, "gretl_loop_append_line: loop line unparsed\n");
-	    abort();
+	    fprintf(stderr, "GRETL_ERROR: loop line is unparsed\n");
+	    err = E_DATA;
 	}
-#endif
 
 	if (!err) {
 	    newloop = start_new_loop(spec, loop, dset, opt, 
@@ -3149,19 +3147,13 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		break;
 	    } else if (cmd->ci == ENDLOOP) {
 		; /* implicit break */
-	    } else if (plain_model_ci(cmd->ci)) {
-		err = gretl_cmd_exec(s, dset);
-		if (!err) {
-		    /* model may need special handling */
-		    err = model_command_post_process(s, dset, loop, j);
-		}
-	    } else if (cmd->ci == PRINT && progressive && !loop_literal(loop, j)) {
+	    } else if (progressive && cmd->ci == PRINT && !loop_literal(loop, j)) {
 		if (cmd_preparsed(loop, j)) {
 		    err = loop_print_update(loop, j, NULL);
 		} else {
 		    err = loop_print_update(loop, j, cmd->parm2);
 		}
-	    } else if (cmd->ci == STORE && progressive) {
+	    } else if (progressive && cmd->ci == STORE) {
 		if (cmd_preparsed(loop, j)) {
 		    err = loop_store_update(loop, j, NULL, NULL, 0);
 		} else {
@@ -3191,8 +3183,11 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    } else if (cmd->ci == DELEET && !(cmd->opt & (OPT_F | OPT_T))) {
 		err = loop_delete_object(cmd, prn);
 	    } else {
+		/* send command to the regular processor */
 		err = gretl_cmd_exec(s, dset);
-		if (!err && !check_gretl_errno() && block_model(cmd)) {
+		if (!err && plain_model_ci(cmd->ci)) {
+		    err = model_command_post_process(s, dset, loop, j);
+		} else if (!err && !check_gretl_errno() && block_model(cmd)) {
 		    /* NLS, etc. */
 		    loop_print_save_model(s->model, dset, prn, s);
 		}
@@ -3278,6 +3273,14 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	gretl_loop_destroy(loop);
 	currloop = NULL;
 	set_loop_off();
+#if 0 /* testing */
+	if (gretl_function_depth() > 0) {
+	    if (gretl_iteration_depth() > 0 || gretl_looping()) {
+		printf("*** destroy loop in function: iter_depth=%d, looping=%d\n",
+		       gretl_iteration_depth(), gretl_looping());
+	    }
+	}
+#endif	
     }
 
     return process_command_error(cmd, err);
