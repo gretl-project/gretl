@@ -38,12 +38,12 @@ content of a data file, \texttt{join} imports one series at a time. A
 command loop can be used to apply \texttt{join} to multiple series.
 
 A related aspect of \texttt{join} should be noted---one that makes
-this command particularly useful when dealing with very large
-data files.  That is, when gretl executes a join operation it does not,
-in general, read into memory the entire content of the right-hand side
+this command particularly useful when dealing with very large data
+files.  That is, when gretl executes a join operation it does not, in
+general, read into memory the entire content of the right-hand side
 dataset.  Only those columns that are actually needed for the
-operation are read in full. This makes \texttt{join} faster and
-less demanding of RAM than the methods available in most other
+operation are read in full. This makes \texttt{join} faster and less
+demanding of computer memory than the methods available in most other
 software. On the other hand, gretl's asymmetrical treatment of the
 ``inner'' and ``outer'' datasets in \texttt{join} may require some
 getting used to, for users of other packages.
@@ -55,12 +55,14 @@ The minimal invocation of \texttt{join} is
 
 \qquad \texttt{join} \textsl{filename} \textsl{varname}
 
-where \textsl{filename} is the name of a delimited text data file and
-\textsl{varname} is the name of the series to be imported. Only
-column-delimited text files are supported at present; the delimiter
-may be comma, space, tab or semicolon. A series named \textsl{varname}
-may already be present in the left-hand dataset, but that is not
-required. The series to be imported may be numerical or string-valued.
+where \textsl{filename} is the name of a data file and
+\textsl{varname} is the name of the series to be imported. Only two
+sorts of data file are supported at present: delimited text files
+(where the delimiter may be comma, space, tab or semicolon) and
+``native'' gretl data files (\texttt{gdt} or \texttt{gdtb}).  A series
+named \textsl{varname} may already be present in the left-hand
+dataset, but that is not required. The series to be imported may be
+numerical or string-valued.
 
 The effect of the minimal version of \texttt{join} is this: gretl
 looks for a data column labeled \textsl{varname} in the specified
@@ -122,6 +124,7 @@ join foo.csv x --data="Some_name"
 \end{code}
 
 \section{Filtering}
+\label{sec:join-filter}
 
 Rows from the outer dataset can be filtered using the \verb|--filter|
 option. The required parameter for this option is a Boolean condition,
@@ -922,6 +925,7 @@ endloop
 setopt join clear
 \end{verbatim}
 \end{footnotesize}
+
 \section{Special handling of time columns}
 \label{sec:join-tconvert}
 
@@ -1090,6 +1094,36 @@ the working dataset---we could dispense with the key apparatus and
 just use the first line of the \texttt{join} command shown
 above. However, in general it is safer to use keys to ensure that the
 data end up in correct registration.
+
+\section{Memo: \texttt{join} options}
+\label{sec:options}
+
+Basic syntax: \texttt{join} \textsl{filename} \textsl{varname} [
+\textsl{options} ]
+
+\begin{center}
+\begin{tabular}{lp{.7\textwidth}}
+  \textit{flag} & \textit{effect} \\ [6pt]
+  \verb|--data| & Give the name of the data column on the right, in
+                  case it differs from \textsl{varname}
+                  (\ref{sec:join-syntax})  \\
+  \verb|--filter| & Specify a condition for filtering data rows
+                    (\ref{sec:join-filter}) \\
+  \verb|--ikey| & Specify up to two keys for matching data rows
+                  (\ref{sec:join-keys}) \\
+  \verb|--okey| & Specify outer key name(s) in case they
+                  differ the inner ones (\ref{sec:join-keys})\\
+  \verb|--aggr| & Select an aggregation method for 1 to $n$ joins
+                 (\ref{sec:join-aggr}) \\ 
+  \verb|--tkey| & Specify right-hand time key (\ref{sec:join-timeser}) \\
+  \verb|--tconvert| & Select outer date columns for conversion to
+                      numeric form (\ref{sec:join-tconvert}) \\
+  \verb|--tconv-fmt| & Specify a format for use with \texttt{tconvert} 
+                       (\ref{sec:join-tconvert}) \\
+  \verb|--verbose| & Report on progress in reading the outer data
+\end{tabular}
+\end{center}
+
 
 \pagebreak[4]
 

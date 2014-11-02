@@ -6,12 +6,12 @@
 
 Gretl has its own native format for data files.  Most users will
 probably not want to read or write such files outside of gretl itself,
-but occasionally this may be useful and details on the file
-formats are given in Appendix~\ref{app-datafile}. The program can
-also import data from a variety of other formats. In the GUI program
-this can be done via the ``File, Open Data, Import'' menu; in
-script mode, simply use the \cmd{open} command. The supported import
-formats are as follows.
+but occasionally this may be useful and details on the file formats
+are given in Appendix~\ref{app-datafile}. The program can also import
+data from a variety of other formats. In the GUI program this can be
+done via the ``File, Open Data, User file'' menu---note the drop-down
+list of acceptable file types. In script mode, simply use the
+\cmd{open} command. The supported import formats are as follows.
 
 \begin{itemize}
 \item Plain text files (comma-separated or ``CSV'' being the most
@@ -125,7 +125,7 @@ conditions must be satisfied:
   so on.  Second, by ``the first row'' is meant the first
   \emph{relevant} row.  In the case of plain text imports, blank
   rows and rows beginning with a hash mark, \verb+#+, are ignored.  In
-  the case of Excel and Gnumeric imports, you are presented with a
+  the case of Excel, Gnumeric and ODS imports, you are presented with a
   dialog box where you can select an offset into the spreadsheet, so
   that gretl will ignore a specified number of rows and/or
   columns.
@@ -143,14 +143,14 @@ conditions must be satisfied:
           
 \item Dates (or observation labels): Optionally, the \emph{first}
   column may contain strings such as dates, or labels for
-  cross-sectional observations.  Such strings have a maximum of 8
+  cross-sectional observations.  Such strings have a maximum of 15
   characters (as with variable names, longer strings will be
   truncated).  A column of this sort should be headed with the string
   \verb+obs+ or \verb+date+, or the first row entry may be left
   blank.
 
-  For dates to be recognized as such, the date strings must adhere to
-  one or other of a set of specific formats, as follows.  For
+  For dates to be recognized as such, the date strings should adhere
+  to one or other of a set of specific formats, as follows.  For
   \emph{annual} data: 4-digit years.  For \emph{quarterly} data: a
   4-digit year, followed by a separator (either a period, a colon, or
   the letter \verb+Q+), followed by a 1-digit quarter.  Examples:
@@ -161,9 +161,9 @@ conditions must be satisfied:
 \end{itemize}
 
 Plain text (``CSV'') files can use comma, space, tab or semicolon as
-the column separator.  When you use the ``Import'' menu item you given
-the option of specifying the separator, though in most cases it should
-be detected automatically.
+the column separator.  When you open such a file via the GUI you are
+given the option of specifying the separator, though in most cases it
+should be detected automatically.
 
 If you use a spreadsheet to prepare your data you are able to carry
 out various transformations of the ``raw'' data with ease (adding
