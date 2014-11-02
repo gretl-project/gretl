@@ -3011,9 +3011,9 @@ static int do_bfgs (Jwrap *J, gretlopt opt, PRN *prn)
 
 	pputs(prn, "LBFGS: using analytical derivatives\n\n");
 
-	err = LBFGS_max(J->theta->val, nn, maxit, toler, 
-			&fncount, &grcount, Jloglik, C_LOGLIK,
-			Jgradient, J, opt, prn);
+	err = BFGS_max(J->theta->val, nn, maxit, toler, 
+		       &fncount, &grcount, Jloglik, C_LOGLIK,
+		       Jgradient, J, NULL, opt | OPT_L, prn);
     }
 
     return err;

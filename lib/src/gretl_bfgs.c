@@ -1226,10 +1226,10 @@ static void reverse_gradient (double *g, int n)
     }
 }
 
-int LBFGS_max (double *b, int n, int maxit, double reltol,
-	       int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
-	       int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
-	       gretlopt opt, PRN *prn)
+static int LBFGS_max (double *b, int n, int maxit, double reltol,
+		      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
+		      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
+		      gretlopt opt, PRN *prn)
 {
     double *wspace = NULL;
     double *g, *l, *u, *wa;
@@ -1391,11 +1391,14 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
  * includes %OPT_V.
  *
  * Obtains the set of values for @b which jointly maximize the
- * criterion value as calculated by @cfunc.  Uses the BFGS
- * variable-metric method.  Based on Pascal code in J. C. Nash,
+ * criterion value as calculated by @cfunc. By default uses the BFGS
+ * variable-metric method (based on Pascal code in J. C. Nash,
  * "Compact Numerical Methods for Computers," 2nd edition, converted
- * by p2c then re-crafted by B. D. Ripley for gnu R.  Revised for 
- * gretl by Allin Cottrell.
+ * by p2c then re-crafted by B. D. Ripley for gnu R; revised for 
+ * gretl by Allin Cottrell and Jack Lucchetti). Alternatively,
+ * if OPT_L is given, uses the L-BFGS-B method (limited memory
+ * BFGS), based on Lbfgsb.2.1 by Ciyou Zhu, Richard Byrd, Jorge 
+ * Nocedal and Jose Luis Morales. 
  * 
  * Returns: 0 on successful completion, non-zero error code
  * on error.
@@ -1408,6 +1411,8 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 {
     int ret, wnum;
 
+    gretl_iteration_push();
+
     if ((opt & OPT_L) || libset_get_bool(USE_LBFGS)) {
 	ret = LBFGS_max(b, n, maxit, reltol,
 			fncount, grcount, cfunc, 
@@ -1419,6 +1424,8 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 			crittype, gradfunc, data, 
 			A0, opt, prn);
     }
+
+    gretl_iteration_pop();
 
     wnum = check_gretl_warning();
     if (wnum != W_GRADIENT) {
@@ -2302,6 +2309,8 @@ int newton_raphson_max (double *b, int n, int maxit,
 	}
     }
 
+    gretl_iteration_push();
+
     while (status == 0 && !err) {
 	iter++;
 	steplen = 1.0;
@@ -2381,6 +2390,8 @@ int newton_raphson_max (double *b, int n, int maxit,
 	    status = CRITTOL_MET;
 	}
     }
+
+    gretl_iteration_pop();
 
     if (verbose) {
 	print_iter_info(-1, f1, crittype, n, b1, g->val, 
@@ -2469,6 +2480,8 @@ int gretl_simann (double *theta, int n, int maxit,
 		f0);
     }
 
+    gretl_iteration_push();
+
     /* Question: should the initial radius be a function of the scale
        of the initial parameter vector?
     */
@@ -2507,6 +2520,8 @@ int gretl_simann (double *theta, int n, int maxit,
 	Temp *= 0.999;
 	radius *= 0.9999;
     }
+
+    gretl_iteration_pop();
 
     if (improved) {
 	/* use the best point */
