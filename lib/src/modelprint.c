@@ -1823,12 +1823,20 @@ static void print_model_heading (const MODEL *pmod,
 		pputc(prn, '\n');
 	    }
 	} else if (pmod->name) {
-	    if (csv) {
-		pprintf(prn, "\"%s:\"\n", pmod->name);
-	    } else if (strlen(pmod->name) > 8) {
-		pprintf(prn, "\n%s:\n", pmod->name);
+	    char modname[32];
+	    
+	    if (tex) {
+		tex_escape(modname, pmod->name);
 	    } else {
-		pprintf(prn, "\n%s: ", pmod->name);
+		strcpy(modname, pmod->name);
+	    }
+
+	    if (csv) {
+		pprintf(prn, "\"%s:\"\n", modname);
+	    } else if (strlen(pmod->name) > 8) {
+		pprintf(prn, "\n%s:\n", modname);
+	    } else {
+		pprintf(prn, "\n%s: ", modname);
 	    }
 	} else {
 	    if (csv) {
