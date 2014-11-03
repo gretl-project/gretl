@@ -22,6 +22,8 @@
 #ifndef MONTE_CARLO_H
 #define MONTE_CARLO_H
 
+typedef struct LOOPSET_ LOOPSET;
+
 int gretl_compiling_loop (void);
 
 int gretl_execute_loop (void);

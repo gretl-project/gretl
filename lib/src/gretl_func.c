@@ -6715,6 +6715,8 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
     return err;
 }
 
+#define LOOPSAVE 0
+
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 DATASET *dset, void *ret, 
 			 char **descrip, PRN *prn)
@@ -6732,7 +6734,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int indent0 = 0, started = 0;
     int retline = -1;
     int debugging = u->debug;
+#if 1 || LOOPSAVE
     int loopstart = 0;
+    int loop_attach = -1;
+#endif
     int i, err = 0;
 
 #if EXEC_DEBUG
@@ -6841,9 +6846,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 	err = maybe_exec_line(&state, dset, &loopstart);
 
-#if 0
+#if LOOPSAVE
 	if (loopstart) {
 	    fprintf(stderr, "fn: loopstart on line %d (%s)\n", i, line);
+	    loop_attach = i;
 	    loopstart = 0;
 	}
 #endif
@@ -6879,8 +6885,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	if (gretl_execute_loop()) {
-#if 0
+#if LOOPSAVE
 	    fprintf(stderr, "fn: loop-exec on line %d (%s)\n", i, line);
+	    fprintf(stderr, " (started on line %d)\n", loop_attach);
+	    save_lstart = -1;
 #endif
 	    err = gretl_loop_exec(&state, dset);
 	    if (err) {

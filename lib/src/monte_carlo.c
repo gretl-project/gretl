@@ -98,12 +98,13 @@ typedef struct {
     DATASET *dset;  /* temporary data storage */
 } LOOP_STORE;
 
-enum loop_flags {
+typedef enum {
     LOOP_PROGRESSIVE = 1 << 0,
     LOOP_VERBOSE     = 1 << 1,
     LOOP_QUIET       = 1 << 2,
-    LOOP_DELVAR      = 1 << 3
-};
+    LOOP_DELVAR      = 1 << 3,
+    LOOP_ATTACHED    = 1 << 4
+} LoopFlags;
 
 struct controller_ {
     double val;            /* evaluated value */
@@ -114,7 +115,7 @@ struct controller_ {
 
 typedef struct controller_ controller;
 
-enum loop_command_codes {
+typedef enum {
     LOOP_CMD_GENR    = 1 << 0, /* compiled "genr" */
     LOOP_CMD_LIT     = 1 << 1, /* literal printing */
     LOOP_CMD_NODOL   = 1 << 2, /* no $-substitution this line */
@@ -123,24 +124,22 @@ enum loop_command_codes {
     LOOP_CMD_CATCH   = 1 << 5, /* "catch" flag present */
     LOOP_CMD_COND    = 1 << 6, /* compiled conditional */
     LOOP_CMD_DONE    = 1 << 7  /* progressive loop command parsed */
-};
+} LoopCmdFlags;
 
 struct loop_command_ {
     char *line;
     int ci;
     gretlopt opt;
-    char flags;
+    LoopCmdFlags flags;
     GENERATOR *genr;
 };
 
 typedef struct loop_command_ loop_command;
 
-typedef struct LOOPSET_ LOOPSET;
-
 struct LOOPSET_ {
     /* basic characteristics */
     char type;
-    char flags;
+    LoopFlags flags;
     int level;
     int err;
 
@@ -189,6 +188,7 @@ struct LOOPSET_ {
 #define loop_set_verbose(l)     (l->flags |= LOOP_VERBOSE)
 #define loop_is_quiet(l)        (l->flags & LOOP_QUIET)
 #define loop_set_quiet(l)       (l->flags |= LOOP_QUIET)
+#define loop_is_attached(l)     (l->flags & LOOP_ATTACHED)
 
 #define model_print_deferred(o) (o & OPT_F)
 
@@ -1242,13 +1242,6 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
 #if LOOP_DEBUG || defined(SHOW_STRUCTURE)
     fprintf(stderr, "start_new_loop: inloop=%p, line='%s'\n", 
 	    (void *) inloop, s);
-#endif
-
-#if 0
-    if (inloop != NULL && (opt & OPT_P)) {
-	/* don't allow nesting of "progressive" loops? */
-	fprintf(stderr, "inner loop with OPT_P\n");
-    }
 #endif
 
     if (inloop == NULL || compile_level <= inloop->level) {
@@ -3270,17 +3263,17 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 
     if (loop->parent == NULL) {
 	/* reached top of stack: clean up */
-	gretl_loop_destroy(loop);
 	currloop = NULL;
 	set_loop_off();
 #if 0 /* testing */
-	if (gretl_function_depth() > 0) {
+	if (!loop_attached(loop) && gretl_function_depth() > 0) {
 	    if (gretl_iteration_depth() > 0 || gretl_looping()) {
 		fprintf(stderr, "destroy loop in function: iter_depth=%d, looping=%d\n",
 		       gretl_iteration_depth(), gretl_looping());
 	    }
 	}
-#endif	
+#endif
+	gretl_loop_destroy(loop);
     }
 
     return process_command_error(cmd, err);

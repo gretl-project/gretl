@@ -2444,9 +2444,10 @@ static int QLR_graph (const double *testvec, int t1, int t2,
     gretl_push_c_numeric_locale();
 
     fprintf(fp, "plot \\\n"
-	    "'-' using 1:2 title '%s' w lines\n",
+	    "'-' using 1:2 title \"%s\" w lines\n",
 	    robust ? _("Robust Wald test for break") : 
 	    _("Chow F-test for break"));
+    
     for (t=t1; t<=t2; t++) {
 	fprintf(fp, "%g %g\n", x[t], testvec[t-t1]);
     }
@@ -2492,15 +2493,18 @@ static double get_QLR_pval (double test, int df, int k1, int k2,
 
     pval = (*qlr_asy_pvalue) (test, df, lam0);
 
+#if 0
+    fprintf(stderr, "k1 = %d, k2 = %d, pi_1 = %g pi_2 = %g\n",
+	    k1, k2, pi_1, pi_2);
+    fprintf(stderr, "lambda0 = %g, pi0 = %g, test = %g, pval = %g\n",
+	    lam0, 1.0/(1 + sqrt(lam0)), test, pval);
+#endif
+
     if (!na(pval)) {
 	pprintf(prn, _("Asymptotic p-value = %.4g for "
 		       "chi-square(%d) = %g"),
 		pval, df, test);
 	pputc(prn, '\n');
-#if 0
-	pprintf(prn, "(k1 = %d, k2 = %d, lambda0 = %g, pi0 = %g)\n", 
-		k1, k2, lam0, 1.0/(1 + sqrt(lam0)));
-#endif
     }
 
     return pval;
