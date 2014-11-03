@@ -50,6 +50,7 @@
 #define INT_USE_XLIST (-999)
 
 typedef struct fn_param_ fn_param;
+typedef struct fn_line_ fn_line;
 typedef struct obsinfo_ obsinfo;
 typedef struct fncall_ fncall;
 
@@ -66,6 +67,13 @@ struct fn_param_ {
     double min;     /* minimum value (scalar parameters only) */
     double max;     /* maximum value (scalar parameters only) */
     double step;    /* step increment (scalars only) */
+};
+
+/* structure representing a line of a user-defined function */
+
+struct fn_line_ {
+    int idx;        /* 1-based line index (allowing for blanks) */
+    char *s;        /* text of command line */
 };
 
 #define UNSET_VALUE (-1.0e200)
@@ -106,8 +114,9 @@ struct ufunc_ {
     fnpkg *pkg;            /* pointer to parent package, or NULL */
     int pkg_role;          /* printer, plotter, etc. */
     int flags;             /* private, plugin, etc. */
+    int line_idx;          /* current line index (compiling) */
     int n_lines;           /* number of lines of code */
-    char **lines;          /* array of lines of code */
+    fn_line *lines;        /* array of lines of code */
     int n_params;          /* number of parameters */
     fn_param *params;      /* parameter info array */
     int rettype;           /* return type (if any) */
@@ -1173,6 +1182,7 @@ static ufunc *ufunc_new (void)
     fun->pkg_role = 0;
 
     fun->n_lines = 0;
+    fun->line_idx = 1;
     fun->lines = NULL;
 
     fun->n_params = 0;
@@ -1183,6 +1193,18 @@ static ufunc *ufunc_new (void)
     fun->debug = 0;
 
     return fun;
+}
+
+static void free_lines_array (fn_line *lines, int n)
+{
+    int i;
+
+    if (lines == NULL) return;
+
+    for (i=0; i<n; i++) {
+	free(lines[i].s);
+    }
+    free(lines);
 }
 
 static void free_params_array (fn_param *params, int n)
@@ -1201,13 +1223,14 @@ static void free_params_array (fn_param *params, int n)
 
 static void clear_ufunc_data (ufunc *fun)
 {
-    strings_array_free(fun->lines, fun->n_lines);
+    free_lines_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
     
     fun->lines = NULL;
     fun->params = NULL;
 
     fun->n_lines = 0;
+    fun->line_idx = 1;
     fun->n_params = 0;
 
     fun->rettype = GRETL_TYPE_NONE;
@@ -1215,7 +1238,7 @@ static void clear_ufunc_data (ufunc *fun)
 
 static void ufunc_free (ufunc *fun)
 {
-    strings_array_free(fun->lines, fun->n_lines);
+    free_lines_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
 
     free(fun);
@@ -1435,6 +1458,36 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
     return err;
 }
 
+static int push_function_line (ufunc *fun, const char *s)
+{
+    int err = 0;
+
+    if (string_is_blank(s)) {
+	fun->line_idx += 1;
+    } else {
+	fn_line *lines;
+	int n = fun->n_lines + 1;
+
+	lines = realloc(fun->lines, n * sizeof *lines);
+
+	if (lines == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    fun->lines = lines;
+	    lines[n-1].idx = fun->line_idx;
+	    lines[n-1].s = gretl_strdup(s);
+	    if (lines[n-1].s == NULL) {
+		err = E_ALLOC;
+	    } else {
+		fun->n_lines = n;
+		fun->line_idx += 1;
+	    }
+	}
+    }
+
+    return err;
+}
+
 /* read the actual code lines from the XML representation of a 
    function */
 
@@ -1455,7 +1508,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 	s = line;
 	while (isspace(*s)) s++;
 	tailstrip(s);
-	err = strings_array_add(&fun->lines, &fun->n_lines, s);
+	err = push_function_line(fun, s);
     }
 
     bufgets_finalize(buf);
@@ -1804,6 +1857,10 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
 	ni++;
     } else if (wordmatch(s, "gmm")) {
 	ni++;
+    } else if (wordmatch(s, "mpi")) {
+	ni++;
+    } else if (wordmatch(s, "plot")) {
+	ni++;
     } else if (wordmatch(s, "function")) {
 	ni++;
     } else if (wordmatch(s, "restrict")) {
@@ -1936,12 +1993,12 @@ static int write_function_xml (ufunc *fun, FILE *fp)
     fputs("<code>", fp);
 
     for (i=0; i<fun->n_lines; i++) {
-	adjust_indent(fun->lines[i], &this_indent, &next_indent);
+	adjust_indent(fun->lines[i].s, &this_indent, &next_indent);
 	for (j=0; j<this_indent; j++) {
 	    fputs("  ", fp);
 	}
-	maybe_correct_line(fun->lines[i]);
-	gretl_xml_put_string(fun->lines[i], fp);
+	maybe_correct_line(fun->lines[i].s);
+	gretl_xml_put_string(fun->lines[i].s, fp);
 	fputc('\n', fp);
     }
 
@@ -2029,6 +2086,7 @@ int gretl_function_print_code (ufunc *u, PRN *prn)
 {
     int this_indent = 0;
     int next_indent = 0;
+    int nblank;
     int i, j;
 
     if (u == NULL) {
@@ -2037,12 +2095,20 @@ int gretl_function_print_code (ufunc *u, PRN *prn)
    
     print_function_start(u, prn);
 
+    /* FIXME blank lines accounting */
+
     for (i=0; i<u->n_lines; i++) {
-	adjust_indent(u->lines[i], &this_indent, &next_indent);
+	adjust_indent(u->lines[i].s, &this_indent, &next_indent);
 	for (j=0; j<=this_indent; j++) {
 	    pputs(prn, "  ");
 	}
-	pputs(prn, u->lines[i]);
+	if (i > 0) {
+	    nblank = u->lines[i].idx - u->lines[i-1].idx - 1;
+	    for (j=0; j<nblank; j++) {
+		pputc(prn, '\n');
+	    }
+	}
+	pputs(prn, u->lines[i].s);
 	pputc(prn, '\n');
     }
 
@@ -2108,9 +2174,9 @@ static void check_special_comments (ufunc *fun)
     int i;
 
     for (i=0; i<fun->n_lines; i++) {
-	if (strstr(fun->lines[i], "## plugin-wrapper ##")) {
+	if (strstr(fun->lines[i].s, "## plugin-wrapper ##")) {
 	    fun->flags |= UFUN_PLUGIN;
-	} else if (strstr(fun->lines[i], "## no-print ##")) {
+	} else if (strstr(fun->lines[i].s, "## no-print ##")) {
 	    fun->flags |= UFUN_NOPRINT;
 	}
     }
@@ -5035,7 +5101,7 @@ static int ignore_line (ufunc *fun)
     char *s, *p;
 
     for (i=0; i<fun->n_lines; i++) {
-	s = p = fun->lines[i];
+	s = p = fun->lines[i].s;
 	while (*p) {
 	    if (!quoted && !ignore && *p == '#') {
 		break;
@@ -5084,10 +5150,10 @@ static int check_function_structure (ufunc *fun)
 
     for (i=0; i<fun->n_lines && !err; i++) {
 #if 0 || defined(SHOW_STRUCTURE)
-	fprintf(stderr, "line[%d] = '%s'\n", i, fun->lines[i]);
+	fprintf(stderr, "line[%d] = '%s'\n", i, fun->lines[i].s);
 #endif
 	/* avoid losing comment lines */
-	strcpy(line, fun->lines[i]);
+	strcpy(line, fun->lines[i].s);
 	get_command_index(line, &cmd);
 	if (cmd.ci == FUNC) {
 	    gretl_errmsg_set("You can't define a function within a function");
@@ -5145,14 +5211,14 @@ static int maybe_check_return (ufunc *fun, const char *s)
 
 	    tmp = g_strdup_printf("return%s", p + strlen(tword));
 	    fun->rettype = type;
-	    err = strings_array_add(&fun->lines, &fun->n_lines, tmp);
+	    err = push_function_line(fun, tmp);
 	    g_free(tmp);
 	    done = 1;
 	}
     }
 
     if (!done) {
-	err = strings_array_add(&fun->lines, &fun->n_lines, s);
+	err = push_function_line(fun, s);
     }
 
     if (!err) {
@@ -5179,18 +5245,19 @@ int gretl_function_append_line (const char *line)
     int editing = 0;
     int err = 0;
 
-#if FNPARSE_DEBUG
-    fprintf(stderr, "gretl_function_append_line: '%s'\n", line);
-#endif
-
     if (fun == NULL) {
 	fprintf(stderr, "gretl_function_append_line: fun is NULL\n");
 	return 1;
     }
 
+#if FNPARSE_DEBUG
+    fprintf(stderr, "gretl_function_append_line: '%s' (idx = %d)\n", 
+	    line, fun->line_idx);
+#endif
+
     if (string_is_blank(line)) {
 	/* note: preserve line numbering */
-	err = strings_array_add(&fun->lines, &fun->n_lines, "");
+	fun->line_idx += 1;
     } else if (end_of_function(line) && !ignore_line(fun)) {
 	if (fun->n_lines == 0) {
 	    gretl_errmsg_sprintf("%s: empty function", fun->name);
@@ -5214,7 +5281,7 @@ int gretl_function_append_line (const char *line)
 	err = maybe_check_return(fun, line);
 #endif
     } else {
-	err = strings_array_add(&fun->lines, &fun->n_lines, line);
+	err = push_function_line(fun, line);
 	if (!err) {
 	    python_check(line);
 	}
@@ -6665,6 +6732,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int indent0 = 0, started = 0;
     int retline = -1;
     int debugging = u->debug;
+    int loopstart = 0;
     int i, err = 0;
 
 #if EXEC_DEBUG
@@ -6761,12 +6829,9 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
+	int line_idx = u->lines[i].idx;
 
-	if (*u->lines[i] == '\0') {
-	    continue;
-	}
-
-	strcpy(line, u->lines[i]);
+	strcpy(line, u->lines[i].s);
 
 	if (debugging) {
 	    pprintf(prn, "%s> %s\n", u->name, line);
@@ -6774,7 +6839,14 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    pprintf(prn, "? %s\n", line);
 	}
 
-	err = maybe_exec_line(&state, dset);
+	err = maybe_exec_line(&state, dset, &loopstart);
+
+#if 0
+	if (loopstart) {
+	    fprintf(stderr, "fn: loopstart on line %d (%s)\n", i, line);
+	    loopstart = 0;
+	}
+#endif
 
 	if (!err && state.cmd->ci == FUNCRET) {
 	    err = handle_return_statement(call, &state, dset, i+1);
@@ -6786,10 +6858,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 	if (debugging > 1 && do_debugging(&state)) {
 	    if (put_func != NULL) {
-		pprintf(prn, "-- debugging %s, line %d --\n", u->name, i+1);
+		pprintf(prn, "-- debugging %s, line %d --\n", u->name, line_idx);
 		(*put_func)(&state);
 	    } else {
-		pprintf(prn, "-- debugging %s, line %d --\n", u->name, i+1);
+		pprintf(prn, "-- debugging %s, line %d --\n", u->name, line_idx);
 	    }
 	    debugging = debug_command_loop(&state, dset,
 					   get_line, put_func, 
@@ -6797,7 +6869,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	if (err) {
-	    set_function_error_message(err, u, &state, line, i+1);
+	    set_function_error_message(err, u, &state, line, line_idx);
 	    break;
 	}
 
@@ -6806,10 +6878,14 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    call->obs.changed = 1;
 	}
 
-	if (gretl_execute_loop()) { 
+	if (gretl_execute_loop()) {
+#if 0
+	    fprintf(stderr, "fn: loop-exec on line %d (%s)\n", i, line);
+#endif
 	    err = gretl_loop_exec(&state, dset);
 	    if (err) {
-		set_function_error_message(err, u, &state, state.line, i+1);
+		set_function_error_message(err, u, &state, state.line, 
+					   u->lines[i].idx);
 	    }
 	}
     }

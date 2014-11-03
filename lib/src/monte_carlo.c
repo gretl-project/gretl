@@ -3276,7 +3276,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 #if 0 /* testing */
 	if (gretl_function_depth() > 0) {
 	    if (gretl_iteration_depth() > 0 || gretl_looping()) {
-		printf("*** destroy loop in function: iter_depth=%d, looping=%d\n",
+		fprintf(stderr, "destroy loop in function: iter_depth=%d, looping=%d\n",
 		       gretl_iteration_depth(), gretl_looping());
 	    }
 	}

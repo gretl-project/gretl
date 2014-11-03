@@ -1085,7 +1085,7 @@ static int run_script (const char *fname, ExecState *s,
     while (fgets(s->line, MAXLINE - 1, fp) && !err) {
 	err = get_line_continuation(s->line, fp, prn);
 	if (!err) {
-	    err = maybe_exec_line(s, dset);
+	    err = maybe_exec_line(s, dset, NULL);
 	}
     }
 
@@ -2869,7 +2869,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 /* called by functions, and by scripts executed from within
    functions */
 
-int maybe_exec_line (ExecState *s, DATASET *dset)
+int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
 {
     int err = 0;
 
@@ -2882,6 +2882,9 @@ int maybe_exec_line (ExecState *s, DATASET *dset)
     } else {
 	/* FIXME last arg to parse_command_line() ? */
 	err = parse_command_line(s->line, s->cmd, dset, NULL);
+	if (loopstart != NULL && s->cmd->ci == LOOP) {
+	    *loopstart = 1;
+	}
     }
 
     if (err) {
