@@ -2473,6 +2473,8 @@ static void save_QLR_test (MODEL *pmod, const char *datestr,
     }	  
 }
 
+/* for internal use by the "qlrtest" command */
+
 static double get_QLR_pval (double test, int df, int k1, int k2, 
 			    MODEL *pmod, PRN *prn)
 {
@@ -2506,6 +2508,30 @@ static double get_QLR_pval (double test, int df, int k1, int k2,
 		pval, df, test);
 	pputc(prn, '\n');
     }
+
+    return pval;
+}
+
+/* for use by the qlrpval() function */
+
+double QLR_pval (double X2, int df, double p1, double p2)
+{
+    double (*qlr_asy_pvalue) (double, int, double);
+    double lamda, pval;
+
+    if (X2 < 0 || df <= 0 || p1 <= 0 || p2 <= p1 || p2 >= 1) {
+	return NADBL;
+    }
+
+    qlr_asy_pvalue = get_plugin_function("qlr_asy_pvalue");
+
+    if (qlr_asy_pvalue == NULL) {
+	fputs(I_("Couldn't load plugin function\n"), stderr);
+	return NADBL;
+    }
+
+    lamda = (p2*(1.0 - p1)) / (p1*(1.0 - p2));
+    pval = (*qlr_asy_pvalue) (X2, df, lamda);
 
     return pval;
 }

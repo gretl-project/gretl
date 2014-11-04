@@ -5965,6 +5965,41 @@
       </description>
     </function>
 
+    <function name="qlrpval" section="probdist" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">X2</fnarg>
+	<fnarg type="int">df</fnarg>
+	<fnarg type="scalar">p1</fnarg>
+	<fnarg type="scalar">p2</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  <math>P</math>-values for the test statistic from the QLR
+	  sup-Wald test for a structural break at an unknown point
+	  (see <cmdref targ="qlrtest"/>), as per <cite
+	  key="hansen97">Bruce Hansen (1997)</cite>.
+	</para>
+	<para>
+	  The first argument, <argname>X2</argname>, denotes the
+	  (chi-square form of) the maximum Wald test statistic and
+	  <argname>df</argname> denotes its degrees of freedom.  The
+	  third and fourth arguments represent, as decimal fractions
+	  of the overall estimation range, the starting and ending
+	  points of the central range of observations over which the
+	  successive Wald tests are calculated. For example if the
+	  standard approach of 15 percent trimming is adopted, you
+	  would set <argname>p1</argname> to 0.15 and
+	  <argname>p2</argname> to 0.85.
+	</para>
+	<para>
+	  <seelist> 
+            <fncref targ="pvalue"/>
+	    <fncref targ="urcpval"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="qnorm" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -7563,6 +7598,7 @@
 	<para>
 	  <seelist> 
             <fncref targ="pvalue"/>
+	    <fncref targ="qlrpval"/>
 	  </seelist>
 	</para>
       </description>

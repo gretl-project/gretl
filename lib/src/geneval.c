@@ -8840,6 +8840,35 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret->v.m = gretl_quadrule_matrix_new(order, method, 
 						 a, b, &p->err);
 	} 
+    } else if (t->t == F_QLRPVAL) {
+	double X2 = NADBL; 
+	double p1 = 0, p2 = 0;
+	int df = 0;
+
+	if (k != 4) {
+	    n_args_error(k, 4, t->t, p);
+	} 
+	
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i == 0) {
+		X2 = node_get_scalar(e, p);
+	    } else if (i == 1) {
+		df = node_get_int(e, p);
+	    } else if (i == 2) {
+		p1 = node_get_scalar(e, p);
+	    } else {
+		p2 = node_get_scalar(e, p);
+	    }
+	}
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
+	if (!p->err) {
+	    ret->v.xval = QLR_pval(X2, df, p1, p2);
+	} 
     } else if (t->t == HF_CLOGFI) {
 	const char *dfname = NULL;
 	gretl_matrix *z = NULL;
@@ -11308,6 +11337,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_LOESS:
     case F_GHK:
     case F_QUADTAB:
+    case F_QLRPVAL:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);

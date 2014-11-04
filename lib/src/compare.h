@@ -136,6 +136,8 @@ int chow_test_from_dummy (int splitvar, MODEL *pmod, DATASET *dset,
 int QLR_test (MODEL *pmod, DATASET *dset,
 	      gretlopt opt, PRN *prn);
 
+double QLR_pval (double X2, int df, double p1, double p2);
+
 int cusum_test (MODEL *pmod, DATASET *dset, 
 		gretlopt opt, PRN *prn);
 
