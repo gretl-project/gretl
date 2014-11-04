@@ -2501,7 +2501,7 @@ static double get_QLR_pval (double test, int df, int k1, int k2,
 #endif
 
     if (!na(pval)) {
-	pprintf(prn, _("Asymptotic p-value = %.4g for "
+	pprintf(prn, _("Asymptotic p-value = %.6g for "
 		       "chi-square(%d) = %g"),
 		pval, df, test);
 	pputc(prn, '\n');
@@ -2545,17 +2545,6 @@ static void QLR_print_result (MODEL *pmod,
     if (opt & OPT_S) {
 	save_QLR_test(pmod, datestr, X2, pval, dfn);
     }
-}
-
-static double robust_chow_test (MODEL *pmod, const int *testlist)
-{
-    double test = wald_omit_F(testlist, pmod);
-
-    if (!na(test)) {
-	test *= testlist[0]; /* chi-square form */
-    }
-
-    return test;
 }
 
 static void save_chow_test (MODEL *pmod, const char *chowstr,
@@ -2677,7 +2666,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	    }
 	    dfn = chow_mod.ncoeff - pmod->ncoeff;
 	    if (robust) {
-		test = robust_chow_test(&chow_mod, testlist);
+		test = wald_omit_chisq(testlist, &chow_mod);
 #if 0
 		fprintf(stderr, "%d %g\n", t+1, test);
 #endif
@@ -2751,7 +2740,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	    }
 
 	    if (robust) {
-		test = robust_chow_test(&chow_mod, testlist);
+		test = wald_omit_chisq(testlist, &chow_mod);
 		if (!na(test)) {
 		    pval = chisq_cdf_comp(dfn, test);
 		}
