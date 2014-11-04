@@ -1,9 +1,13 @@
 version 1.10.0, in progress
 - Replace old command-line parser with new, faster "tokenizer"
+- Add new function qlrpval(): gives Bruce Hansen's asymptotic
+  p-values for QLR sup-Wald test
 - GUI command log: make the log window more accessible, and
   make it refresh automatically
 - GUI design: standardize the position of the window list
   button (top right), and make it more functional
+- "join" command: support native data files (gdt, gdtb) as well
+  as delimited text files, for data importation
 - "data" command: fix incorrect importation of series with
   lower frequency than the current dataset; also add an
   --interpolate option for that context
