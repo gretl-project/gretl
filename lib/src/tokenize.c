@@ -168,7 +168,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { PROBIT,   "probit",   CI_LIST },
     { PVAL,     "pvalue",   CI_ADHOC | CI_NOOPT },
     { QUANTREG, "quantreg", CI_PARM1 | CI_LIST },
-    { QLRTEST,  "qlrtest",  CI_NOOPT }, 
+    { QLRTEST,  "qlrtest",  0 }, 
     { QQPLOT,   "qqplot",   CI_LIST },
     { QUIT,     "quit",     CI_NOOPT }, 
     { RENAME,   "rename",   CI_PARM1 | CI_PARM2 },

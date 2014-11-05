@@ -2348,18 +2348,49 @@ static int chow_active (int split, const double *x, int t)
     } 
 }
 
+static int *get_break_list (const MODEL *pmod, int ci, int *err)
+{
+    const char *lname = get_optval_string(ci, OPT_L);
+    int *list = NULL;
+
+    if (lname == NULL) {
+	*err = E_DATA;
+    } else {
+	list = get_list_by_name(lname);
+    }
+
+    if (list != NULL) {
+	if (list[0] == 0) {
+	    *err = E_DATA;
+	} else {
+	    int i;
+
+	    for (i=1; i<=list[0] && !*err; i++) {
+		if (!in_gretl_list(pmod->list, list[i])) {
+		    *err = E_DATA;
+		} else if (list[i] == 0) {
+		    *err = E_DATA;
+		}
+	    }
+	}
+    }
+
+    return list;
+}
+
 /* compose list of variables to be used for the Chow test and add
    them to the data set */
 
 static int *
 make_chow_list (const MODEL *pmod, DATASET *dset,
-		int split, int dumv, int *err)
+		int split, int dumv, int ci,
+		gretlopt opt, int *err)
 {
     int *chowlist = NULL;
+    int *brklist = NULL;
     int l0 = pmod->list[0];
-    int ninter = pmod->ncoeff - pmod->ifc; /* number of interaction terms */
+    int ninter = 0, newvars = 0;
     int havedum = (dumv > 0);
-    int newvars = ninter + 1 - havedum;
     int i, t, v = dset->v;
 
     if (havedum && in_gretl_list(pmod->list, dumv)) {
@@ -2368,6 +2399,21 @@ make_chow_list (const MODEL *pmod, DATASET *dset,
 	*err = E_DATA;
 	return NULL;
     }
+
+    if (opt & OPT_L) {
+	/* --limit-to */
+	brklist = get_break_list(pmod, ci, err);
+	if (*err) {
+	    return NULL;
+	} else {
+	    ninter = brklist[0];
+	}
+    } else {
+	/* number of interaction terms */
+	ninter = pmod->ncoeff - pmod->ifc;
+    }
+
+    newvars = ninter + 1 - havedum;
 
     if (dataset_add_series(dset, newvars)) {
 	*err = E_ALLOC;
@@ -2401,8 +2447,13 @@ make_chow_list (const MODEL *pmod, DATASET *dset,
 
 	/* and the interaction terms */
 	for (i=0; i<ninter; i++) {
-	    int pv = pmod->list[i + 2 + pmod->ifc];
-	    int sv = v + i + 1 - havedum;
+	    int pv, sv = v + i + 1 - havedum;
+
+	    if (brklist != NULL) {
+		pv = brklist[i+1];
+	    } else {
+		pv = pmod->list[i + 2 + pmod->ifc];
+	    }
 
 	    for (t=0; t<dset->n; t++) {
 		if (model_missing(pmod, t)) {
@@ -2602,6 +2653,7 @@ static void save_chow_test (MODEL *pmod, const char *chowstr,
  * variable if given OPT_D; or ignored if given OPT_T.
  * @pmod: pointer to model to be tested.
  * @dset: dataset information.
+ * @ci: either CHOW or QLRTEST.
  * @opt: if flags include OPT_S, save test results to model;
  * if OPT_D included, do the Chow test based on a given dummy
  * variable; if OPT_T included, do the QLR test.
@@ -2611,7 +2663,7 @@ static void save_chow_test (MODEL *pmod, const char *chowstr,
  */
 
 static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset, 
-			   gretlopt opt, PRN *prn)
+			   int ci, gretlopt opt, PRN *prn)
 {
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
@@ -2653,7 +2705,8 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
     }
 
     if (!err) {
-	chowlist = make_chow_list(pmod, dset, split, dumv, &err);
+	chowlist = make_chow_list(pmod, dset, split, dumv, ci,
+				  opt, &err);
     }
 
     if (err) {
@@ -2668,6 +2721,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	double *testvec = NULL;
 	int *testlist = NULL;
 	int dfn = 0, dfd = 0;
+	int nextra = dset->v - origv;
 	int tmax = 0;
 	int i, t;
 
@@ -2717,7 +2771,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 		    pmod->ess, chow_mod.ess);
 #endif
 	    clear_model(&chow_mod);
-	    for (i=0; i<pmod->ncoeff; i++) {
+	    for (i=0; i<nextra; i++) {
 		dset->Z[origv+i][t] = 0.0;
 	    }
 	}
@@ -2856,7 +2910,7 @@ int chow_test (int splitobs, MODEL *pmod, DATASET *dset,
 	gretl_errmsg_set(_("Invalid sample split for Chow test"));
 	err = E_DATA;
     } else {
-	err = real_chow_test(splitobs, pmod, dset, opt, prn);
+	err = real_chow_test(splitobs, pmod, dset, CHOW, opt, prn);
     }
 
     return err;
@@ -2887,7 +2941,8 @@ int chow_test_from_dummy (int splitvar, MODEL *pmod, DATASET *dset,
 	gretl_errmsg_set(_("Invalid sample split for Chow test"));
 	err = E_DATA;
     } else {
-	err = real_chow_test(splitvar, pmod, dset, opt | OPT_D, prn);
+	err = real_chow_test(splitvar, pmod, dset, CHOW,
+			     opt | OPT_D, prn);
     }
 
     return err;
@@ -2910,7 +2965,8 @@ int chow_test_from_dummy (int splitvar, MODEL *pmod, DATASET *dset,
 int QLR_test (MODEL *pmod, DATASET *dset,
 	      gretlopt opt, PRN *prn)
 {
-    return real_chow_test(0, pmod, dset, opt | OPT_T, prn);
+    return real_chow_test(0, pmod, dset, QLRTEST,
+			  opt | OPT_T, prn);
 }
 
 /* compute v'Mv, for symmetric M */

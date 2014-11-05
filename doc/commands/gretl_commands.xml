@@ -1433,6 +1433,11 @@
 	  <flag>--quiet</flag>
 	  <effect>don't print estimates for augmented model</effect>
 	</option>
+	<option>
+	  <flag>--limit-to</flag>
+	  <optparm>list</optparm>
+	  <effect>limit test to subset of regressors</effect>
+	</option>	
       </options>
       <examples>
         <example>chow 25</example>
@@ -1465,6 +1470,13 @@
 	for the covariance matrix, the test statistic is a Wald chi-square
 	value based on a robust estimator of the covariance matrix for the
 	augmented regression.
+      </para>
+      <para context="cli">
+	The <opt>limit-to</opt> option can be used to limit the set of
+	interactions with the split dummy variable to a subset of the
+	original regressors. The parameter for this option must be a
+	named list, all of whose members are among the original
+	regressors. The list should not include the constant.
       </para>
     </description>
 
@@ -9068,9 +9080,18 @@
 
   </command>
 
-  <command name="qlrtest" section="Tests" 
-    label="Quandt likelihood ratio test">
+  <command name="qlrtest" section="Tests" label="Quandt likelihood ratio test">
 
+    <usage>
+      <options>
+	<option>
+	  <flag>--limit-to</flag>
+	  <optparm>list</optparm>
+	  <effect>limit test to subset of regressors</effect>
+	</option>	
+      </options>      
+    </usage>
+    
     <description>
       <para>
 	For a model estimated on time-series data via OLS, performs the
@@ -9090,6 +9111,14 @@
 	An asymptotic p-value is obtained using the method of <cite
 	key="hansen97">Bruce Hansen (1997)</cite>.
       </para>
+      <para context="cli">
+	The <opt>limit-to</opt> option can be used to limit the set of
+	interactions with the split dummy variable in the Chow tests
+	to a subset of the original regressors. The parameter for this
+	option must be a named list, all of whose members are among
+	the original regressors. The list should not include the
+	constant.
+      </para>      
     </description>
 
     <gui-access>
