@@ -567,8 +567,8 @@ int matrix_freq_driver (const int *list,
 	err = E_DATA;
     } else {
 	if (list == NULL) {
-	    /* this is OK if m is a vector */
-	    if (gretl_vector_get_length(m) > 0) {
+	    /* this is OK if m is a column vector */
+	    if (m->cols == 1) {
 		int mlist[2] = {1, 1};
 		
 		mdset = gretl_dataset_from_matrix(m, mlist, OPT_B, &err);
