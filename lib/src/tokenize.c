@@ -2850,6 +2850,8 @@ static int check_for_list (CMD *cmd)
 	    ; /* list defaults to all series, OK */
 	} else if (cmd->ci == OMIT && (cmd->opt & OPT_A)) {
 	    ; /* the auto-omit option, OK */
+	} else if (cmd->ci == FREQ && (cmd->opt & OPT_X)) {
+	    ; /* using a matrix: may be OK */
 	} else {
 	    fprintf(stderr, "check_for_list: cmd->list is NULL\n");
 	    cmd->err = E_ARGS;

@@ -3861,7 +3861,9 @@
       <para>
 	If the <opt>--matrix</opt> option is given, <repl>var</repl>
 	(which must be an integer) is instead interpreted as a 1-based
-	index that selects a column from the named matrix.
+	index that selects a column from the named matrix. If the
+	matrix in question is in fact a column vector, the
+	<repl>var</repl> argument may be omitted.
       </para>
       <para>
 	To control the presentation of the distribution you may

@@ -553,8 +553,8 @@ int matrix_freq_driver (const int *list,
     const char *mname;
     int err = 0;
 
-    if (list[0] != 1) {
-	return E_PARSE;
+    if (list != NULL && list[0] != 1) {
+	return E_DATA;
     }
 
     mname = get_optval_string(FREQ, OPT_X);
@@ -566,7 +566,18 @@ int matrix_freq_driver (const int *list,
     if (gretl_is_null_matrix(m)) {
 	err = E_DATA;
     } else {
-	mdset = gretl_dataset_from_matrix(m, list, OPT_B, &err);
+	if (list == NULL) {
+	    /* this is OK if m is a vector */
+	    if (gretl_vector_get_length(m) > 0) {
+		int mlist[2] = {1, 1};
+		
+		mdset = gretl_dataset_from_matrix(m, mlist, OPT_B, &err);
+	    } else {
+		err = E_ARGS;
+	    }
+	} else {
+	    mdset = gretl_dataset_from_matrix(m, list, OPT_B, &err);
+	}
     }
 
     if (!err) {
