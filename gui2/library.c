@@ -6593,7 +6593,7 @@ static int maybe_prune_delete_list (int *list)
     for (i=1; i<=list[0]; i++) {
 	if (list[i] <= vsave) {
 	    gretl_list_delete_at_pos(list, i--);
-	    pruned = 1;
+	    pruned++;
 	}
     }
 
@@ -6604,6 +6604,7 @@ static void real_delete_vars (int selvar)
 {
     int err, renumber, pruned = 0;
     const char *vname = NULL;
+    int *dellist = NULL;
     char *liststr = NULL;
     gchar *msg = NULL;
 
@@ -6625,8 +6626,8 @@ static void real_delete_vars (int selvar)
 	}
     } else {
 	/* deleting multiple series selected in main window */
-	liststr = main_window_selection_as_string();
-	if (liststr == NULL) {
+	dellist = main_window_selection_as_list();
+	if (dellist == NULL) {
 	    return;
 	} else {
 	    msg = g_strdup(_("Really delete the selected variables?"));
@@ -6640,47 +6641,46 @@ static void real_delete_vars (int selvar)
 	resp = yes_no_dialog(_("gretl: delete"), msg, 0);
 	g_free(msg);
 	if (resp != GRETL_YES) {
-	    free(liststr);
+	    free(dellist);
 	    return;
 	}
     }
 
-    if (vname != NULL) {
-	lib_command_sprintf("delete %s", vname);
-    } else {
-	lib_command_sprintf("delete%s", liststr);
-	free(liststr);  
-    } 
-
-    if (parse_lib_command()) {
-	return;
+    if (dellist != NULL) {
+	pruned = maybe_prune_delete_list(dellist);
+	if (dellist == 0) {
+	    errbox(_("Cannot delete the specified variables"));
+	    return;
+	} else if (pruned) {
+	    errbox(_("Cannot delete all of the specified variables"));
+	}
+	liststr = gretl_list_to_string(dellist, dataset, &err);
     }
 
-    if (selvar == 0) {
-	pruned = maybe_prune_delete_list(libcmd.list);
+    if (!err) {
+	err = dataset_drop_listed_variables(dellist, dataset, 
+					    &renumber, NULL);
     }
-
-    if (libcmd.list[0] == 0) {
-	errbox(_("Cannot delete the specified variables"));
-	return;
-    } else if (pruned) {
-	errbox(_("Cannot delete all of the specified variables"));
-    }
-
-    err = dataset_drop_listed_variables(libcmd.list, dataset, 
-					&renumber, NULL);
 
     if (err) {
-	nomem();
+	gui_errmsg(err);
     } else {
-	record_lib_command();
+	if (vname != NULL) {
+	    lib_command_sprintf("delete %s", vname);
+	} else {
+	    lib_command_sprintf("delete%s", liststr);
+	} 	
+	record_command_verbatim();
 	refresh_data();
 	if (renumber) {
 	    infobox(_("Take note: variables have been renumbered"));
 	}
-	maybe_clear_selector(libcmd.list);
+	maybe_clear_selector(dellist);
 	mark_dataset_as_modified();
     }
+
+    free(dellist);
+    free(liststr);
 }
 
 void delete_single_var (int id)
@@ -8826,7 +8826,14 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 		err = E_DATA; /* error message handled */
 		break;
 	    } else {
-		maybe_prune_delete_list(cmd->list);
+		if (maybe_prune_delete_list(cmd->list)) {
+		    if (cmd->list[0] == 0) {
+			pputs(prn, _("No series were deleted"));
+			if (cmd->param == NULL) {
+			    break;
+			}
+		    }
+		}
 	    }
 	}
 	if (!err) {
