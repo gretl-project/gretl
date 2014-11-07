@@ -3702,7 +3702,8 @@
       <options>
 	<option>
 	  <flag>--send-data</flag>
-	  <effect>pre-load the current dataset; see below</effect>
+	  <optparm optional="true">list</optparm>
+	  <effect>pre-load data; see below</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
@@ -3728,10 +3729,16 @@
       </para>
       <para>
 	In connection with R, Octave and Stata the
-	<opt>--send-data</opt> option has the effect of making the
-	entire current gretl dataset available within the target
-	program.
+	<opt>--send-data</opt> option has the effect of making data
+	from gretl's workspace available within the target program. By
+	default the entire dataset is sent, but you can limit the data
+	to be sent by giving the name of a predefined list of series.
+	For example:
       </para>
+      <code>
+	list Rlist = x1 x2 x3
+	foreign language=R --send-data=Rlist
+      </code>
       <para>
 	See <guideref targ="chap:gretlR"/> for details and examples.
       </para>

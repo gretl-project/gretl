@@ -483,16 +483,17 @@ script.
 
 A ``foreign'' block takes the form
 \begin{code}
-foreign language=R [--send-data] [--quiet]
+foreign language=R [--send-data[=list]] [--quiet]
     ... R commands ...
 end foreign
 \end{code}
 and achieves the same effect as submitting the enclosed \app{R}
 commands via the GUI in the non-interactive mode (see
 section~\ref{sec:R-scripts} above). The \option{send-data} option
-arranges for auto-loading of the data present in the gretl
-session.  The \option{quiet} option prevents the output from \app{R}
-from being echoed in the gretl output.
+arranges for auto-loading of the data present in the gretl session, or
+a subset thereof specified via a named list.  The \option{quiet}
+option prevents the output from \app{R} from being echoed in the gretl
+output.
 
 \begin{script}[htbp]
   \caption{Estimation of the Basic Structural Model -- simple}
