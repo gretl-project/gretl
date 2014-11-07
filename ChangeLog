@@ -10,6 +10,9 @@ version 1.10.0, in progress
   button (top right), and make it more functional
 - "join" command: support native data files (gdt, gdtb) as well
   as delimited text files, for data importation
+- "foreign" command: where the --send-data option is supported,
+  add an optional list parameter to limit the exportation to
+  a named list of series
 - "data" command: fix incorrect importation of series with
   lower frequency than the current dataset; also add an
   --interpolate option for that context
