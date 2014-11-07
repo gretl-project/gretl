@@ -1128,21 +1128,49 @@ static int write_gretl_mpi_file (gretlopt opt)
     return err;
 }
 
+static const int *get_send_data_list (const DATASET *dset, int *err)
+{
+    const char *lname = get_optval_string(FOREIGN, OPT_D);
+    int *list = NULL;
+
+    if (lname != NULL) {
+	list = get_list_by_name(lname);
+	if (list == NULL) {
+	    *err = E_DATA;
+	} else {
+	    int i;
+
+	    for (i=1; i<=list[0] && !*err; i++) {
+		if (list[i] < 0 || list[i] >= dset->v) {
+		    *err = E_DATA;
+		}
+	    }
+	}
+    }
+
+    return list;
+}
+
 #endif /* HAVE_MPI */
 
 static int write_data_for_stata (const DATASET *dset,
 				 FILE *fp)
 {
+    int *list = NULL;
     char save_na[8];
     gchar *sdata;
-    int err;
+    int err = 0;
 
-    *save_na = '\0';
-    strncat(save_na, get_csv_na_write_string(), 7);
-    set_csv_na_write_string(".");
-    sdata = g_strdup_printf("%sstata.csv", gretl_dotdir());
-    err = write_data(sdata, NULL, dset, OPT_C, NULL);
-    set_csv_na_write_string(save_na);
+    list = get_send_data_list(dset, &err);
+    
+    if (!err) {
+	*save_na = '\0';
+	strncat(save_na, get_csv_na_write_string(), 7);
+	set_csv_na_write_string(".");
+	sdata = g_strdup_printf("%sstata.csv", gretl_dotdir());
+	err = write_data(sdata, list, dset, OPT_C, NULL);
+	set_csv_na_write_string(save_na);
+    }
  
     if (err) {
 	gretl_errmsg_sprintf("write_data_for_stata: failed with err = %d\n", err);
@@ -1203,11 +1231,16 @@ int write_gretl_stata_file (const char *buf, gretlopt opt,
 static int write_data_for_octave (const DATASET *dset,
 				  FILE *fp)
 {
+    int *list = NULL;
     gchar *mdata;
-    int err;
+    int err = 0;
 
-    mdata = g_strdup_printf("%smdata.tmp", gretl_dotdir());
-    err = write_data(mdata, NULL, dset, OPT_M, NULL);
+    list = get_send_data_list(dset, &err);
+
+    if (!err) {
+	mdata = g_strdup_printf("%smdata.tmp", gretl_dotdir());
+	err = write_data(mdata, list, dset, OPT_M, NULL);
+    }
  
     if (err) {
 	gretl_errmsg_sprintf("write_data_for_octave: failed with err = %d\n", err);
@@ -1270,12 +1303,18 @@ static int write_data_for_R (const DATASET *dset,
 			     FILE *fp)
 {
     int ts = dataset_is_time_series(dset);
+    int *list = NULL;
     gchar *Rdata;
-    int err;
+    int err = 0;
 
     Rdata = g_strdup_printf("%sRdata.tmp", gretl_dot_dir);
 
-    err = write_data(Rdata, NULL, dset, OPT_R, NULL);
+    list = get_send_data_list(dset, &err);
+
+    if (!err) {
+	err = write_data(Rdata, list, dset, OPT_R, NULL);
+    }
+
     if (err) {
 	gretl_errmsg_sprintf("write_data_for_R: failed with err = %d\n", err);
 	g_free(Rdata);

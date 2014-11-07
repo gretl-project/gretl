@@ -216,7 +216,7 @@ struct gretl_option gretl_opts[] = {
     { FCAST,    OPT_O, "out-of-sample", 0 },
     { FCAST,    OPT_I, "integrate", 0 },
     { FCAST,    OPT_U, "plot", 2 },
-    { FOREIGN,  OPT_D, "send-data", 0 },
+    { FOREIGN,  OPT_D, "send-data", 1 },
     { FOREIGN,  OPT_V, "verbose", 0 },
     { FRACTINT, OPT_G, "gph", 0 },
     { FRACTINT, OPT_A, "all", 0 },
