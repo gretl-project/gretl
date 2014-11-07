@@ -1128,7 +1128,9 @@ static int write_gretl_mpi_file (gretlopt opt)
     return err;
 }
 
-static const int *get_send_data_list (const DATASET *dset, int *err)
+#endif /* HAVE_MPI */
+
+static int *get_send_data_list (const DATASET *dset, int *err)
 {
     const char *lname = get_optval_string(FOREIGN, OPT_D);
     int *list = NULL;
@@ -1150,8 +1152,6 @@ static const int *get_send_data_list (const DATASET *dset, int *err)
 
     return list;
 }
-
-#endif /* HAVE_MPI */
 
 static int write_data_for_stata (const DATASET *dset,
 				 FILE *fp)
