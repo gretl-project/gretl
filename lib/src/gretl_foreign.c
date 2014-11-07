@@ -1157,8 +1157,8 @@ static int write_data_for_stata (const DATASET *dset,
 				 FILE *fp)
 {
     int *list = NULL;
+    gchar *sdata = NULL;
     char save_na[8];
-    gchar *sdata;
     int err = 0;
 
     list = get_send_data_list(dset, &err);
@@ -1232,7 +1232,7 @@ static int write_data_for_octave (const DATASET *dset,
 				  FILE *fp)
 {
     int *list = NULL;
-    gchar *mdata;
+    gchar *mdata = NULL;
     int err = 0;
 
     list = get_send_data_list(dset, &err);
