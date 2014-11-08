@@ -7474,13 +7474,10 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     int err;
 
     if (!selection && policy == OUTPUT_POLICY_UNSET) {
-	windata_t *w = get_unique_output_viewer();
+	windata_t *targ = get_unique_output_viewer();
 
-	if (w != NULL) {
-	    fprintf(stderr, "FIXME: should set output policy here!\n");
-	    /* just for the moment, stick with the current default
-	       of OUTPUT_POLICY_NEW_WINDOW */
-	    policy = OUTPUT_POLICY_NEW_WINDOW;
+	if (targ != NULL) {
+	    policy = output_policy_dialog(vwin, targ, 0);
 	}
     }
 

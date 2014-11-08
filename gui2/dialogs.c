@@ -5847,49 +5847,110 @@ int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf,
     return opts.retval;
 }
 
-int output_policy_dialog (GtkWidget *w, windata_t *vwin,
-			  int first_time)
+static int real_output_policy_dlg (const char **opts,
+				   int deflt,
+				   int toolbar,
+				   GtkWidget *parent)
 {
-    if (first_time) {
-	/* called via "exec" when policy is unset */
+    GtkWidget *dialog;
+    GtkWidget *vbox, *hbox, *tmp;
+    GtkWidget *button = NULL;
+    GSList *group = NULL;
+    int radio_val = deflt;
+    int hcode = 0;
+    int i, ret = GRETL_CANCEL;
+
+    if (maybe_raise_dialog()) {
+	return ret;
+    }
+
+    dialog = gretl_dialog_new(NULL, parent, GRETL_DLG_BLOCK);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    if (toolbar) {
+	tmp = gtk_label_new(_("New script output:"));
+    } else {
+	tmp = gtk_label_new(_("New script output should:"));
+    }
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+
+    for (i=0; i<3; i++) {
+	button = gtk_radio_button_new_with_label(group, _(opts[i]));
+	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+	g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(i));
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_radio_opt), &radio_val);
+	if (i == deflt) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+	}
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    }
+
+    if (!toolbar) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+	tmp = gtk_label_new("Note that you can change this policy via the\n"
+			    "\"Stickiness\" button in the script output window.");
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);	
+    }
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+
+    /* "OK" button */
+    tmp = ok_validate_button(hbox, &ret, &radio_val);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(delete_widget), dialog);
+    gtk_widget_grab_default(tmp);
+
+    /* Create a "Help" button? */
+    if (hcode) {
+	context_help_button(hbox, hcode);
+    } else {
+	gretl_dialog_keep_above(dialog);
+    }
+
+    gtk_widget_show_all(dialog);
+
+    return ret;
+}
+
+int output_policy_dialog (windata_t *source,
+			  windata_t *target,
+			  int toolbar)
+{
+    int orig = get_script_output_policy();
+    int resp, deflt, policy;
+
+    /* convert to zero-based? */
+    deflt = (orig == OUTPUT_POLICY_UNSET)? orig : orig - 1;
+    
+    if (!toolbar) {
+	/* not called via output window toolbar */
 	const char *opts[] = {
-	    N_("Replaces previous output"),
+	    N_("Replace previous output"),
 	    N_("Add to previous output"),
 	    N_("Go to a new window")
 	};
-	const char *label = N_("New script output should:");
-	int deflt = 0;
-	int resp;
-
-	/* WORK in PROGRESS! */
-
-	/* here we want  a radio dialog with no cancel button,
-	   and with some text noting the existence of the Stickiness
-	   toolbar button
-	*/
+	
+	resp = real_output_policy_dlg(opts, deflt, toolbar,
+				      vwin_toplevel(source));
     } else {
 	const char *opts[] = {
 	    N_("Replaces output in this window"),
 	    N_("Adds to output in this window"),
 	    N_("Always goes to a new window")
-	};
-	const char *label = N_("New script output:");
-	int deflt = get_script_output_policy();
-	int resp;
-
-	if (deflt > OUTPUT_POLICY_UNSET) {
-	    /* convert to zero-based */
-	    deflt--;
-	}
-
-	resp = radio_dialog(NULL, label, opts, 3, deflt, 0, 
-			    vwin_toplevel(vwin));
-
-	if (resp != GRETL_CANCEL) {
-	    /* convert policy back to 1-based */
-	    set_script_output_policy(resp + 1, vwin);
-	}
+	}; 
+    
+	resp = real_output_policy_dlg(opts, deflt, toolbar,
+				      vwin_toplevel(source));
     }
 
-    return 0;
+    /* convert policy back to 1-based */
+    policy = (resp == GRETL_CANCEL)? (deflt + 1) : resp + 1;
+
+    set_script_output_policy(policy, target);
+
+    return policy;
 }

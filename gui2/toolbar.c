@@ -578,7 +578,7 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
 
 static void stickiness_callback (GtkWidget *w, windata_t *vwin)
 {
-    output_policy_dialog(w, vwin, 0);
+    output_policy_dialog(vwin, vwin, 1);
 }
 
 static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)

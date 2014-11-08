@@ -197,7 +197,7 @@ int object_name_entry_dialog (char *name, GretlType type,
 int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf, 
 		      GtkWidget *parent);
 
-int output_policy_dialog (GtkWidget *w, windata_t *vwin,
-			  int first_time);
+int output_policy_dialog (windata_t *source, windata_t *target,
+			  int toolbar);
 
 #endif /* DIALOGS_H */
