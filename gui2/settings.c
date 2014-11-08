@@ -401,9 +401,10 @@ void set_script_output_policy (int p, windata_t *vwin)
 {
     script_output_policy = p;
 
-    if (script_output_policy < 0 || 
-	script_output_policy > OUTPUT_APPEND) {
-	script_output_policy = OUTPUT_NEW_WINDOW;
+    if (script_output_policy < 0 ||
+	script_output_policy > OUTPUT_POLICY_NEW_WINDOW) {
+	/* invalid setting */
+	script_output_policy = OUTPUT_POLICY_REPLACE;
     }
 
     set_reuseable_output_window(p, vwin);

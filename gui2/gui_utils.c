@@ -1745,7 +1745,7 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 }
 
 /* for use with reuseable script output window */
-static windata_t *script_out;
+static windata_t *script_out_viewer;
 
 static gboolean nullify_script_out (GtkWidget *w, windata_t **pvwin)
 {
@@ -1755,12 +1755,13 @@ static gboolean nullify_script_out (GtkWidget *w, windata_t **pvwin)
 
 void set_reuseable_output_window (int policy, windata_t *vwin)
 {
-    if (policy == OUTPUT_NEW_WINDOW) {
-	script_out = NULL;
+    if (policy == OUTPUT_POLICY_NEW_WINDOW) {
+	script_out_viewer = NULL;
     } else {
-	script_out = vwin;
+	script_out_viewer = vwin;
 	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
-			 G_CALLBACK(nullify_script_out), &script_out);
+			 G_CALLBACK(nullify_script_out),
+			 &script_out_viewer);
     }
 }
 
@@ -1773,7 +1774,7 @@ static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
     newtext = gretl_print_get_buffer(prn);
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
-    if (policy == OUTPUT_APPEND) {
+    if (policy == OUTPUT_POLICY_APPEND) {
 	GtkTextMark *mark;
 	GtkTextIter iter;
 
@@ -1808,12 +1809,11 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 			 const char *title, int role, 
 			 gpointer data) 
 {
-    /* int policy = get_script_output_policy(); */
     int width = 0, nlines = 0;
     windata_t *vwin;
 
-    if (role == SCRIPT_OUT && script_out != NULL) {
-	return reuse_script_out(script_out, prn);
+    if (role == SCRIPT_OUT && script_out_viewer != NULL) {
+	return reuse_script_out(script_out_viewer, prn);
     }
 
     if (title != NULL) {
@@ -1880,8 +1880,9 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	    vwin_add_child((windata_t *) data, vwin);
 	}
 	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
-			 G_CALLBACK(nullify_script_out), &script_out);
-	script_out = vwin;
+			 G_CALLBACK(nullify_script_out),
+			 &script_out_viewer);
+	script_out_viewer = vwin;
     }
 
     /* insert and then free the text buffer */

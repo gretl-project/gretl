@@ -282,9 +282,10 @@ enum auto_dummies {
 };
 
 enum script_output_policies {
-    OUTPUT_NEW_WINDOW,
-    OUTPUT_REPLACE,
-    OUTPUT_APPEND
+    OUTPUT_POLICY_UNSET,
+    OUTPUT_POLICY_REPLACE,
+    OUTPUT_POLICY_APPEND,
+    OUTPUT_POLICY_NEW_WINDOW
 };
 
 #endif /* GRETL_ENUMS_H */

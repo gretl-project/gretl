@@ -5846,3 +5846,48 @@ int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf,
 
     return opts.retval;
 }
+
+int output_policy_dialog (GtkWidget *w, windata_t *vwin,
+			  int first_time)
+{
+    if (first_time) {
+	/* called via "exec" when policy is unset */
+	const char *opts[] = {
+	    N_("Replaces previous output"),
+	    N_("Add to previous output"),
+	    N_("Go to a new window")
+	};
+	const char *label = N_("New script output should:");
+	int deflt = 0;
+	int resp;
+
+	/* here we want  a radio dialog with no cancel button,
+	   and with some text noting the existence of the Stickiness
+	   toolbar button
+	*/
+    } else {
+	const char *opts[] = {
+	    N_("Replaces output in this window"),
+	    N_("Adds to output in this window"),
+	    N_("Always goes to a new window")
+	};
+	const char *label = N_("New script output:");
+	int deflt = get_script_output_policy();
+	int resp;
+
+	if (deflt > OUTPUT_POLICY_UNSET) {
+	    /* convert to zero-based */
+	    deflt--;
+	}
+
+	resp = radio_dialog(NULL, label, opts, 3, deflt, 0, 
+			    vwin_toplevel(vwin));
+
+	if (resp != GRETL_CANCEL) {
+	    /* convert policy back to 1-based */
+	    set_script_output_policy(resp + 1, vwin);
+	}
+    }
+
+    return 0;
+}

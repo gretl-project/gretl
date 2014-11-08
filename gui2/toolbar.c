@@ -576,24 +576,9 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     gtk_widget_show_all(dialog);
 }
 
-static void set_output_stickiness (GtkWidget *w, windata_t *vwin)
+static void stickiness_callback (GtkWidget *w, windata_t *vwin)
 {
-    const char *opts[] = {
-	N_("Always goes to a new window"),
-	N_("Replaces output in this window"),
-	N_("Adds to output in this window")
-    };
-    const char *label = N_("New script output:");
-    int resp, deflt;
-
-    deflt = get_script_output_policy();
-
-    resp = radio_dialog(NULL, label, opts, 3, deflt, 0, 
-			vwin_toplevel(vwin));
-
-    if (resp != GRETL_CANCEL) {
-	set_script_output_policy(resp, vwin);
-    }
+    output_policy_dialog(w, vwin, 0);
 }
 
 static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
@@ -702,7 +687,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Refresh"), GTK_STOCK_REFRESH, G_CALLBACK(toolbar_refresh), REFRESH_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, G_CALLBACK(add_data_callback), ADD_DATA_ITEM },
     { N_("Add as matrix..."), GTK_STOCK_ADD, G_CALLBACK(add_matrix_callback), ADD_MATRIX_ITEM },
-    { N_("Stickiness..."), GRETL_STOCK_PIN, G_CALLBACK(set_output_stickiness), STICKIFY_ITEM },
+    { N_("Stickiness..."), GRETL_STOCK_PIN, G_CALLBACK(stickiness_callback), STICKIFY_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_H, G_CALLBACK(split_pane_callback), SPLIT_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_V, G_CALLBACK(split_pane_callback), SPLIT_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },

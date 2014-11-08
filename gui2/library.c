@@ -7467,10 +7467,22 @@ static int maybe_stop_script (void)
 static void run_native_script (windata_t *vwin, gchar *buf, 
 			       gboolean selection)
 {
+    int policy = get_script_output_policy();
     windata_t *kid = NULL;
     PRN *prn;
     int save_batch;
     int err;
+
+    if (!selection && policy == OUTPUT_POLICY_UNSET) {
+	windata_t *w = get_unique_output_viewer();
+
+	if (w != NULL) {
+	    fprintf(stderr, "FIXME: should set output policy here!\n");
+	    /* just for the moment, stick with the current default
+	       of OUTPUT_POLICY_NEW_WINDOW */
+	    policy = OUTPUT_POLICY_NEW_WINDOW;
+	}
+    }
 
     if (bufopen(&prn)) {
 	return;
@@ -7482,7 +7494,7 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	if (kid != NULL) {
 	    suppress_logo = 1;
 	}
-    } else if (get_script_output_policy() == OUTPUT_NEW_WINDOW) {
+    } else if (policy == OUTPUT_POLICY_NEW_WINDOW) {
 	err = start_script_output_handler(prn, SCRIPT_OUT,
 					  NULL, NULL);
 	if (err) {

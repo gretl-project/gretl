@@ -942,6 +942,34 @@ int get_script_output_number (void)
     return ret;
 }
 
+windata_t *get_unique_output_viewer (void)
+{
+    windata_t *ret = NULL;
+    int vcount = 0;
+
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_group);
+	windata_t *vwin;
+
+	while (list != NULL) {
+	    vwin = vwin_from_action((GtkAction *) list->data);
+	    if (vwin != NULL && vwin->role == SCRIPT_OUT) {
+		vcount++;
+		if (vcount == 1) {
+		    ret = vwin;
+		} else {
+		    ret = NULL;
+		    break;
+		}
+	    }
+	    list = list->next;
+	}
+	g_list_free(list);
+    }
+
+    return ret;
+}
+
 GtkWidget *get_window_for_data (const gpointer data)
 {
     GtkWidget *ret = NULL;
