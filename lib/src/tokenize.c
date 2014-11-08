@@ -421,6 +421,11 @@ static void gretl_cmd_clear (CMD *c)
     cmd_token *tok;
     int i, ci = c->ci;
 
+#if CDEBUG
+    fprintf(stderr, "gretl_cmd_clear: ci = %d (%s), context = %d\n", ci,
+	    gretl_command_word(ci), c->context);
+#endif   
+
     if (ci == END && c->param != NULL) {
 	ci = gretl_command_number(c->param);
     }
@@ -441,7 +446,9 @@ static void gretl_cmd_clear (CMD *c)
        get_command index)?
     */
 
-    if (ci != SETOPT && 
+    if (c->context > 0) {
+	; /* don't clear any pending options */
+    } else if (ci > 0 && ci != SETOPT && 
 	!(c->ciflags & (CI_NOOPT | CI_EXPR | CI_VARGS))) {
 	clear_stored_options_for_command(ci);
     }
