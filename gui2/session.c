@@ -2936,7 +2936,8 @@ static int gui_user_var_callback (const char *name, GretlType type,
 	    if (u != NULL) {
 		session_add_icon(u, otype, ICON_ADD_SINGLE);
 	    }
-	} else if (autoicon_on()) {
+	} else if (type != GRETL_TYPE_MATRIX && autoicon_on()) {
+	    /* auto-open icon view unless we added a matrix */
 	    auto_view_session();
 	}
 	if (iconview != NULL && waiting_for_output()) {
