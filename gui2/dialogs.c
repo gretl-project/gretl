@@ -5861,6 +5861,8 @@ int output_policy_dialog (GtkWidget *w, windata_t *vwin,
 	int deflt = 0;
 	int resp;
 
+	/* WORK in PROGRESS! */
+
 	/* here we want  a radio dialog with no cancel button,
 	   and with some text noting the existence of the Stickiness
 	   toolbar button
