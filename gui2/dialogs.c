@@ -5847,6 +5847,11 @@ int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf,
     return opts.retval;
 }
 
+static gint dont_delete (void)
+{
+    return TRUE;
+}
+
 static int real_output_policy_dlg (const char **opts,
 				   int deflt,
 				   int toolbar,
@@ -5865,6 +5870,13 @@ static int real_output_policy_dlg (const char **opts,
     }
 
     dialog = gretl_dialog_new(NULL, parent, GRETL_DLG_BLOCK);
+#ifdef G_OS_WIN32
+    gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
+#else
+    g_signal_connect(G_OBJECT(dialog), "delete-event",
+		     G_CALLBACK(dont_delete), NULL);
+#endif    
+
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -5891,6 +5903,9 @@ static int real_output_policy_dlg (const char **opts,
     if (!toolbar) {
 	hbox = gtk_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+	tmp = gtk_image_new_from_stock(GRETL_STOCK_PIN,
+				       GTK_ICON_SIZE_MENU);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 	tmp = gtk_label_new("Note that you can change this policy via the\n"
 			    "\"Stickiness\" button in the script output window.");
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);	
