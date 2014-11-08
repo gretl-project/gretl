@@ -40,7 +40,6 @@
 #define GRETL_STOCK_JOIN_H  "gretl-join-h"
 #define GRETL_STOCK_JOIN_V  "gretl-join-v"
 #define GRETL_STOCK_WINLIST "gretl-winlist"
-#define GRETL_STOCK_SHEET   "gretl-sheet"
 #define GRETL_STOCK_BUNDLE  "gretl-bundle"
 #define GRETL_STOCK_DB      "gretl-db"
 #define GRETL_STOCK_GRETL   "gretl-gretl"

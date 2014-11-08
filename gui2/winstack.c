@@ -1163,7 +1163,9 @@ GtkWidget *vwin_toplevel (windata_t *vwin)
     return vwin->topmain != NULL ? vwin->topmain : vwin->main;
 }
 
-static void real_add_winlist (windata_t *vwin, GtkWidget *hbox)
+static void real_add_winlist (windata_t *vwin,
+			      GtkWidget *window,
+			      GtkWidget *hbox)
 {
     GtkWidget *button, *img, *tbar;
     GtkToolItem *item;
@@ -1176,21 +1178,34 @@ static void real_add_winlist (windata_t *vwin, GtkWidget *hbox)
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
     img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, GTK_ICON_SIZE_MENU);
     gtk_container_add(GTK_CONTAINER(button), img);
-    gtk_container_add(GTK_CONTAINER(item), button);    
+    gtk_container_add(GTK_CONTAINER(item), button);
 
-    g_signal_connect(G_OBJECT(button), "button-press-event", 
-		     G_CALLBACK(vwin_winlist_popup), vwin);
+    if (vwin != NULL) {
+	g_signal_connect(G_OBJECT(button), "button-press-event", 
+			 G_CALLBACK(vwin_winlist_popup), vwin);
+    } else {
+	g_signal_connect(G_OBJECT(button), "button-press-event", 
+			 G_CALLBACK(window_list_popup), window);
+    }
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     gtk_widget_show_all(tbar);
     gtk_box_pack_end(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
 }
 
-void menu_bar_add_winlist (windata_t *vwin)
+void vwin_add_winlist (windata_t *vwin)
 {
     GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
 
     if (!widget_get_int(hbox, "have_winlist")) {
-	real_add_winlist(vwin, hbox);
+	real_add_winlist(vwin, NULL, hbox);
+	widget_set_int(hbox, "have_winlist", 1);
+    }
+}
+
+void window_add_winlist (GtkWidget *window, GtkWidget *hbox)
+{
+    if (!widget_get_int(hbox, "have_winlist")) {
+	real_add_winlist(NULL, window, hbox);
 	widget_set_int(hbox, "have_winlist", 1);
     }
 }
@@ -1248,7 +1263,7 @@ void vwin_pack_toolbar (windata_t *vwin)
     }
 
     if (want_winlist(vwin)) {
-	menu_bar_add_winlist(vwin);
+	vwin_add_winlist(vwin);
     }
 }
 

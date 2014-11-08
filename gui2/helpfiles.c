@@ -991,7 +991,7 @@ void set_up_helpview_menu (windata_t *hwin)
     gtk_box_pack_start(GTK_BOX(hwin->vbox), hbox, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), hwin->mbar, FALSE, FALSE, 0);
 
-    menu_bar_add_winlist(hwin);
+    vwin_add_winlist(hwin);
 
     if (SHOW_FINDER(hwin->role)) {
 	vwin_add_finder(hwin);

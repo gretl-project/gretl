@@ -60,7 +60,9 @@ void close_session_windows (gretlopt opt);
 
 void cascade_session_windows (void);
 
-void menu_bar_add_winlist (windata_t *vwin);
+void vwin_add_winlist (windata_t *vwin);
+
+void window_add_winlist (GtkWidget *window, GtkWidget *hbox);
 
 windata_t *vwin_new (int role, gpointer data);
 

@@ -57,7 +57,6 @@
 #include "../pixmaps/mini.join_h.xpm"
 #include "../pixmaps/mini.join_v.xpm"
 #include "../pixmaps/mini.winlist.xpm"
-#include "../pixmaps/mini.spreadsheet.xpm"
 #include "../pixmaps/mini.bundle.xpm"
 
 /* for main-window toolbar */
@@ -141,7 +140,6 @@ void gretl_stock_icons_init (void)
 	{ mini_join_h_xpm, GRETL_STOCK_JOIN_H },
 	{ mini_join_v_xpm, GRETL_STOCK_JOIN_V },
 	{ mini_winlist_xpm, GRETL_STOCK_WINLIST },
-	{ mini_spreadsheet_xpm, GRETL_STOCK_SHEET },
 	{ mini_bundle_xpm, GRETL_STOCK_BUNDLE },
 	{ mini_db_xpm, GRETL_STOCK_DB},
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
@@ -683,7 +681,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("LaTeX"), GRETL_STOCK_TEX, G_CALLBACK(window_tex_callback), TEX_ITEM },
     { N_("Graph"), GRETL_STOCK_TS, G_CALLBACK(toolbar_plot_callback), PLOT_ITEM },
     { N_("Reformat..."), GTK_STOCK_CONVERT, G_CALLBACK(reformat_callback), FORMAT_ITEM },
-    { N_("Edit values..."), GRETL_STOCK_SHEET, G_CALLBACK(series_view_edit), EDITOR_ITEM },
+    { N_("Edit values..."), GTK_STOCK_EDIT, G_CALLBACK(series_view_edit), EDITOR_ITEM },
     { N_("Refresh"), GTK_STOCK_REFRESH, G_CALLBACK(toolbar_refresh), REFRESH_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, G_CALLBACK(add_data_callback), ADD_DATA_ITEM },
     { N_("Add as matrix..."), GTK_STOCK_ADD, G_CALLBACK(add_matrix_callback), ADD_MATRIX_ITEM },
@@ -1187,15 +1185,6 @@ static void tbar_model (void)
     }
 }
 
-static void tbar_iconview (void)
-{
-    if (data_status) {
-	view_session();
-    } else {
-	warnbox(_("Please open a data file first"));
-    }
-}
-
 static void tbar_new_script (void)
 {
     do_new_script(EDIT_SCRIPT);
@@ -1212,7 +1201,7 @@ static GretlToolItem mainbar_items[] = {
     { N_("launch calculator"),  GRETL_STOCK_CALC,    G_CALLBACK(tbar_calc), 0 },
     { N_("new script"),         GTK_STOCK_EDIT,      G_CALLBACK(tbar_new_script), 0 },
     { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(gretl_console), 0 },
-    { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(tbar_iconview), 0 },
+    { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(view_session), 0 },
     { N_("function packages"),  GRETL_STOCK_FUNC,    G_CALLBACK(tbar_show_funcs), 0 },
     { N_("command reference"),  GTK_STOCK_HELP,      G_CALLBACK(tbar_command_ref), 0 },
     { N_("X-Y graph"),          GRETL_STOCK_SCATTER, G_CALLBACK(tbar_xy_graph), 0 },

@@ -1428,7 +1428,7 @@ static void make_main_window (void)
     fprintf(stderr, "  set_app_font done\n");
 #endif
 
-    menu_bar_add_winlist(mdata);
+    vwin_add_winlist(mdata);
     add_mainwin_toolbar(mdata->vbox);
 
 #if GUI_DEBUG

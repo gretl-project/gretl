@@ -1504,7 +1504,7 @@ static void make_files_toolbar (windata_t *vwin)
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
-    menu_bar_add_winlist(vwin);
+    vwin_add_winlist(vwin);
     vwin_add_finder(vwin);
     gtk_widget_show_all(hbox);
 }

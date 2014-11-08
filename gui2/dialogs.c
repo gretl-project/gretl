@@ -5873,6 +5873,7 @@ static int real_output_policy_dlg (const char **opts,
 #ifdef G_OS_WIN32
     gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
 #else
+    /* the function above may well not work */
     g_signal_connect(G_OBJECT(dialog), "delete-event",
 		     G_CALLBACK(dont_delete), NULL);
 #endif    

@@ -137,15 +137,11 @@ static GretlToolItem series_items[] = {
     { N_("Add..."), GTK_STOCK_ADD,    G_CALLBACK(sheet_show_popup), 
       SHEET_ADD_BTN },
     { N_("Apply"),  GTK_STOCK_APPLY,  G_CALLBACK(get_data_from_sheet), 
-      SHEET_APPLY_BTN },
-    { N_("Windows"), GRETL_STOCK_WINLIST, GNULL, 0 },
-    { N_("Close"),  GTK_STOCK_CLOSE,  G_CALLBACK(maybe_exit_sheet), 0 }
+      SHEET_APPLY_BTN }
 };
 
 static GretlToolItem scalar_items[] = {
-    { N_("Add..."),  GTK_STOCK_ADD,    G_CALLBACK(add_scalar_callback), 0 },
-    { N_("Windows"), GRETL_STOCK_WINLIST, GNULL, 0 },
-    { N_("Close"),   GTK_STOCK_CLOSE,  G_CALLBACK(maybe_exit_sheet), 0 }
+    { N_("Add..."),  GTK_STOCK_ADD,    G_CALLBACK(add_scalar_callback), 0 }
 };
 
 static int n_series_items = G_N_ELEMENTS(series_items);
@@ -3012,23 +3008,7 @@ static void series_sheet_add_locator (Spreadsheet *sheet,
     sheet->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(sheet->locator), 
 					      "current row and column");
     gtk_box_pack_start(GTK_BOX(status_box), sheet->locator, FALSE, FALSE, 0);
-    gtk_box_pack_end(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
-}
-
-static void sheet_toolbar_insert_winlist (Spreadsheet *sheet,
-					  GtkWidget *tbar)
-{
-    GtkWidget *img, *button = gtk_button_new();
-    GtkToolItem *item = gtk_tool_item_new();
-
-    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
-    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, GTK_ICON_SIZE_MENU);
-    gtk_container_add(GTK_CONTAINER(button), img);
-    gtk_container_add(GTK_CONTAINER(item), button);
-    g_signal_connect(button, "button-press-event", 
-		     G_CALLBACK(window_list_popup), sheet->win);
-    gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
+    gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 }
 
 static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
@@ -3052,27 +3032,27 @@ static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
 
     for (i=0; i<n_items; i++) {
 	item = &items[i];
-	if (winlist_item(item)) {
-	    sheet_toolbar_insert_winlist(sheet, tbar);
-	} else {
-	    button = gretl_toolbar_insert(tbar, item, item->func, sheet, -1);
-	    if (!editing_scalars(sheet)) {
-		if (item->flag == SHEET_APPLY_BTN) {
-		    sheet->apply = button;
-		    gtk_widget_set_sensitive(sheet->apply, FALSE);
-		} 
-		if (item->flag != SHEET_ADD_BTN) {
-		    g_signal_connect(G_OBJECT(button), "enter-notify-event",
-				     G_CALLBACK(button_entered), sheet);
-		}
+	button = gretl_toolbar_insert(tbar, item, item->func, sheet, -1);
+	if (!editing_scalars(sheet)) {
+	    if (item->flag == SHEET_APPLY_BTN) {
+		sheet->apply = button;
+		gtk_widget_set_sensitive(sheet->apply, FALSE);
+	    } 
+	    if (item->flag != SHEET_ADD_BTN) {
+		g_signal_connect(G_OBJECT(button), "enter-notify-event",
+				 G_CALLBACK(button_entered), sheet);
 	    }
 	}
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
+
     if (!editing_scalars(sheet)) {
 	series_sheet_add_locator(sheet, hbox);
     }
+
+    window_add_winlist(sheet->win, hbox);
+
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     if (!editing_scalars(sheet)) {
