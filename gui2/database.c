@@ -2093,8 +2093,8 @@ int unzip_package_file (const char *zipname, const char *path)
 #define ZIPFILE_COLUMN 5
 
 /* note : @vwin here is the source viewer window displaying the
-   remote file (database or datafiles package or function package)
-   that is being installed onto the local machine.
+   remote file (database, or datafiles package, or function package)
+   that is to be installed onto the local machine.
 */
 
 void install_file_from_server (GtkWidget *w, windata_t *vwin)

@@ -152,12 +152,12 @@ static int progress_func (void *clientp, double dltotal, double dlnow,
     urlinfo *u = (urlinfo *) clientp;
     int ret = 0;
 
-    if (u->progfunc != NULL && dltotal > 0) {
+    if (u->progfunc != NULL && dltotal > 1024) {
 	if (!u->pstarted) {
-	    u->progfunc((long) dlnow, (long) dltotal, SP_LOAD_INIT);
+	    u->progfunc((gint64) dlnow, (gint64) dltotal, SP_LOAD_INIT);
 	    u->pstarted = 1;
 	} else {
-	    ret = u->progfunc((long) dlnow, (long) dltotal, SP_TOTAL);
+	    ret = u->progfunc((gint64) dlnow, (gint64) dltotal, SP_TOTAL);
 	}
     }
 
@@ -166,8 +166,9 @@ static int progress_func (void *clientp, double dltotal, double dlnow,
 
 static void stop_progress_bar (urlinfo *u)
 {
-    if (u->progfunc != NULL) {
+    if (u->progfunc != NULL && u->pstarted) {
 	u->progfunc(0, 1024, SP_FINISH);
+	u->pstarted = 0;
     }
 }
 

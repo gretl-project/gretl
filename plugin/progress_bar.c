@@ -110,6 +110,8 @@ int show_progress (gint64 res, gint64 expected, int flag)
 
     if (flag == SP_LOAD_INIT || flag == SP_SAVE_INIT || flag == SP_FONT_INIT) {
 	/* initialize the progress bar */
+	double xb = (double) expected;
+	int Kb = (int) (xb / 1024);
 	gchar *bytestr = NULL;
 
 	offs = 0;
@@ -127,21 +129,9 @@ int show_progress (gint64 res, gint64 expected, int flag)
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), 0.0);
 
 	if (flag == SP_LOAD_INIT) {
-#ifdef G_OS_WIN32
-	    bytestr = g_strdup_printf("%s %I64d Kbytes", _("Retrieving"),
-				      expected / 1024);
-#else
-	    bytestr = g_strdup_printf("%s %lld Kbytes", _("Retrieving"),
-				      (long long) expected / 1024);
-#endif
+	    bytestr = g_strdup_printf("%s %d Kbytes", _("Retrieving"), Kb);
 	} else if (flag == SP_SAVE_INIT) {
-#ifdef G_OS_WIN32
-	    bytestr = g_strdup_printf("%s %I64d Kbytes", _("Storing"),
-				      expected / 1024);
-#else
-	    bytestr = g_strdup_printf("%s %lld Kbytes", _("Storing"),
-				      (long long) expected / 1024);
-#endif
+	    bytestr = g_strdup_printf("%s %d Kbytes", _("Storing"), Kb);
 	} else if (flag == SP_FONT_INIT) {
 	    bytestr = g_strdup_printf(_("Scanning %d fonts"), (int) expected);
 	}
