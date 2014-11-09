@@ -3308,41 +3308,38 @@ enum {
 static int *function_package_get_list (fnpkg *pkg, int code, int n)
 {
     int *list = NULL;
-    int subtract = 0;
+    int j = 0;
 
     if (n > 0) {
  	list = gretl_list_new(n);
 	if (list != NULL) {
-	    int i, j = 1;
+	    int i, priv;
 
 	    for (i=0; i<n_ufuns; i++) {
 		if (ufuns[i]->pkg == pkg) {
-		    int priv = function_is_private(ufuns[i]);
-
+		    priv = function_is_private(ufuns[i]);
 		    if (code == PRIVLIST && priv) {
-			list[j++] = i;
+			list[++j] = i;
 		    } else if (code == PUBLIST && !priv) {
-			list[j++] = i;
-		    } else if (code == GUILIST && !priv) {
-			if (pkg_aux_role(ufuns[i]->pkg_role)) {
-			    /* in the GUI list of public funtions, don't
-			       display post-processing functions
-			    */
-			    subtract = 1;
-			} else {
-			    list[j++] = i;
-			}
+			list[++j] = i;
+		    } else if (code == GUILIST && !priv &&
+			       !pkg_aux_role(ufuns[i]->pkg_role)) {
+			/* in the GUI list of public funtions, don't
+			   display post-processing functions
+			*/
+			list[++j] = i;
 		    }
 		}
-	    }	    
-	} 
-    }
+	    }
+	}
+    } 
 
-    if (list != NULL && subtract) {
-	list[0] -= 1;
-	if (list[0] == 0) {
+    if (list != NULL) {
+	if (j == 0) {
 	    free(list);
 	    list = NULL;
+	} else {
+	    list[0] = j;
 	}
     }
 
