@@ -1678,7 +1678,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 
     show = !user_func_is_noprint(cinfo->func);
 
-    if (close_on_OK) {
+    if (close_on_OK && cinfo->dlg != NULL) {
 	gtk_widget_hide(cinfo->dlg);
     }
 
