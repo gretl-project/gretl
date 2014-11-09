@@ -207,7 +207,8 @@ static ufunc *current_fdef; /* pointer to function currently being defined */
 static GList *callstack;    /* stack of function calls */
 static int n_pkgs;          /* number of loaded function packages */
 static fnpkg **pkgs;        /* array of pointers to loaded packages */
-static fnpkg *current_pkg;  /* pointer to function currently being edited */
+static fnpkg *current_pkg;  /* pointer to package currently being edited,
+			       or called via the gretl GUI */
 
 static int function_package_record (fnpkg *pkg);
 static void function_package_free (fnpkg *pkg);
@@ -1061,19 +1062,20 @@ static int function_in_use (ufunc *fun)
 
 ufunc *get_user_function_by_name (const char *name)
 {
-    fnpkg *pkg = NULL;
-    ufunc *fun;
+    fnpkg *pkg = current_pkg;
+    ufunc *fun = NULL;
     int i;
 
     if (n_ufuns == 0) {
 	return NULL;
     }
 
-    fun = currently_called_function();
-
-    if (fun != NULL) {
-	pkg = fun->pkg;
-	fun = NULL;
+    if (pkg == NULL) {
+	fun = currently_called_function();
+	if (fun != NULL) {
+	    pkg = fun->pkg;
+	    fun = NULL;
+	}
     }
 
     /* First pass: if there's no active function package, match any
@@ -3383,6 +3385,19 @@ static int pkg_get_special_func_id (fnpkg *pkg, int role)
     return -1;
 }
 
+static int pkg_get_func_privacy (fnpkg *pkg, int role)
+{
+    int i;
+
+    for (i=0; i<n_ufuns; i++) {
+	if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == role) {
+	    return function_is_private(ufuns[i]);
+	}
+    }	    
+
+    return -1;
+}
+
 /* varargs function for retrieving the properties of a function
    package: the arguments after @pkg take the form of a
    NULL-terminated set of (key, pointer) pairs; values are written to
@@ -3478,6 +3493,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "gui-main-id")) {
 	    pi = (int *) ptr;
 	    *pi = pkg_get_special_func_id(pkg, UFUN_GUI_MAIN);
+	} else if (!strcmp(key, "gui-main-priv")) {
+	    pi = (int *) ptr;
+	    *pi = pkg_get_func_privacy(pkg, UFUN_GUI_MAIN);
 	} else if (!strcmp(key, BUNDLE_PRINT)) {
 	    ps = (char **) ptr;
 	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_PRINT);
@@ -4358,6 +4376,11 @@ int gretl_is_public_user_function (const char *name)
 void set_current_function_package (fnpkg *pkg)
 {
     current_pkg = pkg;
+}
+
+fnpkg *get_current_function_package (void)
+{
+    return current_pkg;
 }
 
 static int skip_private_func (ufunc *ufun)
