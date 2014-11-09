@@ -42,6 +42,7 @@
    private (0|1) '0'
    plugin-wrapper (0|1) '0'
    no-print (0|1) '0'
+   menu-only (0|1) '0'
    pkg-role (bundle-print | bundle-plot | bundle-test | bundle-fcast |
              bundle-extra | gui-main | gui-precheck | none) 'none'
 >
