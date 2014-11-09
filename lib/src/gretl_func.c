@@ -2766,25 +2766,36 @@ int function_set_package_role (const char *name, fnpkg *pkg,
        requirements for its role, and if so, hook it up 
     */
 
-    if (role == UFUN_GUI_PRECHECK) {
+    if (role == UFUN_GUI_PRECHECK || role == UFUN_GUI_MAIN) {
 	for (i=0; i<pkg->n_priv; i++) {
 	    if (!strcmp(name, pkg->priv[i]->name)) {
 		u = pkg->priv[i];
-		if (u->rettype != GRETL_TYPE_DOUBLE) {
-		    pprintf(prn, "%s: must return a scalar\n", attr);
-		    err = E_TYPES;
-		} else if (u->n_params > 0) {
-		    pprintf(prn, "%s: no parameters are allowed\n", attr);
-		    err = E_TYPES;
+		if (role == UFUN_GUI_PRECHECK) {
+		    if (u->rettype != GRETL_TYPE_DOUBLE) {
+			pprintf(prn, "%s: must return a scalar\n", attr);
+			err = E_TYPES;
+		    } else if (u->n_params > 0) {
+			pprintf(prn, "%s: no parameters are allowed\n", attr);
+			err = E_TYPES;
+		    }
+		} else {
+		    /* UFUN_GUI_MAIN: may be private */
+		    if (u->rettype != GRETL_TYPE_BUNDLE && u->rettype != GRETL_TYPE_VOID) {
+			pprintf(prn, "%s: must return a bundle, or nothing\n", attr);
+			err = E_TYPES;
+		    }
 		}
 		if (!err && !testing) {
 		    u->pkg_role = role;
 		}		
-		return err;
+		return err; /* found */
 	    }
 	}
-	pprintf(prn, "%s: %s: no such private function\n", attr, name);
-	return E_DATA;
+	if (role == UFUN_GUI_PRECHECK) {
+	    /* this one must be private */
+	    pprintf(prn, "%s: %s: no such private function\n", attr, name);
+	    return E_DATA;
+	}
     }
 
     for (i=0; i<pkg->n_pub; i++) {
@@ -3359,6 +3370,19 @@ static char *pkg_get_special_func (fnpkg *pkg, int role)
     return NULL;
 }
 
+static int pkg_get_special_func_id (fnpkg *pkg, int role)
+{
+    int i;
+
+    for (i=0; i<n_ufuns; i++) {
+	if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == role) {
+	    return i;
+	}
+    }	    
+
+    return -1;
+}
+
 /* varargs function for retrieving the properties of a function
    package: the arguments after @pkg take the form of a
    NULL-terminated set of (key, pointer) pairs; values are written to
@@ -3451,6 +3475,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "privlist")) {
 	    plist = (int **) ptr;
 	    *plist = function_package_get_list(pkg, PRIVLIST, npriv);
+	} else if (!strcmp(key, "gui-main-id")) {
+	    pi = (int *) ptr;
+	    *pi = pkg_get_special_func_id(pkg, UFUN_GUI_MAIN);
 	} else if (!strcmp(key, BUNDLE_PRINT)) {
 	    ps = (char **) ptr;
 	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_PRINT);

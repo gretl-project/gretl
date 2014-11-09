@@ -1859,23 +1859,18 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
     }
 }
 
-static void maybe_set_gui_interface (fnpkg *pkg,
-				     const char *gname,
-				     call_info *cinfo)
+static void maybe_set_gui_interface (fnpkg *pkg, call_info *cinfo)
 {
-    const char *iface;
-    int i;
+    int fid = -1;
 
-    for (i=1; i<=cinfo->publist[0]; i++) {
-	iface = user_function_name_by_index(cinfo->publist[i]);
-	if (iface != NULL && !strcmp(iface, gname)) {
-	    cinfo->iface = cinfo->publist[i];
-	    cinfo->flags |= SHOW_GUI_MAIN;
-	    function_package_get_properties(pkg, "name",
-					    &cinfo->label,
-					    NULL);
-	    break;
-	}
+    function_package_get_properties(pkg, "gui-main-id",
+				    &fid, NULL);
+    if (fid >= 0) {
+	cinfo->iface = fid;
+	cinfo->flags |= SHOW_GUI_MAIN;
+	function_package_get_properties(pkg, "name",
+					&cinfo->label,
+					NULL);
     }
 }
 
@@ -1896,8 +1891,13 @@ static int need_model_check (call_info *cinfo)
     return err;
 }
 
-/* call to execute a function from the specified package: we do
-   this only for locally installed packages */
+/* Call to execute a function from the package specified
+   by @fname. We may or may not end up offering a list
+   of interfaces. This is called both from menu items
+   (see below in this file) and from the "browser" window
+   that lists installed function packages. In the latter
+   case @loaderr is non-NULL, in the former it's NULL.
+*/
 
 void call_function_package (const char *fname, windata_t *vwin,
 			    int *loaderr)
@@ -1954,18 +1954,8 @@ void call_function_package (const char *fname, windata_t *vwin,
 	}
     }
 
-    if (!err && cinfo->publist[0] > 0) {
-	/* is there a GUI default we should show instead of 
-	   an interface menu? 
-	*/
-	gchar *gmain = NULL;
-
-	function_package_get_properties(pkg, "gui-main",
-					&gmain, NULL);
-	if (gmain != NULL) {
-	    maybe_set_gui_interface(pkg, gmain, cinfo);
-	    free(gmain);
-	}
+    if (!err) {
+	maybe_set_gui_interface(pkg, cinfo);
     }
 
     if (!err && cinfo->iface < 0) {
