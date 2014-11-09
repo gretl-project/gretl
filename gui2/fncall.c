@@ -1954,6 +1954,11 @@ void call_function_package (const char *fname, windata_t *vwin,
 	}
     }
 
+    /* FIXME: if gui-main is private, we should not
+       offer it here when called from the function
+       package browser
+    */
+
     if (!err) {
 	maybe_set_gui_interface(pkg, cinfo);
     }
