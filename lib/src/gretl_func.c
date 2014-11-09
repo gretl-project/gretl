@@ -102,9 +102,10 @@ struct fncall_ {
 };
 
 enum {
-    UFUN_PRIVATE  = 1 << 0,
-    UFUN_PLUGIN   = 1 << 1,
-    UFUN_NOPRINT  = 1 << 2  
+    UFUN_PRIVATE   = 1 << 0,
+    UFUN_PLUGIN    = 1 << 1,
+    UFUN_NOPRINT   = 1 << 2,
+    UFUN_MENU_ONLY = 1 << 3
 };
 
 /* structure representing a user-defined function */
@@ -207,8 +208,7 @@ static ufunc *current_fdef; /* pointer to function currently being defined */
 static GList *callstack;    /* stack of function calls */
 static int n_pkgs;          /* number of loaded function packages */
 static fnpkg **pkgs;        /* array of pointers to loaded packages */
-static fnpkg *current_pkg;  /* pointer to package currently being edited,
-			       or called via the gretl GUI */
+static fnpkg *current_pkg;  /* pointer to package currently being edited */
 
 static int function_package_record (fnpkg *pkg);
 static void function_package_free (fnpkg *pkg);
@@ -220,9 +220,10 @@ static int compiling;    /* boolean: are we compiling a function currently? */
 static int fn_executing; /* depth of function call stack */
 static int compiling_python;
 
-#define function_is_private(f) (f->flags & UFUN_PRIVATE)
-#define function_is_plugin(f)  (f->flags & UFUN_PLUGIN)
-#define function_is_noprint(f) (f->flags & UFUN_NOPRINT)
+#define function_is_private(f)   (f->flags & UFUN_PRIVATE)
+#define function_is_plugin(f)    (f->flags & UFUN_PLUGIN)
+#define function_is_noprint(f)   (f->flags & UFUN_NOPRINT)
+#define function_is_menu_only(f) (f->flags & UFUN_MENU_ONLY)
 
 struct flag_and_key {
     int flag;
@@ -1764,6 +1765,10 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 	fun->flags |= UFUN_NOPRINT;
     }
 
+    if (gretl_xml_get_prop_as_bool(node, "menu-only")) {
+	fun->flags |= UFUN_MENU_ONLY;
+    }
+
     if (gretl_xml_get_prop_as_string(node, "pkg-role", &tmp)) {
 	fun->pkg_role = pkg_key_get_role(tmp);
 	free(tmp);
@@ -1931,6 +1936,9 @@ static int write_function_xml (ufunc *fun, FILE *fp)
     if (function_is_noprint(fun)) {
 	fputs(" no-print=\"1\"", fp);
     }
+    if (function_is_menu_only(fun)) {
+	fputs(" menu-only=\"1\"", fp);
+    }    
 
     if (fun->pkg_role) {
 	fprintf(fp, " pkg-role=\"%s\"", package_role_get_key(fun->pkg_role));
@@ -2180,6 +2188,8 @@ static void check_special_comments (ufunc *fun)
 	    fun->flags |= UFUN_PLUGIN;
 	} else if (strstr(fun->lines[i].s, "## no-print ##")) {
 	    fun->flags |= UFUN_NOPRINT;
+	} else if (strstr(fun->lines[i].s, "## menu-only ##")) {
+	    fun->flags |= UFUN_MENU_ONLY;
 	}
     }
 }
@@ -2768,24 +2778,16 @@ int function_set_package_role (const char *name, fnpkg *pkg,
        requirements for its role, and if so, hook it up 
     */
 
-    if (role == UFUN_GUI_PRECHECK || role == UFUN_GUI_MAIN) {
+    if (role == UFUN_GUI_PRECHECK) {
 	for (i=0; i<pkg->n_priv; i++) {
 	    if (!strcmp(name, pkg->priv[i]->name)) {
 		u = pkg->priv[i];
-		if (role == UFUN_GUI_PRECHECK) {
-		    if (u->rettype != GRETL_TYPE_DOUBLE) {
-			pprintf(prn, "%s: must return a scalar\n", attr);
-			err = E_TYPES;
-		    } else if (u->n_params > 0) {
-			pprintf(prn, "%s: no parameters are allowed\n", attr);
-			err = E_TYPES;
-		    }
-		} else {
-		    /* UFUN_GUI_MAIN: may be private */
-		    if (u->rettype != GRETL_TYPE_BUNDLE && u->rettype != GRETL_TYPE_VOID) {
-			pprintf(prn, "%s: must return a bundle, or nothing\n", attr);
-			err = E_TYPES;
-		    }
+		if (u->rettype != GRETL_TYPE_DOUBLE) {
+		    pprintf(prn, "%s: must return a scalar\n", attr);
+		    err = E_TYPES;
+		} else if (u->n_params > 0) {
+		    pprintf(prn, "%s: no parameters are allowed\n", attr);
+		    err = E_TYPES;
 		}
 		if (!err && !testing) {
 		    u->pkg_role = role;
@@ -2793,11 +2795,9 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 		return err; /* found */
 	    }
 	}
-	if (role == UFUN_GUI_PRECHECK) {
-	    /* this one must be private */
-	    pprintf(prn, "%s: %s: no such private function\n", attr, name);
-	    return E_DATA;
-	}
+	/* not found */
+	pprintf(prn, "%s: %s: no such private function\n", attr, name);
+	return E_DATA;
     }
 
     for (i=0; i<pkg->n_pub; i++) {
@@ -2839,9 +2839,9 @@ int function_set_package_role (const char *name, fnpkg *pkg,
     return E_DATA;
 }
 
-static int pkg_set_no_print_funcs (fnpkg *pkg, const char *s)
+static int pkg_set_funcs_attribute (fnpkg *pkg, const char *s,
+				    int flag)
 {
-    /* introduced 2013-05-30 (1.9.12cvs) */
     char **S;
     int ns = 0, err = 0;
 
@@ -2855,7 +2855,7 @@ static int pkg_set_no_print_funcs (fnpkg *pkg, const char *s)
 	    match = 0;
 	    for (j=0; j<pkg->n_pub; j++) {
 		if (!strcmp(S[i], pkg->pub[j]->name)) {
-		    pkg->pub[j]->flags |= UFUN_NOPRINT;
+		    pkg->pub[j]->flags |= flag;
 		    match = 1;
 		    break;
 		}
@@ -2948,7 +2948,9 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 	    } else if (!strncmp(line, "lives-in-subdir", 15)) {
 		pkg->uses_subdir = pkg_boolean_from_string(p);
 	    } else if (!strncmp(line, "no-print", 8)) {
-		err = pkg_set_no_print_funcs(pkg, p);
+		err = pkg_set_funcs_attribute(pkg, p, UFUN_NOPRINT);
+	    } else if (!strncmp(line, "menu-only", 9)) {
+		err = pkg_set_funcs_attribute(pkg, p, UFUN_MENU_ONLY);
 	    } else {
 		const char *key;
 		int i;
@@ -3326,16 +3328,17 @@ static int *function_package_get_list (fnpkg *pkg, int code, int n)
     if (n > 0) {
  	list = gretl_list_new(n);
 	if (list != NULL) {
-	    int i, priv;
+	    int i, priv, menu_only;
 
 	    for (i=0; i<n_ufuns; i++) {
 		if (ufuns[i]->pkg == pkg) {
 		    priv = function_is_private(ufuns[i]);
+		    menu_only = function_is_menu_only(ufuns[i]);
 		    if (code == PRIVLIST && priv) {
 			list[++j] = i;
 		    } else if (code == PUBLIST && !priv) {
 			list[++j] = i;
-		    } else if (code == GUILIST && !priv &&
+		    } else if (code == GUILIST && !priv && !menu_only &&
 			       !pkg_aux_role(ufuns[i]->pkg_role)) {
 			/* in the GUI list of public funtions, don't
 			   display post-processing functions
@@ -3391,7 +3394,13 @@ static int pkg_get_func_privacy (fnpkg *pkg, int role)
 
     for (i=0; i<n_ufuns; i++) {
 	if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == role) {
-	    return function_is_private(ufuns[i]);
+	    if (function_is_private(ufuns[i])) {
+		return 1;
+	    } else if (function_is_menu_only(ufuns[i])) {
+		return 1;
+	    } else {
+		return 0;
+	    }
 	}
     }	    
 
@@ -4376,11 +4385,6 @@ int gretl_is_public_user_function (const char *name)
 void set_current_function_package (fnpkg *pkg)
 {
     current_pkg = pkg;
-}
-
-fnpkg *get_current_function_package (void)
-{
-    return current_pkg;
 }
 
 static int skip_private_func (ufunc *ufun)

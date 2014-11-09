@@ -1832,15 +1832,7 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 	}
 
 	if (!err) {
-	    int setpkg = (get_current_function_package() == NULL);
-
-	    if (setpkg) {
-		set_current_function_package(cinfo->pkg);
-	    }
 	    err = real_GUI_function_call(cinfo, prn);
-	    if (setpkg) {
-		set_current_function_package(NULL);
-	    }
 	} else {
 	    gretl_print_destroy(prn);
 	}

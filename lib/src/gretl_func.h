@@ -141,8 +141,6 @@ int gretl_function_print_code (ufunc *u, PRN *prn);
 
 void set_current_function_package (fnpkg *pkg);
 
-fnpkg *get_current_function_package (void);
-
 fnpkg *function_package_new (const char *fname, 
 			     char **pubnames, int n_pub,
 			     char **privnames, int n_priv, 
