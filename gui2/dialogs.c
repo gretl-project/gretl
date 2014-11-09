@@ -5847,10 +5847,14 @@ int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf,
     return opts.retval;
 }
 
+#ifndef G_OS_WIN32
+
 static gint dont_delete (void)
 {
     return TRUE;
 }
+
+#endif
 
 static int real_output_policy_dlg (const char **opts,
 				   int deflt,
