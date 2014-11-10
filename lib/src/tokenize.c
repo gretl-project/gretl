@@ -422,7 +422,7 @@ static void gretl_cmd_clear (CMD *c)
     int i, ci = c->ci;
 
 #if CDEBUG
-    fprintf(stderr, "gretl_cmd_clear: ci = %d (%s), context = %d\n", ci,
+    fprintf(stderr, "gretl_cmd_clear: ci = %d (%s), context = %d\n\n", ci,
 	    gretl_command_word(ci), c->context);
 #endif   
 

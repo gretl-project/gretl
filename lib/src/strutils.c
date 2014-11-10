@@ -693,6 +693,7 @@ char *gretl_word_strdup (const char *src, const char **ptr,
 		src++;
 	    }
 	    if (*src && !is_word_char(*src)) {
+		gretl_errmsg_sprintf(_("Unexpected symbol '%c'"), *src);
 		*err = E_PARSE;
 		return NULL;
 	    }
@@ -707,6 +708,14 @@ char *gretl_word_strdup (const char *src, const char **ptr,
 	while (is_word_char(*src)) {
 	    len++;
 	    src++;
+	}
+
+	if (opt & OPT_S) {
+	    if (*src != '\0' && *src != ' ' && *src != ',') {
+		gretl_errmsg_sprintf(_("Unexpected symbol '%c'"), *src);
+		*err = E_PARSE;
+		return NULL;
+	    }
 	}
 
 	if (ptr != NULL) {

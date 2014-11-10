@@ -1810,9 +1810,12 @@ static int print_listed_objects (const char *s,
 	return err;
     }
 
-    while ((name = gretl_word_strdup(s, &s, OPT_NONE, &err)) != NULL) {
+    while ((name = gretl_word_strdup(s, &s, OPT_S, &err)) != NULL) {
 	err = print_user_var_by_name(name, dset, prn);
 	free(name);
+	if (err) {
+	    break;
+	}
     }
 
     return err;
