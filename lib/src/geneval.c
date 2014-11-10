@@ -1181,6 +1181,21 @@ static int node_get_int (NODE *n, parser *p)
     }
 }
 
+static int node_get_int_strict (NODE *n, parser *p)
+{
+    double x = node_get_scalar(n, p);
+
+    if (p->err == 0 && (na(x) || fabs(x) > INT_MAX)) {
+	p->err = E_INVARG;
+	return -1;
+    } else if (fabs(x - nearbyint(x)) > 1.0e-8) {
+	p->err = E_INVARG;
+	return -1;
+    } else {	
+	return (int) x;
+    }
+}
+
 static NODE *DW_node (NODE *r, parser *p)
 {
     NODE *s, *e, *ret = NULL;
