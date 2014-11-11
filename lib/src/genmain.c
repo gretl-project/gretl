@@ -873,12 +873,27 @@ char *generate_string (const char *s, DATASET *dset, int *err)
     return ret;
 }
 
+static int x_to_list_member (double x, DATASET *dset, int *err)
+{
+    int v = -1;
+
+    if (x < 0 || x >= dset->v) {
+	*err = E_INVARG;
+    } else if (fabs(x - nearbyint(x)) > 1.0e-8) {
+	*err = E_INVARG;
+    } else {
+	v = nearbyint(x);
+    }
+
+    return v;
+}
+
 /* retrieve a list result directly */
 
 int *generate_list (const char *s, DATASET *dset, int *err)
 {
-    parser p;
     int *ret = NULL;
+    parser p;
 
     if (dset == NULL) {
 	*err = E_NODATA;
@@ -903,10 +918,16 @@ int *generate_list (const char *s, DATASET *dset, int *err)
 	    if (ret != NULL) {
 		ret[1] = n->vnum;
 	    }
-	} else if (n->t == NUM && n->v.xval >= 0 && n->v.xval < dset->v) {
-	    ret = gretl_list_new(1);
-	    if (ret != NULL) {
-		ret[1] = n->v.xval;
+	} else if (n->t == NUM) {
+	    int v = x_to_list_member(n->v.xval, dset, err);
+
+	    if (!*err) {
+		ret = gretl_list_new(1);
+		if (ret == NULL) {
+		    *err = E_ALLOC;
+		} else {
+		    ret[1] = v;
+		}
 	    }	    
 	} else {
 	    *err = E_TYPES;

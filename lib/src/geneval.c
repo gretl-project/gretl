@@ -1169,7 +1169,9 @@ static double node_get_scalar (NODE *n, parser *p)
     }
 }
 
-static int node_get_int (NODE *n, parser *p)
+#if 0
+
+static int node_get_int_sloppy (NODE *n, parser *p)
 {
     double x = node_get_scalar(n, p);
 
@@ -1181,7 +1183,9 @@ static int node_get_int (NODE *n, parser *p)
     }
 }
 
-static int node_get_int_strict (NODE *n, parser *p)
+#endif
+
+static int node_get_int (NODE *n, parser *p)
 {
     double x = node_get_scalar(n, p);
 
@@ -1192,7 +1196,7 @@ static int node_get_int_strict (NODE *n, parser *p)
 	p->err = E_INVARG;
 	return -1;
     } else {	
-	return (int) x;
+	return nearbyint(x);
     }
 }
 
@@ -4143,15 +4147,17 @@ static int *node_get_list (NODE *n, parser *p)
 	/* handle wildcard */
 	list = varname_match_list(p->dset, n->v.str, &p->err);
     } else if (n->t == SERIES || n->t == NUM) {
-	v = (n->t == SERIES)? n->vnum : n->v.xval;
-	if (v < 0 || v >= p->dset->v) {
-	    p->err = E_UNKVAR;
-	} else {
-	    list = gretl_list_new(1);
-	    if (list == NULL) {
-		p->err = E_ALLOC;
+	v = (n->t == SERIES)? n->vnum : node_get_int(n, p);
+	if (!p->err) {
+	    if (v < 0 || v >= p->dset->v) {
+		p->err = E_UNKVAR;
 	    } else {
-		list[1] = v;
+		list = gretl_list_new(1);
+		if (list == NULL) {
+		    p->err = E_ALLOC;
+		} else {
+		    list[1] = v;
+		}
 	    }
 	}
     } else if (n->t == EMPTY) {
