@@ -69,6 +69,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { EQNPRINT, "eqnprint" },
     { EQUATION, "equation" },
     { ESTIMATE, "estimate" },
+    { EVAL,     "eval" },
     { FCAST,    "fcast" },
     { FLUSH,    "flush" },
     { FOREIGN,  "foreign" }, 
@@ -176,7 +177,6 @@ static struct gretl_cmd gretl_cmds[] = {
 }; 
 
 static struct gretl_cmd gretl_cmd_aliases[] = {
-    { GENR, "eval" },   
     { GENR, "series" },   
     { GENR, "scalar" },  
     { GENR, "matrix" },  

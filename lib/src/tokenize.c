@@ -105,6 +105,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { EQNPRINT, "eqnprint", 0 }, /* special, handled later */
     { EQUATION, "equation", CI_LIST },
     { ESTIMATE, "estimate", CI_PARM1 | CI_PARM2 }, /* params optional */
+    { EVAL,     "eval",     CI_EXPR },  
     { FCAST,    "fcast",    CI_ADHOC },
     { FLUSH,    "flush",    CI_NOOPT },
     { FOREIGN,  "foreign",  CI_PARM1 | CI_BLOCK }, 
@@ -2769,7 +2770,8 @@ static void set_command_vstart (CMD *cmd)
 	s = tok->lp;
 	if (!cmd->context && expr_keep_cmdword(cmd->ci)) {
 	    ; /* leave it alone */
-	} else if (cmd->ci != GENR && cmd->ci != cmd->context) {
+	} else if (cmd->ci != GENR && cmd->ci != EVAL &&
+		   cmd->ci != cmd->context) {
 	    /* skip initial command word */
 	    s += strlen(tok->s);
 	}

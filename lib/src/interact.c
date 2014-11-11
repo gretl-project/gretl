@@ -2159,6 +2159,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case GENR:
+    case EVAL:
 	err = generate(cmd->vstart, dset, cmd->opt, prn);
 	break;
 

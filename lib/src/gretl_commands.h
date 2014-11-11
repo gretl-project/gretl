@@ -59,6 +59,7 @@ typedef enum {
     EQNPRINT, 
     EQUATION,
     ESTIMATE,
+    EVAL,
     FCAST,
     FLUSH,
     FOREIGN,

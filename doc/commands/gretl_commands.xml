@@ -3352,6 +3352,29 @@
 
   </command>
 
+  <command name="eval" section="Utilities">
+    <usage>
+      <arguments>
+        <argument>expression</argument>
+      </arguments>
+      <examples>
+        <example>eval x</example>
+	<example>eval inv(X'X)</example>
+	<example>eval sqrt($pi)</example>
+      </examples>
+    </usage>    
+    <description>
+      <para>
+	This command makes gretl act like a glorified calculator.  The
+	program evaluates <argname>expression</argname> and prints its
+	value. The argument may be the name of a variable, or
+	something more complicated. In any case, it should be an
+	expression which could stand as the right-hand side of an
+	assignment statement.
+      </para>
+    </description>
+  </command>
+
   <command name="expand" section="Dataset" context="gui"
     label="Expand data">
 
