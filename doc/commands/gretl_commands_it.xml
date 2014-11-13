@@ -3325,6 +3325,30 @@
 
   </command>
 
+  <command name="eval" section="Utilities">
+    <usage>
+      <arguments>
+        <argument>espressione</argument>
+      </arguments>
+      <examples>
+        <example>eval x</example>
+	<example>eval inv(X'X)</example>
+	<example>eval sqrt($pi)</example>
+      </examples>
+    </usage>    
+    <description>
+      <para>
+	Con questo comando, gretl diventa una specie di grande
+	calcolatrice. Il programma valuta
+	l'<argname>espressione</argname> e stampa il
+	risultato. L'argomento può essere il nome di una variabile, o
+	qualcosa di più complicato. In ogni caso, dev'essere
+	un'espressione ammissibile a destra dell'operatore di
+	assegnamento.
+      </para>
+    </description>
+  </command>
+
   <command name="expand" section="Dataset" context="gui"
     label="Espansione dei dati">
 
