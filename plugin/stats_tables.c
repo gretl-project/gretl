@@ -1982,3 +1982,53 @@ double qlr_asy_pvalue (double X2, int df, double lambda)
 
     return pval;
 }
+
+/* Approximate 5 percent critical value for QLR test
+   with 15 percent trimming and @df degrees of
+   freedom.
+*/
+
+double qlr_critval_15_05 (int df)
+{
+    double X2L = 8.5, X2R = 30;
+    double lambda = (0.85*0.85)/(0.15*0.15);
+    double pv, X2 = NADBL;
+    int k = 0, ok = 0;
+
+    pv = qlr_asy_pvalue(X2R, df, lambda);
+
+    while (pv > 0.05) {
+	/* make sure the upper bound on the critval
+	   is high enough */
+	X2R += 10.0;
+	pv = qlr_asy_pvalue(X2R, df, lambda);
+    }
+
+#if 0
+    fprintf(stderr, "X2L=%g; X2R=%g, pvr=%g\n",
+	    X2L, X2R, pvr);
+#endif
+
+    while (++k < 40) {
+	X2 = (X2L + X2R) / 2;
+	pv = qlr_asy_pvalue(X2, df, lambda);
+	if (pv >= .049 && pv <= 0.051) {
+	    /* good enough */
+	    ok = 1;
+	    break;
+	}
+	if (pv > 0.05) {
+	    /* take the right fork */
+	    X2L = X2;
+	} else {
+	    /* take the left fork */
+	    X2R = X2;
+	}
+    }
+
+#if 0
+    fprintf(stderr, "k=%d: X2=%g, pv=%g\n", k, X2, pv);
+#endif
+
+    return ok ? X2 : NADBL;
+}

@@ -2479,9 +2479,16 @@ make_chow_list (const MODEL *pmod, DATASET *dset,
 }
 
 static int QLR_graph (const double *testvec, int t1, int t2, 
-		      const DATASET *dset, int robust)
+		      const DATASET *dset, int df, int robust)
 {
     const double *x = gretl_plotx(dset, OPT_NONE);
+    const char *titles[] = {
+	N_("Chow F-test for break"),
+	N_("Robust Wald test for break")
+    };
+    const char *title;
+    double (*qlr_critval) (int);
+    double critval = NADBL;
     FILE *fp;
     int t, err = 0;
 
@@ -2492,14 +2499,33 @@ static int QLR_graph (const double *testvec, int t1, int t2,
 	return err;
     }
 
+    qlr_critval = get_plugin_function("qlr_critval_15_05");
+    if (qlr_critval != NULL) {
+	critval = qlr_critval(df);
+    }
+
     print_keypos_string(GP_KEY_LEFT_TOP, fp);
+
+    if (robust) {
+	title = titles[1];
+    } else {
+	title = titles[0];
+	if (!na(critval)) {
+	    critval /= df;
+	}
+    }
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "plot \\\n"
-	    "'-' using 1:2 title \"%s\" w lines\n",
-	    robust ? _("Robust Wald test for break") : 
-	    _("Chow F-test for break"));
+    if (!na(critval)) {
+	fprintf(fp, "plot \\\n"
+		"'-' using 1:2 title \"%s\" w lines , \\\n"
+		"%g title \"%s\" w lines\n", 
+		_(title), critval, "5% QLR critical value");
+    } else {
+	fprintf(fp, "plot \\\n"
+		"'-' using 1:2 title \"%s\" w lines\n", _(title));
+    }
     
     for (t=t1; t<=t2; t++) {
 	fprintf(fp, "%g %g\n", x[t], testvec[t-t1]);
@@ -2795,7 +2821,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	    QLR_print_result(pmod, testmax, tmax, split, smax, 
 			     dfn, dfd, dset, opt, robust, prn);
 	    if (testvec != NULL) {
-		QLR_graph(testvec, split, smax, dset, robust);
+		QLR_graph(testvec, split, smax, dset, dfn, robust);
 	    }
 	}
 

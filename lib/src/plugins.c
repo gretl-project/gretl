@@ -202,6 +202,7 @@ struct plugin_function_info plugin_functions[] = {
     { "IPS_tbar_moments",     P_STATS_TABLES },
     { "IPS_tbar_rho_moments", P_STATS_TABLES },
     { "qlr_asy_pvalue",       P_STATS_TABLES },
+    { "qlr_critval_15_05",    P_STATS_TABLES },
 
     /* SUR, 3SLS, FIML */
     { "system_estimate", P_SYSEST },
