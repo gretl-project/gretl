@@ -2485,6 +2485,8 @@ static int QLR_graph (const double *testvec, int t1, int t2,
     FILE *fp;
     int t, err = 0;
 
+    set_effective_plot_ci(QLRTEST);
+
     fp = open_plot_input_file(PLOT_REGULAR, &err);
     if (err) {
 	return err;
@@ -2506,7 +2508,11 @@ static int QLR_graph (const double *testvec, int t1, int t2,
 
     gretl_pop_c_numeric_locale();
 
-    return finalize_plot_input_file(fp);
+    err = finalize_plot_input_file(fp);
+
+    set_effective_plot_ci(GNUPLOT);
+
+    return err;
 }
 
 static void save_QLR_test (MODEL *pmod, const char *datestr,
@@ -2716,6 +2722,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
     if (QLR) {
 	/* Quandt likelihood ratio */
 	int robust = (pmod->opt & OPT_R);
+	int doplot = gretl_in_gui_mode();
 	gretlopt lsqopt = OPT_A;
 	double test, testmax = 0.0;
 	double *testvec = NULL;
@@ -2725,7 +2732,15 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	int tmax = 0;
 	int i, t;
 
-	if (gretl_in_gui_mode()) {
+	if (opt & OPT_U) {
+	    const char *plotparm = get_optval_string(QLRTEST, OPT_U);
+
+	    if (plotparm != NULL && !strcmp(plotparm, "none")) {
+		doplot = 0;
+	    }
+	}
+
+	if (doplot) {
 	    testvec = malloc((smax - split + 1) * sizeof *testvec);
 	}
 

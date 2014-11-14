@@ -233,6 +233,7 @@ typedef enum {
 			     c == RMPLOT || \
 			     c == HURST || \
 			     c == LEVERAGE || \
+			     c == QLRTEST ||  \
 			     c == QQPLOT)
 	
 int gretl_command_number (const char *s);
