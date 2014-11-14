@@ -6602,11 +6602,12 @@ static int maybe_prune_delete_list (int *list)
 
 static void real_delete_vars (int selvar)
 {
-    int err, renumber, pruned = 0;
     const char *vname = NULL;
     int *dellist = NULL;
     char *liststr = NULL;
     gchar *msg = NULL;
+    int renumber = 0;
+    int err = 0;
 
     if (dataset_locked()) {
 	return;
@@ -6647,7 +6648,8 @@ static void real_delete_vars (int selvar)
     }
 
     if (dellist != NULL) {
-	pruned = maybe_prune_delete_list(dellist);
+	int pruned = maybe_prune_delete_list(dellist);
+
 	if (dellist == 0) {
 	    errbox(_("Cannot delete the specified variables"));
 	    return;
@@ -6655,7 +6657,14 @@ static void real_delete_vars (int selvar)
 	    errbox(_("Cannot delete all of the specified variables"));
 	}
 	liststr = gretl_list_to_string(dellist, dataset, &err);
-    }
+    } else if (selvar > 0) {
+	dellist = gretl_list_new(1);
+	if (dellist == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    dellist[1] = selvar;
+	}
+    }	
 
     if (!err) {
 	err = dataset_drop_listed_variables(dellist, dataset, 
