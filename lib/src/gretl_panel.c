@@ -2339,7 +2339,8 @@ static int within_variance (panelmod_t *pan,
 	}
 
 	if (den == 0) {
-	    pan->s2e = 0.0;
+	    gretl_errmsg_set(_("Inadequate data for panel estimation"));
+	    return E_DF;
 	} else {
 	    pan->s2e = femod.ess / den;
 	}
@@ -4196,8 +4197,8 @@ int panel_isconst (int t1, int t2, int pd, const double *x,
 
 static int varying_vars_list (const DATASET *dset, panelmod_t *pan)
 {
-    int i, j, k, t;
-    int bigt;
+    int i, j, k, t, bigt;
+    int err = 0;
 
     pan->vlist = gretl_list_new(pan->pooled->list[0]);
     if (pan->vlist == NULL) {
@@ -4257,7 +4258,7 @@ static int varying_vars_list (const DATASET *dset, panelmod_t *pan)
     printlist(pan->vlist, "time-varying regressors");
 #endif
 
-    return 0;
+    return err;
 }
 
 /* apparatus for setting panel structure by reading two variables,
