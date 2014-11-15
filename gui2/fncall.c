@@ -1763,7 +1763,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
    list.
 */
 
-static void select_interface (call_info *cinfo, int npub)
+static void pkg_select_interface (call_info *cinfo, int npub)
 {
     const char *funname;
     char **opts = NULL;
@@ -1787,7 +1787,9 @@ static void select_interface (call_info *cinfo, int npub)
 	cinfo->iface = -1;
 	gui_errmsg(err);
     } else if (radios) {
-	resp = radio_dialog("gretl", "select function", 
+	gchar *title = g_strdup_printf("gretl: %s\n", cinfo->pkgname);
+
+	resp = radio_dialog(title, "Select function", 
 			    (const char **) opts, 
 			    nopts, 0, 0, cinfo->dlg);
 	if (resp >= 0) {
@@ -1796,8 +1798,9 @@ static void select_interface (call_info *cinfo, int npub)
 	    cinfo->iface = -1;
 	}
 	strings_array_free(opts, nopts);
+	g_free(title);
     } else {
-	resp = combo_selector_dialog(ilist, "select function", 
+	resp = combo_selector_dialog(ilist, "Select function", 
 				     0, cinfo->dlg);
 	if (resp >= 0) {
 	    cinfo->iface = cinfo->publist[resp+1];
@@ -1962,7 +1965,7 @@ void call_function_package (const char *fname, windata_t *vwin,
 	int n = cinfo->publist[0];
 
 	if (n > 1) {
-	    select_interface(cinfo, n);
+	    pkg_select_interface(cinfo, n);
 	    if (cinfo->iface < 0) {
 		/* failed, or cancelled */
 		cinfo_free(cinfo);
