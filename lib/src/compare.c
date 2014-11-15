@@ -2478,6 +2478,22 @@ make_chow_list (const MODEL *pmod, DATASET *dset,
     return chowlist;
 }
 
+static void write_plot_x_range (const double *x, int t1, int t2,
+				FILE *fp)
+{
+    double xmin0, xmin, xmax0, xmax;
+    double xrange;
+
+    gretl_minmax(t1, t2, x, &xmin0, &xmax0);
+    xrange = xmax0 - xmin0;
+    xmin = xmin0 - xrange * .025;
+    if (xmin0 >= 0.0 && xmin < 0.0) {
+	xmin = 0.0;
+    }
+    xmax = xmax0 + xrange * .025;
+    fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
+}
+
 static int QLR_graph (const double *testvec, int t1, int t2, 
 		      const DATASET *dset, int df, int robust)
 {
@@ -2517,10 +2533,12 @@ static int QLR_graph (const double *testvec, int t1, int t2,
 
     gretl_push_c_numeric_locale();
 
+    write_plot_x_range(x, t1, t2, fp);
+
     if (!na(critval)) {
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 title \"%s\" w lines , \\\n"
-		"%g title \"%s\" w lines\n", 
+		"%g title \"%s\" w lines lt 0\n", 
 		_(title), critval, "5% QLR critical value");
     } else {
 	fprintf(fp, "plot \\\n"
@@ -2679,6 +2697,27 @@ static void save_chow_test (MODEL *pmod, const char *chowstr,
     }	  
 }
 
+static int QLR_plot_wanted (gretlopt opt)
+{
+    /* the default: show a plot only if in interactive mode */
+    int ret = !gretl_in_batch_mode();
+
+    if (opt & OPT_U) {
+	/* but the default can be overruled by @opt */
+	const char *plotparm = get_optval_string(QLRTEST, OPT_U);
+
+	if (plotparm != NULL) {
+	    if (!strcmp(plotparm, "none")) {
+		ret = 0;
+	    } else {
+		ret = 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /*
  * real_chow_test:
  * @chowparm: sample breakpoint; or ID number of dummy
@@ -2748,7 +2787,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
     if (QLR) {
 	/* Quandt likelihood ratio */
 	int robust = (pmod->opt & OPT_R);
-	int doplot = gretl_in_gui_mode();
+	int do_plot = QLR_plot_wanted(opt);
 	gretlopt lsqopt = OPT_A;
 	double test, testmax = 0.0;
 	double *testvec = NULL;
@@ -2758,15 +2797,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	int tmax = 0;
 	int i, t;
 
-	if (opt & OPT_U) {
-	    const char *plotparm = get_optval_string(QLRTEST, OPT_U);
-
-	    if (plotparm != NULL && !strcmp(plotparm, "none")) {
-		doplot = 0;
-	    }
-	}
-
-	if (doplot) {
+	if (do_plot) {
 	    testvec = malloc((smax - split + 1) * sizeof *testvec);
 	}
 

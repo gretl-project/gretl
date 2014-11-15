@@ -9157,14 +9157,14 @@
 	constant.
       </para>
       <para>
-	When this command is run interactively in the gretl GUI, by
-	default a plot of the Chow test statistic is displayed.  This
-	can be adjusted via the <opt>plot</opt> option. The acceptable
+	When this command is run interactively (only), a plot of the
+	Chow test statistic is displayed by default.  This can be
+	adjusted via the <opt>plot</opt> option. The acceptable
 	parameters to this option are <lit>none</lit> (to suppress the
-	plot); <lit>display</lit> (to display a plot even when in
-	script mode); or a file name. The effect of providing a file
-	name is as described for the <opt>output</opt> option of the
-	<cmdref targ="gnuplot"/> command.
+	plot); <lit>display</lit> (to display a plot even when not in
+	interactive mode); or a file name. The effect of providing a
+	file name is as described for the <opt>output</opt> option of
+	the <cmdref targ="gnuplot"/> command.
       </para>
     </description>
 
