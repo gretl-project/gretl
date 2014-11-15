@@ -2900,7 +2900,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     if (pmod->aux == AUX_VECM || pmod->aux == AUX_COINT) {
 	/* VECM equation or Engle-Granger test: suppress F-test */
 	val[6] = val[7] = NADBL;
-    } else if (!na(pmod->fstt)) {
+    } else if (!xna(pmod->fstt) && pmod->dfd > 0) {
 	/* format F-stat and get its p-value */
 	if (tex) {
 	    sprintf(teststr, "$F(%d, %d)$", pmod->dfn, pmod->dfd);

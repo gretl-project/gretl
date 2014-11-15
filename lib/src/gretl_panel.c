@@ -1696,7 +1696,9 @@ static void fixed_effects_F (panelmod_t *pan, MODEL *wmod)
     pan->F = (pan->pooled->ess - wmod->ess) * pan->Fdfd / 
 	(wmod->ess * pan->Fdfn);
 
-    if (pan->F < 0) {
+    if (xna(pan->F)) {
+	pan->F = NADBL;
+    } else if (pan->F < 0) {
 	pan->F = 0;
     }
 }
@@ -2336,7 +2338,12 @@ static int within_variance (panelmod_t *pan,
 	    den = femod.nobs - pan->effn - (pan->vlist[0] - 2);
 	}
 
-	pan->s2e = femod.ess / den;
+	if (den == 0) {
+	    pan->s2e = 0.0;
+	} else {
+	    pan->s2e = femod.ess / den;
+	}
+
 #if PDEBUG
 	fprintf(stderr, "nT = %d, n = %d, K = %d\n", femod.nobs,
 		pan->effn, pan->vlist[0] - 2);
