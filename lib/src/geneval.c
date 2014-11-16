@@ -12930,8 +12930,8 @@ static gretl_matrix *matrix_from_scratch (parser *p, int tmp,
     gretl_matrix *m = NULL;
 
 #if EDEBUG
-    fprintf(stderr, "matrix_from_scratch: reusable = %d\n",
-	    reusable(p));
+    fprintf(stderr, "matrix_from_scratch: reusable=%d, prechecked=%d\n",
+	    reusable(p), prechecked != NULL ? *prechecked : -1);
 #endif
 
     if (p->ret->t == NUM) {
@@ -13808,13 +13808,15 @@ static int save_generated_var (parser *p, PRN *prn)
 	    edit_matrix(p);
 	    prechecked = 1;
 	}
-#if TRY_SAVE_AUX
+#if 0 /* TRY_SAVE_AUX */
+	/* Apparently this is _not_safe */
 	if (!prechecked && p->callcount > 0 && r->t == MAT) {
 	    prechecked = 1;
 	}
 #endif
 	if (!prechecked && gretl_matrix_xna_check(p->lh.m1)) {
 	    set_gretl_warning(W_GENNAN);
+	    prechecked = 1;
 	}
     } else if (p->targ == LIST) {
 	edit_list(p);
