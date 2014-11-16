@@ -8906,6 +8906,21 @@
   
   <command name="qlrtest" section="Tests" label="Test del rapporto di verosimiglianza di Quandt">
 
+    <usage>
+      <options>
+	<option>
+	  <flag>--limit-to</flag>
+	  <optparm>lista</optparm>
+	  <effect>limita il test a una parte delle variabili esplicative</effect>
+	</option>
+	<option>
+	  <flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>si veda sotto</effect>
+	</option>
+      </options>      
+    </usage>
+
     <description>
       <para>
         Per un modello stimato con OLS su serie storiche, esegue il
@@ -8915,18 +8930,36 @@
         del campione.
       </para>
       <para>
-	Per ogni possibile punto di rottura compreso nel 70% centrale
-	delle osservazioni, viene eseguito un test di Chow (si veda
-	<cmdref targ="chow"/>). La statistica del test QLR è il
-	massimo dei valori <math>F</math> di questi test; segue una
-	distribuzione non standard, i cui valori critici sono presi da
-	<book>Introduction to Econometrics</book> di Stock e Watson
-	(2003). Se la statistica QLR eccede il valore critico per un
-	dato livello di significatività, è possibile inferire che i
-	parametri del modello non sono costanti.  Questa statistica
-	può essere usata per riconoscere forme di instabilità diverse
-	da un singolo punto di rottura, ad esempio più punti di
-	rottura o un lento cambiamento dei parametri.
+      	Per ogni possibile punto di rottura compreso nel 70% centrale
+      	delle osservazioni, viene eseguito un test di Chow (si veda
+      	<cmdref targ="chow"/>); come per il test di Chow vero e
+      	proprio, questo è un test di Wald robusto se il modello
+      	originale è stato stimato con l'opzione <opt>robust</opt>. La
+      	statistica del test QLR è il massimo dei valori <math>F</math>
+      	di questi test e segue una distribuzione non standard.
+      </para>
+      <para>
+      	Il p-value asintotico è ottenuto usando il metodo di <cite
+      	key="hansen97">Bruce Hansen (1997)</cite>.
+      </para>
+      <para context="cli">
+      	L'opzione <opt>limit-to</opt> serve a limitare le interazioni
+      	con la dummy di divisione del campione nei test di Chow a un
+      	sottoinsieme dei regressori originali. Il parametro dev'essere
+      	una lista predefinita, che non puà contenere la costante, gli
+      	elementi della quale devono essere tutti scelti fra i
+      	regressori originali.
+      </para>
+      <para>
+      	Quando questo comando viene eseguito interattivamente, di
+      	default verrà mostrato un grafico delle statistiche del test
+      	di Chow.  Questo comportamento si può modificare con l'opzione
+      	<opt>plot</opt>. Parametri consentiti sono <lit>none</lit>
+      	(per fare a meno del grafico); <lit>display</lit> (per
+      	mostrare il grafico anche quando non si è in modo
+      	interattivo), oppure un nome di file. Per la descrizione
+      	dell'effetto di quest'ultima scelta, si veda l'opzione
+      	<opt>output</opt> del comando <cmdref targ="gnuplot"/>.
       </para>
     </description>
 
