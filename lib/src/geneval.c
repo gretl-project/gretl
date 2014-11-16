@@ -9503,15 +9503,18 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
 	for (j=0; j<m->cols; j++) {
 	    for (i=0; i<m->rows; i++) {
 		x = gretl_matrix_get(m, i, j);
+		if (na(x)) x = M_NA;
 		if (isnan(x)) {
 		    gretl_matrix_set(mret, i, j, x);
 		} else if (x != 0.0) {
 		    y = l->t == NUM ? l->v.xval :
 			gretl_matrix_get(l->v.m, i, j);
+		    if (na(y)) y = M_NA;
 		    gretl_matrix_set(mret, i, j, y);
 		} else {
 		    y = r->t == NUM ? r->v.xval :
 			gretl_matrix_get(r->v.m, i, j);
+		    if (na(y)) y = M_NA;
 		    gretl_matrix_set(mret, i, j, y);
 		}
 	    }
@@ -13810,7 +13813,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
 #if 0 /* TRY_SAVE_AUX */
 	/* Apparently this is _not_safe */
-	if (!prechecked && p->callcount > 0 && r->t == MAT) {
+	if (!prechecked && p->callcount > 1 && r->t == MAT) {
 	    prechecked = 1;
 	}
 #endif
