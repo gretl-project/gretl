@@ -35,6 +35,7 @@
 #include "gretl_xml.h"
 #include "gretl_string_table.h"
 #include "gretl_typemap.h"
+#include "gretl_array.h"
 #include "dbread.h"
 #include "gretl_foreign.h"
 #include "boxplots.h"
@@ -1266,6 +1267,43 @@ static int *get_inner_keys (const char *s, DATASET *dset,
     return klist;
 }
 
+static int check_join_vnames (gretl_array *A, DATASET *dset,
+			      const char ***pS, int *pn)
+{
+    int i, n, err = 0;
+    
+    if (gretl_array_get_type(A) != GRETL_TYPE_STRINGS) {
+	err = E_TYPES;
+    } else {
+	/* all the strings should be either current series
+	   names or valid names for new series */
+	const char **S = (const char **)
+	    gretl_array_get_strings(A, &n);
+
+	if (S == NULL) {
+	    err = E_DATA;
+	} else {
+	    for (i=0; i<n && !err; i++) {
+		if (S[i] == NULL || S[i][0] == '\0') {
+		    err = E_DATA;
+		} else if (current_series_index(dset, S[i]) < 0) {
+		    err = check_varname(S[i]);
+		    if (!err && gretl_type_from_name(S[i], NULL)) {
+			err = E_TYPES;
+		    }
+		}
+	    }
+	    if (!err) {
+		/* OK: hook up pointers */
+		*pS = S;
+		*pn = n;
+	    }
+	}
+    }
+
+    return err;
+}
+
 static int lib_join_data (ExecState *s,
 			  char *newfile,
 			  DATASET *dset,
@@ -1283,8 +1321,10 @@ static int lib_join_data (ExecState *s,
 	OPT_T, /* tconv-fmt: format for "tconvert" */ 
 	0 
     };
+    gretl_array *A = NULL;
     char *okey = NULL, *filter = NULL;
     const char *varname;
+    const char **vnames = NULL;
     char *dataname = NULL;
     char *auxname = NULL;
     char *tconvstr = NULL;
@@ -1292,6 +1332,7 @@ static int lib_join_data (ExecState *s,
     int *ikeyvars = NULL;
     int aggr = 0, seqval = 0;
     int tseries = 0;
+    int nvars = 1;
     int i, err = 0;
 
     if (opt & OPT_K) {
@@ -1305,8 +1346,10 @@ static int lib_join_data (ExecState *s,
 
     tseries = dataset_is_time_series(dset);
     varname = s->cmd->parm2;
-    
-    if (current_series_index(dset, varname) < 0) {
+
+    if ((A = get_array_by_name(varname)) != NULL) {
+	err = check_join_vnames(A, dset, &vnames, &nvars);
+    } else if (current_series_index(dset, varname) < 0) {
 	err = check_varname(varname);
 	if (!err && gretl_type_from_name(varname, NULL)) {
 	    err = E_TYPES;
@@ -1368,7 +1411,10 @@ static int lib_join_data (ExecState *s,
     }
 
     if (!err) {
-	err = gretl_join_data(newfile, varname, dset, 
+	if (vnames == NULL) {
+	    vnames = &varname;
+	}
+	err = gretl_join_data(newfile, vnames, nvars, dset, 
 			      ikeyvars, okey, filter,
 			      dataname, aggr, seqval, 
 			      auxname, tconvstr,

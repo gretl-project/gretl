@@ -44,7 +44,8 @@ int test_markers_for_dates (DATASET *dset,
 void reverse_data (DATASET *dset, PRN *prn);
 
 int gretl_join_data (const char *fname,
-		     const char *varname,
+		     const char **vnames,
+		     int nvars,
 		     DATASET *dset, 
 		     const int *ikeyvars,
 		     const char *okey,
