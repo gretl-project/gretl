@@ -352,7 +352,7 @@ int dataset_shrink_obs_range (DATASET *dset);
 
 int dataset_add_series (DATASET *dset, int newvars);
 
-int dataset_add_NA_series (DATASET *dset);
+int dataset_add_NA_series (DATASET *dset, int newvars);
 
 int dataset_add_allocated_series (DATASET *dset, double *x);
 

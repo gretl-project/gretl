@@ -1824,7 +1824,7 @@ static int join_wants_col_zero (csvdata *c, const char *s)
 	return 0;
     }
 
-    for (i=0; i<JOIN_MAXCOL; i++) {
+    for (i=0; i<c->jspec->ncols; i++) {
 	colname = c->jspec->colnames[i];
 	if (colname != NULL && !strcmp(s, colname)) {
 	    return 1;
@@ -2537,7 +2537,7 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
     fprintf(stderr, "handle_join_varname: looking at '%s' (%s)\n", c->str, okname);
 #endif
 
-    for (i=0; i<JOIN_MAXCOL; i++) {
+    for (i=0; i<c->jspec->ncols; i++) {
 	/* find "wanted name" i */
 	colname = c->jspec->colnames[i];
 	if (colname == NULL || c->jspec->colnums[i] > 0) {
@@ -2956,14 +2956,16 @@ static void print_csv_parsing_header (const char *fname, PRN *prn)
 static int join_unique_columns (csvdata *c)
 {
     const char **cnames = c->jspec->colnames;
-    int counted[JOIN_MAXCOL] = {0};
+    char *counted;
     int i, j, ncols = 0;
 
-    for (i=0; i<JOIN_MAXCOL; i++) {
+    counted = calloc(c->jspec->ncols, 1);
+
+    for (i=0; i<c->jspec->ncols; i++) {
 	if (cnames[i] != NULL && counted[i] == 0) {
 	    counted[i] = 1;
 	    /* mark any duplicates as counted too */
-	    for (j=i+1; j<JOIN_MAXCOL; j++) {
+	    for (j=i+1; j<c->jspec->ncols; j++) {
 		if (cnames[j] != NULL && !strcmp(cnames[i], cnames[j])) {
 		    counted[j] = 1;
 		}
@@ -2974,6 +2976,8 @@ static int join_unique_columns (csvdata *c)
 	    ncols++;
 	}
     }
+
+    free(counted);
 
     return ncols;
 }
@@ -3471,7 +3475,7 @@ struct joiner_ {
     obskey *auto_keys;  /* struct to hold info on obs-based key(s) */
     DATASET *l_dset;    /* the left-hand or inner dataset */
     DATASET *r_dset;    /* the right-hand or outer temporary dataset */
-    int newvar;         /* is the target series newly added? (0/1) */
+    int newvar;         /* is a target series newly added? (0/1) */
     int modified;       /* has an existing series been modified? */
 };
 
@@ -4687,23 +4691,19 @@ static jr_filter *make_join_filter (const char *s, int *err)
 
 static int add_target_series (const char **vnames,
 			      DATASET *dset,
-			      int *targvars)
+			      int *targvars,
+			      int n_add)
 {
-    char *gen;
-    int i, v, t;
-    int err = 0;
+    int i, v = dset->v;
+    int err;
 
-    for (i=1; i<=targvars[0] && !err; i++) {
-	if (targvars[i] < 0) {
-	    gen = gretl_strdup_printf("series %s", vnames[i-1]);
-	    err = generate(gen, dset, OPT_Q, NULL);
-	    free(gen);
-	    if (!err) {
-		v = dset->v - 1;
-		for (t=0; t<dset->n; t++) {
-		    dset->Z[v][t] = NADBL;
-		}
-		targvars[i] = v;
+    err = dataset_add_series(dset, n_add);
+
+    if (!err) {
+	for (i=1; i<=targvars[0]; i++) {
+	    if (targvars[i] < 0) {
+		strcpy(dset->varname[v], vnames[i-1]);
+		targvars[i] = v++;
 	    }
 	}
     }
@@ -4965,7 +4965,7 @@ static int process_tconvert_info (csvjoin *jspec,
     /* match the names we got against the set of "wanted" columns */
 
     for (i=0; i<nnames && !err; i++) {
-	for (j=0; j<JOIN_MAXCOL; j++) {
+	for (j=0; j<jspec->ncols; j++) {
 	    colname = jspec->colnames[j];
 	    if (colname != NULL && !strcmp(names[i], colname)) {
 		gretl_list_append_term(&list, j);
@@ -5103,7 +5103,7 @@ static int check_for_missing_columns (csvjoin *jspec)
        filter is evaluated.
     */
 
-    for (i=0; i<JOIN_MAXCOL; i++) {
+    for (i=0; i<jspec->ncols; i++) {
 	if (i == JOIN_F1 || i == JOIN_F2 || i == JOIN_F3) {
 	    continue;
 	}
@@ -5194,7 +5194,7 @@ static int join_import_gdt (const char *fname,
     int err = 0;
     
     /* form array of unique wanted series names */
-    for (i=0; i<JOIN_MAXCOL && !err; i++) {
+    for (i=0; i<join->ncols && !err; i++) {
 	if (join->colnames[i] != NULL) {
 	    err = strings_array_add_uniq(&vnames, &nv, join->colnames[i]);
 	}
@@ -5215,7 +5215,7 @@ static int join_import_gdt (const char *fname,
 
     if (!err) {
 	/* match up the imported series with their roles */
-	for (i=0; i<JOIN_MAXCOL && !err; i++) {
+	for (i=0; i<join->ncols && !err; i++) {
 	    if (join->colnames[i] != NULL) {
 		vi = current_series_index(join->dset, join->colnames[i]);
 		if (vi < 0) {
@@ -5453,8 +5453,8 @@ int gretl_join_data (const char *fname,
 
     /* Step 2: set up the array of required column names,
        jspec.colnames. This is an array of const *char, pointers
-       to strings that "live" elsewhere. The array has space for
-       JOIN_MAXCOL strings; we leave any unneeded elements as NULL.
+       to strings that "live" elsewhere. We leave any unneeded
+       elements as NULL.
     */
 
     if (!err) {
@@ -5590,7 +5590,7 @@ int gretl_join_data (const char *fname,
 
     if (!err && add_v > 0) {
 	/* we need to add new series on the left */
-	err = add_target_series(vnames, dset, targvars);
+	err = add_target_series(vnames, dset, targvars, add_v);
 	if (!err) {
 	    jr->newvar = 1;
 	}

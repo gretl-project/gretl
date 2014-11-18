@@ -1236,15 +1236,17 @@ int dataset_add_series (DATASET *dset, int newvars)
 /**
  * dataset_add_NA_series:
  * @dset: pointer to dataset.
+ * @newvars: number of series to add.
  *
- * Adds space for one additional series in the dataset; the
- * values of the new series are initialized to NADBL.
+ * Adds space for the specified number of additional series
+ * in the dataset. Values are initialized to NA.
  *
  * Returns: 0 on success, E_ALLOC on error.
  */
 
-int dataset_add_NA_series (DATASET *dset)
+int dataset_add_NA_series (DATASET *dset, int newvars)
 {
+    int v0 = dset->v;
     int err;
 
     if (dset_zcols_borrowed(dset)) {
@@ -1252,13 +1254,16 @@ int dataset_add_NA_series (DATASET *dset)
 	return E_DATA;
     }
 
-    err = real_add_series(1, NULL, dset);
+    err = real_add_series(newvars, NULL, dset);
 
     if (!err) {
-	int t, v = dset->v - 1;
+	int i, v, t;
 
-	for (t=0; t<dset->n; t++) {
-	    dset->Z[v][t] = NADBL;
+	for (i=0; i<newvars; i++) {
+	    v = v0 + i;
+	    for (t=0; t<dset->n; t++) {
+		dset->Z[v][t] = NADBL;
+	    }
 	}
     }
 

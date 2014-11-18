@@ -12179,7 +12179,7 @@ static void do_declaration (parser *p)
     for (i=0; i<n && !p->err; i++) {
 	if (S[i] != NULL) {
 	    if (p->targ == SERIES) {
-		p->err = dataset_add_NA_series(p->dset);
+		p->err = dataset_add_NA_series(p->dset, 1);
 		if (!p->err) {
 		    v = p->dset->v - 1;
 		    strcpy(p->dset->varname[v], S[i]);
@@ -13530,7 +13530,7 @@ static int gen_allocate_storage (parser *p)
 	if (p->dset == NULL || p->dset->Z == NULL) {
 	    p->err = E_DATA;
 	} else {
-	    p->err = dataset_add_NA_series(p->dset);
+	    p->err = dataset_add_NA_series(p->dset, 1);
 	    if (!p->err) {
 		p->lh.v = p->dset->v - 1;
 	    }
