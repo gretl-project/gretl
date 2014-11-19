@@ -4531,8 +4531,8 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v,
 }
 
 /* Simple transcription: we come here only if there are no keys, and
-   we've verified that the number of rows on the right matches the
-   number of rows in the current sample range on the left.
+   we've verified that the number of rows on the right is no greater
+   than the number of rows in the current sample range on the left.
 */
 
 static int join_transcribe_data (joiner *jr, int v, int newvar,
@@ -5269,6 +5269,34 @@ static int join_import_gdt (const char *fname,
     return err;
 }
 
+static int join_range_check (joiner *jr, DATASET *dset, AggrType aggr)
+{
+    int T = sample_size(dset);
+    int err = 0;
+
+    if (jr->n_rows < T) {
+	/* can we handle jr->n_rows < T? */
+	if (aggr != AGGR_NONE) {
+	    err = E_DATA; /* No */
+	} else if (dset->v == 1) {
+	    ; /* only const, OK */
+	} else if (dset->v == 2 && !strcmp(dset->varname[1], "index")) {
+	    ; /* "nulldata" default, OK */
+	} else {
+	    err = E_DATA; /* Not OK */
+	}
+    } else if (jr->n_rows != T) {
+	gretl_errmsg_set(_("Series length does not match the dataset"));
+	err = E_DATA;
+    }
+
+    if (err) {
+	gretl_errmsg_set(_("Series length does not match the dataset"));
+    }
+
+    return err;
+}
+
 static int *get_series_indices (const char **vnames,
 				int nvars,
 				DATASET *dset,
@@ -5639,9 +5667,8 @@ int gretl_join_data (const char *fname,
 
     /* Step 8: another check now the joiner struct is ready */
 
-    if (!err && jr->n_keys == 0 && jr->n_rows != sample_size(jr->l_dset)) {
-	gretl_errmsg_set(_("Series length does not match the dataset"));
-	err = E_DATA;
+    if (!err && jr != NULL && jr->n_keys == 0) {
+	err = join_range_check(jr, dset, aggr);
     }
 
  transcribe:
