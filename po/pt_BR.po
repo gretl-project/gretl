@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-10-23 11:25-0400\n"
-"PO-Revision-Date: 2014-10-05 13:13-0300\n"
-"Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
+"PO-Revision-Date: 2014-11-19 11:12-0300\n"
+"Last-Translator: Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.3\n"
+"X-Generator: Poedit 1.6.10\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -3841,9 +3841,9 @@ msgid "gretlcmd.hlp"
 msgstr "gretlcmd.hlp"
 
 #: lib/src/gretl_plot.c:359 lib/src/tokenize.c:2030 lib/src/tokenize.c:2085
-#, fuzzy, c-format
+#, c-format
 msgid "Parse error at unexpected token '%s'"
-msgstr "Erro de interpretação em '%s'"
+msgstr "Erro de interpretação no token '%s' inesperado"
 
 #: lib/src/gretl_prn.c:273
 #, c-format
@@ -6087,9 +6087,9 @@ msgid "Warning: option%s ignored outside of loop"
 msgstr "Aviso: opção%s ignorada fora do ciclo (\"loop\")"
 
 #: lib/src/options.c:1756
-#, fuzzy, c-format
+#, c-format
 msgid "%s: inapplicable option"
-msgstr "Opções incompatíveis"
+msgstr "%s: opção não aplicável"
 
 #: lib/src/plotspec.c:208 lib/src/plotspec.c:231
 msgid "lines"
@@ -6957,9 +6957,9 @@ msgid "Invalid option '-%c'"
 msgstr "Opção inválida '-%c'"
 
 #: lib/src/tokenize.c:3018
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected symbol '%c'"
-msgstr "Esperado %s mas encontrou-se %s"
+msgstr "Símbolo '%c' não esperado"
 
 #: lib/src/transforms.c:144
 #, c-format
@@ -7455,7 +7455,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 5 de outubro de 2014."
+"Tradução de 19 de novembro de 2014."
 
 #: gui2/about.c:203
 msgid "News"
@@ -11229,9 +11229,8 @@ msgid "_Observation range dummy"
 msgstr "Dummies para o intervalo de _observações"
 
 #: gui2/gretl.c:1598
-#, fuzzy
 msgid "Dummies for _discrete variable..."
-msgstr "Dummies para as variáveis _discretas selecionadas"
+msgstr "Dummies para variável _discreta..."
 
 #: gui2/gretl.c:1600
 msgid "_Define matrix..."
@@ -11463,7 +11462,7 @@ msgstr "_GARCH..."
 
 #: gui2/gretl.c:1674
 msgid "_Vector Autoregression..."
-msgstr "Autorregressão _vetorial..."
+msgstr "Autorregressão _vetorial (VAR)..."
 
 #: gui2/gretl.c:1675
 msgid "VAR _lag selection..."
@@ -12646,7 +12645,7 @@ msgstr "Utilitários"
 
 #: gui2/helpfiles.c:345 doc/commands/matfuncs.c:61
 msgid "Accessors"
-msgstr "Assessores"
+msgstr "Acessores"
 
 #: gui2/helpfiles.c:347
 msgid "Mathematical"
@@ -13235,14 +13234,13 @@ msgid "Skip the highest value"
 msgstr "Ignorar o valor mais alto"
 
 #: gui2/library.c:5644
-#, fuzzy
 msgid "Variable to dummify"
-msgstr "Variável para gráfico"
+msgstr "Variável a ser transformada em dummy..."
 
 #: gui2/library.c:5663
-#, fuzzy, c-format
+#, c-format
 msgid "Encoding %s as dummies"
-msgstr "Codificando as variáveis como sendo dummies"
+msgstr "Codificando %s como sendo dummies"
 
 #: gui2/library.c:5666
 msgid "Encoding variables as dummies"
@@ -15057,7 +15055,7 @@ msgstr "Preferência de manual PDF"
 
 #: gui2/settings.c:450
 msgid "This change will apply to newly opened windows"
-msgstr ""
+msgstr "Esta mudança será aplicada nas novas janelas abertas"
 
 #: gui2/settings.c:819
 msgid "You seem to be running gretl as root.  Do you really want to do this?"
@@ -15748,9 +15746,8 @@ msgid "Arrange"
 msgstr "Organizar"
 
 #: gui2/winstack.c:498
-#, fuzzy
 msgid "command log"
-msgstr "Registro de _comandos"
+msgstr "registro de comandos"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
@@ -15980,9 +15977,8 @@ msgid "user-specified values"
 msgstr "valores fornecidos pelo usuário"
 
 #: plugin/arma_common.c:489
-#, fuzzy
 msgid "No usable data were found"
-msgstr "Não foram encontrados dados numéricos"
+msgstr "Não foram encontrados dados utilizáveis"
 
 #: plugin/arma_common.c:689 plugin/arma_common.c:770
 msgid "Error in arma command"
