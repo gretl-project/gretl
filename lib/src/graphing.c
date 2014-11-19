@@ -5622,7 +5622,11 @@ static int panel_overlay_ts_plot (const int vnum,
 	gset->Z[nv-1][t] = obs[t];
     }	
 
-    opt |= OPT_O; /* use lines */
+    if (nunits > 9 && T < 50) {
+	opt |= OPT_P; /* lines/points */
+    } else {
+	opt |= OPT_O; /* use lines */
+    }
 
     if (single_series) {
 	opt |= OPT_S; /* suppress-fitted */
