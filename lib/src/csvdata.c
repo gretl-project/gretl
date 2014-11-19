@@ -3475,8 +3475,6 @@ struct joiner_ {
     obskey *auto_keys;  /* struct to hold info on obs-based key(s) */
     DATASET *l_dset;    /* the left-hand or inner dataset */
     DATASET *r_dset;    /* the right-hand or outer temporary dataset */
-    int newvar;         /* is a target series newly added? (0/1) */
-    int modified;       /* has an existing series been modified? */
 };
 
 typedef struct joiner_ joiner;
@@ -3527,8 +3525,6 @@ static joiner *joiner_new (int nrows)
     if (jr != NULL) {
 	jr->n_rows = nrows;
 	jr->n_unique = 0;
-	jr->newvar = 0;
-	jr->modified = 0;
 	jr->keys = NULL;
 	jr->key_freq = NULL;
 	jr->key_row = NULL;
@@ -4105,15 +4101,15 @@ static void joiner_print (joiner *jr)
     for (i=0; i<jr->n_rows; i++) {
 	row = &jr->rows[i];
 	if (row->n_keys > 1) {
-	    fprintf(stderr, " row %d: keyvals=(%lld,%lld), data=%.12g\n", i, 
-		    row->keyval, row->keyval2, row->val);
+	    fprintf(stderr, " row %d: keyvals=(%" G_GINT64_FORMAT ",%" G_GINT64_FORMAT "), "
+		    "data=%.12g\n", i, row->keyval, row->keyval2, row->val);
 	} else {
 	    if (jr->str_keys[0] && row->keyval >= 0) {
-		fprintf(stderr, " row %d: keyval=%lld (%s), data=%.12g\n", i, 
-			row->keyval, labels[row->keyval - 1], row->val);
+		fprintf(stderr, " row %d: keyval=%" G_GINT64_FORMAT "(%s), data=%.12g\n",
+			i, row->keyval, labels[row->keyval - 1], row->val);
 	    } else {
-		fprintf(stderr, " row %d: keyval=%lld, data=%.12g\n", i, row->keyval,
-			row->val);
+		fprintf(stderr, " row %d: keyval=%" G_GINT64_FORMAT ", data=%.12g\n",
+			i, row->keyval, row->val);
 	    }
 	}
     }
@@ -4121,7 +4117,7 @@ static void joiner_print (joiner *jr)
     if (jr->keys != NULL) {
 	fprintf(stderr, " for primary key: n_unique = %d\n", jr->n_unique);
 	for (i=0; i<jr->n_unique; i++) {
-	    fprintf(stderr,"  key value %lld: count = %d\n", 
+	    fprintf(stderr,"  key value %" G_GINT64_FORMAT ": count = %d\n", 
 		    jr->keys[i], jr->key_freq[i]);
 	}
     }
@@ -4433,15 +4429,17 @@ static int get_inner_key_values (joiner *jr, int i,
     return err;
 }
 
-static int aggregate_data (joiner *jr, const int *ikeyvars, int *vlist)
+static int aggregate_data (joiner *jr, const int *ikeyvars, int v,
+			   int newvar, int *modified)
 {
     series_table *rst = NULL;
     series_table *lst = NULL;
     DATASET *dset = jr->l_dset;
     double *xmatch = NULL;
     double *auxmatch = NULL;
+    int strcheck = 0;
     gint64 key, key2 = 0;
-    int i, k, t, nmax;
+    int i, t, nmax;
     int err = 0;
 
 #if AGGDEBUG
@@ -4469,61 +4467,59 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int *vlist)
 	}
     }
 
-    for (k=1; k<=vlist[0]; k++) {
-	int strcheck = 0;
-	int v = vlist[k];
+    if (jr->valcol > 0) {
+	/* check for the case where both the target variable on the
+	   left and the series to be imported are string-valued
+	*/
+	rst = series_get_string_table(jr->r_dset, jr->valcol);
+	lst = series_get_string_table(jr->l_dset, v);
+	strcheck = (rst != NULL && lst != NULL);
+    }
 
-	if (jr->valcol > 0) {
-	    /* check for the case where both the target variable on the
-	       left and the series to be imported are string-valued
-	    */
-	    rst = series_get_string_table(jr->r_dset, jr->valcol);
-	    lst = series_get_string_table(jr->l_dset, v);
-	    strcheck = (rst != NULL && lst != NULL);
+    /* run through the rows in the current sample range of the
+       left-hand dataset, pick up the value of the inner key(s), and
+       call aggr_value() to determine the value that should be 
+       imported from the right
+    */
+
+    for (t=dset->t1; t<=dset->t2 && !err; t++) {
+	int missing = 0;
+	int nomatch = 0;
+	double z;
+
+	err = get_inner_key_values(jr, t, ikeyvars, &key, &key2, &missing);
+	if (err) {
+	    break;
+	} else if (missing) {
+	    dset->Z[v][t] = NADBL;
+	    continue;
 	}
 
-	/* run through the rows in the current sample range of the
-	   left-hand dataset, pick up the value of the inner key(s), and
-	   call aggr_value() to determine the value that should be 
-	   imported from the right
-	*/
+	z = aggr_value(jr, key, key2, xmatch, auxmatch, &nomatch, &err);
 
-	for (t=dset->t1; t<=dset->t2 && !err; t++) {
-	    int missing = 0;
-	    int nomatch = 0;
-	    double z;
-
-	    err = get_inner_key_values(jr, t, ikeyvars, &key, &key2, &missing);
-	    if (err) {
-		break;
-	    } else if (missing) {
-		dset->Z[v][t] = NADBL;
-		continue;
-	    }
-
-	    z = aggr_value(jr, key, key2, xmatch, auxmatch, &nomatch, &err);
 #if AGGDEBUG
-	    if (na(z)) {
-		fprintf(stderr, " aggr_value: got NA (keys=%d,%d, err=%d)\n", 
-			key, key2, err);
-	    } else {
-		fprintf(stderr, " aggr_value: got %.12g (keys=%d,%d, err=%d)\n", 
-			z, key, key2, err);
-	    }
+	if (na(z)) {
+	    fprintf(stderr, " aggr_value: got NA (keys=%d,%d, err=%d)\n", 
+		    (int) key, (int) key2, err);
+	} else {
+	    fprintf(stderr, " aggr_value: got %.12g (keys=%d,%d, err=%d)\n", 
+		    z, (int) key, (int) key2, err);
+	}
 #endif
-	    if (!err && strcheck && !na(z)) {
-		z = maybe_adjust_string_code(rst, lst, z, &err);
-	    }
-	    if (!err) {
-		if (jr->newvar) {
+
+	if (!err && strcheck && !na(z)) {
+	    z = maybe_adjust_string_code(rst, lst, z, &err);
+	}
+
+	if (!err) {
+	    if (newvar) {
+		dset->Z[v][t] = z;
+	    } else if (z != dset->Z[v][t]) {
+		if (nomatch && !na(dset->Z[v][t])) {
+		    ; /* leave existing data alone (?) */
+		} else {
 		    dset->Z[v][t] = z;
-		} else if (z != dset->Z[v][t]) {
-		    if (nomatch && !na(dset->Z[v][t])) {
-			; /* leave existing data alone (?) */
-		    } else {
-			dset->Z[v][t] = z;
-			jr->modified += 1;
-		    }
+		    *modified += 1;
 		}
 	    }
 	}
@@ -4539,38 +4535,73 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int *vlist)
    number of rows in the current sample range on the left.
 */
 
-static int join_transcribe_data (joiner *jr, int *vlist)
+static int join_transcribe_data (joiner *jr, int v, int newvar,
+				 int *modified)
 {
     series_table *rst = NULL;
     series_table *lst = NULL;
     DATASET *dset = jr->l_dset;
     double zi;
     int strcheck = 0;
-    int i, k, t, v;
+    int i, t, err = 0;
+
+    if (jr->valcol > 0) {
+	rst = series_get_string_table(jr->r_dset, jr->valcol);
+	lst = series_get_string_table(dset, v);
+	strcheck = (rst != NULL && lst != NULL);
+    }
+
+    for (i=0; i<jr->n_rows && !err; i++) {
+	zi = jr->rows[i].val;
+	if (strcheck && !na(zi)) {
+	    zi = maybe_adjust_string_code(rst, lst, zi, &err);
+	}
+	if (!err) {
+	    t = dset->t1 + i;
+	    if (newvar) {
+		dset->Z[v][t] = zi;
+	    } else if (zi != dset->Z[v][t]) {
+		dset->Z[v][t] = zi;
+		*modified += 1;
+	    }
+	}
+    }
+
+    return err;
+}
+
+static int join_transcribe_multi_data (DATASET *l_dset,
+				       DATASET *r_dset,
+				       int *targlist,
+				       int *modified)
+{
+    const char *vname;
+    int i, s, t, lv, rv;
+    double xit;
     int err = 0;
 
-    /* FIXME multi-valcol */
+    if (r_dset->n != sample_size(l_dset)) {
+	gretl_errmsg_set("join: the observation ranges don't match");
+	err = E_DATA;
+    } else if (r_dset->v - 1 < targlist[0]) {
+	gretl_errmsg_set("join: series missing on the right");
+	err = E_DATA;
+    }
 
-    for (k=1; k<=vlist[0] && !err; k++) {
-	v = vlist[k];
-	if (jr->valcol > 0) {
-	    rst = series_get_string_table(jr->r_dset, jr->valcol);
-	    lst = series_get_string_table(dset, v);
-	    strcheck = (rst != NULL && lst != NULL);
-	}
-
-	for (i=0; i<jr->n_rows && !err; i++) {
-	    zi = jr->rows[i].val;
-	    if (strcheck && !na(zi)) {
-		zi = maybe_adjust_string_code(rst, lst, zi, &err);
-	    }
-	    if (!err) {
-		t = dset->t1 + i;
-		if (jr->newvar) {
-		    dset->Z[v][t] = zi;
-		} else if (zi != dset->Z[v][t]) {
-		    dset->Z[v][t] = zi;
-		    jr->modified += 1;
+    for (i=1; i<=targlist[0] && !err; i++) {
+	lv = targlist[i];
+	vname = l_dset->varname[lv];
+	rv = current_series_index(r_dset, vname);
+	if (rv < 0) {
+	    gretl_errmsg_sprintf("join: '%s' not matched", vname);
+	    err = E_DATA;
+	} else {
+	    s = 0;
+	    for (t=l_dset->t1; t<=l_dset->t2; t++) {
+		xit = r_dset->Z[rv][s++];
+		if (xit != l_dset->Z[lv][t]) {
+		    l_dset->Z[lv][t] = xit;
+		    *modified += 1;
 		}
 	    }
 	}
@@ -4697,7 +4728,7 @@ static int add_target_series (const char **vnames,
     int i, v = dset->v;
     int err;
 
-    err = dataset_add_series(dset, n_add);
+    err = dataset_add_NA_series(dset, n_add);
 
     if (!err) {
 	for (i=1; i<=targvars[0]; i++) {
@@ -5054,6 +5085,7 @@ static int join_data_type_check (csvjoin *jspec,
 	    /* one of (L, R) is string-valued, but not the other */
 	    err = E_TYPES;
 	}
+	valcol = jspec->colnums[JOIN_MAXCOL + k - 1];
     }
 
     return err;
@@ -5112,6 +5144,11 @@ static int check_for_missing_columns (csvjoin *jspec)
 	    gretl_errmsg_sprintf(_("%s: column '%s' was not found"), "join", name);
 	    return E_DATA;
 	}
+#if CDEBUG
+	if (name != NULL) {
+	    fprintf(stderr, "colname '%s' -> colnum %d\n", name, jspec->colnums[i]);
+	}
+#endif	
     }
 
     return 0;
@@ -5270,7 +5307,7 @@ static int set_up_jspec (csvjoin *jspec, const char **vnames,
 			 int nvars)
 {
     int i, j, ncols = JOIN_MAXCOL + nvars - 1;
-	
+
     jspec->colnames = malloc(ncols * sizeof *jspec->colnames);
     jspec->colnums = malloc(ncols * sizeof *jspec->colnums);
 
@@ -5287,7 +5324,9 @@ static int set_up_jspec (csvjoin *jspec, const char **vnames,
 
     j = JOIN_MAXCOL;
     for (i=1; i<nvars; i++) {
-	jspec->colnames[j++] = vnames[i];
+	jspec->colnames[j] = vnames[i];
+	jspec->colnums[j] = 0;
+	j++;
     }
 
     return 0;
@@ -5363,6 +5402,7 @@ int gretl_join_data (const char *fname,
     int *targvars = NULL;
     int orig_v = dset->v;
     int add_v = 0;
+    int modified = 0;
     int verbose = (opt & OPT_V);
     int str_keys[2] = {0};
     int n_keys = 0;
@@ -5396,7 +5436,16 @@ int gretl_join_data (const char *fname,
 #if CDEBUG
     fputs("*** join_from_csv:\n", stderr);
     fprintf(stderr, " filename = '%s'\n", fname);
-    fprintf(stderr, " target series name = '%s'\n", varname);
+    if (nvars > 1) {
+	int i;
+	
+	fputs(" target series names:\n", stderr);
+	for (i=0; i<nvars; i++) {
+	    fprintf(stderr, "  '%s'\n", vnames[i]);
+	}
+    } else {
+	fprintf(stderr, " target series name = '%s'\n", varname);
+    }
     if (n_keys > 0) {
 	fprintf(stderr, " inner key series ID = %d\n", ikeyvars[1]);
 	if (n_keys == 2) {
@@ -5502,7 +5551,7 @@ int gretl_join_data (const char *fname,
 
     /* Step 4: read data from the outer file; check we got all the
        required columns; check that nothing is screwed up type-wise
-     */
+    */
 
     if (!err) {
 	if (opt & OPT_G) {
@@ -5532,8 +5581,17 @@ int gretl_join_data (const char *fname,
     }
 
     if (!err && verbose) {
+	int i;
+	
 	pprintf(prn, _("Outer dataset: read %d columns and %d rows\n"),
 		outer_dset->v - 1, outer_dset->n);
+	for (i=1; i<outer_dset->v; i++) {
+	    pprintf(prn, " col %d: '%s'\n", i, outer_dset->varname[i]);
+	}
+    }
+
+    if (nvars > 1) {
+	goto transcribe;
     }
 
     /* Step 5: set up keys and check for conformability errors */
@@ -5586,52 +5644,53 @@ int gretl_join_data (const char *fname,
 	err = E_DATA;
     }
 
+ transcribe:
+
     /* Step 9: transcribe or aggregate the data */
 
     if (!err && add_v > 0) {
 	/* we need to add new series on the left */
 	err = add_target_series(vnames, dset, targvars, add_v);
-	if (!err) {
-	    jr->newvar = 1;
-	}
     }   
 
     if (!err) {
-	if (jr->n_keys == 0) {
-	    err = join_transcribe_data(jr, targvars);
+	if (nvars > 1) {
+	    err = join_transcribe_multi_data(dset, outer_dset, targvars,
+					     &modified);
+	} else if (jr->n_keys == 0) {
+	    err = join_transcribe_data(jr, targvars[1], add_v,
+				       &modified);
 	} else {
-	    err = aggregate_data(jr, ikeyvars, targvars);
+	    err = aggregate_data(jr, ikeyvars, targvars[1], add_v,
+				 &modified);
 	}
     }
 
 #if CDEBUG
-    fprintf(stderr, "join: newvar = %d, modified = %d\n",
-	    jr->newvar, jr->modified);
+    fprintf(stderr, "join: add_v = %d, modified = %d\n",
+	    add_v, modified);
 #endif    
 
-    if (!err && add_v > 0 && jr->valcol > 0) {
-	/* we added new series (FIXME multi!) */
-	int my_k, my_v;
+    if (!err && add_v > 0 && jr != NULL && jr->valcol > 0) {
+	/* we added a new series */
+	int vnew = targvars[1];
 	
-	for (my_k=1; my_k<=targvars[0]; my_k++) {
-	    my_v = targvars[my_k];
-	    if (is_string_valued(jr->r_dset, jr->valcol)) {
-		/* let the new series grab the RHS string table */
-		steal_string_table(jr->l_dset, my_v, jr->r_dset, jr->valcol); 
-	    }
+	if (is_string_valued(jr->r_dset, jr->valcol)) {
+	    /* let the new series grab the RHS string table */
+	    steal_string_table(jr->l_dset, vnew, jr->r_dset, jr->valcol); 
 	}
     }
 
     if (err) {
 	dataset_drop_last_variables(dset, dset->v - orig_v);
     } else {
-	if (jr->newvar || jr->modified) {
+	if (add_v || modified) {
 	    dset->modflag = 1;
 	}
 	if (gretl_messages_on()) {
-	    if (jr->newvar) {
+	    if (add_v) {
 		pputs(prn, _("Data appended OK\n"));
-	    } else if (jr->modified) {
+	    } else if (modified) {
 		pputs(prn, "Data modified OK\n");
 	    } else {
 		pputs(prn, "No changes were nade to the dataset\n");

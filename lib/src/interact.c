@@ -1356,6 +1356,17 @@ static int lib_join_data (ExecState *s,
 	}
     }
 
+    if (vnames != NULL) {
+	/* we handle multiple import names only in the simplest
+	   case: no fancy options
+	*/
+	for (i=0; opts[i] && !err; i++) {
+	    if (opt & opts[i]) {
+		err = E_BADOPT;
+	    }
+	}
+    }
+
     for (i=0; opts[i] && !err; i++) {
 	gretlopt jopt = opts[i];
 	const char *param;
