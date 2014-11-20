@@ -1977,7 +1977,7 @@ static int call_function_package (call_info *cinfo, windata_t *vwin,
 	    if (cinfo->iface < 0) {
 		/* failed, or cancelled */
 		cinfo_free(cinfo);
-		return; /* note: handled */
+		return 0; /* note: handled */
 	    }
 	} else {
 	    /* only one relevant interface available */
