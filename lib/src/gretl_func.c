@@ -5709,24 +5709,24 @@ int check_function_needs (const DATASET *dset, FuncDataReq dreq,
 
     if ((dset == NULL || dset->v == 0) && dreq != FN_NODATA_OK) {
 	gretl_errmsg_set("This function needs a dataset in place");
-	return 1;
+	return E_DATA;
     }
 
     if (dreq == FN_NEEDS_TS && !dataset_is_time_series(dset)) {
 	gretl_errmsg_set("This function needs time-series data");
-	return 1;
+	return E_DATA;
     }
 
     if (dreq == FN_NEEDS_PANEL && !dataset_is_panel(dset)) {
 	gretl_errmsg_set("This function needs panel data");
-	return 1;
+	return E_DATA;
     }
 
     if (dreq == FN_NEEDS_QM && 
 	(!dataset_is_time_series(dset) || 
 	 (dset->pd != 4 && dset->pd != 12))) {
 	gretl_errmsg_set("This function needs quarterly or monthly data");
-	return 1;
+	return E_DATA;
     } 
 
     return 0;
