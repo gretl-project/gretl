@@ -25,8 +25,7 @@ enum {
     FN_NO_DATA
 } fncall_errors;
 
-void call_function_package (const char *fname, windata_t *vwin,
-			    int *loaderr);
+int open_function_package (const char *fname, windata_t *vwin);
 
 void function_call_cleanup (void);
 

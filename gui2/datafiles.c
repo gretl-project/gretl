@@ -993,11 +993,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	gui_add_package_to_menu(path, TRUE, vwin->main);
     } else if (task == CALL_FN_PKG) {
 	/* note: this is the double-click default */
-	call_function_package(path, vwin, &err);
-	if (err == FN_NO_DATA) {
-	    display_function_package_data(pkgname, path, VIEW_PKG_INFO);
-	    err = 0;
-	}
+	err = open_function_package(path, vwin);
     }
 
     g_free(pkgname);

@@ -64,6 +64,7 @@ struct call_info_ {
     int flags;           /* misc. info on package */
     const ufunc *func;   /* the function we're calling */
     FuncDataReq dreq;    /* the function's data requirement */
+    int minver;          /* minimum gretl version for pkg */
     int n_params;        /* its number of parameters */
     char rettype;        /* its return type */
     gchar **args;        /* its arguments */
@@ -1185,6 +1186,12 @@ static int cinfo_show_return (call_info *c)
     }
 }
 
+static gchar *cinfo_pkg_title (call_info *cinfo)
+{
+    return g_strdup_printf("gretl: %s %s", cinfo->pkgname,
+			   cinfo->pkgver);
+}
+
 static void function_call_dialog (call_info *cinfo)
 {
     GtkWidget *button, *label;
@@ -1208,7 +1215,7 @@ static void function_call_dialog (call_info *cinfo)
     }
 
     cinfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    txt = g_strdup_printf("gretl: %s %s", cinfo->pkgname, cinfo->pkgver);
+    txt = cinfo_pkg_title(cinfo);
     gtk_window_set_title(GTK_WINDOW(cinfo->dlg), txt);
     g_free(txt);
     gretl_emulated_dialog_add_structure(cinfo->dlg, &vbox, &bbox);
@@ -1789,7 +1796,7 @@ static void pkg_select_interface (call_info *cinfo, int npub)
     } else if (radios) {
 	gchar *title = g_strdup_printf("gretl: %s\n", cinfo->pkgname);
 
-	resp = radio_dialog(title, "Select function", 
+	resp = radio_dialog(title, _("Select function"), 
 			    (const char **) opts, 
 			    nopts, 0, 0, cinfo->dlg);
 	if (resp >= 0) {
@@ -1800,7 +1807,7 @@ static void pkg_select_interface (call_info *cinfo, int npub)
 	strings_array_free(opts, nopts);
 	g_free(title);
     } else {
-	resp = combo_selector_dialog(ilist, "Select function", 
+	resp = combo_selector_dialog(ilist, _("Select function"), 
 				     0, cinfo->dlg);
 	if (resp >= 0) {
 	    cinfo->iface = cinfo->publist[resp+1];
@@ -1852,12 +1859,12 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
    that should be displayed as the default interface.
 */
 
-static void maybe_set_gui_interface (fnpkg *pkg, call_info *cinfo,
+static void maybe_set_gui_interface (call_info *cinfo,
 				     int from_browser)
 {
     int fid = -1, priv = -1;
 
-    function_package_get_properties(pkg, 
+    function_package_get_properties(cinfo->pkg, 
 				    "gui-main-id", &fid,
 				    "gui-main-priv", &priv,
 				    NULL);
@@ -1869,7 +1876,7 @@ static void maybe_set_gui_interface (fnpkg *pkg, call_info *cinfo,
 	*/
 	cinfo->iface = fid;
 	cinfo->flags |= SHOW_GUI_MAIN;
-	function_package_get_properties(pkg, "name",
+	function_package_get_properties(cinfo->pkg, "name",
 					&cinfo->label,
 					NULL);
     }
@@ -1892,19 +1899,9 @@ static int need_model_check (call_info *cinfo)
     return err;
 }
 
-/* Call to execute a function from the package specified
-   by @fname. We may or may not end up offering a list
-   of interfaces. This is called both from menu items
-   (see below in this file) and from the "browser" window
-   that lists installed function packages. In the latter
-   case @loaderr is non-NULL, in the former it's NULL.
-*/
-
-void call_function_package (const char *fname, windata_t *vwin,
-			    int *loaderr)
+static call_info *start_cinfo_for_package (const char *fname,
+					   windata_t *vwin)
 {
-    int from_browser = (loaderr != NULL);
-    int minver = 0;
     call_info *cinfo;
     fnpkg *pkg;
     int err = 0;
@@ -1912,53 +1909,64 @@ void call_function_package (const char *fname, windata_t *vwin,
     pkg = get_function_package_by_filename(fname, &err);
 
     if (err) {
-	gui_errmsg(err); /* FIXME error not very informative? */
-	if (from_browser) {
-	    *loaderr = FN_NO_LOAD;
-	}
-	return;
+	gui_errmsg(err);
+	return NULL;
     }
 
     cinfo = cinfo_new(pkg, vwin);
     if (cinfo == NULL) {
-	return;
+	return NULL;
     }
 
-    /* get the interface list and other info for package */
+    /* get the interface list and other basic info for package */
 
     err = function_package_get_properties(pkg,
 					  "name", &cinfo->pkgname,
 					  "version", &cinfo->pkgver,
 					  "gui-publist", &cinfo->publist,
 					  "data-requirement", &cinfo->dreq,
-					  "min-version", &minver,
+					  "min-version", &cinfo->minver,
 					  NULL);
 
     if (err) {
 	gui_errmsg(err);
     } else if (cinfo->publist == NULL) {
 	/* no available interfaces */
-	err = E_DATA;
 	errbox(_("Function package is broken"));
     }
 
-    if (!err) {
-	/* do we have suitable data in place? */
-	err = check_function_needs(dataset, cinfo->dreq, minver);
-	if (err) {
-	    if (from_browser) {
-		gui_warnmsg(err);
-		*loaderr = FN_NO_DATA;
-		cinfo_free(cinfo);
-		return;
-	    } else {
-		gui_errmsg(err);
-	    }
+    if (err) {
+	cinfo_free(cinfo);
+	cinfo = NULL;
+    }
+
+    return cinfo;
+}
+
+/* Call to execute a function from the package pre-attached to
+   @cinfo. We may or may not end up offering a list of
+   interfaces. This is called both from menu items (see below in this
+   file) and (indirectly) from the "browser" window that lists
+   installed function packages -- see open_function_package() below.
+*/
+
+static int call_function_package (call_info *cinfo, windata_t *vwin,
+				  int from_browser)
+{
+    int err = 0;
+
+    /* do we have suitable data in place? */
+    err = check_function_needs(dataset, cinfo->dreq, cinfo->minver);
+    if (err) {
+	gui_errmsg(err);
+	if (from_browser) {
+	    cinfo_free(cinfo);
+	    return err;
 	}
     }
 
     if (!err) {
-	maybe_set_gui_interface(pkg, cinfo, from_browser);
+	maybe_set_gui_interface(cinfo, from_browser);
     }
 
     if (!err && cinfo->iface < 0) {
@@ -2014,6 +2022,81 @@ void call_function_package (const char *fname, windata_t *vwin,
     } else {
 	cinfo_free(cinfo);
     }
+
+    return err;
+}
+
+static int open_sample_script (fnpkg *pkg)
+{
+    gchar *buf = NULL;
+    int err;
+
+    err = function_package_get_properties(pkg,
+					  "sample-script", &buf,
+					  NULL);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	do_new_script(EDIT_SCRIPT, buf);
+	g_free(buf);
+    }
+
+    return err;
+}
+
+/* called from the function-package browser */
+
+int open_function_package (const char *fname, windata_t *vwin)
+{
+    call_info *cinfo;
+    int can_call = 1;
+    int free_cinfo = 1;
+    int err = 0;
+
+    cinfo = start_cinfo_for_package(fname, vwin);
+
+    if (cinfo == NULL) {
+	return E_ALLOC;
+    }
+
+    /* do we have suitable data in place? */
+    err = check_function_needs(dataset, cinfo->dreq, cinfo->minver);
+    if (err == E_DATA) {
+	can_call = 0;
+	gretl_error_clear();
+    } else if (err) {
+	gui_errmsg(err);
+    }
+
+    if (can_call) {
+	/* give choice of sample script or call dialog */
+	const char *opts[] = {
+	    N_("Open sample script"),
+	    N_("Call a function")
+	};
+	gchar *title;
+	int resp;
+
+	title = cinfo_pkg_title(cinfo);
+	resp = radio_dialog(NULL, _("Would you like to:"),
+			    opts, 2, 0, 0, vwin->main);
+	g_free(title);
+	if (resp == 0) {
+	    err = open_sample_script(cinfo->pkg);
+	} else if (resp == 1) {
+	    free_cinfo = 0;
+	    err = call_function_package(cinfo, vwin, 1);
+	}
+    } else {
+	err = open_sample_script(cinfo->pkg);
+    }
+
+    if (free_cinfo) {
+	cinfo_free(cinfo);
+    }
+
+    return err;
 }
 
 void function_call_cleanup (void)
@@ -2426,7 +2509,12 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     }
 
     if (addon->filepath != NULL) {
-	call_function_package(addon->filepath, vwin, NULL);
+	call_info *cinfo;
+
+	cinfo = start_cinfo_for_package(addon->filepath, vwin);
+	if (cinfo != NULL) {
+	    call_function_package(cinfo, vwin, 0);
+	}
     } else {
 	unregister_function_package(pkgname);
     }

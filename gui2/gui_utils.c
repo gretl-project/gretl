@@ -675,7 +675,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    } else if (upkey == GDK_T) {
 		if (window_is_tab(vwin)) {
 		    /* Ctrl-T: open new tab */
-		    do_new_script(vwin->role);
+		    do_new_script(vwin->role, NULL);
 		    return TRUE;
 		}
 	    } 

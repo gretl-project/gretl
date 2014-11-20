@@ -7083,7 +7083,7 @@ static int list_position (int v, const int *list)
     return 0;
 }
 
-static int maybe_reorder_list (char *liststr)
+static int maybe_reorder_list (char *liststr, dialog_opts *opts)
 {
     const char *query = _("X-axis variable");
     int *list;
@@ -7095,7 +7095,9 @@ static int maybe_reorder_list (char *liststr)
     if (err) {
 	return err;
     } else {
-	int xvar = select_var_from_list(list, query, NULL);
+	int xvar =
+	    select_var_from_list_with_opt(list, query, opts,
+					  0, NULL);
 
 	if (xvar < 0) {
 	    /* the user cancelled */
@@ -7127,6 +7129,7 @@ static int maybe_reorder_list (char *liststr)
 void plot_from_selection (int code)
 {
     gretlopt opt = OPT_G;
+    int pan_between = 0;
     char *liststr;
     int cancel = 0;
 
@@ -7136,7 +7139,28 @@ void plot_from_selection (int code)
     }
 
     if (code == GR_XY) {
-	cancel = maybe_reorder_list(liststr);
+	if (multi_unit_panel_sample(dataset)) {
+	    dialog_opts *opts;
+	    const char *strs[] = {
+		N_("Plot all data"),
+		N_("Plot group means")
+	    };
+	    gretlopt vals[] = {
+		OPT_NONE,
+		OPT_B,
+	    };
+	    gretlopt popt = OPT_NONE;
+
+	    opts = dialog_opts_new(2, OPT_TYPE_RADIO,
+				   &popt, vals, strs);
+	    cancel = maybe_reorder_list(liststr, opts);
+	    if (popt & OPT_B) {
+		pan_between = 1;
+	    }
+	    dialog_opts_free(opts);
+	} else {
+	    cancel = maybe_reorder_list(liststr, NULL);
+	}
     } else if (code == GR_PLOT) {
 	int k = mdata_selection_count();
 
@@ -7168,6 +7192,7 @@ void plot_from_selection (int code)
 	if (opt & OPT_L) {
 	    lib_command_sprintf("scatters %s --with-lines", liststr);
 	} else {
+	    /* FIXME pan_between and CLI? */
 	    lib_command_sprintf("gnuplot%s%s", liststr, 
 				(code == GR_PLOT)? " --time-series --with-lines" : "");
 	}
@@ -7177,11 +7202,13 @@ void plot_from_selection (int code)
 	if (!err) {
 	    if (opt & OPT_L) {
 		err = multi_scatters(libcmd.list, dataset, opt);
-	    } else {	
+	    } else if (pan_between) {
+		err = panel_means_XY_scatter(libcmd.list, dataset, opt);
+	    } else {
 		err = gnuplot(libcmd.list, NULL, dataset, opt);
 	    } 
 	    gui_graph_handler(err);
-	    if (!err) {
+	    if (!err && !pan_between) {
 		record_lib_command();
 	    }
 	}
@@ -7682,7 +7709,7 @@ gboolean do_open_script (int action)
     return TRUE;
 }
 
-void do_new_script (int code) 
+void do_new_script (int code, const char *buf) 
 {
     int action = (code == FUNC)? EDIT_SCRIPT : code;
     char temp[MAXLEN];
@@ -7694,7 +7721,9 @@ void do_new_script (int code)
 	return;
     }
 
-    if (code == FUNC) {
+    if (buf != NULL) {
+	fputs(buf, fp);
+    } else if (code == FUNC) {
 	fputs("function \n\nend function\n", fp);
     } else if (code == EDIT_OX) {
 	fputs("#include <oxstd.h>\n\n", fp);
@@ -7727,7 +7756,7 @@ void new_script_callback (GtkAction *action)
 	etype = EDIT_PYTHON;
     }
 
-    do_new_script(etype);
+    do_new_script(etype, NULL);
 }
 
 void maybe_display_string_table (void)

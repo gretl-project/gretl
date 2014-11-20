@@ -258,7 +258,7 @@ static void file_open_callback (GtkWidget *w, windata_t *vwin)
 
 static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
 {
-    do_new_script(vwin->role);
+    do_new_script(vwin->role, NULL);
 }
 
 static void clear_text_callback (GtkWidget *w, windata_t *vwin)
@@ -1187,7 +1187,7 @@ static void tbar_model (void)
 
 static void tbar_new_script (void)
 {
-    do_new_script(EDIT_SCRIPT);
+    do_new_script(EDIT_SCRIPT, NULL);
 }
 
 static void tbar_show_funcs (GtkWidget *w, gpointer p)
