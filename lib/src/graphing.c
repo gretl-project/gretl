@@ -5409,6 +5409,83 @@ static int panel_means_ts_plot (const int vnum,
     return err;
 }
 
+int panel_means_XY_scatter (const int *list, const DATASET *dset,
+			    gretlopt opt)
+{
+    DATASET *gset;
+    int N, T = dset->pd;
+    int glist[3] = {2, 1, 2};
+    gchar *literal = NULL;
+    char **grpnames = NULL;
+    int yvar, xvar;
+    int i, t, s, u;
+    int err = 0;
+
+    if (list == NULL || list[0] != 2) {
+	return E_DATA;
+    }
+
+    N = panel_sample_size(dset);
+
+    gset = create_auxiliary_dataset(3, N, 0);
+    if (gset == NULL) {
+	return E_ALLOC;
+    }
+
+    /* If we have panel group names, use them
+       as obs markers here */
+    grpnames = get_panel_group_names((DATASET *) dset);
+    if (grpnames != NULL) {
+	dataset_allocate_obs_markers(gset);
+    }
+
+    yvar = list[1];
+    xvar = list[2];
+
+    strcpy(gset->varname[1], dset->varname[yvar]);
+    series_set_display_name(gset, 1, series_get_display_name(dset, yvar));
+    
+    strcpy(gset->varname[2], dset->varname[xvar]);
+    series_set_display_name(gset, 2, series_get_display_name(dset, xvar));
+
+    s = dset->t1;
+    u = dset->t1 / T;
+
+    for (i=0; i<N; i++) {
+	double yit, ysum = 0.0;
+	double xit, xsum = 0.0;
+	int ny = 0, nx = 0;
+
+	for (t=0; t<T; t++) {
+	    yit = dset->Z[yvar][s];
+	    xit = dset->Z[xvar][s];
+	    if (!na(yit)) {
+		ysum += yit;
+		ny++;
+	    }	    
+	    if (!na(xit)) {
+		xsum += xit;
+		nx++;
+	    }
+	    s++;
+	}
+	gset->Z[1][i] = ny == 0 ? NADBL : ysum / ny;
+	gset->Z[2][i] = nx == 0 ? NADBL : xsum / nx;
+	if (gset->S != NULL) {
+	    strcpy(gset->S[i], grpnames[u]);
+	}
+	u++;
+    }
+
+    literal = g_strdup_printf("set title \"%s\";", _("Group means"));
+    err = gnuplot(glist, literal, gset, opt);
+
+    g_free(literal);
+    destroy_dataset(gset);
+
+    return err;
+}
+
 /* Here we're trying to find out if the observation labels
    for a panel dataset are such that they uniquely identify
    the units/individuals (e.g. country or city names, 
