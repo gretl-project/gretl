@@ -39,7 +39,8 @@ typedef enum {
     R_KLNL,       /* log-likelihood from Kalman filter (if applicable) */
     R_KS2,        /* variance estimate from Kalman filter (if applicable) */
     R_KSTEP,      /* current Kalman time-step (if applicable) */
-    R_STOPWATCH,  /* stopwatch */ 
+    R_STOPWATCH,  /* stopwatch */
+    R_TEST_BRK,   /* obs at which breal occurs (QLR test) */
     R_SCALAR_MAX, /* separator: scalars vs series */
     R_INDEX,      /* consecutive observations index */
     R_PUNIT,      /* 1-based panel unit index */
@@ -50,7 +51,6 @@ typedef enum {
     R_SERIES_MAX, /* separator: series vs matrices */
     R_TEST_STAT,  /* last test statistic(s) (scalar or matrix) */
     R_TEST_PVAL,  /* last test p-value(s) (scalar or matrix) */
-    R_TEST_PARM,  /* last test parameter (string) */
     R_MAX
 } RetrievalIndex;
 

@@ -2066,22 +2066,27 @@ enum {
     GET_TEST_STAT,
     GET_TEST_PVAL,
     GET_TEST_LNL,
+    GET_TEST_BRK,
     TESTS_CLEANUP
 };
 
 #define getcode(c) (c == GET_TEST_STAT || c == GET_TEST_PVAL || \
-                    c == GET_TEST_LNL)
+                    c == GET_TEST_LNL || c == GET_TEST_BRK)
 
 static GretlType last_test_type;
 
-static double
-record_or_get_test_result (double teststat, double pval, double lnl,
-			   char *instr, int code)
+static double record_or_get_test_result (double teststat,
+					 double pval,
+					 double lnl,
+					 double inbrk,
+					 char *instr,
+					 int code)
 {
     static char savestr[MAXLABEL] = {0};
     static double val = NADBL;
     static double pv = NADBL;
     static double ll = NADBL;
+    static double brk = NADBL;
     double ret = NADBL;
 
     if (code == SET_TEST_STAT) {
@@ -2089,6 +2094,7 @@ record_or_get_test_result (double teststat, double pval, double lnl,
 	val = teststat;
 	pv = pval;
 	ll = lnl;
+	brk = inbrk;
 	*savestr = '\0';
 	if (instr != NULL) {
 	    strncat(savestr, instr, MAXLABEL - 1);
@@ -2101,6 +2107,8 @@ record_or_get_test_result (double teststat, double pval, double lnl,
 		sprintf(instr, _("p-value for %s test"), savestr);
 	    } else if (code == GET_TEST_LNL) {
 		sprintf(instr, _("log-likelihood for %s test"), savestr);
+	    } else if (code == GET_TEST_BRK) {
+		sprintf(instr, _("break-point for %s test"), savestr);
 	    }
 	}
 	if (code == GET_TEST_STAT) {
@@ -2109,6 +2117,8 @@ record_or_get_test_result (double teststat, double pval, double lnl,
 	    ret = pv;
 	} else if (code == GET_TEST_LNL) {
 	    ret = ll;
+	} else if (code == GET_TEST_BRK) {
+	    ret = brk;
 	}
     } 
 	
@@ -2170,13 +2180,21 @@ int get_last_test_type (void)
 
 void record_test_result (double teststat, double pval, char *blurb)
 {
-    record_or_get_test_result(teststat, pval, NADBL, blurb, SET_TEST_STAT);
+    record_or_get_test_result(teststat, pval, NADBL, NADBL, blurb,
+			      SET_TEST_STAT);
 }
 
 void record_LR_test_result (double teststat, double pval, double lnl,
 			    char *blurb)
 {
-    record_or_get_test_result(teststat, pval, lnl, blurb, SET_TEST_STAT);
+    record_or_get_test_result(teststat, pval, lnl, NADBL, blurb,
+			      SET_TEST_STAT);
+}
+
+void record_QLR_test_result (double teststat, double pval, double brk)
+{
+    record_or_get_test_result(teststat, pval, NADBL, brk, "QLR",
+			      SET_TEST_STAT);
 }
 
 /* Note: the hypothesis-test recorder "takes ownership" of the
@@ -2192,24 +2210,22 @@ void record_matrix_test_result (gretl_matrix *tests,
 
 double get_last_test_statistic (char *blurb)
 {
-    return record_or_get_test_result(0, 0, 0, blurb, GET_TEST_STAT);
-}
-
-char *get_last_test_param (int *err)
-{
-    /* FIXME */
-    *err = E_NOTIMP;
-    return NULL;
+    return record_or_get_test_result(0, 0, 0, 0, blurb, GET_TEST_STAT);
 }
 
 double get_last_pvalue (char *blurb)
 {
-    return record_or_get_test_result(0, 0, 0, blurb, GET_TEST_PVAL);
+    return record_or_get_test_result(0, 0, 0, 0, blurb, GET_TEST_PVAL);
 }
 
 double get_last_lnl (char *blurb)
 {
-    return record_or_get_test_result(0, 0, 0, blurb, GET_TEST_LNL);
+    return record_or_get_test_result(0, 0, 0, 0, blurb, GET_TEST_LNL);
+}
+
+double get_last_break (char *blurb)
+{
+    return record_or_get_test_result(0, 0, 0, 0, blurb, GET_TEST_BRK);
 }
 
 gretl_matrix *get_last_test_matrix (int *err)

@@ -2667,7 +2667,7 @@ static void QLR_print_result (MODEL *pmod,
 
     pval = get_QLR_pval(X2, dfn, k1, k2, pmod, prn);
 
-    record_test_result(X2, pval, "QLR");
+    record_QLR_test_result(X2, pval, tmax + 1);
 
     if (opt & OPT_S) {
 	save_QLR_test(pmod, datestr, X2, pval, dfn);

@@ -158,13 +158,15 @@ void record_matrix_test_result (gretl_matrix *tests,
 void record_LR_test_result (double teststat, double pval, double lnl,
 			    char *blurb);
 
+void record_QLR_test_result (double teststat, double pval, double brk);
+
 double get_last_test_statistic (char *blurb);
 
 double get_last_pvalue (char *blurb);
 
 double get_last_lnl (char *blurb);
 
-char *get_last_test_param (int *err);
+double get_last_break (char *blurb);
 
 gretl_matrix *get_last_test_matrix (int *err);
 
