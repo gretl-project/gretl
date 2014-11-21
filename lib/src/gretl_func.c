@@ -6966,7 +6966,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 		gretlopt opt = state.padded ? OPT_B : OPT_NONE;
 
 		restore_full_sample(dset, NULL);
-		restrict_sample_from_mask(state.submask, dset, opt, NULL);
+		restrict_sample_from_mask(state.submask, dset, opt);
 	    } 
 	}
 	dset->t1 = orig_t1;

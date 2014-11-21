@@ -4753,7 +4753,7 @@ static int set_sample_from_model (void *ptr, int role)
     if (!err) {
 	if (pmod != NULL && pmod->submask != NULL) {
 	    err = restrict_sample_from_mask(pmod->submask, dataset, 
-					    OPT_NONE, NULL);
+					    OPT_NONE);
 	    range_set = 1;
 	} else {
 	    int t1 = 0, t2 = 0;

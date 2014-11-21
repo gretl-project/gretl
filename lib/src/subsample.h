@@ -48,9 +48,8 @@ int restrict_sample (const char *param, const int *list,
 		     gretlopt opt, PRN *prn,
 		     int *n_dropped);
 
-int 
-restrict_sample_from_mask (char *mask, DATASET *dset, 
-			   gretlopt opt, int *n_dropped);
+int restrict_sample_from_mask (char *mask, DATASET *dset, 
+			       gretlopt opt);
 
 int complex_subsampled (void);
 

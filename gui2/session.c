@@ -1443,8 +1443,7 @@ gboolean do_open_session (void)
 	if (sinfo.resample_n > 0) {
 	    err = dataset_resample(dataset, sinfo.resample_n, sinfo.seed); 
 	} else if (sinfo.mask != NULL) {
-	    err = restrict_sample_from_mask(sinfo.mask, dataset,
-					    OPT_NONE, NULL);
+	    err = restrict_sample_from_mask(sinfo.mask, dataset, OPT_NONE);
 	    if (!err) {
 		dataset->restriction = sinfo.restriction;
 		sinfo.restriction = NULL;
@@ -1780,7 +1779,7 @@ static int real_save_session_dataset (const char *dname)
 	/* reset the prior subsample */
 	if (!err) {
 	    err = restrict_sample_from_mask(mask, dataset, 
-					    OPT_NONE, NULL);
+					    OPT_NONE);
 	}
 	free(mask);
     }

@@ -650,8 +650,7 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 	   to the original state 
 	*/
 	if (state->submask != NULL) {
-	    err = restrict_sample_from_mask(state->submask, dset,
-					    OPT_NONE, NULL);
+	    err = restrict_sample_from_mask(state->submask, dset, OPT_NONE);
 	} else {
 	    int t1min, t2max;
 
@@ -1517,8 +1516,7 @@ static void finalize_panel_subset (DATASET *subset)
 */
 
 int 
-restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt,
-			   int *n_dropped)
+restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 {
     DATASET *subset;
     gretlopt zopt = OPT_R;
@@ -1596,10 +1594,6 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt,
     if (err) { 
 	free(subset);
 	return err;
-    }
-
-    if (n_dropped != NULL) {
-	*n_dropped = dset->n - subset->n;
     }
 
 #if SUBDEBUG
@@ -1851,11 +1845,14 @@ int restrict_sample (const char *param, const int *list,
     char *mask = NULL;
     int free_oldmask = 0;
     int permanent = 0;
+    int n_orig = 0;
     int mode, err = 0;
     
     if (dset == NULL || dset->Z == NULL) {
 	return E_NODATA;
     }
+
+    n_orig = dset->n;
 
     /* We'll accept the redundant combination of the options --dummy
        (OPT_O) and --restrict (OPT_R), but other than that the options
@@ -1963,8 +1960,7 @@ int restrict_sample (const char *param, const int *list,
 #if SUBDEBUG
 	    fprintf(stderr, "restrict sample: using mask\n");
 #endif
-	    err = restrict_sample_from_mask(mask, dset, opt, 
-					    n_dropped);
+	    err = restrict_sample_from_mask(mask, dset, opt);
 	}
     }
 
@@ -1981,6 +1977,10 @@ int restrict_sample (const char *param, const int *list,
     }
 
     free(oldrestr);
+
+    if (n_dropped != NULL) {
+	*n_dropped = n_orig - sample_size(dset);
+    }
 
 #if SUBDEBUG
     fprintf(stderr, "restrict sample: dset: t1=%d, t2=%d, n=%d\n",
