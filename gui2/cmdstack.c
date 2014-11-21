@@ -280,7 +280,12 @@ static void reflow_log_line (const char *line, PRN *prn)
     }
 }
 
-static int real_write_log_entry (const char *s)
+/* If @wrap_done is non-zero, that means the command in @s
+   has already been backslash-broken if necessary and we
+   should not apply "reflow" here.
+*/
+
+static int real_write_log_entry (const char *s, int wrap_done)
 {
     int err = 0;
 
@@ -296,7 +301,7 @@ static int real_write_log_entry (const char *s)
     if (!err) {
 	int n = strlen(s);
 
-	if (n <= LOG_MAXLINE) {
+	if (wrap_done || n <= LOG_MAXLINE) {
 	    pputs(logprn, s);
 	} else {
 	    reflow_log_line(s, logprn);
@@ -317,7 +322,7 @@ static int real_write_log_entry (const char *s)
 /* for a given GUI command (not associated with a model): place it in
    the log buffer */
 
-int add_command_to_stack (const char *s)
+int add_command_to_stack (const char *s, int wrap_done)
 {
     char test[6];
     int err;
@@ -344,7 +349,7 @@ int add_command_to_stack (const char *s)
        previous model ID number */
     prev_ID = 0;
 
-    err = real_write_log_entry(s);
+    err = real_write_log_entry(s, wrap_done);
 
     if (!err) {
 #if CMD_DEBUG
@@ -363,7 +368,8 @@ int add_command_to_stack (const char *s)
     return err;
 }
 
-int add_model_command_to_stack (const char *s, int model_ID)
+int add_model_command_to_stack (const char *s, int model_ID,
+				int wrap_done)
 {
     int err = 0;
 
@@ -380,7 +386,7 @@ int add_model_command_to_stack (const char *s, int model_ID)
 	    pprintf(logprn, "# %s %d\n", _("model"), model_ID);
 	    prev_ID = model_ID;
 	}
-	err = real_write_log_entry(s);
+	err = real_write_log_entry(s, wrap_done);
 	if (!err) {
 	    set_commands_recorded();
 	}

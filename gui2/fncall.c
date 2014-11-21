@@ -1687,13 +1687,14 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     if (!err) {
 	int ID = 0;
 
+	lib_command_strcpy(fnline);
+
 	if (cinfo->flags & MODEL_CALL) {
 	    ID = get_genr_model_ID();
 	}
 	if (ID > 0) {
-	    add_model_command_to_stack(fnline, ID);
+	    record_model_command_verbatim(ID);
 	} else {
-	    lib_command_strcpy(fnline);
 	    record_command_verbatim();
 	}
     }

@@ -4121,7 +4121,7 @@ static void system_test_call (GtkAction *action, gpointer p)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	add_command_to_stack(cstr);
+	add_command_to_stack(cstr, 0);
 	view_buffer(prn, 78, 400, title, PRINT, NULL); 
     }
 
@@ -4781,7 +4781,7 @@ static int set_sample_from_model (void *ptr, int role)
 	    } else {
 		strcpy(comment, "# restored sample from model\n");
 	    }
-	    add_command_to_stack(comment);
+	    add_command_to_stack(comment, 0);
 	} else {
 	    restore_sample_state(FALSE);
 	    lib_command_strcpy("smpl --full");

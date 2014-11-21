@@ -3681,7 +3681,7 @@ static int gui_matrix_from_list (selector *sr)
 		    pputc(prn, '}');
 		}
 	    }
-	    add_command_to_stack(gretl_print_get_buffer(prn));
+	    add_command_to_stack(gretl_print_get_buffer(prn), 0);
 	    gretl_print_destroy(prn);
 	}	    
     }
@@ -3706,7 +3706,7 @@ static int matrix_from_formula (struct gui_matrix_spec *s)
 	if (s->m == NULL) {
 	    err = 1;
 	} else {
-	    add_command_to_stack(genline);
+	    add_command_to_stack(genline, 0);
 	}
     }
 
@@ -3732,7 +3732,7 @@ static int matrix_from_spec (struct gui_matrix_spec *s)
 	if (s->m == NULL) {
 	    err = 1;
 	} else {
-	    add_command_to_stack(genline);
+	    add_command_to_stack(genline, 0);
 	}
     }
 

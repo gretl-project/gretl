@@ -20,11 +20,6 @@
 #ifndef FNCALL_H
 #define FNCALL_H
 
-enum {
-    FN_NO_LOAD,
-    FN_NO_DATA
-} fncall_errors;
-
 int open_function_package (const char *fname, windata_t *vwin);
 
 void function_call_cleanup (void);

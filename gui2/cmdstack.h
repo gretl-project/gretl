@@ -22,9 +22,10 @@
 
 void free_command_stack (void);
 
-int add_command_to_stack (const char *s);
+int add_command_to_stack (const char *s, int wrap_done);
 
-int add_model_command_to_stack (const char *s, int model_ID);
+int add_model_command_to_stack (const char *s, int model_ID,
+				int wrap_done);
 
 gchar *get_logfile_content (int *err);
 

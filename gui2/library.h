@@ -53,6 +53,8 @@ int lib_command_strcat (const char *s);
 
 int record_command_verbatim (void);
 
+int record_model_command_verbatim (int model_ID);
+
 int *command_list_from_string (const char *s, int *err);
 
 int execute_script (const char *runfile, const char *buf,

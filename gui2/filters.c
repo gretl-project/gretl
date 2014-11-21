@@ -1217,7 +1217,7 @@ static void record_filter_command (filter_info *finfo)
 	sprintf(s, "setinfo %s --description=\"%s\"\n", finfo->save_c, finfo->label_c);
     }
 
-    add_command_to_stack(fcmd);
+    add_command_to_stack(fcmd, 0);
 }
 
 static int calculate_filter (filter_info *finfo)

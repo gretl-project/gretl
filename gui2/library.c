@@ -335,9 +335,9 @@ static int real_record_lib_command (int model_ID)
 	fprintf(stderr, "from gretl_record_command: buf='%s'\n", buf);
 #endif
 	if (model_ID > 0) {
-	    err = add_model_command_to_stack(buf, model_ID);
+	    err = add_model_command_to_stack(buf, model_ID, 1);
 	} else {
-	    err = add_command_to_stack(buf);
+	    err = add_command_to_stack(buf, 1);
 	}
 	free(buf);
     }
@@ -368,7 +368,7 @@ static int record_model_command (int model_ID)
 
 int record_command_verbatim (void)
 {
-    return add_command_to_stack(libline);
+    return add_command_to_stack(libline, 0);
 }
 
 /* variant of the above for commands that pertain to a
@@ -377,7 +377,7 @@ int record_command_verbatim (void)
 
 int record_model_command_verbatim (int model_ID)
 {
-    return add_model_command_to_stack(libline, model_ID);
+    return add_model_command_to_stack(libline, model_ID, 0);
 }
 
 /* parses @libline and fills out @libcmd, but does
@@ -3672,7 +3672,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	    int i;
 
 	    for (i=0; i<n_lines; i++) {
-		add_command_to_stack(lines[i]);
+		add_command_to_stack(lines[i], 0);
 	    }
 	}
 	edit_dialog_close(dlg);
@@ -8769,7 +8769,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	if (err) {
 	    errmsg(err, prn);
 	} else if (s->flags & CONSOLE_EXEC) {
-	    add_command_to_stack(line);
+	    add_command_to_stack(line, 0);
 	}
 	return err;
     }

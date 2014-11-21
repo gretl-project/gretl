@@ -8,6 +8,7 @@ version 1.10.0, in progress
   make it refresh automatically
 - GUI design: standardize the position of the window list
   button (top right), and make it more functional
+- GUI, panel data: some improvements to plotting options
 - "join" command: support native data files (gdt, gdtb) as well
   as delimited text files, for data importation
 - "foreign" command: where the --send-data option is supported,
