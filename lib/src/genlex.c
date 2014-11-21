@@ -66,7 +66,7 @@ struct str_table dummies[] = {
     { 0,        NULL }
 };
 
-/* dvars: dataset-related accessors */
+/* dvars: dataset- and test-related accessors */
 
 struct str_table dvars[] = {
     { R_NOBS,      "$nobs" },
@@ -75,6 +75,7 @@ struct str_table dvars[] = {
     { R_DATATYPE,  "$datatype" },
     { R_TEST_STAT, "$test" },
     { R_TEST_PVAL, "$pvalue" },
+    { R_TEST_PARM, "$param" },
     { R_TEST_LNL,  "$rlnl" },
     { R_KLNL,      "$kalman_lnl" },
     { R_KS2,       "$kalman_s2" },

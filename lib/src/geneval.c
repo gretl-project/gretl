@@ -9666,6 +9666,7 @@ static int get_version_as_scalar (void)
 #define dvar_scalar(i) (i > 0 && i < R_SCALAR_MAX)
 #define dvar_series(i) (i > R_SCALAR_MAX && i < R_SERIES_MAX)
 #define dvar_variant(i) (i > R_SERIES_MAX && i < R_MAX)
+#define dvar_string(i) (i == R_TEST_PARM)
 
 #define no_data(p) (p == NULL || p->n == 0)
 
@@ -9822,6 +9823,19 @@ static int dvar_get_series (double *x, int i, const DATASET *dset)
     return err;
 }
 
+static char *dvar_get_string (int i, int *err)
+{
+    char *s = NULL;
+
+    if (i == R_TEST_PARM) {
+	s = get_last_test_param(err);
+    } else {
+	*err = E_DATA;
+    }
+
+    return s;
+}
+
 static gretl_matrix *dvar_get_matrix (int i, int *err)
 {
     gretl_matrix *m = NULL;
@@ -9896,6 +9910,11 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 	    if (ret != NULL) {
 		ret->v.xval = dvar_get_scalar(idx, p->dset, 
 					      p->lh.label);
+	    }
+	} else if (dvar_string(idx)) {
+	    ret = aux_string_node(p);
+	    if (ret != NULL) {
+		ret->v.str = dvar_get_string(idx, &p->err);
 	    }
 	} else if (dvar_series(idx)) {
 	    ret = aux_series_node(p);

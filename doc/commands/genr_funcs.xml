@@ -1522,7 +1522,9 @@
 	  determined by the character <argname>c</argname>. Between the
 	  arguments <argname>c</argname> and <argname>x</argname>, zero or
 	  more additional scalar arguments are required to specify the
-	  parameters of the distribution, as follows.
+	  parameters of the distribution, as follows (but note that
+	  the normal distribution has its own convenience function,
+	  <fncref targ="cnorm"/>).
 	</para>
 	<ilist context="notex">
 	  <li>

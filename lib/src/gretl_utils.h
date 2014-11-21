@@ -164,6 +164,8 @@ double get_last_pvalue (char *blurb);
 
 double get_last_lnl (char *blurb);
 
+char *get_last_test_param (int *err);
+
 gretl_matrix *get_last_test_matrix (int *err);
 
 gretl_matrix *get_last_pvals_matrix (int *err);

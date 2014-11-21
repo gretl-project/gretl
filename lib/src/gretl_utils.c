@@ -2195,6 +2195,13 @@ double get_last_test_statistic (char *blurb)
     return record_or_get_test_result(0, 0, 0, blurb, GET_TEST_STAT);
 }
 
+char *get_last_test_param (int *err)
+{
+    /* FIXME */
+    *err = E_NOTIMP;
+    return NULL;
+}
+
 double get_last_pvalue (char *blurb)
 {
     return record_or_get_test_result(0, 0, 0, blurb, GET_TEST_PVAL);
