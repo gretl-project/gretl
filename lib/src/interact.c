@@ -528,7 +528,7 @@ static void reflow_line (const char *line, const CMD *cmd,
 	pputs(prn, leader);
     }
 
-    if (cmd->ciflags & CI_EXPR) {
+    if (cmd != NULL && (cmd->ciflags & CI_EXPR)) {
 	/* "genr"-type lines: be more generous? */
 	maxline += 10;
     } else if (gretl_in_gui_mode()) {
@@ -568,6 +568,10 @@ static void reflow_line (const char *line, const CMD *cmd,
 
 static int command_is_silent (const CMD *cmd, const char *line)
 {
+    if (cmd == NULL) {
+	return 0;
+    }
+    
     if (cmd->ci == FUNCERR || cmd->ci == PRINTF ||
 	(cmd->ci == PRINT && strchr(line, '"'))) {
 	return 1;
@@ -617,8 +621,11 @@ static void real_echo_command (CMD *cmd, const char *line,
     const char *leader = NULL;
     int compiling = 0;
 
-    if (line == NULL || *line == '\0' ||
-	prn == NULL || cmd->ci > NC) {
+    if (line == NULL || *line == '\0' || prn == NULL) {
+	return;
+    }
+
+    if (cmd != NULL && cmd->ci >= NC) {
 	return;
     }
 
@@ -627,15 +634,17 @@ static void real_echo_command (CMD *cmd, const char *line,
     }
 
 #if ECHO_DEBUG
-    fprintf(stderr, "echo_cmd:\n*** line='%s'\n param='%s' oarm2='%s'\n", 
-	    line, cmd->param, cmd->parm2);
-    fprintf(stderr, " cmd->opt=%d, recording=%d, compiling=%d\n",
-	    cmd->opt, recording, compiling);
-    fprintf(stderr, " cmd->ci = %d (%s), context = %d\n", cmd->ci, 
-	    gretl_command_word(cmd->ci), cmd->context);
-    fprintf(stderr, " cmd->savename = '%s'\n", cmd->savename);
-    if (cmd->list != NULL) {
-	printlist(cmd->list, "cmd->list");
+    if (cmd != NULL) {
+	fprintf(stderr, "echo_cmd:\n*** line='%s'\n param='%s' parm2='%s'\n", 
+		line, cmd->param, cmd->parm2);
+	fprintf(stderr, " cmd->opt=%d, recording=%d, compiling=%d\n",
+		cmd->opt, recording, compiling);
+	fprintf(stderr, " cmd->ci = %d (%s), context = %d\n", cmd->ci, 
+		gretl_command_word(cmd->ci), cmd->context);
+	fprintf(stderr, " cmd->savename = '%s'\n", cmd->savename);
+	if (cmd->list != NULL) {
+	    printlist(cmd->list, "cmd->list");
+	}
     }
 #endif
 
@@ -647,7 +656,7 @@ static void real_echo_command (CMD *cmd, const char *line,
 
     /* print leading string before echo? */
     if (recording) {
-	if (cmd->ci == STORE) {
+	if (cmd != NULL && cmd->ci == STORE) {
 	    leader = "# ";
 	}
     } else if (compiling) {
@@ -656,8 +665,10 @@ static void real_echo_command (CMD *cmd, const char *line,
 	leader = "? ";
     }
 
-    if (cmd->context == FOREIGN) {
-	pputs(prn, leader);
+    if (cmd != NULL && cmd->context == FOREIGN) {
+	if (leader != NULL) {
+	    pputs(prn, leader);
+	}
 	pputs(prn, line);
     } else {
 	reflow_line(line, cmd, leader, prn);
