@@ -220,8 +220,7 @@ static void script_window_update (windata_t *vwin, const char *fname)
 
     g_free(trfname);
 
-    if (vwin->role == VIEW_LOG || vwin->role == VIEW_SCRIPT ||
-	vwin->role == VIEW_PKG_CODE) {
+    if (vwin->role == VIEW_SCRIPT || vwin->role == VIEW_PKG_CODE) {
 	/* change role of window for editing */
 	vwin->role = EDIT_SCRIPT;
     } else if (vwin->role == EDIT_GP) {
@@ -300,6 +299,7 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
     }
 
     if (vwin->role == VIEW_LOG) {
+	/* note: currently unused */
 	gchar *lbuf = pre_trim_buffer(buf);
 
 	system_print_buf(lbuf, fp);
