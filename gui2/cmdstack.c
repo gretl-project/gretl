@@ -109,6 +109,7 @@ static void send_entry_to_window (const char *s)
     if (s[strlen(s)-1] != '\n') {
 	textview_append_text(vwin->text, "\n");
     }
+    scroll_to_foot(vwin);
 }
 
 /* Close down the logfile writing apparatus.  If we were writing to a

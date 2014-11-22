@@ -109,7 +109,8 @@ enum {
     CLOSE_ITEM,
     BUNDLE_ITEM,
     FIND_ITEM,
-    CLEAR_ITEM
+    CLEAR_ITEM,
+    LOG_COPY_ITEM
 } viewbar_flags;
 
 struct stock_maker {
@@ -172,6 +173,33 @@ void gretl_stock_icons_init (void)
 }
 
 /* callbacks for viewer window toolbar */
+
+static void copy_log_callback (GtkWidget *w, windata_t *vwin)
+{
+    gchar *buf = textview_get_text(vwin->text);
+    gchar *s = buf;
+    int n = 0;
+
+    while (s != NULL && n < 3) {
+	s = strchr(s, '\n');
+	if (s != NULL) {
+	    s++;
+	    n++;
+	}
+    }
+
+    if (s != NULL) {
+	gchar *modbuf;
+
+	modbuf = g_strdup_printf("# logged commands\n%s", s);
+	do_new_script(EDIT_SCRIPT, modbuf);
+	g_free(modbuf);
+    } else {
+	do_new_script(EDIT_SCRIPT, buf);
+    }
+    
+    g_free(buf);
+}
 
 static void save_as_callback (GtkWidget *w, windata_t *vwin)
 {
@@ -660,6 +688,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
     { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(vwin_save_callback), SAVE_ITEM },
     { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(save_as_callback), SAVE_AS_ITEM },
+    { N_("Open in script editor"), GTK_STOCK_EDIT, G_CALLBACK(copy_log_callback), LOG_COPY_ITEM },
     { N_("Clear"), GTK_STOCK_CLEAR, G_CALLBACK(clear_text_callback), CLEAR_ITEM },
     { N_("Save bundle content..."), GRETL_STOCK_BUNDLE, NULL, BUNDLE_ITEM },
     { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
@@ -714,6 +743,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 	               r != EDIT_PKG_CODE && \
 		       r != EDIT_PKG_SAMPLE && \
 		       r != CONSOLE && \
+		       r != VIEW_LOG && \
 		       r != VIEW_BUNDLE)
 
 #define help_ok(r) (r == LEVERAGE || \
@@ -756,7 +786,9 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     int f = item->flag;
     int r = vwin->role;
 
-    if (!edit_ok(r) && f == EDIT_ITEM) {
+    if (r != VIEW_LOG && f == LOG_COPY_ITEM) {
+	return NULL;
+    } else if (!edit_ok(r) && f == EDIT_ITEM) {
 	return NULL;
     } else if (!open_ok(r) && f == OPEN_ITEM) {
 	return NULL;
