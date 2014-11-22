@@ -2,6 +2,7 @@ version 1.10.0, in progress
 - Replace old command-line parser with new, faster "tokenizer"
 - "chow" and "qlrtest" commands: add --limit-to option to 
   restrict the break test to a subset of regressors
+- "qlrtest": add new accessor $qlrbreak
 - Add new function qlrpval(): gives Bruce Hansen's asymptotic
   p-values for QLR sup-Wald test
 - GUI command log: make the log window more accessible, and

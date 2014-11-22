@@ -575,6 +575,17 @@
       </description>
     </function>
 
+    <function name="$qlrbreak" section="access" output="scalar">
+      <description>
+	<para>
+	  Must follow an invocation of the <cmdref targ="qlrtest"/>
+	  command (the QLR test for a structural break at an unknown
+	  point). The value returned is the 1-based index of the
+	  observation at which the test statistic is maximized.
+	</para>
+      </description>
+    </function>    
+
     <function name="$rho" section="access" output="scalar">
       <fnargs>
 	<fnarg optional="true" type="scalar">n</fnarg>

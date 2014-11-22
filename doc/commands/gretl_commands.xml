@@ -9137,17 +9137,24 @@
 	and end of the sample period.
       </para>
       <para>
-	For each potential break point within the central 70 percent of the
-	observations, a Chow test is performed. See <cmdref targ="chow"/> for
-	details; as with the regular Chow test, this is a robust Wald test if
-	the original model was estimated with the <opt>robust</opt> option, an
-	F-test otherwise. The QLR statistic is then the maximum of the
-	individual test statistics.
+	For each potential break point within the central 70 percent
+	of the observations, a Chow test is performed. See <cmdref
+	targ="chow"/> for details; as with the regular Chow test, this
+	is a robust Wald test if the original model was estimated with
+	the <opt>robust</opt> option, an F-test otherwise. The QLR
+	statistic is then the maximum of the individual test
+	statistics.
       </para>
       <para>
 	An asymptotic p-value is obtained using the method of <cite
 	key="hansen97">Bruce Hansen (1997)</cite>.
       </para>
+      <para>
+	Besides the standard hypothesis test accessors <fncref
+	targ="$test"/> and <fncref targ="$pvalue"/>, <fncref
+	targ="$qlrbreak"/> can be used to retrieve the index of the
+	observation at which the test statistic is maximized.
+      </para>      
       <para context="cli">
 	The <opt>limit-to</opt> option can be used to limit the set of
 	interactions with the split dummy variable in the Chow tests
