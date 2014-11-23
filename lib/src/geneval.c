@@ -10211,8 +10211,8 @@ static NODE *two_scalars_func (NODE *l, NODE *r, int t, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	double xl = l->v.xval;
-	double xr = r->v.xval;
+	double xl = node_get_scalar(l, p);
+	double xr = node_get_scalar(r, p);
 
 	if (!na(xl) && !na(xr)) {
 	    if (t == F_XMIN) {
@@ -11274,7 +11274,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_RANDINT:
     case F_KPSSCRIT:
 	/* two scalars */
-	if (l->t == NUM && r->t == NUM) {
+	if (scalar_node(l) && scalar_node(r)) {
 	    if (t->t == F_KPSSCRIT) {
 		ret = kpss_crit_node(l, r, p);
 	    } else {
