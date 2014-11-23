@@ -3442,6 +3442,7 @@ struct jr_row_ {
     int n_keys;     /* number of keys (needed for qsort callback) */
     gint64 keyval;  /* primary key value */
     gint64 keyval2; /* secondary key value, if applicable */
+    int dset_row;   /* associated row in the RHS or outer dataset */
     double val;     /* data value */
     double aux;     /* auxiliary value */
 };
@@ -3710,10 +3711,10 @@ static int read_iso_basic (joiner *jr, int j, int i)
     return err;
 }
 
-/* Evaluate the filter expression provided by the user, and if it works
-   OK count the number of rows on which the filter returns non-zero.
-   Flag an error if the filter gives NA on any row, since the filter
-   is then indeterminate.
+/* Evaluate the filter expression provided by the user, and if it
+   works OK count the number of rows on which the filter returns
+   non-zero.  Flag an error if the filter gives NA on any row, since
+   it is then indeterminate.
 */
 
 static int evaluate_filter (jr_filter *filter, DATASET *r_dset, 
@@ -3924,6 +3925,7 @@ static joiner *build_joiner (csvjoin *jspec,
 		    jr->rows[j].keyval2 = 0;
 		}
 		/* the "payload" data */
+		jr->rows[j].dset_row = valcol > 0 ? i : -1;
 		jr->rows[j].val = valcol > 0 ? Z[valcol][i] : 0;
 		/* the auxiliary data */
 		jr->rows[j].aux = auxcol > 0 ? Z[auxcol][i] : 0;
@@ -4215,7 +4217,7 @@ static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
 {
     double x, xa;
     int imin, imax, pos;
-    int i, n, ntotal;
+    int i, n, v, ntotal;
 
     /* find the position of the inner (primary) key in the 
        array of unique outer key values */
@@ -4272,13 +4274,19 @@ static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
 
     n = 0;      /* will now hold count of non-NA matches */
     ntotal = 0; /* will ignore the OK/NA distinction */
+    v = jr->valcol;
 
     for (i=imin; i<imax; i++) {
-	if (jr->n_keys == 1 || key2 == jr->rows[i].keyval2) {
+	jr_row *r = &jr->rows[i];
+
+	if (jr->n_keys == 1 || key2 == r->keyval2) {
 	    ntotal++;
-	    x = jr->rows[i].val;
+	    x = jr->r_dset->Z[v][r->dset_row];
+	    if (x != r->val) {
+		fprintf(stderr, "*** i=%d, x=%g but r->val=%g\n", i, x, r->val);
+	    }
 	    if (jr->auxcol) {
-		xa = jr->rows[i].aux;
+		xa = r->aux;
 		if (!na(x) && na(xa)) {
 		    /* we can't know the min/max of the aux var */
 		    *err = E_MISSDATA;
@@ -4543,7 +4551,7 @@ static int join_transcribe_data (joiner *jr, int v, int newvar,
     DATASET *dset = jr->l_dset;
     double zi;
     int strcheck = 0;
-    int i, t, err = 0;
+    int i, t, vr, err = 0;
 
     if (jr->valcol > 0) {
 	rst = series_get_string_table(jr->r_dset, jr->valcol);
@@ -4551,8 +4559,15 @@ static int join_transcribe_data (joiner *jr, int v, int newvar,
 	strcheck = (rst != NULL && lst != NULL);
     }
 
+    vr = jr->valcol;
+
     for (i=0; i<jr->n_rows && !err; i++) {
-	zi = jr->rows[i].val;
+	jr_row *r = &jr->rows[i];
+
+	zi = jr->r_dset->Z[vr][r->dset_row];
+	if (zi != r->val) {
+	    fprintf(stderr, "*** transcribe: i=%d, zi != r->val\n", i);
+	}
 	if (strcheck && !na(zi)) {
 	    zi = maybe_adjust_string_code(rst, lst, zi, &err);
 	}
