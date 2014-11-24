@@ -767,6 +767,33 @@ gretl_matrix *filter_matrix (gretl_matrix *X, gretl_vector *A, gretl_vector *C,
     return Y;
 }
 
+static int series_goodobs (const double *x, int *t1, int *t2)
+{
+    int t, t1min = *t1, t2max = *t2;
+    int T = 0;
+
+    for (t=t1min; t<t2max; t++) {
+	if (na(x[t])) t1min++;
+	else break;
+    }
+
+    for (t=t2max; t>t1min; t--) {
+	if (na(x[t])) t2max--;
+	else break;
+    }
+
+    for (t=t1min; t<=t2max; t++) {
+	if (!na(x[t])) {
+	    T++;
+	}
+    }
+
+    *t1 = t1min; 
+    *t2 = t2max;
+
+    return T;
+}
+
 /**
  * exponential_movavg_series:
  * @x: array of original data.
@@ -785,15 +812,14 @@ int exponential_movavg_series (const double *x, double *y,
 {
     int t1 = dset->t1;
     int t2 = dset->t2;
-    int t, T;
+    int t, T, err = 0;
 
     if (n < 0) {
 	return E_INVARG;
-    } else if (series_adjust_sample(x, &t1, &t2)) {
-	return E_MISSDATA;
     }
 
-    T = t2 - t1 + 1;
+    T = series_goodobs(x, &t1, &t2);
+
     if (T < n) {
 	return E_TOOFEW;
     }
@@ -810,16 +836,28 @@ int exponential_movavg_series (const double *x, double *y,
 	/* initialize on mean of first n obs */
 	y[t1] = 0.0;
 	for (t=t1; t<t1+n; t++) {
+	    if (na(x[t])) {
+		err = E_MISSDATA;
+		break;
+	    }
 	    y[t1] += x[t];
 	}
-	y[t1] /= n;
+	if (!err) {
+	    y[t1] /= n;
+	}
     }
 
-    for (t=t1+1; t<=t2; t++) {
-	y[t] = d * x[t] + (1-d) * y[t-1];
+    if (!err) {
+	for (t=t1+1; t<=t2; t++) {
+	    if (na(x[t]) || na(y[t-1])) {
+		y[t] = NADBL;
+	    } else {
+		y[t] = d * x[t] + (1-d) * y[t-1];
+	    }
+	}
     }
 
-    return 0;
+    return err;
 }
 
 /**
@@ -840,12 +878,8 @@ int movavg_series (const double *x, double *y, const DATASET *dset,
     int t2 = dset->t2;
     int k1 = k-1, k2 = 0;
     int i, s, t, T;
-    int err;
 
-    err = series_adjust_sample(x, &t1, &t2);
-    if (err) {
-	return err;
-    }
+    T = series_goodobs(x, &t1, &t2);
 
     T = t2 - t1 + 1;
     if (T < k) {
