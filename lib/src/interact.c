@@ -1367,25 +1367,12 @@ static int lib_join_data (ExecState *s,
 	}
     }
 
-#if 1
     if (vnames != NULL) {
-	/* we don't handle the --data renaming option */
+	/* multiple series: we can't handle the --data option */
 	if (opt & OPT_D) {
 	    err = E_BADOPT;
 	}
     }
-#else    
-    if (vnames != NULL) {
-	/* we handle multiple import names only in the simplest
-	   case: no fancy options
-	*/
-	for (i=0; opts[i] && !err; i++) {
-	    if (opt & opts[i]) {
-		err = E_BADOPT;
-	    }
-	}
-    }
-#endif
 
     for (i=0; opts[i] && !err; i++) {
 	gretlopt jopt = opts[i];

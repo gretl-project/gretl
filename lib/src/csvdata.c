@@ -4708,7 +4708,7 @@ static void print_filter_vnames (jr_filter *f)
    number of column-names to store but probably 3 is enough.
 
    The heuristic for column-name detection is that we find a portion
-   if *s which is legal as a gretl identifier but which is not
+   of @s which is legal as a gretl identifier but which is not
    enclosed in quotes, is not directly followed by '(', and is not
    the name of a scalar or string variable on the left.
 */
@@ -5438,14 +5438,11 @@ static void maybe_transfer_string_table (DATASET *l_dset,
     int i, lv, rv;
 
     for (i=1; i<=targvars[0]; i++) {
-	lv = targvars[1];
+	lv = targvars[i];
 	if (lv >= orig_v) {
-	    if (i == 1) {
-		rv = jspec->colnums[JOIN_VAL];
-	    } else {
-		rv = jspec->colnums[JOIN_MAXCOL + i - 1];
-	    }
-	    if (is_string_valued(r_dset, rv)) {
+	    /* it's a new series */
+	    rv = outer_series_index(jspec, i);
+	    if (rv > 0 && is_string_valued(r_dset, rv)) {
 		/* let the new series grab the RHS string table */
 		steal_string_table(l_dset, lv, r_dset, rv);
 	    }
