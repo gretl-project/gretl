@@ -3443,7 +3443,6 @@ struct jr_row_ {
     gint64 keyval;  /* primary key value */
     gint64 keyval2; /* secondary key value, if applicable */
     int dset_row;   /* associated row in the RHS or outer dataset */
-    double val;     /* data value */
     double aux;     /* auxiliary value */
 };
 
@@ -3794,14 +3793,7 @@ static gint64 dtoll_full (double x, int key, int row, int *err)
 
 static int join_row_wanted (jr_filter *filter, int i)
 {
-    int ret;
-
-    if (filter == NULL) {
-	/* no-op */
-	return 1;
-    }
-
-    ret = filter->val[i] != 0;
+    int ret = filter->val[i] != 0;
 
 #if CDEBUG > 2
     fprintf(stderr, "join filter: %s row %d\n",
@@ -3901,36 +3893,36 @@ static joiner *build_joiner (csvjoin *jspec,
 	*/
 
 	for (i=0; i<r_dset->n && !*err; i++) {
-	    if (join_row_wanted(filter, i)) {
-		/* the keys */
-		if (use_iso_basic) {
-		    *err = read_iso_basic(jr, j, i);
-		} else if (using_auto_keys(jr)) {
-		    *err = read_outer_auto_keys(jr, j, i);
-		} else if (keycol > 0) {
-		    jr->rows[j].keyval = dtoll_full(Z[keycol][i], 1, i+1, err);
-		    if (!*err && key2col > 0) {
-			/* double key */
-			jr->rows[j].n_keys = 2;
-			jr->rows[j].keyval2 = dtoll_full(Z[key2col][i], 2, i+1, err);
-		    } else {
-			/* single key */
-			jr->rows[j].n_keys = 1;
-			jr->rows[j].keyval2 = 0;
-		    }
+	    if (filter != NULL && !join_row_wanted(filter, i)) {
+		continue;
+	    }
+	    /* the keys */
+	    if (use_iso_basic) {
+		*err = read_iso_basic(jr, j, i);
+	    } else if (using_auto_keys(jr)) {
+		*err = read_outer_auto_keys(jr, j, i);
+	    } else if (keycol > 0) {
+		jr->rows[j].keyval = dtoll_full(Z[keycol][i], 1, i+1, err);
+		if (!*err && key2col > 0) {
+		    /* double key */
+		    jr->rows[j].n_keys = 2;
+		    jr->rows[j].keyval2 = dtoll_full(Z[key2col][i], 2, i+1, err);
 		} else {
-		    /* no keys have been specified */
-		    jr->rows[j].n_keys = 0;
-		    jr->rows[j].keyval = 0;
+		    /* single key */
+		    jr->rows[j].n_keys = 1;
 		    jr->rows[j].keyval2 = 0;
 		}
-		/* the "payload" data */
-		jr->rows[j].dset_row = valcol > 0 ? i : -1;
-		jr->rows[j].val = valcol > 0 ? Z[valcol][i] : 0;
-		/* the auxiliary data */
-		jr->rows[j].aux = auxcol > 0 ? Z[auxcol][i] : 0;
-		j++;
+	    } else {
+		/* no keys have been specified */
+		jr->rows[j].n_keys = 0;
+		jr->rows[j].keyval = 0;
+		jr->rows[j].keyval2 = 0;
 	    }
+	    /* "payload" data: record the dataset row */
+	    jr->rows[j].dset_row = valcol > 0 ? i : -1;
+	    /* the auxiliary data */
+	    jr->rows[j].aux = auxcol > 0 ? Z[auxcol][i] : 0;
+	    j++;
 	}
     }
 
@@ -4282,9 +4274,6 @@ static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
 	if (jr->n_keys == 1 || key2 == r->keyval2) {
 	    ntotal++;
 	    x = jr->r_dset->Z[v][r->dset_row];
-	    if (x != r->val) {
-		fprintf(stderr, "*** i=%d, x=%g but r->val=%g\n", i, x, r->val);
-	    }
 	    if (jr->auxcol) {
 		xa = r->aux;
 		if (!na(x) && na(xa)) {
@@ -4496,9 +4485,11 @@ static int aggregate_data (joiner *jr, const int *ikeyvars, int v,
 	double z;
 
 	err = get_inner_key_values(jr, t, ikeyvars, &key, &key2, &missing);
+
 	if (err) {
 	    break;
 	} else if (missing) {
+	    /* FIXME handle multiple LH series */
 	    dset->Z[v][t] = NADBL;
 	    continue;
 	}
@@ -4565,9 +4556,6 @@ static int join_transcribe_data (joiner *jr, int v, int newvar,
 	jr_row *r = &jr->rows[i];
 
 	zi = jr->r_dset->Z[vr][r->dset_row];
-	if (zi != r->val) {
-	    fprintf(stderr, "*** transcribe: i=%d, zi != r->val\n", i);
-	}
 	if (strcheck && !na(zi)) {
 	    zi = maybe_adjust_string_code(rst, lst, zi, &err);
 	}

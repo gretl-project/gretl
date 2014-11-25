@@ -8308,7 +8308,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	int freeA = 0, freeC = 0;
 	double y0 = 0;
 
-	if (k < 2 || k > 4) {
+	if (k < 1 || k > 4) {
 	    n_args_error(k, 4, t->t, p);
 	} 
 
