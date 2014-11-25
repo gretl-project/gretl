@@ -581,51 +581,47 @@ static int get_extra_var (const MODEL *pmod)
     }
 }
 
-/* reconstitute full varlist for WLS, AR and count models */
+/* reconstitute full varlist for WLS, AR, count and
+   duation models */
 
 static int *
 full_model_list (const MODEL *pmod, const int *inlist)
 {
-    int i, len = 0, pos = 0;
     int *flist = NULL;
 
-    if (pmod->ci == WLS) { 
-	len = inlist[0] + 2;
-    } else if (COUNT_MODEL(pmod->ci)) {
-	len = inlist[0] + 3;
-    } else if (pmod->ci == AR) {
-	pos = pmod->arinfo->arlist[0] + 1;
-	len = pos + inlist[0] + 2;
-    }
-
-    flist = malloc(len * sizeof *flist);
-    if (flist == NULL) {
-	return NULL;
-    }
-
-    if (pmod->ci == WLS) { 
-	flist[0] = len - 1;
-	flist[1] = pmod->nwt;
-	for (i=1; i<=inlist[0]; i++) {
-	    flist[i+1] = inlist[i];
+    if (pmod->ci == AR) {
+	/* cobble together arlist and @inlist */
+	flist = gretl_lists_join_with_separator(pmod->arinfo->arlist,
+						inlist);
+    } else {
+	int i, len = inlist[0];
+    
+	if (pmod->ci == WLS) {
+	    /* prepend the weight variable */
+	    len += 1;
+	} else if (COUNT_MODEL(pmod->ci) || pmod->ci == DURATION) {
+	    /* append list separator and offset or censoring var */
+	    len += 2;
 	}
-    } else if (COUNT_MODEL(pmod->ci) || pmod->ci == DURATION) {
-	int extra = get_extra_var(pmod);
 
-	flist[0] = len - 1;
-	for (i=1; i<=inlist[0]; i++) {
-	    flist[i] = inlist[i];
+	flist = gretl_list_new(len);
+	if (flist == NULL) {
+	    return NULL;
 	}
-	flist[flist[0] - 1] = LISTSEP;
-	flist[flist[0]] = extra;
-    } else if (pmod->ci == AR) {
-	flist[0] = len - 2;
-	for (i=1; i<pos; i++) {
-	    flist[i] = pmod->arinfo->arlist[i];
-	}
-	flist[pos] = LISTSEP;
-	for (i=1; i<=inlist[0]; i++) {
-	    flist[pos+i] = inlist[i];
+
+	if (pmod->ci == WLS) { 
+	    flist[1] = pmod->nwt;
+	    for (i=1; i<=inlist[0]; i++) {
+		flist[i+1] = inlist[i];
+	    }
+	} else if (COUNT_MODEL(pmod->ci) || pmod->ci == DURATION) {
+	    int extra = get_extra_var(pmod);
+
+	    for (i=1; i<=inlist[0]; i++) {
+		flist[i] = inlist[i];
+	    }
+	    flist[flist[0]-1] = LISTSEP;
+	    flist[flist[0]] = extra;
 	}
     }
 
