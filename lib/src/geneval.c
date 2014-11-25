@@ -4777,7 +4777,7 @@ static int type_translate_to_int (GretlType type)
 	return 4;
     } else if (type == GRETL_TYPE_BUNDLE) {
 	return 5;
-    } else if (type == GRETL_TYPE_MATRIX_REF) {
+    } else if (type == GRETL_TYPE_ARRAY) {
 	return 6;
     } else {
 	return 0;
@@ -7109,7 +7109,7 @@ static NODE *type_string_node (NODE *n, parser *p)
 	} else if (t == 5) {
 	    s = "bundle";
 	} else if (t == 6) {
-	    s = "matrixref";
+	    s = "array";
 	}
 
 	ret->v.str = gretl_strdup(s);

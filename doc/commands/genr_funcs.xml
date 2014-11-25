@@ -3304,9 +3304,9 @@
 	  data-item with name <argname>key</argname>. The value
 	  returned is an integer code for the type of the item: 0 for
 	  no match, 1 for scalar, 2 for series, 3 for matrix, 4 for
-	  string and 5 for bundle. The function <fncref
-	  targ="typestr"/> may be used to get the string
-	  corresponding to this code.
+	  string, 5 for bundle and 6 for array. The function <fncref
+	  targ="typestr"/> may be used to get the string corresponding
+	  to this code.
 	</para>   
       </description>
     </function>   
@@ -7476,6 +7476,21 @@
       </description>
     </function>
 
+    <function name="typeof" section="data-utils" output="int">
+      <fnargs>
+	<fnarg type="string">varname</fnarg>
+      </fnargs>      
+      <description>
+	<para>
+	  if <argname>varname</argname> is the name of a currently
+	  defined variable, returns an integer representing the type
+	  of the variable, otherwise returns 0. The coding is 1 for
+	  scalar, 2 for series, 3 for matrix, 4 for string, 5 for
+	  bundle and 6 for array. See also <fncref targ="typestr"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="typestr" section="data-utils" output="string">
       <fnargs>
 	<fnarg type="int">typecode</fnarg>
@@ -7483,11 +7498,12 @@
       <description>
 	<para>
 	  Returns the name of the gretl data-type corresponding to
-	  <argname>typecode</argname>. This is intended for use in
-	  conjunction with the function <fncref targ="inbundle"/>.
-	  The value returned is one of <quote>scalar</quote>,
-	  <quote>series</quote>, <quote>matrix</quote>,
-	  <quote>string</quote>, <quote>bundle</quote> or
+	  <argname>typecode</argname>. This may be used in conjunction
+	  with the functions <fncref targ="inbundle"/> and <fncref
+	  targ="typeof"/>.  The value returned is one of
+	  <quote>scalar</quote>, <quote>series</quote>,
+	  <quote>matrix</quote>, <quote>string</quote>,
+	  <quote>bundle</quote>, <quote>array</quote> or
 	  <quote>null</quote>.
 	</para>
       </description>
