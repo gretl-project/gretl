@@ -24,6 +24,7 @@ version 1.10.0, in progress
   list within the GTK file chooser
 - Fix bug: user-defined plots could generate an error dialog
   even if they display OK
+- Fix bug: crash on using "omit" with a duration model
 - Build for 64-bit Windows: update to OpenBLAS 2.11
 - Build for 32-bit Windows: update compiler to gcc 4.8.3 and
   substitute OpenBlas for Netlib reference lapack and blas

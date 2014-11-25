@@ -1367,6 +1367,14 @@ static int lib_join_data (ExecState *s,
 	}
     }
 
+#if 1
+    if (vnames != NULL) {
+	/* we don't handle the --data renaming option */
+	if (opt & OPT_D) {
+	    err = E_BADOPT;
+	}
+    }
+#else    
     if (vnames != NULL) {
 	/* we handle multiple import names only in the simplest
 	   case: no fancy options
@@ -1377,6 +1385,7 @@ static int lib_join_data (ExecState *s,
 	    }
 	}
     }
+#endif
 
     for (i=0; opts[i] && !err; i++) {
 	gretlopt jopt = opts[i];
@@ -1387,29 +1396,29 @@ static int lib_join_data (ExecState *s,
 	    if (param == NULL) {
 		err = E_DATA;
 	    } else if (jopt == OPT_I) {		
-		/* the inner key(s) string */
+		/* --ikey: the inner key(s) string */
 		ikeyvars = get_inner_keys(param, dset, &err);
 	    } else if (jopt == OPT_O) {
-		/* the outer key(s) string */
+		/* --okey: the outer key(s) string */
 		okey = gretl_strdup(param);
 	    } else if (jopt == OPT_F) {
-		/* string specifying a row filter */
+		/* --filter: string specifying a row filter */
 		filter = gretl_strdup(param);
 	    } else if (jopt == OPT_A) {
-		/* aggregation */
+		/* --aggr: aggregation */
 		aggr = join_aggregation_method(param, &seqval, 
 					       &auxname, &err);
 	    } else if (jopt == OPT_D) {
-		/* string specifying the wanted data series */
+		/* --data: string specifying the outer data series */
 		dataname = gretl_strdup(param);
 	    } else if (jopt == OPT_K) {
-		/* string specifying outer time key */
+		/* --tkey: string specifying outer time key */
 		okey = gretl_strdup(param);
 	    } else if (jopt == OPT_X) {
-		/* string holding list of time/date cols */
+		/* --tconvert: list of time/date cols */
 		tconvstr = gretl_strdup(param);
 	    } else if (jopt == OPT_T) {
-		/* format for tconvert columns */
+		/* --tconv-fmt: format for tconvert columns */
 		tconvfmt = gretl_strdup(param);
 	    }
 	}
