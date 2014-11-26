@@ -29,15 +29,9 @@ outset:
 \end{itemize}
 
 As will be explained below, these features support rather complex
-concatenation and manipulation of data from different sources. The
-potential complexity of a \texttt{join} operation, when several
-options are activated, means that it is not possible to support batch
-importation of several series with a single command. In contrast with
-the \texttt{append} command, which by default imports the entire
-content of a data file, \texttt{join} imports one series at a time. A
-command loop can be used to apply \texttt{join} to multiple series.
+concatenation and manipulation of data from different sources.
 
-A related aspect of \texttt{join} should be noted---one that makes
+A further aspect of \texttt{join} should be noted---one that makes
 this command particularly useful when dealing with very large data
 files.  That is, when gretl executes a join operation it does not, in
 general, read into memory the entire content of the right-hand side
@@ -56,13 +50,16 @@ The minimal invocation of \texttt{join} is
 \qquad \texttt{join} \textsl{filename} \textsl{varname}
 
 where \textsl{filename} is the name of a data file and
-\textsl{varname} is the name of the series to be imported. Only two
+\textsl{varname} is the name of a series to be imported. Only two
 sorts of data file are supported at present: delimited text files
 (where the delimiter may be comma, space, tab or semicolon) and
 ``native'' gretl data files (\texttt{gdt} or \texttt{gdtb}).  A series
 named \textsl{varname} may already be present in the left-hand
 dataset, but that is not required. The series to be imported may be
-numerical or string-valued.
+numerical or string-valued. For most of the discussion below we assume
+that just a single series is imported by each \texttt{join} command,
+but see section~\ref{sec:join-multi} for an account of multiple
+imports.
 
 The effect of the minimal version of \texttt{join} is this: gretl
 looks for a data column labeled \textsl{varname} in the specified
@@ -81,6 +78,7 @@ explain something about right-hand variable names (column
 headings). 
 
 \subsection{Right-hand names}
+\label{subsec:rhnames}
 
 We accept on input arbitrary column heading strings, but if these
 strings do not qualify as valid gretl identifiers they are
@@ -184,7 +182,7 @@ this facility is perhaps best introduced by example.  Suppose that (as
 with many survey and census-based datasets) we have a dataset that is
 composed of two or more related files, each having a different unit of
 observation; for example we have a ``persons'' data file and a
-``households'' data file. Table~\ref{tab:csv} shows a simple,
+``households'' data file. Table~\ref{tab:join-csv} shows a simple,
 artificial case. The file \texttt{people.csv} contains a unique
 identifier for the individuals, \texttt{pid}. The households file,
 \texttt{hholds.csv}, contains the unique household identifier
@@ -206,13 +204,13 @@ a column of the same name, though as we'll see below that assumption
 can be overridden. The \texttt{join} command above says, find a series
 named \texttt{xh} in the right-hand dataset and add it to the
 left-hand one, using the values of \texttt{hid} to match rows.
-Looking at the data in Table~\ref{tab:csv} we can see how this should
-work. Persons 1 and 2 are both members of household 1, so they should
-both get values of 1 for \texttt{xh}; persons 3 and 4 are members of
-household 2, so that \texttt{xh} = 4; and so on. Note that the order
-in which the key values occur on the right-hand side does not matter.
-The gretl output from the \texttt{print} command is shown in the lower
-panel of Table~\ref{tab:csv}.
+Looking at the data in Table~\ref{tab:join-csv} we can see how this
+should work. Persons 1 and 2 are both members of household 1, so they
+should both get values of 1 for \texttt{xh}; persons 3 and 4 are
+members of household 2, so that \texttt{xh} = 4; and so on. Note that
+the order in which the key values occur on the right-hand side does
+not matter.  The gretl output from the \texttt{print} command is shown
+in the lower panel of Table~\ref{tab:join-csv}.
 
 \begin{table}[thbp]
 \begin{center}
@@ -248,7 +246,7 @@ panel of Table~\ref{tab:csv}.
    \texttt{10}  &  \texttt{6}    &  \texttt{12}
 \end{tabular}
 \caption{Two linked CSV data files, and the effect of a \texttt{join}}
-\label{tab:csv}
+\label{tab:join-csv}
 \end{center}
 \end{table}
 
@@ -291,8 +289,8 @@ Two extensions of the basic key mechanism are available.
 
 \subsection{The number of key-matches}
 
-The example shown in Table~\ref{tab:csv} is an instance of a 1 to 1
-match: applying the matching criterion produces exactly one value of
+The example shown in Table~\ref{tab:join-csv} is an instance of a 1 to
+1 match: applying the matching criterion produces exactly one value of
 the variable \texttt{xh} corresponding to each row of the inner
 dataset. Two other possibilities arise: it may be that some rows in
 the inner dataset have no match on the right, and/or some rows on the
@@ -387,9 +385,9 @@ negative integer can be used to count down from the last match
 second-last match, and so on). If the specified sequence number is out
 of bounds for a given observation this method returns \texttt{NA}.
 
-Referring again to the data in Table~\ref{tab:csv}, suppose we want to
-import data from the persons file into a dataset established at
-household level.  Here's an example where we use the individual
+Referring again to the data in Table~\ref{tab:join-csv}, suppose we
+want to import data from the persons file into a dataset established
+at household level.  Here's an example where we use the individual
 \texttt{age} data from \texttt{people.csv} to add the average and
 minimum age of household members.
 \begin{code}
@@ -460,6 +458,56 @@ which gives
 6            5            2          150
 \end{code}
 
+\section{Importing multiple series}
+\label{sec:join-multi}
+
+The examples given so far have been limited in one respect. While
+several columns in the outer data file may be referenced (as keys, or
+in filtering or aggregation) only one column has actually provided
+data---and correspondingly only one series in the inner dataset has
+been created or modified---per invocation of \texttt{join}. However,
+\texttt{join} can handle the importation of several series at
+once. This section gives an account of the required syntax along with
+certain restrictions that apply to the multiple-import case.
+
+There are two ways to specify more than one series for importation:
+\begin{enumerate}
+\item The \textsl{varname} field in the command can take the form of
+  a space-separated list of names rather than a single name.
+\item Alternatively, you can give the name of an array of strings
+  in place of \textsl{varname}: the elements of this array should be
+  the names of the series to import.
+\end{enumerate}
+
+Here are the limitations:
+\begin{enumerate}
+\item The \verb|--data| option, which permits the renaming of a series
+  on import, is not available. When importing multiple series you
+  are obliged to accept their ``outer'' names, fixed up as described
+  in section~\ref{subsec:rhnames}.
+\item While the other \texttt{join} options are available, they
+  necessarily apply uniformly to all the series imported via a given
+  command. This means that if you want to import several series but
+  using different keys, filters or aggregation methods you must use a
+  sequence of commands.
+\end{enumerate}
+
+Here are a couple of examples of multiple imports.
+\begin{code}
+# open base datafile containing keys
+open PUMSdata.gdt
+
+# join using a list of import names
+join ss13pnc.csv SCHL WAGP WKHP --ikey=SERIALNO,SPORDER
+
+# using a strings array: may be worthwhile if the array
+# will be used for more than one purpose
+strings S = array(3)
+S[1] = "SCHL"
+S[2] = "WAGP"
+S[3] = "WKHP"
+join ss13pnc.csv S --ikey=SERIALNO,SPORDER
+\end{code}
 
 \section{A real-world case}
 \label{sec:join-SHIW}
@@ -590,8 +638,7 @@ series \texttt{YL} (payroll income) and \texttt{YM} (net
 self-employment income) from the persons file \texttt{rper10.csv}.
 %
 \begin{code}
-join SHIW/rper10.csv YL --ikey=NQUEST,NORD --aggr=sum
-join SHIW/rper10.csv YM --ikey=NQUEST,NORD --aggr=sum
+join SHIW/rper10.csv YL YM --ikey=NQUEST,NORD --aggr=sum
 series WW = LFP ? (YL + YM)/WHRS : 0
 \end{code}
 %
@@ -1096,9 +1143,9 @@ above. However, in general it is safer to use keys to ensure that the
 data end up in correct registration.
 
 \section{Memo: \texttt{join} options}
-\label{sec:options}
+\label{sec:join-options}
 
-Basic syntax: \texttt{join} \textsl{filename} \textsl{varname} [
+Basic syntax: \texttt{join} \textsl{filename} \textsl{varname(s)} [
 \textsl{options} ]
 
 \begin{center}
@@ -1106,7 +1153,7 @@ Basic syntax: \texttt{join} \textsl{filename} \textsl{varname} [
   \textit{flag} & \textit{effect} \\ [6pt]
   \verb|--data| & Give the name of the data column on the right, in
                   case it differs from \textsl{varname}
-                  (\ref{sec:join-syntax})  \\
+                  (\ref{sec:join-syntax}); single import only  \\
   \verb|--filter| & Specify a condition for filtering data rows
                     (\ref{sec:join-filter}) \\
   \verb|--ikey| & Specify up to two keys for matching data rows
@@ -1166,8 +1213,7 @@ join SHIW/lavoro.csv ETALAV --ikey=NQUEST,NORD
 series AX = misszero(WA - ETALAV)
 
 # women's hourly wages
-join SHIW/rper10.csv YL --ikey=NQUEST,NORD --aggr=sum
-join SHIW/rper10.csv YM --ikey=NQUEST,NORD --aggr=sum
+join SHIW/rper10.csv YL YM --ikey=NQUEST,NORD --aggr=sum
 series WW = LFP ? (YL + YM)/WHRS : 0
 
 # family income (Y = net disposable income)
@@ -1207,7 +1253,7 @@ delete SEX STACIV KIDS YL YM PARENT H_ID ETALAV
 
 # add some labels for the series
 setinfo LFP -d "1 if woman worked in 2010"
-setinfo WHRS -d "Wife's hours of work in 2010
+setinfo WHRS -d "Wife's hours of work in 2010"
 setinfo KL6 -d "Number of children less than 6 years old in household"
 setinfo K618 -d "Number of children between ages 6 and 18 in household"
 setinfo WA -d "Wife's age"
