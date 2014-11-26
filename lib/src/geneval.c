@@ -3487,7 +3487,7 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-#if LHDEBUG > 1
+#if EDEBUG > 1
 
 static void print_mspec (matrix_subspec *mspec)
 {
@@ -3515,29 +3515,33 @@ static void print_mspec (matrix_subspec *mspec)
 /* compose a sub-matrix specification, from scalars and/or
    index matrices */
 
-static matrix_subspec *build_mspec (NODE *l, NODE *r, int *err)
+static matrix_subspec *build_mspec (NODE *l, NODE *r, parser *p)
 {
     matrix_subspec *spec = matrix_subspec_new();
 
     if (spec == NULL) {
-	*err = E_ALLOC;
+	p->err = E_ALLOC;
 	return NULL;
     }
+
+#if EDEBUG > 1
+    fprintf(stderr, "build_mspec: l->t=%d (%s)\n", l->t, 
+	    getsymb(l->t, p));
+#endif
 
     if (l->t == DUM) {
 	if (l->v.idnum == DUM_DIAG) {
 	    spec->type[0] = SEL_DIAG;
 	    spec->type[1] = SEL_ALL;
-	    return spec;
 	} else {
-	    *err = E_TYPES;
-	    goto bailout;
+	    p->err = E_TYPES;
 	}
+	goto finished;
     } else if (l->t == NUM && r != NULL && r->t == NUM) {
 	spec->type[0] = spec->type[1] = SEL_ELEMENT;
 	mspec_set_row_index(spec, l->v.xval);
 	mspec_set_col_index(spec, r->v.xval);
-	return spec;
+	goto finished;
     }
 
     if (l->t == NUM) {
@@ -3553,8 +3557,8 @@ static matrix_subspec *build_mspec (NODE *l, NODE *r, int *err)
     } else if (l->t == EMPTY) {
 	spec->type[0] = SEL_ALL;
     } else {
-	*err = E_TYPES;
-	goto bailout;
+	p->err = E_TYPES;
+	goto finished;
     }
 
     if (r == NULL) {
@@ -3572,13 +3576,16 @@ static matrix_subspec *build_mspec (NODE *l, NODE *r, int *err)
     } else if (r->t == EMPTY) {
 	spec->type[1] = SEL_ALL;
     } else {
-	*err = E_TYPES;
-	goto bailout;
+	p->err = E_TYPES;
     }
 
- bailout:
-    
-    if (*err) {
+ finished:
+
+#if EDEBUG > 1
+    print_mspec(spec);
+#endif
+
+    if (p->err && spec != NULL) {
 	free(spec);
 	spec = NULL;
     }
@@ -3593,7 +3600,7 @@ static NODE *mspec_node (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_mspec_node(p);
 
     if (ret != NULL && starting(p)) {
-	ret->v.mspec = build_mspec(l, r, &p->err);
+	ret->v.mspec = build_mspec(l, r, p);
     }
 
     return ret;
@@ -9939,21 +9946,19 @@ object_var_get_submatrix (const char *oname, int idx, NODE *t, parser *p,
     NODE *r = eval(t->v.b2.r, p);
     gretl_matrix *M, *S = NULL;
 
-    if (r == NULL || r->t != MSPEC) {
-	if (!p->err) {
-	    p->err = E_TYPES;
+    if (!p->err && (r == NULL || r->t != MSPEC || r->v.mspec == NULL)) {
+	p->err = E_TYPES;
+    }
+
+    if (!p->err) {
+	if (needs_data) {
+	    M = saved_object_build_matrix(oname, idx, p->dset, &p->err);
+	} else {
+	    M = saved_object_get_matrix(oname, idx, &p->err);
 	}
-	return NULL;
-    }
-
-    if (needs_data) {
-	M = saved_object_build_matrix(oname, idx, p->dset, &p->err);
-    } else {
-	M = saved_object_get_matrix(oname, idx, &p->err);
-    }
-
-    if (M != NULL) {
-	S = submat_postprocess(M, r, p);
+	if (M != NULL) {
+	    S = submat_postprocess(M, r, p);
+	}
     }
 
     return S;

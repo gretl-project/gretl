@@ -443,7 +443,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     gretl_matrix *S;
     int r, c;
 
-    if (gretl_is_null_matrix(M)) {
+    if (gretl_is_null_matrix(M) || spec == NULL) {
 	*err = E_DATA;
 	return NULL;
     }
