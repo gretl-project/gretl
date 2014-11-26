@@ -1278,38 +1278,99 @@ static int *get_inner_keys (const char *s, DATASET *dset,
     return klist;
 }
 
-static int check_join_vnames (gretl_array *A, DATASET *dset,
-			      const char ***pS, int *pn)
+static int check_join_import_names (char **S, int ns, 
+				    DATASET *dset)
 {
-    int i, n, err = 0;
+    int i, err = 0;
     
-    if (gretl_array_get_type(A) != GRETL_TYPE_STRINGS) {
-	err = E_TYPES;
-    } else {
-	/* all the strings should be either current series
-	   names or valid names for new series */
-	const char **S = (const char **)
-	    gretl_array_get_strings(A, &n);
-
-	if (S == NULL) {
+    for (i=0; i<ns && !err; i++) {
+	if (S[i] == NULL || S[i][0] == '\0') {
 	    err = E_DATA;
-	} else {
-	    for (i=0; i<n && !err; i++) {
-		if (S[i] == NULL || S[i][0] == '\0') {
-		    err = E_DATA;
-		} else if (current_series_index(dset, S[i]) < 0) {
-		    err = check_varname(S[i]);
-		    if (!err && gretl_type_from_name(S[i], NULL)) {
-			err = E_TYPES;
-		    }
-		}
-	    }
-	    if (!err) {
-		/* OK: hook up pointers */
-		*pS = S;
-		*pn = n;
+	} else if (current_series_index(dset, S[i]) < 0) {
+	    err = check_varname(S[i]);
+	    if (!err && gretl_type_from_name(S[i], NULL)) {
+		err = E_TYPES;
 	    }
 	}
+    }
+
+    return err;
+}
+
+static char **names_from_array_arg (gretl_array *A, 
+				    int *ns,
+				    int *err)
+{
+    char **S = NULL;
+
+    if (gretl_array_get_type(A) != GRETL_TYPE_STRINGS) {
+	*err = E_TYPES;
+    } else {
+	S = gretl_array_get_strings(A, ns);
+	if (S == NULL) {
+	    *err = E_DATA;
+	}
+    }
+
+    return S;
+}
+
+static char **strings_array_singleton (const char *s,
+				       int *err)
+{
+    int len = strlen(s) + 1;
+    char **S = strings_array_new_with_length(1, len);
+
+    if (S == NULL) {
+	*err = E_ALLOC;
+    } else {
+	strcat(S[0], s);
+    }
+
+    return S;
+}
+
+static int get_join_import_names (const char *s, 
+				  DATASET *dset,
+				  char ***pvnames,
+				  int *pnvars)
+{
+    char **S = NULL;
+    gretl_array *A = NULL;
+    int ns = 0;
+    int err = 0;
+
+    if (strchr(s, ' ') != NULL) {
+	/* @s should hold two or more names */
+	S = gretl_string_split(s, &ns, NULL);
+	if (S == NULL) {
+	    err = E_DATA;
+	}
+    } else if ((A = get_array_by_name(s)) != NULL) {
+	/* @s should be the name of an array of strings */
+	S = names_from_array_arg(A, &ns, &err);
+    } else {
+	/* @s should be a legit series name */
+	S = strings_array_singleton(s, &err);
+	ns = 1;
+    }
+
+    if (S != NULL) {
+	err = check_join_import_names(S, ns, dset);
+    }
+
+    if (!err) {
+	if (A != NULL) {
+	    /* copy strings "borrowed" from array */
+	    *pvnames = strings_array_dup(S, ns);
+	    if (*pvnames == NULL) {
+		err = E_ALLOC;
+	    }
+	} else {
+	    /* grab strings allocated here */
+	    *pvnames = S;
+	}
+	*pnvars = ns;
     }
 
     return err;
@@ -1332,10 +1393,9 @@ static int lib_join_data (ExecState *s,
 	OPT_T, /* tconv-fmt: format for "tconvert" */ 
 	0 
     };
-    gretl_array *A = NULL;
     char *okey = NULL, *filter = NULL;
-    const char *varname;
-    const char **vnames = NULL;
+    const char *param;
+    char **vnames = NULL;
     char *dataname = NULL;
     char *auxname = NULL;
     char *tconvstr = NULL;
@@ -1356,18 +1416,11 @@ static int lib_join_data (ExecState *s,
     }
 
     tseries = dataset_is_time_series(dset);
-    varname = s->cmd->parm2;
+    param = s->cmd->parm2;
 
-    if ((A = get_array_by_name(varname)) != NULL) {
-	err = check_join_vnames(A, dset, &vnames, &nvars);
-    } else if (current_series_index(dset, varname) < 0) {
-	err = check_varname(varname);
-	if (!err && gretl_type_from_name(varname, NULL)) {
-	    err = E_TYPES;
-	}
-    }
+    err = get_join_import_names(param, dset, &vnames, &nvars);
 
-    if (vnames != NULL) {
+    if (!err && nvars > 1) {
 	/* multiple series: we can't handle the --data option */
 	if (opt & OPT_D) {
 	    err = E_BADOPT;
@@ -1429,16 +1482,16 @@ static int lib_join_data (ExecState *s,
     }
 
     if (!err) {
-	if (vnames == NULL) {
-	    vnames = &varname;
-	}
-	err = gretl_join_data(newfile, vnames, nvars, dset, 
+	err = gretl_join_data(newfile, 
+			      (const char **) vnames, 
+			      nvars, dset, 
 			      ikeyvars, okey, filter,
 			      dataname, aggr, seqval, 
 			      auxname, tconvstr,
 			      tconvfmt, opt, prn);
-    }	
+    }
 
+    strings_array_free(vnames, nvars);
     free(ikeyvars);
     free(okey);
     free(filter);

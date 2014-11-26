@@ -127,7 +127,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { INCLUDE,  "include",  CI_PARM1 | CI_FNAME },
     { INFO,     "info",     CI_NOOPT }, 
     { INTREG,   "intreg",   CI_LIST },
-    { JOIN,     "join",     CI_PARM1 | CI_FNAME | CI_PARM2 },
+    { JOIN,     "join",     CI_PARM1 | CI_FNAME | CI_EXTRA },
     { KALMAN,   "kalman",   CI_BLOCK },
     { KPSS,     "kpss",     CI_ORD1 | CI_LIST },
     { LABELS,   "labels",   CI_LIST | CI_DOALL },
@@ -2746,6 +2746,15 @@ static int handle_command_extra (CMD *c)
 	    tok = &c->toks[i];
 	    if (!token_done(tok) && 
 		(tok->type == TOK_NAME || tok->type == TOK_INT)) {
+		tok->flag |= TOK_DONE;
+		c->parm2 = gretl_str_expand(&c->parm2, tok->s, " ");
+	    }
+	}
+    } else if (c->ci == JOIN) {
+	/* join: allow for multiple import names */
+	for (i=c->cstart+1; i<c->ntoks; i++) {
+	    tok = &c->toks[i];
+	    if (!token_done(tok) && tok->type == TOK_NAME) {
 		tok->flag |= TOK_DONE;
 		c->parm2 = gretl_str_expand(&c->parm2, tok->s, " ");
 	    }
