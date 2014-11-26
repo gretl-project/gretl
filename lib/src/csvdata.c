@@ -4441,6 +4441,8 @@ static int outer_series_index (joinspec *jspec, int i)
     }
 }
 
+/* below: FIXME "newvar" when importing more than one series */
+
 static int aggregate_data (joiner *jr, const int *ikeyvars,
 			   const int *targvars, joinspec *jspec,
 			   int newvar, int *modified)
