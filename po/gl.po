@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.10.0)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-11-22 09:50-0500\n"
-"PO-Revision-Date: 2014-11-18 15:42+0100\n"
+"PO-Revision-Date: 2014-11-27 13:43+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -643,9 +643,9 @@ msgid "Robust Wald test for break"
 msgstr "Proba robusta de Wald de cambio estrutural"
 
 #: lib/src/compare.c:2607
-#, fuzzy, c-format
+#, c-format
 msgid "Asymptotic p-value = %.6g for chi-square(%d) = %g"
-msgstr "Valor p asintótico = %.4g para Chi-cadrado(%d)= %g"
+msgstr "Valor p asintótico = %.6g para Chi-cadrado(%d)= %g"
 
 #: lib/src/compare.c:2654
 msgid ""
@@ -2790,9 +2790,8 @@ msgid "mean %s"
 msgstr "media *%s*"
 
 #: lib/src/graphing.c:5480
-#, fuzzy
 msgid "Group means"
-msgstr "Grupos"
+msgstr "Medias de grupo"
 
 #: lib/src/graphing.c:5798
 msgid "time"
@@ -3675,9 +3674,8 @@ msgid "Error estimating fixed effects model\n"
 msgstr "Erro ao estimar o modelo de efectos fixos\n"
 
 #: lib/src/gretl_panel.c:2342
-#, fuzzy
 msgid "Inadequate data for panel estimation"
-msgstr "Estimación iterativa"
+msgstr "Datos inadecuados para estimación de panel"
 
 #: lib/src/gretl_panel.c:2385
 msgid ""
@@ -4080,9 +4078,9 @@ msgid "log-likelihood for %s test"
 msgstr "log-verosimilitude para a proba %s"
 
 #: lib/src/gretl_utils.c:2111
-#, fuzzy, c-format
+#, c-format
 msgid "break-point for %s test"
-msgstr "valor p para a proba %s"
+msgstr "Punto de ruptura para a proba %s"
 
 #: lib/src/gretl_xml.c:94 lib/src/gretl_xml.c:527 lib/src/gretl_xml.c:4066
 #, c-format
@@ -5376,7 +5374,7 @@ msgstr "note on model statistics abbreviations here"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2826
 msgid "Mean dependent var"
-msgstr "Media da variable dep."
+msgstr "Media var. dependente"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2828
@@ -9500,22 +9498,20 @@ msgid "New script output:"
 msgstr "Novo resultado de guión:"
 
 #: gui2/dialogs.c:5892
-#, fuzzy
 msgid "New script output should:"
-msgstr "Novo resultado de guión:"
+msgstr "O novo resultado de guión debera:"
 
 #: gui2/dialogs.c:5952
 msgid "Replace previous output"
-msgstr ""
+msgstr "Substituír o resultado previo"
 
 #: gui2/dialogs.c:5953
 msgid "Add to previous output"
-msgstr ""
+msgstr "Engadir ao resultado previo"
 
 #: gui2/dialogs.c:5954
-#, fuzzy
 msgid "Go to a new window"
-msgstr "Mover a unha nova xanela"
+msgstr "Ir a unha nova xanela"
 
 #: gui2/dialogs.c:5961
 msgid "Replaces output in this window"
@@ -10007,9 +10003,8 @@ msgid "close this dialog on \"OK\""
 msgstr "Pechar este diálogo ao premer \"OK\""
 
 #: gui2/fncall.c:1800 gui2/fncall.c:1811
-#, fuzzy
 msgid "Select function"
-msgstr "Funcións de axuda"
+msgstr "Escolla unha función"
 
 #: gui2/fncall.c:1894
 msgid "This function needs a model in place"
@@ -10024,18 +10019,16 @@ msgid "Couldn't get function package information"
 msgstr "Non puido obterse a información do paquete de función"
 
 #: gui2/fncall.c:2076
-#, fuzzy
 msgid "Open sample script"
-msgstr "Editar un guión de exemplo"
+msgstr "Abrir un guión de exemplo"
 
 #: gui2/fncall.c:2077
-#, fuzzy
 msgid "Call a function"
-msgstr "Gardar funcións"
+msgstr "Chamar unha función"
 
 #: gui2/fncall.c:2083
 msgid "Would you like to:"
-msgstr ""
+msgstr "Desexaría vostede:"
 
 #: gui2/fncall.c:2501
 #, c-format
@@ -13423,14 +13416,12 @@ msgid "X-axis variable"
 msgstr "Variable do eixe X"
 
 #: gui2/library.c:7145
-#, fuzzy
 msgid "Plot all data"
-msgstr "Datos de panel"
+msgstr "Representar todos os datos"
 
 #: gui2/library.c:7146
-#, fuzzy
 msgid "Plot group means"
-msgstr "Grupos de panel"
+msgstr "Debuxar as medias dos grupos"
 
 #: gui2/library.c:7169
 msgid "on a single graph"
@@ -13576,9 +13567,8 @@ msgid "Unterminated comment in script"
 msgstr "No guión hai un comentario sen rematar"
 
 #: gui2/library.c:8878
-#, fuzzy
 msgid "No series were deleted"
-msgstr "Non se eliminou ningunha variable"
+msgstr "Non se eliminou ningunha serie"
 
 #: gui2/library.c:8944
 msgid "Script done\n"
@@ -15606,9 +15596,8 @@ msgid "Save as..."
 msgstr "Gardar como..."
 
 #: gui2/toolbar.c:691
-#, fuzzy
 msgid "Open in script editor"
-msgstr "Gretl: Editor de guións"
+msgstr "Abrir no editor de guións"
 
 #: gui2/toolbar.c:693
 msgid "Save bundle content..."
