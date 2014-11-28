@@ -1872,7 +1872,10 @@ static void print_model_heading (const MODEL *pmod,
 	    maybe_print_T(pmod, dset, startdate, prn);
 	}
 
-	if (pmod->ci == HECKIT) {
+	if (gretl_model_get_int(pmod, "binary_obs_dropped")) {
+	    /* the relevant info should be printed already */
+	    mc = 0;
+	} else if (pmod->ci == HECKIT) {
 	    mc = Tmax - gretl_model_get_int(pmod, "totobs");
 	} else {
 	    mc = Tmax - pmod->nobs;

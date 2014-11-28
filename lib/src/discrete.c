@@ -1329,13 +1329,18 @@ static double logit_pdf (double x)
 }
 
 static char *classifier_check (int *list, const DATASET *dset,
-			       PRN *prn, int *err)
+			       PRN *prn, int *ndropped, int *err)
 {
     char *mask = NULL;
-    const double *y = dset->Z[list[1]];
+    int yno = list[1];
+    const double *y = dset->Z[yno];
     int i, v, ni, t;
 
+    *ndropped = 0;
+
     for (i=2; i<=list[0]; i++) {
+	int getout = 0;
+	
 	v = list[i];
 	if (v == 0) {
 	    continue;
@@ -1344,40 +1349,48 @@ static char *classifier_check (int *list, const DATASET *dset,
 	ni = gretl_isdummy(dset->t1, dset->t2, dset->Z[v]);
 
 	if (ni > 0) {
-	    int same[2] = {0};
-	    int diff[2] = {0};
-	    int maskval, pc = 1;
+	    const double *x = dset->Z[v];
+	    int xytab[4] = {0};
+	    int pp0 = 1, pp1 = 1;
+	    int maskval = -1;
 
-	    for (t=dset->t1; t<=dset->t2 && pc; t++) {
-		if (dset->Z[v][t] > 0) {
-		    if (y[t] > 0) {
-			same[0] += 1;
-		    } else {
-			diff[0] += 1;
-		    }
-		} else {
-		    if (y[t] == 0) {
-			same[1] += 1;
-		    } else {
-			diff[1] += 1;
-		    }
+	    for (t=dset->t1; t<=dset->t2; t++) {
+		xytab[0] += (x[t] == 0 && y[t] == 0);
+		xytab[1] += (x[t] == 0 && y[t] == 1);
+		xytab[2] += (x[t] == 1 && y[t] == 0);
+		xytab[3] += (x[t] == 1 && y[t] == 1);
+		if (xytab[1] && xytab[3]) {
+		    /* x does not perfectly predict y == 0 */
+		    pp0 = 0;
 		}
-		if (same[0] && diff[0] && same[1] && diff[1]) {
-		    pc = 0;
+		if (xytab[0] && xytab[2]) {
+		    /* x does not perfectly predict y == 1 */
+		    pp1 = 0;
+		}
+		if (!pp0 && !pp1) {
+		    break;
 		}
 	    }
 
-	    if (pc) {
-		if (!(same[0] && diff[0])) {
-		    maskval = 1;
-		    pprintf(prn, "Note: %s != 0 predicts %s perfectly\n",
-			    dset->varname[v], (same[0])? "success" : "failure");
-		} else {
-		    maskval = 0;
-		    pprintf(prn, "Note: %s == 0 predicts %s perfectly\n",
-			    dset->varname[v], (diff[1])? "success" : "failure");
-		}
-
+	    if (pp0 && pp1) {
+		pprintf(prn, "\nNote: %s = %s%s at all observations\n",
+			dset->varname[yno], xytab[0] ? "" : "not-",
+			dset->varname[v]);
+		*err = E_NOCONV;
+		getout = 1;
+	    } else if (pp0) {
+		maskval = xytab[1] ? 1 : 0;
+		pprintf(prn, "\nNote: Prob(%s = 0 | %s = %d) = 1\n",
+			dset->varname[yno], dset->varname[v],
+			maskval);
+	    } else if (pp1) {
+		maskval = xytab[0] ? 1 : 0;
+		pprintf(prn, "\nNote: Prob(%s = 1 | %s = %d) = 1\n",
+			dset->varname[yno], dset->varname[v],
+			maskval);
+	    }
+		
+	    if (maskval >= 0) {
 		if (mask == NULL) {
 		    mask = malloc(dset->n + 1);
 		    if (mask == NULL) {
@@ -1387,17 +1400,27 @@ static char *classifier_check (int *list, const DATASET *dset,
 			mask[dset->n] = 0;
 		    }
 		}
-
 		if (mask != NULL) {
 		    for (t=dset->t1; t<=dset->t2; t++) {
 			if (dset->Z[v][t] == maskval) {
 			    mask[t-dset->t1] = '1';
+			    *ndropped += 1;
 			}
 		    }
-		    pprintf(prn, "%d observations not used\n", ni);
+		    /* this behavior is as per Stata */
+		    pprintf(prn, "%s dropped and %d observations not used\n",
+			    dset->varname[v], *ndropped);
 		}
+		
 		gretl_list_delete_at_pos(list, i--);
+		/* It'll get too confusing if we try doing
+		   this for more than one regressor?
+		*/
+		getout = 1;
 	    }
+	}
+	if (getout) {
+	    break;
 	}
     }
 
@@ -2852,6 +2875,7 @@ static MODEL binary_model (int ci, const int *inlist,
     double gradtol = 1.0e-7;
     int maxit = 100;
     int fncount = 0;
+    int ndropped = 0;
     MODEL mod;
     bin_info *bin = NULL;
     PRN *vprn = NULL;
@@ -2881,8 +2905,11 @@ static MODEL binary_model (int ci, const int *inlist,
 
     list_adjust_sample(list, &dset->t1, &dset->t2, dset, NULL);
 
-    mask = classifier_check(list, dset, prn, &mod.errcode);
+    mask = classifier_check(list, dset, prn, &ndropped, &mod.errcode);
     if (mod.errcode) {
+	if (mod.errcode == E_NOCONV) {
+	    gretl_errmsg_set(_("Perfect prediction obtained: no MLE exists"));
+	}
 	goto bailout;
     }
 
@@ -2957,6 +2984,9 @@ static MODEL binary_model (int ci, const int *inlist,
 
     if (!mod.errcode) {
 	binary_model_finish(bin, &mod, dset, opt);
+	if (!mod.errcode && ndropped > 0) {
+	    gretl_model_set_int(&mod, "binary_obs_dropped", ndropped);
+	}
     }  
 
  bailout:  
