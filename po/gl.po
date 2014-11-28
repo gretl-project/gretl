@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.10.0)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-11-22 09:50-0500\n"
-"PO-Revision-Date: 2014-11-27 13:43+0100\n"
+"PO-Revision-Date: 2014-11-28 12:18+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -5374,7 +5374,7 @@ msgstr "note on model statistics abbreviations here"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2826
 msgid "Mean dependent var"
-msgstr "Media var. dependente"
+msgstr "Media var.dependent. Y"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2828
@@ -5389,7 +5389,7 @@ msgstr "Suma de erros cadrados"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2832
 msgid "S.E. of regression"
-msgstr "Desv.típ.Regresión (S)"
+msgstr "Desv.típ. regresión(S)"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2834 lib/src/modelprint.c:3231 gui2/guiprint.c:902
