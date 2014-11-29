@@ -1338,7 +1338,7 @@ static char *classifier_check (int *list, const DATASET *dset,
 
     *ndropped = 0;
 
-    for (i=2; i<=list[0]; i++) {
+    for (i=list[0]; i>=2; i--) {
 	int getout = 0;
 	
 	v = list[i];
@@ -1412,7 +1412,7 @@ static char *classifier_check (int *list, const DATASET *dset,
 			    dset->varname[v], *ndropped);
 		}
 		
-		gretl_list_delete_at_pos(list, i--);
+		gretl_list_delete_at_pos(list, i);
 		/* It'll get too confusing if we try doing
 		   this for more than one regressor?
 		*/
