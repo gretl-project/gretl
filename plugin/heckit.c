@@ -1480,6 +1480,19 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
     return err;
 }
 
+static int check_heckit_probit (MODEL *pmod, h_container *HC,
+				const int *sellist)
+{
+    int err = pmod->errcode;
+    
+    if (!err && pmod->list[0] < sellist[0]) {
+	gretl_errmsg_sprintf("Couldn't estimate selection equation");
+	err = E_DATA;
+    }
+
+    return err;
+}
+
 static MODEL heckit_init (h_container *HC, DATASET *dset)
 {
 #if HDEBUG
@@ -1511,8 +1524,8 @@ static MODEL heckit_init (h_container *HC, DATASET *dset)
 
     /* run initial auxiliary probit */
     probmod = binary_probit(sellist, dset, OPT_A, NULL);
-    if (probmod.errcode) {
-	hm.errcode = probmod.errcode;
+    hm.errcode = check_heckit_probit(&probmod, HC, sellist);
+    if (hm.errcode) {
 	goto bailout;
     }
 

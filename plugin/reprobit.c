@@ -554,9 +554,12 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
     mod = binary_probit(list, dset, OPT_P | OPT_X, prn);
 
     if ((err = mod.errcode) != 0) {
-	fprintf(stderr, "reprobit_estimate: error %d in "
-		"initial probit\n", err);
-    }    
+	pputs(prn, "reprobit: error estimating initial probit\n");
+    } else if (mod.list[0] < list[0]) {
+	/* something was dropped */
+	gretl_errmsg_set("Couldn't estimate initial probit");
+	err = E_DATA;
+    }
 
     if (!err) {
 	/* do the actual reprobit stuff */
