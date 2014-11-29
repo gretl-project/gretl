@@ -279,6 +279,24 @@ static int bp_add_coeff_vecs_and_mask (bp_container *bp, int T)
     return 0;
 }
 
+static int check_initial_probit (MODEL *pmod, bp_container *bp,
+				 int eqn)
+{
+    int err = pmod->errcode;
+    
+    if (!err) {
+	int nparm = eqn == 1 ? bp->k1 : bp->k2;
+
+	if (pmod->ncoeff < nparm) {
+	    gretl_errmsg_sprintf("Couldn't estimate initial probit "
+				 "for equation %d", eqn);
+	    err = E_DATA;
+	}
+    }
+
+    return err;
+}
+
 /* 
    The following function runs the initial probit models, which 
    serves several purposes: 
@@ -292,7 +310,6 @@ static int bp_add_coeff_vecs_and_mask (bp_container *bp, int T)
    4) the missing values mask is computed by ANDing the residuals;
       they should match anyway because of the preliminary OLS done 
       in bp_preliminary_ols(), but hey, checking is always good.
-
 */
 
 static int biprobit_first_pass (bp_container *bp, MODEL *olsmod, 
@@ -336,7 +353,8 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
     set_reference_missmask_from_model(olsmod);
 
     probmod = binary_probit(list1, dset, popt, prn);
-    if (probmod.errcode) {
+    err = check_initial_probit(&probmod, bp, 1);
+    if (err) {
 	goto bailout;
     }
 
@@ -361,9 +379,10 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
 
     clear_model(&probmod);
     probmod = binary_probit(list2, dset, popt, prn);
-    if (probmod.errcode) {
+    err = check_initial_probit(&probmod, bp, 2);
+    if (err) {
 	goto bailout;
-    }
+    }    
 
     if (prn != NULL) {
 	probmod.aux = AUX_BIPROB;
