@@ -299,7 +299,6 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
     }
 
     if (vwin->role == VIEW_LOG) {
-	/* note: currently unused */
 	gchar *lbuf = pre_trim_buffer(buf);
 
 	system_print_buf(lbuf, fp);

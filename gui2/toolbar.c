@@ -743,7 +743,6 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 	               r != EDIT_PKG_CODE && \
 		       r != EDIT_PKG_SAMPLE && \
 		       r != CONSOLE && \
-		       r != VIEW_LOG && \
 		       r != VIEW_BUNDLE)
 
 #define help_ok(r) (r == LEVERAGE || \
