@@ -3603,7 +3603,7 @@ static void print_coeff_left_string (const char *s, PRN *prn)
     if (plain_format(prn)) {
 	pprintf(prn, " %s:\n", s);
     } else if (tex_format(prn)) {
-	char tmp[32];
+	char tmp[48];
 
 	tex_escape(tmp, s);
 	pputs(prn, "\\\\ [-8pt]\n");
@@ -4656,7 +4656,7 @@ alt_print_count_offset (const MODEL *pmod, const DATASET *dset, PRN *prn)
 	    pprintf(prn, "\\ql %s\\cell\\qc 1.0\\cell", name);
 	    pputs(prn, "\\qc \\cell\\qc \\cell \\qc \\cell \\intbl \\row\n");
 	} else if (tex_format(prn)) {
-	    char tmp[32];
+	    char tmp[48];
 
 	    tex_escape(tmp, name);
 	    pprintf(prn, "{\\rm %s} & \\multicolumn{1}{c}{1.0} \\\\\n", tmp);
