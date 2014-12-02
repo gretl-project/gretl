@@ -1471,7 +1471,7 @@ static int make_ess (MODEL *pmod, const DATASET *dset)
     return 0;
 }
 
-#define SMALLDIFF 9.0e-16
+#define SMALLDIFF 1.15e-15 /* was 9.0e-16, a bit too tight? */
 
 /* The heuristic used here is that the model effectively
    contains a constant or intercept if the means of y and
@@ -1481,7 +1481,9 @@ static int make_ess (MODEL *pmod, const DATASET *dset)
 
 int check_for_effective_const (MODEL *pmod, const DATASET *dset)
 {
-    double reldiff, x1 = 0.0, x2 = 0.0;
+    double absdiff, reldiff;
+    double x1 = 0.0, x2 = 0.0;
+    double eps = 1.0e-16;
     int yno = pmod->list[1];
     int t, ret = 0;
 
@@ -1492,9 +1494,23 @@ int check_for_effective_const (MODEL *pmod, const DATASET *dset)
 	}
     }
 
-    reldiff = fabs((x1 - x2) / x2);
+    x1 /= pmod->nobs;
+    x2 /= pmod->nobs;
+
+    absdiff = fabs(x1 - x2);
+
+    /* are the criteria below correct? */
+
+    if (fabs(x2) < eps || absdiff < SMALLDIFF) {
+	reldiff = absdiff;
+    } else {
+	reldiff = absdiff / fabs(x2);
+    }
+
 #if 0
-    fprintf(stderr, "check_for_effective_const: reldiff = %g\n", reldiff);
+    fprintf(stderr, "check_for_effective_const:\n"
+	    "x1=%g, x2=%g, absdiff=%g, reldiff=%g\n",
+	    x1, x2, absdiff, reldiff);
 #endif
 
     if (reldiff < SMALLDIFF) {
