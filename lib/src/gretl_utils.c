@@ -525,6 +525,8 @@ int true_const (int v, const DATASET *dset)
     return gretl_isunits(dset->t1, dset->t2, dset->Z[v]);
 }
 
+#define NAN_HIGH 1 /* should we do this? */
+
 /**
  * gretl_compare_doubles:
  * @a: pointer to first element to compare.
@@ -540,8 +542,22 @@ int gretl_compare_doubles (const void *a, const void *b)
 {
     const double *da = (const double *) a;
     const double *db = (const double *) b;
-     
+
+#if NAN_HIGH
+    if (isnan(*da) || isnan(*db)) {
+	if (!isnan(*da)) {
+	    return -1;
+	} else if (!isnan(*db)) {
+	    return 1;
+	} else {
+	    return 0;
+	}
+    } else {
+	return (*da > *db) - (*da < *db);
+    }
+#else
     return (*da > *db) - (*da < *db);
+#endif    
 }
 
 /**
@@ -560,7 +576,21 @@ int gretl_inverse_compare_doubles (const void *a, const void *b)
     const double *da = (const double *) a;
     const double *db = (const double *) b;
 
+#if NAN_HIGH    
+    if (isnan(*da) || isnan(*db)) {
+	if (!isnan(*da)) {
+	    return 1;
+	} else if (!isnan(*db)) {
+	    return -1;
+	} else {
+	    return 0;
+	}
+    } else {
+	return (*da < *db) - (*da > *db);
+    }      
+#else
     return (*da < *db) - (*da > *db);
+#endif    
 }
 
 /**
