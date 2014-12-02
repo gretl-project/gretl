@@ -740,16 +740,14 @@ static void pval_max_line (const MODEL *pmod, const DATASET *dset,
     if (k < 3) return;
 
     if ((k = least_significant_coeff(pmod))) {
-	char tmp[128];
-
 	if (pmod->ifc) {
-	    sprintf(tmp, _("Excluding the constant, p-value was highest "
+	    pprintf(prn, _("Excluding the constant, p-value was highest "
 			   "for variable %d (%s)"), k, dset->varname[k]);
 	} else {
-	    sprintf(tmp, _("P-value was highest for variable %d (%s)"), 
+	    pprintf(prn, _("P-value was highest for variable %d (%s)"), 
 		    k, dset->varname[k]);
 	}	    
-	pprintf(prn, "%s\n\n", tmp);
+	pputs(prn, "\n\n");
     }
 }
 
