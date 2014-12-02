@@ -1394,7 +1394,7 @@ static int max_label_length (const char **names, int n)
 
     for (i=0; i<n; i++) {
 	if (names[i] != NULL) {
-	    len = strlen(names[i]);
+	    len = g_utf8_strlen(names[i], -1);
 	    if (len > maxlen) {
 		maxlen = len;
 	    }
