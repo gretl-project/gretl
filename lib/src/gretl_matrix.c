@@ -12594,7 +12594,17 @@ static int compare_rows (const void *a, const void *b)
 {
     const double *da = (const double *) a;
     const double *db = (const double *) b;
-    int ret = (*da > *db) - (*da < *db);
+    int ret = 0;
+
+    if (isnan(*da) || isnan(*db)) {
+	if (!isnan(*da)) {
+	    ret = -1;
+	} else if (!isnan(*db)) {
+	    ret = 1;
+	}
+    } else {
+	ret = (*da > *db) - (*da < *db);
+    }
 
     if (ret == 0) {
 	/* ensure stable sort */
