@@ -525,7 +525,7 @@ int true_const (int v, const DATASET *dset)
     return gretl_isunits(dset->t1, dset->t2, dset->Z[v]);
 }
 
-#define NAN_HIGH 1 /* should we do this? */
+#define NAN_HIGH 1 /* like Matlab/Octave */
 
 /**
  * gretl_compare_doubles:
