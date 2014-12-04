@@ -763,9 +763,7 @@ bnum_from_name (gretl_restriction *r, const DATASET *dset,
    present the "X" element must be an equation number, and the "Y" may
    be a coefficient number or the name of a variable.  If the ",Y" is
    not present, "X" may be a coefficient number or the name of a
-   variable.  This function is actually fed the string in question at
-   an offset of 1 beyond the "[".  We skip any white space in the 
-   string.
+   variable.
 
    Such terms may be preceded by a multiplier, but they should not
    be followed by anything, so we flag an error if the closing "]"
@@ -780,6 +778,7 @@ static int pick_apart (gretl_restriction *r, const char *s,
     char s1[VNAMELEN] = {0};
     char s2[VNAMELEN] = {0};
     char *targ = s1;
+    char rdelim;
     int i, j, k;
     int err = 0;
 
@@ -787,9 +786,13 @@ static int pick_apart (gretl_restriction *r, const char *s,
     fprintf(stderr, "pick_apart: looking at '%s'\n", s);
 #endif
 
+    /* register then skip past the opening delimiter */
+    rdelim = (*s == '[')? ']' : ')';
+    s++;
+
     *eq = *bnum = -1;
 
-    k = gretl_charpos(']', s);
+    k = gretl_charpos(rdelim, s);
     if (k <= 0 || k > 2*(VNAMELEN-1)) {
 	return E_PARSE;
     }
@@ -880,8 +883,8 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
 	    *eq = R_UNSPEC;
 	}
 	err = 0;
-    } else if (*s == '[') {
-	err = pick_apart(r, s + 1, eq, bnum, dset);
+    } else if (*s == '[' || *s == '(') {
+	err = pick_apart(r, s, eq, bnum, dset);
     }
 
     if (*bnum < 1) {
@@ -961,8 +964,16 @@ static int get_named_param (const char *s, MODEL *pmod,
     return 0;
 }
 
-#define b_start(r,s) ((*s == 'b' || (r->vecm && *s == 'a')) && \
-		      (isdigit(*(s+1)) || *(s+1) == '['))
+static int starts_b (const char *s, gretl_restriction *r)
+{
+    if (*s == 'b' || (r->vecm && *s == 'a')) {
+	char c = *(s+1);
+
+	return isdigit(c) || c == '[' || c == '(';
+    }
+
+    return 0;
+}
 
 #define could_be_param(r,s) (r->otype == GRETL_OBJ_EQN && \
 	                     !isdigit(*s))
@@ -984,7 +995,7 @@ parse_coeff_chunk (gretl_restriction *r, const char *s, double *x,
     fprintf(stderr, "parse_coeff_chunk: s='%s'\n", s);
 #endif
 
-    if (b_start(r, s)) {
+    if (starts_b(s, r)) {
 	/* something like "b[" or "b2" */
 	*letter = *s;
 	s++;
@@ -1009,7 +1020,7 @@ parse_coeff_chunk (gretl_restriction *r, const char *s, double *x,
 	s += strspn(s, " ");
 	s += strcspn(s, " *");
 	s += strspn(s, " *");
-	if (b_start(r, s)) {
+	if (starts_b(s, r)) {
 	    *letter = *s;
 	    s++;
 	    err = parse_b_bit(r, s, eq, bnum, dset);
