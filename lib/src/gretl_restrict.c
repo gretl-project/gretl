@@ -774,6 +774,7 @@ static int pick_apart (gretl_restriction *r, const char *s,
 		       int *eq, int *bnum,
 		       const DATASET *dset)
 {
+    int parens_ok = 0;
     const char *junk;
     char s1[VNAMELEN] = {0};
     char s2[VNAMELEN] = {0};
@@ -838,8 +839,13 @@ static int pick_apart (gretl_restriction *r, const char *s,
 	if (isdigit(*s1)) {
 	    *bnum = positive_int_from_string(s1);
 	} else {
+	    parens_ok = 1;
 	    *bnum = bnum_from_name(r, dset, s1);
 	}	    
+    }
+
+    if (!err && rdelim == ')' && !parens_ok) {
+	err = E_PARSE;
     }
 
     return err;

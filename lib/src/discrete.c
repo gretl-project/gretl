@@ -1394,20 +1394,23 @@ static char *classifier_check (int *list, const DATASET *dset,
 
 #if LIKE_STATA	    
 	    if (pp0 && pp1) {
-		pprintf(prn, "\nNote: %s = %s%s at all observations\n",
+		pputc(prn, '\n');
+		pprintf(prn, "Note: %s = %s%s at all observations\n",
 			dset->varname[yno], xytab[0] ? "" : "not-",
 			dset->varname[v]);
 		*err = E_NOCONV;
 		getout = 1;
 	    } else if (pp0) {
 		maskval = xytab[1] ? 1 : 0;
-		pprintf(prn, "\nNote: Prob(%s = 0 | %s = %d) = 1\n",
-			dset->varname[yno], dset->varname[v],
+		pputc(prn, '\n');
+		pprintf(prn, "Note: Prob(%s = %d | %s = %d) = 1\n",
+			dset->varname[yno], 0, dset->varname[v],
 			maskval);
 	    } else if (pp1) {
+		pputc(prn, '\n');
 		maskval = xytab[0] ? 1 : 0;
-		pprintf(prn, "\nNote: Prob(%s = 1 | %s = %d) = 1\n",
-			dset->varname[yno], dset->varname[v],
+		pprintf(prn, "Note: Prob(%s = %d | %s = %d) = 1\n",
+			dset->varname[yno], 1, dset->varname[v],
 			maskval);
 	    }
 		
@@ -1440,25 +1443,28 @@ static char *classifier_check (int *list, const DATASET *dset,
 	    }
 #else /* not like Stata */
 	    if (pp0 && pp1) {
-		pprintf(prn, "\nNote: %s = %s%s at all observations\n",
-			dset->varname[yno], xytab[0] ? "" : "not-",
+		pputc(prn, '\n');
+		pprintf(prn, _("Note: %s = %s%s at all observations\n"),
+			dset->varname[yno], xytab[0] ? "" : "!",
 			dset->varname[v]);
 		*err = E_NOCONV;
 		getout = 1;
 	    } else if (pp0) {
 		maskval = xytab[1] ? 1 : 0;
-		pprintf(prn, "\nNote: Prob(%s = 0 | %s = %d) = 1\n",
-			dset->varname[yno], dset->varname[v],
+		pputc(prn, '\n');
+		pprintf(prn, _("Note: Prob(%s = %d | %s = %d) = 1\n"),
+			dset->varname[yno], 0, dset->varname[v],
 			maskval);
 	    } else if (pp1) {
 		maskval = xytab[0] ? 1 : 0;
-		pprintf(prn, "\nNote: Prob(%s = 1 | %s = %d) = 1\n",
-			dset->varname[yno], dset->varname[v],
+		pputc(prn, '\n');
+		pprintf(prn, _("Note: Prob(%s = %d | %s = %d) = 1\n"),
+			dset->varname[yno], 1, dset->varname[v],
 			maskval);
 	    }
 		
 	    if (maskval >= 0) {
-		pprintf(prn, "%s dropped\n", dset->varname[v]);
+		pprintf(prn, _("Dropping %s\n"), dset->varname[v]);
 		gretl_list_delete_at_pos(list, i);
 	    }
 #endif	    
