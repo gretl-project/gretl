@@ -1328,6 +1328,26 @@ static double logit_pdf (double x)
     return l;
 }
 
+/* Here we're checking for a dummy variable that acts as a
+   "one-way perfect predictor" of the binary dependent variable;
+   that is, an x such that Prob(y = A | x = B) = 1 for some
+   assignment of values 0 or 1 to A and B. The MLE does not
+   exist in the presence of such a regressor, so we'll remove
+   it from the model (after alerting the user). 
+
+   The approach taken by Stata is not only to drop such a
+   regressor but also to drop the observations that are thus
+   perfectly predicted. As the outcome of disussions in
+   November-December 2014 we decided not to follow Stata in
+   this policy: we just drop the regressor. However, in case
+   we want to revisit this point I'm leaving in place the
+   apparatus required to implement the Stata policy.
+
+   AC, 2014-12-04
+*/
+
+#define LIKE_STATA 0
+
 static char *classifier_check (int *list, const DATASET *dset,
 			       PRN *prn, int *ndropped, int *err)
 {
@@ -1372,6 +1392,7 @@ static char *classifier_check (int *list, const DATASET *dset,
 		}
 	    }
 
+#if LIKE_STATA	    
 	    if (pp0 && pp1) {
 		pprintf(prn, "\nNote: %s = %s%s at all observations\n",
 			dset->varname[yno], xytab[0] ? "" : "not-",
@@ -1407,7 +1428,6 @@ static char *classifier_check (int *list, const DATASET *dset,
 			    *ndropped += 1;
 			}
 		    }
-		    /* this behavior is as per Stata */
 		    pprintf(prn, "%s dropped and %d observations not used\n",
 			    dset->varname[v], *ndropped);
 		}
@@ -1418,6 +1438,30 @@ static char *classifier_check (int *list, const DATASET *dset,
 		*/
 		getout = 1;
 	    }
+#else /* not like Stata */
+	    if (pp0 && pp1) {
+		pprintf(prn, "\nNote: %s = %s%s at all observations\n",
+			dset->varname[yno], xytab[0] ? "" : "not-",
+			dset->varname[v]);
+		*err = E_NOCONV;
+		getout = 1;
+	    } else if (pp0) {
+		maskval = xytab[1] ? 1 : 0;
+		pprintf(prn, "\nNote: Prob(%s = 0 | %s = %d) = 1\n",
+			dset->varname[yno], dset->varname[v],
+			maskval);
+	    } else if (pp1) {
+		maskval = xytab[0] ? 1 : 0;
+		pprintf(prn, "\nNote: Prob(%s = 1 | %s = %d) = 1\n",
+			dset->varname[yno], dset->varname[v],
+			maskval);
+	    }
+		
+	    if (maskval >= 0) {
+		pprintf(prn, "%s dropped\n", dset->varname[v]);
+		gretl_list_delete_at_pos(list, i);
+	    }
+#endif	    
 	}
 	if (getout) {
 	    break;
