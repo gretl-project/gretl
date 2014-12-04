@@ -6605,6 +6605,7 @@ static void real_delete_vars (int selvar)
     const char *vname = NULL;
     int *dellist = NULL;
     char *liststr = NULL;
+    gchar *cmdstr = NULL;
     gchar *msg = NULL;
     int renumber = 0;
     int err = 0;
@@ -6667,6 +6668,12 @@ static void real_delete_vars (int selvar)
     }	
 
     if (!err) {
+	/* set-up for command log */
+	if (vname != NULL) {
+	    cmdstr = g_strdup_printf("delete %s", vname);
+	} else {
+	    cmdstr = g_strdup_printf("delete%s", liststr);
+	} 
 	err = dataset_drop_listed_variables(dellist, dataset, 
 					    &renumber, NULL);
     }
@@ -6674,11 +6681,7 @@ static void real_delete_vars (int selvar)
     if (err) {
 	gui_errmsg(err);
     } else {
-	if (vname != NULL) {
-	    lib_command_sprintf("delete %s", vname);
-	} else {
-	    lib_command_sprintf("delete%s", liststr);
-	} 	
+	lib_command_strcpy(cmdstr);
 	record_command_verbatim();
 	refresh_data();
 	if (renumber) {
@@ -6690,6 +6693,7 @@ static void real_delete_vars (int selvar)
 
     free(dellist);
     free(liststr);
+    g_free(cmdstr);
 }
 
 void delete_single_var (int id)
