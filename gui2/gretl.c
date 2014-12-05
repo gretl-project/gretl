@@ -2439,6 +2439,8 @@ static int gui_query_stop (void)
     return script_stopper(0);
 }
 
+/* callback from "stop" button in script output viewer */
+
 void do_stop_script (GtkWidget *w, windata_t *vwin)
 {
     script_stopper(1);

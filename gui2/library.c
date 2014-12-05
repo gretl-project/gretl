@@ -7500,24 +7500,31 @@ static int maybe_stop_script (void)
     return stop;
 }
 
-/* Execute a script from the buffer in a viewer window.  The script
-   may be executed in full or in part (in case @selection is true)
+/* Execute a script from the buffer in viewer window @vwin. The
+   script may be executed in full or in part (in case @selection is
+   true).
 */
 
 static void run_native_script (windata_t *vwin, gchar *buf, 
 			       gboolean selection)
 {
     int policy = get_script_output_policy();
+    windata_t *targ = NULL;
     windata_t *kid = NULL;
     PRN *prn;
     int save_batch;
     int err;
 
-    if (!selection && policy == OUTPUT_POLICY_UNSET) {
-	windata_t *targ = get_unique_output_viewer();
+    if (policy != OUTPUT_POLICY_NEW_WINDOW) {
+	/* check for an existing output window */
+	targ = get_unique_output_viewer();
+    }
 
-	if (targ != NULL) {
-	    policy = output_policy_dialog(vwin, targ, 0);
+    if (!selection && targ != NULL && policy == OUTPUT_POLICY_UNSET) {
+	/* ask the user for a policy */
+	policy = output_policy_dialog(vwin, targ, 0);
+	if (policy == OUTPUT_POLICY_NEW_WINDOW) {
+	    targ = NULL;
 	}
     }
 
@@ -7525,23 +7532,30 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	return;
     }
 
-#if 0
-    fprintf(stderr, "run_native_script, policy = %d\n", policy);
-#endif
-
     if (selection) {
 	/* running a selected portion of a script */
 	kid = vwin_first_child(vwin);
 	if (kid != NULL) {
+	    targ = NULL;
 	    suppress_logo = 1;
 	}
-    } else if (policy == OUTPUT_POLICY_NEW_WINDOW) {
+    }
+
+#if 0
+    fprintf(stderr, "run_native_script: policy=%d, targ=%p, kid=%p\n",
+	    policy, (void *) targ, (void *) kid);
+#endif
+
+    if (kid == NULL && targ == NULL) {
+	/* there's no pre-existing output window */
 	err = start_script_output_handler(prn, SCRIPT_OUT,
 					  NULL, NULL);
 	if (err) {
 	    gretl_print_destroy(prn);
 	    return;
 	}
+    } else if (targ != NULL) {
+	set_reuseable_output_window(policy, targ);
     }
 
     save_batch = gretl_in_batch_mode();
@@ -7554,10 +7568,15 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     if (kid != NULL) {
 	send_output_to_kid(kid, prn);
     } else if (oh.vwin != NULL) {
+	if (selection) {
+	    vwin_add_child(vwin, oh.vwin);
+	}	
 	finalize_script_output_window(0, NULL);
     } else {
-	/* In the @selection case, arrange for the new 
-	   script output window to take on the "kid" role
+	/* In the @selection case (only) arrange for the new 
+	   script output window to take on the "kid" role in
+	   relation to the script editor, by passing the @vp
+	   argument below.
 	*/
 	void *vp = selection ? vwin : NULL;
 
