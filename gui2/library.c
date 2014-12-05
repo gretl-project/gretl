@@ -7521,7 +7521,7 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     }
 
     if (!selection && targ != NULL && policy == OUTPUT_POLICY_UNSET) {
-	/* ask the user for a policy */
+	/* ask the user to choose a policy */
 	policy = output_policy_dialog(vwin, targ, 0);
 	if (policy == OUTPUT_POLICY_NEW_WINDOW) {
 	    targ = NULL;
