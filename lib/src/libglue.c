@@ -438,8 +438,8 @@ int do_modprint (const char *mname, const char *names,
  
     if (!err) {
 	/* second, string containing names */
-	if (strchr(names, ' ') || strchr(names, ',')) {
-	    /* got a string literal */
+	if (opt & OPT_L) {
+	    /* treat as string _L_iteral */
 	    parnames = names;
 	} else if (get_string_by_name(names)) {
 	    parnames = get_string_by_name(names);
