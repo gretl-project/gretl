@@ -557,14 +557,14 @@ static int handle_sprintf_output (const char *targ,
 				  const char *buf,
 				  PRN *prn)
 {
-    char *tmp = malloc(strlen(targ) + 8);
+    char *tmp = malloc(strlen(targ) + 15);
     int err = 0;
 
     if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
 	gretl_insert_builtin_string("pstmp", buf);
-	sprintf(tmp, "%s=$pstmp", targ);
+	sprintf(tmp, "string %s=$pstmp", targ);
 	err = generate(tmp, NULL, OPT_NONE, prn);
 	free(tmp);
 	gretl_insert_builtin_string("pstmp", NULL);
@@ -637,7 +637,7 @@ static int real_do_printf (const char *targ, const char *format,
 
 	if (ci == SPRINTF) {
 	    /* sprintf: output to a string variable */
-	    handle_sprintf_output(targ, buf, prn);
+	    err = handle_sprintf_output(targ, buf, inprn);
 	} else {
 	    /* plain printf: output to @inprn */
 	    pputs(inprn, buf);
