@@ -7525,6 +7525,10 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	return;
     }
 
+#if 0
+    fprintf(stderr, "run_native_script, policy = %d\n", policy);
+#endif
+
     if (selection) {
 	/* running a selected portion of a script */
 	kid = vwin_first_child(vwin);
