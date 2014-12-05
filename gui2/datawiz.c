@@ -701,7 +701,7 @@ static void compute_default_ts_info (DATASET *dwinfo)
 	       dwinfo->pd == 6 ||
 	       dwinfo->pd == 7) {
 	strcpy(dwinfo->stobs, "1900-01-01");
-	dwinfo->n = 40000;
+	dwinfo->n = 50000;
 	/* set default start to 1960-01-01 (a Friday) */
 	if (dwinfo->pd == 5) {
 	    dwinfo->t1 = 15654;
