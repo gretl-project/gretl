@@ -2963,6 +2963,13 @@ static int model_command_post_process (ExecState *s,
     return err;
 }
 
+static void abort_loop_execution (ExecState *s)
+{
+    *s->cmd->savename = '\0';
+    gretl_cmd_destroy_context(s->cmd);
+    errmsg(E_STOP, s->prn);
+}
+
 static int block_model (CMD *cmd)
 {
     return cmd->ci == END && 
@@ -3022,6 +3029,17 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	if (gretl_echo_on() && indexed_loop(loop) && !loop_is_quiet(loop)) {
 	    print_loop_progress(loop, dset, prn);
 	}
+
+#if 1 /* experimental, 2014-12-05 */
+	if (gretl_in_gui_mode() && 
+	    loop->iter % 10 == 0 && 
+	    check_for_stop()) {
+	    /* the GUI user clicked the "Stop" button */
+	    abort_loop_execution(s);
+	    err = E_STOP;
+	    break;
+	}
+#endif	
 
 	while (!err && loop_next_command(line, loop, &j)) {
 	    int subst = 0;

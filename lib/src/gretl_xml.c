@@ -2821,7 +2821,7 @@ static int process_values (DATASET *dset,
 		} else {
 		    fprintf(stderr, "%s: %d: bad data\n", __FILE__, __LINE__);
 		    perror(NULL);
-		    err = 1;
+		    err = E_DATA;
 		}
 	    } else if (!strncmp(test, "NA", 2)) {
 		x = NADBL;
@@ -2937,7 +2937,6 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
     t = 0;
     while (cur != NULL) {
         if (!xmlStrcmp(cur->name, (XUC) "obs")) {
-
 	    if (dset->markers) {
 		tmp = xmlGetProp(cur, (XUC) "label");
 		if (tmp) {
@@ -2948,35 +2947,29 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
 		    return E_DATA;
 		}
 	    }
-
-	    if (binary) {
-		t++;
-		continue;
-	    }
-
-	    tmp = xmlNodeListGetRawString(doc, cur->xmlChildrenNode, 1);
-
-	    if (tmp) {
-		if (process_values(dset, t, (char *) tmp, dset->v, NULL)) {
-		    return 1;
+	    if (!binary) {
+		tmp = xmlNodeListGetRawString(doc, cur->xmlChildrenNode, 1);
+		if (tmp) {
+		    err = process_values(dset, t, (char *) tmp, dset->v, NULL);
+		    free(tmp);
+		} else if (dset->v > 1) {
+		    gretl_errmsg_sprintf(_("Values missing at observation %d"), t+1);
+		    err = E_DATA;
 		}
-		free(tmp);
-		t++;
-	    } else if (dset->v > 1) {
-		gretl_errmsg_sprintf(_("Values missing at observation %d"), t+1);
-		err = E_DATA;
-		goto bailout;
-	    } else {
-		t++;
 	    }
-	}	   
+	    t++;
+	}
+
+	if (err) {
+	    break;
+	}
  
 	cur = cur->next;
 
 	if (cur != NULL && t == dset->n) {
 	    /* got too many observations */
 	    t = dset->n + 1;
-	    goto bailout;
+	    break;
 	}
 
 	if (progress && t > 0 && t % 50 == 0) {
@@ -3081,7 +3074,6 @@ static int read_observations_subset (xmlDocPtr doc,
     t = 0;
     while (cur != NULL) {
         if (!xmlStrcmp(cur->name, (XUC) "obs")) {
-
 	    if (dset->markers) {
 		tmp = xmlGetProp(cur, (XUC) "label");
 		if (tmp) {
@@ -3092,28 +3084,22 @@ static int read_observations_subset (xmlDocPtr doc,
 		    return E_DATA;
 		}
 	    }
-
-	    if (binary) {
-		t++;
-		continue;
-	    }
-
-	    tmp = xmlNodeListGetRawString(doc, cur->xmlChildrenNode, 1);
-
-	    if (tmp) {
-		if (process_values(dset, t, (char *) tmp, fullv, vlist)) {
-		    return E_DATA;
+	    if (!binary) {
+		tmp = xmlNodeListGetRawString(doc, cur->xmlChildrenNode, 1);
+		if (tmp) {
+		    err = process_values(dset, t, (char *) tmp, fullv, vlist);
+		    free(tmp);
+		} else if (dset->v > 1) {
+		    gretl_errmsg_sprintf(_("Values missing at observation %d"), t+1);
+		    err = E_DATA;
 		}
-		free(tmp);
-		t++;
-	    } else if (dset->v > 1) {
-		gretl_errmsg_sprintf(_("Values missing at observation %d"), t+1);
-		err = E_DATA;
-		goto bailout;
-	    } else {
-		t++;
 	    }
-	}	   
+	    t++;
+	}
+
+	if (err) {
+	    break;
+	}
  
 	cur = cur->next;
 
