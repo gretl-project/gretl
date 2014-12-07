@@ -11,7 +11,8 @@ version 1.10.0, in progress
   button (top right), and make it more functional
 - GUI, panel data: some improvements to plotting options
 - "join" command: support native data files (gdt, gdtb) as well
-  as delimited text files, for data importation
+  as delimited text files, for data importation; also support
+  importing data from more than one series at a time
 - "foreign" command: where the --send-data option is supported,
   add an optional list parameter to limit the exportation to
   a named list of series
@@ -24,8 +25,10 @@ version 1.10.0, in progress
   list within the GTK file chooser
 - Fix bug: user-defined plots could generate an error dialog
   even if they display OK
+- Fix bug: crash on reading gdtb (binary) data file containing
+  observation markers
 - Fix bug: crash on using "omit" with a duration model
-- Build for 64-bit Windows: update to OpenBLAS 2.11
+- Build for 64-bit Windows: update to OpenBLAS 2.13
 - Build for 32-bit Windows: update compiler to gcc 4.8.3 and
   substitute OpenBlas for Netlib reference lapack and blas
 - Both Windows builds: update to GTK 2.24.25
