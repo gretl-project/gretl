@@ -1305,5 +1305,3 @@ void vwin_add_tmpbar (windata_t *vwin)
     start_wait_for_output(vwin, hbox);
     gtk_widget_show_all(hbox);
 }
-
-
