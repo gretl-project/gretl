@@ -82,6 +82,8 @@ GtkWidget *vwin_toplevel (windata_t *vwin);
 
 void vwin_pack_toolbar (windata_t *vwin);
 
+void vwin_reinstate_toolbar (windata_t *vwin);
+
 void gretl_viewer_present (windata_t *vwin);
 
 void gretl_viewer_destroy (windata_t *vwin);

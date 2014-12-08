@@ -7312,6 +7312,7 @@ struct output_handler {
     gulong handler_id;   /* signal ID for @vwin */
     int flushing;        /* is the writer using "flush"? 1/0 */
     int stopped;         /* flag for premature termination */
+    int reusable;        /* is @vwin a reusable viewer? 1/0 */
 };
 
 static struct output_handler oh;
@@ -7330,7 +7331,7 @@ static void stop_wait_for_output (GtkWidget *w, gpointer p)
    type GTK_BOX, into which a spinner may be packed.
 */
 
-void start_wait_for_output (GtkWidget *w)
+void start_wait_for_output (windata_t *vwin, GtkWidget *w)
 {
     GtkWidget *spinner;
 
@@ -7342,6 +7343,16 @@ void start_wait_for_output (GtkWidget *w)
     gtk_widget_show(spinner);
     gtk_spinner_start(GTK_SPINNER(spinner));
     script_wait = 1;
+
+    /* If @vwin is a reusable script output window and the
+       current policy is to replace output, blank out the
+       current text
+    */
+    if (GTK_IS_TEXT_VIEW(vwin->text) &&
+	get_script_output_policy() == OUTPUT_POLICY_REPLACE) { 
+	textview_set_text(vwin->text, NULL);
+	gretl_viewer_present(vwin);
+    }
 
     g_signal_connect(G_OBJECT(spinner), "destroy",
 		     G_CALLBACK(stop_wait_for_output),
@@ -7365,6 +7376,7 @@ static void clear_output_handler (void)
     oh.handler_id = 0;
     oh.flushing = 0;
     oh.stopped = 0;
+    oh.reusable = 0;
 }
 
 static int output_handler_is_free (void)
@@ -7437,14 +7449,24 @@ static int start_script_output_handler (PRN *prn, int mode,
     } else {
 	windata_t *vwin;
 
-	vwin = hansl_output_viewer_new(prn, mode, title);
-	if (vwin == NULL) {
-	    err = E_ALLOC;
+	if (outwin != NULL && *outwin != NULL) {
+	    /* using an existing viewer */
+	    oh.reusable = 1;
+	    vwin = *outwin;
+	    vwin_add_tmpbar(vwin);
 	} else {
+	    /* new viewer needed */
+	    vwin = hansl_output_viewer_new(prn, mode, title);
+	    if (vwin == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+	
+	if (!err) {
 	    oh.prn = prn;
 	    oh.vwin = vwin;
 	    gretl_print_set_save_position(oh.prn);
-	    if (outwin != NULL) {
+	    if (outwin != NULL && outwin == NULL) {
 		*outwin = vwin;
 	    }
 	    output_handler_block_deletion();
@@ -7472,6 +7494,13 @@ void finalize_script_output_window (int role, gpointer data)
 	}
     }
 
+    clear_output_handler();
+}
+
+void finalize_reusable_output_window (windata_t *vwin)
+{
+    handle_flush_callback(1);
+    vwin_reinstate_toolbar(vwin);
     clear_output_handler();
 }
 
@@ -7513,6 +7542,7 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     windata_t *kid = NULL;
     PRN *prn;
     int save_batch;
+    int untmp = 0;
     int err;
 
     if (policy != OUTPUT_POLICY_NEW_WINDOW) {
@@ -7556,6 +7586,11 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	}
     } else if (targ != NULL) {
 	set_reuseable_output_window(policy, targ);
+#if 0 /* not totally ready yet */
+	start_script_output_handler(prn, SCRIPT_OUT,
+				    NULL, &targ);
+	untmp = 1;
+#endif	
     }
 
     save_batch = gretl_in_batch_mode();
@@ -7570,8 +7605,12 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     } else if (oh.vwin != NULL) {
 	if (selection) {
 	    vwin_add_child(vwin, oh.vwin);
-	}	
-	finalize_script_output_window(0, NULL);
+	}
+	if (untmp) {
+	    finalize_reusable_output_window(targ);
+	} else {
+	    finalize_script_output_window(0, NULL);
+	}
     } else {
 	/* In the @selection case (only) arrange for the new 
 	   script output window to take on the "kid" role in
@@ -7581,6 +7620,9 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	void *vp = selection ? vwin : NULL;
 
 	view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, vp);
+	if (untmp) {
+	    finalize_reusable_output_window(targ);
+	}
     }
 
     if (!err && !selection && vwin->role != EDIT_PKG_SAMPLE &&

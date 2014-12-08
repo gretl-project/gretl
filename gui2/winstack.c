@@ -1163,9 +1163,9 @@ GtkWidget *vwin_toplevel (windata_t *vwin)
     return vwin->topmain != NULL ? vwin->topmain : vwin->main;
 }
 
-static void real_add_winlist (windata_t *vwin,
-			      GtkWidget *window,
-			      GtkWidget *hbox)
+static GtkWidget *real_add_winlist (windata_t *vwin,
+				    GtkWidget *window,
+				    GtkWidget *hbox)
 {
     GtkWidget *button, *img, *tbar;
     GtkToolItem *item;
@@ -1190,24 +1190,30 @@ static void real_add_winlist (windata_t *vwin,
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     gtk_widget_show_all(tbar);
     gtk_box_pack_end(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
+
+    return tbar;
 }
 
 void vwin_add_winlist (windata_t *vwin)
 {
     GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
 
-    if (!widget_get_int(hbox, "have_winlist")) {
-	real_add_winlist(vwin, NULL, hbox);
-	widget_set_int(hbox, "have_winlist", 1);
+    if (g_object_get_data(G_OBJECT(hbox), "winlist") == NULL) {
+	GtkWidget *winlist;
+	
+	winlist = real_add_winlist(vwin, NULL, hbox);
+	g_object_set_data(G_OBJECT(hbox), "winlist", winlist);
     }
 }
 
 void window_add_winlist (GtkWidget *window, GtkWidget *hbox)
 {
-    if (!widget_get_int(hbox, "have_winlist")) {
-	real_add_winlist(NULL, window, hbox);
-	widget_set_int(hbox, "have_winlist", 1);
-    }
+    if (g_object_get_data(G_OBJECT(hbox), "winlist") == NULL) {
+	GtkWidget *winlist;
+
+	winlist = real_add_winlist(NULL, window, hbox);
+	g_object_set_data(G_OBJECT(hbox), "winlist", winlist);
+    }    
 }
 
 static void destroy_hbox_child (GtkWidget *w, gpointer p)
@@ -1222,7 +1228,7 @@ static int want_winlist (windata_t *vwin)
 {
     GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
 
-    return !widget_get_int(hbox, "have_winlist");
+    return g_object_get_data(G_OBJECT(hbox), "winlist") == NULL;
 }
 
 void vwin_pack_toolbar (windata_t *vwin)
@@ -1264,6 +1270,30 @@ void vwin_pack_toolbar (windata_t *vwin)
 
     if (want_winlist(vwin)) {
 	vwin_add_winlist(vwin);
+    }
+}
+
+void vwin_reinstate_toolbar (windata_t *vwin)
+{
+    GtkWidget *hbox;
+
+    hbox = g_object_get_data(G_OBJECT(vwin->main), "top-hbox");
+
+    if (hbox != NULL) {
+	/* destroy the temporary stuff, put the "real" stuff back,
+	   and drop the extra references 
+	*/
+	GtkWidget *winlist;
+	
+	gtk_container_foreach(GTK_CONTAINER(hbox), destroy_hbox_child, NULL);
+	gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+	g_object_unref(G_OBJECT(vwin->mbar));
+	winlist = g_object_get_data(G_OBJECT(hbox), "winlist");
+	if (winlist != NULL) {
+	    gtk_box_pack_end(GTK_BOX(hbox), winlist, FALSE, FALSE, 0);
+	    g_object_unref(G_OBJECT(winlist));
+	}
+	gtk_widget_show_all(hbox);
     }
 }
 

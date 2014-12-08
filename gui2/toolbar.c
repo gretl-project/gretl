@@ -1259,8 +1259,12 @@ void add_mainwin_toolbar (GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
-/* add a temporary menubar for use in a script output
-   window, while we're waiting for the output */
+/* Add a temporary menubar for use in a script output
+   window, while we're waiting for the output. If the
+   output window is being reused this is a bit more
+   complicated; we have to "hide" the regular menubar
+   before inserting the temporary one.
+ */
 
 void vwin_add_tmpbar (windata_t *vwin)
 {
@@ -1272,15 +1276,34 @@ void vwin_add_tmpbar (windata_t *vwin)
     };
     GtkWidget *hbox, *tmp;
 
-    hbox = gtk_hbox_new(FALSE, 0);
-    g_object_set_data(G_OBJECT(vwin->main), "top-hbox", hbox);
+    hbox = g_object_get_data(G_OBJECT(vwin->main), "top-hbox");
+    
+    if (hbox != NULL) {
+	/* We're replacing a "real" menubar temporarily: ref. the
+	   widgets in @hbox before removing them so we can put
+	   them back later.
+	*/
+	GtkWidget *winlist = g_object_get_data(G_OBJECT(hbox), "winlist");
+
+	g_object_ref(G_OBJECT(vwin->mbar));
+	gtk_container_remove(GTK_CONTAINER(hbox), vwin->mbar);
+	if (winlist != NULL) {
+	    g_object_ref(G_OBJECT(winlist));
+	    gtk_container_remove(GTK_CONTAINER(hbox), winlist);
+	}
+    } else {
+	/* starting from scratch */
+	hbox = gtk_hbox_new(FALSE, 0);
+	g_object_set_data(G_OBJECT(vwin->main), "top-hbox", hbox);
+	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
+    }
 
     tmp = gretl_toolbar_new();
     gretl_toolbar_insert(tmp, &item, item.func, NULL, 0);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
-    gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
-    start_wait_for_output(hbox);
+    start_wait_for_output(vwin, hbox);
     gtk_widget_show_all(hbox);
 }
+
 
