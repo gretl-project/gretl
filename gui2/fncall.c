@@ -1753,7 +1753,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 
     free(tmpname);
 
-    if (err) {
+    if (err && !show) {
 	gui_errmsg(err);
     } 
 
