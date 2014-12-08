@@ -2448,6 +2448,8 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
     int c = m->cols;
     int i, j;
 
+    gretl_matrix_destroy_info(m);
+
     if (r == c) {
 	double mij, mji;
 	int n = r - 1;
@@ -2483,8 +2485,6 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
 	
 	mval_free(val);
     }
-
-    gretl_matrix_destroy_info(m);
 
     return 0;
 }
