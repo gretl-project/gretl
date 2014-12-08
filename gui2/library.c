@@ -7464,7 +7464,7 @@ static int start_script_output_handler (PRN *prn, int mode,
 	    oh.prn = prn;
 	    oh.vwin = vwin;
 	    gretl_print_set_save_position(oh.prn);
-	    if (outwin != NULL && outwin == NULL) {
+	    if (outwin != NULL && *outwin == NULL) {
 		*outwin = vwin;
 	    }
 	    output_handler_block_deletion();
