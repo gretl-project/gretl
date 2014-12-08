@@ -7344,13 +7344,11 @@ void start_wait_for_output (windata_t *vwin, GtkWidget *w)
     gtk_spinner_start(GTK_SPINNER(spinner));
     script_wait = 1;
 
-    /* If @vwin is a reusable script output window and the
-       current policy is to replace output, blank out the
-       current text
-    */
-    if (GTK_IS_TEXT_VIEW(vwin->text) &&
-	get_script_output_policy() == OUTPUT_POLICY_REPLACE) { 
-	textview_set_text(vwin->text, NULL);
+    if (GTK_IS_TEXT_VIEW(vwin->text)) {
+	/* @vwin is a reusable output window */
+	if (get_script_output_policy() == OUTPUT_POLICY_REPLACE) { 
+	    textview_set_text(vwin->text, NULL);
+	}
 	gretl_viewer_present(vwin);
     }
 
@@ -7586,11 +7584,9 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	}
     } else if (targ != NULL) {
 	set_reuseable_output_window(policy, targ);
-#if 0 /* not totally ready yet */
 	start_script_output_handler(prn, SCRIPT_OUT,
 				    NULL, &targ);
 	untmp = 1;
-#endif	
     }
 
     save_batch = gretl_in_batch_mode();
@@ -7621,6 +7617,7 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 
 	view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, vp);
 	if (untmp) {
+	    /* not reachable any more? */
 	    finalize_reusable_output_window(targ);
 	}
     }
