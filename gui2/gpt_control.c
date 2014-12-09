@@ -4675,9 +4675,14 @@ static int gnuplot_show_png (const char *fname, const char *name,
 	plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
     } else {
 	set_plot_format_flags(plot);
-    } 
+    }
 
-    if (plot->spec->code == PLOT_ROOTS ||
+    if (plot->spec->code == PLOT_PERIODOGRAM) {
+	/* the x2 axis gets broken, and also the x axis if it's
+	   in degrees or radians, on zooming
+	*/
+	plot->status |= PLOT_DONT_ZOOM;
+    } else if (plot->spec->code == PLOT_ROOTS ||
 	plot->spec->code == PLOT_QQ) {
 	plot->pixel_width = plot->pixel_height = GP_SQ_SIZE;
     }
