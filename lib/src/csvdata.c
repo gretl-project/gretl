@@ -3640,6 +3640,11 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 	s_src = 3;
     }
 
+    /* note: with strptime, a NULL return means that an error
+       occurred while a non-NULL and non-empty return string 
+       means a trailing portion of the input was not
+       processed.
+    */
     test = strptime(s, tfmt, &t);
 
     if (test == NULL || *test != '\0') {
@@ -4883,9 +4888,10 @@ static int process_outer_key (const char *s, int n_keys,
     return err;
 }
 
-/* Handle the case where the user gave a "%q" conversion specifier
-   (which we take to mean quarter). We convert this to %m for use with
-   strptime(), but record that the fact that "month means quarter".
+/* Handle the case where the user gave a "%q" or "%Q" conversion
+   specifier (which we take to mean quarter). We convert this to %m
+   for use with strptime(), but record that the fact that "month means
+   quarter".
 */
 
 static int format_uses_quarterly (char *fmt)
@@ -4894,13 +4900,42 @@ static int format_uses_quarterly (char *fmt)
     int i, ret = 0;
 
     for (i=0; s[i]; i++) {
-	if (s[i] == '%' && s[i+1] == 'q' && (i == 0 || s[i-1] != '%')) {
+	if (s[i] == '%' &&
+	    (s[i+1] == 'q' || s[i+1] == 'Q') &&
+	    (i == 0 || s[i-1] != '%')) {
 	    s[i+1] = 'm';
 	    ret = 1;
 	}
     }
 
     return ret;
+}
+
+static int check_for_quarterly_format (obskey *auto_keys, int pd)
+{
+    char *s = auto_keys->timefmt;
+    int i, err = 0;
+
+    fprintf(stderr, "check_for_quarterly_format: '%s'\n", s);
+
+    for (i=0; s[i]; i++) {
+	if (s[i] == '%' &&
+	    (s[i+1] == 'q' || s[i+1] == 'Q') &&
+	    (i == 0 || s[i-1] != '%')) {
+	    if (pd == 4 || pd == 1) {
+		s[i+1] = 'm';
+		auto_keys->m_means_q = 1;
+	    } else {
+		err = E_DATA;
+		gretl_errmsg_sprintf("The '%c' format is not applicable "
+				     "for data with frequency %d",
+				     s[i+1], pd);
+	    }
+	    break;
+	}
+    }
+
+    return err;
 }
 
 /* time-series data on the left, and no explicit keys supplied */
@@ -4932,9 +4967,9 @@ static int auto_keys_check (const DATASET *l_dset,
 	/* the user supplied a time-format spec */
 	err = set_time_format(auto_keys, tkeyfmt);
 	if (!err) {
-	    if ((pd == 4 || pd == 1) && format_uses_quarterly(auto_keys->timefmt)) {
-		auto_keys->m_means_q = 1;
-	    }
+	    err = check_for_quarterly_format(auto_keys, pd);
+	}
+	if (!err) {
 	    if (annual_data(l_dset)) {
 		*n_keys = 1;
 	    } else if (calendar_data(l_dset)) {
