@@ -4932,7 +4932,7 @@ static int auto_keys_check (const DATASET *l_dset,
 	/* the user supplied a time-format spec */
 	err = set_time_format(auto_keys, tkeyfmt);
 	if (!err) {
-	    if (pd == 4 && format_uses_quarterly(auto_keys->timefmt)) {
+	    if ((pd == 4 || pd == 1) && format_uses_quarterly(auto_keys->timefmt)) {
 		auto_keys->m_means_q = 1;
 	    }
 	    if (annual_data(l_dset)) {
