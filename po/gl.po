@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.10.0)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-12-04 13:09-0500\n"
-"PO-Revision-Date: 2014-11-28 12:18+0100\n"
+"PO-Revision-Date: 2014-12-09 14:14+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -2020,19 +2020,19 @@ msgid "The variable '%s' is not discrete"
 msgstr "A variable *%s* non é discreta"
 
 #: lib/src/discrete.c:1447
-#, fuzzy, c-format
+#, c-format
 msgid "Note: %s = %s%s at all observations\n"
-msgstr "Número de observacións"
+msgstr "Nota: %s = %s%s en todas as observacións\n"
 
 #: lib/src/discrete.c:1455 lib/src/discrete.c:1461
-#, fuzzy, c-format
+#, c-format
 msgid "Note: Prob(%s = %d | %s = %d) = 1\n"
-msgstr " Prob(x = %d) = %g\n"
+msgstr "Nota:  Prob(%s = %d | %s = %d) = 1\n"
 
 #: lib/src/discrete.c:1467
-#, fuzzy, c-format
+#, c-format
 msgid "Dropping %s\n"
-msgstr "Error ao ler %s\n"
+msgstr "Prescindindo %s\n"
 
 #: lib/src/discrete.c:2939
 #, c-format
@@ -5389,7 +5389,7 @@ msgstr "note on model statistics abbreviations here"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2827
 msgid "Mean dependent var"
-msgstr "Media var.dependent. Y"
+msgstr "Media var.dependente Y"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2829
