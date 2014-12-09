@@ -7527,17 +7527,12 @@ static int maybe_stop_script (void)
     return stop;
 }
 
-/* Execute a script from the buffer in viewer window @vwin. The
-   script may be executed in full or in part (in case @selection is
-   true).
-*/
+/* Execute a script from the buffer in viewer window @vwin */
 
-static void run_native_script (windata_t *vwin, gchar *buf, 
-			       gboolean selection)
+static void run_native_script (windata_t *vwin, gchar *buf)
 {
     int policy = get_script_output_policy();
     windata_t *targ = NULL;
-    windata_t *kid = NULL;
     PRN *prn;
     int save_batch;
     int untmp = 0;
@@ -7548,7 +7543,7 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	targ = get_unique_output_viewer();
     }
 
-    if (!selection && targ != NULL && policy == OUTPUT_POLICY_UNSET) {
+    if (targ != NULL && policy == OUTPUT_POLICY_UNSET) {
 	/* ask the user to choose a policy */
 	policy = output_policy_dialog(vwin, targ, 0);
 	if (policy == OUTPUT_POLICY_NEW_WINDOW) {
@@ -7560,21 +7555,12 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	return;
     }
 
-    if (selection) {
-	/* running a selected portion of a script */
-	kid = vwin_first_child(vwin);
-	if (kid != NULL) {
-	    targ = NULL;
-	    suppress_logo = 1;
-	}
-    }
-
 #if 0
-    fprintf(stderr, "run_native_script: policy=%d, targ=%p, kid=%p\n",
-	    policy, (void *) targ, (void *) kid);
+    fprintf(stderr, "run_native_script: policy=%d, targ=%p\n",
+	    policy, (void *) targ);
 #endif
 
-    if (kid == NULL && targ == NULL) {
+    if (targ == NULL) {
 	/* there's no pre-existing output window */
 	err = start_script_output_handler(prn, SCRIPT_OUT,
 					  NULL, NULL);
@@ -7582,7 +7568,7 @@ static void run_native_script (windata_t *vwin, gchar *buf,
 	    gretl_print_destroy(prn);
 	    return;
 	}
-    } else if (targ != NULL) {
+    } else {
 	set_reuseable_output_window(policy, targ);
 	start_script_output_handler(prn, SCRIPT_OUT,
 				    NULL, &targ);
@@ -7594,39 +7580,57 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     gretl_set_batch_mode(save_batch);
 
     refresh_data();
-    suppress_logo = 0;
 
-    if (kid != NULL) {
-	send_output_to_kid(kid, prn);
-    } else if (oh.vwin != NULL) {
-	if (selection) {
-	    vwin_add_child(vwin, oh.vwin);
-	}
+    if (oh.vwin != NULL) {
 	if (untmp) {
 	    finalize_reusable_output_window(targ);
 	} else {
 	    finalize_script_output_window(0, NULL);
 	}
     } else {
-	/* In the @selection case (only) arrange for the new 
-	   script output window to take on the "kid" role in
-	   relation to the script editor, by passing the @vp
-	   argument below.
-	*/
-	void *vp = selection ? vwin : NULL;
-
-	view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, vp);
+	view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, NULL);
 	if (untmp) {
 	    /* not reachable any more? */
 	    finalize_reusable_output_window(targ);
 	}
     }
 
-    if (!err && !selection && vwin->role != EDIT_PKG_SAMPLE &&
+    if (!err && vwin->role != EDIT_PKG_SAMPLE &&
 	*vwin->fname != '\0' && !strstr(vwin->fname, "script_tmp")) {
 	mkfilelist(FILE_LIST_SCRIPT, vwin->fname);
 	lib_command_sprintf("run %s", vwin->fname);
 	record_command_verbatim();
+    }
+
+    /* re-establish command echo (?) */
+    set_gretl_echo(1);
+}
+
+void run_script_fragment (windata_t *vwin, gchar *buf)
+{
+    windata_t *kid = vwin_first_child(vwin);
+    PRN *prn;
+    int save_batch;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    if (kid != NULL) {
+	suppress_logo = 1;
+    }
+
+    save_batch = gretl_in_batch_mode();
+    execute_script(NULL, buf, prn, SCRIPT_EXEC);
+    gretl_set_batch_mode(save_batch);
+
+    refresh_data();
+    suppress_logo = 0;
+
+    if (kid != NULL) {
+	send_output_to_kid(kid, prn);
+    } else {
+	view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, vwin);
     }
 
     /* re-establish command echo (?) */
@@ -7728,18 +7732,13 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	run_foreign_script(buf, LANG_PYTHON);
     } else if (vwin->role == EDIT_X12A) {
 	run_x12a_script(buf);
+    } else if (selection) {
+	run_script_fragment(vwin, buf);
     } else {
-	run_native_script(vwin, buf, selection);
+	run_native_script(vwin, buf);
     }
 
     g_free(buf);
-}
-
-/* called from textbuf.c */
-
-void run_script_fragment (windata_t *vwin, gchar *buf)
-{
-    run_native_script(vwin, buf, TRUE);
 }
 
 gboolean do_open_script (int action)
