@@ -223,7 +223,6 @@ int function_from_string (const char *s)
 static const char *reswords[] = {
     /* constants */
     "const",
-    "pi",
     "NA",
     "null",
     "obs", /* not exactly a constant, but hey */
@@ -234,6 +233,7 @@ static const char *reswords[] = {
     "string",
     "list",
     "bundle",
+    "array",
     "kalman",
     "void",
     /* debugging instructions, etc. */
