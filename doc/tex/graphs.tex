@@ -243,6 +243,128 @@ formats.
 To be written.  Line widths, enhanced text.  Show a ``before and
 after'' example.  
 
+\section{Plotting graphs from scripts}
+\label{sec:plotenv}
+
+When working with scripts, you may want to have a graph shown onto
+your display or saved into a file. In fact, if in your usual workflow
+you find yourself creating similar graphs over and over again, you
+might want to consider the option of writing a script which automates
+this process for you. \app{Gretl} gives you two tools for doing this:
+one is a command called \cmd{gnuplot}, whose main use is to create
+standard plot quickly. The other one is the \cmd{plot} command block,
+which has a more elaborate syntax but offers you more control on
+output.
+
+\subsection{The \cmd{gnuplot} command}
+\label{sec:gnuplot-cmd}
+
+The \cmd{gnuplot} command is described at length in the \GCR\ and the
+online help system. Here, we just summarize its main features:
+basically, it consists of the \cmd{gnuplot} keyword, followed by a
+list of items, telling the command \emph{what} you want plotted and a
+list of options, telling it \emph{how} you want it plotted.
+
+For example, the line
+\begin{code}
+gnuplot y1 y2 x   
+\end{code}
+will give you a basic XY plot of the two series \texttt{y1} and
+\texttt{y2} on the vertical axis versus the series \texttt{x} on the
+horizontal axis. In general, the arguments to the \cmd{gnuplot}
+command is a list of series, the last of which goes on the x-axis,
+while all the other ones go onto the y-axis. By default, the
+\cmd{gnuplot} command gives you a scatterplot. If you just have one
+variable on the y-axis, then \app{gretl} will also draw a the OLS
+interpolation, if the fit is good enough.\footnote{The technical
+  condition for this is that the two-tailed $p$-value for the slope
+  coefficient should be under 10\%.}
+
+Several aspects of the behavior described above can be modified. You
+do this by appending options to the command. Most options can be
+broadly grouped in three categories (FIXME: expand on this):
+\begin{enumerate}
+\item Plot styles
+\item Algorithm for the fitted line
+\item Input and output
+\end{enumerate}
+
+For more detail, consult the \GCR.
+
+\subsection{The \cmd{plot} command block}
+\label{sec:plotblock}
+
+The \cmd{plot} environment is a way to pass information to Gnuplot in
+a more structured way, so that customization of basic plot becomes
+easier. It has the following characteristics:
+
+The block starts with the \cmd{plot} keyword, followed by a required
+parameter: the name of a list, a single series or a matrix. This
+parameter specifies the data to be plotted. The starting line may be
+prefixed with the \verb|savename <-| apparatus to save a plot as an icon
+in the GUI program. The block ends with \cmd{end plot}.
+
+Inside the block you have zero or more lines of these types, identified 
+by an initial keyword:
+\begin{description}
+\item[\texttt{option}:] specify a single option (details below)
+\item[\texttt{options}:] specify multiple options on a single line; if
+  more than one option is given on a line, the options should be
+  separated by spaces.
+\item[\texttt{literal}:] a command to be passed to gnuplot literally 
+\item[\texttt{printf}:] a printf statement whose result will be passed
+  to gnuplot literally; this allows the use of string variables
+  without having to resort to \verb!@!-style string substitution.
+\end{description}
+
+The options available are basically those of the current \cmd{gnuplot} 
+command, but with a few differences. For one thing you don't need the 
+leading double-dash in an "option" (or "options") line. Besides that,
+\begin{itemize}
+\item You can't use the option \option{matrix=whatever} with \cmd{plot}:
+  that possibility is handled by providing the name of a matrix on the
+  initial \cmd{plot} line.
+\item The \option{input=filename} option is not supported: use
+  \cmd{gnuplot} for the case where you're supplying the entire plot
+  specification yourself.
+\item The several options pertaining to the presence and type of a
+  fitted line, are replaced in \cmd{plot} by a single option \cmd{fit} which
+  requires a parameter. Supported values for the parameter are: none,
+  linear, quadratic, cubic, inverse, semilog and loess. Example:
+\begin{code}
+  option fit=quadratic
+\end{code}
+\end{itemize}
+
+As with \cmd{gnuplot}, the default is to show a linear fit in an X-Y scatter if 
+it's significant at the 10 percent level.
+
+Here's a simple example, the plot spec from the "bandplot" package,
+which shows how to achieve the same result via the \cmd{command} and
+the \cmd{plot} block, respectively:
+
+\begin{code}
+   gnuplot 1 2 3 4 --with-lines --matrix=plotmat \
+   --suppress-fitted --output=display \
+   { set linetype 3 lc rgb "#0000ff"; set title "@title"; \
+     set nokey; set xlabel "@xname"; }
+\end{code}
+
+\begin{code}
+   plot plotmat
+     options with-lines fit=none
+     literal set linetype 3 lc rgb "#0000ff"
+     literal set nokey
+     printf "set title \"%s\"", title
+     printf "set xlabel \"%s\"", xname
+   end plot --output=display
+\end{code}
+
+Note that \option{output=display} is appended to \cmd{end plot}; also
+note that if you give a matrix to \cmd{plot} it's assumed you want to
+plot all the columns. In addition, if you give a single series and the
+dataset is time series, it's assumed you want a time-series plot.
+
 \section{Boxplots}
 \label{sect-boxplots}
 
