@@ -1746,7 +1746,12 @@ void gretl_saved_objects_cleanup (void)
 	       so we drop the associated refcount and nullify the
 	       last model pointer to guard against double-freeing
 	    */
+#if ODEBUG
+	    fprintf(stderr, " ostack[%d] = last model, unrefing\n", i);
+#endif
 	    gretl_object_unref(lmp, lmt);
+	    last_model.ptr = NULL;
+	    last_model.type = 0;
 	    lmp = NULL;
 	}
 #if ODEBUG
