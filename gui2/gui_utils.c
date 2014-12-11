@@ -2404,6 +2404,11 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     gchar *tmp;
     int width, nlines, tabbed;
 
+#if 0
+    fprintf(stderr, "view_model: pmod at %p, model %d\n",
+	    (void *) pmod, pmod->ID);
+#endif
+
     tabbed = use_tabbed_model_viewer();
 
     if (tabbed) {

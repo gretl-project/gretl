@@ -921,20 +921,23 @@ int maybe_stack_var (GRETL_VAR *var, CMD *cmd)
 MODEL *maybe_stack_model (MODEL *pmod, CMD *cmd, PRN *prn, int *err)
 {
     const char *name = gretl_cmd_get_savename(cmd);
+    gretlopt opt = gretl_cmd_get_opt(cmd);
     MODEL *smod = NULL;
 
-    if (*name != '\0') {
+    if (*name != '\0' || (opt & OPT_W)) {
 	MODEL *cpy = gretl_model_copy(pmod);
 
 	if (cpy == NULL) {
 	    *err = E_ALLOC;
-	} else {
+	} else if (*name != '\0') {
 	    *err = real_stack_object(cpy, GRETL_OBJ_EQN, name, NULL);
 	}
 
 	if (!*err) {
 	    set_as_last_model(cpy, GRETL_OBJ_EQN);
-	    pprintf(prn, _("%s saved\n"), name);
+	    if (*name != '\0') {
+		pprintf(prn, _("%s saved\n"), name);
+	    }
 	} else {
 	    errmsg(*err, prn);
 	}
