@@ -250,11 +250,11 @@ When working with scripts, you may want to have a graph shown onto
 your display or saved into a file. In fact, if in your usual workflow
 you find yourself creating similar graphs over and over again, you
 might want to consider the option of writing a script which automates
-this process for you. \app{Gretl} gives you two tools for doing this:
-one is a command called \cmd{gnuplot}, whose main use is to create
-standard plot quickly. The other one is the \cmd{plot} command block,
-which has a more elaborate syntax but offers you more control on
-output.
+this process for you. \app{Gretl} gives you two main tools for doing
+this: one is a command called \cmd{gnuplot}, whose main use is to
+create standard plot quickly. The other one is the \cmd{plot} command
+block, which has a more elaborate syntax but offers you more control
+on output.
 
 \subsection{The \cmd{gnuplot} command}
 \label{sec:gnuplot-cmd}
@@ -290,6 +290,29 @@ broadly grouped in three categories (FIXME: expand on this):
 \end{enumerate}
 
 For more detail, consult the \GCR.
+
+Example:
+
+\begin{scode}
+open AWM.gdt --quiet
+
+# --- different styles -------
+
+gnuplot PCR YER
+gnuplot PCR YER --output=display
+gnuplot PCR YER --output=display --time-series
+gnuplot PCR YER --output=display --time-series --with-lines
+
+# --- fitted lines -----------
+# --- Phillips' curve --------
+
+gnuplot INFQ URX  --output=display
+gnuplot INFQ URX --suppress-fitted --output=display
+gnuplot INFQ URX --inverse-fit --output=display
+gnuplot INFQ URX --loess-fit --output=display
+\end{scode}
+
+FIXME: comment on the above
 
 \subsection{The \cmd{plot} command block}
 \label{sec:plotblock}
@@ -365,15 +388,10 @@ note that if you give a matrix to \cmd{plot} it's assumed you want to
 plot all the columns. In addition, if you give a single series and the
 dataset is time series, it's assumed you want a time-series plot.
 
+FIXME: provide an example
+
 \section{Boxplots}
 \label{sect-boxplots}
-
-These plots (after Tukey and Chambers) display the distribution
-of a variable. The central box encloses the middle 50 percent of the
-data, i.e.\ it is bounded by the first and third quartiles.  The
-``whiskers'' extend to the minimum and maximum values.  A line is
-drawn across the box at the median and a ``\texttt{+}'' sign
-identifies the mean---see Figure~\ref{fig-boxplot}.
 
 \begin{figure}[htbp]
   \begin{center}
@@ -383,15 +401,61 @@ identifies the mean---see Figure~\ref{fig-boxplot}.
   \label{fig-boxplot}
 \end{figure}
 
+These plots (after Tukey and Chambers) display the distribution
+of a variable. The central box encloses the middle 50 percent of the
+data, i.e.\ it is bounded by the first and third quartiles.  The
+``whiskers'' extend to the minimum and maximum values.  A line is
+drawn across the box at the median and a ``\texttt{+}'' sign
+identifies the mean---see Figure~\ref{fig-boxplot}.
+
 In the case of boxplots with confidence intervals, dotted lines show
 the limits of an approximate 90 percent confidence interval for the
 median.  This is obtained by the bootstrap method, which can take a
-while if the data series is very long.
+while if the data series is very long. For details on constructing
+boxplots, see the entry for \cmd{boxplot} in the \GCR\, or use the
+\textsf{Help} button that appears when you select one of the boxplot
+items under the menu item ``View, Graph specified vars'' in the main
+gretl window.
 
-For details on constructing boxplots, see the entry for \cmd{boxplot}
-in the \GCR\, or use the \textsf{Help} button that appears when you
-select one of the boxplot items under the menu item ``View, Graph
-specified vars'' in the main gretl window.
+\subsection{Factorized boxplots}
+
+A nice feature which is quite useful for data visualization is the
+conditional, or factorized boxplot.  This type of plot allows you to
+examine the distribution of a variable conditional on the value of
+some discrete factor.
+
+As an example, we'll use one of the datasets supplied with
+\app{gretl}, that is \cmd{rac3d}, which contains an example taken from
+\cite{cameron-trivedi13} on the health conditions of 5190 people. The
+script below compares the unconditional (marginal) distribution of the
+number of illnesses in the past 2 weeks with the distribution of the
+same variable, conditional on age classes.
+
+\begin{scode}
+open rac3d.gdt
+# unconditional boxplot
+boxplot ILLNESS --output=display
+# create a discrete variable for age class: 
+# 0 = below 20, 1 = bewteen 20 and 39, etc
+series age_class = floor(AGE/0.2)
+# conditional boxplot
+boxplot ILLNESS age_class --factorized --output=display
+\end{scode}
+
+After running the code above, you should see two graphs similar to
+Figure \ref{fig:fact-boxplots}. By comparing the marginal plot to
+the factorized one, the effect of age on the mean number of illnesses
+is quite evident (join the green crosses).
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tabular}{cc}
+    \includegraphics[width=0.475\textwidth]{figures/uboxplot} & 
+    \includegraphics[width=0.475\textwidth]{figures/fboxplot}
+  \end{tabular}
+  \caption{Conditional and unconditional distribution of illnesses}
+  \label{fig:fact-boxplots}
+\end{figure}
 
 %%% Local Variables: 
 %%% mode: latex
