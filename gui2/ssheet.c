@@ -2282,7 +2282,7 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
     } else {
 	g_object_set(r, "ypad", 1, 
 		     "xalign", 1.0,
-		     "background", "gray",
+		     "background", "#EDEDED",
 		     "editable", FALSE, NULL);
     }
 
@@ -2305,12 +2305,20 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
     sheet->datacell = r;
 }
 
-static void manufacture_keystroke (GtkWidget *widget, guint uval)
+static void manufacture_keystroke (GtkWidget *widget,
+				   GdkEvent *orig,
+				   guint uval)
 {
+    GdkKeymap *keymap = NULL;
     GdkKeymapKey *keys;
     gint n_keys;
 
-    if (gdk_keymap_get_entries_for_keyval(NULL, uval, &keys, &n_keys)) {
+#if GTK_MAJOR_VERSION >= 3
+    /* with GDK 3, we can't pass NULL for keymap below */
+    keymap = gdk_keymap_get_for_display(gdk_display_get_default());
+#endif	
+
+    if (gdk_keymap_get_entries_for_keyval(keymap, uval, &keys, &n_keys)) {
 	guint16 hardware_keycode;
 	GdkEvent *event;
 
@@ -2320,13 +2328,16 @@ static void manufacture_keystroke (GtkWidget *widget, guint uval)
 	event = gdk_event_new(GDK_KEY_PRESS);
 	event->key.window = g_object_ref(gtk_widget_get_window(widget));
 	event->key.hardware_keycode = hardware_keycode;
-
 	event->key.keyval = gdk_unicode_to_keyval(uval);
 	event->key.length = 1;
-
 	event->key.send_event = FALSE;
-	event->key.time = GDK_CURRENT_TIME;   
+	event->key.time = GDK_CURRENT_TIME;
 
+#if GTK_MAJOR_VERSION >= 3
+	/* we now get warning spew if no device is attached */
+	gdk_event_set_device(event, gdk_event_get_device(orig));
+#endif
+	
 	gtk_main_do_event(event);
 	gdk_event_free(event);
     }
@@ -2351,10 +2362,10 @@ static int numeric_key (guint *kval, Spreadsheet *sheet)
 
 #define alpha_key(k) ((k >= GDK_A && k <=  GDK_Z) || (k >= GDK_a && k <= GDK_z))
 
-static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key, 
+static gint catch_spreadsheet_key (GtkWidget *view, GdkEvent *event, 
 				   Spreadsheet *sheet)
 {
-    guint kval = key->keyval;
+    guint kval = ((GdkEventKey*) event)->keyval;
 
 #if CELLDEBUG
     fprintf(stderr, "catch_spreadsheet_key: %d\n", kval);
@@ -2412,7 +2423,7 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	    gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, col, 
 				     TRUE);
 	    gtk_tree_path_free(path);
-	    manufacture_keystroke(view, kval);
+	    manufacture_keystroke(view, event, kval);
 	}
     } else if (editing_scalars(sheet) && alpha_key(kval)) {
 	GtkTreePath *path = NULL;
@@ -2428,7 +2439,7 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	    } else {
 		gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, col, 
 					 TRUE);
-		manufacture_keystroke(view, kval);
+		manufacture_keystroke(view, event, kval);
 	    }
 	    gtk_tree_path_free(path);
 	}
