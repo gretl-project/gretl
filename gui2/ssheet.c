@@ -343,6 +343,45 @@ static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
 		       sheet->cid, sheet->location);
 }
 
+#if 0 /* doesn't work! (could it, somehow?) */
+
+static void set_visible_focus (Spreadsheet *sheet,
+			       GtkTreePath *path,
+			       GtkTreeViewColumn *column)
+{
+    GdkRectangle bg_area, cell_area;
+#if GTK_MAJOR_VERSION >= 3
+    cairo_t *cr;
+
+    cr = gdk_cairo_create(gtk_widget_get_window(sheet->view));
+#endif    
+
+    gtk_tree_view_get_cell_area(GTK_TREE_VIEW(sheet->view),
+				path, column, &cell_area);
+    gtk_tree_view_get_background_area(GTK_TREE_VIEW(sheet->view),
+				      path, column, &bg_area);
+
+#if GTK_MAJOR_VERSION >= 3
+    gtk_cell_renderer_render(sheet->datacell,
+			     cr,
+			     sheet->view,
+			     &bg_area,
+			     &cell_area,
+			     GTK_CELL_RENDERER_FOCUSED);
+    cairo_destroy(cr);
+#else
+    gtk_cell_renderer_render(sheet->datacell,
+			     gtk_widget_get_window(sheet->view),
+			     sheet->view,
+			     &bg_area,
+			     &cell_area,
+			     &bg_area,
+			     GTK_CELL_RENDERER_PRELIT);
+#endif
+}
+
+#endif /* 0 */
+
 static void set_treeview_column_number (GtkTreeViewColumn *col, int j)
 {
     g_object_set_data(G_OBJECT(col), "colnum", GINT_TO_POINTER(j));
@@ -1318,6 +1357,9 @@ static void update_cell_position (GtkTreeView *view,
 	    fprintf(stderr, " now in cell(%d, %d)\n", i, j);
 #endif
 	    set_locator_label(sheet, path, col);
+#if 0	    
+	    set_visible_focus(sheet, path, col);
+#endif	    
 	    i0 = i;
 	    j0 = j;
 	} else {
@@ -2282,7 +2324,7 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
     } else {
 	g_object_set(r, "ypad", 1, 
 		     "xalign", 1.0,
-		     "background", "#EDEDED",
+		     "background", "#DDDDDD",
 		     "editable", FALSE, NULL);
     }
 
