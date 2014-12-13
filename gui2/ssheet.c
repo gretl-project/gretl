@@ -343,29 +343,64 @@ static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
 		       sheet->cid, sheet->location);
 }
 
-#if 0 && GTK_MAJOR_VERSION >= 3 /* doesn't work! (could it, somehow?) */
+#if 1 && GTK_MAJOR_VERSION >= 3 /* doesn't work! (could it, somehow?) */
 
-static void set_visible_focus (Spreadsheet *sheet,
-			       GtkTreePath *path,
-			       GtkTreeViewColumn *column)
+static void make_cairo_cell_border (cairo_t *cr,
+				    GdkRectangle *r)
 {
-    GdkRectangle bg_area, cell_area;
+    cairo_move_to(cr, r->x, r->y);
+    cairo_line_to(cr, r->x, r->y + r->height - 1);
+    cairo_line_to(cr, r->x + r->width, r->y + r->height - 1);
+    cairo_line_to(cr, r->x + r->width, r->y);
+    cairo_close_path(cr);
+    cairo_stroke(cr);
+}
+
+static int get_treeview_column_number (GtkTreeViewColumn *col);
+
+static void move_visible_focus (Spreadsheet *sheet,
+				GtkTreePath *path,
+				GtkTreeViewColumn *column,
+				int oldrow, int oldcol)
+{
+    GtkTreeView *view;
+    GtkTreePath *path0;
+    GtkTreeViewColumn *column0;
+    GdkWindow *window;
+    GdkRectangle bg_rect, cell_rect;
     cairo_t *cr;
+    char pstr[8];
 
-    cr = gdk_cairo_create(gtk_widget_get_window(sheet->view));
+    view = GTK_TREE_VIEW(sheet->view);
+    window = gtk_widget_get_window(sheet->view);
+    cr = gdk_cairo_create(window);
 
-    gtk_tree_view_get_cell_area(GTK_TREE_VIEW(sheet->view),
-				path, column, &cell_area);
-    gtk_tree_view_get_background_area(GTK_TREE_VIEW(sheet->view),
-				      path, column, &bg_area);
+    fprintf(stderr, "scrub focus at %d,%d\n", oldrow, oldcol);
 
+    sprintf(pstr, "%d", oldrow);
+    path0 = gtk_tree_path_new_from_string(pstr);
+    column0 = gtk_tree_view_get_column(view, oldcol);
+    gtk_tree_view_get_background_area(view, path0, column0, &bg_rect);
+    gtk_tree_view_get_cell_area(view, path0, column0, &cell_rect);
+    gdk_window_invalidate_rect(window, &cell_rect, TRUE);
     gtk_cell_renderer_render(sheet->datacell,
 			     cr,
 			     sheet->view,
-			     &bg_area,
-			     &cell_area,
-			     GTK_CELL_RENDERER_FOCUSED);
-    cairo_destroy(cr);
+			     &bg_rect, &cell_rect,
+			     0);
+    gtk_tree_path_free(path0);
+
+    fprintf(stderr, "show focus at %d,%d\n\n",
+	    gtk_tree_path_get_indices(path)[0],
+	    get_treeview_column_number(column));
+
+    /* and draw the new one */
+    gtk_tree_view_get_background_area(view, path, column, &bg_rect);
+    gtk_tree_view_get_cell_area(view, path, column, &cell_rect);
+    make_cairo_cell_border(cr, &cell_rect);
+    gdk_window_invalidate_rect(window, &cell_rect, TRUE);
+    
+    cairo_destroy(cr);    
 }
 
 #endif /* 0 */
@@ -1345,8 +1380,8 @@ static void update_cell_position (GtkTreeView *view,
 	    fprintf(stderr, " now in cell(%d, %d)\n", i, j);
 #endif
 	    set_locator_label(sheet, path, col);
-#if 0 && GTK_MAJOR_VERSION >= 3    
-	    set_visible_focus(sheet, path, col);
+#if 1 && GTK_MAJOR_VERSION >= 3    
+	    move_visible_focus(sheet, path, col, i0, j0);
 #endif	    
 	    i0 = i;
 	    j0 = j;
