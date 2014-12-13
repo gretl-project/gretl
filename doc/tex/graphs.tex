@@ -369,8 +369,8 @@ leading double-dash in an "option" (or "options") line. Besides that,
 \end{code}
 \end{itemize}
 
-As with \cmd{gnuplot}, the default is to show a linear fit in an X-Y scatter if 
-it's significant at the 10 percent level.
+As with \cmd{gnuplot}, the default is to show a linear fit in an X-Y
+scatter if it's significant at the 10 percent level.
 
 Here's a simple example, the plot spec from the "bandplot" package,
 which shows how to achieve the same result via the \cmd{command} and
@@ -416,9 +416,11 @@ variable. The central box encloses the middle 50 percent of the data,
 i.e.\ it is bounded by the first and third quartiles.  The
 ``whiskers'' extend to from each end of the box for a range equal to
 1.5 times the interquartile range. Observations outside that range are
-considered outliers and represented via dots.  A line is drawn across
-the box at the median and a ``\texttt{+}'' sign identifies the
-mean---see Figure~\ref{fig-boxplot}.
+considered outliers and represented via dots.\footnote{To give you an
+  intuitive idea, if a variable is normally distributed, the chances
+  of picking an outlier by this definition are slightly below 0.7\%.}
+A line is drawn across the box at the median and a ``\texttt{+}'' sign
+identifies the mean---see Figure~\ref{fig-boxplot}.
 
 In the case of boxplots with confidence intervals, dotted lines show
 the limits of an approximate 90 percent confidence interval for the
