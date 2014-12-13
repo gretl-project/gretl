@@ -282,31 +282,38 @@ interpolation, if the fit is good enough.\footnote{The technical
 
 Several aspects of the behavior described above can be modified. You
 do this by appending options to the command. Most options can be
-broadly grouped in three categories (FIXME: expand on this):
+broadly grouped in three categories:
 \begin{enumerate}
-\item Plot styles
-\item Algorithm for the fitted line
-\item Input and output
+\item Plot styles: we support points (the default choice), lines,
+  lines and points together, and impulses (vertical lines). 
+\item Algorithm for the fitted line: here you can choose between
+  linear, quadratic and cubic interpolation, but also more exotic
+  choices, such as semi-log, inverse or loess (non-parametric). Of
+  course, you can also turn this feature off.
+\item Input and output: you can choose whether you want your graph on
+  your computer screen (and possibly use the in-built graphical widget
+  to further customize it --- see above, page \pageref{plot-editor}),
+  or rather save it to a file. We support several graphical formats,
+  among which PNG and PDF, to make it easy to incorporate your
+  plots into text documents.
 \end{enumerate}
 
-For more detail, consult the \GCR.
-
-Example:
+The following script uses the AWM dataset to exemplify some
+traditional plots in macroeconomics:
 
 \begin{scode}
 open AWM.gdt --quiet
 
-# --- different styles -------
+# --- consumption and income, different styles ------------
 
 gnuplot PCR YER
 gnuplot PCR YER --output=display
 gnuplot PCR YER --output=display --time-series
 gnuplot PCR YER --output=display --time-series --with-lines
 
-# --- fitted lines -----------
-# --- Phillips' curve --------
+# --- Phillips' curve, different fitted lines -------------
 
-gnuplot INFQ URX  --output=display
+gnuplot INFQ URX --output=display
 gnuplot INFQ URX --suppress-fitted --output=display
 gnuplot INFQ URX --inverse-fit --output=display
 gnuplot INFQ URX --loess-fit --output=display
@@ -314,12 +321,15 @@ gnuplot INFQ URX --loess-fit --output=display
 
 FIXME: comment on the above
 
+For more detail, consult the \GCR.
+
+
 \subsection{The \cmd{plot} command block}
 \label{sec:plotblock}
 
-The \cmd{plot} environment is a way to pass information to Gnuplot in
-a more structured way, so that customization of basic plot becomes
-easier. It has the following characteristics:
+The \cmd{plot} environment is a way to pass information to
+\app{Gnuplot} in a more structured way, so that customization of basic
+plots becomes easier. It has the following characteristics:
 
 The block starts with the \cmd{plot} keyword, followed by a required
 parameter: the name of a list, a single series or a matrix. This
@@ -388,7 +398,7 @@ note that if you give a matrix to \cmd{plot} it's assumed you want to
 plot all the columns. In addition, if you give a single series and the
 dataset is time series, it's assumed you want a time-series plot.
 
-FIXME: provide an example
+FIXME: provide an example with real data.
 
 \section{Boxplots}
 \label{sect-boxplots}
@@ -401,12 +411,14 @@ FIXME: provide an example
   \label{fig-boxplot}
 \end{figure}
 
-These plots (after Tukey and Chambers) display the distribution
-of a variable. The central box encloses the middle 50 percent of the
-data, i.e.\ it is bounded by the first and third quartiles.  The
-``whiskers'' extend to the minimum and maximum values.  A line is
-drawn across the box at the median and a ``\texttt{+}'' sign
-identifies the mean---see Figure~\ref{fig-boxplot}.
+These plots (after Tukey and Chambers) display the distribution of a
+variable. The central box encloses the middle 50 percent of the data,
+i.e.\ it is bounded by the first and third quartiles.  The
+``whiskers'' extend to from each end of the box for a range equal to
+1.5 times the interquartile range. Observations outside that range are
+considered outliers and represented via dots.  A line is drawn across
+the box at the median and a ``\texttt{+}'' sign identifies the
+mean---see Figure~\ref{fig-boxplot}.
 
 In the case of boxplots with confidence intervals, dotted lines show
 the limits of an approximate 90 percent confidence interval for the
@@ -445,7 +457,9 @@ boxplot ILLNESS age_class --factorized --output=display
 After running the code above, you should see two graphs similar to
 Figure \ref{fig:fact-boxplots}. By comparing the marginal plot to
 the factorized one, the effect of age on the mean number of illnesses
-is quite evident (join the green crosses).
+is quite evident: by joining the green crosses you get what is
+technically known as the conditional mean function, or regression
+function if you prefer.
 
 \begin{figure}[htbp]
   \centering
