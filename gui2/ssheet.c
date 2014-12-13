@@ -343,68 +343,6 @@ static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
 		       sheet->cid, sheet->location);
 }
 
-#if 1 && GTK_MAJOR_VERSION >= 3 /* doesn't work! (could it, somehow?) */
-
-static void make_cairo_cell_border (cairo_t *cr,
-				    GdkRectangle *r)
-{
-    cairo_move_to(cr, r->x, r->y);
-    cairo_line_to(cr, r->x, r->y + r->height - 1);
-    cairo_line_to(cr, r->x + r->width, r->y + r->height - 1);
-    cairo_line_to(cr, r->x + r->width, r->y);
-    cairo_close_path(cr);
-    cairo_stroke(cr);
-}
-
-static int get_treeview_column_number (GtkTreeViewColumn *col);
-
-static void move_visible_focus (Spreadsheet *sheet,
-				GtkTreePath *path,
-				GtkTreeViewColumn *column,
-				int oldrow, int oldcol)
-{
-    GtkTreeView *view;
-    GtkTreePath *path0;
-    GtkTreeViewColumn *column0;
-    GdkWindow *window;
-    GdkRectangle bg_rect, cell_rect;
-    cairo_t *cr;
-    char pstr[8];
-
-    view = GTK_TREE_VIEW(sheet->view);
-    window = gtk_widget_get_window(sheet->view);
-    cr = gdk_cairo_create(window);
-
-    fprintf(stderr, "scrub focus at %d,%d\n", oldrow, oldcol);
-
-    sprintf(pstr, "%d", oldrow);
-    path0 = gtk_tree_path_new_from_string(pstr);
-    column0 = gtk_tree_view_get_column(view, oldcol);
-    gtk_tree_view_get_background_area(view, path0, column0, &bg_rect);
-    gtk_tree_view_get_cell_area(view, path0, column0, &cell_rect);
-    gdk_window_invalidate_rect(window, &cell_rect, TRUE);
-    gtk_cell_renderer_render(sheet->datacell,
-			     cr,
-			     sheet->view,
-			     &bg_rect, &cell_rect,
-			     0);
-    gtk_tree_path_free(path0);
-
-    fprintf(stderr, "show focus at %d,%d\n\n",
-	    gtk_tree_path_get_indices(path)[0],
-	    get_treeview_column_number(column));
-
-    /* and draw the new one */
-    gtk_tree_view_get_background_area(view, path, column, &bg_rect);
-    gtk_tree_view_get_cell_area(view, path, column, &cell_rect);
-    make_cairo_cell_border(cr, &cell_rect);
-    gdk_window_invalidate_rect(window, &cell_rect, TRUE);
-    
-    cairo_destroy(cr);    
-}
-
-#endif /* 0 */
-
 static void set_treeview_column_number (GtkTreeViewColumn *col, int j)
 {
     g_object_set_data(G_OBJECT(col), "colnum", GINT_TO_POINTER(j));
@@ -421,6 +359,12 @@ static int get_treeview_column_number (GtkTreeViewColumn *col)
     } 
 
     return 0;
+}
+
+static GtkCellRenderer *get_sheet_renderer (Spreadsheet *sheet,
+					    int colnum)
+{
+    return colnum == 0 ? sheet->textcell : sheet->datacell;
 }
 
 static void move_to_next_column (Spreadsheet *sheet, GtkTreePath *path,
@@ -456,7 +400,9 @@ static void move_to_next_column (Spreadsheet *sheet, GtkTreePath *path,
     newcol = gtk_tree_view_get_column(view, colnum);
 
     if (newcol != NULL) {
-	gtk_tree_view_set_cursor(view, path, newcol, FALSE);
+	GtkCellRenderer *r = get_sheet_renderer(sheet, colnum);
+	    
+	gtk_tree_view_set_cursor_on_cell(view, path, newcol, r, FALSE);
     }    
 }
 
@@ -496,12 +442,16 @@ static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
 	sprintf(pstr, "%d", newrow);
 	newpath = gtk_tree_path_new_from_string(pstr);
 	if (newpath != NULL) {
-	    gtk_tree_view_set_cursor(view, newpath, column, FALSE);
+	    int colnum = get_treeview_column_number(column);
+	    GtkCellRenderer *r = get_sheet_renderer(sheet, colnum);
+		
+	    gtk_tree_view_set_cursor_on_cell(view, newpath, column,
+					     r, FALSE);
 	    gtk_tree_path_free(newpath);
 	}
     } else {
 #if CELLDEBUG
-	fprintf(stderr, "move_to_next_cell: else: calling move_to_next_column\n");
+	fprintf(stderr, "move_to_next_cell: calling move_to_next_column\n");
 #endif
 	move_to_next_column(sheet, path, column);
     }
@@ -705,7 +655,9 @@ static void sheet_text_cell_edited (GtkCellRendererText *cell,
 
 	path = gtk_tree_path_new_from_string(path_string);
 	column = gtk_tree_view_get_column(view, 0);
-	gtk_tree_view_set_cursor(view, path, column, TRUE);
+	gtk_tree_view_set_cursor_on_cell(view, path, column,
+					 (GtkCellRenderer *) cell,
+					 TRUE);
 	if (sheet->entry != NULL) {
 	    gtk_entry_set_text(GTK_ENTRY(sheet->entry), user_text);
 	    gtk_editable_select_region(GTK_EDITABLE(sheet->entry), 0, -1);
@@ -1380,9 +1332,6 @@ static void update_cell_position (GtkTreeView *view,
 	    fprintf(stderr, " now in cell(%d, %d)\n", i, j);
 #endif
 	    set_locator_label(sheet, path, col);
-#if 1 && GTK_MAJOR_VERSION >= 3    
-	    move_visible_focus(sheet, path, col, i0, j0);
-#endif	    
 	    i0 = i;
 	    j0 = j;
 	} else {
@@ -1736,11 +1685,14 @@ static void select_first_editable_cell (Spreadsheet *sheet)
 
     if (editing_scalars(sheet) && n_user_scalars() == 0) {
 	column = gtk_tree_view_get_column(view, 0);
+	gtk_tree_view_set_cursor_on_cell(view, path, column,
+					 sheet->textcell, FALSE);
     } else {
 	column = gtk_tree_view_get_column(view, 1);
+	gtk_tree_view_set_cursor_on_cell(view, path, column,
+					 sheet->datacell, FALSE);
     }
-
-    gtk_tree_view_set_cursor(view, path, column, FALSE);
+    
     if (sheet->locator != NULL) {
 	set_locator_label(sheet, path, column);
     }
@@ -2332,9 +2284,10 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
 {
     GtkCellRenderer *r;
 
-    r = gtk_cell_renderer_text_new();
+    sheet->textcell = r = gtk_cell_renderer_text_new();
 
     if (editing_scalars(sheet)) {
+	/* editable name */
 	g_object_set(r, "ypad", 1, 
 		     "xalign", 1.0,
 		     "editable", TRUE, 
@@ -2345,29 +2298,26 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
 	g_signal_connect(r, "edited",
 			 G_CALLBACK(sheet_text_cell_edited), sheet);
     } else {
+	/* immutable label */
 	g_object_set(r, "ypad", 1, 
 		     "xalign", 1.0,
 		     "background", "#DEDEDE",
-		     "editable", FALSE, NULL);
+		     "mode", GTK_CELL_RENDERER_MODE_INERT,
+		     NULL);
     }
 
-    sheet->textcell = r;
+    sheet->datacell = r = gtk_cell_renderer_text_new();
 
-    r = gtk_cell_renderer_text_new();
     g_object_set(r, "ypad", 1, 
 		 "xalign", 1.0, 
 		 "family", "Monospace",
 		 "editable", TRUE, 
 		 "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 NULL);
-#if 1
     g_signal_connect(r, "editing-started",
 		     G_CALLBACK(cell_edit_start), sheet);
-#endif
     g_signal_connect(r, "edited",
 		     G_CALLBACK(sheet_cell_edited), sheet);
-
-    sheet->datacell = r;
 }
 
 static void manufacture_keystroke (GtkWidget *widget,
@@ -3372,9 +3322,10 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 		     G_CALLBACK(catch_spreadsheet_click),
 		     sheet);
 
-    select_first_editable_cell(sheet);
     window_list_add(sheet->win, SSHEET);
     gtk_widget_show(sheet->win);
+    select_first_editable_cell(sheet);
+    gtk_widget_grab_focus(sheet->view);
 
     if (editing_series(sheet)) {
 	/* we can't have the user making confounding changes elsewhere,
