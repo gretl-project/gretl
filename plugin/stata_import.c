@@ -98,9 +98,29 @@ static void bin_error (int *err)
     *err = 1;
 }
 
-/* actually an int (4-byte signed int) */
+static int stata_read_int64 (FILE *fp, int *err)
+{
+    gint64 i;
 
-static int stata_read_long (FILE *fp, int naok, int *err)
+    if (fread(&i, sizeof i, 1, fp) != 1) {
+	bin_error(err);
+	return NA_INT;
+    }
+
+    if (swapends) {
+	if (stata_endian == G_BIG_ENDIAN) {
+	    i = GINT64_FROM_BE(i);
+	} else {
+	    i = GINT64_FROM_LE(i);
+	}
+    }
+
+    return i;
+}
+
+/* 4-byte signed int */
+
+static int stata_read_int32 (FILE *fp, int naok, int *err)
 {
     int i;
 
@@ -147,9 +167,9 @@ static int stata_read_byte (FILE *fp, int *err)
     return (int) u;
 }
 
-/* actually a short (2-byte signed int) */
+/* 2-byte signed int */
 
-static int stata_read_int (FILE *fp, int naok, int *err)
+static int stata_read_short (FILE *fp, int naok, int *err)
 {
     unsigned first, second;
     int s;
@@ -667,18 +687,18 @@ static int read_dta_data (FILE *fp, DATASET *dset,
     if (!err) {
 	while (stata_read_byte(fp, &err)) {
 	    if (stata_version >= 7) { /* manual is wrong here */
-		clen = stata_read_long(fp, 1, &err);
+		clen = stata_read_int32(fp, 1, &err);
 	    } else {
-		clen = stata_read_int(fp, 1, &err);
+		clen = stata_read_short(fp, 1, &err);
 	    }
 	    for (i=0; i<clen; i++) {
 		stata_read_signed_byte(fp, 1, &err);
 	    }
 	}
 	if (stata_version >= 7) {
-	    clen = stata_read_long(fp, 1, &err);
+	    clen = stata_read_int32(fp, 1, &err);
 	} else {
-	    clen = stata_read_int(fp, 1, &err);
+	    clen = stata_read_short(fp, 1, &err);
 	}
 	if (clen != 0) {
 	    fputs(_("something strange in the file\n"
@@ -699,10 +719,10 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 	    } else if (stata_type_double(types[i])) {
 		dset->Z[v][t] = stata_read_double(fp, &err);
 	    } else if (stata_type_long(types[i])) {
-		ix = stata_read_long(fp, 0, &err);
+		ix = stata_read_int32(fp, 0, &err);
 		dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else if (stata_type_int(types[i])) {
-		ix = stata_read_int(fp, 0, &err);
+		ix = stata_read_short(fp, 0, &err);
 		dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else if (stata_type_byte(types[i])) {
 		ix = stata_read_signed_byte(fp, 0, &err);
@@ -743,8 +763,9 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 	
 	for (j=0; j<nvar; j++) {
 	    /* first int not needed, use fread directly to trigger EOF */
-	    fread((int *) aname, sizeof(int), 1, fp);
-	    if (feof(fp)) {
+	    size_t k = fread((int *) aname, sizeof(int), 1, fp);
+	    
+	    if (k == 0 || feof(fp)) {
 		pprintf(vprn, "breaking on feof\n");
 		break;
 	    }
@@ -757,8 +778,8 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 	    stata_read_byte(fp, &err);
 	    stata_read_byte(fp, &err);
 
-	    nlabels = stata_read_long(fp, 1, &err);
-	    totlen = stata_read_long(fp, 1, &err);
+	    nlabels = stata_read_int32(fp, 1, &err);
+	    totlen = stata_read_int32(fp, 1, &err);
 
 	    if (nlabels <= 0 || totlen <= 0) {
 		break;
@@ -787,11 +808,11 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 	    label_array_header(lvars, lnames, aname, dset, st_prn);
 
 	    for (i=0; i<nlabels && !err; i++) {
-		off[i] = stata_read_long(fp, 1, &err);
+		off[i] = stata_read_int32(fp, 1, &err);
 	    }
 
 	    for (i=0; i<nlabels && !err; i++) {
-		level[i] = (double) stata_read_long(fp, 0, &err);
+		level[i] = (double) stata_read_int32(fp, 0, &err);
 		pprintf(vprn, " level %d = %g\n", i, level[i]);
 	    }
 
@@ -845,12 +866,141 @@ static int read_dta_data (FILE *fp, DATASET *dset,
     return err;
 }
 
-static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs,
+/* new-style header:
+
+  file format id     <release>...</release>
+  byteorder          <byteorder>...</byteorder>
+  # of variables     <K>...</K>
+  # of observations  <N>...</N>
+  dataset label      <label>...</label>
+  datetime stamp     <timestamp>...</timestamp>
+
+*/
+
+static int parse_new_dta_header (FILE *fp, int *nvar, int *nobs,
+				 PRN *prn, PRN *vprn)
+{
+    gint64 offsets[14];
+    int rel, clen = 0;
+    char order[4];
+    char buf[96];
+    size_t b;
+    int i, err = 0;
+
+    b = fread(buf, 1, 96, fp);
+    buf[b] = '\0';
+
+    if (sscanf(buf, "<header><release>%d</release>"
+	       "<byteorder>%3s</byteorder>", &rel, order) != 2) {
+	err = 1;
+    } else {
+	fprintf(stderr, "release = %d, byte-order = %s\n",
+		rel, order);
+	if (rel != 117) {
+	    err = 1;
+	} else if (!strcmp(order, "LSF")) {
+	    stata_endian = G_LITTLE_ENDIAN;
+	} else if (!strcmp(order, "MSF")) {
+	    stata_endian = G_BIG_ENDIAN;
+	} else {
+	    err = 1;
+	}
+    }
+
+    if (!err) {
+	swapends = stata_endian != HOST_ENDIAN;
+	if (fseek(fp, 70, SEEK_SET) < 0) {
+	    err = 1;
+	} else {
+	    *nvar = stata_read_short(fp, 1, &err); /* K */
+	}
+    }
+
+    if (!err) {
+	/* skip "</K><N>" */
+	if (fseek(fp, 7, SEEK_CUR) < 0) {
+	    err = 1;
+	} else {
+	    *nobs = stata_read_int32(fp, 1, &err); /* N */
+	}
+    }
+
+    if (!err) {
+	/* skip "</N><label>" */
+	if (fseek(fp, 11, SEEK_CUR) < 0) {
+	    err = 1;
+	} else {
+	    clen = stata_read_byte(fp, &err);
+	    if (!err) {
+		if (clen > 0) {
+		    if (fread(buf, 1, clen, fp) != clen) {
+			err = 1;
+		    } else {
+			buf[clen] = '\0';
+			fprintf(stderr, "label = '%s'\n", buf);
+		    }
+		}
+	    }
+	}
+    }
+
+    if (!err) {
+	/* skip "</label><timestamp>" */
+	if (fseek(fp, 19, SEEK_CUR) < 0) {
+	    err = 1;
+	} else {
+	    clen = stata_read_byte(fp, &err);
+	    if (!err) {
+		if (clen > 0) {
+		    if (fread(buf, 1, clen, fp) != clen) {
+			err = 1;
+		    } else {
+			buf[clen] = '\0';
+			fprintf(stderr, "timestamp = '%s'\n", buf);
+		    }
+		}
+	    }
+	}
+    }
+
+    if (!err) {
+	/* skip "</timestamp></header>" */
+	if (fseek(fp, 21, SEEK_CUR) < 0) {
+	    err = 1;
+	} else {
+	    if (fread(buf, 1, 5, fp) != 5) {
+		err = 1;
+	    } else {
+		buf[5] = '\0';
+		if (strcmp(buf, "<map>")) {
+		    err = 1;
+		} else {
+		    fprintf(stderr, "got map element\n");
+		    for (i=0; i<14 && !err; i++) {
+			offsets[i] = stata_read_int64(fp, &err);
+			fprintf(stderr, "mapvals[%d] = %d\n", i, (int) offsets[i]);
+		    }
+		}
+	    }
+	}
+    }    
+
+    if (!err && (*nvar <= 0 || *nobs <= 0)) {
+	err = 1;
+    }
+    
+    return 1;
+}
+
+/* for Stata data files versions < 117 */
+
+static int parse_dta_header (FILE *fp, int *namelen,
+			     int *nvar, int *nobs,
 			     PRN *prn, PRN *vprn)
 {
     unsigned char u;
     int err = 0;
-    
+
     u = stata_read_byte(fp, &err); /* release version */
 
     if (!err) {
@@ -870,19 +1020,11 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs,
 
     stata_read_byte(fp, &err);              /* filetype -- junk */
     stata_read_byte(fp, &err);              /* padding */
-    *nvar = stata_read_int(fp, 1, &err);    /* number of variables */
-    *nobs = stata_read_long(fp, 1, &err);   /* number of observations */
+    *nvar = stata_read_short(fp, 1, &err);  /* number of variables */
+    *nobs = stata_read_int32(fp, 1, &err);  /* number of observations */
 
     if (!err && (*nvar <= 0 || *nobs <= 0)) {
 	err = 1;
-    }
-
-    if (!err && vprn != NULL) {
-	pprintf(vprn, "endianness: %s\n", (stata_endian == G_BIG_ENDIAN)? 
-		"big" : "little");
-	pprintf(vprn, "number of variables = %d\n", *nvar);
-	pprintf(vprn, "number of observations = %d\n", *nobs);
-	pprintf(vprn, "length of varnames = %d\n", *namelen);
     }
 
     return err;
@@ -891,7 +1033,8 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs,
 int dta_get_data (const char *fname, DATASET *dset,
 		  gretlopt opt, PRN *prn)
 {
-    int namelen = 0, nobs = 0;
+    char test[12] = {0};
+    int namelen = 32, nobs = 0;
     int nvar = 0, nvread = 0;
     FILE *fp;
     DATASET *newset = NULL;
@@ -911,14 +1054,29 @@ int dta_get_data (const char *fname, DATASET *dset,
 
     if (opt & OPT_Q) {
 	vprn = NULL;
-    }
+    }    
 
-    err = parse_dta_header(fp, &namelen, &nvar, &nobs, prn, vprn);
+    if (fread(test, 1, 11, fp) == 11 &&
+	!strcmp(test, "<stata_dta>")) {
+	err = parse_new_dta_header(fp, &nvar, &nobs, prn, vprn);
+    } else {
+	rewind(fp);
+	err = parse_dta_header(fp, &namelen, &nvar, &nobs, prn, vprn);
+    }
+    
     if (err) {
 	pputs(prn, _("This file does not seem to be a valid Stata data file"));
 	fclose(fp);
 	return E_DATA;
     }
+
+    if (vprn != NULL) {
+	pprintf(vprn, "endianness: %s\n", (stata_endian == G_BIG_ENDIAN)? 
+		"big" : "little");
+	pprintf(vprn, "number of variables = %d\n", nvar);
+	pprintf(vprn, "number of observations = %d\n", nobs);
+	pprintf(vprn, "length of varnames = %d\n", namelen);
+    }    
 
     newset = datainfo_new();
     if (newset == NULL) {
