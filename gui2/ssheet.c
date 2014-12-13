@@ -343,25 +343,22 @@ static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
 		       sheet->cid, sheet->location);
 }
 
-#if 0 /* doesn't work! (could it, somehow?) */
+#if 0 && GTK_MAJOR_VERSION >= 3 /* doesn't work! (could it, somehow?) */
 
 static void set_visible_focus (Spreadsheet *sheet,
 			       GtkTreePath *path,
 			       GtkTreeViewColumn *column)
 {
     GdkRectangle bg_area, cell_area;
-#if GTK_MAJOR_VERSION >= 3
     cairo_t *cr;
 
     cr = gdk_cairo_create(gtk_widget_get_window(sheet->view));
-#endif    
 
     gtk_tree_view_get_cell_area(GTK_TREE_VIEW(sheet->view),
 				path, column, &cell_area);
     gtk_tree_view_get_background_area(GTK_TREE_VIEW(sheet->view),
 				      path, column, &bg_area);
 
-#if GTK_MAJOR_VERSION >= 3
     gtk_cell_renderer_render(sheet->datacell,
 			     cr,
 			     sheet->view,
@@ -369,15 +366,6 @@ static void set_visible_focus (Spreadsheet *sheet,
 			     &cell_area,
 			     GTK_CELL_RENDERER_FOCUSED);
     cairo_destroy(cr);
-#else
-    gtk_cell_renderer_render(sheet->datacell,
-			     gtk_widget_get_window(sheet->view),
-			     sheet->view,
-			     &bg_area,
-			     &cell_area,
-			     &bg_area,
-			     GTK_CELL_RENDERER_PRELIT);
-#endif
 }
 
 #endif /* 0 */
@@ -1357,7 +1345,7 @@ static void update_cell_position (GtkTreeView *view,
 	    fprintf(stderr, " now in cell(%d, %d)\n", i, j);
 #endif
 	    set_locator_label(sheet, path, col);
-#if 0	    
+#if 0 && GTK_MAJOR_VERSION >= 3    
 	    set_visible_focus(sheet, path, col);
 #endif	    
 	    i0 = i;
@@ -2324,7 +2312,7 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
     } else {
 	g_object_set(r, "ypad", 1, 
 		     "xalign", 1.0,
-		     "background", "#DDDDDD",
+		     "background", "#DEDEDE",
 		     "editable", FALSE, NULL);
     }
 
@@ -2608,7 +2596,8 @@ static int build_sheet_view (Spreadsheet *sheet)
     view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
     g_object_unref(G_OBJECT(store));
 
-    gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(view), TRUE);
+    gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(view), FALSE);
+    gtk_tree_view_set_grid_lines(GTK_TREE_VIEW(view), GTK_TREE_VIEW_GRID_LINES_BOTH);
 
     /* build and attach the (two) cell renderers */
     create_sheet_cell_renderers(sheet);
