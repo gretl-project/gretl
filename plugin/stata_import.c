@@ -397,9 +397,6 @@ static int check_new_variable_types (FILE *fp, int *types,
 
     *nsv = 0;
 
-    /* skip stupid pseudo-XML tag */
-    fseek(fp, strlen("<variable_types>"), SEEK_CUR);
-
     for (i=0; i<nvar && !err; i++) {
    	guint16 u = stata_read_uint16(fp, &err);
 
@@ -729,7 +726,6 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     }
 
     fseek(fp, dtab->vname_pos, SEEK_SET);
-    fseek(fp, strlen("<varnames>"), SEEK_CUR);
 
     /* variable names */
     for (i=0; i<nvar && !err; i++) {
@@ -745,7 +741,6 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     }
 
     fseek(fp, dtab->vfmt_pos, SEEK_SET);
-    fseek(fp, strlen("<formats>"), SEEK_CUR);
 
     /* format list (use it to identify date variables?) */
     for (i=0; i<nvar && !err; i++){
@@ -770,7 +765,6 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     }
 
     fseek(fp, dtab->vallblnam_pos, SEEK_SET);
-    fseek(fp, strlen("<value_label_names>"), SEEK_CUR);
 
     /* "value labels": these are stored as the names of label formats, 
        which are themselves stored later in the file */
@@ -783,7 +777,6 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     }
 
     fseek(fp, dtab->varlabel_pos, SEEK_SET);
-    fseek(fp, strlen("<variable_labels>"), SEEK_CUR);
 
     /* variable descriptive labels */
     for (i=0; i<nvar && !err; i++) {
@@ -804,7 +797,6 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     }
 
     fseek(fp, dtab->data_pos, SEEK_SET);
-    fseek(fp, strlen("<data>"), SEEK_CUR);
 
     /* actual data values */
     for (t=0; t<dset->n && !err; t++) {
@@ -854,10 +846,8 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     }
 
     fseek(fp, dtab->strl_pos, SEEK_SET);
-    fseek(fp, strlen("<strls>"), SEEK_CUR);
  
     fseek(fp, dtab->vallabel_pos, SEEK_SET);
-    fseek(fp, strlen("<value_labels>"), SEEK_CUR);
 
     /* value labels (FIXME this is quite different in Stata 13+ */
     goto dodge_labels;
@@ -1287,21 +1277,21 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 static void dtab_save_offset (dta_table *dtab, int i, gint64 offset)
 {
     if (i == 2) {
-	dtab->vtype_pos = offset;
+	dtab->vtype_pos = offset + strlen("<variable_types>");
     } else if (i == 3) {
-	dtab->vname_pos = offset;
+	dtab->vname_pos = offset + strlen("<varnames>");
     } else if (i == 5) {
-	dtab->vfmt_pos = offset;
+	dtab->vfmt_pos = offset + strlen("<formats>");
     } else if (i == 6) {
-	dtab->vallblnam_pos = offset;
+	dtab->vallblnam_pos = offset + strlen("<value_label_names>");
     } else if (i == 7) {
-	dtab->varlabel_pos = offset;
+	dtab->varlabel_pos = offset + strlen("<variable_labels>");
     } else if (i == 9) {
-	dtab->data_pos = offset;
+	dtab->data_pos = offset + strlen("<data>");
     } else if (i == 10) {
-	dtab->strl_pos = offset;
+	dtab->strl_pos = offset + strlen("<strls>");
     } else if (i == 11) {
-	dtab->vallabel_pos = offset;
+	dtab->vallabel_pos = offset + strlen("<value_labels>");
     }
 }
 
