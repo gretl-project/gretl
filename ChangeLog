@@ -19,6 +19,7 @@ version 1.10.0, in progress
 - "data" command: fix incorrect importation of series with
   lower frequency than the current dataset; also add an
   --interpolate option for that context
+- Stata dta importer: handle format 117 (Stata 13)
 - Fix bug: GUI panel plot failed if the start of the sample
   range was advanced
 - Fix bug: crash on attempting to open a file from the "Recent"
