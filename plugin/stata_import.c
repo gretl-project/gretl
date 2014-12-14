@@ -849,30 +849,33 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
  
     fseek(fp, dtab->vallabel_pos, SEEK_SET);
 
-    /* value labels (FIXME this is quite different in Stata 13+ */
-    goto dodge_labels;
+    /* value labels (FIXME Stata 13+) */
 
     if (!err && !st_err && lvars != NULL) {
 	PRN *st_prn = NULL;
 	const char *vlabel;
 	double *level;
+	int llen;
 	
 	for (j=0; j<nvar; j++) {
-	    /* first int not needed, use fread directly to trigger EOF */
-	    size_t k = fread((int *) aname, sizeof(int), 1, fp);
-	    
-	    if (k == 0 || feof(fp)) {
-		pprintf(vprn, "breaking on feof\n");
+	    /* check for closing "</value_labels>" */
+	    char test[16] = {0};
+
+	    if (fread(test, 1, 15, fp) < 15 || !strcmp(test, "</value_labels>")) {
+		pprintf(vprn, "breaking on end of value labels\n");
 		break;
 	    }
+
+	    /* otherwise it's supposed to be "<lbl>" */
+	    fseek(fp, -10, SEEK_CUR);
+	    llen = stata_read_int32(fp, 0, &err);
+	    pprintf(vprn, "labels %d: value_label_table = %d bytes\n", j, llen);
 
 	    stata_read_string(fp, namelen + 1, aname, &err);
 	    pprintf(vprn, "labels %d: name = '%s'\n", j, aname);
 
 	    /* padding */
-	    stata_read_byte(fp, &err);
-	    stata_read_byte(fp, &err);
-	    stata_read_byte(fp, &err);
+	    fseek(fp, 3, SEEK_CUR);
 
 	    nlabels = stata_read_int32(fp, 1, &err);
 	    totlen = stata_read_int32(fp, 1, &err);
@@ -942,6 +945,9 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
 	    free(off);
 	    free(level);
 	    free(txt);
+
+	    /* skip pseudo-XML for next read */
+	    fseek(fp, strlen("</lbl>"), SEEK_CUR);
 	}
 
 	if (st_prn != NULL) {
@@ -951,8 +957,6 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
 	    gretl_print_destroy(st_prn);
 	}
     }
-
- dodge_labels:
 
     free(types);
 
