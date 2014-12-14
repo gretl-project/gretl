@@ -234,7 +234,6 @@ static int stata_read_short (FILE *fp, int naok, int *err)
 static guint16 stata_read_uint16 (FILE *fp, int *err)
 {
     guint16 u;
-    int s;
 
     fread(&u, sizeof u, 1, fp);
 
@@ -406,15 +405,15 @@ static int check_new_variable_types (FILE *fp, int *types,
 
 	types[i] = u;
 	if (stata_type_float(u) || stata_type_double(u)) {
-	    pprintf(prn, "variable %d: float type (%d)\n", i+1, types[i]);
+	    pprintf(prn, "variable %d: float type\n", i+1);
 	} else if (stata_type_long(u)) {
-	    pprintf(prn, "variable %d: long type (%d)\n", i+1, types[i]);
+	    pprintf(prn, "variable %d: long type\n", i+1);
 	} else if (stata_type_int(u)) {
-	    pprintf(prn, "variable %d: int type (%d)\n", i+1, types[i]);
+	    pprintf(prn, "variable %d: int type\n", i+1);
 	} else if (stata_type_byte(u)) {
-	    pprintf(prn, "variable %d: byte type (%d)\n", i+1, types[i]);
+	    pprintf(prn, "variable %d: byte type\n", i+1);
 	} else if (stata_type_string(u)) {
-	    pprintf(prn, "variable %d: string type (%d)\n", i+1, types[i]);
+	    pprintf(prn, "variable %d: string type\n", i+1);
 	    *nsv += 1;
 	} else {
 	    pputs(prn, _("unknown data type"));
@@ -860,9 +859,10 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     fseek(fp, dtab->vallabel_pos, SEEK_SET);
     fseek(fp, strlen("<value_labels>"), SEEK_CUR);
 
-    /* value labels */
+    /* value labels (FIXME this is quite different in Stata 13+ */
+    goto dodge_labels;
 
-    if (!err && !st_err && lvars != NULL && stata_version > 5) {
+    if (!err && !st_err && lvars != NULL) {
 	PRN *st_prn = NULL;
 	const char *vlabel;
 	double *level;
@@ -961,6 +961,8 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
 	    gretl_print_destroy(st_prn);
 	}
     }
+
+ dodge_labels:
 
     free(types);
 
@@ -1330,8 +1332,6 @@ static int parse_new_dta_header (FILE *fp, dta_table *dtab,
 	       "<byteorder>%3s</byteorder>", &rel, order) != 2) {
 	err = 1;
     } else {
-	fprintf(stderr, "release = %d, byte-order = %s\n",
-		rel, order);
 	if (rel != 117) {
 	    err = 1;
 	} else if (!strcmp(order, "LSF")) {
@@ -1344,6 +1344,7 @@ static int parse_new_dta_header (FILE *fp, dta_table *dtab,
     }
 
     if (!err) {
+	pprintf(prn, "Stata dta version %d, byte-order %s\n", rel, order);
 	swapends = stata_endian != HOST_ENDIAN;
 	if (fseek(fp, 70, SEEK_SET) < 0) {
 	    err = 1;
@@ -1412,7 +1413,6 @@ static int parse_new_dta_header (FILE *fp, dta_table *dtab,
 
 		    for (i=0; i<14 && !err; i++) {
 			offset = stata_read_int64(fp, &err);
-			fprintf(stderr, "offset[%d] = %d\n", i, (int) offset);
 			if (!err) {
 			    dtab_save_offset(dtab, i, offset);
 			}
