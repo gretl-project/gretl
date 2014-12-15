@@ -450,7 +450,7 @@ open rac3d.gdt
 # unconditional boxplot
 boxplot ILLNESS --output=display
 # create a discrete variable for age class: 
-# 0 = below 20, 1 = bewteen 20 and 39, etc
+# 0 = below 20, 1 = between 20 and 39, etc
 series age_class = floor(AGE/0.2)
 # conditional boxplot
 boxplot ILLNESS age_class --factorized --output=display
