@@ -442,9 +442,7 @@ struct str_table funcs[] = {
 struct str_table func_alias[] = {
     { F_GAMMA,     "gammafunc" },
     { F_GAMMA,     "gamma" },
-    { F_PVAL,      "pval" },
     { F_LOG,       "logs" },
-    { F_OBSLABEL,  "date" },
     { F_BACKTICK,  "$" },
     { 0,           NULL }
 };
