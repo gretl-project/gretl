@@ -246,6 +246,21 @@ double ymd_basic_from_epoch_day (long ed, int *err)
 }
 
 /**
+ * ymd_bits_from_epoch_day:
+ * @ed: epoch day (ed >= 1).
+ * @y: location to receive year.
+ * @m: location to receive month.
+ * @m: location to receive day.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int ymd_bits_from_epoch_day (long ed, int *y, int *m, int *d)
+{
+    return real_ymd_from_epoch_day(ed, y, m, d);
+}
+
+/**
  * weekday_from_epoch_day:
  * @ed: epoch day (ed >= 1).
  * 

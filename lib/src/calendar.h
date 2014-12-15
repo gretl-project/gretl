@@ -36,6 +36,8 @@ char *ymd_extended_from_epoch_day (long ed, int *err);
 
 double ymd_basic_from_epoch_day (long ed, int *err);
 
+int ymd_bits_from_epoch_day (long ed, int *y, int *m, int *d);
+
 int iso_basic_to_extended (const double *b, double *y, double *m, 
 			   double *d, int n);
 

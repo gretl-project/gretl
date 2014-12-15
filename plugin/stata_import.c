@@ -1,11 +1,9 @@
 /*
-   Reader for Stata .dta files, versions 5.0 to 11.
+   Reader for Stata .dta files, versions 5.0 to 13.
 
    Originally based on stataread.c from the GNU R "foreign" package with the 
-   the following version info:
+   the following header:
 
-     * $Id$
-  
      (c) 1999, 2000, 2001, 2002 Thomas Lumley. 
      2000 Saikat DebRoy
 
@@ -20,10 +18,10 @@
 
      Versions of Stata before 4.0 used different file formats.
 
-  This version was fairly substantially modified for gretl by Allin
-  Cottrell, July 2005, modified again in August 2009 to support
-  format 114 dta files as written by Stata 10 and 11, and again
-  in December 2014 to handle format 117 files (Stata 13).
+  The code here was fairly substantially modified for gretl by Allin
+  Cottrell, July 2005; modified again in August 2009 to support format
+  114 dta files as written by Stata 10 and 11; and again in December
+  2014 to handle format 117 files (Stata 13).
 */
 
 #include "libgretl.h"
@@ -36,6 +34,8 @@
 #else
 # define HOST_ENDIAN G_LITTLE_ENDIAN
 #endif
+
+/* see http://www.stata.com/help.cgi?dta */
 
 /* Stata versions */
 #define VERSION_5   0x69
@@ -72,7 +72,6 @@
 #define STATA_13_STRL     32768
 #define STATA_STRF_MAX     2045
 
-/* see http://www.stata.com/help.cgi?dta */
 #define STATA_FLOAT_MAX  1.701e+38
 #define STATA_DOUBLE_MAX 8.988e+307
 #define STATA_LONG_MAX   2147483620
@@ -86,13 +85,16 @@
 #endif
 #define STATA_INT_CUT    32767
 
-/* Stata missing value codes: see http://www.stata.com/help.cgi?dta */
+/* Stata missing value codes */
 #define STATA_FLOAT_NA(x)  (x > STATA_FLOAT_MAX)
 #define STATA_DOUBLE_NA(x) (x > STATA_DOUBLE_MAX)
 #define STATA_LONG_NA(i)   (i > STATA_LONG_MAX)
 #define STATA_INT_NA(i)    (i > STATA_INT_MAX)
 
 #define STATA_BYTE_NA(b,v) ((v<8 && b==127) || b>=101)
+
+/* Add this to Stata daily date values to get epoch days */
+#define STATA_DAY_OFFSET 715523
 
 #define NA_INT -999
 
@@ -543,41 +545,152 @@ static int try_fix_varname (char *name)
     return err;
 }
 
-/* use Stata's "date formats" to reconstruct time series information
-   FIXME: add recognition for daily data too? 
-   (Stata dates are all zero at the start of 1960.)
+/* Check a Stata series that supposedly contains daily dates
+   in their 1960-based format. See if we can figure out an
+   appropriate daily frequency (5, 6 or 7) and in addition
+   register whether the time series is complete (for the given
+   frequency) or has some implicit missing values.
 */
 
-static int set_time_info (int t1, int pd, DATASET *dinfo)
+static int stata_daily_pd (const double *d, int n,
+			   int *complete)
 {
-    int yr, mo, qt;
+    int dfreq[4] = {0};
+    int t, delta;
+    int pd = 0;
 
-    *dinfo->stobs = '\0';
-
-    if (pd == 12) {
-	yr = (t1 / 12) + 1960;
-	mo = t1 % 12 + 1;
-	sprintf(dinfo->stobs, "%d:%02d", yr, mo);
-    } else if (pd == 4) {
-	yr = (t1 / 4) + 1960;
-	qt = t1 % 4 + 1;
-	sprintf(dinfo->stobs, "%d:%d", yr, qt);
-    } else {
-	yr = t1 + 1960;
-	if (yr > 2050) {
-	    ; /* Can't be a year? (FIXME: how did we get here?) */
-	} else {
-	    sprintf(dinfo->stobs, "%d", yr);
+    /* count the frequency of daily deltas */
+    for (t=1; t<n; t++) {
+	delta = (int) d[t] - (int) d[t-1];
+	if (delta <= 0) {
+	    /* not right! */
+	    pd = -1;
+	    break;
+	} else if (delta <= 4) {
+	    dfreq[delta-1] += 1;
 	}
     }
 
-    dinfo->pd = pd;
+    if (pd == 0) {
+	if (dfreq[0] == n - 1) {
+	    /* all days represented */
+	    *complete = 1;
+	    pd = 7;
+	} else {
+	    double T = n - 1;
 
-    if (*dinfo->stobs != '\0') {
-	printf("starting obs seems to be %s\n", dinfo->stobs);
-	dinfo->structure = TIME_SERIES;
-	dinfo->sd0 = get_date_x(dinfo->pd, dinfo->stobs);
-    } 
+	    /* heuristic: "most" of the deltas should be 1 day */
+	    if (dfreq[0] / T > 0.6) {
+		if (dfreq[1] > dfreq[2]) {
+		    /* skipping one day per week, in general? */
+		    *complete = (dfreq[0] + dfreq[1] == n - 1);
+		    pd = 6;
+		} else if (dfreq[2] > dfreq[1]) {
+		    /* skipping two days per week, in general? */
+		    *complete = (dfreq[0] + dfreq[2] == n - 1);
+		    pd = 5;
+		}
+	    }
+	}
+    }
+
+    return pd;
+}
+
+/* In case we get what appear to be valid daily dates, but
+   they are not complete, add observation markers to the
+   dataset and write in the specific daily dates.
+*/
+
+static int add_daily_labels (DATASET *dset, int tv)
+{
+    int err = dataset_allocate_obs_markers(dset);
+
+    if (!err) {
+	int t, y, m, d;
+	long ed;
+
+	for (t=0; t<dset->n && !err; t++) {
+	    ed = dset->Z[tv][t] + STATA_DAY_OFFSET;
+	    err = ymd_bits_from_epoch_day(ed, &y, &m, &d);
+	    if (!err) {
+		sprintf(dset->S[t], "%04d-%02d-%02d", y, m, d);
+	    }
+	}
+	if (err) {
+	    dataset_destroy_obs_markers(dset);
+	} else {
+	    dset->markers = DAILY_DATE_STRINGS;
+	}
+    }
+
+    return err;
+}
+
+/* Try using Stata's "date formats" to reconstruct time series
+   information. (Stata dates are all zero at the start of 1960.)
+*/
+
+static int set_time_info (DATASET *dset, int tv, int pd)
+{
+    int t1 = (int) dset->Z[tv][0];
+
+    *dset->stobs = '\0';
+
+    if (pd == 12) {
+	int y = (t1 / 12) + 1960;
+	int m = t1 % 12 + 1;
+	
+	sprintf(dset->stobs, "%d:%02d", y, m);
+    } else if (pd == 4) {
+	int y = (t1 / 4) + 1960;
+	int q = t1 % 4 + 1;
+	
+	sprintf(dset->stobs, "%d:%d", y, q);
+    } else if (pd == 5) {
+	/* should be daily, but may not really be 5 */
+	int complete = 0;
+	int err = 0;
+	
+	pd = stata_daily_pd(dset->Z[tv], dset->n, &complete);
+	
+	if (pd > 0) {
+	    long ed0 = t1 + STATA_DAY_OFFSET;
+	    char *ymd = ymd_extended_from_epoch_day(ed0, &err);
+
+	    if (!err) {
+		strcpy(dset->stobs, ymd);
+		free(ymd);
+		if (!complete) {
+		    /* let's add observation labels */
+		    err = add_daily_labels(dset, tv);
+		    fprintf(stderr, "add_daily_labels: err = %d\n", err);
+		}
+	    }
+	    if (err) {
+		/* scrub it */
+		*dset->stobs = '\0';
+		pd = 1;
+	    }
+	}
+    } else {
+	int y = t1 + 1960;
+	
+	if (y > 2050) {
+	    ; /* Can't really be a starting year? */
+	} else {
+	    sprintf(dset->stobs, "%d", y);
+	}
+    }
+
+    if (*dset->stobs != '\0') {
+	dset->pd = pd;
+	printf("starting obs seems to be %s\n", dset->stobs);
+	dset->structure = TIME_SERIES;
+	dset->sd0 = get_date_x(dset->pd, dset->stobs);
+    } else {
+	dset->pd = 1;
+    }
 
     return 0;
 }
@@ -648,30 +761,10 @@ static int label_array_header (const int *list, char **names,
     return 1;
 }
 
-/* when printing stata format strings, make sure we double any
-   '%' characters */
-
-static void print_var_format (int k, const char *s, PRN *prn)
-{
-    char tmp[64];
-    int i = 0;
-
-    while (*s) {
-	tmp[i++] = *s;
-	if (*s == '%') {
-	    tmp[i++] = '%';
-	}
-	s++;
-    }
-
-    tmp[i] = '\0';
-    pprintf(prn, "variable %d: format = '%s'\n", k, tmp);    
-}
-
 #if 0
 
 /* If we ever come across Stata files > 4 GB we'll have to enable
-   this somehow.
+   this somehow. In the meantime we'll stick with good old fseek.
 */
 
 static void stata_seek (int fd, off_t offset, int whence, int *err)
@@ -815,23 +908,29 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
     return err;
 }
 
-static void process_stata_format (char *buf, int i,
-				  int *pd, int *tnum,
+/* If we get a format that seems to represent date/time,
+   write the associated periodicity to @pd and record
+   the series ID in @tvar for later use.
+*/
+
+static void process_stata_format (char *buf, int v,
+				  int *pd, int *tvar,
 				  PRN *vprn)
 {
     if (*buf != '\0' && buf[strlen(buf)-1] != 'g') {
-	print_var_format(i+1, buf, vprn);
+	pprintf(vprn, "variable %d: format = '%s'\n", v, buf);
 	if (!strcmp(buf, "%tm")) {
 	    *pd = 12;
-	    *tnum = i;
+	    *tvar = v;
 	} else if (!strcmp(buf, "%tq")) {
 	    *pd = 4;
-	    *tnum = i;
+	    *tvar = v;
 	} else if (!strcmp(buf, "%ty")) {
 	    *pd = 1;
-	    *tnum = i;
+	    *tvar = v;
 	} else if (!strcmp(buf, "%td")) {
-	    fprintf(stderr, "process_stata_format: daily data?\n");
+	    *pd = 5; /* may be revised later */
+	    *tvar = v;
 	}
     }
 }
@@ -911,17 +1010,17 @@ static void maybe_fix_varlabel_pos (FILE *fp, dta_table *dtab)
     }
 }
 
-/* handle data read for dta format 117 */
+/* main reader for dta format 117 */
 
 static int read_new_dta_data (FILE *fp, DATASET *dset,
 			      gretl_string_table **pst, 
-			      dta_table *dtab, int *nvread, 
-			      PRN *prn, PRN *vprn)
+			      dta_table *dtab, PRN *prn,
+			      PRN *vprn)
 {
     int i, j, t, clen;
     int fmtlen = 49;
     int nvar = dset->v - 1, nsv = 0;
-    int pd = 0, tnum = -1;
+    int pd = 0, tvar = -1;
     char label[81], c50[50], aname[33];
     int namelen = 32;
     int *types = NULL;
@@ -930,8 +1029,6 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     char strbuf[256];
     int st_err = 0;
     int err = 0;
-
-    *nvread = nvar;
 
     if (dtab->labellen > 0) {
 	fseek(fp, dtab->labelpos, SEEK_SET);
@@ -985,20 +1082,21 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     }
 
     if (dtab->vfmt_pos > 0) {
-	/* format list (use it to identify time/date variables?) */
+	/* format list (use it to extract time-series info?) */
 	stata_seek(fp, dtab->vfmt_pos, SEEK_SET, &err);
 	for (i=0; i<nvar && !err; i++){
 	    stata_read_string(fp, fmtlen, c50, &err);
 	    if (!err && types[i] >= STATA_13_DOUBLE) {
-		process_stata_format(c50, i, &pd, &tnum, vprn);
+		process_stata_format(c50, i+1, &pd, &tvar, vprn);
 	    }
 	}
     }
 
     stata_seek(fp, dtab->vallblnam_pos, SEEK_SET, &err);
 
-    /* "value labels": these are stored as the names of label formats, 
-       which are themselves stored later in the file */
+    /* value-label names: the names of label formats, 
+       which are themselves stored later in the file 
+    */
     for (i=0; i<nvar && !err; i++) {
         stata_read_string(fp, namelen + 1, aname, &err);
 	if (*aname != '\0' && !st_err) {
@@ -1069,14 +1167,14 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
 	    } else if (types[i] == STATA_13_STRL) {
 		; /* OMG */
 	    }
-
-	    if (i == tnum && t == 0 && !err) {
-		set_time_info((int) dset->Z[v][t], pd, dset);
-	    }
 	}
     }
 
-    if (dtab->strl_pos > 0) {
+    if (!err && tvar > 0) {
+	set_time_info(dset, tvar, pd);
+    }
+
+    if (!err && dtab->strl_pos > 0) {
 	/* strL: long strings: not handled at present */
 	stata_seek(fp, dtab->strl_pos, SEEK_SET, &err);
 	process_strl_values(fp, &err);
@@ -1127,15 +1225,17 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     return err;
 }
 
+/* main reader for dta format <= 115 */
+
 static int read_dta_data (FILE *fp, DATASET *dset,
 			  gretl_string_table **pst, 
-			  int namelen, int *nvread, 
-			  PRN *prn, PRN *vprn)
+			  int namelen, PRN *prn,
+			  PRN *vprn)
 {
     int i, j, t, clen;
     int labellen, fmtlen;
     int nvar = dset->v - 1, nsv = 0;
-    int soffset, pd = 0, tnum = -1;
+    int soffset, pd = 0, tvar = -1;
     char label[81], c50[50], aname[33];
     int *types = NULL;
     int *lvars = NULL;
@@ -1147,7 +1247,6 @@ static int read_dta_data (FILE *fp, DATASET *dset,
     labellen = (stata_version == 5)? 32 : 81;
     fmtlen = (stata_version < 10)? 12 : 49;
     soffset = (stata_SE)? STATA_SE_STRINGOFFSET : STATA_STRINGOFFSET;
-    *nvread = nvar;
 
     pprintf(vprn, "Max length of labels = %d\n", labellen);
 
@@ -1194,16 +1293,17 @@ static int read_dta_data (FILE *fp, DATASET *dset,
         stata_read_byte(fp, &err);
     }
     
-    /* format list (use it to identify date variables?) */
+    /* format list (use it to extract time-series info?) */
     for (i=0; i<nvar && !err; i++){
         stata_read_string(fp, fmtlen, c50, &err);
 	if (!err && !stata_type_string(types[i])) {
-	    process_stata_format(c50, i, &pd, &tnum, vprn);
+	    process_stata_format(c50, i+1, &pd, &tvar, vprn);
 	}
     }
 
-    /* "value labels": these are stored as the names of label formats, 
-       which are themselves stored later in the file */
+    /* value-label names: the names of label formats, 
+       which are themselves stored later in the file 
+    */
     for (i=0; i<nvar && !err; i++) {
         stata_read_string(fp, namelen + 1, aname, &err);
 	if (*aname != '\0' && !st_err) {
@@ -1270,7 +1370,7 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 		/* a string variable */
 		clen = types[i] - soffset;
 		if (clen > 255) {
-		    /* rel <= 115: the max is supposed to be 244 */
+		    /* release <= 115: the max is supposed to be 244 */
 		    clen = 255;
 		} 
 		stata_read_string(fp, clen, strbuf, &err);
@@ -1282,11 +1382,11 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 		    process_string_value(strbuf, *pst, dset, v, t, prn);
 		}
 	    }
-
-	    if (i == tnum && t == 0 && !err) {
-		set_time_info((int) dset->Z[v][t], pd, dset);
-	    }
 	}
+    }
+
+    if (!err && tvar > 0) {
+	set_time_info(dset, tvar, pd);
     }
 
     /* value labels */
@@ -1325,21 +1425,32 @@ static int read_dta_data (FILE *fp, DATASET *dset,
     return err;
 }
 
+/* Save the offsets read from <map>...</map> for later use.
+   In general it should be fatal if any of these offsets are
+   invalid, however many Stata 13 files have 0 in place of
+   the offset to the variable labels block, and we're prepared
+   to work around that.
+*/
+
 static int dtab_save_offset (dta_table *dtab, int i, gint64 offset)
 {
     if (offset <= 0) {
-	if (i != 7) {
+	int err = 0;
+
+	if (i == 5 || i == 7 || i != 10) {
+	    ; /* maybe we can struggle on? */
+	} else {
+	    err = E_DATA;
+	}
+
+	if (i == 7) {
+	    /* semi-expected */
+	    fprintf(stderr, "buggy Stata file: variable labels not mapped\n");
+	} else {
 	    fprintf(stderr, "map: bad offset for element %d\n", i);
 	}
-	if (i != 5 && i != 7 && i != 10) {
-	    return E_DATA;
-	} else {
-	    /* maybe we can struggle on */
-	    if (i == 7) {
-		fprintf(stderr, "buggy Stata file: variable labels not mapped\n");
-	    }
-	    return 0;
-	}
+
+	return err;
     }
 		
     if (i == 2) {
@@ -1471,7 +1582,6 @@ static int parse_new_dta_header (FILE *fp, dta_table *dtab,
 
 		    for (i=0; i<14 && !err; i++) {
 			offset = stata_read_int64(fp, &err);
-			fprintf(stderr, "map offset[%d] = %d\n", i, (int) offset);
 			if (i > 0 && !err) {
 			    err = dtab_save_offset(dtab, i, offset);
 			}
@@ -1550,8 +1660,8 @@ int dta_get_data (const char *fname, DATASET *dset,
 		  gretlopt opt, PRN *prn)
 {
     dta_table *dtab = NULL;
-    int namelen = 32, nobs = 0;
-    int nvar = 0, nvread = 0;
+    int namelen = 32;
+    int nvar = 0, nobs = 0;
     FILE *fp;
     DATASET *newset = NULL;
     gretl_string_table *st = NULL;
@@ -1622,9 +1732,9 @@ int dta_get_data (const char *fname, DATASET *dset,
     }
 
     if (stata_13) {
-	err = read_new_dta_data(fp, newset, &st, dtab, &nvread, prn, vprn);
+	err = read_new_dta_data(fp, newset, &st, dtab, prn, vprn);
     } else {
-	err = read_dta_data(fp, newset, &st, namelen, &nvread, prn, vprn);
+	err = read_dta_data(fp, newset, &st, namelen, prn, vprn);
     }
 
     if (err) {
@@ -1634,11 +1744,6 @@ int dta_get_data (const char *fname, DATASET *dset,
 	}	
     } else {
 	int merge = (dset->Z != NULL);
-	int nvtarg = newset->v - 1;
-
-	if (nvread < nvtarg) {
-	    dataset_drop_last_variables(newset, nvtarg - nvread);
-	}
 	
 	if (fix_varname_duplicates(newset)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
