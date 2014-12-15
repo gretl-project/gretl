@@ -278,13 +278,17 @@ static int pca_save_components (VMatrix *cmat,
 
     if (!err) {
 	/* construct standardized versions of all variables */
-	sZ = doubles_array_new(k, dset->n); 
+	int T = dset->t2 - dset->t1 + 1;
+	double *zi;
+
+	sZ = doubles_array_new(k, T); 
 	if (sZ == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    for (i=0; i<k && !err; i++) {
 		vi = cmat->list[i+1];
-		err = standardize(sZ[i], dset->Z[vi], dset->n);
+		zi = dset->Z[vi] + dset->t1;
+		err = standardize(sZ[i], zi, T);
 	    }
 	}
     }
@@ -292,6 +296,7 @@ static int pca_save_components (VMatrix *cmat,
     if (!err) {
 	gchar *label;
 	double load;
+	int s;
 
 	for (i=0; i<m; i++) {
 	    vi = v + i;
@@ -301,6 +306,7 @@ static int pca_save_components (VMatrix *cmat,
 				    E->val[i]);
 	    series_set_label(dset, vi, label);
 	    g_free(label);
+	    s = 0;
 	    for (t=0; t<dset->n; t++) {
 		if (t < dset->t1 || t > dset->t2) {
 		    dset->Z[vi][t] = NADBL;
@@ -308,7 +314,7 @@ static int pca_save_components (VMatrix *cmat,
 		}
 		dset->Z[vi][t] = 0.0;
 		for (j=0; j<k; j++) {
-		    x = sZ[j][t];
+		    x = sZ[j][s];
 		    if (na(x)) {
 			dset->Z[vi][t] = NADBL;
 			break;
@@ -317,6 +323,7 @@ static int pca_save_components (VMatrix *cmat,
 			dset->Z[vi][t] += load * x;
 		    }
 		}
+		s++;
 	    }
 	}
     }
@@ -390,6 +397,7 @@ int pca_from_cmatrix (VMatrix *cmat, DATASET *dset,
 
 #if PCA_DEBUG
     gretl_matrix_print(C, "revised C (eigenvecs)");
+    gretl_matrix_print(evals, "eigenvalues");
 #endif
 
     if (!err && !(opt & OPT_Q) && prn != NULL) {

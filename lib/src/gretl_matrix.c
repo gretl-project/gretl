@@ -8470,11 +8470,12 @@ gretl_symm_matrix_eigenvals_descending (gretl_matrix *m,
     if (!*err) {
 	m = eigenvecs ? m : NULL;
 	*err = gretl_symmetric_eigen_sort(v, m, 0);
-	if (*err) {
-	    gretl_matrix_free(v);
-	    v = NULL;
-	}
     }
+
+    if (*err && v != NULL) {
+	gretl_matrix_free(v);
+	v = NULL;
+    }	
 
     return v;
 } 

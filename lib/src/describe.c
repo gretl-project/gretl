@@ -5266,8 +5266,10 @@ enum {
 /* compute correlation or covariance matrix, using maximum possible
    sample for each coefficient */
 
-static int max_corrcov_matrix (VMatrix *v, const double **Z, int flag)
+static int max_corrcov_matrix (VMatrix *v, const DATASET *dset, 
+			       int flag)
 {
+    double **Z = dset->Z;
     int i, j, vi, vj, nij;
     int nmaxmin = v->t2 - v->t1 + 1;
     int nmaxmax = 0;
@@ -5327,8 +5329,10 @@ static int max_corrcov_matrix (VMatrix *v, const double **Z, int flag)
 /* compute correlation or covariance matrix, ensuring we
    use the same sample for all coefficients */
 
-static int uniform_corrcov_matrix (VMatrix *v, const double **Z, int flag)
+static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
+				   int flag)
 {
+    double **Z = dset->Z;
     double *xbar = NULL, *ssx = NULL;
     int m = v->dim;
     int mm = (m * (m + 1)) / 2;
@@ -5354,7 +5358,7 @@ static int uniform_corrcov_matrix (VMatrix *v, const double **Z, int flag)
 
     for (i=0; i<m; i++) {
 	xbar[i] = 0.0;
-    }       
+    }
 
     /* first pass: get sample size and sums */
 
@@ -5513,10 +5517,10 @@ VMatrix *corrlist (int *list, const DATASET *dset,
 
     if (opt & OPT_U) {
 	/* impose uniform sample size */
-	*err = uniform_corrcov_matrix(v, (const double **) dset->Z, flag);
+	*err = uniform_corrcov_matrix(v, dset, flag);
     } else {
 	/* sample sizes may differ */
-	*err = max_corrcov_matrix(v, (const double **) dset->Z, flag);
+	*err = max_corrcov_matrix(v, dset, flag);
     }
 
     if (!*err) {
