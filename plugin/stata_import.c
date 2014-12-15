@@ -792,18 +792,24 @@ static int process_value_labels (FILE *fp, DATASET *dset, int j,
 }
 
 static int process_stata_varname (FILE *fp, char *buf, int namelen,
-				  DATASET *dset, int i, PRN *vprn)
+				  DATASET *dset, int v, PRN *vprn)
 {
     int err = 0;
     
     stata_read_string(fp, namelen + 1, buf, &err);
-    /* try to fix possible bad encoding */
-    iso_to_ascii(buf);
-    pprintf(vprn, "variable %d: name = '%s'\n", i+1, buf);
-    if (check_varname(buf) && try_fix_varname(buf)) {
-	err = 1;
-    } else {
-	strncat(dset->varname[i+1], buf, VNAMELEN - 1);
+
+    if (!err) {
+	/* try to fix possible bad encoding */
+	iso_to_ascii(buf);
+	pprintf(vprn, "variable %d: name = '%s'\n", v, buf);
+	err = check_varname(buf);
+	if (err) {
+	    err = try_fix_varname(buf);
+	}
+    }
+    
+    if (!err) {
+	strncat(dset->varname[v], buf, VNAMELEN - 1);
     }
 
     return err;
@@ -824,6 +830,8 @@ static void process_stata_format (char *buf, int i,
 	} else if (!strcmp(buf, "%ty")) {
 	    *pd = 1;
 	    *tnum = i;
+	} else if (!strcmp(buf, "%td")) {
+	    fprintf(stderr, "process_stata_format: daily data?\n");
 	}
     }
 }
@@ -973,11 +981,11 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     /* variable names */
     for (i=0; i<nvar && !err; i++) {
 	err = process_stata_varname(fp, aname, namelen,
-				    dset, i, vprn);
+				    dset, i+1, vprn);
     }
 
     if (dtab->vfmt_pos > 0) {
-	/* format list (use it to identify date variables?) */
+	/* format list (use it to identify time/date variables?) */
 	stata_seek(fp, dtab->vfmt_pos, SEEK_SET, &err);
 	for (i=0; i<nvar && !err; i++){
 	    stata_read_string(fp, fmtlen, c50, &err);
@@ -1178,7 +1186,7 @@ static int read_dta_data (FILE *fp, DATASET *dset,
     /* variable names */
     for (i=0; i<nvar && !err; i++) {
 	err = process_stata_varname(fp, aname, namelen,
-				    dset, i, vprn);
+				    dset, i+1, vprn);
     }
 
     /* sortlist -- not relevant */

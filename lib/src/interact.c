@@ -922,7 +922,7 @@ static int do_pca (int *list, DATASET *dset,
 
 	/* adding OPT_U ensures a uniform sample for the
 	   correlation or covariance matrix */
-	cmat = corrlist(list, dset, opt | OPT_U, &err);
+	cmat = corrlist(PCA, list, dset, opt, &err);
 	if (!err) {
 	    err = call_pca_plugin(cmat, dset, opt, prn);
 	    if (!err && (opt & (OPT_O | OPT_A))) {

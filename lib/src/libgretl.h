@@ -298,6 +298,8 @@ typedef struct VMatrix_ {
     int t1, t2, n;
     char **names;
     double *vec;
+    double *xbar;
+    double *ssx;
     int *list;
     int missing;
 } VMatrix;

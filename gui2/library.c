@@ -703,8 +703,7 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
     switch (ci) {
     case CORR:
     case PCA:
-	obj = corrlist(libcmd.list, dataset, 
-		       (ci == PCA)? (opt | OPT_U) : opt, &err);
+	obj = corrlist(ci, libcmd.list, dataset, opt, &err);
 	if (!err) {
 	    if (ci == CORR) {
 		print_corrmat(obj, dataset, prn);

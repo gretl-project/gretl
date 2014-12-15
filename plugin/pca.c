@@ -229,20 +229,24 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
     }
 }
 
-static int standardize (double *y, const double *x, int n)
+static int standardize (double *sy, const double *y,
+			VMatrix *v, int i)
 {
-    double xbar, sd;
-    int i, err;
+    double sd;
+    int t;
 
-    err = gretl_moments(0, n-1, x, NULL, &xbar, &sd, NULL, NULL, 1);
-
-    if (!err) {
-	for (i=0; i<n; i++) {
-	    y[i] = na(x[i]) ? NADBL : (x[i] - xbar) / sd;
-	}
+    if (v->xbar == NULL || v->ssx == NULL) {
+	/* "can't happen" */
+	return E_DATA;
     }
 
-    return err;
+    sd = sqrt(v->ssx[i] / (v->n - 1));
+
+    for (t=0; t<v->n; t++) {
+	sy[t] = (y[t] - v->xbar[i]) / sd;
+    }
+
+    return 0;
 }
 
 /* Add components to the dataset, either "major" ones (eigenvalues
@@ -258,7 +262,7 @@ static int pca_save_components (VMatrix *cmat,
 				gretlopt opt)
 {
     int save_all = (opt & OPT_A);
-    double x, **sZ = NULL;
+    double **sX = NULL;
     int m = 0, v = dset->v;
     int k = cmat->dim;
     int i, j, t, vi;
@@ -274,28 +278,33 @@ static int pca_save_components (VMatrix *cmat,
 	} 
     }
 
+    /* Note that cmat->t1 and cmat->t2 may differ from
+       dset->t1 and dset->t2 if the PCA sample was
+       restricted by the presence of NAs. Here it's
+       the cmat values that should be used.
+    */
+
     err = dataset_add_series(dset, m);
 
     if (!err) {
 	/* construct standardized versions of all variables */
-	int T = dset->t2 - dset->t1 + 1;
-	double *zi;
+	double *xi;
 
-	sZ = doubles_array_new(k, T); 
-	if (sZ == NULL) {
+	sX = doubles_array_new(k, cmat->n); 
+	if (sX == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    for (i=0; i<k && !err; i++) {
 		vi = cmat->list[i+1];
-		zi = dset->Z[vi] + dset->t1;
-		err = standardize(sZ[i], zi, T);
+		xi = dset->Z[vi] + cmat->t1;
+		err = standardize(sX[i], xi, cmat, i);
 	    }
 	}
     }
 
     if (!err) {
 	gchar *label;
-	double load;
+	double x, load;
 	int s;
 
 	for (i=0; i<m; i++) {
@@ -308,13 +317,13 @@ static int pca_save_components (VMatrix *cmat,
 	    g_free(label);
 	    s = 0;
 	    for (t=0; t<dset->n; t++) {
-		if (t < dset->t1 || t > dset->t2) {
+		if (t < cmat->t1 || t > cmat->t2) {
 		    dset->Z[vi][t] = NADBL;
 		    continue;
 		}
 		dset->Z[vi][t] = 0.0;
 		for (j=0; j<k; j++) {
-		    x = sZ[j][s];
+		    x = sX[j][s];
 		    if (na(x)) {
 			dset->Z[vi][t] = NADBL;
 			break;
@@ -328,7 +337,7 @@ static int pca_save_components (VMatrix *cmat,
 	}
     }
 
-    doubles_array_free(sZ, k);
+    doubles_array_free(sX, k);
 
     return err;
 }

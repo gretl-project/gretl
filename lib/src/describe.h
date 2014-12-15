@@ -229,7 +229,7 @@ int summary_has_missing_values (const Summary *summ);
 
 void free_summary (Summary *summ);
 
-VMatrix *corrlist (int *list, const DATASET *dset,
+VMatrix *corrlist (int ci, int *list, const DATASET *dset,
 		   gretlopt opt, int *err);
 
 VMatrix *vmatrix_new (void);

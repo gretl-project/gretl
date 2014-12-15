@@ -5221,6 +5221,8 @@ VMatrix *vmatrix_new (void)
 
     if (v != NULL) {
 	v->vec = NULL;
+	v->xbar = NULL;
+	v->ssx = NULL;
 	v->list = NULL;
 	v->names = NULL;
 	v->ci = 0;
@@ -5251,6 +5253,12 @@ void free_vmatrix (VMatrix *vmat)
 	if (vmat->vec != NULL) {
 	    free(vmat->vec);
 	}
+	if (vmat->xbar != NULL) {
+	    free(vmat->xbar);
+	}
+	if (vmat->ssx != NULL) {
+	    free(vmat->ssx);
+	}
 	if (vmat->list != NULL) {
 	    free(vmat->list);
 	}
@@ -5263,77 +5271,85 @@ enum {
     COVMAT
 };
 
-/* compute correlation or covariance matrix, using maximum possible
-   sample for each coefficient */
+/* Compute correlation or covariance matrix, using the maximum 
+   available sample for each coefficient.
+*/
 
 static int max_corrcov_matrix (VMatrix *v, const DATASET *dset, 
 			       int flag)
 {
     double **Z = dset->Z;
     int i, j, vi, vj, nij;
-    int nmaxmin = v->t2 - v->t1 + 1;
-    int nmaxmax = 0;
+    int nmin, nmax = 0;
     int m = v->dim;
-    int missing;
+    int nmiss;
+
+    nmin = v->n = v->t2 - v->t1 + 1;
 
     for (i=0; i<m; i++) {  
 	vi = v->list[i+1];
 	for (j=i; j<m; j++)  {
 	    vj = v->list[j+1];
 	    nij = ijton(i, j, m);
-	    missing = 0;
 	    if (i == j && flag == CORRMAT) {
 		v->vec[nij] = 1.0;
 	    } else {
-		missing = 0;
+		nmiss = 0;
 		if (flag == COVMAT) {
 		    v->vec[nij] = gretl_covar(v->t1, v->t2, Z[vi], Z[vj], 
-					      &missing);
+					      &nmiss);
 		} else {
 		    v->vec[nij] = gretl_corr(v->t1, v->t2, Z[vi], Z[vj], 
-					     &missing);
+					     &nmiss);
 		}
-		if (missing > 0) {
-		    int n = v->t2 - v->t1 + 1 - missing;
+		if (nmiss > 0) {
+		    int n = v->n - nmiss;
 
-		    if (n < nmaxmin && n > 0) {
-			nmaxmin = n;
+		    if (n < nmin && n > 0) {
+			nmin = n;
 		    } 
-		    if (n > nmaxmax) {
-			nmaxmax = n;
+		    if (n > nmax) {
+			nmax = n;
 		    }
 		    v->missing = 1;
 		} else {
-		    nmaxmax = v->t2 - v->t1 + 1;
+		    nmax = v->n;
 		}
 	    }
 	}
     }
 
-    /* we'll record an "n" value if there's something resembling
-       a common value across the coefficients */
+    /* We'll record an "n" value if there's something resembling
+       a common number of observations across the coefficients.
+    */
 
-    if (!v->missing) {
-	v->n = v->t2 - v->t1 + 1;
-    } else if (nmaxmax > 0) {
-	double d = (nmaxmax - nmaxmin) / (double) nmaxmax;
+    if (v->missing) {
+	v->n = 0;
+	if (nmax > 0) {
+	    double d = (nmax - nmin) / (double) nmax;
 
-	if (d < .10) {
-	    v->n = nmaxmin;
+	    if (d < 0.10) {
+		v->n = nmin;
+	    }
 	}
     } 
 
     return 0;
 }
 
-/* compute correlation or covariance matrix, ensuring we
-   use the same sample for all coefficients */
+/* Compute correlation or covariance matrix, ensuring we use the same
+   sample for all coefficients. We may be doing this in the context of
+   the "corr" command or in the context of "pca". In the latter case
+   we want to save the "xbar" and "ssx" values for later use when
+   calculating the component series.
+*/
 
 static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
-				   int flag)
+				   int ci, int flag)
 {
     double **Z = dset->Z;
     double *xbar = NULL, *ssx = NULL;
+    double *x;
     int m = v->dim;
     int mm = (m * (m + 1)) / 2;
     double d1, d2;
@@ -5345,19 +5361,22 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
 	return E_ALLOC;
     }
 
-    if (flag == CORRMAT) {
+    if (ci == PCA || flag == CORRMAT) {
 	ssx = malloc(m * sizeof *ssx);
 	if (ssx == NULL) {
 	    free(xbar);
 	    return E_ALLOC;
 	}
-	for (i=0; i<m; i++) {
-	    ssx[i] = 0.0;
-	}
-    }    
+    }
 
     for (i=0; i<m; i++) {
 	xbar[i] = 0.0;
+    }
+
+    if (ssx != NULL) {
+	for (i=0; i<m; i++) {
+	    ssx[i] = 0.0;
+	}
     }
 
     /* first pass: get sample size and sums */
@@ -5398,21 +5417,24 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
     for (t=v->t1; t<=v->t2; t++) {
 	miss = 0;
 	for (i=0; i<m; i++) {
-	    if (na(Z[v->list[i+1]][t])) {
+	    x = Z[v->list[i+1]];
+	    if (na(x[t])) {
 		miss = 1;
 		break;
 	    }
 	}
 	if (!miss) {
 	    for (i=0; i<m; i++) {
-		d1 = Z[v->list[i+1]][t] - xbar[i];
+		x = Z[v->list[i+1]];
+		d1 = x[t] - xbar[i];
 		if (ssx != NULL) {
 		    ssx[i] += d1 * d1;
 		}
 		jmin = (flag == COVMAT)? i : i + 1;
 		for (j=jmin; j<m; j++) {
+		    x = Z[v->list[j+1]];
 		    nij = ijton(i, j, m);
-		    d2 = Z[v->list[j+1]][t] - xbar[j];
+		    d2 = x[t] - xbar[j];
 		    v->vec[nij] += d1 * d2;
 		}
 	    }	    
@@ -5422,6 +5444,7 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
     /* finalize: compute correlations or covariances */
 
     if (flag == CORRMAT) {
+	/* correlations */
 	for (i=0; i<m; i++) {  
 	    for (j=i; j<m; j++)  {
 		nij = ijton(i, j, m);
@@ -5435,6 +5458,7 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
 	    }
 	}
     } else {
+	/* covariances */
 	for (i=0; i<mm; i++) {
 	    v->vec[i] /= (n - 1);
 	}
@@ -5442,8 +5466,11 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
 
     v->n = n;
 
-    free(xbar);
-    if (ssx != NULL) {
+    if (ci == PCA) {
+	v->xbar = xbar;
+	v->ssx = ssx;
+    } else {
+	free(xbar);
 	free(ssx);
     }
 
@@ -5452,6 +5479,7 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
 
 /**
  * corrlist:
+ * @ci: command index.
  * @list: list of variables to process, by ID number.
  * @dset: dataset struct.
  * @opt: option flags.
@@ -5467,12 +5495,13 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
  * Returns: gretl correlation matrix struct, or NULL on failure.
  */
 
-VMatrix *corrlist (int *list, const DATASET *dset,
+VMatrix *corrlist (int ci, int *list, const DATASET *dset,
 		   gretlopt opt, int *err)
 {
     int flag = (opt & OPT_C)? COVMAT : CORRMAT;
     VMatrix *v;
     int i, m, mm;
+    int nmiss = 0;
 
     if (list == NULL) {
 	fprintf(stderr, "corrlist: list is NULL\n");
@@ -5487,16 +5516,32 @@ VMatrix *corrlist (int *list, const DATASET *dset,
     }
 
     /* drop any constants from list */
-    for (i=1; i<=list[0]; i++) {
+    for (i=list[0]; i>0; i--) {
 	if (gretl_isconst(dset->t1, dset->t2, dset->Z[list[i]])) {
 	    gretl_list_delete_at_pos(list, i);
-	    i--;
 	}
     }
 
     if (list[0] < 2) {
 	gretl_errmsg_set(_("corr: needs at least two non-constant arguments"));
 	*err = E_DATA;
+	goto bailout;
+    }
+
+    v->t1 = dset->t1;
+    v->t2 = dset->t2;
+
+    /* adjust sample range if need be */
+    list_adjust_sample(list, &v->t1, &v->t2, dset, &nmiss);
+
+    if (v->t2 - v->t1 + 1 < 3) {
+	*err = E_TOOFEW;
+	goto bailout;
+    } else if (ci == PCA && nmiss > 0) {
+	/* When doing PCA, it's too complicated to handle
+	   missing observations within the sample range.
+	*/
+	*err = E_MISSDATA;
 	goto bailout;
     }	
 
@@ -5512,12 +5557,13 @@ VMatrix *corrlist (int *list, const DATASET *dset,
 	goto bailout;
     }
 
-    v->t1 = dset->t1;
-    v->t2 = dset->t2;
+    if (ci == PCA) {
+	opt |= OPT_U;
+    }
 
     if (opt & OPT_U) {
 	/* impose uniform sample size */
-	*err = uniform_corrcov_matrix(v, dset, flag);
+	*err = uniform_corrcov_matrix(v, dset, ci, flag);
     } else {
 	/* sample sizes may differ */
 	*err = max_corrcov_matrix(v, dset, flag);
@@ -5533,7 +5579,7 @@ VMatrix *corrlist (int *list, const DATASET *dset,
 	}
     }	
 
-    v->ci = (flag == CORRMAT)? CORR : 0;
+    v->ci = (flag == CORRMAT)? CORR : 0; /* FIXME? */
 
  bailout:
     
@@ -5616,7 +5662,7 @@ void print_corrmat (VMatrix *corr, const DATASET *dset, PRN *prn)
  * gretl_corrmx:
  * @list: gives the ID numbers of the variables to process.
  * @dset: dataset struct.
- * @opt: option flags: OPT_U = use uniform sample size.
+ * @opt: option flags: OPT_U means use uniform sample size.
  * @prn: gretl printing struct.
  *
  * Computes and prints the correlation matrix for the specified list
@@ -5635,13 +5681,13 @@ int gretl_corrmx (int *list, const DATASET *dset,
 	if (list[0] == 0) {
 	    return 0;
 	} else {
-	    corr = corrlist(list, dset, opt, &err);
+	    corr = corrlist(CORR, list, dset, opt, &err);
 	}
     } else {
 	int *tmplist = full_var_list(dset, NULL);
 
 	if (tmplist != NULL) {
-	    corr = corrlist(tmplist, dset, opt, &err);
+	    corr = corrlist(CORR, tmplist, dset, opt, &err);
 	    free(tmplist);
 	}
     }
