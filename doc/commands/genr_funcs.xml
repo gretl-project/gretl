@@ -5281,8 +5281,7 @@
 
     <function name="obslabel" section="data-utils" output="string">
       <fnargs>
-	<fnarg type="int">t
-	</fnarg>
+	<fnarg type="int">t</fnarg>
       </fnargs>
       <description>
 	<para>
