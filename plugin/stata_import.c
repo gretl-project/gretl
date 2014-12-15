@@ -35,6 +35,22 @@
 # define HOST_ENDIAN G_LITTLE_ENDIAN
 #endif
 
+#define SIZEOF_OFF_TYPE    8
+
+#ifdef WIN32
+#define ftell64(a)     _ftelli64(a)
+#define fseek64(a,b,c) _fseeki64(a,b,c)
+typedef __int64 off_type;
+#elif SPARC
+#define ftell64(a)     ftello(a)
+#define fseek64(a,b,c) fseeko(a,b,c)
+typedef off64_t off_type;
+#else /* same for Linux and Mac OS X */
+#define ftell64(a)     ftello(a)
+#define fseek64(a,b,c) fseeko(a,b,c)
+typedef off_t off_type;
+#endif
+
 /* see http://www.stata.com/help.cgi?dta */
 
 /* Stata versions */
@@ -761,31 +777,12 @@ static int label_array_header (const int *list, char **names,
     return 1;
 }
 
-#if 0
-
-/* If we ever come across Stata files > 4 GB we'll have to enable
-   this somehow. In the meantime we'll stick with good old fseek.
-*/
-
-static void stata_seek (int fd, off_t offset, int whence, int *err)
-{
-    off_t ret = lseek(fd, offset, whence);
-
-    if (ret < 0) {
-	bin_error(err);
-    }
-}
-
-#else
-
 static void stata_seek (FILE *fp, gint64 offset, int whence, int *err)
 {
-    if (fseek(fp, offset, whence) < 0) {
+    if (fseek64(fp, offset, whence) < 0) {
 	bin_error(err);
     }
 }
-
-#endif
 
 static int process_value_labels (FILE *fp, DATASET *dset, int j,
 				 int *lvars, char **lnames, int namelen,
@@ -810,7 +807,7 @@ static int process_value_labels (FILE *fp, DATASET *dset, int j,
     pprintf(vprn, "labels %d: name = '%s'\n", j, buf);
 
     /* padding */
-    fseek(fp, 3, SEEK_CUR);
+    fseek64(fp, 3, SEEK_CUR);
 
     nlabels = stata_read_int32(fp, 1, &err);
     totlen = stata_read_int32(fp, 1, &err);
@@ -1005,7 +1002,7 @@ static void maybe_fix_varlabel_pos (FILE *fp, dta_table *dtab)
 	test[17] = '\0';
 	if (!strcmp(test, "<variable_labels>")) {
 	    /* got it */
-	    dtab->varlabel_pos = ftell(fp);
+	    dtab->varlabel_pos = ftell64(fp);
 	}
     }
 }
@@ -1031,14 +1028,14 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     int err = 0;
 
     if (dtab->labellen > 0) {
-	fseek(fp, dtab->labelpos, SEEK_SET);
+	fseek64(fp, dtab->labelpos, SEEK_SET);
 	stata_read_string(fp, dtab->labellen, label, &err);
 	label[dtab->labellen] = '\0';
 	pprintf(vprn, "dataset label: '%s'\n", label);
     }
 
     if (dtab->timepos > 0) {
-	fseek(fp, dtab->timepos, SEEK_SET);
+	fseek64(fp, dtab->timepos, SEEK_SET);
 	stata_read_string(fp, 17, c50, &err);
 	c50[17] = '\0';
 	pprintf(vprn, "timestamp: '%s'\n", c50);
@@ -1197,14 +1194,14 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
 	    }
 
 	    /* otherwise it's supposed to be "<lbl>" */
-	    fseek(fp, -10, SEEK_CUR);
+	    fseek64(fp, -10, SEEK_CUR);
 
 	    st_err = process_value_labels(fp, dset, j, lvars, lnames,
 					  namelen, pst, &st_prn, vprn);
 	    /* FIXME handle errors here? */
 
 	    /* skip pseudo-XML for next read */
-	    fseek(fp, strlen("</lbl>"), SEEK_CUR);
+	    fseek64(fp, strlen("</lbl>"), SEEK_CUR);
 	}
 
 	if (st_prn != NULL) {
@@ -1515,7 +1512,7 @@ static int parse_new_dta_header (FILE *fp, dta_table *dtab,
     if (!err) {
 	pprintf(prn, "Stata dta version %d, byte-order %s\n", rel, order);
 	swapends = stata_endian != HOST_ENDIAN;
-	if (fseek(fp, 70, SEEK_SET) < 0) {
+	if (fseek64(fp, 70, SEEK_SET) < 0) {
 	    err = 1;
 	} else {
 	    dtab->nvar = stata_read_short(fp, 1, &err); /* K */
@@ -1524,7 +1521,7 @@ static int parse_new_dta_header (FILE *fp, dta_table *dtab,
 
     if (!err) {
 	/* skip "</K><N>" */
-	if (fseek(fp, 7, SEEK_CUR) < 0) {
+	if (fseek64(fp, 7, SEEK_CUR) < 0) {
 	    err = 1;
 	} else {
 	    dtab->nobs = stata_read_int32(fp, 1, &err); /* N */
@@ -1533,15 +1530,15 @@ static int parse_new_dta_header (FILE *fp, dta_table *dtab,
 
     if (!err) {
 	/* skip "</N><label>" */
-	if (fseek(fp, 11, SEEK_CUR) < 0) {
+	if (fseek64(fp, 11, SEEK_CUR) < 0) {
 	    err = 1;
 	} else {
 	    clen = stata_read_byte(fp, &err);
 	    if (!err) {
 		if (clen > 0) {
 		    dtab->labellen = clen;
-		    dtab->labelpos = ftell(fp);
-		    if (fseek(fp, clen, SEEK_CUR) < 0) {
+		    dtab->labelpos = ftell64(fp);
+		    if (fseek64(fp, clen, SEEK_CUR) < 0) {
 			err = 1;
 		    }
 		}
@@ -1551,14 +1548,14 @@ static int parse_new_dta_header (FILE *fp, dta_table *dtab,
 
     if (!err) {
 	/* skip "</label><timestamp>" */
-	if (fseek(fp, 19, SEEK_CUR) < 0) {
+	if (fseek64(fp, 19, SEEK_CUR) < 0) {
 	    err = 1;
 	} else {
 	    clen = stata_read_byte(fp, &err);
 	    if (!err) {
 		if (clen > 0) {
-		    dtab->timepos = ftell(fp);
-		    if (fseek(fp, clen, SEEK_CUR) < 0) {
+		    dtab->timepos = ftell64(fp);
+		    if (fseek64(fp, clen, SEEK_CUR) < 0) {
 			err = 1;
 		    }
 		}
@@ -1568,7 +1565,7 @@ static int parse_new_dta_header (FILE *fp, dta_table *dtab,
 
     if (!err) {
 	/* skip "</timestamp></header>" */
-	if (fseek(fp, 21, SEEK_CUR) < 0) {
+	if (fseek64(fp, 21, SEEK_CUR) < 0) {
 	    err = 1;
 	} else {
 	    if (fread(buf, 1, 5, fp) != 5) {
