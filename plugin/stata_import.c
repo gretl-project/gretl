@@ -33,20 +33,12 @@
 # define HOST_ENDIAN G_LITTLE_ENDIAN
 #endif
 
-#define SIZEOF_OFF_TYPE    8
-
 #ifdef WIN32
-#define ftell64(a)     _ftelli64(a)
-#define fseek64(a,b,c) _fseeki64(a,b,c)
-typedef __int64 off_type;
-#elif SPARC
-#define ftell64(a)     ftello(a)
-#define fseek64(a,b,c) fseeko(a,b,c)
-typedef off64_t off_type;
-#else /* same for Linux and Mac OS X */
-#define ftell64(a)     ftello(a)
-#define fseek64(a,b,c) fseeko(a,b,c)
-typedef off_t off_type;
+# define ftell64(a)     _ftelli64(a)
+# define fseek64(a,b,c) _fseeki64(a,b,c)
+#else
+# define ftell64(a)     ftello(a)
+# define fseek64(a,b,c) fseeko(a,b,c)
 #endif
 
 /* see http://www.stata.com/help.cgi?dta */
