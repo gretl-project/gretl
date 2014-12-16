@@ -58,7 +58,7 @@ The proof that $s^2$ is indeed the unbiased estimator can be found in
 any good statistics textbook, where we also learn that the magnitude
 $n-1$ in (\ref{eq:sample-variance}) can be brought under a general
 description as the ``degrees of freedom'' of the calculation at
-hand. Given $\bar{x}$, the $n$ sample values provide only $n-1$ pieces
+hand. Given $\bar{x}$, the $n$ sample values provide only $n-1$ items
 of information since the $n$th value can always be deduced via the
 formula for $\bar{x}$.
 
@@ -139,15 +139,14 @@ likelihood function, or via the generalized method of moments (GMM).
 
 In such cases we do not, in general, have exact small-sample results
 to rely upon; in particular, we cannot assume that coefficient
-estimates follow the Student's $t$ distribution.  Rather, we typically
-appeal to asymptotic results in statistical theory.  We seek
-\textit{consistent} estimators which, although they may be biased,
-nonetheless converge in probability to the corresponding parameter
-values as the sample size goes to infinity.  Under the right
-conditions, laws of large numbers and central limit theorems entitle
-us to expect that test statistics will converge to the normal
-distribution, or the $\chi^2$ distribution for multivariate tests,
-given big enough samples.
+estimates follow the $t$ distribution.  Rather, we typically appeal to
+asymptotic results in statistical theory.  We seek \textit{consistent}
+estimators which, although they may be biased, nonetheless converge in
+probability to the corresponding parameter values as the sample size
+goes to infinity.  Under the right conditions, laws of large numbers
+and central limit theorems entitle us to expect that test statistics
+will converge to the normal distribution, or the $\chi^2$ distribution
+for multivariate tests, given big enough samples.
 
 \subsection{To ``correct'' or not?}
 
@@ -189,12 +188,12 @@ nonlinear estimators as a precaution against taking results to be
 In rejoinder to the last point, one might equally say that savvy
 econometricians should know to apply a discount factor (albeit an
 imprecise one) to small-sample estimates outside of the classical,
-normal linear model --- or even that they should distrust such results
+normal linear model---or even that they should distrust such results
 and insist on large samples before making inferences. This line of
 thinking suggests that test statistics such as $z =
 \hat{\beta}_i/\hat\sigma_{\hat{\beta}_i}$ should be referred to the
-distribution to which they conform asymptotically --- in this case
-$N(0,1)$ for $H_0: \beta_i = 0$ --- if and only if the conditions for
+distribution to which they conform asymptotically---in this case
+$N(0,1)$ for $H_0: \beta_i = 0$---if and only if the conditions for
 appealing to asymptotic results can be taken to be met.  From this
 point of view df adjustment may be seen as providing a false sense of
 security.  
@@ -202,22 +201,23 @@ security.
 
 \section{Consistency and ``grey'' cases}
 
-Consistency (in the sense of uniformity) is a bugbear when dealing
-with this issue.  To give a simple example, suppose an econometrics
-program follows the policy of applying df correction for OLS
-estimation but not for ML estimation.  One is, of course, free to
-estimate the classical, normal linear model via ML, in which case
-$\hat\beta$ should be numerically identical to that obtained via OLS.
-But the user of the software will obtain two different sets of
-standard errors depending on the estimation method.  This example is
-not very troublesome, however; presumably one would apply ML to the
-classical linear model only to make a pedagogical point.
+Consistency (in the ordinary sense of uniformity of treatment) is a
+bugbear when dealing with this issue.  To give a simple example,
+suppose an econometrics program follows the policy of applying df
+correction for OLS estimation but not for ML estimation.  One is, of
+course, free to estimate the classical, normal linear model via ML, in
+which case $\hat\beta$ should be numerically identical to that
+obtained via OLS.  But the user of the software will obtain two
+different sets of standard errors depending on the estimation method.
+This example is not very troublesome, however; presumably one would
+apply ML to the classical linear model only to make a pedagogical
+point.
 
 Here is a more awkward case.  An unrestricted vector autoregression
 (VAR) is a system of equations, but the ML estimate of this system,
 given normal errors, is equivalent to equation-by-equation OLS.
 Should df correction be applied to VARs? Consistency with OLS argues
-Yes. But wait --- a popular extension of the VAR methodology is the
+Yes. But wait\dots{} a popular extension of the VAR methodology is the
 vector error-correction model (VECM).  VECMs are closely related to
 VARs and one might well be interested in making comparisons across the
 two, but a VECM is a nonlinear system and the cointegrating vectors
@@ -226,7 +226,7 @@ perhaps VAR results should \textit{not} be df adjusted, for
 comparability with VECMs.
 
 Another ``grey area'' is the class of single-equation Feasible
-Generalized Least Squares (FGLS) estimators --- for example, weighted
+Generalized Least Squares (FGLS) estimators---for example, weighted
 least squares following the estimation of a skedastic function, or
 estimators designed to handle first-order autocorrelation such as
 Cochrane--Orcutt.  These depart from the classical linear model, and
