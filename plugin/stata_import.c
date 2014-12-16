@@ -16,8 +16,6 @@
      real and 8-byte real respectively: it's not clear whether such files
      can exist.
 
-     Versions of Stata before 4.0 used different file formats.
-
   The code here was fairly substantially modified for gretl by Allin
   Cottrell, July 2005; modified again in August 2009 to support format
   114 dta files as written by Stata 10 and 11; and again in December
@@ -1103,10 +1101,7 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     }
 
     if (dtab->varlabel_pos == 0) {
-	/* apparently a not uncommon pathology? see
-	   http://www.stata-press.com/data/r13/ts.html
-	   for some bad dta 117 files
-	*/
+	/* work around bug in some Stata files */
 	maybe_fix_varlabel_pos(fp, dtab);
     }
 
