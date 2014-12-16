@@ -1,0 +1,67 @@
+
+\chapter{Rules regarding white space}
+
+Programming languages differ in their rules regarding the use of white
+space in a program. Here we set out the rules in hansl.  The rules
+differ somewhat between \textit{commands} on the one hand and
+\textit{function calls} plus \textit{assignment} on the other.
+
+\section{White space in commands}
+
+Hansl commands are structured as follows: first comes a
+\textit{command word} (e.g.\ \texttt{ols}, \texttt{summary}); then
+come zero or more \textit{arguments} (often the names of series); then
+come zero or more \textit{options} (some of which may take
+parameters). The relevant rules are:
+\begin{enumerate}
+\item The individual elements just mentioned must always be separated
+  by at least one space, and where one space is required you are free
+  to insert as many as you like.
+\item Whenever a parameter is supplied with an option flag, the
+  parameter must be attached to the flag with an equals sign, with
+  \textit{no} intervening space:
+\begin{code}
+ols y 0 x --cluster=clustvar  # correct
+ols y 0 x --cluster =clustvar # broken!
+\end{code}
+\end{enumerate}
+
+\section{Spaces in function calls and assignment}
+
+For the most part, white space in function calls and assignment is not
+significant; it can be inserted or not at will. For example, in the
+following sets of statements each member is equally acceptable
+syntactically (though some are ugly!):
+\begin{code}
+# set 1
+y = sqrt(x)
+y=sqrt(x)
+# set 2
+c = cov(y1, y2)
+c=cov(y1,y2)
+c  = cov(y1 , y2)
+\end{code}
+
+However, please note these exceptions:
+\begin{enumerate}
+\item When an assignment starts with a type keyword such as
+  \texttt{series} or \texttt{matrix}, this must be separated from what
+  follows by at least one space, as in
+\begin{code}
+series y = normal() # or: series y=normal()
+\end{code}
+\item In a function call, the opening parenthesis that marks the start
+  of the argument list must be attached to the name of the function
+  without intervening space:
+\begin{code}
+c = cov(y1, y2)  # correct
+c = cov (y1, y2) # broken!
+\end{code}
+\end{enumerate}
+
+\label{LastPage}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "hansl-primer"
+%%% End: 

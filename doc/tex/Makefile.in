@@ -75,7 +75,8 @@ TEXSRC = cli.tex \
 	hp-dataset.tex \
 	hp-series.tex \
 	hp-estimate.tex \
-	hp-further.tex
+	hp-further.tex \
+	hp-reference.tex
 
 BIBSRC = gretl.bib gretl.bst
 
