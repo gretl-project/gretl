@@ -7093,6 +7093,27 @@
       </description>
     </function>
 
+    <function name="stringify" section="strings" output="int">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="strings">S</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Provides a means of defining string values for the
+	  series <argname>y</argname>. The target series must
+	  have nothing but integer values, which when sorted
+	  form a consecutive sequence starting at 1. The array
+	  <argname>S</argname> must have just as many elements
+	  as <argname>y</argname> has distinct values, and
+	  each element must be valid UTF-8.
+	  <seelist> 
+            <fncref targ="strvals"/>
+	  </seelist>	  
+	</para>
+      </description>
+    </function>
+
     <function name="strlen" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -7194,6 +7215,24 @@
 	  occurrences of <argname>find</argname> are replaced by
 	  <argname>subst</argname>. See also <fncref targ="regsub"/>
 	  for more complex string replacement via regular expressions.
+	</para>
+      </description>
+    </function>
+
+    <function name="strvals" section="strings" output="strings">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  If the series <argname>y</argname> is string-valued,
+	  returns an array containing all its distinct values,
+	  ordered by the associated numerical values starting
+	  at 1. If <argname>y</argname> is not string-valued an
+	  empty strings array is returned.
+	  <seelist> 
+            <fncref targ="stringify"/>
+	  </seelist>
 	</para>
       </description>
     </function>
