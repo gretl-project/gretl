@@ -15,7 +15,9 @@ Gretl offers the following data types:
 \texttt{list} & holds the ID numbers of a set of series \\
 \texttt{string} & holds an array of characters\\
 \texttt{bundle} & holds a variable number of objects of 
- various types
+ various types \\
+\texttt{array} & holds a variable number of objects of 
+ a given type
 \end{tabular}
 \end{center}
 
@@ -335,6 +337,156 @@ setnote(b, "vcv", "covariance matrix")
 
 After this, the object under the key \texttt{vcv} in bundle \texttt{b}
 will be shown as ``covariance matrix'' in a GUI menu.
+
+\section{Arrays}
+\label{sec:arrays}
+
+The gretl array type was developed in summer 2014 and is first
+documented in gretl 1.10.  Arrays are intended for scripting use only:
+they have no GUI representation and they're unlikely ever to acquire
+one.\footnote{However, it's possible to save arrays ``invisibly'' in
+  the context of a GUI session, by virtue of the fact that they can be
+  packed into bundles (see below), and bundles can be saved as part of
+  a ``session''.} Since this type is a relative newcomer there are at
+present relatively few built-in functions that take arrays as
+arguments or that return arrays; further development can be expected.
+
+A gretl array is, as you might expect, a container which can hold zero
+or more objects of a certain type, indexed by consecutive integers
+starting at 1. It is one-dimensional. This type is implemented by a
+quite ``generic'' back-end. The types of object that can be
+put into arrays are strings, matrices, bundles and lists; a given
+array can hold only one of these types. 
+
+Of gretl's ``primary'' types, then, neither scalars nor series are
+supported by the array mechanism. There would be little point in
+supporting arrays of scalars as such since the matrix type already
+plays that role, and more flexibly. As for series, they have a special
+status as elements of a dataset (which is in a sense an ``array of
+series'' already) and in addition we have the list type which already
+functions as a sort of array for subsets of the series in a dataset.
+
+\subsection{Creating an array}
+
+An array can be brought into existence in any of three ways: bare
+declaration, assignment from \texttt{null}, or using the new
+\texttt{array()} function. In each case one of the specific type-words
+\texttt{strings}, \texttt{matrices}, \texttt{bundles} or
+\texttt{lists} must be used. Here are some examples:
+
+\begin{code}
+# make an empty array of strings
+strings S
+# make an empty array of matrices
+matrices M = null
+# make an array with space for 4 bundles
+bundles B = array(4)
+\end{code}
+
+The ``bare declaration'' form and the ``\texttt{= null}'' form have
+the same effect of creating an empty array, but the second can be used
+in contexts where bare declaration is not allowed (and it can also be
+used to destroy the content of an existing array and reduce it to size
+zero). The \texttt{array()} function expects a positive integer
+argument and can be used to create an array of pre-given size; in this
+case the elements are initialized appropriately as empty strings, null
+matrices, or empty bundles or lists.
+
+\subsection{Setting and getting elements}
+
+There are two ways to set the value of an array element: you can set a
+particular element using the array index, or you can append an element
+using the \texttt{+=} operator:
+\begin{code}
+# first case
+strings S = array(3)
+S[2] = "string the second"
+# alternative
+matrices M = null
+M += mnormal(T,k)
+\end{code}
+
+In the first method the index must (of course) be within bounds; that
+is, greater than zero and no greater than the current length of the
+array. When the second method is used it automatically extends the
+length of the array by 1.
+
+To get hold of an element, the array index must be used:
+\begin{code}
+# for S an array of strings
+string s = S[5]
+# for M an array of matrices
+printf "\n%#12.5\n", M[1]
+\end{code}
+
+\subsection{Operations on whole arrays}
+
+At present only one operation is available for arrays as a whole,
+namely appending. You can do, for example
+\begin{code}
+# for S1 and S2 both arrays of strings
+strings BigS = S1 + S1
+# or
+S1 += S2
+\end{code}
+In each case the result is an array of strings whose length is the sum
+of the lengths of \texttt{S1} and \texttt{S2}---and similarly for the
+other supported types.
+
+\subsection{Arrays as function arguments}
+\label{subsec:array-args}
+
+One can write hansl functions that take as arguments any of the array
+types; in addition arrays can be passed to function in ``pointerized''
+form.\footnote{With the exception of an array of lists. Our thinking
+  on how exactly to handle arrays of lists as function arguments is
+  not yet very far advanced.} In addition hansl functions may return
+any of the array types. Here is a trivial example for strings:
+\begin{code}
+function void printstrings (strings *S)
+  loop i=1..nelem(S) -q
+    printf "element %d: '%s'\n", i, S[i]
+  endloop
+end function
+
+function strings mkstrs (int n)
+  strings S = array(n)
+  loop i=1..n -q
+    sprintf S[i] "member %d", i
+  endloop
+  return S
+end function
+
+strings Foo = mkstrs(5)
+print Foo
+printstrings(&Foo)
+\end{code}
+
+A couple of points are worth noting here. First, the \texttt{nelem()}
+function works to give the number of elements in any of the
+``container'' types (lists, arrays, bundles, matrices). Second, if you
+do ``\texttt{print Foo}'' for \texttt{Foo} an array, you'll see
+something like:
+\begin{code}
+? print Foo
+Array of strings, length 5
+\end{code}
+
+\subsection{Arrays and bundles}
+
+As mentioned, the \texttt{bundle} type is supported by the array
+mechanism. In addition, arrays (of whatever type) can be put into
+bundles:
+\begin{code}
+matrices M = array(8)
+# set values of M[i] here...
+bundle b
+b.M = M
+\end{code}
+
+The mutual ``packability'' of bundles and arrays means that it's
+possible to go quite far down the rabbit-hole\dots\ users are advised
+not to get carried away.
 
 \section{The life cycle of gretl objects}
 
