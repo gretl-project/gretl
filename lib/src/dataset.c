@@ -4166,7 +4166,10 @@ int series_set_string_vals (DATASET *dset, int i,
 	    }
 	    /* and the strings should all be UTF8 */
 	    for (i=0; i<ns && !err; i++) {
-		if (!g_utf8_validate(S[i], -1, NULL)) {
+		if (S[i] == NULL) {
+		    gretl_errmsg_sprintf("String %d is NULL", i+1);
+		    err = E_DATA;
+		} else if (!g_utf8_validate(S[i], -1, NULL)) {
 		    gretl_errmsg_sprintf("String %d is not valid UTF-8", i+1);
 		    err = E_DATA;
 		}
