@@ -4979,6 +4979,8 @@ int set_panel_group_strings (const char *vname,
 	return E_DATA;
     }
 
+    /* FIXME: accept an array of strings here */
+
     if (strchr(grpnames, ' ')) {
 	/* group names as string literal */
 	namestr = grpnames;

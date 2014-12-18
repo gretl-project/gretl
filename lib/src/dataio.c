@@ -1799,6 +1799,9 @@ static int merge_data (DATASET *dset, DATASET *addset,
 		if (is_string_valued(addset, i) &&
 		    addset->n == dset->n && offset == 0 &&
 		    addobs == 0) {
+		    /* attach the string table to the target
+		       series and detach it from @addset 
+		    */
 		    series_table *st;
 
 		    st = series_get_string_table(addset, i);
