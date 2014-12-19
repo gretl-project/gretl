@@ -9313,7 +9313,8 @@ static NODE *stringify_series (NODE *l, NODE *r, parser *p)
 	if (S == NULL) {
 	    p->err = E_DATA;
 	} else {
-	    ret->v.xval = 
+	    /* FIXME flag an error or error? */
+	    ret->v.xval =
 		series_set_string_vals(p->dset, l->vnum, S, ns);
 	}
     }
@@ -13687,11 +13688,17 @@ static int save_generated_var (parser *p, PRN *prn)
 	    t = p->lh.obs;
 	    if (is_string_valued(p->dset, v)) {
 		if (r->t == STR) {
-		    p->err = series_set_string_val(p->dset, v, t, r->v.str);
+		    if (p->op != B_ASN) {
+			p->err = E_TYPES;
+		    } else {
+			p->err = series_set_string_val(p->dset, v, t, r->v.str);
+		    }
 		} else {
-		    gretl_errmsg_sprintf(_("type error: %s is string-valued"), 
-					 p->lh.name);
-		    p->err = E_TYPES;
+		    x = r->t == NUM ? r->v.xval : r->v.m->val[0];
+		    x = xy_calc(Z[v][t], x, p->op, NUM, p);
+		    if (!p->err) {
+			p->err = string_series_assign_value(p->dset, v, t, x);
+		    }
 		}
 	    } else if (r->t == NUM) {
 		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, NUM, p);

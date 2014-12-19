@@ -41,6 +41,8 @@ int gretl_string_table_reset_column_id (gretl_string_table *gst,
 
 series_table *series_table_new (char **strs, int n_strs);
 
+series_table *series_table_copy (series_table *st);
+
 void series_table_destroy (series_table *st);
 
 double series_table_get_value (series_table *st, const char *s);

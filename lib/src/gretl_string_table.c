@@ -286,6 +286,34 @@ series_table *series_table_new (char **strs, int n_strs)
     return st;
 }
 
+series_table *series_table_copy (series_table *st)
+{
+    series_table *ret = NULL;
+
+    if (st != NULL) {
+	ret = series_table_alloc();
+    }
+
+    if (ret != NULL) {
+	char **S = strings_array_dup(st->strs, st->n_strs);
+	int i;
+
+	if (S == NULL) {
+	    series_table_destroy(ret);
+	    ret = NULL;
+	} else {
+	    ret->n_strs = st->n_strs;
+	    ret->strs = S;
+	    for (i=0; i<ret->n_strs; i++) {
+		g_hash_table_insert(ret->ht, (gpointer) ret->strs[i], 
+				    GINT_TO_POINTER(i+1));
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static series_table *
 gretl_string_table_add_column (gretl_string_table *gst, int colnum)
 {

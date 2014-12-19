@@ -329,6 +329,9 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
     targ->lag = src->lag;
     targ->compact_method = src->compact_method;
     targ->stack_level = src->stack_level;
+    if (src->st != NULL) {
+	targ->st = series_table_copy(src->st);
+    }
 }
 
 /**
@@ -1369,8 +1372,8 @@ int dataset_copy_series_as (DATASET *dset, int v, const char *name)
 	    dset->Z[vnew][t] = dset->Z[v][t];
 	}
 	strcpy(dset->varname[vnew], name);
+	copy_varinfo(dset->varinfo[vnew], dset->varinfo[v]);
 	dset->varinfo[vnew]->stack_level += 1;
-	/* FIXME other varinfo stuff? */
 #if 0
 	fprintf(stderr, "copied var %d ('%s', level %d) as var %d ('%s', level %d): ",
 		v, dset->varname[v], dset->varinfo[v]->stack_level,
@@ -4022,6 +4025,43 @@ int series_set_string_val (DATASET *dset, int i, int t, const char *s)
 }
 
 /**
+ * string_series_assign_value:
+ * @dset: pointer to dataset.
+ * @i: index number of string-valued series.
+ * @t: 0-based index of observation.
+ * @x: the numeric value to set.
+ *
+ * Attempts to set the value for observation @t of series @i
+ * to @x. This will fail if the @x falls outside of the range
+ * of values supported by the string table for the series.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int string_series_assign_value (DATASET *dset, int i,
+				int t, double x)
+{
+    series_table *st = NULL;
+    int err = 0;
+
+    if (i <= 0 || i >= dset->v) {
+	err = E_DATA;
+    } else if (na(x)) {
+	dset->Z[i][t] = x;
+    } else if (x != floor(x)) {
+	err = E_TYPES;
+    } else if ((st = dset->varinfo[i]->st) == NULL) {
+	err = E_TYPES;
+    } else if (series_table_get_string(st, x) == NULL) {
+	err = E_DATA;
+    } else {
+	dset->Z[i][t] = x;
+    }
+
+    return err;
+}
+
+/**
  * series_decode_string:
  * @dset: pointer to dataset.
  * @i: index number of series.
@@ -4190,6 +4230,7 @@ int series_set_string_vals (DATASET *dset, int i,
 	}
 	if (!err) {
 	    if (dset->varinfo[i]->st != NULL) {
+		/* remove any pre-existing table */
 		series_table_destroy(dset->varinfo[i]->st);
 	    }
 	    series_set_discrete(dset, i, 1);

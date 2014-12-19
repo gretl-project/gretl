@@ -509,6 +509,9 @@ const char *series_get_string_for_value (const DATASET *dset, int i,
 
 int series_set_string_val (DATASET *dset, int i, int t, const char *s);
 
+int string_series_assign_value (DATASET *dset, int i,
+				int t, double x);
+
 int series_set_string_vals (DATASET *dset, int i, 
 			    char **S, int ns);
 
