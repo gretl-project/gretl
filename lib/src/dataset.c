@@ -4141,28 +4141,26 @@ int series_set_string_vals (DATASET *dset, int i,
 
     if (!err) {
 	int i, nvals = gretl_vector_get_length(vals);
+	double x0 = gretl_vector_get(vals, 0);
+	double x1 = gretl_vector_get(vals, nvals - 1);
 
-	if (ns != nvals) {
-	    /* we want exactly one string per (non-missing) value */
-	    gretl_errmsg_sprintf("Wrong number of strings, %d: should be %d",
-				 ns, nvals);
+	if (x0 < 1.0) {
+	    gretl_errmsg_set("The minimum value of the target series "
+			     "must be >= 1");
 	    err = E_DATA;
-	} else {
-	    /* the values should be successive 1-based integers */
-	    double x0 = gretl_vector_get(vals, 0);
-	    double x1 = gretl_vector_get(vals, nvals - 1);
+	} else if (x1 > ns) {
+	    gretl_errmsg_sprintf("Too few strings: %d are needed", ns);
+	    err = E_DATA;
+	}
 
-	    if (x0 != 1.0 || x1 != nvals) {
-		gretl_errmsg_set("The series values must be successive integers");
-		err = E_DATA;
-	    }
-	    for (i=1; i<nvals && !err; i++) {
+	if (!err) {
+	    /* the values should all be integers */
+	    for (i=0; i<nvals && !err; i++) {
 		x1 = gretl_vector_get(vals, i);
-		if (x1 != x0 + 1.0) {
-		    gretl_errmsg_set("The series values must be successive integers");
+		if (x1 != floor(x1)) {
+		    gretl_errmsg_set("The series values must be integers");
 		    err = E_DATA;
 		}
-		x0 = x1;
 	    }
 	    /* and the strings should all be UTF8 */
 	    for (i=0; i<ns && !err; i++) {
