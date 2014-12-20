@@ -343,7 +343,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 		    } else {
 			pprintf(prn, _("Expected numeric data, found string:\n"
 				       "'%s' at row %d, column %d\n"), 
-				tmp, r, c);
+				tmp, r+1, c+1);
 			err = 1;
 		    }
 		}

@@ -388,7 +388,9 @@ static const char *ods_name (int t)
 }
 
 static int ods_error (ods_sheet *sheet,
-		      int i, int j, int etype, int vtype,
+		      int i, int j, 
+		      int etype, int vtype,
+		      const char *badval, 
 		      PRN *prn)
 {
     int si = i + sheet->yoffset + 1;
@@ -406,10 +408,13 @@ static int ods_error (ods_sheet *sheet,
 	} else {
 	    pputs(prn, ":\n");
 	}
-    } 
+    }
 
     pprintf(prn, _("expected %s but found %s"),
 	    ods_name(etype), ods_name(vtype));
+    if (badval != NULL) {
+	pprintf(prn, ": '%s'\n", badval);
+    }
     
     return E_DATA; 
 }
@@ -420,6 +425,7 @@ static int real_read_cell (xmlNodePtr cur,
 			   PRN *prn)
 {
     char *val = NULL;
+    char *badval = NULL;
     int jread = *preadcol;
     int obscol = (sheet->flags & BOOK_OBS_LABELS)? 1 : 0;
     int blank0 = (sheet->flags & BOOK_OBS_BLANK)? 1 : 0;
@@ -464,11 +470,11 @@ static int real_read_cell (xmlNodePtr cur,
 		free(val);
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_STRING, 
-				ODS_NONE, prn);
+				ODS_NONE, NULL, prn);
 	    }
 	} else if (vtype != ODS_NONE) {
 	    err = ods_error(sheet, iread, jread, ODS_STRING, 
-			    vtype, prn);
+			    vtype, NULL, prn);
 	}
 	return err;
     }
@@ -482,7 +488,7 @@ static int real_read_cell (xmlNodePtr cur,
 		fprintf(stderr, " obs string: '%s'\n", val);
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_STRING,
-				ODS_NONE, prn);
+				ODS_NONE, NULL, prn);
 	    }
 	} else if (vtype == ODS_DATE) {
 	    val = (char *) xmlGetProp(cur, (XUC) "date-value");
@@ -490,7 +496,7 @@ static int real_read_cell (xmlNodePtr cur,
 		fprintf(stderr, " date: '%s'\n", val); 
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_DATE,
-				ODS_NONE, prn);
+				ODS_NONE, NULL, prn);
 	    }
 	} else if (vtype == ODS_NUMERIC) {
 	    val = (char *) xmlGetProp(cur, (XUC) "value");
@@ -498,11 +504,11 @@ static int real_read_cell (xmlNodePtr cur,
 		fprintf(stderr, " numeric obs: '%s'\n", val); 
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_NUMERIC,
-				ODS_NONE, prn);		
+				ODS_NONE, NULL, prn);		
 	    }
 	} else {
 	    err = ods_error(sheet, iread, jread, ODS_DATE,
-			    vtype, prn);
+			    vtype, NULL, prn);
 	}
 
 	if (!err) {
@@ -528,17 +534,19 @@ static int real_read_cell (xmlNodePtr cur,
 	val = get_ods_string_value(cur);
 	if (val != NULL && import_na_string(val)) {
 	    fprintf(stderr, " string: NA?\n");
+	    free(val);
 	} else {
 	    err = E_DATA;
+	    badval = val;
 	}
-	free(val);
     } else {
 	fprintf(stderr, " vtype = %d??\n", vtype); 
 	err = E_DATA;
     }
 
     if (err) {
-	ods_error(sheet, iread, jread, ODS_NUMERIC, vtype, prn);
+	ods_error(sheet, iread, jread, ODS_NUMERIC, vtype, badval, prn);
+	free(badval);
     } else {
 	for (j=0, vj=v; j<nr && vj<sheet->dset->v; j++, vj++) {
 	    sheet->dset->Z[vj][t] = x;
