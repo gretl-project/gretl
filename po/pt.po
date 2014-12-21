@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-12-04 13:09-0500\n"
-"PO-Revision-Date: 2014-10-26 16:30+0100\n"
+"PO-Revision-Date: 2014-12-21 18:40+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -645,9 +645,9 @@ msgid "Robust Wald test for break"
 msgstr "Teste de Wald robusto para quebra estrutural"
 
 #: lib/src/compare.c:2603
-#, fuzzy, c-format
+#, c-format
 msgid "Asymptotic p-value = %.6g for chi-square(%d) = %g"
-msgstr "Valor p assimptótico = %.4g para qui-quadrado (%d) = %g"
+msgstr "Valor p assimptótico = %.6g para qui-quadrado (%d) = %g"
 
 #: lib/src/compare.c:2650
 msgid ""
@@ -2023,19 +2023,19 @@ msgid "The variable '%s' is not discrete"
 msgstr "A variável '%s' não é discreta"
 
 #: lib/src/discrete.c:1447
-#, fuzzy, c-format
+#, c-format
 msgid "Note: %s = %s%s at all observations\n"
-msgstr "Total de observações"
+msgstr "Nota: %s = %s%s em todas as observações\n"
 
 #: lib/src/discrete.c:1455 lib/src/discrete.c:1461
-#, fuzzy, c-format
+#, c-format
 msgid "Note: Prob(%s = %d | %s = %d) = 1\n"
-msgstr " Prob(x = %d) = %g\n"
+msgstr "Nota: Prob(%s = %d | %s = %d) = 1\n"
 
 #: lib/src/discrete.c:1467
-#, fuzzy, c-format
+#, c-format
 msgid "Dropping %s\n"
-msgstr "Erro ao ler %s\n"
+msgstr "Descartando %s\n"
 
 #: lib/src/discrete.c:2939
 #, c-format
@@ -2804,9 +2804,8 @@ msgid "mean %s"
 msgstr "média %s"
 
 #: lib/src/graphing.c:5480
-#, fuzzy
 msgid "Group means"
-msgstr "Grupos"
+msgstr "Médias de Grupos"
 
 #: lib/src/graphing.c:5798
 msgid "time"
@@ -3687,9 +3686,8 @@ msgid "Error estimating fixed effects model\n"
 msgstr "Erro ao estimar o modelo de efeitos fixos\n"
 
 #: lib/src/gretl_panel.c:2342
-#, fuzzy
 msgid "Inadequate data for panel estimation"
-msgstr "Estimação iterada"
+msgstr "Dados inadequados para estimação de painel"
 
 #: lib/src/gretl_panel.c:2385
 msgid ""
@@ -4097,9 +4095,9 @@ msgid "log-likelihood for %s test"
 msgstr "Logaritmo da verosimilhança para o teste %s"
 
 #: lib/src/gretl_utils.c:2141
-#, fuzzy, c-format
+#, c-format
 msgid "break-point for %s test"
-msgstr "valor p para o teste %s"
+msgstr "ponto de quebra para o teste %s"
 
 #: lib/src/gretl_xml.c:94 lib/src/gretl_xml.c:527 lib/src/gretl_xml.c:4066
 #, c-format
@@ -7480,7 +7478,8 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 26 de outubro de 2014."
+"Tradução de 21 de dezembro de 2014.\n"
+"(Boas Festas e Feliz Ano Novo!)"
 
 #: gui2/about.c:203
 msgid "News"
@@ -9506,22 +9505,20 @@ msgid "New script output:"
 msgstr "Nova saída da sequência de comandos:"
 
 #: gui2/dialogs.c:5892
-#, fuzzy
 msgid "New script output should:"
-msgstr "Nova saída da sequência de comandos:"
+msgstr "A saída da nova sequência de comandos deve:"
 
 #: gui2/dialogs.c:5952
 msgid "Replace previous output"
-msgstr ""
+msgstr "Substituir a saída anterior"
 
 #: gui2/dialogs.c:5953
 msgid "Add to previous output"
-msgstr ""
+msgstr "Acrescentar à saída anterior"
 
 #: gui2/dialogs.c:5954
-#, fuzzy
 msgid "Go to a new window"
-msgstr "Mover para uma nova janela"
+msgstr "Ir para uma nova janela"
 
 #: gui2/dialogs.c:5961
 msgid "Replaces output in this window"
@@ -10013,9 +10010,8 @@ msgid "close this dialog on \"OK\""
 msgstr "fechar este diálogo com \"OK\""
 
 #: gui2/fncall.c:1800 gui2/fncall.c:1811
-#, fuzzy
 msgid "Select function"
-msgstr "Funções Ajudantes"
+msgstr "Selecionar função"
 
 #: gui2/fncall.c:1894
 msgid "This function needs a model in place"
@@ -10030,18 +10026,16 @@ msgid "Couldn't get function package information"
 msgstr "Não se conseguiu obter informação sobre o pacote de funções"
 
 #: gui2/fncall.c:2076
-#, fuzzy
 msgid "Open sample script"
-msgstr "Editar o ficheiro de comandos de exemplo"
+msgstr "Abrir ficheiro de comandos de exemplo"
 
 #: gui2/fncall.c:2077
-#, fuzzy
 msgid "Call a function"
-msgstr "Gravar funções"
+msgstr "Invocar uma função"
 
 #: gui2/fncall.c:2083
 msgid "Would you like to:"
-msgstr ""
+msgstr "Você pretende:"
 
 #: gui2/fncall.c:2501
 #, c-format
@@ -13429,14 +13423,12 @@ msgid "X-axis variable"
 msgstr "Variável do eixo dos XX"
 
 #: gui2/library.c:7145
-#, fuzzy
 msgid "Plot all data"
-msgstr "Dados de painel"
+msgstr "Fazer Gráfico de todos os dados"
 
 #: gui2/library.c:7146
-#, fuzzy
 msgid "Plot group means"
-msgstr "Grupos do painel"
+msgstr "Fazer Gráfico de médias de Grupos"
 
 #: gui2/library.c:7169
 msgid "on a single graph"
@@ -13582,9 +13574,8 @@ msgid "Unterminated comment in script"
 msgstr "Comentário não fechado em sequência de comandos"
 
 #: gui2/library.c:8878
-#, fuzzy
 msgid "No series were deleted"
-msgstr "Não foram apagadas nenhumas variáveis"
+msgstr "Não foram apagadas nenhumas séries"
 
 #: gui2/library.c:8944
 msgid "Script done\n"
@@ -15611,9 +15602,8 @@ msgid "Save as..."
 msgstr "Gravar como..."
 
 #: gui2/toolbar.c:691
-#, fuzzy
 msgid "Open in script editor"
-msgstr "gretl: editor de sequências de comandos"
+msgstr "Abrir no editor de sequências de comandos"
 
 #: gui2/toolbar.c:693
 msgid "Save bundle content..."
