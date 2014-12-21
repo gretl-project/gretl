@@ -27,7 +27,7 @@
 
 #include <gtk/gtk.h>
 
-#undef IDEBUG
+#define IDEBUG 0
 
 /* from gnumeric's value.h */
 typedef enum {
@@ -89,36 +89,45 @@ static void wsheet_free (wsheet *sheet)
 
 static void wsheet_print_info (wsheet *sheet)
 {
-    int startcol = sheet->text_cols + sheet->col_offset;
-    int i, j;
-#ifdef IDEBUG
+    int cols = sheet->maxcol + 1 - sheet->col_offset;
+    int i;
+#if IDEBUG
+    int rows = sheet->maxrow + 1 - sheet->row_offset;
     int t;
 #endif
 
-    fprintf(stderr, "maxcol = %d\n", sheet->maxcol);
-    fprintf(stderr, "maxrow = %d\n", sheet->maxrow);
-    fprintf(stderr, "text_cols = %d\n", sheet->text_cols);
-    fprintf(stderr, "text rows = %d\n", sheet->text_rows);
-    fprintf(stderr, "col_offset = %d\n", sheet->col_offset);
-    fprintf(stderr, "row_offset = %d\n", sheet->row_offset);
+    fputs("*** wsheet info after reading cells ***\n", stderr);
+    fprintf(stderr, " maxcol = %d\n", sheet->maxcol);
+    fprintf(stderr, " maxrow = %d\n", sheet->maxrow);
+    fprintf(stderr, " text_cols = %d\n", sheet->text_cols);
+    fprintf(stderr, " text rows = %d\n", sheet->text_rows);
+    fprintf(stderr, " col_offset = %d\n", sheet->col_offset);
+    fprintf(stderr, " row_offset = %d\n", sheet->row_offset);
+    fputs(" varnames?\n", stderr);
 
-    j = 0;
-    for (i=startcol; i<=sheet->maxcol; i++) {
-	fprintf(stderr, "variable %d: %s\n", j + 1, sheet->varname[j]);
-	j++;
+    for (i=0; i<cols; i++) {
+	fprintf(stderr, "  %d: '%s'\n", i, sheet->varname[i]);
     }	
 
-#ifdef IDEBUG /* FIXME */
-    for (t=sheet->text_rows; t<=sheet->maxrow; t++) {
+#if IDEBUG
+    fputs(" observations?\n", stderr);
+    for (t=0; t<rows; t++) {
+	fprintf(stderr, "  %d: ", t);
 	if (sheet->text_cols) {
-	    fprintf(stderr, "%s ", sheet->label[t]);
+	    fprintf(stderr, "label='%s', ", sheet->label[t]);
 	}
-	for (i=startcol; i<=sheet->maxcol; i++) {
-	    fprintf(stderr, "%g%s", sheet->Z[i][t],
-		    (i == sheet->maxcol)? "\n" : " ");
+	for (i=0; i<cols; i++) {
+	    if (na(sheet->Z[i][t])) {
+		fprintf(stderr, "NA%c", (i == cols - 1)? '\n' : ' ');
+	    } else {
+		fprintf(stderr, "%g%c", sheet->Z[i][t],
+			(i == cols - 1)? '\n' : ' ');
+	    }
 	}
     }
 #endif
+
+    fputs("*** end wsheet info ***\n", stderr);
 }
 
 #define VTYPE_IS_NUMERIC(v) ((v) == VALUE_BOOLEAN || \
@@ -158,44 +167,6 @@ static int wsheet_allocate (wsheet *sheet, int cols, int rows)
     return 0;
 }
 
-static int wsheet_get_real_size (xmlNodePtr node, wsheet *sheet)
-{
-    xmlNodePtr p = node->xmlChildrenNode;
-    char *tmp;
-
-    sheet->maxrow = 0;
-    sheet->maxcol = 0;
-
-    while (p != NULL) {
-	if (!xmlStrcmp(p->name, (XUC) "Cell")) {
-	    int i, j;
-
-	    tmp = (char *) xmlGetProp(p, (XUC) "Row");
-	    if (tmp) {
-		i = atoi(tmp);
-		free(tmp);
-		if (i > sheet->maxrow) {
-		    sheet->maxrow = i;
-		}
-	    }
-	    tmp = (char *) xmlGetProp(p, (XUC) "Col");
-	    if (tmp) {
-		j = atoi(tmp);
-		free(tmp);
-		if (j > sheet->maxcol) {
-		    sheet->maxcol = j;
-		}
-	    }
-	}
-	p = p->next;
-    }
-
-    fprintf(stderr, "wsheet_get_real_size: maxrow=%d, maxcol=%d\n",
-	    sheet->maxrow, sheet->maxcol);
-
-    return 0;
-}
-
 static void check_for_date_format (wsheet *sheet, const char *fmt)
 {
 #if 0
@@ -227,7 +198,105 @@ static int stray_numeric (int vtype, char *tmp, double *x)
     return 0;
 }
 
-static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
+static int node_get_vtype_and_content (xmlNodePtr p, int *vtype,
+				       char **content)
+{
+    char *tmp;
+    int err = 0;
+
+    tmp = (char *) xmlGetProp(p, (XUC) "ValueType");
+
+    if (tmp != NULL) {
+	*vtype = atoi(tmp);
+	free(tmp);
+	*content = (char *) xmlNodeGetContent(p);
+    } else { 
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static int inspect_top_left (xmlNodePtr p, int *obscol)
+{
+    char *content = NULL;
+    int err, vtype = 0;
+
+    err = node_get_vtype_and_content(p, &vtype, &content);
+
+    if (!err) {
+	if (vtype == VALUE_EMPTY) {
+	    *obscol = 1;
+	} else if (vtype == VALUE_STRING) {
+	    if (import_obs_label(content)) {
+		*obscol = 1;
+	    }
+	}
+    }
+	
+    free(content);
+
+    return err;
+}
+
+/* Crawl over all the cells and determine the maximum row and column
+   indices. While we're at it, inspect the top left cell.
+*/
+
+static int wsheet_get_real_size_etc (xmlNodePtr node, wsheet *sheet,
+				     int *obscol)
+{
+    xmlNodePtr p = node->xmlChildrenNode;
+    char *tmp;
+    int err = 0;
+
+    sheet->maxrow = 0;
+    sheet->maxcol = 0;
+
+    while (p != NULL && !err) {
+	if (!xmlStrcmp(p->name, (XUC) "Cell")) {
+	    int i = -1, j = -1;
+
+	    tmp = (char *) xmlGetProp(p, (XUC) "Row");
+	    if (tmp) {
+		i = atoi(tmp);
+		free(tmp);
+		if (i > sheet->maxrow) {
+		    sheet->maxrow = i;
+		}
+	    }
+	    tmp = (char *) xmlGetProp(p, (XUC) "Col");
+	    if (tmp) {
+		j = atoi(tmp);
+		free(tmp);
+		if (j > sheet->maxcol) {
+		    sheet->maxcol = j;
+		}
+	    }
+	    if (i == sheet->row_offset && j == sheet->col_offset) {
+		err = inspect_top_left(p, obscol);
+	    }
+	}
+	p = p->next;
+    }
+
+    if (!err) {
+	fprintf(stderr, "wsheet_get_real_size: maxrow=%d, maxcol=%d\n",
+		sheet->maxrow, sheet->maxcol);
+    }
+
+    return err;
+}
+
+/* Note that below we're being agnostic regarding the presence/absence
+   of observation labels in the first column. We're writing first
+   column values into sheet->labels if they're of string type and
+   entering them into sheet->Z if they're numeric. Once we're finished
+   we can decide what to do with the first column and the labels.
+*/
+
+static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, 
+			       int obscol, PRN *prn)
 {
     xmlNodePtr p = node->xmlChildrenNode;
     char *tmp;
@@ -280,27 +349,21 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 	    }
 
 	    if (i < 0 || t < 0) {
-		/* we're not in the requested reading area */
+		/* we're not in the user-specified reading area */
 		p = p->next;
 		continue;
 	    }
 
-	    /* check that we have a value of some type available */
-	    tmp = (char *) xmlGetProp(p, (XUC) "ValueType");
-	    if (tmp) {
-		vtype = atoi(tmp);
-		free(tmp);
-	    } else { 
+	    /* get cell type and content */
+	    err = node_get_vtype_and_content(p, &vtype, &tmp);
+	    if (err) {
 		/* a formula perhaps? */
 		pprintf(prn, _("Couldn't get value for col %d, row %d.\n"
 			       "Maybe there's a formula in the sheet?"),
-			c, r);
-		err = 1;
+			c+1, r+1);
 		break;
 	    }
 
-	    /* get and process the actual cell content */
-	    tmp = (char *) xmlNodeGetContent(p);
 	    if (tmp != NULL) {
 		if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
 		    if (i == 0) {
@@ -328,13 +391,13 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 			/* first row: look for varnames */
 			strncat(sheet->varname[i], tmp, VNAMELEN - 1);
 			sheet->colheads += 1;
-			if (i == 0 && import_obs_label(tmp)) {
+			if (i == 0 && obscol) {
 			    ; /* keep going */
 			} else {
 			    err = check_imported_varname(sheet->varname[i],
 							 i, r, c, prn);
 			}
-		    } else if (i == 0) {
+		    } else if (i == 0 && obscol) {
 			/* first column, not first row */
 			if (!gotlabels) {
 			    gotlabels = 1;
@@ -364,7 +427,8 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
     return err;
 }
 
-static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn) 
+static int wsheet_get_data (const char *fname, wsheet *sheet, 
+			    int *obscol, PRN *prn) 
 {
     xmlDocPtr doc;
     xmlNodePtr cur, sub;
@@ -377,8 +441,10 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
 	return err;
     }
 
-    /* Now walk the tree */
     cur = cur->xmlChildrenNode;
+
+    /* Now walk the tree */
+
     while (!err && cur != NULL && !got_sheet) {
 	if (!xmlStrcmp(cur->name, (XUC) "Sheets")) {
 	    int sheetcount = 0;
@@ -401,21 +467,11 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
 				}
 				free(tmp);
 			    }
-			} else if (got_sheet && !xmlStrcmp(snode->name, (XUC) "MaxCol")) {
-			    tmp = (char *) xmlNodeGetContent(snode);
-			    if (tmp) {
-				sheet->maxcol = atoi(tmp);
-				free(tmp);
-			    }
-			} else if (got_sheet && !xmlStrcmp(snode->name, (XUC) "MaxRow")) {
-			    tmp = (char *) xmlNodeGetContent(snode);
-			    if (tmp) {
-				sheet->maxrow = atoi(tmp);
-				free(tmp);
-			    }
 			} else if (got_sheet && !xmlStrcmp(snode->name, (XUC) "Cells")) {
-			    wsheet_get_real_size(snode, sheet);
-			    err = wsheet_parse_cells(snode, sheet, prn);
+			    err = wsheet_get_real_size_etc(snode, sheet, obscol);
+			    if (!err) {
+				err = wsheet_parse_cells(snode, sheet, *obscol, prn);
+			    }
 			}
 			snode = snode->next;
 		    }
@@ -501,16 +557,19 @@ static int wbook_get_info (const char *fname, const int *list,
 
 static int wsheet_setup (wsheet *sheet, wbook *book, int n)
 {
-    sheet->name = gretl_strdup(book->sheetnames[n]);
-    if (sheet->name == NULL) {
-	return 1;
-    }
+    int err = 0;
 
-    sheet->ID = n;
-    sheet->col_offset = book->col_offset;
-    sheet->row_offset = book->row_offset;    
+    sheet->name = gretl_strdup(book->sheetnames[n]);
+
+    if (sheet->name == NULL) {
+	err = E_ALLOC;
+    } else {
+	sheet->ID = n;
+	sheet->col_offset = book->col_offset;
+	sheet->row_offset = book->row_offset;
+    }   
     
-    return 0;
+    return err;
 }
 
 static int wsheet_labels_complete (wsheet *sheet)
@@ -559,29 +618,22 @@ static int column_is_blank (wsheet *sheet, int k, int n)
     return 1;
 }
 
-/* first column labels: are they all numeric strings? */
-
-static int labels_numeric (char **S, int n)
+static int labels_are_index (char **S, int n)
 {
     int t;
 
-    for (t=0; t<n; t++) {
-	if (!numeric_string(S[t])) {
+    /* note: the first label will be blank or "obs" or similar */
+
+    for (t=1; t<=n; t++) {
+	if (!integer_string(S[t])) {
+	    return 0;
+	} else if (atoi(S[t]) != t) {
 	    return 0;
 	}
     }  
 
     return 1;
 }
-
-#if 0 /* not yet */
-static const char *get_label (int i, int j, void *p)
-{
-    char **labels = p;
-
-    return labels[i];
-}
-#endif
 
 int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 		       DATASET *dset, gretlopt opt, PRN *prn)
@@ -592,6 +644,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
     wsheet gsheet;
     wsheet *sheet = &gsheet;
     int sheetnum = -1;
+    int obscol = 0;
     DATASET *newset;
     int err = 0;
 
@@ -645,12 +698,12 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 
     if (!err && sheetnum >= 0) {
 	fprintf(stderr, "Getting data...\n");
-	if (wsheet_setup(sheet, book, sheetnum)) {
-	    pputs(prn, _("error in wsheet_setup()"));
-	    err = 1;
-	} else {
-	    err = wsheet_get_data(fname, sheet, prn);
-	    if (!err) {
+	err = wsheet_setup(sheet, book, sheetnum);
+	if (!err) {
+	    err = wsheet_get_data(fname, sheet, &obscol, prn);
+	    if (err) {
+		fprintf(stderr, "wsheet_get_data returned %d\n", err);
+	    } else {
 		wsheet_print_info(sheet);
 		book->flags |= sheet->flags;
 	    } 
@@ -660,7 +713,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
     if (err) {
 	goto getout;
     } else {
-	int r0 = 1;
+	int r0 = 1; /* the first data row */
 	int i, j, t;
 	int ts_markers = 0;
 	int merge = (dset->Z != NULL);
@@ -669,8 +722,14 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	int missvals = 0;
 	int pd = 0;
 
-	if (sheet->text_cols > 0) {
+	if (obscol) {
 	    book_set_obs_labels(book);
+	    if (sheet->text_cols == 0) {
+		sheet->text_cols = 1;
+	    }
+	} else if (sheet->text_cols > 0) {
+	    /* string-valued variable? */
+	    fprintf(stderr, "Problem: sheet->text_cols = %d\n", sheet->text_cols);
 	}
 
 	if (sheet->colheads == 0) {
@@ -679,11 +738,14 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	}
 
 	if (book_numeric_dates(book)) {
-	    puts("found calendar dates in first imported column");
+	    fputs("found calendar dates in first imported column\n", stderr);
+	} else if (obscol) {
+	    fprintf(stderr, "found label strings in first imported column (text_cols = %d)\n",
+		    sheet->text_cols);
 	} else if (sheet->text_cols > 0) {
-	    puts("found label strings in first imported column");
+	    fputs("found string-valued variable in first imported column?\n", stderr);
 	} else {
-	    puts("check for label strings in first imported column: not found");
+	    fputs("check for label strings in first imported column: not found\n", stderr);
 	}
 
 	newset->n = sheet->maxrow - sheet->row_offset;
@@ -693,8 +755,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	    newset->n += 1;
 	}
 
-	if (book_numeric_dates(book) || 
-	    (sheet->colheads > 0 && import_obs_label(sheet->label[0]))) {
+	if (book_numeric_dates(book) || obscol) {
 	    pd = importer_dates_check(sheet->label + r0, &book->flags,
 				      newset, prn, &err);
 	    if (pd > 0) {
@@ -703,8 +764,8 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 		ts_markers = newset->markers;
 		ts_S = newset->S;
 	    } else if (!book_numeric_dates(book)) {
-		if (labels_numeric(sheet->label, newset->n)) {
-		    sheet->text_cols = 0;
+		if (labels_are_index(sheet->label, newset->n)) {
+		    /* trash the labels */
 		    book_unset_obs_labels(book);
 		}
 	    }
