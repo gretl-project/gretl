@@ -104,6 +104,7 @@ PangoFontDescription *fixed_font;
 static int usecwd;
 static int shellok;
 static int manpref;
+static int robust_z;
 static int autoicon = 1;
 static int session_prompt = 1;
 static int keep_folder = 1;
@@ -314,6 +315,8 @@ RCVAR rc_vars[] = {
       INVISET | INTSET, 0, TAB_NONE, NULL },
     { "HC_by_default", N_("Use robust covariance matrix by default"), NULL,
       &hc_by_default, BOOLSET, 0, TAB_VCV, NULL },
+    { "robust_z", N_("Use the normal distribution for robust p-values"), NULL,
+      &robust_z, BOOLSET, 0, TAB_VCV, NULL },
     { "HC_xsect", N_("For cross-sectional data"), NULL, hc_xsect, 
       LISTSET, 5, TAB_VCV, NULL },
     { "HC_tseri", N_("For time-series data"), NULL, hc_tseri, 
@@ -1309,7 +1312,10 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_widget_show(rc->widget);
 	    b_col++;
 
-	    if (b_col == 2) {
+	    if (tab == TAB_VCV || b_col == 2) {
+		/* boolean strings under TAB_VCV are too long to
+		   appear column-wise 
+		*/
 		b_col = 0;
 		b_len++;
 		gtk_table_resize(GTK_TABLE(b_table), b_len + 1, 2);
@@ -1733,6 +1739,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
        the "libset" apparatus 
     */
     libset_set_bool(SHELL_OK, shellok);
+    libset_set_bool(ROBUST_Z, robust_z);
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
     set_panel_hccme(hc_panel);
@@ -1884,6 +1891,7 @@ static int common_read_rc_setup (void)
 
     libset_set_bool(SHELL_OK, shellok);
     libset_set_bool(USE_CWD, usecwd);
+    libset_set_bool(ROBUST_Z, robust_z);
     set_gp_colors();
     set_gp_scale();
 

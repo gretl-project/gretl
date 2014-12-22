@@ -5281,6 +5281,13 @@
 	offered for GARCH models: QML is the Quasi-Maximum Likelihood
 	Estimator, and BW is the Bollerslev-Wooldridge estimator.
       </para>
+      <para>
+	By default gretl uses the Student <math>t</math> distribution
+	when calculating p-values based on robust standard errors in
+	the context of least squares estimators. The option labeled
+	<quote>Use the normal distribution for robust p-values</quote>
+	can be used to change this behavior.
+      </para>
     </description>
 
   </command>
@@ -10616,6 +10623,16 @@
 	  option is given the default method is regular HCCM, but the
 	  <opt>robust-hac</opt> flag can be used to force the use of a
 	  HAC estimator.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>robust_z</lit>: <lit>off</lit> (the default) or
+	  <lit>on</lit>. This controls the distribution used when
+	  calculating p-values based on robust standard errors in
+	  the context of least-squares estimators. By default gretl
+	  uses the Student <math>t</math> distribution but if
+	  <lit>robust_z</lit> is turned on the normal distribution
+	  is used.
 	  </para>
 	</li>
 	<li>
