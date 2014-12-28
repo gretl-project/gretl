@@ -2441,9 +2441,15 @@ static void rejoin_list_toks (CMD *c, int k1, int *k2,
 	}
 	*k2 = i;
 	if (tok->type == TOK_PRSTR) {
+	    /* lag spec, for example */
 	    strcat(lstr, "(");
 	    strcat(lstr, tok->s);
 	    strcat(lstr, ")");
+	} else if (tok->type == TOK_BRSTR) {
+	    /* element of named list, for example */
+	    strcat(lstr, "[");
+	    strcat(lstr, tok->s);
+	    strcat(lstr, "]");
 	} else if (i < c->ntoks - 1 && panel_gmm_special(c, tok->s)) {
 	    cmd_token *next = &c->toks[i+1];
 	    char *tmp;
