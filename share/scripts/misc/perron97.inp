@@ -21,7 +21,7 @@ function scalar perron_test (series y, int maxlag, scalar testsig,
    loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1) --quiet
 
       if (verbose > 1)
-         printf "Trying break in %s:\n", date(Tb)
+         printf "Trying break in %s:\n", obslabel(Tb)
       endif
 
       genr DU = (time > Tb)
@@ -34,7 +34,7 @@ function scalar perron_test (series y, int maxlag, scalar testsig,
 
          # test significance of the last lag
          genr tstat = $coeff(dyt_$k) / $stderr(dyt_$k)
-         genr pv = 2 * pval(z, abs(tstat))
+         genr pv = 2 * pvalue(z, abs(tstat))
 
          if (verbose > 2)
             printf "\tlast lag (%2d): t = %8.4f, asy. p-value = %6.4f\n", \ 
@@ -70,7 +70,7 @@ function scalar perron_test (series y, int maxlag, scalar testsig,
    # print -o time yr DU DT
 
    printf "\n*** min(t_alpha) = %g in %s (k=%d) ***\n", \
-   t_a_min, date(Tbstar), Tbk
+   t_a_min, obslabel(Tbstar), Tbk
 
    # print the regression ("Model 1") with the selected break year
 
