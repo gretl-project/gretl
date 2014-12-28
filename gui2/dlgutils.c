@@ -275,7 +275,7 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
     }
 
     if (parent != NULL) {
-	g_signal_connect(G_OBJECT(d), "show", 
+	g_signal_connect(G_OBJECT(d), "realize", /* was "show" */
 			 G_CALLBACK(gretl_dialog_set_destruction), 
 			 parent);
     }

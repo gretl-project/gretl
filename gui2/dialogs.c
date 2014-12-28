@@ -3607,20 +3607,23 @@ static void pd_buttons (GtkWidget *dlg, int spd, struct compaction_info *cinfo)
     GtkWidget *button;
     GtkWidget *vbox;
     GSList *group = NULL;
-    gint f[3] = {0};
-    const char *fstr[3] = { NULL };
+    gint f[4] = {0};
+    const char *fstr[4] = { NULL };
 
     if (spd == 12) {
+	/* monthly: to quarterly or annual */
 	f[0] = 4;
 	f[1] = 1;
 	fstr[0] = N_("Quarterly");
 	fstr[1] = N_("Annual");
     } else if (spd == 5 || spd == 7) {
+	/* daily: to weekly or monthly */
 	f[0] = 52;
 	f[1] = 12;
 	fstr[0] = N_("Weekly");
 	fstr[1] = N_("Monthly");
     } else if (spd == 24) {
+	/* hourly: to daily */
 	f[0] = 7;
 	f[1] = 5;
 	f[2] = 6;
@@ -3898,8 +3901,9 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
 
     show_method_buttons = (methods_set != ALL_METHODS_SET);
 
-    /* Monthly data: give choice of going to quarterly or annual.
-       Dated daily: give choice of going to weekly or monthly 
+    /* Monthly data: give choice of going to quarterly or annual;
+       Dated daily: give choice of going to weekly or monthly;
+       Hourly data: give choice of days per week.
     */
     if (show_pd_buttons) {
 	pd_buttons(dlg, spd, &cinfo);
@@ -3917,7 +3921,8 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
     }
 
     /* per-variable compaction methods not all set already: 
-       give choice of default compaction method */
+       give choice of default compaction method 
+    */
     if (show_method_buttons) {
 	compact_method_buttons(dlg, method, spd, methods_set, &cinfo);
     } 

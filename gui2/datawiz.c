@@ -261,7 +261,7 @@ static void maybe_unrestrict_dataset (void)
 static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 			      GtkWidget *dlg)
 {
-    char record[128];
+    gchar *setobs_cmd = NULL;
     gretlopt opt = OPT_NONE;
     int create = (opts->flags & DW_CREATE);
     int delmiss = (opts->flags & DW_DROPMISS);
@@ -271,8 +271,6 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 #if DWDEBUG
     fprintf(stderr, "dwiz_make_changes: create = %d\n", create);
 #endif
-
-    *record = '\0';
 
     /* preliminaries */
     if (time_series(dwinfo)) {
@@ -294,8 +292,9 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	    err = set_panel_structure_from_vars(uv, tv, dataset);
 	}
 	if (!err) {
-	    sprintf(record, "setobs %s %s --panel-vars",
-		    dataset->varname[uv], dataset->varname[tv]);
+	    setobs_cmd = g_strdup_printf("setobs %s %s --panel-vars",
+					 dataset->varname[uv],
+					 dataset->varname[tv]);
 	}
 	goto finalize;
     }
@@ -355,9 +354,10 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	    dwinfo->pd, dwinfo->stobs, opt, err);
 #endif
 
-    if (!err) {
-	sprintf(record, "%d %s%s", dwinfo->pd, dwinfo->stobs, 
-		print_flags(opt, SETOBS));
+    if (!err && setobs_cmd == NULL) {
+	setobs_cmd = g_strdup_printf("setobs %d %s%s",
+				     dwinfo->pd, dwinfo->stobs, 
+				     print_flags(opt, SETOBS));
     }
 
  finalize:
@@ -384,10 +384,12 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	mark_dataset_as_modified();
     }
 
-    if (!err && *record != '\0') {
-	lib_command_strcpy(record);
+    if (!err && setobs_cmd != NULL) {
+	lib_command_strcpy(setobs_cmd);
 	record_command_verbatim();
     }
+
+    g_free(setobs_cmd);
 
 #if DWDEBUG
     fprintf(stderr, "dwiz_make_changes: returning %d\n", err);
