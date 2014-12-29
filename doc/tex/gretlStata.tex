@@ -42,7 +42,7 @@ foreign language=stata --send-data
   gretl_export vcv "vcv.mat"
 end foreign
 
-matrix stata_vcv = mread("@dotdir/vcv.mat")
+matrix stata_vcv = mread("vcv.mat", 1)
 stata_se = stata_reorder(sqrt(diag(stata_vcv)))
 matrix check = se - stata_se
 print check

@@ -81,7 +81,7 @@ matrix within \app{Ox}, is shown below:
 \begin{code}
 open data4-1
 matrix m = { dataset }
-mwrite(m, "@dotdir/gretl.mat")
+mwrite(m, "gretl.mat", 1)
 
 foreign language=Ox 
 #include <oxstd.h>
@@ -136,7 +136,7 @@ The final portion of the output from Example~\ref{Ox-DPD} is shown
 below:
 %
 \begin{code}
-? matrix oxparm = mread("/home/cottrell/.gretl/oxparm.mat")
+? matrix oxparm = mread("oxparm.mat", 1)
 Generated matrix oxparm
 ? eval abs((parm - oxparm) ./ oxparm)
   1.4578e-13 
@@ -199,7 +199,7 @@ main ()
 end foreign
 
 # Compare the results
-matrix oxparm = mread("@dotdir/oxparm.mat")
+matrix oxparm = mread("oxparm.mat", 1)
 eval abs((parm - oxparm) ./ oxparm)
 \end{scode}
 \label{Ox-DPD}

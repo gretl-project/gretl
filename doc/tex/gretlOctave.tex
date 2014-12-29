@@ -53,7 +53,7 @@ object that is produced, if any.)
 \begin{code}
 open data4-1
 matrix m = { dataset }
-mwrite(m, "@dotdir/gretl.mat")
+mwrite(m, "gretl.mat", 1)
 
 foreign language=Octave
    gmat = gretl_loadmat("gretl.mat")
@@ -136,7 +136,7 @@ shows the same graph in PDF format.
 \begin{scode}
 open data9-7
 matrix xy = { PRIME, UNEMP }
-mwrite(xy, "@dotdir/xy.mat")
+mwrite(xy, "xy.mat", 1)
 
 foreign language=Octave
  # uncomment and modify the following if necessary
@@ -149,7 +149,7 @@ foreign language=Octave
  gretl_export(h, "h.mat");
 end foreign
 
-h = mread("@dotdir/h.mat")
+h = mread("h.mat", 1)
 colnames(h, "coherence")
 gnuplot 1 --time-series --with-lines --matrix=h --output=display
 \end{scode}

@@ -317,32 +317,18 @@ filename, a couple of conventions may prove useful. First, you may
 want to use an informative file suffix such as ``\texttt{.mat}'', but
 this is a matter of taste. More importantly, the exact location of the
 file created by \texttt{mwrite} could be an issue. By default, if no
-path is specified in the file name, gretl stores matrix files in
-the current work directory. However, it may be wise for the purpose at
-hand to use the directory in which gretl stores all its
-temporary files, whose name is stored in the built-in string
-\texttt{dotdir} (see section~\ref{sec:named-strings}). The value of
-this string is automatically passed to \app{R} as the string variable
-\texttt{gretl.dotdir}, so the above example may be rewritten as
-
-Gretl side:
-\begin{code}
-  matrix A = mshape(seq(3,14),4,3)
-  err = mwrite(A, "@dotdir/mymatfile.mat")
-\end{code}
-\app{R} side:
-\begin{code}
-  fname <- paste(gretl.dotdir, "mymatfile.mat", sep="")
-  A <- as.matrix(read.table(fname, skip=1))
-\end{code}
-
-As a convenience, you can traffic in matrix files via gretl's
-\texttt{dotdir} in a more abbreviated form. First, \texttt{mwrite} has
-an optional third (integer) argument: if this is non-zero then the
-matrix file is automatically written into \texttt{dotdir}.  Second,
-the function \texttt{gretl.loadmat}, which is defined when you run
-\app{R} via gretl, provides a shortcut for the last two lines of
-\app{R} code above. The simplied version of the transaction is then
+path is specified in the file name, gretl writes matrix files in the
+current working directory. However, it may be wise for the purpose at
+hand to use a directory that is known to be writable by the user,
+namely the user's ``dotdir''(see section~\ref{sec:named-strings}).
+This can be achieved on the gretl side by passing a non-zero integer
+as the (optional) third argument to \texttt{mwrite}; on the \app{R}
+side you can use the function \texttt{gretl.loadmat}, which is
+pre-defined when \app{R} is called from gretl.\footnote{In case you
+  need to do this sort of thing manually, you can use the built-in
+  string variable \texttt{dotdir} in gretl, while in \app{R} you have
+  the same variable under the name \texttt{gretl.dotdir}.}
+So the above example may be rewritten as
 
 Gretl side:
 \begin{code}
@@ -515,7 +501,7 @@ rename level lg_level
 rename slope lg_slope
 rename sea lg_seas
 
-vars = mread("@dotdir/vars.mat")
+vars = mread("vars.mat", 1)
 \end{scode}
 \label{RStructTS-simple}
 \end{script}
