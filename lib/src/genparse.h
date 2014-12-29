@@ -461,16 +461,14 @@ enum {
                              s == F_NRMAX || s == F_DESEAS || \
 			     s == F_AGGRBY || s == F_INBUNDLE || \
 			     s == F_SSCANF || s == F_PRINTF || \
-			     s == F_SPRINTF || s == F_ALLREDUCE || \
-			     s == F_GENSERIES)
+			     s == F_SPRINTF || s == F_ALLREDUCE)
 
 /* functions taking string arg in middle position */
 #define string_mid_func(s) (s == F_REDUCE || s == F_SCATTER)
 
 /* functions taking one or more "fncall" (string) arguments */
 #define fncall_func(s) (s == F_BFGSMAX || s == F_NRMAX || \
-			s == F_FDJAC || s == F_SIMANN || \
-			s == F_GENSERIES)
+			s == F_FDJAC || s == F_SIMANN)
 
 #define unary_op(s)  (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)

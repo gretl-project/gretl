@@ -9194,54 +9194,81 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
     return ret;
 }
 
-static char *gen_series_line (const char *vname,
-			      const char *formula,
-			      parser *p)
+static NODE *gen_series_from_string (NODE *l, NODE *r, parser *p)
 {
-    char *line = NULL;
+    NODE *ret = NULL;
+    gchar *line;
+    int vnum = -1;
+    int err = 0;
 
-    if (!strncmp(formula, "varname(", 8)) {
-	char *tmp = generate_string(formula, p->dset, &p->err);
-	    
-	if (tmp != NULL) {
-	    line = g_strdup_printf("series %s=%s", vname, tmp);
-	    free(tmp);
-	}
-    } else {
-	line = g_strdup_printf("series %s=%s", vname, formula);
+    line = g_strdup_printf("series %s=%s", l->v.str, r->v.str);
+    err = generate(line, p->dset, OPT_NONE, p->prn);
+    
+    if (!err) {
+	vnum = current_series_index(p->dset, l->v.str);
     }
 
-    return line;
+    ret = aux_scalar_node(p);
+    if (ret != NULL) {
+	ret->v.xval = vnum;
+    }
+	
+    g_free(line);
+
+    return ret;
 }
 
 static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
-    if (l->t != STR || r->t != STR) {
-	p->err = E_TYPES;
-    } else if (p->dset == NULL || p->dset->n == 0) {
+    if (p->dset == NULL || p->dset->n == 0) {
 	no_data_error(p);
+    } else if (l->t == STR && r->t == STR) {
+	return gen_series_from_string(l, r, p);
+    } else if (l->t != STR || r->t != SERIES) {
+	p->err = E_TYPES;
     } else {
-	const char *vname = l->v.str;
-	const char *formula = r->v.str;
-	char *line;
+	char *vname = l->v.str;
+	int vnum = current_series_index(p->dset, vname);
+	int err = 0;
 
-	line = gen_series_line(vname, formula, p);
+	if (vnum > 0) {
+	    /* a series of this name already exists */
+	    int t;
+	    
+	    for (t=0; t<p->dset->n; t++) {
+		if (t < p->dset->t1 || t > p->dset->t2) {
+		    p->dset->Z[vnum][t] = NADBL;
+		} else {
+		    p->dset->Z[vnum][t] = r->v.xvec[t];
+		}
+	    }
+	} else {
+	    /* creating a new series */
+	    GretlType ltype = user_var_get_type_by_name(vname);
 
-	if (!p->err) {
-	    int vnum = -1;
-	    int err = 0;
-
-	    err = generate(line, p->dset, OPT_NONE, p->prn);
+	    if (ltype != GRETL_TYPE_NONE) {
+		/* cannot overwrite a variable of another type */
+		err = E_TYPES;
+	    } else {
+		err = check_varname(vname);
+	    }
 	    if (!err) {
-		vnum = current_series_index(p->dset, vname);
+		err = dataset_add_allocated_series(p->dset, r->v.xvec);
 	    }
-	    ret = aux_scalar_node(p);
-	    if (ret != NULL) {
-		ret->v.xval = vnum;
+	    if (!err) {
+		/* update node @r's properties */
+		r->vnum = p->dset->v - 1;
+		r->flags &= ~TMP_NODE;
+		r->flags &= ~AUX_NODE;
+		err = dataset_rename_series(p->dset, r->vnum, vname);
 	    }
-	    g_free(line);
+	}
+
+	ret = aux_scalar_node(p);
+	if (ret != NULL) {
+	    ret->v.xval = r->vnum;
 	}
     }
 
