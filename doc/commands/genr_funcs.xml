@@ -2054,9 +2054,9 @@
 	  Provides a somewhat flexible means of obtaining a text
 	  buffer containing data from an internet server, using
 	  libcurl. On input the bundle <argname>b</argname> must
-	  contain a string named <quote> <lit>URL</lit> </quote> which
-	  gives the full address of the resource on the target
-	  host. Other optional elements are as follows.
+	  contain a string named <lit>URL</lit> which gives the full
+	  address of the resource on the target host. Other optional
+	  elements are as follows.
 	</para>
 	<ilist>
 	  <li>
@@ -2864,7 +2864,7 @@
     <function name="genseries" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">varname</fnarg>
-	<fnarg type="string">expression</fnarg>
+	<fnarg type="series">rhs</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -2875,15 +2875,18 @@
 	</para>
 	<para>
 	  The first argument gives the name of the series to create
-	  (or modify) and the second the expression or formula that
-	  defines the series; these can be string literals, string
-	  variables, or expressions that evaluate to strings. The
-	  second argument should be an expression of the sort that
-	  appears to the right of the equals sign when generating a
-	  series in the usual way.  The return value from this
-	  function is the ID number of the series in the dataset, a
-	  value suitable for inclusion in a list (or &minus;1 on
-	  failure).
+	  (or modify); this can be a string literal, a string
+	  variable, or an expression that evaluates to a string.  The
+	  second argument, <argname>rhs</argname> (<quote>right-hand
+	  side</quote>), defines the source series: this can be the
+	  name of an existing series or an expression that evaluates
+	  to a series, as would appear to the right of the equals sign
+	  when defining a series in the usual way.
+	</para>
+	<para>
+	  The return value from this function is the ID number of the
+	  series in the dataset, a value suitable for inclusion in a
+	  list (or &minus;1 on failure).
 	</para>
 	<para>
 	  For example, suppose you want to add <math>n</math> random
@@ -2892,10 +2895,8 @@
 	</para>
 	<code>
 	  list Normals = null
-	  string vname
 	  loop i=1..n --quiet
-	      sprintf vname "norm%d", i
-	      Normals += genseries(vname, "normal()")
+	      Normals += genseries(sprintf("norm%d", i), normal())
 	  endloop
 	</code>
 	<para>

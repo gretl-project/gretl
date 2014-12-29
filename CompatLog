@@ -1,7 +1,12 @@
 version 1.10.0, in progress
 
-Remove obsolete function-name aliases: "pval" (use "pvalue")
-and "date" (use "obslabel").
+The function genseries() has been redefined: the second
+argument is now officially an expression that evaluates to
+a series, rather than a string. However the string form is
+still accepted.
+
+Some obsolete, undocumented function-name aliases have been
+removed: "pval" (use "pvalue") and "date" (use "obslabel").
 
 2014-09-20 version 1.9.92
 
