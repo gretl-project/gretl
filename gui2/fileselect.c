@@ -67,6 +67,7 @@ static struct extmap action_map[] = {
     { SAVE_OX_CMDS,      ".ox" },
     { SAVE_OCTAVE_CMDS,  ".m" }, 
     { SAVE_PYTHON_CMDS,  ".py" },
+    { SAVE_STATA_CMDS,   ".do" },
     { SAVE_FUNCTIONS,    ".gfn" },
     { SAVE_MARKERS,      ".txt" },
     { SAVE_LABELS,       ".txt" },
@@ -321,7 +322,8 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	       action == SAVE_R_CMDS ||
 	       action == SAVE_OX_CMDS ||
 	       action == SAVE_OCTAVE_CMDS ||
-	       action == SAVE_PYTHON_CMDS) {
+	       action == SAVE_PYTHON_CMDS ||
+	       action == SAVE_STATA_CMDS) {
 	script_window_update(vwin, fname);
     } 
 }
@@ -362,12 +364,14 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	view_script(fname, 1, EDIT_R);
     } else if (has_suffix(fname, ".plt")) {
 	view_script(fname, 1, EDIT_GP);
-    } else if (ox_support && has_suffix(fname, ".ox")) {
+    } else if (has_suffix(fname, ".ox")) {
 	view_script(fname, 1, EDIT_OX);
     } else if (has_suffix(fname, ".m")) {
 	view_script(fname, 1, EDIT_OCTAVE);
     } else if (has_suffix(fname, ".py")) {
 	view_script(fname, 1, EDIT_PYTHON);
+    } else if (has_suffix(fname, ".do")) {
+	view_script(fname, 1, EDIT_STATA);
     } else {
 	strcpy(tryfile, fname);
 	if (view_script(tryfile, 1, EDIT_SCRIPT) != NULL) {
@@ -853,9 +857,8 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_filter(filesel, N_("gnuplot files (*.plt)"), "*.plt");
 	filesel_add_filter(filesel, N_("GNU Octave files (*.m)"), "*.m");
 	filesel_add_filter(filesel, N_("Python files (*.py)"), "*.py");
-	if (ox_support) {
-	    filesel_add_filter(filesel, N_("Ox files (*.ox)"), "*.ox");
-	}
+	filesel_add_filter(filesel, N_("Ox files (*.ox)"), "*.ox");
+	filesel_add_filter(filesel, N_("Stata files (*.do)"), "*.do");
     } else if (action == OPEN_LABELS || action == OPEN_BARS) {
 	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt");
 	filesel_add_filter(filesel, N_("all files (*.*)"), "*");

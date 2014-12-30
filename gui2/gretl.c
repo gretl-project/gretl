@@ -163,7 +163,6 @@ int main_x = -1;
 int main_y = -1;
 int mainwin_width = 520;
 int mainwin_height = 420;
-int ox_support = FALSE;
 
 #if defined(G_OS_WIN32)
 char calculator[MAXSTR] = "calc.exe";
@@ -306,12 +305,14 @@ static int script_type (const char *fname)
     } else if (has_suffix(fname, ".plt") ||
 	       has_suffix(fname, ".gp")) {
 	return EDIT_GP;
-    } else if (ox_support && has_suffix(fname, ".ox")) {
+    } else if (has_suffix(fname, ".ox")) {
 	return EDIT_OX;
     } else if (has_suffix(fname, ".m")) {
 	return EDIT_OCTAVE;
     } else if (has_suffix(fname, ".py")) {
 	return EDIT_PYTHON;
+    } else if (has_suffix(fname, ".do")) {
+	return EDIT_STATA;
     } else {
 	return 0;
     }
@@ -1487,6 +1488,7 @@ GtkActionEntry main_entries[] = {
     { "OctaveScript", NULL, N_("Octave script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "PyScript", NULL, N_("Python script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "OxScript", NULL, N_("Ox program"), NULL, NULL, G_CALLBACK(new_script_callback) },
+    { "StataScript", NULL, N_("Stata program"), NULL, NULL, G_CALLBACK(new_script_callback) },
 
     { "SessionFiles", NULL, N_("_Session files"), NULL, NULL, NULL },
     { "OpenSession", GTK_STOCK_OPEN, N_("_Open session..."), "", NULL, G_CALLBACK(open_session_callback) },
@@ -1844,15 +1846,6 @@ static void add_conditional_items (windata_t *vwin)
 			  GTK_UI_MANAGER_MENUITEM, 
 			  FALSE);
 #endif
-
-    if (ox_support) {
-	gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
-			      "/menubar/File/ScriptFiles/NewScript/OxScript",
-			      N_("Ox program"),
-			      "OxScript",
-			      GTK_UI_MANAGER_MENUITEM, 
-			      FALSE);
-    }
 
     maybe_add_packages_to_menus(vwin);
 }

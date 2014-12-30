@@ -7699,6 +7699,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	vwin->role == EDIT_OX ||
 	vwin->role == EDIT_OCTAVE ||
         vwin->role == EDIT_PYTHON ||
+	vwin->role == EDIT_STATA ||
 	vwin->role == EDIT_X12A) {
 	buf = textview_get_text(vwin->text);
     } else if (vwin->role == EDIT_PKG_SAMPLE) {
@@ -7729,6 +7730,8 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	run_foreign_script(buf, LANG_OCTAVE);
     } else if (vwin->role == EDIT_PYTHON) {
 	run_foreign_script(buf, LANG_PYTHON);
+    } else if (vwin->role == EDIT_STATA) {
+	run_foreign_script(buf, LANG_STATA);
     } else if (vwin->role == EDIT_X12A) {
 	run_x12a_script(buf);
     } else if (selection) {
@@ -7818,6 +7821,8 @@ void new_script_callback (GtkAction *action)
 	etype = EDIT_OCTAVE;
     } else if (!strcmp(s, "PyScript")) {
 	etype = EDIT_PYTHON;
+    } else if (!strcmp(s, "StataScript")) {
+	etype = EDIT_STATA;
     }
 
     do_new_script(etype, NULL);

@@ -1401,6 +1401,8 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	    file_selector(SAVE_OCTAVE_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_PYTHON) {
 	    file_selector(SAVE_PYTHON_CMDS, FSEL_DATA_VWIN, vwin);
+	} else if (vwin->role == EDIT_STATA) {
+	    file_selector(SAVE_STATA_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == CONSOLE) {
 	    file_selector(SAVE_CONSOLE, FSEL_DATA_VWIN, vwin);
 	}	    
@@ -1698,6 +1700,8 @@ static gchar *make_viewer_title (int role, const char *fname)
 	title = g_strdup(_("gretl: edit Octave script")); break;
     case EDIT_PYTHON:
 	title = g_strdup(_("gretl: edit Python script")); break;
+    case EDIT_STATA:
+	title = g_strdup(_("gretl: edit Stata program")); break;
     case SCRIPT_OUT:
     case FNCALL_OUT:
 	title = script_output_title();
@@ -5118,14 +5122,19 @@ static void run_R_sync (void)
 void run_foreign_script (gchar *buf, int lang)
 {
     const char *fname;
+    PRN *prn = NULL;
     int err;
 
     if (lang == LANG_OX) {
 	err = write_gretl_ox_file(buf, OPT_G, &fname);
     } else if (lang == LANG_PYTHON) {
 	err = write_gretl_python_file(buf, OPT_G, &fname);
-    } else {
+    } else if (lang == LANG_STATA) {
+	err = write_gretl_stata_file(buf, OPT_G, dataset, &fname);
+    } else if (lang == LANG_OCTAVE) {
 	err = write_gretl_octave_file(buf, OPT_G, dataset, &fname);
+    } else {
+	err = E_DATA;
     }
 
     if (err) {
@@ -5138,24 +5147,45 @@ void run_foreign_script (gchar *buf, int lang)
 	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_oxl_path(), fname);
 	} else if (lang == LANG_PYTHON) {
 	    cmd = g_strdup_printf("\"%s\" \"%s\"", "python", fname);
-	} else {
+	} else if (lang == LANG_STATA) {
+	    cmd = g_strdup_printf("\"%s\" /e do \"%s\"", gretl_stata_path(), fname);
+	} else if (lang == LANG_OCTAVE) {
 	    cmd = g_strdup_printf("\"%s\" -q \"%s\"", gretl_octave_path(), fname);
 	}
 
-	err = gretl_win32_grab_output(cmd, &sout);
-	g_free(cmd);
+	if (lang == LANG_STATA) {
+	    err = gretl_win32_grab_output(cmd, &sout);
+	    gchar *buf = NULL;
 
-	if (sout == NULL) {
-	    warnbox("Got no output");
+	    gretl_chdir(gretl_dotdir());
+	    remove("gretltmp.log");
+	    err = gretl_spawn(cmd);
+	
+	    if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
+		bufopen(&prn);
+		pputs(prn, buf);
+		g_free(buf);
+		pputc(prn, '\n');
+	    }
 	} else {
-	    PRN *prn = gretl_print_new_with_buffer(sout);
-    
-	    if (prn != NULL) {
-		view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
-	    } else {
-		free(sout);
+	    err = gretl_win32_grab_output(cmd, &sout);
+	    if (sout != NULL) {
+		prn = gretl_print_new_with_buffer(sout);
+		if (prn == NULL) {
+		    free(sout);
+		}
 	    }
 	}
+
+	if (prn != NULL) {
+	    view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
+	} else if (err) {
+	    gui_errmsg(err);
+	} else {
+	    warnbox("Got no output");
+	}
+	    
+	g_free(cmd);
     }
 }
 
@@ -5268,17 +5298,23 @@ static void start_R_async (void)
     free(s2);
 }
 
-/* run R or Ox in synchronous (batch) mode and display the results
-   in a gretl window: non-Windows variant
+/* run R, Ox, etc., in synchronous (batch) mode and display the
+   results in a gretl window: non-Windows variant
 */
 
-static void run_prog_sync (char **argv)
+static void run_prog_sync (char **argv, int lang)
 {
     gchar *sout = NULL;
     gchar *errout = NULL;
     gint status = 0;
     GError *gerr = NULL;
     PRN *prn = NULL;
+
+    if (lang == LANG_STATA) {
+	/* control location of Stata log file */
+	gretl_chdir(gretl_dotdir());
+	remove("gretltmp.log");
+    }
 
     g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
 		 NULL, NULL, &sout, &errout,
@@ -5298,11 +5334,26 @@ static void run_prog_sync (char **argv)
 		pputs(prn, errout);
 	    }
 	}
-    } else if (sout != NULL) {
-	bufopen(&prn);
-	pputs(prn, sout);
+    } else if (lang == LANG_STATA) {
+	/* read log file */
+	gchar *buf = NULL;
+	
+	if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
+	    bufopen(&prn);
+	    pputs(prn, buf);
+	    g_free(buf);
+	    pputc(prn, '\n');
+	} else {
+	    warnbox("Got no output");
+	}
     } else {
-	warnbox("Got no output");
+	/* read good old stdout */
+	if (sout != NULL) {
+	    bufopen(&prn);
+	    pputs(prn, sout);
+	} else {
+	    warnbox("Got no output");
+	}
     }
 
     if (prn != NULL) {
@@ -5324,7 +5375,7 @@ static void run_R_sync (void)
 	NULL
     };
 
-    run_prog_sync(argv);
+    run_prog_sync(argv, LANG_R);
 }
 
 void run_foreign_script (gchar *buf, int lang)
@@ -5336,15 +5387,18 @@ void run_foreign_script (gchar *buf, int lang)
 	err = write_gretl_ox_file(buf, OPT_G, &fname);
     } else if (lang == LANG_PYTHON) {
 	err = write_gretl_python_file(buf, OPT_G, &fname);
+    } else if (lang == LANG_STATA) {
+	err = write_gretl_stata_file(buf, OPT_G, dataset, &fname);
+    } else if (lang == LANG_OCTAVE) {
+	err = write_gretl_octave_file(buf, OPT_G, dataset, &fname);
     } else {
-	err = write_gretl_octave_file(buf, OPT_G, dataset,
-				      &fname);
+	err = E_DATA;
     }
 
     if (err) {
 	gui_errmsg(err);
     } else {
-	gchar *argv[4];
+	gchar *argv[6];
 
 	if (lang == LANG_OX) {
 	    argv[0] = (gchar *) gretl_oxl_path();
@@ -5354,14 +5408,21 @@ void run_foreign_script (gchar *buf, int lang)
 	    argv[0] = "python";
 	    argv[1] = (gchar *) fname;
 	    argv[2] = NULL;
-	} else {
+	} else if (lang == LANG_STATA) {
+	    argv[0] = (gchar *) gretl_stata_path();
+	    argv[1] = (gchar *) "-q";
+	    argv[2] = (gchar *) "-b";
+	    argv[3] = (gchar *) "do";
+	    argv[4] = (gchar *) fname;
+	    argv[5] = NULL;
+	} else if (lang == LANG_OCTAVE) {
 	    argv[0] = (gchar *) gretl_octave_path();
 	    argv[1] = (gchar *) "-q";
 	    argv[2] = (gchar *) fname;
 	    argv[3] = NULL;
 	}
 
-	run_prog_sync(argv);
+	run_prog_sync(argv, lang);
     }
 }
 

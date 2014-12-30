@@ -213,8 +213,6 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "session_prompt", N_("Prompt to save session"), NULL, &session_prompt, 
       BOOLSET, 0, TAB_MAIN, NULL },
-    { "oxsupport", N_("Enable Ox support"), NULL, &ox_support, 
-      BOOLSET | RESTART, 0, TAB_MAIN, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd, 
       INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
     { "keepfolder", N_("File selector remembers folder"), NULL, &keep_folder, 
@@ -1278,11 +1276,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 	if (rc->tab != tab) {
 	    /* the item is not on this page */
-	    continue;
-	}
-
-	if (!ox_support && rc->var == paths.oxlpath) {
-	    /* don't show ox path entry if support is not enabled */
 	    continue;
 	}
 

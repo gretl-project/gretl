@@ -26,6 +26,7 @@
 				r == EDIT_OX ||     \
                                 r == EDIT_OCTAVE || \
 				r == EDIT_PYTHON || \
+				r == EDIT_STATA ||  \
 				r == EDIT_X12A)
 
 #define vwin_editing_buffer(r) (r == EDIT_HEADER || \

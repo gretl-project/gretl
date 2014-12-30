@@ -26,7 +26,8 @@
 	  <menuitem action="RScript"/>
           <menuitem action="OctaveScript"/>
           <menuitem action="PyScript"/>
-	  <placeholder action="OxScript"/>
+	  <menuitem action="OxScript"/>
+	  <menuitem action="StataScript"/>
 	</menu>
 	<separator/>
 	<placeholder name="RecentScripts"/>
