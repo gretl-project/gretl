@@ -295,7 +295,8 @@ enum {
     TOK_OPTEQ,   /* '=' that joins option flag to value */
     TOK_OPTVAL,  /* value attached to option flag */
     TOK_AST,     /* single asterisk */
-    TOK_SYMB     /* symbols, not otherwise handled */
+    TOK_SYMB,    /* symbols, not otherwise handled */
+    TOK_EVAL     /* string that needs to be eval'd */
 } TokenTypes;    
 
 struct cmd_token_ {
@@ -547,6 +548,13 @@ static int push_string_token (CMD *c, const char *tok,
 	type = TOK_CATCH; 
     } else if (*tok == '$') {
 	type = TOK_DOLSTR;
+    } else if (!strncmp(tok, "eval(", 5)) {
+	char strvar[VNAMELEN];
+	
+	if (sscanf(tok, "eval(%31[^)]", strvar) == 1 &&
+	    tok[strlen(tok)-1] == ')') {
+	    return push_token(c, strvar, s, pos, TOK_EVAL, 0);
+	}
     }
 
     return push_token(c, tok, s, pos, type, 0);
@@ -1450,6 +1458,9 @@ static int get_param (CMD *c, const DATASET *dset)
 	   check for exceptions? */
 	c->param = rebrace_string(tok->s, &c->err);
 	mark_token_done(c->toks[pos]);
+    } else if (tok->type == TOK_EVAL) {
+	c->param = generate_string(tok->s, NULL, &c->err);
+	mark_token_done(c->toks[pos]);
     } else if (delimited_type(tok->type)) {
 	c->param = tok->s;
 	mark_token_done(c->toks[pos]);
@@ -1884,6 +1895,8 @@ static char *tokstring (char *s, cmd_token *toks, int i)
 	strcpy(s, "bracket-delimited");
     } else if (tok->type == TOK_DOLSTR) {
 	strcpy(s, "$-variable");
+    } else if (tok->type == TOK_EVAL) {
+	strcpy(s, "eval-token");
     } else {
 	strcpy(s, "regular");
     }

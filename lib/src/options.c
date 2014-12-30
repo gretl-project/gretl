@@ -985,22 +985,23 @@ static int maybe_evaluate_optval (stored_opt *so)
 {
     char *s = so->val;
     int n = strlen(s);
+    int err = 0;
 
     if (!strncmp(s, "eval(", 5) && s[n-1] == ')') {
 	char *sname = gretl_strndup(s + 5, n - 6);
 
 	if (sname != NULL) {
-	    const char *tmp = get_string_by_name(sname);
+	    char *tmp = generate_string(sname, NULL, &err);
 
 	    if (tmp != NULL) {
 		free(so->val);
-		so->val = gretl_strdup(tmp);
+		so->val = tmp;
 	    }
 	    free(sname);
 	}
     }
 
-    return 0;
+    return err;
 }
 
 static int real_push_option (int ci, gretlopt opt, char *val,
