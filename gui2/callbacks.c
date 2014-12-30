@@ -190,6 +190,10 @@ void file_save (windata_t *vwin, int ci)
     case SAVE_SCRIPT:
     case SAVE_GP_CMDS:
     case SAVE_R_CMDS:
+    case SAVE_OX_CMDS:
+    case SAVE_OCTAVE_CMDS:
+    case SAVE_PYTHON_CMDS:
+    case SAVE_STATA_CMDS:
     case SAVE_DATA:
     case SAVE_DATA_AS:
 	file_selector(ci, FSEL_DATA_VWIN, vwin);
