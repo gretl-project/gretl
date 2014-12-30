@@ -22,7 +22,7 @@ and, of course, you may do with your own Ox code whatever you wish.''
 If you wish to use \app{Ox} in conjunction with gretl please
 refer to \url{doornik.com} for further details on licensing.
 
-As the reader will no doubt have noticed, all the other software that
+As the reader will no doubt have noticed, most other software that
 we discuss in this Guide is open-source and freely available for all
 users.  We make an exception for \app{Ox} on the grounds that it is
 indeed fast and well designed, and that its statistical
@@ -39,19 +39,14 @@ and state space models.\footnote{For a review of \app{Ox}, see
 \label{sec:Ox-support}
 
 The support offered for \app{Ox} in gretl is similar to that
-offered for \app{R}, as discussed in chapter~\ref{chap:gretlR}, but
-with a few differences.  The first difference to note is that 
-\app{Ox} support is not on by default; it must be enabled explicitly.
+offered for \app{R}, as discussed in chapter~\ref{chap:gretlR}.
 
 \tip{To enable support for \app{Ox}, go to the
-  Tools/Preferences/General menu item and check the box labeled
-  ``Enable Ox support''.
-  Click ``OK'' in the preferences dialog, then
-  quit and restart gretl.  You will now find, under the Programs
-  tab in the Tools/Preferences/General dialog, an entry for specifying
-  the path to the \texttt{oxl} executable, that is, the program that
-  runs \app{Ox} files (on MS Windows it is called \texttt{oxl.exe}).
-  Make sure that path is right, and you're ready to go.}
+  Tools/Preferences/General menu item and look under the Programs
+  tab. Find the entry for the path to the \texttt{oxl} executable,
+  that is, the program that runs \app{Ox} files (on MS Windows it is
+  called \texttt{oxl.exe}). Adjust the path if it's not already right
+  for your system and you should be ready to go.}
   
 With support enabled, you can open and edit \app{Ox} programs in the
 gretl GUI.  Clicking the ``execute'' icon in the editor window
