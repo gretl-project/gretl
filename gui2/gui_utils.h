@@ -106,7 +106,7 @@ void set_reuseable_output_window (int policy, windata_t *vwin);
 
 gchar *gretl_window_title (const char *s);
 
-gchar *title_from_filename (const char *fname, gboolean prepend);
+gchar *title_from_filename (const char *fname, int role, gboolean prepend);
 
 windata_t *console_window (int hsize, int vsize);
 

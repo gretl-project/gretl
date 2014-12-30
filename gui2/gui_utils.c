@@ -1617,12 +1617,26 @@ gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
     return FALSE;
 }
 
-gchar *title_from_filename (const char *fname, gboolean prepend)
+gchar *title_from_filename (const char *fname, int role, gboolean prepend)
 {
     gchar *title = NULL;
 
     if (strstr(fname, "script_tmp") || strstr(fname, "session.inp")) {
-	title = g_strdup(_("gretl: untitled"));
+	if (role == EDIT_GP) {
+	    title = g_strdup(_("gretl: edit plot commands"));	    
+	} else if (role == EDIT_R) {
+	    title = g_strdup(_("gretl: edit R script"));
+	} else if (role == EDIT_OX) {
+	    title = g_strdup(_("gretl: edit Ox program"));
+	} else if (role == EDIT_OCTAVE) {
+	    title = g_strdup(_("gretl: edit Octave script"));
+	} else if (role == EDIT_PYTHON) {
+	    title = g_strdup(_("gretl: edit Python script"));
+	} else if (role == EDIT_STATA) {
+	    title = g_strdup(_("gretl: edit Stata program"));
+	} else {
+	    title = g_strdup(_("gretl: untitled"));
+	}
     } else {
 	const char *p = strrchr(fname, SLASH);
 	gchar *trfname;
@@ -1646,7 +1660,7 @@ gchar *title_from_filename (const char *fname, gboolean prepend)
 
 void vwin_set_filename (windata_t *vwin, const char *fname)
 {
-    gchar *title = title_from_filename(fname, TRUE);
+    gchar *title = title_from_filename(fname, vwin->role, TRUE);
 
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_free(title);
@@ -1686,22 +1700,16 @@ static gchar *make_viewer_title (int role, const char *fname)
     case VIEW_FILE:
     case VIEW_CODEBOOK:
     case VIEW_DOC:
-	title = title_from_filename(fname, TRUE);
+    case EDIT_GP:
+    case EDIT_R:
+    case EDIT_OX:
+    case EDIT_OCTAVE:
+    case EDIT_PYTHON:
+    case EDIT_STATA:
+	title = title_from_filename(fname, role, TRUE);
 	break;
     case EDIT_NOTES:
 	title = g_strdup(_("gretl: session notes")); break;
-    case EDIT_GP:
-	title = g_strdup(_("gretl: edit plot commands")); break;
-    case EDIT_R:
-	title = g_strdup(_("gretl: edit R script")); break;
-    case EDIT_OX:
-	title = g_strdup(_("gretl: edit Ox program")); break;
-    case EDIT_OCTAVE:
-	title = g_strdup(_("gretl: edit Octave script")); break;
-    case EDIT_PYTHON:
-	title = g_strdup(_("gretl: edit Python script")); break;
-    case EDIT_STATA:
-	title = g_strdup(_("gretl: edit Stata program")); break;
     case SCRIPT_OUT:
     case FNCALL_OUT:
 	title = script_output_title();
@@ -5141,12 +5149,12 @@ void run_foreign_script (gchar *buf, int lang)
 	gui_errmsg(err);
     } else {
 	char *sout = NULL;
-	gchar *cmd;
+	gchar *cmd = NULL;
 
 	if (lang == LANG_OX) {
 	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_oxl_path(), fname);
 	} else if (lang == LANG_PYTHON) {
-	    cmd = g_strdup_printf("\"%s\" \"%s\"", "python", fname);
+	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_python_path(), fname);
 	} else if (lang == LANG_STATA) {
 	    cmd = g_strdup_printf("\"%s\" /e do \"%s\"", gretl_stata_path(), fname);
 	} else if (lang == LANG_OCTAVE) {
@@ -5154,7 +5162,6 @@ void run_foreign_script (gchar *buf, int lang)
 	}
 
 	if (lang == LANG_STATA) {
-	    err = gretl_win32_grab_output(cmd, &sout);
 	    gchar *buf = NULL;
 
 	    gretl_chdir(gretl_dotdir());
@@ -5324,15 +5331,22 @@ static void run_prog_sync (char **argv, int lang)
 	errbox(gerr->message);
 	g_error_free(gerr);
     } else if (status != 0) {
-	if (errout != NULL) {
-	    if (*errout == '\0') {
-		errbox_printf("%s exited with status %d", argv[0], status);
-	    } else if (strlen(errout) < MAXLEN) {
+	if (errout != NULL && *errout != '\0') {
+	    if (strlen(errout) < MAXLEN) {
 		errbox(errout);
 	    } else {
 		bufopen(&prn);
 		pputs(prn, errout);
 	    }
+	} else if (sout != NULL && *sout != '\0') {
+	    if (strlen(sout) < MAXLEN) {
+		errbox(sout);
+	    } else {
+		bufopen(&prn);
+		pputs(prn, sout);
+	    }
+	} else {
+	    errbox_printf("%s exited with status %d", argv[0], status);
 	}
     } else if (lang == LANG_STATA) {
 	/* read log file */

@@ -431,7 +431,7 @@ static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
 	if (strstr(info, "script_tmp") != NULL) {
 	    title = untitled_title(tabwin);
 	} else {
-	    title = title_from_filename(info, FALSE);
+	    title = title_from_filename(info, EDIT_SCRIPT, FALSE);
 	}
     } else if (info != NULL) {
 	title = g_strdup(info);
@@ -836,7 +836,7 @@ static gchar *title_from_vwin (windata_t *vwin)
 
 	return g_strdup_printf(_("gretl: model %d"), pmod->ID);
     } else {
-	return title_from_filename(vwin->fname, TRUE);
+	return title_from_filename(vwin->fname, vwin->role, TRUE);
     }
 }
 

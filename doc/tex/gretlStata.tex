@@ -5,8 +5,14 @@
 expensive) software and as such is not a natural companion to
 gretl. Nonetheless, given \app{Stata}'s popularity it is
 desirable to have a convenient way of comparing results across the two
-programs, and to that end we provide limited support for \app{Stata}
+programs, and to that end we provide some support for \app{Stata}
 code under the \texttt{foreign} command.
+
+\tip{To enable support for \app{Stata}, go to the
+  Tools/Preferences/General menu item and look under the Programs
+  tab. Find the entry for the path to the \app{Stata} executable.
+  Adjust the path if it's not already right for your system and you
+  should be ready to go.}
 
 The following example illustrates what's available. You can send the
 current gretl dataset to \app{Stata} using the \option{send-data}
@@ -21,7 +27,6 @@ retrieved using the \texttt{mread()} function.\footnote{We do not
   \app{Octave}. This is not at all easy to implement in \app{Stata}
   code.} To suppress printed output from \app{Stata} you can add the
 \option{quiet} flag to the \texttt{foreign} block.
-
 
 \begin{script}[htbp]
   \caption{Comparison of clustered standard errors with \app{Stata}}
@@ -50,11 +55,14 @@ print check
 \label{Stata-test}
 \end{script}
 
-Note that there is no support for editing \app{Stata} scripts via the
-gretl GUI. Also note that \app{Stata} coerces all variable
-names to lower-case on data input, so even if series names in
-gretl are upper-case, or of mixed case, it's necessary to use
-all lower-case in \app{Stata}. 
+In addition you can edit ``pure'' \app{Stata} scripts in the gretl GUI
+and send them for execution as with native gretl scripts.
+
+Note that \app{Stata} coerces all variable names to lower-case on data
+input, so even if series names in gretl are upper-case, or of mixed
+case, it's necessary to use all lower-case in \app{Stata}. Also note
+that when opening a data file within \app{Stata} via the \texttt{use}
+command it will be necessary to provide the full path to the file.
 
 %%% Local Variables: 
 %%% mode: latex
