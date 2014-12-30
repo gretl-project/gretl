@@ -326,7 +326,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	cmd = g_strdup_printf("\"%s\" --silent \"%s\"", path, fname);
     } else if (foreign_lang == LANG_STATA) {
 	path = gretl_stata_path();
-	cmd = g_strdup_printf("%s /q /e gretltmp.do", path);
+	cmd = g_strdup_printf("\"%s\" /q /e gretltmp.do", path);
     } else if (foreign_lang == LANG_PYTHON) {
 	path = gretl_python_path();
 	fname = gretl_python_filename();

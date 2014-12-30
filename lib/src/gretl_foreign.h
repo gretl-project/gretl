@@ -48,6 +48,10 @@ int write_gretl_octave_file (const char *buf, gretlopt opt,
 			     const DATASET *dset,
 			     const char **pfname);
 
+int write_gretl_stata_file (const char *buf, gretlopt opt, 
+			    const DATASET *dset,
+			    const char **pfname);
+
 int gretl_max_mpi_processes (void);
 
 #ifdef HAVE_MPI
