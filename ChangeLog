@@ -10,6 +10,7 @@ version 1.10.0, in progress
 - GUI design: standardize the position of the window list
   button (top right), and make it more functional
 - GUI, panel data: some improvements to plotting options
+- GUI: add support for editing and running Stata scripts
 - "join" command: support native data files (gdt, gdtb) as well
   as delimited text files, for data importation; also support
   importing data from more than one series at a time
