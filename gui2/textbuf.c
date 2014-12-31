@@ -68,6 +68,10 @@ static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods);
 static gboolean 
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
 static gchar *textview_get_current_line_with_newline (GtkWidget *view);
+static void
+insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
+			 const char *s, int role);
+static void connect_link_signals (windata_t *vwin);
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
@@ -1053,6 +1057,7 @@ void textview_insert_file (windata_t *vwin, const char *fname)
     GtkTextIter iter;    
     int thiscolor, nextcolor;
     char fline[MAXSTR], *chunk;
+    int links = 0;
     int i = 0;
 
     g_return_if_fail(GTK_IS_TEXT_VIEW(vwin->text));
@@ -1086,31 +1091,36 @@ void textview_insert_file (windata_t *vwin, const char *fname)
 	}
 
 	nextcolor = PLAIN_TEXT;
-	
-	if (vwin->role == SCRIPT_OUT && ends_with_backslash(chunk)) {
-	    nextcolor = BLUE_TEXT;
-	}
 
-	if (*chunk == '?') {
-	    thiscolor = (vwin->role == CONSOLE)? RED_TEXT : BLUE_TEXT;
-	} else if (*chunk == '#') {
-	    thiscolor = BLUE_TEXT;
-	} 
+	if (vwin->role == VIEW_DOC && strchr(chunk, '<')) {
+	    insert_text_with_markup(tbuf, &iter, chunk, vwin->role);
+	    links = 1;
+	} else {
+	    if (vwin->role == SCRIPT_OUT && ends_with_backslash(chunk)) {
+		nextcolor = BLUE_TEXT;
+	    }
 
-	switch (thiscolor) {
-	case PLAIN_TEXT:
-	    gtk_text_buffer_insert(tbuf, &iter, chunk, -1);
-	    break;
-	case BLUE_TEXT:
-	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
-						     chunk, -1,
-						     "bluetext", NULL);
-	    break;
-	case RED_TEXT:
-	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
-						     chunk, -1,
-						     "redtext", NULL);
-	    break;
+	    if (*chunk == '?') {
+		thiscolor = (vwin->role == CONSOLE)? RED_TEXT : BLUE_TEXT;
+	    } else if (*chunk == '#') {
+		thiscolor = BLUE_TEXT;
+	    } 
+
+	    switch (thiscolor) {
+	    case PLAIN_TEXT:
+		gtk_text_buffer_insert(tbuf, &iter, chunk, -1);
+		break;
+	    case BLUE_TEXT:
+		gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+							 chunk, -1,
+							 "bluetext", NULL);
+		break;
+	    case RED_TEXT:
+		gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+							 chunk, -1,
+							 "redtext", NULL);
+		break;
+	    }
 	}
 
 	if (chunk != fline) {
@@ -1122,6 +1132,10 @@ void textview_insert_file (windata_t *vwin, const char *fname)
     }
 
     fclose(fp);
+
+    if (links) {
+	connect_link_signals(vwin);
+    }
 }
 
 void textview_insert_from_tempfile (windata_t *vwin, PRN *prn)
@@ -1517,6 +1531,26 @@ cmdref_visibility_notify (GtkWidget *w,  GdkEventVisibility *e)
     set_cursor_if_appropriate(view, bx, by);
 
     return FALSE;
+}
+
+static void connect_link_signals (windata_t *vwin)
+{
+    if (hand_cursor == NULL) {
+	hand_cursor = gdk_cursor_new(GDK_HAND2);
+    }
+
+    if (regular_cursor == NULL) {
+	regular_cursor = gdk_cursor_new(GDK_XTERM);
+    }    
+
+    g_signal_connect(G_OBJECT(vwin->text), "key-press-event", 
+		     G_CALLBACK(cmdref_key_press), NULL);
+    g_signal_connect(G_OBJECT(vwin->text), "event-after", 
+		     G_CALLBACK(cmdref_event_after), NULL);
+    g_signal_connect(G_OBJECT(vwin->text), "motion-notify-event", 
+		     G_CALLBACK(cmdref_motion_notify), NULL);
+    g_signal_connect(G_OBJECT(vwin->text), "visibility-notify-event", 
+		     G_CALLBACK(cmdref_visibility_notify), NULL);
 }
 
 static void maybe_connect_help_signals (windata_t *hwin, int en)

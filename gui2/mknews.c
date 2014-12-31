@@ -47,7 +47,7 @@ int main (int argc, char **argv)
     }
 
     fputs("For the full log of gretl changes since January 2000, see\n", f2);
-    fputs("http://gretl.sourceforge.net/ChangeLog.html\n\n", f2);
+    fputs("<@url=\"http://gretl.sourceforge.net/ChangeLog.html\">.\n\n", f2);
 
     while (fgets(line, sizeof line, f1)) {
 	if (line_is_blank(line)) {
