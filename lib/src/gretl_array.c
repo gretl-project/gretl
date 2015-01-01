@@ -333,10 +333,13 @@ int gretl_array_set_string (gretl_array *A, int i,
 {
     int err = 0;
 
-    if (A == NULL || i < 0 || i >= A->n) {
+    if (A == NULL) {
 	err = E_DATA;
     } else if (A->type != GRETL_TYPE_STRINGS) {
 	err = E_TYPES;
+    } else if (i < 0 || i >= A->n) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
+	err = E_DATA;
     } else {
 	free(A->data[i]);
 	err = set_string(A, i, s, copy);
@@ -375,10 +378,13 @@ int gretl_array_set_matrix (gretl_array *A, int i,
 {
     int err = 0;
 
-    if (A == NULL || i < 0 || i >= A->n) {
+    if (A == NULL) {
 	err = E_DATA;
     } else if (A->type != GRETL_TYPE_MATRICES) {
 	err = E_TYPES;
+    } else if (i < 0 || i >= A->n) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
+	err = E_DATA;
     } else {
 	gretl_matrix_free(A->data[i]);
 	err = set_matrix(A, i, m, copy);
@@ -417,10 +423,13 @@ int gretl_array_set_bundle (gretl_array *A, int i,
 {
     int err = 0;
 
-    if (A == NULL || i < 0 || i >= A->n) {
+    if (A == NULL) {
 	err = E_DATA;
     } else if (A->type != GRETL_TYPE_BUNDLES) {
 	err = E_TYPES;
+    } else if (i < 0 || i >= A->n) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
+	err = E_DATA;
     } else {
 	gretl_bundle_destroy(A->data[i]);
 	err = set_bundle(A, i, b, copy);
@@ -458,10 +467,13 @@ int gretl_array_set_list (gretl_array *A, int i,
 {
     int err = 0;
 
-    if (A == NULL || i < 0 || i >= A->n) {
+    if (A == NULL) {
 	err = E_DATA;
     } else if (A->type != GRETL_TYPE_LISTS) {
 	err = E_TYPES;
+    } else if (i < 0 || i >= A->n) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
+	err = E_DATA;
     } else {
 	free(A->data[i]);
 	err = set_list(A, i, L, copy);
@@ -481,6 +493,7 @@ int gretl_array_append_list (gretl_array *A,
 	err = E_DATA;
     } else if (A->type != GRETL_TYPE_LISTS) {
 	err = E_TYPES;
+	
     } else {
 	err = array_extend_content(A, 1);
 	if (!err) {
