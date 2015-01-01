@@ -422,7 +422,7 @@ int main (int argc, char *argv[])
 	}
 
 	if (gretl_execute_loop()) { 
-	    err = gretl_loop_exec(&state, dset);
+	    err = gretl_loop_exec(&state, dset, NULL);
 	    if (err) {
 		break;
 	    }

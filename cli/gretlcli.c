@@ -664,7 +664,7 @@ int main (int argc, char *argv[])
 	}
 
 	if (gretl_execute_loop()) { 
-	    if (gretl_loop_exec(&state, dset)) {
+	    if (gretl_loop_exec(&state, dset, NULL)) {
 		return 1;
 	    }
 	} else {

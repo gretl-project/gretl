@@ -316,7 +316,7 @@ static int real_console_exec (ExecState *state)
     err = gui_exec_line(state, dataset);
 
     while (!err && gretl_execute_loop()) {
-	err = gretl_loop_exec(state, dataset);
+	err = gretl_loop_exec(state, dataset, NULL);
     }
 
 #if CDEBUG

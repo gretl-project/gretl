@@ -127,6 +127,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 DATASET *dset, void *ret, 
 			 char **descrip, PRN *prn);
 
+int attach_loop_to_function (void *ptr);
+
 char *gretl_func_get_arg_name (const char *argvar, int *err);
 
 int object_is_const (const char *name);

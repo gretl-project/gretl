@@ -74,6 +74,8 @@ struct fn_param_ {
 struct fn_line_ {
     int idx;        /* 1-based line index (allowing for blanks) */
     char *s;        /* text of command line */
+    LOOPSET *loop;  /* attached "compiled" loop */
+    int next_idx;   /* line index to skip to after loop */
 };
 
 #define UNSET_VALUE (-1.0e200)
@@ -1206,7 +1208,11 @@ static void free_lines_array (fn_line *lines, int n)
 
     for (i=0; i<n; i++) {
 	free(lines[i].s);
+	if (lines[i].loop != NULL) {
+	    gretl_loop_destroy(lines[i].loop);
+	}
     }
+    
     free(lines);
 }
 
@@ -1479,6 +1485,8 @@ static int push_function_line (ufunc *fun, const char *s)
 	    fun->lines = lines;
 	    lines[n-1].idx = fun->line_idx;
 	    lines[n-1].s = gretl_strdup(s);
+	    lines[n-1].loop = NULL;
+	    lines[n-1].next_idx = -1;
 	    if (lines[n-1].s == NULL) {
 		err = E_ALLOC;
 	    } else {
@@ -6768,6 +6776,30 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 
 #define LOOPSAVE 0
 
+#if LOOPSAVE
+
+int attach_loop_to_function (void *ptr)
+{
+    
+    ufunc *u = currently_called_function();
+    int err = 0;
+
+    if (u == NULL) {
+	err = E_DATA;
+    } else {
+	if (u->lines[u->line_idx].loop != NULL) {
+	    /* there should not already be a loop attached */
+	    err = E_DATA;
+	} else {
+	    u->lines[u->line_idx].loop = ptr;
+	}
+    }
+
+    return err;
+}
+
+#endif
+
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 DATASET *dset, void *ret, 
 			 char **descrip, PRN *prn)
@@ -6785,9 +6817,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int indent0 = 0, started = 0;
     int retline = -1;
     int debugging = u->debug;
-#if 1 || LOOPSAVE
+#if LOOPSAVE
     int loopstart = 0;
-    int loop_attach = -1;
 #endif
     int i, err = 0;
 
@@ -6895,15 +6926,26 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    pprintf(prn, "? %s\n", line);
 	}
 
-	err = maybe_exec_line(&state, dset, &loopstart);
-
 #if LOOPSAVE
+	if (u->lines[i].loop != NULL && !gretl_if_state_false()) {
+	    err = gretl_loop_exec(&state, dset, u->lines[i].loop);
+	    if (err) {
+		set_function_error_message(err, u, &state, state.line, 
+					   u->lines[i].idx);
+	    } else {
+		/* now we need to skip to the matching 'endloop' */
+		i = u->lines[i].next_idx;
+	    }
+	    continue;
+	}
+	err = maybe_exec_line(&state, dset, &loopstart);
 	if (loopstart) {
-	    fprintf(stderr, "fn: loopstart on line %d (%s)\n", i, line);
-	    loop_attach = i;
+	    u->line_idx = i;
 	    loopstart = 0;
 	}
-#endif
+#else
+	err = maybe_exec_line(&state, dset, NULL);
+#endif	
 
 	if (!err && state.cmd->ci == FUNCRET) {
 	    err = handle_return_statement(call, &state, dset, i+1);
@@ -6937,11 +6979,9 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 	if (gretl_execute_loop()) {
 #if LOOPSAVE
-	    fprintf(stderr, "fn: loop-exec on line %d (%s)\n", i, line);
-	    fprintf(stderr, " (started on line %d)\n", loop_attach);
-	    save_lstart = -1;
+	    u->lines[u->line_idx].next_idx = i;
 #endif
-	    err = gretl_loop_exec(&state, dset);
+	    err = gretl_loop_exec(&state, dset, NULL);
 	    if (err) {
 		set_function_error_message(err, u, &state, state.line, 
 					   u->lines[i].idx);

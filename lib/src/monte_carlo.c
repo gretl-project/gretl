@@ -39,6 +39,8 @@
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
 
+#define LOOPSAVE 0
+
 #include <gmp.h>
 
 typedef mpf_t bigval;
@@ -189,6 +191,7 @@ struct LOOPSET_ {
 #define loop_is_quiet(l)        (l->flags & LOOP_QUIET)
 #define loop_set_quiet(l)       (l->flags |= LOOP_QUIET)
 #define loop_is_attached(l)     (l->flags & LOOP_ATTACHED)
+#define loop_set_attached(l)    (l->flags |= LOOP_ATTACHED)
 
 #define model_print_deferred(o) (o & OPT_F)
 
@@ -496,7 +499,7 @@ static LOOPSET *gretl_loop_new (LOOPSET *parent)
     return loop;
 }
 
-static void gretl_loop_destroy (LOOPSET *loop)
+void gretl_loop_destroy (LOOPSET *loop)
 {
     int i;
 
@@ -504,7 +507,7 @@ static void gretl_loop_destroy (LOOPSET *loop)
 	return;
     }
 
-#ifdef SHOW_STRUCTURE
+#if LOOP_DEBUG || defined(SHOW_STRUCTURE)
     fprintf(stderr, "destroying LOOPSET at %p\n", (void *) loop);
 #endif
 
@@ -613,6 +616,30 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 
     return err;
 }
+
+#if LOOPSAVE
+
+static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
+{
+    int err = 0;
+
+    if (!gretl_is_scalar(loop->idxname)) {
+	char genline[64];
+	
+	if (na(loop->init.val)) {
+	    sprintf(genline, "scalar %s = NA", loop->idxname);
+	} else {
+	    gretl_push_c_numeric_locale();
+	    sprintf(genline, "scalar %s = %g", loop->idxname, loop->init.val);
+	    gretl_pop_c_numeric_locale();
+	}
+	err = generate(genline, dset, OPT_Q, NULL);
+    } 
+
+    return err;
+}
+
+#endif
 
 /* for a loop control expression such as "j=start..end", get the
    initial or final value from the string @s (we also use this to get
@@ -2963,6 +2990,28 @@ static int model_command_post_process (ExecState *s,
     return err;
 }
 
+#if LOOPSAVE
+
+static int loop_attached_to_function (LOOPSET *loop)
+{
+    if (loop_is_attached(loop)) {
+	return 1;
+    } else {
+	LOOPSET *parent = loop->parent;
+    
+	while (parent != NULL) {
+	    if (loop_is_attached(parent)) {
+		return 1;
+	    }
+	    parent = parent->parent;
+	}
+    }
+
+    return 0;
+}
+
+#endif
+
 static void abort_loop_execution (ExecState *s)
 {
     *s->cmd->savename = '\0';
@@ -2983,9 +3032,8 @@ static int block_model (CMD *cmd)
 			       c == MLE ||  \
 			       c == GMM)
 
-int gretl_loop_exec (ExecState *s, DATASET *dset) 
+int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop) 
 {
-    LOOPSET *loop = currloop;
     char *line = s->line;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
@@ -2994,6 +3042,12 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
     int progressive;
     int show_activity = 0;
     int j, err = 0;
+
+    if (loop == NULL) {
+	loop = currloop;
+    } else {
+	currloop = loop;
+    }
 
     /* for the benefit of the caller: register the fact that execution
        of this loop is already under way */
@@ -3005,6 +3059,12 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	return 1;
     }
 
+#if LOOPSAVE
+    if (loop->type == INDEX_LOOP && loop_attached_to_function(loop)) {
+	loop_reattach_index_var(loop, dset);
+    }
+#endif
+    
     indent0 = gretl_if_state_record();
     progressive = loop_is_progressive(loop);
     set_loop_on(loop_is_quiet(loop), progressive);
@@ -3151,7 +3211,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		    fprintf(stderr, "Got a LOOP command, don't know what to do!\n");
 		    err = 1;
 		} else {
-		    err = gretl_loop_exec(s, dset);
+		    err = gretl_loop_exec(s, dset, NULL);
 		}
 	    } else if (cmd->ci == BREAK) {
 		loop->brk = 1;
@@ -3283,12 +3343,19 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	/* reached top of stack: clean up */
 	currloop = NULL;
 	set_loop_off();
-#if 0 /* testing */
-	if (!loop_attached(loop) && gretl_function_depth() > 0) {
+#if LOOPSAVE /* testing */
+	if (!loop_is_attached(loop) && gretl_function_depth() > 0) {
 	    if (gretl_iteration_depth() > 0 || gretl_looping()) {
-		fprintf(stderr, "destroy loop in function: iter_depth=%d, looping=%d\n",
-		       gretl_iteration_depth(), gretl_looping());
+		int a_err = attach_loop_to_function(loop);
+
+		if (!a_err) {
+		    loop_set_attached(loop);
+		}
 	    }
+	}
+	if (loop_is_attached(loop)) {
+	    /* prevent destruction */
+	    loop = NULL;
 	}
 #endif
 	gretl_loop_destroy(loop);
