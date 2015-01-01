@@ -6791,6 +6791,7 @@ int attach_loop_to_function (void *ptr)
 	    /* there should not already be a loop attached */
 	    err = E_DATA;
 	} else {
+	    /* OK, attach it */
 	    u->lines[u->line_idx].loop = ptr;
 	}
     }
@@ -6979,6 +6980,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 	if (gretl_execute_loop()) {
 #if LOOPSAVE
+	    /* mark the ending point of an (outer) loop */
 	    u->lines[u->line_idx].next_idx = i;
 #endif
 	    err = gretl_loop_exec(&state, dset, NULL);

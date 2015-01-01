@@ -619,6 +619,11 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 
 #if LOOPSAVE
 
+/* When re-executing a loop that has been saved onto its
+   calling function, the loop index variable may have been
+   destroyed, in which case it has to be recreated.
+*/
+
 static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
 {
     int err = 0;
@@ -2992,6 +2997,11 @@ static int model_command_post_process (ExecState *s,
 
 #if LOOPSAVE
 
+/* Determine whether @loop is attached to a user-defined
+   function -- either directly or, for a nested loop, via
+   its ancestry.
+*/
+
 static int loop_attached_to_function (LOOPSET *loop)
 {
     if (loop_is_attached(loop)) {
@@ -3343,18 +3353,18 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	/* reached top of stack: clean up */
 	currloop = NULL;
 	set_loop_off();
-#if LOOPSAVE /* testing */
+#if LOOPSAVE
 	if (!loop_is_attached(loop) && gretl_function_depth() > 0) {
 	    if (gretl_iteration_depth() > 0 || gretl_looping()) {
-		int a_err = attach_loop_to_function(loop);
+		int attach_err = attach_loop_to_function(loop);
 
-		if (!a_err) {
+		if (!attach_err) {
 		    loop_set_attached(loop);
 		}
 	    }
 	}
 	if (loop_is_attached(loop)) {
-	    /* prevent destruction */
+	    /* prevent destruction of saved loop */
 	    loop = NULL;
 	}
 #endif
