@@ -4244,7 +4244,7 @@ static NODE *get_named_list_element (NODE *l, NODE *r, parser *p)
 
 	if (!p->err) {
 	    if (i < 1 || i > list[0]) {
-		gretl_errmsg_sprintf("Index value %d is out of bounds", i);
+		gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i);
 		p->err = E_DATA;
 	    } else {
 		ret->v.xval = list[i];
@@ -12060,9 +12060,9 @@ static void add_child_parser (parser *p)
     }
 }
 
-/* Given a string [...], parse and evaluate it as a
-   sub-matrix specification.  This is for the case where
-   assignment is to a submatrix, as in m[spec] = foo.
+/* Given a string [...] following a variable name of the left,
+   parse and evaluate it as a sub-matrix (or sub-array) 
+   specification.
 */
 
 static void get_lh_mspec (parser *p)
@@ -12156,9 +12156,9 @@ static void process_lhs_substr (const char *lname,
     if (p->lh.t == SERIES) {
 	/* targetting a particular series observation */
 	get_lh_obsnum(p);
-    } else if (p->lh.t == MAT || p->lh.t == ARRAY) {
-	/* targetting an element or slice of a matrix or
-	   array
+    } else if (p->lh.t == MAT || p->lh.t == ARRAY || p->lh.t == LIST) {
+	/* targetting an element or slice of a matrix,
+	   array or list
 	*/
 	get_lh_mspec(p);
     } else if (p->lh.t == BUNDLE) {
@@ -13265,7 +13265,7 @@ static void edit_array (parser *p)
        element of the LHS array, or (b) doing "+=" to append
        an element (or an array of the same type). At present 
        these are mutually exclusive: you can't do "+=" on an
-       array _element_ yet.
+       array _element_ (yet).
     */
 
     /* preliminary checks */
@@ -13426,13 +13426,39 @@ static int edit_string (parser *p)
 
 static int edit_list (parser *p)
 {
-    int *list = node_get_list(p->ret, p); /* copied */
+    int *list = node_get_list(p->ret, p); /* note: copied */
+    matrix_subspec *spec = p->lh.mspec;
 
 #if EDEBUG
     printlist(list, "incoming list in edit_list()");
 #endif
 
-    if (!p->err) {
+    if (!p->err && spec != NULL) {
+	/* replacing a single member */
+	if (p->lh.t != LIST || p->op != B_ASN) {
+	    p->err = E_TYPES;
+	} else if (list[0] != 1) {
+	    /* at present we'll replace only one list member */
+	    p->err = E_TYPES;
+	} else {
+	    int *orig = get_list_by_name(p->lh.name);
+	    int idx = get_array_index(spec, &p->err) + 1;
+	    
+	    if (!p->err && (idx < 1 || idx > orig[0])) {
+		gretl_errmsg_sprintf(_("Index value %d is out of bounds"), idx);
+		p->err = E_DATA;
+	    } else {
+		int repl = list[1];
+
+		free(list);
+		list = gretl_list_copy(orig);
+		list[idx] = repl;
+		p->err = replace_list_by_name(p->lh.name, list);
+	    }
+	}
+    }
+
+    if (!p->err && spec == NULL) {
 	if (p->lh.t != LIST) {
 	    /* no pre-existing LHS list: must be simple assignment */
 	    p->err = remember_list(list, p->lh.name, NULL);
