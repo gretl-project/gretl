@@ -6927,21 +6927,23 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 #if LOOPSAVE
-	if (u->lines[i].loop != NULL && !gretl_if_state_false()) {
-	    err = gretl_loop_exec(&state, dset, u->lines[i].loop);
-	    if (err) {
-		set_function_error_message(err, u, &state, state.line, 
-					   u->lines[i].idx);
-	    } else {
-		/* now we need to skip to the matching 'endloop' */
-		i = u->lines[i].next_idx;
+	if (u->lines[i].loop != NULL) {
+	    if (!gretl_if_state_false()) {
+		err = gretl_loop_exec(&state, dset, u->lines[i].loop);
+		if (err) {
+		    set_function_error_message(err, u, &state, state.line, 
+					       u->lines[i].idx);
+		}
 	    }
+	    /* skip to the matching 'endloop' */
+	    i = u->lines[i].next_idx;
 	    continue;
-	}
-	err = maybe_exec_line(&state, dset, &loopstart);
-	if (loopstart) {
-	    u->line_idx = i;
-	    loopstart = 0;
+	} else {
+	    err = maybe_exec_line(&state, dset, &loopstart);
+	    if (loopstart) {
+		u->line_idx = i;
+		loopstart = 0;
+	    }
 	}
 #else
 	err = maybe_exec_line(&state, dset, NULL);
