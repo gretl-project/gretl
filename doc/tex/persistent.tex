@@ -23,8 +23,7 @@ list xlist = 1 2 3 4
 list reglist = income price 
 \end{code}
 
-Note that the variables in question must be of the series type: you
-cannot include scalars in a named list.
+Note that the variables in question must be of the series type.
 
 Two abbreviations are available in defining lists:
 \begin{itemize}
@@ -66,19 +65,19 @@ To get rid of a list, you use the following syntax:
 \begin{code}
   list xlist delete
 \end{code}
-Be careful: \texttt{delete xlist} will delete the variables contained
+Be careful: \texttt{delete xlist} will delete the series contained
 in the list, so it implies data loss (which may not be what you want).
 On the other hand, \texttt{list xlist delete} will simply ``undefine''
-the \texttt{xlist} identifier and the variables themselves will not be
+the \texttt{xlist} identifier; the series themselves will not be
 affected.
 
-Similarly, to print the names of the variables in a list you have to
+Similarly, to print the names of the members of a list you have to
 invert the usual print command, as in
 \begin{code}
   list xlist print
 \end{code}
 If you just say \texttt{print xlist} the list will be expanded and
-the values of all the member variables will be printed.
+the values of all the member series will be printed.
 
 Lists can be modified in various ways.  To \textit{redefine} an existing
 list altogether, use the same syntax as for creating a list.  For
@@ -153,7 +152,7 @@ present in \texttt{L2}.
 
 Another way of forming a list is by assignment from a matrix.  The
 matrix in question must be interpretable as a vector containing ID
-numbers of (series) variables.  It may be either a row or a column
+numbers of data series.  It may be either a row or a column
 vector, and each of its elements must have an integer part that is
 no greater than the number of variables in the data set.  For example:
 %
@@ -192,8 +191,8 @@ present in the list.
 \subsection{Generating lists of transformed variables}
 \label{sec:transform-lists}
 
-Given a named list of variables, you are able to generate lists of
-transformations of these variables using the functions \texttt{log},
+Given a named list of series, you are able to generate lists of
+transformations of these series using the functions \texttt{log},
 \texttt{lags}, \texttt{diff}, \texttt{ldiff}, \texttt{sdiff} or
 \texttt{dummify}.  For example
 %
@@ -312,14 +311,24 @@ Output (selected portions):
 \end{scodebit}
 \end{script}
 
-
-
 \subsection{Generating series from lists}
 
-Once a list is defined, gretl offers several functions that
-apply to the list and return a series. In most cases, these functions
-also apply to single series and behave as natural extensions when
-applied to a list, but this is not always the case.
+There are various ways of retrieving or generating individual series
+from a named list. The most basic method is indexing into the
+list. For example,
+%
+\begin{code}
+series x3 = Xlist[3]
+\end{code}
+%
+will retrieve the third element of the list \texttt{Xlist} under the
+name \texttt{x3} (or will generate an error if \texttt{Xlist} has less
+then three members).
+
+In addition gretl offers several functions that apply to a list and
+return a series.  In most cases, these functions also apply to single
+series and behave as natural extensions when applied to lists, but
+this is not always the case.
 
 For recognizing and handling missing values, gretl offers
 several functions (see the \GCR{} for details). In this context, it is
@@ -337,9 +346,9 @@ observations where none of \texttt{x1}, \texttt{x2}, or
 where this condition is not met.
 
 The functions \texttt{max}, \texttt{min}, \texttt{mean}, \texttt{sd},
-\texttt{sum} and \texttt{var} behave horizontally rather than
-vertically when their argument is a list. For instance, the following
-commands
+\texttt{sum} and \texttt{var} behave ``horizontally'' rather than
+``vertically'' when their argument is a list. For instance, the
+following commands
 \begin{code}
   list Xlist = x1 x2 x3
   series m = mean(Xlist)
@@ -564,7 +573,6 @@ print Just testing
 which attempts to print the values of two variables, \texttt{Just} and
 \texttt{testing}.
 
-
 \subsection{Built-in strings}
 
 Apart from any strings that the user may define, some string variables
@@ -646,29 +654,11 @@ Generated string fname
 Generated string foo
 \end{code}
 
-\subsection{The \texttt{strstr} function}
+\subsection{More string functions}
 
-Invocation of this function takes the form
-
-\texttt{string} \textsl{stringname} = 
-\texttt{strstr(}\textsl{s1}\texttt{,} \textsl{s2}\texttt{)}
-
-The effect is to search \textsl{s1} for the first occurrence of
-\textsl{s2}.  If no such occurrence is found, an empty string is
-returned; otherwise the portion of \textsl{s1} starting with
-\textsl{s2} is returned.  For example:
-%
-\begin{code}
-? string hw = "hello world"
-Generated string hw
-? string w = strstr(hw, "o")
-Generated string w
-? print w
-o world
-\end{code}
-%
-
-
+Gretl offers several functions for creating or manipulating
+strings. You can find these listed and explained in the
+\textit{Function Reference} under the category \textsf{Strings}.
     
 %%% Local Variables: 
 %%% mode: latex
