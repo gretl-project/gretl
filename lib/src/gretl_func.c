@@ -6780,7 +6780,6 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 
 int attach_loop_to_function (void *ptr)
 {
-    
     ufunc *u = currently_called_function();
     int err = 0;
 
