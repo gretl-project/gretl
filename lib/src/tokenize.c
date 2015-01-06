@@ -145,7 +145,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { MARKERS,  "markers",  0 },
     { MEANTEST, "meantest", CI_LIST | CI_LLEN2 },
     { MLE,      "mle",      CI_EXPR | CI_BLOCK },
-    { MODELTAB, "modeltab", CI_PARM1 },
+    { MODELTAB, "modeltab", CI_PARM1 | CI_INFL },
     { MODPRINT, "modprint", CI_PARM1 | CI_PARM2 | CI_EXTRA },
     { MODTEST,  "modtest",  CI_ORD1 },
     { MPI,      "mpi",      CI_BLOCK },
@@ -3298,6 +3298,11 @@ static void handle_option_inflections (CMD *cmd)
 	if (cmd->opt == OPT_L) {
 	    /* --list */
 	    cmd->ciflags = CI_PARM1;
+	}
+    } else if (cmd->ci == MODELTAB) {
+	if (cmd->opt == OPT_O) {
+	    /* --output: no arg needed */
+	    cmd->ciflags &= ~CI_PARM1;
 	}
     }
 }

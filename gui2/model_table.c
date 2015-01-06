@@ -1375,19 +1375,16 @@ static int print_model_table_direct (const char *fname,
     return err;
 }
 
-int modeltab_parse_line (const char *line, gretlopt opt, PRN *prn)
+int modeltab_exec (const char *param, gretlopt opt, PRN *prn)
 {
-    char cmdword[16];
-    int gotcmd = 0;
     int err = 0;
 
-    if (sscanf(line, "%*s %15s", cmdword) == 1) {
-	gotcmd = 1;
-    }
-
-    if (gotcmd && (opt & OPT_O)) {
+    if ((param != NULL && (opt & OPT_O)) ||
+	(param == NULL && !(opt & OPT_O))) {
 	/* the --output option rules out the various
-	   command words */
+	   command params; otherwise a param value is
+	   needed
+	*/
 	return E_PARSE;    
     } else if (opt & OPT_O) {
 	/* --output="filename" */
@@ -1399,11 +1396,11 @@ int modeltab_parse_line (const char *line, gretlopt opt, PRN *prn)
 	} else {
 	    err = print_model_table_direct(outfile, opt, prn);
 	}
-    } else if (!strcmp(cmdword, "add")) {
+    } else if (!strcmp(param, "add")) {
 	err = cli_modeltab_add(prn);
-    } else if (!strcmp(cmdword, "show")) {
+    } else if (!strcmp(param, "show")) {
 	err = display_model_table(0);
-    } else if (!strcmp(cmdword, "free")) {
+    } else if (!strcmp(param, "free")) {
 	if (!model_table_is_empty()) {
 	    clear_model_table(0, prn);
 	}
