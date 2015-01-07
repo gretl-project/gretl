@@ -2295,6 +2295,10 @@ int newton_raphson_max (double *b, int n, int maxit,
 	} else {
 	    err = numeric_gradient(b, g->val, n, cfunc, data);
 	}
+	if (err) {
+	    fprintf(stderr, "newton_raphson_max: err = %d from %s\n", err,
+		    gradfunc != NULL ? "supplied gradfunc" : "numeric_gradient");
+	}
     }
 
     if (!err) {

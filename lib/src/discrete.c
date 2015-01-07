@@ -304,11 +304,11 @@ static int op_compute_probs (const double *theta, op_container *OC)
 
 /* Below: method for getting around the "non-increasing cut point"
    issue in ordered models by construction: the 2nd and higher cut
-   points are represented to BFGS in the form of the log-difference
-   from the previous cut point.
+   points are represented to the optimizer in the form of the 
+   log-difference from the previous cut point.
 */
 
-static void op_make_BFGS_theta (op_container *OC, double *theta)
+static void op_transform_theta (op_container *OC, double *theta)
 {
     int i;
 
@@ -323,7 +323,7 @@ static void op_make_BFGS_theta (op_container *OC, double *theta)
 }
 
 /* Inverse operation for the transformation done by
-   op_make_BFGS_theta() */
+   op_transform_theta() */
 
 static void op_get_real_theta (op_container *OC, const double *theta)
 {
@@ -407,7 +407,7 @@ static int op_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 	}
     }
 
-    return 1;
+    return 0;
 }
 
 static int ordered_hessian (op_container *OC, gretl_matrix *H) 
@@ -906,7 +906,7 @@ static int do_ordered (int ci, int ndum,
 
     npar = OC->k;
 
-    /* transformed theta to pass to BFGS */
+    /* transformed theta to pass to optimizer */
     theta = malloc(npar * sizeof *theta);
     if (theta == NULL) {
 	op_container_destroy(OC);
@@ -922,11 +922,11 @@ static int do_ordered (int ci, int ndum,
     cut_points_init(OC, pmod, (const double **) dset->Z);
 
     /* transform theta to log-diff form */
-    op_make_BFGS_theta(OC, theta);
+    op_transform_theta(OC, theta);
 
 #if LPDEBUG
     for (i=0; i<npar; i++) {
-	fprintf(stderr, "theta[%d]: 'real' = %g, BFGS = %g\n", i, 
+	fprintf(stderr, "theta[%d]: 'real' = %g, transformed = %g\n", i, 
 		OC->theta[i], theta[i]);
     }
     fprintf(stderr, "\ninitial loglikelihood = %.12g\n", 
@@ -947,6 +947,7 @@ static int do_ordered (int ci, int ndum,
 				 op_score, NULL, OC, 
 				 (prn != NULL)? OPT_V : OPT_NONE,
 				 prn);
+	fprintf(stderr, "use_newton: err = %d\n", err);
     } else {
 	BFGS_defaults(&maxit, &toler, PROBIT);
 	err = BFGS_max(theta, npar, maxit, toler, 
@@ -955,18 +956,11 @@ static int do_ordered (int ci, int ndum,
 		       (prn != NULL)? OPT_V : OPT_NONE, prn);
     }
 
-    if (err) {
-	goto bailout;
-    } 
-
-    /* transform back to 'real' theta */
-    op_get_real_theta(OC, theta);
-
     if (!err) {
+	/* transform back to 'real' theta */
+	op_get_real_theta(OC, theta);
 	fill_op_model(pmod, list, dset, OC, fncount, grcount);
     }
-
- bailout:
 
     free(theta);
     op_container_destroy(OC);
@@ -983,18 +977,13 @@ static int do_ordered (int ci, int ndum,
 static int maybe_fix_op_depvar (MODEL *pmod, DATASET *dset,
 				double **orig_y, int *ndum)
 {
-    struct sorter *s = NULL;
-    double *sy = NULL;
-    double nexty, bady;
+    gretl_matrix *v = NULL;
+    double *yvals = NULL;
     int dv = pmod->list[1];
     int i, t, n = 0;
     int fixit = 0;
+    int nv = 0;
     int err = 0;
-
-    /* Make a copy of the observations on the dependent variable
-       that were actually used in the initial OLS, recording
-       the observation numbers, then sort.
-    */
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
@@ -1002,83 +991,83 @@ static int maybe_fix_op_depvar (MODEL *pmod, DATASET *dset,
 	}
     }
 
-    s = malloc(n * sizeof *s);
-    if (s == NULL) {
+    /* Transcribe the y values that were used in 
+       the initial OLS
+    */    
+
+    yvals = malloc(n * sizeof *yvals);
+    if (yvals == NULL) {
 	return E_ALLOC;
-    }
+    }    
 
     i = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
-	    s[i].x = dset->Z[dv][t];
-	    s[i].t = t;
-	    i++;
+	    yvals[i++] = dset->Z[dv][t];
 	}
     }
 
-    qsort(s, n, sizeof *s, gretl_compare_doubles);
-
-    /* normalize to minimum zero */
-    if (s[0].x != 0) {
-	double ymin = s[0].x;
-
-	for (i=0; i<n && s[i].x == ymin; i++) {
-	    s[i].x = 0.0;
-	}
-	fixit = 1;
-    }
-
-    /* ensure that the sorted values increase by steps of one:
-       FIXME this does not handle non-integer y correctly
+    /* Make a sorted vector containing the distinct
+       values of y 
     */
-    for (i=1; i<n; i++) {
-	if (s[i].x != s[i-1].x) {
-	    nexty = s[i-1].x + 1;
-	    if (s[i].x != nexty) {
-		bady = s[i].x;
-		while (i < n && s[i].x == bady) {
-		    s[i++].x = nexty;
+    v = gretl_matrix_values(yvals, n, OPT_S, &err);
+
+#if LPDEBUG   
+    gretl_matrix_print(v, "distinct y values");
+#endif    
+
+    if (!err) {
+	nv = gretl_vector_get_length(v);
+	*ndum = nv - 1;
+	if (v->val[0] != 0.0) {
+	    /* the y min. is not zero */
+	    fixit = 1;
+	} else {
+	    for (i=1; i<nv; i++) {
+		if (v->val[i] != v->val[i-1] + 1) {
+		    /* y values are not consecutive integers */
+		    fixit = 1;
+		    break;
 		}
-		i--; /* compensate for outer i++ */
-		fixit = 1;
 	    }
 	}
     }
-
-    /* the number of dummies actually used should equal the
-       max of normalized y
-    */
-    *ndum = (int) s[n-1].x;
 
     if (fixit) {
-	/* the dependent var needs transforming */
-	sy = copyvec(dset->Z[dv], dset->n);
-	if (sy == NULL) {
+	double *normy = malloc(dset->n * sizeof *normy);
+
+	if (normy == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    for (i=0; i<n; i++) {
-		sy[s[i].t] = s[i].x;
+	    for (t=0; t<dset->n; t++) {
+		normy[t] = NADBL;
+		if (!na(pmod->uhat[t])) {
+		    for (i=0; i<nv; i++) {
+			if (dset->Z[dv][t] == v->val[i]) {
+			    normy[t] = i;
+			    break;
+			}
+		    }
+		}
 	    }
-	    /* back up the original dep. var and replace it for
-	       the duration of the ordered analysis 
+	    /* Back up the original y and replace it for
+	       the duration of the ordered analysis.
 	    */
 	    *orig_y = dset->Z[dv];
-	    dset->Z[dv] = sy;
-	}
+	    dset->Z[dv] = normy;
+	}	
     }
 
 #if LPDEBUG
-    if (fixit) {
+    if (!err && fixit) {
 	fputs("ordered model: using normalized y\n", stderr);
-	for (i=0; i<n; i++) {
-	    fprintf(stderr, "normy[%d].x = %g\n", i, s[i].x);
-	}
     } else {
 	fputs("ordered model: using original y\n", stderr);
     }
 #endif
 
-    free(s);
+    free(yvals);
+    gretl_matrix_free(v);
 
     return err;
 }
@@ -1185,21 +1174,6 @@ static void list_purge_const (int *list, DATASET *dset)
     list[1] = depvar;
 }
 
-static int check_for_missing_dummies (MODEL *pmod, int *dlist)
-{
-    int i, dv;
-
-    for (i=1; i<=dlist[0]; i++) {
-	dv = dlist[i];
-	if (!in_gretl_list(pmod->list, dv)) {
-	    fprintf(stderr, "check for missing dummies: var %d is gone!\n", dv);
-	    return E_SINGULAR;
-	}
-    }
-
-    return 0;
-}
-
 static int ordered_depvar_check (int v, const DATASET *dset)
 {
     if (!series_is_discrete(dset, v) && 
@@ -1254,22 +1228,16 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
     }
 
 #if LPDEBUG
-    pprintf(prn, "ordered_estimate: initial OLS\n");
-    printmodel(&model, dset, OPT_S, prn);
+    PRN *vprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    
+    pputs(vprn, "ordered_estimate: initial OLS\n");
+    printmodel(&model, dset, OPT_S, vprn);
+    gretl_print_destroy(vprn);
 #endif
 
-    if (model.list[0] < biglist[0]) {
-	/* One or more regressors were dropped in OLS, most likely due
-	   to collinearity.  We can accept the dropping of
-	   user-selected regressors, but all the added dummies must be
-	   retained, so we'd better investigate.
-	*/
-	model.errcode = check_for_missing_dummies(&model, dumlist);
-    }
-	
     if (!model.errcode) {
-	/* after accounting for any missing observations, check that
-	   the dependent variable is acceptable 
+	/* after accounting for any missing observations, normalize
+	   the dependent variable if necessary 
 	*/
 	model.errcode = maybe_fix_op_depvar(&model, dset,
 					    &orig_y, &ndum);
