@@ -177,6 +177,7 @@ static op_container *op_container_new (int ci, int ndum,
     fprintf(stderr, "nobs = %d\n", OC->nobs);
     fprintf(stderr, "t1-t2 = %d-%d\n", OC->t1, OC->t2);
     fprintf(stderr, "k = %d\n", OC->k);
+    fprintf(stderr, "ndum = %d\n", ndum);
     fprintf(stderr, "nx = %d\n", OC->nx);
     fprintf(stderr, "Max(y) = M = %d\n", OC->ymax);
     printlist(OC->list, "list, in op_container_new");
@@ -990,9 +991,9 @@ static int maybe_fix_op_depvar (MODEL *pmod, DATASET *dset,
     int fixit = 0;
     int err = 0;
 
-    /* make a copy of the observations on the dep. var. that
-       were actually used in the initial OLS, recording
-       the observation numbers, then sort
+    /* Make a copy of the observations on the dependent variable
+       that were actually used in the initial OLS, recording
+       the observation numbers, then sort.
     */
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -1027,7 +1028,9 @@ static int maybe_fix_op_depvar (MODEL *pmod, DATASET *dset,
 	fixit = 1;
     }
 
-    /* ensure that the sorted values increase by steps of one */
+    /* ensure that the sorted values increase by steps of one:
+       FIXME this does not handle non-integer y correctly
+    */
     for (i=1; i<n; i++) {
 	if (s[i].x != s[i-1].x) {
 	    nexty = s[i-1].x + 1;
@@ -1038,11 +1041,11 @@ static int maybe_fix_op_depvar (MODEL *pmod, DATASET *dset,
 		}
 		i--; /* compensate for outer i++ */
 		fixit = 1;
-	    } 
-	} 
+	    }
+	}
     }
 
-    /* the number of dummies actually used will equal the
+    /* the number of dummies actually used should equal the
        max of normalized y
     */
     *ndum = (int) s[n-1].x;
@@ -1057,17 +1060,21 @@ static int maybe_fix_op_depvar (MODEL *pmod, DATASET *dset,
 		sy[s[i].t] = s[i].x;
 	    }
 	    /* back up the original dep. var and replace it for
-	       the duration of the ordered analysis */
+	       the duration of the ordered analysis 
+	    */
 	    *orig_y = dset->Z[dv];
 	    dset->Z[dv] = sy;
 	}
     }
 
-#if 0
+#if LPDEBUG
     if (fixit) {
-	fputs("oprobit: using normalized y\n", stderr);
+	fputs("ordered model: using normalized y\n", stderr);
+	for (i=0; i<n; i++) {
+	    fprintf(stderr, "normy[%d].x = %g\n", i, s[i].x);
+	}
     } else {
-	fputs("oprobit: using original y\n", stderr);
+	fputs("ordered model: using original y\n", stderr);
     }
 #endif
 
