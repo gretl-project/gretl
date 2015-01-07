@@ -108,7 +108,7 @@ enum {
               OVAR,	  /* object variable: variable "under" an object */
               LIST,	  /* list, evaluated */
 	      LISTVAR,    /* variable in list, dot syntax */
-              ELEMENT,    /* element of list, array [...] syntax) */
+              ELEMENT,    /* element of list or array, [...] syntax) */
   /* 80 */    STR,	  /* string */
 	      BUNDLE,     /* gretl bundle (hash table) */
 	      BMEMB,      /* member of bundle */

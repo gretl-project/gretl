@@ -4236,7 +4236,7 @@ static NODE *list_list_op (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *get_named_list_element (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret = aux_empty_series_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(l, p);
@@ -4247,14 +4247,24 @@ static NODE *get_named_list_element (NODE *l, NODE *r, parser *p)
 		gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i);
 		p->err = E_DATA;
 	    } else {
-		ret->v.xval = list[i];
+		int v = list[i];
+
+		if (v < 0 || v >= p->dset->v) {
+		    gretl_errmsg_sprintf(_("Variable number %d is out of bounds"), v);
+		    p->err = E_DATA;
+		} else {
+		    ret->flags = AUX_NODE; /* not TMP_NODE! */
+		    ret->v.xvec = p->dset->Z[v];
+		    ret->vnum = v;
+		    ret->vname = gretl_strdup(p->dset->varname[v]);
+		}
 	    }
 	}
 	free(list);
     }
 
     return ret;
-} 
+}
 
 static NODE *get_array_element (NODE *l, NODE *r, parser *p)
 {
