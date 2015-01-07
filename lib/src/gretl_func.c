@@ -6792,6 +6792,8 @@ int attach_loop_to_function (void *ptr)
 	} else {
 	    /* OK, attach it */
 	    u->lines[u->line_idx].loop = ptr;
+	    fprintf(stderr, "attaching loop at %p to function %s, line %d\n",
+		    ptr, u->name, u->line_idx);
 	}
     }
 
@@ -6928,6 +6930,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 #if LOOPSAVE
 	if (u->lines[i].loop != NULL) {
+	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
+		    (void *) u->lines[i].loop, i, line);
 	    if (!gretl_if_state_false()) {
 		err = gretl_loop_exec(&state, dset, u->lines[i].loop);
 		if (err) {
@@ -6936,8 +6940,14 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 		}
 	    }
 	    /* skip to the matching 'endloop' */
-	    i = u->lines[i].next_idx;
-	    continue;
+	    if (err) {
+		fprintf(stderr, "%s: breaking on err = %d\n", u->name, err);
+		break;
+	    } else {
+		i = u->lines[i].next_idx;
+		fprintf(stderr, "%s: proceeding to line %d\n", u->name, i);
+		continue;
+	    }
 	} else {
 	    err = maybe_exec_line(&state, dset, &loopstart);
 	    if (loopstart) {

@@ -9282,6 +9282,8 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 	}
     }
 
+    fprintf(stderr, "gen_series_node: ret=%p\n", (void *) ret);
+
     return ret;
 }
 
@@ -13447,7 +13449,7 @@ static int edit_list (parser *p)
 	/* replacing a single member */
 	if (p->lh.t != LIST || p->op != B_ASN) {
 	    p->err = E_TYPES;
-	} else if (list[0] != 1) {
+	} else if (list[0] > 1) {
 	    /* at present we'll replace only one list member */
 	    p->err = E_TYPES;
 	} else {
