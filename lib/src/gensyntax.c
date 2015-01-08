@@ -976,7 +976,7 @@ static void pad_parent (NODE *parent, int k, int i, parser *p)
 #define next_arg_is_string(i,k,o) ((i>0 && i<k-1 && (o & (MID_STR|MID_FNCALL))) || \
                                    (i==k-1 && (o & RIGHT_STR)))
 
-/* Get up to k comma-separated arguments (possibly optional).
+/* Get up to @k comma-separated arguments (possibly optional).
    However, if k < 0 this is a signal to get as many arguments as we
    can find (the number unknown in advance).
 */
@@ -1121,10 +1121,19 @@ static NODE *powterm (parser *p)
             t->v.b1.b = powterm(p);
         }
     } else if (func2_symb(sym)) {
+	int unset = 0;
+	
+	if (sym == F_GENSERIES) {
+	    set_doing_genseries(1);
+	    unset = 1;
+	}
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    get_args(t, p, sym, 2, opt, &next);
+	}
+	if (unset) {
+	    set_doing_genseries(0);
 	}
     } else if (func3_symb(sym)) {
 	t = newb3(sym, NULL);

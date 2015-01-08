@@ -654,6 +654,7 @@ void context_error (int c, parser *p);
 void undefined_symbol_error (const char *s, parser *p);
 const char *getsymb (int t, const parser *p);
 void set_parsing_query (int s);
+void set_doing_genseries (int s);
 
 int realgen (const char *s, parser *p, DATASET *dset, 
 	     PRN *prn, int flags, int targtype);

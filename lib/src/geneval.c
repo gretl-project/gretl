@@ -9265,13 +9265,26 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 		err = check_varname(vname);
 	    }
 	    if (!err) {
-		err = dataset_add_allocated_series(p->dset, r->v.xvec);
+		if (is_dataset_series(p->dset, r->v.xvec)) {
+		    err = dataset_add_NA_series(p->dset, 1);
+		    if (!err) {
+			int t, v = p->dset->v - 1;
+
+			for (t=p->dset->t1; t<=p->dset->t2; t++) {
+			    p->dset->Z[v][t] = r->v.xvec[t];
+			}
+			r->v.xvec = p->dset->Z[v];
+		    }
+		} else {
+		    err = dataset_add_allocated_series(p->dset, r->v.xvec);
+		}
 	    }
 	    if (!err) {
 		/* update node @r's properties */
 		r->vnum = p->dset->v - 1;
 		r->flags &= ~TMP_NODE;
 		r->flags &= ~AUX_NODE;
+		r->vname = gretl_strdup(vname);
 		err = dataset_rename_series(p->dset, r->vnum, vname);
 	    }
 	}
@@ -9281,8 +9294,6 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 	    ret->v.xval = r->vnum;
 	}
     }
-
-    fprintf(stderr, "gen_series_node: ret=%p\n", (void *) ret);
 
     return ret;
 }

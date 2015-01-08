@@ -1007,10 +1007,16 @@ static int maybe_get_R_function (const char *s)
 */ 
 
 static int parsing_query;
+static int doing_genseries;
 
 void set_parsing_query (int s)
 {
     parsing_query = s;
+}
+
+void set_doing_genseries (int s)
+{
+    doing_genseries = s;
 }
 
 static void look_up_word (const char *s, parser *p)
@@ -1213,7 +1219,7 @@ static int is_word_char (parser *p)
 {
     if (strchr(wordchars, p->ch) != NULL) {
 	return 1;
-    } else if (p->targ == LIST && p->ch == '*') {
+    } else if (p->targ == LIST && !doing_genseries && p->ch == '*') {
 	return 1;
     } 
 
@@ -1426,7 +1432,7 @@ void lex (parser *p)
 	    parser_getc(p);
 	    return;
         case '*':
-	    if (p->targ == LIST) {
+	    if (p->targ == LIST && !doing_genseries) {
 		/* allow for '*' as wildcard */
 		if (*(p->point - 2) == ' ' &&
 		    (bare_data_type(p->sym) || closing_sym(p->sym) ||
@@ -1633,11 +1639,12 @@ void lex (parser *p)
 		return;
 	    }
 
-	    if (p->targ == LIST && *(p->point - 2) == ' ' && 
+	    if (p->targ == LIST && !doing_genseries && *(p->point - 2) == ' ' && 
 		(bare_data_type(p->sym) || closing_sym(p->sym) ||
 		 (p->sym == LAG))) {
 		/* may be forming a list, but only if there are 
-		   spaces between the terms */
+		   spaces between the terms 
+		*/
 		p->sym = B_LCAT;
 		return;
 	    }
