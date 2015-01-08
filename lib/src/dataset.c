@@ -4322,6 +4322,19 @@ int is_panel_group_names_series (const DATASET *dset, int v)
     }
 }
 
+int is_dataset_series (const DATASET *dset, const double *x)
+{
+    int i;
+
+    for (i=dset->v-1; i>=0; i++) {
+	if (x == dset->Z[i]) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static int effective_daily_skip (int delta, int wd, int pd)
 {
     int k, skip = delta - 1;
