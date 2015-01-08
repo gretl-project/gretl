@@ -14050,7 +14050,12 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     if (p->targ == SERIES && p->lh.v >= p->dset->v) {
 	/* recorded series ID is no longer valid */
 	p->lh.v = 0;
-    }    
+    }
+
+    if (p->lh.t == NUM && !gretl_is_scalar(p->lh.name)) {
+	/* recorded scalar name no longer valid (2015-01-08) */
+	p->lh.t = 0;
+    }
 
     if (p->flags & P_AUXDONE) {
 	int dset_n = dset != NULL ? dset->n : 0;

@@ -39,6 +39,8 @@
 #include <glib.h>
 
 #define OLDFUN_COMPAT
+#define LOOPSAVE 0
+#define LSDEBUG 0
 
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
 #define EXEC_DEBUG 0    /* debugging of function execution */
@@ -6774,8 +6776,6 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
     return err;
 }
 
-#define LOOPSAVE 0
-
 #if LOOPSAVE
 
 int attach_loop_to_function (void *ptr)
@@ -6792,8 +6792,10 @@ int attach_loop_to_function (void *ptr)
 	} else {
 	    /* OK, attach it */
 	    u->lines[u->line_idx].loop = ptr;
+#if LSDEBUG	    
 	    fprintf(stderr, "attaching loop at %p to function %s, line %d\n",
 		    ptr, u->name, u->line_idx);
+#endif	    
 	}
     }
 
@@ -6930,8 +6932,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 #if LOOPSAVE
 	if (u->lines[i].loop != NULL) {
+# if LSDEBUG	    
 	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
 		    (void *) u->lines[i].loop, i, line);
+# endif	    
 	    if (!gretl_if_state_false()) {
 		err = gretl_loop_exec(&state, dset, u->lines[i].loop);
 		if (err) {
@@ -6945,7 +6949,6 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 		break;
 	    } else {
 		i = u->lines[i].next_idx;
-		fprintf(stderr, "%s: proceeding to line %d\n", u->name, i);
 		continue;
 	    }
 	} else {

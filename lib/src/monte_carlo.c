@@ -445,7 +445,7 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->itermax = 0;
     loop->iter = 0;
     loop->err = 0;
-    *loop->idxname = 0;
+    *loop->idxname = '\0';
     loop->idxval = 0;
     loop->brk = 0;
     *loop->listname = '\0';
@@ -616,35 +616,6 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 
     return err;
 }
-
-#if LOOPSAVE
-
-/* When re-executing a loop that has been saved onto its
-   calling function, the loop index variable may have been
-   destroyed, in which case it has to be recreated.
-*/
-
-static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
-{
-    int err = 0;
-
-    if (!gretl_is_scalar(loop->idxname)) {
-	char genline[64];
-	
-	if (na(loop->init.val)) {
-	    sprintf(genline, "scalar %s = NA", loop->idxname);
-	} else {
-	    gretl_push_c_numeric_locale();
-	    sprintf(genline, "scalar %s = %g", loop->idxname, loop->init.val);
-	    gretl_pop_c_numeric_locale();
-	}
-	err = generate(genline, dset, OPT_Q, NULL);
-    } 
-
-    return err;
-}
-
-#endif
 
 /* for a loop control expression such as "j=start..end", get the
    initial or final value from the string @s (we also use this to get
@@ -2999,6 +2970,31 @@ static int model_command_post_process (ExecState *s,
 
 #if LOOPSAVE
 
+/* When re-executing a loop that has been saved onto its
+   calling function, the loop index variable may have been
+   destroyed, in which case it has to be recreated.
+*/
+
+static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
+{
+    int err = 0;
+
+    if (!gretl_is_scalar(loop->idxname)) {
+	char genline[64];
+	
+	if (na(loop->init.val)) {
+	    sprintf(genline, "scalar %s = NA", loop->idxname);
+	} else {
+	    gretl_push_c_numeric_locale();
+	    sprintf(genline, "scalar %s = %g", loop->idxname, loop->init.val);
+	    gretl_pop_c_numeric_locale();
+	}
+	err = generate(genline, dset, OPT_Q, NULL);
+    } 
+
+    return err;
+}
+
 /* Determine whether @loop is attached to a user-defined
    function -- either directly or, for a nested loop, via
    its ancestry.
@@ -3020,6 +3016,21 @@ static int loop_attached_to_function (LOOPSET *loop)
     }
 
     return 0;
+}
+
+static int maybe_preserve_loop (LOOPSET *loop)
+{
+    if (!loop_is_attached(loop) && gretl_function_depth() > 0) {
+	if (gretl_iteration_depth() > 0 || gretl_looping()) {
+	    int err = attach_loop_to_function(loop);
+
+	    if (!err) {
+		loop_set_attached(loop);
+	    }
+	}
+    }
+
+    return loop_is_attached(loop);
 }
 
 #endif
@@ -3072,7 +3083,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     }
 
 #if LOOPSAVE
-    if (loop->type == INDEX_LOOP && loop_attached_to_function(loop)) {
+    if (*loop->idxname != '\0' && loop_attached_to_function(loop)) {
 	loop_reattach_index_var(loop, dset);
     }
 #endif
@@ -3356,16 +3367,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	currloop = NULL;
 	set_loop_off();
 #if LOOPSAVE
-	if (!loop_is_attached(loop) && gretl_function_depth() > 0) {
-	    if (gretl_iteration_depth() > 0 || gretl_looping()) {
-		int attach_err = attach_loop_to_function(loop);
-
-		if (!attach_err) {
-		    loop_set_attached(loop);
-		}
-	    }
-	}
-	if (loop_is_attached(loop)) {
+	if (maybe_preserve_loop(loop)) {
 	    /* prevent destruction of saved loop */
 	    loop = NULL;
 	}

@@ -1380,6 +1380,7 @@ static int real_scalar_set_value (const char *name, double val,
     u = get_user_var_of_type_by_name(name, GRETL_TYPE_DOUBLE);
 
     if (u == NULL) {
+	gretl_errmsg_sprintf("%s: no such scalar", name);
 	err = E_DATA;
     } else if (!authorized && scalar_is_read_only_index(name)) {
 	err = E_DATA;
