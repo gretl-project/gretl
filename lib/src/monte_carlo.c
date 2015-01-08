@@ -2789,9 +2789,10 @@ static int loop_next_command (char *targ, LOOPSET *loop, int *pj)
 static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 {
 #if LOOP_DEBUG
-    fprintf(stderr, "loop_process_error: j=%d, catch=%d\n",
-	    j, loop_cmd_catch(loop, j));
-    fprintf(stderr, "errmsg: '%s'\n", gretl_errmsg_get());
+    fprintf(stderr, "loop_process_error: j=%d, err=%d, catch=%d\n",
+	    j, err, loop_cmd_catch(loop, j));
+    fprintf(stderr, " line: '%s'\n", loop->cmds[j].line);
+    fprintf(stderr, " errmsg: '%s'\n", gretl_errmsg_get());
 #endif
     if (loop_cmd_catch(loop, j)) {
 	set_gretl_errno(err);

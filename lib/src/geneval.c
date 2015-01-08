@@ -10383,7 +10383,10 @@ static void node_reattach_data (NODE *n, parser *p)
 	data = n->v.a = get_array_by_name(n->vname);
     }
 
-    if (!p->err && data == NULL) {
+    if (p->err) {
+	fprintf(stderr, "node_reattach_data: err = %d\n", p->err);
+    } else if (data == NULL) {
+	fprintf(stderr, "node_reattach_data: data has gone away!\n");
 	p->err = E_DATA;
     }
 }
