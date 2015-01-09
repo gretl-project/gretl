@@ -58,7 +58,6 @@ enum {
     STATE_USE_SVD         = 1 << 5,  /* SVD decomposition is matrix OLS default */
     STATE_PREWHITEN       = 1 << 6,  /* HAC pre-whitening? */
     STATE_FORCE_HC        = 1 << 7,  /* don't use HAC for time series */
-    STATE_HALT_ON_ERR     = 1 << 8,  /* errors fatal in batch mode */
     STATE_USE_LBFGS       = 1 << 9,  /* prefer LBFGS to BFGS? */
     STATE_SHELL_OK        = 1 << 10, /* "shell" facility is approved? */
     STATE_MAX_VERBOSE     = 1 << 11, /* verbose output from maximizer? */
@@ -140,7 +139,6 @@ struct set_vars_ {
                            !strcmp(s, WARNINGS) || \
                            !strcmp(s, FORCE_DECP) || \
 			   !strcmp(s, FORCE_HC) || \
-			   !strcmp(s, HALT_ON_ERR) || \
                            !strcmp(s, MAX_VERBOSE) || \
 			   !strcmp(s, USE_LBFGS) || \
 			   !strcmp(s, PCSE) || \
@@ -573,7 +571,7 @@ static void state_vars_init (set_vars *sv)
     fprintf(stderr, "state_vars_init called\n");
 #endif
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON | 
-	STATE_HALT_ON_ERR | STATE_SKIP_MISSING;
+	STATE_SKIP_MISSING;
 #if defined(_OPENMP)
     if (openmp_by_default()) {
 	sv->flags |= STATE_OPENMP_ON;
@@ -1483,7 +1481,6 @@ static int print_settings (PRN *prn, gretlopt opt)
     }
 	    
     libset_print_bool(FORCE_DECP, prn, opt);
-    libset_print_bool(HALT_ON_ERR, prn, opt);
     libset_print_int(LOOP_MAXITER, prn, opt);
     libset_print_bool(MAX_VERBOSE, prn, opt);
     libset_print_int(BFGS_VERBSKIP, prn, opt);
@@ -1762,12 +1759,6 @@ int execute_set (const char *setobj, const char *setarg,
 #endif
 	    } else {
 		err = check_set_bool(setobj, setarg);
-		if (!err && !strcmp(setobj, HALT_ON_ERR) &&
-		    boolean_off(setarg)) {
-		    pputs(prn, "Warning: \"set halt_on_error off\" is "
-			  "deprecated and will be removed.\nPlease use "
-			  "\"catch\" to trap errors instead.\n");
-		}
 	    }
 	} else if (libset_double(setobj)) {
 	    if (default_ok(setobj) && default_str(setarg)) {
@@ -2118,8 +2109,6 @@ static int boolvar_get_flag (const char *s)
 	return STATE_USE_CWD;
     } else if (!strcmp(s, USE_FCP)) {
 	return STATE_USE_FCP;
-    } else if (!strcmp(s, HALT_ON_ERR)) {
-	return STATE_HALT_ON_ERR;
     } else if (!strcmp(s, MAX_VERBOSE)) {
 	return STATE_MAX_VERBOSE;
     } else if (!strcmp(s, SHELL_OK)) {
@@ -2173,8 +2162,6 @@ static void maybe_check_env (const char *s)
 	set_flag_from_env(STATE_USE_SVD, "GRETL_USE_SVD", 0);
     } else if (!strcmp(s, USE_LBFGS)) {
 	set_flag_from_env(STATE_USE_LBFGS, "GRETL_USE_LBFGS", 0);
-    } else if (!strcmp(s, HALT_ON_ERR)) {
-	set_flag_from_env(STATE_HALT_ON_ERR, "GRETL_KEEP_GOING", 1);
     }
 }
 

@@ -59,7 +59,6 @@ typedef enum {
 #define GARCH_ROBUST_VCV "garch_robust_vcv"
 #define HAC_KERNEL       "hac_kernel"
 #define HAC_LAG          "hac_lag"
-#define HALT_ON_ERR      "halt_on_error"
 #define HC_VERSION       "hc_version"
 #define HORIZON          "horizon"
 #define USE_LBFGS        "lbfgs"
