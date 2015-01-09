@@ -5,6 +5,12 @@ argument is now officially an expression that evaluates to
 a series, rather than a string. However the string form is
 still accepted.
 
+The obsolete, undocumented "set" variable halt_on_error has
+been removed.
+
+The old syntax for user-defined functions that was the
+standard prior to gretl 1.8.4 is no longer supported.
+
 Some obsolete, undocumented function-name aliases have been
 removed: "pval" (use "pvalue") and "date" (use "obslabel").
 
