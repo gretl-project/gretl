@@ -38,7 +38,6 @@
 #include <errno.h>
 #include <glib.h>
 
-#define OLDFUN_COMPAT
 #define LOOPSAVE 0
 #define LSDEBUG 0
 
@@ -5075,15 +5074,6 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 	rettype = return_type_from_string(s1, &err);
     }
 
-#ifdef OLDFUN_COMPAT
-    if (!err && rettype == 0) {
-	pputs(prn, "Warning: missing function return type!\n"
-	      "This will be an error in gretl 1.10\n");
-	pputc(prn, '\n');
-	fname = s1;
-    }
-#endif	
-
     if (!err) {
 	err = check_func_name(fname, &fun, prn);
     }
@@ -5253,44 +5243,6 @@ static void python_check (const char *line)
     }
 }
 
-#ifdef OLDFUN_COMPAT
-
-static int maybe_check_return (ufunc *fun, const char *s)
-{
-    const char *p = s;
-    int done = 0;
-    int err = 0;
-
-    if (!strncmp(p, "return ", 7)) {
-	GretlType type;
-	char tword[10];
-
-	p += 7;
-	sscanf(p, "%9s", tword);
-	if ((type = gretl_type_from_string(tword))) {
-	    char *tmp;
-
-	    tmp = g_strdup_printf("return%s", p + strlen(tword));
-	    fun->rettype = type;
-	    err = push_function_line(fun, tmp);
-	    g_free(tmp);
-	    done = 1;
-	}
-    }
-
-    if (!done) {
-	err = push_function_line(fun, s);
-    }
-
-    if (!err) {
-	python_check(s);
-    }
-
-    return err;
-}
-
-#endif
-
 /**
  * gretl_function_append_line:
  * @line: line of code to append.
@@ -5324,11 +5276,6 @@ int gretl_function_append_line (const char *line)
 	    gretl_errmsg_sprintf("%s: empty function", fun->name);
 	    err = 1;
 	}
-#ifdef OLDFUN_COMPAT
-	if (fun->rettype == GRETL_TYPE_NONE) {
-	    fun->rettype = GRETL_TYPE_VOID;
-	}
-#endif
 	set_compiling_off();
     } else if (!strncmp(line, "quit", 4)) {
 	/* abort compilation */
@@ -5337,10 +5284,6 @@ int gretl_function_append_line (const char *line)
 	}
 	set_compiling_off();
 	return 0; /* handled */
-#ifdef OLDFUN_COMPAT
-    } else if (fun->rettype == GRETL_TYPE_NONE) {
-	err = maybe_check_return(fun, line);
-#endif
     } else {
 	err = push_function_line(fun, line);
 	if (!err) {
