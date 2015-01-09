@@ -472,7 +472,7 @@ static void gretl_cmd_clear (CMD *c)
        FIXME: same issue as above?
     */
 
-    if (!c->context) {
+    if (c->context == 0) {
 	*c->savename = '\0';
 	c->flags &= ~CMD_CATCH;
     }
@@ -3467,6 +3467,13 @@ static int real_parse_command (const char *line, CMD *cmd,
 		idx_only = 0;
 	    }
 	    goto parse_exit;
+	}
+
+	if (cmd->ci == ELSE || cmd->ci == ENDIF) {
+	    /* These don't go to assemble_command(), so check
+	       them here for extraneous junk.
+	    */
+	    err = check_for_stray_tokens(cmd);
 	}
 		
 	/* If we haven't already hit an error, then we need to consult

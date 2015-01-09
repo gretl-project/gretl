@@ -1373,11 +1373,19 @@ int dataset_copy_series_as (DATASET *dset, int v, const char *name)
 	}
 	strcpy(dset->varname[vnew], name);
 	copy_varinfo(dset->varinfo[vnew], dset->varinfo[v]);
-	dset->varinfo[vnew]->stack_level += 1;
+	if (dset->varinfo[v]->flags & VAR_LISTARG) {
+	    dset->varinfo[vnew]->flags &= ~VAR_LISTARG;
+	}
+	if (dset->varinfo[v]->stack_level == gretl_function_depth()) {
+	    /* the source series has not already been shifted to
+	       greater stack level 
+	    */
+	    dset->varinfo[vnew]->stack_level += 1;
+	}
 #if 0
 	fprintf(stderr, "copied var %d ('%s', level %d) as var %d ('%s', level %d): ",
 		v, dset->varname[v], dset->varinfo[v]->stack_level,
-		vnew, newname, dset->varinfo[vnew]->stack_level);
+		vnew, name, dset->varinfo[vnew]->stack_level);
 	fprintf(stderr, "Z[%d][0] = %g\n", vnew, dset->Z[vnew][0]);
 #endif
     }
@@ -3653,7 +3661,6 @@ int series_get_flags (DATASET *dset, int i)
 	return 0;
     }
 }
-
 
 /**
  * series_zero_flags:

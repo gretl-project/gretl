@@ -48,7 +48,8 @@ enum {
    "compiled" and reused.
 */
 
-static int if_eval (const char *s, DATASET *dset, void *ptr, int *err)
+static int if_eval (int ci, const char *s, DATASET *dset,
+		    void *ptr, int *err)
 {
     GENERATOR *ifgen = NULL;
     double val = NADBL;
@@ -58,7 +59,10 @@ static int if_eval (const char *s, DATASET *dset, void *ptr, int *err)
     fprintf(stderr, "if_eval: s = '%s'\n", s);
 #endif
 
-    while (*s == ' ') s++;
+    if (s != NULL) {
+	s += (ci == IF)? 2 : 4;
+	while (*s == ' ') s++;
+    }    
 
     if (ptr != NULL) {
 	/* We're being called from a loop, with the implicit
@@ -75,12 +79,18 @@ static int if_eval (const char *s, DATASET *dset, void *ptr, int *err)
 	    */
 	    GENERATOR **pgen = (GENERATOR **) ptr;
 
-	    *pgen = ifgen = genr_compile(s, dset, OPT_P | OPT_S, err);
+	    if (s == NULL) {
+		*err = E_DATA;
+	    } else {
+		*pgen = ifgen = genr_compile(s, dset, OPT_P | OPT_S, err);
+	    }
 	}
     }
 
     if (ifgen != NULL) {
 	val = evaluate_if_cond(ifgen, dset, err);
+    } else if (s == NULL) {
+	*err = E_DATA;
     } else {
 	*err = 0;
 	val = generate_scalar(s, dset, err);
@@ -272,16 +282,6 @@ int gretl_if_state_check (int indent0)
     return err;
 }
 
-static int trailing_junk_error (const char *s)
-{
-    char junk[16] = {0};
- 
-    s += strspn(s, " \t");
-    sscanf(s, "%15[^ ]", junk);
-    gretl_errmsg_sprintf(_("field '%s' in command is invalid"), junk);
-    return E_PARSE;
-}
-
 /* flow_control: if the ci (command index) member of @cmd
    is something other than one of the flow control symbols
    IF, ELSE, ELIF or ENDIF, this function simply returns
@@ -315,7 +315,7 @@ int flow_control (const char *line, DATASET *dset, CMD *cmd,
 	if (blocked) {
 	    err = set_if_state(SET_FALSE);
 	} else {
-	    ok = if_eval(line + 2, dset, ptr, &err);
+	    ok = if_eval(ci, line, dset, ptr, &err);
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
 	    }
@@ -326,17 +326,13 @@ int flow_control (const char *line, DATASET *dset, CMD *cmd,
 	err = set_if_state(SET_ELIF);
 	if (!err && get_if_state(IS_TRUE)) {
 	    set_if_state(UNINDENT);
-	    ok = if_eval(line + 4, dset, ptr, &err);
+	    ok = if_eval(ci, line, dset, ptr, &err);
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
 	    }
 	}
     } else if (ci == ELSE) {
-	if (!string_is_blank(line + 4)) {
-	    err = trailing_junk_error(line + 4);
-	} else {
-	    err = set_if_state(SET_ELSE);
-	}
+	err = set_if_state(SET_ELSE);
     }
 
     if (err) {

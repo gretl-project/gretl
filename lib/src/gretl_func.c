@@ -5055,24 +5055,22 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 
     if (err) {
 	return err;
+    } else if (nf < 2) {
+	gretl_errmsg_set("A function definition must have a return type and name");
+	return E_PARSE;
     }
 
-    if (nf == 2 && (!strcmp(s2, "clear") || !strcmp(s2, "delete"))) {
+    if (!strcmp(s2, "clear") || !strcmp(s2, "delete")) {
 	return maybe_delete_function(s1, prn);
     }
 
     /* If we didn't get a special such as "function foo delete",
        then @s1 should contain the return type and @s2 the
        name.
-
-       Aside from backward compatibility, nf != 2 would be
-       an outright error.
     */
 
-    if (nf == 2) {
-	fname = s2;
-	rettype = return_type_from_string(s1, &err);
-    }
+    fname = s2;
+    rettype = return_type_from_string(s1, &err);
 
     if (!err) {
 	err = check_func_name(fname, &fun, prn);
@@ -5542,6 +5540,12 @@ static int allocate_function_args (fncall *call, DATASET *dset)
     for (i=0; i<args->argc && !err; i++) {
 	arg = args->arg[i];
 	fp = &fun->params[i];
+
+#if UDEBUG
+	fprintf(stderr, "arg[%d], param type %s, arg type %s\n",
+		i, gretl_type_get_name(fp->type),
+		gretl_type_get_name(arg->type));
+#endif	
 
 	if (gretl_scalar_type(fp->type)) {
 	    if (arg->type == GRETL_TYPE_NONE) {

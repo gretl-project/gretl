@@ -529,8 +529,6 @@ int gretl_error_is_fatal (void)
 	return 1;
     } else if (gretl_compiling_loop()) {
 	return 1;
-    } else if (libset_get_bool(HALT_ON_ERR) == 0) {
-	return 0;
     } else {
 	return gretl_in_batch_mode();
     }

@@ -255,8 +255,8 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     gretl_error_clear();
 
 #if CMD_DEBUG
-    fprintf(stderr, "parse_command_line: '%s'\n", line);
-    fprintf(stderr, " nosub = %d\n", cmd_nosub(cmd) ? 1 : 0);
+    fprintf(stderr, "parse_command_line: '%s' (nosub=%d)\n",
+	    line, cmd_nosub(cmd) ? 1 : 0);
 #endif
 
     if (!cmd_nosub(cmd)) {
@@ -3285,10 +3285,6 @@ int process_command_error (CMD *cmd, int err)
 	if (gretl_compiling_function() ||
 	    gretl_compiling_loop()) {
 	    ; /* pass the error through */
-	} else if (libset_get_bool(HALT_ON_ERR) == 0) {
-	    /* global "continue on error" */
-	    set_gretl_errno(err);
-	    ret = 0;
 	} else if (cmd->flags & CMD_CATCH) {
 	    /* local "continue on error" */
 	    set_gretl_errno(err);

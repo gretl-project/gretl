@@ -11,15 +11,13 @@ typedef enum {
     CMD_SUBST   = 1 << 1, /* string substitution has been done on command */
     CMD_PROG    = 1 << 2, /* command is in context of progressive loop */
     CMD_CATCH   = 1 << 3, /* error from command should be "caught" */
-    CMD_NOSUB   = 1 << 4, /* no @-substitution called for (pre-checked) */
-    CMD_NOOPT   = 1 << 5  /* no options present (pre-checked) */
+    CMD_NOSUB   = 1 << 4  /* no @-substitution called for (pre-checked) */
 } CmdFlags;
 
 #define cmd_nolist(c)  (c->flags & CMD_NOLIST)
 #define cmd_ignore(c)  (c->flags & CMD_IGNORE)
 #define cmd_subst(c)   (c->flags & CMD_SUBST)
 #define cmd_nosub(c)   (c->flags & CMD_NOSUB)
-#define cmd_noopt(c)   (c->flags & CMD_NOOPT)
 
 typedef struct cmd_token_ cmd_token;
 

@@ -377,7 +377,7 @@ int series_index (const DATASET *dset, const char *varname)
 	       not just be the result of its being a member of a list
 	       that was passed as an argument.
 	    */
-	    for (i=1; i<dset->v; i++) { 
+	    for (i=1; i<dset->v; i++) {
 		if (fd == series_get_stack_level(dset, i) &&
 		    !series_is_listarg(dset, i) && 
 		    strcmp(dset->varname[i], s) == 0) {

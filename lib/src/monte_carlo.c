@@ -122,10 +122,10 @@ typedef enum {
     LOOP_CMD_LIT     = 1 << 1, /* literal printing */
     LOOP_CMD_NODOL   = 1 << 2, /* no $-substitution this line */
     LOOP_CMD_NOSUB   = 1 << 3, /* no @-substitution this line */
-    LOOP_CMD_NOOPT   = 1 << 4, /* no option flags in this line */
-    LOOP_CMD_CATCH   = 1 << 5, /* "catch" flag present */
-    LOOP_CMD_COND    = 1 << 6, /* compiled conditional */
-    LOOP_CMD_DONE    = 1 << 7  /* progressive loop command parsed */
+    LOOP_CMD_CATCH   = 1 << 4, /* "catch" flag present */
+    LOOP_CMD_COND    = 1 << 5, /* compiled conditional */
+    LOOP_CMD_DONE    = 1 << 6, /* progressive loop command parsed */
+    LOOP_CMD_OK      = 1 << 7  /* command has been run without error */
 } LoopCmdFlags;
 
 struct loop_command_ {
@@ -2752,10 +2752,10 @@ static int loop_next_command (char *targ, LOOPSET *loop, int *pj)
 #define genr_compiled(l,j) (l->cmds[j].flags & LOOP_CMD_GENR)
 #define loop_cmd_nodol(l,j) (l->cmds[j].flags & LOOP_CMD_NODOL)
 #define loop_cmd_nosub(l,j) (l->cmds[j].flags & LOOP_CMD_NOSUB)
-#define loop_cmd_noopt(l,j) (l->cmds[j].flags & LOOP_CMD_NOOPT)
 #define loop_cmd_catch(l,j) (l->cmds[j].flags & LOOP_CMD_CATCH)
 #define conditional_compiled(l,j) (l->cmds[j].flags & LOOP_CMD_COND)
 #define cmd_preparsed(l,j) (l->cmds[j].flags & LOOP_CMD_DONE)
+#define cmd_checked(l,j)   (l->cmds[j].flags & LOOP_CMD_OK)
 
 static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 {
@@ -2768,9 +2768,6 @@ static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
     if (loop_cmd_catch(loop, j)) {
 	set_gretl_errno(err);
 	err = 0;
-    } else if (!libset_get_bool(HALT_ON_ERR)) {
-	errmsg(err, prn);
-	err = 0;
     }
 
     return err;
@@ -2779,7 +2776,7 @@ static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 /* Based on the stored flags in the loop-line record, set
    or unset some flags for the command parser: this can 
    reduce the amount of work the parser has to do on each
-   iteration of a loop. FIXME: broken and/or obsolete?
+   iteration of a loop. FIXME some of this obsolete?
 */
 
 static inline void loop_info_to_cmd (LOOPSET *loop, int j,
@@ -2797,22 +2794,13 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
     }
 
     if (loop_cmd_nosub(loop, j)) {
-	/* tell parser not to try for @-substitution */
+	/* tell parser not to bother trying for @-substitution */
 	cmd->flags |= CMD_NOSUB;
     } else {
 	cmd->flags &= ~CMD_NOSUB;
     }
-    
-    if (loop_cmd_noopt(loop, j)) {
-	/* tell parser not to try for option flags */
-	cmd->flags |= CMD_NOOPT;
-	/* since the cmd->opt is (or can be) persistent, we
-	   should zero it here */
-	cmd->opt = OPT_NONE;
-    } else {
-	cmd->flags &= ~CMD_NOOPT;
-    }
 
+    /* redundant? */
     if (loop_cmd_catch(loop, j)) {
 	cmd->flags |= CMD_CATCH;
     } else if (!cmd->context) {
@@ -2820,9 +2808,8 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
     }
 
 #if LOOP_DEBUG    
-    fprintf(stderr, " flagged: nosub %d, noopt %d, catch %d\n",
+    fprintf(stderr, " flagged: nosub %d, catch %d\n",
 	    (cmd->flags & CMD_NOSUB)? 1 : 0,
-	    (cmd->flags & CMD_NOOPT)? 1 : 0,
 	    (cmd->flags & CMD_CATCH)? 1 : 0);
 #endif	    
 }
@@ -2834,9 +2821,11 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
 static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 				     CMD *cmd, int *subst)
 {
+    loop_command *lcmd = &loop->cmds[j];
+    
 #if LOOP_DEBUG
     fprintf(stderr, "cmd_info_to_loop: j=%d: '%s'\n",
-	    j, loop->cmds[j].line);
+	    j, lcmd->line);
 #endif
 
     if (!loop_cmd_nosub(loop, j)) {
@@ -2847,26 +2836,25 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 	    *subst = 1;
 	} else {
 	    /* record: no @-substitution in this line */
-	    loop->cmds[j].flags |= LOOP_CMD_NOSUB;
+	    lcmd->flags |= LOOP_CMD_NOSUB;
 	}
     }
 
-    if (loop_cmd_nosub(loop, j)) {
-	if (cmd->opt == OPT_NONE) {
-	    /* record: no options are present on this line */
-	    loop->cmds[j].flags |= LOOP_CMD_NOOPT;
-	}
+    if (lcmd->ci == ELSE || lcmd->ci == ENDIF || lcmd->ci == BREAK) {
+	/* "simple" commands; flag as parsed OK */
+	lcmd->flags |= LOOP_CMD_OK;
     }
 
-    loop->cmds[j].opt = cmd->opt;
+    lcmd->opt = cmd->opt;
 
     if (cmd->flags & CMD_CATCH) {
-	loop->cmds[j].flags |= LOOP_CMD_CATCH;
+	lcmd->flags |= LOOP_CMD_CATCH;
     }
 
 #if LOOP_DEBUG    
-    fprintf(stderr, " loop-flagged: nosub %d\n",
-	    loop_cmd_nosub(loop, j)? 1 : 0);
+    fprintf(stderr, " loop-flagged: nosub %d, catch %d\n",
+	    loop_cmd_nosub(loop, j)? 1 : 0,
+	    loop_cmd_catch(loop, j)? 1 : 0);
 #endif	 
 }
 
@@ -2917,7 +2905,8 @@ static int loop_report_error (LOOPSET *loop, int err,
 
 static int conditional_line (LOOPSET *loop, int j)
 {
-    return loop->cmds[j].ci == IF || loop->cmds[j].ci == ELIF;
+    return loop->cmds[j].ci == IF || loop->cmds[j].ci == ELIF ||
+	loop->cmds[j].ci == ELSE || loop->cmds[j].ci == ENDIF;
 }
 
 static int do_compile_conditional (LOOPSET *loop, int j)
@@ -3055,6 +3044,8 @@ static int block_model (CMD *cmd)
 			       c == MLE ||  \
 			       c == GMM)
 
+#define LTRACE 0
+
 int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop) 
 {
     char *line = s->line;
@@ -3127,28 +3118,63 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	while (!err && loop_next_command(line, loop, &j)) {
 	    int subst = 0;
 
-#if LOOP_DEBUG
-	    fprintf(stderr, "iter=%d, j=%d, line='%s', compiled = %d\n",
-		    loop->iter, j, line, genr_compiled(loop, j));
+#if LTRACE || LOOP_DEBUG
+	    fprintf(stderr, "iter=%d, j=%d, line='%s', ci=%s, compiled=%d\n",
+		    loop->iter, j, line, gretl_command_word(loop->cmds[j].ci),
+		    genr_compiled(loop, j) || conditional_compiled(loop, j) ||
+		    cmd_checked(loop, j));
 #endif
 	    strcpy(errline, line);
 
-	    if (!gretl_if_state_false() && genr_compiled(loop, j)) {
-		/* If the current line already has "compiled genr" status,
-		   we should be able to skip several steps that are
-		   potentially quite time-consuming.
+	    if (cmd_checked(loop, j)) {
+		/* Some "unitary" statements such as else, endif and
+		   break don't require re-parsing after they've been
+		   checked once.
 		*/
-		if (gretl_echo_on() && !loop_is_quiet(loop)) {
-		    pprintf(prn, "? %s\n", line);
+		int ci = loop->cmds[j].ci;
+		
+		if (ci == ELSE || ci == ENDIF) {
+		    cmd->ci = ci;
+		    cmd->err = 0;
+		    flow_control(NULL, NULL, cmd, NULL);
+		    if (cmd->err) {
+			err = loop_process_error(loop, j, cmd->err, prn);
+		    }
+		    if (err) {
+			break;
+		    } else {
+			continue;
+		    }
+		} else if (ci == BREAK) {
+		    if (gretl_if_state_false()) {
+			continue;
+		    } else {
+			cmd->ci = BREAK;
+			loop->brk = 1;
+			break;
+		    }
 		}
-		err = execute_genr(loop->cmds[j].genr, dset, prn);
-		if (err) {
-		    err = loop_process_error(loop, j, err, prn);
-		}
-		if (err) {
-		    break;
-		} else {
+	    }
+
+	    if (genr_compiled(loop, j)) {
+		/* If the current line already has "compiled genr" status,
+		   we should be able to skip several steps.
+		*/
+		if (gretl_if_state_false()) {
 		    continue;
+		} else {
+		    if (gretl_echo_on() && !loop_is_quiet(loop)) {
+			pprintf(prn, "? %s\n", line);
+		    }
+		    err = execute_genr(loop->cmds[j].genr, dset, prn);
+		    if (err) {
+			err = loop_process_error(loop, j, err, prn);
+		    }
+		    if (err) {
+			break;
+		    } else {
+			continue;
+		    }
 		}
 	    }
 
@@ -3175,7 +3201,19 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	       compiled, or that should now be compiled
 	    */
 	    if (conditional_compiled(loop, j)) {
-		err = parse_command_line(line, cmd, dset, &loop->cmds[j].genr);
+		if (gretl_if_state_false()) {
+		    continue;
+		} else {
+		    cmd->ci = loop->cmds[j].ci;
+		    flow_control(line, dset, cmd, &loop->cmds[j].genr);
+		    if (cmd->err) {
+			/* we hit an error evaluating the if state */
+			err = cmd->err;
+		    } else {
+			cmd->ci = CMD_MASKED;
+		    }
+		}
+		// WAS: err = parse_command_line(line, cmd, dset, &loop->cmds[j].genr);
 	    } else if (do_compile_conditional(loop, j)) {
 		GENERATOR *ifgen = NULL;
 
@@ -3191,7 +3229,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    }
 
 #if LOOP_DEBUG
-	    fprintf(stderr, "    after: '%s'\n", line);
+	    fprintf(stderr, "    after: '%s', ci=%d\n", line, cmd->ci);
 	    fprintf(stderr, "    cmd->savename = '%s'\n", cmd->savename);
 	    fprintf(stderr, "    err from parse_command_line: %d\n", err);
 #endif
@@ -3204,6 +3242,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    continue;
 		}
 	    } else if (cmd->ci < 0) {
+		/* blocked */
 		if (conditional_line(loop, j)) {
 		    cmd_info_to_loop(loop, j, cmd, &subst);
 		}
@@ -3295,14 +3334,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	} /* end execution of commands within loop */
 
 	if (err) {
-	    if (!libset_get_bool(HALT_ON_ERR)) {
-		/* print error message but keep going */
-		errmsg(err, prn);
-		err = 0;
-		/* should we clear the "if state" here? */
-	    } else {
-		gretl_if_state_clear();
-	    }
+	    gretl_if_state_clear();
 	} 
 
 	if (!err) {
@@ -3323,7 +3355,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     } /* end iterations of loop */
 
     cmd->flags &= ~CMD_NOSUB;
-    cmd->flags &= ~CMD_NOOPT;
 
     if (loop->brk) {
 	/* turn off break flag */
