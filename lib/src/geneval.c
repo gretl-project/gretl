@@ -56,6 +56,8 @@
 # define LHDEBUG 0
 #endif
 
+#define MATRIX_NA_CHECK 1
+
 /* 2014-07-29: I think this is OK now, but it was disabled for
    the 1.9.91 release. AC.
 */
@@ -12862,7 +12864,7 @@ static void gen_check_errvals (parser *p)
 #endif
 	    }		
 	} else {
-	    /* should we be doing this?? */
+#if MATRIX_NA_CHECK
 	    /* convert any NAs to NaNs */
 	    for (i=0; i<k; i++) {
 		if (na(m->val[i])) {
@@ -12872,6 +12874,7 @@ static void gen_check_errvals (parser *p)
 		    set_gretl_warning(W_GENNAN);
 		}
 	    }
+#endif	    
 	}
     }
 }
@@ -13255,9 +13258,11 @@ static void edit_matrix (parser *p)
 	   submatrix.
 	*/
 	p->err = user_matrix_replace_submatrix(p->lh.name, m, spec);
+#if MATRIX_NA_CHECK	
 	if (!p->err && gretl_matrix_xna_check(m)) {
 	    set_gretl_warning(W_GENNAN);
 	}
+#endif	
 	gretl_matrix_free(m);
 	if (p->ret->t == MAT) {
 	    p->ret->v.m = NULL; /* ?? */
@@ -13904,16 +13909,12 @@ static int save_generated_var (parser *p, PRN *prn)
 	    edit_matrix(p);
 	    prechecked = 1;
 	}
-#if 0 /* TRY_SAVE_AUX */
-	/* Apparently this is _not_safe */
-	if (!prechecked && p->callcount > 1 && r->t == MAT) {
-	    prechecked = 1;
-	}
-#endif
+#if MATRIX_NA_CHECK	
 	if (!prechecked && gretl_matrix_xna_check(p->lh.m1)) {
 	    set_gretl_warning(W_GENNAN);
 	    prechecked = 1;
 	}
+#endif	
     } else if (p->targ == LIST) {
 	edit_list(p);
     } else if (p->targ == STR) {

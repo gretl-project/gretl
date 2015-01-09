@@ -2840,8 +2840,9 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 	}
     }
 
-    if (lcmd->ci == ELSE || lcmd->ci == ENDIF || lcmd->ci == BREAK) {
-	/* "simple" commands; flag as parsed OK */
+    if (lcmd->ci == ELSE || lcmd->ci == ENDIF ||
+	lcmd->ci == BREAK || lcmd->ci == LOOP) {
+	/* flag as parsed OK */
 	lcmd->flags |= LOOP_CMD_OK;
     }
 
@@ -3116,65 +3117,60 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 #endif	
 
 	while (!err && loop_next_command(line, loop, &j)) {
+	    int ci = loop->cmds[j].ci;
+	    int parse = 1;
 	    int subst = 0;
 
 #if LTRACE || LOOP_DEBUG
 	    fprintf(stderr, "iter=%d, j=%d, line='%s', ci=%s, compiled=%d\n",
-		    loop->iter, j, line, gretl_command_word(loop->cmds[j].ci),
+		    loop->iter, j, line, gretl_command_word(ci),
 		    genr_compiled(loop, j) || conditional_compiled(loop, j) ||
 		    cmd_checked(loop, j));
 #endif
 	    strcpy(errline, line);
 
-	    if (cmd_checked(loop, j)) {
-		/* Some "unitary" statements such as else, endif and
-		   break don't require re-parsing after they've been
-		   checked once.
-		*/
-		int ci = loop->cmds[j].ci;
-		
+	    if (gretl_if_state_false()) {
+		/* the only ways out are via ELSE or ENDIF */
 		if (ci == ELSE || ci == ENDIF) {
-		    cmd->ci = ci;
-		    cmd->err = 0;
-		    flow_control(NULL, NULL, cmd, NULL);
-		    if (cmd->err) {
-			err = loop_process_error(loop, j, cmd->err, prn);
-		    }
-		    if (err) {
-			break;
+		    if (cmd_checked(loop, j)) {
+			cmd->ci = ci;
+			cmd->err = 0;
+			flow_control(NULL, NULL, cmd, NULL);
+			err = cmd->err;
+			if (cmd->err) {
+			    err = cmd->err;
+			    goto handle_err;
+			} else {
+			    continue;
+			}
 		    } else {
-			continue;
+			goto do_parsing;
 		    }
-		} else if (ci == BREAK) {
-		    if (gretl_if_state_false()) {
-			continue;
-		    } else {
-			cmd->ci = BREAK;
-			loop->brk = 1;
-			break;
-		    }
+		} else {
+		    continue;
 		}
 	    }
 
+	    if (cmd_checked(loop, j)) {
+		/* no parsing needed */
+		cmd->ci = ci;
+		if (ci == BREAK) {
+		    loop->brk = 1;
+		    break;
+		} else if (ci == LOOP) {
+		    goto child_loop;
+		}
+	    }
+			
 	    if (genr_compiled(loop, j)) {
-		/* If the current line already has "compiled genr" status,
-		   we should be able to skip several steps.
-		*/
-		if (gretl_if_state_false()) {
-		    continue;
+		if (gretl_echo_on() && !loop_is_quiet(loop)) {
+		    pprintf(prn, "? %s\n", line);
+		}
+		err = execute_genr(loop->cmds[j].genr, dset, prn);
+		if (err) {
+		    goto handle_err;
 		} else {
-		    if (gretl_echo_on() && !loop_is_quiet(loop)) {
-			pprintf(prn, "? %s\n", line);
-		    }
-		    err = execute_genr(loop->cmds[j].genr, dset, prn);
-		    if (err) {
-			err = loop_process_error(loop, j, err, prn);
-		    }
-		    if (err) {
-			break;
-		    } else {
-			continue;
-		    }
+		    continue;
 		}
 	    }
 
@@ -3193,27 +3189,19 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 	    }
 
-	    /* transcribe loop -> cmd */
+	    /* transcribe saved loop info -> cmd */
 	    loop_info_to_cmd(loop, j, cmd);
 
-	    /* call the full command parser, with special treatment
-	       for "if" or "elif" conditions that may be already
-	       compiled, or that should now be compiled
-	    */
 	    if (conditional_compiled(loop, j)) {
-		if (gretl_if_state_false()) {
-		    continue;
+		cmd->ci = ci;
+		flow_control(line, dset, cmd, &loop->cmds[j].genr);
+		if (cmd->err) {
+		    /* we hit an error evaluating the if state */
+		    err = cmd->err;
 		} else {
-		    cmd->ci = loop->cmds[j].ci;
-		    flow_control(line, dset, cmd, &loop->cmds[j].genr);
-		    if (cmd->err) {
-			/* we hit an error evaluating the if state */
-			err = cmd->err;
-		    } else {
-			cmd->ci = CMD_MASKED;
-		    }
+		    cmd->ci = CMD_MASKED;
 		}
-		// WAS: err = parse_command_line(line, cmd, dset, &loop->cmds[j].genr);
+		parse = 0;
 	    } else if (do_compile_conditional(loop, j)) {
 		GENERATOR *ifgen = NULL;
 
@@ -3222,9 +3210,15 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    loop->cmds[j].genr = ifgen;
 		    loop->cmds[j].flags |= LOOP_CMD_COND;
 		}
+		parse = 0;
 	    } else if (cmd_preparsed(loop, j)) {
-		cmd->ci = loop->cmds[j].ci;
-	    } else {
+		cmd->ci = ci;
+		parse = 0;
+	    }
+
+	do_parsing:
+
+	    if (parse && !err) {
 		err = parse_command_line(line, cmd, dset, NULL);
 	    }
 
@@ -3233,6 +3227,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    fprintf(stderr, "    cmd->savename = '%s'\n", cmd->savename);
 	    fprintf(stderr, "    err from parse_command_line: %d\n", err);
 #endif
+
+	handle_err:
 
 	    if (err) {
 		err = loop_process_error(loop, j, err, prn);
@@ -3265,6 +3261,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    /* now branch based on the command index: some commands
 	       require special treatment in loop context
 	    */
+
+	child_loop:
 
 	    if (cmd->ci == LOOP) {
 		currloop = get_child_loop_by_line(loop, j);
