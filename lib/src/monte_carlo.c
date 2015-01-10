@@ -3146,7 +3146,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 			/* this line not checked yet */
 			goto do_parsing;
 		    }
-		} else if (ci == ELIF) {
+		} else if (ci == IF || ci == ELIF) {
 		    goto elif_next;
 		} else {
 		    continue;
@@ -3163,7 +3163,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    goto child_loop;
 		}
 	    }
-			
+
 	    if (genr_compiled(loop, j)) {
 		if (gretl_echo_on() && !loop_is_quiet(loop)) {
 		    pprintf(prn, "? %s\n", line);
@@ -3176,7 +3176,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 	    }
 
-	elif_next:
+	elif_next:    
 
 	    if (!loop_cmd_nodol(loop, j)) {
 		if (strchr(line, '$')) {
@@ -3221,6 +3221,10 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    }
 
 	do_parsing:
+
+#if LTRACE
+	    fprintf(stderr, "HERE, err = %d, parse = %d\n", err, parse);
+#endif	    
 
 	    if (parse && !err) {
 		err = parse_command_line(line, cmd, dset, NULL);
@@ -3337,14 +3341,10 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 
 	if (err) {
 	    gretl_if_state_clear();
-	} 
-
-	if (!err) {
-	    if (loop->brk) {
-		gretl_if_state_reset(indent0);
-	    } else {
-		err = gretl_if_state_check(indent0);
-	    }
+	} else if (loop->brk) {
+	    gretl_if_state_reset(indent0);
+	} else {
+	    err = gretl_if_state_check(indent0);
 	}
 
 	if (!err && !loop->brk) {

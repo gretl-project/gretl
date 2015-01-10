@@ -138,7 +138,7 @@ static void unmatched_message (int code)
 {
     gretl_errmsg_sprintf(_("Unmatched \"%s\""),
 			 (code == SET_ELSE)? "else" : 
-			 (code == SET_ELIF)? "elif": "endif");
+			 (code == SET_ELIF)? "elif" : "endif");
 }
 
 #define IF_DEPTH 1024

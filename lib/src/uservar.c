@@ -31,6 +31,8 @@
 #include "uservar.h"
 
 #define UVDEBUG 0
+#define UVAR_HASH 0
+#define HDEBUG 0
 
 #define LEVEL_AUTO -1
 #define LEV_PRIVATE -1
@@ -177,9 +179,24 @@ static void uvar_free_value (user_var *u)
     }
 }
 
+#if UVAR_HASH
+
+static GHashTable *uvars_hash;
+
+#endif
+
 static void user_var_destroy (user_var *u)
 {
     int free_val = 1;
+
+#if UVAR_HASH
+    if (uvars_hash != NULL) {
+# if HDEBUG
+	fprintf(stderr, "removing '%s' from hash table\n", u->name);
+# endif	
+	g_hash_table_remove(uvars_hash, u->name);
+    }
+#endif    
 
     if (var_is_shell(u)) {
 	free_val = 0;
@@ -401,42 +418,132 @@ user_var *get_user_var_by_name (const char *name)
     return NULL;
 }
 
+#if UVAR_HASH
+
 user_var *get_user_var_of_type_by_name (const char *name,
 					GretlType type)
 {
-    int i, imin = 0, d = gretl_function_depth();
+    int i, imin = 0, d = gretl_function_depth(); 
+    static int prev_d = -1;
+    user_var *u = NULL;
 
     if (name == NULL || *name == '\0') {
 	return NULL;
     }
 
-#if UVDEBUG
-    fprintf(stderr, "get_user_var_of_type_by_name: '%s' (n_vars=%d, level=%d)\n",
-	    name, n_vars, d);
-# if UVDEBUG > 1
+    if (type == GRETL_TYPE_DOUBLE) {
+	/* support "auxiliary scalars" mechanism */
+	imin = scalar_imin;
+    }    
+
+#if HDEBUG
+    int hfound = 0;
+    
+    fprintf(stderr, "get user var: '%s', %s (n_vars=%d, level=%d)\n",
+	    name, gretl_type_get_name(type), n_vars, d);
+    fprintf(stderr, "uvars list (imin = %d)\n", imin);
     for (i=0; i<n_vars; i++) {
-	fprintf(stderr, " %d: '%s' type %d, level %d, ptr %p\n", i, 
-		uvars[i]->name, uvars[i]->type, uvars[i]->level,
-		uvars[i]->ptr);
+	fprintf(stderr, " %d: '%s', %s, level %d, ptr %p\n", i, 
+		uvars[i]->name, gretl_type_get_name(uvars[i]->type),
+		uvars[i]->level, uvars[i]->ptr);
     }
-# endif
+#endif    
+
+    if (d != prev_d) {
+	if (uvars_hash != NULL) {
+	    g_hash_table_destroy(uvars_hash);
+	}
+	uvars_hash = g_hash_table_new(g_str_hash, g_str_equal);
+	prev_d = d;
+    }
+
+    if (uvars_hash != NULL) {
+	/* First resort: try a hash look-up */
+	u = g_hash_table_lookup(uvars_hash, name);
+	/* but verify type */
+	if (u != NULL && u->type != type) {
+	    u = NULL;
+	}
+#if HDEBUG
+	if (u != NULL) hfound = 1;
+#endif	
+    }
+
+    if (u == NULL) {
+	/* "On demand" hashing: if we're successful in looking
+	   up a variable in the traditional manner, then
+	   insert it into the user vars hash table.
+	*/
+	for (i=imin; i<n_vars; i++) {
+	    if (uvars[i]->level == d && 
+		uvars[i]->type == type &&
+		!strcmp(uvars[i]->name, name)) {
+		u = uvars[i];
+		g_hash_table_insert(uvars_hash, u->name, u);
+		break;
+	    }
+	}
+    }
+
+#if HDEBUG
+    if (hfound)
+	fprintf(stderr, "found via hash\n\n");
+    else if (u != NULL)
+	fprintf(stderr, "found via regular search\n\n");
+    else 
+	fprintf(stderr, "not found\n\n");
 #endif
+
+    return u;
+}
+
+#else
+
+user_var *get_user_var_of_type_by_name (const char *name,
+					GretlType type)
+{
+    int i, imin = 0, d = gretl_function_depth();
+    user_var *u = NULL;
+
+    if (name == NULL || *name == '\0') {
+	return NULL;
+    }
 
     if (type == GRETL_TYPE_DOUBLE) {
 	/* support "auxiliary scalars" mechanism */
 	imin = scalar_imin;
+    }    
+
+#if UVDEBUG
+    fprintf(stderr, "get user var: '%s', %s (n_vars=%d, level=%d)\n",
+	    name, gretl_type_get_name(type), n_vars, d);
+# if UVDEBUG > 1
+    fprintf(stderr, "uvars list (imin = %d)\n", imin);
+    for (i=0; i<n_vars; i++) {
+	fprintf(stderr, " %d: '%s', %s, level %d, ptr %p\n", i, 
+		uvars[i]->name, gretl_type_get_name(uvars[i]->type),
+		uvars[i]->level, uvars[i]->ptr);
     }
+# endif
+#endif
 
     for (i=imin; i<n_vars; i++) {
 	if (uvars[i]->level == d && 
 	    uvars[i]->type == type &&
 	    !strcmp(uvars[i]->name, name)) {
-	    return uvars[i];
+	    u = uvars[i];
+	    break;
 	}
     }
 
-    return NULL;
+#if UVDEBUG
+    fprintf(stderr, "%s\n\n", u != NULL ? "found" : "not found");
+#endif    
+
+    return u;
 }
+
+#endif
 
 /* note: used in kalman.c */
 
