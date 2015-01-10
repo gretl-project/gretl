@@ -3130,13 +3130,12 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    strcpy(errline, line);
 
 	    if (gretl_if_state_false()) {
-		/* the only ways out are via ELSE or ENDIF */
+		/* the only ways out are via ELSE, ELIF or ENDIF */
 		if (ci == ELSE || ci == ENDIF) {
 		    if (cmd_checked(loop, j)) {
 			cmd->ci = ci;
 			cmd->err = 0;
 			flow_control(NULL, NULL, cmd, NULL);
-			err = cmd->err;
 			if (cmd->err) {
 			    err = cmd->err;
 			    goto handle_err;
@@ -3144,8 +3143,11 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 			    continue;
 			}
 		    } else {
+			/* this line not checked yet */
 			goto do_parsing;
 		    }
+		} else if (ci == ELIF) {
+		    goto elif_next;
 		} else {
 		    continue;
 		}
@@ -3173,6 +3175,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    continue;
 		}
 	    }
+
+	elif_next:
 
 	    if (!loop_cmd_nodol(loop, j)) {
 		if (strchr(line, '$')) {
