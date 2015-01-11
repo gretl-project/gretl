@@ -688,11 +688,9 @@ nlspec_add_params_from_line (nlspec *s, const char *str)
     return err;
 }
 
-/* note: this function handles scalar params only */
-
-int real_nlspec_add_param_list (nlspec *spec, int np, 
-				double *vals, char **names, 
-				gretlopt opt)
+static int nlspec_add_scalar_params (nlspec *spec, int np, 
+				     double *vals, char **names, 
+				     gretlopt opt)
 {
     int i, err = 0;
 
@@ -736,16 +734,16 @@ int real_nlspec_add_param_list (nlspec *spec, int np,
 int nlspec_add_param_list (nlspec *spec, int np, double *vals,
 			   char **names)
 {
-    return real_nlspec_add_param_list(spec, np, vals, names,
-				      OPT_NONE);
-
+    return nlspec_add_scalar_params(spec, np, vals, names,
+				    OPT_NONE);
+    
 }
 
 int aux_nlspec_add_param_list (nlspec *spec, int np, double *vals,
 			       char **names)
 {
-    return real_nlspec_add_param_list(spec, np, vals, names,
-				      OPT_A);
+    return nlspec_add_scalar_params(spec, np, vals, names,
+				    OPT_A);
 }
 
 /* update the 'external' values of scalars or matrices using
@@ -3474,7 +3472,7 @@ static int ivreg_set_params (nlspec *spec, MODEL *pmod)
 	sprintf(names[i], "b%d", i);
     }
 
-    err = nlspec_add_param_list(spec, np, pmod->coeff, names);
+    err = aux_nlspec_add_param_list(spec, np, pmod->coeff, names);
 
     strings_array_free(names, np);
 
@@ -3535,7 +3533,8 @@ static int finalize_ivreg_model (MODEL *pmod, MODEL *ols,
 }
 
 /* Responds when OPT_L is given to the ivreg() function,
-   which lives in estimate.c */
+   which lives in estimate.c 
+*/
 
 MODEL ivreg_via_gmm (const int *list, DATASET *dset, gretlopt opt)
 {
