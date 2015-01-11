@@ -919,7 +919,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 	    parms[k] = gretl_mean(0, dset->n - 1, dset->Z[1]);
 	}
 	b0 = &parms[k];
-	strcpy(pnames[k++], "b0");
+	strcpy(pnames[k++], "_b0");
     }
 
     for (i=0; i<ainfo->p; i++) {
@@ -933,7 +933,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 	    if (coeff != NULL) {
 		parms[k] = coeff[k];
 	    }
-	    sprintf(pnames[k++], "phi%d", i+1);
+	    sprintf(pnames[k++], "_phi%d", i+1);
 	}
     }
 
@@ -947,21 +947,21 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 	if (coeff != NULL) {
 	    parms[k] = coeff[k];
 	}
-	sprintf(pnames[k++], "Phi%d", i+1);
+	sprintf(pnames[k++], "_Phi%d", i+1);
     }
 
     for (i=0; i<ainfo->nexo; i++) {
 	if (coeff != NULL) {
 	    parms[k] = coeff[k];
 	}
-	sprintf(pnames[k++], "b%d", i+1);
+	sprintf(pnames[k++], "_b%d", i+1);
     }
 
     if (ainfo->misslist != NULL) {
 	for (i=1; i<=ainfo->misslist[0]; i++) {
 	    j = ainfo->misslist[i];
 	    parms[k] = dset->Z[1][j];
-	    sprintf(pnames[k++], "c%d", i);
+	    sprintf(pnames[k++], "_c%d", i);
 	}
     }
 
@@ -970,7 +970,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
     strcpy(fnstr, "y=");
 
     if (ainfo->ifc) {
-	strcat(fnstr, "b0");
+	strcat(fnstr, "_b0");
     } else {
 	strcat(fnstr, "0");
     } 
@@ -978,7 +978,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
     for (i=0; i<ainfo->p && !err; i++) {
 	if (AR_included(ainfo, i)) {
 	    lag = i + 1;
-	    sprintf(term, "+phi%d*", lag);
+	    sprintf(term, "+_phi%d*", lag);
 	    err = add_to_spec(fnstr, term);
 	    if (!err) {
 		err = y_Xb_at_lag(fnstr, ainfo, narmax, lag);
@@ -987,13 +987,13 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
     }
 
     for (j=0; j<ainfo->P && !err; j++) {
-	sprintf(term, "+Phi%d*", j+1);
+	sprintf(term, "+_Phi%d*", j+1);
 	strcat(fnstr, term);
 	lag = (j + 1) * ainfo->pd;
 	y_Xb_at_lag(fnstr, ainfo, narmax, lag);
 	for (i=0; i<ainfo->p; i++) {
 	    if (AR_included(ainfo, i)) {
-		sprintf(term, "-phi%d*Phi%d*", i+1, j+1);
+		sprintf(term, "-_phi%d*_Phi%d*", i+1, j+1);
 		err = add_to_spec(fnstr, term);
 		if (!err) {
 		    lag = (j+1) * ainfo->pd + (i+1);
@@ -1004,13 +1004,13 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
     }
 
     for (i=0; i<ainfo->nexo && !err; i++) {
-	sprintf(term, "+b%d*x%d", i+1, i+1);
+	sprintf(term, "+_b%d*x%d", i+1, i+1);
 	err = add_to_spec(fnstr, term);
     }
 
     if (!err && ainfo->misslist != NULL) {
 	for (i=1; i<=ainfo->misslist[0]; i++) {
-	    sprintf(term, "+c%d*d%d", i, i);
+	    sprintf(term, "+_c%d*d%d", i, i);
 	    err = add_to_spec(fnstr, term);
 	}
     }

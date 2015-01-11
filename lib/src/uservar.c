@@ -31,7 +31,7 @@
 #include "uservar.h"
 
 #define UVDEBUG 0
-#define UVAR_HASH 0 /* 2015-01-11: let's be conservative for now */
+#define UVAR_HASH 1 /* 2015-01-11: let's be conservative for now */
 #define HDEBUG 0
 
 #define LEVEL_AUTO -1
@@ -418,23 +418,6 @@ int user_var_delete (user_var *uvar)
     return err;
 }
 
-user_var *get_user_var_by_name (const char *name)
-{
-    int i, d = gretl_function_depth();
-
-    if (name == NULL || *name == '\0') {
-	return NULL;
-    }
-
-    for (i=0; i<n_vars; i++) {
-	if (uvars[i]->level == d && !strcmp(uvars[i]->name, name)) {
-	    return uvars[i];
-	}
-    }
-
-    return NULL;
-}
-
 #if UVAR_HASH
 
 #if HDEBUG
@@ -493,11 +476,11 @@ user_var *get_user_var_of_type_by_name (const char *name,
 	previous_d = d;
     }
 
-    if (uvars_hash != NULL && imin == 0) {
+    if (uvars_hash != NULL) {
 	/* First resort: try a hash look-up */
 	u = g_hash_table_lookup(uvars_hash, name);
-	/* but verify type! */
-	if (u != NULL && u->type != type) {
+	/* but verify type, if specified */
+	if (u != NULL && type != GRETL_TYPE_ANY && u->type != type) {
 	    u = NULL;
 	}
 #if HDEBUG
@@ -512,12 +495,10 @@ user_var *get_user_var_of_type_by_name (const char *name,
 	*/
 	for (i=imin; i<n_vars; i++) {
 	    if (uvars[i]->level == d && 
-		uvars[i]->type == type &&
+		(type == GRETL_TYPE_ANY || uvars[i]->type == type) &&
 		!strcmp(uvars[i]->name, name)) {
 		u = uvars[i];
-		if (imin == 0) {
-		    g_hash_table_insert(uvars_hash, u->name, u);
-		}
+		g_hash_table_insert(uvars_hash, u->name, u);
 		break;
 	    }
 	}
@@ -533,6 +514,38 @@ user_var *get_user_var_of_type_by_name (const char *name,
 #endif
 
     return u;
+}
+
+user_var *get_user_var_by_name (const char *name)
+{
+    return get_user_var_of_type_by_name(name, GRETL_TYPE_ANY);
+}
+
+GretlType user_var_get_type_by_name (const char *name)
+{
+    user_var *u;
+
+    u = get_user_var_of_type_by_name(name, GRETL_TYPE_ANY);
+
+    return u == NULL ? GRETL_TYPE_NONE : u->type;
+}
+
+void *user_var_get_value_and_type (const char *name,
+				   GretlType *type)
+{
+    void *ret = NULL;
+    user_var *u;
+
+    u = get_user_var_of_type_by_name(name, GRETL_TYPE_ANY);
+
+    if (u != NULL) {
+	ret = u->ptr;
+	*type = u->type;
+    } else {
+	*type = GRETL_TYPE_NONE;
+    }
+
+    return ret;
 }
 
 #else
@@ -581,7 +594,53 @@ user_var *get_user_var_of_type_by_name (const char *name,
     return u;
 }
 
-#endif
+user_var *get_user_var_by_name (const char *name)
+{
+    int i, d = gretl_function_depth();
+
+    if (name == NULL || *name == '\0') {
+	return NULL;
+    }
+
+    for (i=0; i<n_vars; i++) {
+	if (uvars[i]->level == d && !strcmp(uvars[i]->name, name)) {
+	    return uvars[i];
+	}
+    }
+
+    return NULL;
+}
+
+GretlType user_var_get_type_by_name (const char *name)
+{
+    int i, d = gretl_function_depth();
+
+    for (i=0; i<n_vars; i++) {
+	if (uvars[i]->level == d && !strcmp(uvars[i]->name, name)) {
+	    return uvars[i]->type;
+	}
+    }
+
+    return GRETL_TYPE_NONE;
+}
+
+void *user_var_get_value_and_type (const char *name,
+				   GretlType *type)
+{
+    user_var *u = get_user_var_by_name(name);
+    void *ret = NULL;
+
+    if (u != NULL) {
+	ret = u->ptr;
+	*type = u->type;
+    } else {
+	*type = GRETL_TYPE_NONE;
+    }
+
+    return ret;
+}
+
+#endif /* UVAR_HASH or not */
 
 /* note: used in kalman.c */
 
@@ -603,19 +662,6 @@ gretl_matrix *get_matrix_by_name_at_level (const char *name, int level)
 int gretl_is_user_var (const char *name)
 {
     return get_user_var_by_name(name) != NULL;
-}
-
-GretlType user_var_get_type_by_name (const char *name)
-{
-    int i, d = gretl_function_depth();
-
-    for (i=0; i<n_vars; i++) {
-	if (uvars[i]->level == d && !strcmp(uvars[i]->name, name)) {
-	    return uvars[i]->type;
-	}
-    }
-
-    return GRETL_TYPE_NONE;
 }
 
 user_var *get_user_var_by_data (const void *data)
@@ -663,22 +709,6 @@ void *user_var_get_value_by_name (const char *name)
     user_var *u = get_user_var_by_name(name);
 
     return (u == NULL)? NULL : u->ptr;
-}
-
-void *user_var_get_value_and_type (const char *name,
-				   GretlType *type)
-{
-    user_var *u = get_user_var_by_name(name);
-    void *ret = NULL;
-
-    if (u != NULL) {
-	ret = u->ptr;
-	*type = u->type;
-    } else {
-	*type = GRETL_TYPE_NONE;
-    }
-
-    return ret;
 }
 
 /* special for scalars since user_var_get_value returns

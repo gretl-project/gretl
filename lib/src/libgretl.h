@@ -134,7 +134,8 @@ typedef enum {
     GRETL_TYPE_MATRICES_REF,
     GRETL_TYPE_BUNDLES_REF,
     GRETL_TYPE_LISTS_REF,
-    GRETL_TYPE_VOID
+    GRETL_TYPE_VOID,
+    GRETL_TYPE_ANY
 } GretlType;
 
 #define gretl_scalar_type(t) (t == GRETL_TYPE_BOOL ||	\

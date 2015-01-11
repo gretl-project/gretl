@@ -3361,8 +3361,8 @@ void nlspec_destroy (nlspec *spec)
 
 /* below: apparatus for estimating a "tsls" model via GMM */
 
-#define IVREG_RESIDNAME  "gmm___e"
-#define IVREG_WEIGHTNAME "gmm___V"
+#define IVREG_RESIDNAME  "_gmm_e"
+#define IVREG_WEIGHTNAME "_gmm_V"
 
 static int ivreg_nlfunc_setup (nlspec *spec, MODEL *pmod,
 			       DATASET *dset)
@@ -3381,10 +3381,10 @@ static int ivreg_nlfunc_setup (nlspec *spec, MODEL *pmod,
     pprintf(prn, "gmm %s = %s-(", IVREG_RESIDNAME, dset->varname[v]);
     for (i=0; i<k; i++) {
 	if (i == 0 && pmod->ifc) {
-	    pputs(prn, "b0");
+	    pputs(prn, "_b0");
 	} else {
 	    v = pmod->list[i+2];
-	    pprintf(prn, "+b%d*%s", i, dset->varname[v]);
+	    pprintf(prn, "+_b%d*%s", i, dset->varname[v]);
 	}
     }
     pputc(prn, ')');
@@ -3469,7 +3469,7 @@ static int ivreg_set_params (nlspec *spec, MODEL *pmod)
     }
 
     for (i=0; i<np; i++) {
-	sprintf(names[i], "b%d", i);
+	sprintf(names[i], "_b%d", i);
     }
 
     err = aux_nlspec_add_param_list(spec, np, pmod->coeff, names);
