@@ -3147,7 +3147,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 			goto do_parsing;
 		    }
 		} else if (ci == IF || ci == ELIF) {
-		    goto elif_next;
+		    goto cond_next;
 		} else {
 		    continue;
 		}
@@ -3176,7 +3176,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 	    }
 
-	elif_next:    
+	cond_next:    
 
 	    if (!loop_cmd_nodol(loop, j)) {
 		if (strchr(line, '$')) {
