@@ -31,7 +31,7 @@
 #include "uservar.h"
 
 #define UVDEBUG 0
-#define UVAR_HASH 0
+#define UVAR_HASH 0 /* 2015-01-11: let's be conservative for now */
 #define HDEBUG 0
 
 #define LEVEL_AUTO -1
@@ -182,6 +182,20 @@ static void uvar_free_value (user_var *u)
 #if UVAR_HASH
 
 static GHashTable *uvars_hash;
+static int previous_d = -1;
+
+static void uvar_hash_destroy (void)
+{
+    if (uvars_hash != NULL) {
+# if HDEBUG	
+	fputs("destroy uvars_hash\n", stderr);
+# endif	
+	g_hash_table_destroy(uvars_hash);
+	uvars_hash = NULL;
+    }
+
+    previous_d = -1;
+}
 
 #endif
 
@@ -192,9 +206,12 @@ static void user_var_destroy (user_var *u)
 #if UVAR_HASH
     if (uvars_hash != NULL) {
 # if HDEBUG
-	fprintf(stderr, "removing '%s' from hash table\n", u->name);
-# endif	
+	if (g_hash_table_remove(uvars_hash, u->name)) {
+	    fprintf(stderr, "removed '%s' from hash table\n", u->name);
+	}
+# else
 	g_hash_table_remove(uvars_hash, u->name);
+# endif	
     }
 #endif    
 
@@ -420,11 +437,27 @@ user_var *get_user_var_by_name (const char *name)
 
 #if UVAR_HASH
 
+#if HDEBUG
+
+static int uvar_index (user_var *u)
+{
+    int i;
+
+    for (i=0; i<n_vars; i++) {
+	if (u == uvars[i]) {
+	    return i;
+	}
+    }
+
+    return -1;
+}
+
+#endif
+
 user_var *get_user_var_of_type_by_name (const char *name,
 					GretlType type)
 {
     int i, imin = 0, d = gretl_function_depth(); 
-    static int prev_d = -1;
     user_var *u = NULL;
 
     if (name == NULL || *name == '\0') {
@@ -439,28 +472,31 @@ user_var *get_user_var_of_type_by_name (const char *name,
 #if HDEBUG
     int hfound = 0;
     
-    fprintf(stderr, "get user var: '%s', %s (n_vars=%d, level=%d)\n",
-	    name, gretl_type_get_name(type), n_vars, d);
-    fprintf(stderr, "uvars list (imin = %d)\n", imin);
+    fprintf(stderr, "get user var: '%s', %s (n_vars=%d, level=%d, imin=%d)\n",
+	    name, gretl_type_get_name(type), n_vars, d, imin);
+# if HDEBUG > 1    
+    fputs("uvars list:\n", stderr);
     for (i=0; i<n_vars; i++) {
 	fprintf(stderr, " %d: '%s', %s, level %d, ptr %p\n", i, 
 		uvars[i]->name, gretl_type_get_name(uvars[i]->type),
 		uvars[i]->level, uvars[i]->ptr);
     }
+# endif    
 #endif    
 
-    if (d != prev_d) {
+    if (d != previous_d) {
 	if (uvars_hash != NULL) {
-	    g_hash_table_destroy(uvars_hash);
+	    g_hash_table_remove_all(uvars_hash);
+	} else {
+	    uvars_hash = g_hash_table_new(g_str_hash, g_str_equal);
 	}
-	uvars_hash = g_hash_table_new(g_str_hash, g_str_equal);
-	prev_d = d;
+	previous_d = d;
     }
 
-    if (uvars_hash != NULL) {
+    if (uvars_hash != NULL && imin == 0) {
 	/* First resort: try a hash look-up */
 	u = g_hash_table_lookup(uvars_hash, name);
-	/* but verify type */
+	/* but verify type! */
 	if (u != NULL && u->type != type) {
 	    u = NULL;
 	}
@@ -479,7 +515,9 @@ user_var *get_user_var_of_type_by_name (const char *name,
 		uvars[i]->type == type &&
 		!strcmp(uvars[i]->name, name)) {
 		u = uvars[i];
-		g_hash_table_insert(uvars_hash, u->name, u);
+		if (imin == 0) {
+		    g_hash_table_insert(uvars_hash, u->name, u);
+		}
 		break;
 	    }
 	}
@@ -487,9 +525,9 @@ user_var *get_user_var_of_type_by_name (const char *name,
 
 #if HDEBUG
     if (hfound)
-	fprintf(stderr, "found via hash\n\n");
+	fprintf(stderr, "found at pos %d via hash\n\n", uvar_index(u));
     else if (u != NULL)
-	fprintf(stderr, "found via regular search\n\n");
+	fprintf(stderr, "found at pos %d via regular search\n\n", uvar_index(u));
     else 
 	fprintf(stderr, "not found\n\n");
 #endif
@@ -1162,6 +1200,12 @@ void destroy_user_vars (void)
 	i--;
     }
 
+#if UVAR_HASH
+    if (uvars_hash != NULL) {
+	uvar_hash_destroy();
+    }
+#endif    
+
     set_nvars(0, "destroy_user_vars");
 
     free(uvars);
@@ -1466,6 +1510,12 @@ int add_auxiliary_scalar (const char *name, double val)
 {
     double *px = malloc(sizeof *px);
     int err;
+
+    /* Note that unlike gretl_scalar_add() above, this function
+       adds a new scalar variable unconditionally; it never
+       modifies the value of an existing scalar of the same
+       name. 
+    */
 
     if (px == NULL) {
 	err = E_ALLOC;
