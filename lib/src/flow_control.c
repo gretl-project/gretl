@@ -39,6 +39,13 @@ enum {
     IFRESET
 };
 
+enum {
+    TOK_IF = 1,
+    TOK_ELIF,
+    TOK_ELSE,
+    TOK_ENDIF
+};
+
 /* if_eval: evaluate an "if" condition by generating a scalar
    (integer) representing the truth or falsity of the condition.
    The condition is expressed in the string @s. If a loop is
@@ -72,18 +79,14 @@ static int if_eval (int ci, const char *s, DATASET *dset,
 	*/
 	ifgen = *(GENERATOR **) ptr;
 
-	if (ifgen == NULL) {
+	if (ifgen == NULL && s != NULL) {
 	    /* Generator not compiled yet: do it now. The
 	       flags OPT_P and OPT_S indicate that we're
 	       generating a "private" scalar.
 	    */
 	    GENERATOR **pgen = (GENERATOR **) ptr;
 
-	    if (s == NULL) {
-		*err = E_DATA;
-	    } else {
-		*pgen = ifgen = genr_compile(s, dset, OPT_P | OPT_S, err);
-	    }
+	    *pgen = ifgen = genr_compile(s, dset, OPT_P | OPT_S, err);
 	}
     }
 
@@ -145,10 +148,9 @@ static void unmatched_message (int code)
 
 static int ifstate (int code, int val, int *err)
 {
-    static unsigned short T[IF_DEPTH];
-    static unsigned short got_if[IF_DEPTH];
-    static unsigned short got_else[IF_DEPTH];
-    static unsigned short got_T[IF_DEPTH];
+    static unsigned char T[IF_DEPTH];
+    static unsigned char tok[IF_DEPTH];
+    static unsigned char got_T[IF_DEPTH];
     static unsigned short indent;
     int i, ret = 0;
 
@@ -171,28 +173,28 @@ static int ifstate (int code, int val, int *err)
 	    *err = E_DATA;
 	} else {
 	    T[indent] = got_T[indent] = (code == SET_TRUE);
-	    got_if[indent] = 1;
-	    got_else[indent] = 0;
+	    tok[indent] = TOK_IF;
 	}
-    } else if (code == SET_ELSE || code == SET_ELIF) {
-	if (got_else[indent] || !got_if[indent]) {
+    } else if (code == SET_ELIF || code == SET_ELSE) {
+	if (tok[indent] != TOK_IF && tok[indent] != TOK_ELIF) {
 	    unmatched_message(code);
 	    *err = E_PARSE;
 	} else {
-	    got_else[indent] = (code == SET_ELSE);
+	    tok[indent] = (code == SET_ELSE)? TOK_ELSE : TOK_ELIF;
 	    if (T[indent]) {
 		T[indent] = 0;
 	    } else if (!got_T[indent]) {
 		T[indent] = 1;
 	    }
-	}
+	}	
     } else if (code == SET_ENDIF) {
-	if (!got_if[indent] || indent == 0) {
+	if (tok[indent] != TOK_IF &&
+	    tok[indent] != TOK_ELIF &&
+	    tok[indent] != TOK_ELSE) {
 	    unmatched_message(code);
 	    *err = E_PARSE;
 	} else {
-	    got_if[indent] = 0;
-	    got_else[indent] = 0;
+	    tok[indent] = TOK_ENDIF;
 	    got_T[indent] = 0;
 	    indent--;
 	}
