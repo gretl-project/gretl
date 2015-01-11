@@ -9230,6 +9230,27 @@ static NODE *gen_series_from_string (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static double *xvec_from_matrix (gretl_matrix *m,
+				 parser *p,
+				 int *subset,
+				 int *err)
+{
+    double *ret = NULL;
+    
+    if (gretl_is_null_matrix(m) || m->cols != 1) {
+	*err = E_TYPES;
+    } else if (m->rows == p->dset->n) {
+	ret = m->val;
+    } else if (m->rows == sample_size(p->dset)) {
+	*subset = 1;
+	ret = m->val;
+    } else {
+	*err = E_TYPES;
+    }
+
+    return ret;
+}
+
 static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -9238,25 +9259,33 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 	no_data_error(p);
     } else if (l->t == STR && r->t == STR) {
 	return gen_series_from_string(l, r, p);
-    } else if (l->t != STR || r->t != SERIES) {
+    } else if (l->t != STR || (r->t != SERIES && r->t != MAT)) {
 	p->err = E_TYPES;
     } else {
 	char *vname = l->v.str;
 	int vnum = current_series_index(p->dset, vname);
+	int subset = 0;
+	double *xvec;
 	int err = 0;
 
-	if (vnum > 0) {
+	if (r->t == SERIES) {
+	    xvec = r->v.xvec;
+	} else {
+	    xvec = xvec_from_matrix(r->v.m, p, &subset, &err);
+	}
+
+	if (!err && vnum > 0) {
 	    /* a series of this name already exists */
-	    int t;
-	    
-	    for (t=0; t<p->dset->n; t++) {
-		if (t < p->dset->t1 || t > p->dset->t2) {
-		    p->dset->Z[vnum][t] = NADBL;
+	    int t, i = 0;
+
+	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		if (subset) {
+		    p->dset->Z[vnum][t] = xvec[i++];
 		} else {
-		    p->dset->Z[vnum][t] = r->v.xvec[t];
+		    p->dset->Z[vnum][t] = xvec[t];
 		}
 	    }
-	} else {
+	} else if (!err) {
 	    /* creating a new series */
 	    GretlType ltype = user_var_get_type_by_name(vname);
 
@@ -9267,18 +9296,24 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 		err = check_varname(vname);
 	    }
 	    if (!err) {
-		if (is_dataset_series(p->dset, r->v.xvec)) {
+		if (r->t == MAT || is_dataset_series(p->dset, xvec)) {
+		    /* we need distinct storage */
 		    err = dataset_add_NA_series(p->dset, 1);
 		    if (!err) {
-			int t, v = p->dset->v - 1;
+			int t, i = 0, v = p->dset->v - 1;
 
 			for (t=p->dset->t1; t<=p->dset->t2; t++) {
-			    p->dset->Z[v][t] = r->v.xvec[t];
+			    if (subset) {
+				p->dset->Z[v][t] = xvec[i++];
+			    } else {
+				p->dset->Z[v][t] = xvec[t];
+			    }
 			}
 			r->v.xvec = p->dset->Z[v];
 		    }
 		} else {
-		    err = dataset_add_allocated_series(p->dset, r->v.xvec);
+		    /* we can use the existing RHS storage */
+		    err = dataset_add_allocated_series(p->dset, xvec);
 		}
 	    }
 	    if (!err) {
@@ -9293,7 +9328,7 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 
 	ret = aux_scalar_node(p);
 	if (ret != NULL) {
-	    ret->v.xval = r->vnum;
+	    ret->v.xval = err ? -1 : r->vnum;
 	}
     }
 
