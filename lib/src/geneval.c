@@ -11721,7 +11721,7 @@ static NODE *eval (NODE *t, parser *p)
 	    int l_ok = useries_node(l);
 
 	    node_type_error(t->t, l_ok ? 2 : 1,
-			    l_ok ? USERIES : ARRAY,
+			    l_ok ? ARRAY : USERIES,
 			    l_ok ? r : l, p);
 	} else {
 	    ret = stringify_series(l, r, p);
