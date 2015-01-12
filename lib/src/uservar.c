@@ -477,7 +477,7 @@ user_var *get_user_var_of_type_by_name (const char *name,
     }
 
     if (uvars_hash != NULL) {
-	/* First resort: try a hash look-up */
+	/* rirst resort: try a hash look-up */
 	u = g_hash_table_lookup(uvars_hash, name);
 	/* but verify type, if specified */
 	if (u != NULL && type != GRETL_TYPE_ANY && u->type != type) {
