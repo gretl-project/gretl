@@ -30,7 +30,7 @@
 #include "gretl_typemap.h"
 #include "uservar.h"
 
-#define UVAR_HASH 0
+#define UVAR_HASH 1
 #define UVDEBUG 0
 #define HDEBUG 0
 
