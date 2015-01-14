@@ -30,6 +30,7 @@
 #include "gretl_typemap.h"
 #include "uservar.h"
 
+#define UVAR_HASH 0
 #define UVDEBUG 0
 #define HDEBUG 0
 
@@ -458,6 +459,7 @@ user_var *get_user_var_of_type_by_name (const char *name,
 # endif    
 #endif    
 
+#if UVAR_HASH    
     if (d != previous_d) {
 	if (uvars_hash != NULL) {
 	    g_hash_table_remove_all(uvars_hash);
@@ -478,6 +480,7 @@ user_var *get_user_var_of_type_by_name (const char *name,
 	if (u != NULL) hfound = 1;
 #endif	
     }
+#endif    
 
     if (u == NULL) {
 	/* "On demand" hashing: if we're successful in looking
@@ -489,7 +492,9 @@ user_var *get_user_var_of_type_by_name (const char *name,
 		(type == GRETL_TYPE_ANY || uvars[i]->type == type) &&
 		!strcmp(uvars[i]->name, name)) {
 		u = uvars[i];
+#if UVAR_HASH		
 		g_hash_table_insert(uvars_hash, u->name, u);
+#endif		
 		break;
 	    }
 	}
