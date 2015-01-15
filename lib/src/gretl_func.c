@@ -5198,7 +5198,7 @@ static int check_function_structure (ufunc *fun)
 #endif
 
     for (i=0; i<fun->n_lines && !err; i++) {
-#if 0 || defined(SHOW_STRUCTURE)
+#if defined(SHOW_STRUCTURE)
 	fprintf(stderr, "line[%d] = '%s'\n", i, fun->lines[i].s);
 #endif
 	/* avoid losing comment lines */

@@ -179,18 +179,36 @@ static void uvar_free_value (user_var *u)
     }
 }
 
-static GHashTable *uvars_hash;
-static int previous_d = -1;
+static GHashTable *uvh0;       /* for use at "main" exec level */
+static GHashTable *uvh1;       /* for use within functions */
+static GHashTable *uvars_hash; /* pointer to one or other of the above */
+static int previous_d = -1;    /* record of previous "function depth" */
 
 static void uvar_hash_destroy (void)
 {
     if (uvars_hash != NULL) {
 # if HDEBUG	
-	fputs("destroy uvars_hash\n", stderr);
-# endif	
+	fprintf(stderr, "destroy uvars_hash (=%p, uvh0=%p, uvh1=%p)\n",
+		(void *) uvars_hash, (void *) uvh0, (void *) uvh1);
+# endif
+	if (uvars_hash == uvh0) {
+	    uvh0 = NULL;
+	} else if (uvars_hash == uvh1) {
+	    uvh1 = NULL;
+	}
 	g_hash_table_destroy(uvars_hash);
 	uvars_hash = NULL;
     }
+
+    if (uvh0 != NULL) {
+	g_hash_table_destroy(uvh0);
+	uvh0 = NULL;
+    }
+
+    if (uvh1 != NULL) {
+	g_hash_table_destroy(uvh1);
+	uvh1 = NULL;
+    }    
 
     previous_d = -1;
 }
@@ -202,7 +220,8 @@ static void user_var_destroy (user_var *u)
     if (uvars_hash != NULL) {
 # if HDEBUG
 	if (g_hash_table_remove(uvars_hash, u->name)) {
-	    fprintf(stderr, "removed '%s' from hash table\n", u->name);
+	    fprintf(stderr, "removed '%s' from hash table at %p\n",
+		    u->name, (void *) uvars_hash);
 	}
 # else
 	g_hash_table_remove(uvars_hash, u->name);
@@ -461,10 +480,39 @@ user_var *get_user_var_of_type_by_name (const char *name,
 
 #if UVAR_HASH    
     if (d != previous_d) {
-	if (uvars_hash != NULL) {
-	    g_hash_table_remove_all(uvars_hash);
+	if (d == 0) {
+	    /* "main" level */
+	    if (uvh0 == NULL) {
+		uvh0 = g_hash_table_new(g_str_hash, g_str_equal);
+#if HDEBUG
+		fprintf(stderr, "d=0, prev=%d: uvh0 allocated at %p\n",
+			previous_d, uvh0);
+#endif		
+	    }
+	    if (uvh1 != NULL) {
+#if HDEBUG
+		fprintf(stderr, "d=0, prev=%d: clear uvh1 at %p\n",
+			previous_d, uvh1);
+#endif		
+		g_hash_table_remove_all(uvh1);
+	    }	    
+	    uvars_hash = uvh0;
 	} else {
-	    uvars_hash = g_hash_table_new(g_str_hash, g_str_equal);
+	    /* exec'ing a function */
+	    if (uvh1 == NULL) {
+		uvh1 = g_hash_table_new(g_str_hash, g_str_equal);
+#if HDEBUG
+		fprintf(stderr, "d=%d, prev=%d: uvh1 allocated at %p\n",
+			d, previous_d, uvh1);
+#endif		
+	    } else if (previous_d > 0) {
+#if HDEBUG
+		fprintf(stderr, "d=%d, prev=%d: clear uvh1 at %p\n",
+			d, previous_d, uvh1);
+#endif		
+		g_hash_table_remove_all(uvh1);
+	    }
+	    uvars_hash = uvh1;
 	}
 	previous_d = d;
     }
