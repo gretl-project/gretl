@@ -615,42 +615,4 @@ int list_summary_driver (const int *list, const DATASET *dset,
     return err;
 }
 
-int gnuplot_driver (const int *plotlist, const char *literal,
-		    const DATASET *dset, gretlopt opt)
-{
-    const char *ftype = NULL;
-    gretlopt gpopt = opt;
-    
-    if (opt & OPT_I) {
-	gpopt |= OPT_F;
-	gpopt ^= OPT_I;
-	ftype = "inverse";
-    } else if (opt & OPT_L) {
-	gpopt |= OPT_F;
-	gpopt ^= OPT_L;
-	ftype = "loess";
-    } else if (opt & OPT_Q) {
-	gpopt |= OPT_F;
-	gpopt ^= OPT_Q;
-	ftype = "quadratic";
-    } else if (opt & OPT_N) {
-	gpopt |= OPT_F;
-	gpopt ^= OPT_N;
-	ftype = "linear";
-    } else if (opt & OPT_B) {
-	gpopt |= OPT_F;
-	gpopt ^= OPT_B;
-	ftype = "cubic";
-    } else if (opt & OPT_E) {
-	gpopt |= OPT_F;
-	gpopt ^= OPT_E;
-	ftype = "semilog";	
-    }
-
-    if (ftype != NULL) {
-	set_optval_string(GNUPLOT, OPT_F, ftype);
-    }
-
-    return gnuplot(plotlist, literal, dset, gpopt);
-}
 

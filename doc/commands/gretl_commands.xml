@@ -4656,41 +4656,18 @@
 	  <effect>plot against time</effect>
         </option>
         <option>
-	  <flag>--suppress-fitted</flag>
-	  <effect>don't show fitted line</effect>
-        </option>
-        <option>
 	  <flag>--single-yaxis</flag>
 	  <effect>force use of just one y-axis</effect>
-        </option>
-        <option>
-	  <flag>--linear-fit</flag>
-	  <effect>show least squares fit</effect>
-        </option>
-        <option>
-	  <flag>--inverse-fit</flag>
-	  <effect>show inverse fit</effect>
-        </option>
-        <option>
-	  <flag>--quadratic-fit</flag>
-	  <effect>show quadratic fit</effect>
-        </option>
-        <option>
-	  <flag>--cubic-fit</flag>
-	  <effect>show cubic fit</effect>
-        </option>
-        <option>
-	  <flag>--loess-fit</flag>
-	  <effect>show loess fit</effect>
-        </option>
-        <option>
-	  <flag>--semilog-fit</flag>
-	  <effect>show semilog fit</effect>
         </option>
         <option>
 	  <flag>--dummy</flag>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--fit</flag>
+	  <optparm>fitspec</optparm>
+	  <effect>see below</effect>
+        </option>	
         <option>
 	  <flag>--matrix</flag>
 	  <optparm>name</optparm>
@@ -4711,16 +4688,17 @@
         <example>gnuplot y1 y2 x</example>
         <example>gnuplot x --time-series --with-lines</example>
 	<example>gnuplot wages educ gender --dummy</example>
+	<example>gnuplot y x --fit=quadratic</example>
 	<example>gnuplot y1 y2 x --with-lines=y2</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	The variables in the list <repl>yvars</repl> are graphed against
-	<repl>xvar</repl>.  For a time series plot you may either
-	give <lit>time</lit> as <repl>xvar</repl> or use the option
-	flag <opt>--time-series</opt>.
+	The variables in the list <repl>yvars</repl> are graphed
+	against <repl>xvar</repl>.  For a time series plot you may
+	either give <lit>time</lit> as <repl>xvar</repl> or use the
+	option flag <opt>--time-series</opt>.
       </para>
       <para>
 	By default, data-points are shown as points; this can be
@@ -4766,53 +4744,78 @@
       <code>
 	gnuplot 2 1 --matrix=M
       </code>
-
       <para>
-	In interactive mode the plot is displayed immediately. In batch mode
-	the default behavior is that a gnuplot command file is written in the
-	user's working directory, with a name on the pattern
-	<filename>gpttmpN.plt</filename>, starting with N = <lit>01</lit>. The
-	actual plots may be generated later using <program>gnuplot</program>
-	(under MS Windows, <program>wgnuplot</program>).  This behavior can be
-	modified by use of the <opt>--output=</opt><repl>filename</repl>
-	option.  This option controls the filename used, and at the same time
-	allows you to specify a particular output format via the three-letter
-	extension of the file name, as follows: <lit>.eps</lit> results in the
-	production of an Encapsulated PostScript (EPS) file; <lit>.pdf</lit>
-	produces PDF; <lit>.png</lit> produces PNG format, <lit>.emf</lit>
-	calls for EMF (Enhanced MetaFile), <lit>.fig</lit> calls for an Xfig
-	file, and <lit>.svg</lit> for SVG (Scalable Vector Graphics). If the
-	dummy filename <quote><lit>display</lit></quote> is given then the
-	plot is shown on screen as in interactive mode. If a filename with any
-	extension other than those just mentioned is given, a gnuplot command
-	file is written.
+	The <opt>fit</opt> option is applicable only for bivariate
+	scatterplots and single time-series plots. The default
+	behavior for a scatterplot is to show the OLS fit if the slope
+	coefficient is significant at the 10 percent level, while the
+	default behavior for time-series is not to show any fitted
+	line.  You can call for different behavior by using this
+	option along with one of the following <repl>fitspec</repl>
+	parameter values. Note that if the plot is a single time
+	series the place of <math>x</math> is taken by time.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>linear</lit>: show the OLS fit regardless of its
+	    level of statistical significance.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>none</lit>: don't show any fitted line.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>inverse</lit>, <lit>quadratic</lit>,
+	    <lit>cubic</lit>, <lit>semilog</lit> or <lit>linlog</lit>:
+	    show a fitted line based on a regression of the specified
+	    type. By <lit>semilog</lit>, we mean a regression of log
+	    <math>y</math> on <math>x</math>; the fitted line
+	    represents the conditional expectation of <math>y</math>,
+	    obtained by exponentiation. By <lit>linlog</lit> we mean a
+	    regression of <math>y</math> on the log of <math>x</math>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>loess</lit>: show the fit from a robust locally
+	    weighted regression (also is sometimes known as
+	    <quote>lowess</quote>).
+	  </para>
+	</li>	
+      </ilist>
+      <para>
+	In interactive mode the plot is displayed immediately. In
+	batch mode the default behavior is that a gnuplot command file
+	is written in the user's working directory, with a name on the
+	pattern <filename>gpttmpN.plt</filename>, starting with N =
+	<lit>01</lit>. The actual plots may be generated later using
+	<program>gnuplot</program> (under MS Windows,
+	<program>wgnuplot</program>).  This behavior can be modified
+	by use of the <opt>--output=</opt><repl>filename</repl>
+	option.  This option controls the filename used, and at the
+	same time allows you to specify a particular output format via
+	the three-letter extension of the file name, as follows:
+	<lit>.eps</lit> results in the production of an Encapsulated
+	PostScript (EPS) file; <lit>.pdf</lit> produces PDF;
+	<lit>.png</lit> produces PNG format, <lit>.emf</lit> calls for
+	EMF (Enhanced MetaFile), <lit>.fig</lit> calls for an Xfig
+	file, and <lit>.svg</lit> for SVG (Scalable Vector
+	Graphics). If the dummy filename
+	<quote><lit>display</lit></quote> is given then the plot is
+	shown on screen as in interactive mode. If a filename with any
+	extension other than those just mentioned is given, a gnuplot
+	command file is written.
       </para>
       <para>
-	The various <quote>fit</quote> options are applicable only for
-	bivariate scatterplots and single time-series plots. The
-	default behavior for a scatterplot is to show the OLS fit if
-	the slope coefficient is significant at the 10 percent level;
-	this can be suppressed via the <opt>--suppress-fitted</opt> option.
-	The default behavior for time-series is not to show a fitted
-	line. If the <opt>--linear</opt> option is given, the OLS line
-	is shown regardless of whether or not it is significant.  The
-	other fit options (<opt>--inverse</opt>, <opt>--quadratic</opt>,
-	<opt>--cubic</opt>, <opt>--loess</opt> and
-	<opt>--semilog</opt>) produce respectively an inverse fit
-	(regression of <math>y</math> on 1/<math>x</math>), a
-	quadratic fit, a cubic fit, a loess fit, and a semilog fit.
-	Loess (also sometimes called <quote>lowess</quote>) is a
-	robust locally weighted regression. By semilog, we mean a
-	regression of log <math>y</math> on <math>x</math> (or time);
-	the fitted line represents the conditional expectation of
-	<math>y</math>, obtained by exponentiation.
-      </para>
-      <para>
-	A further option to this command is available: following
-	the specification of the variables to be plotted and the
-	option flag (if any), you may add literal gnuplot commands to
-	control the appearance of the plot (for example, setting the
-	plot title and/or the axis ranges).  These commands should be
+	A further option to this command is available: following the
+	specification of the variables to be plotted and the option
+	flag (if any), you may add literal gnuplot commands to control
+	the appearance of the plot (for example, setting the plot
+	title and/or the axis ranges).  These commands should be
 	enclosed in braces, and each gnuplot command must be
 	terminated with a semi-colon.  A backslash may be used to
 	continue a set of gnuplot commands over more than one line.

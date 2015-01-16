@@ -516,30 +516,60 @@ static void combo_to_gp_style (GtkWidget *w, int *sty)
     g_free(s);
 }
 
-static void fittype_from_combo (GtkComboBox *box, GPT_SPEC *spec)
+static int ftype_from_selected (GtkWidget *w)
 {
-    int oldfit = widget_get_int(GTK_WIDGET(box), "oldfit");
-    FitType f = gtk_combo_box_get_active(box);
+    FitType f = PLOT_FIT_NONE;
+
+    if (GTK_IS_COMBO_BOX(w)) {
+	gchar *s = combo_box_get_active_text(w);
+	int i;
+
+	for (i=0; fittype_strings[i] != NULL; i++) {
+	    if (!strcmp(s, _(fittype_strings[i]))) {
+		f = i;
+		break;
+	    }
+	}
+	g_free(s);
+    }
+
+    return f;
+}
+
+static int set_fit_type_from_combo (GtkWidget *box, GPT_SPEC *spec)
+{
+    int oldfit = widget_get_int(box, "oldfit");
+    FitType f = ftype_from_selected(box);
+    int err = 0;
 
     if (f == oldfit) {
 	/* no change */
-	return;
+	return 0;
     }
 
     if (f == PLOT_FIT_OLS || f == PLOT_FIT_QUADRATIC || 
 	f == PLOT_FIT_CUBIC || f == PLOT_FIT_INVERSE || 
 	f == PLOT_FIT_LOESS || f == PLOT_FIT_LOGLIN ||
 	f == PLOT_FIT_LINLOG) {
-	plotspec_add_fit(spec, f);
-	spec->flags &= ~GPT_FIT_HIDDEN;
-    } else if (f == PLOT_FIT_NONE) {
+	err = plotspec_add_fit(spec, f);
+	if (err) {
+	    gui_errmsg(err);
+	    f = PLOT_FIT_NONE;
+	} else {
+	    spec->flags &= ~GPT_FIT_HIDDEN;
+	}
+    }
+    
+    if (f == PLOT_FIT_NONE) {
 	if (spec->n_lines >= 2) {
 	    spec->flags |= GPT_FIT_HIDDEN;
 	}
 	spec->fit = f;
     }
 
-    widget_set_int(GTK_WIDGET(box), "oldfit", f);
+    widget_set_int(box, "oldfit", f);
+
+    return err;
 }
 
 static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
@@ -548,9 +578,9 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
     const char *s1 = spec->yvarname;
     const char *s2 = spec->xvarname;
     gchar *title = NULL;
-    FitType f = PLOT_FIT_NONE;
+    FitType f;
 
-    f = gtk_combo_box_get_active(box);
+    f = ftype_from_selected(GTK_WIDGET(box));
 
     if ((spec->flags & GPT_TS) && f != PLOT_FIT_NONE && ed->keycombo != NULL) {
 	if (!gtk_widget_is_sensitive(ed->keycombo)) {
@@ -596,7 +626,7 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
     /* also re-jig the "Lines" tab entries for the fitted line */
 
     if (ed->fitformula != NULL && ed->fitlegend != NULL) {
-	fittype_from_combo(box, spec);
+	set_fit_type_from_combo(GTK_WIDGET(box), spec);
 	gtk_entry_set_text(GTK_ENTRY(ed->fitformula), spec->lines[1].formula);
 	gtk_entry_set_text(GTK_ENTRY(ed->fitlegend), spec->lines[1].title);
     }
@@ -1101,7 +1131,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
     }
 
     if (!err && ed->fitcombo != NULL && gtk_widget_is_sensitive(ed->fitcombo)) {
-	fittype_from_combo(GTK_COMBO_BOX(ed->fitcombo), spec);
+	err = set_fit_type_from_combo(ed->fitcombo, spec);
     }
 
     if (!err && ed->bars_check != NULL) {

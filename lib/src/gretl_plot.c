@@ -81,46 +81,6 @@ static void clear_plot (void)
     set_effective_plot_ci(GNUPLOT);
 }
 
-/* Translate "new-style" plot option --fit=whatever to
-   the legacy coding used by gnuplot() in graphing.c
-   The legacy stuff should be trashed at some point!
-*/
-
-static int translate_fit_option (void)
-{
-    const char *fitstr = get_optval_string(PLOT, OPT_F);
-    gretlopt fitopt = 0;
-    int err = 0;
-
-    if (fitstr == NULL) {
-	err = E_DATA;
-    } else if (!strcmp(fitstr, "inverse")) {
-	fitopt = OPT_I;
-    } else if (!strcmp(fitstr, "loess")) {
-	fitopt = OPT_L;
-    } else if (!strcmp(fitstr, "quadratic")) {
-	fitopt = OPT_Q;
-    } else if (!strcmp(fitstr, "linear")) {
-	fitopt = OPT_N;
-    } else if (!strcmp(fitstr, "cubic")) {
-	fitopt = OPT_B;
-    } else if (!strcmp(fitstr, "semilog")) {
-	fitopt = OPT_E;
-    } else if (!strcmp(fitstr, "none")) {
-	fitopt = OPT_S;
-    } else {
-	err = E_BADOPT;
-    }
-
-    if (!err) {
-	/* substitute the specific old-time "fit" flag */
-	plot.opt &= ~OPT_F;
-	plot.opt |= fitopt;
-    }
-
-    return err;
-}
-
 static int execute_plot (const DATASET *dset, gretlopt opt)
 {
     int *list = NULL;
@@ -130,14 +90,6 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
     int i, err = 0;
 
     plot.opt |= opt;
-
-    if (plot.opt & OPT_F) {
-	/* --fit=whatever */
-	err = translate_fit_option();
-	if (err) {
-	    return err;
-	}
-    }
 
     if (plot.datasource == NULL || plot.datatype == 0) {
 	/* FIXME maybe this should be made OK? */

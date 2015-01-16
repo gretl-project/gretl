@@ -243,18 +243,19 @@ struct gretl_option gretl_opts[] = {
     { GMM,      OPT_V, "verbose", 0 },
     { GNUPLOT,  OPT_D, "input", 2 },
     { GNUPLOT,  OPT_O, "with-lines", 1 },
-    { GNUPLOT,  OPT_O, "fit", 2 },
-    /* start legacy fit options */
+    /* fit type option, added 2015-01-16 */
+    { GNUPLOT,  OPT_F, "fit", 2 },
+    /* start legacy plot fit options */
     { GNUPLOT,  OPT_I, "inverse-fit", 0 },
     { GNUPLOT,  OPT_L, "loess-fit", 0 },
     { GNUPLOT,  OPT_Q, "quadratic-fit", 0 },
     { GNUPLOT,  OPT_N, "linear-fit", 0 },
     { GNUPLOT,  OPT_B, "cubic-fit", 0 },
     { GNUPLOT,  OPT_E, "semilog-fit", 0 },
-    /* end legacy fit options */
+    { GNUPLOT,  OPT_S, "suppress-fitted", 0 },
+    /* end legacy plot fit options */
     { GNUPLOT,  OPT_M, "with-impulses", 1 },
     { GNUPLOT,  OPT_P, "with-lp", 1 },
-    { GNUPLOT,  OPT_S, "suppress-fitted", 0 },
     { GNUPLOT,  OPT_T, "time-series", 0 },
     { GNUPLOT,  OPT_Z, "dummy", 0 },
     { GNUPLOT,  OPT_C, "control", 0 },

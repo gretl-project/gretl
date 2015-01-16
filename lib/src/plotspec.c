@@ -1793,9 +1793,11 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 	}
 	if (!na(py[t]) && !na(xt)) {
 	    if (f == PLOT_FIT_LOGLIN) {
+		/* y must be positive */
 		if (py[t] > 0.0) {
 		    y->val[i] = log(py[t]);
 		} else {
+		    gretl_errmsg_set(_("Non-positive values encountered"));
 		    err = E_DATA;
 		    goto bailout;
 		}
@@ -1807,9 +1809,11 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 	    } else {
 		gretl_matrix_set(X, i, 0, 1.0);
 		if (f == PLOT_FIT_LINLOG) {
+		    /* x must be positive */
 		    if (xt > 0.0) {
 			gretl_matrix_set(X, i, 1, log(xt));
 		    } else {
+			gretl_errmsg_set(_("Non-positive values encountered"));
 			err = E_DATA;
 			goto bailout;
 		    }
@@ -1885,6 +1889,8 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     gretl_matrix_free(X);
     gretl_matrix_free(b);
     gretl_matrix_free(yh);
+
+    fprintf(stderr, "plotspec_add_fit: returning %d\n", err);
 
     return err;
 }

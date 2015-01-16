@@ -398,10 +398,43 @@ static int plain_lines_spec (gretlopt opt)
     }
 }
 
-static void get_gp_flags (gnuplot_info *gi, gretlopt opt, 
-			  const int *list, const DATASET *dset)
+static int get_fit_type (gnuplot_info *gi)
+{
+    const char *ftype = get_optval_string(GNUPLOT, OPT_F);
+    int err = 0;
+
+    if (ftype == NULL || *ftype == '\0') {
+	err = E_DATA;
+    } else if (!strcmp(ftype, "none")) {
+	gi->flags |= GPT_FIT_OMIT;
+    } else if (!strcmp(ftype, "linear")) {
+	gi->fit = PLOT_FIT_OLS;
+    } else if (!strcmp(ftype, "quadratic")) {
+	gi->fit = PLOT_FIT_QUADRATIC;
+    } else if (!strcmp(ftype, "cubic")) {
+	gi->fit = PLOT_FIT_CUBIC;
+    } else if (!strcmp(ftype, "inverse")) {
+	gi->fit = PLOT_FIT_INVERSE;
+    } else if (!strcmp(ftype, "loess")) {
+	gi->fit = PLOT_FIT_LOESS;
+    } else if (!strcmp(ftype, "semilog")) {
+	gi->fit = PLOT_FIT_LOGLIN;
+    } else if (!strcmp(ftype, "linlog")) {
+	gi->fit = PLOT_FIT_LINLOG;
+    } else {
+	gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
+			     ftype);
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static int get_gp_flags (gnuplot_info *gi, gretlopt opt, 
+			 const int *list, const DATASET *dset)
 {
     int n_yvars = list[0] - 1;
+    int err = 0;
 
     gi->flags = 0;
 
@@ -463,24 +496,32 @@ static void get_gp_flags (gnuplot_info *gi, gretlopt opt,
     gi->fit = PLOT_FIT_NONE;
 
     if (!(gi->flags & GPT_FIT_OMIT) && n_yvars == 1) {
-	if (opt & OPT_I) {
-	    gi->fit = PLOT_FIT_INVERSE;
-	} else if (opt & OPT_Q) {
-	    gi->fit = PLOT_FIT_QUADRATIC;
-	} else if (opt & OPT_B) {
-	    gi->fit = PLOT_FIT_CUBIC;
-	} else if (opt & OPT_L) {
-	    gi->fit = PLOT_FIT_LOESS;
-	} else if (opt & OPT_N) {
-	    gi->fit = PLOT_FIT_OLS;
-	} else if (opt & OPT_E) {
-	    gi->fit = PLOT_FIT_LOGLIN;
+	if (opt & OPT_F) {
+	    /* the --fit=fitspec option */
+	    err = get_fit_type(gi);
+	} else {
+	    /* the legacy fit-specific options */
+	    if (opt & OPT_I) {
+		gi->fit = PLOT_FIT_INVERSE;
+	    } else if (opt & OPT_Q) {
+		gi->fit = PLOT_FIT_QUADRATIC;
+	    } else if (opt & OPT_B) {
+		gi->fit = PLOT_FIT_CUBIC;
+	    } else if (opt & OPT_L) {
+		gi->fit = PLOT_FIT_LOESS;
+	    } else if (opt & OPT_N) {
+		gi->fit = PLOT_FIT_OLS;
+	    } else if (opt & OPT_E) {
+		gi->fit = PLOT_FIT_LOGLIN;
+	    }
 	}
     }
 
 #if GP_DEBUG
     print_gnuplot_flags(gi->flags, 0);
 #endif
+
+    return err;
 }
 
 static void printvars (FILE *fp, int t, 
@@ -2106,6 +2147,7 @@ static int get_fitted_line (gnuplot_info *gi,
     gretl_matrix *V = NULL;
     const double *yvar, *xvar = NULL;
     double x0, s2 = 0, *ps2 = NULL;
+    int allow_err = 0;
     int err = 0;
 
     if (gi->x != NULL && (dset->pd == 1 || dset->pd == 4 || dset->pd == 12)) {
@@ -2130,6 +2172,9 @@ static int get_fitted_line (gnuplot_info *gi,
 	    return E_ALLOC;
 	}
 	ps2 = &s2;
+	/* if the fit attempt is automatic we'll allow it to
+	   fail without aborting the plot */
+	allow_err = 1;
     }
 
     err = gretl_plotfit_matrices(yvar, xvar, gi->fit,
@@ -2186,6 +2231,10 @@ static int get_fitted_line (gnuplot_info *gi,
     gretl_matrix_free(X);
     gretl_matrix_free(b);
     gretl_matrix_free(V);
+
+    if (err && allow_err) {
+	err = 0;
+    }
 
     return err;
 }
@@ -2664,10 +2713,18 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 	     const char *literal, const DATASET *dset)
 {
     int l0 = list[0];
+    int err = 0;
 
     gi->withlist = NULL;
+    gi->yformula = NULL;
+    gi->x = NULL;
+    gi->list = NULL;
+    gi->dvals = NULL;
 
-    get_gp_flags(gi, opt, list, dset);
+    err = get_gp_flags(gi, opt, list, dset);
+    if (err) {
+	return err;
+    }
 
     if (gi->fit == PLOT_FIT_NONE) {
 	gi->flags |= GPT_TS; /* may be renounced later */
@@ -2685,11 +2742,6 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     gi->xtics[0] = '\0';
     gi->xfmt[0] = '\0';
     gi->yfmt[0] = '\0';
-    gi->yformula = NULL;
-
-    gi->x = NULL;
-    gi->list = NULL;
-    gi->dvals = NULL;
 
     if (l0 < 2 && !(gi->flags & GPT_IDX)) {
 	return E_ARGS;
@@ -3256,7 +3308,7 @@ static int panel_group_invariant_plot (const int *plotlist,
     return err;
 }
 
-#define fit_opts (OPT_I | OPT_L | OPT_Q | OPT_N | OPT_E)
+#define fit_opts (OPT_I | OPT_L | OPT_Q | OPT_N | OPT_E | OPT_F)
 
 /**
  * gnuplot:
@@ -3367,16 +3419,20 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
-    /* add a simple regression line if appropriate */
+    /* add a regression line if appropriate */
     if (!use_impulses(&gi) && !(gi.flags & GPT_FIT_OMIT) && list[0] == 2 && 
 	!(gi.flags & GPT_TS) && !(gi.flags & GPT_RESIDS)) {
-	const char *xname = dset->varname[list[2]];
-	const char *yname = dset->varname[list[1]];
+	err = get_fitted_line(&gi, dset, fit_line);
+	if (err) {
+	    goto bailout;
+	} else {
+	    const char *xname = dset->varname[list[2]];
+	    const char *yname = dset->varname[list[1]];
 
-	get_fitted_line(&gi, dset, fit_line);
-	if (*xname != '\0' && yname != '\0') {
-	    pprintf(prn, "# X = '%s' (%d)\n", xname, list[2]);
-	    pprintf(prn, "# Y = '%s' (%d)\n", yname, list[1]);
+	    if (*xname != '\0' && yname != '\0') {
+		pprintf(prn, "# X = '%s' (%d)\n", xname, list[2]);
+		pprintf(prn, "# Y = '%s' (%d)\n", yname, list[1]);
+	    }
 	}
     } 
 
