@@ -6723,6 +6723,13 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
     return err;
 }
 
+int current_function_size (void)
+{
+    ufunc *u = currently_called_function();
+
+    return (u != NULL)? u->n_lines : 0;
+}
+
 #if LOOPSAVE
 
 int attach_loop_to_function (void *ptr)

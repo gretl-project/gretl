@@ -448,10 +448,24 @@ static int uvar_index (user_var *u)
 
 #endif
 
+/* Try to guess whether the currently-called function is big enough
+   (number of lines of code) to make it worthwhile to construct a hash
+   table for uservars at its level of execution, namely @uvh1, given
+   that we'll have to empty the table on exit from the function.
+
+   The number-of-lines threshold here is obviously kinda arbitrary;
+   some systematic experimentation might be useful.
+*/
+
+static inline int use_uvh1 (void)
+{
+    return current_function_size() > 40;
+}
+
 user_var *get_user_var_of_type_by_name (const char *name,
 					GretlType type)
 {
-    int i, imin = 0, d = gretl_function_depth(); 
+    int i, imin = 0, d = gretl_function_depth();
     user_var *u = NULL;
 
     if (name == NULL || *name == '\0') {
@@ -497,15 +511,21 @@ user_var *get_user_var_of_type_by_name (const char *name,
 		g_hash_table_remove_all(uvh1);
 	    }	    
 	    uvars_hash = uvh0;
+	} else if (!use_uvh1()) {
+	    /* exec'ing a function, hash table not wanted */
+	    if (previous_d > 0 && uvh1 != NULL) {
+		g_hash_table_remove_all(uvh1);
+	    }
+	    uvars_hash = NULL;
 	} else {
-	    /* exec'ing a function */
+	    /* exec'ing a function, hash table wanted */
 	    if (uvh1 == NULL) {
 		uvh1 = g_hash_table_new(g_str_hash, g_str_equal);
 #if HDEBUG
 		fprintf(stderr, "d=%d, prev=%d: uvh1 allocated at %p\n",
 			d, previous_d, uvh1);
 #endif		
-	    } else if (previous_d > 0) {
+	    } else if (previous_d > 0 && uvh1 != NULL) {
 #if HDEBUG
 		fprintf(stderr, "d=%d, prev=%d: clear uvh1 at %p\n",
 			d, previous_d, uvh1);
@@ -528,7 +548,7 @@ user_var *get_user_var_of_type_by_name (const char *name,
 	if (u != NULL) hfound = 1;
 #endif	
     }
-#endif    
+#endif /* UVAR_HASH */
 
     if (u == NULL) {
 	/* "On demand" hashing: if we're successful in looking
@@ -540,8 +560,10 @@ user_var *get_user_var_of_type_by_name (const char *name,
 		(type == GRETL_TYPE_ANY || uvars[i]->type == type) &&
 		!strcmp(uvars[i]->name, name)) {
 		u = uvars[i];
-#if UVAR_HASH		
-		g_hash_table_insert(uvars_hash, u->name, u);
+#if UVAR_HASH
+		if (uvars_hash != NULL) {
+		    g_hash_table_insert(uvars_hash, u->name, u);
+		}
 #endif		
 		break;
 	    }
