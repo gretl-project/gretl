@@ -6330,7 +6330,7 @@ static void theil_plot (MODEL *pmod, DATASET *dset)
 
 void fit_actual_plot (GtkAction *action, gpointer p)
 {
-    gretlopt opt = OPT_G | OPT_F;
+    gretlopt opt = OPT_G | OPT_A;
     int plotlist[4];
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -6413,7 +6413,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    gretlopt plotopt = OPT_F;
+    gretlopt plotopt = OPT_A;
     DATASET *dset;
     int origv = dataset->v;
     int *xlist = NULL;

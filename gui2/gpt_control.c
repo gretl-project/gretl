@@ -2082,6 +2082,8 @@ static int grab_fit_coeffs (GPT_SPEC *spec, const char *s)
 	spec->b_quad = b;
     } else if (f == PLOT_FIT_CUBIC) {
 	spec->b_cub = b;
+    } else if (f == PLOT_FIT_LINLOG) {
+	spec->b_linlog = b;
     }
 
     return err;
@@ -2357,6 +2359,8 @@ static FitType recognize_fit_string (const char *s)
 	return PLOT_FIT_LOESS;
     } else if (strstr(s, "semilog")) {
 	return PLOT_FIT_LOGLIN;
+    } else if (strstr(s, "linlog")) {
+	return PLOT_FIT_LINLOG;
     } else {
 	return PLOT_FIT_NONE;
     }

@@ -41,6 +41,9 @@ MODEL logistic_driver (const int *list, DATASET *dset,
 MODEL tobit_driver (const int *list, DATASET *dset, 
 		    gretlopt opt, PRN *prn);
 
+int gnuplot_driver (const int *plotlist, const char *literal,
+		    const DATASET *dset, gretlopt opt);
+
 int matrix_command_driver (int ci, 
 			   const int *list, 
 			   const char *param,

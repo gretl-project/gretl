@@ -408,7 +408,7 @@ static void get_gp_flags (gnuplot_info *gi, gretlopt opt,
     if (opt & OPT_R) {
 	/* internal option for residual plot */
 	gi->flags |= GPT_RESIDS;
-    } else if (opt & OPT_F) {
+    } else if (opt & OPT_A) {
 	/* internal option for fitted-actual plot */
 	gi->flags |= GPT_FA;
     }
@@ -4118,7 +4118,7 @@ static gchar *maybe_get_surface (const int *list,
     smod = lsq(olslist, dset, OLS, OPT_A);
 
     if (!smod.errcode && !na(smod.fstt) &&
-	(snedecor_cdf_comp(smod.dfn, smod.dfd, smod.fstt) < .10 || (opt & OPT_F))) {
+	(snedecor_cdf_comp(smod.dfn, smod.dfd, smod.fstt) < .10 || (opt & OPT_A))) {
 	double uadj = (umax - umin) * 0.02;
 	double vadj = (vmax - vmin) * 0.02;
 
@@ -4140,7 +4140,7 @@ static gchar *maybe_get_surface (const int *list,
  * @list: list of variables to plot, by ID number: Y, X, Z
  * @literal: literal command(s) to pass to gnuplot (or NULL)
  * @dset: pointer to dataset.
- * @opt: may include OPT_F to force display of fitted surface;
+ * @opt: may include OPT_A to force display of fitted surface;
  * may include OPT_I to force an interactive (rotatable) plot.
  * Note that OPT_I may be removed on output if a suitable
  * gnuplot terminal is not present.

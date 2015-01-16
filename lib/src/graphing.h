@@ -126,6 +126,7 @@ typedef enum {
     PLOT_FIT_INVERSE,
     PLOT_FIT_LOESS,
     PLOT_FIT_LOGLIN,
+    PLOT_FIT_LINLOG,
     PLOT_FIT_NA       /* fit option not applicable */
 } FitType;
 

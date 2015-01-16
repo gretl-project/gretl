@@ -896,7 +896,10 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
     if (fit == PLOT_FIT_LOGLIN && !gretl_ispositive(t1, t2, yvar, 1)) {
 	gretl_errmsg_set(_("Non-positive values encountered"));
 	return E_DATA;
-    }
+    } else if (fit == PLOT_FIT_LINLOG && !gretl_ispositive(t1, t2, xvar, 1)) {
+	gretl_errmsg_set(_("Non-positive values encountered"));
+	return E_DATA;
+    }	
 
     mask = calloc(T, 1);
     if (mask == NULL) {
@@ -950,6 +953,8 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
 	    xt = (xvar != NULL)? xvar[t] : s;
 	    if (fit == PLOT_FIT_INVERSE) {
 		gretl_matrix_set(X, i, j++, 1.0 / xt);
+	    } else if (fit == PLOT_FIT_LINLOG) {
+		gretl_matrix_set(X, i, j++, log(xt));
 	    } else {
 		gretl_matrix_set(X, i, j++, xt);
 	    }
