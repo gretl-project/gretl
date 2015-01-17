@@ -138,7 +138,7 @@ static void urlinfo_finalize (urlinfo *u, char **getbuf, int *err)
 
 static void urlinfo_set_show_progress (urlinfo *u)
 {
-    int (*show_progress) (gint64, gint64, int) = NULL;
+    int (*show_progress) (double, double, int) = NULL;
 
     show_progress = get_plugin_function("show_progress");
     if (show_progress != NULL) {
@@ -152,13 +152,11 @@ static int progress_func (void *clientp, double dltotal, double dlnow,
     urlinfo *u = (urlinfo *) clientp;
     int ret = 0;
 
-    if (u->progfunc != NULL && dltotal > 1024) {
-	if (!u->pstarted) {
-	    u->progfunc((gint64) dlnow, (gint64) dltotal, SP_LOAD_INIT);
-	    u->pstarted = 1;
-	} else {
-	    ret = u->progfunc((gint64) dlnow, (gint64) dltotal, SP_TOTAL);
-	}
+    if (u->pstarted) {
+	ret = u->progfunc(dlnow, dltotal, SP_TOTAL);
+    } else if (u->progfunc != NULL && dltotal > 1024) {
+	u->progfunc(dlnow, dltotal, SP_LOAD_INIT);
+	u->pstarted = 1;
     }
 
     return (ret == SP_RETURN_CANCELED) ? 1 : 0;
@@ -266,6 +264,7 @@ static int progress_bar_wanted (int opt)
 		opt == GRAB_PKG ||
 		opt == GRAB_FOREIGN);
     }
+    
     return 0;
 }
 

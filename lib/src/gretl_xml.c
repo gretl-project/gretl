@@ -1611,8 +1611,8 @@ int gretl_matrix_write_as_gdt (const char *fname,
     gzFile fz = Z_NULL;
     char datname[MAXLEN];
     char *xmlbuf = NULL;
-    int (*show_progress) (gint64, gint64, int) = NULL;
-    gint64 sz = 0;
+    int (*show_progress) (double, double, int) = NULL;
+    double msize = 0;
     int T = X->rows;
     int k = X->cols;
     int in_c_locale = 0;
@@ -1625,21 +1625,22 @@ int gretl_matrix_write_as_gdt (const char *fname,
 	return 1;
     }
 
-    sz = (T * k * sizeof(double));
-    if (sz > 100000) {
-	fprintf(stderr, I_("Writing %ld Kbytes of data\n"), sz / 1024);
+    msize = T * k * sizeof(double);
+    
+    if (msize > 100000) {
+	fprintf(stderr, I_("Writing %.0f Kbytes of data\n"), msize / 1024);
     } else {
-	sz = 0;
+	msize = 0;
     }
 
-    if (sz) {
+    if (msize > 0) {
 	show_progress = get_plugin_function("show_progress");
 	if (show_progress == NULL) {
-	    sz = 0;
+	    msize = 0;
+	} else {
+	    (*show_progress)(0, msize, SP_SAVE_INIT);
 	}
     }
-
-    if (sz) (*show_progress)(0, sz, SP_SAVE_INIT); 
 
     simple_fname(datname, fname);
     xmlbuf = gretl_xml_encode(datname);
@@ -1679,7 +1680,7 @@ int gretl_matrix_write_as_gdt (const char *fname,
 	    gzprintf(fz, "%.12g ", gretl_matrix_get(X, t, i));
 	}
 	gzputs(fz, "</obs>\n");
-	if (sz && t && (t % 50 == 0)) { 
+	if (msize > 0 && t && (t % 50 == 0)) { 
 	    (*show_progress) (50, T, SP_NONE);
 	}
     }
@@ -1692,7 +1693,7 @@ int gretl_matrix_write_as_gdt (const char *fname,
 	gretl_pop_c_numeric_locale();
     }
 
-    if (sz) {
+    if (msize > 0) {
 	(*show_progress)(0, T, SP_FINISH);
     } 
 
@@ -2043,8 +2044,8 @@ static int real_write_gdt (const char *fname, const int *list,
     char startdate[OBSLEN], enddate[OBSLEN];
     char datname[MAXLEN], freqstr[32];
     char numstr[128], xmlbuf[256];
-    int (*show_progress) (gint64, gint64, int) = NULL;
-    gint64 dsize = 0;
+    int (*show_progress) (double, double, int) = NULL;
+    double dsize = 0;
     int i, t, v, nvars, ntabs;
     int gz, have_markers, in_c_locale = 0;
     int binary = 0, skip_padding = 0;
@@ -2083,7 +2084,7 @@ static int real_write_gdt (const char *fname, const int *list,
     dsize = tsamp * nvars * sizeof(double);
 
     if (dsize > 100000) {
-	fprintf(stderr, I_("Writing %ld Kbytes of data\n"), (long) (dsize / 1024));
+	fprintf(stderr, I_("Writing %.0f Kbytes of data\n"), dsize / 1024);
     } else if (progress) {
 	/* suppress progress bar for smaller data */
 	progress = 0;
@@ -2845,13 +2846,14 @@ static int process_values (DATASET *dset,
 }
 
 static int read_observations (xmlDocPtr doc, xmlNodePtr node, 
-			      DATASET *dset, long progress,
+			      DATASET *dset, double dsize,
 			      int binary, const char *fname)
 {
     xmlNodePtr cur;
     xmlChar *tmp;
     int n, i, t;
-    int (*show_progress) (gint64, gint64, int) = NULL;
+    int (*show_progress) (double, double, int) = NULL;
+    int progbar = 0;
     int err = 0;
 
     tmp = xmlGetProp(node, (XUC) "count");
@@ -2868,14 +2870,10 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
 	return E_DATA;
     }
 
-    if (binary) {
-	progress = 0;
-    }
-
-    if (progress > 0) {
+    if (dsize > 100000 && !binary) {
 	show_progress = get_plugin_function("show_progress");
-	if (show_progress == NULL) {
-	    progress = 0;
+	if (show_progress != NULL) {
+	    progbar = 1;
 	}
     }
 
@@ -2926,8 +2924,8 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
 	return E_DATA;
     }
 
-    if (progress) {
-	(*show_progress)(0L, progress, SP_LOAD_INIT);
+    if (progbar) {
+	(*show_progress)(0, dsize, SP_LOAD_INIT);
 #if GDT_DEBUG
 	fprintf(stderr, "read_observations: inited progess bar (n=%d)\n",
 		dset->n);
@@ -2972,14 +2970,14 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
 	    break;
 	}
 
-	if (progress && t > 0 && t % 50 == 0) {
+	if (progbar && t > 0 && t % 50 == 0) {
 	    (*show_progress) (50, dset->n, SP_NONE);
 	}
     }
 
  bailout:
 
-    if (progress) {
+    if (progbar) {
 #if GDT_DEBUG
 	fprintf(stderr, "finalizing progress bar (n = %d)\n", dset->n);
 #endif
@@ -3553,24 +3551,20 @@ static int real_read_gdt (const char *fname, const char *srcname,
     int gotvars = 0, gotobs = 0, err = 0;
     int caldata = 0, repad = 0;
     double gdtversion = 1.0;
-    long fsz, progress = 0L;
     int in_c_locale = 0;
     int gz, binary = 0;
+    long fsz;
 
     gretl_error_clear();
-
     fsz = get_filesize(fname);
     gz = is_gzipped(fname);
 
     if (fsz < 0) {
 	return E_FOPEN;
     } else if (fsz > 100000) {
-	fprintf(stderr, "%s %ld bytes %s...\n", 
+	fprintf(stderr, "%s %.0f Kbytes %s...\n", 
 		gz ? I_("Uncompressing") : I_("Reading"),
-		fsz, I_("of data"));
-	if (opt & OPT_B) {
-	    progress = fsz;
-	}
+		(double) fsz / 1024.0, I_("of data"));
     }
 
     set_alt_gettext_mode(prn);
@@ -3642,11 +3636,14 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	    if (!gotvars) {
 		gretl_errmsg_set(_("Variables information is missing"));
 		err = 1;
-	    } else if (read_observations(doc, cur, tmpset, progress,
-					 binary, fname)) {
-		err = 1;
 	    } else {
-		gotobs = 1;
+		double dsize = (opt & OPT_B)? (double) fsz : 0;
+		
+		err = read_observations(doc, cur, tmpset, dsize,
+					binary, fname);
+		if (!err) {
+		    gotobs = 1;
+		}
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "string-tables")) {
 	    if (!gotvars) {

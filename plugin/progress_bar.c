@@ -87,10 +87,10 @@ static ProgressData *build_progress_window (int flag, int *cancel)
     return pdata;
 }
 
-int show_progress (gint64 res, gint64 expected, int flag)
+int show_progress (double res, double expected, int flag)
 {
     static ProgressData *pdata;
-    static gint64 offs;
+    static double offs;
     static int cancel;
 
     if (expected == 0) {
@@ -98,6 +98,7 @@ int show_progress (gint64 res, gint64 expected, int flag)
     }
 
     if (res < 0 || flag == SP_FINISH) {
+	fprintf(stderr, "prog: got SP_FINISH\n");
 	/* clean up and get out */
 	if (pdata != NULL && pdata->window != NULL) {
 	    gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
@@ -110,8 +111,6 @@ int show_progress (gint64 res, gint64 expected, int flag)
 
     if (flag == SP_LOAD_INIT || flag == SP_SAVE_INIT || flag == SP_FONT_INIT) {
 	/* initialize the progress bar */
-	double xb = (double) expected;
-	int Kb = (int) (xb / 1024);
 	gchar *bytestr = NULL;
 
 	offs = 0;
@@ -128,10 +127,13 @@ int show_progress (gint64 res, gint64 expected, int flag)
 
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), 0.0);
 
-	if (flag == SP_LOAD_INIT) {
-	    bytestr = g_strdup_printf("%s %d Kbytes", _("Retrieving"), Kb);
-	} else if (flag == SP_SAVE_INIT) {
-	    bytestr = g_strdup_printf("%s %d Kbytes", _("Storing"), Kb);
+	if (flag == SP_LOAD_INIT || flag == SP_SAVE_INIT) {
+	    int Kb = (int) (expected / 1024);
+	    
+	    bytestr = g_strdup_printf("%s %d Kbytes",
+				      flag == SP_LOAD_INIT ?
+				      _("Retrieving") : _("Storing"),
+				      Kb);
 	} else if (flag == SP_FONT_INIT) {
 	    bytestr = g_strdup_printf(_("Scanning %d fonts"), (int) expected);
 	}
@@ -162,23 +164,17 @@ int show_progress (gint64 res, gint64 expected, int flag)
 	offs += res;
     }
 
-    if (offs > expected && pdata != NULL) {
-	gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
-	return SP_RETURN_DONE;
-    }
-
-    if (offs <= expected && pdata != NULL) {
-	/* display the completed fraction */
-	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), 
-				      (gdouble) ((double) offs / expected));
-	while (gtk_events_pending()) {
-	    gtk_main_iteration();
-	}
-    } else {
-	if (pdata != NULL && pdata->window != NULL) {
+    if (pdata != NULL) {
+	if (offs < expected) {
+	    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), 
+					  offs / expected);
+	    while (gtk_events_pending()) {
+		gtk_main_iteration();
+	    }
+	} else {
 	    gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
+	    return SP_RETURN_DONE;
 	}
-	return SP_RETURN_DONE;
     }
 	
     return SP_RETURN_OK;

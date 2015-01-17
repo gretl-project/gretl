@@ -106,7 +106,7 @@ static int get_font_characteristics (PangoFontFamily *family,
 
 static void font_progress_bar (int i, int nf)
 {
-    static int (*show_progress) (gint64, gint64, int) = NULL;
+    static int (*show_progress) (double, double, int) = NULL;
     static int show = 1;
 
     if (show && show_progress == NULL) {
@@ -114,7 +114,7 @@ static void font_progress_bar (int i, int nf)
 	if (show_progress == NULL) {
 	    show = 0;
 	} else {
-	    (*show_progress)(0L, nf, SP_FONT_INIT);
+	    (*show_progress)(0, nf, SP_FONT_INIT);
 	}
     }
 
