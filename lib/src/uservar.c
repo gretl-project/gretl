@@ -39,7 +39,8 @@
 
 typedef enum {
     UV_PRIVATE = 1 << 0,
-    UV_SHELL   = 1 << 1
+    UV_SHELL   = 1 << 1,
+    UV_MAIN    = 1 << 2
 } UVFlags;
 
 struct user_var_ {
@@ -100,7 +101,7 @@ static user_var *user_var_new (const char *name, int type,
     } else {
 	u->type = type;
 	u->level = gretl_function_depth();
-	u->flags = 0;
+	u->flags = (u->level == 0)? UV_MAIN : 0;
 	*u->name = '\0';
 	strncat(u->name, name, VNAMELEN - 1);
 	u->ptr = NULL;
@@ -379,6 +380,11 @@ int user_var_delete_by_name (const char *name, PRN *prn)
 
     if (targ == NULL) {
 	return E_UNKVAR;
+    }
+
+    if (level > 0 && (targ->flags & UV_MAIN)) {
+	gretl_errmsg_sprintf("%s: cannot be deleted here", targ->name);
+	return E_DATA;
     }
 
     if (user_var_callback != NULL && level == 0 &&
