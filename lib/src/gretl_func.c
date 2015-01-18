@@ -187,10 +187,10 @@ enum {
 /* structure representing an argument to a user-defined function */
 
 struct fn_arg_ {
-    char type;           /* argument type */
-    char flags;          /* ARG_OPTIONAL, ARG_CONST as appropriate */
-    const char *name;    /* name as function param */
-    char *upname;        /* name of supplied arg at caller level */
+    char type;             /* argument type */
+    char flags;            /* ARG_OPTIONAL, ARG_CONST as appropriate */
+    const char *name;      /* name as function param */
+    char upname[VNAMELEN]; /* name of supplied arg at caller level */
     union {
 	int idnum;        /* named series arg (series ID) */
 	double x;         /* scalar arg */
@@ -340,13 +340,10 @@ static int fn_arg_set_data (fn_arg *arg, const char *name,
     arg->type = type;
     arg->flags = 0;
     arg->name = NULL;
-    arg->upname = NULL;
+    arg->upname[0] = '\0';
 
     if (name != NULL) {
-	arg->upname = gretl_strdup(name);
-	if (arg->upname == NULL) {
-	    return E_ALLOC;
-	}
+	strcpy(arg->upname, name);
     }
     
     if (type == GRETL_TYPE_NONE) {
@@ -396,7 +393,7 @@ static int ufunc_add_args_array (ufunc *u)
 	    u->args[i].type = 0;
 	    u->args[i].flags = 0;
 	    u->args[i].name = NULL;
-	    u->args[i].upname = NULL;
+	    u->args[i].upname[0] = '\0';
 	}
     }
 
@@ -446,9 +443,8 @@ void function_clear_args (ufunc *fun)
 	for (i=0; i<fun->argc; i++) {
 	    fun->args[i].type = 0;
 	    fun->args[i].flags = 0;
-	    free(fun->args[i].upname);
 	    fun->args[i].name = NULL;
-	    fun->args[i].upname = NULL;
+	    fun->args[i].upname[0] = '\0';
 	}
 
 	fun->argc = 0;
@@ -1215,14 +1211,9 @@ static void free_params_array (fn_param *params, int n)
 
 static void free_args_array (fn_arg *args, int n)
 {
-    int i;
-
-    if (args == NULL) return;
-
-    for (i=0; i<n; i++) {
-	free(args[i].upname);
+    if (args != NULL) {
+	free(args);
     }
-    free(args);
 }
 
 static void clear_ufunc_data (ufunc *fun)
@@ -5583,7 +5574,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    }
 	} else if (gretl_ref_type(fp->type)) {
 	    if (arg->type != GRETL_TYPE_NONE) {
-		if (fp->type == GRETL_TYPE_BUNDLE_REF && arg->upname == NULL) {
+		if (fp->type == GRETL_TYPE_BUNDLE_REF && arg->upname[0] == '\0') {
 		    err = localize_bundle_as_shell(arg, fp);
 		} else {
 		    err = user_var_localize(arg->upname, fp->name, fp->type);
@@ -5597,8 +5588,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	if (!err && arg->type == GRETL_TYPE_USERIES) {
 	    if (fp->type == GRETL_TYPE_LIST) {
 		/* FIXME ? */
-		free(arg->upname);
-		arg->upname = NULL;
+		arg->upname[0] = '\0';
 	    }
 	}	
     }
@@ -6099,7 +6089,7 @@ function_assign_returns (fncall *call, int rtype,
 	    err = E_DATA;
 	} else if (gretl_ref_type(fp->type)) {
 	    if (arg->type == GRETL_TYPE_BUNDLE_REF &&
-		arg->upname == NULL) {
+		arg->upname[0] == '\0') {
 		; /* pointer to anonymous bundle: no-op */
 	    } else if (arg->type == GRETL_TYPE_SERIES_REF) {
 		int v = arg->val.idnum;
@@ -6111,7 +6101,7 @@ function_assign_returns (fncall *call, int rtype,
 	    } 
 	} else if (fp->type == GRETL_TYPE_MATRIX && 
 		   (fp->flags & ARG_CONST) && 
-		   arg->upname != NULL) {
+		   arg->upname[0] != '\0') {
 	    /* non-pointerized const matrix argument */
 	    user_var *u = get_user_var_by_data(arg->val.m);
 
@@ -7036,11 +7026,7 @@ char *gretl_func_get_arg_name (const char *argvar, int *err)
 	for (i=0; i<n; i++) {
 	    if (!strcmp(argvar, u->params[i].name)) {
 		*err = 0;
-		if (call->args[i].upname == NULL) {
-		    ret = gretl_strdup("");
-		} else {
-		    ret = gretl_strdup(call->args[i].upname); 
-		}
+		ret = gretl_strdup(call->args[i].upname); 
 		if (ret == NULL) {
 		    *err = E_ALLOC;
 		}

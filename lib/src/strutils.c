@@ -512,7 +512,7 @@ char *gretl_strdup (const char *src)
     if (src != NULL) {
 	size_t n = strlen(src) + 1;
 
-	targ = malloc(n);
+	targ = calloc(n, 1);
 	if (targ != NULL) {
 	    memcpy(targ, src, n);
 	}
