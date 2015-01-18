@@ -261,21 +261,6 @@ static void plot_winlist_popup (GtkWidget *w, png_plot *plot)
     window_list_popup(w, NULL, plot->shell);
 }
 
-static void gp_toolbar_relief (GtkWidget *w)
-{
-    static int style_done;
-
-    gtk_widget_set_name(w, "gp_toolbar");
-
-    if (!style_done) {
-	gtk_rc_parse_string("style \"gp-style\"\n{\n"
-			    "  GtkToolbar::shadow-type = GTK_SHADOW_NONE\n"
-			    "}\n"
-			    "widget \"*.gp_toolbar\" style \"gp-style\"");
-	style_done = 1;
-    }
-}
-
 static GretlToolItem plotbar_items[] = {
     { N_("Bigger"),      GRETL_STOCK_BIGGER,  G_CALLBACK(graph_enlarge_callback), 0 },
     { N_("Smaller"),     GRETL_STOCK_SMALLER, G_CALLBACK(graph_shrink_callback), 0 },
@@ -291,7 +276,6 @@ static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
     int i, n = G_N_ELEMENTS(plotbar_items);
 
     tbar = gretl_toolbar_new();
-    gp_toolbar_relief(tbar);
 
     for (i=0; i<n; i++) {
 	item = &plotbar_items[i];

@@ -665,6 +665,7 @@ static void varinfo_add_toolbar (gui_varinfo *vset, GtkWidget *hbox)
 
     item = gtk_tool_button_new_from_stock(GTK_STOCK_APPLY);
     g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(varinfo_apply), vset);
+    gtk_widget_set_size_request(GTK_WIDGET(item), 30, -1);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     vset->apply = GTK_WIDGET(item);
     add_stock_tooltip(vset->apply, GTK_STOCK_APPLY);
@@ -672,12 +673,14 @@ static void varinfo_add_toolbar (gui_varinfo *vset, GtkWidget *hbox)
 
     item = gtk_tool_button_new_from_stock(GTK_STOCK_GO_UP);
     g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(varinfo_up_down), vset);
+    gtk_widget_set_size_request(GTK_WIDGET(item), 30, -1);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     vset->up = GTK_WIDGET(item);
     gretl_tooltips_add(vset->up, _("Previous series"));
     
     item = gtk_tool_button_new_from_stock(GTK_STOCK_GO_DOWN);
     g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(varinfo_up_down), vset);
+    gtk_widget_set_size_request(GTK_WIDGET(item), 30, -1);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     vset->down = GTK_WIDGET(item);
     gretl_tooltips_add(vset->down, _("Next series"));

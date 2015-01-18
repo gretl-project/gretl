@@ -885,6 +885,21 @@ static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
     return menu;
 }
 
+static void gretl_toolbar_relief (GtkWidget *w)
+{
+    static int style_done;
+
+    gtk_widget_set_name(w, "gretl_toolbar");
+
+    if (!style_done) {
+	gtk_rc_parse_string("style \"gretl-tb-style\"\n{\n"
+			    "  GtkToolbar::shadow-type = GTK_SHADOW_NONE\n"
+			    "}\n"
+			    "widget \"*.gretl_toolbar\" style \"gretl-tb-style\"");
+	style_done = 1;
+    }
+}
+
 GtkWidget *gretl_toolbar_new (void)
 {
     GtkWidget *tb = gtk_toolbar_new();
@@ -892,6 +907,7 @@ GtkWidget *gretl_toolbar_new (void)
     gtk_toolbar_set_icon_size(GTK_TOOLBAR(tb), GTK_ICON_SIZE_MENU);
     gtk_toolbar_set_style(GTK_TOOLBAR(tb), GTK_TOOLBAR_ICONS);
     gtk_toolbar_set_show_arrow(GTK_TOOLBAR(tb), FALSE);
+    gretl_toolbar_relief(tb);
 
     return tb;
 }
@@ -954,6 +970,7 @@ GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
     item = gtk_tool_button_new_from_stock(tool->icon);
     gretl_tool_item_set_tip(GTK_WIDGET(item), tool);
     g_signal_connect(G_OBJECT(item), "clicked", func, data);
+    gtk_widget_set_size_request(GTK_WIDGET(item), 30, -1);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, pos);
 
     return GTK_WIDGET(item);
@@ -1010,10 +1027,8 @@ static GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 	}
     }
 
-#if GTK_MAJOR_VERSION == 2
     /* separate the buttons a tad more? */
     gtk_widget_set_size_request(GTK_WIDGET(item), 30, -1);
-#endif    
 
     gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, pos);
 
