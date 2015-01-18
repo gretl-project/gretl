@@ -38,7 +38,7 @@
 #include <errno.h>
 #include <glib.h>
 
-#define LOOPSAVE 0
+#define LOOPSAVE 1
 #define LSDEBUG 0
 
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
@@ -408,7 +408,7 @@ static int ufunc_add_args_array (ufunc *u)
  * @fun: pointer to function.
  * @name: name of variable (or NULL for anonymous)
  * @type: type of argument to add.
- * @p: pointer to value to add.
+ * @value: pointer to value to add.
  *
  * Writes a new argument of the specified type and value into the
  * argument array of @fun.
@@ -423,20 +423,16 @@ int push_function_arg (ufunc *fun, const char *name, GretlType type,
 
     if (fun == NULL) {
 	err = E_DATA;
-    } else {
-	if (fun->argc >= fun->n_params) {
-	    fprintf(stderr, "push_function_arg: excess argument!\n");
-	    err = E_DATA;
-	} else if (fun->args == NULL) {
-	    err = ufunc_add_args_array(fun);
-	}
+    } else if (fun->argc >= fun->n_params) {
+	fprintf(stderr, "push_function_arg: excess argument!\n");
+	err = E_DATA;
+    } else if (fun->args == NULL) {
+	err = ufunc_add_args_array(fun);
+    }
 
-	if (!err) {
-	    int i = fun->argc;
-	    
-	    err = fn_arg_set_data(&fun->args[i], name, type, value);
-	    fun->argc += 1;
-	}
+    if (!err) {
+	err = fn_arg_set_data(&fun->args[fun->argc], name, type, value);
+	fun->argc += 1;
     }
 
     return err;
