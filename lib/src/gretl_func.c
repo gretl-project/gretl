@@ -51,6 +51,7 @@
 #define INT_USE_XLIST (-999)
 
 typedef struct fn_param_ fn_param;
+typedef struct fn_arg_ fn_arg;
 typedef struct fn_line_ fn_line;
 typedef struct obsinfo_ obsinfo;
 typedef struct fncall_ fncall;
@@ -97,7 +98,8 @@ struct obsinfo_ {
 
 struct fncall_ {
     ufunc *fun;    /* the function called */
-    fnargs *args;  /* argument array */
+    int argc;      /* argument count */
+    fn_arg *args;  /* argument array */
     int *ptrvars;  /* list of pointer arguments */
     int *listvars; /* list of series included in a list argument */
     char *retname; /* name of return value (or dummy string) */
@@ -123,6 +125,8 @@ struct ufunc_ {
     fn_line *lines;        /* array of lines of code */
     int n_params;          /* number of parameters */
     fn_param *params;      /* parameter info array */
+    int argc;              /* argument count (call-dependent) */
+    fn_arg *args;          /* argument array */
     int rettype;           /* return type (if any) */
     int debug;             /* are we debugging this function? */
 };
@@ -182,7 +186,7 @@ enum {
 
 /* structure representing an argument to a user-defined function */
 
-struct fnarg {
+struct fn_arg_ {
     char type;           /* argument type */
     char flags;          /* ARG_OPTIONAL, ARG_CONST as appropriate */
     const char *name;    /* name as function param */
@@ -199,12 +203,6 @@ struct fnarg {
     } val;
 };
 
-struct fnargs_ {
-    int argc;           /* count of arguments */
-    int n_alloc;        /* number of arg slots allocated */
-    struct fnarg **arg; /* array of arguments */
-};
-
 static int n_ufuns;         /* number of user-defined functions in memory */
 static ufunc **ufuns;       /* array of pointers to user-defined functions */
 static ufunc *current_fdef; /* pointer to function currently being defined */
@@ -216,6 +214,8 @@ static fnpkg *current_pkg;  /* pointer to package currently being edited */
 static int function_package_record (fnpkg *pkg);
 static void function_package_free (fnpkg *pkg);
 static int version_number_from_string (const char *s);
+static int function_recursing (fncall *refcall);
+static void free_args_array (fn_arg *args, int n);
 
 /* record of state, and communication of state with outside world */
 
@@ -321,7 +321,7 @@ int gretl_function_depth (void)
     return fn_executing;
 }
 
-static void adjust_array_arg_type (struct fnarg *arg)
+static void adjust_array_arg_type (fn_arg *arg)
 {
     GretlType t = gretl_array_get_type(arg->val.a);
 
@@ -332,30 +332,11 @@ static void adjust_array_arg_type (struct fnarg *arg)
     }
 }
 
-/**
- * fn_arg_new:
- * @name: name of argument (or NULL for an anonymous argument).
- * @type: type of argument.
- * @p: pointer to value for argument.
- * @err: location to receive error code.
- *
- * Allocates a new function argument of the specified @type
- * and assigns it the value given in @p.
- *
- * Returns: the allocated argument, or %NULL of failure.
- */
-
-static struct fnarg *fn_arg_new (const char *name, GretlType type, 
-				 void *p, int *err)
+static int fn_arg_set_data (fn_arg *arg, const char *name,
+			    GretlType type, void *p)
 {
-    struct fnarg *arg;
-
-    arg = malloc(sizeof *arg);
-    if (arg == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
+    int err = 0;
+    
     arg->type = type;
     arg->flags = 0;
     arg->name = NULL;
@@ -364,9 +345,7 @@ static struct fnarg *fn_arg_new (const char *name, GretlType type,
     if (name != NULL) {
 	arg->upname = gretl_strdup(name);
 	if (arg->upname == NULL) {
-	    *err = E_ALLOC;
-	    free(arg);
-	    return NULL;
+	    return E_ALLOC;
 	}
     }
     
@@ -389,7 +368,7 @@ static struct fnarg *fn_arg_new (const char *name, GretlType type,
 	arg->val.list = (int *) p;
     } else if (type == GRETL_TYPE_SERIES_REF ||
 	       type == GRETL_TYPE_USERIES) {
-	       arg->val.idnum = *(int *) p;
+	arg->val.idnum = *(int *) p;
     } else if (type == GRETL_TYPE_BUNDLE || 
 	       type == GRETL_TYPE_BUNDLE_REF) {
 	arg->val.b = (gretl_bundle *) p;
@@ -398,116 +377,86 @@ static struct fnarg *fn_arg_new (const char *name, GretlType type,
 	arg->val.a = (gretl_array *) p;
 	adjust_array_arg_type(arg);
     } else {
-	*err = E_TYPES;
-	free(arg);
-	arg = NULL;
+	err = E_TYPES;
     }
 
-    return arg;
+    return err;
 }
 
-/**
- * fn_args_new:
- * @argc: the number of argument slots to allocate.
- *
- * Returns: a newly allocated array of @argc function
- * arguments, or %NULL on failure.
- */
-
-fnargs *fn_args_new (int argc)
+static int ufunc_add_args_array (ufunc *u)
 {
-    fnargs *args = malloc(sizeof *args);
-
-    if (args != NULL) {
-	if (argc <= 0) {
-	    args->arg = NULL;
-	    args->n_alloc = 0;
-	    args->argc = 0;
-	} else {
-	    args->arg = malloc(argc * sizeof *args->arg);
-	    if (args->arg == NULL) {
-		free(args);
-		args = NULL;
-	    } else {
-		int i;
-
-		for (i=0; i<argc; i++) {
-		    args->arg[i] = NULL;
-		}
-		args->n_alloc = argc;
-		args->argc = 0;
-	    }
-	}
-    }
-
-    return args;
-}
-
-/* note: this is not supposed to be a "deep free" (in case the arg
-   carries a pointer member); that is handled in geneval.c 
-*/
-
-static void free_fn_arg (struct fnarg *arg)
-{
-    if (arg != NULL) {
-	free(arg->upname);
-	free(arg);
-    }
-}
-
-void fn_args_free (fnargs *args)
-{
-    if (args != NULL) {
-	int i;
-
-	for (i=0; i<args->n_alloc; i++) {
-	    free_fn_arg(args->arg[i]);
-	}
+    int i, err = 0;
     
-	free(args->arg);
-	free(args);
+    u->args = malloc(u->n_params * sizeof *u->args);
+
+    if (u->args == NULL) {
+	err = E_ALLOC;
+    } else {
+	for (i=0; i<u->n_params; i++) {
+	    u->args[i].type = 0;
+	    u->args[i].flags = 0;
+	    u->args[i].name = NULL;
+	    u->args[i].upname = NULL;
+	}
     }
+
+    return err;
 }
 
 /**
- * push_fn_arg:
- * @args: existing array of function arguments.
+ * push_function_arg:
+ * @fun: pointer to function.
  * @name: name of variable (or NULL for anonymous)
  * @type: type of argument to add.
  * @p: pointer to value to add.
  *
  * Writes a new argument of the specified type and value into the
- * array @args. Note that @args must have been pre-allocated
- * with enough slots to accommodate the argument; see fn_args_new().
- * Successive calls to this function will populate the array
- * from position 0 onwards.
+ * argument array of @fun. Called prior to execution of @fun;
  *
  * Returns: 0 on success, non-zero on failure.
  */
 
-int push_fn_arg (fnargs *args, const char *name, GretlType type, 
-		 void *value)
+int push_function_arg (ufunc *fun, const char *name, GretlType type, 
+		       void *value)
 {
     int err = 0;
 
-    if (args == NULL) {
+    if (fun == NULL) {
 	err = E_DATA;
     } else {
-	int n = args->argc + 1;
-
-	if (n > args->n_alloc) {
-	    fprintf(stderr, "push_fn_arg: excess argument!\n");
+	if (fun->argc >= fun->n_params) {
+	    fprintf(stderr, "push_function_arg: excess argument!\n");
 	    err = E_DATA;
-	} else {
-	    args->arg[n-1] = fn_arg_new(name, type, value, &err);
+	} else if (fun->args == NULL) {
+	    err = ufunc_add_args_array(fun);
 	}
 
 	if (!err) {
-	    args->argc = n;
+	    int i = fun->argc;
+	    
+	    err = fn_arg_set_data(&fun->args[i], name, type, value);
+	    fun->argc += 1;
 	}
     }
 
     return err;
+}
+
+void function_clear_args (ufunc *fun)
+{
+    if (fun != NULL && fun->args != NULL) {
+	int i;
+
+	for (i=0; i<fun->argc; i++) {
+	    fun->args[i].type = 0;
+	    fun->args[i].flags = 0;
+	    free(fun->args[i].upname);
+	    fun->args[i].name = NULL;
+	    fun->args[i].upname = NULL;
+	}
+
+	fun->argc = 0;
+    }
 }
 
 static fncall *fncall_new (ufunc *fun)
@@ -516,9 +465,15 @@ static fncall *fncall_new (ufunc *fun)
 
     if (call != NULL) {
 	call->fun = fun;
+	call->argc = fun->argc;
+	call->args = fun->args;
 	call->ptrvars = NULL;
 	call->listvars = NULL;
 	call->retname = NULL;
+
+	/* allow for recursion */
+	fun->args = NULL;
+	fun->argc = 0;
     }
 
     return call;
@@ -527,6 +482,16 @@ static fncall *fncall_new (ufunc *fun)
 static void fncall_free (fncall *call)
 {
     if (call != NULL) {
+	if (call->fun != NULL && call->args != NULL) {
+	    if (function_recursing(call)) {
+		/* free duplicate args */
+		free_args_array(call->args, call->argc);
+	    } else {
+		/* hand args back to function */
+		call->fun->args = call->args;
+		function_clear_args(call->fun);
+	    }
+	}
 	free(call->ptrvars);
 	free(call->listvars);
 	free(call->retname);
@@ -1053,6 +1018,22 @@ static int function_in_use (ufunc *fun)
     return 0;
 }
 
+static int function_recursing (fncall *refcall)
+{
+    GList *tmp = callstack;
+    fncall *call;
+
+    while (tmp != NULL) {
+	call = tmp->data;
+	if (call != refcall && call->fun == refcall->fun) {
+	    return 1;
+	}
+	tmp = tmp->next;
+    }
+
+    return 0;
+}
+
 /**
  * get_ufunc_by_name:
  * @name: name to test.
@@ -1193,6 +1174,8 @@ static ufunc *ufunc_new (void)
 
     fun->n_params = 0;
     fun->params = NULL;
+    fun->argc = 0;
+    fun->args = NULL;
 
     fun->rettype = GRETL_TYPE_NONE;
 
@@ -1231,17 +1214,32 @@ static void free_params_array (fn_param *params, int n)
     free(params);
 }
 
+static void free_args_array (fn_arg *args, int n)
+{
+    int i;
+
+    if (args == NULL) return;
+
+    for (i=0; i<n; i++) {
+	free(args[i].upname);
+    }
+    free(args);
+}
+
 static void clear_ufunc_data (ufunc *fun)
 {
     free_lines_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
+    free_args_array(fun->args, fun->n_params);
     
     fun->lines = NULL;
     fun->params = NULL;
+    fun->args = NULL;
 
     fun->n_lines = 0;
     fun->line_idx = 1;
     fun->n_params = 0;
+    fun->argc = 0;
 
     fun->rettype = GRETL_TYPE_NONE;
 }
@@ -1250,6 +1248,7 @@ static void ufunc_free (ufunc *fun)
 {
     free_lines_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
+    free_args_array(fun->args, fun->n_params);
 
     free(fun);
 }
@@ -5322,7 +5321,7 @@ int gretl_function_append_line (const char *line)
    purposes of the function.
 */
 
-static int localize_list (fncall *call, struct fnarg *arg,
+static int localize_list (fncall *call, fn_arg *arg,
 			  fn_param *fp, DATASET *dset)
 {
     int *list = NULL;
@@ -5373,7 +5372,7 @@ static int localize_list (fncall *call, struct fnarg *arg,
     return err;
 }
 
-static void maybe_set_arg_const (struct fnarg *arg, fn_param *fp)
+static void maybe_set_arg_const (fn_arg *arg, fn_param *fp)
 {
     if (fp->flags & ARG_CONST) {
 	/* param is marked CONST directly */
@@ -5389,7 +5388,7 @@ static void maybe_set_arg_const (struct fnarg *arg, fn_param *fp)
 /* handle the case where the GUI passed an anonymous
    bundle as a "bundle *" argument */
 
-static int localize_bundle_as_shell (struct fnarg *arg, 
+static int localize_bundle_as_shell (fn_arg *arg, 
 				     fn_param *fp)
 {
     int err = 0;
@@ -5403,7 +5402,7 @@ static int localize_bundle_as_shell (struct fnarg *arg,
     return err;
 }
 
-static int localize_const_matrix (struct fnarg *arg, fn_param *fp)
+static int localize_const_matrix (fn_arg *arg, fn_param *fp)
 {
     user_var *u = get_user_var_by_data(arg->val.m);
     int err = 0;
@@ -5427,7 +5426,7 @@ static int localize_const_matrix (struct fnarg *arg, fn_param *fp)
     return err;
 }
 
-static int localize_series_ref (fncall *call, struct fnarg *arg, 
+static int localize_series_ref (fncall *call, fn_arg *arg, 
 				fn_param *fp, DATASET *dset)
 {
     int v = arg->val.idnum;
@@ -5478,7 +5477,7 @@ static int add_scalar_arg_default (fn_param *param)
    was given as argument.
 */
 
-static int do_matrix_scalar_cast (struct fnarg *arg, fn_param *param)
+static int do_matrix_scalar_cast (fn_arg *arg, fn_param *param)
 {
     gretl_matrix *m = arg->val.m;
 
@@ -5502,8 +5501,9 @@ static void fncall_finalize_listvars (fncall *call)
     }
 }
 
-static int duplicated_pointer_arg_check (fnargs *args)
+static int duplicated_pointer_arg_check (fn_arg *args, int argc)
 {
+    fn_arg *ai, *aj;
     int i, j, err = 0;
 
     /* note: a caller cannot be allowed to supply a given 
@@ -5512,11 +5512,13 @@ static int duplicated_pointer_arg_check (fnargs *args)
        may be repeated)
     */
 
-    for (i=0; i<args->argc && !err; i++) {
-	if (gretl_ref_type(args->arg[i]->type)) {
-	    for (j=i+1; j<args->argc && !err; j++) {
-		if (gretl_ref_type(args->arg[j]->type) && 
-		    !strcmp(args->arg[i]->upname, args->arg[j]->upname)) {
+    for (i=0; i<argc && !err; i++) {
+	ai = &args[i];
+	if (gretl_ref_type(ai->type)) {
+	    for (j=i+1; j<argc && !err; j++) {
+		aj = &args[j];
+		if (gretl_ref_type(aj->type) && 
+		    !strcmp(ai->upname, aj->upname)) {
 		    gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
 		    err = E_DATA;
 		}
@@ -5530,15 +5532,14 @@ static int duplicated_pointer_arg_check (fnargs *args)
 static int allocate_function_args (fncall *call, DATASET *dset)
 {
     ufunc *fun = call->fun;
-    fnargs *args = call->args;
-    struct fnarg *arg;
+    fn_arg *arg;
     fn_param *fp;
     int i, err;
 
-    err = duplicated_pointer_arg_check(args);
+    err = duplicated_pointer_arg_check(call->args, call->argc);
 
-    for (i=0; i<args->argc && !err; i++) {
-	arg = args->arg[i];
+    for (i=0; i<call->argc && !err; i++) {
+	arg = &call->args[i];
 	fp = &fun->params[i];
 
 #if UDEBUG
@@ -5605,7 +5606,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 
     /* now for any parameters without matching arguments */
 
-    for (i=args->argc; i<fun->n_params && !err; i++) {
+    for (i=call->argc; i<fun->n_params && !err; i++) {
 	fp = &fun->params[i];
 	if (gretl_scalar_type(fp->type)) {
 	    err = add_scalar_arg_default(fp);
@@ -5871,7 +5872,7 @@ static void replace_caller_series (int targ, int src, DATASET *dset)
    on the fly. This is flagged by @arg.  
 */
 
-static int unlocalize_list (const char *lname, struct fnarg *arg,
+static int unlocalize_list (const char *lname, fn_arg *arg,
 			    DATASET *dset)
 {
     int *list = get_list_by_name(lname);
@@ -5999,14 +6000,14 @@ maybe_set_return_description (fncall *call, int rtype,
     }
 }
 
-static int is_pointer_arg (fncall *call, fnargs *args, int rtype)
+static int is_pointer_arg (fncall *call, int rtype)
 {
     ufunc *u = call->fun;
 
     if (call->retname != NULL) {
 	int i;
 
-	for (i=0; i<args->argc; i++) {
+	for (i=0; i<call->argc; i++) {
 	    if (rtype == gretl_type_get_ref_type(u->params[i].type) &&
 		!strcmp(u->params[i].name, call->retname)) {
 		return 1;
@@ -6026,13 +6027,12 @@ static int is_pointer_arg (fncall *call, fnargs *args, int rtype)
 			  t == GRETL_TYPE_LISTS_REF)
 
 static int 
-function_assign_returns (fncall *call, fnargs *args, int rtype, 
-			 DATASET *dset, void *ret, char **descrip, 
-			 PRN *prn, int *perr)
+function_assign_returns (fncall *call, int rtype, 
+			 DATASET *dset, void *ret,
+			 char **descrip, PRN *prn,
+			 int *perr)
 {
     ufunc *u = call->fun;
-    struct fnarg *arg;
-    fn_param *fp;
     int i, err = 0;
 
 #if UDEBUG
@@ -6054,7 +6054,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	/* first we work on the value directly returned by the
 	   function (but only if there's no error) 
 	*/
-	int copy = is_pointer_arg(call, args, rtype);
+	int copy = is_pointer_arg(call, rtype);
 
 	if (rtype == GRETL_TYPE_DOUBLE) {
 	    err = handle_scalar_return(call->retname, ret);
@@ -6088,13 +6088,14 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	}
     }
 
-    /* "indirect return" values and other pointerized args: 
+    /* "Indirect return" values and other pointerized args: 
        these should be handled even if the function bombed.
     */
 
-    for (i=0; i<args->argc; i++) {
-	arg = args->arg[i];
-	fp = &u->params[i];
+    for (i=0; i<call->argc; i++) {
+	fn_arg *arg = &call->args[i];
+	fn_param *fp = &u->params[i];
+	
 	if (needs_dataset(fp->type) && dset == NULL) {
 	    err = E_DATA;
 	} else if (gretl_ref_type(fp->type)) {
@@ -6184,8 +6185,6 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 	    call->fun->name, d, (dset != NULL)? dset->v : 0);
 #endif
 
-    call->args = NULL;
-    
     /* below: delete series local to the function, taking care not to
        delete any that have been "promoted" to caller level via their 
        inclusion in a returned list
@@ -6312,7 +6311,7 @@ static void func_exec_callback (ExecState *s, void *ptr,
     }
 }
 
-static double arg_get_double_val (struct fnarg *arg)
+static double arg_get_double_val (fn_arg *arg)
 {
     if (gretl_scalar_type(arg->type)) {
 	return arg->val.x;
@@ -6323,15 +6322,16 @@ static double arg_get_double_val (struct fnarg *arg)
     }
 }
 
-static int check_function_args (ufunc *u, fnargs *args, PRN *prn)
+static int check_function_args (fncall *call, PRN *prn)
 {
-    struct fnarg *arg;
+    ufunc *u = call->fun;    
+    fn_arg *arg;
     fn_param *fp;
     double x;
     int i, err = 0;
 
-    for (i=0; i<args->argc && !err; i++) {
-	arg = args->arg[i];
+    for (i=0; i<call->argc && !err; i++) {
+	arg = &call->args[i];
 	fp = &u->params[i];
 
 	if ((fp->flags & ARG_OPTIONAL) && arg->type == GRETL_TYPE_NONE) {
@@ -6366,7 +6366,7 @@ static int check_function_args (ufunc *u, fnargs *args, PRN *prn)
 	}
     }
 
-    for (i=args->argc; i<u->n_params && !err; i++) {
+    for (i=call->argc; i<u->n_params && !err; i++) {
 	/* do we have defaults for any empty args? */
 	fp = &u->params[i];
 	if (!(fp->flags & ARG_OPTIONAL) && no_scalar_default(fp)) {
@@ -6587,11 +6587,12 @@ static int do_debugging (ExecState *s)
    return value, if any.
 */
 
-static int handle_plugin_call (ufunc *u, fnargs *args,
+static int handle_plugin_call (fncall *call,
 			       DATASET *dset,
 			       void *retval,
 			       PRN *prn)
 {
+    ufunc *u = call->fun;
     int (*cfunc) (gretl_bundle *, PRN *);
     void *handle;
     gretl_bundle *argb;
@@ -6620,10 +6621,10 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 	return E_ALLOC;
     }
 
-    for (i=0; i<args->argc && !err; i++) {
+    for (i=0; i<call->argc && !err; i++) {
 	fn_param *fp = &u->params[i];
+	fn_arg *arg = &call->args[i];
 	const char *key = fp->name;
-	struct fnarg *arg = args->arg[i];
 
 	if (!type_can_be_bundled(fp->type)) {
 	    fprintf(stderr, "type %d: cannot be bundled\n", fp->type);
@@ -6758,9 +6759,8 @@ int attach_loop_to_function (void *ptr)
 
 #endif
 
-int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
-			 DATASET *dset, void *ret, 
-			 char **descrip, PRN *prn)
+int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
+			 void *ret, char **descrip, PRN *prn)
 {
     DEBUG_READLINE get_line = NULL;
     DEBUG_OUTPUT put_func = NULL;
@@ -6786,11 +6786,12 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     err = maybe_check_function_needs(dset, u);
     if (err) {
+	function_clear_args(u);
 	return err;
     }
 
 #if EXEC_DEBUG
-    fprintf(stderr, "gretl_function_exec: argc = %d\n", args->argc);
+    fprintf(stderr, "gretl_function_exec: argc = %d\n", u->argc);
     fprintf(stderr, "u->n_params = %d\n", u->n_params);
 #endif
 
@@ -6810,17 +6811,17 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
     }
 
-    err = check_function_args(u, args, prn);
+    err = check_function_args(call, prn);
 
     if (function_is_plugin(u)) {
 	if (!err) {
-	    err = handle_plugin_call(u, args, dset, ret, prn);
+	    err = handle_plugin_call(call, dset, ret, prn);
 	}
+	fncall_free(call);
 	return err;
     }
 
     if (!err) {
-	call->args = args;
 	err = allocate_function_args(call, dset);
     }
 
@@ -6996,7 +6997,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	err = gretl_if_state_check(indent0);
     }
 
-    function_assign_returns(call, args, rtype, dset, ret, 
+    function_assign_returns(call, rtype, dset, ret, 
 			    descrip, prn, &err);
 
     gretl_exec_state_clear(&state);
@@ -7008,6 +7009,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	if (stoperr && !err) {
 	    err = stoperr;
 	}
+    } else {
+	fncall_free(call);
     }
 
 #if EXEC_DEBUG
@@ -7027,18 +7030,17 @@ char *gretl_func_get_arg_name (const char *argvar, int *err)
 
     *err = E_DATA;
 
-    if (call != NULL && call->args != NULL) {
+    if (call != NULL) {
 	ufunc *u = call->fun;
-	fnargs *args = call->args;
-	int i, n = args->argc;
+	int i, n = call->argc;
 
 	for (i=0; i<n; i++) {
 	    if (!strcmp(argvar, u->params[i].name)) {
 		*err = 0;
-		if (args->arg[i]->upname == NULL) {
+		if (call->args[i].upname == NULL) {
 		    ret = gretl_strdup("");
 		} else {
-		    ret = gretl_strdup(args->arg[i]->upname); 
+		    ret = gretl_strdup(call->args[i].upname); 
 		}
 		if (ret == NULL) {
 		    *err = E_ALLOC;
@@ -7066,15 +7068,14 @@ int object_is_const (const char *name)
 {
     fncall *call = current_function_call();
 
-    if (call != NULL && call->args != NULL) {
-	fnargs *args = call->args;
-	int i, n = args->argc;
+    if (call != NULL) {
+	int i, n = call->argc;
 
 	for (i=0; i<n; i++) {
-	    const char *aname = args->arg[i]->name;
+	    const char *aname = call->args[i].name;
 
 	    if (aname != NULL && !strcmp(name, aname)) {
-		return args->arg[i]->flags & ARG_CONST;
+		return call->args[i].flags & ARG_CONST;
 	    }
 	}
     }
@@ -7096,12 +7097,11 @@ int object_is_function_arg (const char *name)
 {
     fncall *call = current_function_call();
 
-    if (call != NULL && call->args != NULL) {
-	fnargs *args = call->args;
-	int i, n = args->argc;
+    if (call != NULL) {
+	int i, n = call->argc;
 
 	for (i=0; i<n; i++) {
-	    const char *aname = args->arg[i]->name;
+	    const char *aname = call->args[i].name;
 
 	    if (aname != NULL && !strcmp(name, aname)) {
 		return 1;

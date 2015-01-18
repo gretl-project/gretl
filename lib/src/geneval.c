@@ -6508,7 +6508,6 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     NODE *r = t->v.b2.r;
     NODE *ret = NULL;
     const char *funname = l->v.str;
-    fnargs *args = NULL;
     ufunc *uf = NULL;
     GretlType rtype = 0;
     int i, nparam, argc = 0;
@@ -6542,14 +6541,6 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 				   "function %s (%d)"),
 				 argc, funname, nparam);
 	    p->err = E_DATA;
-	}
-    }
-
-    if (!p->err) {
-	/* allocate an arguments array */
-	args = fn_args_new(argc);
-	if (args == NULL) {
-	    p->err = E_ALLOC;
 	}
     }
 
@@ -6603,7 +6594,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	if (!p->err) {
 	    /* assemble info and push argument */
 	    data = arg_get_data(arg, reftype, &argt);
-	    p->err = push_fn_arg(args, arg->vname, argt, data);
+	    p->err = push_function_arg(uf, arg->vname, argt, data);
 	}
 
 	if (p->err) {
@@ -6646,8 +6637,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    pdescrip = &descrip;
 	}
 
-	p->err = gretl_function_exec(uf, args, rtype, p->dset, 
-				     retp, pdescrip, p->prn);
+	p->err = gretl_function_exec(uf, rtype, p->dset, retp,
+				     pdescrip, p->prn);
 
 	if (!p->err) {
 	    if (rtype == GRETL_TYPE_DOUBLE) {
@@ -6714,7 +6705,9 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	}
     }
 
-    fn_args_free(args);
+    if (p->err) {
+	function_clear_args(uf);
+    }
 
 #if EDEBUG
     fprintf(stderr, "eval_ufunc: p->err = %d, ret = %p\n", 

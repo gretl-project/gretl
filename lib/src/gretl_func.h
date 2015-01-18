@@ -61,7 +61,6 @@ typedef enum {
 
 typedef struct ufunc_ ufunc;
 typedef struct fnpkg_ fnpkg;
-typedef struct fnargs_ fnargs;
 
 int n_user_functions (void);
 
@@ -123,9 +122,8 @@ int gretl_function_append_line (const char *line);
 
 int gretl_is_public_user_function (const char *name);
 
-int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
-			 DATASET *dset, void *ret, 
-			 char **descrip, PRN *prn);
+int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
+			 void *ret, char **descrip, PRN *prn);
 
 int attach_loop_to_function (void *ptr);
 
@@ -209,12 +207,10 @@ int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname);
 
 void gretl_functions_cleanup (void);
 
-fnargs *fn_args_new (int argc);
+void function_clear_args (ufunc *fun);
 
-void fn_args_free (fnargs *args);
-
-int push_fn_arg (fnargs *args, const char *name, GretlType type,
-		 void *value);
+int push_function_arg (ufunc *fun, const char *name,
+		       GretlType type, void *value);
 
 void adjust_indent (const char *line, int *this_indent,
 		    int *next_indent);

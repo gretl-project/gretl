@@ -2116,9 +2116,8 @@ void function_call_cleanup (void)
 int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 {
     ufunc *func;
-    fnargs *args = NULL;
     char funname[32];
-    int argc, iopt = -1;
+    int iopt = -1;
     int err = 0;
 
     if (aname != NULL) {
@@ -2145,20 +2144,12 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
     if (func == NULL) {
 	err = E_DATA;
     } else {
-	argc = iopt >= 0 ? 2 : 1;
-	args = fn_args_new(argc);
-	if (args == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
 	const char *bname = user_var_get_name_by_data(b);
 #if 1
 	fprintf(stderr, "bundle plot: using bundle %p (%s)\n",
 		(void *) b, bname);
 #endif
-	err = push_fn_arg(args, bname, GRETL_TYPE_BUNDLE_REF, b);
+	err = push_function_arg(func, bname, GRETL_TYPE_BUNDLE_REF, b);
 
 	if (!err && iopt >= 0) {
 	    /* add the option flag, if any, to args */
@@ -2166,7 +2157,7 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 
 	    if (!na(minv)) {
 		iopt += (int) minv;
-		err = push_fn_arg(args, NULL, GRETL_TYPE_INT, &iopt);
+		err = push_function_arg(func, NULL, GRETL_TYPE_INT, &iopt);
 	    }
 	}
     }
@@ -2177,14 +2168,13 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 	*/
 	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 
-	err = gretl_function_exec(func, args, GRETL_TYPE_NONE,
+	err = gretl_function_exec(func, GRETL_TYPE_NONE,
 				  dataset, NULL, NULL, prn);
 	gretl_print_destroy(prn);
     }
 
-    fn_args_free(args);
-
     if (err) {
+	function_clear_args(func);
 	gui_errmsg(err);
     } 
 
@@ -2697,22 +2687,16 @@ static void add_package_to_menu (addon_info *addon,
 
 static int precheck_error (ufunc *func, windata_t *vwin)
 {
-    fnargs *args = fn_args_new(0);
     PRN *prn;
     double check_err = 0;
     int err = 0;
 
-    if (args == NULL) {
-	return E_ALLOC;
-    }
-
     prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
     set_genr_model_from_vwin(vwin);
-    err = gretl_function_exec(func, args, GRETL_TYPE_DOUBLE,
+    err = gretl_function_exec(func, GRETL_TYPE_DOUBLE,
 			      dataset, &check_err, NULL, prn);
     unset_genr_model();
     gretl_print_destroy(prn);
-    fn_args_free(args);
 
     if (err == 0 && check_err != 0) {
 	err = 1;
