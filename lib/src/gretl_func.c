@@ -411,7 +411,7 @@ static int ufunc_add_args_array (ufunc *u)
  * @p: pointer to value to add.
  *
  * Writes a new argument of the specified type and value into the
- * argument array of @fun. Called prior to execution of @fun;
+ * argument array of @fun.
  *
  * Returns: 0 on success, non-zero on failure.
  */
@@ -465,13 +465,15 @@ static fncall *fncall_new (ufunc *fun)
 
     if (call != NULL) {
 	call->fun = fun;
-	call->argc = fun->argc;
-	call->args = fun->args;
 	call->ptrvars = NULL;
 	call->listvars = NULL;
 	call->retname = NULL;
-
-	/* allow for recursion */
+	/* Allow for recursion: transfer the arg list
+	   from @fun to @call so that it doesn't
+	   overflow if @fun is called again. 
+	*/
+	call->argc = fun->argc;
+	call->args = fun->args;
 	fun->args = NULL;
 	fun->argc = 0;
     }
@@ -484,10 +486,11 @@ static void fncall_free (fncall *call)
     if (call != NULL) {
 	if (call->fun != NULL && call->args != NULL) {
 	    if (function_recursing(call)) {
-		/* free duplicate args */
+		/* free (duplicate) args array */
 		free_args_array(call->args, call->argc);
 	    } else {
-		/* hand args back to function */
+		/* hand args array back to @fun for
+		   possible reuse */
 		call->fun->args = call->args;
 		function_clear_args(call->fun);
 	    }
