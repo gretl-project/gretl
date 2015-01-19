@@ -3202,7 +3202,7 @@ static void make_time_tics (gnuplot_info *gi,
 	    pputs(prn, "set xdata time\n");
 	}
 	strcpy(gi->timefmt, "%Y-%m-%d");
-	pprintf(prn, "set timefmt x \"%s\"\n", gi->timefmt);
+	pprintf(prn, "set timefmt \"%s\"\n", gi->timefmt);
 	strcpy(gi->xfmt, "%Y-%m-%d");
 	pprintf(prn, "set format x \"%s\"\n", gi->xfmt);
 	return;

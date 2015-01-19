@@ -1195,7 +1195,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	} else {
 	    fputs("set xdata time\n", fp);
 	}	
-	fprintf(fp, "set timefmt x \"%s\"\n", spec->timefmt);
+	fprintf(fp, "set timefmt \"%s\"\n", spec->timefmt);
     }
 
     /* special x and/or y format? */
