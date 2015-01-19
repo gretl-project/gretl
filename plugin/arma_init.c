@@ -828,7 +828,7 @@ static int y_Xb_at_lag (char *spec, arma_info *ainfo,
     }
 
     if (ainfo->ifc) {
-	strcat(chunk, "b0");
+	strcat(chunk, "_b0");
     }
 
     err = add_to_spec(spec, chunk);
@@ -837,7 +837,7 @@ static int y_Xb_at_lag (char *spec, arma_info *ainfo,
 	if (ainfo->ifc || i > 0) {
 	    err += add_to_spec(spec, "+");
 	} 
-	sprintf(chunk, "b%d*x%d_%d", i+1, i+1, lag);
+	sprintf(chunk, "_b%d*x%d_%d", i+1, i+1, lag);
 	err += add_to_spec(spec, chunk); 
     }
 
