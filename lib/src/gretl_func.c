@@ -38,7 +38,7 @@
 #include <errno.h>
 #include <glib.h>
 
-#define LOOPSAVE 1
+#define LOOPSAVE 0
 #define LSDEBUG 0
 
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
@@ -579,7 +579,9 @@ static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
 #endif
 
     if (dbg) {
-	pprintf(prn, "*** exiting function %s, ", call->fun->name);
+	pputs(prn, "*** ");
+	bufspace(gretl_function_depth(), prn);
+	pprintf(prn, "exiting function %s, ", call->fun->name);
     }
 
     fncall_free(call);
@@ -4496,8 +4498,9 @@ static int check_parm_min_max (fn_param *p, const char *name,
     int err = 0;
 
     if (p->type != GRETL_TYPE_DOUBLE && na(p->deflt)) {
-	gretl_errmsg_sprintf("%s: only the 'scalar' type can have a "
-			     "default value of NA", name);
+	gretl_errmsg_sprintf("%s: parameters of type %s cannot have a "
+			     "default value of NA", name,
+			     gretl_type_get_name(p->type));
 	err = E_DATA;
     }
 
@@ -6274,7 +6277,9 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
     if (gretl_debugging_on() || call->fun->debug) {
 	set_gretl_echo(1);
 	set_gretl_messages(1);
-	pprintf(prn, "*** executing function %s\n", call->fun->name);
+	pputs(prn, "*** ");
+	bufspace(gretl_function_depth(), prn);
+	pprintf(prn, "executing function %s\n", call->fun->name);
     } else {
 	set_gretl_echo(0);
 	set_gretl_messages(0);

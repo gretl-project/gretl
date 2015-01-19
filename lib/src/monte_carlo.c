@@ -39,7 +39,7 @@
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
 
-#define LOOPSAVE 1
+#define LOOPSAVE 0
 
 #include <gmp.h>
 

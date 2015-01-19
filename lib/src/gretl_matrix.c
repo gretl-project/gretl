@@ -10102,8 +10102,8 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
 
     if (rank < k) {
 	fprintf(stderr, "gretl_matrix_SVD_ols:\n"
-		" dgelss: rank of data matrix X = %d (rows = %d, cols = %d)\n", 
-		(int) rank, X->rows, X->cols);
+		" dgelss: data matrix X (%d x %d) has column rank %d\n", 
+		X->rows, X->cols, (int) rank);
     } 
 
 #if SVD_CHECK_BOUND
@@ -10242,8 +10242,8 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 
     if (rank < k) {
 	fprintf(stderr, "gretl_matrix_multi_SVD_ols:\n"
-		" dgelss: rank of data matrix X = %d (rows = %d, cols = %d)\n", 
-		(int) rank, T, k);
+		" dgelss: data matrix X (%d x %d) has column rank %d\n", 
+		T, k, (int) rank);
 #if 0
 	gretl_matrix_print(X, "X");
 #endif
