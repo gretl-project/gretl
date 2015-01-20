@@ -13836,13 +13836,21 @@ static int save_generated_var (parser *p, PRN *prn)
 	    }
 	} else {
 	    /* a new scalar */
-	    x = (r->t == MAT)? r->v.m->val[0] : r->v.xval;
+	    if (r->t == NUM) {
+		x = r->v.xval;
+	    } else if (scalar_matrix_node(r)) {
+		x = r->v.m->val[0];
+	    } else {
+		p->err = E_TYPES;
+	    }
 #if SCALARS_ENSURE_FINITE
-	    if (!isfinite(x)) {
+	    if (!p->err && !isfinite(x)) {
 		x = NADBL;
 	    }
 #endif
-	    p->err = gretl_scalar_add(p->lh.name, x);
+	    if (!p->err) {
+		p->err = gretl_scalar_add(p->lh.name, x);
+	    }
 	}
     } else if (p->targ == SERIES) {
 	/* writing a series */
