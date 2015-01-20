@@ -311,6 +311,7 @@ static int real_user_var_add (const char *name,
 		u->flags = UV_SHELL;
 	    }
 	    if (opt & OPT_A) {
+		u->flags &= ~UV_MAIN;
 		u->level += 1;
 	    }
 	    uvars[n_vars] = u;
