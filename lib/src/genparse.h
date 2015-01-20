@@ -554,7 +554,8 @@ enum {
     TMP_NODE = 1 << 1, /* temporary: free content on exit */
     PTR_NODE = 1 << 2, /* node is compatible with P_LHPTR */
     SVL_NODE = 1 << 3, /* holds string-valued series */
-    CPY_NODE = 1 << 4  /* node derives from lhs_copy_node() */
+    CPY_NODE = 1 << 4, /* node derives from lhs_copy_node() */
+    ELE_NODE = 1 << 5  /* node holding single matrix element */
 };
 
 struct node {
@@ -586,7 +587,7 @@ enum {
     P_SAVEAUX = 1 << 17, /* indicates try aux node compilation */
     P_AUXDONE = 1 << 18, /* indicates aux nodes compiled */
     P_DELTAN  = 1 << 19, /* flag for change in series length */
-    P_LHBKVAR = 1 << 20  /* LHS bundle key is string variable */  
+    P_LHBKVAR = 1 << 20  /* LHS bundle key is string variable */
 };
 
 struct lhinfo {

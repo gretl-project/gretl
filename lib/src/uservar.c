@@ -1055,7 +1055,8 @@ void set_scalar_edit_callback (void (*callback))
     scalar_edit_callback = callback; 
 }
 
-/* used in response to bare declaration of a user variable */
+/* used in response to bare declaration of a user variable
+   in geneval.c */
 
 int create_user_var (const char *name, GretlType type)
 {

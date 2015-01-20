@@ -328,6 +328,7 @@ matrix_subspec *matrix_subspec_new (void)
 
     if (spec != NULL) {
 	spec->rslice = spec->cslice = NULL;
+	spec->singleton = 0;
     }
 
     return spec;
@@ -440,7 +441,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 				    int prechecked, 
 				    int *err)
 {
-    gretl_matrix *S;
+    gretl_matrix *S = NULL;
     int r, c;
 
     if (gretl_is_null_matrix(M) || spec == NULL) {
@@ -462,7 +463,11 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	int j = mspec_get_col_index(spec);
 	double x = matrix_get_element(M, i, j, err);
 
-	return (*err)? NULL : gretl_matrix_from_scalar(x);
+	if (!*err) {
+	    S = gretl_matrix_from_scalar(x);
+	}
+
+	return S;
     }
 
     if (spec->rslice == NULL && spec->cslice == NULL) {

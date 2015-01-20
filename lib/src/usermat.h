@@ -43,6 +43,7 @@ struct matrix_subspec_ {
     union msel sel[2];
     int *rslice;
     int *cslice;
+    int singleton;
 };
 
 #define mspec_get_row_index(m) (m->sel[0].range[0])

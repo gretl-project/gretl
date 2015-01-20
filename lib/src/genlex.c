@@ -1723,6 +1723,8 @@ const char *getsymb (int t, const parser *p)
 	return "UNDEF";
     } else if (t == NUM) {
 	return "NUM";
+    } else if (t == IVEC) {
+	return "IVEC";
     }
 
     if (p != NULL) {

@@ -478,7 +478,15 @@ static int print_arg (const char **pfmt, const char **pargs,
 
     if (err) {
 	goto bailout;
-    } 
+    }
+
+    if (m != NULL && m->rows == 1 && m->cols == 1) {
+	/* print 1 x 1 matrix as scalar? */
+	if (!isnan(m->val[0])) {
+	    x = m->val[0];
+	    got_scalar = 1;
+	}
+    }
 
     if (got_scalar && na(x)) {
 	fc = fmt[flen - 1] = 's';
@@ -487,7 +495,7 @@ static int print_arg (const char **pfmt, const char **pargs,
 
     /* do the actual printing */
 
-    if (m != NULL) {
+    if (m != NULL && !got_scalar) {
 	/* printing a matrix */
 	if (!wstar) wid = -1;
 	if (!pstar) prec = -1;
