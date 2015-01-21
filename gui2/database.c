@@ -957,7 +957,7 @@ make_db_index_window (int action, char *fname, char *buf)
 	title = strrchr(fname, SLASH) + 1;
     } else {
 	title = fname;
-    } 
+    }
 
     vwin = gretl_browser_new(action, title);
     if (vwin == NULL) {
@@ -998,7 +998,7 @@ make_db_index_window (int action, char *fname, char *buf)
 	gtk_box_pack_start(GTK_BOX(hbox), vwin->status, FALSE, FALSE, 0);
     }
 
-    if (action == NATIVE_SERIES) { 
+    if (action == NATIVE_SERIES) {
 	err = add_local_db_series_list(vwin);
     } else if (action == REMOTE_SERIES) { 
 	err = add_remote_db_series_list(vwin, buf);
