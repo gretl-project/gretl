@@ -613,7 +613,7 @@ int win32_write_access (char *path)
     domain = LocalAlloc(0, dlen * sizeof *domain);
     if (sid == NULL || domain == NULL) {
 	err = 1;
-    } 
+    }
 
     if (!err) {
 	/* call the function for real */
@@ -629,7 +629,7 @@ int win32_write_access (char *path)
 	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT, 
 				   DACL_SECURITY_INFORMATION, 
 				   NULL, NULL, &dacl, NULL, 
-				   (void **) &sd);
+				   (PSECURITY_DESCRIPTOR) &sd);
 #else
 	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT, 
 				   DACL_SECURITY_INFORMATION, 
@@ -652,9 +652,6 @@ int win32_write_access (char *path)
 	}
     }
 
-    if (dacl != NULL) {
-	LocalFree(dacl);
-    }
     if (sid != NULL) {
 	LocalFree(sid);
     }    
