@@ -2448,11 +2448,6 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 {
     NODE *ret = NULL;
 
-    if (op == B_KRON) {
-	p->err = E_TYPES;
-	return NULL;
-    }
-
     if (starting(p)) {
 	const gretl_matrix *m = NULL;
 	int comp = comparison_op(op);
@@ -3498,9 +3493,6 @@ static void print_mspec (matrix_subspec *mspec)
 		gretl_matrix_print(mspec->sel[i].m, "sel matrix");
 	    }
 	}
-	if (mspec->singleton) {
-	    fputs("singleton\n", stderr);
-	}
     }
 }
 
@@ -3638,8 +3630,8 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 	    if (ret == NULL) {
 		gretl_matrix_free(a);
 	    } else {
-		if (spec->singleton) {
-		    ret->flags |= ELE_NODE;
+		if (!spec->singleton) {
+		    ret->flags |= MSL_NODE;
 		}
 		ret->v.m = a;
 	    }
@@ -9955,8 +9947,8 @@ static gretl_matrix *dvar_get_submatrix (NODE *targ, int idx,
 
     if (M != NULL) {
 	S = matrix_get_submatrix(M, r->v.mspec, 0, &p->err);
-	if (r->v.mspec->singleton) {
-	    targ->flags |= ELE_NODE;
+	if (!r->v.mspec->singleton) {
+	    targ->flags |= MSL_NODE;
 	}
 	gretl_matrix_free(M);
     }
@@ -10044,8 +10036,8 @@ object_var_get_submatrix (NODE *targ, const char *oname, int idx,
 
     if (M != NULL) {
 	S = matrix_get_submatrix(M, r->v.mspec, 0, &p->err);
-	if (r->v.mspec->singleton) {
-	    targ->flags |= ELE_NODE;
+	if (!r->v.mspec->singleton) {
+	    targ->flags |= MSL_NODE;
 	}
 	gretl_matrix_free(M);
     }
@@ -10412,7 +10404,7 @@ static void node_reattach_data (NODE *n, parser *p)
 
 	if (data == NULL) {
 	    p->err = E_DATA;
-	} else if (n->t == NUM && type == GRETL_TYPE_DOUBLE) {
+	} else if (uscalar_node(n) && type == GRETL_TYPE_DOUBLE) {
 	    n->v.xval = *(double *) data;
 	} else if (n->t == MAT && type == GRETL_TYPE_MATRIX) {
 	    n->v.m = data;
@@ -10425,9 +10417,9 @@ static void node_reattach_data (NODE *n, parser *p)
 	} else if (n->t == ARRAY && type == GRETL_TYPE_ARRAY) {
 	    n->v.a = data;
 	} else {
-	    fprintf(stderr, "node_reattach_data (vname = %s): "
-		    "expected %s but found %s\n", n->vname,
-		    getsymb(n->t, p), gretl_type_get_name(type));
+	    fprintf(stderr, "node_reattach_data (vname = '%s'): "
+		    "expected type %d (%s) but found %s\n", n->vname,
+		    n->t, getsymb(n->t, p), gretl_type_get_name(type));
 	    p->err = E_TYPES;
 	    return;
 	}
@@ -10776,7 +10768,8 @@ static NODE *eval (NODE *t, parser *p)
     case F_MRSEL:
     case F_MCSEL:
     case F_DSUM:
-    case B_LDIV:	
+    case B_LDIV:
+    case B_KRON:
 	/* matrix-only binary operators (but promote scalars) */
 	if ((l->t == MAT || l->t == NUM) && 
 	    (r->t == MAT || r->t == NUM)) {
@@ -10787,15 +10780,6 @@ static NODE *eval (NODE *t, parser *p)
 	} else if ((l->t == MAT && r->t == BUNDLE) ||
 		   (l->t == BUNDLE && r->t == MAT)) {
 	    ret = matrix_bundle_calc(l, r, t->t, p);
-	} else {
-	    node_type_error(t->t, (l->t == MAT)? 2 : 1,
-			    MAT, (l->t == MAT)? r : l, p);
-	}
-	break;
-    case B_KRON:
-	/* Kronecker product ("**"): insist on matrices only */
-	if (l->t == MAT && r->t == MAT) {
-	    ret = matrix_matrix_calc(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, (l->t == MAT)? 2 : 1,
 			    MAT, (l->t == MAT)? r : l, p);
@@ -13777,7 +13761,7 @@ static int save_generated_var (parser *p, PRN *prn)
 
     if (p->targ == UNK) {
 	/* 1 x 1 matrix to scalar? */
-	if (r->t == MAT && (r->flags & ELE_NODE)) {
+	if (scalar_matrix_node(r) && !(r->flags & MSL_NODE)) {
 	    p->targ = NUM;
 	} else {
 	    p->targ = r->t;
