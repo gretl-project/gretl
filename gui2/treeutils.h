@@ -28,6 +28,8 @@ void tree_model_get_iter_last (GtkTreeModel *mod, GtkTreeIter *iter);
 
 gboolean tree_model_iter_prev (GtkTreeModel *mod, GtkTreeIter *iter);
 
+int tree_model_count_rows (GtkTreeModel *mod);
+
 gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 			windata_t *win);
 

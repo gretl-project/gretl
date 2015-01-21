@@ -1383,7 +1383,7 @@ enum {
 };
 
 static GretlToolItem files_items[] = {
-    { N_("Open"),           GTK_STOCK_OK, NULL, BTN_OPEN },
+    { N_("Open"),           GTK_STOCK_OPEN, NULL, BTN_OPEN },
     { N_("Select directory"), GTK_STOCK_DIRECTORY, NULL, BTN_DIR },
     { N_("Edit"),           GTK_STOCK_EDIT,       G_CALLBACK(browser_edit_func), BTN_EDIT },
     { N_("Info"),           GTK_STOCK_INFO,       NULL,                          BTN_INFO },

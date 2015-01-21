@@ -714,6 +714,21 @@ void tree_model_get_iter_last (GtkTreeModel *mod, GtkTreeIter *iter)
     }
 }
 
+int tree_model_count_rows (GtkTreeModel *mod)
+{
+    GtkTreeIter iter;
+    int nrows = 0;
+
+    if (gtk_tree_model_get_iter_first(mod, &iter)) {
+	nrows = 1;
+	while (gtk_tree_model_iter_next(mod, &iter)) {
+	    nrows++;
+	}
+    }
+
+    return nrows;
+}
+
 gboolean tree_model_iter_prev (GtkTreeModel *mod, GtkTreeIter *iter)
 {
     GtkTreePath *path;

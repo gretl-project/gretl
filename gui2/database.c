@@ -779,6 +779,11 @@ static void db_view_codebook (GtkWidget *w, windata_t *vwin)
     view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK);
 }
 
+static void db_show_index (GtkWidget *w, windata_t *vwin)
+{
+    show_native_dbs();
+}
+
 static void build_db_popup (windata_t *vwin, int cb, int del)
 {
     if (vwin->popup != NULL) {
@@ -811,20 +816,23 @@ static void build_db_popup (windata_t *vwin, int cb, int del)
 
 enum {
     DEL_BTN = 1,
-    CB_BTN
+    CB_BTN,
+    IDX_BTN
 };
 
 static GretlToolItem db_items[] = {
-    { N_("Display values"), GTK_STOCK_OPEN,   G_CALLBACK(db_display_series), 0 },
+    { N_("Display values"), GTK_STOCK_MEDIA_PLAY, G_CALLBACK(db_display_series), 0 },
     { N_("Graph"),          GRETL_STOCK_TS,   G_CALLBACK(db_graph_series), 0 },
     { N_("Add to dataset"), GTK_STOCK_ADD,    G_CALLBACK(db_import_series), 0 },
+    { N_("List databases"), GTK_STOCK_INDEX,  G_CALLBACK(db_show_index), IDX_BTN },
     { N_("Delete"),         GTK_STOCK_DELETE, G_CALLBACK(db_delete_callback), DEL_BTN },
     { N_("Codebook"),       GRETL_STOCK_BOOK, G_CALLBACK(db_view_codebook), CB_BTN }
 };
 
 static int n_db_items = G_N_ELEMENTS(db_items);
 
-static void make_db_toolbar (windata_t *vwin, int cb, int del)
+static void make_db_toolbar (windata_t *vwin, int cb, int del,
+			     int index_button)
 {
     GtkWidget *hbox;
     GretlToolItem *item;
@@ -839,7 +847,9 @@ static void make_db_toolbar (windata_t *vwin, int cb, int del)
 	item = &db_items[i];
 	if (!del && item->flag == DEL_BTN) {
 	    continue;
-	} if (!cb && item->flag == CB_BTN) {
+	} else if (!cb && item->flag == CB_BTN) {
+	    continue;
+	} else if (!index_button && item->flag == IDX_BTN) {
 	    continue;
 	}
 	gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, -1);
@@ -933,7 +943,8 @@ maybe_adjust_descrip_column (windata_t *vwin)
 }
 
 static int 
-make_db_index_window (int action, char *fname, char *buf)
+make_db_index_window (int action, char *fname, char *buf,
+		      int index_button)
 {
     GtkWidget *listbox;
     gchar *title;
@@ -982,7 +993,7 @@ make_db_index_window (int action, char *fname, char *buf)
     cb = db_has_codebook(fname);
     del = db_is_writable(action, fname);
 
-    make_db_toolbar(vwin, cb, del);
+    make_db_toolbar(vwin, cb, del, index_button);
     build_db_popup(vwin, cb, del);
 
     listbox = database_window(vwin);
@@ -1021,12 +1032,12 @@ make_db_index_window (int action, char *fname, char *buf)
 
 void open_rats_window (char *fname)
 {
-    make_db_index_window(RATS_SERIES, fname, NULL);
+    make_db_index_window(RATS_SERIES, fname, NULL, 0);
 }
 
 void open_bn7_window (char *fname)
 {
-    make_db_index_window(PCGIVE_SERIES, fname, NULL);
+    make_db_index_window(PCGIVE_SERIES, fname, NULL, 0);
 }
 
 static int check_serinfo (char *str, char *sername, int *nobs)
@@ -1605,7 +1616,7 @@ gboolean open_named_db_index (char *dbname)
 	file_read_errbox(dbname);
     } else {
 	fclose(fp);
-	make_db_index_window(action, dbname, NULL);
+	make_db_index_window(action, dbname, NULL, 0);
 	ret = TRUE;
     }
     
@@ -1625,7 +1636,7 @@ gboolean open_named_remote_db_index (char *dbname)
     } else if (getbuf != NULL && !strncmp(getbuf, "Couldn't open", 13)) {
 	errbox(getbuf);
     } else {
-	err = make_db_index_window(REMOTE_SERIES, dbname, getbuf);
+	err = make_db_index_window(REMOTE_SERIES, dbname, getbuf, 0);
 	if (!err) {
 	    ret = TRUE;
 	}
@@ -1638,10 +1649,11 @@ gboolean open_named_remote_db_index (char *dbname)
 
 void open_db_index (GtkWidget *w, gpointer data)
 {
+    windata_t *vwin = (windata_t *) data;
     gchar *fname = NULL, *dbdir = NULL;
     char dbfile[MAXLEN];
     int action = NATIVE_SERIES;
-    windata_t *vwin = (windata_t *) data;
+    int idx = 0;
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 0, &fname);
@@ -1658,7 +1670,19 @@ void open_db_index (GtkWidget *w, gpointer data)
     g_free(fname);
     g_free(dbdir);
 
-    make_db_index_window(action, dbfile, NULL); 
+    if (action == NATIVE_SERIES) {
+	GtkTreeModel *mod;
+	
+	mod = gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox));
+	idx = tree_model_count_rows(mod) > 1;
+    }
+
+    make_db_index_window(action, dbfile, NULL, idx);
+
+    if (action == NATIVE_SERIES) {
+	/* close the window from which this db was selected */
+	gtk_widget_destroy(vwin->main);
+    }
 }
 
 void open_remote_db_index (GtkWidget *w, gpointer data)
@@ -1689,7 +1713,7 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
 	show_network_error(vwin);
     } else {
 	update_statusline(vwin, "OK");
-	make_db_index_window(REMOTE_SERIES, fname, getbuf);
+	make_db_index_window(REMOTE_SERIES, fname, getbuf, 0);
     }
 
     g_free(fname);
