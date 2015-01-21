@@ -555,7 +555,7 @@ enum {
     PTR_NODE = 1 << 2, /* node is compatible with P_LHPTR */
     SVL_NODE = 1 << 3, /* holds string-valued series */
     CPY_NODE = 1 << 4, /* node derives from lhs_copy_node() */
-    ELE_NODE = 1 << 5  /* node holding single matrix element */
+    MSL_NODE = 1 << 5  /* node holding matrix "slice" */
 };
 
 struct node {

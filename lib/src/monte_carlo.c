@@ -39,7 +39,7 @@
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
 
-#define LOOPSAVE 1
+#define LOOPSAVE 0
 
 #include <gmp.h>
 
@@ -2985,29 +2985,6 @@ static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
     return err;
 }
 
-/* Determine whether @loop is attached to a user-defined
-   function -- either directly or, for a nested loop, via
-   its ancestry.
-*/
-
-static int loop_attached_to_function (LOOPSET *loop)
-{
-    if (loop_is_attached(loop)) {
-	return 1;
-    } else {
-	LOOPSET *parent = loop->parent;
-    
-	while (parent != NULL) {
-	    if (loop_is_attached(parent)) {
-		return 1;
-	    }
-	    parent = parent->parent;
-	}
-    }
-
-    return 0;
-}
-
 static int maybe_preserve_loop (LOOPSET *loop)
 {
     if (!loop_is_attached(loop) && gretl_function_depth() > 0) {
@@ -3075,7 +3052,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     }
 
 #if LOOPSAVE
-    if (*loop->idxname != '\0' && loop_attached_to_function(loop)) {
+    if (loop_is_attached(loop) && *loop->idxname != '\0') {
 	loop_reattach_index_var(loop, dset);
     }
 #endif
@@ -3279,6 +3256,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    fprintf(stderr, "Got a LOOP command, don't know what to do!\n");
 		    err = 1;
 		} else {
+		    if (loop_is_attached(loop)) {
+			loop_set_attached(currloop);
+		    }
 		    err = gretl_loop_exec(s, dset, NULL);
 		}
 	    } else if (cmd->ci == BREAK) {

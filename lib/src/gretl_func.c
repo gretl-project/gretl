@@ -38,7 +38,7 @@
 #include <errno.h>
 #include <glib.h>
 
-#define LOOPSAVE 1
+#define LOOPSAVE 0
 #define LSDEBUG 0
 
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
