@@ -1725,6 +1725,10 @@ const char *getsymb (int t, const parser *p)
 	return "NUM";
     } else if (t == IVEC) {
 	return "IVEC";
+    } else if (t == UNUM_P) {
+	return "UNUM_P";
+    } else if (t == UNUM_M) {
+	return "UNUM_M";
     }
 
     if (p != NULL) {
