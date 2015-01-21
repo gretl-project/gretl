@@ -2948,23 +2948,10 @@ static int got_package_entry (const char *line,
     return 0;
 }
 
-static FILE *read_open_packages_xml (gchar **pfname)
+static gchar *packages_xml_path (void)
 {
-    gchar *fname;
-    FILE *fp;
-
-    fname = g_strdup_printf("%sfunctions%cpackages.xml", 
-			     gretl_dotdir(), SLASH);
-    fp = gretl_fopen(fname, "r");
-
-    if (pfname != NULL) {
-	/* give the caller the filename */
-	*pfname = fname;
-    } else {
-	g_free(fname);
-    }
-
-    return fp;
+    return g_strdup_printf("%sfunctions%cpackages.xml", 
+			   gretl_dotdir(), SLASH);
 }
 
 /* When a package nominally appears in a menu but in fact
@@ -2973,11 +2960,12 @@ static FILE *read_open_packages_xml (gchar **pfname)
 
 void unregister_function_package (const gchar *pkgname)
 {
-    gchar *pkgxml;
+    gchar *fname;
     FILE *fp;
     int err = 0;
 
-    fp = read_open_packages_xml(&pkgxml);
+    fname = packages_xml_path();
+    fp = gretl_fopen(fname, "r");
 
     if (fp != NULL) {
 	gchar *tmpfile;
@@ -3005,7 +2993,9 @@ void unregister_function_package (const gchar *pkgname)
 	    }
 	    fclose(fnew);
 	}
+	
 	fclose(fp);
+	
 	if (!err) {
 	    if (done) {
 		/* we actually removed an entry */
@@ -3016,14 +3006,14 @@ void unregister_function_package (const gchar *pkgname)
 		    gtk_ui_manager_remove_ui(mdata->ui, 
 					     addon->merge_id);
 		}
-		err = gretl_copy_file(tmpfile, pkgxml);
+		err = gretl_copy_file(tmpfile, fname);
 	    }
 	    gretl_remove(tmpfile);
 	}
 	g_free(tmpfile);
     } 
 
-    g_free(pkgxml);
+    g_free(fname);
 }
 
 static char *retrieve_pkg_line (const gchar *pkgname,
@@ -3044,28 +3034,93 @@ static char *retrieve_pkg_line (const gchar *pkgname,
     return ret;
 }
 
+static int rewrite_packages_xml (const char *pkgname,
+				 const char *pkgline,
+				 const char *fname,
+				 FILE *fsrc,
+				 int maybe_edit,
+				 int *pkgmod)
+{
+    gchar *tmpfile;
+    FILE *ftarg;
+    int err = 0;
+    
+    tmpfile = g_strdup_printf("%sfunctions%cpackages.xml.new", 
+			      gretl_dotdir(), SLASH);
+    ftarg = gretl_fopen(tmpfile, "w");
+
+    if (ftarg == NULL) {
+	err = E_FOPEN;
+    } else {
+	char line[512];
+	int skip, done = 0;
+
+	while (fgets(line, sizeof line, fsrc)) {
+	    skip = 0;
+	    if (maybe_edit) {
+		/* check for an existing line for this package,
+		   and replace it if found -- or bypass it if
+		   @pkgline is NULL
+		*/
+		if (!done && got_package_entry(line, pkgname)) {
+		    if (pkgline != NULL) {
+			fputs(pkgline, ftarg);
+		    }
+		    done = skip = 1;
+		}
+	    }
+	    if (!done && strstr(line, "</gretl-package-info>")) {
+		/* reached the last line */
+		if (pkgline != NULL) {
+		    fputs(pkgline, ftarg);
+		    *pkgmod = 1;
+		}
+	    }
+	    if (!skip) {
+		fputs(line, ftarg);
+	    }
+	}
+	fclose(ftarg);
+    }
+
+    fclose(fsrc);
+    
+    if (!err) {
+	err = gretl_copy_file(tmpfile, fname);
+	gretl_remove(tmpfile);
+    }
+
+    g_free(tmpfile);
+
+    return err;
+}
+
 int revise_package_status (const gchar *pkgname,
 			   const gchar *label,
 			   const gchar *mpath,
 			   gboolean uses_subdir,
 			   gboolean maybe_edit,
-			   gboolean installing)
+			   gboolean installing,
+			   GtkWidget *parent)
 {
     int toplev = !uses_subdir;
     char *pkgline;
-    gchar *pkgxml;
+    gchar *fname;
     int pkgmod = 0;
+    int pkgadd = 0;
+    int queried = 0;
     int modelwin = 0;
     FILE *fp;
     int err = 0;
 
     pkgline = make_pkg_line(pkgname, label, mpath, toplev, &modelwin);
-    fp = read_open_packages_xml(&pkgxml);
+    fname = packages_xml_path();
+    fp = gretl_fopen(fname, "r");
 
     if (fp == NULL) {
 	/* start a new packages.xml? */
 	if (pkgline != NULL) {
-	    fp = gretl_fopen(pkgxml, "w");
+	    fp = gretl_fopen(fname, "w");
 	    if (fp == NULL) {
 		err = E_FOPEN;
 	    } else {
@@ -3078,11 +3133,6 @@ int revise_package_status (const gchar *pkgname,
 	    }
 	}
     } else {
-	/* revising an existing packages.xml, open as @fp */
-	gchar *tmpfile;
-	char line[512];
-	FILE *fnew;
-
 	if (maybe_edit) {
 	    char *origline = retrieve_pkg_line(pkgname, fp);
 
@@ -3096,62 +3146,36 @@ int revise_package_status (const gchar *pkgname,
 		}
 		free(origline);
 	    } else if (pkgline != NULL) {
-		/* package line should be added */
-		pkgmod = 1;
+		/* package line should be added? */
+		pkgadd = 1;
 	    } else {
 		/* nothing to be done here */
 		fclose(fp);
-		g_free(pkgxml);
+		g_free(fname);
 		free(pkgline);
 		return 0;
 	    }
-	}
 
-	tmpfile = g_strdup_printf("%sfunctions%cpackages.xml.new", 
-				  gretl_dotdir(), SLASH);
-	fnew = gretl_fopen(tmpfile, "w");
-
-	if (fnew == NULL) {
-	    err = E_FOPEN;
-	} else {
-	    int skip, done = 0;
-
-	    while (fgets(line, sizeof line, fp)) {
-		skip = 0;
-		if (maybe_edit) {
-		    /* check for an existing line for this package,
-		       and replace it if found -- or bypass it if
-		       @pkgline is NULL
-		    */
-		    if (!done && got_package_entry(line, pkgname)) {
-			if (pkgline != NULL) {
-			    fputs(pkgline, fnew);
-			}
-			done = skip = 1;
-		    }
-		}
-		if (!done && strstr(line, "</gretl-package-info>")) {
-		    /* reached the last line */
-		    if (pkgline != NULL) {
-			fputs(pkgline, fnew);
-			pkgmod = 1;
-		    }
-		}
-		if (!skip) {
-		    fputs(line, fnew);
+	    if (pkgadd) {
+		/* see if this is actually wanted */
+		int resp = pkg_attach_dialog(pkgname,
+					     label,
+					     mpath,
+					     parent);
+		if (resp == GRETL_YES) {
+		    pkgmod = 1;
+		    queried = 1;
 		}
 	    }
-	    fclose(fnew);
 	}
-	fclose(fp);
-	if (!err) {
-	    err = gretl_copy_file(tmpfile, pkgxml);
-	    gretl_remove(tmpfile);
+
+	if (installing || pkgmod) {
+	    rewrite_packages_xml(pkgname, pkgline, fname,
+				 fp, maybe_edit, &pkgmod);
 	}
-	g_free(tmpfile);
     } 
 
-    g_free(pkgxml);
+    g_free(fname);
     free(pkgline);
 
     if (err) {
@@ -3159,7 +3183,7 @@ int revise_package_status (const gchar *pkgname,
     } else if (pkgmod) {
 	gchar *ustr = NULL;
 
-	if (!installing) {
+	if (!installing && !queried) {
 	    ustr = user_friendly_menu_path(mpath, modelwin);
 	}
 
@@ -3185,10 +3209,12 @@ int revise_package_status (const gchar *pkgname,
 
 static int package_already_registered (const char *pkgname)
 {
+    gchar *fname;
     FILE *fp;
     int found = 0;
 
-    fp = read_open_packages_xml(NULL);
+    fname = packages_xml_path();
+    fp = gretl_fopen(fname, "r");
 
     if (fp != NULL) {
 	char line[512];
@@ -3198,6 +3224,8 @@ static int package_already_registered (const char *pkgname)
 	}
 	fclose(fp);
     }
+
+    g_free(fname);
 
     return found;
 }
@@ -3223,6 +3251,8 @@ int gui_add_package_to_menu (const char *path, gboolean prechecked,
 					      NULL);
 
 	if (!err && !prechecked && pkgname != NULL) {
+	    /* prechecked implies that we know the package
+	       is not already registered */
 	    registered = package_already_registered(pkgname);
 	}
 
@@ -3246,7 +3276,8 @@ int gui_add_package_to_menu (const char *path, gboolean prechecked,
 
 	if (addit) {
 	    revise_package_status(pkgname, label, mpath, 
-				  uses_subdir, FALSE, TRUE);
+				  uses_subdir, FALSE, TRUE,
+				  NULL);
 	}
 
 	g_free(pkgname);

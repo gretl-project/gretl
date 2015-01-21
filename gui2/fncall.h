@@ -61,6 +61,7 @@ int revise_package_status (const gchar *pkgname,
 			   const gchar *mpath,
 			   gboolean uses_subdir,
 			   gboolean maybe_edit,
-			   gboolean installing);
+			   gboolean installing,
+			   GtkWidget *parent);
 
 #endif /* FNCALL_H */

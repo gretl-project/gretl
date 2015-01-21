@@ -2400,7 +2400,8 @@ int save_function_package (const char *fname, gpointer p)
 			      finfo->menulabel,
 			      finfo->menupath,
 			      finfo->uses_subdir,
-			      TRUE, FALSE);
+			      TRUE, FALSE,
+			      finfo->dlg);
     }
 
     return err;
