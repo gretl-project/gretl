@@ -1172,34 +1172,24 @@ static double node_get_scalar (NODE *n, parser *p)
     }
 }
 
-#if 0
-
-static int node_get_int_sloppy (NODE *n, parser *p)
-{
-    double x = node_get_scalar(n, p);
-
-    if (p->err == 0 && (na(x) || fabs(x) > INT_MAX)) {
-	p->err = E_INVARG;
-	return -1;
-    } else {
-	return (int) x;
-    }
-}
-
-#endif
-
 static int node_get_int (NODE *n, parser *p)
 {
     double x = node_get_scalar(n, p);
 
-    if (p->err == 0 && (na(x) || fabs(x) > INT_MAX)) {
+    if (p->err) {
+	return -1;
+    } else if (na(x) || fabs(x) > INT_MAX) {
 	p->err = E_INVARG;
 	return -1;
-    } else if (fabs(x - nearbyint(x)) > 1.0e-8) {
-	p->err = E_INVARG;
-	return -1;
-    } else {	
-	return nearbyint(x);
+    } else {
+	double nx = nearbyint(x);
+	
+	if (fabs(x - nx) > 1.0e-8) {
+	    p->err = E_INVARG;
+	    return -1;
+	} else {	
+	    return (int) nx;
+	}
     }
 }
 
@@ -2783,11 +2773,10 @@ static NODE *matrix_text_write (NODE *l, NODE *m, NODE *r, parser *p)
 	}
 
 	ret = aux_scalar_node(p);
-	if (ret == NULL) { 
-	    return NULL;
-	}
 
-	ret->v.xval = gretl_matrix_write_as_text(l->v.m, s, export);
+	if (ret != NULL) { 
+	    ret->v.xval = gretl_matrix_write_as_text(l->v.m, s, export);
+	}
     } else {
 	ret = aux_scalar_node(p);
     }
@@ -2808,11 +2797,10 @@ static NODE *bundle_text_write (NODE *l, NODE *m, NODE *r, parser *p)
 	}
 
 	ret = aux_scalar_node(p);
-	if (ret == NULL) { 
-	    return NULL;
-	}
 
-	ret->v.xval = gretl_bundle_write_to_file(l->v.b, s, export);
+	if (ret != NULL) { 
+	    ret->v.xval = gretl_bundle_write_to_file(l->v.b, s, export);
+	}
     } else {
 	ret = aux_scalar_node(p);
     }
