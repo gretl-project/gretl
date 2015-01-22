@@ -38,8 +38,9 @@ void maybe_add_packages_to_model_menus (windata_t *vwin);
 
 void maybe_add_packages_to_menus (windata_t *vwin);
 
-int gui_add_package_to_menu (const char *path, gboolean prechecked,
-			     GtkWidget *parent);
+int gui_add_package_to_menu (const char *path,
+			     GtkWidget *parent,
+			     int *notified);
 
 int maybe_handle_pkg_menu_option (const char *path, 
 				  GtkWidget *parent);
@@ -56,12 +57,11 @@ int download_addon (const char *pkgname, char **local_path);
 char *installed_addon_status_string (const char *path,
 				     const char *svstr);
 
-int revise_package_status (const gchar *pkgname,
-			   const gchar *label,
-			   const gchar *mpath,
-			   gboolean uses_subdir,
-			   gboolean maybe_edit,
-			   gboolean installing,
-			   GtkWidget *parent);
+int maybe_update_packages_xml (const gchar *pkgname,
+			       const gchar *label,
+			       const gchar *mpath,
+			       gboolean uses_subdir,
+			       int *notified,
+			       GtkWidget *parent);
 
 #endif /* FNCALL_H */

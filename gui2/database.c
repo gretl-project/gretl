@@ -2113,6 +2113,26 @@ int unzip_package_file (const char *zipname, const char *path)
     return err;
 }
 
+static gchar *make_gfn_path (const char *path, const char *name)
+{
+    const char *p = strrchr(path, SLASH);
+    gchar *ret = NULL;
+
+    if (p != NULL) {
+	char *tmp;
+
+	tmp = gretl_strndup(path, p - path + 1);
+	ret = g_strdup_printf("%s%s%c%s.gfn", tmp,
+			      name, SLASH, name);
+	free(tmp);
+    } else {
+	ret = g_strdup_printf("%s%c%s.gfn",
+			      name, SLASH, name);
+    }	
+
+    return ret;
+}
+
 #define STATUS_COLUMN  4
 #define ZIPFILE_COLUMN 5
 
@@ -2133,6 +2153,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     */
 
     if (vwin->role == REMOTE_DB) {
+	/* database files */
 	GtkTreeSelection *sel;
 	GtkTreeModel *model;
 	GtkTreeIter iter;
@@ -2142,7 +2163,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	    gtk_tree_model_get(model, &iter, 0, &objname, -1);
 	}
     } else {
-	/* remote datafiles or function package */
+	/* datafiles or function package */
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			     vwin->active_var, 0, &objname);
 	if (vwin->role == REMOTE_FUNC_FILES) {
@@ -2193,7 +2214,17 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	windata_t *local = get_local_viewer(vwin->role);
 	
 	if (vwin->role == REMOTE_FUNC_FILES) {
-	    if (!maybe_handle_pkg_menu_option(path, vwin->main)) {
+	    int notified = 0;
+
+	    if (zipfile) {
+		gchar *gfnpath = make_gfn_path(path, objname);
+
+		notified = maybe_handle_pkg_menu_option(gfnpath, vwin->main);
+		g_free(gfnpath);
+	    } else {
+		notified = maybe_handle_pkg_menu_option(path, vwin->main);
+	    }
+	    if (!notified) {
 		infobox(_("Installed"));
 	    }
 	    list_store_set_string(GTK_TREE_VIEW(vwin->listbox),
@@ -2389,7 +2420,8 @@ read_db_files_in_dir (DIR *dir, int dbtype, const char *path,
     return ndb;
 }
 
-static void get_local_object_status (const char *fname, int role, 
+static void get_local_object_status (const char *fname,
+				     int role, 
 				     const char **status, 
 				     time_t remtime)
 {
@@ -2825,9 +2857,9 @@ gint populate_remote_func_list (windata_t *vwin)
     GtkTreeIter iter;  
     char *getbuf = NULL;
     char line[1024];
-    char fname[32];
+    char fname[64];
+    char basename[32];
     const char *status;
-    char *basename;
     time_t remtime;
     int n, err = 0;
 
@@ -2860,11 +2892,18 @@ gint populate_remote_func_list (windata_t *vwin)
 	    continue;
 	}
 
+	strcpy(basename, fname);
+	strip_extension(basename);
+
+	zipfile = has_suffix(fname, ".zip");
+	if (zipfile) {
+	    /* local status: look for PKG/PKG.gfn, not PKG.zip */
+	    sprintf(fname, "%s%c%s.gfn", basename, SLASH, basename);
+	}
+
 	status = "";
 	get_local_object_status(fname, vwin->role, &status, remtime);
-	zipfile = has_suffix(fname, ".zip");
-	basename = strip_extension(fname);
-
+	
 	if (bufgets(line, sizeof line, getbuf)) {
 	    tailstrip(line);
 	    utf8_correct(line);
@@ -2932,7 +2971,6 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
     char line[256];
     char fname[32];
     char tstr[16];
-    char *basename;
     char *descrip;
     int n, err = 0;
 
@@ -2960,7 +2998,7 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
 	    continue;
 	}
 
-	basename = strip_extension(fname);
+	strip_extension(fname);
 
 	if (bufgets(line, sizeof line, getbuf)) {
 	    tailstrip(line);
@@ -2974,7 +3012,7 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
 
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 
-			   0, basename, 
+			   0, fname, 
 			   1, descrip, 
 			   2, tstr,
 			   -1);

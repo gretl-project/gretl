@@ -2396,12 +2396,12 @@ int save_function_package (const char *fname, gpointer p)
 	}
 	/* revise packages.xml in accordance with any
 	   changes above */
-	revise_package_status(pkgname, 
-			      finfo->menulabel,
-			      finfo->menupath,
-			      finfo->uses_subdir,
-			      TRUE, FALSE,
-			      finfo->dlg);
+	maybe_update_packages_xml(pkgname, 
+				  finfo->menulabel,
+				  finfo->menupath,
+				  finfo->uses_subdir,
+				  NULL, /* notification not needed */
+				  finfo->dlg);
     }
 
     return err;

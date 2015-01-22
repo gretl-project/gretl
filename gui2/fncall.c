@@ -2629,7 +2629,7 @@ static int read_addons_info (void)
 static void add_package_to_menu (addon_info *addon,
 				 windata_t *vwin)
 {
-    static GtkActionEntry pkg_item = {
+    static GtkActionEntry item = {
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gfn_menu_callback)
     };
     GtkActionGroup *actions;
@@ -2641,30 +2641,30 @@ static void add_package_to_menu (addon_info *addon,
 	    addon->pkgname, addon->menupath);
 #endif
 
-    pkg_item.name = addon->pkgname;
+    item.name = addon->pkgname;
     if (addon->label != NULL) {
-	pkg_item.label = _(addon->label);
+	item.label = _(addon->label);
     } else {
-	pkg_item.label = addon->pkgname;
+	item.label = addon->pkgname;
     }
     
-    if (strchr(pkg_item.label, '_')) {
-	const char *s = pkg_item.label;
+    if (strchr(item.label, '_')) {
+	const char *s = item.label;
 	int n = 0;
 
 	while (*s && (s = strchr(s, '_')) != NULL) {
 	    n++;
 	    s++;
 	}
-	fixed_label = malloc(strlen(pkg_item.label) + n + 1);
-	double_underscores(fixed_label, pkg_item.label);
-	pkg_item.label = fixed_label;
+	fixed_label = malloc(strlen(item.label) + n + 1);
+	double_underscores(fixed_label, item.label);
+	item.label = fixed_label;
     }
 
     merge_id = gtk_ui_manager_new_merge_id(vwin->ui);
 
     gtk_ui_manager_add_ui(vwin->ui, merge_id, addon->menupath, 
-			  pkg_item.label, pkg_item.name,
+			  item.label, item.name,
 			  GTK_UI_MANAGER_MENUITEM, 
 			  FALSE);
 
@@ -2672,8 +2672,8 @@ static void add_package_to_menu (addon_info *addon,
 	addon->merge_id = merge_id;
     }
 
-    actions = gtk_action_group_new(pkg_item.name);
-    gtk_action_group_add_actions(actions, &pkg_item, 1, vwin);
+    actions = gtk_action_group_new(item.name);
+    gtk_action_group_add_actions(actions, &item, 1, vwin);
     gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
     g_object_unref(actions);
 
@@ -2851,10 +2851,10 @@ static const gchar *pkg_get_attachment (const gchar *mpath,
     return relpath;
 }
 
-static int pkg_attach_dialog (const gchar *name,
-			      const gchar *label,
-			      const gchar *mpath,
-			      GtkWidget *parent)
+static int pkg_attach_query (const gchar *name,
+			     const gchar *label,
+			     const gchar *mpath,
+			     GtkWidget *parent)
 {
     const gchar *relpath = NULL;
     int modelwin = 0;
@@ -2885,11 +2885,11 @@ static int pkg_attach_dialog (const gchar *name,
     return resp;
 }
 
-static char *make_pkg_line (const gchar *name, 
-			    const gchar *label, 
-			    const gchar *mpath, 
-			    int toplev,
-			    int *modelwin)
+static char *make_pkg_xml_line (const gchar *name, 
+				const gchar *label, 
+				const gchar *mpath,
+				gboolean uses_subdir,
+				int *modelwin)
 {
     const gchar *relpath;
     PRN *prn = NULL;
@@ -2917,7 +2917,7 @@ static char *make_pkg_line (const gchar *name,
 	pprintf(prn, " path=\"/menubar%s\"", relpath);
     }
 
-    if (toplev) {
+    if (!uses_subdir) {
 	pputs(prn, " toplev=\"true\"");
     }
 
@@ -2954,26 +2954,22 @@ static gchar *packages_xml_path (void)
 			   gretl_dotdir(), SLASH);
 }
 
-#if 1
-
-/* NEW stuff */
-
 enum {
-    PKG_NO_FILE,
-    PKG_NO_ENTRY,
-    PKG_STALE_ENTRY,
-    PKG_SAME_ENTRY
+    PKG_NO_FILE,     /* dotdir packages.xml not present yet */
+    PKG_NO_ENTRY,    /* no entry for the package in question */
+    PKG_STALE_ENTRY, /* package has an obsolete entry */
+    PKG_SAME_ENTRY   /* existing entry is up to date */
 };
 
 enum {
-    PKG_CREATE_ENTRY = 1,
-    PKG_ADD_ENTRY,
-    PKG_REVISE_ENTRY,
-    PKG_DELETE_ENTRY
+    PKG_CREATE_ENTRY = 1, /* start a new packages.xml */
+    PKG_ADD_ENTRY,        /* append entry to packages.xml */
+    PKG_REVISE_ENTRY,     /* replace the package's entry */
+    PKG_DELETE_ENTRY      /* scrub the package's entry */
 };
 
 static int package_get_registry_status (const gchar *pkgname,
-					const gchar *pkgline)
+					const char *pkgline)
 {
     gchar *fname;
     FILE *fp;
@@ -3004,8 +3000,8 @@ static int package_get_registry_status (const gchar *pkgname,
     return ret;
 }
 
-static int revise_packages_xml (const gchar *pkgname,
-				const gchar *pkgline,
+static int update_packages_xml (const gchar *pkgname,
+				const char *pkgline,
 				int task)
 {
     gchar *fname;
@@ -3021,6 +3017,11 @@ static int revise_packages_xml (const gchar *pkgname,
     }
 
     if (fp == NULL) {
+	if (task == PKG_CREATE_ENTRY) {
+	    file_write_errbox(fname);
+	} else {
+	    file_read_errbox(fname);
+	}
 	g_free(fname);
 	return E_FOPEN;
     }
@@ -3041,6 +3042,7 @@ static int revise_packages_xml (const gchar *pkgname,
 	ftmp = gretl_fopen(tmpfile, "w");
 	
 	if (ftmp == NULL) {
+	    file_write_errbox(tmpfile);
 	    g_free(tmpfile);
 	    fclose(fp);
 	    err = E_FOPEN;
@@ -3064,20 +3066,20 @@ static int revise_packages_xml (const gchar *pkgname,
 	    while (fgets(line, sizeof line, fp)) {
 		if (strstr(line, "</gretl-package-info>")) {	
 		    fputs(pkgline, ftmp);
+		    done = 1;
 		}
 		fputs(line, ftmp);
 	    }
 	}
 
-	if (task == PKG_DELETE_ENTRY && !done) {
-	    err = 1;
-	}
-
 	fclose(ftmp);
 	fclose(fp);
 
-	if (!err) {
+	if (done) {
 	    err = gretl_copy_file(tmpfile, fname);
+	    if (err) {
+		gui_errmsg(err);
+	    }
 	}
 	
 	gretl_remove(tmpfile);
@@ -3088,25 +3090,36 @@ static int revise_packages_xml (const gchar *pkgname,
 
     g_free(fname);
 
+    /* note: error messages handled above */
+
     return err;
 }
 
-static int maybe_revise_packages_xml (const gchar *pkgname,
-				      const gchar *label,
-				      const gchar *mpath,
-				      gboolean uses_subdir,
-				      gboolean maybe_edit,
-				      gboolean installing,
-				      GtkWidget *parent)
+int maybe_update_packages_xml (const gchar *pkgname,
+			       const gchar *label,
+			       const gchar *mpath,
+			       gboolean uses_subdir,
+			       int *notified,
+			       GtkWidget *parent)
 {
     char *pkgline = NULL;
-    int toplev = !uses_subdir;
     int modelwin = 0;
     int status, task = 0;
+    int err = 0;
 
-    pkgline = make_pkg_line(pkgname, label, mpath, toplev, &modelwin);   
+    /* construct an up-to-date packages.xml entry for 
+       @pkgname, if the package in fact offers menu
+       attachment (otherwise @pkgline will be NULL)
+    */
+    pkgline = make_pkg_xml_line(pkgname, label, mpath,
+				uses_subdir, &modelwin);   
+
+    /* determine the status of @pkgname in relation to
+       the current packages.xml file
+    */
     status = package_get_registry_status(pkgname, pkgline);
 
+    /* figure out what task (if any) is required */
     if (pkgline != NULL && status == PKG_NO_FILE) {
 	task = PKG_CREATE_ENTRY;
     } else if (pkgline != NULL && status == PKG_NO_ENTRY) {
@@ -3118,26 +3131,38 @@ static int maybe_revise_packages_xml (const gchar *pkgname,
 	    task = PKG_DELETE_ENTRY;
 	}
     }
-	
+
+#if 0
+    fprintf(stderr, "maybe_update_packages_xml:\n"
+	    " pkgline='%s'\n status=%d, task=%d\n",
+	    pkgline, status, task);
+#endif
+    
     if (task == PKG_CREATE_ENTRY || task == PKG_ADD_ENTRY) {
-	/* see if the user wants to do this */
-	int resp = pkg_attach_dialog(pkgname, label, mpath, parent);
+	/* see if the user really wants to do this */
+	int resp = pkg_attach_query(pkgname, label, mpath, parent);
 	
 	if (resp != GRETL_YES) {
 	    task = 0;
 	}
+	if (notified != NULL) {
+	    /* flag the fact that the user has seen a dialog */
+	    *notified = 1;
+	}
     }
 
     if (task) {
-	revise_packages_xml(pkgname, pkgline, task);
+	/* we actually have something to do */
+	err = update_packages_xml(pkgname, pkgline, task);
+	if (!err && (task == PKG_CREATE_ENTRY || task == PKG_ADD_ENTRY)) {
+	    infobox(_("This change will take effect when you restart gretl"));
+	}
     }
 
     free(pkgline);
 
-    return 0;
+    return err;
 }
-
-#endif
 
 /* When a package nominally appears in a menu but in fact
    it is not found, remove it from packages.xml.
@@ -3147,7 +3172,7 @@ void unregister_function_package (const gchar *pkgname)
 {
     addon_info *addon;
 
-    revise_packages_xml(pkgname, NULL, PKG_DELETE_ENTRY);
+    update_packages_xml(pkgname, NULL, PKG_DELETE_ENTRY);
 
     addon = retrieve_addon_info(pkgname);
     if (addon != NULL && addon->merge_id > 0) {
@@ -3156,232 +3181,34 @@ void unregister_function_package (const gchar *pkgname)
     } 
 }
 
-static char *retrieve_pkg_line (const gchar *pkgname,
-				FILE *fp)
-{
-    char line[1024];
-    char *ret = NULL;
+/* 
+   The following is called in two contexts: 
 
-    while (fgets(line, sizeof line, fp)) {
-	if (got_package_entry(line, pkgname)) {
-	    ret = gretl_strdup(line);
-	    break;
-	}
-    }
+   (1) From the popup menu-item or button "Add to menu" in the window
+   displaying installed function packages. In this case it is known
+   that the package represented by @path is not already in the menus,
+   and that it does in fact offer menu attachment.
 
-    rewind(fp);
+   (2) From the handler for installing a function package from the
+   gretl server. In this case we don't know in advance whether the
+   package offers menu attachment -- and if it does, we don't yet
+   know if the user will want the attachment.
 
-    return ret;
-}
-
-static int rewrite_packages_xml (const char *pkgname,
-				 const char *pkgline,
-				 const char *fname,
-				 FILE *fsrc,
-				 int maybe_edit,
-				 int *pkgmod)
-{
-    gchar *tmpfile;
-    FILE *ftarg;
-    int err = 0;
-    
-    tmpfile = g_strdup_printf("%sfunctions%cpackages.xml.new", 
-			      gretl_dotdir(), SLASH);
-    ftarg = gretl_fopen(tmpfile, "w");
-
-    if (ftarg == NULL) {
-	err = E_FOPEN;
-    } else {
-	char line[512];
-	int skip, done = 0;
-
-	while (fgets(line, sizeof line, fsrc)) {
-	    skip = 0;
-	    if (maybe_edit) {
-		/* check for an existing line for this package,
-		   and replace it if found -- or bypass it if
-		   @pkgline is NULL
-		*/
-		if (!done && got_package_entry(line, pkgname)) {
-		    if (pkgline != NULL) {
-			fputs(pkgline, ftarg);
-		    }
-		    done = skip = 1;
-		}
-	    }
-	    if (!done && strstr(line, "</gretl-package-info>")) {
-		/* reached the last line */
-		if (pkgline != NULL) {
-		    fputs(pkgline, ftarg);
-		    *pkgmod = 1;
-		}
-	    }
-	    if (!skip) {
-		fputs(line, ftarg);
-	    }
-	}
-	fclose(ftarg);
-    }
-
-    fclose(fsrc);
-    
-    if (!err) {
-	err = gretl_copy_file(tmpfile, fname);
-	gretl_remove(tmpfile);
-    }
-
-    g_free(tmpfile);
-
-    return err;
-}
-
-int revise_package_status (const gchar *pkgname,
-			   const gchar *label,
-			   const gchar *mpath,
-			   gboolean uses_subdir,
-			   gboolean maybe_edit,
-			   gboolean installing,
-			   GtkWidget *parent)
-{
-    int toplev = !uses_subdir;
-    char *pkgline;
-    gchar *fname;
-    int pkgmod = 0;
-    int pkgadd = 0;
-    int queried = 0;
-    int modelwin = 0;
-    FILE *fp;
-    int err = 0;
-
-    pkgline = make_pkg_line(pkgname, label, mpath, toplev, &modelwin);
-    fname = packages_xml_path();
-    fp = gretl_fopen(fname, "r");
-
-    if (fp == NULL) {
-	/* start a new packages.xml? */
-	if (pkgline != NULL) {
-	    fp = gretl_fopen(fname, "w");
-	    if (fp == NULL) {
-		err = E_FOPEN;
-	    } else {
-		fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", fp);
-		fputs("<gretl-package-info>\n", fp);
-		fputs(pkgline, fp);
-		fputs("</gretl-package-info>\n", fp);
-		fclose(fp);
-		pkgmod = 1;
-	    }
-	}
-    } else {
-	if (maybe_edit) {
-	    char *origline = retrieve_pkg_line(pkgname, fp);
-
-	    if (origline != NULL) {
-		if (pkgline == NULL) {
-		    /* package line should be removed */
-		    pkgmod = 1;
-		} else if (strcmp(origline, pkgline)) {
-		    /* package line should be modified */
-		    pkgmod = 1;
-		}
-		free(origline);
-	    } else if (pkgline != NULL) {
-		/* package line should be added? */
-		pkgadd = 1;
-	    } else {
-		/* nothing to be done here */
-		fclose(fp);
-		g_free(fname);
-		free(pkgline);
-		return 0;
-	    }
-
-	    if (pkgadd) {
-		/* see if this is actually wanted */
-		int resp = pkg_attach_dialog(pkgname,
-					     label,
-					     mpath,
-					     parent);
-		if (resp == GRETL_YES) {
-		    pkgmod = 1;
-		    queried = 1;
-		}
-	    }
-	}
-
-	if (installing || pkgmod) {
-	    rewrite_packages_xml(pkgname, pkgline, fname,
-				 fp, maybe_edit, &pkgmod);
-	}
-    } 
-
-    g_free(fname);
-    free(pkgline);
-
-    if (err) {
-	gui_errmsg(err);
-    } else if (pkgmod) {
-	gchar *ustr = NULL;
-
-	if (!installing && !queried) {
-	    ustr = user_friendly_menu_path(mpath, modelwin);
-	}
-
-	if (ustr != NULL) {
-	    gchar *tmp = g_strdup_printf(_("Adding %s under %s."), 
-					 label, ustr);
-
-	    infobox_printf("%s\n%s", tmp, 
-			   _("This change will take effect when you restart gretl"));
-	    g_free(ustr);
-	    g_free(tmp);
-	} else {
-	    infobox(_("This change will take effect when you restart gretl"));
-	}
-    }
-
-    return err;
-}
-
-/* see if a package is already "registered" in the user's
-   packages.xml file
+   In case (2) @notified will be non-NULL, and its content should
+   be set non-zero if we put up a dialog here.
 */
 
-static int package_already_registered (const char *pkgname)
-{
-    gchar *fname;
-    FILE *fp;
-    int found = 0;
-
-    fname = packages_xml_path();
-    fp = gretl_fopen(fname, "r");
-
-    if (fp != NULL) {
-	char line[512];
-
-	while (fgets(line, sizeof line, fp) && !found) {
-	    found = got_package_entry(line, pkgname);
-	}
-	fclose(fp);
-    }
-
-    g_free(fname);
-
-    return found;
-}
-
-int gui_add_package_to_menu (const char *path, gboolean prechecked,
-			     GtkWidget *parent)
+int gui_add_package_to_menu (const char *path, GtkWidget *parent,
+			     int *notified)
 {
     fnpkg *pkg;
-    int err = 0, ret = 0;
+    int err = 0;
 
     pkg = get_function_package_by_filename(path, &err);
 
     if (!err) {
 	gchar *pkgname = NULL, *mpath = NULL, *label = NULL;
-	int registered = 0, uses_subdir = 0;
-	int addit = 0;
+	int uses_subdir = 0;
 
 	err = function_package_get_properties(pkg,
 					      "name", &pkgname,
@@ -3390,34 +3217,13 @@ int gui_add_package_to_menu (const char *path, gboolean prechecked,
 					      "lives-in-subdir", &uses_subdir,
 					      NULL);
 
-	if (!err && !prechecked && pkgname != NULL) {
-	    /* prechecked implies that we know the package
-	       is not already registered */
-	    registered = package_already_registered(pkgname);
-	}
-
-	if (!err && !registered && pkgname != NULL && 
-	    label != NULL && mpath != NULL) {
-	    if (prechecked) {
-		/* go right ahead */
-		addit = 1;
-	    } else {
-		/* not "prechecked": put up a dialog */
-		int resp = pkg_attach_dialog(pkgname, label, mpath, parent);
-
-		if (resp >= 0) {
-		    ret = 1;
-		}
-		if (resp == GRETL_YES) {
-		    addit = 1;
-		}
-	    }
-	}
-
-	if (addit) {
-	    revise_package_status(pkgname, label, mpath, 
-				  uses_subdir, FALSE, TRUE,
-				  NULL);
+	if (!err) {
+	    maybe_update_packages_xml(pkgname,
+				      label,
+				      mpath,
+				      uses_subdir,
+				      notified,
+				      parent);
 	}
 
 	g_free(pkgname);
@@ -3425,7 +3231,7 @@ int gui_add_package_to_menu (const char *path, gboolean prechecked,
 	g_free(mpath);
     }
 
-    return ret;
+    return err;
 }
 
 /* returns non-zero if we put up a dialog box */
@@ -3433,7 +3239,13 @@ int gui_add_package_to_menu (const char *path, gboolean prechecked,
 int maybe_handle_pkg_menu_option (const char *path,
 				  GtkWidget *parent)
 {
-    return gui_add_package_to_menu(path, FALSE, parent);
+    int notified = 0;
+
+    if (path != NULL) {
+	gui_add_package_to_menu(path, parent, &notified);
+    }
+
+    return notified;
 }
 
 char *installed_addon_status_string (const char *path,
