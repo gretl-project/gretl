@@ -2954,66 +2954,206 @@ static gchar *packages_xml_path (void)
 			   gretl_dotdir(), SLASH);
 }
 
-/* When a package nominally appears in a menu but in fact
-   it is not found, remove it from packages.xml.
-*/
+#if 1
 
-void unregister_function_package (const gchar *pkgname)
+/* NEW stuff */
+
+enum {
+    PKG_NO_FILE,
+    PKG_NO_ENTRY,
+    PKG_STALE_ENTRY,
+    PKG_SAME_ENTRY
+};
+
+enum {
+    PKG_CREATE_ENTRY = 1,
+    PKG_ADD_ENTRY,
+    PKG_REVISE_ENTRY,
+    PKG_DELETE_ENTRY
+};
+
+static int package_get_registry_status (const gchar *pkgname,
+					const gchar *pkgline)
+{
+    gchar *fname;
+    FILE *fp;
+    int ret = PKG_NO_ENTRY;
+
+    fname = packages_xml_path();
+    fp = gretl_fopen(fname, "r");
+
+    if (fp == NULL) {
+	return PKG_NO_FILE;
+    } else {
+	char line[512];
+
+	while (fgets(line, sizeof line, fp)) {
+	    if (got_package_entry(line, pkgname)) {
+		if (pkgline != NULL && !strcmp(line, pkgline)) {
+		    ret = PKG_SAME_ENTRY;
+		} else {
+		    ret = PKG_STALE_ENTRY;
+		}
+		break;
+	    }
+	}
+
+	fclose(fp);
+    }
+
+    return ret;
+}
+
+static int revise_packages_xml (const gchar *pkgname,
+				const gchar *pkgline,
+				int task)
 {
     gchar *fname;
     FILE *fp;
     int err = 0;
 
     fname = packages_xml_path();
-    fp = gretl_fopen(fname, "r");
 
-    if (fp != NULL) {
+    if (task == PKG_CREATE_ENTRY) {
+	fp = gretl_fopen(fname, "w");
+    } else {
+	fp = gretl_fopen(fname, "r");
+    }
+
+    if (fp == NULL) {
+	g_free(fname);
+	return E_FOPEN;
+    }
+
+    if (task == PKG_CREATE_ENTRY) {
+	fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", fp);
+	fputs("<gretl-package-info>\n", fp);
+	fputs(pkgline, fp);
+	fputs("</gretl-package-info>\n", fp);
+	fclose(fp);
+    } else {
+	FILE *ftmp;
 	gchar *tmpfile;
 	char line[512];
-	FILE *fnew;
-	int done = 0;
+	int skip, done = 0;
 
-	tmpfile = g_strdup_printf("%sfunctions%cpackages.xml.new", 
-				  gretl_dotdir(), SLASH);
-	fnew = gretl_fopen(tmpfile, "w");
-
-	if (fnew == NULL) {
+	tmpfile = g_strdup_printf("%s.new", fname);
+	ftmp = gretl_fopen(tmpfile, "w");
+	
+	if (ftmp == NULL) {
+	    g_free(tmpfile);
+	    fclose(fp);
 	    err = E_FOPEN;
-	} else {
-	    int skip;
+	    goto bailout;
+	}
 
+	if (task == PKG_REVISE_ENTRY || task == PKG_DELETE_ENTRY) {
 	    while (fgets(line, sizeof line, fp)) {
 		skip = 0;
 		if (!done && got_package_entry(line, pkgname)) {
+		    if (task == PKG_REVISE_ENTRY) {
+			fputs(pkgline, ftmp);
+		    }
 		    done = skip = 1;
 		}
 		if (!skip) {
-		    fputs(line, fnew);
+		    fputs(line, ftmp);
 		}
 	    }
-	    fclose(fnew);
+	} else if (task == PKG_ADD_ENTRY) {
+	    while (fgets(line, sizeof line, fp)) {
+		if (strstr(line, "</gretl-package-info>")) {	
+		    fputs(pkgline, ftmp);
+		}
+		fputs(line, ftmp);
+	    }
 	}
-	
-	fclose(fp);
-	
-	if (!err) {
-	    if (done) {
-		/* we actually removed an entry */
-		addon_info *addon;
 
-		addon = retrieve_addon_info(pkgname);
-		if (addon != NULL && addon->merge_id > 0) {
-		    gtk_ui_manager_remove_ui(mdata->ui, 
-					     addon->merge_id);
-		}
-		err = gretl_copy_file(tmpfile, fname);
-	    }
-	    gretl_remove(tmpfile);
+	if (task == PKG_DELETE_ENTRY && !done) {
+	    err = 1;
 	}
+
+	fclose(ftmp);
+	fclose(fp);
+
+	if (!err) {
+	    err = gretl_copy_file(tmpfile, fname);
+	}
+	
+	gretl_remove(tmpfile);
 	g_free(tmpfile);
-    } 
+    }
+
+ bailout:
 
     g_free(fname);
+
+    return err;
+}
+
+static int maybe_revise_packages_xml (const gchar *pkgname,
+				      const gchar *label,
+				      const gchar *mpath,
+				      gboolean uses_subdir,
+				      gboolean maybe_edit,
+				      gboolean installing,
+				      GtkWidget *parent)
+{
+    char *pkgline = NULL;
+    int toplev = !uses_subdir;
+    int modelwin = 0;
+    int status, task = 0;
+
+    pkgline = make_pkg_line(pkgname, label, mpath, toplev, &modelwin);   
+    status = package_get_registry_status(pkgname, pkgline);
+
+    if (pkgline != NULL && status == PKG_NO_FILE) {
+	task = PKG_CREATE_ENTRY;
+    } else if (pkgline != NULL && status == PKG_NO_ENTRY) {
+	task = PKG_ADD_ENTRY;
+    } else if (status == PKG_STALE_ENTRY) {
+	if (pkgline != NULL) {
+	    task = PKG_REVISE_ENTRY;
+	} else {
+	    task = PKG_DELETE_ENTRY;
+	}
+    }
+	
+    if (task == PKG_CREATE_ENTRY || task == PKG_ADD_ENTRY) {
+	/* see if the user wants to do this */
+	int resp = pkg_attach_dialog(pkgname, label, mpath, parent);
+	
+	if (resp != GRETL_YES) {
+	    task = 0;
+	}
+    }
+
+    if (task) {
+	revise_packages_xml(pkgname, pkgline, task);
+    }
+
+    free(pkgline);
+
+    return 0;
+}
+
+#endif
+
+/* When a package nominally appears in a menu but in fact
+   it is not found, remove it from packages.xml.
+*/
+
+void unregister_function_package (const gchar *pkgname)
+{
+    addon_info *addon;
+
+    revise_packages_xml(pkgname, NULL, PKG_DELETE_ENTRY);
+
+    addon = retrieve_addon_info(pkgname);
+    if (addon != NULL && addon->merge_id > 0) {
+	gtk_ui_manager_remove_ui(mdata->ui, 
+				 addon->merge_id);
+    } 
 }
 
 static char *retrieve_pkg_line (const gchar *pkgname,
