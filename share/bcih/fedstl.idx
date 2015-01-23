@@ -1,6 +1,6 @@
 # St Louis Fed (various series, large)
 isratio  Total Business: Inventories to Sales Ratio, Ratio, SA
-M  1992.01 - 2014.10  n = 274
+M  1992.01 - 2014.11  n = 275
 ushown  Home Ownership Rate for the United States, %, NSA
 A  1984 - 2013  n = 30
 ushvac  Home Vacancy Rate for the United States, %, NSA
@@ -8,81 +8,57 @@ A  1986 - 2013  n = 28
 usrvac  Rental Vacancy Rate for the United States, %, NSA
 A  1986 - 2013  n = 28
 houst  Housing Starts: Total: New Privately Owned Housing Units Started, Thous. of Units, SAAR
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 houstnsa  Housing Starts: Total: New Privately Owned Housing Units Started, Thous. of Units, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 cumfn  Capacity Utilization: Manufacturing (NAICS), % of Capacity, SA
-Q  1972.1 - 2014.3  n = 171
+Q  1972.1 - 2014.4  n = 172
 indpro  Industrial Production Index, 2007=100, SA
-M  1919.01 - 2014.11  n = 1151
+M  1919.01 - 2014.12  n = 1152
 ipbuseq  Industrial Production: Business Equipment, 2007=100, SA
-M  1947.01 - 2014.11  n = 815
+M  1947.01 - 2014.12  n = 816
 ipcongd  Industrial Production: Consumer Goods, 2007=100, SA
-M  1939.01 - 2014.11  n = 911
+M  1939.01 - 2014.12  n = 912
 ipdcongd  Industrial Production: Durable Consumer Goods, 2007=100, SA
-M  1947.01 - 2014.11  n = 815
+M  1947.01 - 2014.12  n = 816
 ipdman  Industrial Production: Durable Manufacturing (NAICS), 2007=100, SA
-M  1972.01 - 2014.11  n = 515
+M  1972.01 - 2014.12  n = 516
 ipdmat  Industrial Production: Durable Materials, 2007=100, SA
-M  1947.01 - 2014.11  n = 815
+M  1947.01 - 2014.12  n = 816
 ipfinal  Industrial Production: Final Products (Market Group), 2007=100, SA
-M  1939.01 - 2014.11  n = 911
+M  1939.01 - 2014.12  n = 912
 ipman  Industrial Production: Manufacturing (NAICS), 2007=100, SA
-M  1972.01 - 2014.11  n = 515
+M  1972.01 - 2014.12  n = 516
 ipmat  Industrial Production: Materials, 2007=100, SA
-M  1939.01 - 2014.11  n = 911
+M  1939.01 - 2014.12  n = 912
 ipmine  Industrial Production: Mining, 2007=100, SA
-M  1972.01 - 2014.11  n = 515
+M  1972.01 - 2014.12  n = 516
 ipncongd  Industrial Production: Nondurable Consumer Goods, 2007=100, SA
-M  1947.01 - 2014.11  n = 815
+M  1947.01 - 2014.12  n = 816
 ipnman  Industrial Production: Nondurable Manufacturing (NAICS), 2007=100, SA
-M  1972.01 - 2014.11  n = 515
+M  1972.01 - 2014.12  n = 516
 ipnmat  Industrial Production: nondurable Materials, 2007=100, SA
-M  1954.01 - 2014.11  n = 731
+M  1954.01 - 2014.12  n = 732
 iputil  Industrial Production: Electric and Gas Utilities, 2007=100, SA
-M  1972.01 - 2014.11  n = 515
+M  1972.01 - 2014.12  n = 516
 mcumfn  Capacity Utilization: Manufacturing (NAICS), % of Capacity, SA
-M  1972.01 - 2014.11  n = 515
+M  1972.01 - 2014.12  n = 516
 tcu  Capacity Utilization: Total Industry, % of Capacity, SA
-M  1967.01 - 2014.11  n = 575
+M  1967.01 - 2014.12  n = 576
 ecomnsa  E-Commerce Retail Sales, Mil. of $, NSA
 Q  1999.4 - 2014.3  n = 60
 ecomsa  E-Commerce Retail Sales, Mil. of $, SA
 Q  1999.4 - 2014.3  n = 60
 rrsfs  Real Retail and Food Services Sales, Mil. of $, SA
-M  1992.01 - 2014.11  n = 275
+M  1992.01 - 2014.12  n = 276
 rsafs  Retail and Food Services Sales, Mil. of $, SA
-M  1992.01 - 2014.11  n = 275
+M  1992.01 - 2014.12  n = 276
 rsafsna  Retail and Food Services Sales, Mil. of $, NSA
-M  1992.01 - 2014.11  n = 275
+M  1992.01 - 2014.12  n = 276
 rsfsxmv  Retail Sales and Food Services Excluding Motor Vehicles and Parts Dealers, Mil. of $, SA
-M  1992.01 - 2014.11  n = 275
+M  1992.01 - 2014.12  n = 276
 rsxfs  Retail Sales: Total (Excluding Food Services), Mil. of $, SA
-M  1992.01 - 2014.11  n = 275
-nppgpl  Nonfarm Private Goods - Producing Large Payroll Employment (> 499), Thous., SA
-M  2005.01 - 2014.12  n = 120
-nppgpm  Nonfarm Private Goods - Producing Medium Payroll Employment (50 - 499), Thous., SA
-M  2005.01 - 2014.12  n = 120
-nppgps  Nonfarm Private Goods - Producing Small Payroll Employment (1 - 49), Thous., SA
-M  2005.01 - 2014.12  n = 120
-nppgpt  Nonfarm Private Goods - Producing Payroll Employment, Thous., SA
-M  2001.04 - 2014.12  n = 165
-nppmnf  Nonfarm Private Manufacturing Payroll Employment, Thous., SA
-M  2001.04 - 2014.12  n = 165
-nppspl  Nonfarm Private Service - Providing Large Payroll Employment (> 499), Thous., SA
-M  2005.01 - 2014.12  n = 120
-nppspm  Nonfarm Private Service - Providing Medium Payroll Employment  (50 - 499), Thous., SA
-M  2005.01 - 2014.12  n = 120
-nppsps  Nonfarm Private Service - Providing Small Payroll Employment (1 - 49), Thous., SA
-M  2005.01 - 2014.12  n = 120
-nppspt  Nonfarm Private Service - Providing Payroll Employment, Thous., SA
-M  2001.04 - 2014.12  n = 165
-npptl  Nonfarm Private Large Payroll Employment (> 499), Thous., SA
-M  2005.01 - 2014.12  n = 120
-npptm  Nonfarm Private Medium Payroll Employment (50 - 499), Thous., SA
-M  2005.01 - 2014.12  n = 120
-nppts  Nonfarm Private Small Payroll Employment (1 - 49), Thous., SA
-M  2005.01 - 2014.12  n = 120
+M  1992.01 - 2014.12  n = 276
 nppttl  Total Nonfarm Private Payroll Employment, Thous., SA
 M  2001.04 - 2014.12  n = 165
 cnp16ov  Civilian Noninstitutional Population, Thous. of Persons, NSA
@@ -135,12 +111,6 @@ unratensa  Civilian Unemployment Rate, %, NSA
 M  1948.01 - 2014.12  n = 804
 uempmean  Average (Mean) Duration of Unemployment, Weeks, SA
 M  1948.01 - 2014.12  n = 804
-ces0000000010  Women Employees: Total Nonfarm, Thous. of Persons, SA
-M  1964.01 - 2014.12  n = 612
-ces0000000039  Women Employees-To-All Employees Ratio: Total Nonfarm, %, SA
-M  1964.01 - 2014.12  n = 612
-ceu0000000010  Women Employees: Total Nonfarm, Thous. of Persons, NSA
-M  1964.01 - 2014.12  n = 612
 payems  All Employees: Total nonfarm, Thous. of Persons, SA
 M  1939.01 - 2014.12  n = 912
 paynsa  All Employees: Total nonfarm, Thous. of Persons, NSA
@@ -1858,7 +1828,7 @@ Q  1947.1 - 2014.3  n = 271
 prs88003203  Nonfinancial Corporations Sector: Total Unit Costs, 2009=100, SA
 Q  1947.1 - 2014.3  n = 271
 mich  University of Michigan Inflation Expectation, %, NSA
-M  1978.01 - 2014.11  n = 443
+M  1978.01 - 2014.12  n = 444
 acoilbrenteu  Crude Oil Prices: Brent - Europe, $ per Barrel, NSA
 A  1987 - 2013  n = 27
 acoilwtico  Crude Oil Prices: West Texas Intermediate (WTI) - Cushing, Oklahoma, $ per Barrel, NSA
@@ -1942,31 +1912,31 @@ M  1992.06 - 2014.12  n = 271
 gasregwcm  PADD V (West Coast District) Regular All Formulations Gas Price, $ per Gallon, NSA
 M  1992.06 - 2014.12  n = 271
 mcoilbrenteu  Crude Oil Prices: Brent - Europe, $ per Barrel, NSA
-M  1987.05 - 2014.11  n = 331
+M  1987.05 - 2014.12  n = 332
 mcoilwtico  Crude Oil Prices: West Texas Intermediate (WTI) - Cushing, Oklahoma, $ per Barrel, NSA
-M  1986.01 - 2014.11  n = 347
+M  1986.01 - 2014.12  n = 348
 mdfuella  Ultra-Low-Sulfur No. 2 Diesel Fuel Prices: Los Angeles, $ per Gallon, NSA
-M  1996.04 - 2014.11  n = 224
+M  1996.04 - 2014.12  n = 225
 mdfuelnyh  Ultra-Low-Sulfur No. 2 Diesel Fuel Prices: New York Harbor, $ per Gallon, NSA
-M  2006.06 - 2014.11  n = 102
+M  2006.06 - 2014.12  n = 103
 mdfuelusgulf  Ultra-Low-Sulfur No. 2 Diesel Fuel Prices: U.S. Gulf Coast, $ per Gallon, NSA
-M  2006.06 - 2014.11  n = 102
+M  2006.06 - 2014.12  n = 103
 mgasnyh  Conventional Gasoline Prices: New York Harbor, Regular, $ per Gallon, NSA
-M  1986.06 - 2014.11  n = 342
+M  1986.06 - 2014.12  n = 343
 mgasusgulf  Conventional Gasoline Prices: U.S. Gulf Coast, Regular, $ per Gallon, NSA
-M  1986.06 - 2014.11  n = 342
+M  1986.06 - 2014.12  n = 343
 mhoilnyh  No. 2 Heating Oil Prices: New York Harbor, $ per Gallon, NSA
-M  1986.06 - 2014.11  n = 342
+M  1986.06 - 2014.12  n = 343
 mjfuelusgulf  Kerosene-Type Jet Fuel Prices: U.S. Gulf Coast, $ per Gallon, NSA
-M  1990.04 - 2014.11  n = 296
+M  1990.04 - 2014.12  n = 297
 mpropanembtx  Propane Prices: Mont Belvieu, Texas, $ per Gallon, NSA
-M  1992.06 - 2014.11  n = 270
+M  1992.06 - 2014.12  n = 271
 mrgasla  Reformulated Gasoline Blendstock for Oxygenate Blending (RBOB) Prices: Regular Gasoline: Los Angeles, $ per Gallon, NSA
-M  2003.06 - 2014.11  n = 138
+M  2003.06 - 2014.12  n = 139
 cpiaucns  Consumer Price Index for All Urban Consumers: All Items, 1982-84=100, NSA
-M  1913.01 - 2014.11  n = 1223
+M  1913.01 - 2014.12  n = 1224
 cpiaucsl  Consumer Price Index for All Urban Consumers: All Items, 1982-84=100, SA
-M  1947.01 - 2014.11  n = 815
+M  1947.01 - 2014.12  n = 816
 jcxfe  Personal Consumption Expenditures: Chain-type Price Index Less Food and Energy, 2009=100, SA
 Q  1959.1 - 2014.3  n = 223
 pcectpi  Personal Consumption Expenditures: Chain-type Price Index, 2009=100, SA
@@ -1976,57 +1946,57 @@ M  1959.01 - 2014.11  n = 671
 pcepilfe  Personal Consumption Expenditures Excluding Food and Energy (Chain-Type Price Index), 2009=100, SA
 M  1959.01 - 2014.11  n = 671
 cpifabns  Consumer Price Index for All Urban Consumers: Food and Beverages, 1982-84=100, NSA
-M  1967.01 - 2014.11  n = 575
+M  1967.01 - 2014.12  n = 576
 cpifabsl  Consumer Price Index for All Urban Consumers: Food and Beverages, 1982-84=100, SA
-M  1967.01 - 2014.11  n = 575
+M  1967.01 - 2014.12  n = 576
 cpiufdns  Consumer Price Index for All Urban Consumers: Food, 1982-84=100, NSA
-M  1913.01 - 2014.11  n = 1223
+M  1913.01 - 2014.12  n = 1224
 cpiufdsl  Consumer Price Index for All Urban Consumers: Food, 1982-84=100, SA
-M  1947.01 - 2014.11  n = 815
+M  1947.01 - 2014.12  n = 816
 cpihosns  Consumer Price Index for All Urban Consumers: Housing, 1982-84=100, NSA
-M  1967.01 - 2014.11  n = 575
+M  1967.01 - 2014.12  n = 576
 cpihossl  Consumer Price Index for All Urban Consumers: Housing, 1982-84=100, SA
-M  1967.01 - 2014.11  n = 575
+M  1967.01 - 2014.12  n = 576
 cpiappns  Consumer Price Index for All Urban Consumers: Apparel, 1982-84=100, NSA
-M  1914.12 - 2014.11  n = 1200
+M  1914.12 - 2014.12  n = 1201
 cpiappsl  Consumer Price Index for All Urban Consumers: Apparel, 1982-84=100, SA
-M  1947.01 - 2014.11  n = 815
+M  1947.01 - 2014.12  n = 816
 cpitrnns  Consumer Price Index for All Urban Consumers: Transportation, 1982-84=100, NSA
-M  1935.03 - 2014.11  n = 957
+M  1935.03 - 2014.12  n = 958
 cpitrnsl  Consumer Price Index for All Urban Consumers: Transportation, 1982-84=100, SA
-M  1947.01 - 2014.11  n = 815
+M  1947.01 - 2014.12  n = 816
 cpimedns  Consumer Price Index for All Urban Consumers: Medical Care, 1982-84=100, NSA
-M  1935.03 - 2014.11  n = 957
+M  1935.03 - 2014.12  n = 958
 cpimedsl  Consumer Price Index for All Urban Consumers: Medical Care, 1982-84=100, SA
-M  1947.01 - 2014.11  n = 815
+M  1947.01 - 2014.12  n = 816
 cpirecns  Consumer Price Index for All Urban Consumers: Recreation, Dec 1997=100, NSA
-M  1993.01 - 2014.11  n = 263
+M  1993.01 - 2014.12  n = 264
 cpirecsl  Consumer Price Index for All Urban Consumers: Recreation, Dec 1997=100, SA
-M  1993.01 - 2014.11  n = 263
+M  1993.01 - 2014.12  n = 264
 cpieduns  Consumer Price Index for All Urban Consumers: Education & Communication, Dec 1997=100, NSA
-M  1993.01 - 2014.11  n = 263
+M  1993.01 - 2014.12  n = 264
 cpiedusl  Consumer Price Index for All Urban Consumers: Education and Communication, Dec 1997=100, SA
-M  1993.01 - 2014.11  n = 263
+M  1993.01 - 2014.12  n = 264
 cpiogsns  Consumer Price Index for All Urban Consumers: Other Goods and Services, 1982-84=100, NSA
-M  1967.01 - 2014.11  n = 575
+M  1967.01 - 2014.12  n = 576
 cpiogssl  Consumer Price Index for All Urban Consumers: Other Goods and Services, 1982-84=100, SA
-M  1967.01 - 2014.11  n = 575
+M  1967.01 - 2014.12  n = 576
 cpiengns  Consumer Price Index for All Urban Consumers: Energy, 1982-84=100, NSA
-M  1957.01 - 2014.11  n = 695
+M  1957.01 - 2014.12  n = 696
 cpiengsl  Consumer Price Index for All Urban Consumers: Energy, 1982-84=100, SA
-M  1957.01 - 2014.11  n = 695
+M  1957.01 - 2014.12  n = 696
 cpilegns  Consumer Price Index for All Urban Consumers: All Items Less Energy, 1982-84=100, NSA
-M  1957.01 - 2014.11  n = 695
+M  1957.01 - 2014.12  n = 696
 cpilegsl  Consumer Price Index for All Urban Consumers: All Items Less Energy, 1982-84=100, SA
-M  1957.01 - 2014.11  n = 695
+M  1957.01 - 2014.12  n = 696
 cpilfens  Consumer Price Index for All Urban Consumers: All Items Less Food & Energy, 1982-84=100, NSA
-M  1957.01 - 2014.11  n = 695
+M  1957.01 - 2014.12  n = 696
 cpilfesl  Consumer Price Index for All Urban Consumers: All Items Less Food & Energy, 1982-84=100, SA
-M  1957.01 - 2014.11  n = 695
+M  1957.01 - 2014.12  n = 696
 cpiulfns  Consumer Price Index for All Urban Consumers: All Items Less Food, 1982-84=100, NSA
-M  1935.03 - 2014.11  n = 957
+M  1935.03 - 2014.12  n = 958
 cpiulfsl  Consumer Price Index for All Urban Consumers: All Items Less Food, 1982-84=100, SA
-M  1947.01 - 2014.11  n = 815
+M  1947.01 - 2014.12  n = 816
 eciben  Employment Cost Index: Benefits: Private Industry Workers, Index: Dec 2005=100, SA
 Q  2001.1 - 2014.3  n = 55
 ecicom  Employment Cost Index: Compensation: Private Industry Workers, Index: Dec 2005=100, SA
@@ -2056,41 +2026,41 @@ Q  2001.1 - 2014.3  n = 55
 eciwag  Employment Cost Index: Wages & Salaries: Private Industry Workers, Index: Dec 2005=100, SA
 Q  2001.1 - 2014.3  n = 55
 pfcgef  Producer Price Index: Finished Consumer Goods Excluding Foods, 1982=100, SA
-M  1947.04 - 2014.11  n = 812
+M  1947.04 - 2014.12  n = 813
 ppiaco  Producer Price Index: All Commodities, 1982=100, NSA
-M  1913.01 - 2014.11  n = 1223
+M  1913.01 - 2014.12  n = 1224
 ppicem  Producer Price Index: Crude Energy Materials, 1982=100, NSA
-M  1974.01 - 2014.11  n = 491
+M  1974.01 - 2014.12  n = 492
 ppicff  Producer Price Index: Crude Foodstuffs & Feedstuffs, 1982=100, SA
-M  1969.01 - 2014.11  n = 551
+M  1969.01 - 2014.12  n = 552
 ppicpe  Producer Price Index: Finished Goods: Capital Equipment, 1982=100, SA
-M  1947.04 - 2014.11  n = 812
+M  1947.04 - 2014.12  n = 813
 ppicrm  Producer Price Index: Crude Materials for Further Processing, 1982=100, SA
-M  1947.04 - 2014.11  n = 812
+M  1947.04 - 2014.12  n = 813
 ppieng  Producer Price Index: Fuels & Related Products & Power, 1982=100, NSA
-M  1926.01 - 2014.11  n = 1067
+M  1926.01 - 2014.12  n = 1068
 ppifcf  Producer Price Index: Finished Consumer Foods, 1982=100, SA
-M  1947.04 - 2014.11  n = 812
+M  1947.04 - 2014.12  n = 813
 ppifcg  Producer Price Index: Finished Consumer Goods, 1982=100, SA
-M  1947.04 - 2014.11  n = 812
+M  1947.04 - 2014.12  n = 813
 ppifeg  Producer Price Index: Finished Energy Goods, 1982=100, SA
-M  1974.01 - 2014.11  n = 491
+M  1974.01 - 2014.12  n = 492
 ppifgs  Producer Price Index: Finished Goods, 1982=100, SA
-M  1947.04 - 2014.11  n = 812
+M  1947.04 - 2014.12  n = 813
 ppifle  Producer Price Index: Finished Goods Less Energy, 1982=100, SA
-M  1975.01 - 2014.11  n = 479
+M  1975.01 - 2014.12  n = 480
 ppiflf  Producer Price Index: Finished Goods Excluding Foods, 1982=100, SA
-M  1967.01 - 2014.11  n = 575
+M  1967.01 - 2014.12  n = 576
 ppiidc  Producer Price Index: Industrial Commodities, 1982=100, NSA
-M  1913.01 - 2014.11  n = 1223
+M  1913.01 - 2014.12  n = 1224
 ppiieg  Producer Price Index: Intermediate Energy Goods, 1982=100, SA
-M  1974.01 - 2014.11  n = 491
+M  1974.01 - 2014.12  n = 492
 ppiiff  Producer Price Index: Intermediate Foods & Feeds, 1982=100, SA
-M  1967.01 - 2014.11  n = 575
+M  1967.01 - 2014.12  n = 576
 ppiitm  Producer Price Index: Intermediate Materials: Supplies & Components, 1982=100, SA
-M  1947.04 - 2014.11  n = 812
+M  1947.04 - 2014.12  n = 813
 ppilfe  Producer Price Index: Finished Goods Less Food & Energy, 1982=100, SA
-M  1974.01 - 2014.11  n = 491
+M  1974.01 - 2014.12  n = 492
 atxrnsa  S&P/Case-Shiller GA-Atlanta Home Price Index, Jan 2000 = 100, NSA
 M  1991.01 - 2014.10  n = 286
 atxrsa  S&P/Case-Shiller GA-Atlanta Home Price Index, Jan 2000 = 100, SA
@@ -2179,62 +2149,10 @@ wdxrnsa  S&P/Case-Shiller DC-Washington Home Price Index, Jan 2000 = 100, NSA
 M  1987.01 - 2014.10  n = 334
 wdxrsa  S&P/Case-Shiller DC-Washington Home Price Index, Jan 2000 = 100, SA
 M  1987.01 - 2014.10  n = 334
-ic131  Services Inbound Index: Inbound Air Freight, 2000=100, NSA
-M  1990.09 - 2014.11  n = 291
-ic1311  Services Inbound Index: Europe, Dec 2003=100, NSA
-M  2003.12 - 2014.11  n = 132
-ic1312  Services Inbound Index: Asia, 2000=100, NSA
-M  1990.09 - 2014.11  n = 291
-ih142  Services Export Index: Export Air Passenger Fares, 2000=100, NSA
-M  1986.09 - 2014.11  n = 339
-ih1421  Services Export Index: Export Air Passenger Fares - Europe, 2000=100, NSA
-M  1994.03 - 2014.11  n = 249
-ih14211  Services Export Index: Export Air Passenger Fares - United Kingdom, Dec 2002=100, NSA
-M  2002.12 - 2014.11  n = 144
-ih14212  Services Export Index: Export Air Passenger Fares - Other Europe, Dec 2002=100, NSA
-M  2002.12 - 2014.11  n = 144
-ih1422  Services Export Index: Export Air Passenger Fares - Asia, 2000=100, NSA
-M  1994.03 - 2014.11  n = 249
-ih14221  Services Export Index: Export Air Passenger Fares - Japan, 2000=100, NSA
-M  1994.03 - 2014.11  n = 249
-ih14222  Services Export Index: Export Air Passenger Fares - Other Asia, Dec 2009=100, NSA
-M  2009.12 - 2014.11  n = 60
-ih1424  Services Export Index: Export Air Passenger Fares - Latin America/Caribbean, 2000=100, NSA
-M  1986.09 - 2014.11  n = 339
-ih14243  Services Export Index: Export Air Passenger Fares - Central/South America, Dec 2009=100, NSA
-M  2009.12 - 2014.11  n = 60
-ih231  Services Export Index: Export Air Freight, 2000=100, NSA
-M  1996.12 - 2014.11  n = 216
-ih2311  Services Export Index: Europe, Dec 2006=100, NSA
-M  2006.12 - 2014.11  n = 96
-is231  Services Outbound Index: Outbound Air Freight, 2000=100, NSA
-M  1992.09 - 2014.11  n = 267
-is2311  Services Outbound Index: Europe, Dec 2003=100, NSA
-M  2003.12 - 2014.11  n = 132
-is2312  Services Outbound Index: Asia, 2000=100, NSA
-M  1992.09 - 2014.11  n = 267
-iv131  Services Import Index: Import Air Freight, 2000=100, NSA
-M  1990.09 - 2014.11  n = 291
-iv1311  Services Import Index: Import Air Freight - Europe, Dec 2003=100, NSA
-M  2003.12 - 2014.11  n = 132
-iv1312  Services Import Index: Import Air Freight - Asia, 2000=100, NSA
-M  1990.09 - 2014.11  n = 291
-iv142  Services Import Index: Import Air Passenger Fares, 2000=100, NSA
-M  1988.03 - 2014.11  n = 321
-iv1421  Services Import Index: Import Air Passenger Fares - Europe, 2000=100, NSA
-M  1996.12 - 2014.11  n = 216
-iv14211  Services Import Index: Import Air Passenger Fares - United Kingdom, Dec 2002=100, NSA
-M  2002.12 - 2014.11  n = 144
-iv14212  Services Import Index: Import Air Passenger Fares - Other Europe, Dec 2002=100, NSA
-M  2002.12 - 2014.11  n = 144
-iv1422  Services Import Index: Import Air Passenger Fares - Asia, 2000=100, NSA
-M  1996.12 - 2014.11  n = 216
-iv1424  Services Import Index: Import Air Passenger Fares - Latin America/Caribbean, 2000=100, NSA
-M  1988.03 - 2014.11  n = 321
 busloans  Commercial and Industrial Loans, All Commercial Banks, Bil. of U.S. $, SA
 M  1947.01 - 2014.12  n = 816
 consumer  Consumer Loans at All Commercial Banks, Bil. of U.S. $, SA
-M  1947.01 - 2014.12  n = 816
+M  1957.12 - 2014.12  n = 685
 invest  Securities in Bank Credit at All Commercial Banks, Bil. of U.S. $, SA
 M  1947.01 - 2014.12  n = 816
 loaninv  Bank Credit at All Commercial Banks, Bil. of U.S. $, SA
@@ -2249,16 +2167,6 @@ usgsec  Treasury and Agency Securities at All Commercial Banks, Bil. of U.S. $, 
 M  1947.01 - 2014.12  n = 816
 eqta  Total Equity to Total Assets for Banks, %, NSA
 Q  1988.1 - 2014.3  n = 107
-eqta1  Total Equity to Total Assets, Banks with Total Assets up to $300M, %, NSA
-Q  1988.1 - 2014.3  n = 107
-eqta2  Total Equity to Total Assets, Banks with Total Assets from $300M to $1B, %, NSA
-Q  1988.1 - 2014.3  n = 107
-eqta3  Total Equity to Total Assets, Banks with Total Assets from $1B to $10B, %, NSA
-Q  1988.1 - 2014.3  n = 107
-eqta4  Total Equity to Total Assets, Banks with Total Assets from $10B to $20B, %, NSA
-Q  1988.1 - 2014.3  n = 107
-eqta5  Total Equity to Total Assets, Banks with Total Assets over $20B, %, NSA
-Q  1988.1 - 2014.3  n = 107
 freq  Banks, Number, NSA
 Q  1988.1 - 2014.3  n = 107
 freq1  Banks with Total Assets up to $300M, Number, NSA
@@ -2271,50 +2179,10 @@ freq4  Banks with Total Assets from $10B to $20B, Number, NSA
 Q  1988.1 - 2014.3  n = 107
 freq5  Banks with Total Assets over $20B, Number, NSA
 Q  1988.1 - 2014.3  n = 107
-llrnpt  Assets at Banks whose ALLL exceeds their Nonperforming Loans, %, NSA
-Q  1988.1 - 2014.3  n = 107
-llrnpt1  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets up to $300M, %, NSA
-Q  1988.1 - 2014.3  n = 107
-llrnpt2  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets from $300M to $1B, %, NSA
-Q  1988.1 - 2014.3  n = 107
-llrnpt3  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets from $1B to $10B, %, NSA
-Q  1988.1 - 2014.3  n = 107
-llrnpt4  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets from $10B to $20B, %, NSA
-Q  1988.1 - 2014.3  n = 107
-llrnpt5  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets over $20B, %, NSA
-Q  1988.1 - 2014.3  n = 107
 ncotot  Total Net Loan Charge-offs to Total Loans for Banks, %, NSA
 Q  1988.1 - 2014.3  n = 107
 nptltl  Nonperforming Total Loans (past due 90+ days plus nonaccrual) to Total Loans, %, NSA
 Q  1988.1 - 2014.3  n = 107
-usg15llrtl  Loan Loss Reserve to Total Loans for U.S. Banks with average assets greater than $15B, %, NSA
-Q  1984.1 - 2014.3  n = 123
-usg15lstl  Net Loan Losses to Average Total Loans for U.S. Banks with average assets greater than $15B, %, NSA
-Q  1984.1 - 2014.3  n = 123
-usg15nim  Net Interest Margin for U.S. Banks with average assets greater than $15B, %, NSA
-Q  1984.1 - 2014.3  n = 123
-usg15nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) to Total Loans for U.S. Banks with average assets greater than $15B, %, NSA
-Q  1984.1 - 2014.3  n = 123
-usg15num  Commercial Banks in the U.S. with average assets greater than $15B, Number, NSA
-Q  1984.1 - 2014.3  n = 123
-usg15roa  Return on Average Assets for U.S. Banks with average assets greater than $15B, %, NSA
-Q  1984.1 - 2014.3  n = 123
-usg15roe  Return on Average Equity for U.S. Banks with average assets greater than $15B, %, NSA
-Q  1984.1 - 2014.3  n = 123
-usl15llrtl  Loan Loss Reserve to Total Loans for U.S. Banks with average assets less than $15B, %, NSA
-Q  1984.1 - 2014.3  n = 123
-usl15lstl  Net Loan Losses to Average Total Loans for U.S. Banks with average assets less than $15B, %, NSA
-Q  1984.1 - 2014.3  n = 123
-usl15nim  Net Interest Margin for U.S. Banks with average assets less than $15B, %, NSA
-Q  1984.1 - 2014.3  n = 123
-usl15nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) to Total Loans for U.S. Banks with average assets less than $15B, %, NSA
-Q  1984.1 - 2014.3  n = 123
-usl15num  Commercial Banks in the U.S. with average assets less than $15B, Number, NSA
-Q  1984.1 - 2014.3  n = 123
-usl15roa  Return on Average Assets for U.S. Banks with average assets less than $15B, %, NSA
-Q  1984.1 - 2014.3  n = 123
-usl15roe  Return on Average Equity for U.S. Banks with average assets less than $15B, %, NSA
-Q  1984.1 - 2014.3  n = 123
 usllrtl  Loan Loss Reserve to Total Loans for all U.S. Banks, %, NSA
 Q  1984.1 - 2014.3  n = 123
 uslstl  Net Loan Losses to Average Total Loans for all U.S. Banks, %, NSA
@@ -2369,40 +2237,6 @@ totalsl  Total Consumer Credit Owned and Securitized, Outstanding, Bil. of $, SA
 M  1943.01 - 2014.11  n = 863
 totaltcu  Total Consumer Loans Owned by Credit Unions, Outstanding, Bil. of $, NSA
 M  1943.01 - 2014.11  n = 863
-driscflm  Net Percentage of Domestic Banks Increasing Spreads of Loan Rates over Banks' Cost of Funds to Large and Middle-Market Firms, %, NSA
-Q  1990.2 - 2014.4  n = 99
-driscfs  Net Percentage of Domestic Banks Increasing Spreads of Loan Rates over Banks' Cost of Funds to Small Firms, %, NSA
-Q  1990.2 - 2014.4  n = 99
-driwcil  Net Percentage of Domestic Banks Reporting Increased Willingness to Make Consumer Installment Loans, %, NSA
-Q  1982.2 - 2014.4  n = 131
-drsdcilm  Net Percentage of Domestic Banks Reporting Stronger Demand for Commercial and Industrial Loans from Large and Middle-Market Firms, %, NSA
-Q  1991.4 - 2014.4  n = 93
-drsdcis  Net Percentage of Domestic Banks Reporting Stronger Demand for Commercial and Industrial Loans from Small Firms, %, NSA
-Q  1991.4 - 2014.4  n = 93
-drsdcrel  Net Percentage of Domestic Banks Reporting Stronger Demand for Commercial Real Estate Loans, %, NSA
-Q  1995.2 - 2013.3  n = 74
-drsdnt  Net Percentage of Domestic Banks Reporting Stronger Demand for Nontraditional Mortgage Loans, %, NSA
-Q  2007.2 - 2014.4  n = 31
-drsdpm  Net Percentage of Domestic Banks Reporting Stronger Demand for Prime Mortgage Loans, %, NSA
-Q  2007.2 - 2014.4  n = 31
-drsdsp  Net Percentage of Domestic Banks Reporting Stronger Demand for Subprime Mortgage Loans, %, NSA
-Q  2007.2 - 2014.4  n = 31
-drtscilm  Net Percentage of Domestic Banks Tightening Standards for Commercial and Industrial Loans to Large and Middle-Market Firms, %, NSA
-Q  1990.2 - 2014.4  n = 99
-drtscis  Net Percentage of Domestic Banks Tightening Standards for Commercial and Industrial Loans to Small Firms, %, NSA
-Q  1990.2 - 2014.4  n = 99
-drtsclcc  Net Percentage of Domestic Banks Tightening Standards on Consumer Loans, Credit Cards, %, NSA
-Q  1996.1 - 2014.4  n = 76
-drtscocl  Net Percentage of Domestic Banks Tightening Standards for Consumer Loans Excluding Credit Card, %, NSA
-Q  1996.1 - 2011.1  n = 61
-drtscrel  Net Percentage of Domestic Banks Tightening Standards for Commercial Real Estate Loans, %, NSA
-Q  1990.3 - 2013.3  n = 93
-drtsnt  Net Percentage of Domestic Banks Tightening Standards for Nontraditional Mortgage Loans, %, NSA
-Q  2007.2 - 2014.4  n = 31
-drtspm  Net Percentage of Domestic Banks Tightening Standards for Prime Mortgage Loans, %, NSA
-Q  2007.2 - 2014.4  n = 31
-drtssp  Net Percentage of Domestic Banks Tightening Standards for Subprime Mortgage Loans, %, NSA
-Q  2007.2 - 2014.4  n = 31
 exbzus  Brazil / U.S. Foreign Exchange Rate, Brazilian Reals to  1 U.S. $, NSA
 M  1995.01 - 2015.01  n = 241
 excaus  Canada / U.S. Foreign Exchange Rate, Canadian $ to  1 U.S. $, NSA
@@ -2510,7 +2344,7 @@ A  1973 - 2014  n = 42
 kcfsi  Kansas City Financial Stress Index, Index, NSA
 M  1990.02 - 2014.11  n = 298
 umcsent  University of Michigan: Consumer Sentiment, 1st Qtr. 1966=100, NSA
-M  1978.01 - 2014.06  n = 438
+M  1978.01 - 2014.07  n = 439
 cpf1m  1-Month AA Financial Commercial Paper Rate, %, NSA
 M  1997.01 - 2014.12  n = 216
 cpf2m  2-Month AA Financial Commercial Paper Rate, %, NSA
@@ -2640,13 +2474,13 @@ M  1918.01 - 2014.12  n = 1164
 ambsl  St. Louis Adjusted Monetary Base, Bil. of $, SA
 M  1918.01 - 2014.12  n = 1164
 ram  Reserve Adjustment Magnitude (RAM), Bil. of $, NSA
-M  1980.10 - 2014.12  n = 411
+M  1980.10 - 2015.01  n = 412
 sbasens  St. Louis Source Base, Bil. of $, NSA
 M  1918.01 - 2014.12  n = 1164
 adjresns  St. Louis Adjusted Reserves, Bil. of $, NSA
-M  1918.01 - 2014.11  n = 1163
+M  1918.01 - 2014.12  n = 1164
 adjressl  St. Louis Adjusted Reserves, Bil. of $, SA
-M  1918.01 - 2014.11  n = 1163
+M  1918.01 - 2014.12  n = 1164
 reqresns  Required Reserves of Depository Institutions, Bil. of $, NSA
 M  1959.01 - 2014.12  n = 672
 resbalns  Total Reserve Balances Maintained with Federal Reserve Banks, Bil. of $, NSA
@@ -2656,117 +2490,117 @@ M  1959.01 - 2014.12  n = 672
 vault  Vault Cash Used to Satisfy Required Reserves, Bil. of $, NSA
 M  1959.11 - 2014.12  n = 662
 currdd  Currency Component of M1 Plus Demand Deposits, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 currns  Currency Component of M1, Bil. of $, NSA
-M  1947.01 - 2014.11  n = 815
+M  1947.01 - 2014.12  n = 816
 currsl  Currency Component of M1, Bil. of $, SA
-M  1947.01 - 2014.11  n = 815
+M  1947.01 - 2014.12  n = 816
 demdepns  Demand Deposits at Commercial Banks, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 demdepsl  Demand Deposits at Commercial Banks, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 m1ns  M1 Money Stock, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 m1sl  M1 Money Stock, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 ocdcbn  Other Checkable Deposits at Commercial Banks, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 ocdcbs  Other Checkable Deposits at Commercial Banks, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 ocdns  Other Checkable Deposits, Bil. of $, NSA
-M  1963.01 - 2014.11  n = 623
+M  1963.01 - 2014.12  n = 624
 ocdsl  Other Checkable Deposits, Bil. of $, SA
-M  1963.01 - 2014.11  n = 623
+M  1963.01 - 2014.12  n = 624
 ocdtin  Other Checkable Deposits at Thrift Institutions, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 ocdtis  Other Checkable Deposits at Thrift Institutions, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 tcdns  Total Checkable Deposits, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 tcdsl  Total Checkable Deposits, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 tvcksns  Travelers Checks Outstanding, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 tvckssl  Travelers Checks Outstanding, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 m2ns  M2 Money Stock, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 m2own  M2 Own Rate, %, NSA
 M  1959.04 - 2014.12  n = 669
 m2sl  M2 Money Stock, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 msim2  Monetary Services Index: M2 (preferred), Bil. of $, SA
 M  1967.01 - 2013.12  n = 564
 nom1m2  Non-M1 Components of M2, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 nom1m2n  Non-M1 Components of M2, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 rmfns  Retail Money Funds, Bil. of $, NSA
-M  1973.11 - 2014.11  n = 493
+M  1973.11 - 2014.12  n = 494
 rmfsl  Retail Money Funds, Bil. of $, SA
-M  1973.11 - 2014.11  n = 493
+M  1973.11 - 2014.12  n = 494
 savingns  Savings Deposits - Total, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 savingsl  Savings Deposits - Total, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 stdcbns  Small Time Deposits at Commercial Banks, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 stdcbsl  Small Time Deposits at Commercial Banks, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 stdns  Small Time Deposits - Total, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 stdsl  Small Time Deposits - Total, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 stdti  Small Time Deposits at Thrift Institutions, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 stdtns  Small Time Deposits at Thrift Institutions, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 svgcbns  Savings Deposits at Commercial Banks, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 svgcbsl  Savings Deposits at Commercial Banks, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 svgti  Savings Deposits at Thrift Institutions, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 svgtns  Savings Deposits at Thrift Institutions, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 svstcbns  Savings and Small Time Deposits at Commercial Banks, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 svstcbsl  Savings and Small Time Deposits at Commercial Banks, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 svstns  Savings and Small Time Deposits - Total, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 svstsl  Savings and Small Time Deposits - Total, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 m2mns  M2 Less Small Time Deposits, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 m2mown  M2 Minus Own Rate, %, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 m2msl  M2 Less Small Time Deposits, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 imfns  Institutional Money Funds, Bil. of $, NSA
-M  1974.01 - 2014.11  n = 491
+M  1974.01 - 2014.12  n = 492
 imfsl  Institutional Money Funds, Bil. of $, SA
-M  1974.01 - 2014.11  n = 491
+M  1974.01 - 2014.12  n = 492
 mzmns  MZM Money Stock, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 mzmown  MZM Own Rate, %, NSA
-M  1974.01 - 2014.11  n = 491
+M  1974.01 - 2014.12  n = 492
 mzmsl  MZM Money Stock, Bil. of $, SA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 dddfcbns  Demand Deposits Due to Foreign Commercial Banks, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 dddfoins  Demand Deposits Due to Foreign Official Institutions, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 ira  IRA and Keogh Accounts - Total, Bil. of $, NSA
-M  1962.11 - 2014.11  n = 625
+M  1962.11 - 2014.12  n = 626
 iracb  IRA and Keogh Accounts at Commercial Banks, Bil. of $, NSA
-M  1967.12 - 2014.11  n = 564
+M  1967.12 - 2014.12  n = 565
 nbcb  U.S. Government Note Balances at Depository Institutions, Bil. of $, NSA
-M  1978.11 - 2014.11  n = 433
+M  1978.11 - 2014.12  n = 434
 usgdcb  U.S. Government Demand Deposits at Commercial Banks, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 usgvddns  U.S. Government Demand Deposits and Note Balances - Total, Bil. of $, NSA
-M  1959.01 - 2014.11  n = 671
+M  1959.01 - 2014.12  n = 672
 m1v  Velocity of M1 Money Stock, Ratio, SA
 Q  1959.1 - 2014.3  n = 223
 m2v  Velocity of M2 Money Stock, Ratio, SA
@@ -3021,68 +2855,6 @@ slinvc96  Real State & Local Government: Gross Investment, Bil. of Chn. 2009 $, 
 Q  1999.1 - 2014.3  n = 63
 tgdef  Net Government Saving, Bil. of $, SAAR
 Q  1947.1 - 2014.3  n = 271
-usalclictax  State Government Tax Collections, Alcoholic Beverages Licenses in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usalcotax  State Government Tax Collections, Alcoholic Beverages - Selective Sales Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usamslictax  State Government Tax Collections, Amusements Licenses in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usamustax  State Government Tax Collections, Amusements - Selective Sales Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usbuslictax  State Government Tax Collections, Occupation and Business Licenses in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-uscorpinctx  State Government Tax Collections, Corporation Net Income Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-uscorplictax  State Government Tax Collections, Corporations in General Licenses in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usdocutax  State Government Tax Collections, Documentary and Stock Transfer Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usdthgftax  State Government Tax Collections, Death and Gift Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usfueltax  State Government Tax Collections, Motor Fuels - Selective Sales Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-ushuntlictax  State Government Tax Collections, Hunting and Fishing Licenses in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usinctax  State Government Tax Collections, Individual Income Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usinsurtax  State Government Tax Collections, Insurance Premiums - Selective Sales Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usmotolictax  State Government Tax Collections, Motor Vehicle Licenses in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usmvopertax  State Government Tax Collections, Motor Vehicle Operators Licenses in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usnoclstax  State Government Tax Collections, Taxes Not Elsewhere Classified in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usothlictax  State Government Tax Collections, Other License Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usothslstax  State Government Tax Collections, Other Selective Sales and Gross Receipts Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usparitax  State Government Tax Collections, Pari-Mutuels - Selective Sales Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usproptax  State Government Tax Collections, Property Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-ussalestax  State Government Tax Collections, General Sales and Gross Receipts Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usslgrtax  State Government Tax Collections, Total Sales and Gross Receipts Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-ussvrnctax  State Government Tax Collections, Severance Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-ustlinctax  State Government Tax Collections, Total Income Taxes in the United States, Thous. of $, NSA
-A  2005 - 2013  n = 9
-ustllictax  State Government Tax Collections, Total License Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-ustlothtax  State Government Tax Collections, Total Other Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-ustlsltax  State Government Tax Collections, Total Selective Sales Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-ustobactax  State Government Tax Collections, Tobacco Products - Selective Sales Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-ustotltax  State Government Tax Collections, Total Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usutilitax  State Government Tax Collections, Public Utilities - Selective Sales Taxes in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
-usutillictax  State Government Tax Collections, Public Utilities Licenses in the United States, Thous. of $, NSA
-A  1992 - 2013  n = 22
 a038rc1  Compensation of Employees, Received: Supplements to Wages and Salaries, Bil. of $, SAAR
 M  1959.01 - 2014.11  n = 671
 a041rc1  Proprietors' income with inventory valuation and capital consumption adjustments, Bil. of $, SAAR
@@ -3195,6 +2967,12 @@ w211rc1  Personal current transfer payments, Bil. of $, SAAR
 M  1959.01 - 2014.11  n = 671
 w875rx1  Real personal income excluding current transfer receipts, Bil. of Chn. 2009 $, SAAR
 M  1959.01 - 2014.11  n = 671
+gdpdef  Gross domestic product (implicit price deflator), 2009=100, NSA
+A  1929 - 2013  n = 85
+gdppidxca  Gross domestic product (chain-type price index), 2009=100, NSA
+A  1929 - 2013  n = 85
+gdppidxq  Gross domestic product (chain-type price index), 2009=100, SA
+Q  1947.1 - 2014.3  n = 271
 ccfc  Corporate: Consumption of Fixed Capital, Bil. of $, SAAR
 Q  1947.1 - 2014.3  n = 271
 civa  Corporate Inventory Valuation Adjustment, Bil. of $, SAAR
@@ -3269,7 +3047,7 @@ bopgtb  Trade Balance: Goods, Balance of Payments Basis, Mil. of $, SA
 M  1992.01 - 2014.11  n = 275
 bopstb  Trade Balance: Services, Balance of Payments Basis, Mil. of $, SA
 M  1992.01 - 2014.11  n = 275
-bopia  Foreign-owned assets in the US, excl. financial derivatives (increase/financial inflow (+)) (Discontinued Series), Bil. of $, NSA
+bopia  Foreign-owned assets in the US, excluding financial derivatives (increase/financial inflow (+)), Bil. of $, NSA
 A  1960 - 2013  n = 54
-bopin  Foreign-owned assets in the US, excl. financial derivatives (increase/financial inflow (+)) (Discontinued Series), Bil. of $, NSA
+bopin  Foreign-owned assets in the US, excluding financial derivatives (increase/financial inflow (+)), Bil. of $, NSA
 Q  1960.1 - 2014.1  n = 217
