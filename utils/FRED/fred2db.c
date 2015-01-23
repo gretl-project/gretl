@@ -50,6 +50,7 @@ typedef enum {
     DB_MAIN,
     DB_INTL,
     DB_JOLTS,
+    DB_TEST,
     DB_MAX
 } FREDdb;
 
@@ -502,12 +503,18 @@ static int get_series_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 	if (!err) {
 	    /* finalize the index entry */
 	    char stobs[16], endobs[16], sername[32];
+	    char *ustr = (char *) units;
 
 	    lower(sername, (const char *) idstr);
 	    ymd_to_db_date(stobs, (const char *) start, pd, sername);
 	    ymd_to_db_date(endobs, (const char *) stop, pd, sername);
 
-	    fprintf(fidx, "%s  %s, %s", sername, title, units);
+	    if (!strncmp(ustr, "Index ", 6)) {
+		/* skip redundant bit which makes some lines too long */
+		ustr += 6;
+	    }
+
+	    fprintf(fidx, "%s  %s, %s", sername, title, ustr);
 	    if (adj != NULL && strcmp((const char *) adj, "NA")) {
 		fprintf(fidx, ", %s\n", adj);
 	    } else {
@@ -550,6 +557,7 @@ static void fb_indent (FREDbuf *fb)
 
     for (i=0; i<fb->indent; i++) {
 	putchar(' ');
+	putchar(' ');
     }
 }
 
@@ -562,6 +570,10 @@ static void fb_indent (FREDbuf *fb)
 static int skipcat (int id)
 {
     int skip = 0;
+
+    if (db_opt == DB_TEST) {
+	return 0;
+    }    
 
     if (db_opt == DB_JOLTS) {
 	return !is_jolts_id(id);
@@ -931,7 +943,7 @@ static int get_api_key (const char *keyopt)
    The following list of top-level categories can be updated via
    http://api.stlouisfed.org/fred/category/children?category_id=0&api_key=$KEY
 
-   As of 2012-02-01:
+   As of 2015-01-23:
 
    1     Production & Business Activity
    10    Population, Employment, & Labor Markets
@@ -940,6 +952,7 @@ static int get_api_key (const char *keyopt)
    32263 International Data
    32991 Money, Banking, & Finance
    32992 National Accounts
+   33060 Academic Data
 
    Also note: JOLTS is category 32241
 */
@@ -947,11 +960,6 @@ static int get_api_key (const char *keyopt)
 int main (int argc, char **argv)
 {
     FILE *fidx = NULL, *fbin = NULL;
-#if 0 /* testing: just personal income, expenditure */
-    int pi_cats[] = {
-	110, -1
-    };
-#else
     int main_cats[] = {
 	/* 1, 9, 10, 13, 15, 18, 22, 23, 24, 31, 45, 46, -1 */
 	1, 10, 32455, 32991, 32992, -1
@@ -961,8 +969,10 @@ int main (int argc, char **argv)
     };
     int jolts_cats[] = {
 	10, -1
+    };
+    int test_cats[] = {
+	32992, -1
     };    
-#endif
     int *topcats = main_cats;
     FREDbuf *fb = NULL;
     const char *keyfile = NULL;
@@ -983,6 +993,9 @@ int main (int argc, char **argv)
 	} else if (!strcmp(argv[i], "--jolts")) {
 	    topcats = jolts_cats;
 	    db_opt = DB_JOLTS;
+	} else if (!strcmp(argv[i], "--test")) {
+	    topcats = test_cats;
+	    db_opt = DB_TEST;
 	} else {
 	    fprintf(stderr, "%s: bad option '%s'\n", argv[0], argv[i]);
 	    exit(EXIT_FAILURE);
@@ -1005,6 +1018,9 @@ int main (int argc, char **argv)
 	    fidx = fopen("jolts.idx", "w");
 	    fbin = fopen("jolts.bin", "wb");
 	    whitename = "jolts.whitelist";
+	} else if (db_opt == DB_TEST) {
+	    fidx = fopen("test.idx", "w");
+	    fbin = fopen("test.bin", "wb");
 	} else {
 	    fidx = fopen("fedstl.idx", "w");
 	    fbin = fopen("fedstl.bin", "wb");
@@ -1022,7 +1038,9 @@ int main (int argc, char **argv)
 	    fputs("# St Louis Fed (various series, large)\n", fidx);
 	}
 
-	maybe_read_whitelist_file(whitename);
+	if (whitename != NULL) {
+	    maybe_read_whitelist_file(whitename);
+	}
     }
 
     xmlKeepBlanksDefault(0);

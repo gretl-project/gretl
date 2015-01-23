@@ -200,4 +200,6 @@ int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf,
 int output_policy_dialog (windata_t *source, windata_t *target,
 			  int toolbar);
 
+void percent_change_dialog (int v);
+
 #endif /* DIALOGS_H */

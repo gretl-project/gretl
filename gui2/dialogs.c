@@ -1248,7 +1248,7 @@ void database_description_dialog (const char *binname)
 			   GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new (_("description:"));
+    tmp = gtk_label_new(_("description:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 
     g_signal_connect(G_OBJECT(dlg), "destroy", 
@@ -5978,4 +5978,117 @@ int output_policy_dialog (windata_t *source,
     set_script_output_policy(policy, target);
 
     return policy;
+}
+
+struct pc_change_info {
+    GtkWidget *dialog;
+    GtkWidget *entry;
+    int varnum;
+    int *radioval;
+};
+
+static void pc_change_callback (GtkWidget *w,
+				struct pc_change_info *pci)
+{    
+    gchar *name;
+
+    name = entry_get_trimmed_text(pci->entry);
+
+    fprintf(stderr, "pc_change: source varnum=%d, radio=%d, name='%s'\n",
+	    pci->varnum, *pci->radioval, name);
+    g_free(name);
+    
+    gtk_widget_destroy(pci->dialog);
+}
+
+void percent_change_dialog (int v)
+{
+    struct pc_change_info pci = {0};
+    GtkWidget *dialog;
+    GtkWidget *vbox, *hbox, *tmp;
+    GtkWidget *button = NULL;
+    gchar *msg;
+    int radioval = 1;
+    int hcode = 0;
+
+    if (maybe_raise_dialog()) {
+	return;
+    }
+
+    dialog = gretl_dialog_new(NULL, NULL, 0);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    pci.dialog = dialog;
+    pci.varnum = v;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    msg = g_strdup_printf("percent change in %s", dataset->varname[v]);
+    tmp = gtk_label_new(msg);
+    g_free(msg);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    msg = g_strdup_printf(_("Enter name for new variable\n"
+			    "(max. %d characters)"), 
+			  VNAMELEN - 1);
+    tmp = gtk_label_new(msg);
+    g_free(msg);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, FALSE, 5);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    pci.entry = tmp = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(tmp), 32);
+    gtk_entry_set_width_chars(GTK_ENTRY(tmp), 32);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+
+    if (dataset->pd == 4 || dataset->pd == 12) {
+	const char *q_opts[] = {
+	    N_("Quarterly"),
+	    N_("Quarterly, annualized"),
+	    N_("Year on year")
+	};
+	const char *m_opts[] = {
+	    N_("Monthly"),
+	    N_("Monthly, annualized"),
+	    N_("Year on year")
+	};
+	const char **opts;
+	GSList *group = NULL;
+	int i;
+
+	opts = dataset->pd == 4 ? q_opts : m_opts;
+	
+	for (i=0; i<3; i++) {
+	    button = gtk_radio_button_new_with_label(group, _(opts[i]));
+	    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+	    g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(i));
+	    g_signal_connect(G_OBJECT(button), "clicked",
+			     G_CALLBACK(set_radio_opt), &radioval);
+	    if (i == 1) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+	    }
+	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	}
+	pci.radioval = &radioval;
+    }
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+
+    cancel_delete_button(hbox, dialog);
+    tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(pc_change_callback), &pci);
+    gtk_widget_grab_default(tmp);
+
+    /* Create a "Help" button? */
+    if (hcode) {
+	context_help_button(hbox, hcode);
+    } else {
+	gretl_dialog_keep_above(dialog);
+    }
+
+    gtk_widget_show_all(dialog);
 }

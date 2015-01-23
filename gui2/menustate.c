@@ -380,6 +380,9 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	add_logs_etc(LOGS, v);
     } else if (!strcmp(item, _("Add difference"))) {
 	add_logs_etc(DIFF, v);
+    } else if (!strcmp(item, _("Add percent change..."))) {
+	// percent_change_dialog(v);
+	dummy_call(); // not ready
     } else if (!strcmp(item, _("Dummify..."))) {
 	add_discrete_dummies(v);
     } else if (!strcmp(item, _("Define new variable..."))) { 
@@ -524,7 +527,9 @@ GtkWidget *build_var_popup (int selvar)
 	NULL,
 	N_("Add log"),
 	N_("Add difference"),
+	N_("Add percent change..."),
 	N_("Dummify..."),
+	NULL,
 	N_("Define new variable...")
     };
     GtkWidget *menu;
@@ -549,7 +554,7 @@ GtkWidget *build_var_popup (int selvar)
 	    /* don't offer panel plot */
 	    continue;
 	}	
-	if ((i == 6 || i == 7) && !dataset_is_time_series(dataset)) {
+	if ((i == 6 || i == 7 || i == 15) && !dataset_is_time_series(dataset)) {
 	    continue;
 	}
 	if ((i == 2 || i == 14) && !extended_ts(dataset)) {
@@ -559,7 +564,7 @@ GtkWidget *build_var_popup (int selvar)
 	    /* skip boxplot option */
 	    continue;
 	}
-	if (i == 15 && !series_is_dummifiable(selvar)) {
+	if (i == 16 && !series_is_dummifiable(selvar)) {
 	    /* skip dummify option */
 	    continue;
 	}	
