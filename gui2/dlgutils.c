@@ -1383,25 +1383,12 @@ gchar *entry_box_get_trimmed_text (GtkWidget *w)
 {
     const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
     gchar *ret = NULL;
-    int i, len;
 
-    if (s == NULL || *s == '\0') {
-	return NULL;
-    }
-
-    while (isspace(*s)) s++;
-    if (*s == '\0') {
-	return NULL;
-    }
-
-    len = strlen(s);
-    for (i=len-1; i>0; i--) {
-	if (!isspace(s[i])) break;
-	len--;
-    }
-
-    if (len > 0) {
-	ret = g_strndup(s, len);
+    if (s != NULL) {
+	while (isspace(*s)) s++;
+	if (*s != '\0') {
+	    ret = g_strstrip(g_strdup(s));
+	}
     }
 
     return ret;

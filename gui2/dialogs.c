@@ -5992,7 +5992,7 @@ static void pc_change_callback (GtkWidget *w,
 {    
     gchar *name;
 
-    name = entry_get_trimmed_text(pci->entry);
+    name = entry_box_get_trimmed_text(pci->entry);
 
     fprintf(stderr, "pc_change: source varnum=%d, radio=%d, name='%s'\n",
 	    pci->varnum, *pci->radioval, name);
