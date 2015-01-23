@@ -5029,8 +5029,8 @@ static int real_gui_validate_varname (const char *name,
 
    gui_validate_varname: checks with the user whether overwriting is
    OK in the case where a variable of type @type already exists; if
-   so, it's assumed that the distinction between adding a variable and
-   adding a new variable is handled by the caller.
+   so, it's assumed that the distinction between redefining a variable
+   and adding a new variable is handled by the caller.
 */
 
 int gui_validate_varname_strict (const char *name, GretlType type)

@@ -5984,42 +5984,89 @@ struct pc_change_info {
     GtkWidget *dialog;
     GtkWidget *entry;
     int varnum;
-    int *radioval;
+    int *ctrl;
 };
 
 static void pc_change_callback (GtkWidget *w,
 				struct pc_change_info *pci)
-{    
-    gchar *name;
+{
+    gchar *newname;
+    int err;
 
-    name = entry_box_get_trimmed_text(pci->entry);
-
-    fprintf(stderr, "pc_change: source varnum=%d, radio=%d, name='%s'\n",
-	    pci->varnum, *pci->radioval, name);
-    g_free(name);
+    newname = entry_box_get_trimmed_text(pci->entry);
     
-    gtk_widget_destroy(pci->dialog);
+    if (newname == NULL || *newname == '\0') {
+	gtk_widget_grab_focus(pci->entry);
+	g_free(newname);
+	return;
+    }
+
+    err = gui_validate_varname(newname, GRETL_TYPE_SERIES);
+
+    if (err) {
+	gtk_widget_grab_focus(pci->entry);
+    } else {
+	const char *vname = dataset->varname[pci->varnum];
+	gchar *genline;
+	int ctrl = 0;
+
+	if (pci->ctrl != NULL) {
+	    ctrl = *pci->ctrl;
+	}
+
+	if (ctrl == 0) {
+	    /* period to period rate */
+	    genline = g_strdup_printf("series %s=(%s/%s(-1)-1)*100",
+				      newname, vname, vname);
+	} else if (ctrl == 1) {
+	    /* annualized */
+	    genline = g_strdup_printf("series %s=((%s/%s(-1))^%d-1)*100",
+				      newname, vname, vname,
+				      dataset->pd);
+	} else {
+	    /* year on year */
+	    genline = g_strdup_printf("series %s=(%s/%s(-%d)-1)*100",
+				      newname, vname, vname,
+				      dataset->pd);
+	}
+
+	err = generate(genline, dataset, OPT_NONE, NULL);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    add_command_to_stack(genline, 0);
+	    refresh_data();
+	}
+
+	g_free(genline);
+    }
+
+    g_free(newname);
+
+    if (!err) {
+	gtk_widget_destroy(pci->dialog);
+    }
 }
 
 void percent_change_dialog (int v)
 {
-    struct pc_change_info pci = {0};
+    struct pc_change_info pci;
     GtkWidget *dialog;
     GtkWidget *vbox, *hbox, *tmp;
     GtkWidget *button = NULL;
     gchar *msg;
     int radioval = 1;
-    int hcode = 0;
 
     if (maybe_raise_dialog()) {
 	return;
     }
 
-    dialog = gretl_dialog_new(NULL, NULL, 0);
+    dialog = gretl_dialog_new(NULL, NULL, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     pci.dialog = dialog;
     pci.varnum = v;
+    pci.ctrl = NULL;
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
@@ -6035,7 +6082,7 @@ void percent_change_dialog (int v)
 			  VNAMELEN - 1);
     tmp = gtk_label_new(msg);
     g_free(msg);
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
@@ -6043,6 +6090,7 @@ void percent_change_dialog (int v)
     gtk_entry_set_max_length(GTK_ENTRY(tmp), 32);
     gtk_entry_set_width_chars(GTK_ENTRY(tmp), 32);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+    
 
     if (dataset->pd == 4 || dataset->pd == 12) {
 	const char *q_opts[] = {
@@ -6072,7 +6120,7 @@ void percent_change_dialog (int v)
 	    }
 	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 	}
-	pci.radioval = &radioval;
+	pci.ctrl = &radioval;
     }
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
@@ -6083,12 +6131,6 @@ void percent_change_dialog (int v)
 		     G_CALLBACK(pc_change_callback), &pci);
     gtk_widget_grab_default(tmp);
 
-    /* Create a "Help" button? */
-    if (hcode) {
-	context_help_button(hbox, hcode);
-    } else {
-	gretl_dialog_keep_above(dialog);
-    }
-
+    gretl_dialog_keep_above(dialog);
     gtk_widget_show_all(dialog);
 }

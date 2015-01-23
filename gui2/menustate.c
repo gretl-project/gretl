@@ -381,8 +381,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     } else if (!strcmp(item, _("Add difference"))) {
 	add_logs_etc(DIFF, v);
     } else if (!strcmp(item, _("Add percent change..."))) {
-	// percent_change_dialog(v);
-	dummy_call(); // not ready
+	percent_change_dialog(v);
     } else if (!strcmp(item, _("Dummify..."))) {
 	add_discrete_dummies(v);
     } else if (!strcmp(item, _("Define new variable..."))) { 
