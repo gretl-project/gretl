@@ -220,7 +220,8 @@ enum clipstuff {
     TARGET_STRING,
     TARGET_TEXT,
     TARGET_COMPOUND_TEXT,
-    TARGET_RTF
+    TARGET_RTF,
+    TARGET_SVG
 };
 
 enum data_status_flags {

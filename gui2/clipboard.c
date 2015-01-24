@@ -20,7 +20,7 @@
 #include "gretl.h"
 #include "textutil.h"
 
-#define CLIPDEBUG 0
+#define CLIPDEBUG 2
 
 static gchar *clipboard_buf; 
 
@@ -40,10 +40,17 @@ GtkTargetEntry rtf_targets[] = {
     { "TEXT",              0, TARGET_TEXT }
 };
 
+GtkTargetEntry svg_targets[] = {
+    { "application/svg+xml", 0, TARGET_SVG },
+    { "image/svg+xml",       0, TARGET_SVG },
+    { "image/svg",           0, TARGET_SVG }
+};
+
 static int n_text = sizeof text_targets / sizeof text_targets[0];
 static int n_rtf = sizeof rtf_targets / sizeof rtf_targets[0];
+static int n_svg = sizeof svg_targets / sizeof svg_targets[0];
 
-static void gretl_clipboard_set (int copycode);
+static void gretl_clipboard_set (int copycode, int svg);
 
 static void gretl_clipboard_free (void)
 {
@@ -64,7 +71,7 @@ int buf_to_clipboard (const char *buf)
     if (clipboard_buf == NULL) {
 	err = 1;
     } else {
-	gretl_clipboard_set(GRETL_FORMAT_TXT);
+	gretl_clipboard_set(GRETL_FORMAT_TXT, 0);
     }
 
     return err;
@@ -84,6 +91,8 @@ static const char *fmt_label (int f)
 	return "TARGET_COMPOUND_STRING";
     } else if (f == TARGET_RTF) {
 	return "TARGET_RTF";
+    } else if (f == TARGET_SVG) {
+	return "TARGET_SVG";
     } else {
 	return "unknown";
     }
@@ -107,7 +116,7 @@ static void gretl_clipboard_get (GtkClipboard *clip,
 	return;
     }
 
-    if (info != TARGET_UTF8_STRING) {
+    if (info != TARGET_UTF8_STRING && info != TARGET_SVG) {
 	/* remove any Unicode minuses (?) */
 	strip_unicode_minus(str);
     }
@@ -117,6 +126,12 @@ static void gretl_clipboard_get (GtkClipboard *clip,
 			       GDK_SELECTION_TYPE_STRING,
 			       8, (guchar *) str, 
 			       strlen(str));
+    } else if (info == TARGET_SVG) {
+	/* FIXME? */
+	gtk_selection_data_set(selection_data,
+			       GDK_SELECTION_TYPE_STRING,
+			       8, (guchar *) str, 
+			       strlen(str));	
     } else {
 	gtk_selection_data_set_text(selection_data, str, -1);
     }
@@ -143,7 +158,7 @@ static void pasteboard_set (int fmt)
 
 #endif
 
-static void gretl_clipboard_set (int fmt)
+static void gretl_clipboard_set (int fmt, int svg)
 {
     static GtkClipboard *clip;
     GtkTargetEntry *targs;
@@ -160,7 +175,10 @@ static void gretl_clipboard_set (int fmt)
 	clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
     }
 
-    if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
+    if (svg) {
+	targs = svg_targets;
+	n_targs = n_svg;
+    } else if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
 	targs = rtf_targets;
 	n_targs = n_rtf;
     } else {
@@ -169,7 +187,7 @@ static void gretl_clipboard_set (int fmt)
     }
 
 #if CLIPDEBUG
-    fprintf(stderr, "gretl_clipboard_set: fmt = %d\n", fmt);
+    fprintf(stderr, "gretl_clipboard_set: fmt = %d, svg = %d\n", fmt, svg);
 #endif
 
     if (!gtk_clipboard_set_with_owner(clip, targs, n_targs,
@@ -204,7 +222,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	} else {
 	    clipboard_buf = buf;
 	}
-	gretl_clipboard_set(fmt);
+	gretl_clipboard_set(fmt, 0);
     }
 
     if (buf != clipboard_buf) {
@@ -212,6 +230,22 @@ int prn_to_clipboard (PRN *prn, int fmt)
     }
 
     return err;
+}
+
+int svg_to_clipboard (const char *fname)
+{
+    gchar *buf = NULL;
+    gsize sz = 0;
+    
+    gretl_file_get_contents(fname, &buf, &sz);
+
+    if (buf != NULL && *buf != '\0') {
+	gretl_clipboard_free();
+	clipboard_buf = buf;
+	gretl_clipboard_set(0, 1);
+    }
+
+    return 0;
 }
 
 

@@ -33,6 +33,7 @@
 #include "dlgutils.h"
 #include "winstack.h"
 #include "toolbar.h"
+#include "clipboard.h"
 
 #define GPDEBUG 0
 #define POINTS_DEBUG 0
@@ -1213,6 +1214,43 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
     }
 
     gretl_remove(emfname);
+}
+
+#elif 0 /* not ready */
+
+static void copy_graph_as_svg (GPT_SPEC *spec)
+{
+    char svgname[FILENAME_MAX];
+    char plttmp[FILENAME_MAX];
+    gchar *setterm;
+    gchar *plotcmd;
+    int err = 0;
+
+    build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
+    build_path(svgname, gretl_dotdir(), "gpttmp.svg", NULL);
+
+    setterm = g_strdup("set term svg noenhanced");
+    err = revise_plot_file(spec, plttmp, svgname, setterm);
+    g_free(setterm);
+
+    if (err) {
+	return;
+    }
+
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
+			      gretl_gnuplot_path(), 
+			      plttmp);
+    err = gretl_spawn(plotcmd);
+    g_free(plotcmd);
+    gretl_remove(plttmp);
+    
+    if (err) {
+        errbox(_("Gnuplot error creating graph"));
+    } else {
+	err = svg_to_clipboard(svgname);
+    }
+
+    gretl_remove(svgname);
 }
 
 #endif
@@ -3432,7 +3470,11 @@ static gint color_popup_activated (GtkMenuItem *item, gpointer data)
     } else if (!strcmp(menu_string, _("Print"))) {
 	win32_process_graph(plot->spec, WIN32_TO_PRINTER);
     }    
-#endif 
+#elif 0
+    else if (!strcmp(menu_string, _("Copy to clipboard"))) {
+	copy_graph_as_svg(plot->spec);
+    }
+#endif    
 
     plot->spec->flags &= ~GPT_MONO;
 
@@ -3770,7 +3812,7 @@ static void build_plot_menu (png_plot *plot)
 #ifndef G_OS_WIN32
 	N_("Save as Windows metafile (EMF)..."),
 #endif
-#ifdef G_OS_WIN32
+#if 1 // def G_OS_WIN32
 	N_("Copy to clipboard"),
 #endif
 	N_("Save to session as icon"),
