@@ -6089,8 +6089,8 @@ void percent_change_dialog (int v)
     pci.entry = tmp = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(tmp), 32);
     gtk_entry_set_width_chars(GTK_ENTRY(tmp), 32);
+    gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-    
 
     if (dataset->pd == 4 || dataset->pd == 12) {
 	const char *q_opts[] = {
