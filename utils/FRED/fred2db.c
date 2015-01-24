@@ -366,11 +366,23 @@ static int get_pd (const char *s)
     }
 }
 
-/* convert series names to lower case */
+/* convert series names to lower case, plus special name
+   conversion for a few BEA price index series
+*/
 
 static char *lower (char *targ, const char *src)
 {
     int i = 0;
+
+    if (*targ == 'A') {
+	if (!strcmp(src, "A191RD3A086NBEA")) {
+	    return strcpy(targ, "gdpdef");
+	} else if (!strcmp(src, "A191RG3A086NBEA")) {
+	    return strcpy(targ, "gdppidxca");
+	} else if (!strcmp(src, "A191RG3Q086SBEA")) {
+	    return strcpy(targ, "gdppidxq");
+	}
+    }
 
     while (*src) {
 	targ[i++] = tolower(*src);
