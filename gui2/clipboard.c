@@ -22,7 +22,8 @@
 
 #define CLIPDEBUG 2
 
-static gchar *clipboard_buf; 
+static gchar *clipboard_buf;
+static gsize clipboard_bytes;
 
 GtkTargetEntry text_targets[] = {
     { "UTF8_STRING",     0, TARGET_UTF8_STRING },
@@ -46,16 +47,24 @@ GtkTargetEntry svg_targets[] = {
     { "image/svg",           0, TARGET_SVG }
 };
 
+GtkTargetEntry emf_targets[] = {
+    { "application/emf",   0, TARGET_EMF },
+    { "application/x-emf", 0, TARGET_EMF },
+    { "image/x-emf",       0, TARGET_EMF }
+};
+
 static int n_text = sizeof text_targets / sizeof text_targets[0];
 static int n_rtf = sizeof rtf_targets / sizeof rtf_targets[0];
 static int n_svg = sizeof svg_targets / sizeof svg_targets[0];
+static int n_emf = sizeof emf_targets / sizeof emf_targets[0];
 
-static void gretl_clipboard_set (int copycode, int svg);
+static void gretl_clipboard_set (int copycode, int svg, int emf);
 
 static void gretl_clipboard_free (void)
 {
     free(clipboard_buf);
     clipboard_buf = NULL;
+    clipboard_bytes = 0;
 }
 
 int buf_to_clipboard (const char *buf)
@@ -71,7 +80,7 @@ int buf_to_clipboard (const char *buf)
     if (clipboard_buf == NULL) {
 	err = 1;
     } else {
-	gretl_clipboard_set(GRETL_FORMAT_TXT, 0);
+	gretl_clipboard_set(GRETL_FORMAT_TXT, 0, 0);
     }
 
     return err;
@@ -93,6 +102,8 @@ static const char *fmt_label (int f)
 	return "TARGET_RTF";
     } else if (f == TARGET_SVG) {
 	return "TARGET_SVG";
+    } else if (f == TARGET_EMF) {
+	return "TARGET_EMF";
     } else {
 	return "unknown";
     }
@@ -105,35 +116,33 @@ static void gretl_clipboard_get (GtkClipboard *clip,
 				 guint info,
 				 gpointer p)
 {
-    gchar *str = clipboard_buf; /* global */
-
 #if CLIPDEBUG
     fprintf(stderr, "gretl_clipboard_get: info = %d (%s)\n", 
 	    (int) info, fmt_label(info));
 #endif   
 
-    if (str == NULL || *str == '\0') {
+    if (clipboard_buf == NULL || *clipboard_buf == '\0') {
 	return;
     }
 
-    if (info != TARGET_UTF8_STRING && info != TARGET_SVG) {
-	/* remove any Unicode minuses (?) */
-	strip_unicode_minus(str);
+    if (info != TARGET_UTF8_STRING &&
+	info != TARGET_SVG && info != TARGET_EMF) {
+	/* remove any Unicode minuses (??) */
+	strip_unicode_minus(clipboard_buf);
     }
 
-    if (info == TARGET_RTF) {
+    if (info == TARGET_RTF || info == TARGET_SVG) {
 	gtk_selection_data_set(selection_data,
 			       GDK_SELECTION_TYPE_STRING,
-			       8, (guchar *) str, 
-			       strlen(str));
-    } else if (info == TARGET_SVG) {
-	/* FIXME? */
+			       8, (guchar *) clipboard_buf, 
+			       strlen(clipboard_buf));
+    } else if (info == TARGET_EMF) {
 	gtk_selection_data_set(selection_data,
 			       GDK_SELECTION_TYPE_STRING,
-			       8, (guchar *) str, 
-			       strlen(str));	
+			       8, (guchar *) clipboard_buf, 
+			       clipboard_bytes);
     } else {
-	gtk_selection_data_set_text(selection_data, str, -1);
+	gtk_selection_data_set_text(selection_data, clipboard_buf, -1);
     }
 }
 
@@ -158,7 +167,7 @@ static void pasteboard_set (int fmt)
 
 #endif
 
-static void gretl_clipboard_set (int fmt, int svg)
+static void gretl_clipboard_set (int fmt, int svg, int emf)
 {
     static GtkClipboard *clip;
     GtkTargetEntry *targs;
@@ -178,6 +187,9 @@ static void gretl_clipboard_set (int fmt, int svg)
     if (svg) {
 	targs = svg_targets;
 	n_targs = n_svg;
+    } else if (emf) {
+	targs = emf_targets;
+	n_targs = n_emf;
     } else if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
 	targs = rtf_targets;
 	n_targs = n_rtf;
@@ -222,7 +234,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	} else {
 	    clipboard_buf = buf;
 	}
-	gretl_clipboard_set(fmt, 0);
+	gretl_clipboard_set(fmt, 0, 0);
     }
 
     if (buf != clipboard_buf) {
@@ -239,10 +251,14 @@ int svg_to_clipboard (const char *fname)
     
     gretl_file_get_contents(fname, &buf, &sz);
 
+    fprintf(stderr, "clip: got buf at %p, size %d\n",
+	    (void *) buf, (int) sz);
+
     if (buf != NULL && *buf != '\0') {
 	gretl_clipboard_free();
 	clipboard_buf = buf;
-	gretl_clipboard_set(0, 1);
+	clipboard_bytes = sz;
+	gretl_clipboard_set(0, 1, 0);
     }
 
     return 0;

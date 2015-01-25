@@ -1190,7 +1190,6 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
     build_path(emfname, gretl_dotdir(), "gpttmp.emf", NULL);
 
     color = !(spec->flags & GPT_MONO);
-
     setterm = get_gretl_emf_term_line(spec->code, color);
     
     err = revise_plot_file(spec, plttmp, emfname, setterm);
@@ -1222,12 +1221,16 @@ static void copy_graph_as_svg (GPT_SPEC *spec)
 {
     char svgname[FILENAME_MAX];
     char plttmp[FILENAME_MAX];
+    // const char *setterm;
     gchar *setterm;
     gchar *plotcmd;
     int err = 0;
 
     build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
     build_path(svgname, gretl_dotdir(), "gpttmp.svg", NULL);
+
+    // int color = !(spec->flags & GPT_MONO);
+    // setterm = get_gretl_emf_term_line(spec->code, color);
 
     setterm = g_strdup("set term svg noenhanced");
     err = revise_plot_file(spec, plttmp, svgname, setterm);
