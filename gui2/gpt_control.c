@@ -1229,7 +1229,7 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
     gretl_remove(emfname);
 }
 
-#elif 1 /* not ready */
+#else /* ! MS Windows */
 
 static GPT_SPEC *copyspec;
 
@@ -1310,7 +1310,7 @@ int write_plot_for_copy (int target)
     return err;
 }
 
-#endif
+#endif /* Windows vs not */
 
 /* chop trailing comma, if present; return 1 if comma chopped,
    zero otherwise */
@@ -3867,9 +3867,7 @@ static void build_plot_menu (png_plot *plot)
 #ifndef G_OS_WIN32
 	N_("Save as Windows metafile (EMF)..."),
 #endif
-#if 1 /* ifdef G_OS_WIN32 */
 	N_("Copy to clipboard"),
-#endif
 	N_("Save to session as icon"),
 	N_("Freeze data labels"),
 	N_("All data labels"),
