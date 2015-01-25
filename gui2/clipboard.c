@@ -19,8 +19,13 @@
 
 #include "gretl.h"
 #include "textutil.h"
+#include "clipboard.h"
 
-#define CLIPDEBUG 2
+#ifndef G_OS_WIN32
+# include "gpt_control.h"
+#endif
+
+#define CLIPDEBUG 0
 
 static gchar *clipboard_buf;
 static gsize clipboard_bytes;
@@ -41,24 +46,32 @@ GtkTargetEntry rtf_targets[] = {
     { "TEXT",              0, TARGET_TEXT }
 };
 
-GtkTargetEntry svg_targets[] = {
+GtkTargetEntry image_targets[] = {
     { "application/svg+xml", 0, TARGET_SVG },
     { "image/svg+xml",       0, TARGET_SVG },
-    { "image/svg",           0, TARGET_SVG }
+    { "image/svg",           0, TARGET_SVG },
+    { "application/emf",     0, TARGET_EMF },
+    { "application/x-emf",   0, TARGET_EMF },
+    { "image/x-emf",         0, TARGET_EMF },
+    { "application/postscript", 0, TARGET_EPS },
+    { "application/eps",        0, TARGET_EPS },
+    { "application/x-eps",      0, TARGET_EPS },
+    { "image/eps",              0, TARGET_EPS },
+    { "image/x-eps",            0, TARGET_EPS },    
+    { "application/pdf",   0, TARGET_PDF },
+    { "application/x-pdf", 0, TARGET_PDF },
+    { "image/png",         0, TARGET_PNG }
 };
 
-GtkTargetEntry emf_targets[] = {
-    { "application/emf",   0, TARGET_EMF },
-    { "application/x-emf", 0, TARGET_EMF },
-    { "image/x-emf",       0, TARGET_EMF }
-};
+#define image_type(t) (t == TARGET_SVG || t == TARGET_EMF || \
+		       t == TARGET_EPS || t == TARGET_PDF || \
+		       t == TARGET_PNG)
 
 static int n_text = sizeof text_targets / sizeof text_targets[0];
 static int n_rtf = sizeof rtf_targets / sizeof rtf_targets[0];
-static int n_svg = sizeof svg_targets / sizeof svg_targets[0];
-static int n_emf = sizeof emf_targets / sizeof emf_targets[0];
+static int n_image = sizeof image_targets / sizeof image_targets[0];
 
-static void gretl_clipboard_set (int copycode, int svg, int emf);
+static void gretl_clipboard_set (int copycode, int imgtype);
 
 static void gretl_clipboard_free (void)
 {
@@ -80,7 +93,7 @@ int buf_to_clipboard (const char *buf)
     if (clipboard_buf == NULL) {
 	err = 1;
     } else {
-	gretl_clipboard_set(GRETL_FORMAT_TXT, 0, 0);
+	gretl_clipboard_set(GRETL_FORMAT_TXT, 0);
     }
 
     return err;
@@ -104,6 +117,12 @@ static const char *fmt_label (int f)
 	return "TARGET_SVG";
     } else if (f == TARGET_EMF) {
 	return "TARGET_EMF";
+    } else if (f == TARGET_EPS) {
+	return "TARGET_EPS";
+    } else if (f == TARGET_PDF) {
+	return "TARGET_PDF";
+    } else if (f == TARGET_PNG) {
+	return "TARGET_PNG";
     } else {
 	return "unknown";
     }
@@ -119,24 +138,28 @@ static void gretl_clipboard_get (GtkClipboard *clip,
 #if CLIPDEBUG
     fprintf(stderr, "gretl_clipboard_get: info = %d (%s)\n", 
 	    (int) info, fmt_label(info));
-#endif   
+#endif
 
-    if (clipboard_buf == NULL || *clipboard_buf == '\0') {
-	return;
+    if (image_type(info)) {
+	write_plot_for_copy(info);
+	if (clipboard_buf == NULL) {
+	    return;
+	}
+    } else {
+	if (clipboard_buf == NULL || *clipboard_buf == '\0') {
+	    return;
+	} else if (info != TARGET_UTF8_STRING) {
+	    /* remove any Unicode minuses (??) */
+	    strip_unicode_minus(clipboard_buf);
+	}	
     }
 
-    if (info != TARGET_UTF8_STRING &&
-	info != TARGET_SVG && info != TARGET_EMF) {
-	/* remove any Unicode minuses (??) */
-	strip_unicode_minus(clipboard_buf);
-    }
-
-    if (info == TARGET_RTF || info == TARGET_SVG) {
+    if (info == TARGET_RTF) {
 	gtk_selection_data_set(selection_data,
 			       GDK_SELECTION_TYPE_STRING,
 			       8, (guchar *) clipboard_buf, 
 			       strlen(clipboard_buf));
-    } else if (info == TARGET_EMF) {
+    } else if (image_type(info)) {
 	gtk_selection_data_set(selection_data,
 			       GDK_SELECTION_TYPE_STRING,
 			       8, (guchar *) clipboard_buf, 
@@ -167,7 +190,7 @@ static void pasteboard_set (int fmt)
 
 #endif
 
-static void gretl_clipboard_set (int fmt, int svg, int emf)
+static void gretl_clipboard_set (int fmt, int imgtype)
 {
     static GtkClipboard *clip;
     GtkTargetEntry *targs;
@@ -184,12 +207,9 @@ static void gretl_clipboard_set (int fmt, int svg, int emf)
 	clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
     }
 
-    if (svg) {
-	targs = svg_targets;
-	n_targs = n_svg;
-    } else if (emf) {
-	targs = emf_targets;
-	n_targs = n_emf;
+    if (imgtype) {
+	targs = image_targets;
+	n_targs = n_image;
     } else if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
 	targs = rtf_targets;
 	n_targs = n_rtf;
@@ -199,7 +219,8 @@ static void gretl_clipboard_set (int fmt, int svg, int emf)
     }
 
 #if CLIPDEBUG
-    fprintf(stderr, "gretl_clipboard_set: fmt = %d, svg = %d\n", fmt, svg);
+    fprintf(stderr, "gretl_clipboard_set: fmt = %d, imgtype = %d\n",
+	    fmt, imgtype);
 #endif
 
     if (!gtk_clipboard_set_with_owner(clip, targs, n_targs,
@@ -234,7 +255,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	} else {
 	    clipboard_buf = buf;
 	}
-	gretl_clipboard_set(fmt, 0, 0);
+	gretl_clipboard_set(fmt, 0);
     }
 
     if (buf != clipboard_buf) {
@@ -244,21 +265,27 @@ int prn_to_clipboard (PRN *prn, int fmt)
     return err;
 }
 
-int svg_to_clipboard (const char *fname)
+void flag_image_available (void)
+{
+    gretl_clipboard_set(0, 1);
+}
+
+int image_file_to_clipboard (const char *fname)
 {
     gchar *buf = NULL;
     gsize sz = 0;
     
     gretl_file_get_contents(fname, &buf, &sz);
 
-    fprintf(stderr, "clip: got buf at %p, size %d\n",
-	    (void *) buf, (int) sz);
+#if CLIPDEBUG
+    fprintf(stderr, "image_file_to_clipboard: "
+	    "buf at %p, size %d\n", (void *) buf, (int) sz);
+#endif    
 
     if (buf != NULL && *buf != '\0') {
 	gretl_clipboard_free();
 	clipboard_buf = buf;
 	clipboard_bytes = sz;
-	gretl_clipboard_set(0, 1, 0);
     }
 
     return 0;

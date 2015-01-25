@@ -82,4 +82,10 @@ int dump_plot_buffer (const char *buf, const char *fname,
 
 int get_graph_scale (int i, double *s);
 
+#ifndef G_OS_WIN32
+
+int write_plot_for_copy (int target);
+
+#endif
+
 #endif /* GPT_CONTROL_H */

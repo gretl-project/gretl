@@ -5,6 +5,8 @@ int prn_to_clipboard (PRN *prn, int fmt);
 
 int buf_to_clipboard (const char *buf);
 
-int svg_to_clipboard (const char *fname);
+void flag_image_available (void);
+
+int image_file_to_clipboard (const char *fname);
 
 #endif /* CLIPBOARD_H */

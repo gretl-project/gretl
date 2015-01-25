@@ -152,10 +152,12 @@ static int zoom_replaces_plot (png_plot *plot);
 static void prepare_for_zoom (png_plot *plot);
 static int get_plot_ranges (png_plot *plot, PlotType ptype);
 static void graph_display_pdf (GPT_SPEC *spec);
+static void plot_do_rescale (png_plot *plot, int mod);
 #ifdef G_OS_WIN32
 static void win32_process_graph (GPT_SPEC *spec, int dest);
+#else
+static void set_plot_for_copy (png_plot *plot);
 #endif
-static void plot_do_rescale (png_plot *plot, int mod);
 
 enum {
     GRETL_PNG_OK,
@@ -247,6 +249,15 @@ static void graph_shrink_callback (GtkWidget *w, png_plot *plot)
     plot_do_rescale(plot, -1);
 }
 
+static void graph_copy_callback (GtkWidget *w, png_plot *plot)
+{
+#ifdef G_OS_WIN32
+    win32_process_graph(plot->spec, WIN32_TO_CLIPBOARD);    
+#else    
+    set_plot_for_copy(plot);
+#endif    
+}
+
 static void graph_edit_callback (GtkWidget *w, png_plot *plot)
 {
     start_editing_png_plot(plot);
@@ -265,6 +276,7 @@ static void plot_winlist_popup (GtkWidget *w, png_plot *plot)
 static GretlToolItem plotbar_items[] = {
     { N_("Bigger"),      GRETL_STOCK_BIGGER,  G_CALLBACK(graph_enlarge_callback), 0 },
     { N_("Smaller"),     GRETL_STOCK_SMALLER, G_CALLBACK(graph_shrink_callback), 0 },
+    { N_("Copy"),        GTK_STOCK_COPY,      G_CALLBACK(graph_copy_callback), 0 },
     { N_("Display PDF"), GRETL_STOCK_PDF,     G_CALLBACK(show_pdf_callback), 0 },
     { N_("Edit"),        GTK_STOCK_EDIT,      G_CALLBACK(graph_edit_callback), 0 },
     { N_("Windows"),     GRETL_STOCK_WINLIST, G_CALLBACK(plot_winlist_popup), 0 }
@@ -608,6 +620,8 @@ static void get_full_term_string (const GPT_SPEC *spec, char *termstr)
 	strcpy(termstr, s);
     } else if (spec->termtype == GP_TERM_FIG) {
 	strcpy(termstr, "set term fig");
+    } else if (spec->termtype == GP_TERM_SVG) {
+	strcpy(termstr, "set term svg noenhanced");
     } else if (spec->termtype == GP_TERM_PNG) { 
 	strcpy(termstr, get_png_line_for_plotspec(spec)); 
     } else if (spec->termtype == GP_TERM_EMF) {
@@ -794,8 +808,8 @@ static void maybe_print_gp_encoding (int ttype, int latin, FILE *fp)
 } 
 
 static int revise_plot_file (GPT_SPEC *spec, 
-			     const char *pltname,
-			     const char *outtarg,
+			     const char *inpname,
+			     const char *outname,
 			     const char *setterm)
 {
     FILE *fpin = NULL;
@@ -811,10 +825,10 @@ static int revise_plot_file (GPT_SPEC *spec,
 	return 1;
     }
 
-    fpout = gretl_fopen(pltname, "w");
+    fpout = gretl_fopen(inpname, "w");
     if (fpout == NULL) {
 	fclose(fpin);
-	file_write_errbox(pltname);
+	file_write_errbox(inpname);
 	return 1;
     }
 
@@ -828,9 +842,9 @@ static int revise_plot_file (GPT_SPEC *spec,
 	}
     }
 
-    if (outtarg != NULL && *outtarg != '\0') {
+    if (outname != NULL && *outname != '\0') {
 	fprintf(fpout, "%s\n", setterm);
-	write_plot_output_line(outtarg, fpout);
+	write_plot_output_line(outname, fpout);
     }	
 
     filter_gnuplot_file(ttype, latin, mono, fpin, fpout);
@@ -1215,45 +1229,85 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
     gretl_remove(emfname);
 }
 
-#elif 0 /* not ready */
+#elif 1 /* not ready */
 
-static void copy_graph_as_svg (GPT_SPEC *spec)
+static GPT_SPEC *copyspec;
+
+/* Here we're just posting the information that an image
+   should be available for pasting */
+
+static void set_plot_for_copy (png_plot *plot)
 {
-    char svgname[FILENAME_MAX];
-    char plttmp[FILENAME_MAX];
-    // const char *setterm;
-    gchar *setterm;
-    gchar *plotcmd;
+    copyspec = plot->spec;
+    flag_image_available();
+}
+
+/* Here we're responding to a request to paste the plot
+   advertised above; @target tells us which of the posted
+   formats the application has selected.
+*/
+
+int write_plot_for_copy (int target)
+{
+    GPT_SPEC *spec = copyspec;
+    char outname[FILENAME_MAX];
+    char inpname[FILENAME_MAX];
+    char setterm[MAXLEN];
+    double savescale;
+    int saveterm;
     int err = 0;
 
-    build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
-    build_path(svgname, gretl_dotdir(), "gpttmp.svg", NULL);
-
-    // int color = !(spec->flags & GPT_MONO);
-    // setterm = get_gretl_emf_term_line(spec->code, color);
-
-    setterm = g_strdup("set term svg noenhanced");
-    err = revise_plot_file(spec, plttmp, svgname, setterm);
-    g_free(setterm);
-
-    if (err) {
-	return;
+    if (copyspec == NULL) {
+	fprintf(stderr, "retrieve_plot_for_copy: no data\n");
+	return 1;
     }
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
-			      gretl_gnuplot_path(), 
-			      plttmp);
-    err = gretl_spawn(plotcmd);
-    g_free(plotcmd);
-    gretl_remove(plttmp);
+    saveterm = spec->termtype;
+    savescale = spec->scale;
+    
+    if (target == TARGET_SVG) {
+	spec->termtype = GP_TERM_SVG;
+    } else if (target == TARGET_EMF) {
+	spec->termtype = GP_TERM_EMF;
+    } else if (target == TARGET_PNG) {
+	spec->termtype = GP_TERM_PNG;
+	spec->scale = 0.8;
+    } else if (target == TARGET_EPS) {
+	spec->termtype = GP_TERM_EPS;
+    } else if (target == TARGET_PDF) {
+	spec->termtype = GP_TERM_PDF;
+    } else {
+	fprintf(stderr, "write_plot_for_copy: unsupported type\n");
+	return 1;
+    }
+    
+    get_full_term_string(spec, setterm);
+
+    build_path(inpname, gretl_dotdir(), "gptinp.tmp", NULL);
+    build_path(outname, gretl_dotdir(), "gptout.tmp", NULL);
+    err = revise_plot_file(spec, inpname, outname, setterm);
+
+    spec->termtype = saveterm;
+    spec->scale = savescale;
+
+    if (!err) {
+	gchar *plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
+					 gretl_gnuplot_path(), 
+					 inpname);
+	err = gretl_spawn(plotcmd);
+	g_free(plotcmd);
+	gretl_remove(inpname);
+    }
     
     if (err) {
         errbox(_("Gnuplot error creating graph"));
     } else {
-	err = svg_to_clipboard(svgname);
+	err = image_file_to_clipboard(outname);
     }
 
-    gretl_remove(svgname);
+    gretl_remove(outname);
+
+    return err;
 }
 
 #endif
@@ -3473,10 +3527,6 @@ static gint color_popup_activated (GtkMenuItem *item, gpointer data)
     } else if (!strcmp(menu_string, _("Print"))) {
 	win32_process_graph(plot->spec, WIN32_TO_PRINTER);
     }    
-#elif 0
-    else if (!strcmp(menu_string, _("Copy to clipboard"))) {
-	copy_graph_as_svg(plot->spec);
-    }
 #endif    
 
     plot->spec->flags &= ~GPT_MONO;
@@ -3739,6 +3789,8 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
 #ifndef G_OS_WIN32
     else if (!strcmp(item_string, _("Print..."))) { 
 	gtk_print_graph(plot->spec->fname, plot->shell);
+    } else if (!strcmp(item_string, _("Copy to clipboard"))) {
+	set_plot_for_copy(plot);
     }
 #endif 
     else if (!strcmp(item_string, _("Display PDF"))) { 
@@ -3815,7 +3867,7 @@ static void build_plot_menu (png_plot *plot)
 #ifndef G_OS_WIN32
 	N_("Save as Windows metafile (EMF)..."),
 #endif
-#if 1 // def G_OS_WIN32
+#if 1 /* ifdef G_OS_WIN32 */
 	N_("Copy to clipboard"),
 #endif
 	N_("Save to session as icon"),
@@ -3867,6 +3919,8 @@ static void build_plot_menu (png_plot *plot)
 
     i = 0;
     while (plot_items[i]) {
+	int colorpop = 0;
+	
 	if (plot->spec->code != PLOT_PROB_DIST &&
 	    !strcmp(plot_items[i], "Add another curve...")) {
 	    i++;
@@ -3947,9 +4001,19 @@ static void build_plot_menu (png_plot *plot)
 
 	item = gtk_menu_item_new_with_label(_(plot_items[i]));
 
-	if (!strcmp(plot_items[i], "Save as Windows metafile (EMF)...") ||
-	    !strcmp(plot_items[i], "Copy to clipboard") ||
+#ifdef G_OS_WIN32
+	if (!strcmp(plot_items[i], "Copy to clipboard") ||
+	    !strcmp(plot_items[i], "Save as Windows metafile (EMF)...") ||
 	    !strcmp(plot_items[i], "Print")) {
+	    colorpop = 1;
+	}
+#else
+	if (!strcmp(plot_items[i], "Save as Windows metafile (EMF)...") ||
+	    !strcmp(plot_items[i], "Print")) {
+	    colorpop = 1;
+	}
+#endif
+	if (colorpop) {
 	    /* special: items with color sub-menu */
 	    attach_color_popup(item, plot);
 	} else {
@@ -3957,7 +4021,7 @@ static void build_plot_menu (png_plot *plot)
 	    g_signal_connect(G_OBJECT(item), "activate",
 			     G_CALLBACK(plot_popup_activated),
 			     plot);
-	}
+	}	    
 
         gtk_widget_show(item);
         gtk_menu_shell_append(GTK_MENU_SHELL(plot->popup), item);
@@ -4465,6 +4529,12 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
     fprintf(stderr, "destroy_png_plot: plot = %p, spec = %p\n",
 	    (void *) plot, (void *) plot->spec);
 #endif
+
+#ifndef G_OS_WIN32    
+    if (copyspec == plot->spec) {
+	copyspec = NULL;
+    }
+#endif    
 
     plotspec_destroy(plot->spec);
 
