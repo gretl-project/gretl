@@ -780,9 +780,15 @@ void system_print_buf (const gchar *buf, FILE *fp)
 
 static char *dosify_buffer (const char *buf, int format)
 {
+#if 0 /* not working with lowriter */
+    const char *rtf_preamble = "{\\rtf1\r\n"
+	"{\\fonttbl{\\f0\\fnil\\fprq1\\fcharset1 Consolas{\\*\\falt Courier New};}}\r\n"
+	"\\f0\\fs18\r\n";
+#else    
     const char *rtf_preamble = "{\\rtf1\r\n"
 	"{\\fonttbl{\\f0\\fnil\\fprq1\\fcharset1 Courier New;}}\r\n"
 	"\\f0\\fs18\r\n";
+#endif    
     int extra = 0, nlines = 0;
     int add_rtf = 0;
     char *targ, *q;
