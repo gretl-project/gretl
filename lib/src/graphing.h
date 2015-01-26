@@ -177,7 +177,7 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags);
 
 const char *get_png_line_for_plotspec (const GPT_SPEC *spec);
 
-const char *get_gretl_emf_term_line (PlotType ptype, int color);
+const char *get_gretl_emf_term_line (PlotType ptype, GptFlags flags);
 
 const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags);
 

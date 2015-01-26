@@ -1309,7 +1309,7 @@ static void png_font_to_emf (const char *pngfont, char *emfline)
 /**
  * get_gretl_emf_term_line:
  * @ptype: indication of the sort of plot to be made.
- * @color: 1 if graph is to be in color, else 0.
+ * @flags: plot option flags.
  *
  * Constructs a suitable line for sending to gnuplot to invoke
  * the EMF "terminal".  
@@ -1317,17 +1317,17 @@ static void png_font_to_emf (const char *pngfont, char *emfline)
  * Returns: the term string, "set term emf ..."
  */
 
-const char *get_gretl_emf_term_line (PlotType ptype, int color)
+const char *get_gretl_emf_term_line (PlotType ptype, GptFlags flags)
 {
     static char tline[256];
     const char *grfont = NULL;
     
     strcpy(tline, "set term emf ");
 
-    if (color) {
-	strcat(tline, "color noenhanced ");
-    } else {
+    if (flags & GPT_MONO) {
 	strcat(tline, "mono dash noenhanced ");
+    } else {
+	strcat(tline, "color noenhanced ");
     }
 
     /* font spec */
@@ -1398,13 +1398,13 @@ static void print_term_string (int ttype, PlotType ptype,
     } else if (ttype == GP_TERM_PDF) {
 	tstr = get_gretl_pdf_term_line(ptype, flags);
     } else if (ttype == GP_TERM_PNG) {
-	tstr = get_gretl_png_term_line(ptype, 0);
+	tstr = get_gretl_png_term_line(ptype, flags);
     } else if (ttype == GP_TERM_EMF) {
-	tstr = get_gretl_emf_term_line(ptype, 1);
+	tstr = get_gretl_emf_term_line(ptype, flags);
     } else if (ttype == GP_TERM_FIG) {
 	tstr = "set term fig";
     } else if (ttype == GP_TERM_SVG) {
-	tstr = "set term svg";
+	tstr = "set term svg noenhanced";
     }
 
     if (tstr != NULL) {
