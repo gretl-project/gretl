@@ -611,24 +611,18 @@ int gp_term_code (gpointer p, int action)
 static void get_full_term_string (const GPT_SPEC *spec, char *termstr) 
 {
     if (spec->termtype == GP_TERM_EPS) {
-	const char *s = get_gretl_eps_term_line(spec->code, spec->flags);
-
-	strcpy(termstr, s);
+	strcpy(termstr, get_gretl_eps_term_line(spec->code, spec->flags));
     } else if (spec->termtype == GP_TERM_PDF) {
-	const char *s = get_gretl_pdf_term_line(spec->code, spec->flags);
-
-	strcpy(termstr, s);
+	strcpy(termstr, get_gretl_pdf_term_line(spec->code, spec->flags));
+    } else if (spec->termtype == GP_TERM_PNG) { 
+	strcpy(termstr, get_png_line_for_plotspec(spec)); 
+    } else if (spec->termtype == GP_TERM_EMF) {
+	strcpy(termstr, get_gretl_emf_term_line(spec->code, spec->flags));
     } else if (spec->termtype == GP_TERM_FIG) {
 	strcpy(termstr, "set term fig");
     } else if (spec->termtype == GP_TERM_SVG) {
 	strcpy(termstr, "set term svg noenhanced");
-    } else if (spec->termtype == GP_TERM_PNG) { 
-	strcpy(termstr, get_png_line_for_plotspec(spec)); 
-    } else if (spec->termtype == GP_TERM_EMF) {
-	int mono = (spec->flags & GPT_MONO);
-
-	strcpy(termstr, get_gretl_emf_term_line(spec->code, !mono));
-    } 
+    }
 }
 
 /* Sometimes we want to put \pi into tic-marks or a graph
@@ -1198,13 +1192,12 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
     char plttmp[FILENAME_MAX];
     gchar *plotcmd;
     const char *setterm;
-    int color, err = 0;
+    int err = 0;
 
     build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
     build_path(emfname, gretl_dotdir(), "gpttmp.emf", NULL);
 
-    color = !(spec->flags & GPT_MONO);
-    setterm = get_gretl_emf_term_line(spec->code, color);
+    setterm = get_gretl_emf_term_line(spec->code, spec->flags);
     
     err = revise_plot_file(spec, plttmp, emfname, setterm);
     if (err) {

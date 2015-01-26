@@ -20,10 +20,7 @@
 #include "gretl.h"
 #include "textutil.h"
 #include "clipboard.h"
-
-#ifndef G_OS_WIN32
-# include "gpt_control.h"
-#endif
+#include "gpt_control.h"
 
 #define CLIPDEBUG 0
 
