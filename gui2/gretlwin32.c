@@ -319,6 +319,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 {
     char *buf = gretl_print_steal_buffer(prn);
     char *modbuf = NULL;
+    int rtf_format = 0;
     int err = 0;
 
     if (buf == NULL || *buf == '\0') {
@@ -329,6 +330,10 @@ int prn_to_clipboard (PRN *prn, int fmt)
     if (!OpenClipboard(NULL)) {
 	errbox(_("Cannot open the clipboard"));
 	return 1;
+    }
+
+    if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
+	rtf_format = 1;
     }
 
     EmptyClipboard();
@@ -346,7 +351,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
 	winbuf = modbuf != NULL ? modbuf : buf;
 
-	if (!rtf_format(prn) && !gretl_is_ascii(winbuf)) {
+	if (!rtf_format && !gretl_is_ascii(winbuf)) {
 	    /* for Windows clipboard, recode UTF-8 to UTF-16 */
 	    ubuf = g_utf8_to_utf16(winbuf, -1, NULL, &wrote, NULL);
 	}
@@ -356,6 +361,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	} else {
 	    sz = strlen(winbuf) + 1;
 	}
+	
 	winclip = GlobalAlloc(GMEM_MOVEABLE, sz);
 	ptr = GlobalLock(winclip);
 	if (ubuf != NULL) {
@@ -367,7 +373,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
 	if (ubuf != NULL) {
 	    clip_format = CF_UNICODETEXT;
-	} else if (rtf_format(prn)) { 
+	} else if (rtf_format) {
 	    clip_format = RegisterClipboardFormat("Rich Text Format");
 	} else if (fmt == GRETL_FORMAT_CSV) {
 	    clip_format = RegisterClipboardFormat("CSV");
