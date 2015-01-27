@@ -12003,6 +12003,8 @@ struct mod_assign {
     int op;
 };
 
+/* supported "inflections" of assignment */
+
 struct mod_assign m_assign[] = {
     { '+', B_ADD },
     { '-', B_SUB },
@@ -12678,6 +12680,16 @@ static void pre_process (parser *p, int flags)
 	    return;
 	}
     }
+
+#if 0 /* not yet */
+    if (p->targ == UNK &&
+	gretl_looping() && gretl_function_depth() > 0) {
+	gretl_errmsg_sprintf("The variable '%s' has no type specified",
+			     test);
+	p->err = E_DATA;
+	return;
+    }
+#endif
 
     /* advance past varname */
     s = p->point;
