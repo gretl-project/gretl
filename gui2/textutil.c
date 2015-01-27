@@ -780,7 +780,7 @@ void system_print_buf (const gchar *buf, FILE *fp)
 
 static char *dosify_buffer (const char *buf, int format)
 {
-#if 0 /* not working with lowriter */
+#ifdef G_OS_WIN32 /* alt font not working with lowriter */
     const char *rtf_preamble = "{\\rtf1\r\n"
 	"{\\fonttbl{\\f0\\fnil\\fprq1\\fcharset1 Consolas{\\*\\falt Courier New};}}\r\n"
 	"\\f0\\fs18\r\n";
