@@ -43,6 +43,32 @@ GtkTargetEntry rtf_targets[] = {
     { "TEXT",              0, TARGET_TEXT }
 };
 
+#ifdef OS_OSX
+
+/* try including Apple UTIs where available */
+
+GtkTargetEntry image_targets[] = {
+    { "public.svg-image",    0, TARGET_SVG },
+    { "application/svg+xml", 0, TARGET_SVG },
+    { "image/svg+xml",       0, TARGET_SVG },
+    { "image/svg",           0, TARGET_SVG },
+    { "application/emf",     0, TARGET_EMF },
+    { "application/x-emf",   0, TARGET_EMF },
+    { "image/x-emf",         0, TARGET_EMF },
+    { "com.adobe.encapsulated-​postscript", 0, TARGET_EPS },
+    { "application/postscript", 0, TARGET_EPS },
+    { "application/eps",        0, TARGET_EPS },
+    { "application/x-eps",      0, TARGET_EPS },
+    { "image/eps",              0, TARGET_EPS },
+    { "image/x-eps",            0, TARGET_EPS },
+    { "com.adobe.pdf",     0, TARGET_PDF },
+    { "application/pdf",   0, TARGET_PDF },
+    { "application/x-pdf", 0, TARGET_PDF },
+    { "image/png",         0, TARGET_PNG }
+};
+
+#else
+
 GtkTargetEntry image_targets[] = {
     { "application/svg+xml", 0, TARGET_SVG },
     { "image/svg+xml",       0, TARGET_SVG },
@@ -59,6 +85,8 @@ GtkTargetEntry image_targets[] = {
     { "application/x-pdf", 0, TARGET_PDF },
     { "image/png",         0, TARGET_PNG }
 };
+
+#endif
 
 #define image_type(t) (t == TARGET_SVG || t == TARGET_EMF || \
 		       t == TARGET_EPS || t == TARGET_PDF || \
@@ -96,7 +124,7 @@ int buf_to_clipboard (const char *buf)
     return err;
 }
 
-#if CLIPDEBUG
+#if 1 || CLIPDEBUG
 
 static const char *fmt_label (int f)
 {
@@ -132,7 +160,7 @@ static void gretl_clipboard_get (GtkClipboard *clip,
 				 guint info,
 				 gpointer p)
 {
-#if CLIPDEBUG
+#if 1 || CLIPDEBUG
     fprintf(stderr, "gretl_clipboard_get: info = %d (%s)\n", 
 	    (int) info, fmt_label(info));
 #endif
