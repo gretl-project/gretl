@@ -31,7 +31,7 @@ static double pheight = 3.5;
 static char psfont[64] = "Helvetica";
 static char pdffont[64] = "Sans";
 static int psfontsize = 8;
-static int pdffontsize = 10;
+static int pdffontsize = 12;
 static double lw_factor = 1.0;
 static int mono;
 
@@ -126,7 +126,7 @@ static void saver_init (struct pdf_ps_saver *s,
     static int started;
 
     if (!started && gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	pdffontsize = (gnuplot_version() > 4.4)? 10 : 5;
+	pdffontsize = (gnuplot_version() > 4.4)? 12 : 6; /* was 10:5 */
 	started = 1;
     }
 #endif
