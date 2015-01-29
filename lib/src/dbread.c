@@ -4103,6 +4103,7 @@ int compact_data_set (DATASET *dset, int newpd,
 	    startmin = weekday_from_date(dset->stobs);
 	    if (oldpd == 7) {
 		if (monstart) {
+		    /* WTF? */
 		    if (startmin == 0) startmin = 7;
 		} else {
 		    startmin++;

@@ -3803,7 +3803,9 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 
 static int compact_methods_set (CompactMethod *method)
 {
-    int i, m, nset = 0;
+    int i, nset = 0;
+    int m = 0, mbak = -1;
+    int all_same = 1;
     int ret = NO_METHODS_SET;
 
     if (dataset->v == 2) {
@@ -3819,10 +3821,17 @@ static int compact_methods_set (CompactMethod *method)
 	if (m != COMPACT_NONE) {
 	    nset++;
 	}
+	if (all_same && mbak >= 0 && m != mbak) {
+	    all_same = 0;
+	}	
+	mbak = m;
     }
 
     if (nset == dataset->v - 1) {
 	ret = ALL_METHODS_SET;
+	if (all_same) {
+	    *method = m;
+	}
     } else if (nset > 0) {
 	ret = SOME_METHODS_SET;
     }
