@@ -45,26 +45,17 @@ GtkTargetEntry rtf_targets[] = {
 
 #ifdef OS_OSX
 
-/* try including Apple UTIs where available */
+/* try using Apple UTIs where available */
 
 GtkTargetEntry image_targets[] = {
     { "public.svg-image",    0, TARGET_SVG },
-    { "application/svg+xml", 0, TARGET_SVG },
-    { "image/svg+xml",       0, TARGET_SVG },
-    { "image/svg",           0, TARGET_SVG },
     { "application/emf",     0, TARGET_EMF },
     { "application/x-emf",   0, TARGET_EMF },
     { "image/x-emf",         0, TARGET_EMF },
-    { "com.adobe.encapsulated-​postscript", 0, TARGET_EPS },
-    { "application/postscript", 0, TARGET_EPS },
-    { "application/eps",        0, TARGET_EPS },
-    { "application/x-eps",      0, TARGET_EPS },
-    { "image/eps",              0, TARGET_EPS },
-    { "image/x-eps",            0, TARGET_EPS },
+    { "com.adobe.encapsulated-postscript", 0, TARGET_EPS },
+    { "application/eps",   0, TARGET_EPS },
     { "com.adobe.pdf",     0, TARGET_PDF },
-    { "application/pdf",   0, TARGET_PDF },
-    { "application/x-pdf", 0, TARGET_PDF },
-    { "image/png",         0, TARGET_PNG }
+    { "public.png",        0, TARGET_PNG }
 };
 
 #else
@@ -92,9 +83,9 @@ GtkTargetEntry image_targets[] = {
 		       t == TARGET_EPS || t == TARGET_PDF || \
 		       t == TARGET_PNG)
 
-static int n_text = sizeof text_targets / sizeof text_targets[0];
-static int n_rtf = sizeof rtf_targets / sizeof rtf_targets[0];
-static int n_image = sizeof image_targets / sizeof image_targets[0];
+static int n_text  = G_N_ELEMENTS(text_targets);
+static int n_rtf   = G_N_ELEMENTS(rtf_targets);
+static int n_image = G_N_ELEMENTS(image_targets);
 
 static void gretl_clipboard_set (int copycode, int imgtype);
 
