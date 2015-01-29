@@ -267,6 +267,7 @@ void ts_or_panel_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/Add/lags", s);
     flip(mdata->ui, "/menubar/Add/diff", s);
     flip(mdata->ui, "/menubar/Add/ldiff", s);
+    flip(mdata->ui, "/menubar/Add/pcdiff", s);
 
     s = dataset_is_seasonal(dataset);
     flip(mdata->ui, "/menubar/Add/sdiff", s);
@@ -309,6 +310,14 @@ void compact_data_state (gboolean s)
     if (mdata->ui != NULL) {
 	flip(mdata->ui, "/menubar/Data/DataCompact", s);
     }
+}
+
+void single_var_menu_state (int nsel)
+{
+    gboolean s = dataset_is_time_series(dataset) ||
+	dataset_is_panel(dataset);
+	
+    flip(mdata->ui, "/menubar/Add/pcdiff", s && nsel == 1);
 }
 
 void main_menus_enable (gboolean s)
@@ -553,10 +562,12 @@ GtkWidget *build_var_popup (int selvar)
 	    /* don't offer panel plot */
 	    continue;
 	}	
-	if ((i == 6 || i == 7 || i == 15) && !dataset_is_time_series(dataset)) {
+	if ((i == 6 || i == 7) && !dataset_is_time_series(dataset)) {
+	    /* correlogram, periodogram */ 
 	    continue;
 	}
-	if ((i == 2 || i == 14) && !extended_ts(dataset)) {
+	if ((i == 2 || i == 14 || i == 15) && !extended_ts(dataset)) {
+	    /* time-series plot, difference, percent change */
 	    continue;
 	}
 	if (i == 5 && dataset_is_time_series(dataset)) {

@@ -23,6 +23,7 @@
 #include "treeutils.h"
 #include "datafiles.h"
 #include "dlgutils.h"
+#include "menustate.h"
 
 /* special comparator which always preserves "const" (variable 0) in
    the first position when sorting variables by name */
@@ -439,6 +440,14 @@ static void check_db_series_selection (GtkTreeSelection *sel,
     }  
 }
 
+static void mdata_selection_changed (GtkTreeSelection *sel, 
+				     windata_t *vwin)
+{
+    int nsel = gtk_tree_selection_count_selected_rows(sel);
+
+    single_var_menu_state(nsel);
+}
+
 static void id_col_clicked (GtkTreeViewColumn *column, GtkWidget *view)
 {
     GtkTreeModel *model;
@@ -558,6 +567,9 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 			      | GDK_POINTER_MOTION_HINT_MASK);
         g_signal_connect(G_OBJECT(view), "motion-notify-event",
 			 G_CALLBACK(listbox_drag), NULL);
+	g_signal_connect(G_OBJECT(select), "changed",
+			 G_CALLBACK(mdata_selection_changed),
+			 vwin);
     } else if (db_series_window(vwin)) {
 	gtk_tree_selection_set_mode(select, GTK_SELECTION_MULTIPLE);
 	g_signal_connect(G_OBJECT(select), "changed",

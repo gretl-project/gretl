@@ -223,6 +223,11 @@ static void new_matrix_callback (GtkAction *action, gpointer p)
     gui_new_matrix(mdata->main);
 }
 
+static void pc_change_callback (GtkAction *action, gpointer p)
+{
+    percent_change_dialog(mdata->active_var);
+}
+
 static void new_package_callback (GtkAction *action, gpointer p)
 {
     if (no_user_functions_check()) {
@@ -1589,6 +1594,8 @@ GtkActionEntry main_entries[] = {
       G_CALLBACK(logs_etc_callback) },
     { "sdiff", NULL, N_("_Seasonal differences of selected variables"), NULL, NULL, 
       G_CALLBACK(logs_etc_callback) },
+    { "pcdiff", NULL, N_("_Percentage change of selected variable"), NULL, NULL, 
+      G_CALLBACK(pc_change_callback) },
     { "AddIndex", NULL, N_("_Index variable"), NULL, NULL, G_CALLBACK(add_index) },
     { "AddTime", NULL, N_("_Time trend"), NULL, NULL, G_CALLBACK(add_index) },
     { "AddUnit", NULL, N_("_Panel unit index"), NULL, NULL, G_CALLBACK(add_index) },

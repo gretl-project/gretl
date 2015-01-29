@@ -6092,7 +6092,7 @@ void percent_change_dialog (int v)
     gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
-    if (dataset->pd == 4 || dataset->pd == 12) {
+    if (quarterly_or_monthly(dataset)) {
 	const char *q_opts[] = {
 	    N_("Quarterly"),
 	    N_("Quarterly, annualized"),
