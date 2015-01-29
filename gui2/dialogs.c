@@ -3704,7 +3704,8 @@ enum {
     NO_METHODS_SET,
     SOME_METHODS_SET,
     ALL_METHODS_SET,
-    SINGLE_SERIES
+    SINGLE_SERIES,
+    ALL_METHODS_SET_SAME
 };
 
 static int method_selected (int i, CompactMethod *method)
@@ -3828,9 +3829,11 @@ static int compact_methods_set (CompactMethod *method)
     }
 
     if (nset == dataset->v - 1) {
-	ret = ALL_METHODS_SET;
 	if (all_same) {
 	    *method = m;
+	    ret = ALL_METHODS_SET_SAME;
+	} else {
+	    ret = ALL_METHODS_SET;
 	}
     } else if (nset > 0) {
 	ret = SOME_METHODS_SET;

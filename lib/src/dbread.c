@@ -4047,7 +4047,9 @@ int maybe_expand_daily_data (DATASET *dset)
  * @dset: dataset struct.
  * @newpd: target data frequency.
  * @default_method: code for the default compaction method.
- * @monstart: FIXME add explanation.
+ * @monstart: if non-zero, take Monday rather than Sunday as
+ * the "start of the week" (only relevant for 7-day daily
+ * data).
  * @repday: "representative day" for conversion from daily
  * to weekly data (with method %COMPACT_WDAY only).
  * 
@@ -4103,7 +4105,6 @@ int compact_data_set (DATASET *dset, int newpd,
 	    startmin = weekday_from_date(dset->stobs);
 	    if (oldpd == 7) {
 		if (monstart) {
-		    /* WTF? */
 		    if (startmin == 0) startmin = 7;
 		} else {
 		    startmin++;
