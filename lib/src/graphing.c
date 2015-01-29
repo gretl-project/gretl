@@ -1119,7 +1119,7 @@ const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
     static char pdf_term_line[128];
 
     if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	int ptsize = 10;
+	int ptsize = 12; /* was 10 */
 
 	if (ptype == PLOT_MULTI_SCATTER) {
 	    ptsize = 6;
