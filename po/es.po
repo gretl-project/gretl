@@ -1,14 +1,14 @@
 # translation of es.po to Spanish
-# Copyright (C) 2001--2014 Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>,
+# Copyright (C) 2001--2015 Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>,
 # This file is distributed under the same license as the gretl package.
 #
-# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2014.
+# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2014, 2015.
 msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-12-04 13:09-0500\n"
-"PO-Revision-Date: 2014-09-30 19:32+0200\n"
+"PO-Revision-Date: 2015-01-30 18:13+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -508,12 +508,12 @@ msgid "LM test"
 msgstr "Contraste LM (Multiplicador de Lagrange)"
 
 #: lib/src/compare.c:399
-#, fuzzy, c-format
+#, c-format
 msgid "Adding variables improved %d of %d information criteria.\n"
 msgstr "Al añadir variables mejoraron %d de %d criterios de información.\n"
 
 #: lib/src/compare.c:402
-#, fuzzy, c-format
+#, c-format
 msgid "Omitting variables improved %d of %d information criteria.\n"
 msgstr "Al omitir variables mejoraron %d de %d criterios de información.\n"
 
@@ -643,9 +643,9 @@ msgid "Robust Wald test for break"
 msgstr "Contraste de Wald robusto para el cambio estructural"
 
 #: lib/src/compare.c:2603
-#, fuzzy, c-format
+#, c-format
 msgid "Asymptotic p-value = %.6g for chi-square(%d) = %g"
-msgstr "Valor p asintótico = %.4g para Chi-cuadrado(%d)= %g"
+msgstr "Valor p asintótico = %.6g para Chi-cuadrado(%d)= %g"
 
 #: lib/src/compare.c:2650
 msgid ""
@@ -2024,19 +2024,19 @@ msgid "The variable '%s' is not discrete"
 msgstr "La variable '%s' no es un discreta"
 
 #: lib/src/discrete.c:1447
-#, fuzzy, c-format
+#, c-format
 msgid "Note: %s = %s%s at all observations\n"
-msgstr "Número de observaciones"
+msgstr "Nota: %s = %s%s en todas las observaciones\n"
 
 #: lib/src/discrete.c:1455 lib/src/discrete.c:1461
-#, fuzzy, c-format
+#, c-format
 msgid "Note: Prob(%s = %d | %s = %d) = 1\n"
-msgstr " Prob(x = %d) = %g\n"
+msgstr "Nota: Prob(%s = %d | %s = %d) = 1\n"
 
 #: lib/src/discrete.c:1467
-#, fuzzy, c-format
+#, c-format
 msgid "Dropping %s\n"
-msgstr "Error al leer %s\n"
+msgstr "Quitando  %s\n"
 
 #: lib/src/discrete.c:2939
 #, c-format
@@ -2813,9 +2813,8 @@ msgid "mean %s"
 msgstr "media %s"
 
 #: lib/src/graphing.c:5480
-#, fuzzy
 msgid "Group means"
-msgstr "Grupos"
+msgstr "Medias de grupo"
 
 #: lib/src/graphing.c:5798
 msgid "time"
@@ -3703,9 +3702,8 @@ msgid "Error estimating fixed effects model\n"
 msgstr "Error al estimar el modelo de efectos fijos\n"
 
 #: lib/src/gretl_panel.c:2342
-#, fuzzy
 msgid "Inadequate data for panel estimation"
-msgstr "Estimación iterativa"
+msgstr "Los datos no son adecuados para una estimación de panel"
 
 #: lib/src/gretl_panel.c:2385
 msgid ""
@@ -3872,9 +3870,9 @@ msgid "gretlcmd.hlp"
 msgstr "gretlcmd.hlp"
 
 #: lib/src/gretl_plot.c:376 lib/src/tokenize.c:2038 lib/src/tokenize.c:2093
-#, fuzzy, c-format
+#, c-format
 msgid "Parse error at unexpected token '%s'"
-msgstr "Error de paso en '%s'"
+msgstr "Error de paso en objeto inesperado '%s'"
 
 #: lib/src/gretl_prn.c:273
 #, c-format
@@ -4115,9 +4113,9 @@ msgid "log-likelihood for %s test"
 msgstr "log-verosimilitud para el contraste %s"
 
 #: lib/src/gretl_utils.c:2141
-#, fuzzy, c-format
+#, c-format
 msgid "break-point for %s test"
-msgstr "valor p para el contraste de %s"
+msgstr "punto de ruptura para el contraste %s"
 
 #: lib/src/gretl_xml.c:94 lib/src/gretl_xml.c:527 lib/src/gretl_xml.c:4066
 #, c-format
@@ -6139,9 +6137,9 @@ msgid "Warning: option%s ignored outside of loop"
 msgstr "Atención: fuera de un bucle la opción %s es ignorada"
 
 #: lib/src/options.c:1761
-#, fuzzy, c-format
+#, c-format
 msgid "%s: inapplicable option"
-msgstr "Opciones incompatibles"
+msgstr "%s: Opción no aplicable"
 
 #: lib/src/plotspec.c:208 lib/src/plotspec.c:231
 msgid "lines"
@@ -6634,9 +6632,9 @@ msgid "GED (shape = %g): "
 msgstr "GED (forma = %g): "
 
 #: lib/src/strutils.c:696 lib/src/strutils.c:715 lib/src/tokenize.c:3038
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected symbol '%c'"
-msgstr "se esperaba %s pero se encontró %s"
+msgstr "Símbolo no esperado '%c'"
 
 #: lib/src/strutils.c:2060
 msgid "out of memory in XML encoding"
@@ -9539,22 +9537,20 @@ msgid "New script output:"
 msgstr "Nuevo resultado de guion:"
 
 #: gui2/dialogs.c:5892
-#, fuzzy
 msgid "New script output should:"
-msgstr "Nuevo resultado de guion:"
+msgstr "Los nuevos resultados de guion deberían:"
 
 #: gui2/dialogs.c:5952
 msgid "Replace previous output"
-msgstr ""
+msgstr "Reemplazar los resultados anteriores"
 
 #: gui2/dialogs.c:5953
 msgid "Add to previous output"
-msgstr ""
+msgstr "Añadirse a los resultados anteriores"
 
 #: gui2/dialogs.c:5954
-#, fuzzy
 msgid "Go to a new window"
-msgstr "Mover a una ventana nueva"
+msgstr "Aparecer en una ventana nueva"
 
 #: gui2/dialogs.c:5961
 msgid "Replaces output in this window"
@@ -10046,9 +10042,8 @@ msgid "close this dialog on \"OK\""
 msgstr "cerrar este diálogo al presionar \"Aceptar\""
 
 #: gui2/fncall.c:1800 gui2/fncall.c:1811
-#, fuzzy
 msgid "Select function"
-msgstr "Funciones auxiliares"
+msgstr "Elegir Función"
 
 #: gui2/fncall.c:1894
 msgid "This function needs a model in place"
@@ -10063,18 +10058,16 @@ msgid "Couldn't get function package information"
 msgstr "No se pudo obtener la información del paquete de función"
 
 #: gui2/fncall.c:2076
-#, fuzzy
 msgid "Open sample script"
-msgstr "Editar el guion de ejemplo"
+msgstr "Abrir guión de ejemplo"
 
 #: gui2/fncall.c:2077
-#, fuzzy
 msgid "Call a function"
-msgstr "Llamada a la función %s"
+msgstr "Llamada a una función"
 
 #: gui2/fncall.c:2083
 msgid "Would you like to:"
-msgstr ""
+msgstr "Desea Vd.:"
 
 #: gui2/fncall.c:2501
 #, c-format
@@ -11337,9 +11330,8 @@ msgid "_Observation range dummy"
 msgstr "Variable ficticia de rango de _observación"
 
 #: gui2/gretl.c:1598
-#, fuzzy
 msgid "Dummies for _discrete variable..."
-msgstr "V_ariables ficticias para las variables discretas seleccionadas"
+msgstr "V_ariables ficticias para la variable discreta..."
 
 #: gui2/gretl.c:1600
 msgid "_Define matrix..."
@@ -13348,14 +13340,13 @@ msgid "Skip the highest value"
 msgstr "Ignorar el mayor valor"
 
 #: gui2/library.c:5644
-#, fuzzy
 msgid "Variable to dummify"
-msgstr "Variable a representar"
+msgstr "Variable a convertir en un conjunto de variables ficticias (dummify)"
 
 #: gui2/library.c:5663
-#, fuzzy, c-format
+#, c-format
 msgid "Encoding %s as dummies"
-msgstr "Codificar las variables como variables ficticias"
+msgstr "Codificando %s como variables ficticias"
 
 #: gui2/library.c:5666
 msgid "Encoding variables as dummies"
@@ -13468,14 +13459,12 @@ msgid "X-axis variable"
 msgstr "variable del eje X"
 
 #: gui2/library.c:7145
-#, fuzzy
 msgid "Plot all data"
-msgstr "Datos de panel"
+msgstr "Representar todos los datos"
 
 #: gui2/library.c:7146
-#, fuzzy
 msgid "Plot group means"
-msgstr "Grupos de panel"
+msgstr "Representar las medias de grupo"
 
 #: gui2/library.c:7169
 msgid "on a single graph"
@@ -13621,9 +13610,8 @@ msgid "Unterminated comment in script"
 msgstr "En el guion hay un comentario sin terminar"
 
 #: gui2/library.c:8878
-#, fuzzy
 msgid "No series were deleted"
-msgstr "No se borró ninguna variable"
+msgstr "No se borró ninguna serie"
 
 #: gui2/library.c:8944
 msgid "Script done\n"
@@ -15187,7 +15175,7 @@ msgstr "Preferencia de manual en PDF"
 
 #: gui2/settings.c:452
 msgid "This change will apply to newly opened windows"
-msgstr ""
+msgstr "Este cambio se aplicará a las ventanas que se abran a partir de ahora"
 
 #: gui2/settings.c:821
 msgid "You seem to be running gretl as root.  Do you really want to do this?"
@@ -15650,9 +15638,8 @@ msgid "Save as..."
 msgstr "Guardar como..."
 
 #: gui2/toolbar.c:691
-#, fuzzy
 msgid "Open in script editor"
-msgstr "gretl: editor de guiones"
+msgstr "Abrir en el editor de guiones"
 
 #: gui2/toolbar.c:693
 msgid "Save bundle content..."
@@ -15868,9 +15855,8 @@ msgid "Arrange"
 msgstr "Organizar"
 
 #: gui2/winstack.c:498
-#, fuzzy
 msgid "command log"
-msgstr "_Historial de instrucciones"
+msgstr "Historial de instrucciones"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
@@ -16100,9 +16086,8 @@ msgid "user-specified values"
 msgstr "valores especificados por el usuario"
 
 #: plugin/arma_common.c:489
-#, fuzzy
 msgid "No usable data were found"
-msgstr "No se encontraron datos numéricos"
+msgstr "No se encontraron datos que se puedan utilizar"
 
 #: plugin/arma_common.c:689 plugin/arma_common.c:770
 msgid "Error in arma command"
