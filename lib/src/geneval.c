@@ -12561,7 +12561,8 @@ static void pre_process (parser *p, int flags)
 	s += strcspn(s, " ") + 1;
     }
 
-    if (p->targ == SERIES && p->dset_n == 0) {
+    if ((p->targ == SERIES || p->targ == LIST) &&
+	(p->dset == NULL || p->dset_n == 0)) {
 	no_data_error(p);
 	return;
     }
@@ -13571,24 +13572,16 @@ static int gen_check_return_type (parser *p)
     }
 
 #if EDEBUG
-    fprintf(stderr, "gen_check_return_type: targ = %d; ret at %p, type %d\n", 
-	    p->targ, (void *) r, r->t);
+    fprintf(stderr, "gen_check_return_type: targ=%s; ret at %p, type %s\n", 
+	    getsymb(p->targ, NULL), (void *) r, getsymb(r->t, NULL));
 #endif
-
-    if ((p->dset == NULL || p->dset->n == 0) && 
-	r->t != MAT && r->t != NUM && 
-	r->t != STR && r->t != BUNDLE &&
-	r->t != U_ADDR && r->t != EMPTY &&
-	r->t != ARRAY) {
-	return no_data_error(p);
-    }
 
     if (!ok_return_type(r->t)) {
 	return E_TYPES;
     }
 
     if (r->t == SERIES && r->v.xvec == NULL) {
-	fprintf(stderr, "got SERIES return with xvec == NULL!\n");
+	fprintf(stderr, "got SERIES return with xvec = NULL!\n");
 	return E_DATA;
     }
 
@@ -13612,7 +13605,7 @@ static int gen_check_return_type (parser *p)
 	    err = E_TYPES;
 	}
     } else if (p->targ == MAT) {
-	; /* no-op: leave targ alone */
+	; /* no-op: handled later */
     } else if (p->targ == LIST) {
 	if (r->t != EMPTY && !ok_list_node(r)) {
 	    err = E_TYPES;
@@ -13763,13 +13756,14 @@ static int save_generated_var (parser *p, PRN *prn)
     double x;
     int t, v = 0;
 
-#if 0
-    fprintf(stderr, "save: callcount=%d, lh.t=%s, targ=%s, r->t=%s\n",
+#if EDEBUG
+    fprintf(stderr, "save_generated_var:\n"
+	    "callcount=%d, lh.t=%s, targ=%s, r->t=%s\n",
 	    p->callcount, getsymb(p->lh.t, NULL), getsymb(p->targ, NULL),
 	    getsymb(r->t, NULL));
 #endif    
 
-    if (p->callcount == 0) {
+    if (p->callcount < 2) {
 	/* first exec: test for type mismatch errors */
 	p->err = gen_check_return_type(p);
 	if (p->err) {
@@ -13778,7 +13772,7 @@ static int save_generated_var (parser *p, PRN *prn)
     } 
 
     if (p->targ == UNK) {
-	/* 1 x 1 matrix to scalar? */
+	/* "cast" 1 x 1 matrix to scalar? */
 	if (scalar_matrix_node(r) && !(r->flags & MSL_NODE)) {
 	    p->targ = NUM;
 	} else {
@@ -13787,11 +13781,8 @@ static int save_generated_var (parser *p, PRN *prn)
     }	
 
 #if EDEBUG
-    fputs("save_generated_var:\n ", stderr);
-    fprintf(stderr, "targ = %d (%s), ret = %d (%s), op = %d (%s)\n",
-	    p->targ, getsymb(p->targ, NULL), 
-	    p->ret->t, getsymb(p->ret->t, NULL), 
-	    p->op, getsymb(p->op, NULL));
+    fprintf(stderr, "after preliminaries: targ=%s, op='%s'\n",
+	    getsymb(p->targ, NULL), getsymb(p->op, NULL));
 #endif
 
     /* allocate dataset storage, if needed */
@@ -13972,9 +13963,7 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == STR) {
 	edit_string(p);
     } else if (p->targ == BUNDLE) {
-	if (r->t != BUNDLE) {
-	    p->err = E_TYPES;
-	} else if (is_tmp_node(r) || (p->flags & P_UFRET)) {
+	if (is_tmp_node(r) || (p->flags & P_UFRET)) {
 	    /* bundle created on the fly */
 	    p->err = user_var_add_or_replace(p->lh.name,
 					     GRETL_TYPE_BUNDLE,
@@ -14129,8 +14118,8 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     }
 
 #if EDEBUG
-    fprintf(stderr, "parser_reinit: targ=%d, lhname='%s', op=%d, callcount=%d\n", 
-	    p->targ, p->lh.name, p->op, p->callcount);
+    fprintf(stderr, "parser_reinit: targ=%s, lhname='%s', op='%s', callcount=%d\n", 
+	    getsymb(p->targ, NULL), p->lh.name, getsymb(p->op, NULL), p->callcount);
 #endif
 
     if (p->targ == SERIES) {
@@ -14389,6 +14378,9 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 #if LHDEBUG || EDEBUG
     fprintf(stderr, "\n*** realgen: task = %s\n", (flags & P_COMPILE)?
 	    "compile" : (flags & P_EXEC)? "exec" : "normal");
+    if (s != NULL) {
+	fprintf(stderr, "input = '%s'\n", s);
+    }
 #endif
 
     if (flags & P_EXEC) {
@@ -14469,11 +14461,12 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     }    
 
     if (flags & P_COMPILE) {
+	/* we're done at this point */
 	return p->err;
     }
 
-    /* set P_UFRET here if relevant */
     if (!p->err) {
+	/* set P_UFRET here if relevant */
 	maybe_set_return_flags(p);
     }
 
@@ -14521,11 +14514,9 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	p->ret = eval(p->tree, p);
     }
 
-#if 1
     if (p->flags & P_EXEC) {
 	p->callcount += 1;
     }
-#endif
 
     if (p->flags & P_SAVEAUX) {
 	p->flags |= P_AUXDONE;
