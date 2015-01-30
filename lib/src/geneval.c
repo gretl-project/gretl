@@ -13763,6 +13763,12 @@ static int save_generated_var (parser *p, PRN *prn)
     double x;
     int t, v = 0;
 
+#if 0
+    fprintf(stderr, "save: callcount=%d, lh.t=%s, targ=%s, r->t=%s\n",
+	    p->callcount, getsymb(p->lh.t, NULL), getsymb(p->targ, NULL),
+	    getsymb(r->t, NULL));
+#endif    
+
     if (p->callcount == 0) {
 	/* first exec: test for type mismatch errors */
 	p->err = gen_check_return_type(p);
@@ -13966,7 +13972,9 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == STR) {
 	edit_string(p);
     } else if (p->targ == BUNDLE) {
-	if (is_tmp_node(r) || (p->flags & P_UFRET)) {
+	if (r->t != BUNDLE) {
+	    p->err = E_TYPES;
+	} else if (is_tmp_node(r) || (p->flags & P_UFRET)) {
 	    /* bundle created on the fly */
 	    p->err = user_var_add_or_replace(p->lh.name,
 					     GRETL_TYPE_BUNDLE,
