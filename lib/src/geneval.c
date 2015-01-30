@@ -2420,98 +2420,126 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
     return ret;
 }
 
-static int 
-matrix_pow_check (int t, double x, const gretl_matrix *m, parser *p)
-{
-    if (t != MAT) {
-	p->err = E_TYPES;
-    } else if (gretl_is_null_matrix(m)) {
-	p->err = E_DATA;
-    } else if (m->rows != m->cols) {
-	p->err = E_NONCONF;
-    } else if (x < 0 || x > (double) INT_MAX || floor(x) != x) {
-	p->err = E_DATA;
-    } 
+/* Here we know have a scalar and a 1 x 1 matrix to work with,
+   in either order */
 
-    return p->err;
+static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
+				  parser *p)
+{
+    NODE *ret;
+
+    if (l->t == NUM && (op == B_MOD || op == B_POW)) {
+	/* the matrix on the right is functioning as
+	   a scalar argument */
+	ret = aux_scalar_node(p);
+    } else {
+	ret = aux_matrix_node(p);
+    }    
+
+    if (!p->err) {
+	double x, y;
+	
+	if (l->t == NUM) {
+	    x = l->v.xval;
+	    y = r->v.m->val[0];
+	} else {
+	    x = l->v.m->val[0];
+	    y = r->v.xval;
+	}
+
+	if (ret->t == NUM) {
+	    ret->v.xval = xy_calc(x, y, op, NUM, p);
+	} else {
+	    node_allocate_matrix(ret, 1, 1, p);
+	    if (!p->err) {
+		ret->v.m->val[0] = xy_calc(x, y, op, MAT, p);
+	    }
+	}
+    }
+
+    return ret;
 }
 
 #define comparison_op(o) (o == B_EQ  || o == B_NEQ || \
 			  o == B_LT  || o == B_GT ||  \
 			  o == B_LTE || o == B_GTE)
 
-/* one of the operands is a matrix, the other a scalar, giving a
-   matrix result unless we're looking at a comparison operator.
+/* Mixed types: one of the operands is a matrix, the other a scalar,
+   giving a matrix result unless we're looking at a comparison
+   operator.
 */
 
 static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 {
+    const gretl_matrix *m = NULL;
+    int comp = comparison_op(op);
+    double x;
     NODE *ret = NULL;
 
-    if (starting(p)) {
-	const gretl_matrix *m = NULL;
-	int comp = comparison_op(op);
-	double y, x = 0.0;
-	int i, n = 0;
-
-	x = (l->t == NUM)? l->v.xval : r->v.xval;
-	m = (l->t == MAT)? l->v.m : r->v.m;
-
-	if (gretl_is_null_matrix(m)) {
-	    p->err = E_DATA;
-	    return NULL;
+    if (op != B_TRMUL) {
+	/* Check for the simple case of scalar and
+	   1 x 1 matrix, either way round 
+	*/
+	if ((l->t == NUM && scalar_node(r)) ||
+	    (r->t == NUM && scalar_node(l))) {
+	    return matrix_scalar_calc2(l, r, op, p);
 	}
+    }
 
-	n = m->rows * m->cols;
+    /* get a scalar @x and matrix @m */
+    x = (l->t == NUM)? l->v.xval : r->v.xval;
+    m = (l->t == MAT)? l->v.m : r->v.m;
 
-	/* special: raising a matrix to an integer power */
-	if (n > 1 && op == B_POW && matrix_pow_check(l->t, x, m, p)) {
-	    fprintf(stderr, "matrix_pow_check failed\n");
-	    return NULL;
-	}
+    if (gretl_is_null_matrix(m)) {
+	p->err = E_DATA;
+	return NULL;
+    }
 
-	/* mod: scalar must be on the right */
-	if (op == B_MOD && l->t == NUM) {
-	    p->err = E_TYPES;
-	    return NULL;
-	}
+    /* mod, pow: the right-hand term must be scalar */
+    if ((op == B_MOD || op == B_POW) && !scalar_node(r)) {
+	p->err = E_TYPES;
+	return NULL;
+    }    
 
-	if (comp || (op == B_POW && n == 1)) {
-	    ret = aux_scalar_node(p);
+    if (comp) {
+	ret = aux_scalar_node(p);
+    } else {
+	ret = aux_matrix_node(p);
+    }
+
+    if (ret == NULL) { 
+	return NULL;
+    }
+
+    if (op == B_POW) {
+	/* note: the (scalar, 1x1) and (1x1, scalar) cases are
+	   handled above
+	*/
+	int s = node_get_int(r, p);
+
+	if (!p->err) {
+	    ret->v.m = gretl_matrix_pow(m, s, &p->err);
+	}	
+	return ret;
+    } else if (op == B_TRMUL) {
+	gretl_matrix *tmp;
+
+	if (l->t == NUM) {
+	    tmp = gretl_matrix_copy(m);
 	} else {
-	    ret = aux_matrix_node(p);
+	    tmp = gretl_matrix_copy_transpose(m);
 	}
-
-	if (ret == NULL) { 
-	    return NULL;
+	if (tmp == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    gretl_matrix_multiply_by_scalar(tmp, x);
+	    ret->v.m = tmp;
 	}
-
-	if (op == B_POW) {
-	    if (n > 1) {
-		ret->v.m = gretl_matrix_pow(m, (int) x, &p->err);
-	    } else if (l->t == NUM) {
-		ret->v.xval = xy_calc(x, m->val[0], op, MAT, p);
-	    } else {
-		ret->v.xval = xy_calc(m->val[0], x, op, MAT, p);
-	    }
-	    return ret;
-	} else if (op == B_TRMUL) {
-	    gretl_matrix *tmp;
-
-	    if (l->t == NUM) {
-		tmp = gretl_matrix_copy(m);
-	    } else {
-		tmp = gretl_matrix_copy_transpose(m);
-	    }
-	    if (tmp == NULL) {
-		p->err = E_ALLOC;
-	    } else {
-		gretl_matrix_multiply_by_scalar(tmp, x);
-		ret->v.m = tmp;
-	    }
-	    return ret;
-	}
-
+	return ret;
+    } else {
+	int i, n = m->rows * m->cols;
+	double y;
+	
 	if (comp) {
 	    ret->v.xval = 1;
 	    if (l->t == NUM) {
@@ -2545,9 +2573,7 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 		    ret->v.m->val[i] = y;
 		}	
 	    }
-	} 
-    } else {
-	ret = aux_any_node(p);
+	}
     }
 
     return ret;
@@ -2852,18 +2878,22 @@ static gretl_matrix *make_scalar_matrix (double x)
 
 static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 {
+    gretl_matrix *ml = NULL, *mr = NULL;
     NODE *ret = aux_matrix_node(p);
-    gretl_matrix *ml, *mr;
-
-    if (op == B_POW) {
-	p->err = E_TYPES;
-	return NULL;
-    }
 
 #if EDEBUG
     fprintf(stderr, "matrix_matrix_calc: l=%p, r=%p, ret=%p\n",
 	    (void *) l, (void *) r, (void *) ret);
 #endif
+
+    if (op == B_POW) {
+	if (scalar_node(l) && scalar_node(r)) {
+	    op = B_DOTPOW;
+	} else if (!scalar_node(r)) {
+	    p->err = E_TYPES;
+	    return NULL;
+	}	    
+    }
 
     if (l->t == NUM) {
 	ml = make_scalar_matrix(l->v.xval);
@@ -2871,14 +2901,26 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 	ml = l->v.m;
     }
 
-    if (r->t == NUM) {
-	mr = make_scalar_matrix(r->v.xval);
-    } else {
-	mr = r->v.m;
+    if (op != B_POW) {
+	if (r->t == NUM) {
+	    mr = make_scalar_matrix(r->v.xval);
+	} else {
+	    mr = r->v.m;
+	}
     }
 
     if (ret != NULL && starting(p)) {
-	ret->v.m = real_matrix_calc(ml, mr, op, &p->err);
+	if (op == B_DOTPOW) {
+	    ret->v.m = gretl_matrix_dot_op(ml, mr, '^', &p->err);
+	} else if (op == B_POW) {
+	    int s = node_get_int(r, p);
+
+	    if (!p->err) {
+		ret->v.m = gretl_matrix_pow(ml, s, &p->err);
+	    }
+	} else {
+	    ret->v.m = real_matrix_calc(ml, mr, op, &p->err);
+	}
     }
 
     if (l->t == NUM) gretl_matrix_free(ml);
@@ -13772,7 +13814,8 @@ static int save_generated_var (parser *p, PRN *prn)
     } 
 
     if (p->targ == UNK) {
-	/* "cast" 1 x 1 matrix to scalar? */
+	/* "cast" 1 x 1 matrix to scalar? FIXME this should
+	   be scrapped soon */
 	if (scalar_matrix_node(r) && !(r->flags & MSL_NODE)) {
 	    p->targ = NUM;
 	} else {
