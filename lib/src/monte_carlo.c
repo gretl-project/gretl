@@ -2776,15 +2776,15 @@ static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 /* Based on the stored flags in the loop-line record, set
    or unset some flags for the command parser: this can 
    reduce the amount of work the parser has to do on each
-   iteration of a loop. FIXME some of this obsolete?
+   iteration of a loop (maybe some of this obsolete?).
 */
 
 static inline void loop_info_to_cmd (LOOPSET *loop, int j,
 				     CMD *cmd)
 {
 #if LOOP_DEBUG
-    fprintf(stderr, "loop_info_to_cmd: j=%d: '%s'\n",
-	    j, loop->cmds[j].line);
+    fprintf(stderr, "loop_info_to_cmd: i=%d, j=%d: '%s'\n",
+	    loop->iter, j, loop->cmds[j].line);
 #endif
     
     if (loop_is_progressive(loop)) {
@@ -2800,7 +2800,8 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
 	cmd->flags &= ~CMD_NOSUB;
     }
 
-    /* redundant? */
+    /* readjust "catch" for commands that are not being
+       sent through the parser again */
     if (loop_cmd_catch(loop, j)) {
 	cmd->flags |= CMD_CATCH;
     } else if (!cmd->context) {
@@ -2808,7 +2809,8 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
     }
 
 #if LOOP_DEBUG    
-    fprintf(stderr, " flagged: nosub %d, catch %d\n",
+    fprintf(stderr, " flagged: prog %d, nosub %d, catch %d\n",
+	    (cmd->flags & CMD_PROG)? 1 : 0,
 	    (cmd->flags & CMD_NOSUB)? 1 : 0,
 	    (cmd->flags & CMD_CATCH)? 1 : 0);
 #endif	    
@@ -3303,7 +3305,13 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		err = loop_delete_object(cmd, prn);
 	    } else {
 		/* send command to the regular processor */
+		int catch = cmd->flags & CMD_CATCH;
+		
 		err = gretl_cmd_exec(s, dset);
+		if (catch) {
+		    /* ensure "catch" hasn't been scrubbed */
+		    cmd->flags |= CMD_CATCH;
+		}
 		if (!err && plain_model_ci(cmd->ci)) {
 		    err = model_command_post_process(s, dset, loop, j);
 		} else if (!err && !check_gretl_errno() && block_model(cmd)) {
