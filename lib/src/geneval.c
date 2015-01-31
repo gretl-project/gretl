@@ -96,7 +96,7 @@
 #define uvar_node(n) (n->vname != NULL)
 
 #define scalar_matrix_node(n) (n->t == MAT && gretl_matrix_is_scalar(n->v.m))
-#define scalar_node(n) (n != NULL && (n->t == NUM || scalar_matrix_node(n)))
+#define scalar_node(n) (n->t == NUM || scalar_matrix_node(n))
 
 #define stringvec_node(n) (n->flags & SVL_NODE)
 
@@ -6130,7 +6130,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
     } 
 
     if (null_or_empty(r)) {
-	rtype = 0; /* OK */
+	rtype = 0; /* not present, OK */
     } else if (rtype == NUM) {
 	if (!scalar_node(r)) {
 	    node_type_error(f, 2, rtype, r, p);
@@ -6156,7 +6156,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 
 	if (rtype == SERIES) {
 	    z = r->v.xvec;
-	} else if (scalar_node(r)) {
+	} else if (rtype == NUM) {
 	    parm = node_get_scalar(r, p);
 	}
 
