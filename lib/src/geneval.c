@@ -13823,7 +13823,7 @@ static int save_generated_var (parser *p, PRN *prn)
 
     if (p->targ == UNK) {
 	/* "cast" 1 x 1 matrix to scalar? FIXME this should
-	   be scrapped soon */
+	   be scrapped? */
 	if (scalar_matrix_node(r) && !(r->flags & MSL_NODE)) {
 	    p->targ = NUM;
 	} else {

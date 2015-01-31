@@ -2074,6 +2074,51 @@ static double special_time_val (const char *s, const char *fmt,
     }
 }
 
+static int char_count (char c, const char *s)
+{
+    int n = 0;
+
+    while (*s) {
+	if (*s == c) n++;
+	s++;
+    }
+
+    return n;
+}
+
+static double maybe_fix_thousands_sep (csvdata *c, const char *s)
+{
+    const char *p1 = strrchr(s, '.');
+    const char *p2 = strrchr(s, ',');
+    char thou_sep = 0;
+    double ret = NON_NUMERIC;
+
+    if (p1 != NULL && p2 != NULL) {
+	thou_sep = (p2 - p1 > 0)? '.' : ',';
+    } else if (p1 != NULL && char_count('.', s) > 0) {
+	thou_sep = '.';
+    } else if (p2 != NULL && char_count(',', s) > 0) {
+	thou_sep = ',';
+    }
+
+    if (thou_sep != 0) {
+	char *test, tmp[32];
+	double x;
+
+	*tmp = '\0';
+	strncat(tmp, s, 31);
+	gretl_delchar(thou_sep, tmp);
+	errno = 0;
+	x = strtod(tmp, &test);
+	if (*test == '\0' && errno == 0) {
+	    c->decpoint = (thou_sep == '.')? ',' : '.';
+	    ret = x;
+	}
+    }
+
+    return ret;
+}
+
 static double eval_non_numeric (csvdata *c, int i, const char *s)
 {
     double x = NON_NUMERIC;
@@ -2095,6 +2140,13 @@ static double eval_non_numeric (csvdata *c, int i, const char *s)
 	    } else {
 		x = NADBL;
 	    }
+	}
+    } else if (0) {
+	/* not ready */
+	const char *numbloat = "0123456789.,";
+
+	if (strspn(s, numbloat) == strlen(s)) {
+	    x = maybe_fix_thousands_sep(c, s);
 	}
     }
 
