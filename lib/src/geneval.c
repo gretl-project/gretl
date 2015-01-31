@@ -96,7 +96,7 @@
 #define uvar_node(n) (n->vname != NULL)
 
 #define scalar_matrix_node(n) (n->t == MAT && gretl_matrix_is_scalar(n->v.m))
-#define scalar_node(n) (n->t == NUM || scalar_matrix_node(n))
+#define scalar_node(n) (n != NULL && (n->t == NUM || scalar_matrix_node(n)))
 
 #define stringvec_node(n) (n->flags & SVL_NODE)
 
@@ -279,7 +279,7 @@ static int data_in_tree (NODE *t, short type, void *ptr)
    whose data pointer is independently allocated. With such
    a node it's OK simply to "pass on" the pointer in
    assignment, and if it's not passed on it should be freed
-   on completion of "genr". (So note: if it's assigned 
+   on completion of "genr". (So nota bene: if it's assigned 
    elsewhere, the pointer on the aux node itself must then 
    be set to NULL.)
 
@@ -5388,24 +5388,24 @@ static NODE *isodate_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
-    if (l->t != NUM && l->t != SERIES) {
+    if (!scalar_node(l) && l->t != SERIES) {
 	node_type_error(F_ISODATE, 1, NUM, l, p);
-    } else if (r->t != NUM && r->t != EMPTY) {
+    } else if (!scalar_node(r) && r->t != EMPTY) {
 	node_type_error(F_ISODATE, 2, NUM, r, p);
     }
 
     if (!p->err) {
-	if (l->t == NUM) {
+	if (scalar_node(l)) {
 	    /* epoch day node is scalar */
-	    int as_string = (r->t == NUM)? node_get_int(r, p) : 0;
+	    int as_string = scalar_node(r)? node_get_int(r, p) : 0;
 
 	    if (!p->err) {
 		ret = as_string ? aux_string_node(p) : aux_scalar_node(p);
 	    }
 	    if (ret != NULL) {
-		double x = l->v.xval;
+		double x = node_get_scalar(l, p);
 
-		if (!as_string && na(x)) {
+		if (!as_string && xna(x)) {
 		    ret->v.xval = NADBL;
 		} else if (x >= 1 && x <= LONG_MAX) {
 		    if (as_string) {
@@ -6131,6 +6131,11 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 
     if (null_or_empty(r)) {
 	rtype = 0; /* OK */
+    } else if (rtype == NUM) {
+	if (!scalar_node(r)) {
+	    node_type_error(f, 2, rtype, r, p);
+	    return NULL;
+	}
     } else if (r->t != rtype) {
 	node_type_error(f, 2, rtype, r, p);
 	return NULL;
@@ -6151,7 +6156,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 
 	if (rtype == SERIES) {
 	    z = r->v.xvec;
-	} else if (rtype == NUM) {
+	} else if (scalar_node(r)) {
 	    parm = node_get_scalar(r, p);
 	}
 
@@ -7148,26 +7153,29 @@ static NODE *type_string_node (NODE *n, parser *p)
     NODE *ret = aux_string_node(p);
 
     if (ret != NULL) {
-	int t = n->v.xval;
-	const char *s = "null";
+	int t = node_get_int(n, p);
 
-	if (t == 1) {
-	    s = "scalar";
-	} else if (t == 2) {
-	    s = "series";
-	} else if (t == 3) {
-	    s = "matrix";
-	} else if (t == 4) {
-	    s = "string";
-	} else if (t == 5) {
-	    s = "bundle";
-	} else if (t == 6) {
-	    s = "array";
-	}
+	if (!p->err) {
+	    const char *s = "null";
 
-	ret->v.str = gretl_strdup(s);
-	if (ret->v.str == NULL) {
-	    p->err = E_ALLOC;
+	    if (t == 1) {
+		s = "scalar";
+	    } else if (t == 2) {
+		s = "series";
+	    } else if (t == 3) {
+		s = "matrix";
+	    } else if (t == 4) {
+		s = "string";
+	    } else if (t == 5) {
+		s = "bundle";
+	    } else if (t == 6) {
+		s = "array";
+	    }
+
+	    ret->v.str = gretl_strdup(s);
+	    if (ret->v.str == NULL) {
+		p->err = E_ALLOC;
+	    }
 	}
     }
 
@@ -11014,7 +11022,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case ELEMENT:
 	/* list or array, plus scalar */
-	if (r->t != NUM) {
+	if (!scalar_node(r)) {
 	    node_type_error(t->t, 2, NUM, r, p);
 	} else if (l->t == ARRAY) {
 	    ret = get_array_element(l, r, p);
@@ -11042,7 +11050,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_TYPESTR:
 	/* numerical type code to string */
-	if (l->t == NUM) {
+	if (scalar_node(l)) {
 	    ret = type_string_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, NUM, l, p);
@@ -11396,7 +11404,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_COLNAME:
 	/* matrix, scalar as second arg */
-	if (l->t == MAT && r->t == NUM) {
+	if (l->t == MAT && scalar_node(r)) {
 	    ret = matrix_get_colname(l, r, p);
 	} else {
 	    p->err = E_TYPES;
