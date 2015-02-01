@@ -1948,6 +1948,12 @@ static int csv_missval (const char *str, int i, int t,
     return miss;
 }
 
+/* In the case where we think we've found thousands 
+   separators in numerical input, provisionally mark
+   all "non-numeric" values as NAs; we do this prior
+   to a second pass through the data.
+*/
+
 static void revise_non_numeric_values (csvdata *c)
 {
     int i, t;
@@ -2104,8 +2110,12 @@ static int char_count (char c, const char *s)
     return n;
 }
 
-/* each occurrence of a thousands separator must be
-   followed by exactly three digits */
+/* Follow-up check for the case where we think we might
+   have found a thousands separator: each occurrence of 
+   the putative separator must be followed by exactly 3
+   digits: we set c->thousep to an invalid value if this 
+   is not the case.
+*/
 
 static void validate_thousep (csvdata *c, const char *s)
 {
@@ -2134,6 +2144,20 @@ static void validate_thousep (csvdata *c, const char *s)
     }
 }
 
+/* Initial heuristic for detecting a thousands separator,
+   where the string @s has been determined to contain 
+   nothing but digits, dot and comma (allowing for a leading 
+   minus).
+
+   1) If the string contains both comma and dot, whichever 
+   character appears to the left cannot be the decimal
+   separator and may be a thousands separator.
+
+   2) If more than one comma appears in the string, comma
+   cannot be the decimal character and might be a thousands
+   separator; mutatis mutandis for dot.
+*/
+
 static void test_for_thousands_sep (csvdata *c, const char *s)
 {
     const char *p1 = strrchr(s, '.');
@@ -2151,16 +2175,17 @@ static void test_for_thousands_sep (csvdata *c, const char *s)
     if (c->thousep > 0) {
 	if (thousep != 0 && thousep != c->thousep) {
 	    /* no consistent interpretation exists */
-	    c->thousep = -1; /* invalid code */
+	    c->thousep = -1; /* invalid */
 	}
     } else if (thousep != 0) {
+	/* we have a candidate for testing */
 	char *test, tmp[32];
 
 	*tmp = '\0';
 	strncat(tmp, s, 31);
 	gretl_delchar(thousep, tmp);
-	if (thousep == '.') {
-	    gretl_charsub(tmp, ',', '.'); /* FIXME? */
+	if (thousep == '.' && get_local_decpoint() == '.') {
+	    gretl_charsub(tmp, ',', '.');
 	}
 	errno = 0;
 	strtod(tmp, &test);
@@ -2174,7 +2199,7 @@ static void test_for_thousands_sep (csvdata *c, const char *s)
     }
 }
 
-static int digits_and_seps (const char *s)
+static int all_digits_and_seps (const char *s)
 {
     const char *test = "0123456789.,";
 
@@ -2206,8 +2231,17 @@ static double eval_non_numeric (csvdata *c, int i, const char *s)
 	    }
 	}
     } else if (c->thousep >= 0 && !csv_scrub_thousep(c)) {
-	/* not ready? */
-	if (digits_and_seps(s)) {
+	/* Here we consider the possibility although @s does not
+	   validate as numeric according to the C library, it is by
+	   intent numeric but includes one or more thousands
+	   separators.
+
+	   The condition c->thousep >= 0 requires that we haven't
+	   already ruled out this interpretation due to inconsistency,
+	   and !csv_scrub_thousep(c) requires that we're not on a
+	   second pass through the data.
+	*/
+	if (all_digits_and_seps(s)) {
 	    test_for_thousands_sep(c, s);
 	}
     }
@@ -2218,15 +2252,14 @@ static double eval_non_numeric (csvdata *c, int i, const char *s)
 static double csv_atof (csvdata *c, int i, const char *s)
 {
     double x = NON_NUMERIC;
-    char clean[32];
+    char tmp[32], clean[32];
     char *test;
 
-    errno = 0;
-
-    if (csv_scrub_thousep(c) && digits_and_seps(s)) {
+    if (csv_scrub_thousep(c) && strchr(s, c->thousep) &&
+	all_digits_and_seps(s)) {
 	strcpy(clean, s);
 	gretl_delchar(c->thousep, clean);
-	gretl_charsub(clean, ',', '.'); /* FIXME? */
+	gretl_charsub(clean, ',', '.');
 	s = clean;
     }
 
@@ -2234,6 +2267,7 @@ static double csv_atof (csvdata *c, int i, const char *s)
 	/* either we're currently set to the correct locale,
 	   or there's no problematic decimal point in @s
 	*/
+	errno = 0;
 	x = strtod(s, &test);
 	if (*test == '\0' && errno == 0) {
 	    return x;
@@ -2242,11 +2276,9 @@ static double csv_atof (csvdata *c, int i, const char *s)
 	}
     } else if (csv_do_dotsub(c) && strlen(s) <= 31) {
 	/* substitute dot for comma */
-	char tmp[32];
-
 	strcpy(tmp, s);
 	gretl_charsub(tmp, ',', '.');
-
+	errno = 0;
 	x = strtod(tmp, &test);
 	if (*test == '\0' && errno == 0) {
 	    return x;
@@ -2257,12 +2289,9 @@ static double csv_atof (csvdata *c, int i, const char *s)
 
     if (c->decpoint == '.' && strchr(s, ',') != NULL && strlen(s) <= 31) {
 	/* try remediation for decimal comma? */
-	char tmp[32];
-
 	strcpy(tmp, s);
 	gretl_charsub(tmp, ',', '.');
 	errno = 0;
-
 	x = strtod(tmp, &test);
 	if (*test != '\0' || errno != 0) {
 	    x = eval_non_numeric(c, i, s);
