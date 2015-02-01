@@ -1667,6 +1667,8 @@ static int merge_lengthen_series (DATASET *dset,
     return err;
 }
 
+#define MERGE_DEBUG 0
+
 #define simple_structure(p) (p->structure == TIME_SERIES ||		\
 			     p->structure == SPECIAL_TIME_SERIES ||	\
 			     (p->structure == CROSS_SECTION &&		\
@@ -1701,7 +1703,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
     int offset = 0;
     int err = 0;
 
-#if 1
+#if MERGE_DEBUG
     debug_print_option_flags("merge_data", opt);
 #endif
 
@@ -1756,7 +1758,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 	}
     }
 
-#if 0
+#if MERGE_DEBUG
     fprintf(stderr, "merge_data: addvars = %d, addobs = %d\n",
 	    addvars, addobs);
 #endif
