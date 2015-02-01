@@ -2179,10 +2179,9 @@ static void test_for_thousands_sep (csvdata *c, const char *s)
 	}
     } else if (thousep != 0) {
 	/* we have a candidate for testing */
-	char *test, tmp[32];
+	char *test, tmp[CSVSTRLEN];
 
-	*tmp = '\0';
-	strncat(tmp, s, 31);
+	strcpy(tmp, s);
 	gretl_delchar(thousep, tmp);
 	if (thousep == '.' && get_local_decpoint() == '.') {
 	    gretl_charsub(tmp, ',', '.');
@@ -2251,14 +2250,14 @@ static double eval_non_numeric (csvdata *c, int i, const char *s)
 
 static double csv_atof (csvdata *c, int i, const char *s)
 {
+    char tmp[CSVSTRLEN], clean[CSVSTRLEN];
     double x = NON_NUMERIC;
-    char tmp[32], clean[32];
     char *test;
 
     if (csv_scrub_thousep(c) && strchr(s, c->thousep) &&
 	all_digits_and_seps(s)) {
 	/* second pass through the data: pre-process fields
-	   that include thousands separators 
+	   that we reckon include thousands separators 
 	*/
 	strcpy(clean, s);
 	gretl_delchar(c->thousep, clean);
@@ -2273,35 +2272,32 @@ static double csv_atof (csvdata *c, int i, const char *s)
 	errno = 0;
 	x = strtod(s, &test);
 	if (*test == '\0' && errno == 0) {
-	    return x;
-	} else {
-	    x = eval_non_numeric(c, i, s);
+	    return x; /* handled */
 	}
-    } else if (csv_do_dotsub(c) && strlen(s) <= 31) {
+    } else if (csv_do_dotsub(c)) {
 	/* substitute dot for comma */
 	strcpy(tmp, s);
 	gretl_charsub(tmp, ',', '.');
 	errno = 0;
 	x = strtod(tmp, &test);
 	if (*test == '\0' && errno == 0) {
-	    return x;
-	} else {
-	    x = eval_non_numeric(c, i, s);
+	    return x; /* handled */
 	}
     }
 
-    if (c->decpoint == '.' && strchr(s, ',') != NULL && strlen(s) <= 31) {
+    if (c->decpoint == '.' && strchr(s, ',') != NULL) {
 	/* try remediation for decimal comma? */
 	strcpy(tmp, s);
 	gretl_charsub(tmp, ',', '.');
 	errno = 0;
 	x = strtod(tmp, &test);
-	if (*test != '\0' || errno != 0) {
-	    x = eval_non_numeric(c, i, s);
-	} 
+	if (*test == '\0' && errno == 0) {
+	    return x; /* handled */
+	}
     }
 
-    return x;
+    /* fallback */
+    return eval_non_numeric(c, i, s);
 }
 
 static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
@@ -3387,6 +3383,8 @@ static int real_import_csv (const char *fname,
     }
 
     if (c->decpoint == '.' && get_local_decpoint() == ',') {
+	/* we're in a locale that uses decimal comma: 
+	   switch to the C locale */
 	gretl_push_c_numeric_locale();
 	popit = 1;
     } else if (c->decpoint == ',' && get_local_decpoint() == '.') {
@@ -3404,6 +3402,8 @@ static int real_import_csv (const char *fname,
 	if (csv_skip_bad(c)) {
 	    err = csv_read_data(c, fp, prn, NULL);
 	} else if (c->thousep > 0) {
+	    pprintf(mprn, A_("WARNING: it seems '%c' is being used "
+			     "as thousands separator\n"), c->thousep);
 	    c->decpoint = (c->thousep == '.')? ',' : '.';
 	    revise_non_numeric_values(c);
 	    csv_set_scrub_thousep(c);
