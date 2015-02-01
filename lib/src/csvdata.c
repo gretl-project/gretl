@@ -51,7 +51,8 @@ enum {
     CSV_DOTSUB   = 1 << 9,
     CSV_ALLCOLS  = 1 << 10,
     CSV_BOM      = 1 << 11,
-    CSV_VERBOSE  = 1 << 12
+    CSV_VERBOSE  = 1 << 12,
+    CSV_THOUSEP  = 1 << 13
 };
 
 enum {
@@ -81,6 +82,7 @@ struct csvdata_ {
     int flags;
     char delim;
     char decpoint;
+    char thousep;
     int markerpd;
     int maxlinelen;
     int real_n;
@@ -115,6 +117,7 @@ struct csvdata_ {
 #define csv_all_cols(c)           (c->flags & CSV_ALLCOLS)
 #define csv_has_bom(c)            (c->flags & CSV_BOM)
 #define csv_is_verbose(c)         (c->flags & CSV_VERBOSE)
+#define csv_scrub_thousep(c)      (c->flags & CSV_THOUSEP)
 
 #define csv_set_trailing_comma(c)   (c->flags |= CSV_TRAIL)
 #define csv_unset_trailing_comma(c) (c->flags &= ~CSV_TRAIL)
@@ -129,6 +132,7 @@ struct csvdata_ {
 #define csv_set_all_cols(c)         (c->flags |= CSV_ALLCOLS)
 #define csv_set_has_bom(c)          (c->flags |= CSV_BOM)
 #define csv_set_verbose(c)          (c->flags |= CSV_VERBOSE)
+#define csv_set_scrub_thousep(c)    (c->flags |= CSV_THOUSEP)
 
 #define csv_skip_bad(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
@@ -285,6 +289,7 @@ static csvdata *csvdata_new (DATASET *dset)
 
     c->flags = 0;
     c->delim = '\t';
+    c->thousep = 0;
     c->markerpd = -1;
     c->maxlinelen = 0;
     c->real_n = 0;
@@ -1943,6 +1948,19 @@ static int csv_missval (const char *str, int i, int t,
     return miss;
 }
 
+static void revise_non_numeric_values (csvdata *c)
+{
+    int i, t;
+    
+    for (i=1; i<c->dset->v; i++) {
+	for (t=0; t<c->dset->n; t++) {
+	    if (c->dset->Z[i][t] == NON_NUMERIC) {
+		c->dset->Z[i][t] = NADBL;
+	    }
+	}
+    }
+}
+
 static int non_numeric_check (csvdata *c, PRN *prn)
 {
     int *list = NULL;
@@ -2086,37 +2104,83 @@ static int char_count (char c, const char *s)
     return n;
 }
 
-static double maybe_fix_thousands_sep (csvdata *c, const char *s)
+/* each occurrence of a thousands separator must be
+   followed by exactly three digits */
+
+static void validate_thousep (csvdata *c, const char *s)
+{
+    int nd;
+
+    while (*s) {
+	if (*s == c->thousep) {
+	    nd = 0;
+	    s++;
+	    while (*s) {
+		if (isdigit(*s)) {
+		    nd++;
+		    s++;
+		} else {
+		    break;
+		}
+	    }
+	    if (nd != 3) {
+		/* nope! */
+		c->thousep = -1;
+		break;
+	    }
+	} else {
+	    s++;
+	}
+    }
+}
+
+static void test_for_thousands_sep (csvdata *c, const char *s)
 {
     const char *p1 = strrchr(s, '.');
     const char *p2 = strrchr(s, ',');
-    char thou_sep = 0;
-    double ret = NON_NUMERIC;
+    char thousep = 0;
 
     if (p1 != NULL && p2 != NULL) {
-	thou_sep = (p2 - p1 > 0)? '.' : ',';
+	thousep = (p2 - p1 > 0)? '.' : ',';
     } else if (p1 != NULL && char_count('.', s) > 0) {
-	thou_sep = '.';
+	thousep = '.';
     } else if (p2 != NULL && char_count(',', s) > 0) {
-	thou_sep = ',';
+	thousep = ',';
     }
 
-    if (thou_sep != 0) {
+    if (c->thousep > 0) {
+	if (thousep != 0 && thousep != c->thousep) {
+	    /* no consistent interpretation exists */
+	    c->thousep = -1; /* invalid code */
+	}
+    } else if (thousep != 0) {
 	char *test, tmp[32];
-	double x;
 
 	*tmp = '\0';
 	strncat(tmp, s, 31);
-	gretl_delchar(thou_sep, tmp);
+	gretl_delchar(thousep, tmp);
+	if (thousep == '.') {
+	    gretl_charsub(tmp, ',', '.'); /* FIXME? */
+	}
 	errno = 0;
-	x = strtod(tmp, &test);
+	strtod(tmp, &test);
 	if (*test == '\0' && errno == 0) {
-	    c->decpoint = (thou_sep == '.')? ',' : '.';
-	    ret = x;
+	    c->thousep = thousep;
 	}
     }
 
-    return ret;
+    if (c->thousep && thousep != 0) {
+	validate_thousep(c, s);
+    }
+}
+
+static int digits_and_seps (const char *s)
+{
+    const char *test = "0123456789.,";
+
+    if (*s == '-') s++;
+
+    return strspn(s, test) == strlen(s);
 }
 
 static double eval_non_numeric (csvdata *c, int i, const char *s)
@@ -2141,12 +2205,10 @@ static double eval_non_numeric (csvdata *c, int i, const char *s)
 		x = NADBL;
 	    }
 	}
-    } else if (0) {
-	/* not ready */
-	const char *numbloat = "0123456789.,";
-
-	if (strspn(s, numbloat) == strlen(s)) {
-	    x = maybe_fix_thousands_sep(c, s);
+    } else if (c->thousep >= 0 && !csv_scrub_thousep(c)) {
+	/* not ready? */
+	if (digits_and_seps(s)) {
+	    test_for_thousands_sep(c, s);
 	}
     }
 
@@ -2156,9 +2218,17 @@ static double eval_non_numeric (csvdata *c, int i, const char *s)
 static double csv_atof (csvdata *c, int i, const char *s)
 {
     double x = NON_NUMERIC;
+    char clean[32];
     char *test;
 
     errno = 0;
+
+    if (csv_scrub_thousep(c) && digits_and_seps(s)) {
+	strcpy(clean, s);
+	gretl_delchar(c->thousep, clean);
+	gretl_charsub(clean, ',', '.'); /* FIXME? */
+	s = clean;
+    }
 
     if (c->decpoint == '.' || !csv_do_dotsub(c) || strchr(s, ',') == NULL) {
 	/* either we're currently set to the correct locale,
@@ -3288,14 +3358,25 @@ static int real_import_csv (const char *fname,
 	gretl_push_c_numeric_locale();
 	popit = 1;
     } else if (c->decpoint == ',' && get_local_decpoint() == '.') {
+	/* dotsub: define this if we're in a '.' locale and
+	   we've figured that the decimal character is ',' in
+	   the file we're reading
+	*/
 	csv_set_dotsub(c);
     }
 
     err = csv_read_data(c, fp, prn, mprn);
 
-    if (!err && csv_skip_bad(c)) {
-	/* try again */
-	err = csv_read_data(c, fp, prn, NULL);
+    if (!err) {
+	/* try again, under certain conditions */
+	if (csv_skip_bad(c)) {
+	    err = csv_read_data(c, fp, prn, NULL);
+	} else if (c->thousep > 0) {
+	    c->decpoint = (c->thousep == '.')? ',' : '.';
+	    revise_non_numeric_values(c);
+	    csv_set_scrub_thousep(c);
+	    err = csv_read_data(c, fp, prn, NULL);
+	}
     }
 
     if (!err) {
