@@ -2257,6 +2257,9 @@ static double csv_atof (csvdata *c, int i, const char *s)
 
     if (csv_scrub_thousep(c) && strchr(s, c->thousep) &&
 	all_digits_and_seps(s)) {
+	/* second pass through the data: pre-process fields
+	   that include thousands separators 
+	*/
 	strcpy(clean, s);
 	gretl_delchar(c->thousep, clean);
 	gretl_charsub(clean, ',', '.');
