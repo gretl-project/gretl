@@ -4037,26 +4037,31 @@ static NODE *apply_list_func (NODE *n, int f, parser *p)
 	/* note: list is modified below */
 
 	if (list != NULL) {
-	    switch (f) {
-	    case F_LOG:
-		p->err = list_loggenr(list, p->dset);
-		break;
-	    case F_DIFF:
-	    case F_LDIFF:
-	    case F_SDIFF:
-		if (f == F_DIFF) t = DIFF;
-		else if (f == F_LDIFF) t = LDIFF;
-		else if (f == F_SDIFF) t = SDIFF;
-		p->err = list_diffgenr(list, t, p->dset);
-		break;
-	    case F_XPX:
-		p->err = list_xpxgenr(&list, p->dset, OPT_O);
-		break;
-	    case F_ODEV:
-		p->err = list_orthdev(list, p->dset);
-		break;
-	    default:
-		break;
+	    /* note: an empty list argument produces an
+	       empty list return
+	    */
+	    if (list[0] > 0) {
+		switch (f) {
+		case F_LOG:
+		    p->err = list_loggenr(list, p->dset);
+		    break;
+		case F_DIFF:
+		case F_LDIFF:
+		case F_SDIFF:
+		    if (f == F_DIFF) t = DIFF;
+		    else if (f == F_LDIFF) t = LDIFF;
+		    else if (f == F_SDIFF) t = SDIFF;
+		    p->err = list_diffgenr(list, t, p->dset);
+		    break;
+		case F_XPX:
+		    p->err = list_xpxgenr(&list, p->dset, OPT_O);
+		    break;
+		case F_ODEV:
+		    p->err = list_orthdev(list, p->dset);
+		    break;
+		default:
+		    break;
+		}
 	    }
 	    ret->v.ivec = list;
 	}
@@ -6669,7 +6674,11 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else if (rtype == GRETL_TYPE_MATRIX) {
 	    retp = &mret;
 	} else if (rtype == GRETL_TYPE_LIST) {
-	    retp = &iret;
+	    if (p->targ != EMPTY && p->tree == t) {
+		/* "collect" the return value only on direct
+		   assignment, 2015-02-02 */
+		retp = &iret;
+	    }
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    retp = &sret;
 	} else if (rtype == GRETL_TYPE_BUNDLE) {
@@ -6714,7 +6723,11 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    if (is_tmp_node(ret)) {
 			free(ret->v.ivec);
 		    }
-		    ret->v.ivec = iret;
+		    if (iret != NULL) {
+			ret->v.ivec = iret;
+		    } else {
+			ret->v.ivec = gretl_list_new(0);
+		    }
 		}
 	    } else if (rtype == GRETL_TYPE_STRING) {
 		ret = aux_string_node(p);
@@ -13570,6 +13583,8 @@ static int edit_list (parser *p)
 		gretl_errmsg_sprintf(_("Index value %d is out of bounds"), idx);
 		p->err = E_DATA;
 	    } else {
+		/* FIXME we're in a function and the list was
+		   provided as an argument */
 		int repl = list[1];
 
 		free(list);

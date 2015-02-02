@@ -1729,7 +1729,8 @@ int max_namelen_in_list (const int *list, const DATASET *dset)
 
 void varlist (const DATASET *dset, PRN *prn)
 {
-    int level = gretl_function_depth();
+    int fd = gretl_function_depth();
+    const char *name;
     int len, maxlen = 0;
     int nv = 4;
     int i, j, n = 0;
@@ -1740,8 +1741,13 @@ void varlist (const DATASET *dset, PRN *prn)
     }
 
     for (i=0; i<dset->v; i++) {
-	if (series_get_stack_level(dset, i) == level) {
-	    len = strlen(dset->varname[i]);
+	if (i == 0 || fd == 0 || series_get_stack_level(dset, i) == fd) {
+	    if (series_is_listarg(dset, i)) {
+		name = "[masked]";
+	    } else {
+		name = dset->varname[i];
+	    }
+	    len = strlen(name);
 	    if (len > maxlen) {
 		maxlen = len;
 	    }
@@ -1761,14 +1767,18 @@ void varlist (const DATASET *dset, PRN *prn)
 
     j = 1;
     for (i=0; i<dset->v; i++) {
-	if (level > 0 && series_get_stack_level(dset, i) != level) {
-	    continue;
+	if (i == 0 || fd == 0 || series_get_stack_level(dset, i) == fd) {
+	    if (series_is_listarg(dset, i)) {
+		name = "[masked]";
+	    } else {
+		name = dset->varname[i];
+	    }
+	    pprintf(prn, "%3d) %-*s", i, maxlen + 2, name);
+	    if (j % nv == 0) {
+		pputc(prn, '\n');
+	    }
+	    j++;
 	}
-	pprintf(prn, "%3d) %-*s", i, maxlen + 2, dset->varname[i]);
-	if (j % nv == 0) {
-	    pputc(prn, '\n');
-	}
-	j++;
     }
 
     if (n % nv) {

@@ -21,6 +21,7 @@
 #include "uservar.h"
 #include "dbwrite.h"
 #include "libset.h"
+#include "gretl_func.h"
 #include "gretl_xml.h"
 #include "gretl_panel.h"
 #include "csvdata.h"
@@ -1342,8 +1343,6 @@ static void merge_name_error (const char *objname, PRN *prn)
     g_free(msg);
 }
 
-#if 0 /* not yet */
-
 static int count_new_vars (const DATASET *dset, const DATASET *addinfo,
 			   PRN *prn)
 {
@@ -1362,34 +1361,10 @@ static int count_new_vars (const DATASET *dset, const DATASET *addinfo,
 	if (gretl_is_user_var(vname)) {
 	    merge_name_error(vname, prn);
 	    addvars = -1;
-	} else if (current_series_index(dset, vname) > 0) {
-	    addvars--;
-	}
-    }
-
-    return addvars;
-}
-
-#else
-
-static int count_new_vars (const DATASET *dset, const DATASET *addinfo,
-			   PRN *prn)
-{
-    const char *vname;
-    int addvars = addinfo->v - 1;
-    int i, j;
-
-    /* We start by assuming that all the series in @addinfo are new,
-       then subtract those we find to be already present. We also
-       check for collision between the names of series to be added and
-       the names of existing objects other than series.
-    */
-
-    for (i=1; i<addinfo->v && addvars >= 0; i++) {
-	vname = addinfo->varname[i];
-	if (gretl_is_user_var(vname)) {
-	    merge_name_error(vname, prn);
-	    addvars = -1;
+	} else if (gretl_function_depth() > 0) {
+	    if (current_series_index(dset, vname) > 0) {
+		addvars--;
+	    }
 	} else {
 	    for (j=1; j<dset->v; j++) {
 		if (!strcmp(vname, dset->varname[j])) {
@@ -1402,8 +1377,6 @@ static int count_new_vars (const DATASET *dset, const DATASET *addinfo,
 
     return addvars;
 }
-
-#endif
 
 static int year_special_markers (const DATASET *dset,
 				 const DATASET *addset)
@@ -1454,8 +1427,10 @@ static int year_special_markers (const DATASET *dset,
 
 static int compare_ranges (const DATASET *targ,
 			   const DATASET *src,
+			   int newvars,
 			   int *offset,
-			   int *yrspecial)
+			   int *yrspecial,
+			   int *err)
 {
     int ed0 = dateton(targ->endobs, targ);
     int sd1, ed1, addobs = -1;
@@ -1463,12 +1438,22 @@ static int compare_ranges (const DATASET *targ,
 
     if (dataset_is_cross_section(targ) &&
 	dataset_is_cross_section(src) &&
-	!targ->markers && !src->markers) {
-	/* we have no meaningful row information: just
-	   stick the new data onto the end 
-	*/
-	*offset = ed0 + 1;
-	return src->n;
+	!(targ->markers && src->markers)) {
+	if (newvars == 0) {
+	    /* assume the new data should be appended length-wise */
+	    *offset = ed0 + 1;
+	    return src->n;
+	} else {
+	    /* we've already determined that the series length in
+	       @src doesn't match either the full series length or
+	       the current sample range in @targ; we therefore have
+	       no information with which to match rows for new
+	       series
+	    */	    
+	    gretl_errmsg_set(_("append: don't know how to align the new series!"));
+	    *err = E_DATA;
+	    return -1;
+	}
     }
 
     sd1 = merge_dateton(src->stobs, targ);
@@ -1630,6 +1615,9 @@ just_append_rows (const DATASET *targ, const DATASET *src,
 	src->structure == CROSS_SECTION &&
 	targ->markers == 0 && src->markers == 0 &&
 	targ->sd0 == 1 && src->sd0 == 1) {
+	/* note: we do this only if we're not adding any new
+	   series: we'll append to existing series lengthwise
+	*/
 	*offset = targ->n;
 	return src->n;
     } else {
@@ -1745,8 +1733,14 @@ static int merge_data (DATASET *dset, DATASET *addset,
 	return 1;
     }
 
+#if MERGE_DEBUG
+    fprintf(stderr, " new series count = %d\n", addvars);
+#endif    
+
     if (dated_daily_data(dset) && dated_daily_data(addset)) {
-	fprintf(stderr, "special: merging daily data\n");
+#if MERGE_DEBUG	
+	fprintf(stderr, " special: merging daily data\n");
+#endif	
 	dayspecial = 1;
     }
 
@@ -1758,21 +1752,38 @@ static int merge_data (DATASET *dset, DATASET *addset,
     } else if (dataset_is_panel(dset) && 
 	       panel_expand_ok(dset, addset, opt)) {
 	/* allow appending to panel when the number of obs matches
-	   either the cross-section size or the time-series length */
+	   either the cross-section size or the time-series length 
+	*/
 	addpanel = 1;
     } else if (dset->pd != addset->pd) {
 	merge_error(_("Data frequency does not match\n"), prn);
 	err = 1;
     }
 
-    if (!err) {
+    if (!err && gretl_function_depth() > 0) {
+	/* we won't add observations within a function, but
+	   we should still check for an error from compare_ranges()
+	*/
 	if (!addsimple && !addpanel) {
-	    addobs = compare_ranges(dset, addset, &offset, &yrspecial);
-	    fprintf(stderr, "addobs (1) = %d\n", addobs);
+	    addobs = compare_ranges(dset, addset, addvars, &offset,
+				    &yrspecial, &err);
+	    if (!err && addobs > 0) {
+		addobs = 0;
+	    }
 	}
-	if (addobs <= 0 && addvars == 0) {
+    } else if (!err) {
+	if (!addsimple && !addpanel) {
+	    addobs = compare_ranges(dset, addset, addvars, &offset,
+				    &yrspecial, &err);
+#if MERGE_DEBUG	    
+	    fprintf(stderr, " added obs, from compare_ranges: %d\n", addobs);
+#endif	    
+	}
+	if (!err && addobs <= 0 && addvars == 0) {
 	    addobs = just_append_rows(dset, addset, &offset);
-	    fprintf(stderr, "addobs (2) = %d\n", addobs);
+#if MERGE_DEBUG	    
+	    fprintf(stderr, " added obs, from just_append_rows: %d\n", addobs);
+#endif	    
 	}
     }
 
@@ -1791,8 +1802,12 @@ static int merge_data (DATASET *dset, DATASET *addset,
     }
 
 #if MERGE_DEBUG
-    fprintf(stderr, "merge_data: addvars = %d, addobs = %d\n",
-	    addvars, addobs);
+    if (!err) {
+	fprintf(stderr, " after preliminaries: addvars = %d, addobs = %d\n",
+		addvars, addobs);
+    } else {
+	fprintf(stderr, " after preliminaries: err = %d\n", err);
+    }	
 #endif
 
     /* if checks are passed, try merging the data */

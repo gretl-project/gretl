@@ -5861,11 +5861,12 @@ static void replace_caller_series (int targ, int src, DATASET *dset)
    function whose execution is now terminating.  Note that this list
    may be the direct return value of the function, or it may have been
    given to the function as an argument, or it may have been constructed
-   on the fly. This is flagged by @arg.  
+   on the fly. This is flagged by @arg (which will be non-NULL only if
+   the list was supplied as a function argument).
 */
 
 static int unlocalize_list (const char *lname, fn_arg *arg,
-			    DATASET *dset)
+			    void *ret, DATASET *dset)
 {
     int *list = get_list_by_name(lname);
     int d = gretl_function_depth();
@@ -5891,15 +5892,18 @@ static int unlocalize_list (const char *lname, fn_arg *arg,
        redefined within the function.  If any series have been
        redefined in that way we also need to adjust the list itself,
        replacing the ID numbers of local variables with the
-       caller-level IDs.
+       caller-level IDs -- all supposing the direct return value is
+       being assigned by the caller.
 
        On the other hand, if the list was a temporary construction
        (a list parameter was required, but a single series was given as
        argument), we destroy the list.
     */
 
-    if (arg == NULL) {
-	/* we're looking at a direct return value */
+    if (arg == NULL && ret == NULL) {
+	; /* no-op: we'll trash the list later */
+    } else if (arg == NULL) {
+	/* handle list as direct return value */
 	int j, lev, overwrite;
 	const char *vname;
 
@@ -5939,6 +5943,7 @@ static int unlocalize_list (const char *lname, fn_arg *arg,
 #endif
 	}
     } else {
+	/* list was given as argument to function */
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    if (vi == LISTSEP) {
@@ -6059,7 +6064,7 @@ function_assign_returns (fncall *call, int rtype,
 	       stop_fncall(); here we just adjust the info on the
 	       listed variables so they don't get deleted
 	    */
-	    err = unlocalize_list(call->retname, NULL, dset);
+	    err = unlocalize_list(call->retname, NULL, ret, dset);
 	} else if (rtype == GRETL_TYPE_BUNDLE) {
 	    err = handle_bundle_return(call, ret, copy);
 	} else if (gretl_array_type(rtype)) {
@@ -6113,7 +6118,7 @@ function_assign_returns (fncall *call, int rtype,
 		user_var_set_name(u, arg->upname);
 	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
-	    unlocalize_list(fp->name, arg, dset);
+	    unlocalize_list(fp->name, arg, NULL, dset);
 	} 
     }
 
@@ -6179,7 +6184,8 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 
     /* below: delete series local to the function, taking care not to
        delete any that have been "promoted" to caller level via their 
-       inclusion in a returned list
+       inclusion in a returned list; also catch any "listarg" series
+       that are no longer attached to a list
     */
 
     if (dset != NULL) {
@@ -6206,6 +6212,12 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 		}
 	    }    
 	}
+	for (i=1; i<orig_v; i++) {
+	    if (series_is_listarg(dset, i)) {
+		series_unset_flag(dset, i, VAR_LISTARG);
+		series_set_stack_level(dset, i, d - 1);
+	    }
+	}
     }
 
     /* direct list return: write the possibly revised list to the
@@ -6214,7 +6226,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
        changed due to the deletion of function-local variables.
     */
 
-    if (!err && rtype == GRETL_TYPE_LIST) {
+    if (!err && rtype == GRETL_TYPE_LIST && ret != NULL) {
 	int *lret = gretl_list_copy(get_list_by_name(call->retname));
 
 	if (lret != NULL) {

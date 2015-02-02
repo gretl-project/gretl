@@ -1531,13 +1531,13 @@ static int lib_open_append (ExecState *s,
     */
 
 #if ALLOW_GUI_OPEN
-    if (cmd->ci != JOIN && gretl_function_depth() > 0) {
+    if (cmd->ci == OPEN && gretl_function_depth() > 0) {
 	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
 			     gretl_command_word(cmd->ci));
 	return E_DATA;
     }
 #else
-    if (cmd->ci != JOIN && (gretl_in_gui_mode() || gretl_function_depth() > 0)) {
+    if (cmd->ci == OPEN && (gretl_in_gui_mode() || gretl_function_depth() > 0)) {
 	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
 			     gretl_command_word(cmd->ci));
 	return E_DATA;
