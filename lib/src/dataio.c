@@ -1342,6 +1342,36 @@ static void merge_name_error (const char *objname, PRN *prn)
     g_free(msg);
 }
 
+#if 0 /* not yet */
+
+static int count_new_vars (const DATASET *dset, const DATASET *addinfo,
+			   PRN *prn)
+{
+    const char *vname;
+    int addvars = addinfo->v - 1;
+    int i, j;
+
+    /* We start by assuming that all the series in @addinfo are new,
+       then subtract those we find to be already present. We also
+       check for collision between the names of series to be added and
+       the names of existing objects other than series.
+    */
+
+    for (i=1; i<addinfo->v && addvars >= 0; i++) {
+	vname = addinfo->varname[i];
+	if (gretl_is_user_var(vname)) {
+	    merge_name_error(vname, prn);
+	    addvars = -1;
+	} else if (current_series_index(dset, vname) > 0) {
+	    addvars--;
+	}
+    }
+
+    return addvars;
+}
+
+#else
+
 static int count_new_vars (const DATASET *dset, const DATASET *addinfo,
 			   PRN *prn)
 {
@@ -1372,6 +1402,8 @@ static int count_new_vars (const DATASET *dset, const DATASET *addinfo,
 
     return addvars;
 }
+
+#endif
 
 static int year_special_markers (const DATASET *dset,
 				 const DATASET *addset)
