@@ -71,6 +71,8 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 		    p->lh.name, p->lh.v);
 	}
     } else if (p->targ == MAT) {
+	gretl_matrix *m = get_matrix_by_name(p->lh.name);
+	
 	if (p->lh.t == MAT && p->lh.substr != NULL && 
 	    *p->lh.substr != '\0') {
 	    pprintf(prn, _("Modified matrix %s"), p->lh.name);
@@ -78,6 +80,9 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	    pprintf(prn, _("Replaced matrix %s"), p->lh.name);
 	} else {
 	    pprintf(prn, _("Generated matrix %s"), p->lh.name);
+	}
+	if (m != NULL && m->rows == 1 && m->cols == 1) {
+	    pprintf(prn, " = {%g}", m->val[0]);
 	}
     } else if (p->targ == LIST) {
 	if (p->lh.t == LIST) {

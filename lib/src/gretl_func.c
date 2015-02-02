@@ -6212,10 +6212,13 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 		}
 	    }    
 	}
-	for (i=1; i<orig_v; i++) {
-	    if (series_is_listarg(dset, i)) {
-		series_unset_flag(dset, i, VAR_LISTARG);
-		series_set_stack_level(dset, i, d - 1);
+	if (call->listvars != NULL) {
+	    int vi;
+	    
+	    for (i=1; i<=call->listvars[0]; i++) {
+		vi = call->listvars[i];
+		series_unset_flag(dset, vi, VAR_LISTARG);
+		series_set_stack_level(dset, vi, d - 1);
 	    }
 	}
     }

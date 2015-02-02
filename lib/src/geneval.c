@@ -13814,6 +13814,8 @@ static int assign_null_to_array (parser *p)
     return err;
 }
 
+#define ONE_BY_ONE_CAST 1 /* but drop soon? */
+
 static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
@@ -13836,15 +13838,20 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
     } 
 
+#if ONE_BY_ONE_CAST   
     if (p->targ == UNK) {
-	/* "cast" 1 x 1 matrix to scalar? FIXME this should
-	   be scrapped? */
+	/* "cast" 1 x 1 matrix to scalar */
 	if (scalar_matrix_node(r) && !(r->flags & MSL_NODE)) {
 	    p->targ = NUM;
 	} else {
 	    p->targ = r->t;
 	}
-    }	
+    }
+#else
+    if (p->targ == UNK) {
+	p->targ = r->t;
+    }
+#endif    
 
 #if EDEBUG
     fprintf(stderr, "after preliminaries: targ=%s, op='%s'\n",
