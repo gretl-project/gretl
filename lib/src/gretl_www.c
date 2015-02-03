@@ -548,7 +548,7 @@ int get_update_info (char **saver, int verbose)
 
 int upload_function_package (const char *login, const char *pass, 
 			     const char *fname, const char *buf,
-			     char **retbuf)
+			     size_t buflen, char **retbuf)
 {
     CURL *curl;
     CURLcode res;
@@ -579,6 +579,8 @@ int upload_function_package (const char *login, const char *pass,
     } else {
 	struct curl_httppost *post = NULL;
 	struct curl_httppost *last = NULL;
+	int zipfile = has_suffix(fname, ".zip");
+	char sizestr[32];
 	
 	curl_easy_setopt(curl, CURLOPT_URL, u.url);
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, u.agent);
@@ -591,7 +593,7 @@ int upload_function_package (const char *login, const char *pass,
 	if (wproxy && *proxyhost != '\0') {
 	    curl_easy_setopt(curl, CURLOPT_PROXY, proxyhost);
 	}
-	
+
 	curl_formadd(&post, &last, 
 		     CURLFORM_COPYNAME, "login", 
 		     CURLFORM_PTRCONTENTS, login, 
@@ -600,13 +602,28 @@ int upload_function_package (const char *login, const char *pass,
 		     CURLFORM_COPYNAME, "pass", 
 		     CURLFORM_PTRCONTENTS, pass, 
 		     CURLFORM_END);
-	curl_formadd(&post, &last, 
-		     CURLFORM_COPYNAME, "pkg", 
-		     CURLFORM_BUFFER, fname,
-		     CURLFORM_CONTENTTYPE, "text/plain; charset=utf-8",
-		     CURLFORM_BUFFERPTR, buf,
-		     CURLFORM_BUFFERLENGTH, strlen(buf),
-		     CURLFORM_END);
+	if (zipfile) {
+	    sprintf(sizestr, "%d", (int) buflen);
+	    curl_formadd(&post, &last, 
+			 CURLFORM_COPYNAME, "datasize",
+			 CURLFORM_PTRCONTENTS, sizestr, 
+			 CURLFORM_END);		    
+	    curl_formadd(&post, &last, 
+			 CURLFORM_COPYNAME, "pkg", 
+			 CURLFORM_BUFFER, fname,
+			 CURLFORM_CONTENTTYPE, "application/x-zip-compressed",
+			 CURLFORM_BUFFERPTR, buf,
+			 CURLFORM_BUFFERLENGTH, buflen,
+			 CURLFORM_END);	    
+	} else {
+	    curl_formadd(&post, &last, 
+			 CURLFORM_COPYNAME, "pkg", 
+			 CURLFORM_BUFFER, fname,
+			 CURLFORM_CONTENTTYPE, "text/plain; charset=utf-8",
+			 CURLFORM_BUFFERPTR, buf,
+			 CURLFORM_BUFFERLENGTH, strlen(buf),
+			 CURLFORM_END);
+	}
 
 	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
 	res = curl_easy_perform(curl);

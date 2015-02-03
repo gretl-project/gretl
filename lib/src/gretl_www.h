@@ -74,7 +74,7 @@ int get_update_info (char **saver, int verbose);
 
 int upload_function_package (const char *login, const char *pass, 
 			     const char *fname, const char *buf,
-			     char **retbuf);
+			     size_t buflen, char **retbuf);
 
 int retrieve_public_file (const char *uri, char *localname);
 
