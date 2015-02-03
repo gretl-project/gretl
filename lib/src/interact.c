@@ -1525,11 +1525,6 @@ static int lib_open_append (ExecState *s,
 	return E_NODATA;
     }
 
-    /* Of open, append and join, only join is OK within a function:
-       the latter simply adds a local series while the others 
-       attempt to modify the entire dataset.
-    */
-
 #if ALLOW_GUI_OPEN
     if (cmd->ci == OPEN && gretl_function_depth() > 0) {
 	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
