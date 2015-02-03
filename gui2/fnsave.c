@@ -25,6 +25,7 @@
 #include "textbuf.h"
 #include "fileselect.h"
 #include "gretl_www.h"
+#include "gretl_zip.h"
 #include "winstack.h"
 #include "selector.h"
 #include "textutil.h"
@@ -2170,27 +2171,166 @@ static int validate_package_file (const char *fname, int verbose)
     return err;
 }
 
-static void do_pkg_upload (function_info *finfo, const char *fname)
+/* For a package whose help is in a PDF file, return
+   the path to the file (or NULL if not found).
+*/
+
+static gchar *pkg_find_pdf_doc (function_info *finfo)
 {
+    gchar *pdfname = g_strdup(finfo->help + 7);
+    char *p;
+    FILE *fp;
+
+    g_strchomp(g_strchug(pdfname));
+
+    /* adjust path to match finfo->fname? */
+    if ((p = strrchr(finfo->fname, SLASH)) != NULL) {
+	char tmp[FILENAME_MAX];
+
+	strcpy(tmp, finfo->fname);
+	p = strrchr(tmp, SLASH);
+	*(p + 1) = '\0';
+	strcat(tmp, pdfname);
+	g_free(pdfname);
+	pdfname = g_strdup(tmp);
+    }
+    
+    fp = gretl_fopen(pdfname, "r");
+
+    if (fp == NULL) {
+	fprintf(stderr, " couldn't find '%s'\n", pdfname);
+	g_free(pdfname);
+	pdfname = NULL;
+    } else {
+	fprintf(stderr, " found '%s' OK\n", pdfname);
+	fclose(fp);
+    }
+
+    return pdfname;
+}
+
+/* Collect pkg.gfn and pkg.pdf into a temporary dir under
+   the user's dotdir, and make a zipfile containing these
+   two files.
+*/
+
+int pkg_make_zipfile (function_info *finfo,
+		      gchar **zipname)
+{
+    char origdir[FILENAME_MAX];
+    gchar *pdfname;
+    const char *pkgname;
+    gchar *path, *tmp;
+    int dir_made = 0;
+    int err;
+
+    pdfname = pkg_find_pdf_doc(finfo);
+    if (pdfname == NULL) {
+	return 1;
+    }
+
+    *origdir = '\0';
+    pkgname = function_package_get_name(finfo->pkg);
+    path = g_strdup_printf("%s%s", gretl_dotdir(), pkgname);
+    err = gretl_mkdir(path);
+    
+    if (err) {
+	fprintf(stderr, "mkdir error for path '%s'\n", path);
+    } else {
+	dir_made = 1;
+	tmp = g_strdup_printf("%s%c%s.gfn", path, SLASH, pkgname);
+	err = gretl_copy_file(finfo->fname, tmp);
+	g_free(tmp);
+	if (!err) {
+	    tmp = g_strdup_printf("%s%c%s.pdf", path, SLASH, pkgname);
+	    err = gretl_copy_file(pdfname, tmp);
+	    g_free(tmp);
+	}
+    }
+
+    if (!err) {
+	GError *gerr = NULL;
+
+	if (getcwd(origdir, FILENAME_MAX - 1) == NULL) {
+	    *origdir = '\0';
+	}
+	err = gretl_chdir(gretl_dotdir());
+	if (!err) {
+	    tmp = g_strdup_printf("%s.zip", pkgname);
+	    err = gretl_make_zipfile(tmp, pkgname, &gerr);
+	    g_free(tmp);
+	    if (gerr != NULL) {
+		fprintf(stderr, "gretl_make_zipfile: %s\n", gerr->message);
+		g_error_free(gerr);
+	    }
+	    if (!err) {
+		*zipname = g_strdup_printf("%s%s.zip", gretl_dotdir(),
+					   pkgname);
+	    }
+	}
+    }
+
+    if (*origdir != '\0') {
+	/* get back to where we came from */
+	gretl_chdir(origdir);
+    }
+
+    if (dir_made) {
+	/* delete the temporary zip directory */
+	gretl_deltree(path);
+    }
+
+    g_free(path);
+
+    return err;
+}
+
+static int pkg_has_pdf_help (function_info *finfo)
+{
+    if (finfo->help != NULL &&
+	!strncmp(finfo->help, "pdfdoc:", 7)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+static void do_pkg_upload (function_info *finfo, const char *gfnpath)
+{
+    const char *fname;
     gchar *buf = NULL;
     char *retbuf = NULL;
+    gchar *zipname = NULL;
     login_info linfo;
     GdkDisplay *disp;
     GdkCursor *cursor;
     GdkWindow *w1;
     gint x, y;
+    gsize buflen;
     int error_printed = 0;
     int err;
 
-    err = validate_package_file(fname, 0);
+    err = validate_package_file(gfnpath, 0);
     if (err) {
 	return;
     }
+
+    if (pkg_has_pdf_help(finfo)) {
+	err = pkg_make_zipfile(finfo, &zipname);
+	if (err) {
+	    /* FIXME better error message */
+	    errbox("Error making package zipfile: not uploaded");
+	    return;
+	}
+    }
+
+    fname = zipname != NULL ? zipname : gfnpath;
 
     login_dialog(&linfo, finfo->dlg);
 
     if (linfo.canceled) {
 	linfo_free(&linfo);
+	g_free(zipname);
 	return;
     }
 
@@ -2204,14 +2344,14 @@ static void do_pkg_upload (function_info *finfo, const char *fname)
 	gdk_cursor_unref(cursor);
     }
 
-    err = gretl_file_get_contents(fname, &buf, NULL);
+    err = gretl_file_get_contents(fname, &buf, &buflen);
 
     if (err) {
 	error_printed = 1;
     } else {
 	err = upload_function_package(linfo.login, linfo.pass, 
 				      path_last_element(fname),
-				      buf, &retbuf);
+				      buf, buflen, &retbuf);
 	fprintf(stderr, "upload_function_package: err = %d\n", err);
     }
 
@@ -2228,6 +2368,7 @@ static void do_pkg_upload (function_info *finfo, const char *fname)
 	infobox(retbuf);
     }
 
+    g_free(zipname);
     g_free(buf);
     free(retbuf);
 
@@ -2395,7 +2536,7 @@ int save_function_package (const char *fname, gpointer p)
 	    do_pkg_upload(finfo, fname);
 	}
 	/* revise packages.xml in accordance with any
-	   changes above */
+	   changes above, as needed */
 	maybe_update_packages_xml(pkgname, 
 				  finfo->menulabel,
 				  finfo->menupath,
