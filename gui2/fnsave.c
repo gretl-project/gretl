@@ -2288,7 +2288,7 @@ int pkg_make_zipfile (function_info *finfo,
 static int pkg_has_pdf_help (function_info *finfo)
 {
     if (finfo->help != NULL &&
-	!strncmp(finfo->help, "pdfdoc:", 7)) {
+	!strncmp(finfo->help, "pdfdoc", 6)) {
 	return 1;
     } else {
 	return 0;
@@ -2774,7 +2774,7 @@ int save_function_package_spec (const char *fname, gpointer p)
 	gchar *help = textview_get_trimmed_text(finfo->text);
 
 	if (help != NULL) {
-	    if (!strncmp(help, "pdfdoc:", 7)) {
+	    if (!strncmp(help, "pdfdoc", 6)) {
 		pputs(prn, help + 7);
 	    } else {
 		maybe_write_aux_file(fname, help, "_help.txt", prn);

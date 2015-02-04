@@ -1020,4 +1020,3 @@ int gretl_curl (const char *url, const char *header,
 
     return err;
 }
-

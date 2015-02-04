@@ -7338,7 +7338,7 @@ int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname)
 {
     int ret = 0;
 
-    if (pkg->help != NULL && !strncmp(pkg->help, "pdfdoc:", 7)) {
+    if (pkg->help != NULL && !strncmp(pkg->help, "pdfdoc", 6)) {
 	ret = 1;
 	if (pdfname != NULL) {
 	    *pdfname = switch_ext_new(pkg->fname, "pdf");
