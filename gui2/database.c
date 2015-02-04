@@ -2271,12 +2271,24 @@ void pkg_info_from_server (GtkWidget *w, windata_t *vwin)
 {
     static int idx;
     gchar *path, *objname = NULL;
+    int zipfile = 0;
     int err = 0;
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 0, &objname);
+    tree_view_get_bool(GTK_TREE_VIEW(vwin->listbox), 
+		       vwin->active_var, ZIPFILE_COLUMN, &zipfile);
+
     path = g_strdup_printf("%sdltmp.%d", gretl_dotdir(), idx++);
-    err = retrieve_remote_function_package(objname, path);
+
+    if (zipfile) {
+	gchar *zipname = g_strdup_printf("%s.zip", objname);
+
+	err = retrieve_remote_gfn_content(zipname, path);
+	g_free(zipname);
+    } else {
+	err = retrieve_remote_function_package(objname, path);
+    }
 
     if (err) {
 	show_network_error(NULL);
