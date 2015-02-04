@@ -291,6 +291,8 @@ static const char *print_option (int opt)
 	return "CHECK_DB";
     case LIST_PKGS:
 	return "LIST_PKGS";
+    case GRAB_FUNC_INFO:
+	return "GRAB_FUNC_INFO";
     default:
 	break;
     }
@@ -306,7 +308,8 @@ static void urlinfo_set_params (urlinfo *u, CGIOpt opt,
     strcat(u->url, print_option(opt));
 
     if (fname != NULL) {
-	if (opt == GRAB_FILE || opt == GRAB_FUNC) {
+	if (opt == GRAB_FILE || opt == GRAB_FUNC ||
+	    opt == GRAB_FUNC_INFO) {
 	    strcat(u->url, "&fname=");
 	} else {
 	    strcat(u->url, "&dbase=");
@@ -585,6 +588,7 @@ int upload_function_package (const char *login, const char *pass,
 	curl_easy_setopt(curl, CURLOPT_URL, u.url);
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, u.agent);
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, u.verbose);
+
 	if (saveopt == SAVE_TO_BUFFER) {
 	    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, gretl_write_func);
 	    curl_easy_setopt(curl, CURLOPT_FILE, &u);
@@ -719,6 +723,25 @@ int retrieve_remote_function_package (const char *pkgname,
 				      const char *localname)
 {
     return retrieve_url(gretlhost, GRAB_FUNC, pkgname, NULL, 
+			localname, NULL);
+}
+
+/**
+ * retrieve_remote_gfn_content:
+ * @zipname: name of function package, e.g. "foo.zip".
+ * @localname: full path to which the gfn file should be
+ * written on the local machine.
+ *
+ * Retrieves the gfn file from within a function package on
+ * the gretl server that takes the form of a zip file.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int retrieve_remote_gfn_content (const char *zipname, 
+				 const char *localname)
+{
+    return retrieve_url(gretlhost, GRAB_FUNC_INFO, zipname, NULL, 
 			localname, NULL);
 }
 
