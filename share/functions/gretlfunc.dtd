@@ -31,6 +31,9 @@
 <!ELEMENT description (#PCDATA)>
 <!ELEMENT label       (#PCDATA)>
 <!ELEMENT menu-attachment (#PCDATA)>
+<!ATTLIST author
+   email CDATA #IMPLIED
+>
 <!ATTLIST description
    lang CDATA #IMPLIED
 >
