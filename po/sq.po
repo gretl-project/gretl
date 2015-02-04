@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-12-04 13:09-0500\n"
-"PO-Revision-Date: 2015-02-04 00:26+0100\n"
+"PO-Revision-Date: 2015-02-04 13:35+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: \n"
@@ -645,12 +645,12 @@ msgstr "testi LM"
 #: lib/src/compare.c:399
 #, c-format
 msgid "Adding variables improved %d of %d information criteria.\n"
-msgstr "Shtimi i ndryshoreve përmirësoi %d nga %d kriteret e përzgjedhjes së modelit.\n"
+msgstr "Shtimi i ndryshoreve përmirësoi %d nga %d kriteret informues të modelit.\n"
 
 #: lib/src/compare.c:402
 #, c-format
 msgid "Omitting variables improved %d of %d information criteria.\n"
-msgstr "Përjashtimi i ndryshoreve përmirësoi %d nga %d kriteret e përzgjedhjes së modelit.\n"
+msgstr "Heqja e ndryshoreve përmirësoi %d nga %d kriteret informues të modelit.\n"
 
 #: lib/src/compare.c:551
 #: lib/src/vartest.c:807
@@ -1476,11 +1476,11 @@ msgstr "Të dhënat e reja që kerkoni të bashkëngjitni nuk janë të përshtatshme\n"
 
 #: lib/src/dataio.c:1752
 msgid "Inconsistency in observation markers\n"
-msgstr "Emërtimet e vrojtimeve janë të papërshtatshëm\n"
+msgstr "Shënimet e vrojtimeve janë të papërshtatshëm\n"
 
 #: lib/src/dataio.c:2261
 msgid "No markers are available for writing"
-msgstr "Skeda nuk përman emërtime të vrojtimeve "
+msgstr "Skeda nuk përmban ndonjë shënim për vrojtimet"
 
 #: lib/src/dataio.c:2331
 #, c-format
@@ -3373,7 +3373,7 @@ msgstr "%s i korrigjuar"
 #: lib/src/graphing.c:7229
 #: plugin/range-mean.c:112
 msgid "with least squares fit"
-msgstr "me vijën e regresiit KVZ"
+msgstr "me vijën e regresit KVZ"
 
 #: lib/src/gretl_array.c:700
 #, c-format
@@ -3424,7 +3424,7 @@ msgstr "Vlerësimet e gradientit : %d\n"
 #: lib/src/gretl_bfgs.c:2065
 #, c-format
 msgid "Gradient within tolerance (%g)\n"
-msgstr "Gradieni brenda kufirit të lejuar(%g)\n"
+msgstr "Gradienti brenda kufirit të lejuar(%g)\n"
 
 #: lib/src/gretl_bfgs.c:2069
 #, c-format
@@ -4644,7 +4644,7 @@ msgstr "Asnjë vrojtim nuk u gjet\n"
 #: lib/src/gretl_xml.c:3091
 #, c-format
 msgid "Case marker missing at obs %d"
-msgstr "Mungon emërtimi i vrojtimit %d"
+msgstr "Mungon shënimi për vrojtimin %d"
 
 #: lib/src/gretl_xml.c:2966
 #: lib/src/gretl_xml.c:3110
@@ -7570,11 +7570,11 @@ msgstr "Katrorët më të Vegjël të Trefishtë"
 
 #: lib/src/system.c:106
 msgid "Full Information Maximum Likelihood"
-msgstr "Maksimumi i Përgjasisë me Informacion të Plotë"
+msgstr "Maksimumi i Gjasës me Informacion të Plotë"
 
 #: lib/src/system.c:107
 msgid "Limited Information Maximum Likelihood"
-msgstr "Maksimumi i Përgjasisë me Informacion të Kufizuar"
+msgstr "Maksimumi i Gjasës me Informacion të Kufizuar"
 
 #: lib/src/system.c:108
 msgid "Ordinary Least Squares"
@@ -8068,7 +8068,7 @@ msgstr "Hipoteza alternative"
 
 #: lib/src/varprint.c:1269
 msgid "Comparison of information criteria"
-msgstr "Krahasimi i kritereve të informacionit"
+msgstr "Krahasimi i kritereve informues"
 
 #: lib/src/varprint.c:1271
 #: lib/src/varprint.c:1275
@@ -8088,8 +8088,8 @@ msgid ""
 "BIC = Schwarz Bayesian criterion and HQC = Hannan-Quinn criterion."
 msgstr ""
 "Ylli shënon vlerat më të vogla (dmth më të mirat)\n"
-"për kriteret informuese që vijojnë , AIC = kriteri i Akaike,\n"
-"BIC = kriteri bejzjan i Schwartz, HQC = kriteri i Hannan-Quinn."
+"për kriteret informues që vijojnë , AIC = kriteri i Akaike,\n"
+"BIC = kriteri bejzian i Schwartz, HQC = kriteri i Hannan-Quinn."
 
 #: lib/src/vartest.c:290
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
@@ -9434,7 +9434,7 @@ msgstr "Ekzekuto"
 #: gui2/datafiles.c:1240
 #: gui2/datafiles.c:1394
 msgid "Add to menu"
-msgstr "Shto në mënu"
+msgstr "Shto në menu"
 
 #: gui2/datafiles.c:1247
 #: gui2/datafiles.c:1398
@@ -10054,7 +10054,7 @@ msgstr "Fillimi:"
 #: gui2/dialogs.c:2355
 #: gui2/dialogs.c:2473
 msgid "End:"
-msgstr "Fundi:"
+msgstr "Mbarimi:"
 
 #: gui2/dialogs.c:1970
 #: gui2/dialogs.c:2323
@@ -10204,7 +10204,7 @@ msgstr "parashikim statik"
 
 #: gui2/dialogs.c:3136
 msgid "rolling k-step ahead forecasts: k = "
-msgstr "parashikim rekursiv mbi k periudha: k ="
+msgstr "parashikim përsëritës mbi k periudha: k ="
 
 #: gui2/dialogs.c:3149
 msgid "gretl: forecast"
@@ -10220,7 +10220,7 @@ msgstr "Fillimi"
 
 #: gui2/dialogs.c:3159
 msgid "End"
-msgstr "Fundi"
+msgstr "Mbarimi"
 
 #: gui2/dialogs.c:3268
 msgid "Show fitted values for pre-forecast range"
@@ -10803,7 +10803,7 @@ msgstr "Mungon emri i ndryshores"
 
 #: gui2/filters.c:297
 msgid "Conflicting variable names"
-msgstr "Emri e një ose më shumë ndryshoreve krijon një konflikt me gretl"
+msgstr "Emri e një ose më shumë ndryshoreve krijon konflikt"
 
 #: gui2/filters.c:342
 msgid "Save output as"
@@ -10811,7 +10811,7 @@ msgstr "Ruaj rezultatin si"
 
 #: gui2/filters.c:346
 msgid "Save smoothed series as"
-msgstr "Ruaj serinë e lëmuar si"
+msgstr "Ruaj serinë e filtruar si"
 
 #: gui2/filters.c:350
 msgid "Save cyclical component as"
@@ -10871,7 +10871,7 @@ msgstr "Vrojtimet e përfshirë në mesatare:"
 
 #: gui2/filters.c:661
 msgid "Centered"
-msgstr "E centruar"
+msgstr "E normuar"
 
 #: gui2/filters.c:672
 msgid "Weight on current observation:"
@@ -10927,7 +10927,7 @@ msgstr "Vizato serinë fillestare dhe të lëmuarën"
 
 #: gui2/filters.c:796
 msgid "Graph residual or cycle series"
-msgstr "Vizato mbetjen ose ciklin"
+msgstr "Vizato ciklin/mbetjen"
 
 #: gui2/filters.c:799
 msgid "Graph frequency response"
@@ -11079,8 +11079,8 @@ msgid ""
 "The %s package was not found, or is not up to date.\n"
 "Would you like to try downloading it now?"
 msgstr ""
-"Paketa %s nuk u gjet ose mund të mos jetë e përdiësuar.\n"
-"A doni ta teleshkarkoni tani?"
+"Paketa %s nuk u gjet ose mund të mos jetë e përditësuar.\n"
+"A doni ta telengarkoni tani?"
 
 #: gui2/fncall.c:2883
 #: gui2/fnsave.c:1439
@@ -11099,7 +11099,7 @@ msgid ""
 "as \"%s/%s\" in the %s.\n"
 "Do you want to do this?"
 msgstr ""
-"Paketa %s mund t'i shtohet mënusë së gretli-it\n"
+"Paketa %s mund t'i shtohet menusë së gretli-it\n"
 "si \"%s/%s\" në %s.\n"
 "A doni ta bëni një gjë të tillë?"
 
@@ -11198,15 +11198,15 @@ msgstr "Dritarja"
 
 #: gui2/fnsave.c:1516
 msgid "To create a menu attachment, you must supply a label."
-msgstr "Nqs doni të krijoni një mënu, ju lutem jepni përshkrimin e saj."
+msgstr "Nqs doni të krijoni një menu, ju lutem jepni përshkrimin e saj."
 
 #: gui2/fnsave.c:1519
 msgid ""
 "To update the menu attachment, you should\n"
 "(a) save this package, and (b) restart gretl."
 msgstr ""
-"Për të përditësuar mënunë ju duhet:\n"
-"(a) të ruani paketën, (b) rihapni programin."
+"Për të përditësuar menunë ju duhet:\n"
+"(a) të ruani paketën, (b) të rihapni programin."
 
 #: gui2/fnsave.c:1691
 msgid "gretl: extra properties"
@@ -11218,7 +11218,7 @@ msgstr "Funksione të veçanta"
 
 #: gui2/fnsave.c:1774
 msgid "Menu attachment"
-msgstr "Bashkëngjit mënunë"
+msgstr "Bashkëngjit menunë"
 
 #: gui2/fnsave.c:1826
 msgid "Date (YYYY-MM-DD)"
@@ -12228,7 +12228,7 @@ msgstr "Ho_llësi mbi të dhënat"
 
 #: gui2/gretl.c:1547
 msgid "_Observation markers..."
-msgstr "_Përshkrimet e vrojtimeve..."
+msgstr "_Shënime mbi vrojtimet..."
 
 #: gui2/gretl.c:1548
 msgid "_Variable labels..."
@@ -12465,16 +12465,16 @@ msgstr "_Shpërndarja e frekuencave"
 
 #: gui2/gretl.c:1622
 msgid "Estimated _density plot..."
-msgstr "Grafiku i vlerësimit të_densitetit..."
+msgstr "Grafiku i vlerësimit të _densitetit..."
 
 #: gui2/gretl.c:1623
 #: gui2/gui_utils.c:2856
 msgid "_Boxplot"
-msgstr "Grafik_ BoxPlot"
+msgstr "Grafik _ BoxPlot"
 
 #: gui2/gretl.c:1624
 msgid "Normal _Q-Q plot..."
-msgstr "grafik _Q-Q normal..."
+msgstr "Grafik _Q-Q normal..."
 
 #: gui2/gretl.c:1625
 msgid "_Gini coefficient"
@@ -12597,7 +12597,7 @@ msgstr "_TSLS - Katrorët më të Vegjël të Dyfishtë (2KVZ)"
 
 #: gui2/gretl.c:1662
 msgid "_LIML..."
-msgstr "_LIML - Maksimumi i Përgjasisë me Informacion të Kufizuar (MPIK)"
+msgstr "_LIML - Maksimumi i Gjasës me Informacion të Kufizuar (MPIK)"
 
 #: gui2/gretl.c:1663
 #: gui2/gretl.c:1710
@@ -13207,7 +13207,7 @@ msgstr "_Bootstrap..."
 
 #: gui2/gui_utils.c:241
 msgid "_Omit variables"
-msgstr "Përjasht_o ndryshore të tepërta"
+msgstr "_Hiq ndryshore të tepërta"
 
 #: gui2/gui_utils.c:242
 msgid "_Add variables"
@@ -13687,15 +13687,15 @@ msgstr "Kushtet lineare"
 
 #: gui2/gui_utils.c:4243
 msgid "Omit exogenous variables..."
-msgstr "Përjashto ndryshore të pavarura..."
+msgstr "Hiq ndryshore të pavarura..."
 
 #: gui2/gui_utils.c:4249
 msgid "Omit time trend"
-msgstr "Përjashto prirjen kohore"
+msgstr "Hiq prirjen kohore"
 
 #: gui2/gui_utils.c:4255
 msgid "Omit seasonal dummies"
-msgstr "Përjashto ndryshoret treguese stinore"
+msgstr "Hiq ndryshoret treguese stinore"
 
 #: gui2/gui_utils.c:4264
 msgid "Residuals from equation"
@@ -14200,18 +14200,18 @@ msgstr "gretl: hollësi mbi vlerat munguese"
 
 #: gui2/library.c:1701
 msgid "Export the markers to file"
-msgstr "Krijo një skedë me përshkrimet e vrojtimeve"
+msgstr "Krijo një skedë me shënimet e vrojtimeve"
 
 #: gui2/library.c:1702
 msgid "Remove the markers"
-msgstr "Fshij përshkrimet e vrojtimeve"
+msgstr "Fshij shënimet e vrojtimeve"
 
 #: gui2/library.c:1706
 msgid ""
 "The dataset has observation markers.\n"
 "Would you like to:"
 msgstr ""
-"Të dhënat përmbajnë përshkrime për vrojtimet.\n"
+"Të dhënat përmbajnë shënime mbi vrojtimet.\n"
 "A doni të:"
 
 #: gui2/library.c:1719
@@ -14219,8 +14219,8 @@ msgid ""
 "The dataset has no observation markers.\n"
 "Add some from file now?"
 msgstr ""
-"Të dhënat nuk përmbajnë përshkrime për vrojtimet.\n"
-"Doni ti shtoni tani?"
+"Të dhënat nuk përmbajnë ndonje shënim mbi vrojtimet.\n"
+"Doni t'i shtoni tani?"
 
 #: gui2/library.c:1774
 msgid "Export the labels to file"
@@ -14235,7 +14235,7 @@ msgid ""
 "The dataset has variable labels.\n"
 "Would you like to:"
 msgstr ""
-"Të dhënat përmbajnë edhe përshkrimet e ndryshoreve.\n"
+"Përshkrimet e ndryshoreve u janë bashkëngjitur të dhënave.\n"
 "A doni të:"
 
 #: gui2/library.c:1788
@@ -14265,7 +14265,7 @@ msgid ""
 msgstr ""
 "Nuk ka asnjë vrojtim për t'u parashikuar përtej kampionit\n"
 "të përdorur. Nqs doni, mund t'i shtoni tani ndërmjet \n"
-"menysë 'Të dhënat' ose mund të zvogëloni kampionin\n"
+"menusë 'Të dhënat' ose mund të zvogëloni kampionin\n"
 "mbi të cilin është ndërtuar modeli (nëpërmjet menusë\n"
 "'Kampioni'."
 
@@ -15289,7 +15289,7 @@ msgstr "Katrorët më të Vegjël të Dyfishtë (2KVZ)"
 
 #: gui2/selector.c:3739
 msgid "Limited information maximum likelihood"
-msgstr "Maksimumi i Përgjasisë me Informacion të Kufizuar"
+msgstr "Maksimumi i Gjasës me Informacion të Kufizuar"
 
 #: gui2/selector.c:3741
 msgid "Generalized method of moments"
@@ -15756,11 +15756,11 @@ msgstr "Korrigjo me metodën Cochrane-Orcutt"
 #: gui2/selector.c:6068
 #: gui2/selector.c:6080
 msgid "Exact Maximum Likelihood"
-msgstr "Maksimumi i Përgjasisë të Saktë"
+msgstr "Maksimumi i Gjasës së Saktë"
 
 #: gui2/selector.c:6081
 msgid "Conditional Maximum Likelihood"
-msgstr "Maksimumi i Përgjasisë të Kushtëzuar"
+msgstr "Maksimumi i Gjasës së Kushtëzuar"
 
 #: gui2/selector.c:6149
 msgid "No constant"
@@ -16370,7 +16370,7 @@ msgstr "Komanda për lëshimin e GNU R"
 
 #: gui2/settings.c:234
 msgid "Path to Rterm.exe"
-msgstr "Skedari ku gjendet Rterm.exe"
+msgstr "Skedari ku ndodhet Rterm.exe"
 
 #: gui2/settings.c:237
 msgid "Command to compile TeX files"
@@ -16398,35 +16398,35 @@ msgstr "Makina llogaritëse"
 
 #: gui2/settings.c:254
 msgid "Path to x12arima"
-msgstr "Skedari ku gjendet x12arima"
+msgstr "Skedari ku ndodhet x12arima"
 
 #: gui2/settings.c:258
 msgid "Path to tramo"
-msgstr "Skedari ku gjendet tramo"
+msgstr "Skedari ku ndodhet tramo"
 
 #: gui2/settings.c:262
 msgid "Path to R library"
-msgstr "Skedari ku gjendet biblioteka R"
+msgstr "Skedari ku ndodhet biblioteka R"
 
 #: gui2/settings.c:265
 msgid "Path to oxl executable"
-msgstr "Skedari ku gjendet oxl"
+msgstr "Skedari ku ndodhet oxl"
 
 #: gui2/settings.c:267
 msgid "Path to octave executable"
-msgstr "Skedari ku gjendet Octave"
+msgstr "Skedari ku ndodhet Octave"
 
 #: gui2/settings.c:269
 msgid "Path to Stata executable"
-msgstr "Skedari ku gjendet Stata"
+msgstr "Skedari ku ndodhet Stata"
 
 #: gui2/settings.c:271
 msgid "Path to Python executable"
-msgstr "Skedari ku gjendet Python"
+msgstr "Skedari ku ndodhet Python"
 
 #: gui2/settings.c:274
 msgid "Path to mpiexec"
-msgstr "Skedari ku gjendet mpiexec"
+msgstr "Skedari ku ndodhet mpiexec"
 
 #: gui2/settings.c:276
 msgid "Path to MPI hosts file"
@@ -16434,7 +16434,7 @@ msgstr "Rruga për skedën MPI 'host'"
 
 #: gui2/settings.c:278
 msgid "Installed MPI variant"
-msgstr "Varianti MPI është i instaluar"
+msgstr "Varianti MPI i instaluar"
 
 #: gui2/settings.c:281
 msgid "Database server name"
@@ -16454,7 +16454,7 @@ msgstr "Shkrimi fiks"
 
 #: gui2/settings.c:289
 msgid "Menu font"
-msgstr "Shkrimi i menysë"
+msgstr "Lloji i shkrimit të menusë"
 
 #: gui2/settings.c:295
 msgid "PNG graph font"
@@ -17533,11 +17533,11 @@ msgstr "Mungon lista e ndryshoreve të pavarura "
 
 #: plugin/fiml.c:893
 msgid "Gradients at last iteration"
-msgstr "Gradientët e llogaritur së fundmi"
+msgstr "Gradientët e njehsimit të fundit"
 
 #: plugin/fractals.c:43
 msgid "Rescaled-range plot for"
-msgstr "Grafiku i shtrirjes së ponderuar për "
+msgstr "Grafiku i \"shtrirjes së ponderuar\" për "
 
 #: plugin/fractals.c:44
 msgid "log(sample size)"
@@ -17834,7 +17834,7 @@ msgstr "intervali = %g"
 #: plugin/kernel.c:112
 #, c-format
 msgid "Estimated density of %s"
-msgstr "Densiteti i përafruar i %s"
+msgstr "Vlerësimi i densitetit i %s"
 
 #: plugin/leverage.c:120
 #: plugin/pca.c:101
