@@ -1566,6 +1566,11 @@ static int loop_print_start (LOOP_PRINT *lprn, const char *namestr)
 {
     int i, nv;
 
+    if (namestr == NULL || *namestr == '\0') {
+	gretl_errmsg_set("'print' list is empty");
+	return E_DATA;
+    }
+
     lprn->names = gretl_string_split(namestr, &lprn->nvars, NULL);
     if (lprn->names == NULL) {
 	return E_ALLOC;
@@ -2552,6 +2557,26 @@ static void progressive_loop_zero (LOOPSET *loop)
 {
     int i;
 
+    /* What we're doing here is debatable: could we get
+       away with just "zeroing" the relevant structures
+       in an appropriate way, rather than destroying
+       them? Maybe, but so long as we're destroying them
+       we have to remove the "preparsed" flags from
+       associated "print" and "store" commands, or else
+       things will go awry on the second execution of
+       a nested progressive loop.
+    */
+
+    if (loop->cmds != NULL) {
+	for (i=0; i<loop->n_cmds; i++) {
+	    if (loop->cmds[i].ci == PRINT ||
+		loop->cmds[i].ci == STORE) {
+		/* reset */
+		loop->cmds[i].flags &= ~LOOP_CMD_DONE;
+	    }
+	}
+    }    
+
     for (i=0; i<loop->n_loop_models; i++) {
 	loop_model_free(&loop->lmodels[i]);
     }
@@ -2559,7 +2584,7 @@ static void progressive_loop_zero (LOOPSET *loop)
     loop->lmodels = NULL;
     loop->n_loop_models = 0;
 
-    for (i=0; i<loop->n_prints; i++) { 
+    for (i=0; i<loop->n_prints; i++) {
 	loop_print_free(&loop->prns[i]);
     }
 
