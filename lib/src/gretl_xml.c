@@ -369,6 +369,34 @@ void gretl_xml_put_tagged_string (const char *tag, const char *str,
 }
 
 /**
+ * gretl_xml_put_tagged_string_plus:
+ * @tag: name to give string.
+ * @str: string to put.
+ * @attrib: name of attribute.
+ * @attval: value of attribute.
+ * @fp: file to which to write.
+ * 
+ * Similar to gretl_xml_put_tagged_string(), but allows
+ * (in fact, requires) an attribute name and value along
+ * with the element name and value.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+void gretl_xml_put_tagged_string_plus (const char *tag,
+				       const char *str,
+				       const char *attrib,
+				       const char *attval,
+				       FILE *fp)
+{
+    fprintf(fp, "<%s %s=\"", tag, attrib);
+    gretl_xml_put_string(attval, fp);
+    fputs("\">", fp);
+    gretl_xml_put_string(str, fp);
+    fprintf(fp, "</%s>\n", tag);
+}
+
+/**
  * gretl_list_serialize:
  * @list: list of integers to be written.
  * @name: name to give list, or NULL.

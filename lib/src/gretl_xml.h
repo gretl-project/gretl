@@ -111,6 +111,12 @@ void gretl_xml_put_tagged_string (const char *tag,
 				  const char *str, 
 				  FILE *fp);
 
+void gretl_xml_put_tagged_string_plus (const char *tag,
+				       const char *str,
+				       const char *attrib,
+				       const char *attval,
+				       FILE *fp);
+
 void gretl_xml_put_tagged_list (const char *tag, 
 				const int *list, 
 				FILE *fp);

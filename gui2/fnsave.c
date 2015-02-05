@@ -43,7 +43,7 @@
 #include "gretl_typemap.h"
 
 #define PKG_DEBUG 0
-#define NENTRIES 4
+#define NENTRIES 5
 
 enum {
     NO_WINDOW,
@@ -76,6 +76,7 @@ struct function_info_ {
     fnpkg *pkg;            /* pointer to package being edited */
     gchar *fname;          /* package filename */
     gchar *author;         /* package author */
+    gchar *email;          /* author's email address */
     gchar *version;        /* package version number */
     gchar *date;           /* package last-revised date */
     gchar *pkgdesc;        /* package description */
@@ -137,6 +138,7 @@ function_info *finfo_new (void)
     finfo->pkg = NULL;
     finfo->fname = NULL;
     finfo->author = NULL;
+    finfo->email = NULL;
     finfo->version = NULL;
     finfo->date = NULL;
     finfo->pkgdesc = NULL;
@@ -198,6 +200,7 @@ static void finfo_free (function_info *finfo)
 {
     g_free(finfo->fname);
     g_free(finfo->author);
+    g_free(finfo->email);
     g_free(finfo->version);
     g_free(finfo->date);
     g_free(finfo->pkgdesc);
@@ -359,6 +362,7 @@ static int finfo_save (function_info *finfo, int saveas)
     const char *missing = "???";
     char **fields[] = {
 	&finfo->author,
+	&finfo->email,
 	&finfo->version,
 	&finfo->date,
 	&finfo->pkgdesc
@@ -1823,12 +1827,14 @@ static void finfo_dialog (function_info *finfo)
     GtkTextBuffer *hbuf = NULL;
     const char *entry_labels[] = {
 	N_("Author"),
+	N_("Email"),
 	N_("Version"),
 	N_("Date (YYYY-MM-DD)"),
 	N_("Package description")
     };
     char *entry_texts[] = {
 	finfo->author,
+	finfo->email,
 	finfo->version,
 	finfo->date,
 	finfo->pkgdesc
@@ -1879,7 +1885,7 @@ static void finfo_dialog (function_info *finfo)
 
 	if (entry_texts[i] != NULL) {
 	    gtk_entry_set_text(GTK_ENTRY(entry), entry_texts[i]);
-	    if (i == 2) {
+	    if (i == 3) {
 		g_signal_connect(G_OBJECT(entry), "button-press-event",
 				 G_CALLBACK(today_popup), &finfo->popup);
 	    }
@@ -1889,16 +1895,23 @@ static void finfo_dialog (function_info *finfo)
 	    if (s != NULL) {
 		gtk_entry_set_text(GTK_ENTRY(entry), s);
 	    }
-	} else if (i == 1) {
-	    gtk_entry_set_text(GTK_ENTRY(entry), "1.0");
 	} else if (i == 2) {
+	    gtk_entry_set_text(GTK_ENTRY(entry), "1.0");
+	} else if (i == 3) {
 	    gtk_entry_set_text(GTK_ENTRY(entry), print_today());
 	}
 
 	if (i == 0 && entry_texts[i] == NULL) {
+	    /* no author's name */
 	    gtk_widget_grab_focus(entry);
 	    focused = 1;
-	} else if (i == 1 && !focused) {
+	} else if (i == 1 && !focused &&
+		   (entry_texts[i] == NULL || *entry_texts[i] == '\0')) {
+	    /* no email address */
+	    gtk_widget_grab_focus(entry);
+	    focused = 1;
+	} else if (i == 2 && !focused) {
+	    /* version number */
 	    gtk_widget_grab_focus(entry);
 	}
 
@@ -2493,6 +2506,7 @@ int save_function_package (const char *fname, gpointer p)
     if (!err) {
 	err = function_package_set_properties(finfo->pkg,
 					      "author",  finfo->author,
+					      "email",   finfo->email,
 					      "version", finfo->version,
 					      "date",    finfo->date,
 					      "description", finfo->pkgdesc,
@@ -2565,6 +2579,9 @@ int save_function_package_as_script (const char *fname, gpointer p)
     }
 
     pprintf(prn, "# author='%s'\n", finfo->author);
+    if (finfo->email != NULL && *finfo->email != '\0') {
+	pprintf(prn, "# email='%s'\n", finfo->email);
+    }
     pprintf(prn, "# version='%s'\n", finfo->version);
     pprintf(prn, "# date='%s'\n", finfo->date);
 
@@ -2604,7 +2621,7 @@ int save_function_package_as_script (const char *fname, gpointer p)
 static void maybe_print (PRN *prn, const char *key, 
 			       const char *arg)
 {
-    if (arg != NULL) {
+    if (arg != NULL && *arg != '\0') {
 	pprintf(prn, "%s = %s\n", key, arg);
     } else {
 	pprintf(prn, "%s = \n", key);
@@ -2687,6 +2704,7 @@ int save_function_package_spec (const char *fname, gpointer p)
     }
 
     maybe_print(prn, "author", finfo->author);
+    maybe_print(prn, "email", finfo->email);
     maybe_print(prn, "version", finfo->version);
     maybe_print(prn, "date", finfo->date);
     maybe_print(prn, "description", finfo->pkgdesc);
@@ -2949,6 +2967,7 @@ void edit_function_package (const char *fname)
 					  "publist",  &publist,
 					  "privlist", &privlist,
 					  "author",   &finfo->author,
+					  "email",    &finfo->email,
 					  "version",  &finfo->version,
 					  "date",     &finfo->date,
 					  "description", &finfo->pkgdesc,

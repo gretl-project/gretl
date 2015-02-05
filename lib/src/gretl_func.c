@@ -138,6 +138,7 @@ struct fnpkg_ {
     char name[FN_NAMELEN]; /* package name */
     char *fname;      /* filename */
     char *author;     /* author's name */
+    char *email;      /* author's email address */
     char *version;    /* package version string */
     char *date;       /* last revision date */
     char *descrip;    /* package description */
@@ -515,6 +516,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->ID = (int) time(NULL);
     pkg->name[0] = '\0';
     pkg->author = NULL;
+    pkg->email = NULL;
     pkg->version = NULL;
     pkg->date = NULL;
     pkg->descrip = NULL;
@@ -2565,7 +2567,13 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 
     fputs(">\n", fp);
 
-    gretl_xml_put_tagged_string("author",  pkg->author, fp);
+    if (pkg->email != NULL && *pkg->email != '\0') {
+	gretl_xml_put_tagged_string_plus("author", pkg->author,
+					 "email", pkg->email,
+					 fp);
+    } else {
+	gretl_xml_put_tagged_string("author", pkg->author, fp);
+    }
     gretl_xml_put_tagged_string("version", pkg->version, fp);
     gretl_xml_put_tagged_string("date",    pkg->date, fp);
     gretl_xml_put_tagged_string("description", pkg->descrip, fp);
@@ -2897,6 +2905,8 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 	    if (!strncmp(line, "author", 6)) {
 		err = function_package_set_properties(pkg, "author", p, NULL);
 		if (!err) got++;
+	    } else if (!strncmp(line, "email", 5)) {
+		err = function_package_set_properties(pkg, "email", p, NULL);
 	    } else if (!strncmp(line, "version", 7)) {
 		err = function_package_set_properties(pkg, "version", p, NULL);
 		if (!err) got++;
@@ -3235,6 +3245,7 @@ static int is_string_property (const char *key)
 {
     return !strcmp(key, "fname") ||
 	!strcmp(key, "author")   ||
+	!strcmp(key, "email")    ||
 	!strcmp(key, "version")  ||
 	!strcmp(key, "date")     ||
 	!strcmp(key, "description") ||
@@ -3270,6 +3281,8 @@ int function_package_set_properties (fnpkg *pkg, ...)
 		err = maybe_replace_string_var(&pkg->fname, sval);
 	    } else if (!strcmp(key, "author")) {
 		err = maybe_replace_string_var(&pkg->author, sval);
+	    } else if (!strcmp(key, "email")) {
+		err = maybe_replace_string_var(&pkg->email, sval);
 	    } else if (!strcmp(key, "date")) {
 		err = maybe_replace_string_var(&pkg->date, sval);
 	    } else if (!strcmp(key, "version")) {
@@ -3454,6 +3467,13 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "author")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->author);
+	} else if (!strcmp(key, "email")) {
+	    ps = (char **) ptr;
+	    if (pkg->email != NULL) {
+		*ps = g_strdup(pkg->email);
+	    } else {
+		*ps = g_strdup(""); /* ? */
+	    }
 	} else if (!strcmp(key, "date")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->date);
@@ -3623,6 +3643,7 @@ static void real_function_package_free (fnpkg *pkg, int full)
 	free(pkg->priv);
 	free(pkg->fname);
 	free(pkg->author);
+	free(pkg->email);
 	free(pkg->version);
 	free(pkg->date);
 	free(pkg->descrip);
@@ -3850,6 +3871,9 @@ static void print_package_info (const fnpkg *pkg, PRN *prn)
 
     pprintf(prn, "Package: %s\n", (*pkg->name)? pkg->name : "unknown");
     pprintf(prn, "Author: %s\n", (pkg->author)? pkg->author : "unknown");
+    if (pkg->email != NULL && *pkg->email != '\0') {
+	pprintf(prn, "Email: %s\n", pkg->email);
+    }
     pprintf(prn, "Version: %s\n", (pkg->version)? pkg->version : "unknown");
     pprintf(prn, "Date: %s\n", (pkg->date)? pkg->date : "unknown");
     pprintf(prn, "Required gretl version: %s\n", (*vstr)? vstr : "unknown");
@@ -3976,6 +4000,7 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
     while (cur != NULL) {
 	if (!xmlStrcmp(cur->name, (XUC) "author")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->author);
+	    gretl_xml_get_prop_as_string(cur, "email", &pkg->email);
 	} else if (!xmlStrcmp(cur->name, (XUC) "version")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->version);
 	} else if (!xmlStrcmp(cur->name, (XUC) "date")) {
@@ -7190,10 +7215,16 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
     if (pkg != NULL) {
 	if (markup) {
 	    pprintf(prn, "<@hd1=\"Author\">: %s\n", pkg->author? pkg->author : "unknown");
+	    if (pkg->email != NULL && *pkg->email != '\0') {
+		pprintf(prn, "<@hd1=\"Email\">: %s\n", pkg->email);
+	    }
 	    pprintf(prn, "<@hd1=\"Version\">: %s (%s)\n\n", pkg->version? pkg->version : "unknown",
 		    pkg->date? pkg->date : "unknown");
 	} else {
 	    pprintf(prn, "Author: %s\n", pkg->author? pkg->author : "unknown");
+	    if (pkg->email != NULL && *pkg->email != '\0') {
+		pprintf(prn, "Email:  %s\n", pkg->email);
+	    }
 	    pprintf(prn, "Version: %s (%s)\n\n", pkg->version? pkg->version : "unknown",
 		    pkg->date? pkg->date : "unknown");
 	}
