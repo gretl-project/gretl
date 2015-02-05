@@ -3132,7 +3132,7 @@ int maybe_update_packages_xml (const gchar *pkgname,
 	}
     }
 
-#if 0
+#if PKG_DEBUG
     fprintf(stderr, "maybe_update_packages_xml:\n"
 	    " pkgline='%s'\n status=%d, task=%d\n",
 	    pkgline, status, task);
@@ -3207,6 +3207,10 @@ int gui_add_package_to_menu (const char *path, GtkWidget *parent,
 
     pkg = get_function_package_by_filename(path, &err);
 
+#if PKG_DEBUG
+    fprintf(stderr, "gui_add_package_to_menu: %s: err = %d\n", path, err);
+#endif       
+
     if (!err) {
 	gchar *pkgname = NULL, *mpath = NULL, *label = NULL;
 	int uses_subdir = 0;
@@ -3218,19 +3222,25 @@ int gui_add_package_to_menu (const char *path, GtkWidget *parent,
 					      "lives-in-subdir", &uses_subdir,
 					      NULL);
 
-	if (!uses_subdir) {
+	if (!err && !uses_subdir) {
 	    /* fallback detection: packages that have PDF doc
 	       must be in their own subdir */
 	    uses_subdir = function_package_has_PDF_doc(pkg, NULL);
 	}
 
+	if (!err && mpath != NULL && label == NULL) {
+	    /* tolerate substitution of description for label? */
+	    err = function_package_get_properties(pkg, "description",
+						  &label, NULL);
+	}
+
 	if (!err) {
-	    maybe_update_packages_xml(pkgname,
-				      label,
-				      mpath,
-				      uses_subdir,
-				      notified,
-				      parent);
+	    err = maybe_update_packages_xml(pkgname,
+					    label,
+					    mpath,
+					    uses_subdir,
+					    notified,
+					    parent);
 	}
 
 	g_free(pkgname);
