@@ -2565,6 +2565,10 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 	fprintf(fp, " minver=\"%s\"", get_version_string(vstr, pkg->minver));
     }
 
+    if (pkg->uses_subdir) {
+	fprintf(fp, " lives-in-subdir=\"true\"");
+    }    
+
     fputs(">\n", fp);
 
     if (pkg->email != NULL && *pkg->email != '\0') {
@@ -2924,6 +2928,7 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		if (has_suffix(p, ".pdf")) {
 		    pprintf(prn, "Recording help reference %s\n", p);
 		    tmp = g_strdup_printf("pdfdoc:%s", p);
+		    pkg->uses_subdir = 1;
 		} else {
 		    pprintf(prn, "Looking for help text in %s\n", p);
 		    tmp = pkg_aux_content(p, &err);
@@ -3509,6 +3514,7 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	    *pi = pkg->minver;
 	} else if (!strcmp(key, "lives-in-subdir")) {
 	    pi = (int *) ptr;
+	    fprintf(stderr, "get properties: uses_subdir = %d\n", pkg->uses_subdir);
 	    *pi = pkg->uses_subdir;
 	} else if (!strcmp(key, "publist")) {
 	    plist = (int **) ptr;
@@ -3994,9 +4000,12 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 
     if (gretl_xml_get_prop_as_int(node, "ID", &id)) {
 	pkg->ID = id;
-    }    
+    }
+
+    pkg->uses_subdir = gretl_xml_get_prop_as_bool(node, "lives-in-subdir");
 
     cur = node->xmlChildrenNode;
+    
     while (cur != NULL) {
 	if (!xmlStrcmp(cur->name, (XUC) "author")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->author);
