@@ -2098,7 +2098,6 @@ int gretl_function_print_code (ufunc *u, PRN *prn)
 {
     int this_indent = 0;
     int next_indent = 0;
-    int nblank;
     int i, j;
 
     if (u == NULL) {
@@ -2107,20 +2106,17 @@ int gretl_function_print_code (ufunc *u, PRN *prn)
    
     print_function_start(u, prn);
 
-    /* FIXME blank lines accounting */
-
     for (i=0; i<u->n_lines; i++) {
 	adjust_indent(u->lines[i].s, &this_indent, &next_indent);
 	for (j=0; j<=this_indent; j++) {
 	    pputs(prn, "  ");
 	}
-	if (i > 0) {
-	    nblank = u->lines[i].idx - u->lines[i-1].idx - 1;
-	    for (j=0; j<nblank; j++) {
+	pputs(prn, u->lines[i].s);
+	if (i < u->n_lines - 1) {
+	    if (u->lines[i+1].idx > u->lines[i].idx + 1) {
 		pputc(prn, '\n');
 	    }
 	}
-	pputs(prn, u->lines[i].s);
 	pputc(prn, '\n');
     }
 
