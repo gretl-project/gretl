@@ -3155,6 +3155,7 @@ int maybe_update_packages_xml (const gchar *pkgname,
 	/* we actually have something to do */
 	err = update_packages_xml(pkgname, pkgline, task);
 	if (!err && (task == PKG_CREATE_ENTRY || task == PKG_ADD_ENTRY)) {
+	    /* FIXME: can we do this without a restart? */
 	    infobox(_("This change will take effect when you restart gretl"));
 	}
     }
@@ -3216,6 +3217,12 @@ int gui_add_package_to_menu (const char *path, GtkWidget *parent,
 					      "menu-attachment", &mpath,
 					      "lives-in-subdir", &uses_subdir,
 					      NULL);
+
+	if (!uses_subdir) {
+	    /* fallback detection: packages that have PDF doc
+	       must be in their own subdir */
+	    uses_subdir = function_package_has_PDF_doc(pkg, NULL);
+	}
 
 	if (!err) {
 	    maybe_update_packages_xml(pkgname,
