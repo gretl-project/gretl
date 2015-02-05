@@ -3514,7 +3514,6 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	    *pi = pkg->minver;
 	} else if (!strcmp(key, "lives-in-subdir")) {
 	    pi = (int *) ptr;
-	    fprintf(stderr, "get properties: uses_subdir = %d\n", pkg->uses_subdir);
 	    *pi = pkg->uses_subdir;
 	} else if (!strcmp(key, "publist")) {
 	    plist = (int **) ptr;
