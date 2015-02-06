@@ -135,20 +135,19 @@ implemented in gretl through some examples.
 A very simple illustration of GMM can be given by dropping the ``G'',
 via an example of the time-honored statistical technique known as
 ``method of moments''; let's see how to estimate the parameters of a
-gamma distribution, that we also used as an example for ML estimation
-in section \ref{sec:ml-gamma}.
+gamma distribution, which we also used as an example for ML estimation
+in section~\ref{sec:ml-gamma}.
 
 Assume that we have an i.i.d. sample of size $T$ from a gamma
-distribution. A common parametrization of the gamma density is the
-shape/scale parametrization, which uses two parameters $p$ (shape) and
-$\theta$ (scale), both real and positive.\footnote{In section
-  \ref{sec:ml-gamma} we used a slightly different, perhaps more
-  common, parametrization, employing $\theta = 1/\alpha$. We are
-  switching to the shape/scale parametization here for the sake of
-  convenience.}  In order to estimate them by the method of moments,
-we need two moment conditions so that we have two equations and two
-unknowns (in the GMM jargon, this amounts to exact
-identification). The two relations we need are
+distribution. The gamma density can be parameterized in terms of the
+two parameters $p$ (shape) and $\theta$ (scale), both real and
+positive.\footnote{In section \ref{sec:ml-gamma} we used a slightly
+  different, perhaps more common, parametrization, employing
+  $\theta = 1/\alpha$. We are switching to the shape/scale
+  parametrization here for the sake of convenience.}  In order to
+estimate them by the method of moments, we need two moment conditions
+so that we have two equations and two unknowns (in the GMM jargon,
+this amounts to exact identification). The two relations we need are
 \[
   E(x_i) = p \cdot \theta \qquad V(x_i) = p \cdot \theta^2
 \]
@@ -207,7 +206,7 @@ the \option{verbose} switch to the \texttt{end gmm} line.
 \bigskip
 
 Equations \ref{eq:mm-ex-mean} and \ref{eq:mm-ex-var} are not yet in
-the ``moment condition''-form required by the \cmd{gmm} command. We
+the ``moment condition'' form required by the \cmd{gmm} command. We
 need to transform them and arrive at something looking like $E(e_{j,i}
 z_{j,i}) = 0$, with $j=1 \ldots 2$. Therefore, we need two
 corresponding observable variables $e_1$ and $e_2$ with corresponding
@@ -220,8 +219,8 @@ x_i - p\theta$, then we can re-write the first moment condition as
 \[
 \hat{E}[(x_i - p\theta) \cdot 1] = 0.
 \]
-This is in the form required by the \cmd{gmm} command, since in the
-required input the statement \verb|orthog e; z|, \texttt{e} will be
+This is in the form required by the \cmd{gmm} command: in the
+required input statement ``\verb|orthog e ; z|'', \texttt{e} will be
 the variable on the left (defined as a series) and \texttt{z} will the
 variable to the right of the semicolon. Since $z_{1,i} = 1$ for all
 $i$, we can use the built-in series \texttt{const} for that.
