@@ -447,8 +447,9 @@ static gboolean update_active_func (GtkComboBox *menu,
    offset of 9 bytes into the line, skipping "function ".
 */
 
-static int extract_funcname (char *name, const char *s)
+static int extract_funcname (const char *s, const char *origname)
 {
+    char newname[FN_NAMELEN];
     char word[FN_NAMELEN];
     int n, type, err = 0;
 
@@ -459,7 +460,7 @@ static int extract_funcname (char *name, const char *s)
 	return E_DATA;
     }
 
-    *word = '\0';
+    *newname = *word = '\0';
     strncat(word, s, n);
 
     if (!strcmp(word, "void")) {
@@ -468,10 +469,8 @@ static int extract_funcname (char *name, const char *s)
 	type = gretl_type_from_string(word);
     }
 
-    if (type == 0) {
-	/* old-style */
-	strcpy(name, word);
-    } else if (!ok_function_return_type(type)) {
+    if (!ok_function_return_type(type)) {
+	gretl_errmsg_sprintf("%s: bad or missing return type", origname);
 	err = E_DATA;
     } else {
 	s += n;
@@ -480,8 +479,11 @@ static int extract_funcname (char *name, const char *s)
 	if (n == 0 || n > FN_NAMELEN - 1) {
 	    err = E_DATA;
 	} else {
-	    *name = '\0';
-	    strncat(name, s, n);
+	    strncat(newname, s, n);
+	    if (strcmp(newname, origname)) {
+		gretl_errmsg_set(_("You can't change the name of a function here"));
+		err = E_DATA;
+	    }
 	}
     }
 
@@ -490,7 +492,7 @@ static int extract_funcname (char *name, const char *s)
 
 static int pretest_funcname (char *buf, const char *origname)
 {
-    char *s, line[MAXLINE], newname[FN_NAMELEN];
+    char *s, line[MAXLINE];
     int err = 0;
 
     bufgets_init(buf);
@@ -498,12 +500,7 @@ static int pretest_funcname (char *buf, const char *origname)
     while (bufgets(line, sizeof line, buf) && !err) {
 	s = line + strspn(line, " \t");
 	if (!strncmp(s, "function ", 9)) {
-	    if (extract_funcname(newname, s + 9)) {
-		err = E_DATA;
-	    } else if (strcmp(newname, origname)) {
-		gretl_errmsg_set(_("You can't change the name of a function here"));
-		err = E_DATA;
-	    }
+	    err = extract_funcname(s + 9, origname);
 	    break;
 	}
     }
@@ -685,7 +682,7 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 	return;
     }    
 
-    gretl_function_print_code(fun, prn);
+    gretl_function_print_code(fun, tabwidth, prn);
 
     vwin = view_buffer(prn, SCRIPT_WIDTH, SCRIPT_HEIGHT, 
 		       finfo->active, EDIT_PKG_CODE, finfo);
@@ -2590,7 +2587,7 @@ int save_function_package_as_script (const char *fname, gpointer p)
 					finfo->pkg);
 	if (fun != NULL) {
 	    pputc(prn, '\n');
-	    gretl_function_print_code(fun, prn);
+	    gretl_function_print_code(fun, tabwidth, prn);
 	}
     }
 
@@ -2599,7 +2596,7 @@ int save_function_package_as_script (const char *fname, gpointer p)
 					finfo->pkg);
 	if (fun != NULL) {
 	    pputc(prn, '\n');
-	    gretl_function_print_code(fun, prn);
+	    gretl_function_print_code(fun, tabwidth, prn);
 	}
     }
 

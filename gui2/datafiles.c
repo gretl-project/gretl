@@ -35,6 +35,7 @@
 #include "winstack.h"
 #include "fileselect.h"
 #include "dlgutils.h"
+#include "textbuf.h"
 
 #include "gretl_xml.h"
 #include "gretl_func.h"
@@ -848,7 +849,7 @@ windata_t *display_function_package_data (const char *pkgname,
 	}
 	err = print_function_package_info(path, prn);
     } else {
-	err = print_function_package_code(path, prn);
+	err = print_function_package_code(path, tabwidth, prn);
     }
 	
     if (err) {

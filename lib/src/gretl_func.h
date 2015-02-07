@@ -139,7 +139,7 @@ void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2);
 
 int function_return_type_from_string (const char *s);
 
-int gretl_function_print_code (ufunc *u, PRN *prn);
+int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn);
 
 void set_current_function_package (fnpkg *pkg);
 
@@ -193,7 +193,8 @@ void function_package_unload_full_by_filename (const char *fname);
 
 int print_function_package_info (const char *fname, PRN *prn);
 
-int print_function_package_code (const char *fname, PRN *prn);
+int print_function_package_code (const char *fname, int tabwidth,
+				 PRN *prn);
 
 ufunc *get_function_from_package (const char *funname, fnpkg *pkg);
 

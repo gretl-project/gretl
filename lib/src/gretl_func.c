@@ -2087,6 +2087,7 @@ static void print_function_start (ufunc *fun, PRN *prn)
 /**
  * gretl_function_print_code:
  * @u: pointer to user-function.
+ * @tabwidth: number of spaces per "tab" (logical indent).
  * @prn: printing struct.
  *
  * Prints out function @fun to @prn, script-style.
@@ -2094,7 +2095,7 @@ static void print_function_start (ufunc *fun, PRN *prn)
  * Returns: 0 on success, non-zero if @fun is %NULL.
  */
 
-int gretl_function_print_code (ufunc *u, PRN *prn)
+int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
 {
     int this_indent = 0;
     int next_indent = 0;
@@ -2103,13 +2104,17 @@ int gretl_function_print_code (ufunc *u, PRN *prn)
     if (u == NULL) {
 	return E_DATA;
     }
+
+    if (tabwidth == 0) {
+	tabwidth = 2;
+    }
    
     print_function_start(u, prn);
 
     for (i=0; i<u->n_lines; i++) {
 	adjust_indent(u->lines[i].s, &this_indent, &next_indent);
 	for (j=0; j<=this_indent; j++) {
-	    pputs(prn, "  ");
+	    bufspace(tabwidth, prn);
 	}
 	pputs(prn, u->lines[i].s);
 	if (i < u->n_lines - 1) {
@@ -3921,20 +3926,24 @@ static void print_package_info (const fnpkg *pkg, PRN *prn)
     }
 }
 
-static void print_package_code (const fnpkg *pkg, PRN *prn)
+static void print_package_code (const fnpkg *pkg,
+				int tabwidth,
+				PRN *prn)
 {
     int i;
 
     if (pkg->priv != NULL) {
+	pputs(prn, "# private functions\n\n");
 	for (i=0; i<pkg->n_priv; i++) {
-	    gretl_function_print_code(pkg->priv[i], prn);
+	    gretl_function_print_code(pkg->priv[i], tabwidth, prn);
 	    pputc(prn, '\n');
 	}
     }
 
     if (pkg->pub != NULL) {
+	pputs(prn, "# public functions\n\n");
 	for (i=0; i<pkg->n_pub; i++) {
-	    gretl_function_print_code(pkg->pub[i], prn);
+	    gretl_function_print_code(pkg->pub[i], tabwidth, prn);
 	    pputc(prn, '\n');
 	}
     }
@@ -4245,8 +4254,8 @@ fnpkg *get_function_package_by_name (const char *pkgname)
    GUI (see below for the actual callbacks).
 */
 
-static int 
-real_print_function_package_data (const char *fname, PRN *prn, int task)
+static int real_print_gfn_data (const char *fname, PRN *prn,
+				int tabwidth, int task)
 {
     fnpkg *pkg;
     int free_pkg = 0;
@@ -4255,7 +4264,7 @@ real_print_function_package_data (const char *fname, PRN *prn, int task)
     pkg = get_loaded_pkg_by_filename(fname);
 
 #if PKG_DEBUG
-    fprintf(stderr, "real_get_function_file_info: fname='%s', pkg=%p\n", 
+    fprintf(stderr, "real_print_gfn_data: fname='%s', pkg=%p\n", 
 	    fname, (void *) pkg);
 #endif
 
@@ -4269,7 +4278,7 @@ real_print_function_package_data (const char *fname, PRN *prn, int task)
 	if (task == FUNCS_INFO) {
 	    print_package_info(pkg, prn);
 	} else {
-	    print_package_code(pkg, prn);
+	    print_package_code(pkg, tabwidth, prn);
 	}
 	if (free_pkg) {
 	    function_package_free_full(pkg);
@@ -4288,14 +4297,15 @@ real_print_function_package_data (const char *fname, PRN *prn, int task)
 
 int print_function_package_info (const char *fname, PRN *prn)
 {
-    return real_print_function_package_data(fname, prn, FUNCS_INFO);
+    return real_print_gfn_data(fname, prn, 0, FUNCS_INFO);
 }
 
 /* callback used in the  GUI function package browser */
 
-int print_function_package_code (const char *fname, PRN *prn)
+int print_function_package_code (const char *fname, int tabwidth,
+				 PRN *prn)
 {
-    return real_print_function_package_data(fname, prn, FUNCS_CODE);
+    return real_print_gfn_data(fname, prn, tabwidth, FUNCS_CODE);
 }
 
 /* Read the header from a function package file -- this is used when
