@@ -1641,6 +1641,51 @@ char *gretl_function_package_get_path (const char *name,
 }
 
 /**
+ * get_package_data_path:
+ * @fname: the basename of the file whose full path is wanted.
+ * @fullname: location to which the full path should be written
+ * (should be at least FILENAME_MAX bytes).
+ * 
+ * Looks for @fname in association with the name of a function
+ * package, which must have been set previously using the
+ * --frompkg option with the "open" command. 
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int get_package_data_path (const char *fname, char *fullname)
+{
+    const char *pkgname;
+    int err = 0;
+
+    *fullname = '\0';
+    pkgname = get_optval_string(OPEN, OPT_K);
+
+    if (pkgname == NULL) {
+	err = E_DATA;
+    } else {
+	char *gfnpath = gretl_addon_get_path(pkgname);
+
+	if (gfnpath == NULL) {
+	    err = E_DATA;
+	} else {
+	    char *p = strrchr(gfnpath, SLASH);
+
+	    if (p != NULL) {
+		*(p + 1) = '\0';
+		strcat(fullname, gfnpath);
+		strcat(fullname, fname);
+	    } else {
+		strcpy(fullname, fname);
+	    }
+	    free(gfnpath);
+	}
+    }
+
+    return err;
+}
+
+/**
  * gretl_addpath:
  * @fname: the initially given file name.
  * @script: if non-zero, suppose the file we're looking for

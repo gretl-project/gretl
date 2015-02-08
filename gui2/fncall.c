@@ -604,7 +604,7 @@ static int do_make_list (selector *sr)
     } 
 
     if (data != NULL) {
-	/* called from fncall.c */
+	/* called from elsewhere in fncall.c */
 	GtkWidget *entry = GTK_WIDGET(data);
 
 	cinfo = g_object_get_data(G_OBJECT(entry), "cinfo");

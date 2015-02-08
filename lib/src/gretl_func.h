@@ -156,6 +156,10 @@ int function_package_set_properties (fnpkg *pkg, ...);
 
 int function_package_get_properties (fnpkg *pkg, ...);
 
+int function_package_set_data_files (fnpkg *pkg, char **S, int n);
+
+char **function_package_get_data_files (fnpkg *pkg, int *n);
+
 const char *function_package_get_name (fnpkg *pkg);
 
 int function_package_write_file (fnpkg *pkg);

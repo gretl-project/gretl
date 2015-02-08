@@ -155,6 +155,8 @@ struct fnpkg_ {
     ufunc **priv;     /* pointers to private functions */
     int n_pub;        /* number of public functions */
     int n_priv;       /* number of private functions */
+    char **datafiles; /* names of packaged data files */
+    int n_files;      /* number of data files */
 };
 
 /* acceptable types for parameters of user-defined functions */
@@ -532,6 +534,8 @@ static fnpkg *function_package_alloc (const char *fname)
     
     pkg->pub = pkg->priv = NULL;
     pkg->n_pub = pkg->n_priv = 0;
+    pkg->datafiles = NULL;
+    pkg->n_files = 0;
 
     return pkg;
 }
@@ -2601,7 +2605,13 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 	fputs("<gui-help>\n", fp);
 	gretl_xml_put_string(trim_text(pkg->gui_help), fp);
 	fputs("\n</gui-help>\n", fp);
-    }     
+    }
+
+    if (pkg->datafiles != NULL) {
+	gretl_xml_put_strings_array("data-files",
+				    (const char **) pkg->datafiles,
+				    pkg->n_files, fp);
+    }    
 
     if (pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub; i++) {
@@ -2709,6 +2719,27 @@ static int pkg_set_modelreq (fnpkg *pkg, const char *s)
     } else {
 	return E_PARSE;
     }
+}
+
+static int pkg_set_datafiles (fnpkg *pkg, const char *s)
+{
+    int err = 0;
+
+    if (string_is_blank(s)) {
+	err = E_DATA;
+    } else {
+	int n = 0;
+	
+	pkg->datafiles = gretl_string_split(s, &n, NULL);
+	if (pkg->datafiles == NULL) {
+	    pkg->n_files = 0;
+	    err = E_ALLOC;
+	} else {
+	    pkg->n_files = n;
+	}
+    }
+
+    return err;
 }
 
 static int pkg_boolean_from_string (const char *s)
@@ -2954,6 +2985,9 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		    if (!err) got++;
 		    g_free(tmp);
 		}
+	    } else if (!strncmp(line, "data-files", 10)) {
+		pprintf(prn, "Recording data-file list: %s\n", p);
+		err = pkg_set_datafiles(pkg, p);
 	    } else if (!strncmp(line, "data-requirement", 16)) {
 		err = pkg_set_dreq(pkg, p);
 	    } else if (!strncmp(line, "model-requirement", 17)) {
@@ -3560,6 +3594,43 @@ int function_package_get_properties (fnpkg *pkg, ...)
     return err;
 }
 
+char **function_package_get_data_files (fnpkg *pkg, int *n)
+{
+    char **S = NULL;
+
+    *n = 0;
+    if (pkg->datafiles != NULL) {
+	S = strings_array_dup(pkg->datafiles, pkg->n_files);
+	if (S != NULL) {
+	    *n = pkg->n_files;
+	}
+    }
+
+    return S;
+}
+
+int function_package_set_data_files (fnpkg *pkg, char **S, int n)
+{
+    int err = 0;
+    
+    if (pkg->datafiles != NULL) {
+	strings_array_free(pkg->datafiles, pkg->n_files);
+	pkg->datafiles = NULL;
+	pkg->n_files = 0;
+    }
+
+    if (S != NULL) {
+	pkg->datafiles = strings_array_dup(S, n);
+	if (pkg->datafiles == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    pkg->n_files = n;
+	}
+    }
+
+    return err;
+}
+
 /* quick check to see if there's a gross problem with a package */
 
 static int validate_function_package (fnpkg *pkg)
@@ -4030,6 +4101,10 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->label);
 	} else if (!xmlStrcmp(cur->name, (XUC) "menu-attachment")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->mpath);
+	} else if (!xmlStrcmp(cur->name, (XUC) "data-files")) {
+	    pkg->datafiles =
+		gretl_xml_get_strings_array(cur, doc, &pkg->n_files,
+					    0, err);
 	}
 
 	cur = cur->next;

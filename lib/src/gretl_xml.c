@@ -314,6 +314,17 @@ void gretl_xml_put_strings_array (const char *tag, const char **strs,
 {
     int i;
 
+    if (n < 0) {
+	/* assume NULL termination */
+	const char **S = strs;
+
+	n = 0;
+	while (*S != NULL) {
+	    n++;
+	    S++;
+	}
+    }
+
     fprintf(fp, "<%s count=\"%d\">\n", tag, n);
     for (i=0; i<n; i++) {
 	gretl_xml_put_string(strs[i], fp);

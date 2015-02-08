@@ -8689,21 +8689,30 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	return 0;
     }
 
-    err = gui_try_http(cmd->param, myfile, &http);
-    if (err) {
-	gui_errmsg(err);
-	return err;
-    }  
-
-    if (!http && !(opt & OPT_O)) {
-	/* not using http or ODBC */
-	err = get_full_filename(cmd->param, myfile, (opt & OPT_W)? 
-				OPT_W : OPT_NONE);
+    if (opt & OPT_K) {
+	/* --frompkg=whatever */
+	err = get_package_data_path(cmd->param, myfile);
 	if (err) {
 	    gui_errmsg(err);
 	    return err;
 	}
-    }   
+    } else {
+	err = gui_try_http(cmd->param, myfile, &http);
+	if (err) {
+	    gui_errmsg(err);
+	    return err;
+	}  
+
+	if (!http && !(opt & OPT_O)) {
+	    /* not using http or ODBC */
+	    err = get_full_filename(cmd->param, myfile, (opt & OPT_W)? 
+				    OPT_W : OPT_NONE);
+	    if (err) {
+		gui_errmsg(err);
+		return err;
+	    }
+	}
+    }
 
     if (opt & OPT_W) {
 	ftype = GRETL_NATIVE_DB_WWW;

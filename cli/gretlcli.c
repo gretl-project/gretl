@@ -795,19 +795,28 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
     int ftype;
     int err = 0;
 
-    err = cli_try_http(cmd->param, newfile, &http);
-    if (err) {
-	errmsg(err, prn);
-	return err;
-    }
-
-    if (!http && !(opt & OPT_O)) {
-	/* not using http or ODBC */
-	err = get_full_filename(cmd->param, newfile, (opt & OPT_W)?
-				OPT_W : OPT_NONE);
+    if (opt & OPT_K) {
+	/* --frompkg=whatever */
+	err = get_package_data_path(cmd->param, newfile);
 	if (err) {
 	    errmsg(err, prn);
 	    return err;
+	}
+    } else {
+	err = cli_try_http(cmd->param, newfile, &http);
+	if (err) {
+	    errmsg(err, prn);
+	    return err;
+	}
+
+	if (!http && !(opt & OPT_O)) {
+	    /* not using http or ODBC */
+	    err = get_full_filename(cmd->param, newfile, (opt & OPT_W)?
+				    OPT_W : OPT_NONE);
+	    if (err) {
+		errmsg(err, prn);
+		return err;
+	    }
 	}
     }
 

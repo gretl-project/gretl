@@ -44,6 +44,7 @@
 
 #define PKG_DEBUG 0
 #define NENTRIES 5
+#define N_FILE_ENTRIES 4
 
 enum {
     NO_WINDOW,
@@ -58,7 +59,10 @@ typedef struct login_info_ login_info;
 
 struct function_info_ {
     GtkWidget *dlg;        /* editing dialog box */
-    GtkWidget *entries[NENTRIES]; /* entry boxes for author, etc. */
+    /* entry boxes for author, etc. */
+    GtkWidget *entries[NENTRIES];
+    /* entry boxes for data file names */
+    GtkWidget *file_entries[N_FILE_ENTRIES];
     GtkWidget *text;       /* text box for help */
     GtkWidget *codesel;    /* code-editing selector */
     GtkWidget *save;       /* Save button in dialog */
@@ -85,9 +89,11 @@ struct function_info_ {
     char **pubnames;       /* names of public functions */
     char **privnames;      /* names of private functions */
     char **specials;       /* names of special functions */
+    char **datafiles;      /* names of included data files */
     int n_pub;             /* number of public functions */
     int n_priv;            /* number of private functions */
     int n_special;         /* (max) number of special functions */
+    int n_files;           /* number of include data files */
     gboolean uses_subdir;  /* the package has its own subdir (0/1) */
     gchar *menupath;       /* path for menu attachment, if any */
     gchar *menulabel;      /* label for menu attachment, if any */
@@ -164,9 +170,11 @@ function_info *finfo_new (void)
     finfo->help = NULL;
     finfo->pubnames = NULL;
     finfo->privnames = NULL;
+    finfo->datafiles = NULL;
 
     finfo->n_pub = 0;
     finfo->n_priv = 0;
+    finfo->n_files = 0;
 
     finfo->dreq = 0;
     finfo->minver = 10804;
@@ -219,6 +227,10 @@ static void finfo_free (function_info *finfo)
 
     if (finfo->specials != NULL) {
 	strings_array_free(finfo->specials, finfo->n_special);
+    }
+
+    if (finfo->datafiles != NULL) {
+	strings_array_free(finfo->datafiles, finfo->n_files);
     }    
 
     if (finfo->samplewin != NULL) {
@@ -1412,6 +1424,32 @@ static void switch_menu_view (GtkComboBox *combo,
     }	
 }
 
+static void add_data_files_entries (GtkWidget *holder,
+				    function_info *finfo)
+{
+    const char *msg = N_("You may add or delete names of data"
+			 "files to be included in the package.");
+    GtkWidget *w, *hbox, *entry;
+    int i;
+
+    w = gtk_label_new(_(msg));
+    gtk_label_set_line_wrap(GTK_LABEL(w), TRUE);
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
+
+    for (i=0; i<N_FILE_ENTRIES; i++) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	finfo->file_entries[i] = entry = gtk_entry_new();
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), 32);
+	if (i < finfo->n_files) {
+	    gtk_entry_set_text(GTK_ENTRY(entry), finfo->datafiles[i]);
+	}
+	gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
+    }
+}
+
 static void add_menu_attach_top (GtkWidget *holder,
 				 function_info *finfo)
 {
@@ -1575,6 +1613,57 @@ static int process_special_functions (function_info *finfo)
     return n_changed;
 }
 
+static int process_data_file_names (function_info *finfo)
+{
+    gchar *fname;
+    int i, nf = 0;
+    int changed = 0;
+
+    for (i=0; i<N_FILE_ENTRIES; i++) {
+	fname = entry_box_get_trimmed_text(finfo->file_entries[i]);
+	if (fname != NULL) {
+	    nf++;
+	    if (i < finfo->n_files &&
+		strcmp(fname, finfo->datafiles[i])) {
+		changed = 1;
+	    }
+	}
+	g_free(fname);
+    }
+
+    if (!changed && nf != finfo->n_files) {
+	/* added or deleted */
+	changed = 1;
+    }
+
+    if (changed) {
+	strings_array_free(finfo->datafiles, finfo->n_files);
+	if (nf == 0) {
+	    finfo->datafiles = NULL;
+	    finfo->n_files = 0;
+	} else {
+	    finfo->datafiles = strings_array_new(nf);
+	    if (finfo->datafiles != NULL) {
+		finfo->n_files = nf;
+	    }
+	}
+
+	if (finfo->datafiles != NULL) {
+	    int j = 0;
+	    
+	    for (i=0; i<N_FILE_ENTRIES; i++) {
+		fname = entry_box_get_trimmed_text(finfo->file_entries[i]);
+		if (fname != NULL) {
+		    finfo->datafiles[j++] = gretl_strdup(fname);
+		}
+		g_free(fname);
+	    }
+	}	
+    }
+
+    return changed;
+}
+
 static void extra_properties_callback (GtkWidget *w, function_info *finfo)
 {
     GtkWidget *notebook;
@@ -1586,7 +1675,7 @@ static void extra_properties_callback (GtkWidget *w, function_info *finfo)
     
     if (page == 0) {
 	changed = process_special_functions(finfo);
-    } else {
+    } else if (page == 1) {
 	int focus_label = 0;
 
 	changed = process_menu_attachment(finfo, &focus_label);
@@ -1595,6 +1684,8 @@ static void extra_properties_callback (GtkWidget *w, function_info *finfo)
 
 	    gtk_widget_grab_focus(w);
 	}
+    } else {
+	changed = process_data_file_names(finfo);
     }
 
     if (changed) {
@@ -1771,13 +1862,14 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), table, FALSE, FALSE, 5);
 
+    /* the menu attachment page */
+
     vbox = gtk_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
     tmp = gtk_label_new(_("Menu attachment"));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);
 
     add_menu_attach_top(vbox, finfo);
-
     finfo->maintree = add_menu_navigator(vbox, finfo, 0);
     finfo->modeltree = add_menu_navigator(vbox, finfo, 1);
 
@@ -1785,6 +1877,16 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 	gtk_widget_set_sensitive(finfo->currtree, FALSE);
     }
 
+    /* the data files page */
+    
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
+    tmp = gtk_label_new(_("Data files"));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);
+    add_data_files_entries(vbox, finfo);
+
+    /* the common buttons area */
+    
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
 
     /* Apply button */
@@ -2181,42 +2283,27 @@ static int validate_package_file (const char *fname, int verbose)
     return err;
 }
 
-/* For a package whose help is in a PDF file, return
-   the path to the file (or NULL if not found).
+/* Fill out the full path to an auxiliary file to be 
+   included in a function package zipfile, using
+   basename @fname.
 */
 
-static gchar *pkg_find_pdf_doc (function_info *finfo)
+static void pkg_make_auxname (const char *fname,
+			      function_info *finfo,
+			      char *auxname)
 {
-    gchar *pdfname = g_strdup(finfo->help + 7);
-    char *p;
-    FILE *fp;
+    char *p = strrchr(finfo->fname, SLASH);
 
-    g_strchomp(g_strchug(pdfname));
+    *auxname = '\0';
 
-    /* adjust path to match finfo->fname? */
-    if ((p = strrchr(finfo->fname, SLASH)) != NULL) {
-	char tmp[FILENAME_MAX];
-
-	strcpy(tmp, finfo->fname);
-	p = strrchr(tmp, SLASH);
+    if (p != NULL) {
+	strcpy(auxname, finfo->fname);
+	p = strrchr(auxname, SLASH);
 	*(p + 1) = '\0';
-	strcat(tmp, pdfname);
-	g_free(pdfname);
-	pdfname = g_strdup(tmp);
-    }
-    
-    fp = gretl_fopen(pdfname, "r");
-
-    if (fp == NULL) {
-	fprintf(stderr, " couldn't find '%s'\n", pdfname);
-	g_free(pdfname);
-	pdfname = NULL;
+	strcat(auxname, fname);
     } else {
-	fprintf(stderr, " found '%s' OK\n", pdfname);
-	fclose(fp);
+	strcpy(auxname, fname);
     }
-
-    return pdfname;
 }
 
 /* Collect pkg.gfn and pkg.pdf into a temporary dir under
@@ -2224,39 +2311,58 @@ static gchar *pkg_find_pdf_doc (function_info *finfo)
    two files.
 */
 
-int pkg_make_zipfile (function_info *finfo,
-		      gchar **zipname)
+static int pkg_make_zipfile (function_info *finfo, int pdfdoc,
+			     gchar **zipname)
 {
     char origdir[FILENAME_MAX];
-    gchar *pdfname;
+    char auxname[FILENAME_MAX];
     const char *pkgname;
-    gchar *path, *tmp;
+    gchar *dotpath, *tmp;
     int dir_made = 0;
     int err;
 
-    pdfname = pkg_find_pdf_doc(finfo);
-    if (pdfname == NULL) {
-	return 1;
-    }
-
     *origdir = '\0';
     pkgname = function_package_get_name(finfo->pkg);
-    path = g_strdup_printf("%s%s", gretl_dotdir(), pkgname);
-    err = gretl_mkdir(path);
+    dotpath = g_strdup_printf("%s%s", gretl_dotdir(), pkgname);
+    err = gretl_mkdir(dotpath);
     
     if (err) {
-	fprintf(stderr, "mkdir error for path '%s'\n", path);
+	fprintf(stderr, "mkdir error for path '%s'\n", dotpath);
     } else {
 	dir_made = 1;
-	tmp = g_strdup_printf("%s%c%s.gfn", path, SLASH, pkgname);
+    }
+
+    if (!err) {
+	/* copy the gfn file into place */
+	tmp = g_strdup_printf("%s%c%s.gfn", dotpath, SLASH, pkgname);
 	err = gretl_copy_file(finfo->fname, tmp);
 	g_free(tmp);
-	if (!err) {
-	    tmp = g_strdup_printf("%s%c%s.pdf", path, SLASH, pkgname);
-	    err = gretl_copy_file(pdfname, tmp);
+    }
+
+    if (!err && pdfdoc) {
+	/* copy PDF file into place */
+	char *pdfname = g_strdup_printf("%s.pdf", pkgname);
+
+	pkg_make_auxname(pdfname, finfo, auxname);
+	tmp = g_strdup_printf("%s%c%s.pdf", dotpath, SLASH, pkgname);
+	err = gretl_copy_file(auxname, tmp);
+	g_free(tmp);
+	g_free(pdfname);
+    }
+
+    if (!err && finfo->datafiles != NULL) {
+	/* copy data files into place, if any */
+	const char *fname;
+	int i;
+
+	for (i=0; i<finfo->n_files && !err; i++) {
+	    fname = finfo->datafiles[i];
+	    pkg_make_auxname(fname, finfo, auxname);
+	    tmp = g_strdup_printf("%s%c%s", dotpath, SLASH, fname);
+	    err = gretl_copy_file(auxname, tmp);
 	    g_free(tmp);
 	}
-    }
+    }	
 
     if (!err) {
 	GError *gerr = NULL;
@@ -2287,10 +2393,10 @@ int pkg_make_zipfile (function_info *finfo,
 
     if (dir_made) {
 	/* delete the temporary zip directory */
-	gretl_deltree(path);
+	gretl_deltree(dotpath);
     }
 
-    g_free(path);
+    g_free(dotpath);
 
     return err;
 }
@@ -2318,6 +2424,7 @@ static void do_pkg_upload (function_info *finfo, const char *gfnpath)
     gint x, y;
     gsize buflen;
     int error_printed = 0;
+    int pdfdoc;
     int err;
 
     err = validate_package_file(gfnpath, 0);
@@ -2325,14 +2432,18 @@ static void do_pkg_upload (function_info *finfo, const char *gfnpath)
 	return;
     }
 
-    if (pkg_has_pdf_help(finfo)) {
-	err = pkg_make_zipfile(finfo, &zipname);
+    pdfdoc = pkg_has_pdf_help(finfo);
+
+    if (pdfdoc || finfo->datafiles != NULL) {
+	err = pkg_make_zipfile(finfo, pdfdoc, &zipname);
 	if (err) {
 	    /* FIXME better error message */
 	    errbox("Error making package zipfile: not uploaded");
 	    return;
 	}
     }
+
+    return;
 
     fname = zipname != NULL ? zipname : gfnpath;
 
@@ -2521,6 +2632,9 @@ int save_function_package (const char *fname, gpointer p)
 
     if (!err) {
 	pkg_save_special_functions(finfo);
+	function_package_set_data_files(finfo->pkg,
+					finfo->datafiles,
+					finfo->n_files);
     }
 
     if (!err) {
@@ -2938,6 +3052,21 @@ static int finfo_set_special_names (function_info *finfo)
     return err;
 }
 
+static int finfo_set_data_files (function_info *finfo)
+{
+    char **S;
+    int n = 0;
+
+    S = function_package_get_data_files(finfo->pkg, &n);
+
+    if (S != NULL) {
+	finfo->datafiles = S;
+	finfo->n_files = n;
+    }
+
+    return 0;
+}
+
 void edit_function_package (const char *fname)
 {
     function_info *finfo;
@@ -2987,6 +3116,10 @@ void edit_function_package (const char *fname)
 
     if (!err) {
 	finfo_set_menuwin(finfo);
+    }
+
+    if (!err) {
+	err = finfo_set_data_files(finfo);
     }
 
 #if PKG_DEBUG
