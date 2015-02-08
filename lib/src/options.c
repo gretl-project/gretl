@@ -400,6 +400,7 @@ struct gretl_option gretl_opts[] = {
     { OPEN,     OPT_L, "cols", 2 },
     { OPEN,     OPT_M, "rowmask", 2 },
     { OPEN,     OPT_V, "verbose", 0 },
+    { OPEN,     OPT_K, "frompkg", 2 },
     { OUTFILE,  OPT_A, "append", 0 },
     { OUTFILE,  OPT_C, "close", 0 },
     { OUTFILE,  OPT_W, "write", 0 },
