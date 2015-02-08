@@ -11,7 +11,7 @@
 
 <!ELEMENT gretl-function-package (author, version, date, description, 
                                   label?, menu-attachment?, help, gui-help?, 
-                                  gretl-function+, sample-script)>
+                                  data-files?, gretl-function+, sample-script)>
 <!ATTLIST gretl-function-package
    name CDATA #REQUIRED
    ID CDATA #IMPLIED
@@ -52,6 +52,11 @@
 
 <!ELEMENT help (#PCDATA)>
 <!ELEMENT gui-help (#PCDATA)>
+
+<!ELEMENT data-files (#PCDATA)>
+<!ATTLIST data-files 
+   count CDATA #REQUIRED
+>
 
 <!ELEMENT params (param+)>
 <!ATTLIST params 
