@@ -33,22 +33,11 @@
 #include "gretl_zip.h"
 #include "strutils.h"
 
-#ifdef USE_GSF
+#ifdef USE_GSF /* libgsf-1 >= 1.14.31 */
 
-#include <gsf/gsf-utils.h>
-
-#include <gsf/gsf-input-stdio.h>
-#include <gsf/gsf-infile.h>
-#include <gsf/gsf-infile-stdio.h>
-#include <gsf/gsf-infile-zip.h>
-
-#include <gsf/gsf-output-stdio.h>
-#include <gsf/gsf-outfile-stdio.h>
-#include <gsf/gsf-outfile.h>
-#include <gsf/gsf-outfile-zip.h>
+#include <gsf/gsf.h>
 
 #define ZDEBUG 1
-
 #define CHUNK 32768
 
 #define gsf_is_dir(i) (GSF_IS_INFILE(i) && gsf_infile_num_children(GSF_INFILE(i)) >= 0)
@@ -189,10 +178,6 @@ int gretl_make_zipfile (const char *fname, const char *path,
     return err;
 }
 
-#if 0 /* libgsf not ready yet: doesn't support setting of
-	 zlib compression level as of version 1.14.30
-      */
-
 int gretl_zip_datafile (const char *fname, const char *path,
 			int level, GError **gerr)
 {
@@ -232,7 +217,7 @@ int gretl_zip_datafile (const char *fname, const char *path,
 	    if (zinp == NULL) {
 		err = 1;
 	    } else {
-		/* property not present in libgsf <= 1.14.30 */
+		/* note: property not present in libgsf <= 1.14.30 */
 		zout = gsf_outfile_new_child_full(outfile, names[i], 0,
 						  "deflate-level", level,
 						  NULL);
@@ -250,30 +235,11 @@ int gretl_zip_datafile (const char *fname, const char *path,
     }
 
 #if ZDEBUG
-    fprintf(stderr, "*** gretl_zip_datafile: returning %d\n", err);
+    fprintf(stderr, "*** gretl_zip_datafile (gsf): returning %d\n", err);
 #endif
 
     return err;
 }
-
-#else
-
-/* use native gretlzip plugin code for now */
-
-int gretl_zip_datafile (const char *fname, const char *path,
-			int level, GError **gerr)
-{
-    int (*zfunc) (const char *, const char *, int, GError **);
-
-    zfunc = get_plugin_function("gretl_native_zip_datafile");
-    if (zfunc == NULL) {
-        return 1;
-    }
-
-    return (*zfunc)(fname, path, level, gerr);
-}
-
-#endif /* work-around for missing functionality in libgsf */
 
 static int real_unzip_file (const char *fname, const char *path,
 			    gchar **zdirname, GError **gerr)
