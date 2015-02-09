@@ -1750,6 +1750,8 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 	    sourceview_insert_buffer(vwin, buf);
 	} else if (vwin->role == SCRIPT_OUT) {
 	    textview_set_text_colorized(vwin->text, buf);
+	} else if (vwin->role == ZIPBUILD) {
+	    textview_set_text_report(vwin->text, buf);
 	} else {
 	    textview_set_text(vwin->text, buf);
 	}
@@ -1859,7 +1861,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     } else if (role == EDIT_PKG_CODE ||
 	       role == EDIT_PKG_SAMPLE) {
 	vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
-    } else if (role != IMPORT) {
+    } else if (role != IMPORT && role != ZIPBUILD) {
 	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
     }
 

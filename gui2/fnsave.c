@@ -2283,27 +2283,32 @@ static int validate_package_file (const char *fname, int verbose)
     return err;
 }
 
-/* Fill out the full path to an auxiliary file to be 
-   included in a function package zipfile, using
-   basename @fname.
-*/
-
-static void pkg_make_auxname (const char *fname,
-			      function_info *finfo,
-			      char *auxname)
+static void zip_report (int err, PRN *prn)
 {
-    char *p = strrchr(finfo->fname, SLASH);
-
-    *auxname = '\0';
-
-    if (p != NULL) {
-	strcpy(auxname, finfo->fname);
-	p = strrchr(auxname, SLASH);
-	*(p + 1) = '\0';
-	strcat(auxname, fname);
+    if (err) {
+	pputs(prn, "<@fail>\n");
     } else {
-	strcpy(auxname, fname);
+	pputs(prn, "<@ok>\n");
     }
+}
+
+static int pkg_zipfile_add (const char *fname,
+			    const char *pkgbase,
+			    const char *dotpath,
+			    PRN *prn)
+{
+    gchar *src, *dest;
+    int err;
+
+    src = g_strdup_printf("%s%s", pkgbase, fname);
+    dest = g_strdup_printf("%s%c%s", dotpath, SLASH, fname);
+    pprintf(prn, "Copying %s... ", fname);
+    err = gretl_copy_file(src, dest);
+    zip_report(err, prn);
+    g_free(src);
+    g_free(dest);
+
+    return err;
 }
 
 /* Collect pkg.gfn and pkg.pdf into a temporary dir under
@@ -2315,52 +2320,59 @@ static int pkg_make_zipfile (function_info *finfo, int pdfdoc,
 			     gchar **zipname)
 {
     char origdir[FILENAME_MAX];
-    char auxname[FILENAME_MAX];
+    char pkgbase[FILENAME_MAX];
     const char *pkgname;
     gchar *dotpath, *tmp;
+    windata_t *vwin;
+    PRN *prn = NULL;
     int dir_made = 0;
     int err;
 
+    /* common path to files for packaging */
+    strcpy(pkgbase, finfo->fname);
+    tmp = strrchr(pkgbase, SLASH);
+    if (tmp != NULL) {
+	*(tmp + 1) = '\0';
+    } else {
+	*pkgbase = '\0';
+    }
+
     *origdir = '\0';
     pkgname = function_package_get_name(finfo->pkg);
+
+    bufopen(&prn);
+
+    /* path to temporary dir for zipping */
     dotpath = g_strdup_printf("%s%s", gretl_dotdir(), pkgname);
+    pputs(prn, "Making temporary directory... ");
     err = gretl_mkdir(dotpath);
+    zip_report(err, prn);
     
-    if (err) {
-	fprintf(stderr, "mkdir error for path '%s'\n", dotpath);
-    } else {
+    if (!err) {
 	dir_made = 1;
     }
 
     if (!err) {
 	/* copy the gfn file into place */
-	tmp = g_strdup_printf("%s%c%s.gfn", dotpath, SLASH, pkgname);
-	err = gretl_copy_file(finfo->fname, tmp);
+	tmp = g_strdup_printf("%s.gfn", pkgname);
+	err = pkg_zipfile_add(tmp, pkgbase, dotpath, prn);
 	g_free(tmp);
     }
 
     if (!err && pdfdoc) {
 	/* copy PDF file into place */
-	char *pdfname = g_strdup_printf("%s.pdf", pkgname);
-
-	pkg_make_auxname(pdfname, finfo, auxname);
-	tmp = g_strdup_printf("%s%c%s.pdf", dotpath, SLASH, pkgname);
-	err = gretl_copy_file(auxname, tmp);
+	tmp = g_strdup_printf("%s.pdf", pkgname);
+	err = pkg_zipfile_add(tmp, pkgbase, dotpath, prn);
 	g_free(tmp);
-	g_free(pdfname);
     }
 
     if (!err && finfo->datafiles != NULL) {
 	/* copy data files into place, if any */
-	const char *fname;
 	int i;
 
 	for (i=0; i<finfo->n_files && !err; i++) {
-	    fname = finfo->datafiles[i];
-	    pkg_make_auxname(fname, finfo, auxname);
-	    tmp = g_strdup_printf("%s%c%s", dotpath, SLASH, fname);
-	    err = gretl_copy_file(auxname, tmp);
-	    g_free(tmp);
+	    err = pkg_zipfile_add(finfo->datafiles[i], pkgbase,
+				  dotpath, prn);
 	}
     }	
 
@@ -2373,7 +2385,9 @@ static int pkg_make_zipfile (function_info *finfo, int pdfdoc,
 	err = gretl_chdir(gretl_dotdir());
 	if (!err) {
 	    tmp = g_strdup_printf("%s.zip", pkgname);
+	    pprintf(prn, "Making %s... ", tmp);
 	    err = gretl_make_zipfile(tmp, pkgname, &gerr);
+	    zip_report(err, prn);
 	    g_free(tmp);
 	    if (gerr != NULL) {
 		fprintf(stderr, "gretl_make_zipfile: %s\n", gerr->message);
@@ -2385,6 +2399,12 @@ static int pkg_make_zipfile (function_info *finfo, int pdfdoc,
 	    }
 	}
     }
+
+    /* show details regarding progress */
+    vwin = view_buffer(prn, 78, 300, _("build zip file"), ZIPBUILD, NULL);
+    gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
+				 GTK_WINDOW(finfo->dlg));
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(vwin->main), TRUE);
 
     if (*origdir != '\0') {
 	/* get back to where we came from */

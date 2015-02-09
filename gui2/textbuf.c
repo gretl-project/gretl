@@ -838,6 +838,10 @@ static GtkTextTagTable *gretl_tags_new (void)
     g_object_set(tag, "foreground", "red", NULL);
     gtk_text_tag_table_add(table, tag);
 
+    tag = gtk_text_tag_new("greentext");
+    g_object_set(tag, "foreground", "green", NULL);
+    gtk_text_tag_table_add(table, tag);
+
     tag = gtk_text_tag_new("title");
     g_object_set(tag, "justification", GTK_JUSTIFY_CENTER,
 		 "pixels_above_lines", 15,
@@ -1000,6 +1004,35 @@ void textview_set_text_colorized (GtkWidget *view, const char *buf)
 void textview_append_text_colorized (GtkWidget *view, const char *buf, int trim)
 {
     real_textview_add_colorized(view, buf, 1, trim);
+}
+
+void textview_set_text_report (GtkWidget *view, const char *buf)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextIter iter;
+    const char *p;
+
+    /* plain text except for "<@ok>" represented as "OK" in
+       green and "<@fail>" as "failed" in red
+    */
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
+    
+    while ((p = strstr(buf, "<@"))) {
+	gtk_text_buffer_insert(tbuf, &iter, buf, p - buf);
+	if (!strncmp(p, "<@ok>", 5)) {
+	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter, _("OK"),
+						     -1, "greentext", NULL);
+	    buf = p + 5;
+	} else if (!strncmp(p, "<@fail>", 7)) {
+	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter, _("failed"),
+						     -1, "redtext", NULL);
+	    buf = p + 7;
+	}
+    }
+
+    gtk_text_buffer_insert(tbuf, &iter, buf, -1);
 }
 
 void textview_delete_processing_message (GtkWidget *view)
