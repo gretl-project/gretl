@@ -7337,23 +7337,14 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
    between the start of 1970 and the start of 2000 when
    calling *nix time functions. With version 4.7 (CVS) gnuplot
    switched to a base of 1970.
-
-   The 64-bit Windows package of gretl includes gnuplot 4.7 so
-   if WIN64 is defined we know we don't need the adjustment.
 */
 
-#ifndef WIN64
-# define GP_TIME_OFFSET 946684800
-#endif
+#define GP_TIME_OFFSET 946684800
 
 void date_from_gnuplot_time (char *targ, size_t tsize, 
 			     const char *fmt, double x)
 {
-#if defined(WIN64)
-    time_t etime = (time_t) x;
-
-    strftime(targ, tsize, fmt, localtime(&etime));
-#elif defined(WIN32)
+#ifdef WIN32
     time_t etime;
 
     if (gnuplot_version() < 4.7) {
@@ -7390,11 +7381,9 @@ double gnuplot_time_from_date (const char *s, const char *fmt)
 	    /* conversion went OK */
 	    etime = mktime(&t);
 	    x = (double) etime;
-#ifndef WIN64
 	    if (gnuplot_version() < 4.7) {
 		x -= GP_TIME_OFFSET;
 	    } 
-#endif
 	}
     }
 
