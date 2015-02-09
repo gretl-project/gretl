@@ -1710,24 +1710,37 @@ static int read_plot_logscale (const char *s, GPT_SPEC *spec)
 static int read_plot_format (const char *s, GPT_SPEC *spec,
 			     int timefmt)
 {
-    char axis, fmt[16];
+    char fmt[16];
+    char axis = '\0';
     int n, err = 0;
 
-    n = sscanf(s, "%c \"%15[^\"]", &axis, fmt);
+    if (timefmt) {
+	/* including 'x' axis here is actually wrong,
+	   but it may be in some old plot files */
+	s += strspn(s, " ");
+	if (*s == 'x') {
+	    n = sscanf(s, "%c \"%15[^\"]", &axis, fmt);
+	    err = n < 2;
+	} else {
+	    n = sscanf(s, "%15s", fmt);
+	    err = n < 1;
+	}
+    } else {
+	n = sscanf(s, "%c \"%15[^\"]", &axis, fmt);
+	err = n < 2;
+    }
 
-    if (n < 2) {
-	err = 1;
-    } else if (timefmt) {
-	if (axis == 'x') {
+    if (!err) {
+	if (timefmt) {
 	    *spec->timefmt = '\0';
 	    strncat(spec->timefmt, fmt, 15);
+	} else if (axis == 'x') {
+	    *spec->xfmt = '\0';
+	    strncat(spec->xfmt, fmt, 15);
+	} else if (axis == 'y') {
+	    *spec->yfmt = '\0';
+	    strncat(spec->yfmt, fmt, 15);
 	}
-    } else if (axis == 'x') {
-	*spec->xfmt = '\0';
-	strncat(spec->xfmt, fmt, 15);
-    } else if (axis == 'y') {
-	*spec->yfmt = '\0';
-	strncat(spec->yfmt, fmt, 15);
     }
 
     return err;
