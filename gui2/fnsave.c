@@ -2443,8 +2443,6 @@ static void do_pkg_upload (function_info *finfo, const char *gfnpath)
 	}
     }
 
-    return;
-
     fname = zipname != NULL ? zipname : gfnpath;
 
     login_dialog(&linfo, finfo->dlg);
