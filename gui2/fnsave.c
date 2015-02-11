@@ -2400,11 +2400,15 @@ static int pkg_make_zipfile (function_info *finfo, int pdfdoc,
 	}
     }
 
-    /* show details regarding progress */
-    vwin = view_buffer(prn, 78, 300, _("build zip file"), ZIPBUILD, NULL);
-    gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
-				 GTK_WINDOW(finfo->dlg));
-    gtk_window_set_destroy_with_parent(GTK_WINDOW(vwin->main), TRUE);
+    if (err) {
+	/* show details on failure */
+	vwin = view_buffer(prn, 78, 300, _("build zip file"), ZIPBUILD, NULL);
+	gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
+				     GTK_WINDOW(finfo->dlg));
+	gtk_window_set_destroy_with_parent(GTK_WINDOW(vwin->main), TRUE);
+    } else {
+	gretl_print_destroy(prn);
+    }
 
     if (*origdir != '\0') {
 	/* get back to where we came from */
@@ -2457,8 +2461,7 @@ static void do_pkg_upload (function_info *finfo, const char *gfnpath)
     if (pdfdoc || finfo->datafiles != NULL) {
 	err = pkg_make_zipfile(finfo, pdfdoc, &zipname);
 	if (err) {
-	    /* FIXME better error message */
-	    errbox("Error making package zipfile: not uploaded");
+	    /* the error message will have been handled abive */
 	    return;
 	}
     }
