@@ -5786,10 +5786,10 @@ int means_test (const int *list, const DATASET *dset,
 	df = satterthwaite_df(v1, n1, v2, n2);
     } else {
 	/* form pooled estimate of variance */
-	double sp2;
+	double s2p;
 
-	sp2 = ((n1-1) * v1 + (n2-1) * v2) / df;
-	se = sqrt(sp2 / n1 + sp2 / n2);
+	s2p = ((n1-1) * v1 + (n2-1) * v2) / df;
+	se = sqrt(s2p / n1 + s2p / n2);
 	df = n1 + n2 - 2;
     }
 
