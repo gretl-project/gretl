@@ -1053,7 +1053,12 @@ static int dfgls_get_options (const char *title, int panel,
     int difference = 0;
     int *radio_var = panel ? NULL : &difference;
     gretlopt opt = OPT_G; /* --gls */
+    GtkWidget *tdown;
+    int test_down_opt = 0;
     int retval;
+
+    tdown = adf_test_down_selector(&test_down_opt);
+    set_checks_dialog_extra(0, tdown);
 
     retval = checks_dialog(_(title), NULL, 
 			   opts, nchecks, active, 0, 0,
@@ -1077,6 +1082,18 @@ static int dfgls_get_options (const char *title, int panel,
 
 	*popt = opt;
     }
+
+    if (opt & OPT_E) {
+	if (test_down_opt == 0) {
+	    /* MAIC */
+	    set_optval_string(ADF, OPT_E, "MAIC");
+	} else if (test_down_opt == 1) {
+	    /* MBIC */
+	    set_optval_string(ADF, OPT_E, "MBIC"); 
+	} else {
+	    set_optval_string(ADF, OPT_E, "tstat");
+	}
+    }    
 
     return retval;
 }
