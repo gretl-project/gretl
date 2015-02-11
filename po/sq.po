@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-12-04 13:09-0500\n"
-"PO-Revision-Date: 2015-02-04 13:35+0100\n"
+"PO-Revision-Date: 2015-02-11 21:49+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: \n"
@@ -4138,7 +4138,7 @@ msgstr ""
 
 #: lib/src/gretl_panel.c:1591
 msgid "Joint significance of differing group means:\n"
-msgstr "Testi i diferencës të të gjitha mesatareve të individëve :\n"
+msgstr "Test mbi domethënien e përbashkët  të diferencës të të gjitha mesatareve të individëve :\n"
 
 #: lib/src/gretl_panel.c:1595
 msgid ""
@@ -5454,7 +5454,7 @@ msgid ""
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
 "Vlerat kritike për vëllimin maksimal të dëshirueshëm të MPIK\n"
-"  për teste në pragun 5%l:\n"
+"  sipas testeve për pragun e domethënies 5%:\n"
 
 #: lib/src/modelprint.c:1029
 #, no-c-format
@@ -5463,7 +5463,7 @@ msgid ""
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
 "Vlerat kritike për vëllimin maksimal të dëshirueshëm të 2KVZ\n"
-"  sipas testeve për pragun 5%:\n"
+"  sipas testeve për pragun e domethënies 5%:\n"
 
 #: lib/src/modelprint.c:1033
 msgid "bias"
@@ -5500,12 +5500,12 @@ msgstr "Vëllimi maksimal mund të tejkalojë %g%%"
 
 #: lib/src/modelprint.c:1073
 msgid "Weak instrument test"
-msgstr "Test i dobët i instrumenteve "
+msgstr "Testi për instrumentë të dobët"
 
 #: lib/src/modelprint.c:1097
 #: lib/src/modelprint.c:1105
 msgid "First-stage F-statistic"
-msgstr "Statistika F e hapit të parë"
+msgstr "Statistika F e nivelit të parë"
 
 #: lib/src/modelprint.c:1111
 #: lib/src/modelprint.c:1120
@@ -5633,7 +5633,7 @@ msgstr "Me intervale besimi të qëndrueshëm të shkallës %g%%"
 #: lib/src/modelprint.c:1423
 #, c-format
 msgid "With %g percent confidence intervals"
-msgstr "Me interval besimi të nivelit %g%%"
+msgstr "Me interval besimi të shkallës %g%%"
 
 #: lib/src/modelprint.c:1428
 msgid "Robust (sandwich) standard errors"
@@ -7088,7 +7088,7 @@ msgstr ""
 #: gui2/guiprint.c:950
 #, c-format
 msgid "Model estimation range: %s - %s"
-msgstr "Modeli u vlerësua mbi intervalin: %s - %s"
+msgstr "Modeli u vlerësua mbi kampionin: %s - %s"
 
 #: lib/src/printout.c:1260
 msgid "error"
@@ -10931,7 +10931,7 @@ msgstr "Vizato ciklin/mbetjen"
 
 #: gui2/filters.c:799
 msgid "Graph frequency response"
-msgstr "Vizato ndjeshmërinë ndaj këputjes"
+msgstr "Vizato përgjigjen në frekuencë"
 
 #: gui2/filters.c:912
 #: gui2/filters.c:938
@@ -13187,7 +13187,7 @@ msgstr "_Parashikimi..."
 
 #: gui2/gui_utils.c:232
 msgid "_Confidence intervals for coefficients"
-msgstr "Intervali i besimit i koeficientëve"
+msgstr "_Intervali i besimit i koeficientëve"
 
 #: gui2/gui_utils.c:234
 msgid "Confidence _ellipse..."
@@ -14077,7 +14077,7 @@ msgstr "shfaq rezultatet e regresionit"
 #: gui2/library.c:1039
 #: gui2/library.c:1095
 msgid "use level of variable"
-msgstr "përdor nivelin e ndryshores"
+msgstr "përdor vlerën e ndryshores"
 
 #: gui2/library.c:944
 #: gui2/library.c:952

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-12-04 13:09-0500\n"
-"PO-Revision-Date: 2015-01-31 20:23+0100\n"
+"PO-Revision-Date: 2015-02-11 21:56+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -7095,7 +7095,7 @@ msgstr ""
 #: gui2/guiprint.c:950
 #, c-format
 msgid "Model estimation range: %s - %s"
-msgstr "Intervalle des prédictions du modèle : %s - %s"
+msgstr "Intervalle de l'estimation du modèle : %s - %s"
 
 #: lib/src/printout.c:1260
 msgid "error"
@@ -8304,7 +8304,7 @@ msgstr "Compilé le : "
 #: gui2/about.c:192
 #: gui2/about.c:194
 msgid "translator_credits"
-msgstr "Traduction française : Florent Bresson, Michel Robitaille et Artur Bala"
+msgstr "Traduction française (par ordre alphabétique) :  Artur Bala, Florent Bresson et Michel Robitaille"
 
 #: gui2/about.c:203
 msgid "News"
@@ -10945,7 +10945,7 @@ msgstr "Tracer la série de résidus ou de cycles"
 # améliorer peut-être
 #: gui2/filters.c:799
 msgid "Graph frequency response"
-msgstr "Tracer la sensibilité de la fréquence"
+msgstr "Tracer la réponse en fréquence"
 
 #: gui2/filters.c:912
 #: gui2/filters.c:938
@@ -16521,7 +16521,7 @@ msgstr "gretl : options"
 #: gui2/settings.c:1011
 #: gui2/settings.c:2589
 msgid "Browse..."
-msgstr "Fureter..."
+msgstr "Chercher..."
 
 #: gui2/settings.c:1049
 msgid "English (US letter paper)"
