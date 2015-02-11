@@ -917,7 +917,7 @@ static GtkWidget *adf_test_down_selector (int *option)
     combo_box_append_text(combo, _("modified AIC"));    
     combo_box_append_text(combo, _("modified BIC"));    
     combo_box_append_text(combo, _("t-statistic"));
-    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), *option);
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(switch_test_down_opt), 
 		     option);
@@ -964,7 +964,7 @@ static int adf_get_options (const char *title, int panel,
     int *radio_var = panel ? &pantrend : &difference;
     int save_seas = ts_active[5];
     GtkWidget *tdown;
-    int test_down_opt = 0;
+    static int test_down_opt = 0;
     gretlopt opt = OPT_NONE;
     int retval;
 
@@ -1054,7 +1054,7 @@ static int dfgls_get_options (const char *title, int panel,
     int *radio_var = panel ? NULL : &difference;
     gretlopt opt = OPT_G; /* --gls */
     GtkWidget *tdown;
-    int test_down_opt = 0;
+    static int test_down_opt = 0;
     int retval;
 
     tdown = adf_test_down_selector(&test_down_opt);
