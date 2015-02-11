@@ -9351,39 +9351,28 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 		err = check_varname(vname);
 	    }
 	    if (!err) {
-		if (r->t == MAT || is_dataset_series(p->dset, xvec)) {
-		    /* we need distinct storage */
-		    err = dataset_add_NA_series(p->dset, 1);
-		    if (!err) {
-			int t, i = 0, v = p->dset->v - 1;
+		err = dataset_add_NA_series(p->dset, 1);
+	    }
+	    if (!err) {
+		int t, i = 0, v = p->dset->v - 1;
 
-			for (t=p->dset->t1; t<=p->dset->t2; t++) {
-			    if (subset) {
-				p->dset->Z[v][t] = xvec[i++];
-			    } else {
-				p->dset->Z[v][t] = xvec[t];
-			    }
-			}
-			r->v.xvec = p->dset->Z[v];
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		    if (subset) {
+			p->dset->Z[v][t] = xvec[i++];
+		    } else {
+			p->dset->Z[v][t] = xvec[t];
 		    }
-		} else {
-		    /* we can use the existing RHS storage */
-		    err = dataset_add_allocated_series(p->dset, xvec);
 		}
 	    }
 	    if (!err) {
-		/* update node @r's properties */
-		r->vnum = p->dset->v - 1;
-		r->flags &= ~TMP_NODE;
-		r->flags &= ~AUX_NODE;
-		r->vname = gretl_strdup(vname);
-		err = dataset_rename_series(p->dset, r->vnum, vname);
+		vnum =  p->dset->v - 1;
+		strcpy(p->dset->varname[vnum], vname);
 	    }
 	}
 
 	ret = aux_scalar_node(p);
 	if (ret != NULL) {
-	    ret->v.xval = err ? -1 : r->vnum;
+	    ret->v.xval = err ? -1 : vnum;
 	}
     }
 

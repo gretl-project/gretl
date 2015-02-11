@@ -4333,7 +4333,7 @@ int is_dataset_series (const DATASET *dset, const double *x)
 {
     int i;
 
-    for (i=dset->v-1; i>=0; i++) {
+    for (i=dset->v-1; i>=0; i--) {
 	if (x == dset->Z[i]) {
 	    return 1;
 	}
