@@ -2927,12 +2927,16 @@ int db_delete_series_by_number (const int *list, const char *fname)
 void get_db_padding (SERIESINFO *sinfo, DATASET *dset, 
 		     int *pad1, int *pad2)
 {
-    *pad1 = dateton(sinfo->stobs, dset); 
+    *pad1 = dateton(sinfo->stobs, dset);
+#if DB_DEBUG    
     fprintf(stderr, "pad1 = dateton(%s) = %d\n", sinfo->stobs, *pad1);
+#endif    
 
     *pad2 = dset->n - sinfo->nobs - *pad1;
+#if DB_DEBUG
     fprintf(stderr, "pad2 = dset->n - sinfo->nobs - pad1 = %d - %d - %d = %d\n", 
 	    dset->n, sinfo->nobs, *pad1, *pad2);
+#endif    
 } 
 
 int db_range_check (SERIESINFO *sinfo, DATASET *dset)
