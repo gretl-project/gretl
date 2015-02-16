@@ -6572,9 +6572,14 @@
     <function name="resample" section="stats" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
-	<fnarg optional="true" type="int">b</fnarg>
+	<fnarg optional="true" type="int">blocksize</fnarg>
       </fnargs>    
       <description>
+	<para>
+	  The initial description of this function pertains to
+	  cross-sectional or time-series data; see below for
+	  the case of panel data.
+	</para>
 	<para>
 	  Resamples from <argname>x</argname> with replacement.  In
 	  the case of a series argument, each value of the returned
@@ -6585,16 +6590,28 @@
 	  <argname>x</argname> with equal probability.
 	</para>
 	<para>
-	  The optional argument <argname>b</argname> represents the
-	  block length for resampling by moving blocks.  If this
-	  argument is given it should be a positive integer greater
-	  than or equal to 2. The effect is that the output is
+	  The optional argument <argname>blocksize</argname>
+	  represents the block size for resampling by moving blocks.
+	  If this argument is given it should be a positive integer
+	  greater than or equal to 2. The effect is that the output is
 	  composed by random selection with replacement from among all
 	  the possible contiguous sequences of length
-	  <argname>b</argname> in the input.  (In the case of matrix
-	  input, this means contiguous rows.) If the length of the
-	  data is not an integer multiple of the block length, the
+	  <argname>blocksize</argname> in the input.  (In the case of
+	  matrix input, this means contiguous rows.) If the length of
+	  the data is not an integer multiple of the block size, the
 	  last selected block is truncated to fit.
+	</para>
+	<para>
+	  If the argument <argname>x</argname> is a series and the
+	  dataset takes the form of a panel, resampling by moving
+	  blocks is not supported. The basic form of resampling is
+	  supported, but has this specific interpretation: the data
+	  are resampled <quote>by individual</quote>. Suppose you have
+	  a panel in which 100 individuals are observed over 5
+	  periods. Then the returned series will again be composed of
+	  100 blocks of 5 observations: each block will be drawn with
+	  equal probability from the 100 individual time series, with
+	  the time-series order preserved.
 	</para>
       </description>
     </function>

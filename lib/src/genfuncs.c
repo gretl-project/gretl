@@ -568,6 +568,10 @@ int block_resample_series (const double *x, double *y, int blocklen,
     int m, rem, bt2, x0;
     int i, s, t, n;
 
+    if (dataset_is_panel(dset)) {
+	return E_PDWRONG;
+    }
+
     if (blocklen <= 0) {
 	return E_DATA;
     }
