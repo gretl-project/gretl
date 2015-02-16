@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.10.0)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-02-13 07:46-0500\n"
-"PO-Revision-Date: 2015-02-16 14:02+0100\n"
+"PO-Revision-Date: 2015-02-16 14:16+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -10190,7 +10190,7 @@ msgstr "Gardar os cambios?"
 #: gui2/fnsave.c:1430
 msgid "You may add or delete names of datafiles to be included in the package."
 msgstr ""
-"Pódense engadir ou eliminar nomes ficheiros de datos a incluír no paquete."
+"Pódense engadir ou eliminar nomes de ficheiros de datos a incluír no paquete."
 
 #: gui2/fnsave.c:1461
 msgid "Label"
@@ -10529,7 +10529,7 @@ msgstr "semilogarítmica: log y = a + b*x"
 
 #: gui2/gpt_dialog.c:142
 msgid "linear-log: y = a + b*log(x)"
-msgstr "linearlog: y = a + b*log(x)"
+msgstr "linear-log: y = a + b*log(x)"
 
 #: gui2/gpt_dialog.c:309
 msgid "gretl: graph color selection"
@@ -10547,7 +10547,7 @@ msgstr "*%s* con respecto a *%s* (con axuste semilogarítmico)"
 #: gui2/gpt_dialog.c:615
 #, c-format
 msgid "%s versus %s (with linear-log fit)"
-msgstr "*%s* fronte a *%s* (con axuste linearlog)"
+msgstr "*%s* fronte a *%s* (con axuste linear-log)"
 
 #: gui2/gpt_dialog.c:717 gui2/gpt_dialog.c:756
 msgid "Invalid position, must be X Y"
