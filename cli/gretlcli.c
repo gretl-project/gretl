@@ -676,7 +676,8 @@ int main (int argc, char *argv[])
 	}
 
 	if (!state.in_comment) {
-	    if (cmd.context == FOREIGN || gretl_compiling_python(line)) {
+	    if (cmd.context == FOREIGN || cmd.context == MPI ||
+		gretl_compiling_python(line)) {
 		tailstrip(line);
 	    } else {
 		err = maybe_get_input_line_continuation(line); 

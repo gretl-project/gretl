@@ -8521,7 +8521,9 @@ int execute_script (const char *runfile, const char *buf,
 	    }
 
 	    if (!exec_err) {
-		if (state.in_comment || libcmd.context == FOREIGN ||
+		if (state.in_comment ||
+		    libcmd.context == FOREIGN ||
+		    libcmd.context == MPI ||
 		    gretl_compiling_python(line)) {
 		    tailstrip(line);
 		} else {

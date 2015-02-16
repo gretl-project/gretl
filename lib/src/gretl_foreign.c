@@ -2280,14 +2280,15 @@ int foreign_start (int ci, const char *param, gretlopt opt,
 /**
  * foreign_append:
  * @line: line to append.
+ * @context: either FOREIGN or MPI.
  *
  * Appends @line to an internally stored block of "foreign"
- * commands, if such a block is currently defined.
+ * or MPI commands, if such a block is currently defined.
  * 
  * Returns: 0 on success, non-zero on error.
  */
 
-int foreign_append (const char *line)
+int foreign_append (const char *line, int context)
 {
     int err = 0;
 
@@ -2296,7 +2297,8 @@ int foreign_append (const char *line)
 #endif
 
     if (!foreign_started) {
-	gretl_errmsg_set("foreign: no block is in progress");
+	gretl_errmsg_sprintf("%s: no block is in progress",
+			     gretl_command_word(context));
 	err = E_DATA;
     } else if (!string_is_blank(line)) {
 	err = strings_array_add(&foreign_lines, &foreign_n_lines, line);

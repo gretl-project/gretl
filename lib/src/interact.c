@@ -279,9 +279,10 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     }
 #endif
 
-    if (cmd->context == FOREIGN && !ends_foreign_block(line)) {
+    if ((cmd->context == FOREIGN || cmd->context == MPI) &&
+	!ends_foreign_block(line)) {
 	cmd->opt = OPT_NONE;
-	cmd->ci = FOREIGN;
+	cmd->ci = cmd->context;
 	return 0;
     }
 
@@ -665,7 +666,7 @@ static void real_echo_command (CMD *cmd, const char *line,
 	leader = "? ";
     }
 
-    if (cmd != NULL && cmd->context == FOREIGN) {
+    if (cmd != NULL && (cmd->context == FOREIGN || cmd->context == MPI)) {
 	if (leader != NULL) {
 	    pputs(prn, leader);
 	}
@@ -2664,12 +2665,12 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case FOREIGN:
     case MPI:
-	if (cmd->context == FOREIGN) {
-	    err = foreign_append(line);
+	if (cmd->context == FOREIGN || cmd->context == MPI) {
+	    err = foreign_append(line, cmd->context);
 	} else {
 	    err = foreign_start(cmd->ci, cmd->param, cmd->opt, prn);
 	    if (!err) {
-		gretl_cmd_set_context(cmd, FOREIGN);
+		gretl_cmd_set_context(cmd, cmd->ci);
 	    }
 	}
 	break;
@@ -3096,10 +3097,9 @@ int get_command_index (char *line, CMD *cmd)
 
     if (cmd->ci == NLS || cmd->ci == MLE ||
 	cmd->ci == GMM || cmd->ci == FOREIGN ||
-	cmd->ci == KALMAN || cmd->ci == PLOT) {
+	cmd->ci == KALMAN || cmd->ci == PLOT ||
+	cmd->ci == MPI) {
 	cmd->context = cmd->ci;
-    } else if (cmd->ci == MPI) {
-	cmd->context = FOREIGN;
     }
 
 #if CMD_DEBUG

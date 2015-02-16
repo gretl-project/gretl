@@ -2262,12 +2262,12 @@ static int try_for_command_index (CMD *cmd, int i,
     cmd->ci = gretl_command_number(test);
 
     if (cmd->context && cmd->ci != END) {
-	if (cmd->context == FOREIGN) {
+	if (cmd->context == FOREIGN || cmd->context == MPI) {
 	    /* Do not attempt to parse! But FIXME: I
 	       don't think we should ever get here.
 	    */
 	    cmd->ciflags = CI_EXPR;
-	    cmd->ci = FOREIGN;
+	    cmd->ci = cmd->context;
 	} else {
 	    /* We're inside a "native" block of some kind.
 	       In that case the line should be passed "as
@@ -2862,13 +2862,7 @@ static int check_end_command (CMD *cmd)
 {
     int endci = gretl_command_number(cmd->param);
 
-    /* In general the parameter after "end" should
-       match the (ongoing) context of the command.
-       The one exception is for the "mpi" block,
-       where we assign FOREIGN as the context.
-    */
-
-    if (endci != cmd->context && endci != MPI) {
+    if (endci != cmd->context) {
 	gretl_errmsg_sprintf("end: invalid parameter '%s'", cmd->param);
 	cmd->err = E_DATA;
     }
