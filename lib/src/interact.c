@@ -304,7 +304,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     cmd->err = real_parse_command(line, cmd, dset, 0, ptr);
 
     if (cmd->err) {
-	cmd->context = 0;
+	gretl_cmd_destroy_context(cmd);
     }
 
     return cmd->err;
@@ -3117,7 +3117,7 @@ void gretl_cmd_set_context (CMD *cmd, int ci)
 void gretl_cmd_destroy_context (CMD *cmd)
 {
     if (cmd->context == FOREIGN || cmd->context == MPI) {
-	/* destroy_foreign(); not yet */
+	foreign_destroy();
     }
     cmd->context = 0;
     *cmd->savename = '\0';

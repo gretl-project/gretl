@@ -62,7 +62,7 @@ static gchar *gretl_python_prog;
 static gchar *gretl_mpi_prog;
 #endif
 
-void destroy_foreign (void)
+void foreign_destroy (void)
 {
     if (foreign_lines != NULL) {
 	strings_array_free(foreign_lines, foreign_n_lines);
@@ -2306,7 +2306,7 @@ int foreign_append (const char *line, int context)
     } else if (!string_is_blank(line)) {
 	err = strings_array_add(&foreign_lines, &foreign_n_lines, line);
 	if (err) {
-	    destroy_foreign();
+	    foreign_destroy();
 	}
     }
 
@@ -2368,7 +2368,7 @@ int foreign_execute (const DATASET *dset,
 	} else {
 	    err = lib_run_mpi_sync(foreign_opt, prn);
 	}
-	destroy_foreign();
+	foreign_destroy();
 	return err;
     }
 #endif
@@ -2419,7 +2419,7 @@ int foreign_execute (const DATASET *dset,
 	err = E_DATA;
     }
     
-    destroy_foreign();
+    foreign_destroy();
 
     return err;
 }
