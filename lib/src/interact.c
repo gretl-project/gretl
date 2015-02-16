@@ -3116,6 +3116,9 @@ void gretl_cmd_set_context (CMD *cmd, int ci)
 
 void gretl_cmd_destroy_context (CMD *cmd)
 {
+    if (cmd->context == FOREIGN || cmd->context == MPI) {
+	/* destroy_foreign(); not yet */
+    }
     cmd->context = 0;
     *cmd->savename = '\0';
 }

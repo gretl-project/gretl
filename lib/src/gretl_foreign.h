@@ -34,6 +34,8 @@ int foreign_append (const char *line, int context);
 
 int foreign_execute (const DATASET *dset, gretlopt opt, PRN *prn);
 
+void destroy_foreign (void);
+
 int write_gretl_R_files (const char *buf,
 			 const DATASET *dset,
 			 gretlopt opt);

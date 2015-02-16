@@ -62,10 +62,12 @@ static gchar *gretl_python_prog;
 static gchar *gretl_mpi_prog;
 #endif
 
-static void destroy_foreign (void)
+void destroy_foreign (void)
 {
-    strings_array_free(foreign_lines, foreign_n_lines);
-    foreign_lines = NULL;
+    if (foreign_lines != NULL) {
+	strings_array_free(foreign_lines, foreign_n_lines);
+	foreign_lines = NULL;
+    }
     foreign_started = 0;
     foreign_n_lines = 0;
     foreign_opt = OPT_NONE;
@@ -2247,7 +2249,8 @@ int foreign_start (int ci, const char *param, gretlopt opt,
     int err = 0;
 
     if (foreign_started) {
-	gretl_errmsg_set("foreign: a block is already started");
+	gretl_errmsg_sprintf("%s: a block is already started",
+			     gretl_command_word(ci));
 	return E_DATA;
     }
 
