@@ -485,13 +485,55 @@ int cum_series (const double *x, double *y, const DATASET *dset)
     return 0;
 }
 
+static int panel_resample_series (const double *x, double *y,
+				  const DATASET *dset)
+{
+    int n = panel_sample_size(dset);
+    int T = dset->pd;
+    int i, j, t, s;
+    int u1, u2;
+    int *z;
+
+    if (n <= 1) {
+	return E_DATA;
+    }    
+
+    z = malloc(n * sizeof *z);
+    if (z == NULL) {
+	return E_ALLOC;
+    }
+
+    u1 = dset->t1 / T;
+    u2 = dset->t2 / T;
+
+    /* select n units from [u1 .. u2] */
+    gretl_rand_int_minmax(z, n, u1, u2);
+
+    s = dset->t1;
+    for (i=0; i<n; i++) {
+	j = z[i] * T;
+	for (t=0; t<T; t++) {
+	    y[s++] = x[j + t];
+	}
+    }
+
+    free(z);
+
+    return 0;
+}
+
 int resample_series (const double *x, double *y, const DATASET *dset)
 {
-    int t1 = dset->t1;
-    int t2 = dset->t2;
     int *z = NULL;
+    int t1, t2;
     int i, t, n;
 
+    if (dataset_is_panel(dset)) {
+	return panel_resample_series(x, y, dset);
+    }
+
+    t1 = dset->t1;
+    t2 = dset->t2;
     series_adjust_sample(x, &t1, &t2);
 
     n = t2 - t1 + 1;
