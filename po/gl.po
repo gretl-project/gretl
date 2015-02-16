@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.10.0)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-02-13 07:46-0500\n"
-"PO-Revision-Date: 2014-12-09 14:14+0100\n"
+"PO-Revision-Date: 2015-02-16 14:02+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -1082,7 +1082,7 @@ msgstr "Ficheiro de datos incorrecto\n"
 #: lib/src/csvdata.c:3405
 #, c-format
 msgid "WARNING: it seems '%c' is being used as thousands separator\n"
-msgstr ""
+msgstr "AVISO: Semella que '%c' utilizouse como separador de milleiros\n"
 
 #: lib/src/csvdata.c:3440 plugin/import_common.c:118
 msgid ""
@@ -1239,7 +1239,7 @@ msgstr ""
 
 #: lib/src/dataio.c:1453
 msgid "append: don't know how to align the new series!"
-msgstr ""
+msgstr "Engadir: Non se sabe como aliñar a nova serie!"
 
 #: lib/src/dataio.c:1580 lib/src/dataio.c:1818 lib/src/dataio.c:1830
 #: lib/src/dataio.c:2495 lib/src/dataio.c:2504 cli/gretlcli.c:184
@@ -4125,9 +4125,9 @@ msgid "File of the wrong type, root node not %s"
 msgstr "Ficheiro de tipo equivocado, o nodo raíz non é %s"
 
 #: lib/src/gretl_xml.c:1670 lib/src/gretl_xml.c:2126
-#, fuzzy, c-format
+#, c-format
 msgid "Writing %.0f Kbytes of data\n"
-msgstr "Escribindo %ld Kbytes de datos\n"
+msgstr "Escribindo %.0f Kbytes de datos\n"
 
 #: lib/src/gretl_xml.c:2545
 msgid "Failed to parse count of variables"
@@ -8386,9 +8386,8 @@ msgid "Add to dataset"
 msgstr "Engadir ao conxunto de datos"
 
 #: gui2/database.c:827
-#, fuzzy
 msgid "List databases"
-msgstr "Banco de datos de Gretl"
+msgstr "Listar bancos de datos"
 
 #: gui2/database.c:1007 gui2/datafiles.c:1730
 msgid "Network status: OK"
@@ -8558,7 +8557,7 @@ msgstr "máquina local"
 #: gui2/datafiles.c:1525
 #, c-format
 msgid "gretl: databases on %s"
-msgstr "Gretl: Bases de datos en %s"
+msgstr "Gretl: Bancos de datos en %s"
 
 #: gui2/datafiles.c:1527
 #, c-format
@@ -8575,7 +8574,7 @@ msgstr "Gretl: Ficheiros de datos"
 
 #: gui2/datafiles.c:1654
 msgid "gretl: databases on server"
-msgstr "Gretl: Bases de datos no servidor"
+msgstr "Gretl: Bancos de datos no servidor"
 
 #: gui2/datafiles.c:1656
 msgid "gretl: function packages on server"
@@ -9565,17 +9564,16 @@ msgstr ""
 "(máx. %d caracteres)"
 
 #: gui2/dialogs.c:6110
-#, fuzzy
 msgid "Quarterly, annualized"
-msgstr "Trimestral"
+msgstr "Trimestral, convertido a anual"
 
 #: gui2/dialogs.c:6111 gui2/dialogs.c:6116
 msgid "Year on year"
-msgstr ""
+msgstr "Interanual"
 
 #: gui2/dialogs.c:6115
 msgid "Monthly, annualized"
-msgstr ""
+msgstr "Mensual, convertido a anual"
 
 #: gui2/dlgutils.c:751
 msgid "Add equation"
@@ -9718,9 +9716,8 @@ msgid "Ox files (*.ox)"
 msgstr "ficheiros de Ox (*.ox)"
 
 #: gui2/fileselect.c:861
-#, fuzzy
 msgid "Stata files (*.do)"
-msgstr "Ficheiros de Stata (*.dta)"
+msgstr "Ficheiros de Stata (*.do)"
 
 #: gui2/fileselect.c:867
 msgid "Gretl datafiles (*.gdt)"
@@ -10191,11 +10188,9 @@ msgid "Save changes?"
 msgstr "Gardar os cambios?"
 
 #: gui2/fnsave.c:1430
-#, fuzzy
 msgid "You may add or delete names of datafiles to be included in the package."
 msgstr ""
-"\n"
-"Pode indicarse o nome dun ficheiro de datos na liña de instrucións"
+"Pódense engadir ou eliminar nomes ficheiros de datos a incluír no paquete."
 
 #: gui2/fnsave.c:1461
 msgid "Label"
@@ -10230,13 +10225,12 @@ msgid "Menu attachment"
 msgstr "Anexo ao menú"
 
 #: gui2/fnsave.c:1884
-#, fuzzy
 msgid "Data files"
-msgstr "Utilidades de datos"
+msgstr "Ficheiros de datos"
 
 #: gui2/fnsave.c:1929
 msgid "Email"
-msgstr ""
+msgstr "Correo electrónico"
 
 #: gui2/fnsave.c:1931
 msgid "Date (YYYY-MM-DD)"
@@ -10316,7 +10310,7 @@ msgstr ""
 
 #: gui2/fnsave.c:2405
 msgid "build zip file"
-msgstr ""
+msgstr "Crear un ficheiro comprimido"
 
 #: gui2/fnsave.c:2550
 msgid ""
@@ -10534,9 +10528,8 @@ msgid "semilog: log y = a + b*x"
 msgstr "semilogarítmica: log y = a + b*x"
 
 #: gui2/gpt_dialog.c:142
-#, fuzzy
 msgid "linear-log: y = a + b*log(x)"
-msgstr "linear: y = a + b*x"
+msgstr "linearlog: y = a + b*log(x)"
 
 #: gui2/gpt_dialog.c:309
 msgid "gretl: graph color selection"
@@ -10552,9 +10545,9 @@ msgid "%s versus %s (with semilog fit)"
 msgstr "*%s* con respecto a *%s* (con axuste semilogarítmico)"
 
 #: gui2/gpt_dialog.c:615
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with linear-log fit)"
-msgstr "*%s* con respecto a *%s* (con axuste semilogarítmico)"
+msgstr "*%s* fronte a *%s* (con axuste linearlog)"
 
 #: gui2/gpt_dialog.c:717 gui2/gpt_dialog.c:756
 msgid "Invalid position, must be X Y"
@@ -11025,9 +11018,8 @@ msgid "Ox program"
 msgstr "Programa Ox"
 
 #: gui2/gretl.c:1496
-#, fuzzy
 msgid "Stata program"
-msgstr "Programa Ox"
+msgstr "Programa Stata"
 
 #: gui2/gretl.c:1498
 msgid "_Session files"
@@ -11351,9 +11343,8 @@ msgid "_Seasonal differences of selected variables"
 msgstr "Diferenzas e_stacionais das variables seleccionadas"
 
 #: gui2/gretl.c:1597
-#, fuzzy
 msgid "_Percentage change of selected variable"
-msgstr "_Retardos das variables seleccionadas"
+msgstr "_Variación porcentual das variables seleccionadas"
 
 #: gui2/gretl.c:1599
 msgid "_Index variable"
@@ -12377,9 +12368,8 @@ msgid "gretl: edit Python script"
 msgstr "Gretl: Editar un guión de Python"
 
 #: gui2/gui_utils.c:1636
-#, fuzzy
 msgid "gretl: edit Stata program"
-msgstr "Gretl: Editar programa Ox"
+msgstr "Gretl: Editar programa Stata"
 
 #: gui2/gui_utils.c:1638
 msgid "gretl: untitled"
@@ -13735,7 +13725,7 @@ msgstr "Engadir diferenzas"
 
 #: gui2/menustate.c:392 gui2/menustate.c:538
 msgid "Add percent change..."
-msgstr ""
+msgstr "Engadir variación porcentual..."
 
 #: gui2/menustate.c:394 gui2/menustate.c:539
 msgid "Dummify..."
@@ -15211,7 +15201,7 @@ msgstr "Utilizar por defecto unha matriz robusta de covarianzas"
 
 #: gui2/settings.c:316
 msgid "Use the normal distribution for robust p-values"
-msgstr ""
+msgstr "Utilizar a distribución normal para valores p robustos"
 
 #: gui2/settings.c:318
 msgid "For cross-sectional data"
@@ -15558,7 +15548,7 @@ msgstr "Non hai información dispoñible para 'desfacer'"
 
 #: gui2/textbuf.c:1025
 msgid "OK"
-msgstr ""
+msgstr "Aceptado"
 
 #: gui2/textbuf.c:1057
 msgid "processing...\n"
