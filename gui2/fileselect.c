@@ -99,7 +99,7 @@ static const char *get_extension_for_action (int action, gpointer data)
 	return ".gdtb";
     }
 
-    if (action == EXPORT_GDT) {
+    if (action == EXPORT_GDT || action == SAVE_BOOT_DATA) {
 	return ".gdt";
     } else if (action == EXPORT_GDTB) {
 	return ".gdtb";
@@ -989,7 +989,8 @@ static void gtk_file_selector (int action, FselDataSrc src,
 					  NULL);
 
     if (action == SAVE_DATA || 
-	action == SAVE_DATA_AS || 
+	action == SAVE_DATA_AS ||
+	action == SAVE_BOOT_DATA ||
 	action == EXPORT_GDT ||
 	action == EXPORT_GDTB) {
 	add_compression_level_option(filesel);
