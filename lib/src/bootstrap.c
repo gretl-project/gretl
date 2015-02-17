@@ -30,19 +30,22 @@ enum {
     BOOT_PVAL        = 1 << 1,  /* compute p-value */
     BOOT_RESAMPLE_U  = 1 << 2,  /* resample the empirical residuals */
     BOOT_NORMAL_U    = 1 << 3,  /* simulate normal residuals */
-    BOOT_STUDENTIZE  = 1 << 4,  /* studentize, when doing confidence interval */
-    BOOT_GRAPH       = 1 << 5,  /* graph the distribution */
-    BOOT_RESTRICT    = 1 << 6,  /* called via "restrict" command */
-    BOOT_F_FORM      = 1 << 7,  /* compute F-statistics */
-    BOOT_FREE_RQ     = 1 << 8,  /* free restriction matrices */
-    BOOT_SAVE        = 1 << 9,  /* save results vector */
-    BOOT_VERBOSE     = 1 << 10, /* verbose output */
-    BOOT_SILENT      = 1 << 11  /* suppress printed output */
+    BOOT_PAIRS       = 1 << 4,  /* resample y and X "pairs" */
+    BOOT_STUDENTIZE  = 1 << 5,  /* studentize, when doing confidence interval */
+    BOOT_GRAPH       = 1 << 6,  /* graph the distribution */
+    BOOT_RESTRICT    = 1 << 7,  /* called via "restrict" command */
+    BOOT_F_FORM      = 1 << 8,  /* compute F-statistics */
+    BOOT_FREE_RQ     = 1 << 9,  /* free restriction matrices */
+    BOOT_SAVE        = 1 << 10, /* save results vector */
+    BOOT_VERBOSE     = 1 << 11, /* verbose output */
+    BOOT_SILENT      = 1 << 12  /* suppress printed output */
 };
 
-#define resampling(b) (b->flags & BOOT_RESAMPLE_U)
-#define verbose(b) (b->flags & BOOT_VERBOSE)
-#define boot_Ftest(b) (b->flags & BOOT_F_FORM)
+#define resampling_u(b)     (b->flags & BOOT_RESAMPLE_U)
+#define resampling_pairs(b) (b->flags & BOOT_PAIRS)
+#define resampling(b)       (b->flags & (BOOT_RESAMPLE_U | BOOT_PAIRS))
+#define verbose(b)          (b->flags & BOOT_VERBOSE)
+#define boot_Ftest(b)       (b->flags & BOOT_F_FORM)
 
 typedef struct boot_ boot;
 typedef struct ldvinfo_ ldvinfo;
@@ -57,6 +60,8 @@ struct boot_ {
     int mci;            /* model command index */
     gretl_matrix *y;    /* holds original, then artificial, dep. var. */
     gretl_matrix *X;    /* independent variables */
+    gretl_matrix *y0;   /* holds original dep var (for pairs) */
+    gretl_matrix *X0;   /* original independent variables (for pairs) */
     gretl_matrix *b0;   /* coefficients used to generate dep var */
     gretl_matrix *u0;   /* original residuals for resampling */
     gretl_matrix *R;    /* LHS restriction matrix */
@@ -92,6 +97,8 @@ static void boot_destroy (boot *bs)
 
     gretl_matrix_free(bs->y);
     gretl_matrix_free(bs->X);
+    gretl_matrix_free(bs->y0);
+    gretl_matrix_free(bs->X0);
     gretl_matrix_free(bs->b0);
     gretl_matrix_free(bs->u0);
     gretl_matrix_free(bs->w);
@@ -114,7 +121,8 @@ make_model_matrices (boot *bs, const MODEL *pmod,
     int T = pmod->nobs;
     int k = pmod->ncoeff;
     int needw = 0;
-    int i, s, t;
+    int need0 = 0;
+    int i, s, t, yno;
 
     bs->y = gretl_column_vector_alloc(T);
     bs->X = gretl_matrix_alloc(T, k);
@@ -126,19 +134,35 @@ make_model_matrices (boot *bs, const MODEL *pmod,
 	bs->w = gretl_column_vector_alloc(T);
     }
 
-    if (bs->y == NULL || bs->X == NULL || bs->b0 == NULL || 
-	bs->u0 == NULL || (needw && bs->w == NULL)) {
+    if (resampling_pairs(bs)) {
+	need0 = 1;
+	bs->y0 = gretl_column_vector_alloc(T);
+	bs->X0 = gretl_matrix_alloc(T, k);
+    }    
+
+    if (bs->y == NULL || bs->X == NULL ||
+	bs->b0 == NULL || bs->u0 == NULL) {
+	return E_ALLOC;
+    }
+
+    if ((needw && bs->w == NULL) ||
+	(need0 && (bs->y0 == NULL || bs->X0 == NULL))) {
 	return E_ALLOC;
     }
 
     for (i=0; i<k; i++) {
 	gretl_vector_set(bs->b0, i, pmod->coeff[i]);
-    }    
+    }
+
+    yno = pmod->list[1];
 
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
-	    bs->y->val[s] = dset->Z[pmod->list[1]][t];
+	    bs->y->val[s] = dset->Z[yno][t];
+	    if (bs->y0 != NULL) {
+		bs->y0->val[s] = dset->Z[yno][t];
+	    }
 	    if (pmod->ci == WLS) {
 		bs->w->val[s] = sqrt(dset->Z[pmod->nwt][t]);
 		bs->y->val[s] *= bs->w->val[s];
@@ -153,6 +177,9 @@ make_model_matrices (boot *bs, const MODEL *pmod,
 		    bs->u0->val[s] -= bs->b0->val[i-2] * xti;
 		}
 		gretl_matrix_set(bs->X, s, i-2, xti);
+		if (bs->X0 != NULL) {
+		    gretl_matrix_set(bs->X0, s, i-2, xti);
+		}
 	    }
 	    s++;
 	}
@@ -173,6 +200,8 @@ static int make_bs_flags (gretlopt opt)
 
     if (opt & OPT_N) {
 	flags |= BOOT_NORMAL_U;
+    } else if (opt & OPT_X) {
+	flags |= BOOT_PAIRS;
     } else {
 	flags |= BOOT_RESAMPLE_U;
     }
@@ -337,6 +366,8 @@ static boot *boot_new (const MODEL *pmod,
 
     bs->y = NULL;
     bs->X = NULL;
+    bs->y0 = NULL;
+    bs->X0 = NULL;
     bs->b0 = NULL;
     bs->u0 = NULL;
     bs->w = NULL;
@@ -441,6 +472,25 @@ static void make_resampled_y (boot *bs, int *z)
 	    }
 	    xti = gretl_matrix_get(bs->X, t, i);
 	    bs->y->val[t] += bs->b0->val[i] * xti;
+	}
+    }
+}
+
+static void make_resampled_pairs (boot *bs, int *z)
+{
+    double xti;
+    int i, s, t;
+
+    /* fill the resampling array */
+    gretl_rand_int_minmax(z, bs->T, 0, bs->T-1);
+
+    /* fill y and X with resampled "pairs" */
+    for (t=0; t<bs->T; t++) {
+	s = z[t];
+	bs->y->val[t] = bs->y0->val[s];
+	for (i=0; i<bs->X->cols; i++) {
+	    xti = gretl_matrix_get(bs->X0, s, i);
+	    gretl_matrix_set(bs->X, t, i, xti);
 	}
     }
 }
@@ -554,8 +604,10 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
     pputs(prn, "\n\n");
     pprintf(prn, _("Based on %d replications"), bs->B);
     pputs(prn, ", ");
-    if (bs->flags & BOOT_RESAMPLE_U) {
+    if (resampling_u(bs)) {
 	pputs(prn, _("using resampled residuals"));
+    } else if (resampling_pairs(bs)) {
+	pputs(prn, _("using resampled y,X \"pairs\""));
     } else {
 	pputs(prn, _("with simulated normal errors"));
     }
@@ -840,7 +892,9 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	    err = E_ALLOC;
 	    goto bailout;
 	}
-	rescale_residuals(bs);
+	if (resampling_u(bs)) {
+	    rescale_residuals(bs);
+	}
     }
 
     if (bs->flags & (BOOT_CI | BOOT_GRAPH | BOOT_SAVE)) {
@@ -893,10 +947,12 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	fprintf(stderr, "real_bootstrap: round %d\n", i);
 #endif
 
-	if (bs->flags & BOOT_NORMAL_U) {
-	    make_normal_y(bs);
+	if (resampling_u(bs)) {
+	    make_resampled_y(bs, z);
+	} else if (resampling_pairs(bs)) {
+	    make_resampled_pairs(bs, z);
 	} else {
-	    make_resampled_y(bs, z); 
+	    make_normal_y(bs);
 	}
 
 	if (bs->ldv != NULL) {
