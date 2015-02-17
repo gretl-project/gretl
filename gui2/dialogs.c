@@ -943,7 +943,8 @@ void copy_format_dialog (windata_t *vwin, int action)
 enum {
     SET_CI = 1,
     SET_PVAL,
-    UNSET_NORMAL,
+    SET_PAIRS,
+    SET_UHAT,
     SET_NORMAL,
     SET_STUDENT
 };
@@ -961,10 +962,16 @@ static void set_bs_opt (GtkWidget *w, gretlopt *opt)
 	*opt &= ~OPT_T;
 	*opt |= OPT_P;
 	break;
-    case UNSET_NORMAL:
+    case SET_UHAT:
+	*opt &= ~OPT_X;
 	*opt &= ~OPT_N;
 	break;
+    case SET_PAIRS:
+	*opt &= ~OPT_N;
+	*opt |= OPT_X;
+	break;
     case SET_NORMAL:
+	*opt &= ~OPT_X;
 	*opt |= OPT_N;
 	break;
     case SET_STUDENT:
@@ -1070,7 +1077,8 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 	}
     }	
 
-    dialog = gretl_dialog_new(_("gretl: bootstrap analysis"), vwin->main, 
+    dialog = gretl_dialog_new(_("gretl: bootstrap analysis"),
+			      vwin_toplevel(vwin), 
 			      GRETL_DLG_BLOCK);
     rs.dlg = dialog;
 
@@ -1091,7 +1099,6 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     g_signal_connect(G_OBJECT(popdown), "changed",
 		     G_CALLBACK(bs_select_coeff), pp);
     gtk_box_pack_start(GTK_BOX(hbox), popdown, TRUE, TRUE, 5);
-    
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
     vbox_add_hsep(vbox);
@@ -1130,7 +1137,15 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     button = gtk_radio_button_new_with_label(NULL, _("Resample residuals"));
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
-    g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(UNSET_NORMAL));
+    g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_UHAT));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_bs_opt), popt);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    button = gtk_radio_button_new_with_label(group, _("Resample data \"pairs\""));
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), FALSE);
+    g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_PAIRS));
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_bs_opt), popt);
 
@@ -5656,7 +5671,8 @@ void tex_format_dialog (GtkAction *action, gpointer data)
 	if (*fmt) nset++;
     }
 
-    dlg = gretl_dialog_new(_("gretl: TeX tabular format"), vwin->main,
+    dlg = gretl_dialog_new(_("gretl: TeX tabular format"),
+			   vwin_toplevel(vwin),
 			   GRETL_DLG_BLOCK);
 
     dvbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
