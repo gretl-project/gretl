@@ -129,7 +129,7 @@ make_model_matrices (boot *bs, const MODEL *pmod,
     bs->b0 = gretl_column_vector_alloc(k);
     bs->u0 = gretl_column_vector_alloc(T);
 
-    if (pmod->ci == WLS || pmod->ci == HSK) {
+    if (pmod->ci == WLS) {
 	needw = 1;
 	bs->w = gretl_column_vector_alloc(T);
     }
@@ -166,6 +166,9 @@ make_model_matrices (boot *bs, const MODEL *pmod,
 	    if (pmod->ci == WLS) {
 		bs->w->val[s] = sqrt(dset->Z[pmod->nwt][t]);
 		bs->y->val[s] *= bs->w->val[s];
+		if (bs->y0 != NULL) {
+		    bs->y0->val[s] = bs->y->val[s];
+		}
 		bs->u0->val[s] = bs->y->val[s];
 	    } else {
 		gretl_vector_set(bs->u0, s, pmod->uhat[t]);
@@ -375,12 +378,12 @@ static boot *boot_new (const MODEL *pmod,
     bs->R = NULL;
     bs->q = NULL;
 
+    bs->flags = make_bs_flags(opt);
+
     if (make_model_matrices(bs, pmod, dset)) {
 	boot_destroy(bs);
 	return NULL;
     }
-
-    bs->flags = make_bs_flags(opt);
 
     bs->mci = pmod->ci;
     bs->a = 0.05; /* make configurable? */
@@ -487,6 +490,7 @@ static void make_resampled_pairs (boot *bs, int *z)
     /* fill y and X with resampled "pairs" */
     for (t=0; t<bs->T; t++) {
 	s = z[t];
+	fprintf(stderr, "pairs: %d <- %d\n", t, s);
 	bs->y->val[t] = bs->y0->val[s];
 	for (i=0; i<bs->X->cols; i++) {
 	    xti = gretl_matrix_get(bs->X0, s, i);
@@ -712,137 +716,6 @@ static double bs_F_test (const gretl_matrix *b,
     return test;
 }
 
-#if 0 /* mot used */
-
-static char *squarable_cols_mask (const gretl_matrix *X, int *n)
-{
-    const double *xi = X->val;
-    char *mask;
-    int i, t;
-
-    mask = calloc(X->cols, 1);
-    if (mask == NULL) {
-	return NULL;
-    }
-
-    for (i=0; i<X->cols; i++) {
-	for (t=0; t<X->rows; t++) {
-	    if (xi[t] != 1.0 && xi[t] != 0.0) {
-		mask[i] = 1;
-		*n += 1;
-		break;
-	    }
-	}
-	xi += X->rows;
-    }
-
-    return mask;
-}
-
-static int hsk_transform_data (boot *bs, gretl_matrix *b,
-			       gretl_matrix *yh)
-{
-    gretl_matrix *X = NULL;
-    gretl_matrix *g = NULL;
-    int Xcols = bs->k;
-    double *xi, *xj;
-    double ut;
-    char *mask = NULL;
-    int bigX = 0;
-    int i, t, err = 0;
-
-    gretl_matrix_multiply(bs->X, b, yh);
-
-    /* calculate log of uhat squared */
-    for (t=0; t<bs->T; t++) {
-	ut = bs->y->val[t] - yh->val[t];
-	bs->w->val[t] = log(ut * ut);
-    } 
-
-    mask = squarable_cols_mask(bs->X, &Xcols);
-    if (mask == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    X = gretl_matrix_alloc(bs->T, Xcols);
-    if (X == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    if (Xcols > bs->k) {
-	bigX = 1;
-    }
-	    
-    g = gretl_column_vector_alloc(Xcols);
-    if (g == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    xi = bs->X->val;
-    xj = X->val;
-
-    for (i=0; i<bs->k; i++) {
-	for (t=0; t<bs->T; t++) {
-	    xj[t] = xi[t];
-	}
-	xi += bs->T;
-	xj += bs->T;
-    }
-
-    if (bigX) {
-	xi = bs->X->val;
-	for (i=0; i<bs->k; i++) {
-	    if (mask[i]) {
-		for (t=0; t<bs->T; t++) {
-		    xj[t] = xi[t] * xi[t];
-		}
-		xj += bs->T;
-	    }
-	    xi += bs->T;
-	}
-    }
-
-    err = gretl_matrix_ols(bs->w, X, g, NULL, NULL, NULL);
-    if (err) {
-	goto bailout;
-    }
-
-    /* form weighted dataset */
-
-    gretl_matrix_multiply(X, g, yh);
-    for (t=0; t<bs->T; t++) {
-	gretl_vector_set(bs->w, t, sqrt(1.0 / exp(yh->val[t])));
-    }
-
-    gretl_matrix_reuse(X, bs->T, bs->k);
-    xi = X->val;
-    for (i=0; i<bs->k; i++) {
-	for (t=0; t<bs->T; t++) {
-	    xi[t] *= gretl_vector_get(bs->w, t);
-	}
-	xi += bs->T;
-    }
-    for (t=0; t<bs->T; t++) {
-	bs->w->val[t] *= bs->y->val[t];
-    }
-
-    /* do WLS */
-    err = gretl_matrix_ols(bs->w, X, b, NULL, NULL, NULL);
-
- bailout:
-
-    gretl_matrix_free(g);
-    gretl_matrix_free(X);
-    free(mask);
-
-    return err;
-}
-
-#endif /* not used */
-
 static void print_test_round (boot *bs, int i, double test, PRN *prn)
 {
     pprintf(prn, "round %d: test = %g%s\n", i+1, test,
@@ -988,12 +861,6 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	    /* solve for current parameter estimates */
 	    err = gretl_cholesky_solve(XTX, b);
 	}
-
-#if 0
-	if (!err && bs->mci == HSK) {
-	    err = hsk_transform_data(bs, b, yh);
-	}
-#endif
 
 	if (err) {
 	    break;
@@ -1144,11 +1011,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B,
 	int v = pmod->list[p+2];
 
 	bs->p = p;  /* coeff to examine */
-	if (pmod->ci == HSK) {
-	    bs->SE = gretl_model_get_double(pmod, "sigma_orig");
-	} else {
-	    bs->SE = pmod->sigma;
-	}
+	bs->SE = pmod->sigma;
 	strcpy(bs->vname, dset->varname[v]);
 	bs->point = pmod->coeff[p];
 	bs->se0 = pmod->sderr[p];
@@ -1231,7 +1094,7 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 
 int bootstrap_ok (int ci)
 {
-    return (ci == OLS || ci == WLS); /* HSK?? */
+    return (ci == OLS || ci == WLS);
 }
 
 int bootstrap_save_data (const char *fname)
@@ -1258,6 +1121,3 @@ int bootstrap_save_data (const char *fname)
 
     return err;
 }
-
-
-
