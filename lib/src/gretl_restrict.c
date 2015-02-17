@@ -2890,4 +2890,3 @@ void rset_record_LR_result (gretl_restriction *rset)
     record_LR_test_result(rset->test, rset->pval, rset->lnl,
 			  "LR");
 }
-

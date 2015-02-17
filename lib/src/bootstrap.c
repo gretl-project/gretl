@@ -490,7 +490,6 @@ static void make_resampled_pairs (boot *bs, int *z)
     /* fill y and X with resampled "pairs" */
     for (t=0; t<bs->T; t++) {
 	s = z[t];
-	fprintf(stderr, "pairs: %d <- %d\n", t, s);
 	bs->y->val[t] = bs->y0->val[s];
 	for (i=0; i<bs->X->cols; i++) {
 	    xti = gretl_matrix_get(bs->X0, s, i);
@@ -970,11 +969,11 @@ static int bs_add_restriction (boot *bs, int p)
  * @p: 0-based index number of the coefficient to analyse.
  * @B: number of replications.
  * @dset: dataset struct.
- * @opt: option flags -- may contain %OPT_P to compute p-value
- * (default is to calculate confidence interval), %OPT_N
- * to use simulated normal errors (default is to resample the
- * empirical residuals), %OPT_G to display graph, %OPT_S for
- * silent operation.
+ * @opt: option flags: may contain %OPT_P to compute p-value
+ * (the default is to calculate confidence interval), %OPT_N
+ * to use simulated normal errors or %OPT_X to resample "pairs"
+ * (the default being to resample the empirical residuals), 
+ * %OPT_G to display graph, %OPT_S for silent operation.
  * @prn: printing struct.
  *
  * Calculates a bootstrap confidence interval or p-value for
