@@ -4016,7 +4016,8 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
 #define ok_list_func(f) (f == F_LOG || f == F_DIFF || \
 			 f == F_LDIFF || f == F_SDIFF || \
-			 f == F_XPX || f == F_ODEV)
+			 f == F_XPX || f == F_ODEV || \
+			 f == F_RESAMPLE)
 
 /* functions that are "basically" for series, but which
    can also be applied to lists */
@@ -4058,6 +4059,9 @@ static NODE *apply_list_func (NODE *n, int f, parser *p)
 		    break;
 		case F_ODEV:
 		    p->err = list_orthdev(list, p->dset);
+		    break;
+		case F_RESAMPLE:
+		    p->err = list_resample(list, p->dset);
 		    break;
 		default:
 		    break;
@@ -11119,6 +11123,9 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
 	} else if (t->t == F_DIFF && ok_list_node(l)) {
+	    ret = apply_list_func(l, t->t, p);
+	} else if (t->t == F_RESAMPLE && ok_list_node(l) &&
+		   null_or_empty(r)) {
 	    ret = apply_list_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, SERIES, l, p);

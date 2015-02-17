@@ -40,6 +40,8 @@ int list_diffgenr (int *list, int ci, DATASET *dset);
 
 int list_orthdev (int *list, DATASET *dset);
 
+int list_resample (int *list, DATASET *dset);
+
 int list_laggenr (int **plist, int order, DATASET *dset, gretlopt opt);
 
 int *laggenr_from_to (int v, int minlag, int maxlag, 

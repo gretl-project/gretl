@@ -39,7 +39,8 @@ enum {
 } varcomp_codes;
 
 enum {
-    INVERSE = NC + 1
+    INVERSE = NC + 1,
+    RESAMPLE
 };
 
 static char *get_mangled_name_by_id (int v);
@@ -123,7 +124,10 @@ make_transform_varname (char *vname, const char *orig, int ci,
     } else if (ci == INVERSE) {
 	strcpy(vname, "i_");
 	strncat(vname, orig, len - 2);
-    }
+    } else if (ci == RESAMPLE) {
+	strcpy(vname, "rs_");
+	strncat(vname, orig, len - 3);
+    }	
 
 #if TRDEBUG
     fprintf(stderr, "make_transform_varname:\n"
@@ -158,6 +162,8 @@ make_transform_label (char *label, const char *parent,
 	}
     } else if (ci == INVERSE) {
 	sprintf(label, "= 1/%s", parent);
+    } else if (ci == RESAMPLE) {
+	sprintf(label, "= resampled %s", parent);
     } else {
 	err = 1;
     }
@@ -439,6 +445,37 @@ static int get_inverse (int v, double *xvec, const DATASET *dset)
     return 0;
 }
 
+/* write resampled series into xvec */
+
+static int get_resampled (int v, double *rsvec,
+			  const DATASET *dset,
+			  const int *z)
+{
+    const double *x = dset->Z[v];
+    int t, j, s;
+
+    if (dataset_is_panel(dset)) {
+	int n = panel_sample_size(dset);
+	int i, T = dset->pd;
+	
+	s = dset->t1;
+	for (i=0; i<n; i++) {
+	    j = z[i] * T;
+	    for (t=0; t<T; t++) {
+		rsvec[s++] = x[j + t];
+	    }
+	}	
+    } else {
+	s = 0;
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    j = z[s++];
+	    rsvec[t] = x[j];
+	}
+    }
+
+    return 0;
+}
+
 /* write dummy for (v == value) into xvec */
 
 static int get_discdum (int v, double val, double *xvec, 
@@ -588,7 +625,8 @@ static int get_lag_ID (int srcv, int lag, const DATASET *dset)
 */
 
 static int get_transform (int ci, int v, int aux, double x, 
-			  DATASET *dset, int startlen, int origv)
+			  DATASET *dset, int startlen, int origv,
+			  int *idxvec)
 {
     char vname[VNAMELEN] = {0};
     char label[MAXLABEL] = {0};
@@ -619,6 +657,8 @@ static int get_transform (int ci, int v, int aux, double x,
 	err = get_discdum(v, x, vx, dset);
     } else if (ci == INVERSE) {
 	err = get_inverse(v, vx, dset);
+    } else if (ci == RESAMPLE) {
+	err = get_resampled(v, vx, dset, idxvec);
     }
 
     if (err) {
@@ -722,7 +762,7 @@ int laggenr (int v, int lag, DATASET *dset)
 	lno = v;
     } else {
 	lno = get_transform(LAGS, v, lag, 0.0, dset, 
-			    VNAMELEN - 3, dset->v);
+			    VNAMELEN - 3, dset->v, NULL);
     }
 
     return lno;
@@ -802,7 +842,7 @@ int *laggenr_from_to (int v, int minlag, int maxlag,
 int loggenr (int v, DATASET *dset)
 {
     return get_transform(LOGS, v, 0, 0.0, dset, 
-			 VNAMELEN - 3, dset->v);
+			 VNAMELEN - 3, dset->v, NULL);
 }
 
 /**
@@ -819,7 +859,7 @@ int loggenr (int v, DATASET *dset)
 int invgenr (int v, DATASET *dset)
 {
     return get_transform(INVERSE, v, 0, 0.0, dset, 
-			 VNAMELEN - 3, dset->v);
+			 VNAMELEN - 3, dset->v, NULL);
 }
 
 /**
@@ -847,7 +887,7 @@ int diffgenr (int v, int ci, DATASET *dset)
     }
 
     return get_transform(ci, v, 0, 0.0, dset, 
-			 VNAMELEN - 3, dset->v);
+			 VNAMELEN - 3, dset->v, NULL);
 }
 
 /**
@@ -872,7 +912,7 @@ int xpxgenr (int vi, int vj, DATASET *dset)
     }
 
     return get_transform(SQUARE, vi, vj, 0.0, dset, 
-			 VNAMELEN - 3, dset->v);
+			 VNAMELEN - 3, dset->v, NULL);
 }
 
 static int 
@@ -1014,7 +1054,7 @@ transform_preprocess_list (int *list, const DATASET *dset, int f)
     int i, v, ok;
     int err = 0;
 
-    if (f == SQUARE || f == LDIFF || f == SDIFF) {
+    if (f == SQUARE || f == LDIFF || f == SDIFF || f == RESAMPLE) {
 	/* 3-character prefixes */
 	maxc--;
     } else if (f == DUMMIFY) {
@@ -1113,7 +1153,7 @@ int list_loggenr (int *list, DATASET *dset)
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	tnum = get_transform(LOGS, v, 0, 0.0, dset, startlen,
-			     origv);
+			     origv, NULL);
 	if (tnum > 0) {
 	    list[j++] = tnum;
 	    l0++;
@@ -1195,7 +1235,8 @@ int list_laggenr (int **plist, int order, DATASET *dset,
 	for (l=1; l<=order; l++) {
 	    for (i=1; i<=list[0]; i++) {
 		v = list[i];
-		lv = get_transform(LAGS, v, l, 0.0, dset, startlen, origv);
+		lv = get_transform(LAGS, v, l, 0.0, dset,
+				   startlen, origv, NULL);
 		if (lv > 0) {
 		    laglist[j++] = lv;
 		    l0++;
@@ -1207,7 +1248,8 @@ int list_laggenr (int **plist, int order, DATASET *dset,
 	for (i=1; i<=list[0]; i++) {
 	    v = list[i];
 	    for (l=1; l<=order; l++) {
-		lv = get_transform(LAGS, v, l, 0.0, dset, startlen, origv);
+		lv = get_transform(LAGS, v, l, 0.0, dset,
+				   startlen, origv, NULL);
 		if (lv > 0) {
 		    laglist[j++] = lv;
 		    l0++;
@@ -1288,7 +1330,8 @@ int list_diffgenr (int *list, int ci, DATASET *dset)
     
     for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
-	tnum = get_transform(ci, v, 0, 0.0, dset, startlen, origv);
+	tnum = get_transform(ci, v, 0, 0.0, dset,
+			     startlen, origv, NULL);
 	if (tnum < 0) {
 	    err = 1;
 	} else {
@@ -1339,7 +1382,8 @@ int list_orthdev (int *list, DATASET *dset)
     
     for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
-	tnum = get_transform(ORTHDEV, v, 0, 0.0, dset, startlen, origv);
+	tnum = get_transform(ORTHDEV, v, 0, 0.0, dset,
+			     startlen, origv, NULL);
 	if (tnum < 0) {
 	    err = 1;
 	} else {
@@ -1405,8 +1449,8 @@ int list_xpxgenr (int **plist, DATASET *dset, gretlopt opt)
     k = 1;
     for (i=1; i<=l0; i++) {
 	vi = list[i];
-	tnum = get_transform(SQUARE, vi, vi, 0.0, dset, startlen,
-			     origv);
+	tnum = get_transform(SQUARE, vi, vi, 0.0, dset,
+			     startlen, origv, NULL);
 	if (tnum > 0) {
 	    xpxlist[k++] = tnum;
 	    xpxlist[0] += 1;
@@ -1431,6 +1475,59 @@ int list_xpxgenr (int **plist, DATASET *dset, gretlopt opt)
     }
 
     return (xpxlist[0] > 0)? 0 : E_SQUARES;
+}
+
+int list_resample (int *list, DATASET *dset)
+{
+    int origv = dset->v;
+    int *z = NULL;
+    int tnum, i, j, vi;
+    int n, startlen, l0;
+    int k1, k2;
+    int err;
+
+    err = transform_preprocess_list(list, dset, RESAMPLE);
+    if (err) {
+	return err;
+    }
+
+    if (dataset_is_panel(dset)) {
+	k1 = dset->t1 / dset->pd;
+	k2 = dset->t2 / dset->pd;
+    } else {
+	k1 = dset->t1;
+	k2 = dset->t2;
+    }
+
+    n = k2 - k1 + 1;
+    
+    z = malloc(n * sizeof *z);
+    if (z == NULL) {
+	return E_ALLOC;
+    }
+
+    /* generate uniform drawings from sample range */
+    gretl_rand_int_minmax(z, n, k1, k2);  
+
+    l0 = list[0];
+    startlen = get_starting_length(list, dset, 3);
+    list[0] = 0;
+
+    j = 1;
+    for (i=1; i<=l0; i++) {
+	vi = list[i];
+	tnum = get_transform(RESAMPLE, vi, 0, 0.0, dset,
+			     startlen, origv, z);
+	if (tnum > 0) {
+	    list[j++] = tnum;
+	    list[0] += 1;
+	}
+    }
+
+    free(z);
+    destroy_mangled_names();
+
+    return (list[0] > 0)? 0 : E_DATA;
 }
 
 #define DUMDEBUG 0
@@ -1507,7 +1604,7 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
 	for (j=jmin; j<jmax && !err; j++) {
 	    if (x[j] != oddval) {
 		tnum = get_transform(DUMMIFY, vi, j+1, x[j], dset, 
-				     startlen, origv);
+				     startlen, origv, NULL);
 #if DUMDEBUG   
 		fprintf(stderr, "VALUE = %g, tnum = %d\n", x[j], tnum);
 #endif
