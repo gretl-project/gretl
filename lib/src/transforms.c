@@ -445,7 +445,7 @@ static int get_inverse (int v, double *xvec, const DATASET *dset)
     return 0;
 }
 
-/* write resampled series into xvec */
+/* write resampled series into rsvec */
 
 static int get_resampled (int v, double *rsvec,
 			  const DATASET *dset,
