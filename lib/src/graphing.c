@@ -298,16 +298,16 @@ double gnuplot_version (void)
 # ifdef WIN64
 double gnuplot_version (void)
 {
-    /* As of 2014-07-28, the package for 64-bit Windows
-       includes gnuplot 4.6.6 (CVS) */
-    return 4.66;
+    /* As of 2015-02-18, the package for 64-bit Windows
+       includes gnuplot 5.1 (CVS) */
+    return 5.1;
 }
 # else
 double gnuplot_version (void)
 {
-    /* As of 2014-07-28, the package for 32-bit Windows
-       includes gnuplot 4.6.6 (CVS) */
-    return 4.66;
+    /* As of 2015-02-18, the package for 32-bit Windows
+       includes gnuplot 5.1 (CVS) */
+    return 5.1;
 }
 # endif
 
