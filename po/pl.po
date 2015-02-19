@@ -1,15 +1,15 @@
 # Polish translation for gretl-1.10.0cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
-# Pawel Kufel <qfel@mat.umk.pl>, 2004 - 2014
-# Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2014
-# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2014
+# Pawel Kufel <qfel@mat.umk.pl>, 2004 - 2015
+# Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2015
+# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2015
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.9.91\n"
+"Project-Id-Version: gretl-1.9.92\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-02-13 07:46-0500\n"
-"PO-Revision-Date: 2014-10-26 12:46+0100\n"
+"PO-Revision-Date: 2015-02-19 00:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -647,9 +647,9 @@ msgid "Robust Wald test for break"
 msgstr "Test Robust Walda na zmiany strukturalne"
 
 #: lib/src/compare.c:2603
-#, fuzzy, c-format
+#, c-format
 msgid "Asymptotic p-value = %.6g for chi-square(%d) = %g"
-msgstr "Asymptotyczna wartość p = %.4g dla chi-kwadrat(%d) = %g"
+msgstr "Asymptotyczna wartość p = %.6g dla chi-kwadrat(%d) = %g"
 
 #: lib/src/compare.c:2650
 msgid ""
@@ -2033,19 +2033,19 @@ msgid "The variable '%s' is not discrete"
 msgstr "Zmienna '%s' nie jest dyskretna"
 
 #: lib/src/discrete.c:1422
-#, fuzzy, c-format
+#, c-format
 msgid "Note: %s = %s%s at all observations\n"
-msgstr "Liczba obserwacji"
+msgstr "Uwaga: %s = %s%s dla wszystkich obserwacji\n"
 
 #: lib/src/discrete.c:1430 lib/src/discrete.c:1436
-#, fuzzy, c-format
+#, c-format
 msgid "Note: Prob(%s = %d | %s = %d) = 1\n"
-msgstr " Prob(x = %d) = %g\n"
+msgstr "Uwaga: Prob(%s = %d | %s = %d) = 1\n"
 
 #: lib/src/discrete.c:1442
-#, fuzzy, c-format
+#, c-format
 msgid "Dropping %s\n"
-msgstr "Błąd wczytania %s\n"
+msgstr "Dropping %s\n"
 
 #: lib/src/discrete.c:2914
 #, c-format
@@ -2822,9 +2822,8 @@ msgid "mean %s"
 msgstr "średnia %s"
 
 #: lib/src/graphing.c:5536
-#, fuzzy
 msgid "Group means"
-msgstr "Groups"
+msgstr "Srednie grupowe"
 
 #: lib/src/graphing.c:5854
 msgid "time"
@@ -3702,9 +3701,8 @@ msgid "Error estimating fixed effects model\n"
 msgstr "Oszacowane reszty modelu ustalonych efektów\n"
 
 #: lib/src/gretl_panel.c:2342
-#, fuzzy
 msgid "Inadequate data for panel estimation"
-msgstr "Estymacja iteracyjna"
+msgstr "Nieodpowiednie dane do estymacji panelowej"
 
 #: lib/src/gretl_panel.c:2385
 msgid ""
@@ -4101,9 +4099,9 @@ msgid "log-likelihood for %s test"
 msgstr "Logarytm wiarygodności dla testu %s"
 
 #: lib/src/gretl_utils.c:2141
-#, fuzzy, c-format
+#, c-format
 msgid "break-point for %s test"
-msgstr "wartość p dla testu %s"
+msgstr "break-point dla testu %s"
 
 #: lib/src/gretl_xml.c:94 lib/src/gretl_xml.c:566 lib/src/gretl_xml.c:4088
 #, c-format
@@ -4121,9 +4119,9 @@ msgid "File of the wrong type, root node not %s"
 msgstr "Zły typ pliku (root node not %s)"
 
 #: lib/src/gretl_xml.c:1670 lib/src/gretl_xml.c:2126
-#, fuzzy, c-format
+#, c-format
 msgid "Writing %.0f Kbytes of data\n"
-msgstr "Zapisano %ld KB danych\n"
+msgstr "Zapisano %.0f Kb danych\n"
 
 #: lib/src/gretl_xml.c:2545
 msgid "Failed to parse count of variables"
@@ -8356,9 +8354,8 @@ msgid "Add to dataset"
 msgstr "Dodaj do bazy danych"
 
 #: gui2/database.c:827
-#, fuzzy
 msgid "List databases"
-msgstr "okno baz danych"
+msgstr "Lista baz danych"
 
 #: gui2/database.c:1007 gui2/datafiles.c:1730
 msgid "Network status: OK"
@@ -9109,7 +9106,7 @@ msgstr "wielokrotny wykres: siatka wielorzędowa (N <= 16)"
 
 #: gui2/dialogs.c:2571
 msgid "multiple plots arranged vertically (N <= 6)"
-msgstr "wielokrotny wykres: siatka wertikalna (N <= 6)"
+msgstr "wielokrotny wykres: siatka wertykalna (N <= 6)"
 
 #: gui2/dialogs.c:2572
 msgid "boxplots by group (N <= 150)"
@@ -9497,22 +9494,20 @@ msgid "New script output:"
 msgstr "Nowy skrypt wyników:"
 
 #: gui2/dialogs.c:5909
-#, fuzzy
 msgid "New script output should:"
 msgstr "Nowy skrypt wyników:"
 
 #: gui2/dialogs.c:5969
 msgid "Replace previous output"
-msgstr ""
+msgstr "Zastąp poprzednie wyniki"
 
 #: gui2/dialogs.c:5970
 msgid "Add to previous output"
-msgstr ""
+msgstr "Dodaj do poprzednich wyników"
 
 #: gui2/dialogs.c:5971
-#, fuzzy
 msgid "Go to a new window"
-msgstr "Przenieś do nowego okna"
+msgstr "Przejdź do nowego okna"
 
 #: gui2/dialogs.c:5978
 msgid "Replaces output in this window"
@@ -9520,7 +9515,7 @@ msgstr "Zastąp wyniki w tym oknie"
 
 #: gui2/dialogs.c:5979
 msgid "Adds to output in this window"
-msgstr "Dodano wyniki w tym oknie"
+msgstr "Dodaj wyniki w tym oknie"
 
 #: gui2/dialogs.c:5980
 msgid "Always goes to a new window"
@@ -9536,17 +9531,16 @@ msgstr ""
 "(maksymalnie %d znaków)"
 
 #: gui2/dialogs.c:6110
-#, fuzzy
 msgid "Quarterly, annualized"
-msgstr "Kwartalne"
+msgstr "Kwartalne, w ujęciu rocznym"
 
 #: gui2/dialogs.c:6111 gui2/dialogs.c:6116
 msgid "Year on year"
-msgstr ""
+msgstr "Rok do roku"
 
 #: gui2/dialogs.c:6115
 msgid "Monthly, annualized"
-msgstr ""
+msgstr "Miesięczne, w ujęciu rocznym"
 
 #: gui2/dlgutils.c:751
 msgid "Add equation"
@@ -9689,9 +9683,8 @@ msgid "Ox files (*.ox)"
 msgstr "pliki programu Ox (*.ox)"
 
 #: gui2/fileselect.c:861
-#, fuzzy
 msgid "Stata files (*.do)"
-msgstr "pliki danych Stata (*.dta)"
+msgstr "pliki danych Stata (*.do)"
 
 #: gui2/fileselect.c:867
 msgid "Gretl datafiles (*.gdt)"
@@ -10033,9 +10026,8 @@ msgid "close this dialog on \"OK\""
 msgstr "close this dialog on \"OK\""
 
 #: gui2/fncall.c:1800 gui2/fncall.c:1811
-#, fuzzy
 msgid "Select function"
-msgstr "Funkcje pomocnicze (prywatne)"
+msgstr "Wybór funkcji"
 
 #: gui2/fncall.c:1894
 msgid "This function needs a model in place"
@@ -10050,18 +10042,16 @@ msgid "Couldn't get function package information"
 msgstr "Niemożliwe pobranie informacji o pakiecie funkcji"
 
 #: gui2/fncall.c:2076
-#, fuzzy
 msgid "Open sample script"
-msgstr "Edycja skryptu"
+msgstr "Otwórz przykłady skryptów"
 
 #: gui2/fncall.c:2077
-#, fuzzy
 msgid "Call a function"
-msgstr "Zapisz funkcje"
+msgstr "Wywołanie funkcji"
 
 #: gui2/fncall.c:2083
 msgid "Would you like to:"
-msgstr ""
+msgstr "Czy chciałbyś, aby:"
 
 #: gui2/fncall.c:2491
 #, c-format
@@ -10167,11 +10157,8 @@ msgid "Save changes?"
 msgstr "Zapisać zmiany?"
 
 #: gui2/fnsave.c:1430
-#, fuzzy
 msgid "You may add or delete names of datafiles to be included in the package."
-msgstr ""
-"\n"
-"You may supply the name of a data file on the command line"
+msgstr "You may add or delete names of datafiles to be included in the package."
 
 #: gui2/fnsave.c:1461
 msgid "Label"
@@ -10206,13 +10193,12 @@ msgid "Menu attachment"
 msgstr "Menu załącznika"
 
 #: gui2/fnsave.c:1884
-#, fuzzy
 msgid "Data files"
-msgstr "Narzędzia"
+msgstr "Pliki danych"
 
 #: gui2/fnsave.c:1929
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 #: gui2/fnsave.c:1931
 msgid "Date (YYYY-MM-DD)"
@@ -10510,9 +10496,8 @@ msgid "semilog: log y = a + b*x"
 msgstr "wykładnicza:  log y = a + b*x"
 
 #: gui2/gpt_dialog.c:142
-#, fuzzy
 msgid "linear-log: y = a + b*log(x)"
-msgstr "liniowa:    y = a + b*x"
+msgstr "log-liniowa: y = a + b*log(x)"
 
 #: gui2/gpt_dialog.c:309
 msgid "gretl: graph color selection"
@@ -10528,9 +10513,9 @@ msgid "%s versus %s (with semilog fit)"
 msgstr "%s względem %s (z regresją wykładniczą)"
 
 #: gui2/gpt_dialog.c:615
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with linear-log fit)"
-msgstr "%s względem %s (z regresją wykładniczą)"
+msgstr "%s względem %s (z regresją log-liniową)"
 
 #: gui2/gpt_dialog.c:717 gui2/gpt_dialog.c:756
 msgid "Invalid position, must be X Y"
@@ -11001,9 +10986,8 @@ msgid "Ox program"
 msgstr "skrypt Ox"
 
 #: gui2/gretl.c:1496
-#, fuzzy
 msgid "Stata program"
-msgstr "skrypt Ox"
+msgstr "skrypt Stata"
 
 #: gui2/gretl.c:1498
 msgid "_Session files"
@@ -11327,9 +11311,8 @@ msgid "_Seasonal differences of selected variables"
 msgstr "_sezonowe różnice dla wybranych zmiennych"
 
 #: gui2/gretl.c:1597
-#, fuzzy
 msgid "_Percentage change of selected variable"
-msgstr "_opóźnienia dla wybranych zmiennych..."
+msgstr "_procentowe zmiany dla wybranej zmiennej..."
 
 #: gui2/gretl.c:1599
 msgid "_Index variable"
@@ -12355,9 +12338,8 @@ msgid "gretl: edit Python script"
 msgstr "gretl: edycja skryptu Pythona"
 
 #: gui2/gui_utils.c:1636
-#, fuzzy
 msgid "gretl: edit Stata program"
-msgstr "gretl: edycja skryptu Ox"
+msgstr "gretl: edycja skryptu Stata"
 
 #: gui2/gui_utils.c:1638
 msgid "gretl: untitled"
@@ -13500,14 +13482,12 @@ msgid "X-axis variable"
 msgstr "Zmienna dla osi X"
 
 #: gui2/library.c:7165
-#, fuzzy
 msgid "Plot all data"
-msgstr "Dane panelowe"
+msgstr "Wykres wszystkich danych"
 
 #: gui2/library.c:7166
-#, fuzzy
 msgid "Plot group means"
-msgstr "Grupy panelu"
+msgstr "Wykres średnich grupowych"
 
 #: gui2/library.c:7189
 msgid "on a single graph"
@@ -13653,9 +13633,8 @@ msgid "Unterminated comment in script"
 msgstr "Nieokreślone polecenie w skrypcie"
 
 #: gui2/library.c:8973
-#, fuzzy
 msgid "No series were deleted"
-msgstr "Brak zmiennych do usunięcia"
+msgstr "Usunięto nie szeregi"
 
 #: gui2/library.c:9039
 msgid "Script done\n"
@@ -15675,9 +15654,8 @@ msgid "Save as..."
 msgstr "Zapisz jako..."
 
 #: gui2/toolbar.c:693
-#, fuzzy
 msgid "Open in script editor"
-msgstr "gretl: edytor skryptu gretla"
+msgstr "Otwórz w edytorze skryptu"
 
 #: gui2/toolbar.c:695
 msgid "Save bundle content..."
@@ -17043,15 +17021,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "type error: %s is string-valued"
-#~ msgstr "błędny typ: %s jest łańcuchem wartości"
-
-#~ msgid "Adding %s under %s."
-#~ msgstr "Adding %s under %s."
-
-#~ msgid "Enable Ox support"
-#~ msgstr "Włącz współpracę z programem Ox"
-
-#~ msgid "error in wsheet_setup()"
-#~ msgstr "błąd w poleceniu wsheet_setup()"
