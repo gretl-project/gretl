@@ -1180,7 +1180,7 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R, int *rank,
     if (r < k) {
 	err = E_SINGULAR;
     } else {
-	/* invert R */
+	/* then invert the triangular R */
 	char uplo = 'U';
 	char diag = 'N';
 	integer info = 0;
