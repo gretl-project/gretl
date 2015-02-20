@@ -985,7 +985,8 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
 	    }
 	    if (hc_version == 2) {
 		diag->val[t] /= (1.0 - ht);
-	    } else { /* HC3 */
+	    } else {
+		/* HC3 */
 		diag->val[t] /= (1.0 - ht) * (1.0 - ht);
 	    }
 	}
