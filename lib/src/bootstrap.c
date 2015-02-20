@@ -55,7 +55,7 @@ struct boot_ {
     int B;              /* number of replications */
     int k;              /* number of coefficients in model */
     int T;              /* number of observations used */
-    int p;              /* index number of coeff to examine */
+    int p;              /* index number of specific coeff to examine */
     int g;              /* number of restrictions */
     int mci;            /* model command index */
     gretl_matrix *y;    /* holds original, then artificial, dep. var. */
@@ -361,10 +361,13 @@ static boot *boot_new (const MODEL *pmod,
 
     bs->ldv = NULL;
 
-    *err = make_boot_ldvinfo(bs, pmod, dset);
-    if (*err) {
-	free(bs);
-	return NULL;
+    if (!(opt & OPT_X)) {
+	/* we don't need to do this for the pairs bootstrap */
+	*err = make_boot_ldvinfo(bs, pmod, dset);
+	if (*err) {
+	    free(bs);
+	    return NULL;
+	}
     }
 
     bs->y = NULL;
@@ -585,13 +588,21 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	double ql, qu;
 	int i, j;
 
+	/* find the alpha/2 quantile */
 	i = bs->a * (bs->B + 1) / 2.0;
 	ql = xi[i-1];
 
+	/* find the 1 - alpha/2 quantile */
 	j = bs->B - i + 1;
 	qu = xi[j-1];
 
+#if BS_DEBUG
+	fprintf(stderr, "i=%d, ql=xi[%d] = %g\n", i, i-1, ql);
+	fprintf(stderr, "j=%d, qu=xi[%d] = %g\n", j, j-1, qu);
+#endif	
+
 	if (bs->flags & BOOT_STUDENTIZE) {
+	    /* the "percentile t" method */
 	    double cl = ql;
 
 	    ql = bs->point - bs->se0 * qu;
@@ -599,6 +610,7 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	    pprintf(prn, _("Studentized %g%% confidence interval = %g to %g"), 
 		    100 * (1 - bs->a), ql, qu);
 	} else {
+	    /* the "naive" percentile method */
 	    pprintf(prn, _("%g%% confidence interval = %g to %g"), 
 		    100 * (1 - bs->a), ql, qu);
 	}
@@ -715,6 +727,20 @@ static double bs_F_test (const gretl_matrix *b,
     return test;
 }
 
+static void recreate_ldv_X (boot *bs)
+{
+    int j, p, t;
+
+    for (j=0; j<bs->X->cols; j++) {
+	p = ldv_lag(bs, j);
+	if (p > 0) {
+	    for (t=p; t<bs->T; t++) {
+		gretl_matrix_set(bs->X, t, j, bs->y->val[t-p]);
+	    }
+	}
+    }
+}
+
 static void print_test_round (boot *bs, int i, double test, PRN *prn)
 {
     pprintf(prn, "round %d: test = %g%s\n", i+1, test,
@@ -734,8 +760,8 @@ static int real_bootstrap (boot *bs, PRN *prn)
     gretl_matrix *b = NULL;     /* re-estimated coeffs */
     gretl_matrix *yh = NULL;    /* fitted values */
     gretl_matrix *V = NULL;     /* covariance matrix */
-    int *z = NULL;
-    double *xi = NULL;
+    double *xi = NULL;          /* recorder for results */
+    int *z = NULL;              /* resampling array */
     int k = bs->k;
     int p = bs->p;
     int tail = 0;
@@ -827,18 +853,15 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	    make_normal_y(bs);
 	}
 
-	if (bs->ldv != NULL) {
-	    /* X matrix includes lagged dependent variable(s), so it has
-	       to be modified */
-	    int j, p;
-
-	    for (j=0; j<bs->X->cols; j++) {
-		p = ldv_lag(bs, j);
-		if (p > 0) {
-		    for (t=p; t<bs->T; t++) {
-			gretl_matrix_set(bs->X, t, j, bs->y->val[t-p]);
-		    }
-		}
+	if (bs->ldv != NULL || resampling_pairs(bs)) {
+	    /* If the X matrix includes lags of the dependent variable,
+	       the X matrix has to be rewritten, and X'X inverse
+	       recalculated. If we're doing the pairs bootstrap, X
+	       will already have been modified but again X'X-inverse
+	       needs redoing.
+	    */
+	    if (bs->ldv != NULL) {
+		recreate_ldv_X(bs);
 	    }
 	    gretl_matrix_multiply_mod(bs->X, GRETL_MOD_TRANSPOSE,
 				      bs->X, GRETL_MOD_NONE,
@@ -904,8 +927,10 @@ static int real_bootstrap (boot *bs, PRN *prn)
 
 	if (bs->flags & BOOT_CI) {
 	    if (bs->flags & BOOT_STUDENTIZE) {
+		/* record bootstrap t-stat */
 		xi[i] = test;
 	    } else {
+		/* record bootstrap coeff */
 		xi[i] = b->val[p];
 	    }
 	} else {
