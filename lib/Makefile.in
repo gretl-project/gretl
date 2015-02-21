@@ -138,6 +138,7 @@ PUBLIC_HDRS = \
 	gretl_utils.h \
 	gretl_win32.h \
 	gretl_xml.h \
+	gretl_zip.h \
 	interact.h \
 	johansen.h \
 	kalman.h \

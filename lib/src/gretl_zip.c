@@ -37,7 +37,7 @@
 
 #include <gsf/gsf.h>
 
-#define ZDEBUG 1
+#define ZDEBUG 0
 #define CHUNK 32768
 
 #define gsf_is_dir(i) (GSF_IS_INFILE(i) && gsf_infile_num_children(GSF_INFILE(i)) >= 0)
