@@ -1017,6 +1017,8 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
     int st_err = 0;
     int err = 0;
 
+    *label = *c50 = '\0';
+
     if (dtab->labellen > 0) {
 	fseek64(fp, dtab->labelpos, SEEK_SET);
 	stata_read_string(fp, dtab->labellen, label, &err);
@@ -1031,7 +1033,7 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
 	pprintf(vprn, "timestamp: '%s'\n", c50);
     }
 
-    if (*label != '\0' || *c50 != '\0') {
+    if (*label != '\0') {
 	save_dataset_info(dset, label, c50);
     }
   
