@@ -1736,8 +1736,10 @@ static void finfo_extra_help (GtkWidget *w, function_info *finfo)
     
     if (page == 0) {
 	show_gui_help(GUI_FUNCS);
-    } else {
+    } else if (page == 1) {
 	show_gui_help(MENU_ATTACH);
+    } else {
+	show_gui_help(PKG_FILES);
     }
 }
 

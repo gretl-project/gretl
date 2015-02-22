@@ -120,6 +120,7 @@ enum extra_cmds {
     MENU_ATTACH,
     DAILY_PURGE,
     ZIPBUILD,
+    PKG_FILES,
     GUI_CMD_MAX
 };
 

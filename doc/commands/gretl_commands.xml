@@ -2352,6 +2352,53 @@
 
   </command>
 
+  <command name="data-files" section="Programming" 
+	   label="Data files" context="gui">
+    <description>
+      <para>
+	This dialog enables you to specify additional data files to
+	be included with a function package. Including such files
+	implies that the package takes the form of a zip file;
+	building the zip file is done automatically when you save
+	a package with the <quote>upload to server</quote> option
+	checked.
+      </para>
+      <para>
+	There are two main intended uses for this facility. First, you
+	can include a data file for use with the package's sample
+	script, if none of the data files supplied with the gretl
+	distribution are suitable. In this case the data should be in
+	gretl native format (<lit>gdt</lit> or binary
+	<lit>gdtb</lit>). Second, if your package requires a big
+	matrix (for example, holding critical values for a specialized
+	test statistic) it may be more convenient to include this as a
+	gretl matrix file (<lit>mat</lit>) than to assemble the matrix
+	via multiple hansl statements.
+      </para>
+      <para>
+	To access a packaged <lit>gdt</lit> or <lit>gdtb</lit> file
+	from a sample script, use the <opt>frompkg</opt> option with
+	the <lit>open</lit> command, supplying the name of the
+	package as a parameter, as in
+      </para>
+      <code>
+	open almon.gdt --frompkg=almonreg
+      </code>
+      <para>
+	To read a packaged matrix file from within your package code,
+	use the built-in string variable <lit>$pkgdir</lit>, as in
+      </para>
+      <code>
+	string mname = sprintf("%s/A.mat", $pkgdir)
+	matrix A = mread(mname)
+      </code>
+      <para>
+	(Note that <quote><lit>/</lit></quote> will work OK as
+	path separator on MS Windows.)
+      </para>
+    </description>
+  </command>  
+
   <command name="dataset" section="Dataset" 
     label="Manipulate the dataset" context="cli">
 
@@ -3366,7 +3413,7 @@
     <description>
       <para>
 	This command makes gretl act like a glorified calculator.  The
-	program evaluates <argname>expression</argname> and prints its
+	program evaluates <repl>expression</repl> and prints its
 	value. The argument may be the name of a variable, or
 	something more complicated. In any case, it should be an
 	expression which could stand as the right-hand side of an

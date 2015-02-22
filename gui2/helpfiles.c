@@ -145,6 +145,7 @@ static struct gui_help_item gui_help_items[] = {
     { MENU_ATTACH,    "menu-attach" },
     { REPROBIT,       "reprobit" },
     { DAILY_PURGE,    "daily-purge" },
+    { PKG_FILES,      "data-files" },
     { -1,             NULL },
 };
 
