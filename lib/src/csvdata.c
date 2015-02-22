@@ -2262,6 +2262,7 @@ static double csv_atof (csvdata *c, int i, const char *s)
 	strcpy(clean, s);
 	gretl_delchar(c->thousep, clean);
 	gretl_charsub(clean, ',', '.');
+	// fprintf(stderr, "second pass: '%s' -> '%s'\n", s, clean);
 	s = clean;
     }
 
