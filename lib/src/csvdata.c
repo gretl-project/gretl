@@ -2135,6 +2135,10 @@ static void validate_thousep (csvdata *c, const char *s)
 	    }
 	    if (nd != 3) {
 		/* nope! */
+#if CDEBUG
+		fprintf(stderr, "validate_thousep: no: '%c' is followed by %d digits\n",
+			c->thousep, nd);
+#endif		
 		c->thousep = -1;
 		break;
 	    }
@@ -2262,7 +2266,6 @@ static double csv_atof (csvdata *c, int i, const char *s)
 	strcpy(clean, s);
 	gretl_delchar(c->thousep, clean);
 	gretl_charsub(clean, ',', '.');
-	// fprintf(stderr, "second pass: '%s' -> '%s'\n", s, clean);
 	s = clean;
     }
 
@@ -3406,6 +3409,9 @@ static int real_import_csv (const char *fname,
 	    pprintf(mprn, A_("WARNING: it seems '%c' is being used "
 			     "as thousands separator\n"), c->thousep);
 	    c->decpoint = (c->thousep == '.')? ',' : '.';
+	    if (c->decpoint == ',' && get_local_decpoint() == '.') {
+		csv_set_dotsub(c);
+	    }
 	    revise_non_numeric_values(c);
 	    csv_set_scrub_thousep(c);
 	    err = csv_read_data(c, fp, prn, NULL);
@@ -3455,7 +3461,11 @@ static int real_import_csv (const char *fname,
     }
 
     if (c->st != NULL) {
-	if (joining(c)) {
+	err = gretl_string_table_validate(c->st);
+	if (err) {
+	    pputs(prn, A_("Failed to interpret the data as numeric\n"));
+	    goto csv_bailout;
+	} else if (joining(c)) {
 	    gretl_string_table_save(c->st, c->dset);
 	} else {
 	    gretl_string_table_print(c->st, c->dset, fname, prn);

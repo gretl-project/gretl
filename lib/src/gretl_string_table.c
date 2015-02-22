@@ -559,6 +559,53 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 }
 
 /**
+ * gretl_string_table_validate:
+ * @gst: gretl string table.
+ *
+ * Checks that the "string values" in @gst are not in fact
+ * undigested quasi-numerical values. We run this on 
+ * imported "CSV" data to ensure we don't produce
+ * misleading results.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_string_table_validate (gretl_string_table *gst)
+{
+    const char *test = "0123456789.,";
+    int i, ncols = 0;
+    int err = 0;
+
+    if (gst != NULL && gst->cols_list != NULL) {
+	ncols = gst->cols_list[0];
+    }
+
+    for (i=0; i<ncols; i++) {
+	series_table *st = gst->cols[i];
+	const char *s;
+	int j, myerr = E_DATA;
+
+	for (j=0; j<st->n_strs; j++) {
+	    s = st->strs[j];
+	    if (*s == '-' || *s == '+') s++;
+	    if (strspn(s, test) < strlen(s)) {
+		/* not quasi-numeric */
+		myerr = 0;
+		break;
+
+	    }
+	}
+
+	if (myerr) {
+	    err = myerr;
+	    break;
+	}
+    }
+
+    return err;
+}
+
+/**
  * gretl_string_table_save:
  * @gst: gretl string table.
  * @dset: dataset information (for names of variables).
