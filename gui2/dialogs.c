@@ -944,6 +944,7 @@ enum {
     SET_CI = 1,
     SET_PVAL,
     SET_PAIRS,
+    SET_WILD,
     SET_UHAT,
     SET_NORMAL,
     SET_STUDENT
@@ -964,14 +965,22 @@ static void set_bs_opt (GtkWidget *w, gretlopt *opt)
 	break;
     case SET_UHAT:
 	*opt &= ~OPT_X;
+	*opt &= ~OPT_W;
 	*opt &= ~OPT_N;
 	break;
     case SET_PAIRS:
 	*opt &= ~OPT_N;
+	*opt &= ~OPT_W;
 	*opt |= OPT_X;
+	break;
+    case SET_WILD:
+	*opt &= ~OPT_N;
+	*opt &= ~OPT_X;
+	*opt |= OPT_W;
 	break;
     case SET_NORMAL:
 	*opt &= ~OPT_X;
+	*opt &= ~OPT_W;
 	*opt |= OPT_N;
 	break;
     case SET_STUDENT:
@@ -1132,7 +1141,7 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 
  htest_only:
 
-    /* resample vs simulated normal */
+    /* bootstrap method options */
 
     button = gtk_radio_button_new_with_label(NULL, _("Resample residuals"));
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
@@ -1146,6 +1155,14 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), FALSE);
     g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_PAIRS));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_bs_opt), popt);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    button = gtk_radio_button_new_with_label(group, _("Wild bootstrap"));
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), FALSE);
+    g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_WILD));
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_bs_opt), popt);
 

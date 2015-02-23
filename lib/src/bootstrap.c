@@ -486,7 +486,16 @@ static void make_resampled_y (boot *bs, int *z)
     }
 }
 
-/* Davidson-Flachaire method */
+/* Davidson-Flachaire method: the bootstrap value
+   of the dependent variable is
+
+   y^*_t = X_t\hat{\beta} + f(\hat{u}_t) v^*_t
+
+   where f(\hat{u}_t) = \hat{u}_t / (1 - h_t)^{1/2},
+   and v^*_t = 1 with probability 1/2 and -1 with
+   probability 1/2. The h_t values are the diagonal
+   elements of the hat matrix.
+*/
 
 static void make_wild_y (boot *bs, int *z, gretl_matrix *h)
 {
@@ -861,10 +870,14 @@ static int boot_calc_2 (boot *bs,
     return err;
 }
 
-/* do the actual bootstrap analysis: the objective is either to form a
+/* Do the actual bootstrap analysis: the objective is either to form a
    confidence interval or to compute a p-value; the methodology is
-   either to resample the original residuals or to simulate normal
-   errors with the empirically given variance.
+   one of
+
+   - resampling the original (scaled) residuals
+   - resampling the y, X pairs
+   - wild bootstrap (Davidson-Flachaire)
+   - simulate normal errors with the empirically given variance
 */
 
 static int real_bootstrap (boot *bs, PRN *prn)
@@ -895,8 +908,7 @@ static int real_bootstrap (boot *bs, PRN *prn)
     }
 
     if (bs->flags & BOOT_WILD) {
-	use_qr = 1;
-	use_h = 1;
+	use_qr = use_h = 1;
     }
 
     b = gretl_column_vector_alloc(k);
@@ -932,8 +944,8 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	}
     }
 
-    if (resampling(bs)) {
-	/* resampling index array */
+    if (resampling(bs) || wild_boot(bs)) {
+	/* random integer array */
 	z = malloc(bs->T * sizeof *z);
 	if (z == NULL) {
 	    err = E_ALLOC;
@@ -962,7 +974,7 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	}
     }
 
-    err = boot_calc_1(bs, XTX, XTXI, Q, R, NULL);
+    err = boot_calc_1(bs, XTX, XTXI, Q, R, h);
 
     if (!err && verbose(bs)) {
 	if (boot_Ftest(bs)) {
@@ -993,15 +1005,15 @@ static int real_bootstrap (boot *bs, PRN *prn)
 
 	if (bs->ldv != NULL || resampling_pairs(bs)) {
 	    /* If the X matrix includes lags of the dependent variable,
-	       the X matrix has to be rewritten, and X'X-inverse
-	       (or Q and R) recalculated. If we're doing the pairs 
-	       bootstrap, X will have been revised already but again 
-	       X'X-inverse or Q, R need redoing.
+	       it has to be rewritten, and X'X-inverse (or Q and R) 
+	       recalculated. If we're doing the pairs bootstrap, X will
+	       have been revised already but again X'X-inverse or Q, R
+	       need redoing.
 	    */
 	    if (bs->ldv != NULL) {
 		recreate_ldv_X(bs);
 	    }
-	    err = boot_calc_1(bs, XTX, XTXI, Q, R, NULL);
+	    err = boot_calc_1(bs, XTX, XTXI, Q, R, h);
 	}
 
 	if (!err) {
@@ -1120,10 +1132,11 @@ static int bs_add_restriction (boot *bs, int p)
  * @B: number of replications.
  * @dset: dataset struct.
  * @opt: option flags: may contain %OPT_P to compute p-value
- * (the default is to calculate confidence interval), %OPT_N
- * to use simulated normal errors or %OPT_X to resample "pairs"
- * (the default being to resample the empirical residuals), 
- * %OPT_G to display graph, %OPT_S for silent operation.
+ * (the default is to calculate confidence interval); %OPT_N
+ * to use simulated normal errors, %OPT_X to resample "pairs",
+ * or %OPT_W to do the wild bootstrap (the default method 
+ * being to resample the empirical residuals); %OPT_G to display 
+ * graph, %OPT_S for silent operation.
  * @prn: printing struct.
  *
  * Calculates a bootstrap confidence interval or p-value for
