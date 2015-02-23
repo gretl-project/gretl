@@ -31,19 +31,21 @@ enum {
     BOOT_RESAMPLE_U  = 1 << 2,  /* resample the empirical residuals */
     BOOT_NORMAL_U    = 1 << 3,  /* simulate normal residuals */
     BOOT_PAIRS       = 1 << 4,  /* resample y and X "pairs" */
-    BOOT_STUDENTIZE  = 1 << 5,  /* studentize, when doing confidence interval */
-    BOOT_GRAPH       = 1 << 6,  /* graph the distribution */
-    BOOT_RESTRICT    = 1 << 7,  /* called via "restrict" command */
-    BOOT_F_FORM      = 1 << 8,  /* compute F-statistics */
-    BOOT_FREE_RQ     = 1 << 9,  /* free restriction matrices */
-    BOOT_SAVE        = 1 << 10, /* save results vector */
-    BOOT_VERBOSE     = 1 << 11, /* verbose output */
-    BOOT_SILENT      = 1 << 12  /* suppress printed output */
+    BOOT_WILD        = 1 << 5,  /* "wild" bootstrap */
+    BOOT_STUDENTIZE  = 1 << 6,  /* studentize, when doing confidence interval */
+    BOOT_GRAPH       = 1 << 7,  /* graph the distribution */
+    BOOT_RESTRICT    = 1 << 8,  /* called via "restrict" command */
+    BOOT_F_FORM      = 1 << 9,  /* compute F-statistics */
+    BOOT_FREE_RQ     = 1 << 10,  /* free restriction matrices */
+    BOOT_SAVE        = 1 << 11, /* save results vector */
+    BOOT_VERBOSE     = 1 << 12, /* verbose output */
+    BOOT_SILENT      = 1 << 13  /* suppress printed output */
 };
 
 #define resampling_u(b)     (b->flags & BOOT_RESAMPLE_U)
 #define resampling_pairs(b) (b->flags & BOOT_PAIRS)
 #define resampling(b)       (b->flags & (BOOT_RESAMPLE_U | BOOT_PAIRS))
+#define wild_boot(b)        (b->flags & BOOT_WILD)
 #define verbose(b)          (b->flags & BOOT_VERBOSE)
 #define boot_Ftest(b)       (b->flags & BOOT_F_FORM)
 
@@ -205,6 +207,8 @@ static int make_bs_flags (gretlopt opt)
 	flags |= BOOT_NORMAL_U;
     } else if (opt & OPT_X) {
 	flags |= BOOT_PAIRS;
+    } else if (opt & OPT_W) {
+	flags |= BOOT_WILD;
     } else {
 	flags |= BOOT_RESAMPLE_U;
     }
@@ -482,6 +486,30 @@ static void make_resampled_y (boot *bs, int *z)
     }
 }
 
+/* Davidson-Flachaire method */
+
+static void make_wild_y (boot *bs, int *z, gretl_matrix *h)
+{
+    double xti;
+    int i, t, p;
+
+    gretl_rand_int_minmax(z, bs->T, 0, 1);
+
+    /* construct y recursively */
+    for (t=0; t<bs->X->rows; t++) {
+	bs->y->val[t] = bs->u0->val[t] / sqrt(1 - h->val[t]);
+	bs->y->val[t] *= z[t] ? 1 : -1;
+	for (i=0; i<bs->X->cols; i++) {
+	    p = ldv_lag(bs, i);
+	    if (p > 0 && t >= p) {
+		gretl_matrix_set(bs->X, t, i, bs->y->val[t-p]);
+	    }
+	    xti = gretl_matrix_get(bs->X, t, i);
+	    bs->y->val[t] += bs->b0->val[i] * xti;
+	}
+    }
+}
+
 static void make_resampled_pairs (boot *bs, int *z)
 {
     double xti;
@@ -623,6 +651,8 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	pputs(prn, _("using resampled residuals"));
     } else if (resampling_pairs(bs)) {
 	pputs(prn, _("using resampled y,X \"pairs\""));
+    } else if (wild_boot(bs)) {
+	pputs(prn, _("using \"wild\" bootstrap"));
     } else {
 	pputs(prn, _("with simulated normal errors"));
     }
@@ -747,6 +777,90 @@ static void print_test_round (boot *bs, int i, double test, PRN *prn)
 	    test > bs->test0 ? " *" : "");
 }
 
+static void fill_hat_vec (gretl_matrix *Q, gretl_matrix *h)
+{
+    int t, i;
+    
+    for (t=0; t<Q->rows; t++) {
+	double q, ht = 0.0;
+
+	for (i=0; i<Q->cols; i++) {
+	    q = gretl_matrix_get(Q, t, i);
+	    ht += q * q;
+	}
+	h->val[t] = ht;
+    }
+}
+
+static int boot_calc_1 (boot *bs,
+			gretl_matrix *XTX,
+			gretl_matrix *XTXI,
+			gretl_matrix *Q,
+			gretl_matrix *R,
+			gretl_matrix *h)
+{
+    int err = 0;
+
+    if (Q != NULL) {
+	/* using QR */
+	gretl_matrix_copy_values(Q, bs->X);
+	err = gretl_matrix_QR_decomp(Q, R);
+	if (!err) {
+	    err = gretl_invert_triangular_matrix(R, 'U');
+	}
+	if (!err) {
+	    gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
+				      R, GRETL_MOD_TRANSPOSE,
+				      XTXI, GRETL_MOD_NONE);
+	    if (h != NULL) {
+		fill_hat_vec(Q, h);
+	    }
+	}
+    } else {
+	/* using Cholesky */
+	gretl_matrix_multiply_mod(bs->X, GRETL_MOD_TRANSPOSE,
+				  bs->X, GRETL_MOD_NONE,
+				  XTX, GRETL_MOD_NONE);
+	err = gretl_matrix_cholesky_decomp(XTX);
+	if (!err) {
+	    err = gretl_inverse_from_cholesky_decomp(XTXI, XTX);
+	}	
+    }
+
+    return err;
+}
+
+static int boot_calc_2 (boot *bs,
+			gretl_matrix *XTX,
+			gretl_matrix *Q,
+			gretl_matrix *R,
+			gretl_matrix *g,
+			gretl_matrix *b,
+			gretl_matrix *yh)
+{
+    int err = 0;
+
+    if (Q != NULL) {
+	/* using QR */
+	gretl_matrix_multiply_mod(Q, GRETL_MOD_TRANSPOSE,
+				  bs->y, GRETL_MOD_NONE, 
+				  g, GRETL_MOD_NONE);
+	gretl_matrix_multiply(R, g, b);
+	gretl_matrix_multiply(Q, g, yh); 
+    } else {
+	/* using Cholesky */
+	gretl_matrix_multiply_mod(bs->X, GRETL_MOD_TRANSPOSE,
+				  bs->y, GRETL_MOD_NONE,
+				  b, GRETL_MOD_NONE);
+	err = gretl_cholesky_solve(XTX, b);
+	if (!err) {
+	    gretl_matrix_multiply(bs->X, b, yh);
+	}
+    }
+
+    return err;
+}
+
 /* do the actual bootstrap analysis: the objective is either to form a
    confidence interval or to compute a p-value; the methodology is
    either to resample the original residuals or to simulate normal
@@ -757,6 +871,10 @@ static int real_bootstrap (boot *bs, PRN *prn)
 {
     gretl_matrix *XTX = NULL;   /* X'X */
     gretl_matrix *XTXI = NULL;  /* X'X^{-1} */
+    gretl_matrix *Q = NULL;     /* for use with QR decomp */
+    gretl_matrix *R = NULL;     /* for use with QR decomp */
+    gretl_matrix *g = NULL;     /* for use with QR decomp */
+    gretl_matrix *h = NULL;     /* "hat" vector (QR) */
     gretl_matrix *b = NULL;     /* re-estimated coeffs */
     gretl_matrix *yh = NULL;    /* fitted values */
     gretl_matrix *V = NULL;     /* covariance matrix */
@@ -765,6 +883,8 @@ static int real_bootstrap (boot *bs, PRN *prn)
     int k = bs->k;
     int p = bs->p;
     int tail = 0;
+    int use_qr = 0;
+    int use_h = 0;
     int i, t, err = 0;
 
     if (bs->flags & BOOT_PVAL) {
@@ -774,13 +894,42 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	}
     }
 
-    b = gretl_column_vector_alloc(k);
-    XTX = gretl_matrix_alloc(k, k);
-    yh = gretl_column_vector_alloc(bs->T);
+    if (bs->flags & BOOT_WILD) {
+	use_qr = 1;
+	use_h = 1;
+    }
 
-    if (b == NULL || XTX == NULL || yh == NULL) {
+    b = gretl_column_vector_alloc(k);
+    yh = gretl_column_vector_alloc(bs->T);
+    XTXI = gretl_matrix_alloc(k, k);
+
+    if (b == NULL || yh == NULL || XTXI == NULL) {
 	err = E_ALLOC;
 	goto bailout;
+    }
+
+    if (use_qr) {
+	Q = gretl_matrix_alloc(bs->T, k);
+	R = gretl_matrix_alloc(k, k);
+	g = gretl_matrix_alloc(k, 1);
+	if (Q == NULL || R == NULL || g == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+	if (use_h) {
+	    h = gretl_matrix_alloc(bs->T, 1);
+	    if (h == NULL) {
+		err = E_ALLOC;
+		goto bailout;
+	    }
+	}
+    } else {
+	/* Cholesky */
+	XTX = gretl_matrix_alloc(k, k);
+	if (XTX == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
     }
 
     if (resampling(bs)) {
@@ -811,24 +960,11 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	    err = E_ALLOC;
 	    goto bailout;
 	}
-    }	    
-
-    gretl_matrix_multiply_mod(bs->X, GRETL_MOD_TRANSPOSE,
-			      bs->X, GRETL_MOD_NONE,
-			      XTX, GRETL_MOD_NONE);
-
-    XTXI = gretl_matrix_alloc(XTX->rows, XTX->cols);
-    if (XTXI == NULL) {
-	err = E_ALLOC;
-	goto bailout;
     }
 
-    err = gretl_matrix_cholesky_decomp(XTX);
-    if (!err) {
-	err = gretl_inverse_from_cholesky_decomp(XTXI, XTX);
-    }
+    err = boot_calc_1(bs, XTX, XTXI, Q, R, NULL);
 
-    if (verbose(bs)) {
+    if (!err && verbose(bs)) {
 	if (boot_Ftest(bs)) {
 	    pputc(prn, '\n');
 	} else {
@@ -849,47 +985,32 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	    make_resampled_y(bs, z);
 	} else if (resampling_pairs(bs)) {
 	    make_resampled_pairs(bs, z);
+	} else if (wild_boot(bs)) {
+	    make_wild_y(bs, z, h);
 	} else {
 	    make_normal_y(bs);
 	}
 
 	if (bs->ldv != NULL || resampling_pairs(bs)) {
 	    /* If the X matrix includes lags of the dependent variable,
-	       the X matrix has to be rewritten, and X'X inverse
-	       recalculated. If we're doing the pairs bootstrap, X
-	       will already have been modified but again X'X-inverse
-	       needs redoing.
+	       the X matrix has to be rewritten, and X'X-inverse
+	       (or Q and R) recalculated. If we're doing the pairs 
+	       bootstrap, X will have been revised already but again 
+	       X'X-inverse or Q, R need redoing.
 	    */
 	    if (bs->ldv != NULL) {
 		recreate_ldv_X(bs);
 	    }
-	    gretl_matrix_multiply_mod(bs->X, GRETL_MOD_TRANSPOSE,
-				      bs->X, GRETL_MOD_NONE,
-				      XTX, GRETL_MOD_NONE);
-	    err = gretl_matrix_cholesky_decomp(XTX);
-	    if (!err) {
-		err = gretl_inverse_from_cholesky_decomp(XTXI, XTX);
-	    }
+	    err = boot_calc_1(bs, XTX, XTXI, Q, R, NULL);
 	}
 
 	if (!err) {
-	    /* form X'y */
-	    gretl_matrix_multiply_mod(bs->X, GRETL_MOD_TRANSPOSE,
-				      bs->y, GRETL_MOD_NONE,
-				      b, GRETL_MOD_NONE);
-	}
-
-	if (!err) {
-	    /* solve for current parameter estimates */
-	    err = gretl_cholesky_solve(XTX, b);
+	    err = boot_calc_2(bs, XTX, Q, R, g, b, yh);
 	}
 
 	if (err) {
 	    break;
 	}	
-
-	/* form fitted values */
-	gretl_matrix_multiply(bs->X, b, yh);
 
 	/* residuals, etc */
 	SSR = 0.0;
@@ -962,6 +1083,10 @@ static int real_bootstrap (boot *bs, PRN *prn)
     gretl_matrix_free(b);
     gretl_matrix_free(XTX);
     gretl_matrix_free(XTXI);
+    gretl_matrix_free(Q);
+    gretl_matrix_free(R);
+    gretl_matrix_free(g);
+    gretl_matrix_free(h);
     gretl_matrix_free(yh);
     gretl_matrix_free(V);
 

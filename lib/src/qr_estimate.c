@@ -1154,8 +1154,8 @@ allocate_model_arrays (MODEL *pmod, int k, int T)
 
 /* perform QR decomposition plus some additional tasks */
 
-static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R, int *rank,
-			   int *warn)
+static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R,
+			   int *rank, int *warn)
 {
     integer k = gretl_matrix_rows(R);
     double rcond = 0;
