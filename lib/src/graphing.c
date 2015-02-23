@@ -1573,6 +1573,8 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 		gretl_pop_c_numeric_locale();
 	    }
 	    write_plot_output_line(NULL, fp);
+	} else {
+	    fputs("set termoption noenhanced\n", fp);
 	}
 	write_plot_type_string(ptype, flags, fp);
 	write_plot_line_styles(ptype, fp);
