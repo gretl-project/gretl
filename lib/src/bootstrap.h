@@ -21,8 +21,16 @@
 #define BOOTSTRAP_H
  
 int bootstrap_analysis (MODEL *pmod, int p, int B, 
-			const DATASET *dset, gretlopt opt,
-			PRN *prn);
+			double alpha, const DATASET *dset,
+			gretlopt opt, PRN *prn);
+
+gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
+				   const DATASET *dset,
+				   int p, int B,
+				   double alpha,
+				   int method,
+				   int studentize,
+				   int *err);
 
 int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R, 
 				gretl_matrix *q, double test, int g,

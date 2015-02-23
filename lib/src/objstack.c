@@ -26,6 +26,7 @@
 #include "usermat.h"
 #include "forecast.h"
 #include "kalman.h"
+#include "bootstrap.h"
 
 #define ODEBUG 0
 
@@ -1434,6 +1435,29 @@ gretl_bundle *last_model_get_irf_bundle (int targ, int shock, double alpha,
     gretl_matrix_free(m);
 
     return b;
+}
+
+gretl_matrix *last_model_get_boot_ci (int cnum,
+				      const DATASET *dset,
+				      int B,
+				      double alpha,
+				      int method,
+				      int studentize,
+				      int *err)
+{
+    stacker *smatch = find_smatch(NULL);
+    gretl_matrix *ret = NULL;
+
+    if (smatch == NULL || smatch->type != GRETL_OBJ_EQN) {
+	*err = E_DATA;
+    } else {
+	MODEL *pmod = smatch->ptr;
+
+	ret = bootstrap_ci_matrix(pmod, dset, cnum, B, alpha,
+				  method, studentize, err);
+    }
+
+    return ret;
 }
 
 void *last_model_get_data (const char *key, GretlType *type, 

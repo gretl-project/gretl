@@ -2393,7 +2393,7 @@ static int bootstrap_zero_restriction (gretl_restriction *rset,
     }
 
     gretl_restriction_get_boot_params(&B, &bopt);
-    err = bootstrap_analysis(pmod, r->bnum[0], B, dset, 
+    err = bootstrap_analysis(pmod, r->bnum[0], B, 0, dset, 
 			     bopt, prn);
     return err;
 }

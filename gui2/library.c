@@ -2015,6 +2015,7 @@ void do_bootstrap (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     gretlopt opt = OPT_NONE;
+    double alpha = 0.05;
     int B = 1000;
     int k = 0;
     PRN *prn;
@@ -2032,7 +2033,7 @@ void do_bootstrap (GtkAction *action, gpointer p)
 	return;
     }
 
-    err = bootstrap_analysis(pmod, k, B, dataset, opt, prn);
+    err = bootstrap_analysis(pmod, k, B, alpha, dataset, opt, prn);
 
     if (err) {
 	gui_errmsg(err);

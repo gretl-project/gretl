@@ -197,12 +197,14 @@ static int make_bs_flags (gretlopt opt)
 {
     int flags = 0;
 
+    /* p-value versus confidence interval */
     if (opt & OPT_P) {
 	flags |= BOOT_PVAL;
     } else {
 	flags |= BOOT_CI;
     }
 
+    /* boostrap method */
     if (opt & OPT_N) {
 	flags |= BOOT_NORMAL_U;
     } else if (opt & OPT_X) {
@@ -353,8 +355,8 @@ static int make_boot_ldvinfo (boot *b, const MODEL *pmod,
 
 static boot *boot_new (const MODEL *pmod,
 		       const DATASET *dset,
-		       int B, gretlopt opt,
-		       int *err)
+		       int B, double alpha,
+		       gretlopt opt, int *err)
 {
     boot *bs;
 
@@ -393,7 +395,7 @@ static boot *boot_new (const MODEL *pmod,
     }
 
     bs->mci = pmod->ci;
-    bs->a = 0.05; /* make configurable? */
+    bs->a = alpha;
     bs->B = maybe_adjust_B(B, bs->a, bs->flags);
 
     bs->p = 0;
@@ -693,6 +695,32 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
     }
 }
 
+static void bs_calc_ci (boot *bs, double *xi, gretl_matrix *ci)
+{
+    double ql, qu;
+    int i, j;
+    
+    qsort(xi, bs->B, sizeof *xi, gretl_compare_doubles);
+
+    /* find the alpha/2 quantile */
+    i = bs->a * (bs->B + 1) / 2.0;
+    ql = xi[i-1];
+
+    /* find the 1 - alpha/2 quantile */
+    j = bs->B - i + 1;
+    qu = xi[j-1];
+
+    if (bs->flags & BOOT_STUDENTIZE) {
+	/* the "percentile t" method */
+	ci->val[0] = bs->point - bs->se0 * qu;
+	ci->val[1] = bs->point - bs->se0 * ql;
+    } else {
+	/* the "naive" percentile method */
+	ci->val[0] = ql;
+	ci->val[1] = qu;
+    }
+}
+
 /* Davidson and MacKinnon, ETM, p. 163 */
 
 static void rescale_residuals (boot *bs)
@@ -880,7 +908,7 @@ static int boot_calc_2 (boot *bs,
    - simulate normal errors with the empirically given variance
 */
 
-static int real_bootstrap (boot *bs, PRN *prn)
+static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 {
     gretl_matrix *XTX = NULL;   /* X'X */
     gretl_matrix *XTXI = NULL;  /* X'X^{-1} */
@@ -967,7 +995,7 @@ static int real_bootstrap (boot *bs, PRN *prn)
 
     if (bs->flags & BOOT_F_FORM) {
 	/* covariance matrix for F-test */
-	V = gretl_matrix_alloc(XTX->rows, XTX->cols);
+	V = gretl_matrix_alloc(k, k);
 	if (V == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
@@ -1078,7 +1106,9 @@ static int real_bootstrap (boot *bs, PRN *prn)
     }
 
     if (!err) {
-	if (bs->flags & BOOT_PVAL) {
+	if (ci != NULL) {
+	    bs_calc_ci(bs, xi, ci);
+	} else if (bs->flags & BOOT_PVAL) {
 	    bs->pval = (double) tail / bs->B;
 	    record_test_result(bs->test0, bs->pval, _("bootstrap test"));
 	}
@@ -1130,6 +1160,7 @@ static int bs_add_restriction (boot *bs, int p)
  * @pmod: model to be examined.
  * @p: 0-based index number of the coefficient to analyse.
  * @B: number of replications.
+ * @alpha: for use when calculating confidence interval.
  * @dset: dataset struct.
  * @opt: option flags: may contain %OPT_P to compute p-value
  * (the default is to calculate confidence interval); %OPT_N
@@ -1149,8 +1180,8 @@ static int bs_add_restriction (boot *bs, int p)
  */
 
 int bootstrap_analysis (MODEL *pmod, int p, int B, 
-			const DATASET *dset, gretlopt opt,
-			PRN *prn)
+			double alpha, const DATASET *dset,
+			gretlopt opt, PRN *prn)
 {
     boot *bs = NULL;
     int err = 0;
@@ -1163,7 +1194,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B,
 	return E_DATA;
     }
 
-    bs = boot_new(pmod, dset, B, opt, &err);
+    bs = boot_new(pmod, dset, B, alpha, opt, &err);
 
     if (!err && (bs->flags & BOOT_PVAL)) {
 	err = bs_add_restriction(bs, p);
@@ -1183,12 +1214,92 @@ int bootstrap_analysis (MODEL *pmod, int p, int B,
 	} else {
 	    bs->b_p = bs->point;
 	}
-	err = real_bootstrap(bs, prn);
+	err = real_bootstrap(bs, NULL, prn);
     }
 
     boot_destroy(bs);
 
     return err;
+}
+
+gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
+				   const DATASET *dset,
+				   int p, int B,
+				   double alpha,
+				   int method,
+				   int studentize,
+				   int *err)
+{
+    gretl_matrix *ci = NULL;
+    gretlopt opt = OPT_S; /* silent */
+    boot *bs = NULL;
+
+    if (!bootstrap_ok(pmod->ci)) {
+	*err = E_NOTIMP;
+	return NULL;
+    }
+
+    /* convert coefficient index @p to zero-based */
+    p -= 1;
+
+    if (p < 0 || p >= pmod->ncoeff) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (!na(alpha) && (alpha < .001 || alpha > .999)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (method == 2) {
+	/* resample pairs */
+	opt |= OPT_X;
+    } else if (method == 3) {
+	/* wild */
+	opt |= OPT_W;
+    } else if (method == 4) {
+	/* normal errors */
+	opt |= OPT_N;
+    } else if (method != 1) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (studentize) {
+	opt |= OPT_T;
+    }
+
+    ci = gretl_zero_matrix_new(1, 2);
+    if (ci == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (na(alpha)) {
+	alpha = 0.05;
+    }
+
+    bs = boot_new(pmod, dset, B, alpha, opt, err);
+
+    if (!*err) {
+	bs->p = p;  /* coeff to examine */
+	bs->SE = pmod->sigma;
+	bs->point = pmod->coeff[p];
+	bs->se0 = pmod->sderr[p];
+	bs->test0 = pmod->coeff[p] / pmod->sderr[p];
+	bs->b_p = bs->point;
+	*err = real_bootstrap(bs, ci, NULL);
+    }
+
+    if (*err) {
+	gretl_matrix_free(ci);
+	ci = NULL;
+    }
+
+    boot_destroy(bs);
+
+    return ci;
 }
 
 /**
@@ -1238,7 +1349,7 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 
     gretl_restriction_get_boot_params(&B, &bopt);
 
-    bs = boot_new(pmod, dset, B, bopt, &err);
+    bs = boot_new(pmod, dset, B, 0, bopt, &err);
 
     if (!err) {
 	bs->R = R;
@@ -1246,7 +1357,7 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 	bs->g = g;
 	bs->test0 = test;
 	strcpy(bs->vname, "F-test");
-	err = real_bootstrap(bs, prn);
+	err = real_bootstrap(bs, NULL, prn);
     }
 
     boot_destroy(bs);

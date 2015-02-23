@@ -8967,7 +8967,44 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 	if (!p->err) {
 	    ret->v.xval = QLR_pval(X2, df, p1, p2);
+	}
+    } else if (t->t == F_BOOTCI) {
+	int cnum = -1, method = 1, B = 0;
+	int studentize = 1;
+	double alpha = NADBL;
+
+	if (k < 1 || k > 5) {
+	    n_args_error(k, 4, t->t, p);
 	} 
+	
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i == 0) {
+		cnum = node_get_int(e, p);
+	    } else if (!empty_or_num(e)) {
+		node_type_error(t->t, i+1, NUM, e, p);
+	    } else if (i == 1) {
+		B = node_get_int(e, p);
+	    } else if (i == 2) {
+		alpha = e->v.xval;
+	    } else if (i == 3) {
+		method = node_get_int(e, p);
+	    } else {
+		studentize = node_get_int(e, p);
+	    }
+	}
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+	if (!p->err) {
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }	    
+	    ret->v.m = last_model_get_boot_ci(cnum, p->dset, B, alpha, method,
+					      studentize, &p->err);
+	} 	
     } else if (t->t == HF_CLOGFI) {
 	const char *dfname = NULL;
 	gretl_matrix *z = NULL;
@@ -11514,6 +11551,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_GHK:
     case F_QUADTAB:
     case F_QLRPVAL:
+    case F_BOOTCI:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);

@@ -412,6 +412,7 @@ enum {
     F_QUADTAB,
     F_ISOCONV,
     F_QLRPVAL,
+    F_BOOTCI,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
