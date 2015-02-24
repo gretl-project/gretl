@@ -540,8 +540,10 @@ static void make_resampled_pairs (boot *bs, int *z)
     }
 }
 
-/* when doing a bootstrap p-value: run the restricted regression; save
-   the coefficient vector in bs->b0 and residuals in bs->u0
+/* When computing a bootstrap p-value: the coefficients used in the
+   bootstrap DGP should be in agreement with the null hypothesis; so
+   here we run the restricted regression, saving the coefficient
+   vector in bs->b0 and the residuals in bs->u0.
 */
 
 static int do_restricted_ols (boot *bs)
@@ -549,8 +551,8 @@ static int do_restricted_ols (boot *bs)
     double s2 = 0.0;
     int err = 0;
     
-    err = gretl_matrix_restricted_ols(bs->y, bs->X, bs->R, bs->q, bs->b0, 
-				      NULL, bs->u0, &s2);
+    err = gretl_matrix_restricted_ols(bs->y, bs->X, bs->R, bs->q,
+				      bs->b0, NULL, bs->u0, &s2);
 
 #if BDEBUG
     if (1) {
@@ -928,7 +930,10 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     int use_h = 0;
     int i, t, err = 0;
 
-    if (bs->flags & BOOT_PVAL) {
+    if ((bs->flags & BOOT_PVAL) && !resampling_pairs(bs)) {
+	/* no point in doing this if we're resampling
+	   data pairs, since we can't impose H0 
+	*/
 	err = do_restricted_ols(bs);
 	if (err) {
 	    return err;
@@ -1210,7 +1215,11 @@ int bootstrap_analysis (MODEL *pmod, int p, int B,
 	bs->se0 = pmod->sderr[p];
 	bs->test0 = pmod->coeff[p] / pmod->sderr[p];
 	if (bs->flags & BOOT_PVAL) {
-	    bs->b_p = 0.0;
+	    if (opt & OPT_X) {
+		bs->b_p = pmod->coeff[p];
+	    } else {
+		bs->b_p = 0.0;
+	    }
 	} else {
 	    bs->b_p = bs->point;
 	}
