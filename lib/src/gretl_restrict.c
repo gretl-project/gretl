@@ -2380,6 +2380,7 @@ static int test_restriction_set (gretl_restriction *rset, PRN *prn)
 static int bootstrap_zero_restriction (gretl_restriction *rset,
 				       MODEL *pmod,
 				       const DATASET *dset,
+				       int method,
 				       PRN *prn)
 {
     rrow *r = rset->rows[0];
@@ -2390,6 +2391,15 @@ static int bootstrap_zero_restriction (gretl_restriction *rset,
     if (rset->opt & OPT_S) {
 	/* silent */
 	bopt |= OPT_S;
+    }
+
+    if (method == BOOT_METHOD_PAIRS) {
+	bopt |= OPT_X;
+    } else if (method == BOOT_METHOD_WILD_R ||
+	       method == BOOT_METHOD_WILD_M) {
+	bopt |= OPT_W;
+    } else if (method == BOOT_METHOD_PARAMETRIC) {
+	bopt |= OPT_N;
     }
 
     gretl_restriction_get_boot_params(&B, &bopt);
@@ -2424,6 +2434,29 @@ static int is_simple_zero_restriction (gretl_restriction *rset)
     }
 }
 
+static int get_restriction_boot_method (int *method)
+{
+    const char *s = get_optval_string(RESTRICT, OPT_B);
+    int err = 0;
+
+    if (s != NULL) {
+	if (!strcmp(s, "pairs")) {
+	    *method = BOOT_METHOD_PAIRS;
+	} else if (!strcmp(s, "wild")) {
+	    *method = BOOT_METHOD_WILD_R;
+	} else if (!strcmp(s, "wild-mammen")) {
+	    *method = BOOT_METHOD_WILD_M;
+	} else if (!strcmp(s, "normal")) {
+	    *method = BOOT_METHOD_PARAMETRIC;
+	} else if (strcmp(s, "residuals")) {
+	    gretl_errmsg_sprintf(_("field '%s' in command is invalid"), s);
+	    err = E_DATA;
+	}
+    }
+
+    return err;
+}
+
 static int do_single_equation_test (ExecState *state,
 				    gretl_restriction *rset,
 				    const DATASET *dset,
@@ -2441,14 +2474,21 @@ static int do_single_equation_test (ExecState *state,
     if (rset->opt & OPT_B) {
 	/* bootstrapping, if possible */
 	MODEL *pmod = rset->obj;
+	int method = 1;
 	
 	err = check_bootstrap(pmod, prn);
+
+	if (!err) {
+	    err = get_restriction_boot_method(&method);
+	}
+	
 	if (err) {
 	    return err;
 	}
 
 	if (is_simple_zero_restriction(rset)) {
-	    err = bootstrap_zero_restriction(rset, pmod, dset, prn);
+	    err = bootstrap_zero_restriction(rset, pmod, dset,
+					     method, prn);
 	} else {
 	    err = test_restriction_set(rset, prn);
 	    if (!err && rset->R->cols != pmod->ncoeff) {
@@ -2458,7 +2498,8 @@ static int do_single_equation_test (ExecState *state,
 		rset->test /= rset->g;
 		err = bootstrap_test_restriction(pmod, rset->R, rset->q,
 						 rset->test, rset->g, 
-						 dset, rset->opt, prn);
+						 dset, rset->opt,
+						 method, prn);
 	    }
 	}
     } else {

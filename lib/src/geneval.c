@@ -8974,7 +8974,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	double alpha = NADBL;
 
 	if (k < 1 || k > 5) {
-	    n_args_error(k, 4, t->t, p);
+	    n_args_error(k, 5, t->t, p);
 	} 
 	
 	for (i=0; i<k && !p->err; i++) {
@@ -9004,7 +9004,35 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }	    
 	    ret->v.m = last_model_get_boot_ci(cnum, p->dset, B, alpha, method,
 					      studentize, &p->err);
-	} 	
+	}
+    } else if (t->t == F_BOOTPVAL) {
+	int cnum = -1, method = 1, B = 0;
+
+	if (k < 1 || k > 3) {
+	    n_args_error(k, 3, t->t, p);
+	} 
+	
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i == 0) {
+		cnum = node_get_int(e, p);
+	    } else if (!empty_or_num(e)) {
+		node_type_error(t->t, i+1, NUM, e, p);
+	    } else if (i == 1) {
+		B = node_get_int(e, p);
+	    } else {
+		method = node_get_int(e, p);
+	    }
+	}
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
+	if (!p->err) {
+	    ret->v.xval = last_model_get_boot_pval(cnum, p->dset, B,
+						   method, &p->err);
+	}
     } else if (t->t == HF_CLOGFI) {
 	const char *dfname = NULL;
 	gretl_matrix *z = NULL;
@@ -11552,6 +11580,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_QUADTAB:
     case F_QLRPVAL:
     case F_BOOTCI:
+    case F_BOOTPVAL:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);

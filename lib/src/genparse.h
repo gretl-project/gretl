@@ -413,6 +413,7 @@ enum {
     F_ISOCONV,
     F_QLRPVAL,
     F_BOOTCI,
+    F_BOOTPVAL,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };

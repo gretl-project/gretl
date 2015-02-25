@@ -1460,6 +1460,26 @@ gretl_matrix *last_model_get_boot_ci (int cnum,
     return ret;
 }
 
+double last_model_get_boot_pval (int cnum,
+				 const DATASET *dset,
+				 int B,
+				 int method,
+				 int *err)
+{
+    stacker *smatch = find_smatch(NULL);
+    double ret = NADBL;
+
+    if (smatch == NULL || smatch->type != GRETL_OBJ_EQN) {
+	*err = E_DATA;
+    } else {
+	MODEL *pmod = smatch->ptr;
+
+	ret = bootstrap_pvalue(pmod, dset, cnum, B, method, err);
+    }
+
+    return ret;
+}
+
 void *last_model_get_data (const char *key, GretlType *type, 
 			   int *size, int *err)
 {

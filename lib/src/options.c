@@ -459,7 +459,7 @@ struct gretl_option gretl_opts[] = {
     { QUIT,     OPT_X, "exit", 0 },
     { RESET,    OPT_C, "cubes-only", 0 },
     { RESET,    OPT_R, "squares-only", 0 },
-    { RESTRICT, OPT_B, "bootstrap", 0 },
+    { RESTRICT, OPT_B, "bootstrap", 1 },
     { RESTRICT, OPT_F, "full", 0 },
     { RESTRICT, OPT_J, "jitter", 0 },
     { RESTRICT, OPT_V, "verbose", 0 },

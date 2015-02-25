@@ -142,6 +142,11 @@ gretl_matrix *last_model_get_boot_ci (int cnum, const DATASET *dset,
 				      int method, int studentize,
 				      int *err);
 
+double last_model_get_boot_pval (int cnum,
+				 const DATASET *dset,
+				 int B, int method,
+				 int *err);
+
 void *last_model_get_data (const char *key, GretlType *type, 
 			   int *size, int *err);
 

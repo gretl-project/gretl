@@ -437,6 +437,7 @@ struct str_table funcs[] = {
     { F_PUTARRAY,  "putarray" },
     { F_DOTWRITE,  "dotwrite" },
     { F_BOOTCI,    "bootci" },
+    { F_BOOTPVAL,  "bootpval" },
     { 0,           NULL }
 };
 

@@ -1187,41 +1187,53 @@
 	<li>
 	  <para>
 	    The sort of analysis to perform.  The default (95 percent)
-	    confidence interval is based directly on the quantiles of the
-	    bootstrap coefficient estimates.  The
+	    confidence interval is based directly on the quantiles of
+	    the bootstrap coefficient estimates.  The
 	    <quote>studentized</quote> version is as per Davidson and
-	    MacKinnon's <book>Economic Theory and Methods</book> (ETM),
-	    chapter 5: at each bootstrap replication a
-	    <math>t</math>-ratio is formed as (a) the difference
-	    between the current and the baseline coefficient estimate,
-	    divided by (b) the baseline estimated standard error. Then the
-	    confidence interval is formed based on the quantiles of this
-	    t-ratio, as explained in ETM.  The P-value option is based on
-	    the distribution of the bootstrap <math>t</math>-ratio:
-	    it is the proportion of the replications where the absolute
+	    MacKinnon's <cite key="davidson-mackinnon04">Economic
+	    Theory and Methods</cite> (ETM), chapter 5: at each
+	    bootstrap replication a <math>t</math>-ratio is formed as
+	    (a) the difference between the current and the baseline
+	    coefficient estimate, divided by (b) the baseline
+	    estimated standard error. Then the confidence interval is
+	    formed based on the quantiles of this t-ratio, as
+	    explained in ETM.  The P-value option is based on the
+	    distribution of the bootstrap <math>t</math>-ratio: it is
+	    the proportion of the replications where the absolute
 	    value of this statistic exceeds the absolute value of the
-	    baseline <math>t</math>-ratio. 
+	    baseline <math>t</math>-ratio.
 	  </para>
 	</li>
 	<li>
-	  <para>Resampled residuals versus simulate normal errors. In the
-	    first case the original residuals (rescaled as suggested in
-	    ETM) are resampled with replacement.  In the second case
-	    pseudo-random normal values are generated with the original
-	    residual variance.
+	  <para>
+	    The bootstrap method. Under the first option the residuals
+	    from the original estimation are resampled with
+	    replacement (after rescaling as suggested in ETM). Under
+	    the second, resampling with replacement is performed on
+	    <quote>pairs</quote> or <quote>cases</quote>; that is, the
+	    <math>y</math>, <math>X</math> data rows. In the third
+	    option the original residuals are first transformed as per
+	    <cite key="davidson-flachaire01">Davidson and Flachaire
+	    (2001)</cite>, then on each bootstrap replication each
+	    transformed residual is multiplied by either 1 or
+	    &minus;1, with probability 0.5 in either case.  In the
+	    final option pseudo-random normal values are generated
+	    with the original residual variance.
 	  </para>
 	</li>
 	<li>
-	  <para>The number of replications to perform. Note that when
+	  <para>
+	    The number of replications to perform. Note that when
 	    you're constructing a 95 percent confidence interval it is
 	    desirable that 0.05(<math>B</math> + 1)/2 is an integer
-	    (where <math>B</math> is the number of replications).
-	    So gretl may adjust the chosen number of replications to
+	    (where <math>B</math> is the number of replications).  So
+	    gretl may adjust the chosen number of replications to
 	    ensure this is the case.
 	  </para>
 	</li>
 	<li>
-	  <para>Whether or not to produce a graph of the bootstrap
+	  <para>
+	    Whether or not to produce a graph of the bootstrap
 	    distribution. This option employs gretl's kernel density
 	    estimation facility.
 	  </para>

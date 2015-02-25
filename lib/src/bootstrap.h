@@ -19,6 +19,14 @@
 
 #ifndef BOOTSTRAP_H
 #define BOOTSTRAP_H
+
+typedef enum {
+    BOOT_METHOD_RESIDUALS = 1,
+    BOOT_METHOD_PAIRS,
+    BOOT_METHOD_WILD_R,
+    BOOT_METHOD_WILD_M,
+    BOOT_METHOD_PARAMETRIC
+} BootMethod;
  
 int bootstrap_analysis (MODEL *pmod, int p, int B, 
 			double alpha, const DATASET *dset,
@@ -32,10 +40,17 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
 				   int studentize,
 				   int *err);
 
+double bootstrap_pvalue (const MODEL *pmod,
+			 const DATASET *dset,
+			 int p, int B,
+			 int method,
+			 int *err);
+
 int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R, 
 				gretl_matrix *q, double test, int g,
 				const DATASET *dset, 
-				gretlopt opt, PRN *prn);
+				gretlopt opt, int method,
+				PRN *prn);
 
 int bootstrap_ok (int ci);
 

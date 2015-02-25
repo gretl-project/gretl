@@ -39,7 +39,8 @@ enum {
     BOOT_FREE_RQ     = 1 << 10,  /* free restriction matrices */
     BOOT_SAVE        = 1 << 11, /* save results vector */
     BOOT_VERBOSE     = 1 << 12, /* verbose output */
-    BOOT_SILENT      = 1 << 13  /* suppress printed output */
+    BOOT_SILENT      = 1 << 13, /* suppress printed output */
+    BOOT_WILD_M      = 1 << 14  /* using Mammen form for wild bootstrap */
 };
 
 #define resampling_u(b)     (b->flags & BOOT_RESAMPLE_U)
@@ -488,28 +489,55 @@ static void make_resampled_y (boot *bs, int *z)
     }
 }
 
-/* Davidson-Flachaire method: the bootstrap value
-   of the dependent variable is
+/* Davidson-Flachaire: the bootstrap value of the 
+   dependent variable is
 
    y^*_t = X_t\hat{\beta} + f(\hat{u}_t) v^*_t
 
    where f(\hat{u}_t) = \hat{u}_t / (1 - h_t)^{1/2},
-   and v^*_t = 1 with probability 1/2 and -1 with
-   probability 1/2. The h_t values are the diagonal
-   elements of the hat matrix.
+   for h_t the diagonal elements of the "hat" matrix.
+
+   The v^*_t values are either:
+
+   1 with probability 0.5 and -1 with probability 0.5
+   (Rademacher variables), or
+
+   -(sqrt(5)-1)/2 with probability (sqrt(5)+1)/(2*sqrt(5))
+   and (sqrt(5)+1)/2 with the complementary probability
+   (Mammen, 1993). The latter case is, approximately:
+   -0.62 with probability 0.73 and 1.62 with probability
+   0.28. (Mammen, 1993)
 */
 
-static void make_wild_y (boot *bs, int *z, gretl_matrix *h)
+static void make_wild_y (boot *bs, int *z, double *xz)
 {
+    static double pminus, mminus, mplus;
     double xti;
     int i, t, p;
 
-    gretl_rand_int_minmax(z, bs->T, 0, 1);
+    if (bs->flags & BOOT_WILD_M) {
+	/* Mammen */
+	if (pminus == 0.0) {
+	    double r5 = sqrt(5.0);
+
+	    pminus = (r5 + 1)/(2*r5);
+	    mminus = -(r5 - 1)/2.0;
+	    mplus = (r5 + 1)/2.0;
+	}
+	gretl_rand_uniform(xz, 0, bs->T - 1);
+    } else {
+	/* Rademacher */
+	gretl_rand_int_minmax(z, bs->T, 0, 1);
+    }
 
     /* construct y recursively */
     for (t=0; t<bs->X->rows; t++) {
-	bs->y->val[t] = bs->u0->val[t] / sqrt(1 - h->val[t]);
-	bs->y->val[t] *= z[t] ? 1 : -1;
+	bs->y->val[t] = bs->u0->val[t];
+	if (bs->flags & BOOT_WILD_M) {
+	    bs->y->val[t] *= (xz[t] < pminus)? mminus : mplus;
+	} else {
+	    bs->y->val[t] *= z[t] ? 1 : -1;
+	}
 	for (i=0; i<bs->X->cols; i++) {
 	    p = ldv_lag(bs, i);
 	    if (p > 0 && t >= p) {
@@ -725,18 +753,25 @@ static void bs_calc_ci (boot *bs, double *xi, gretl_matrix *ci)
 
 /* Davidson and MacKinnon, ETM, p. 163 */
 
-static void rescale_residuals (boot *bs)
+static void rescale_residuals (boot *bs, gretl_matrix *h)
 {
-    double s;
-    int k = bs->k;
+    if (h != NULL) {
+	int t;
 
-    if (bs->flags & BOOT_PVAL) {
-	k--;
+	for (t=0; t<bs->T; t++) {
+	    bs->u0->val[t] /= sqrt(1.0 - h->val[t]);
+	}
+    } else {
+	int k = bs->k;
+	double s;
+
+	if (bs->flags & BOOT_PVAL) {
+	    k--;
+	}
+
+	s = sqrt((double) bs->T / (bs->T - k));
+	gretl_matrix_multiply_by_scalar(bs->u0, s);
     }
-
-    s = sqrt((double) bs->T / (bs->T - k));
-
-    gretl_matrix_multiply_by_scalar(bs->u0, s);
 }
 
 /* we do the following on each replication if we're bootstrapping
@@ -922,7 +957,8 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     gretl_matrix *yh = NULL;    /* fitted values */
     gretl_matrix *V = NULL;     /* covariance matrix */
     double *xi = NULL;          /* recorder for results */
-    int *z = NULL;              /* resampling array */
+    int *z = NULL;              /* integer resampling array */
+    double *xz = NULL;          /* random doubles */
     int k = bs->k;
     int p = bs->p;
     int tail = 0;
@@ -977,15 +1013,19 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	}
     }
 
-    if (resampling(bs) || wild_boot(bs)) {
+    if (bs->flags & BOOT_WILD_M) {
+	/* wild bootstrap with Mammen distribution */
+	xz = malloc(bs->T * sizeof *xz);
+	if (xz == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    } else if (resampling(bs) || wild_boot(bs)) {
 	/* random integer array */
 	z = malloc(bs->T * sizeof *z);
 	if (z == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
-	}
-	if (resampling_u(bs)) {
-	    rescale_residuals(bs);
 	}
     }
 
@@ -1009,6 +1049,10 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 
     err = boot_calc_1(bs, XTX, XTXI, Q, R, h);
 
+    if (resampling_u(bs) || wild_boot(bs)) {
+	rescale_residuals(bs, h);
+    }
+
     if (!err && verbose(bs)) {
 	if (boot_Ftest(bs)) {
 	    pputc(prn, '\n');
@@ -1031,7 +1075,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	} else if (resampling_pairs(bs)) {
 	    make_resampled_pairs(bs, z);
 	} else if (wild_boot(bs)) {
-	    make_wild_y(bs, z, h);
+	    make_wild_y(bs, z, xz);
 	} else {
 	    make_normal_y(bs);
 	}
@@ -1046,7 +1090,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	    if (bs->ldv != NULL) {
 		recreate_ldv_X(bs);
 	    }
-	    err = boot_calc_1(bs, XTX, XTXI, Q, R, h);
+	    err = boot_calc_1(bs, XTX, XTXI, Q, R, NULL);
 	}
 
 	if (!err) {
@@ -1138,6 +1182,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     gretl_matrix_free(V);
 
     free(z);
+    free(xz);
     free(xi);
     
     return err;
@@ -1231,6 +1276,30 @@ int bootstrap_analysis (MODEL *pmod, int p, int B,
     return err;
 }
 
+static int opt_from_method (gretlopt *opt, int *mammen, int method)
+{
+    int err = 0;
+
+    if (method == BOOT_METHOD_PAIRS) {
+	/* resample pairs */
+	*opt |= OPT_X;
+    } else if (method == BOOT_METHOD_WILD_R) {
+	/* wild, Rademacher */
+	*opt |= OPT_W;
+    } else if (method == BOOT_METHOD_WILD_M) {
+	/* wild, Mammen */
+	*opt |= OPT_W;
+	*mammen = 1;
+    } else if (method == BOOT_METHOD_PARAMETRIC) {
+	/* normal errors */
+	*opt |= OPT_N;
+    } else if (method != BOOT_METHOD_RESIDUALS) {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
 gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
 				   const DATASET *dset,
 				   int p, int B,
@@ -1241,6 +1310,7 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
 {
     gretl_matrix *ci = NULL;
     gretlopt opt = OPT_S; /* silent */
+    int mammen = 0;
     boot *bs = NULL;
 
     if (!bootstrap_ok(pmod->ci)) {
@@ -1261,23 +1331,14 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
 	return NULL;
     }
 
-    if (method == 2) {
-	/* resample pairs */
-	opt |= OPT_X;
-    } else if (method == 3) {
-	/* wild */
-	opt |= OPT_W;
-    } else if (method == 4) {
-	/* normal errors */
-	opt |= OPT_N;
-    } else if (method != 1) {
-	*err = E_DATA;
+    *err = opt_from_method(&opt, &mammen, method);
+    if (*err) {
 	return NULL;
     }
 
     if (studentize) {
 	opt |= OPT_T;
-    }
+    }    
 
     ci = gretl_zero_matrix_new(1, 2);
     if (ci == NULL) {
@@ -1290,6 +1351,10 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
     }
 
     bs = boot_new(pmod, dset, B, alpha, opt, err);
+
+    if (mammen) {
+	bs->flags |= BOOT_WILD_M;
+    }
 
     if (!*err) {
 	bs->p = p;  /* coeff to examine */
@@ -1311,6 +1376,69 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
     return ci;
 }
 
+double bootstrap_pvalue (const MODEL *pmod,
+			 const DATASET *dset,
+			 int p, int B,
+			 int method,
+			 int *err)
+{
+    double pval = NADBL;
+    gretlopt opt = OPT_P | OPT_S; /* p-value, silent */
+    int mammen = 0;
+    boot *bs = NULL;
+
+    if (!bootstrap_ok(pmod->ci)) {
+	*err = E_NOTIMP;
+	return NADBL;
+    }
+
+    /* convert coefficient index @p to zero-based */
+    p -= 1;
+
+    if (p < 0 || p >= pmod->ncoeff) {
+	*err = E_DATA;
+	return NADBL;
+    }
+
+    *err = opt_from_method(&opt, &mammen, method);
+    if (*err) {
+	return NADBL;
+    }   
+
+    bs = boot_new(pmod, dset, B, 0.0, opt, err);
+
+    if (!*err) {
+	*err = bs_add_restriction(bs, p);
+    }
+
+    if (mammen) {
+	bs->flags |= BOOT_WILD_M;
+    }
+
+    if (!*err) {
+	bs->p = p;  /* coeff to examine */
+	bs->SE = pmod->sigma;
+	bs->point = pmod->coeff[p];
+	bs->se0 = pmod->sderr[p];
+	bs->test0 = pmod->coeff[p] / pmod->sderr[p];
+	bs->b_p = bs->point;
+	if (opt & OPT_X) {
+	    bs->b_p = pmod->coeff[p];
+	} else {
+	    bs->b_p = 0.0;
+	}
+	*err = real_bootstrap(bs, NULL, NULL);
+    }
+
+    if (!*err) {
+	pval = bs->pval;
+    }
+
+    boot_destroy(bs);
+
+    return pval;
+}
+
 /**
  * bootstrap_test_restriction:
  * @pmod: model to be examined.
@@ -1320,6 +1448,7 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
  * @g: number of restrictions.
  * @dset: pointer to dataset.
  * @opt: options passed to the restrict command.
+ * @method: bootstrap method.
  * @prn: printing struct.
  *
  * Calculates a bootstrap p-value for the restriction on the
@@ -1334,7 +1463,8 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
 int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R, 
 				gretl_matrix *q, double test, int g,
 				const DATASET *dset, 
-				gretlopt opt, PRN *prn)
+				gretlopt opt, int method,
+				PRN *prn)
 {
     gretlopt bopt = OPT_P | OPT_R | OPT_F;
     boot *bs = NULL;
@@ -1355,6 +1485,8 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 	/* verbose */
 	bopt |= OPT_V;
     }
+
+    /* FIXME handling of @method */
 
     gretl_restriction_get_boot_params(&B, &bopt);
 
