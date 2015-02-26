@@ -411,6 +411,7 @@ static boot *boot_new (const MODEL *pmod,
     bs->vi = gretl_model_get_data(pmod, "vcv_info");
 
     if (bs->vi != NULL && bs->vi->vmaj == VCV_HAC) {
+	bs->flags |= BOOT_HAC;
 	if (dset->pd > 1 && dset->pd < pmod->nobs/5) {
 	    /* for testing purposes */
 	    bs->blocklen = dset->pd;
@@ -487,10 +488,17 @@ resample_vector (const gretl_matrix *u0, gretl_matrix *u, int *z)
     }
 }
 
+#define HAC_DEBUG 0
+
 static void make_resampled_y (boot *bs, int *z)
 {
     double xti;
     int i, t, p;
+
+#if HAC_DEBUG
+    /* check replication on identical data */
+    return;
+#endif    
 
     /* resample the residuals, into y */
     if (bs->blocklen > 1) {
@@ -1019,6 +1027,11 @@ static double boot_hac_tau (boot *bs,
 	se = sqrt(gretl_matrix_get(V, j, j));
 	tau = (b->val[j] - bs->bp0) / se;
 	gretl_matrix_free(XOX);
+#if HAC_DEBUG
+	fprintf(stderr, "b, se(b), tau = %g, %g, %g\n",
+		b->val[j], se, tau);
+#endif    
+	
     }
 
     return tau;
