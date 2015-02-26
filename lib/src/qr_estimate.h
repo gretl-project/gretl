@@ -24,6 +24,13 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt);
 
 int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt);
 
+int qr_matrix_hccme (const gretl_matrix *X,
+		     const gretl_matrix *uhat,
+		     const gretl_matrix *h,
+		     const gretl_matrix *XTXi,
+		     gretl_matrix *VCV,
+		     int hc_version);
+
 double hac_weight (int kern, int h, int i);
 
 double qs_hac_weight (double bt, int i);
@@ -38,7 +45,8 @@ int newey_west_bandwidth (const gretl_matrix *f,
 			  int kern, int prewhitened,
 			  int *h, double *bt);
 
-gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
+gretl_matrix *HAC_XOX (const gretl_matrix *uhat,
+		       const gretl_matrix *X,
 		       VCVInfo *vi, int *err);
 
 #endif  /* QR_ESTIMATE_H */
