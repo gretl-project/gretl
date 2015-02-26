@@ -49,7 +49,8 @@ enum {
 #define resampling(b)       (b->flags & (BOOT_RESAMPLE_U | BOOT_PAIRS))
 #define wild_boot(b)        (b->flags & BOOT_WILD)
 #define verbose(b)          (b->flags & BOOT_VERBOSE)
-#define boot_Ftest(b)       (b->flags & BOOT_F_FORM)
+#define doing_Ftest(b)      (b->flags & BOOT_F_FORM)
+#define tau_wanted(b)       (b->flags & (BOOT_PVAL | BOOT_STUDENTIZE))
 
 typedef struct boot_ boot;
 typedef struct ldvinfo_ ldvinfo;
@@ -943,13 +944,16 @@ static int boot_calc_2 (boot *bs,
 	
 	for (t=0; t<bs->T; t++) {
 	    ut = bs->y->val[t] - yh->val[t];
-	    SSR += ut * ut;
 	    if (bs->hc_version >= 0) {
 		/* re-use to hold squared residuals */
 		yh->val[t] = ut * ut;
+	    } else {
+		SSR += ut * ut;
 	    }
-	} 
-	*ps2 = SSR / (bs->T - bs->k);
+	}
+	if (bs->hc_version < 0) {
+	    *ps2 = SSR / (bs->T - bs->k);
+	}
     }
 
     return err;
@@ -1093,7 +1097,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	}
     }	
 
-    if (bs->hc_version >= 0 || (bs->flags & BOOT_F_FORM)) {
+    if (bs->hc_version >= 0 || doing_Ftest(bs)) {
 	/* covariance matrix needed */
 	V = gretl_matrix_alloc(k, k);
 	if (V == NULL) {
@@ -1109,7 +1113,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     }
 
     if (!err && verbose(bs)) {
-	if (boot_Ftest(bs)) {
+	if (doing_Ftest(bs)) {
 	    pputc(prn, '\n');
 	} else {
 	    pprintf(prn, "%13s %13s\n", "b", "tval");
@@ -1119,7 +1123,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     /* carry out B replications */
 
     for (i=0; i<bs->B && !err; i++) {
-	double s2, test;
+	double s2, tau = 0;
 
 #if BDEBUG > 1
 	fprintf(stderr, "real_bootstrap: round %d\n", i);
@@ -1157,7 +1161,9 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	}	
 
 	/* F-test, if wanted */
-	if (bs->flags & BOOT_F_FORM) {
+	if (doing_Ftest(bs)) {
+	    double test;
+	    
 	    if (bs->hc_version < 0) {
 		/* otherwise @V should already hold HCCME */
 		gretl_matrix_copy_values(V, XTXI);
@@ -1176,21 +1182,23 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	    continue;
 	}
 
-	/* bootstrap t-statistic */
-	if (bs->hc_version >= 0) {
-	    test = boot_hc_tau(bs, XTXI, b, h, d, V, &err);
-	} else {
-	    test = boot_tau(bs, XTXI, b, s2);
-	}
-
-	if (verbose(bs)) {
-	    pprintf(prn, "%13g %13g\n", b->val[p], test);
+	if (tau_wanted(bs)) {
+	    /* bootstrap t-statistic */
+	    if (bs->hc_version >= 0) {
+		tau = boot_hc_tau(bs, XTXI, b, h, d, V, &err);
+	    } else {
+		tau = boot_tau(bs, XTXI, b, s2);
+	    }
+	    if (verbose(bs)) {
+		pprintf(prn, "%13g %13g\n", b->val[p], tau);
+	    }
 	}
 
 	if (bs->flags & BOOT_CI) {
+	    /* doing a confidence interval */
 	    if (bs->flags & BOOT_STUDENTIZE) {
 		/* record bootstrap t-stat */
-		xi[i] = test;
+		xi[i] = tau;
 	    } else {
 		/* record bootstrap coeff */
 		xi[i] = b->val[p];
@@ -1198,9 +1206,9 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	} else {
 	    /* doing p-value */
 	    if (bs->flags & (BOOT_GRAPH | BOOT_SAVE)) {
-		xi[i] = test;
+		xi[i] = tau;
 	    }
-	    if (fabs(test) > fabs(bs->test0)) {
+	    if (fabs(tau) > fabs(bs->test0)) {
 		tail++;
 	    }
 	}
