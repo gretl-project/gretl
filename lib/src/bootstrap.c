@@ -1015,7 +1015,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     gretl_matrix *d = NULL;     /* workspace */
     gretl_matrix *b = NULL;     /* re-estimated coeffs */
     gretl_matrix *V = NULL;     /* covariance matrix */
-    double *xi = NULL;          /* recorder for results */
+    double *r = NULL;           /* recorder for results */
     int *z = NULL;              /* integer resampling array */
     double *xz = NULL;          /* random doubles */
     int k = bs->k;
@@ -1023,7 +1023,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     int tail = 0;
     int use_qr = 0;
     int use_h = 0;
-    int i, err = 0;
+    int j, err = 0;
 
     if ((bs->flags & BOOT_PVAL) && !resampling_pairs(bs)) {
 	/* no point in doing this if we're resampling
@@ -1090,8 +1090,8 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 
     if (bs->flags & (BOOT_CI | BOOT_GRAPH | BOOT_SAVE)) {
 	/* array for storing results */
-	xi = malloc(bs->B * sizeof *xi);
-	if (xi == NULL) {
+	r = malloc(bs->B * sizeof *r);
+	if (r == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	}
@@ -1122,11 +1122,11 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 
     /* carry out B replications */
 
-    for (i=0; i<bs->B && !err; i++) {
+    for (j=0; j<bs->B && !err; j++) {
 	double s2, tau = 0;
 
 #if BDEBUG > 1
-	fprintf(stderr, "real_bootstrap: round %d\n", i);
+	fprintf(stderr, "real_bootstrap: round %d\n", j);
 #endif
 
 	if (resampling_u(bs)) {
@@ -1160,24 +1160,27 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	    break;
 	}	
 
-	/* F-test, if wanted */
 	if (doing_Ftest(bs)) {
-	    double test;
+	    double test = 0;
 	    
-	    if (bs->hc_version < 0) {
-		/* otherwise @V should already hold HCCME */
+	    if (bs->hc_version >= 0) {
+		err = qr_matrix_hccme(bs->X, h, XTXI, d,
+				      V, bs->hc_version);
+	    } else {
 		gretl_matrix_copy_values(V, XTXI);
 		gretl_matrix_multiply_by_scalar(V, s2);
 	    }
-	    test = bs_F_test(b, V, bs, &err);
-	    if (verbose(bs)) {
-		print_test_round(bs, i, test, prn);
+	    if (!err) {
+		test = bs_F_test(b, V, bs, &err);
+		if (verbose(bs)) {
+		    print_test_round(bs, j, test, prn);
+		}
 	    }
 	    if (test > bs->test0) {
 		tail++;
 	    }
 	    if (bs->flags & (BOOT_GRAPH | BOOT_SAVE)) {
-		xi[i] = test;
+		r[j] = test;
 	    }
 	    continue;
 	}
@@ -1198,15 +1201,15 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	    /* doing a confidence interval */
 	    if (bs->flags & BOOT_STUDENTIZE) {
 		/* record bootstrap t-stat */
-		xi[i] = tau;
+		r[j] = tau;
 	    } else {
 		/* record bootstrap coeff */
-		xi[i] = b->val[p];
+		r[j] = b->val[p];
 	    }
 	} else {
 	    /* doing p-value */
 	    if (bs->flags & (BOOT_GRAPH | BOOT_SAVE)) {
-		xi[i] = tau;
+		r[j] = tau;
 	    }
 	    if (fabs(tau) > fabs(bs->test0)) {
 		tail++;
@@ -1216,16 +1219,16 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 
     if (!err) {
 	if (ci != NULL) {
-	    bs_calc_ci(bs, xi, ci);
+	    bs_calc_ci(bs, r, ci);
 	} else if (bs->flags & BOOT_PVAL) {
 	    bs->pval = (double) tail / bs->B;
 	    record_test_result(bs->test0, bs->pval, _("bootstrap test"));
 	}
 	if (bs->flags & BOOT_SAVE) {
-	    bs_store_result(bs, xi);
+	    bs_store_result(bs, r);
 	}
 	if (!(bs->flags & BOOT_SILENT)) {
-	    bs_print_result(bs, xi, tail, prn);
+	    bs_print_result(bs, r, tail, prn);
 	}
     }
 
@@ -1243,7 +1246,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 
     free(z);
     free(xz);
-    free(xi);
+    free(r);
     
     return err;
 }
