@@ -1015,12 +1015,15 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
    been estimated via matrix methods. On input the
    vector @d should hold the squared residuals, and
    @h the diagonal elements of the "hat" matrix.
+   On return @d will be overwritten (used as work-
+   space), and if successful @V will contain the
+   requested HCCME variant.
 */
 
 int qr_matrix_hccme (const gretl_matrix *X,
-		     const gretl_matrix *d,
 		     const gretl_matrix *h,
 		     const gretl_matrix *XTXi,
+		     gretl_matrix *d,
 		     gretl_matrix *VCV,
 		     int hc_version)
 {

@@ -966,7 +966,7 @@ static double boot_hc_tau (boot *bs,
     double se, tau = NADBL;
     int j = bs->p;
 
-    *err = qr_matrix_hccme(bs->X, d, h, XTXI,
+    *err = qr_matrix_hccme(bs->X, h, XTXI, d,
 			   V, bs->hc_version);
     if (!*err) {
 	se = sqrt(gretl_matrix_get(V, j, j));
