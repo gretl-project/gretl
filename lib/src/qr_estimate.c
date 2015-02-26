@@ -728,29 +728,49 @@ static gretl_matrix *newey_west_H (const gretl_matrix *X,
 
 /* HAC_XOX: compute the "sandwich filling" for the HAC estimator */
 
-gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
-		       VCVInfo *vi, int *err)
+gretl_matrix *HAC_XOX (const gretl_matrix *uhat,
+		       const gretl_matrix *X,
+		       VCVInfo *vi, int use_prior,
+		       int *err)
 {
     gretl_matrix *XOX = NULL;
-    gretl_matrix*Wtj = NULL;
+    gretl_matrix *Wtj = NULL;
     gretl_matrix *Gj = NULL;
     gretl_matrix *H = NULL;
     gretl_matrix *A = NULL;
     gretl_matrix *w = NULL;
-    int prewhiten = libset_get_bool(PREWHITEN);
-    int data_based = data_based_hac_bandwidth();
-    int kern = libset_get_int(HAC_KERNEL);
+    int prewhiten;
+    int data_based;
+    int kern;
     int T = X->rows;
     int k = X->cols;
     int p, j, t;
     double bt = 0;
+
+    if (use_prior) {
+	kern = vi->vmin;
+	prewhiten = vi->flags != 0; /* ? */
+	if (kern == KERNEL_QS) {
+	    bt = vi->bw;
+	    p = T - 1;
+	} else {
+	    p = vi->order;
+	}
+	data_based = 0;
+    } else {
+	kern = libset_get_int(HAC_KERNEL);
+	data_based = data_based_hac_bandwidth();
+	prewhiten = libset_get_bool(PREWHITEN);
+    }
 
 #if NW_DEBUG
     fprintf(stderr, "*** HAC: kern = %d, prewhiten = %d ***\n", 
 	    kern, prewhiten);
 #endif
 
-    if (prewhiten || data_based) {
+    if (use_prior) {
+	H = newey_west_H(X, uhat, NULL);
+    } else if (prewhiten || data_based) {
 	H = newey_west_H(X, uhat, &w);
     } else {
 	H = newey_west_H(X, uhat, NULL);
@@ -778,16 +798,18 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
 
     /* determine the bandwidth setting */
 
-    if (data_based) {
-	*err = newey_west_bandwidth(H, w, kern, prewhiten, &p, &bt);
-	if (*err) {
-	    goto bailout;
+    if (!use_prior) {
+	if (data_based) {
+	    *err = newey_west_bandwidth(H, w, kern, prewhiten, &p, &bt);
+	    if (*err) {
+		goto bailout;
+	    }
+	} else if (kern == KERNEL_QS) {
+	    bt = libset_get_double(QS_BANDWIDTH);
+	    p = T - 1;
+	} else {
+	    p = get_hac_lag(T);
 	}
-    } else if (kern == KERNEL_QS) {
-	bt = libset_get_double(QS_BANDWIDTH);
-	p = T - 1;
-    } else {
-	p = get_hac_lag(T);
     }
 
     if (!*err) {
@@ -822,16 +844,18 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
 	hac_recolor(XOX, A);
     }
 
-    vi->vmaj = VCV_HAC;
-    vi->vmin = kern;
-    vi->flags = prewhiten;
+    if (!use_prior) {
+	vi->vmaj = VCV_HAC;
+	vi->vmin = kern;
+	vi->flags = prewhiten;
 
-    if (kern == KERNEL_QS) {
-	vi->order = 0;
-	vi->bw = bt;
-    } else {
-	vi->order = p;
-	vi->bw = NADBL;
+	if (kern == KERNEL_QS) {
+	    vi->order = 0;
+	    vi->bw = bt;
+	} else {
+	    vi->order = p;
+	    vi->bw = NADBL;
+	}
     }
 
  bailout:
@@ -851,8 +875,8 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
 }
 
 /* Calculate HAC covariance matrix.  Algorithm and (basically)
-   notation taken from Davidson and MacKinnon (DM), Econometric Theory
-   and Methods, chapter 9.
+   notation taken from Davidson and MacKinnon (DM), Econometric
+   Theory and Methods, chapter 9.
 */
 
 static int qr_make_hac (MODEL *pmod, const DATASET *dset, 
@@ -878,7 +902,7 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
     umat.cols = 1;
     umat.val = pmod->uhat + pmod->t1;
 
-    XOX = HAC_XOX(&umat, X, &vi, &err);
+    XOX = HAC_XOX(&umat, X, &vi, 0, &err);
 
     if (!err) {
 	V = gretl_matrix_alloc(XOX->rows, XOX->rows);

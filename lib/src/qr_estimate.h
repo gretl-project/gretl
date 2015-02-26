@@ -47,6 +47,7 @@ int newey_west_bandwidth (const gretl_matrix *f,
 
 gretl_matrix *HAC_XOX (const gretl_matrix *uhat,
 		       const gretl_matrix *X,
-		       VCVInfo *vi, int *err);
+		       VCVInfo *vi, int use_prior,
+		       int *err);
 
 #endif  /* QR_ESTIMATE_H */

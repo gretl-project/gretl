@@ -41,7 +41,8 @@ enum {
     BOOT_SAVE        = 1 << 11, /* save results vector */
     BOOT_VERBOSE     = 1 << 12, /* verbose output */
     BOOT_SILENT      = 1 << 13, /* suppress printed output */
-    BOOT_WILD_M      = 1 << 14  /* using Mammen form for wild bootstrap */
+    BOOT_WILD_M      = 1 << 14, /* using Mammen form for wild bootstrap */
+    BOOT_HAC         = 1 << 15  /* use HAC estimator in bootstrap */
 };
 
 #define resampling_u(b)     (b->flags & BOOT_RESAMPLE_U)
@@ -51,6 +52,7 @@ enum {
 #define verbose(b)          (b->flags & BOOT_VERBOSE)
 #define doing_Ftest(b)      (b->flags & BOOT_F_FORM)
 #define tau_wanted(b)       (b->flags & (BOOT_PVAL | BOOT_STUDENTIZE))
+#define boot_use_hac(b)     (b->flags & BOOT_HAC)
 
 typedef struct boot_ boot;
 typedef struct ldvinfo_ ldvinfo;
@@ -82,6 +84,7 @@ struct boot_ {
     double a;           /* alpha, for confidence interval */
     double pval;        /* p-value for bootstrap test */
     char vname[VNAMELEN]; /* name of variable analysed */
+    VCVInfo *vi;        /* covariance matrix info from model */
     ldvinfo *ldv;       /* lagged depvar info, if applicable */
 };
 
@@ -405,6 +408,16 @@ static boot *boot_new (const MODEL *pmod,
     bs->a = alpha;
     bs->B = maybe_adjust_B(B, bs->a, bs->flags);
 
+    bs->vi = gretl_model_get_data(pmod, "vcv_info");
+
+    if (bs->vi != NULL && bs->vi->vmaj == VCV_HAC) {
+	if (dset->pd > 1 && dset->pd < pmod->nobs/5) {
+	    /* for testing purposes */
+	    bs->blocklen = dset->pd;
+	    fprintf(stderr, "HAC: setting blocklen = %d\n", bs->blocklen);
+	}
+    }
+
     bs->p = 0;
     bs->g = 0;
 
@@ -481,7 +494,7 @@ static void make_resampled_y (boot *bs, int *z)
 
     /* resample the residuals, into y */
     if (bs->blocklen > 1) {
-	gretl_matrix_block_resample2(bs->y, bs->u0, bs->blocklen, z);
+	gretl_matrix_block_resample2(bs->u0, bs->y, bs->blocklen, z);
     } else {
 	resample_vector(bs->u0, bs->y, z);
     }
@@ -953,16 +966,62 @@ static int boot_calc_2 (boot *bs,
 	    if (bs->hc_version >= 0) {
 		/* re-use to hold squared residuals */
 		yh->val[t] = ut * ut;
+	    } else if (boot_use_hac(bs)) {
+		/* re-use to hold plain residuals */
+		yh->val[t] = ut;
 	    } else {
 		SSR += ut * ut;
 	    }
 	}
-	if (bs->hc_version < 0) {
+	if (bs->hc_version < 0 && !boot_use_hac(bs)) {
 	    *ps2 = SSR / (bs->T - bs->k);
 	}
     }
 
     return err;
+}
+
+static int boot_hac_vcv (boot *bs,
+			 const gretl_matrix *XTXI,
+			 gretl_matrix *d,
+			 gretl_matrix *V)
+{
+    gretl_matrix *XOX;
+    int err = 0;
+
+    XOX = HAC_XOX(d, bs->X, bs->vi, 1, &err);
+
+    if (!err) {
+	gretl_matrix_qform(XTXI, GRETL_MOD_TRANSPOSE, XOX,
+			   V, GRETL_MOD_NONE);
+	gretl_matrix_free(XOX);
+    }
+
+    return err;
+}
+
+static double boot_hac_tau (boot *bs,
+			   const gretl_matrix *XTXI,
+			   const gretl_matrix *b,
+			   gretl_matrix *d,
+			   gretl_matrix *V,
+			   int *err)
+{
+    gretl_matrix *XOX;
+    double se, tau = NADBL;
+    int j = bs->p;
+
+    XOX = HAC_XOX(d, bs->X, bs->vi, 1, err);
+
+    if (!*err) {
+	gretl_matrix_qform(XTXI, GRETL_MOD_TRANSPOSE, XOX,
+			   V, GRETL_MOD_NONE);
+	se = sqrt(gretl_matrix_get(V, j, j));
+	tau = (b->val[j] - bs->bp0) / se;
+	gretl_matrix_free(XOX);
+    }
+
+    return tau;
 }
 
 static double boot_hc_tau (boot *bs,
@@ -1108,7 +1167,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	}
     }	
 
-    if (bs->hc_version >= 0 || doing_Ftest(bs)) {
+    if (bs->hc_version >= 0 || boot_use_hac(bs) || doing_Ftest(bs)) {
 	/* covariance matrix needed */
 	V = gretl_matrix_alloc(k, k);
 	if (V == NULL) {
@@ -1134,7 +1193,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     /* carry out B replications */
 
     for (j=0; j<bs->B && !err; j++) {
-	double s2, tau = 0;
+	double s2 = 0, tau = 0;
 
 #if BDEBUG > 1
 	fprintf(stderr, "real_bootstrap: round %d\n", j);
@@ -1177,6 +1236,8 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	    if (bs->hc_version >= 0) {
 		err = qr_matrix_hccme(bs->X, h, XTXI, d,
 				      V, bs->hc_version);
+	    } else if (boot_use_hac(bs)) {
+		err = boot_hac_vcv(bs, XTXI, d, V);
 	    } else {
 		gretl_matrix_copy_values(V, XTXI);
 		gretl_matrix_multiply_by_scalar(V, s2);
@@ -1200,6 +1261,8 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	    /* bootstrap t-statistic */
 	    if (bs->hc_version >= 0) {
 		tau = boot_hc_tau(bs, XTXI, b, h, d, V, &err);
+	    } else if (boot_use_hac(bs)) {
+		tau = boot_hac_tau(bs, XTXI, b, d, V, &err);
 	    } else {
 		tau = boot_tau(bs, XTXI, b, s2);
 	    }
