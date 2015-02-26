@@ -484,6 +484,25 @@ int gretl_model_get_vcv_type (const MODEL *pmod)
 }
 
 /**
+ * gretl_model_get_hc_version:
+ * @pmod: pointer to model.
+ *
+ * Returns: the "HC" (HCCME) variant employed in @pmod,
+ * or -1 if this does not apply.
+ */
+
+int gretl_model_get_hc_version (const MODEL *pmod)
+{
+    VCVInfo *vi = gretl_model_get_data(pmod, "vcv_info");
+
+    if (vi != NULL && vi->vmaj == VCV_HC) {
+	return vi->vmin;
+    } else {
+	return -1;
+    }
+}
+
+/**
  * gretl_model_get_cluster_var:
  * @pmod: pointer to model.
  *

@@ -1011,43 +1011,37 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
     return err;
 }
 
-/* variant of qr_make_hccme for use when a model has
-   been estimated via matrix methods */
+/* Variant of qr_make_hccme for use when a model has
+   been estimated via matrix methods. On input the
+   vector @d should hold the squared residuals, and
+   @h the diagonal elements of the "hat" matrix.
+*/
 
 int qr_matrix_hccme (const gretl_matrix *X,
-		     const gretl_matrix *uhat,
+		     const gretl_matrix *d,
 		     const gretl_matrix *h,
 		     const gretl_matrix *XTXi,
 		     gretl_matrix *VCV,
 		     int hc_version)
 {
-    gretl_matrix *diag = NULL;
     gretl_matrix *tmp1 = NULL;
     gretl_matrix *tmp2 = NULL;
     int T = X->rows; 
     int k = X->cols;
-    int i, t;
-    int err = 0;
+    int t, err = 0;
 
-    diag = gretl_matrix_alloc(T, 1);
     tmp1 = gretl_matrix_alloc(k, T);
     tmp2 = gretl_matrix_alloc(k, k);
 
-    if (diag == NULL || tmp1 == NULL || tmp2 == NULL) {
-	gretl_matrix_free(diag);
+    if (tmp1 == NULL || tmp2 == NULL) {
 	gretl_matrix_free(tmp1);
 	gretl_matrix_free(tmp2);
 	return E_ALLOC;
     }
 
-    /* fill diag with squared residuals */
-    for (t=0; t<T; t++) {
-	diag->val[t] = uhat->val[t] * uhat->val[t];
-    }
-
     if (hc_version == 1) {
 	for (t=0; t<T; t++) {
-	    diag->val[t] *= (double) T / (T - k);
+	    d->val[t] *= (double) T / (T - k);
 	}
     } else if (hc_version > 1) {
 	/* do the h_t calculations */
@@ -1055,20 +1049,19 @@ int qr_matrix_hccme (const gretl_matrix *X,
 	    double ht = h->val[t];
 
 	    if (hc_version == 2) {
-		diag->val[t] /= (1.0 - ht);
+		d->val[t] /= (1.0 - ht);
 	    } else {
 		/* HC3 */
-		diag->val[t] /= (1.0 - ht) * (1.0 - ht);
+		d->val[t] /= (1.0 - ht) * (1.0 - ht);
 	    }
 	}
     }
 
-    do_X_prime_diag(X, diag, tmp1);
+    do_X_prime_diag(X, d, tmp1);
     gretl_matrix_multiply(tmp1, X, tmp2);
     gretl_matrix_qform(XTXi, GRETL_MOD_NONE, tmp2,
 		       VCV, GRETL_MOD_NONE);
 
-    gretl_matrix_free(diag);
     gretl_matrix_free(tmp1);
     gretl_matrix_free(tmp2);
 

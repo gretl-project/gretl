@@ -21,6 +21,7 @@
 #include "libset.h"
 #include "gretl_restrict.h"
 #include "gretl_xml.h"
+#include "qr_estimate.h"
 #include "bootstrap.h"
 
 #define BDEBUG 0
@@ -36,7 +37,7 @@ enum {
     BOOT_GRAPH       = 1 << 7,  /* graph the distribution */
     BOOT_RESTRICT    = 1 << 8,  /* called via "restrict" command */
     BOOT_F_FORM      = 1 << 9,  /* compute F-statistics */
-    BOOT_FREE_RQ     = 1 << 10,  /* free restriction matrices */
+    BOOT_FREE_RQ     = 1 << 10, /* free restriction matrices */
     BOOT_SAVE        = 1 << 11, /* save results vector */
     BOOT_VERBOSE     = 1 << 12, /* verbose output */
     BOOT_SILENT      = 1 << 13, /* suppress printed output */
@@ -70,9 +71,10 @@ struct boot_ {
     gretl_matrix *R;    /* LHS restriction matrix */
     gretl_matrix *q;    /* RHS restriction matrix */
     gretl_matrix *w;    /* weights for WLS */
-    double SE;          /* original std. error of residuals */
+    int hc_version;     /* HCCME variant, or -1 for none */
+    double SER0;        /* original std. error of regression */
     double point;       /* point estimate of coeff */
-    double se0;         /* original std. error for coeff of interest */
+    double sep0;        /* original std. error for coeff p */
     double test0;       /* original test statistic */
     double b_p;         /* test value for coeff */
     double a;           /* alpha, for confidence interval */
@@ -396,6 +398,7 @@ static boot *boot_new (const MODEL *pmod,
     }
 
     bs->mci = pmod->ci;
+    bs->hc_version = gretl_model_get_hc_version(pmod);
     bs->a = alpha;
     bs->B = maybe_adjust_B(B, bs->a, bs->flags);
 
@@ -404,9 +407,9 @@ static boot *boot_new (const MODEL *pmod,
 
     *bs->vname = '\0';
 
-    bs->SE = NADBL;
+    bs->SER0 = NADBL;
     bs->point = NADBL;
-    bs->se0 = NADBL;
+    bs->sep0 = NADBL;
     bs->test0 = NADBL;
     bs->b_p = NADBL;
     bs->pval = NADBL;
@@ -439,7 +442,7 @@ static void make_normal_y (boot *bs)
 
     /* generate scaled normal errors */
     gretl_matrix_random_fill(bs->y, D_NORMAL);
-    gretl_matrix_multiply_by_scalar(bs->y, bs->SE);
+    gretl_matrix_multiply_by_scalar(bs->y, bs->SER0);
 
     /* construct y recursively */
     for (t=0; t<bs->X->rows; t++) {
@@ -595,7 +598,7 @@ static int do_restricted_ols (boot *bs)
 #endif
 
     if (!err) {
-	bs->SE = sqrt(s2);
+	bs->SER0 = sqrt(s2);
     }
 
     return err;
@@ -674,8 +677,8 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	    /* the "percentile t" method */
 	    double cl = ql;
 
-	    ql = bs->point - bs->se0 * qu;
-	    qu = bs->point - bs->se0 * cl;
+	    ql = bs->point - bs->sep0 * qu;
+	    qu = bs->point - bs->sep0 * cl;
 	    pprintf(prn, _("Studentized %g%% confidence interval = %g to %g"), 
 		    100 * (1 - bs->a), ql, qu);
 	} else {
@@ -742,8 +745,8 @@ static void bs_calc_ci (boot *bs, double *xi, gretl_matrix *ci)
 
     if (bs->flags & BOOT_STUDENTIZE) {
 	/* the "percentile t" method */
-	ci->val[0] = bs->point - bs->se0 * qu;
-	ci->val[1] = bs->point - bs->se0 * ql;
+	ci->val[0] = bs->point - bs->sep0 * qu;
+	ci->val[1] = bs->point - bs->sep0 * ql;
     } else {
 	/* the "naive" percentile method */
 	ci->val[0] = ql;
@@ -910,7 +913,8 @@ static int boot_calc_2 (boot *bs,
 			gretl_matrix *R,
 			gretl_matrix *g,
 			gretl_matrix *b,
-			gretl_matrix *yh)
+			gretl_matrix *yh,
+			double *ps2)
 {
     int err = 0;
 
@@ -932,7 +936,58 @@ static int boot_calc_2 (boot *bs,
 	}
     }
 
+    if (!err) {
+	/* residual-related statistics */
+	double ut, SSR = 0.0;
+	int t;
+	
+	for (t=0; t<bs->T; t++) {
+	    ut = bs->y->val[t] - yh->val[t];
+	    SSR += ut * ut;
+	    if (bs->hc_version >= 0) {
+		/* re-use to hold squared residuals */
+		yh->val[t] = ut * ut;
+	    }
+	} 
+	*ps2 = SSR / (bs->T - bs->k);
+    }
+
     return err;
+}
+
+static double boot_hc_tau (boot *bs,
+			   const gretl_matrix *XTXI,
+			   const gretl_matrix *b,
+			   const gretl_matrix *h,
+			   gretl_matrix *d,
+			   gretl_matrix *V,
+			   int *err)
+{
+    double se, tau = NADBL;
+    int j = bs->p;
+
+    *err = qr_matrix_hccme(bs->X, d, h, XTXI,
+			   V, bs->hc_version);
+    if (!*err) {
+	se = sqrt(gretl_matrix_get(V, j, j));
+	tau = (b->val[j] - bs->b_p) / se;
+    }
+    
+    return tau;
+}
+
+static double boot_tau (boot *bs,
+			const gretl_matrix *XTXI,
+			const gretl_matrix *b,
+			double s2)
+{
+    double vpp, se;
+    int j = bs->p;
+
+    vpp = gretl_matrix_get(XTXI, j, j);
+    se = sqrt(s2 * vpp);
+    
+    return (b->val[j] - bs->b_p) / se;
 }
 
 /* Do the actual bootstrap analysis: the objective is either to form a
@@ -951,10 +1006,10 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     gretl_matrix *XTXI = NULL;  /* X'X^{-1} */
     gretl_matrix *Q = NULL;     /* for use with QR decomp */
     gretl_matrix *R = NULL;     /* for use with QR decomp */
-    gretl_matrix *g = NULL;     /* for use with QR decomp */
+    gretl_matrix *g = NULL;     /* workspace, QR decomp */
     gretl_matrix *h = NULL;     /* "hat" vector (QR) */
+    gretl_matrix *d = NULL;     /* workspace */
     gretl_matrix *b = NULL;     /* re-estimated coeffs */
-    gretl_matrix *yh = NULL;    /* fitted values */
     gretl_matrix *V = NULL;     /* covariance matrix */
     double *xi = NULL;          /* recorder for results */
     int *z = NULL;              /* integer resampling array */
@@ -964,7 +1019,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     int tail = 0;
     int use_qr = 0;
     int use_h = 0;
-    int i, t, err = 0;
+    int i, err = 0;
 
     if ((bs->flags & BOOT_PVAL) && !resampling_pairs(bs)) {
 	/* no point in doing this if we're resampling
@@ -976,15 +1031,15 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	}
     }
 
-    if (bs->flags & BOOT_WILD) {
+    if (bs->hc_version >= 0 || (bs->flags & BOOT_WILD)) {
 	use_qr = use_h = 1;
     }
 
     b = gretl_column_vector_alloc(k);
-    yh = gretl_column_vector_alloc(bs->T);
+    d = gretl_column_vector_alloc(bs->T);
     XTXI = gretl_matrix_alloc(k, k);
 
-    if (b == NULL || yh == NULL || XTXI == NULL) {
+    if (b == NULL || d == NULL || XTXI == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -1038,8 +1093,8 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	}
     }	
 
-    if (bs->flags & BOOT_F_FORM) {
-	/* covariance matrix for F-test */
+    if (bs->hc_version >= 0 || (bs->flags & BOOT_F_FORM)) {
+	/* covariance matrix needed */
 	V = gretl_matrix_alloc(k, k);
 	if (V == NULL) {
 	    err = E_ALLOC;
@@ -1064,7 +1119,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     /* carry out B replications */
 
     for (i=0; i<bs->B && !err; i++) {
-	double vpp, se, SSR, s2, ut, test;
+	double s2, test;
 
 #if BDEBUG > 1
 	fprintf(stderr, "real_bootstrap: round %d\n", i);
@@ -1094,25 +1149,20 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	}
 
 	if (!err) {
-	    err = boot_calc_2(bs, XTX, Q, R, g, b, yh);
+	    err = boot_calc_2(bs, XTX, Q, R, g, b, d, &s2);
 	}
 
 	if (err) {
 	    break;
 	}	
 
-	/* residuals, etc */
-	SSR = 0.0;
-	for (t=0; t<bs->T; t++) {
-	    ut = bs->y->val[t] - yh->val[t];
-	    SSR += ut * ut;
-	} 
-	s2 = SSR / (bs->T - k);
-
 	/* F-test, if wanted */
 	if (bs->flags & BOOT_F_FORM) {
-	    gretl_matrix_copy_values(V, XTXI);
-	    gretl_matrix_multiply_by_scalar(V, s2);
+	    if (bs->hc_version < 0) {
+		/* otherwise @V should already hold HCCME */
+		gretl_matrix_copy_values(V, XTXI);
+		gretl_matrix_multiply_by_scalar(V, s2);
+	    }
 	    test = bs_F_test(b, V, bs, &err);
 	    if (verbose(bs)) {
 		print_test_round(bs, i, test, prn);
@@ -1126,10 +1176,12 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	    continue;
 	}
 
-	/* coeff, standard error and t-stat */
-	vpp = gretl_matrix_get(XTXI, p, p);
-	se = sqrt(s2 * vpp);
-	test = (b->val[p] - bs->b_p) / se;
+	/* bootstrap t-statistic */
+	if (bs->hc_version >= 0) {
+	    test = boot_hc_tau(bs, XTXI, b, h, d, V, &err);
+	} else {
+	    test = boot_tau(bs, XTXI, b, s2);
+	}
 
 	if (verbose(bs)) {
 	    pprintf(prn, "%13g %13g\n", b->val[p], test);
@@ -1178,7 +1230,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     gretl_matrix_free(R);
     gretl_matrix_free(g);
     gretl_matrix_free(h);
-    gretl_matrix_free(yh);
+    gretl_matrix_free(d);
     gretl_matrix_free(V);
 
     free(z);
@@ -1258,10 +1310,10 @@ int bootstrap_analysis (MODEL *pmod, int p, int B,
 	int v = pmod->list[p+2];
 
 	bs->p = p;  /* coeff to examine */
-	bs->SE = pmod->sigma;
+	bs->SER0 = pmod->sigma;
 	strcpy(bs->vname, dset->varname[v]);
 	bs->point = pmod->coeff[p];
-	bs->se0 = pmod->sderr[p];
+	bs->sep0 = pmod->sderr[p];
 	bs->test0 = pmod->coeff[p] / pmod->sderr[p];
 	if (bs->flags & BOOT_PVAL) {
 	    if (opt & OPT_X) {
@@ -1364,9 +1416,9 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
 
     if (!*err) {
 	bs->p = p;  /* coeff to examine */
-	bs->SE = pmod->sigma;
+	bs->SER0 = pmod->sigma;
 	bs->point = pmod->coeff[p];
-	bs->se0 = pmod->sderr[p];
+	bs->sep0 = pmod->sderr[p];
 	bs->test0 = pmod->coeff[p] / pmod->sderr[p];
 	bs->b_p = bs->point;
 	*err = real_bootstrap(bs, ci, NULL);
@@ -1429,9 +1481,9 @@ double bootstrap_pvalue (const MODEL *pmod,
 
     if (!*err) {
 	bs->p = p;  /* coeff to examine */
-	bs->SE = pmod->sigma;
+	bs->SER0 = pmod->sigma;
 	bs->point = pmod->coeff[p];
-	bs->se0 = pmod->sderr[p];
+	bs->sep0 = pmod->sderr[p];
 	bs->test0 = pmod->coeff[p] / pmod->sderr[p];
 	bs->b_p = bs->point;
 	if (opt & OPT_X) {
