@@ -74,11 +74,11 @@ struct boot_ {
     int hc_version;     /* HCCME variant, or -1 for none */
     double SER0;        /* original std. error of regression */
     double point;       /* point estimate of coeff */
+    double bp0;         /* reference value of coefficient */
     double sep0;        /* original std. error for coeff p */
     double test0;       /* original test statistic */
-    double b_p;         /* test value for coeff */
     double a;           /* alpha, for confidence interval */
-    double pval;        /* p-value for test */
+    double pval;        /* p-value for bootstrap test */
     char vname[VNAMELEN]; /* name of variable analysed */
     ldvinfo *ldv;       /* lagged depvar info, if applicable */
 };
@@ -411,7 +411,7 @@ static boot *boot_new (const MODEL *pmod,
     bs->point = NADBL;
     bs->sep0 = NADBL;
     bs->test0 = NADBL;
-    bs->b_p = NADBL;
+    bs->bp0 = NADBL;
     bs->pval = NADBL;
 
     bs->k = bs->X->cols;
@@ -970,7 +970,7 @@ static double boot_hc_tau (boot *bs,
 			   V, bs->hc_version);
     if (!*err) {
 	se = sqrt(gretl_matrix_get(V, j, j));
-	tau = (b->val[j] - bs->b_p) / se;
+	tau = (b->val[j] - bs->bp0) / se;
     }
     
     return tau;
@@ -987,7 +987,7 @@ static double boot_tau (boot *bs,
     vpp = gretl_matrix_get(XTXI, j, j);
     se = sqrt(s2 * vpp);
     
-    return (b->val[j] - bs->b_p) / se;
+    return (b->val[j] - bs->bp0) / se;
 }
 
 /* Do the actual bootstrap analysis: the objective is either to form a
@@ -1317,12 +1317,12 @@ int bootstrap_analysis (MODEL *pmod, int p, int B,
 	bs->test0 = pmod->coeff[p] / pmod->sderr[p];
 	if (bs->flags & BOOT_PVAL) {
 	    if (opt & OPT_X) {
-		bs->b_p = pmod->coeff[p];
+		bs->bp0 = pmod->coeff[p];
 	    } else {
-		bs->b_p = 0.0;
+		bs->bp0 = 0.0;
 	    }
 	} else {
-	    bs->b_p = bs->point;
+	    bs->bp0 = bs->point;
 	}
 	err = real_bootstrap(bs, NULL, prn);
     }
@@ -1420,7 +1420,7 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
 	bs->point = pmod->coeff[p];
 	bs->sep0 = pmod->sderr[p];
 	bs->test0 = pmod->coeff[p] / pmod->sderr[p];
-	bs->b_p = bs->point;
+	bs->bp0 = bs->point;
 	*err = real_bootstrap(bs, ci, NULL);
     }
 
@@ -1480,16 +1480,16 @@ double bootstrap_pvalue (const MODEL *pmod,
     }    
 
     if (!*err) {
-	bs->p = p;  /* coeff to examine */
+	bs->p = p;  /* index of coeff to examine */
 	bs->SER0 = pmod->sigma;
 	bs->point = pmod->coeff[p];
 	bs->sep0 = pmod->sderr[p];
 	bs->test0 = pmod->coeff[p] / pmod->sderr[p];
-	bs->b_p = bs->point;
+	bs->bp0 = bs->point;
 	if (opt & OPT_X) {
-	    bs->b_p = pmod->coeff[p];
+	    bs->bp0 = pmod->coeff[p];
 	} else {
-	    bs->b_p = 0.0;
+	    bs->bp0 = 0.0;
 	}
 	*err = real_bootstrap(bs, NULL, NULL);
     }
