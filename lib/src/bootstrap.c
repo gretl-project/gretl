@@ -1240,6 +1240,10 @@ int bootstrap_analysis (MODEL *pmod, int p, int B,
 	return E_NOTIMP;
     }
 
+    if (model_sample_problem(pmod, dset)) {
+	return E_DATA;
+    }      
+
     if (p < 0 || p >= pmod->ncoeff) {
 	return E_DATA;
     }
@@ -1276,20 +1280,16 @@ int bootstrap_analysis (MODEL *pmod, int p, int B,
     return err;
 }
 
-static int opt_from_method (gretlopt *opt, int *mammen, int method)
+static int opt_from_method (gretlopt *opt, int method)
 {
     int err = 0;
 
     if (method == BOOT_METHOD_PAIRS) {
 	/* resample pairs */
 	*opt |= OPT_X;
-    } else if (method == BOOT_METHOD_WILD_R) {
-	/* wild, Rademacher */
+    } else if (method == BOOT_METHOD_WILD) {
+	/* wild */
 	*opt |= OPT_W;
-    } else if (method == BOOT_METHOD_WILD_M) {
-	/* wild, Mammen */
-	*opt |= OPT_W;
-	*mammen = 1;
     } else if (method == BOOT_METHOD_PARAMETRIC) {
 	/* normal errors */
 	*opt |= OPT_N;
@@ -1310,13 +1310,17 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
 {
     gretl_matrix *ci = NULL;
     gretlopt opt = OPT_S; /* silent */
-    int mammen = 0;
     boot *bs = NULL;
 
     if (!bootstrap_ok(pmod->ci)) {
 	*err = E_NOTIMP;
 	return NULL;
     }
+
+    if (model_sample_problem(pmod, dset)) {
+	*err = E_DATA;
+	return NULL;
+    }    
 
     /* convert coefficient index @p to zero-based */
     p -= 1;
@@ -1331,7 +1335,7 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
 	return NULL;
     }
 
-    *err = opt_from_method(&opt, &mammen, method);
+    *err = opt_from_method(&opt, method);
     if (*err) {
 	return NULL;
     }
@@ -1352,8 +1356,10 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
 
     bs = boot_new(pmod, dset, B, alpha, opt, err);
 
-    if (mammen) {
-	bs->flags |= BOOT_WILD_M;
+    if (method == BOOT_METHOD_WILD) {
+	if (libset_get_int(WILDBOOT_DIST) > 0) {
+	    bs->flags |= BOOT_WILD_M;
+	}
     }
 
     if (!*err) {
@@ -1384,13 +1390,17 @@ double bootstrap_pvalue (const MODEL *pmod,
 {
     double pval = NADBL;
     gretlopt opt = OPT_P | OPT_S; /* p-value, silent */
-    int mammen = 0;
     boot *bs = NULL;
 
     if (!bootstrap_ok(pmod->ci)) {
 	*err = E_NOTIMP;
 	return NADBL;
     }
+
+    if (model_sample_problem(pmod, dset)) {
+	*err = E_DATA;
+	return NADBL;
+    }    
 
     /* convert coefficient index @p to zero-based */
     p -= 1;
@@ -1400,7 +1410,7 @@ double bootstrap_pvalue (const MODEL *pmod,
 	return NADBL;
     }
 
-    *err = opt_from_method(&opt, &mammen, method);
+    *err = opt_from_method(&opt, method);
     if (*err) {
 	return NADBL;
     }   
@@ -1411,9 +1421,11 @@ double bootstrap_pvalue (const MODEL *pmod,
 	*err = bs_add_restriction(bs, p);
     }
 
-    if (mammen) {
-	bs->flags |= BOOT_WILD_M;
-    }
+    if (method == BOOT_METHOD_WILD) {
+	if (libset_get_int(WILDBOOT_DIST) > 0) {
+	    bs->flags |= BOOT_WILD_M;
+	}
+    }    
 
     if (!*err) {
 	bs->p = p;  /* coeff to examine */
@@ -1471,6 +1483,10 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
     int B = 0;
     int err = 0;
 
+    if (model_sample_problem(pmod, dset)) {
+	return E_DATA;
+    }
+
 #if BDEBUG
     fprintf(stderr, "bootstrap_test_restriction: on input test = %g, g = %d\n",
 	    test, g);
@@ -1486,11 +1502,18 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 	bopt |= OPT_V;
     }
 
-    /* FIXME handling of @method */
+    err = opt_from_method(&bopt, method);
 
-    gretl_restriction_get_boot_params(&B, &bopt);
+    if (!err) {
+	gretl_restriction_get_boot_params(&B, &bopt);
+	bs = boot_new(pmod, dset, B, 0, bopt, &err);
+    }
 
-    bs = boot_new(pmod, dset, B, 0, bopt, &err);
+    if (!err && method == BOOT_METHOD_WILD) {
+	if (libset_get_int(WILDBOOT_DIST) > 0) {
+	    bs->flags |= BOOT_WILD_M;
+	}
+    }      
 
     if (!err) {
 	bs->R = R;

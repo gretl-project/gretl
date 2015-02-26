@@ -72,7 +72,7 @@ enum {
     STATE_DPDSTYLE_ON     = 1 << 19, /* emulate dpd in dynamic panel data models */
     STATE_OPENMP_ON       = 1 << 20, /* using openmp */
     STATE_ROBUST_Z        = 1 << 21, /* use z- not t-score with HCCM/HAC */
-    STATE_ECHO_SPACE      = 1 << 22
+    STATE_ECHO_SPACE      = 1 << 22  /* preserve vertical space in output */
 };    
 
 /* for values that really want a non-negative integer */
@@ -120,6 +120,7 @@ struct set_vars_ {
     char csv_read_na[8];        /* representation of NA in CSV input */
     double nadarwat_trim;       /* multiple of h to use in nadarwat() for trimming */
     int fdjac_qual;             /* quality of "fdjac" function */
+    int wildboot_dist;          /* distribution for wild bootstrap */
 };
 
 #define MESSAGES "messages"
@@ -185,7 +186,8 @@ struct set_vars_ {
 		       !strcmp(s, OMP_N_THREADS) || \
 		       !strcmp(s, SIMD_K_MAX) || \
 		       !strcmp(s, SIMD_MN_MIN) || \
-		       !strcmp(s, FDJAC_QUAL))
+		       !strcmp(s, FDJAC_QUAL) || \
+		       !strcmp(s, WILDBOOT_DIST))
 
 /* global state */
 set_vars *state;
@@ -290,6 +292,12 @@ static const char *normal_rand_strs[] = {
     NULL
 };
 
+static const char *wildboot_strs[] = {
+    "rademacher",
+    "mammen",
+    NULL
+};
+
 static const char **libset_option_strings (const char *s)
 {
     if (!strcmp(s, GARCH_VCV)) {
@@ -310,6 +318,8 @@ static const char **libset_option_strings (const char *s)
 	return csv_delim_args;
     } else if (!strcmp(s, OPTIM_STEPLEN)) {
 	return steplen_strs;
+    } else if (!strcmp(s, WILDBOOT_DIST)) {
+	return wildboot_strs;
     } else {
 	return NULL;
     }
@@ -360,6 +370,8 @@ static const char *libset_option_string (const char *s)
 	return normal_rand_strs[gretl_rand_get_box_muller()];
     } else if (!strcmp(s, OPTIM_STEPLEN)) {
 	return steplen_strs[state->optim_steplen];
+    } else if (!strcmp(s, WILDBOOT_DIST)) {
+	return wildboot_strs[state->wildboot_dist];
     } else {
 	return "?";
     }
@@ -435,6 +447,7 @@ static void state_vars_copy (set_vars *sv)
     sv->garch_robust_vcv = state->garch_robust_vcv;
     sv->nadarwat_trim = state->nadarwat_trim;
     sv->fdjac_qual = state->fdjac_qual;
+    sv->wildboot_dist = state->wildboot_dist;
 
     sv->initvals = gretl_matrix_copy(state->initvals);
     sv->matmask = gretl_matrix_copy(state->matmask);
@@ -603,6 +616,7 @@ static void state_vars_init (set_vars *sv)
     sv->garch_robust_vcv = ML_UNSET;
     sv->nadarwat_trim = 4.0;
     sv->fdjac_qual = 0;
+    sv->wildboot_dist = 0;
 
     *sv->shelldir = '\0';
 
@@ -1034,6 +1048,14 @@ static int parse_libset_int_code (const char *key,
 		break;
 	    }
 	}
+    } else if (!g_ascii_strcasecmp(key, WILDBOOT_DIST)) {
+	for (i=0; wildboot_strs[i] != NULL; i++) {
+	    if (!g_ascii_strcasecmp(val, wildboot_strs[i])) {
+		state->wildboot_dist = i;
+		err = 0;
+		break;
+	    }
+	}
     } else if (!g_ascii_strcasecmp(key, OPTIM_STEPLEN)) {
 	for (i=0; i<STEPLEN_MAX; i++) {
 	    if (!g_ascii_strcasecmp(val, steplen_strs[i])) {
@@ -1382,7 +1404,8 @@ static void libset_print_bool (const char *s, PRN *prn,
 			 !strcmp(s, VECM_NORM) || \
 			 !strcmp(s, GRETL_OPTIM) || \
 			 !strcmp(s, NORMAL_RAND) || \
-			 !strcmp(s, OPTIM_STEPLEN))
+			 !strcmp(s, OPTIM_STEPLEN) || \
+			 !strcmp(s, WILDBOOT_DIST))
 
 const char *intvar_code_string (const char *s)
 {
@@ -1978,6 +2001,8 @@ int libset_get_int (const char *key)
 	return csv_digits;
     } else if (!strcmp(key, FDJAC_QUAL)) {
 	return state->fdjac_qual;
+    } else if (!strcmp(key, WILDBOOT_DIST)) {
+	return state->wildboot_dist;
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
 		"variable '%s'\n", key);	
@@ -2045,6 +2070,10 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*min = 0;
 	*max = 3;
 	*var = &state->fdjac_qual;
+    } else if (!strcmp(s, WILDBOOT_DIST)) {
+	*min = 0;
+	*max = 1;
+	*var = &state->wildboot_dist;
     } else {
 	fprintf(stderr, "libset_set_int: unrecognized "
 		"variable '%s'\n", s);	

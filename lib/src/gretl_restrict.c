@@ -2395,8 +2395,7 @@ static int bootstrap_zero_restriction (gretl_restriction *rset,
 
     if (method == BOOT_METHOD_PAIRS) {
 	bopt |= OPT_X;
-    } else if (method == BOOT_METHOD_WILD_R ||
-	       method == BOOT_METHOD_WILD_M) {
+    } else if (method == BOOT_METHOD_WILD) {
 	bopt |= OPT_W;
     } else if (method == BOOT_METHOD_PARAMETRIC) {
 	bopt |= OPT_N;
@@ -2443,9 +2442,7 @@ static int get_restriction_boot_method (int *method)
 	if (!strcmp(s, "pairs")) {
 	    *method = BOOT_METHOD_PAIRS;
 	} else if (!strcmp(s, "wild")) {
-	    *method = BOOT_METHOD_WILD_R;
-	} else if (!strcmp(s, "wild-mammen")) {
-	    *method = BOOT_METHOD_WILD_M;
+	    *method = BOOT_METHOD_WILD;
 	} else if (!strcmp(s, "normal")) {
 	    *method = BOOT_METHOD_PARAMETRIC;
 	} else if (strcmp(s, "residuals")) {

@@ -72,7 +72,7 @@ int count_missing_values (const DATASET *dset, gretlopt opt,
 
 void maybe_free_full_dataset (const DATASET *dset);
 
-int model_sample_problem (MODEL *pmod, const DATASET *dset);
+int model_sample_problem (const MODEL *pmod, const DATASET *dset);
 
 void print_sample_obs (const DATASET *dset, PRN *prn);
 

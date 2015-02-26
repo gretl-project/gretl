@@ -88,6 +88,7 @@ typedef enum {
 #define USE_OPENMP       "openmp"
 #define FDJAC_QUAL       "fdjac_quality"
 #define ROBUST_Z         "robust_z"
+#define WILDBOOT_DIST    "wildboot"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 typedef void (*SHOW_ACTIVITY_FUNC) (void);

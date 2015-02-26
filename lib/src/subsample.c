@@ -2434,7 +2434,7 @@ static int submask_match (const char *s1, const char *s2, int n)
    (subsampled) data set from the current one
 */
 
-int model_sample_problem (MODEL *pmod, const DATASET *dset)
+int model_sample_problem (const MODEL *pmod, const DATASET *dset)
 {
     int n = dset->n;
     int ret = 1;
