@@ -275,6 +275,10 @@ gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
 					   int blocklen, 
 					   int *err);
 
+int gretl_matrix_block_resample2 (const gretl_matrix *src,
+				  gretl_matrix *targ,
+				  int blocklen, int *z);    
+
 double gretl_vector_mean (const gretl_vector *v);
 
 double gretl_vector_variance (const gretl_vector *v);

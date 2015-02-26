@@ -73,6 +73,7 @@ struct boot_ {
     gretl_matrix *q;    /* RHS restriction matrix */
     gretl_matrix *w;    /* weights for WLS */
     int hc_version;     /* HCCME variant, or -1 for none */
+    int blocklen;       /* block-length, for resampling by blocks */
     double SER0;        /* original std. error of regression */
     double point;       /* point estimate of coeff */
     double bp0;         /* reference value of coefficient */
@@ -400,6 +401,7 @@ static boot *boot_new (const MODEL *pmod,
 
     bs->mci = pmod->ci;
     bs->hc_version = gretl_model_get_hc_version(pmod);
+    bs->blocklen = 0;
     bs->a = alpha;
     bs->B = maybe_adjust_B(B, bs->a, bs->flags);
 
@@ -478,7 +480,11 @@ static void make_resampled_y (boot *bs, int *z)
     int i, t, p;
 
     /* resample the residuals, into y */
-    resample_vector(bs->u0, bs->y, z);
+    if (bs->blocklen > 1) {
+	gretl_matrix_block_resample2(bs->y, bs->u0, bs->blocklen, z);
+    } else {
+	resample_vector(bs->u0, bs->y, z);
+    }
 
     /* construct y recursively */
     for (t=0; t<bs->X->rows; t++) {
@@ -1081,7 +1087,12 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	}
     } else if (resampling(bs) || wild_boot(bs)) {
 	/* random integer array */
-	z = malloc(bs->T * sizeof *z);
+	int nz = bs->T;
+
+	if (bs->blocklen > 1) {
+	    nz = bs->T / bs->blocklen + (bs->T % bs->blocklen > 0);
+	}
+	z = malloc(nz * sizeof *z);
 	if (z == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;

@@ -1517,6 +1517,63 @@ gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
     return R;
 }
 
+/**
+ * gretl_matrix_block_resample2:
+ * @src: source matrix.
+ * @targ: target matrix.
+ * @blocklen: length of moving blocks.
+ * @z: array of length XXX.
+ *
+ * An "in-place" version of gretl_matrix_block_resample().
+ * It is assumed that @targ is a matrix of the same dimensions
+ * as @src, that @blocklen is greater than 1, and that @z
+ * is long enough to hold n integers, where n is the number
+ * of rows in @src divided by @blocklen, rounded up to the
+ * nearest integer.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int gretl_matrix_block_resample2 (const gretl_matrix *src,
+				  gretl_matrix *targ,
+				  int blocklen,
+				  int *z)
+{
+    double x;
+    int r = src->rows;
+    int b, n, s, rmax;
+    int i, j, k;
+
+    n = r / blocklen + (r % blocklen > 0);
+
+    rmax = r - blocklen;
+    if (rmax < 0) {
+	return E_DATA;
+    }
+
+    /* generate n drawings from [0 .. rmax] */
+    gretl_rand_int_minmax(z, n, 0, rmax);
+
+    /* sample from source matrix based on block indices */
+    i = 0;
+    for (b=0; b<n; b++) {
+	for (s=0; s<blocklen; s++) {
+	    if (i < r) {
+		k = z[b] + s;
+		for (j=0; j<src->cols; j++) {
+		    x = gretl_matrix_get(src, k, j);
+		    gretl_matrix_set(targ, i, j, x);
+		}
+		i++;
+	    } else {
+		break;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 static int gretl_matrix_zero_triangle (gretl_matrix *m, char t)
 {
     int i, j;
