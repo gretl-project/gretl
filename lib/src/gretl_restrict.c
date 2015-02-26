@@ -2443,7 +2443,7 @@ static int get_restriction_boot_method (int *method)
 	    *method = BOOT_METHOD_PAIRS;
 	} else if (!strcmp(s, "wild")) {
 	    *method = BOOT_METHOD_WILD;
-	} else if (!strcmp(s, "normal")) {
+	} else if (!strcmp(s, "parametric")) {
 	    *method = BOOT_METHOD_PARAMETRIC;
 	} else if (strcmp(s, "residuals")) {
 	    gretl_errmsg_sprintf(_("field '%s' in command is invalid"), s);
