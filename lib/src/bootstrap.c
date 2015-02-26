@@ -1483,6 +1483,16 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
     int B = 0;
     int err = 0;
 
+    if (method == BOOT_METHOD_PAIRS) {
+	/* This has to be disallowed unless we can come up with
+	   a way of testing a relevant H0 that is true under the 
+	   bootstrap DGP (easy enough for a single zero
+	   restriction, not so easy in general).
+	*/
+	gretl_errmsg_set("The pairs method cannot be used for this test");
+	return E_DATA;
+    }
+
     if (model_sample_problem(pmod, dset)) {
 	return E_DATA;
     }
