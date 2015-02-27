@@ -221,7 +221,9 @@ static void script_window_update (windata_t *vwin, const char *fname)
 
     g_free(trfname);
 
-    if (vwin->role == VIEW_SCRIPT || vwin->role == VIEW_PKG_CODE) {
+    if (vwin->role == VIEW_SCRIPT ||
+	vwin->role == VIEW_PKG_CODE ||
+	vwin->role == VIEW_PKG_SAMPLE) {
 	/* change role of window for editing */
 	vwin->role = EDIT_SCRIPT;
     } else if (vwin->role == EDIT_GP) {

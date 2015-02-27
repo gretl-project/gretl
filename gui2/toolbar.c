@@ -225,6 +225,7 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 	}
     } else if (vwin->role == EDIT_SCRIPT ||
 	       vwin->role == VIEW_SCRIPT ||
+	       vwin->role == VIEW_PKG_SAMPLE ||
 	       vwin->role == VIEW_LOG ||
 	       vwin->role == VIEW_PKG_CODE) {
 	u = SAVE_SCRIPT;
@@ -729,6 +730,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define exec_ok(r) (vwin_editing_script(r) || \
 		    r == VIEW_SCRIPT || \
+		    r == VIEW_PKG_SAMPLE || \
 	            r == EDIT_PKG_SAMPLE)
 
 #define open_ok(r) (vwin_editing_script(r))
@@ -756,6 +758,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 #define cmd_help_ok(r) (r == EDIT_SCRIPT || \
 	                r == EDIT_PKG_CODE || \
                         r == EDIT_PKG_SAMPLE || \
+			r == VIEW_PKG_SAMPLE || \
 			r == VIEW_SCRIPT || \
 			r == VIEW_LOG)
 

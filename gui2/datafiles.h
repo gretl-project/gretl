@@ -25,6 +25,7 @@
 enum {
     VIEW_FN_PKG_INFO,
     VIEW_FN_PKG_CODE,
+    VIEW_FN_PKG_SAMPLE,
     LOAD_FN_PKG,
     EDIT_FN_PKG,
     DELETE_FN_PKG,

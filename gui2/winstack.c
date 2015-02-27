@@ -130,7 +130,8 @@ static const gchar *window_list_icon (int role)
 	id = GRETL_STOCK_BOOK;
     } else if (role == STAT_TABLE) {
 	id = GRETL_STOCK_CALC;
-    } else if (role == VIEW_SCRIPT) {
+    } else if (role == VIEW_SCRIPT ||
+	       role == VIEW_PKG_SAMPLE) {
 	id = GTK_STOCK_EXECUTE;
     } else if (role == OPEN_SESSION) {
 	id = GRETL_STOCK_ICONS;
@@ -676,6 +677,7 @@ gboolean window_list_exit_check (void)
 			     r == EDIT_PKG_SAMPLE ||	\
 			     r == VIEW_LOG ||		\
 			     r == VIEW_SCRIPT ||	\
+			     r == VIEW_PKG_SAMPLE ||	\
 	                     r == TEXTBOOK_DATA ||	\
 			     r == PS_FILES ||		\
 			     r == NATIVE_DB ||		\

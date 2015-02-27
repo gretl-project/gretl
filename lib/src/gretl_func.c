@@ -1311,7 +1311,8 @@ static int no_scalar_default (fn_param *fp)
 enum {
     FUNCS_INFO,
     FUNCS_LOAD,
-    FUNCS_CODE
+    FUNCS_CODE,
+    FUNCS_SAMPLE
 };
 
 static const char *arg_type_xml_string (int t)
@@ -4324,9 +4325,9 @@ fnpkg *get_function_package_by_name (const char *pkgname)
     return NULL;
 }
 
-/* Retrieve summary info or code listing for a function package,
-   identified by its filename.  This is called (indirectly) from the
-   GUI (see below for the actual callbacks).
+/* Retrieve summary info, sample script, or code listing for a
+   function package, identified by its filename.  This is called
+   (indirectly) from the GUI (see below for the actual callbacks).
 */
 
 static int real_print_gfn_data (const char *fname, PRN *prn,
@@ -4352,6 +4353,8 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
     if (!err) {
 	if (task == FUNCS_INFO) {
 	    print_package_info(pkg, prn);
+	} else if (task == FUNCS_SAMPLE) {
+	    pputs(prn, pkg->sample);
 	} else {
 	    print_package_code(pkg, tabwidth, prn);
 	}
@@ -4368,19 +4371,27 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
     return err;
 }
 
-/* callback used in the  GUI function package browser */
+/* callback used in the GUI function package browser */
 
 int print_function_package_info (const char *fname, PRN *prn)
 {
     return real_print_gfn_data(fname, prn, 0, FUNCS_INFO);
 }
 
-/* callback used in the  GUI function package browser */
+/* callback used in the GUI function package browser */
 
 int print_function_package_code (const char *fname, int tabwidth,
 				 PRN *prn)
 {
     return real_print_gfn_data(fname, prn, tabwidth, FUNCS_CODE);
+}
+
+/* callback used in the GUI function package browser */
+
+int print_function_package_sample (const char *fname, int tabwidth,
+				   PRN *prn)
+{
+    return real_print_gfn_data(fname, prn, tabwidth, FUNCS_SAMPLE);
 }
 
 /* Read the header from a function package file -- this is used when

@@ -848,6 +848,8 @@ windata_t *display_function_package_data (const char *pkgname,
 	    pprintf(prn, "File: %s\n", path);
 	}
 	err = print_function_package_info(path, prn);
+    } else if (role == VIEW_PKG_SAMPLE) {
+	err = print_function_package_sample(path, tabwidth, prn);
     } else {
 	err = print_function_package_code(path, tabwidth, prn);
     }
@@ -856,7 +858,13 @@ windata_t *display_function_package_data (const char *pkgname,
 	gretl_print_destroy(prn);
 	gui_errmsg(err);
     } else {
-	gchar *title = g_strdup_printf("gretl: %s", pkgname);
+	gchar *title;
+
+	if (role == VIEW_PKG_SAMPLE) {
+	    title = g_strdup_printf("gretl: %s sample", pkgname);
+	} else {
+	    title = g_strdup_printf("gretl: %s", pkgname);
+	}
 
 	vwin = view_buffer(prn, 78, 350, title, role, NULL);
 	strcpy(vwin->fname, path);
@@ -986,6 +994,8 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	err = gui_delete_fn_pkg(pkgname, path, vwin);
     } else if (task == VIEW_FN_PKG_INFO) {
 	display_function_package_data(pkgname, path, VIEW_PKG_INFO);
+    } else if (task == VIEW_FN_PKG_SAMPLE) {
+	display_function_package_data(pkgname, path, VIEW_PKG_SAMPLE);
     } else if (task == VIEW_FN_PKG_CODE) {
 	display_function_package_data(pkgname, path, VIEW_PKG_CODE);
     } else if (task == EDIT_FN_PKG) {
@@ -1120,6 +1130,13 @@ static void show_function_code (GtkWidget *w, gpointer data)
     browser_functions_handler(vwin, VIEW_FN_PKG_CODE);
 }
 
+static void show_function_sample (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    browser_functions_handler(vwin, VIEW_FN_PKG_SAMPLE);
+}
+
 static void browser_del_func (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -1230,6 +1247,9 @@ static void build_funcfiles_popup (windata_t *vwin)
 		       vwin);
 	add_popup_item(_("Info"), vwin->popup, 
 		       G_CALLBACK(show_function_info), 
+		       vwin);
+	add_popup_item(_("Sample script"), vwin->popup, 
+		       G_CALLBACK(show_function_sample), 
 		       vwin);
 	add_popup_item(_("View code"), vwin->popup, 
 		       G_CALLBACK(show_function_code), 
@@ -1388,6 +1408,7 @@ static GretlToolItem files_items[] = {
     { N_("Select directory"), GTK_STOCK_DIRECTORY, NULL, BTN_DIR },
     { N_("Edit"),           GTK_STOCK_EDIT,       G_CALLBACK(browser_edit_func), BTN_EDIT },
     { N_("Info"),           GTK_STOCK_INFO,       NULL,                          BTN_INFO },
+    { N_("Sample script"),  GTK_STOCK_JUSTIFY_LEFT, G_CALLBACK(show_function_sample), BTN_CODE },
     { N_("View code"),      GTK_STOCK_PROPERTIES, G_CALLBACK(show_function_code), BTN_CODE },
     { N_("List series"),    GTK_STOCK_INDEX,      NULL,                           BTN_INDX },
     { N_("Install"),        GTK_STOCK_SAVE,       NULL,                           BTN_INST },

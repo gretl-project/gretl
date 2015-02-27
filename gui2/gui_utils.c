@@ -1696,7 +1696,7 @@ static gchar *make_viewer_title (int role, const char *fname)
     case VIEW_LOG:
 	title = g_strdup(_("gretl: command log")); break;
     case EDIT_SCRIPT:
-    case VIEW_SCRIPT:	
+    case VIEW_SCRIPT:
     case VIEW_FILE:
     case VIEW_CODEBOOK:
     case VIEW_DOC:
@@ -1739,7 +1739,8 @@ static void attach_content_changed_signal (windata_t *vwin)
 
 #define viewing_source(r) (r == VIEW_PKG_CODE || \
 			   r == EDIT_PKG_CODE || \
-			   r == EDIT_PKG_SAMPLE)
+			   r == EDIT_PKG_SAMPLE || \
+			   r == VIEW_PKG_SAMPLE)
 
 static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 {
@@ -1856,7 +1857,9 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 			     G_CALLBACK(check_VAR_menu), vwin);
 	}
 	gretl_object_ref(data, (role == SYSTEM)? GRETL_OBJ_SYS : GRETL_OBJ_VAR);
-    } else if (role == VIEW_PKG_CODE || role == VIEW_MODELTABLE) {
+    } else if (role == VIEW_PKG_CODE ||
+	       role == VIEW_PKG_SAMPLE ||
+	       role == VIEW_MODELTABLE) {
 	vwin_add_viewbar(vwin, 0);
     } else if (role == EDIT_PKG_CODE ||
 	       role == EDIT_PKG_SAMPLE) {
@@ -1867,6 +1870,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 
     if (role != VIEW_PKG_CODE && 
 	role != EDIT_PKG_CODE &&
+	role != VIEW_PKG_SAMPLE &&
 	role != SCRIPT_OUT) {
 	gretl_print_get_size(prn, &width, &nlines);
 	if (width > 0 && width + 2 < hsize) {
@@ -1874,7 +1878,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	}	
     }
 
-    if (role == VIEW_PKG_CODE) {
+    if (role == VIEW_PKG_CODE || role == VIEW_PKG_SAMPLE) {
 	create_source(vwin, hsize, vsize, FALSE);
     } else if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
 	create_source(vwin, hsize, vsize, TRUE);

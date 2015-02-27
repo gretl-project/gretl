@@ -43,6 +43,7 @@ enum extra_cmds {
     VIEW_MODELTABLE,
     VIEW_PKG_INFO,
     VIEW_PKG_CODE,
+    VIEW_PKG_SAMPLE,
     VIEW_BUNDLE,
     VIEW_FILE,
     VIEW_DOC,

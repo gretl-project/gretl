@@ -693,7 +693,8 @@ static void set_sourceview_data_path (GtkSourceLanguageManager *lm)
 #define gretl_script_role(r) (r == EDIT_SCRIPT || \
 			      r == VIEW_SCRIPT || \
 			      r == EDIT_PKG_CODE || \
-			      r == EDIT_PKG_SAMPLE)
+			      r == EDIT_PKG_SAMPLE || \
+			      r == VIEW_PKG_SAMPLE)
 
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable)
