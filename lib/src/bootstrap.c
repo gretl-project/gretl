@@ -166,6 +166,9 @@ make_model_matrices (boot *bs, const MODEL *pmod,
 
     yno = pmod->list[1];
 
+    /* transcribe the data into matrix form, skipping
+       any missing values */
+
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
