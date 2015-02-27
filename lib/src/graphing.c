@@ -3341,6 +3341,7 @@ int gnuplot (const int *plotlist, const char *literal,
     int time_fit = 0;
     int oddman = 0;
     int lmin, many = 0;
+    int set_xrange = 1;
     PlotType ptype;
     gnuplot_info gi;
     int i, err = 0;
@@ -3358,6 +3359,10 @@ int gnuplot (const int *plotlist, const char *literal,
 	} else {
 	    time_fit = 1;
 	}
+    }
+
+    if (literal != NULL && strstr(literal, "set xdata time")) {
+	set_xrange = 0;
     }
 
     if (dataset_is_panel(dset) && 
@@ -3527,10 +3532,12 @@ int gnuplot (const int *plotlist, const char *literal,
 
     if (gi.flags & GPT_TIMEFMT) {
 	print_x_range_from_dates(&gi, dset, fp);
-    } else if (gi.x != NULL) {
-	print_x_range(&gi, gi.x, fp);
-    } else {
-	print_x_range_from_list(&gi, dset, list, fp);
+    } else if (set_xrange) {
+	if (gi.x != NULL) {
+	    print_x_range(&gi, gi.x, fp);
+	} else {
+	    print_x_range_from_list(&gi, dset, list, fp);
+	}
     }
 
     if (!(gi.flags & GPT_TIMEFMT) && *gi.xfmt != '\0' && *gi.xtics != '\0') {
