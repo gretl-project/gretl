@@ -1193,10 +1193,10 @@
 	    MacKinnon's <cite key="davidson-mackinnon04">Economic
 	    Theory and Methods</cite> (ETM), chapter 5: at each
 	    bootstrap replication a <math>t</math>-ratio is formed as
-	    (a) the difference between the current and the baseline
-	    coefficient estimate, divided by (b) the baseline
-	    estimated standard error. Then the confidence interval is
-	    formed based on the quantiles of this t-ratio, as
+	    the difference between the bootstrap and the baseline
+	    coefficient estimates, divided by the bootstrap standard
+	    error. The confidence interval is then based on the
+	    quantiles of this bootstrap <math>t</math>-ratio, as
 	    explained in ETM.  The P-value option is based on the
 	    distribution of the bootstrap <math>t</math>-ratio: it is
 	    the proportion of the replications where the absolute
