@@ -749,7 +749,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat,
 
     if (use_prior) {
 	kern = vi->vmin;
-	prewhiten = vi->flags != 0; /* ? */
+	prewhiten = vi->flags & HAC_PREWHITEN;
 	if (kern == KERNEL_QS) {
 	    bt = vi->bw;
 	    p = T - 1;
@@ -847,7 +847,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat,
     if (!use_prior) {
 	vi->vmaj = VCV_HAC;
 	vi->vmin = kern;
-	vi->flags = prewhiten;
+	vi->flags = prewhiten ? HAC_PREWHITEN : 0;
 
 	if (kern == KERNEL_QS) {
 	    vi->order = 0;

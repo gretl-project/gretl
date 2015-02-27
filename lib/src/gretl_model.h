@@ -80,14 +80,18 @@ typedef enum {
     RQ_NID    /* sandwich */
 } RQVCVType;
 
+typedef enum {
+    HAC_PREWHITEN = 1
+} VCVFlags;
+
 typedef struct VCVInfo_ VCVInfo;
 
 struct VCVInfo_ {
-    int vmaj;
-    int vmin;
-    int order;
-    int flags;
-    double bw;
+    int vmaj;       /* general type of VCV */
+    int vmin;       /* HC variant, etc. */
+    int order;      /* for use with HAC */
+    VCVFlags flags; /* includes prewhitening */
+    double bw;      /* for use with QS HAC kernel */ 
 };
 
 /* single-equation model commands */

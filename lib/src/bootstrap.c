@@ -364,6 +364,24 @@ static int make_boot_ldvinfo (boot *b, const MODEL *pmod,
     return err;
 }
 
+static void maybe_set_bs_blocklen (boot *bs)
+{
+    int blen = 0;
+    
+    if (resampling_u(bs)) {
+	if (bs->vi->vmin == KERNEL_QS) {
+	    blen = (int) ceil(bs->vi->bw);
+	} else {
+	    blen = bs->vi->order;
+	}
+    }
+
+    if (blen > 1) {
+	fprintf(stderr, "HAC: setting blocklen = %d\n", blen);
+	bs->blocklen = blen;
+    }
+}
+
 static boot *boot_new (const MODEL *pmod,
 		       const DATASET *dset,
 		       int B, double alpha,
@@ -415,11 +433,7 @@ static boot *boot_new (const MODEL *pmod,
 
     if (bs->vi != NULL && bs->vi->vmaj == VCV_HAC) {
 	bs->flags |= BOOT_HAC;
-	if (dset->pd > 1 && dset->pd < pmod->nobs/5) {
-	    /* for testing purposes */
-	    bs->blocklen = dset->pd;
-	    fprintf(stderr, "HAC: setting blocklen = %d\n", bs->blocklen);
-	}
+	maybe_set_bs_blocklen(bs);
     }
 
     bs->p = 0;
@@ -1003,8 +1017,12 @@ static int boot_hac_vcv (boot *bs,
     XOX = HAC_XOX(d, bs->X, bs->vi, 1, &err);
 
     if (!err) {
-	gretl_matrix_qform(XTXI, GRETL_MOD_TRANSPOSE, XOX,
-			   V, GRETL_MOD_NONE);
+	err = gretl_matrix_qform(XTXI, GRETL_MOD_TRANSPOSE, XOX,
+				 V, GRETL_MOD_NONE);
+	if (err) {
+	    fprintf(stderr, "qform error in boot_hac_vcv\n");
+	    abort();
+	}
 	gretl_matrix_free(XOX);
     }
 
@@ -1353,6 +1371,7 @@ static int bs_add_restriction (boot *bs, int p)
 	return E_ALLOC;
     }
 
+    bs->flags |= BOOT_FREE_RQ;
     gretl_vector_set(bs->R, p, 1.0);
 
     return 0;
