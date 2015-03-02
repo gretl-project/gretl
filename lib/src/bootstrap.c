@@ -53,6 +53,7 @@ enum {
 #define doing_Ftest(b)      (b->flags & BOOT_F_FORM)
 #define tau_wanted(b)       (b->flags & (BOOT_PVAL | BOOT_STUDENTIZE))
 #define boot_use_hac(b)     (b->flags & BOOT_HAC)
+#define studentizing(b)     (b->flags & BOOT_STUDENTIZE)
 
 typedef struct boot_ boot;
 typedef struct ldvinfo_ ldvinfo;
@@ -649,23 +650,15 @@ static int do_restricted_ols (boot *bs)
     return err;
 }
 
-static int bs_store_result (boot *bs, double *xi)
+static void bs_store_result (boot *bs, gretl_matrix **rp)
 {
-    int i;
-
     if (bs_data != NULL) {
 	gretl_matrix_free(bs_data);
 	bs_data = NULL;
     }
 
-    bs_data = gretl_column_vector_alloc(bs->B);
-    if (bs_data == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<bs->B; i++) {
-	gretl_vector_set(bs_data, i, xi[i]);
-    }
+    bs_data = *rp;
+    *rp = NULL;
 
     *bs_vname = '\0';
 
@@ -679,11 +672,9 @@ static int bs_store_result (boot *bs, double *xi)
 	}
 	strncat(bs_vname, bs->vname, VNAMELEN - 3);
     }
-
-    return 0;
 }
 
-static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
+static void bs_print_result (boot *bs, gretl_matrix *xi, int tail, PRN *prn)
 {
     if (bs->flags & BOOT_F_FORM) {
 	pprintf(prn, "\n%s: ", _("bootstrap F-test"));
@@ -696,7 +687,7 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
     }
 
     if (bs->flags & (BOOT_CI | BOOT_GRAPH)) {
-	qsort(xi, bs->B, sizeof *xi, gretl_compare_doubles);
+	qsort(xi->val, bs->B, sizeof *xi->val, gretl_compare_doubles);
     }
 
     if (bs->flags & BOOT_PVAL) {
@@ -707,18 +698,18 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 
 	/* find the alpha/2 quantile */
 	i = bs->a * (bs->B + 1) / 2.0;
-	ql = xi[i-1];
+	ql = xi->val[i-1];
 
 	/* find the 1 - alpha/2 quantile */
 	j = bs->B - i + 1;
-	qu = xi[j-1];
+	qu = xi->val[j-1];
 
 #if BS_DEBUG
 	fprintf(stderr, "i=%d, ql=xi[%d] = %g\n", i, i-1, ql);
 	fprintf(stderr, "j=%d, qu=xi[%d] = %g\n", j, j-1, qu);
 #endif	
 
-	if (bs->flags & BOOT_STUDENTIZE) {
+	if (studentizing(bs)) {
 	    /* the "percentile t" method */
 	    double cl = ql;
 
@@ -769,26 +760,34 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	    strcpy(label, _("bootstrap coefficient"));
 	} 
 
-	(*kdfunc)(xi, bs->B, label);
+	(*kdfunc)(xi->val, bs->B, label);
     }
 }
 
-static void bs_calc_ci (boot *bs, double *xi, gretl_matrix *ci)
+static void bs_calc_ci (boot *bs, gretl_matrix *xi, gretl_matrix *ci)
 {
     double ql, qu;
     int i, j;
     
-    qsort(xi, bs->B, sizeof *xi, gretl_compare_doubles);
+    qsort(xi->val, bs->B, sizeof *xi->val, gretl_compare_doubles);
 
     /* find the alpha/2 quantile */
     i = bs->a * (bs->B + 1) / 2.0;
-    ql = xi[i-1];
+    ql = xi->val[i-1];
 
     /* find the 1 - alpha/2 quantile */
     j = bs->B - i + 1;
-    qu = xi[j-1];
+    qu = xi->val[j-1];
 
-    if (bs->flags & BOOT_STUDENTIZE) {
+#if BDEBUG
+    fprintf(stderr, "B = %d, ci indices = %d, %d\n", bs->B, i, j);
+    if (!studentizing(bs)) {
+	fprintf(stderr, "\"basic\" interval: %g to %g\n",
+		2*bs->point - qu, 2*bs->point - ql);
+    }
+#endif    
+
+    if (studentizing(bs)) {
 	/* the "percentile t" method */
 	ci->val[0] = bs->point - bs->sep0 * qu;
 	ci->val[1] = bs->point - bs->sep0 * ql;
@@ -1114,7 +1113,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     gretl_matrix *d = NULL;     /* workspace */
     gretl_matrix *b = NULL;     /* re-estimated coeffs */
     gretl_matrix *V = NULL;     /* covariance matrix */
-    double *r = NULL;           /* recorder for results */
+    gretl_matrix *r = NULL;     /* recorder for results */
     int *z = NULL;              /* integer resampling array */
     double *xz = NULL;          /* random doubles */
     int k = bs->k;
@@ -1193,8 +1192,8 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     }
 
     if (bs->flags & (BOOT_CI | BOOT_GRAPH | BOOT_SAVE)) {
-	/* array for storing results */
-	r = malloc(bs->B * sizeof *r);
+	/* storage for results */
+	r = gretl_matrix_alloc(bs->B, 1);
 	if (r == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
@@ -1286,7 +1285,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 		tail++;
 	    }
 	    if (bs->flags & (BOOT_GRAPH | BOOT_SAVE)) {
-		r[j] = test;
+		r->val[j] = test;
 	    }
 	    continue;
 	}
@@ -1307,17 +1306,17 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 
 	if (bs->flags & BOOT_CI) {
 	    /* doing a confidence interval */
-	    if (bs->flags & BOOT_STUDENTIZE) {
+	    if (studentizing(bs)) {
 		/* record bootstrap t-stat */
-		r[j] = tau;
+		r->val[j] = tau;
 	    } else {
 		/* record bootstrap coeff */
-		r[j] = b->val[p];
+		r->val[j] = b->val[p];
 	    }
 	} else {
 	    /* doing p-value */
 	    if (bs->flags & (BOOT_GRAPH | BOOT_SAVE)) {
-		r[j] = tau;
+		r->val[j] = tau;
 	    }
 	    if (fabs(tau) > fabs(bs->test0)) {
 		tail++;
@@ -1332,11 +1331,11 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	    bs->pval = (double) tail / bs->B;
 	    record_test_result(bs->test0, bs->pval, _("bootstrap test"));
 	}
-	if (bs->flags & BOOT_SAVE) {
-	    bs_store_result(bs, r);
-	}
 	if (!(bs->flags & BOOT_SILENT)) {
 	    bs_print_result(bs, r, tail, prn);
+	}	
+	if (bs->flags & BOOT_SAVE) {
+	    bs_store_result(bs, &r);
 	}
     }
 
@@ -1351,10 +1350,10 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
     gretl_matrix_free(h);
     gretl_matrix_free(d);
     gretl_matrix_free(V);
+    gretl_matrix_free(r);
 
     free(z);
     free(xz);
-    free(r);
     
     return err;
 }
