@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.10.0)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-02-27 13:21-0500\n"
-"PO-Revision-Date: 2015-02-16 14:16+0100\n"
+"PO-Revision-Date: 2015-03-02 17:06+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -348,14 +348,12 @@ msgid "using resampled residuals"
 msgstr "utilizando erros re-mostrados"
 
 #: lib/src/bootstrap.c:742
-#, fuzzy
 msgid "using resampled y,X \"pairs\""
-msgstr "utilizando erros re-mostrados"
+msgstr "utilizando \"pares\" y,X re-mostrados"
 
 #: lib/src/bootstrap.c:744
-#, fuzzy
 msgid "using \"wild\" bootstrap"
-msgstr "Usar bootstrap"
+msgstr "utilizando \"wild\" bootstrap"
 
 #: lib/src/bootstrap.c:746
 msgid "with simulated normal errors"
@@ -1111,9 +1109,8 @@ msgstr ""
 "\n"
 
 #: lib/src/csvdata.c:3466
-#, fuzzy
 msgid "Failed to interpret the data as numeric\n"
-msgstr "Fallo ao crear un conxunto de datos baleiro"
+msgstr "Fallo ao interpretar os datos como numéricos\n"
 
 #: lib/src/csvdata.c:3498 plugin/eviews_import.c:555
 #: plugin/excel_import.c:1741 plugin/gnumeric_import.c:832
@@ -8525,9 +8522,8 @@ msgid "Edit"
 msgstr "Editar"
 
 #: gui2/datafiles.c:1251 gui2/datafiles.c:1411
-#, fuzzy
 msgid "Sample script"
-msgstr "Abrir un guión de exemplo"
+msgstr "Guión de exemplo"
 
 #: gui2/datafiles.c:1254 gui2/datafiles.c:1412
 msgid "View code"
@@ -9018,14 +9014,12 @@ msgid "Resample residuals"
 msgstr "Re-mostrar os erros"
 
 #: gui2/dialogs.c:1154
-#, fuzzy
 msgid "Resample data \"pairs\""
-msgstr "Remostrar datos"
+msgstr "Remostrar \"pares\" de datos"
 
 #: gui2/dialogs.c:1162
-#, fuzzy
 msgid "Wild bootstrap"
-msgstr "Usar bootstrap"
+msgstr "Wild bootstrap"
 
 #: gui2/dialogs.c:1170
 msgid "Simulate normal errors"
