@@ -83,7 +83,8 @@ enum {
     W_POINTS,
     W_LINES,
     W_IMPULSES,
-    W_LP
+    W_LP,
+    W_BOXES
 };
 
 #define MAX_LETTERBOX_LINES 8
@@ -357,6 +358,8 @@ static int gp_set_non_point_info (gnuplot_info *gi,
 	withval = W_IMPULSES;
     } else if (opt == OPT_P) {
 	withval = W_LP;
+    } else if (opt == OPT_B) {
+	withval = W_BOXES;
     }
 
     if (s == NULL) {
@@ -391,7 +394,7 @@ static int gp_set_non_point_info (gnuplot_info *gi,
 
 static int plain_lines_spec (gretlopt opt)
 {
-    if ((opt & OPT_O) && !(opt & (OPT_M | OPT_P))) {
+    if ((opt & OPT_O) && !(opt & (OPT_B | OPT_M | OPT_P))) {
 	return get_optval_string(plot_ci, OPT_O) == NULL;
     } else {
 	return 0;
@@ -473,7 +476,7 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
     if (plain_lines_spec(opt)) {
 	/* just using lines */
 	gi->flags |= GPT_LINES;
-    } else if (opt & (OPT_M | OPT_O | OPT_P)) {
+    } else if (opt & (OPT_M | OPT_O | OPT_P | OPT_B)) {
 	/* for handling per-variable "plot with" options */
 	gi->withlist = gretl_list_new(n_yvars);
     }
@@ -490,6 +493,10 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	if (opt & OPT_P) {
 	    /* --with-lp */
 	    gp_set_non_point_info(gi, list, dset, OPT_P);
+	}
+	if (opt & OPT_B) {
+	    /* --with-lp */
+	    gp_set_non_point_info(gi, list, dset, OPT_B);
 	}
     }
 
@@ -2864,6 +2871,8 @@ static void set_withstr (gnuplot_info *gi, int i, char *str)
 	    strcpy(str, "w impulses");
 	} else if (withval == W_LP) {
 	    strcpy(str, "w linespoints");
+	} else if (withval == W_BOXES) {
+	    strcpy(str, "w boxes");
 	} else {
 	    strcpy(str, "w points");
 	}
