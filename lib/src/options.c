@@ -250,7 +250,6 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_L, "loess-fit", 0 },
     { GNUPLOT,  OPT_Q, "quadratic-fit", 0 },
     { GNUPLOT,  OPT_N, "linear-fit", 0 },
-    { GNUPLOT,  OPT_B, "cubic-fit", 0 },
     { GNUPLOT,  OPT_E, "semilog-fit", 0 },
     { GNUPLOT,  OPT_S, "suppress-fitted", 0 },
     /* end legacy plot fit options */

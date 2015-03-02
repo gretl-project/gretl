@@ -5,6 +5,12 @@ argument is now officially an expression that evaluates to
 a series, rather than a string. However the string form is
 still accepted.
 
+The old fit-type options for the "gnuplot" command (namely
+inverse-fit, loess-fit, quadratic-fit, linear-fit, cubic-fit,
+semilog-fit and suppress-fitted have been replaced by a
+single --fit option which requires a parameter specifying the
+type of fit, or "none".
+
 The obsolete, undocumented "set" variable halt_on_error has
 been removed.
 

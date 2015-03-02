@@ -266,7 +266,9 @@ int gp_style_index_from_name (const char *s)
 	return GP_STYLE_LINESPOINTS;
     } else if (!strcmp(s, "i")) {
 	return GP_STYLE_IMPULSES;
-    } 
+    } else if (!strcmp(s, "b")) {
+	return GP_STYLE_BOXES;
+    }
 
     /* fallback */
     return GP_STYLE_LINES;

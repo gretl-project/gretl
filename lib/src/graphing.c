@@ -495,7 +495,7 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	    gp_set_non_point_info(gi, list, dset, OPT_P);
 	}
 	if (opt & OPT_B) {
-	    /* --with-lp */
+	    /* --with-boxes */
 	    gp_set_non_point_info(gi, list, dset, OPT_B);
 	}
     }
@@ -512,8 +512,6 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 		gi->fit = PLOT_FIT_INVERSE;
 	    } else if (opt & OPT_Q) {
 		gi->fit = PLOT_FIT_QUADRATIC;
-	    } else if (opt & OPT_B) {
-		gi->fit = PLOT_FIT_CUBIC;
 	    } else if (opt & OPT_L) {
 		gi->fit = PLOT_FIT_LOESS;
 	    } else if (opt & OPT_N) {
