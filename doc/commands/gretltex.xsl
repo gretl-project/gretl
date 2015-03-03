@@ -185,7 +185,7 @@
   <xsl:if test="(@optional)">
     <xsl:text>\texttt{[} </xsl:text>
   </xsl:if>
-  <xsl:if test="(@separated and preceding-sibling::argument)">
+  <xsl:if test="(@separated and (preceding-sibling::argument or preceding-sibling::argblock))">
     <xsl:text>\texttt{;} </xsl:text>
   </xsl:if>
   <xsl:if test="(@alternate)">
@@ -201,7 +201,7 @@
   <xsl:text>\textsl{</xsl:text>
   <xsl:value-of select="translate(., '_', '-')"/>
   <xsl:text>} </xsl:text>
-  <xsl:if test="(@separated and not(preceding-sibling::argument))">
+  <xsl:if test="(@separated and not(preceding-sibling::argument or preceding-sibling::argblock))">
     <xsl:text>\texttt{;} </xsl:text>
   </xsl:if>
   <xsl:if test="(@optional)">
