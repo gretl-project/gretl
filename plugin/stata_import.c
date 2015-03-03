@@ -42,15 +42,16 @@
 #endif
 
 #if defined(WIN32) && !defined(WIN64)
+/* _ftelli64 missing in msvcrt.dll */
 
 #include <io.h>
 
-gint64 ftell64 (FILE *fp)
+static gint64 ftell64 (FILE *fp)
 {
     return _telli64(_fileno(fp));
 }
 
-gint64 fseek64 (FILE *fp, gint64 offset, int whence)
+static gint64 fseek64 (FILE *fp, gint64 offset, int whence)
 {
     return _lseeki64(_fileno(fp), offset, whence);
 }
