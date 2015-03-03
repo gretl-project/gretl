@@ -2095,12 +2095,13 @@ static int lb_autocorr_test (MODEL *pmod, int order,
 			     gretlopt opt, PRN *prn)
 {
     double lb, pval;
-    int npq, df = order;
-    int err = 0;
+    int df, err = 0;
 
-    npq = arma_model_get_n_arma_coeffs(pmod);
-    if (npq < df) {
-	df -= npq; /* FIXME? */
+    df = order - arma_model_get_n_arma_coeffs(pmod);
+
+    if (df < 0) {
+	gretl_errmsg_set("Insufficient degrees of freedom for test");
+	return E_DATA;
     }
 
     lb = ljung_box(order, pmod->t1, pmod->t2, pmod->uhat, &err);
@@ -2108,7 +2109,7 @@ static int lb_autocorr_test (MODEL *pmod, int order,
     if (err) {
 	lb = pval = NADBL;
     } else {
-	pval = chisq_cdf_comp(order, lb);
+	pval = chisq_cdf_comp(df, lb);
 	if (na(pval)) {
 	    err = E_DATA;
 	} 

@@ -2982,8 +2982,8 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	      gretlopt opt, PRN *prn)
 {
     const double z[] = {1.65, 1.96, 2.58};
-    double ybar, box, pm[3];
-    double pval = NADBL;
+    double ybar, pm[3];
+    double lbox, pval = NADBL;
     gretl_matrix *A;
     double *acf, *pacf;
     const char *vname;
@@ -3078,7 +3078,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     pputs(prn, _("  LAG      ACF          PACF         Q-stat. [p-value]"));
     pputs(prn, "\n\n");
 
-    box = 0.0;
+    lbox = 0.0;
     dfQ = 1;
 
     for (k=0; k<m; k++) {
@@ -3112,20 +3112,25 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	    } else {
 		pputs(prn, "    ");
 	    }
-	} 
+	}
 
 	/* Ljung-Box Q */
-	box += (T * (T + 2.0)) * acf[k] * acf[k] / (T - (k + 1));
-	pprintf(prn, "%12.4f", box);
+	lbox += (T * (T + 2.0)) * acf[k] * acf[k] / (T - (k + 1));
+	pprintf(prn, "%12.4f", lbox);
+
 	if (k >= nparam) {
-	    pval = chisq_cdf_comp(dfQ++, box);
+	    /* i.e., if the real df is > 0 */
+	    pval = chisq_cdf_comp(dfQ++, lbox);
 	    pprintf(prn, "  [%5.3f]", pval);
 	}
+
 	pputc(prn, '\n');
     }
     pputc(prn, '\n');
 
-    record_test_result(box, pval, "Ljung-Box");
+    if (lbox > 0 && !na(pval)) {
+	record_test_result(lbox, pval, "Ljung-Box");
+    }
     
     if (use_gnuplot) {
 	err = correlogram_plot(vname, acf, (pacf_err)? NULL : pacf, 
