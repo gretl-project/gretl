@@ -2106,9 +2106,7 @@ static int lb_autocorr_test (MODEL *pmod, int order,
 
     lb = ljung_box(order, pmod->t1, pmod->t2, pmod->uhat, &err);
 
-    if (err) {
-	lb = pval = NADBL;
-    } else {
+    if (!err) {
 	pval = chisq_cdf_comp(df, lb);
 	if (na(pval)) {
 	    err = E_DATA;

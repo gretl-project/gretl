@@ -3116,10 +3116,10 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 
 	/* Ljung-Box Q */
 	lbox += (T * (T + 2.0)) * acf[k] * acf[k] / (T - (k + 1));
-	pprintf(prn, "%12.4f", lbox);
 
 	if (k >= nparam) {
 	    /* i.e., if the real df is > 0 */
+	    pprintf(prn, "%12.4f", lbox); 
 	    pval = chisq_cdf_comp(dfQ++, lbox);
 	    pprintf(prn, "  [%5.3f]", pval);
 	}
