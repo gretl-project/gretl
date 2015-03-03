@@ -884,11 +884,12 @@
 
       <para context="cli">
 	The optional integer values <repl>P</repl>, <repl>D</repl> and
-	<repl>Q</repl> represent the seasonal AR, order for seasonal
-	differencing and seasonal MA order respectively.  These are
-	applicable only if the data have a frequency greater than 1
-	(for example, quarterly or monthly data).  These orders must
-	be given in numerical form or as scalar variables.
+	<repl>Q</repl> represent the seasonal AR order, the order for
+	seasonal differencing, and the seasonal MA order,
+	respectively.  These are applicable only if the data have a
+	frequency greater than 1 (for example, quarterly or monthly
+	data).  These orders may be given in numerical form or as
+	scalar variables.
       </para>
 
       <para context="cli">
