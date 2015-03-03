@@ -36,12 +36,25 @@
 #if defined(WIN64)
 # define ftell64(a)     _ftelli64(a)
 # define fseek64(a,b,c) _fseeki64(a,b,c)
-#elif defined(WIN32)
-# define ftell64(a)     ftell(a)
-# define fseek64(a,b,c) fseek(a,b,c)
-#else
+#elif !defined(WIN32)
 # define ftell64(a)     ftello(a)
 # define fseek64(a,b,c) fseeko(a,b,c)
+#endif
+
+#if defined(WIN32) && !defined(WIN64)
+
+#include <io.h>
+
+gint64 ftell64 (FILE *fp)
+{
+    return _telli64(_fileno(fp));
+}
+
+gint64 fseek64 (FILE *fp, gint64 offset, int whence)
+{
+    return _lseeki64(_fileno(fp), offset, whence);
+}
+
 #endif
 
 /* see http://www.stata.com/help.cgi?dta */
