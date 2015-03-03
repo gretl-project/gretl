@@ -33,9 +33,12 @@
 # define HOST_ENDIAN G_LITTLE_ENDIAN
 #endif
 
-#ifdef WIN32
+#if defined(WIN64)
 # define ftell64(a)     _ftelli64(a)
 # define fseek64(a,b,c) _fseeki64(a,b,c)
+#elif defined(WIN32)
+# define ftell64(a)     ftell(a)
+# define fseek64(a,b,c) fseek(a,b,c)
 #else
 # define ftell64(a)     ftello(a)
 # define fseek64(a,b,c) fseeko(a,b,c)
