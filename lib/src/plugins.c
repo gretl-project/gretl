@@ -471,7 +471,13 @@ void *get_plugin_function (const char *funcname)
 
 	if (handle != NULL) {
 	    funp = get_function_address(handle, funcname);
+	} else {
+	    fprintf(stderr, "%s: get_function_address failed\n",
+		    funcname);
 	}
+    } else {
+	fprintf(stderr, "%s: plugin_index_lookup failed\n",
+		funcname);
     }
 
     if (funp == NULL) {
