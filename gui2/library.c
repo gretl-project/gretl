@@ -5321,7 +5321,7 @@ enum {
 };
 
 static void real_do_corrgm (DATASET *dset, int code,
-			    GtkWidget *parent)
+			    int nparam, GtkWidget *parent)
 {
     gchar *title;
     int T = sample_size(dset);
@@ -5352,7 +5352,7 @@ static void real_do_corrgm (DATASET *dset, int code,
 	    record_lib_command();
 	}
     } else {
-	err = corrgram(dset->v - 1, order, 0,
+	err = corrgram(dset->v - 1, order, nparam,
 		       dset, OPT_R, prn);
     }
 
@@ -5369,7 +5369,7 @@ static void real_do_corrgm (DATASET *dset, int code,
 
 void do_corrgm (void)
 {
-    real_do_corrgm(dataset, SELECTED_VAR, NULL);
+    real_do_corrgm(dataset, SELECTED_VAR, 0, NULL);
 }
 
 static int tmp_add_fit_resid (MODEL *pmod, DATASET *dset, int code)
@@ -5389,7 +5389,7 @@ void residual_correlogram_callback (GtkAction *action, gpointer p)
     MODEL *pmod = (MODEL *) vwin->data;
     int origv = dataset->v;
     DATASET *dset;
-    int err = 0;
+    int npar, err = 0;
 
     dset = maybe_get_model_data(pmod, OPT_G, &err);
     if (err) {
@@ -5401,7 +5401,17 @@ void residual_correlogram_callback (GtkAction *action, gpointer p)
 	return;
     }
 
-    real_do_corrgm(dset, MODEL_VAR, vwin_toplevel(vwin));
+    /* probably wrong but just for testing by now */
+    if (pmod->ci == ARMA) {
+	npar = arma_model_nonseasonal_AR_order(pmod);
+	npar += arma_model_nonseasonal_MA_order(pmod);
+	npar += gretl_model_get_int(pmod, "arma_P");
+	npar += gretl_model_get_int(pmod, "arma_Q");
+    } else {
+	npar = 0;
+    }
+    
+    real_do_corrgm(dset, MODEL_VAR, npar, vwin_toplevel(vwin));
 
     trim_dataset(pmod, origv);
 }
