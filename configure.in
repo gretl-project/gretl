@@ -872,20 +872,21 @@ AC_SUBST(swap_ends)
 AC_SUBST(use_gsf)
 
 GTK_HUSH=""
+CFLAGS=-Wno-deprecated-declarations
+AC_MSG_CHECKING([whether CC supports -Wno-deprecated-declarations])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+   [AC_MSG_RESULT([yes])]
+   [GTK_HUSH=-Wno-deprecated-declarations],
+   [AC_MSG_RESULT([no])]
+)
+AC_SUBST(GTK_HUSH)
+
 if test "$gtk_version" = "3.0" ; then
    plugsub="gretl-gtk3"
-   CFLAGS=-Wno-deprecated-declarations
-   AC_MSG_CHECKING([whether CC supports -Wno-deprecated-declarations])
-   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
-      [AC_MSG_RESULT([yes])]
-      [GTK_HUSH=-Wno-deprecated-declarations],
-      [AC_MSG_RESULT([no])]
-   )
 else 
    plugsub="gretl-gtk2"
 fi
 AC_SUBST(plugsub)
-AC_SUBST(GTK_HUSH)
 
 dnl record results on various libraries
 AC_SUBST(XML_CFLAGS)
