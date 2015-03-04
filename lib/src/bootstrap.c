@@ -791,6 +791,12 @@ static void bs_calc_ci (boot *bs, gretl_matrix *xi, gretl_matrix *ci)
 	/* the "percentile t" method */
 	ci->val[0] = bs->point - bs->sep0 * qu;
 	ci->val[1] = bs->point - bs->sep0 * ql;
+    } else if (ci->rows == 2) {
+	/* "naive" percentile plus "basic" method */
+	gretl_matrix_set(ci, 0, 0, ql);
+	gretl_matrix_set(ci, 0, 1, qu);
+	gretl_matrix_set(ci, 1, 0, 2*bs->point - qu);
+	gretl_matrix_set(ci, 1, 1, 2*bs->point - ql);
     } else {
 	/* the "naive" percentile method */
 	ci->val[0] = ql;
@@ -1471,6 +1477,8 @@ static int opt_from_method (gretlopt *opt, int method)
     return err;
 }
 
+#define TRY_BASIC 0
+
 gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
 				   const DATASET *dset,
 				   int p, int B,
@@ -1513,9 +1521,16 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
 
     if (studentize) {
 	opt |= OPT_T;
-    }    
-
-    ci = gretl_zero_matrix_new(1, 2);
+	ci = gretl_zero_matrix_new(1, 2);
+    } else {
+#if TRY_BASIC
+	/* calculate c.i. two ways */
+	ci = gretl_zero_matrix_new(2, 2);
+#else
+	ci = gretl_zero_matrix_new(1, 2);
+#endif
+    }
+    
     if (ci == NULL) {
 	*err = E_ALLOC;
 	return NULL;

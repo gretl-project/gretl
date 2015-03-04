@@ -2003,7 +2003,7 @@ int libgretl_mpi_init (int self, int np, int dcmt)
 
     if (dcmt && np > 1) {
 	/* use DCMT for multiple RNGs */
-	gretl_dcmt_init(np, self, 4172);
+	gretl_dcmt_init(np, self, 0);
     } else {
 	/* just use one RNG */
 	gretl_rand_init();

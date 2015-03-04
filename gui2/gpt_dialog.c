@@ -143,6 +143,18 @@ const gchar *fittype_strings[] = {
     NULL
 };
 
+const gchar *ts_fittype_strings[] = {
+    N_("none"),
+    N_("linear: y = a + b*t"),
+    N_("quadratic: y = a + b*t + c*t^2"),
+    N_("cubic: y = a + b*t + c*t^2 + d*t^3"),
+    N_("inverse: y = a + b*(1/t)"),
+    N_("loess (locally weighted fit)"),
+    N_("semilog: log y = a + b*t"),
+    N_("linear-log: y = a + b*log(t)"),
+    NULL
+};
+
 enum {
     GUI_LINE,
     GUI_LABEL,
@@ -516,7 +528,7 @@ static void combo_to_gp_style (GtkWidget *w, int *sty)
     g_free(s);
 }
 
-static int ftype_from_selected (GtkWidget *w)
+static int ftype_from_selected (GtkWidget *w, const char **S)
 {
     FitType f = PLOT_FIT_NONE;
 
@@ -524,8 +536,8 @@ static int ftype_from_selected (GtkWidget *w)
 	gchar *s = combo_box_get_active_text(w);
 	int i;
 
-	for (i=0; fittype_strings[i] != NULL; i++) {
-	    if (!strcmp(s, _(fittype_strings[i]))) {
+	for (i=0; S[i] != NULL; i++) {
+	    if (!strcmp(s, _(S[i]))) {
 		f = i;
 		break;
 	    }
@@ -539,9 +551,13 @@ static int ftype_from_selected (GtkWidget *w)
 static int set_fit_type_from_combo (GtkWidget *box, GPT_SPEC *spec)
 {
     int oldfit = widget_get_int(box, "oldfit");
-    FitType f = ftype_from_selected(box);
+    const char **S;
+    FitType f;
     int err = 0;
 
+    S = (spec->flags & GPT_TS)? ts_fittype_strings : fittype_strings;
+    f = ftype_from_selected(box, S);
+    
     if (f == oldfit) {
 	/* no change */
 	return 0;
@@ -577,10 +593,12 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
     GPT_SPEC *spec = ed->spec;
     const char *s1 = spec->yvarname;
     const char *s2 = spec->xvarname;
+    const char **S;
     gchar *title = NULL;
     FitType f;
 
-    f = ftype_from_selected(GTK_WIDGET(box));
+    S = (spec->flags & GPT_TS)? ts_fittype_strings : fittype_strings;
+    f = ftype_from_selected(GTK_WIDGET(box), S);
 
     if ((spec->flags & GPT_TS) && f != PLOT_FIT_NONE && ed->keycombo != NULL) {
 	if (!gtk_widget_is_sensitive(ed->keycombo)) {
@@ -1998,13 +2016,9 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 				  ed->fitcombo, 1, TAB_MAIN_COLS, rows-1, rows);
 
 	if (spec->flags & GPT_TS) {
-	    char tmp[128];
-
-	    for (i=0; fittype_strings[i] != NULL; i++) {
-		strcpy(tmp, _(fittype_strings[i]));
-		gretl_charsub(tmp, 'x', 't');
+	    for (i=0; ts_fittype_strings[i] != NULL; i++) {
 		if (i != PLOT_FIT_LOGLIN || semilog_ok) {
-		    combo_box_append_text(ed->fitcombo, tmp);
+		    combo_box_append_text(ed->fitcombo, _(ts_fittype_strings[i]));
 		}
 	    }	    
 	} else {
