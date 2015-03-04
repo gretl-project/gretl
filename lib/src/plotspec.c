@@ -1717,11 +1717,10 @@ static void plotspec_set_fitted_line (GPT_SPEC *spec, FitType f,
     spec->lines[1].ncols = 0;
 }
 
-#define polyfit(f) (f == PLOT_FIT_OLS || \
+#define timefit(f) (f == PLOT_FIT_OLS || \
 		    f == PLOT_FIT_QUADRATIC ||	\
 		    f == PLOT_FIT_CUBIC || \
-		    f == PLOT_FIT_LOGLIN || \
-		    f == PLOT_FIT_LINLOG)
+		    f == PLOT_FIT_LOGLIN)
 
 int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 {
@@ -1738,7 +1737,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     int i, t, k;
     int err = 0;
 
-    if ((spec->flags & GPT_TS) && polyfit(f)) {
+    if ((spec->flags & GPT_TS) && timefit(f)) {
 	if (spec->pd == 1 || spec->pd == 4 || spec->pd == 12) {
 	    x0 = px[0];
 	}
@@ -1892,7 +1891,9 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     gretl_matrix_free(b);
     gretl_matrix_free(yh);
 
+#if 0
     fprintf(stderr, "plotspec_add_fit: returning %d\n", err);
+#endif    
 
     return err;
 }
