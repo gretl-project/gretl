@@ -804,17 +804,34 @@ static void bs_calc_ci (boot *bs, gretl_matrix *xi, gretl_matrix *ci)
     }
 }
 
-/* Davidson and MacKinnon, ETM, p. 163 */
+/* Davidson and MacKinnon, ETM, p. 163; see also
+   Davidson and Flachaire, 2001 */
 
 static void rescale_residuals (boot *bs, gretl_matrix *h)
 {
-    if (h != NULL) {
+    int done = 0;
+
+    if (bs->hc_version == 0) {
+	/* no scaling */
+	done = 1;
+    } else if (h != NULL) {
 	int t;
 
-	for (t=0; t<bs->T; t++) {
-	    bs->u0->val[t] /= sqrt(1.0 - h->val[t]);
+	if (bs->hc_version == 2) {
+	    for (t=0; t<bs->T; t++) {
+		bs->u0->val[t] /= sqrt(1.0 - h->val[t]);
+	    }
+	    done = 1;
+	} else if (bs->hc_version == 3) {
+	    for (t=0; t<bs->T; t++) {
+		bs->u0->val[t] /= 1.0 - h->val[t];
+	    }
+	    done = 1;
 	}
-    } else {
+    }
+
+    if (!done) {
+	/* HC1 or no HC applied */
 	int k = bs->k;
 	double s;
 
