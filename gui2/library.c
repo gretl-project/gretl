@@ -7803,6 +7803,7 @@ gboolean do_open_script (int action)
 void do_new_script (int code, const char *buf) 
 {
     int action = (code == FUNC)? EDIT_SCRIPT : code;
+    windata_t *vwin;
     char temp[MAXLEN];
     FILE *fp;
 
@@ -7827,7 +7828,11 @@ void do_new_script (int code, const char *buf)
 	strcpy(scriptfile, temp);
     }
     
-    view_file(temp, 1, 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
+    vwin = view_file(temp, 1, 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
+
+    if (buf != NULL && *buf != '\0') {
+	mark_vwin_content_changed(vwin);
+    }
 }
 
 void new_script_callback (GtkAction *action) 
