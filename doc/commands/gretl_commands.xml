@@ -8141,8 +8141,13 @@
 	</option>
 	<option>
 	  <flag>--preserve</flag>
-	  <effect>preserve any matrices and scalars</effect>
+	  <effect>preserve variables other than series</effect>
 	</option>
+	<option>
+	  <flag>--frompkg</flag>
+	  <optparm>pkgname</optparm>
+	  <effect>see below</effect>
+	</option>	
 	<option>
 	  <flag>--www</flag>
 	  <effect>use a database on the gretl server</effect>
@@ -8160,10 +8165,10 @@
 
     <description>
       <para>
-	Opens a data file.  If a data file is already open, it is
-	replaced by the newly opened one. To add data to the current
-	dataset, see <cmdref targ="append"/> and (for greater
-	flexibility) <cmdref targ="join"/>.
+	Opens a data file or database.  If a data file is already
+	open, it is replaced by the newly opened one. To add data to
+	the current dataset, see <cmdref targ="append"/> and (for
+	greater flexibility) <cmdref targ="join"/>.
       </para>
       <para>
 	If a full path is not given, the program will search some relevant
@@ -8174,15 +8179,22 @@
 	(native, plain text, CSV, MS Excel, Stata, SPSS, etc.).
       </para>
       <para>
+	If the <opt>frompkg</opt> option is used, gretl will look for
+	the specified data file in the subdirectory associated with
+	the function package specified by <repl>pkgname</repl>.
+      </para>
+      <para>
 	If the <repl>filename</repl> argument takes the form of a
 	URI starting with <lit>http://</lit>, then gretl will attempt
 	to download the indicated data file before opening it.
       </para>
       <para>
 	By default, opening a new data file clears the current gretl
-	session, which includes deletion of any named matrices and
-	scalars. If you wish to keep any currently defined matrices
-	and scalars, use the <opt>--preserve</opt> option.
+	session, which includes deletion of all named variables,
+	including matrices, scalars and strings.  If you wish to keep
+	your currently defined variables (other than series, which are
+	necessarily cleared out), use the <opt>--preserve</opt>
+	option.
       </para>
       <para>
 	The <lit>open</lit> command can also be used to open a database
