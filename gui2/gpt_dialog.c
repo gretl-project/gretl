@@ -143,18 +143,6 @@ const gchar *fittype_strings[] = {
     NULL
 };
 
-const gchar *ts_fittype_strings[] = {
-    N_("none"),
-    N_("linear: y = a + b*t"),
-    N_("quadratic: y = a + b*t + c*t^2"),
-    N_("cubic: y = a + b*t + c*t^2 + d*t^3"),
-    N_("inverse: y = a + b*(1/t)"),
-    N_("loess (locally weighted fit)"),
-    N_("semilog: log y = a + b*t"),
-    N_("linear-log: y = a + b*log(t)"),
-    NULL
-};
-
 enum {
     GUI_LINE,
     GUI_LABEL,
@@ -528,21 +516,17 @@ static void combo_to_gp_style (GtkWidget *w, int *sty)
     g_free(s);
 }
 
-static int ftype_from_selected (GtkWidget *w, const char **S)
+static int ftype_from_selected (GtkWidget *w)
 {
     FitType f = PLOT_FIT_NONE;
 
     if (GTK_IS_COMBO_BOX(w)) {
-	gchar *s = combo_box_get_active_text(w);
-	int i;
-
-	for (i=0; S[i] != NULL; i++) {
-	    if (!strcmp(s, _(S[i]))) {
-		f = i;
-		break;
-	    }
+	f = gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	if (f == PLOT_FIT_LOGLIN && widget_get_int(w, "no-semilog")) {
+	    /* the second-last fit option will have been
+	       suppressed, so we're off by one */
+	    f = PLOT_FIT_LINLOG;
 	}
-	g_free(s);
     }
 
     return f;
@@ -551,12 +535,10 @@ static int ftype_from_selected (GtkWidget *w, const char **S)
 static int set_fit_type_from_combo (GtkWidget *box, GPT_SPEC *spec)
 {
     int oldfit = widget_get_int(box, "oldfit");
-    const char **S;
     FitType f;
     int err = 0;
 
-    S = (spec->flags & GPT_TS)? ts_fittype_strings : fittype_strings;
-    f = ftype_from_selected(box, S);
+    f = ftype_from_selected(box);
     
     if (f == oldfit) {
 	/* no change */
@@ -593,12 +575,10 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
     GPT_SPEC *spec = ed->spec;
     const char *s1 = spec->yvarname;
     const char *s2 = spec->xvarname;
-    const char **S;
     gchar *title = NULL;
     FitType f;
 
-    S = (spec->flags & GPT_TS)? ts_fittype_strings : fittype_strings;
-    f = ftype_from_selected(GTK_WIDGET(box), S);
+    f = ftype_from_selected(GTK_WIDGET(box));
 
     if ((spec->flags & GPT_TS) && f != PLOT_FIT_NONE && ed->keycombo != NULL) {
 	if (!gtk_widget_is_sensitive(ed->keycombo)) {
@@ -2016,14 +1996,25 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 				  ed->fitcombo, 1, TAB_MAIN_COLS, rows-1, rows);
 
 	if (spec->flags & GPT_TS) {
-	    for (i=0; ts_fittype_strings[i] != NULL; i++) {
-		if (i != PLOT_FIT_LOGLIN || semilog_ok) {
-		    combo_box_append_text(ed->fitcombo, _(ts_fittype_strings[i]));
+	    char *p, tmp[128];
+
+	    for (i=0; fittype_strings[i] != NULL; i++) {
+		if (i == PLOT_FIT_LOGLIN && !semilog_ok) {
+		    widget_set_int(ed->fitcombo, "no-semilog", 1);
+		    continue;
+		} else {
+		    strcpy(tmp, _(fittype_strings[i]));
+		    p = strchr(tmp, ':');
+		    if (p != NULL) {
+			gretl_charsub(tmp, 'x', 't');
+		    }
+		    combo_box_append_text(ed->fitcombo, tmp);
 		}
 	    }	    
 	} else {
 	    for (i=0; fittype_strings[i] != NULL; i++) {
 		if (i == PLOT_FIT_LOGLIN && !semilog_ok) {
+		    widget_set_int(ed->fitcombo, "no-semilog", 1);
 		    continue;
 		} else if (i == PLOT_FIT_LINLOG && !linlog_ok) {
 		    continue;
