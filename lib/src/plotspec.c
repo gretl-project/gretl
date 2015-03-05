@@ -1571,67 +1571,40 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
 static void set_plotfit_formula (char *formula, FitType f, const double *b,
 				 double t0, double pd)
 {
+    char x[32];
+    
     gretl_push_c_numeric_locale();
 
-    /* if t0 is not NA that indicates there we're doing a fitted 
-       plot against time, and we have to transform the
-       coefficients
+    /* If t0 is not NA that indicates that we've calculated a fit
+       against time (t = 1,2,3,...,T), and we have to transform the
+       equation so that it produces correct fitted values given
+       x-data in the form year[.fraction].
     */
 
+    if (!na(t0)) {
+	if (pd > 1) {
+	    sprintf(x, "(%.1f*(x-%.10g)+1)", pd, t0);
+	} else {
+	    sprintf(x, "(x-%.10g+1)", t0);
+	}
+    } else {
+	strcpy(x, "x");
+    }
+
     if (f == PLOT_FIT_OLS) {
-	if (!na(t0)) {
-	    double c = b[1] * pd;
-
-	    sprintf(formula, "%.10g + %.10g*x", b[0] - c*t0, c);
-	} else {
-	    sprintf(formula, "%.10g + %.10g*x", b[0], b[1]);
-	}
+	sprintf(formula, "%.10g + %.10g*%s", b[0], b[1], x);
     } else if (f == PLOT_FIT_QUADRATIC) {
-	if (!na(t0)) {
-	    double c = b[1] * pd;
-	    double g = b[2] * pd * pd;
-
-	    sprintf(formula, "%.10g + %.10g*x + %.10g*x**2", 
-		    b[0] - c*t0 + g*t0*t0, c - 2*g*t0, g);
-	} else {
-	    sprintf(formula, "%.10g + %.10g*x + %.10g*x**2", b[0], b[1], b[2]);
-	}
+	sprintf(formula, "%.10g + %.10g*%s + %.10g*%s**2", b[0], b[1], x, b[2], x);
     } else if (f == PLOT_FIT_CUBIC) {	
-	if (!na(t0)) {
-	    double c = b[1] * pd;
-	    double g = b[2] * pd * pd;
-	    double h = b[3] * pd * pd * pd;
-
-	    sprintf(formula, "%.13g + %.10g*x + %.10g*x**2 + %.10g*x**3", 
-		    b[0] - c*t0 + g*t0*t0 - h*t0*t0*t0, 
-		    c - 2*g*t0 + 3*h*t0*t0, 
-		    g - 3*h*t0, h);
-	} else {
-	    sprintf(formula, "%.10g + %.10g*x + %.10g*x**2 + %.10g*x**3", 
-		    b[0], b[1], b[2], b[3]);
-	}	
+	sprintf(formula, "%.10g + %.10g*%s + %.10g*%s**2 + %.10g*%s**3", 
+		b[0], b[1], x, b[2], x, b[3], x);
     } else if (f == PLOT_FIT_INVERSE) {
-	if (!na(t0)) {
-	    double c = t0 * pd;
-
-	    sprintf(formula, "%.10g + %.10g/(%g*x - %.10g)", b[0], b[1], 
-		    pd, c);
-	} else {
-	    sprintf(formula, "%.10g + %.10g/x", b[0], b[1]);
-	}
+	sprintf(formula, "%.10g + %.10g/%s", b[0], b[1], x);
     } else if (f == PLOT_FIT_LOGLIN) {
-	if (!na(t0)) {
-	    double c = b[1] * pd;
-
-	    sprintf(formula, "exp(%.10g + %.10g*x)", b[0] - c*t0, c);
-	} else {
-	    sprintf(formula, "exp(%.10g + %.10g*x)", b[0], b[1]);
-	}
+	sprintf(formula, "exp(%.10g + %.10g*%s)", b[0], b[1], x);
     } else if (f == PLOT_FIT_LINLOG) {
 	if (!na(t0)) {
-	    double c = b[1] * pd;
-
-	    sprintf(formula, "%.10g + %.10g*log(x)", b[0] - c*t0, c);
+	    sprintf(formula, "%.10g + %.10g*log%s", b[0], b[1], x);
 	} else {
 	    sprintf(formula, "%.10g + %.10g*log(x)", b[0], b[1]);
 	}
@@ -1717,11 +1690,6 @@ static void plotspec_set_fitted_line (GPT_SPEC *spec, FitType f,
     spec->lines[1].ncols = 0;
 }
 
-#define timefit(f) (f == PLOT_FIT_OLS || \
-		    f == PLOT_FIT_QUADRATIC ||	\
-		    f == PLOT_FIT_CUBIC || \
-		    f == PLOT_FIT_LOGLIN)
-
 int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 {
     gretl_matrix *y = NULL;
@@ -1737,8 +1705,14 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     int i, t, k;
     int err = 0;
 
-    if ((spec->flags & GPT_TS) && timefit(f)) {
+    if ((spec->flags & GPT_TS) && f != PLOT_FIT_LOESS) {
 	if (spec->pd == 1 || spec->pd == 4 || spec->pd == 12) {
+	    /* Annual, quarterly or monthly data: we'll estimate
+	       the fit against t = 1,2,3,...,T to give a more
+	       comprehensible displayed equation. So we have
+	       to record the initial x-value (e.g. 2008.25) to
+	       get the fitted line right on the plot.
+	    */
 	    x0 = px[0];
 	}
     } 
@@ -1788,7 +1762,8 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     i = 0;
     for (t=0; t<spec->nobs; t++) {
 	if (!na(x0)) {
-	    xt = t;
+	    /* use a 1-based time index */
+	    xt = t + 1;
 	} else {
 	    xt = px[t];
 	}
