@@ -1569,23 +1569,23 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
 }
 
 static void set_plotfit_formula (char *formula, FitType f, const double *b,
-				 double t0, double pd)
+				 double x0, double pd)
 {
     char x[32];
     
     gretl_push_c_numeric_locale();
 
-    /* If t0 is not NA that indicates that we've calculated a fit
+    /* If x0 is not NA that indicates that we've calculated a fit
        against time (t = 1,2,3,...,T), and we have to transform the
        equation so that it produces correct fitted values given
        x-data in the form year[.fraction].
     */
 
-    if (!na(t0)) {
+    if (!na(x0)) {
 	if (pd > 1) {
-	    sprintf(x, "(%.1f*(x-%.10g)+1)", pd, t0);
+	    sprintf(x, "(%.1f*(x-%.10g)+1)", pd, x0);
 	} else {
-	    sprintf(x, "(x-%.10g+1)", t0);
+	    sprintf(x, "(x-%.10g+1)", x0);
 	}
     } else {
 	strcpy(x, "x");
