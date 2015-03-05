@@ -1603,7 +1603,7 @@ static void set_plotfit_formula (char *formula, FitType f, const double *b,
     } else if (f == PLOT_FIT_LOGLIN) {
 	sprintf(formula, "exp(%.10g + %.10g*%s)", b[0], b[1], x);
     } else if (f == PLOT_FIT_LINLOG) {
-	if (!na(t0)) {
+	if (!na(x0)) {
 	    sprintf(formula, "%.10g + %.10g*log%s", b[0], b[1], x);
 	} else {
 	    sprintf(formula, "%.10g + %.10g*log(x)", b[0], b[1]);
