@@ -3692,3 +3692,91 @@ const char *gretl_app_support_dir (void)
 }
 
 #endif
+
+static int dir_is_writable (const char *dirname)
+{
+    int ok = 0;
+
+    if (gretl_mkdir(dirname) == 0) {
+	gchar *test = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
+
+	if (test != NULL) {
+	    ok = (gretl_test_fopen(test, "w") == 0);
+	    g_free(test);
+	}
+    }
+
+    return ok;
+}
+
+static int get_user_pkg_path (char *path)
+{
+#ifdef OS_OSX
+    const char *dirname = gretl_app_support_dir();
+#else
+    const char *dirname = gretl_dotdir();
+#endif
+    int err = 0;
+
+    if (dirname == NULL || *dirname == '\0') {
+	err = E_FOPEN;
+    } else {
+	sprintf(path, "%sfunctions", dirname);
+	err = (dir_is_writable(path) == 0);
+    }
+
+    return err;
+}
+
+static int get_system_pkg_path (char *path)
+{
+    sprintf(path, "%sfunctions", gretl_home());
+
+    if (dir_is_writable(path)) {
+	return 0;
+    } else {
+	return E_FOPEN;
+    }
+}
+
+/* get a path that's suitable for writing a function
+   package on installation 
+*/
+
+const char *gretl_function_package_path (void)
+{
+    static char path[FILENAME_MAX];
+
+    if (*path == '\0') {
+	int sys_first = 1;
+	int err = 0;
+	
+#if defined(OS_OSX)
+	/* we prefer writing to ~/Library/Application Support */
+	sys_first = 0;
+#elif defined(WIN32)
+	if (win32_uses_virtual_store()) {
+	    /* don't write to virtualized location */
+	    sys_first = 0;
+	}    
+#endif
+
+	if (sys_first) {
+	    err = get_system_pkg_path(path);
+	    if (err) {
+		err = get_user_pkg_path(path);
+	    }
+	} else {
+	    err = get_user_pkg_path(path);
+	}
+
+	if (err) {
+	    *path = '\0';
+	} else {
+	    slash_terminate(path);
+	}
+    }
+
+    return path;
+}
+

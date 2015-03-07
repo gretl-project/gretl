@@ -293,6 +293,8 @@ static const char *print_option (int opt)
 	return "LIST_PKGS";
     case GRAB_FUNC_INFO:
 	return "GRAB_FUNC_INFO";
+    case FUNC_FULLNAME:
+	return "FUNC_FULLNAME";
     default:
 	break;
     }
@@ -309,7 +311,7 @@ static void urlinfo_set_params (urlinfo *u, CGIOpt opt,
 
     if (fname != NULL) {
 	if (opt == GRAB_FILE || opt == GRAB_FUNC ||
-	    opt == GRAB_FUNC_INFO) {
+	    opt == GRAB_FUNC_INFO || opt == FUNC_FULLNAME) {
 	    strcat(u->url, "&fname=");
 	} else {
 	    strcat(u->url, "&dbase=");
@@ -743,6 +745,44 @@ int retrieve_remote_gfn_content (const char *zipname,
 {
     return retrieve_url(gretlhost, GRAB_FUNC_INFO, zipname, NULL, 
 			localname, NULL);
+}
+
+/**
+ * retrieve_remote_pkg_filename:
+ * @pkgname: name of function package, without extension.
+ * @err: location to receive error code.
+ *
+ * Returns: the completed package filename, with .gfn or
+ * .zip extension, or NULL on failure.
+ */
+
+char *retrieve_remote_pkg_filename (const char *pkgname, 
+				    int *err)
+{
+    char *fname = NULL;
+    char *buf = NULL;
+
+    *err = retrieve_url(gretlhost, FUNC_FULLNAME, pkgname, NULL, 
+			NULL, &buf);
+    
+    if (!*err) {
+	if (buf == NULL) {
+	    *err = E_DATA;
+	} else {
+	    if (strstr(buf, "not found")) {
+		gretl_errmsg_set(buf);
+		*err = E_DATA;
+	    } else {
+		char tmp[64];
+
+		sscanf(buf, "%63s", tmp);
+		fname = gretl_strdup(tmp);
+	    }
+	    free(buf);
+	}
+    }
+
+    return fname;
 }
 
 /**

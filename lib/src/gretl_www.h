@@ -37,7 +37,8 @@ typedef enum {
     GRAB_PKG,
     GRAB_FOREIGN,
     QUERY_SF,
-    GRAB_FUNC_INFO
+    GRAB_FUNC_INFO,
+    FUNC_FULLNAME
 } CGIOpt;
 
 int gretl_www_init (const char *host, const char *proxy, int use_proxy);
@@ -63,6 +64,9 @@ int retrieve_remote_function_package (const char *pkgname,
 
 int retrieve_remote_gfn_content (const char *zipname, 
 				 const char *localname);
+
+char *retrieve_remote_pkg_filename (const char *pkgname, 
+				    int *err);
 
 int retrieve_remote_datafiles_package (const char *pkgname, 
 				       const char *localname);

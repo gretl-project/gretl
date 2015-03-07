@@ -212,6 +212,8 @@ const char *gretl_mpiexec (void);
 
 const char *gretl_current_dir (void);
 
+const char *gretl_function_package_path (void);
+
 void gretl_set_current_dir (const char *s);
 
 void set_gretl_png_font (const char *s);

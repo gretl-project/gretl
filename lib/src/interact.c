@@ -44,6 +44,7 @@
 #include "flow_control.h"
 #include "libglue.h"
 #include "csvdata.h"
+#include "gretl_zip.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
@@ -1999,6 +2000,72 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
     return err;
 }
 
+static int lib_unzip_package_file (const char *zipname,
+				   const char *dirname)
+{
+    GError *gerr = NULL;
+    int err = 0;
+
+    err = gretl_chdir(dirname);
+    if (err) {
+	return err;
+    }
+
+    err = gretl_unzip_file(zipname, &gerr);
+    if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	if (!err) {
+	    err = 1;
+	}
+	g_error_free(gerr);
+    }
+
+    gretl_remove(zipname);
+
+    return err;
+}
+
+static int install_function_package (const char *pkgname,
+				     PRN *prn)
+{
+    char *fname = NULL;
+    int filetype = 0;
+    int err = 0;
+
+    if (strstr(pkgname, ".gfn")) {
+	filetype = 1;
+    } else if (strstr(pkgname, ".zip")) {
+	filetype = 2;
+    } else {
+	/* determine the correct suffix */
+	fname = retrieve_remote_pkg_filename(pkgname, &err);
+	if (!err) {
+	    filetype = strstr(fname, ".zip") ? 2 : 1;
+	}
+    }
+
+    if (filetype) {
+	const char *basename = fname != NULL ? fname : pkgname;
+	const char *path = gretl_function_package_path();
+	gchar *fullname;
+
+	fullname = g_strdup_printf("%s%s", path, basename);
+	err = retrieve_remote_function_package(basename, fullname);
+	if (!err && filetype == 2) {
+	    err = lib_unzip_package_file(basename, path);
+	}
+	g_free(fullname);
+
+	if (!err && gretl_messages_on()) {
+	    pprintf(prn, "Installed %s\n", basename);
+	}
+    }
+
+    free(fname);
+    
+    return err;
+}
+
 static void abort_execution (ExecState *s)
 {
     *s->cmd->savename = '\0';
@@ -2533,6 +2600,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (!err) {
 	    print_smpl(dset, get_full_length_n(), prn);
 	}	
+	break;
+
+    case INSTALL:
+	err = install_function_package(cmd->param, prn);
 	break;
 
     case MAKEPKG:

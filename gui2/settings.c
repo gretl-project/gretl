@@ -576,11 +576,11 @@ static int write_OK (gchar *dirname)
     int ok = 0;
 
     if (gretl_mkdir(dirname) == 0) {
-	gchar  *target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
+	gchar *test = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
 
-	if (target != NULL) {
-	    ok = (gretl_test_fopen(target, "w") == 0);
-	    g_free(target);
+	if (test != NULL) {
+	    ok = (gretl_test_fopen(test, "w") == 0);
+	    g_free(test);
 	}
     }
 
@@ -633,7 +633,7 @@ static void get_pkg_save_dir (char *dirname, int action)
     }
 
 #ifdef G_OS_WIN32
-    if (windows_uses_virtual_store()) {
+    if (win32_uses_virtual_store()) {
 	/* don't write to virtualized location */
 	try_sysdir = 0;
     }

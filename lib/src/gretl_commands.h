@@ -80,6 +80,7 @@ typedef enum {
     IF,
     INCLUDE,
     INFO,
+    INSTALL,
     INTREG,
     JOIN,
     KALMAN,

@@ -1872,7 +1872,7 @@ static int get_writable_doc_path (char *path, const char *fname)
     }
 
 #ifdef G_OS_WIN32
-    if (sysdoc_writable < 0 && windows_uses_virtual_store()) {
+    if (sysdoc_writable < 0 && win32_uses_virtual_store()) {
 	/* don't write to virtualized location */
 	sysdoc_writable = 0;
     }
