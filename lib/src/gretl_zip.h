@@ -34,4 +34,7 @@ int gretl_zip_datafile (const char *fname, const char *path,
 int gretl_unzip_datafile (const char *fname, const char *path,
 			  GError **gerr);
 
+int gretl_unzip_function_package (const char *fname,
+				  const char *path);
+
 #endif /* GRETL_ZIP_H */

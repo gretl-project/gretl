@@ -1,5 +1,7 @@
 version 1.10.0, in progress
 - Replace old command-line parser with new, faster "tokenizer"
+- add "install" command to install function packages via the
+  command line
 - "chow" and "qlrtest" commands: add --limit-to option to 
   restrict the break test to a subset of regressors
 - "qlrtest": add new accessor $qlrbreak

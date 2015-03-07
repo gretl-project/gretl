@@ -5658,11 +5658,39 @@
 
   </command>
 
+  <command name="install" section="Utilities" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>pkgname</argument>
+      </arguments>
+     <examples>
+        <example>install armax</example>
+        <example>install felogit.gfn</example>
+	<example>install HIP.zip</example>
+     </examples>
+    </usage>    
+
+    <description>
+      <para>
+	Downloads and installs <repl>pkgname</repl>. At present this
+	applies only to function packages (<lit>gfn</lit> or
+	<lit>zip</lit> files) from the gretl server. The name of the
+	package may be given with or without the filename extension,
+	as illustrated in the examples.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Tools/Function packages/On server</menu-path>
+    </gui-access>
+
+  </command>  
+
   <command name="intreg" section="Estimation" label="Interval regression model">
 
     <usage>
       <arguments>
-        <argument></argument>
         <argument>minvar</argument>
         <argument>maxvar</argument>
         <argument>indepvars</argument>

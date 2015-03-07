@@ -378,4 +378,27 @@ int gretl_unzip_datafile (const char *fname, const char *path,
 
 #endif /* zip/unzip variants */
 
+int gretl_unzip_function_package (const char *fname,
+				  const char *path)
+{
+    GError *gerr = NULL;
+    int err = 0;
 
+    err = gretl_chdir(path);
+    if (err) {
+	return err;
+    }
+
+    err = gretl_unzip_file(fname, &gerr);
+    if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	if (!err) {
+	    err = 1;
+	}
+	g_error_free(gerr);
+    }
+
+    gretl_remove(fname);
+
+    return err;
+}

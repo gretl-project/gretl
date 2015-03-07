@@ -2067,52 +2067,6 @@ static int unpack_book_data (const char *fname)
     return err;
 }
 
-int unzip_package_file (const char *zipname, const char *path)
-{
-    char *p, dirname[FILENAME_MAX];
-    GError *gerr = NULL;
-    int err = 0;
-
-    strcpy(dirname, path);
-    p = strrchr(dirname, SLASH);
-    if (p != NULL) {
-	*p = '\0';
-    }
-
-    err = gretl_chdir(dirname);
-    if (err) {
-	return err;
-    }
-
-#ifdef G_OS_WIN32
-    if (1) {
-	char *test;
-
-	fprintf(stderr, "unzip_package_file: unzipping in '%s'\n", dirname);
-	*dirname = '\0';
-	test = getcwd(dirname, FILENAME_MAX - 1);
-	fprintf(stderr, " check: getcwd() gives '%s'\n", test);
-    }
-#endif
-
-    err = gretl_unzip_file(zipname, &gerr);
-    if (gerr != NULL) {
-	gretl_errmsg_set(gerr->message);
-	if (!err) {
-	    err = 1;
-	}
-	g_error_free(gerr);
-    }
-
-    gretl_remove(zipname);
-
-    if (err) {
-	fprintf(stderr, "gretl_unzip_file: err = %d\n", err);
-    }
-
-    return err;
-}
-
 static gchar *make_gfn_path (const char *path, const char *name)
 {
     const char *p = strrchr(path, SLASH);
@@ -2189,7 +2143,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 
 	    err = retrieve_remote_function_package(zipname, path);
 	    if (!err) {
-		err = unzip_package_file(zipname, path);
+		err = gretl_unzip_function_package(zipname, path);
 	    }
 	    g_free(zipname);
 	} else {

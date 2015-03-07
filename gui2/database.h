@@ -13,8 +13,6 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin);
 
 void pkg_info_from_server (GtkWidget *w, windata_t *vwin);
 
-int unzip_package_file (const char *zipname, const char *path);
-
 gint populate_dbfilelist (windata_t *vwin, int *pndb);
 
 void set_db_dir_callback (windata_t *vwin, char *path);

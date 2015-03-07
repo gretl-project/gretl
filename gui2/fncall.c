@@ -28,6 +28,7 @@
 #include "gretl_www.h"
 #include "gretl_xml.h"
 #include "gretl_typemap.h"
+#include "gretl_zip.h"
 #include "database.h"
 #include "guiprint.h"
 #include "ssheet.h"
@@ -2363,7 +2364,7 @@ int download_addon (const char *pkgname, char **local_path)
 	err = retrieve_public_file(uri, fname);
 	fprintf(stderr, "retrieve_public_file: err = %d\n", err);
 	if (!err) {
-	    err = unzip_package_file(fname, path);
+	    err = gretl_unzip_function_package(fname, path);
 	    fprintf(stderr, "unzip_package_file: err = %d\n", err);
 	}
 	if (err) {

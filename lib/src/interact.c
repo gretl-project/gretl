@@ -2000,31 +2000,6 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
     return err;
 }
 
-static int lib_unzip_package_file (const char *zipname,
-				   const char *dirname)
-{
-    GError *gerr = NULL;
-    int err = 0;
-
-    err = gretl_chdir(dirname);
-    if (err) {
-	return err;
-    }
-
-    err = gretl_unzip_file(zipname, &gerr);
-    if (gerr != NULL) {
-	gretl_errmsg_set(gerr->message);
-	if (!err) {
-	    err = 1;
-	}
-	g_error_free(gerr);
-    }
-
-    gretl_remove(zipname);
-
-    return err;
-}
-
 static int install_function_package (const char *pkgname,
 				     PRN *prn)
 {
@@ -2052,7 +2027,7 @@ static int install_function_package (const char *pkgname,
 	fullname = g_strdup_printf("%s%s", path, basename);
 	err = retrieve_remote_function_package(basename, fullname);
 	if (!err && filetype == 2) {
-	    err = lib_unzip_package_file(basename, path);
+	    err = gretl_unzip_function_package(basename, path);
 	}
 	g_free(fullname);
 
