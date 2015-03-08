@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-02-27 13:21-0500\n"
-"PO-Revision-Date: 2015-02-14 21:58+0100\n"
+"PO-Revision-Date: 2015-03-08 14:14+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -351,14 +351,12 @@ msgid "using resampled residuals"
 msgstr "usando resíduos reamostrados"
 
 #: lib/src/bootstrap.c:742
-#, fuzzy
 msgid "using resampled y,X \"pairs\""
-msgstr "usando resíduos reamostrados"
+msgstr "usando \"pares\" y,X reamostrados"
 
 #: lib/src/bootstrap.c:744
-#, fuzzy
 msgid "using \"wild\" bootstrap"
-msgstr "Usar bootstrap"
+msgstr "Usar bootstrap \"bravo\""
 
 #: lib/src/bootstrap.c:746
 msgid "with simulated normal errors"
@@ -1117,9 +1115,8 @@ msgstr ""
 "\n"
 
 #: lib/src/csvdata.c:3466
-#, fuzzy
 msgid "Failed to interpret the data as numeric\n"
-msgstr "Falhou a criação de conjunto de dados vazio"
+msgstr "Falhou a interpretação do conjunto de dados como sendo numérico\n"
 
 #: lib/src/csvdata.c:3498 plugin/eviews_import.c:555
 #: plugin/excel_import.c:1741 plugin/gnumeric_import.c:832
@@ -7502,8 +7499,8 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 14 de fevereiro de 2015.\n"
-"(Feliz dia dos namorados!)"
+"Tradução de 8 de março de 2015.\n"
+"(A todas Mulheres um bom dia Internacional da Mulher!)"
 
 #: gui2/about.c:203
 msgid "News"
@@ -8518,9 +8515,8 @@ msgid "Edit"
 msgstr "Editar"
 
 #: gui2/datafiles.c:1251 gui2/datafiles.c:1411
-#, fuzzy
 msgid "Sample script"
-msgstr "Abrir ficheiro de comandos de exemplo"
+msgstr "Ficheiro de comandos de exemplo"
 
 #: gui2/datafiles.c:1254 gui2/datafiles.c:1412
 msgid "View code"
@@ -9011,14 +9007,12 @@ msgid "Resample residuals"
 msgstr "Reamostrar resíduos"
 
 #: gui2/dialogs.c:1154
-#, fuzzy
 msgid "Resample data \"pairs\""
-msgstr "reamostrar o conjunto de dados"
+msgstr "Reamostrar \"pares\" de dados"
 
 #: gui2/dialogs.c:1162
-#, fuzzy
 msgid "Wild bootstrap"
-msgstr "Usar bootstrap"
+msgstr "Bootstrap \"bravo\""
 
 #: gui2/dialogs.c:1170
 msgid "Simulate normal errors"
