@@ -2492,7 +2492,6 @@ int gretl_write_gdt (const char *fname, const int *list,
 
 	if (!err) {
 	    char xmlfile[FILENAME_MAX];
-	    GError *gerr = NULL;
 
 	    build_path(xmlfile, zdir, "data.xml", NULL);
 	    err = real_write_gdt(xmlfile, list, dset, opt | OPT_B, 0);
@@ -2500,17 +2499,9 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    if (!err) {
 		int level = get_compression_option(STORE);
 
-		err = gretl_zip_datafile(fname, zdir, level, &gerr);
-		if (gerr != NULL && err == 0) {
-		    err = 1;
-		} 
+		err = gretl_zip_datafile(fname, zdir, level);
 		if (err) {
-		    if (gerr != NULL) {
-			gretl_errmsg_set(gerr->message);
-			g_error_free(gerr);
-		    } else {
-			gretl_errmsg_set("Problem writing data file");
-		    }
+		    gretl_errmsg_ensure("Problem writing data file");
 		}
 	    }
 	    gretl_deltree(zdir);
@@ -3942,7 +3933,6 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 {
     if (has_suffix(fname, ".gdtb")) {
 	/* zipfile with gdt + binary */
-	GError *gerr = NULL;
 	gchar *zdir;
 	int err;
 
@@ -3950,17 +3940,9 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 	err = gretl_mkdir(zdir);
 
 	if (!err) {
-	    err = gretl_unzip_datafile(fname, zdir, &gerr);
-	    if (gerr != NULL && err == 0) {
-		err = 1;
-	    } 
+	    err = gretl_unzip_into(fname, zdir);
 	    if (err) {
-		if (gerr != NULL) {
-		    gretl_errmsg_set(gerr->message);
-		    g_error_free(gerr);
-		} else {
-		    gretl_errmsg_ensure("Problem opening data file");
-		}
+		gretl_errmsg_ensure("Problem opening data file");
 	    } else {
 		char xmlfile[FILENAME_MAX];
 
@@ -3999,7 +3981,6 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 {
     if (has_suffix(fname, ".gdtb")) {
 	/* zipfile with gdt + binary */
-	GError *gerr = NULL;
 	gchar *zdir;
 	int err;
 
@@ -4007,17 +3988,9 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 	err = gretl_mkdir(zdir);
 
 	if (!err) {
-	    err = gretl_unzip_datafile(fname, zdir, &gerr);
-	    if (gerr != NULL && err == 0) {
-		err = 1;
-	    } 
+	    err = gretl_unzip_into(fname, zdir);
 	    if (err) {
-		if (gerr != NULL) {
-		    gretl_errmsg_set(gerr->message);
-		    g_error_free(gerr);
-		} else {
-		    gretl_errmsg_ensure("Problem opening data file");
-		}
+		gretl_errmsg_ensure("Problem opening data file");
 	    } else {
 		char xmlfile[FILENAME_MAX];
 

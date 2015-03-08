@@ -3709,7 +3709,7 @@ static int dir_is_writable (const char *dirname)
     return ok;
 }
 
-static int get_user_pkg_path (char *path)
+static int get_user_install_path (char *path, const char *subdir)
 {
 #ifdef OS_OSX
     const char *dirname = gretl_app_support_dir();
@@ -3721,16 +3721,16 @@ static int get_user_pkg_path (char *path)
     if (dirname == NULL || *dirname == '\0') {
 	err = E_FOPEN;
     } else {
-	sprintf(path, "%sfunctions", dirname);
+	sprintf(path, "%s%s", dirname, subdir);
 	err = (dir_is_writable(path) == 0);
     }
 
     return err;
 }
 
-static int get_system_pkg_path (char *path)
+static int get_system_install_path (char *path, const char *subdir)
 {
-    sprintf(path, "%sfunctions", gretl_home());
+    sprintf(path, "%s%s", gretl_home(), subdir);
 
     if (dir_is_writable(path)) {
 	return 0;
@@ -3762,12 +3762,12 @@ const char *gretl_function_package_path (void)
 #endif
 
 	if (sys_first) {
-	    err = get_system_pkg_path(path);
+	    err = get_system_install_path(path, "functions");
 	    if (err) {
-		err = get_user_pkg_path(path);
+		err = get_user_install_path(path, "functions");
 	    }
 	} else {
-	    err = get_user_pkg_path(path);
+	    err = get_user_install_path(path, "functions");
 	}
 
 	if (err) {

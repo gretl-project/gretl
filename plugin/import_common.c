@@ -139,6 +139,8 @@ static void import_ts_check (DATASET *dset)
 
 #if defined(ODS_IMPORTER) || defined(XLSX_IMPORTER)
 
+/* we want this for unzipping purposes */
+
 static char *get_absolute_path (const char *fname)
 {
     char buf[FILENAME_MAX];
@@ -215,7 +217,6 @@ static int open_import_zipfile (const char *fname, char *dname,
     const char *real_fname = fname;
     char *recoded_fname = NULL;
     char *abspath = NULL;
-    GError *gerr = NULL;
     FILE *fp;
     int err = 0;
 
@@ -227,6 +228,10 @@ static int open_import_zipfile (const char *fname, char *dname,
        appropriately recoded filename to pass into the
        zipfile apparatus, since in that context a filename
        that works with plain system stdio is expected.
+       FIXME: is this right if we're using libgsf to do the
+       unzipping? Maybe this doesn't matter if we're using
+       libgsf only on UTF-8 systems (e.g. modern Linux), in
+       which case no recoding will be required.
     */
 
     fp = gretl_fopen_with_recode(fname, "r", &recoded_fname);
@@ -264,12 +269,13 @@ static int open_import_zipfile (const char *fname, char *dname,
     }
     
     if (!err) {
-	err = gretl_unzip_file(real_fname, &gerr);
-	if (gerr != NULL) {
-	    pprintf(prn, "gretl_unzip_file: '%s'\n", gerr->message);
-	    g_error_free(gerr);
-	} else if (err) {
-	    pprintf(prn, "gretl_unzip_file: err = %d\n", err);
+	/* if all has gone OK, we're now "in" the temporary
+	   directory under dotdir, and @real_fname is the
+	   absolute path to the file to be unzipped.
+	*/
+	err = gretl_unzip(real_fname);
+	if (err) {
+	    pprintf(prn, "gretl_unzip: %s\n", gretl_errmsg_get());
 	}
     }
 

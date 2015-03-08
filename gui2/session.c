@@ -1322,7 +1322,6 @@ gboolean do_open_session (void)
     char gdtname[MAXLEN]; /* path to session data file */
     char fname[MAXLEN];   /* multi-purpose temp variable */
     gchar *zdirname = NULL;
-    GError *gerr = NULL;
     FILE *fp;
     int nodata = 0;
     int err = 0;
@@ -1349,20 +1348,10 @@ gboolean do_open_session (void)
     maybe_absolutize_tryfile();
     
     gretl_chdir(gretl_dotdir());
-    err = gretl_unzip_session_file(tryfile, &zdirname, &gerr);
-
-    if (gerr != NULL && err == 0) {
-	err = 1;
-    } 
+    err = gretl_unzip_session_file(tryfile, &zdirname);
 
     if (err) {
-	if (gerr != NULL) {
-	    errbox(gerr->message);
-	    g_error_free(gerr);
-	} else {
-	    /* FIXME more explicit error message */
-	    file_read_errbox(tryfile);
-	}
+	gui_errmsg(err);
 	g_free(zdirname);
 	goto bailout;
     } 
@@ -1870,7 +1859,6 @@ int save_session (char *fname)
     char dirname[MAXLEN];
     int len, err = 0;
     int log_code = LOG_SAVE;
-    GError *gerr = NULL;
 
     if (fname == NULL) {
 	/* re-saving session 'as is' */
@@ -1961,18 +1949,11 @@ int save_session (char *fname)
     
     if (!err) {
 	/* make zipfile containing session files */
-	err = gretl_make_zipfile(fname, dirname, &gerr);
-	fprintf(stderr, " gretl_make_zipfile: err = %d\n", err);
-
-	if (gerr != NULL && !err) {
-	    err = 1;
-	}
+	err = gretl_make_zipfile(fname, dirname);
 
 	if (err) {
-	    if (gerr != NULL) {
-		errbox(gerr->message);
-		g_error_free(gerr);
-	    }
+	    fprintf(stderr, " gretl_make_zipfile: err = %d\n", err);
+	    gui_errmsg(err);
 	} else {
 	    mkfilelist(FILE_LIST_SESSION, fname);
 	    if (fname != sessionfile) {

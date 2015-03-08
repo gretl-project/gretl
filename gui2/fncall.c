@@ -2339,50 +2339,40 @@ int download_addon (const char *pkgname, char **local_path)
 {
     const char *SF = "http://downloads.sourceforge.net/"
 	"project/gretl/addons";
-    char path[FILENAME_MAX];
     char pkgdir[16];
     int err;
 
     err = query_addons_dir(pkgname, pkgdir);
-    if (err) {
-	return err;
-    }
 
-    get_default_dir(path, SAVE_FUNCTIONS);
-
-    if (*path == '\0') {
-	file_write_errbox(pkgname);
-    } else {
+    if (!err) {
+	const char *path = gretl_function_package_path();
 	gchar *uri = g_strdup_printf("%s/%s/%s.zip", SF, pkgdir, pkgname);
-	gchar *fname = g_strdup_printf("%s%s.zip", path, pkgname);
+	gchar *fullname = g_strdup_printf("%s%s.zip", path, pkgname);
 
 #if 1
 	fprintf(stderr, "uri   = '%s'\n", uri);
-	fprintf(stderr, "fname = '%s'\n", fname);
+	fprintf(stderr, "fname = '%s'\n", fullname);
 #endif
 
-	err = retrieve_public_file(uri, fname);
+	err = retrieve_public_file(uri, fullname);
 	fprintf(stderr, "retrieve_public_file: err = %d\n", err);
 	if (!err) {
-	    err = gretl_unzip_function_package(fname, path);
-	    fprintf(stderr, "unzip_package_file: err = %d\n", err);
+	    err = gretl_unzip_into(fullname, path);
+	    fprintf(stderr, "gretl_unzip_into: err = %d\n", err);
+	    gretl_remove(fullname);
 	}
 	if (err) {
 	    gui_errmsg(err);
-	} else {
-	    strcat(path, pkgname);
-	    strcat(path, SLASHSTR);
-	    strcat(path, pkgname);
-	    strcat(path, ".gfn");
-	    if (local_path != NULL) {
-		*local_path = gretl_strdup(path);
-		if (*local_path == NULL) {
-		    err = E_ALLOC;
-		}
-	    }
+	} else if (local_path != NULL) {
+	    /* return local path to gfn file */
+	    *local_path =
+		gretl_strdup_printf("%s%s%s%s.gfn", path,
+				    pkgname, SLASHSTR,
+				    pkgname);
+	    fprintf(stderr, "local_path: '%s'\n", *local_path);
 	}
 	g_free(uri);
-	g_free(fname);
+	g_free(fullname);
     }
 
     return err;

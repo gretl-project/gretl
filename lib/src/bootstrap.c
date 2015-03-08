@@ -1494,7 +1494,7 @@ static int opt_from_method (gretlopt *opt, int method)
     return err;
 }
 
-#define TRY_BASIC 0
+#define TRY_BASIC 1
 
 gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
 				   const DATASET *dset,

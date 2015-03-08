@@ -20,21 +20,15 @@
 #ifndef GRETL_ZIP_H
 #define GRETL_ZIP_H
 
-int gretl_unzip_file (const char *fname, GError **gerr);
+int gretl_unzip (const char *fname);
 
-int gretl_make_zipfile (const char *fname, const char *path,
-			GError **gerr);
+int gretl_unzip_into (const char *fname, const char *dirname);
 
-int gretl_unzip_session_file (const char *fname, gchar **zdirname, 
-			      GError **gerr);
+int gretl_unzip_session_file (const char *fname, gchar **zdirname); 
+
+int gretl_make_zipfile (const char *fname, const char *path);
 
 int gretl_zip_datafile (const char *fname, const char *path,
-			int level, GError **gerr);
-
-int gretl_unzip_datafile (const char *fname, const char *path,
-			  GError **gerr);
-
-int gretl_unzip_function_package (const char *fname,
-				  const char *path);
+			int level);
 
 #endif /* GRETL_ZIP_H */

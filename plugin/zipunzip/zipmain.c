@@ -991,8 +991,8 @@ static int check_matches (const char **fnames, char *matches)
  * subset of the included files.  
  *
  * Returns: 0 on success, non-zero error code on failure, in
- * which case @gerr will receive an account of the error if
- * @gerr is not %NULL.
+ * which case @gerr (if non-NULL) will receive an account of
+ * the error.
  */
 
 int zipfile_extract_files (const char *targ, const char **filenames,

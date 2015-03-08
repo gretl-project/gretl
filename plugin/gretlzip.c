@@ -67,7 +67,7 @@ static gchar *gretl_zipfile_get_topdir (const char *fname)
     return topdir;
 }
 
-int gretl_native_unzip_file (const char *fname, GError **gerr)
+int gretl_native_unzip (const char *fname, GError **gerr)
 {
     int err;
 
@@ -118,7 +118,7 @@ int gretl_native_unzip_session_file (const char *fname, gchar **zdirname,
     if (*zdirname == NULL) {
 	err = 1;
     } else {
-	err = gretl_native_unzip_file(fname, gerr);
+	err = gretl_native_unzip(fname, gerr);
     }
 
     return err;
@@ -126,14 +126,15 @@ int gretl_native_unzip_session_file (const char *fname, gchar **zdirname,
 
 #define ZDEBUG 0
 
-int gretl_native_unzip_datafile (const char *fname, const char *path,
-				 GError **gerr)
+int gretl_native_unzip_into (const char *fname,
+			     const char *path,
+			     GError **gerr)
 {
     char thisdir[FILENAME_MAX];
     int err = 0;
 
 #if ZDEBUG
-    fprintf(stderr, "gretl_native_unzip_datafile\n"
+    fprintf(stderr, "gretl_native_unzip_into\n"
 	    " fname = '%s', path = '%s'\n", fname, path);
 #endif
 
@@ -154,7 +155,7 @@ int gretl_native_unzip_datafile (const char *fname, const char *path,
 	fprintf(stderr, " zipname = '%s'\n", zipname);
 #endif
 	gretl_chdir(path);
-	err = gretl_native_unzip_file(zipname, gerr);
+	err = gretl_native_unzip(zipname, gerr);
 	gretl_chdir(thisdir);
     }
 

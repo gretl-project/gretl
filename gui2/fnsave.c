@@ -2379,8 +2379,6 @@ static int pkg_make_zipfile (function_info *finfo, int pdfdoc,
     }	
 
     if (!err) {
-	GError *gerr = NULL;
-
 	if (getcwd(origdir, FILENAME_MAX - 1) == NULL) {
 	    *origdir = '\0';
 	}
@@ -2388,13 +2386,9 @@ static int pkg_make_zipfile (function_info *finfo, int pdfdoc,
 	if (!err) {
 	    tmp = g_strdup_printf("%s.zip", pkgname);
 	    pprintf(prn, "Making %s... ", tmp);
-	    err = gretl_make_zipfile(tmp, pkgname, &gerr);
+	    err = gretl_make_zipfile(tmp, pkgname);
 	    zip_report(err, prn);
 	    g_free(tmp);
-	    if (gerr != NULL) {
-		fprintf(stderr, "gretl_make_zipfile: %s\n", gerr->message);
-		g_error_free(gerr);
-	    }
 	    if (!err) {
 		*zipname = g_strdup_printf("%s%s.zip", gretl_dotdir(),
 					   pkgname);

@@ -2027,7 +2027,8 @@ static int install_function_package (const char *pkgname,
 	fullname = g_strdup_printf("%s%s", path, basename);
 	err = retrieve_remote_function_package(basename, fullname);
 	if (!err && filetype == 2) {
-	    err = gretl_unzip_function_package(basename, path);
+	    err = gretl_unzip_into(fullname, path);
+	    gretl_remove(fullname);
 	}
 	g_free(fullname);
 

@@ -1978,8 +1978,7 @@ enum {
    data files, or function package 
 */
 
-static char *get_writable_target (int code, char *objname,
-				  gboolean zipfile)
+static char *get_writable_target (int code, char *objname)
 {
     const char *ext;
     char *targ;
@@ -2000,7 +1999,7 @@ static char *get_writable_target (int code, char *objname,
     if (code == REMOTE_DB) {
 	ext = ".ggz";
     } else if (code == REMOTE_FUNC_FILES) {
-	ext = zipfile ? ".zip" : ".gfn";
+	ext = ".gfn";
     } else {
 	ext = ".tar.gz";
     }
@@ -2067,24 +2066,12 @@ static int unpack_book_data (const char *fname)
     return err;
 }
 
-static gchar *make_gfn_path (const char *path, const char *name)
+static gchar *make_gfn_path (const char *pkgname)
 {
-    const char *p = strrchr(path, SLASH);
-    gchar *ret = NULL;
+    const char *fpath = gretl_function_package_path();
 
-    if (p != NULL) {
-	char *tmp;
-
-	tmp = gretl_strndup(path, p - path + 1);
-	ret = g_strdup_printf("%s%s%c%s.gfn", tmp,
-			      name, SLASH, name);
-	free(tmp);
-    } else {
-	ret = g_strdup_printf("%s%c%s.gfn",
-			      name, SLASH, name);
-    }	
-
-    return ret;
+    return g_strdup_printf("%s%s%c%s.gfn", fpath,
+			   pkgname, SLASH, pkgname);
 }
 
 #define STATUS_COLUMN  4
@@ -2098,7 +2085,7 @@ static gchar *make_gfn_path (const char *path, const char *name)
 void install_file_from_server (GtkWidget *w, windata_t *vwin)
 {
     gchar *objname = NULL;
-    char *path = NULL;
+    char *targ = NULL;
     gboolean zipfile = FALSE;
     int err = 0;
 
@@ -2129,36 +2116,43 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     if (objname == NULL || *objname == '\0') {
 	g_free(objname);
 	return;
-    } 
+    }
 
-    path = get_writable_target(vwin->role, objname, zipfile);
-    if (path == NULL) {
-	g_free(objname);
-	return;
+    if (!zipfile) {
+	targ = get_writable_target(vwin->role, objname);
+	if (targ == NULL) {
+	    g_free(objname);
+	    return;
+	}
     }
 
     if (vwin->role == REMOTE_FUNC_FILES) {
 	if (zipfile) {
-	    gchar *zipname = g_strdup_printf("%s.zip", objname);
+	    const char *path = gretl_function_package_path();
+	    gchar *basename = g_strdup_printf("%s.zip", objname);
+	    gchar *fullname;
 
-	    err = retrieve_remote_function_package(zipname, path);
+	    fullname = g_strdup_printf("%s%s", path, basename);
+	    err = retrieve_remote_function_package(basename, fullname);
 	    if (!err) {
-		err = gretl_unzip_function_package(zipname, path);
+		err = gretl_unzip_into(fullname, path);
+		gretl_remove(fullname);
 	    }
-	    g_free(zipname);
+	    g_free(fullname);
+	    g_free(basename);
 	} else {
-	    err = retrieve_remote_function_package(objname, path);
+	    err = retrieve_remote_function_package(objname, targ);
 	}
     } else if (vwin->role == REMOTE_DATA_PKGS) {
 	gchar *tarname = g_strdup_printf("%s.tar.gz", objname);
 
-	err = retrieve_remote_datafiles_package(tarname, path);
+	err = retrieve_remote_datafiles_package(tarname, targ);
 	g_free(tarname);
     } else if (vwin->role == REMOTE_DB) {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-	err = retrieve_remote_db(objname, path, GRAB_NBO_DATA);
+	err = retrieve_remote_db(objname, targ, GRAB_NBO_DATA);
 #else
-	err = retrieve_remote_db(objname, path, GRAB_DATA);
+	err = retrieve_remote_db(objname, targ, GRAB_DATA);
 #endif
     }
 
@@ -2171,12 +2165,12 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	    int notified = 0;
 
 	    if (zipfile) {
-		gchar *gfnpath = make_gfn_path(path, objname);
+		gchar *gfnpath = make_gfn_path(objname);
 
 		notified = maybe_handle_pkg_menu_option(gfnpath, vwin->main);
 		g_free(gfnpath);
 	    } else {
-		notified = maybe_handle_pkg_menu_option(path, vwin->main);
+		notified = maybe_handle_pkg_menu_option(targ, vwin->main);
 	    }
 	    if (!notified) {
 		infobox(_("Installed"));
@@ -2188,9 +2182,9 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 		populate_filelist(local, NULL);
 	    }
 	} else if (vwin->role == REMOTE_DATA_PKGS) {
-	    fprintf(stderr, "downloaded '%s'\n", path);
-	    err = unpack_book_data(path);
-	    remove(path);
+	    fprintf(stderr, "downloaded '%s'\n", targ);
+	    err = unpack_book_data(targ);
+	    remove(targ);
 	    if (err) {
 		errbox(_("Error unzipping compressed data"));
 	    } else {
@@ -2198,8 +2192,8 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	    }
 	} else {
 	    /* gretl-zipped database package */
-	    fprintf(stderr, "downloaded '%s'\n", path);
-	    err = ggz_extract(path);
+	    fprintf(stderr, "downloaded '%s'\n", targ);
+	    err = ggz_extract(targ);
 	    if (err) {
 		if (err != E_FOPEN) {
 		    errbox(_("Error unzipping compressed data"));
@@ -2211,14 +2205,14 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 		if (local != NULL) {
 		    populate_filelist(local, NULL);
 		} else {
-		    offer_db_open(path);
+		    offer_db_open(targ);
 		}
 	    }
 	}
     }
 
     g_free(objname);
-    free(path);
+    free(targ);
 }
 
 void pkg_info_from_server (GtkWidget *w, windata_t *vwin)
