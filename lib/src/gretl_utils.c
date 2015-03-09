@@ -53,6 +53,7 @@
 #include <gmp.h>
 
 static void gretl_tests_cleanup (void);
+static int have_optimized_blas (void);
 
 /**
  * date_as_double:
@@ -1971,6 +1972,10 @@ void libgretl_init (void)
     gretl_xml_init();
     gretl_stopwatch_init();
     mpf_set_default_prec(get_mp_bits());
+
+    if (have_optimized_blas()) {
+	set_blas_mnk_min(90000);
+    } 
 }
 
 #ifdef HAVE_MPI
@@ -2598,6 +2603,16 @@ static int blas_variant_code (void)
 
     return bver;
 #endif
+}
+
+static int have_optimized_blas (void)
+{
+    int bvc = blas_variant_code();
+
+    return bvc == BLAS_OPENBLAS ||
+	bvc == BLAS_VECLIB ||
+	bvc == BLAS_MKL ||
+	bvc == BLAS_ATLAS;
 }
 
 const char *blas_variant_string (void)

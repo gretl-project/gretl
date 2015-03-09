@@ -2444,9 +2444,6 @@ int libset_init (void)
 #endif
 
     if (!done) {
-	/* FIXME set a sensible value for blas_mnk_min if
-	   there's an optimized BLAS in place
-	*/
 	err = push_program_state();
 	done = 1;
     }
