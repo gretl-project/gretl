@@ -42,7 +42,8 @@ int zipfile_archive_files (const char *targ, const char **filenames,
 			   int level, ZipOption opt, GError **gerr);
 
 int zipfile_extract_files (const char *targ, const char **filenames,
-			   ZipOption opt, GError **gerr);
+			   const char *eprefix, ZipOption opt,
+			   GError **gerr);
 
 int zipfile_delete_files (const char *targ, const char **filenames,
 			  ZipOption opt, GError **gerr);

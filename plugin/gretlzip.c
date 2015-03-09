@@ -67,12 +67,22 @@ static gchar *gretl_zipfile_get_topdir (const char *fname)
     return topdir;
 }
 
-int gretl_native_unzip (const char *fname, GError **gerr)
+int gretl_native_unzip (const char *fname,
+			const char *path,
+			gchar **zdirname,
+			GError **gerr)
 {
     int err;
 
-    /* for verbose operation, make 3rd arg ZIP_VERBOSE or ZIP_TRACE */
-    err = zipfile_extract_files(fname, NULL, 0, gerr);
+    if (zdirname != NULL) {
+	*zdirname = gretl_zipfile_get_topdir(fname);
+	if (*zdirname == NULL) {
+	    return 1;
+	}
+    }
+
+    /* for verbose operation, make 4th arg ZIP_VERBOSE or ZIP_TRACE */
+    err = zipfile_extract_files(fname, NULL, path, 0, gerr);
 
     if (*gerr != NULL && !err) {
 	/* shouldn't happen */
@@ -89,7 +99,8 @@ int gretl_native_unzip (const char *fname, GError **gerr)
  * and zipped.
  */
 
-int gretl_native_make_zipfile (const char *fname, const char *path,
+int gretl_native_make_zipfile (const char *fname,
+			       const char *path,
 			       GError **gerr)
 {
     const char *array[2] = { path, NULL };
@@ -106,60 +117,6 @@ int gretl_native_make_zipfile (const char *fname, const char *path,
 
     /* don't let ZIP error codes get confused with gretl ones */
     return (err != 0);
-}
-
-int gretl_native_unzip_session_file (const char *fname, gchar **zdirname, 
-				     GError **gerr)
-{
-    int err = 0;
-
-    *zdirname = gretl_zipfile_get_topdir(fname);
-
-    if (*zdirname == NULL) {
-	err = 1;
-    } else {
-	err = gretl_native_unzip(fname, gerr);
-    }
-
-    return err;
-}
-
-#define ZDEBUG 0
-
-int gretl_native_unzip_into (const char *fname,
-			     const char *path,
-			     GError **gerr)
-{
-    char thisdir[FILENAME_MAX];
-    int err = 0;
-
-#if ZDEBUG
-    fprintf(stderr, "gretl_native_unzip_into\n"
-	    " fname = '%s', path = '%s'\n", fname, path);
-#endif
-
-    if (getcwd(thisdir, FILENAME_MAX - 1) == NULL) {
-	err = E_FOPEN; /* ? */
-    } else {
-	char zipname[FILENAME_MAX];
-
-#if ZDEBUG
-	fprintf(stderr, " cwd = '%s'\n", thisdir);
-#endif
-	if (!g_path_is_absolute(fname)) {
-	    build_path(zipname, thisdir, fname, NULL);
-	} else {
-	    strcpy(zipname, fname);
-	}
-#if ZDEBUG
-	fprintf(stderr, " zipname = '%s'\n", zipname);
-#endif
-	gretl_chdir(path);
-	err = gretl_native_unzip(zipname, gerr);
-	gretl_chdir(thisdir);
-    }
-
-    return err;
 }
 
 int gretl_native_zip_datafile (const char *fname, const char *path,

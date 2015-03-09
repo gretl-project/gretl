@@ -260,6 +260,7 @@ static void zfile_init (zfile *zf, int level, ZipOption opt)
     zf->strm_initted = 0;
 
     zf->wanted = NULL;
+    zf->eprefix = NULL;
     zf->matches = NULL;
 
     /* other initializations, while we're at it */
@@ -982,6 +983,8 @@ static int check_matches (const char **fnames, char *matches)
  * @filenames: array of strings holding the names of the files
  * to be extracted from @targ, terminated by a %NULL sentinel.
  * If this argument is %NULL, all files are extracted.
+ * @eprefix: if non-NULL, path to prepend when extracting
+ * files.
  * @opt: may contain %ZIP_VERBOSE or %ZIP_TRACE.
  * @gerr: location to receive a GError pointer in case of
  * failure, or %NULL.
@@ -995,8 +998,11 @@ static int check_matches (const char **fnames, char *matches)
  * the error.
  */
 
-int zipfile_extract_files (const char *targ, const char **filenames,
-			   ZipOption opt, GError **gerr)
+int zipfile_extract_files (const char *targ,
+			   const char **filenames,
+			   const char *eprefix,
+			   ZipOption opt,
+			   GError **gerr)
 {
     zfile zf;
     gchar *matches = NULL;
@@ -1011,6 +1017,7 @@ int zipfile_extract_files (const char *targ, const char **filenames,
     zfile_init(&zf, 0, opt);
 
     zf.wanted = filenames;
+    zf.eprefix = eprefix;
     zf.matches = matches;
 
     err = process_zipfile(&zf, targ, ZIP_DO_UNZIP);

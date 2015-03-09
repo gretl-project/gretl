@@ -149,6 +149,7 @@ struct zfile_ {
     z_stream strm;       /* stream for deflation/inflation */
     int strm_initted;    /* flag: is strm initialized yet? */
     const char **wanted; /* array of filenames wanted for extraction */
+    const char *eprefix; /* path to prepend on extraction */
     char *matches;       /* array for recording matches of wanted files */
 };
 

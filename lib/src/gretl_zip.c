@@ -318,9 +318,11 @@ static int gretl_gsf_unzip (const char *fname,
 
 #include "plugins.h"
 
-static int gretl_plugin_unzip (const char *fname)
+static int gretl_plugin_unzip (const char *fname,
+			       const char *path,
+			       gchar **zdirname)
 {
-    int (*zfunc) (const char *, GError **);
+    int (*zfunc) (const char *, const char *, gchar **, GError **);
     GError *gerr = NULL;
     int err = 0;
 
@@ -330,7 +332,7 @@ static int gretl_plugin_unzip (const char *fname)
         return 1;
     }
 
-    err = (*zfunc)(fname, &gerr);
+    err = (*zfunc)(fname, path, zdirname, &gerr);
 
     return handle_zip_error(fname, gerr, err, "unzipping");
 }
@@ -358,23 +360,6 @@ static int gretl_plugin_make_zipfile (const char *fname,
     return handle_zip_error(fname, gerr, err, "zipping");
 }
 
-static int gretl_plugin_unzip_session_file (const char *fname,
-					    gchar **zdirname)
-{
-    int (*zfunc) (const char *, gchar **, GError **);
-    GError *gerr = NULL;
-    int err = 0;
-
-    zfunc = get_plugin_function("gretl_native_unzip_session_file");
-    if (zfunc == NULL) {
-        return 1;
-    }
-
-    err = (*zfunc)(fname, zdirname, &gerr);
-
-    return handle_zip_error(fname, gerr, err, "unzipping");
-}
-
 static int gretl_plugin_zip_datafile (const char *fname,
 				      const char *path,
 				      int level)
@@ -391,23 +376,6 @@ static int gretl_plugin_zip_datafile (const char *fname,
     err = (*zfunc)(fname, path, level, &gerr);
 
     return handle_zip_error(fname, gerr, err, "zipping");
-}
-
-static int gretl_plugin_unzip_into (const char *fname,
-				    const char *path)
-{
-    int (*zfunc) (const char *, const char *, GError **);
-    GError *gerr = NULL;
-    int err = 0;
-
-    zfunc = get_plugin_function("gretl_native_unzip_into");
-    if (zfunc == NULL) {
-        return 1;
-    }
-
-    err = (*zfunc)(fname, path, &gerr);
-
-    return handle_zip_error(fname, gerr, err, "unzipping");
 }
 
 #endif /* zip/unzip variants */
@@ -427,7 +395,7 @@ int gretl_unzip (const char *fname)
 #if USE_GSF
     return gretl_gsf_unzip(fname, NULL, NULL);
 #else
-    return gretl_plugin_unzip(fname);
+    return gretl_plugin_unzip(fname, NULL, NULL);
 #endif    
 }
 
@@ -448,7 +416,7 @@ int gretl_unzip_into (const char *fname, const char *dirname)
 #if USE_GSF
     return gretl_gsf_unzip(fname, dirname, NULL);
 #else
-    return gretl_plugin_unzip_into(fname, dirname);
+    return gretl_plugin_unzip(fname, dirname, NULL);
 #endif 
 }
 
@@ -488,7 +456,7 @@ int gretl_unzip_session_file (const char *fname, gchar **zdirname)
 #if USE_GSF
     return gretl_gsf_unzip(fname, NULL, zdirname);
 #else
-    return gretl_plugin_unzip_session_file(fname, zdirname);    
+    return gretl_plugin_unzip(fname, NULL, zdirname);    
 #endif 
 }
 

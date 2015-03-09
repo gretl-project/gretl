@@ -533,10 +533,11 @@ void zlib_deflate_free (zfile *zf)
 
 /* now stuff pertaining to unzipping */
 
-static int make_dirs_in_path (const char *fname)
+static int make_dirs_in_path (const char *fname,
+			      const char *prefix)
 {
+    char *dtarg, dirname[FILENAME_MAX];
     const char *p = fname;
-    char *dirname = NULL;
     DIR *dir;
     int len = 0;
     int err = 0;
@@ -544,18 +545,28 @@ static int make_dirs_in_path (const char *fname)
     errno = 0;
 
     if (fname == NULL) {
-	err = ZE_READ;
+	return ZE_READ;
+    }
+
+    if (prefix != NULL && *prefix != '\0') {
+	int n = strlen(prefix);
+	
+	strcpy(dirname, prefix);
+	if (prefix[n-1] != G_DIR_SEPARATOR) {
+	    strcat(dirname, G_DIR_SEPARATOR_S);
+	    n++;
+	}
+	dtarg = dirname + n;
+    } else {
+	dtarg = dirname;
     }
 
     trace(2, "doing make_dirs_in_path for '%s'\n", fname);
 
     while (strchr(p, G_DIR_SEPARATOR) && !err) {
 	len += strcspn(p, G_DIR_SEPARATOR_S);
-	dirname = g_strndup(fname, len);
-	if (dirname == NULL) {
-	    err = ZE_MEM;
-	    break;
-	}
+	*dtarg = '\0';
+	strncat(dtarg, fname, len);
 	trace(2, "got dirname = '%s'\n", dirname);
 	dir = opendir(dirname);
 	if (dir != NULL) {
@@ -573,7 +584,6 @@ static int make_dirs_in_path (const char *fname)
 	} else {
 	    err = ZE_READ;
 	}
-	g_free(dirname);
 	if (!err) {
 	    p = fname + len;
 	    while (*p == G_DIR_SEPARATOR) {
@@ -585,7 +595,7 @@ static int make_dirs_in_path (const char *fname)
 
     if (err) {
 	ziperr(err, "trying to create or open directory");
-    }
+    }    
 
     return err;
 }
@@ -703,6 +713,29 @@ static int zip_relink (FILE *src, const char *targ, guint32 usize)
 
 #endif
 
+static FILE *open_zip_output (const char *name, const char *prefix)
+{
+    FILE *fp;
+
+    if (prefix != NULL && *prefix != '\0') {
+	int n = strlen(prefix);
+	gchar *fname;
+
+	if (prefix[n-1] == G_DIR_SEPARATOR) {
+	    fname = g_strdup_printf("%s%s", prefix, name);
+	} else {
+	    fname = g_strdup_printf("%s%c%s", prefix,
+				    G_DIR_SEPARATOR, name);
+	}
+	fp = fopen(fname, "wb");
+	g_free(fname);
+    } else {
+	fp = fopen(name, "wb");
+    }
+
+    return fp;
+}
+
 /* driver for zlib decompression or simple extraction */
 
 int decompress_to_file (zfile *zf, zlist *z, long offset)
@@ -720,7 +753,7 @@ int decompress_to_file (zfile *zf, zlist *z, long offset)
 	return ziperr(ZE_CRYPT, NULL);
     } 
 
-    err = make_dirs_in_path(z->zname);
+    err = make_dirs_in_path(z->zname, zf->eprefix);
     if (err) {
 	return err;
     }
@@ -738,10 +771,13 @@ int decompress_to_file (zfile *zf, zlist *z, long offset)
     /* overwriting existing file(s)? */
 
     if (!islink) {
-	fout = fopen(z->name, "wb");
+	fout = open_zip_output(z->name, zf->eprefix);
 	if (fout == NULL) {
 	    err = ZE_CREAT;
 	}
+    } else if (zf->eprefix != NULL) {
+	/* never mind, too complicated! */
+	return 0;
     }
 
     if (!err) {
