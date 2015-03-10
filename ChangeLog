@@ -37,7 +37,7 @@ version 1.10.0, in progress
   cases on MS Windows
 - Builds for Windows: update cross-compiler to gcc 4.8.4;
   update to OpenBLAS 2.13; replace Netlib reference lapack and 
-  blas with OpenBLAS in 32-bit build; update to GTK 2.24.26;
+  blas with OpenBLAS in 32-bit build; update to GTK 2.24.27;
   update to gnuplot 5.1 (CVS)
 - Mac quartz build: update to GTK 2.24.25
 

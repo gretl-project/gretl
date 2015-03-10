@@ -1727,8 +1727,9 @@ double user_BFGS (gretl_matrix *b,
 
     if (verbose) {
 	opt = OPT_V;
-	u->prn = prn;
     }
+
+    u->prn = prn; /* 2015-03-10: this was conditional on OPT_V */
 
     *err = BFGS_max(b->val, u->ncoeff, 
 		    maxit, tol, &fcount, &gcount,
