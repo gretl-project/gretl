@@ -4318,6 +4318,44 @@ static NODE *get_named_list_element (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *real_get_array_element (gretl_array *a, int i,
+				     parser *p)
+{
+    NODE *ret = NULL;
+    GretlType type = 0;
+    void *data;
+
+    data = gretl_array_get_element(a, i-1, &type, &p->err);
+
+    if (!p->err) {
+	if (type == GRETL_TYPE_STRING) {
+	    ret = aux_string_node(p);
+	    if (ret != NULL) {
+		/* aux string node must be robust */
+		ret->v.str = gretl_strdup(data);
+	    }
+	} else if (type == GRETL_TYPE_MATRIX) {
+	    ret = matrix_pointer_node(p);
+	    if (ret != NULL) {
+		ret->v.m = data;
+	    }		    
+	} else if (type == GRETL_TYPE_BUNDLE) {
+	    ret = bundle_pointer_node(p);
+	    if (ret != NULL) {
+		ret->v.b = data;
+	    }			    
+	} else if (type == GRETL_TYPE_LIST) {
+	    ret = aux_list_node(p);
+	    if (ret != NULL) {
+		/* aux list node must be robust */
+		ret->v.ivec = gretl_list_copy(data);
+	    }
+	}		    
+    }
+
+    return ret;
+}
+
 static NODE *get_array_element (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -4327,36 +4365,7 @@ static NODE *get_array_element (NODE *l, NODE *r, parser *p)
 	int i = node_get_int(r, p);
 
 	if (!p->err) {
-	    GretlType type = 0;
-	    void *data;
-
-	    data = gretl_array_get_element(a, i-1, &type, &p->err);
-
-	    if (!p->err) {
-		if (type == GRETL_TYPE_STRING) {
-		    ret = aux_string_node(p);
-		    if (ret != NULL) {
-			/* aux string node must be robust */
-			ret->v.str = gretl_strdup(data);
-		    }
-		} else if (type == GRETL_TYPE_MATRIX) {
-		    ret = matrix_pointer_node(p);
-		    if (ret != NULL) {
-			ret->v.m = data;
-		    }		    
-		} else if (type == GRETL_TYPE_BUNDLE) {
-		    ret = bundle_pointer_node(p);
-		    if (ret != NULL) {
-			ret->v.b = data;
-		    }			    
-		} else if (type == GRETL_TYPE_LIST) {
-		    ret = aux_list_node(p);
-		    if (ret != NULL) {
-			/* aux list node must be robust */
-			ret->v.ivec = gretl_list_copy(data);
-		    }
-		}		    
-	    }
+	    ret = real_get_array_element(a, i, p);
 	}
     } else {
 	ret = aux_any_node(p);
@@ -6898,12 +6907,52 @@ static gretl_matrix *complex_array_to_matrix (cmplx *c, int sz,
     return m;
 }
 
+/* Here we're working on something like "b.array[k]",
+   where @spec is the "[k]" bit.
+*/
+
+static NODE *bundled_array_element_node (gretl_array *a,
+					 parser *p,
+					 char *spec)
+{
+    NODE *ret = NULL;
+    int n = strlen(spec);
+    int i = -1;
+
+    if (n > 2 && spec[n-1] == ']') {
+	gchar *tmp;
+	double x;
+	    
+	tmp = g_strndup(spec + 1, n-2);
+	x = generate_scalar(tmp, p->dset, &p->err);
+	if (!p->err) {
+	    if (x == floor(x)) {
+		i = (int) x;
+	    } else {
+		p->err = E_DATA;
+	    }
+	}
+	g_free(tmp);
+    } else {
+	p->err = E_DATA;
+    }
+
+    if (!p->err) {
+	ret = real_get_array_element(a, i, p);
+    }
+
+    return ret;
+}
+
 static void process_bundle_member_subspec (NODE *n, parser *p,
 					   char *spec)
 {
     if (n->t == MAT) {
 	gretl_matrix *m = NULL;
 	gchar *tmp;
+
+	/* FIXME there has to be a better way of doing
+	   this */
 
 	tmp = g_strdup_printf("gentmpmat___%s", spec);
 	p->err = private_matrix_add(n->v.m, "gentmpmat___");
@@ -6935,6 +6984,7 @@ static void process_bundle_member_subspec (NODE *n, parser *p,
 	} else {
 	    p->err = E_DATA;
 	}
+	*s = ']';
     } else {
 	context_error('[', p);
     }
@@ -7015,11 +7065,17 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 					 &p->err);
 	}
     } else if (type == GRETL_TYPE_ARRAY) {
-	ret = aux_array_node(p);
-	if (ret != NULL) {
-	    ret->v.a = gretl_array_copy((gretl_array *) val,
-					&p->err);
-	}	
+	if (extra != NULL) {
+	    ret = bundled_array_element_node(val, p, extra);
+	    free(extra);
+	    extra = NULL;
+	} else {
+	    ret = aux_array_node(p);
+	    if (ret != NULL) {
+		ret->v.a = gretl_array_copy((gretl_array *) val,
+					    &p->err);
+	    }
+	}
     } else if (type == GRETL_TYPE_CMPLX_ARRAY) {
 	ret = aux_matrix_node(p);
 	if (ret != NULL) {
