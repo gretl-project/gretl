@@ -1790,8 +1790,10 @@ double user_NR (gretl_matrix *b,
 
     if (libset_get_bool(MAX_VERBOSE)) {
 	opt = OPT_V;
-	u->prn = prn;
     }
+
+    u->prn = prn; /* 2015-03-10: this was conditional on OPT_V */
+
 
     *err = newton_raphson_max(b->val, u->ncoeff, maxit, 
 			      crittol, gradtol, 
