@@ -403,10 +403,11 @@ static int plain_lines_spec (gretlopt opt)
 
 static int get_fit_type (gnuplot_info *gi)
 {
-    const char *ftype = get_optval_string(GNUPLOT, OPT_F);
+    const char *ftype = get_optval_string(plot_ci, OPT_F);
     int err = 0;
 
     if (ftype == NULL || *ftype == '\0') {
+	
 	err = E_DATA;
     } else if (!strcmp(ftype, "none")) {
 	gi->flags |= GPT_FIT_OMIT;
@@ -523,7 +524,9 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
     }
 
 #if GP_DEBUG
-    print_gnuplot_flags(gi->flags, 0);
+    if (gi->flags) {
+	print_gnuplot_flags(gi->flags, 0);
+    }
 #endif
 
     return err;
@@ -2785,7 +2788,9 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     }
 
 #if GP_DEBUG
-    print_gnuplot_flags(gi->flags, 1);
+    if (gi->flags) {
+	print_gnuplot_flags(gi->flags, 1);
+    }
 #endif
 
     return 0;
@@ -2799,6 +2804,7 @@ static void clear_gpinfo (gnuplot_info *gi)
 }
 
 #if GP_DEBUG
+
 static void print_gnuplot_flags (int flags, int revised)
 {
     if (revised) {
@@ -2841,6 +2847,7 @@ static void print_gnuplot_flags (int flags, int revised)
 	fprintf(stderr, " GPT_FIT_HIDDEN\n");
     }
 }
+
 #endif
 
 static void set_lwstr (const DATASET *dset, int v, char *s)

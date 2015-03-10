@@ -165,6 +165,9 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
 	} else {
 	    err = gnuplot(list, literal, dset, plot.opt);
 	}
+#if PDEBUG
+	fprintf(stderr, "actual exec returned %d\n", err);
+#endif	
     }
 
     free(literal);
@@ -227,10 +230,17 @@ static int check_plot_option (const char *s)
 	s += 2;
     }
 
+#if PDEBUG
+    fprintf(stderr, "check_plot_option: '%s'\n", s);
+#endif    
+
     if ((p = strchr(s, '=')) != NULL) {
 	char *flag = gretl_strndup(s, p - s);
 
 	param = gretl_strdup(p + 1);
+#if PDEBUG
+	fprintf(stderr, " flag = '%s', param = '%s'\n", flag, param);
+#endif      
 	opt = valid_long_opt(PLOT, flag, &status);
 	free(flag);
     } else {
