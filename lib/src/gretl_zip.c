@@ -38,6 +38,7 @@ static int handle_zip_error (const char *fname,
 			     const char *action)
 {
     if (gerr != NULL) {
+	fprintf(stderr, "handle_zip_error: '%s'\n", gerr->message);
 	gretl_errmsg_sprintf("%s: %s", fname, gerr->message);
 	g_error_free(gerr);
     } else if (err) {
@@ -253,7 +254,7 @@ static int gretl_gsf_zip_datafile (const char *fname,
     }
 
 #if ZDEBUG
-    fprintf(stderr, "*** gretl_zip_datafile (gsf): returning %d\n", err);
+    fprintf(stderr, "*** gretl_gsf_zip_datafile: returning %d\n", err);
 #endif
 
     return handle_zip_error(fname, gerr, err, "zipping");
@@ -273,7 +274,7 @@ static int gretl_gsf_unzip (const char *fname,
     GsfInput *input;
     GsfInfile *infile;
     GsfOutfile *outfile;
-    GError *gerr;
+    GError *gerr = NULL;
     int err = 0;
 
 #if ZDEBUG

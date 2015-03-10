@@ -380,7 +380,7 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
 	    va_end(ap);
 
 	    if (gretl_errmsg[len0 - 1] != '\n') {
-		strncat(gretl_errmsg, "\n", 1);
+		strcat(gretl_errmsg, "\n");
 	    }
 	    strncat(gretl_errmsg, tmp, strlen(tmp));
 	} 
