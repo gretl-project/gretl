@@ -7065,11 +7065,7 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 					 &p->err);
 	}
     } else if (type == GRETL_TYPE_ARRAY) {
-	if (extra != NULL) {
-	    ret = bundled_array_element_node(val, p, extra);
-	    free(extra);
-	    extra = NULL;
-	} else {
+	if (extra == NULL) {
 	    ret = aux_array_node(p);
 	    if (ret != NULL) {
 		ret->v.a = gretl_array_copy((gretl_array *) val,
@@ -7110,7 +7106,11 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     }
 
     if (extra != NULL) {
-	process_bundle_member_subspec(ret, p, extra);
+	if (type == GRETL_TYPE_ARRAY) {
+	    ret = bundled_array_element_node(val, p, extra);
+	} else {
+	    process_bundle_member_subspec(ret, p, extra);
+	}
 	free(extra);
 	*s = '['; /* reinstate full incoming string */
     }
