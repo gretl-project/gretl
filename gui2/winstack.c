@@ -1162,7 +1162,11 @@ windata_t *gretl_viewer_new (int role, const gchar *title,
 
 GtkWidget *vwin_toplevel (windata_t *vwin)
 {
-    return vwin->topmain != NULL ? vwin->topmain : vwin->main;
+    if (vwin == NULL) {
+	return NULL;
+    } else {
+	return vwin->topmain != NULL ? vwin->topmain : vwin->main;
+    }
 }
 
 static GtkWidget *real_add_winlist (windata_t *vwin,

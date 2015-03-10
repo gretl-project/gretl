@@ -1682,7 +1682,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 					    title, &outwin);
     } else {
 	/* execute "invisibly" */
-	err = gui_exec_line(&state, dataset);
+	err = gui_exec_line(&state, dataset, NULL);
     }
 
     if (!err) {
@@ -2246,7 +2246,7 @@ int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn)
 	gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
 			      NULL, prn);
 	state.line = fnline;
-	err = gui_exec_line(&state, dataset);
+	err = gui_exec_line(&state, dataset, NULL);
 
 	if (err) {
 	    gui_errmsg(err);

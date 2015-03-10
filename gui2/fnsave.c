@@ -541,7 +541,7 @@ int update_func_code (windata_t *vwin)
 	int save_batch = gretl_in_batch_mode();
 
 	set_current_function_package(finfo->pkg);
-	err = execute_script(NULL, text, NULL, INCLUDE_EXEC);
+	err = execute_script(NULL, text, NULL, INCLUDE_EXEC, NULL);
 	set_current_function_package(NULL);
 	gretl_set_batch_mode(save_batch);
     }

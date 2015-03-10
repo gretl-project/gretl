@@ -313,7 +313,7 @@ static int real_console_exec (ExecState *state)
     push_history_line(state->line);
 
     state->flags = CONSOLE_EXEC;
-    err = gui_exec_line(state, dataset);
+    err = gui_exec_line(state, dataset, console_main);
 
     while (!err && gretl_execute_loop()) {
 	err = gretl_loop_exec(state, dataset, NULL);

@@ -2215,6 +2215,41 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     free(targ);
 }
 
+void maybe_update_pkgview (const char *filename,
+			   const char *pkgname,
+			   int zipfile,
+			   GtkWidget *parent)
+{
+    windata_t *vwin;
+
+    /* update local package browser? */
+    vwin = get_browser_for_role(FUNC_FILES); 
+    if (vwin != NULL) {
+	populate_filelist(vwin, NULL);
+    }
+
+   /* update remote package browser? */ 
+    vwin = get_browser_for_role(REMOTE_FUNC_FILES); 
+    if (vwin != NULL && find_package_in_viewer(vwin, pkgname)) {
+	list_store_set_string(GTK_TREE_VIEW(vwin->listbox),
+			      vwin->active_var, STATUS_COLUMN,
+			      _("Up to date"));
+    }
+
+    if (vwin == NULL) {
+	vwin = mdata;
+    }
+
+    if (zipfile) {
+	gchar *gfnpath = make_gfn_path(pkgname);
+
+	maybe_handle_pkg_menu_option(gfnpath, parent);
+	g_free(gfnpath);
+    } else {
+	maybe_handle_pkg_menu_option(filename, parent);
+    }
+}
+
 void pkg_info_from_server (GtkWidget *w, windata_t *vwin)
 {
     static int idx;

@@ -58,7 +58,8 @@ int record_model_command_verbatim (int model_ID);
 int *command_list_from_string (const char *s, int *err);
 
 int execute_script (const char *runfile, const char *buf,
-		    PRN *prn, int exec_code);
+		    PRN *prn, int exec_code,
+		    GtkWidget *parent);
 
 int user_fopen (const char *fname, char *fullname, PRN **pprn);
 
@@ -325,7 +326,8 @@ gboolean get_csv_exclude_obs (void);
 
 void do_save_text (char *fname, MODEL *pmod);
 
-int gui_exec_line (ExecState *s, DATASET *dset);
+int gui_exec_line (ExecState *s, DATASET *dset,
+		   GtkWidget *parent);
 
 int exec_line_with_output_handler (ExecState *s, 
 				   DATASET *dset,

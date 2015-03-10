@@ -51,6 +51,9 @@ void text_find (gpointer unused, gpointer data);
 
 void vwin_add_finder (windata_t *vwin);
 
+gboolean find_package_in_viewer (windata_t *vwin, 
+				 const gchar *targ);
+
 int add_help_navigator (windata_t *vwin, GtkWidget *hp);
 
 char *quoted_help_string (const char *s);

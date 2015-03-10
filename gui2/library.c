@@ -47,6 +47,7 @@
 #include "gretl_panel.h"
 #include "gretl_foreign.h"
 #include "gretl_help.h"
+#include "gretl_zip.h"
 #include "uservar.h"
 #include "csvdata.h"
 #include "matrix_extra.h"
@@ -4449,7 +4450,7 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
     free(buf);
 
     console_record_sample(dataset);
-    err = gui_exec_line(&state, dataset);
+    err = gui_exec_line(&state, dataset, mdata->main);
 
     if (err) {
 	gui_errmsg(err);
@@ -7555,6 +7556,7 @@ static int maybe_stop_script (void)
 static void run_native_script (windata_t *vwin, gchar *buf)
 {
     int policy = get_script_output_policy();
+    GtkWidget *parent;
     windata_t *targ = NULL;
     PRN *prn;
     int save_batch;
@@ -7598,8 +7600,9 @@ static void run_native_script (windata_t *vwin, gchar *buf)
 	untmp = 1;
     }
 
+    parent = vwin_toplevel(vwin);
     save_batch = gretl_in_batch_mode();
-    err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
+    err = execute_script(NULL, buf, prn, SCRIPT_EXEC, parent);
     gretl_set_batch_mode(save_batch);
 
     refresh_data();
@@ -7632,6 +7635,7 @@ static void run_native_script (windata_t *vwin, gchar *buf)
 void run_script_fragment (windata_t *vwin, gchar *buf)
 {
     windata_t *kid = vwin_first_child(vwin);
+    GtkWidget *parent;
     PRN *prn;
     int save_batch;
 
@@ -7641,10 +7645,13 @@ void run_script_fragment (windata_t *vwin, gchar *buf)
 
     if (kid != NULL) {
 	suppress_logo = 1;
+	parent = vwin_toplevel(kid);
+    } else {
+	parent = vwin_toplevel(vwin);
     }
 
     save_batch = gretl_in_batch_mode();
-    execute_script(NULL, buf, prn, SCRIPT_EXEC);
+    execute_script(NULL, buf, prn, SCRIPT_EXEC, parent);
     gretl_set_batch_mode(save_batch);
 
     refresh_data();
@@ -7671,7 +7678,13 @@ int exec_line_with_output_handler (ExecState *s,
 				      title, outwin);
 
     if (!err) {
-	err = gui_exec_line(s, dataset);
+	GtkWidget *parent = mdata->main;
+
+	if (outwin != NULL && *outwin != NULL) {
+	    parent = vwin_toplevel(*outwin);
+	}
+	
+	err = gui_exec_line(s, dataset, parent);
     }
 
     return err;
@@ -8476,7 +8489,8 @@ static char *gui_get_input_line (char *line, FILE *fp,
 /* run commands from runfile or buf, output to prn */
 
 int execute_script (const char *runfile, const char *buf,
-		    PRN *prn, int exec_code)
+		    PRN *prn, int exec_code,
+		    GtkWidget *parent)
 {
     ExecState state;
     FILE *fb = NULL;
@@ -8571,7 +8585,7 @@ int execute_script (const char *runfile, const char *buf,
 		    strcpy(state.runfile, runfile);
 		}
 		state.flags = exec_code;
-		exec_err = gui_exec_line(&state, dataset);
+		exec_err = gui_exec_line(&state, dataset, parent);
 	    }
 
 	    if (exec_err) {
@@ -8676,6 +8690,60 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     if (err) {
 	gui_errmsg(err);
     }
+}
+
+static int script_install_function_package (const char *pkgname,
+					    PRN *prn,
+					    GtkWidget *parent)
+{
+    char *fname = NULL;
+    int filetype = 0;
+    int err = 0;
+
+    if (strstr(pkgname, ".gfn")) {
+	filetype = 1;
+    } else if (strstr(pkgname, ".zip")) {
+	filetype = 2;
+    } else {
+	/* determine the correct suffix */
+	fname = retrieve_remote_pkg_filename(pkgname, &err);
+	if (!err) {
+	    filetype = strstr(fname, ".zip") ? 2 : 1;
+	}
+    }
+
+    if (filetype) {
+	const char *basename = fname != NULL ? fname : pkgname;
+	const char *path = gretl_function_package_path();
+	gchar *fullname;
+
+	fullname = g_strdup_printf("%s%s", path, basename);
+	err = retrieve_remote_function_package(basename, fullname);
+	if (!err && filetype == 2) {
+	    err = gretl_unzip_into(fullname, path);
+	    gretl_remove(fullname);
+	}
+
+	if (!err) {
+	    gchar *p, *trimmed = g_strdup(basename);
+
+	    p = strrchr(trimmed, '.');
+	    if (p != NULL) *p = '\0';
+	    
+	    maybe_update_pkgview(fullname, trimmed, filetype == 2,
+				 parent);
+	    if (gretl_messages_on()) {
+		pprintf(prn, "Installed %s\n", trimmed);
+	    }
+	    g_free(trimmed);
+	}
+	
+	g_free(fullname);
+    }
+
+    free(fname);
+    
+    return err;
 }
 
 static int script_renumber_series (const char *s, DATASET *dset, 
@@ -8860,7 +8928,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
    commands are passed on to libgretl.
 */
 
-int gui_exec_line (ExecState *s, DATASET *dset)
+int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 {
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -9030,6 +9098,10 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	err = script_open_append(s, dset, prn);
 	break;
 
+    case INSTALL:
+	err = script_install_function_package(cmd->param, prn, parent);
+	break;
+
     case NULLDATA:
 	if (dataset_locked()) {
 	    break;
@@ -9087,7 +9159,8 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 		s->flags |= INCLUDE_EXEC;
 	    }
 
-	    err = execute_script(runfile, NULL, prn, s->flags);
+	    err = execute_script(runfile, NULL, prn, s->flags,
+				 parent);
 	    gretl_set_batch_mode(save_batch);
 	    s->flags = orig_flags;
 	}

@@ -1691,6 +1691,42 @@ static gboolean real_find_in_listbox (windata_t *vwin,
     return (pos >= 0);
 }
 
+gboolean find_package_in_viewer (windata_t *vwin, 
+				 const gchar *targ)
+{
+    char haystack[MAXLEN];
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    int pos = -1;
+
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox));
+
+    if (model == NULL || !gtk_tree_model_get_iter_first(model, &iter)) {
+	return FALSE;
+    }
+
+    while (pos < 0) {
+	get_tree_model_haystack(model, &iter, 0, haystack);
+	pos = string_match_pos(haystack, targ, TRUE, 0);
+	if (pos >= 0 || !gtk_tree_model_iter_next(model, &iter)) {
+	    break;
+	}
+    }
+
+    if (pos >= 0) {
+	GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
+
+	gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(vwin->listbox),
+				     path, NULL, FALSE, 0, 0);
+	gtk_tree_view_set_cursor(GTK_TREE_VIEW(vwin->listbox),
+				 path, NULL, FALSE);
+	vwin->active_var = tree_path_get_row_number(path);
+	gtk_tree_path_free(path);
+    } 
+
+    return (pos >= 0);
+}
+
 /* used for windows that do not have a built-in search entry,
    but which call the function find_string_dialog() */
 
