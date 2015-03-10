@@ -2215,6 +2215,12 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     free(targ);
 }
 
+/* Called when the "install" command is used to install a function
+   package via console or script: try to sync the local and/or remote
+   function-package windows, if they're open. Also present the
+   package's menu-attachment option, if any.
+*/
+
 void maybe_update_pkgview (const char *filename,
 			   const char *pkgname,
 			   int zipfile,
@@ -2236,10 +2242,7 @@ void maybe_update_pkgview (const char *filename,
 			      _("Up to date"));
     }
 
-    if (vwin == NULL) {
-	vwin = mdata;
-    }
-
+    /* offer menu attachment if applicable */
     if (zipfile) {
 	gchar *gfnpath = make_gfn_path(pkgname);
 
