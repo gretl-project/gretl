@@ -426,6 +426,7 @@ int gretl_plot_start (const char *param, const DATASET *dset)
 
     if (!err) {
 	plot.in_progress = 1;
+	/* for option-param handling in graphing.c */
 	set_effective_plot_ci(PLOT);
     }
 
