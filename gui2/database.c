@@ -2242,14 +2242,16 @@ void maybe_update_pkgview (const char *filename,
 			      _("Up to date"));
     }
 
-    /* offer menu attachment if applicable */
-    if (zipfile) {
-	gchar *gfnpath = make_gfn_path(pkgname);
+    if (parent != NULL) {
+	/* offer menu attachment if applicable */
+	if (zipfile) {
+	    gchar *gfnpath = make_gfn_path(pkgname);
 
-	maybe_handle_pkg_menu_option(gfnpath, parent);
-	g_free(gfnpath);
-    } else {
-	maybe_handle_pkg_menu_option(filename, parent);
+	    maybe_handle_pkg_menu_option(gfnpath, parent);
+	    g_free(gfnpath);
+	} else {
+	    maybe_handle_pkg_menu_option(filename, parent);
+	}
     }
 }
 
