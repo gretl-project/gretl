@@ -9347,9 +9347,9 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 	int anelem, i;
 	double x;
 
-	if (a->rows == 1 && b->rows != 1) {
+	if (matrix_is_scalar(a) && b->rows != 1) {
 	    scalar_a = 1;
-	} else if (b->rows == 1 && a->rows != 1) {
+	} else if (matrix_is_scalar(b) && a->rows != 1) {
 	    scalar_b = 1;
 	} else if (a->rows != b->rows) {
 	    *err = E_NONCONF;
