@@ -2740,6 +2740,10 @@ static int pkg_set_datafiles (fnpkg *pkg, const char *s)
 	}
     }
 
+    if (!err) {
+	pkg->uses_subdir = 1;
+    }
+
     return err;
 }
 
@@ -2961,7 +2965,6 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		if (has_suffix(p, ".pdf")) {
 		    pprintf(prn, "Recording help reference %s\n", p);
 		    tmp = g_strdup_printf("pdfdoc:%s", p);
-		    pkg->uses_subdir = 1;
 		} else {
 		    pprintf(prn, "Looking for help text in %s\n", p);
 		    tmp = pkg_aux_content(p, &err);
@@ -2989,9 +2992,6 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 	    } else if (!strncmp(line, "data-files", 10)) {
 		pprintf(prn, "Recording data-file list: %s\n", p);
 		err = pkg_set_datafiles(pkg, p);
-		if (!err) {
-		    pkg->uses_subdir = 1;
-		}
 	    } else if (!strncmp(line, "data-requirement", 16)) {
 		err = pkg_set_dreq(pkg, p);
 	    } else if (!strncmp(line, "model-requirement", 17)) {
@@ -3335,6 +3335,9 @@ int function_package_set_properties (fnpkg *pkg, ...)
 		err = maybe_replace_string_var(&pkg->descrip, sval);
 	    } else if (!strcmp(key, "help")) {
 		err = maybe_replace_string_var(&pkg->help, sval);
+		if (!err && !strncmp(sval, "pdfdoc", 6)) {
+		    pkg->uses_subdir = 1;
+		}
 	    } else if (!strcmp(key, "gui-help")) {
 		err = maybe_replace_string_var(&pkg->gui_help, sval);
 	    } else if (!strcmp(key, "sample-script")) {
@@ -3623,12 +3626,17 @@ int function_package_set_data_files (fnpkg *pkg, char **S, int n)
 	pkg->n_files = 0;
     }
 
-    if (S != NULL) {
-	pkg->datafiles = strings_array_dup(S, n);
-	if (pkg->datafiles == NULL) {
-	    err = E_ALLOC;
+    if (n > 0) {
+	if (S == NULL) {
+	    err = E_DATA;
 	} else {
-	    pkg->n_files = n;
+	    pkg->datafiles = strings_array_dup(S, n);
+	    if (pkg->datafiles == NULL) {
+		err = E_ALLOC;
+	    } else {
+		pkg->n_files = n;
+		pkg->uses_subdir = 1;
+	    }
 	}
     }
 
