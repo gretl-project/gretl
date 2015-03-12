@@ -2520,24 +2520,18 @@ static int real_detect_blas (const char *s)
 	s++;
     }
 
-    fputs("detect blas: ", stderr);
-
     if (strcmp(found, "nnny") == 0) {
-	fputs("MKL\n", stderr);
 	ret = BLAS_MKL;
     } else if (strcmp(found, "nnyn") == 0) {
-	fputs("OpenBLAS\n", stderr);
 	ret = BLAS_OPENBLAS;
     } else if (strcmp(found, "nynn") == 0) {
-	fputs("ATLAS\n", stderr);
 	ret = BLAS_ATLAS;
     } else if (strcmp(found, "ynnn") == 0) {
-	fputs("Netlib\n", stderr);
 	ret = BLAS_NETLIB;
     } else if (strcmp(found, "nnnn") == 0) {
-	fputs("found no relevant libs!\n", stderr);
+	fputs("detect blas: found no relevant libs!\n", stderr);
     } else {
-	fputs("confused, found too many blas libs!\n", stderr);
+	fputs("detect blas: confused, found too many blas libs!\n", stderr);
     }
 
     return ret;
@@ -2594,7 +2588,7 @@ static int blas_variant_code (void)
 #elif defined(OS_OSX)
     return BLAS_VECLIB;
 #else
-    /* not a packaged build: we have to check */
+    /* not an own-packaged build: we have to check */
     static int bver = -1;
 
     if (bver < 0) {
