@@ -2989,6 +2989,9 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 	    } else if (!strncmp(line, "data-files", 10)) {
 		pprintf(prn, "Recording data-file list: %s\n", p);
 		err = pkg_set_datafiles(pkg, p);
+		if (!err) {
+		    pkg->uses_subdir = 1;
+		}
 	    } else if (!strncmp(line, "data-requirement", 16)) {
 		err = pkg_set_dreq(pkg, p);
 	    } else if (!strncmp(line, "model-requirement", 17)) {
