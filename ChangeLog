@@ -1,6 +1,6 @@
 version 1.10.0, in progress
 - Replace old command-line parser with new, faster "tokenizer"
-- add "install" command to install function packages via the
+- Add "install" command to install function packages via the
   command line
 - "chow" and "qlrtest" commands: add --limit-to option to 
   restrict the break test to a subset of regressors
@@ -22,6 +22,9 @@ version 1.10.0, in progress
 - "data" command: fix incorrect importation of series with
   lower frequency than the current dataset; also add an
   --interpolate option for that context
+- "set" command: add a new setter, "robust_z" to select
+  asymptotic p-values when using the --robust option in
+  estimation
 - Stata dta importer: handle format 117 (Stata 13)
 - Fix bug: GUI panel plot failed if the start of the sample
   range was advanced
