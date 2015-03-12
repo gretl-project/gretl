@@ -2299,13 +2299,31 @@ static int pkg_zipfile_add (const char *fname,
 			    const char *dotpath,
 			    PRN *prn)
 {
-    gchar *src, *dest;
+    gchar *src, *dest = NULL;
+    struct stat sbuf;
     int err;
 
     src = g_strdup_printf("%s%s", pkgbase, fname);
-    dest = g_strdup_printf("%s%c%s", dotpath, SLASH, fname);
-    pprintf(prn, "Copying %s... ", fname);
-    err = gretl_copy_file(src, dest);
+
+    if (stat(src, &sbuf) == 0 && (sbuf.st_mode & S_IFDIR)) {
+	/* aha, we've got a subdir */
+	gchar *ziptmp;
+
+	pprintf(prn, "%s: using temporary archive... ", fname);
+	ziptmp = g_strdup_printf("%s%c%s.zip", dotpath, SLASH, src);
+	err = gretl_make_zipfile(ziptmp, src);
+	if (!err) {
+	    err = gretl_unzip_into(ziptmp, dotpath);
+	    gretl_remove(ziptmp);
+	}
+	g_free(ziptmp);
+    } else {
+	/* a regular file, we hope */
+	dest = g_strdup_printf("%s%c%s", dotpath, SLASH, fname);
+	pprintf(prn, "Copying %s... ", fname);
+	err = gretl_copy_file(src, dest);
+    }
+    
     zip_report(err, prn);
     g_free(src);
     g_free(dest);
@@ -2506,7 +2524,12 @@ static void do_pkg_upload (function_info *finfo, const char *gfnpath)
 	infobox(retbuf);
     }
 
-    g_free(zipname);
+    if (zipname != NULL) {
+	/* delete the upload zipfile */
+	gretl_remove(zipname);
+	g_free(zipname);
+    }
+    
     g_free(buf);
     free(retbuf);
 

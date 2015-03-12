@@ -87,10 +87,10 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
 			    FitType fit, int t1, int t2, 
 			    gretl_matrix **py, gretl_matrix **pX);
 
-gretl_matrix *gretl_matrix_read_from_text (const char *fname, 
+gretl_matrix *gretl_matrix_read_from_file (const char *fname, 
 					   int import, int *err);
 
-int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname,
+int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 				int export);
 
 void 

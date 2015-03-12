@@ -2781,7 +2781,7 @@ static void lag_calc (double *y, const double *x,
     }
 }
 
-static NODE *matrix_text_write (NODE *l, NODE *m, NODE *r, parser *p)
+static NODE *matrix_file_write (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
@@ -2796,7 +2796,7 @@ static NODE *matrix_text_write (NODE *l, NODE *m, NODE *r, parser *p)
 	ret = aux_scalar_node(p);
 
 	if (ret != NULL) { 
-	    ret->v.xval = gretl_matrix_write_as_text(l->v.m, s, export);
+	    ret->v.xval = gretl_matrix_write_to_file(l->v.m, s, export);
 	}
     } else {
 	ret = aux_scalar_node(p);
@@ -3372,7 +3372,7 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 
 	switch (f) {
 	case F_MREAD:
-	    ret->v.m = gretl_matrix_read_from_text(n->v.str, import, 
+	    ret->v.m = gretl_matrix_read_from_file(n->v.str, import, 
 						   &p->err);
 	    break;
 	case F_BREAD:
@@ -11486,7 +11486,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = numeric_jacobian(l, r, p);
 	} else if (t->t == F_MWRITE && l->t == MAT && 
 		   m->t == STR && empty_or_num(r)) {
-	    ret = matrix_text_write(l, m, r, p);
+	    ret = matrix_file_write(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
 	} 

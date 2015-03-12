@@ -21,6 +21,7 @@
 #include "usermat.h"
 #include "matrix_extra.h"
 #include "libset.h"
+#include "swap_bytes.h"
 
 #ifdef WIN32
 # include "gretl_win32.h"
@@ -1072,36 +1073,104 @@ static char *decompress_matrix_buffer (gzFile fz, const char *fname,
     return buf;
 }
 
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+
+static void matrix_swap_endianness (gretl_matrix *A)
+{
+    int i, n = A->rows * A->cols;
+
+    for (i=0; i<n; i++) {
+	reverse_double(A->val[i]);
+    }
+}
+
+#endif
+
+static gretl_matrix *read_binary_matrix_file (FILE *fp, int *err)
+{
+    gretl_matrix *A = NULL;
+    char header[20] = {0};
+    gint32 dim[2];
+
+    if (fread(header, 1, 19, fp) < 19) {
+	*err = E_DATA;
+    } else if (strcmp(header, "gretl_binary_matrix")) {
+	*err = E_DATA;
+    } else if (fread(dim, sizeof *dim, 2, fp) < 2) {
+	*err = E_DATA;
+    } else if (dim[0] <= 0 || dim[1] <= 0) {
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+	reverse_int(dim[0]);
+	reverse_int(dim[1]);
+#endif    
+	A = gretl_matrix_alloc(dim[0], dim[1]);
+	if (A == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	size_t n = dim[0] * dim[1];
+    
+	if (fread(A->val, sizeof *A->val, n, fp) < n) {
+	    *err = E_DATA;
+	    gretl_matrix_free(A);
+	    A = NULL;
+	}
+    }
+
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+    if (A != NULL) {
+	matrix_swap_endianness(A);
+    }
+#endif    
+
+    fclose(fp);
+
+    return A;
+}
+
 /**
- * gretl_matrix_read_from_text:
- * @fname: name of text file.
+ * gretl_matrix_read_from_file:
+ * @fname: name of file.
  * @import: non-zero means we're importing via dotdir.
  * @err: location to receive error code.
  *
- * Reads a matrix from a text file by the name @fname; the column
- * separator must be space or tab. It is assumed that the dimensions of
- * the matrix (number of rows and columns) are found on the first line
- * of the csv file, so no heuristics are necessary. In case of error,
- * @err is filled appropriately.
+ * Reads a matrix from a file by the name @fname; if it's
+ * a text file the column separator must be space or tab. It is 
+ * assumed that the dimensions of the matrix (number of rows and 
+ * columns) are found on the first line of the file, so no 
+ * heuristics are necessary. In case of error,  @err is filled 
+ * appropriately.
  *
- * Returns: The matrix read from file, or NULL.
+ * Returns: The matrix as read from file, or NULL.
  */
 
-gretl_matrix *gretl_matrix_read_from_text (const char *fname, 
+gretl_matrix *gretl_matrix_read_from_file (const char *fname, 
 					   int import, int *err)
 {
     char fullname[FILENAME_MAX];
-    int r, c, n, gz;
+    int r, c, n, gz, bin = 0;
     gretl_matrix *A = NULL;
     gzFile fz = Z_NULL;
     FILE *fp = NULL;
 
     gz = has_suffix(fname, ".gz");
 
+    if (!gz) {
+	bin = has_suffix(fname, ".bin");
+    }
+
     if (import) {
 	build_path(fullname, gretl_dotdir(), fname, NULL);
 	if (gz) {
 	    fz = gretl_gzopen(fullname, "r");
+	} else if (bin) {
+	    fp = gretl_fopen(fullname, "rb");
 	} else {
 	    fp = gretl_fopen(fullname, "r");
 	}
@@ -1109,6 +1178,8 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname,
 	strcpy(fullname, fname);
 	if (gz) {
 	    fz = gretl_gzopen(fullname, "r");
+	} else if (bin) {
+	    fp = gretl_fopen(fullname, "rb");
 	} else {
 	    fp = gretl_fopen(fullname, "r");
 	}
@@ -1117,6 +1188,8 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname,
 	    if (strcmp(fullname, fname)) {
 		if (gz) {
 		    fz = gretl_gzopen(fullname, "r");
+		} else if (bin) {
+		    fp = gretl_fopen(fullname, "rb");
 		} else {
 		    fp = gretl_fopen(fullname, "r");
 		}
@@ -1127,6 +1200,10 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname,
     if (fz == Z_NULL && fp == NULL) {
 	*err = E_FOPEN;
 	return NULL;
+    }
+
+    if (bin) {
+	return read_binary_matrix_file(fp, err);
     }
 
     /* skip any leading comment lines starting with '#' */
@@ -1254,20 +1331,19 @@ static void win32_xna_out (double x, gzFile fz, FILE *fp,
 #endif
 
 /**
- * gretl_matrix_write_as_text:
- * @A: matrix.
- * @fname: name of file to write.
+ * gretl_matrix_write_to_file:
+ * @A: matrix to write.
+ * @fname: name of file.
  * @export: non-zero means we're exporting via dotdir.
  *
- * Writes the matrix @A to a plain text file by the name @fname; the
- * column separator is the tab. The number of rows and columns are
- * written on the first line of the file (which comes in handy for
- * reading the matrix).
+ * Writes the matrix @A to a file by the name @fname; if it's a text
+ * file, the column separator is tab. The number of rows and columns
+ * are written on the first line of the file.
  *
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname,
+int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 				int export)
 {
     int r = A->rows;
@@ -1277,9 +1353,13 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname,
     FILE *fp = NULL;
     double x;
     char pad, d = '\t';
-    int gz;
+    int gz, bin = 0;
 
     gz = has_suffix(fname, ".gz");
+
+    if (!gz) {
+	bin = has_suffix(fname, ".bin");
+    }
 
     if (export) {
 	char targ[FILENAME_MAX];
@@ -1297,6 +1377,35 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname,
 	} else {
 	    fp = gretl_fopen(fname, "wb");
 	}
+    }
+
+    if (bin && fp != NULL) {
+	const char *header = "gretl_binary_matrix";
+	gint32 dim[2] = {r, c};
+	size_t n = r * c;
+	
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+	double x;
+	size_t i;
+	int k;
+	
+	fwrite(header, 1, strlen(header), fp);
+	for (i=0; i<2; i++) {
+	    k = dim[i];
+	    reverse_int(k);
+	    fwrite(&k, sizeof k, 1, fp);
+	}
+	for (i=0; i<n; i++) {
+	    x = A->val[i];
+	    reverse_double(x);
+	    fwrite(&x, sizeof x, 1, fp);
+	}
+#else
+	fwrite(header, 1, strlen(header), fp);
+	fwrite(dim, sizeof *dim, 2, fp);
+	fwrite(A->val, sizeof *A->val, n, fp);
+#endif	
+	goto finish;
     }
 
     if (fz) {
@@ -1330,6 +1439,8 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname,
     }
 
     gretl_pop_c_numeric_locale();
+
+ finish:
 
     if (fz) {
 	gzclose(fz);
