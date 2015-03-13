@@ -824,6 +824,11 @@ static NODE *aux_array_node (parser *p)
     return get_aux_node(p, ARRAY, 0, 1);
 }
 
+static NODE *array_pointer_node (parser *p)
+{
+    return get_aux_node(p, ARRAY, 0, 0);
+}
+
 static NODE *aux_empty_node (parser *p)
 {
     return get_aux_node(p, EMPTY, 0, 0);
@@ -3574,16 +3579,12 @@ static matrix_subspec *build_mspec (NODE *l, NODE *r, parser *p)
 	spec->type[0] = spec->type[1] = SEL_ELEMENT;
 	mspec_set_row_index(spec, l->v.xval);
 	mspec_set_col_index(spec, r->v.xval);
-	spec->singleton = 1;
 	goto finished;
     }
 
     if (l->t == NUM) {
 	spec->type[0] = SEL_RANGE;
 	mspec_set_row_index(spec, l->v.xval);
-	if (r == NULL) {
-	    spec->singleton = 1;
-	}
     } else if (l->t == IVEC) {
 	spec->type[0] = SEL_RANGE;
 	spec->sel[0].range[0] = l->v.ivec[0];
@@ -3672,14 +3673,123 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 	    if (ret == NULL) {
 		gretl_matrix_free(a);
 	    } else {
-		if (!spec->singleton) {
-		    ret->flags |= MSL_NODE;
-		}
 		ret->v.m = a;
 	    }
 	}
     } else {
 	ret = aux_matrix_node(p);
+    }
+
+    return ret;
+}
+
+static NODE *array_element_node (gretl_array *a, int i,
+				 parser *p)
+{
+    NODE *ret = NULL;
+    GretlType type = 0;
+    void *data;
+
+    data = gretl_array_get_element(a, i-1, &type, &p->err);
+
+    if (!p->err) {
+	if (type == GRETL_TYPE_STRING) {
+	    ret = aux_string_node(p);
+	    if (ret != NULL) {
+		/* aux string node must be robust */
+		ret->v.str = gretl_strdup(data);
+	    }
+	} else if (type == GRETL_TYPE_MATRIX) {
+	    ret = matrix_pointer_node(p);
+	    if (ret != NULL) {
+		ret->v.m = data;
+	    }		    
+	} else if (type == GRETL_TYPE_BUNDLE) {
+	    ret = bundle_pointer_node(p);
+	    if (ret != NULL) {
+		ret->v.b = data;
+	    }			    
+	} else if (type == GRETL_TYPE_LIST) {
+	    ret = aux_list_node(p);
+	    if (ret != NULL) {
+		/* aux list node must be robust */
+		ret->v.ivec = gretl_list_copy(data);
+	    }
+	}		    
+    }
+
+    return ret;
+}
+
+static int mspec_get_series_index (matrix_subspec *s,
+				   parser *p)
+{
+    int t = -1;
+    
+    if (s->type[0] == SEL_RANGE &&
+	s->type[1] == SEL_NULL) {
+	if (s->sel[0].range[0] == s->sel[0].range[1]) {
+	    t = s->sel[0].range[0];
+	} else {
+	    /* allow for dates such as "2008:4" */
+	    gchar *tmp;
+
+	    tmp = g_strdup_printf("%d:%d", s->sel[0].range[0],
+				  s->sel[0].range[1]);
+	    t = get_observation_number(tmp, p->dset);
+	    g_free(tmp);
+	}
+    }
+
+    if (t < 1 || t > p->dset->n) {
+	p->err = E_DATA;
+    }
+
+    return t;
+}
+
+static int mspec_get_simple_index (matrix_subspec *s,
+				   parser *p)
+{
+    if (s->type[0] == SEL_RANGE &&
+	s->type[1] == SEL_NULL &&
+	s->sel[0].range[0] == s->sel[0].range[1]) {
+	return s->sel[0].range[0];
+    } else {
+	p->err = E_TYPES;
+	return -1;
+    }
+}
+
+static NODE *subobject_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	if (l->t == MAT && r->t == MSPEC) {
+	    return submatrix_node(l, r, p);
+	} else if (l->t == ARRAY && r->t == MSPEC) {
+	    int i = mspec_get_simple_index(r->v.mspec, p);
+
+	    if (!p->err) {
+		ret = array_element_node(l->v.a, i, p);
+	    }
+	} else if (l->t == SERIES && r->t == MSPEC) {
+	    int t = mspec_get_series_index(r->v.mspec, p);
+
+	    if (!p->err) {
+		ret = aux_scalar_node(p);
+		if (!p->err) {
+		    ret->v.xval = l->v.xvec[t-1];
+		}
+	    }	    
+	} else {
+	    fprintf(stderr, "subobject_node: l='%s', r='%s'\n",
+		    getsymb(l->t, NULL), getsymb(r->t, NULL));
+	    p->err = E_TYPES;
+	}
+    } else {
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -4318,44 +4428,6 @@ static NODE *get_named_list_element (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *real_get_array_element (gretl_array *a, int i,
-				     parser *p)
-{
-    NODE *ret = NULL;
-    GretlType type = 0;
-    void *data;
-
-    data = gretl_array_get_element(a, i-1, &type, &p->err);
-
-    if (!p->err) {
-	if (type == GRETL_TYPE_STRING) {
-	    ret = aux_string_node(p);
-	    if (ret != NULL) {
-		/* aux string node must be robust */
-		ret->v.str = gretl_strdup(data);
-	    }
-	} else if (type == GRETL_TYPE_MATRIX) {
-	    ret = matrix_pointer_node(p);
-	    if (ret != NULL) {
-		ret->v.m = data;
-	    }		    
-	} else if (type == GRETL_TYPE_BUNDLE) {
-	    ret = bundle_pointer_node(p);
-	    if (ret != NULL) {
-		ret->v.b = data;
-	    }			    
-	} else if (type == GRETL_TYPE_LIST) {
-	    ret = aux_list_node(p);
-	    if (ret != NULL) {
-		/* aux list node must be robust */
-		ret->v.ivec = gretl_list_copy(data);
-	    }
-	}		    
-    }
-
-    return ret;
-}
-
 static NODE *get_array_element (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -4365,7 +4437,7 @@ static NODE *get_array_element (NODE *l, NODE *r, parser *p)
 	int i = node_get_int(r, p);
 
 	if (!p->err) {
-	    ret = real_get_array_element(a, i, p);
+	    ret = array_element_node(a, i, p);
 	}
     } else {
 	ret = aux_any_node(p);
@@ -6907,89 +6979,6 @@ static gretl_matrix *complex_array_to_matrix (cmplx *c, int sz,
     return m;
 }
 
-/* Here we're working on something like "b.array[k]",
-   where @spec is the "[k]" bit.
-*/
-
-static NODE *bundled_array_element_node (gretl_array *a,
-					 parser *p,
-					 char *spec)
-{
-    NODE *ret = NULL;
-    int n = strlen(spec);
-    int i = -1;
-
-    if (n > 2 && spec[n-1] == ']') {
-	gchar *tmp;
-	double x;
-	    
-	tmp = g_strndup(spec + 1, n-2);
-	x = generate_scalar(tmp, p->dset, &p->err);
-	if (!p->err) {
-	    if (x == floor(x)) {
-		i = (int) x;
-	    } else {
-		p->err = E_DATA;
-	    }
-	}
-	g_free(tmp);
-    } else {
-	p->err = E_DATA;
-    }
-
-    if (!p->err) {
-	ret = real_get_array_element(a, i, p);
-    }
-
-    return ret;
-}
-
-static void process_bundle_member_subspec (NODE *n, parser *p,
-					   char *spec)
-{
-    if (n->t == MAT) {
-	gretl_matrix *m = NULL;
-	gchar *tmp;
-
-	/* FIXME there has to be a better way of doing
-	   this */
-
-	tmp = g_strdup_printf("gentmpmat___%s", spec);
-	p->err = private_matrix_add(n->v.m, "gentmpmat___");
-	if (!p->err) {
-	    m = generate_matrix(tmp, p->dset, &p->err);
-	}
-	user_var_delete_by_name("gentmpmat___", NULL);
-	g_free(tmp);
-	if (!p->err) {
-	    /* replace the outgoing matrix */
-	    n->v.m = m;
-	    n->flags &= ~PTR_NODE;
-	    n->flags |= TMP_NODE;
-	}
-    } else if (n->t == SERIES) {
-	char *s = strrchr(spec, ']');
-	double xt;
-	int t;
-
-	*s = '\0';
-	t = get_observation_number(spec + 1, p->dset);
-	if (t > 0) {
-	    /* revise outgoing node to hold scalar */
-	    xt = n->v.xvec[t-1];
-	    free(n->v.xvec);
-	    n->t = NUM;
-	    n->v.xval = xt;
-	    n->flags &= ~TMP_NODE;
-	} else {
-	    p->err = E_DATA;
-	}
-	*s = ']';
-    } else {
-	context_error('[', p);
-    }
-}
-
 /* Getting an object from within a bundle: on the left is the
    bundle reference, on the right should be a string -- the
    key to look up to get content. 
@@ -6998,7 +6987,6 @@ static void process_bundle_member_subspec (NODE *n, parser *p,
 static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 {
     char *key = r->v.str;
-    char *s, *extra = NULL;
     GretlType type;
     int size = 0;
     void *val = NULL;
@@ -7007,12 +6995,6 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 #if EDEBUG
     fprintf(stderr, "get_named_bundle_value: %s[\"%s\"]\n", l->vname, key);
 #endif
-
-    if ((s = strchr(key, '[')) != NULL) {
-	/* a matrix slice spec is appended to the key? */
-	extra = gretl_strdup(s);
-	*s = '\0';
-    }
 
     if (!strcmp(l->vname, "$")) {
 	/* special: treat the 'last model' as a bundle */
@@ -7059,18 +7041,14 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	    ret->flags |= PTR_NODE;
 	}
     } else if (type == GRETL_TYPE_BUNDLE) {
-	ret = aux_bundle_node(p);
+	ret = bundle_pointer_node(p);
 	if (ret != NULL) {
-	    ret->v.b = gretl_bundle_copy((gretl_bundle *) val,
-					 &p->err);
+	    ret->v.b = (gretl_bundle *) val;
 	}
     } else if (type == GRETL_TYPE_ARRAY) {
-	if (extra == NULL) {
-	    ret = aux_array_node(p);
-	    if (ret != NULL) {
-		ret->v.a = gretl_array_copy((gretl_array *) val,
-					    &p->err);
-	    }
+	ret = array_pointer_node(p);
+	if (ret != NULL) {
+	    ret->v.a = (gretl_array *) val;
 	}
     } else if (type == GRETL_TYPE_CMPLX_ARRAY) {
 	ret = aux_matrix_node(p);
@@ -7103,16 +7081,6 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	}
     } else {
 	p->err = E_DATA;
-    }
-
-    if (extra != NULL) {
-	if (type == GRETL_TYPE_ARRAY) {
-	    ret = bundled_array_element_node(val, p, extra);
-	} else {
-	    process_bundle_member_subspec(ret, p, extra);
-	}
-	free(extra);
-	*s = '['; /* reinstate full incoming string */
     }
 
     return ret;
@@ -10124,9 +10092,6 @@ static gretl_matrix *dvar_get_submatrix (NODE *targ, int idx,
 
     if (M != NULL) {
 	S = matrix_get_submatrix(M, r->v.mspec, 0, &p->err);
-	if (!r->v.mspec->singleton) {
-	    targ->flags |= MSL_NODE;
-	}
 	gretl_matrix_free(M);
     }
 
@@ -10213,9 +10178,6 @@ object_var_get_submatrix (NODE *targ, const char *oname, int idx,
 
     if (M != NULL) {
 	S = matrix_get_submatrix(M, r->v.mspec, 0, &p->err);
-	if (!r->v.mspec->singleton) {
-	    targ->flags |= MSL_NODE;
-	}
 	gretl_matrix_free(M);
     }
 
@@ -11138,6 +11100,10 @@ static NODE *eval (NODE *t, parser *p)
 	/* user matrix plus subspec */
 	ret = submatrix_node(l, r, p);
 	break;
+    case OSL:
+	/* object plus subspec */
+	ret = subobject_node(l, r, p);
+	break;	
     case MSLRAW:
 	/* unevaluated matrix subspec */
 	ret = mspec_node(l, r, p);
@@ -13933,7 +13899,7 @@ static int assign_null_to_array (parser *p)
     return err;
 }
 
-#define ONE_BY_ONE_CAST 1 /* but drop soon? */
+#define ONE_BY_ONE_CAST 0 /* OK now? */
 
 static int save_generated_var (parser *p, PRN *prn)
 {
@@ -13960,7 +13926,7 @@ static int save_generated_var (parser *p, PRN *prn)
 #if ONE_BY_ONE_CAST   
     if (p->targ == UNK) {
 	/* "cast" 1 x 1 matrix to scalar */
-	if (scalar_matrix_node(r) && !(r->flags & MSL_NODE)) {
+	if (scalar_matrix_node(r)) {
 	    p->targ = NUM;
 	} else {
 	    p->targ = r->t;
@@ -14155,21 +14121,30 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == STR) {
 	edit_string(p);
     } else if (p->targ == BUNDLE) {
-	if (is_tmp_node(r) || (p->flags & P_UFRET)) {
-	    /* bundle created on the fly */
-	    p->err = user_var_add_or_replace(p->lh.name,
-					     GRETL_TYPE_BUNDLE,
-					     r->v.b);
-	    if (!p->err) {
-		/* avoid destroying the returned bundle */
-		r->v.b = NULL;
-	    }
-	} else if (r->t == EMPTY) {
+	if (r->t == EMPTY) {
 	    /* as in "bundle b = null" */
 	    p->err = assign_null_to_bundle(p);
 	} else {
-	    /* assignment from pre-existing named bundle */
-	    p->err = gretl_bundle_copy_as(p->rhs, p->lh.name);
+	    /* full assignment of RHS bundle */
+	    gretl_bundle *b;
+	    
+	    if (is_tmp_node(r) || (p->flags & P_UFRET)) {
+		/* grabbing r->v.b is OK */
+		b = r->v.b;
+	    } else {
+		/* we need to make a copy */
+		b = gretl_bundle_copy(r->v.b, &p->err);
+	    }
+
+	    if (!p->err) {
+		p->err = user_var_add_or_replace(p->lh.name,
+						 GRETL_TYPE_BUNDLE,
+						 b);
+		if (!p->err && b == r->v.b) {
+		    /* avoid destroying the assigned bundle */
+		    r->v.b = NULL;
+		}
+	    }
 	}
     } else if (p->targ == BMEMB) {
 	/* saving an object into a bundle */
@@ -14177,26 +14152,32 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == ARRAY) {
 	if (p->lh.substr != NULL || p->op != B_ASN) {
 	    edit_array(p);
-	} else if (is_tmp_node(r) || (p->flags & P_UFRET)) {
-	    /* array created on the fly */
-	    GretlType atype = p->lh.atype > 0 ? p->lh.atype :
-		gretl_array_get_type(r->v.a);
-
-	    p->err = user_var_add_or_replace(p->lh.name,
-					     atype,
-					     r->v.a);
-	    if (!p->err) {
-		/* avoid destroying the returned array */
-		r->v.a = NULL;
-	    }
 	} else if (r->t == EMPTY) {
 	    /* as in, e.g., "strings A = null" */
 	    p->err = assign_null_to_array(p);
 	} else {
-	    /* assignment from pre-existing named array */
-	    p->err = gretl_array_copy_as(p->rhs, 
-					 p->lh.name,
-					 p->lh.atype);
+	    /* full assignment of RHS array */
+	    GretlType atype = p->lh.atype > 0 ? p->lh.atype :
+		gretl_array_get_type(r->v.a);
+	    gretl_array *a;
+
+	    if (is_tmp_node(r) || (p->flags & P_UFRET)) {
+		/* grabbing r->v.a is OK */
+		a = r->v.a;
+	    } else {
+		/* we need to make a copy */
+		a = gretl_array_copy(r->v.a, &p->err);
+	    }
+
+	    if (!p->err) {
+		p->err = user_var_add_or_replace(p->lh.name,
+						 atype,
+						 a);
+		if (!p->err && a == r->v.a) {
+		    /* avoid destroying the assigned array */
+		    r->v.a = NULL;
+		}
+	    }
 	}
     }	
 

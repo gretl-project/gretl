@@ -1687,6 +1687,8 @@ const char *getsymb (int t, const parser *p)
 	return "OBS";
     } else if (t == MSL) {
 	return "MSL";
+    } else if (t == OSL) {
+	return "OSL";
     } else if (t == DMSL) {
 	return "DMSL";
     } else if (t == DMSTR) {

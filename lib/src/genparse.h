@@ -122,6 +122,7 @@ enum {
   /* 90 */    RFUN,       /* GNU R function */
 	      USTR,       /* string variable */
 	      IVEC,       /* array of ints, not a varlist */
+	      OSL,        /* "slice" of object other than matrix */
               INC,        /* increment */
               DEC,        /* decrement */
               QUERY,      /* ternary "?" expression */
@@ -480,7 +481,7 @@ enum {
 
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSLRAW || s == SUBSL || s == LAG || \
-                   s == OBS || s == BMEMB || s == ELEMENT)
+                   s == OBS || s == BMEMB || s == ELEMENT || s == OSL)
 
 #define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
                   s == G_LPR || s == EROOT)
@@ -556,8 +557,7 @@ enum {
     TMP_NODE = 1 << 1, /* temporary: free content on exit */
     PTR_NODE = 1 << 2, /* node is compatible with P_LHPTR */
     SVL_NODE = 1 << 3, /* holds string-valued series */
-    CPY_NODE = 1 << 4, /* node derives from lhs_copy_node() */
-    MSL_NODE = 1 << 5  /* node holding matrix "slice" */
+    CPY_NODE = 1 << 4  /* node derives from lhs_copy_node() */
 };
 
 struct node {

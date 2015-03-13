@@ -328,7 +328,6 @@ matrix_subspec *matrix_subspec_new (void)
 
     if (spec != NULL) {
 	spec->rslice = spec->cslice = NULL;
-	spec->singleton = 0;
     }
 
     return spec;
