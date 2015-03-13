@@ -2285,9 +2285,11 @@ static int validate_package_file (const char *fname, int verbose)
     return err;
 }
 
-static void zip_report (int err, PRN *prn)
+static void zip_report (int err, int nf, PRN *prn)
 {
-    if (err) {
+    if (err && nf) {
+	pprintf(prn, "<@fail> (%s)\n", _("not found"));	
+    } else if (err) {
 	pputs(prn, "<@fail>\n");
     } else {
 	pputs(prn, "<@ok>\n");
@@ -2301,16 +2303,20 @@ static int pkg_zipfile_add (const char *fname,
 {
     gchar *src, *dest = NULL;
     struct stat sbuf;
-    int err;
+    int nf = 0;
+    int err = 0;
 
-    /* path to the file to be copied */
+    /* full path to the file to be copied */
     src = g_strdup_printf("%s%s", pkgbase, fname);
 
-    if (stat(src, &sbuf) == 0 && (sbuf.st_mode & S_IFDIR)) {
+    pprintf(prn, "Copying %s... ", src);
+
+    if (stat(src, &sbuf) != 0) {
+	nf = err = E_DATA;
+    } else if (sbuf.st_mode & S_IFDIR) {
 	/* aha, we've got a subdir */
 	gchar *ziptmp;
 
-	pprintf(prn, "%s: using temporary archive... ", fname);
 	ziptmp = g_strdup_printf("%s%cpkgtmp.zip", dotpath, SLASH);
 	err = gretl_make_zipfile(ziptmp, src);
 	if (!err) {
@@ -2321,11 +2327,10 @@ static int pkg_zipfile_add (const char *fname,
     } else {
 	/* a regular file, we hope */
 	dest = g_strdup_printf("%s%c%s", dotpath, SLASH, fname);
-	pprintf(prn, "Copying %s... ", fname);
 	err = gretl_copy_file(src, dest);
     }
     
-    zip_report(err, prn);
+    zip_report(err, nf, prn);
     g_free(src);
     g_free(dest);
 
@@ -2367,7 +2372,7 @@ static int pkg_make_zipfile (function_info *finfo, int pdfdoc,
     dotpath = g_strdup_printf("%s%s", gretl_dotdir(), pkgname);
     pputs(prn, "Making temporary directory... ");
     err = gretl_mkdir(dotpath);
-    zip_report(err, prn);
+    zip_report(err, 0, prn);
     
     if (!err) {
 	dir_made = 1;
@@ -2406,7 +2411,7 @@ static int pkg_make_zipfile (function_info *finfo, int pdfdoc,
 	    tmp = g_strdup_printf("%s.zip", pkgname);
 	    pprintf(prn, "Making %s... ", tmp);
 	    err = gretl_make_zipfile(tmp, pkgname);
-	    zip_report(err, prn);
+	    zip_report(err, 0, prn);
 	    g_free(tmp);
 	    if (!err) {
 		*zipname = g_strdup_printf("%s%s.zip", gretl_dotdir(),
