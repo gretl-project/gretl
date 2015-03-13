@@ -12,7 +12,9 @@ version 1.10.0, in progress
 - GUI design: standardize the position of the window list
   button (top right), and make it more functional
 - GUI, panel data: some improvements to plotting options
-- GUI: add support for editing and running Stata scripts
+- GUI, script editor: add support for Stata scripts
+- GUI, model table: support tsls models; also remember format
+  preferences across gretl sessions
 - "join" command: support native data files (gdt, gdtb) as well
   as delimited text files, for data importation; also support
   importing data from more than one series at a time
@@ -25,7 +27,11 @@ version 1.10.0, in progress
 - "set" command: add a new setter, "robust_z" to select
   asymptotic p-values when using the --robust option in
   estimation
+- mwrite() and mread() functions: add facility to write and
+  read matrices in binary format
 - Stata dta importer: handle format 117 (Stata 13)
+- CSV importer: add code to handle the case where data values
+  are written with thousands separators
 - Fix bug: GUI panel plot failed if the start of the sample
   range was advanced
 - Fix bug: crash on attempting to open a file from the "Recent"
