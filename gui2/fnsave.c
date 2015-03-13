@@ -2311,7 +2311,7 @@ static int pkg_zipfile_add (const char *fname,
 	gchar *ziptmp;
 
 	pprintf(prn, "%s: using temporary archive... ", fname);
-	ziptmp = g_strdup_printf("%s%c%pkgtmp.zip", dotpath, SLASH);
+	ziptmp = g_strdup_printf("%s%cpkgtmp.zip", dotpath, SLASH);
 	err = gretl_make_zipfile(ziptmp, src);
 	if (!err) {
 	    err = gretl_unzip_into(ziptmp, dotpath);
