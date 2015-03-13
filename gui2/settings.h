@@ -87,4 +87,18 @@ const char *get_default_hc_string (int ci);
 
 int check_for_prog (const char *prog);
 
+void get_model_table_prefs (int *colheads,
+			    int *use_tstats,
+			    int *do_pvals,
+			    int *do_asts,
+			    int *figs,
+			    char *fmt);
+
+void set_model_table_prefs (int colheads,
+			    int use_tstats,
+			    int do_pvals,
+			    int do_asts,
+			    int figs,
+			    char fmt);
+
 #endif /* SETTINGS_H */

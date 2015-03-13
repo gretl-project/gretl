@@ -145,6 +145,14 @@ static char themepref[12] = "Clearlooks";
 char midiplayer[MAXSTR] = "timidity -ig";
 #endif
 
+/* model table display variables */
+static int modtab_colheads;
+static gboolean modtab_tstats;
+static gboolean modtab_pvalues;
+static gboolean modtab_asterisks = TRUE;
+static int modtab_digits = 4;
+static gboolean modtab_decimals;
+
 typedef enum {
     USERSET  = 1 << 0,  /* user-level variable */
     BOOLSET  = 1 << 1,  /* boolean value (user) */
@@ -325,6 +333,18 @@ RCVAR rc_vars[] = {
       LISTSET, 5, TAB_VCV, NULL },
     { "manpref", N_("PDF manual preference"), NULL, &manpref, 
       RADIOSET | INTSET, 0, TAB_MAN, NULL },
+    { "modtab_colheads", "Model table column heads", NULL, &modtab_colheads, 
+      INVISET | INTSET, 0, TAB_NONE, NULL },
+    { "modtab_tstats", "Model table t-ratios", NULL, &modtab_tstats, 
+      INVISET | BOOLSET, 0, TAB_NONE, NULL },
+    { "modtab_pvalues", "Model table p-values", NULL, &modtab_pvalues, 
+      INVISET | BOOLSET, 0, TAB_NONE, NULL },
+    { "modtab_asterisks", "Model table asterisks", NULL, &modtab_asterisks, 
+      INVISET | BOOLSET, 0, TAB_NONE, NULL },
+    { "modtab_digits", "Model table digits", NULL, &modtab_digits, 
+      INVISET | INTSET, 0, TAB_NONE, NULL },
+    { "modtab_decimals", "Model table decimal places", NULL, &modtab_decimals, 
+      INVISET | INTSET, 0, TAB_NONE, NULL },
     { NULL, NULL, NULL, NULL, 0, 0, TAB_NONE, NULL }
 };
 
@@ -429,6 +449,36 @@ int get_use_wimp (void)
 }
 
 #endif
+
+void get_model_table_prefs (int *colheads,
+			    int *use_tstats,
+			    int *do_pvals,
+			    int *do_asts,
+			    int *figs,
+			    char *fmt)
+{
+    *colheads   = modtab_colheads;
+    *use_tstats = modtab_tstats;
+    *do_pvals   = modtab_pvalues;
+    *do_asts    = modtab_asterisks;
+    *figs       = modtab_digits;
+    *fmt        = modtab_decimals ? 'f' : 'g';
+}    
+
+void set_model_table_prefs (int colheads,
+			    int use_tstats,
+			    int do_pvals,
+			    int do_asts,
+			    int figs,
+			    char fmt)
+{
+    modtab_colheads  = colheads;
+    modtab_tstats    = use_tstats;
+    modtab_pvalues   = do_pvals;
+    modtab_asterisks = do_asts;
+    modtab_digits    = figs;
+    modtab_decimals  = (fmt == 'f')? 1 : 0;
+}
 
 static gretlopt update_paths_opt = OPT_NONE;
 

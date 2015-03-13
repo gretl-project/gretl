@@ -5272,6 +5272,13 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
+#if 0 /* not ready */
+    /* "reset" button */
+    gtk_button_new_from_stock(GTK_STOCK_CLEAR);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(dummy_call), NULL);
+#endif    
+
     /* "Cancel" button */
     cancel_delete_button(hbox, dialog);
 

@@ -30,11 +30,12 @@ static MODEL **table_models;
 static int n_models;
 static char **pnames;
 static int n_params;
-static int use_tstats;
-static int do_pvals;
-static int colheads;
 static int depvarnum;
 
+/* may be governed by, and saved in, rc file */
+static int colheads;
+static int use_tstats;
+static int do_pvals;
 static int do_asts = 1;
 static int mt_figs = 4;   /* figures for printing */
 static char mt_fmt = 'g'; /* floating-point format ('g' or 'f') */
@@ -50,6 +51,27 @@ enum {
     COLHEAD_ALPHA,
     COLHEAD_NAMES
 };
+
+#if 0 /* not ready yet */
+
+static void reset_to_defaults (void)
+{
+    colheads = 0;
+    use_tstats = 0;
+    do_pvals = 0;
+    do_asts = 1;
+    mt_figs = 4;
+    mt_fmt = 'g';
+
+    set_model_table_prefs(colheads,
+			  use_tstats,
+			  do_pvals,
+			  do_asts,
+			  mt_figs,
+			  mt_fmt);
+}
+
+#endif
 
 static void mtable_errmsg (char *msg, int gui)
 {
@@ -1079,6 +1101,13 @@ int display_model_table (int gui)
 	return 1;
     }
 
+    get_model_table_prefs(&colheads,
+			  &use_tstats,
+			  &do_pvals,
+			  &do_asts,
+			  &mt_figs,
+			  &mt_fmt);    
+
     plain_print_model_table(prn);
 
     if (real_table_n_models() > 5) {
@@ -1271,6 +1300,13 @@ int special_print_model_table (PRN *prn)
 {
     set_alt_gettext_mode(prn);
 
+    get_model_table_prefs(&colheads,
+			  &use_tstats,
+			  &do_pvals,
+			  &do_asts,
+			  &mt_figs,
+			  &mt_fmt);    
+
     if (tex_format(prn)) {
 	return tex_print_model_table(prn);
     } else if (rtf_format(prn)) {
@@ -1412,13 +1448,25 @@ int modeltab_exec (const char *param, gretlopt opt, PRN *prn)
 
 void format_model_table (windata_t *vwin)
 {
-    int colhead_opt = colheads;
-    int se_opt = use_tstats;
-    int pv_opt = do_pvals;
-    int ast_opt = do_asts;
-    int figs = mt_figs;
-    char fmt = mt_fmt;
+    int colhead_opt;
+    int se_opt, pv_opt;
+    int ast_opt, figs;
+    char fmt;
     int resp;
+
+    get_model_table_prefs(&colheads,
+			  &use_tstats,
+			  &do_pvals,
+			  &do_asts,
+			  &figs,
+			  &fmt);
+
+    colhead_opt = colheads;
+    se_opt = use_tstats;
+    pv_opt = do_pvals;
+    ast_opt = do_asts;
+    figs = mt_figs;
+    fmt = mt_fmt;    
 
     resp = model_table_dialog(&colhead_opt, &se_opt, &pv_opt, &ast_opt,
 			      &figs, &fmt, vwin->main);
@@ -1442,6 +1490,13 @@ void format_model_table (windata_t *vwin)
 	do_asts = ast_opt;
 	mt_figs = figs;
 	mt_fmt = fmt;
+
+	set_model_table_prefs(colheads,
+			      use_tstats,
+			      do_pvals,
+			      do_asts,
+			      mt_figs,
+			      mt_fmt);	
 
 	if (bufopen(&prn)) {
 	    return;
