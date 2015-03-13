@@ -5126,6 +5126,27 @@ int freq_dialog (const char *title, const char *blurb,
     return ret;
 }
 
+struct mtab_info {
+    GtkWidget *ch0; /* column head default */
+    GtkWidget *se0; /* stderr (vs t-stat) selector */
+    GtkWidget *pv0; /* p-values checkbox */
+    GtkWidget *as0; /* asterisks checkbox */
+    GtkWidget *fig; /* figures spinner */
+    GtkWidget *dec; /* decimal places option */
+};
+
+static void mtab_reset_callback (GtkWidget *w,
+				 struct mtab_info *mti)
+{
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mti->ch0), TRUE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mti->se0), TRUE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mti->pv0), FALSE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mti->as0), TRUE);
+
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(mti->fig), 4);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(mti->dec), 0);    
+}
+
 static void model_table_set_format (GtkComboBox *combo, char *fmt)
 {
     if (gtk_combo_box_get_active(combo) == 0) {
@@ -5158,7 +5179,8 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
 			int *ast_opt, int *figs, char *fmt,
 			GtkWidget *parent)
 {
-    static char *col_opts[] = {
+    struct mtab_info mti = {0};
+    const char *col_opts[] = {
 	"(1), (2), (3), ...",
 	"I, II, III, ...",
 	"A, B, C, ...",
@@ -5202,6 +5224,9 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
 	    button = gtk_radio_button_new_with_label(group, col_opts[i]);
 	}
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+	if (i == 0) {
+	    mti.ch0 = button;
+	}
 	if (i == *colhead_opt) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	}
@@ -5222,6 +5247,9 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
 	if (i == *se_opt) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	}
+	if (i == 0) {
+	    mti.se0 = button;
+	}
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_radio_opt), se_opt);
 	g_object_set_data(G_OBJECT(button), "action", 
@@ -5232,14 +5260,16 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
     vbox_add_hsep(vbox);
 
     /* show p-values box */
-    button = gtk_check_button_new_with_label(_("Show p-values"));
+    mti.pv0 = button =
+	gtk_check_button_new_with_label(_("Show p-values"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), *pv_opt);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(option_check_set), pv_opt);
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
 
     /* show asterisks box */
-    button = gtk_check_button_new_with_label(_("Show significance asterisks"));
+    mti.as0 =button =
+	gtk_check_button_new_with_label(_("Show significance asterisks"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), *ast_opt);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(option_check_set), ast_opt);
@@ -5254,8 +5284,11 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), *figs);
     g_signal_connect(G_OBJECT(GTK_SPIN_BUTTON(spin)), "value-changed",
 		     G_CALLBACK(model_table_set_figs), figs);
-    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 0);    
-    tmp = gtk_combo_box_text_new();
+    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 0);
+    mti.fig = spin;
+
+    /* selector for significant figs vs decimal places */
+    mti.dec = tmp = gtk_combo_box_text_new();
     combo_box_append_text(tmp, _("significant figures"));
     combo_box_append_text(tmp, _("decimal places"));
     if (*fmt == 'g') {
@@ -5272,12 +5305,11 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
-#if 0 /* not ready */
     /* "reset" button */
-    gtk_button_new_from_stock(GTK_STOCK_CLEAR);
-    g_signal_connect(G_OBJECT(tmp), "clicked", 
-		     G_CALLBACK(dummy_call), NULL);
-#endif    
+    button = gtk_button_new_with_label(_("Reset"));
+    gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(mtab_reset_callback), &mti);
 
     /* "Cancel" button */
     cancel_delete_button(hbox, dialog);

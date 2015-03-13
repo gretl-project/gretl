@@ -52,27 +52,6 @@ enum {
     COLHEAD_NAMES
 };
 
-#if 0 /* not ready yet */
-
-static void reset_to_defaults (void)
-{
-    colheads = 0;
-    use_tstats = 0;
-    do_pvals = 0;
-    do_asts = 1;
-    mt_figs = 4;
-    mt_fmt = 'g';
-
-    set_model_table_prefs(colheads,
-			  use_tstats,
-			  do_pvals,
-			  do_asts,
-			  mt_figs,
-			  mt_fmt);
-}
-
-#endif
-
 static void mtable_errmsg (char *msg, int gui)
 {
     if (gui) {
