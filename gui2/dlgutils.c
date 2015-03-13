@@ -1196,7 +1196,8 @@ static void edit_dialog_add_note (const char *s, GtkWidget *vbox)
     GtkWidget *w;
     gchar *lbl;
 
-    lbl = g_strdup_printf("%s\n%s\n%s", s, _("(Please refer to Help for guidance)"),
+    lbl = g_strdup_printf("%s\n%s\n%s", s,
+			  _("(Please refer to Help for guidance)"),
 			  _("right-click for some shortcuts"));
     w = gtk_label_new(lbl);
     gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
