@@ -799,11 +799,17 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
     char cexp = 0;
 
 #if SDEBUG
-    fprintf(stderr, "get_matrix_def, p->sym = %d\n", p->sym);
+    fprintf(stderr, "get_matrix_def, p->sym = %d ('%s')\n",
+	    p->sym, getsymb(p->sym, NULL));
 #endif    
 
     if (p->sym == G_LCB) {
 	lex(p);
+	if (!p->err && p->sym == G_RCB) {
+	    /* empty matrix def, OK */
+	    lex(p);
+	    return;
+	}
 	while (p->ch != 0 && !p->err) {
 	    n = expr(p);
 	    if (p->err) {
@@ -835,6 +841,11 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
     } else {
 	cexp = '{';
     }
+
+#if SDEBUG
+    fprintf(stderr, " after processing, sym = %d, err = %d\n",
+	    p->sym, p->err);
+#endif     
 
     if (!p->err && cexp == 0) {
 	if (p->sym == G_RCB) {
