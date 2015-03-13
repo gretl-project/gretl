@@ -2501,6 +2501,7 @@ static int real_detect_blas (const char *s)
 
     while (*s) {
 	if (*s == '\n') {
+	    /* got to the end of a line */
 	    line[i] = '\0';
 	    if (strstr(line, "libmkl")) {
 		found[3] = 'y';
@@ -2518,6 +2519,14 @@ static int real_detect_blas (const char *s)
 	    line[i++] = *s;
 	}
 	s++;
+    }
+
+    /* allow for the possibility that we have a symlink
+       from libblas to one or other of the optimized 
+       BLAS variants 
+    */
+    if (found[0] == 'y' && strcmp(found + 1, "nnn")) {
+	found[0] = 'n';
     }
 
     if (strcmp(found, "nnny") == 0) {
