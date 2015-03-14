@@ -1215,32 +1215,12 @@ static NODE *powterm (parser *p)
 	    t->v.b2.l = newref(p, p->upsym);
 	    lex(p);
 	    t->v.b2.r = base(p, t);
-	    if (p->sym == G_LBR) {
-		/* followed by subspec */
-		t = newb2(OSL, t, NULL);
-		if (t != NULL) {
-		    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
-		    if (t->v.b2.r != NULL) {
-			get_slice_parts(t->v.b2.r, p);
-		    }
-		}
-	    }
 	}
     } else if (sym == BMEMB) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->v.b2.l = newref(p, BUNDLE);
 	    t->v.b2.r = get_bundle_member_name(p);
-	    if (p->sym == G_LBR) {
-		/* followed by subspec */
-		t = newb2(OSL, t, NULL);
-		if (t != NULL) {
-		    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
-		    if (t->v.b2.r != NULL) {
-			get_slice_parts(t->v.b2.r, p);
-		    }
-		}
-	    }
 	}
     } else if (sym == OVAR) {
 	t = newb2(sym, NULL, NULL);
@@ -1313,9 +1293,29 @@ static NODE *powterm (parser *p)
 	t = base(p, NULL);
     }
 
-    if (next == '[') {
+    if (t != NULL && (sym == ELEMENT || sym == BMEMB)) {
+	if (p->sym == G_LBR) {
+	    /* followed by subspec */
+	    t = newb2(OSL, t, NULL);
+	    if (t != NULL) {
+		t->v.b2.r = newb2(MSLRAW, NULL, NULL);
+		if (t->v.b2.r != NULL) {
+		    get_slice_parts(t->v.b2.r, p);
+		}
+	    }
+	    if (sym == BMEMB && p->sym == G_LBR) {
+		/* followed by another subspec */
+		t = newb2(OSL, t, NULL);
+		if (t != NULL) {
+		    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
+		    if (t->v.b2.r != NULL) {
+			get_slice_parts(t->v.b2.r, p);
+		    }
+		}		
+	    }
+	}
+    } else if (next == '[') {
 	/* support func(args)[slice] */
-	fprintf(stderr, "HERE, '['\n");
 	t = newb2(MSL, t, NULL);
 	if (t != NULL) {
 	    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
