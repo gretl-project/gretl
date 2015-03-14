@@ -21,6 +21,13 @@ const char *special_keyword[] = {
     "orthog",
     "weights",
     "hessian",
+    "option",
+    "options",
+    "literal",
+    "printf",
+    "identity",
+    "endog",
+    "instr",    
     NULL
 };
 
