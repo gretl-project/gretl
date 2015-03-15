@@ -13899,7 +13899,9 @@ static int assign_null_to_array (parser *p)
     return err;
 }
 
-#define ONE_BY_ONE_CAST 0 /* OK now? */
+/* this behavior is "traditional": keep it for the
+   1.10.0 release and reconsider thereafter? */
+#define ONE_BY_ONE_CAST 1
 
 static int save_generated_var (parser *p, PRN *prn)
 {
