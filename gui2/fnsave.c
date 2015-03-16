@@ -2297,28 +2297,24 @@ static void zip_report (int err, int nf, PRN *prn)
 }
 
 static int pkg_zipfile_add (const char *fname,
-			    const char *pkgbase,
 			    const char *dotpath,
 			    PRN *prn)
 {
-    gchar *src, *dest = NULL;
+    gchar *dest = NULL;
     struct stat sbuf;
     int nf = 0;
     int err = 0;
 
-    /* full path to the file to be copied */
-    src = g_strdup_printf("%s%s", pkgbase, fname);
+    pprintf(prn, "Copying %s... ", fname);
 
-    pprintf(prn, "Copying %s... ", src);
-
-    if (stat(src, &sbuf) != 0) {
+    if (stat(fname, &sbuf) != 0) {
 	nf = err = E_DATA;
     } else if (sbuf.st_mode & S_IFDIR) {
 	/* aha, we've got a subdir */
 	gchar *ziptmp;
 
 	ziptmp = g_strdup_printf("%s%cpkgtmp.zip", dotpath, SLASH);
-	err = gretl_make_zipfile(ziptmp, src);
+	err = gretl_make_zipfile(ziptmp, fname);
 	if (!err) {
 	    err = gretl_unzip_into(ziptmp, dotpath);
 	    gretl_remove(ziptmp);
@@ -2327,11 +2323,10 @@ static int pkg_zipfile_add (const char *fname,
     } else {
 	/* a regular file, we hope */
 	dest = g_strdup_printf("%s%c%s", dotpath, SLASH, fname);
-	err = gretl_copy_file(src, dest);
+	err = gretl_copy_file(fname, dest);
     }
     
     zip_report(err, nf, prn);
-    g_free(src);
     g_free(dest);
 
     return err;
@@ -2348,13 +2343,20 @@ static int pkg_make_zipfile (function_info *finfo, int pdfdoc,
     char origdir[FILENAME_MAX];
     char pkgbase[FILENAME_MAX];
     const char *pkgname;
-    gchar *dotpath, *tmp;
+    gchar *tmp, *dotpath = NULL;
     windata_t *vwin;
     PRN *prn = NULL;
     int dir_made = 0;
-    int err;
+    int err = 0;
 
-    /* common path to files for packaging */
+    /* record where we are now */
+    *origdir = '\0';
+    if (getcwd(origdir, FILENAME_MAX - 1) == NULL) {
+	*origdir = '\0';
+    }
+    fprintf(stderr, "origdir: '%s'\n", origdir);
+
+    /* determine the common path to files for packaging */
     strcpy(pkgbase, finfo->fname);
     tmp = strrchr(pkgbase, SLASH);
     if (tmp != NULL) {
@@ -2363,16 +2365,29 @@ static int pkg_make_zipfile (function_info *finfo, int pdfdoc,
 	*pkgbase = '\0';
     }
 
-    *origdir = '\0';
+    fprintf(stderr, "pkgbase: '%s'\n", pkgbase);
+
+    /* get the basename of the package */
     pkgname = function_package_get_name(finfo->pkg);
+    fprintf(stderr, "pkgname: '%s'\n", pkgname);
 
+    /* open recorder for possible errors */
     bufopen(&prn);
+    
+    if (*pkgbase != '\0') {
+	/* get into place for copying */
+	pputs(prn, "Getting in place... ");
+	err = gretl_chdir(pkgbase);
+	zip_report(err, 0, prn);
+    }
 
-    /* path to temporary dir for zipping */
-    dotpath = g_strdup_printf("%s%s", gretl_dotdir(), pkgname);
-    pputs(prn, "Making temporary directory... ");
-    err = gretl_mkdir(dotpath);
-    zip_report(err, 0, prn);
+    if (!err) {
+	/* path to temporary dir for zipping */
+	dotpath = g_strdup_printf("%s%s", gretl_dotdir(), pkgname);
+	pputs(prn, "Making temporary directory... ");
+	err = gretl_mkdir(dotpath);
+	zip_report(err, 0, prn);
+    }
     
     if (!err) {
 	dir_made = 1;
@@ -2381,14 +2396,14 @@ static int pkg_make_zipfile (function_info *finfo, int pdfdoc,
     if (!err) {
 	/* copy the gfn file into place */
 	tmp = g_strdup_printf("%s.gfn", pkgname);
-	err = pkg_zipfile_add(tmp, pkgbase, dotpath, prn);
+	err = pkg_zipfile_add(tmp, dotpath, prn);
 	g_free(tmp);
     }
 
     if (!err && pdfdoc) {
 	/* copy PDF file into place */
 	tmp = g_strdup_printf("%s.pdf", pkgname);
-	err = pkg_zipfile_add(tmp, pkgbase, dotpath, prn);
+	err = pkg_zipfile_add(tmp, dotpath, prn);
 	g_free(tmp);
     }
 
@@ -2397,15 +2412,13 @@ static int pkg_make_zipfile (function_info *finfo, int pdfdoc,
 	int i;
 
 	for (i=0; i<finfo->n_files && !err; i++) {
-	    err = pkg_zipfile_add(finfo->datafiles[i], pkgbase,
+	    err = pkg_zipfile_add(finfo->datafiles[i],
 				  dotpath, prn);
 	}
     }	
 
     if (!err) {
-	if (getcwd(origdir, FILENAME_MAX - 1) == NULL) {
-	    *origdir = '\0';
-	}
+	/* get into place for making zipfile */
 	err = gretl_chdir(gretl_dotdir());
 	if (!err) {
 	    tmp = g_strdup_printf("%s.zip", pkgname);
