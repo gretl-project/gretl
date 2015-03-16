@@ -1030,9 +1030,11 @@ static GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 	}
     }
 
+#if 0
     /* separate the buttons a tad more? */
     gtk_widget_set_size_request(GTK_WIDGET(item), 30, -1);
-
+#endif
+    
     gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, pos);
 
     return GTK_WIDGET(item);
