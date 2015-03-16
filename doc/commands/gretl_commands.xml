@@ -7188,11 +7188,14 @@
 	results in the form of a table, where each column contains the
 	results (coefficient estimates and standard errors) for a
 	given model, and each row contains the estimates for a given
-	variable across the models.</para>
+	variable across the models.
+      </para>
 
-      <para>Gretl provides a means of constructing such a table (and
+      <para>
+	Gretl provides a means of constructing such a table (and
 	copying it in plain text, &latex; or Rich Text Format).  Here is
-	how to do it:</para>
+	how to do it:
+      </para>
 
       <nlist>
 	<li><para>Estimate a model which you wish to include in the
@@ -7247,7 +7250,7 @@
       </para>
       <para>
 	To call for printing of the model table, use the flag
-	<opt>output=</opt> plus a filename. If the filename has the
+	<opt>--output=</opt> plus a filename. If the filename has the
 	suffix <quote><lit>.tex</lit></quote>, the output will be in
 	&tex; format; if the suffix is <quote><lit>.rtf</lit></quote>
 	the output will be RTF; otherwise it will be plain text.
