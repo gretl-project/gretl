@@ -1824,6 +1824,8 @@ const char *getsymb (int t, const parser *p)
 	return "<=";
     case B_AND: 
 	return "&&";
+    case B_JOIN:
+	return "JOIN";
     case B_RANGE:
 	return " to ";
     case U_ADDR:

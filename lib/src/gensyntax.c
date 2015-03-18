@@ -319,6 +319,10 @@ static NODE *base (parser *p, NODE *up)
 	lex(p);
 	t = expr(p);
 	break;
+    case B_JOIN:
+	/* list joiner with empty LHS */
+	t = newempty();
+	break;
     case G_LPR: /* left paren '(' */
 	lex(p);
 	t = expr(p);
