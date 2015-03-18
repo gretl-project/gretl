@@ -62,3 +62,17 @@ const char *SVAR_translations[] = {
     N_("template matrix")
 };
 
+const char *HIP_translations[] = {
+    N_("IV/Heteroskedastic"),
+    N_("Covariance matrix estimation"),
+    N_("Dependent variable"),
+    N_("Endogenous variables"),
+    N_("Exogenous variables"),
+    N_("Hessian"),
+    N_("Instruments"),
+    N_("OPG"),
+    N_("Sandwich"),
+    N_("Variance regressors"),
+    N_("Verbosity level")
+};
+
