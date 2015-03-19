@@ -135,6 +135,8 @@ gretl_matrix *get_matrix_by_name_at_level (const char *name, int level);
 
 int matrix_is_saved (const gretl_matrix *m);
 
+double get_scalar_value_by_name (const char *name, int *err);
+
 int gretl_is_scalar (const char *name);
 
 double gretl_scalar_get_value (const char *name, int *err);

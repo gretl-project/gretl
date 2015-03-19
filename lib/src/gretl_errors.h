@@ -106,7 +106,7 @@ void gretl_warnmsg_sprintf (const char *fmt, ...);
 
 void gretl_errmsg_set_from_errno (const char *s);
 
-void gretl_error_clear (void);
+int gretl_error_clear (void);
 
 void set_gretl_alarm (int val);
 

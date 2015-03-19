@@ -443,7 +443,7 @@ void gretl_errmsg_set_from_errno (const char *s)
  * Blank out any previously recorded error message.
  */
 
-void gretl_error_clear (void)
+int gretl_error_clear (void)
 {
 #if EDEBUG
     fprintf(stderr, "gretl_error_clear\n");
@@ -455,6 +455,8 @@ void gretl_error_clear (void)
     errno = 0;
     gretl_warnnum = 0;
     *gretl_warnmsg = '\0';
+
+    return 0;
 }
 
 /**

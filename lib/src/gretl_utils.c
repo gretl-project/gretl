@@ -1288,7 +1288,7 @@ double gretl_double_from_string (const char *s, int *err)
     char *test;
     double x;
 
-    if (s == NULL || *s == 0) {
+    if (s == NULL || *s == '\0') {
 	*err = E_DATA;
 	return NADBL;
     }
@@ -1307,14 +1307,7 @@ double gretl_double_from_string (const char *s, int *err)
 	return x;
     }
 
-    if (gretl_is_scalar(s)) {
-	x = gretl_scalar_get_value(s, NULL);
-    } else {
-	*err = E_DATA;
-	x = NADBL;
-    } 
-
-    return x;    
+    return get_scalar_value_by_name(s, err);
 }
 
 /**
@@ -1353,18 +1346,19 @@ int gretl_int_from_string (const char *s, int *err)
 
     if (*test == '\0') {
 	return n;
-    } else if (gretl_is_scalar(s)) {
-	x = gretl_scalar_get_value(s, NULL);
+    }
+
+    x = get_scalar_value_by_name(s, err);
+
+    if (!*err) {
 	if (na(x)) {
 	    *err = E_MISSDATA;
 	} else if (fabs(x) > INT_MAX) {
 	    *err = E_DATA;
 	} else {
 	    n = (int) x;
-	}	
-    } else {
-	*err = E_DATA;
-    } 
+	}
+    }
 
     return n;    
 }

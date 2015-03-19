@@ -1662,7 +1662,7 @@ double get_const_by_name (const char *name, int *err)
 	return get_const_by_id(id);
     } else {
 	if (err != NULL) {
-	    *err = E_UNKVAR;
+	    *err = E_DATA;
 	}
 	return NADBL;
     }

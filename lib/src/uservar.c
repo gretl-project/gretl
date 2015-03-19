@@ -1571,6 +1571,8 @@ int gretl_scalar_set_value_authorized (const char *name, double val)
     return real_scalar_set_value(name, val, 1);
 }
 
+/* get the value from a user variable of scalar type */
+
 double gretl_scalar_get_value (const char *name, int *err)
 {
     user_var *u;
@@ -1582,6 +1584,42 @@ double gretl_scalar_get_value (const char *name, int *err)
 	ret = *(double *) u->ptr;
     } else {
 	ret = get_const_by_name(name, err);
+    }
+
+    return ret;
+}
+
+/* more "permissive" than gretl_scalar_get_value(): allows
+   for @name being the identifier for a 1 x 1 matrix 
+*/
+
+double get_scalar_value_by_name (const char *name, int *err)
+{
+    double ret = NADBL;
+    user_var *u;
+
+    u = get_user_var_by_name(name);
+
+    if (u != NULL) {
+	if (u->type == GRETL_TYPE_DOUBLE) {
+	    ret = *(double *) u->ptr;
+	} else if (u->type == GRETL_TYPE_MATRIX) {
+	    gretl_matrix *m = u->ptr;
+
+	    if (gretl_matrix_is_scalar(m)) {
+		ret = m->val[0];
+	    } else {
+		*err = E_TYPES;
+	    }
+	} else {
+	    *err = E_TYPES;
+	}
+    } else {
+	ret = get_const_by_name(name, err);
+    }
+
+    if (*err) {
+	gretl_errmsg_sprintf(_("'%s': not a scalar"), name);
     }
 
     return ret;

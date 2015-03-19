@@ -1619,7 +1619,7 @@ static int token_to_int (CMD *c, int k)
 	ret = atoi(tok->s);
 	tok->flag |= TOK_DONE;
     } else if (tok->type == TOK_NAME) {
-	double x = gretl_scalar_get_value(tok->s, &c->err);
+	double x = get_scalar_value_by_name(tok->s, &c->err);
 
 	if (!c->err) {
 	    if (x > 0 && x < INT_MAX) {
@@ -1672,17 +1672,17 @@ static int get_VAR_order (CMD *c, int k)
     if (tok->type == TOK_INT) {
 	ret = atoi(tok->s);
     } else if (tok->type == TOK_NAME) {
-	if (gretl_is_scalar(tok->s)) {
-	    double x = gretl_scalar_get_value(tok->s, &c->err);
+	double x = get_scalar_value_by_name(tok->s, &c->err);
 
-	    if (!c->err) {
-		if (x > 0 && x < INT_MAX) {
-		    ret = x;
-		} else {
-		    c->err = E_INVARG;
-		}
+	if (!c->err) {
+	    if (x > 0 && x < INT_MAX) {
+		ret = x;
+	    } else {
+		c->err = E_INVARG;
 	    }
 	} else {
+	    /* could be a non-scalar matrix */
+	    c->err = gretl_error_clear();
 	    c->auxlist = get_auxlist(tok, &c->err);
 	}
     } else if (tok->type == TOK_CBSTR) {
