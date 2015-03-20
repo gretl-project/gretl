@@ -2028,25 +2028,6 @@ static int call_function_package (call_info *cinfo, windata_t *vwin,
     return err;
 }
 
-static int open_sample_script (fnpkg *pkg)
-{
-    gchar *buf = NULL;
-    int err;
-
-    err = function_package_get_properties(pkg,
-					  "sample-script", &buf,
-					  NULL);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	do_new_script(EDIT_SCRIPT, buf);
-	g_free(buf);
-    }
-
-    return err;
-}
-
 /* called from the function-package browser */
 
 int open_function_package (const char *fname, windata_t *vwin)
@@ -2085,13 +2066,15 @@ int open_function_package (const char *fname, windata_t *vwin)
 			    opts, 2, 0, 0, vwin->main);
 	g_free(title);
 	if (resp == 0) {
-	    err = open_sample_script(cinfo->pkg);
+	    display_function_package_data(cinfo->pkgname, fname,
+					  VIEW_PKG_SAMPLE);
 	} else if (resp == 1) {
 	    free_cinfo = 0;
 	    err = call_function_package(cinfo, vwin, 1);
 	}
     } else {
-	err = open_sample_script(cinfo->pkg);
+	display_function_package_data(cinfo->pkgname, fname,
+				      VIEW_PKG_SAMPLE);
     }
 
     if (free_cinfo) {

@@ -519,6 +519,24 @@ static int overwrite_stop (const char *fname)
     return 0;
 }
 
+static int get_action_by_suffix (const char *fname,
+				 int *err)
+{
+    int action = 0;
+    
+    if (has_suffix(fname, ".inp")) {
+	action = OPEN_SCRIPT;
+    } else if (has_suffix(fname, ".gdt") ||
+	       has_suffix(fname, ".gdtb")) {
+	action = OPEN_DATA;
+    } else {
+	/* FIXME */
+	*err = 1;
+    }
+	
+    return action;
+}
+
 static void
 file_selector_process_result (const char *in_fname, int action, 
 			      FselDataSrc src, gpointer data)
@@ -527,7 +545,7 @@ file_selector_process_result (const char *in_fname, int action,
     int quit = 0;
     int err = 0;
 
-    *fname = 0;
+    *fname = '\0';
     strncat(fname, in_fname, FILENAME_MAX - 1);
 
     if (action < END_OPEN) {
@@ -541,7 +559,15 @@ file_selector_process_result (const char *in_fname, int action,
 	} else {
 	    fclose(fp);
 	}
-    } 
+    }
+
+    if (action == OPEN_ANY) {
+	action = get_action_by_suffix(fname, &err);
+	if (err) {
+	    dummy_call();
+	    return;
+	}
+    }
 
     if (action == OPEN_DATA) {
 	strcpy(tryfile, fname);
@@ -868,6 +894,11 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 	       action == SAVE_BOOT_DATA) {
 	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt");
 	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb");
+    } else if (action == OPEN_ANY) {
+	filesel_add_filter(filesel, N_("gretl script files (*.inp)"), "*.inp");
+	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt");
+	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb");
+	filesel_add_filter(filesel, N_("all files (*.*)"), "*");
     } else {
 	GtkFileFilter *filter = get_file_filter(action, data);
 
@@ -936,7 +967,8 @@ static void check_native_save_filter (GtkWidget *filesel)
 }
 
 static void gtk_file_selector (int action, FselDataSrc src, 
-			       gpointer data, GtkWidget *parent) 
+			       gpointer data, GtkWidget *parent,
+			       const char *dirname) 
 {
     static char savedir[MAXLEN];
     char startdir[MAXLEN];
@@ -969,7 +1001,9 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	}
     }
 
-    if (remember && *savedir != '\0') {
+    if (dirname != NULL) {
+	strcpy(startdir, dirname);
+    } else if (remember && *savedir != '\0') {
 	strcpy(startdir, savedir);
     } else {
 	get_default_dir(startdir, action);
@@ -1054,11 +1088,29 @@ void file_selector (int action, FselDataSrc src, gpointer data)
 	w = vwin_toplevel(vwin);
     }
 
-    gtk_file_selector(action, src, data, w);
+    gtk_file_selector(action, src, data, w, NULL);
 }
 
 void file_selector_with_parent (int action, FselDataSrc src, 
 				gpointer data, GtkWidget *w)
 {
-    gtk_file_selector(action, src, data, w);
+    gtk_file_selector(action, src, data, w, NULL);
+}
+
+void file_selector_with_startdir (int action,
+				  FselDataSrc src, 
+				  gpointer data,
+				  const char *startdir)
+{
+    GtkWidget *w = NULL;
+
+    if (src == FSEL_DATA_VWIN) {
+	windata_t *vwin = (windata_t *) data;
+
+	w = vwin_toplevel(vwin);
+    }
+
+    /* FIXME */
+    
+    gtk_file_selector(action, 0, NULL, w, startdir);
 }

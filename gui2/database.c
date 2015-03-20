@@ -1405,7 +1405,7 @@ static GtkWidget *database_window (windata_t *vwin)
        least part of the observation-info column */
 
     box = gtk_vbox_new(FALSE, 0);
-    vwin_add_list_box(vwin, GTK_BOX(box), 4, TRUE, types, titles, 0);
+    vwin_add_list_box(vwin, GTK_BOX(box), 4, 1, types, titles, 0);
     g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
 		     G_CALLBACK(popup_menu_handler), 
 		     vwin->popup);

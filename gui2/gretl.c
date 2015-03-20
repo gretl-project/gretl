@@ -1390,7 +1390,7 @@ static void make_main_window (void)
     fprintf(stderr, " adding main-window listbox...\n");
 #endif
    
-    vwin_add_list_box(mdata, GTK_BOX(box), 3, FALSE, types, titles, 1);
+    vwin_add_list_box(mdata, GTK_BOX(box), 3, 0, types, titles, 1);
 
     gtk_drag_dest_set(mdata->listbox,
 		      GTK_DEST_DEFAULT_ALL,

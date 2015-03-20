@@ -468,7 +468,7 @@ static void id_col_clicked (GtkTreeViewColumn *column, GtkWidget *view)
                              v->role == REMOTE_SERIES)
 
 void vwin_add_list_box (windata_t *vwin, GtkBox *box, 
-			int ncols, gboolean hidden_col,
+			int ncols, int hidden_cols,
 			GType *types, const char **titles,
 			int tree) 
 {
@@ -479,11 +479,9 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     GtkCellRenderer *bool_renderer = NULL;
     GtkTreeViewColumn *column;
     GtkTreeSelection *select;
-    int i, viscols = ncols;
+    int i, viscols;
 
-    if (hidden_col) {
-	viscols--;
-    }
+    viscols = ncols - hidden_cols;
 
     if (tree) {
 	tstore = gtk_tree_store_newv(ncols, types);
@@ -544,7 +542,7 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 	}	
     }
 
-    if (hidden_col) {
+    for (i=viscols; i<ncols; i++) {
 	column = gtk_tree_view_column_new_with_attributes(NULL,
 							  renderer,
 							  "text", i, 

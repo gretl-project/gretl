@@ -977,7 +977,11 @@ static void browser_functions_handler (windata_t *vwin, int task)
     if (dircol != 0) {
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
 			     dircol, &dir);
-	build_path(path, dir, pkgname, ".gfn");
+	if (task == VIEW_PKG_RESOURCES) {
+	    build_path(path, dir, "examples", NULL);
+	} else {
+	    build_path(path, dir, pkgname, ".gfn");
+	}
 	g_free(dir);
     } else {
 	strcpy(path, pkgname);
@@ -1002,6 +1006,9 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	edit_function_package(path);
     } else if (task == MENU_ADD_FN_PKG) {
 	gui_add_package_to_menu(path, vwin->main, NULL);
+    } else if (task == VIEW_PKG_RESOURCES) {
+	file_selector_with_startdir(OPEN_ANY, FSEL_DATA_VWIN,
+				    vwin, path);
     } else if (task == CALL_FN_PKG) {
 	/* note: this is the double-click default */
 	err = open_function_package(path, vwin);
@@ -1137,6 +1144,13 @@ static void show_function_sample (GtkWidget *w, gpointer data)
     browser_functions_handler(vwin, VIEW_FN_PKG_SAMPLE);
 }
 
+static void show_package_resources (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    browser_functions_handler(vwin, VIEW_PKG_RESOURCES);
+}
+
 static void browser_del_func (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -1235,12 +1249,16 @@ static void build_funcfiles_popup (windata_t *vwin)
     if (vwin->role == FUNC_FILES) {
 	/* local function files: full menu */
 	int menu_add_ok = 0;
+	int resources_ok = 0;
 	GtkWidget *add;
 
 	add = g_object_get_data(G_OBJECT(vwin->mbar), "add-button");
 	if (add != NULL && gtk_widget_is_sensitive(add)) {
 	    menu_add_ok = 1;
 	}
+
+	tree_view_get_bool(GTK_TREE_VIEW(vwin->listbox),
+			   vwin->active_var, 5, &resources_ok);
 
 	add_popup_item(_("Edit"), vwin->popup, 
 		       G_CALLBACK(browser_edit_func), 
@@ -1257,6 +1275,11 @@ static void build_funcfiles_popup (windata_t *vwin)
 	add_popup_item(_("Execute"), vwin->popup, 
 		       G_CALLBACK(browser_call_func), 
 		       vwin);
+	if (resources_ok) {
+	    add_popup_item(_("Resources..."), vwin->popup, 
+			   G_CALLBACK(show_package_resources), 
+			   vwin);
+	}
 	if (menu_add_ok) {
 	    add_popup_item(_("Add to menu"), vwin->popup, 
 			   G_CALLBACK(add_func_to_menu), 
@@ -1895,13 +1918,36 @@ static int is_functions_dir (const char *path)
     return n > 0 && !strcmp(path + n, "functions");
 }
 
+/* For a function package that lives in its own directory,
+   see if it has an "examples" subdir.
+*/
+
+static int have_examples (const char *dirname)
+{
+    struct stat sbuf;
+    gchar *test;
+    int ret = 0;
+
+    test = g_strdup_printf("%s%cexamples", dirname, SLASH);
+
+    if (stat(test, &sbuf) == 0 &&
+	(sbuf.st_mode & S_IFDIR)) {
+	ret = 1;
+    }
+
+    g_free(test);
+
+    return ret;
+}
+
 static int ok_gfn_path (const char *fullname, 
 			const char *shortname,
 			const char *dirname,
 			GtkListStore *store, 
 			GtkTreeIter *iter,
 			int imax, 
-			int *maxlen)
+			int *maxlen,
+			int subdir)
 {
     char *descrip = NULL, *version = NULL;
     int err, ok = 0;
@@ -1913,7 +1959,8 @@ static int ok_gfn_path (const char *fullname,
 	    gchar *fname = g_strdup(shortname);
 	    int n = strlen(fname) - 4;
 
-	    fname[n] = '\0'; /* chop off ".gfn" */
+	    /* chop off ".gfn" for display */
+	    fname[n] = '\0';
 	    if (n > *maxlen) {
 		*maxlen = n;
 	    }
@@ -1923,7 +1970,9 @@ static int ok_gfn_path (const char *fullname,
 			       1, version,
 			       2, descrip, 
 			       3, function_package_is_loaded(fullname), 
-			       4, dirname, -1);
+			       4, dirname,
+			       5, subdir && have_examples(dirname),
+			       -1);
 	    g_free(fname);
 	}
 	ok = 1;
@@ -1976,7 +2025,7 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 		    realbase = g_strdup_printf("%s.gfn", basename);
 		    realpath = g_strdup_printf("%s%c%s", path, SLASH, basename);
 		    *nfn += ok_gfn_path(fullname, realbase, realpath,
-					store, iter, imax, maxlen);
+					store, iter, imax, maxlen, 1);
 		    g_free(realbase);
 		    g_free(realpath);
 		} else {
@@ -2002,7 +2051,7 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 	if (has_suffix(basename, ".gfn")) {
 	    build_path(fullname, path, basename, NULL);
 	    *nfn += ok_gfn_path(fullname, basename, path,
-				store, iter, imax, maxlen);
+				store, iter, imax, maxlen, 0);
 	}
     }
 }
@@ -2228,7 +2277,8 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_BOOLEAN,
-	G_TYPE_STRING   /* hidden string: directory */
+	G_TYPE_STRING,   /* hidden string: directory */
+	G_TYPE_BOOLEAN   /* hidden boolean: has examples dir? */
     };
     GType remote_func_types[] = {
 	G_TYPE_STRING,
@@ -2248,7 +2298,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
     const char **titles = data_titles;
     GType *types = types_2;
     int full_width = 500, file_height = 260;
-    int hidden_col = 0;
+    int hidden_cols = 0;
     int use_tree = 0;
     GtkWidget *vbox;
     int cols = 2;
@@ -2257,7 +2307,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
     case NATIVE_DB:
 	titles = db_titles;
 	cols = 3;
-	hidden_col = TRUE;
+	hidden_cols = 1;
 	break;
     case REMOTE_DB:
 	titles = remote_db_titles;
@@ -2280,7 +2330,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	titles = func_titles;
 	types = func_types;
 	cols = G_N_ELEMENTS(func_types);
-	hidden_col = TRUE;
+	hidden_cols = 2;
 	full_width = 560;
 	file_height = 320;
 	break;
@@ -2288,7 +2338,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	titles = remote_func_titles;
 	types = remote_func_types;
 	cols = G_N_ELEMENTS(remote_func_types);
-	hidden_col = TRUE;
+	hidden_cols = 1;
 	full_width = 580;
 	file_height = 340;
 	break;
@@ -2296,7 +2346,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	titles = addons_titles;
 	types = addons_types;
 	cols = G_N_ELEMENTS(addons_types);
-	hidden_col = TRUE;
+	hidden_cols = 1;
 	full_width = 400;
 	break;	
     default:
@@ -2313,7 +2363,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
     vbox = gtk_vbox_new(FALSE, 0);
     gtk_widget_set_size_request(vbox, full_width, file_height);
     /* note: the following packs and attaches vwin->listbox */
-    vwin_add_list_box(vwin, GTK_BOX(vbox), cols, hidden_col, 
+    vwin_add_list_box(vwin, GTK_BOX(vbox), cols, hidden_cols, 
 		      types, titles, use_tree);
     gtk_widget_show(vbox);
 
