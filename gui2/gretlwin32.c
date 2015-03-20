@@ -564,8 +564,9 @@ static int win32_open_arg (const char *arg, char *ext)
 
     if ((ptrcast) ShellExecute(NULL, "open", arg, NULL, NULL, SW_SHOW) <= 32) {
 	/* if the above fails, get the appropriate fileext regkey and 
-	   look up the program */
-	if (GetRegKey(HKEY_CLASSES_ROOT, ext, key) == ERROR_SUCCESS) {
+	   look up the program 
+	*/
+	if (*ext && GetRegKey(HKEY_CLASSES_ROOT, ext, key) == ERROR_SUCCESS) {
 	    lstrcat(key,"\\shell\\open\\command");
 	    if (GetRegKey(HKEY_CLASSES_ROOT, key, key) == ERROR_SUCCESS) {
 		char *p;
@@ -578,10 +579,10 @@ static int win32_open_arg (const char *arg, char *ext)
 			/* if no parameter */
 			p = key + lstrlen(key) - 1;
 		    } else {
-			*p = '\0';    /* remove the param */
+			*p = '\0'; /* remove the param */
 		    }
 		} else {
-		    *p = '\0';        /* remove the param */
+		    *p = '\0'; /* remove the param */
 		}
 
 		lstrcat(p, " ");
@@ -610,8 +611,11 @@ int win32_open_file (const char *fname)
 
     if (has_suffix(fname, ".pdf")) {
 	strcpy(sfx, ".pdf");
-    } else {
+    } else if (has_suffix(fname, ".ps") ||
+	       has_suffix(fname, ".eps")) {
 	strcpy(sfx, ".ps");
+    } else {
+	*sfx = '\0';
     }
 
     err = win32_open_arg(fname, sfx);

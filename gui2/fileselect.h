@@ -27,10 +27,13 @@ typedef enum {
 
 void file_selector (int action, FselDataSrc src, gpointer data);
 
-void file_selector_with_parent (int action, FselDataSrc src, 
-				gpointer data, GtkWidget *w);
+void file_selector_with_parent (int action,
+				FselDataSrc src, 
+				gpointer data,
+				GtkWidget *parent);
 
-void file_selector_with_startdir (int action, FselDataSrc src, 
-				  gpointer data, const char *dir);
+void file_selector_with_startdir (int action,
+				  const char *startdir,
+				  GtkWidget *parent);
 
 

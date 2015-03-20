@@ -1007,8 +1007,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
     } else if (task == MENU_ADD_FN_PKG) {
 	gui_add_package_to_menu(path, vwin->main, NULL);
     } else if (task == VIEW_PKG_RESOURCES) {
-	file_selector_with_startdir(OPEN_ANY, FSEL_DATA_VWIN,
-				    vwin, path);
+	file_selector_with_startdir(OPEN_ANY, path, vwin_toplevel(vwin));
     } else if (task == CALL_FN_PKG) {
 	/* note: this is the double-click default */
 	err = open_function_package(path, vwin);
@@ -1221,7 +1220,7 @@ static int get_menu_add_ok (windata_t *vwin)
     return ret;
 }
 
-static void check_add_button_state (GtkTreeSelection *sel, windata_t *vwin)
+static void check_extra_buttons_state (GtkTreeSelection *sel, windata_t *vwin)
 {
     GtkWidget *button;
 
@@ -1229,16 +1228,25 @@ static void check_add_button_state (GtkTreeSelection *sel, windata_t *vwin)
     if (button != NULL) {
 	gtk_widget_set_sensitive(button, get_menu_add_ok(vwin));
     }
+
+    button = g_object_get_data(G_OBJECT(vwin->mbar), "res-button");
+    if (button != NULL) {
+	gboolean res = FALSE;
+	
+	tree_view_get_bool(GTK_TREE_VIEW(vwin->listbox),
+			   vwin->active_var, 5, &res);
+	gtk_widget_set_sensitive(button, res);
+    }
 }
 
-static void connect_menu_add_signal (windata_t *vwin)
+static void connect_menu_adjust_signal (windata_t *vwin)
 {
     GtkTreeSelection *sel;
 
     sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
 
     g_signal_connect(G_OBJECT(sel), "changed",
-		     G_CALLBACK(check_add_button_state), 
+		     G_CALLBACK(check_extra_buttons_state), 
 		     vwin);
 }
 
@@ -1248,17 +1256,19 @@ static void build_funcfiles_popup (windata_t *vwin)
 
     if (vwin->role == FUNC_FILES) {
 	/* local function files: full menu */
-	int menu_add_ok = 0;
-	int resources_ok = 0;
-	GtkWidget *add;
+	int add_ok = 0;
+	int res_ok = 0;
+	GtkWidget *b;
 
-	add = g_object_get_data(G_OBJECT(vwin->mbar), "add-button");
-	if (add != NULL && gtk_widget_is_sensitive(add)) {
-	    menu_add_ok = 1;
+	b = g_object_get_data(G_OBJECT(vwin->mbar), "add-button");
+	if (b != NULL && gtk_widget_is_sensitive(b)) {
+	    add_ok = 1;
 	}
 
-	tree_view_get_bool(GTK_TREE_VIEW(vwin->listbox),
-			   vwin->active_var, 5, &resources_ok);
+	b = g_object_get_data(G_OBJECT(vwin->mbar), "res-button");
+	if (b != NULL && gtk_widget_is_sensitive(b)) {
+	    res_ok = 1;
+	}	
 
 	add_popup_item(_("Edit"), vwin->popup, 
 		       G_CALLBACK(browser_edit_func), 
@@ -1275,12 +1285,12 @@ static void build_funcfiles_popup (windata_t *vwin)
 	add_popup_item(_("Execute"), vwin->popup, 
 		       G_CALLBACK(browser_call_func), 
 		       vwin);
-	if (resources_ok) {
+	if (res_ok) {
 	    add_popup_item(_("Resources..."), vwin->popup, 
 			   G_CALLBACK(show_package_resources), 
 			   vwin);
 	}
-	if (menu_add_ok) {
+	if (add_ok) {
 	    add_popup_item(_("Add to menu"), vwin->popup, 
 			   G_CALLBACK(add_func_to_menu), 
 			   vwin);
@@ -1423,7 +1433,7 @@ enum {
     BTN_FIND,
     BTN_OPEN,
     BTN_DIR,
-    BTN_CLOSE
+    BTN_RES
 };
 
 static GretlToolItem files_items[] = {
@@ -1436,6 +1446,7 @@ static GretlToolItem files_items[] = {
     { N_("List series"),    GTK_STOCK_INDEX,      NULL,                           BTN_INDX },
     { N_("Install"),        GTK_STOCK_SAVE,       NULL,                           BTN_INST },
     { N_("Execute"),        GTK_STOCK_EXECUTE,    G_CALLBACK(browser_call_func), BTN_EXEC },
+    { N_("Resources..."),   GTK_STOCK_OPEN,       G_CALLBACK(show_package_resources), BTN_RES },
     { N_("Add to menu"),    GTK_STOCK_ADD,        G_CALLBACK(add_func_to_menu),  BTN_ADD },
     { N_("Delete"),         GTK_STOCK_DELETE,     G_CALLBACK(browser_del_func),  BTN_DEL },
     { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
@@ -1445,10 +1456,11 @@ static GretlToolItem files_items[] = {
 
 static int n_files_items = G_N_ELEMENTS(files_items);
 
-#define common_item(f) (f == 0 || f == BTN_FIND || f == BTN_CLOSE)
+#define common_item(f) (f == 0 || f == BTN_FIND)
 
 #define local_funcs_item(f) (f == BTN_EDIT || f == BTN_NEW || \
-			     f == BTN_DEL || f == BTN_CODE)
+			     f == BTN_DEL || f == BTN_CODE || \
+			     f == BTN_RES)
 
 static int files_item_get_callback (GretlToolItem *item, int role)
 {
@@ -1478,7 +1490,7 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	    item->func = G_CALLBACK(browser_open_data);
 	} else if (role == PS_FILES) {
 	    item->func = G_CALLBACK(browser_open_ps);
-	} 
+	}
     } else if (item->flag == BTN_INFO) {
 	if (role == TEXTBOOK_DATA) {
 	    item->func = G_CALLBACK(show_datafile_info);
@@ -1539,6 +1551,9 @@ static void make_files_toolbar (windata_t *vwin)
 	    button = gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, -1);
 	    if (item->flag == BTN_ADD) {
 		g_object_set_data(G_OBJECT(vwin->mbar), "add-button", button);
+		gtk_widget_set_sensitive(button, FALSE);
+	    } else if (item->flag == BTN_RES) {
+		g_object_set_data(G_OBJECT(vwin->mbar), "res-button", button);
 		gtk_widget_set_sensitive(button, FALSE);
 	    }
 	}
@@ -1752,7 +1767,7 @@ void display_files (int role, gpointer data)
 			 G_CALLBACK(funcfiles_popup_handler), 
 			 vwin);
 	if (role == FUNC_FILES) {
-	    connect_menu_add_signal(vwin);
+	    connect_menu_adjust_signal(vwin);
 	}
     } else if (role == NATIVE_DB || role == REMOTE_DB) {
 	build_db_popup(vwin);
@@ -2331,7 +2346,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	types = func_types;
 	cols = G_N_ELEMENTS(func_types);
 	hidden_cols = 2;
-	full_width = 560;
+	full_width = 750;
 	file_height = 320;
 	break;
     case REMOTE_FUNC_FILES:

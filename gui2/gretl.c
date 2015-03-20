@@ -2147,6 +2147,8 @@ int gretl_fork (const char *progvar, const char *arg)
 	prog = viewpdf;
     } else if (!strcmp(progvar, "viewps")) {
 	prog = viewps;
+    } else {
+	prog = progvar;
     }
 #endif
 

@@ -519,22 +519,15 @@ static int overwrite_stop (const char *fname)
     return 0;
 }
 
-static int get_action_by_suffix (const char *fname,
-				 int *err)
+static void os_open_other (const char *fname)
 {
-    int action = 0;
-    
-    if (has_suffix(fname, ".inp")) {
-	action = OPEN_SCRIPT;
-    } else if (has_suffix(fname, ".gdt") ||
-	       has_suffix(fname, ".gdtb")) {
-	action = OPEN_DATA;
-    } else {
-	/* FIXME */
-	*err = 1;
-    }
-	
-    return action;
+#if defined(G_OS_WIN32)
+    win32_open_file(fname);
+#elif defined(OS_OSX)
+    osx_open_file(fname);
+#else
+    gretl_fork("xdg-open", fname);
+#endif
 }
 
 static void
@@ -562,9 +555,13 @@ file_selector_process_result (const char *in_fname, int action,
     }
 
     if (action == OPEN_ANY) {
-	action = get_action_by_suffix(fname, &err);
-	if (err) {
-	    dummy_call();
+	if (has_suffix(fname, ".inp")) {
+	    action = OPEN_SCRIPT;
+	} else if (has_suffix(fname, ".gdt") ||
+		   has_suffix(fname, ".gdtb")) {
+	    action = OPEN_DATA;
+	} else {
+	    os_open_other(fname);
 	    return;
 	}
     }
@@ -1019,9 +1016,13 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	parent = mdata->main;
     }
 
-    filesel = gtk_file_chooser_dialog_new(NULL, GTK_WINDOW(parent), fsel_action,
-					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					  okstr, GTK_RESPONSE_ACCEPT,
+    filesel = gtk_file_chooser_dialog_new(NULL,
+					  GTK_WINDOW(parent),
+					  fsel_action,
+					  GTK_STOCK_CANCEL,
+					  GTK_RESPONSE_CANCEL,
+					  okstr,
+					  GTK_RESPONSE_ACCEPT,
 					  NULL);
 
     if (action == SAVE_DATA || 
@@ -1078,7 +1079,9 @@ static void gtk_file_selector (int action, FselDataSrc src,
     }
 }
 
-void file_selector (int action, FselDataSrc src, gpointer data)
+void file_selector (int action,
+		    FselDataSrc src,
+		    gpointer data)
 {
     GtkWidget *w = NULL;
 
@@ -1091,26 +1094,17 @@ void file_selector (int action, FselDataSrc src, gpointer data)
     gtk_file_selector(action, src, data, w, NULL);
 }
 
-void file_selector_with_parent (int action, FselDataSrc src, 
-				gpointer data, GtkWidget *w)
+void file_selector_with_parent (int action,
+				FselDataSrc src, 
+				gpointer data,
+				GtkWidget *parent)
 {
-    gtk_file_selector(action, src, data, w, NULL);
+    gtk_file_selector(action, src, data, parent, NULL);
 }
 
 void file_selector_with_startdir (int action,
-				  FselDataSrc src, 
-				  gpointer data,
-				  const char *startdir)
+				  const char *startdir,
+				  GtkWidget *parent)
 {
-    GtkWidget *w = NULL;
-
-    if (src == FSEL_DATA_VWIN) {
-	windata_t *vwin = (windata_t *) data;
-
-	w = vwin_toplevel(vwin);
-    }
-
-    /* FIXME */
-    
-    gtk_file_selector(action, 0, NULL, w, startdir);
+    gtk_file_selector(action, 0, NULL, parent, startdir);
 }
