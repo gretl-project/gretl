@@ -1209,7 +1209,9 @@ static gint query_save_package (GtkWidget *w, GdkEvent *event,
 				function_info *finfo)
 {
     if (finfo->modified) {
-	int resp = yes_no_dialog("gretl", _("Save changes?"), 1);
+	int resp =
+	    yes_no_dialog_with_parent("gretl", _("Save changes?"),
+				      1, w);
 
 	if (resp == GRETL_CANCEL) {
 	    return TRUE;
@@ -1915,6 +1917,20 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     gtk_widget_show_all(dlg);
 }
 
+int package_editor_exit_check (GtkWidget *w)
+{
+    function_info *finfo;
+
+    finfo = g_object_get_data(G_OBJECT(w), "finfo");
+    
+    if (finfo != NULL && finfo->modified) {
+	gtk_window_present(GTK_WINDOW(w));
+	return query_save_package(w, NULL, finfo);
+    }
+
+    return FALSE;
+}
+
 /* Dialog for editing function package.  The user can get here in
    either of two ways: after selecting functions to put into a
    newly created package, or upon selecting an existing package
@@ -1956,6 +1972,7 @@ static void finfo_dialog (function_info *finfo)
 			     _("gretl: function package editor"));
     } 
 
+    g_object_set_data(G_OBJECT(finfo->dlg), "finfo", finfo);
     gtk_widget_set_name(finfo->dlg, "pkg-editor");
     g_signal_connect(G_OBJECT(finfo->dlg), "delete-event",
 		     G_CALLBACK(query_save_package), finfo);

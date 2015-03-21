@@ -23,6 +23,7 @@
 #include "guiprint.h"
 #include "session.h"
 #include "tabwin.h"
+#include "fnsave.h"
 #include "toolbar.h"
 #include "cmdstack.h"
 #include "winstack.h"
@@ -630,6 +631,17 @@ void vwin_winlist_popup (GtkWidget *src, GdkEvent *event,
     window_list_popup(src, event, vwin_toplevel(vwin));
 }
 
+static int window_is_package_editor (GtkWidget *w)
+{
+    const gchar *wname = gtk_widget_get_name(w);
+
+    if (wname != NULL && strcmp(wname, "pkg-editor") == 0) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /* on exiting, check for any editing windows with unsaved
    changes, and if we find any give the user a chance to
    save the changes, or to cancel the exit
@@ -654,8 +666,12 @@ gboolean window_list_exit_check (void)
 			ret = query_save_text(NULL, NULL, vwin);
 		    }
 		}
-		if (vwin == NULL && g_object_get_data(G_OBJECT(w), "tabwin")) {
-		    ret = tabwin_exit_check(w);
+		if (vwin == NULL) {
+		    if (g_object_get_data(G_OBJECT(w), "tabwin")) {
+			ret = tabwin_exit_check(w);
+		    } else if (window_is_package_editor(w)) {
+			ret = package_editor_exit_check(w);
+		    }
 		}
 	    }
 	    list = list->next;
@@ -689,15 +705,9 @@ gboolean window_list_exit_check (void)
 
 static int keep_window_open (GtkWidget *w, gretlopt opt)
 {
-    const gchar *wname = gtk_widget_get_name(w);
+    return window_is_package_editor(w);
 
     /* FIXME maybe keep plot windows open if opt & OPT_P? */
-
-    if (wname != NULL && strcmp(wname, "pkg-editor") == 0) {
-	return 1;
-    } else {
-	return 0;
-    }
 }
 
 /* called from session.c on switching the session: close all

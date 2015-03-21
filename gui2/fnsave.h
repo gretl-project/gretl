@@ -44,4 +44,6 @@ void edit_package_at_startup (const char *fname);
 
 void revise_function_package (void *p);
 
+int package_editor_exit_check (GtkWidget *w);
+
 #endif /* FNSAVE_H */
