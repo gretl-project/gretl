@@ -186,20 +186,11 @@ static int previous_d = -1;    /* record of previous "function depth" */
 
 static void uvar_hash_destroy (void)
 {
-    if (uvars_hash != NULL) {
 #if HDEBUG	
-	fprintf(stderr, "destroy uvars_hash (=%p, uvh0=%p, uvh1=%p)\n",
-		(void *) uvars_hash, (void *) uvh0, (void *) uvh1);
+    fprintf(stderr, "uvar_hash_destroy (uvh0=%p, uvh1=%p)\n",
+	    (void *) uvh0, (void *) uvh1);
 #endif
-	if (uvars_hash == uvh0) {
-	    uvh0 = NULL;
-	} else if (uvars_hash == uvh1) {
-	    uvh1 = NULL;
-	}
-	g_hash_table_destroy(uvars_hash);
-	uvars_hash = NULL;
-    }
-
+    
     if (uvh0 != NULL) {
 #if HDEBUG	
 	fprintf(stderr, " destroying uvh0\n");
@@ -214,7 +205,10 @@ static void uvar_hash_destroy (void)
 #endif	
 	g_hash_table_destroy(uvh1);
 	uvh1 = NULL;
-    }    
+    }
+
+    /* also NULL the convenience pointer */
+    uvars_hash = NULL;
 
     previous_d = -1;
 }
@@ -1216,7 +1210,7 @@ void destroy_user_vars (void)
 	i--;
     }
 
-    if (uvars_hash != NULL || uvh0 != NULL || uvh1 != NULL) {
+    if (uvh0 != NULL || uvh1 != NULL) {
 	uvar_hash_destroy();
     }
 
