@@ -1541,6 +1541,7 @@ static int is_addon (const char *name)
 {
     if (!strcmp(name, "gig") ||
 	!strcmp(name, "SVAR") ||
+	!strcmp(name, "HIP") ||
 	!strcmp(name, "ivpanel")) {
 	return 1;
     } else {

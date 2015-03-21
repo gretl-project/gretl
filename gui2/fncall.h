@@ -20,7 +20,9 @@
 #ifndef FNCALL_H
 #define FNCALL_H
 
-int open_function_package (const char *fname, windata_t *vwin);
+int open_function_package (const char *pkgname,
+			   const char *fname,
+			   windata_t *vwin);
 
 void function_call_cleanup (void);
 

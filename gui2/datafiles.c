@@ -1010,7 +1010,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	file_selector_with_startdir(OPEN_ANY, path, vwin_toplevel(vwin));
     } else if (task == CALL_FN_PKG) {
 	/* note: this is the double-click default */
-	err = open_function_package(path, vwin);
+	err = open_function_package(pkgname, path, vwin);
     }
 
     g_free(pkgname);

@@ -83,6 +83,7 @@ static GtkWidget *open_fncall_dlg;
 static gboolean close_on_OK = TRUE;
 
 static void fncall_exec_callback (GtkWidget *w, call_info *cinfo);
+static void maybe_record_include (const char *pkgname, int model_id);
 
 static gchar **glib_str_array_new (int n)
 {
@@ -1688,14 +1689,17 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     if (!err) {
 	int ID = 0;
 
-	lib_command_strcpy(fnline);
-
 	if (cinfo->flags & MODEL_CALL) {
 	    ID = get_genr_model_ID();
 	}
+
+	maybe_record_include(cinfo->pkgname, ID);
+	
 	if (ID > 0) {
+	    lib_command_sprintf("# %s", fnline);
 	    record_model_command_verbatim(ID);
 	} else {
+	    lib_command_strcpy(fnline);
 	    record_command_verbatim();
 	}
     }
@@ -1901,18 +1905,23 @@ static int need_model_check (call_info *cinfo)
     return err;
 }
 
-static call_info *start_cinfo_for_package (const char *fname,
+static call_info *start_cinfo_for_package (const char *pkgname,
+					   const char *fname,
 					   windata_t *vwin)
 {
     call_info *cinfo;
     fnpkg *pkg;
     int err = 0;
 
-    pkg = get_function_package_by_filename(fname, &err);
+    pkg = get_function_package_by_name(pkgname);
 
-    if (err) {
-	gui_errmsg(err);
-	return NULL;
+    if (pkg == NULL) {
+	/* not already loaded */
+	pkg = get_function_package_by_filename(fname, &err);
+	if (err) {
+	    gui_errmsg(err);
+	    return NULL;
+	}
     }
 
     cinfo = cinfo_new(pkg, vwin);
@@ -2030,14 +2039,16 @@ static int call_function_package (call_info *cinfo, windata_t *vwin,
 
 /* called from the function-package browser */
 
-int open_function_package (const char *fname, windata_t *vwin)
+int open_function_package (const char *pkgname,
+			   const char *fname,
+			   windata_t *vwin)
 {
     call_info *cinfo;
     int can_call = 1;
     int free_cinfo = 1;
     int err = 0;
 
-    cinfo = start_cinfo_for_package(fname, vwin);
+    cinfo = start_cinfo_for_package(pkgname, fname, vwin);
 
     if (cinfo == NULL) {
 	return E_ALLOC;
@@ -2369,6 +2380,7 @@ struct addon_info_ {
     PkgType ptype;
     int modelwin;
     guint merge_id;
+    int included;
 };
 
 typedef struct addon_info_ addon_info;
@@ -2405,6 +2417,27 @@ static addon_info *retrieve_addon_info (const gchar *pkgname)
     }
 
     return NULL;
+}
+
+static void maybe_record_include (const char *pkgname,
+				  int model_id)
+{
+    int i;
+
+    for (i=0; i<n_addons; i++) {
+	if (!strcmp(pkgname, addons[i].pkgname)) {
+	    if (!addons[i].included) {
+		lib_command_sprintf("include %s.gfn", pkgname);
+		if (model_id > 0) {
+		    record_model_command_verbatim(model_id);
+		} else {
+		    record_command_verbatim();
+		}
+		addons[i].included = 1;
+	    }
+	    break;
+	}
+    }
 }
 
 int package_is_available_for_menu (const gchar *pkgname,
@@ -2469,6 +2502,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 
 	g_free(msg);
 	if (resp == GRETL_YES) {
+	    /* FIXME record in command log? */
 	    download_addon(pkgname, &addon->filepath);
 	}
     }
@@ -2476,7 +2510,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     if (addon->filepath != NULL) {
 	call_info *cinfo;
 
-	cinfo = start_cinfo_for_package(addon->filepath, vwin);
+	cinfo = start_cinfo_for_package(pkgname, addon->filepath, vwin);
 	if (cinfo != NULL) {
 	    call_function_package(cinfo, vwin, 0);
 	}
@@ -2538,6 +2572,7 @@ static int real_read_packages_file (const char *fname, int *pn,
 		    addons[n].ptype = (top)? PKG_TOPLEV : PKG_SUBDIR;
 		    addons[n].modelwin = mw;
 		    addons[n].merge_id = 0;
+		    addons[n].included = 0;
 		    n++;
 		} 
 	    }
