@@ -773,10 +773,13 @@ void context_error (int c, parser *p)
     } else {
 	const char *s = getsymb(p->sym, p);
 
-	if (s != NULL && *s != '\0') {
+	if (s != NULL && *s != '\0' && strcmp(s, "unknown")) {
 	    pprintf(p->prn, _("The symbol '%s' is not valid in this context\n"), 
 		    getsymb(p->sym, p));
-	}
+	} else {
+	    pprintf(p->prn, "The symbol %d is not valid in this context\n", 
+		    p->sym);
+	}	    
     }
 
     if (!p->err) {

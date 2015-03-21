@@ -30,7 +30,6 @@
 #include "gretl_typemap.h"
 #include "uservar.h"
 
-#define UVAR_HASH 1
 #define UVDEBUG 0
 #define HDEBUG 0
 
@@ -188,10 +187,10 @@ static int previous_d = -1;    /* record of previous "function depth" */
 static void uvar_hash_destroy (void)
 {
     if (uvars_hash != NULL) {
-# if HDEBUG	
+#if HDEBUG	
 	fprintf(stderr, "destroy uvars_hash (=%p, uvh0=%p, uvh1=%p)\n",
 		(void *) uvars_hash, (void *) uvh0, (void *) uvh1);
-# endif
+#endif
 	if (uvars_hash == uvh0) {
 	    uvh0 = NULL;
 	} else if (uvars_hash == uvh1) {
@@ -202,11 +201,17 @@ static void uvar_hash_destroy (void)
     }
 
     if (uvh0 != NULL) {
+#if HDEBUG	
+	fprintf(stderr, " destroying uvh0\n");
+#endif
 	g_hash_table_destroy(uvh0);
 	uvh0 = NULL;
     }
 
     if (uvh1 != NULL) {
+#if HDEBUG	
+	fprintf(stderr, " destroying uvh1\n");
+#endif	
 	g_hash_table_destroy(uvh1);
 	uvh1 = NULL;
     }    
@@ -438,7 +443,7 @@ int user_var_delete (user_var *uvar)
     return err;
 }
 
-#if HDEBUG
+#if HDEBUG > 1
 
 static int uvar_index (user_var *u)
 {
@@ -484,12 +489,12 @@ user_var *get_user_var_of_type_by_name (const char *name,
 	imin = scalar_imin;
     }    
 
-#if HDEBUG
+#if HDEBUG > 1
     int hfound = 0;
     
     fprintf(stderr, "get user var: '%s', %s (n_vars=%d, level=%d, imin=%d)\n",
 	    name, gretl_type_get_name(type), n_vars, d, imin);
-# if HDEBUG > 1    
+# if HDEBUG > 2    
     fputs("uvars list:\n", stderr);
     for (i=0; i<n_vars; i++) {
 	fprintf(stderr, " %d: '%s', %s, level %d, ptr %p\n", i, 
@@ -499,14 +504,13 @@ user_var *get_user_var_of_type_by_name (const char *name,
 # endif    
 #endif    
 
-#if UVAR_HASH    
     if (d != previous_d) {
 	if (d == 0) {
 	    /* "main" level */
 	    if (uvh0 == NULL) {
 		uvh0 = g_hash_table_new(g_str_hash, g_str_equal);
 #if HDEBUG
-		fprintf(stderr, "d=0, prev=%d: uvh0 allocated at %p\n",
+		fprintf(stderr, "uvh0: d=0, prev=%d, allocated at %p\n",
 			previous_d, uvh0);
 #endif		
 	    }
@@ -529,7 +533,7 @@ user_var *get_user_var_of_type_by_name (const char *name,
 	    if (uvh1 == NULL) {
 		uvh1 = g_hash_table_new(g_str_hash, g_str_equal);
 #if HDEBUG
-		fprintf(stderr, "d=%d, prev=%d: uvh1 allocated at %p\n",
+		fprintf(stderr, "uvh1: d=%d, prev=%d, allocated at %p\n",
 			d, previous_d, uvh1);
 #endif		
 	    } else if (previous_d > 0 && uvh1 != NULL) {
@@ -551,11 +555,10 @@ user_var *get_user_var_of_type_by_name (const char *name,
 	if (u != NULL && type != GRETL_TYPE_ANY && u->type != type) {
 	    u = NULL;
 	}
-#if HDEBUG
+#if HDEBUG > 1
 	if (u != NULL) hfound = 1;
 #endif	
     }
-#endif /* UVAR_HASH */
 
     if (u == NULL) {
 	/* "On demand" hashing: if we're successful in looking
@@ -567,17 +570,15 @@ user_var *get_user_var_of_type_by_name (const char *name,
 		(type == GRETL_TYPE_ANY || uvars[i]->type == type) &&
 		!strcmp(uvars[i]->name, name)) {
 		u = uvars[i];
-#if UVAR_HASH
 		if (uvars_hash != NULL) {
 		    g_hash_table_insert(uvars_hash, u->name, u);
 		}
-#endif		
 		break;
 	    }
 	}
     }
 
-#if HDEBUG
+#if HDEBUG > 1
     if (hfound)
 	fprintf(stderr, "found at pos %d via hash\n\n", uvar_index(u));
     else if (u != NULL)
@@ -1198,6 +1199,11 @@ void destroy_user_vars (void)
 {
     int i, j;
 
+#if HDEBUG
+    fprintf(stderr, "destroy_user_vars, uvars_hash = %p (uvh0 %p, uvh1 %p)\n",
+	    (void *) uvars_hash, (void *) uvh0, (void *) uvh1);
+#endif
+    
     for (i=0; i<n_vars; i++) {
 	if (uvars[i] == NULL) {
 	    break;
@@ -1210,7 +1216,7 @@ void destroy_user_vars (void)
 	i--;
     }
 
-    if (uvars_hash != NULL) {
+    if (uvars_hash != NULL || uvh0 != NULL || uvh1 != NULL) {
 	uvar_hash_destroy();
     }
 
@@ -1240,6 +1246,11 @@ static int real_destroy_user_vars_at_level (int level, int type,
     int i, j, nv = imin;
     int err = 0;
 
+#if HDEBUG    
+    fprintf(stderr, "real_destroy_user_vars_at_level: level %d, "
+	    "type %d (%s)\n", level, type, gretl_type_get_name(type));
+#endif
+    
     for (i=imin; i<n_vars; i++) {
 	if (uvars[i] == NULL) {
 	    break;
