@@ -4657,7 +4657,7 @@ int list_ok_dollar_vars (DATASET *dset, PRN *prn)
 
     pprintf(prn, "\n%s\n", _("model-related"));
 
-    for (i=R_MAX+1; i<M_MAX; i++) {
+    for (i=R_MAX+1; i<M_MODEL; i++) {
 	GretlType type = GRETL_TYPE_NONE;
 	double x = NADBL;
 	gretl_matrix *m = NULL;

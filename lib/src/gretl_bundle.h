@@ -153,6 +153,10 @@ int bundle_contains_data (gretl_bundle *b, void *data);
 
 gretl_bundle *get_sysinfo_bundle (int *err);
 
+gretl_bundle *bundle_from_model (MODEL *pmod,
+				 DATASET *dset,
+				 int *err);
+
 void gretl_bundle_cleanup (void);
 
 #endif /* GRETL_BUNDLE_H_ */

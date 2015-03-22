@@ -27,6 +27,7 @@
 #include "gretl_xml.h"
 #include "gretl_foreign.h"
 #include "gretl_typemap.h"
+#include "genparse.h"
 #include "gretl_bundle.h"
 
 #define BDEBUG 0
@@ -1748,6 +1749,76 @@ gretl_bundle *get_sysinfo_bundle (int *err)
     }
 
     return sysinfo_bundle;
+}
+
+gretl_bundle *bundle_from_model (MODEL *pmod,
+				 DATASET *dset,
+				 int *err)
+{
+    gretl_bundle *b = NULL;
+    gretl_matrix *m;
+    double *x = NULL;
+    double val;
+    const char *s = NULL;
+    int i, t, berr;
+
+    if (pmod == NULL) {
+	GretlObjType type = 0;
+	void *p = get_last_model(&type);
+
+	if (p == NULL || type != GRETL_OBJ_EQN) {
+	    *err = E_DATA;
+	    return NULL;
+	} else {
+	    pmod = p;
+	}
+    }
+
+    x = malloc(dset->n * sizeof *x);
+    if (x == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    b = gretl_bundle_new();
+    if (b == NULL) {
+	free(x);
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=M_ESS; i<M_SCALAR_MAX && !*err; i++) {
+	berr = 0;
+	val = gretl_model_get_scalar(pmod, i, dset, &berr);
+	if (!berr) {
+	    s = mvarname(i) + 1;
+	    *err = gretl_bundle_set_scalar(b, s, val);	    
+	}
+    }
+
+    for (i=M_SCALAR_MAX+1; i<M_SERIES_MAX && !*err; i++) {
+	for (t=0; t<dset->n; t++) {
+	    x[t] = NADBL;
+	}
+	berr = gretl_model_get_series(x, pmod, dset, i);
+	if (!berr) {
+	    s = mvarname(i) + 1;
+	    *err = gretl_bundle_set_series(b, s, x, dset->n);
+	}	
+    }    
+
+    for (i=M_SERIES_MAX; i<M_MATRIX_MAX && !*err; i++) {
+	berr = 0;
+	m = gretl_model_get_matrix(pmod, i, &berr);
+	if (!berr) {
+	    s = mvarname(i) + 1;
+	    *err = gretl_bundle_set_matrix(b, s, m);
+	}
+    }
+
+    free(x);
+
+    return b;
 }
 
 void gretl_bundle_cleanup (void)

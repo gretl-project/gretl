@@ -6057,7 +6057,7 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
  * 
  * Retrieves from @pmod a copy of a specified series (for
  * example, regression residuals); @idx must be greater than
- * %M_ELEM_MAX and less than %M_SERIES_MAX.
+ * %M_SCALAR_MAX and less than %M_SERIES_MAX.
  * 
  * Returns: 0 on success, non-zero code on error.
  */
@@ -6324,7 +6324,7 @@ static gretl_matrix *model_get_special_test (const MODEL *pmod,
  * 
  * Retrieves from @pmod a copy of a specified matrix (for
  * example, regression residuals); @idx must be greater than
- * %M_ELEM_MAX and less than %M_MAX.
+ * %M_SERIES_MAX and less than %M_MATRIX_MAX.
  * 
  * Returns: the allocated matrix, or %NULL on failure,
  * in which case @err will contain a non-zero error code.

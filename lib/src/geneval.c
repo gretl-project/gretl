@@ -10204,6 +10204,8 @@ static GretlType object_var_type (int idx, const char *oname,
 	vtype = GRETL_TYPE_LIST;
     } else if (model_data_string(idx)) {
 	vtype = GRETL_TYPE_STRING;
+    } else if (idx == M_MODEL) {
+	vtype = GRETL_TYPE_BUNDLE;
     }
 
     if (idx == M_UHAT || idx == M_YHAT || idx == M_SIGMA) {
@@ -10347,6 +10349,8 @@ static NODE *object_var_node (NODE *t, parser *p)
 	    ret = aux_list_node(p);
 	} else if (vtype == GRETL_TYPE_STRING) {
 	    ret = aux_string_node(p);
+	} else if (vtype == GRETL_TYPE_BUNDLE) {
+	    ret = aux_bundle_node(p);
 	} else {
 	    ret = aux_matrix_node(p);
 	}
@@ -10363,6 +10367,8 @@ static NODE *object_var_node (NODE *t, parser *p)
 	} else if (vtype == GRETL_TYPE_STRING) {
 	    ret->v.str = saved_object_get_string(oname, idx, p->dset,
 						 &p->err);
+	} else if (vtype == GRETL_TYPE_BUNDLE) {
+	    ret->v.b = bundle_from_model(NULL, p->dset, &p->err);
 	} else if (mslice) {
 	    /* the right-hand subnode needs more work */
 	    ret->v.m = object_var_get_submatrix(ret, oname, idx, r, p, needs_data);
