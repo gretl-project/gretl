@@ -2564,7 +2564,7 @@ static void hermite_scale (int n, double *x, double *w,
  * @err: location to receive error code.
  *
  * Calculates a quadrature "rule" (i.e. a set of abscissae or
- * nodes and assoicated weights) for use in numerical integration.
+ * nodes and associated weights) for use in numerical integration.
  * The three supported methods are Gauss-Hermite, Gauss-Legendre
  * and Gauss-Laguerre. The arguments @a and @b are ignored for
  * methods other than Legendre: in the Gauss-Hermite case the

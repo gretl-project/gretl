@@ -134,9 +134,6 @@ gretl_matrix *
 last_model_get_irf_matrix (int targ, int shock, double alpha, 
 			   const DATASET *dset, int *err);
 
-gretl_bundle *last_model_get_irf_bundle (int targ, int shock, double alpha, 
-					 const DATASET *dset, int *err);
-
 gretl_matrix *last_model_get_boot_ci (int cnum, const DATASET *dset,
 				      int B, double alpha,
 				      int method, int studentize,

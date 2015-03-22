@@ -1383,60 +1383,6 @@ last_model_get_irf_matrix (int targ, int shock, double alpha,
     return M;
 }
 
-gretl_bundle *last_model_get_irf_bundle (int targ, int shock, double alpha, 
-					 const DATASET *dset, int *err)
-{
-    stacker *smatch = find_smatch(NULL);
-    GRETL_VAR *var = NULL;
-    gretl_matrix *m = NULL;
-    gretl_bundle *b = NULL;
-
-    if (smatch == NULL || smatch->type != GRETL_OBJ_VAR) {
-	*err = E_BADSTAT;
-    } else {
-	var = smatch->ptr;
-	m = gretl_VAR_get_impulse_response(var, targ, shock, 0,
-					   alpha, dset, err);
-    }
-
-    if (!*err) {
-	b = gretl_bundle_new();
-	if (b == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    int vtarg = gretl_VAR_get_variable_number(var, targ);
-	    int vshock = gretl_VAR_get_variable_number(var, shock);
-	    const char *tname = dset->varname[vtarg];
-	    const char *sname = dset->varname[vshock];
-	    const char *label = dataset_period_label(dset);
-	    int i, errs[6];
-
-	    errs[0] = gretl_bundle_set_payload_matrix(b, m);
-	    errs[1] = gretl_bundle_set_string(b, "targname", tname);
-	    errs[2] = gretl_bundle_set_string(b, "shockname", sname);
-	    errs[3] = gretl_bundle_set_string(b, "period_label", label);
-	    errs[4] = gretl_bundle_set_scalar(b, "alpha", alpha);
-	    errs[5] = gretl_bundle_set_creator(b, "gretl::irf");
-
-	    for (i=0; i<6; i++) {
-		if (errs[i]) {
-		    *err = errs[i];
-		    break;
-		}
-	    }
-
-	    if (*err) {
-		gretl_bundle_destroy(b);
-		b = NULL;
-	    }
-	}
-    }
-
-    gretl_matrix_free(m);
-
-    return b;
-}
-
 gretl_matrix *last_model_get_boot_ci (int cnum,
 				      const DATASET *dset,
 				      int B,

@@ -634,53 +634,6 @@ double *gretl_bundle_get_series (gretl_bundle *bundle,
 }
 
 /**
- * gretl_bundle_get_payload_matrix:
- * @bundle: bundle to access.
- * @err: location to receive error code.
- *
- * Returns: a copy of the matrix associated with the key 
- * "payload" in the specified @bundle, if any; otherwise NULL.
- */
-
-gretl_matrix *gretl_bundle_get_payload_matrix (gretl_bundle *bundle,
-					       int *err)
-{
-    gretl_matrix *m = NULL;
-    GretlType type;
-    void *ptr;
-
-    ptr = gretl_bundle_get_data(bundle, "payload", &type, 
-				NULL, err);
-    if (!*err && type != GRETL_TYPE_MATRIX) {
-	*err = E_TYPES;
-    }
-
-    if (!*err) {
-	m = gretl_matrix_copy((gretl_matrix *) ptr);
-	if (m == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    return m;
-}
-
-/**
- * gretl_bundle_set_payload_matrix:
- * @bundle: bundle to access.
- * @m: matrix to set as payload.
- *
- * Returns: 0 on success, non-zero code on error.
- */
-
-int gretl_bundle_set_payload_matrix (gretl_bundle *bundle,
-				     const gretl_matrix *m)
-{
-    return real_bundle_set_data(bundle, "payload", (void *) m,
-				GRETL_TYPE_MATRIX, 0, 1, NULL);
-}
-
-/**
  * gretl_bundle_get_scalar:
  * @bundle: bundle to access.
  * @key: name of key to access.
@@ -1751,18 +1704,42 @@ gretl_bundle *get_sysinfo_bundle (int *err)
     return sysinfo_bundle;
 }
 
+static gretl_matrix *matrix_from_list (const int *list)
+{
+    gretl_matrix *m = NULL;
+    int i;
+    
+    if (list != NULL && list[0] > 0) {
+	m = gretl_matrix_alloc(1, list[0]);
+	if (m != NULL) {
+	    for (i=0; i<list[0]; i++) {
+		m->val[i] = list[i+1];
+	    }
+	}
+    }
+
+    return m;
+}
+
+/* For a single-equation model, create a bundle containing
+   all the data available via $-accessors.
+*/
+
 gretl_bundle *bundle_from_model (MODEL *pmod,
 				 DATASET *dset,
 				 int *err)
 {
     gretl_bundle *b = NULL;
     gretl_matrix *m;
-    double *x = NULL;
+    double *x;
     double val;
-    const char *s = NULL;
+    int *list;
+    const char *s;
+    const char *key;
     int i, t, berr;
 
     if (pmod == NULL) {
+	/* get the "last model" */
 	GretlObjType type = 0;
 	void *p = get_last_model(&type);
 
@@ -1791,8 +1768,8 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
 	berr = 0;
 	val = gretl_model_get_scalar(pmod, i, dset, &berr);
 	if (!berr) {
-	    s = mvarname(i) + 1;
-	    *err = gretl_bundle_set_scalar(b, s, val);	    
+	    key = mvarname(i) + 1;
+	    *err = gretl_bundle_set_scalar(b, key, val);	    
 	}
     }
 
@@ -1802,21 +1779,62 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
 	}
 	berr = gretl_model_get_series(x, pmod, dset, i);
 	if (!berr) {
-	    s = mvarname(i) + 1;
-	    *err = gretl_bundle_set_series(b, s, x, dset->n);
+	    key = mvarname(i) + 1;
+	    *err = gretl_bundle_set_series(b, key, x, dset->n);
 	}	
     }    
 
-    for (i=M_SERIES_MAX; i<M_MATRIX_MAX && !*err; i++) {
+    for (i=M_SERIES_MAX+1; i<M_MATRIX_MAX && !*err; i++) {
 	berr = 0;
 	m = gretl_model_get_matrix(pmod, i, &berr);
 	if (!berr) {
-	    s = mvarname(i) + 1;
-	    *err = gretl_bundle_set_matrix(b, s, m);
+	    key = mvarname(i) + 1;
+	    *err = gretl_bundle_donate_data(b, key, m,
+					    GRETL_TYPE_MATRIX,
+					    0);
 	}
     }
 
+    for (i=M_MBUILD_MAX+1; i<M_LIST_MAX && !*err; i++) {
+	list = NULL;
+	if (i == M_XLIST) {
+	    list = gretl_model_get_x_list(pmod);
+	} else if (i == M_YLIST) {
+	    list = gretl_model_get_y_list(pmod);
+	}
+	if (list != NULL) {
+	    /* convert list to matrix for bundling */
+	    m = matrix_from_list(list);
+	    if (m != NULL) {
+		key = mvarname(i) + 1;
+		*err = gretl_bundle_donate_data(b, key, m,
+						GRETL_TYPE_MATRIX,
+						0);
+	    }
+	    free(list);
+	}
+    }
+
+    for (i=M_LIST_MAX+1; i<M_STR_MAX && !*err; i++) {
+	s = NULL;
+	if (i == M_DEPVAR) {
+	    s = gretl_model_get_depvar_name(pmod, dset);
+	} else if (i == M_COMMAND) {
+	    s = gretl_command_word(pmod->ci);
+	}
+	if (s != NULL && *s != '\0') {
+	    key = mvarname(i) + 1;
+	    *err = gretl_bundle_set_string(b, key, s);	    
+	}	    
+    }    
+
     free(x);
+
+    /* don't return a broken bundle */
+    if (*err && b != NULL) {
+	gretl_bundle_destroy(b);
+	b = NULL;
+    }
 
     return b;
 }

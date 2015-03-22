@@ -57,8 +57,8 @@ typedef enum {
 /**
  * ModelDataIndex:
  * 
- * Symbolic names for various scalars, series and matrices
- * that can be retrieved from gretl models.
+ * Symbolic names for variables that can be retrieved 
+ * from gretl models.
  */
 
 typedef enum {
@@ -79,7 +79,7 @@ typedef enum {
     M_CHISQ,      /* overall chi-square stat, last model */
     M_DIAGTEST,   /* system test for diagonal covariance matrix */
     M_DIAGPVAL,   /* p-value for the above */
-    M_SCALAR_MAX, /* -- SEPARATOR, scalars/series -- */
+    M_SCALAR_MAX, /*** SEPARATOR, scalars/series ***/
     M_UHAT,       /* residuals */
     M_YHAT,       /* fitted values */
     M_LLT,        /* per-observation loglikelihood */
@@ -87,7 +87,7 @@ typedef enum {
     M_H,          /* GARCH predicted variances */
     M_SAMPLE,     /* observations used in estimation */
     M_UHAT2,      /* squared residuals */
-    M_SERIES_MAX, /* -- SEPARATOR, series/matrices -- */
+    M_SERIES_MAX, /*** SEPARATOR, series/matrices ***/
     M_COEFF,      /* parameter estimates */
     M_SE,         /* parameter standard errors */
     M_VCV,        /* parameter covariance matrix */
@@ -113,18 +113,19 @@ typedef enum {
     M_KLLT,       /* Kalman log-likelihood, per time-step */
     M_KUHAT,      /* Kalman: current prediction error */
     M_EHAT,       /* ARMA: vector of estimated innovations */
-    M_MATRIX_MAX, /* -- SEPARATOR, end of matrices -- */
+    M_MATRIX_MAX, /*** SEPARATOR, end of matrices ***/
     M_EC,         /* VECM error-correction terms */
     M_VMA,        /* VARs, VECMs: vector moving average representation */
     M_FEVD,       /* VAR variance decomposition */
     M_MNLPROBS,   /* case probabilities for multinomial logit */
-    M_MBUILD_MAX, /* -- SEPARATOR, end of matrix-builders -- */
+    M_MBUILD_MAX, /*** SEPARATOR, end of matrix-builders ***/
     M_XLIST,      /* list of regressors */
     M_YLIST,      /* list of endogenous variables */
-    M_LIST_MAX,   /* -- SEPARATOR, end of lists -- */
+    M_LIST_MAX,   /*** SEPARATOR, end of lists ***/
     M_COMMAND,    /* model command word */
     M_DEPVAR,     /* name of dependent variable */
-    M_MODEL,      /* model as bundle */
+    M_STR_MAX,    /*** SEPARATOR, end of strings ***/
+    M_MODEL,      /* special: whole model as bundle */
     M_MAX         /* sentinel */
 } ModelDataIndex;
 
@@ -133,7 +134,7 @@ typedef enum {
 #define model_data_matrix(i) (i > M_SERIES_MAX && i < M_MATRIX_MAX)
 #define model_data_matrix_builder(i) (i > M_MATRIX_MAX && i < M_MBUILD_MAX)
 #define model_data_list(i)   (i > M_MBUILD_MAX && i < M_LIST_MAX)
-#define model_data_string(i) (i > M_LIST_MAX && i < M_MODEL)
+#define model_data_string(i) (i > M_LIST_MAX && i < M_STR_MAX)
 
 typedef struct parser_ GENERATOR;
 
