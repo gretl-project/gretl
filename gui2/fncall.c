@@ -1878,7 +1878,7 @@ static void maybe_set_gui_interface (call_info *cinfo,
     if (fid >= 0 && (from_browser == 0 || priv == 0)) {
 	/* We found gui-main -- and if we're coming
 	   from the package browser, it's not masked
-	   by being designated as private.
+	   by being designated as "private".
 	*/
 	cinfo->iface = fid;
 	cinfo->flags |= SHOW_GUI_MAIN;
@@ -1944,6 +1944,7 @@ static call_info *start_cinfo_for_package (const char *pkgname,
     } else if (cinfo->publist == NULL) {
 	/* no available interfaces */
 	errbox(_("Function package is broken"));
+	fprintf(stderr, "%s: no public interfaces\n", cinfo->pkgname);
     }
 
     if (err) {

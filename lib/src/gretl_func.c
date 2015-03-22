@@ -1721,6 +1721,15 @@ static int attach_ufunc_to_package (ufunc *fun, fnpkg *pkg)
     return err;
 }
 
+static void maybe_set_menu_only (ufunc *fun, fnpkg *pkg)
+{
+    if (pkg->mpath != NULL && strstr(pkg->mpath, "MODELWIN")) {
+	if (fun->pkg_role == UFUN_GUI_MAIN) {
+	    fun->flags |= UFUN_MENU_ONLY;
+	}
+    }
+}
+
 /* read a single user-function definition from XML file: if the
    function is a child of a package, the @pkg argument will
    be non-NULL
@@ -1779,6 +1788,10 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     if (gretl_xml_get_prop_as_string(node, "pkg-role", &tmp)) {
 	fun->pkg_role = pkg_key_get_role(tmp);
 	free(tmp);
+    }
+
+    if (!(fun->flags & UFUN_MENU_ONLY) && pkg != NULL) {
+	maybe_set_menu_only(fun, pkg);
     }
 
 #if PKG_DEBUG
@@ -3451,6 +3464,16 @@ static int pkg_get_special_func_id (fnpkg *pkg, int role)
 static int pkg_get_func_privacy (fnpkg *pkg, int role)
 {
     int i;
+
+    if (role == UFUN_GUI_MAIN) {
+	if (pkg->mpath != NULL && strstr(pkg->mpath, "MODELWIN")) {
+	    /* An interface designed to be called from a model-
+	       window menu is in a sense "private"; it's
+	       expecting special set-up.
+	    */
+	    return 1;
+	}
+    }
 
     for (i=0; i<n_ufuns; i++) {
 	if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == role) {
