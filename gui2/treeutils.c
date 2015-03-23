@@ -650,6 +650,20 @@ void tree_view_get_bool (GtkTreeView *view, int row, int col, gboolean *val)
     g_free(path);
 }
 
+void tree_view_get_int (GtkTreeView *view, int row, int col, gint *val)
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    gchar *path;
+
+    model = gtk_tree_view_get_model(view);
+    path = g_strdup_printf("%d", row);
+    if (gtk_tree_model_get_iter_from_string(model, &iter, path)) {
+	gtk_tree_model_get(model, &iter, col, val, -1);
+    }
+    g_free(path);
+}
+
 void tree_view_get_string (GtkTreeView *view, int row, int col, gchar **val)
 {
     GtkTreeModel *model;
@@ -691,20 +705,6 @@ void list_store_set_string (GtkTreeView *view, int row, int col, const gchar *va
 void tree_store_set_string (GtkTreeView *view, int row, int col, const gchar *val)
 {
     tree_view_set_string(view, row, col, val, 1);
-}
-
-void tree_view_get_int (GtkTreeView *view, int row, int col, int *val)
-{
-    GtkTreeModel *model;
-    GtkTreeIter iter;
-    gchar *path;
-
-    model = gtk_tree_view_get_model(view);
-    path = g_strdup_printf("%d", row);
-    if (gtk_tree_model_get_iter_from_string(model, &iter, path)) {
-	gtk_tree_model_get(model, &iter, col, val, -1);
-    }
-    g_free(path);
 }
 
 int tree_path_get_row_number (GtkTreePath *path)

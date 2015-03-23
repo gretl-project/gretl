@@ -78,6 +78,11 @@ enum {
     COLL_PS
 };
 
+enum {
+    PKG_ATTR_RES = 1 << 0,
+    PKG_ATTR_DOC = 1 << 1
+};
+
 struct fpkg_response {
     int col1_width;
     int try_server;
@@ -979,6 +984,8 @@ static void browser_functions_handler (windata_t *vwin, int task)
 			     dircol, &dir);
 	if (task == VIEW_PKG_RESOURCES) {
 	    build_path(path, dir, "examples", NULL);
+	} else if (task == VIEW_PKG_DOC) {
+	    build_path(path, dir, pkgname, ".pdf");
 	} else {
 	    build_path(path, dir, pkgname, ".gfn");
 	}
@@ -1008,6 +1015,8 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	gui_add_package_to_menu(path, vwin->main, NULL);
     } else if (task == VIEW_PKG_RESOURCES) {
 	file_selector_with_startdir(OPEN_ANY, path, vwin_toplevel(vwin));
+    } else if (task == VIEW_PKG_DOC) {
+	gretl_show_pdf(path);
     } else if (task == CALL_FN_PKG) {
 	/* note: this is the double-click default */
 	err = open_function_package(pkgname, path, vwin);
@@ -1150,6 +1159,13 @@ static void show_package_resources (GtkWidget *w, gpointer data)
     browser_functions_handler(vwin, VIEW_PKG_RESOURCES);
 }
 
+static void show_package_doc (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    browser_functions_handler(vwin, VIEW_PKG_DOC);
+}
+
 static void browser_del_func (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -1223,20 +1239,29 @@ static int get_menu_add_ok (windata_t *vwin)
 static void check_extra_buttons_state (GtkTreeSelection *sel, windata_t *vwin)
 {
     GtkWidget *button;
+    gint flags;
 
     button = g_object_get_data(G_OBJECT(vwin->mbar), "add-button");
     if (button != NULL) {
 	gtk_widget_set_sensitive(button, get_menu_add_ok(vwin));
     }
 
+    /* Get flags from last, hidden int column, to determine
+       whether we can offer links to a package's "examples"
+       directory and/or its documentation in PDF format.
+    */
+    tree_view_get_int(GTK_TREE_VIEW(vwin->listbox),
+		      vwin->active_var, 5, &flags);
+
     button = g_object_get_data(G_OBJECT(vwin->mbar), "res-button");
     if (button != NULL) {
-	gboolean res = FALSE;
-	
-	tree_view_get_bool(GTK_TREE_VIEW(vwin->listbox),
-			   vwin->active_var, 5, &res);
-	gtk_widget_set_sensitive(button, res);
+	gtk_widget_set_sensitive(button, flags & PKG_ATTR_RES);
     }
+
+    button = g_object_get_data(G_OBJECT(vwin->mbar), "doc-button");
+    if (button != NULL) {
+	gtk_widget_set_sensitive(button, flags & PKG_ATTR_DOC);
+    }    
 }
 
 static void connect_menu_adjust_signal (windata_t *vwin)
@@ -1258,6 +1283,7 @@ static void build_funcfiles_popup (windata_t *vwin)
 	/* local function files: full menu */
 	int add_ok = 0;
 	int res_ok = 0;
+	int doc_ok = 0;
 	GtkWidget *b;
 
 	b = g_object_get_data(G_OBJECT(vwin->mbar), "add-button");
@@ -1268,6 +1294,11 @@ static void build_funcfiles_popup (windata_t *vwin)
 	b = g_object_get_data(G_OBJECT(vwin->mbar), "res-button");
 	if (b != NULL && gtk_widget_is_sensitive(b)) {
 	    res_ok = 1;
+	}
+
+	b = g_object_get_data(G_OBJECT(vwin->mbar), "doc-button");
+	if (b != NULL && gtk_widget_is_sensitive(b)) {
+	    doc_ok = 1;
 	}	
 
 	add_popup_item(_("Edit"), vwin->popup, 
@@ -1295,6 +1326,11 @@ static void build_funcfiles_popup (windata_t *vwin)
 			   G_CALLBACK(add_func_to_menu), 
 			   vwin);
 	}
+	if (doc_ok) {
+	    add_popup_item(_("Help"), vwin->popup, 
+			   G_CALLBACK(show_package_doc), 
+			   vwin);
+	}	
 	add_popup_item(_("Delete"), vwin->popup, 
 		       G_CALLBACK(browser_del_func), 
 		       vwin);
@@ -1433,7 +1469,8 @@ enum {
     BTN_FIND,
     BTN_OPEN,
     BTN_DIR,
-    BTN_RES
+    BTN_RES,
+    BTN_DOC
 };
 
 static GretlToolItem files_items[] = {
@@ -1448,6 +1485,7 @@ static GretlToolItem files_items[] = {
     { N_("Execute"),        GTK_STOCK_EXECUTE,    G_CALLBACK(browser_call_func), BTN_EXEC },
     { N_("Resources..."),   GTK_STOCK_OPEN,       G_CALLBACK(show_package_resources), BTN_RES },
     { N_("Add to menu"),    GTK_STOCK_ADD,        G_CALLBACK(add_func_to_menu),  BTN_ADD },
+    { N_("Help"),           GRETL_STOCK_PDF,      G_CALLBACK(show_package_doc),  BTN_DOC },
     { N_("Delete"),         GTK_STOCK_DELETE,     G_CALLBACK(browser_del_func),  BTN_DEL },
     { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
     { N_("Local machine"),  GTK_STOCK_HOME,       NULL,                          BTN_HOME },
@@ -1460,7 +1498,7 @@ static int n_files_items = G_N_ELEMENTS(files_items);
 
 #define local_funcs_item(f) (f == BTN_EDIT || f == BTN_NEW || \
 			     f == BTN_DEL || f == BTN_CODE || \
-			     f == BTN_RES)
+			     f == BTN_RES || f == BTN_DOC)
 
 static int files_item_get_callback (GretlToolItem *item, int role)
 {
@@ -1555,7 +1593,10 @@ static void make_files_toolbar (windata_t *vwin)
 	    } else if (item->flag == BTN_RES) {
 		g_object_set_data(G_OBJECT(vwin->mbar), "res-button", button);
 		gtk_widget_set_sensitive(button, FALSE);
-	    }
+	    } else if (item->flag == BTN_DOC) {
+		g_object_set_data(G_OBJECT(vwin->mbar), "doc-button", button);
+		gtk_widget_set_sensitive(button, FALSE);
+	    }		
 	}
     }
 
@@ -1877,10 +1918,11 @@ void show_native_dbs (void)
 }
 
 static int get_func_info (const char *path, char **pdesc, 
-			  char **pver)
+			  char **pver, int *pdfdoc)
 {
-    int err = get_function_file_header(path, pdesc, pver);
+    int err;
 
+    err = get_function_file_header(path, pdesc, pver, pdfdoc);
     if (err) {
 	gui_errmsg(err);
     }
@@ -1965,20 +2007,32 @@ static int ok_gfn_path (const char *fullname,
 			int subdir)
 {
     char *descrip = NULL, *version = NULL;
+    int pdfdoc = 0;
     int err, ok = 0;
 
-    err = get_func_info(fullname, &descrip, &version);
+    err = get_func_info(fullname, &descrip, &version, &pdfdoc);
 
     if (!err && !fn_file_is_duplicate(shortname, version, store, imax)) {
 	if (iter != NULL) {
 	    gchar *fname = g_strdup(shortname);
 	    int n = strlen(fname) - 4;
+	    gint flags = 0;
 
 	    /* chop off ".gfn" for display */
 	    fname[n] = '\0';
 	    if (n > *maxlen) {
 		*maxlen = n;
 	    }
+
+	    if (subdir) {
+		if (have_examples(dirname)) {
+		    flags |= PKG_ATTR_RES;
+		}
+		if (pdfdoc) {
+		    flags |= PKG_ATTR_DOC;
+		}
+	    }
+	    
 	    gtk_list_store_append(store, iter);
 	    gtk_list_store_set(store, iter, 
 			       0, fname, 
@@ -1986,7 +2040,7 @@ static int ok_gfn_path (const char *fullname,
 			       2, descrip, 
 			       3, function_package_is_loaded(fullname), 
 			       4, dirname,
-			       5, subdir && have_examples(dirname),
+			       5, flags,
 			       -1);
 	    g_free(fname);
 	}
@@ -2293,7 +2347,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	G_TYPE_STRING,
 	G_TYPE_BOOLEAN,
 	G_TYPE_STRING,   /* hidden string: directory */
-	G_TYPE_BOOLEAN   /* hidden boolean: has examples dir? */
+	G_TYPE_INT       /* hidden flags: has examples dir? doc? */
     };
     GType remote_func_types[] = {
 	G_TYPE_STRING,

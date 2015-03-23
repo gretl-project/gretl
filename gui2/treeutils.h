@@ -14,6 +14,8 @@ void presort_treelist (windata_t *vwin);
 
 void tree_view_get_bool (GtkTreeView *view, int row, int col, gboolean *val);
 
+void tree_view_get_int (GtkTreeView *view, int row, int col, gint *val);
+
 void tree_view_get_string (GtkTreeView *view, int row, int col, gchar **val);
 
 void list_store_set_string (GtkTreeView *view, int row, int col, const gchar *val);

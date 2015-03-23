@@ -4435,16 +4435,24 @@ int print_function_package_sample (const char *fname, int tabwidth,
 */
 
 int get_function_file_header (const char *fname, char **pdesc, 
-			      char **pver)
+			      char **pver, int *pdfdoc)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
     xmlNodePtr sub;
+    int docdone = 0;
     int err = 0;
 
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
     if (err) {
 	return err;
+    }
+
+    if (pdfdoc == NULL) {
+	/* not wanted, so count it is "done" already */
+	docdone = 1;
+    } else {
+	*pdfdoc = 0;
     }
 
     node = node->xmlChildrenNode;
@@ -4456,8 +4464,19 @@ int get_function_file_header (const char *fname, char **pdesc,
 		    gretl_xml_node_get_trimmed_string(sub, doc, pdesc);
 		} else if (!xmlStrcmp(sub->name, (XUC) "version")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, pver);
+		} else if (pdfdoc != NULL && !xmlStrcmp(sub->name, (XUC) "help")) {
+		    char *tmp = NULL;
+		    
+		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
+		    if (tmp != NULL) {
+			if (!strncmp(tmp, "pdfdoc", 6)) {
+			    *pdfdoc = 1;
+			}
+			free(tmp);
+		    }
+		    docdone = 1;
 		}
-		if (*pdesc != NULL && *pver != NULL) {
+		if (*pdesc != NULL && *pver != NULL && docdone) {
 		    break;
 		}
 		sub = sub->next;
