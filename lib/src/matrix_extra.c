@@ -2527,6 +2527,10 @@ static int legendre_scale (int n, double *x, double *w,
     double shft, slp;
     int i;
 
+    if (xna(a) || xna(b)) {
+	return E_INVARG;
+    }
+
     if (fabs(b - a) <= DBL_EPSILON) {
 	fprintf(stderr, "legendre: |b - a| too small\n");
 	return E_DATA;
@@ -2543,34 +2547,53 @@ static int legendre_scale (int n, double *x, double *w,
     return 0;
 }
 
-static void hermite_scale (int n, double *x, double *w,
-			   double mu, double sigma)
+static int hermite_scale (int n, double *x, double *w,
+			  double mu, double sigma)
 {
     double rtpi = sqrt(M_PI);
     int i;
+
+    if (xna(mu) || xna(sigma) || sigma <= 0.0) {
+	return E_INVARG;
+    }
 
     for (i=0; i<n; i++) {
 	x[i] = mu + M_SQRT2 * sigma * x[i];
 	w[i] /= rtpi;
     }
+
+    return 0;
 }
 
 /**
  * gretl_quadrule_matrix_new:
  * @n: the order (i.e. the number of abscissae and weights).
  * @method: should be one of the values in #QuadMethod.
- * @a: for method = QUAD_LEGENDRE, the lower limit of integration.
- * @b: for method = QUAD_LEGENDRE, the upper limit of integration.
+ * @a: optional parameter (see below).
+ * @b: optional parameter (see below).
  * @err: location to receive error code.
  *
  * Calculates a quadrature "rule" (i.e. a set of abscissae or
  * nodes and associated weights) for use in numerical integration.
  * The three supported methods are Gauss-Hermite, Gauss-Legendre
- * and Gauss-Laguerre. The arguments @a and @b are ignored for
- * methods other than Legendre: in the Gauss-Hermite case the
- * integral that is approximated runs from minus infinity to
- * plus infinity, and in the Laguerre case it runs from zero to
- * plus infinity.
+ * and Gauss-Laguerre.
+ *
+ * If the optional parameters are not to be used, both should
+ * be given the value NADBL. 
+ *
+ * If the method is QUAD_GHERMITE, the default weights are W(x)
+ * = exp(-x^2), but @a and @b can be used to apply a normal
+ * scaling with mean @a and standard deviation @b. The limits
+ * of integration are in principle minus infinity and plus
+ * infinity.
+ *
+ * If the method is QUAD_LEGENDRE the weights are W(x) = 1 and
+ * the default limits of integration are -1 and 1, but @a and @b
+ * can be used to adjust the lower and upper limit respectively.
+ *
+ * In the QUAD_LAGUERRE case W(x) = exp(-x) and the limits
+ * of integration are 0 and plus infinity; @a and @b are
+ * ignored.
  * 
  * Returns: an @n x 2 matrix containing the abscissae in the first
  * column and the weights in the second, or NULL on failure.
@@ -2614,15 +2637,11 @@ gretl_matrix *gretl_quadrule_matrix_new (int n, int method,
 		    *err = legendre_scale(n, x, w, a, b);
 		}
 	    } else if (method == QUAD_GHERMITE) {
-#if 0
-	/* old behaviour, btw contrary to what the docs have
-	   said all along */
-		hermite_scale(n, x, w, 0.0, 1.0);
-#else 
-		if (!na(a) && !na(b)) {
-		    hermite_scale(n, x, w, a, b);
+		if (!na(a) || !na(b)) {
+		    *err = hermite_scale(n, x, w, a, b);
 		}
-#endif
+	    } else if (method == QUAD_LAGUERRE) {
+		; /* a and b are ignored */
 	    }
 	}
     }
