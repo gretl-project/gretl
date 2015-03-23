@@ -2614,9 +2614,11 @@ gretl_matrix *gretl_quadrule_matrix_new (int n, int method,
 		    *err = legendre_scale(n, x, w, a, b);
 		}
 	    } else if (method == QUAD_GHERMITE) {
-#if 1 /* FIXME: change this */
+#if 0
+	/* old behaviour, btw contrary to what the docs have
+	   said all along */
 		hermite_scale(n, x, w, 0.0, 1.0);
-#else
+#else 
 		if (!na(a) && !na(b)) {
 		    hermite_scale(n, x, w, a, b);
 		}
