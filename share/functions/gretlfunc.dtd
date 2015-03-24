@@ -50,6 +50,14 @@
              bundle-extra | gui-main | gui-precheck | none) 'none'
 >
 
+<!ATTLIST help
+   filename CDATA #IMPLIED
+>
+
+<!ATTLIST gui-help
+   filename CDATA #IMPLIED
+>
+
 <!ELEMENT help (#PCDATA)>
 <!ELEMENT gui-help (#PCDATA)>
 
@@ -88,6 +96,10 @@
    name CDATA #REQUIRED
    type (scalar | series | matrix | list | string | bundle | 
          strings | matrices | bundles) 'series'
+>
+
+<!ATTLIST sample-script
+   filename CDATA #IMPLIED
 >
 
 <!ELEMENT sample-script (#PCDATA)>
