@@ -145,6 +145,9 @@ struct fnpkg_ {
     char *help;       /* package help text */
     char *gui_help;   /* GUI-specific help (optional) */
     char *sample;     /* sample caller script */
+    char *help_fname;     /* filename: package help text */
+    char *gui_help_fname; /* filename: GUI-specific help text */
+    char *sample_fname;   /* filename: sample caller script */
     char *label;      /* for use in GUI menus */
     char *mpath;      /* menu path in GUI */
     int minver;       /* minimum required gretl version */
@@ -525,6 +528,9 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->help = NULL;
     pkg->gui_help = NULL;
     pkg->sample = NULL;
+    pkg->help_fname = NULL;
+    pkg->gui_help_fname = NULL;
+    pkg->sample_fname = NULL;
     pkg->label = NULL;
     pkg->mpath = NULL;
     pkg->dreq = 0;
@@ -899,6 +905,23 @@ int user_func_is_noprint (const ufunc *fun)
 	return 0;
     } else {
 	return function_is_noprint(fun);
+    }
+}
+
+/**
+ * user_func_is_menu_only:
+ * @fun: pointer to user-function.
+ * 
+ * Returns: 1 if the function is not designed to be called
+ * other than via a GUI menu.
+ */
+
+int user_func_is_menu_only (const ufunc *fun)
+{
+    if (fun == NULL) {
+	return 0;
+    } else {
+	return function_is_menu_only(fun);
     }
 }
 
@@ -2610,13 +2633,22 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     }
 
     if (pkg->help != NULL) {
-	fputs("<help>\n", fp);
+	if (pkg->help_fname != NULL) {
+	    fprintf(fp, "<help filename=\"%s\">\n", pkg->help_fname);
+	} else {
+	    fputs("<help>\n", fp);
+	}
 	gretl_xml_put_string(trim_text(pkg->help), fp);
 	fputs("\n</help>\n", fp);
     } 
 
     if (pkg->gui_help != NULL) {
-	fputs("<gui-help>\n", fp);
+	if (pkg->gui_help_fname != NULL) {
+	    fprintf(fp, "<gui-help filename=\"%s\">\n",
+		    pkg->gui_help_fname);
+	} else {
+	    fputs("<gui-help>\n", fp);
+	}	
 	gretl_xml_put_string(trim_text(pkg->gui_help), fp);
 	fputs("\n</gui-help>\n", fp);
     }
@@ -2640,7 +2672,12 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     }
 
     if (pkg->sample != NULL) {
-	fputs("<sample-script>\n", fp);
+	if (pkg->sample_fname != NULL) {
+	    fprintf(fp, "<sample-script filename=\"%s\">\n",
+		    pkg->sample_fname);
+	} else {
+	    fputs("<sample-script>\n", fp);
+	}
 	gretl_xml_put_string(trim_text(pkg->sample), fp);
 	fputs("\n</sample-script>\n", fp);	
     }
@@ -2933,9 +2970,37 @@ static int pkg_set_funcs_attribute (fnpkg *pkg, const char *s,
     return err;
 }
 
-/* having assembled and checked the function-listing for a new
+static void function_package_set_auxfile (fnpkg *pkg,
+					  const char *id,
+					  const char *fname)
+{
+    gchar *test = NULL;
+    
+    /* Maybe set the source filename for an element
+       of a function package read from file, but only
+       if it's not the standard, default filename for
+       the element in question.
+    */
+
+    if (!strcmp(id, "help-fname")) {
+	test = g_strdup_printf("%s_help.txt", pkg->name);
+    } else if (!strcmp(id, "gui-help-fname")) {
+	test = g_strdup_printf("%s_gui_help.txt", pkg->name);
+    } else if (!strcmp(id, "sample-fname")) {
+	test = g_strdup_printf("%s_sample.inp", pkg->name);
+    }
+
+    if (test != NULL) {
+	if (strcmp(fname, test)) {
+	   function_package_set_properties(pkg, id, fname, NULL);
+	}
+	g_free(test);
+    }
+}
+
+/* Having assembled and checked the function-listing for a new
    package, now retrieve the additional information from the
-   spec file
+   spec file.
 */
 
 static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
@@ -2975,16 +3040,24 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 	    } else if (!strncmp(line, "menu-attachment", 15)) {
 		err = function_package_set_properties(pkg, "menu-attachment", p, NULL);
 	    } else if (!strncmp(line, "help", 4)) {
+		int pdfdoc = 0;
+		
 		if (has_suffix(p, ".pdf")) {
 		    pprintf(prn, "Recording help reference %s\n", p);
 		    tmp = g_strdup_printf("pdfdoc:%s", p);
+		    pdfdoc = 1;
 		} else {
 		    pprintf(prn, "Looking for help text in %s\n", p);
 		    tmp = pkg_aux_content(p, &err);
 		}
 		if (!err) {
 		    err = function_package_set_properties(pkg, "help", tmp, NULL);
-		    if (!err) got++;
+		    if (!err) {
+			got++;
+			if (!pdfdoc) {
+			    function_package_set_auxfile(pkg, "help-fname", p);
+			}
+		    }
 		    g_free(tmp);
 		}
 	    } else if (!strncmp(line, "gui-help", 8)) {
@@ -2992,6 +3065,9 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		tmp = pkg_aux_content(p, &err);
 		if (!err) {
 		    err = function_package_set_properties(pkg, "gui-help", tmp, NULL);
+		    if (!err) {
+			function_package_set_auxfile(pkg, "gui-help-fname", p);
+		    }
 		    g_free(tmp);
 		}
 	    } else if (!strncmp(line, "sample-script", 13)) {
@@ -2999,7 +3075,10 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		tmp = pkg_aux_content(p, &err);
 		if (!err) {
 		    err = function_package_set_properties(pkg, "sample-script", tmp, NULL);
-		    if (!err) got++;
+		    if (!err) {
+			got++;
+			function_package_set_auxfile(pkg, "sample-fname", p);
+		    }
 		    g_free(tmp);
 		}
 	    } else if (!strncmp(line, "data-files", 10)) {
@@ -3310,7 +3389,10 @@ static int is_string_property (const char *key)
 	!strcmp(key, "menu-attachment") ||
 	!strcmp(key, "help") ||
 	!strcmp(key, "gui-help") ||
-	!strcmp(key, "sample-script");
+	!strcmp(key, "sample-script") ||
+	!strcmp(key, "help-fname") ||
+	!strcmp(key, "gui-help-fname") ||
+	!strcmp(key, "sample-fname");
 }
 
 /* varargs function for setting the properties of a function
@@ -3352,9 +3434,15 @@ int function_package_set_properties (fnpkg *pkg, ...)
 		    pkg->uses_subdir = 1;
 		}
 	    } else if (!strcmp(key, "gui-help")) {
-		err = maybe_replace_string_var(&pkg->gui_help, sval);
+		err = maybe_replace_optional_string_var(&pkg->gui_help, sval);
 	    } else if (!strcmp(key, "sample-script")) {
 		err = maybe_replace_string_var(&pkg->sample, sval);
+	    } else if (!strcmp(key, "help-fname")) {
+		err = maybe_replace_optional_string_var(&pkg->help_fname, sval);
+	    } else if (!strcmp(key, "gui-help-fname")) {
+		err = maybe_replace_optional_string_var(&pkg->gui_help_fname, sval);
+	    } else if (!strcmp(key, "sample-fname")) {
+		err = maybe_replace_optional_string_var(&pkg->sample_fname, sval);
 	    } else if (!strcmp(key, "label")) {
 		err = maybe_replace_optional_string_var(&pkg->label, sval);
 	    } else if (!strcmp(key, "menu-attachment")) {
@@ -3490,6 +3578,15 @@ static int pkg_get_func_privacy (fnpkg *pkg, int role)
     return -1;
 }
 
+static void handle_optional_string (char **ps, const char *src)
+{
+    if (src == NULL) {
+	*ps = NULL;
+    } else {
+	*ps = g_strdup(src);
+    }
+}
+
 /* varargs function for retrieving the properties of a function
    package: the arguments after @pkg take the form of a
    NULL-terminated set of (key, pointer) pairs; values are written to
@@ -3561,7 +3658,15 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	    *ps = g_strdup(pkg->gui_help);
 	} else if (!strcmp(key, "sample-script")) {
 	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->sample);
+	} else if (!strcmp(key, "help-fname")) {
+	    ps = (char **) ptr;
+	    handle_optional_string(ps, pkg->help_fname);
+	} else if (!strcmp(key, "gui-help-fname")) {
+	    ps = (char **) ptr;
+	    handle_optional_string(ps, pkg->gui_help_fname);
+	} else if (!strcmp(key, "sample-fname")) {
+	    ps = (char **) ptr;
+	    handle_optional_string(ps, pkg->sample_fname);
 	} else if (!strcmp(key, "label")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->label);
@@ -3622,6 +3727,28 @@ int function_package_get_properties (fnpkg *pkg, ...)
     va_end(ap);
 
     return err;
+}
+
+/* don't tamper with return value! */
+
+const char *function_package_get_string (fnpkg *pkg,
+					 const char *id)
+{
+    if (!strcmp(id, "help-fname")) {
+	return pkg->help_fname;
+    } else if (!strcmp(id, "gui-help-fname")) {
+	return pkg->gui_help_fname;
+    } else if (!strcmp(id, "sample-fname")) {
+	return pkg->sample_fname;
+    } else if (!strcmp(id, "sample-script")) {
+	return pkg->sample;
+    } else if (!strcmp(id, "help")) {
+	return pkg->help;
+    } else if (!strcmp(id, "gui-help")) {
+	return pkg->gui_help;
+    } else {
+	return NULL;
+    }
 }
 
 char **function_package_get_data_files (fnpkg *pkg, int *n)
@@ -3762,6 +3889,9 @@ static void real_function_package_free (fnpkg *pkg, int full)
 	free(pkg->help);
 	free(pkg->gui_help);
 	free(pkg->sample);
+	free(pkg->help_fname);
+	free(pkg->gui_help_fname);
+	free(pkg->sample_fname);
 	free(pkg->label);
 	free(pkg->mpath);
 	free(pkg);
@@ -4128,10 +4258,13 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->descrip);
 	} else if (!xmlStrcmp(cur->name, (XUC) "help")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->help);
+	    gretl_xml_get_prop_as_string(cur, "filename", &pkg->help_fname);
 	} else if (!xmlStrcmp(cur->name, (XUC) "gui-help")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->gui_help);
+	    gretl_xml_get_prop_as_string(cur, "filename", &pkg->gui_help_fname);
 	} else if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sample);
+	    gretl_xml_get_prop_as_string(cur, "filename", &pkg->sample_fname);
 	} else if (!xmlStrcmp(cur->name, (XUC) "label")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->label);
 	} else if (!xmlStrcmp(cur->name, (XUC) "menu-attachment")) {

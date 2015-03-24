@@ -6218,3 +6218,5 @@ void percent_change_dialog (int v)
     gretl_dialog_keep_above(dialog);
     gtk_widget_show_all(dialog);
 }
+
+

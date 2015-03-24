@@ -99,6 +99,8 @@ int user_func_get_return_type (const ufunc *fun);
 
 int user_func_is_noprint (const ufunc *fun);
 
+int user_func_is_menu_only (const ufunc *fun);
+
 const char *user_function_name_by_index (int i);
 
 int user_function_index_by_name (const char *name, 
@@ -158,6 +160,9 @@ int function_package_connect_funcs (fnpkg *pkg,
 int function_package_set_properties (fnpkg *pkg, ...);
 
 int function_package_get_properties (fnpkg *pkg, ...);
+
+const char *function_package_get_string (fnpkg *pkg,
+					 const char *id);
 
 int function_package_set_data_files (fnpkg *pkg, char **S, int n);
 

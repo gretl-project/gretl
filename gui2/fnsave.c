@@ -52,6 +52,13 @@ enum {
     MODEL_WINDOW
 };
 
+enum {
+    APPEND_SAMPLE  = 1 << 0, /* write functions as .inp: append sample? */
+    WRITE_SAMPFILE = 1 << 1, /* write .spec file: also write sample script? */
+    WRITE_HELPFILE = 1 << 2, /* write .spec file: also write help file? */
+    WRITE_GUI_HELP = 1 << 3  /* write .spec file: also write gui help? */
+} PkgSaveFlags;
+
 typedef struct function_info_ function_info;
 typedef struct login_info_ login_info;
 
@@ -75,6 +82,7 @@ struct function_info_ {
     GtkWidget *currtree;   /* currently displayed menu treeview */
     GtkWidget *alttree;    /* currently undisplayed menu treeview */
     GtkWidget *treewin;    /* scrolled window to hold menu trees */
+    GtkWidget *specdlg;    /* pkg spec save dialog */
     windata_t *samplewin;  /* window for editing sample script */
     GList *codewins;       /* list of windows editing function code */
     fnpkg *pkg;            /* pointer to package being edited */
@@ -86,6 +94,10 @@ struct function_info_ {
     gchar *pkgdesc;        /* package description */
     gchar *sample;         /* sample script for package */
     gchar *help;           /* package help text */
+    gchar *gui_help;       /* GUI-specific help text */
+    gchar *sample_fname;   /* filename: sample script */
+    gchar *help_fname;     /* filename: help text */
+    gchar *gui_help_fname; /* filename: GUI-specific help */
     char **pubnames;       /* names of public functions */
     char **privnames;      /* names of private functions */
     char **specials;       /* names of special functions */
@@ -103,7 +115,7 @@ struct function_info_ {
     int minver;            /* minimum gretl version, package */
     gboolean upload;       /* upload to server on save? */
     gboolean modified;     /* anything changed in package? */
-    gboolean include_samp; /* include sample script on .inp save? */
+    int save_flags;        /* see PkgSaveFlags */
 };
 
 /* info relating to login to server for upload */
@@ -160,7 +172,8 @@ function_info *finfo_new (void)
 
     finfo->upload = FALSE;
     finfo->modified = FALSE;
-    finfo->include_samp = FALSE;
+    finfo->save_flags = WRITE_SAMPFILE |
+	WRITE_HELPFILE | WRITE_GUI_HELP;
 
     finfo->active = NULL;
     finfo->samplewin = NULL;
@@ -168,8 +181,15 @@ function_info *finfo_new (void)
     finfo->codesel = NULL;
     finfo->popup = NULL;
     finfo->extra = NULL;
+    finfo->specdlg = NULL;
 
     finfo->help = NULL;
+    finfo->gui_help = NULL;
+
+    finfo->sample_fname = NULL;
+    finfo->help_fname = NULL;
+    finfo->gui_help_fname = NULL;
+    
     finfo->pubnames = NULL;
     finfo->privnames = NULL;
     finfo->datafiles = NULL;
@@ -216,6 +236,12 @@ static void finfo_free (function_info *finfo)
     g_free(finfo->pkgdesc);
     g_free(finfo->sample);
     g_free(finfo->help);
+    g_free(finfo->gui_help);
+
+    g_free(finfo->sample_fname);
+    g_free(finfo->help_fname);
+    g_free(finfo->gui_help_fname);
+    
     g_free(finfo->menupath);
     g_free(finfo->menulabel);
 
@@ -861,22 +887,230 @@ static void gfn_to_script_callback (GtkWidget *w, function_info *finfo)
 	    return;
 	}
 
-	finfo->include_samp = (resp == GRETL_YES);
+	if (resp == GRETL_YES) {
+	    finfo->save_flags |= APPEND_SAMPLE;
+	} else {
+	    finfo->save_flags &= ~APPEND_SAMPLE;
+	}
     }
 
     file_selector_with_parent(SAVE_FUNCTIONS_AS, FSEL_DATA_MISC, 
 			      finfo, finfo->dlg);
 }
 
+struct spec_info {
+    GtkWidget *dialog;
+    GtkWidget *checks[3];
+    GtkWidget *entries[3];
+    int *flags;
+    function_info *finfo;
+    int retval;
+};
+
+static void reset_finfo_filename (function_info *finfo, int i, gchar *src)
+{
+    if (i == 0) {
+	g_free(finfo->sample_fname);
+	finfo->sample_fname = src;
+    } else if (i == 1) {
+	g_free(finfo->help_fname);
+	finfo->help_fname = src;
+    } else {
+	g_free(finfo->gui_help_fname);
+	finfo->gui_help_fname = src;
+    }
+}
+
+static void spec_save_ok (GtkWidget *button, gpointer data)
+{
+    struct spec_info *sinfo = data;
+    function_info *finfo = sinfo->finfo;
+    gchar *fname;
+    int i, flag;
+
+    for (i=0; i<3; i++) {
+	fname = NULL;
+	if (sinfo->checks[i] != NULL) {
+	    flag = sinfo->flags[i];
+	    finfo->save_flags &= ~flag;
+	    if (button_is_active(sinfo->checks[i])) {
+		fname = entry_box_get_trimmed_text(sinfo->entries[i]);
+		if (fname != NULL) {
+		    finfo->save_flags |= flag;
+		}
+	    }
+	}
+	reset_finfo_filename(finfo, i, fname);
+    }
+
+    sinfo->retval = 0;
+    gtk_widget_destroy(sinfo->dialog);
+}
+
+static gchar *get_pkg_text_filename (function_info *finfo,
+				     const char *pkgname,
+				     const char **ids,
+				     int i)
+{
+    const char *s;
+    gchar *fname = NULL;
+
+    s = function_package_get_string(finfo->pkg, ids[i]);
+
+    if (s != NULL) {
+	fname = g_strdup(s);
+    } else if (i == 0) {
+	fname = g_strdup_printf("%s_sample.inp", pkgname);
+    } else if (i == 1) {
+	fname = g_strdup_printf("%s_help.txt", pkgname);
+    } else {
+	fname = g_strdup_printf("%s_gui_help.txt", pkgname);
+    }
+
+    return fname;
+}
+
+static void nullify_spec_dialog (GtkWidget *w, function_info *finfo)
+{
+    finfo->specdlg = NULL;
+}
+
+static int gfn_spec_save_dialog (function_info *finfo,
+				 const char **texts)
+{
+    const gchar *msgs[] = {
+	N_("Save sample script as"),
+	N_("Save help text as"),
+	N_("Save GUI help as")
+    };
+    const char *ids[] = {
+	"sample-fname",
+	"help-fname",
+	"gui-help-fname"
+    };
+    int flags[] = {
+	WRITE_SAMPFILE,
+	WRITE_HELPFILE,
+	WRITE_GUI_HELP
+    };    
+    struct spec_info sinfo;
+    GtkWidget *dialog, *entry;
+    GtkWidget *vbox, *hbox, *w;
+    GtkWidget *table;
+    const char *pkgname;
+    gchar *tmp;
+    int i, j, n = 0;
+
+    sinfo.retval = GRETL_CANCEL;
+    sinfo.finfo = finfo;
+    sinfo.flags = flags;
+
+    finfo->specdlg = sinfo.dialog = dialog =
+	gretl_dialog_new(NULL, finfo->dlg, GRETL_DLG_BLOCK);
+    g_signal_connect(G_OBJECT(dialog), "destroy",
+		     G_CALLBACK(nullify_spec_dialog), finfo);
+    
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    pkgname = function_package_get_name(finfo->pkg);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    tmp = g_strdup_printf("Saving %s.spec: Also save auxiliary file(s)?",
+			  pkgname);
+    w = gtk_label_new(tmp);
+    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
+
+    for (i=0; i<3; i++) {
+	n += (texts[i] != NULL);
+    }
+
+    table = gtk_table_new(n, 2, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(table), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(table), 5);
+    gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, FALSE, 5);
+
+    j = 0;
+    for (i=0; i<3; i++) {
+	if (texts[i] == NULL) {
+	    sinfo.checks[i] = sinfo.entries[i] = NULL;
+	    continue;
+	}
+	tmp = get_pkg_text_filename(finfo, pkgname, ids, i);
+	w = sinfo.checks[i] = gtk_check_button_new_with_label(_(msgs[i]));
+	if (finfo->save_flags & flags[i]) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
+	}
+	gtk_table_attach_defaults(GTK_TABLE(table), w, 0, 1, j, j+1);
+	entry = sinfo.entries[i] = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(entry), 64);
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), 28);
+	gtk_entry_set_text(GTK_ENTRY(entry), tmp);
+	gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, j, j+1);
+	g_free(tmp);
+	j++;
+    }
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+
+    cancel_delete_button(hbox, dialog);
+    w = ok_button(hbox);
+    g_signal_connect(G_OBJECT(w), "clicked", 
+		     G_CALLBACK(spec_save_ok), &sinfo);
+    gtk_widget_grab_default(w);
+
+    gtk_widget_show_all(dialog);
+
+    return sinfo.retval;
+}
+
 static void gfn_to_spec_callback (GtkWidget *w, function_info *finfo)
 {
+    const char *texts[] = {
+	finfo->sample,
+	finfo->help,
+	finfo->gui_help
+    };
+    int resp = 0;
+    
     if (finfo->pkg == NULL) {
 	warnbox(_("Please save your package first"));
 	return;
     }
 
-    file_selector_with_parent(SAVE_GFN_SPEC, FSEL_DATA_MISC, 
-			      finfo, finfo->dlg);
+    if (finfo->specdlg != NULL) {
+	gtk_window_present(GTK_WINDOW(finfo->specdlg));
+	return;
+    }
+
+    if (texts[0] == NULL) {
+	texts[0] = function_package_get_string(finfo->pkg, "sample-script");
+    }
+    if (texts[1] != NULL && !strncmp(texts[1], "pdfdoc", 6)) {
+	texts[1] = NULL;
+    }    
+    if (texts[2] == NULL) {
+	texts[2] = function_package_get_string(finfo->pkg, "gui-help");
+    }
+
+    if (texts[0] != NULL || texts[1] != NULL || texts[2] != NULL) {
+	resp = gfn_spec_save_dialog(finfo, texts);
+    }
+
+#if 0
+    fprintf(stderr, "resp = %d\n", resp);
+    fprintf(stderr, "fnames: '%s' (%s), '%s' (%s), '%s' (%s)\n",
+	    finfo->sample_fname, (finfo->save_flags & WRITE_SAMPFILE) ? "yes" : "no",
+	    finfo->help_fname, (finfo->save_flags & WRITE_HELPFILE) ? "yes" : "no",
+	    finfo->gui_help_fname, (finfo->save_flags & WRITE_GUI_HELP) ? "yes" : "no");
+    
+    return;
+#endif
+    
+    if (!canceled(resp)) {
+	file_selector_with_parent(SAVE_GFN_SPEC, FSEL_DATA_MISC, 
+				  finfo, finfo->dlg);
+    }
 }
 
 static GtkWidget *label_hbox (GtkWidget *w, const char *txt)
@@ -2815,7 +3049,8 @@ int save_function_package_as_script (const char *fname, gpointer p)
     }
 
     /* append sample script? */
-    if (finfo->include_samp && finfo->sample != NULL) {
+    if ((finfo->save_flags & APPEND_SAMPLE) &&
+	finfo->sample != NULL) {
 	int n = strlen(finfo->sample);
 
 	pputs(prn, "\n# sample function call\n");
@@ -2831,7 +3066,7 @@ int save_function_package_as_script (const char *fname, gpointer p)
 }
 
 static void maybe_print (PRN *prn, const char *key, 
-			       const char *arg)
+			 const char *arg)
 {
     if (arg != NULL && *arg != '\0') {
 	pprintf(prn, "%s = %s\n", key, arg);
@@ -2840,41 +3075,56 @@ static void maybe_print (PRN *prn, const char *key,
     }
 }
 
-static const char *aux_basename (const char *fname)
-{
-    const char *p = strrchr(fname, SLASH);
-
-    if (p != NULL) {
-	/* take last part of filename */
-	return p + 1;
-    } else {
-	return fname;
-    }
-}
-
-static int maybe_write_aux_file (const char *fname, 
+static int maybe_write_aux_file (function_info *finfo,
+				 const char *fname,
+				 const char *id,
 				 const gchar *content,
-				 const char *sfx,
 				 PRN *prn)
 {
     int ret = 0;
 
     if (content != NULL && *content != '\0') {
-	char *s, tmp[FILENAME_MAX];
-	FILE *fp;
+	const char *auxname = NULL;
+	int flag;
 
-	strcpy(tmp, fname);
-	s = strstr(tmp, ".spec");
-	if (s != NULL) {
-	    *s = '\0';
-	    strncat(s, sfx, strlen(sfx));
-	    fp = gretl_fopen(tmp, "w");
+	if (!strcmp(id, "sample-script")) {
+	    auxname = finfo->sample_fname;
+	    flag = WRITE_SAMPFILE;
+	} else if (!strcmp(id, "help")) {
+	    auxname = finfo->help_fname;
+	    flag = WRITE_HELPFILE;
+	} else {
+	    auxname = finfo->gui_help_fname;
+	    flag = WRITE_GUI_HELP;
+	}
+
+	if (auxname != NULL && (finfo->save_flags & flag)) {
+	    /* we'll write out the actual file */
+	    FILE *fp = NULL;
+
+	    if (strrchr(fname, SLASH)) {
+		/* package fname has directory component */
+		char *s, tmp[FILENAME_MAX];
+		
+		strcpy(tmp, fname);
+		s = strrchr(tmp, SLASH);
+		*(s + 1) = '\0';
+		strcat(tmp, auxname);
+		fp = gretl_fopen(tmp, "w");
+	    } else {
+		fp = gretl_fopen(auxname, "w");
+	    }
+	    
 	    if (fp != NULL) {
 		fputs(content, fp);
 		fclose(fp);
-		pputs(prn, aux_basename(tmp));
 		ret = 1;
 	    }
+	}
+
+	if (auxname != NULL) {
+	    /* record filename in spec file */
+	    pputs(prn, auxname);
 	}
     }
 
@@ -2906,7 +3156,8 @@ int save_function_package_spec (const char *fname, gpointer p)
     PRN *prn;
     const char *reqstr = NULL;
     int v1, v2, v3;
-    int i, len, nnp = 0;
+    int nnp = 0, nmo = 0;
+    int i, len;
     int err = 0;
 
     prn = gretl_print_new_with_filename(fname, &err);
@@ -2980,6 +3231,9 @@ int save_function_package_spec (const char *fname, gpointer p)
 	if (user_func_is_noprint(fun)) {
 	    nnp++;
 	}
+	if (user_func_is_menu_only(fun)) {
+	    nmo++;
+	}	
     }
     pputc(prn, '\n');
 
@@ -2997,6 +3251,20 @@ int save_function_package_spec (const char *fname, gpointer p)
 	pputc(prn, '\n');
     }
 
+    if (nmo > 0) {
+	/* menu-only interface names */
+	pputs(prn, "menu-only = ");
+	for (i=0; i<finfo->n_pub; i++) {
+	    const char *s = finfo->pubnames[i];
+	    ufunc *fun = get_function_from_package(s, finfo->pkg);
+
+	    if (user_func_is_menu_only(fun)) {
+		pprintf(prn, "%s ", s);
+	    }
+	}
+	pputc(prn, '\n');
+    }
+
     /* write out help text file and/or sample script? */
 
     pputs(prn, "help = ");
@@ -3007,7 +3275,7 @@ int save_function_package_spec (const char *fname, gpointer p)
 	    if (!strncmp(help, "pdfdoc", 6)) {
 		pputs(prn, help + 7);
 	    } else {
-		maybe_write_aux_file(fname, help, "_help.txt", prn);
+		maybe_write_aux_file(finfo, fname, "help", help, prn);
 	    }
 	    g_free(help);
 	}
@@ -3015,7 +3283,7 @@ int save_function_package_spec (const char *fname, gpointer p)
     }
 
     pputs(prn, "sample-script = ");
-    maybe_write_aux_file(fname, finfo->sample, "_sample.inp", prn);
+    maybe_write_aux_file(finfo, fname, "sample-script", finfo->sample, prn);
     pputc(prn, '\n');
 
     gretl_print_destroy(prn);
@@ -3273,13 +3541,14 @@ int no_user_functions_check (GtkWidget *parent)
     int err = 0;
 
     if (n_free_functions() == 0) {
+	const gchar *query =
+	    N_("No functions are available for packaging at present.\n"
+	       "Do you want to write a function now?");
 	int resp;
 
 	err = 1;
 	resp = yes_no_dialog_with_parent(_("gretl: function packages"),
-					 _("No functions are available for packaging at present.\n"
-					   "Do you want to write a function now?"),
-					 0, parent);
+					 _(query), 0, parent);
 	if (resp == GRETL_YES) {
 	    do_new_script(FUNC, NULL);
 	}
