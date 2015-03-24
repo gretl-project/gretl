@@ -1193,9 +1193,11 @@ windata_t *get_local_viewer (int remote_role)
     return vwin;
 }
 
-static void new_package_callback (GtkWidget *w, gpointer p)
+static void new_package_callback (GtkWidget *w, gpointer data)
 {
-    functions_selection_wrapper();
+    windata_t *vwin = (windata_t *) data;
+    
+    functions_selection_wrapper(vwin_toplevel(vwin));
 }
 
 static void build_datafiles_popup (windata_t *vwin)

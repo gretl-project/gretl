@@ -230,7 +230,7 @@ static void pc_change_callback (GtkAction *action, gpointer p)
 
 static void new_package_callback (GtkAction *action, gpointer p)
 {
-    if (no_user_functions_check()) {
+    if (no_user_functions_check(NULL)) {
 	return;
     } else {
 	fsave_callback(action, p);

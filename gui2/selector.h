@@ -59,7 +59,7 @@ void selector_from_model (windata_t *vwin);
 
 void data_export_selection_wrapper (int file_code);
 
-void functions_selection_wrapper (void);
+void functions_selection_wrapper (GtkWidget *parent);
 
 void add_remove_functions_dialog (char **pubnames, int npub,
 				  char **privnames, int npriv,

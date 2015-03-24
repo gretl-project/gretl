@@ -103,6 +103,7 @@ struct function_info_ {
     int minver;            /* minimum gretl version, package */
     gboolean upload;       /* upload to server on save? */
     gboolean modified;     /* anything changed in package? */
+    gboolean include_samp; /* include sample script on .inp save? */
 };
 
 /* info relating to login to server for upload */
@@ -159,6 +160,7 @@ function_info *finfo_new (void)
 
     finfo->upload = FALSE;
     finfo->modified = FALSE;
+    finfo->include_samp = FALSE;
 
     finfo->active = NULL;
     finfo->samplewin = NULL;
@@ -841,9 +843,25 @@ static void add_remove_callback (GtkWidget *w, function_info *finfo)
 
 static void gfn_to_script_callback (GtkWidget *w, function_info *finfo)
 {
+    gint resp;
+    
     if (finfo->n_pub + finfo->n_priv == 0) {
 	warnbox("No code to save");
 	return;
+    }
+
+    if (finfo->sample != NULL) {
+	resp = yes_no_dialog_with_parent("gretl",
+					 _("Saving packaged functions as script:\n"
+					   "include the sample script?"),
+					 1,
+					 finfo->dlg);
+
+	if (canceled(resp)) {
+	    return;
+	}
+
+	finfo->include_samp = (resp == GRETL_YES);
     }
 
     file_selector_with_parent(SAVE_FUNCTIONS_AS, FSEL_DATA_MISC, 
@@ -2610,13 +2628,16 @@ static int check_package_filename (function_info *finfo, const char *fname)
     return err;
 }
 
-static int dont_overwrite_pkg (const char *fname)
+static int dont_overwrite_pkg (function_info *finfo, const char *fname)
 {
     FILE *fp = gretl_fopen(fname, "r");
     int ret = 0;
 
     if (fp != NULL) {
-	int resp = yes_no_dialog("gretl", _("OK to overwrite?"), 0);
+	int resp = yes_no_dialog_with_parent("gretl",
+					     _("OK to overwrite?"),
+					     0,
+					     finfo->dlg);
 
 	ret = (resp == GRETL_NO);
 	fclose(fp);
@@ -2653,7 +2674,7 @@ int save_function_package (const char *fname, gpointer p)
 
     if (finfo->fname == NULL || strcmp(finfo->fname, fname)) {
 	/* new or save as */
-	if (dont_overwrite_pkg(fname)) {
+	if (dont_overwrite_pkg(finfo, fname)) {
 	    return 1;
 	}
 	err = check_package_filename(finfo, fname);
@@ -2765,6 +2786,7 @@ int save_function_package_as_script (const char *fname, gpointer p)
 	return err;
     }
 
+    /* write basic package info */
     pprintf(prn, "# author='%s'\n", finfo->author);
     if (finfo->email != NULL && *finfo->email != '\0') {
 	pprintf(prn, "# email='%s'\n", finfo->email);
@@ -2772,6 +2794,7 @@ int save_function_package_as_script (const char *fname, gpointer p)
     pprintf(prn, "# version='%s'\n", finfo->version);
     pprintf(prn, "# date='%s'\n", finfo->date);
 
+    /* write private functions, if any */
     for (i=0; i<finfo->n_priv; i++) {
 	fun = get_function_from_package(finfo->privnames[i],
 					finfo->pkg);
@@ -2781,6 +2804,7 @@ int save_function_package_as_script (const char *fname, gpointer p)
 	}
     }
 
+    /* write public functions */
     for (i=0; i<finfo->n_pub; i++) {
 	fun = get_function_from_package(finfo->pubnames[i],
 					finfo->pkg);
@@ -2790,7 +2814,8 @@ int save_function_package_as_script (const char *fname, gpointer p)
 	}
     }
 
-    if (finfo->sample != NULL) {
+    /* append sample script? */
+    if (finfo->include_samp && finfo->sample != NULL) {
 	int n = strlen(finfo->sample);
 
 	pputs(prn, "\n# sample function call\n");
@@ -3243,7 +3268,7 @@ void edit_package_at_startup (const char *fname)
     }
 }
 
-int no_user_functions_check (void)
+int no_user_functions_check (GtkWidget *parent)
 {
     int err = 0;
 
@@ -3251,10 +3276,10 @@ int no_user_functions_check (void)
 	int resp;
 
 	err = 1;
-	resp = yes_no_dialog(_("gretl: function packages"),
-			     _("No functions are available for packaging at present.\n"
-			       "Do you want to write a function now?"),
-			     0);
+	resp = yes_no_dialog_with_parent(_("gretl: function packages"),
+					 _("No functions are available for packaging at present.\n"
+					   "Do you want to write a function now?"),
+					 0, parent);
 	if (resp == GRETL_YES) {
 	    do_new_script(FUNC, NULL);
 	}

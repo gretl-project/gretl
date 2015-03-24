@@ -7455,13 +7455,13 @@ void data_export_selection_wrapper (int file_ci)
     }
 }
 
-void functions_selection_wrapper (void)
+void functions_selection_wrapper (GtkWidget *parent)
 {
     int err;
 
     set_selector_storelist(NULL);
 
-    err = no_user_functions_check();
+    err = no_user_functions_check(parent);
 
     if (!err) {
 	selector *sr;

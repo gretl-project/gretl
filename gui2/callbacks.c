@@ -203,7 +203,7 @@ void file_save (windata_t *vwin, int ci)
 	data_export_selection_wrapper(ci);
 	break;
     case SAVE_FUNCTIONS:
-	functions_selection_wrapper();
+	functions_selection_wrapper(vwin_toplevel(vwin));
 	break;
     case SAVE_TEX:
     case SAVE_TEXT:
