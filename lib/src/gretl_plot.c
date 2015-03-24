@@ -151,7 +151,7 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
     }
 
     if (!err && list != NULL && list[0] == 1) {
-	/* default to time-series plot? */
+	/* default to time-series plot */
 	if (dataset_is_time_series(dset)) {
 	    plot.opt |= OPT_T;
 	}

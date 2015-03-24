@@ -8762,6 +8762,139 @@
 
   </command>
 
+  <command name="plot" section="Graphs" context="cli">
+    <usage>
+      <arguments>
+        <argument>data</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--with-lines</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>use lines, not points</effect>
+        </option>
+        <option>
+	  <flag>--with-lp</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>use lines and points</effect>
+        </option>
+        <option>
+	  <flag>--with-impulses</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>use vertical lines</effect>
+        </option>
+        <option>
+	  <flag>--time-series</flag>
+	  <effect>plot against time</effect>
+        </option>
+        <option>
+	  <flag>--single-yaxis</flag>
+	  <effect>force use of just one y-axis</effect>
+        </option>
+        <option>
+	  <flag>--dummy</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--fit</flag>
+	  <optparm>fitspec</optparm>
+	  <effect>see below</effect>
+        </option>	
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+        </option>
+      </options>
+    </usage>
+    
+    <description>
+      <para>
+	The <lit>plot</lit> block provides an alternative to the
+	<cmdref targ="gnuplot"/> command which may be more convenient
+	when you are producing an elaborate plot (with several options
+	and/or gnuplot commands to be inserted into the plot file).
+      </para>
+      <para>
+	A <lit>plot</lit> block starts with the command-word
+	<lit>plot</lit> followed by the required argument,
+	<repl>data</repl>, which specifies the data to be plotted:
+	this should be the name of a list, a matrix, or a single
+	series. If a list or matrix is given, the last element (list)
+	or column (matrix) is assumed to be the <math>x</math>-axis
+	variable and the other(s) the <math>y</math>-axis variable(s).
+	The option of supplying a single series name is restricted to
+	time-series data, in which case it is assumed that a
+	time-series plot is wanted; otherwise an error is flagged.
+      </para>
+      <para>
+	The starting line may be prefixed with
+	the <quote><repl>savename</repl> <lit>&lt;-</lit></quote>
+	apparatus to save a plot as an icon in the GUI program.
+	The block ends with <lit>end plot</lit>.
+      </para>
+      <para>
+	Inside the block you have zero or more lines of these types,
+	identified by an initial keyword:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>option</lit>: specify a single option.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	  <lit>options</lit>: specify multiple options on a single
+	  line, separated by spaces.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>literal</lit>: a command to be passed to gnuplot
+	    literally.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>printf</lit>: a printf statement whose result will be
+	    passed to gnuplot literally.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Note that when you specify an option using the
+	<lit>option</lit> or <lit>options</lit> keywords, it is not
+	necessary to supply the customary double-dash before the
+	option specifier. For details on the effects of the various
+	options please see <cmdref targ="gnuplot"/>.
+      </para>
+      <para>
+	The intended use of the <lit>plot</lit> block is best
+	illustrated by example:
+      </para>
+      <code>
+	string title = "My title"
+	string xname = "My x-variable"
+	plot plotmat
+	    options with-lines fit=none
+	    literal set linetype 3 lc rgb "#0000ff"
+	    literal set nokey
+	    printf "set title \"%s\"", title
+	    printf "set xlabel \"%s\"", xname
+	end plot --output=display
+      </code>
+      <para>
+	This example assumes that <lit>plotmat</lit> is the name of a
+	matrix with at least 2 columns (or a list with at least two
+	members).  Note that it is considered good practice to place
+	the <opt>output</opt> option (only) on the last line of the
+	block.
+      </para>
+    </description>
+
+  </command>
+
   <command name="polyweights" section="Transformations" context="gui"
     label="Polynomial trend fitting">
 
