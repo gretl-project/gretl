@@ -1082,14 +1082,14 @@ static void gfn_to_spec_callback (GtkWidget *w, function_info *finfo)
 	finfo->gui_help
     };
     int resp = 0;
-    
-    if (finfo->pkg == NULL) {
-	warnbox(_("Please save your package first"));
-	return;
-    }
 
     if (finfo->specdlg != NULL) {
 	gtk_window_present(GTK_WINDOW(finfo->specdlg));
+	return;
+    }    
+    
+    if (finfo->pkg == NULL) {
+	warnbox(_("Please save your package first"));
 	return;
     }
 
@@ -1107,16 +1107,6 @@ static void gfn_to_spec_callback (GtkWidget *w, function_info *finfo)
 	resp = gfn_spec_save_dialog(finfo, texts);
     }
 
-#if 0
-    fprintf(stderr, "resp = %d\n", resp);
-    fprintf(stderr, "fnames: '%s' (%s), '%s' (%s), '%s' (%s)\n",
-	    finfo->sample_fname, (finfo->save_flags & WRITE_SAMPFILE) ? "yes" : "no",
-	    finfo->help_fname, (finfo->save_flags & WRITE_HELPFILE) ? "yes" : "no",
-	    finfo->gui_help_fname, (finfo->save_flags & WRITE_GUI_HELP) ? "yes" : "no");
-    
-    return;
-#endif
-    
     if (!canceled(resp)) {
 	file_selector_with_parent(SAVE_GFN_SPEC, FSEL_DATA_MISC, 
 				  finfo, finfo->dlg);

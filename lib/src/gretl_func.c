@@ -3655,9 +3655,10 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	    *ps = g_strdup(pkg->help);
 	} else if (!strcmp(key, "gui-help")) {
 	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->gui_help);
+	    handle_optional_string(ps, pkg->gui_help);
 	} else if (!strcmp(key, "sample-script")) {
 	    ps = (char **) ptr;
+	    *ps = g_strdup(pkg->sample);
 	} else if (!strcmp(key, "help-fname")) {
 	    ps = (char **) ptr;
 	    handle_optional_string(ps, pkg->help_fname);
