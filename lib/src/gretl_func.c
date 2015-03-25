@@ -3734,7 +3734,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 const char *function_package_get_string (fnpkg *pkg,
 					 const char *id)
 {
-    if (!strcmp(id, "help-fname")) {
+    if (pkg == NULL || id == NULL) {
+	return NULL;
+    } else if (!strcmp(id, "help-fname")) {
 	return pkg->help_fname;
     } else if (!strcmp(id, "gui-help-fname")) {
 	return pkg->gui_help_fname;

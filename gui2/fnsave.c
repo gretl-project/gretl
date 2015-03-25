@@ -3160,6 +3160,8 @@ int save_function_package_spec (const char *fname, gpointer p)
 	GUI_PRECHECK,
 	NULL
     };
+    const char *gui_help;
+    const char *sample;
     gchar *strval;
     int intval;
     function_info *finfo = p;
@@ -3292,17 +3294,24 @@ int save_function_package_spec (const char *fname, gpointer p)
 	pputc(prn, '\n');
     }
 
+    gui_help = (finfo->gui_help != NULL)? finfo->gui_help :
+	function_package_get_string(finfo->pkg, "gui-help");
+
     /* write out GUI-specific help text? */
-    if (finfo->gui_help != NULL) {
+    if (gui_help != NULL) {
 	pputs(prn, "gui-help = ");
 	maybe_write_aux_file(finfo, fname, "gui-help",
-			     finfo->gui_help, prn);
+			     gui_help, prn);
+	pputc(prn, '\n');
     }
+
+    sample = (finfo->sample != NULL)? finfo->sample :
+	function_package_get_string(finfo->pkg, "sample-script");
 
     /* write out sample script? */
     pputs(prn, "sample-script = ");
     maybe_write_aux_file(finfo, fname, "sample-script",
-			 finfo->sample, prn);
+			 sample, prn);
     pputc(prn, '\n');
 
     gretl_print_destroy(prn);
