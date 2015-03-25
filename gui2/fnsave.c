@@ -929,7 +929,6 @@ static void spec_save_ok (GtkWidget *button, gpointer data)
     int i, flag;
 
     for (i=0; i<3; i++) {
-	fname = NULL;
 	if (sinfo->checks[i] != NULL) {
 	    flag = sinfo->flags[i];
 	    finfo->save_flags &= ~flag;
@@ -937,10 +936,10 @@ static void spec_save_ok (GtkWidget *button, gpointer data)
 		fname = entry_box_get_trimmed_text(sinfo->entries[i]);
 		if (fname != NULL) {
 		    finfo->save_flags |= flag;
+		    reset_finfo_filename(finfo, i, fname);
 		}
 	    }
 	}
-	reset_finfo_filename(finfo, i, fname);
     }
 
     sinfo->retval = 0;
@@ -968,6 +967,14 @@ static gchar *get_pkg_text_filename (function_info *finfo,
     }
 
     return fname;
+}
+
+static void sensitize_auxname_entry (GtkToggleButton *button,
+				     GtkWidget *w)
+{
+    gboolean s = gtk_toggle_button_get_active(button);
+	
+    gtk_widget_set_sensitive(w, s);
 }
 
 static void nullify_spec_dialog (GtkWidget *w, function_info *finfo)
@@ -1016,7 +1023,7 @@ static int gfn_spec_save_dialog (function_info *finfo,
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    tmp = g_strdup_printf("Saving %s.spec: Also save auxiliary file(s)?",
+    tmp = g_strdup_printf(_("Saving %s.spec: also save ancillary file(s)?"),
 			  pkgname);
     w = gtk_label_new(tmp);
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
@@ -1046,6 +1053,9 @@ static int gfn_spec_save_dialog (function_info *finfo,
 	gtk_entry_set_max_length(GTK_ENTRY(entry), 64);
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), 28);
 	gtk_entry_set_text(GTK_ENTRY(entry), tmp);
+	g_signal_connect(G_OBJECT(w), "toggled", 
+			 G_CALLBACK(sensitize_auxname_entry),
+			 entry);
 	gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, j, j+1);
 	g_free(tmp);
 	j++;
@@ -3265,8 +3275,7 @@ int save_function_package_spec (const char *fname, gpointer p)
 	pputc(prn, '\n');
     }
 
-    /* write out help text file and/or sample script? */
-
+    /* write out help text? */
     pputs(prn, "help = ");
     if (finfo->text != NULL) {
 	gchar *help = textview_get_trimmed_text(finfo->text);
@@ -3275,15 +3284,25 @@ int save_function_package_spec (const char *fname, gpointer p)
 	    if (!strncmp(help, "pdfdoc", 6)) {
 		pputs(prn, help + 7);
 	    } else {
-		maybe_write_aux_file(finfo, fname, "help", help, prn);
+		maybe_write_aux_file(finfo, fname, "help",
+				     help, prn);
 	    }
 	    g_free(help);
 	}
 	pputc(prn, '\n');
     }
 
+    /* write out GUI-specific help text? */
+    if (finfo->gui_help != NULL) {
+	pputs(prn, "gui-help = ");
+	maybe_write_aux_file(finfo, fname, "gui-help",
+			     finfo->gui_help, prn);
+    }
+
+    /* write out sample script? */
     pputs(prn, "sample-script = ");
-    maybe_write_aux_file(finfo, fname, "sample-script", finfo->sample, prn);
+    maybe_write_aux_file(finfo, fname, "sample-script",
+			 finfo->sample, prn);
     pputc(prn, '\n');
 
     gretl_print_destroy(prn);
