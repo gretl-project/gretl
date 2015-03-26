@@ -626,6 +626,8 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     dbgprn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 #endif
 
+    /* create regression list for unrestricted model by appending
+       @hatlist to @reglist */
     HT_list = gretl_list_add(reglist, hatlist, &err);
     if (err) {
 	if (err == E_NOADD) {
@@ -660,6 +662,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 	goto bailout;
     }
 
+    /* record U-model info */
     URSS = hmod.ess;
     ku = hmod.ncoeff;
 
@@ -667,14 +670,16 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     err = dataset_add_series(dset, 1);
     if (err) {
 	goto bailout;
-    } 
-
-    for (t=hmod.t1; t<=hmod.t2; t++) {
-	dset->Z[nv][t] = hmod.yhat[t];
+    } else {
+	for (t=hmod.t1; t<=hmod.t2; t++) {
+	    dset->Z[nv][t] = hmod.yhat[t];
+	}
     }
 
     clear_model(&hmod);
 
+    /* redefine HT_list: dep var is the fitted value from the
+       U-model, regressors are from @reglist */
     free(HT_list);
     HT_list = gretl_list_copy(reglist);
     HT_list[1] = nv;
