@@ -642,9 +642,9 @@ static int window_is_package_editor (GtkWidget *w)
     }
 }
 
-/* on exiting, check for any editing windows with unsaved
-   changes, and if we find any give the user a chance to
-   save the changes, or to cancel the exit
+/* On exiting, check for any editing windows with unsaved
+   changes: if we find any, give the user a chance to
+   save the changes or cancel the exit.
 */
 
 gboolean window_list_exit_check (void)
@@ -660,13 +660,13 @@ gboolean window_list_exit_check (void)
 	    w = window_from_action((GtkAction *) list->data);
 	    if (w != NULL) {
 		vwin = g_object_get_data(G_OBJECT(w), "vwin");
-		if (vwin != NULL && vwin_is_editing(vwin)) {
-		    if (vwin_content_changed(vwin)) {
+		if (vwin != NULL) {
+		    if (vwin_is_editing(vwin) && vwin_content_changed(vwin)) {
 			gtk_window_present(GTK_WINDOW(vwin->main));
 			ret = query_save_text(NULL, NULL, vwin);
 		    }
-		}
-		if (vwin == NULL) {
+		} else {
+		    /* vwin is NULL */
 		    if (g_object_get_data(G_OBJECT(w), "tabwin")) {
 			ret = tabwin_exit_check(w);
 		    } else if (window_is_package_editor(w)) {

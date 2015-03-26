@@ -33,8 +33,6 @@ void tabwin_tab_set_status (windata_t *vwin);
 
 void show_tabbed_viewer (windata_t *vwin);
 
-void maybe_destroy_tabwin (windata_t *vwin);
-
 void tabwin_navigate (windata_t *vwin, guint key);
 
 void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin);

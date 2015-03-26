@@ -65,25 +65,19 @@ static tabwin_t *vwin_get_tabwin (windata_t *vwin)
 }
 
 static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
-					  GtkWindow *topwin)
+					  GtkWidget *parent)
 {
     GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
     int np = gtk_notebook_get_n_pages(notebook);
     gboolean ret = FALSE;
 
-    if (tabwin->role != EDIT_SCRIPT) {
-	return FALSE;
-    }
-
     if (np > 1) {
 	gchar *msg = g_strdup_printf(_("Editing %d scripts: really quit?"), np);
 	gint resp;
 
-	if (topwin != NULL) {
-	    gtk_window_present(topwin);
-	}
-
-	resp = yes_no_dialog(_("gretl: script editor"), msg, 0);
+	gtk_window_present(GTK_WINDOW(parent));
+	resp = yes_no_dialog_with_parent(_("gretl: script editor"),
+					 msg, 0, parent);
 	if (resp != GRETL_YES) {
 	    ret = TRUE;
 	}
@@ -95,9 +89,7 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
 	    windata_t *vwin = g_object_get_data(G_OBJECT(page), "vwin");
     
 	    if (vwin_content_changed(vwin)) {
-		if (topwin != NULL) {
-		    gtk_window_present(topwin);
-		}
+		gtk_window_present(GTK_WINDOW(parent));
 		ret = query_save_text(NULL, NULL, vwin);
 	    }
 	}
@@ -106,32 +98,30 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
     return ret;
 }
 
-/* called on program exit */
+/* called from winstack.c on program exit: @w will
+   be the top-level of a tabbed window */
 
 gboolean tabwin_exit_check (GtkWidget *w)
 {
     tabwin_t *tabwin = g_object_get_data(G_OBJECT(w), "tabwin");
 
-    return maybe_block_tabedit_quit(tabwin, GTK_WINDOW(w));
+    if (tabwin->role != EDIT_SCRIPT) {
+	return FALSE;
+    }    
+
+    return maybe_block_tabedit_quit(tabwin, w);
 }
 
-/* called on delete-event */
+/* called on delete-event: @w is the top-level */
 
 static gboolean tabedit_quit_check (GtkWidget *w, GdkEvent *event, 
 				    tabwin_t *tabwin)
 {
-    return maybe_block_tabedit_quit(tabwin, NULL);
-}
-
-/* called by top-level toolbar closer button */
-
-void maybe_destroy_tabwin (windata_t *vwin)
-{
-    tabwin_t *tabwin = vwin_get_tabwin(vwin);
-
-    if (!maybe_block_tabedit_quit(tabwin, NULL)) {
-	gtk_widget_destroy(vwin->topmain);
+    if (tabwin->role != EDIT_SCRIPT) {
+	return FALSE;
     }
+    
+    return maybe_block_tabedit_quit(tabwin, w);
 }
 
 /* activate or de-activate a tab's closer button */

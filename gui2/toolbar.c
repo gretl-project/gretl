@@ -272,16 +272,20 @@ static void mail_script_callback (GtkWidget *w, windata_t *vwin)
 
 static void file_open_callback (GtkWidget *w, windata_t *vwin)
 {
-    /* don't proceed unconditionally if there's unsaved
-       text in the window 
-    */
-    if (query_save_text(NULL, NULL, vwin)) {
-	return;
+    int tabbed = window_is_tab(vwin);
+    
+    if (!tabbed) {
+	/* don't proceed unconditionally if there's unsaved
+	   text in a single-script window 
+	*/
+	if (query_save_text(NULL, NULL, vwin)) {
+	    return;
+	}
     }
 
     file_selector(OPEN_SCRIPT, FSEL_DATA_VWIN, vwin);
 
-    if (vwin->flags & VWIN_CONTENT_CHANGED) {
+    if (!tabbed && (vwin->flags & VWIN_CONTENT_CHANGED)) {
 	mark_vwin_content_saved(vwin);
 	vwin_set_filename(vwin, tryfile);
     }
@@ -639,24 +643,6 @@ static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 {
     text_set_cursor(vwin->text, GDK_QUESTION_ARROW);
     set_window_help_active(vwin);
-}
-
-static void delete_file_viewer (GtkWidget *widget, windata_t *vwin) 
-{
-    gint resp = 0;
-
-    if (window_is_tab(vwin)) {
-	maybe_destroy_tabwin(vwin);
-	return;
-    }
-
-    if (vwin_is_editing(vwin) && vwin_content_changed(vwin)) {
-	resp = query_save_text(NULL, NULL, vwin);
-    }
-
-    if (!resp) {
-	gtk_widget_destroy(vwin->main); 
-    }
 }
 
 static int edit_script_popup_item (GretlToolItem *item)
@@ -1174,10 +1160,6 @@ GtkWidget *build_text_popup (windata_t *vwin)
 		}
 	    } else if (func == G_CALLBACK(text_undo) && !text_can_undo(vwin)) {
 		continue;
-	    } else if (func == G_CALLBACK(delete_file_viewer)) {
-		if (window_is_tab(vwin)) {
-		    continue;
-		}
 	    }
 	    w = gtk_menu_item_new_with_label(_(item->tip));
 	    g_signal_connect(G_OBJECT(w), "activate", func, vwin);
