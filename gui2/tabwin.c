@@ -76,8 +76,7 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
 	gint resp;
 
 	gtk_window_present(GTK_WINDOW(parent));
-	resp = yes_no_dialog_with_parent(_("gretl: script editor"),
-					 msg, 0, parent);
+	resp = yes_no_dialog(_("gretl: script editor"), msg, parent);
 	if (resp != GRETL_YES) {
 	    ret = TRUE;
 	}

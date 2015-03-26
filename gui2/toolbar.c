@@ -309,7 +309,9 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
     window_print(NULL, vwin);
 #else
     if (textview_use_highlighting(vwin->role)) {
-	int resp = yes_no_dialog(NULL, _("Print with syntax highlighting?"), 1);
+	int resp = yes_no_cancel_dialog(NULL,
+					_("Print with syntax highlighting?"),
+					vwin_toplevel(vwin));
 
 	if (resp == GRETL_YES) {
 	    sourceview_print(vwin);
@@ -347,9 +349,10 @@ static void toolbar_refresh (GtkWidget *w, windata_t *vwin)
 static void set_matrix_name (GtkWidget *widget, dialog_t *dlg)
 {
     char *vname = (char *) edit_dialog_get_data(dlg);
+    GtkWidget *parent =  edit_dialog_get_window(dlg);
     const gchar *s = edit_dialog_get_text(dlg);
 
-    if (s == NULL || gui_validate_varname(s, GRETL_TYPE_MATRIX)) {
+    if (s == NULL || gui_validate_varname(s, GRETL_TYPE_MATRIX, parent)) {
 	edit_dialog_reset(dlg);
     } else {
 	strcpy(vname, s);

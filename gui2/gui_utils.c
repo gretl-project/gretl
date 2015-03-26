@@ -78,7 +78,7 @@ static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb,
 			    gpointer data);
 static void model_copy_callback (GtkAction *action, gpointer p);
 static int set_sample_from_model (void *ptr, int role);
-static gboolean maybe_set_sample_from_model (void *ptr, int role);
+static gboolean maybe_set_sample_from_model (windata_t *vwin);
 
 static void close_model (GtkAction *action, gpointer data)
 {
@@ -156,6 +156,9 @@ static int model_get_t1_t2 (void *ptr, int role, int *t1, int *t2)
     return err;
 }
 
+/* Called from menu in model window, bit not necessarily
+   a single-equation model */
+
 static void model_revise_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -165,7 +168,7 @@ static void model_revise_callback (GtkAction *action, gpointer p)
     err = model_get_t1_t2(vwin->data, vwin->role, &t1, &t2);
 
     if (!err && (t1 != dataset->t1 || t2 != dataset->t2)) {
-	ok = maybe_set_sample_from_model(vwin->data, vwin->role);
+	ok = maybe_set_sample_from_model(vwin);
     }
 
     if (ok) {
@@ -1019,7 +1022,7 @@ static void finalize_data_open (const char *fname, int ftype,
 			     _("The imported data have been interpreted as undated\n"
 			       "(cross-sectional).  Do you want to give the data a\n"
 			       "time-series or panel interpretation?"),
-			     0);
+			     NULL);
 	if (resp == GRETL_YES) {
 	    data_structure_dialog();
 	}
@@ -1276,10 +1279,11 @@ gboolean verify_open_data (windata_t *vwin, int code)
 
     if (data_status) {
 	int resp = 
-	    yes_no_dialog (_("gretl: open data"), 
-			   _("Opening a new data file will automatically\n"
-			     "close the current one.  Any unsaved work\n"
-			     "will be lost.  Proceed to open data file?"), 0);
+	    yes_no_dialog(_("gretl: open data"), 
+			  _("Opening a new data file will automatically\n"
+			    "close the current one.  Any unsaved work\n"
+			    "will be lost.  Proceed to open data file?"),
+			  vwin_toplevel(vwin));
 
 	if (resp != GRETL_YES) {
 	    return FALSE;
@@ -1301,10 +1305,11 @@ gboolean verify_open_session (void)
 
     if (data_status) {
 	int resp = 
-	    yes_no_dialog (_("gretl: open session"), 
-			   _("Opening a new session file will automatically\n"
-			     "close the current session.  Any unsaved work\n"
-			     "will be lost.  Proceed to open session file?"), 0);
+	    yes_no_dialog(_("gretl: open session"), 
+			  _("Opening a new session file will automatically\n"
+			    "close the current session.  Any unsaved work\n"
+			    "will be lost.  Proceed to open session file?"),
+			  NULL);
 
 	if (resp != GRETL_YES) {
 	    return FALSE;
@@ -2360,10 +2365,9 @@ void viewer_set_editable (windata_t *vwin)
 gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 {
     if (vwin_content_changed(vwin)) {
-	int resp = yes_no_dialog_with_parent("gretl", 
-					     _("Save changes?"), 
-					     1,
-					     vwin_toplevel(vwin));
+	int resp = yes_no_cancel_dialog("gretl", 
+					_("Save changes?"), 
+					vwin_toplevel(vwin));
 
 	if (resp == GRETL_CANCEL) {
 	    /* cancel -> don't save, but also don't close */
@@ -2621,7 +2625,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     set_tests_menu_state(vwin->ui, pmod);
 
     /* disallow saving an already-saved model */
-    if (pmod->name != NULL) {
+    if (is_session_model((void *) pmod)) {
 	set_model_save_state(vwin, FALSE);
     }
 
@@ -4769,6 +4773,7 @@ static int set_sample_from_model (void *ptr, int role)
     int err = 0;
 
     if (role == VIEW_MODEL) {
+	/* called from single-eqn model window */
 	pmod = ptr;
     }
 
@@ -4782,6 +4787,7 @@ static int set_sample_from_model (void *ptr, int role)
 					    OPT_NONE);
 	    range_set = 1;
 	} else {
+	    /* VAR, VECM or something */
 	    int t1 = 0, t2 = 0;
 
 	    model_get_t1_t2(ptr, role, &t1, &t2);
@@ -4825,7 +4831,7 @@ static int set_sample_from_model (void *ptr, int role)
    (sample mismatch) is successfully handled, else FALSE.
 */
 
-static gboolean maybe_set_sample_from_model (void *ptr, int role)
+static gboolean maybe_set_sample_from_model (windata_t *vwin)
 {
     const char *msg = N_("The model sample differs from the dataset sample,\n"
 			 "so some menu options will be disabled.\n\n"
@@ -4833,13 +4839,13 @@ static gboolean maybe_set_sample_from_model (void *ptr, int role)
 			 "this model was estimated?");
     int resp, err = 0;
 
-    resp = yes_no_dialog(NULL, _(msg), 0);
+    resp = yes_no_dialog(NULL, _(msg), vwin_toplevel(vwin));
 
     if (resp == GRETL_NO) {
 	return FALSE;
     }
 
-    err = set_sample_from_model(ptr, role);
+    err = set_sample_from_model(vwin->data, vwin->role);
 
     return (err == 0);
 }
@@ -4884,7 +4890,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     }    
 
     if (s && !ok) {
-	ok = maybe_set_sample_from_model(pmod, VIEW_MODEL);
+	ok = maybe_set_sample_from_model(vwin);
 	if (ok) {
 	    return FALSE;
 	}
@@ -4952,13 +4958,14 @@ static gchar *exists_string (const char *name, GretlType t)
     return s;
 }
 
-static int object_overwrite_ok (const char *name, GretlType t)
+static int object_overwrite_ok (const char *name, GretlType t,
+				GtkWidget *parent)
 {
     gchar *info = exists_string(name, t);
     gchar *msg = g_strdup_printf("%s\n%s", info, _("OK to overwrite it?"));
     int resp;
 
-    resp = yes_no_dialog("gretl", msg, 0);
+    resp = yes_no_dialog("gretl", msg, parent);
     g_free(info);
     g_free(msg);
 
@@ -4969,7 +4976,8 @@ static int object_overwrite_ok (const char *name, GretlType t)
 
 static int real_gui_validate_varname (const char *name, 
 				      GretlType t,
-				      int allow_overwrite)
+				      int allow_overwrite,
+				      GtkWidget *parent)
 {
     int i, n = strlen(name);
     char namebit[VNAMELEN];
@@ -5009,7 +5017,7 @@ static int real_gui_validate_varname (const char *name,
 	    /* there's already a variable of this name */
 	    if (t == t0 && allow_overwrite) {
 		/* the types agree: overwrite? */
-		err = !object_overwrite_ok(name, t);
+		err = !object_overwrite_ok(name, t, parent);
 	    } else {
 		/* the types disgree: won't work */
 		gchar *msg = exists_string(name, t0);
@@ -5042,14 +5050,16 @@ static int real_gui_validate_varname (const char *name,
    and adding a new variable is handled by the caller.
 */
 
-int gui_validate_varname_strict (const char *name, GretlType type)
+int gui_validate_varname_strict (const char *name, GretlType type,
+				 GtkWidget *parent)
 {
-    return real_gui_validate_varname(name, type, 0);
+    return real_gui_validate_varname(name, type, 0, parent);
 }
 
-int gui_validate_varname (const char *name, GretlType type)
+int gui_validate_varname (const char *name, GretlType type,
+			  GtkWidget *parent)
 {
-    return real_gui_validate_varname(name, type, 1);
+    return real_gui_validate_varname(name, type, 1, parent);
 }
 
 gint popup_menu_handler (GtkWidget *widget, GdkEventButton *event,

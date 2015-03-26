@@ -2206,7 +2206,7 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	    resp = yes_no_dialog(_("gretl: function packages"),
 				 _("No gretl function packages were found on this computer.\n"
 				   "Do you want to take a look on the gretl server?"),
-				 0);
+				 vwin_toplevel(vwin));
 	    if (resp == GRETL_YES) {
 		fresp->try_server = 1;
 	    }

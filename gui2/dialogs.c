@@ -92,9 +92,9 @@ void gretl_dialog_add_message (GtkWidget *dlg, const char *msg)
 }
 
 static gint 
-real_yes_no_dialog_with_parent (const char *title, const char *msg, 
-				int cancel, GtkWidget *parent,
-				int default_id)
+real_yes_no_dialog (const char *title, const char *msg, 
+		    int cancel, GtkWidget *parent,
+		    int default_id)
 {
     GtkDialogFlags flags = GTK_DIALOG_MODAL;
     GtkWidget *dlg;
@@ -150,23 +150,24 @@ real_yes_no_dialog_with_parent (const char *title, const char *msg,
     }
 }
 
-gint yes_no_dialog_with_parent (const char *title, const char *msg, 
-				int cancel, GtkWidget *parent)
+gint yes_no_dialog (const char *title,
+		    const char *msg, 
+		    GtkWidget *parent)
 {
-    return real_yes_no_dialog_with_parent(title, msg, cancel, 
-					  parent, 0);
+    return real_yes_no_dialog(title, msg, 0, parent, 0);
 }
 
-gint yes_no_dialog (const char *title, const char *msg, int cancel)
+gint yes_no_cancel_dialog (const char *title,
+			   const char *msg, 
+			   GtkWidget *parent)
 {
-    return real_yes_no_dialog_with_parent(title, msg, cancel, 
-					  NULL, 0);
+    return real_yes_no_dialog(title, msg, 1, parent, 0);
 }
 
 gint no_yes_dialog (const char *title, const char *msg)
 {
-    return real_yes_no_dialog_with_parent(title, msg, 0, NULL,
-					  GTK_RESPONSE_NO);
+    return real_yes_no_dialog(title, msg, 0, NULL,
+			      GTK_RESPONSE_NO);
 }
 
 static void toggle_session_prompt (GtkToggleButton *b)
@@ -276,7 +277,7 @@ gboolean exit_check (void)
 	const char *save_msg = N_("Do you want to save the changes you made\n"
 				  "to this session?");
 
-	resp = yes_no_dialog("gretl", _(save_msg), 1);
+	resp = yes_no_cancel_dialog("gretl", _(save_msg), NULL);
 	if (resp == GRETL_YES) {
 	    err = save_session(NULL);
 	    if (err) {
@@ -321,9 +322,10 @@ gboolean exit_check (void)
 
     if (!session_file_is_open() && (data_status & MODIFIED_DATA)) {
 	/* give the user a chance to save modified dataset */
-	resp = yes_no_dialog ("gretl", 
-			      _("Do you want to save changes you have\n"
-				"made to the current data set?"), 1);
+	resp =
+	    yes_no_cancel_dialog("gretl", 
+				 _("Do you want to save changes you have\n"
+				   "made to the current data set?"), NULL);
 	if (resp == GRETL_YES) {
 	    save_data_callback();
 	} else if (resp == GRETL_CANCEL) {
@@ -2440,7 +2442,7 @@ range_dummy_callback (GtkWidget *w, struct range_setting *rset)
     }
 
     /* FIXME USERIES vs SERIES? */
-    err = gui_validate_varname(vname, GRETL_TYPE_USERIES);
+    err = gui_validate_varname(vname, GRETL_TYPE_USERIES, rset->dlg);
     if (err) {
 	return FALSE;
     }
@@ -5506,7 +5508,7 @@ name_entry_finalize (GtkWidget *w, GtkWidget *dlg)
     GretlType type = widget_get_int(dlg, "type");
     const gchar *txt = gtk_entry_get_text(GTK_ENTRY(entry));
 
-    if (gui_validate_varname(txt, type) == 0) {
+    if (gui_validate_varname(txt, type, dlg) == 0) {
 	strcpy(name, txt);
 	gtk_widget_destroy(dlg);
     }
@@ -6085,7 +6087,9 @@ static void pc_change_callback (GtkWidget *w,
 	return;
     }
 
-    err = gui_validate_varname(newname, GRETL_TYPE_SERIES);
+    err = gui_validate_varname(newname,
+			       GRETL_TYPE_SERIES,
+			       pci->dialog);
 
     if (err) {
 	gtk_widget_grab_focus(pci->entry);

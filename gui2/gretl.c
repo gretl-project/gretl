@@ -2010,7 +2010,7 @@ static void name_new_list (GtkWidget *widget, dialog_t *dlg)
     char *lname = (char *) edit_dialog_get_data(dlg);
     const gchar *buf = edit_dialog_get_text(dlg);
 
-    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_LIST)) {
+    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_LIST, NULL)) {
 	return;
     }
 

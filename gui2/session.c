@@ -1011,7 +1011,7 @@ static void delete_icon_for_data (void *data)
 
 static int show_model_in_window (void *ptr, GretlObjType type)
 { 
-    char *name;
+    char *name = NULL;
     PRN *prn;
 
     if (type != GRETL_OBJ_EQN && type != GRETL_OBJ_VAR) {
@@ -1489,10 +1489,10 @@ void verify_clear_data (void)
 	return;
     }
 
-    if (yes_no_dialog ("gretl",                      
-		       _("Clearing the data set will end\n"
-			 "your current session.  Continue?"), 
-		       0) != GRETL_YES) {
+    if (yes_no_dialog("gretl",                      
+		      _("Clearing the data set will end\n"
+			"your current session.  Continue?"), 
+		      NULL) != GRETL_YES) {
 	return;
     }
 
@@ -2411,7 +2411,7 @@ static void maybe_delete_session_object (gui_obj *obj)
     } else {	    
 	gchar *msg = g_strdup_printf(_("Really delete %s?"), obj->name);
 
-	if (yes_no_dialog(_("gretl: delete"), msg, 0) == GRETL_YES) {
+	if (yes_no_dialog(_("gretl: delete"), msg, iconview) == GRETL_YES) {
 	    delete_session_object(obj);
 	}
 	g_free(msg);

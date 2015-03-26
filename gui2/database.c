@@ -233,7 +233,7 @@ static int expand_data_dialog (int src_pd, int targ_pd, int *interpol,
 			      "repeating each value %d times.  In general, this is\n"
 			      "not a valid thing to do."),
 			    mult);
-	resp = yes_no_dialog("gretl", msg, 0);
+	resp = yes_no_dialog("gretl", msg, parent);
 	g_free(msg);
     }
 
@@ -392,9 +392,10 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	dbv = series_index(dataset, sinfo->varname);
 	if (dbv < dataset->v) {
 	    if (dw->nv == 1) {
-		resp = yes_no_dialog ("gretl",                      
-				      _("There is already a variable of this name\n"
-					"in the dataset.  OK to overwrite it?"), 0);
+		resp = yes_no_dialog("gretl",                      
+				     _("There is already a variable of this name\n"
+				       "in the dataset.  OK to overwrite it?"),
+				     vwin_toplevel(vwin));
 		if (resp != GRETL_YES) {
 		    return 0;
 		}
@@ -577,7 +578,7 @@ static void db_delete_callback (GtkWidget *w, windata_t *vwin)
 			      "from the database '%s'?"), 
 			    gtk_window_get_title(GTK_WINDOW(vwin->main)));
 
-    resp = yes_no_dialog ("gretl", query, 0);
+    resp = yes_no_dialog("gretl", query, vwin_toplevel(vwin));
 
     g_free(query);
 
@@ -1891,11 +1892,12 @@ static int ggz_extract (char *ggzname)
     return err;
 }
 
-static void offer_db_open (char *target)
+static void offer_db_open (char *target, windata_t *vwin)
 {
-    int resp = yes_no_dialog ("gretl",                      
-			      _("Database installed.\n"
-				"Open it now?"), 0);
+    int resp = yes_no_dialog("gretl",                      
+			     _("Database installed.\n"
+			       "Open it now?"),
+			     vwin_toplevel(vwin));
 
     if (resp == GRETL_YES) { 
 	char dbpath[MAXLEN];
@@ -2205,7 +2207,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 		if (local != NULL) {
 		    populate_filelist(local, NULL);
 		} else {
-		    offer_db_open(targ);
+		    offer_db_open(targ, vwin);
 		}
 	    }
 	}

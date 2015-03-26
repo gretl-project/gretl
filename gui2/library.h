@@ -213,7 +213,8 @@ void do_variable_setmiss (GtkWidget *w, dialog_t *dlg);
 
 void do_edit_label (GtkWidget *w, dialog_t *dlg);
 
-int do_rename_variable (int v, const char *newname);
+int do_rename_variable (int v, const char *newname,
+			GtkWidget *parent);
 
 int record_varlabel_change (int v, int desc, int gname);
 

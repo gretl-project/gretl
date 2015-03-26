@@ -149,12 +149,13 @@ static void dwinfo_init (DATASET *dwinfo)
 
 static void prep_spreadsheet (GtkWidget *widget, dialog_t *dlg) 
 {
-    const gchar *buf;
+    GtkWidget *parent = edit_dialog_get_window(dlg);
+    const gchar *buf = edit_dialog_get_text(dlg);
     int t;
 
-    buf = edit_dialog_get_text(dlg);
-
-    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_SERIES)) {
+    if (buf == NULL || gui_validate_varname(buf,
+					    GRETL_TYPE_SERIES,
+					    parent)) {
 	edit_dialog_reset(dlg);
 	return;
     }

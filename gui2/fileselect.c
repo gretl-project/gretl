@@ -248,8 +248,7 @@ static void log_view_save_as (const char *fname, windata_t *vwin)
     gretl_basename(basename, fname, 0);
     msg = g_strdup_printf("Open %s in the script editor?", basename);
 
-    resp = yes_no_dialog_with_parent(NULL, msg, 0,
-				     vwin_toplevel(vwin));
+    resp = yes_no_dialog(NULL, msg, vwin_toplevel(vwin));
     g_free(msg);
 
     if (resp == GRETL_YES) {
@@ -511,7 +510,7 @@ static int overwrite_stop (const char *fname)
 	if (yes_no_dialog(NULL, 
 			  _("There is already a file of this name.\n"
 			    "OK to overwrite it?"), 
-			  0) == GRETL_NO) {
+			  NULL) == GRETL_NO) {
 	    return 1;
 	}
     }

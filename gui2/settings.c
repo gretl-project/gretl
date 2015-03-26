@@ -871,7 +871,7 @@ static void root_check (void)
 
 	resp = yes_no_dialog("gretl", _("You seem to be running gretl " 
 					"as root.  Do you really want to do this?"), 
-			     0);
+			     NULL);
 	if (resp == GRETL_NO) {
 	    exit(EXIT_FAILURE);
 	}

@@ -36,6 +36,7 @@
 #include "toolbar.h"
 #include "obsbutton.h"
 #include "cmdstack.h"
+#include "winstack.h"
 #include "fncall.h"
 
 #define FCDEBUG 0
@@ -603,7 +604,7 @@ static int do_make_list (selector *sr)
     if (lname == NULL || *lname == '\0') {
 	errbox(_("No name was given for the list"));
 	return 1;
-    } 
+    }
 
     if (data != NULL) {
 	/* called from elsewhere in fncall.c */
@@ -619,7 +620,8 @@ static int do_make_list (selector *sr)
     if (buf == NULL || *buf == '\0') {
 	int resp;
 
-	resp = yes_no_dialog("gretl", _("Really create an empty list?"), 0);
+	resp = yes_no_dialog("gretl", _("Really create an empty list?"),
+			     selector_get_window(sr));
 	if (resp == GRETL_YES) {
 	    list = gretl_null_list();
 	    if (list == NULL) {
@@ -2499,7 +2501,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 	gchar *msg = g_strdup_printf(_("The %s package was not found, or is not "
 				       "up to date.\nWould you like to try "
 				       "downloading it now?"), pkgname);
-	int resp = yes_no_dialog(NULL, msg, 0);
+	int resp = yes_no_dialog(NULL, msg, vwin_toplevel(vwin));
 
 	g_free(msg);
 	if (resp == GRETL_YES) {
@@ -2887,7 +2889,7 @@ static int pkg_attach_query (const gchar *name,
 			      name, ustr ? ustr : relpath, _(label),
 			      modelwin ? _(window_names[1]) :
 			      _(window_names[0]));
-	resp = yes_no_dialog_with_parent(NULL, msg, 0, parent);
+	resp = yes_no_dialog(NULL, msg, parent);
 	g_free(msg);
 	g_free(ustr);
     }

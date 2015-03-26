@@ -1427,7 +1427,7 @@ void dataset_info (void)
 	if (yes_no_dialog(_("gretl: add info"), 
 			  _("The data file contains no informative comments.\n"
 			    "Would you like to add some now?"), 
-			  0) == GRETL_YES) {
+			  NULL) == GRETL_YES) {
 	    edit_buffer(&dataset->descrip, 80, 400, _("gretl: edit data info"),
 			EDIT_HEADER);
 	}
@@ -1735,7 +1735,7 @@ void markers_callback (void)
 	if (yes_no_dialog("gretl",
 			  _("The dataset has no observation markers.\n"
 			    "Add some from file now?"),
-			  0) == GRETL_YES) {
+			  NULL) == GRETL_YES) {
 	    file_selector(OPEN_MARKERS, FSEL_DATA_NONE, NULL);
 	}
     }
@@ -4760,7 +4760,8 @@ void do_variable_setmiss (GtkWidget *w, dialog_t *dlg)
     }
 }
 
-int do_rename_variable (int v, const char *newname)
+int do_rename_variable (int v, const char *newname,
+			GtkWidget *parent)
 {
     int err = 0;
 
@@ -4773,7 +4774,7 @@ int do_rename_variable (int v, const char *newname)
 	errbox_printf(_("A series named %s already exists"), newname);
 	err = E_DATA;
     } else {
-	err = gui_validate_varname(newname, GRETL_TYPE_SERIES);
+	err = gui_validate_varname(newname, GRETL_TYPE_SERIES, parent);
     }
 
     if (!err) {
@@ -5863,7 +5864,7 @@ void do_remove_obs (void)
 
 	msg = g_strdup_printf(_("Really delete the last %d observations?"),
 			      drop);
-	resp = yes_no_dialog(_("gretl: drop observations"), msg, 0);
+	resp = yes_no_dialog(_("gretl: drop observations"), msg, NULL);
 	g_free(msg);
 
 	if (resp == GRETL_YES) {
@@ -6124,9 +6125,12 @@ void add_system_resid (GtkAction *action, gpointer p)
 static void set_scalar_name (GtkWidget *widget, dialog_t *dlg)
 {
     char *vname = (char *) edit_dialog_get_data(dlg);
+    GtkWidget *parent = edit_dialog_get_window(dlg);
     const gchar *s = edit_dialog_get_text(dlg);
 
-    if (s == NULL || gui_validate_varname(s, GRETL_TYPE_DOUBLE)) {
+    if (s == NULL || gui_validate_varname(s,
+					  GRETL_TYPE_DOUBLE,
+					  parent)) {
 	edit_dialog_reset(dlg);
     } else {
 	strcpy(vname, s);
@@ -6664,7 +6668,7 @@ static void real_delete_vars (int selvar)
 	/* ask for confirmation */
 	int resp;
 
-	resp = yes_no_dialog(_("gretl: delete"), msg, 0);
+	resp = yes_no_dialog(_("gretl: delete"), msg, NULL);
 	g_free(msg);
 	if (resp != GRETL_YES) {
 	    free(dellist);
@@ -7537,7 +7541,8 @@ static int maybe_stop_script (void)
     resp = yes_no_dialog(_("gretl: open data"), 
 			 _("Opening a new data file will automatically\n"
 			   "close the current one.  Any unsaved work\n"
-			   "will be lost.  Proceed to open data file?"), 0);
+			   "will be lost.  Proceed to open data file?"),
+			 NULL);
 
     if (resp == GRETL_YES) {
 	if (oh.vwin != NULL) {
@@ -7917,27 +7922,28 @@ int dataset_is_restricted (void)
 int maybe_restore_full_data (int action)
 {
     if (dataset_is_subsampled()) {
-	int resp = GRETL_CANCEL;
+	int r = GRETL_CANCEL;
 
 	if (action == SAVE_DATA) {
-	    resp = yes_no_dialog(_("gretl: save data"), 
-				 _("The data set is currently sub-sampled.\n"
-				   "Would you like to restore the full range?"), 1);
+	    r = yes_no_cancel_dialog(_("gretl: save data"), 
+				     _("The data set is currently sub-sampled.\n"
+				       "Would you like to restore the full range?"),
+				     NULL);
 	} else if (action == COMPACT) {
-	    resp = yes_no_dialog(_("gretl: Compact data"), 
-				 _("The data set is currently sub-sampled.\n"
-				   "You must restore the full range before compacting.\n"
-				   "Restore the full range now?"), 1);
+	    r = yes_no_cancel_dialog(_("gretl: Compact data"), 
+				     _("The data set is currently sub-sampled.\n"
+				       "You must restore the full range before compacting.\n"
+				       "Restore the full range now?"), NULL);
 	} else if (action == EXPAND) {
-	    resp = yes_no_dialog(_("gretl: Expand data"), 
-				 _("The data set is currently sub-sampled.\n"
-				   "You must restore the full range before expanding.\n"
-				   "Restore the full range now?"), 1);
+	    r = yes_no_cancel_dialog(_("gretl: Expand data"), 
+				     _("The data set is currently sub-sampled.\n"
+				       "You must restore the full range before expanding.\n"
+				       "Restore the full range now?"), NULL);
 	}
 
-	if (resp == GRETL_YES) {
+	if (r == GRETL_YES) {
 	    gui_restore_sample(dataset);
-	} else if (resp == GRETL_CANCEL || action == COMPACT || action == EXPAND) {
+	} else if (r == GRETL_CANCEL || action == COMPACT || action == EXPAND) {
 	    return 1;
 	}
     } 
@@ -7952,7 +7958,8 @@ void gui_transpose_data (void)
     resp = yes_no_dialog(_("gretl: transpose data"), 
 			 _("Transposing means that each variable becomes interpreted\n"
 			   "as an observation, and each observation as a variable.\n"
-			   "Do you want to proceed?"), 0);
+			   "Do you want to proceed?"),
+			 NULL);
 
     if (resp == GRETL_YES) {
 	int err = transpose_data(dataset);
@@ -8048,7 +8055,7 @@ static int db_write_response (const char *filename, const int *list)
     msg = g_strdup_printf("%s\n%s", gretl_errmsg_get(),
 			  _("OK to overwrite?"));
 
-    resp = yes_no_dialog("gretl", msg, 0);
+    resp = yes_no_dialog("gretl", msg, NULL);
 
     if (resp == GRETL_NO) {
 	ret = 1;
@@ -8091,7 +8098,8 @@ static void maybe_shrink_dataset (const char *newname)
     } else {
 	resp = yes_no_dialog(_("gretl: revised data set"), 
 			     _("You have saved a reduced version of the current data set.\n"
-			       "Do you want to switch to the reduced version now?"), 0);
+			       "Do you want to switch to the reduced version now?"),
+			     NULL);
 	shrink = (resp == GRETL_YES);
     }
 

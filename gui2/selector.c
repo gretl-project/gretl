@@ -475,7 +475,7 @@ void clear_selector (void)
 
 GtkWidget *selector_get_window (const selector *sr)
 {
-    return sr->dlg;
+    return (sr != NULL)? sr->dlg : NULL;
 }
 
 static int presel;

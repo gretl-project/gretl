@@ -645,7 +645,9 @@ static void sheet_text_cell_edited (GtkCellRendererText *cell,
     int err = 0;
 
     if (*user_text != '\0') {
-	err = gui_validate_varname_strict(user_text, GRETL_TYPE_DOUBLE);
+	err = gui_validate_varname_strict(user_text,
+					  GRETL_TYPE_DOUBLE,
+					  sheet->win);
     }
 
     if (err) {
@@ -947,12 +949,15 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
 static void name_new_var (GtkWidget *widget, dialog_t *dlg) 
 {
     Spreadsheet *sheet = (Spreadsheet *) edit_dialog_get_data(dlg);
+    GtkWidget *parent = edit_dialog_get_window(dlg);
     const gchar *buf;
     char varname[VNAMELEN];
 
     buf = edit_dialog_get_text(dlg);
 
-    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_SERIES)) {
+    if (buf == NULL || gui_validate_varname(buf,
+					    GRETL_TYPE_SERIES,
+					    parent)) {
 	return;
     }
 
@@ -1013,11 +1018,14 @@ static void new_case_dialog (Spreadsheet *sheet)
 static void name_matrix_col (GtkWidget *widget, dialog_t *dlg) 
 {
     GtkTreeViewColumn *col = (GtkTreeViewColumn *) edit_dialog_get_data(dlg);
+    GtkWidget *parent = edit_dialog_get_window(dlg);
     const gchar *buf, *old;
     char tmp[13], colname[24];
 
     buf = edit_dialog_get_text(dlg);
-    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_NONE)) {
+    if (buf == NULL || gui_validate_varname(buf,
+					    GRETL_TYPE_NONE,
+					    parent)) {
 	return;
     }
 
@@ -1615,9 +1623,12 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 static void matrix_new_name (GtkWidget *w, dialog_t *dlg)
 {
     char *newname = (char *) edit_dialog_get_data(dlg);
+    GtkWidget *parent = edit_dialog_get_window(dlg);
     const gchar *buf = edit_dialog_get_text(dlg);
 
-    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_MATRIX)) {
+    if (buf == NULL || gui_validate_varname(buf,
+					    GRETL_TYPE_MATRIX,
+					    parent)) {
 	edit_dialog_reset(dlg);
     } else {
 	*newname = '\0';
@@ -2869,7 +2880,8 @@ static void empty_dataset_guard (void)
 static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
 {
     if (sheet_is_modified(sheet)) {
-	int resp = yes_no_dialog ("gretl", _("Save changes?"), 1);
+	int resp = yes_no_dialog("gretl", _("Save changes?"),
+				 sheet->win);
 
 	if (resp == GRETL_YES) {
 	    get_data_from_sheet(NULL, sheet);
@@ -2893,10 +2905,11 @@ static gint sheet_delete_event (GtkWidget *w, GdkEvent *event,
     int resp;
 
     if (sheet_is_modified(sheet)) {
-	resp = yes_no_dialog ("gretl", 
-			      (sheet->matrix != NULL)? _("Save changes?") :
-			      _("Do you want to save changes you have\n"
-				"made to the current data set?"), 1);
+	resp = yes_no_cancel_dialog("gretl", 
+				    (sheet->matrix != NULL)? _("Save changes?") :
+				    _("Do you want to save changes you have\n"
+				      "made to the current data set?"),
+				    sheet->win);
 	if (resp == GRETL_YES) {
 	    get_data_from_sheet(NULL, sheet);
 	} else if (resp == GRETL_CANCEL) {
@@ -3448,7 +3461,9 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
     }
 
     if (gtk_widget_is_sensitive(mdlg->nentry)) {
-	err = gui_validate_varname(etxt, GRETL_TYPE_MATRIX);
+	err = gui_validate_varname(etxt,
+				   GRETL_TYPE_MATRIX,
+				   mdlg->dlg);
 	if (err) {
 	    return;
 	}

@@ -149,6 +149,8 @@ gretlopt edit_dialog_get_opt (const dialog_t *dlg);
 
 gpointer edit_dialog_get_data (dialog_t *dlg);
 
+GtkWidget *edit_dialog_get_window (dialog_t *dlg);
+
 void edit_dialog_close (dialog_t *dlg);
 
 gchar *entry_box_get_trimmed_text (GtkWidget *w);

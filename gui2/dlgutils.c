@@ -632,6 +632,11 @@ gpointer edit_dialog_get_data (dialog_t *dlg)
     return dlg->data;
 }
 
+GtkWidget *edit_dialog_get_window (dialog_t *dlg)
+{
+    return dlg->dialog;
+}
+
 static void dialog_table_setup (dialog_t *dlg, int hsize)
 {
     GtkWidget *sw;

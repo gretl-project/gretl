@@ -252,7 +252,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
     if (vset->changed[VSET_VARNAME]) {
 	newstr = entry_get_trimmed_text(vset->name_entry);
 	/* note: do_rename_variable() logs the corresponding command */
-	err = do_rename_variable(v, newstr);
+	err = do_rename_variable(v, newstr, vset->dlg);
 	g_free(newstr);
     }
 
@@ -354,9 +354,9 @@ static void set_series_name_and_desc (GtkWidget *w, name_setter *nset)
 	}
 
 	if (allow_overwrite) {
-	    err = gui_validate_varname(s, GRETL_TYPE_SERIES);
+	    err = gui_validate_varname(s, GRETL_TYPE_SERIES, nset->dlg);
 	} else {
-	    err = gui_validate_varname_strict(s, GRETL_TYPE_SERIES);
+	    err = gui_validate_varname_strict(s, GRETL_TYPE_SERIES, nset->dlg);
 	}
 
 	if (err) {

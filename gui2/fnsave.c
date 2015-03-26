@@ -877,12 +877,11 @@ static void gfn_to_script_callback (GtkWidget *w, function_info *finfo)
     }
 
     if (finfo->sample != NULL) {
-	resp = yes_no_dialog_with_parent("gretl",
-					 _("Saving packaged functions as script:\n"
-					   "include the sample script?"),
-					 1,
-					 finfo->dlg);
-
+	resp = yes_no_cancel_dialog("gretl",
+				    _("Saving packaged functions as script:\n"
+				      "include the sample script?"),
+				    finfo->dlg);
+	
 	if (canceled(resp)) {
 	    return;
 	}
@@ -1462,8 +1461,7 @@ static gint query_save_package (GtkWidget *w, GdkEvent *event,
 {
     if (finfo->modified) {
 	int resp =
-	    yes_no_dialog_with_parent("gretl", _("Save changes?"),
-				      1, w);
+	    yes_no_cancel_dialog("gretl", _("Save changes?"), w);
 
 	if (resp == GRETL_CANCEL) {
 	    return TRUE;
@@ -2868,10 +2866,9 @@ static int dont_overwrite_pkg (function_info *finfo, const char *fname)
     int ret = 0;
 
     if (fp != NULL) {
-	int resp = yes_no_dialog_with_parent("gretl",
-					     _("OK to overwrite?"),
-					     0,
-					     finfo->dlg);
+	int resp = yes_no_dialog("gretl",
+				 _("OK to overwrite?"),
+				 finfo->dlg);
 
 	ret = (resp == GRETL_NO);
 	fclose(fp);
@@ -3565,8 +3562,8 @@ int no_user_functions_check (GtkWidget *parent)
 	int resp;
 
 	err = 1;
-	resp = yes_no_dialog_with_parent(_("gretl: function packages"),
-					 _(query), 0, parent);
+	resp = yes_no_dialog(_("gretl: function packages"),
+			     _(query), parent);
 	if (resp == GRETL_YES) {
 	    do_new_script(FUNC, NULL);
 	}
