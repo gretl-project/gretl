@@ -1658,6 +1658,9 @@ gchar *title_from_filename (const char *fname, int role, gboolean prepend)
     return title;
 }
 
+/* called when replacing a script in (non-tabbed) script
+   editor, via the editor's "Open" button */
+
 void vwin_set_filename (windata_t *vwin, const char *fname)
 {
     gchar *title = title_from_filename(fname, vwin->role, TRUE);

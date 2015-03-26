@@ -275,8 +275,9 @@ static void file_open_callback (GtkWidget *w, windata_t *vwin)
     int tabbed = window_is_tab(vwin);
     
     if (!tabbed) {
-	/* don't proceed unconditionally if there's unsaved
-	   text in a single-script window 
+	/* Don't proceed unconditionally if there's unsaved
+	   text in a single-script window; this doesn't
+	   apply if we're just opening another tab.
 	*/
 	if (query_save_text(NULL, NULL, vwin)) {
 	    return;
