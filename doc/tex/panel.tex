@@ -24,9 +24,7 @@ following section.
 \subsection{The fixed and random effects models}
 \label{panel-est}
 
-In gretl version 1.6.0 and higher, the fixed and random effects
-models for panel data can be estimated in their own right.  In the
-graphical interface these options are found under the menu item
+In the graphical interface these options are found under the menu item
 ``Model/Panel/Fixed and random effects''.  In the command-line
 interface one uses the \cmd{panel} command, with or without the
 \option{random-effects} option.
@@ -381,8 +379,7 @@ method of calculation of this term is a matter of convention, but the
 gretl authors decided to follow the convention employed by
 \app{Stata}; this involves adding the global mean back into the
 variables from which the group means have been removed.\footnote{See
-  \url{http://www.stata.com/support/faqs/statistics/intercept-in-fixed-effects-model/}
-  for an explanation from William Gould of StataCorp.}
+  \cite{gould13} for an extended explanation.}
 
 The method that gretl uses internally is exemplified in
 Example~\ref{fe-intercept}. The coefficients in the final OLS
