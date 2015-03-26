@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.10.0)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-03-24 20:06-0400\n"
-"PO-Revision-Date: 2015-03-02 17:06+0100\n"
+"PO-Revision-Date: 2015-03-26 17:24+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -8537,7 +8537,7 @@ msgstr "Executar"
 
 #: gui2/datafiles.c:1322 gui2/datafiles.c:1488
 msgid "Resources..."
-msgstr ""
+msgstr "Recursos..."
 
 #: gui2/datafiles.c:1327 gui2/datafiles.c:1489
 msgid "Add to menu"
@@ -9512,7 +9512,7 @@ msgstr "nº de decimais"
 
 #: gui2/dialogs.c:5309
 msgid "Reset"
-msgstr ""
+msgstr "Restaurar"
 
 #: gui2/dialogs.c:5332
 msgid "gretl: error"
@@ -9669,9 +9669,8 @@ msgid "(Please refer to Help for guidance)"
 msgstr "(Consultar a Axuda para máis información)"
 
 #: gui2/dlgutils.c:1201
-#, fuzzy
 msgid "right-click for some shortcuts"
-msgstr " Pulsar na gráfica, co botón dereito do rato, para ver un menú"
+msgstr "Pulsar no botón dereito para algúns atallos"
 
 #: gui2/fileselect.c:512
 msgid ""
@@ -10193,26 +10192,25 @@ msgid ""
 "Saving packaged functions as script:\n"
 "include the sample script?"
 msgstr ""
+"Gardando funcións empaquetadas como guión:\n"
+"incluír o guión de exemplo?"
 
 #: gui2/fnsave.c:989
-#, fuzzy
 msgid "Save sample script as"
-msgstr "Abrir un guión de exemplo"
+msgstr "Gardar guión de exemplo como"
 
 #: gui2/fnsave.c:990
-#, fuzzy
 msgid "Save help text as"
-msgstr "Gardar texto"
+msgstr "Gardar texto de axuda como"
 
 #: gui2/fnsave.c:991
-#, fuzzy
 msgid "Save GUI help as"
-msgstr "Gardar como"
+msgstr "Gardar axuda GUI como"
 
 #: gui2/fnsave.c:1026
 #, c-format
 msgid "Saving %s.spec: also save ancillary file(s)?"
-msgstr ""
+msgstr "Gardando %s.spec: tamén campo(s) accesorio(s)?"
 
 #: gui2/fnsave.c:1087 gui2/fnsave.c:2042
 msgid "Please save your package first"
@@ -10381,9 +10379,8 @@ msgstr ""
 "no seu navegador web."
 
 #: gui2/fnsave.c:2570
-#, fuzzy
 msgid "not found"
-msgstr "atopado %s\n"
+msgstr "non atopado"
 
 #: gui2/fnsave.c:2717
 msgid "build zip file"
@@ -16155,17 +16152,14 @@ msgid "template matrix"
 msgstr "matriz patrón"
 
 #: plugin/addons-i18n.c:66
-#, fuzzy
 msgid "IV/Heteroskedastic"
-msgstr "_Heterocedasticidade"
+msgstr "VI/Heterocedástico"
 
 #: plugin/addons-i18n.c:67
-#, fuzzy
 msgid "Covariance matrix estimation"
-msgstr "Estimador de covarianza"
+msgstr "Estimación da matriz de covarianza"
 
 #: plugin/addons-i18n.c:76
-#, fuzzy
 msgid "Verbosity level"
 msgstr "Nivel de detalle"
 
