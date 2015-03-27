@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-03-24 20:06-0400\n"
-"PO-Revision-Date: 2015-01-09 22:12+0100\n"
+"PO-Revision-Date: 2015-03-27 09:01+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -347,14 +347,12 @@ msgid "using resampled residuals"
 msgstr "usando residui del ricampionamento"
 
 #: lib/src/bootstrap.c:733
-#, fuzzy
 msgid "using resampled y,X \"pairs\""
-msgstr "usando residui del ricampionamento"
+msgstr "usando y e X ricampionati a coppie"
 
 #: lib/src/bootstrap.c:735
-#, fuzzy
 msgid "using \"wild\" bootstrap"
-msgstr "Usa bootstrap"
+msgstr "Usa il wild bootstrap"
 
 #: lib/src/bootstrap.c:737
 msgid "with simulated normal errors"
@@ -1102,7 +1100,7 @@ msgstr "File di dati non valido\n"
 #: lib/src/csvdata.c:3409
 #, c-format
 msgid "WARNING: it seems '%c' is being used as thousands separator\n"
-msgstr ""
+msgstr "ATTENZIONE: a quanto pare, '%c' è il separatore delle migliaia\n"
 
 #: lib/src/csvdata.c:3447 plugin/import_common.c:118
 msgid ""
@@ -1121,9 +1119,8 @@ msgstr ""
 "\n"
 
 #: lib/src/csvdata.c:3466
-#, fuzzy
 msgid "Failed to interpret the data as numeric\n"
-msgstr "Impossibile restringere il dataset"
+msgstr "Impossibile interpretare i dati come numerici\n"
 
 #: lib/src/csvdata.c:3498 plugin/eviews_import.c:555
 #: plugin/excel_import.c:1741 plugin/gnumeric_import.c:832
@@ -1262,7 +1259,7 @@ msgstr ""
 
 #: lib/src/dataio.c:1453
 msgid "append: don't know how to align the new series!"
-msgstr ""
+msgstr "append: non si cpaisce come allineare la nuova serie!"
 
 #: lib/src/dataio.c:1580 lib/src/dataio.c:1818 lib/src/dataio.c:1830
 #: lib/src/dataio.c:2495 lib/src/dataio.c:2504 cli/gretlcli.c:184
@@ -4147,9 +4144,9 @@ msgid "File of the wrong type, root node not %s"
 msgstr "Tipo di file errato, il root node non è %s"
 
 #: lib/src/gretl_xml.c:1670 lib/src/gretl_xml.c:2126
-#, fuzzy, c-format
+#, c-format
 msgid "Writing %.0f Kbytes of data\n"
-msgstr "Scrittura di %ld Kbyte di dati\n"
+msgstr "Scrittura di %.0f Kbyte di dati\n"
 
 #: lib/src/gretl_xml.c:2536
 msgid "Failed to parse count of variables"
@@ -8397,9 +8394,8 @@ msgid "Add to dataset"
 msgstr "Aggiungi al dataset"
 
 #: gui2/database.c:827
-#, fuzzy
 msgid "List databases"
-msgstr "database gretl"
+msgstr "Lista dei database"
 
 #: gui2/database.c:1007 gui2/datafiles.c:1832
 msgid "Network status: OK"
@@ -8522,9 +8518,8 @@ msgid "Edit"
 msgstr "Modifica"
 
 #: gui2/datafiles.c:1312 gui2/datafiles.c:1483
-#, fuzzy
 msgid "Sample script"
-msgstr "Modifica script di esempio"
+msgstr "Script di esempio"
 
 #: gui2/datafiles.c:1315 gui2/datafiles.c:1484
 msgid "View code"
@@ -8536,7 +8531,7 @@ msgstr "Esegui"
 
 #: gui2/datafiles.c:1322 gui2/datafiles.c:1488
 msgid "Resources..."
-msgstr ""
+msgstr "Risorse..."
 
 #: gui2/datafiles.c:1327 gui2/datafiles.c:1489
 msgid "Add to menu"
@@ -9025,14 +9020,12 @@ msgid "Resample residuals"
 msgstr "Residui del ricampionamento"
 
 #: gui2/dialogs.c:1154
-#, fuzzy
 msgid "Resample data \"pairs\""
-msgstr "ricampiona dataset"
+msgstr "ricampiona i dati a coppie"
 
 #: gui2/dialogs.c:1162
-#, fuzzy
 msgid "Wild bootstrap"
-msgstr "Usa bootstrap"
+msgstr "Wild bootstrap"
 
 #: gui2/dialogs.c:1170
 msgid "Simulate normal errors"
@@ -9513,7 +9506,7 @@ msgstr "cifre decimali"
 
 #: gui2/dialogs.c:5309
 msgid "Reset"
-msgstr ""
+msgstr "Reimposta"
 
 #: gui2/dialogs.c:5332
 msgid "gretl: error"
@@ -9606,17 +9599,16 @@ msgstr ""
 "(max. %d caratteri)"
 
 #: gui2/dialogs.c:6182
-#, fuzzy
 msgid "Quarterly, annualized"
-msgstr "Trimestrale"
+msgstr "Trimestrale, annualizzato"
 
 #: gui2/dialogs.c:6183 gui2/dialogs.c:6188
 msgid "Year on year"
-msgstr ""
+msgstr "Anno su anno"
 
 #: gui2/dialogs.c:6187
 msgid "Monthly, annualized"
-msgstr ""
+msgstr "Mensile, annualizzato"
 
 #: gui2/dlgutils.c:751
 msgid "Add equation"
@@ -9671,9 +9663,8 @@ msgid "(Please refer to Help for guidance)"
 msgstr "(si veda l'Aiuto per indicazioni)"
 
 #: gui2/dlgutils.c:1201
-#, fuzzy
 msgid "right-click for some shortcuts"
-msgstr " Fare clic destro sul grafico per aprire il menù"
+msgstr " Fare clic destro per alcune scorciatoie"
 
 #: gui2/fileselect.c:512
 msgid ""
@@ -9764,9 +9755,8 @@ msgid "Ox files (*.ox)"
 msgstr "file Ox (*.ox)"
 
 #: gui2/fileselect.c:886
-#, fuzzy
 msgid "Stata files (*.do)"
-msgstr "File di Stata (*.dta)"
+msgstr "File di Stata (*.do)"
 
 #: gui2/fileselect.c:892 gui2/fileselect.c:896
 msgid "Gretl datafiles (*.gdt)"
@@ -10198,26 +10188,25 @@ msgid ""
 "Saving packaged functions as script:\n"
 "include the sample script?"
 msgstr ""
+"Salvataggio della funzione come script:\n"
+"includere lo script di esempio?"
 
 #: gui2/fnsave.c:989
-#, fuzzy
 msgid "Save sample script as"
-msgstr "Modifica script di esempio"
+msgstr "Salva script di esempio con nome"
 
 #: gui2/fnsave.c:990
-#, fuzzy
 msgid "Save help text as"
-msgstr "Salva testo"
+msgstr "Salva il testo di aiuto come"
 
 #: gui2/fnsave.c:991
-#, fuzzy
 msgid "Save GUI help as"
-msgstr "Salva come"
+msgstr "Salva lo help GUI come"
 
 #: gui2/fnsave.c:1026
 #, c-format
 msgid "Saving %s.spec: also save ancillary file(s)?"
-msgstr ""
+msgstr "Salvataggio di %s.spec: salvare anche i file ancillari?"
 
 #: gui2/fnsave.c:1087 gui2/fnsave.c:2042
 msgid "Please save your package first"
@@ -10265,11 +10254,8 @@ msgid "Save changes?"
 msgstr "Salva le modifiche?"
 
 #: gui2/fnsave.c:1694
-#, fuzzy
 msgid "You may add or delete names of datafiles to be included in the package."
-msgstr ""
-"\n"
-"È possibile indicare il nome di un file di dati sulla riga di comando"
+msgstr "Si possono aggiungere o cancellare file di dati da includere nel pacchetto"
 
 #: gui2/fnsave.c:1725
 msgid "Label"
@@ -10304,13 +10290,12 @@ msgid "Menu attachment"
 msgstr "Aggiunta al menu"
 
 #: gui2/fnsave.c:2150
-#, fuzzy
 msgid "Data files"
-msgstr "Utilità dati"
+msgstr "File di dati"
 
 #: gui2/fnsave.c:2209
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 #: gui2/fnsave.c:2211
 msgid "Date (YYYY-MM-DD)"
@@ -10389,13 +10374,12 @@ msgstr ""
 "nel vostro browser web."
 
 #: gui2/fnsave.c:2570
-#, fuzzy
 msgid "not found"
-msgstr "Host non trovato"
+msgstr "non trovato"
 
 #: gui2/fnsave.c:2717
 msgid "build zip file"
-msgstr ""
+msgstr "genera il file zip"
 
 #: gui2/fnsave.c:2867
 msgid ""
@@ -10607,9 +10591,8 @@ msgid "semilog: log y = a + b*x"
 msgstr "semilog: log y = a + b*x"
 
 #: gui2/gpt_dialog.c:142
-#, fuzzy
 msgid "linear-log: y = a + b*log(x)"
-msgstr "lineare: y = a + b*x"
+msgstr "log-lineare: y = a + b*log(x)"
 
 #: gui2/gpt_dialog.c:309
 msgid "gretl: graph color selection"
@@ -10625,9 +10608,9 @@ msgid "%s versus %s (with semilog fit)"
 msgstr "%s rispetto a %s (con fit semilog)"
 
 #: gui2/gpt_dialog.c:613
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with linear-log fit)"
-msgstr "%s rispetto a %s (con fit semilog)"
+msgstr "%s rispetto a %s (con fit log-lineare)"
 
 #: gui2/gpt_dialog.c:715 gui2/gpt_dialog.c:754
 msgid "Invalid position, must be X Y"
@@ -11099,9 +11082,8 @@ msgid "Ox program"
 msgstr "Programma Ox"
 
 #: gui2/gretl.c:1496
-#, fuzzy
 msgid "Stata program"
-msgstr "Programma Ox"
+msgstr "Programma Stata"
 
 #: gui2/gretl.c:1498
 msgid "_Session files"
@@ -11425,9 +11407,8 @@ msgid "_Seasonal differences of selected variables"
 msgstr "Differenze _stagionali delle variabili selezionate"
 
 #: gui2/gretl.c:1597
-#, fuzzy
 msgid "_Percentage change of selected variable"
-msgstr "_Ritardi delle variabili selezionate"
+msgstr "Variazioni _Percentuali delle variabili selezionate"
 
 #: gui2/gretl.c:1599
 msgid "_Index variable"
@@ -12454,9 +12435,8 @@ msgid "gretl: edit Python script"
 msgstr "gretl: modifica script Python"
 
 #: gui2/gui_utils.c:1636
-#, fuzzy
 msgid "gretl: edit Stata program"
-msgstr "gretl: modifica programma Ox"
+msgstr "gretl: modifica programma Stata"
 
 #: gui2/gui_utils.c:1638
 msgid "gretl: untitled"
@@ -13821,7 +13801,7 @@ msgstr "Aggiungi differenze"
 
 #: gui2/menustate.c:392 gui2/menustate.c:538
 msgid "Add percent change..."
-msgstr ""
+msgstr "Aggiungi differenza percentuale..."
 
 #: gui2/menustate.c:394 gui2/menustate.c:539
 msgid "Dummify..."
@@ -15305,7 +15285,7 @@ msgstr "Usa la matrice di covarianza robusta in modo predefinito"
 
 #: gui2/settings.c:324
 msgid "Use the normal distribution for robust p-values"
-msgstr ""
+msgstr "Usa la normale per i p-value robusti"
 
 #: gui2/settings.c:326
 msgid "For cross-sectional data"
@@ -16186,17 +16166,14 @@ msgid "template matrix"
 msgstr "Matrice modello"
 
 #: plugin/addons-i18n.c:66
-#, fuzzy
 msgid "IV/Heteroskedastic"
-msgstr "LMTEST - _Eteroschedasticità"
+msgstr "IV/Eteroschedastico"
 
 #: plugin/addons-i18n.c:67
-#, fuzzy
 msgid "Covariance matrix estimation"
 msgstr "Stimatore covarianza"
 
 #: plugin/addons-i18n.c:76
-#, fuzzy
 msgid "Verbosity level"
 msgstr "Verbosità"
 
@@ -17535,7 +17512,7 @@ msgstr "Distribuzioni di probabilità"
 
 #, fuzzy
 #~ msgid "Malformed SVG file for graph"
-#~ msgstr "File PNG malformato per il grafico"
+#~ msgstr "File SVG malformato per il grafico"
 
 #~ msgid "cointegration rank:"
 #~ msgstr "Rango di cointegrazione:"
