@@ -336,12 +336,12 @@ static void DF_header (const char *s, int p, int pmax,
 {
     pputc(prn, '\n');
 
-    if (p <= 0) {
+    if (p <= 0 && pmax == 0) {
 	if (opt & OPT_G) {
 	    pprintf(prn, _("Dickey-Fuller (GLS) test for %s\n"), s);
 	} else {
 	    pprintf(prn, _("Dickey-Fuller test for %s\n"), s);
-	}	
+	}
     } else {
 	if (opt & OPT_G) {
 	    pprintf(prn, _("Augmented Dickey-Fuller (GLS) test for %s\n"), s);
@@ -584,8 +584,17 @@ static double get_sum_y2 (MODEL *pmod, int ylagno, const DATASET *dset)
     double sumy2 = 0;
     int t;
 
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	sumy2 += ylag[t] * ylag[t];
+    if (pmod->ifc) {
+	/* FIXME does this make any sense? */
+	double ybar = gretl_mean(pmod->t1, pmod->t2, ylag);
+	
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    sumy2 += (ylag[t] - ybar) * (ylag[t] - ybar);
+	}
+    } else {
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    sumy2 += ylag[t] * ylag[t];
+	}
     }
 
     return sumy2;
@@ -619,7 +628,7 @@ static int ic_adjust_order (int *list, int kmax, int which,
 	return -1;
     }
 
-    for (k=kmax; k>0; k--) {
+    for (k=kmax; k>=0; k--) {
 	kmod = lsq(tmplist, dset, OLS, kmod_opt);
 	if (!kmod.errcode && kmod.dfd == 0) {
 	    kmod.errcode = E_DF;
