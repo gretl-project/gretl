@@ -548,18 +548,22 @@ static int t_adjust_order (int *list, int order_max,
     return k;
 }
 
-static double get_MIC (MODEL *pmod, int k, double sum_ylag2, int which,
-		       const DATASET *dset)
+static double get_MIC (MODEL *pmod, int k, double sum_ylag2,
+		       int which, int t1, const DATASET *dset)
 {
     double g, CT, ttk, s2k = 0;
     int t, T = pmod->nobs;
 
     g = pmod->coeff[pmod->ifc];
 
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	s2k += pmod->uhat[t] * pmod->uhat[t];
+    if (t1 < 0) {
+	t1 = pmod->t1;
     }
 
+    for (t=t1; t<=pmod->t2; t++) {
+	s2k += pmod->uhat[t] * pmod->uhat[t];
+    }
+    
     s2k /= pmod->nobs;
     ttk = g * g * sum_ylag2 / s2k;
 
@@ -602,9 +606,11 @@ static int ic_adjust_order (int *list, int kmax, int which,
     double MIC, MICmin = 0;
     double sum_ylag2 = 0;
     int k, kstar = kmax;
+    int uniform_sample = 1;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int ylagno = list[2];
+    int t1max = -1;
     int *tmplist;
 
     tmplist = gretl_list_copy(list);
@@ -629,12 +635,17 @@ static int ic_adjust_order (int *list, int kmax, int which,
 	if (k == kmax) {
 	    /* this need only be done once */
 	    sum_ylag2 = get_sum_y2(&kmod, ylagno, dset);
+	    if (!uniform_sample) {
+		t1max = kmod.t1;
+	    }
 	}
-	MIC = get_MIC(&kmod, k, sum_ylag2, which, dset);
+	MIC = get_MIC(&kmod, k, sum_ylag2, which, t1max, dset);
 	if (k == kmax) {
 	    /* ensure a uniform sample */
-	    dset->t1 = kmod.t1;
-	    dset->t2 = kmod.t2;
+	    if (uniform_sample) {
+		dset->t1 = kmod.t1;
+		dset->t2 = kmod.t2;
+	    }
 	    MICmin = MIC;
 	} else if (MIC < MICmin) {
 	    MICmin = MIC;
