@@ -1706,7 +1706,7 @@ real_kpss_test (int order, int varno, DATASET *dset,
     t2 = KPSSmod.t2;
     T = KPSSmod.nobs;
 
-    if (order <= 0) {
+    if (order < 0) {
 	order = 4.0 * pow(T / 100.0, 0.25);
     }
 

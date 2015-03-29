@@ -6007,23 +6007,30 @@
       </para>
 
       <para context="cli">
-	The order argument determines the size of the window used for
-	Bartlett smoothing.  If the <opt>--verbose</opt> option is
-	chosen the results of the auxiliary regression are printed,
-	along with the estimated variance of the random walk component
-	of the variable.
+	The <repl>order</repl> argument determines the size of the
+	window used for Bartlett smoothing. If a negative value is
+	given this is taken as a signal to use an automatic window
+	size of 4(<math>T</math>/100)<sup>0.25</sup>, where
+	<math>T</math> is the sample size.
+      </para>
+
+      <para context="cli">
+	If the <opt>--verbose</opt> option is chosen the results of
+	the auxiliary regression are printed, along with the estimated
+	variance of the random walk component of the variable.
       </para>
 
       <para>
-	The critical values shown for the test statistic are based on the
-	response surfaces estimated by <cite key="sephton95">Sephton
-	(Economics Letters, 1995)</cite>, which are more accurate for
-	small samples than the values given in the original KPSS
-	article. When the test statistic lies between the 10 percent and 1
-	percent critical values a p-value is shown; this is obtained
-	by linear interpolation and should not be taken too literally.
-	See the <fncref targ="kpsscrit"/> function for a means of
-	obtaining these critical values programmatically.
+	The critical values shown for the test statistic are based on
+	the response surfaces estimated by <cite
+	key="sephton95">Sephton (Economics Letters, 1995)</cite>,
+	which are more accurate for small samples than the values
+	given in the original KPSS article. When the test statistic
+	lies between the 10 percent and 1 percent critical values a
+	p-value is shown; this is obtained by linear interpolation and
+	should not be taken too literally.  See the <fncref
+	targ="kpsscrit"/> function for a means of obtaining these
+	critical values programmatically.
       </para>
 
       <subhead context="cli">Panel data</subhead>
