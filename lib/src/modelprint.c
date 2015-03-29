@@ -3339,10 +3339,10 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 
 static void print_pval_str (double pval, char *str)
 {
-    if (pval < .00001) {
-	sprintf(str, "<%.5f", 0.00001);
+    if (pval < .0001) {
+	sprintf(str, "<%.4f", 0.0001);
     } else {
-	sprintf(str, "%.5f", pval);
+	sprintf(str, "%.4f", pval);
     }
 }
 
