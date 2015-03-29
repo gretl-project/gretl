@@ -549,18 +549,14 @@ static int t_adjust_order (int *list, int order_max,
 }
 
 static double get_MIC (MODEL *pmod, int k, double sum_ylag2,
-		       int which, int t1, const DATASET *dset)
+		       int which, const DATASET *dset)
 {
     double g, CT, ttk, s2k = 0;
     int t, T = pmod->nobs;
 
     g = pmod->coeff[pmod->ifc];
 
-    if (t1 < 0) {
-	t1 = pmod->t1;
-    }
-
-    for (t=t1; t<=pmod->t2; t++) {
+    for (t=pmod->t1; t<=pmod->t2; t++) {
 	s2k += pmod->uhat[t] * pmod->uhat[t];
     }
     
@@ -615,11 +611,9 @@ static int ic_adjust_order (int *list, int kmax, int which,
     double MIC, MICmin = 0;
     double sum_ylag2 = 0;
     int k, kstar = kmax;
-    int uniform_sample = 1;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int ylagno = list[2];
-    int t1max = -1;
     int *tmplist;
 
     tmplist = gretl_list_copy(list);
@@ -644,17 +638,12 @@ static int ic_adjust_order (int *list, int kmax, int which,
 	if (k == kmax) {
 	    /* this need only be done once */
 	    sum_ylag2 = get_sum_y2(&kmod, ylagno, dset);
-	    if (!uniform_sample) {
-		t1max = kmod.t1;
-	    }
 	}
-	MIC = get_MIC(&kmod, k, sum_ylag2, which, t1max, dset);
+	MIC = get_MIC(&kmod, k, sum_ylag2, which, dset);
 	if (k == kmax) {
 	    /* ensure a uniform sample */
-	    if (uniform_sample) {
-		dset->t1 = kmod.t1;
-		dset->t2 = kmod.t2;
-	    }
+	    dset->t1 = kmod.t1;
+	    dset->t2 = kmod.t2;
 	    MICmin = MIC;
 	} else if (MIC < MICmin) {
 	    MICmin = MIC;
@@ -669,7 +658,7 @@ static int ic_adjust_order (int *list, int kmax, int which,
 	    if (k == kmax && test_num == 1) {
 		pputc(prn, '\n');
 	    }
-	    pprintf(prn, "  k = %02d: %s = %#g\n", k, tag, MIC);
+	    pprintf(prn, "  k = %2d: %s = %#g\n", k, tag, MIC);
 	}	    
 	clear_model(&kmod);
 	gretl_list_delete_at_pos(tmplist, k + 2);
@@ -1563,17 +1552,18 @@ int adf_test (int order, const int *list, DATASET *dset,
 /* See Peter S. Sephton, "Response surface estimates of the KPSS 
    stationarity test", Economics Letters 47 (1995) 255-261.
 
-   The estimates below of \beta_\infty and \beta_1 allow the
+   The estimates below of \beta_\infty and \beta_1 (based on
+   a bigger replication using Sephton's methodology) allow the
    construction of better critical values for finite samples
    than the values given in the original KPSS article.
 */
 
 static void kpss_parms (double a, int trend, double *b)
 {
-    const double b0_level[] = { 0.74375, 0.46119, 0.34732 };
-    const double b1_level[] = { -0.99187, 0.45911, 0.20695 };
-    const double b0_trend[] = { 0.21778, 0.14795, 0.119298 };
-    const double b1_trend[] = { -0.235089, 0.035327, 0.100804 };
+    const double b0_level[] = { 0.74404, 0.46158, 0.34742 };
+    const double b1_level[] = { -0.99120, 0.01642, 0.19814 };
+    const double b0_trend[] = { 0.21787, 0.14797, 0.11925 };
+    const double b1_trend[] = { -0.25128, 0.03270, 0.10244 };
     int i = (a == .01)? 0 : (a == .05)? 1 : 2;
 
     if (trend) {
