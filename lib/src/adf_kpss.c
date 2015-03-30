@@ -75,6 +75,7 @@ struct adf_info_ {
     int niv;         /* number of (co-)integrated vars (Engle-Granger) */
     AdfFlags flags;  /* bitflags: see above */
     DetCode det;     /* code for deterministics */
+    int dum0;        /* series IS of first seasonal dummy */
     int nseas;       /* number of seasonal terms */
     int T;           /* number of obs used in test */
     int df;          /* degrees of freedom, test regression */
@@ -220,7 +221,7 @@ static int OLS_demean_detrend (double *ys, int T, DetCode det)
     return err;
 }
 
-static int real_adf_form_list (adf_info *ainfo, int *d0,
+static int real_adf_form_list (adf_info *ainfo,
 			       DATASET *dset)
 {
     int v, save_t1 = dset->t1;
@@ -265,8 +266,8 @@ static int real_adf_form_list (adf_info *ainfo, int *d0,
     }
 
     if (!err && ainfo->nseas > 0) {
-	*d0 = dummy(dset, 0); /* should we center these? */
-	if (*d0 < 0) {
+	ainfo->dum0 = dummy(dset, 0); /* should we center these? */
+	if (ainfo->dum0 < 0) {
 	    fprintf(stderr, "Error generating seasonal dummies\n");
 	    err = E_DATA;
 	} 
@@ -298,8 +299,8 @@ static int adf_y_offset (adf_info *ainfo, int v, DATASET *dset)
    NULL on failure.
 */
 
-static int adf_prepare_vars (adf_info *ainfo, int *d0,
-			     DATASET *dset, gretlopt opt)
+static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
+			     gretlopt opt)
 {
     int err = 0;
 
@@ -372,7 +373,7 @@ static int adf_prepare_vars (adf_info *ainfo, int *d0,
     }
 
     if (!err) {
-	err = real_adf_form_list(ainfo, d0, dset);
+	err = real_adf_form_list(ainfo, dset);
     }
 
 #if ADF_DEBUG
@@ -982,7 +983,84 @@ static int get_auto_order_method (AdfFlags flags, int *err)
     }
 }
 
-#define USE_PERRON_QU 0
+static void print_df_model (adf_info *ainfo, MODEL *pmod,
+			    int dfnum, DATASET *dset,
+			    PRN *prn)
+{
+    pmod->aux = (ainfo->order > 0)? AUX_ADF : AUX_DF;
+    
+    if (!na(ainfo->pval)) {
+	gretl_model_set_int(pmod, "dfnum", dfnum);
+	gretl_model_set_double(pmod, "dfpval", ainfo->pval);
+    }
+    
+    if (ainfo->flags & ADF_EG_RESIDS) {
+	gretl_model_set_int(pmod, "eg-resids", 1);
+    }
+    
+    printmodel(pmod, dset, OPT_NONE, prn);
+}
+
+static int set_deterministic_terms (adf_info *ainfo,
+				    DATASET *dset)
+{
+    int k, j;
+
+    /* Note that list[1] and list[2], plus the @order lags, 
+       are in common for all specifications 
+    */
+
+    ainfo->list[0] = 1 + ainfo->order + ainfo->det;
+
+    if (ainfo->det >= UR_TREND) {
+	k = 3 + ainfo->order;
+	ainfo->list[k] = gettrend(dset, 0);
+	if (ainfo->list[k] == 0) {
+	    return E_ALLOC;
+	}
+    }
+
+    if (ainfo->det == UR_QUAD_TREND) {
+	k = 4 + ainfo->order;
+	ainfo->list[k] = gettrend(dset, 1);
+	if (ainfo->list[k] == 0) {
+	    return E_ALLOC;
+	}
+    }
+
+    if (ainfo->det != UR_NO_CONST) {
+	k = ainfo->list[0];
+	ainfo->list[0] += ainfo->nseas;
+	/* stick constant on end of list */
+	ainfo->list[ainfo->list[0]] = 0;
+	/* preceded by seasonal dummies if wanted */
+	for (j=0; j<ainfo->nseas; j++) {
+	    ainfo->list[k++] = ainfo->dum0 + j;
+	}	    
+    } 
+
+    return 0;
+}
+
+static int check_adf_options (gretlopt opt)
+{
+    int err;
+
+    /* we can only have one of the basic deterministics options */
+    err = incompatible_options(opt, OPT_N | OPT_C | OPT_T | OPT_R);
+
+    if (opt & OPT_G) {
+	/* options incompatible with --gls */
+	if (opt & (OPT_N | OPT_D | OPT_R)) {
+	    err = E_BADOPT;
+	}
+    } else if (opt & OPT_U) {
+	/* option dependent on --gls */
+	err = E_BADOPT;
+    }
+
+    return err;
+}
 
 static int real_adf_test (adf_info *ainfo, DATASET *dset,
 			  gretlopt opt, PRN *prn)
@@ -994,14 +1072,19 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     int blurb_done = 0;
     int auto_order = 0;
     int test_num = 0;
-    int i, d0 = 0;
-    int err = 0;
+    int i, err;
+
+    err = check_adf_options(opt);
+    if (err) {
+	return err;
+    }
 
     /* safety-first initializations */
     ainfo->nseas = ainfo->kmax = ainfo->altv = 0;
     ainfo->vname = dset->varname[ainfo->v];
     ainfo->list = ainfo->biglist = NULL;
     ainfo->det = 0;
+    ainfo->dum0 = 0;
 
 #if ADF_DEBUG
     fprintf(stderr, "real_adf_test: got order = %d\n", ainfo->order);
@@ -1019,12 +1102,10 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    return err;
 	}
 	ainfo->kmax = ainfo->order;
-#if USE_PERRON_QU	
-	if (opt & OPT_G) {
-	    /* experimental */
+	if (opt & OPT_U) {
+	    /* --perron-qu, experimental */
 	    ainfo->flags |= ADF_OLS_FIRST;
 	}
-#endif	
     }
 
     if (ainfo->order < 0) {
@@ -1083,7 +1164,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	}
     }
 
-    err = adf_prepare_vars(ainfo, &d0, dset, opt);
+    err = adf_prepare_vars(ainfo, dset, opt);
     if (err) {
 	return err;
     }
@@ -1100,7 +1181,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     gretl_model_init(&dfmod, dset);
 
     for (i=UR_NO_CONST; i<UR_MAX; i++) {
-	int j, k, dfnum = (i > UR_NO_CONST);
+	int b0pos = (i > UR_NO_CONST);
 
 	ainfo->det = i;
 
@@ -1117,45 +1198,13 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	if (opt & OPT_G) {
 	    /* DF-GLS: skip const, trend */
 	    ainfo->list[0] = ainfo->order + 2;
-	    dfnum--;
-	    goto skipdet;
-	}
-
-	ainfo->list[0] = 1 + ainfo->order + i;
-
-	/* list[1] and list[2], plus the @order lags, are in common
-	   for all models */
-
-	if (i >= UR_TREND) {
-	    k = 3 + ainfo->order;
-	    ainfo->list[k] = gettrend(dset, 0);
-	    if (ainfo->list[k] == 0) {
-		err = E_ALLOC;
+	    b0pos = 0;
+	} else {
+	    err = set_deterministic_terms(ainfo, dset);
+	    if (err) {
 		goto bailout;
 	    }
 	}
-
-	if (i == UR_QUAD_TREND) {
-	    k = 4 + ainfo->order;
-	    ainfo->list[k] = gettrend(dset, 1);
-	    if (ainfo->list[k] == 0) {
-		err = E_ALLOC;
-		goto bailout;
-	    }
-	}
-
-	if (i != UR_NO_CONST) {
-	    k = ainfo->list[0];
-	    ainfo->list[0] += ainfo->nseas;
-	    /* stick constant on end of list */
-	    ainfo->list[ainfo->list[0]] = 0;
-	    /* preceded by seasonal dummies if wanted */
-	    for (j=0; j<ainfo->nseas; j++) {
-		ainfo->list[k++] = d0 + j;
-	    }	    
-	} 
-
-    skipdet:
 
 	test_num++;
 
@@ -1176,7 +1225,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	if (ainfo->flags & ADF_OLS_FIRST) {
 	    /* switch out the regressors list */
 	    ainfo->flags &= ~ADF_OLS_FIRST;
-	    err = adf_prepare_vars(ainfo, &d0, dset, opt);
+	    err = adf_prepare_vars(ainfo, dset, opt);
 	}
 
 #if ADF_DEBUG
@@ -1196,8 +1245,8 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    goto bailout;
 	}
 
-	ainfo->b0 = dfmod.coeff[dfnum];
-	ainfo->tau = ainfo->b0 / dfmod.sderr[dfnum];
+	ainfo->b0 = dfmod.coeff[b0pos];
+	ainfo->tau = ainfo->b0 / dfmod.sderr[b0pos];
 	ainfo->T = dfmod.nobs;
 	ainfo->df = dfmod.dfd;
 
@@ -1229,15 +1278,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
 	if ((opt & OPT_V) && !(ainfo->flags & ADF_PANEL)) {
 	    /* verbose */
-	    dfmod.aux = (ainfo->order > 0)? AUX_ADF : AUX_DF;
-	    if (!na(ainfo->pval)) {
-		gretl_model_set_int(&dfmod, "dfnum", dfnum);
-		gretl_model_set_double(&dfmod, "dfpval", ainfo->pval);
-	    }
-	    if (ainfo->flags & ADF_EG_RESIDS) {
-		gretl_model_set_int(&dfmod, "eg-resids", 1);
-	    }
-	    printmodel(&dfmod, dset, OPT_NONE, prn);
+	    print_df_model(ainfo, &dfmod, b0pos, dset, prn);
 	} else if (!(opt & OPT_Q) && !(ainfo->flags & (ADF_EG_RESIDS | ADF_PANEL))) {
 	    pputc(prn, '\n');
 	}
