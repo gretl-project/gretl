@@ -72,8 +72,8 @@ typedef enum {
 } AdfFlags;
 
 enum {
-    AUTO_MAIC = 1,
-    AUTO_MBIC,
+    AUTO_AIC = 1,
+    AUTO_BIC,
     AUTO_TSTAT
 };
 
@@ -318,15 +318,18 @@ static void show_lags_test (MODEL *pmod, int order, PRN *prn)
     }
 }
 
-static const char *auto_order_string (int i)
+static const char *auto_order_string (int i, gretlopt opt)
 {
-    if (i == AUTO_MBIC) {
+    int gls = (opt & OPT_G);
+    
+    if (i == AUTO_BIC) {
+	return gls ? _("modified BIC") : _("BIC");
 	return _("modified BIC");
     } else if (i == AUTO_TSTAT) {
 	return _("t-statistic");
     } else {
 	/* the default */
-	return _("modified AIC");
+	return gls ? _("modified AIC") : _("AIC");
     }
 }
 
@@ -354,7 +357,7 @@ static void DF_header (const char *s, int p, int pmax,
 	    pprintf(prn, _("including %d lags of (1-L)%s"), p, s);
 	}
 	if (pmax >= p) {
-	    const char *critstr = auto_order_string(auto_order);
+	    const char *critstr = auto_order_string(auto_order, opt);
 
 	    pputc(prn, '\n');
 	    pprintf(prn, _("(max was %d, criterion %s)"), 
@@ -563,7 +566,7 @@ static double get_MIC (MODEL *pmod, int k, double sum_ylag2,
     s2k /= pmod->nobs;
     ttk = g * g * sum_ylag2 / s2k;
 
-    if (which == AUTO_MBIC) {
+    if (which == AUTO_BIC) {
 	/* Schwartz Bayesian */
 	CT = log(T);
     } else {
@@ -599,7 +602,9 @@ static double get_sum_y2 (MODEL *pmod, int ylagno, const DATASET *dset)
 /* Using modified information criterion, as per Ng and Perron,
    "Lag Length Selection and the Construction of Unit Root Tests 
    with Good Size and Power", Econometrica 69/6, Nov 2001, pp. 
-   1519-1554.
+   1519-1554, for the GLS case -- otherwise plain IC (as of
+   2015-03-29). But maybe reconsider in light of Perron and Qu
+   (Economics Letters, 2007).
 */
 
 static int ic_adjust_order (int *list, int kmax, int which,
@@ -608,7 +613,7 @@ static int ic_adjust_order (int *list, int kmax, int which,
 {
     MODEL kmod;
     gretlopt kmod_opt = (OPT_A | OPT_Z);
-    double MIC, MICmin = 0;
+    double IC, ICmin = 0;
     double sum_ylag2 = 0;
     int k, kstar = kmax;
     int save_t1 = dset->t1;
@@ -639,26 +644,39 @@ static int ic_adjust_order (int *list, int kmax, int which,
 	    /* this need only be done once */
 	    sum_ylag2 = get_sum_y2(&kmod, ylagno, dset);
 	}
-	MIC = get_MIC(&kmod, k, sum_ylag2, which, dset);
+	if (opt & OPT_G) {
+	    /* --gls */
+	    IC = get_MIC(&kmod, k, sum_ylag2, which, dset);
+	} else if (which == AUTO_BIC) {
+	    IC = kmod.criterion[C_BIC];
+	} else {
+	    IC = kmod.criterion[C_AIC];
+	}
 	if (k == kmax) {
 	    /* ensure a uniform sample */
 	    dset->t1 = kmod.t1;
 	    dset->t2 = kmod.t2;
-	    MICmin = MIC;
-	} else if (MIC < MICmin) {
-	    MICmin = MIC;
+	    ICmin = IC;
+	} else if (IC < ICmin) {
+	    ICmin = IC;
 	    kstar = k;
 	}
 #if ADF_DEBUG
 	printmodel(&kmod, dset, OPT_NONE, prn);
 #endif
 	if (opt & OPT_V) {
-	    const char *tag = (which == AUTO_MBIC) ? "MBIC" : "MAIC";
+	    const char *tag;
+
+	    if (opt & OPT_G) {
+		tag = (which == AUTO_BIC) ? "MBIC" : "MAIC";
+	    } else {
+		tag = (which == AUTO_BIC) ? "BIC" : "AIC";
+	    }
 
 	    if (k == kmax && test_num == 1) {
 		pputc(prn, '\n');
 	    }
-	    pprintf(prn, "  k = %2d: %s = %#g\n", k, tag, MIC);
+	    pprintf(prn, "  k = %2d: %s = %#g\n", k, tag, IC);
 	}	    
 	clear_model(&kmod);
 	gretl_list_delete_at_pos(tmplist, k + 2);
@@ -838,11 +856,11 @@ static int get_auto_order_method (AdfFlags flags, int *err)
 
     if (s == NULL || *s == '\0') {
 	/* the default */
-	return AUTO_MAIC;
-    } else if (!strcmp(s, "MAIC")) {
-	return AUTO_MAIC;
-    } else if (!strcmp(s, "MBIC")) {
-	return AUTO_MBIC;
+	return AUTO_AIC;
+    } else if (!strcmp(s, "MAIC") || !strcmp(s, "AIC")) {
+	return AUTO_AIC;
+    } else if (!strcmp(s, "MBIC") || !strcmp(s, "BIC")) {
+	return AUTO_BIC;
     } else if (!strcmp(s, "tstat")) {
 	return AUTO_TSTAT;
     } else {
@@ -893,7 +911,7 @@ static int real_adf_test (int varno, int order, int niv,
 
     if (order < 0) {
 	/* testing down: backward compatibility */
-	auto_order = AUTO_MAIC;
+	auto_order = AUTO_AIC;
 	order = order_max = -order;
     }
 

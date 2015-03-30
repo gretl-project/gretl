@@ -3821,10 +3821,10 @@
 	  the test includes a trend, 0 otherwise.
 	</para>
 	<para>
-	  The critical values given are based on the response surfaces
-	  estimated by <cite key="sephton95">Sephton (Economics
-	  Letters, 1995)</cite>. See also the <cmdref targ="kpss"/>
-	  command.
+	  The critical values given are based on response surfaces
+	  estimated in the manner set out by <cite
+	  key="sephton95">Sephton (Economics Letters,
+	  1995)</cite>. See also the <cmdref targ="kpss"/> command.
  	</para>
       </description>
     </function> 

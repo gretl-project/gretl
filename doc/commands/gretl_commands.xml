@@ -6022,7 +6022,7 @@
 
       <para>
 	The critical values shown for the test statistic are based on
-	the response surfaces estimated by <cite
+	response surfaces estimated in the manner set out by <cite
 	key="sephton95">Sephton (Economics Letters, 1995)</cite>,
 	which are more accurate for small samples than the values
 	given in the original KPSS article. When the test statistic
