@@ -1050,12 +1050,14 @@ static int check_adf_options (gretlopt opt)
     err = incompatible_options(opt, OPT_N | OPT_C | OPT_T | OPT_R);
 
     if (opt & OPT_G) {
-	/* options incompatible with --gls */
+	/* options incompatible with --gls: no-const, seasonals,
+	   and quadratic trend
+	*/
 	if (opt & (OPT_N | OPT_D | OPT_R)) {
 	    err = E_BADOPT;
 	}
     } else if (opt & OPT_U) {
-	/* option dependent on --gls */
+	/* option dependent on --gls: Perron-Qu modified AIC/BIC */
 	err = E_BADOPT;
     }
 
@@ -1074,6 +1076,9 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     int test_num = 0;
     int i, err;
 
+    /* If we're called via interact,c, we might have checked
+       this already, but it won't hurt to check here.
+    */
     err = check_adf_options(opt);
     if (err) {
 	return err;
