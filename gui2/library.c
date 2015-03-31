@@ -906,7 +906,7 @@ static void switch_test_down_opt (GtkComboBox *combo,
     *option = gtk_combo_box_get_active(combo);
 }
 
-static GtkWidget *adf_test_down_selector (int *option)
+static GtkWidget *adf_test_down_selector (int ci, int *option)
 {
     GtkWidget *hbox, *label, *combo;
 
@@ -915,8 +915,13 @@ static GtkWidget *adf_test_down_selector (int *option)
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     combo = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
-    combo_box_append_text(combo, _("modified AIC"));    
-    combo_box_append_text(combo, _("modified BIC"));    
+    if (ci == DFGLS) {
+	combo_box_append_text(combo, _("modified AIC"));    
+	combo_box_append_text(combo, _("modified BIC"));
+    } else {
+	combo_box_append_text(combo, _("AIC"));    
+	combo_box_append_text(combo, _("BIC"));
+    }
     combo_box_append_text(combo, _("t-statistic"));
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), *option);
     g_signal_connect(G_OBJECT(combo), "changed",
@@ -974,7 +979,7 @@ static int adf_get_options (const char *title, int panel,
 	ts_active[5] = -1;
     }
 
-    tdown = adf_test_down_selector(&test_down_opt);
+    tdown = adf_test_down_selector(ADF, &test_down_opt);
     set_checks_dialog_extra(0, tdown);
 
     /* note: making nradios < 0 places the radio buttons before the
@@ -1009,11 +1014,11 @@ static int adf_get_options (const char *title, int panel,
 
     if (opt & OPT_E) {
 	if (test_down_opt == 0) {
-	    /* MAIC */
-	    set_optval_string(ADF, OPT_E, "MAIC");
+	    /* AIC */
+	    set_optval_string(ADF, OPT_E, "AIC");
 	} else if (test_down_opt == 1) {
-	    /* MBIC */
-	    set_optval_string(ADF, OPT_E, "MBIC"); 
+	    /* BIC */
+	    set_optval_string(ADF, OPT_E, "BIC"); 
 	} else {
 	    set_optval_string(ADF, OPT_E, "tstat");
 	}
@@ -1058,7 +1063,7 @@ static int dfgls_get_options (const char *title, int panel,
     static int test_down_opt = 0;
     int retval;
 
-    tdown = adf_test_down_selector(&test_down_opt);
+    tdown = adf_test_down_selector(DFGLS, &test_down_opt);
     set_checks_dialog_extra(0, tdown);
 
     retval = checks_dialog(_(title), NULL, 
@@ -1086,11 +1091,11 @@ static int dfgls_get_options (const char *title, int panel,
 
     if (opt & OPT_E) {
 	if (test_down_opt == 0) {
-	    /* MAIC */
-	    set_optval_string(ADF, OPT_E, "MAIC");
+	    /* AIC */
+	    set_optval_string(ADF, OPT_E, "AIC");
 	} else if (test_down_opt == 1) {
-	    /* MBIC */
-	    set_optval_string(ADF, OPT_E, "MBIC"); 
+	    /* BIC */
+	    set_optval_string(ADF, OPT_E, "BIC"); 
 	} else {
 	    set_optval_string(ADF, OPT_E, "tstat");
 	}
@@ -2199,7 +2204,7 @@ int do_add_omit (selector *sr)
     if (ci == ADD) {
         lib_command_sprintf("add%s%s", buf, flagstr);
     } else if (buf == NULL) {
-	lib_command_sprintf("omit %s", flagstr);
+	lib_command_sprintf("omit%s", flagstr);
     } else {
         lib_command_sprintf("omit%s%s", buf, flagstr);
     }
