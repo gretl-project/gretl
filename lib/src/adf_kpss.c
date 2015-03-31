@@ -95,7 +95,8 @@ struct kpss_info_ {
 
 /* replace y with demeaned or detrended y via GLS */
 
-static int GLS_demean_detrend (double *y, int T, DetCode det)
+static int GLS_demean_detrend (double *y, int offset,
+			       int T, DetCode det)
 {
     gretl_matrix *ya = NULL;
     gretl_matrix *Za = NULL;
@@ -120,6 +121,12 @@ static int GLS_demean_detrend (double *y, int T, DetCode det)
     }
 
     c = (det == UR_CONST)? (1.0 - 7.0/T) : (1.0 - 13.5/T);
+
+    /* invalidate pre-offset observations */
+    for (t=0; t<offset; t++) {
+	y[t] = NADBL;
+    }
+    y += offset;
 
     gretl_vector_set(ya, 0, y[0] /* (1 - c) * y[0] ?? */);
     for (t=1; t<T; t++) {
@@ -160,7 +167,8 @@ static int GLS_demean_detrend (double *y, int T, DetCode det)
 
 /* replace y with demeaned or detrended y via OLS */
 
-static int OLS_demean_detrend (double *ys, int T, DetCode det)
+static int OLS_demean_detrend (double *ys, int offset,
+			       int T, DetCode det)
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
@@ -186,6 +194,12 @@ static int OLS_demean_detrend (double *ys, int T, DetCode det)
 	err = E_ALLOC;
 	goto bailout;
     }
+
+    /* invalidate pre-offset observations */
+    for (t=0; t<offset; t++) {
+	ys[t] = NADBL;
+    }
+    ys += offset;    
 
     for (t=0; t<T; t++) {
 	gretl_vector_set(y, t, ys[t]);
@@ -249,9 +263,6 @@ static int real_adf_form_list (adf_info *ainfo,
 	return E_DATA;
     }
 
-    /* undo reset sample */
-    dset->t1 = save_t1;
-
     /* generate lagged differences for augmented test */
     j = 3;
     for (i=1; i<=ainfo->order && !err; i++) {
@@ -273,11 +284,23 @@ static int real_adf_form_list (adf_info *ainfo,
 	} 
     }
 
+    /* restore incoming sample */
+    dset->t1 = save_t1;
+
     return err;
 }
 
+/* The "offset" will determine where the data start for the
+   initial detrending regression. I suppose we don't want
+   to include excessive "pre-sample" data if the user has
+   explicitly moved the sample start off zero, but we need
+   the data to start early enough to provide @order + 1
+   lags, to be in sync with the ADF regressions.
+*/
+
 static int adf_y_offset (adf_info *ainfo, int v, DATASET *dset)
 {
+    int min_offset = dset->t1 - (ainfo->order + 1);
     int t, offset = 0;
 
     for (t=0; t<=dset->t2; t++) {
@@ -286,11 +309,16 @@ static int adf_y_offset (adf_info *ainfo, int v, DATASET *dset)
 	    offset = t+1;
 	}
     }
-    
-    if (offset < dset->t1 - ainfo->order) {
-	offset = dset->t1 - ainfo->order;
+
+    if (offset < min_offset) {
+	offset = min_offset;
     }
 
+#if ADF_DEBUG
+    fprintf(stderr, "adf_y_offset: dset->t1=%d, order=%d, offset=%d\n",
+	    dset->t1, ainfo->order, offset);
+#endif
+    
     return offset;
 }
 
@@ -334,8 +362,8 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	if (!err) {
 	    int offset = adf_y_offset(ainfo, v, dset);
 	    int T = dset->t2 - offset + 1;
-	    
-	    err = OLS_demean_detrend(dset->Z[v] + offset, T, det);
+
+	    err = OLS_demean_detrend(dset->Z[v], offset, T, det);
 	}
 	
 	if (!err) {
@@ -349,8 +377,8 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	int v;
 
 	if (ainfo->altv > 0) {
-	    /* If we already did OLS-detrending, re-use the
-	       series we added earlier 
+	    /* if we already did detrending, re-use the
+	       storage we added earlier 
 	    */	    
 	    v = ainfo->altv;
 	} else {
@@ -362,7 +390,7 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	    int offset = adf_y_offset(ainfo, v, dset);
 	    int T = dset->t2 - offset + 1;
 
-	    err = GLS_demean_detrend(dset->Z[v] + offset, T, det);
+	    err = GLS_demean_detrend(dset->Z[v], offset, T, det);
 	}
 	
 	if (!err) {
@@ -724,7 +752,7 @@ static int ic_adjust_order (adf_info *ainfo, int which,
     double IC, ICmin = 0;
     double sum_ylag2 = 0;
     int kmax = ainfo->kmax;
-    int k, kstar = kmax;
+    int k, kopt = kmax;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int ylagno = ainfo->list[2];
@@ -751,7 +779,7 @@ static int ic_adjust_order (adf_info *ainfo, int which,
 		    kmod.errcode);
 	    *err = kmod.errcode;
 	    clear_model(&kmod);
-	    kstar = -1;
+	    kopt = -1;
 	    break;
 	}
 	if (k == kmax) {
@@ -772,7 +800,7 @@ static int ic_adjust_order (adf_info *ainfo, int which,
 	    ICmin = IC;
 	} else if (IC < ICmin) {
 	    ICmin = IC;
-	    kstar = k;
+	    kopt = k;
 	}
 #if ADF_DEBUG
 	printmodel(&kmod, dset, OPT_NONE, prn);
@@ -801,9 +829,9 @@ static int ic_adjust_order (adf_info *ainfo, int which,
 
     free(tmplist);
 
-    if (kstar >= 0) {
-	/* now trim the 'real' list to kstar lags */
-	for (k=kmax; k>kstar; k--) {
+    if (kopt >= 0) {
+	/* now trim the 'real' list to kopt lags */
+	for (k=kmax; k>kopt; k--) {
 	    gretl_list_delete_at_pos(ainfo->list, k + 2);
 	}
     }
@@ -811,7 +839,7 @@ static int ic_adjust_order (adf_info *ainfo, int which,
     dset->t1 = save_t1;
     dset->t2 = save_t2;
 
-    return kstar;
+    return kopt;
 }
 
 /* targ must be big enough to accept all of src! */
@@ -957,32 +985,6 @@ static int gettrend (DATASET *dset, int square)
     return idx;
 }
 
-static int get_auto_order_method (AdfFlags flags, int *err)
-{
-    const char *s;
-
-    if (flags & (ADF_EG_TEST | ADF_EG_RESIDS)) {
-	s = get_optval_string(COINT, OPT_E);
-    } else {
-	s = get_optval_string(ADF, OPT_E);
-    }
-
-    if (s == NULL || *s == '\0') {
-	/* the default */
-	return AUTO_AIC;
-    } else if (!strcmp(s, "MAIC") || !strcmp(s, "AIC")) {
-	return AUTO_AIC;
-    } else if (!strcmp(s, "MBIC") || !strcmp(s, "BIC")) {
-	return AUTO_BIC;
-    } else if (!strcmp(s, "tstat")) {
-	return AUTO_TSTAT;
-    } else {
-	gretl_errmsg_set(_("Invalid option"));
-	*err = E_DATA;
-	return 0;
-    }
-}
-
 static void print_df_model (adf_info *ainfo, MODEL *pmod,
 			    int dfnum, DATASET *dset,
 			    PRN *prn)
@@ -1004,42 +1006,108 @@ static void print_df_model (adf_info *ainfo, MODEL *pmod,
 static int set_deterministic_terms (adf_info *ainfo,
 				    DATASET *dset)
 {
-    int k, j;
+    int i, j;
 
-    /* Note that list[1] and list[2], plus the @order lags, 
-       are in common for all specifications 
+    /* Note that list[1] and list[2], plus the @order 
+       lagged differences, are in common for all 
+       specifications 
     */
 
     ainfo->list[0] = 1 + ainfo->order + ainfo->det;
 
     if (ainfo->det >= UR_TREND) {
-	k = 3 + ainfo->order;
-	ainfo->list[k] = gettrend(dset, 0);
-	if (ainfo->list[k] == 0) {
+	i = 3 + ainfo->order;
+	ainfo->list[i] = gettrend(dset, 0);
+	if (ainfo->list[i] == 0) {
 	    return E_ALLOC;
 	}
     }
 
     if (ainfo->det == UR_QUAD_TREND) {
-	k = 4 + ainfo->order;
-	ainfo->list[k] = gettrend(dset, 1);
-	if (ainfo->list[k] == 0) {
+	i = 4 + ainfo->order;
+	ainfo->list[i] = gettrend(dset, 1);
+	if (ainfo->list[i] == 0) {
 	    return E_ALLOC;
 	}
     }
 
     if (ainfo->det != UR_NO_CONST) {
-	k = ainfo->list[0];
+	i = ainfo->list[0];
 	ainfo->list[0] += ainfo->nseas;
 	/* stick constant on end of list */
 	ainfo->list[ainfo->list[0]] = 0;
 	/* preceded by seasonal dummies if wanted */
 	for (j=0; j<ainfo->nseas; j++) {
-	    ainfo->list[k++] = ainfo->dum0 + j;
+	    ainfo->list[i++] = ainfo->dum0 + j;
 	}	    
     } 
 
     return 0;
+}
+
+/* When we're done with testing down in the DF-GLS context
+   we may need to regenerate the detrended data: this
+   applies if (a) we used Perron-Qu OLS detrending in the
+   test-down phase or (b) the sample start is currently
+   set after the start of the dataset.
+*/
+
+static int reset_detrended_data (adf_info *ainfo,
+				 DATASET *dset,
+				 gretlopt opt)
+{
+    if (ainfo->flags & ADF_OLS_FIRST) {
+	/* Perron-Qu */
+	return 1;
+    } else if ((opt & OPT_G) && (opt & OPT_E) && dset->t1 > 0) {
+	/* GLS + testing down + t1 > 0 */
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+static int handle_test_down_option (adf_info *ainfo,
+				    gretlopt opt,
+				    int *err)
+{
+    int tmethod = 0;
+    const char *s;
+
+    if (ainfo->flags & (ADF_EG_TEST | ADF_EG_RESIDS)) {
+	s = get_optval_string(COINT, OPT_E);
+    } else {
+	s = get_optval_string(ADF, OPT_E);
+    }
+
+    if (s == NULL || *s == '\0') {
+	/* the (old) default */
+	tmethod = AUTO_AIC;
+    } else if (!strcmp(s, "MAIC") || !strcmp(s, "AIC")) {
+	tmethod = AUTO_AIC;
+    } else if (!strcmp(s, "MBIC") || !strcmp(s, "BIC")) {
+	tmethod = AUTO_BIC;
+    } else if (!strcmp(s, "tstat")) {
+	tmethod = AUTO_TSTAT;
+    } else {
+	gretl_errmsg_set(_("Invalid option"));
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+	/* take the given order to be the max */
+	ainfo->kmax = ainfo->order;
+	if (opt & OPT_U) {
+	    /* --perron-qu */
+	    if (tmethod != AUTO_AIC && tmethod != AUTO_BIC) {
+		*err = E_BADOPT;
+	    } else {
+		ainfo->flags |= ADF_OLS_FIRST;
+	    }
+	}
+    }
+
+    return tmethod;
 }
 
 static int check_adf_options (gretlopt opt)
@@ -1101,15 +1169,10 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     }    
 
     if (opt & OPT_E) {
-	/* testing down */
-	auto_order = get_auto_order_method(ainfo->flags, &err);
+	/* --test-down=... */
+	auto_order = handle_test_down_option(ainfo, opt, &err);
 	if (err) {
 	    return err;
-	}
-	ainfo->kmax = ainfo->order;
-	if (opt & OPT_U) {
-	    /* --perron-qu, experimental */
-	    ainfo->flags |= ADF_OLS_FIRST;
 	}
     }
 
@@ -1156,7 +1219,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     }
 
     if ((opt & OPT_D) && dset->pd > 1) {
-	/* add seasonal dummies */
+	/* arrange to add seasonal dummies */
 	ainfo->nseas = dset->pd - 1;
     }
 
@@ -1227,8 +1290,8 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    }
 	}
 
-	if (ainfo->flags & ADF_OLS_FIRST) {
-	    /* switch out the regressors list */
+	if (reset_detrended_data(ainfo, dset, opt)) {
+	    /* swap out the detrended data */
 	    ainfo->flags &= ~ADF_OLS_FIRST;
 	    err = adf_prepare_vars(ainfo, dset, opt);
 	}
@@ -1695,7 +1758,7 @@ int adf_test (int order, const int *list, DATASET *dset,
     int err;
 
     /* GLS incompatible with no const, quadratic trend or seasonals */
-    err = incompatible_options(opt, OPT_N | OPT_R | OPT_G);
+    err = incompatible_options(opt, OPT_G | OPT_N | OPT_R);
     if (!err) {
 	err = incompatible_options(opt, OPT_D | OPT_G);
     }
