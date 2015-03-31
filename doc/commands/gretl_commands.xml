@@ -235,19 +235,20 @@
       </para>
 
       <para context="cli">
-	If the lag order, <math>k</math>, is greater than 0, then
-	<math>k</math> lags of the dependent variable are included on
-	the right-hand side of the test regressions.  If the order is
-	given as &minus;1, <math>k</math> is set following the
-	recommendation of <cite key="schwert89">Schwert (1989)</cite>,
-	namely 12(<math>T</math>/100)<sup>0.25</sup>, where
-	<math>T</math> is the sample size.  In either case, however,
-	if the <opt>--test-down</opt> option is given then
-	<math>k</math> is taken as the <emphasis>maximum</emphasis>
-	lag and the actual lag order used is obtained by testing down.
-	The criterion for testing down can be selected using the
-	option parameter, which should be one of <lit>AIC</lit>,
-	<lit>BIC</lit> or <lit>tstat</lit>.
+	If the <repl>order</repl> argument (henceforth,
+	<math>k</math>) is greater than 0, then <math>k</math> lags of
+	the dependent variable are included on the right-hand side of
+	the test regressions.  If the order is given as &minus;1,
+	<math>k</math> is set following the recommendation of <cite
+	key="schwert89">Schwert (1989)</cite>, namely the integer part
+	of 12(<math>T</math>/100)<sup>0.25</sup>, where <math>T</math>
+	is the sample size.  In either case, however, if the
+	<opt>--test-down</opt> option is given then <math>k</math> is
+	taken as the <emphasis>maximum</emphasis> lag and the actual
+	lag order used is obtained by testing down.  The criterion for
+	testing down can be selected using the option parameter, which
+	should be one of <lit>AIC</lit>, <lit>BIC</lit> or
+	<lit>tstat</lit>; <lit>AIC</lit> is the default.
       </para>
 
       <para context="gui">
@@ -264,7 +265,7 @@
       <para context="cli">
 	When testing down via AIC or BIC is called for, the final lag
 	order for the ADF equation is that which optimizes the chosen
-	information criterion (Akaike or Schwartz Bayesian).  The
+	information criterion (Akaike or Schwarz Bayesian).  The
 	exact procedure depends on whether or not the <opt>--gls</opt>
 	option is given: when GLS detrending is specified, AIC and BIC
 	are the <quote>modified</quote> versions described in <cite
@@ -279,7 +280,7 @@
       <para context="gui">
 	When testing down via AIC or BIC is called for, the final lag
 	order for the ADF equation is that which optimizes the chosen
-	information criterion (Akaike or Schwartz Bayesian).
+	information criterion (Akaike or Schwarz Bayesian).
       </para>      
 	
       <para>
@@ -12647,7 +12648,7 @@
       <para context="cli">
 	If the <opt>--lagselect</opt> option is given, the first parameter to
 	the <lit>var</lit> command is taken as the maximum lag order.  Output
-	consists of a table showing the values of the Akaike (AIC), Schwartz
+	consists of a table showing the values of the Akaike (AIC), Schwarz
 	(BIC) and Hannan&ndash;Quinn (HQC) information criteria computed from
 	VARs of order 1 to the given maximum.  This is intended to help
 	with the selection of the optimal lag order.  The usual VAR output is
@@ -12673,7 +12674,7 @@
       </para>
       <para>
 	Output will consist of a table showing the values of the Akaike (AIC),
-	Schwartz (BIC) and Hannan&ndash;Quinn (HQC) information criteria computed
+	Schwarz (BIC) and Hannan&ndash;Quinn (HQC) information criteria computed
 	from VARs of order 1 to the chosen maximum.  This is intended to help with
 	the selection of the optimal lag order.  
       </para>
