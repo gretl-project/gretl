@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-03-24 20:06-0400\n"
-"PO-Revision-Date: 2015-03-08 14:14+0100\n"
+"PO-Revision-Date: 2015-03-31 22:19+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -7501,8 +7501,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 8 de março de 2015.\n"
-"(A todas Mulheres um bom dia Internacional da Mulher!)"
+"Tradução de 31 de março de 2015."
 
 #: gui2/about.c:203
 msgid "News"
@@ -8530,7 +8529,7 @@ msgstr "Executar"
 
 #: gui2/datafiles.c:1322 gui2/datafiles.c:1488
 msgid "Resources..."
-msgstr ""
+msgstr "Recursos..."
 
 #: gui2/datafiles.c:1327 gui2/datafiles.c:1489
 msgid "Add to menu"
@@ -9505,7 +9504,7 @@ msgstr "casas decimais"
 
 #: gui2/dialogs.c:5309
 msgid "Reset"
-msgstr ""
+msgstr "Reiniciar"
 
 #: gui2/dialogs.c:5332
 msgid "gretl: error"
@@ -9662,9 +9661,8 @@ msgid "(Please refer to Help for guidance)"
 msgstr "(Por favor consulte a Ajuda para orientações)"
 
 #: gui2/dlgutils.c:1201
-#, fuzzy
 msgid "right-click for some shortcuts"
-msgstr "Clicar com o botão direito no gráfico para menu de contexto"
+msgstr "clicar com o botão direito para alguns atalhos"
 
 #: gui2/fileselect.c:512
 msgid ""
@@ -10187,26 +10185,25 @@ msgid ""
 "Saving packaged functions as script:\n"
 "include the sample script?"
 msgstr ""
+"Gravando o pacote de funções como ficheiro de comandos:\n"
+"Incluir o ficheiro de comandos de exemplo?"
 
 #: gui2/fnsave.c:989
-#, fuzzy
 msgid "Save sample script as"
-msgstr "Abrir ficheiro de comandos de exemplo"
+msgstr "Gravar o ficheiro de comandos de exemplo como"
 
 #: gui2/fnsave.c:990
-#, fuzzy
 msgid "Save help text as"
-msgstr "Gravar texto"
+msgstr "Gravar texto de ajuda como"
 
 #: gui2/fnsave.c:991
-#, fuzzy
 msgid "Save GUI help as"
-msgstr "Gravar como"
+msgstr "Gravar ajuda da aplicação como"
 
 #: gui2/fnsave.c:1026
 #, c-format
 msgid "Saving %s.spec: also save ancillary file(s)?"
-msgstr ""
+msgstr "Gravando %s.spec: gravar também os ficheiros acessórios?"
 
 #: gui2/fnsave.c:1087 gui2/fnsave.c:2042
 msgid "Please save your package first"
@@ -10376,9 +10373,8 @@ msgstr ""
 "no seu visionador da Web."
 
 #: gui2/fnsave.c:2570
-#, fuzzy
 msgid "not found"
-msgstr "Servidor não encontrado"
+msgstr "não encontrado"
 
 #: gui2/fnsave.c:2717
 msgid "build zip file"
@@ -16149,19 +16145,16 @@ msgid "template matrix"
 msgstr "modelo de matriz"
 
 #: plugin/addons-i18n.c:66
-#, fuzzy
 msgid "IV/Heteroskedastic"
-msgstr "_Heterocedasticidade"
+msgstr "IV/Heterocedasticidade"
 
 #: plugin/addons-i18n.c:67
-#, fuzzy
 msgid "Covariance matrix estimation"
-msgstr "Estimador de covariância"
+msgstr "Estimação da matriz de covariância"
 
 #: plugin/addons-i18n.c:76
-#, fuzzy
 msgid "Verbosity level"
-msgstr "Detalhe"
+msgstr "Nível de detalhe"
 
 #: plugin/anova.c:108 plugin/anova.c:110
 msgid "Treatment"
