@@ -158,6 +158,10 @@
 	  <optparm optional="true">criterion</optparm>
 	  <effect>automatic lag order</effect>
 	</option>
+	<option>
+	  <flag>--perron-qu</flag>
+	  <effect>see below</effect>
+	</option>	
       </options>
       <examples>
 	<example>adf 0 y</example>
@@ -202,6 +206,19 @@
 	specifying one or more of the option flags.
       </para>
 
+      <para context="cli">
+	The <opt>--gls</opt> option can be used in conjunction with
+	one or other of the flags <opt>--c</opt> and <opt>--ct</opt>
+	(the model with constant, or model with constant and trend).
+	The effect of this option is that the de-meaning or
+	de-trending of the variable to be tested is done using the GLS
+	procedure suggested by <cite key="ERS96">Elliott,
+	Rothenberg and Stock (1996)</cite>, which gives a test of
+	greater power than the standard Dickey&ndash;Fuller approach.
+	This option is not compatible with <opt>--nc</opt>,
+	<opt>--ctt</opt> or <opt>--seasonals</opt>.
+      </para>      
+
       <para>
 	In all cases the dependent variable is the first difference of the
 	specified variable, <math>y</math>, and the key independent variable
@@ -229,14 +246,8 @@
 	<math>k</math> is taken as the <emphasis>maximum</emphasis>
 	lag and the actual lag order used is obtained by testing down.
 	The criterion for testing down can be selected using the
-	option parameter, which must be one of <lit>MAIC</lit>,
-	<lit>MBIC</lit> or <lit>tstat</lit>. The MAIC and MBIC methods
-	are as described in <cite key="ng-perron01">Ng and Perron
-	(2001)</cite>; the lag order is chosen so as to optimize an
-	appropriately modified version of the Akaike Information
-	Criterion or the Schwartz Bayesian Criterion, respectively.
-	The MAIC method is the default when no method is explicitly
-	specified. The tstat method is a follows:
+	option parameter, which should be one of <lit>AIC</lit>,
+	<lit>BIC</lit> or <lit>tstat</lit>.
       </para>
 
       <para context="gui">
@@ -247,12 +258,33 @@
 	from maximum lag</quote> is checked, the selected lag order is
 	taken as a maximum and the actual lag order used is obtained
 	by testing down, using the criterion chosen via the
-	accompanying drop-down list. The modified AIC and modified BIC
-	methods are as described in <cite key="ng-perron01">Ng and
-	Perron (2001)</cite>; the lag order is chosen so as to
-	optimize an appropriately modified version of the Akaike
-	Information Criterion (AIC) or the Schwartz Bayesian Criterion
-	(BIC).  The <math>t</math>-statistic method is a follows:
+	accompanying drop-down list.
+      </para>
+
+      <para context="cli">
+	When testing down via AIC or BIC is called for, the final lag
+	order for the ADF equation is that which optimizes the chosen
+	information criterion (Akaike or Schwartz Bayesian).  The
+	exact procedure depends on whether or not the <opt>--gls</opt>
+	option is given: when GLS detrending is specified, AIC and BIC
+	are the <quote>modified</quote> versions described in <cite
+	key="ng-perron01">Ng and Perron (2001)</cite>, otherwise they
+	are the standard versions. In the GLS case a refinement is
+	available: if the additional option <opt>perron-qu</opt> is
+	given, the modified information criteria are computed
+	according to the revised method recommended by <cite
+	key="perron-qu07">Perron and Qu (2007)</cite>.
+      </para>
+
+      <para context="gui">
+	When testing down via AIC or BIC is called for, the final lag
+	order for the ADF equation is that which optimizes the chosen
+	information criterion (Akaike or Schwartz Bayesian).
+      </para>      
+	
+      <para>
+	When testing down via the <math>t</math>-statistic method
+	is called for, the procedure is as follows:
       </para>
 
       <nlist>
@@ -275,26 +307,15 @@
 	against the normal distribution, of 0.10 or less.
       </para> 
 
-      <para context="cli">
-	The <opt>--gls</opt> option can be used in conjunction with
-	one or other of the flags <opt>--c</opt> and <opt>--ct</opt>
-	(the model with constant, or model with constant and trend).
-	The effect of this option is that the de-meaning or
-	de-trending of the variable to be tested is done using the GLS
-	procedure suggested by <cite key="ERS96">Elliott,
-	Rothenberg and Stock (1996)</cite>, which gives a test of
-	greater power than the standard Dickey&ndash;Fuller approach.
-	This option is not compatible with <opt>--nc</opt>,
-	<opt>--ctt</opt> or <opt>--seasonals</opt>.
-      </para>
-
-      <para><emphasis>P</emphasis>-values for the Dickey&ndash;Fuller
-      tests are based on <cite key="mackinnon96">MacKinnon
-      (1996)</cite>.  The relevant code is included by kind permission
-      of the author.  In the case of the test with linear trend using
-      GLS these <emphasis>P</emphasis>-values are not applicable;
-      critical values from Table 1 in <cite key="ERS96">Elliott,
-      Rothenberg and Stock (1996)</cite> are shown instead.
+      <para>
+	<emphasis>P</emphasis>-values for the Dickey&ndash;Fuller
+	tests are based on <cite key="mackinnon96">MacKinnon
+	(1996)</cite>.  The relevant code is included by kind
+	permission of the author.  In the case of the test with linear
+	trend using GLS these <emphasis>P</emphasis>-values are not
+	applicable; critical values from Table 1 in <cite
+	key="ERS96">Elliott, Rothenberg and Stock (1996)</cite> are
+	shown instead.
       </para>
 
       <subhead context="cli">Panel data</subhead>
@@ -2695,18 +2716,22 @@
 
     <description>
       <para>
-	The ADF-GLS test is a variant of the Dickey&ndash;Fuller
-	test for a unit root, for the case where the variable
-	to be tested is assumed to have a non-zero mean or to
-	exhibit a linear trend.  The difference is that 
-	the de-meaning or de-trending of the variable is done
-	using the GLS procedure suggested by Elliott, Rothenberg
-	and Stock (1996).  This gives a test of greater power than
-	the standard Dickey&ndash;Fuller approach.
+	The ADF-GLS test is a variant of the Dickey&ndash;Fuller test
+	for a unit root, for the case where the variable to be tested
+	is assumed to have a non-zero mean or to exhibit a linear
+	trend.  The difference is that the de-meaning or de-trending
+	of the variable is done using the GLS procedure suggested by
+	Elliott, Rothenberg and Stock (1996).  This gives a test of
+	greater power than the standard Dickey&ndash;Fuller approach.
       </para>
       <para>
-	See also the <cmdref targ="adf"/> command and the <opt>--gls</opt>
-	option.
+	When testing down from a given maximum lag order, the
+	<quote>modified</quote> AIC and BIC criteria are as described
+	in in <cite key="ng-perron01">Ng and Perron (2001)</cite>.
+      </para>     
+      <para>
+	See also the <cmdref targ="adf"/> command and the
+	<opt>--gls</opt> option.
       </para>
     </description>
 
@@ -2720,20 +2745,22 @@
     label="Model dialog box">
 
     <description>
-      <para>To select the dependent variable, highlight a variable in
-	the list on the left and press the <quote>Choose</quote>
-	button pointing to the Dependent variable slot.  If you check
-	the <quote>Set as default</quote> box, the selected variable
-	will be pre-selected as dependent when the model dialog is
-	next opened.  Short-cut: double-click on a variable on the
-	left to select it as the dependent variable and also set it as
-	the default.
+      <para>
+	To select the dependent variable, highlight a variable in the
+	list on the left and press the <quote>Choose</quote> button
+	pointing to the Dependent variable slot.  If you check the
+	<quote>Set as default</quote> box, the selected variable will
+	be pre-selected as dependent when the model dialog is next
+	opened.  Short-cut: double-click on a variable on the left to
+	select it as the dependent variable and also set it as the
+	default.
       </para>
-      <para>To select independent variables, highlight them on the
-	left and press the <quote>Add</quote> button (or click the
-	right mouse button).  You can highlight several contiguous
-	variables by dragging with the mouse.  You can highlight a
-	group of non-contiguous variables by clicking on them with the
+      <para>
+	To select independent variables, highlight them on the left
+	and press the <quote>Add</quote> button (or click the right
+	mouse button).  You can highlight several contiguous variables
+	by dragging with the mouse.  You can highlight a group of
+	non-contiguous variables by clicking on them with the
 	<lit>Ctrl</lit> key pressed.
       </para>
     </description>
