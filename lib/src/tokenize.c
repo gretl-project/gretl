@@ -2962,6 +2962,8 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    idx_only ? "get_command_index" : "parse_command_line", line);
 #endif
 
+    gretl_push_c_numeric_locale();
+
     while (!err && *s) {
 	int skipped = 0;
 
@@ -3029,9 +3031,14 @@ static int tokenize_line (CMD *cmd, const char *line,
 	} else if ((n = symbol_spn(s)) > 0) {
 	    if (n == 1 && MAY_START_NUMBER(*s) && isdigit(*(s+1))) {
 		n = numeric_spn(s, 0);
-		m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
-		strncat(tok, s, m);
-		err = push_numeric_token(cmd, tok, s, pos);
+		if (n == 0) {
+		    gretl_errmsg_sprintf(_("Unexpected symbol '%c'"), *s);
+		    err = E_PARSE;
+		} else {
+		    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
+		    strncat(tok, s, m);
+		    err = push_numeric_token(cmd, tok, s, pos);
+		}
 	    } else {
 		/* operator / symbol */
 		m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
@@ -3118,6 +3125,8 @@ static int tokenize_line (CMD *cmd, const char *line,
 	s += n;
 	pos += n;
     }
+
+    gretl_pop_c_numeric_locale();
 
 #if CDEBUG
     if (err) {
