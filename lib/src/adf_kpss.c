@@ -462,16 +462,24 @@ static void show_lags_test (MODEL *pmod, int order, PRN *prn)
 
 static const char *auto_order_string (int i, gretlopt opt)
 {
-    int gls = (opt & OPT_G);
-    
-    if (i == AUTO_BIC) {
-	return gls ? _("modified BIC") : _("BIC");
-	return _("modified BIC");
-    } else if (i == AUTO_TSTAT) {
-	return _("t-statistic");
+    if (opt & OPT_U) {
+	/* perron-qu */
+	if (i == AUTO_BIC) {
+	    return _("modified BIC, Perron-Qu");
+	} else {
+	    return _("modified AIC, Perron-Qu");
+	}
     } else {
-	/* the default */
-	return gls ? _("modified AIC") : _("AIC");
+	int gls = (opt & OPT_G);
+	
+	if (i == AUTO_BIC) {
+	    return gls ? _("modified BIC") : _("BIC");
+	} else if (i == AUTO_TSTAT) {
+	    return _("t-statistic");
+	} else {
+	    /* the default */
+	    return gls ? _("modified AIC") : _("AIC");
+	}
     }
 }
 

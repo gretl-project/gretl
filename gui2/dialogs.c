@@ -4431,6 +4431,7 @@ static void checks_dialog_add_checks (GtkWidget *dialog, GtkWidget *vbox,
 				      int *active, int check_min,
 				      int check_max)
 {
+    GtkWidget *prev_button = NULL;
     GtkWidget *hbox, *button;
     int nc0 = 0, nc1 = 0;
     int i;
@@ -4477,7 +4478,12 @@ static void checks_dialog_add_checks (GtkWidget *dialog, GtkWidget *vbox,
 	    /* and erase the "extra" specification */
 	    check_extra = NULL;
 	    check_extra_pos = -1;
+	} else if (prev_button != NULL && strstr(opts[i], "Perron-Qu")) {
+	    gtk_widget_set_sensitive(button, active[0]);
+	    sensitize_conditional_on(button, prev_button);
 	}
+
+	prev_button = button;
 
 	if (i+1 == nc1) {
 	    /* mark end of the "must check one" area */

@@ -921,8 +921,8 @@ static GtkWidget *adf_test_down_selector (int ci, int *option)
     } else {
 	combo_box_append_text(combo, _("AIC"));    
 	combo_box_append_text(combo, _("BIC"));
+	combo_box_append_text(combo, _("t-statistic"));
     }
-    combo_box_append_text(combo, _("t-statistic"));
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), *option);
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(switch_test_down_opt), 
@@ -1038,6 +1038,7 @@ static int dfgls_get_options (const char *title, int panel,
     const char *ts_opts[] = {
 	/* checkbox items */
 	N_("test down from maximum lag order"),
+	N_("use Perron-Qu method"),
 	N_("include a trend"),
 	N_("show regression results"),
 	/* radio-button items */
@@ -1050,11 +1051,11 @@ static int dfgls_get_options (const char *title, int panel,
 	N_("use first difference of variable"),
 	N_("show individual test results")
     };
-    static int ts_active[] = { 1, 0, 0 };
+    static int ts_active[] = { 1, 1, 0, 0 };
     static int panel_active[] = { 0, 0, 1 };
     const char **opts = panel ? panel_opts : ts_opts;
     int *active = panel ? panel_active : ts_active;
-    int nchecks = 3;
+    int nchecks = panel ? 3 : 4;
     int nradios = panel ? 0 : 2;
     int difference = 0;
     int *radio_var = panel ? NULL : &difference;
@@ -1079,9 +1080,12 @@ static int dfgls_get_options (const char *title, int panel,
 	    if (active[1]) opt |= OPT_F;
 	    if (active[2]) opt |= OPT_V;
 	} else {
-	    if (active[0]) opt |= OPT_E;
-	    if (active[1]) opt |= OPT_T;
-	    if (active[2]) opt |= OPT_V;
+	    if (active[0]) {
+		opt |= OPT_E;
+		if (active[1]) opt |= OPT_U;
+	    }
+	    if (active[2]) opt |= OPT_T;
+	    if (active[3]) opt |= OPT_V;
 	    if (difference) opt |= OPT_F;
 	}
 	if (!(opt & OPT_T)) opt |= OPT_C;

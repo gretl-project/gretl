@@ -2722,13 +2722,19 @@
 	is assumed to have a non-zero mean or to exhibit a linear
 	trend.  The difference is that the de-meaning or de-trending
 	of the variable is done using the GLS procedure suggested by
-	Elliott, Rothenberg and Stock (1996).  This gives a test of
-	greater power than the standard Dickey&ndash;Fuller approach.
+	<cite key="ERS96">Elliott, Rothenberg and Stock (1996)</cite>.
+	This gives a test of greater power than the standard
+	Dickey&ndash;Fuller approach.
       </para>
       <para>
 	When testing down from a given maximum lag order, the
 	<quote>modified</quote> AIC and BIC criteria are as described
-	in in <cite key="ng-perron01">Ng and Perron (2001)</cite>.
+	in <cite key="ng-perron01">Ng and Perron (2001)</cite>,
+	with or without the amendment proposed by <cite
+	key="perron-qu07">Perron and Qu (2007)</cite>. The amendment
+	involves using OLS-detrended data in the phase of determining
+	the optimal lag order, then GLS-detrending in the final unit
+	root test.
       </para>     
       <para>
 	See also the <cmdref targ="adf"/> command and the
