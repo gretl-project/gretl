@@ -35,7 +35,8 @@ version 1.10.0, in progress
 - KPSS test: use improved version of Sephton-type response
   surface to find critical values
 - ADF test: don't try to use Ng-Perron modified AIC/BIC for 
-  lag-length selection when GLS pre-processing is not chosen
+  lag-length selection when GLS pre-processing is not chosen;
+  add option to use Perron-Qu lag-length selection
 - Fix bug: GUI panel plot failed if the start of the sample
   range was advanced
 - Fix bug: crash on attempting to open a file from the "Recent"
