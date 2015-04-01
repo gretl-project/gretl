@@ -106,6 +106,8 @@ int get_translated_width (const char *str);
 
 int chinese_locale (void);
 
+int japanese_locale (void);
+
 # define UTF_WIDTH(s, w) get_utf_width(s, w) 
 # define TRANSLATED_WIDTH(s) get_translated_width(s)
 

@@ -331,6 +331,17 @@ int chinese_locale (void)
 #endif
 }
 
+int japanese_locale (void)
+{
+#ifdef WIN32
+    return (gretl_cpage == 932);
+#else
+    char *lang = getenv("LANG");
+
+    return (lang != NULL && !strncmp(lang, "ja", 2));
+#endif
+}
+
 #ifdef ENABLE_NLS
 
 char *iso_gettext (const char *msgid)
@@ -1101,6 +1112,8 @@ static char *get_gp_encoding_set (char *s, int targ)
 	}
     } else if (chinese_locale()) {
 	strcpy(s, "CP950");
+    } else if (japanese_locale()) {
+	strcpy(s, "CP932");
     } else {
 	/* ENC_CODEPAGE */
 	strcpy(s, "CP125");

@@ -2141,6 +2141,8 @@ int read_win32_config (int debug)
 
     if (chinese_locale()) {
 	strcpy(fixedfontname, "NSimSun 10");
+    } else if (japanese_locale()) {
+	strcpy(fixedfontname, "MS Gothic 10");
     }
 
     appdata = appdata_path();
