@@ -82,9 +82,8 @@ struct adf_info_ {
     double b0;       /* coefficient on lagged level */
     double tau;      /* test statistic */
     double pval;     /* p-value of test stat */
-    const char *vname; /* name of series tested */
     int *list;       /* regression list */
-    int *biglist;    /* "full-length" list */
+    const char *vname; /* name of series tested */
 };
 
 struct kpss_info_ {
@@ -1138,6 +1137,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     MODEL dfmod;
     gretlopt eg_opt = OPT_NONE;
     gretlopt df_mod_opt = (OPT_A | OPT_Z);
+    int *biglist = NULL;
     int orig_nvars = dset->v;
     int blurb_done = 0;
     int auto_order = 0;
@@ -1155,7 +1155,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     /* safety-first initializations */
     ainfo->nseas = ainfo->kmax = ainfo->altv = 0;
     ainfo->vname = dset->varname[ainfo->v];
-    ainfo->list = ainfo->biglist = NULL;
+    ainfo->list = NULL;
     ainfo->det = 0;
     ainfo->dum0 = 0;
 
@@ -1239,8 +1239,8 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
     if (auto_order) {
 	ainfo->list[0] = ainfo->order + 5;
-	ainfo->biglist = gretl_list_copy(ainfo->list);
-	if (ainfo->biglist == NULL) {
+	biglist = gretl_list_copy(ainfo->list);
+	if (biglist == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	}
@@ -1260,7 +1260,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	if (auto_order) {
 	    /* re-establish max order before testing down */
 	    ainfo->order = ainfo->kmax;
-	    copy_list_values(ainfo->list, ainfo->biglist);
+	    copy_list_values(ainfo->list, biglist);
 	}
 
 	if (opt & OPT_G) {
@@ -1364,8 +1364,8 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
  bailout:
 
     free(ainfo->list);
-    free(ainfo->biglist);
-    ainfo->list = ainfo->biglist = NULL;
+    ainfo->list = NULL;
+    free(biglist);
 
     dataset_drop_last_variables(dset, dset->v - orig_nvars);
 
