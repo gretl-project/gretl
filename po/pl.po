@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.92\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-03-24 20:06-0400\n"
-"PO-Revision-Date: 2015-02-19 00:00+0100\n"
+"PO-Revision-Date: 2015-04-01 00:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -343,14 +343,12 @@ msgid "using resampled residuals"
 msgstr "wykorzystuje próbkowe reszty"
 
 #: lib/src/bootstrap.c:733
-#, fuzzy
 msgid "using resampled y,X \"pairs\""
-msgstr "wykorzystuje próbkowe reszty"
+msgstr "wykorzystuje próbkowanie y,X \"pairs\""
 
 #: lib/src/bootstrap.c:735
-#, fuzzy
 msgid "using \"wild\" bootstrap"
-msgstr "Wykorzystaj bootstrap"
+msgstr "Wykorzystuje \"wild\" bootstrap"
 
 #: lib/src/bootstrap.c:737
 msgid "with simulated normal errors"
@@ -358,11 +356,11 @@ msgstr "z generowanymi błędami z rozkładu normalnego"
 
 #: lib/src/bootstrap.c:742
 msgid "recognized lagged dependent variable"
-msgstr "rozpoznano opóźnioną z zmienną zależną"
+msgstr "rozpoznano opóźnioną zmienną zależną"
 
 #: lib/src/bootstrap.c:758
 msgid "bootstrap t-ratio"
-msgstr "bootstrapowa statystyka t"
+msgstr "bootstrapowa statystyka t-ratio"
 
 #: lib/src/bootstrap.c:760
 msgid "bootstrap coefficient"
@@ -374,9 +372,7 @@ msgstr "bootstrapowy test"
 
 #: lib/src/boxplots.c:281
 msgid "Numerical summary with bootstrapped confidence interval for median"
-msgstr ""
-"Wyniki numeryczne przedziału ufności dla mediany (estymacja metodą "
-"bootstrapową)"
+msgstr "Wyniki numeryczne bootstrapowego przedziału ufności dla mediany"
 
 #: lib/src/boxplots.c:286
 #, c-format
@@ -1094,7 +1090,7 @@ msgstr "Błędny zbiór danych\n"
 #: lib/src/csvdata.c:3409
 #, c-format
 msgid "WARNING: it seems '%c' is being used as thousands separator\n"
-msgstr ""
+msgstr "Uwaga: Znak '%c' jest używany jako separator tysięcy\n"
 
 #: lib/src/csvdata.c:3447 plugin/import_common.c:118
 msgid ""
@@ -1113,9 +1109,8 @@ msgstr ""
 "\n"
 
 #: lib/src/csvdata.c:3466
-#, fuzzy
 msgid "Failed to interpret the data as numeric\n"
-msgstr "Błąd tworzenia pustej bazy danych"
+msgstr "Błąd interpretacji danych numerycznych\n"
 
 #: lib/src/csvdata.c:3498 plugin/eviews_import.c:555
 #: plugin/excel_import.c:1741 plugin/gnumeric_import.c:832
@@ -1254,7 +1249,7 @@ msgstr ""
 
 #: lib/src/dataio.c:1453
 msgid "append: don't know how to align the new series!"
-msgstr ""
+msgstr "Dołączanie: nie wiem jak dopasować nowy szereg!"
 
 #: lib/src/dataio.c:1580 lib/src/dataio.c:1818 lib/src/dataio.c:1830
 #: lib/src/dataio.c:2495 lib/src/dataio.c:2504 cli/gretlcli.c:184
@@ -8495,9 +8490,8 @@ msgid "Edit"
 msgstr "Edycja"
 
 #: gui2/datafiles.c:1312 gui2/datafiles.c:1483
-#, fuzzy
 msgid "Sample script"
-msgstr "Otwórz przykłady skryptów"
+msgstr "Przykłady skryptów"
 
 #: gui2/datafiles.c:1315 gui2/datafiles.c:1484
 msgid "View code"
@@ -8509,7 +8503,7 @@ msgstr "Wykonaj"
 
 #: gui2/datafiles.c:1322 gui2/datafiles.c:1488
 msgid "Resources..."
-msgstr ""
+msgstr "Zasoby..."
 
 #: gui2/datafiles.c:1327 gui2/datafiles.c:1489
 msgid "Add to menu"
@@ -8998,14 +8992,12 @@ msgid "Resample residuals"
 msgstr "Ponowne pobieranie próby reszt"
 
 #: gui2/dialogs.c:1154
-#, fuzzy
 msgid "Resample data \"pairs\""
-msgstr "Wylosowana podpróba"
+msgstr "Próbkowanie pary danych \"pairs\""
 
 #: gui2/dialogs.c:1162
-#, fuzzy
 msgid "Wild bootstrap"
-msgstr "Wykorzystaj bootstrap"
+msgstr "Próbkowanie \"wild\" bootstrap"
 
 #: gui2/dialogs.c:1170
 msgid "Simulate normal errors"
@@ -9485,7 +9477,7 @@ msgstr "pokaż dokładnie"
 
 #: gui2/dialogs.c:5309
 msgid "Reset"
-msgstr ""
+msgstr "Reset"
 
 #: gui2/dialogs.c:5332
 msgid "gretl: error"
@@ -9642,9 +9634,8 @@ msgid "(Please refer to Help for guidance)"
 msgstr "(Proszę skorzystać z porady w Pomocy dla polecenia)"
 
 #: gui2/dlgutils.c:1201
-#, fuzzy
 msgid "right-click for some shortcuts"
-msgstr "  Kliknij na wykres prawym przypiskiem myszy a uzyskasz menu"
+msgstr "  Kliknij prawym przypiskiem myszy a uzyskasz menu"
 
 #: gui2/fileselect.c:512
 msgid ""
@@ -10168,26 +10159,25 @@ msgid ""
 "Saving packaged functions as script:\n"
 "include the sample script?"
 msgstr ""
+"Zapisuje pakiet funkcji jako skrypt:\n"
+"Czy włączyć przykład skruptu?"
 
 #: gui2/fnsave.c:989
-#, fuzzy
 msgid "Save sample script as"
-msgstr "Otwórz przykłady skryptów"
+msgstr "Zapisz przykład skryptu jako..."
 
 #: gui2/fnsave.c:990
-#, fuzzy
 msgid "Save help text as"
 msgstr "Zapisz okno wyników"
 
 #: gui2/fnsave.c:991
-#, fuzzy
 msgid "Save GUI help as"
-msgstr "Zapisz jako..."
+msgstr "Zapisz pomoc GUI jako..."
 
 #: gui2/fnsave.c:1026
 #, c-format
 msgid "Saving %s.spec: also save ancillary file(s)?"
-msgstr ""
+msgstr "Saving %s.spec: also save ancillary file(s)?"
 
 #: gui2/fnsave.c:1087 gui2/fnsave.c:2042
 msgid "Please save your package first"
@@ -10356,13 +10346,12 @@ msgstr ""
 " "
 
 #: gui2/fnsave.c:2570
-#, fuzzy
 msgid "not found"
-msgstr "znaleziono %s\n"
+msgstr "Nie znaleziono"
 
 #: gui2/fnsave.c:2717
 msgid "build zip file"
-msgstr ""
+msgstr "Utworzono plik ZIP"
 
 #: gui2/fnsave.c:2867
 msgid ""
@@ -15253,7 +15242,7 @@ msgstr "Użyj domyślnie odpornej macierzy kowariancji (robust)"
 
 #: gui2/settings.c:324
 msgid "Use the normal distribution for robust p-values"
-msgstr ""
+msgstr "Użyj rozkładu normalnego dla wartości p (robust)"
 
 #: gui2/settings.c:326
 msgid "For cross-sectional data"
@@ -15596,7 +15585,7 @@ msgstr "Brak informacji do cofnięcia"
 
 #: gui2/textbuf.c:1026
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: gui2/textbuf.c:1058
 msgid "processing...\n"
@@ -16132,19 +16121,16 @@ msgid "template matrix"
 msgstr "Szablon macierzy"
 
 #: plugin/addons-i18n.c:66
-#, fuzzy
 msgid "IV/Heteroskedastic"
-msgstr "test heteroskedastyczności"
+msgstr "IV/Heteroskedastic"
 
 #: plugin/addons-i18n.c:67
-#, fuzzy
 msgid "Covariance matrix estimation"
-msgstr "Estymator kowariancji"
+msgstr "Macierz kowariancji"
 
 #: plugin/addons-i18n.c:76
-#, fuzzy
 msgid "Verbosity level"
-msgstr "Pokaż detale modelu"
+msgstr "Pokaż detale"
 
 #: plugin/anova.c:108 plugin/anova.c:110
 msgid "Treatment"
