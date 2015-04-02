@@ -1,4 +1,4 @@
-version 1.10.0, in progress
+2015-04-02 version 1.10.0
 - Replace old command-line parser with new, faster "tokenizer"
 - Add "install" command to install function packages via the
   command line

@@ -1,4 +1,4 @@
-version 1.10.0, in progress
+2015-04-02 version 1.10.0
 
 The function genseries() has been redefined: the second
 argument is now officially an expression that evaluates to
