@@ -52,16 +52,18 @@ typedef enum {
 /* flags for "special stuff" going on */
 
 typedef enum {
-    ADF_EG_TEST   = 1 << 0,
-    ADF_EG_RESIDS = 1 << 1,
-    ADF_PANEL     = 1 << 2,
-    ADF_OLS_FIRST = 1 << 3
+    ADF_EG_TEST   = 1 << 0, /* doing Engle-Granger test */
+    ADF_EG_RESIDS = 1 << 1, /* final stage of the above */
+    ADF_PANEL     = 1 << 2, /* working on panel data */
+    ADF_OLS_FIRST = 1 << 3  /* Perron-Qu, 2007 */
 } AdfFlags;
 
+/* automatic lag selection methods */
+
 enum {
-    AUTO_AIC = 1,
-    AUTO_BIC,
-    AUTO_TSTAT
+    k_AIC = 1,
+    k_BIC,
+    k_TSTAT
 };
 
 typedef struct adf_info_ adf_info;
@@ -75,7 +77,7 @@ struct adf_info_ {
     int niv;         /* number of (co-)integrated vars (Engle-Granger) */
     AdfFlags flags;  /* bitflags: see above */
     DetCode det;     /* code for deterministics */
-    int dum0;        /* series IS of first seasonal dummy */
+    int dum0;        /* series ID of first seasonal dummy */
     int nseas;       /* number of seasonal terms */
     int T;           /* number of obs used in test */
     int df;          /* degrees of freedom, test regression */
@@ -92,29 +94,29 @@ struct kpss_info_ {
     double pval;
 };
 
-/* replace y with demeaned or detrended y via GLS */
+/* replace @y with demeaned or detrended y via GLS */
 
 static int GLS_demean_detrend (double *y, int offset,
 			       int T, DetCode det)
 {
-    gretl_matrix *ya = NULL;
-    gretl_matrix *Za = NULL;
+    gretl_matrix *yd = NULL;
+    gretl_matrix *Xd = NULL;
     gretl_matrix *b = NULL;
     double c;
-    int t, zcols;
+    int t, xcols;
     int err = 0;
 
-    zcols = (det == UR_TREND)? 2 : 1;
+    xcols = (det == UR_TREND)? 2 : 1;
 
-    if (T - zcols <= 0) {
+    if (T - xcols <= 0) {
 	return E_DF;
     }
 
-    ya = gretl_column_vector_alloc(T);
-    Za = gretl_matrix_alloc(T, zcols);
-    b = gretl_column_vector_alloc(zcols);
+    yd = gretl_column_vector_alloc(T);
+    Xd = gretl_matrix_alloc(T, xcols);
+    b = gretl_column_vector_alloc(xcols);
 
-    if (ya == NULL || Za == NULL || b == NULL) {
+    if (yd == NULL || Xd == NULL || b == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -127,29 +129,29 @@ static int GLS_demean_detrend (double *y, int offset,
     }
     y += offset;
 
-    gretl_vector_set(ya, 0, y[0] /* (1 - c) * y[0] ?? */);
+    gretl_vector_set(yd, 0, y[0] /* (1 - c) * y[0] ?? */);
     for (t=1; t<T; t++) {
-	gretl_vector_set(ya, t, y[t] - c * y[t-1]);
+	gretl_vector_set(yd, t, y[t] - c * y[t-1]);
     }
 
-    gretl_matrix_set(Za, 0, 0, 1);
-    if (zcols == 2) {
-	gretl_matrix_set(Za, 0, 1, 1);
+    gretl_matrix_set(Xd, 0, 0, 1);
+    if (xcols == 2) {
+	gretl_matrix_set(Xd, 0, 1, 1);
     }
 
     for (t=1; t<T; t++) {
-	gretl_matrix_set(Za, t, 0, 1 - c);
-	if (zcols == 2) {
-	    gretl_matrix_set(Za, t, 1, t+1 - t*c);
+	gretl_matrix_set(Xd, t, 0, 1 - c);
+	if (xcols == 2) {
+	    gretl_matrix_set(Xd, t, 1, t+1 - t*c);
 	}
     }
 
-    err = gretl_matrix_ols(ya, Za, b, NULL, NULL, NULL);
+    err = gretl_matrix_ols(yd, Xd, b, NULL, NULL, NULL);
 
     if (!err) {
 	for (t=0; t<T; t++) {
 	    y[t] -= b->val[0];
-	    if (zcols == 2) {
+	    if (xcols == 2) {
 		y[t] -= b->val[1] * (t+1);
 	    }
 	}
@@ -157,78 +159,78 @@ static int GLS_demean_detrend (double *y, int offset,
 
  bailout:
 
-    gretl_matrix_free(ya);
-    gretl_matrix_free(Za);
+    gretl_matrix_free(yd);
+    gretl_matrix_free(Xd);
     gretl_matrix_free(b);
     
     return err;
 }
 
-/* replace y with demeaned or detrended y via OLS */
+/* replace @y with demeaned or detrended y via OLS */
 
-static int OLS_demean_detrend (double *ys, int offset,
+static int OLS_demean_detrend (double *y, int offset,
 			       int T, DetCode det)
 {
-    gretl_matrix *y = NULL;
-    gretl_matrix *X = NULL;
+    gretl_matrix *yd = NULL;
+    gretl_matrix *Xd = NULL;
     gretl_matrix *b = NULL;
-    int t, zcols = 1;
+    int t, xcols = 1;
     int err = 0;
 
     if (det == UR_QUAD_TREND) {
-	zcols = 3;
+	xcols = 3;
     } else if (det == UR_TREND) {
-	zcols = 2;
+	xcols = 2;
     }
 
-    if (T - zcols <= 0) {
+    if (T - xcols <= 0) {
 	return E_DF;
     }
 
-    y = gretl_column_vector_alloc(T);
-    X = gretl_matrix_alloc(T, zcols);
-    b = gretl_column_vector_alloc(zcols);
+    yd = gretl_column_vector_alloc(T);
+    Xd = gretl_matrix_alloc(T, xcols);
+    b = gretl_column_vector_alloc(xcols);
 
-    if (y == NULL || X == NULL || b == NULL) {
+    if (yd == NULL || Xd == NULL || b == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
     /* invalidate pre-offset observations */
     for (t=0; t<offset; t++) {
-	ys[t] = NADBL;
+	y[t] = NADBL;
     }
-    ys += offset;    
+    y += offset;    
 
     for (t=0; t<T; t++) {
-	gretl_vector_set(y, t, ys[t]);
-	gretl_matrix_set(X, t, 0, 1.0);
-	if (zcols > 1) {
-	    gretl_matrix_set(X, t, 1, t+1);
+	gretl_vector_set(yd, t, y[t]);
+	gretl_matrix_set(Xd, t, 0, 1.0);
+	if (xcols > 1) {
+	    gretl_matrix_set(Xd, t, 1, t+1);
 	}
-	if (zcols > 2) {
-	    gretl_matrix_set(X, t, 2, (t+1) * (t+1));
+	if (xcols > 2) {
+	    gretl_matrix_set(Xd, t, 2, (t+1) * (t+1));
 	}
     }
 
-    err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
+    err = gretl_matrix_ols(yd, Xd, b, NULL, NULL, NULL);
 
     if (!err) {
 	for (t=0; t<T; t++) {
-	    ys[t] -= b->val[0];
-	    if (zcols > 1) {
-		ys[t] -= b->val[1] * (t+1);
+	    y[t] -= b->val[0];
+	    if (xcols > 1) {
+		y[t] -= b->val[1] * (t+1);
 	    }
-	    if (zcols > 2) {
-		ys[t] -= b->val[2] * (t+1) * (t+1);
+	    if (xcols > 2) {
+		y[t] -= b->val[2] * (t+1) * (t+1);
 	    }
 	}
     }
 
  bailout:
 
-    gretl_matrix_free(y);
-    gretl_matrix_free(X);
+    gretl_matrix_free(yd);
+    gretl_matrix_free(Xd);
     gretl_matrix_free(b);
     
     return err;
@@ -238,7 +240,7 @@ static int real_adf_form_list (adf_info *ainfo,
 			       DATASET *dset)
 {
     int v, save_t1 = dset->t1;
-    int i, j, err = 0;
+    int k, j, err = 0;
 
     /* using the original var, or transformed? */
     v = ainfo->altv > 0 ? ainfo->altv : ainfo->v;
@@ -253,7 +255,7 @@ static int real_adf_form_list (adf_info *ainfo,
     if (ainfo->list[1] < 0) {
 	dset->t1 = save_t1;
 	return E_DATA;
-    }	
+    }
 
     /* generate lag 1 of series @v: the basic RHS series */
     ainfo->list[2] = laggenr(v, 1, dset); 
@@ -264,14 +266,14 @@ static int real_adf_form_list (adf_info *ainfo,
 
     /* generate lagged differences for augmented test */
     j = 3;
-    for (i=1; i<=ainfo->order && !err; i++) {
-	int lnum = laggenr(ainfo->list[1], i, dset);
+    for (k=1; k<=ainfo->order && !err; k++) {
+	int vk = laggenr(ainfo->list[1], k, dset);
 
-	if (lnum < 0) {
+	if (vk < 0) {
 	    fprintf(stderr, "Error generating lag variable\n");
 	    err = E_DATA;
 	} else {
-	    ainfo->list[j++] = lnum;
+	    ainfo->list[j++] = vk;
 	} 
     }
 
@@ -302,6 +304,7 @@ static int adf_y_offset (adf_info *ainfo, int v, DATASET *dset)
     int min_offset = dset->t1 - (ainfo->order + 1);
     int t, offset = 0;
 
+    /* copy original data into series v */
     for (t=0; t<=dset->t2; t++) {
 	dset->Z[v][t] = dset->Z[ainfo->v][t];
 	if (na(dset->Z[v][t])) {
@@ -322,8 +325,7 @@ static int adf_y_offset (adf_info *ainfo, int v, DATASET *dset)
 }
 
 /* Generate the various differences and lags required for
-   the ADF test: return the list of such variables, or
-   NULL on failure.
+   the ADF test, detrending first if required.
 */
 
 static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
@@ -336,7 +338,7 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
     }
 
     if (ainfo->list == NULL) {
-	/* the max number of terms (in case of quadratic trend) */
+	/* the max number of terms (quadratic trend case) */
 	int len = 5 + ainfo->nseas + ainfo->order;
 	
 	ainfo->list = gretl_list_new(len);
@@ -377,8 +379,7 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 
 	if (ainfo->altv > 0) {
 	    /* if we already did detrending, re-use the
-	       storage we added earlier 
-	    */	    
+	       storage we added earlier */
 	    v = ainfo->altv;
 	} else {
 	    v = dset->v;
@@ -460,11 +461,11 @@ static void show_lags_test (MODEL *pmod, int order, PRN *prn)
     }
 }
 
-static const char *auto_order_string (int i, gretlopt opt)
+static const char *test_down_string (int i, gretlopt opt)
 {
     if (opt & OPT_U) {
 	/* perron-qu */
-	if (i == AUTO_BIC) {
+	if (i == k_BIC) {
 	    return _("modified BIC, Perron-Qu");
 	} else {
 	    return _("modified AIC, Perron-Qu");
@@ -472,9 +473,9 @@ static const char *auto_order_string (int i, gretlopt opt)
     } else {
 	int gls = (opt & OPT_G);
 	
-	if (i == AUTO_BIC) {
+	if (i == k_BIC) {
 	    return gls ? _("modified BIC") : _("BIC");
-	} else if (i == AUTO_TSTAT) {
+	} else if (i == k_TSTAT) {
 	    return _("t-statistic");
 	} else {
 	    /* the default */
@@ -484,7 +485,7 @@ static const char *auto_order_string (int i, gretlopt opt)
 }
 
 static void DF_header (const char *s, int p, int pmax,
-		       int auto_order, gretlopt opt, 
+		       int test_down, gretlopt opt, 
 		       PRN *prn)
 {
     pputc(prn, '\n');
@@ -507,7 +508,7 @@ static void DF_header (const char *s, int p, int pmax,
 	    pprintf(prn, _("including %d lags of (1-L)%s"), p, s);
 	}
 	if (pmax >= p) {
-	    const char *critstr = auto_order_string(auto_order, opt);
+	    const char *critstr = test_down_string(test_down, opt);
 
 	    pputc(prn, '\n');
 	    pprintf(prn, _("(max was %d, criterion %s)"), 
@@ -567,7 +568,7 @@ static const char *DF_test_string (int i)
 
 static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 			       int *blurb_done, gretlopt opt,
-			       int auto_order, PRN *prn)
+			       int test_down, PRN *prn)
 {
     const char *urcstrs[] = {
 	"nc", "c", "ct", "ctt"
@@ -593,7 +594,7 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 
     if (*blurb_done == 0) {
 	DF_header(ainfo->vname, ainfo->order, ainfo->kmax,
-		  auto_order, opt, prn);
+		  test_down, opt, prn);
 	pprintf(prn, _("sample size %d\n"), ainfo->T);
 	if (ainfo->flags & ADF_PANEL) {
 	    pputc(prn, '\n');
@@ -702,8 +703,10 @@ static int t_adjust_order (adf_info *ainfo, DATASET *dset,
     return k;
 }
 
+/* compute modified information criterion */
+
 static double get_MIC (MODEL *pmod, int k, double sum_ylag2,
-		       int which, const DATASET *dset)
+		       int kmethod, const DATASET *dset)
 {
     double g, CT, ttk, s2k = 0;
     int t, T = pmod->nobs;
@@ -716,21 +719,17 @@ static double get_MIC (MODEL *pmod, int k, double sum_ylag2,
     
     s2k /= pmod->nobs;
     ttk = g * g * sum_ylag2 / s2k;
-
-    if (which == AUTO_BIC) {
-	/* Schwartz Bayesian */
-	CT = log(T);
-    } else {
-	/* Akaike */
-	CT = 2.0;
-    }
+    CT = kmethod == k_BIC ? log(T) : 2.0;
 
     return log(s2k) + CT * (ttk + k)/T;
 }
 
-static double get_sum_y2 (MODEL *pmod, int ylagno, const DATASET *dset)
+/* component calculation for modified IC methods */
+
+static double get_sum_y2 (adf_info *ainfo, MODEL *pmod,
+			  const DATASET *dset)
 {
-    const double *ylag = dset->Z[ylagno];
+    const double *ylag = dset->Z[ainfo->list[2]];
     double sumy2 = 0;
     int t;
 
@@ -745,11 +744,10 @@ static double get_sum_y2 (MODEL *pmod, int ylagno, const DATASET *dset)
    "Lag Length Selection and the Construction of Unit Root Tests 
    with Good Size and Power", Econometrica 69/6, Nov 2001, pp. 
    1519-1554, for the GLS case -- otherwise plain IC (as of
-   2015-03-29). But maybe reconsider in light of Perron and Qu
-   (Economics Letters, 2007).
+   2015-03-31).
 */
 
-static int ic_adjust_order (adf_info *ainfo, int which,
+static int ic_adjust_order (adf_info *ainfo, int kmethod,
 			    DATASET *dset, gretlopt opt,
 			    int test_num, int *err,
 			    PRN *prn)
@@ -762,7 +760,6 @@ static int ic_adjust_order (adf_info *ainfo, int which,
     int k, kopt = kmax;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
-    int ylagno = ainfo->list[2];
     int use_MIC = 0;
     int *tmplist;
 
@@ -773,6 +770,7 @@ static int ic_adjust_order (adf_info *ainfo, int which,
     }
 
     if (opt & OPT_G) {
+	/* ADF-GLS */
 	use_MIC = 1;
     }
 
@@ -789,13 +787,13 @@ static int ic_adjust_order (adf_info *ainfo, int which,
 	    kopt = -1;
 	    break;
 	}
-	if (k == kmax) {
-	    /* this need only be done once */
-	    sum_ylag2 = get_sum_y2(&kmod, ylagno, dset);
-	}
 	if (use_MIC) {
-	    IC = get_MIC(&kmod, k, sum_ylag2, which, dset);
-	} else if (which == AUTO_BIC) {
+	    if (k == kmax) {
+		/* this need only be done once */
+		sum_ylag2 = get_sum_y2(ainfo, &kmod, dset);
+	    }
+	    IC = get_MIC(&kmod, k, sum_ylag2, kmethod, dset);
+	} else if (kmethod == k_BIC) {
 	    IC = kmod.criterion[C_BIC];
 	} else {
 	    IC = kmod.criterion[C_AIC];
@@ -816,9 +814,9 @@ static int ic_adjust_order (adf_info *ainfo, int which,
 	    const char *tag;
 
 	    if (use_MIC) {
-		tag = (which == AUTO_BIC) ? "MBIC" : "MAIC";
+		tag = (kmethod == k_BIC) ? "MBIC" : "MAIC";
 	    } else {
-		tag = (which == AUTO_BIC) ? "BIC" : "AIC";
+		tag = (kmethod == k_BIC) ? "BIC" : "AIC";
 	    }
 
 	    if (k == kmax && test_num == 1) {
@@ -837,7 +835,7 @@ static int ic_adjust_order (adf_info *ainfo, int which,
     free(tmplist);
 
     if (kopt >= 0) {
-	/* now trim the 'real' list to kopt lags */
+	/* now trim the "real" list to @kopt lags */
 	for (k=kmax; k>kopt; k--) {
 	    gretl_list_delete_at_pos(ainfo->list, k + 2);
 	}
@@ -1064,9 +1062,9 @@ static int reset_detrended_data (adf_info *ainfo,
 				 gretlopt opt)
 {
     if (ainfo->flags & ADF_OLS_FIRST) {
-	/* Perron-Qu */
+	/* testing down using Perron-Qu */
 	return 1;
-    } else if ((opt & OPT_G) && (opt & OPT_E) && dset->t1 > 0) {
+    } else if ((opt & OPT_G) && dset->t1 > 0) {
 	/* GLS + testing down + t1 > 0 */
 	return 1;
     } else {
@@ -1078,7 +1076,7 @@ static int handle_test_down_option (adf_info *ainfo,
 				    gretlopt opt,
 				    int *err)
 {
-    int tmethod = 0;
+    int kmethod = 0;
     const char *s;
 
     if (ainfo->flags & (ADF_EG_TEST | ADF_EG_RESIDS)) {
@@ -1088,14 +1086,14 @@ static int handle_test_down_option (adf_info *ainfo,
     }
 
     if (s == NULL || *s == '\0') {
-	/* the (old) default */
-	tmethod = AUTO_AIC;
+	/* the default */
+	kmethod = k_AIC;
     } else if (!strcmp(s, "MAIC") || !strcmp(s, "AIC")) {
-	tmethod = AUTO_AIC;
+	kmethod = k_AIC;
     } else if (!strcmp(s, "MBIC") || !strcmp(s, "BIC")) {
-	tmethod = AUTO_BIC;
+	kmethod = k_BIC;
     } else if (!strcmp(s, "tstat")) {
-	tmethod = AUTO_TSTAT;
+	kmethod = k_TSTAT;
     } else {
 	gretl_errmsg_set(_("Invalid option"));
 	*err = E_DATA;
@@ -1106,7 +1104,7 @@ static int handle_test_down_option (adf_info *ainfo,
 	ainfo->kmax = ainfo->order;
 	if (opt & OPT_U) {
 	    /* --perron-qu */
-	    if (tmethod != AUTO_AIC && tmethod != AUTO_BIC) {
+	    if (kmethod != k_AIC && kmethod != k_BIC) {
 		*err = E_BADOPT;
 	    } else {
 		ainfo->flags |= ADF_OLS_FIRST;
@@ -1114,7 +1112,7 @@ static int handle_test_down_option (adf_info *ainfo,
 	}
     }
 
-    return tmethod;
+    return kmethod;
 }
 
 static int check_adf_options (gretlopt opt)
@@ -1148,13 +1146,12 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     int *biglist = NULL;
     int orig_nvars = dset->v;
     int blurb_done = 0;
-    int auto_order = 0;
+    int test_down = 0;
     int test_num = 0;
     int i, err;
 
-    /* If we're called via interact,c, we might have checked
-       this already, but it won't hurt to check here.
-    */
+    /* (most of) this may have been done already
+       but it won't hurt to check here */
     err = check_adf_options(opt);
     if (err) {
 	return err;
@@ -1177,29 +1174,29 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     }    
 
     if (opt & OPT_E) {
-	/* --test-down=... */
-	auto_order = handle_test_down_option(ainfo, opt, &err);
+	/* --test-down[=...] */
+	test_down = handle_test_down_option(ainfo, opt, &err);
 	if (err) {
 	    return err;
 	}
     }
 
     if (ainfo->order < 0) {
-	/* testing down: backward compatibility */
-	auto_order = AUTO_AIC;
+	test_down = k_AIC;
 	ainfo->order = ainfo->kmax = -ainfo->order;
     }
 
 #if ADF_DEBUG
-    fprintf(stderr, "real_adf_test: order = %d, auto_order = %d\n",
-	    ainfo->order, auto_order);
+    fprintf(stderr, "real_adf_test: order = %d, test_down = %d\n",
+	    ainfo->order, test_down);
 #endif
 
     if (ainfo->flags & ADF_EG_RESIDS) {
-	/* final step of Engle-Granger test: the (A)DF test regression
-	   will contain no deterministic terms, but the selection of the
-	   p-value is based on the deterministic terms in the cointegrating
-	   regression, represented by "eg_opt".
+	/* Final step of Engle-Granger test: the (A)DF test
+	   regression will contain no deterministic terms, 
+	   but the selection of the p-value is based on the
+	   deterministic terms in the cointegrating
+	   regression, represented by @eg_opt.
 	*/
 	int verbose = (opt & OPT_V);
 	int silent = (opt & OPT_I);
@@ -1214,7 +1211,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     }
 
     if (opt & OPT_F) {
-	/* difference the variable before testing */
+	/* difference the target series before testing */
 	int t1 = dset->t1;
 
 	dset->t1 = 0;
@@ -1245,7 +1242,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	return err;
     }
 
-    if (auto_order) {
+    if (test_down) {
 	ainfo->list[0] = ainfo->order + 5;
 	biglist = gretl_list_copy(ainfo->list);
 	if (biglist == NULL) {
@@ -1256,6 +1253,11 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
     gretl_model_init(&dfmod, dset);
 
+    /* Now loop across the wanted deterministics cases:
+       in many instances we'll actually be doing only one
+       case.
+    */
+
     for (i=UR_NO_CONST; i<UR_MAX; i++) {
 	int b0pos = (i > UR_NO_CONST);
 
@@ -1265,14 +1267,14 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    continue;
 	}
 
-	if (auto_order) {
+	if (test_down) {
 	    /* re-establish max order before testing down */
 	    ainfo->order = ainfo->kmax;
 	    copy_list_values(ainfo->list, biglist);
 	}
 
 	if (opt & OPT_G) {
-	    /* DF-GLS: skip const, trend */
+	    /* DF-GLS: skip deterministics */
 	    ainfo->list[0] = ainfo->order + 2;
 	    b0pos = 0;
 	} else {
@@ -1284,33 +1286,34 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
 	test_num++;
 
-	if (auto_order) {
-	    if (auto_order == AUTO_TSTAT) {
+	if (test_down) {
+	    /* determine the optimal lag order */
+	    if (test_down == k_TSTAT) {
 		ainfo->order = t_adjust_order(ainfo, dset, &err, prn);
 	    } else {
-		ainfo->order = ic_adjust_order(ainfo, auto_order,
+		ainfo->order = ic_adjust_order(ainfo, test_down,
 					       dset, opt, test_num,
 					       &err, prn);
 	    }	    
 	    if (err) {
 		clear_model(&dfmod);
 		goto bailout;
-	    }
-	}
-
-	if (reset_detrended_data(ainfo, dset, opt)) {
-	    /* swap out the detrended data */
-	    ainfo->flags &= ~ADF_OLS_FIRST;
-	    err = adf_prepare_vars(ainfo, dset, opt);
+	    } else if (reset_detrended_data(ainfo, dset, opt)) {
+		/* swap out the detrended data */
+		ainfo->flags &= ~ADF_OLS_FIRST;
+		err = adf_prepare_vars(ainfo, dset, opt);
+	    }	    
 	}
 
 #if ADF_DEBUG
 	printlist(ainfo->list, "final ADF regression list");
 #endif
 
+	/* run the actual test regression */
 	dfmod = lsq(ainfo->list, dset, OLS, df_mod_opt);
+
 	if (!dfmod.errcode && dfmod.dfd == 0) {
-	    /* we can't have an exact fit here */
+	    /* we can't tolerate an exact fit here */
 	    dfmod.errcode = E_DF;
 	}
 	if (dfmod.errcode) {
@@ -1321,6 +1324,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    goto bailout;
 	}
 
+	/* transcribe info from test regression */
 	ainfo->b0 = dfmod.coeff[b0pos];
 	ainfo->tau = ainfo->b0 / dfmod.sderr[b0pos];
 	ainfo->T = dfmod.nobs;
@@ -1349,7 +1353,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
 	if (!(opt & (OPT_Q | OPT_I)) && !(ainfo->flags & ADF_PANEL)) {
 	    print_adf_results(ainfo, &dfmod, &blurb_done,
-			      opt, auto_order, prn);
+			      opt, test_down, prn);
 	}
 
 	if ((opt & OPT_V) && !(ainfo->flags & ADF_PANEL)) {
