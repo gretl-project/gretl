@@ -3007,7 +3007,13 @@ static void load_default_path (char *targ)
     } else if (targ == paths.mpi_hosts) {
 	*targ = '\0';
     } else if (targ == paths.pngfont) {
-	strcpy(targ, "verdana 8");
+	if (chinese_locale()) {
+	    strcpy(targ, "SimSun 8");
+	} else if (japanese_locale()) {
+	    strcpy(targ, "Meiryo 8");
+	} else {
+	    strcpy(targ, "verdana 8");
+	}
     }
 
     free(progfiles);
