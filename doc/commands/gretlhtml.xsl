@@ -216,7 +216,7 @@
   <xsl:text>&lt;i&gt;</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>&lt;/i&gt;</xsl:text>
-  <xsl:if test="(@separated and not(preceding-sibling::argument or preceding-sibling::argblock)))"> ;</xsl:if>
+  <xsl:if test="(@separated and not(preceding-sibling::argument or preceding-sibling::argblock))"> ;</xsl:if>
   <xsl:if test="(@optional)"> ] </xsl:if>
   <xsl:text> </xsl:text>
 </xsl:template>
