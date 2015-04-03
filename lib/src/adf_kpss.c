@@ -1117,12 +1117,11 @@ static int handle_test_down_option (adf_info *ainfo,
 
 static int check_adf_options (gretlopt opt)
 {
-    int err;
-
-    /* we can only have one of the basic deterministics options */
-    err = incompatible_options(opt, OPT_N | OPT_C | OPT_T | OPT_R);
+    int err = 0;
 
     if (opt & OPT_G) {
+	/* we can only have one of the basic deterministics options */
+	err = incompatible_options(opt, OPT_N | OPT_C | OPT_T | OPT_R);
 	/* options incompatible with --gls: no-const, seasonals,
 	   and quadratic trend
 	*/
