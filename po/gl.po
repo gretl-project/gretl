@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Gretl (1.10.0)\n"
+"Project-Id-Version: Gretl (1.10.1)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-04-02 16:06-0400\n"
-"PO-Revision-Date: 2015-03-26 17:24+0100\n"
+"PO-Revision-Date: 2015-04-06 18:56+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -24,14 +24,12 @@ msgid "lagged differences"
 msgstr "Diferenzas retardadas"
 
 #: lib/src/adf_kpss.c:469
-#, fuzzy
 msgid "modified BIC, Perron-Qu"
-msgstr "criterio de inf. de Bayes modificado"
+msgstr "criterio de inf. de Bayes modificado Perron-Qu"
 
 #: lib/src/adf_kpss.c:471
-#, fuzzy
 msgid "modified AIC, Perron-Qu"
-msgstr "criterio de inf. de Akaike modificado"
+msgstr "criterio de inf. de Akaike modificado Perron-Qu"
 
 #: lib/src/adf_kpss.c:477 gui2/library.c:920
 msgid "modified BIC"
@@ -13058,7 +13056,7 @@ msgstr "Orde do retardo para a proba ADF:"
 
 #: gui2/library.c:1041
 msgid "use Perron-Qu method"
-msgstr ""
+msgstr "Usar o método Perron-Qu"
 
 #: gui2/library.c:1042 gui2/library.c:1050 gui2/library.c:1117
 #: gui2/library.c:1126
