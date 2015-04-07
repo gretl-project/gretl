@@ -411,7 +411,28 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
     return err;
 }
 
-static double *df_gls_ct_cval (int T)
+#if 1 /* based on a much larger replication of ERS */
+
+static void get_df_gls_ct_cval (int T, double *c)
+{
+    static double b[4][3] = {
+	/* b0       b(1/T)    b(1/T^2) */
+	{ -2.56073, -17.5434,  68.4750 }, /* 10% */
+	{ -2.84864, -17.6702,  36.9221 }, /* 5% */
+	{ -3.10420, -18.2513,  9.99274 }, /* 2.5% */
+	{ -3.40846, -19.4237, -23.9869 }  /* 1% */
+    };
+    double T2 = T * T;
+    int i;
+
+    for (i=0; i<4; i++) {
+	c[i] = b[i][0] + b[i][1] / T + b[i][2] / T2;
+    }
+}
+
+#else
+
+static void get_df_gls_ct_cval (int T, double *c)
 {
     /* Elliott, Rothenberg and Stock (1996), Table 1 */
     static double df_gls_ct_cvals[4][4] = {
@@ -421,7 +442,7 @@ static double *df_gls_ct_cval (int T)
 	{ -2.64, -2.93, -3.18, -3.46 }, /* T = 200 */
 	{ -2.57, -2.89, -3.15, -3.48 }  /* \infty  */
     };
-    int i = 3;
+    int j, i = 3;
 
     if (T <= 50){
 	i = 0;
@@ -429,10 +450,14 @@ static double *df_gls_ct_cval (int T)
 	i = 1;
     } else if (T <= 200){
 	i = 2;
-    } 
+    }
 
-    return df_gls_ct_cvals[i];
+    for (j=0; j<4; j++) {
+	c[j] = df_gls_ct_cvals[i][j];
+    }
 }
+
+#endif
 
 /* display an F-test for the joint significance of the lagged
    \delta y terms in ADF test */
@@ -642,8 +667,9 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 	    _("test statistic"), taustr, ainfo->tau);
 
     if ((opt & OPT_G) && i+1 == UR_TREND) {
-	const double *c = df_gls_ct_cval(ainfo->T);
+	double c[4];
 
+	get_df_gls_ct_cval(ainfo->T, c);
 	pprintf(prn, "\n  %*s    ", TRANSLATED_WIDTH(_("Critical values")), " ");
 	pprintf(prn, "%g%%     %g%%     %g%%     %g%%\n", 10.0, 5.0, 2.5, 1.0);
 	pprintf(prn, "  %s: %.2f   %.2f   %.2f   %.2f\n", 
