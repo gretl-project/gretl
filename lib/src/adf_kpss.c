@@ -411,7 +411,9 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
     return err;
 }
 
-#if 1 /* based on a much larger replication of ERS */
+#if 0 /* based on a much larger replication of ERS:
+	 activate this after putting an account of
+	 the simulation in place */
 
 static void get_df_gls_ct_cval (int T, double *c)
 {
