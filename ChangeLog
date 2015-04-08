@@ -1,6 +1,8 @@
 version 1.10.90, in progress
 - "install" command: add a --local option plus the ability
-  to install a package from an chosen server  
+  to install a package from an chosen server
+- Fix bug: optional arguments to bkfilt() function not being
+  recognized properly 
 
 2015-04-04 version 1.10.1
 - Fix bug: breakage in ADF test: giving more than one
