@@ -126,7 +126,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { IF,       "if",       CI_EXPR },
     { INCLUDE,  "include",  CI_PARM1 | CI_FNAME },
     { INFO,     "info",     CI_NOOPT },
-    { INSTALL,  "install",  CI_NOOPT | CI_PARM1 },
+    { INSTALL,  "install",  CI_PARM1 },
     { INTREG,   "intreg",   CI_LIST },
     { JOIN,     "join",     CI_PARM1 | CI_FNAME | CI_EXTRA },
     { KALMAN,   "kalman",   CI_BLOCK },
