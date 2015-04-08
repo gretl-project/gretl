@@ -1381,6 +1381,12 @@
       usare. Se questi argomenti non sono forniti, vengono usati i
       seguenti valori di default: <argname>f1</argname> = 8,
       <argname>f1</argname> = 32, <argname>k</argname> = 8.
+    </para>
+    <para>
+      Se <argname>f2</argname> è maggiore o uguale del numero di
+      osservazioni disponibili, verrà usata la versione "passa-basso"
+      del filtro e il risultato deve essere interpretato come una
+      stima del trend, anziché del ciclo.
       <seelist>
         <fncref targ="bwfilt"/>
         <fncref targ="hpfilt"/>

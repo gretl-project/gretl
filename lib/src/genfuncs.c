@@ -1502,7 +1502,10 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
  * @bku: upper frequency bound (or 0 for automatic).
  * @k: approximation order (or 0 for automatic).
  *
- * Calculates the Baxter and King bandpass filter.
+ * Calculates the Baxter and King bandpass filter. If bku exceeds the
+ * number of available observations, then the "low-pass" version will
+ * be computed (weights sum to 1). Otherwise, the ordinary bandpass
+ * filter will be applied (weights sum to 0).
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
@@ -1515,6 +1518,7 @@ int bkbp_filter (const double *x, double *bk, const DATASET *dset,
     double avg_a;
     double *a;
     int i, t, err = 0;
+    int lowpass = 0;
 
     if (bkl <= 0 || bku <= 0) {
 	/* get user settings if available (or the defaults) */
@@ -1545,17 +1549,25 @@ int bkbp_filter (const double *x, double *bk, const DATASET *dset,
 	return E_DATA;
     }
 
+    if (bku >= t2 - t1 + 1) {
+	lowpass = 1;
+    }
+    
     a = malloc((k + 1) * sizeof *a);
     if (a == NULL) {
 	return E_ALLOC;
     }
     
     omubar = M_2PI / bkl;
-    omlbar = M_2PI / bku;
+    omlbar = lowpass? 0 : M_2PI / bku;
     
     /* first we compute the coefficients */
 
     avg_a = a[0] = (omubar - omlbar) / M_PI;
+
+    if (lowpass) {
+	avg_a -= 1.0;
+    }
 
     for (i=1; i<=k; i++) {
 	a[i] = (sin(i * omubar) - sin(i * omlbar)) / (i * M_PI);

@@ -8363,7 +8363,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		if (e == NULL) {
 		    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
 		} else {
-		    bk[i] = node_get_int(e, p);
+		    bk[i-1] = node_get_int(e, p);
 		}
 	    }
 	}
