@@ -1363,7 +1363,7 @@
 	  If <argname>f2</argname> is greater than or equal to the
 	  number of available observations, then the
 	  <quote>low-pass</quote> version of the filter will be run
-	  and the resulting series should be taken as an estmate of
+	  and the resulting series should be taken as an estimate of
 	  the trend component, rather than the cycle.
 	  <seelist>
             <fncref targ="bwfilt"/>
