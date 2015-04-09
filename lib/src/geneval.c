@@ -1240,7 +1240,8 @@ static NODE *eval_urcpval (NODE *n, parser *p)
     if (starting(p)) {
 	NODE *s, *e, *r = n->v.b1.b;
 	int i, m = r->v.bn.n_nodes;
-	double x[4];
+	int iargs[3] = {0};
+	double tau = NADBL;
 
 	if (m != 4) {
 	    p->err = E_INVARG;
@@ -1250,37 +1251,28 @@ static NODE *eval_urcpval (NODE *n, parser *p)
 
 	for (i=0; i<4 && !p->err; i++) {
 	    s = r->v.bn.n[i];
-	    if (scalar_node(s)) {
-		if (i == 0) {
-		    x[i] = node_get_scalar(s, p);
-		} else {
-		    x[i] = node_get_int(s, p);
-		}
-	    } else {
-		e = eval(s, p);
-		if (!p->err) {
-		    if (scalar_node(e)) {
-			if (i == 0) {
-			    x[i] = node_get_scalar(e, p);
-			} else {
-			    x[i] = node_get_int(e, p);
-			}
+	    e = eval(s, p);
+	    if (!p->err) {
+		if (scalar_node(e)) {
+		    if (i == 0) {
+			tau = node_get_scalar(e, p);
 		    } else {
-			p->err = E_TYPES;
+			iargs[i-1] = node_get_int(e, p);
 		    }
-		    if (!reusable(p)) {
-			free_tree(s, p, "Pdist");
-			r->v.bn.n[i] = NULL;
-		    }		    
+		} else {
+		    p->err = E_TYPES;
 		}
+		if (!reusable(p)) {
+		    free_tree(s, p, "Pdist");
+		    r->v.bn.n[i] = NULL;
+		}		    
 	    }
 	}
 
 	if (!p->err) {
-	    double tau = x[0];
-	    int nobs = (int) x[1];
-	    int niv = (int) x[2];
-	    int itv = (int) x[3];
+	    int nobs = iargs[0];
+	    int niv = iargs[1];
+	    int itv = iargs[2];
 
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL) {
