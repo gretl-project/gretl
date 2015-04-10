@@ -381,6 +381,8 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
     tab = gtk_table_new(2, 2, FALSE);
     gtk_table_set_col_spacing(GTK_TABLE(tab), 0, 5);
 
+    int T = finfo->t2 - finfo->t1 + 1;
+
     /* lower limit */
     w = gtk_label_new(_("Lower frequency bound:"));
     gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 0, 1);
@@ -393,7 +395,7 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
     /* upper limit */
     w = gtk_label_new(_("Upper frequency bound:"));
     gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 1, 2);
-    s2 = gtk_spin_button_new_with_range(2, 128, 1);
+    s2 = gtk_spin_button_new_with_range(2, (double) T, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s2), finfo->bku);
     g_signal_connect(G_OBJECT(s2), "value-changed",
 		     G_CALLBACK(set_int_from_spinner), &finfo->bku);
