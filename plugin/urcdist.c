@@ -15,6 +15,7 @@
 
 #include "libgretl.h"
 #include "version.h"
+#include "swap_bytes.h"
 
 #define URDEBUG 0
 
@@ -22,44 +23,43 @@
 FILE *fdb;
 #endif
 
-enum urc_errs {
-    URC_OK,
-    URC_BAD_PARAM,
-    URC_NOT_FOUND,
-    URC_SMALL_SAMPLE
-};
-
-#define MAXVARS 8
+#define NIVMAX 8
 #define URCLEN 221
 #define BIGLEN 884
 
-/* Copyright (c) James G. MacKinnon, 1995. Routine to evaluate
-   response surface for specified betas and sample size. 
+/* Based on Fortran code copyright (c) James G. MacKinnon,
+   1995. Routine to evaluate response surface for specified betas and
+   sample size.
 */
 
-static double eval_crit (double *b, int model, int nreg, int nobs)
+static void eval_all_crit (double tau, double *b, int nb,
+			   int T, double *crit, int *imin)
 {
-    double d, cval = 0.0;
+    double d1 = 0, d2 = 0, d3 = 0;
+    double diff, diffm = 1000;
+    int i;
 
-    if (nobs == 0) {
-	cval = b[0];
-    } else if (model == 2) {
-	d = 1.0 / nobs;
-	cval = b[0] + b[1] * d + b[2] * (d * d);
-    } else if (model == 3) {
-	d = 1.0 / nobs;
-	cval = b[0] + b[1] * d + b[2] * (d * d) + b[3] * (d * d * d);
-    } else if (model == 4) {
-	d = 1.0 / (nobs - nreg);
-	cval = b[0] + b[1] * d + b[2] * (d * d);
-    } else if (model == 5) {
-	d = 1.0 / (nobs - nreg);
-	cval = b[0] + b[1] * d + b[2] * (d * d) + b[3] * (d * d * d);
-    } else {
-	fputs("*** Warning! Error in input file. ***", stderr);
+    if (T > 0) {
+	d1 = 1.0 / T;
+	d2 = d1 * d1;
+	d3 = d1 * d2;
     }
 
-    return cval;
+    for (i=0; i<URCLEN; i++) {
+	if (T == 0) {
+	    crit[i] = b[0];
+	} else if (nb == 3) {
+	    crit[i] = b[0] + b[1]*d1 + b[2]*d2;
+	} else if (nb == 4) {
+	    crit[i] = b[0] + b[1]*d1 + b[2]*d2 + b[3]*d3;
+	}
+	diff = fabs(tau - crit[i]);
+	if (diff < diffm) {
+	    diffm = diff;
+	    *imin = i + 1; /* has to be 1-based */
+	}
+	b += nb;
+    }
 }
 
 /* Copyright (c) James G. MacKinnon, 1993.  This routine uses the
@@ -84,7 +84,8 @@ static int cholx (double *a, int m, int n)
 		}
 	    } else if (a[i + i * m] <= 0.0) {
 		/* error: get out */
-		err = i;
+		fprintf(stderr, "cholx: failed at i = %d\n", i);
+		err = E_NOTPD;
 		goto cholx_exit;
 	    }
 	    if (i == j) {
@@ -137,20 +138,25 @@ static int cholx (double *a, int m, int n)
 
 static int gls (double *xmat, double *yvec, double *omega, 
 		double *beta, double *xomx, double *fits, 
-		double *resid, double *ssr, double *ssrt, int nobs, 
-		int nvar, int nomax, int nvmax, int ivrt)
+		double *resid, double *ssr, double *ssrt,
+		int T, int ivrt)
 {
+    int nomax = 20;
+    int nvmax = 4;
+    int nvar = 4 - ivrt;
     int omega_offset = 1 + nomax;
     int xomx_offset = 1 + nvmax;
     int xmat_offset = 1 + nomax;
     int i, j, k, l;
     double xomy[50];
+    int err = 0;
 
     /* xomx is covariance matrix of parameter estimates if omega is
-       truly known.  First, invert omega matrix if ivrt=0. Original one
-       gets replaced. */
+       truly known. First, invert omega matrix if ivrt=0. Original one
+       gets replaced. 
+    */
 
-    /* Parameter adjustments */
+    /* parameter adjustments */
     omega -= omega_offset;
     xomx -= xomx_offset;
     xmat -= xmat_offset;
@@ -160,7 +166,10 @@ static int gls (double *xmat, double *yvec, double *omega,
     --beta;
 
     if (ivrt == 0) {
-	cholx(&omega[omega_offset], nomax, nobs);
+	err = cholx(&omega[omega_offset], nomax, T);
+	if (err) {
+	    return err;
+	}
     }
 
     /* form xomx matrix and xomy vector */
@@ -170,8 +179,8 @@ static int gls (double *xmat, double *yvec, double *omega,
 	    xomx[j + l * nvmax] = 0.;
 	}
     }
-    for (i = 1; i <= nobs; ++i) {
-	for (k = 1; k <= nobs; ++k) {
+    for (i = 1; i <= T; ++i) {
+	for (k = 1; k <= T; ++k) {
 	    for (j = 1; j <= nvar; ++j) {
 		xomy[j - 1] += xmat[i + j * nomax] * 
 		    omega[k + i * nomax] * yvec[k];
@@ -191,20 +200,23 @@ static int gls (double *xmat, double *yvec, double *omega,
     }
 
     /* invert xomx matrix */
-    cholx(&xomx[xomx_offset], nvmax, nvar);
+    err = cholx(&xomx[xomx_offset], nvmax, nvar);
+    if (err) {
+	return err;
+    }
 
     /* form estimates of beta */
     for (i = 1; i <= nvar; ++i) {
-	beta[i] = 0.;
+	beta[i] = 0.0;
 	for (j = 1; j <= nvar; ++j) {
 	    beta[i] += xomx[i + j * nvmax] * xomy[j - 1];
 	}
     }
 
     /* find ssr, fitted values, and residuals */
-    *ssr = 0.;
-    for (i = 1; i <= nobs; ++i) {
-	fits[i] = 0.;
+    *ssr = 0.0;
+    for (i = 1; i <= T; ++i) {
+	fits[i] = 0.0;
 	for (j = 1; j <= nvar; ++j) {
 	    fits[i] += xmat[i + j * nomax] * beta[j];
 	}
@@ -213,62 +225,51 @@ static int gls (double *xmat, double *yvec, double *omega,
     }
 
     /* find ssr from transformed regression */
-    *ssrt = 0.;
-    for (i = 1; i <= nobs; ++i) {
-	for (k = 1; k <= nobs; ++k) {
+    *ssrt = 0.0;
+    for (i = 1; i <= T; ++i) {
+	for (k = 1; k <= T; ++k) {
 	    *ssrt += resid[i] * omega[k + i * nomax] * resid[k];
 	}
     }
 
-    return 0;
+    return err;
 }
 
-/* Copyright (c) James G. MacKinnon, 1995.
-   Routine to find P value for any specified test statistic. 
+/* Based on Fortran code copyright (c) James G. MacKinnon, 1995.
+   Routine to find P-value for any specified test statistic. 
 */
 
-static double fpval (double *beta, double *cnorm, double *wght, 
-		     double *prob, double stat, int nobs, 
-		     int model, int nreg)
+static double fpval (double *beta, int nbeta, double *wght, 
+		     double *prob, double *cnorm,
+		     double tau, int T, int *err)
 {
     double d1, precrt = 2.0;
     int i, j, ic, jc, imin = 0;
     int np1, nph, nptop, np = 9;
-    double bot, top, ssr, diff;
+    double bot, top, ssr, ssrt;
     double sd4, ttest, crfit;
-    double ssrt, diffm = 1000.0; 
     double yvec[20], fits[20], resid[20];
     double xmat[80], xomx[16], gamma[4], omega[400];
     double crits[URCLEN];
     double pval = 0.0;
 
-    /* Parameter adjustments */
+    /* parameter adjustments */
     --prob;
     --wght;
     --cnorm;
-    beta -= 5;
 
-    /* first, compute all the estimated critical values */
-
-    for (i = 1; i <= URCLEN; ++i) {
-	crits[i - 1] = eval_crit(&beta[(i << 2) + 1], model, nreg, nobs);
-    }
-
-    /* find critical value closest to test statistic */
-    for (i = 0; i < URCLEN; i++) {
-	diff = fabs(stat - crits[i]);
-	if (diff < diffm) {
-	    diffm = diff;
-	    imin = i;
-	}
-    }
+    /* first compute all the estimated critical values,
+       and find the one closest to test statistic, 
+       indexed by @imin.
+    */    
+    eval_all_crit(tau, beta, nbeta, T, crits, &imin);
 
     nph = np / 2;
     nptop = URCLEN - nph;
 
     if (imin > nph && imin < nptop) {
 	/* imin is not too close to the end. 
-	   Use np points around stat. 
+	   Use np points around tau. 
 	*/
 	for (i=1; i<=np; i++) {
 	    ic = imin - nph - 1 + i;
@@ -284,8 +285,8 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	    for (j=i; j<=np; j++) {
 		ic = imin - nph - 1 + i;
 		jc = imin - nph - 1 + j;
-		top = prob[ic] * (1. - prob[jc]);
-		bot = prob[jc] * (1. - prob[ic]);
+		top = prob[ic] * (1 - prob[jc]);
+		bot = prob[jc] * (1 - prob[ic]);
 		omega[i + j * 20 - 21] = wght[ic] * wght[jc] * sqrt(top / bot);
 	    }
 	}
@@ -295,21 +296,27 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	    }
 	}
 
-	gls(xmat, yvec, omega, gamma, xomx, fits, resid, &ssr, &ssrt, np, 
-	    4, 20, 4, 0);
+	*err = gls(xmat, yvec, omega, gamma, xomx, fits, resid,
+		   &ssr, &ssrt, np, 0);
+	if (*err) {
+	    goto bailout;
+	}
 
 	/* check to see if gamma(4) is needed */
 	sd4 = sqrt(ssrt / (np - 4) * xomx[15]);
 	ttest = fabs(gamma[3]) / sd4;
+	d1 = tau;
+	
 	if (ttest > precrt) {
-	    d1 = stat;
 	    crfit = gamma[0] + gamma[1] * d1 + gamma[2] * (d1 * d1) + 
 		gamma[3] * (d1 * d1 * d1);
 	} else {
-	    gls(xmat, yvec, omega, gamma, xomx, fits, resid, &ssr, &ssrt, 
-		np, 3, 20, 4, 1);
-	    d1 = stat;
-	    crfit = gamma[0] + gamma[1] * stat + gamma[2] * (d1 * d1);
+	    *err = gls(xmat, yvec, omega, gamma, xomx, fits, resid,
+		       &ssr, &ssrt, np, 1);
+	    if (*err) {
+		goto bailout;
+	    }	    
+	    crfit = gamma[0] + gamma[1] * d1 + gamma[2] * (d1 * d1);
 	}
 	pval = normal_cdf(crfit);
     } else {
@@ -323,10 +330,10 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	    }
 	    for (i = 1; i <= np1; ++i) {
 		yvec[i - 1] = cnorm[i];
-		xmat[i - 1] = 1.;
+		xmat[i - 1] = 1.0;
 		xmat[i + 19] = crits[i - 1];
-		xmat[i + 39] = xmat[i + 19] * crits[i - 1];
-		xmat[i + 59] = xmat[i + 39] * crits[i - 1];
+		xmat[i + 39] = xmat[i + 19] * crits[i-1];
+		xmat[i + 59] = xmat[i + 39] * crits[i-1];
 	    }
 	} else {
 	    np1 = (URCLEN + 1) - imin + nph;
@@ -338,8 +345,8 @@ static double fpval (double *beta, double *cnorm, double *wght,
 		yvec[i - 1] = cnorm[ic];
 		xmat[i - 1] = 1.;
 		xmat[i + 19] = crits[ic - 1];
-		xmat[i + 39] = xmat[i + 19] * crits[ic - 1];
-		xmat[i + 59] = xmat[i + 39] * crits[ic - 1];
+		xmat[i + 39] = xmat[i + 19] * crits[ic-1];
+		xmat[i + 59] = xmat[i + 39] * crits[ic-1];
 	    }
 	}
 
@@ -347,8 +354,8 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	for (i = 1; i <= np1; ++i) {
 	    for (j = i; j <= np1; ++j) {
 		if (imin < np) {
-		    top = prob[i] * (1. - prob[j]);
-		    bot = prob[j] * (1. - prob[i]);
+		    top = prob[i] * (1.0 - prob[j]);
+		    bot = prob[j] * (1.0 - prob[i]);
 		    omega[i + j * 20 - 21] = wght[i] * wght[j] * sqrt(top / bot);
 		} else {
 		    /* Avoid numerical singularities at the upper end */
@@ -366,25 +373,29 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	    }
 	}
 
-	gls(xmat, yvec, omega, gamma, xomx, fits, resid, &ssr, &ssrt, np1, 
-	    4, 20, 4, 0);
+	*err = gls(xmat, yvec, omega, gamma, xomx, fits, resid,
+		   &ssr, &ssrt, np1, 0);
+	if (*err) {
+	    goto bailout;
+	}
 
 	/* check to see if gamma(4) is needed */
 	sd4 = sqrt(ssrt / (np1 - 4) * xomx[15]);
 	ttest = fabs(gamma[3]) / sd4;
+	d1 = tau;
 
 	if (ttest > precrt) {
-	    d1 = stat;
-	    crfit = gamma[0] + gamma[1] * stat + gamma[2] * (d1 * d1) + 
+	    crfit = gamma[0] + gamma[1] * d1 + gamma[2] * (d1 * d1) + 
 		gamma[3] * (d1 * d1 * d1);
-	    pval = normal_cdf(crfit);
 	} else {
-	    gls(xmat, yvec, omega, gamma, xomx, fits, resid, &ssr, &ssrt,
-		np1, 3, 20, 4, 1);
-	    d1 = stat;
-	    crfit = gamma[0] + gamma[1] * stat + gamma[2] * (d1 * d1);
-	    pval = normal_cdf(crfit);
+	    *err = gls(xmat, yvec, omega, gamma, xomx, fits, resid,
+		       &ssr, &ssrt, np1, 1);
+	    if (*err) {
+		goto bailout;
+	    }	    
+	    crfit = gamma[0] + gamma[1] * d1 + gamma[2] * (d1 * d1);
 	}
+	pval = normal_cdf(crfit);
 
 	/* check that nothing crazy has happened at the ends */
 	if (imin == 1 && pval > prob[1]) {
@@ -395,161 +406,220 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	}
     }
 
+ bailout:
+
+    if (*err) {
+	pval = NADBL;
+    }
+
     return pval;
 }
 
-static char *read_double_and_advance (double *val, char *s)
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+
+static void urc_swap_endianness (double *beta,
+				 int nbeta,
+				 double *wght,
+				 double *prob,
+				 double *cnorm)
 {
-    char valstr[16];
+    int i, n = nbeta * URCLEN;
 
-    while (isspace((unsigned char) *s)) s++;
+    for (i=0; i<n; i++) {
+	reverse_double(beta[i]);
+    }
 
-    sscanf(s, "%s", valstr);
-    *val = atof(valstr);
-    s += strlen(valstr);
+    for (i=0; i<URCLEN; i++) {
+	reverse_double(wght[i]);
+    }    
 
-    return s;
+    for (i=0; i<URCLEN; i++) {
+	reverse_double(prob[i]);
+    }
+
+    for (i=0; i<URCLEN; i++) {
+	reverse_double(cnorm[i]);
+    }    
 }
+
+#endif
+
+struct urcinfo {
+    int nz;
+    int nreg;
+    int model;
+    int Tmin;
+    int pos;
+};
 
 /* 
    niv = # of integrated variables
    itv = appropriate ur_code for nc, c, ct, ctt models
-   nobs = sample size (0 for asymptotic)
-   arg = test statistic
+   T = sample size (0 for asymptotic)
+   tau = test statistic
    pval = location to receive P-value
 */
 
-static int urcval (int niv, int itv, int nobs, double arg, 
-		   const char *path, double *pval)
+static double urcval (int niv, int itv, int T, double tau,
+		      const char *path, int *err)
 {
-    gzFile fz;
-    char line[80], code[8];
-    int urc_ret = URC_OK;
-    int i, j, iskip, nvar;
-    char datfile[FILENAME_MAX];
-    struct {
-	double probs[URCLEN];
-	double cnorm[URCLEN];
-	double beta[BIGLEN];
-	double wght[URCLEN];
-	int nz, nreg, model, minsize;
-    } urc;
-    /* byte offsets into data */
-    int urc_offsets[] = {
-	39,     /* urc-1 */
-	60685,  /* urc-2 */
-	121331, /* urc-3 */
-	178662, /* urc-4 */
-	239308, /* urc-5 */
-	303269, /* urc-6 */
-	360600, /* urc-7 */
-	427876, /* urc-8 */
-	481892  /* probs */
+    FILE *fp;
+    char datafile[FILENAME_MAX];
+    double beta[BIGLEN];
+    double wght[URCLEN];
+    double prob[URCLEN];
+    double cnorm[URCLEN];
+    struct urcinfo uis[] = {
+	{0,  1, 2, 20,      0}, /* dfnc: tab1 */
+	{0,  2, 2, 20,   7072}, /* dfc */
+	{0,  3, 3, 20,  14144}, /* dfct */
+	{0,  4, 3, 20,  22984}, /* dfctt */
+	{1,  2, 2, 20,  31824}, /* conc: tab2 */
+	{1,  3, 2, 20,  38896}, /* coc */
+	{1,  4, 3, 25,  45968}, /* coct */
+	{1,  5, 3, 20,  54808}, /* coctt */
+	{2,  3, 2, 25,  63648}, /* conc: tab3 */
+	{2,  4, 2, 20,  70720}, /* coc */
+	{2,  5, 2, 20,  77792}, /* coct */
+	{2,  6, 3, 20,  84864}, /* coctt */
+	{3,  4, 3, 20,  93704}, /* conc: tab4 */
+	{3,  5, 2, 25, 102544}, /* coc */
+	{3,  6, 3, 20, 109616}, /* coct */
+	{3,  7, 2, 30, 118456}, /* coctt */
+	{4,  5, 2, 25, 125528}, /* conc: tab 5 */
+	{4,  6, 3, 20, 132600}, /* coc */
+	{4,  7, 3, 20, 141440}, /* coct */
+	{4,  8, 3, 20, 150280}, /* coctt */
+	{5,  6, 2, 30, 159120}, /* conc: tab 6 */
+	{5,  7, 2, 30, 166192}, /* coc */
+	{5,  8, 2, 30, 173264}, /* coct */
+	{5,  9, 3, 25, 180336}, /* coctt */
+	{6,  7, 3, 25, 189176}, /* conc: tab 7 */
+	{6,  8, 3, 25, 198016}, /* coc */
+	{6,  9, 3, 30, 206856}, /* coct */
+	{6, 10, 3, 30, 215696}, /* coctt */
+	{7,  8, 2, 40, 224536}, /* conc: tab 8 */
+	{7,  9, 2, 35, 231608}, /* coc */
+	{7, 10, 2, 40, 238680}, /* coct */
+	{7, 11, 2, 40, 245752}, /* coctt */
+	{0,  0, 0,  0, 252824}, /* prob */
+	{0,  0, 0, -1, 254592}  /* cnorm */
     };
+    struct urcinfo *ui;
+    size_t nr1, nr2;
+    int i, nbeta;
+    double pval = NADBL;
 
     /* Check that parameters are valid */
-    if (niv < 1 || niv > MAXVARS) {
-	return URC_BAD_PARAM;
+    if (niv < 1 || niv > NIVMAX) {
+	*err = E_DATA;
+	return pval;
     }
 
     if (itv < 1 || itv > 4) {
 	/* these limits correspond to UR_NO_CONST and UR_QUAD_TREND
 	   in lib/src/adf_kpss.c */
-	return URC_BAD_PARAM;
+	*err = E_DATA;
+	return pval;
     }
 
     /* Open data file */
-    sprintf(datfile, "%sdata%curcdata.gz", path, SLASH);
-    fz = gretl_gzopen(datfile, "rb");
-    if (fz == NULL) {
-	return URC_NOT_FOUND;
+    sprintf(datafile, "%sdata%curcdata.bin", path, SLASH);
+    fp = gretl_fopen(datafile, "rb");
+    if (fp == NULL) {
+	fprintf(stderr, "urcdata.bin not found\n");
+	*err = E_FOPEN;
+	return pval;
     }
 
     /* skip to appropriate location in data file */
-    gzseek(fz, (z_off_t) urc_offsets[niv - 1], SEEK_SET);
+    i = (niv-1) * 4 + (itv - 1);
+    ui = &uis[i];
+    fseek(fp, ui->pos, SEEK_SET);
 
-    iskip = (itv - 1) * (URCLEN + 1);
-    for (i = 0; i < iskip; i++) {
-	gzgets(fz, line, sizeof line);
-    }
-
-    gzgets(fz, line, sizeof line);
-    sscanf(line, "%s %d %d %d %d", code, &urc.nz, &urc.nreg,
-	   &urc.model, &urc.minsize);
+    /* the number of coefficients in the critical values
+       equations */
+    nbeta = ui->model == 2 ? 3 : 4;
 
 #if URDEBUG
-    fprintf(fdb, "code=%s nz=%d, nreg=%d, model=%d, minsize=%d\n",
-	    code, urc.nz, urc.nreg, urc.model, urc.minsize);
+    fprintf(fdb, "nz=%d, nreg=%d, model=%d, Tmin=%d, offset=%d\n",
+	    ui->nz, ui->nreg, ui->model, ui->Tmin, ui->pos);
     fflush(fdb);
 #endif
 
-    nvar = (urc.model == 2 || urc.model == 4)? 3 : 4;
+    /* read coefficients and weights */
+    nr1 = fread(beta, sizeof(double), nbeta * URCLEN, fp);
+    nr2 = fread(wght, sizeof(double), URCLEN, fp);
+    if (nr1 != nbeta * URCLEN || nr2 != URCLEN) {
+	fprintf(stderr, "error reading urcdata\n");
+	*err = E_DATA;
+    }    
 
-    for (i=1; i<=URCLEN; i++) {
-	char *s = gzgets(fz, line, sizeof line);
-
-	for (j=1; j<=nvar; j++) {
-	    s = read_double_and_advance(&urc.beta[j + (i << 2) - 5], s);
+    if (!*err) {
+	/* read from embedded "probs.tab" data */
+	fseek(fp, uis[32].pos, SEEK_SET);
+	nr1 = fread(prob, sizeof(double), URCLEN, fp);
+	nr2 = fread(cnorm, sizeof(double), URCLEN, fp);
+	if (nr1 != URCLEN || nr2 != URCLEN) {
+	    fprintf(stderr, "error reading urcdata\n");
+	    *err = E_DATA;
 	}
-	read_double_and_advance(&urc.wght[i - 1], s);
     }
 
-    /* read from embedded "probs.tab" */
-    gzseek(fz, (z_off_t) urc_offsets[MAXVARS], SEEK_SET);
-    for (i=0; i<URCLEN; i++) {
-	gzgets(fz, line, sizeof line);
-	sscanf(line, "%lf %lf", &urc.probs[i], &urc.cnorm[i]);
+    fclose(fp);
+
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+    if (!*err) {
+	urc_swap_endianness(beta, nbeta, wght, prob, cnorm);
+    }
+#endif    
+
+    if (!*err && T > 0 && T < ui->Tmin) {
+	/* error, or warning? */
+	fprintf(stderr, "Warning, too few observations!\n");
+	/* *err = E_TOOFEW; */
     }
 
-    if (nobs > 0 && nobs < urc.minsize) {
-	urc_ret = URC_SMALL_SAMPLE;
+    if (!*err) {
+	pval = fpval(beta, nbeta, wght, prob, cnorm,
+		     tau, T, err);
     }
 
-    *pval = fpval(urc.beta, urc.cnorm, urc.wght, urc.probs,
-		  arg, nobs, urc.model, urc.nreg);
-
-    gzclose(fz);
-
-    return urc_ret;
+    return pval;
 }
 
 /* 
    tau = test statistic
-   n = sample size (or 0 for asymptotic)
+   T = sample size (or 0 for asymptotic)
    niv = # of integrated variables
    itv = 1, 2, 3, or 4 for nc, c, ct, ctt models.
-   path = path to urc data files
+   path = path to urc data file
    
    returns: the computed P-value
 */
 
-double mackinnon_pvalue (double tau, int n, int niv, int itv, char *path)
+double mackinnon_pvalue (double tau, int T, int niv, int itv,
+			 char *path)
 {
     double pval = NADBL;
-    int err;
+    int err = 0;
 
 #if URDEBUG
     fdb = fopen("debug.txt", "w");
-    fprintf(fdb, "mackinnon_pvalue: tau=%g, n=%d, niv=%d, itv=%d\n",
-	    tau, n, niv, itv);
+    fprintf(fdb, "mackinnon_pvalue: tau=%g, T=%d, niv=%d, itv=%d\n",
+	    tau, T, niv, itv);
     fprintf(fdb, "mackinnon_pvalue: path='%s'\n", path);
     fflush(fdb);
 #endif
 
-    gretl_push_c_numeric_locale();
-    err = urcval(niv, itv, n, tau, path, &pval);
-    gretl_pop_c_numeric_locale();
+    pval = urcval(niv, itv, T, tau, path, &err);
 
 #if URDEBUG
     fclose(fdb);
 #endif
 
-    if (err == URC_NOT_FOUND) {
-	path[0] = '\0';
-    }
-
-    if (err != URC_OK && err != URC_SMALL_SAMPLE) {
-	pval = NADBL;
+    if (err == E_FOPEN) {
+	*path = '\0';
     }
 
     return pval;
