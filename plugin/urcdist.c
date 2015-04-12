@@ -10,7 +10,8 @@
    The calculation code here is Copyright (c) James G. MacKinnon, 
    1996 (corrected 2003-5-5).
 
-   This "wrapper" written by Allin Cottrell, 2004.
+   This "wrapper" written by Allin Cottrell, 2004; revised to
+   load MacKinnon's tables in binary format, 2015.
 */
 
 #include "libgretl.h"
@@ -470,35 +471,35 @@ static double urcval (int niv, int itv, int T, double tau,
     double prob[URCLEN];
     double cnorm[URCLEN];
     struct urcinfo uis[] = {
-	{0,  1, 2, 20,      0}, /* dfnc: tab1 */
+	{0,  1, 2, 20,      0}, /* dfnc: table 1 */
 	{0,  2, 2, 20,   7072}, /* dfc */
 	{0,  3, 3, 20,  14144}, /* dfct */
 	{0,  4, 3, 20,  22984}, /* dfctt */
-	{1,  2, 2, 20,  31824}, /* conc: tab2 */
+	{1,  2, 2, 20,  31824}, /* conc: table 2 */
 	{1,  3, 2, 20,  38896}, /* coc */
 	{1,  4, 3, 25,  45968}, /* coct */
 	{1,  5, 3, 20,  54808}, /* coctt */
-	{2,  3, 2, 25,  63648}, /* conc: tab3 */
+	{2,  3, 2, 25,  63648}, /* conc: table 3 */
 	{2,  4, 2, 20,  70720}, /* coc */
 	{2,  5, 2, 20,  77792}, /* coct */
 	{2,  6, 3, 20,  84864}, /* coctt */
-	{3,  4, 3, 20,  93704}, /* conc: tab4 */
+	{3,  4, 3, 20,  93704}, /* conc: table 4 */
 	{3,  5, 2, 25, 102544}, /* coc */
 	{3,  6, 3, 20, 109616}, /* coct */
 	{3,  7, 2, 30, 118456}, /* coctt */
-	{4,  5, 2, 25, 125528}, /* conc: tab 5 */
+	{4,  5, 2, 25, 125528}, /* conc: table 5 */
 	{4,  6, 3, 20, 132600}, /* coc */
 	{4,  7, 3, 20, 141440}, /* coct */
 	{4,  8, 3, 20, 150280}, /* coctt */
-	{5,  6, 2, 30, 159120}, /* conc: tab 6 */
+	{5,  6, 2, 30, 159120}, /* conc: table 6 */
 	{5,  7, 2, 30, 166192}, /* coc */
 	{5,  8, 2, 30, 173264}, /* coct */
 	{5,  9, 3, 25, 180336}, /* coctt */
-	{6,  7, 3, 25, 189176}, /* conc: tab 7 */
+	{6,  7, 3, 25, 189176}, /* conc: table 7 */
 	{6,  8, 3, 25, 198016}, /* coc */
 	{6,  9, 3, 30, 206856}, /* coct */
 	{6, 10, 3, 30, 215696}, /* coctt */
-	{7,  8, 2, 40, 224536}, /* conc: tab 8 */
+	{7,  8, 2, 40, 224536}, /* conc: table 8 */
 	{7,  9, 2, 35, 231608}, /* coc */
 	{7, 10, 2, 40, 238680}, /* coct */
 	{7, 11, 2, 40, 245752}, /* coctt */
