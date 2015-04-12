@@ -221,7 +221,7 @@ ifeq ($(LIBGSF_LIBS),)
   ZIP_CFLAGS = $(GRETL_ZIP_CFLAGS)
 endif
 
-URCDATA = $(topsrc)/plugin/data/urcdata.gz
+URCDATA = $(topsrc)/plugin/data/urcdata.bin
 DWDATA = $(topsrc)/plugin/data/dwdata.gz
 
 override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
