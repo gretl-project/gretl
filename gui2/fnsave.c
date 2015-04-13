@@ -1483,7 +1483,7 @@ static void delete_pkg_editor (GtkWidget *widget, function_info *finfo)
     gint resp = 0;
 
     if (finfo->modified) {
-	resp = query_save_package(NULL, NULL, finfo);
+	resp = query_save_package(finfo->dlg, NULL, finfo);
     }
 
     if (!resp) {
@@ -2390,7 +2390,7 @@ static void finfo_dialog (function_info *finfo)
     button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
-    g_signal_connect(G_OBJECT (button), "clicked", 
+    g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_pkg_editor), finfo);
 
     finfo_set_modified(finfo, finfo->fname == NULL);
