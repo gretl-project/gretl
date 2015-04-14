@@ -113,7 +113,6 @@ struct function_info_ {
     char *active;          /* name of 'active' function */
     FuncDataReq dreq;      /* data requirement of package */
     int minver;            /* minimum gretl version, package */
-    gboolean upload;       /* upload to server on save? */
     gboolean modified;     /* anything changed in package? */
     int save_flags;        /* see PkgSaveFlags */
 };
@@ -177,7 +176,6 @@ function_info *finfo_new (void)
     finfo->treewin = NULL;
     finfo->ui = NULL;
 
-    finfo->upload = FALSE;
     finfo->modified = FALSE;
     finfo->save_flags = WRITE_SAMPFILE |
 	WRITE_HELPFILE | WRITE_GUI_HELP;
@@ -277,28 +275,16 @@ static void finfo_free (function_info *finfo)
 	g_list_free(finfo->codewins);
     }
 
+    if (finfo->ui != NULL) {
+	g_object_unref(finfo->ui);
+    }
+
     if (finfo->popup != NULL) {
 	gtk_widget_destroy(finfo->popup);
     }
 
     free(finfo);
 }
-
-const gchar *pkgsave_ui = 
-    "<ui>"
-    "  <menubar>"
-    "    <menu action='File'>"
-    "      <menuitem action='Save'/>"
-    "      <menuitem action='SaveAs'/>"
-    "      <menuitem action='SaveZip'/>"
-    "      <menuitem action='WriteInp'/>"
-    "      <menuitem action='WriteSpec'/>"
-    "      <menuitem action='Upload'/>"
-    "      <separator/>"   
-    "      <menuitem action='Close'/>"    
-    "    </menu>"
-    "  </menubar>"
-    "</ui>";
 
 static void pkg_save_action (GtkAction *action, function_info *finfo)
 {
@@ -320,70 +306,83 @@ static void pkg_save_action (GtkAction *action, function_info *finfo)
     }
 }
 
-static void delete_dlg_action (GtkAction *action, function_info *finfo) 
-{
-    gint resp = 0;
-
-    if (finfo->modified) {
-	resp = query_save_package(finfo->dlg, NULL, finfo);
-    }
-
-    if (!resp) {
-	gtk_widget_destroy(finfo->dlg); 
-    }
-}
+const gchar *pkgsave_ui = 
+    "<ui>"
+    "  <popup>"
+    "    <menuitem action='Save'/>"
+    "    <menuitem action='SaveAs'/>"
+    "    <menuitem action='SaveZip'/>"
+    "    <menuitem action='WriteInp'/>"
+    "    <menuitem action='WriteSpec'/>"
+    "    <menuitem action='Upload'/>"
+    "  </popup>"
+    "</ui>";
 
 static GtkActionEntry pkgsave_items[] = {
-    { "File", NULL, N_("_File"), NULL, NULL, NULL },
-    { "Save", GTK_STOCK_SAVE, N_("_Save"), NULL, NULL, G_CALLBACK(pkg_save_action) },
-    { "SaveAs", GTK_STOCK_SAVE_AS, N_("Save _as..."), NULL, NULL, G_CALLBACK(pkg_save_action) },
+    { "Save", NULL, N_("_Save gfn"), NULL, NULL, G_CALLBACK(pkg_save_action) },
+    { "SaveAs", NULL, N_("Save gfn _as..."), NULL, NULL, G_CALLBACK(pkg_save_action) },
     { "SaveZip", NULL, N_("Save _zip file..."), NULL, NULL, G_CALLBACK(pkg_save_action) },
     { "WriteInp", NULL, N_("Save as _script..."), NULL, NULL, G_CALLBACK(pkg_save_action) },
     { "WriteSpec", NULL, N_("_Write spec file..."), NULL, NULL, G_CALLBACK(pkg_save_action) },
     { "Upload", NULL, N_("_Upload to server..."), NULL, NULL, G_CALLBACK(pkg_save_action) },
-    { "Close", GTK_STOCK_CLOSE, NULL, NULL, NULL, G_CALLBACK(delete_dlg_action) }
 };
 
-static void pkg_dialog_add_file_menu (function_info *finfo,
-				      GtkWidget *vbox)
+static void save_popup_pos (GtkMenu *menu,
+			    gint *x,
+			    gint *y,
+			    gboolean *push_in,
+			    gpointer data)
 {
-    GtkActionGroup *actions;
-    GtkWidget *mbar, *hbox;
+    GtkWidget *button = data;
+    gint wx, wy, tx, ty;
+
+    gdk_window_get_origin(gtk_widget_get_window(button), &wx, &wy);
+    gtk_widget_translate_coordinates(button, gtk_widget_get_toplevel(button), 
+				     0, 0, &tx, &ty);
+    *x = wx + tx - 80;
+    *y = wy + ty - 128;
+    *push_in = TRUE;
+}
+
+static void pkg_save_popup (GtkWidget *button,
+			    function_info *finfo)
+{
+    GtkWidget *menu;
     gboolean cond;
 
-    finfo->ui = gtk_ui_manager_new();
-    actions = gtk_action_group_new("PkgActions");
-    gtk_action_group_set_translation_domain(actions, "gretl");
+    if (finfo->ui == NULL) {
+	GtkActionGroup *actions;
+	
+	finfo->ui = gtk_ui_manager_new();
+	actions = gtk_action_group_new("PkgActions");
+	gtk_action_group_set_translation_domain(actions, "gretl");
+	gtk_action_group_add_actions(actions, pkgsave_items,
+				     G_N_ELEMENTS(pkgsave_items),
+				     finfo);
+	gtk_ui_manager_add_ui_from_string(finfo->ui, pkgsave_ui, -1, NULL);
+	gtk_ui_manager_insert_action_group(finfo->ui, actions, 0);
+	g_object_unref(actions);
+    }
 
-    gtk_action_group_add_actions(actions, pkgsave_items,
-				 G_N_ELEMENTS(pkgsave_items),
-				 finfo);
-    gtk_ui_manager_add_ui_from_string(finfo->ui, pkgsave_ui, -1, NULL);
-
-    gtk_ui_manager_insert_action_group(finfo->ui, actions, 0);
-    g_object_unref(actions);
-
-    hbox = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-    mbar = gtk_ui_manager_get_widget(finfo->ui, "/menubar");
-    gtk_box_pack_start(GTK_BOX(hbox), mbar, TRUE, TRUE, 0);
-
-    /* set initial sensitivities */
+    /* set menu item sensitivities */
+    flip(finfo->ui, "/popup/Save", finfo->modified);
     cond = finfo->fname != NULL;
-    flip(finfo->ui, "/menubar/File/SaveAs", cond);
-    flip(finfo->ui, "/menubar/File/Upload", cond);
+    flip(finfo->ui, "/popup/SaveAs", cond);
+    flip(finfo->ui, "/popup/Upload", cond);
     cond = pkg_has_pdf_help(finfo) || finfo->datafiles != NULL;
-    flip(finfo->ui, "/menubar/File/SaveZip", cond);
+    flip(finfo->ui, "/popup/SaveZip", cond);    
 
-    window_add_winlist(finfo->dlg, hbox);
+    menu = gtk_ui_manager_get_widget(finfo->ui, "/popup");
+
+    gtk_menu_popup(GTK_MENU(menu), NULL, NULL,
+		   save_popup_pos,
+		   button, 0,
+		   gtk_get_current_event_time());    
 }
 
 static void finfo_set_modified (function_info *finfo, gboolean s)
 {
     finfo->modified = s;
-    flip(finfo->ui, "/menubar/File/Save", s);
-    s = pkg_has_pdf_help(finfo) || finfo->datafiles != NULL;
-    flip(finfo->ui, "/menubar/File/SaveZip", s);
 }
 
 static void login_init_or_free (login_info *linfo, int freeit)
@@ -2243,6 +2242,19 @@ int package_editor_exit_check (GtkWidget *w)
     return FALSE;
 }
 
+static void delete_dlg_callback (GtkWidget *button, function_info *finfo) 
+{
+    gint resp = 0;
+
+    if (finfo->modified) {
+	resp = query_save_package(finfo->dlg, NULL, finfo);
+    }
+
+    if (!resp) {
+	gtk_widget_destroy(finfo->dlg); 
+    }
+}
+
 /* Dialog for editing function package.  The user can get here in
    either of two ways: after selecting functions to put into a
    newly created package, or upon selecting an existing package
@@ -2294,9 +2306,6 @@ static void finfo_dialog (function_info *finfo)
     vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
     gtk_container_add(GTK_CONTAINER(finfo->dlg), vbox);
-
-    /* menu for save, upload */
-    pkg_dialog_add_file_menu(finfo, vbox);
 
     tbl = gtk_table_new(NENTRIES + 1, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
@@ -2368,16 +2377,22 @@ static void finfo_dialog (function_info *finfo)
 
     /* table for buttons arrayed at foot of window */
     hbox = gtk_hbox_new(FALSE, 0);
-    tbl = gtk_table_new(2, 3, FALSE);
+    tbl = gtk_table_new(2, 4, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 4);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 4);
+    gtk_table_set_col_spacing(GTK_TABLE(tbl), 2, 32);
     gtk_box_pack_start(GTK_BOX(hbox), tbl, TRUE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 2);
 
-    /* edit code button, possibly with function selector */
+    /* first button row */
+
+    /* 1: edit code button */
     button = gtk_button_new_with_label(_("Edit function code"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, 0, 1);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(edit_code_callback), finfo);
 
+    /* 2: interface selector */
     finfo->codesel = active_func_selector(finfo);
     gtk_table_attach_defaults(GTK_TABLE(tbl), finfo->codesel, 1, 2, 0, 1);
     g_signal_connect(G_OBJECT(finfo->codesel), "changed",
@@ -2385,31 +2400,45 @@ static void finfo_dialog (function_info *finfo)
 
     update_active_func(NULL, finfo);
 
-    /* edit sample script button */
-    button = gtk_button_new_with_label(_("Edit sample script"));
-    gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, 1, 2);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(edit_sample_callback), finfo);
-
-    /* add/remove functions button */
-    button = gtk_button_new_with_label(_("Add/remove functions"));
-    gtk_table_attach_defaults(GTK_TABLE(tbl), button, 1, 2, 1, 2);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(add_remove_callback), finfo);
-
-    /* extra package properties button */
+    /* 3: extra package properties button */
     button = gtk_button_new_with_label(_("Extra properties"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), button, 2, 3, 0, 1);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(extra_properties_dialog), finfo);
 
-    /* validate button */
+    /* 4: save-menu button */
+    button = gtk_button_new_with_label(_("Save..."));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), button, 3, 4, 0, 1);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(pkg_save_popup), finfo);    
+
+    /* second button row */
+
+    /* 1: edit sample script button */
+    button = gtk_button_new_with_label(_("Edit sample script"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, 1, 2);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(edit_sample_callback), finfo);
+
+    /* 2: add/remove functions button */
+    button = gtk_button_new_with_label(_("Add/remove functions"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), button, 1, 2, 1, 2);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(add_remove_callback), finfo);
+
+    /* 3: validate button */
     button = gtk_button_new_with_label(_("Validate"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), button, 2, 3, 1, 2);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(check_pkg_callback), finfo);
     gtk_widget_set_sensitive(button, finfo->fname != NULL);
     finfo->validate = button;
+
+    /* 4: close button */
+    button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), button, 3, 4, 1, 2);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(delete_dlg_callback), finfo);       
 
     finfo_set_modified(finfo, finfo->fname == NULL);
 
@@ -3014,8 +3043,6 @@ int save_function_package (const char *fname, gpointer p)
 	gtk_window_set_title(GTK_WINDOW(finfo->dlg), title);
 	g_free(title);
 	finfo_set_modified(finfo, FALSE);
-	flip(finfo->ui, "/menubar/File/SaveAs", TRUE);
-	flip(finfo->ui, "/menubar/File/Upload", TRUE);
 	gtk_widget_set_sensitive(finfo->validate, TRUE);
 	maybe_update_func_files_window(EDIT_FN_PKG);
 	
