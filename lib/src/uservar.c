@@ -298,7 +298,7 @@ static int real_user_var_add (const char *name,
     */
 
 #if UVDEBUG
-    fprintf(stderr, "real_user_var_add: '%s'\n", name);
+    fprintf(stderr, "real_user_var_add: '%s', err = %d\n", name, err);
 #endif
 
     if (!err) {

@@ -13853,7 +13853,7 @@ static int assign_null_to_array (parser *p)
 	a = gretl_array_new(p->lh.atype, 0, &err);
 	if (!err) {
 	    err = user_var_add_or_replace(p->lh.name,
-					  GRETL_TYPE_ARRAY,
+					  p->lh.atype,
 					  a);
 	}
     }
