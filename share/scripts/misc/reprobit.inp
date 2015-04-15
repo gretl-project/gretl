@@ -1,0 +1,11 @@
+open union_wooldridge.gdt
+
+# list regressors (including time dummies)
+list X = const black married educ dummify(year)
+
+# default Gauss-Hermite quadrature
+probit union X --random
+
+# faster, but less accurate
+probit union X --random --quadpoints=12
+
