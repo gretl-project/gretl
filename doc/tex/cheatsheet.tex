@@ -527,6 +527,60 @@ more elegant:
   endloop
 \end{code}
 
+\subsection{Dropping collinear variables}
+
+\emph{Problem:} I'm writing my own estimator and I'd like to have a
+function that automatically drops collinear variables from a list.
+
+\emph{Solution:}
+The neatest way to achieve this is to use \emph{Gram-Schmidt
+  orthogonalization}, which is performed by the matrix function
+\cmd{qrdecomp()}. The function below defines a user-level function
+that (i) converts the list to a matrix (ii) spots collinear columns
+and (iii) removes them if any.
+
+\begin{code}
+function list autodrop(list X, scalar criterion[1.0e-12])
+    list drop = null
+    matrix R
+    qrdecomp({X}, &R)
+
+    scalar ndrop = 0
+    loop i=1..nelem(X) --quiet
+        if criterion > abs(R[i,i])
+            drop += X[i]
+            ndrop++
+        endif
+    endloop
+
+    if ndrop > 0 
+        printf "%d collinear variables dropped (%s)\n", \
+          ndrop, varname(drop)    
+        return X - drop
+    else 
+        return X
+    endif
+end function
+\end{code}
+
+\emph{Comment:} The function also accepts a second optional argument
+which sets a criterion for deciding how strict the decision rule must
+be. Usage example:
+
+\begin{code}
+nulldata 20
+
+x1 = normal()
+x2 = normal()
+x3 = x1 + x2
+x4 = x1 + 1
+
+list A = const x1 x2 x3 x4
+list C = autodrop(A)
+\end{code}
+Running the code above will create a list \texttt{C} containing just
+\texttt{const}, \texttt{x1} and \texttt{x2}.
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "gretl-guide"
