@@ -2708,6 +2708,10 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
 	gtk_widget_destroy(sheet->popup);
     }
 
+    if (sheet->ui != NULL) {
+	g_object_unref(sheet->ui);
+    }    
+
     free(sheet->varlist);
     free(sheet->edits);
     free(sheet->inserts);
@@ -2724,7 +2728,7 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
     if (editing_scalars(sheet)) {
 	scalars_sheet = NULL;
 	set_scalar_edit_callback(NULL);
-    } 
+    }
 
     free(sheet);
 

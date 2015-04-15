@@ -5,6 +5,7 @@ version 1.10.90, in progress
   recognized properly
 - Fix bug: urcpval() might not update its argument when
   called inside a loop
+- Fix bug: assigning "null" to a new array was not working
 - MacKinnon urc p-values: speed up calculation
 
 2015-04-04 version 1.10.1

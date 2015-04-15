@@ -248,7 +248,7 @@ static double fpval (double *beta, int nbeta, double *wght,
     int i, j, ic, jc, imin = 0;
     int np1, nph, nptop, np = 9;
     double bot, top, ssr, ssrt;
-    double sd4, ttest, crfit;
+    double se3, ttest, crfit;
     double yvec[20], fits[20], resid[20];
     double xmat[80], xomx[16], gamma[4], omega[400];
     double crits[URCLEN];
@@ -303,9 +303,9 @@ static double fpval (double *beta, int nbeta, double *wght,
 	    goto bailout;
 	}
 
-	/* check to see if gamma(4) is needed */
-	sd4 = sqrt(ssrt / (np - 4) * xomx[15]);
-	ttest = fabs(gamma[3]) / sd4;
+	/* check to see if gamma[3] is needed */
+	se3 = sqrt(ssrt / (np - 4) * xomx[15]);
+	ttest = fabs(gamma[3]) / se3;
 	d1 = tau;
 	
 	if (ttest > precrt) {
@@ -380,9 +380,9 @@ static double fpval (double *beta, int nbeta, double *wght,
 	    goto bailout;
 	}
 
-	/* check to see if gamma(4) is needed */
-	sd4 = sqrt(ssrt / (np1 - 4) * xomx[15]);
-	ttest = fabs(gamma[3]) / sd4;
+	/* check to see if gamma[3] is needed */
+	se3 = sqrt(ssrt / (np1 - 4) * xomx[15]);
+	ttest = fabs(gamma[3]) / se3;
 	d1 = tau;
 
 	if (ttest > precrt) {
