@@ -327,7 +327,7 @@
 <xsl:template match="demos">
   <xsl:if test="position() = 1">
     <xsl:choose>
-      <xsl:when test="count(../example) > 1">
+      <xsl:when test="count(../example) > 1 or count(demo) > 1">
         <xsl:call-template name="gettext">
           <xsl:with-param name="key" select="'examples'"/>
         </xsl:call-template>
