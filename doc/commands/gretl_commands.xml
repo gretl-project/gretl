@@ -9261,6 +9261,13 @@
 	  <effect>number of quadrature points for RE estimation</effect>
 	</option>
       </options>
+      <examples>
+	<demos>
+	  <demo>ooballot.inp</demo>
+	  <demo>oprobit.inp</demo>
+	  <demo>reprobit.inp</demo>
+	</demos>
+      </examples>      
     </usage>
 
     <description>
@@ -9300,6 +9307,7 @@
 	Probit estimates are obtained.  (If the variable selected as dependent
 	is not discrete, an error is flagged.)
       </para>
+      <subhead>Probit for panel data</subhead>
       <para>
 	With the <opt>--random-effects</opt> option, the error
 	term is assumed to be composed of two normally distributed
@@ -9351,10 +9359,6 @@
 	whether the random effects specification is needed. If
 	the null is not rejected that suggests that a simple
 	pooled probit specification is adequate.
-      </para>
-      <para>
-	Probit for analysis of proportions is not implemented in
-	<program>gretl</program> at this point.
       </para>
 
     </description>

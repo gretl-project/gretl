@@ -289,7 +289,7 @@
     <xsl:call-template name="nl"/>
   </xsl:if>
   <xsl:choose>
-    <xsl:when test="count(example) > 1">
+    <xsl:when test="count(example) > 1 or count(demos) > 0">
       <xsl:call-template name="gettext">
         <xsl:with-param name="key" select="'examples'"/>
       </xsl:call-template>
