@@ -8710,35 +8710,87 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 }
 
 static int script_install_function_package (const char *pkgname,
+					    gretlopt opt,
 					    PRN *prn,
 					    GtkWidget *parent)
 {
     char *fname = NULL;
     int filetype = 0;
+    int local = (opt & OPT_L);
+    int http = 0;
     int err = 0;
+
+    if (!strncmp(pkgname, "http://", 7)) {
+	http = 1;
+    }
 
     if (strstr(pkgname, ".gfn")) {
 	filetype = 1;
     } else if (strstr(pkgname, ".zip")) {
 	filetype = 2;
+    } else if (local || http) {
+	/* must have suitable suffix */
+	err = E_DATA;
     } else {
-	/* determine the correct suffix */
+	/* from gretl server: determine the correct suffix */
 	fname = retrieve_remote_pkg_filename(pkgname, &err);
 	if (!err) {
 	    filetype = strstr(fname, ".zip") ? 2 : 1;
 	}
     }
 
-    if (filetype) {
+    if (!err) {
+	if (http) {
+	    /* get @fname as last portion of URL */
+	    const char *p = strrchr(pkgname, '/');
+
+	    if (p == NULL) {
+		err = E_DATA;
+	    } else {
+		fname = gretl_strdup(p + 1);
+	    }
+	} else if (local) {
+	    /* last portion of local filename */
+	    const char *p = strrchr(pkgname, SLASH);
+
+	    if (p != NULL) {
+		fname = gretl_strdup(p + 1);
+	    }
+	}
+    }
+
+    if (!err && filetype) {
 	const char *basename = fname != NULL ? fname : pkgname;
 	const char *path = gretl_function_package_path();
 	gchar *fullname;
+	int preserve = 0;
 
 	fullname = g_strdup_printf("%s%s", path, basename);
-	err = retrieve_remote_function_package(basename, fullname);
+
+	if (local) {
+	    /* copy file into place if need be */
+	    if (strcmp(fullname, pkgname)) {
+		err = gretl_copy_file(pkgname, fullname);
+	    } else if (filetype == 2) {
+		/* local zip file already in the right place:
+		   if we're not copying it, don't delete it
+		*/
+		preserve = 1;
+	    }
+	} else if (http) {
+	    /* get file from a specified server */
+	    err = retrieve_public_file(pkgname, fullname);
+	} else {
+	    /* get file from default gretl server */
+	    err = retrieve_remote_function_package(basename, fullname);
+	}
+	
 	if (!err && filetype == 2) {
 	    err = gretl_unzip_into(fullname, path);
-	    gretl_remove(fullname);
+	    if (!preserve) {
+		/* delete the zipfile */
+		gretl_remove(fullname);
+	    }
 	}
 
 	if (!err) {
@@ -8753,10 +8805,10 @@ static int script_install_function_package (const char *pkgname,
 		pprintf(prn, "Installed %s\n", trimmed);
 	    }
 	    g_free(trimmed);
-	}
+	}	
 	
 	g_free(fullname);
-    }
+    }    
 
     free(fname);
     
@@ -9116,7 +9168,8 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	break;
 
     case INSTALL:
-	err = script_install_function_package(cmd->param, prn, parent);
+	err = script_install_function_package(cmd->param, cmd->opt,
+					      prn, parent);
 	break;
 
     case NULLDATA:
