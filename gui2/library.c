@@ -8769,6 +8769,7 @@ static int script_install_function_package (const char *pkgname,
 
 	if (local) {
 	    /* copy file into place if need be */
+	    fprintf(stderr, "install: using local file %s\n", pkgname);
 	    if (strcmp(fullname, pkgname)) {
 		err = gretl_copy_file(pkgname, fullname);
 	    } else if (filetype == 2) {
