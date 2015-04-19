@@ -1978,7 +1978,14 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
     if (!err) {
 	char fname[FILENAME_MAX];
 
-	strcpy(fname, param);
+	if (param != NULL) {
+	    strcpy(fname, param);
+	} else {
+	    const char *sfx = (opt & OPT_R)? "rtf" :
+		(opt & OPT_C)? "csv" : "tex";
+	    
+	    sprintf(fname, "model_%d.%s", pmod->ID, sfx);
+	}
 
 	if (opt & OPT_R) {
 	    err = rtfprint(pmod, dset, fname, opt);
