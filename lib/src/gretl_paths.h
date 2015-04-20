@@ -216,6 +216,8 @@ const char *gretl_function_package_path (void);
 
 void gretl_set_current_dir (const char *s);
 
+char *gretl_prepend_homedir (const char *fname, int *err);
+
 void set_gretl_png_font (const char *s);
 
 void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,

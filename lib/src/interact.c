@@ -2012,6 +2012,7 @@ static int install_function_package (const char *pkgname,
 				     PRN *prn)
 {
     char *fname = NULL;
+    char *homefile = NULL;
     int filetype = 0;
     int local = (opt & OPT_L);
     int http = 0;
@@ -2047,9 +2048,17 @@ static int install_function_package (const char *pkgname,
 		fname = gretl_strdup(p + 1);
 	    }
 	} else if (local) {
-	    /* last portion of local filename */
-	    const char *p = strrchr(pkgname, SLASH);
-
+	    /* get last portion of local filename */
+	    const char *p = NULL;
+	    
+	    if (!strncmp(pkgname, "~/", 2)) {
+		homefile = gretl_prepend_homedir(pkgname, &err);
+		if (!err) {
+		    p = strrchr(homefile, SLASH);
+		}
+	    } else {
+		p = strrchr(pkgname, SLASH);
+	    }
 	    if (p != NULL) {
 		fname = gretl_strdup(p + 1);
 	    }
@@ -2065,9 +2074,11 @@ static int install_function_package (const char *pkgname,
 	fullname = g_strdup_printf("%s%s", path, basename);
 
 	if (local) {
+	    const char *lpath = homefile != NULL ? homefile : pkgname;
+	    
 	    /* copy file into place if need be */
-	    if (strcmp(fullname, pkgname)) {
-		err = gretl_copy_file(pkgname, fullname);
+	    if (strcmp(fullname, lpath)) {
+		err = gretl_copy_file(lpath, fullname);
 	    } else if (filetype == 2) {
 		/* local zip file already in the right place:
 		   if we're not copying it, don't delete it
@@ -2098,6 +2109,7 @@ static int install_function_package (const char *pkgname,
     }
 
     free(fname);
+    free(homefile);
     
     return err;
 }

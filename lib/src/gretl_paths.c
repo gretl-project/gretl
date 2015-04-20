@@ -1883,6 +1883,28 @@ char *gretl_addpath (char *fname, int script)
     return NULL;
 }
 
+/* It is assumed here that @fname starts with "~/" */
+
+char *gretl_prepend_homedir (const char *fname, int *err)
+{
+    char *homedir = getenv("HOME");
+    char *ret = NULL;
+
+    if (homedir != NULL) {
+	ret = malloc(strlen(homedir) + strlen(fname));
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    strcpy(ret, homedir);
+	    strcat(ret, fname + 1);
+	}
+    } else {
+	*err = E_DATA;
+    }
+
+    return ret;
+}
+
 static int substitute_homedir (char *fname)
 {
     char *homedir = getenv("HOME");
@@ -1934,7 +1956,7 @@ static int get_gfn_special (char *fname)
  * @fname: input filename.
  * @fullname: filename to be filled out: must be at least #MAXLEN bytes.
  * @opt: if OPT_S, treat as a script; if OPT_I we're responding
- * to the "include" command; if OPT_W to pass @fname through as is.
+ * to the "include" command; if OPT_W, pass @fname through as is.
  * 
  * Includes elementary path-searching: try adding various paths to the
  * given @fname, if appropriate, and see if it can be opened. For
