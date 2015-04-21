@@ -6,6 +6,7 @@ version 1.10.90, in progress
 - Fix bug: urcpval() might not update its argument when
   called inside a loop
 - Fix bug: assigning "null" to a new array was not working
+- Fix bug: crash when "tabprint" is used without a filename
 - MacKinnon urc p-values: speed up calculation
 
 2015-04-04 version 1.10.1
