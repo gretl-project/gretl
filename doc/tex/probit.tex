@@ -491,13 +491,96 @@ be independent. In formulae,
 \begin{itemize}
 \item The explanatory variables for the first equation $x$ and for the
   second equation $z$ may overlap
-\item example contained in \texttt{biprobit.inp}
+\item example contained in the \texttt{biprobit.inp} sample script.
 \item \dollar{uhat} and \dollar{yhat} are matrices
 \end{itemize}
 
 FIXME: expand.
 
 
+\section{Panel estimators}
+\label{sec:REprobit}
+
+When your dataset is a panel, the traditional choice for binary
+dependent variable models was, for many years, to use logit with fixed
+effects and probit with random effects (see \ref{sec:FE-vs-RE} for a
+brief discussion of this dichotomy in the context of linear
+models). Nowadays, the choice is somewhat wider, but the two
+traditional models are by and large what practitioners use as routine
+tools.
+
+\app{Gretl} provides FE logit as a function package\footnote{Although
+  this may change in the near future.} and RE probit
+natively. provided your dataset has a panel structure, the latter
+option can be obtained by adding the \option{random} option to the
+\cmd{probit} command:
+\begin{code}
+  probit depvar const indvar1 indvar2 --random
+\end{code}
+as exemplified in the \texttt{reprobit.inp} sample script. The numeric
+technique used for this particular estimator is \emph{Gauss-Hermite
+  quadrature}, which we'll now briefly describe. Generalize equation
+\eqref{eq:qr-latent} to a panel context, that is
+
+\begin{equation}
+  y^*_{i,t} = \sum_{j=1}^k x_{ijt} \beta_j + \alpha_i + \varepsilon_{i,t} = z_{i,t}  +
+  \omega_{i,t} 
+\end{equation}
+in which you assume that the individual effect $\alpha_i$ and the
+disturbance term $\varepsilon_{i,t}$ are both zero-mean Gaussian
+random variables, independent of each other. The composite error term
+$\omega_{i,t} = \alpha_i + \varepsilon_{i,t}$, therefore, is a normal
+r.~v.~with mean zero and variance $1 + \sigma^2_{\alpha}$. Because of
+the individual effect $\alpha_i$, observations for the same unit are
+not independent; hence, the likelihood has to be evaluated on a
+per-unit basis as
+\[
+\LogLik_i = \log P\left[ y_{i,1}, y_{i,2}, \ldots , y_{i,T}\right] .
+\]
+and there's no way to write the above as a product of individual
+terms.
+
+However, the above probability \emph{can} be written as a product if
+we treated $\alpha_i$ as a constant: in this case we would have that
+\[
+\LogLik_i | \alpha_i = \sum_{t=1}^T 
+\Phi\left[ 
+(2 y_{i,t} - 1) \frac{x_{ijt} \beta_j + \alpha_i}{\sqrt{1 + \sigma^2_{\alpha}}}
+\right]
+\]
+so that we can compute $\LogLik_i$ by integrating $\alpha_i$ out as
+\[
+\LogLik_i = E\left( \LogLik_i | \alpha_i \right) =
+\int_{-\infty}^{\infty} (\LogLik_i | \alpha_i)
+\frac{\varphi(\alpha_i)}{\sqrt{1 + \sigma^2_{\alpha}}} \mathrm{d} \alpha_i 
+\]
+
+The technique known as Gauss-Hermite quadrature is simply a way of
+approximating the above integral via a sum of carefully chosen
+terms:\footnote{Some have suggested using a more refined method called
+  \emph{adaptive} Gauss-Hermite quadrature; this is not implemented in
+  \app{gretl}.}
+\[
+\LogLik_i \simeq \sum_{k=1}^{m} (\LogLik_i | \alpha_i = n_k ) w_k
+\]
+where the numbers $n_k$ and $w_k$ are known as \emph{quadrature
+  points} and \emph{weights}, respectively. Of course, accuracy
+improves with higher values of $m$, but so does CPU usage. Note that
+this technique can also be used in more general cases by using the
+\cmd{quadtable()} function and the \cmd{mle} command via the apparatus
+described in chapter \ref{chap:mle}. Here, however, the calculations
+were hard-coded in C for maximal speed and efficiency.
+
+Experience shows that a reasonable compromise can be achieved in most
+cases by choosing $m$ in the order of 20 or so; \app{gretl} uses 32 as
+a default value, but this can be changed via the
+\option{quadpoints=\emph{n}} option, as in
+\begin{code}
+  probit y const x1 x2 x3 --random --quadpoints=48
+\end{code}
+
+
+ 
 \section{The Tobit model}
 \label{sec:tobit}
 
@@ -554,7 +637,7 @@ for example,
 \begin{code}
 tobit depvar indvars --llimit=10
 \end{code}
-would tell gretl that the left bound $a$ is set to 10.
+would tell \app{gretl} that the left bound $a$ is set to 10.
 
 \section{Interval regression}
 \label{sec:intreg}
