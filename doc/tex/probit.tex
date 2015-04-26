@@ -509,39 +509,38 @@ models). Nowadays, the choice is somewhat wider, but the two
 traditional models are by and large what practitioners use as routine
 tools.
 
-\app{Gretl} provides FE logit as a function package\footnote{Although
-  this may change in the near future.} and RE probit
-natively. provided your dataset has a panel structure, the latter
-option can be obtained by adding the \option{random} option to the
-\cmd{probit} command:
+Gretl provides FE logit as a function package\footnote{Although this
+  may change in the near future.} and RE probit natively. Provided
+your dataset has a panel structure, the latter option can be obtained
+by adding the \option{random} option to the \cmd{probit} command:
 \begin{code}
   probit depvar const indvar1 indvar2 --random
 \end{code}
-as exemplified in the \texttt{reprobit.inp} sample script. The numeric
-technique used for this particular estimator is \emph{Gauss-Hermite
-  quadrature}, which we'll now briefly describe. Generalize equation
-\eqref{eq:qr-latent} to a panel context, that is
-
+as exemplified in the \texttt{reprobit.inp} sample script. The
+numerical technique used for this particular estimator is
+\emph{Gauss-Hermite quadrature}, which we'll now briefly
+describe. Generalizing equation \eqref{eq:qr-latent} to a panel
+context, we get
 \begin{equation}
   y^*_{i,t} = \sum_{j=1}^k x_{ijt} \beta_j + \alpha_i + \varepsilon_{i,t} = z_{i,t}  +
   \omega_{i,t} 
 \end{equation}
-in which you assume that the individual effect $\alpha_i$ and the
-disturbance term $\varepsilon_{i,t}$ are both zero-mean Gaussian
-random variables, independent of each other. The composite error term
-$\omega_{i,t} = \alpha_i + \varepsilon_{i,t}$, therefore, is a normal
+in which we assume that the individual effect, $\alpha_i$, and the
+disturbance term, $\varepsilon_{i,t}$, are mutually independent
+zero-mean Gaussian random variables. The composite error term,
+$\omega_{i,t} = \alpha_i + \varepsilon_{i,t}$, is therefore a normal
 r.~v.~with mean zero and variance $1 + \sigma^2_{\alpha}$. Because of
-the individual effect $\alpha_i$, observations for the same unit are
-not independent; hence, the likelihood has to be evaluated on a
-per-unit basis as
+the individual effect, $\alpha_i$, observations for the same unit are
+not independent; the likelihood therefore has to be evaluated on a
+per-unit basis, as
 \[
 \LogLik_i = \log P\left[ y_{i,1}, y_{i,2}, \ldots , y_{i,T}\right] .
 \]
 and there's no way to write the above as a product of individual
 terms.
 
-However, the above probability \emph{can} be written as a product if
-we treated $\alpha_i$ as a constant: in this case we would have that
+However, the above probability \emph{could} be written as a product if
+we were to treat $\alpha_i$ as a constant; in that case we would have
 \[
 \LogLik_i | \alpha_i = \sum_{t=1}^T 
 \Phi\left[ 
@@ -555,7 +554,7 @@ so that we can compute $\LogLik_i$ by integrating $\alpha_i$ out as
 \frac{\varphi(\alpha_i)}{\sqrt{1 + \sigma^2_{\alpha}}} \mathrm{d} \alpha_i 
 \]
 
-The technique known as Gauss-Hermite quadrature is simply a way of
+The technique known as Gauss--Hermite quadrature is simply a way of
 approximating the above integral via a sum of carefully chosen
 terms:\footnote{Some have suggested using a more refined method called
   \emph{adaptive} Gauss-Hermite quadrature; this is not implemented in
@@ -573,12 +572,11 @@ were hard-coded in C for maximal speed and efficiency.
 
 Experience shows that a reasonable compromise can be achieved in most
 cases by choosing $m$ in the order of 20 or so; \app{gretl} uses 32 as
-a default value, but this can be changed via the
-\option{quadpoints=\emph{n}} option, as in
+a default value, but this can be changed via the \option{quadpoints}
+option, as in
 \begin{code}
   probit y const x1 x2 x3 --random --quadpoints=48
 \end{code}
-
 
  
 \section{The Tobit model}
