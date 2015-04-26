@@ -260,7 +260,7 @@ static double fpval (double *beta, int nbeta, double *wght,
     --cnorm;
 
     /* first compute all the estimated critical values,
-       and find the one closest to test statistic, 
+       and find the one closest to the test statistic, 
        indexed by @imin.
     */    
     eval_all_crit(tau, beta, nbeta, T, crits, &imin);
@@ -303,7 +303,7 @@ static double fpval (double *beta, int nbeta, double *wght,
 	    goto bailout;
 	}
 
-	/* check to see if gamma[3] is needed */
+	/* check: is a cubic term actually needed? */
 	se3 = sqrt(ssrt / (np - 4) * xomx[15]);
 	ttest = fabs(gamma[3]) / se3;
 	d1 = tau;
@@ -359,7 +359,7 @@ static double fpval (double *beta, int nbeta, double *wght,
 		    bot = prob[j] * (1.0 - prob[i]);
 		    omega[i + j * 20 - 21] = wght[i] * wght[j] * sqrt(top / bot);
 		} else {
-		    /* Avoid numerical singularities at the upper end */
+		    /* avoid numerical singularities at the upper end */
 		    omega[i + j * 20 - 21] = 0.;
 		    if (i == j) {
 			omega[i + i * 20 - 21] = 1.;
@@ -380,7 +380,7 @@ static double fpval (double *beta, int nbeta, double *wght,
 	    goto bailout;
 	}
 
-	/* check to see if gamma[3] is needed */
+	/* is gamma[3] needed? */
 	se3 = sqrt(ssrt / (np1 - 4) * xomx[15]);
 	ttest = fabs(gamma[3]) / se3;
 	d1 = tau;
