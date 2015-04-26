@@ -726,7 +726,7 @@ int main (int argc, char **argv)
     } else if (optwebdb != NULL) {
 	open_named_remote_db_index(auxname);
     } else if (optpkg != NULL) {
-	edit_package_at_startup(auxname);
+	edit_specified_package(auxname);
     }
 
 #ifdef GRETL_OPEN_HANDLER

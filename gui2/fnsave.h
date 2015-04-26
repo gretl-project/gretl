@@ -42,7 +42,7 @@ void update_sample_script (windata_t *vwin);
 
 int update_func_code (windata_t *vwin);
 
-void edit_package_at_startup (const char *fname);
+void edit_specified_package (const char *fname);
 
 void revise_function_package (void *p);
 

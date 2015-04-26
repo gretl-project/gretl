@@ -21,6 +21,7 @@
 #include "filelists.h"
 #include "menustate.h"
 #include "toolbar.h"
+#include "fnsave.h"
 #include "libset.h"
 
 #ifdef G_OS_WIN32
@@ -29,24 +30,27 @@
 
 #define FDEBUG 0
 
-#define NFILELISTS 4
+#define NFILELISTS 5
 
 /* lists of recently opened files */
 static char datalist[MAXRECENT][MAXSTR];
 static char sessionlist[MAXRECENT][MAXSTR];
 static char scriptlist[MAXRECENT][MAXSTR];
+static char gfnlist[MAXRECENT][MAXSTR];
 static char wdirlist[MAXRECENT][MAXSTR];
 
 /* and pointers to same */
 static char *datap[MAXRECENT];
 static char *sessionp[MAXRECENT];
 static char *scriptp[MAXRECENT];
+static char *gfnp[MAXRECENT];
 static char *wdirp[MAXRECENT];
 
 /* and ui_ids for same (apart from wdirlist) */
 static guint data_id[MAXRECENT];
 static guint session_id[MAXRECENT];
 static guint script_id[MAXRECENT];
+static guint gfn_id[MAXRECENT];
 
 static void real_add_files_to_menus (int ftype);
 
@@ -59,6 +63,7 @@ void initialize_file_lists (void)
 	datalist[i][0] = '\0';
 	sessionlist[i][0] = '\0';
 	scriptlist[i][0] = '\0';
+	gfnlist[i][0] = '\0';
 	wdirlist[i][0] = '\0';
     }
 }
@@ -71,6 +76,7 @@ void init_fileptrs (void)
 	datap[i] = datalist[i];
 	sessionp[i] = sessionlist[i];
 	scriptp[i] = scriptlist[i];
+	gfnp[i] = gfnlist[i];
 	wdirp[i] = wdirlist[i];
     }
 }
@@ -83,6 +89,8 @@ static char **get_file_list (int filetype)
 	return sessionp;
     } else if (filetype == FILE_LIST_SCRIPT) {
 	return scriptp;
+    } else if (filetype == FILE_LIST_GFN) {
+	return gfnp;
     } else if (filetype == FILE_LIST_WDIR) {
 	return wdirp;
     } else {
@@ -94,6 +102,7 @@ static const char *file_sections[] = {
     "recent_data_files",
     "recent_session_files",
     "recent_script_files",
+    "recent_gfn_files",
     "recent_working_dirs"
 };
 
@@ -106,6 +115,8 @@ static void write_filename_to_list (int filetype, int i, char *fname)
 	    strcpy(sessionlist[i], fname);
 	} else if (filetype == FILE_LIST_SCRIPT) {
 	    strcpy(scriptlist[i], fname);
+	} else if (filetype == FILE_LIST_GFN) {
+	    strcpy(gfnlist[i], fname);
 	} else if (filetype == FILE_LIST_WDIR) {
 	    strcpy(wdirlist[i], fname);
 	}
@@ -170,6 +181,7 @@ void rc_save_file_lists (FILE *fp)
     rc_print_filelist(FILE_LIST_DATA, fp);
     rc_print_filelist(FILE_LIST_SESSION, fp);
     rc_print_filelist(FILE_LIST_SCRIPT, fp);
+    rc_print_filelist(FILE_LIST_GFN, fp);
     rc_print_filelist(FILE_LIST_WDIR, fp);
 }    
 
@@ -188,6 +200,8 @@ static void clear_files_list (int ftype, char **filep)
 	id = session_id;
     } else if (ftype == FILE_LIST_SCRIPT) {
 	id = script_id;
+    } else if (ftype == FILE_LIST_GFN) {
+	id = gfn_id;
     } else {
 	return;
     }
@@ -418,6 +432,8 @@ static void open_file_from_filelist (GtkAction *action)
     } else if (!strcmp(ftype, "Session")) {
 	strcpy(tryfile, sessionp[i]);
 	verify_open_session();
+    } else if (!strcmp(ftype, "Gfn")) {
+	edit_specified_package(gfnp[i]);
     }
 }
 
@@ -430,7 +446,8 @@ static void real_add_files_to_menus (int ftype)
     const gchar *mpath[] = {
 	"/menubar/File/OpenDataMenu/RecentData",
 	"/menubar/File/SessionFiles/RecentSessions",
-	"/menubar/File/ScriptFiles/RecentScripts"
+	"/menubar/File/ScriptFiles/RecentScripts",
+	"/menubar/Tools/FunctionFiles/RecentGfns"
     };
     gchar *aname, *alabel;
     int jmin = 0, jmax = NFILELISTS - 1;
@@ -464,7 +481,11 @@ static void real_add_files_to_menus (int ftype)
 	    filep = scriptp;
 	    id = script_id;
 	    fword = "Script";
-	} 
+	} else if (j == FILE_LIST_GFN) {
+	    filep = gfnp;
+	    id = gfn_id;
+	    fword = "Gfn";
+	}	    
 
 	/* See if there are any files to add */
 

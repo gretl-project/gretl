@@ -24,6 +24,7 @@
 #include "datafiles.h"
 #include "textbuf.h"
 #include "fileselect.h"
+#include "filelists.h"
 #include "gretl_www.h"
 #include "gretl_zip.h"
 #include "winstack.h"
@@ -3521,22 +3522,22 @@ static int finfo_set_data_files (function_info *finfo)
 
 void edit_function_package (const char *fname)
 {
-    function_info *finfo;
+    function_info *finfo = NULL;
     int *publist = NULL;
     int *privlist = NULL;
     fnpkg *pkg;
-    const char *p;
     int err = 0;
 
     pkg = get_function_package_by_filename(fname, &err);
     if (err) {
 	gui_errmsg(err);
-	return;
+	goto bailout;
     }
 
     finfo = finfo_new();
     if (finfo == NULL) {
-	return;
+	err = E_ALLOC;
+	goto bailout;
     }
 
     finfo->pkg = pkg;
@@ -3558,7 +3559,11 @@ void edit_function_package (const char *fname)
 					  "lives-in-subdir", &finfo->uses_subdir,
 					  NULL);
 
-    if (!err && publist != NULL) {
+    if (!err && publist == NULL) {
+	err = E_DATA;
+    }
+
+    if (!err) {
 	err = finfo_set_function_names(finfo, publist, privlist);
     }
 
@@ -3582,11 +3587,11 @@ void edit_function_package (const char *fname)
     free(publist);
     free(privlist);
 
-    if (err || publist == NULL) {
+    if (err) {
 	fprintf(stderr, "function_package_get_info: failed on %s\n", fname);
 	errbox("Couldn't get function package information");
 	finfo_free(finfo);
-	return;
+	goto bailout;
     } 
 
     /* if the user has a package-list window open, we may need to
@@ -3595,24 +3600,31 @@ void edit_function_package (const char *fname)
     */
     maybe_update_func_files_window(CALL_FN_PKG);
 
-    p = strrchr(fname, SLASH);
-    if (p == NULL) {
-	p = fname;
-    } else {
-	p++;
-    }
-
     finfo->fname = g_strdup(fname);
 
-    finfo_dialog(finfo);
+ bailout:
+
+    if (err) {
+	delete_from_filelist(FILE_LIST_GFN, fname);
+    } else {
+	/* record opening */
+	gchar *tmp = g_strdup(fname);
+
+	mkfilelist(FILE_LIST_GFN, tmp);
+	g_free(tmp);
+	
+	/* and go for it */
+	finfo_dialog(finfo);
+    }
 }
 
-void edit_package_at_startup (const char *fname)
+void edit_specified_package (const char *fname)
 {
     FILE *fp = gretl_fopen(fname, "r");
 
     if (fp == NULL) {
 	file_read_errbox(fname);
+	delete_from_filelist(FILE_LIST_GFN, fname);
     } else {
 	fclose(fp);
 	edit_function_package(fname);

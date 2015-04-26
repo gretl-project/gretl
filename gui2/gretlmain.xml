@@ -67,6 +67,8 @@
 	<menuitem action="RemoteGfn"/>
 	<menuitem action="EditGfn"/>
 	<menuitem action="NewGfn"/>
+	<separator/>
+	<placeholder name="RecentGfns"/>
       </menu>
       <menu action="NistTest">
 	<menuitem action="NistBasic"/>
