@@ -2722,6 +2722,25 @@ static int handle_adhoc_string (CMD *c)
     return err;
 }
 
+static int n_regular_tokens (CMD *c)
+{
+    int i, n = c->ntoks;
+
+    if (c->opt) {
+	for (i=0; i<c->ntoks; i++) {
+	    if (c->toks[i].type == TOK_OPT ||
+		c->toks[i].type == TOK_SOPT ||
+		c->toks[i].type == TOK_OPTDASH ||
+		c->toks[i].type == TOK_OPTEQ ||
+		c->toks[i].type == TOK_OPTVAL) {
+		n--;
+	    }
+	}
+    }
+
+    return n;
+}
+
 static int handle_command_extra (CMD *c)
 {
     cmd_token *tok;
@@ -2739,11 +2758,13 @@ static int handle_command_extra (CMD *c)
 	}
     } else if (c->ci == MODPRINT) {
 	/* if present, 'extra' gets pushed as an option */
-	if (c->ntoks - c->cstart - 1 == 3) {
+	int regtoks = n_regular_tokens(c);
+	
+	if (regtoks - c->cstart - 1 == 3) {
 	    /* got three arguments */
 	    char *extra;
 
-	    tok = &c->toks[c->ntoks - 1];
+	    tok = &c->toks[regtoks - 1];
 	    if (!token_done(tok) && tok->type == TOK_NAME) {
 		tok->flag |= TOK_DONE;
 		extra = gretl_strdup(tok->s);
