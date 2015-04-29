@@ -7,6 +7,10 @@ version 1.10.90, in progress
   called inside a loop
 - Fix bug: assigning "null" to a new array was not working
 - Fix bug: crash when "tabprint" is used without a filename
+- Fix bug: TRAMO options not always getting set as per the
+  user's selection via the GUI
+- Fix bug: normality test for system residuals not hooked
+  up for non-time series models
 - MacKinnon urc p-values: speed up calculation
 
 2015-04-04 version 1.10.1

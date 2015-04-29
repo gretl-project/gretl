@@ -4237,7 +4237,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	nfc = neqns = gretl_VAR_get_n_equations(var);
     }
 
-    cmdword = gretl_command_word(ci);   
+    cmdword = gretl_command_word(ci);
     action_entry_init(&item);
 
     /* FIXME: the following two tests should really be multivariate */
@@ -4258,6 +4258,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     /* multivariate normality test */
     item.name = "normtest";
     item.label = N_("_Normality of residuals");
+    item.callback = G_CALLBACK(system_test_call);
     vwin_menu_add_item(vwin, tests, &item);
 
     if (ci == VECM || ci == SYSTEM) {
