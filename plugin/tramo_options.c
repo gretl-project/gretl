@@ -844,17 +844,8 @@ int print_tramo_options (tx_request *request, FILE *fp)
 	goto set_out;
     }
 
-    /* note: if values are at their TRAMO defaults, don't bother
-       printing them */
-
-    if (opts->lam != -1) {
-	fprintf(fp, "lam=%d,", opts->lam);
-    }
-
-    if (opts->imean != 1) {
-	fprintf(fp, "imean=%d,", opts->imean);
-    }
-
+    fprintf(fp, "lam=%d,", opts->lam);
+    fprintf(fp, "imean=%d,", opts->imean);
     fprintf(fp, "iatip=%d,", opts->iatip);
 
     if (opts->iatip == 1) {
