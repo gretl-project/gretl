@@ -2329,7 +2329,8 @@
       contrario, il risultato è una matrice <by r="n" c="2"/>,
       dove la prima colonna contiene le parti reali degli
       autovalori, mentre la seconda le corrispondenti parti
-      immaginarie.
+      immaginarie. Non c'è alcuna garanzia sul fatto che gli
+      autovalori siano ordinati in alcun modo particolare.
     </para>
     <para>
       Il secondo argomento può essere il nome di una matrice
@@ -2390,10 +2391,11 @@
       </fnargs>
       <description>
     <para>
-      Funziona esattamente come <fncref targ="eigengen"/>, ma l'argomento 
-      <argname>A</argname> deve essere una matrice simmetrica (in questo caso
-      i calcoli possono essere semplificati). Gli autovalori sono riportati in 
-      ordine crescente.
+      Funziona esattamente come <fncref targ="eigengen"/>, ma
+      l'argomento <argname>A</argname> deve essere una matrice
+      simmetrica (in questo caso i calcoli possono essere
+      semplificati). A differenza di <fncref targ="eigengen"/>, gli
+      autovalori sono ordinati in senso crescente.
     </para>
       </description>
     </function>

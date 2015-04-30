@@ -2377,7 +2377,8 @@
 	  eigenvalues are real an <by r="n" c="1"/> matrix is returned;
 	  otherwise the result is an <by r="n" c="2"/> matrix, the first
 	  column holding the real components and the second column the
-	  imaginary components.
+	  imaginary components. The eigenvalues are not guaranteed to
+	  be sorted in any particular order.
 	</para>
 	<para>
 	  The second argument must be either the name of an existing
@@ -2438,8 +2439,9 @@
 	<para>
 	  Works just as <fncref targ="eigengen"/>, but the argument
 	  <argname>A</argname> must be symmetric (in which case the
-	  calculations can be reduced). The eigenvalues are returned
-	  in ascending order.
+	  calculations can be reduced). Unlike <fncref
+	  targ="eigengen"/>, eigenvalues are returned in ascending
+	  order.
 	</para>
       </description>
     </function>
