@@ -1041,6 +1041,48 @@ int seasonally_adjust_series (const double *x, double *y,
     return err;
 }
 
+int tramo_linearize_series (const double *x, double *y, 
+			    DATASET *dset)
+{
+    int (*linearize_series) (const double *, double *, 
+			     const DATASET *);
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    int T, err = 0;
+
+    series_adjust_sample(x, &t1, &t2);
+    T = t2 - t1 + 1;
+
+    if (T < 8) {
+	return E_TOOFEW;
+    } else if (T > 600) {
+	gretl_errmsg_set(_("TRAMO can't handle more than 600 observations.\n"
+			   "Please select a smaller sample."));
+	return E_EXTERNAL;
+    }
+
+    gretl_error_clear();
+
+    linearize_series = get_plugin_function("linearize_series");
+    
+    if (linearize_series == NULL) {
+	err = E_FOPEN;
+    } else {
+	int save_t1 = dset->t1;
+	int save_t2 = dset->t2;
+
+	dset->t1 = t1;
+	dset->t2 = t2;
+
+	err = (*linearize_series) (x, y, dset);
+
+	dset->t1 = save_t1;
+	dset->t2 = save_t2;
+    }
+
+    return err;
+}
+
 static int new_unit (const DATASET *dset, int t)
 {
     return t > 0 && (t / dset->pd != (t-1) / dset->pd);

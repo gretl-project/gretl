@@ -6256,6 +6256,9 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 		p->err = seasonally_adjust_series(x, y, p->dset, 0, 0);
 	    }
 	    break;
+	case F_TRAMOLIN:
+	    p->err = tramo_linearize_series(x, y, p->dset);
+	    break;
 	case F_RESAMPLE:
 	    if (rtype == NUM) {
 		p->err = block_resample_series(x, y, parm, p->dset); 
@@ -11142,6 +11145,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_PXSUM:
     case F_PSD:
     case F_DESEAS:
+    case F_TRAMOLIN:
 	/* series argument needed */
 	if (l->t == SERIES || l->t == MAT) {
 	    ret = series_series_func(l, r, t->t, p);
