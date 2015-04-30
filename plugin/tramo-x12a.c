@@ -940,9 +940,9 @@ static int grab_linearized_series (double *y, const DATASET *dset,
 				   const char *path)
 {
     FILE *fp;
-    char line[128], sfname[MAXLEN], date[8];
+    char line[128], sfname[MAXLEN];
     double yt;
-    int d, yr, per, err = 0;
+    int err = 0;
     int i, t;
 
     sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
@@ -1077,14 +1077,12 @@ static int write_tramo_file (const char *fname,
     fprintf(fp, "%d %d %d %d\n", T, startyr, startper, dset->pd);
 
     for (t=dset->t1; t<=dset->t2; t++) {
-	if (t && t % dset->pd == 0) fputc('\n', fp);
 	if (na(y[t])) {
-	    fputs("-99999 ", fp);
+	    fputs("-99999\n", fp);
 	} else {
-	    fprintf(fp, "%.8g ", y[t]);
+	    fprintf(fp, "%.8g\n", y[t]);
 	}
     }
-    fputc('\n', fp);
 
     if (request == NULL) {
 	fputs("$INPUT rsa=3,out=2,$END\n", fp);
