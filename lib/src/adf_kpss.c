@@ -86,6 +86,7 @@ struct adf_info_ {
     double pval;     /* p-value of test stat */
     int *list;       /* regression list */
     const char *vname; /* name of series tested */
+    gretl_matrix *g; /* GLS coefficients (if applicable) */
 };
 
 struct kpss_info_ {
@@ -97,7 +98,8 @@ struct kpss_info_ {
 /* replace @y with demeaned or detrended y via GLS */
 
 static int GLS_demean_detrend (double *y, int offset,
-			       int T, DetCode det)
+			       int T, DetCode det,
+			       adf_info *ainfo)
 {
     gretl_matrix *yd = NULL;
     gretl_matrix *Xd = NULL;
@@ -161,7 +163,12 @@ static int GLS_demean_detrend (double *y, int offset,
 
     gretl_matrix_free(yd);
     gretl_matrix_free(Xd);
-    gretl_matrix_free(b);
+
+    if (err) {
+	gretl_matrix_free(b);
+    } else {
+	ainfo->g = b;
+    }
     
     return err;
 }
@@ -390,7 +397,8 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	    int offset = adf_y_offset(ainfo, v, dset);
 	    int T = dset->t2 - offset + 1;
 
-	    err = GLS_demean_detrend(dset->Z[v], offset, T, det);
+	    err = GLS_demean_detrend(dset->Z[v], offset, T,
+				     det, ainfo);
 	}
 	
 	if (!err) {
@@ -1404,6 +1412,10 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
     free(ainfo->list);
     ainfo->list = NULL;
+
+    gretl_matrix_free(ainfo->g);
+    ainfo->g = NULL;
+    
     free(biglist);
 
     dataset_drop_last_variables(dset, dset->v - orig_nvars);
