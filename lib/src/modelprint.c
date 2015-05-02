@@ -3192,7 +3192,9 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 
     if (pmod->aux == AUX_DF || pmod->aux == AUX_ADF || 
 	pmod->aux == AUX_KPSS) {
-	aux_print_info_criteria(pmod, prn);
+	if (!gretl_model_get_int(pmod, "dfgls")) {
+	    aux_print_info_criteria(pmod, prn);
+	}
 	goto close_format;
     }
 

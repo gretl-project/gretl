@@ -1040,8 +1040,24 @@ static void print_df_model (adf_info *ainfo, MODEL *pmod,
     if (ainfo->flags & ADF_EG_RESIDS) {
 	gretl_model_set_int(pmod, "eg-resids", 1);
     }
+
+    if (ainfo->g != NULL) {
+	gretl_model_set_int(pmod, "dfgls", 1);
+    }
     
     printmodel(pmod, dset, OPT_NONE, prn);
+
+    if (ainfo->g != NULL) {
+	pputs(prn, "  ");
+	if (ainfo->g->rows == 2) {
+	    pprintf(prn, _("GLS detrending: b0 = %g, b1 = %g\n"),
+		    ainfo->g->val[0], ainfo->g->val[1]);
+	} else {
+	    pprintf(prn, _("GLS estimate of b0: %g\n"),
+		    ainfo->g->val[0]);
+	}
+	pputc(prn, '\n');
+    }    
 }
 
 static int set_deterministic_terms (adf_info *ainfo,
