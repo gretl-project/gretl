@@ -730,11 +730,7 @@ static int add_series_from_file (const char *path, int src,
     int d, yr, per, err = 0;
     int t;
 
-    if (request->prog == TRAMO_SEATS) {
-	tramo_got_irfin = 1;
-	sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
-		tramo_save_strings[src]);
-    } else {
+    if (request->prog == X12A) {
 	char *p;
 
 	strcpy(sfname, path);
@@ -742,6 +738,11 @@ static int add_series_from_file (const char *path, int src,
 	if (p != NULL) {
 	    strcpy(p + 1, x12a_save_strings[src]);
 	}
+    } else {
+	tramo_got_irfin = 1;
+	sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
+		tramo_save_strings[src]);
+	fprintf(stderr, "sfname='%s'\n", sfname);
     }
 
     fp = gretl_fopen(sfname, "r");
@@ -756,7 +757,7 @@ static int add_series_from_file (const char *path, int src,
 	   for the other.  Also, the seasonally adjusted series "safin"
 	   is not always available.
 	*/
-	if (request->prog == TRAMO_SEATS) {
+	if (request->prog == TRAMO_SEATS || request->prog == TRAMO_ONLY) {
 	    if (src == TX_IR) { 
 		/* try "irreg" */
 		sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
@@ -794,22 +795,24 @@ static int add_series_from_file (const char *path, int src,
     /* formulate name of new variable to add */
     strcpy(varname, request->opts[src].savename);
     if (*varname == '\0') {
-	if (request->prog == TRAMO_SEATS) {
-	    sprintf(varname, "%.8s_%.2s", dset->varname[0], 
-		    tramo_save_strings[src]);
-	} else {
+	if (request->prog == X12A) {
 	    sprintf(varname, "%.8s_%s", dset->varname[0], 
 		    x12a_save_strings[src]);
+	} else {	    
+	    sprintf(varname, "%.8s_%.2s", dset->varname[0], 
+		    tramo_save_strings[src]);
 	}
     }
 
     /* copy varname and label into place */
     strcpy(dset->varname[targv], varname);
     sprintf(label, _(tx_descrip_formats[src]), dset->varname[0]);
-    if (request->prog == TRAMO_SEATS) {
+    if (request->prog == X12A) {
+	strcat(label, " (X-12-ARIMA)");
+    } else if (request->prog == TRAMO_SEATS) {
 	strcat(label, " (TRAMO/SEATS)");
     } else {
-	strcat(label, " (X-12-ARIMA)");
+	strcat(label, " (TRAMO)");
     }
     series_set_label(dset, targv, label);
 
@@ -819,7 +822,7 @@ static int add_series_from_file (const char *path, int src,
 
     gretl_push_c_numeric_locale();
 
-    if (request->prog == TRAMO_SEATS) {
+    if (request->prog == TRAMO_SEATS || request->prog == TRAMO_ONLY) {
 	int i = 0;
 
 	t = dset->t1;
@@ -1032,15 +1035,27 @@ static void set_opts (tx_request *request)
     }
 }
 
-static void cancel_savevars (tx_request *request)
+static void cancel_savevars (tx_request *request,
+			     int *savelist)
 {
     int i;
 
     request->savevars = 0;
 
     for (i=0; i<TX_MAXOPT; i++) {
-	request->opts[i].save = 0;
-    } 
+	if (i == TX_LN && request->opts[i].save) {
+	    request->savevars = 1;
+	} else {
+	    request->opts[i].save = 0;
+	}
+    }
+
+    if (request->savevars == 1) {
+	savelist[0] = 1;
+	savelist[1] = TX_LN;
+    } else {
+	savelist[0] = 0;
+    }
 }
 
 static int write_tramo_file (const char *fname, 
@@ -1551,8 +1566,7 @@ int write_tx_data (char *fname, int varnum,
 	   SEATS is not to be run */
 	write_tramo_file(fname, dset->Z[varnum], vname, dset, &request);
 	if (request.prog == TRAMO_ONLY) {
-	    cancel_savevars(&request); /* FIXME later */
-	    savelist[0] = 0;
+	    cancel_savevars(&request, savelist);
 	}
     }
 

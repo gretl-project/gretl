@@ -264,8 +264,8 @@ seats_specific_widgets_set_sensitive (tramo_options *opts,
     
     for (i=0; i<TX_MAXOPT; i++) {
 	if (request->opts[i].check != NULL) {
-	    if (0 && i == TX_LN && !s) {
-		/* not ready yet */
+	    if (i == TX_LN && !s) {
+		/* leave TX_LN active */
 		continue;
 	    }
 	    gtk_widget_set_sensitive(request->opts[i].check, s);
