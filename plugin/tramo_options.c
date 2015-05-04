@@ -264,6 +264,10 @@ seats_specific_widgets_set_sensitive (tramo_options *opts,
     
     for (i=0; i<TX_MAXOPT; i++) {
 	if (request->opts[i].check != NULL) {
+	    if (0 && i == TX_LN && !s) {
+		/* not ready yet */
+		continue;
+	    }
 	    gtk_widget_set_sensitive(request->opts[i].check, s);
 	}
     }
@@ -473,7 +477,7 @@ static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
 	GtkWidget *entry;
 	int idx = save_codes[i];
 
-	if (request->pd == 1 && i == 0) {
+	if (request->pd == 1 && i == TX_SA) {
 	    request->opts[idx].check = NULL;
 	    continue;
 	}

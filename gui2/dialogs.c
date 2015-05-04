@@ -2847,6 +2847,15 @@ static void chow_dumv_callback (GtkComboBox *box, int *dumv)
     g_free(vname);
 }
 
+static void set_chow_subset (GtkToggleButton *b, gretlopt *popt)
+{
+    if (gtk_toggle_button_get_active(b)) {
+	*popt |= OPT_L;
+    } else {
+	*popt &= ~OPT_L;
+    }
+}
+
 static void configure_chow_dlg (GtkToggleButton *b, struct range_setting *rset)
 {
     gboolean s = gtk_toggle_button_get_active(b);
@@ -2862,7 +2871,7 @@ static void configure_chow_dlg (GtkToggleButton *b, struct range_setting *rset)
 }
 
 int chow_dialog (int tmin, int tmax, int *t, int *dumv,
-		 GtkWidget *parent)
+		 gretlopt *popt, GtkWidget *parent)
 {
     const gchar *olabel = N_("Observation at which to split the sample:");
     const gchar *dlabel = N_("Name of dummy variable to use:");
@@ -2887,8 +2896,10 @@ int chow_dialog (int tmin, int tmax, int *t, int *dumv,
     if (dumlist != NULL) {
 	GSList *grp;
 
+	hbox = gtk_hbox_new(FALSE, 5);
 	b1 = gtk_radio_button_new_with_label(NULL, _(olabel));
-	gtk_box_pack_start(GTK_BOX(vbox), b1, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 	grp = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
 	b2 = gtk_radio_button_new_with_label(grp, _(dlabel));
     }
@@ -2902,13 +2913,25 @@ int chow_dialog (int tmin, int tmax, int *t, int *dumv,
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
 
     if (dumlist != NULL) {
-	gtk_box_pack_start(GTK_BOX(vbox), b2, TRUE, TRUE, 0);
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 	rset->combo = add_dummies_combo(dumlist, thisdum, NULL, vbox);
 	gtk_widget_set_sensitive(rset->combo, FALSE);
 	rset->t2 = dumv;
 	g_signal_connect(b2, "toggled", G_CALLBACK(configure_chow_dlg), rset);
 	g_signal_connect(G_OBJECT(rset->combo), "changed",
 			 G_CALLBACK(chow_dumv_callback), dumv);
+    }
+
+    if (popt != NULL) {
+	GtkWidget *cb;
+	
+	hbox = gtk_hbox_new(FALSE, 5);
+	cb = gtk_check_button_new_with_label(_("Test a subset of regressors"));
+	gtk_box_pack_start(GTK_BOX(hbox), cb, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+	g_signal_connect(b2, "toggled", G_CALLBACK(set_chow_subset), popt);
     }
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));

@@ -182,7 +182,7 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 		      gretlopt *popt);
 
 int chow_dialog (int tmin, int tmax, int *t, int *dumv,
-		 GtkWidget *parent);
+		 gretlopt *popt, GtkWidget *parent);
 
 int iter_control_dialog (int *optim, int *pmaxit, double *ptol, 
 			 int *plmem, GtkWidget *parent);
