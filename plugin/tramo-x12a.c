@@ -742,7 +742,6 @@ static int add_series_from_file (const char *path, int src,
 	tramo_got_irfin = 1;
 	sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
 		tramo_save_strings[src]);
-	fprintf(stderr, "sfname='%s'\n", sfname);
     }
 
     fp = gretl_fopen(sfname, "r");
@@ -768,9 +767,9 @@ static int add_series_from_file (const char *path, int src,
 		}
 		tramo_got_irfin = 0;
 	    } else if (src == TX_LN) {
-		/* no linearization was required? */
+		/* maybe no linearization was required? */
 		sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
-			"xorig.t");
+			"xorigt.t");
 		fp = gretl_fopen(sfname, "r");
 		if (fp != NULL) {
 		    gotit = 1;
