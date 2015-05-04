@@ -303,9 +303,16 @@ By ``pre-multiplication by transpose'' we mean, for example, that
 matrix C = X'Y
 \end{code}
 %
-produces the product of $X$-transpose and $Y$.  In effect, 
-the expression \texttt{X'Y} is shorthand for \texttt{X'*Y}
-(which is also valid).
+produces the product of $X$-transpose and $Y$.  In effect, the
+expression \texttt{X'Y} is shorthand for \texttt{X'*Y}, which is also
+valid. Consider, however, that in the special case $X = Y$, the two
+are not exactly equivalent: the former expression uses a specialized,
+optimized algorithm which has the double advantage of being more
+efficient computationally and of ensuring that the result will be free
+by construction of machine precision artifacts that may render it
+numerically non-symmetric. This, however, is unlikely to affect you
+unless your $X$ matrix is rather large (at least several hundreds
+rows/columns).
 
 In matrix ``left division'', the statement 
 %

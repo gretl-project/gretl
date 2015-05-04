@@ -71,8 +71,10 @@ Matrix sum, difference and product are obtained via \texttt{+},
 (\texttt{'}) can act as a unary operator, in which case it transposes
 the preceding matrix, or as a binary operator, in which case it acts
 as in ordinary matrix algebra, multiplying the transpose of the first
-matrix into the second one. Errors are flagged if conformability is a
-problem. For example:
+matrix into the second one.\footnote{In fact, in this case an
+  optimized algorithm is used; you should always use \texttt{a'a}
+  instead of \texttt{a'*a} for maximal precision and performance.}
+Errors are flagged if conformability is a problem. For example:
 \begin{code}
   matrix a = {11, 22 ; 33, 44}  # a is square 2 x 2
   matrix b = {1,2,3; 3,2,1}     # b is 2 x 3

@@ -2442,6 +2442,17 @@
 	  targ="eigengen"/>, eigenvalues are returned in ascending
 	  order.
 	</para>
+	<para>
+	  Note: if you're interested in the eigen-decomposition of a
+	  matrix of the form <math>X'X</math>, where <math>X</math> is
+	  a large matrix, it is preferable to compute it via the prime
+	  operator <lit>X'X</lit> rather than using the more general
+	  syntax <lit>X'*X</lit>. The former expression uses a
+	  specialized algorithm which has the double advantage of
+	  being more efficient computationally and of ensuring that
+	  the result will be free by construction of machine precision
+	  artifacts that may render it numerically non-symmetric.
+	</para>
       </description>
     </function>
 
@@ -3395,6 +3406,15 @@
 	  definite; and triangular.
 	</para>
 	<para>
+	  Note: it makes sense to use this function only if you plan
+	  to use the inverse of <argname>A</argname> more than
+	  once. If you just need to compute an expression of the form
+	  <math>A</math><sup>-1</sup><math>B</math>, you'll be much
+	  better off using the <quote>division</quote> operators
+	  <lit>\</lit> and <lit>/</lit>. See <guideref
+	  targ="matrix-op"/> for details.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="ginv"/>
             <fncref targ="invpd"/>
@@ -3534,6 +3554,17 @@
 	  <fncref targ="inv"/> for large matrices, since no check for
 	  symmetry is performed; for that reason it should be used with
 	  care.
+	</para>
+	<para>
+	  Note: if you're interested in the inversion of a matrix of
+	  the form <math>X'X</math>, where <math>X</math> is a large
+	  matrix, it is preferable to compute it via the prime
+	  operator <lit>X'X</lit> rather than using the more general
+	  syntax <lit>X'*X</lit>. The former expression uses a
+	  specialized algorithm which has the double advantage of
+	  being more efficient computationally and of ensuring that
+	  the result will be free by construction of machine precision
+	  artifacts that may render it numerically non-symmetric.
 	</para>
       </description>
     </function>

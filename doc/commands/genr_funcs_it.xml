@@ -2397,6 +2397,18 @@
       semplificati). A differenza di <fncref targ="eigengen"/>, gli
       autovalori sono ordinati in senso crescente.
     </para>
+    <para>
+      Notare che nel calcolo degli autovalori ed autovettori di una
+      matrice del tipo <math>X'X</math>, ove <math>X</math> sia di
+      dimensioni elevate, è preferibile utilizzare la forma
+      <lit>X'X</lit> invece della più generale sintassi
+      <lit>X'*X</lit>. La prima espressione utilizza infatti un
+      algoritmo specifico che presenta il duplice vantaggio di essere
+      più efficiente dal punto di vista computazionale e di assicurare
+      come risultato una matrice priva per costruzione di
+      approssimazioni indotte dalla precisione macchina, che possono
+      renderlo numericamente non simmetrico.
+    </para>
       </description>
     </function>
 
@@ -3309,9 +3321,18 @@
       numerica più efficiente per il calcolo dell'inversa.
     </para>
     <para>
-      I tipi di matrice che sono controllati da gretl sono:
-      identità; diagonale; simmetrica e positiva definita;
-      simmetrica ma non positiva definita; triangolare.
+      I tipi di matrice che sono controllati da gretl sono: identità;
+      diagonale; simmetrica e positiva definita; simmetrica ma non
+      positiva definita; triangolare.
+    </para>
+    <para>
+      Notare che ha senso utilizzare questa funzione solamente se si
+      intende usare l'inversa di <argname>A</argname> più di una
+      volta. Se serve semplicemente calcolare un'espressione del tipo
+      <math>A</math><sup>-1</sup><math>B</math> conviene decisamente
+      utilizzare gli operatori di <quote>divisione matriciale</quote>,
+      <lit>\</lit> e <lit>/</lit>. Per ulteriori dettagli vedere
+      <guideref targ="matrix-op"/>.
     </para>
     <para>
       <seelist>
@@ -3454,6 +3475,17 @@
       di <fncref targ="inv"/> per grandi matrici poichè non viene
       effettuato nessun controllo per la simmetria; per questa
       ragione deve essere utilizzata con attenzione.
+    </para>
+    <para>
+      Notare che nel calcolo dell'inversa di una matrice del tipo
+      <math>X'X</math>, ove <math>X</math> sia di dimensioni elevate,
+      è preferibile utilizzare la forma <lit>X'X</lit> invece della
+      più generale sintassi <lit>X'*X</lit>. La prima espressione
+      utilizza infatti un algoritmo specifico che presenta il duplice
+      vantaggio di essere più efficiente dal punto di vista
+      computazionale e di assicurare come risultato una matrice priva
+      per costruzione di approssimazioni indotte dalla precisione
+      macchina, che possono renderlo numericamente non simmetrico.
     </para>
       </description>
     </function>
