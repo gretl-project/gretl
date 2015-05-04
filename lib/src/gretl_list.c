@@ -240,7 +240,8 @@ int remember_list (const int *list, const char *name, PRN *prn)
 	if (orig != NULL) {
 	    /* replace existing list of same name */
 	    user_var_replace_value(orig, lcpy);
-	    if (gretl_messages_on() && !gretl_looping_quietly()) {
+	    if (prn != NULL && gretl_messages_on() &&
+		!gretl_looping_quietly()) {
 		pprintf(prn, _("Replaced list '%s'\n"), name);
 	    }
 	} else {
@@ -768,7 +769,11 @@ int *gretl_list_from_varnames (const char *str,
 	int i, vi;
 
 	for (i=0; i<n; i++) {
-	    vi = current_series_index(dset, S[i]);
+	    if (!strcmp(S[i], "0")) {
+		vi = 0;
+	    } else {
+		vi = current_series_index(dset, S[i]);
+	    }
 	    if (vi < 0) {
 		*err = E_UNKVAR;
 		break;

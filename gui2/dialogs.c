@@ -2931,7 +2931,7 @@ int chow_dialog (int tmin, int tmax, int *t, int *dumv,
 	cb = gtk_check_button_new_with_label(_("Test a subset of regressors"));
 	gtk_box_pack_start(GTK_BOX(hbox), cb, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-	g_signal_connect(b2, "toggled", G_CALLBACK(set_chow_subset), popt);
+	g_signal_connect(cb, "toggled", G_CALLBACK(set_chow_subset), popt);
     }
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));

@@ -6296,7 +6296,7 @@ static void selector_doit (GtkWidget *w, selector *sr)
     compose_cmdlist(sr);
 
     if (sr->error == 0) {
-	int err;
+	int err = 0;
 
 #ifdef OS_OSX
 	/* Hiding the selector window prevents the "next" window
@@ -6309,7 +6309,7 @@ static void selector_doit (GtkWidget *w, selector *sr)
 #endif
 
 	err = sr->callback(sr);
-
+	
 	if (!err && open_selector != NULL) {
 	    gtk_widget_destroy(sr->dlg);
 	}
@@ -6328,7 +6328,8 @@ static void build_selector_buttons (selector *sr)
 
     if (sr->ci != PRINT && sr->ci != SUMMARY && !FNPKG_CODE(sr->ci) &&
 	sr->ci != DEFINE_LIST && sr->ci != DEFINE_MATRIX &&
-	sr->ci != ELLIPSE && !SAVE_DATA_ACTION(sr->ci)) {
+	sr->ci != ELLIPSE && sr->ci != CHOW &&
+	!SAVE_DATA_ACTION(sr->ci)) {
 	/* add a Help button if appropriate */
 	int ci = sr->ci;
 
@@ -6816,6 +6817,8 @@ static char *get_topstr (int cmdnum)
 	return N_("Select variables to save");
     case COPY_CSV:
 	return N_("Select variables to copy");
+    case CHOW:
+	return N_("Select variables to test");
     case DEFINE_LIST:
 	return N_("Define named list");
     default:
@@ -6862,7 +6865,8 @@ static int add_omit_list (gpointer p, selector *sr)
 	}
 	g_object_set_data(G_OBJECT(sr->lvars), "keep-names", 
 			  GINT_TO_POINTER(1));
-    } else if (sr->ci == OMIT || sr->ci == ADD || sr->ci == COEFFSUM) {
+    } else if (sr->ci == OMIT || sr->ci == ADD || sr->ci == CHOW ||
+	       sr->ci == COEFFSUM) {
 	int *xlist = gretl_model_get_x_list(pmod);
 
 	if (xlist == NULL) {
@@ -6885,6 +6889,9 @@ static int add_omit_list (gpointer p, selector *sr)
 	    }
 	} else {	    
 	    for (i=1; i<=xlist[0]; i++) {
+		if (sr->ci == CHOW && xlist[i] == 0) {
+		    continue;
+		}
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 
 				   COL_ID, xlist[i], COL_LAG, 0,
@@ -7136,7 +7143,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     GtkWidget *tmp;
     selector *sr;
     int nleft = 0;
-    int i;
+    int i, err = 0;
 
     if (open_selector != NULL) {
 	gtk_window_present(GTK_WINDOW(open_selector->dlg));
@@ -7167,7 +7174,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     if (ci == OMIT || ci == ADD || ci == COEFFSUM ||
-	ci == ELLIPSE || ci == VAROMIT) {
+	ci == ELLIPSE || ci == VAROMIT || ci == CHOW) {
         nleft = add_omit_list(data, sr);
     } else {
 	int start = (ci == DEFINE_LIST || ci == DEFINE_MATRIX)? 0 : 1;
@@ -7261,16 +7268,18 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     }
 
     if (nleft == 0) {
-	gtk_widget_destroy(sr->dlg);
-	warnbox(_("No suitable data are available"));
+	err = E_DATA;
     } else if ((ci == COEFFSUM || ci == ELLIPSE) && nleft < 2) {
-	gtk_widget_destroy(sr->dlg);
-	warnbox(_("No suitable data are available"));
+	err = E_DATA;
     } else {
 	gtk_widget_show_all(sr->dlg);
     }
 
-    if (sr->ci == DEFINE_MATRIX) {
+    if (err) {
+	warnbox(_("No suitable data are available"));
+	gtk_widget_destroy(sr->dlg);
+	sr = NULL;
+    } else if (sr->ci == DEFINE_MATRIX) {
 	selector_set_blocking(sr, 1);
     }
 

@@ -2826,6 +2826,88 @@ static int chow_cusum_ci (GtkAction *action)
 	return CHOW;
 }
 
+struct chowparms {
+    int splitbrk;
+    int splitdum;
+};
+
+static int real_limited_chow (selector *sr)
+{
+    windata_t *vwin = selector_get_data(sr);
+    MODEL *pmod = vwin->data;
+    gretlopt opt = OPT_S | OPT_L;
+    struct chowparms *cp;
+    const char *lstr;
+    PRN *prn = NULL;
+    int *clist = NULL;
+    int err = 0;
+
+    cp = g_object_get_data(G_OBJECT(vwin->main), "chowparms");
+    lstr = selector_list(sr);
+    if (lstr == NULL) {
+	warnbox(_("You must select at least one regressor"));
+	return 1;
+    }
+
+    clist = gretl_list_from_varnames(lstr, dataset, &err);
+
+#if 0
+    fprintf(stderr, "lstr = '%s'\n", lstr);
+    printlist(clist, "chow arg list");
+#endif
+
+    if (!err) {
+	err = remember_list(clist, "chow_args_", NULL);
+	if (!err) {
+	    err = push_option_param(CHOW, OPT_L, gretl_strdup("chow_args_"));
+	}
+	if (!err) {
+	    lib_command_sprintf("list chow_args_ =%s", lstr);
+	    record_command_verbatim();
+	}
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	if (cp->splitdum > 0) {
+	    lib_command_sprintf("chow %s --dummy --limit-to=chowargs",
+				dataset->varname[cp->splitdum]);
+	    opt |= OPT_D;
+	} else {
+	    char brkstr[OBSLEN];
+
+	    ntodate(brkstr, cp->splitbrk, dataset);
+	    lib_command_sprintf("chow %s --limit-to=chow_args_", brkstr);
+	}
+	err = bufopen(&prn);
+    }
+
+    if (!err) {
+	if (opt & OPT_D) {
+	    err = chow_test_from_dummy(cp->splitdum, pmod, dataset, opt, prn);
+	} else {
+	    err = chow_test(cp->splitbrk, pmod, dataset, opt, prn);
+	}
+	if (err) {
+	    gui_errmsg(err);
+	    gretl_print_destroy(prn);
+	} else {
+	    update_model_tests(vwin);
+	    record_model_command_verbatim(pmod->ID);
+	    view_buffer_with_parent(vwin, prn, 78, 400, 
+				    _("gretl: Chow test output"),
+				    CHOW, NULL);
+	}
+    }
+
+    free(cp);
+    g_object_set_data(G_OBJECT(vwin->main), "chowparms", NULL);
+    free(clist);
+
+    return 0;
+}
+
 void do_chow_cusum (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -2851,11 +2933,30 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 	int resp;
 
 	splitbrk = (pmod->t2 - pmod->t1) / 2;
-	resp = chow_dialog(pmod->t1 + 1, pmod->t2 - 1, &splitbrk, &splitdum,
-			   NULL, vwin_toplevel(vwin));
+	if (pmod->ncoeff > 2) {
+	    resp = chow_dialog(pmod->t1 + 1, pmod->t2 - 1, &splitbrk,
+			       &splitdum, &opt, vwin_toplevel(vwin));
+	} else {
+	    resp = chow_dialog(pmod->t1 + 1, pmod->t2 - 1, &splitbrk,
+			       &splitdum, NULL, vwin_toplevel(vwin));
+	}
 	if (canceled(resp)) {
 	    return;
 	}
+	if (opt & OPT_L) {
+	    struct chowparms *cp = malloc(sizeof *cp);
+
+	    cp->splitdum = splitdum;
+	    cp->splitbrk = splitbrk;
+	    g_object_set_data(G_OBJECT(vwin->main), "chowparms", cp);
+	    simple_selection_for_viewer(CHOW, _("gretl: chow test"), 
+					real_limited_chow, vwin);
+	    /* execution resumes with real_limited_chow() */
+	    return;
+	}
+    }
+
+    if (ci == CHOW) {
 	if (splitdum > 0) {
 	    lib_command_sprintf("chow %s --dummy", dataset->varname[splitdum]);
 	    opt |= OPT_D;
