@@ -1,6 +1,6 @@
 version 1.10.90, in progress
 - "install" command: add a --local option plus the ability
-  to install a package from an chosen server
+  to install a package from a chosen server
 - "chow" command: represent the --limit-to option in the GUI
 - TRAMO interface: allow saving of "linearized" series
 - Fix bug: optional arguments to bkfilt() function not being
