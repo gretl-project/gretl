@@ -581,6 +581,27 @@ list C = autodrop(A)
 Running the code above will create a list \texttt{C} containing just
 \texttt{const}, \texttt{x1} and \texttt{x2}.
 
+\subsection{Comparing two lists}
+
+\emph{Problem:} How can I tell if two lists contain the same variables
+(not necessarily in the same order)?
+
+\emph{Solution:} Under many respects, lists are like sets, so it makes
+sense to use the so-called ``symmetric difference'' operator; this, in
+turn can be defined as
+\[
+A\,\triangle\,B = (A \backslash B) \cup (B \backslash A) .
+\]
+
+In practice: we first check if there are series in $A$ but not in $B$,
+then we perform the reverse check. If the union of the two results is
+an empty set, then the lists contain the same variables. The hansl
+syntax for this would be something like
+
+\begin{code}
+scalar NotTheSame = nelem((A-B) || (B-A)) > 0
+\end{code}
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "gretl-guide"
