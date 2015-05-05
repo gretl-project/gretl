@@ -1,6 +1,8 @@
 version 1.10.90, in progress
 - "install" command: add a --local option plus the ability
   to install a package from an chosen server
+- "chow" command: represent the --limit-to option in the GUI
+- TRAMO interface: allow saving of "linearized" series
 - Fix bug: optional arguments to bkfilt() function not being
   recognized properly
 - Fix bug: urcpval() might not update its argument when
@@ -11,7 +13,7 @@ version 1.10.90, in progress
   user's selection via the GUI
 - Fix bug: normality test for system residuals not hooked
   up for non-time series models
-- MacKinnon urc p-values: speed up calculation
+- MacKinnon urc p-values: much faster calculation
 
 2015-04-04 version 1.10.1
 - Fix bug: breakage in ADF test: giving more than one
