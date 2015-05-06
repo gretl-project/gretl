@@ -72,7 +72,8 @@ enum {
     STATE_DPDSTYLE_ON     = 1 << 19, /* emulate dpd in dynamic panel data models */
     STATE_OPENMP_ON       = 1 << 20, /* using openmp */
     STATE_ROBUST_Z        = 1 << 21, /* use z- not t-score with HCCM/HAC */
-    STATE_ECHO_SPACE      = 1 << 22  /* preserve vertical space in output */
+    STATE_MWRITE_G        = 1 << 22, /* use %g format with mwrite() */
+    STATE_ECHO_SPACE      = 1 << 23  /* preserve vertical space in output */
 };    
 
 /* for values that really want a non-negative integer */
@@ -155,6 +156,7 @@ struct set_vars_ {
 			   !strcmp(s, DPDSTYLE) || \
 			   !strcmp(s, USE_DCMT) || \
 			   !strcmp(s, ROBUST_Z) || \
+			   !strcmp(s, MWRITE_G) || \
 			   !strcmp(s, USE_OPENMP))
 
 #define libset_double(s) (!strcmp(s, CONV_HUGE) || \
@@ -2156,6 +2158,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_OPENMP_ON;
     } else if (!strcmp(s, ROBUST_Z)) {
 	return STATE_ROBUST_Z;
+    } else if (!strcmp(s, MWRITE_G)) {
+	return STATE_MWRITE_G;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
 		"variable '%s'\n", s);	

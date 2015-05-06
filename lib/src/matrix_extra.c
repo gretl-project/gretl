@@ -1349,6 +1349,7 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
     int r = A->rows;
     int c = A->cols;
     int i, j, err = 0;
+    int format_g = 0;
     gzFile fz = Z_NULL;
     FILE *fp = NULL;
     double x;
@@ -1359,6 +1360,10 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 
     if (!gz) {
 	bin = has_suffix(fname, ".bin");
+    }
+
+    if (!bin) {
+	format_g = libset_get_bool(MWRITE_G);
     }
 
     if (export) {
@@ -1429,10 +1434,18 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 	    }
 #endif
 	    if (fz) {
-		gzprintf(fz, "%26.18E", x);
+		if (format_g) {
+		    gzprintf(fz, "%g", x);
+		} else {
+		    gzprintf(fz, "%26.18E", x);
+		}
 		gzputc(fz, pad);
 	    } else {
-		fprintf(fp, "%26.18E", x);
+		if (format_g) {
+		    fprintf(fp, "%g", x);
+		} else {
+		    fprintf(fp, "%26.18E", x);
+		}
 		fputc(pad, fp);
 	    }
 	}

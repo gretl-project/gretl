@@ -89,6 +89,7 @@ typedef enum {
 #define FDJAC_QUAL       "fdjac_quality"
 #define ROBUST_Z         "robust_z"
 #define WILDBOOT_DIST    "wildboot"
+#define MWRITE_G         "mwrite_g"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
