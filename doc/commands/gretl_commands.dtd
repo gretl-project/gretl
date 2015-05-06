@@ -206,7 +206,7 @@
 <!ELEMENT emphasis (#PCDATA)>
 <!ELEMENT book     (#PCDATA)>
 <!ELEMENT url      (#PCDATA)>
-<!ELEMENT quote    (#PCDATA | lit | math)*>
+<!ELEMENT quote    (#PCDATA | lit | repl | math)*>
 <!ELEMENT filename (#PCDATA)>
 <!ELEMENT func     (#PCDATA)>
 <!ELEMENT cmd      (#PCDATA)>

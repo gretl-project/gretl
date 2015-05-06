@@ -4048,6 +4048,27 @@
       </description>
     </function>
 
+    <function name="linearize" section="filters" output="series">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Depends on having TRAMO installed. Returns a
+	  <quote>linearized</quote> version of the input series; that
+	  is, a series in which any missing values are replaced by
+	  interpolated values and outliers are adjusted. TRAMO's fully
+	  automatic mechanism is used; consult the TRAMO documentation
+	  for details.
+	</para>
+	<para>
+	  Note that if the input series has no missing values and no
+	  values that TRAMO regards as outliers, this function will
+	  return a copy of the original series.
+	</para>
+      </description>
+    </function>
+    
     <function name="ljungbox" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -6744,7 +6765,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the number of rows of the matrix <argname>X</argname>.  
+	  Returns the number of rows of the matrix <argname>X</argname>.
 	  <seelist>
             <fncref targ="cols"/>
             <fncref targ="mshape"/>

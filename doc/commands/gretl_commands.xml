@@ -10624,9 +10624,22 @@
 	  </para>
 	</li>
 	<li>
+	  <para><lit>mwrite_g</lit>: <lit>on</lit> or <lit>off</lit>
+	  (the default). When writing a matrix to file as text, gretl
+	  by default uses scientific notation with 18-digit precision,
+	  hence ensuring that the stored values are a faithful
+	  representation of the numbers in memory. When writing
+	  primary data with no more than 6 digits of precision it may
+	  be preferable to use <lit>%g</lit> format for a more compact
+	  and human-readable file; you can make this switch via
+	  <lit>set mwrite_g on</lit>.
+	  </para>
+	</li>
+	<li>
 	  <para><lit>echo</lit>: <lit>off</lit> or <lit>on</lit> (the
 	  default). Suppress or resume the echoing of commands in gretl's
-	    output.</para>
+	  output.
+	  </para>
 	</li>
 	<li>
 	  <para><lit>force_decpoint</lit>: <lit>on</lit> or <lit>off</lit>
