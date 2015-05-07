@@ -1885,10 +1885,6 @@ int set_odbc_dsn (const char *line, PRN *prn)
     int got_plugin = 0;
     int err = 0;
 
-    /* skip command word */
-    line += strcspn(line, " ");
-    line += strspn(line, " ");
-
     ODBC_info_clear_all();
 
     dbname = get_dsn_field("dsn", line);
