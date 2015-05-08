@@ -188,7 +188,7 @@ static int set_up_dcmt (int n, int self, unsigned int seed)
 {
     mt_struct **mtss;
     int w = 32;
-    int p = 521;
+    int p = 9941; /* period */
     int dseed = 4172;
     int i, count = 0;
 

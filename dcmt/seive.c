@@ -140,22 +140,20 @@ static mt_struct *init_mt_search(check32_t *ck, prescr_t *pre, int w, int p)
     int n, m, r;
     mt_struct *mts;
 
-    if ( (w>32) || (w<31) ) {
-	printf ("Sorry, currently only w = 32 or 31 is allowded.\n");
+    if (w > 32 || w < 31) {
+	printf("Sorry, currently only w = 32 or 31 is allowed.\n");
 	return NULL;
     }
 
-    if ( !proper_mersenne_exponent(p) ) {
-	if (p<521) {
+    if (!proper_mersenne_exponent(p)) {
+	if (p < 521) {
 	    printf ("\"p\" is too small.\n");
 	    return NULL;
-	}
-	else if (p>44497){
-	    printf ("\"p\" is too large.\n");
+	} else if (p > 44497) {
+	    printf("\"p\" is too large.\n");
 	    return NULL;
-	}
-	else {
-	    printf ("\"p\" is not a Mersenne exponent.\n");
+	} else {
+	    printf("\"p\" is not a Mersenne exponent.\n");
 	    return NULL;
 	}
     }
@@ -274,8 +272,9 @@ mt_struct *get_mt_parameter_id_st(int w, int p, int id, uint32_t seed)
     return mts;
 }
 
-mt_struct **get_mt_parameters_st(int w, int p, int start_id,
-				 int max_id, uint32_t seed, int *count)
+mt_struct **get_mt_parameters_st (int w, int p, int start_id,
+				  int max_id, uint32_t seed,
+				  int *count)
 {
     mt_struct **mtss, *template_mts;
     int i;
@@ -283,21 +282,25 @@ mt_struct **get_mt_parameters_st(int w, int p, int start_id,
     _org_state org;
     check32_t ck;
 
-    if ((start_id > max_id) || (max_id > 0xffff) || (start_id < 0)) {
+    if (start_id > max_id || max_id > 0xffff || start_id < 0) {
 	printf("\"id\" error\n");
 	return NULL;
     }
 
     _sgenrand_dc(&org, seed);
-    mtss = (mt_struct**)malloc(sizeof(mt_struct*)*(max_id-start_id+1));
-    if (NULL == mtss) return NULL;
+    mtss = malloc(sizeof *mtss * (max_id-start_id+1));
+    if (NULL == mtss) {
+	return NULL;
+    }
 
     template_mts = init_mt_search(&ck, &pre, w, p);
     if (template_mts == NULL) {
 	free(mtss);
 	return NULL;
     }
+    
     *count = 0;
+    
     for (i=0; i<=max_id-start_id; i++) {
 	mtss[i] = alloc_mt_struct(template_mts->nn);
 	if (NULL == mtss[i]) {
@@ -306,17 +309,18 @@ mt_struct **get_mt_parameters_st(int w, int p, int start_id,
 
 	copy_params_of_mt_struct(template_mts, mtss[i]);
 
-	if ( NOT_FOUND == get_irred_param(&ck, &pre, &org, mtss[i],
-					  i+start_id,DEFAULT_ID_SIZE) ) {
+	if (NOT_FOUND == get_irred_param(&ck, &pre, &org, mtss[i],
+					  i+start_id,DEFAULT_ID_SIZE)) {
 	    free_mt_struct(mtss[i]);
 	    break;
 	}
 	_get_tempering_parameter_hard_dc(mtss[i]);
 	++(*count);
     }
-
+    
     free_mt_struct(template_mts);
     end_mt_search(&pre);
+    
     if (*count > 0) {
 	return mtss;
     } else {
@@ -326,7 +330,7 @@ mt_struct **get_mt_parameters_st(int w, int p, int start_id,
 }
 
 /* n : sizeof state vector */
-static mt_struct *alloc_mt_struct(int n)
+static mt_struct *alloc_mt_struct (int n)
 {
     mt_struct *mts;
 
@@ -341,7 +345,7 @@ static mt_struct *alloc_mt_struct(int n)
     return mts;
 }
 
-void free_mt_struct(mt_struct *mts)
+void free_mt_struct (mt_struct *mts)
 {
     free(mts->state);
     free(mts);
