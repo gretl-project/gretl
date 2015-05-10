@@ -5983,7 +5983,25 @@
 	end kalman
       </code>
       <para>
-	Please see <guideref targ="chap:kalman"/> for details.
+	would set up a linear, time invariant state-space model with
+	observation equation 
+	<equation status="display" 
+	  tex="\[y_t=H'\alpha_t\]"
+	  ascii="y(t) = H'a(t)"
+	  graphic="kalman1"/> 
+	and state transition equation
+	<equation status="display" 
+	  tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
+	  ascii="a(t+1) = F a(t) + u(t)"
+	  graphic="kalman2"/> 
+	where <math>V(u) = Q</math>.
+      </para>
+      <para>
+	More complex state-space models are handled via the additional
+	keywords <lit>obsx</lit>, <lit>obsxmat</lit>,
+	<lit>obsvar</lit>, <lit>inistate</lit>, <lit>inivar</lit> and
+	<lit>stconst</lit>. Please see <guideref targ="chap:kalman"/>
+	for details.
       </para>
 	<para>
 	  <seelist>

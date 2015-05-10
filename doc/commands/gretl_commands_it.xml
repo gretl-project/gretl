@@ -5806,15 +5806,33 @@
 	end kalman
       </code>
       <para>
-	Vedi <guideref targ="chap:kalman"/> per ulteriori dettagli.
+	scefica un modello in spazio degli stati lineare e invariante
+	nel tempo con equazione di osservazione
+	<equation status="display" 
+	  tex="\[y_t=H'\alpha_t\]"
+	  ascii="y(t) = H'a(t)"
+	  graphic="kalman1"/> 
+	ed equazione di transizione di stato
+	<equation status="display" 
+	  tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
+	  ascii="a(t+1) = F a(t) + u(t)"
+	  graphic="kalman2"/> 
+	dove <math>V(u) = Q</math>.
       </para>
-	<para>
-	  <seelist>
-	    <fncref targ="kfilter"/>
-	    <fncref targ="ksimul"/>
-	    <fncref targ="ksmooth"/>
+      <para>
+	Modelli in spazio degli stati più complessi possono essere
+	gestiti usando le parole chiave <lit>obsx</lit>,
+	<lit>obsxmat</lit>, <lit>obsvar</lit>, <lit>inistate</lit>,
+	<lit>inivar</lit> e <lit>stconst</lit>.  Vedi <guideref
+	targ="chap:kalman"/> per ulteriori dettagli.
+      </para>
+      <para>
+	<seelist>
+	  <fncref targ="kfilter"/>
+	  <fncref targ="ksimul"/>
+	  <fncref targ="ksmooth"/>
 	  </seelist>
-	</para>
+      </para>
     </description>
 
   </command>

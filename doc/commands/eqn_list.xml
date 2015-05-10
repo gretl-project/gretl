@@ -14,24 +14,6 @@
 <texequation fileref="ell">
 $\ell$
 </texequation>
-<texequation fileref="lambda">
-\[z=re^{i2\pi\lambda}\]
-</texequation>
-<texequation fileref="autocorr">
-$\hat{\rho}(u_t, u_{t-s})$
-</texequation>
-<texequation fileref="aic">
-\[{\rm AIC} = -2 \ell + 2k\]
-</texequation>
-<texequation fileref="ell">
-$\ell$
-</texequation>
-<texequation fileref="bic_orig">
-\[{\rm BIC} = -2 \ell + k \log T\]
-</texequation>
-<texequation fileref="hqc">
-\[{\rm HQC} = -2 \ell + 2k \log \log T\]
-</texequation>
 <texequation fileref="kernel1">
 \[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]
 </texequation>
@@ -62,8 +44,11 @@ $y_t = \sum_{\tau=1}^t x_{\tau}$
 <texequation fileref="">
 \[m_t \le y_t \le M_t\]
 </texequation>
-<texequation fileref="influence">
-$uh/(1 - h)$
+<texequation fileref="kalman1">
+\[y_t=H'\alpha_t\]
+</texequation>
+<texequation fileref="kalman2">
+\[\alpha_{t+1}=F \alpha_t + u_t\]
 </texequation>
 <texequation fileref="dffit">
 $\sqrt{h/(1 - h)}$
@@ -76,9 +61,6 @@ $\sqrt{h/(1 - h)}$
 </texequation>
 <texequation fileref="mahal">
 \[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]
-</texequation>
-<texequation fileref="mahal2">
-$(p-q)$
 </texequation>
 <texequation fileref="greene_Cfunc">
 \[C = \alpha + \beta Y^{\gamma}\]
@@ -97,9 +79,6 @@ $p = 4 \times (T/100)^{2/9}$
 </texequation>
 <texequation fileref="structural">
 \[\Gamma y_t=Ay_{t-1}+Bx_t+\epsilon_t\]
-</texequation>
-<texequation fileref="Gamma">
-$\Gamma$
 </texequation>
 <texequation fileref="vif">
 \[\frac{1}{1-R_j^2}\]
