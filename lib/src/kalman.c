@@ -3730,3 +3730,40 @@ int user_kalman_get_time_step (void)
 	return (int) u->K->t + 1;
     }
 }
+
+#if 0 /* not yet */
+
+kalman *kalman_from_bundle (gretl_bundle *b, const DATASET *dset,
+			    gretlopt opt, int *err)
+{
+    kalman *K;
+    GretlType type;
+    int i;
+
+    K = kalman_new_empty(KALMAN_USER);
+    if (K == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<K_MMAX && !*err; i++) {
+	key = K_input_mats[i].name;
+	type = gretl_bundle_get_type(b, key, err);
+	if (!*err && type != 0) {
+	    *err = attach_input_matrix(K, key, i, dset);
+	}
+    }
+
+    if (!*err) {
+	*err = user_kalman_setup(K, opt);
+    }
+
+    if (*err) {
+	kalman_free(K);
+	K = NULL;
+    }
+
+    return K;
+}
+
+#endif
