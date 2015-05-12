@@ -961,7 +961,6 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     int old_runit = runit;
     char runfile[MAXLEN];
     int renumber = 0;
-    int loopcomp;
     int err = 0;
 
 #if 0
@@ -985,9 +984,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	return 0;
     }
 
-    loopcomp = gretl_compiling_loop();
-
-    if (!loopcomp && !s->in_comment &&
+    if (!gretl_compiling_loop() && !s->in_comment &&
 	!cmd->context && !gretl_if_state_false()) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
@@ -1003,7 +1000,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     /* tell libgretl if we're in batch mode */
     gretl_set_batch_mode(batch);
 
-    if (loopcomp) {
+    if (gretl_compiling_loop()) {
 	/* if we're stacking commands for a loop, parse "lightly" */
 	err = get_command_index(line, cmd);
     } else {
