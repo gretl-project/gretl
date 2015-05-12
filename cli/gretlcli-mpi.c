@@ -723,7 +723,8 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	return 0;
     }
 
-    if (!s->in_comment && !cmd->context && !gretl_if_state_false()) {
+    if (!gretl_compiling_loop() && !s->in_comment &&
+	!cmd->context && !gretl_if_state_false()) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
 	int action = cli_saved_object_action(line, dset, prn);

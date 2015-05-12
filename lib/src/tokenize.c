@@ -1714,6 +1714,13 @@ static int get_command_order (CMD *c)
 {
     int pos = real_arg_index(c, 1);
 
+    if (next_joined_token(c, pos) != NULL) {
+	/* nothing else should be stuck onto the order
+	   specifier */	
+	c->err = E_PARSE;
+	return c->err;
+    }
+
     if (c->ci == MODTEST && pos < 0) {
 	/* order is optional, not present, OK */
 	return 0;
@@ -2546,7 +2553,11 @@ static int process_command_list (CMD *c, DATASET *dset)
 	    }
 	}
 	if (!token_done(tok)) {
-	    if (want_ints) {
+	    if (tok->type == TOK_PRSTR || tok->type == TOK_BRSTR) {
+		gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"),
+				     tok->type == TOK_PRSTR ? "(" : "[");
+		c->err = E_PARSE;
+	    } else if (want_ints) {
 		if (try_auxlist_term(c, tok, scount)) {
 		    /* a vector-style entry */
 		    c->err = process_auxlist_term(c, tok, &ilist);
