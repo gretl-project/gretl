@@ -22,7 +22,7 @@ enum tx_objects {
     TX_TR,    /* save trend/cycle */
     TX_IR,    /* save irregular component */
     TX_LN,    /* save linearized series */
-    TRIGRAPH, /* graph showing all of the above */
+    TRIGRAPH, /* graph showing some/all of the above */
     TEXTOUT,  /* for full text output */
     TX_MAXOPT
 };

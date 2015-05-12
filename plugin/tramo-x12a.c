@@ -1034,7 +1034,7 @@ static void set_opts (tx_request *request)
     }
 }
 
-static void cancel_savevars (tx_request *request,
+static void adjust_savevars (tx_request *request,
 			     int *savelist)
 {
     int i;
@@ -1565,7 +1565,7 @@ int write_tx_data (char *fname, int varnum,
 	   SEATS is not to be run */
 	write_tramo_file(fname, dset->Z[varnum], vname, dset, &request);
 	if (request.prog == TRAMO_ONLY) {
-	    cancel_savevars(&request, savelist);
+	    adjust_savevars(&request, savelist);
 	}
     }
 

@@ -350,15 +350,20 @@ void gretl_bundle_destroy (gretl_bundle *bundle)
 
 void gretl_bundle_void_content (gretl_bundle *bundle)
 {
-    if (bundle != NULL) {
-	if (bundle->ht != NULL) {
-	    g_hash_table_destroy(bundle->ht);
-	}
+    if (bundle == NULL) {
+	return;
+    }
+
+    if (bundle->creator != NULL) {
 	free(bundle->creator);
+	bundle->creator = NULL;
+    }
+    
+    if (bundle->ht != NULL && g_hash_table_size(bundle->ht) > 0) {
+	g_hash_table_destroy(bundle->ht);
 	bundle->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
 					   bundle_key_destroy, 
 					   bundled_item_destroy);
-	bundle->creator = NULL;
     }
 }
 

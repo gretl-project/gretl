@@ -14046,7 +14046,6 @@ static int save_generated_var (parser *p, PRN *prn)
 		}
 	    }
 	}
-
 #if SERIES_ENSURE_FINITE
 	if (!p->err) {
 	    series_make_finite(Z[v], p->dset->n);
