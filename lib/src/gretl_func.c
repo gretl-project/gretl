@@ -5078,15 +5078,15 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	    s++;
 	}
 	if (*tstr == '\0') {
-	    gretl_errmsg_set("Expected a type identifier");
+	    gretl_errmsg_set(_("Expected a type identifier"));
 	    err = E_PARSE;
 	} else {
 	    type = gretl_type_from_string(tstr);
 	    if (type == 0) {
-		gretl_errmsg_sprintf("Unrecognized data type '%s'", tstr);
+		gretl_errmsg_sprintf(_("Unrecognized data type '%s'"), tstr);
 		err = E_PARSE;
 	    } else if (!ok_function_arg_type(type)) {
-		gretl_errmsg_sprintf("%s: invalid parameter type", tstr);
+		gretl_errmsg_sprintf(_("%s: invalid parameter type"), tstr);
 		err = E_INVARG;
 	    }		
 	} 
@@ -5103,7 +5103,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
     len = gretl_namechar_spn(s);
 
     if (len == 0) {
-	gretl_errmsg_sprintf("parameter %d: name is missing", i + 1);
+	gretl_errmsg_sprintf(_("parameter %d: name is missing"), i + 1);
 	err = E_PARSE;
     } else {
 	name = gretl_strndup(s, len);
