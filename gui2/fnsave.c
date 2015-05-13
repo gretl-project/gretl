@@ -518,6 +518,7 @@ static int finfo_save (function_info *finfo, int saveas)
 	g_free(*fields[i]);
 	*fields[i] = entry_box_get_trimmed_text(finfo->entries[i]);
 	if (*fields[i] == NULL || !strcmp(*fields[i], missing)) {
+	    warnbox(_("Please complete all fields"));
 	    gtk_entry_set_text(GTK_ENTRY(finfo->entries[i]), missing);
 	    gtk_editable_select_region(GTK_EDITABLE(finfo->entries[i]), 0, -1);
 	    gtk_widget_grab_focus(finfo->entries[i]);
@@ -527,14 +528,16 @@ static int finfo_save (function_info *finfo, int saveas)
 
     g_free(finfo->help);
     finfo->help = textview_get_trimmed_text(finfo->text);
+    
     if (finfo->help == NULL || !strcmp(finfo->help, missing)) {
+	warnbox(_("Please complete all fields"));
 	textview_set_text_selected(finfo->text, missing);
 	gtk_widget_grab_focus(finfo->text);
 	return 1;
     }
 
     if (finfo->sample == NULL) {
-	infobox(_("Please add a sample script for this package"));
+	warnbox(_("Please add a sample script for this package"));
 	return 1;
     }
 
