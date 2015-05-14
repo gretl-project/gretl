@@ -45,14 +45,23 @@ struct search_replace {
     gchar *replace;        /* the Replace string */
     GtkTextBuffer *buf;    
     GtkTextView *view;
+    GtkTextMark *mark;
     GtkTextIter iter;
 };
 
 static gboolean destroy_replacer (GtkWidget *widget, 
 				  struct search_replace *s)
 {
+    GtkTextMark *mark;
+    
+    mark = gtk_text_buffer_get_mark(s->buf, "srmark");
+    if (mark != NULL) {
+	gtk_text_buffer_delete_mark(s->buf, mark);
+    }
+    
     g_free(s->find);
     g_free(s->replace);
+    
     gtk_main_quit();
     return FALSE;
 }
@@ -72,6 +81,8 @@ static void replace_find_callback (GtkWidget *widget,
 	return;
     }
 
+    gtk_text_buffer_get_iter_at_mark(s->buf, &s->iter, s->mark);
+
 #if USE_GTKSOURCEVIEW_2    
     found = gtk_source_iter_forward_search(&s->iter,
 					   s->find, 
@@ -89,13 +100,9 @@ static void replace_find_callback (GtkWidget *widget,
 #endif
 
     if (found) {
-	GtkTextMark *vis;
-
 	gtk_text_buffer_select_range(s->buf, &f_start, &f_end);
-	vis = gtk_text_buffer_create_mark(s->buf, "vis", &f_end, FALSE);
-	gtk_text_view_scroll_to_mark(s->view, vis, 0.0, FALSE, 0, 0);
-	gtk_text_buffer_delete_mark(s->buf, vis);
-	s->iter = f_end;
+	gtk_text_buffer_move_mark(s->buf, s->mark, &f_end);
+	gtk_text_view_scroll_to_mark(s->view, s->mark, 0.0, FALSE, 0, 0);
     } else {
 	notify_string_not_found(s->f_entry);
     }
@@ -135,12 +142,10 @@ static void replace_single_callback (GtkWidget *button,
 
     if (strcmp(text, s->find) == 0) {
 	gtk_text_buffer_begin_user_action(s->buf);
-
 	gtk_text_buffer_delete(s->buf, &r_start, &r_end);
 	gtk_text_buffer_insert(s->buf, &r_start, s->replace, -1);
-	s->iter = r_start;
-	gtk_text_iter_forward_chars(&s->iter, g_utf8_strlen(s->replace, -1));
-
+	gtk_text_iter_forward_chars(&r_start, g_utf8_strlen(s->replace, -1));
+	gtk_text_buffer_move_mark(s->buf, s->mark, &r_start);
 	gtk_text_buffer_end_user_action(s->buf);
     }
 
@@ -249,6 +254,7 @@ static void replace_all_callback (GtkWidget *button,
     gtk_text_iter_set_line(&s->iter, init_pos[0]);
     gtk_text_iter_set_line_index(&s->iter, init_pos[1]);
     gtk_text_buffer_place_cursor(s->buf, &s->iter);
+    gtk_text_buffer_move_mark(s->buf, s->mark, &s->iter);
 }
 
 static void replace_string_dialog (windata_t *vwin)
@@ -264,6 +270,8 @@ static void replace_string_dialog (windata_t *vwin)
     s->view = GTK_TEXT_VIEW(vwin->text);
     s->buf = gtk_text_view_get_buffer(s->view);
     gtk_text_buffer_get_start_iter(s->buf, &s->iter);
+    s->mark = gtk_text_buffer_create_mark(s->buf, "srmark",
+					  &s->iter, FALSE);
 
     s->w = gtk_dialog_new();
     gretl_dialog_set_destruction(s->w, vwin_toplevel(vwin));
