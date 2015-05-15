@@ -1713,10 +1713,13 @@ static int get_VAR_order (CMD *c, int k)
 static int get_command_order (CMD *c)
 {
     int pos = real_arg_index(c, 1);
+    cmd_token *ntok = next_joined_token(c, pos);
 
-    if (next_joined_token(c, pos) != NULL) {
-	/* nothing else should be stuck onto the order
-	   specifier */	
+    if (ntok != NULL && ntok->type != TOK_SEMIC) {
+	/* nothing should be "stuck onto" the order
+	   specifier; however, we have accepted ";" 
+	   without an intervening space
+	*/	
 	c->err = E_PARSE;
 	return c->err;
     }

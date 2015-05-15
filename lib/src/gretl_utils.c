@@ -1655,10 +1655,14 @@ double **data_array_from_model (const MODEL *pmod, double **Z, int missv)
 
 #ifndef WIN32
 
-static int non_fatal (const char *s)
+static int gp_fatal (const char *s)
 {
-    /* 
-       "Could not find/open font when opening font X, using default" 
+    /* wx and C++ ABI non-issue */
+    if (strstr(s, "Warning: Mismatch")) {
+	return 0;
+    }
+    
+    /* "Could not find/open font when opening font X, using default" 
        "gnuplot_x11: Some character sets not available" 
        "Warning: empty y2 range..."
        pango warning for, e.g., FreeSans font w/o GPOS table
@@ -1668,12 +1672,14 @@ static int non_fatal (const char *s)
     if (strstr(s, "using default") ||
 	strstr(s, "trying default") ||
 	strstr(s, "character sets not available") ||
-	strstr(s, "Warning: empty ") ||
+	strstr(s, "Warning: ") ||
 	strstr(s, "Pango-WARNING") ||
 	strstr(s, "CGContextSetFont")) {
-	return 1;
-    } else {
+	fprintf(stderr, "gnuplot stderr: '%s'\n", s);
 	return 0;
+    } else {
+	fprintf(stderr, "gnuplot stderr: '%s'\n", s);
+	return 1;
     }
 }
 
@@ -1698,9 +1704,8 @@ int gretl_spawn (char *cmdline)
 	fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
 	g_error_free(error);
 	ret = 1;
-    } else if (errout && *errout) {
-	fprintf(stderr, "stderr: '%s'\n", errout);
-	if (!non_fatal(errout)) {
+    } else if (errout != NULL && *errout) {
+	if (gp_fatal(errout)) {
 	    gretl_errmsg_set(errout);
 	    fprintf(stderr, "gretl_errmsg: '%s'\n", gretl_errmsg_get());
 	    ret = 1;
