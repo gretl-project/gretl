@@ -32,9 +32,6 @@
 # include <omp.h>
 #endif
 
-/* we could activate this for the case where USE_SSE2 is defined,
-   but it's probably not worth it
-*/
 #if defined(USE_AVX)
 # define USE_SIMD 1
 # if defined(HAVE_IMMINTRIN_H)
@@ -79,31 +76,19 @@ struct gretl_matrix_block_ {
 #define INFO_INVALID 0xdeadbeef
 #define is_block_matrix(m) (m->info == (matrix_info *) INFO_INVALID)
 
-#ifdef USE_SIMD
-static void *mval_malloc (size_t sz)
+static inline void *mval_malloc (size_t sz)
 {
-    if (sz % 16) {
-	/* forestall invalid reads by openblas */
-	sz += 8;
-    }
-# if defined(USE_AVX)
-    return _mm_malloc(sz,32);
-# else
-    return _mm_malloc(sz,16);
-# endif
+    /* forestall "invalid reads" by OpenBLAS */
+    return malloc(sz % 16 ? sz + 8 : sz);
 }
-#else
-# define mval_malloc(sz) malloc(sz)
-#endif
 
-#ifdef USE_SIMD
-static inline void mval_free (void *mem)
+static inline void *mval_realloc (void *ptr, size_t sz)
 {
-    if (mem != NULL) _mm_free(mem);
+    /* comment as for mval_malloc() */
+    return realloc(ptr, sz % 16 ? sz + 8 : sz);
 }
-#else
-# define mval_free(v) free(v)
-#endif
+
+#define mval_free(m) free(m)
 
 #ifdef USE_SIMD
 # include "matrix_simd.c"
@@ -598,11 +583,7 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 	return E_DATA;
     }
 
-#ifdef USE_SIMD
-    x = mval_realloc(m, n);
-#else
-    x = realloc(m->val, n * sizeof *m->val);
-#endif 
+    x = mval_realloc(m->val, n * sizeof *m->val);
     if (x == NULL) {
 	return E_ALLOC;
     }
@@ -2181,7 +2162,7 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
 #endif
 
 #if defined(USE_SIMD)
-    if (simd_add_sub(n) && !is_block_matrix(targ) && !is_block_matrix(src)) {
+    if (simd_add_sub(n)) {
 	return gretl_matrix_simd_add_to(targ, src, n);
     }
 #endif
@@ -2221,10 +2202,7 @@ gretl_matrix_add (const gretl_matrix *a, const gretl_matrix *b,
     n = rows * cols;
 
 #if defined(USE_SIMD)
-    if (simd_add_sub(n) && 
-	!is_block_matrix(a) && 
-	!is_block_matrix(b) &&
-	!is_block_matrix(c)) {
+    if (simd_add_sub(n)) {
 	return gretl_matrix_simd_add(a->val, b->val, c->val, n);
     }
 #endif
@@ -2315,7 +2293,7 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
 #endif
 
 #if defined(USE_SIMD)
-    if (simd_add_sub(n) && !is_block_matrix(targ) && !is_block_matrix(src)) {
+    if (simd_add_sub(n)) {
 	return gretl_matrix_simd_subt_from(targ, src, n);
     }
 #endif
@@ -2356,10 +2334,7 @@ gretl_matrix_subtract (const gretl_matrix *a, const gretl_matrix *b,
     n = rows * cols;
 
 #if defined(USE_SIMD)
-    if (simd_add_sub(n) && 
-	!is_block_matrix(a) && 
-	!is_block_matrix(b) &&
-	!is_block_matrix(c)) {
+    if (simd_add_sub(n)) {
 	return gretl_matrix_simd_subtract(a->val, b->val, c->val, n);
     }
 #endif
@@ -4755,8 +4730,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 #endif /* _OPENMP */
 
 #if defined(USE_SIMD)
-    if (k <= simd_k_max && !atr && !btr && !cmod && !is_block_matrix(a) && 
-	!is_block_matrix(b) && !is_block_matrix(c)) {
+    if (k <= simd_k_max && !atr && !btr && !cmod) {
 	gretl_matrix_simd_mul(a, b, c);
 	return;
     }
