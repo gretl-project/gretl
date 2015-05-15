@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-13 14:04-0400\n"
-"PO-Revision-Date: 2015-04-19 13:09-0300\n"
+"PO-Revision-Date: 2015-05-15 00:11-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.7.5\n"
+"X-Generator: Poedit 1.7.6\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -179,12 +179,12 @@ msgstr "variável de tendência temporal"
 #: lib/src/adf_kpss.c:1053
 #, c-format
 msgid "GLS detrending: b0 = %g, b1 = %g\n"
-msgstr ""
+msgstr "Retirada de tendência GLS: b0 = %g, b1 = %g\n"
 
 #: lib/src/adf_kpss.c:1056
-#, fuzzy, c-format
+#, c-format
 msgid "GLS estimate of b0: %g\n"
-msgstr "Estimativas MQO"
+msgstr "Estimativa GLS de b0: %g\n"
 
 #: lib/src/adf_kpss.c:1150
 msgid "Invalid option"
@@ -3326,22 +3326,22 @@ msgstr "A função '%s' foi apagada\n"
 
 #: lib/src/gretl_func.c:5081
 msgid "Expected a type identifier"
-msgstr ""
+msgstr "É esperado um tipo de identificador"
 
 #: lib/src/gretl_func.c:5086
-#, fuzzy, c-format
+#, c-format
 msgid "Unrecognized data type '%s'"
-msgstr "Tipo de dados desconhecido"
+msgstr "Tipo de dados desconhecido '%s'"
 
 #: lib/src/gretl_func.c:5089
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid parameter type"
-msgstr "%s: tipo de argumento inválido %s"
+msgstr "%s: tipo de parâmetro inválido"
 
 #: lib/src/gretl_func.c:5106
-#, fuzzy, c-format
+#, c-format
 msgid "parameter %d: name is missing"
-msgstr "Falta nome da variável"
+msgstr "parâmetro %d: falta o nome"
 
 #: lib/src/gretl_func.c:5285
 #, c-format
@@ -7545,7 +7545,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 19 de abril de 2015."
+"Tradução de 15 de maio de 2015."
 
 #: gui2/about.c:203
 msgid "News"
@@ -9260,9 +9260,8 @@ msgid "gretl: Chow test"
 msgstr "gretl: teste Chow"
 
 #: gui2/dialogs.c:2931
-#, fuzzy
 msgid "Test a subset of regressors"
-msgstr "Regressores de seleção"
+msgstr "Testar um subconjunto de regressores"
 
 #: gui2/dialogs.c:3043 gui2/dialogs.c:3339
 msgid "shaded area"
@@ -10213,39 +10212,32 @@ msgid "Error reading package"
 msgstr "Erro ao ler o pacote"
 
 #: gui2/fnsave.c:323
-#, fuzzy
 msgid "_Save gfn"
-msgstr "_Salvar"
+msgstr "_Salvar gfn"
 
 #: gui2/fnsave.c:324
-#, fuzzy
 msgid "Save gfn _as..."
-msgstr "Salvar como..."
+msgstr "S_alvar gfn como..."
 
 #: gui2/fnsave.c:325
-#, fuzzy
 msgid "Save _zip file..."
-msgstr "Salvar para arquivo"
+msgstr "Salvar arquivo _zip..."
 
 #: gui2/fnsave.c:326
-#, fuzzy
 msgid "Save as _script..."
-msgstr "Salvar como script"
+msgstr "Salvar como _script..."
 
 #: gui2/fnsave.c:327
-#, fuzzy
 msgid "_Write spec file..."
-msgstr "Escrever arquivo de especificação (\"spec\")"
+msgstr "Escrever arquivo de _especificação (\"spec\")"
 
 #: gui2/fnsave.c:328
-#, fuzzy
 msgid "_Upload to server..."
-msgstr "Enviar pacote para o servidor ao gravar"
+msgstr "Enviar pacote para o _servidor..."
 
 #: gui2/fnsave.c:521 gui2/fnsave.c:533
-#, fuzzy
 msgid "Please complete all fields"
-msgstr "Primeiro abra um arquivo de dados"
+msgstr "Por favor, preencha todos os campos"
 
 #: gui2/fnsave.c:540
 msgid "Please add a sample script for this package"
@@ -11612,7 +11604,7 @@ msgstr "Teste de Dickey-Fuller _aumentado"
 
 #: gui2/gretl.c:1640
 msgid "ADF-GLS test"
-msgstr "Teste _ADF-GLS"
+msgstr "Teste ADF-GLS"
 
 #: gui2/gretl.c:1641
 msgid "_KPSS test"
@@ -13350,9 +13342,8 @@ msgid "Normal Q-Q plot"
 msgstr "Gráfico Q-Q Normal"
 
 #: gui2/library.c:2848
-#, fuzzy
 msgid "You must select at least one regressor"
-msgstr "Deve-se selecionar uma variável limite inferior"
+msgstr "Deve ser selecionado ao menos um regressor"
 
 #: gui2/library.c:2899 gui2/library.c:3009
 msgid "gretl: Chow test output"
@@ -13363,9 +13354,8 @@ msgid "This test only implemented for OLS models"
 msgstr "Este teste está implementado apenas para modelos MQO"
 
 #: gui2/library.c:2952
-#, fuzzy
 msgid "gretl: chow test"
-msgstr "gretl: teste Chow"
+msgstr "gretl: teste de Chow"
 
 #: gui2/library.c:3011
 msgid "gretl: QLR test output"
@@ -14859,9 +14849,8 @@ msgid "Select variables to copy"
 msgstr "Selecionar variáveis para copiar"
 
 #: gui2/selector.c:6821
-#, fuzzy
 msgid "Select variables to test"
-msgstr "Selecionar variáveis para omitir"
+msgstr "Selecionar variáveis para testar"
 
 #: gui2/selector.c:6823
 msgid "Define named list"
@@ -16967,9 +16956,8 @@ msgid "Irregular"
 msgstr "Irregular"
 
 #: plugin/tramo_options.c:425
-#, fuzzy
 msgid "Linearized series"
-msgstr "adicionar séries"
+msgstr "Séries linearizadas"
 
 #: plugin/tramo_options.c:439
 msgid "Output"
@@ -17084,9 +17072,9 @@ msgid "irregular component of %s"
 msgstr "componente irregular de %s"
 
 #: plugin/tramo-x12a.c:70
-#, fuzzy, c-format
+#, c-format
 msgid "linearized %s"
-msgstr "iterado %s"
+msgstr "%s linearizado"
 
 #: plugin/tramo-x12a.c:239
 msgid "X-12-ARIMA options"
