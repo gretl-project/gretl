@@ -357,23 +357,35 @@ static void filesel_save_prn_buffer (PRN *prn, const char *fname)
 
 static void filesel_open_script (const char *fname, windata_t *vwin)
 {
+    int role = EDIT_SCRIPT;
+    int foreign = 0;
+
+    if (has_suffix(fname, ".R")) {
+	role = EDIT_R;
+    } else if (has_suffix(fname, ".plt")) {
+	role = EDIT_GP;
+    } else if (has_suffix(fname, ".ox")) {
+	role = EDIT_OX;
+    } else if (has_suffix(fname, ".m")) {
+	role = EDIT_OCTAVE;
+    } else if (has_suffix(fname, ".py")) {
+	role = EDIT_PYTHON;
+    } else if (has_suffix(fname, ".do")) {
+	role = EDIT_STATA;
+    }
+
+    if (role >= EDIT_GP && role < EDIT_MAX) {
+	foreign = 1;
+    }
+    
     if (vwin != NULL && !window_is_tab(vwin)) {
 	/* we're called from an existing (and untabbed) script 
 	   editor window */
 	strcpy(tryfile, fname);
 	sourceview_insert_file(vwin, fname);
-    } else if (has_suffix(fname, ".R")) {
-	view_script(fname, 1, EDIT_R);
-    } else if (has_suffix(fname, ".plt")) {
-	view_script(fname, 1, EDIT_GP);
-    } else if (has_suffix(fname, ".ox")) {
-	view_script(fname, 1, EDIT_OX);
-    } else if (has_suffix(fname, ".m")) {
-	view_script(fname, 1, EDIT_OCTAVE);
-    } else if (has_suffix(fname, ".py")) {
-	view_script(fname, 1, EDIT_PYTHON);
-    } else if (has_suffix(fname, ".do")) {
-	view_script(fname, 1, EDIT_STATA);
+	vwin->role = role;
+    } else if (foreign) {
+	view_script(fname, 1, role);
     } else {
 	strcpy(tryfile, fname);
 	if (view_script(tryfile, 1, EDIT_SCRIPT) != NULL) {
