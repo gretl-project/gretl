@@ -3621,17 +3621,21 @@ void edit_function_package (const char *fname)
     }
 }
 
-void edit_specified_package (const char *fname)
+gboolean edit_specified_package (const char *fname)
 {
     FILE *fp = gretl_fopen(fname, "r");
-
+    gboolean ret = FALSE;
+    
     if (fp == NULL) {
 	file_read_errbox(fname);
 	delete_from_filelist(FILE_LIST_GFN, fname);
     } else {
 	fclose(fp);
 	edit_function_package(fname);
+	ret = TRUE;
     }
+
+    return ret;
 }
 
 int no_user_functions_check (GtkWidget *parent)

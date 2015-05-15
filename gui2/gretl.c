@@ -2299,10 +2299,14 @@ gboolean real_open_tryfile (void)
 
     if (has_db_suffix(tryfile)) {
 	ret = open_named_db_index(tryfile);
-    } else if (has_suffix(tryfile, ".gretl") && gretl_is_pkzip_file(tryfile)) {
+    } else if (has_suffix(tryfile, ".gretl") &&
+	       gretl_is_pkzip_file(tryfile)) {
 	ret = verify_open_session();
     } else if ((ftype = script_type(tryfile))) {
 	ret = do_open_script(ftype);
+    } else if (has_suffix(tryfile, ".gfn") &&
+	       gretl_is_xml_file(tryfile)) {
+	ret = edit_specified_package(tryfile);
     } else {
 	ret = verify_open_data(NULL, 0);
     }
