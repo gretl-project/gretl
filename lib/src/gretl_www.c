@@ -724,8 +724,40 @@ int check_remote_db (const char *dbname)
 int retrieve_remote_function_package (const char *pkgname, 
 				      const char *localname)
 {
-    return retrieve_url(gretlhost, GRAB_FUNC, pkgname, NULL, 
-			localname, NULL);
+    int err;
+
+    err = retrieve_url(gretlhost, GRAB_FUNC, pkgname, NULL, 
+		       localname, NULL);
+
+    if (!err) {
+	if (has_suffix(localname, ".zip")) {
+	    if (!gretl_is_pkzip_file(localname)) {
+		err = E_DATA;
+	    }
+	} else if (has_suffix(localname, ".gfn")) {
+	    if (!gretl_is_xml_file(localname)) {
+		err = E_DATA;
+	    }	    
+	}
+	if (err) {
+	    /* let's see what we got */
+	    FILE *fp = gretl_fopen(localname, "rb");
+
+	    if (fp != NULL) {
+		char buf[128] = {0};
+		size_t n;
+
+		n = fread(buf, 1, 127, fp);
+		if (n > 8 && g_utf8_validate(buf, -1, NULL)) {
+		    g_strchomp(buf);
+		    gretl_errmsg_set(buf);
+		}
+		fclose(fp);
+	    }
+	}
+    }
+
+    return err;
 }
 
 /**
