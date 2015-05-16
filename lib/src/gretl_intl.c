@@ -338,6 +338,8 @@ int japanese_locale (void)
 #else
     char *lang = getenv("LANG");
 
+    fprintf(stderr, "japanese_locale: lang='%s'\n", lang);
+
     return (lang != NULL && !strncmp(lang, "ja", 2));
 #endif
 }
