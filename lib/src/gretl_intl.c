@@ -325,9 +325,9 @@ int chinese_locale (void)
 #ifdef WIN32
     return (gretl_cpage == 950);
 #else
-    char *lang = getenv("LANG");
+    char *loc = setlocale(LC_ALL, NULL);
 
-    return (lang != NULL && !strncmp(lang, "zh", 2));
+    return (loc != NULL && !strncmp(loc, "zh", 2));
 #endif
 }
 
@@ -336,12 +336,22 @@ int japanese_locale (void)
 #ifdef WIN32
     return (gretl_cpage == 932);
 #else
-    char *lang = getenv("LANG");
+    char *loc = setlocale(LC_ALL, NULL);
 
-    fprintf(stderr, "japanese_locale: lang='%s'\n", lang);
-
-    return (lang != NULL && !strncmp(lang, "ja", 2));
+    return (loc != NULL && !strncmp(loc, "ja", 2));
 #endif
+}
+
+int east_asian_locale (void)
+{
+#ifdef WIN32
+    return (gretl_cpage == 950 || gretl_cpage == 932);
+#else
+    char *loc = setlocale(LC_ALL, NULL);
+
+    return (loc != NULL && (!strncmp(loc, "zh", 2) ||
+			    !strncmp(loc, "ja", 2)));
+#endif    
 }
 
 #ifdef ENABLE_NLS

@@ -104,13 +104,14 @@ static int glyph_count (const char *str)
 
 static int char_len (const char *s)
 {
+    static int ea = -1;
+
+    if (ea < 0) {
+	ea = east_asian_locale();
+    }
+    
     if (g_utf8_validate(s, -1, NULL)) {
-	if (0 && japanese_locale()) {
-	    /* not yet */
-	    return glyph_count(s);
-	} else {
-	    return g_utf8_strlen(s, -1);
-	}
+	return ea ? glyph_count(s) : g_utf8_strlen(s, -1);
     } else {
 	return strlen(s);
     }
