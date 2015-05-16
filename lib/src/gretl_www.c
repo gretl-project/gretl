@@ -710,6 +710,45 @@ int check_remote_db (const char *dbname)
     return err;
 }
 
+static int check_downloaded_file (const char *fname,
+				  const char *dl)
+{
+    int err = 0;
+    
+    if (has_suffix(fname, ".zip") &&
+	!gretl_is_pkzip_file(fname)) {
+	err = E_DATA;
+    } else if (has_suffix(fname, ".gfn") &&
+	       !gretl_is_xml_file(fname)) {
+	err = E_DATA;
+    }
+	
+    if (err) {
+	/* let's see what we got */
+	FILE *fp = gretl_fopen(fname, "rb");
+	int msg_done = 0;
+
+	if (fp != NULL) {
+	    char buf[128] = {0};
+	    size_t n;
+
+	    n = fread(buf, 1, 127, fp);
+	    if (n > 8 && g_utf8_validate(buf, -1, NULL)) {
+		gretl_errmsg_set(g_strchomp(buf));
+		msg_done = 1;
+	    }
+	    fclose(fp);
+	    gretl_remove(fname);
+	}
+
+	if (!msg_done) {
+	    gretl_errmsg_sprintf("%s\ndownload failed", dl);
+	}
+    }
+
+    return err;
+}
+
 /**
  * retrieve_remote_function_package:
  * @pkgname: name of function package to retrieve, e.g. "foo.gfn".
@@ -730,31 +769,7 @@ int retrieve_remote_function_package (const char *pkgname,
 		       localname, NULL);
 
     if (!err) {
-	if (has_suffix(localname, ".zip")) {
-	    if (!gretl_is_pkzip_file(localname)) {
-		err = E_DATA;
-	    }
-	} else if (has_suffix(localname, ".gfn")) {
-	    if (!gretl_is_xml_file(localname)) {
-		err = E_DATA;
-	    }	    
-	}
-	if (err) {
-	    /* let's see what we got */
-	    FILE *fp = gretl_fopen(localname, "rb");
-
-	    if (fp != NULL) {
-		char buf[128] = {0};
-		size_t n;
-
-		n = fread(buf, 1, 127, fp);
-		if (n > 8 && g_utf8_validate(buf, -1, NULL)) {
-		    g_strchomp(buf);
-		    gretl_errmsg_set(buf);
-		}
-		fclose(fp);
-	    }
-	}
+	err = check_downloaded_file(localname, pkgname);
     }
 
     return err;
@@ -947,6 +962,8 @@ int retrieve_public_file (const char *uri, char *localname)
 	    /* no error message in place */
 	    gretl_errmsg_sprintf("%s\ndownload failed", uri);
 	}
+    } else {
+	err = check_downloaded_file(localname, uri);
     }
 
     return err;
