@@ -81,10 +81,36 @@ void model_coeff_init (model_coeff *mc)
     mc->name[0] = '\0';
 }
 
+static int glyph_count (const char *str)
+{
+    gunichar *u;
+    glong nu;
+    int i, ng = 0;
+
+    u = g_utf8_to_ucs4_fast(str, -1, &nu);
+    
+    for (i=0; i<nu; i++) {
+	if (g_unichar_iswide(u[i])) {
+	    ng += 2;
+	} else if (u[i] > 0) {
+	    ng++;
+	}
+    }
+
+    g_free(u);
+
+    return ng;
+}
+
 static int char_len (const char *s)
 {
     if (g_utf8_validate(s, -1, NULL)) {
-	return g_utf8_strlen(s, -1);
+	if (0 && japanese_locale()) {
+	    /* not yet */
+	    return glyph_count(s);
+	} else {
+	    return g_utf8_strlen(s, -1);
+	}
     } else {
 	return strlen(s);
     }
@@ -4447,6 +4473,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 	}
 	gretl_model_get_param_name(pmod, dset, i, names[i]);
 	n = char_len(names[i]);
+	fprintf(stderr, "%s: len=%d\n", names[i], n);
 	if (n > namelen) {
 	    namelen = n;
 	}
@@ -4513,6 +4540,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 	w[j] = lmax[j] + rmax[j];
 	head = get_col_heading(headings, j, show_slope, intervals);
 	hlen = char_len(head);
+	fprintf(stderr, "head %d: len=%d\n", j, hlen);
 	if (hlen > w[j]) {
 	    addoff[j] = (hlen - w[j]) / 2;
 	    w[j] = hlen;
