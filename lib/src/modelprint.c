@@ -4474,7 +4474,6 @@ static int plain_print_coeffs (const MODEL *pmod,
 	}
 	gretl_model_get_param_name(pmod, dset, i, names[i]);
 	n = char_len(names[i]);
-	fprintf(stderr, "%s: len=%d\n", names[i], n);
 	if (n > namelen) {
 	    namelen = n;
 	}
@@ -4541,7 +4540,6 @@ static int plain_print_coeffs (const MODEL *pmod,
 	w[j] = lmax[j] + rmax[j];
 	head = get_col_heading(headings, j, show_slope, intervals);
 	hlen = char_len(head);
-	fprintf(stderr, "head %d: len=%d\n", j, hlen);
 	if (hlen > w[j]) {
 	    addoff[j] = (hlen - w[j]) / 2;
 	    w[j] = hlen;
