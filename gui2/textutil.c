@@ -144,7 +144,6 @@ static void replace_single_callback (GtkWidget *button,
 	gtk_text_buffer_begin_user_action(s->buf);
 	gtk_text_buffer_delete(s->buf, &r_start, &r_end);
 	gtk_text_buffer_insert(s->buf, &r_start, s->replace, -1);
-	gtk_text_iter_forward_chars(&r_start, g_utf8_strlen(s->replace, -1));
 	gtk_text_buffer_move_mark(s->buf, s->mark, &r_start);
 	gtk_text_buffer_end_user_action(s->buf);
     }
