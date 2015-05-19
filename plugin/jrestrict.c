@@ -1169,7 +1169,7 @@ static void print_switch_iter (Jwrap *J, int i)
 
 /* driver function for switching algorithm */
 
-static int switchit (Jwrap *J, PRN *prn)
+static int switchit (Jwrap *J, gretlopt opt, PRN *prn)
 {
     switcher s;
     double lldiff = NADBL;
@@ -1248,9 +1248,9 @@ static int switchit (Jwrap *J, PRN *prn)
     if (err) {
 	pputs(prn, _("Switching algorithm: failed"));
 	pputc(prn, '\n');
-    } else {
+    } else if (!(opt & OPT_S)) {
+	/* not silent */
 	pprintf(prn, _("Switching algorithm: %d iterations"), j);
-
 	if (uinit) {
 	    pprintf(prn, " (%s)", _("user-supplied initial values"));
 	}
@@ -1845,6 +1845,7 @@ static int vecm_id_check (Jwrap *J, GRETL_VAR *jvar,
 			  gretlopt opt, PRN *prn)
 {
     int npar = J->alen + J->blen;
+    int silent = (opt & OPT_S)? 1 : 0;
     int err = 0;
 
     err = check_jacobian(J);
@@ -1854,19 +1855,25 @@ static int vecm_id_check (Jwrap *J, GRETL_VAR *jvar,
 #endif
 
     if (!err) {
-	pprintf(prn, _("Rank of Jacobian = %d, number of free "
-		"parameters = %d\n"), J->jr, npar);
+	if (!silent) {
+	    pprintf(prn, _("Rank of Jacobian = %d, number of free "
+			   "parameters = %d\n"), J->jr, npar);
+	}
 	if (J->jr < npar) {
-	    pputs(prn, _("Model is not fully identified\n"));
+	    if (!silent) {
+		pputs(prn, _("Model is not fully identified\n"));
+	    }
 	    if (using_bfgs(J)) {
 		err = E_NOIDENT;
 	    }
-	} else {
+	} else if (!silent) {
 	    pputs(prn, _("Model is fully identified\n"));
 	}
 
 	J->df = (J->p + J->p1 - J->r) * J->r - J->jr;
-	pprintf(prn, _("Based on Jacobian, df = %d\n"), J->df);
+	if (!silent) {
+	    pprintf(prn, _("Based on Jacobian, df = %d\n"), J->df);
+	}
 
 #if JDEBUG
 	fprintf(stderr, "Jacobian: got df = %d\n", J->df);
@@ -1876,8 +1883,10 @@ static int vecm_id_check (Jwrap *J, GRETL_VAR *jvar,
 	    /* system was subject to a prior restriction? */
 	    if (jvar->jinfo->lrdf > 0) {
 		J->df -= jvar->jinfo->lrdf;
-		pprintf(prn, _("Allowing for prior restriction, df = %d\n"), 
-			J->df);
+		if (!silent) {
+		    pprintf(prn, _("Allowing for prior restriction, df = %d\n"), 
+			    J->df);
+		}
 	    }
 	}
     }
@@ -3105,7 +3114,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	if (using_bfgs(J)) {
 	    err = do_bfgs(J, opt, prn);
 	} else {
-	    err = switchit(J, prn);
+	    err = switchit(J, opt, prn);
 	}
     }
 
