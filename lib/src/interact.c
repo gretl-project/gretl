@@ -3193,9 +3193,12 @@ int get_command_index (char *line, CMD *cmd)
 	/* maybe genr via series name? */
 	const char *s = cmd->toks[0].s;
 
-	if (s != NULL && strlen(s) == gretl_namechar_spn(s)) {
-	    cmd->ci = GENR;
-	}
+	if (s != NULL) {
+	    if (*s == '$') s++;
+	    if (strlen(s) == gretl_namechar_spn(s)) {
+		cmd->ci = GENR;
+	    }
+	}  
     }
 
     if (!err && cmd->ci == 0) {
