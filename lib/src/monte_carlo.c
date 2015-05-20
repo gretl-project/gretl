@@ -153,7 +153,7 @@ struct LOOPSET_ {
     /* index/foreach control variables */
     char idxname[VNAMELEN];
     int idxval;
-    char listname[VNAMELEN];
+    char eachname[VNAMELEN];
 
     /* break signal */
     char brk;
@@ -448,7 +448,7 @@ static void gretl_loop_init (LOOPSET *loop)
     *loop->idxname = '\0';
     loop->idxval = 0;
     loop->brk = 0;
-    *loop->listname = '\0';
+    *loop->eachname = '\0';
 
     controller_init(&loop->init);
     controller_init(&loop->test);
@@ -816,29 +816,29 @@ static int list_vars_to_strings (LOOPSET *loop, const int *list,
 
 static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 {
-    const char *strvar = NULL;
+    const char *strval = NULL;
     int *list = NULL;
     int err = 0;
 
-    if (strchr(loop->listname, '$') != NULL) {
+    if (strchr(loop->eachname, '$') != NULL) {
 	/* $-string substitution required */
 	char lname[VNAMELEN];
 
-	strcpy(lname, loop->listname);
+	strcpy(lname, loop->eachname);
 	err = make_dollar_substitutions(lname, VNAMELEN, loop, 
 					dset, NULL, OPT_T);
 	if (!err) {
 	    list = get_list_by_name(lname);
 	}
-    } else if (*loop->listname == '@') {
+    } else if (*loop->eachname == '@') {
 	/* @-string substitution required */
-	strvar = get_string_by_name(loop->listname + 1);
-	if (strvar != NULL && strlen(strvar) < VNAMELEN) {
-	    list = get_list_by_name(strvar);
+	strval = get_string_by_name(loop->eachname + 1);
+	if (strval != NULL && strlen(strval) < VNAMELEN) {
+	    list = get_list_by_name(strval);
 	}
     } else {
 	/* no string substitution needed */
-	list = get_list_by_name(loop->listname);
+	list = get_list_by_name(loop->eachname);
     }
 
     if (loop->eachstrs != NULL) {
@@ -850,11 +850,11 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 
     if (list == NULL) {
 	if (!err) {
-	    if (strvar != NULL) {
+	    if (strval != NULL) {
 		/* maybe space separated strings? */
 		int nf = 0;
 		
-		loop->eachstrs = gretl_string_split_quoted(strvar, &nf, NULL, &err);
+		loop->eachstrs = gretl_string_split_quoted(strval, &nf, NULL, &err);
 		if (!err) {
 		    loop->final.val = nf;
 		}
@@ -906,6 +906,9 @@ static int find_list_in_parentage (LOOPSET *loop, const char *s)
    the variable-name (or variable-number) strings: these will be set
    when the loop is actually run, since the list may have changed in
    the meantime.
+
+   Besides the possibilities mentioned above, the single field 
+   may be an @-string that cashes out into one or more "words".
 */
 
 static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
@@ -918,8 +921,8 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
 
     if (*s == '@') {
 	/* tricksy: got a list-name that needs string subst? */
-	*loop->listname = '\0';
-	strncat(loop->listname, s, VNAMELEN - 1);
+	*loop->eachname = '\0';
+	strncat(loop->eachname, s, VNAMELEN - 1);
 	*nf = 0;
 	return 0;
     }
@@ -934,8 +937,8 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
     if (list == NULL && !find_list_in_parentage(loop, s)) {
 	err = E_UNKVAR;
     } else {
-	*loop->listname = '\0';
-	strncat(loop->listname, s, VNAMELEN - 1);
+	*loop->eachname = '\0';
+	strncat(loop->eachname, s, VNAMELEN - 1);
 	*nf = (list != NULL)? list[0] : 0;
     } 
 
@@ -2610,7 +2613,7 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 
     loop->iter = 0;
 
-    if (loop->listname[0] != '\0') {
+    if (loop->eachname[0] != '\0') {
 	err = loop_list_refresh(loop, dset);
     } else if (loop->type == INDEX_LOOP) {
 	loop->init.val = controller_get_val(&loop->init, loop, dset, &err);
