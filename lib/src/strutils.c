@@ -2562,7 +2562,7 @@ char *gretl_regexp_replace (const char *orig,
     char *mod = NULL;
 
     regex = g_regex_new(match, 0, 0, &error);
-
+    
     if (error == NULL) {
 	mod = g_regex_replace(regex, orig, -1, 0, repl, 0, &error);
     }

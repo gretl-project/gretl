@@ -816,6 +816,7 @@ static int list_vars_to_strings (LOOPSET *loop, const int *list,
 
 static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 {
+    const char *strvar = NULL;
     int *list = NULL;
     int err = 0;
 
@@ -831,10 +832,9 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 	}
     } else if (*loop->listname == '@') {
 	/* @-string substitution required */
-	const char *s = get_string_by_name(loop->listname + 1);
-
-	if (s != NULL && strlen(s) < VNAMELEN) {
-	    list = get_list_by_name(s);
+	strvar = get_string_by_name(loop->listname + 1);
+	if (strvar != NULL && strlen(strvar) < VNAMELEN) {
+	    list = get_list_by_name(strvar);
 	}
     } else {
 	/* no string substitution needed */
@@ -850,7 +850,17 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 
     if (list == NULL) {
 	if (!err) {
-	    err = E_UNKVAR;
+	    if (strvar != NULL) {
+		/* maybe space separated strings? */
+		int nf = 0;
+		
+		loop->eachstrs = gretl_string_split_quoted(strvar, &nf, NULL, &err);
+		if (!err) {
+		    loop->final.val = nf;
+		}
+	    } else {
+		err = E_UNKVAR;
+	    }
 	}
     } else if (list[0] > 0) {
 	err = list_vars_to_strings(loop, list, dset);

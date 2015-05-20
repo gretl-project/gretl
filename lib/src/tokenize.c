@@ -446,7 +446,7 @@ static void gretl_cmd_clear (CMD *c)
 
     /* FIXME: do the next step only if the CMD has actually
        been parsed/assembled, not just tokenized (as in
-       get_command index)?
+       get_command_index)?
     */
 
     if (c->context > 0) {
@@ -2989,6 +2989,7 @@ static int tokenize_line (CMD *cmd, const char *line,
     char *vtok;
     int n, m, pos = 0;
     int wild_ok = 0;
+    int at_ok = idx_only;
     int want_fname = 0;
     int err = 0;
 
@@ -3029,7 +3030,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
 	    strncat(tok, s, m);
 	    err = push_string_token(cmd, tok, s, pos);	    
-	} else if (isalpha(*s) || *s == '$') {
+	} else if (isalpha(*s) || *s == '$' || (at_ok && *s == '@')) {
 	    /* regular or accessor identifier */
 	    n = 1 + namechar_spn(s+1);
 	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
