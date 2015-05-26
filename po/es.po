@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-13 14:04-0400\n"
-"PO-Revision-Date: 2015-04-27 15:21+0200\n"
+"PO-Revision-Date: 2015-05-26 19:01+0200\n"
 "Last-Translator: \n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -175,12 +175,12 @@ msgstr "variable de tendencia temporal"
 #: lib/src/adf_kpss.c:1053
 #, c-format
 msgid "GLS detrending: b0 = %g, b1 = %g\n"
-msgstr ""
+msgstr "Eliminación de la tendencia mediante MCG: b0 = %g, b1 = %g\n"
 
 #: lib/src/adf_kpss.c:1056
-#, fuzzy, c-format
+#, c-format
 msgid "GLS estimate of b0: %g\n"
-msgstr "Estimaciones de MCO"
+msgstr "Estimaciones de MCG de b0: %g\n"
 
 #: lib/src/adf_kpss.c:1150
 msgid "Invalid option"
@@ -3332,22 +3332,22 @@ msgstr "Se ha borrado la función '%s'\n"
 
 #: lib/src/gretl_func.c:5081
 msgid "Expected a type identifier"
-msgstr ""
+msgstr "Se esperaba un identificador de tipo"
 
 #: lib/src/gretl_func.c:5086
-#, fuzzy, c-format
+#, c-format
 msgid "Unrecognized data type '%s'"
-msgstr "tipo de datos desconocido"
+msgstr "Tipo de datos desconocido '%s'"
 
 #: lib/src/gretl_func.c:5089
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid parameter type"
-msgstr "%s: Argumento de tipo no válido %s"
+msgstr "%s: tipo de parámetro no válido"
 
 #: lib/src/gretl_func.c:5106
-#, fuzzy, c-format
+#, c-format
 msgid "parameter %d: name is missing"
-msgstr "Falta el nombre de la variable"
+msgstr "parámetro %d: falta el nombre"
 
 #: lib/src/gretl_func.c:5285
 #, c-format
@@ -9286,9 +9286,8 @@ msgid "gretl: Chow test"
 msgstr "gretl: Contraste de Chow"
 
 #: gui2/dialogs.c:2931
-#, fuzzy
 msgid "Test a subset of regressors"
-msgstr "Regresores de selección"
+msgstr "Contrastar un subconjunto de regresores"
 
 #: gui2/dialogs.c:3043 gui2/dialogs.c:3339
 msgid "shaded area"
@@ -10239,39 +10238,32 @@ msgid "Error reading package"
 msgstr "Error al leer el paquete"
 
 #: gui2/fnsave.c:323
-#, fuzzy
 msgid "_Save gfn"
-msgstr "_Guardar"
+msgstr "_Guardar gfn"
 
 #: gui2/fnsave.c:324
-#, fuzzy
 msgid "Save gfn _as..."
-msgstr "Guardar como..."
+msgstr "Guardar gfn como..."
 
 #: gui2/fnsave.c:325
-#, fuzzy
 msgid "Save _zip file..."
-msgstr "Guardar a un fichero"
+msgstr "Guardar a un fichero _zip..."
 
 #: gui2/fnsave.c:326
-#, fuzzy
 msgid "Save as _script..."
-msgstr "Guardar como un guion de instrucciones"
+msgstr "Guardar como un guion de in_strucciones..."
 
 #: gui2/fnsave.c:327
-#, fuzzy
 msgid "_Write spec file..."
-msgstr "Escribir un archivo spec"
+msgstr "Escribir un archivo spec..."
 
 #: gui2/fnsave.c:328
-#, fuzzy
 msgid "_Upload to server..."
-msgstr "Al guardar, cargar el paquete al servidor"
+msgstr "_Cargar al servidor..."
 
 #: gui2/fnsave.c:521 gui2/fnsave.c:533
-#, fuzzy
 msgid "Please complete all fields"
-msgstr "Por favor, abra primero un archivo de datos"
+msgstr "Por favor, rellene todos los campos"
 
 #: gui2/fnsave.c:540
 msgid "Please add a sample script for this package"
@@ -13381,9 +13373,8 @@ msgid "Normal Q-Q plot"
 msgstr "Gráfico Q-Q normal"
 
 #: gui2/library.c:2848
-#, fuzzy
 msgid "You must select at least one regressor"
-msgstr "Se debe elegir una variable de límite inferior"
+msgstr "Se debe elegir al menos un regresor"
 
 #: gui2/library.c:2899 gui2/library.c:3009
 msgid "gretl: Chow test output"
@@ -13394,7 +13385,6 @@ msgid "This test only implemented for OLS models"
 msgstr "Este contraste sólo está implementado para modelos de MCO"
 
 #: gui2/library.c:2952
-#, fuzzy
 msgid "gretl: chow test"
 msgstr "gretl: Contraste de Chow"
 
@@ -14890,9 +14880,8 @@ msgid "Select variables to copy"
 msgstr "Elija las variables a copiar"
 
 #: gui2/selector.c:6821
-#, fuzzy
 msgid "Select variables to test"
-msgstr "Elija las variables a omitir"
+msgstr "Elija las variables a contrastar"
 
 #: gui2/selector.c:6823
 msgid "Define named list"
@@ -17000,9 +16989,8 @@ msgid "Irregular"
 msgstr "Irregular"
 
 #: plugin/tramo_options.c:425
-#, fuzzy
 msgid "Linearized series"
-msgstr "añadir una serie"
+msgstr "Serie linealizada"
 
 #: plugin/tramo_options.c:439
 msgid "Output"
@@ -17117,9 +17105,9 @@ msgid "irregular component of %s"
 msgstr "componente irregular de %s"
 
 #: plugin/tramo-x12a.c:70
-#, fuzzy, c-format
+#, c-format
 msgid "linearized %s"
-msgstr "%s iterado"
+msgstr "%s linealizada"
 
 #: plugin/tramo-x12a.c:239
 msgid "X-12-ARIMA options"
