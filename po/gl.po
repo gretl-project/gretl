@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.10.1)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-13 14:04-0400\n"
-"PO-Revision-Date: 2015-05-15 13:44+0100\n"
+"PO-Revision-Date: 2015-05-26 19:34+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -968,7 +968,7 @@ msgstr ""
 
 #: lib/src/csvdata.c:1687 lib/src/dataio.c:2391
 msgid "Data file is empty\n"
-msgstr "O ficheiro de datos está baleiro\n"
+msgstr "O ficheiro de datos está baldeiro\n"
 
 #: lib/src/csvdata.c:1689
 msgid "Data file has trailing commas\n"
@@ -988,7 +988,7 @@ msgstr "   Semella ser unha etiqueta de observación\n"
 msgid ""
 "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
-"   A cela da variable %d, observación %d está baleira: considérase como "
+"   A cela da variable %d, observación %d está baldeira: considérase como "
 "valor perdido\n"
 
 #: lib/src/csvdata.c:1940
@@ -1575,7 +1575,7 @@ msgstr "%s: utilizando o método para compactar predeterminado: promedio"
 
 #: lib/src/dbread.c:3850 lib/src/dbread.c:3916 lib/src/dbread.c:4142
 msgid "Compacted dataset would be empty"
-msgstr "O conxunto de datos compactado estaría baleiro"
+msgstr "O conxunto de datos compactado estaría baldeiro"
 
 #: lib/src/dbwrite.c:475 lib/src/dbwrite.c:484 lib/src/gretl_xml.c:1663
 #: lib/src/gretl_xml.c:2113
@@ -2260,7 +2260,7 @@ msgstr "Condición indeterminada para 'if'"
 #: lib/src/flow_control.c:142 lib/src/flow_control.c:279
 #, c-format
 msgid "Unmatched \"%s\""
-msgstr "\"%s\" non emparellado"
+msgstr "\"%s\" non coincidente"
 
 #: lib/src/forecast.c:2921
 msgid "predicted values"
@@ -2382,7 +2382,7 @@ msgstr "O símbolo '%c' é incorrecto neste contexto\n"
 #: lib/src/gensyntax.c:261 lib/src/tokenize.c:3039 lib/src/tokenize.c:3057
 #, c-format
 msgid "Unmatched '%c'\n"
-msgstr "'%c' non se corresponde\n"
+msgstr "'%c' non coincidente\n"
 
 #: lib/src/geneval.c:12569
 #, c-format
@@ -2583,7 +2583,7 @@ msgstr "O símbolo '%s' é incorrecto neste contexto\n"
 
 #: lib/src/genlex.c:877
 msgid "Empty observation []\n"
-msgstr "Observación baleira []\n"
+msgstr "Observación baldeira []\n"
 
 #: lib/src/genlex.c:1670
 #, c-format
@@ -4177,7 +4177,7 @@ msgstr "xmlParseFile fallou en %s"
 #: lib/src/gretl_xml.c:101 lib/src/gretl_xml.c:4066
 #, c-format
 msgid "%s: empty document"
-msgstr "%s: documento baleiro"
+msgstr "%s: documento baldeiro"
 
 #: lib/src/gretl_xml.c:109
 #, c-format
@@ -4487,7 +4487,7 @@ msgstr "Poñer %d valores como \"perdidos\"\n"
 
 #: lib/src/missing.c:554
 msgid "Didn't find any matching observations\n"
-msgstr "Non se atoparon observacións que casen\n"
+msgstr "Non se atoparon observacións que coincidan\n"
 
 #: lib/src/missing.c:561
 #, c-format
@@ -4497,7 +4497,7 @@ msgstr "%s: Poñer %d observacións como \"perdidas\"\n"
 #: lib/src/missing.c:565
 #, c-format
 msgid "%s: Didn't find any matching observations\n"
-msgstr "%s: Non se atoparon observacións que casen\n"
+msgstr "%s: Non se atoparon observacións que coincidan\n"
 
 #: lib/src/modelprint.c:154
 msgid "Unconditional error variance"
@@ -8294,7 +8294,7 @@ msgstr "Número total de observacións:"
 
 #: gui2/callbacks.c:702
 msgid "Failed to create empty data set"
-msgstr "Fallo ao crear un conxunto de datos baleiro"
+msgstr "Fallo ao crear un conxunto de datos baldeiro"
 
 #: gui2/callbacks.c:717 gui2/library.c:1390
 msgid "cross-correlogram"
@@ -10097,7 +10097,7 @@ msgstr "Non se deu nome á lista"
 
 #: gui2/fncall.c:623
 msgid "Really create an empty list?"
-msgstr "Crear realmente unha lista baleira?"
+msgstr "Crear realmente unha lista baldeira?"
 
 #: gui2/fncall.c:690 gui2/fncall.c:697 gui2/fncall.c:1159 gui2/menustate.c:498
 #: gui2/menustate.c:608
@@ -10166,7 +10166,7 @@ msgstr "Abrir un guión de exemplo"
 
 #: gui2/fncall.c:2073
 msgid "Call a function"
-msgstr "Chamar unha función"
+msgstr "Invocar unha función"
 
 #: gui2/fncall.c:2079
 msgid "Would you like to:"
@@ -10920,7 +10920,7 @@ msgid ""
 "by graph-specific choices\n"
 msgstr ""
 "Usaranse estas cores mentres non se indiquen\n"
-"outras mediante seleccións específicas.\n"
+"outras mediante opcións específicas de gráfica.\n"
 
 #: gui2/gpt_dialog.c:3845
 msgid "Title of plot"
@@ -10988,7 +10988,7 @@ msgstr "Fallo ao procesar o ficheiro TeX"
 
 #: gui2/graph_page.c:711 gui2/graph_page.c:831 gui2/session.c:3121
 msgid "The graph page is empty"
-msgstr "A páxina da gráfica está baleira"
+msgstr "A páxina da gráfica está baldeira"
 
 #: gui2/graph_page.c:715
 msgid "graph page options"
@@ -11931,7 +11931,7 @@ msgstr "estado da mostra"
 
 #: gui2/gretlwin32.c:326
 msgid "Copy buffer was empty"
-msgstr "O búfer está baleiro"
+msgstr "O búfer está baldeiro"
 
 #: gui2/gretlwin32.c:331 gui2/gretlwin32.c:510
 msgid "Cannot open the clipboard"
@@ -12476,7 +12476,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:1369
 msgid "Buffer is empty"
-msgstr "O búfer está baleiro"
+msgstr "O búfer está baldeiro"
 
 #: gui2/gui_utils.c:1631
 msgid "gretl: edit plot commands"
@@ -13440,7 +13440,7 @@ msgstr "Poñer %d valores como \"perdidos\""
 
 #: gui2/library.c:4841 gui2/library.c:4869
 msgid "Didn't find any matching observations"
-msgstr "Non se atoparon observacións que casen"
+msgstr "Non se atoparon observacións que coincidan"
 
 #: gui2/library.c:4866
 #, c-format
@@ -14041,7 +14041,7 @@ msgstr "Para logit e probit, o R-cadrado é o pseudo-R-cadrado de McFadden"
 #: gui2/model_table.c:1070 gui2/model_table.c:1109 gui2/model_table.c:1211
 #: gui2/model_table.c:1348
 msgid "The model table is empty"
-msgstr "A táboa de modelos está baleira"
+msgstr "A táboa de modelos está baldeira"
 
 #: gui2/model_table.c:1096
 msgid "gretl: model table"
@@ -15019,7 +15019,7 @@ msgstr "fronte a"
 
 #: gui2/session.c:2204
 msgid "Bundle is empty"
-msgstr "O paquete está baleiro"
+msgstr "O paquete está baldeiro"
 
 #: gui2/session.c:2409
 #, c-format
@@ -15602,7 +15602,7 @@ msgstr "Non hai series para editar"
 #: gui2/ssheet.c:2876
 #, c-format
 msgid "Warning: series %s is empty"
-msgstr "Aviso: A serie *%s* está baleira"
+msgstr "Aviso: A serie *%s* está baldeira"
 
 #: gui2/ssheet.c:3168
 msgid "gretl: edit matrix"
@@ -15626,7 +15626,7 @@ msgstr "Débese dar un nome á matriz"
 
 #: gui2/ssheet.c:3483
 msgid "The matrix formula is empty"
-msgstr "A fórmula da matriz está baleira"
+msgstr "A fórmula da matriz está baldeira"
 
 #: gui2/ssheet.c:3572
 msgid "New matrix"
