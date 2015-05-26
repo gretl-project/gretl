@@ -2496,33 +2496,42 @@ check_for_yscale (gnuplot_info *gi, const double **Z, int *oddman)
 {
     double ymin[6], ymax[6];
     double ratio;
+    int lmax = gi->list[0];
     int i, j, oddcount;
 
 #if GP_DEBUG
-    fprintf(stderr, "gnuplot: doing check_for_yscale\n");
+    fprintf(stderr, "gnuplot: doing check_for_yscale, listlen %d\n",
+	    gi->list[0]);
 #endif
 
+    if (gi->flags & GPT_IDX) {
+	/* do this only if we haven't added a 0 at the end of
+	   the list */
+	if (gi->list[lmax] != 0) {
+	    lmax++;
+	}
+    }
+
     /* find minima, maxima of the y-axis vars */
-    for (i=1; i<gi->list[0]; i++) {
+    for (i=1; i<lmax; i++) {
 	gretl_minmax(gi->t1, gi->t2, Z[gi->list[i]], 
 		     &ymin[i-1], &ymax[i-1]);
     }
 
     gi->flags &= ~GPT_Y2AXIS;
 
-    for (i=1; i<gi->list[0]; i++) {
+    for (i=lmax-1; i>0; i--) {
 	oddcount = 0;
-	for (j=1; j<gi->list[0]; j++) {
-	    if (j == i) {
-		continue;
-	    }
-	    ratio = ymax[i-1] / ymax[j-1];
-	    if (ratio > 5.0 || ratio < 0.2) {
-		gi->flags |= GPT_Y2AXIS;
-		oddcount++;
+	for (j=1; j<lmax; j++) {
+	    if (j != i) {
+		ratio = ymax[i-1] / ymax[j-1];
+		if (ratio > 5.0 || ratio < 0.2) {
+		    gi->flags |= GPT_Y2AXIS;
+		    oddcount++;
+		}
 	    }
 	}
-	if (oddcount == gi->list[0] - 2) {
+	if (oddcount == lmax - 2) {
 	    /* series at list position i differs considerably in scale
 	       from all the others in the list */
 	    *oddman = i;
@@ -2775,7 +2784,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 	fprintf(stderr, "l0 = %d, setting y2axis probe\n", l0);
 #endif
 	gi->flags |= GPT_Y2AXIS;
-    } 
+    }
 
     if ((gi->flags & GPT_FA) && literal != NULL && 
 	!strncmp(literal, "yformula: ", 10)) {
@@ -3589,7 +3598,12 @@ int gnuplot (const int *plotlist, const char *literal,
     fputs("plot \\\n", fp);
     if (gi.flags & GPT_Y2AXIS) {
 	/* using two y axes */
-	for (i=1; i<list[0]; i++) {
+	int lmax = list[0];
+
+	if ((gi.flags & GPT_IDX) && list[lmax] != 0) {
+	    lmax++;
+	}
+	for (i=1; i<lmax; i++) {
 	    set_lwstr(dset, list[i], lwstr);
 	    set_withstr(&gi, i, withstr);
 	    fprintf(fp, "'-' using 1:($2) axes %s title \"%s (%s)\" %s%s%s",
@@ -3598,7 +3612,7 @@ int gnuplot (const int *plotlist, const char *literal,
 		    (i == oddman)? _("right") : _("left"),
 		    withstr,
 		    lwstr,
-		    (i == list[0] - 1)? "\n" : ", \\\n");
+		    (i == lmax - 1)? "\n" : ", \\\n");
 	}
     } else if (gi.flags & GPT_DUMMY) { 
 	/* plot shows separation by discrete variable */
