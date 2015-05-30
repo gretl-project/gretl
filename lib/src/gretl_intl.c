@@ -245,6 +245,33 @@ void set_gretl_charset (void)
 
 #ifdef WIN32
 
+int cli_set_win32_charset (const char *package)
+{
+    const char *charset = NULL;
+    char win32_charset[16];
+
+    native_utf8 = g_get_charset(&charset);
+
+    if (native_utf8) {
+	set_stdio_use_utf8();
+    }
+
+    *win32_charset = '\0';
+    gretl_cpage = 850;
+
+    if (!native_utf8 && charset != NULL && *charset != '\0') {
+	bind_textdomain_codeset(package, charset);
+	strncat(win32_charset, charset, 15);
+	gretl_lower(win32_charset);
+	if (!strncmp(win32_charset, "cp", 2)) {
+	    gretl_cpage = atoi(win32_charset + 2);
+	    
+	}
+    }
+
+    return 0;
+}
+
 static void set_cp_from_locale (const char *loc)
 {
     const char *p = strrchr(loc, '.');
@@ -255,7 +282,7 @@ static void set_cp_from_locale (const char *loc)
     }
 }
 
-#endif
+#endif /* WIN32 */
 
 #ifdef ENABLE_NLS
 
@@ -380,13 +407,11 @@ char *iso_gettext (const char *msgid)
     /* iso_switch: we'll reckon that if the system character set is
        not UTF-8, and is an ISO-8859-N or Windows CP12NN 8-bit set,
        then we should probably recode when printing translated strings
-       in the context of writing CSV and RTF files.  
+       in the context of writing CSV files.  
 
        If iso_switch is non-zero (once it's determinate) this makes the
        I_() gettext macro use the system encoding, otherwise I_() is
-       equivalent to plain _(), which always spits out UTF-8.  There's
-       a possible gotcha here: I suspect that a UTF-8 encoded RTF file 
-       is never kosher, regardless of the system.  
+       equivalent to plain _(), which always spits out UTF-8.
     */
 
     if (iso_switch < 0) {
@@ -722,7 +747,7 @@ set_locale_with_workaround (int langid, const char *lcode)
     if (test == NULL) {
 	char lfix[32];
 
-	sprintf(lfix, "%s.UTF-8", lcode); /* Ubuntu, grr */
+	sprintf(lfix, "%s.UTF-8", lcode);
 	test = setlocale(LC_ALL, lfix);
     }
 # endif

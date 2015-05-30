@@ -124,4 +124,10 @@ int east_asian_locale (void);
 
 #endif /* ENABLE_NLS */
 
+#ifdef WIN32
+
+int cli_set_win32_charset (const char *package);
+
+#endif
+
 #endif /* GRETL_INTL_H */
