@@ -392,6 +392,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 {
     int latin = 0;
     int pdfterm = 0;
+    int epsterm = 0;
     char *fname;
     FILE *fp, *fq;
     int err = 0;
@@ -413,11 +414,14 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 
     if (gpage.term == GP_TERM_PDF) {
 	pdfterm = gnuplot_pdf_terminal();
-    }
-
-    if (gpage.term == GP_TERM_EPS || pdfterm != GP_PDF_CAIRO) {
-	latin = iso_latin_version();
-	fprintf(fq, "set encoding iso_8859_%d\n", latin);
+	if (pdfterm != GP_PDF_CAIRO) {
+	    latin = iso_latin_version();
+	}
+    } else if (gpage.term == GP_TERM_EPS) {
+	epsterm = gnuplot_eps_terminal();
+	if (epsterm != GP_EPS_CAIRO) {
+	    latin = iso_latin_version();
+	}	
     }
 
     gretl_push_c_numeric_locale();
@@ -433,6 +437,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 	}
 	fname = gpage_fname(".pdf", i);
     } else {
+	/* FIXME epscairo */
 	fprintf(fq, "set term postscript eps%s", (gpage.mono)? " monochrome" : " color");
 	fname = gpage_fname(".ps", i);
     }
@@ -447,7 +452,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 
     fprintf(fq, "set output '%s'\n", fname);
 
-    filter_gnuplot_file(gpage.term, latin, gpage.mono, fp, fq);
+    filter_gnuplot_file(latin, gpage.mono, fp, fq);
 
     fclose(fp);
     fclose(fq);

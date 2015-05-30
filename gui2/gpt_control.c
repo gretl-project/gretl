@@ -663,26 +663,21 @@ static char *eps_replace_pi (unsigned char *s)
     return repl;
 }
 
-/* for postscript output, e.g. in Latin-2, or EMF output in CPXXXX */
+/* for postscript output, e.g. in Latin-2 */
 
-static int maybe_recode_gp_line (char *s, int ttype, FILE *fp)
+static int maybe_recode_gp_line (char *s, FILE *fp)
 {
     int err = 0;
 
     if (!gretl_is_ascii(s) && g_utf8_validate(s, -1, NULL)) {
+	char *repl = eps_replace_pi((unsigned char *) s);
 	char *tmp;
 
-	if (ttype == GP_TERM_EMF) {
-	    tmp = utf8_to_cp(s);
+	if (repl != NULL) {
+	    tmp = utf8_to_latin(repl);
+	    free(repl);
 	} else {
-	    char *repl = eps_replace_pi((unsigned char *) s);
-
-	    if (repl != NULL) {
-		tmp = utf8_to_latin(repl);
-		free(repl);
-	    } else {
-		tmp = utf8_to_latin(s);
-	    }
+	    tmp = utf8_to_latin(s);
 	}
 
 	if (tmp == NULL) {
@@ -742,7 +737,7 @@ static int term_uses_utf8 (int ttype)
     }
 }
 
-void filter_gnuplot_file (int ttype, int latin, int mono,
+void filter_gnuplot_file (int latin, int mono,
 			  FILE *fpin, FILE *fpout)
 {
     char pline[512];
@@ -770,7 +765,7 @@ void filter_gnuplot_file (int ttype, int latin, int mono,
 	}
 
 	if (latin && *pline != '#') {
-	    err = maybe_recode_gp_line(pline, ttype, fpout);
+	    err = maybe_recode_gp_line(pline, fpout);
 	    if (err && !err_shown) {
 		gui_errmsg(err);
 		err_shown = 1;
@@ -785,17 +780,9 @@ void filter_gnuplot_file (int ttype, int latin, int mono,
    if appropriate, but only if gnuplot won't choke on it.
 */
 
-static void maybe_print_gp_encoding (int ttype, int latin, FILE *fp)
+static void maybe_print_gp_encoding (int latin, FILE *fp)
 {
-    if (ttype == GP_TERM_EMF) {
-	if (latin == 2) {
-	    fputs("set encoding cp1250\n", fp);
-	} else if (latin == 9) {
-	    fputs("set encoding cp1254\n", fp);
-	} else if (chinese_locale() && gnuplot_has_cp950()) {
-	    fputs("set encoding cp950\n", fp);
-	}
-    } else if (latin == 1 || latin == 2 || latin == 15 || latin == 9) {
+    if (latin == 1 || latin == 2 || latin == 15 || latin == 9) {
 	/* supported by gnuplot >= 4.4.0 */
 	fprintf(fp, "set encoding iso_8859_%d\n", latin);
     }
@@ -832,7 +819,7 @@ static int revise_plot_file (GPT_SPEC *spec,
 	    fputs("set encoding utf8\n", fpout);
 	} else {
 	    latin = iso_latin_version();
-	    maybe_print_gp_encoding(ttype, latin, fpout);
+	    maybe_print_gp_encoding(latin, fpout);
 	}
     }
 
@@ -841,7 +828,7 @@ static int revise_plot_file (GPT_SPEC *spec,
 	write_plot_output_line(outname, fpout);
     }	
 
-    filter_gnuplot_file(ttype, latin, mono, fpin, fpout);
+    filter_gnuplot_file(latin, mono, fpin, fpout);
 
     fclose(fpin);
     fclose(fpout);
