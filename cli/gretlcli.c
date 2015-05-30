@@ -225,7 +225,6 @@ static void nls_init (void)
 
     build_path(LOCALEDIR, gretl_home(), "locale", NULL);
 # endif /* WIN32 */
-
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE); 
@@ -562,9 +561,8 @@ int main (int argc, char *argv[])
     }
 
 #ifdef WIN32
-    if (!batch) {
-	bind_textdomain_codeset(PACKAGE, "CP850");
-    }
+    /* revised 2015-05-28 */
+    cli_set_win32_charset(PACKAGE);
 #endif
 
     libgretl_init();
