@@ -136,7 +136,7 @@ enum {
 
 #define SHOW_LISTS_CODE(c) (c == SUMMARY || c == CORR || c == MAHAL || c == PCA)
 
-#define LIST_USE_INTS(c) (c == ELLIPSE)
+#define LIST_USE_INTS(c) (c == ELLIPSE || c == SAVE_FUNCTIONS)
 
 #define WANT_TOGGLES(c) (c == DPANEL || \
                          c == ARMA || \
