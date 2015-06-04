@@ -92,6 +92,8 @@ void win32_stopwatch_init (void);
 
 double win32_stopwatch (void);
 
+int cli_set_win32_charset (const char *package);
+
 #endif /* WIN32 */
 
 #endif /* GRETL_WIN32_H */

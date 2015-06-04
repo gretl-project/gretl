@@ -245,38 +245,6 @@ void set_gretl_charset (void)
 
 #ifdef WIN32
 
-int cli_set_win32_charset (const char *package)
-{
-    const char *charset = NULL;
-    char win32_charset[16];
-
-    native_utf8 = g_get_charset(&charset);
-
-    if (native_utf8) {
-	set_stdio_use_utf8();
-    }
-
-    *win32_charset = '\0';
-    gretl_cpage = 850;
-
-    if (!native_utf8 && charset != NULL && *charset != '\0') {
-	char *s = bind_textdomain_codeset(package, charset);
-
-	fprintf(stderr, "bind_textdomain_codeset returned '%s'\n", s);
-	strncat(win32_charset, charset, 15);
-	gretl_lower(win32_charset);
-	if (!strncmp(win32_charset, "cp", 2)) {
-	    gretl_cpage = atoi(win32_charset + 2);
-	    
-	}
-    }
-
-    fprintf(stderr, "cli_set_win32_charset: charset='%s', gretl_cpage=%d\n",
-	    charset, gretl_cpage);
-
-    return 0;
-}
-
 static void set_cp_from_locale (const char *loc)
 {
     const char *p = strrchr(loc, '.');

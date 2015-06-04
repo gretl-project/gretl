@@ -1576,3 +1576,17 @@ double win32_stopwatch (void)
     return (double) dt / 1.0e6;
 } 
 
+int cli_set_win32_charset (const char *package)
+{
+    char console_charset[16] = {0};
+    UINT CP;
+
+    CP = GetConsoleOutputCP();
+
+    sprintf(console_charset, "CP%d", (int) CP);
+    bind_textdomain_codeset(package, console_charset);
+
+    printf("cli_set_win32_charset: charset='%s'\n", console_charset);
+
+    return 0;
+}
