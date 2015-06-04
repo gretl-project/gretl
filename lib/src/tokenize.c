@@ -806,7 +806,7 @@ static int closing_delimiter_pos (const char *s)
    "catch" or assignment to an object.
 */
 
-static int min_token_index (CMD *c)
+static int min_token_index (CMD *c, int idx_only)
 {
     int pos = 0, apos = 1;
 
@@ -819,8 +819,11 @@ static int min_token_index (CMD *c)
     if (c->ntoks > apos && c->toks[apos].type == TOK_ASSIGN) {
 	/* advance by assignment target and operator */
 	pos += 2;
+    } else if (idx_only && c->ntoks == 2 && c->toks[0].s[0] == '@') {
+	/* got a @-term in pos 0, not a command word */
+	pos = 1;
     }
-
+    
     c->cstart = pos;
 
     return c->cstart;
@@ -3032,6 +3035,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    err = push_string_token(cmd, tok, s, pos);	    
 	} else if (isalpha(*s) || *s == '$' || (at_ok && *s == '@')) {
 	    /* regular or accessor identifier */
+	    if (*s == '@') fprintf(stderr, "HERE 1, @\n");
 	    n = 1 + namechar_spn(s+1);
 	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
 	    strncat(tok, s, m);
@@ -3110,7 +3114,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 
 	if (!skipped && cmd->ci == 0 && cmd->ntoks > 0) {
 	    /* use current info to determine command index? */
-	    int imin = min_token_index(cmd);
+	    int imin = min_token_index(cmd, idx_only);
 
 	    if (cmd->ntoks > imin) {
 		try_for_command_index(cmd, imin, dset, idx_only);

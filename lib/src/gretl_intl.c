@@ -260,7 +260,9 @@ int cli_set_win32_charset (const char *package)
     gretl_cpage = 850;
 
     if (!native_utf8 && charset != NULL && *charset != '\0') {
-	bind_textdomain_codeset(package, charset);
+	char *s = bind_textdomain_codeset(package, charset);
+
+	fprintf(stderr, "bind_textdomain_codeset returned '%s'\n", s);
 	strncat(win32_charset, charset, 15);
 	gretl_lower(win32_charset);
 	if (!strncmp(win32_charset, "cp", 2)) {
@@ -268,6 +270,9 @@ int cli_set_win32_charset (const char *package)
 	    
 	}
     }
+
+    fprintf(stderr, "cli_set_win32_charset: charset='%s', gretl_cpage=%d\n",
+	    charset, gretl_cpage);
 
     return 0;
 }
@@ -1179,28 +1184,6 @@ char *utf8_to_latin (const char *s)
     char *ret = NULL;
 
     get_gp_encoding_set(to_set, ENC_ISO_LATIN);
-
-    ret = g_convert(s, -1, to_set, "UTF-8",
-		    &read, &wrote, &err);
-
-    if (err != NULL) {
-	gretl_errmsg_set(err->message);
-	g_error_free(err);
-    }
-
-    return ret;
-}
-
-/* convert from UTF-8 to Windows codepage, e.g. for EMF graphs */
-
-char *utf8_to_cp (const char *s)
-{
-    char to_set[8];
-    gsize read, wrote;
-    GError *err = NULL;
-    char *ret = NULL;
-
-    get_gp_encoding_set(to_set, ENC_CODEPAGE);
 
     ret = g_convert(s, -1, to_set, "UTF-8",
 		    &read, &wrote, &err);

@@ -360,6 +360,11 @@ int main (int argc, char *argv[])
 	}
     }
 
+#ifdef WIN32
+    /* revised 2015-05-28 */
+    cli_set_win32_charset(PACKAGE);
+#endif    
+
     err = libgretl_mpi_init(id, np, use_dcmt);
     if (err) {
 	fputs("Couldn't initialize the MPI sub-system\n", stderr);

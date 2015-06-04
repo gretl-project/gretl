@@ -1376,12 +1376,7 @@ int dataset_copy_series_as (DATASET *dset, int v, const char *name)
 	if (dset->varinfo[v]->flags & VAR_LISTARG) {
 	    dset->varinfo[vnew]->flags &= ~VAR_LISTARG;
 	}
-	if (dset->varinfo[v]->stack_level == gretl_function_depth()) {
-	    /* the source series has not already been shifted to
-	       greater stack level 
-	    */
-	    dset->varinfo[vnew]->stack_level += 1;
-	}
+	dset->varinfo[vnew]->stack_level = gretl_function_depth() + 1;
 #if 0
 	fprintf(stderr, "copied var %d ('%s', level %d) as var %d ('%s', level %d): ",
 		v, dset->varname[v], dset->varinfo[v]->stack_level,
