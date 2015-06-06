@@ -2533,7 +2533,9 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
 
     if (!skip) {
 	/* start by testing all candidate vars for unit root */
-	coint_set_sample(clist, nv, order, dset);
+	int uniform_order = (opt & OPT_E)? 0 : order;
+	
+	coint_set_sample(clist, nv, uniform_order, dset);
 	for (i=1; i<=nv; i++) {
 	    ainfo.v = clist[i];
 	    ainfo.order = order;
