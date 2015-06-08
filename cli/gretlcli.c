@@ -561,7 +561,7 @@ int main (int argc, char *argv[])
     }
 
 #ifdef WIN32
-    /* revised 2015-05-28 */
+    /* revised 2015-06-05 */
     cli_set_win32_charset(PACKAGE);
 #endif
 
