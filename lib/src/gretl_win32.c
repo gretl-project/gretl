@@ -1574,19 +1574,44 @@ double win32_stopwatch (void)
     wt0 = wt1;
 
     return (double) dt / 1.0e6;
-} 
+}
+
+#ifndef WIN64
+/* missing from mingw's wincon.h */
+BOOL WINAPI GetCurrentConsoleFont(HANDLE, BOOL, PCONSOLE_FONT_INFO);
+#endif
 
 int cli_set_win32_charset (const char *package)
 {
-    char console_charset[16] = {0};
-    UINT CP;
+    int ttfont = 0;
+    HANDLE h;
 
-    CP = GetConsoleOutputCP();
+    h = GetStdHandle(STD_OUTPUT_HANDLE);
+    
+    if (h != NULL) {
+	CONSOLE_FONT_INFO finfo = {0};
 
-    sprintf(console_charset, "CP%d", (int) CP);
-    bind_textdomain_codeset(package, console_charset);
+	if (GetCurrentConsoleFont(h, FALSE, &finfo)) {
+	    /* a shot in the dark here, based on what I found
+	       on Windows 8 */
+	    ttfont = finfo.nFont >= 8;
+	}
+    }
+    
+    /* The first option below seems to work OK if the Windows console
+       is using a TrueType font (e.g. Lucida Console or Consolas) 
+    */
 
-    printf("cli_set_win32_charset: charset='%s'\n", console_charset);
+    if (ttfont && IsValidCodePage(65001)) {
+	SetConsoleOutputCP(65001);
+	bind_textdomain_codeset(package, "UTF-8");
+    } else {
+	UINT CP = GetConsoleOutputCP();
+	char console_charset[16] = {0};
+	
+	sprintf(console_charset, "CP%d", (int) CP);
+	bind_textdomain_codeset(package, console_charset);
+    }
 
     return 0;
 }

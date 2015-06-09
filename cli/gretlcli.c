@@ -233,6 +233,9 @@ static void nls_init (void)
     gretl_setenv("LC_NUMERIC", "");
     setlocale(LC_NUMERIC, "");
     reset_local_decpoint();
+# ifdef WIN32
+    cli_set_win32_charset(PACKAGE);
+# endif
 #endif /* ENABLE_NLS */
 }
 
@@ -559,11 +562,6 @@ int main (int argc, char *argv[])
 	    force_language(LANG_C);
 	}
     }
-
-#ifdef WIN32
-    /* revised 2015-06-05 */
-    cli_set_win32_charset(PACKAGE);
-#endif
 
     libgretl_init();
 

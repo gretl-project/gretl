@@ -200,7 +200,6 @@ static void nls_init (void)
 
     build_path(LOCALEDIR, gretl_home(), "locale", NULL);
 # endif /* WIN32 */
-
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE); 
@@ -209,6 +208,9 @@ static void nls_init (void)
     gretl_setenv("LC_NUMERIC", "");
     setlocale(LC_NUMERIC, "");
     reset_local_decpoint();
+# ifdef WIN32
+    cli_set_win32_charset(PACKAGE);
+# endif    
 #endif /* ENABLE_NLS */
 }
 
@@ -359,11 +361,6 @@ int main (int argc, char *argv[])
 	    force_language(LANG_C);
 	}
     }
-
-#ifdef WIN32
-    /* revised 2015-05-28 */
-    cli_set_win32_charset(PACKAGE);
-#endif    
 
     err = libgretl_mpi_init(id, np, use_dcmt);
     if (err) {
