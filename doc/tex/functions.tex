@@ -95,7 +95,8 @@ function parameter may include some additional fields, as follows:
 \item For \texttt{scalar} or \texttt{int} parameters: minimum, maximum
   and default values; or for \texttt{bool} parameters, just a default
   value.
-\item For optional pointer and list arguments (see
+\item For optional arguments in pointer form, and additionally for
+  string or list arguments in standard form (see
   section~\ref{func-details}), the special default value
   \texttt{null}.
 \item For all parameters, a descriptive string.
@@ -308,9 +309,9 @@ so it should rarely be necessary to delete functions explicitly.
 \subsection{Variables versus pointers}
 \label{funscope}
 
-Series, scalar, and matrix arguments to functions can be passed in two
-ways: ``as they are'', or as pointers. For example, consider the
-following:
+Series, scalar, matrix, bundle, as well as array arguments to
+functions can be passed in two ways: ``as they are'', or as
+pointers. For example, consider the following:
 \begin{code}
 function series triple1(series x)
   return 3*x
