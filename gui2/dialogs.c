@@ -6187,7 +6187,7 @@ void percent_change_dialog (int v)
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    msg = g_strdup_printf("percent change in %s", dataset->varname[v]);
+    msg = g_strdup_printf(_("percent change in %s"), dataset->varname[v]);
     tmp = gtk_label_new(msg);
     g_free(msg);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
