@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.10.1)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-06-10 09:28+0100\n"
-"PO-Revision-Date: 2015-05-26 19:34+0100\n"
+"PO-Revision-Date: 2015-06-10 13:29+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -9639,9 +9639,9 @@ msgid "Always goes to a new window"
 msgstr "Ir sempre a unha nova xanela"
 
 #: gui2/dialogs.c:6190
-#, fuzzy, c-format
+#, c-format
 msgid "percent change in %s"
-msgstr "Engadir variación porcentual..."
+msgstr "Variación porcentual en %s"
 
 #: gui2/dialogs.c:6197 gui2/ssheet.c:994
 #, c-format
@@ -9842,7 +9842,7 @@ msgstr "Filtro pasabanda de Baxter-King"
 
 #: gui2/filters.c:100
 msgid "Butterworth filter"
-msgstr "Fltro Butterworth"
+msgstr "Filtro Butterworth"
 
 #: gui2/filters.c:102
 msgid "Polynomial trend"
@@ -16284,7 +16284,7 @@ msgstr "As estimacións de medias móbiles están fóra dos límites\n"
 #: plugin/arma.c:1446 plugin/arma_init.c:351 plugin/arma_init.c:1139
 #: plugin/arma_init.c:1214 plugin/arma_init.c:1217
 msgid "ARMA initialization"
-msgstr "Inicialización do ARMA"
+msgstr "Iniciación do ARMA"
 
 #: plugin/arma.c:1447
 msgid "user-specified values"
