@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-06-10 09:28+0100\n"
-"PO-Revision-Date: 2015-03-31 22:19+0100\n"
+"PO-Revision-Date: 2015-06-11 10:20+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -27,14 +27,12 @@ msgid "lagged differences"
 msgstr "diferenças desfasadas"
 
 #: lib/src/adf_kpss.c:504
-#, fuzzy
 msgid "modified BIC, Perron-Qu"
-msgstr "BIC modificado"
+msgstr "BIC, Perron-Qu modificado"
 
 #: lib/src/adf_kpss.c:506
-#, fuzzy
 msgid "modified AIC, Perron-Qu"
-msgstr "AIC modificado"
+msgstr "AIC, Perron-Qu modificado"
 
 #: lib/src/adf_kpss.c:512 gui2/library.c:920
 msgid "modified BIC"
@@ -181,12 +179,12 @@ msgstr "variável de tendência temporal"
 #: lib/src/adf_kpss.c:1053
 #, c-format
 msgid "GLS detrending: b0 = %g, b1 = %g\n"
-msgstr ""
+msgstr "remoção de tendência GLS: b0 = %g, b1 = %g\n"
 
 #: lib/src/adf_kpss.c:1056
-#, fuzzy, c-format
+#, c-format
 msgid "GLS estimate of b0: %g\n"
-msgstr "Estimativas Mínimos Quadrados (OLS)"
+msgstr "estimativa GLS de b0: %g\n"
 
 #: lib/src/adf_kpss.c:1150
 msgid "Invalid option"
@@ -3319,22 +3317,22 @@ msgstr "A função '%s' foi apagada\n"
 
 #: lib/src/gretl_func.c:5081
 msgid "Expected a type identifier"
-msgstr ""
+msgstr "É esperado um identificador de tipo"
 
 #: lib/src/gretl_func.c:5086
-#, fuzzy, c-format
+#, c-format
 msgid "Unrecognized data type '%s'"
-msgstr "Tipo de dados desconhecido"
+msgstr "Tipo de dados desconhecido '%s'"
 
 #: lib/src/gretl_func.c:5089
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid parameter type"
-msgstr "%s: tipo de argumento inválido %s"
+msgstr "%s: tipo de parâmetro inválido"
 
 #: lib/src/gretl_func.c:5106
-#, fuzzy, c-format
+#, c-format
 msgid "parameter %d: name is missing"
-msgstr "Falta nome da variável"
+msgstr "parâmetro %d: falta o nome"
 
 #: lib/src/gretl_func.c:5285
 #, c-format
@@ -9256,9 +9254,8 @@ msgid "gretl: Chow test"
 msgstr "gretl: teste Chow"
 
 #: gui2/dialogs.c:2931
-#, fuzzy
 msgid "Test a subset of regressors"
-msgstr "Regressores de selecção"
+msgstr "Testa um subconjunto de regressores"
 
 #: gui2/dialogs.c:3043 gui2/dialogs.c:3339
 msgid "shaded area"
@@ -9634,9 +9631,9 @@ msgid "Always goes to a new window"
 msgstr "Vai sempre para uma nova janela"
 
 #: gui2/dialogs.c:6190
-#, fuzzy, c-format
+#, c-format
 msgid "percent change in %s"
-msgstr "Adicionar alteração percentual..."
+msgstr "alteração percentual em %s"
 
 #: gui2/dialogs.c:6197 gui2/ssheet.c:994
 #, c-format
@@ -10214,39 +10211,32 @@ msgid "Error reading package"
 msgstr "Erro ao ler o pacote"
 
 #: gui2/fnsave.c:323
-#, fuzzy
 msgid "_Save gfn"
-msgstr "_Gravar"
+msgstr "_Gravar gfn"
 
 #: gui2/fnsave.c:324
-#, fuzzy
 msgid "Save gfn _as..."
-msgstr "Gravar como..."
+msgstr "Gravar gfn como..."
 
 #: gui2/fnsave.c:325
-#, fuzzy
 msgid "Save _zip file..."
-msgstr "Gravar para ficheiro"
+msgstr "Gravar ficheiro _zip..."
 
 #: gui2/fnsave.c:326
-#, fuzzy
 msgid "Save as _script..."
-msgstr "Gravar como ficheiro de comandos"
+msgstr "Gravar como ficheiro de comando_s..."
 
 #: gui2/fnsave.c:327
-#, fuzzy
 msgid "_Write spec file..."
-msgstr "Escrever o ficheiro de especificação"
+msgstr "Escrever ficheiro de _especificação..."
 
 #: gui2/fnsave.c:328
-#, fuzzy
 msgid "_Upload to server..."
-msgstr "Enviar pacote para o servidor ao gravar"
+msgstr "Enviar para o ser_vidor..."
 
 #: gui2/fnsave.c:521 gui2/fnsave.c:533
-#, fuzzy
 msgid "Please complete all fields"
-msgstr "Por favor primeiro abra um ficheiro de dados"
+msgstr "Por favor complete todos os campos"
 
 #: gui2/fnsave.c:540
 msgid "Please add a sample script for this package"
@@ -13116,7 +13106,7 @@ msgstr "Ordem de desfasamento para o teste ADF:"
 
 #: gui2/library.c:1041
 msgid "use Perron-Qu method"
-msgstr ""
+msgstr "use o método Perron-Qu"
 
 #: gui2/library.c:1042 gui2/library.c:1050 gui2/library.c:1117
 #: gui2/library.c:1126
@@ -13351,9 +13341,8 @@ msgid "Normal Q-Q plot"
 msgstr "Gráfico Quantil-Quantil Normal"
 
 #: gui2/library.c:2848
-#, fuzzy
 msgid "You must select at least one regressor"
-msgstr "Tem que seleccionar uma variável limite inferior"
+msgstr "Tem que selecionar pelo menos um regressor"
 
 #: gui2/library.c:2899 gui2/library.c:3009
 msgid "gretl: Chow test output"
@@ -13365,7 +13354,6 @@ msgstr ""
 "Este teste apenas está implementado para modelos Mínimos Quadrados (OLS)"
 
 #: gui2/library.c:2952
-#, fuzzy
 msgid "gretl: chow test"
 msgstr "gretl: teste Chow"
 
@@ -14863,9 +14851,8 @@ msgid "Select variables to copy"
 msgstr "Seleccionar variáveis para copiar"
 
 #: gui2/selector.c:6821
-#, fuzzy
 msgid "Select variables to test"
-msgstr "Seleccionar variáveis para omitir"
+msgstr "Selecionar variáveis para testar"
 
 #: gui2/selector.c:6823
 msgid "Define named list"
@@ -16972,9 +16959,8 @@ msgid "Irregular"
 msgstr "Irregular"
 
 #: plugin/tramo_options.c:425
-#, fuzzy
 msgid "Linearized series"
-msgstr "acrescentar série"
+msgstr "Linearizar série"
 
 #: plugin/tramo_options.c:439
 msgid "Output"
@@ -17089,9 +17075,9 @@ msgid "irregular component of %s"
 msgstr "componente irregular de %s"
 
 #: plugin/tramo-x12a.c:70
-#, fuzzy, c-format
+#, c-format
 msgid "linearized %s"
-msgstr "iterado %s"
+msgstr "%s linearizado"
 
 #: plugin/tramo-x12a.c:239
 msgid "X-12-ARIMA options"
