@@ -3972,8 +3972,9 @@ static NODE *matrix_isnan_node (NODE *n, parser *p)
 static NODE *apply_series_func (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_series_node(p);
-    int t, t1, t2;
+    int t;
 
+#if 0 /* initial parallelization experiment */
     if (ret != NULL) {
 	const double *x;
 
@@ -3984,13 +3985,43 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
 	}
 
 	if (!p->err) {
-	    t1 = (autoreg(p))? p->obs : p->dset->t1;
-	    t2 = (autoreg(p))? p->obs : p->dset->t2;
-	    for (t=t1; t<=t2; t++) {
-		ret->v.xvec[t] = real_apply_func(x[t], f, p);
+	    if (autoreg(p)) {
+		ret->v.xvec[p->obs] = real_apply_func(x[p->obs], f, p);
+	    } else {
+#if defined(_OPENMP)		
+#pragma omp parallel for private(t)		
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		    ret->v.xvec[t] = real_apply_func(x[t], f, p);
+		}
+#else
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		    ret->v.xvec[t] = real_apply_func(x[t], f, p);
+		}
+#endif		
 	    }
 	}
     }
+#else    
+    if (ret != NULL) {
+	const double *x;
+
+	if (n->t == SERIES) {
+	    x = n->v.xvec;
+	} else {
+	    x = get_colvec_as_series(n, f, p);
+	}
+
+	if (!p->err) {
+	    if (autoreg(p)) {
+		ret->v.xvec[p->obs] = real_apply_func(x[p->obs], f, p);
+	    } else {
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		    ret->v.xvec[t] = real_apply_func(x[t], f, p);
+		}
+	    }
+	}
+    }
+#endif    
 
     return ret;
 }
