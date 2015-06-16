@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-06-10 09:28+0100\n"
-"PO-Revision-Date: 2015-05-26 19:01+0200\n"
+"PO-Revision-Date: 2015-06-16 13:46+0200\n"
 "Last-Translator: \n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -2636,7 +2636,7 @@ msgstr "Se ha generado la lista %s"
 #: lib/src/genmain.c:95
 #, c-format
 msgid "Replaced string %s"
-msgstr "Se ha reemplazado la matriz %s"
+msgstr "Se ha reemplazado la cadena de caracteres %s"
 
 #: lib/src/genmain.c:97
 #, c-format
