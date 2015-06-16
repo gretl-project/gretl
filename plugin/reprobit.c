@@ -38,8 +38,10 @@ struct reprob_container_ {
     int T;                   /* time dimension of panel */
     int Tmax;                /* max usable time-series observations */
     int *unit_obs;           /* array of effective unit T's */
+    int *unit_start;         /* array of starting indices for units */
     int nobs;                /* total number of observations */
     int qp;                  /* number of quadrature points */
+    int parallel;
 
     int *y;	             /* dependent var (0/1) */
     gretl_matrix *X;	     /* main eq. regressors */
@@ -67,8 +69,11 @@ reprob_container *rep_container_new (const int *list)
 	C->ll = NADBL;
 	C->N = 0;
 	C->nobs = 0;
+	C->parallel = 0;
 
 	C->unit_obs = NULL;
+	C->unit_start = NULL;
+	
 	C->y = NULL;
 	C->X = NULL;
 	C->R = NULL;
@@ -100,7 +105,7 @@ static int reprobit_obs_accounts (reprob_container *C,
 				  const DATASET *dset)
 {
     int unit, ubak = -1;
-    int i, t;
+    int i, t, s;
 
     C->nobs = pmod->nobs;
     C->T = dset->pd;
@@ -116,18 +121,20 @@ static int reprobit_obs_accounts (reprob_container *C,
 	}
     }
 
-    C->unit_obs = malloc(C->N * sizeof *C->unit_obs);
+    C->unit_obs = malloc(2 * C->N * sizeof *C->unit_obs);
     if (C->unit_obs == NULL) {
 	return E_ALLOC;
     }
 
+    C->unit_start = C->unit_obs + C->N;
+
     for (i=0; i<C->N; i++) {
-	C->unit_obs[i] = 0;
+	C->unit_obs[i] = C->unit_start[i] = 0;
     }
 
     C->Tmax = 0;
     ubak = -1;
-    i = 0;
+    i = s = 0;
 
     /* build the obs-count array */
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -138,10 +145,12 @@ static int reprobit_obs_accounts (reprob_container *C,
 		    C->Tmax = C->unit_obs[i];
 		}
 		C->unit_obs[++i] = 1;
+		C->unit_start[i] = s;
 	    } else {
 		C->unit_obs[i] += 1;
 	    }
 	    ubak = unit;
+	    s++;
 	}
     }
 
@@ -277,6 +286,13 @@ static int rep_container_fill (reprob_container *C,
 	gretl_matrix_free(tmp);
     }
 
+#if defined(_OPENMP)
+    if (C->nobs * C->qp > 900) {
+	/* FIXME threshold */
+	C->parallel = 1;
+    }
+#endif    
+
     return err;
 }
 
@@ -299,9 +315,7 @@ static int reprobit_score (double *theta, double *g, int npar,
     reprob_container *C = (reprob_container *) p;
     gretl_matrix *Q, *qi;
     const double *nodes = C->nodes->val;
-    double x, qij, ndxi, node;
-    int i, j, k, s, t, h = C->qp;
-    int sign = 1;
+    int i, j, k, t;
     int err = 0;
 
     k = C->npar - 1;
@@ -311,24 +325,29 @@ static int reprobit_score (double *theta, double *g, int npar,
     update_ndx(C, theta);
 
     /* form the Q and R matrices */
-    s = 0;
+
+#if defined(_OPENMP)
+#pragma omp parallel for private(i, j, t) if (C->parallel)
+#endif    
     for (i=0; i<C->N; i++) {
 	int Ti = C->unit_obs[i];
+	int t0 = C->unit_start[i];
+	double x, qij, node, ndxi;
+	int sign;
 
-	for (j=0; j<h; j++) {
+	for (j=0; j<C->qp; j++) {
 	    node = C->scale * nodes[j];
 	    qij = 1.0;
 	    for (t=0; t<Ti; t++) {
-		ndxi = C->ndx->val[s+t];
-		sign = C->y[s+t] ? 1 : -1;
+		ndxi = C->ndx->val[t0+t];
+		sign = C->y[t0+t] ? 1 : -1;
 		x = sign * (ndxi + node);
 		qij *= normal_cdf(x);
 		x = sign * invmills(-x);
-		gretl_matrix_set(C->R, s+t, j, x);
+		gretl_matrix_set(C->R, t0+t, j, x);
 	    }
 	    gretl_matrix_set(Q, i, j, qij);
 	}
-	s += Ti;
     }
 
     gretl_matrix_multiply(Q, C->wts, C->lik);
@@ -337,13 +356,16 @@ static int reprobit_score (double *theta, double *g, int npar,
 	g[i] = 0.0;
     }
 
-    s = 0;
+#if 0 /* defined(_OPENMP) */
+#pragma omp parallel for private(i, j, t) if (C->parallel)
+#endif      
     for (i=0; i<C->N; i++) {
 	int ii, Ti = C->unit_obs[i];
-	double rtj, tmp;
+	int t0 = C->unit_start[i];
+	double x, qij, rtj, tmp;
 
 	for (ii=0; ii<=k; ii++) {
-	    for (j=0; j<h; j++) {
+	    for (j=0; j<C->qp; j++) {
 		x = qi->val[j] = 0.0;
 		qij = gretl_matrix_get(Q, i, j);
 		if (ii == k) {
@@ -351,20 +373,22 @@ static int reprobit_score (double *theta, double *g, int npar,
 		}
 		for (t=0; t<Ti; t++) {
                     if (ii < k) {
-		        x = gretl_matrix_get(C->X, s+t, ii);
+		        x = gretl_matrix_get(C->X, t0+t, ii);
                     }
- 		    rtj = gretl_matrix_get(C->R, s+t, j);
+ 		    rtj = gretl_matrix_get(C->R, t0+t, j);
 		    qi->val[j] += x * rtj * qij;
 		}
 		qi->val[j] /= C->lik->val[i];
 	    }
+	    /* the next line is problematic for parallelization:
+	       is there a workaround? */
             tmp = gretl_vector_dot_product(qi, C->wts, &err);
 	    g[ii] += tmp;
  	}
-	s += Ti;
     }
 
     g[k] /= 2;
+    
     return err;
 }
 
@@ -372,7 +396,7 @@ static double reprobit_ll (const double *theta, void *p)
 {
     reprob_container *C = (reprob_container *) p;
     double x, pij, node;
-    int i, j, t, s, h = C->qp;
+    int i, j, t;
     int err = 0;
 
     if (theta[C->npar-1] < -9.0) {
@@ -383,25 +407,33 @@ static double reprobit_ll (const double *theta, void *p)
     update_ndx(C, theta);
     gretl_matrix_zero(C->P);
 
-    s = 0;
+    /* Note on parallelization: this may be worthwhile if N is big
+       enough. In that case i, j, t, Ti and pij will have to be
+       private. Prelim work: add unit_start array (precompute
+       the initial index into C->ndx and C->y for each unit).
+    */
+
+#if defined(_OPENMP)
+#pragma omp parallel for private(i, j, t, node, pij) if (C->parallel)
+#endif
     for (i=0; i<C->N; i++) {
 	int Ti = C->unit_obs[i];
+	int t0 = C->unit_start[i];
 
-	for (j=0; j<h; j++) {
+	for (j=0; j<C->qp; j++) {
 	    node = gretl_vector_get(C->nodes, j);
 	    pij = 1.0;
 	    for (t=0; t<Ti; t++) {
-		x = C->ndx->val[s+t] + C->scale * node;
+		x = C->ndx->val[t0+t] + C->scale * node;
 		/* the probability */
-		pij *= normal_cdf(C->y[s+t] ? x : -x);
+		pij *= normal_cdf(C->y[t0+t] ? x : -x);
 		if (pij < 1.0e-200) {
 		    break;
 		}
 	    }
 	    gretl_matrix_set(C->P, i, j, pij);
 	}
-	s += Ti;
-    }	    
+    }
 
     err = gretl_matrix_multiply(C->P, C->wts, C->lik);
 
