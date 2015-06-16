@@ -309,19 +309,31 @@ static void update_ndx (reprob_container *C, const double *theta)
     C->scale = exp(theta[C->npar-1]/2.0);
 }
 
+static double quick_dot_product (const double *x,
+				 const double *y,
+				 int n)
+{
+    double ret = 0.0;
+    int i;
+
+    for (i=0; i<n; i++) {
+	ret += x[i] * y[i];
+    }
+
+    return ret;
+}
+
 static int reprobit_score (double *theta, double *g, int npar, 
 			   BFGS_CRIT_FUNC ll, void *p)
 {
     reprob_container *C = (reprob_container *) p;
-    gretl_matrix *Q, *qi;
+    gretl_matrix *Q = C->P; /* re-use existing storage */
+    gretl_matrix *qi = C->qi;
     const double *nodes = C->nodes->val;
     int i, j, k, t;
     int err = 0;
 
     k = C->npar - 1;
-    Q = C->P;   /* re-use existing storage of right size */
-    qi = C->qi; /* reduce verbosity below */ 
-
     update_ndx(C, theta);
 
     /* form the Q and R matrices */
@@ -356,13 +368,14 @@ static int reprobit_score (double *theta, double *g, int npar,
 	g[i] = 0.0;
     }
 
-#if 0 /* defined(_OPENMP) */
-#pragma omp parallel for private(i, j, t) if (C->parallel)
-#endif      
+    /* the last block here is quite tricky to 
+       parallelize: any thoughts?
+    */
+
     for (i=0; i<C->N; i++) {
 	int ii, Ti = C->unit_obs[i];
 	int t0 = C->unit_start[i];
-	double x, qij, rtj, tmp;
+	double x, qij, rtj;
 
 	for (ii=0; ii<=k; ii++) {
 	    for (j=0; j<C->qp; j++) {
@@ -372,19 +385,16 @@ static int reprobit_score (double *theta, double *g, int npar,
 		    x = C->scale * nodes[j];
 		}
 		for (t=0; t<Ti; t++) {
-                    if (ii < k) {
-		        x = gretl_matrix_get(C->X, t0+t, ii);
-                    }
- 		    rtj = gretl_matrix_get(C->R, t0+t, j);
+		    if (ii < k) {
+			x = gretl_matrix_get(C->X, t0+t, ii);
+		    }
+		    rtj = gretl_matrix_get(C->R, t0+t, j);
 		    qi->val[j] += x * rtj * qij;
 		}
 		qi->val[j] /= C->lik->val[i];
 	    }
-	    /* the next line is problematic for parallelization:
-	       is there a workaround? */
-            tmp = gretl_vector_dot_product(qi, C->wts, &err);
-	    g[ii] += tmp;
- 	}
+	    g[ii] += quick_dot_product(qi->val, C->wts->val, C->qp);
+	}
     }
 
     g[k] /= 2;
@@ -406,12 +416,6 @@ static double reprobit_ll (const double *theta, void *p)
 
     update_ndx(C, theta);
     gretl_matrix_zero(C->P);
-
-    /* Note on parallelization: this may be worthwhile if N is big
-       enough. In that case i, j, t, Ti and pij will have to be
-       private. Prelim work: add unit_start array (precompute
-       the initial index into C->ndx and C->y for each unit).
-    */
 
 #if defined(_OPENMP)
 #pragma omp parallel for private(i, j, t, node, pij) if (C->parallel)
