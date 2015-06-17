@@ -330,6 +330,7 @@ static int reprobit_score (double *theta, double *g, int npar,
     gretl_matrix *Q = C->P; /* re-use existing storage */
     gretl_matrix *qi = C->qi;
     const double *nodes = C->nodes->val;
+    double *qival = NULL;
     int i, j, k, t;
     int err = 0;
 
@@ -372,6 +373,42 @@ static int reprobit_score (double *theta, double *g, int npar,
        parallelize: any thoughts?
     */
 
+#if 0 /* defined(_OPENMP) */
+#pragma omp parallel if (C->parallel) private(i, j, t, qival)
+    {
+	/* this is broken! */
+	qival = malloc(C->qp * sizeof *qival);
+
+#pragma omp for	
+	for (i=0; i<C->N; i++) {
+	    int ii, Ti = C->unit_obs[i];
+	    int t0 = C->unit_start[i];
+	    double x, qij, rtj;
+
+	    for (ii=0; ii<=k; ii++) {
+		for (j=0; j<C->qp; j++) {
+		    x = qival[j] = 0.0;
+		    qij = gretl_matrix_get(Q, i, j);
+		    if (ii == k) {
+			x = C->scale * nodes[j];
+		    }
+		    for (t=0; t<Ti; t++) {
+			if (ii < k) {
+			    x = gretl_matrix_get(C->X, t0+t, ii);
+			}
+			rtj = gretl_matrix_get(C->R, t0+t, j);
+			qival[j] += x * rtj * qij;
+		    }
+		    qival[j] /= C->lik->val[i];
+		}
+		g[ii] += quick_dot_product(qival, C->wts->val, C->qp);
+	    }
+	}
+
+	free(qival);
+    }
+#else
+    /* single-threaded, works fine */
     for (i=0; i<C->N; i++) {
 	int ii, Ti = C->unit_obs[i];
 	int t0 = C->unit_start[i];
@@ -396,6 +433,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 	    g[ii] += quick_dot_product(qi->val, C->wts->val, C->qp);
 	}
     }
+#endif    
 
     g[k] /= 2;
     
@@ -418,7 +456,7 @@ static double reprobit_ll (const double *theta, void *p)
     gretl_matrix_zero(C->P);
 
 #if defined(_OPENMP)
-#pragma omp parallel for private(i, j, t, node, pij) if (C->parallel)
+#pragma omp parallel for private(i, j, t, node, pij, x) if (C->parallel)
 #endif
     for (i=0; i<C->N; i++) {
 	int Ti = C->unit_obs[i];
