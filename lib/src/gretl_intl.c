@@ -27,12 +27,13 @@
 
 static int numeric_c_locale_depth = 0;
 static char *numeric_locale = NULL;
+static int native_dot = -1;
 
 /**
  * gretl_push_c_numeric_locale:
  *
  * Description: Saves the current %LC_NUMERIC locale and sets it to "C".
- * This way you can safely read write floating point numbers all in the
+ * This way you can safely read/write floating point numbers all in the
  * same format, using '.' as the decimal character.  You should make sure 
  * that code between gretl_push_c_numeric_locale() and gretl_pop_c_numeric_locale()
  * doesn't do any setlocale calls, or locale may end up in a strange setting.
@@ -42,11 +43,22 @@ static char *numeric_locale = NULL;
 
 void gretl_push_c_numeric_locale (void)
 {
+    if (native_dot == -1) {
+	struct lconv *lc = localeconv();
+
+	native_dot = (*lc->decimal_point == '.');
+    }
+
+    if (native_dot == 1) {
+	return;
+    }
+    
     if (numeric_c_locale_depth == 0) {
 	free(numeric_locale);
 	numeric_locale = gretl_strdup(setlocale(LC_NUMERIC, NULL));
 	setlocale(LC_NUMERIC, "C");
     }
+    
     numeric_c_locale_depth++;
 }
 
