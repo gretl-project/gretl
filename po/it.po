@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-06-10 09:28+0100\n"
-"PO-Revision-Date: 2015-06-17 20:48+0200\n"
+"PO-Revision-Date: 2015-06-17 20:50+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -3339,7 +3339,7 @@ msgstr "Tipo di dati '%s' non riconosciuto"
 #: lib/src/gretl_func.c:5089
 #, c-format
 msgid "%s: invalid parameter type"
-msgstr "%s: tipo di parametro non valido %s"
+msgstr "%s: tipo di parametro non valido"
 
 #: lib/src/gretl_func.c:5106
 #, c-format
