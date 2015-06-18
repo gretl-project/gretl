@@ -24,6 +24,10 @@
 #include "gretl_normal.h"
 #include "libset.h"
 
+#ifdef _OPENMP
+# include <omp.h>
+#endif
+
 typedef struct reprob_container_ reprob_container;
 
 struct reprob_container_ {
@@ -70,6 +74,7 @@ reprob_container *rep_container_new (const int *list)
 	C->N = 0;
 	C->nobs = 0;
 	C->parallel = 0;
+	C->qi = NULL;
 
 	C->unit_obs = NULL;
 	C->unit_start = NULL;
@@ -91,6 +96,7 @@ static void rep_container_destroy (reprob_container *C)
 	gretl_matrix_free(C->X);
 	gretl_matrix_free(C->R);
 	gretl_matrix_block_destroy(C->B);
+	gretl_matrix_free(C->qi);
 	free(C);
     }
 }
@@ -249,7 +255,6 @@ static int rep_container_fill (reprob_container *C,
 				  &C->beta, k, 1,
 				  &C->nodes, 1, C->qp,
 				  &C->wts, C->qp, 1,
-				  &C->qi, 1, C->qp,
 				  NULL);
     if (C->B == NULL) {
 	return E_ALLOC;
@@ -287,11 +292,18 @@ static int rep_container_fill (reprob_container *C,
     }
 
 #if defined(_OPENMP)
-    if (C->nobs * C->qp > 900) {
-	/* FIXME threshold */
+    if (C->nobs * C->qp > 900 && get_omp_n_threads() > 1) {
+	/* FIXME threshold? */
 	C->parallel = 1;
     }
-#endif    
+#endif
+
+    if (!C->parallel) {
+	C->qi = gretl_matrix_alloc(1, C->qp);
+	if (C->qi == NULL) {
+	    err = E_ALLOC;
+	}
+    }
 
     return err;
 }
@@ -328,10 +340,9 @@ static int reprobit_score (double *theta, double *g, int npar,
 {
     reprob_container *C = (reprob_container *) p;
     gretl_matrix *Q = C->P; /* re-use existing storage */
-    gretl_matrix *qi = C->qi;
     const double *nodes = C->nodes->val;
-    double *qival = NULL;
     int i, j, k, t;
+    int done = 0;
     int err = 0;
 
     k = C->npar - 1;
@@ -369,17 +380,67 @@ static int reprobit_score (double *theta, double *g, int npar,
 	g[i] = 0.0;
     }
 
-    /* the last block here is quite tricky to 
-       parallelize: any thoughts?
-    */
+#if defined(_OPENMP)
+    if (C->parallel) {
+	double *qi, *all_qi = NULL;
+	
+#pragma omp parallel private(i, j, t, qi)
+	{
+	    int nt = omp_get_num_threads();
+	    int tid = omp_get_thread_num();
 
-#if 0 /* defined(_OPENMP) */
-#pragma omp parallel if (C->parallel) private(i, j, t, qival)
-    {
-	/* this is broken! */
-	qival = malloc(C->qp * sizeof *qival);
+	    if (tid == 0) {
+		/* master: allocate workspace for all */
+		all_qi = malloc(nt * C->qp * sizeof *all_qi);
+		if (all_qi == NULL) {
+		    err = E_ALLOC;
+		}
+	    }
 
-#pragma omp for	
+#pragma omp barrier	    
+	    qi = err ? NULL : all_qi + tid * C->qp;
+
+#pragma omp for
+	    for (i=0; i<C->N; i++) {
+		int ii, Ti = C->unit_obs[i];
+		int t0 = C->unit_start[i];
+		double x, qij, rtj;
+
+		if (qi == NULL) {
+		    continue;
+		}
+
+		for (ii=0; ii<=k; ii++) {
+		    for (j=0; j<C->qp; j++) {
+			x = qi[j] = 0.0;
+			qij = gretl_matrix_get(Q, i, j);
+			if (ii == k) {
+			    x = C->scale * nodes[j];
+			}
+			for (t=0; t<Ti; t++) {
+			    if (ii < k) {
+				x = gretl_matrix_get(C->X, t0+t, ii);
+			    }
+			    rtj = gretl_matrix_get(C->R, t0+t, j);
+			    qi[j] += x * rtj * qij;
+			}
+			qi[j] /= C->lik->val[i];
+		    }
+		    x = quick_dot_product(qi, C->wts->val, C->qp);
+#pragma omp atomic		
+		    g[ii] += x;
+		}
+	    }
+	}
+	free(all_qi);
+	done = 1;
+    }
+#endif /* _OPENMP */
+
+    if (!done) {
+	/* single-threaded variant */
+	double *qi = C->qi->val;
+	
 	for (i=0; i<C->N; i++) {
 	    int ii, Ti = C->unit_obs[i];
 	    int t0 = C->unit_start[i];
@@ -387,7 +448,7 @@ static int reprobit_score (double *theta, double *g, int npar,
 
 	    for (ii=0; ii<=k; ii++) {
 		for (j=0; j<C->qp; j++) {
-		    x = qival[j] = 0.0;
+		    x = qi[j] = 0.0;
 		    qij = gretl_matrix_get(Q, i, j);
 		    if (ii == k) {
 			x = C->scale * nodes[j];
@@ -397,43 +458,14 @@ static int reprobit_score (double *theta, double *g, int npar,
 			    x = gretl_matrix_get(C->X, t0+t, ii);
 			}
 			rtj = gretl_matrix_get(C->R, t0+t, j);
-			qival[j] += x * rtj * qij;
+			qi[j] += x * rtj * qij;
 		    }
-		    qival[j] /= C->lik->val[i];
+		    qi[j] /= C->lik->val[i];
 		}
-		g[ii] += quick_dot_product(qival, C->wts->val, C->qp);
+		g[ii] += quick_dot_product(qi, C->wts->val, C->qp);
 	    }
 	}
-
-	free(qival);
     }
-#else
-    /* single-threaded, works fine */
-    for (i=0; i<C->N; i++) {
-	int ii, Ti = C->unit_obs[i];
-	int t0 = C->unit_start[i];
-	double x, qij, rtj;
-
-	for (ii=0; ii<=k; ii++) {
-	    for (j=0; j<C->qp; j++) {
-		x = qi->val[j] = 0.0;
-		qij = gretl_matrix_get(Q, i, j);
-		if (ii == k) {
-		    x = C->scale * nodes[j];
-		}
-		for (t=0; t<Ti; t++) {
-		    if (ii < k) {
-			x = gretl_matrix_get(C->X, t0+t, ii);
-		    }
-		    rtj = gretl_matrix_get(C->R, t0+t, j);
-		    qi->val[j] += x * rtj * qij;
-		}
-		qi->val[j] /= C->lik->val[i];
-	    }
-	    g[ii] += quick_dot_product(qi->val, C->wts->val, C->qp);
-	}
-    }
-#endif    
 
     g[k] /= 2;
     
