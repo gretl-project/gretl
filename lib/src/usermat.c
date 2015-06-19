@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "matrix_extra.h"
+#include "gretl_array.h"
 #include "gretl_normal.h"
 #include "usermat.h"
 #include "genparse.h"
@@ -605,6 +606,45 @@ int umatrix_set_names_from_string (gretl_matrix *M,
 	    gretl_matrix_set_rownames(M, S);
 	} else {
 	    gretl_matrix_set_colnames(M, S);
+	} 
+    }
+
+    return err;
+}
+
+int umatrix_set_names_from_array (gretl_matrix *M, 
+				  void *data,
+				  int byrow)
+{
+    gretl_array *A = data;
+    int n, err = 0;
+
+    n = (byrow)? M->rows : M->cols;
+
+    if (A == NULL || gretl_array_get_length(A) == 0) {
+	if (byrow) {
+	    gretl_matrix_set_rownames(M, NULL);
+	} else {
+	    gretl_matrix_set_colnames(M, NULL);
+	}
+    } else {
+	char **AS;
+	int ns;
+
+	AS = gretl_array_get_strings(A, &ns);
+
+	if (ns != n) {
+	    err = E_NONCONF;
+	} else {
+	    char **S = strings_array_dup(AS, ns);
+
+	    if (S == NULL) {
+		err = E_ALLOC;
+	    } else if (byrow) {
+		gretl_matrix_set_rownames(M, S);
+	    } else {
+		gretl_matrix_set_colnames(M, S);
+	    }
 	} 
     }
 

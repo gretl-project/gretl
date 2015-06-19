@@ -3093,7 +3093,14 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
 
 	if (r->t == STR) {
 	    ret->v.xval = umatrix_set_names_from_string(m, r->v.str, byrow);
+	} else if (r->t == ARRAY) {
+	    if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
+		p->err = E_TYPES;
+	    } else {
+		ret->v.xval = umatrix_set_names_from_array(m, r->v.a, byrow);
+	    }	    
 	} else {
+	    /* some sort of list-bearing node */
 	    int *list = node_get_list(r, p);
 
 	    if (p->err) {
@@ -6758,9 +6765,10 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else if (rtype == GRETL_TYPE_MATRIX) {
 	    retp = &mret;
 	} else if (rtype == GRETL_TYPE_LIST) {
-	    if (p->targ != EMPTY && p->tree == t) {
+	    if (1 || (p->targ != EMPTY && p->tree == t)) {
 		/* "collect" the return value only on direct
-		   assignment, 2015-02-02 */
+		   assignment, 2015-02-02 
+		   FIXME -- why?!? */
 		retp = &iret;
 	    }
 	} else if (rtype == GRETL_TYPE_STRING) {
@@ -11494,8 +11502,8 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_COLNAMES:
     case F_ROWNAMES:
-	/* matrix, list or string as second arg */
-	if (l->t == MAT && (ok_list_node(r) || r->t == STR)) {
+	/* matrix, list, string or strings array as second arg */
+	if (l->t == MAT && (ok_list_node(r) || r->t == STR || r->t == ARRAY)) {
 	    ret = matrix_add_names(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;

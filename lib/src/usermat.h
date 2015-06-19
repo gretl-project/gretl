@@ -74,6 +74,10 @@ int umatrix_set_names_from_string (gretl_matrix *M,
 				   const char *s,
 				   int byrow);
 
+int umatrix_set_names_from_array (gretl_matrix *M, 
+				  void *data,
+				  int byrow);
+
 int umatrix_set_names_from_list (gretl_matrix *M, 
 				 const int *list,
 				 const DATASET *dset,
