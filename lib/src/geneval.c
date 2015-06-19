@@ -6765,7 +6765,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else if (rtype == GRETL_TYPE_MATRIX) {
 	    retp = &mret;
 	} else if (rtype == GRETL_TYPE_LIST) {
-	    if (1 || (p->targ != EMPTY && p->tree == t)) {
+	    if (p->targ != EMPTY && p->tree == t) {
 		/* "collect" the return value only on direct
 		   assignment, 2015-02-02 
 		   FIXME -- why?!? */

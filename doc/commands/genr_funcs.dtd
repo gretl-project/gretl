@@ -62,7 +62,7 @@
                series-or-list | smlist | pscalar | seebelow | fncall |
                anyfloat-or-list | list-or-string | listetc | scalar-or-vec |
                int-or-list | scalar-or-matrix | int | bool | pdmat |
-               bundle | varargs) "series"
+               strings-or-list | bundle | varargs) "series"
     optional  (true | false) "false"
     conditional (true | false) "false"
 >
