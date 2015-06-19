@@ -6766,9 +6766,11 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    retp = &mret;
 	} else if (rtype == GRETL_TYPE_LIST) {
 	    if (p->targ != EMPTY && p->tree == t) {
-		/* "collect" the return value only on direct
-		   assignment, 2015-02-02 
-		   FIXME -- why?!? */
+		/* 2015-02-02: "collect" the return value only on direct
+		   assignment. This is because otherwise we're likely to
+		   end up adding series to the caller's dataset without
+		   any authorization from the user.
+		*/
 		retp = &iret;
 	    }
 	} else if (rtype == GRETL_TYPE_STRING) {
