@@ -119,6 +119,7 @@ static void node_type_error (int ntype, int argnum, int goodt,
 			     NODE *bad, parser *p);
 static int *node_get_list (NODE *n, parser *p);
 static void reattach_series (NODE *n, parser *p);
+static void edit_matrix (parser *p);
 
 static const char *typestr (int t)
 {
@@ -7239,32 +7240,6 @@ static NODE *type_string_node (NODE *n, parser *p)
     return ret;
 }
 
-static int check_for_subspec (gretl_bundle *b, const char *key)
-{
-    int err = 0;
-
-    if (strchr(key, '[') != NULL) {
-	char *p, *name;
-	GretlType t;
-
-	name = gretl_strdup(key);
-	p = strchr(name, '[');
-	*p = '\0';
-	t = gretl_bundle_get_type(b, name, &err);
-	if (!err) {
-	    if (t == GRETL_TYPE_MATRIX || t == GRETL_TYPE_ARRAY) {
-		/* FIXME this should be supported */
-		gretl_errmsg_sprintf("Setting bundled %s subset: not supported yet",
-				     gretl_type_get_name(t));
-	    }
-	    err = E_DATA;
-	}
-	free(name);
-    }
-
-    return err;
-}
-
 /* Setting an object in a bundle under a given key string. We get here
    only if p->lh.substr is non-NULL. That "substr" may be a string
    literal, or it may be the name of a string variable. In the latter
@@ -7287,10 +7262,10 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     bundle = get_bundle_by_name(name);
 
     if (p->flags & P_LHBKVAR) {
-	/* substr is the name of a string variable */
+	/* substr is the name of a string variable in [] */
 	key = get_string_by_name(p->lh.substr);
     } else {
-	/* substr is just a plain string */
+	/* substr is just a plain key string */
 	key = p->lh.substr;
     }
 
@@ -7299,7 +7274,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     }
 
 #if EDEBUG
-    fprintf(stderr, "set_named_bundle_value: %s.%s\n", name, key);
+    fprintf(stderr, "set_named_bundle_value: target %s.%s\n", name, key);
 #endif
 
 #if 0
@@ -7312,10 +7287,6 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	type = gretl_bundle_get_type(bundle, key, &err);
     }
 #endif
-
-    if (!err) {
-	err = check_for_subspec(bundle, key);
-    }
 
     if (!err) {
 	switch (n->t) {
@@ -7375,6 +7346,37 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     }
 
     return err;
+}
+
+static int edit_named_bundle_value (const char *name, NODE *n,
+				    parser *p)
+{
+    gretl_bundle *b = get_bundle_by_name(name);
+    char *key = p->lh.subvar;
+    GretlType type = 0;
+
+    if (b == NULL || key == NULL) {
+	p->err = E_DATA;
+    } else {
+	type = gretl_bundle_get_type(b, key, &p->err);
+    }
+
+    if (!p->err) {
+	if (type == GRETL_TYPE_MATRIX) {
+	    p->lh.m0 = gretl_bundle_get_matrix(b, key, &p->err);
+	    if (!p->err) {
+		edit_matrix(p);
+	    }
+	} else if (type == GRETL_TYPE_ARRAY) {
+	    gretl_errmsg_sprintf("Setting bundled %s subset: not supported yet",
+				 gretl_type_get_name(type));
+	    p->err = E_DATA;
+	} else {
+	    p->err = E_TYPES;
+	}
+    }	
+
+    return p->err;
 }
 
 static int set_named_bundle_note (const char *name, const char *key,
@@ -12399,6 +12401,24 @@ static void get_lh_obsnum (parser *p)
     }
 }
 
+static int split_lh_subinfo (parser *p)
+{
+    char *s = strchr(p->lh.substr, '[');
+    int n = strlen(p->lh.substr);
+
+    if (p->lh.substr[n-1] != ']') {
+	p->err = E_PARSE;
+    } else {
+	*s = '\0';
+	p->lh.subvar = p->lh.substr;
+	p->lh.substr = gretl_strdup(s + 1);
+	n = strlen(p->lh.substr);
+	p->lh.substr[n-1] = '\0';
+    }
+    
+    return p->err;
+}
+
 /* check validity of "[...]" or "." on the LHS, and evaluate
    the expression if needed */
 
@@ -12420,13 +12440,25 @@ static void process_lhs_substr (const char *lname,
 	*/
 	get_lh_mspec(p);
     } else if (p->lh.t == BUNDLE) {
-	/* targetting a bundle element via its key */
-	if (p->lh.substr[0] == '"') {
-	    /* a string literal */
-	    gretl_unquote(p->lh.substr, &p->err);
-	} else if (subchar == '[') {
-	    /* should be a string variable */
-	    p->flags |= P_LHBKVAR;
+	/* targetting a bundle element */
+	if (subchar == '[') {
+	    /* using [<key>] notation */
+	    if (p->lh.substr[0] == '"') {
+		/* a string literal */
+		gretl_unquote(p->lh.substr, &p->err);
+	    } else {
+		/* should be a string variable */
+		p->flags |= P_LHBKVAR;
+	    }
+	} else {
+	    /* using dot-member notation */
+	    if (strchr(p->lh.substr, '[') != NULL) {
+		/* with subspec appended */
+		split_lh_subinfo(p);
+		if (!p->err) {
+		    get_lh_mspec(p);
+		}
+	    }
 	}
 	p->targ = BMEMB;
     } else if (p->lh.t == UNK) {
@@ -13495,7 +13527,12 @@ static void edit_matrix (parser *p)
 	   check for numerical "breakage" in the replacement
 	   submatrix.
 	*/
-	p->err = user_matrix_replace_submatrix(p->lh.name, m, spec);
+	if (p->targ == BMEMB) {
+	    /* matrix inside a bundle */
+	    p->err = matrix_replace_submatrix(p->lh.m0, m, spec);
+	} else {
+	    p->err = user_matrix_replace_submatrix(p->lh.name, m, spec);
+	}
 #if MATRIX_NA_CHECK	
 	if (!p->err && gretl_matrix_xna_check(m)) {
 	    set_gretl_warning(W_GENNAN);
@@ -13505,7 +13542,11 @@ static void edit_matrix (parser *p)
 	if (p->ret->t == MAT) {
 	    p->ret->v.m = NULL; /* ?? */
 	}
-	p->lh.m1 = get_matrix_by_name(p->lh.name);
+	if (p->targ == BMEMB) {
+	    p->lh.m1 = p->lh.m0;
+	} else {
+	    p->lh.m1 = get_matrix_by_name(p->lh.name);
+	}
     }
 }
 
@@ -14198,7 +14239,11 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
     } else if (p->targ == BMEMB) {
 	/* saving an object into a bundle */
-	p->err = set_named_bundle_value(p->lh.name, r, p);
+	if (p->lh.subvar != NULL) {
+	    p->err = edit_named_bundle_value(p->lh.name, r, p);
+	} else {
+	    p->err = set_named_bundle_value(p->lh.name, r, p);
+	}
     } else if (p->targ == ARRAY) {
 	if (p->lh.substr != NULL || p->op != B_ASN) {
 	    edit_array(p);
@@ -14414,6 +14459,7 @@ static void parser_init (parser *p, const char *str,
     p->lh.m0 = NULL;
     p->lh.m1 = NULL;
     p->lh.substr = NULL;
+    p->lh.subvar = NULL;
     p->lh.mspec = NULL;
     p->lh.atype = 0;
 
@@ -14548,6 +14594,7 @@ void gen_cleanup (parser *p)
 
 	free_tree(p->ret, p, "p->ret");
 	free(p->lh.substr);
+	free(p->lh.subvar);
 
 	if (p->lh.mspec != NULL) {
 	    free_mspec(p->lh.mspec, p);

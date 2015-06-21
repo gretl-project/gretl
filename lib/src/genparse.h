@@ -602,6 +602,7 @@ struct lhinfo {
     gretl_matrix *m0;      /* original LHS matrix (or NULL) */
     gretl_matrix *m1;      /* computed LHS matrix (or NULL) */
     char *substr;          /* obs or matrix/array selection string */
+    char *subvar;          /* name of targetted bundle member */
     matrix_subspec *mspec; /* evaluated submatrix spec */
     GretlType atype;       /* type of LHS array, if any */
 };

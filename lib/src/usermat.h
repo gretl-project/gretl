@@ -66,6 +66,10 @@ gretl_matrix *steal_matrix_by_name (const char *name);
 int assign_scalar_to_submatrix (gretl_matrix *M, double x,
 				matrix_subspec *spec);
 
+int matrix_replace_submatrix (gretl_matrix *M,
+			      const gretl_matrix *S,
+			      matrix_subspec *spec);
+
 int user_matrix_replace_submatrix (const char *mname, 
 				   const gretl_matrix *S,
 				   matrix_subspec *spec);

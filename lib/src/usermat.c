@@ -357,9 +357,9 @@ static int matrix_insert_diagonal (gretl_matrix *M,
    substitution.
 */
 
-static int matrix_replace_submatrix (gretl_matrix *M,
-				     const gretl_matrix *S,
-				     matrix_subspec *spec)
+int matrix_replace_submatrix (gretl_matrix *M,
+			      const gretl_matrix *S,
+			      matrix_subspec *spec)
 {
     int mr = gretl_matrix_rows(M);
     int mc = gretl_matrix_cols(M);
