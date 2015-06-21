@@ -6772,6 +6772,11 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		   any authorization from the user.
 		*/
 		retp = &iret;
+	    } else if (p->targ != EMPTY) {
+		p->err = E_DATA;
+		gretl_errmsg_sprintf(_("%s: list return values must be either "
+				       "assigned or ignored"), funname);
+		goto bailout;
 	    }
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    retp = &sret;
@@ -6857,6 +6862,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    free(descrip);
 	}
     }
+
+ bailout:
 
     if (p->err) {
 	function_clear_args(uf);
@@ -7232,6 +7239,32 @@ static NODE *type_string_node (NODE *n, parser *p)
     return ret;
 }
 
+static int check_for_subspec (gretl_bundle *b, const char *key)
+{
+    int err = 0;
+
+    if (strchr(key, '[') != NULL) {
+	char *p, *name;
+	GretlType t;
+
+	name = gretl_strdup(key);
+	p = strchr(name, '[');
+	*p = '\0';
+	t = gretl_bundle_get_type(b, name, &err);
+	if (!err) {
+	    if (t == GRETL_TYPE_MATRIX || t == GRETL_TYPE_ARRAY) {
+		/* FIXME this should be supported */
+		gretl_errmsg_sprintf("Setting bundled %s subset: not supported yet",
+				     gretl_type_get_name(t));
+	    }
+	    err = E_DATA;
+	}
+	free(name);
+    }
+
+    return err;
+}
+
 /* Setting an object in a bundle under a given key string. We get here
    only if p->lh.substr is non-NULL. That "substr" may be a string
    literal, or it may be the name of a string variable. In the latter
@@ -7266,7 +7299,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     }
 
 #if EDEBUG
-    fprintf(stderr, "set_named_bundle_value: %s[\"%s\"]\n", name, key);
+    fprintf(stderr, "set_named_bundle_value: %s.%s\n", name, key);
 #endif
 
 #if 0
@@ -7279,6 +7312,10 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	type = gretl_bundle_get_type(bundle, key, &err);
     }
 #endif
+
+    if (!err) {
+	err = check_for_subspec(bundle, key);
+    }
 
     if (!err) {
 	switch (n->t) {
@@ -12676,7 +12713,7 @@ static void pre_process (parser *p, int flags)
     char *lhsub = NULL;
     char subchar = 0;
     char opstr[3] = {0};
-    int v, newvar = 1;
+    int i, v, newvar = 1;
 
     while (isspace(*s)) s++;
 
@@ -12745,10 +12782,15 @@ static void pre_process (parser *p, int flags)
     p->point = s + strlen(test);
 
     /* grab LHS obs string, matrix slice, or bundle element, 
-       if present */
-    if ((lhsub = strchr(test, '[')) || (lhsub = strchr(test, '.'))) {
-	subchar = *lhsub;
-	get_lhs_substr(lhsub, p);
+       if present
+    */
+    for (i=0; test[i]; i++) {
+	if (test[i] == '.' || test[i] == '[') {
+	    lhsub = test + i;
+	    subchar = *lhsub;
+	    get_lhs_substr(lhsub, p);
+	    break;
+	}
     }
 
     if (p->err) {
