@@ -673,7 +673,8 @@ static built_in_string built_ins[] = {
     { "tramodir", NULL },
     { "seats",    NULL },
     { "pkgdir",   NULL },
-    { "pstmp",    NULL }
+    { "pstmp",    NULL },
+    { "lang",     NULL }
 };
 
 void builtin_strings_cleanup (void)

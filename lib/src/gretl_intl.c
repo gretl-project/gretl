@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "texprint.h"
 #include "libset.h"
+#include "gretl_string_table.h"
 
 #include <glib.h>
 
@@ -170,7 +171,7 @@ int get_local_decpoint (void)
     return '.';
 }
 
-#endif
+#endif /* ENABLE_NLS or not */
 
 /* fudges for strings that should not be in utf-8 under some
    conditions: under GTK translations always come out in utf-8 in the
@@ -180,9 +181,9 @@ int get_local_decpoint (void)
 
 static int gretl_cset_maj;
 static int gretl_cset_min;
-# ifdef WIN32
+#ifdef WIN32
 static int gretl_cpage;
-# endif
+#endif
 static int native_utf8;
 
 
@@ -536,22 +537,22 @@ static struct localeinfo locales[] = {
     { LANG_C,     "english" },
     { LANG_SQ,    "albanian" },
     { LANG_EU,    "basque" },
-    { LANG_BG,    "bulgarian" },
+    { LANG_BG,    "bulgarian" },    
     { LANG_CA,    "catalan" },
+    { LANG_ZH_TW, "chinese-traditional" },
+    { LANG_CS,    "czech" },
+    { LANG_FR,    "french" },
     { LANG_GL,    "galician" },
     { LANG_DE,    "german" },
-    { LANG_ES,    "spanish" },
-    { LANG_FR,    "french" },
     { LANG_EL,    "greek" },
     { LANG_IT,    "italian" },
     { LANG_JA,    "japanese" },
     { LANG_PL,    "polish" },
-    { LANG_TR,    "turkish" },
     { LANG_PT,    "portuguese" },
     { LANG_PT_BR, "portuguese-brazilian" },
     { LANG_RU,    "russian" },
-    { LANG_ZH_TW, "chinese-traditional" },
-    { LANG_CS,    "czech" },
+    { LANG_ES,    "spanish" },
+    { LANG_TR,    "turkish" },
     { LANG_MAX,    NULL }
 };
 
@@ -643,6 +644,42 @@ const char *lang_code_from_id (int langid)
 
 #ifdef WIN32
 
+static const char *lang_code_from_windows_name (char *s)
+{
+    const char *ret = NULL;
+    int i, n;
+
+    if (strstr(s, "razil")) {
+	return "pr_BR";
+    } else if (!strncmp(s + 1, "hinese", 6)) {
+	return "zh_TW";
+    }
+
+    for (i=1; i<LANG_MAX; i++) {
+	n = strlen(langs[i].name);
+	if (!strncmp(s, langs[i].name, n)) {
+	    ret = langs[i].code;
+	    break;
+	}
+    }
+
+    if (ret == NULL && strchr(s, '-')) {
+	/* Windows : "en-US" in place of "en_US"? */
+	char *p = strchr(s, '-');
+
+	*p = '_';
+	for (i=1; i<LANG_MAX; i++) {
+	    n = strlen(langs[i].code);
+	    if (!strncmp(s, langs[i].code, n)) {
+		ret = langs[i].code;
+		break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static char *win32_set_numeric (const char *lang)
 {
     char *set = NULL;
@@ -724,7 +761,8 @@ void set_lcnumeric (int langid, int lcnumeric)
 #ifdef ENABLE_NLS
 
 static int 
-set_locale_with_workaround (int langid, const char *lcode)
+set_locale_with_workaround (int langid, const char *lcode,
+			    char **locp)
 {
     char *test = setlocale(LC_ALL, lcode);
 
@@ -748,6 +786,10 @@ set_locale_with_workaround (int langid, const char *lcode)
 	    gretl_lower(tmp);
 	    gretl_setenv("LANGUAGE", tmp);
 	}
+    }
+
+    if (locp != NULL && test != NULL) {
+	*locp = gretl_strdup(test);
     }
 
     return test == NULL;
@@ -783,7 +825,7 @@ int test_locale (const char *langstr)
     *ocpy = '\0';
     strncat(ocpy, orig, 63);
 
-    err = set_locale_with_workaround(langid, lcode);
+    err = set_locale_with_workaround(langid, lcode, NULL);
 
     if (err) {
 	gretl_errmsg_sprintf(_("%s: locale is not supported "
@@ -796,13 +838,45 @@ int test_locale (const char *langstr)
 #endif
 }
 
+#ifdef ENABLE_NLS
+
+static void record_locale (char *locale)
+{
+# ifdef WIN32
+    const char *s = lang_code_from_windows_name(locale);
+
+    if (s != NULL) {
+	gretl_insert_builtin_string("lang", s);
+    } else {
+	gretl_insert_builtin_string("lang", "unknown");
+    }
+# else
+    if (strrchr(locale, '.') != NULL) {
+	/* chop off character encoding */
+	char *p = strrchr(locale, '.');
+
+	*p = '\0';
+    }
+    gretl_insert_builtin_string("lang", locale);
+# endif
+}
+
+#endif
+
 int force_language (int langid)
 {
 #ifndef ENABLE_NLS
     return 1;
 #else
     const char *lcode = NULL;
+    char *locale = NULL;
     int err = 0;
+
+    if (langid == LANG_AUTO) {
+	/* note: avoid getting long spew from Windows */
+	locale = gretl_strdup(setlocale(LC_COLLATE, NULL));
+	goto record;
+    }
 
     if (langid == LANG_C) {
 	gretl_setenv("LANGUAGE", "english");
@@ -812,16 +886,15 @@ int force_language (int langid)
 	lcode = get_setlocale_string(langid);
 	if (lcode != NULL) {  
 # ifdef WIN32
-	    char *newloc = setlocale(LC_ALL, lcode);
-
-            fprintf(stderr, "lcode='%s', newloc='%s'\n", lcode, newloc);
-	    if (newloc != NULL) {
-		set_cp_from_locale(newloc);
+	    locale = gretl_strdup(setlocale(LC_ALL, lcode));
+            fprintf(stderr, "lcode='%s', newloc='%s'\n", lcode, locale);
+	    if (locale != NULL) {
+		set_cp_from_locale(locale);
 	    } else {
 		err = 1;
 	    }
 # else
-	    err = set_locale_with_workaround(langid, lcode);
+	    err = set_locale_with_workaround(langid, lcode, &locale);
 # endif
 	}
     }
@@ -845,6 +918,14 @@ int force_language (int langid)
 	}
     }
 # endif
+
+ record:
+    if (locale != NULL) {
+	record_locale(locale);
+	free(locale);
+    } else {
+	record_locale("unknown");
+    }
 
     return err;
 #endif /* ENABLE_NLS */

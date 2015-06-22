@@ -560,6 +560,8 @@ int main (int argc, char *argv[])
 
 	if (opt & OPT_ENGLISH) {
 	    force_language(LANG_C);
+	} else {
+	    force_language(LANG_AUTO);
 	}
     }
 

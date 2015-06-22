@@ -3,6 +3,7 @@ version 1.10.90, in progress
   to install a package from a chosen server
 - "chow" command: represent the --limit-to option in the GUI
 - TRAMO interface: allow saving of "linearized" series
+- Add new accessor $lang to get national language identifier
 - Fix bug: optional arguments to bkfilt() function not being
   recognized properly
 - Fix bug: urcpval() might not update its argument when

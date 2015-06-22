@@ -1966,12 +1966,10 @@ static int common_read_rc_setup (void)
 # endif
 
     langid = lang_id_from_name(langpref);
-    if (langid > 0) {
-	force_language(langid);
-	if (langid == LANG_C) {
-	    force_english_help();
-	}
-    } 
+    force_language(langid);
+    if (langid == LANG_C) {
+	force_english_help();
+    }
     set_lcnumeric(langid, lcnumeric);
 
     return err;
