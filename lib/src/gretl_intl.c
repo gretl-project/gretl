@@ -842,23 +842,51 @@ int test_locale (const char *langstr)
 
 static void record_locale (char *locale)
 {
+    int done = 0;
+    
 # ifdef WIN32
-    const char *s = lang_code_from_windows_name(locale);
+    /* LANG probably not present, use setlocale output */
+    if (locale != NULL) {
+	const char *s = lang_code_from_windows_name(locale);
 
-    if (s != NULL) {
-	gretl_insert_builtin_string("lang", s);
-    } else {
-	gretl_insert_builtin_string("lang", "unknown");
+	if (s != NULL) {
+	    gretl_insert_builtin_string("lang", s);
+	    done = 1;
+	}
     }
 # else
-    if (strrchr(locale, '.') != NULL) {
-	/* chop off character encoding */
-	char *p = strrchr(locale, '.');
+    char *lang = getenv("LANG");
 
-	*p = '\0';
+    if (lang != NULL) {
+	/* prefer using LANG */
+	if (strrchr(lang, '.') == NULL) {
+	    gretl_insert_builtin_string("lang", lang);
+	} else {
+	    char *tmp = gretl_strdup(lang);
+	    char *p = strrchr(tmp, '.');
+
+	    *p = '\0';
+	    gretl_insert_builtin_string("lang", tmp);
+	    free(tmp);
+	}
+	done = 1;
+    } else if (locale != NULL) {
+	/* use locale as fallback */
+	if (strrchr(locale, '.') == NULL) {
+	    gretl_insert_builtin_string("lang", locale);
+	} else {
+	    char *p = strrchr(locale, '.');
+
+	    *p = '\0';
+	}
+	gretl_insert_builtin_string("lang", locale);
+	done = 1;
     }
-    gretl_insert_builtin_string("lang", locale);
 # endif
+
+    if (!done) {
+	gretl_insert_builtin_string("lang", "unknown");
+    }
 }
 
 #endif
@@ -920,12 +948,9 @@ int force_language (int langid)
 # endif
 
  record:
-    if (locale != NULL) {
-	record_locale(locale);
-	free(locale);
-    } else {
-	record_locale("unknown");
-    }
+
+    record_locale(locale);
+    free(locale);
 
     return err;
 #endif /* ENABLE_NLS */

@@ -685,7 +685,7 @@ static double chisq_cdf_inverse (int df, double a)
  * @dfd degrees of freedom, from 0 to @x, or #NADBL on failure.
  */
 
-static double snedecor_cdf (int dfn, int dfd, double x)
+double snedecor_cdf (int dfn, int dfd, double x)
 {
     double p = NADBL;
 
