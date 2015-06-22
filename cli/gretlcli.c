@@ -509,6 +509,7 @@ int main (int argc, char *argv[])
     }
 
     if (argc < 2) {
+	force_language(LANG_AUTO);
 	load_datafile = 0;
     } else {
 	gretlopt opt = 0;
