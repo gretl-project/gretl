@@ -6773,6 +6773,15 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else if (rtype == GRETL_TYPE_MATRIX) {
 	    retp = &mret;
 	} else if (rtype == GRETL_TYPE_LIST) {
+#if 1
+	    if (p->targ == EMPTY && p->tree == t) {
+		/* bare function call, not assigned */
+		fprintf(stderr, "*** list return ignored ***\n");
+		goto bailout;
+	    } else {
+		retp = &iret;
+	    }
+#else	    
 	    if (p->targ != EMPTY && p->tree == t) {
 		/* 2015-02-02: "collect" the return value only on direct
 		   assignment. This is because otherwise we're likely to
@@ -6786,6 +6795,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 				       "assigned or ignored"), funname);
 		goto bailout;
 	    }
+#endif	    
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    retp = &sret;
 	} else if (rtype == GRETL_TYPE_BUNDLE) {

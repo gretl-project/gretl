@@ -656,15 +656,6 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 		DF_model_string(i));
     }
 
-    if (!na(dfmod->rho)) {
-	pprintf(prn, "  %s: %.3f\n", _("1st-order autocorrelation coeff. for e"), 
-		dfmod->rho);
-    }
-
-    if (ainfo->order > 1) {
-	show_lags_test(dfmod, ainfo->order, prn);
-    }	
-
     if (opt & OPT_G) {
 	strcpy(taustr, "tau");
     } else {
@@ -686,6 +677,15 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 		_("Critical values"), c[0], c[1], c[2], c[3]);
     } else {
 	pprintf(prn, "  %s\n", pvstr);
+    }
+
+    if (!na(dfmod->rho)) {
+	pprintf(prn, "  %s: %.3f\n", _("1st-order autocorrelation coeff. for e"), 
+		dfmod->rho);
+    }
+
+    if (ainfo->order > 1) {
+	show_lags_test(dfmod, ainfo->order, prn);
     } 
 }
 
