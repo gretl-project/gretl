@@ -608,6 +608,36 @@ gretl_matrix *gretl_bundle_get_matrix (gretl_bundle *bundle,
 }
 
 /**
+ * gretl_bundle_get_array:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @err: location to receive error code.
+ *
+ * Returns: the array associated with @key in the
+ * specified @bundle, if any; otherwise NULL.
+ */
+
+void *gretl_bundle_get_array (gretl_bundle *bundle,
+			      const char *key,
+			      int *err)
+{
+    gretl_array *a = NULL;
+    GretlType type;
+    void *ptr;
+
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
+    if (!*err && type != GRETL_TYPE_ARRAY) { 
+	*err = E_TYPES;
+    }
+
+    if (!*err) {
+	a = (gretl_array *) ptr;
+    }
+
+    return a;
+}
+
+/**
  * gretl_bundle_get_series:
  * @bundle: bundle to access.
  * @key: name of key to access.

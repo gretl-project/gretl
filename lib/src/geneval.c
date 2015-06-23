@@ -120,6 +120,7 @@ static void node_type_error (int ntype, int argnum, int goodt,
 static int *node_get_list (NODE *n, parser *p);
 static void reattach_series (NODE *n, parser *p);
 static void edit_matrix (parser *p);
+static void edit_array (parser *p);
 
 static const char *typestr (int t)
 {
@@ -7368,9 +7369,7 @@ static int edit_named_bundle_value (const char *name, NODE *n,
 		edit_matrix(p);
 	    }
 	} else if (type == GRETL_TYPE_ARRAY) {
-	    gretl_errmsg_sprintf("Setting bundled %s subset: not supported yet",
-				 gretl_type_get_name(type));
-	    p->err = E_DATA;
+	    edit_array(p);
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -13566,7 +13565,7 @@ static int get_array_index (matrix_subspec *spec, int *err)
 static void edit_array (parser *p)
 {
     matrix_subspec *spec = p->lh.mspec;
-    gretl_array *A;
+    gretl_array *A = NULL;
     NODE *r = p->ret;
     int idx = 0, copy = 1;
 
@@ -13579,7 +13578,17 @@ static void edit_array (parser *p)
     */
 
     /* preliminary checks */
-    A = get_array_by_name(p->lh.name);
+
+    if (p->lh.t == BUNDLE) {
+	gretl_bundle *b = get_bundle_by_name(p->lh.name);
+
+	if (b != NULL) {
+	    A = gretl_bundle_get_array(b, p->lh.subvar, &p->err);
+	}
+    } else {
+	A = get_array_by_name(p->lh.name);
+    }
+    
     if (A == NULL) {
 	p->err = E_DATA;
     } else if (spec != NULL) {
