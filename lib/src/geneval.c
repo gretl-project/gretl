@@ -6773,29 +6773,12 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else if (rtype == GRETL_TYPE_MATRIX) {
 	    retp = &mret;
 	} else if (rtype == GRETL_TYPE_LIST) {
-#if 1
 	    if (p->targ == EMPTY && p->tree == t) {
-		/* bare function call, not assigned */
-		fprintf(stderr, "*** list return ignored ***\n");
+		/* a bare function call, not assigned to anything */
 		goto bailout;
 	    } else {
 		retp = &iret;
 	    }
-#else	    
-	    if (p->targ != EMPTY && p->tree == t) {
-		/* 2015-02-02: "collect" the return value only on direct
-		   assignment. This is because otherwise we're likely to
-		   end up adding series to the caller's dataset without
-		   any authorization from the user.
-		*/
-		retp = &iret;
-	    } else if (p->targ != EMPTY) {
-		p->err = E_DATA;
-		gretl_errmsg_sprintf(_("%s: list return values must be either "
-				       "assigned or ignored"), funname);
-		goto bailout;
-	    }
-#endif	    
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    retp = &sret;
 	} else if (rtype == GRETL_TYPE_BUNDLE) {
