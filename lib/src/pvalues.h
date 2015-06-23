@@ -82,6 +82,8 @@ double normal_cdf_inverse (double x);
 
 double normal_cdf_comp (double x);
 
+double student_cdf (double df, double x);
+
 double student_cdf_inverse (double df, double a);
 
 double normal_pdf (double x);
