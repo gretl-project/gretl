@@ -70,11 +70,15 @@ double chisq_cdf (double df, double x);
 
 double chisq_cdf_comp (double df, double x);
 
+double nc_chisq_cdf (double df, double delta, double x);
+
 double snedecor_cdf (int dfn, int dfd, double x);
 
 double snedecor_cdf_comp (int dfn, int dfd, double x);
 
 double snedecor_critval (int dfn, int dfd, double a);
+
+double nc_snedecor_cdf (double dfn, double dfd, double delta, double x);
 
 double normal_cdf (double x);
 
@@ -85,6 +89,8 @@ double normal_cdf_comp (double x);
 double student_cdf (double df, double x);
 
 double student_cdf_inverse (double df, double a);
+
+double nc_student_cdf (double df, double delta, double x);
 
 double normal_pdf (double x);
 
