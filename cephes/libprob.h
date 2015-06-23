@@ -115,7 +115,8 @@ double gdtrc (double a, double b, double x);
 /* 
    Returns the inverse incomplete gamma function.
 */
-double igami( double a, double y0 );
+double igami (double a, double y0 );
+
 /*
    Returns gamma function of the argument.  The result is
    correctly signed.
@@ -132,6 +133,11 @@ double cephes_lgamma (double x); /* alias for cephes' lgam() */
 
 /* Returns the current value of cephes_sgngam */
 int get_cephes_sgngam (void);
+
+/* Returns incomplete beta integral of the arguments, evaluated
+   from zero to x
+*/
+double incbet (double a, double b, double x);
 
 /* Returns the Psi (digamma) function of the argument */
 double psi (double x);

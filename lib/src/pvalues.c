@@ -1698,6 +1698,9 @@ int dist_code_from_string (const char *s)
 	{ D_BINORM,   "D" },
 	{ D_JOHANSEN, "J" },
 	{ D_BETABIN,  "bb" },
+	{ D_NC_CHISQ, "ncx" },
+	{ D_NC_F,     "ncf" },
+	{ D_NC_T,     "nct" },
 	{ D_NONE,     NULL }
     };
     char test[8];
@@ -1809,9 +1812,11 @@ static int pdist_check_input (int dist, const double *parm,
     if (dist == D_NORMAL) {
 	np = 0;
     } else if (dist == D_SNEDECOR || dist == D_GAMMA ||
-	       dist == D_BINOMIAL || dist == D_WEIBULL) {
+	       dist == D_BINOMIAL || dist == D_WEIBULL ||
+	       dist == D_NC_CHISQ || dist == D_NC_T) {
 	np = 2;
-    } else if (dist == D_JOHANSEN || dist == D_BETABIN) {
+    } else if (dist == D_JOHANSEN || dist == D_BETABIN ||
+	       dist == D_NC_F) {
 	np = 3;
     }
 
@@ -1944,6 +1949,12 @@ double gretl_get_cdf (int dist, const double *parm, double x)
 	y = weibull_cdf(parm[0], parm[1], x);
     } else if (dist == D_GED) {
 	y = GED_cdf(parm[0], x);
+    } else if (dist == D_NC_CHISQ) {
+	y = nc_chisq_cdf(parm[0], parm[1], x);
+    } else if (dist == D_NC_F) {
+	y = nc_snedecor_cdf(parm[0], parm[1], parm[2], x);
+    } else if (dist == D_NC_T) {
+	y = nc_student_cdf(parm[0], parm[1], x);
     }
 
     return y;
@@ -2978,3 +2989,4 @@ double nc_student_cdf (double df, double delta, double x)
     
     return x < 0 ? (1.0 - ret) : ret;
 }
+

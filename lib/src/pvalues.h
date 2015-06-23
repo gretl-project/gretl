@@ -37,7 +37,10 @@ typedef enum {
     D_DW,
     D_BINORM,
     D_JOHANSEN,
-    D_BETABIN
+    D_BETABIN,
+    D_NC_CHISQ,
+    D_NC_F,
+    D_NC_T
 } DistCode;
 
 double gamma_function (double x);
@@ -158,5 +161,3 @@ gretl_matrix *gretl_get_DW (int n, int k, int *err);
 int dist_code_from_string (const char *s);
 
 #endif /* PVALUES_H */
-
-

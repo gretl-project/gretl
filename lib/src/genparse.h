@@ -457,7 +457,7 @@ enum {
 
 /* function with multiple args, string for first arg */
 #define str0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
-		      s == F_CRIT || s == F_RANDGEN || s == F_PDF ||	\
+		      s == F_CRIT || s == F_RANDGEN || s == F_PDF || \
 		      s == F_BESSEL || s == F_MRANDGEN || s == F_RANDGEN1)
 
 /* functions taking a string arg in last position */
