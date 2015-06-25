@@ -2903,11 +2903,12 @@ double nc_student_cdf (double df, double delta, double x)
     }
 
     ax = fabs(x);
+
     del = x > 0 ? delta : -delta;
     ret = normal_cdf(-del);
 
-    if (ax == 0.0) {
-	return ret;
+    if (ax < 1.0e-12) {
+	return 1.0 - ret;
     }
 
     /* settings */
