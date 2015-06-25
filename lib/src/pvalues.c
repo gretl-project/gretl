@@ -43,6 +43,8 @@
  * they return the libgretl missing value code, %NADBL).
  */
 
+static int nct_pdf_array (double df, double delta, double *x, int n);
+
 /**
  * gamma_function:
  * @x: argument.
@@ -3037,7 +3039,7 @@ double nc_student_pdf (double df, double delta, double x)
 }
 
 
-int nct_pdf_array (double df, double delta, double *x, int n)
+static int nct_pdf_array (double df, double delta, double *x, int n)
 {
     int i, err = 0;
 
