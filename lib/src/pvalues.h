@@ -95,6 +95,8 @@ double student_cdf_inverse (double df, double a);
 
 double nc_student_cdf (double df, double delta, double x);
 
+double nc_student_pdf (double df, double delta, double x);
+
 double normal_pdf (double x);
 
 double normal_critval (double a);

@@ -1999,6 +1999,8 @@ double gretl_get_pdf (int dist, const double *parm, double x)
 	y = weibull_pdf(parm[0], parm[1], x);
     } else if (dist == D_GED) {
 	y = GED_pdf(parm[0], x);
+    } else if (dist == D_NC_T) {
+	y = nc_student_pdf(parm[0], parm[1], x);
     }
 
     return y;
@@ -2046,6 +2048,8 @@ int gretl_fill_pdf_array (int dist, const double *parm,
 	err = weibull_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_GED) {
 	err = GED_pdf_array(parm[0], x, n);
+    } else if (dist == D_NC_T) {
+	err = nct_pdf_array(parm[0], parm[1], x, n);
     }
 
     return err;
@@ -2991,3 +2995,69 @@ double nc_student_cdf (double df, double delta, double x)
     return x < 0 ? (1.0 - ret) : ret;
 }
 
+/**
+ * nc_student_pdf:
+ * @df: degrees of freedom.
+ * @delta: noncentrality parameter.
+ * @x: reference value.
+ *
+ * Calculates the value at @x of the PDF of the noncentral Student t
+ * distribution with @df dof and noncentrality parameter equal to 
+ * @delta. The algorithm is from Wikipedia, apparently used in R too.
+ *
+ * Returns: the calculated density, or #NADBL on failure.
+ */
+
+double nc_student_pdf (double df, double delta, double x)
+{
+
+    double ret, tmp;
+    
+    if (df <= 0.0) {
+	return NADBL;
+    }
+
+    if (fabs(delta) <= 1.0e-10) {
+	/*
+	  When non-centrality parameter is (essentially) zero, use
+	  ordinary t distribution
+	*/
+	return student_pdf(df, x);
+    }
+
+    if(fabs(x) < 1.0e-12) {
+	tmp = ln_gamma((df+1)/2) - ln_gamma(df/2);
+	ret = exp(tmp - 0.5 * delta*delta) / (sqrt(M_PI * df));
+    } else {
+	tmp = nc_student_cdf(df+2, delta, x * sqrt(1 + 2.0/df)) - nc_student_cdf(df, delta, x);
+	ret = tmp * (df / x);
+    }
+
+    return ret;
+}
+
+
+int nct_pdf_array (double df, double delta, double *x, int n)
+{
+    int i, err = 0;
+
+    if (df > 0) {
+	for (i=0; i<n; i++) {
+	    if (!na(x[i])) {
+		x[i] = nc_student_pdf(df, delta, x[i]);
+	    } else {
+		x[i] = NADBL;
+	    }
+	}
+    } else {
+	err = E_DATA;
+    }
+    
+    if (err) {
+	for (i=0; i<n; i++) {
+	    x[i] = NADBL;
+	}
+    }
+
+    return err;
+}
