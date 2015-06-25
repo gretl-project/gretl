@@ -3010,7 +3010,6 @@ double nc_student_cdf (double df, double delta, double x)
 
 double nc_student_pdf (double df, double delta, double x)
 {
-
     double ret, tmp;
     
     if (df <= 0.0) {
@@ -3025,11 +3024,12 @@ double nc_student_pdf (double df, double delta, double x)
 	return student_pdf(df, x);
     }
 
-    if(fabs(x) < 1.0e-12) {
+    if (fabs(x) < 1.0e-12) {
 	tmp = ln_gamma((df+1)/2) - ln_gamma(df/2);
 	ret = exp(tmp - 0.5 * delta*delta) / (sqrt(M_PI * df));
     } else {
-	tmp = nc_student_cdf(df+2, delta, x * sqrt(1 + 2.0/df)) - nc_student_cdf(df, delta, x);
+	tmp = nc_student_cdf(df+2, delta, x * sqrt(1 + 2.0/df)) -
+	    nc_student_cdf(df, delta, x);
 	ret = tmp * (df / x);
     }
 
