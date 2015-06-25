@@ -981,8 +981,8 @@ static int check_dist_count (int d, int f, int *np, int *argc)
 	    err = E_INVARG;
 	}
     }	else if (d == D_NC_T) {
-	/* non-central t: only CDF and PDF supported (for the moment) */
-	if (f == F_PDF || f == F_CDF) {
+	/* non-central t: only CDF, PDF and INVCDF supported */
+	if (f == F_PDF || f == F_CDF || f == F_INVCDF) {
 	    *np = 2;
 	} else {
 	    err = E_INVARG;

@@ -1832,48 +1832,6 @@ static int pdist_check_input (int dist, const double *parm,
 }
 
 /**
- * gretl_get_cdf_inverse:
- * @dist: distribution code.
- * @parm: array holding from zero to two parameter values, 
- * depending on the distribution.
- * @a: probability value.
- *
- * Returns: the argument, y, for which the area under the PDF
- * specified by @dist and @parm, integrated from its minimum to y,
- * is equal to @a, or #NADBL on failure.
- */
-
-double gretl_get_cdf_inverse (int dist, const double *parm, 
-			      double a)
-{
-    double y = NADBL;
-
-    if (pdist_check_input(dist, parm, a) == E_MISSDATA) {
-	return y;
-    }
-
-    if (dist == D_NORMAL) {
-	y = normal_cdf_inverse(a);
-    } else if (dist == D_STUDENT) {
-	y = student_cdf_inverse(parm[0], a);
-    } else if (dist == D_CHISQ) {
-	y = chisq_cdf_inverse((int) parm[0], a);
-    } else if (dist == D_GAMMA) {
-	y = gamma_cdf_inverse(parm[0], parm[1], a);
-    } else if (dist == D_SNEDECOR) {
-	y = snedecor_cdf_inverse((int) parm[0], (int) parm[1], a);
-    } else if (dist == D_BINOMIAL) {
-	y = binomial_cdf_inverse((int) parm[0], (int) parm[1], a);
-    } else if (dist == D_POISSON) {
-	y = poisson_cdf_inverse((int) parm[0], a);
-    } else if (dist == D_GED) {
-	y = GED_cdf_inverse(parm[0], a);
-    } 
-
-    return y;
-}
-
-/**
  * gretl_get_critval:
  * @dist: distribution code.
  * @parm: array holding from zero to two parameter values, 
@@ -3063,3 +3021,108 @@ static int nct_pdf_array (double df, double delta, double *x, int n)
 
     return err;
 }
+
+/**
+ * nct_cdf_inverse:
+ * @p: degrees of freedom.
+ * @c: noncentrality parameter.
+ * @q: probability.
+ *
+ * Calculates the @q-th quantile of the noncentral Student t
+ * distribution with @c dof and noncentrality parameter equal to @c
+ * via a rough and not particularly clever root-finding
+ * algorithm. Maybe this can be more efficient by using logs. Some
+ * experimentation needed.
+ *
+ * Returns: the calculated quantile, or #NADBL on failure.
+ */
+
+static double nct_cdf_inverse (double p, double c, double q)
+{
+    if (p<1) {
+	return NADBL;
+    } 
+
+    double x, d0, d1;
+    int iter, subiter;
+    double F, f, dir;
+
+    x = c + student_cdf_inverse(p, q) / sqrt(p-0.5);
+    d0 = 1.0e7;
+    iter = 0;
+
+    while (fabs(d0)>1.0e-10 && iter<1000) {
+	F = nc_student_cdf(p, c, x);
+	f = nc_student_pdf(p, c, x);
+	d0 = F - q;
+        dir = d0/f;
+        d1 = 1.0e7;
+	subiter = 0;
+
+        while (fabs(d1) > fabs(d0) && subiter < 100) {
+            d1 = F - nc_student_cdf(p, c, x - dir);
+            dir /= 2.0;
+	    subiter++;
+	}
+
+	if (subiter>=100) {
+	    x = NADBL;
+	    break;
+	} else {
+	    x -= dir*2;
+	    d0 = d1;
+	    iter++;
+	}
+    }
+    
+    if (iter>=100) {
+	x = NADBL;
+    }
+
+    return x;
+}
+
+/**
+ * gretl_get_cdf_inverse:
+ * @dist: distribution code.
+ * @parm: array holding from zero to two parameter values, 
+ * depending on the distribution.
+ * @a: probability value.
+ *
+ * Returns: the argument, y, for which the area under the PDF
+ * specified by @dist and @parm, integrated from its minimum to y,
+ * is equal to @a, or #NADBL on failure.
+ */
+
+double gretl_get_cdf_inverse (int dist, const double *parm, 
+			      double a)
+{
+    double y = NADBL;
+
+    if (pdist_check_input(dist, parm, a) == E_MISSDATA) {
+	return y;
+    }
+
+    if (dist == D_NORMAL) {
+	y = normal_cdf_inverse(a);
+    } else if (dist == D_STUDENT) {
+	y = student_cdf_inverse(parm[0], a);
+    } else if (dist == D_CHISQ) {
+	y = chisq_cdf_inverse((int) parm[0], a);
+    } else if (dist == D_GAMMA) {
+	y = gamma_cdf_inverse(parm[0], parm[1], a);
+    } else if (dist == D_SNEDECOR) {
+	y = snedecor_cdf_inverse((int) parm[0], (int) parm[1], a);
+    } else if (dist == D_BINOMIAL) {
+	y = binomial_cdf_inverse((int) parm[0], (int) parm[1], a);
+    } else if (dist == D_POISSON) {
+	y = poisson_cdf_inverse((int) parm[0], a);
+    } else if (dist == D_GED) {
+	y = GED_cdf_inverse(parm[0], a);
+    } else if (dist == D_NC_T) {
+	y = nct_cdf_inverse(parm[0], parm[1], a);
+    } 
+
+    return y;
+}
+
