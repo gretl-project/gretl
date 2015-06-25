@@ -1603,12 +1603,12 @@ int cli_set_win32_charset (const char *package)
     */
 
     /* FIXME handling of filenames when forcing UTF-8 in the
-       Windows console */
+       Windows console? */
 
     if (ttfont && IsValidCodePage(65001)) {
 	SetConsoleOutputCP(65001);
 	bind_textdomain_codeset(package, "UTF-8");
-	
+	set_native_utf8(1);
     } else {
 	UINT CP = GetConsoleOutputCP();
 	char console_charset[16] = {0};

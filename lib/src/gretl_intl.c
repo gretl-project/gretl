@@ -186,6 +186,15 @@ static int gretl_cpage;
 #endif
 static int native_utf8;
 
+void set_native_utf8 (int s)
+{
+    native_utf8 = s;
+    
+    if (native_utf8) {
+	set_stdio_use_utf8();
+    }
+}
+
 
 /* Use g_get_charset() to determine the current local character set,
    and record this information.  If we get an "ISO-XXXX-Y" locale,
