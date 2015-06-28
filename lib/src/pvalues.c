@@ -1676,6 +1676,700 @@ double johansen_trace_pval (int N, int det, int T, double tr)
     return pv;
 }
 
+/* below: non-central distributions: chi-square, F and Student's t
+*/
+
+#define qsmall(sum,x) (sum < 1.0e-30 || (x) < 1.0e-8*sum)
+
+/**
+ * nc_chisq_cdf:
+ * @df: degrees of freedom.
+ * @delta: noncentrality parameter.
+ * @x: reference value.
+ *
+ * Calculates the value at @x of the CDF of the noncentral chi^2
+ * distribution with @df dof and noncentrality parameter equal to
+ * @delta.
+ *
+ * This is a version of cumchn() from dcdflib, de-spaghettized by
+ * Jack Lucchetti (2015-06-21). The original algorithm uses formula
+ * 26.4.25 from Abramowitz and Stegun, Handbook of Mathematical 
+ * Functions, US NBS (1966).
+ *
+ * Returns: the calculated probability, or #NADBL on failure.
+ */
+
+double nc_chisq_cdf (double df, double delta, double x)
+{
+    double adj, centaj, centwt, chid2, dfd2, lcntaj, lcntwt;
+    double lfact, pcent, pterm, sum, sumadj, term, wt, xnonc;
+    double T1, T2, T3;
+    int i, icent, iterb, iterf;
+    int itermax = 1000;
+
+    if (x < 0.0) {
+	return 1.0;
+    }
+
+    if (df <= 0.0) {
+	return NADBL;
+    }
+
+    if (delta <= 1.0e-10) {
+	/*
+	  When non-centrality parameter is (essentially) zero,
+	  use ordinary chi-square distribution
+	*/
+	return chisq_cdf(df, x);
+    }
+    
+    xnonc = delta / 2.0;
+	
+    /*
+      The following code calculates the weight, chi-square, and
+      adjustment term for the central term in the infinite series.
+      The central term is the one in which the poisson weight is
+      greatest.  The adjustment term is the amount that must
+      be subtracted from the chi-square to move up two degrees
+      of freedom.
+    */
+    icent = (xnonc < 1.0) ? 1 : (int) trunc(xnonc);
+    chid2 = x / 2.0;
+
+    /*
+      Calculate central weight term
+    */
+
+    T1 = (double) (icent + 1);
+    lfact = ln_gamma(T1);
+    lcntwt = -xnonc + (double)icent*log(xnonc) - lfact;
+    centwt = exp(lcntwt);
+
+    /*
+      Calculate central chi-square
+    */
+    T2 = df + 2.0 * (double) icent;
+    pcent = chisq_cdf(T2, x);
+
+    /*
+      Calculate central adjustment term
+    */
+
+    dfd2 = df / 2.0 + icent;
+    T3 = dfd2 + 1.0;
+    lfact = ln_gamma(T3);
+    lcntaj = dfd2 * log(chid2) - chid2 - lfact;
+    centaj = exp(lcntaj);
+    sum = centwt * pcent;
+
+    /*
+      Sum backwards from the central term towards zero.
+      Quit whenever either
+      (1) the zero term is reached, or
+      (2) the term gets small relative to the sum, or
+      (3) More than NTIRED terms are totaled.
+    */
+
+    iterb = 0;
+    sumadj = 0.0;
+    adj = centaj;
+    wt = centwt;
+    i = icent;
+
+    do {
+	dfd2 = df/2.0 + i;
+	/*
+	  Adjust chi-square for two fewer degrees of freedom.
+	  The adjusted value ends up in PTERM.
+	*/
+	adj = adj * dfd2/chid2;
+	sumadj += adj;
+	pterm = pcent + sumadj;
+	/*
+	  Adjust poisson weight for J decreased by one
+	*/
+	wt *= ((double)i/xnonc);
+	term = wt * pterm;
+	sum += term;
+	i--;
+	iterb++;
+    } while (iterb <= itermax && !qsmall(sum, term) && i > 0);
+
+    /*
+      Now sum forward from the central term towards infinity.
+      Quit when either
+      (1) the term gets small relative to the sum, or
+      (2) More than NTIRED terms are totaled.
+    */
+    iterf = 0;
+    sumadj = adj = centaj;
+    wt = centwt;
+    i = icent;
+
+    do {
+	/*
+	  Update weights for next higher J
+	*/
+	wt *= (xnonc/(double)(i+1));
+	/*
+	  Calculate PTERM and add term to sum
+	*/
+	pterm = pcent - sumadj;
+	term = wt * pterm;
+	sum += term;
+	/*
+	  Update adjustment term for DF for next iteration
+	*/
+	i++;
+	dfd2 = df/2.0 + i;
+	adj = adj * chid2/dfd2;
+	sumadj += adj;
+	iterf++;
+    } while (iterf <= itermax && !qsmall(sum, term));
+
+    return sum;
+}
+
+/**
+ * nc_snedecor_cdf:
+ * @dfn: degrees of freedom (num).
+ * @dfd: degrees of freedom (den).
+ * @delta: noncentrality parameter.
+ * @x: reference value.
+ *
+ * Calculates the value at @x of the CDF of the noncentral F
+ * distribution with @dfn, @dfd dof and noncentrality parameter equal
+ * to @delta.
+ * 
+ * This is a version of cumfnc() from dcdflib, de-spaghettized by
+ * Jack Lucchetti (2015-06-21). The original algorithm uses formula
+ * 26.6.18 from Abramowitz and Stegun, Handbook of Mathematical
+ * Functions, US NBS (1966).
+ *
+ * Returns: the calculated probability, or #NADBL on failure.
+ */
+
+double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
+{
+    double dsum, prod, xx, yy, adn, aup, b, betdn, betup;
+    double centwt, dnterm, sum, upterm, xmult, xnonc;
+    double T1, T2, T3, T4, T5, T6;
+    int i, icent;
+    
+    if (x < 0.0) {
+	return 1.0;
+    }
+
+    if (dfn <= 0.0 || dfd <= 0.0) {
+	return NADBL;
+    }
+
+    if (delta <= 1.0e-10) {
+	/*
+	  When non-centrality parameter is (essentially) zero, use
+	  ordinary F distribution
+	*/
+	return snedecor_cdf(dfn, dfd, x);
+    } else {
+	xnonc = delta / 2.0;
+    }
+
+    /*
+      Calculate the central term of the poisson weighting factor.
+    */
+    icent = (xnonc < 1.0) ? 1 : (int) trunc(xnonc);
+
+    /*
+      Compute central weight term
+    */
+    T1 = (double) (icent + 1);
+    centwt = exp(-xnonc + (double) icent * log(xnonc) - ln_gamma(T1));
+
+    /*
+      Compute central incomplete beta term
+      Assure that minimum of arg to beta and 1 - arg is computed
+      accurately.
+    */
+    prod = dfn * x;
+    dsum = dfd + prod;
+    yy = dfd / dsum;
+    if (yy > 0.5) {
+        xx = prod / dsum;
+        yy = 1.0 - xx;
+    } else {
+	xx = 1.0 - yy;
+    }
+
+    T2 = dfn / 2.0 + (double) icent;
+    T3 = dfd / 2.0;
+    betdn = incbet(T2, T3, xx);
+    adn = dfn / 2.0 + (double) icent;
+    aup = adn;
+    b = dfd / 2.0;
+    betup = betdn;
+    sum = centwt * betdn;
+
+    /*
+      Now sum terms backward from icent until convergence or all done
+    */
+    
+    xmult = centwt;
+    i = icent;
+    T4 = adn + b;
+    T5 = adn + 1.0;
+    dnterm = exp(ln_gamma(T4)-ln_gamma(T5)-ln_gamma(b) + adn*log(xx) + b*log(yy));
+
+    while (!qsmall(sum, xmult*betdn) && i > 0) {
+	xmult *= (double) i /xnonc;
+	i--;
+	adn -= 1.0;
+	dnterm *= (adn + 1.0)/((adn+b)*xx);
+	betdn += dnterm;
+	sum += xmult * betdn;
+    }
+
+    i = icent+1;
+
+    /*
+      Now sum forwards until convergence
+    */
+    xmult = centwt;
+    if (aup-1.0+b == 0) {
+	upterm = exp(-ln_gamma(aup) - ln_gamma(b) + 
+		     (aup-1.0)*log(xx) + b*log(yy));
+    } else {
+        T6 = aup - 1.0 + b;
+        upterm = exp(ln_gamma(T6) - ln_gamma(aup) - ln_gamma(b) + 
+		     (aup-1.0)*log(xx) + b*log(yy));
+    }
+
+    while (!qsmall(sum, xmult*betup)) {
+	xmult *= (xnonc/(double)i);
+	i++;
+	aup += 1.0;
+	upterm *= (aup + b - 2.0) * xx/(aup-1.0);
+	betup -= upterm;
+	sum += (xmult*betup);
+    }
+
+    return sum;
+}
+#undef qsmall
+
+/**
+ * nc_snedecor_pdf_array:
+ * @dfn: degrees of freedom (num).
+ * @dfd: degrees of freedom (den).
+ * @c: noncentrality parameter.
+ * @x: array of arguments (overwritten on exit).
+ * @n: no. of elements in x.
+ *
+ * Calculates the value at @x of the CDF of the noncentral F
+ * distribution with @dfn, @dfd dof and noncentrality parameter equal
+ * to @c.
+ *
+ * Source: S. Kay, Fundamentals of Statistical Signal Processing:
+ * Detection Theory, (New Jersey: Prentice Hall, 1998), 
+ * <TeX> 
+ * p(x) = \sum\limits_{k=0}^\infty
+ *   \frac{e^{-c/2}(c/2)^k}{k!}  % Poisson weights
+ *   \frac{1}{B\left(\frac{\nu_2}{2},\frac{\nu_1}{2}+k\right)} % Beta function
+ *   \left(\frac{\nu_1}{\nu_2}\right)^{\frac{\nu_1}{2}+k}
+ *   \left(\frac{\nu_2}{\nu_2+\nu_1f}\right)^{\frac{\nu_1+\nu_2}{2}+k}
+ *   x^{\nu_1/2-1+k}
+ * </TeX>
+ * coded in C by Jack Lucchetti (2015-06-27).
+ *
+ * Returns: an error code, as appropriate.
+ */
+
+int ncf_pdf_array (double dfn, double dfd, double c, 
+			   double *x, int n)
+{
+    double errtol = 1.0e-16;
+    double maxit = 256;
+    int err = 0;
+
+    if (dfd <= 0.0 || dfn <= 0.0) {
+	return 1;
+    }
+
+    if (fabs(c) <= 1.0e-10) {
+	/*
+	  When non-centrality parameter is (essentially) zero, use
+	  ordinary F distribution
+	*/
+	return 1; //snedecor_pdf(dfn, dfd, x);
+    }
+
+    double *vx, *vz;
+
+    vx  = malloc(n * sizeof *vx);
+    vz  = malloc(n * sizeof *vx);
+
+    if (vx == NULL || vz == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* fill up auxiliary vectors */
+    int t, i;
+    double ch = c/2.0;
+    double k1 = dfn/2;
+    double k2 = (dfn + dfd)/2;
+    double k = log(dfn) - log(dfd);
+
+    
+    for(t=0; t<n; t++) {
+	if(xna(x[t]) || x[t] < 0) {
+	    vx[t] = vz[t] = NADBL;
+	} else {
+	    vx[t] = log(x[t]);
+	    vz[t] = log(dfd) - log(dfd + dfn * x[t]);
+	}
+    }
+
+    /* start from central Poisson weight */
+
+    int start = (int) floor(ch);
+    double pw, beta;
+    double a, b, l;
+
+    /* Poisson weight */
+    pw = exp(-ch - ln_gamma(start+1) + start * log(ch));
+    /* Beta */
+    beta = exp(ln_gamma(k1+start) + ln_gamma(dfd/2.0) - ln_gamma(start + k2));
+    a = pw / beta;
+    b = (k1 + start) * k;
+
+    for(t=0; t<n; t++) {
+	if(xna(x[t]) || x[t] < 0) {
+	    x[t] = NADBL;
+	} else {
+	    l = b + (start + k1 - 1) * vx[t] + (start + k2) * vz[t];
+	    x[t] = a * exp(l);
+	}
+    }
+    
+    /*
+      First, go back from start to 0
+    */
+
+    double pwi, betai;
+    int iter = 0;
+
+    pwi = pw;
+    betai = beta;
+
+    for (i = start - 1; i>=0 && pwi>errtol && iter < maxit; i--) {
+	iter++;
+	pwi *= (i + 1.0)/ch;
+	betai *= (k2 + i)/(k1 + i);
+	a = pwi / betai;
+	b = (k1 + i) * k;
+	for(t=0; t<n; t++) {
+	    if(!na(x[t])) {
+		l = b + (i + k1 - 1) * vx[t] + (i + k2) * vz[t]; 
+		x[t] += a * exp(l);
+	    }
+	}
+    }
+
+    /*
+      Then, go from start all the way up as necessary
+    */
+
+    iter = 0;
+    pwi = pw;
+    betai = beta;
+
+    for (i = start + 1; pwi>errtol && iter<maxit; i++) {
+	iter++;
+	pwi *= ch/i;
+	betai *= (k1 + i - 1.0)/(k2 + i - 1.0);
+	a = pwi / betai;
+	b = (k1 + i) * k;
+	for(t=0; t<n; t++) {
+	    if(!na(x[t])) {
+		l = b + (i + k1 - 1) * vx[t] + (i + k2) * vz[t]; 
+		x[t] += a * exp(l);
+	    }
+	}
+    }
+
+ bailout:
+
+    free(vx);
+    free(vz);
+
+    return err;
+}
+
+double ncf_pdf (double dfn, double dfd, double c, double x)
+{
+    ncf_pdf_array(dfn, dfd, c, &x, 1);
+
+    return x;
+   
+}
+
+#ifndef ISQRT_2
+#define ISQRT_2 .707106781186547524401
+#endif
+
+/**
+ * nc_student_cdf:
+ * @df: degrees of freedom.
+ * @delta: noncentrality parameter.
+ * @x: reference value.
+ *
+ * Calculates the value at @x of the CDF of the noncentral Student t
+ * distribution with @df dof and noncentrality parameter equal to 
+ * @delta. The algorithm is by Benson-Krishnamoorthy (2003) CSDA 43,
+ * with minimal changes.
+ *
+ * Returns: the calculated probability, or #NADBL on failure.
+ */
+
+double nc_student_cdf (double df, double delta, double x)
+{
+    double errtol = 1.0e-16;
+    double maxit = 512;
+    double ax, y, del, dels, k, a, b, c; 
+    double pkf, pkb, qkf, qkb, pbetaf, pbetab, qbetaf, qbetab;
+    double pgamf, pgamb, qgamf, qgamb, tmp, ret;
+    double rempois, sum, ptermf, qtermf, ptermb, qtermb;
+    int i;
+    
+    if (df <= 0.0) {
+	return NADBL;
+    }
+
+    if (fabs(delta) <= 1.0e-10) {
+	/*
+	  When non-centrality parameter is (essentially) zero, use
+	  ordinary t distribution
+	*/
+	return student_cdf(df, x);
+    }
+
+    ax = fabs(x);
+
+    del = x > 0 ? delta : -delta;
+    ret = normal_cdf(-del);
+
+    if (ax < 1.0e-12) {
+	return 1.0 - ret;
+    }
+
+    /* settings */
+    
+    y = ax*ax / (df + ax*ax);
+    dels = del * del / 2.0;
+    k = (int) floor(dels);
+    a = k + 0.5;
+    c = k + 1;
+    b = df * 0.5;
+
+    /* 
+       Initialization to compute the P_k and Q_k terms 
+       and the respective incomplete beta functions
+    */
+
+    tmp = -dels + k * log(dels);
+    pkf = pkb = exp(tmp - ln_gamma(k + 1));
+    qkf = qkb = exp(tmp - ln_gamma(k + 1.5));
+    pbetaf = pbetab = incbet(a, b, y);
+    qbetaf = qbetab = incbet(c, b, y);
+    
+    /*
+      Initialization to compute the incomplete beta functions 
+      associated with the P_i and the Q_i recursively:
+    */
+    
+    tmp = b * log(1-y) - ln_gamma(b);
+    pgamf = exp(ln_gamma(a+b-1) - ln_gamma(a) + (a-1) * log(y) + tmp);
+    pgamb = pgamf * y * (a + b - 1)/a;
+
+    qgamf = exp(ln_gamma(c+b-1) - ln_gamma(c) + (c-1) * log(y) + tmp);
+    qgamb = qgamf * y * (c + b - 1)/c;
+
+    /*
+      Compute the remainder of the Poisson weights
+    */
+
+    rempois = 1.0 - pkf;
+    sum = pkf * pbetaf + del * qkf * qbetaf * ISQRT_2;
+
+    for (i = 1; i<=k && rempois>errtol; i++) {
+	/* first block --- backwards */
+	pgamb *= (a-i+1)/(y * (a+b-i));
+	pbetab += pgamb;
+	pkb *= (k-i+1)/dels;
+	ptermb = pkb * pbetab;
+	    
+	/* second block --- backwards */
+	qgamb *= (c-i+1)/(y * (c+b-i));
+	qbetab += qgamb;
+	qkb *= (k-i+1.5)/dels;
+	qtermb = qkb * qbetab;
+	    
+	/* accumulate */
+	sum += ptermb + del * qtermb * ISQRT_2;
+	rempois -= pkb;
+    }
+
+    for (i = 1; i<maxit && rempois > errtol; i++) {
+	/* first block --- forwards */
+	pgamf *= y * (a+b-2+i)/(a+i-1);
+	pbetaf -= pgamf;
+	pkf *= dels/(k+i);
+	ptermf = pkf * pbetaf;
+	    
+	/* second block --- forwards */
+	qgamf *= y * (c+b-2+i)/(c+i-1);
+	qbetaf -= qgamf;
+	qkf *= dels/(k+i+0.5);
+	qtermf = qkf * qbetaf;
+	    
+	/* accumulate */
+	sum += ptermf + del * qtermf * ISQRT_2;
+	rempois -= pkf;
+    }
+
+    ret += sum/2.0;
+    
+    return x < 0 ? (1.0 - ret) : ret;
+}
+
+/**
+ * nc_student_pdf:
+ * @df: degrees of freedom.
+ * @delta: noncentrality parameter.
+ * @x: reference value.
+ *
+ * Calculates the value at @x of the PDF of the noncentral Student t
+ * distribution with @df dof and noncentrality parameter equal to 
+ * @delta. The algorithm is from Wikipedia, apparently used in R too.
+ *
+ * Returns: the calculated density, or #NADBL on failure.
+ */
+
+double nc_student_pdf (double df, double delta, double x)
+{
+    double ret, tmp;
+    
+    if (df <= 0.0) {
+	return NADBL;
+    }
+
+    if (fabs(delta) <= 1.0e-10) {
+	/*
+	  When non-centrality parameter is (essentially) zero, use
+	  ordinary t distribution
+	*/
+	return student_pdf(df, x);
+    }
+
+    if (fabs(x) < 1.0e-12) {
+	tmp = ln_gamma((df+1)/2) - ln_gamma(df/2);
+	ret = exp(tmp - 0.5 * delta*delta) / (sqrt(M_PI * df));
+    } else {
+	tmp = nc_student_cdf(df+2, delta, x * sqrt(1 + 2.0/df)) -
+	    nc_student_cdf(df, delta, x);
+	ret = tmp * (df / x);
+    }
+
+    return ret;
+}
+
+
+static int nct_pdf_array (double df, double delta, double *x, int n)
+{
+    int i, err = 0;
+
+    if (df > 0) {
+	for (i=0; i<n; i++) {
+	    if (!na(x[i])) {
+		x[i] = nc_student_pdf(df, delta, x[i]);
+	    } else {
+		x[i] = NADBL;
+	    }
+	}
+    } else {
+	err = E_DATA;
+    }
+    
+    if (err) {
+	for (i=0; i<n; i++) {
+	    x[i] = NADBL;
+	}
+    }
+
+    return err;
+}
+
+/**
+ * nct_cdf_inverse:
+ * @p: degrees of freedom.
+ * @c: noncentrality parameter.
+ * @q: probability.
+ *
+ * Calculates the @q-th quantile of the noncentral Student t
+ * distribution with @c dof and noncentrality parameter equal to @c
+ * via a rough and not particularly clever root-finding
+ * algorithm. Maybe this can be more efficient by using logs. Some
+ * experimentation needed.
+ *
+ * Returns: the calculated quantile, or #NADBL on failure.
+ */
+
+static double nct_cdf_inverse (double p, double c, double q)
+{
+    if (p<1) {
+	return NADBL;
+    } 
+
+    double x, d0, d1;
+    int iter, subiter;
+    double F, f, dir;
+
+    x = c + student_cdf_inverse(p, q) / sqrt(p-0.5);
+    d0 = 1.0e7;
+    iter = 0;
+
+    while (fabs(d0)>1.0e-10 && iter<1000) {
+	F = nc_student_cdf(p, c, x);
+	f = nc_student_pdf(p, c, x);
+	d0 = F - q;
+        dir = d0/f;
+        d1 = 1.0e7;
+	subiter = 0;
+
+        while (fabs(d1) > fabs(d0) && subiter < 100) {
+            d1 = F - nc_student_cdf(p, c, x - dir);
+            dir /= 2.0;
+	    subiter++;
+	}
+
+	if (subiter>=100) {
+	    x = NADBL;
+	    break;
+	} else {
+	    x -= dir*2;
+	    d0 = d1;
+	    iter++;
+	}
+    }
+    
+    if (iter>=100) {
+	x = NADBL;
+    }
+
+    return x;
+}
+
+
 struct distmap {
     int code;
     char *s;
@@ -1831,6 +2525,52 @@ static int pdist_check_input (int dist, const double *parm,
     return 0;
 }
 
+
+/**
+ * gretl_get_cdf_inverse:
+ * @dist: distribution code.
+ * @parm: array holding from zero to two parameter values, 
+ * depending on the distribution.
+ * @a: probability value.
+ *
+ * Returns: the argument, y, for which the area under the PDF
+ * specified by @dist and @parm, integrated from its minimum to y,
+ * is equal to @a, or #NADBL on failure.
+ */
+
+double gretl_get_cdf_inverse (int dist, const double *parm, 
+			      double a)
+{
+    double y = NADBL;
+
+    if (pdist_check_input(dist, parm, a) == E_MISSDATA) {
+	return y;
+    }
+
+    if (dist == D_NORMAL) {
+	y = normal_cdf_inverse(a);
+    } else if (dist == D_STUDENT) {
+	y = student_cdf_inverse(parm[0], a);
+    } else if (dist == D_CHISQ) {
+	y = chisq_cdf_inverse((int) parm[0], a);
+    } else if (dist == D_GAMMA) {
+	y = gamma_cdf_inverse(parm[0], parm[1], a);
+    } else if (dist == D_SNEDECOR) {
+	y = snedecor_cdf_inverse((int) parm[0], (int) parm[1], a);
+    } else if (dist == D_BINOMIAL) {
+	y = binomial_cdf_inverse((int) parm[0], (int) parm[1], a);
+    } else if (dist == D_POISSON) {
+	y = poisson_cdf_inverse((int) parm[0], a);
+    } else if (dist == D_GED) {
+	y = GED_cdf_inverse(parm[0], a);
+    } else if (dist == D_NC_T) {
+	y = nct_cdf_inverse(parm[0], parm[1], a);
+    } 
+
+    return y;
+}
+
+
 /**
  * gretl_get_critval:
  * @dist: distribution code.
@@ -1959,6 +2699,8 @@ double gretl_get_pdf (int dist, const double *parm, double x)
 	y = weibull_pdf(parm[0], parm[1], x);
     } else if (dist == D_GED) {
 	y = GED_pdf(parm[0], x);
+    } else if (dist == D_NC_F) {
+	y = ncf_pdf(parm[0], parm[1], parm[2], x);
     } else if (dist == D_NC_T) {
 	y = nc_student_pdf(parm[0], parm[1], x);
     }
@@ -2008,6 +2750,8 @@ int gretl_fill_pdf_array (int dist, const double *parm,
 	err = weibull_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_GED) {
 	err = GED_pdf_array(parm[0], x, n);
+    } else if (dist == D_NC_F) {
+	err = ncf_pdf_array(parm[0], parm[1], parm[2], x, n);
     } else if (dist == D_NC_T) {
 	err = nct_pdf_array(parm[0], parm[1], x, n);
     }
@@ -2542,587 +3286,5 @@ gretl_matrix *gretl_get_DW (int n, int k, int *err)
     *err = (*dw_lookup) (n, k, &m);
 
     return m;
-}
-
-/* below: CDFs for non-central distributions: chi-square, F
-   and Student's t
-*/
-
-#define qsmall(sum,x) (sum < 1.0e-30 || (x) < 1.0e-8*sum)
-
-/**
- * nc_chisq_cdf:
- * @df: degrees of freedom.
- * @delta: noncentrality parameter.
- * @x: reference value.
- *
- * Calculates the value at @x of the CDF of the noncentral chi^2
- * distribution with @df dof and noncentrality parameter equal to
- * @delta.
- *
- * This is a version of cumchn() from dcdflib, de-spaghettized by
- * Jack Lucchetti (2015-06-21). The original algorithm uses formula
- * 26.4.25 from Abramowitz and Stegun, Handbook of Mathematical 
- * Functions, US NBS (1966).
- *
- * Returns: the calculated probability, or #NADBL on failure.
- */
-
-double nc_chisq_cdf (double df, double delta, double x)
-{
-    double adj, centaj, centwt, chid2, dfd2, lcntaj, lcntwt;
-    double lfact, pcent, pterm, sum, sumadj, term, wt, xnonc;
-    double T1, T2, T3;
-    int i, icent, iterb, iterf;
-    int itermax = 1000;
-
-    if (x < 0.0) {
-	return 1.0;
-    }
-
-    if (df <= 0.0) {
-	return NADBL;
-    }
-
-    if (delta <= 1.0e-10) {
-	/*
-	  When non-centrality parameter is (essentially) zero,
-	  use ordinary chi-square distribution
-	*/
-	return chisq_cdf(df, x);
-    }
-    
-    xnonc = delta / 2.0;
-	
-    /*
-      The following code calculates the weight, chi-square, and
-      adjustment term for the central term in the infinite series.
-      The central term is the one in which the poisson weight is
-      greatest.  The adjustment term is the amount that must
-      be subtracted from the chi-square to move up two degrees
-      of freedom.
-    */
-    icent = (xnonc < 1.0) ? 1 : (int) trunc(xnonc);
-    chid2 = x / 2.0;
-
-    /*
-      Calculate central weight term
-    */
-
-    T1 = (double) (icent + 1);
-    lfact = ln_gamma(T1);
-    lcntwt = -xnonc + (double)icent*log(xnonc) - lfact;
-    centwt = exp(lcntwt);
-
-    /*
-      Calculate central chi-square
-    */
-    T2 = df + 2.0 * (double) icent;
-    pcent = chisq_cdf(T2, x);
-
-    /*
-      Calculate central adjustment term
-    */
-
-    dfd2 = df / 2.0 + icent;
-    T3 = dfd2 + 1.0;
-    lfact = ln_gamma(T3);
-    lcntaj = dfd2 * log(chid2) - chid2 - lfact;
-    centaj = exp(lcntaj);
-    sum = centwt * pcent;
-
-    /*
-      Sum backwards from the central term towards zero.
-      Quit whenever either
-      (1) the zero term is reached, or
-      (2) the term gets small relative to the sum, or
-      (3) More than NTIRED terms are totaled.
-    */
-
-    iterb = 0;
-    sumadj = 0.0;
-    adj = centaj;
-    wt = centwt;
-    i = icent;
-
-    do {
-	dfd2 = df/2.0 + i;
-	/*
-	  Adjust chi-square for two fewer degrees of freedom.
-	  The adjusted value ends up in PTERM.
-	*/
-	adj = adj * dfd2/chid2;
-	sumadj += adj;
-	pterm = pcent + sumadj;
-	/*
-	  Adjust poisson weight for J decreased by one
-	*/
-	wt *= ((double)i/xnonc);
-	term = wt * pterm;
-	sum += term;
-	i--;
-	iterb++;
-    } while (iterb <= itermax && !qsmall(sum, term) && i > 0);
-
-    /*
-      Now sum forward from the central term towards infinity.
-      Quit when either
-      (1) the term gets small relative to the sum, or
-      (2) More than NTIRED terms are totaled.
-    */
-    iterf = 0;
-    sumadj = adj = centaj;
-    wt = centwt;
-    i = icent;
-
-    do {
-	/*
-	  Update weights for next higher J
-	*/
-	wt *= (xnonc/(double)(i+1));
-	/*
-	  Calculate PTERM and add term to sum
-	*/
-	pterm = pcent - sumadj;
-	term = wt * pterm;
-	sum += term;
-	/*
-	  Update adjustment term for DF for next iteration
-	*/
-	i++;
-	dfd2 = df/2.0 + i;
-	adj = adj * chid2/dfd2;
-	sumadj += adj;
-	iterf++;
-    } while (iterf <= itermax && !qsmall(sum, term));
-
-    return sum;
-}
-
-/**
- * nc_snedecor_cdf:
- * @dfn: degrees of freedom (num).
- * @dfd: degrees of freedom (den).
- * @delta: noncentrality parameter.
- * @x: reference value.
- *
- * Calculates the value at @x of the CDF of the noncentral F
- * distribution with @dfn, @dfd dof and noncentrality parameter equal
- * to @delta.
- * 
- * This is a version of cumfnc() from dcdflib, de-spaghettized by
- * Jack Lucchetti (2015-06-21). The original algorithm uses formula
- * 26.6.18 from Abramowitz and Stegun, Handbook of Mathematical
- * Functions, US NBS (1966).
- *
- * Returns: the calculated probability, or #NADBL on failure.
- */
-
-double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
-{
-    double dsum, prod, xx, yy, adn, aup, b, betdn, betup;
-    double centwt, dnterm, sum, upterm, xmult, xnonc;
-    double T1, T2, T3, T4, T5, T6;
-    int i, icent;
-    
-    if (x < 0.0) {
-	return 1.0;
-    }
-
-    if (dfn <= 0.0 || dfd <= 0.0) {
-	return NADBL;
-    }
-
-    if (delta <= 1.0e-10) {
-	/*
-	  When non-centrality parameter is (essentially) zero, use
-	  ordinary F distribution
-	*/
-	return snedecor_cdf(dfn, dfd, x);
-    } else {
-	xnonc = delta / 2.0;
-    }
-
-    /*
-      Calculate the central term of the poisson weighting factor.
-    */
-    icent = (xnonc < 1.0) ? 1 : (int) trunc(xnonc);
-
-    /*
-      Compute central weight term
-    */
-    T1 = (double) (icent + 1);
-    centwt = exp(-xnonc + (double) icent * log(xnonc) - ln_gamma(T1));
-
-    /*
-      Compute central incomplete beta term
-      Assure that minimum of arg to beta and 1 - arg is computed
-      accurately.
-    */
-    prod = dfn * x;
-    dsum = dfd + prod;
-    yy = dfd / dsum;
-    if (yy > 0.5) {
-        xx = prod / dsum;
-        yy = 1.0 - xx;
-    } else {
-	xx = 1.0 - yy;
-    }
-
-    T2 = dfn / 2.0 + (double) icent;
-    T3 = dfd / 2.0;
-    betdn = incbet(T2, T3, xx);
-    adn = dfn / 2.0 + (double) icent;
-    aup = adn;
-    b = dfd / 2.0;
-    betup = betdn;
-    sum = centwt * betdn;
-
-    /*
-      Now sum terms backward from icent until convergence or all done
-    */
-    
-    xmult = centwt;
-    i = icent;
-    T4 = adn + b;
-    T5 = adn + 1.0;
-    dnterm = exp(ln_gamma(T4)-ln_gamma(T5)-ln_gamma(b) + adn*log(xx) + b*log(yy));
-
-    while (!qsmall(sum, xmult*betdn) && i > 0) {
-	xmult *= (double) i /xnonc;
-	i--;
-	adn -= 1.0;
-	dnterm = (adn + 1.0)/((adn+b)*xx) * dnterm;
-	betdn += dnterm;
-	sum += xmult * betdn;
-    }
-
-    i = icent+1;
-
-    /*
-      Now sum forwards until convergence
-    */
-    xmult = centwt;
-    if (aup-1.0+b == 0) {
-	upterm = exp(-ln_gamma(aup) - ln_gamma(b) + 
-		     (aup-1.0)*log(xx) + b*log(yy));
-    } else {
-        T6 = aup - 1.0 + b;
-        upterm = exp(ln_gamma(T6) - ln_gamma(aup) - ln_gamma(b) + 
-		     (aup-1.0)*log(xx) + b*log(yy));
-    }
-
-    while (!qsmall(sum, xmult*betup)) {
-	xmult *= (xnonc/(double)i);
-	i++;
-	aup += 1.0;
-	upterm = (aup + b - 2.0) * xx/(aup-1.0) * upterm;
-	betup -= upterm;
-	sum += (xmult*betup);
-    }
-
-    return sum;
-}
-
-#undef qsmall
-
-#ifndef ISQRT_2
-#define ISQRT_2 .707106781186547524401
-#endif
-
-/**
- * nc_student_cdf:
- * @df: degrees of freedom.
- * @delta: noncentrality parameter.
- * @x: reference value.
- *
- * Calculates the value at @x of the CDF of the noncentral Student t
- * distribution with @df dof and noncentrality parameter equal to 
- * @delta. The algorithm is by Benson-Krishnamoorthy (2003) CSDA 43,
- * with minimal changes.
- *
- * Returns: the calculated probability, or #NADBL on failure.
- */
-
-double nc_student_cdf (double df, double delta, double x)
-{
-    double errtol = 1.0e-16;
-    double maxit = 512;
-    double ax, y, del, dels, k, a, b, c; 
-    double pkf, pkb, qkf, qkb, pbetaf, pbetab, qbetaf, qbetab;
-    double pgamf, pgamb, qgamf, qgamb, tmp, ret;
-    double rempois, sum, ptermf, qtermf, ptermb, qtermb;
-    int i;
-    
-    if (df <= 0.0) {
-	return NADBL;
-    }
-
-    if (fabs(delta) <= 1.0e-10) {
-	/*
-	  When non-centrality parameter is (essentially) zero, use
-	  ordinary t distribution
-	*/
-	return student_cdf(df, x);
-    }
-
-    ax = fabs(x);
-
-    del = x > 0 ? delta : -delta;
-    ret = normal_cdf(-del);
-
-    if (ax < 1.0e-12) {
-	return 1.0 - ret;
-    }
-
-    /* settings */
-    
-    y = ax*ax / (df + ax*ax);
-    dels = del * del / 2.0;
-    k = (int) floor(dels);
-    a = k + 0.5;
-    c = k + 1;
-    b = df * 0.5;
-
-    /* 
-       Initialization to compute the P_k and Q_k terms 
-       and the respective incomplete beta functions
-    */
-
-    tmp = -dels + k * log(dels);
-    pkf = pkb = exp(tmp - ln_gamma(k + 1));
-    qkf = qkb = exp(tmp - ln_gamma(k + 1.5));
-    pbetaf = pbetab = incbet(a, b, y);
-    qbetaf = qbetab = incbet(c, b, y);
-    
-    /*
-      Initialization to compute the incomplete beta functions 
-      associated with the P_i and the Q_i recursively:
-    */
-    
-    tmp = b * log(1-y) - ln_gamma(b);
-    pgamf = exp(ln_gamma(a+b-1) - ln_gamma(a) + (a-1) * log(y) + tmp);
-    pgamb = pgamf * y * (a + b - 1)/a;
-
-    qgamf = exp(ln_gamma(c+b-1) - ln_gamma(c) + (c-1) * log(y) + tmp);
-    qgamb = qgamf * y * (c + b - 1)/c;
-
-    /*
-      Compute the remainder of the Poisson weights
-    */
-
-    rempois = 1.0 - pkf;
-    sum = pkf * pbetaf + del * qkf * qbetaf * ISQRT_2;
-
-    for (i = 1; i<=k && rempois>errtol; i++) {
-	/* first block --- backwards */
-	pgamb *= (a-i+1)/(y * (a+b-i));
-	pbetab += pgamb;
-	pkb *= (k-i+1)/dels;
-	ptermb = pkb * pbetab;
-	    
-	/* second block --- backwards */
-	qgamb *= (c-i+1)/(y * (c+b-i));
-	qbetab += qgamb;
-	qkb *= (k-i+1.5)/dels;
-	qtermb = qkb * qbetab;
-	    
-	/* accumulate */
-	sum += ptermb + del * qtermb * ISQRT_2;
-	rempois -= pkb;
-    }
-
-    for (i = 1; i<maxit && rempois > errtol; i++) {
-	/* first block --- forwards */
-	pgamf *= y * (a+b-2+i)/(a+i-1);
-	pbetaf -= pgamf;
-	pkf *= dels/(k+i);
-	ptermf = pkf * pbetaf;
-	    
-	/* second block --- forwards */
-	qgamf *= y * (c+b-2+i)/(c+i-1);
-	qbetaf -= qgamf;
-	qkf *= dels/(k+i+0.5);
-	qtermf = qkf * qbetaf;
-	    
-	/* accumulate */
-	sum += ptermf + del * qtermf * ISQRT_2;
-	rempois -= pkf;
-    }
-
-    ret += sum/2.0;
-    
-    return x < 0 ? (1.0 - ret) : ret;
-}
-
-/**
- * nc_student_pdf:
- * @df: degrees of freedom.
- * @delta: noncentrality parameter.
- * @x: reference value.
- *
- * Calculates the value at @x of the PDF of the noncentral Student t
- * distribution with @df dof and noncentrality parameter equal to 
- * @delta. The algorithm is from Wikipedia, apparently used in R too.
- *
- * Returns: the calculated density, or #NADBL on failure.
- */
-
-double nc_student_pdf (double df, double delta, double x)
-{
-    double ret, tmp;
-    
-    if (df <= 0.0) {
-	return NADBL;
-    }
-
-    if (fabs(delta) <= 1.0e-10) {
-	/*
-	  When non-centrality parameter is (essentially) zero, use
-	  ordinary t distribution
-	*/
-	return student_pdf(df, x);
-    }
-
-    if (fabs(x) < 1.0e-12) {
-	tmp = ln_gamma((df+1)/2) - ln_gamma(df/2);
-	ret = exp(tmp - 0.5 * delta*delta) / (sqrt(M_PI * df));
-    } else {
-	tmp = nc_student_cdf(df+2, delta, x * sqrt(1 + 2.0/df)) -
-	    nc_student_cdf(df, delta, x);
-	ret = tmp * (df / x);
-    }
-
-    return ret;
-}
-
-
-static int nct_pdf_array (double df, double delta, double *x, int n)
-{
-    int i, err = 0;
-
-    if (df > 0) {
-	for (i=0; i<n; i++) {
-	    if (!na(x[i])) {
-		x[i] = nc_student_pdf(df, delta, x[i]);
-	    } else {
-		x[i] = NADBL;
-	    }
-	}
-    } else {
-	err = E_DATA;
-    }
-    
-    if (err) {
-	for (i=0; i<n; i++) {
-	    x[i] = NADBL;
-	}
-    }
-
-    return err;
-}
-
-/**
- * nct_cdf_inverse:
- * @p: degrees of freedom.
- * @c: noncentrality parameter.
- * @q: probability.
- *
- * Calculates the @q-th quantile of the noncentral Student t
- * distribution with @c dof and noncentrality parameter equal to @c
- * via a rough and not particularly clever root-finding
- * algorithm. Maybe this can be more efficient by using logs. Some
- * experimentation needed.
- *
- * Returns: the calculated quantile, or #NADBL on failure.
- */
-
-static double nct_cdf_inverse (double p, double c, double q)
-{
-    if (p<1) {
-	return NADBL;
-    } 
-
-    double x, d0, d1;
-    int iter, subiter;
-    double F, f, dir;
-
-    x = c + student_cdf_inverse(p, q) / sqrt(p-0.5);
-    d0 = 1.0e7;
-    iter = 0;
-
-    while (fabs(d0)>1.0e-10 && iter<1000) {
-	F = nc_student_cdf(p, c, x);
-	f = nc_student_pdf(p, c, x);
-	d0 = F - q;
-        dir = d0/f;
-        d1 = 1.0e7;
-	subiter = 0;
-
-        while (fabs(d1) > fabs(d0) && subiter < 100) {
-            d1 = F - nc_student_cdf(p, c, x - dir);
-            dir /= 2.0;
-	    subiter++;
-	}
-
-	if (subiter>=100) {
-	    x = NADBL;
-	    break;
-	} else {
-	    x -= dir*2;
-	    d0 = d1;
-	    iter++;
-	}
-    }
-    
-    if (iter>=100) {
-	x = NADBL;
-    }
-
-    return x;
-}
-
-/**
- * gretl_get_cdf_inverse:
- * @dist: distribution code.
- * @parm: array holding from zero to two parameter values, 
- * depending on the distribution.
- * @a: probability value.
- *
- * Returns: the argument, y, for which the area under the PDF
- * specified by @dist and @parm, integrated from its minimum to y,
- * is equal to @a, or #NADBL on failure.
- */
-
-double gretl_get_cdf_inverse (int dist, const double *parm, 
-			      double a)
-{
-    double y = NADBL;
-
-    if (pdist_check_input(dist, parm, a) == E_MISSDATA) {
-	return y;
-    }
-
-    if (dist == D_NORMAL) {
-	y = normal_cdf_inverse(a);
-    } else if (dist == D_STUDENT) {
-	y = student_cdf_inverse(parm[0], a);
-    } else if (dist == D_CHISQ) {
-	y = chisq_cdf_inverse((int) parm[0], a);
-    } else if (dist == D_GAMMA) {
-	y = gamma_cdf_inverse(parm[0], parm[1], a);
-    } else if (dist == D_SNEDECOR) {
-	y = snedecor_cdf_inverse((int) parm[0], (int) parm[1], a);
-    } else if (dist == D_BINOMIAL) {
-	y = binomial_cdf_inverse((int) parm[0], (int) parm[1], a);
-    } else if (dist == D_POISSON) {
-	y = poisson_cdf_inverse((int) parm[0], a);
-    } else if (dist == D_GED) {
-	y = GED_cdf_inverse(parm[0], a);
-    } else if (dist == D_NC_T) {
-	y = nct_cdf_inverse(parm[0], parm[1], a);
-    } 
-
-    return y;
 }
 
