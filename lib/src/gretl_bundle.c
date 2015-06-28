@@ -1609,7 +1609,7 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
 	err = E_FOPEN;
     } else {
 	gretl_xml_header(fp);
-	gretl_bundle_serialize(b, "temp", fp);
+	gretl_bundle_serialize(b, NULL, fp);
 	fclose(fp);
     }
 
