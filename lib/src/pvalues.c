@@ -1983,15 +1983,20 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
  * Returns: an error code, as appropriate.
  */
 
-int ncf_pdf_array (double dfn, double dfd, double c, 
-			   double *x, int n)
+static int ncf_pdf_array (double dfn, double dfd, double c, 
+			  double *x, int n)
 {
+    double ch, k1, k2, k;
+    double a, b, l, pw, beta;
+    double pwi, betai;
     double errtol = 1.0e-16;
     double maxit = 256;
+    double *vx, *vz;
+    int i, t, start, iter;
     int err = 0;
 
     if (dfd <= 0.0 || dfn <= 0.0) {
-	return 1;
+	return E_DATA;
     }
 
     if (fabs(c) <= 1.0e-10) {
@@ -2002,10 +2007,8 @@ int ncf_pdf_array (double dfn, double dfd, double c,
 	return 1; //snedecor_pdf(dfn, dfd, x);
     }
 
-    double *vx, *vz;
-
     vx  = malloc(n * sizeof *vx);
-    vz  = malloc(n * sizeof *vx);
+    vz  = malloc(n * sizeof *vz);
 
     if (vx == NULL || vz == NULL) {
 	err = E_ALLOC;
@@ -2013,12 +2016,10 @@ int ncf_pdf_array (double dfn, double dfd, double c,
     }
 
     /* fill up auxiliary vectors */
-    int t, i;
-    double ch = c/2.0;
-    double k1 = dfn/2;
-    double k2 = (dfn + dfd)/2;
-    double k = log(dfn) - log(dfd);
-
+    ch = c/2.0;
+    k1 = dfn/2;
+    k2 = (dfn + dfd)/2;
+    k = log(dfn) - log(dfd);
     
     for(t=0; t<n; t++) {
 	if(xna(x[t]) || x[t] < 0) {
@@ -2031,9 +2032,7 @@ int ncf_pdf_array (double dfn, double dfd, double c,
 
     /* start from central Poisson weight */
 
-    int start = (int) floor(ch);
-    double pw, beta;
-    double a, b, l;
+    start = (int) floor(ch);
 
     /* Poisson weight */
     pw = exp(-ch - ln_gamma(start+1) + start * log(ch));
@@ -2042,8 +2041,8 @@ int ncf_pdf_array (double dfn, double dfd, double c,
     a = pw / beta;
     b = (k1 + start) * k;
 
-    for(t=0; t<n; t++) {
-	if(xna(x[t]) || x[t] < 0) {
+    for (t=0; t<n; t++) {
+	if (xna(x[t]) || x[t] < 0) {
 	    x[t] = NADBL;
 	} else {
 	    l = b + (start + k1 - 1) * vx[t] + (start + k2) * vz[t];
@@ -2055,20 +2054,18 @@ int ncf_pdf_array (double dfn, double dfd, double c,
       First, go back from start to 0
     */
 
-    double pwi, betai;
-    int iter = 0;
-
     pwi = pw;
     betai = beta;
+    iter = 0;
 
-    for (i = start - 1; i>=0 && pwi>errtol && iter < maxit; i--) {
+    for (i = start-1; i>=0 && pwi>errtol && iter < maxit; i--) {
 	iter++;
 	pwi *= (i + 1.0)/ch;
 	betai *= (k2 + i)/(k1 + i);
 	a = pwi / betai;
 	b = (k1 + i) * k;
-	for(t=0; t<n; t++) {
-	    if(!na(x[t])) {
+	for (t=0; t<n; t++) {
+	    if (!na(x[t])) {
 		l = b + (i + k1 - 1) * vx[t] + (i + k2) * vz[t]; 
 		x[t] += a * exp(l);
 	    }
@@ -2083,14 +2080,14 @@ int ncf_pdf_array (double dfn, double dfd, double c,
     pwi = pw;
     betai = beta;
 
-    for (i = start + 1; pwi>errtol && iter<maxit; i++) {
+    for (i = start+1; pwi>errtol && iter<maxit; i++) {
 	iter++;
 	pwi *= ch/i;
 	betai *= (k1 + i - 1.0)/(k2 + i - 1.0);
 	a = pwi / betai;
 	b = (k1 + i) * k;
-	for(t=0; t<n; t++) {
-	    if(!na(x[t])) {
+	for (t=0; t<n; t++) {
+	    if (!na(x[t])) {
 		l = b + (i + k1 - 1) * vx[t] + (i + k2) * vz[t]; 
 		x[t] += a * exp(l);
 	    }
@@ -2110,9 +2107,7 @@ double ncf_pdf (double dfn, double dfd, double c, double x)
     ncf_pdf_array(dfn, dfd, c, &x, 1);
 
     return x;
-   
 }
-
 
 /**
  * ncf_cdf_inverse:
@@ -2132,19 +2127,19 @@ double ncf_pdf (double dfn, double dfd, double c, double x)
 
 static double ncf_cdf_inverse (double n1, double n2, double c, double q)
 {
-    if (n2<1 || n1<1 || q<=0 || q>=1) {
-	return NADBL;
-    } 
-
     double x, d0, d1;
     int iter, subiter;
     double F, f, dir;
+    
+    if (n2 < 1 || n1 < 1 || q <= 0 || q >= 1) {
+	return NADBL;
+    } 
 
     x = 0.5;
     d0 = 1.0e7;
     iter = 0;
 
-    while (fabs(d0)>1.0e-10 && iter<1000) {
+    while (fabs(d0) > 1.0e-10 && iter < 1000) {
 	F = nc_snedecor_cdf(n1, n2, c, x);
 	f = ncf_pdf(n1, n2, c, x);
 	d0 = F - q;
@@ -2158,7 +2153,7 @@ static double ncf_cdf_inverse (double n1, double n2, double c, double q)
 	    subiter++;
 	}
 
-	if (subiter>=100) {
+	if (subiter >= 100) {
 	    x = NADBL;
 	    break;
 	} else {
@@ -2168,9 +2163,10 @@ static double ncf_cdf_inverse (double n1, double n2, double c, double q)
 	}
     }
     
-    if (iter>=100) {
+    if (iter >= 100) {
 	x = NADBL;
     }
+    
     return x;
 }
 
@@ -2387,19 +2383,19 @@ static int nct_pdf_array (double df, double delta, double *x, int n)
 
 static double nct_cdf_inverse (double p, double c, double q)
 {
-    if (p<1 || q<=0 || q>=1) {
-	return NADBL;
-    } 
-
     double x, d0, d1;
     int iter, subiter;
     double F, f, dir;
+    
+    if (p < 1 || q <= 0 || q >= 1) {
+	return NADBL;
+    } 
 
-    x = c + student_cdf_inverse(p, q) / sqrt(p-0.5);
+    x = c + student_cdf_inverse(p, q) / sqrt(p - 0.5);
     d0 = 1.0e7;
     iter = 0;
 
-    while (fabs(d0)>1.0e-10 && iter<1000) {
+    while (fabs(d0) > 1.0e-10 && iter < 1000) {
 	F = nc_student_cdf(p, c, x);
 	f = nc_student_pdf(p, c, x);
 	d0 = F - q;
@@ -2413,7 +2409,7 @@ static double nct_cdf_inverse (double p, double c, double q)
 	    subiter++;
 	}
 
-	if (subiter>=100) {
+	if (subiter >= 100) {
 	    x = NADBL;
 	    break;
 	} else {
@@ -2423,7 +2419,7 @@ static double nct_cdf_inverse (double p, double c, double q)
 	}
     }
     
-    if (iter>=100) {
+    if (iter >= 100) {
 	x = NADBL;
     }
 
