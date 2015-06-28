@@ -1610,6 +1610,7 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
     } else {
 	gretl_xml_header(fp);
 	gretl_bundle_serialize(b, "temp", fp);
+	fclose(fp);
     }
 
     return err;
