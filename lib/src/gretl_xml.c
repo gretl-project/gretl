@@ -1599,19 +1599,15 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask)
 	err = 1;
     } else {
 	xmlChar *tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+	
 	if (tmp == NULL) {
 	    err = 1;
 	} else {
-	    const char *s = (const char *) tmp;
-	    int si;
+	    char *s = (char *) tmp;
 
 	    for (i=0; i<len; i++) {
-		sscanf(s, "%d", &si);
-		s += strspn(s, " ");
-		s += strcspn(s, " ");
-		if (si != 0) {
-		    mask[i] = si;
-		}
+		mask[i] = atoi(s);
+		s += 2;
 	    }
 	    free(tmp);
 	}
