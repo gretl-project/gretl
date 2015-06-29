@@ -1995,7 +1995,7 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
     int i, t, start, iter;
     int err = 0;
 
-    if (dfd <= 0.0 || dfn <= 0.0) {
+    if (dfd <= 0.0 || dfn <= 0.0 || c < 0.0) {
 	return E_DATA;
     }
 
@@ -2004,7 +2004,7 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
 	  When non-centrality parameter is (essentially) zero, use
 	  ordinary F distribution
 	*/
-	return 1; //snedecor_pdf(dfn, dfd, x);
+	return snedecor_pdf_array(dfn, dfd, x, n);
     }
 
     vx  = malloc(n * sizeof *vx);
@@ -2163,7 +2163,7 @@ static double ncf_cdf_inverse (double n1, double n2, double c, double q)
 	}
     }
     
-    if (iter >= 100) {
+    if (iter >= 1000) {
 	x = NADBL;
     }
     
@@ -2419,7 +2419,7 @@ static double nct_cdf_inverse (double p, double c, double q)
 	}
     }
     
-    if (iter >= 100) {
+    if (iter >= 1000) {
 	x = NADBL;
     }
 
