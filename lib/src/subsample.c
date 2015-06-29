@@ -327,6 +327,121 @@ int attach_subsample_to_model (MODEL *pmod, const DATASET *dset)
     return err;
 }
 
+static int obs_in_use (MODEL *pmod, int i)
+{
+    if (pmod->submask != NULL && pmod->submask[i] == 0) {
+	/* obs masked out, not used */
+	return 0;
+    } else if (pmod->submask == NULL) {
+	if (pmod->uhat != NULL && na(pmod->uhat[i])) {
+	    /* obs out of range, or excluded due to NAs? */
+	    return 0;
+	} else if (i < pmod->t1 || i > pmod->t2) {
+	    /* obs out of range, not used */
+	    return 0;
+	}
+    } else {
+	/* Urgh! Need to consider "cross-products" of
+	   the conditions above */
+	return 1;
+    }
+}
+
+/* This is called from objstack.c for any saved models: we
+   want to check that a proposed permanent shrinkage of the
+   dataset will not end up deleting observations that are
+   "in use" by one or more models.
+*/
+
+int check_model_submask (MODEL *pmod, char *mask)
+{
+    int i, err = 0;
+
+    if (pmod->submask == RESAMPLED || mask == RESAMPLED) {
+	/* what to do?? */
+	return 0;
+    }
+
+    for (i=0; !err; i++) {
+	if (mask[i] == SUBMASK_SENTINEL) {
+	    break;
+	} else if (mask[i] == 0 && obs_in_use(pmod, i)) {
+	    /* obs i is to be excluded, but the model "uses" it */
+	    gretl_errmsg_set(_("You cannot permanently delete observations "
+			       "that are used by a saved model"));
+	    err = E_DATA;
+	}
+    }
+
+    return err;
+}
+
+/* Called from objstack.c for any saved models that have a 
+   subsample mask attached, after carrying out permanent
+   shrinkage of the dataset: we need to revise such masks
+   in light of the changed "full" dataset.
+*/
+
+int revise_model_submask (MODEL *pmod, char *mask)
+{
+    char *newmask = NULL;
+    int all_ones = 1;
+    int masklen = 0;
+    int i, j, err = 0;
+
+    if (pmod->submask == RESAMPLED || mask == RESAMPLED) {
+	/* what to do?? */
+	return 0;
+    }
+
+    for (i=0; ; i++) {
+	if (mask[i] == SUBMASK_SENTINEL) {
+	    break;
+	} else if (mask[i] == 1) {
+	    masklen++;
+	}
+    }
+
+    if (masklen == 0) {
+	return E_DATA;
+    } else {
+	newmask = make_submask(masklen);
+	if (newmask == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    j = 0;
+
+    for (i=0; ; i++) {
+	if (pmod->submask[i] == SUBMASK_SENTINEL) {
+	    break;
+	}
+	if (pmod->submask[i] == 0) {
+	    if (mask[i] == 0) {
+		; /* skip */
+	    } else if (mask[i] == 1) {
+		newmask[j++] = 0;
+		all_ones = 0;
+	    }
+	} else {
+	    newmask[j++] = 1;
+	}
+    }
+
+    free(pmod->submask);
+    pmod->full_n = masklen;
+
+    if (all_ones) {
+	free(newmask);
+	pmod->submask = NULL;
+    } else {
+	pmod->submask = newmask;
+    }
+
+    return err;
+}
+
 /* If series have been added to a resampled dataset, we can't
    bring these back to the "full" dataset, which may have a
    longer or shorter series length, and from which there is
@@ -1539,6 +1654,13 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 	return E_BADOPT;
     }
 
+    if (opt & OPT_T) {
+	err = check_model_submasks(mask, 1);
+	if (err) {
+	    return err;
+	}
+    }
+
     subset = datainfo_new();
     if (subset == NULL) {
 	return E_ALLOC;
@@ -1622,6 +1744,7 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 
     if (opt & OPT_T) {
 	/* --permanent */
+	err = check_model_submasks(mask, 0);
 	destroy_full_dataset(dset);
     } else {
 	err = backup_full_dataset(dset);
@@ -1831,6 +1954,10 @@ static int make_restriction_string (DATASET *dset, char *old,
  * In case the original dataset was a panel and OPT_B was given,
  * we'll pad with missing values if necessary, to try to reconstitute 
  * a balanced panel.
+ *
+ * In case OPT_T is included, the sample restriction will be
+ * permanent (the full datasset is destroyed), otherwise the
+ * restriction can be undone via the command "smpl full".
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
@@ -2104,7 +2231,7 @@ int set_sample (const char *start, const char *stop, DATASET *dset)
 
 #if SUBDEBUG
     fprintf(stderr, "set_sample: start='%s', stop='%s', dset=%p\n", 
-	    newstart, newstop, (void *) dset);
+	    start, stop, (void *) dset);
     if (dset != NULL) {
 	fprintf(stderr, "dset->v = %d, dset->n = %d, pd = %d\n",
 		dset->v, dset->n, dset->pd);

@@ -1723,6 +1723,33 @@ int check_variable_deletion_list (int *list, const DATASET *dset)
     return pruned;
 }
 
+int check_model_submasks (char *testmask, int dryrun)
+{
+    GretlObjType type;
+    void *ptr;
+    int i, err = 0;
+
+    for (i=-1; i<n_obj && !err; i++) {
+	if (i < 0) {
+	    ptr = get_last_model(&type);
+	} else {
+	    ptr = ostack[i].ptr;
+	    type = ostack[i].type;
+	}
+	if (ptr != NULL && type == GRETL_OBJ_EQN) {
+	    MODEL *pmod = ptr;
+
+	    if (dryrun) {
+		err = check_model_submask(pmod, testmask);
+	    } else if (pmod->missmask != NULL) {
+		err = revise_model_submask(pmod, testmask);
+	    }
+	}
+    }
+
+    return err;
+}
+
 void gretl_saved_objects_cleanup (void)
 {
     void *lmp = last_model.ptr;

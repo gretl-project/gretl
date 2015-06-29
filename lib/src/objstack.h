@@ -179,6 +179,8 @@ int highest_numbered_var_in_saved_object (const DATASET *dset);
 
 int check_variable_deletion_list (int *list, const DATASET *dset);
 
+int check_model_submasks (char *testmask, int dryrun);
+
 void gretl_saved_objects_cleanup (void);
 
 #endif

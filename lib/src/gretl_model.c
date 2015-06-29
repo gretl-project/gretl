@@ -4986,7 +4986,9 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	} else if (!xmlStrcmp(cur->name, (XUC) "params")) {
 	    *err = attach_model_params_from_xml(cur, doc, pmod);
 	} else if (!xmlStrcmp(cur->name, (XUC) "submask")) {
+	    fprintf(stderr, "getting submask...\n");
 	    *err = model_submask_from_xml(cur, doc, pmod);
+	    fprintf(stderr, "got it\n");
 	} else if (!xmlStrcmp(cur->name, (XUC) "missmask")) {
 	    if (!gretl_xml_node_get_string(cur, doc, &pmod->missmask)) {
 		*err = 1;
