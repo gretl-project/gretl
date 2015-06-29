@@ -343,8 +343,10 @@ static int obs_in_use (MODEL *pmod, int i)
     } else {
 	/* Urgh! Need to consider "cross-products" of
 	   the conditions above */
-	return 1;
+	;
     }
+
+    return 1;
 }
 
 /* This is called from objstack.c for any saved models: we
@@ -414,7 +416,7 @@ int revise_model_submask (MODEL *pmod, char *mask)
     j = 0;
 
     for (i=0; ; i++) {
-	if (pmod->submask[i] == SUBMASK_SENTINEL) {
+	if (mask[i] == SUBMASK_SENTINEL) {
 	    break;
 	}
 	if (pmod->submask[i] == 0) {

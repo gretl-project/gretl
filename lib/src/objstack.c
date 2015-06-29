@@ -1672,17 +1672,17 @@ int last_model_test_uhat (DATASET *dset, gretlopt opt, PRN *prn)
 int highest_numbered_var_in_saved_object (const DATASET *dset)
 {
     GretlObjType type;
-    void *ptr;
+    void *ptr, *lmp;
     int i, mvm, vmax = 0;
 
     for (i=-1; i<n_obj; i++) {
 	if (i < 0) {
-	    ptr = get_last_model(&type);
+	    lmp = ptr = get_last_model(&type);
 	} else {
 	    ptr = ostack[i].ptr;
 	    type = ostack[i].type;
 	}
-	if (ptr == NULL) {
+	if (ptr == NULL || (i >= 0 && ptr == lmp)) {
 	    continue;
 	}
 	if (type == GRETL_OBJ_EQN) {
@@ -1726,22 +1726,25 @@ int check_variable_deletion_list (int *list, const DATASET *dset)
 int check_model_submasks (char *testmask, int dryrun)
 {
     GretlObjType type;
-    void *ptr;
+    void *ptr, *lmp;
     int i, err = 0;
 
     for (i=-1; i<n_obj && !err; i++) {
 	if (i < 0) {
-	    ptr = get_last_model(&type);
+	    lmp = ptr = get_last_model(&type);
 	} else {
 	    ptr = ostack[i].ptr;
 	    type = ostack[i].type;
+	}
+	if (i >= 0 && ptr == lmp) {
+	    continue;
 	}
 	if (ptr != NULL && type == GRETL_OBJ_EQN) {
 	    MODEL *pmod = ptr;
 
 	    if (dryrun) {
 		err = check_model_submask(pmod, testmask);
-	    } else if (pmod->missmask != NULL) {
+	    } else if (pmod->submask != NULL) {
 		err = revise_model_submask(pmod, testmask);
 	    }
 	}
