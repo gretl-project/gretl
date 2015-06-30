@@ -1373,7 +1373,8 @@ static void convert_pow_term (NODE *n)
 			  t == P_COM || \
                           t == G_RPR || \
 	                  t == G_RBR ||	\
-                          t == G_RCB)
+                          t == G_RCB || \
+			  t == P_COL)
 
 static NODE *factor (parser *p)
 {  
