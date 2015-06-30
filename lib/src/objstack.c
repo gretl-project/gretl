@@ -1723,6 +1723,17 @@ int check_variable_deletion_list (int *list, const DATASET *dset)
     return pruned;
 }
 
+/* The following function is called from subsample.c when
+   the user has called for a permanent subsampling (represented
+   by @newmask) of the original dataset.
+
+   If @dryrun is non-zero that means we're just checking
+   whether the proposed subsampling is "fatal" for any
+   saved model. Otherwise we call the appropriate
+   function to revise the sample information on each
+   saved model in light of the shrinkage of the dataset.
+*/
+
 int check_models_for_subsample (char *newmask, int dryrun)
 {
     GretlObjType type;

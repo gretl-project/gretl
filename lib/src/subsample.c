@@ -371,8 +371,14 @@ static int obs_in_use (MODEL *pmod, int i)
 	    ret = 0;
 	}
     } else if (pmod->nobs < pmod->full_n) {
+	/* mask is present; obs @i is not excluded by
+	   mask; and the observations used by @pmod
+	   fall short of the total made available
+	   via mask
+	*/
 	int t1 = 0, t2 = 0;
 	int s, t = -1;
+	int found = 0;
 
 	for (s=0; mask[s] != SUBMASK_SENTINEL; s++) {
 	    if (mask[s] == 1) {
@@ -382,10 +388,12 @@ static int obs_in_use (MODEL *pmod, int i)
 		na(pmod->uhat[t])) {
 		ret = 0;
 		break;
-	    } else if (t == pmod->t1) {
+	    } else if (found == 0 && t == pmod->t1) {
 		t1 = s;
-	    } else if (t == pmod->t2) {
+		found++;
+	    } else if (found == 1 && t == pmod->t2) {
 		t2 = s;
+		found++;
 		break;
 	    }
 	}
@@ -431,6 +439,10 @@ int subsample_check_model (MODEL *pmod, char *mask)
    pmod->submask will be non-NULL). Here we aim to 
    replace these indices with the corresponding values
    relative to the "new" subsample represented by @targ.
+
+   We also revise the indices that record the sample
+   range in force when @pmod was estimated. This aspect
+   may not be quite right?
 */
 
 static void convert_obs_indices (MODEL *pmod, char *targ)
@@ -530,7 +542,7 @@ static int revise_missmask (MODEL *pmod, char *targ, int n)
 	    pmod->missmask[s] == '1') {
 	    /* we have an observation which is included in
 	       both the original and the new subsamples, and
-	       which is masked as containing NAs for @pmod
+	       which is marked as containing NAs for @pmod
 	    */
 	    newmiss[t] = '1';
 	    misscount++;
@@ -554,6 +566,13 @@ static int revise_missmask (MODEL *pmod, char *targ, int n)
     return 0;
 }
 
+/* We come here if @pmod has a "submask" attached, indicating
+   which observations from the full dataset were selected
+   when the model was estimated. This mask has to be revised
+   in light of a permanent sample restriction represented
+   by @mask.
+*/
+
 static int revise_model_submask (MODEL *pmod, char *mask,
 				 int masklen)
 {
@@ -569,6 +588,9 @@ static int revise_model_submask (MODEL *pmod, char *mask,
     if (masklen == 0) {
 	return E_DATA;
     } else {
+	/* make an empty new submask of the correct length, namely
+	   the number of observations included by @mask
+	*/	
 	newmask = make_submask(masklen);
 	if (newmask == NULL) {
 	    return E_ALLOC;
@@ -579,13 +601,27 @@ static int revise_model_submask (MODEL *pmod, char *mask,
 
     for (i=0; mask[i] != SUBMASK_SENTINEL; i++) {
 	if (pmod->submask[i] == 0) {
+	    /* observation @i was screened out when @pmod was
+	       estimated */
 	    if (mask[i] == 0) {
-		; /* skip */
+		/* observation @i is being dropped from the
+		   full dataset: it's no longer correct to
+		   mark it as a 0 in the model-specific
+		   submask, so skip it
+		*/
+		;
 	    } else if (mask[i] == 1) {
+		/* observation @i is retained in the full
+		   dataset but it was screened out for @pmod, so
+		   we need a 0 entry in @newmask
+		*/		
 		newmask[j++] = 0;
 		all_ones = 0;
 	    }
 	} else {
+	    /* observation @i was used when @pmod was estimated,
+	       so it must be marked as included
+	    */
 	    newmask[j++] = 1;
 	}
     }
@@ -594,6 +630,10 @@ static int revise_model_submask (MODEL *pmod, char *mask,
     pmod->full_n = masklen;
 
     if (all_ones) {
+	/* it turns out that none of the obs included by @mask
+	   were screened out by @pmod's submask, so we don't
+	   need @newmask
+	*/
 	free(newmask);
 	pmod->submask = NULL;
     } else {
@@ -603,10 +643,19 @@ static int revise_model_submask (MODEL *pmod, char *mask,
     return 0;
 }
 
-/* Called from objstack.c for any saved models that have a 
-   subsample mask attached, after carrying out permanent
-   shrinkage of the dataset: we need to revise such masks
-   in light of the changed "full" dataset.
+/* Called from objstack.c for each saved model, when the
+   user calls for the imposition of a permanent subsample
+   restriction on the dataset. We need to adjust up to
+   three sorts of sample information stored in the MODEL
+   struct on pain of nasty breakage, particularly in
+   the GUI "session" context.
+
+   @mask represents the selection of observations which
+   is to become the new "full" dataset.
+
+   Note that we get here only if we've already checked
+   that the subsampling operation will not be fatal for
+   any saved model.
 */
 
 int revise_model_sample_info (MODEL *pmod, char *mask)
@@ -622,7 +671,7 @@ int revise_model_sample_info (MODEL *pmod, char *mask)
 	err = revise_missmask(pmod, mask, n);
     }
 
-    /* adjust the attached subsample mask if necessary */
+    /* adjust the model's subsample mask as needed */
     if (!err) {
 	if (pmod->submask != NULL) {
 	    err = revise_model_submask(pmod, mask, n);
