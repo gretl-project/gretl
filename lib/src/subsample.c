@@ -526,7 +526,12 @@ static int revise_missmask (MODEL *pmod, char *targ, int n)
 	if (src == NULL || src[i] == 1) {
 	    s++;
 	}
-	if (targ[i] == 1 && src[i] == 1 && pmod->missmask[s] == '1') {
+	if (targ[i] == 1 && (src == NULL || src[i] == 1) &&
+	    pmod->missmask[s] == '1') {
+	    /* we have an observation which is included in
+	       both the original and the new subsamples, and
+	       which is masked as containing NAs for @pmod
+	    */
 	    newmiss[t] = '1';
 	    misscount++;
 	}
@@ -537,6 +542,7 @@ static int revise_missmask (MODEL *pmod, char *targ, int n)
     if (misscount > 0) {
 	pmod->missmask = newmiss;
     } else {
+	/* no NAs left in new subsample */
 	pmod->missmask = NULL;
 	free(newmiss);
     }
