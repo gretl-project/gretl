@@ -1723,7 +1723,7 @@ int check_variable_deletion_list (int *list, const DATASET *dset)
     return pruned;
 }
 
-int check_model_submasks (char *testmask, int dryrun)
+int check_models_for_subsample (char *newmask, int dryrun)
 {
     GretlObjType type;
     void *ptr, *lmp;
@@ -1743,9 +1743,9 @@ int check_model_submasks (char *testmask, int dryrun)
 	    MODEL *pmod = ptr;
 
 	    if (dryrun) {
-		err = check_model_submask(pmod, testmask);
-	    } else if (pmod->submask != NULL) {
-		err = revise_model_submask(pmod, testmask);
+		err = subsample_check_model(pmod, newmask);
+	    } else {
+		err = revise_model_sample_info(pmod, newmask);
 	    }
 	}
     }

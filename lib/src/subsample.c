@@ -89,12 +89,29 @@ static int get_submask_length (const char *s)
 {
     int n = 1;
 
-    if (s == RESAMPLED) {
+    if (s == NULL || s == RESAMPLED) {
 	n = 0;
     } else {
 	while (*s != SUBMASK_SENTINEL) {
 	    n++;
 	    s++;
+	}
+    }
+
+    return n;
+}
+
+static int submask_n_selected (const char *s)
+{
+    int n = 0;
+
+    if (s != NULL && s != RESAMPLED) {
+	int i;
+
+	for (i=0; s[i] != SUBMASK_SENTINEL; i++) {
+	    if (s[i] == 1) {
+		n++;
+	    }
 	}
     }
 
@@ -327,14 +344,25 @@ int attach_subsample_to_model (MODEL *pmod, const DATASET *dset)
     return err;
 }
 
+#define MDEBUG 0
+
+/* For observation @i (0-based index relative to the full
+   dataset), determine whether it was used in estimation
+   of @pmod, allowing for the possibility that it
+   may have been excluded by a boolean sample restriction,
+   by the setting of the sample range (t1, t2), or on
+   account of missing values.
+*/
+
 static int obs_in_use (MODEL *pmod, int i)
 {
+    char *mask = pmod->submask;
     int ret = 1;
     
-    if (pmod->submask != NULL && pmod->submask[i] == 0) {
+    if (mask != NULL && mask[i] == 0) {
 	/* obs masked out, not used */
 	ret = 0;
-    } else if (pmod->submask == NULL) {
+    } else if (mask == NULL) {
 	if (pmod->uhat != NULL && na(pmod->uhat[i])) {
 	    /* obs out of range, or excluded due to NAs? */
 	    ret = 0;
@@ -346,8 +374,8 @@ static int obs_in_use (MODEL *pmod, int i)
 	int t1 = 0, t2 = 0;
 	int s, t = -1;
 
-	for (s=0; pmod->submask[s] != SUBMASK_SENTINEL; s++) {
-	    if (pmod->submask[s] == 1) {
+	for (s=0; mask[s] != SUBMASK_SENTINEL; s++) {
+	    if (mask[s] == 1) {
 		t++;
 	    }
 	    if (s == i && pmod->uhat != NULL &&
@@ -372,11 +400,11 @@ static int obs_in_use (MODEL *pmod, int i)
 
 /* This is called from objstack.c for any saved models: we
    want to check that a proposed permanent shrinkage of the
-   dataset will not end up deleting observations that are
-   "in use" by one or more models.
+   dataset will not have the effect of deleting observations
+   that are "in use" by one or more models.
 */
 
-int check_model_submask (MODEL *pmod, char *mask)
+int subsample_check_model (MODEL *pmod, char *mask)
 {
     int i, err = 0;
 
@@ -385,10 +413,8 @@ int check_model_submask (MODEL *pmod, char *mask)
 	return 0;
     }
 
-    for (i=0; !err; i++) {
-	if (mask[i] == SUBMASK_SENTINEL) {
-	    break;
-	} else if (mask[i] == 0 && obs_in_use(pmod, i)) {
+    for (i=0; mask[i] != SUBMASK_SENTINEL && !err; i++) {
+	if (mask[i] == 0 && obs_in_use(pmod, i)) {
 	    /* obs i is to be excluded, but the model "uses" it */
 	    gretl_errmsg_set(_("You cannot permanently delete observations "
 			       "that are used by a saved model"));
@@ -399,30 +425,139 @@ int check_model_submask (MODEL *pmod, char *mask)
     return err;
 }
 
-/* Called from objstack.c for any saved models that have a 
-   subsample mask attached, after carrying out permanent
-   shrinkage of the dataset: we need to revise such masks
-   in light of the changed "full" dataset.
+/* The t1 and t2 members of @pmod are observation indices
+   relative to the dataset on which @pmod was estimated,
+   which may have been sub-sampled (in which case 
+   pmod->submask will be non-NULL). Here we aim to 
+   replace these indices with the corresponding values
+   relative to the "new" subsample represented by @targ.
 */
 
-int revise_model_submask (MODEL *pmod, char *mask)
+static void convert_obs_indices (MODEL *pmod, char *targ)
+{
+    char *src = pmod->submask;
+    int i, t = -1, s = -1;
+    int found[4] = {0};
+    int nf = 0;
+
+#if MDEBUG
+    fprintf(stderr, "convert_obs_indices: t1=%d, t2=%d, "
+	    "smpl.t1=%d, smpl.t2=%d\n", pmod->t1, pmod->t2,
+	    pmod->smpl.t1, pmod->smpl.t2);
+#endif    
+    
+    /* note that @i represents "absolute" position
+       in the full dataset */
+
+    for (i=0; targ[i] != SUBMASK_SENTINEL; i++) {
+	if (targ[i] == 1) {
+	    t++;
+	}
+	if (src == NULL || src[i] == 1) {
+	    s++;
+	}
+	if (found[0] == 0 && s == pmod->t1) {
+	    pmod->t1 = t;
+	    found[0] = 1;
+	    nf++;
+	}
+	if (found[1] == 0 && s == pmod->t2) {
+	    pmod->t2 = t;
+	    found[1] = 1;
+	    nf++;
+	}
+	if (found[2] == 0 && s == pmod->smpl.t1) {
+	    pmod->smpl.t1 = t;
+	    found[2] = 1;
+	    nf++;
+	}
+	if (found[3] == 0 && s == pmod->smpl.t2) {
+	    pmod->smpl.t2 = t;
+	    found[3] = 1;
+	    nf++;
+	}	
+	if (nf == 4) {
+	    /* no need to go on */
+	    break;
+	}
+    }
+
+#if MDEBUG
+    fprintf(stderr, "converted indices: t1=%d, t2=%d, "
+	    "smpl.t1=%d, smpl.t2=%d\n", pmod->t1, pmod->t2,
+	    pmod->smpl.t1, pmod->smpl.t2);
+#endif
+}
+
+/* Given a "new" subsample mask, @targ, revise the missing
+   obs mask on @pmod
+*/
+
+static int revise_missmask (MODEL *pmod, char *targ, int n)
+{
+    char *src = pmod->submask;
+    char *newmiss;
+    int misscount = 0;
+    int i, s, t;
+
+#if MDEBUG    
+    fprintf(stderr, "original missmask: '%s'\n", pmod->missmask);
+#endif
+    
+    /* make an empty new missmask of the correct length, namely
+       the number of observations included by @targ
+    */
+    newmiss = malloc(n + 1);
+    if (newmiss == NULL) {
+	return E_ALLOC;
+    } else {
+	for (i=0; i<n; i++) {
+	    newmiss[i] = '0';
+	}
+	newmiss[n] = '\0';
+    }
+
+    s = t = -1;
+
+    for (i=0; targ[i] != SUBMASK_SENTINEL; i++) {
+	if (targ[i] == 1) {
+	    t++;
+	}
+	if (src == NULL || src[i] == 1) {
+	    s++;
+	}
+	if (targ[i] == 1 && src[i] == 1 && pmod->missmask[s] == '1') {
+	    newmiss[t] = '1';
+	    misscount++;
+	}
+    }
+
+    free(pmod->missmask);
+
+    if (misscount > 0) {
+	pmod->missmask = newmiss;
+    } else {
+	pmod->missmask = NULL;
+	free(newmiss);
+    }
+
+#if MDEBUG    
+    fprintf(stderr, "new missmask: '%s'\n", pmod->missmask);
+#endif    
+
+    return 0;
+}
+
+static int revise_model_submask (MODEL *pmod, char *mask,
+				 int masklen)
 {
     char *newmask = NULL;
     int all_ones = 1;
-    int masklen = 0;
-    int i, j, err = 0;
-
+    int i, j;
+    
     if (pmod->submask == RESAMPLED || mask == RESAMPLED) {
 	/* what to do?? */
 	return 0;
-    }
-
-    for (i=0; ; i++) {
-	if (mask[i] == SUBMASK_SENTINEL) {
-	    break;
-	} else if (mask[i] == 1) {
-	    masklen++;
-	}
     }
 
     if (masklen == 0) {
@@ -436,10 +571,7 @@ int revise_model_submask (MODEL *pmod, char *mask)
 
     j = 0;
 
-    for (i=0; ; i++) {
-	if (mask[i] == SUBMASK_SENTINEL) {
-	    break;
-	}
+    for (i=0; mask[i] != SUBMASK_SENTINEL; i++) {
 	if (pmod->submask[i] == 0) {
 	    if (mask[i] == 0) {
 		; /* skip */
@@ -460,6 +592,37 @@ int revise_model_submask (MODEL *pmod, char *mask)
 	pmod->submask = NULL;
     } else {
 	pmod->submask = newmask;
+    }    
+
+    return 0;
+}
+
+/* Called from objstack.c for any saved models that have a 
+   subsample mask attached, after carrying out permanent
+   shrinkage of the dataset: we need to revise such masks
+   in light of the changed "full" dataset.
+*/
+
+int revise_model_sample_info (MODEL *pmod, char *mask)
+{
+    int n = submask_n_selected(mask);
+    int err = 0;
+
+    /* adjust the t1 and t2 members of @pmod if necessary */
+    convert_obs_indices(pmod, mask);
+
+    /* adjust the model's missing obs mask if required */
+    if (pmod->missmask != NULL) {
+	err = revise_missmask(pmod, mask, n);
+    }
+
+    /* adjust the attached subsample mask if necessary */
+    if (!err) {
+	if (pmod->submask != NULL) {
+	    err = revise_model_submask(pmod, mask, n);
+	} else if (n > 0) {
+	    pmod->full_n = n;
+	}
     }
 
     return err;
@@ -1678,7 +1841,7 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
     }
 
     if (opt & OPT_T) {
-	err = check_model_submasks(mask, 1);
+	err = check_models_for_subsample(mask, 1);
 	if (err) {
 	    return err;
 	}
@@ -1767,7 +1930,7 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 
     if (opt & OPT_T) {
 	/* --permanent */
-	err = check_model_submasks(mask, 0);
+	err = check_models_for_subsample(mask, 0);
 	destroy_full_dataset(dset);
     } else {
 	err = backup_full_dataset(dset);
