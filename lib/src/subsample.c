@@ -329,24 +329,45 @@ int attach_subsample_to_model (MODEL *pmod, const DATASET *dset)
 
 static int obs_in_use (MODEL *pmod, int i)
 {
+    int ret = 1;
+    
     if (pmod->submask != NULL && pmod->submask[i] == 0) {
 	/* obs masked out, not used */
-	return 0;
+	ret = 0;
     } else if (pmod->submask == NULL) {
 	if (pmod->uhat != NULL && na(pmod->uhat[i])) {
 	    /* obs out of range, or excluded due to NAs? */
-	    return 0;
+	    ret = 0;
 	} else if (i < pmod->t1 || i > pmod->t2) {
 	    /* obs out of range, not used */
-	    return 0;
+	    ret = 0;
 	}
-    } else {
-	/* Urgh! Need to consider "cross-products" of
-	   the conditions above */
-	;
+    } else if (pmod->nobs < pmod->full_n) {
+	int t1 = 0, t2 = 0;
+	int s, t = -1;
+
+	for (s=0; pmod->submask[s] != SUBMASK_SENTINEL; s++) {
+	    if (pmod->submask[s] == 1) {
+		t++;
+	    }
+	    if (s == i && pmod->uhat != NULL &&
+		na(pmod->uhat[t])) {
+		ret = 0;
+		break;
+	    } else if (t == pmod->t1) {
+		t1 = s;
+	    } else if (t == pmod->t2) {
+		t2 = s;
+		break;
+	    }
+	}
+	if (i < t1 || i > t2) {
+	    /* obs out of range, not used */
+	    ret = 0;
+	}	    
     }
 
-    return 1;
+    return ret;
 }
 
 /* This is called from objstack.c for any saved models: we
