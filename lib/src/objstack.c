@@ -1737,7 +1737,7 @@ int check_variable_deletion_list (int *list, const DATASET *dset)
 int check_models_for_subsample (char *newmask, int dryrun)
 {
     GretlObjType type;
-    void *ptr, *lmp;
+    void *ptr, *lmp = NULL;
     int i, err = 0;
 
     for (i=-1; i<n_obj && !err; i++) {
