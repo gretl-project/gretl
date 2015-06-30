@@ -159,11 +159,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 	    *err = E_DATA;
 	} else {
 	    ns = gretl_vector_get_length(sel->m);
-	    if (ns == 0) {
-		fprintf(stderr, "selection matrix is %d x %d\n", 
-			sel->m->rows, sel->m->cols);
-		*err = E_NONCONF;
-	    } else if (vec_is_const(sel->m, ns)) {
+	    if (ns > 1 && vec_is_const(sel->m, ns)) {
 		ns = 1;
 	    }
 	}
@@ -188,7 +184,12 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 	return NULL;
     }
 
-    slice = gretl_list_new(ns);
+    if (ns == 0) {
+	slice = gretl_null_list();
+    } else {
+	slice = gretl_list_new(ns);
+    }
+    
     if (slice == NULL) {
 	*err = E_ALLOC;
 	return NULL;
