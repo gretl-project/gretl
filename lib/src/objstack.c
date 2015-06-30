@@ -1672,7 +1672,7 @@ int last_model_test_uhat (DATASET *dset, gretlopt opt, PRN *prn)
 int highest_numbered_var_in_saved_object (const DATASET *dset)
 {
     GretlObjType type;
-    void *ptr, *lmp;
+    void *ptr, *lmp = NULL;
     int i, mvm, vmax = 0;
 
     for (i=-1; i<n_obj; i++) {
