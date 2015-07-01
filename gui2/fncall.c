@@ -2072,10 +2072,9 @@ int open_function_package (const char *pkgname,
 	    N_("Open sample script"),
 	    N_("Call a function")
 	};
-	gchar *title;
+	gchar *title = cinfo_pkg_title(cinfo);
 	int resp;
 
-	title = cinfo_pkg_title(cinfo);
 	resp = radio_dialog(NULL, _("Would you like to:"),
 			    opts, 2, 0, 0, vwin->main);
 	g_free(title);
@@ -2087,8 +2086,18 @@ int open_function_package (const char *pkgname,
 	    err = call_function_package(cinfo, vwin, 1);
 	}
     } else {
-	display_function_package_data(cinfo->pkgname, fname,
-				      VIEW_PKG_SAMPLE);
+	/* notify and give choice of running sample */
+	const char *msg = N_("This package requires data that are not "
+			     "currently in place.\nWould you like to open "
+			     "its sample script?");
+	gchar *title = cinfo_pkg_title(cinfo);
+	int resp;
+
+	resp = yes_no_dialog(title, _(msg), vwin_toplevel(vwin));
+	if (resp == GRETL_YES) {
+	    display_function_package_data(cinfo->pkgname, fname,
+					  VIEW_PKG_SAMPLE);
+	}
     }
 
     if (free_cinfo) {
