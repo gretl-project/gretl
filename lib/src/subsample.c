@@ -423,7 +423,7 @@ int subsample_check_model (MODEL *pmod, char *mask)
 
     for (i=0; mask[i] != SUBMASK_SENTINEL && !err; i++) {
 	if (mask[i] == 0 && obs_in_use(pmod, i)) {
-	    /* obs i is to be excluded, but the model "uses" it */
+	    /* obs @i is to be excluded, but the model "uses" it */
 	    gretl_errmsg_set(_("You cannot permanently delete observations "
 			       "that are used by a saved model"));
 	    err = E_DATA;
@@ -502,7 +502,7 @@ static void convert_obs_indices (MODEL *pmod, char *targ)
 }
 
 /* Given a "new" subsample mask, @targ, revise the missing
-   obs mask on @pmod
+   observations mask on @pmod
 */
 
 static int revise_missmask (MODEL *pmod, char *targ, int n)
@@ -516,13 +516,14 @@ static int revise_missmask (MODEL *pmod, char *targ, int n)
     fprintf(stderr, "original missmask: '%s'\n", pmod->missmask);
 #endif
     
-    /* make an empty new missmask of the correct length, namely
+    /* make an empty new mask of the correct length, namely
        the number of observations included by @targ
     */
     newmiss = malloc(n + 1);
     if (newmiss == NULL) {
 	return E_ALLOC;
     } else {
+	/* initialize to no missing values */
 	for (i=0; i<n; i++) {
 	    newmiss[i] = '0';
 	}
@@ -554,7 +555,7 @@ static int revise_missmask (MODEL *pmod, char *targ, int n)
     if (misscount > 0) {
 	pmod->missmask = newmiss;
     } else {
-	/* no NAs left in new subsample */
+	/* no relevant NAs left in new subsample */
 	pmod->missmask = NULL;
 	free(newmiss);
     }
@@ -589,7 +590,7 @@ static int revise_model_submask (MODEL *pmod, char *mask,
 	return E_DATA;
     } else {
 	/* make an empty new submask of the correct length, namely
-	   the number of observations included by @mask
+	   the number of observations retained by @mask
 	*/	
 	newmask = make_submask(masklen);
 	if (newmask == NULL) {
@@ -627,12 +628,11 @@ static int revise_model_submask (MODEL *pmod, char *mask,
     }
 
     free(pmod->submask);
-    pmod->full_n = masklen;
 
     if (all_ones) {
-	/* it turns out that none of the obs included by @mask
+	/* it turns out that none of the obs retained by @mask
 	   were screened out by @pmod's submask, so we don't
-	   need @newmask
+	   need @newmask after all
 	*/
 	free(newmask);
 	pmod->submask = NULL;
@@ -663,6 +663,8 @@ int revise_model_sample_info (MODEL *pmod, char *mask)
     int n = submask_n_selected(mask);
     int err = 0;
 
+    pmod->full_n = n;
+
     /* adjust the t1 and t2 members of @pmod if necessary */
     convert_obs_indices(pmod, mask);
 
@@ -672,12 +674,8 @@ int revise_model_sample_info (MODEL *pmod, char *mask)
     }
 
     /* adjust the model's subsample mask as needed */
-    if (!err) {
-	if (pmod->submask != NULL) {
-	    err = revise_model_submask(pmod, mask, n);
-	} else if (n > 0) {
-	    pmod->full_n = n;
-	}
+    if (!err && pmod->submask != NULL) {
+	err = revise_model_submask(pmod, mask, n);
     }
 
     return err;
