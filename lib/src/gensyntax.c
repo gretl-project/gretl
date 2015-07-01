@@ -941,7 +941,10 @@ static void attach_child (NODE *parent, NODE *child, int k, int i,
     fprintf(stderr, "attach_child: i=%d, type=%d\n", i, child->t);
 #endif
 
-    if (k == 2) {
+    if (k == 1) {
+	/* 1-place node */
+	parent->v.b1.b = child;
+    } else if (k == 2) {
 	/* 2-place node */
 	if (i == 0) {
 	    parent->v.b2.l = child;
@@ -1123,7 +1126,7 @@ static NODE *powterm (parser *p)
         }
     } else if (func2_symb(sym)) {
 	int unset = 0;
-	
+
 	if (sym == F_GENSERIES) {
 	    set_doing_genseries(1);
 	    unset = 1;
@@ -1174,10 +1177,7 @@ static NODE *powterm (parser *p)
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b1.b = base(p, t);
-	    if (p->sym == G_LBR) {
-		next = G_LBR;
-	    }
+	    get_args(t, p, sym, 1, opt, &next);
 	}
     } else if (sym == LAG || sym == OBS) {
 	if (sym == LAG) {
