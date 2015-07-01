@@ -414,10 +414,18 @@ static int obs_in_use (MODEL *pmod, int i)
 
 int subsample_check_model (MODEL *pmod, char *mask)
 {
+    char *mmask = pmod->submask;
     int i, err = 0;
 
-    if (pmod->submask == RESAMPLED || mask == RESAMPLED) {
+    if (mmask == RESAMPLED || mask == RESAMPLED) {
 	/* what to do?? */
+	return 0;
+    }
+
+    if (mmask != NULL && submask_cmp(mmask, mask) == 0) {
+	/* (relatively) easy case: the two masks
+	   are the same 
+	*/
 	return 0;
     }
 
@@ -660,9 +668,19 @@ static int revise_model_submask (MODEL *pmod, char *mask,
 
 int revise_model_sample_info (MODEL *pmod, char *mask)
 {
-    int n = submask_n_selected(mask);
-    int err = 0;
+    char *mmask = pmod->submask;
+    int n, err = 0;
 
+    if (mmask != NULL && submask_cmp(mmask, mask) == 0) {
+	/* (relatively) easy case: the two masks
+	   are the same 
+	*/
+	free(pmod->submask);
+	pmod->submask = NULL;
+	return 0;
+    }
+
+    n = submask_n_selected(mask);
     pmod->full_n = n;
 
     /* adjust the t1 and t2 members of @pmod if necessary */
