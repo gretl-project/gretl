@@ -11,6 +11,7 @@
    endobs       CDATA #IMPLIED
    type         CDATA #REQUIRED
    binary       CDATA #IMPLIED
+   rseed        CDATA #IMPLIED
 >
 
 <!ELEMENT description ( #PCDATA )>
