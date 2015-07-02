@@ -424,6 +424,7 @@ void datainfo_init (DATASET *dset)
     dset->panel_sd0 = 0;
 
     dset->auxiliary = 0;
+    dset->rseed = 0;
 }
 
 /**
@@ -3065,6 +3066,7 @@ int dataset_resample (DATASET *dset, int n, unsigned int seed)
 {
     DATASET *rset = NULL;
     char **S = NULL;
+    unsigned int state;
     int T = sample_size(dset);
     int v = dset->v;
     int i, j, s, t;
@@ -3119,6 +3121,8 @@ int dataset_resample (DATASET *dset, int n, unsigned int seed)
 	resample_seed = gretl_rand_get_seed();
     }
 
+    state = gretl_rand_int();
+
     for (t=0; t<n; t++) {
 	s = gretl_rand_int_max(T) + dset->t1;
 	j = 1;
@@ -3145,7 +3149,7 @@ int dataset_resample (DATASET *dset, int n, unsigned int seed)
     rset->t2 = n - 1;
     dataset_obs_info_default(rset);
 
-    set_dataset_resampled(rset);
+    set_dataset_resampled(rset, state);
 
  bailout:
 

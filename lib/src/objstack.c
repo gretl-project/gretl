@@ -27,6 +27,7 @@
 #include "forecast.h"
 #include "kalman.h"
 #include "bootstrap.h"
+#include "libset.h"
 
 #define ODEBUG 0
 
@@ -1759,6 +1760,11 @@ int check_models_for_subsample (char *newmask, int dryrun)
 		err = revise_model_sample_info(pmod, newmask);
 	    }
 	}
+    }
+
+    if (err && !gretl_in_gui_mode()) {
+	set_as_last_model(NULL, GRETL_OBJ_NULL);
+	err = 0;
     }
 
     return err;

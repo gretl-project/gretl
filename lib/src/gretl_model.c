@@ -2739,9 +2739,11 @@ void gretl_model_init (MODEL *pmod, const DATASET *dset)
     if (dset != NULL) {
 	pmod->smpl.t1 = dset->t1;
 	pmod->smpl.t2 = dset->t2;
+	pmod->smpl.rseed = dset->rseed;
     } else {
 	pmod->smpl.t1 = 0;
 	pmod->smpl.t2 = 0;
+	pmod->smpl.rseed = 0;
     }	
 
     pmod->ncoeff = 0;
@@ -2777,6 +2779,7 @@ void gretl_model_smpl_init (MODEL *pmod, const DATASET *dset)
 {
     pmod->smpl.t1 = dset->t1;
     pmod->smpl.t2 = dset->t2;
+    pmod->smpl.rseed = dset->rseed;
 #if MDEBUG
     fprintf(stderr, "gretl_model_smpl_init: set t1=%d, t2=%d\n",
 	    dset->t1, dset->t2);
@@ -4393,8 +4396,13 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 
     fputs(">\n", fp);
 
-    fprintf(fp, "<sample t1=\"%d\" t2=\"%d\"/>\n",
-	    pmod->smpl.t1, pmod->smpl.t2);
+    if (pmod->smpl.rseed > 0) {
+	fprintf(fp, "<sample t1=\"%d\" t2=\"%d\" rseed=\"%u\"/>\n",
+		pmod->smpl.t1, pmod->smpl.t2, pmod->smpl.rseed);
+    } else {
+	fprintf(fp, "<sample t1=\"%d\" t2=\"%d\"/>\n",
+		pmod->smpl.t1, pmod->smpl.t2);
+    }
 
     gretl_xml_put_double_array("coeff", pmod->coeff, k, fp);
     gretl_xml_put_double_array("sderr", pmod->sderr, k, fp);
@@ -4966,6 +4974,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	if (!xmlStrcmp(cur->name, (XUC) "sample")) {
 	    gretl_xml_get_prop_as_int(cur, "t1", &pmod->smpl.t1);
 	    gretl_xml_get_prop_as_int(cur, "t2", &pmod->smpl.t2);
+	    gretl_xml_get_prop_as_unsigned_int(cur, "rseed", &pmod->smpl.rseed);
 	} else if (!xmlStrcmp(cur->name, (XUC) "coeff")) {
 	    pmod->coeff = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "sderr")) {

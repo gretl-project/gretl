@@ -287,6 +287,7 @@ typedef struct DATASET_ {
     char *submask;      /* subsampling mask */
     char *restriction;  /* record of sub-sampling restriction */
     char *padmask;      /* record of padding to re-balance panel data */
+    unsigned int rseed; /* resampling seed */
     int auxiliary;      /* = 0 for regular dataset, 1 for aux dataset */
     char *pangrps;      /* panel-only: name of series holding group names */
     int panel_pd;       /* panel-only: panel time-series frequency */
@@ -308,6 +309,7 @@ typedef struct VMatrix_ {
 typedef struct SAMPLE_ {
     int t1;
     int t2;
+    unsigned int rseed;
 } SAMPLE;
 
 typedef struct ARINFO_ {

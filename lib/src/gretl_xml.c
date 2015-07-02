@@ -605,9 +605,34 @@ int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
     int ret = 0;
 
     if (tmp != NULL) {
-	*i = atoi((const char *) tmp);
+	ret = sscanf((const char *) tmp, "%d", i);
 	free(tmp);
-	ret = 1;
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_xml_get_prop_as_unsigned_int:
+ * @node: XML node pointer.
+ * @tag: name by which unsigned integer property is known.
+ * @u: location to write value.
+ * 
+ * Returns: 1 if an unsigned int is found and read successfully, 0
+ * otherwise.
+ */
+
+unsigned int
+gretl_xml_get_prop_as_unsigned_int (xmlNodePtr node,
+				    const char *tag,
+				    unsigned int *u)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) tag);
+    int ret = 0;
+
+    if (tmp != NULL) {
+	ret = sscanf((const char *) tmp, "%u", u);
+	free(tmp);
     }
 
     return ret;
@@ -2183,6 +2208,15 @@ static int real_write_gdt (const char *fname, const int *list,
 	write_binary_order(fp);
     }
 
+    if (dset->rseed > 0) {
+	/* record resampling info */
+	if (gz) {
+	    gzprintf(fz, "rseed=\"%u\"", dset->rseed);
+	} else {
+	    fprintf(fp, "rseed=\"%u\"", dset->rseed);
+	}
+    }
+
     alt_puts(">\n", fp, fz);
 
     have_markers = dataset_has_markers(dset);
@@ -3609,7 +3643,10 @@ static int real_read_gdt (const char *fname, const char *srcname,
 
     gdtversion = get_gdt_version(cur);
 
-    /* set some datainfo parameters */
+    /* optional */
+    gretl_xml_get_prop_as_unsigned_int(cur, "rseed", &tmpset->rseed);
+
+    /* set some required datainfo parameters */
 
     err = xml_get_data_structure(cur, &tmpset->structure);
     if (err) {

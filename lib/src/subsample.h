@@ -61,7 +61,7 @@ int dataset_is_complex_subsampled (const DATASET *dset);
 
 int get_full_length_n (void);
 
-void set_dataset_resampled (DATASET *dset);
+void set_dataset_resampled (DATASET *dset, unsigned int seed);
 
 int dataset_is_resampled (const DATASET *dset);
 

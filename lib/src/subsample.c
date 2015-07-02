@@ -72,19 +72,6 @@ DATASET *fetch_full_dataset (void)
     return fullset;
 }
 
-static int full_data_length (const DATASET *dset)
-{
-    int n = 0;
-
-    if (fullset != NULL) {
-	n = fullset->n;
-    } else if (dset != NULL) {
-	n = dset->n;
-    } 
-
-    return n;
-}
-
 static int get_submask_length (const char *s)
 {
     int n = 1;
@@ -95,23 +82,6 @@ static int get_submask_length (const char *s)
 	while (*s != SUBMASK_SENTINEL) {
 	    n++;
 	    s++;
-	}
-    }
-
-    return n;
-}
-
-static int submask_n_selected (const char *s)
-{
-    int n = 0;
-
-    if (s != NULL && s != RESAMPLED) {
-	int i;
-
-	for (i=0; s[i] != SUBMASK_SENTINEL; i++) {
-	    if (s[i] == 1) {
-		n++;
-	    }
 	}
     }
 
@@ -207,8 +177,14 @@ int write_datainfo_submask (const DATASET *dset, FILE *fp)
 
 int submask_cmp (const char *m1, const char *m2)
 {
+    if (m1 == NULL && m2 == NULL) {
+	return 0;
+    } else if (m1 == NULL || m2 == NULL) {
+	return 1;
+    }
+	
     if (m1 == RESAMPLED || m2 == RESAMPLED) {
-	return m1 == RESAMPLED && m2 == RESAMPLED;
+	return m1 != RESAMPLED || m2 != RESAMPLED;
     }
 
     while (*m1 != SUBMASK_SENTINEL && *m2 != SUBMASK_SENTINEL) {
@@ -238,9 +214,10 @@ static char *make_submask (int n)
     return mask;
 }
 
-void set_dataset_resampled (DATASET *dset)
+void set_dataset_resampled (DATASET *dset, unsigned int seed)
 {
     dset->submask = RESAMPLED;
+    dset->rseed = seed;
 }
 
 int dataset_is_resampled (const DATASET *dset)
@@ -346,357 +323,36 @@ int attach_subsample_to_model (MODEL *pmod, const DATASET *dset)
 
 #define MDEBUG 0
 
-/* For observation @i (0-based index relative to the full
-   dataset), determine whether it was used in estimation
-   of @pmod, allowing for the possibility that it
-   may have been excluded by a boolean sample restriction,
-   by the setting of the sample range (t1, t2), or on
-   account of missing values.
-*/
-
-static int obs_in_use (MODEL *pmod, int i)
-{
-    char *mask = pmod->submask;
-    int ret = 1;
-    
-    if (mask != NULL && mask[i] == 0) {
-	/* obs masked out, not used */
-	ret = 0;
-    } else if (mask == NULL) {
-	if (pmod->uhat != NULL && na(pmod->uhat[i])) {
-	    /* obs out of range, or excluded due to NAs? */
-	    ret = 0;
-	} else if (i < pmod->t1 || i > pmod->t2) {
-	    /* obs out of range, not used */
-	    ret = 0;
-	}
-    } else if (pmod->nobs < pmod->full_n) {
-	/* mask is present; obs @i is not excluded by
-	   mask; and the observations used by @pmod
-	   fall short of the total made available
-	   via mask
-	*/
-	int t1 = 0, t2 = 0;
-	int s, t = -1;
-	int found = 0;
-
-	for (s=0; mask[s] != SUBMASK_SENTINEL; s++) {
-	    if (mask[s] == 1) {
-		t++;
-	    }
-	    if (s == i && pmod->uhat != NULL &&
-		na(pmod->uhat[t])) {
-		ret = 0;
-		break;
-	    } else if (found == 0 && t == pmod->t1) {
-		t1 = s;
-		found++;
-	    } else if (found == 1 && t == pmod->t2) {
-		t2 = s;
-		found++;
-		break;
-	    }
-	}
-	if (i < t1 || i > t2) {
-	    /* obs out of range, not used */
-	    ret = 0;
-	}	    
-    }
-
-    return ret;
-}
-
 /* This is called from objstack.c for any saved models: we
    want to check that a proposed permanent shrinkage of the
-   dataset will not have the effect of deleting observations
-   that are "in use" by one or more models.
+   dataset will not invalidate any saved models.
 */
 
 int subsample_check_model (MODEL *pmod, char *mask)
 {
-    char *mmask = pmod->submask;
-    int i, err = 0;
-
-    if (mmask == RESAMPLED || mask == RESAMPLED) {
-	/* what to do?? */
-	return 0;
-    }
-
-    if (mmask != NULL && submask_cmp(mmask, mask) == 0) {
-	/* (relatively) easy case: the two masks
-	   are the same 
-	*/
-	return 0;
-    }
-
-    for (i=0; mask[i] != SUBMASK_SENTINEL && !err; i++) {
-	if (mask[i] == 0 && obs_in_use(pmod, i)) {
-	    /* obs @i is to be excluded, but the model "uses" it */
-	    gretl_errmsg_set(_("You cannot permanently delete observations "
-			       "that are used by a saved model"));
-	    err = E_DATA;
-	}
-    }
-
-    return err;
-}
-
-/* The t1 and t2 members of @pmod are observation indices
-   relative to the dataset on which @pmod was estimated,
-   which may have been sub-sampled (in which case 
-   pmod->submask will be non-NULL). Here we aim to 
-   replace these indices with the corresponding values
-   relative to the "new" subsample represented by @targ.
-
-   We also revise the indices that record the sample
-   range in force when @pmod was estimated. This aspect
-   may not be quite right?
-*/
-
-static void convert_obs_indices (MODEL *pmod, char *targ)
-{
-    char *src = pmod->submask;
-    int i, t = -1, s = -1;
-    int found[4] = {0};
-    int nf = 0;
-
-#if MDEBUG
-    fprintf(stderr, "convert_obs_indices: t1=%d, t2=%d, "
-	    "smpl.t1=%d, smpl.t2=%d\n", pmod->t1, pmod->t2,
-	    pmod->smpl.t1, pmod->smpl.t2);
-#endif    
-    
-    /* note that @i represents "absolute" position
-       in the full dataset */
-
-    for (i=0; targ[i] != SUBMASK_SENTINEL; i++) {
-	if (targ[i] == 1) {
-	    t++;
-	}
-	if (src == NULL || src[i] == 1) {
-	    s++;
-	}
-	if (found[0] == 0 && s == pmod->t1) {
-	    pmod->t1 = t;
-	    found[0] = 1;
-	    nf++;
-	}
-	if (found[1] == 0 && s == pmod->t2) {
-	    pmod->t2 = t;
-	    found[1] = 1;
-	    nf++;
-	}
-	if (found[2] == 0 && s == pmod->smpl.t1) {
-	    pmod->smpl.t1 = t;
-	    found[2] = 1;
-	    nf++;
-	}
-	if (found[3] == 0 && s == pmod->smpl.t2) {
-	    pmod->smpl.t2 = t;
-	    found[3] = 1;
-	    nf++;
-	}	
-	if (nf == 4) {
-	    /* no need to go on */
-	    break;
-	}
-    }
-
-#if MDEBUG
-    fprintf(stderr, "converted indices: t1=%d, t2=%d, "
-	    "smpl.t1=%d, smpl.t2=%d\n", pmod->t1, pmod->t2,
-	    pmod->smpl.t1, pmod->smpl.t2);
-#endif
-}
-
-/* Given a "new" subsample mask, @targ, revise the missing
-   observations mask on @pmod
-*/
-
-static int revise_missmask (MODEL *pmod, char *targ, int n)
-{
-    char *src = pmod->submask;
-    char *newmiss;
-    int misscount = 0;
-    int i, s, t;
-
-#if MDEBUG    
-    fprintf(stderr, "original missmask: '%s'\n", pmod->missmask);
-#endif
-    
-    /* make an empty new mask of the correct length, namely
-       the number of observations included by @targ
-    */
-    newmiss = malloc(n + 1);
-    if (newmiss == NULL) {
-	return E_ALLOC;
-    } else {
-	/* initialize to no missing values */
-	for (i=0; i<n; i++) {
-	    newmiss[i] = '0';
-	}
-	newmiss[n] = '\0';
-    }
-
-    s = t = -1;
-
-    for (i=0; targ[i] != SUBMASK_SENTINEL; i++) {
-	if (targ[i] == 1) {
-	    t++;
-	}
-	if (src == NULL || src[i] == 1) {
-	    s++;
-	}
-	if (targ[i] == 1 && (src == NULL || src[i] == 1) &&
-	    pmod->missmask[s] == '1') {
-	    /* we have an observation which is included in
-	       both the original and the new subsamples, and
-	       which is marked as containing NAs for @pmod
-	    */
-	    newmiss[t] = '1';
-	    misscount++;
-	}
-    }
-
-    free(pmod->missmask);
-
-    if (misscount > 0) {
-	pmod->missmask = newmiss;
-    } else {
-	/* no relevant NAs left in new subsample */
-	pmod->missmask = NULL;
-	free(newmiss);
-    }
-
-#if MDEBUG    
-    fprintf(stderr, "new missmask: '%s'\n", pmod->missmask);
-#endif    
-
-    return 0;
-}
-
-/* We come here if @pmod has a "submask" attached, indicating
-   which observations from the full dataset were selected
-   when the model was estimated. This mask has to be revised
-   in light of a permanent sample restriction represented
-   by @mask.
-*/
-
-static int revise_model_submask (MODEL *pmod, char *mask,
-				 int masklen)
-{
-    char *newmask = NULL;
-    int all_ones = 1;
-    int i, j;
-    
-    if (pmod->submask == RESAMPLED || mask == RESAMPLED) {
-	/* what to do?? */
-	return 0;
-    }
-
-    if (masklen == 0) {
+    if (submask_cmp(pmod->submask, mask)) {
+	gretl_errmsg_set(_("This subsampling would invalidate at least "
+			   "one saved model"));
 	return E_DATA;
     } else {
-	/* make an empty new submask of the correct length, namely
-	   the number of observations retained by @mask
-	*/	
-	newmask = make_submask(masklen);
-	if (newmask == NULL) {
-	    return E_ALLOC;
-	}
+	return 0;
     }
-
-    j = 0;
-
-    for (i=0; mask[i] != SUBMASK_SENTINEL; i++) {
-	if (pmod->submask[i] == 0) {
-	    /* observation @i was screened out when @pmod was
-	       estimated */
-	    if (mask[i] == 0) {
-		/* observation @i is being dropped from the
-		   full dataset: it's no longer correct to
-		   mark it as a 0 in the model-specific
-		   submask, so skip it
-		*/
-		;
-	    } else if (mask[i] == 1) {
-		/* observation @i is retained in the full
-		   dataset but it was screened out for @pmod, so
-		   we need a 0 entry in @newmask
-		*/		
-		newmask[j++] = 0;
-		all_ones = 0;
-	    }
-	} else {
-	    /* observation @i was used when @pmod was estimated,
-	       so it must be marked as included
-	    */
-	    newmask[j++] = 1;
-	}
-    }
-
-    free(pmod->submask);
-
-    if (all_ones) {
-	/* it turns out that none of the obs retained by @mask
-	   were screened out by @pmod's submask, so we don't
-	   need @newmask after all
-	*/
-	free(newmask);
-	pmod->submask = NULL;
-    } else {
-	pmod->submask = newmask;
-    }    
-
-    return 0;
 }
 
 /* Called from objstack.c for each saved model, when the
    user calls for the imposition of a permanent subsample
-   restriction on the dataset. We need to adjust up to
-   three sorts of sample information stored in the MODEL
-   struct on pain of nasty breakage, particularly in
-   the GUI "session" context.
-
-   @mask represents the selection of observations which
-   is to become the new "full" dataset.
-
-   Note that we get here only if we've already checked
-   that the subsampling operation will not be fatal for
-   any saved model.
+   restriction on the dataset. We've already checked that
+   the "new" subsample matches that on which models were
+   estimated, so all we have to do now is remove the
+   subsample mask from the models.
 */
 
 int revise_model_sample_info (MODEL *pmod, char *mask)
 {
-    char *mmask = pmod->submask;
-    int n, err = 0;
-
-    if (mmask != NULL && submask_cmp(mmask, mask) == 0) {
-	/* (relatively) easy case: the two masks
-	   are the same 
-	*/
-	free(pmod->submask);
-	pmod->submask = NULL;
-	return 0;
-    }
-
-    n = submask_n_selected(mask);
-    pmod->full_n = n;
-
-    /* adjust the t1 and t2 members of @pmod if necessary */
-    convert_obs_indices(pmod, mask);
-
-    /* adjust the model's missing obs mask if required */
-    if (pmod->missmask != NULL) {
-	err = revise_missmask(pmod, mask, n);
-    }
-
-    /* adjust the model's subsample mask as needed */
-    if (!err && pmod->submask != NULL) {
-	err = revise_model_submask(pmod, mask, n);
-    }
-
-    return err;
+    free_subsample_mask(pmod->submask);
+    pmod->submask = NULL;
+    
+    return 0;
 }
 
 /* If series have been added to a resampled dataset, we can't
@@ -885,26 +541,52 @@ static int sync_data_to_full (DATASET *dset)
     return err;
 }
 
-static char *make_current_sample_mask (DATASET *dset)
+/* Here we make a mask representing the "complete" sample
+   restriction currently in force, for use in cumulating
+   restrictions. "Complete" means that we take into account
+   both an existing subsampling restriction, if any, and
+   possible setting of the t1 and t2 members of @dset to
+   exclude certain observation ranges.
+
+   The mask returned, if non-NULL, will be the length of
+   the full dataset. It will be NULL (without error) if
+   the current dataset is neither subsampled nor range-
+   restricted.
+*/
+
+static char *make_current_sample_mask (DATASET *dset, int *err)
 {
-    int n = full_data_length(dset);
     char *currmask = NULL;
-    int s, t, err = 0;
+    int range_set;
+    int s, t;
+
+    range_set = (dset->t1 > 0 || dset->t2 < dset->n - 1);
 
     if (dset->submask == NULL) {
-	/* no pre-existing mask: not sub-sampled */
-	currmask = make_submask(n);
-	if (currmask != NULL) {
-	    for (t=dset->t1; t<=dset->t2; t++) {
-		currmask[t] = 1;
+	/* no pre-existing mask, so not subsampled, but
+	   we should restrict currmask to observations
+	   included in the current (t1, t2) range, if
+	   applicable
+	*/
+	if (range_set) {
+	    currmask = make_submask(dset->n);
+	    if (currmask == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		for (t=dset->t1; t<=dset->t2; t++) {
+		    currmask[t] = 1;
+		}
 	    }
 	}
     } else {
-	/* there's a pre-existing mask */
-	currmask = copy_subsample_mask(dset->submask, &err);
-	if (currmask != NULL) {
+	/* there's a pre-existing mask: in addition we
+	   mask out observations outside of the current
+	   (t1, t2) range, if applicable
+	*/
+	currmask = copy_subsample_mask(dset->submask, err);
+	if (!*err && range_set) {
 	    s = -1;
-	    for (t=0; t<n; t++) {
+	    for (t=0; t<fullset->n; t++) {
 		if (dset->submask[t]) s++;
 		if (s < dset->t1 || s > dset->t2) {
 		    currmask[t] = 0;
@@ -1911,13 +1593,6 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 	return E_BADOPT;
     }
 
-    if (opt & OPT_T) {
-	err = check_models_for_subsample(mask, 1);
-	if (err) {
-	    return err;
-	}
-    }
-
     subset = datainfo_new();
     if (subset == NULL) {
 	return E_ALLOC;
@@ -2001,7 +1676,9 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 
     if (opt & OPT_T) {
 	/* --permanent */
-	err = check_models_for_subsample(mask, 0);
+	if (gretl_in_gui_mode()) {
+	    err = check_models_for_subsample(mask, 0);
+	}
 	destroy_full_dataset(dset);
     } else {
 	err = backup_full_dataset(dset);
@@ -2013,6 +1690,27 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
     free(subset);
 
     return err;
+}
+
+static char *expand_mask (char *tmpmask, const char *oldmask,
+			  int *err)
+{
+    char *newmask = make_submask(fullset->n);
+
+    if (newmask == NULL) {
+	*err = E_ALLOC;
+    } else {
+	/* map @tmpmask onto the full data range */
+	int t, i = 0;
+	
+	for (t=0; t<fullset->n; t++) {
+	    if (oldmask[t]) {
+		newmask[t] = tmpmask[i++];
+	    }
+	}
+    }
+
+    return newmask;
 }
 
 /* Below: we do this "precompute" thing if the dataset is already
@@ -2028,43 +1726,29 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 static char *precompute_mask (const char *s, const char *oldmask,
 			      DATASET *dset, PRN *prn, int *err)
 {
-    char *tmp = make_submask(dset->n);
-    char *mask = NULL;
-    int i, t;
+    char *tmpmask = make_submask(dset->n);
+    char *newmask = NULL;
 
 #if SUBDEBUG
     fprintf(stderr, "restrict_sample: precomputing new mask\n");
 #endif
 
-    if (tmp == NULL) {
+    if (tmpmask == NULL) {
 	*err = E_ALLOC;
-	return NULL;
-    }
-
-    /* fill out mask relative to current, restricted dataset */
-    *err = mask_from_temp_dummy(s, dset, tmp, prn);
-
-    if (!*err) {
-	/* make blank full-length mask */
-	mask = make_submask(fullset->n);
-	if (mask == NULL) {
-	    *err = E_ALLOC;
-	}
     }
 
     if (!*err) {
-	/* map the new mask onto full data range */
-	i = 0;
-	for (t=0; t<fullset->n; t++) {
-	    if (oldmask[t]) {
-		mask[t] = tmp[i++];
-	    }
-	}
+	/* fill out mask relative to current, restricted dataset */
+	*err = mask_from_temp_dummy(s, dset, tmpmask, prn);
     }
 
-    free(tmp);
+    if (!*err) {
+	newmask = expand_mask(tmpmask, oldmask, err);
+    }
 
-    return mask;
+    free(tmpmask);
+
+    return newmask;
 }
 
 /* Intended for time series data: trim any missing values
@@ -2114,7 +1798,7 @@ static int set_contiguous_sample (const int *list,
 
 #if 1 /* let's be conservative here */
 
-# define restriction_uses_obs(s) (strstr(s, "obs") != NULL)
+#define restriction_uses_obs(s) (strstr(s, "obs") != NULL)
 
 #else
 
@@ -2185,6 +1869,74 @@ static int make_restriction_string (DATASET *dset, char *old,
     return err;
 }
 
+/* This "dset_saver" business is designed to permit 
+   recovery of the original dataset passed to 
+   restrict_sample() with the OPT_T (permanent)
+   option, in case of failure due to conflict 
+   between the proposed subsampling and saved
+   models.
+*/
+
+struct dset_saver {
+    int pd;
+    int structure;
+    double sd0;
+    int t1;
+    int t2;
+    char stobs[OBSLEN];
+    char endobs[OBSLEN];
+    char *submask;
+};
+
+static int fill_dset_saver (struct dset_saver *saver,
+			    DATASET *dset)
+{
+    int err = 0;
+
+    saver->pd = dset->pd;
+    saver->structure = dset->structure;
+    saver->sd0 = dset->sd0;
+    saver->t1 = dset->t1;
+    saver->t2 = dset->t2;
+    strcpy(saver->stobs, dset->stobs);
+    strcpy(saver->endobs, dset->endobs);
+
+    if (dset->submask != NULL) {
+	saver->submask = copy_subsample_mask(dset->submask, &err);
+    } else {
+	saver->submask = NULL;
+    }
+
+    return err;
+}
+
+static int deploy_dset_saver (struct dset_saver *saver,
+			      DATASET *dset)
+{
+    int err = 0;
+
+    if (saver->submask == RESAMPLED) {
+	/* cannot be restored */
+	err = E_DATA;
+    } else if (saver->submask != NULL) {
+	err = restrict_sample_from_mask(saver->submask, dset, OPT_NONE);
+	free(saver->submask);
+	saver->submask = NULL;
+    }
+
+    if (!err) {
+	dset->pd = saver->pd;
+	dset->structure = saver->structure;
+	dset->sd0 = saver->sd0;
+	dset->t1 = saver->t1;
+	dset->t2 = saver->t2;
+	strcpy(dset->stobs, saver->stobs);
+	strcpy(dset->endobs, saver->endobs);
+    }
+
+    return err;
+}
+
 /* restrict_sample: 
  * @param: restriction string (or %NULL).  
  * @dset: dataset struct.
@@ -2224,6 +1976,7 @@ int restrict_sample (const char *param, const int *list,
 		     gretlopt opt, PRN *prn,
 		     int *n_dropped)
 {
+    struct dset_saver saver = {0};
     char *oldrestr = NULL;
     char *oldmask = NULL;
     char *mask = NULL;
@@ -2253,7 +2006,7 @@ int restrict_sample (const char *param, const int *list,
     }
 
     if (opt & OPT_T) {
-	/* permanent */
+	/* --permanent */
 	if (gretl_function_depth() > 0) {
 	    /* can't permanently shrink the dataset within a function */
 	    gretl_errmsg_set(_("The dataset cannot be modified at present"));
@@ -2279,7 +2032,6 @@ int restrict_sample (const char *param, const int *list,
     }	
 
     mode = get_restriction_mode(opt);
-
     if (mode == SUBSAMPLE_UNKNOWN) {
 	gretl_errmsg_set("Unrecognized sample command");
 	return 1;
@@ -2287,32 +2039,45 @@ int restrict_sample (const char *param, const int *list,
 
     if (!(opt & OPT_P)) {
 	/* not replacing but cumulating any existing restrictions */
-	oldmask = make_current_sample_mask(dset);
-	if (oldmask == NULL) {
-	    return E_ALLOC;
+	oldmask = make_current_sample_mask(dset, &err);
+	if (err) {
+	    return err;
 	}
 	free_oldmask = 1;
 	if (dset->restriction != NULL) {
 	    oldrestr = gretl_strdup(dset->restriction);
 	}
     } else if (state != NULL && state->submask != NULL) {
-	/* subsampling within a function, with incoming
-	   restriction recorded in state
+	/* subsampling within a function: this necessarily
+	   cumulates with the incoming sample restriction 
+	   recorded in state->submask
 	*/
 	oldmask = state->submask;
     }
 
     if (mode == SUBSAMPLE_BOOLEAN && fullset != NULL && 
 	oldmask != NULL && restriction_uses_obs(param)) {
+	/* we come here only if cumulating restrictions */
 	mask = precompute_mask(param, oldmask, dset, prn, &err);
     }
 
-    /* restore the full data range, for housekeeping purposes */
+    if (!err && permanent) {
+	/* back up current info in case of error */
+	err = fill_dset_saver(&saver, dset);
+    }
+
     if (!err) {
+	/* restore the full data range, for housekeeping purposes */
 	err = restore_full_sample(dset, NULL);
     }
 
     if (err) {
+	/* clean up and get out */
+	free(mask);
+	if (free_oldmask) {
+	    free(oldmask);
+	}
+	free(saver.submask);
 	return err;
     }
 
@@ -2321,6 +2086,14 @@ int restrict_sample (const char *param, const int *list,
 	err = make_restriction_mask(mode, param, list, dset, 
 				    oldmask, &mask, prn);
     }
+
+    if (!err && mask != NULL && (opt & OPT_T)) {
+	err = check_models_for_subsample(mask, 1);
+	if (err) {
+	    /* try to recover the dataset we had on input */
+	    deploy_dset_saver(&saver, dset);
+	}
+    }    
 
     if (!err && mask != NULL) {
 	int contiguous = 0;
@@ -2354,17 +2127,19 @@ int restrict_sample (const char *param, const int *list,
 	free(oldmask);
     }
 
-    if (permanent) {
-	destroy_restriction_string(dset);
-    } else {
-	make_restriction_string(dset, oldrestr, param, mode);
+    if (!err) {
+	if (permanent) {
+	    destroy_restriction_string(dset);
+	    free(saver.submask);
+	} else {
+	    make_restriction_string(dset, oldrestr, param, mode);
+	}
+	if (n_dropped != NULL) {
+	    *n_dropped = n_orig - sample_size(dset);
+	}	
     }
 
     free(oldrestr);
-
-    if (n_dropped != NULL) {
-	*n_dropped = n_orig - sample_size(dset);
-    }
 
 #if SUBDEBUG
     fprintf(stderr, "restrict sample: dset: t1=%d, t2=%d, n=%d\n",
@@ -2798,19 +2573,19 @@ int add_dataset_to_model (MODEL *pmod, const DATASET *dset,
     return 0;
 }
 
-static int submask_match (const char *s1, const char *s2, int n)
+static int submasks_match (const DATASET *dset, const MODEL *pmod)
 {
-    int t;
-
-    if (s1 == RESAMPLED || s2 == RESAMPLED) {
-	return s1 == RESAMPLED && s2 == RESAMPLED;
+    char *s1 = dset->submask;
+    char *s2 = pmod->submask;
+    
+    if (s1 == RESAMPLED && s2 == RESAMPLED) {
+	return dset->n == pmod->full_n &&
+	    dset->rseed == pmod->smpl.rseed;
+    } else if (s1 == RESAMPLED || s2 == RESAMPLED) {
+	return 0;
+    } else {
+	return submask_cmp(s1, s2) == 0;
     }
-
-    for (t=0; t<n; t++) {
-	if (s1[t] != s2[t]) return 0;
-    }
-
-    return 1;
 }
 
 /* check the subsample mask from a model against datainfo to 
@@ -2820,7 +2595,6 @@ static int submask_match (const char *s1, const char *s2, int n)
 
 int model_sample_problem (const MODEL *pmod, const DATASET *dset)
 {
-    int n = dset->n;
     int ret = 1;
 
     if (pmod->submask == NULL) {
@@ -2839,7 +2613,7 @@ int model_sample_problem (const MODEL *pmod, const DATASET *dset)
 	    fputs(I_("model is subsampled, dataset is not\n"), stderr);
 	    gretl_errmsg_set(_("model is subsampled, dataset is not\n"));
 	    ret = 1;
-	} else if (submask_match(dset->submask, pmod->submask, n)) {
+	} else if (submasks_match(dset, pmod)) {
 	    /* the subsamples (model and current data set) agree, OK */
 	    ret = 0;
 	} else {

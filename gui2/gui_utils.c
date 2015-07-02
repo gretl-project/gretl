@@ -156,16 +156,24 @@ static int model_get_t1_t2 (void *ptr, int role, int *t1, int *t2)
     return err;
 }
 
-/* Called from menu in model window, bit not necessarily
+/* Called from menu in model window, but not necessarily
    a single-equation model */
 
 static void model_revise_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     int ok = 1, t1 = 0, t2 = 0;
-    int err;
+    int err = 0;
 
-    err = model_get_t1_t2(vwin->data, vwin->role, &t1, &t2);
+    if (vwin->role == VIEW_MODEL) {
+	MODEL *pmod = vwin->data;
+	
+	err = model_sample_problem(pmod, dataset);
+    }
+
+    if (!err) {
+	err = model_get_t1_t2(vwin->data, vwin->role, &t1, &t2);
+    }
 
     if (!err && (t1 != dataset->t1 || t2 != dataset->t2)) {
 	ok = maybe_set_sample_from_model(vwin);
@@ -4857,6 +4865,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = vwin->data;
     GtkAction *action;
+    int resampled = 0;
     gboolean s, ok = TRUE;
 
     if (RQ_SPECIAL_MODEL(pmod)) {
@@ -4878,7 +4887,8 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	return FALSE;
     }
 
-    if (model_sample_problem(pmod, dataset)) { 
+    if (model_sample_problem(pmod, dataset)) {
+	resampled = (pmod->submask == RESAMPLED);
 	ok = FALSE;
     }
 
@@ -4891,9 +4901,14 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     }    
 
     if (s && !ok) {
-	ok = maybe_set_sample_from_model(vwin);
-	if (ok) {
-	    return FALSE;
+	if (resampled) {
+	    infobox(_("The model sample differs from the dataset sample,\n"
+		      "so some menu options will be disabled."));
+	} else {
+	    ok = maybe_set_sample_from_model(vwin);
+	    if (ok) {
+		return FALSE;
+	    }
 	}
     } 
 
@@ -4902,6 +4917,13 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     flip(vwin->ui, "/menubar/Save/uhat", ok);
     flip(vwin->ui, "/menubar/Save/uhat2", ok);
     flip(vwin->ui, "/menubar/Save/NewVar", ok);
+
+    if (resampled) {
+	flip(vwin->ui, "/menubar/Tests", FALSE);
+	flip(vwin->ui, "/menubar/Analysis/DisplayAFR", FALSE);
+	flip(vwin->ui, "/menubar/Analysis/Bootstrap", FALSE);
+	flip(vwin->ui, "/menubar/Graphs", FALSE);
+    }
 
     return FALSE;
 }
