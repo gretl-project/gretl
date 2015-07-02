@@ -445,7 +445,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     gretl_matrix *S = NULL;
     int r, c;
 
-    if (gretl_is_null_matrix(M) || spec == NULL) {
+    if (M == NULL || spec == NULL) {
 	*err = E_DATA;
 	return NULL;
     }
