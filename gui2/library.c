@@ -1510,6 +1510,13 @@ int bool_subsample (const char *param, gretlopt opt)
 			      opt, prn, &n_dropped);
     }
 
+    if ((opt & OPT_T) && err == E_CANCEL) {
+	/* saved models problem with permanent subsample:
+	   FIXME: offer some options?
+	*/
+	;
+    }
+
     msg = gretl_print_get_buffer(prn);
 
     if (err) {

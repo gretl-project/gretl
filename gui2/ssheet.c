@@ -3445,6 +3445,7 @@ struct mdialog {
     GtkWidget *numerics;
     GtkWidget *formula;
     struct gui_matrix_spec *spec;
+    int *retp;
 };
 
 static void spin_call (GtkWidget *s, int *n)
@@ -3461,6 +3462,7 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 
     if (etxt == NULL || *etxt == '\0') {
 	infobox(_("You must give the matrix a name"));
+	*mdlg->retp = GRETL_CANCEL;
 	return;
     }
 
@@ -3469,6 +3471,7 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 				   GRETL_TYPE_MATRIX,
 				   mdlg->dlg);
 	if (err) {
+	    *mdlg->retp = GRETL_CANCEL;
 	    return;
 	}
     }
@@ -3481,6 +3484,7 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 	etxt = gtk_entry_get_text(GTK_ENTRY(mdlg->formula));
 	if (etxt == NULL || *etxt == '\0') {
 	    errbox(_("The matrix formula is empty"));
+	    *mdlg->retp = GRETL_CANCEL;
 	    return;
 	}
 	mdlg->spec->formula = g_strdup(etxt);
@@ -3491,6 +3495,8 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 	etxt = gtk_entry_get_text(GTK_ENTRY(mdlg->ventry));
 	x = gui_double_from_string(etxt, &err);
 	if (err) {
+	    gtk_editable_select_region(GTK_EDITABLE(mdlg->ventry), 0, -1);
+	    *mdlg->retp = GRETL_CANCEL;
 	    return;
 	}
 	mdlg->spec->fill = x;
@@ -3566,6 +3572,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
     mdlg.spec = spec;
     mdlg.numerics = NULL;
     mdlg.formula = NULL;
+    mdlg.retp = &ret;
 
     /* top label */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -3767,8 +3774,13 @@ static int matrix_from_spec (struct gui_matrix_spec *s)
     gchar *genline;
     int err;
 
-    genline = g_strdup_printf("matrix %s = zeros(%d,%d) + %.15g",
-			      s->name, s->rows, s->cols, s->fill);
+    if (xna(s->fill)) {
+	genline = g_strdup_printf("matrix %s = ones(%d,%d) * 0/0",
+				  s->name, s->rows, s->cols);
+    } else {
+	genline = g_strdup_printf("matrix %s = zeros(%d,%d) + %.15g",
+				  s->name, s->rows, s->cols, s->fill);
+    }
 
     err = generate(genline, dataset, OPT_NONE, NULL); 
 

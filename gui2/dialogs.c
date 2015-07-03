@@ -342,30 +342,37 @@ gboolean exit_check (void)
 double gui_double_from_string (const char *str, int *err)
 {
     double x = 0;
-    char s[32];
-    int sub = 0;
+    char *p, s[32];
 
     gretl_error_clear();
 
     *s = '\0';
     strncat(s, str, 31);
+    p = s + strspn(s, " ");
+    gretl_lower(p);
 
-    if (get_local_decpoint() != '.') {
-	gretl_push_c_numeric_locale();
-	gretl_charsub(s, ',', '.');
-	sub = 1;
-    }
-
-    *err = check_atof(s);
-
-    if (*err) {
-	gui_errmsg(*err);
+    if (!strcmp(p, "na") || !strcmp(p, "nan")) {
+	x = M_NA;
     } else {
-	x = atof(s);
-    }
+	int sub = 0;
+	
+	if (get_local_decpoint() != '.') {
+	    gretl_push_c_numeric_locale();
+	    gretl_charsub(p, ',', '.');
+	    sub = 1;
+	}
 
-    if (sub) {
-	gretl_pop_c_numeric_locale();
+	*err = check_atof(p);
+
+	if (*err) {
+	    gui_errmsg(*err);
+	} else {
+	    x = atof(p);
+	}
+
+	if (sub) {
+	    gretl_pop_c_numeric_locale();
+	}
     }
 
     return x;
