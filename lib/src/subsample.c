@@ -333,7 +333,7 @@ int subsample_check_model (MODEL *pmod, char *mask)
     if (submask_cmp(pmod->submask, mask)) {
 	gretl_errmsg_set(_("This subsampling would invalidate at least "
 			   "one saved model"));
-	return E_DATA;
+	return E_CANCEL;
     } else {
 	return 0;
     }
@@ -1869,72 +1869,15 @@ static int make_restriction_string (DATASET *dset, char *old,
     return err;
 }
 
-/* This "dset_saver" business is designed to permit 
-   recovery of the original dataset passed to 
-   restrict_sample() with the OPT_T (permanent)
-   option, in case of failure due to conflict 
-   between the proposed subsampling and saved
-   models.
-*/
-
-struct dset_saver {
-    int pd;
-    int structure;
-    double sd0;
-    int t1;
-    int t2;
-    char stobs[OBSLEN];
-    char endobs[OBSLEN];
-    char *submask;
-};
-
-static int fill_dset_saver (struct dset_saver *saver,
-			    DATASET *dset)
+static int full_sample (const DATASET *dset)
 {
-    int err = 0;
-
-    saver->pd = dset->pd;
-    saver->structure = dset->structure;
-    saver->sd0 = dset->sd0;
-    saver->t1 = dset->t1;
-    saver->t2 = dset->t2;
-    strcpy(saver->stobs, dset->stobs);
-    strcpy(saver->endobs, dset->endobs);
-
-    if (dset->submask != NULL) {
-	saver->submask = copy_subsample_mask(dset->submask, &err);
+    if (complex_subsampled()) {
+	return 0;
+    } else if (dset->t1 > 0 || dset->t2 < dset->n - 1) {
+	return 0;
     } else {
-	saver->submask = NULL;
+	return 1;
     }
-
-    return err;
-}
-
-static int deploy_dset_saver (struct dset_saver *saver,
-			      DATASET *dset)
-{
-    int err = 0;
-
-    if (saver->submask == RESAMPLED) {
-	/* cannot be restored */
-	err = E_DATA;
-    } else if (saver->submask != NULL) {
-	err = restrict_sample_from_mask(saver->submask, dset, OPT_NONE);
-	free(saver->submask);
-	saver->submask = NULL;
-    }
-
-    if (!err) {
-	dset->pd = saver->pd;
-	dset->structure = saver->structure;
-	dset->sd0 = saver->sd0;
-	dset->t1 = saver->t1;
-	dset->t2 = saver->t2;
-	strcpy(dset->stobs, saver->stobs);
-	strcpy(dset->endobs, saver->endobs);
-    }
-
-    return err;
 }
 
 /* restrict_sample: 
@@ -1976,12 +1919,12 @@ int restrict_sample (const char *param, const int *list,
 		     gretlopt opt, PRN *prn,
 		     int *n_dropped)
 {
-    struct dset_saver saver = {0};
     char *oldrestr = NULL;
     char *oldmask = NULL;
     char *mask = NULL;
     int free_oldmask = 0;
     int permanent = 0;
+    int n_models = 0;
     int n_orig = 0;
     int mode, err = 0;
     
@@ -2015,7 +1958,15 @@ int restrict_sample (const char *param, const int *list,
 	    /* we need some kind of restriction flag */
 	    return E_BADOPT;
 	} else {
-	    permanent = 1;
+	    n_models = n_stacked_models();
+	    if (n_models > 0 && gretl_in_gui_mode() && !full_sample(dset)) {
+		/* too difficult to recover gracefully on error */
+		gretl_errmsg_set(_("The full dataset must be restored before "
+				   "imposing a permanent sample restriction"));
+		return E_DATA;
+	    } else {
+		permanent = 1;
+	    }
 	}
     }
 
@@ -2061,12 +2012,7 @@ int restrict_sample (const char *param, const int *list,
 	mask = precompute_mask(param, oldmask, dset, prn, &err);
     }
 
-    if (!err && permanent) {
-	/* back up current info in case of error */
-	err = fill_dset_saver(&saver, dset);
-    }
-
-    if (!err) {
+    if (!err && !full_sample(dset)) {
 	/* restore the full data range, for housekeeping purposes */
 	err = restore_full_sample(dset, NULL);
     }
@@ -2077,7 +2023,6 @@ int restrict_sample (const char *param, const int *list,
 	if (free_oldmask) {
 	    free(oldmask);
 	}
-	free(saver.submask);
 	return err;
     }
 
@@ -2087,12 +2032,8 @@ int restrict_sample (const char *param, const int *list,
 				    oldmask, &mask, prn);
     }
 
-    if (!err && mask != NULL && (opt & OPT_T)) {
+    if (!err && mask != NULL && (opt & OPT_T) && n_models > 0) {
 	err = check_models_for_subsample(mask, 1);
-	if (err) {
-	    /* try to recover the dataset we had on input */
-	    deploy_dset_saver(&saver, dset);
-	}
     }    
 
     if (!err && mask != NULL) {
@@ -2130,7 +2071,6 @@ int restrict_sample (const char *param, const int *list,
     if (!err) {
 	if (permanent) {
 	    destroy_restriction_string(dset);
-	    free(saver.submask);
 	} else {
 	    make_restriction_string(dset, oldrestr, param, mode);
 	}

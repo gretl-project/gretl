@@ -1770,6 +1770,30 @@ int check_models_for_subsample (char *newmask, int dryrun)
     return err;
 }
 
+int n_stacked_models (void)
+{
+    GretlObjType type;
+    void *ptr, *lmp = NULL;
+    int i, n = 0;
+
+    for (i=-1; i<n_obj; i++) {
+	if (i < 0) {
+	    lmp = ptr = get_last_model(&type);
+	} else {
+	    ptr = ostack[i].ptr;
+	    type = ostack[i].type;
+	}
+	if (i >= 0 && ptr == lmp) {
+	    continue;
+	}
+	if (ptr != NULL && type == GRETL_OBJ_EQN) {
+	    n++;
+	}
+    }
+
+    return n;
+}
+
 void gretl_saved_objects_cleanup (void)
 {
     void *lmp = last_model.ptr;

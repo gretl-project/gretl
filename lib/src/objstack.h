@@ -181,6 +181,8 @@ int check_variable_deletion_list (int *list, const DATASET *dset);
 
 int check_models_for_subsample (char *newmask, int dryrun);
 
+int n_stacked_models (void);
+
 void gretl_saved_objects_cleanup (void);
 
 #endif
