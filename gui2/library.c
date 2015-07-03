@@ -1506,10 +1506,12 @@ static int perma_sample_options (const char *param, int *list,
     g_free(msg);
 	
     if (resp == GRETL_YES) {
-	opt |= OPT_F; /* add "force" option */
 	*n_dropped = 0;
 	err = restrict_sample(param, list, dataset, NULL, 
-			      opt, prn, n_dropped);
+			      opt | OPT_F, prn, n_dropped);
+	if (!err) {
+	    mark_session_changed();
+	}
     } else {
 	*cancel = 1;
     }
@@ -1571,9 +1573,6 @@ int bool_subsample (const char *param, gretlopt opt)
 	}
 	if (opt & OPT_T) {
 	    mark_dataset_as_modified();
-	    if (opt & OPT_F) {
-		mark_session_changed();
-	    }
 	} else {
 	    set_sample_label(dataset);
 	}
@@ -9517,7 +9516,11 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
   	    errmsg(err, prn);
   	} else {
   	    print_smpl(dset, get_full_length_n(), prn);
-	    set_sample_label(dset);
+	    if (cmd->opt & OPT_T) {
+		mark_dataset_as_modified();
+	    } else {
+		set_sample_label(dset);
+	    }
   	}
 	if (err && err != E_ALLOC && (cmd->flags & CMD_CATCH)) {
 	    set_gretl_errno(err);

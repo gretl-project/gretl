@@ -1824,15 +1824,24 @@ int check_models_for_subsample (char *newmask, int *ndropped)
 
 int n_stacked_models (void)
 {
-    GretlObjType type;
-    void *ptr;
-    int i, n = 0;
+    GList *list = NULL;
+    int n = 0;
 
-    for (i=0; i<n_obj; i++) {
-	ptr = ostack[i].ptr;
-	type = ostack[i].type;
-	if (ptr != NULL && type == GRETL_OBJ_EQN) {
-	    n++;
+    if (get_or_send_gui_models != NULL) {
+	list = (*get_or_send_gui_models)(NULL);
+	n = g_list_length(list);
+	g_list_free(list);
+    } else {
+	GretlObjType type;
+	void *ptr;
+	int i;
+
+	for (i=0; i<n_obj; i++) {
+	    ptr = ostack[i].ptr;
+	    type = ostack[i].type;
+	    if (ptr != NULL && type == GRETL_OBJ_EQN) {
+		n++;
+	    }
 	}
     }
 
