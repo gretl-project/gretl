@@ -351,7 +351,7 @@ double gui_double_from_string (const char *str, int *err)
     p = s + strspn(s, " ");
     gretl_lower(p);
 
-    if (!strcmp(p, "na") || !strcmp(p, "nan")) {
+    if (!strcmp(p, "na") || !strcmp(p, "nan") || !strcmp(p, ".")) {
 	x = M_NA;
     } else {
 	int sub = 0;
