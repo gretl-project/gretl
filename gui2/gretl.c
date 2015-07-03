@@ -627,6 +627,7 @@ int main (int argc, char **argv)
     set_workdir_callback(gui_set_working_dir);
     set_show_activity_func(gui_show_activity);
     set_query_stop_func(gui_query_stop);
+    set_gui_model_list_callback(get_or_send_gui_models);
 
     /* allocate data information struct */
     dataset = datainfo_new();

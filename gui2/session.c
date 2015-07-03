@@ -1623,6 +1623,27 @@ int highest_numbered_variable_in_session (void)
     return vmax;
 }
 
+GList *session_model_list (void)
+{
+    GList *list = NULL;
+
+    if (session.models != NULL) {
+	GretlObjType type;
+	void *ptr;
+	int i;
+	
+	for (i=0; i<session.nmodels; i++) {
+	    ptr = session.models[i]->ptr;
+	    type = session.models[i]->type;
+	    if (ptr != NULL && type == GRETL_OBJ_EQN) {
+		list = g_list_append(list, ptr);
+	    }
+	}
+    }
+
+    return list;
+}
+
 int session_file_is_open (void)
 {
     return (*sessionfile != '\0');

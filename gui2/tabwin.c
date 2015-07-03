@@ -1250,6 +1250,25 @@ int highest_numbered_var_in_tabwin (tabwin_t *tabwin,
     return vmax;
 }
 
+void list_add_tabwin_models (tabwin_t *tabwin, GList **plist)
+{
+    if (tabwin->role == VIEW_MODEL) {
+	GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
+	int n = gtk_notebook_get_n_pages(notebook);
+	windata_t *vwin;
+	GtkWidget *tab;
+	int i;
+	
+	for (i=0; i<n; i++) {
+	    tab = gtk_notebook_get_nth_page(notebook, i);
+	    vwin = g_object_get_data(G_OBJECT(tab), "vwin");
+	    if (vwin != NULL && vwin->data != NULL) {
+		*plist = g_list_append(*plist, vwin->data);
+	    }
+	}
+    }
+}
+
 windata_t *window_get_active_vwin (GtkWidget *window) 
 {
     windata_t *vwin = g_object_get_data(G_OBJECT(window), "vwin");

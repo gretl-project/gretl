@@ -1724,47 +1724,99 @@ int check_variable_deletion_list (int *list, const DATASET *dset)
     return pruned;
 }
 
+static GList *(*get_or_send_gui_models)(GList *);
+
+void set_gui_model_list_callback (GList *(*callback)())
+{
+    get_or_send_gui_models = callback;
+}
+
 /* The following function is called from subsample.c when
    the user has called for a permanent subsampling (represented
    by @newmask) of the original dataset.
 
-   If @dryrun is non-zero that means we're just checking
-   whether the proposed subsampling is "fatal" for any
-   saved model. Otherwise we call the appropriate
-   function to revise the sample information on each
-   saved model in light of the shrinkage of the dataset.
+   If @ndropped is non-NULL that means we're just checking
+   whether the proposed subsampling is inconsistent with
+   preservation of any saved models -- and this argument gets
+   filled out with the number of such models. This variant
+   call is issued only in gui mode.
+
+   Otherwise, for each saved model, we either mark it for
+   deletion (via the GUI) or revise its sample information 
+   appropriately in light of the shrinkage of the dataset.
 */
 
-int check_models_for_subsample (char *newmask, int dryrun)
+int check_models_for_subsample (char *newmask, int *ndropped)
 {
+    GList *fromgui = NULL;
     GretlObjType type;
-    void *ptr, *lmp = NULL;
-    int i, err = 0;
+    MODEL *pmod;
+    void *ptr;
+    int moderr;
+    int err = 0;
 
-    for (i=-1; i<n_obj && !err; i++) {
-	if (i < 0) {
-	    lmp = ptr = get_last_model(&type);
-	} else {
-	    ptr = ostack[i].ptr;
-	    type = ostack[i].type;
-	}
-	if (i >= 0 && ptr == lmp) {
-	    continue;
-	}
-	if (ptr != NULL && type == GRETL_OBJ_EQN) {
-	    MODEL *pmod = ptr;
+    if (get_or_send_gui_models != NULL) {
+	fromgui = (*get_or_send_gui_models)(NULL);
+    }
 
-	    if (dryrun) {
-		err = subsample_check_model(pmod, newmask);
+    if (ndropped != NULL) {
+	/* gui-only precheck: how many models are problematic? */
+	*ndropped = 0;
+	while (fromgui != NULL) {
+	    pmod = fromgui->data;
+	    moderr = subsample_check_model(pmod, newmask);
+	    if (moderr) {
+		*ndropped += 1;
+		err = E_CANCEL;
+	    }	    
+	    if (fromgui->next != NULL) {
+		fromgui = fromgui->next;
 	    } else {
-		err = revise_model_sample_info(pmod, newmask);
+		break;
+	    }	    
+	}
+	fprintf(stderr, "gui-precheck: ndropped = %d\n", *ndropped);
+    } else {
+	/* delete or fix-up affected models */
+	GList *togui = NULL;
+
+	ptr = get_last_model(&type);
+	if (ptr != NULL && type == GRETL_OBJ_EQN) {
+	    pmod = ptr;
+	    moderr = subsample_check_model(pmod, newmask);
+	    if (moderr) {
+		set_as_last_model(NULL, GRETL_OBJ_NULL);
+	    } else if (fromgui == NULL || g_list_find(fromgui, ptr) == NULL) {
+		/* don't do this twice on a given model */
+		remove_model_subsample_info(pmod);
 	    }
+	}
+	
+	while (fromgui != NULL) {
+	    pmod = fromgui->data;
+	    fprintf(stderr, "finalizing model %p\n", fromgui->data);
+	    moderr = subsample_check_model(pmod, newmask);
+	    if (moderr) {
+		fprintf(stderr, " error: adding to deletion list\n");
+		togui = g_list_append(togui, fromgui->data);
+	    } else {
+		fprintf(stderr, " OK: fixing sample info\n");
+		remove_model_subsample_info(pmod);
+	    }
+	    if (fromgui->next != NULL) {
+		fromgui = fromgui->next;
+	    } else {
+		break;
+	    }	    
+	}
+
+	if (togui != NULL && get_or_send_gui_models != NULL) {
+	    (*get_or_send_gui_models)(togui);
 	}
     }
 
-    if (err && !gretl_in_gui_mode()) {
-	set_as_last_model(NULL, GRETL_OBJ_NULL);
-	err = 0;
+    if (fromgui != NULL) {
+	g_list_free(fromgui);
     }
 
     return err;
@@ -1773,19 +1825,12 @@ int check_models_for_subsample (char *newmask, int dryrun)
 int n_stacked_models (void)
 {
     GretlObjType type;
-    void *ptr, *lmp = NULL;
+    void *ptr;
     int i, n = 0;
 
-    for (i=-1; i<n_obj; i++) {
-	if (i < 0) {
-	    lmp = ptr = get_last_model(&type);
-	} else {
-	    ptr = ostack[i].ptr;
-	    type = ostack[i].type;
-	}
-	if (i >= 0 && ptr == lmp) {
-	    continue;
-	}
+    for (i=0; i<n_obj; i++) {
+	ptr = ostack[i].ptr;
+	type = ostack[i].type;
 	if (ptr != NULL && type == GRETL_OBJ_EQN) {
 	    n++;
 	}

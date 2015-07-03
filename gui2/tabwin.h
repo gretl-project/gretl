@@ -65,6 +65,8 @@ int viewer_n_siblings (windata_t *vwin);
 int highest_numbered_var_in_tabwin (tabwin_t *tabwin, 
 				    const DATASET *dset);
 
+void list_add_tabwin_models (tabwin_t *tabwin, GList **plist);
+
 windata_t *window_get_active_vwin (GtkWidget *window);
 
 #endif /* TABWIN_H_ */

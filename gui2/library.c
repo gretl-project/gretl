@@ -1480,6 +1480,43 @@ void gui_warnmsg (int errcode)
     } 
 }
 
+static int perma_sample_options (const char *param, int *list,
+				 DATASET *dset, gretlopt opt,
+				 PRN *prn, int *n_dropped,
+				 int *cancel)
+{
+    /* we have a saved-models problem with the specified
+       permanent subsample -- what to do?
+    */
+    gchar *msg;
+    int resp;
+    int err = 0;
+
+    msg =
+	g_strdup_printf(_("Imposing this permanent subsample will "
+			  "result in the deletion\nof %d model(s) "
+			  "from this gretl session.\n\n"
+			  "You may wish to say No here and save the "
+			  "session first.\n\n"
+			  "Do you want to go ahead with the "
+			  "subsampling now?"),
+			*n_dropped);
+	
+    resp = yes_no_dialog(NULL, msg, NULL);
+    g_free(msg);
+	
+    if (resp == GRETL_YES) {
+	opt |= OPT_F; /* add "force" option */
+	*n_dropped = 0;
+	err = restrict_sample(param, list, dataset, NULL, 
+			      opt, prn, n_dropped);
+    } else {
+	*cancel = 1;
+    }
+
+    return err;
+}
+
 /* OPT_M  drop all obs with missing data values
    OPT_A  drop obs with no valid data
    OPT_W  drop weekends
@@ -1493,6 +1530,7 @@ void gui_warnmsg (int errcode)
 
 int bool_subsample (const char *param, gretlopt opt)
 {
+    const char *myparm;
     const char *msg;
     PRN *prn;
     int n_dropped = 0;
@@ -1502,19 +1540,23 @@ int bool_subsample (const char *param, gretlopt opt)
 	return 1;
     }
 
-    if (opt & (OPT_M | OPT_A | OPT_W)) {
-	err = restrict_sample(NULL, NULL, dataset, NULL, 
-			      opt, prn, &n_dropped);
-    } else {
-	err = restrict_sample(param, NULL, dataset, NULL, 
-			      opt, prn, &n_dropped);
-    }
+    myparm = (opt & (OPT_M | OPT_A | OPT_W)) ? NULL : param;
 
-    if ((opt & OPT_T) && err == E_CANCEL) {
-	/* saved models problem with permanent subsample:
-	   FIXME: offer some options?
-	*/
-	;
+    err = restrict_sample(myparm, NULL, dataset, NULL, 
+			  opt, prn, &n_dropped);
+
+    if (err == E_CANCEL && (opt & OPT_T)) {
+	int cancel = 0;
+	
+	err = perma_sample_options(myparm, NULL, dataset,
+				   opt, prn, &n_dropped,
+				   &cancel);
+	if (cancel) {
+	    gretl_print_destroy(prn);
+	    return 0;
+	} else {
+	    opt |= OPT_F;
+	}
     }
 
     msg = gretl_print_get_buffer(prn);
@@ -1524,15 +1566,20 @@ int bool_subsample (const char *param, gretlopt opt)
     } else {
 	if (msg != NULL && *msg != '\0') {
 	    infobox(msg);
-	} else {
+	} else if (n_dropped > 0) {
 	    infobox_printf(_("Dropped %d observations"), n_dropped);
 	}
 	if (opt & OPT_T) {
 	    mark_dataset_as_modified();
+	    if (opt & OPT_F) {
+		mark_session_changed();
+	    }
 	} else {
 	    set_sample_label(dataset);
 	}
-    } 
+    }
+
+    /* FIXME record command */
 
     gretl_print_destroy(prn);
 
@@ -8817,6 +8864,95 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     }
 }
 
+/* add to @l1 any elements of @l2 and @l3 that are not
+   already present */
+
+static GList *model_list_union (GList *l1,
+				GList *l2,
+				GList *l3)
+{
+    if (l2 != NULL) {
+	while (1) {
+	    if (g_list_find(l1, l2->data) == NULL) {
+		l1 = g_list_append(l1, l2->data);
+	    }
+	    if (l2->next != NULL) {
+		l2 = l2->next;
+	    } else {
+		break;
+	    }
+	}
+	g_list_free(l2);
+    }
+
+    if (l3 != NULL) {
+	while (1) {
+	    if (g_list_find(l1, l3->data) == NULL) {
+		l1 = g_list_append(l1, l3->data);
+	    }
+	    if (l3->next != NULL) {
+		l3 = l3->next;
+	    } else {
+		break;
+	    }
+	}
+	g_list_free(l3);
+    }
+
+    return l1;
+}
+
+/* Apparatus for handling a permanent sub-sampling via the
+   GUI program. This function, registered as a libgretl
+   callback, runs both ways: it can be used (see objstack.c
+   in the library) to get a GList of models represented in
+   the GUI, for checking, and to send back a GList of models
+   that will have to be deleted because their dataset has
+   been cut out from under them.
+*/
+
+GList *get_or_send_gui_models (GList *list)
+{
+    if (list == NULL) {
+	/* signal to send list to objstack */
+	GList *lw = windowed_model_list();
+	GList *ls = session_model_list();
+	GList *lt = table_model_list();
+
+	return model_list_union(lw, ls, lt);
+    } else {
+	/* handle list returned by objstack */
+	windata_t *vwin;
+	void *ptr;
+    
+	while (1) {
+	    ptr = list->data;
+	    fprintf(stderr, "*** deleting gui model %p\n", ptr);
+	    /* is the model in the model table? */
+	    if (in_model_table(ptr)) {
+		fprintf(stderr, " removing from model table\n");
+		remove_from_model_table(ptr);
+	    }
+	    /* is the model in a viewer window? */
+	    vwin = get_viewer_for_data(ptr);
+	    if (vwin != NULL) {
+		fprintf(stderr, " destroy viewer\n");
+		gtk_widget_destroy(vwin->main);
+	    }
+	    fprintf(stderr, " removing from session\n");
+	    session_model_callback(ptr, OBJ_ACTION_FREE);
+	    if (list->next != NULL) {
+		list = list->next;
+	    } else {
+		break;
+	    }
+	}
+
+	g_list_free(list);
+	return NULL;
+    }
+}
+
 static int script_install_function_package (const char *pkgname,
 					    gretlopt opt,
 					    PRN *prn,
@@ -9360,12 +9496,23 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     case SMPL:
  	if (cmd->opt == OPT_F) {
  	    gui_restore_sample(dset);
- 	} else if (cmd->opt) {
- 	    err = restrict_sample(cmd->param, cmd->list, dset,
- 				  NULL, cmd->opt, prn, NULL);
+	} else if (!cmd->opt) {
+	    err = set_sample(cmd->param, cmd->parm2, dset);
  	} else {
- 	    err = set_sample(cmd->param, cmd->parm2, dset);
- 	}
+	    int n_dropped = 0;
+	    int cancel = 0;
+	    
+ 	    err = restrict_sample(cmd->param, cmd->list, dset,
+ 				  NULL, cmd->opt, prn, &n_dropped);
+	    if (err == E_CANCEL && (cmd->opt & OPT_T)) {
+		err = perma_sample_options(cmd->param, cmd->list,
+					   dset, cmd->opt, prn,
+					   &n_dropped, &cancel);
+		if (cancel) {
+		    break;
+		}
+	    }
+	}
   	if (err) {
   	    errmsg(err, prn);
   	} else {

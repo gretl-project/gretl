@@ -106,6 +106,23 @@ int in_model_table (const MODEL *pmod)
     return 0;
 }
 
+GList *table_model_list (void)
+{
+    GList *list = NULL;
+
+    if (n_models > 0) {
+	int i;
+
+	for (i=0; i<n_models; i++) {
+	    if (table_models[i] != NULL) {
+		list = g_list_append(list, table_models[i]);
+	    }
+	}
+    }
+
+    return list;
+}
+
 int model_table_n_models (void)
 {
     return n_models;
@@ -235,7 +252,8 @@ static int model_table_precheck (MODEL *pmod, int add_mode)
    the position within the array that this model should occupy.
 */
 
-static int real_add_to_model_table (MODEL *pmod, int add_mode, int pos, PRN *prn)
+static int real_add_to_model_table (MODEL *pmod, int add_mode,
+				    int pos, PRN *prn)
 {
     int i, n = (pos == 0)? n_models + 1 : pos;
 
@@ -291,6 +309,33 @@ int add_to_model_table (MODEL *pmod, int add_mode, int pos, PRN *prn)
     }
 
     return real_add_to_model_table(pmod, add_mode, pos, prn);
+}
+
+void remove_from_model_table (MODEL *pmod)
+{
+    if (n_models > 0) {
+	int pos = model_table_position(pmod);
+
+	if (pos == 0) {
+	    /* not present */
+	    return;
+	} else if (n_models == 1) {
+	    /* it's the only model in the table */
+	    clear_model_table(0, NULL);
+	} else {
+	    /* remove and reshuffle */
+	    int i;
+
+	    gretl_object_unref(pmod, GRETL_OBJ_EQN);
+	    
+	    for (i=pos-1; i<n_models-1; i++) {
+		table_models[i] = table_models[i+1];
+	    }
+	    
+	    table_models[n_models-1] = NULL;
+	    n_models--;
+	}
+    }
 }
 
 static int on_param_list (const char *pname)

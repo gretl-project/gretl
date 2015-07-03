@@ -112,6 +112,8 @@ void free_session (gretlopt opt);
 
 int highest_numbered_variable_in_session (void);
 
+GList *session_model_list (void);
+
 int is_session_model (void *p);
 
 void view_session (void);

@@ -30,6 +30,8 @@ void clear_model_table (int on_exit, PRN *prn);
 
 int add_to_model_table (MODEL *pmod, int add_mode, int pos, PRN *prn);
 
+void remove_from_model_table (MODEL *pmod);
+
 int display_model_table (int gui);
 
 int special_print_model_table (PRN *prn);
@@ -39,6 +41,8 @@ int modeltab_exec (const char *param, gretlopt opt, PRN *prn);
 void format_model_table (windata_t *vwin);
 
 int in_model_table (const MODEL *pmod);
+
+GList *table_model_list (void);
 
 int model_table_n_models (void);
 

@@ -38,7 +38,7 @@ int write_model_submask (const MODEL *pmod, FILE *fp);
 
 int subsample_check_model (MODEL *pmod, char *mask);
 
-int revise_model_sample_info (MODEL *pmod, char *mask);
+int remove_model_subsample_info (MODEL *pmod);
 
 int submask_cmp (const char *m1, const char *m2);
 

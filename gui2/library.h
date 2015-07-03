@@ -117,6 +117,8 @@ void set_original_n (int n);
 
 int get_original_n (void);
 
+GList *get_or_send_gui_models (GList *list);
+
 /* model-related functions */
 
 int do_coint (selector *sr);

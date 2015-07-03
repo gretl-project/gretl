@@ -68,6 +68,8 @@ windata_t *vwin_new (int role, gpointer data);
 
 int highest_numbered_variable_in_winstack (void);
 
+GList *windowed_model_list (void);
+
 windata_t *gretl_viewer_new (int role, const gchar *title, 
 			     gpointer data);
 

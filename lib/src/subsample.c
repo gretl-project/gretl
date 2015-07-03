@@ -214,6 +214,35 @@ static char *make_submask (int n)
     return mask;
 }
 
+#if 0
+
+static void debug_print_submask (char *mask, char *msg)
+{
+    if (mask == NULL) {
+	fprintf(stderr, "%s: NULL\n", msg);
+    } else if (mask == RESAMPLED) {
+	fprintf(stderr, "%s: RESAMPLED\n", msg);
+    } else {
+	char *s = mask;
+
+	fprintf(stderr, "%s: ", msg);
+	
+	while (*s != SUBMASK_SENTINEL) {
+	    if (*s == 0) {
+		fputc('0', stderr);
+	    } else if (*s == 1) {
+		fputc('1', stderr);
+	    } else {
+		fputc('?', stderr);
+	    }
+	    s++;
+	}
+	fputc('\n', stderr);
+    }
+}
+
+#endif
+
 void set_dataset_resampled (DATASET *dset, unsigned int seed)
 {
     dset->submask = RESAMPLED;
@@ -331,9 +360,7 @@ int attach_subsample_to_model (MODEL *pmod, const DATASET *dset)
 int subsample_check_model (MODEL *pmod, char *mask)
 {
     if (submask_cmp(pmod->submask, mask)) {
-	gretl_errmsg_set(_("This subsampling would invalidate at least "
-			   "one saved model"));
-	return E_CANCEL;
+	return E_DATA;
     } else {
 	return 0;
     }
@@ -347,7 +374,7 @@ int subsample_check_model (MODEL *pmod, char *mask)
    subsample mask from the models.
 */
 
-int revise_model_sample_info (MODEL *pmod, char *mask)
+int remove_model_subsample_info (MODEL *pmod)
 {
     free_subsample_mask(pmod->submask);
     pmod->submask = NULL;
@@ -1676,9 +1703,7 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 
     if (opt & OPT_T) {
 	/* --permanent */
-	if (gretl_in_gui_mode()) {
-	    err = check_models_for_subsample(mask, 0);
-	}
+	check_models_for_subsample(mask, NULL);
 	destroy_full_dataset(dset);
     } else {
 	err = backup_full_dataset(dset);
@@ -1957,9 +1982,12 @@ int restrict_sample (const char *param, const int *list,
 	} else if (!(opt & (OPT_O | OPT_M | OPT_A | OPT_N | OPT_R))) {
 	    /* we need some kind of restriction flag */
 	    return E_BADOPT;
+	} else if (!gretl_in_gui_mode() || (opt & OPT_F)) {
+	    /* CLI, or GUI with internal "force" option */
+	    permanent = 1;
 	} else {
 	    n_models = n_stacked_models();
-	    if (n_models > 0 && gretl_in_gui_mode() && !full_sample(dset)) {
+	    if (n_models > 0 && !full_sample(dset)) {
 		/* too difficult to recover gracefully on error */
 		gretl_errmsg_set(_("The full dataset must be restored before "
 				   "imposing a permanent sample restriction"));
@@ -2032,8 +2060,8 @@ int restrict_sample (const char *param, const int *list,
 				    oldmask, &mask, prn);
     }
 
-    if (!err && mask != NULL && (opt & OPT_T) && n_models > 0) {
-	err = check_models_for_subsample(mask, 1);
+    if (!err && n_models > 0) {
+	err = check_models_for_subsample(mask, n_dropped);
     }    
 
     if (!err && mask != NULL) {
