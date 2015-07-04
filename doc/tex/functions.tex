@@ -93,8 +93,8 @@ function parameter may include some additional fields, as follows:
 \begin{itemize}
 \item The \texttt{const} modifier.
 \item For \texttt{scalar} or \texttt{int} parameters: minimum, maximum
-  and default values; or for \texttt{bool} parameters, just a default
-  value.
+  and/or default values; or for \texttt{bool} parameters, just a
+  default value.
 \item For optional arguments in pointer form, and additionally for
   string or list arguments in standard form (see
   section~\ref{func-details}), the special default value
@@ -137,7 +137,21 @@ int order[1:12:4]
 If you wish to omit any of the three specifiers, leave the
 corresponding field empty.  For example \texttt{[1::4]} would specify
 a minimum of 1 and a default of 4 while leaving the maximum
-unlimited.  
+unlimited. However, as a special case, it is acceptable to give just
+one value, with no colons: in that case the value is interpreted as a
+default. So for example
+%    
+\begin{code}
+int k[0]
+\end{code}
+%
+designates a default value of 0 for the parameter \texttt{k}, with no
+minimum or maximum specified. If you wished to specify a minimum of
+zero with no maximum or default you would have to write
+%    
+\begin{code}
+int k[0::]
+\end{code}
 
 For a parameter of type \texttt{bool} (whose values are just zero or
 non-zero), you can specify a default of 1 (true) or 0 (false), as in
