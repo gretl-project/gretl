@@ -1831,6 +1831,57 @@ double nc_chisq_cdf (double df, double delta, double x)
 }
 
 /**
+ * nc_chisq_pdf_array:
+ * @p: degrees of freedom.
+ * @c: noncentrality parameter.
+ * @x: array of arguments (overwritten on exit).
+ * @n: no. of elements in x.
+ *
+ * Calculates the value at @x of the CDF of the noncentral chi^2
+ * distribution with @p dof and noncentrality parameter equal
+ * to @c.
+ *
+ * Returns: an error code, as appropriate.
+ */
+
+static int nc_chisq_pdf_array (double p, double c, double *x, int n)
+{
+    int i, err = 0;
+    double k, a, b; 
+
+    if (fabs(c) < 1.0e-10) {
+	return chisq_pdf_array((int) floor(p), x, n);
+    }
+
+    if (p <= 0 || c < 0) {
+	return E_DATA;
+    }
+
+    k = p/2.0 - 1;
+
+    for (i=0; i<n; i++) {
+	if(xna(x[i]) || x[i] < 0) {
+	    x[i] = NADBL;
+	} else {
+	    a = exp(-0.5*(x[i]+c) + k/2.0 * log(x[i]/c)) / 2.0;
+	    b = gretl_bessel('I', k, sqrt(x[i]*c), &err);
+	    if (err) {
+		break;
+	    }
+	    x[i] = a*b;
+	}
+    }
+
+    return err;
+}
+
+double nc_chisq_pdf (double p, double c, double x)
+{
+    nc_chisq_pdf_array(p, c, &x, 1);
+    return x;
+}
+
+/**
  * nc_snedecor_cdf:
  * @dfn: degrees of freedom (num).
  * @dfd: degrees of freedom (den).
@@ -2762,6 +2813,8 @@ double gretl_get_pdf (int dist, const double *parm, double x)
 	y = ncf_pdf(parm[0], parm[1], parm[2], x);
     } else if (dist == D_NC_T) {
 	y = nc_student_pdf(parm[0], parm[1], x);
+    } else if (dist == D_NC_CHISQ) {
+	y = nc_chisq_pdf(parm[0], parm[1], x);
     }
 
     return y;
@@ -2813,6 +2866,8 @@ int gretl_fill_pdf_array (int dist, const double *parm,
 	err = ncf_pdf_array(parm[0], parm[1], parm[2], x, n);
     } else if (dist == D_NC_T) {
 	err = nct_pdf_array(parm[0], parm[1], x, n);
+    } else if (dist == D_NC_CHISQ) {
+	err = nc_chisq_pdf_array(parm[0], parm[1], x, n);
     }
 
     return err;

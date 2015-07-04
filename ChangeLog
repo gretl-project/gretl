@@ -7,7 +7,7 @@ version 1.10.90, in progress
   distributions
 - TRAMO interface: allow saving of "linearized" series
 - Add new accessor $lang to get national language identifier
-- Add Romananian translation
+- Add Romanian translation
 - Fix bug: bwrite() not completing until gretl exits
 - Fix bug: matrix transpose (') not accepted before the colon
   of the ternary query operator

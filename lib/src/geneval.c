@@ -974,8 +974,8 @@ static int check_dist_count (int d, int f, int *np, int *argc)
     *np = *argc = 0;
 
     if (d == D_NC_CHISQ) {
-	/* non-central $\chi^2$: only CDF supported so far */
-	if (f == F_CDF) {
+	/* non-central $\chi^2$: only CDF and PDF supported so far */
+	if (f == F_PDF || f == F_CDF) {
 	    *np = 2;
 	} else {
 	    err = E_INVARG;
