@@ -1493,7 +1493,7 @@ static int perma_sample_options (const char *param, int *list,
     int err = 0;
 
     msg =
-	g_strdup_printf(_("Imposing this permanent subsample will "
+	g_strdup_printf(_("Changing the dataset in this way will "
 			  "result in the deletion\nof %d model(s) "
 			  "from this gretl session.\n\n"
 			  "You may wish to say No here and save the "
@@ -1532,7 +1532,6 @@ static int perma_sample_options (const char *param, int *list,
 
 int bool_subsample (const char *param, gretlopt opt)
 {
-    const char *myparm;
     const char *msg;
     PRN *prn;
     int n_dropped = 0;
@@ -1542,22 +1541,18 @@ int bool_subsample (const char *param, gretlopt opt)
 	return 1;
     }
 
-    myparm = (opt & (OPT_M | OPT_A | OPT_W)) ? NULL : param;
-
-    err = restrict_sample(myparm, NULL, dataset, NULL, 
+    err = restrict_sample(param, NULL, dataset, NULL, 
 			  opt, prn, &n_dropped);
 
     if (err == E_CANCEL && (opt & OPT_T)) {
 	int cancel = 0;
 	
-	err = perma_sample_options(myparm, NULL, dataset,
+	err = perma_sample_options(param, NULL, dataset,
 				   opt, prn, &n_dropped,
 				   &cancel);
 	if (cancel) {
 	    gretl_print_destroy(prn);
 	    return 0;
-	} else {
-	    opt |= OPT_F;
 	}
     }
 
@@ -1577,8 +1572,6 @@ int bool_subsample (const char *param, gretlopt opt)
 	    set_sample_label(dataset);
 	}
     }
-
-    /* FIXME record command */
 
     gretl_print_destroy(prn);
 
