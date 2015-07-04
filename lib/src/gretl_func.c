@@ -4889,7 +4889,7 @@ static int read_min_max_deflt (char **ps, fn_param *param,
 	    } else if (len > 0) {
 		*valstr = '\0';
 		strncat(valstr, q, len);
-#if VALDEBUG
+#if VALDEBUG > 1
 		fprintf(stderr, "valstr(%d) = '%s'\n", i, valstr);
 #endif
 		if (!strcmp(valstr, "NA")) {
@@ -4917,7 +4917,7 @@ static int read_min_max_deflt (char **ps, fn_param *param,
 	    }
 
 #if VALDEBUG
-	    fprintf(stderr, "min %g, max %g, def %g, step %g\n", 
+	    fprintf(stderr, "min %g, max %g, deflt %g, step %g\n", 
 		    param->min, param->max, param->deflt, param->step);
 #endif
 
@@ -5750,8 +5750,29 @@ static int localize_series_ref (fncall *call, fn_arg *arg,
     return 0;
 }
 
+static int argval_get_int (double x, int *err)
+{
+    int ret = 0;
+    
+    if (fabs(x) > INT_MAX) {
+	*err = E_INVARG;
+    } else {
+	double nx = nearbyint(x);
+	
+	if (fabs(x - nx) > 1.0e-8) {
+	    *err = E_INVARG;
+	} else {	
+	    ret = (int) nx;
+	}
+    }
+
+    return ret;
+}
+
 static int real_add_scalar_arg (fn_param *param, double x)
 {
+    int err = 0;
+    
     if (!na(x)) {
 	if (param->type == GRETL_TYPE_BOOL) {
 	    if (x != 0.0) {
@@ -5759,11 +5780,24 @@ static int real_add_scalar_arg (fn_param *param, double x)
 	    }
 	} else if (param->type == GRETL_TYPE_INT ||
 		   param->type == GRETL_TYPE_OBS) {
-	    x = floor(x);
+	    x = argval_get_int(x, &err);
+	}
+    } else if (param->type == GRETL_TYPE_BOOL ||
+	       param->type == GRETL_TYPE_INT ||
+	       param->type == GRETL_TYPE_OBS) {
+	err = E_INVARG;
+    }
+
+    if (!err) {
+	if (x < param->min || x > param->max) {
+	    gretl_errmsg_set(_("Argument value is out of bounds"));
+	    err = E_DATA;
+	} else {
+	    err = copy_as_arg(param->name, GRETL_TYPE_DOUBLE, &x);
 	}
     }
 
-    return copy_as_arg(param->name, GRETL_TYPE_DOUBLE, &x);
+    return err;
 }
 
 /* Scalar function arguments only: if the arg is not supplied, use the
