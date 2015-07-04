@@ -5789,7 +5789,8 @@ static int real_add_scalar_arg (fn_param *param, double x)
     }
 
     if (!err) {
-	if (x < param->min || x > param->max) {
+	if ((!na(param->min) && x < param->min) ||
+	    (!na(param->max) && x > param->max)) {
 	    gretl_errmsg_set(_("Argument value is out of bounds"));
 	    err = E_DATA;
 	} else {
