@@ -11350,10 +11350,10 @@
 	The purpose of <opt>panel-groups</opt> is to create a
 	string-valued series holding names for the groups
 	(individuals, cross-sectional units) in the panel. With this
-	option you must supply a name for the series and a string
-	variable holding a list of group names (in that order). The
-	names should be separated by spaces; if a name includes spaces
-	it should be wrapped in backslash-escaped double-quotes. For
+	option you must supply a name for the series followed by a
+	string variable holding a list of group names. The names
+	should be separated by spaces; if a name includes spaces it
+	should be wrapped in backslash-escaped double-quotes. For
 	example, the following will create a series named
 	<lit>country</lit> in which the names in <lit>cstrs</lit> are
 	each repeated <math>T</math> times, <math>T</math> being the

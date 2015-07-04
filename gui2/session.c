@@ -1040,7 +1040,7 @@ static int show_model_in_window (void *ptr, GretlObjType type)
     return 0;
 }
 
-/* Callback (indirect) from libgretl for a model created via 
+/* Callback (indirectly) from libgretl for a model created via 
    script command. When this function is called, the model
    in question has already been stacked; it is just a matter
    of syncing the GUI session with the model stack state.
@@ -1050,10 +1050,10 @@ int add_model_to_session_callback (void *ptr, GretlObjType type)
 {
     SESSION_MODEL *targ = NULL;
     char *name = gretl_object_get_name(ptr, type);
-    int ret = 0;
+    int err = 0;
 
     if (name == NULL || *name == '\0') {
-	/* we got the --window callback */
+	/* we just got the --window callback */
 	return show_model_in_window(ptr, type);
     }
 
@@ -1072,10 +1072,13 @@ int add_model_to_session_callback (void *ptr, GretlObjType type)
 	targ->type = type;
 	mark_session_changed();
     } else {
-	ret = add_model_to_session(ptr, name, type);
+	err = add_model_to_session(ptr, name, type);
+	if (!err) {
+	    mark_session_changed();
+	}
     }
 
-    return ret;
+    return err;
 }
 
 static int model_type_from_vwin (windata_t *vwin)
