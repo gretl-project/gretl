@@ -2284,6 +2284,9 @@ static int real_delete_model_from_session (SESSION_MODEL *model)
 	}
     }
 
+    /* FIXME should delete the model's file in the session
+       directory? */
+
     session.nmodels = nm;
     mark_session_changed();
 

@@ -587,6 +587,55 @@ static char *get_xmlname (char *objname, int *err)
     return ret;
 }
 
+static int session_graph_wanted (const char *fname)
+{
+    int i;
+
+    for (i=0; i<session.ngraphs; i++) {
+	if (!strcmp(session.graphs[i]->fname, fname)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+/* on re-saving a session, avoid keeping model files for
+   models that have been dropped from the session, and
+   similarly for graph files
+*/
+
+static void trash_old_session_files (const char *path)
+{
+    DIR *sdir = gretl_opendir(path);     
+
+    if (sdir != NULL) {
+	struct dirent *dirent;
+	char tmp[128];
+	int fnum;
+	
+	while ((dirent = readdir(sdir)) != NULL) {
+	    if (!strncmp(dirent->d_name, "model.", 6)) {
+		fnum = atoi(dirent->d_name + 6);
+		sprintf(tmp, "model.%d", fnum);
+		if (!strcmp(dirent->d_name, tmp)) {
+		    sprintf(tmp, "%s%cmodel.%d", path, SLASH, fnum);
+		    gretl_remove(tmp);
+		}
+	    } else if (!strncmp(dirent->d_name, "graph.", 6)) {
+		fnum = atoi(dirent->d_name + 6);
+		sprintf(tmp, "graph.%d", fnum);
+		if (!strcmp(dirent->d_name, tmp) &&
+		    !session_graph_wanted(tmp)) {
+		    sprintf(tmp, "%s%cgraph.%d", path, SLASH, fnum);
+		    gretl_remove(tmp);
+		}		    
+	    }
+	}
+	closedir(sdir);
+    }
+}
+
 static int write_session_xml (const char *datname)
 {
     MODEL *pmod;
@@ -637,6 +686,8 @@ static int write_session_xml (const char *datname)
 	    nmodels++;
 	}
     }
+
+    trash_old_session_files(session.dirname);
 
     fprintf(fp, " <models count=\"%d\">\n", nmodels);
 
