@@ -973,17 +973,10 @@ static int check_dist_count (int d, int f, int *np, int *argc)
 
     *np = *argc = 0;
 
-    if (d == D_NC_CHISQ) {
-	/* non-central $\chi^2$: only CDF and PDF supported so far */
-	if (f == F_PDF || f == F_CDF) {
-	    *np = 2;
-	} else {
-	    err = E_INVARG;
-	}
-    }	else if (d == D_NC_T || d == D_NC_F) {
-	/* non-central t and F: only CDF, PDF and INVCDF supported */
+    if (d == D_NC_T || d == D_NC_F || d == D_NC_CHISQ) {
+	/* non-central t, chisq and F: only CDF, PDF and INVCDF supported */
 	if (f == F_PDF || f == F_CDF || f == F_INVCDF) {
-	    *np = (d == D_NC_T) ? 2 : 3;
+	    *np = (d == D_NC_F) ? 3 : 2;
 	} else {
 	    err = E_INVARG;
 	}

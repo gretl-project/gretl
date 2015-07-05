@@ -1882,6 +1882,79 @@ double nc_chisq_pdf (double p, double c, double x)
 }
 
 /**
+ * nc_chisq_cdf_inverse:
+ * @p: degrees of freedom
+ * @c: noncentrality parameter.
+ * @q: probability.
+ *
+ * Calculates the @q-th quantile of the noncentral chi^2
+ * distribution with @n1, @n2 dof and noncentrality parameter equal to
+ * @c via a rough and not particularly clever root-finding
+ * algorithm. Maybe this can be more efficient by using logs. Some
+ * experimentation needed.
+ *
+ * Returns: the calculated quantile, or #NADBL on failure.
+ */
+
+static double nc_chisq_cdf_inverse (double p, double c, double q)
+{
+    double x, d0, d1;
+    int iter, subiter, retry;
+    double F, f, dir;
+    
+    if (p < 0 || c < 0 || q <= 0 || q >= 1) {
+	return NADBL;
+    } 
+
+    if (fabs(c) < 1.0e-10) {
+	/* don't bother for infinitesimal c */
+	return chisq_cdf_inverse(p, q);
+    }
+
+
+    /* start from the mean (safe bet) */
+    x = p + c;
+    d0 = 1.0e7;
+    iter = 0;
+
+    while (fabs(d0) > 1.0e-10 && iter < 1000) {
+	F = nc_chisq_cdf(p, c, x);
+	f = nc_chisq_pdf(p, c, x);
+	d0 = F - q;
+        dir = d0/f;
+	printf(" (%g)\n", dir);
+        d1 = 1.0e7;
+	retry = 1;
+	subiter = 0;
+
+        while (retry && subiter < 100) {
+	    if((x-dir) > 0) {
+		d1 = F - nc_chisq_cdf(p, c, x - dir);
+	    }
+            dir /= 2.0;
+	    retry = (x-dir) < 0 || fabs(d1) > fabs(d0);
+	    subiter++;
+	}
+
+	if (subiter >= 100) {
+	    x = NADBL;
+	    break;
+	} else {
+	    x -= dir*2;
+	    d0 = d1;
+	    iter++;
+	}
+    }
+    
+    if (iter >= 1000) {
+	x = NADBL;
+    }
+    
+    return x;
+}
+
+
+/**
  * nc_snedecor_cdf:
  * @dfn: degrees of freedom (num).
  * @dfd: degrees of freedom (den).
@@ -1899,6 +1972,7 @@ double nc_chisq_pdf (double p, double c, double x)
  *
  * Returns: the calculated probability, or #NADBL on failure.
  */
+
 
 double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
 {
@@ -2167,11 +2241,10 @@ double ncf_pdf (double dfn, double dfd, double c, double x)
  * @c: noncentrality parameter.
  * @q: probability.
  *
- * Calculates the @q-th quantile of the noncentral Student F
- * distribution with @n1, @n2 dof and noncentrality parameter equal to
- * @c via a rough and not particularly clever root-finding
- * algorithm. Maybe this can be more efficient by using logs. Some
- * experimentation needed.
+ * Calculates the @q-th quantile of the noncentral F distribution with
+ * @n1, @n2 dof and noncentrality parameter equal to @c via a rough
+ * and not particularly clever root-finding algorithm. Maybe this can
+ * be more efficient by using logs. Some experimentation needed.
  *
  * Returns: the calculated quantile, or #NADBL on failure.
  */
@@ -2182,7 +2255,7 @@ static double ncf_cdf_inverse (double n1, double n2, double c, double q)
     int iter, subiter;
     double F, f, dir;
     
-    if (n2 < 1 || n1 < 1 || q <= 0 || q >= 1) {
+    if (n2 < 1 || n1 < 1 || c < 0 || q <= 0 || q >= 1) {
 	return NADBL;
     } 
 
@@ -2438,9 +2511,14 @@ static double nct_cdf_inverse (double p, double c, double q)
     int iter, subiter;
     double F, f, dir;
     
-    if (p < 1 || q <= 0 || q >= 1) {
+    if (p < 1 || c < 0 || q <= 0 || q >= 1) {
 	return NADBL;
     } 
+
+    if (fabs(c) < 1.0e-10) {
+	/* don't bother for infinitesimal c */
+	return student_cdf_inverse(p, q);
+    }
 
     x = c + student_cdf_inverse(p, q) / sqrt(p - 0.5);
     d0 = 1.0e7;
@@ -2673,6 +2751,8 @@ double gretl_get_cdf_inverse (int dist, const double *parm,
 	y = GED_cdf_inverse(parm[0], a);
     } else if (dist == D_NC_F) {
 	y = ncf_cdf_inverse(parm[0], parm[1], parm[2], a);
+    } else if (dist == D_NC_CHISQ) {
+	y = nc_chisq_cdf_inverse(parm[0], parm[1], a); 
     } else if (dist == D_NC_T) {
 	y = nct_cdf_inverse(parm[0], parm[1], a); 
     } 
