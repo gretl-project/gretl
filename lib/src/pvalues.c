@@ -1922,7 +1922,6 @@ static double nc_chisq_cdf_inverse (double p, double c, double q)
 	f = nc_chisq_pdf(p, c, x);
 	d0 = F - q;
         dir = d0/f;
-	printf(" (%g)\n", dir);
         d1 = 1.0e7;
 	retry = 1;
 	subiter = 0;
