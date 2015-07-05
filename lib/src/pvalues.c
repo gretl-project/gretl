@@ -1911,7 +1911,6 @@ static double nc_chisq_cdf_inverse (double p, double c, double q)
 	return chisq_cdf_inverse(p, q);
     }
 
-
     /* start from the mean (safe bet) */
     x = p + c;
     d0 = 1.0e7;
@@ -1951,7 +1950,6 @@ static double nc_chisq_cdf_inverse (double p, double c, double q)
     
     return x;
 }
-
 
 /**
  * nc_snedecor_cdf:
