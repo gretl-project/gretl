@@ -348,17 +348,23 @@ special function that can be used in the \app{R} environment. An
 \texttt{dotdir} directory, from where it can be easily retrieved from
 within gretl.
 
-The name of this function is \texttt{gretl.export()}, and it accepts
-one argument, the object to be exported. At present, the objects that
-can be exported with this method are matrices, data frames and
-time-series objects. The function creates a text file, with the same
-name as the exported object, in gretl's temporary
-directory. Data frames and time-series objects are stored as CSV
-files, and can be retrieved by using gretl's \texttt{append}
-command.  Matrices are stored in a special text format that is
-understood by gretl (see section~\ref{sec:matrix-csv}); the file
-suffix is in this case \texttt{.mat}, and to read the matrix in
+The name of this function is \texttt{gretl.export()}; it takes one
+required argument, the object to be exported. At present, the objects
+that can be exported with this method are matrices, data frames and
+time-series objects. The function creates a text file, by default with
+the same name as the exported object (plus an appropriate suffix),
+in gretl's temporary directory. Data frames and time-series objects
+are stored as CSV files, and can be retrieved by using gretl's
+\texttt{append} command.  Matrices are stored in a special text format
+that is understood by gretl (see section~\ref{sec:matrix-csv}); the
+file suffix is in this case \texttt{.mat}, and to read the matrix in
 gretl you must use the \texttt{mread()} function.
+
+This function also has an optional second argument, namely a string
+which specifies a basename for the export file, in case you want to
+use a name other than that attached to the object within \app{R}. As
+in the default case an appropriate suffix, \texttt{.csv} or
+\texttt{.mat}, will be added to the basename.
 
 As an example, we take the airline data and use them to estimate a
 structural time series model \`a la \cite{harvey89}. The model we will 
