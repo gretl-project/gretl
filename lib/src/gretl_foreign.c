@@ -1364,9 +1364,11 @@ static void write_R_io_funcs (FILE *fp)
 {
     fprintf(fp, "gretl.dotdir <- \"%s\"\n", gretl_dot_dir);
 
-    fputs("gretl.export <- function(x) {\n", fp);
+    fputs("gretl.export <- function(x, sx) {\n", fp);
     fprintf(fp, "  prefix <- \"%s\"\n", gretl_dot_dir);
-    fputs("  sx <- as.character(substitute(x))\n", fp);
+    fputs("  if (missing(sx)) {\n", fp);
+    fputs("    sx <- as.character(substitute(x))\n", fp);
+    fputs("  }\n", fp);
     fputs("  if (is.ts(x)) {\n", fp);
     fputs("    fname <- paste(prefix, sx, \".csv\", sep=\"\")\n", fp);
     fputs("    dfx <- data.frame(x)\n", fp);

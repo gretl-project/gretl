@@ -1860,7 +1860,7 @@ static int nc_chisq_pdf_array (double p, double c, double *x, int n)
     k = p/2.0 - 1;
 
     for (i=0; i<n; i++) {
-	if(xna(x[i]) || x[i] < 0) {
+	if (xna(x[i]) || x[i] < 0) {
 	    x[i] = NADBL;
 	} else {
 	    a = exp(-0.5*(x[i]+c) + k/2.0 * log(x[i]/c)) / 2.0;
@@ -1927,7 +1927,7 @@ static double nc_chisq_cdf_inverse (double p, double c, double q)
 	subiter = 0;
 
         while (retry && subiter < 100) {
-	    if((x-dir) > 0) {
+	    if ((x-dir) > 0) {
 		d1 = F - nc_chisq_cdf(p, c, x - dir);
 	    }
             dir /= 2.0;
