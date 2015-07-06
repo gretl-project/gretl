@@ -26,6 +26,26 @@
 # include "gretlwin32.h"
 #endif
 
+#if GTK_MAJOR_VERSION == 3
+# if GTK_MINOR_VERSION >= 16
+#  define GTK_DETACH_NEW
+# else
+#  define GTK_DETACH_BROKEN
+# endif
+#endif
+
+/* Note 2015-07-06: GTK 3 (3.16.4, and probably earlier minor
+   versions too), crashes on dragging a script or model tab out
+   of a tabbed viewer, unless the special function 
+   gtk_notebook_detach_tab(), which is new in 3.16, is used.
+   So we'll disable "drag to root window" 
+
+I think this
+   is a GTK bug; there's no problem with GTK 2. So until further
+   notice, detaching tabs by dragging must be disabled in 
+   GTK 3 builds.
+*/
+
 #define TDEBUG 0
 
 struct tabwin_t_ {
@@ -47,6 +67,8 @@ GtkTargetEntry tabwin_drag_targets[] = {
 
 static tabwin_t *tabedit;
 static tabwin_t *tabmod;
+
+static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin);
 
 static void tabwin_destroy (GtkWidget *w, tabwin_t *tabwin)
 {
@@ -206,7 +228,9 @@ static void page_added_callback (GtkNotebook *notebook,
     if (np > 1) {
 	for (i=0; i<np; i++) {
 	    tab = gtk_notebook_get_nth_page(notebook, i);
+#ifndef GTK_DETACH_BROKEN	    
 	    gtk_notebook_set_tab_detachable(notebook, tab, TRUE);
+#endif	    
 	    viewer_tab_show_closer(notebook, tab, TRUE);
 	}
     } else {
@@ -320,6 +344,8 @@ static gboolean switch_page_callback (GtkNotebook *tabs,
 
 /* callback for the "create-window" signal */
 
+#ifndef GTK_DETACH_BROKEN
+
 static GtkNotebook *detach_tab_callback (GtkNotebook *book,
 					 GtkWidget *page,
 					 gint x, gint y,
@@ -331,8 +357,13 @@ static GtkNotebook *detach_tab_callback (GtkNotebook *book,
 	undock_tabbed_viewer(NULL, vwin);
     }
 
+    /* return NULL since we're not adding the detached
+       tab to another GtkNotebook */
+
     return NULL;
 }
+
+#endif
 
 /* avoid excessive padding in a tab's close button */
 
@@ -561,8 +592,10 @@ static tabwin_t *make_tabbed_viewer (int role)
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(tabwin->tabs), TRUE);
     g_signal_connect(G_OBJECT(tabwin->tabs), "switch-page",
 		     G_CALLBACK(switch_page_callback), tabwin);
+#ifndef GTK_DETACH_BROKEN    
     g_signal_connect(G_OBJECT(tabwin->tabs), "create-window",
 		     G_CALLBACK(detach_tab_callback), tabwin);
+#endif    
     g_signal_connect(G_OBJECT(tabwin->tabs), "page-added",
 		     G_CALLBACK(page_added_callback), tabwin);
     g_signal_connect(G_OBJECT(tabwin->tabs), "page-removed",
@@ -676,6 +709,8 @@ void tabwin_register_toolbar (windata_t *vwin)
 #if TDEBUG
     fprintf(stderr, "*** tabwin_register_toolbar: vwin=%p has toolbar=%p\n",
 	    (void *) vwin, (void *) vwin->mbar);
+    fprintf(stderr, "    new handler_id for mbar destruction callback: %lu\n",
+	    handler_id);
 #endif
 
     if (tabwin->mbar != NULL) {
@@ -853,12 +888,11 @@ void script_editor_show_new_open (windata_t *vwin, gboolean show)
    context: we need to give the content its own window
 */
 
-void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
+static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 {
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
     GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
-    gint pg = gtk_notebook_page_num(notebook, vwin->main);
-    GtkWidget *hbox = vwin->main;
+    GtkWidget *page = vwin->main;
     gulong handler_id;
     gchar *title;
 
@@ -868,21 +902,21 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-#if TDEBUG
-    fprintf(stderr, "undock_tabbed_viewer: starting on vwin at %p\n",
-	    (void *) vwin);
-#endif
-
     /* disconnect stuff */
     vwin->main = vwin->topmain = NULL;
 
     /* remove signals and data from hbox (ex vwin->main) */
-    g_object_steal_data(G_OBJECT(hbox), "vwin");
-    g_signal_handlers_disconnect_by_func(hbox,
+    g_object_steal_data(G_OBJECT(page), "vwin");
+    g_signal_handlers_disconnect_by_func(page,
 					 free_windata,
 					 vwin);
     handler_id = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(vwin->mbar),
 						    "destroy-id"));
+#if TDEBUG
+    fprintf(stderr, "*** undock_tabbed_viewer: w = %p, vwin = %p, page = %p\n",
+	    (void *) w, (void *) vwin, page);
+    fprintf(stderr, "    handler_id from mbar: %lu\n", handler_id);
+#endif    
     if (handler_id > 0) {
 	g_signal_handler_disconnect(vwin->mbar, handler_id);
 	g_object_steal_data(G_OBJECT(vwin->mbar), "destroy-id");
@@ -890,8 +924,12 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 
     /* extract vwin->vbox from its tabbed holder */
     g_object_ref(vwin->vbox);
-    gtk_container_remove(GTK_CONTAINER(hbox), vwin->vbox);
-    gtk_notebook_remove_page(notebook, pg);
+    gtk_container_remove(GTK_CONTAINER(page), vwin->vbox);
+#ifdef GTK_DETACH_NEW
+    gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), page);
+#else
+    gtk_container_remove(GTK_CONTAINER(notebook), page);
+#endif    
 
     /* tweak vbox params */
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
@@ -910,8 +948,10 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     size_new_toplevel(vwin);
 
 #if TDEBUG
-    fprintf(stderr, "*** undock_tabbed_viewer: new main=%p, mbar=%p\n", 
+    fprintf(stderr, "    undock: new main=%p, mbar=%p\n", 
 	    (void *) vwin->main, (void *) vwin->mbar);
+    fprintf(stderr, "    new handler_id for main destruction: %lu\n",
+	    handler_id);
 #endif
 
     /* add box for toolbar, pack it, drop extra ref., then
@@ -924,16 +964,16 @@ void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     vwin->flags &= ~VWIN_TABBED;
 
     if (vwin->role == EDIT_SCRIPT) {
+	/* invalidate some menubar items */
 	script_editor_show_new_open(vwin, FALSE);
+	/* connect delete signal for single-script window */
+	g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
+			 G_CALLBACK(query_save_text), vwin);
     }
 
     /* put vbox into new top-level window and drop extra ref. */
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
     g_object_unref(vwin->vbox);
-
-    /* connect delete signal for single-script window */
-    g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
-		     G_CALLBACK(query_save_text), vwin);
 
     /* add to window list and attach window-key signals */
     window_list_add(vwin->main, vwin->role);
@@ -1167,13 +1207,16 @@ static void tabwin_unregister_dialog (GtkWidget *w, tabwin_t *tabwin)
 #endif
 
 	if (tab != NULL) {
-	    GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
 	    windata_t *vwin = g_object_get_data(G_OBJECT(tab), "vwin");
 
 	    gtk_widget_set_sensitive(GTK_WIDGET(vwin->mbar), TRUE);
+#ifndef GTK_DETACH_BROKEN
+	    GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
+	    
 	    if (gtk_notebook_get_n_pages(notebook) > 1) {
 		gtk_notebook_set_tab_detachable(notebook, tab, TRUE);
 	    }
+#endif	    
 	    tabwin->dlg_owner = NULL;
 	}
 	tabwin->dialog = NULL;

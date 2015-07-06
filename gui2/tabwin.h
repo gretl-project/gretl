@@ -35,8 +35,6 @@ void show_tabbed_viewer (windata_t *vwin);
 
 void tabwin_navigate (windata_t *vwin, guint key);
 
-void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin);
-
 gboolean window_is_undockable (windata_t *vwin);
 
 void add_undock_popup_item (GtkWidget *menu, windata_t *vwin);
