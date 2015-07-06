@@ -352,9 +352,9 @@ int attach_subsample_to_model (MODEL *pmod, const DATASET *dset)
 
 #define MDEBUG 0
 
-/* This is called from objstack.c for any saved models: we
-   want to check that a proposed permanent shrinkage of the
-   dataset will not invalidate any saved models.
+/* This is called from objstack.c for each saved model, to
+   determine whether a proposed permanent shrinkage of the
+   dataset will invalidate the model.
 */
 
 int subsample_check_model (MODEL *pmod, char *mask)
@@ -369,9 +369,9 @@ int subsample_check_model (MODEL *pmod, char *mask)
 /* Called from objstack.c for each saved model, when the
    user calls for the imposition of a permanent subsample
    restriction on the dataset. We've already checked that
-   the "new" subsample matches that on which models were
-   estimated, so all we have to do now is remove the
-   subsample mask from the models.
+   the "new" subsample matches that on which model was
+   estimated, so all we have to do now is sync by removing
+   the model's subsample mask.
 */
 
 int remove_model_subsample_info (MODEL *pmod)
@@ -2151,7 +2151,7 @@ int restrict_sample (const char *param, const int *list,
 
 /* perma_sample: 
  * @dset: dataset struct.
- * @opt: option flags.
+ * @opt: option flags: must be OPT_T | OPT_U.
  * @prn: printing apparatus.
  * @n_dropped: location to receive count of dropped models,
  * or NULL.
@@ -2164,12 +2164,16 @@ int restrict_sample (const char *param, const int *list,
 int perma_sample (DATASET *dset, gretlopt opt, PRN *prn,
 		  int *n_dropped)
 {
+    gretlopt testopt = OPT_T | OPT_U;
+    
     if (dset->submask == NULL) {
 	pputs(prn, "smpl: nothing to be done\n");
 	return 0;
     } else if (dset->submask == RESAMPLED) {
 	pputs(prn, "smpl: dataset is resampled\n");
 	return E_DATA;
+    } else if (opt != testopt) {
+	return E_BADOPT;
     }
 
     if (n_dropped != NULL) {

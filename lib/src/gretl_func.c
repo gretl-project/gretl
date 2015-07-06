@@ -5772,8 +5772,11 @@ static int argval_get_int (double x, int *err)
 static int real_add_scalar_arg (fn_param *param, double x)
 {
     int err = 0;
-    
-    if (!na(x)) {
+
+    if (na(x)) {
+	/* always allow NA for scalar args (?) */
+	err = copy_as_arg(param->name, GRETL_TYPE_DOUBLE, &x);
+    } else {
 	if (param->type == GRETL_TYPE_BOOL) {
 	    if (x != 0.0) {
 		x = 1.0;
@@ -5782,19 +5785,15 @@ static int real_add_scalar_arg (fn_param *param, double x)
 		   param->type == GRETL_TYPE_OBS) {
 	    x = argval_get_int(x, &err);
 	}
-    } else if (param->type == GRETL_TYPE_BOOL ||
-	       param->type == GRETL_TYPE_INT ||
-	       param->type == GRETL_TYPE_OBS) {
-	err = E_INVARG;
-    }
 
-    if (!err) {
-	if ((!na(param->min) && x < param->min) ||
-	    (!na(param->max) && x > param->max)) {
-	    gretl_errmsg_set(_("Argument value is out of bounds"));
-	    err = E_DATA;
-	} else {
-	    err = copy_as_arg(param->name, GRETL_TYPE_DOUBLE, &x);
+	if (!err) {
+	    if ((!na(param->min) && x < param->min) ||
+		(!na(param->max) && x > param->max)) {
+		gretl_errmsg_set(_("Argument value is out of bounds"));
+		err = E_DATA;
+	    } else {
+		err = copy_as_arg(param->name, GRETL_TYPE_DOUBLE, &x);
+	    }
 	}
     }
 
