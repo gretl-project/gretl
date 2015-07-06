@@ -83,7 +83,8 @@ void gui_graph_handler (int err);
 
 /* sample-related functions */
 
-int bool_subsample (const char *param, gretlopt opt);
+int bool_subsample (const char *param, gretlopt opt,
+		    GtkWidget *dialog);
 
 void drop_missing_data (void);
 

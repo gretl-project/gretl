@@ -1692,7 +1692,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	    return TRUE;
 	}
 
-	err = bool_subsample(s, rset->opt);
+	err = bool_subsample(s, rset->opt, rset->dlg);
 	if (!err) {
 	    lib_command_sprintf("smpl %s --restrict%s", s, extra);
 	    record_command_verbatim();
@@ -1704,7 +1704,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	gchar *dumv;
 
 	dumv = combo_box_get_active_text(GTK_COMBO_BOX(rset->combo));
-	err = bool_subsample(dumv, rset->opt);
+	err = bool_subsample(dumv, rset->opt, rset->dlg);
 	if (!err) {
 	    lib_command_sprintf("smpl %s --dummy%s", dumv, extra);
 	    record_command_verbatim();
@@ -1716,7 +1716,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	int subn = obs_button_get_value(rset->spin1);
 	gchar *nstr = g_strdup_printf("%d", subn);
 
-	err = bool_subsample(nstr, rset->opt);
+	err = bool_subsample(nstr, rset->opt, rset->dlg);
 	if (!err) {
 	    lib_command_sprintf("smpl %d --random%s", subn, extra);
 	    record_command_verbatim();

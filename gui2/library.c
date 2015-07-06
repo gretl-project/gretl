@@ -1530,7 +1530,8 @@ static int perma_sample_options (const char *param, int *list,
    OPT_T  restriction is permanent
 */
 
-int bool_subsample (const char *param, gretlopt opt)
+int bool_subsample (const char *param, gretlopt opt,
+		    GtkWidget *dialog)
 {
     const char *msg;
     PRN *prn;
@@ -1561,6 +1562,9 @@ int bool_subsample (const char *param, gretlopt opt)
     if (err) {
 	errmsg_plus(err, msg);
     } else {
+	if (dialog != NULL) {
+	    gtk_widget_hide(dialog);
+	}
 	if (msg != NULL && *msg != '\0') {
 	    infobox(msg);
 	} else if (n_dropped > 0) {
@@ -1678,7 +1682,7 @@ void drop_missing_data (void)
 	if (permanent) {
 	    opt |= OPT_T;
 	}
-	err = bool_subsample(NULL, opt);
+	err = bool_subsample(NULL, opt, NULL);
 	if (!err) {
 	    lib_command_sprintf("smpl%s", print_flags(opt, SMPL));
 	    record_command_verbatim();

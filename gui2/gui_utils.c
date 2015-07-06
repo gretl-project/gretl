@@ -992,7 +992,7 @@ static void maybe_offer_daily_options (void)
     }
 
     if (purge_opt) {
-	bool_subsample(NULL, purge_opt);
+	bool_subsample(NULL, purge_opt, NULL);
     }
 }
 
