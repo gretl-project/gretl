@@ -2742,8 +2742,6 @@ static int maybe_add_model_pkg (addon_info *addon,
     if (addon->filepath == NULL) {
 	fprintf(stderr, "%s: couldn't find it\n", addon->pkgname);
 	return 0;
-    } else {
-	fprintf(stderr, "found %s\n", addon->filepath);
     }
 
     pkg = get_function_package_by_filename(addon->filepath, &err);
@@ -2761,11 +2759,7 @@ static int maybe_add_model_pkg (addon_info *addon,
 	if (mreq > 0) {
 	    MODEL *pmod = vwin->data;
 
-	    if (pmod->ci != mreq) {
-		fprintf(stderr, "%s: model-requirement (%s) not met\n",  
-			addon->pkgname, gretl_command_word(mreq));
-		err = 1;
-	    }
+	    err = pmod->ci != mreq;
 	}
 	if (!err) {
 	    err = check_function_needs(dataset, dreq, minver);
