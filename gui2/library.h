@@ -112,6 +112,8 @@ void gui_sort_data (void);
 
 void gui_resample_data (void);
 
+void perma_sample_callback (void);
+
 int dataset_is_subsampled (void);
 
 void set_original_n (int n);

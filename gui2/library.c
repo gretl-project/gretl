@@ -1507,8 +1507,13 @@ static int perma_sample_options (const char *param, int *list,
 	
     if (resp == GRETL_YES) {
 	*n_dropped = 0;
-	err = restrict_sample(param, list, dataset, NULL, 
-			      opt | OPT_F, prn, n_dropped);
+	if (opt & OPT_U) {
+	    /* freezing current restriction */
+	    err = perma_sample(dset, opt, prn, NULL);
+	} else {
+	    err = restrict_sample(param, list, dataset, NULL, 
+				  opt | OPT_F, prn, n_dropped);
+	}
 	if (!err) {
 	    mark_session_changed();
 	}
@@ -1528,6 +1533,7 @@ static int perma_sample_options (const char *param, int *list,
    OPT_C  replace current restriction
 
    OPT_T  restriction is permanent
+   OPT_U  use current restriction
 */
 
 int bool_subsample (const char *param, gretlopt opt,
@@ -1542,8 +1548,13 @@ int bool_subsample (const char *param, gretlopt opt,
 	return 1;
     }
 
-    err = restrict_sample(param, NULL, dataset, NULL, 
-			  opt, prn, &n_dropped);
+    if ((opt & OPT_T) && (opt & OPT_U)) {
+	/* freezing current restriction */
+	err = perma_sample(dataset, opt, prn, &n_dropped);
+    } else {
+	err = restrict_sample(param, NULL, dataset, NULL, 
+			      opt, prn, &n_dropped);
+    }
 
     if (err == E_CANCEL && (opt & OPT_T)) {
 	int cancel = 0;
@@ -1580,6 +1591,11 @@ int bool_subsample (const char *param, gretlopt opt,
     gretl_print_destroy(prn);
 
     return err;
+}
+
+void perma_sample_callback (void)
+{
+    bool_subsample(NULL, OPT_T | OPT_U, NULL);
 }
 
 static int any_missing (void)
@@ -9502,9 +9518,13 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
  	} else {
 	    int n_dropped = 0;
 	    int cancel = 0;
-	    
- 	    err = restrict_sample(cmd->param, cmd->list, dset,
- 				  NULL, cmd->opt, prn, &n_dropped);
+
+	    if ((cmd->opt & OPT_T) && (cmd->opt & OPT_U)) {
+		err = perma_sample(dset, cmd->opt, prn, &n_dropped);
+	    } else {
+		err = restrict_sample(cmd->param, cmd->list, dset,
+				      NULL, cmd->opt, prn, &n_dropped);
+	    }
 	    if (err == E_CANCEL && (cmd->opt & OPT_T)) {
 		err = perma_sample_options(cmd->param, cmd->list,
 					   dset, cmd->opt, prn,

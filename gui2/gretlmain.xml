@@ -163,6 +163,7 @@
       <menuitem action="SMPLRAND"/>
       <menuitem action="SampleWReplace"/>
       <menuitem action="DropMissing"/>
+      <menuitem action="PermaSample"/>
       <separator/>
       <menuitem action="ShowSample"/>
     </menu>

@@ -749,6 +749,8 @@ void set_sample_label (DATASET *dset)
     ts_or_panel_menu_state(dataset_is_time_series(dset) ||
 			   dataset_is_panel(dset));
     flip(mdata->ui, "/menubar/Data/DataTranspose", !dataset_is_panel(dset));
+    flip(mdata->ui, "/menubar/Sample/PermaSample",
+	 dataset->submask != NULL && dataset->submask != RESAMPLED);
 
     tsubset = dset->t1 > 0 || dset->t2 < dset->n - 1;
 
@@ -837,9 +839,10 @@ void set_sample_label (DATASET *dset)
 	}
     }
 
-    if (complex_subsampled() || dset->t1 > 0 || 
-	dset->t2 < dset->n - 1) {
+    if (complex_subsampled() || dset->t1 > 0 || dset->t2 < dset->n - 1) {
 	restore_sample_state(TRUE);
+    } else {
+	restore_sample_state(FALSE);
     }
 
     console_record_sample(dataset);

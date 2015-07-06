@@ -1647,6 +1647,8 @@ GtkActionEntry main_entries[] = {
       G_CALLBACK(gui_resample_data) },
     { "DropMissing", NULL, N_("Drop observations with _missing values..."), NULL, NULL, 
       G_CALLBACK(drop_missing_data) },
+    { "PermaSample", NULL, N_("Make current subsample permanent..."), NULL, NULL, 
+      G_CALLBACK(perma_sample_callback) },
     { "CountMissing", NULL, N_("_Count missing values"), NULL, NULL, G_CALLBACK(count_missing) },
 
     /* Variable */
