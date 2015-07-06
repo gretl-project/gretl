@@ -8938,7 +8938,7 @@ GList *get_or_send_gui_models (GList *list)
 	    vwin = get_viewer_for_data(ptr);
 	    if (vwin != NULL) {
 		fprintf(stderr, " destroy viewer\n");
-		gtk_widget_destroy(vwin->main);
+		gretl_viewer_destroy(vwin);
 	    }
 	    fprintf(stderr, " removing from session\n");
 	    session_model_callback(ptr, OBJ_ACTION_FREE);

@@ -898,11 +898,19 @@ windata_t *get_viewer_for_data (const gpointer data)
     if (n_listed_windows > 1) {
 	GList *list = gtk_action_group_list_actions(window_group);
 	windata_t *vwin;
+	GtkWidget *w;
 
 	while (list != NULL && ret == NULL) {
-	    vwin = vwin_from_action((GtkAction *) list->data);
-	    if (vwin != NULL && vwin->data == data) {
-		ret = vwin;
+	    w = window_from_action((GtkAction *) list->data);
+	    if (w != NULL) {
+		vwin = g_object_get_data(G_OBJECT(w), "vwin");
+		if (vwin != NULL) {
+		    if (vwin->data == data) {
+			ret = vwin;
+		    }
+		} else if (g_object_get_data(G_OBJECT(w), "tabwin")) {
+		    ret = get_tab_for_data(data, w);
+		}
 	    }
 	    list = list->next;
 	}

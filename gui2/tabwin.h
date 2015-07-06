@@ -50,6 +50,9 @@ void tabwin_tab_destroy (windata_t *vwin);
 windata_t *tabwin_get_editor_for_file (const char *filename,
 				       GtkWidget *w);
 
+windata_t *get_tab_for_data (const gpointer data,
+			     GtkWidget *w);
+
 void tabwin_tab_present (windata_t *vwin);
 
 void tabwin_close_models_viewer (GtkWidget *w);

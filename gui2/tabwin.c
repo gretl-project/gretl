@@ -1146,7 +1146,7 @@ windata_t *tabwin_get_editor_for_file (const char *filename,
 {
     windata_t *ret = NULL;
 
-    if (w == tabedit->main) {
+    if (tabedit != NULL && w == tabedit->main) {
 	GtkNotebook *notebook = GTK_NOTEBOOK(tabedit->tabs);
 	int i, n = gtk_notebook_get_n_pages(notebook);
 	GtkWidget *tab;
@@ -1156,6 +1156,30 @@ windata_t *tabwin_get_editor_for_file (const char *filename,
 	    tab = gtk_notebook_get_nth_page(notebook, i);
 	    vwin = g_object_get_data(G_OBJECT(tab), "vwin");
 	    if (vwin != NULL && !strcmp(filename, vwin->fname)) {
+		ret = vwin;
+		break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+windata_t *get_tab_for_data (const gpointer data,
+			     GtkWidget *w)
+{
+    windata_t *ret = NULL;
+
+    if (tabmod != NULL && w == tabmod->main) {
+	GtkNotebook *notebook = GTK_NOTEBOOK(tabmod->tabs);
+	int i, n = gtk_notebook_get_n_pages(notebook);
+	GtkWidget *tab;
+	windata_t *vwin;
+
+	for (i=0; i<n; i++) {
+	    tab = gtk_notebook_get_nth_page(notebook, i);
+	    vwin = g_object_get_data(G_OBJECT(tab), "vwin");
+	    if (vwin != NULL && vwin->data == data) {
 		ret = vwin;
 		break;
 	    }
