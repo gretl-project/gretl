@@ -691,7 +691,7 @@ void print_smpl (const DATASET *dset, int fulln, PRN *prn)
 
     if (fulln && !dataset_is_panel(dset)) {
 	pprintf(prn, _("Full data set: %d observations\n"), fulln);
-	if (sample_size(dset) < dset->n) {
+	if (sample_size(dset) < dset->n || dataset_is_time_series(dset)) {
 	    print_sample_obs(dset, prn);
 	} else {
 	    pprintf(prn, _("Current sample: %d observations\n"),

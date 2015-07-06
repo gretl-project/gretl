@@ -1905,6 +1905,31 @@ static int full_sample (const DATASET *dset)
     }
 }
 
+static int handle_ts_restrict (char *mask, DATASET *dset,
+			       gretlopt opt, int t1)
+{
+    char stobs[OBSLEN];
+    int pd = dset->pd;
+    double sd0;
+    int err;
+
+    ntodate(stobs, t1, dset);
+    sd0 = get_date_x(dset->pd, stobs);
+
+    err = restrict_sample_from_mask(mask, dset, opt);
+
+    if (!err) {
+	/* re-establish time-series characteristics */
+	dset->structure = TIME_SERIES;
+	dset->pd = pd;
+	dset->sd0 = sd0;
+	strcpy(dset->stobs, stobs);
+	ntodate(dset->endobs, dset->n - 1, dset);
+    }
+
+    return err;
+}
+
 /* restrict_sample: 
  * @param: restriction string (or %NULL).  
  * @dset: dataset struct.
@@ -2073,15 +2098,22 @@ int restrict_sample (const char *param, const int *list,
 	}
 
 	if (contiguous) {
-	    /* The specified subsample consists of contiguous
-	       observations, so we'll just adjust the range, avoiding
-	       the overhead of creating a parallel dataset.
-	    */
 #if SUBDEBUG
 	    fprintf(stderr, "restrict sample: got contiguous range\n");
 #endif
-	    dset->t1 = t1;
-	    dset->t2 = t2;
+	    if (dataset_is_time_series(dset)) {
+		/* apply the restriction, but then re-establish the
+		   time-series character of the dataset
+		   (2015-07-05: experimental!)
+		*/
+		err = handle_ts_restrict(mask, dset, opt, t1);
+	    } else {
+		/* just move the sample range pointers, avoiding
+		   the overhead of creating a parallel dataset
+		*/
+		dset->t1 = t1;
+		dset->t2 = t2;
+	    }
 	} else {
 #if SUBDEBUG
 	    fprintf(stderr, "restrict sample: using mask\n");
@@ -2115,6 +2147,61 @@ int restrict_sample (const char *param, const int *list,
 #endif    
 
     return err;
+}
+
+/* perma_sample: 
+ * @dset: dataset struct.
+ * @opt: option flags.
+ * @prn: printing apparatus.
+ * @n_dropped: location to receive count of dropped models,
+ * or NULL.
+ *
+ * Make the current sub-sampling of the dataset permanent.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int perma_sample (DATASET *dset, gretlopt opt, PRN *prn,
+		  int *n_dropped)
+{
+    if (dset->submask == NULL) {
+	pputs(prn, "smpl: nothing to be done\n");
+	return 0;
+    } else if (dset->submask == RESAMPLED) {
+	pputs(prn, "smpl: dataset is resampled\n");
+	return E_DATA;
+    }
+
+    if (n_dropped != NULL) {
+	int err;
+
+	err = check_models_for_subsample(dset->submask, n_dropped);
+	if (err) {
+	    return err;
+	}
+    } else {
+	check_models_for_subsample(dset->submask, NULL);
+    }
+
+    free(dset->submask);
+    dset->submask = NULL;
+    free(dset->restriction);
+    dset->restriction = NULL;
+
+    if (fullset->varname == dset->varname) {
+	fullset->varname = NULL;
+    }
+    if (fullset->varinfo == dset->varinfo) {
+	fullset->varinfo = NULL;
+    }
+    if (fullset->descrip == dset->descrip) {
+	fullset->descrip = NULL;
+    }
+    
+    destroy_dataset(fullset);
+    fullset = peerset = NULL;
+
+    return 0;
 }
 
 enum {

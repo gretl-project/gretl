@@ -2154,7 +2154,8 @@ static int maybe_raise_object_window (gpointer data)
 }
 
 static int display_session_model (SESSION_MODEL *sm)
-{ 
+{
+    DATASET *dset = dataset;
     PRN *prn;
 
     if (maybe_raise_object_window(sm->ptr)) {
@@ -2168,12 +2169,15 @@ static int display_session_model (SESSION_MODEL *sm)
     if (sm->type == GRETL_OBJ_EQN) {
 	MODEL *pmod = (MODEL *) sm->ptr;
 
-	printmodel(pmod, dataset, OPT_NONE, prn);
+	if (pmod->submask == NULL && complex_subsampled()) {
+	    dset = fetch_full_dataset();
+	}	
+	printmodel(pmod, dset, OPT_NONE, prn);
 	view_model(prn, pmod, sm->name);
     } else if (sm->type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) sm->ptr;
 
-	gretl_VAR_print(var, dataset, OPT_NONE, prn);
+	gretl_VAR_print(var, dset, OPT_NONE, prn);
 	view_buffer(prn, 78, 450, sm->name, var->ci, var);
     } else if (sm->type == GRETL_OBJ_SYS) {
 	equation_system *sys = (equation_system *) sm->ptr;

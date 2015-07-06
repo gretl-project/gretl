@@ -2639,6 +2639,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case SMPL:
 	if (cmd->opt == OPT_F) {
 	    err = restore_full_sample(dset, s);
+	} else if ((cmd->opt & OPT_T) && (cmd->opt & OPT_U)) {
+	    err = perma_sample(dset, cmd->opt, prn, NULL);
 	} else if (cmd->opt) {
 	    err = restrict_sample(cmd->param, cmd->list, dset, 
 				  s, cmd->opt, prn, NULL);

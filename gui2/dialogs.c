@@ -2401,7 +2401,9 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     }
 
     if (u == SMPLRAND) {
-	add_smpl_permanent_check(vbox, rset);
+	if (!complex_subsampled()) {
+	    add_smpl_permanent_check(vbox, rset);
+	}
     } else {
 	/* label that will show the number of observations */
 	rset->obslabel = gtk_label_new("");
@@ -2819,8 +2821,10 @@ void sample_restrict_dialog (GtkAction *action, gpointer p)
 			 G_CALLBACK(toggle_replace_restrictions), rset);
     }
 
-    /* add checkbox for permanence of restriction */
-    add_smpl_permanent_check(vbox, rset);
+    if (!complex_subsampled()) {
+	/* add checkbox for permanence of restriction */
+	add_smpl_permanent_check(vbox, rset);
+    }
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));
 

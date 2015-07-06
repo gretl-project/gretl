@@ -1634,7 +1634,7 @@ void drop_missing_data (void)
 {
     int permanent = 0;
     gretlopt opt = OPT_M;
-    int resp;
+    int resp = 0;
 
     if (!any_missing_user_values(dataset)) {
 	infobox(_("No missing data values"));
@@ -1648,15 +1648,20 @@ void drop_missing_data (void)
 	};
 	int deflt = 0;
 
-	resp = radio_dialog_with_check("gretl", _("Drop missing data"), 
-				       opts, 2, deflt, 0,
-				       &permanent,
-				       _("Make this permanent"),
-				       NULL);
+	if (complex_subsampled()) {
+	    resp = radio_dialog("gretl", _("Drop missing data"), 
+				opts, 2, deflt, 0, NULL);	    
+	} else {
+	    resp = radio_dialog_with_check("gretl", _("Drop missing data"), 
+					   opts, 2, deflt, 0,
+					   &permanent,
+					   _("Make this permanent"),
+					   NULL);
+	}
 	if (resp == 1) {
 	    opt = OPT_A;
 	}
-    } else {
+    } else if (!complex_subsampled()) {
 	const char *opts[] = {
 	    N_("Make this permanent"),
 	    NULL
