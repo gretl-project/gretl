@@ -8,6 +8,7 @@ version 1.10.90, in progress
 - TRAMO interface: allow saving of "linearized" series
 - Add new accessor $lang to get national language identifier
 - Add Romanian translation
+- Random effects probit: parallelize quadrature code
 - Fix bug: bwrite() not completing until gretl exits
 - Fix bug: matrix transpose (') not accepted before the colon
   of the ternary query operator
