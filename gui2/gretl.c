@@ -441,6 +441,30 @@ static void record_filearg (char *targ, const char *src)
     }
 }
 
+# if GTK_MAJOR_VERSION == 3
+
+/* cut out annoying runtime spew from GLib-GObject
+   warning about deprecated stuff
+*/
+
+static void logtrap (const gchar *domain,
+		     GLogLevelFlags level,
+		     const gchar *msg,
+		     gpointer p)
+{
+    if (strstr(msg, "deprecat") == NULL) {
+	g_log_default_handler(domain, level, msg, p);
+    }
+}
+
+static void quell_glib_spew (void)
+{
+    g_log_set_handler("GLib-GObject", G_LOG_LEVEL_WARNING,
+		      (GLogFunc) logtrap, NULL);
+}
+
+# endif
+
 #endif
 
 #ifdef MAC_INTEGRATION
@@ -584,7 +608,9 @@ int main (int argc, char **argv)
 #ifdef G_OS_WIN32
     /* let's call this before doing libgretl_init */
     gretl_win32_debug_init(optdebug);
-#endif
+#elif GTK_MAJOR_VERSION == 3
+    quell_glib_spew();
+#endif    
 
     libgretl_init();
     gretl_set_gui_mode();
