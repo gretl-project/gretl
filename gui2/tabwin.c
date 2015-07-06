@@ -931,9 +931,11 @@ static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     gtk_container_remove(GTK_CONTAINER(notebook), page);
 #endif    
 
+#if GTK_MAJOR_VERSION == 2    
     /* tweak vbox params */
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
+#endif
 
     /* build new shell for @vwin */
     vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
