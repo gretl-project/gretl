@@ -2101,10 +2101,10 @@ int restrict_sample (const char *param, const int *list,
 #if SUBDEBUG
 	    fprintf(stderr, "restrict sample: got contiguous range\n");
 #endif
-	    if (dataset_is_time_series(dset)) {
+	    if (0 && dataset_is_time_series(dset)) {
 		/* apply the restriction, but then re-establish the
 		   time-series character of the dataset
-		   (2015-07-05: experimental!)
+		   (2015-07-05: experimental!!)
 		*/
 		err = handle_ts_restrict(mask, dset, opt, t1);
 	    } else {
