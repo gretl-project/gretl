@@ -301,7 +301,7 @@ static NODE *base (parser *p, NODE *up)
     case UNUM_M:
     case UNDEF:
 	if (p->sym == OBS) {
-	    fprintf(stderr, "*** HERE 1: sym OBS\n");
+	    fprintf(stderr, "*** gensyntax: base: sym = OBS\n");
 	}
 	t = newref(p, p->sym);
 	lex(p);
