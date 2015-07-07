@@ -138,7 +138,6 @@ static int wf1_read_history (FILE *fp, unsigned pos,
 	fseek(fp, hpos, SEEK_SET);
 	if (fread(htxt, 1, len, fp) == len) {
 	    series_set_label(dset, i, htxt);
-	    fprintf(stderr, "%s\n", htxt);
 	}
 	free(htxt);
     }
