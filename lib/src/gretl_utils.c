@@ -1674,6 +1674,7 @@ static int gp_fatal (const char *s)
 	strstr(s, "character sets not available") ||
 	strstr(s, "Warning: ") ||
 	strstr(s, "Pango-WARNING") ||
+	strstr(s, "rid drawn") ||
 	strstr(s, "CGContextSetFont")) {
 	fprintf(stderr, "gnuplot stderr: '%s'\n", s);
 	return 0;
