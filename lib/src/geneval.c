@@ -12395,7 +12395,9 @@ static void get_lh_obsnum (parser *p)
     
     if (p->lh.obs < 0 || p->lh.obs >= p->dset->n) {
 	gretl_errmsg_sprintf("'[%s]': bad observation specifier", p->lh.substr);
-	p->err = E_PARSE;
+	fprintf(stderr, "obs index = %d and dataset n = %d\n",
+		p->lh.obs, p->dset->n);
+	p->err = E_DATA;
     } else {
 	gretl_error_clear();
 	p->targ = NUM;
