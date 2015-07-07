@@ -6775,8 +6775,12 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    retp = &mret;
 	} else if (rtype == GRETL_TYPE_LIST) {
 	    if (p->targ == EMPTY && p->tree == t) {
-		/* a bare function call, not assigned to anything */
-		goto bailout;
+		/* this function offers a list return, but the
+		   caller hasn't assigned it and it's not being
+		   used as an argument to a further function, so
+		   ignore the return value
+		*/
+		;
 	    } else {
 		retp = &iret;
 	    }
@@ -6796,7 +6800,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	p->err = gretl_function_exec(uf, rtype, p->dset, retp,
 				     pdescrip, p->prn);
 
-	if (!p->err) {
+	if (!p->err && retp != NULL) {
 	    if (rtype == GRETL_TYPE_DOUBLE) {
 		ret = aux_scalar_node(p);
 		if (ret != NULL) {
@@ -6864,8 +6868,6 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    free(descrip);
 	}
     }
-
- bailout:
 
     if (p->err) {
 	function_clear_args(uf);

@@ -427,7 +427,8 @@ int push_function_arg (ufunc *fun, const char *name, GretlType type,
     if (fun == NULL) {
 	err = E_DATA;
     } else if (fun->argc >= fun->n_params) {
-	fprintf(stderr, "push_function_arg: excess argument!\n");
+	fprintf(stderr, "function %s has %d parameters but argc = %d\n",
+		fun->name, fun->n_params, fun->argc);
 	err = E_DATA;
     } else if (fun->args == NULL) {
 	err = ufunc_add_args_array(fun);
