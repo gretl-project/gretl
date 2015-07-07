@@ -789,9 +789,11 @@ int *laggenr_from_to (int v, int minlag, int maxlag,
     int i, lv, nlags = -1;
     int p, reverse;
 
-    if (maxlag < 0) {
-	nlags = -maxlag + minlag + 1;
-    } else if (maxlag > 0) {
+    if (maxlag <= 0 && minlag <= 0) {
+	/* all leads or contemporaneous value, either order */
+	nlags = abs(abs(minlag) - abs(maxlag)) + 1;
+    } else {
+	/* "standard" case */
 	nlags = maxlag - minlag + 1;
     } 
 
