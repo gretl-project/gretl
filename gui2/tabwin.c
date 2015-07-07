@@ -29,21 +29,17 @@
 #if GTK_MAJOR_VERSION == 3
 # if GTK_MINOR_VERSION >= 16
 #  define GTK_DETACH_NEW
-# else
+# elif GTK_MINOR_VERSION == 14
 #  define GTK_DETACH_BROKEN
 # endif
 #endif
 
-/* Note 2015-07-06: GTK 3 (3.16.4, and probably earlier minor
-   versions too), crashes on dragging a script or model tab out
-   of a tabbed viewer, unless the special function 
-   gtk_notebook_detach_tab(), which is new in 3.16, is used.
-   So we'll disable "drag to root window" 
-
-I think this
-   is a GTK bug; there's no problem with GTK 2. So until further
-   notice, detaching tabs by dragging must be disabled in 
-   GTK 3 builds.
+/* Note 2015-07-06: gtk 3.14 and 3.16 crash on dragging a
+   script or model tab out of a tabbed viewer, unless the 
+   special function gtk_notebook_detach_tab() is used in
+   place of gtk_container_remove(). Since this function is
+   new in 3.16, we have to disable "drag to root window"
+   for gtk 3.14
 */
 
 #define TDEBUG 0
