@@ -32,7 +32,7 @@
 <!ELEMENT label       (#PCDATA)>
 <!ELEMENT menu-attachment (#PCDATA)>
 <!ATTLIST author
-   email CDATA #IMPLIED
+   email CDATA #REQUIRED
 >
 <!ATTLIST description
    lang CDATA #IMPLIED
