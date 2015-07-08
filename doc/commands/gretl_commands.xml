@@ -2081,6 +2081,10 @@
       </arguments>
       <options>
        <option>
+	  <flag>--bartlett</flag>
+	  <effect>use Bartlett standard errors</effect>
+        </option>	
+       <option>
 	  <flag>--plot</flag>
 	  <optparm>mode-or-filename</optparm>
 	  <effect>see below</effect>
@@ -2093,7 +2097,7 @@
 
     <description>
       <para context="notex">
-	Prints the values of the autocorrelation function for
+	Prints the values of the autocorrelation function (ACF) for
 	<repl>series</repl>, which may be specified by name or number.
 	The values are defined as &rgr;(<math>u</math><sub>t</sub>,
 	<math>u</math><sub>t-s</sub>) where <math>u</math><sub>t</sub>
@@ -2101,14 +2105,14 @@
 	<math>u</math> and <math>s</math> denotes the number of lags.
       </para>
       <para context="tex">
-	Prints the values of the autocorrelation function for
+	Prints the values of the autocorrelation function (ACF) for
 	<repl>series</repl>, which may be specified by name or number. The
 	values are defined as $\hat{\rho}(u_t, u_{t-s})$, where
 	$u_t$ is the $t^{\rm th}$ observation of the variable $u$ and
 	$s$ denotes the number of lags.
       </para>
       <para>
-	The partial autocorrelations (calculated using the
+	The partial autocorrelations (PACF, calculated using the
 	Durbin&ndash;Levinson algorithm) are also shown: these are net
 	of the effects of intervening lags.  In addition the
 	Ljung&ndash;Box <math>Q</math> statistic is printed.  This may
@@ -2117,14 +2121,31 @@
 	as chi-square with degrees of freedom equal to the number of
 	lags used.
       </para>
-      <para>
+      <para context="cli">
+	Asterisks are used to indicate statistical significance of the
+	individual autocorrelations. By default this is assessed using
+	a standard error of one over the square root of the sample
+	size, but if the <opt>bartlett</opt> option is given then
+	Bartlett standard errors are used for the ACF. This option
+	also governs the confidence band drawn in the ACF plot, if
+	applicable.
+      </para>
+      <para context="gui">
+	Asterisks are used to indicate statistical significance of the
+	individual autocorrelations. By default this is assessed using
+	a standard error of one over the square root of the sample
+	size, but you have the choice of using Bartlett standard
+	errors for the ACF. This option also governs the confidence
+	band drawn in the ACF plot.
+      </para>      
+      <para context="cli">
 	If an <repl>order</repl> value is specified the length of the
 	correlogram is limited to at most that number of lags,
 	otherwise the length is determined automatically, as a
 	function of the frequency of the data and the number of
 	observations.
       </para>
-      <para>
+      <para context="cli">
 	By default, a plot of the correlogram is produced: a gnuplot
 	graph in interactive mode or an ASCII graphic in batch mode.
 	This can be adjusted via the <opt>plot</opt> option. The
@@ -2136,7 +2157,7 @@
 	the <opt>output</opt> option of the <cmdref targ="gnuplot"/>
 	command.
       </para>
-      <para>
+      <para context="cli">
 	Upon successful completion, the accessors <lit>$test</lit> and
 	<lit>$pvalue</lit> contain the corresponding figures of the
 	Ljung&ndash;Box test for the maximum order displayed. Note
