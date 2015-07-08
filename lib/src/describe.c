@@ -2959,6 +2959,19 @@ static void handle_corrgm_plot_options (int ci,
     }
 }
 
+static void do_acf_bartlett (gretl_matrix *PM, int i,
+			     int T, double ssr,
+			     const double *z)
+{
+    double b;
+    int j;
+
+    for (j=0; j<PM->cols; j++) {
+	b = z[j] * sqrt((1.0/T) * (1 + 2*ssr));
+	gretl_matrix_set(PM, i, j, b);
+    }
+}
+
 /**
  * corrgram:
  * @varno: ID number of variable to process.
@@ -2982,9 +2995,11 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	      gretlopt opt, PRN *prn)
 {
     const double z[] = {1.65, 1.96, 2.58};
-    double ybar, pm[3];
-    double lbox, pval = NADBL;
-    gretl_matrix *A;
+    gretl_matrix *PM = NULL;
+    gretl_matrix *A = NULL;
+    double ybar, ssr, lbox;
+    double pval = NADBL;
+    double pm[3];
     double *acf, *pacf;
     const char *vname;
     int i, k, m, T, dfQ;
@@ -3039,6 +3054,14 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	goto bailout;
     }
 
+    if (opt & OPT_B) {
+	PM = gretl_matrix_alloc(m, 3);
+	if (PM == NULL) {
+	    err = E_ALLOC;   
+	    goto bailout;
+	}	
+    }
+
     acf = A->val;
     pacf = acf + m;
 
@@ -3055,12 +3078,22 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     } 
 
     if (opt & OPT_R) {
-	pprintf(prn, "\n%s\n\n", _("Residual autocorrelation function"));
+	pprintf(prn, "\n%s\n", _("Residual autocorrelation function"));
     } else {
 	pputc(prn, '\n');
 	pprintf(prn, _("Autocorrelation function for %s"), vname);
-	pputs(prn, "\n\n");
+	pputc(prn, '\n');
     }
+
+    pputs(prn, _("***, **, * indicate significance at the 1%, 5%, 10% levels\n"));
+
+    if (opt & OPT_B) {
+	pputs(prn, _("using Bartlett standard errors for ACF"));
+    } else {
+	pprintf(prn, _("using standard error 1/T^%.1f"), 0.5);
+    }
+
+    pputs(prn, "\n\n");
 
     /* for confidence bands */
     for (i=0; i<3; i++) {
@@ -3078,22 +3111,37 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     pputs(prn, _("  LAG      ACF          PACF         Q-stat. [p-value]"));
     pputs(prn, "\n\n");
 
-    lbox = 0.0;
+    lbox = ssr = 0.0;
     dfQ = 1;
 
     for (k=0; k<m; k++) {
+	double pm0, pm1, pm2;
+	
 	if (na(acf[k])) {
 	    pprintf(prn, "%5d\n", k + 1);
 	    continue;
 	}
 
+	/* ACF */
 	pprintf(prn, "%5d%9.4f ", k + 1, acf[k]);
-
-	if (fabs(acf[k]) > pm[2]) {
+	if (PM != NULL) {
+	    if (k > 0 && !na(acf[k-1])) {
+		ssr += acf[k-1] * acf[k-1];
+	    }
+	    do_acf_bartlett(PM, k, T, ssr, z);
+	    pm0 = gretl_matrix_get(PM, k, 0);
+	    pm1 = gretl_matrix_get(PM, k, 1);
+	    pm2 = gretl_matrix_get(PM, k, 2);
+	} else {
+	    pm0 = pm[0];
+	    pm1 = pm[1];
+	    pm2 = pm[2];
+	}
+	if (fabs(acf[k]) > pm2) {
 	    pputs(prn, " ***");
-	} else if (fabs(acf[k]) > pm[1]) {
+	} else if (fabs(acf[k]) > pm1) {
 	    pputs(prn, " ** ");
-	} else if (fabs(acf[k]) > pm[0]) {
+	} else if (fabs(acf[k]) > pm0) {
 	    pputs(prn, " *  ");
 	} else {
 	    pputs(prn, "    ");
@@ -3102,6 +3150,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	if (na(pacf[k])) {
 	    bufspace(13, prn);
 	} else {
+	    /* PACF */
 	    pprintf(prn, "%9.4f", pacf[k]);
 	    if (fabs(pacf[k]) > pm[2]) {
 		pputs(prn, " ***");
@@ -3134,12 +3183,13 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     
     if (use_gnuplot) {
 	err = correlogram_plot(vname, acf, (pacf_err)? NULL : pacf, 
-			       m, pm[1], opt);
+			       PM, m, pm[1], opt);
     }
 
  bailout:
 
     gretl_matrix_free(A);
+    gretl_matrix_free(PM);
 
     return err;
 }

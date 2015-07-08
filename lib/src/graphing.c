@@ -6756,15 +6756,17 @@ static void corrgm_min_max (const double *acf, const double *pacf,
 static int real_correlogram_print_plot (const char *vname,
 					const double *acf, 
 					const double *pacf,
+					const gretl_matrix *PM,
 					int m, double pm, 
 					gretlopt opt,
 					FILE *fp)
 {
-    char crit_string[16];
+    const char *PM_title = N_("95% interval");
+    char pm_title[16];
     double ymin, ymax;
     int k;
 
-    sprintf(crit_string, "%.2f/T^%.1f", 1.96, 0.5);
+    sprintf(pm_title, "%.2f/T^%.1f", 1.96, 0.5);
 
     corrgm_min_max(acf, pacf, m, pm, &ymin, &ymax);
 
@@ -6790,14 +6792,32 @@ static int real_correlogram_print_plot (const char *vname,
 	fprintf(fp, "set title '%s %s'\n", _("ACF for"), vname);
     }
     fprintf(fp, "set xrange [0:%d]\n", m + 1);
-    fprintf(fp, "plot \\\n"
-	    "'-' using 1:2 notitle w impulses lw 5, \\\n"
-	    "%g title '+- %s' lt 2, \\\n"
-	    "%g notitle lt 2\n", pm, crit_string, -pm);
+    if (PM != NULL) {
+	fprintf(fp, "plot \\\n"
+		"'-' using 1:2 notitle w impulses lw 5, \\\n"
+		"'-' title '%s' w lines lt 2, \\\n"
+		"'-' notitle w lines lt 2\n", _(PM_title));
+    } else {
+	fprintf(fp, "plot \\\n"
+		"'-' using 1:2 notitle w impulses lw 5, \\\n"
+		"%g title '+- %s' lt 2, \\\n"
+		"%g notitle lt 2\n", pm, pm_title, -pm);
+    }
     for (k=0; k<m; k++) {
 	fprintf(fp, "%d %g\n", k + 1, acf[k]);
     }
     fputs("e\n", fp);
+    if (PM != NULL) {
+	/* Bartlett-type confidence band data */
+	for (k=0; k<m; k++) {
+	    fprintf(fp, "%d %g\n", k + 1, gretl_matrix_get(PM, k, 1));
+	}
+	fputs("e\n", fp);
+	for (k=0; k<m; k++) {
+	    fprintf(fp, "%d -%g\n", k + 1, gretl_matrix_get(PM, k, 1));
+	}
+	fputs("e\n", fp);	
+    }
 
     if (pacf != NULL) {
 	/* lower plot: Partial Autocorrelation Function or PACF */
@@ -6811,7 +6831,7 @@ static int real_correlogram_print_plot (const char *vname,
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 notitle w impulses lw 5, \\\n"
 		"%g title '+- %s' lt 2, \\\n"
-		"%g notitle lt 2\n", pm, crit_string, -pm);
+		"%g notitle lt 2\n", pm, pm_title, -pm);
 	for (k=0; k<m; k++) {
 	    fprintf(fp, "%d %g\n", k + 1, pacf[k]);
 	}
@@ -6830,7 +6850,8 @@ static int real_correlogram_print_plot (const char *vname,
 int correlogram_plot (const char *vname,
 		      const double *acf, 
 		      const double *pacf,
-		      int m, double pm, 
+		      const gretl_matrix *PM,
+		      int m, double pm,
 		      gretlopt opt)
 {
     FILE *fp;
@@ -6840,7 +6861,7 @@ int correlogram_plot (const char *vname,
 
     if (!err) {
 	real_correlogram_print_plot(vname, acf, pacf, 
-				    m, pm, opt, fp);
+				    PM, m, pm, opt, fp);
 	err = finalize_plot_input_file(fp);
     }
 

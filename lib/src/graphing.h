@@ -247,7 +247,8 @@ int qq_plot (const int *list, const DATASET *dset, gretlopt opt);
 int correlogram_plot (const char *vname,
 		      const double *acf, 
 		      const double *pacf,
-		      int m, double pm, 
+		      const gretl_matrix *PM,
+		      int m, double pm,
 		      gretlopt opt);
 
 int periodogram_plot (const char *vname,

@@ -5509,18 +5509,35 @@ static void real_do_corrgm (DATASET *dset, int code,
     gchar *title;
     int T = sample_size(dset);
     int order = auto_acf_order(T);
+    gretlopt opt = OPT_NONE;
+    const char *opts[1] = {NULL};
+    int bartlett = 0;
     PRN *prn;
     int err;
 
     title = gretl_window_title(_("correlogram"));
+    opts[0] = N_("Use Bartlett standard errors");
 
+    err = checks_dialog(title, NULL, opts,
+			1, &bartlett, 
+			0, 0,
+			0, NULL, 
+			&order, _("Maximum lag:"), 
+			1, T - 1, 
+			CORRGM, parent); 
+#if 0
     err = spin_dialog(title, NULL, &order, _("Maximum lag:"),
 		      1, T - 1, CORRGM, parent);
-
+#endif
+    
     if (err < 0 || bufopen(&prn)) {
 	g_free(title);
 	return;
-    }    
+    }
+
+    if (bartlett) {
+	opt |= OPT_B;
+    }
 
     if (code == SELECTED_VAR) {
 	lib_command_sprintf("corrgm %s %d", selected_varname(), order);
@@ -5530,14 +5547,14 @@ static void real_do_corrgm (DATASET *dset, int code,
 	    return;
 	}
 	err = corrgram(libcmd.list[1], order, 0, 
-		       dset, OPT_NONE, prn);
+		       dset, opt, prn);
 	if (!err) {
 	    record_lib_command();
 	}
     } else {
 	/* model residual */
 	err = corrgram(dset->v - 1, order, npq,
-		       dset, OPT_R, prn);
+		       dset, opt | OPT_R, prn);
     }
 
     if (err) {
