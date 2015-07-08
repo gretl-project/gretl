@@ -100,7 +100,8 @@ static const char *get_extension_for_action (int action, gpointer data)
 	return ".gdtb";
     }
 
-    if (action == EXPORT_GDT || action == SAVE_BOOT_DATA) {
+    if (action == SAVE_DATA || action == EXPORT_GDT ||
+	action == SAVE_BOOT_DATA) {
 	return ".gdt";
     } else if (action == EXPORT_GDTB) {
 	return ".gdtb";
@@ -190,7 +191,7 @@ static int post_process_savename (char *fname, int action, gpointer data)
 		strcat(fname, ext);
 	    }
 	}
-    } 
+    }
 
     return err;
 }
