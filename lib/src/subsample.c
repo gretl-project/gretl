@@ -2510,7 +2510,7 @@ static int real_set_sample (const char *start,
 	return 1;
     }
 
-    if (t1 != NULL && t2 != NULL) {
+    if (testing) {
 	*t1 = new_t1;
 	*t2 = new_t2;
     } else {
