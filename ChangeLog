@@ -2,6 +2,8 @@ version 1.10.90, in progress
 - "install" command: add a --local option plus the ability
   to install a package from a chosen server
 - "chow" command: represent the --limit-to option in the GUI
+- "corrgm" command: add --bartlett option to use Bartlett
+  standard errors for the ACF
 - cdf(), pdf() and invcdf() functions: add support for non-
   central variants of the chi-square, F and Student's t 
   distributions
