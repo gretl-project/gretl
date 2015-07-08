@@ -64,6 +64,8 @@ static DATASET *peerset;
 #define SUBMASK_SENTINEL 127
 
 static int smpl_get_int (const char *s, DATASET *dset, int *err);
+static int test_set_sample (const char *s, DATASET *dset,
+			    int *t1, int *t2);
 
 /* accessors for full dataset, when sub-sampled */
 
@@ -1572,6 +1574,51 @@ make_restriction_mask (int mode, const char *s,
     return err;
 }
 
+static int 
+make_mixed_mask (int t1, int t2, DATASET *dset,
+		 const char *oldmask, char **pmask,
+		 PRN *prn)
+{
+    char *mask = NULL;
+    int t, sn = 0, err = 0;
+
+    mask = make_submask(dset->n);
+    if (mask == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	mask[t] = 1;
+    }
+
+    if (oldmask != NULL) {
+	sn = overlay_masks(mask, oldmask, dset->n);
+    } else {
+	sn = t2 - t1 + 1;
+    }
+
+    if (sn == 0) {
+	gretl_errmsg_set(_("No observations would be left!"));
+	err = 1;
+    } else if (sn == dset->n) {
+	/* not really an error, just a no-op */
+	if (gretl_messages_on()) {
+	    pputs(prn, _("No observations were dropped!"));
+	    pputc(prn, '\n');
+	}
+	free(mask);
+	mask = NULL;
+    }
+
+    if (err) {
+	free(mask);
+    } else {
+	*pmask = mask;
+    }
+
+    return err;
+}
+
 static void finalize_panel_subset (DATASET *subset)
 {
     int pdp = subset->pd;
@@ -1930,6 +1977,57 @@ static int handle_ts_restrict (char *mask, DATASET *dset,
     return err;
 }
 
+/* under what conditions will be bother testing for a
+   contiguous subsample mask? */
+
+static int try_for_contig (gretlopt opt, DATASET *dset)
+{
+    if (opt & (OPT_T | OPT_N)) {
+	/* permanent restriction, or random subsample: no */
+	return 0;
+    }
+
+    if ((opt & OPT_Z) && !dataset_is_time_series(dset)) {
+	/* forcing a resize and not time-series: no */
+	return 0;
+    }
+
+    return 1;
+}
+
+static int handle_resize_option (gretlopt *opt,
+				 const char *param,
+				 DATASET *dset,
+				 int *rt1, int *rt2)
+{
+    int err = 0;
+
+    if (*opt & (OPT_O | OPT_M | OPT_A | OPT_N | OPT_C)) {
+	/* besides --resize we got another option
+	   that implies a restriction: so there's
+	   nothing to be done here (FIXME OPT_C)
+	*/
+	return 0;
+    }
+
+    /* add implicit "restrict" flag */
+    *opt |= OPT_R;
+
+    /* and inspect @param */
+    if (param != NULL) {
+	if (strchr(param, '=') ||
+	    strchr(param, '<') ||
+	    strchr(param, '>')) {
+	    ; /* must be a restriction spec */
+	} else {
+	    /* may be obs1 [ obs2 ] or similar? */
+	    err = test_set_sample(param, dset, rt1, rt2);
+	}
+    }
+
+    return err;
+}
+
 /* restrict_sample: 
  * @param: restriction string (or %NULL).  
  * @dset: dataset struct.
@@ -1973,8 +2071,10 @@ int restrict_sample (const char *param, const int *list,
     char *oldmask = NULL;
     char *mask = NULL;
     int free_oldmask = 0;
+    int force_resize = 0;
     int permanent = 0;
     int n_models = 0;
+    int rt1 = -1, rt2 = -1;
     int n_orig = 0;
     int mode, err = 0;
     
@@ -1997,6 +2097,14 @@ int restrict_sample (const char *param, const int *list,
 	incompatible_options(opt, OPT_R | OPT_M | OPT_A | OPT_N)) {
 	return E_BADOPT;
     }
+
+    if (opt & OPT_Z) {
+	force_resize = 1;
+	err = handle_resize_option(&opt, param, dset, &rt1, &rt2);
+	if (err) {
+	    return err;
+	}
+    }    
 
     if (opt & OPT_T) {
 	/* --permanent */
@@ -2081,8 +2189,13 @@ int restrict_sample (const char *param, const int *list,
 
     if (mask == NULL) {
 	/* not already handled by "precompute" above */
-	err = make_restriction_mask(mode, param, list, dset, 
-				    oldmask, &mask, prn);
+	if (rt1 >= 0 && rt2 >= 0) {
+	    err = make_mixed_mask(rt1, rt2, dset, oldmask,
+				  &mask, prn);
+	} else {
+	    err = make_restriction_mask(mode, param, list, dset, 
+					oldmask, &mask, prn);
+	}
     }
 
     if (!err && n_models > 0) {
@@ -2093,7 +2206,7 @@ int restrict_sample (const char *param, const int *list,
 	int contiguous = 0;
 	int t1 = 0, t2 = 0;
 
-	if (!permanent && mode != SUBSAMPLE_RANDOM) {
+	if (try_for_contig(opt, dset)) {
 	    contiguous = mask_contiguous(mask, dset, &t1, &t2);
 	}
 
@@ -2101,10 +2214,9 @@ int restrict_sample (const char *param, const int *list,
 #if SUBDEBUG
 	    fprintf(stderr, "restrict sample: got contiguous range\n");
 #endif
-	    if (0 && dataset_is_time_series(dset)) {
+	    if (force_resize && dataset_is_time_series(dset)) {
 		/* apply the restriction, but then re-establish the
 		   time-series character of the dataset
-		   (2015-07-05: experimental!!)
 		*/
 		err = handle_ts_restrict(mask, dset, opt, t1);
 	    } else {
@@ -2307,13 +2419,21 @@ static void maybe_clear_range_error (int t, DATASET *dset)
     }
 }
 
-int set_sample (const char *start, const char *stop, DATASET *dset)
+static int real_set_sample (const char *start,
+			    const char *stop,
+			    DATASET *dset,
+			    int *t1, int *t2)
 {
     int nf, new_t1 = dset->t1, new_t2 = dset->t2;
     int tmin = 0, tmax = 0;
+    int testing = 0;
 
     if (dset == NULL) {
 	return E_NODATA;
+    }
+
+    if (t1 != NULL && t2 != NULL) {
+	testing = 1;
     }
 
     gretl_error_clear();
@@ -2329,7 +2449,7 @@ int set_sample (const char *start, const char *stop, DATASET *dset)
     }
 #endif
 
-    if (nf == 2 && dset->n == 0) {
+    if (nf == 2 && dset->n == 0 && !testing) {
 	/* database special */
 	return db_set_sample(start, stop, dset);
     }
@@ -2356,7 +2476,11 @@ int set_sample (const char *start, const char *stop, DATASET *dset)
 	    gretl_errmsg_set(_("error in new starting obs"));
 	    return 1;
 	}
-	dset->t1 = new_t1;
+	if (testing) {
+	    *t1 = new_t1;
+	} else {
+	    dset->t1 = new_t1;
+	}
 	return 0;
     }
 
@@ -2386,10 +2510,35 @@ int set_sample (const char *start, const char *stop, DATASET *dset)
 	return 1;
     }
 
-    dset->t1 = new_t1;
-    dset->t2 = new_t2;
+    if (t1 != NULL && t2 != NULL) {
+	*t1 = new_t1;
+	*t2 = new_t2;
+    } else {
+	dset->t1 = new_t1;
+	dset->t2 = new_t2;
+    }
 
     return 0;
+}
+
+int set_sample (const char *start, const char *stop, DATASET *dset)
+{
+    return real_set_sample(start, stop, dset, NULL, NULL);
+}
+
+static int test_set_sample (const char *s, DATASET *dset,
+			    int *t1, int *t2)
+{
+    char start[OBSLEN], stop[OBSLEN];
+    int err = 0;
+
+    if (sscanf(s, "%15s %15s", start, stop) == 2) {
+	err = real_set_sample(start, stop, dset, t1, t2);
+    } else if (sscanf(s, "%15s", start) == 1) {
+	err = real_set_sample(start, NULL, dset, t1, t2);
+    }
+
+    return err;
 }
 
 /**

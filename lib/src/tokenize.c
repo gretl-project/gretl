@@ -3292,11 +3292,11 @@ static void handle_option_inflections (CMD *cmd)
 	    cmd->ciflags |= CI_LLEN2;
 	}
     } else if (cmd->ci == SMPL) {
-	if (cmd->opt & (OPT_M | OPT_C)) {
-	    /* no-missing or contiguous */
+	if (cmd->opt & (OPT_M | OPT_A | OPT_C)) {
+	    /* no-missing, no-all-missing or contiguous */
 	    cmd->ciflags = CI_LIST | CI_DOALL;
-	} else if (cmd->opt & OPT_R) {
-	    /* restrict */
+	} else if (cmd->opt & (OPT_R | OPT_Z)) {
+	    /* restrict or resize */
 	    cmd->ciflags = CI_ADHOC;
 	} else if (cmd->opt & OPT_F) {
 	    /* full: no args */
