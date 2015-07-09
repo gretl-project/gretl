@@ -1239,7 +1239,7 @@ int get_restriction_mode (gretlopt opt)
 {
     int mode = SUBSAMPLE_UNKNOWN;
 
-    if (opt & OPT_M) {
+    if (opt & (OPT_M | OPT_C)) {
 	mode = SUBSAMPLE_DROP_MISSING;
     } else if (opt & OPT_R) {
 	mode = SUBSAMPLE_BOOLEAN;
@@ -1491,6 +1491,29 @@ static int try_for_daily_subset (char *selected,
     return err;
 }
 
+/* does the given policy lead to an empty sample, or no change
+   in the sample, perchance? 
+*/
+
+static int check_subsample_n (int n, DATASET *dset,
+			      char **pmask, PRN *prn)
+{
+    if (n == 0) {
+	gretl_errmsg_set(_("No observations would be left!"));
+	return E_DATA;
+    } else if (n == dset->n) {
+	/* not really an error, just a no-op */
+	if (gretl_messages_on()) {
+	    pputs(prn, _("No observations were dropped!"));
+	    pputc(prn, '\n');
+	}
+	free(*pmask);
+	*pmask = NULL;
+    }
+
+    return 0;
+}
+
 #define needs_string_arg(m) (m == SUBSAMPLE_RANDOM || \
 	                     m == SUBSAMPLE_USE_DUMMY || \
                              m == SUBSAMPLE_BOOLEAN)
@@ -1549,21 +1572,7 @@ make_restriction_mask (int mode, const char *s,
 	sn = count_selected_cases(mask, dset);
     }
 
-    /* does this policy lead to an empty sample, or no change in the
-       sample, perchance? */
-
-    if (sn == 0) {
-	gretl_errmsg_set(_("No observations would be left!"));
-	err = 1;
-    } else if (sn == dset->n) {
-	/* not really an error, just a no-op */
-	if (gretl_messages_on()) {
-	    pputs(prn, _("No observations were dropped!"));
-	    pputc(prn, '\n');
-	}
-	free(mask);
-	mask = NULL;
-    }
+    err = check_subsample_n(sn, dset, &mask, prn);
 
     if (err) {
 	free(mask);
@@ -1573,6 +1582,11 @@ make_restriction_mask (int mode, const char *s,
 
     return err;
 }
+
+/* Here the mask we're after is "mixed" in the sense that
+   we are starting from a t1, t2 setting but possibly
+   compounding this with a prior "subsampling".
+*/
 
 static int 
 make_mixed_mask (int t1, int t2, DATASET *dset,
@@ -1597,18 +1611,7 @@ make_mixed_mask (int t1, int t2, DATASET *dset,
 	sn = t2 - t1 + 1;
     }
 
-    if (sn == 0) {
-	gretl_errmsg_set(_("No observations would be left!"));
-	err = 1;
-    } else if (sn == dset->n) {
-	/* not really an error, just a no-op */
-	if (gretl_messages_on()) {
-	    pputs(prn, _("No observations were dropped!"));
-	    pputc(prn, '\n');
-	}
-	free(mask);
-	mask = NULL;
-    }
+    err = check_subsample_n(sn, dset, &mask, prn);
 
     if (err) {
 	free(mask);
@@ -1831,19 +1834,14 @@ static char *precompute_mask (const char *s, const char *oldmask,
 
 static int set_contiguous_sample (const int *list,
 				  DATASET *dset,
-				  gretlopt opt)
+				  int *rt1, int *rt2)
 {
-    int save_t1 = dset->t1;
-    int save_t2 = dset->t2;
+    int ct1 = dset->t1;
+    int ct2 = dset->t2;
     int err = 0;
 
-    if (opt & OPT_P) {
-	/* can't combine this with the "replace" option */
-	return E_BADOPT;
-    }
-
     if (list != NULL && list[0] > 0) {
-	err = list_adjust_sample(list, &dset->t1, &dset->t2, dset, NULL);
+	err = list_adjust_sample(list, &ct1, &ct2, dset, NULL);
     } else {
 	int *biglist = NULL;
 	int nvars = 0;
@@ -1854,15 +1852,20 @@ static int set_contiguous_sample (const int *list,
 	} else if (biglist == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = list_adjust_sample(biglist, &dset->t1, &dset->t2, 
+	    err = list_adjust_sample(biglist, &ct1, &ct2, 
 				     dset, NULL);
 	    free(biglist);
 	}
-    } 
+    }
 
-    if (err) {
-	dset->t1 = save_t1;
-	dset->t2 = save_t2;
+    if (!err) {
+	if (rt1 != NULL && rt2 != NULL) {
+	    *rt1 = ct1;
+	    *rt2 = ct2;
+	} else {
+	    dset->t1 = ct1;
+	    dset->t2 = ct2;
+	}
     }
 
     return err;
@@ -1974,6 +1977,11 @@ static int try_for_contig (gretlopt opt, DATASET *dset)
 	return 0;
     }
 
+    if (opt & OPT_C) {
+	/* we're already forcing contiguity */
+	return 0;
+    }
+
     if ((opt & OPT_Z) && !dataset_is_time_series(dset)) {
 	/* forcing a resize and not time-series: no */
 	return 0;
@@ -1992,7 +2000,7 @@ static int handle_resize_option (gretlopt *opt,
     if (*opt & (OPT_O | OPT_M | OPT_A | OPT_N | OPT_C)) {
 	/* besides --resize we got another option
 	   that implies a restriction: so there's
-	   nothing to be done here (FIXME OPT_C)
+	   nothing to be done here
 	*/
 	return 0;
     }
@@ -2032,7 +2040,7 @@ static int check_restrict_options (gretlopt opt, const char *param)
     }
 
     /* The --contiguous option (OPT_C) is compatible only with 
-       --no-missing and --resize (OPT_Z) */
+       --no-missing (implied) and possibly --resize (OPT_Z) */
     if (opt & OPT_C) {
 	if ((opt & ~(OPT_C | OPT_M | OPT_Z)) != OPT_NONE) {
 	    return E_BADOPT;
@@ -2120,17 +2128,17 @@ static int do_precompute (int mode, char *oldmask, const char *param)
 }
 
 /* restrict_sample: 
- * @param: restriction string (or %NULL).  
+ * @param: restriction string (or %NULL).
+ * @list: list of variables in case of OPT_M (or %NULL).     
  * @dset: dataset struct.
  * @state: structure representing program state (or %NULL).
- * @list: list of variables in case of OPT_M (or %NULL).  
  * @opt: option flags.
  * @prn: printing apparatus.
  * @n_dropped: location to receive count of dropped
  * observations, or NULL.
  *
  * Sub-sample the data set, based on the criterion of skipping all
- * observations with missing data values (OPT_M); or using as a mask a
+ * observations with missing data values (OPT_M); or using as mask a
  * specified dummy variable (OPT_O); or masking with a specified
  * boolean condition (OPT_R); or selecting at random (OPT_N).
  *
@@ -2176,10 +2184,9 @@ int restrict_sample (const char *param, const int *list,
     n_orig = dset->n;
 
     /* general check on incoming options */
-
     err = check_restrict_options(opt, param);
 
-    /* take a closer look at some finicky options */
+    /* now take a closer look at some finicky options */
 
     if (!err && (opt & OPT_Z)) {
 	err = handle_resize_option(&opt, param, dset, &rt1, &rt2);
@@ -2208,8 +2215,16 @@ int restrict_sample (const char *param, const int *list,
 #endif
 
     if (opt & OPT_C) {
-	/* FIXME ignores permanent and force_resize */
-	return set_contiguous_sample(list, dset, opt);
+	/* --contiguous */
+	if (force_resize) {
+	    err = set_contiguous_sample(list, dset, &rt1, &rt2);
+	    if (err) {
+		return err;
+	    }
+	} else {
+	    /* we should be done at this point */
+	    return set_contiguous_sample(list, dset, NULL, NULL);
+	}
     }	
 
     mode = get_restriction_mode(opt);
@@ -2276,6 +2291,10 @@ int restrict_sample (const char *param, const int *list,
 
 	if (try_for_contig(opt, dset)) {
 	    contiguous = mask_contiguous(mask, dset, &t1, &t2);
+	} else if (dataset_is_time_series(dset) && (opt & OPT_C)) {
+	    contiguous = 1;
+	    t1 = rt1;
+	    t2 = rt2;
 	}
 
 #if SUBDEBUG
