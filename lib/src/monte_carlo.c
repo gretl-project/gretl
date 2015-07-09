@@ -589,10 +589,33 @@ static int parse_as_while_loop (LOOPSET *loop, const char *s)
     return err;
 }
 
+static int check_index_in_parentage (LOOPSET *loop, const char *vname)
+{
+    int thistype = loop->type;
+	
+    while ((loop = loop->parent) != NULL) {
+	if ((loop->type != FOR_LOOP || loop->type != thistype) &&
+	    strcmp(vname, loop->idxname) == 0) {
+	    gretl_errmsg_sprintf(_("Using the same index variable (%s) for nested loops:\n"
+				   "this is acceptable only with \"for\" loops."), vname);
+	    return E_DATA;
+	}
+    }
+
+    return 0;
+}
+
 static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 				  DATASET *dset)
 {
     int err = 0;
+
+    if (loop->parent != NULL) {
+	err = check_index_in_parentage(loop, vname);
+	if (err) {
+	    return err;
+	}
+    }
 
     if (gretl_is_scalar(vname)) {
 	strcpy(loop->idxname, vname);
