@@ -1868,19 +1868,6 @@ static int set_contiguous_sample (const int *list,
     return err;
 }
 
-#if 1 /* let's be conservative here */
-
-#define restriction_uses_obs(s) (strstr(s, "obs") != NULL)
-
-#else
-
-static int restriction_uses_obs (const char *s)
-{
-    return gretl_namechar_spn(s) == 3 && !strncmp(s, "obs", 3);
-}
-
-#endif
-
 static void destroy_restriction_string (DATASET *dset)
 {
     if (dset->restriction != NULL) {
@@ -2028,6 +2015,110 @@ static int handle_resize_option (gretlopt *opt,
     return err;
 }
 
+static int check_restrict_options (gretlopt opt, const char *param)
+{
+    /* We'll accept the redundant combination of the options --dummy
+       (OPT_O) and --restrict (OPT_R), but other than that the options
+       --dummy, 
+       --restrict, 
+       --no-missing (OPT_M), 
+       --no-all-missing (OPT_A) and
+       --random (OPT_N) 
+       are all mutually incompatible.
+    */
+    if (incompatible_options(opt, OPT_O | OPT_M | OPT_A | OPT_N) ||
+	incompatible_options(opt, OPT_R | OPT_M | OPT_A | OPT_N)) {
+	return E_BADOPT;
+    }
+
+    /* The --contiguous option (OPT_C) is compatible only with 
+       --no-missing and --resize (OPT_Z) */
+    if (opt & OPT_C) {
+	if ((opt & ~(OPT_C | OPT_M | OPT_Z)) != OPT_NONE) {
+	    return E_BADOPT;
+	}
+    }
+
+    if (opt & (OPT_O | OPT_R | OPT_N)) {
+	/* parameter is required */
+	if (param == NULL || *param == '\0') {
+	    return E_ARGS;
+	}
+    }
+
+    if (opt & OPT_U) {
+	/* --current */
+	if (!(opt & (OPT_T | OPT_Z))) {
+	    /* requires --permanent or --resize */
+	    return E_ARGS;
+	}
+    }
+	
+    return 0;
+}
+
+static int check_permanent_option (gretlopt opt,
+				   DATASET *dset,
+				   int *n_models)
+{
+    if (gretl_function_depth() > 0) {
+	/* can't permanently shrink the dataset within a function */
+	gretl_errmsg_set(_("The dataset cannot be modified at present"));
+	return E_DATA;
+    } else if (!(opt & (OPT_O | OPT_M | OPT_A | OPT_N | OPT_R | OPT_U))) {
+	/* we need some kind of restriction flag */
+	return E_ARGS;
+    } else if (gretl_in_gui_mode() && !(opt & OPT_F)) {
+	/* GUI program, without internal "force" option */
+	*n_models = n_stacked_models();
+	if (*n_models > 0 && !full_sample(dset)) {
+	    /* too difficult to recover gracefully on error */
+	    gretl_errmsg_set(_("The full dataset must be restored before "
+			       "imposing a permanent sample restriction"));
+	    return E_DATA;
+	}
+    }
+
+    return 0;
+}
+
+/* "Precomputing" a mask means computing a mask based on a
+   current subsampled dataset (before restoring the full dataset,
+   which is a part of the subsampling process). This is worthwhile
+   only if we're cumulating (rather than replacing) sample
+   restrictions _and_ the present resampling parameter makes
+   reference to the built-in "obs" series. Given the last point,
+   the user might reasonably expect the "obs" values to refer to
+   the currently subsampled dataset rather than the full dataset.
+*/
+
+static int do_precompute (int mode, char *oldmask, const char *param)
+{
+    if (fullset == NULL) {
+	/* not subsampled: no */
+	return 0;
+    } else if (oldmask == NULL) {
+	/* not cumulating restrictions: no */
+	return 0;
+    } else if (mode != SUBSAMPLE_BOOLEAN) {
+	/* can't be keying off "obs" series: no */
+	return 0;
+    } else {
+	/* look for "obs" as a "word" in itself */
+	const char *s = param;
+
+	while (strstr(s, "obs") != NULL) {
+	    if (gretl_namechar_spn(s) == 3 &&
+		(s == param || !isalpha(*(s-1)))) {
+		return 1;
+	    }
+	    s += 3;
+	}
+    }
+
+    return 0;
+}
+
 /* restrict_sample: 
  * @param: restriction string (or %NULL).  
  * @dset: dataset struct.
@@ -2044,7 +2135,7 @@ static int handle_resize_option (gretlopt *opt,
  * boolean condition (OPT_R); or selecting at random (OPT_N).
  *
  * In case OPT_M or OPT_C a @list of variables may be supplied; in 
- * cases OPT_O, OPT_R and OPT_N, @line must contain specifics.
+ * cases OPT_O, OPT_R and OPT_N, @param must contain specifics.
  *
  * In case OPT_P is included, the restriction will rePlace any
  * existing sample restriction, otherwise the resulting restriction
@@ -2084,52 +2175,29 @@ int restrict_sample (const char *param, const int *list,
 
     n_orig = dset->n;
 
-    /* We'll accept the redundant combination of the options --dummy
-       (OPT_O) and --restrict (OPT_R), but other than that the options
-       --dummy, 
-       --restrict, 
-       --no-missing (OPT_M), 
-       --no-all-missing (OPT_A) and
-       --random (OPT_N) 
-       are all mutually incompatible.
-    */
-    if (incompatible_options(opt, OPT_O | OPT_M | OPT_A | OPT_N) ||
-	incompatible_options(opt, OPT_R | OPT_M | OPT_A | OPT_N)) {
-	return E_BADOPT;
-    }
+    /* general check on incoming options */
 
-    if (opt & OPT_Z) {
-	force_resize = 1;
+    err = check_restrict_options(opt, param);
+
+    /* take a closer look at some finicky options */
+
+    if (!err && (opt & OPT_Z)) {
 	err = handle_resize_option(&opt, param, dset, &rt1, &rt2);
-	if (err) {
-	    return err;
-	}
-    }    
-
-    if (opt & OPT_T) {
-	/* --permanent */
-	if (gretl_function_depth() > 0) {
-	    /* can't permanently shrink the dataset within a function */
-	    gretl_errmsg_set(_("The dataset cannot be modified at present"));
-	    return E_DATA;
-	} else if (!(opt & (OPT_O | OPT_M | OPT_A | OPT_N | OPT_R))) {
-	    /* we need some kind of restriction flag */
-	    return E_BADOPT;
-	} else if (!gretl_in_gui_mode() || (opt & OPT_F)) {
-	    /* CLI, or GUI with internal "force" option */
-	    permanent = 1;
-	} else {
-	    n_models = n_stacked_models();
-	    if (n_models > 0 && !full_sample(dset)) {
-		/* too difficult to recover gracefully on error */
-		gretl_errmsg_set(_("The full dataset must be restored before "
-				   "imposing a permanent sample restriction"));
-		return E_DATA;
-	    } else {
-		permanent = 1;
-	    }
+	if (!err) {
+	    force_resize = 1;
 	}
     }
+
+    if (!err && (opt & OPT_T)) {
+	err = check_permanent_option(opt, dset, &n_models);
+	if (!err) {
+	    permanent = 1;
+	}
+    }
+
+    if (err) {
+	return err;
+    }    
 
     gretl_error_clear();
 
@@ -2140,6 +2208,7 @@ int restrict_sample (const char *param, const int *list,
 #endif
 
     if (opt & OPT_C) {
+	/* FIXME ignores permanent and force_resize */
 	return set_contiguous_sample(list, dset, opt);
     }	
 
@@ -2167,8 +2236,7 @@ int restrict_sample (const char *param, const int *list,
 	oldmask = state->submask;
     }
 
-    if (mode == SUBSAMPLE_BOOLEAN && fullset != NULL && 
-	oldmask != NULL && restriction_uses_obs(param)) {
+    if (do_precompute(mode, oldmask, param)) {
 	/* we come here only if cumulating restrictions */
 	mask = precompute_mask(param, oldmask, dset, prn, &err);
     }
@@ -2210,10 +2278,11 @@ int restrict_sample (const char *param, const int *list,
 	    contiguous = mask_contiguous(mask, dset, &t1, &t2);
 	}
 
-	if (contiguous) {
 #if SUBDEBUG
-	    fprintf(stderr, "restrict sample: got contiguous range\n");
+	fprintf(stderr, "restrict sample: got contiguous range\n");
 #endif
+
+	if (contiguous) {
 	    if (force_resize && dataset_is_time_series(dset)) {
 		/* apply the restriction, but then re-establish the
 		   time-series character of the dataset
@@ -2227,9 +2296,6 @@ int restrict_sample (const char *param, const int *list,
 		dset->t2 = t2;
 	    }
 	} else {
-#if SUBDEBUG
-	    fprintf(stderr, "restrict sample: using mask\n");
-#endif
 	    err = restrict_sample_from_mask(mask, dset, opt);
 	}
     }

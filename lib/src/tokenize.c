@@ -3307,8 +3307,8 @@ static void handle_option_inflections (CMD *cmd)
 	} else if (cmd->opt & OPT_N) {
 	    /* random sample */
 	    cmd->ciflags = CI_PARM1;
-	} else if ((cmd->opt & OPT_T) && (cmd->opt & OPT_U)) {
-	    /* make current subsample permanent: no args */
+	} else if (cmd->opt & OPT_U) {
+	    /* operate on current subsample: no args */
 	    cmd->ciflags = 0;
 	}	    
     } else if (cmd->ci == SET) {
