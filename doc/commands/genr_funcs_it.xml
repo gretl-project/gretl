@@ -1618,7 +1618,24 @@
         <para>
           Generalized Error (E): forma
         </para>
-      </li> 
+      </li>
+      <li>
+	<para>
+	  Chi-quadro non centrale (ncX): gdl, parametro di non
+	  centralità
+	</para>
+      </li>
+      <li>
+	<para>
+	  F non centrale (ncF): gdl (num.), gdl (den.), parametro di
+	  non centralità
+	</para>
+      </li>
+      <li>
+	<para>
+	  t non centrale (nct): gdl, parametro di non centralità
+	</para>
+      </li>	  
     </ilist>
     <para context="tex">
       \begin{center} 
@@ -1640,7 +1657,17 @@
       Binomiale &amp; \texttt{b} o \texttt{B} &amp;
       probabilit\`a &amp; prove \\ 
       Poisson &amp; \texttt{p} o \texttt{P} &amp; 
-      media &amp; -- 
+      media &amp; -- \\
+      Weibull &amp; \texttt{w} or \texttt{W} &amp; 
+      forma &amp; scala &amp; --\\
+      Generalized Error &amp; \texttt{E} &amp; 
+      forma &amp; -- &amp; --\\
+      $\chi^2$ non centrale &amp; \texttt{ncX} &amp; 
+      gdl &amp; non centralit{\`a} &amp; -- \\
+      $F$  non centrale &amp; \texttt{ncF} &amp; 
+      gdl (num.) &amp; gdl (den.) &amp; non centralit{\`a}  \\
+      $t$  non centrale &amp; \texttt{nct} &amp; 
+      gdl &amp; non centralit{\`a} &amp; -- \\
       \end{tabular}
       \end{center}
     </para>
@@ -3401,27 +3428,50 @@
           GED standardizzata (E): forma
         </para>
       </li>
+      <li>
+	<para>
+	  Chi-quadro non centrale (ncX): gdl, parametro di non
+	  centralità
+	</para>
+      </li>
+      <li>
+	<para>
+	  F non centrale (ncF): gdl (num.), gdl (den.), parametro di
+	  non centralità
+	</para>
+      </li>
+      <li>
+	<para>
+	  t non centrale (nct): gdl, parametro di non centralità
+	</para>
+      </li>	  
      </ilist>
     <para context="tex">
       \begin{center} 
-      \begin{tabular}{llll} 
+      \begin{tabular}{lllll} 
       \textit{Distribuzione} &amp; codice, $c$ &amp;
-      \textit{Arg.} 2 &amp; \textit{Arg.} 3 \\[4pt] 
+      \textit{Arg.} 2 &amp; \textit{Arg.} 3 &amp; \textit{Arg.} 4 \\[4pt] 
       Normale Standard &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp;
-      -- &amp; -- \\ 
+      -- &amp; -- &amp; -- \\ 
       Gamma &amp; \texttt{g} o \texttt{G} &amp;
-      forma &amp; scala \\ 
+      forma &amp; scala &amp; -- \\ 
       $t$ di Student (centrata) &amp; \texttt{t} &amp; 
-      gradi di libertà &amp; -- \\ 
+      gradi di libertà &amp; -- &amp; -- \\ 
       Chi-quadrato &amp; \texttt{c}, \texttt{x} o \texttt{X} &amp; 
-      gradi di libertà &amp; -- \\
+      gradi di libertà &amp; -- &amp; -- \\
       $F$ di Snedecor &amp; \texttt{f} o \texttt{F} &amp; 
       gradi di libertà (num.) &amp; gradi di libertà (den.) \\ 
       Binomiale &amp; \texttt{b} or \texttt{B} &amp; 
-      $p$ &amp; $n$ \\
+      $p$ &amp; $n$ &amp; -- \\
       Poisson &amp; \texttt{p} o \texttt{P} &amp;
-          $\lambda$ &amp; -- \\ 
-      GED standardizzata &amp; \texttt{E} &amp; forma\\
+          $\lambda$ &amp; -- &amp; -- \\ 
+      GED standardizzata &amp; \texttt{E} &amp; forma &amp; -- &amp; -- \\
+      $\chi^2$ non centrale &amp; \texttt{ncX} &amp; 
+      gdl &amp; non centralit{\`a} &amp; -- \\
+      $F$  non centrale &amp; \texttt{ncF} &amp; 
+      gdl (num.) &amp; gdl (den.) &amp; non centralit{\`a}  \\
+      $t$  non centrale &amp; \texttt{nct} &amp; 
+      gdl &amp; non centralit{\`a} &amp; -- \\
       \end{tabular}
       \end{center}
     </para>
@@ -5445,6 +5495,8 @@
       gamma, Weibull, Generalized Error, binomiale and Poisson. Si
       noti che per la binomiale e la Poisson ciò che viene
       calcolato è in effetti la probabilità nel punto specificato.
+      Per la <math>t</math> di Student, la chi quadro e la 
+      <math>F</math> tanche le varianti non centrali sono ammesse.
     </para>
     <para>
       Per la normale, si veda anche la funzione <fncref
