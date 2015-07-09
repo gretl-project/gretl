@@ -3475,7 +3475,7 @@
 
     <function name="invcdf" section="probdist" output="asinput">
       <fnargs>
-	<fnarg type="char">c</fnarg>
+	<fnarg type="string">d</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">p</fnarg>
       </fnargs>
@@ -3484,9 +3484,10 @@
 	  Inverse cumulative distribution function calculator. Returns
 	  <math>x</math> such that
 	  <equation status="inline" ascii="P(X &le; x) = p"  
-		    tex="$P(X \le x) = p$"/>, where the distribution <math>X</math> is
-	  determined by the character <argname>c</argname>. Between the
-	  arguments <argname>c</argname> and <argname>p</argname>, zero or
+		    tex="$P(X \le x) = p$"/>, where the distribution
+	  of <math>X</math> is determined by the string
+	  <argname>d</argname>. Between the arguments
+	  <argname>d</argname> and <argname>p</argname>, zero or
 	  more additional scalar arguments are required to specify the
 	  parameters of the distribution, as follows.
 	</para>
@@ -3551,7 +3552,7 @@
 	<para context="tex">
 	  \begin{center} 
 	  \begin{tabular}{lllll} 
-	  \textit{Distribution} &amp; code, $c$ &amp;
+	  \textit{Distribution} &amp; \textsl{d} &amp;
 	  \textit{Arg} 2 &amp; \textit{Arg} 3 &amp; \textit{Arg} 4 \\[4pt] 
 	  Standard normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp;
 	  -- &amp; --  &amp; -- \\ 
@@ -5607,7 +5608,7 @@
 
     <function name="pdf" section="probdist" output="asinput">
       <fnargs>
-	<fnarg type="char">c</fnarg>
+	<fnarg type="string">d</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -5620,7 +5621,7 @@
 	<para>
 	  Probability density function calculator. Returns the density
 	  at <argname>x</argname> of the distribution identified by
-	  the code <argname>c</argname>.  See <fncref targ="cdf"/> for
+	  the code <argname>d</argname>.  See <fncref targ="cdf"/> for
 	  details of the required (scalar) arguments.  The
 	  distributions supported by the <lit>pdf</lit> function are
 	  the normal, Student's <math>t</math>, chi-square,
@@ -6062,7 +6063,7 @@
 	<para>
 	  <math>P</math>-value calculator. Returns <equation
 	  status="inline" ascii="P(X > x)" tex="$P(X > x)$"/>, where
-	  the distribution <math>X</math> is determined by the
+	  the distribution of <math>X</math> is determined by the
 	  character <argname>c</argname>. Between the arguments
 	  <argname>c</argname> and <argname>x</argname>, zero or more
 	  additional arguments are required to specify the parameters
