@@ -5751,7 +5751,7 @@ static int localize_series_ref (fncall *call, fn_arg *arg,
     return 0;
 }
 
-static int argval_get_int (double x, int *err)
+static int argval_get_int (fn_param *param, double x, int *err)
 {
     int ret = 0;
     
@@ -5765,6 +5765,11 @@ static int argval_get_int (double x, int *err)
 	} else {	
 	    ret = (int) nx;
 	}
+    }
+
+    if (*err) {
+	gretl_errmsg_sprintf(_("%s: expected an integer but found %g"),
+			     param->name, x);
     }
 
     return ret;
@@ -5784,13 +5789,14 @@ static int real_add_scalar_arg (fn_param *param, double x)
 	    }
 	} else if (param->type == GRETL_TYPE_INT ||
 		   param->type == GRETL_TYPE_OBS) {
-	    x = argval_get_int(x, &err);
+	    x = argval_get_int(param, x, &err);
 	}
 
 	if (!err) {
 	    if ((!na(param->min) && x < param->min) ||
 		(!na(param->max) && x > param->max)) {
-		gretl_errmsg_set(_("Argument value is out of bounds"));
+		gretl_errmsg_sprintf(_("%s: argument value %g is out of bounds"),
+				     param->name, x);
 		err = E_DATA;
 	    } else {
 		err = copy_as_arg(param->name, GRETL_TYPE_DOUBLE, &x);
@@ -5888,7 +5894,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	fprintf(stderr, "arg[%d], param type %s, arg type %s\n",
 		i, gretl_type_get_name(fp->type),
 		gretl_type_get_name(arg->type));
-#endif	
+#endif
 
 	if (gretl_scalar_type(fp->type)) {
 	    if (arg->type == GRETL_TYPE_NONE) {
@@ -5935,7 +5941,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		    maybe_set_arg_const(arg, fp);
 		}
 	    }
-	} 
+	}
 
 	if (!err && arg->type == GRETL_TYPE_USERIES) {
 	    if (fp->type == GRETL_TYPE_LIST) {
@@ -6731,6 +6737,10 @@ static int check_function_args (fncall *call, PRN *prn)
 	    pprintf(prn, _("%s: not enough arguments\n"), u->name);
 	    err = E_ARGS;
 	}
+    }
+
+    if (err) {
+	fprintf(stderr, "CHECK_FUNCTION_ARGS: err = %d\n", err);
     }
 
     return err;
