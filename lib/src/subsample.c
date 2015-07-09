@@ -1829,7 +1829,9 @@ static char *precompute_mask (const char *s, const char *oldmask,
 /* Intended for time series data: trim any missing values
    at the start and end of the current sample range, then
    check the remaining range for missing values and flag
-   an error if any are found.
+   an error if any are found. If @rt1 and @rt2 are non-
+   NULL we record the resulting sample range in them,
+   otherwise we assign in to the t1 and t2 members of @dset.
 */
 
 static int set_contiguous_sample (const int *list,
