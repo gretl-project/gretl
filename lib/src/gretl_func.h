@@ -177,8 +177,10 @@ int create_and_write_function_package (const char *fname,
 				       PRN *prn);
 
 int function_set_package_role (const char *name, fnpkg *pkg,
-			       const char *attr,
-			       gretlopt opt, PRN *prn);
+			       const char *attr, PRN *prn);
+
+int function_ok_for_package_role (const char *name,
+				  int role);
 
 const char *package_role_get_key (int flag);
 

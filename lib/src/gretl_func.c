@@ -2837,26 +2837,19 @@ static int pkg_remove_role (fnpkg *pkg, int role)
 */
 
 int function_set_package_role (const char *name, fnpkg *pkg,
-			       const char *attr, 
-			       gretlopt opt, PRN *prn)
+			       const char *attr, PRN *prn)
 {
     ufunc *u = NULL;
     int role = pkg_key_get_role(attr);
-    int testing = (opt & OPT_T);
     int i, j, err = 0;
 
     if (name == NULL) {
 	/* removing a role */
-	if (!testing) {
-	    pkg_remove_role(pkg, role);
-	}
+	pkg_remove_role(pkg, role);
 	return 0;
     }
 
     if (role == UFUN_ROLE_NONE) {
-	if (testing) {
-	    return 0;
-	}
 	for (i=0; i<pkg->n_priv; i++) {
 	    if (!strcmp(name, pkg->priv[i]->name)) {
 		u = pkg->priv[i];
@@ -2889,7 +2882,7 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 		    pprintf(prn, "%s: no parameters are allowed\n", attr);
 		    err = E_TYPES;
 		}
-		if (!err && !testing) {
+		if (!err) {
 		    u->pkg_role = role;
 		}		
 		return err; /* found */
@@ -2927,7 +2920,7 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 		    }
 		}
 	    }
-	    if (!err && !testing) {
+	    if (!err) {
 		u->pkg_role = role;
 	    }
 	    return err;
@@ -2937,6 +2930,57 @@ int function_set_package_role (const char *name, fnpkg *pkg,
     pprintf(prn, "%s: %s: no such public function\n", attr, name);
 
     return E_DATA;
+}
+
+int function_ok_for_package_role (const char *name,
+				  int role)
+{
+    ufunc *u = NULL;
+    int i, err = 0;
+
+    if (name == NULL || role == UFUN_ROLE_NONE) {
+	return 0;
+    }
+    
+    for (i=0; i<n_ufuns; i++) {
+	if (!strcmp(name, ufuns[i]->name)) { 
+	    u = ufuns[i];
+	    break;
+	}
+    }
+
+    if (u == NULL) {
+	return 0;
+    }
+
+    if (role == UFUN_GUI_PRECHECK) {
+	if (u->rettype != GRETL_TYPE_DOUBLE) {
+	    err = E_TYPES;
+	} else if (u->n_params > 0) {
+	    err = E_TYPES;
+	}
+	return !err; /* found */
+    }
+
+    if (role == UFUN_GUI_MAIN) {
+	if (u->rettype != GRETL_TYPE_BUNDLE && u->rettype != GRETL_TYPE_VOID) {
+	    err = E_TYPES;
+	}
+    } else {
+	/* bundle-print, bundle-plot, etc. */
+	for (i=0; i<u->n_params && !err; i++) {
+	    if (i == 0 && u->params[i].type != GRETL_TYPE_BUNDLE_REF) {
+		err = E_TYPES;
+	    } else if (i == 1 && u->params[i].type != GRETL_TYPE_INT) {
+		err = E_TYPES;
+	    } else if (i > 1 && !fn_param_optional(u, i) &&
+		       na(fn_param_default(u, i))) {
+		err = E_TYPES;
+	    }
+	}
+    }
+
+    return !err;
 }
 
 static int pkg_set_funcs_attribute (fnpkg *pkg, const char *s,
@@ -3105,7 +3149,7 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		for (i=0; pkg_lookups[i].key != NULL; i++) {
 		    key = pkg_lookups[i].key;
 		    if (!strncmp(line, key, strlen(key))) {
-			err = function_set_package_role(p, pkg, key, OPT_NONE, prn);
+			err = function_set_package_role(p, pkg, key, prn);
 			if (!err) {
 			    pprintf(prn, "%s function is %s, OK\n", key, p);
 			}

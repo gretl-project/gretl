@@ -2094,6 +2094,8 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     if (finfo->pkg == NULL) {
 	warnbox(_("Please save your package first"));
 	return;
+    } else if (finfo->modified) {
+	fprintf(stderr, "need to sync package??\n");
     }
 
     finfo->maintree = finfo->modeltree = NULL;
@@ -2133,7 +2135,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     */
 
     for (i=0; i<finfo->n_special; i++) {
-	int err, n_cands = 0;
+	int n_cands = 0;
 	int selected = 0;
 	int role = i + 1;
 
@@ -2151,9 +2153,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 		continue;
 	    }
 	    /* test for validity in this role */
-	    err = function_set_package_role(funname, finfo->pkg,
-					    key, OPT_T, NULL);
-	    if (!err) {
+	    if (function_ok_for_package_role(funname, role)) {
 		combo_box_append_text(combo, funname);
 		if (special != NULL && !selected && !strcmp(special, funname)) {
 		    selected = n_cands + 1;
@@ -2952,7 +2952,6 @@ static int pkg_save_special_functions (function_info *finfo)
 	err = function_set_package_role(finfo->specials[i], 
 					finfo->pkg,
 					key,
-					OPT_NONE,
 					NULL);
     }
 
@@ -3471,6 +3470,17 @@ void revise_function_package (void *p)
 	depopulate_combo_box(GTK_COMBO_BOX(finfo->codesel));
 	func_selector_set_strings(finfo, finfo->codesel);
 	finfo_set_modified(finfo, TRUE);
+	if (finfo->extra != NULL) {
+	    int resp = yes_no_dialog(NULL,
+				     "The \"extra properties\" dialog should be reopened\n"
+				     "to ensure that it is synchronized. Close it now?",
+				     finfo->dlg);
+	    if (resp == GRETL_YES) {
+		if (finfo->extra != NULL) {
+		    gtk_widget_destroy(finfo->extra);
+		}
+	    }
+	}
     }
 
     fprintf(stderr, "finfo->n_pub=%d, finfo->n_priv=%d\n", 

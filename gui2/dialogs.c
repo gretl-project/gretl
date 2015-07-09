@@ -5368,7 +5368,7 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
     return ret;
 }
 
-static void msgbox (const char *msg, int msgtype, GtkWidget *parent)
+void msgbox (const char *msg, int msgtype, GtkWidget *parent)
 {
     const gchar *titles[] = {
 	N_("gretl: error"),
