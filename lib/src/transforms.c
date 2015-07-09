@@ -771,8 +771,8 @@ int laggenr (int v, int lag, DATASET *dset)
 /**
  * laggenr_from_to: 
  * @v: ID number in dataset of source variable.
- * @minlag: minimum lag order.
- * @maxlag: maximum lag order.
+ * @fromlag: start of lag/lead range.
+ * @tolag: end of lag/lead range.
  * @dset: dataset struct.
  * @err: location to receive error code.
  *
@@ -782,20 +782,19 @@ int laggenr (int v, int lag, DATASET *dset)
  * Returns: list of lag variables, or NULL or on error.
  */
 
-int *laggenr_from_to (int v, int minlag, int maxlag, 
+int *laggenr_from_to (int v, int fromlag, int tolag, 
 		      DATASET *dset, int *err)
 {
     int *llist;
     int i, lv, nlags = -1;
-    int p, reverse;
+    int p, count_down = 0;
 
-    if (maxlag <= 0 && minlag <= 0) {
-	/* all leads or contemporaneous value, either order */
-	nlags = abs(abs(minlag) - abs(maxlag)) + 1;
+    if (fromlag > tolag) {
+	nlags = fromlag - tolag + 1;
+	count_down = 1;
     } else {
-	/* "standard" case */
-	nlags = maxlag - minlag + 1;
-    } 
+	nlags = tolag - fromlag + 1;
+    }
 
     if (nlags <= 0) {
 	*err = E_DATA;
@@ -808,11 +807,10 @@ int *laggenr_from_to (int v, int minlag, int maxlag,
 	return NULL;
     }
 
-    reverse = (maxlag < minlag);
-    p = minlag;
+    p = fromlag;
 
     for (i=0; i<nlags; i++) {
-	lv = laggenr(v, p, dset);
+	lv = laggenr(v, -p, dset);
 	if (lv < 0) {
 	    *err = E_DATA;
 	    free(llist);
@@ -820,7 +818,7 @@ int *laggenr_from_to (int v, int minlag, int maxlag,
 	    break;
 	}
 	llist[i+1] = lv;
-	if (reverse) {
+	if (count_down) {
 	    p--;
 	} else {
 	    p++;

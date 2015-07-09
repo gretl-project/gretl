@@ -44,7 +44,7 @@ int list_resample (int *list, DATASET *dset);
 
 int list_laggenr (int **plist, int order, DATASET *dset, gretlopt opt);
 
-int *laggenr_from_to (int v, int minlag, int maxlag, 
+int *laggenr_from_to (int v, int fromlag, int tolag, 
 		      DATASET *dset, int *err);
 
 int list_loggenr (int *list, DATASET *dset);

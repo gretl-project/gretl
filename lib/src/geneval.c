@@ -4268,16 +4268,16 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
 		lv = srclist[i];
 	    }
 	    if (r->t == IVEC) {
-		int minlag = -r->v.ivec[0];
-		int maxlag = -r->v.ivec[1];
+		int fromlag = r->v.ivec[0];
+		int tolag = r->v.ivec[1];
 
 		if (list == NULL) {
-		    list = laggenr_from_to(lv, minlag, maxlag,
+		    list = laggenr_from_to(lv, fromlag, tolag,
 					   p->dset, &p->err);
 		} else {
 		    int *tmp;
 
-		    tmp = laggenr_from_to(lv, minlag, maxlag,
+		    tmp = laggenr_from_to(lv, fromlag, tolag,
 					   p->dset, &p->err);
 		    if (!p->err) {
 			p->err = gretl_list_add_list(&list, tmp);
