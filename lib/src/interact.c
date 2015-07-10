@@ -3013,6 +3013,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(readfile)) {
 	    err = load_user_XML_file(readfile, prn);
 	    break;
+	} else if (cmd->ci == INCLUDE && gfn_is_loaded(readfile)) {
+	    break;
 	}
 	if (!strcmp(readfile, s->runfile)) { 
 	    pprintf(prn, _("Infinite loop detected in script\n"));
