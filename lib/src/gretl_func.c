@@ -973,15 +973,6 @@ int user_function_index_by_name (const char *name,
     return -1;
 }	
 
-/* Apparatus used in the GUI selector for composing a new function
-   package.  We want a list of the names of currently unpackaged
-   functions: we first call function_names_init(), then keep calling
-   next_available_function_name() until it returns %NULL.  The pointer
-   argument @idxp provides a means to grab the "index number"
-   (position in the current functions array) corresponding to the
-   returned function name.
-*/
-
 static int fname_idx;
 
 void function_names_init (void)
@@ -989,7 +980,21 @@ void function_names_init (void)
     fname_idx = 0;
 }
 
-const char *next_available_function_name (int *idxp)
+/* Apparatus used in the GUI selector for composing a new function
+   package, or editing an existing one.  In the first case we want a
+   list of names of currently unpackaged functions (and the @pkg
+   argument should be NULL); in the second the list should include
+   both unpackaged functions and those belonging to the package
+   in question (specified via the @pkg arg).
+
+   The caller should first invoke function_names_init(), then keep
+   calling next_available_function_name() until it returns %NULL. The
+   pointer argument @idxp provides a means to grab the "index number"
+   (position in the current functions array) corresponding to the
+   returned function name.
+*/
+
+const char *next_available_function_name (fnpkg *pkg, int *idxp)
 {
     const char *ret = NULL;
     ufunc *fun;
@@ -1001,7 +1006,7 @@ const char *next_available_function_name (int *idxp)
 
     while (fname_idx < n_ufuns) {
 	fun = ufuns[fname_idx++];
-	if (fun->pkg == NULL) {
+	if (fun->pkg == NULL || fun->pkg == pkg) {
 	    ret = fun->name;
 	    *idxp = fname_idx - 1;
 	    break;
@@ -4462,6 +4467,33 @@ static fnpkg *read_package_file (const char *fname, int *err)
 int function_package_is_loaded (const char *fname)
 {
     return (get_loaded_pkg_by_filename(fname) != NULL);
+}
+
+/** 
+ * function_package_is_loaded:
+ * @gfnname: basename of gfn file, including suffix.
+ *
+ * Returns: 1 if the function package with basename @gfnname is
+ * loaded in memory, otherwise 0.
+ */
+
+int gfn_is_loaded (const char *gfnname)
+{
+    int ret = 0;
+    
+    if (strchr(gfnname, SLASH) == NULL && has_suffix(gfnname, ".gfn")) {
+	/* plain basename of gfn file */
+	gchar *test = g_strdup(gfnname);
+	gchar *p = strrchr(test, '.');
+
+	*p = '\0';
+	if (get_function_package_by_name(test)) {
+	    ret = 1;
+	}
+	g_free(test);
+    }
+
+    return ret;
 }
 
 /** 

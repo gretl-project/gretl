@@ -110,7 +110,8 @@ int user_function_set_debug (const char *name, int debug);
 
 void function_names_init (void);
 
-const char *next_available_function_name (int *idxp);
+const char *next_available_function_name (fnpkg *pkg,
+					  int *idxp);
 
 int gretl_compiling_function (void);
 
@@ -200,6 +201,8 @@ fnpkg *get_function_package_by_filename (const char *fname, int *err);
 int load_function_package_by_filename (const char *fname, PRN *prn);
 
 int function_package_is_loaded (const char *fname);
+
+int gfn_is_loaded (const char *gfnname);
 
 void function_package_unload_by_filename (const char *fname);
 
