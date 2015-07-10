@@ -784,10 +784,9 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
 {
     char *msg = g_strdup_printf(_("Function package %s"), fname);
     const char *opts[] = {
-	N_("Delete package file"),
-	N_("Unload member functions")
+	N_("Unload member functions only"),
+	N_("Unload and delete package file"),
     };
-    int active[] = {1, 1};
     int resp, err = 0;
 
     if (package_being_edited(pkgname)) {
@@ -796,28 +795,24 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
 	return 0;
     }
 
-    resp = checks_only_dialog("gretl", msg, opts, 2, 
-			      active, 0, vwin->main);
+    resp = radio_dialog(NULL, msg, opts, 2, 0, 0, vwin_toplevel(vwin));    
     g_free(msg);
 
-    if (resp < 0 || (active[0] == 0 && active[1] == 0)) {
-	/* canceled, or equivalent */
+    if (resp < 0) {
+	/* canceled */
 	return 0;
     }
 
     /* remove entry from packages.xml, if present */
     unregister_function_package(pkgname);
 
-    if (active[1]) {
-	/* unload the package and its members from memory */
-	function_package_unload_full_by_filename(fname);
-    } else {
+    if (resp == 0) {
 	/* unload the package (only) from memory */
 	function_package_unload_by_filename(fname);
-    }
-
-     if (active[0]) {
-	/* scratch the package file */
+    } else {
+	/* unload the package and its members from memory */
+	function_package_unload_full_by_filename(fname);
+	/* and scratch the package file */
 	err = gretl_remove(fname);
 	if (err) {
 	    file_write_errbox(fname);
@@ -908,10 +903,6 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
     DIR *dir = gretl_opendir(path);
 
     if (dir != NULL) {
-	const char *opts[] = {
-	    N_("Add to functions shown"),
-	    N_("Replace functions shown")
-	};
 	GtkListStore *store;
 	GtkTreeIter iter;
 	int maxlen = 0;
@@ -928,20 +919,28 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 	    warnbox(_("No additional function files were found"));
 	    closedir(dir);
 	    return;
-	} 
-
-	resp = radio_dialog("gretl", "function packages", opts, 2, 
-			    0, 0, vwin->main);
-
-	if (resp < 0) {
-	    /* canceled */
-	    closedir(dir);
-	    return;
-	} else if (resp > 0) {
-	    gtk_list_store_clear(store);
-	    nfn = nfn0 = 0;
 	} else {
-	    nfn = nfn0;
+	    const char *opts[] = {
+		N_("Add to functions shown"),
+		N_("Replace functions shown")
+	    };	    
+	    gchar *msg;
+
+	    msg = g_strdup_printf(_("Found %d function file(s)"), nfn - nfn0);
+	    resp = radio_dialog("gretl", msg, opts, 2, 
+				0, 0, vwin->main);
+	    g_free(msg);
+	    
+	    if (resp < 0) {
+		/* canceled */
+		closedir(dir);
+		return;
+	    } else if (resp > 0) {
+		gtk_list_store_clear(store);
+		nfn = nfn0 = 0;
+	    } else {
+		nfn = nfn0;
+	    }
 	}
 
 	rewinddir(dir);
@@ -954,7 +953,6 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 
 	    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
 	    gtk_tree_selection_selected_foreach(sel, fix_selected_row, vwin);
-	    infobox_printf(_("Found %d function file(s)"), nfn - nfn0);
 	    g_object_set_data(G_OBJECT(vwin->listbox), "nfn", GINT_TO_POINTER(nfn));
 	    if (resp > 0) {
 		g_object_set_data(G_OBJECT(vwin->listbox), "keepdir", GINT_TO_POINTER(1));
@@ -1339,7 +1337,7 @@ static void build_funcfiles_popup (windata_t *vwin)
 			   G_CALLBACK(show_package_doc), 
 			   vwin);
 	}	
-	add_popup_item(_("Delete"), vwin->popup, 
+	add_popup_item(_("Unload/delete..."), vwin->popup, 
 		       G_CALLBACK(browser_del_func), 
 		       vwin);
 	add_popup_item(_("New"), vwin->popup, 
@@ -1494,7 +1492,7 @@ static GretlToolItem files_items[] = {
     { N_("Resources..."),   GTK_STOCK_OPEN,       G_CALLBACK(show_package_resources), BTN_RES },
     { N_("Add to menu"),    GTK_STOCK_ADD,        G_CALLBACK(add_func_to_menu),  BTN_ADD },
     { N_("Help"),           GRETL_STOCK_PDF,      G_CALLBACK(show_package_doc),  BTN_DOC },
-    { N_("Delete"),         GTK_STOCK_DELETE,     G_CALLBACK(browser_del_func),  BTN_DEL },
+    { N_("Unload/delete..."), GTK_STOCK_DELETE,   G_CALLBACK(browser_del_func),  BTN_DEL },
     { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
     { N_("Local machine"),  GTK_STOCK_HOME,       NULL,                          BTN_HOME },
     { N_("New"),            GTK_STOCK_NEW,        G_CALLBACK(new_package_callback), BTN_NEW }
