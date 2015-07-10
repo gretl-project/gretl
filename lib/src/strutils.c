@@ -1878,32 +1878,26 @@ int strings_array_cmp (char **strs1, char **strs2, int n)
  * @n1: number of strings in @strs1.
  * @strs2: second array of strings.
  * @n2: number of strings in @strs2.
- * @added: location to receive array of strings present
+ * @extra: location to receive array of strings present
  * in @strs2 but not in @strs1 (or NULL).
- * @n_added: location to receive bumber of strings in
- * the @added array (or NULL).
- * @dropped: location to receive array of strings present
- * in @strs1 but not in @strs2 (or NULL).
- * @n_dropped: location to receive bumber of strings in
- * the @dropped array.
+ * @n_extra: location to receive bumber of strings in
+ * the @extra array (or NULL).
  *
- * Compares @strs1 and @strs2 and fills out information
- * on the strings added and/or dropped in moving from
- * @strs1 to @strs2.
+ * Fills out @extra with any strings present in @strs2
+ * but not in @strs1.
  * 
  * Returns: 0 on success, non-zero otherwise.
  */
 
 int strings_array_diff (char **strs1, int n1,
 			char **strs2, int n2,
-			char ***added, int *n_added,
-			char ***dropped, int *n_dropped)
+			char ***extra, int *n_extra)
 {
     char **S = NULL;
     int i, j, n, found;
     int err = 0;
 
-    if (added != NULL && n_added != NULL) {
+    if (extra != NULL && n_extra != NULL) {
 	n = 0;
 	for (j=0; j<n2 && !err; j++) {
 	    found = 0;
@@ -1917,31 +1911,10 @@ int strings_array_diff (char **strs1, int n1,
 	    }
 	}
 	if (!err) {
-	    *added = S;
-	    *n_added = n;
+	    *extra = S;
+	    *n_extra = n;
 	}
     }
-
-    S = NULL;
-
-    if (dropped != NULL && n_dropped != NULL) {
-	n = 0;
-	for (i=0; i<n1 && !err; i++) {
-	    found = 0;
-	    for (j=0; j<n2 && !found; j++) {
-		if (!strcmp(strs1[i], strs2[j])) {
-		    found = 1;
-		}
-	    }
-	    if (!found) {
-		err = strings_array_add(&S, &n, strs1[i]);
-	    }
-	}
-	if (!err) {
-	    *dropped = S;
-	    *n_dropped = n;
-	}	
-    }    
 
     return err;
 }

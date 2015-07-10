@@ -142,8 +142,7 @@ int strings_array_cmp (char **strs1, char **strs2, int n);
 
 int strings_array_diff (char **strs1, int n1,
 			char **strs2, int n2,
-			char ***added, int *n_added,
-			char ***dropped, int *n_dropped);
+			char ***extra, int *n_extra);
 
 void strings_array_free (char **strs, int nstrs);
 
