@@ -46,6 +46,8 @@ gboolean edit_specified_package (const char *fname);
 
 void revise_function_package (void *p);
 
+int query_package_editor (GtkWidget *w, const char *pkgname);
+
 int package_editor_exit_check (GtkWidget *w);
 
 #endif /* FNSAVE_H */

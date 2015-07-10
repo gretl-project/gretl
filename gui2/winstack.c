@@ -633,13 +633,15 @@ void vwin_winlist_popup (GtkWidget *src, GdkEvent *event,
 
 static int window_is_package_editor (GtkWidget *w)
 {
-    const gchar *wname = gtk_widget_get_name(w);
+    if (w != NULL) {
+	const gchar *wname = gtk_widget_get_name(w);
 
-    if (wname != NULL && strcmp(wname, "pkg-editor") == 0) {
-	return 1;
-    } else {
-	return 0;
+	if (wname != NULL && strcmp(wname, "pkg-editor") == 0) {
+	    return 1;
+	}
     }
+
+    return 0;
 }
 
 /* On exiting, check for any editing windows with unsaved
@@ -1063,6 +1065,27 @@ GtkWidget *get_window_for_plot (const char *plotfile)
 		    ret = w;
 		}
 	    }	    
+	    list = list->next;
+	}
+	g_list_free(list);
+    }
+
+    return ret;
+}
+
+gboolean package_being_edited (const char *pkgname)
+{
+    gboolean ret = FALSE;
+
+    if (n_listed_windows > 1) {
+	GList *list = gtk_action_group_list_actions(window_group);
+	GtkWidget *w;
+
+	while (list != NULL && !ret) {
+	    w = window_from_action((GtkAction *) list->data);
+	    if (window_is_package_editor(w)) {
+		ret = query_package_editor(w, pkgname);
+	    }
 	    list = list->next;
 	}
 	g_list_free(list);

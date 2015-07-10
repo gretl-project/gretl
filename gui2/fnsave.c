@@ -961,8 +961,31 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
     g_free(title);
 }
 
+/* Callback to launch dialog for adding or removing functions.
+   We need to be careful here: if the package's "extra
+   properties" dialog is open, its content is liable to be
+   out-dated by changes in the public and/or private
+   function lists. Since it would be very complicated and
+   error-prone to adjust this content on the fly, we'll
+   insist that the user closes the extra props dialog
+   first.
+*/
+
 static void add_remove_callback (GtkWidget *w, function_info *finfo)
 {
+    if (finfo->extra != NULL) {
+	const char *msg = N_("Before adding or removing functions, please close\n"
+			     "the \"extra properties\" dialog (after applying any\n"
+			     "changes you want to keep).");
+	
+	msgbox(_(msg), GTK_MESSAGE_INFO, finfo->dlg);
+    }
+
+    if (finfo->extra != NULL) {
+	gtk_window_present(GTK_WINDOW(finfo->extra));
+	return;
+    }
+
     add_remove_functions_dialog(finfo->pubnames, finfo->n_pub,
 				finfo->privnames, finfo->n_priv,
 				finfo->pkg, finfo);
@@ -1255,45 +1278,6 @@ static char **get_function_names (const int *list, int *err)
     return names;
 }
 
-static void delete_invalid_specials (function_info *finfo,
-				     char **dropped,
-				     int n_dropped)
-{
-    int i, j;
-
-    for (i=0; i<finfo->n_special; i++) {
-	if (finfo->specials[i] != NULL) {
-	    for (j=0; j<n_dropped; j++) {
-		if (!strcmp(dropped[j], finfo->specials[i])) {
-		    free(finfo->specials[i]);
-		    finfo->specials[i] = NULL;
-		    break;
-		}
-	    }
-	}
-    }
-}
-
-enum {
-    CMP_NULL,
-    CMP_ALL_NEW,
-    CMP_ALL_GONE,
-    CMP_DIFF
-};
-
-static int pkg_lists_cmp (int n1, int n2)
-{
-    if (n1 == 0 && n2 == 0) {
-	return CMP_NULL;
-    } else if (n1 == 0 && n2 > 0) {
-	return CMP_ALL_NEW;
-    } else if (n1 > 0 && n2 == 0) {
-	return CMP_ALL_GONE;
-    } else {
-	return CMP_DIFF;
-    }
-}
-
 /* Convert from lists of functions by index numbers, @publist and
    @privlist, to arrays of public and private functions by name.
    Record in the @changed location whether or not there's any change
@@ -1301,131 +1285,43 @@ static int pkg_lists_cmp (int n1, int n2)
 */
 
 static int finfo_reset_function_names (function_info *finfo,
-				       const int *publist,
-				       const int *privlist,
+				       const int *pub_ids,
+				       const int *priv_ids,
 				       int *changed)
 {
     char **pubnames = NULL;
     char **privnames = NULL;
-    int npub = publist[0];
-    int npriv = (privlist == NULL)? 0 : privlist[0];
+    int npub = pub_ids[0];
+    int npriv = (priv_ids == NULL)? 0 : priv_ids[0];
     int err = 0;
 
     *changed = 0;
 
-    pubnames = get_function_names(publist, &err);
-
+    pubnames = get_function_names(pub_ids, &err);
     if (!err && npriv > 0) {
-	privnames = get_function_names(privlist, &err);
+	privnames = get_function_names(priv_ids, &err);
     }
-
-    /* The amount of change-info we need here depends on the
-       state of the package editor. If some functions have
-       been selected for "special" package roles, we need to
-       know if they've been dropped. If the "extra properties"
-       dialog is displayed we may wish to revise what it's
-       showing -- in which case we also need to know about
-       any added functions.
-    */
 
     if (!err) {
-	char **add1 = NULL, **drop1 = NULL;
-	char **add2 = NULL, **drop2 = NULL;
-	int n_add1 = 0, n_drop1 = 0;
-	int n_add2 = 0, n_drop2 = 0;
-	int pubcmp, privcmp;
-	int i, have_specials = 0;
-
-	pubcmp = pkg_lists_cmp(finfo->n_pub, npub);
-	privcmp = pkg_lists_cmp(finfo->n_priv, npriv);
-
-	for (i=0; i<finfo->n_special; i++) {
-	    if (finfo->specials[i] != NULL) {
-		have_specials = 1;
-		break;
+	if (npub != finfo->n_pub || npriv != finfo->n_priv) {
+	    /* we know that something has changed */
+	    *changed = 1;
+	} else {
+	    /* we'll have to check the arrays for any changes */
+	    *changed = strings_array_cmp(pubnames, finfo->pubnames, npub);
+	    if (*changed == 0 && npriv > 0) {
+		*changed = strings_array_cmp(privnames, finfo->privnames,
+					     npriv);
 	    }
 	}
-
-	if (finfo->extra != NULL) {
-	    /* we want all detailed info */
-	    if (pubcmp == CMP_DIFF) {
-		err = strings_array_diff(finfo->pubnames, finfo->n_pub,
-					 pubnames, npub,
-					 &add1, &n_add1,
-					 &drop1, &n_drop1);
-		if (!err && (n_add1 > 0 || n_drop1 > 0)) {
-		    *changed = 1;
-		}
-	    }
-	    if (!err && privcmp == CMP_DIFF) {
-		err = strings_array_diff(finfo->privnames, finfo->n_priv,
-					 privnames, npriv,
-					 &add2, &n_add2,
-					 &drop2, &n_drop2);
-		if (!err && (n_add2 > 0 || n_drop2 > 0)) {
-		    *changed = 1;
-		}		
-	    }
-	} else if (have_specials) {
-	    /* just detailed drop info will do */
-	    if (pubcmp == CMP_DIFF) {
-		err = strings_array_diff(finfo->pubnames, finfo->n_pub,
-					 pubnames, npub,
-					 NULL, NULL,
-					 &drop1, &n_drop1);
-		if (!err && n_drop1 > 0) {
-		    *changed = 1;
-		}
-	    }
-	    if (!err && privcmp == CMP_DIFF) {
-		err = strings_array_diff(finfo->privnames, finfo->n_priv,
-					 privnames, npriv,
-					 NULL, NULL,
-					 &drop2, &n_drop2);
-		if (!err && n_drop2 > 0) {
-		    *changed = 1;
-		}
-	    }
-	}
-
-	if (!err && !*changed && finfo->extra == NULL) {
-	    /* there could still be uncaught changes: do a basic check */
-	    if (npub != finfo->n_pub || npriv != finfo->n_priv) {
-		/* we know that something has changed */
-		*changed = 1;
-	    } else {
-		/* we'll have to check for any changes */
-		*changed = strings_array_cmp(pubnames, finfo->pubnames, npub);
-		if (!*changed && npriv > 0) {
-		    *changed = strings_array_cmp(privnames, finfo->privnames,
-						 npriv);
-		}
-	    }
-	}
-
-	if (n_drop1 > 0) {
-	    delete_invalid_specials(finfo, drop1, n_drop1);
-	}
-
-	if (n_drop2 > 0) {
-	    /* some private funcs dropped */
-	    delete_invalid_specials(finfo, drop2, n_drop2);
-	} else if (privcmp == CMP_ALL_GONE) {
-	    /* all private funcs dropped */
-	    delete_invalid_specials(finfo, finfo->privnames, finfo->n_priv);
-	}
-
-	/* FIXME -- finfo->extra: make more use of this info */
-	strings_array_free(add1, n_add1);
-	strings_array_free(add2, n_add2);
-	strings_array_free(drop1, n_drop1);
-	strings_array_free(drop2, n_drop2);
     }
 
-    if (!*changed) {
+    if (*changed == 0) {
+	/* trash the new function-name arrays */
 	strings_array_free(pubnames, npub);
 	strings_array_free(privnames, npriv);
     } else if (!err) {
+	/* replace the old function-name arrays */
 	strings_array_free(finfo->pubnames, finfo->n_pub);
 	finfo->pubnames = pubnames;
 	finfo->n_pub = npub;
@@ -2061,135 +1957,49 @@ static int process_special_functions (function_info *finfo)
 #define must_be_private(r) (r == UFUN_GUI_PRECHECK)
 #define must_be_public(r) (r != UFUN_GUI_PRECHECK)
 
-#if 0 /* not yet */
+/* After adding or deleting functions, check that any
+   selected "specials" are still valid: the selected
+   funtion has not been removed from the package, nor
+   has its public/private status been changed such as
+   to disqualify it from playing the given role. If a
+   selection has been invalidated, null it out.
+*/
 
-static int maybe_add_new_funcs (GtkComboBox *cb, int role,
-				char **add1, int n_add1,
-				char **add2, int n_add2)
+static void verify_selected_specials (function_info *finfo)
 {
-    int i, ret = 0;
-    
-    if (!must_be_private(role)) {
-	for (i=0; i<n_add1; i++) {
-	    if (function_ok_for_package_role(add1[i], role)) {
-		combo_box_append_text(cb, add1[i]);
-		ret++;
-	    }
-	}
-    }
+    const char *seek;
+    int i, j, found, role;
 
-    if (!must_be_public(role)) {
-	for (i=0; i<n_add2; i++) {
-	    if (function_ok_for_package_role(add2[i], role)) {
-		combo_box_append_text(cb, add2[i]);
-		ret++;
-	    }
-	}
-    }
-
-    return ret;
-}
-
-static int function_is_gone (char *fun, char **S1, int n1,
-			     char **S2, int n2)
-{
-    int i;
-
-    /* @fun is "gone" if it appears in either of the
-       dropped-names lists, @S1 or @S2 -- or maybe not:
-       what if it's shifted from public to private or
-       vice versa?!
-    */
-
-    for (i=0; i<n1; i++) {
-	if (!strcmp(fun, S1[i])) {
-	    return 1;
-	}
-    }
-
-    for (i=0; i<n2; i++) {
-	if (!strcmp(fun, S2[i])) {
-	    return 1;
-	}
-    }    
-
-    return 0;
-}
-
-static int maybe_revise_special_functions (function_info *finfo,
-					   char **add1, int n_add1,
-					   char **add2, int n_add2,
-					   char **drop1, int n_drop1,
-					   char **drop2, int n_drop2)
-{
-    GtkWidget **c_array;
-    gchar *fun, *active;
-    int i, err = 0;
-
-    c_array = g_object_get_data(G_OBJECT(finfo->extra), "combo-array");
-
-    /* For each active special function slot, check to see if
-       its content is still valid given a change in the functions 
-       present in the package in memory.
-    */
-
-    for (i=0; i<finfo->n_special && !err; i++) {
-	GtkComboBox *cb = GTK_COMBO_BOX(c_array[i]);
-	int role = i + 1;
-	int n_ok = 0;
-	
-	if (gtk_widget_is_sensitive(c_array[i])) {
-	    /* previously selectable */
-	    GtkTreeModel *model = gtk_combo_box_get_model(cb);
-	    GtkTreeIter iter;
-	    int idx, selidx = -1;
-
-	    /* start by getting active text, if any, so we can
-	       re-establish it in case other funcs are removed
-	       but the prior selection is still OK
-	    */
-	    active = combo_box_get_active_text(cb);
-
-	    if (gtk_tree_model_get_iter_first(model, &iter)) {
-		/* start from row 1 and remove any gone functions */
-		idx = 1;
-		while (1) {
-		    if (gtk_tree_model_iter_next(model, &iter)) {
-			gtk_tree_model_get(model, &iter, 0, &fun, -1);
-			if (function_is_gone(fun, drop1, n_drop1, drop2, n_drop2)) {
-			    combo_box_remove(cb, idx);
-			} else {
-			    if (active != NULL && !strcmp(fun, active)) {
-				selidx = idx;
-			    }
-			    idx++;
-			}
-			g_free(fun);
-		    } else {
-			break;
+    for (i=0; i<finfo->n_special; i++) {
+	role = i + 1;
+	if (finfo->specials[i] != NULL) {
+	    /* a selection was made */
+	    seek = finfo->specials[i];
+	    found = 0;
+	    if (!must_be_private(role)) {
+		/* try the public interface list */
+		for (j=0; j<finfo->n_pub && !found; j++) {
+		    if (!strcmp(seek, finfo->pubnames[j])) {
+			found = 1;
 		    }
 		}
 	    }
-
-	    g_free(active);
-
-	    n_ok = idx - 1; /* is this right? */
-
-	    if (selidx < 0) {
-		selidx = 0;
+	    if (!found && !must_be_public(role)) {
+		/* try the private interface list */
+		for (j=0; j<finfo->n_priv && !found; j++) {
+		    if (!strcmp(seek, finfo->privnames[j])) {
+			found = 1;
+		    }
+		}
 	    }
-
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(c_array[i]), selidx);
+	    if (!found) {
+		/* gone bad */
+		free(finfo->specials[i]);
+		finfo->specials[i] = NULL;
+	    }
 	}
-
-	n_ok += maybe_add_new_funcs(cb, role, add1, n_add1, add2, n_add2);
-	gtk_widget_set_sensitive(c_array[i], n_ok > 0);
     }
-
-    return 0;
 }
-
-#endif
 
 static int process_data_file_names (function_info *finfo)
 {
@@ -2242,33 +2052,51 @@ static int process_data_file_names (function_info *finfo)
     return changed;
 }
 
-static void extra_properties_callback (GtkWidget *w, function_info *finfo)
+static void extra_properties_apply (function_info *finfo,
+				    int pgnum)
 {
-    GtkWidget *notebook;
-    gint page;
-    int changed;
+    int do_all = (pgnum < 0);
+    int changed = 0;
 
-    notebook = g_object_get_data(G_OBJECT(finfo->extra), "book");
-    page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+    if (do_all || pgnum == 0) {
+	changed += process_special_functions(finfo);
+    }
     
-    if (page == 0) {
-	changed = process_special_functions(finfo);
-    } else if (page == 1) {
+    if (do_all || pgnum == 1) {
 	int focus_label = 0;
 
-	changed = process_menu_attachment(finfo, &focus_label);
+	changed += process_menu_attachment(finfo, &focus_label);
 	if (focus_label) {
 	    GtkWidget *w = g_object_get_data(G_OBJECT(finfo->extra), "label-entry");
 
 	    gtk_widget_grab_focus(w);
 	}
-    } else {
-	changed = process_data_file_names(finfo);
+    }
+
+    if (do_all || pgnum == 2) {
+	changed += process_data_file_names(finfo);
     }
 
     if (changed) {
 	finfo_set_modified(finfo, TRUE);
     }    
+}
+
+static void extra_properties_callback (GtkWidget *w, function_info *finfo)
+{
+    GtkWidget *notebook;
+    gint pgnum;
+
+    notebook = g_object_get_data(G_OBJECT(finfo->extra), "book");
+    pgnum = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+
+    extra_properties_apply(finfo, pgnum);
+}
+
+static void apply_and_quit_callback (GtkWidget *w, function_info *finfo)
+{
+    extra_properties_apply(finfo, -1);
+    gtk_widget_destroy(finfo->extra);
 }
 
 /* Prevent the user from assigning a given function to more
@@ -2352,8 +2180,6 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     if (finfo->pkg == NULL) {
 	warnbox(_("Please save your package first"));
 	return;
-    } else if (finfo->modified) {
-	fprintf(stderr, "need to sync package??\n");
     }
 
     finfo->maintree = finfo->modeltree = NULL;
@@ -2471,7 +2297,11 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(extra_properties_callback), finfo);
     gtk_widget_grab_default(tmp);
-    gtk_widget_show(tmp);
+
+    /* OK button */
+    tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+                     G_CALLBACK(apply_and_quit_callback), finfo);
 
     /* Close button */
     tmp = close_button(hbox);
@@ -2499,6 +2329,25 @@ int package_editor_exit_check (GtkWidget *w)
     if (finfo != NULL && finfo->modified) {
 	gtk_window_present(GTK_WINDOW(w));
 	return query_save_package(w, NULL, finfo);
+    }
+
+    return FALSE;
+}
+
+/* return non-zero if @w is the window of an editor working
+   on @pkgname
+*/
+
+int query_package_editor (GtkWidget *w, const char *pkgname)
+{
+    function_info *finfo;
+
+    finfo = g_object_get_data(G_OBJECT(w), "finfo");
+    
+    if (finfo != NULL && finfo->pkg != NULL) {
+	const char *myname = function_package_get_name(finfo->pkg);
+	
+	return strcmp(pkgname, myname) == 0;
     }
 
     return FALSE;
@@ -3706,46 +3555,47 @@ void edit_new_function_package (void)
 void revise_function_package (void *p)
 {
     function_info *finfo = p;
-    int *publist = NULL;
-    int *privlist = NULL;
+    int *pub_ids = NULL;
+    int *priv_ids = NULL;
     int changed = 0;
     int err = 0;
 
-    err = get_lists_from_selector(&publist, &privlist);
+    err = get_lists_from_selector(&pub_ids, &priv_ids);
     if (err) {
 	return;
     }
 
 #if PKG_DEBUG
-    printlist(publist, "new publist");
-    printlist(privlist, "new privlist");
+    printlist(pub_ids, "new pub_ids");
+    printlist(priv_ids, "new priv_ids");
 #endif
 
-    err = finfo_reset_function_names(finfo, publist, privlist,
+    fprintf(stderr, "original: finfo->n_pub=%d, finfo->n_priv=%d\n", 
+	    finfo->n_pub, finfo->n_priv);
+
+    err = finfo_reset_function_names(finfo, pub_ids, priv_ids,
 				     &changed);
+
+    fprintf(stderr, "revised: finfo->n_pub=%d, finfo->n_priv=%d\n", 
+	    finfo->n_pub, finfo->n_priv);
 
     if (!err && changed) {
 	depopulate_combo_box(GTK_COMBO_BOX(finfo->codesel));
 	func_selector_set_strings(finfo, finfo->codesel);
-	finfo_set_modified(finfo, TRUE);
-	if (finfo->extra != NULL) {
-	    int resp = yes_no_dialog(NULL,
-				     "The \"extra properties\" dialog should be reopened\n"
-				     "to ensure that it is synchronized. Close it now?",
-				     finfo->dlg);
-	    if (resp == GRETL_YES) {
-		if (finfo->extra != NULL) {
-		    gtk_widget_destroy(finfo->extra);
-		}
-	    }
+	verify_selected_specials(finfo);
+	if (finfo->pkg != NULL) {
+	    /* sync with gretl_func.c */
+	    function_package_connect_funcs(finfo->pkg, 
+					   finfo->pubnames,
+					   finfo->n_pub,
+					   finfo->privnames,
+					   finfo->n_priv);
 	}
+	finfo_set_modified(finfo, TRUE);
     }
 
-    fprintf(stderr, "finfo->n_pub=%d, finfo->n_priv=%d\n", 
-	    finfo->n_pub, finfo->n_priv);
-
-    free(publist);
-    free(privlist);
+    free(pub_ids);
+    free(priv_ids);
 }
 
 static void finfo_set_menuwin (function_info *finfo)

@@ -282,7 +282,7 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
 static gint listvar_flagcol_click (GtkWidget *widget, GdkEventButton *event, 
 				   gpointer data);
 static int list_show_var (int v, int ci, int show_lags);
-static void functions_list (selector *sr);
+static void available_functions_list (selector *sr, void *p);
 static void primary_rhs_varlist (selector *sr);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static void call_iters_dialog (GtkWidget *w, GtkWidget *combo);
@@ -6673,7 +6673,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     if (FNPKG_CODE(ci)) {
-	functions_list(sr);
+	available_functions_list(sr, NULL);
     } else {
 	for (i=0; i<dataset->v; i++) {
 	    if (i == 1 && (MODEL_CODE(ci) || VEC_CODE(ci))) {
@@ -6920,7 +6920,7 @@ static int add_omit_list (gpointer p, selector *sr)
     return nvars;
 }
 
-static void functions_list (selector *sr)
+static void available_functions_list (selector *sr, void *p)
 {
     GtkListStore *store;
     GtkTreeIter iter;
@@ -6933,7 +6933,7 @@ static void functions_list (selector *sr)
 
     function_names_init();
     
-    while ((fnname = next_available_function_name(&idx)) != NULL) {
+    while ((fnname = next_available_function_name(p, &idx)) != NULL) {
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter,
 			   COL_ID, idx, COL_LAG, 0,
@@ -7504,59 +7504,49 @@ void add_remove_functions_dialog (char **pubnames, int npub,
 			  pkg_add_remove_callback); 
 
     if (sr != NULL) {
-	GtkWidget *w;
 	GtkTreeModel *model;
 	GtkListStore *store;
-	GtkListStore *lstore = NULL;
-	GtkTreeIter iter, liter;
-	char **names;
-	int i, j, n, idx;
+	GtkTreeIter iter;
+	int i, idx;
 
 	sr->data = finfo;
 
-	if (pkg != NULL) {
-	    /* some functions will be attached to pkg, and we'll
-	       want to ad these on the left, below
-	    */
-	    model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars));
-	    lstore = GTK_LIST_STORE(model);
-	    tree_model_get_iter_last(model, &liter);
-	}
-
-	for (j=0; j<2; j++) {
-	    if (j == 0) {
-		/* public functions */
-		w = sr->rvars1;
-		names = pubnames;
-		n = npub;
-	    } else {
-		/* private functions */
-		w = sr->rvars2;
-		names = privnames;
-		n = npriv;
-	    }
-
-	    if (n == 0) continue;
-
-	    model = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
+	/* put current @pubnames into top right list box */
+	if (npub > 0) {
+	    model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars1));
 	    store = GTK_LIST_STORE(model);
+	    gtk_list_store_clear(store);
 	    gtk_tree_model_get_iter_first(model, &iter);
-
-	    for (i=0; i<n; i++) {
-		idx = user_function_index_by_name(names[i], pkg);
-		if (idx < 0) continue;
-		gtk_list_store_append(store, &iter);
-		gtk_list_store_set(store, &iter,
-				   COL_ID, idx, COL_LAG, 0,
-				   COL_NAME, names[i], -1);
-		if (lstore != NULL) {
-		    gtk_list_store_append(lstore, &liter);
-		    gtk_list_store_set(lstore, &liter,
+	    for (i=0; i<npub; i++) {
+		idx = user_function_index_by_name(pubnames[i], pkg);
+		if (idx >= 0) {
+		    gtk_list_store_append(store, &iter);
+		    gtk_list_store_set(store, &iter,
 				       COL_ID, idx, COL_LAG, 0,
-				       COL_NAME, names[i], -1);
+				       COL_NAME, pubnames[i], -1);
 		}
 	    }
 	}
+
+	/* put current @privnames into lower right box */
+	if (npriv > 0) {
+	    model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars2));
+	    store = GTK_LIST_STORE(model);
+	    gtk_list_store_clear(store);
+	    gtk_tree_model_get_iter_first(model, &iter);
+	    for (i=0; i<npriv; i++) {
+		idx = user_function_index_by_name(privnames[i], pkg);
+		if (idx >= 0) {
+		    gtk_list_store_append(store, &iter);
+		    gtk_list_store_set(store, &iter,
+				       COL_ID, idx, COL_LAG, 0,
+				       COL_NAME, privnames[i], -1);
+		}
+	    }
+	}
+
+	/* put names of available functions on the left */
+	available_functions_list(sr, pkg);
 	
 	selector_set_blocking(sr, 1);
     }    

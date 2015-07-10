@@ -49,6 +49,8 @@ GtkWidget *get_window_for_data (const gpointer data);
 
 GtkWidget *get_window_for_plot (const char *plotfile);
 
+gboolean package_being_edited (const char *pkgname);
+
 int get_script_output_number (void);
 
 windata_t *get_unique_output_viewer (void);
