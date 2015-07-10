@@ -947,11 +947,15 @@ const char *user_function_name_by_index (int i)
 /**
  * user_function_index_by_name:
  * @name: function name.
- * @pkg: reference function package.
+ * @pkg: reference function package, or NULL.
+ *
+ * Looks up the 0-based index of the named function
+ * in the current array of user-functions. If @pkg is 
+ * non-NULL the search for @name is confined to functions
+ * that belong to @pkg; otherwise the index of the first
+ * match is returned.
  * 
- * Returns: the 0-based position of a function of name
- * @name belonging to package @pkg, or -1 if there is
- * no such function.
+ * Returns: 0-based index or -1 on failure.
  */
 
 int user_function_index_by_name (const char *name,
@@ -960,7 +964,7 @@ int user_function_index_by_name (const char *name,
     int i;
 
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkg == pkg && 
+	if ((pkg == NULL || ufuns[i]->pkg == pkg) && 
 	    !strcmp(name, ufuns[i]->name)) {
 	    return i;
 	}
@@ -2830,12 +2834,6 @@ static int pkg_remove_role (fnpkg *pkg, int role)
     return E_DATA;
 }
 
-/* below: if opt & OPT_T we're just testing (return 0 if 
-   everything is OK). Otherwise if all is OK we actually 
-   hook up the function given by @name to the role
-   given by @attr in @pkg.
-*/
-
 int function_set_package_role (const char *name, fnpkg *pkg,
 			       const char *attr, PRN *prn)
 {
@@ -2872,6 +2870,7 @@ int function_set_package_role (const char *name, fnpkg *pkg,
     */
 
     if (role == UFUN_GUI_PRECHECK) {
+	/* the pre-checker must be a private function */
 	for (i=0; i<pkg->n_priv; i++) {
 	    if (!strcmp(name, pkg->priv[i]->name)) {
 		u = pkg->priv[i];
@@ -2894,6 +2893,7 @@ int function_set_package_role (const char *name, fnpkg *pkg,
     }
 
     for (i=0; i<pkg->n_pub; i++) {
+	/* all other special-role functions must be public */
 	if (!strcmp(name, pkg->pub[i]->name)) {
 	    u = pkg->pub[i];
 	    if (role == UFUN_GUI_MAIN) {
@@ -2903,6 +2903,11 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 		}
 	    } else {
 		/* bundle-print, bundle-plot, etc. */
+		if (u->n_params == 0) {
+		    pprintf(prn, "%s: must take a %s argument\n", attr,
+			    gretl_type_get_name(GRETL_TYPE_BUNDLE_REF));
+		    err = E_TYPES;
+		}
 		for (j=0; j<u->n_params && !err; j++) {
 		    if (j == 0 && u->params[j].type != GRETL_TYPE_BUNDLE_REF) {
 			pprintf(prn, "%s: first param type must be %s\n",
@@ -2931,6 +2936,11 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 
     return E_DATA;
 }
+
+/* called from the GUI package editor to check whether
+   a given function of name @name can be shown as a 
+   candidate for a specified GUI-special @role
+*/
 
 int function_ok_for_package_role (const char *name,
 				  int role)
@@ -2968,6 +2978,9 @@ int function_ok_for_package_role (const char *name,
 	}
     } else {
 	/* bundle-print, bundle-plot, etc. */
+	if (u->n_params == 0) {
+	    err = E_TYPES;
+	}
 	for (i=0; i<u->n_params && !err; i++) {
 	    if (i == 0 && u->params[i].type != GRETL_TYPE_BUNDLE_REF) {
 		err = E_TYPES;
