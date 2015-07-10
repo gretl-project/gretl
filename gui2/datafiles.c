@@ -790,6 +790,12 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
     int active[] = {1, 1};
     int resp, err = 0;
 
+    if (package_being_edited(pkgname)) {
+	warnbox_printf(_("%s: please close this object's window first"),
+		       pkgname);
+	return 0;
+    }
+
     resp = checks_only_dialog("gretl", msg, opts, 2, 
 			      active, 0, vwin->main);
     g_free(msg);
@@ -1937,33 +1943,32 @@ static int fn_file_is_duplicate (const char *fname,
 				 GtkListStore *store,
 				 int imax)
 {
-    GtkTreeModel *model;
+    GtkTreeModel *model = GTK_TREE_MODEL(store);
     GtkTreeIter iter;
-    gchar *fname_i;
-    gchar *version_i;
-    int i, n, ret = 0;
+    int ret = 0;
 
-    model = GTK_TREE_MODEL(store);
+    if (imax > 0 && gtk_tree_model_get_iter_first(model, &iter)) {
+	gchar *fname_i;
+	gchar *version_i;
+	int i, n;
+	
+	n = strlen(fname) - 4;
 
-    if (imax == 0 || !gtk_tree_model_get_iter_first(model, &iter)) {
-	return 0;
-    }
-
-    n = strlen(fname) - 4;
-
-    for (i=0; i<imax; i++) {
-	gtk_tree_model_get(model, &iter, 
-			   0, &fname_i, 
-			   1, &version_i,
-			   -1);
-	if (strncmp(fname, fname_i, n) == 0 &&
-	    strcmp(version, version_i) == 0) {
-	    ret = 1;
-	} 
-	g_free(fname_i);
-	g_free(version_i);
-	if (ret || !gtk_tree_model_iter_next(model, &iter)) {
-	    break;
+	for (i=0; i<imax; i++) {
+	    gtk_tree_model_get(model, &iter, 
+			       0, &fname_i, 
+			       1, &version_i,
+			       -1);
+	    if (strncmp(fname, fname_i, n) == 0 &&
+		strcmp(version, version_i) == 0) {
+		fprintf(stderr, "%s %s duplicated (i=%d)\n", fname, version, i);
+		ret = 1;
+	    } 
+	    g_free(fname_i);
+	    g_free(version_i);
+	    if (ret || !gtk_tree_model_iter_next(model, &iter)) {
+		break;
+	    }
 	}
     }
 
@@ -2034,7 +2039,7 @@ static int ok_gfn_path (const char *fullname,
 		    flags |= PKG_ATTR_DOC;
 		}
 	    }
-	    
+
 	    gtk_list_store_append(store, iter);
 	    gtk_list_store_set(store, iter, 
 			       0, fname, 
