@@ -1255,6 +1255,45 @@ static char **get_function_names (const int *list, int *err)
     return names;
 }
 
+static void delete_invalid_specials (function_info *finfo,
+				     char **dropped,
+				     int n_dropped)
+{
+    int i, j;
+
+    for (i=0; i<finfo->n_special; i++) {
+	if (finfo->specials[i] != NULL) {
+	    for (j=0; j<n_dropped; j++) {
+		if (!strcmp(dropped[j], finfo->specials[i])) {
+		    free(finfo->specials[i]);
+		    finfo->specials[i] = NULL;
+		    break;
+		}
+	    }
+	}
+    }
+}
+
+enum {
+    CMP_NULL,
+    CMP_ALL_NEW,
+    CMP_ALL_GONE,
+    CMP_DIFF
+};
+
+static int pkg_lists_cmp (int n1, int n2)
+{
+    if (n1 == 0 && n2 == 0) {
+	return CMP_NULL;
+    } else if (n1 == 0 && n2 > 0) {
+	return CMP_ALL_NEW;
+    } else if (n1 > 0 && n2 == 0) {
+	return CMP_ALL_GONE;
+    } else {
+	return CMP_DIFF;
+    }
+}
+
 /* Convert from lists of functions by index numbers, @publist and
    @privlist, to arrays of public and private functions by name.
    Record in the @changed location whether or not there's any change
@@ -1280,18 +1319,107 @@ static int finfo_reset_function_names (function_info *finfo,
 	privnames = get_function_names(privlist, &err);
     }
 
+    /* The amount of change-info we need here depends on the
+       state of the package editor. If some functions have
+       been selected for "special" package roles, we need to
+       know if they've been dropped. If the "extra properties"
+       dialog is displayed we may wish to revise what it's
+       showing -- in which case we also need to know about
+       any added functions.
+    */
+
     if (!err) {
-	if (npub != finfo->n_pub || npriv != finfo->n_priv) {
-	    /* we know that something has changed */
-	    *changed = 1;
-	} else {
-	    /* we'll have to check for any changes */
-	    *changed = strings_array_cmp(pubnames, finfo->pubnames, npub);
-	    if (!*changed && npriv > 0) {
-		*changed = strings_array_cmp(privnames, finfo->privnames,
-					     npriv);
+	char **add1 = NULL, **drop1 = NULL;
+	char **add2 = NULL, **drop2 = NULL;
+	int n_add1 = 0, n_drop1 = 0;
+	int n_add2 = 0, n_drop2 = 0;
+	int pubcmp, privcmp;
+	int i, have_specials = 0;
+
+	pubcmp = pkg_lists_cmp(finfo->n_pub, npub);
+	privcmp = pkg_lists_cmp(finfo->n_priv, npriv);
+
+	for (i=0; i<finfo->n_special; i++) {
+	    if (finfo->specials[i] != NULL) {
+		have_specials = 1;
+		break;
 	    }
 	}
+
+	if (finfo->extra != NULL) {
+	    /* we want all detailed info */
+	    if (pubcmp == CMP_DIFF) {
+		err = strings_array_diff(finfo->pubnames, finfo->n_pub,
+					 pubnames, npub,
+					 &add1, &n_add1,
+					 &drop1, &n_drop1);
+		if (!err && (n_add1 > 0 || n_drop1 > 0)) {
+		    *changed = 1;
+		}
+	    }
+	    if (!err && privcmp == CMP_DIFF) {
+		err = strings_array_diff(finfo->privnames, finfo->n_priv,
+					 privnames, npriv,
+					 &add2, &n_add2,
+					 &drop2, &n_drop2);
+		if (!err && (n_add2 > 0 || n_drop2 > 0)) {
+		    *changed = 1;
+		}		
+	    }
+	} else if (have_specials) {
+	    /* just detailed drop info will do */
+	    if (pubcmp == CMP_DIFF) {
+		err = strings_array_diff(finfo->pubnames, finfo->n_pub,
+					 pubnames, npub,
+					 NULL, NULL,
+					 &drop1, &n_drop1);
+		if (!err && n_drop1 > 0) {
+		    *changed = 1;
+		}
+	    }
+	    if (!err && privcmp == CMP_DIFF) {
+		err = strings_array_diff(finfo->privnames, finfo->n_priv,
+					 privnames, npriv,
+					 NULL, NULL,
+					 &drop2, &n_drop2);
+		if (!err && n_drop2 > 0) {
+		    *changed = 1;
+		}
+	    }
+	}
+
+	if (!err && !*changed && finfo->extra == NULL) {
+	    /* there could still be uncaught changes: do a basic check */
+	    if (npub != finfo->n_pub || npriv != finfo->n_priv) {
+		/* we know that something has changed */
+		*changed = 1;
+	    } else {
+		/* we'll have to check for any changes */
+		*changed = strings_array_cmp(pubnames, finfo->pubnames, npub);
+		if (!*changed && npriv > 0) {
+		    *changed = strings_array_cmp(privnames, finfo->privnames,
+						 npriv);
+		}
+	    }
+	}
+
+	if (n_drop1 > 0) {
+	    delete_invalid_specials(finfo, drop1, n_drop1);
+	}
+
+	if (n_drop2 > 0) {
+	    /* some private funcs dropped */
+	    delete_invalid_specials(finfo, drop2, n_drop2);
+	} else if (privcmp == CMP_ALL_GONE) {
+	    /* all private funcs dropped */
+	    delete_invalid_specials(finfo, finfo->privnames, finfo->n_priv);
+	}
+
+	/* FIXME -- finfo->extra: make more use of this info */
+	strings_array_free(add1, n_add1);
+	strings_array_free(add2, n_add2);
+	strings_array_free(drop1, n_drop1);
+	strings_array_free(drop2, n_drop2);
     }
 
     if (!*changed) {
@@ -1930,6 +2058,139 @@ static int process_special_functions (function_info *finfo)
     return n_changed;
 }
 
+#define must_be_private(r) (r == UFUN_GUI_PRECHECK)
+#define must_be_public(r) (r != UFUN_GUI_PRECHECK)
+
+#if 0 /* not yet */
+
+static int maybe_add_new_funcs (GtkComboBox *cb, int role,
+				char **add1, int n_add1,
+				char **add2, int n_add2)
+{
+    int i, ret = 0;
+    
+    if (!must_be_private(role)) {
+	for (i=0; i<n_add1; i++) {
+	    if (function_ok_for_package_role(add1[i], role)) {
+		combo_box_append_text(cb, add1[i]);
+		ret++;
+	    }
+	}
+    }
+
+    if (!must_be_public(role)) {
+	for (i=0; i<n_add2; i++) {
+	    if (function_ok_for_package_role(add2[i], role)) {
+		combo_box_append_text(cb, add2[i]);
+		ret++;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+static int function_is_gone (char *fun, char **S1, int n1,
+			     char **S2, int n2)
+{
+    int i;
+
+    /* @fun is "gone" if it appears in either of the
+       dropped-names lists, @S1 or @S2 -- or maybe not:
+       what if it's shifted from public to private or
+       vice versa?!
+    */
+
+    for (i=0; i<n1; i++) {
+	if (!strcmp(fun, S1[i])) {
+	    return 1;
+	}
+    }
+
+    for (i=0; i<n2; i++) {
+	if (!strcmp(fun, S2[i])) {
+	    return 1;
+	}
+    }    
+
+    return 0;
+}
+
+static int maybe_revise_special_functions (function_info *finfo,
+					   char **add1, int n_add1,
+					   char **add2, int n_add2,
+					   char **drop1, int n_drop1,
+					   char **drop2, int n_drop2)
+{
+    GtkWidget **c_array;
+    gchar *fun, *active;
+    int i, err = 0;
+
+    c_array = g_object_get_data(G_OBJECT(finfo->extra), "combo-array");
+
+    /* For each active special function slot, check to see if
+       its content is still valid given a change in the functions 
+       present in the package in memory.
+    */
+
+    for (i=0; i<finfo->n_special && !err; i++) {
+	GtkComboBox *cb = GTK_COMBO_BOX(c_array[i]);
+	int role = i + 1;
+	int n_ok = 0;
+	
+	if (gtk_widget_is_sensitive(c_array[i])) {
+	    /* previously selectable */
+	    GtkTreeModel *model = gtk_combo_box_get_model(cb);
+	    GtkTreeIter iter;
+	    int idx, selidx = -1;
+
+	    /* start by getting active text, if any, so we can
+	       re-establish it in case other funcs are removed
+	       but the prior selection is still OK
+	    */
+	    active = combo_box_get_active_text(cb);
+
+	    if (gtk_tree_model_get_iter_first(model, &iter)) {
+		/* start from row 1 and remove any gone functions */
+		idx = 1;
+		while (1) {
+		    if (gtk_tree_model_iter_next(model, &iter)) {
+			gtk_tree_model_get(model, &iter, 0, &fun, -1);
+			if (function_is_gone(fun, drop1, n_drop1, drop2, n_drop2)) {
+			    combo_box_remove(cb, idx);
+			} else {
+			    if (active != NULL && !strcmp(fun, active)) {
+				selidx = idx;
+			    }
+			    idx++;
+			}
+			g_free(fun);
+		    } else {
+			break;
+		    }
+		}
+	    }
+
+	    g_free(active);
+
+	    n_ok = idx - 1; /* is this right? */
+
+	    if (selidx < 0) {
+		selidx = 0;
+	    }
+
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(c_array[i]), selidx);
+	}
+
+	n_ok += maybe_add_new_funcs(cb, role, add1, n_add1, add2, n_add2);
+	gtk_widget_set_sensitive(c_array[i], n_ok > 0);
+    }
+
+    return 0;
+}
+
+#endif
+
 static int process_data_file_names (function_info *finfo)
 {
     gchar *fname;
@@ -2065,9 +2326,6 @@ static void unref_trees (GtkWidget *w, function_info *finfo)
     g_object_unref(G_OBJECT(finfo->maintree));
     g_object_unref(G_OBJECT(finfo->modeltree));
 }
-
-#define must_be_private(r) (r == UFUN_GUI_PRECHECK)
-#define must_be_public(r) (r != UFUN_GUI_PRECHECK)
 
 /* The following function supports two "notebook" tabs: one allows the
    user to select functions in the package for the various "special"

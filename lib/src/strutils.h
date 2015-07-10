@@ -140,6 +140,11 @@ int strings_array_sort (char ***pS, int *n, gretlopt opt);
 
 int strings_array_cmp (char **strs1, char **strs2, int n);
 
+int strings_array_diff (char **strs1, int n1,
+			char **strs2, int n2,
+			char ***added, int *n_added,
+			char ***dropped, int *n_dropped);
+
 void strings_array_free (char **strs, int nstrs);
 
 char *get_obs_string (char *obs, int t, const DATASET *dset);
