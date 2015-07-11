@@ -3440,6 +3440,50 @@ static int maybe_replace_optional_string_var (char **svar, const char *src)
     }
 }
 
+static void pkg_set_noprint_funcs (fnpkg *pkg, const char *np)
+{
+    ufunc *uf;
+    int i, r;
+
+    for (r=1; r<UFUN_GUI_PRECHECK; r++) {
+	uf = NULL;
+	for (i=0; i<n_ufuns; i++) {
+	    if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == r) {
+		uf = ufuns[i];
+		break;
+	    }
+	}
+	if (uf != NULL) {
+	    if (np[r-1]) {
+		uf->flags |= UFUN_NOPRINT;
+	    } else {
+		uf->flags &= ~UFUN_NOPRINT;
+	    }
+	}
+    }
+}
+
+static void pkg_get_noprint_funcs (fnpkg *pkg, char *np)
+{
+    ufunc *uf;
+    int i, r;
+
+    for (r=1; r<UFUN_GUI_PRECHECK; r++) {
+	uf = NULL;
+	for (i=0; i<n_ufuns; i++) {
+	    if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == r) {
+		uf = ufuns[i];
+		break;
+	    }
+	}
+	if (uf == NULL) {
+	    np[r-1] = 0;
+	} else {
+	    np[r-1] = (uf->flags & UFUN_NOPRINT)? 1 : 0;
+	}
+    }
+}
+
 static int is_string_property (const char *key)
 {
     return !strcmp(key, "fname") ||
@@ -3511,6 +3555,10 @@ int function_package_set_properties (fnpkg *pkg, ...)
 	    } else if (!strcmp(key, "menu-attachment")) {
 		err = maybe_replace_optional_string_var(&pkg->mpath, sval);
 	    }
+	} else if (!strcmp(key, "noprint-list")) {
+	    const char *np = va_arg(ap, const char *);
+
+	    pkg_set_noprint_funcs(pkg, np);
 	} else {
 	    int ival = va_arg(ap, int);
 
@@ -3785,7 +3833,11 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, GUI_PRECHECK)) {
 	    ps = (char **) ptr;
 	    *ps = pkg_get_special_func(pkg, UFUN_GUI_PRECHECK);
-	}	    
+	} else if (!strcmp(key, "noprint-list")) {
+	    char *s = (char *) ptr;
+	    
+	    pkg_get_noprint_funcs(pkg, s);
+	}
     }
 
     va_end(ap);

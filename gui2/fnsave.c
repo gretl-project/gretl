@@ -3153,6 +3153,7 @@ int save_function_package (const char *fname, gpointer p)
 					      "min-version", finfo->minver,
 					      "menu-attachment", finfo->menupath,
 					      "label", finfo->menulabel,
+					      "noprint-list", finfo->gui_attrs,
 					      NULL);
 	if (err) {
 	    fprintf(stderr, "function_package_set_properties: err = %d\n", err);
@@ -3708,6 +3709,7 @@ void edit_function_package (const char *fname)
 					  "menu-attachment", &finfo->menupath,
 					  "label", &finfo->menulabel,
 					  "lives-in-subdir", &finfo->uses_subdir,
+					  "noprint-list", finfo->gui_attrs,
 					  NULL);
 
     if (!err && publist == NULL) {
