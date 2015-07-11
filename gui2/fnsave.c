@@ -47,6 +47,7 @@
 #define PKG_DEBUG 0
 #define NENTRIES 5
 #define N_FILE_ENTRIES 4
+#define N_SPECIALS (UFUN_ROLE_MAX - 1)
 
 enum {
     NO_WINDOW,
@@ -105,7 +106,6 @@ struct function_info_ {
     char **datafiles;      /* names of included data files */
     int n_pub;             /* number of public functions */
     int n_priv;            /* number of private functions */
-    int n_special;         /* (max) number of special functions */
     int n_files;           /* number of include data files */
     gboolean uses_subdir;  /* the package has its own subdir (0/1) */
     gchar *menupath;       /* path for menu attachment, if any */
@@ -116,6 +116,7 @@ struct function_info_ {
     int minver;            /* minimum gretl version, package */
     gboolean modified;     /* anything changed in package? */
     int save_flags;        /* see PkgSaveFlags */
+    char gui_attrs[N_SPECIALS]; /* attribute flags for special funcs */
 };
 
 /* info relating to login to server for upload */
@@ -145,20 +146,19 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo);
 function_info *finfo_new (void)
 {
     function_info *finfo;
-    int ns = UFUN_ROLE_MAX - 1;
 
     finfo = mymalloc(sizeof *finfo);
     if (finfo == NULL) {
 	return NULL;
     }
 
-    finfo->specials = strings_array_new(ns);
+    finfo->specials = strings_array_new(N_SPECIALS);
     if (finfo->specials == NULL) {
 	free(finfo);
 	return NULL;
     }
 
-    finfo->n_special = ns;
+    memset(finfo->gui_attrs, 0, N_SPECIALS);
 
     finfo->pkg = NULL;
     finfo->fname = NULL;
@@ -260,7 +260,7 @@ static void finfo_free (function_info *finfo)
     }
 
     if (finfo->specials != NULL) {
-	strings_array_free(finfo->specials, finfo->n_special);
+	strings_array_free(finfo->specials, N_SPECIALS);
     }
 
     if (finfo->datafiles != NULL) {
@@ -976,13 +976,10 @@ static void add_remove_callback (GtkWidget *w, function_info *finfo)
     if (finfo->extra != NULL) {
 	const char *msg = N_("Before adding or removing functions, please close\n"
 			     "the \"extra properties\" dialog (after applying any\n"
-			     "changes you want to keep).");
-	
-	msgbox(_(msg), GTK_MESSAGE_INFO, finfo->dlg);
-    }
+			     "changes you wish to keep).");
 
-    if (finfo->extra != NULL) {
 	gtk_window_present(GTK_WINDOW(finfo->extra));
+	msgbox(_(msg), GTK_MESSAGE_INFO, finfo->extra);
 	return;
     }
 
@@ -991,7 +988,7 @@ static void add_remove_callback (GtkWidget *w, function_info *finfo)
 				finfo->pkg, finfo);
 }
 
-static void gfn_to_script_callback ( function_info *finfo)
+static void gfn_to_script_callback (function_info *finfo)
 {
     gint resp;
     
@@ -1921,9 +1918,11 @@ static int process_special_functions (function_info *finfo)
        the function package itself.
     */
 
-    for (i=0; i<finfo->n_special && !err; i++) {
+    for (i=0; i<N_SPECIALS && !err; i++) {
 	if (gtk_widget_is_sensitive(c_array[i])) {
-	    int newnull = 0, oldnull = 0, changed = 0;
+	    int fn_changed = 0, np_changed = 0;
+	    int newnull = 0, oldnull = 0;
+	    GtkWidget *cb;
 
 	    /* retrieve and check the selected name */
 	    newfun = combo_box_get_active_text(GTK_COMBO_BOX(c_array[i]));
@@ -1935,18 +1934,33 @@ static int process_special_functions (function_info *finfo)
 	    oldnull = (oldfun == NULL || *oldfun == '\0' || 
 		       !strcmp(oldfun, "none"));
 
+	    /* retrieve the no-print attribute */
+	    cb = g_object_get_data(G_OBJECT(c_array[i]), "np-toggle");
+	    if (cb != NULL) {
+		int np = button_is_active(cb);
+		
+		if (np != finfo->gui_attrs[i]) {
+		    finfo->gui_attrs[i] = np;
+		    np_changed = 1;
+		}
+	    }
+
 	    if (oldnull && !newnull) {
-		changed = 1;
+		fn_changed = 1;
 	    } else if (!oldnull && newnull) {
-		changed = 1;
+		fn_changed = 1;
 	    } else if (!oldnull && !newnull) {
-		changed = strcmp(newfun, oldfun);
-	    } 
-	    if (changed) {
+		fn_changed = strcmp(newfun, oldfun);
+	    }
+	    
+	    if (fn_changed) {
 		free(finfo->specials[i]);
 		finfo->specials[i] = gretl_strdup(newfun);
 		n_changed++;
+	    } else if (np_changed) {
+		n_changed++;
 	    }
+	    
 	    g_free(newfun);
 	}
     }
@@ -1970,7 +1984,7 @@ static void verify_selected_specials (function_info *finfo)
     const char *seek;
     int i, j, found, role;
 
-    for (i=0; i<finfo->n_special; i++) {
+    for (i=0; i<N_SPECIALS; i++) {
 	role = i + 1;
 	if (finfo->specials[i] != NULL) {
 	    /* a selection was made */
@@ -2084,6 +2098,16 @@ static void apply_and_quit_callback (GtkWidget *w, function_info *finfo)
     gtk_widget_destroy(finfo->extra);
 }
 
+static void sensitize_np_toggle (GObject *obj, gboolean s)
+{
+    GtkWidget *cb;
+
+    cb = g_object_get_data(obj, "np-toggle");
+    if (cb != NULL) {
+	gtk_widget_set_sensitive(cb, s);
+    }    
+}
+
 /* Prevent the user from assigning a given function to more
    then one special role: when a selection is changed, if
    the given function is already selected for a different
@@ -2098,16 +2122,24 @@ static void special_changed_callback (GtkComboBox *this,
     gchar *s0, *si;
     int i, dup = 0;
 
+    if (gtk_combo_box_get_active(this) == 0) {
+	/* selected "none" */
+	sensitize_np_toggle(G_OBJECT(this), FALSE);
+	return;
+    }
+
+    sensitize_np_toggle(G_OBJECT(this), TRUE);
     s0 = combo_box_get_active_text(this);
     c_array = g_object_get_data(G_OBJECT(finfo->extra), "combo-array");
 
-    for (i=0; i<finfo->n_special && !dup; i++) {
+    for (i=0; i<N_SPECIALS && !dup; i++) {
 	other = c_array[i];
 	if (other != GTK_WIDGET(this)) {
 	    si = combo_box_get_active_text(GTK_COMBO_BOX(other));
 	    if (!strcmp(si, s0)) {
 		/* switch to "none" */
 		gtk_combo_box_set_active(GTK_COMBO_BOX(other), 0);
+		sensitize_np_toggle(G_OBJECT(other), FALSE);
 		dup = 1;
 	    }
 	    g_free(si);
@@ -2140,10 +2172,12 @@ static void unref_trees (GtkWidget *w, function_info *finfo)
     g_object_unref(G_OBJECT(finfo->modeltree));
 }
 
-/* The following function supports two "notebook" tabs: one allows the
-   user to select functions in the package for the various "special"
-   package roles (e.g. gui-main, bundle-print). The other allows for
-   selection of a menu attachment point and GUI label.
+/* The following function supports three "notebook" tabs. The first
+   allows the user to select functions in the package for the various
+   "special" package roles (e.g. gui-main, bundle-print). The second
+   allows for selection of a menu attachment point and GUI label. The
+   third allows for specification of additional data to be included in
+   the package.
 */
 
 static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
@@ -2155,6 +2189,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     const char *funname;
     const char *key;
     const char *special;
+    int tabcols = 3;
     int nfuns, i, j;
 
     if (finfo->extra != NULL) {
@@ -2189,12 +2224,12 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     tmp = gtk_label_new(_("Special functions"));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);  
 
-    table = gtk_table_new(finfo->n_special, 2, TRUE);
+    table = gtk_table_new(N_SPECIALS, tabcols, TRUE);
     gtk_table_set_row_spacings(GTK_TABLE(table), 5);
     gtk_table_set_col_spacings(GTK_TABLE(table), 5);
 
     nfuns = finfo->n_priv + finfo->n_pub;
-    combo_array = g_malloc(finfo->n_special * sizeof *combo_array);
+    combo_array = g_malloc(N_SPECIALS * sizeof *combo_array);
     g_object_set_data_full(G_OBJECT(dlg), "combo-array", 
 			   combo_array, g_free);
 
@@ -2203,7 +2238,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
        that role; if so, add them to the combo selector.
     */
 
-    for (i=0; i<finfo->n_special; i++) {
+    for (i=0; i<N_SPECIALS; i++) {
 	int n_cands = 0;
 	int selected = 0;
 	int role = i + 1;
@@ -2221,7 +2256,6 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 	    } else {
 		continue;
 	    }
-	    /* test for validity in this role */
 	    if (function_ok_for_package_role(funname, role)) {
 		combo_box_append_text(combo, funname);
 		if (special != NULL && !selected && !strcmp(special, funname)) {
@@ -2244,6 +2278,17 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 			     finfo);
 	}
 	combo_array[i] = combo;
+
+	if (role != UFUN_GUI_PRECHECK) {
+	    /* is this the right conditionality? */
+	    GtkWidget *cb = gtk_check_button_new_with_label("no-print");
+
+	    gtk_table_attach_defaults(GTK_TABLE(table), cb, 2, 3, i, i+1);
+	    g_object_set_data(G_OBJECT(combo), "np-toggle", cb);
+	    gtk_widget_set_sensitive(cb, selected > 0);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cb),
+					 finfo->gui_attrs[i]);
+	}
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -3039,7 +3084,7 @@ static int pkg_save_special_functions (function_info *finfo)
     const char *key;
     int i, err = 0;
 
-    for (i=0; i<finfo->n_special && !err; i++) {
+    for (i=0; i<N_SPECIALS && !err; i++) {
 	key = package_role_get_key(i+1);
 	err = function_set_package_role(finfo->specials[i], 
 					finfo->pkg,
@@ -3601,7 +3646,7 @@ static int finfo_set_special_names (function_info *finfo)
     const char *key;
     int i, err = 0;
 
-    for (i=0; i<finfo->n_special && !err; i++) {
+    for (i=0; i<N_SPECIALS && !err; i++) {
 	key = package_role_get_key(i+1);
 	err = function_package_get_properties(finfo->pkg, key,
 					      &finfo->specials[i],
