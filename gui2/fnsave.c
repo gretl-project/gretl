@@ -2052,30 +2052,21 @@ static int process_data_file_names (function_info *finfo)
     return changed;
 }
 
-static void extra_properties_apply (function_info *finfo,
-				    int pgnum)
+static void extra_properties_apply (function_info *finfo)
 {
-    int do_all = (pgnum < 0);
+    int focus_label = 0;
     int changed = 0;
 
-    if (do_all || pgnum == 0) {
-	changed += process_special_functions(finfo);
-    }
+    changed += process_special_functions(finfo);
     
-    if (do_all || pgnum == 1) {
-	int focus_label = 0;
+    changed += process_menu_attachment(finfo, &focus_label);
+    if (focus_label) {
+	GtkWidget *w = g_object_get_data(G_OBJECT(finfo->extra), "label-entry");
 
-	changed += process_menu_attachment(finfo, &focus_label);
-	if (focus_label) {
-	    GtkWidget *w = g_object_get_data(G_OBJECT(finfo->extra), "label-entry");
-
-	    gtk_widget_grab_focus(w);
-	}
+	gtk_widget_grab_focus(w);
     }
 
-    if (do_all || pgnum == 2) {
-	changed += process_data_file_names(finfo);
-    }
+    changed += process_data_file_names(finfo);
 
     if (changed) {
 	finfo_set_modified(finfo, TRUE);
@@ -2084,18 +2075,12 @@ static void extra_properties_apply (function_info *finfo,
 
 static void extra_properties_callback (GtkWidget *w, function_info *finfo)
 {
-    GtkWidget *notebook;
-    gint pgnum;
-
-    notebook = g_object_get_data(G_OBJECT(finfo->extra), "book");
-    pgnum = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
-
-    extra_properties_apply(finfo, pgnum);
+    extra_properties_apply(finfo);
 }
 
 static void apply_and_quit_callback (GtkWidget *w, function_info *finfo)
 {
-    extra_properties_apply(finfo, -1);
+    extra_properties_apply(finfo);
     gtk_widget_destroy(finfo->extra);
 }
 
