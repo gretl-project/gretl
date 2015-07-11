@@ -106,13 +106,6 @@ struct fncall_ {
     obsinfo obs;   /* sample info */
 };
 
-enum {
-    UFUN_PRIVATE   = 1 << 0,
-    UFUN_PLUGIN    = 1 << 1,
-    UFUN_NOPRINT   = 1 << 2,
-    UFUN_MENU_ONLY = 1 << 3
-};
-
 /* structure representing a user-defined function */
 
 struct ufunc_ {
@@ -3440,7 +3433,12 @@ static int maybe_replace_optional_string_var (char **svar, const char *src)
     }
 }
 
-static void pkg_set_noprint_funcs (fnpkg *pkg, const char *np)
+/* Called (indirectly) from GUI function packager. Note that we're
+   careful not to touch UFUN_PRIVATE or UFUN_PLUGIN on the uf->flags
+   side, since these flags are not represented in @attrs.
+*/
+
+static void pkg_set_gui_attrs (fnpkg *pkg, const unsigned char *attrs)
 {
     ufunc *uf;
     int i, r;
@@ -3454,16 +3452,27 @@ static void pkg_set_noprint_funcs (fnpkg *pkg, const char *np)
 	    }
 	}
 	if (uf != NULL) {
-	    if (np[r-1]) {
+	    if (attrs[r-1] & UFUN_NOPRINT) {
 		uf->flags |= UFUN_NOPRINT;
 	    } else {
 		uf->flags &= ~UFUN_NOPRINT;
 	    }
+	    if (attrs[r-1] & UFUN_MENU_ONLY) {
+		uf->flags |= UFUN_MENU_ONLY;
+	    } else {
+		uf->flags &= ~UFUN_MENU_ONLY;
+	    }	    
 	}
     }
 }
 
-static void pkg_get_noprint_funcs (fnpkg *pkg, char *np)
+/* Called (indirectly) from GUI function packager. Note that we scrub
+   UFUN_PRIVATE and UFUN_PLUGIN from the user function flags passed to
+   the packager: UFUN_PLUGIN is irrelevant and UFUN_PRIVATE is handled
+   by a different mechanism.
+*/
+
+static void pkg_get_gui_attrs (fnpkg *pkg, unsigned char *attrs)
 {
     ufunc *uf;
     int i, r;
@@ -3477,9 +3486,9 @@ static void pkg_get_noprint_funcs (fnpkg *pkg, char *np)
 	    }
 	}
 	if (uf == NULL) {
-	    np[r-1] = 0;
+	    attrs[r-1] = 0;
 	} else {
-	    np[r-1] = (uf->flags & UFUN_NOPRINT)? 1 : 0;
+	    attrs[r-1] = uf->flags & ~(UFUN_PRIVATE | UFUN_PLUGIN);
 	}
     }
 }
@@ -3555,10 +3564,10 @@ int function_package_set_properties (fnpkg *pkg, ...)
 	    } else if (!strcmp(key, "menu-attachment")) {
 		err = maybe_replace_optional_string_var(&pkg->mpath, sval);
 	    }
-	} else if (!strcmp(key, "noprint-list")) {
-	    const char *np = va_arg(ap, const char *);
+	} else if (!strcmp(key, "gui-attrs")) {
+	    const unsigned char *np = va_arg(ap, const char *);
 
-	    pkg_set_noprint_funcs(pkg, np);
+	    pkg_set_gui_attrs(pkg, np);
 	} else {
 	    int ival = va_arg(ap, int);
 
@@ -3833,10 +3842,10 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, GUI_PRECHECK)) {
 	    ps = (char **) ptr;
 	    *ps = pkg_get_special_func(pkg, UFUN_GUI_PRECHECK);
-	} else if (!strcmp(key, "noprint-list")) {
-	    char *s = (char *) ptr;
+	} else if (!strcmp(key, "gui-attrs")) {
+	    unsigned char *s = (unsigned char *) ptr;
 	    
-	    pkg_get_noprint_funcs(pkg, s);
+	    pkg_get_gui_attrs(pkg, s);
 	}
     }
 

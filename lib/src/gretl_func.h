@@ -39,7 +39,14 @@ typedef enum {
     UFUN_GUI_MAIN,
     UFUN_GUI_PRECHECK,
     UFUN_ROLE_MAX
-} UfunRole; 
+} UfunRole;
+
+typedef enum {
+    UFUN_PRIVATE   = 1 << 0,
+    UFUN_PLUGIN    = 1 << 1,
+    UFUN_NOPRINT   = 1 << 2,
+    UFUN_MENU_ONLY = 1 << 3
+} UfunAttrs;
 
 #define NEEDS_TS    "needs-time-series-data"
 #define NEEDS_QM    "needs-qm-data"

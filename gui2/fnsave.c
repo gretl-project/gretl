@@ -116,7 +116,7 @@ struct function_info_ {
     int minver;            /* minimum gretl version, package */
     gboolean modified;     /* anything changed in package? */
     int save_flags;        /* see PkgSaveFlags */
-    char gui_attrs[N_SPECIALS]; /* attribute flags for special funcs */
+    unsigned char gui_attrs[N_SPECIALS]; /* attribute flags for special funcs */
 };
 
 /* info relating to login to server for upload */
@@ -1823,7 +1823,12 @@ static void add_menu_attach_top (GtkWidget *holder,
 		     G_CALLBACK(switch_menu_view), finfo);
 }
 
+/* pertaining to the "extra properties" dialog: check for
+   any changes in relation to menu attachment
+*/
+
 static int process_menu_attachment (function_info *finfo,
+				    gboolean make_changes,
 				    int *focus_label)
 {
     GtkTreeSelection *selection;
@@ -1834,20 +1839,24 @@ static int process_menu_attachment (function_info *finfo,
     int changed = 0;
 
     view = finfo->currtree;
-
+    
     entry = g_object_get_data(G_OBJECT(finfo->extra), "label-entry");
     label = entry_box_get_trimmed_text(entry);
 
     if (label == NULL || *label == '\0') {
 	if (finfo->menulabel != NULL) {
-	    g_free(finfo->menulabel);
-	    finfo->menulabel = NULL;
+	    if (make_changes) {
+		g_free(finfo->menulabel);
+		finfo->menulabel = NULL;
+	    }
 	    changed = 1;
 	}
     } else if (finfo->menulabel == NULL || strcmp(finfo->menulabel, label)) {
-	g_free(finfo->menulabel);
-	finfo->menulabel = label;
-	label = NULL;
+	if (make_changes) {
+	    g_free(finfo->menulabel);
+	    finfo->menulabel = label;
+	    label = NULL;
+	}
 	changed = 1;
     }
 
@@ -1856,8 +1865,10 @@ static int process_menu_attachment (function_info *finfo,
     if (!gtk_widget_is_sensitive(view)) {
 	/* no menu attachment at present */
 	if (finfo->menupath != NULL) {
-	    g_free(finfo->menupath);
-	    finfo->menupath = NULL;
+	    if (make_changes) {
+		g_free(finfo->menupath);
+		finfo->menupath = NULL;
+	    }
 	    changed = 1;
 	}
 	finfo->menuwin = NO_WINDOW;
@@ -1868,8 +1879,10 @@ static int process_menu_attachment (function_info *finfo,
 
     if (!gtk_tree_selection_get_selected(selection, &model, &iter)) {
 	if (finfo->menupath != NULL) {
-	    g_free(finfo->menupath);
-	    finfo->menupath = NULL;
+	    if (make_changes) {
+		g_free(finfo->menupath);
+		finfo->menupath = NULL;
+	    }
 	    changed = 1;
 	}
     } else {
@@ -1877,9 +1890,11 @@ static int process_menu_attachment (function_info *finfo,
 
 	gtk_tree_model_get(model, &iter, 1, &newpath, -1);
 	if (finfo->menupath == NULL || strcmp(finfo->menupath, newpath)) {
-	    g_free(finfo->menupath);
-	    finfo->menupath = newpath;
-	    newpath = NULL;
+	    if (make_changes) {
+		g_free(finfo->menupath);
+		finfo->menupath = newpath;
+		newpath = NULL;
+	    }
 	    changed = 1;
 	}
 	g_free(newpath);
@@ -1889,19 +1904,26 @@ static int process_menu_attachment (function_info *finfo,
 
  finish:
 
-    if (finfo->menupath != NULL && *finfo->menupath != '\0' &&
-	(finfo->menulabel == NULL || *finfo->menulabel == '\0')) {
-	warnbox(_("To create a menu attachment, you must supply a label."));
-	*focus_label = 1;
-    } else if (changed) {
-	infobox(_("To update the menu attachment, you should\n"
-		  "(a) save this package, and (b) restart gretl."));
+    if (make_changes) {
+	if (finfo->menupath != NULL && *finfo->menupath != '\0' &&
+	    (finfo->menulabel == NULL || *finfo->menulabel == '\0')) {
+	    warnbox(_("To create a menu attachment, you must supply a label."));
+	    *focus_label = 1;
+	} else if (changed) {
+	    infobox(_("To update the menu attachment, you should\n"
+		      "(a) save this package, and (b) restart gretl."));
+	}
     }
 
     return changed;
 }
 
-static int process_special_functions (function_info *finfo)
+/* pertaining to the "extra properties" dialog: check for
+   any changes in relation to the special functions table
+*/
+
+static int process_special_functions (function_info *finfo,
+				      gboolean make_changes)
 {
     GtkWidget **c_array;
     const char *oldfun;
@@ -1919,9 +1941,12 @@ static int process_special_functions (function_info *finfo)
     */
 
     for (i=0; i<N_SPECIALS && !err; i++) {
+	int role = i + 1;
+	
 	if (gtk_widget_is_sensitive(c_array[i])) {
-	    int fn_changed = 0, np_changed = 0;
+	    int fn_changed = 0, attr_changed = 0;
 	    int newnull = 0, oldnull = 0;
+	    unsigned char attr = 0;
 	    GtkWidget *cb;
 
 	    /* retrieve and check the selected name */
@@ -1934,14 +1959,19 @@ static int process_special_functions (function_info *finfo)
 	    oldnull = (oldfun == NULL || *oldfun == '\0' || 
 		       !strcmp(oldfun, "none"));
 
-	    /* retrieve the no-print attribute */
-	    cb = g_object_get_data(G_OBJECT(c_array[i]), "np-toggle");
-	    if (cb != NULL) {
-		int np = button_is_active(cb);
-		
-		if (np != finfo->gui_attrs[i]) {
-		    finfo->gui_attrs[i] = np;
-		    np_changed = 1;
+	    if (role != UFUN_GUI_PRECHECK) {
+		/* retrieve the no-print attribute? */
+		cb = g_object_get_data(G_OBJECT(c_array[i]), "np-toggle");
+		if (cb != NULL && button_is_active(cb)) {
+		    attr |= UFUN_NOPRINT;
+		}
+	    }
+
+	    if (role == UFUN_GUI_MAIN) {
+		/* retrieve the menu-only attribute? */
+		cb = g_object_get_data(G_OBJECT(c_array[i]), "mo-toggle");
+		if (cb != NULL && button_is_active(cb)) {
+		    attr |= UFUN_MENU_ONLY;
 		}
 	    }
 
@@ -1952,12 +1982,22 @@ static int process_special_functions (function_info *finfo)
 	    } else if (!oldnull && !newnull) {
 		fn_changed = strcmp(newfun, oldfun);
 	    }
-	    
-	    if (fn_changed) {
-		free(finfo->specials[i]);
-		finfo->specials[i] = gretl_strdup(newfun);
-		n_changed++;
-	    } else if (np_changed) {
+
+	    if (attr != finfo->gui_attrs[i]) {
+		attr_changed = 1;
+	    }
+
+	    if (make_changes) {
+		if (fn_changed) {
+		    free(finfo->specials[i]);
+		    finfo->specials[i] = gretl_strdup(newfun);
+		}
+		if (attr_changed) {
+		    finfo->gui_attrs[i] = attr;
+		}
+	    }
+
+	    if (fn_changed || attr_changed) {
 		n_changed++;
 	    }
 	    
@@ -2015,7 +2055,12 @@ static void verify_selected_specials (function_info *finfo)
     }
 }
 
-static int process_data_file_names (function_info *finfo)
+/* pertaining to the "extra properties" dialog: check for
+   any changes in relation to included data files
+*/
+
+static int process_data_file_names (function_info *finfo,
+				    gboolean make_changes)
 {
     gchar *fname;
     int i, nf = 0;
@@ -2038,7 +2083,7 @@ static int process_data_file_names (function_info *finfo)
 	changed = 1;
     }
 
-    if (changed) {
+    if (changed && make_changes) {
 	strings_array_free(finfo->datafiles, finfo->n_files);
 	if (nf == 0) {
 	    finfo->datafiles = NULL;
@@ -2066,43 +2111,82 @@ static int process_data_file_names (function_info *finfo)
     return changed;
 }
 
-static void extra_properties_apply (function_info *finfo)
+static int process_extra_properties (function_info *finfo,
+				     gboolean make_changes)
 {
     int focus_label = 0;
     int changed = 0;
 
-    changed += process_special_functions(finfo);
-    
-    changed += process_menu_attachment(finfo, &focus_label);
+    changed += process_special_functions(finfo, make_changes);
+
+    changed += process_menu_attachment(finfo, make_changes, &focus_label);
     if (focus_label) {
 	GtkWidget *w = g_object_get_data(G_OBJECT(finfo->extra), "label-entry");
 
 	gtk_widget_grab_focus(w);
     }
 
-    changed += process_data_file_names(finfo);
+    changed += process_data_file_names(finfo, make_changes);
+
+    if (changed && make_changes) {
+	finfo_set_modified(finfo, TRUE);
+    }
+
+    return changed;
+}
+
+static void extra_properties_apply (GtkWidget *w, function_info *finfo)
+{
+    process_extra_properties(finfo, TRUE);
+}
+
+static void extra_properties_close (GtkWidget *w, function_info *finfo)
+{
+    int changed = process_extra_properties(finfo, FALSE);
 
     if (changed) {
-	finfo_set_modified(finfo, TRUE);
-    }    
-}
+	int resp = yes_no_cancel_dialog(NULL, _("Apply changes?"),
+					finfo->extra);
 
-static void extra_properties_callback (GtkWidget *w, function_info *finfo)
-{
-    extra_properties_apply(finfo);
-}
-
-static void apply_and_quit_callback (GtkWidget *w, function_info *finfo)
-{
-    extra_properties_apply(finfo);
+	if (resp == GRETL_CANCEL) {
+	    return;
+	} else if (resp == GRETL_YES) {
+	    process_extra_properties(finfo, TRUE);
+	}
+    }
+    
     gtk_widget_destroy(finfo->extra);
 }
 
-static void sensitize_np_toggle (GObject *obj, gboolean s)
+static gint query_save_extra_props (GtkWidget *w, GdkEvent *event, 
+				    function_info *finfo)
+{
+    int changed = process_extra_properties(finfo, FALSE);
+
+    if (changed) {
+	int resp = yes_no_cancel_dialog(NULL, _("Apply changes?"),
+					finfo->extra);
+
+	if (resp == GRETL_CANCEL) {
+	    return TRUE;
+	} else if (resp == GRETL_YES) {
+	    process_extra_properties(finfo, TRUE);
+	}
+    }
+    
+    return FALSE;
+}
+
+static void sensitize_attr_toggles (GObject *obj, gboolean s)
 {
     GtkWidget *cb;
 
     cb = g_object_get_data(obj, "np-toggle");
+    if (cb != NULL) {
+	gtk_widget_set_sensitive(cb, s);
+    }
+
+    cb = g_object_get_data(obj, "mo-toggle");
     if (cb != NULL) {
 	gtk_widget_set_sensitive(cb, s);
     }    
@@ -2124,11 +2208,11 @@ static void special_changed_callback (GtkComboBox *this,
 
     if (gtk_combo_box_get_active(this) == 0) {
 	/* selected "none" */
-	sensitize_np_toggle(G_OBJECT(this), FALSE);
+	sensitize_attr_toggles(G_OBJECT(this), FALSE);
 	return;
     }
 
-    sensitize_np_toggle(G_OBJECT(this), TRUE);
+    sensitize_attr_toggles(G_OBJECT(this), TRUE);
     s0 = combo_box_get_active_text(this);
     c_array = g_object_get_data(G_OBJECT(finfo->extra), "combo-array");
 
@@ -2139,7 +2223,7 @@ static void special_changed_callback (GtkComboBox *this,
 	    if (!strcmp(si, s0)) {
 		/* switch to "none" */
 		gtk_combo_box_set_active(GTK_COMBO_BOX(other), 0);
-		sensitize_np_toggle(G_OBJECT(other), FALSE);
+		sensitize_attr_toggles(G_OBJECT(other), FALSE);
 		dup = 1;
 	    }
 	    g_free(si);
@@ -2189,7 +2273,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     const char *funname;
     const char *key;
     const char *special;
-    int tabcols = 3;
+    int tabcols = 4;
     int nfuns, i, j;
 
     if (finfo->extra != NULL) {
@@ -2209,6 +2293,8 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     dlg = gretl_dialog_new(_("gretl: extra properties"), finfo->dlg,
 			   GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
     finfo->extra = dlg;
+    g_signal_connect(G_OBJECT(dlg), "delete-event",
+		     G_CALLBACK(query_save_extra_props), finfo);    
     g_signal_connect(G_OBJECT(dlg), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed), &finfo->extra);
     g_signal_connect(G_OBJECT(dlg), "destroy",
@@ -2224,7 +2310,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     tmp = gtk_label_new(_("Special functions"));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);  
 
-    table = gtk_table_new(N_SPECIALS, tabcols, TRUE);
+    table = gtk_table_new(N_SPECIALS, tabcols, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(table), 5);
     gtk_table_set_col_spacings(GTK_TABLE(table), 5);
 
@@ -2280,15 +2366,24 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 	combo_array[i] = combo;
 
 	if (role != UFUN_GUI_PRECHECK) {
-	    /* is this the right conditionality? */
 	    GtkWidget *cb = gtk_check_button_new_with_label("no-print");
 
 	    gtk_table_attach_defaults(GTK_TABLE(table), cb, 2, 3, i, i+1);
 	    g_object_set_data(G_OBJECT(combo), "np-toggle", cb);
 	    gtk_widget_set_sensitive(cb, selected > 0);
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cb),
-					 finfo->gui_attrs[i]);
+					 finfo->gui_attrs[i] & UFUN_NOPRINT);
 	}
+
+	if (role == UFUN_GUI_MAIN) {
+	    GtkWidget *cb = gtk_check_button_new_with_label("menu-only");
+
+	    gtk_table_attach_defaults(GTK_TABLE(table), cb, 3, 4, i, i+1);
+	    g_object_set_data(G_OBJECT(combo), "mo-toggle", cb);
+	    gtk_widget_set_sensitive(cb, selected > 0);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cb),
+					 finfo->gui_attrs[i] & UFUN_MENU_ONLY);
+	}	
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -2325,18 +2420,13 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     /* Apply button */
     tmp = apply_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
-		     G_CALLBACK(extra_properties_callback), finfo);
+		     G_CALLBACK(extra_properties_apply), finfo);
     gtk_widget_grab_default(tmp);
-
-    /* OK button */
-    tmp = ok_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked", 
-                     G_CALLBACK(apply_and_quit_callback), finfo);
 
     /* Close button */
     tmp = close_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
-                     G_CALLBACK(delete_widget), dlg);
+                     G_CALLBACK(extra_properties_close), finfo);
 
     /* Help button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
@@ -3153,7 +3243,7 @@ int save_function_package (const char *fname, gpointer p)
 					      "min-version", finfo->minver,
 					      "menu-attachment", finfo->menupath,
 					      "label", finfo->menulabel,
-					      "noprint-list", finfo->gui_attrs,
+					      "gui-attrs", finfo->gui_attrs,
 					      NULL);
 	if (err) {
 	    fprintf(stderr, "function_package_set_properties: err = %d\n", err);
@@ -3709,7 +3799,7 @@ void edit_function_package (const char *fname)
 					  "menu-attachment", &finfo->menupath,
 					  "label", &finfo->menulabel,
 					  "lives-in-subdir", &finfo->uses_subdir,
-					  "noprint-list", finfo->gui_attrs,
+					  "gui-attrs", finfo->gui_attrs,
 					  NULL);
 
     if (!err && publist == NULL) {
