@@ -1155,6 +1155,8 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 		pprintf(cmdprn, "include \"%s\"\n", runfile);
 	    }
 	    break;
+	} else if (cmd->ci == INCLUDE && gfn_is_loaded(runfile)) {
+	    break;
 	}
 	if (!strcmp(runfile, s->runfile)) { 
 	    pprintf(prn, _("Infinite loop detected in script\n"));
