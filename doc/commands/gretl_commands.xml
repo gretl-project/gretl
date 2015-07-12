@@ -5196,6 +5196,20 @@
 	  </para>
 	</li>	
       </ilist>
+      <para>
+	In addition certain functions may be marked as
+	<quote>no-print</quote>. Usually, when a function is invoked
+	via the GUI program, gretl opens a window to display its text
+	output. By checking this box you are telling gretl not to do
+	this, since no text output should be expected.
+      </para>
+      <para>
+	Finally, the <lit>gui-main</lit> function (if any) can be
+	marked as <quote>menu-only</quote>. This tells gretl that the
+	function in question is specifically designed to be called
+	from the GUI menu to which it is attached, and should not be
+	presented to users otherwise.
+      </para>
     </description>
   </command>
 
