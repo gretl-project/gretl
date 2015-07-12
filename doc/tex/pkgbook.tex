@@ -1,0 +1,681 @@
+\documentclass[oneside]{book}
+\usepackage{url,verbatim,fancyvrb}
+\usepackage{pifont}
+\usepackage[latin1]{inputenc}
+\usepackage[pdftex]{graphicx}
+%\usepackage[authoryear]{natbib}
+\usepackage{color,gretl}
+\usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+\usepackage{dcolumn,amsmath,bm}
+
+\newcommand{\ttusage}[1]{\textit{example}: \quad \texttt{#1}}
+\newcommand{\vbusage}[0]{\textit{example}: \quad}
+
+%% \pdfimageresolution=120
+\hypersetup{pdftitle={Gretl Function Package Guide},
+            pdfsubject={Using and writing gretl function packages},
+            pdfauthor={Allin Cottrell and Riccardo (Jack) Lucchetti},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            citecolor=steel,
+            bookmarks=true,
+            bookmarksnumbered=true,
+            plainpages=false
+}
+
+\begin{document}
+
+\VerbatimFootnotes
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+\setcounter{tocdepth}{1}
+
+%% titlepage
+
+\thispagestyle{empty}
+
+\begin{center}
+\pdfbookmark[1]{Gretl Function Package Guide}{titlepage}
+
+\gtitle{Gretl Function Package Guide}
+
+{\large \sffamily
+Allin Cottrell\\
+Department of Economics\\
+Wake Forest University\\
+
+\vspace{20pt}
+Riccardo (Jack) Lucchetti\\
+Dipartimento di Scienze Economiche e Sociali\\
+Università Politecnica delle Marche\\
+
+\vspace{20pt}
+\input date
+}
+
+\end{center}
+\clearpage
+
+%% end titlepage, start license page
+
+\thispagestyle{empty}
+
+\pdfbookmark[1]{License}{license}
+
+\vspace*{2in}
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the \emph{GNU Free Documentation License}, Version
+1.1 or any later version published by the Free Software Foundation
+(see \url{http://www.gnu.org/licenses/fdl.html}).
+
+\cleardoublepage
+
+%% end license page, start table of contents
+\pdfbookmark[1]{Table of contents}{contents}
+
+\pagenumbering{roman}
+\pagestyle{headings}
+
+\tableofcontents
+
+\clearpage
+\pagenumbering{arabic}
+%\setcounter{chapter}{-1}
+
+\chapter{Introduction}
+\label{chap:intro}
+
+\section{The purpose of function packages}
+\label{sec:purpose}
+
+The primary purpose of gretl function packages is to add estimators,
+hypothesis tests or other analytical procedures to gretl's repertoire
+of built-in procedures. While function packages may also be used for
+other purposes (e.g.\ pedagogy, replication exercises), those made
+available via the gretl server are expected to extend gretl's
+functionality in non-trivial ways.
+
+For an extended discussion of the rationale for such packages see
+``Extending gretl: addons and bundles''.\footnote{Presented by Allin
+  Cottrell at the 2011 gretl conference---see
+  \url{http://gretl.sourceforge.net/papers/addons.pdf}.} Note,
+however, that the distinction between regular packages and ``addons''
+in that document has become somewhat blurred, as regular packages have
+gradually acquired many of the rights and responsibilities previously
+confined to official gretl ``addons''. On the rights side, regular
+packages are now able to hook into the gretl GUI; on the
+responsibilities side, contributed packages are now subject to
+(minimal) vetting before they can appear in the public download area
+on the gretl server.
+  
+\section{The form of function packages}
+\label{sec:pkgform}
+
+The core component of a gretl function package---in simpler cases,
+the sole component---is a \textsf{gfn} file. This is an XML file
+conforming to the Document Type Definition \texttt{gretlfunc.dtd},
+which is supplied in the gretl distribution and can also be found in
+gretl CVS.\footnote{See
+  \url{http://gretl.cvs.sourceforge.net/viewvc/gretl/gretl/share/functions/gretlfunc.dtd?view=log}.}
+Such files contain
+\begin{itemize}
+\item the hansl code for at least one function;
+\item various items of metadata (author, version, date, etc.);
+\item help text for the function(s), or a pointer to help in
+  PDF format; and
+\item a sample script that illustrates a call to the packaged
+  function(s). 
+\end{itemize}
+
+While it is possible in principle to create and edit a \textsf{gfn}
+file ``manually'', using a suitable text editor, this is not
+recomended. Gretl provides tools (both command-line and GUI) to create
+and maintain package files, such that authors are not required to
+mess with raw XML.
+
+We will refer to packages that consist of a gfn file alone as ``simple
+packages'' (the included hansl code may not be simple, but the
+structure is). 
+
+The alternative to a simple package we will call a ``zip package''.
+Such packages take the form of a \textsf{PKZIP} archive containing a
+\texttt{gfn} file along with other materials, which may include PDF
+documentation (in place of plain text help), data needed by the
+package for internal use (for example, tables of critical values for
+some test statistic), and/or extra data files or scripts intended to
+supplement the required sample script. Zip packages can be built using
+command-line tools or with the help of the gretl GUI.
+
+One point to note about zip packages is that the \textsf{PKZIP}
+wrapper is actually just a storage and transport format. When such a
+package is installed, it is unpacked in a suitable location. Further
+details on this package format can be found in
+chapter~\ref{chap:zipfile}.
+
+\chapter{For package users}
+\label{chap:users}
+
+To be written: take in (updated) material from the User's Guide and/or
+elsewhere.
+
+\section{Acquiring a package}
+
+Text wanted here.
+
+\section{Using packages via the command line}
+
+Text wanted here.
+
+\section{Using packages via the GUI}
+
+Text wanted here.
+
+\chapter{For package authors}
+\label{chap:authors}
+
+``In the beginning was the command line'' (Neal Stephenson), so we'll
+start with CLI methods for building a package. Those who prefer to use
+a graphical interface whenever possible may skip ahead to
+section~\ref{sec:gui-build}.
+
+\section{Building a package via the command line}
+\label{sec:cli-build}
+
+First of all, we strongly recommend that when starting work on a
+package you create a specific directory to hold the makings of the
+package. For illustration we'll suppose the package is called
+``mypkg''. (Naturally, you should replace all occurrences of
+\texttt{mypkg} below with the actual name of the package you're
+building.) So, starting from some suitable point in your file system,
+you might begin with
+%
+\begin{code}
+mkdir mypkg
+cd mypkg
+\end{code}
+
+Now, the minimum requirement for building your package (as a ``simple
+package'' or stand-alone \textsf{gfn} file) is the following set of
+files:
+\begin{itemize}
+\item At least one (for now, let's just say one) hansl \textsf{inp}
+  file containing definitions of the functions you wish to
+  package. Let's call this \texttt{mypkg.inp}.
+\item A \textsf{spec} file, which supplies metadata and tells gretl how the
+  package should be assembled; call this \texttt{mypkg.spec}.
+\item A sample script (\textsf{inp} file) which exercises your
+  package; call this \texttt{mypkg\_sample.inp}.
+\item A plain text file containing help on the packaged function(s);
+  call this \texttt{mypkg\_help.txt}.
+\end{itemize}
+
+You will need to create such files in the current directory (or maybe
+copy or move them from elsewhere if you've already made a start). It's
+not absolutely necessary that \textit{all} the filenames are
+regimented as shown (starting with the name of the package in each
+case), but as we'll see before long this can make life easier.
+
+The \textsf{inp} file containing your function definitions we won't
+say much about here. If you're contemplating writing a package you
+should already be pretty comfortable with hansl. See the \textit{Hansl
+  Primer} if in doubt.\footnote{Look in
+  \url{http://sourceforge.net/projects/gretl/files/manual/}.}
+
+The requirements on the sample script and help text are set out in
+section~\ref{sec:common-req}.
+
+That leaves the \textsf{spec} file. We'll approach this by stages,
+starting with the simplest possible case.
+
+
+
+\section{Building a package via the GUI}
+\label{sec:gui-build}
+
+Text wanted here; take in existing material from the \textit{User's
+  Guide}, suitably updated (and then remove that section of the UG).
+
+\section{Common requirements}
+\label{sec:common-req}
+
+Whether you're building a function package from the command line or
+composing a package via the gretl GUI, certain requirements must be
+met if your package is to be made available via the gretl server. Here
+we spell out what's needed in regard to the help text and the sample
+script.
+
+\subsection{Help text}
+
+This must give a clear (if brief) account, in English, of what the
+package does, and also what each parameter does, for each public
+function, insofar as explanation is reasonably required. (A boolean
+\texttt{verbose} parameter probably doesn't need much if any comment,
+but most parameters do need comment.)
+
+If the help is not in PDF format (FIXME add cross-ref) it must be
+encoded in UTF-8 (or plain ASCII, which is a proper subset of
+UTF-8). We also recommend that lines of text are kept to close to 70
+characters in width: some people may like to run gretl windows at
+full-screen size, but many of us do not!
+
+\subsection{Sample script}
+
+This is crucial. The sample script \textit{must} work ``out of the
+box'' on all platforms, and \textit{must not} take too long to
+execute.
+
+The sample script is what curious users are likely to run if they just
+want to see what a package does and check that it's not broken. It's
+what we package-checkers want to run for the same reasons, but also in
+the process of regression-testing new gretl release candidates. It's
+important that a new gretl release doesn't break existing packages,
+but we can't assess that if a package's sample script is broken in the
+first place.
+
+Here are the key things to watch out for in relation to sample
+scripts:
+\begin{itemize}
+\item \textbf{Include yourself}: Right at the top, the sample script
+  must \texttt{include} the \texttt{gfn} file in question. This will
+  never do any harm, and is needed when the script is run ``from
+  scratch'', without the package being already loaded.  The name of
+  the \texttt{gfn} file should be given without any added path, and
+  without quotation marks, as in
+
+  \texttt{include mypackage.gfn}
+
+\item \textbf{Dataset}: If the package requires that a dataset be in
+  place the sample script \textit{must} arrange for this in a portable
+  manner. The options are as follows.
+ \begin{enumerate}
+ \item Open a data file that's supplied with the gretl distribution
+   (that is, under the \textsf{Gretl}, \textsf{Greene} or
+   \textsf{Ramanathan} tabs in the built-in datafile browser).
+   But if none of the supplied data files are suitable, then
+ \item construct an artificial dataset using the \texttt{nulldata}
+   command and gretl's random-number generation facilities, or
+ \item specify a downloaded data file using the \texttt{http} prefix
+   with the \texttt{open} command; or
+ \item include a suitable data file in your package---this requires
+   that the package be in zip format.
+ \end{enumerate}
+ In the case of artificial data, the script should include a
+ \texttt{set seed} command so that the results are reproducible. In
+ the case of downloaded data the URL should be reasonably stable, not
+ something that's likely to disappear or be moved before long.
+
+ In \textit{no case} should a datafile be specified with a full path
+ (\url{/usr/share/gretl/}\dots{} or 
+  \url{C:\\Program Files\\gretl\\}\dots{}, or anything of the sort). 
+  This is obviously not portable, and is never necessary when opening
+  a supplied data file, given gretl's path-searching capability.
+  
+\item \textbf{Execution time}: Some packages carry out Monte Carlo
+  analyses and/or bootstrapping and we all know that such procedures
+  are inherently time consuming. Nonetheless, a sample script should
+  execute on current hardware in a reasonably short time---preferably
+  less than 15 seconds and certainly less than a minute. Otherwise
+  both casual users and testers will lose patience. If this means that
+  only a ``toy'' example can be run, that's OK. The author can add
+  comments to the script saying that this is just an illustration,
+  serious use requires many more iterations. And/or one can add a more
+  ``realistic'' invocation of the function(s), commented out, with a
+  statement such as ``Uncomment this for a real test''.
+\item \textbf{Commenting out}: In some cases an author may wish to
+  indicate alternative ways of calling his or her package. That's
+  fine, but if an alternative call requires a dataset other than
+  the one opened by the script it must be commented out; we don't
+  want any lines in the sample script that will generate errors
+  when the script is called ``as is''. 
+\end{itemize}
+
+The basic point here is that the intent of the sample script in a gfn
+package is not just ``a rough idea of how you might call this
+package'', or ``something that ran OK for the author on some machine
+at some time'', but something that will run for any user of gretl on
+any platform, without modification, provided only that their gretl
+installation satisfies the stated version requirement of the package.
+
+\section{Maintaining a package}
+\label{sec:maint}
+
+This section should talk about issues arising in relation to the
+maintenance of an existing package. Use of CLI and GUI and cross-over
+between the two. Avoid reverting any changes made by package admins to
+fix breakage in prior versions (tho' maybe that should never happen?).
+
+
+\chapter{Spec file details}
+\label{chap:specfile}
+
+Here we set out all the currently allowed elements of the
+\texttt{spec} file (from which a gretl function package may be
+constructed) and explain the usage of each.
+
+We begin with a few general points. Each entry in the spec file must
+take the form
+
+\texttt{keyword =} \textsl{value(s)}
+
+Where multiple values are allowed, they should be separated by
+spaces. An entry can be continued over more than one line if required,
+using a trailing backslash (\verb+\+) as the continuation
+character. Blank lines are ignored, as are lines beginning with the
+hash mark (\texttt{\#}), which can be used to insert comments.
+
+\section{Basic elements}
+
+The elements described in the section apply to all function packages,
+whether or not they offer an interface specifically designed for
+use via the gretl GUI and whether or not the main public function(s)
+return a gretl bundle.
+
+\begin{description}
+
+\item \texttt{author} (required): The name of the author of the
+  package. Multiple names may be given, separated by ``and'', although
+  note that this string may be truncated for presentation purposes in
+  some contexts.
+
+  \vbusage{} \verb|author = Riccardo "Jack" Lucchetti and Allin Cottrell|
+
+\item \texttt{email} (required for new packages): The email address to
+  which correspondence should be directed. Only one address should be
+  given.
+
+  \vbusage{} \verb|email = cottrell@wfu.edu|
+
+\item \texttt{version} (required): The version number for the package
+  release. This should be parseable as an integer or floating-point
+  number (in the \textsf{C} locale). That is, it should contain only
+  digits and at most one dot (\texttt{.}).
+
+  \ttusage{version = 1.2}
+
+\item \texttt{date} (required): The date on which the release was
+  prepared, in ISO 8601 format, \textsf{YYYY-MM-DD}.
+
+  \ttusage{date = 2015-03-28}
+
+\item \texttt{description} (required): A short plain-text (UTF-8)
+  string describing what the package does.
+
+  \ttusage{description = logit/probit marginal effects}
+
+ \item \texttt{min-version} (required): The minimum gretl version on
+   which the package is supported, format \textsf{M.N.P} (three
+   numbers separated by two dots). Ideally, this should truly be the
+   first gretl version on which the package will run OK, but if in
+   doubt it is preferable to specify a later version (users can
+   always update) rather than an earlier one (on which the package
+   might fail and give the user a bad impression).
+
+   \ttusage{min-version = 1.9.12}
+
+\item \texttt{public} (required): A list of names of the public
+  interfaces offered by the package.
+
+  \vbusage{} \verb|public = GUI_lp_mfx lp_mfx_print mlogit_mfx \| \\
+           \verb|                   mlogit_dpj_dx ordered_mfx |
+
+\item \texttt{sample-script} (required): the name of a hansl
+   script (\texttt{.inp}) file that serves as examplar for use
+   of the package.
+
+   \ttusage{sample-script = keane-mfx.inp}
+
+ \item \texttt{help} (required): The name of the file in which
+  Help for this package can be found. This should either be a 
+  plain text (UTF-8) file, in which case the filename suffix
+  doesn't really matter---although we suggest \texttt{.txt}---or a
+  PDF file, in which case the suffix must be \texttt{.pdf}. 
+
+  \vbusage{} \verb|help = lp-mfx_help.txt|
+
+\item \texttt{data-requirement} (optional): If this element is
+  supplied, it must be one of the following strings:
+  \texttt{no-data-ok}, \texttt{needs-time-series-data},
+  \texttt{needs-qm-data} (meaning, quarterly or monthly time-series
+  data), or \texttt{needs-panel-data}. Note that the \textit{default}
+  requirement is that a dataset of some sort is in place (cross
+  sectional, time series or panel). If your function does not take any
+  series or list arguments (for example, it does something with
+  matrices), you should use \texttt{no-data-ok} to indicate that a
+  dataset is not required.
+
+  \ttusage{data-requirement = needs-panel-data}
+
+\end{description}
+
+\section{GUI-related elements}
+
+The elements described in this section are applicable only if at least
+one function in the package is designed to be called via gretl's
+graphical interface.
+
+\begin{description}
+
+\item \texttt{menu-attachment} (optional): Specifies a place within
+  the gretl menu system under which the package should be made
+  available. At present packages can attach to menus (a) in the main
+  gretl window and (b) in windows displaying model estimates
+  (only). In specifying a \texttt{menu-attachment} these are
+  represented by the strings \texttt{MAINWIN} and \texttt{MODELWIN}
+  respectively. The ``path'' to the entry for your package should
+  start with one of these identifiers; this should be followed by one
+  or more slash-separated elements, using the internal representation
+  of the menu tree in \texttt{gretlmain.xml} or
+  \texttt{gretlmodel.xml}---these XML UI files can be found in the
+  gretl source package or in CVS.\footnote{See
+    \url{http://gretl.cvs.sourceforge.net/viewvc/gretl/gretl/gui2/}}
+
+  \ttusage{menu-attachment = MODELWIN/Analysis}
+
+\item \texttt{label} (conditionally required): A very short string
+  that can be displayed in a GUI menu. This is relevant only if the
+  package specifies a \texttt{menu-attachment}, in which case it is
+  required.
+
+  \ttusage{label = Marginal effects}
+
+\item \texttt{gui-main} (optional): This entry is relevant only if a
+  package offers more than one public interface. Its effect is to
+  select one particular interface when a user accesses the function
+  package via the gretl GUI (other public interfaces can be selected
+  via the command line if the user so chooses). If a package offers
+  multiple public interfaces and \texttt{gui-main} is \textit{not}
+  specified, the user will be given a choice of interfaces whenever he
+  or she calls the package. (If a package offers only one public
+  interface, we can think of this as implicitly its ``gui-main''.)
+
+  \vbusage{} \verb|gui-main = GUI_lp_mfx|
+
+\item \texttt{gui-help} (optional): The name of a UTF-8 file
+  containing GUI-specific help text, to be shown when the user
+  clicks on \textsf{Help} in a dialog box representing the
+  package. Such text may make reference to buttons, pull-down lists
+  and the like rather than using language appropriate to command-line
+  usage.
+
+  \ttusage{gui-help = bpgui.help}
+
+\item \texttt{menu-only} (optional): A list of public interfaces (in
+  practice, probably only one) that are specifically designed to be
+  called from a suitable GUI menu and that should \textit{not} be
+  offered via the browser for installed packages. If any function
+  falls in this category it's likely to be the one designated as
+  \texttt{gui-main}.
+
+  \vbusage{} \verb|menu-only = GUI_lp_mfx|
+
+\item \texttt{model-requirement} (optional): When the ``gui-main''
+  function of a package is designed to be called from a menu in a
+  gretl model-output window, this element can be used to indicate that
+  only models of a certain type are supported (and therefore the
+  package will shown only for such models).  The right-hand value
+  should be the gretl command-word corresponding to the supported
+  estimator. See also \texttt{gui-precheck}.
+
+  \ttusage{model-requirement = tobit}
+
+\item \texttt{gui-precheck} (optional): Applies only when a
+  \texttt{menu-attachment} is specified. This element identifies a
+  function to be called to check whether the package is supported in
+  context.  It offers a more flexible testing mechanism than
+  \texttt{model-requirement}.
+
+  The \texttt{gui-precheck} function should not be included in the
+  listing of public interfaces; it is intended only for internal use
+  by gretl. It must take no arguments and must return a scalar. On
+  execution it has access to all the \texttt{\$}-accessors for the
+  model in question. On this basis the function should return 0 if the
+  model is supported, non-zero otherwise.
+
+  \vbusage{} \verb|gui-precheck = lp_mfx_precheck|
+
+\item \texttt{no-print} (optional): A list of public interfaces that
+  are not designed to print anything.  Consider, for example, a
+  package whose job is to produce a special graph based on model data.
+  By default, when a packaged function is invoked via the GUI a window
+  is opened showing the command along with any printed output, but for
+  graph-only output such a window is superfluous and potentially
+  confusing. You can suppress the text output window by adding such a
+  function to the \texttt{no-print} list.
+
+\end{description}
+
+\section{Bundle-related elements}
+
+The elements described below are applicable only if at least one
+public function in the package returns a bundle.
+
+\begin{description}
+
+\item \texttt{bundle-print} (optional): Identifies a given function
+  (which must be a public interface) that can be used to print the
+  content of a bundle produced by the package.
+
+  \vbusage{} \verb|bundle-print = oddsratios_print|
+
+\item \texttt{bundle-plot} (optional): Identifies a given function
+  (which must be a public interface) that can be used to produce some
+  sort of plot or graph using the content of a bundle produced by the
+  package.
+
+  \vbusage{} \verb|bundle-plot = Brown_print|
+
+\item \texttt{bundle-test} (optional): Intended for identifying a
+  function that performs some sort of statistical test based on
+  a bundle's content. Unused at present.
+
+\item \texttt{bundle-fcast} (optional): Intended for identifying a
+  function that generates a forecast based on a bundle's
+  content. Unused at present.
+
+\item \texttt{bundle-extra} (optional): Unused at present.
+
+\end{description}
+
+Functions selected for the special bundle-related roles must conform
+to a definite standard, as follows:
+\begin{itemize}
+\item The first argument must be a bundle-pointer.
+\item The second argument, if present, must be an \texttt{int} that
+  controls the function's behavior in some way, and it must have a
+  specified default value.
+\item Any further arguments should also have default values (meaning
+  that they can be omitted).
+\end{itemize}
+
+Taking the \textsf{gig} package as an example, we have:
+%
+\begin{verbatim}
+  function void gig_bundle_print(bundle *model)
+\end{verbatim}
+%
+and
+%
+\begin{verbatim}
+  function void GUI_gig_plot(bundle *model, int ptype[0:1:0] \
+                             "Plot type" {"Time series", "Density"})
+\end{verbatim}
+
+That is, \textsf{gig}'s \texttt{bundle-print} function has no options,
+but its \texttt{bundle-plot} function has a control parameter
+\texttt{ptype}. Note how this parameter is set up: it has a minimum
+value of 0 and a maximum of 1 (these options could be extended), and 0
+is the default. Further, the parameter is given a name for display in
+the GUI, ``Plot type'', and it also has strings---``Time series'' and
+``Density''---associated with its two possible numerical values. The
+latter strings will be used to populate a menu on the window
+displaying a \textsf{gig} bundle.
+
+\section{Extra elements}
+
+At present there is only one spec file entry in this category:
+
+\begin{description}
+
+\item \texttt{data-files} (optional): Specifies extra files that
+  should be included in the package. Use of this option implies that
+  the package should take the form of a zipfile. See
+  chapter~\ref{chap:zipfile} for details.
+
+  \ttusage{data-files = special.gdt extradir}
+
+\end{description}
+
+\chapter{Zip package details}
+\label{chap:zipfile}
+
+The zip format was originally supported only for officially recognized
+``addons'' such as \textsf{gig} and \textsf{SVAR}, but since gretl
+1.10.1 it is also supported for contributed function packages.
+
+A zip package must conform to the following specifications.
+
+First, it contains a top-level directory with the same name as the
+package itself, and this directory must contain the \texttt{gfn}
+file. Suppose the name of the package is \textsf{mypkg}; in that case
+the minimal zipfile looks like this (as shown by the \textsf{unzip}
+program with its \texttt{-l} option to list the contents of an
+archive):
+
+\begin{verbatim}
+Archive:  mypkg.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2015-06-07 10:54   mypkg/
+    10708  2015-06-07 10:54   mypkg/mypkg.gfn
+---------                     -------
+    10708                     2 files
+\end{verbatim}
+
+There would be little point in creating a package with just the
+content shown above; the advantage of the zipfile format lies in the
+possibility of including extra materials that cannot be stuffed into
+a \texttt{gfn} file. Such materials fall into four main categories:
+
+\begin{itemize}
+\item PDF documentation. This should take the form of a pdf file with
+  the same basename as the package, included in the top-level package
+  directory. Thus, to continue the example above, the directory
+  \texttt{mypkg} might contain \texttt{mypkg.pdf} as well as
+  \texttt{mypkg.gfn}.
+\item Data to support a sample script. This answers the case where a
+  package author wishes to use specific data, not present in the gretl
+  distribution, with his or her sample script. For example, the
+  \textsf{almonreg} package contains the datafile \texttt{almon.gdt}
+  to permit replication of Shirley Almon's original modeling. FIXME
+  spec file entry, also subdir?
+\item Data for internal use. E.g.\ Ignacio's critical values.
+\item Extra examples (scripts and/or data files).
+\end{itemize}
+
+\end{document}
+
+
