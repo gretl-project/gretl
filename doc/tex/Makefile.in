@@ -6,10 +6,12 @@ MAKE = @MAKE@
 GUIDE = gretl-guide.pdf
 REF = gretl-ref.pdf
 HANSL = hansl-primer.pdf
+PKGBOOK = pkgbook.pdf
 KBD = gretl-keys.pdf
 ALTGUIDE = gretl-guide-a4.pdf
 ALTREF = gretl-ref-a4.pdf
 ALTHANSL = hansl-primer-a4.pdf
+ALTPKGBOOK = pkgbook-a4.pdf
 ALTKBD = gretl-keys-a4.pdf
 
 TEXSRC = cli.tex \
@@ -76,7 +78,8 @@ TEXSRC = cli.tex \
 	hp-series.tex \
 	hp-estimate.tex \
 	hp-further.tex \
-	hp-reference.tex
+	hp-reference.tex \
+	pkgbook.tex
 
 BIBSRC = gretl.bib gretl.bst
 
@@ -84,7 +87,8 @@ STYSRC = $(docsrc)/gretl.sty.in
 
 ALLSRC = $(wildcard $(docsrc)/tex/*.tex) $(STYSRC)
 
-all: $(GUIDE) $(REF) $(HANSL) $(ALTGUIDE) $(ALTREF) $(ALTHANSL)
+all: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) \
+	$(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK)
 
 $(GUIDE): gretl-guide.tex links textables date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
@@ -103,8 +107,11 @@ $(REF): gretl-ref.tex links cmdtex functex textables topiclist \
 	pdflatex $<
 	pdflatex $<
 
-$(HANSL): hansl-primer.tex links \
-	date.tex $(STYSRC)
+$(HANSL): hansl-primer.tex links date.tex $(STYSRC)
+	pdflatex $<
+	pdflatex $<
+
+$(PKGBOOK): pkgbook.tex links date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
 
@@ -128,8 +135,11 @@ $(ALTREF): gretl-ref-a4.tex links cmdtex functex textables topiclist \
 	pdflatex $<
 	pdflatex $<
 
-$(ALTHANSL): hansl-primer-a4.tex links \
-	date.tex $(STYSRC)
+$(ALTHANSL): hansl-primer-a4.tex links date.tex $(STYSRC)
+	pdflatex $<
+	pdflatex $<
+
+$(ALTPKGBOOK): pkgbook-a4.tex links date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
 
@@ -148,9 +158,9 @@ hansl-primer.tex:
 gretl-keys.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
 
-letter: $(GUIDE) $(REF) $(HANSL) $(KBD)
+letter: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(KBD)
 
-a4: $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTKBD)
+a4: $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTKBD)
 
 gretl-guide-a4.tex: $(docsrc)/tex/gretl-guide.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
@@ -161,10 +171,14 @@ gretl-ref-a4.tex: $(docsrc)/tex/gretl-ref.tex ../commands/us2a4
 hansl-primer-a4.tex: $(docsrc)/tex/hansl-primer.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
+pkgbook-a4.tex: $(docsrc)/tex/pkgbook.tex ../commands/us2a4
+	../commands/us2a4 < $< > $@
+
 gretl-keys-a4.tex: $(docsrc)/tex/gretl-keys.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
-.PHONY : links cmdtex functex textables alt onepass refpass topiclist install clean
+.PHONY : links cmdtex functex textables alt onepass refpass \
+	hanslpass pkgbookpass topiclist install clean
 
 links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
@@ -204,6 +218,9 @@ refpass: gretl-ref.tex links cmdtex textables functex topiclist
 hanslpass: hansl-primer.tex links
 	pdflatex $<
 
+pkgbookpass: pkgbook.tex links
+	pdflatex $<
+
 bibpass: onepass refpass
 	bibtex gretl-guide
 	bibtex gretl-ref
@@ -211,7 +228,8 @@ bibpass: onepass refpass
 clean:
 	rm -f *.aux *.log *.out *.toc *.pdf *.bbl *.blg
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
-	rm -f gretl-guide-a4.tex gretl-ref-a4.tex hansl-primer-a4.tex gretl-keys-a4.tex
+	rm -f gretl-guide-a4.tex gretl-ref-a4.tex hansl-primer-a4.tex
+	rm -f pkgbook-a4.tex gretl-keys-a4.tex
 	rm -f ../commands/textables ../commands/topiclist_en 
 	rm -f ../commands/cmdtex ../commands/functex
 
