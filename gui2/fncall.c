@@ -2741,6 +2741,7 @@ static int maybe_add_model_pkg (addon_info *addon,
 	
     if (addon->filepath == NULL) {
 	fprintf(stderr, "%s: couldn't find it\n", addon->pkgname);
+	/* FIXME remove reference to this from packages.xml */
 	return 0;
     }
 
@@ -2774,9 +2775,6 @@ static int maybe_add_model_pkg (addon_info *addon,
     }
 
     if (!err) {
-#if PKG_DEBUG
-	fprintf(stderr, "maybe_add_model_pkg...\n");
-#endif
 	add_package_to_menu(addon, vwin);
     }
 

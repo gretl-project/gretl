@@ -494,12 +494,12 @@ static int check_version_string (const char *s)
     return err;
 }
 
-/* Callback from the Save button, or "Save as" button, when editing a
-   function package.  We first assemble and check the relevant info
-   then if the package is new and has not been saved yet (which is
-   flagged by finfo->fname being NULL), or if we're called from "Save
-   as", we offer a file selector, otherwise we go ahead and save using
-   the package's recorded filename.
+/* Callback from "Save" or "Save as", when editing a function package.
+   We first assemble and check the relevant info then if the package
+   is new and has not been saved yet (which is flagged by finfo->fname
+   being NULL), or if we're called from "Save as", we offer a file
+   selector, otherwise we go ahead and save using the package's
+   recorded filename.
 */
 
 static int finfo_save (function_info *finfo, int saveas)
@@ -3185,9 +3185,10 @@ static int pkg_save_special_functions (function_info *finfo)
     return err;
 }
 
-/* callback from file selector when saving a function package, or
+/* Callback from file selector when saving a function package, or
    directly from the package editor if using the package's
-   existing filename */
+   existing filename.
+*/
 
 int save_function_package (const char *fname, gpointer p)
 {
@@ -3276,6 +3277,7 @@ int save_function_package (const char *fname, gpointer p)
 	finfo_set_modified(finfo, FALSE);
 	gtk_widget_set_sensitive(finfo->validate, TRUE);
 	maybe_update_func_files_window(EDIT_FN_PKG);
+	mkfilelist(FILE_LIST_GFN, finfo->fname);
 	
 	/* revise packages.xml in accordance with any
 	   changes above, as needed */
@@ -3403,6 +3405,7 @@ static int maybe_write_aux_file (function_info *finfo,
 	    
 	    if (fp != NULL) {
 		fputs(content, fp);
+		fputc('\n', fp);
 		fclose(fp);
 		ret = 1;
 	    }
