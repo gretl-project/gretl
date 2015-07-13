@@ -184,7 +184,10 @@ Text wanted here.
 ``In the beginning was the command line'' (Neal Stephenson), so we'll
 start with CLI methods for building a package. Those who prefer to use
 a graphical interface whenever possible may skip ahead to
-section~\ref{sec:gui-build}.
+section~\ref{sec:gui-build}. However, the GUI interface for creating
+function packages is likely to be convenient for small to medium-sized
+packages but may be too cumbersome for ambitious packages that include
+a large hierarchy of private functions. 
 
 \section{Building a package via the command line}
 \label{sec:cli-build}
@@ -280,8 +283,200 @@ mark them as private.
 \section{Building a package via the GUI}
 \label{sec:gui-build}
 
-Text wanted here; take in existing material from the \textit{User's
-  Guide}, suitably updated (and then remove that section of the UG).
+Here is a walk-through of the process.
+
+\subsection{Load a function in memory}
+
+There are several ways to load a function:
+
+\begin{itemize}
+\item If you have a script file containing function definitions, open
+  that file and run it.
+\item Create a script file from scratch.  Include at least one
+  function definition, and run the script.
+\item Open the GUI console and type a function definition
+  interactively.  This method is not particularly recommended; you are
+  probably better composing a function non-interactively.
+\end{itemize}
+
+For example, suppose you decide to package a function that returns the
+percentage change of a time series. Open a script file and type
+\begin{code}
+function series pc(series y "Series to process")
+    series ret = 100 * diff(y)/y(-1)
+    string dsc = sprintf("Percentage change of %s", argname(y))
+    setinfo ret --description="@dsc"
+    return ret  
+end function
+\end{code}
+In this case, we have appended a string to the function argument, so
+as to make our interface more informative.  This is not obligatory: if
+you omit the descriptive string, gretl will supply a predefined one.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{scode}
+              x         dpcx
+
+ 1    0.4428625             
+ 2    0.3737993     -15.5947
+ 3    0.1570864     -57.9757
+ 4    0.6896227     339.0086
+ 5    0.8510148      23.4030
+ 6      0.07757     -90.8851
+ 7    0.1454557      87.5180
+ 8    0.8260684     467.9174
+ 9    0.4328073     -47.6064
+10    0.3566473     -17.5967
+
+  \end{scode}
+  \caption{Output of function check}
+  \label{fig:func_check}
+\end{figure}
+
+Now run your function. You may want to make sure it works properly by
+running a few tests. For example, you may open the console and type
+
+\begin{code}
+genr x = uniform()
+genr dpcx = pc(x)
+print x dpcx --byobs
+\end{code}
+
+You should see something similar to figure \ref{fig:func_check}. The
+function seems to work ok.  Once your function is debugged, you
+may proceed to the next stage.
+
+\subsection{Create a package}
+
+We first present the mechanism for creating a function package via
+gretl's graphical interface. This can also be done via the
+command line, which offers some additional functionality for package
+authors; an explanation is given later in this section.
+
+Start the GUI program and take a look at the ``Tools, Function
+packages'' menu.  This menu contains four items: ``On local machine'',
+``On server'', ``Edit package'', ``New package''.
+
+Select ``New package''.  (This will produce an error message unless at
+least one user-defined function is currently loaded in memory---see
+the previous point.)  In the first dialog you get to select:
+
+\begin{itemize}
+\item A public function to package.
+\item Zero or more ``private'' helper functions.
+\end{itemize}
+
+Public functions are directly available to users; private functions are
+part of the ``behind the scenes'' mechanism in a function package. So,
+at this point, you select the \cmd{pc} function from the left-hand
+panel and put it into the ``Public functions'' box.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/package_editor}
+  \caption{The package editor window}
+  \label{fig:package_editor}
+\end{figure}
+
+On clicking ``OK'' a second dialog should appear (see
+Figure~\ref{fig:package_editor}), where you get to enter the package
+information (author, version, date, and a short description).  You can
+also enter help text for the public interface.  You have a further
+chance to edit the code of the function(s) to be packaged, by clicking
+on ``Edit function code''.  (If the package contains more than one
+function, a drop-down selector will be shown.)  And you get to add a
+sample script that exercises your package.  This will be helpful for
+potential users, and also for testing.  A sample script is required if
+you want to upload the package to the gretl server (for which a
+check-box is supplied).
+
+You won't need it right now, but the button labeled ``Save as script''
+allows you to ``reverse engineer'' a function package, writing out a
+script that contains all the relevant function definitions.
+
+Clicking ``Save'' in this dialog leads you to a File Save dialog.  All
+being well, this should be pointing towards a directory named
+\texttt{functions}, either under the gretl system directory (if
+you have write permission on that) or the gretl user directory.
+This is the recommended place to save function package files, since
+that is where the program will look in the special routine for opening
+such files (see below).
+
+Needless to say, the menu item ``Tools, Function packages, Edit
+package'' allows you to make changes to a local function package.
+
+\subsection{Load a package}
+
+Why package functions in this way?  To see what's on offer so far, try
+the next phase of the walk-through.
+
+Close gretl, then re-open it.  Now go to ``Tools, Function packages,
+On local machine''. If the previous stage above has gone OK, you
+should see the file you packaged and saved, with its short
+description.  If you click on ``Info'' you get a window with all the
+information gretl has gleaned from the function package.  If you click
+on the ``View code'' icon in the toolbar of this new window, you get a
+script view window showing the actual function code. Now, back to the
+``Function packages'' window, if you click on the package's name, the
+relevant functions are loaded into gretl's workspace, ready to be
+called by clicking on the ``Call'' button.
+
+After loading the function(s) from the package, open the GUI console.
+Try typing \texttt{help foo}, replacing \texttt{foo} with the name of
+the public interface from the loaded function package: if any help text
+was provided for the function, it should be presented.
+
+In a similar way, you can browse and load the function packages
+available on the gretl server, by selecting ``Tools, Function
+packages, On server''.
+
+Once your package is installed on your local machine, you can use the
+function it contains via the graphical interface as described above,
+or by using the CLI, namely in a script or through the console. In the
+latter case, you load the function via the \texttt{include} command,
+specifying the package file as the argument, complete with the
+\texttt{.gfn} extension.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/function_call}
+  \caption{Using your package}
+  \label{fig:function_call}
+\end{figure}
+
+To continue with our example, load the file \texttt{np.gdt} (supplied
+with gretl among the sample datasets). Suppose you want to
+compute the rate of change for the variable \texttt{iprod} via your
+new function and store the result in a series named \texttt{foo}.
+
+Go to ``Tools, Function packages, On local machine''.  You will be
+shown a list of the installed packages, including the one you have
+just created. If you select it and click on ``Execute'' (or
+double-click on the name of the function package), a window similar to
+the one shown in figure \ref{fig:function_call} will appear.  Notice
+that the description string ``Series to process'', supplied with the
+function definition, appears to the left of the top series chooser.
+
+Click ``Ok'' and the series \texttt{foo} will be generated (see figure
+\ref{fig:iprod_pc}).  Under some circumstances you might have to press
+the ``r'' key (refresh) to have your new variable show up the main
+window variable list.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/iprod_pc}
+  \caption{Percent change in industrial production}
+  \label{fig:iprod_pc}
+\end{figure}
+
+Alternatively, the same could have been accomplished by the script
+\begin{code}
+include pc.gfn
+open np
+foo = pc(iprod)
+\end{code}
+
 
 \section{Common requirements}
 \label{sec:common-req}
