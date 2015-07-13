@@ -3967,7 +3967,7 @@ static int real_do_model (int action)
 			  libcmd.opt, prn);
 	break;
     case HSK:
-	*pmod = hsk_model(libcmd.list, dataset);
+	*pmod = hsk_model(libcmd.list, dataset, libcmd.opt);
 	break;
     case IVREG:
 	*pmod = ivreg(libcmd.list, dataset, libcmd.opt);

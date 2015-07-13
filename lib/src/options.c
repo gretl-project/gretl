@@ -271,6 +271,7 @@ struct gretl_option gretl_opts[] = {
     { HECKIT,   OPT_T, "two-step", 0 },
     { HECKIT,   OPT_V, "verbose", 0 },
     { HELP,     OPT_F, "func", 0 },
+    { HSK,      OPT_N, "no-squares" },
     { HURST,    OPT_U, "plot", 2 },
     { INSTALL,  OPT_L, "local", 0 },
     { INTREG,   OPT_R, "robust", 0 },

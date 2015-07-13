@@ -2077,6 +2077,9 @@ static void print_model_heading (const MODEL *pmod,
 	    pprintf(prn, A_("Using %d quadrature points"), qp);
 	    gretl_prn_newline(prn);
 	}
+    } else if (pmod->ci == HSK && (pmod->opt & OPT_N)) {
+	pputs(prn, _("Without squared terms in variance equation"));
+	gretl_prn_newline(prn);
     }
 
     /* VCV variants */

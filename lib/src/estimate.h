@@ -58,7 +58,7 @@ MODEL dpd_model (const int *list, const int *laglist,
 		 const char *ispec, const DATASET *dset, 
 		 gretlopt opt, PRN *prn);
 
-MODEL hsk_model (const int *list, DATASET *dset);
+MODEL hsk_model (const int *list, DATASET *dset, gretlopt opt);
 
 MODEL arch_model (const int *list, int order, DATASET *dset, 
 		  gretlopt opt);

@@ -2622,19 +2622,19 @@ static int observation_is_dummied (const MODEL *pmod,
     return ret;
 }
 
-/* get_hsk_weights: take the residuals from the model pmod, square them
-   and take logs; find the fitted values for this series using an
+/* get_hsk_weights: take the residuals from the model pmod, square
+   them and take logs; find the fitted values for this series using an
    auxiliary regression including the original independent variables
-   and their squares; exponentiate the fitted values; and add the
-   resulting series to the data set.
+   (and their squares, if not given OPT_N); exponentiate the fitted
+   values; and add the resulting series to the data set.
 */
 
-static int get_hsk_weights (MODEL *pmod, DATASET *dset)
+static int get_hsk_weights (MODEL *pmod, DATASET *dset, gretlopt opt)
 {
     int oldv = dset->v;
     int t, t1 = dset->t1, t2 = dset->t2;
     int *lcpy = NULL;
-    int *list = NULL;
+    int *auxlist = NULL;
     int err = 0, shrink = 0;
     double xx;
     MODEL aux;
@@ -2650,7 +2650,7 @@ static int get_hsk_weights (MODEL *pmod, DATASET *dset)
 	return E_ALLOC;
     }
 
-    /* add transformed pmod residuals to data set */
+    /* add transformed residuals to data set */
     for (t=0; t<dset->n; t++) {
 	xx = pmod->uhat[t];
 	if (na(xx)) {
@@ -2667,19 +2667,24 @@ static int get_hsk_weights (MODEL *pmod, DATASET *dset)
 	}
     }
 
-    /* build regression list, adding the squares of the original
-       independent vars */
-    list = augment_regression_list(lcpy, AUX_SQ, dset, &err);
-    if (err) {
-	return err;
+    if (opt & OPT_N) {
+	/* --no-squares option */
+	auxlist = lcpy;
+    } else {
+	/* build regression list, adding the squares of the original
+	   independent vars */
+	auxlist = augment_regression_list(lcpy, AUX_SQ, dset, &err);
+	if (err) {
+	    return err;
+	}
     }
 
-    list[1] = oldv; /* the newly added log(uhat-squared) */
+    auxlist[1] = oldv; /* the newly added log(uhat-squared) */
 
     dset->t1 = pmod->t1;
     dset->t2 = pmod->t2;
 
-    aux = lsq(list, dset, OLS, OPT_A);
+    aux = lsq(auxlist, dset, OLS, OPT_A);
     err = aux.errcode;
     if (err) {
 	shrink = dset->v - oldv;
@@ -2705,7 +2710,9 @@ static int get_hsk_weights (MODEL *pmod, DATASET *dset)
 	dataset_drop_last_variables(dset, shrink);
     }
 
-    free(list);
+    if (auxlist != lcpy) {
+	free(auxlist);
+    }
     free(lcpy);
 
     return err;
@@ -2715,6 +2722,8 @@ static int get_hsk_weights (MODEL *pmod, DATASET *dset)
  * hsk_model:
  * @list: dependent variable plus list of regressors.
  * @dset: dataset struct.
+ * @opt: may include OPT_N to suppress use of squares
+ * of regressors in the auxiliary regression.
  *
  * Estimate the model given in @list using a correction for
  * heteroskedasticity.
@@ -2722,7 +2731,7 @@ static int get_hsk_weights (MODEL *pmod, DATASET *dset)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL hsk_model (const int *list, DATASET *dset)
+MODEL hsk_model (const int *list, DATASET *dset, gretlopt opt)
 {
     int i, err;
     int orig_nvar = dset->v;
@@ -2742,8 +2751,8 @@ MODEL hsk_model (const int *list, DATASET *dset)
 	return hsk;
     }
 
-    /* use the residuals from the initial OLS to form weights */
-    err = get_hsk_weights(&hsk, dset);
+    /* form weights based on the OLS residuals */
+    err = get_hsk_weights(&hsk, dset, opt);
     if (err) {
 	hsk.errcode = err;
 	return hsk;
@@ -2770,6 +2779,11 @@ MODEL hsk_model (const int *list, DATASET *dset)
     clear_model(&hsk);
     hsk = lsq(hsklist, dset, WLS, OPT_NONE);
     hsk.ci = HSK;
+
+    if (opt & OPT_N) {
+	gretl_model_set_int(&hsk, "no-squares", 1);
+	hsk.opt |= OPT_N;
+    }
 
     dataset_drop_last_variables(dset, dset->v - orig_nvar);
 

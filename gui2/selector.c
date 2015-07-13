@@ -145,6 +145,7 @@ enum {
 			 c == CORR || \
                          c == GARCH || \
                          c == HECKIT || \
+			 c == HSK || \
                          c == BIPROBIT || \
                          c == INTREG || \
                          c == IVREG || \
@@ -5570,6 +5571,9 @@ static void build_selector_switches (selector *sr)
     } else if (sr->ci == GR_BOX) {
 	tmp = gtk_check_button_new_with_label(_("Show interval for median"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_O, 0);
+    } else if (sr->ci == HSK) {
+	tmp = gtk_check_button_new_with_label(_("Variance equation includes squares"));
+	pack_switch(tmp, sr, TRUE, TRUE, OPT_N, 0);
     }	
 
     if (sr->ci == ARMA) {

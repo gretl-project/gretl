@@ -5548,6 +5548,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--no-squares</flag>
+	  <effect>see below</effect>
+	</option>	
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
@@ -5568,14 +5572,28 @@
 	error variance, then finally (c) weighted least squares, using as
 	weight the reciprocal of the estimated variance.
       </para>
-      <para>
-	In the auxiliary regression (b) we regress the log of the squared
-	residuals from the first OLS on the original regressors and their
-	squares.  The log transformation is performed to ensure that the
-	estimated variances are non-negative.  Call the fitted values from
-	this regression <math>u</math><sup>*</sup>.  The weight series for the
-	final WLS is then formed as 1/exp(<math>u</math><sup>*</sup>).
+      <para context="cli">
+	In the auxiliary regression (b) we regress the log of the
+	squared residuals from the first OLS on the original
+	regressors and their squares (by default), or just on the
+	original regressors (if the <opt>no-squares</opt> option is
+	given).  The log transformation is performed to ensure that the
+	estimated variances are all non-negative.  Call the fitted
+	values from this regression <math>u</math><sup>*</sup>.  The
+	weight series for the final WLS is then formed as
+	1/exp(<math>u</math><sup>*</sup>).
       </para>
+      <para context="gui">
+	In the auxiliary regression (b) we regress the log of the
+	squared residuals from the first OLS on the original
+	regressors and their squares (by default), or just on the
+	original regressors (if the <quote>include squares</quote> box
+	is cleared).  The log transformation is performed to ensure
+	that the estimated variances are all non-negative.  Call the
+	fitted values from this regression <math>u</math><sup>*</sup>.
+	The weight series for the final WLS is then formed as
+	1/exp(<math>u</math><sup>*</sup>).
+      </para>      
     </description>
 
     <gui-access>

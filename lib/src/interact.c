@@ -2735,7 +2735,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (cmd->ci == LOGIT || cmd->ci == PROBIT) {
 	    *model = logit_probit(cmd->list, dset, cmd->ci, cmd->opt, prn);
 	} else if (cmd->ci == HSK) {
-	    *model = hsk_model(cmd->list, dset);
+	    *model = hsk_model(cmd->list, dset, cmd->opt);
 	} else if (cmd->ci == LOGISTIC) {
 	    *model = logistic_driver(cmd->list, dset, cmd->opt);
 	} else if (cmd->ci == TOBIT) {

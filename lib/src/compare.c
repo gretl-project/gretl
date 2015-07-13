@@ -716,6 +716,10 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	} else {
 	    list = full_list;
 	}
+    } else if (orig->ci == HSK) {
+	if (gretl_model_get_int(orig, "no-squares")) {
+	    myopt |= OPT_N;
+	}
     } else if (orig->ci == ARBOND) {
 	param = gretl_model_get_data(orig, "istr");
 	myopt |= retrieve_dpanel_opts(orig);
@@ -841,7 +845,7 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	rep = panel_model(list, dset, myopt, prn);
 	break;
     case HSK:
-	rep = hsk_model(list, dset);
+	rep = hsk_model(list, dset, myopt);
 	break;
     default:
 	/* handles OLS, WLS, etc. */
