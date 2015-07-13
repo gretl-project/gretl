@@ -283,9 +283,14 @@ mark them as private.
 \section{Building a package via the GUI}
 \label{sec:gui-build}
 
-Here is a walk-through of the process.
+When you're building a package, it's a good idea to ensure you have a
+``clean'' workspace. So if you've been running regressions, maybe
+using other packages, or whatever, we recommend saving your work,
+closing gretl, and restarting the program.
 
-\subsection{Load a function in memory}
+That said, here's a walk-through of the process.
+
+\subsection{Load at least one function into memory}
 
 There are several ways to load a function:
 
@@ -295,12 +300,13 @@ There are several ways to load a function:
 \item Create a script file from scratch.  Include at least one
   function definition, and run the script.
 \item Open the GUI console and type a function definition
-  interactively.  This method is not particularly recommended; you are
-  probably better composing a function non-interactively.
+  interactively.  But this method is not recommended; you are better
+  composing a function non-interactively.
 \end{itemize}
 
 For example, suppose you decide to package a function that returns the
-percentage change of a time series. Open a script file and type
+percentage change of a time series. Open the script editor window and
+type
 \begin{code}
 function series pc(series y "Series to process")
     series ret = 100 * diff(y)/y(-1)
@@ -313,7 +319,7 @@ In this case, we have appended a string to the function argument, so
 as to make our interface more informative.  This is not obligatory: if
 you omit the descriptive string, gretl will supply a predefined one.
 
-\begin{figure}[htbp]
+\begin{script}[htbp]
   \centering
   \begin{scode}
               x         dpcx
@@ -331,8 +337,8 @@ you omit the descriptive string, gretl will supply a predefined one.
 
   \end{scode}
   \caption{Output of function check}
-  \label{fig:func_check}
-\end{figure}
+  \label{ex:func_check}
+\end{script}
 
 Now run your function. You may want to make sure it works properly by
 running a few tests. For example, you may open the console and type
@@ -343,27 +349,21 @@ genr dpcx = pc(x)
 print x dpcx --byobs
 \end{code}
 
-You should see something similar to figure \ref{fig:func_check}. The
-function seems to work ok.  Once your function is debugged, you
-may proceed to the next stage.
+You should see something similar to Example~\ref{ex:func_check}. The
+function seems to work OK.  Once your function is debugged, you may
+proceed to the next stage.
 
 \subsection{Create a package}
 
-We first present the mechanism for creating a function package via
-gretl's graphical interface. This can also be done via the
-command line, which offers some additional functionality for package
-authors; an explanation is given later in this section.
-
-Start the GUI program and take a look at the ``Tools, Function
+In the gretl main window, take a look at the ``Tools, Function
 packages'' menu.  This menu contains four items: ``On local machine'',
-``On server'', ``Edit package'', ``New package''.
+``On server'', ``Edit package'' and ``New package''.
 
-Select ``New package''.  (This will produce an error message unless at
-least one user-defined function is currently loaded in memory---see
-the previous point.)  In the first dialog you get to select:
+Select ``New package''.  In the first dialog to appear you get to
+select:
 
 \begin{itemize}
-\item A public function to package.
+\item One or more public functions to package.
 \item Zero or more ``private'' helper functions.
 \end{itemize}
 
@@ -381,30 +381,28 @@ panel and put it into the ``Public functions'' box.
 
 On clicking ``OK'' a second dialog should appear (see
 Figure~\ref{fig:package_editor}), where you get to enter the package
-information (author, version, date, and a short description).  You can
-also enter help text for the public interface.  You have a further
-chance to edit the code of the function(s) to be packaged, by clicking
-on ``Edit function code''.  (If the package contains more than one
-function, a drop-down selector will be shown.)  And you get to add a
-sample script that exercises your package.  This will be helpful for
-potential users, and also for testing.  A sample script is required if
-you want to upload the package to the gretl server (for which a
-check-box is supplied).
+information (author, version, date, etc.).  You should also enter help
+text for the public interface.  You have a further chance to edit the
+code of the function(s) to be packaged, by clicking on \textsf{Edit
+  function code}.  (If the package contains more than one function, a
+drop-down selector will be shown.)  And you get to add a sample script
+that exercises your package.  This will be helpful for potential
+users, and also for testing.  A sample script is required if you want
+to upload the package to the gretl server.
 
-You won't need it right now, but the button labeled ``Save as script''
-allows you to ``reverse engineer'' a function package, writing out a
-script that contains all the relevant function definitions.
-
-Clicking ``Save'' in this dialog leads you to a File Save dialog.  All
-being well, this should be pointing towards a directory named
-\texttt{functions}, either under the gretl system directory (if
-you have write permission on that) or the gretl user directory.
-This is the recommended place to save function package files, since
-that is where the program will look in the special routine for opening
-such files (see below).
-
-Needless to say, the menu item ``Tools, Function packages, Edit
-package'' allows you to make changes to a local function package.
+Clicking the \textsf{Save} button in this window brings up a little
+menu. For the present, it's just the first item, ``Save gfn'', that's
+relevant. Selecting this item takes you to a File Save dialog---unless
+there's something missing from your package specification (e.g.\ no
+help text), in which case you'll get a nag box! When File Save comes
+up, you want to pay attention to where it's pointing. By default, it
+will reference a directory named \texttt{functions}, either under the
+gretl system directory (if you have write permission on that) or the
+gretl user directory.  This is the recommended place to save function
+package files, since it's where the program will look in the special
+routine for opening such files (see FIXME XREF). However, if you're just
+experimenting and don't want to ``install'' the package yet, you can
+choose a different location.
 
 \subsection{Load a package}
 
