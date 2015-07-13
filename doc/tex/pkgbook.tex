@@ -158,7 +158,18 @@ chapter~\ref{chap:zipfile}.
 
 \section{Using this document}
 
-Text wanted here.
+Chapter~\ref{chap:users} gives an account of function packages from
+the user's point of view. Even those who are familiar with packages
+might want to take a look, since there are some finer points that
+might not be totally evident.
+
+Chapter~\ref{chap:authors} gives a walk-through of the means of
+creating and maintaining function packages, both via command-line and
+via the GUI.
+
+Chapters~\ref{chap:specfile} and \ref{chap:zipfile} provide reference
+material on the details of package specification and structure, along
+with some tips on usage.
 
 \chapter{For package users}
 \label{chap:users}
@@ -255,8 +266,8 @@ min-version = 1.9.3
 
 According to this spec, the package has a single public function,
 \texttt{myfunc}, and requires gretl 1.9.3 or higher to run
-properly. For details on all the specification keys (e.g.\
-\texttt{min-version}) see chapter~\ref{chap:specfile}.
+properly. For details on the specification keys used here (e.g.\
+\texttt{min-version}) see chapter~\ref{sec:spec-basic}.
 
 Now, assuming all the required files are in place, how do we actually
 build the package? Simple: the shell command
@@ -272,9 +283,9 @@ and, if all goes well, write out \texttt{mypkg.gfn} (FIXME: where?!).
 
 We've said this package offers a single public function,
 \texttt{myfunc}: that's the only function that will be made directly
-available to users of the package. However, you may want to include
-one or more private ``helper'' functions, designed to be called only
-by \texttt{myfunc}. To do so, just put definitions of these functions
+available to users. However, you may want to include one or more
+private ``helper'' functions, designed to be called only by
+\texttt{myfunc}. To do so, just put definitions of these functions
 into \texttt{mypkg.inp}; \textsf{gretlcli} will pick them up and,
 seeing that they don't appear in the \texttt{public} listing, will
 mark them as private.
@@ -610,6 +621,7 @@ usual with gretl files, any non-ASCII characters should be UTF-8
 encoded.
 
 \section{Basic elements}
+\label{sec:spec-basic}
 
 The elements described in the section apply to all function packages,
 whether or not they offer an interface specifically designed for
@@ -628,9 +640,8 @@ panel of the GUI package editor window.
 
   \vbusage{} \verb|author = Riccardo "Jack" Lucchetti and Allin Cottrell|
 
-\item \texttt{email} (required for new packages): The email address to
-  which correspondence should be directed. Only one address should be
-  given.
+\item \texttt{email} (required): The email address to which
+  correspondence should be directed. Only one address should be given.
 
   \vbusage{} \verb|email = cottrell@wfu.edu|
 
@@ -712,6 +723,7 @@ in various ways, as described below.
 \end{description}
 
 \section{GUI-related elements}
+\label{sec:spec-gui}
 
 The elements described in this section are applicable only if at least
 one function in the package is designed to be called via gretl's
@@ -811,6 +823,7 @@ shown in the window that appears on clicking the \textsf{Extra
 \end{description}
 
 \section{Bundle-related elements}
+\label{sec:spec-bundle}
 
 The elements described below are applicable only if at least one
 public function in the package returns a bundle. In the GUI package
@@ -879,6 +892,7 @@ latter strings will be used to populate a menu on the window
 displaying a \textsf{gig} bundle.
 
 \section{Extra elements}
+\label{sec:spec-extra}
 
 At present there is only one spec file entry in this category; in the
 GUI package editor it appears under the \textsf{Data files} tab in the
@@ -910,8 +924,8 @@ file. Suppose the name of the package is \textsf{mypkg}; in that case
 the minimal zipfile looks like this (as shown by the \textsf{unzip}
 program with its \texttt{-l} option to list the contents of an
 archive):
-
-\begin{verbatim}
+%
+\begin{code}
 Archive:  mypkg.zip
   Length      Date    Time    Name
 ---------  ---------- -----   ----
@@ -919,7 +933,7 @@ Archive:  mypkg.zip
     10708  2015-06-07 10:54   mypkg/mypkg.gfn
 ---------                     -------
     10708                     2 files
-\end{verbatim}
+\end{code}
 
 There would be little point in creating a package with just the
 content shown above; the advantage of the zipfile format lies in the
@@ -936,11 +950,36 @@ a \texttt{gfn} file. Such materials fall into four main categories:
   package author wishes to use specific data, not present in the gretl
   distribution, with his or her sample script. For example, the
   \textsf{almonreg} package contains the datafile \texttt{almon.gdt}
-  to permit replication of Shirley Almon's original modeling. FIXME
-  spec file entry, also subdir?
-\item Data for internal use. E.g.\ Ignacio's critical values.
-\item Extra examples (scripts and/or data files).
+  to permit replication of Shirley Almon's original modeling.
+\item Data for internal use. For example, gretl matrix files
+  containing tables of critical value for some hypothesis test
+  implemented by the package.
+\item Extra examples: scripts and/or data files that go beyond the
+  required sample script to give users a full sense of the scope of
+  a complex package.
 \end{itemize}
+
+Here's a slightly more complex case, the \textsf{almonreg} package:
+%
+\begin{code}
+Archive:  almonreg.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  02-12-2015 13:27   almonreg/
+    55861  02-12-2015 13:27   almonreg/almonreg.pdf
+     4409  02-12-2015 13:27   almonreg/almonreg.gfn
+     1969  02-12-2015 13:27   almonreg/almon.gdt
+---------                     -------
+    62239                     4 files
+\end{code}
+
+Note that when the \textsf{almonreg} sample script opens the data file
+\texttt{almon.gdt} it must employ the \option{frompkg} option to tell
+gretl where to find the file:
+%
+\begin{code}
+open almon.gdt --frompkg=almonreg
+\end{code}
 
 \end{document}
 
