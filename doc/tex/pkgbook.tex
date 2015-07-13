@@ -156,6 +156,10 @@ package is installed, it is unpacked in a suitable location. Further
 details on this package format can be found in
 chapter~\ref{chap:zipfile}.
 
+\section{Using this document}
+
+Text wanted here.
+
 \chapter{For package users}
 \label{chap:users}
 
@@ -226,11 +230,51 @@ should already be pretty comfortable with hansl. See the \textit{Hansl
   \url{http://sourceforge.net/projects/gretl/files/manual/}.}
 
 The requirements on the sample script and help text are set out in
-section~\ref{sec:common-req}.
+section~\ref{sec:common-req}.  That leaves the \textsf{spec}
+file. We'll approach this by stages, starting with the simplest
+possible case (see Example~\ref{ex:spec1}).
 
-That leaves the \textsf{spec} file. We'll approach this by stages,
-starting with the simplest possible case.
+\begin{script}[htbp]
+  \caption{Simple \texttt{mypkg.spec}}
+  \label{ex:spec1}
+\begin{code}
+author = A. U. Thor
+email = author@somewhere.net
+version = 1.0
+date = 2015-07-12
+description = Suitable description goes here
+public = myfunc
+help = mypkg_help.txt
+sample-script = mypkg_sample.inp
+min-version = 1.9.3
+\end{code}
+\end{script}
 
+According to this spec, the package has a single public function,
+\texttt{myfunc}, and requires gretl 1.9.3 or higher to run
+properly. For details on all the specification keys (e.g.\
+\texttt{min-version}) see chapter~\ref{chap:specfile}.
+
+Now, assuming all the required files are in place, how do we actually
+build the package? Simple: the shell command
+%
+\begin{code}
+gretlcli --makepkg mypkg.inp
+\end{code}
+%
+tells \textsf{gretlcli} to run \texttt{mypkg.inp}, hence loading your
+function definitions into memory; read the corresponding \textsf{spec}
+file (which must have the same basename as the \textsf{inp} file);
+and, if all goes well, write out \texttt{mypkg.gfn} (FIXME: where?!).
+
+We've said this package offers a single public function,
+\texttt{myfunc}: that's the only function that will be made directly
+available to users of the package. However, you may want to include
+one or more private ``helper'' functions, designed to be called only
+by \texttt{myfunc}. To do so, just put definitions of these functions
+into \texttt{mypkg.inp}; \textsf{gretlcli} will pick them up and,
+seeing that they don't appear in the \texttt{public} listing, will
+mark them as private.
 
 
 \section{Building a package via the GUI}
@@ -349,15 +393,18 @@ between the two. Avoid reverting any changes made by package admins to
 fix breakage in prior versions (tho' maybe that should never happen?).
 
 
-\chapter{Spec file details}
+\chapter{Package specification details}
 \label{chap:specfile}
 
-Here we set out all the currently allowed elements of the
-\texttt{spec} file (from which a gretl function package may be
-constructed) and explain the usage of each.
+Here we list and explain the usage of all the currently allowed
+elements in the specification of a function package. We focus on the
+\textsf{spec} file (from which a gretl function package may be
+constructed by command-line means) but we also indicate the
+representation of each specification element in the GUI package
+editor.
 
-We begin with a few general points. Each entry in the spec file must
-take the form
+We begin with a few general points on the \textsf{spec} file. Each
+entry in this file takes the form
 
 \texttt{keyword =} \textsl{value(s)}
 
@@ -365,7 +412,9 @@ Where multiple values are allowed, they should be separated by
 spaces. An entry can be continued over more than one line if required,
 using a trailing backslash (\verb+\+) as the continuation
 character. Blank lines are ignored, as are lines beginning with the
-hash mark (\texttt{\#}), which can be used to insert comments.
+hash mark (\texttt{\#}), which can be used to insert comments.  As
+usual with gretl files, any non-ASCII characters should be UTF-8
+encoded.
 
 \section{Basic elements}
 
@@ -373,6 +422,9 @@ The elements described in the section apply to all function packages,
 whether or not they offer an interface specifically designed for
 use via the gretl GUI and whether or not the main public function(s)
 return a gretl bundle.
+
+Elements in the first block below are all represented in the upper
+panel of the GUI package editor window.
 
 \begin{description}
 
@@ -416,26 +468,6 @@ return a gretl bundle.
 
    \ttusage{min-version = 1.9.12}
 
-\item \texttt{public} (required): A list of names of the public
-  interfaces offered by the package.
-
-  \vbusage{} \verb|public = GUI_lp_mfx lp_mfx_print mlogit_mfx \| \\
-           \verb|                   mlogit_dpj_dx ordered_mfx |
-
-\item \texttt{sample-script} (required): the name of a hansl
-   script (\texttt{.inp}) file that serves as examplar for use
-   of the package.
-
-   \ttusage{sample-script = keane-mfx.inp}
-
- \item \texttt{help} (required): The name of the file in which
-  Help for this package can be found. This should either be a 
-  plain text (UTF-8) file, in which case the filename suffix
-  doesn't really matter---although we suggest \texttt{.txt}---or a
-  PDF file, in which case the suffix must be \texttt{.pdf}. 
-
-  \vbusage{} \verb|help = lp-mfx_help.txt|
-
 \item \texttt{data-requirement} (optional): If this element is
   supplied, it must be one of the following strings:
   \texttt{no-data-ok}, \texttt{needs-time-series-data},
@@ -451,11 +483,48 @@ return a gretl bundle.
 
 \end{description}
 
+The remaining ``basic'' elements are represented in the GUI
+in various ways, as described below.
+
+\begin{description}
+
+\item \texttt{public} (required): A list of names of the public
+  interfaces offered by the package.
+
+  \vbusage{} \verb|public = GUI_lp_mfx lp_mfx_print mlogit_mfx \| \\
+           \verb|                   mlogit_dpj_dx ordered_mfx |
+
+  In the GUI this list can be accessed and modified via the
+  \textsf{Add/Remove functions} button.
+
+\item \texttt{sample-script} (required): the name of a hansl
+   script (\texttt{.inp}) file that serves as examplar for use
+   of the package.
+
+   \ttusage{sample-script = keane-mfx.inp}
+
+   GUI: access and edit via the \textsf{Edit sample script} button.
+
+ \item \texttt{help} (required): The name of the file in which
+  Help for this package can be found. This should either be a 
+  plain text (UTF-8) file, in which case the filename suffix
+  doesn't really matter---although we suggest \texttt{.txt}---or a
+  PDF file, in which case the suffix must be \texttt{.pdf}. 
+
+  \vbusage{} \verb|help = lp-mfx_help.txt|
+
+  GUI: The help text is found in the lower panel of the main
+  package editor window.
+
+\end{description}
+
 \section{GUI-related elements}
 
 The elements described in this section are applicable only if at least
 one function in the package is designed to be called via gretl's
-graphical interface.
+graphical interface. In the GUI package editor these elements are
+shown in the window that appears on clicking the \textsf{Extra
+  properties} button.
 
 \begin{description}
 
@@ -551,7 +620,9 @@ graphical interface.
 \section{Bundle-related elements}
 
 The elements described below are applicable only if at least one
-public function in the package returns a bundle.
+public function in the package returns a bundle. In the GUI package
+editor these appear under the \textsf{Special functions} tab in the
+\textsf{Extra properties} window.
 
 \begin{description}
 
@@ -616,7 +687,9 @@ displaying a \textsf{gig} bundle.
 
 \section{Extra elements}
 
-At present there is only one spec file entry in this category:
+At present there is only one spec file entry in this category; in the
+GUI package editor it appears under the \textsf{Data files} tab in the
+\textsf{Extra properties} window.
 
 \begin{description}
 
