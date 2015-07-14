@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.10.1)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-07-13 13:35-0400\n"
-"PO-Revision-Date: 2015-06-10 13:29+0100\n"
+"PO-Revision-Date: 2015-07-14 15:06+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -1468,7 +1468,7 @@ msgstr "O conxunto de datos ten agora o tamaño da mostra recortado"
 
 #: lib/src/dataset.c:3333
 msgid "dataset restore: dataset is not resampled\n"
-msgstr "Restaurar conxunto de datos: conxunto de datos non re-mostrado\n"
+msgstr "Restablecer conxunto de datos: conxunto de datos non re-mostrado\n"
 
 #: lib/src/dbread.c:442 lib/src/dbread.c:730
 msgid "Couldn't open database index file"
@@ -1646,19 +1646,17 @@ msgid "Autocorrelation function for %s"
 msgstr "Función de autocorrelación para *%s*"
 
 #: lib/src/describe.c:3088
-#, fuzzy
 msgid "***, **, * indicate significance at the 1%, 5%, 10% levels\n"
-msgstr "** Indica significatividade ao nivel do 5%"
+msgstr "***, **, * indica significación a niveis do 1%, 5%, 10%\n"
 
 #: lib/src/describe.c:3091
-#, fuzzy
 msgid "using Bartlett standard errors for ACF"
-msgstr "Desviacións típicas agrupadas"
+msgstr "Utilizando desviacións típicas de Bartlett para FAC"
 
 #: lib/src/describe.c:3093
-#, fuzzy, c-format
+#, c-format
 msgid "using standard error 1/T^%.1f"
-msgstr "Desviacións típicas robustas"
+msgstr "Usando desviación típica 1/T^%.1f"
 
 #: lib/src/describe.c:3111
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
@@ -1863,12 +1861,12 @@ msgstr "Desv. típica"
 #: lib/src/describe.c:4609
 #, no-c-format
 msgid "5% perc."
-msgstr "Porc. 5%"
+msgstr "Perc. 5%"
 
 #: lib/src/describe.c:4611
 #, no-c-format
 msgid "95% perc."
-msgstr "Porc. 95%"
+msgstr "Perc. 95%"
 
 #: lib/src/describe.c:4612 gui2/guiprint.c:795
 msgid "IQ range"
@@ -2315,7 +2313,7 @@ msgstr "A variable nº %d está fóra dos límites"
 #: lib/src/usermat.c:537
 #, c-format
 msgid "Index value %d is out of bounds"
-msgstr "O valor do índice %d está fóra dos límites"
+msgstr "O valor %d do índice está fóra dos límites"
 
 #: lib/src/geneval.c:6475
 msgid "Matrix specification is not coherent"
@@ -2694,7 +2692,7 @@ msgstr "exceso de argumentos"
 #: lib/src/gmm.c:131 lib/src/nls.c:2771
 #, c-format
 msgid "Unknown variable '%s'"
-msgstr "Variable '%s' descoñecida"
+msgstr "Variable *%s* descoñecida"
 
 #: lib/src/gmm.c:676
 msgid "Orthogonality conditions must come before the weights matrix"
@@ -2935,9 +2933,9 @@ msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "Elipse de confianza (%g%%) e intervalos marxinais de confianza (%g%%)"
 
 #: lib/src/graphing.c:6764
-#, fuzzy, c-format
+#, c-format
 msgid "95% interval"
-msgstr "(Intervalo ao 90%)"
+msgstr "Intervalo %d"
 
 #: lib/src/graphing.c:6790
 msgid "Residual ACF"
@@ -3363,14 +3361,14 @@ msgid "%s: duplicated parameter name '%s'"
 msgstr "%s: o nome do parámetro '%s' está duplicado"
 
 #: lib/src/gretl_func.c:5921
-#, fuzzy, c-format
+#, c-format
 msgid "%s: expected an integer but found %g"
-msgstr "%s: agardábase unha orde de enteiros"
+msgstr "%s: agardábase un enteiro pero atopouse %g"
 
 #: lib/src/gretl_func.c:5948
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument value %g is out of bounds"
-msgstr "%s, argumento %d: o valor %g está fóra dos límites\n"
+msgstr "%s: o valor do argumento %g está fóra dos límites"
 
 #: lib/src/gretl_func.c:6020
 msgid "Duplicated pointer argument: not allowed"
@@ -4442,7 +4440,7 @@ msgstr "%s: instrución non dispoñible\n"
 #: lib/src/interact.c:3068
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
-msgstr "A instrución %s non está aínda integrada en libgretl\n"
+msgstr "A instrución '%s' non está aínda integrada en libgretl\n"
 
 #: lib/src/kalman.c:476
 msgid "kalman: a required matrix is missing"
@@ -4503,7 +4501,7 @@ msgstr "Xerador de números pseudoaleatorios iniciado con semente %d\n"
 #: lib/src/libset.c:1837
 #, c-format
 msgid "set: unknown variable '%s'"
-msgstr "set: variable '%s' descoñecida"
+msgstr "set: variable *%s* descoñecida"
 
 #: lib/src/matrix_extra.c:898 lib/src/matrix_extra.c:901
 #: lib/src/plotspec.c:1776 lib/src/plotspec.c:1792
@@ -4513,21 +4511,21 @@ msgstr "Atopáronse valores non positivos"
 #: lib/src/matrix_extra.c:1558
 #, c-format
 msgid "%s: matrix is NULL"
-msgstr ""
+msgstr "%s: a matriz é NULA"
 
 #: lib/src/matrix_extra.c:1560
 msgid "matrix is NULL"
-msgstr ""
+msgstr "A matriz é NULA"
 
 #: lib/src/matrix_extra.c:1566
-#, fuzzy, c-format
+#, c-format
 msgid "%s: matrix is empty (%d x %d)"
-msgstr "Matriz nula, %d x %d\n"
+msgstr "%s: a matriz está baleira (%d x %d)"
 
 #: lib/src/matrix_extra.c:1569
-#, fuzzy, c-format
+#, c-format
 msgid "matrix is empty (%d x %d)"
-msgstr "Matriz nula, %d x %d\n"
+msgstr "A matriz está baleira (%d x %d)"
 
 #: lib/src/missing.c:551
 #, c-format
@@ -5338,7 +5336,7 @@ msgstr "Usando %d puntos de cuadratura"
 
 #: lib/src/modelprint.c:2081
 msgid "Without squared terms in variance equation"
-msgstr ""
+msgstr "Sen termos cadrados na ecuación de varianza"
 
 #: lib/src/modelprint.c:2094
 msgid "Allowing for groupwise heteroskedasticity"
@@ -5815,6 +5813,8 @@ msgid ""
 "Using the same index variable (%s) for nested loops:\n"
 "this is acceptable only with \"for\" loops."
 msgstr ""
+"Utilizando a mesma variable índice (%s) para ciclos aniñados:\n"
+"isto só é aceptable con ciclos \"for\"."
 
 #: lib/src/monte_carlo.c:1244
 msgid "No valid loop condition was given."
@@ -6086,7 +6086,7 @@ msgid ""
 "Number of runs (R) in the variable '%s' = %d\n"
 msgstr ""
 "\n"
-"Número de rachas (R) na variable '%s' = %d\n"
+"Número de rachas (R) na variable *%s* = %d\n"
 
 #: lib/src/nonparam.c:839
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
@@ -6745,7 +6745,7 @@ msgstr "'%s' non é unha variable ficticia"
 #: lib/src/subsample.c:920
 #, c-format
 msgid "Variable '%s' not defined"
-msgstr "Variable '%s' non definida"
+msgstr "Variable *%s* non definida"
 
 #: lib/src/subsample.c:1008
 #, c-format
@@ -6762,7 +6762,7 @@ msgstr "Non se prescindiu de ningunha observación!"
 
 #: lib/src/subsample.c:1558
 msgid "Sub-sample command failed mysteriously"
-msgstr "A instrución sub-sample fallou misteriosamente"
+msgstr "A instrución 'sub-sample' fallou misteriosamente"
 
 #: lib/src/subsample.c:1668
 msgid "--balanced option is invalid: the (full) dataset is not a panel"
@@ -6779,6 +6779,8 @@ msgid ""
 "The full dataset must be restored before imposing a permanent sample "
 "restriction"
 msgstr ""
+"O conxunto completo de datos debe restablecerse antes de impoñer unha "
+"restrición mostral permanente"
 
 #: lib/src/subsample.c:2563 lib/src/subsample.c:2580
 msgid "error in new starting obs"
@@ -6814,11 +6816,11 @@ msgstr "valores correctos"
 
 #: lib/src/subsample.c:2901 lib/src/subsample.c:2902
 msgid "dataset is subsampled, model is not\n"
-msgstr "O conxunto de datos foi sub-mostrado, o modelo non é\n"
+msgstr "O conxunto de datos foi submostrado, o modelo non é\n"
 
 #: lib/src/subsample.c:2908 lib/src/subsample.c:2909
 msgid "model is subsampled, dataset is not\n"
-msgstr "O modelo foi sub-mostrado, o conxunto de datos non é\n"
+msgstr "O modelo foi submostrado, o conxunto de datos non é\n"
 
 #: lib/src/subsample.c:2916
 msgid "model and dataset subsamples not the same\n"
@@ -6895,7 +6897,7 @@ msgstr "Rango"
 
 #: lib/src/subsample.c:2996
 msgid "Subsampled data"
-msgstr "Datos sub-mostrados"
+msgstr "Datos submostrados"
 
 #: lib/src/subsample.c:3046
 #, c-format
@@ -7978,7 +7980,7 @@ msgstr "FDA en lugar da densidade"
 #: gui2/calculator.c:2226
 #, c-format
 msgid "Data missing for variable '%s'"
-msgstr "Dato perdido para a variable '%s'"
+msgstr "Dato perdido para a variable *%s*"
 
 #: gui2/calculator.c:2355
 #, c-format
@@ -8514,7 +8516,7 @@ msgstr "Estado da rede: correcto"
 #: gui2/database.c:1060
 #, c-format
 msgid "Database parse error at variable '%s'"
-msgstr "Erro de proceso na base de datos na variable '%s'"
+msgstr "Erro de proceso na base de datos na variable *%s*"
 
 #: gui2/database.c:1393 gui2/ssheet.c:2603
 msgid "Name"
@@ -8583,14 +8585,12 @@ msgid "Function package %s"
 msgstr "Paquete %s de función"
 
 #: gui2/datafiles.c:787
-#, fuzzy
 msgid "Unload member functions only"
-msgstr "Descargar as funcións internas"
+msgstr "Descargar só as funcións internas"
 
 #: gui2/datafiles.c:788
-#, fuzzy
 msgid "Unload and delete package file"
-msgstr "Eliminar ficheiro de paquete"
+msgstr "Descargar e eliminar ficheiro de paquete"
 
 #: gui2/datafiles.c:793 gui2/session.c:2440
 #, c-format
@@ -8663,7 +8663,7 @@ msgstr "Axuda"
 
 #: gui2/datafiles.c:1340 gui2/datafiles.c:1495
 msgid "Unload/delete..."
-msgstr ""
+msgstr "Descargar/eliminar"
 
 #: gui2/datafiles.c:1343 gui2/datafiles.c:1498
 msgid "New"
@@ -10258,6 +10258,8 @@ msgid ""
 "This package requires data that are not currently in place.\n"
 "Would you like to open its sample script?"
 msgstr ""
+"Este paquete precisa datos dos que non se dispón actualmente.\n"
+"Desexa abrir o seu guión de exemplo?"
 
 #: gui2/fncall.c:2510
 #, c-format
@@ -10351,6 +10353,9 @@ msgid ""
 "the \"extra properties\" dialog (after applying any\n"
 "changes you wish to keep)."
 msgstr ""
+"Antes de engadir ou eliminar funcións, peche\n"
+"o diálogo de \"Propiedades extra\" (logo de aplicar\n"
+"calquera cambio que desexe conservar)."
 
 #: gui2/fnsave.c:1002
 msgid ""
@@ -10448,9 +10453,8 @@ msgstr ""
 "(a) gardar este paquete, e (b) reiniciar Gretl"
 
 #: gui2/fnsave.c:2148 gui2/fnsave.c:2167
-#, fuzzy
 msgid "Apply changes?"
-msgstr "Gardar os cambios?"
+msgstr "Aplicar os cambios?"
 
 #: gui2/fnsave.c:2293
 msgid "gretl: extra properties"
@@ -10686,7 +10690,7 @@ msgstr "Zoom..."
 
 #: gui2/gpt_control.c:3777 gui2/gpt_control.c:3885
 msgid "Restore full view"
-msgstr "Recuperar a vista completa"
+msgstr "Restablecer a vista completa"
 
 #: gui2/gpt_control.c:3779 gui2/gpt_control.c:3886
 msgid "Replace full view"
@@ -11626,7 +11630,7 @@ msgstr "Establecer _rango..."
 
 #: gui2/gretl.c:1641
 msgid "_Restore full range"
-msgstr "Recuperar o rango _completo"
+msgstr "Restablecer o rango _completo"
 
 #: gui2/gretl.c:1642
 msgid "_Show status"
@@ -11649,9 +11653,8 @@ msgid "Drop observations with _missing values..."
 msgstr "Prescindir das observacións con _valores perdidos..."
 
 #: gui2/gretl.c:1650
-#, fuzzy
 msgid "Make current subsample permanent..."
-msgstr "Facer isto permanente"
+msgstr "Facer permanente a submostra actual"
 
 #: gui2/gretl.c:1652
 msgid "_Count missing values"
@@ -12330,7 +12333,7 @@ msgstr "_Modificar o modelo..."
 
 #: gui2/gui_utils.c:232
 msgid "_Restore model sample"
-msgstr "_Restaurar a mostra do modelo"
+msgstr "_Restablecer a mostra do modelo"
 
 #: gui2/gui_utils.c:234 gui2/gui_utils.c:361
 msgid "_Tests"
@@ -12925,18 +12928,15 @@ msgstr ""
 "A mostra do modelo é diferente da mostra do conxunto de datos,\n"
 "por iso desactivaranse algunhas opcións de menú.\n"
 "\n"
-"Desexa recuperar a mostra sobre a que se estimou este modelo?"
+"Desexa restablecer a mostra sobre a que se estimou este modelo?"
 
 #: gui2/gui_utils.c:4905
-#, fuzzy
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled."
 msgstr ""
 "A mostra do modelo é diferente da mostra do conxunto de datos,\n"
-"por iso desactivaranse algunhas opcións de menú.\n"
-"\n"
-"Desexa recuperar a mostra sobre a que se estimou este modelo?"
+"por iso desactivaranse algunhas opcións de menú."
 
 #: gui2/gui_utils.c:4970 gui2/library.c:4955
 #, c-format
@@ -13290,6 +13290,12 @@ msgid ""
 "\n"
 "Do you want to go ahead with the subsampling now?"
 msgstr ""
+"Modificando así o conxunto de datos eliminará\n"
+"%d modelo(s) desta sesión de Gretl.\n"
+"\n"
+"Desexa dicir 'Non' aquí e gardar primeiro a sesión.\n"
+"\n"
+"Desexa continuar agora coa submostra?"
 
 #: gui2/library.c:1582
 #, c-format
@@ -13620,9 +13626,8 @@ msgid "correlogram"
 msgstr "Correlograma"
 
 #: gui2/library.c:5519
-#, fuzzy
 msgid "Use Bartlett standard errors"
-msgstr "Desviacións típicas agrupadas"
+msgstr "Utilizar desviacións típicas de Bartlett"
 
 #: gui2/library.c:5525 gui2/library.c:5529
 msgid "Maximum lag:"
@@ -14674,9 +14679,8 @@ msgid "Show interval for median"
 msgstr "Amosar o intervalo para a mediana"
 
 #: gui2/selector.c:5575
-#, fuzzy
 msgid "Variance equation includes squares"
-msgstr "Estimado usando Mínimos Cadrados"
+msgstr "A ecuación de varianza inclúe cadrados"
 
 #: gui2/selector.c:5581
 msgid "Parameter covariance matrix via Hessian"
@@ -16893,7 +16897,7 @@ msgstr "Gretl: Información POP"
 #: plugin/mp_ols.c:164
 #, c-format
 msgid "Variable '%s' is all zeros"
-msgstr "A variable '%s' ten todos ceros"
+msgstr "A variable *%s* ten todos ceros"
 
 #: plugin/mp_ols.c:1413
 msgid "Error sum of squares is not >= 0"
