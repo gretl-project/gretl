@@ -7825,6 +7825,7 @@ static void run_native_script (windata_t *vwin, gchar *buf)
     }
 
     if (!err && vwin->role != EDIT_PKG_SAMPLE &&
+	vwin->role != VIEW_PKG_SAMPLE && 
 	*vwin->fname != '\0' && !strstr(vwin->fname, "script_tmp")) {
 	mkfilelist(FILE_LIST_SCRIPT, vwin->fname);
 	lib_command_sprintf("run %s", vwin->fname);
