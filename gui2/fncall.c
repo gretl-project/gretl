@@ -2051,6 +2051,7 @@ int open_function_package (const char *pkgname,
     int free_cinfo = 1;
     int err = 0;
 
+    /* note: this loads the package */
     cinfo = start_cinfo_for_package(pkgname, fname, vwin);
 
     if (cinfo == NULL) {
@@ -2069,8 +2070,8 @@ int open_function_package (const char *pkgname,
     if (can_call) {
 	/* give choice of sample script or call dialog */
 	const char *opts[] = {
-	    N_("Open sample script"),
-	    N_("Call a function")
+	    N_("Call a function"),
+	    N_("Open sample script")
 	};
 	gchar *title = cinfo_pkg_title(cinfo);
 	int resp;
@@ -2079,11 +2080,12 @@ int open_function_package (const char *pkgname,
 			    opts, 2, 0, 0, vwin->main);
 	g_free(title);
 	if (resp == 0) {
-	    display_function_package_data(cinfo->pkgname, fname,
-					  VIEW_PKG_SAMPLE);
-	} else if (resp == 1) {
+	    /* function call: preserve @cinfo! */
 	    free_cinfo = 0;
 	    err = call_function_package(cinfo, vwin, 1);
+	} else if (resp == 1) {
+	    display_function_package_data(cinfo->pkgname, fname,
+					  VIEW_PKG_SAMPLE);
 	}
     } else {
 	/* notify and give choice of running sample */

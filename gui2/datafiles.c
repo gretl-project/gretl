@@ -2002,6 +2002,18 @@ static int have_examples (const char *dirname)
     return ret;
 }
 
+char *maybe_ellipsize_string (char *s, int maxlen)
+{
+    size_t n = strlen(s);
+
+    if (n > maxlen) {
+	gretl_trunc(s, maxlen - 3);
+	strncat(s, "...", 3);
+    }
+
+    return s;
+}
+
 static int ok_gfn_path (const char *fullname, 
 			const char *shortname,
 			const char *dirname,
@@ -2019,6 +2031,7 @@ static int ok_gfn_path (const char *fullname,
 
     if (!err && !fn_file_is_duplicate(shortname, version, store, imax)) {
 	if (iter != NULL) {
+	    /* actually enter the file into the browser */
 	    gchar *fname = g_strdup(shortname);
 	    int n = strlen(fname) - 4;
 	    gint flags = 0;
@@ -2037,6 +2050,11 @@ static int ok_gfn_path (const char *fullname,
 		    flags |= PKG_ATTR_DOC;
 		}
 	    }
+
+	    /* 2015-07-14: truncate excessively long
+	       descriptions to make the browser window
+	       more manageable */
+	    maybe_ellipsize_string(descrip, 63);
 
 	    gtk_list_store_append(store, iter);
 	    gtk_list_store_set(store, iter, 
@@ -2058,9 +2076,9 @@ static int ok_gfn_path (const char *fullname,
     return ok;
 }
 
-/* Read (or just count) the .gfn files in a given directory.
-   The signal to count rather than read is that the @iter
-   argument is NULL.
+/* Read (or simply just count) the .gfn files in a given directory.
+   The signal to count rather than read is that the @iter argument
+   is NULL.
 */
 
 static void
@@ -2072,8 +2090,11 @@ read_fn_files_in_dir (DIR *dir, const char *path,
     char fullname[MAXLEN];
     int imax = *nfn;
 
-    /* look first for the new-style setup: gfn file in its own
-       subdir, e.g. functions/gig/gig.gfn 
+    /* Look first for a gfn file in its own subdir, as
+       in functions/foo/foo.gfn. That way if a package
+       has been updated to zipfile status and there's
+       also an older "plain gfn" version lying around
+       we should get the newer one.
     */
 
     if (is_functions_dir(path)) {
@@ -2112,7 +2133,7 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 	rewinddir(dir);
     }
 
-    /* then look for "plain" .gfn files */
+    /* then look for "plain gfn" files */
 
     while ((dirent = readdir(dir)) != NULL) {
 	const char *basename = dirent->d_name;
@@ -2143,7 +2164,25 @@ static int dirname_done (char **dnames, int ndirs, char *dirname)
     return 0;
 }
 
-gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
+#define BROWSE_DEBUG 0
+
+#if BROWSE_DEBUG
+
+static void show_dirs_list (char **S, int n, const char *msg)
+{
+    int i;
+
+    fprintf(stderr, "*** dirs list: %s\n", msg);
+    for (i=0; i<n; i++) {
+	fprintf(stderr, " %d: '%s'\n", i, S[i]);
+    }
+}
+
+#endif
+
+/* Populate browser displaying gfn files on local machine */
+
+static gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 {
     GtkListStore *store;
     GtkTreeIter iter;
@@ -2155,8 +2194,12 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
     nfn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->listbox), "nfn"));
 
+    /* @nfn is the number of function files currently displayed */
+
     if (nfn > 0) {
-	/* we're repopulating an existing list */
+	/* We're re-populating an existing list, in response
+	   to the user selecting a directory to process (and/or what??)
+	*/
 	GtkTreeModel *model = GTK_TREE_MODEL(store);
 	gchar *dirname;
 
@@ -2174,11 +2217,18 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	}
     }
 
+#if BROWSE_DEBUG
+    fprintf(stderr, "populate_func_list: on entry nfn=%d, n_dirs=%d\n",
+	    nfn, n_dirs);
+#endif    
+
+    /* initialize the listing */
     nfn = 0;
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     if (n_dirs > 0) {
+	/* using previously established set of paths */
 	for (i=0; i<n_dirs; i++) {
 	    dir = gretl_opendir(dnames[i]);
 	    if (dir != NULL) {
@@ -2187,10 +2237,9 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 		closedir(dir);
 	    }
 	}
-	strings_array_free(dnames, n_dirs);
     } else {
+	/* starting from scratch */
 	dnames = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
-
 	for (i=0; i<n_dirs; i++) {
 	    dir = gretl_opendir(dnames[i]);
 	    if (dir != NULL) {
@@ -2199,10 +2248,16 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 		closedir(dir);
 	    }
 	}
-	strings_array_free(dnames, n_dirs);
-    }	    
+    }
+
+#if BROWSE_DEBUG
+    show_dirs_list(dnames, n_dirs, "FUNCS_SEARCH");
+#endif
+
+    strings_array_free(dnames, n_dirs);
 
     if (nfn == 0) {
+	/* we didn't find any gfn files */
 	if (fresp->try_server == 0) {
 	    int resp;
 
@@ -2218,6 +2273,7 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	}
 	return 1;
     } else {
+	/* update gfn file count */
 	g_object_set_data(G_OBJECT(vwin->listbox), "nfn", GINT_TO_POINTER(nfn));
 	presort_treelist(vwin);
     }
@@ -2258,7 +2314,8 @@ static void revise_loaded_status (GtkWidget *listbox)
     }
 }
 
-/* update function package status after run, edit calls */
+/* update function package status after calls to run
+   or save a function package */
 
 void maybe_update_func_files_window (int role)
 {
@@ -2413,7 +2470,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	types = remote_func_types;
 	cols = G_N_ELEMENTS(remote_func_types);
 	hidden_cols = 1;
-	full_width = 580;
+	full_width = 750;
 	file_height = 340;
 	break;
     case REMOTE_ADDONS:

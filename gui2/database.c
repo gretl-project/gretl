@@ -2909,13 +2909,8 @@ gint populate_remote_func_list (windata_t *vwin)
 	if (bufgets(line, sizeof line, getbuf)) {
 	    tailstrip(line);
 	    utf8_correct(line);
-	    if (strlen(line) > 62) {
-		descrip = gretl_strndup(line + 2, 60);
-		descrip[56] = '\0';
-		strncat(descrip, "...", 3);
-	    } else {
-		descrip = gretl_strdup(line + 2);
-	    }
+	    descrip = gretl_strdup(line + 2);
+	    maybe_ellipsize_string(descrip, 62);
 	} 
 
 	if (bufgets(line, sizeof line, getbuf)) {
@@ -2926,6 +2921,7 @@ gint populate_remote_func_list (windata_t *vwin)
 	if (bufgets(line, sizeof line, getbuf)) {
 	    tailstrip(line);
 	    author = gretl_strdup(line + 2);
+	    maybe_ellipsize_string(author, 33);
 	}
 
 	if (descrip != NULL && version != NULL && author != NULL) {
