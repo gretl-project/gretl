@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-13 13:35-0400\n"
+"POT-Creation-Date: 2015-07-14 09:16-0400\n"
 "PO-Revision-Date: 2015-02-11 21:49+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
@@ -188,7 +188,7 @@ msgstr "Zgjedhje e pavlefshme"
 
 #: lib/src/adf_kpss.c:1223 lib/src/adf_kpss.c:1986 lib/src/boxplots.c:850
 #: lib/src/describe.c:1649 lib/src/describe.c:3028 lib/src/describe.c:3582
-#: lib/src/describe.c:4153 lib/src/graphing.c:7136
+#: lib/src/describe.c:4153 lib/src/graphing.c:7137
 #, c-format
 msgid "%s is a constant"
 msgstr "%s është konstante"
@@ -1399,7 +1399,7 @@ msgstr "të dhënave ishin në përdorim"
 msgid "dataset is subsampled"
 msgstr "të dhënat i përkasin një nën-kampioni"
 
-#: lib/src/dataset.c:1986 lib/src/dataset.c:1998 lib/src/graphing.c:6894
+#: lib/src/dataset.c:1986 lib/src/dataset.c:1998 lib/src/graphing.c:6895
 #: lib/src/gretl_utils.c:1168 lib/src/gretl_utils.c:1251
 msgid "periods"
 msgstr "periudha"
@@ -1643,7 +1643,7 @@ msgid "Correlogram"
 msgstr "Korrelogram"
 
 #: lib/src/describe.c:2915 lib/src/describe.c:3327 lib/src/describe.c:3372
-#: lib/src/graphing.c:6781
+#: lib/src/graphing.c:6782
 msgid "lag"
 msgstr "vonesa"
 
@@ -2945,76 +2945,76 @@ msgstr "VAR: rrënjët e anasjellta kundrejt rrethit të njësishëm"
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "elipsi i besimit %g%% me intervalet marzhinalë %g%%"
 
-#: lib/src/graphing.c:6764
-#, fuzzy, c-format
+#: lib/src/graphing.c:6765
+#, fuzzy, no-c-format
 msgid "95% interval"
 msgstr "(intervali 90%)"
 
-#: lib/src/graphing.c:6790
+#: lib/src/graphing.c:6791
 msgid "Residual ACF"
 msgstr " ACF i mbetjes"
 
-#: lib/src/graphing.c:6792
+#: lib/src/graphing.c:6793
 msgid "ACF for"
 msgstr "ACF për"
 
-#: lib/src/graphing.c:6826
+#: lib/src/graphing.c:6827
 msgid "Residual PACF"
 msgstr "PACF i mbetjes"
 
-#: lib/src/graphing.c:6828
+#: lib/src/graphing.c:6829
 msgid "PACF for"
 msgstr "PACF për"
 
-#: lib/src/graphing.c:6905
+#: lib/src/graphing.c:6906
 msgid "radians"
 msgstr "radianë"
 
-#: lib/src/graphing.c:6907
+#: lib/src/graphing.c:6908
 msgid "degrees"
 msgstr "gradë"
 
-#: lib/src/graphing.c:6909
+#: lib/src/graphing.c:6910
 msgid "scaled frequency"
 msgstr "frekuencë e ponderuar"
 
-#: lib/src/graphing.c:6919
+#: lib/src/graphing.c:6920
 msgid "Residual spectrum"
 msgstr "Spektri i mbetjes"
 
-#: lib/src/graphing.c:6921
+#: lib/src/graphing.c:6922
 #, c-format
 msgid "Spectrum of %s"
 msgstr "Spektri i  %s"
 
-#: lib/src/graphing.c:6927
+#: lib/src/graphing.c:6928
 #, c-format
 msgid "Bartlett window, length %d"
 msgstr "Dritarja e Bartlett, gjerësia %d"
 
-#: lib/src/graphing.c:6933 gui2/dialogs.c:4840
+#: lib/src/graphing.c:6934 gui2/dialogs.c:4840
 msgid "log scale"
 msgstr "shkallë logaritmike"
 
-#: lib/src/graphing.c:7079 gui2/library.c:824 gui2/library.c:2818
+#: lib/src/graphing.c:7080 gui2/library.c:824 gui2/library.c:2818
 msgid "Q-Q plot"
 msgstr "Grafiku i kuantileve (Q-Q) "
 
-#: lib/src/graphing.c:7167
+#: lib/src/graphing.c:7168
 #, c-format
 msgid "Q-Q plot for %s"
 msgstr "Grafiku i kuantileve (Q-Q) për %s"
 
-#: lib/src/graphing.c:7170
+#: lib/src/graphing.c:7171
 msgid "Normal quantiles"
 msgstr "Kuantilet e shpërndarjes normale"
 
-#: lib/src/graphing.c:7277 lib/src/graphing.c:7280
+#: lib/src/graphing.c:7278 lib/src/graphing.c:7281
 #, c-format
 msgid "adjusted %s"
 msgstr "%s i korrigjuar"
 
-#: lib/src/graphing.c:7343 plugin/range-mean.c:112
+#: lib/src/graphing.c:7344 plugin/range-mean.c:112
 msgid "with least squares fit"
 msgstr "me vijën e regresit KVZ"
 
@@ -8528,7 +8528,7 @@ msgid "Installed"
 msgstr "Instaluar"
 
 #: gui2/database.c:2182 gui2/database.c:2206 gui2/database.c:2244
-#: gui2/database.c:2475 gui2/datafiles.c:1103 gui2/fncall.c:3321
+#: gui2/database.c:2475 gui2/datafiles.c:1103 gui2/fncall.c:3319
 msgid "Up to date"
 msgstr "I përditësuar"
 
@@ -8540,7 +8540,7 @@ msgstr "Gabim gjatë dekompresimit të të dhënave"
 msgid "Unknown: access error"
 msgstr "I panjohur: gabim përpunimi"
 
-#: gui2/database.c:2473 gui2/datafiles.c:1053 gui2/fncall.c:3323
+#: gui2/database.c:2473 gui2/datafiles.c:1053 gui2/fncall.c:3321
 msgid "Not up to date"
 msgstr "I papërditësuar"
 
@@ -8724,7 +8724,7 @@ msgstr "gretl: paketë të dhënash në server"
 msgid "gretl: addons"
 msgstr "gretl: module shtesë"
 
-#: gui2/datafiles.c:2209 gui2/fnsave.c:3892
+#: gui2/datafiles.c:2209 gui2/fnsave.c:3895
 msgid "gretl: function packages"
 msgstr "gretl: paketa e funksioneve"
 
@@ -10265,15 +10265,15 @@ msgstr ""
 "Paketa %s nuk u gjet ose mund të mos jetë e përditësuar.\n"
 "A doni ta telengarkoni tani?"
 
-#: gui2/fncall.c:2882 gui2/fnsave.c:1817
+#: gui2/fncall.c:2880 gui2/fnsave.c:1817
 msgid "main window"
 msgstr "dritarja kryesore"
 
-#: gui2/fncall.c:2883 gui2/fnsave.c:1818
+#: gui2/fncall.c:2881 gui2/fnsave.c:1818
 msgid "model window"
 msgstr "dritarja e modeleve"
 
-#: gui2/fncall.c:2888
+#: gui2/fncall.c:2886
 #, c-format
 msgid ""
 "The package %s can be attached to the gretl menus\n"
@@ -10284,16 +10284,16 @@ msgstr ""
 "si \"%s/%s\" në %s.\n"
 "A doni ta bëni një gjë të tillë?"
 
-#: gui2/fncall.c:3174 gui2/settings.c:1760
+#: gui2/fncall.c:3172 gui2/settings.c:1760
 msgid "This change will take effect when you restart gretl"
 msgstr "Ndryshimi vihet në jetë pas mbylljes së gretl"
 
-#: gui2/fncall.c:3325
+#: gui2/fncall.c:3323
 #, c-format
 msgid "Requires gretl %s"
 msgstr "Nevojitet gretl %s"
 
-#: gui2/fncall.c:3331
+#: gui2/fncall.c:3329
 msgid "Error reading package"
 msgstr "Gabim gjatë leximit të paketës"
 
@@ -10571,7 +10571,7 @@ msgstr ""
 msgid "OK to overwrite?"
 msgstr "Dakort për ta zëvendësuar?"
 
-#: gui2/fnsave.c:3887
+#: gui2/fnsave.c:3890
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"

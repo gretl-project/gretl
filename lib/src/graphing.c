@@ -6761,6 +6761,7 @@ static int real_correlogram_print_plot (const char *vname,
 					gretlopt opt,
 					FILE *fp)
 {
+    /* xgettext:no-c-format */
     const char *PM_title = N_("95% interval");
     char pm_title[16];
     double ymin, ymax;

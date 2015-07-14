@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-13 13:35-0400\n"
+"POT-Creation-Date: 2015-07-14 09:16-0400\n"
 "PO-Revision-Date: 2014-10-03 15:46+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
@@ -192,7 +192,7 @@ msgstr "Geçersiz seçenek"
 
 #: lib/src/adf_kpss.c:1223 lib/src/adf_kpss.c:1986 lib/src/boxplots.c:850
 #: lib/src/describe.c:1649 lib/src/describe.c:3028 lib/src/describe.c:3582
-#: lib/src/describe.c:4153 lib/src/graphing.c:7136
+#: lib/src/describe.c:4153 lib/src/graphing.c:7137
 #, c-format
 msgid "%s is a constant"
 msgstr "%s bir sabit"
@@ -1390,7 +1390,7 @@ msgstr "Bazı veriler kullanımda"
 msgid "dataset is subsampled"
 msgstr "veri seti altörneklemeli"
 
-#: lib/src/dataset.c:1986 lib/src/dataset.c:1998 lib/src/graphing.c:6894
+#: lib/src/dataset.c:1986 lib/src/dataset.c:1998 lib/src/graphing.c:6895
 #: lib/src/gretl_utils.c:1168 lib/src/gretl_utils.c:1251
 msgid "periods"
 msgstr "dönemler"
@@ -1632,7 +1632,7 @@ msgid "Correlogram"
 msgstr "İlintiçizit"
 
 #: lib/src/describe.c:2915 lib/src/describe.c:3327 lib/src/describe.c:3372
-#: lib/src/graphing.c:6781
+#: lib/src/graphing.c:6782
 msgid "lag"
 msgstr "gecikme"
 
@@ -2931,76 +2931,76 @@ msgstr "VAR ters kökleri, birim çembere göre"
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%%%g Güven Elipsi ve %%%g Marjinal Aralıkları"
 
-#: lib/src/graphing.c:6764
-#, fuzzy, c-format
+#: lib/src/graphing.c:6765
+#, fuzzy, no-c-format
 msgid "95% interval"
 msgstr "(% 90 aralığı)"
 
-#: lib/src/graphing.c:6790
+#: lib/src/graphing.c:6791
 msgid "Residual ACF"
 msgstr "Kalıntı Özilinti İşlevi"
 
-#: lib/src/graphing.c:6792
+#: lib/src/graphing.c:6793
 msgid "ACF for"
 msgstr "Özilinti İşlevi, Değişken:"
 
-#: lib/src/graphing.c:6826
+#: lib/src/graphing.c:6827
 msgid "Residual PACF"
 msgstr "Kalıntı Kısmi Özilinti İşlevi"
 
-#: lib/src/graphing.c:6828
+#: lib/src/graphing.c:6829
 msgid "PACF for"
 msgstr "Kısmi Özilinti İşlevi, Değişken:"
 
-#: lib/src/graphing.c:6905
+#: lib/src/graphing.c:6906
 msgid "radians"
 msgstr "düşümler"
 
-#: lib/src/graphing.c:6907
+#: lib/src/graphing.c:6908
 msgid "degrees"
 msgstr "dereceler"
 
-#: lib/src/graphing.c:6909
+#: lib/src/graphing.c:6910
 msgid "scaled frequency"
 msgstr "ölçekli sıklık"
 
-#: lib/src/graphing.c:6919
+#: lib/src/graphing.c:6920
 msgid "Residual spectrum"
 msgstr "Kalıntı İzgesi"
 
-#: lib/src/graphing.c:6921
+#: lib/src/graphing.c:6922
 #, c-format
 msgid "Spectrum of %s"
 msgstr "İzge, Değişken: %s"
 
-#: lib/src/graphing.c:6927
+#: lib/src/graphing.c:6928
 #, c-format
 msgid "Bartlett window, length %d"
 msgstr "Bartlett penceresi, uzunluk: %d"
 
-#: lib/src/graphing.c:6933 gui2/dialogs.c:4840
+#: lib/src/graphing.c:6934 gui2/dialogs.c:4840
 msgid "log scale"
 msgstr "log ölçeği"
 
-#: lib/src/graphing.c:7079 gui2/library.c:824 gui2/library.c:2818
+#: lib/src/graphing.c:7080 gui2/library.c:824 gui2/library.c:2818
 msgid "Q-Q plot"
 msgstr "Q-Q çizimi"
 
-#: lib/src/graphing.c:7167
+#: lib/src/graphing.c:7168
 #, c-format
 msgid "Q-Q plot for %s"
 msgstr "Q-Q Çizimi, Değişken: %s"
 
-#: lib/src/graphing.c:7170
+#: lib/src/graphing.c:7171
 msgid "Normal quantiles"
 msgstr "Normal bölütler"
 
-#: lib/src/graphing.c:7277 lib/src/graphing.c:7280
+#: lib/src/graphing.c:7278 lib/src/graphing.c:7281
 #, c-format
 msgid "adjusted %s"
 msgstr "Ayarlamalı %s"
 
-#: lib/src/graphing.c:7343 plugin/range-mean.c:112
+#: lib/src/graphing.c:7344 plugin/range-mean.c:112
 msgid "with least squares fit"
 msgstr "(en küçük kareler yakıştırması ile)"
 
@@ -8488,7 +8488,7 @@ msgid "Installed"
 msgstr "Kurulu"
 
 #: gui2/database.c:2182 gui2/database.c:2206 gui2/database.c:2244
-#: gui2/database.c:2475 gui2/datafiles.c:1103 gui2/fncall.c:3321
+#: gui2/database.c:2475 gui2/datafiles.c:1103 gui2/fncall.c:3319
 msgid "Up to date"
 msgstr "Güncel"
 
@@ -8500,7 +8500,7 @@ msgstr "Sıkıştırılmış dosya açma hatası"
 msgid "Unknown: access error"
 msgstr "Bilinmiyor: erişim hatası"
 
-#: gui2/database.c:2473 gui2/datafiles.c:1053 gui2/fncall.c:3323
+#: gui2/database.c:2473 gui2/datafiles.c:1053 gui2/fncall.c:3321
 msgid "Not up to date"
 msgstr "Güncel değil"
 
@@ -8684,7 +8684,7 @@ msgstr "gretl: sunucudaki veri paketleri"
 msgid "gretl: addons"
 msgstr "gretl: eklentiler"
 
-#: gui2/datafiles.c:2209 gui2/fnsave.c:3892
+#: gui2/datafiles.c:2209 gui2/fnsave.c:3895
 msgid "gretl: function packages"
 msgstr "gretl: işlev paketleri"
 
@@ -10230,15 +10230,15 @@ msgstr ""
 "%s paketi bulunamadı, ya da güncel değil.\n"
 "Şimdi indirmeyi denemek istiyor musunuz?"
 
-#: gui2/fncall.c:2882 gui2/fnsave.c:1817
+#: gui2/fncall.c:2880 gui2/fnsave.c:1817
 msgid "main window"
 msgstr "ana pencere"
 
-#: gui2/fncall.c:2883 gui2/fnsave.c:1818
+#: gui2/fncall.c:2881 gui2/fnsave.c:1818
 msgid "model window"
 msgstr "model penceresi"
 
-#: gui2/fncall.c:2888
+#: gui2/fncall.c:2886
 #, c-format
 msgid ""
 "The package %s can be attached to the gretl menus\n"
@@ -10249,16 +10249,16 @@ msgstr ""
 "\"%2$s/%3$s\" olarak eklenebilir.\n"
 "Bunu yapmak ister misiniz?"
 
-#: gui2/fncall.c:3174 gui2/settings.c:1760
+#: gui2/fncall.c:3172 gui2/settings.c:1760
 msgid "This change will take effect when you restart gretl"
 msgstr "Bu değişiklik gretl'ı yeniden başlattığınızda etkili olacaktır"
 
-#: gui2/fncall.c:3325
+#: gui2/fncall.c:3323
 #, c-format
 msgid "Requires gretl %s"
 msgstr "gretl %s gerekli"
 
-#: gui2/fncall.c:3331
+#: gui2/fncall.c:3329
 msgid "Error reading package"
 msgstr "Paket okuma hatası"
 
@@ -10536,7 +10536,7 @@ msgstr ""
 msgid "OK to overwrite?"
 msgstr "Üzerine yazılsın mı?"
 
-#: gui2/fnsave.c:3887
+#: gui2/fnsave.c:3890
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"

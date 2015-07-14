@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bg\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-13 13:35-0400\n"
+"POT-Creation-Date: 2015-07-14 09:16-0400\n"
 "PO-Revision-Date: 2014-04-28 09:50+0100\n"
 "Last-Translator: Plamen Petkov <ppet@uni-svishtov.bg>\n"
 "Language-Team: bulgarian <LL@li.org>\n"
@@ -197,7 +197,7 @@ msgstr "Невалидна опция"
 
 #: lib/src/adf_kpss.c:1223 lib/src/adf_kpss.c:1986 lib/src/boxplots.c:850
 #: lib/src/describe.c:1649 lib/src/describe.c:3028 lib/src/describe.c:3582
-#: lib/src/describe.c:4153 lib/src/graphing.c:7136
+#: lib/src/describe.c:4153 lib/src/graphing.c:7137
 #, c-format
 msgid "%s is a constant"
 msgstr "%s е константа"
@@ -1404,7 +1404,7 @@ msgstr "Използвана е част от данните"
 msgid "dataset is subsampled"
 msgstr "извадката е ограничена"
 
-#: lib/src/dataset.c:1986 lib/src/dataset.c:1998 lib/src/graphing.c:6894
+#: lib/src/dataset.c:1986 lib/src/dataset.c:1998 lib/src/graphing.c:6895
 #: lib/src/gretl_utils.c:1168 lib/src/gretl_utils.c:1251
 msgid "periods"
 msgstr "Периоди"
@@ -1655,7 +1655,7 @@ msgid "Correlogram"
 msgstr "Корелограма"
 
 #: lib/src/describe.c:2915 lib/src/describe.c:3327 lib/src/describe.c:3372
-#: lib/src/graphing.c:6781
+#: lib/src/graphing.c:6782
 msgid "lag"
 msgstr "лаг"
 
@@ -2959,76 +2959,76 @@ msgstr ""
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%g%% доверителна елипса и %g%% доверителни интервали"
 
-#: lib/src/graphing.c:6764
-#, fuzzy, c-format
+#: lib/src/graphing.c:6765
+#, fuzzy, no-c-format
 msgid "95% interval"
 msgstr "(90% интервал)"
 
-#: lib/src/graphing.c:6790
+#: lib/src/graphing.c:6791
 msgid "Residual ACF"
 msgstr "Остатъци ACF"
 
-#: lib/src/graphing.c:6792
+#: lib/src/graphing.c:6793
 msgid "ACF for"
 msgstr "ACF за"
 
-#: lib/src/graphing.c:6826
+#: lib/src/graphing.c:6827
 msgid "Residual PACF"
 msgstr "Остатъци PACF"
 
-#: lib/src/graphing.c:6828
+#: lib/src/graphing.c:6829
 msgid "PACF for"
 msgstr "PACF за"
 
-#: lib/src/graphing.c:6905
+#: lib/src/graphing.c:6906
 msgid "radians"
 msgstr "радиани"
 
-#: lib/src/graphing.c:6907
+#: lib/src/graphing.c:6908
 msgid "degrees"
 msgstr "градуси"
 
-#: lib/src/graphing.c:6909
+#: lib/src/graphing.c:6910
 msgid "scaled frequency"
 msgstr "мащабирана честота"
 
-#: lib/src/graphing.c:6919
+#: lib/src/graphing.c:6920
 msgid "Residual spectrum"
 msgstr "Спектър на остатъците"
 
-#: lib/src/graphing.c:6921
+#: lib/src/graphing.c:6922
 #, c-format
 msgid "Spectrum of %s"
 msgstr "Спектър за %s"
 
-#: lib/src/graphing.c:6927
+#: lib/src/graphing.c:6928
 #, c-format
 msgid "Bartlett window, length %d"
 msgstr "Прозорец на Бартлет, ширина %d"
 
-#: lib/src/graphing.c:6933 gui2/dialogs.c:4840
+#: lib/src/graphing.c:6934 gui2/dialogs.c:4840
 msgid "log scale"
 msgstr "логаритмична скала "
 
-#: lib/src/graphing.c:7079 gui2/library.c:824 gui2/library.c:2818
+#: lib/src/graphing.c:7080 gui2/library.c:824 gui2/library.c:2818
 msgid "Q-Q plot"
 msgstr "Q-Q графика"
 
-#: lib/src/graphing.c:7167
+#: lib/src/graphing.c:7168
 #, c-format
 msgid "Q-Q plot for %s"
 msgstr "Q-Q графика за %s"
 
-#: lib/src/graphing.c:7170
+#: lib/src/graphing.c:7171
 msgid "Normal quantiles"
 msgstr "Квантили на нормалното разпределение"
 
-#: lib/src/graphing.c:7277 lib/src/graphing.c:7280
+#: lib/src/graphing.c:7278 lib/src/graphing.c:7281
 #, c-format
 msgid "adjusted %s"
 msgstr "коригиран %s"
 
-#: lib/src/graphing.c:7343 plugin/range-mean.c:112
+#: lib/src/graphing.c:7344 plugin/range-mean.c:112
 msgid "with least squares fit"
 msgstr "оценка с МНМК"
 
@@ -8559,7 +8559,7 @@ msgid "Installed"
 msgstr "Инсталирано"
 
 #: gui2/database.c:2182 gui2/database.c:2206 gui2/database.c:2244
-#: gui2/database.c:2475 gui2/datafiles.c:1103 gui2/fncall.c:3321
+#: gui2/database.c:2475 gui2/datafiles.c:1103 gui2/fncall.c:3319
 msgid "Up to date"
 msgstr "Актуална"
 
@@ -8571,7 +8571,7 @@ msgstr "Грешка при разархивирането на пакетни �
 msgid "Unknown: access error"
 msgstr "Невъзможен достъп до данните"
 
-#: gui2/database.c:2473 gui2/datafiles.c:1053 gui2/fncall.c:3323
+#: gui2/database.c:2473 gui2/datafiles.c:1053 gui2/fncall.c:3321
 msgid "Not up to date"
 msgstr "Версията не е актуализирана"
 
@@ -8755,7 +8755,7 @@ msgstr "gretl: пакети с данни на сървъра"
 msgid "gretl: addons"
 msgstr "gretl: разширения"
 
-#: gui2/datafiles.c:2209 gui2/fnsave.c:3892
+#: gui2/datafiles.c:2209 gui2/fnsave.c:3895
 msgid "gretl: function packages"
 msgstr "gretl: пакети с функции"
 
@@ -10310,15 +10310,15 @@ msgstr ""
 "Пакетът с функции %s не е открит или не е актуализиран.\n"
 "Искате ли да го изтеглите?"
 
-#: gui2/fncall.c:2882 gui2/fnsave.c:1817
+#: gui2/fncall.c:2880 gui2/fnsave.c:1817
 msgid "main window"
 msgstr "главен прозорец"
 
-#: gui2/fncall.c:2883 gui2/fnsave.c:1818
+#: gui2/fncall.c:2881 gui2/fnsave.c:1818
 msgid "model window"
 msgstr "прозорец на модела"
 
-#: gui2/fncall.c:2888
+#: gui2/fncall.c:2886
 #, c-format
 msgid ""
 "The package %s can be attached to the gretl menus\n"
@@ -10329,16 +10329,16 @@ msgstr ""
 "като \"%s/%s\" в %s.\n"
 "Искате ли да се изпълни?"
 
-#: gui2/fncall.c:3174 gui2/settings.c:1760
+#: gui2/fncall.c:3172 gui2/settings.c:1760
 msgid "This change will take effect when you restart gretl"
 msgstr "Промените влизат в сила след рестартирането на gretl"
 
-#: gui2/fncall.c:3325
+#: gui2/fncall.c:3323
 #, c-format
 msgid "Requires gretl %s"
 msgstr "Нужен е gretl %s"
 
-#: gui2/fncall.c:3331
+#: gui2/fncall.c:3329
 msgid "Error reading package"
 msgstr "Грешка при отварянето на пакета"
 
@@ -10619,7 +10619,7 @@ msgstr ""
 msgid "OK to overwrite?"
 msgstr "Да презапиша ли?"
 
-#: gui2/fnsave.c:3887
+#: gui2/fnsave.c:3890
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"
