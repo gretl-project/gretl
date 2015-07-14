@@ -4195,7 +4195,7 @@ static int real_load_package (fnpkg *pkg)
 {
     int i, err = 0;
 
-#if 1 || PKG_DEBUG
+#if PKG_DEBUG
     fprintf(stderr, "real_load_package:\n loading '%s'\n", pkg->fname);
 #endif
 
