@@ -476,7 +476,7 @@ static int check_email_string (const char *s)
 	/* no spaces allowed */
 	err = 1;
     } else if (strchr(s, '@') == NULL) {
-	/* must include at-sign */
+	/* must include "at"-sign */
 	err = 1;
     }
 

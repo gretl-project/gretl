@@ -1094,7 +1094,7 @@ static void db_drag_connect (windata_t *vwin, int i)
 
 #define db_drag_series_connect(v) db_drag_connect(v, GRETL_DBSERIES_PTR)
 #define db_drag_db_connect(v) db_drag_connect(v, GRETL_REMOTE_DB_PTR)
-#define funcpkg_drag_connect(v) db_drag_connect(v, GRETL_REMOTE_FNPKG_PTR)
+#define fnpkg_drag_connect(v) db_drag_connect(v, GRETL_REMOTE_FNPKG_PTR)
 
 #define DB_LINELEN 512
 
@@ -2951,7 +2951,7 @@ gint populate_remote_func_list (windata_t *vwin)
     }
 
     if (!err) {
-	funcpkg_drag_connect(vwin);
+	fnpkg_drag_connect(vwin);
     }
 
     return err;
@@ -3029,7 +3029,7 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
 
 #if 0
     if (!err) {
-	funcpkg_drag_connect(vwin);
+	fnpkg_drag_connect(vwin);
     }
 #endif
 

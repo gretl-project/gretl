@@ -20,7 +20,7 @@
 /* datafiles.c : for gretl */
 
 #define COLL_DEBUG 0
-#define BROWSE_DEBUG 0
+#define GFN_DEBUG 0
 
 #include "gretl.h"
 #include "datafiles.h"
@@ -903,6 +903,10 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 {
     DIR *dir = gretl_opendir(path);
 
+#if GFN_DEBUG    
+    fprintf(stderr, "set_funcs_dir: '%s'\n", path);
+#endif    
+
     if (dir != NULL) {
 	GtkListStore *store;
 	GtkTreeIter iter;
@@ -931,12 +935,13 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 	    resp = radio_dialog("gretl", msg, opts, 2, 
 				0, 0, vwin->main);
 	    g_free(msg);
-	    
+
 	    if (resp < 0) {
 		/* canceled */
 		closedir(dir);
 		return;
 	    } else if (resp > 0) {
+		/* scrub existing list */
 		gtk_list_store_clear(store);
 		nfn = nfn0 = 0;
 	    } else {
@@ -955,10 +960,8 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 	    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
 	    gtk_tree_selection_selected_foreach(sel, fix_selected_row, vwin);
 	    g_object_set_data(G_OBJECT(vwin->listbox), "nfn", GINT_TO_POINTER(nfn));
-	    if (resp > 0) {
-		g_object_set_data(G_OBJECT(vwin->listbox), "keepdir", GINT_TO_POINTER(1));
-	    }
 	} else {
+	    /* can't happen? */
 	    warnbox(_("No function files were found"));
 	}
 	    
@@ -999,7 +1002,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	strcpy(path, pkgname);
     }
 
-#if BROWSE_DEBUG
+#if GFN_DEBUG
     fprintf(stderr, "browser_functions_handler: active=%d, pkgname='%s'\n"
 	    "path='%s'\n", vwin->active_var, pkgname, path);
 #endif
@@ -1058,6 +1061,7 @@ static void show_addon_info (GtkWidget *w, gpointer data)
 	    int err = 0;
 
 	    if (path != NULL) {
+		/* FIXME just get header here? */
 		pkg = get_function_package_by_filename(path, &err);
 		err = function_package_get_properties(pkg, "version", &ver,
 						      "date", &date,
@@ -2167,7 +2171,7 @@ static int dirname_done (char **dnames, int ndirs, char *dirname)
     return 0;
 }
 
-#if BROWSE_DEBUG
+#if GFN_DEBUG
 
 static void show_dirs_list (char **S, int n, const char *msg)
 {
@@ -2183,7 +2187,7 @@ static void show_dirs_list (char **S, int n, const char *msg)
 
 /* Populate browser displaying gfn files on local machine */
 
-static gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
+static gint populate_gfn_list (windata_t *vwin, struct fpkg_response *fresp)
 {
     GtkListStore *store;
     GtkTreeIter iter;
@@ -2198,8 +2202,13 @@ static gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     /* @nfn is the number of function files currently displayed */
 
     if (nfn > 0) {
-	/* We're re-populating an existing list, in response
-	   to the user selecting a directory to process (and/or what??)
+	/* We're re-populating an existing list in response to the
+	   user saving a function package from the GUI package editor,
+	   so that the visible properties of a displayed package may
+	   have changed. We'll keep a list of the dirs referenced in
+	   the browser window in case the modified package is in a
+	   non-standard location that was added to the default set of
+	   directories.
 	*/
 	GtkTreeModel *model = GTK_TREE_MODEL(store);
 	gchar *dirname;
@@ -2218,8 +2227,8 @@ static gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	}
     }
 
-#if BROWSE_DEBUG
-    fprintf(stderr, "populate_func_list: on entry nfn=%d, n_dirs=%d\n",
+#if GFN_DEBUG
+    fprintf(stderr, "populate_gfn_list: on entry nfn=%d, n_dirs=%d\n",
 	    nfn, n_dirs);
 #endif    
 
@@ -2251,7 +2260,7 @@ static gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	}
     }
 
-#if BROWSE_DEBUG
+#if GFN_DEBUG
     show_dirs_list(dnames, n_dirs, "FUNCS_SEARCH");
 #endif
 
@@ -2282,53 +2291,7 @@ static gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     return 0;
 }
 
-#if 0
-
-/* not yet, but would be more efficient if we know we're just
-   updating loaded status for a specific package */
-
-void set_gfn_loaded (const char *pkgpath, gboolean s)
-{
-    windata_t *vwin = get_browser_for_role(FUNC_FILES);
-
-    if (vwin != NULL && vwin->listbox != NULL) {
-	GtkTreeModel *model;
-	GtkListStore *store;
-	GtkTreeIter iter;
-	gchar *fullname;
-	gchar *filename;
-	gchar *filepath;
-	int found = 0;
-
-	model = gtk_tree_view_get_model(GTK_TREE_VIEW(listbox));
-	store = GTK_LIST_STORE(model);
-
-	if (!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter)) {
-	    return;
-	}
-
-	while (!found) {
-	    gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 
-			       0, &filename, 4, &filepath, -1);
-	    fullname = g_strdup_printf("%s%c%s.gfn", filepath, SLASH, 
-				       filename);
-	    if (!strcmp(fullname, pkgpath)) {
-		gtk_list_store_set(store, &iter, 3, s, -1);
-		found = 1;
-	    }
-	    g_free(filename);
-	    g_free(filepath);
-	    g_free(fullname);
-	    if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
-		break;
-	    }
-	}
-    }
-}
-
-#endif
-
-static void revise_loaded_status (GtkWidget *listbox)
+static void update_pkg_loaded_status (GtkWidget *listbox)
 {
     GtkTreeModel *model;
     GtkListStore *store;
@@ -2364,15 +2327,16 @@ static void revise_loaded_status (GtkWidget *listbox)
 /* update function package status after calls to run
    or save a function package */
 
-void maybe_update_func_files_window (int role)
+void maybe_update_func_files_window (int code)
 {
     windata_t *vwin = get_browser_for_role(FUNC_FILES);
 
     if (vwin != NULL && vwin->listbox != NULL) {
-	if (role == EDIT_FN_PKG) {
-	    populate_func_list(vwin, NULL);
+	if (code == EDIT_FN_PKG) {
+	    /* saving from package editor window */
+	    populate_gfn_list(vwin, NULL);
 	} else {
-	    revise_loaded_status(vwin->listbox);
+	    update_pkg_loaded_status(vwin->listbox);
 	}
     }
 }
@@ -2388,7 +2352,7 @@ gint populate_filelist (windata_t *vwin, gpointer p)
     } else if (vwin->role == REMOTE_DATA_PKGS) {
 	return populate_remote_data_pkg_list(vwin);
     } else if (vwin->role == FUNC_FILES) {
-	return populate_func_list(vwin, p);
+	return populate_gfn_list(vwin, p);
     } else if (vwin->role == REMOTE_ADDONS) {
 	return populate_remote_addons_list(vwin);
     } else {
