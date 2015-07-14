@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.10.1)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-07-14 09:16-0400\n"
-"PO-Revision-Date: 2015-07-14 15:06+0100\n"
+"PO-Revision-Date: 2015-07-14 16:35+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -2935,7 +2935,7 @@ msgstr "Elipse de confianza (%g%%) e intervalos marxinais de confianza (%g%%)"
 #: lib/src/graphing.c:6765
 #, no-c-format
 msgid "95% interval"
-msgstr "Intervalo %d"
+msgstr "Intervalo ao 95%"
 
 #: lib/src/graphing.c:6791
 msgid "Residual ACF"
