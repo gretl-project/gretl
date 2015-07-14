@@ -466,8 +466,25 @@ void get_default_package_name (char *fname, gpointer p, int mode)
     }	
 }
 
+/* very minimal check here! */
+
+static int check_email_string (const char *s)
+{
+    int err = 0;
+    
+    if (strchr(s, ' ') != NULL) {
+	/* no spaces allowed */
+	err = 1;
+    } else if (strchr(s, '@') == NULL) {
+	/* must include at-sign */
+	err = 1;
+    }
+
+    return err;
+}
+
 /* Check the user-supplied version string for the package: should be
-   something like "1" or "1.2" or maybe "1.2.3" 
+   something like "1" or "1.02"
 */
 
 static int check_version_string (const char *s)
@@ -481,11 +498,11 @@ static int check_version_string (const char *s)
     }
 
     while (*s && !err) {
-	if (*s == '.' && ++dotcount > 2) {
-	    /* max of two dots exceeded */
+	if (!isdigit(*s) && *s != '.') {
+	    /* only dots and digits allowed */
 	    err = 1;
-	} else if (!isdigit(*s) && strspn(s, ".") != 1) {
-	    /* no more than one dot in a row allowed */
+	} else if (*s == '.' && ++dotcount > 1) {
+	    /* max of one dot exceeded */
 	    err = 1;
 	}
 	s++;
@@ -540,6 +557,11 @@ static int finfo_save (function_info *finfo, int saveas)
 	warnbox(_("Please add a sample script for this package"));
 	return 1;
     }
+
+    if (check_email_string(finfo->email)) {
+	errbox(_("Please supply a valid email address"));
+	return 1;
+    }    
 
     if (check_version_string(finfo->version)) {
 	errbox(_("Invalid version string: use numbers and '.' only"));
