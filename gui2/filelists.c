@@ -313,11 +313,6 @@ void mkfilelist (int filetype, char *fname)
 	    filetype, fname);
 #endif
 
-    /* temporary, trying to track down a bug */
-    if (filetype == FILE_LIST_SCRIPT && has_suffix(fname, ".gfn")) {
-	fprintf(stderr, "BUG: sticking gfn file onto recent scripts list\n");
-    }
-
     gretl_normalize_path(fname);
 
     filep = get_file_list(filetype);
