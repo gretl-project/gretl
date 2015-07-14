@@ -20,6 +20,7 @@
 /* datafiles.c : for gretl */
 
 #define COLL_DEBUG 0
+#define BROWSE_DEBUG 0
 
 #include "gretl.h"
 #include "datafiles.h"
@@ -998,7 +999,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	strcpy(path, pkgname);
     }
 
-#if 0
+#if BROWSE_DEBUG
     fprintf(stderr, "browser_functions_handler: active=%d, pkgname='%s'\n"
 	    "path='%s'\n", vwin->active_var, pkgname, path);
 #endif
@@ -1113,6 +1114,8 @@ static void install_addon_callback (GtkWidget *w, gpointer data)
 	g_free(pkgname);
     }
 }
+
+/* callback from toggling "loaded" button in treeview */
 
 void browser_load_func (GtkWidget *w, gpointer data)
 {
@@ -2164,8 +2167,6 @@ static int dirname_done (char **dnames, int ndirs, char *dirname)
     return 0;
 }
 
-#define BROWSE_DEBUG 0
-
 #if BROWSE_DEBUG
 
 static void show_dirs_list (char **S, int n, const char *msg)
@@ -2280,6 +2281,52 @@ static gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 
     return 0;
 }
+
+#if 0
+
+/* not yet, but would be more efficient if we know we're just
+   updating loaded status for a specific package */
+
+void set_gfn_loaded (const char *pkgpath, gboolean s)
+{
+    windata_t *vwin = get_browser_for_role(FUNC_FILES);
+
+    if (vwin != NULL && vwin->listbox != NULL) {
+	GtkTreeModel *model;
+	GtkListStore *store;
+	GtkTreeIter iter;
+	gchar *fullname;
+	gchar *filename;
+	gchar *filepath;
+	int found = 0;
+
+	model = gtk_tree_view_get_model(GTK_TREE_VIEW(listbox));
+	store = GTK_LIST_STORE(model);
+
+	if (!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter)) {
+	    return;
+	}
+
+	while (!found) {
+	    gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 
+			       0, &filename, 4, &filepath, -1);
+	    fullname = g_strdup_printf("%s%c%s.gfn", filepath, SLASH, 
+				       filename);
+	    if (!strcmp(fullname, pkgpath)) {
+		gtk_list_store_set(store, &iter, 3, s, -1);
+		found = 1;
+	    }
+	    g_free(filename);
+	    g_free(filepath);
+	    g_free(fullname);
+	    if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
+		break;
+	    }
+	}
+    }
+}
+
+#endif
 
 static void revise_loaded_status (GtkWidget *listbox)
 {

@@ -1909,47 +1909,48 @@ static int need_model_check (call_info *cinfo)
 
 static call_info *start_cinfo_for_package (const char *pkgname,
 					   const char *fname,
-					   windata_t *vwin)
+					   windata_t *vwin,
+					   int *err)
 {
     call_info *cinfo;
     fnpkg *pkg;
-    int err = 0;
 
     pkg = get_function_package_by_name(pkgname);
 
     if (pkg == NULL) {
 	/* not already loaded */
-	pkg = get_function_package_by_filename(fname, &err);
-	if (err) {
-	    gui_errmsg(err);
+	pkg = get_function_package_by_filename(fname, err);
+	if (*err) {
+	    gui_errmsg(*err);
 	    return NULL;
 	}
     }
 
     cinfo = cinfo_new(pkg, vwin);
     if (cinfo == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
     /* get the interface list and other basic info for package */
 
-    err = function_package_get_properties(pkg,
-					  "name", &cinfo->pkgname,
-					  "version", &cinfo->pkgver,
-					  "gui-publist", &cinfo->publist,
-					  "data-requirement", &cinfo->dreq,
-					  "min-version", &cinfo->minver,
-					  NULL);
+    *err = function_package_get_properties(pkg,
+					   "name", &cinfo->pkgname,
+					   "version", &cinfo->pkgver,
+					   "gui-publist", &cinfo->publist,
+					   "data-requirement", &cinfo->dreq,
+					   "min-version", &cinfo->minver,
+					   NULL);
 
-    if (err) {
-	gui_errmsg(err);
+    if (*err) {
+	gui_errmsg(*err);
     } else if (cinfo->publist == NULL) {
 	/* no available interfaces */
 	errbox(_("Function package is broken"));
-	fprintf(stderr, "%s: no public interfaces\n", cinfo->pkgname);
+	*err = E_DATA;
     }
 
-    if (err) {
+    if (*err) {
 	cinfo_free(cinfo);
 	cinfo = NULL;
     }
@@ -2040,7 +2041,10 @@ static int call_function_package (call_info *cinfo, windata_t *vwin,
     return err;
 }
 
-/* called from the function-package browser */
+/* Called from the function-package browser: unless the
+   package can't be loaded we should return 0 to signal
+   that loading happened.
+*/
 
 int open_function_package (const char *pkgname,
 			   const char *fname,
@@ -2051,20 +2055,25 @@ int open_function_package (const char *pkgname,
     int free_cinfo = 1;
     int err = 0;
 
-    /* note: this loads the package */
-    cinfo = start_cinfo_for_package(pkgname, fname, vwin);
+    /* note: this ensures the package gets loaded */
+    cinfo = start_cinfo_for_package(pkgname, fname, vwin, &err);
 
-    if (cinfo == NULL) {
-	return E_ALLOC;
+    if (err) {
+	return err;
     }
 
     /* do we have suitable data in place? */
     err = check_function_needs(dataset, cinfo->dreq, cinfo->minver);
+    
     if (err == E_DATA) {
+	/* we might still run the sample script */
 	can_call = 0;
+	err = 0;
 	gretl_error_clear();
     } else if (err) {
+	/* fatal error */
 	gui_errmsg(err);
+	return err;
     }
 
     if (can_call) {
@@ -2082,7 +2091,7 @@ int open_function_package (const char *pkgname,
 	if (resp == 0) {
 	    /* function call: preserve @cinfo! */
 	    free_cinfo = 0;
-	    err = call_function_package(cinfo, vwin, 1);
+	    call_function_package(cinfo, vwin, 1);
 	} else if (resp == 1) {
 	    display_function_package_data(cinfo->pkgname, fname,
 					  VIEW_PKG_SAMPLE);
@@ -2106,7 +2115,7 @@ int open_function_package (const char *pkgname,
 	cinfo_free(cinfo);
     }
 
-    return err;
+    return 0;
 }
 
 void function_call_cleanup (void)
@@ -2468,20 +2477,7 @@ int package_is_available_for_menu (const gchar *pkgname,
 
     if (!present) {
 	/* not already present in menus: can it be added? */
-	gchar *mpath = NULL;
-	fnpkg *pkg;
-	int err = 0;
-
-	pkg = get_function_package_by_filename(path, &err);
-	if (!err) {
-	    err = function_package_get_properties(pkg,
-						  "menu-attachment", &mpath,
-						  NULL);
-	    if (mpath != NULL) {
-		ret = 1;
-		g_free(mpath);
-	    }
-	}
+	ret = package_has_menu_attachment(path, NULL);
     }
 
     return ret;
@@ -2523,8 +2519,9 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 
     if (addon->filepath != NULL) {
 	call_info *cinfo;
+	int err = 0;
 
-	cinfo = start_cinfo_for_package(pkgname, addon->filepath, vwin);
+	cinfo = start_cinfo_for_package(pkgname, addon->filepath, vwin, &err);
 	if (cinfo != NULL) {
 	    call_function_package(cinfo, vwin, 0);
 	}

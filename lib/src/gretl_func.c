@@ -4195,7 +4195,7 @@ static int real_load_package (fnpkg *pkg)
 {
     int i, err = 0;
 
-#if PKG_DEBUG
+#if 1 || PKG_DEBUG
     fprintf(stderr, "real_load_package:\n loading '%s'\n", pkg->fname);
 #endif
 
@@ -4793,6 +4793,55 @@ int get_function_file_header (const char *fname, char **pdesc,
     }
 
     return err;
+}
+
+int package_has_menu_attachment (const char *fname,
+				 char **attach)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr node = NULL;
+    xmlNodePtr sub;
+    char *tmp = NULL;
+    int found = 0;
+    int stop = 0;
+    int err = 0;
+
+    err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
+    if (err) {
+	return 0;
+    }
+
+    node = node->xmlChildrenNode;
+    
+    while (!stop && node != NULL) {
+	if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
+	    sub = node->xmlChildrenNode;
+	    while (!stop && sub != NULL) {
+		if (!xmlStrcmp(sub->name, (XUC) "menu-attachment")) {
+		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
+		    if (tmp != NULL) {
+			stop = found = 1;
+			if (attach != NULL) {
+			    *attach = tmp;
+			} else {
+			    free(tmp);
+			}
+		    }
+		} else if (!xmlStrcmp(sub->name, (XUC) "help")) {
+		    /* we've overshot */
+		    stop = 1;
+		}
+		sub = sub->next;
+	    }
+	}
+	node = node->next;
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+    }
+
+    return found;
 }
 
 double function_package_get_version (const char *fname)
@@ -6142,7 +6191,8 @@ static int allocate_function_args (fncall *call, DATASET *dset)
  * are jointly satisfied by the current dataset and gretl
  * version.
  *
- * Returns: 0 if all is OK, 1 otherwise.
+ * Returns: 0 if all is OK; E_DATA if the current dataset
+ * (or lack thereof) does not satisfy @dreq; 1 otherwise.
  */
 
 int check_function_needs (const DATASET *dset, FuncDataReq dreq,

@@ -231,6 +231,9 @@ int user_function_help (const char *fnname, gretlopt opt, PRN *prn);
 
 int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname);
 
+int package_has_menu_attachment (const char *fname,
+				 char **attach);
+
 void gretl_functions_cleanup (void);
 
 void function_clear_args (ufunc *fun);
