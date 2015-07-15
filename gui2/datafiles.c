@@ -911,7 +911,7 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 	GtkListStore *store;
 	GtkTreeIter iter;
 	int maxlen = 0;
-	int nfn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->listbox), "nfn"));
+	int nfn = widget_get_int(vwin->listbox, "nfn");
 	int nfn0 = nfn;	
 	int resp;
 
@@ -959,7 +959,7 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 
 	    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
 	    gtk_tree_selection_selected_foreach(sel, fix_selected_row, vwin);
-	    g_object_set_data(G_OBJECT(vwin->listbox), "nfn", GINT_TO_POINTER(nfn));
+	    widget_set_int(vwin->listbox, "nfn", nfn);
 	} else {
 	    /* can't happen? */
 	    warnbox(_("No function files were found"));
@@ -2197,7 +2197,7 @@ static gint populate_gfn_list (windata_t *vwin, struct fpkg_response *fresp)
     int nfn, maxlen = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
-    nfn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->listbox), "nfn"));
+    nfn = widget_get_int(vwin->listbox, "nfn");
 
     /* @nfn is the number of function files currently displayed */
 
@@ -2284,7 +2284,7 @@ static gint populate_gfn_list (windata_t *vwin, struct fpkg_response *fresp)
 	return 1;
     } else {
 	/* update gfn file count */
-	g_object_set_data(G_OBJECT(vwin->listbox), "nfn", GINT_TO_POINTER(nfn));
+	widget_set_int(vwin->listbox, "nfn", nfn);
 	presort_treelist(vwin);
     }
 
