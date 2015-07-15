@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (1.10.1)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-07-14 09:16-0400\n"
-"PO-Revision-Date: 2015-07-14 16:35+0100\n"
+"PO-Revision-Date: 2015-07-15 17:18+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -2156,7 +2156,7 @@ msgstr "A suma de cadrados dos erros (%g) non é > 0"
 
 #: lib/src/estimate.c:2120 lib/src/estimate.c:2221
 msgid "ESS"
-msgstr "SCR"
+msgstr "SCE"
 
 #: lib/src/estimate.c:2317
 #, c-format
@@ -2168,7 +2168,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"A SCR é mínima para rho = %g\n"
+"A SCE é mínima para rho = %g\n"
 "\n"
 
 #: lib/src/estimate.c:2335
@@ -2193,7 +2193,7 @@ msgstr ""
 
 #: lib/src/estimate.c:2340
 msgid "                 ITER       RHO        ESS"
-msgstr "               ITERACIÓN    RHO       SCR"
+msgstr "               ITERACIÓN    RHO       SCE"
 
 #: lib/src/estimate.c:2351
 #, c-format
@@ -2236,7 +2236,7 @@ msgstr "Estimación xeneralizada de Cochrane-Orcutt"
 #: lib/src/estimate.c:3479
 #, no-c-format
 msgid "ITER             ESS           % CHANGE"
-msgstr "ITERAC.          SCR          % CAMBIO"
+msgstr "ITERAC.          SCE          % CAMBIO"
 
 #: lib/src/estimate.c:3753 lib/src/vartest.c:125
 msgid "Test for ARCH of order"
@@ -5668,7 +5668,7 @@ msgstr "HQC"
 
 #: lib/src/modelprint.c:3263
 msgid "SSR"
-msgstr "SCR"
+msgstr "SCE"
 
 #: lib/src/modelprint.c:4357
 msgid "Sum of AR coefficients"
@@ -5915,7 +5915,7 @@ msgstr "%s: agardábase un escalar ou un vector"
 #: lib/src/nls.c:1059
 #, c-format
 msgid "iteration %2d: SSR = %.8g\n"
-msgstr "Iteración %2d: SCR = %.8g\n"
+msgstr "Iteración %2d: SCE = %.8g\n"
 
 #: lib/src/nls.c:1797
 msgid "Perfect fit achieved\n"
