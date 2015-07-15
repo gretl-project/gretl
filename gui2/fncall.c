@@ -39,6 +39,8 @@
 #include "winstack.h"
 #include "fncall.h"
 
+#include <errno.h>
+
 #define FCDEBUG 0
 
 enum {
@@ -3022,6 +3024,8 @@ static int update_packages_xml (const gchar *pkgname,
 
     fname = packages_xml_path();
 
+    errno = 0;
+
     if (task == PKG_CREATE_ENTRY) {
 	fp = gretl_fopen(fname, "w");
     } else {
@@ -3031,6 +3035,9 @@ static int update_packages_xml (const gchar *pkgname,
     if (fp == NULL) {
 	if (task == PKG_CREATE_ENTRY) {
 	    file_write_errbox(fname);
+	} else if (task == PKG_DELETE_ENTRY && errno == ENOENT) {
+	    /* OK if the file doesn't exist */
+	    return 0;
 	} else {
 	    file_read_errbox(fname);
 	}
