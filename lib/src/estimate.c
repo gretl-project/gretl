@@ -3593,7 +3593,11 @@ MODEL ar_model (const int *list, DATASET *dset,
     for (t=ar.t1; t<=ar.t2; t++) {
 	tss += (dset->Z[ryno][t] - xx) * (dset->Z[ryno][t] - xx);
     }
-    ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
+    if (ar.dfn == 0) {
+	ar.fstt = NADBL;
+    } else {
+	ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
+    }
     ar.lnL = NADBL;
     mle_criteria(&ar, 0);
     ar.dw = dwstat(maxlag, &ar, dset);
