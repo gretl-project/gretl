@@ -3,7 +3,7 @@
 \usepackage{pifont}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
-%\usepackage[authoryear]{natbib}
+\usepackage[authoryear]{natbib}
 \usepackage{color,gretl}
 \usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
@@ -11,6 +11,8 @@
 
 \newcommand{\ttusage}[1]{\textit{example}: \quad \texttt{#1}}
 \newcommand{\vbusage}[0]{\textit{example}: \quad}
+
+\bibliographystyle{gretl}
 
 %% \pdfimageresolution=120
 \hypersetup{pdftitle={Gretl Function Package Guide},
@@ -174,12 +176,116 @@ with some tips on usage.
 \chapter{For package users}
 \label{chap:users}
 
-To be written: take in (updated) material from the User's Guide and/or
-elsewhere.
-
 \section{Acquiring a package}
 
-Text wanted here.
+The first thing is finding out what packages are available. At
+present, most packages are contained in Gretl's official
+repository. These packages have passed a minimal checking procedure:
+it means that the \app{gretl} development team put a few checks in
+place so that the package is useable with the current version of
+\app{gretl}. This does not mean that the packages is guaranteed to be
+bug-free, or deliver accurate results, or even that it cannot harm
+your computer. Those responsibilities are entirely on the shoulders of
+the package authors.
+
+However, an author may choose to make her package public via other
+means. In that case, once the user has the package file available,
+either as a \textsf{gfn} file or a \textsf{zip} file (see Section
+\ref{sec:pkgform}), the package can be installed by hand using the
+instructions below.
+
+\subsection{Searching the package repository}
+
+The complete list of the packages can be browed from within the
+program or from the Net.
+
+From within gretl, you can browse the function packages available on
+the gretl server, by selecting the menu item ``Tools, Function
+packages, On server''. This provides you with a convenient interface
+for upgrading your packages, adding some new ones, deleting the ones
+you don't need etcetera. Alternatively, if you're only interested in
+browsing the repository, you can do so at this URL:
+\url{http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi?opt=SHOW_FUNCS}.
+
+If you're looking for some specific functionality (``I was told that
+gretl can do such-and-such, but you need to install an additional
+package''), a short ``description'' field is provided. \textbf{JEL
+  codes should be on their way}
+
+
+\subsection{Installing/upgrading an existing package}
+
+We'll use, as an example, Ignacio D\'iaz-Emparanza's ``GHegy''
+package.  Suppose you've read Ignacio's excellent paper
+(\citet{Ignacio-HEGY}) and you'd like to use his results. You were
+told a gretl package is available. Here's what you do.
+
+Open gretl, and select ``Tools, Function packages, On server''. Since
+the package deals with seasonal unit roots, you'll probably want to
+look for the word ``seasonal''. A list should appear. After typing
+``seasonal'' in the top-right text box and having hit ``Return'' a few
+times, you find what looks like it.
+
+\begin{center}
+  \includegraphics[width=0.8\textwidth]{figures/ghegy-lst.png}
+\end{center}
+
+To make sure this is what you want, you may get some more information
+on the package than what is displayed. This is available by clicking
+on the ``Info'' icon (top-left), or by right-clicking on the package
+entry and selecting the ``Info'' item. You'll be presented with a
+window like this:
+
+\begin{center}
+  \includegraphics[width=0.6\textwidth]{figures/ghegy-info.png}
+\end{center}
+
+Yes, this definitely looks like it. At this point, all you have to do
+is install the package, which you can do by clicking on the
+``Install'' icon in the list window, or, again, by right-clicking on
+the package entry. Gretl will now download the package from the gretl
+server from Wake Forest University (we assume you have an Internet
+connection) and install it. The final step of your installation is a
+window like this:
+
+\begin{center}
+  \includegraphics[width=0.4\textwidth]{figures/ghegy-menu.png}
+\end{center}
+
+Function packages may offer you the option of integrating into gretl's
+main GUI menu: in this case, the package's author chose to make it
+available among the other unit root tests that gretl provides
+natively. You may choose to accept this option (which makes it handy
+to use the package from gretl's graphical interface) or not, if you
+don't want to clutter up your menus with anything more than the
+essential entries. Even if you say ``No'' here, however, the package
+will still be available to you from the GUI interface. Only, it won't
+have a dedicated menu entry.
+
+Suppose you say ``Yes''. After restarting gretl, the HEGY unit-root
+test should be available where you expect it to be
+
+\begin{center}
+  \includegraphics[width=0.8\textwidth]{figures/ghegy-hook.png}
+\end{center}
+
+
+(\ldots)
+
+The same can be accomplished from the console by using the
+\cmd{install} command.
+
+(\ldots) Another version of this story is: you stumbled across
+Ignacio's web page and downloaded the package file directly on your
+computer. Your best bet is to use the \cmd{install} command. This will
+take care of copying things where they belong, in such a way that the
+new functions are available to you (you may have to restart gretl).
+
+If the previous stage above was completed without errors, the extra
+functions that the package provides should be available to you as if
+they were gretl native functions. Moreover, if you go to ``Tools,
+Function packages, On local machine'' and you will be shown a list of
+the installed packages, with their short description.
 
 \section{Using packages via the command line}
 
@@ -980,6 +1086,8 @@ gretl where to find the file:
 \begin{code}
 open almon.gdt --frompkg=almonreg
 \end{code}
+
+\bibliography{gretl}
 
 \end{document}
 
