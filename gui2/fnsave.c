@@ -755,7 +755,7 @@ static gint catch_codewin_key (GtkWidget *w, GdkEventKey *event,
 
 	if (word != NULL) {
 	    /* we got a "word": is it the name of a function in
-	       this pachage? */
+	       this package? */
 	    char *active = NULL;
 	    int i;
 
@@ -2038,7 +2038,7 @@ static int process_special_functions (function_info *finfo,
 
 /* After adding or deleting functions, check that any
    selected "specials" are still valid: the selected
-   funtion has not been removed from the package, nor
+   function has not been removed from the package, nor
    has its public/private status been changed such as
    to disqualify it from playing the given role. If a
    selection has been invalidated, null it out.
@@ -3078,7 +3078,7 @@ static void do_pkg_upload (function_info *finfo)
     if (pdfdoc || finfo->datafiles != NULL) {
 	err = pkg_make_zipfile(finfo, pdfdoc, &zipname, NULL);
 	if (err) {
-	    /* the error message will have been handled abive */
+	    /* the error message will have been handled above */
 	    return;
 	}
     }
