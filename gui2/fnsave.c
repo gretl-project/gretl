@@ -478,6 +478,9 @@ static int check_email_string (const char *s)
     } else if (strchr(s, '@') == NULL) {
 	/* must include "at"-sign */
 	err = 1;
+    } else if (strchr(s, '.') == NULL) {
+	/* must include at least one dot */
+	err = 1;
     }
 
     return err;
