@@ -8117,3 +8117,17 @@ int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname)
 
     return ret;
 }
+
+/**
+ * function_package_has_gui_help:
+ * @pkg: function-package pointer.
+ * 
+ * Checks whether @pkg has GUI-specific help text.
+ *
+ * Returns: 1 if so, 0 otherwise.
+ */
+
+int function_package_has_gui_help (fnpkg *pkg)
+{
+    return pkg->gui_help != NULL && !string_is_blank(pkg->gui_help);
+}
