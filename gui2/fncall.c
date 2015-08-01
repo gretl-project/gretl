@@ -1988,14 +1988,28 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 static void maybe_set_gui_interface (call_info *cinfo,
 				     int from_browser)
 {
-    int fid = -1, priv = -1;
+    int fid = -1;
 
-    function_package_get_properties(cinfo->pkg, 
-				    "gui-main-id", &fid,
-				    "gui-main-priv", &priv,
-				    NULL);
+    if (cinfo->publist[0] == 1) {
+	/* a single interface: take as implicit gui-main */
+	fid = cinfo->publist[1];
+    } else {
+	int priv = -1;
+	
+	function_package_get_properties(cinfo->pkg, 
+					"gui-main-id", &fid,
+					"gui-main-priv", &priv,
+					NULL);
+	if (fid >= 0 && from_browser && priv) {
+	    /* We found gui-main -- bur we're coming
+	       from the package browser and this function
+	       is masked out (for use on menus only).
+	    */	    
+	    fid = -1;
+	}
+    }
 
-    if (fid >= 0 && (from_browser == 0 || priv == 0)) {
+    if (fid >= 0) {
 	/* We found gui-main -- and if we're coming
 	   from the package browser, it's not masked
 	   by being designated as "private".
@@ -2112,18 +2126,11 @@ static int call_function_package (call_info *cinfo, windata_t *vwin,
     }
 
     if (!err && cinfo->iface < 0) {
-	int n = cinfo->publist[0];
-
-	if (n > 1) {
-	    pkg_select_interface(cinfo, n);
-	    if (cinfo->iface < 0) {
-		/* failed, or cancelled */
-		cinfo_free(cinfo);
-		return 0; /* note: handled */
-	    }
-	} else {
-	    /* only one relevant interface available */
-	    cinfo->iface = cinfo->publist[1];
+	pkg_select_interface(cinfo, cinfo->publist[0]);
+	if (cinfo->iface < 0) {
+	    /* failed, or cancelled */
+	    cinfo_free(cinfo);
+	    return 0; /* note: handled */
 	}
     }
 

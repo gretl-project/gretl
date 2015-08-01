@@ -3748,7 +3748,7 @@ static int *function_package_get_list (fnpkg *pkg, int code, int n)
 			list[++j] = i;
 		    } else if (code == GUILIST && !priv && !menu_only &&
 			       !pkg_aux_role(ufuns[i]->pkg_role)) {
-			/* in the GUI list of public funtions, don't
+			/* in the GUI list of public functions, don't
 			   display post-processing functions
 			*/
 			list[++j] = i;
