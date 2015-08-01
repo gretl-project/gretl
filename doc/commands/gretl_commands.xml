@@ -2414,10 +2414,7 @@
       <para>
 	This dialog enables you to specify additional data files to
 	be included with a function package. Including such files
-	implies that the package takes the form of a zip file;
-	building the zip file is done automatically when you save
-	a package with the <quote>upload to server</quote> option
-	checked.
+	implies that the package takes the form of a zip file.
       </para>
       <para>
 	There are two main intended uses for this facility. First, you
@@ -6953,20 +6950,42 @@
     <description>
       <para>
 	Supports creation of a gretl function package via the command
-	line. The filename argument represents the name of the package
-	to be created, and should have the <lit>.gfn</lit>
-	extension. Please see <guideref targ="chap:functions"/> for
-	details.
+	line. The mode of operation of this command depends on the
+	extension of <repl>filename</repl>, which must be either
+	<lit>.gfn</lit> or <lit>.zip</lit>.
       </para>
+      <subhead>Gfn mode</subhead>
       <para>
-	The option flags support the writing of auxiliary files for
-	use with gretl <quote>addons</quote>. The index file is a
-	short XML document containing basic information about the
-	package; it has the same basename as the package and the
-	extension <lit>.xml</lit>. The translations file contains
+	Writes a gfn file. It is assumed that a package specification
+	file, with the same basename as <repl>filename</repl> but with
+	the extension <lit>.spec</lit>, is accessible, along with any
+	auxiliary files that it references. It is also assumed that
+	all the functions to be packaged have been read into memory.
+      </para>
+      <subhead>Zip mode</subhead>
+      <para>
+	Writes a zip package file (gfn plus other materials). If
+	a gfn file of the same basename as <repl>filename</repl>
+	is found, it forms the basis of the zip package. If no
+	gfn file is found, the program first attempts to build
+	the gfn, as described above.
+      </para>
+      <subhead>Gfn options</subhead>
+      <para>
+	The option flags support the writing of auxiliary files,
+	intended for use with gretl <quote>addons</quote>. The index
+	file is a short XML document containing basic information
+	about the package; it has the same basename as the package and
+	the extension <lit>.xml</lit>. The translations file contains
 	strings from the package that may be suitable for translation,
 	in C format; for package <lit>foo</lit> this file is named
-	<lit>foo-i18n.c</lit>.
+	<lit>foo-i18n.c</lit>. These files are not produced if the
+	command is operating in zip mode and a pre-existing gfn
+	file is used.
+      </para>
+      <para>
+	For details on all of this, see the the <book>Gretl Function
+	Package Guide</book>.
       </para>
     </description>
 
@@ -8957,9 +8976,16 @@
 	<lit>plot</lit> followed by the required argument,
 	<repl>data</repl>, which specifies the data to be plotted:
 	this should be the name of a list, a matrix, or a single
-	series. If a list or matrix is given, the last element (list)
-	or column (matrix) is assumed to be the <math>x</math>-axis
-	variable and the other(s) the <math>y</math>-axis variable(s).
+	series.
+      </para>
+      <para>
+	If a list or matrix is given, the last element (list) or
+	column (matrix) is assumed to be the <math>x</math>-axis
+	variable and the other(s) the <math>y</math>-axis variable(s),
+	unless the <opt>time-series</opt> option is given in which
+	case all the specified data go on the <math>y</math> axis.
+      </para>
+      <para>
 	The option of supplying a single series name is restricted to
 	time-series data, in which case it is assumed that a
 	time-series plot is wanted; otherwise an error is flagged.

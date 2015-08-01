@@ -6936,6 +6936,37 @@
       </description>
     </function>
 
+    <function name="seasonals" section="data-utils" output="list">
+      <fnargs>
+	<fnarg optional="true" type="int">baseline</fnarg>
+	<fnarg optional="true" type="bool">center</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Applicable only if the dataset has a time-series structure
+	  with periodicity greater than 1. Returns a list of dummy
+	  variables coding for the period or season, named
+	  <lit>S1</lit>, <lit>S2</lit> and so on.
+	</para>
+	<para>
+	  The optional <argname>baseline</argname> argument can be
+	  used to exclude one period from the set of dummies. For
+	  example, if you give a baseline value of 1 with quarterly
+	  data the returned list will hold dummies for quarters 2, 3
+	  and 4 only.  If this argument is omitted or set to zero a
+	  full set of dummies is generated; if non-zero, it must be an
+	  integer from 1 to the periodicity of the data.
+	</para>
+	<para>
+	  The <argname>center</argname> argument, if non-zero, calls
+	  for the dummies to be centered; that is, to have their
+	  population mean subtracted. For example, with quarterly data
+	  centered seasonals will have values &minus;0.25 and 0.75
+	  rather than 0 and 1.
+	</para>
+      </description>
+    </function>    
+
     <function name="selifc" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
@@ -7161,6 +7192,27 @@
 	</para>
       </description>
     </function>
+
+    <function name="square" section="transforms" output="list">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg optional="true" type="bool">cross-products</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Returns a list that references the squares of the variables
+	  in the list <argname>L</argname>, named on the pattern
+	  <lit>sq_</lit><repl>varname</repl>.  If the optional second
+	  argument is present and has a non-zero value, the returned
+	  list also includes the cross-products of the elements of
+	  <argname>L</argname>; these are named on the pattern
+	  <repl>var1</repl><lit>_</lit><repl>var2</repl>.  In these
+	  patterns the input variable names are truncated if need be,
+	  and the output names may be adjusted in case of duplication
+	  of names in the returned list.
+	</para>
+      </description>
+    </function>    
 
     <function name="sqrt" section="math" output="asinput">
       <fnargs>
@@ -8165,24 +8217,6 @@
             <fncref targ="min"/>
 	  </seelist>
 	</para> 
-      </description>
-    </function>
-
-    <function name="xpx" section="transforms" output="list">
-      <fnargs>
-	<fnarg type="list">L</fnarg>
-      </fnargs>     
-      <description>
-	<para>
-	  Returns a list that references the squares and
-	  cross-products of the variables in list
-	  <argname>L</argname>.  Squares are named on the pattern
-	  <lit>sq_</lit><repl>varname</repl> and cross-products on the
-	  pattern <repl>var1</repl><lit>_</lit><repl>var2</repl>.  The
-	  input variable names are truncated if need be, and the
-	  output names may be adjusted in case of duplication of names
-	  in the returned list.
-	</para>
       </description>
     </function>
 

@@ -27,32 +27,52 @@ to meet the needs of an expert analyst, they can be reliably used in
 an entirely automatic manner. The main applications are forecasting,
 seasonal adjustment, trend-cycle estimation, construction of composite
 leading indicators, interpolation, detection and correction of
-outliers, estimation of special effects, and quality control of data."</p>
+outliers, estimation of special effects, and quality control of
+  data."</p>
 
-<p>To install TRAMO/SEATS for use with gretl under
-  <b>GNU/Linux</b> please use the binary rpm <a
-href="http://ricardo.ecn.wfu.edu/pub/gretl/tramo-seats-98-1.i386.rpm">tramo-seats-98-1.i386.rpm</a>.
-(Source code for the programs is not freely available, although the
-authors were kind enough to give me access to the source to build this
-version.)  </p>
+<p>Downloads of TRAMO/SEATS for use with gretl can be found in the
+  <a href="http://sourceforge.net/projects/gretl/files/tramo/">tramo
+    folder</a>. The file you want depends on your platform:</p>
 
-<p>If you wish to use TRAMO/SEATS with gretl on <b>Windows</b>, you
-should download the self-installer, <a
-  href="http://ricardo.ecn.wfu.edu/pub/gretl/ts_install.exe">ts_install.exe</a>
-  and run it.  You will be prompted for an installation directory, by
-  default <kbd>c:\userdata\tramo</kbd>.  This package contains
-  the programs <kbd>tramo.exe</kbd> and <kbd>seats.exe</kbd> in win32
-console form, along with
-  examples and documentation in PDF format.  I am grateful to Gianluca
-Caporello for permission to redistribute tramo and seats in this
-form.</p>
+<table border=0 cellspacing=4 cellpadding=4>
+  <tr>
+    <td>MS Windows</td>
+    <td><a href="http://sourceforge.net/projects/gretl/files/tramo/ts_install.exe">ts_install.exe</a></td>
+  </tr>
+  <tr>
+    <td>Mac OS X</td>
+    <td><a href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats-intel.dmg">tramo-seats-intel.dmg</a></td>
+  </tr>
+  <tr>
+    <td>Old OS X (ppc)</td>
+    <td><a href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats.dmg">tramo-seats.dmg</a></td>
+  </tr>
+  <tr>
+    <td>Linux (generic)</td>
+    <td><a href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats-linux.tar.gz">tramo-seats-linux.tar.gz</a></td>
+  </tr>
+  <tr>
+    <td>Linux (rpm-based)</td>
+    <td><a href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats-98-2.i586.rpm">tramo-seats-98-2.i586.rpm</a></td>
+  </tr>
+  <tr>
+    <td>Linux (debian-based)</td>
+    <td><a href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats_98-2_i386.deb">tramo-seats_98-2_i386.deb</a></td>
+  </tr>  
+</table>
 
-<p>Support for TRAMO/SEATS is new in version 1.0.3 of gretl and at
-present it is quite limited, but if there is interest in this feature
-I will probably aim to develop it further.  The following pictures
-illustrate what you can do as of now.</p>
+<p>(Source code for these programs is not freely available, but the
+authors were kind enough to give the gretl team access to the sources to build
+these packages. We are grateful to Gianluca Caporello for permission to
+redistribute tramo and seats in this form.)</p>
 
-<p>After opening a suitable data set (i.e. containing seasonal time
+<p><b>Please note</b>: after installing TRAMO/SEATS it may be necessary to
+  adjust gretl's expectation of where to find the programs. To do this,
+  go to the "Tools" menu in the gretl main window and select
+  "Preferences, General", then the "Programs" tab. Look for the item
+  titled "Path to tramo".</p>
+
+<p>After opening a suitable dataset (i.e. containing seasonal time
 series), select a variable in the gretl main window and pull down the
 Variable menu.  Select "TRAMO analysis".</p>
 
@@ -60,15 +80,21 @@ Variable menu.  Select "TRAMO analysis".</p>
 <IMG SRC="tramo-menu.png" ALT="Variable menu">
 </center>
 
-<p>You will then see a dialog box which gives you the choice of saving
-(into the current gretl data set) up to three of the series generated
-by SEATS, namely the seasonally adjusted version of the input
-series, the estimated trend/cycle component of the series, and the
-estimated "irregular" component.  At this point you can also choose
-whether or not to display a graph showing these series.</p>
+<p>You will then see a dialog box that gives you a choice between
+  the "Standard automatic analysis" and some alternatives (which
+  you can explore at your leisure).
+</p>
 
 <center>
 <IMG SRC="tramo-dialog.png" ALT="Dialog box">
+</center>
+
+<p>Clicking on the "Output" tab gives you some further choices,
+  including saving output series and plotting the results of
+  the analysis.</p>
+
+<center>
+<IMG SRC="tramo-dialog-2.png" ALT="Dialog box">
 </center>
 
 <p>If you choose to display the graph, you should see something like

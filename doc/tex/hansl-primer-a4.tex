@@ -123,7 +123,7 @@ or Gauss, some of which they are already confident with. Here,
 therefore, the focus is not so much on ``How do I do this?'', but
 rather on ``How do I do this \emph{in hansl}?''.
 
-As a consequence, this document aims as making the reader a reasonably
+As a consequence, this document aims at making the reader a reasonably
 proficient hansl user in a (relatively) short time; however, not all
 the features of hansl are illustrated; for those, interested readers
 should consult the \GCR{} and \GUG{}.
@@ -171,8 +171,10 @@ look at the following additional resources.
   more interesting examples under the \textsf{Gretl} tab.
 \item Function packages. Relatively ambitious examples of hansl coding
   can be found in the various contributed ``function packages''. You
-  can access these packages via the gretl menu item
-  \textsf{/File/Function files/On server}. Right-click on a package
+  can download these packages via the gretl menu item
+  \textsf{/Tools/Function packages/On server}. Once a package is
+  downloaded it appears in the listing under \textsf{/Tools/Function
+    packages/On local machine}; in that context you can right-click
   and select \textsf{View code} to examine the hansl functions.
 \item The gretl-users mailing list. Most well-considered
   questions get answered quite quickly and fully. See
@@ -182,38 +184,40 @@ look at the following additional resources.
 \chapter{For the impatient}
 \label{chap:impatient}
 
-If you're reading this, you're probably thinking ``Do I really need to
-go through the whole thing? After all, I've been coding econometric
-stuff for a while, and I'm pretty confident I can work my way
-through. I just need to get started and, perhaps, a few tips''. Well,
-you may be right. In this case, we'll just give you a one-page hansl
-script which exemplifies a hefty share of the topics we'll go through
-in the rest of this manual. We will use, for our example, a Vector
-AutoRegressive model, or VAR for short.
+OK, so you're impatient. Then perhaps you're thinking ``Do I really
+need to go through the whole thing? After all, I've been coding
+econometric stuff for a while, and I'm pretty confident I can pick a
+new scripting language if it's not too obscure.  I just need a few
+tips to get me started''. If that's not what you're thinking at all,
+we suggest you move along to chapter~\ref{chap:hello}; but if it is,
+well then, we'll give you a one-page hansl script which exemplifies a
+hefty share of the topics discussed in the rest of this primer. We
+will use for our example a Vector AutoRegressive model, or VAR for
+short.
 
 As you probably know, a finite-order VAR can be estimated via
-conditional maximum likelihood simply by repeatedly applying OLS to
-each equation. That amounts to solving a least-squares problem and its
+conditional maximum likelihood simply by applying OLS to each equation
+individually. That amounts to solving a least-squares problem and its
 solution can be easily written, in matrix notation, as $\hat{\Pi} =
 (X'X)^{-1} X'Y$, where $Y$ contains your endogenous variables and $X$
-contains their lags plus other exogenous series (typically, a constant
+contains their lags plus other exogenous terms (typically, a constant
 term at least). But of course, you may choose to find the maximum of
-the concentrated likelihood $\mathcal{L} = -T/2 \ln|\hat{\Sigma}|$
+the concentrated likelihood $\mathcal{L} = -(T/2) \ln|\hat{\Sigma}|$
 numerically if you so wish.
 
-The following example contains a hansl script which performs the
-these actions:
+The following example contains a hansl script which performs these
+actions:
 \begin{enumerate}
-\item Read data from a disk file.
-\item Perform some data transformation and simple visualization.
+\item Reads data from a disk file.
+\item Performs some data transformation and simple visualization.
 \item Estimates the VAR via 
   \begin{enumerate}
-  \item the native hansl command
-  \item iterated OLS
+  \item the native hansl \texttt{var} command
+  \item sequential single-equation OLS
   \item matrix algebra (in 3 different ways)
-  \item numerical maximization the log-likelihood.
+  \item numerical maximization of the log-likelihood.
   \end{enumerate}
-\item Print out the results.
+\item Prints out the results.
 \end{enumerate}
 The script also contains some concise comments.
 
@@ -244,8 +248,8 @@ matrix B = {}                          # initialize an empty matrix
 
 loop foreach i X                       # loop over the 3 var equations
     ols $i const X(-1 to -p) --quiet   # using native OLS command
-    B ~= $coeff                        # and store estimated coefficients
-end loop                               # as matrix columns
+    B ~= $coeff                        # and store the estimated coefficients
+endloop                               # as matrix columns
 
 /* via matrices */
 
@@ -292,8 +296,8 @@ print A B C1 C2 C3 D
 
 If you were able to follow the script above in all its parts,
 congratulations. You probably don't need to read the rest of this
-document (but we don't mind if you do). If, instead, you find this too
-scary, never mind: we'll take things step by step. Read on.
+document (though we don't mind if you do). But if you find the script
+too scary, never fear: we'll take things step by step. Read on.
 
 \part{Without a dataset}
 \label{part:hp-nodata}
@@ -310,6 +314,10 @@ scary, never mind: we'll take things step by step. Read on.
 \include{hp-dataset}
 \include{hp-series}
 \include{hp-estimate}
+
+\part{Reference}
+\label{part:hp-reference}
+\include{hp-reference}
 
 % \part{Further topics}
 % \include{hp-further}

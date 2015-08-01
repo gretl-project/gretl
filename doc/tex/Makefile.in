@@ -110,8 +110,11 @@ $(REF): gretl-ref.tex links cmdtex functex textables topiclist \
 $(HANSL): hansl-primer.tex links date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
+	pdflatex $<
 
 $(PKGBOOK): pkgbook.tex links date.tex $(STYSRC)
+	pdflatex $<
+	bibtex pkgbook
 	pdflatex $<
 	pdflatex $<
 
@@ -138,8 +141,11 @@ $(ALTREF): gretl-ref-a4.tex links cmdtex functex textables topiclist \
 $(ALTHANSL): hansl-primer-a4.tex links date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
+	pdflatex $<
 
 $(ALTPKGBOOK): pkgbook-a4.tex links date.tex $(STYSRC)
+	pdflatex $<
+	bibtex pkgbook-a4
 	pdflatex $<
 	pdflatex $<
 
