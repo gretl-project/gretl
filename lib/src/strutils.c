@@ -1873,6 +1873,31 @@ int strings_array_cmp (char **strs1, char **strs2, int n)
 }
 
 /**
+ * strings_array_position:
+ * @strs: array of strings.
+ * @n: number of elements in @strs.
+ * @s: string to test.
+ *
+ * Returns: the 0-based position of the first member of @strs
+ * to compare equal to @s, or -1 if no match is found.
+ */
+
+int strings_array_position (char **strs, int n, const char *s)
+{
+    int i, ret = -1;
+
+    if (s != NULL) {
+	for (i=0; i<n && ret<0; i++) {
+	    if (strs[i] != NULL && !strcmp(strs[i], s)) {
+		ret = i;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+/**
  * strings_array_diff:
  * @strs1: first array of strings.
  * @n1: number of strings in @strs1.
@@ -2353,7 +2378,7 @@ char *append_dir (char *fname, const char *dir)
 char *build_path (char *targ, const char *dirname, const char *fname, 
 		  const char *ext)
 {
-    size_t len;
+    size_t n;
 
     if (dirname == NULL || fname == NULL || targ == NULL) {
 	return NULL;
@@ -2361,18 +2386,76 @@ char *build_path (char *targ, const char *dirname, const char *fname,
 
     *targ = '\0';
     strcat(targ, dirname);
-    len = strlen(targ);
-    if (len == 0) {
+    n = strlen(targ);
+    if (n == 0) {
 	return targ;
     }
 
     /* strip a trailing single dot */
-    if (len > 1 && targ[len-1] == '.' && 
-	(targ[len-2] == '/' || targ[len-2] == '\\')) {
-	    targ[len-1] = '\0';
+    if (n > 1 && targ[n-1] == '.' && 
+	(targ[n-2] == '/' || targ[n-2] == '\\')) {
+	    targ[n-1] = '\0';
     }
 
-    if (targ[len-1] == '/' || targ[len-1] == '\\') {
+    if (targ[n-1] == '/' || targ[n-1] == '\\') {
+        /* dirname is already properly terminated */
+        strcat(targ, fname);
+    } else {
+        /* otherwise put a separator in */
+        strcat(targ, SLASHSTR);
+        strcat(targ, fname);
+    }
+
+    if (ext != NULL) {
+	strcat(targ, ext);
+    }
+
+    return targ;
+}
+
+/**
+ * build_path_new:
+ * @dirname: first part of path.
+ * @fname: filename.
+ * @ext: filename extension to be appended (or NULL).
+ *
+ * Works as build_path() except that the full path is
+ * returned in a newly allocated string.
+ *
+ * Returns: the constructed path, or NULL on failure.
+ */
+
+char *build_path_new (const char *dirname, const char *fname, 
+		      const char *ext)
+{
+    char *targ = NULL;
+    size_t n, targlen;
+
+    if (dirname == NULL || fname == NULL) {
+	return NULL;
+    }
+
+    n = strlen(dirname);
+    targlen = n + strlen(fname) + 2;
+    if (ext != NULL) {
+	targlen += strlen(ext);
+    }
+
+    targ = malloc(targlen);
+    if (targ == NULL) {
+	return NULL;
+    }
+
+    *targ = '\0';
+    strcat(targ, dirname);
+
+    /* strip a trailing single dot */
+    if (n > 1 && targ[n-1] == '.' && 
+	(targ[n-2] == '/' || targ[n-2] == '\\')) {
+	    targ[n-1] = '\0';
+    }
+
+    if (targ[n-1] == '/' || targ[n-1] == '\\') {
         /* dirname is already properly terminated */
         strcat(targ, fname);
     } else {
@@ -2560,6 +2643,36 @@ char *gretl_utf8_strncat_trim (char *dest, const char *src, size_t n)
     }
 
     return dest;
+}
+
+/**
+ * gretl_utf8_truncate:
+ * @s: string to process.
+ * @nmax: maximum number of characters to retain.
+ *
+ * Truncates @s to a maximum length of @n UTF-8 characters,
+ * ensuring that we don't end up with an incomplete UTF-8
+ * character preceding the terminating NUL byte.
+ *
+ * Returns: the (possibly truncated) string.
+ */
+
+char *gretl_utf8_truncate (char *s, size_t nmax)
+{
+    char *p = s;
+    size_t n = 0;
+
+    while (p && *p) {
+	p = g_utf8_next_char(p);
+	if (p && *p) {
+	    if (++n == nmax) {
+		*p = '\0';
+		break;
+	    }
+	}
+    }
+
+    return s;
 }
 
 /**

@@ -3253,8 +3253,17 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     }
 
     if (gretl_function_depth() > 0) {
-	gretl_errmsg_set(_("The 'dataset' command is not available within functions"));
-	return 1;
+	if (op == DS_ADDOBS && !complex_subsampled() &&
+	    dset->t2 == dset->n - 1) {
+	    /* experimental, 2015-07-28: allow "addobs" within a
+	       function provided the dataset is not subsampled
+	    */
+	    goto proceed;
+	} else {
+	    gretl_errmsg_set(_("The 'dataset' command is not available "
+			       "within functions"));
+	    return 1;
+	}
     }
 
     if (op != DS_RESAMPLE && op != DS_RESTORE && gretl_looping()) {
@@ -3276,6 +3285,8 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	gretl_errmsg_set(_("The data set is currently sub-sampled"));
 	return 1;
     }
+
+ proceed:
 
     if (op == DS_ADDOBS || op == DS_INSOBS || 
 	op == DS_COMPACT || op == DS_RESAMPLE ||

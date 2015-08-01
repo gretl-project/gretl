@@ -30,6 +30,7 @@
 #include "gretl_string_table.h"
 #include "gretl_array.h"
 #include "gretl_typemap.h"
+#include "gretl_zip.h"
 #include "uservar.h"
 #include "flow_control.h"
 #include "kalman.h"
@@ -3348,6 +3349,98 @@ static int cli_validate_package_file (const char *fname, PRN *prn)
     return err;
 }
 
+static int get_gfn_info_for_zip (const char *fname,
+				 int *pdfdoc,
+				 char ***datafiles,
+				 int *n_datafiles)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr node = NULL;
+    xmlNodePtr sub;
+    int found = 0;
+    int err = 0;
+
+    err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
+    if (err) {
+	return err;
+    }
+
+    node = node->xmlChildrenNode;
+    while (node != NULL && found < 2) {
+	if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
+	    sub = node->xmlChildrenNode;
+	    while (sub != NULL && found < 2) {
+		if (!xmlStrcmp(sub->name, (XUC) "help")) {
+		    char *s = NULL;
+		    
+		    gretl_xml_node_get_trimmed_string(sub, doc, &s);
+		    *pdfdoc = has_suffix(s, ".pdf");
+		    free(s);
+		    found++;
+		} else if (!xmlStrcmp(sub->name, (XUC) "data-files")) {
+		    *datafiles =
+			gretl_xml_get_strings_array(sub, doc, n_datafiles,
+						    0, &err);
+		    found++;
+		} else if (!xmlStrcmp(sub->name, (XUC) "gretl-function")) {
+		    /* we've overshot */
+		    found = 2;
+		}
+		sub = sub->next;
+	    }
+	}
+	node = node->next;
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+    }
+
+    return err;
+}
+
+static int cli_build_zip_package (const char *fname,
+				  const char *gfnname,
+				  fnpkg *pkg,
+				  PRN *prn)
+{
+    char **datafiles = NULL;
+    int n_datafiles = 0;
+    int pdfdoc = 0;
+    int freeit = 0;
+    int err = 0;
+
+    if (pkg != NULL) {
+	datafiles = pkg->datafiles;
+	n_datafiles = pkg->n_files;
+	pdfdoc = has_suffix(pkg->help, ".pdf");
+    } else {
+	/* grope in the gfn file */
+	err = get_gfn_info_for_zip(gfnname,
+				   &pdfdoc,
+				   &datafiles,
+				   &n_datafiles);
+	freeit = 1;
+    }
+	
+    if (!err) {
+	err = package_make_zipfile(gfnname,
+				   pdfdoc,
+				   datafiles,
+				   n_datafiles,
+				   NULL,
+				   fname,
+				   OPT_NONE,
+				   prn);
+    }
+
+    if (freeit) {
+	strings_array_free(datafiles, n_datafiles);
+    }
+
+    return err;
+}
+
 /**
  * create_and_write_function_package:
  * @fname: filename for function package.
@@ -3365,19 +3458,39 @@ int create_and_write_function_package (const char *fname,
 				       gretlopt opt,
 				       PRN *prn)
 {
+    char gfnname[FILENAME_MAX];
     fnpkg *pkg = NULL;
+    int build_gfn = 1;
+    int build_zip = 0;
     int err = 0;
 
-    if (n_free_functions() == 0) {
+    if (has_suffix(fname, ".zip")) {
+	/* building a zip package */
+	FILE *fp;
+
+	switch_ext(gfnname, fname, "gfn");
+	fp = gretl_fopen(gfnname, "r");
+	if (fp != NULL) {
+	    /* gfn is already made */
+	    build_gfn = 0;
+	    fclose(fp);
+	}
+	build_zip = 1;
+    } else {
+	/* just building a gfn file */
+	strcpy(gfnname, fname);
+    }
+
+    if (build_gfn && n_free_functions() == 0) {
 	gretl_errmsg_set(_("No functions are available for packaging at present."));
 	err = E_DATA;
-    } else {
-	pkg = new_pkg_from_spec_file(fname, prn, &err);
+    } else if (build_gfn) {
+	pkg = new_pkg_from_spec_file(gfnname, prn, &err);
 	if (pkg != NULL) {
 	    err = function_package_write_file(pkg);
 	    if (!err) {
-		err = cli_validate_package_file(fname, prn);
-		/* should we delete @fname ? */
+		err = cli_validate_package_file(gfnname, prn);
+		/* should we delete @gfnname ? */
 	    }
 	    if (!err) {
 		if (opt & OPT_T) {
@@ -3388,6 +3501,10 @@ int create_and_write_function_package (const char *fname,
 		}		
 	    }
 	}
+    }
+
+    if (!err && build_zip) {
+	err = cli_build_zip_package(fname, gfnname, pkg, prn);
     }
 
     return err;
@@ -3493,22 +3610,46 @@ static void pkg_get_gui_attrs (fnpkg *pkg, unsigned char *attrs)
     }
 }
 
-static int is_string_property (const char *key)
+static char **pkg_strvar_pointer (fnpkg *pkg, const char *key,
+				  int *optional)
 {
-    return !strcmp(key, "fname") ||
-	!strcmp(key, "author")   ||
-	!strcmp(key, "email")    ||
-	!strcmp(key, "version")  ||
-	!strcmp(key, "date")     ||
-	!strcmp(key, "description") ||
-	!strcmp(key, "label") ||
-	!strcmp(key, "menu-attachment") ||
-	!strcmp(key, "help") ||
-	!strcmp(key, "gui-help") ||
-	!strcmp(key, "sample-script") ||
-	!strcmp(key, "help-fname") ||
-	!strcmp(key, "gui-help-fname") ||
-	!strcmp(key, "sample-fname");
+    *optional = 0;
+    
+    if (!strcmp(key, "fname")) {
+	return &pkg->fname;
+    } else if (!strcmp(key, "author")) {
+	return &pkg->author;
+    } else if (!strcmp(key, "email")) {
+	return &pkg->email;
+    } else if (!strcmp(key, "version")) {
+	return &pkg->version;
+    } else if (!strcmp(key, "date")) {
+	return &pkg->date;
+    } else if (!strcmp(key, "description")) {
+	return &pkg->descrip;
+    } else if (!strcmp(key, "help")) {
+	return &pkg->help;
+    } else if (!strcmp(key, "sample-script")) {
+	return &pkg->sample;
+    }
+
+    *optional = 1;
+    
+    if (!strcmp(key, "label")) {
+	return &pkg->label;
+    } else if (!strcmp(key, "menu-attachment")) {
+	return &pkg->mpath;
+    } else if (!strcmp(key, "gui-help")) {
+	return &pkg->gui_help;
+    } else if (!strcmp(key, "help-fname")) {
+	return &pkg->help_fname;
+    } else if (!strcmp(key, "gui-help-fname")) {
+	return &pkg->gui_help_fname;
+    } else if (!strcmp(key, "sample-fname")) {
+	return &pkg->sample_fname;
+    }
+
+    return NULL;
 }
 
 /* varargs function for setting the properties of a function
@@ -3520,6 +3661,8 @@ int function_package_set_properties (fnpkg *pkg, ...)
 {
     va_list ap;
     const char *key;
+    char **sptr;
+    int optional;
     int i, err = 0;
 
     va_start(ap, pkg);
@@ -3529,40 +3672,22 @@ int function_package_set_properties (fnpkg *pkg, ...)
 	if (key == NULL) {
 	    break;
 	}
-	if (is_string_property(key)) {
+
+	sptr = pkg_strvar_pointer(pkg, key, &optional);
+
+	if (sptr != NULL) {
 	    const char *sval = va_arg(ap, const char *);
 
-	    if (!strcmp(key, "fname")) {
-		err = maybe_replace_string_var(&pkg->fname, sval);
-	    } else if (!strcmp(key, "author")) {
-		err = maybe_replace_string_var(&pkg->author, sval);
-	    } else if (!strcmp(key, "email")) {
-		err = maybe_replace_string_var(&pkg->email, sval);
-	    } else if (!strcmp(key, "date")) {
-		err = maybe_replace_string_var(&pkg->date, sval);
-	    } else if (!strcmp(key, "version")) {
-		err = maybe_replace_string_var(&pkg->version, sval);
-	    } else if (!strcmp(key, "description")) {
-		err = maybe_replace_string_var(&pkg->descrip, sval);
-	    } else if (!strcmp(key, "help")) {
-		err = maybe_replace_string_var(&pkg->help, sval);
-		if (!err && !strncmp(sval, "pdfdoc", 6)) {
+	    if (optional) {
+		err = maybe_replace_optional_string_var(sptr, sval);
+	    } else {
+		err = maybe_replace_string_var(sptr, sval);
+	    }
+	    
+	    if (!err && !strcmp(key, "help")) {
+		if (!strncmp(sval, "pdfdoc", 6)) {
 		    pkg->uses_subdir = 1;
 		}
-	    } else if (!strcmp(key, "gui-help")) {
-		err = maybe_replace_optional_string_var(&pkg->gui_help, sval);
-	    } else if (!strcmp(key, "sample-script")) {
-		err = maybe_replace_string_var(&pkg->sample, sval);
-	    } else if (!strcmp(key, "help-fname")) {
-		err = maybe_replace_optional_string_var(&pkg->help_fname, sval);
-	    } else if (!strcmp(key, "gui-help-fname")) {
-		err = maybe_replace_optional_string_var(&pkg->gui_help_fname, sval);
-	    } else if (!strcmp(key, "sample-fname")) {
-		err = maybe_replace_optional_string_var(&pkg->sample_fname, sval);
-	    } else if (!strcmp(key, "label")) {
-		err = maybe_replace_optional_string_var(&pkg->label, sval);
-	    } else if (!strcmp(key, "menu-attachment")) {
-		err = maybe_replace_optional_string_var(&pkg->mpath, sval);
 	    }
 	} else if (!strcmp(key, "gui-attrs")) {
 	    const unsigned char *np = va_arg(ap, const char *);
@@ -3577,7 +3702,9 @@ int function_package_set_properties (fnpkg *pkg, ...)
 		pkg->modelreq = ival;
 	    } else if (!strcmp(key, "min-version")) {
 		pkg->minver = ival;
-	    } 
+	    } else if (!strcmp(key, "lives-in-subdir")) {
+		pkg->uses_subdir = (ival != 0);
+	    }
 	} 
     }
 
@@ -4195,7 +4322,7 @@ static int real_load_package (fnpkg *pkg)
 {
     int i, err = 0;
 
-#if PKG_DEBUG
+#if 1 || PKG_DEBUG
     fprintf(stderr, "real_load_package:\n loading '%s'\n", pkg->fname);
 #endif
 
@@ -4227,64 +4354,104 @@ static int version_number_from_string (const char *s)
     return 10000 * x + 100 * y + z;
 }
 
-static void print_package_info (const fnpkg *pkg, PRN *prn)
+static const char *data_needs_string (FuncDataReq dr)
+{
+    if (dr == FN_NEEDS_TS) {
+	return N_("Time-series data");
+    } else if (dr == FN_NEEDS_QM) {
+	return N_("Quarterly or monthly data");
+    } else if (dr == FN_NEEDS_PANEL) {
+	return N_("Panel data");
+    } else if (dr == FN_NODATA_OK) {
+	return N_("none");
+    } else {
+	return N_("some sort of dataset");
+    }
+}
+
+static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 {
     char vstr[8];
-    int i;
+    int remote, pdfdoc;
 
-    if (pkg->minver > 0) {
-	get_version_string(vstr, pkg->minver);
-    } else {
-	*vstr = '\0';
+    remote = (strstr(fname, "dltmp.") != NULL);
+
+    if (!remote && g_path_is_absolute(fname)) {
+	pprintf(prn, "<@itl=\"File\">: %s\n\n", fname);
     }
 
-    pprintf(prn, "Package: %s\n", (*pkg->name)? pkg->name : "unknown");
-    pprintf(prn, "Author: %s\n", (pkg->author)? pkg->author : "unknown");
+    if (pkg->name[0] == '\0' || pkg->author == NULL ||
+	pkg->minver <= 0 || pkg->descrip == NULL ||
+	pkg->version == NULL || pkg->date == NULL ||
+	pkg->help == NULL) {
+	pprintf(prn, "\nBroken package! Basic information is missing\n");
+	return;
+    }
+
+    get_version_string(vstr, pkg->minver);
+    pdfdoc = has_suffix(pkg->help, ".pdf");
+
+    pprintf(prn, "<@itl=\"Package\">: %s %s (%s)\n", pkg->name, pkg->version,
+	    pkg->date);
+    pprintf(prn, "<@itl=\"Author\">: %s\n", pkg->author);
     if (pkg->email != NULL && *pkg->email != '\0') {
-	pprintf(prn, "Email: %s\n", pkg->email);
+	pprintf(prn, "<@itl=\"Email\">: %s\n", pkg->email);
     }
-    pprintf(prn, "Version: %s\n", (pkg->version)? pkg->version : "unknown");
-    pprintf(prn, "Date: %s\n", (pkg->date)? pkg->date : "unknown");
-    pprintf(prn, "Required gretl version: %s\n", (*vstr)? vstr : "unknown");
-    pputs(prn, "Description: ");
-    pputs(prn, (pkg->descrip)? pkg->descrip : "none");
+    pprintf(prn, "<@itl=\"Required gretl version\">: %s\n", vstr);
+    pprintf(prn, "<@itl=\"Data requirement\">: %s\n", _(data_needs_string(pkg->dreq)));
+    pprintf(prn, "<@itl=\"Description\">: %s\n", gretl_strstrip(pkg->descrip));
 
-    pputs(prn, "\n\n");
+    if (pdfdoc) {
+	const char *s = strrchr(pkg->help, ':');
+
+	if (remote) {
+	    pprintf(prn, "<@itl=\"Documentation\">: %s\n\n", s + 1);
+	} else {
+	    gchar *localpdf = g_strdup(fname);
+	    gchar *p = strrchr(localpdf, '.');
+
+	    *p = '\0';
+	    strncat(p, ".pdf", 4);
+	    pprintf(prn, "<@itl=\"Documentation\">: <@adb=\"%s\">\n\n", localpdf);
+	    g_free(localpdf);
+	}	
+    } else {
+	pputc(prn, '\n');
+    }
 
     if (pkg->pub != NULL) {
 	if (pkg->n_pub == 1) {
 	    if (strcmp(pkg->pub[0]->name, pkg->name)) {
-		pputs(prn, "Public interface: ");
+		pputs(prn, "<@itl=\"Public interface\">: ");
+		pputs(prn, "<mono>\n");
 		pprintf(prn, "%s()\n", pkg->pub[0]->name);
+		pputs(prn, "</mono>\n\n");
 	    }
 	} else {
-	    pputs(prn, "Public interfaces:\n");
+	    int i;
+	    
+	    pputs(prn, "<@itl=\"Public interfaces\">:\n\n");
+	    pputs(prn, "<mono>\n");
 	    for (i=0; i<pkg->n_pub; i++) {
 		pprintf(prn, "  %s()\n", pkg->pub[i]->name);
 	    }
+	    pputs(prn, "</mono>\n\n");
 	}
-	pputc(prn, '\n');
     }    
 
-    if (pkg->help != NULL) {
-	pputs(prn, "Help text:\n");
-	if (has_suffix(pkg->help, ".pdf")) {
-	    const char *s = strrchr(pkg->help, ':');
-
-	    if (s != NULL) {
-		pprintf(prn, "See %s", s + 1);
-	    } else {
-		pputs(prn, pkg->help);
-	    }
-	} else {	
-	    pputs(prn, pkg->help);
-	}
-	pprintf(prn, "\n\n");
+    if (!pdfdoc) {
+	pputs(prn, "<@itl=\"Help text\">:\n\n");
+	pputs(prn, "<mono>\n");
+	pputs(prn, pkg->help);
+	pputs(prn, "\n\n");
+	pputs(prn, "</mono>\n");
     }
 
-    if (pkg->sample != NULL) {
-	pputs(prn, "Sample script:\n");
+    if (remote && pkg->sample != NULL) {
+	pputs(prn, "<@itl=\"Sample script\">:\n\n");
+	pputs(prn, "<code>\n");
 	pputs(prn, pkg->sample);
+	pputs(prn, "</code>\n");
 	pputc(prn, '\n');
     }
 }
@@ -4323,7 +4490,7 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
     char *tmp = NULL;
     int id;
 
-#if PKG_DEBUG
+#if 1 || PKG_DEBUG
     fprintf(stderr, "real_read_package: fname='%s'\n", fname);
 #endif
 
@@ -4575,7 +4742,7 @@ int load_function_package_by_filename (const char *fname, PRN *prn)
 
     if (function_package_is_loaded(fname)) {
 	/* already loaded: no-op */
-	fprintf(stderr, "load_function_package_from_file:\n"
+	fprintf(stderr, "load_function_package_by_filename:\n"
 		" '%s' is already loaded\n", fname);
     } else {
 	pkg = read_package_file(fname, &err);
@@ -4681,7 +4848,7 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
 
     if (!err) {
 	if (task == FUNCS_INFO) {
-	    print_package_info(pkg, prn);
+	    print_package_info(pkg, fname, prn);
 	} else if (task == FUNCS_SAMPLE) {
 	    pputs(prn, pkg->sample);
 	} else {
@@ -4804,13 +4971,16 @@ int get_function_file_header (const char *fname, char **pdesc,
 }
 
 int package_has_menu_attachment (const char *fname,
-				 char **attach)
+				 char **pkgname,
+				 char **attach,
+				 char **label)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
     xmlNodePtr sub;
     char *tmp = NULL;
     int found = 0;
+    int ftarg = 1;
     int stop = 0;
     int err = 0;
 
@@ -4819,21 +4989,37 @@ int package_has_menu_attachment (const char *fname,
 	return 0;
     }
 
+    if (label != NULL) {
+	ftarg++;
+    }
+
     node = node->xmlChildrenNode;
     
     while (!stop && node != NULL) {
 	if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
+	    if (pkgname != NULL) {
+		gretl_xml_get_prop_as_string(node, "name", pkgname);
+	    }
 	    sub = node->xmlChildrenNode;
 	    while (!stop && sub != NULL) {
 		if (!xmlStrcmp(sub->name, (XUC) "menu-attachment")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
 		    if (tmp != NULL) {
-			stop = found = 1;
+			if (++found == ftarg) {
+			    stop = 1;
+			}
 			if (attach != NULL) {
 			    *attach = tmp;
 			} else {
 			    free(tmp);
 			}
+		    }
+		} else if (label != NULL &&
+			   !xmlStrcmp(sub->name, (XUC) "label")) {
+		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
+		    *label = tmp;
+		    if (++found == ftarg) {
+			stop = 1;
 		    }
 		} else if (!xmlStrcmp(sub->name, (XUC) "help")) {
 		    /* we've overshot */
@@ -7346,6 +7532,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
     char line[MAXLINE];
     CMD cmd;
     int orig_v = 0;
+    int orig_n = 0;
     int orig_t1 = 0;
     int orig_t2 = 0;
     int indent0 = 0, started = 0;
@@ -7373,6 +7560,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 
     if (dset != NULL) {
 	orig_v = dset->v;
+	orig_n = dset->n;
 	orig_t1 = dset->t1;
 	orig_t2 = dset->t2;
     }
@@ -7555,6 +7743,12 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 		restore_full_sample(dset, NULL);
 		restrict_sample_from_mask(state.submask, dset, opt);
 	    } 
+	} else if (dset->n > orig_n) {
+	    /* some observations were added inside the function; note
+	       that this is not allowed if the dataset is subsampled
+	       on entry
+	    */
+	    dataset_drop_observations(dset, dset->n - orig_n);
 	}
 	dset->t1 = orig_t1;
 	dset->t2 = orig_t2;
@@ -7749,18 +7943,18 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
     int i;
 
     if (markup) {
-	pprintf(prn, "<@hd1=\"%s\">\n\n", fun->name);
+	pprintf(prn, "<@itl=\"%s\">\n\n", fun->name);
     } else {
 	pprintf(prn, "%s\n\n", fun->name);
     }
 
     if (pkg != NULL) {
 	if (markup) {
-	    pprintf(prn, "<@hd1=\"Author\">: %s\n", pkg->author? pkg->author : "unknown");
+	    pprintf(prn, "<@itl=\"Author\">: %s\n", pkg->author? pkg->author : "unknown");
 	    if (pkg->email != NULL && *pkg->email != '\0') {
-		pprintf(prn, "<@hd1=\"Email\">: %s\n", pkg->email);
+		pprintf(prn, "<@itl=\"Email\">: %s\n", pkg->email);
 	    }
-	    pprintf(prn, "<@hd1=\"Version\">: %s (%s)\n\n", pkg->version? pkg->version : "unknown",
+	    pprintf(prn, "<@itl=\"Version\">: %s (%s)\n\n", pkg->version? pkg->version : "unknown",
 		    pkg->date? pkg->date : "unknown");
 	} else {
 	    pprintf(prn, "Author: %s\n", pkg->author? pkg->author : "unknown");
@@ -7775,7 +7969,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
     if ((opt & OPT_G) && pkg != NULL && pkg->gui_help != NULL) {
 	/* GUI-specific help is preferred, and is available */
 	if (markup) {
-	    pputs(prn, "<@hd1=\"Help text\">:\n\n");
+	    pputs(prn, "<@itl=\"Help text\">:\n\n");
 	    pputs(prn, "<mono>\n");
 	} else {
 	    pputs(prn, "Help text:\n");
@@ -7789,7 +7983,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
     }
 
     if (markup) {
-	pputs(prn, "<@hd1=\"Parameters\">: ");
+	pputs(prn, "<@itl=\"Parameters\">: ");
     } else {
 	pputs(prn, "Parameters: ");
     }    
@@ -7811,7 +8005,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
     }
 
     if (markup) {
-	pputs(prn, "<@hd1=\"Return value\">: ");
+	pputs(prn, "<@itl=\"Return value\">: ");
     } else {
 	pputs(prn, "Return value: ");
     }      
@@ -7824,7 +8018,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 
     if (pkg != NULL && pkg->help != NULL) {
 	if (markup) {
-	    pputs(prn, "<@hd1=\"Help text\">:\n\n");
+	    pputs(prn, "<@itl=\"Help text\">:\n\n");
 	    pputs(prn, "<mono>\n");
 	} else {
 	    pputs(prn, "Help text:\n");
@@ -7852,7 +8046,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 
     if (pkg != NULL && pkg->sample != NULL) {
 	if (markup) {
-	    pputs(prn, "<@hd1=\"Sample script\">:\n\n");
+	    pputs(prn, "<@itl=\"Sample script\">:\n\n");
 	    pputs(prn, "<code>\n");
 	} else {
 	    pputs(prn, "Sample script:\n\n");

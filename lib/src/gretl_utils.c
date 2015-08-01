@@ -66,8 +66,10 @@ static int have_optimized_blas (void);
 
 double date_as_double (int t, int pd, double sd0)
 {
-    int ysd = (int) sd0, yy, pp, yp;
+    int ysd, yy, pp, yp;
     int p10 = 10;
+
+    ysd = (int) sd0;
 
     if (pd == 1) {
 	return (double) (ysd + t);  
@@ -1655,8 +1657,12 @@ double **data_array_from_model (const MODEL *pmod, double **Z, int missv)
 
 #ifndef WIN32
 
-static int gp_fatal (const char *s)
+static int gp_fatal (const char *cmd, const char *s)
 {
+    if (strstr(cmd, "gnuplot") == NULL) {
+	return 0;
+    }
+    
     /* wx and C++ ABI non-issue */
     if (strstr(s, "Warning: Mismatch")) {
 	return 0;
@@ -1706,7 +1712,7 @@ int gretl_spawn (char *cmdline)
 	g_error_free(error);
 	ret = 1;
     } else if (errout != NULL && *errout) {
-	if (gp_fatal(errout)) {
+	if (gp_fatal(cmdline, errout)) {
 	    gretl_errmsg_set(errout);
 	    fprintf(stderr, "gretl_errmsg: '%s'\n", gretl_errmsg_get());
 	    ret = 1;

@@ -1825,7 +1825,8 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 	int llen = 0, intcast = 0;
 	double x;
 	int cpos = strlen(fmt) - 1;
-	int i, j, c;
+	char c;
+	int i, j, k;
 
 	c = fmt[cpos];
 
@@ -1863,20 +1864,20 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 		    intcast = intcols[j];
 		}
 		if (intcast) {
-		    if (wid >= 0 && prec >= 0) {
+		    if (wid > 0 && prec > 0) {
 			pprintf(prn, ifmt, wid, prec, (int) x);
-		    } else if (wid >= 0 || prec >= 0) {
-			c = (wid >= 0)? wid : prec;
-			pprintf(prn, ifmt, c, (int) x);
+		    } else if (wid > 0 || prec > 0) {
+			k = (wid > 0)? wid : prec;
+			pprintf(prn, ifmt, k, (int) x);
 		    } else {
 			pprintf(prn, ifmt, (int) x);
 		    }
 		} else {
-		    if (wid >= 0 && prec >= 0) {
+		    if (wid > 0 && prec > 0) {
 			pprintf(prn, xfmt, wid, prec, x);
-		    } else if (wid >= 0 || prec >= 0) {
-			c = (wid >= 0)? wid : prec;
-			pprintf(prn, xfmt, c, x);
+		    } else if (wid > 0 || prec > 0) {
+			k = (wid > 0)? wid : prec;
+			pprintf(prn, xfmt, k, x);
 		    } else {
 			pprintf(prn, xfmt, x);
 		    }

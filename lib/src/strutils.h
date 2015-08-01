@@ -140,6 +140,8 @@ int strings_array_sort (char ***pS, int *n, gretlopt opt);
 
 int strings_array_cmp (char **strs1, char **strs2, int n);
 
+int strings_array_position (char **strs, int n, const char *s);
+
 int strings_array_diff (char **strs1, int n1,
 			char **strs2, int n2,
 			char ***extra, int *n_extra);
@@ -173,6 +175,9 @@ char *append_dir (char *fname, const char *dir);
 char *build_path (char *targ, const char *dirname, const char *fname, 
 		  const char *ext);
 
+char *build_path_new (const char *dirname, const char *fname, 
+		      const char *ext);
+
 const char *path_last_element (const char *path);
 
 char *trim_slash (char *s);
@@ -184,6 +189,8 @@ void get_column_widths (const char **strs, int *widths, int n);
 char *gretl_utf8_strncat (char *dest, const char *src, size_t n);
 
 char *gretl_utf8_strncat_trim (char *dest, const char *src, size_t n);
+
+char *gretl_utf8_truncate (char *s, size_t nmax);
 
 int gretl_scan_varname (const char *src, char *targ);
 

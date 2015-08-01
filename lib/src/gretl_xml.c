@@ -4051,30 +4051,38 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
  * Returns: buffer containing description, or NULL on failure.
  */
 
-char *gretl_get_gdt_description (const char *fname)
+char *gretl_get_gdt_description (const char *fname, int *err)
 {
     xmlDocPtr doc;
     xmlNodePtr cur;
+    int found = 0;
     xmlChar *buf = NULL;
-    int err;
 
     gretl_error_clear();
 
-    /* FIXME (?) : will fail with gdtb file */
+    if (has_suffix(fname, ".gdtb")) {
+	gretl_errmsg_set("Binary data file, cannot access description");
+	*err = E_DATA;
+	return NULL;
+    }
 
-    err = gretl_xml_open_doc_root(fname, "gretldata", 
-				  &doc, &cur);
-    if (err) {
+    *err = gretl_xml_open_doc_root(fname, "gretldata", &doc, &cur);
+    if (*err) {
 	return NULL;
     }
 
     cur = cur->xmlChildrenNode;
-    while (cur != NULL) {
+    while (cur != NULL && !found) {
         if (!xmlStrcmp(cur->name, (XUC) "description")) {
 	    buf = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-	    break;
+	    found = 1;
         }
 	cur = cur->next;
+    }
+
+    if (!found) {
+	gretl_errmsg_set("No description was found");
+	*err = E_DATA;
     }
 
     xmlFreeDoc(doc);

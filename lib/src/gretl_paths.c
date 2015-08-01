@@ -1464,6 +1464,9 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
     }
 
     if (!err) {
+	/* a legacy thing: some files may have been written to
+	   the "default workdir" in the past
+	*/
 	const char *wd = maybe_get_default_workdir();
 
 	if (wd != NULL) {
@@ -1552,9 +1555,9 @@ static int is_addon (const char *name)
 /**
  * gretl_function_package_get_path:
  * @name: the name of the package to find, without the .gfn extension.
- * @type: %PKG_SUBDIR for a recognized gretl "addon", %PKG_TOPLEV
- * for a package file not in a subdirectory, or %PKG_ALL for a
- * package that may be at either level.
+ * @type: %PKG_SUBDIR for a package that lives in its own subdirectory,
+ * %PKG_TOPLEV for a package file not in a subdirectory, or %PKG_ALL
+ * for a package that may be at either level.
  *
  * Searches a list of directories in which we might expect to find
  * function packages, and, if the package in question is found,
@@ -2256,86 +2259,63 @@ const char *gretl_workdir (void)
 
 #ifdef WIN32
 
-static const char *win32_default_workdir (int force)
+static const char *win32_default_workdir (void)
 {
     static char default_workdir[MAXLEN];
     char *base = mydocs_path();
-    int ok = 0;
+    const char *retval = NULL;
 
     if (base != NULL) {
 	sprintf(default_workdir, "%s\\gretl\\", base);
-	if (force || strcmp(default_workdir, paths.workdir)) {
-	    if (force) {
-		ok = (gretl_mkdir(default_workdir) == 0);
-	    } else {
-		DIR *dir = gretl_opendir(default_workdir);
+	if (strcmp(default_workdir, paths.workdir)) {
+	    DIR *dir = gretl_opendir(default_workdir);
 
-		if (dir != NULL) {
-		    closedir(dir);
-		    ok = 1;
-		}
+	    if (dir != NULL) {
+		closedir(dir);
+		retval = default_workdir;
 	    }
 	}
 	free(base);
     }
 
-    return (ok)? default_workdir : NULL;
+    return retval;
 }
 
 #else /* !WIN32 */
 
-static const char *regular_default_workdir (int force)
+static const char *regular_default_workdir (void)
 {
     static char default_workdir[MAXLEN];
     char *home = getenv("HOME");
-    int ok = 0;
+    const char *retval = NULL;
 
     if (home != NULL) {
 	sprintf(default_workdir, "%s/gretl/", home);
-	if (force || strcmp(default_workdir, paths.workdir)) {
-	    if (force) {
-		ok = (gretl_mkdir(default_workdir) == 0);
-	    } else {
-		DIR *dir = opendir(default_workdir);
+	if (strcmp(default_workdir, paths.workdir)) {
+	    DIR *dir = opendir(default_workdir);
 
-		if (dir != NULL) {
-		    closedir(dir);
-		    ok = 1;
-		} 
-	    }
+	    if (dir != NULL) {
+		closedir(dir);
+		retval = default_workdir;
+	    } 
 	}
     }
 
-    return (ok)? default_workdir : NULL;
+    return retval;
 }
 
 #endif /* WIN32 or not */
 
 /**
- * gretl_default_workdir:
- *
- * Returns: the full path to the default value of the
- * user's gretl working directory, or NULL if it
- * happens that this path cannot be determined,
- * or is not writable by the current user.
- */
-
-const char *gretl_default_workdir (void)
-{
-#ifdef WIN32
-    return win32_default_workdir(1);
-#else
-    return regular_default_workdir(1);
-#endif
-}
-
-/**
  * maybe_get_default_workdir:
  *
- * Acts like gretl_default_workdir(), except that this
- * function returns NULL if the default working
- * directory is the same as the current gretl
- * working directory, as returned by gretl_workdir().
+ * Figures the full path to the default value of the
+ * user's gretl working directory; call this "defdir".
+ *
+ * If this defdir turns out to be the same as the
+ * current gretl working directory, as would be returned
+ * by gretl_workdir(), this function returns NULL,
+ * otherwise it returns the defdir value.
  *
  * Returns: a path, or NULL.
  */
@@ -2343,9 +2323,9 @@ const char *gretl_default_workdir (void)
 const char *maybe_get_default_workdir (void)
 {
 #ifdef WIN32
-    return win32_default_workdir(0);
+    return win32_default_workdir();
 #else
-    return regular_default_workdir(0);
+    return regular_default_workdir();
 #endif
 }
 
@@ -2476,7 +2456,7 @@ const char *gretl_rbin_path (void)
 	char tmp[MAX_PATH];
 	int err;
 
-	err = R_path_from_registry(tmp, RTERM);
+	err = R_path_from_registry(tmp, REXE);
 
 	if (!err) {
 	    paths.rbinpath[0] = '\0';
@@ -2610,11 +2590,17 @@ void win32_set_gretldir (const char *progname)
 	    int m = strlen(progname);
 
 	    if (n + m + 1 < MAXLEN) {
+		struct stat buf;
+		
 		if (paths.gretldir[n-1] != '\\' &&
 		    paths.gretldir[n-1] != '/') {
 		    strncat(paths.gretldir, "\\", 1);
 		}
 		strncat(paths.gretldir, progname, m);
+		if (gretl_stat(paths.gretldir, &buf) != 0) {
+		    /* can't be right! */
+		    *paths.gretldir = '\0';
+		}
 	    }
 	}
     }
@@ -2625,6 +2611,7 @@ void win32_set_gretldir (const char *progname)
 	char *s = rightmost(p1, p2);
 
 	if (s != NULL) {
+	    /* chop off the program-name bit */
 	    *(s+1) = '\0';
 	    done = 1;
 	}
@@ -3003,6 +2990,7 @@ static void load_default_workdir (char *targ)
 static void load_default_path (char *targ)
 {
     char *progfiles = program_files_path();
+    char *pfx86 = program_files_x86_path();
 
     if (targ == paths.workdir) {
 	load_default_workdir(targ);
@@ -3011,9 +2999,9 @@ static void load_default_path (char *targ)
     } else if (targ == paths.x12a) {
 	sprintf(targ, "%s\\x13as\\x13as.exe", progfiles);	
     } else if (targ == paths.tramo) {
-	sprintf(targ, "%s\\tramo\\tramo.exe", progfiles);
+	sprintf(targ, "%s\\tramo\\tramo.exe", pfx86);
     } else if (targ == paths.rbinpath) {
-	R_path_from_registry(targ, RTERM);
+	R_path_from_registry(targ, REXE);
     } else if (targ == paths.rlibpath) {
 	R_path_from_registry(targ, RLIB);
     } else if (targ == paths.oxlpath) {
@@ -3531,6 +3519,9 @@ static void handle_use_cwd (int use_cwd, ConfigPaths *cpaths)
 }
 
 #define PROXLEN 64
+#define GRETLCLI_USE_CWD 1
+
+/* called only on behalf of gretlcli (for all platforms) */
 
 void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 				 char *dbproxy, int *use_proxy)
@@ -3565,7 +3556,11 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 	} else if (!strcmp(key, "shellok")) {
 	    libset_set_bool(SHELL_OK, rc_bool(val));
 	} else if (!strcmp(key, "usecwd")) {
+#if GRETLCLI_USE_CWD
+	    ; /* handled later */
+#else	    
 	    handle_use_cwd(rc_bool(val), cpaths);
+#endif	    
 	} else if (!strcmp(key, "lcnumeric")) {
 	    libset_set_bool(FORCE_DECP, !rc_bool(val));
 	} else if (!strcmp(key, "dbhost")) {
@@ -3614,6 +3609,11 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 	    set_garch_robust_vcv(val);
 	}
     }
+
+#if GRETLCLI_USE_CWD
+    /* "workdir" is always the current directory */
+    handle_use_cwd(1, cpaths);  
+#endif    
 }
 
 #ifndef WIN32

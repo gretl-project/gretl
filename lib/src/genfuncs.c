@@ -2502,150 +2502,223 @@ static int n_new_dummies (const DATASET *dset,
 }
 
 static void 
-make_dummy_name_and_label (int vi, const DATASET *dset, int center,
-			   char *vname, char *vlabel)
+seas_name_and_label (int k, const DATASET *dset, gretlopt opt,
+		     char *vname, char *vlabel)
 {
-    if (center > 0) {
-	sprintf(vname, "S%d", vi);
+    if (opt & OPT_C) {
+	sprintf(vname, "S%d", k);
 	strcpy(vlabel, "centered periodic dummy");
-    } else if (center < 0) {
-	sprintf(vname, "S%d", vi);
+    } else if (opt & OPT_S) {
+	sprintf(vname, "S%d", k);
 	strcpy(vlabel, "uncentered periodic dummy");
     } else if (dset->pd == 4 && dset->structure == TIME_SERIES) {
-	sprintf(vname, "dq%d", vi);
-	sprintf(vlabel, _("= 1 if quarter = %d, 0 otherwise"), vi);
+	sprintf(vname, "dq%d", k);
+	sprintf(vlabel, _("= 1 if quarter = %d, 0 otherwise"), k);
     } else if (dset->pd == 12 && dset->structure == TIME_SERIES) {
-	sprintf(vname, "dm%d", vi);
-	sprintf(vlabel, _("= 1 if month = %d, 0 otherwise"), vi);
+	sprintf(vname, "dm%d", k);
+	sprintf(vlabel, _("= 1 if month = %d, 0 otherwise"), k);
     } else {
 	char dumstr[8] = "dummy_";
 	char numstr[8];
 	int len;
 
-	sprintf(numstr, "%d", vi);
+	sprintf(numstr, "%d", k);
 	len = strlen(numstr);
 	dumstr[8 - len] = '\0';
-	sprintf(vname, "%s%d", dumstr, vi);
-	sprintf(vlabel, _("%s = 1 if period is %d, 0 otherwise"), vname, vi);
+	sprintf(vname, "%s%d", dumstr, k);
+	sprintf(vlabel, _("%s = 1 if period is %d, 0 otherwise"), vname, k);
     }
 }
 
-/**
- * dummy:
- * @dset: dataset struct.
- * @center: if greater than zero subtract the population mean from
- * each of the generated dummies; if less than zero, do not
- * subtract the mean but generate dummies with labels on the
- * same pattern as centered dummies (for internal use in VECMs).
- * Usually this argument is set to zero.
- *
- * Adds to the data set (if these variables are not already 
- * present) a set of periodic (usually seasonal) dummy variables.
- *
- * Returns: the ID number of the first dummy variable on success,
- * or 0 on error.
- */
-
-int dummy (DATASET *dset, int center)
+static int real_seasonals (DATASET *dset, int ref, int center,
+			   int snames, int **plist)
 {
     char vname[VNAMELEN];
     char vlabel[MAXLABEL];
-    int vi, t, pp;
+    gretlopt opt = 0;
+    int *list = NULL;
+    int i, vi, k, t, pp;
     int ndums, nnew = 0;
-    int di, di0;
-    double xx, dx;
+    int err = 0;
 
     if (dset == NULL || dset->n == 0) {
-	gretl_errmsg_set(_("No dataset is in place"));
-	return 0;
+	return E_NODATA;
     }
 
-    ndums = dset->pd;
-    di0 = dset->v;
-
-    if (ndums < 2 || ndums > 99999) {
-	gretl_errmsg_set(_("This command won't work with the current periodicity"));
-	return 0;
+    if (dset->pd < 2 || dset->pd > 99999) {
+	return E_PDWRONG;
     }
 
-    for (vi=0; vi<ndums; vi++) {
-	make_dummy_name_and_label(vi + 1, dset, center, vname, vlabel);
-	di = series_index(dset, vname);
-	if (di >= dset->v || strcmp(vlabel, series_get_label(dset, di))) {
-	    nnew++;
-	} else if (vi == 0) {
-	    di0 = di;
-	} else if (di != di0 + vi) {
-	    /* dummies not consecutive: problem */
-	    di0 = dset->v;
-	    nnew = ndums;
-	    break;
+    if (ref < 0 || ref > dset->pd) {
+	return E_INVARG;
+    }
+
+    ndums = dset->pd - (ref > 0);
+
+    list = gretl_list_new(ndums);
+    if (list == NULL) {
+	return E_ALLOC;
+    }
+
+    if (center) opt |= OPT_C;
+    if (snames) opt |= OPT_S;
+
+    /* check for appropriate series already in place */
+
+    for (k=1, i=1; i<=dset->pd; i++) {
+	if (i == ref) {
+	    /* dummy not wanted */
+	    continue;
 	}
+	seas_name_and_label(i, dset, opt, vname, vlabel);
+	vi = series_index(dset, vname);
+	if (vi < dset->v && !strcmp(vlabel, series_get_label(dset, vi))) {
+	    /* record dummy already present */
+	    list[k] = vi;
+	} else {
+	    nnew++;
+	}
+	k++;
     }
 
     if (nnew == 0) {
-	/* all dummies already present */
-	return di0;
-    } else if (dset->Z == NULL) {
-	return -1;
+	goto finish;
     }
 
-    if (dataset_add_series(dset, ndums)) {
-	gretl_errmsg_set(_("Out of memory!"));
-	return 0;
+    /* starting point for new dummy IDs */
+    vi = dset->v;
+
+    if (dataset_add_series(dset, nnew)) {
+	return E_ALLOC;
     }
 
-    for (vi=1, di = di0; vi<=ndums; vi++, di++) {
-	make_dummy_name_and_label(vi, dset, center, vname, vlabel);
-	strcpy(dset->varname[di], vname);
-	series_set_label(dset, di, vlabel);
+    for (k=1, i=1; i<=dset->pd; i++) {
+	if (i == ref) {
+	    continue;
+	}
+	if (list[k] == 0) {
+	    seas_name_and_label(i, dset, opt, vname, vlabel);
+	    strcpy(dset->varname[vi], vname);
+	    series_set_label(dset, vi, vlabel);
+	    list[k] = vi++;
+	}
+	k++;
     }
 
-    if (dataset_is_daily(dset)) {
+    if (dated_daily_data(dset)) {
+	char datestr[OBSLEN];
+	int wkday;
+
+	for (t=0; t<dset->n; t++) {
+	    ntodate(datestr, t, dset);
+	    wkday = weekday_from_date(datestr);
+	    wkday = (wkday == 0)? 7 : wkday;
+	    for (k=1, i=1; i<=list[0]; i++) {
+		vi = list[i];
+		if (k+1 == ref) k++;
+		dset->Z[vi][t] = (wkday == k)? 1 : 0;
+		k++;
+	    }
+	}	
+    } else if (dataset_is_daily(dset)) {
 	int yy, mm = 10;
+	double xx;
 
 	pp = dset->pd;
 	while ((pp = pp / 10)) {
 	    mm *= 10;
 	}
 
-	for (vi=1, di = di0; vi<=ndums; vi++, di++) {
+	for (k=1, i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (k == ref) k++;
 	    for (t=0; t<dset->n; t++) {
 		xx = date_as_double(t, dset->pd, dset->sd0) + .1;
 		yy = (int) xx;
 		pp = (int) (mm * (xx - yy) + 0.5);
-		dx = (pp == vi)? 1.0 : 0.0;
-		dset->Z[di][t] = dx;
+		dset->Z[vi][t] = (pp == k)? 1 : 0;
 	    }
+	    k++;
 	}
     } else {
 	int p0 = get_subperiod(0, dset, NULL);
 
 	for (t=0; t<dset->n; t++) {
 	    pp = (t + p0) % dset->pd;
-	    for (vi=0, di = di0; vi<ndums; vi++, di++) {
-		dx = (pp == vi)? 1 : 0;
-		dset->Z[di][t] = dx;
+	    for (k=0, i=1; i<=list[0]; i++) {
+		vi = list[i];
+		if (k+1 == ref) k++;
+		dset->Z[vi][t] = (pp == k)? 1 : 0;
+		k++;
 	    }
 	}
     }
 
-    if (center > 0) {
+    if (center) {
 	double cx = 1.0 / dset->pd;
-	int vimax = di0 + dset->pd - 1;
 
-	for (vi=di0; vi<=vimax; vi++) {
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
 	    for (t=0; t<dset->n; t++) {
 		dset->Z[vi][t] -= cx;
 	    }
 	}	
     }
 
-    return di0;
+ finish:
+
+    if (plist != NULL) {
+	*plist = list;
+    } else {
+	free(list);
+    }
+
+    return err;
 }
 
 /**
- * panel_dummies:
+ * gen_seasonal_dummies:
+ * @dset: dataset struct.
+ * @center: if non-zero subtract the population mean from
+ * each of the generated dummies.
+ *
+ * Adds to the data set (if these variables are not already 
+ * present) a set of seasonal dummy variables.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gen_seasonal_dummies (DATASET *dset, int center)
+{
+    return real_seasonals(dset, 0, center, 0, NULL);
+}
+
+/**
+ * seasonals_list:
+ * @dset: dataset struct.
+ * @ref: 1-based reference period, or 0 for none.
+ * @center: if non-zero, subtract the population mean from
+ * each of the generated dummies.
+ * @err: location to receive error code.
+ *
+ * Adds to the data set (if these variables are not already 
+ * present) a set of seasonal dummy variables.
+ *
+ * Returns: list holding the ID numbers of the seasonal
+ * dummies, or NULL on error.
+ */
+
+int *seasonals_list (DATASET *dset, int ref, int center, int *err)
+{
+    int *list = NULL;
+
+    *err = real_seasonals(dset, ref, center, 1, &list);
+
+    return list;
+}
+
+/**
+ * gen_panel_dummies:
  * @dset: dataset struct.
  * @opt: %OPT_T for time dummies, otherwise unit dummies.
  * @prn: printer for warning, or NULL.
@@ -2657,7 +2730,7 @@ int dummy (DATASET *dset, int center)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
+int gen_panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 {
     char vname[16], label[MAXLABEL];
     int vi, t, yy, pp, mm;

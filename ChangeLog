@@ -4,13 +4,26 @@ version 1.10.90, in progress
 - "chow" command: represent the --limit-to option in the GUI
 - "corrgm" command: add --bartlett option to use Bartlett
   standard errors for the ACF
+- "hsk" command: add --no-squares option to emulate the
+  variant of this procedure favored by Wooldridge
+- "vif" command: upgrade to show Belsley-Kuh-Welsch variance
+  decomposition for diagnosing collinearity
 - cdf(), pdf() and invcdf() functions: add support for non-
   central variants of the chi-square, F and Student's t 
   distributions
+- Add new function square(): returns list of squares of its
+  list argument, with the option of also generating cross-
+  products
+- Add new function seasonals() for "smart" generation of
+  seasonal dummies, with the option of centering the dummies
 - TRAMO interface: allow saving of "linearized" series
 - Add new accessor $lang to get national language identifier
 - Add Romanian translation
 - Random effects probit: parallelize quadrature code
+- GUI: numerous improvements and fixes for editing and
+  configuring function packages
+- Fix bug: possible hang of "foreign" on Windows when using
+  Rterm non-interactively
 - Fix bug: bwrite() not completing until gretl exits
 - Fix bug: matrix transpose (') not accepted before the colon
   of the ternary query operator

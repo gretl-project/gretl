@@ -18,104 +18,8 @@
  */
 
 #include "libgretl.h"
+#include "matrix_extra.h"
 #include "version.h"
-
-#include "gretl_f2c.h"
-#include "clapack_double.h"
-
-static double packed_matrix_norm (const double *x, int k)
-{
-    double csum, cmax = 0.0;
-    int i, j;
-
-    for (j=0; j<k; j++) {
-	csum = 0.0;
-	for (i=0; i<k; i++) {
-	    csum += fabs(x[ijton(i, j, k)]);
-	}
-	if (csum > cmax) {
-	    cmax = csum;
-	}
-    }
-
-    return cmax;
-}
-
-/* Get 1-norm, determinant and reciprocal condition number using
-   Cholesky */
-
-static int 
-decomp_etc (double *xpx, int k, double *xnorm, double *det, double *rcond)
-{
-    char uplo = 'L';
-    integer n = k;
-    integer info = 0;
-    integer *iwork = NULL;
-    double *work = NULL;
-    int i, err = 0;
-
-    work = malloc((3 * n) * sizeof *work);
-    iwork = malloc(n * sizeof *iwork);
-
-    if (work == NULL || iwork == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    *xnorm = packed_matrix_norm(xpx, k);
-
-    dpptrf_(&uplo, &n, xpx, &info);
-
-    if (info != 0) {
-	err = 1;
-    } else {
-	double d = 1.0;
-
-	for (i=0; i<k; i++) {
-	    d *= xpx[ijton(i,i,k)];
-	}
-
-	*det = d * d;
-	dppcon_(&uplo, &n, xpx, xnorm, rcond, work, iwork, &info);
-	if (info != 0) {
-	    err = 1;
-	}
-    } 
-
- bailout:
-
-    free(work);
-    free(iwork);
-
-    return err;
-}
-
-static int XTX_properties (const MODEL *pmod, DATASET *dset,
-			   PRN *prn)
-{
-    double *xpx = NULL;
-    int k = pmod->ncoeff;
-    double xnorm, rcond, det = 1;
-    int err = 0;
-
-    xpx = gretl_XTX(pmod, dset, &err);
-
-    if (!err) {
-	err = decomp_etc(xpx, k, &xnorm, &det, &rcond);
-    }
-
-    if (!err) {
-	pprintf(prn, "\n%s:\n\n", _("Properties of matrix X'X"));
-	pprintf(prn, " %s = %.8g\n", _("1-norm"), xnorm);
-	pprintf(prn, " %s = %.8g\n", _("Determinant"), det);
-	pprintf(prn, " %s = %.8g\n", _("Reciprocal condition number"), rcond);
-	pputc(prn, '\n');
-    }
-
-    free(xpx);
-
-    return err;
-}
 
 /* run the vif regression for regressor k */
 
@@ -204,10 +108,150 @@ static double *model_vif_vector (MODEL *pmod, const int *xlist,
     return vif;
 }
 
-#define xtx_ok(c) (c == OLS || c == AR1 || c == WLS) 
+gretl_matrix *bkw_matrix (const gretl_matrix *VCV, int *err)
+{
+    gretl_matrix *Vi = NULL;
+    gretl_matrix *S = NULL;
+    gretl_matrix *Q = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *lambda = NULL;
+    gretl_matrix *BKW = NULL;
+    double x, y;
+    int k = VCV->rows;
+    int i, j;
+
+    /* invert the covariance matrix */
+    Vi = gretl_matrix_copy(VCV);
+    if (Vi == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+    
+    *err = gretl_invert_symmetric_matrix(Vi);
+    if (*err) {
+	goto bailout;
+    }
+
+    /* allocate workspace */
+    S = gretl_identity_matrix_new(k);
+    Q = gretl_matrix_alloc(k, k);
+    BKW = gretl_matrix_alloc(k, k+2);
+    
+    if (S == NULL || Q == NULL || BKW == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (i=0; i<k; i++) {
+	x = gretl_matrix_get(Vi, i, i);
+	gretl_matrix_set(S, i, i, 1/sqrt(x));
+    }
+
+    *err = gretl_matrix_qform(S, GRETL_MOD_TRANSPOSE,
+			      Vi, Q, GRETL_MOD_NONE);
+
+    if (!*err) {
+	*err = gretl_matrix_SVD(Q, NULL, &lambda, &V);
+    }
+    
+    if (*err) {
+	goto bailout;
+    }
+
+    /* S = (1/lambda) ** ones(k, 1) */
+    for (j=0; j<k; j++) {
+	x = lambda->val[j];
+	for (i=0; i<k; i++) {
+	    gretl_matrix_set(S, i, j, 1/x);
+	}
+    }
+
+    for (i=0; i<k; i++) {
+	for (j=0; j<k; j++) {
+	    x = gretl_matrix_get(V, j, i);
+	    y = gretl_matrix_get(S, i, j);
+	    gretl_matrix_set(Q, i, j, x * x * y);
+	}
+    }    
+
+    for (i=0; i<k; i++) {
+	/* compute row sums */
+	y = 0.0;
+	for (j=0; j<k; j++) {
+	    y += gretl_matrix_get(Q, i, j);
+	}
+	for (j=0; j<k; j++) {
+	    x = gretl_matrix_get(Q, i, j);
+	    gretl_matrix_set(V, j, i, x/y);
+	}	
+    }
+
+    y = lambda->val[0];
+
+    /* assemble the matrix to return */
+    for (i=0; i<k; i++) {
+	x = lambda->val[i];
+	gretl_matrix_set(BKW, i, 0, x);
+	gretl_matrix_set(BKW, i, 1, sqrt(y / x));
+	for (j=0; j<k; j++) {
+	    x = gretl_matrix_get(V, i, j);
+	    gretl_matrix_set(BKW, i, j+2, x);
+	}
+    }
+
+ bailout:
+
+    gretl_matrix_free(Vi);
+    gretl_matrix_free(S);
+    gretl_matrix_free(Q);
+    gretl_matrix_free(V);
+    gretl_matrix_free(lambda);
+
+    if (*err) {
+	gretl_matrix_free(BKW);
+	BKW = NULL;
+    }
+
+    return BKW;
+}
+
+static void BKW_print (gretl_matrix *B, PRN *prn)
+{
+    const char *strs[] = {
+	N_("Belsley-Kuh-Welsch collinearity diagnostics"),
+	N_("variance proportions"),
+	N_("eigenvalues of X'X, largest to smallest"),
+	N_("condition index"),
+	N_("note: variance proportions columns sum to 1.0")
+    };
+
+    pprintf(prn, "\n%s:\n\n", _(strs[0]));
+    bufspace(25, prn);
+    pprintf(prn, "--- %s ---\n", _(strs[1]));
+    gretl_matrix_print_with_format(B, "%10.3f", 0, 0, prn);
+    pprintf(prn, "\n  lambda = %s\n", _(strs[2]));
+    pprintf(prn, "  cond   = %s\n", _(strs[3]));
+    pprintf(prn, "  %s\n\n", _(strs[4]));
+}
+
+static void maybe_truncate_param_name (char *s)
+{
+    int n = strlen(s);
+
+    if (n > 9) {
+	char tmp[VNAMELEN];
+
+	tmp[0] = '\0';
+	strncat(tmp, s, 8);
+	strcat(tmp, "~");
+	strcpy(s, tmp);
+    }
+}
 
 int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
 {
+    gretl_matrix *V = NULL;
+    gretl_matrix *B = NULL;
     double *vif = NULL;
     int *xlist;
     double vj;
@@ -234,8 +278,7 @@ int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
 	return err;
     }
 
-    pprintf(prn, "%s\n\n", _("Variance Inflation Factors"));
-
+    pprintf(prn, "\n%s\n", _("Variance Inflation Factors"));
     pprintf(prn, "%s\n", _("Minimum possible value = 1.0"));
     pprintf(prn, "%s\n", _("Values > 10.0 may indicate a collinearity problem"));
     pputc(prn, '\n');
@@ -267,9 +310,34 @@ int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
 		 "variable j and the other independent variables"));
     pputc(prn, '\n');
 
-    if (xtx_ok(pmod->ci)) {
-	XTX_properties(pmod, dset, prn);
+    /* now for some more sophisticated diagnostics */
+
+    V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
+
+    if (!err) {
+	B = bkw_matrix(V, &err);
     }
+
+    if (!err) {
+	int k = pmod->ncoeff + 2;
+	char **S = strings_array_new_with_length(k, VNAMELEN);
+
+	if (S != NULL) {
+	    int i;
+
+	    strcpy(S[0], "lambda");
+	    strcpy(S[1], "cond");
+	    for (i=0; i<pmod->ncoeff; i++) {
+		gretl_model_get_param_name(pmod, dset, i, S[i+2]);
+		maybe_truncate_param_name(S[i+2]);
+	    }
+	    gretl_matrix_set_colnames(B, S);
+	    BKW_print(B, prn);
+	}
+    }
+
+    gretl_matrix_free(B);
+    gretl_matrix_free(V);
 
     free(vif);
     free(xlist);

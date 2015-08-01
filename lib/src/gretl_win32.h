@@ -32,6 +32,7 @@ enum {
 enum {
     RGUI,
     RTERM,
+    REXE,
     RLIB,
     RBASE
 };
@@ -64,6 +65,8 @@ char *appdata_path (void);
 char *mydocs_path (void);
 
 char *program_files_path (void);
+
+char *program_files_x86_path (void);
 
 int win32_write_access (char *path);
 

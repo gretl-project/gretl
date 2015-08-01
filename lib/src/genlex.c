@@ -338,7 +338,7 @@ struct str_table funcs[] = {
     { F_WMEAN,    "wmean" },
     { F_WVAR,     "wvar" },
     { F_WSD,      "wsd" },
-    { F_XPX,      "xpx" },
+    { F_SQUARE,   "square" },
     { F_FILTER,   "filter" },
     { F_KFILTER,  "kfilter" },
     { F_KSMOOTH,  "ksmooth" },
@@ -440,6 +440,7 @@ struct str_table funcs[] = {
     { F_DOTWRITE,  "dotwrite" },
     { F_BOOTCI,    "bootci" },
     { F_BOOTPVAL,  "bootpval" },
+    { F_SEASONALS, "seasonals" },
     { 0,           NULL }
 };
 
@@ -447,6 +448,7 @@ struct str_table func_alias[] = {
     { F_GAMMA,     "gammafunc" },
     { F_GAMMA,     "gamma" },
     { F_LOG,       "logs" },
+    { F_SQUARE,    "xpx" },
     { F_BACKTICK,  "$" },
     { 0,           NULL }
 };
@@ -507,12 +509,7 @@ static GHashTable *gretl_function_hash_init (void)
     return ht;
 }
 
-enum {
-    NO_ALIAS,
-    ALLOW_ALIAS
-};
-
-static int real_function_lookup (const char *s, int a)
+static int real_function_lookup (const char *s, int *aliased)
 {
     static GHashTable *fht;
     gpointer p;
@@ -535,11 +532,12 @@ static int real_function_lookup (const char *s, int a)
 	return GPOINTER_TO_INT(p);
     }
 
-    if (a == ALLOW_ALIAS) {
+    if (aliased != NULL) {
 	int i;
 
 	for (i=0; func_alias[i].id != 0; i++) {
 	    if (!strcmp(s, func_alias[i].str)) {
+		*aliased = 1;
 		return func_alias[i].id;
 	    }
 	} 
@@ -550,17 +548,25 @@ static int real_function_lookup (const char *s, int a)
 
 void gretl_function_hash_cleanup (void)
 {
-    real_function_lookup(NULL, 0);
+    real_function_lookup(NULL, NULL);
 }
 
 int function_lookup (const char *s)
 {
-    return real_function_lookup(s, NO_ALIAS);
+    return real_function_lookup(s, NULL);
 }
 
-static int function_lookup_with_alias (const char *s)
+static int function_lookup_with_alias (const char *s,
+				       parser *p)
 {
-    return real_function_lookup(s, ALLOW_ALIAS);
+    int f, aliased = 0;
+    
+    f = real_function_lookup(s, &aliased);
+    if (aliased) {
+	p->flags |= P_ALIASED;
+    }
+
+    return f;
 }
 
 static const char *funname (int t)
@@ -725,7 +731,7 @@ int genr_function_word (const char *s)
 {
     int ret = 0;
 
-    ret = real_function_lookup(s, NO_ALIAS);
+    ret = real_function_lookup(s, NULL);
     if (!ret) {
 	ret = dvar_lookup(s);
     }
@@ -1030,7 +1036,7 @@ static void look_up_word (const char *s, parser *p)
 {
     int fsym, err = 0;
 
-    fsym = p->sym = function_lookup_with_alias(s);
+    fsym = p->sym = function_lookup_with_alias(s, p);
 
     if (p->sym == 0 || p->ch != '(') {
 	p->idnum = const_lookup(s);

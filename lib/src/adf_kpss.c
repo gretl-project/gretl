@@ -77,14 +77,14 @@ struct adf_info_ {
     int niv;         /* number of (co-)integrated vars (Engle-Granger) */
     AdfFlags flags;  /* bitflags: see above */
     DetCode det;     /* code for deterministics */
-    int dum0;        /* series ID of first seasonal dummy */
-    int nseas;       /* number of seasonal terms */
+    int nseas;       /* number of seasonal dummies */
     int T;           /* number of obs used in test */
     int df;          /* degrees of freedom, test regression */
     double b0;       /* coefficient on lagged level */
     double tau;      /* test statistic */
     double pval;     /* p-value of test stat */
     int *list;       /* regression list */
+    int *slist;      /* list of seasonal dummies, if applicable */
     const char *vname; /* name of series tested */
     gretl_matrix *g; /* GLS coefficients (if applicable) */
 };
@@ -285,11 +285,13 @@ static int real_adf_form_list (adf_info *ainfo,
     }
 
     if (!err && ainfo->nseas > 0) {
-	ainfo->dum0 = dummy(dset, 0); /* should we center these? */
-	if (ainfo->dum0 < 0) {
-	    fprintf(stderr, "Error generating seasonal dummies\n");
-	    err = E_DATA;
-	} 
+	/* should we center these? */
+	ainfo->slist = seasonals_list(dset, dset->pd, 0, &err);
+	if (err) {
+	    ainfo->nseas = 0;
+	} else {
+	    ainfo->nseas = ainfo->slist[0];
+	}
     }
 
     /* restore incoming sample */
@@ -1095,7 +1097,7 @@ static int set_deterministic_terms (adf_info *ainfo,
 	ainfo->list[ainfo->list[0]] = 0;
 	/* preceded by seasonal dummies if wanted */
 	for (j=0; j<ainfo->nseas; j++) {
-	    ainfo->list[i++] = ainfo->dum0 + j;
+	    ainfo->list[i++] = ainfo->slist[j+1];
 	}	    
     } 
 
@@ -1211,9 +1213,8 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     /* safety-first initializations */
     ainfo->nseas = ainfo->kmax = ainfo->altv = 0;
     ainfo->vname = dset->varname[ainfo->v];
-    ainfo->list = NULL;
+    ainfo->list = ainfo->slist = NULL;
     ainfo->det = 0;
-    ainfo->dum0 = 0;
 
 #if ADF_DEBUG
     fprintf(stderr, "real_adf_test: got order = %d\n", ainfo->order);
@@ -1428,6 +1429,9 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
     free(ainfo->list);
     ainfo->list = NULL;
+
+    free(ainfo->slist);
+    ainfo->slist = NULL;
 
     gretl_matrix_free(ainfo->g);
     ainfo->g = NULL;
@@ -1976,6 +1980,7 @@ real_kpss_test (int order, int varno, DATASET *dset,
     double *autocov;
     int t1, t2, T;
     int i, t, ndum, nreg;
+    int err = 0;
 
     /* sanity check */
     if (varno <= 0 || varno >= dset->v) {
@@ -2022,14 +2027,17 @@ real_kpss_test (int order, int varno, DATASET *dset,
     }
 
     if (hasseas) {
-	int firstdum = dummy(dset, 0);
+	int *slist = NULL;
 
-	if (firstdum == 0) {
+	slist = seasonals_list(dset, dset->pd, 0, &err);
+	if (err) {
 	    free(list);
-	    return E_ALLOC;
-	}
-	for (i=0; i<ndum; i++) {
-	    list[3 + hastrend + i] = firstdum + i;
+	    return err;
+	} else {
+	    for (i=0; i<ndum; i++) {
+		list[3 + hastrend + i] = slist[i+1];
+	    }
+	    free(slist);
 	}
     }
 
@@ -2161,7 +2169,7 @@ real_kpss_test (int order, int varno, DATASET *dset,
     free(list);
     free(autocov);
 
-    return 0;
+    return err;
 }
 
 static int panel_kpss_test (int order, int v, DATASET *dset, 

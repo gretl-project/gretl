@@ -275,14 +275,15 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     gchar *cmd;
     int err = 0;
 
-    cmd = g_strdup_printf("\"%s\" --no-save --no-init-file --no-restore-data "
-			  "--slave", gretl_rbin_path());
-
-#if FDEBUG
-    fprintf(stderr, "Running R binary, '%s'\n", gretl_rbin_path());
-#endif
+    cmd = g_strdup_printf("\"%s\" CMD BATCH --no-save --no-init-file "
+			  "--no-restore-data --slave \"%s\"",
+			  gretl_rbin_path(), gretl_Rprofile);
 
     err = win_run_sync(cmd, NULL);
+
+#if FDEBUG
+    fprintf(stderr, "Running R binary: err = %d\n", err);
+#endif
 
     if (!(opt & OPT_Q)) {
 	const gchar *outname;
@@ -290,7 +291,7 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
 	outname = (err)? gretl_Rmsg : gretl_Rout;
 	fp = gretl_fopen(outname, "r");
-	
+
 	if (fp != NULL) {
 	    char line[1024];
 
@@ -1415,16 +1416,19 @@ static void put_R_startup_content (FILE *fp)
 static int write_gretl_R_profile (gretlopt opt)
 {
     FILE *fp;
-    int err;
+    int err = 0;
 
 #if FDEBUG
     printf("writing R profile: starting\n");
 #endif
 
+#ifndef G_OS_WIN32
+    /* On Windows we'll not use this mechanism */
     err = gretl_setenv("R_PROFILE", gretl_Rprofile);
     if (err) {
 	return err;
-    }     
+    }
+#endif    
 
     fp = gretl_fopen(gretl_Rprofile, "w");
 
@@ -1479,8 +1483,8 @@ static int write_R_source_file (const char *buf,
 	int sunk = 0;
 
 #ifdef G_OS_WIN32
-	if (!(opt & (OPT_I | OPT_L))) {
-	    /* non-interactive, but not using Rlib */
+	if (!(opt & OPT_I) && !(opt & OPT_L)) {
+	    /* non-interactive, not using Rlib */
 	    fprintf(fp, "sink(\"%s\", type=\"output\")\n", gretl_Rout);
 	    fprintf(fp, "errout <- file(\"%s\", open=\"wt\")\n", gretl_Rmsg);
 	    fputs("sink(errout, type=\"message\")\n", fp);
@@ -1532,13 +1536,6 @@ static int write_R_source_file (const char *buf,
 	if (sunk) {
 	    fputs("sink()\n", fp);
 	}
-
-#ifdef G_OS_WIN32
-	if (!(opt & (OPT_I | OPT_L))) {
-	    /* Rterm on Windows won't exit without this? */
-	    fputs("q()\n", fp);
-	}
-#endif
 
 	fclose(fp);
     }

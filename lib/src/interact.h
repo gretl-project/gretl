@@ -84,6 +84,8 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset,
 int parse_gui_command (const char *line, CMD *cmd, 
 		       DATASET *dset);
 
+const char *get_parser_errline (void);
+
 int get_command_index (char *line, CMD *cmd);
 
 int command_number (const char *cmd);

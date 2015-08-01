@@ -251,7 +251,6 @@ enum {
     F_UPPER,
     F_LOWER,
     F_POLROOTS,
-    F_XPX,
     F_ARGNAME,
     F_OBSLABEL,
     F_BACKTICK,
@@ -360,6 +359,8 @@ enum {
     F_KPSSCRIT,
     F_STRINGIFY,
     F_PUTARRAY,
+    F_SQUARE,
+    F_SEASONALS,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,
@@ -558,7 +559,8 @@ enum {
     TMP_NODE = 1 << 1, /* temporary: free content on exit */
     PTR_NODE = 1 << 2, /* node is compatible with P_LHPTR */
     SVL_NODE = 1 << 3, /* holds string-valued series */
-    CPY_NODE = 1 << 4  /* node derives from lhs_copy_node() */
+    CPY_NODE = 1 << 4, /* node derives from lhs_copy_node() */
+    ALS_NODE = 1 << 5  /* node holds aliased function */
 };
 
 struct node {
@@ -569,7 +571,7 @@ struct node {
     union val v;   /* value (of whatever type) */
 };
 
-enum {
+enum parser_flags {
     P_DISCARD = 1 <<  0, /* compute and print, don't save */
     P_START   = 1 <<  1, /* first round of evaluation */
     P_AUTOREG = 1 <<  2, /* expression is autoregressive */
@@ -590,7 +592,8 @@ enum {
     P_SAVEAUX = 1 << 17, /* indicates try aux node compilation */
     P_AUXDONE = 1 << 18, /* indicates aux nodes compiled */
     P_DELTAN  = 1 << 19, /* flag for change in series length */
-    P_LHBKVAR = 1 << 20  /* LHS bundle key is string variable */
+    P_LHBKVAR = 1 << 20, /* LHS bundle key is string variable */
+    P_ALIASED = 1 << 21  /* the given function name is an alias */
 };
 
 struct lhinfo {
@@ -615,7 +618,7 @@ struct parser_ {
     const char *rhs;   /* for use in labelling */
     DATASET *dset;     /* convenience pointer to dataset */
     PRN *prn;          /* for printing messages */
-    int flags;         /* various attributes (see above) */
+    int flags;         /* various attributes (see @parser_flags above) */
     int targ;          /* target type */
     int op;            /* assignment operator (possibly inflected) */
     struct lhinfo lh;  /* left-hand side info */

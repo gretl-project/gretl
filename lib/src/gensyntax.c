@@ -928,8 +928,6 @@ static void get_slice_parts (NODE *t, parser *p)
     set_slice_off(p);
 }
 
-
-
 static void attach_child (NODE *parent, NODE *child, int k, int i,
 			  parser *p)
 {
@@ -1327,6 +1325,12 @@ static NODE *powterm (parser *p)
 		get_slice_parts(t->v.b2.r, p);
 	    }
 	}	
+    }
+
+    if (p->flags & P_ALIASED) {
+	/* transfer info from parser to node */
+	t->flags |= ALS_NODE;
+	p->flags ^= P_ALIASED;
     }
 
 #if SDEBUG

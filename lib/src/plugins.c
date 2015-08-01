@@ -173,8 +173,9 @@ struct plugin_function_info plugin_functions[] = {
     { "model_leverage",       P_LEVERAGE },
     { "leverage_data_dialog", P_LEVERAGE },
 
-    /* variance inflation factors (collinearity) */
+    /* collinearity diagnostics */
     { "print_vifs", P_VIF },
+    { "bkw_matrix", P_VIF },
 
     /* GMP (multiple precision) */
     { "mplsq",                    P_MP_OLS },

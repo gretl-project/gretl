@@ -542,24 +542,17 @@ static int gen_special (const char *s, const char *line,
     if (!strcmp(s, "markers")) {
 	return generate_obs_markers(line, dset);
     } else if (!strcmp(s, "dummy")) {
-	int di0 = dummy(dset, 0);
-
-	if (di0 == 0) {
-	    err = 1;
-	} else { 
-	    if (di0 == orig_v) {
-		msg = N_("Periodic dummy variables generated.\n");
-	    } else {
-		msg = N_("Periodic dummy variables already present.\n");
-	    }
+	err = gen_seasonal_dummies(dset, 0);
+	if (!err) {
+	    msg = N_("Periodic dummy variables generated.\n");
 	}
     } else if (!strcmp(s, "timedum")) {
-	err = panel_dummies(dset, OPT_T, prn);
+	err = gen_panel_dummies(dset, OPT_T, prn);
 	if (!err) {
 	    msg = N_("Panel dummy variables generated.\n");
 	}
     } else if (!strcmp(s, "unitdum")) {
-	err = panel_dummies(dset, OPT_NONE, prn);
+	err = gen_panel_dummies(dset, OPT_NONE, prn);
 	if (!err) {
 	    msg = N_("Panel dummy variables generated.\n");
 	}

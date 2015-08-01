@@ -25,13 +25,8 @@
 # include "winconfig.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <glib.h>
-
+#include "libgretl.h"
 #include "gretl_zip.h"
-#include "strutils.h"
 
 static int handle_zip_error (const char *fname,
 			     GError *gerr, int err,
@@ -482,3 +477,258 @@ int gretl_zip_datafile (const char *fname, const char *path,
     return gretl_plugin_zip_datafile(fname, path, level);
 #endif 
 }
+
+/* below: apparatus for making a zipfile for a function
+   package
+*/
+
+static void zip_report (int err, int nf, gretlopt opt, PRN *prn)
+{
+    if (opt & OPT_G) {
+	/* GUI use */
+	if (err && nf) {
+	    pprintf(prn, "<@fail> (%s)\n", _("not found"));	
+	} else if (err) {
+	    pputs(prn, "<@fail>\n");
+	} else {
+	    pputs(prn, "<@ok>\n");
+	}
+    } else {
+	if (err && nf) {
+	    pprintf(prn, "failed (%s)\n", _("not found"));	
+	} else if (err) {
+	    pputs(prn, "failed\n");
+	} else {
+	    pputs(prn, "OK\n");
+	}
+    }
+}
+
+static int pkg_zipfile_add (const char *fname,
+			    const char *dotpath,
+			    gretlopt opt,
+			    PRN *prn)
+{
+    gchar *dest = NULL;
+    struct stat sbuf;
+    int nf = 0;
+    int err = 0;
+
+    pprintf(prn, "Copying %s... ", fname);
+
+    if (stat(fname, &sbuf) != 0) {
+	nf = err = E_DATA;
+    } else if (sbuf.st_mode & S_IFDIR) {
+	/* aha, we've got a subdir */
+	gchar *ziptmp;
+
+	ziptmp = g_strdup_printf("%s%cpkgtmp.zip", dotpath, SLASH);
+	err = gretl_make_zipfile(ziptmp, fname);
+	if (!err) {
+	    err = gretl_unzip_into(ziptmp, dotpath);
+	    gretl_remove(ziptmp);
+	}
+	g_free(ziptmp);
+    } else {
+	/* a regular file, we hope */
+	dest = g_strdup_printf("%s%c%s", dotpath, SLASH, fname);
+	err = gretl_copy_file(fname, dest);
+    }
+    
+    zip_report(err, nf, opt, prn);
+    g_free(dest);
+
+    return err;
+}
+
+/**
+ * package_make_zipfile:
+ * @gfnname: name of the gfn file to be zip-packaged.
+ * @pdfdoc: package has PDF documentation? (0/1).
+ * @datafiles: names of any data files to include (or NULL).
+ * @n_datafiles: the number of strings in @datafiles.
+ * @pzipname: location to receive "dotdir" zipname, or NULL.
+ * @dest: specific path for output zipfile, or NULL.
+ * @opt: use OPT_G for GUI use (only);
+ * @prn: gretl printer for progress.
+ *
+ * Collects the specified gfn file plus any additional files
+ * it references (PDF doc and/or data files) and makes a
+ * zip archive, using the user's "dotdir" as workspace.
+ * If @pzipname is non-NULL this is taken as signal to
+ * leave the zipfile where it has been created, and to
+ * "return" its full path via this pointer. Otherwise, if
+ * @dest is non-NULL it is taken to stipulate a path to
+ * which the zipfile should be moved/renamed.
+ *
+ * Errors are flagged if both @pzipname and @dest are NULL,
+ * if @gfnname does not have the ".gfn" extension, or if
+ * the basename of the gfn file (minus extension) is over
+ * 32 bytes long.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int package_make_zipfile (const char *gfnname,
+			  int pdfdoc,
+			  char **datafiles,
+			  int n_datafiles,
+			  gchar **pzipname,
+			  const char *dest,
+			  gretlopt opt,
+			  PRN *prn)
+{
+    char origdir[FILENAME_MAX];
+    char pkgbase[FILENAME_MAX];
+    char pkgname[VNAMELEN];
+    gchar *tmp, *dotpath = NULL;
+    int len, dir_made = 0;
+    int err = 0;
+
+    if (pzipname == NULL && dest == NULL) {
+	/* we need one or the other of these */
+	return E_DATA;
+    }
+
+    if (!has_suffix(gfnname, ".gfn")) {
+	gretl_errmsg_set("Input must have extension \".gfn\"");
+	return E_DATA;
+    }    
+
+    /* determine the common path to files for packaging,
+       and also the name of the package
+    */
+    strcpy(pkgbase, gfnname);
+    tmp = strrchr(pkgbase, SLASH);
+    if (tmp != NULL) {
+	/* got some path component */
+	*tmp = '\0';
+	tmp++;
+    } else {
+	/* using current working directory */
+	*pkgbase = '\0';
+	tmp = (gchar *) gfnname;
+    }
+
+    len = strlen(tmp) - 4; /* minus 4 for ".gfn" */
+    if (len < 0 || len > 31) {
+	gretl_errmsg_set("Invalid package name (31 bytes max)");
+	return E_DATA;
+    }
+
+    *pkgname = '\0';
+    strncat(pkgname, tmp, len);
+
+    /* record where we are now */
+    *origdir = '\0';
+    if (getcwd(origdir, FILENAME_MAX - 1) == NULL) {
+	*origdir = '\0';
+    }
+
+    fprintf(stderr, "origdir: '%s'\n", origdir);    
+    fprintf(stderr, "pkgbase: '%s'\n", pkgbase);
+    fprintf(stderr, "pkgname: '%s'\n", pkgname);
+
+    if (*pkgbase != '\0') {
+	/* get into place for copying */
+	pputs(prn, "Getting in place... ");
+	err = gretl_chdir(pkgbase);
+	zip_report(err, 0, opt, prn);
+    }
+
+    if (!err) {
+	/* path to temporary dir for zipping */
+	dotpath = g_strdup_printf("%s%s", gretl_dotdir(), pkgname);
+	pputs(prn, "Making temporary directory... ");
+	err = gretl_mkdir(dotpath);
+	zip_report(err, 0, opt, prn);
+    }
+    
+    if (!err) {
+	dir_made = 1;
+    }
+
+    if (!err) {
+	/* copy the gfn file into place */
+	tmp = g_strdup_printf("%s.gfn", pkgname);
+	err = pkg_zipfile_add(tmp, dotpath, opt, prn);
+	g_free(tmp);
+    }
+
+    if (!err && pdfdoc) {
+	/* copy PDF file into place */
+	tmp = g_strdup_printf("%s.pdf", pkgname);
+	err = pkg_zipfile_add(tmp, dotpath, opt, prn);
+	g_free(tmp);
+    }
+
+    if (!err && datafiles != NULL) {
+	/* copy data files into place, if any */
+	int i;
+
+	for (i=0; i<n_datafiles && !err; i++) {
+	    err = pkg_zipfile_add(datafiles[i],
+				  dotpath, opt, prn);
+	}
+    }	
+
+    if (!err) {
+	/* get into place for making zipfile */
+	err = gretl_chdir(gretl_dotdir());
+	if (!err) {
+	    tmp = g_strdup_printf("%s.zip", pkgname);
+	    pprintf(prn, "Making %s... ", tmp);
+	    err = gretl_make_zipfile(tmp, pkgname);
+	    zip_report(err, 0, opt, prn);
+	    if (!err) {
+		if (pzipname != NULL) {
+		    /* Signals that we should leave the zipfile in
+		       the user's dotdir and return its name via
+		       this pointer.
+		    */
+		    *pzipname = g_strdup_printf("%s%s.zip", gretl_dotdir(),
+						pkgname);
+		} else {
+		    /* If we get here dest must be non-NULL,
+		       but it may be a relative path, in which
+		       case it must be absolutized for the
+		       zipfile copying operation.
+		    */
+		    const char *realdest = dest;
+		    char *zipname = NULL;
+
+		    pprintf(prn, "Copying %s... ", tmp);
+		    
+		    if (*origdir && !g_path_is_absolute(dest)) {
+			zipname = build_path_new(origdir, dest, NULL);
+		    }
+		    if (zipname != NULL) {
+			realdest = zipname;
+		    }
+		    err = gretl_copy_file(tmp, realdest);
+		    zip_report(err, 0, opt, prn);
+		    if (strcmp(tmp, realdest)) {
+			gretl_remove(tmp);
+		    }
+		    free(zipname);
+		}
+	    }
+	    g_free(tmp);
+	}
+    }
+
+    if (*origdir != '\0') {
+	/* get back to where we came from */
+	gretl_chdir(origdir);
+    }
+
+    if (dir_made) {
+	/* delete the temporary zip directory */
+	gretl_deltree(dotpath);
+    }
+
+    g_free(dotpath);
+
+    return err;
+}
+

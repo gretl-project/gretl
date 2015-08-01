@@ -69,6 +69,7 @@
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
 #define is_tmp_node(n) (n != NULL && (n->flags & TMP_NODE))
+#define aliased_node(n) (n != NULL && (n->flags & ALS_NODE))
 
 #define mark_node_fragile(n) (n->flags &= ~TMP_NODE)
 
@@ -121,6 +122,7 @@ static int *node_get_list (NODE *n, parser *p);
 static void reattach_series (NODE *n, parser *p);
 static void edit_matrix (parser *p);
 static void edit_array (parser *p);
+static int node_is_true (NODE *n, parser *p);
 
 static const char *typestr (int t)
 {
@@ -4138,13 +4140,13 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
 #define ok_list_func(f) (f == F_LOG || f == F_DIFF || \
 			 f == F_LDIFF || f == F_SDIFF || \
-			 f == F_XPX || f == F_ODEV || \
+			 f == F_SQUARE || f == F_ODEV || \
 			 f == F_RESAMPLE)
 
 /* functions that are "basically" for series, but which
    can also be applied to lists */
 
-static NODE *apply_list_func (NODE *n, int f, parser *p)
+static NODE *apply_list_func (NODE *n, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_list_node(p);
 
@@ -4155,7 +4157,17 @@ static NODE *apply_list_func (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(n, p);
+	gretlopt opt = OPT_NONE;
 	int t = 0;
+
+	if (f == F_SQUARE) {
+	    if (r != NULL && node_is_true(r, p)) {
+		opt = OPT_O;
+	    } else if (aliased_node(n)) {
+		/* the user gave "xpx" */
+		opt = OPT_O;
+	    }
+	}
 
 	/* note: list is modified below */
 
@@ -4176,8 +4188,8 @@ static NODE *apply_list_func (NODE *n, int f, parser *p)
 		    else if (f == F_SDIFF) t = SDIFF;
 		    p->err = list_diffgenr(list, t, p->dset);
 		    break;
-		case F_XPX:
-		    p->err = list_xpxgenr(&list, p->dset, OPT_O);
+		case F_SQUARE:
+		    p->err = list_xpxgenr(&list, p->dset, opt);
 		    break;
 		case F_ODEV:
 		    p->err = list_orthdev(list, p->dset);
@@ -4229,6 +4241,34 @@ static NODE *trend_node (parser *p)
 	    ret->vnum = series_index(p->dset, "time");
 	    ret->v.xvec = p->dset->Z[ret->vnum];
 	    mark_node_fragile(ret);
+	}
+    }
+
+    return ret;
+}
+
+static NODE *seasonals_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+    
+    if (!dataset_is_seasonal(p->dset)) {
+	p->err = E_PDWRONG;
+    } else {
+	int ref = 0, center = 0;
+
+	if (!null_or_empty(l)) {
+	    ref = node_get_int(l, p);
+	}
+	if (!null_or_empty(r)) {
+	    center = node_is_true(r, p);
+	}
+
+	if (!p->err) {
+	    ret = aux_list_node(p);
+	}
+
+	if (ret != NULL) {
+	    ret->v.ivec = seasonals_list(p->dset, ref, center, &p->err);
 	}
     }
 
@@ -6772,6 +6812,12 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else if (rtype == GRETL_TYPE_SERIES) {
 	    retp = &Xret;
 	} else if (rtype == GRETL_TYPE_MATRIX) {
+	    if (p->targ == UNK && p->tree == t) {
+		/* target type not specified, and function returns
+		   a matrix -> set target type to matrix
+		*/
+		p->targ = MAT;
+	    }
 	    retp = &mret;
 	} else if (rtype == GRETL_TYPE_LIST) {
 	    if (p->targ == EMPTY && p->tree == t) {
@@ -11046,14 +11092,14 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_scalar_func(l, t->t, p);
 	} else if (l->t == SERIES) {
 	    if (cast_series_to_list(p, l, t->t)) {
-		ret = apply_list_func(l, t->t, p);
+		ret = apply_list_func(l, NULL, t->t, p);
 	    } else {
 		ret = apply_series_func(l, t->t, p);
 	    }
 	} else if (l->t == MAT) {
 	    ret = apply_matrix_func(l, t->t, p);
 	} else if (ok_list_node(l) && t->t == F_LOG) {
-	    ret = apply_list_func(l, t->t, p);
+	    ret = apply_list_func(l, NULL, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -11066,6 +11112,16 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
+    case F_SEASONALS:
+	/* two optional args: int, bool */
+	if (!null_or_empty(l) && l->t != NUM) {
+	    node_type_error(t->t, 1, NUM, l, p);
+	} else if (!null_or_empty(r) && r->t != NUM) {
+	    node_type_error(t->t, 2, NUM, r, p);
+	} else {
+	    ret = seasonals_node(l, r, p);
+	}
+	break;	
     case F_MISSZERO:
     case F_ZEROMISS:
 	/* one series or scalar argument needed */
@@ -11205,11 +11261,11 @@ static NODE *eval (NODE *t, parser *p)
     case F_SDIFF:
     case F_ODEV:
 	if (l->t == SERIES && cast_series_to_list(p, l, t->t)) {
-	    ret = apply_list_func(l, t->t, p);
+	    ret = apply_list_func(l, NULL, t->t, p);
 	} else if (l->t == SERIES || (t->t != F_ODEV && l->t == MAT)) {
 	    ret = series_series_func(l, r, t->t, p);
 	} else if (ok_list_node(l)) {
-	    ret = apply_list_func(l, t->t, p);
+	    ret = apply_list_func(l, NULL, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, SERIES, l, p);
 	} 
@@ -11256,17 +11312,17 @@ static NODE *eval (NODE *t, parser *p)
 	/* series or matrix argument */
 	if (l->t == SERIES) {
 	    if (cast_series_to_list(p, l, t->t)) {
-		ret = apply_list_func(l, t->t, p);
+		ret = apply_list_func(l, NULL, t->t, p);
 	    } else {
 		ret = series_series_func(l, r, t->t, p);
 	    }
 	} else if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
 	} else if (t->t == F_DIFF && ok_list_node(l)) {
-	    ret = apply_list_func(l, t->t, p);
+	    ret = apply_list_func(l, NULL, t->t, p);
 	} else if (t->t == F_RESAMPLE && ok_list_node(l) &&
 		   null_or_empty(r)) {
-	    ret = apply_list_func(l, t->t, p);
+	    ret = apply_list_func(l, NULL, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, SERIES, l, p);
 	}
@@ -11753,9 +11809,9 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
-    case F_XPX:
-	if (ok_list_node(l)) {
-	    ret = apply_list_func(l, t->t, p);
+    case F_SQUARE:
+	if (ok_list_node(l) && empty_or_num(r)) {
+	    ret = apply_list_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}

@@ -153,6 +153,8 @@ static FILE *cli_rcfile_open (void)
     return fp;
 }
 
+/* called from gretlcli.exe and gretlmpi.exe */
+
 void win32_cli_read_rc (char *callname)
 {
     ConfigPaths cpaths = {0};
@@ -363,6 +365,11 @@ char *mydocs_path (void)
 char *program_files_path (void)
 {
     return win_special_path(CSIDL_PROGRAM_FILES);
+}
+
+char *program_files_x86_path (void)
+{
+    return win_special_path(CSIDL_PROGRAM_FILESX86);
 }
 
 static char *compose_command_line (const char *arg)
@@ -800,7 +807,9 @@ static int try_for_R_path (HKEY tree, char *s)
 
 static void append_R_filename (char *s, int which)
 {
-    if (which == RGUI) {
+    if (which == REXE) {
+	strcat(s, "R.exe");
+    } else if (which == RGUI) {
 	strcat(s, "Rgui.exe");
     } else if (which == RTERM) {
 	strcat(s, "Rterm.exe");

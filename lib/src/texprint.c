@@ -1179,7 +1179,6 @@ void set_gretl_tex_preamble (void)
     int gotit;
 
     set_tex_locale_filename(localname);
-
     gotit = find_gretlpre(path, localname);
 
     if (!gotit) {

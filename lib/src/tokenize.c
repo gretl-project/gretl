@@ -3269,14 +3269,24 @@ static int post_process_spreadsheet_options (CMD *cmd)
     return err;
 }
 
-static void post_process_rename_param (CMD *cmd,
-				       DATASET *dset)
+static int post_process_rename_param (CMD *cmd,
+				      DATASET *dset)
 {
+    int err = 0;
+    
     if (integer_string(cmd->param)) {
 	cmd->auxint = atoi(cmd->param);
+	if (cmd->auxint < 1 || cmd->auxint >= dset->v) {
+	    err = E_DATA;
+	}
     } else {
 	cmd->auxint = current_series_index(dset, cmd->param);
+	if (cmd->auxint < 0) {
+	    err = E_UNKVAR;
+	}
     }
+
+    return err;
 }
 
 /* check the commands that have the CI_INFL flag:
@@ -3475,7 +3485,7 @@ static int assemble_command (CMD *cmd, DATASET *dset)
 	    (cmd->ci == OPEN || cmd->ci == APPEND)) {
 	    cmd->err = post_process_spreadsheet_options(cmd);
 	} else if (cmd->ci == RENAME) {
-	    post_process_rename_param(cmd, dset);
+	    cmd->err = post_process_rename_param(cmd, dset);
 	}
     }
 
@@ -3490,7 +3500,24 @@ static void maybe_init_shadow (void)
 	check_for_shadowed_commands();
 	shadow_initted = 1;
     }
-}    
+}
+
+static char *get_or_set_errline (const char *s, int set)
+{
+    static char *errline;
+
+    if (set) {
+	free(errline);
+	errline = gretl_strdup(s);
+    }
+    
+    return errline;
+}
+
+const char *get_parser_errline (void)
+{
+    return get_or_set_errline(NULL, 0);
+}
 
 static int real_parse_command (const char *line, CMD *cmd, 
 			       DATASET *dset, int idx_only,
@@ -3555,7 +3582,12 @@ static int real_parse_command (const char *line, CMD *cmd,
 #endif
 
     if (err) {
+#if CDEBUG	
 	fprintf(stderr, "+++ tokenizer: err=%d on '%s'\n", err, line);
+#endif	
+	get_or_set_errline(line, 1);
+    } else {
+	get_or_set_errline(NULL, 1);
     }
 
     return err;

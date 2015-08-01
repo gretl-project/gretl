@@ -31,4 +31,13 @@ int gretl_make_zipfile (const char *fname, const char *path);
 int gretl_zip_datafile (const char *fname, const char *path,
 			int level);
 
+int package_make_zipfile (const char *gfnname,
+			  int pdfdoc,
+			  char **datafiles,
+			  int n_datafiles,
+			  gchar **pzipname,
+			  const char *dest,
+			  gretlopt opt,
+			  PRN *prn);
+
 #endif /* GRETL_ZIP_H */

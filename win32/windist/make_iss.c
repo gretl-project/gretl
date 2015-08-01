@@ -34,11 +34,12 @@ void add_languages (void)
 	{ "tr", "Turkish" },
 	{ "ca", "Catalan" },
 	{ "el", "Greek" },
+	{ "ja", "Japanese" },
 	{ NULL, NULL }
     };
     int i;
 
-    printf("\n[Languages]\n");
+    puts("\n[Languages]");
 
     printf("Name: \"%s\"; MessagesFile: \"compiler:%s.isl\"\n", 
 	   languages[0].id, languages[0].fname);
@@ -49,13 +50,19 @@ void add_languages (void)
     }
 }
 
+void add_tasks (void)
+{
+    puts("\n[Tasks]");
+    puts("Name: modifypath; Description: &Add gretl directory to your PATH; Flags: checkedonce");
+}
+
 void define_program_icons (void)
 {
-    printf("\n[Icons]\n");
-    printf("Name: \"{group}\\gretl\"; Filename: \"{app}\\gretl.exe\"\n");
-    printf("Name: \"{group}\\Gretl Web Site\"; Filename: \"{app}\\gretl_website.url\"\n");
-    printf("Name: \"{group}\\uninstall gretl\"; Filename: \"{app}\\unins000.exe\"\n");
-    printf("Name: \"{userdesktop}\\gretl\"; Filename: \"{app}\\gretl.exe\"; WorkingDir: \"{app}\"\n");
+    puts("\n[Icons]");
+    puts("Name: \"{group}\\gretl\"; Filename: \"{app}\\gretl.exe\"");
+    puts("Name: \"{group}\\Gretl Web Site\"; Filename: \"{app}\\gretl_website.url\"");
+    puts("Name: \"{group}\\uninstall gretl\"; Filename: \"{app}\\unins000.exe\"");
+    puts("Name: \"{userdesktop}\\gretl\"; Filename: \"{app}\\gretl.exe\"; WorkingDir: \"{app}\"");
 }
 
 void LM_entry (const char *valname, const char *valdata)
@@ -99,12 +106,12 @@ void reg_suffix (const char *sfx, const char *name, const char *mime,
 
 void set_registry_entries (void)
 {
-    printf("\n[Registry]\n");
+    puts("\n[Registry]");
 
     /* base paths */
-    printf("; Start \"gretl\" registry keys.\n");
-    printf("Root: HKCR; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n");
-    printf("Root: HKLM; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n");
+    puts("; Start \"gretl\" registry keys.");
+    puts("Root: HKCR; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey");
+    puts("Root: HKLM; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey");
 
     /* specific entries, Local Machine */
     LM_entry("gretldir", "{app}");
@@ -120,11 +127,26 @@ void set_registry_entries (void)
 	       "Gretl binary data file", 4);
 }
 
+void add_code_block (void)
+{
+    puts("\n[Code]");
+    puts("const");
+    puts("ModPathName = 'modifypath';");
+    puts("ModPathType = 'user';\n");
+
+    puts("function ModPathDir(): TArrayOfString;");
+    puts("begin");
+    puts("   setArrayLength(Result, 1);");
+    puts("   Result[0] := ExpandConstant('{app}');");
+    puts("end;");
+    puts("#include \"../../win32/windist/modpath.iss\"");
+}
+
 void preamble (const char *s, int x64)
 {
-    printf("; -- gretl.iss --\n");
-    printf("\n[Setup]\n");
-    printf("AppName=gretl\n");
+    puts("; -- gretl.iss --");
+    puts("\n[Setup]");
+    puts("AppName=gretl");
     if (x64) {
 	printf("AppVerName=gretl version %s (x86_64)\n", s);
     } else {
@@ -132,21 +154,22 @@ void preamble (const char *s, int x64)
     }
     printf("AppVersion=%s\n", s);
     if (x64) {
-	printf("ArchitecturesAllowed=x64\n");
-	printf("ArchitecturesInstallIn64BitMode=x64\n");
+	puts("ArchitecturesAllowed=x64");
+	puts("ArchitecturesInstallIn64BitMode=x64");
     }
-    printf("AppPublisher=The gretl team\n");
-    printf("AppPublisherURL=http://gretl.sourceforge.net/\n");
-    printf("AppSupportURL=http://gretl.sourceforge.net/\n");
-    printf("DefaultDirName={pf}\\gretl\n");
-    printf("DefaultGroupName=gretl\n");
-    printf("PrivilegesRequired=poweruser\n");
-    printf("UninstallDisplayIcon={app}\\gretl.exe\n");
-    printf("ChangesAssociations=yes\n");
-    printf("DirExistsWarning=no\n");
+    puts("AppPublisher=The gretl team");
+    puts("AppPublisherURL=http://gretl.sourceforge.net/");
+    puts("AppSupportURL=http://gretl.sourceforge.net/");
+    puts("DefaultDirName={pf}\\gretl");
+    puts("DefaultGroupName=gretl");
+    puts("PrivilegesRequired=poweruser");
+    puts("UninstallDisplayIcon={app}\\gretl.exe");
+    puts("ChangesAssociations=yes");
+    puts("ChangesEnvironment=yes");
+    puts("DirExistsWarning=no");
 
-    printf("\n[InstallDelete]\n");
-    printf("Type: files; Name: \"{app}\\*.dll\"\n");
+    puts("\n[InstallDelete]");
+    puts("Type: files; Name: \"{app}\\*.dll\"");
 }
 
 void tailstrip (char *s)
@@ -212,7 +235,7 @@ int main (int argc, char **argv)
     n = sscanf(line + 8, "%15s %7s", version, arch);
 
     if (n < 1) {
-	fprintf(stderr, "malformed MANIFEST: expected VERSION ...\n");
+	fputs("malformed MANIFEST: expected VERSION ...\n", stderr);
 	exit(EXIT_FAILURE);
     } else if (n == 2) {
 	if (!strcmp(arch, "x64")) {
@@ -220,7 +243,7 @@ int main (int argc, char **argv)
 	    fprintf(stderr, "Making installer script for gretl version %s (x64)...\n",
 		    version);
 	} else {
-	    fprintf(stderr, "malformed MANIFEST: if arch is present, it must be \"x64\"\n");
+	    fputs("malformed MANIFEST: if arch is present, it must be \"x64\"\n", stderr);
 	    exit(EXIT_FAILURE);
 	}
     } else {
@@ -229,10 +252,10 @@ int main (int argc, char **argv)
     }	
 
     preamble(version, x64);
-
     add_languages();
+    add_tasks();
 
-    printf("\n[Files]\n");
+    puts("\n[Files]");
 
     /* Read MANIFEST from stdin.  Format is size date time pathname,
        for example:
@@ -255,15 +278,16 @@ int main (int argc, char **argv)
 	modpath(path);
 	printf("Source: \"%s\"; ", path); 
 	n = split_path(path, pathbits);
-	printf("Destdir: \"{app}");
+	fputs("Destdir: \"{app}", stdout);
 	for (i=1; i<n-1; i++) {
 	    printf("\\%s", pathbits[i]);
 	}
-	printf("\"\n");
+	puts("\"");
     }
 
     define_program_icons();
     set_registry_entries();
+    add_code_block();
 
     return 0;
 }

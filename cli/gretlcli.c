@@ -174,8 +174,15 @@ static void usage (int err)
 
 static void gretl_abort (char *line)
 {
+    const char *tokline = get_parser_errline();
+    
     fprintf(stderr, _("\ngretlcli: error executing script: halting\n"));
+
+    if (tokline != NULL && strcmp(tokline, line)) {
+	fprintf(stderr, "> %s\n", tokline);
+    }
     fprintf(stderr, "> %s\n", line);
+    
     exit(EXIT_FAILURE);
 }
 
