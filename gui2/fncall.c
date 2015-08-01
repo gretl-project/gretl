@@ -256,16 +256,23 @@ static void fncall_close (GtkWidget *w, call_info *cinfo)
 
 static GtkWidget *label_hbox (call_info *cinfo, GtkWidget *w)
 {
-    const char *funcname;
     GtkWidget *hbox, *lbl;
     gchar *buf = NULL;
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 5);
 
-    funcname = user_function_name_by_index(cinfo->iface);
-    buf = g_markup_printf_escaped("<span weight=\"bold\">%s</span>",
-				  funcname);
+    if (cinfo->label != NULL) {
+	buf = g_markup_printf_escaped("<span weight=\"bold\">%s</span>",
+				      cinfo->label);
+    } else {
+	const char *funcname;
+	
+	funcname = user_function_name_by_index(cinfo->iface);
+	buf = g_markup_printf_escaped("<span weight=\"bold\">%s</span>",
+				      funcname);
+    }
+    
     lbl = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl), buf);
     g_free(buf);
@@ -441,14 +448,30 @@ static GList *get_selection_list (int type)
     return list;
 }
 
-static windata_t *make_help_viewer (const char *fnname, char *buf)
+static windata_t *make_help_viewer (const char *fnname,
+				    const char *pdfname,
+				    PRN *prn)
 {
     windata_t *vwin;
     gchar *title;
+    char *buf;
 
+    if (pdfname != NULL) {
+	/* append a link to the PDF file */
+	gchar *localpdf = g_strdup(pdfname);
+	gchar *p = strrchr(localpdf, '.');
+
+	*p = '\0';
+	strncat(p, ".pdf", 4);
+	pprintf(prn, "<@itl=\"Documentation\">: <@adb=\"%s\">\n", localpdf);
+	g_free(localpdf);	
+    }
+
+    buf = gretl_print_steal_buffer(prn);
     title = g_strdup_printf(_("help on %s"), fnname);
     vwin = view_formatted_text_buffer(title, buf, 70, 350);
     g_free(title);
+    free(buf);
 
     return vwin;
 }
@@ -456,8 +479,18 @@ static windata_t *make_help_viewer (const char *fnname, char *buf)
 static void fncall_help (GtkWidget *w, call_info *cinfo)
 {
     char *pdfname = NULL;
+    int show_ghlp = 0;
+    int have_pdf = 0;
 
-    if (function_package_has_PDF_doc(cinfo->pkg, &pdfname)) {
+    if ((cinfo->flags & SHOW_GUI_MAIN) &&
+	function_package_has_gui_help(cinfo->pkg)) {
+	show_ghlp = 1;
+    }
+
+    have_pdf = function_package_has_PDF_doc(cinfo->pkg, &pdfname);
+
+    if (have_pdf && !show_ghlp) {
+	/* simple: just show PDF doc */
 	FILE *fp = gretl_fopen(pdfname, "r");
 
 	if (fp != NULL) {
@@ -467,27 +500,33 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
 	    gui_errmsg(E_FOPEN);
 	}
     } else {
-	const char *fnname = user_function_name_by_index(cinfo->iface);
-	PRN *prn;
+	/* show help text, either "plain" or GUI */
+	const char *fnname;
+	PRN *prn = NULL;
+	gretlopt opt = OPT_M;
 	int err;
 
 	if (bufopen(&prn)) {
 	    return;
 	}
 
-	err = user_function_help(fnname, OPT_M | OPT_G, prn);
+	if (show_ghlp) {
+	    opt |= OPT_G;
+	}
+
+	fnname = user_function_name_by_index(cinfo->iface);
+	err = user_function_help(fnname, opt, prn);
 
 	if (err) {
 	    gretl_print_destroy(prn);
 	    errbox("Couldn't find any help");
 	} else {
-	    char *buf = gretl_print_steal_buffer(prn);
-
-	    make_help_viewer(fnname, buf);
-	    free(buf);
+	    make_help_viewer(fnname, pdfname, prn);
 	    gretl_print_destroy(prn);
 	}
     }
+
+    free(pdfname);
 }
 
 static int combo_list_index (const gchar *s, GList *list)
@@ -1961,11 +2000,20 @@ static void maybe_set_gui_interface (call_info *cinfo,
 	   from the package browser, it's not masked
 	   by being designated as "private".
 	*/
+	gchar *name = NULL, *label = NULL;
+	
 	cinfo->iface = fid;
 	cinfo->flags |= SHOW_GUI_MAIN;
-	function_package_get_properties(cinfo->pkg, "name",
-					&cinfo->label,
+	function_package_get_properties(cinfo->pkg,
+					"name", &name,
+					"label", &label,
 					NULL);
+	if (label != NULL) {
+	    cinfo->label = label;
+	    g_free(name);
+	} else {
+	    cinfo->label = name;
+	}
     }
 }
 

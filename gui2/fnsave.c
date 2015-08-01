@@ -812,8 +812,8 @@ static int check_help_text (function_info *finfo)
 
 	while (*s && !err) {
 	    if (*s == '\n') {
+		p = s + 1; /* start of line marker */
 		n = 0;
-		p = s + 1;
 	    } else {
 		n++;
 	    }
@@ -824,7 +824,7 @@ static int check_help_text (function_info *finfo)
 		    err = 1;
 		}
 	    }
-	    p++;
+	    s++;
 	}
     }
 
@@ -1280,12 +1280,18 @@ void update_sample_script (windata_t *vwin)
 	gchar *text = textview_get_text(vwin->text);
 
 	free(finfo->sample);
-	finfo->sample = gretl_strdup(text);
+	if (text == NULL || string_is_blank(text)) {
+	    finfo->sample = NULL;
+	} else {
+	    finfo->sample = gretl_strdup(text);
+	}
 	g_free(text);
 	mark_vwin_content_saved(vwin);
 	finfo_set_modified(finfo, TRUE);
     }
 }
+
+/* callback from Save in GUI help text editor window */
 
 void update_gfn_gui_help (windata_t *vwin)
 {
@@ -1297,7 +1303,11 @@ void update_gfn_gui_help (windata_t *vwin)
 	gchar *text = textview_get_text(vwin->text);
 
 	free(finfo->gui_help);
-	finfo->gui_help = gretl_strdup(text);
+	if (text == NULL || string_is_blank(text)) {
+	    finfo->gui_help = NULL;
+	} else {
+	    finfo->gui_help = gretl_strdup(text);
+	}
 	g_free(text);
 	mark_vwin_content_saved(vwin);
 	finfo_set_modified(finfo, TRUE);
@@ -2228,7 +2238,7 @@ static void gui_help_text_callback (GtkButton *b, function_info *finfo)
 	pputc(prn, '\n');
     } 
 
-    finfo->gui_helpwin = view_buffer(prn, 78, 350, title,
+    finfo->gui_helpwin = view_buffer(prn, 72, 350, title,
 				     EDIT_PKG_GHLP, finfo);
     g_object_set_data(G_OBJECT(finfo->gui_helpwin->main), "finfo",
 		      finfo);
@@ -3688,6 +3698,7 @@ int save_function_package (const char *fname, gpointer p)
 					      "min-version", finfo->minver,
 					      "menu-attachment", finfo->menupath,
 					      "label", finfo->menulabel,
+					      "gui-help", finfo->gui_help,
 					      "gui-attrs", finfo->gui_attrs,
 					      "lives-in-subdir", finfo->uses_subdir,
 					      NULL);
