@@ -347,11 +347,6 @@ bool_col_toggled (GtkCellRendererToggle *cell, gchar *path_str, windata_t *vwin)
 	return;
     }
 
-    if (vwin->role == FUNC_FILES) {
-	vwin->active_var = atoi(path_str);
-	browser_load_func(NULL, vwin);
-    } 
-
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, col, TRUE, -1);
     gtk_tree_path_free(path);
 }

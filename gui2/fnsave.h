@@ -40,9 +40,13 @@ gchar *package_sample_get_script (windata_t *vwin);
 
 void update_sample_script (windata_t *vwin);
 
+void update_gfn_gui_help (windata_t *vwin);
+
 int update_func_code (windata_t *vwin);
 
 gboolean edit_specified_package (const char *fname);
+
+void upload_package_file (const char *fname);
 
 void revise_function_package (void *p);
 

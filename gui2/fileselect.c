@@ -91,6 +91,7 @@ static struct extmap action_map[] = {
 };
 
 static int gdtb_save;
+static char alt_gfndir[FILENAME_MAX];
 
 static const char *get_extension_for_action (int action, gpointer data)
 {
@@ -515,23 +516,6 @@ static void maybe_set_fsel_status (int action, FselDataSrc src,
     }
 }
 
-static int overwrite_stop (const char *fname)
-{
-    FILE *fp = gretl_fopen(fname, "r");
-
-    if (fp != NULL) {
-	fclose(fp);
-	if (yes_no_dialog(NULL, 
-			  _("There is already a file of this name.\n"
-			    "OK to overwrite it?"), 
-			  NULL) == GRETL_NO) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
 static void os_open_other (const char *fname)
 {
 #if defined(G_OS_WIN32)
@@ -548,7 +532,6 @@ file_selector_process_result (const char *in_fname, int action,
 			      FselDataSrc src, gpointer data)
 {
     char fname[FILENAME_MAX];
-    int quit = 0;
     int err = 0;
 
     *fname = '\0';
@@ -605,6 +588,8 @@ file_selector_process_result (const char *in_fname, int action,
 	open_rats_window(fname);
     } else if (action == OPEN_PCGIVE_DB) {
 	open_bn7_window(fname);
+    } else if (action == UPLOAD_PKG) {
+	upload_package_file(fname);
     }
 
     if (action < END_OPEN) {
@@ -614,21 +599,6 @@ file_selector_process_result (const char *in_fname, int action,
     /* now for the save/export options */
 
     if (post_process_savename(fname, action, data)) {
-	return;
-    }
-
-    if (EXPORT_OTHER(action) || 
-	action == EXPORT_GDT ||
-	action == EXPORT_GDTB ||
-	(action > END_SAVE_DATA && action < END_SAVE_OTHER)) {
-	/* saving CSV, graphs etc.; check overwrite */
-	quit = overwrite_stop(fname);
-    } else if (action == SAVE_DATA_AS && strcmp(fname, datafile)) {
-	/* check for "saving as" over an existing gdt file */
-	quit = overwrite_stop(fname);
-    }
-
-    if (quit) {
 	return;
     }
 
@@ -671,7 +641,7 @@ file_selector_process_result (const char *in_fname, int action,
     } else if (action == SET_WDIR) {
 	set_working_dir_callback(data, fname);
     } else if (action == SET_FDIR) {
-	set_funcs_dir_callback(data, fname);
+	set_alternate_gfn_dir(data, fname);
     } else if (action == SET_DBDIR) {
 	set_db_dir_callback(data, fname);
     } else {
@@ -912,6 +882,9 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt");
 	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb");
 	filesel_add_filter(filesel, N_("all files (*.*)"), "*");
+    } else if (action == UPLOAD_PKG) {
+	filesel_add_filter(filesel, N_("plain function packages (*.gfn)"), "*.gfn");
+	filesel_add_filter(filesel, N_("zipped function packages (*.zip)"), "*.zip");
     } else {
 	GtkFileFilter *filter = get_file_filter(action, data);
 
@@ -997,7 +970,9 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	fsel_action = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
 	okstr = GTK_STOCK_OK;
 	remember = 0;
-    } else if (action == SET_PROG || action == SET_OTHER) {
+    } else if (action == SET_PROG ||
+	       action == SET_OTHER ||
+	       action == UPLOAD_PKG) {
 	fsel_action = GTK_FILE_CHOOSER_ACTION_OPEN;
 	okstr = GTK_STOCK_OK;
 	remember = 0;
@@ -1019,8 +994,15 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	strcpy(startdir, dirname);
     } else if (remember && *savedir != '\0') {
 	strcpy(startdir, savedir);
+    } else if ((action == UPLOAD_PKG || action == SET_FDIR) &&
+	       *alt_gfndir != '\0') {
+	strcpy(startdir, alt_gfndir);
+    } else if (action == SAVE_FUNCTIONS) {
+	/* we come here only if the user has not chosen
+	   to "install" a newly saved package */
+	get_default_dir_for_action(startdir, 0);
     } else {
-	get_default_dir(startdir, action);
+	get_default_dir_for_action(startdir, action);
     }
 
 #ifdef G_OS_WIN32
@@ -1050,6 +1032,11 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	add_compression_level_option(filesel);
     }
 
+    if (fsel_action == GTK_FILE_CHOOSER_ACTION_SAVE) {
+	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(filesel),
+						       TRUE);
+    }
+
     gtk_dialog_set_default_response(GTK_DIALOG(filesel), GTK_RESPONSE_ACCEPT);
 
     if (SET_DIR_ACTION(action)) {
@@ -1073,8 +1060,11 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	}
 
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filesel));
+	
 	if (remember) {
 	    remember_folder(GTK_FILE_CHOOSER(filesel), savedir);
+	} else if (action == UPLOAD_PKG || action == SET_FDIR) {
+	    strcpy(alt_gfndir, fname);
 	}
 
 	gtk_widget_destroy(filesel);

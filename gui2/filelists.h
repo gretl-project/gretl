@@ -9,7 +9,7 @@ void init_fileptrs (void);
 
 void initialize_file_lists (void);
 
-void delete_from_filelist (int filetype, const char *fname);
+int delete_from_filelist (int filetype, const char *fname);
 
 void add_files_to_menus (void);
 

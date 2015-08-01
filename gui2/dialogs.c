@@ -4216,7 +4216,6 @@ int radio_dialog_with_check (const char *title, const char *label,
 			     checkvar, checktxt, 0, 0, parent);
 }
 
-
 /* selections in relation to kernel density estimation */
 
 static void bw_set (GtkWidget *w, gpointer p)
@@ -5402,7 +5401,7 @@ void msgbox (const char *msg, int msgtype, GtkWidget *parent)
 				    (trmsg != NULL)? trmsg : msg);
 
     title = (msgtype == GTK_MESSAGE_ERROR)? titles[0] :
-	(msgtype == GTK_MESSAGE_WARNING)? titles[0] : titles[2];
+	(msgtype == GTK_MESSAGE_WARNING)? titles[1] : titles[2];
 
     gtk_window_set_title(GTK_WINDOW(dialog), _(title));
     gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);

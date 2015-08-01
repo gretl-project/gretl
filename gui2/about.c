@@ -213,8 +213,8 @@ void about_dialog (void)
 		     G_CALLBACK(license_callback), 
 		     NULL);
 
-    /* OK button */
-    button = gtk_button_new_from_stock(GTK_STOCK_OK);
+    /* Close button */
+    button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(button), "clicked", 

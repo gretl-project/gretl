@@ -1400,6 +1400,9 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
     } else if (vwin->role == EDIT_PKG_CODE) {
 	/* function package editor, function code window */
 	update_func_code(vwin);
+    } else if (vwin->role == EDIT_PKG_GHLP) {
+	/* function package editor, gui-help window */
+	update_gfn_gui_help(vwin);
     } else if (*vwin->fname == '\0' || strstr(vwin->fname, "script_tmp")) {
 	/* no real filename is available yet */
 	if (vwin->role == EDIT_SCRIPT) {
@@ -1828,6 +1831,17 @@ static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
     return vwin;
 }
 
+static void vwin_add_closer (windata_t *vwin)
+{
+    GtkWidget *b;
+
+    b = gtk_button_new_with_label(_("Close"));
+    g_signal_connect(G_OBJECT(b), "clicked", 
+		     G_CALLBACK(delete_widget), vwin->main);
+    gtk_widget_show(b);
+    gtk_box_pack_end(GTK_BOX(vwin->vbox), b, FALSE, FALSE, 0);    
+}
+
 void set_model_save_state (windata_t *vwin, gboolean s)
 {
     flip(vwin->ui, "/menubar/File/SaveAsIcon", s);
@@ -1878,9 +1892,12 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	       role == VIEW_MODELTABLE) {
 	vwin_add_viewbar(vwin, 0);
     } else if (role == EDIT_PKG_CODE ||
-	       role == EDIT_PKG_SAMPLE) {
+	       role == EDIT_PKG_SAMPLE ||
+	       role == EDIT_PKG_GHLP) {
 	vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
-    } else if (role != IMPORT && role != ZIPBUILD) {
+    } else if (role == IMPORT || role == ZIPBUILD) {
+	vwin_add_closer(vwin);
+    } else {
 	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
     }
 
@@ -1935,8 +1952,10 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 			 G_CALLBACK(query_save_text), vwin);
     } 
 
-    g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
-		     G_CALLBACK(text_popup_handler), vwin);
+    if (role != ZIPBUILD) {
+	g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
+			 G_CALLBACK(text_popup_handler), vwin);
+    }
 
     cursor_to_top(vwin);
     gtk_widget_grab_focus(vwin->text);
@@ -5272,7 +5291,9 @@ int browser_open (const char *url)
     }
     
     urlcmd = g_strdup_printf("%s -remote \"openURLNewWindow(%s)\"", Browser, url);
+    fprintf(stderr, "urlcmd='%s'\n", urlcmd);
     err = gretl_spawn(urlcmd);
+    fprintf(stderr, " err = %d\n", err);
     g_free(urlcmd);
 
     if (err) {

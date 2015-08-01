@@ -1957,11 +1957,11 @@ static void get_system_target (char *targ, int code,
 			       const char *ext)
 {
     if (code == REMOTE_DB) {
-	get_default_dir(targ, SAVE_REMOTE_DB);
+	get_default_dir_for_action(targ, SAVE_REMOTE_DB);
     } else if (code == REMOTE_DATA_PKGS) {
-	get_default_dir(targ, SAVE_DATA_PKG);
+	get_default_dir_for_action(targ, SAVE_DATA_PKG);
     } else if (code == REMOTE_FUNC_FILES) {
-	get_default_dir(targ, SAVE_FUNCTIONS);
+	get_default_dir_for_action(targ, SAVE_FUNCTIONS);
     }
 
     strcat(targ, objname);
@@ -2169,10 +2169,10 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	    if (zipfile) {
 		gchar *gfnpath = make_gfn_path(objname);
 
-		notified = maybe_handle_pkg_menu_option(gfnpath, vwin->main);
+		notified = gui_function_pkg_query_register(gfnpath, vwin->main);
 		g_free(gfnpath);
 	    } else {
-		notified = maybe_handle_pkg_menu_option(targ, vwin->main);
+		notified = gui_function_pkg_query_register(targ, vwin->main);
 	    }
 	    if (!notified) {
 		infobox(_("Installed"));
@@ -2249,10 +2249,10 @@ void maybe_update_pkgview (const char *filename,
 	if (zipfile) {
 	    gchar *gfnpath = make_gfn_path(pkgname);
 
-	    maybe_handle_pkg_menu_option(gfnpath, parent);
+	    gui_function_pkg_query_register(gfnpath, parent);
 	    g_free(gfnpath);
 	} else {
-	    maybe_handle_pkg_menu_option(filename, parent);
+	    gui_function_pkg_query_register(filename, parent);
 	}
     }
 }
@@ -2849,8 +2849,9 @@ gint populate_remote_addons_list (windata_t *vwin)
     return err;
 }
 
-/* Fill a list box with names, version numbers, and short descriptions
-   of function packages, retrieved from server.
+/* Fill a list box with name, version number, author,
+   and short description of function packages, retrieved
+   from server.
 */
 
 gint populate_remote_func_list (windata_t *vwin)
@@ -2910,7 +2911,7 @@ gint populate_remote_func_list (windata_t *vwin)
 	    tailstrip(line);
 	    utf8_correct(line);
 	    descrip = gretl_strdup(line + 2);
-	    maybe_ellipsize_string(descrip, 62);
+	    maybe_ellipsize_string(descrip, 48);
 	} 
 
 	if (bufgets(line, sizeof line, getbuf)) {
@@ -2921,7 +2922,7 @@ gint populate_remote_func_list (windata_t *vwin)
 	if (bufgets(line, sizeof line, getbuf)) {
 	    tailstrip(line);
 	    author = gretl_strdup(line + 2);
-	    maybe_ellipsize_string(author, 33);
+	    maybe_ellipsize_string(author, 26);
 	}
 
 	if (descrip != NULL && version != NULL && author != NULL) {

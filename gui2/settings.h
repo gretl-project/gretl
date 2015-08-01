@@ -65,7 +65,7 @@ const char *get_app_fontname (void);
 
 const char *get_fixed_fontname (void);
 
-void get_default_dir (char *s, int action);
+void get_default_dir_for_action (char *s, int action);
 
 void working_dir_dialog (void);
 
@@ -100,5 +100,9 @@ void set_model_table_prefs (int colheads,
 			    int do_asts,
 			    int figs,
 			    char fmt);
+
+void set_author_mail (const char *s);
+
+const char *get_author_mail (void);
 
 #endif /* SETTINGS_H */

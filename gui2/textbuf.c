@@ -46,6 +46,7 @@
 #define GFR_PAGE    997
 #define BIB_PAGE    996
 #define EXT_PAGE    995
+#define PDF_PAGE    994
 
 enum {
     PLAIN_TEXT,
@@ -68,7 +69,7 @@ static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods);
 static gboolean 
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
 static gchar *textview_get_current_line_with_newline (GtkWidget *view);
-static void
+static gboolean
 insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s, int role);
 static void connect_link_signals (windata_t *vwin);
@@ -1127,8 +1128,11 @@ void textview_insert_file (windata_t *vwin, const char *fname)
 	nextcolor = PLAIN_TEXT;
 
 	if (vwin->role == VIEW_DOC && strchr(chunk, '<')) {
-	    insert_text_with_markup(tbuf, &iter, chunk, vwin->role);
-	    links = 1;
+	    if (!links) {
+		links = insert_text_with_markup(tbuf, &iter, chunk, vwin->role);
+	    } else {
+		insert_text_with_markup(tbuf, &iter, chunk, vwin->role);
+	    }
 	} else {
 	    if (vwin->role == SCRIPT_OUT && ends_with_backslash(chunk)) {
 		nextcolor = BLUE_TEXT;
@@ -1199,11 +1203,11 @@ void textview_insert_from_tempfile (windata_t *vwin, PRN *prn)
     }
 }
 
-#define TAGLEN 64
+#define TAGLEN 128
 
-static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter, 
-			 const char *text, gint page, 
-			 const char *indent)
+static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter, 
+			     const char *text, gint page, 
+			     const char *indent)
 {
     GtkTextTagTable *tab = gtk_text_buffer_get_tag_table(tbuf);
     GtkTextTag *tag;
@@ -1215,6 +1219,14 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     } else if (page == SCRIPT_PAGE || page == EXT_PAGE) {
 	*tagname = '\0';
 	strncat(tagname, text, TAGLEN-1);
+    } else if (page == PDF_PAGE) {
+	char *p = strrchr(text, SLASH);
+
+	*tagname = '\0';
+	strncat(tagname, text, TAGLEN-1);
+	if (p != NULL) {
+	    show = g_strdup(p + 1);
+	}
     } else if (page == BIB_PAGE) {
 	char *p = strrchr(text, ';');
 
@@ -1234,7 +1246,8 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	if (page == GUIDE_PAGE || page == BIB_PAGE) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
 					     "family", helpfont, NULL);
-	} else if (page == SCRIPT_PAGE || page == EXT_PAGE) {
+	} else if (page == SCRIPT_PAGE || page == EXT_PAGE ||
+		   page == PDF_PAGE) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
 					     "family", "monospace", NULL);
 	} else if (indent != NULL) {
@@ -1252,11 +1265,13 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     } else {
 	gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
     }
+
+    return TRUE;
 }
 
-static void insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter, 
-			  const char *text, gint page, 
-			  const char *indent)
+static gboolean insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter, 
+			      const char *text, gint page, 
+			      const char *indent)
 {
     GtkTextTagTable *tab = gtk_text_buffer_get_tag_table(tbuf);
     GtkTextTag *tag;
@@ -1289,6 +1304,8 @@ static void insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter,
     } 
 
     gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
+
+    return TRUE;
 }
 
 static void open_script_link (GtkTextTag *tag)
@@ -1388,6 +1405,18 @@ static void open_external_link (GtkTextTag *tag)
     }
 }
 
+static void open_pdf_file (GtkTextTag *tag)
+{
+    gchar *name = NULL;
+
+    g_object_get(G_OBJECT(tag), "name", &name, NULL);
+
+    if (name != NULL) {
+	gretl_show_pdf(name);
+	g_free(name);
+    }
+}
+
 static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, 
 			    gpointer en_ptr)
 {
@@ -1410,6 +1439,8 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 		open_bibitem_link(tag, tview);
 	    } else if (page == EXT_PAGE) {
 		open_external_link(tag);
+	    } else if (page == PDF_PAGE) {
+		open_pdf_file(tag);
 	    } else {
 		int role = object_get_int(tview, "role");
 
@@ -3138,10 +3169,11 @@ enum {
     INSERT_SUP,
     INSERT_SUB,
     INSERT_TEXT,
-    INSERT_PDFLINK,
+    INSERT_GUGLINK,
     INSERT_INPLINK,
     INSERT_GFRLINK,
     INSERT_BIBLINK,
+    INSERT_ADBLINK,
     INSERT_BOLD
 };
 
@@ -3246,13 +3278,15 @@ static int get_instruction_and_string (const char *p, char *str)
     } else if (!strncmp(p, "sub", 3)) {
 	ins = INSERT_SUB;
     } else if (!strncmp(p, "pdf", 3)) {
-	ins = INSERT_PDFLINK;
+	ins = INSERT_GUGLINK;
     } else if (!strncmp(p, "inp", 3)) {
 	ins = INSERT_INPLINK;
     } else if (!strncmp(p, "gfr", 3)) {
 	ins = INSERT_GFRLINK;
     } else if (!strncmp(p, "bib", 3)) {
 	ins = INSERT_BIBLINK;
+    } else if (!strncmp(p, "adb", 3)) {
+	ins = INSERT_ADBLINK;
     } else if (!strncmp(p, "hd1", 3)) {
 	ins = INSERT_BOLD;
     }
@@ -3291,10 +3325,13 @@ static int get_code_skip (const char *s)
     return skip;
 }
 
-static void
+/* return non-zero if we inserted any hyperlinks */
+
+static gboolean
 insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s, int role)
 {
+    gboolean ret = FALSE;
     static char targ[128];
     const char *indent = NULL;
     const char *p;
@@ -3327,24 +3364,26 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 		} else {
 		    itarg = gretl_command_number(targ);
 		}
-		insert_link(tbuf, iter, targ, itarg, indent);
+		ret = insert_link(tbuf, iter, targ, itarg, indent);
 	    } else if (ins == INSERT_XREF) {
 		if (role == FUNCS_HELP) {
 		    itarg = gretl_command_number(targ);
 		} else {
 		    itarg = function_help_index_from_word(targ);
 		}
-		insert_xlink(tbuf, iter, targ, itarg, indent);
+		ret = insert_xlink(tbuf, iter, targ, itarg, indent);
 	    } else if (ins == INSERT_URL) {
-		insert_link(tbuf, iter, targ, EXT_PAGE, indent);
-	    } else if (ins == INSERT_PDFLINK) {
-		insert_link(tbuf, iter, targ, GUIDE_PAGE, indent);
+		ret = insert_link(tbuf, iter, targ, EXT_PAGE, indent);
+	    } else if (ins == INSERT_GUGLINK) {
+		ret = insert_link(tbuf, iter, targ, GUIDE_PAGE, indent);
 	    } else if (ins == INSERT_INPLINK) {
-		insert_link(tbuf, iter, targ, SCRIPT_PAGE, indent);
+		ret = insert_link(tbuf, iter, targ, SCRIPT_PAGE, indent);
 	    } else if (ins == INSERT_BIBLINK) {
-		insert_link(tbuf, iter, targ, BIB_PAGE, indent);
+		ret = insert_link(tbuf, iter, targ, BIB_PAGE, indent);
 	    } else if (ins == INSERT_GFRLINK) {
-		insert_xlink(tbuf, iter, targ, GFR_PAGE, indent);
+		ret = insert_xlink(tbuf, iter, targ, GFR_PAGE, indent);
+	    } else if (ins == INSERT_ADBLINK) {
+		ret = insert_link(tbuf, iter, targ, PDF_PAGE, indent);
 	    } else if (ins == INSERT_FIG) {
 		insert_help_figure(tbuf, iter, targ);
 	    } else if (ins != INSERT_NONE) {
@@ -3387,6 +3426,8 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, -1,
 						 "text", indent, NULL);
     }
+
+    return ret;
 }
 
 static char *grab_topic_buffer (const char *s)
@@ -3493,13 +3534,18 @@ void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf)
 {
     GtkTextBuffer *textb;
     GtkTextIter iter;
+    gboolean links;
 
     textb = gretl_text_buf_new();
     gtk_text_buffer_get_iter_at_offset(textb, &iter, 0);
-    insert_text_with_markup(textb, &iter, buf, FUNCS_HELP);
+    links = insert_text_with_markup(textb, &iter, buf, FUNCS_HELP);
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(vwin->text), textb);
     cursor_to_top(vwin);
+
+    if (links) {
+	connect_link_signals(vwin);
+    }    
 }
 
 static int get_screen_height (void)

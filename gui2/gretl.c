@@ -218,6 +218,11 @@ static void edit_package_callback (GtkAction *action, gpointer p)
     file_selector(OPEN_GFN, FSEL_DATA_NONE, NULL);
 }
 
+static void upload_package_callback (GtkAction *action, gpointer p)
+{
+    file_selector(UPLOAD_PKG, FSEL_DATA_NONE, NULL);
+}
+
 static void new_matrix_callback (GtkAction *action, gpointer p)
 {
     gui_new_matrix(mdata->main);
@@ -780,6 +785,7 @@ int main (int argc, char **argv)
     }
 
     destroy_file_collections();
+    destroy_gui_package_info();
     free_command_stack();
 
 #ifdef MAC_INTEGRATION
@@ -1555,6 +1561,7 @@ GtkActionEntry main_entries[] = {
     { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
     { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_package_callback) },
     { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_package_callback) },
+    { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
     { "NistTest", NULL, N_("_NIST test suite"), NULL, NULL, NULL },
     { "NistBasic", NULL, N_("_Basic"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVerbose", NULL, N_("_Verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },

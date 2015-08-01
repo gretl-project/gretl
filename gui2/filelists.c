@@ -372,7 +372,10 @@ void mkfilelist (int filetype, char *fname)
     add_files_to_menu(filetype);
 }
 
-void delete_from_filelist (int filetype, const char *fname)
+/* return 0 if this is a np-op, 1 if we actually deleted
+   an entry */
+
+int delete_from_filelist (int filetype, const char *fname)
 {
     char *tmp[MAXRECENT];
     char **filep;
@@ -380,7 +383,7 @@ void delete_from_filelist (int filetype, const char *fname)
 
     filep = get_file_list(filetype);
     if (filep == NULL) {
-	return;
+	return 0;
     }
 
     /* save pointers to current order */
@@ -392,7 +395,7 @@ void delete_from_filelist (int filetype, const char *fname)
     }
 
     if (match == -1) {
-	return;
+	return 0;
     }
 
     /* clear menu files list before rebuilding */
@@ -406,6 +409,8 @@ void delete_from_filelist (int filetype, const char *fname)
     filep[MAXRECENT-1][0] = '\0';
 
     add_files_to_menu(filetype);
+
+    return 1;
 }
 
 static void open_file_from_filelist (GtkAction *action)

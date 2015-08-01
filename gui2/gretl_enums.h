@@ -56,6 +56,7 @@ enum extra_cmds {
     EDIT_NOTES,
     EDIT_PKG_CODE,
     EDIT_PKG_SAMPLE,
+    EDIT_PKG_GHLP,
     EDIT_GP,
     EDIT_R,
     EDIT_OX,
@@ -139,6 +140,7 @@ enum file_ops {
     OPEN_BARS,
     OPEN_GFN,
     OPEN_ANY,
+    UPLOAD_PKG,
     END_OPEN,        /* marker for end of file open section */
     AUTO_SAVE_DATA,
     SAVE_DATA,
@@ -204,6 +206,7 @@ enum browser_codes {
     PCGIVE_SERIES,
     REMOTE_SERIES,
     REMOTE_ADDONS,
+    PKG_REGISTRY,
     MAINWIN
 };
 

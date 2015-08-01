@@ -730,12 +730,14 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 #define edit_ok(r) (vwin_editing_script(r) || \
 		    vwin_editing_buffer(r) || \
                     r == EDIT_PKG_CODE || \
-		    r == EDIT_PKG_SAMPLE)
+		    r == EDIT_PKG_SAMPLE || \
+		    r == EDIT_PKG_GHLP)
 
 #define save_as_ok(r) (r != EDIT_HEADER && \
 	               r != EDIT_NOTES && \
 	               r != EDIT_PKG_CODE && \
 		       r != EDIT_PKG_SAMPLE && \
+		       r != EDIT_PKG_GHLP && \
 		       r != CONSOLE && \
 		       r != VIEW_BUNDLE)
 

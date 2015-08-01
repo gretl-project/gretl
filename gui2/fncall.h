@@ -26,6 +26,8 @@ int open_function_package (const char *pkgname,
 
 void function_call_cleanup (void);
 
+void destroy_gui_package_info (void);
+
 void gui_define_list (void);
 
 void fncall_register_genr (int addv, gpointer p);
@@ -40,17 +42,26 @@ void maybe_add_packages_to_model_menus (windata_t *vwin);
 
 void maybe_add_packages_to_menus (windata_t *vwin);
 
-int gui_add_package_to_menu (const char *path,
-			     GtkWidget *parent,
-			     int *notified);
-
-int maybe_handle_pkg_menu_option (const char *path, 
-				  GtkWidget *parent);
-
 int package_is_available_for_menu (const gchar *pkgname,
-				   const char *path);
+				   const char *fname);
 
-void unregister_function_package (const gchar *pkgname);
+int gui_function_pkg_query_register (const char *fname, 
+				     GtkWidget *parent);
+
+void gui_function_pkg_unregister (const gchar *pkgname);
+
+int gui_function_pkg_revise_status (const gchar *pkgname,
+				    const gchar *fname,
+				    const gchar *label,
+				    const gchar *mpath,
+				    gboolean uses_subdir);
+
+int n_registered_packages (void);
+
+int n_user_handled_packages (void);
+
+void get_registered_pkg_info (int i, char **name, char **path,
+			      char **label, int *modelwin);
 
 int query_addons (void);
 
@@ -58,12 +69,5 @@ int download_addon (const char *pkgname, char **local_path);
 
 char *installed_addon_status_string (const char *path,
 				     const char *svstr);
-
-int maybe_update_packages_xml (const gchar *pkgname,
-			       const gchar *label,
-			       const gchar *mpath,
-			       gboolean uses_subdir,
-			       int *notified,
-			       GtkWidget *parent);
 
 #endif /* FNCALL_H */

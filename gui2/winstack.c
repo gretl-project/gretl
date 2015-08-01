@@ -125,6 +125,8 @@ static const gchar *window_list_icon (int role)
 	id = GTK_STOCK_EDIT;
     } else if (role == GNUPLOT) {
 	id = GRETL_STOCK_SCATTER;
+    } else if (role == PKG_REGISTRY) {
+	id = GTK_STOCK_PREFERENCES;
     } else if (BROWSER_ROLE(role)) {
 	id = GTK_STOCK_INDEX;
     } else if (help_role(role)) {
@@ -702,6 +704,7 @@ gboolean window_list_exit_check (void)
 			     r == REMOTE_DB ||		\
 			     r == FUNC_FILES ||		\
 			     r == REMOTE_FUNC_FILES ||	\
+			     r == PKG_REGISTRY ||	\
 			     r == CONSOLE)
 
 

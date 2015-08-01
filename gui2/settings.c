@@ -114,6 +114,7 @@ static int script_output_policy;
 char gpcolors[64];
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
+static char author_mail[32];
 
 static int hc_by_default;
 static char langpref[32];
@@ -165,7 +166,8 @@ typedef enum {
     MACHSET  = 1 << 8,  /* "local machine" setting */
     BROWSER  = 1 << 9,  /* wants "Browse" button */
     RESTART  = 1 << 10, /* needs program restart to take effect */
-    GOTSET   = 1 << 11  /* dynamic: already found a setting */
+    GOTSET   = 1 << 11, /* dynamic: already found a setting */
+    SKIPSET  = 1 << 12  /* for string value, skip empty value */
 } rcflags;
 
 typedef struct {
@@ -238,8 +240,8 @@ RCVAR rc_vars[] = {
     { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef G_OS_WIN32 
-    { "Rbin", N_("Path to Rterm.exe"), NULL, paths.rbinpath, 
-      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL }, /* was TAB_NONE? */
+    { "Rbin", N_("Path to R.exe"), NULL, paths.rbinpath, 
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
     { "latex", N_("Command to compile TeX files"), NULL, latex, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
@@ -345,6 +347,8 @@ RCVAR rc_vars[] = {
       INVISET | INTSET, 0, TAB_NONE, NULL },
     { "modtab_decimals", "Model table decimal places", NULL, &modtab_decimals, 
       INVISET | INTSET, 0, TAB_NONE, NULL },
+    { "author_mail", "Package author email", NULL, &author_mail,
+      INVISET | SKIPSET, sizeof author_mail, TAB_NONE, NULL },
     { NULL, NULL, NULL, NULL, 0, 0, TAB_NONE, NULL }
 };
 
@@ -378,6 +382,20 @@ const char *get_datapage (void)
 const char *get_scriptpage (void)
 {
     return scriptpage;
+}
+
+void set_author_mail (const char *s)
+{
+    if (strlen(s) < sizeof author_mail) {
+	strcpy(author_mail, s);
+    } else {
+	author_mail[0] = '\0';
+    }
+}
+
+const char *get_author_mail (void)
+{
+    return author_mail;
 }
 
 int autoicon_on (void)
@@ -678,6 +696,8 @@ static void get_pkg_save_dir (char *dirname, int action)
 	subdir = "functions";
     } else if (action == SAVE_DATA_PKG) {
 	subdir = "data";
+    } else if (action == SAVE_REMOTE_DB) {
+	subdir = "db";
     } else {
 	return;
     }
@@ -696,14 +716,8 @@ static void get_pkg_save_dir (char *dirname, int action)
     }
 
     if (!ok) {
-	/* try user's filespace */
-	const char *wdir = maybe_get_default_workdir();
-
-	if (wdir == NULL) {
-	    wdir = gretl_workdir();
-	}
-
-	sprintf(dirname, "%s%s", wdir, subdir);
+	/* go to user's dotdir */
+	sprintf(dirname, "%s%s", gretl_dotdir(), subdir);
 	ok = write_OK(dirname);
     }
 
@@ -712,15 +726,14 @@ static void get_pkg_save_dir (char *dirname, int action)
     }
 }
 
-void get_default_dir (char *s, int action)
+void get_default_dir_for_action (char *s, int action)
 {
     *s = '\0';
 
-    if (action == SAVE_FUNCTIONS || action == SAVE_DATA_PKG) {
+    if (action == SAVE_FUNCTIONS ||
+	action == SAVE_DATA_PKG ||
+	action == SAVE_REMOTE_DB) {
 	get_pkg_save_dir(s, action);
-    } else if (action == SAVE_REMOTE_DB) {
-	/* FIXME Windows Vista and higher? */
-	sprintf(s, "%sdb", gretl_home());
     } else {
 	strcpy(s, gretl_workdir());
     }
@@ -1828,6 +1841,13 @@ int write_rc (void)
 	    continue;
 	}
 #endif
+	if (rcvar->flags & SKIPSET) {
+	    /* don't bother writing out an empty entry */
+	    strvar = (char *) rcvar->var;
+	    if (*strvar == '\0') {
+		continue;
+	    }
+	}
 	fprintf(fp, "# %s\n", rcvar->description);
 	if (rcvar->flags & BOOLSET) {
 	    boolvar_to_str(rcvar->var, val);

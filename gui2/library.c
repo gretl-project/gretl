@@ -5977,7 +5977,7 @@ void add_dummies (GtkAction *action)
 	return;
     } else if (u == TS_DUMMIES) {
 	lib_command_strcpy("genr dummy");
-	err = dummy(dataset, 0) == 0;
+	err = gen_seasonal_dummies(dataset, 0);
     } else if (dataset_is_panel(dataset)) {
 	if (u == PANEL_UNIT_DUMMIES) {
 	    lib_command_strcpy("genr unitdum");
@@ -5985,7 +5985,7 @@ void add_dummies (GtkAction *action)
 	    lib_command_strcpy("genr timedum");
 	    opt = OPT_T;
 	}
-	err = panel_dummies(dataset, opt, NULL);
+	err = gen_panel_dummies(dataset, opt, NULL);
     } else {
 	/* "can't happen" */
 	err = E_DATA;
@@ -8693,6 +8693,17 @@ static char *gui_get_input_line (char *line, FILE *fp,
     return got;
 }
 
+static void print_fatal_error (const char *s, PRN *prn)
+{
+    const char *tokline = get_parser_errline();
+
+    if (tokline != NULL && strcmp(tokline, s)) {
+	pprintf(prn, "> %s\n", tokline);
+    }
+
+    pprintf(prn, "> %s\n", s);
+}
+
 /* run commands from runfile or buf, output to prn */
 
 int execute_script (const char *runfile, const char *buf,
@@ -8806,7 +8817,7 @@ int execute_script (const char *runfile, const char *buf,
 		    if (exec_err == E_TOOLONG) {
 			errmsg(exec_err, prn);
 		    } else {
-			pprintf(prn, "> %s\n", tmp);
+			print_fatal_error(tmp, prn);
 		    }
 		    goto endwhile;
 		}
@@ -8988,10 +8999,11 @@ GList *get_or_send_gui_models (GList *list)
     }
 }
 
-static int script_install_function_package (const char *pkgname,
-					    gretlopt opt,
-					    PRN *prn,
-					    GtkWidget *parent)
+int script_install_function_package (const char *pkgname,
+				     gretlopt opt,
+				     PRN *prn,
+				     GtkWidget *parent,
+				     char **gfnpath)
 {
     char *fname = NULL;
     char *homefile = NULL;
@@ -9053,7 +9065,7 @@ static int script_install_function_package (const char *pkgname,
 	gchar *fullname;
 	int preserve = 0;
 
-	fullname = g_strdup_printf("%s%s", path, basename);
+	fullname = gretl_strdup_printf("%s%s", path, basename);
 
 	if (local) {
 	    const char *lpath = homefile != NULL ? homefile : pkgname;
@@ -9095,7 +9107,11 @@ static int script_install_function_package (const char *pkgname,
 		pprintf(prn, "Installed %s\n", trimmed);
 	    }
 	    g_free(trimmed);
-	}	
+	}
+
+	if (!err && gfnpath != NULL) {
+	    *gfnpath = gretl_strdup(fullname);
+	}
 	
 	g_free(fullname);
     }    
@@ -9461,7 +9477,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 
     case INSTALL:
 	err = script_install_function_package(cmd->param, cmd->opt,
-					      prn, parent);
+					      prn, parent, NULL);
 	break;
 
     case NULLDATA:

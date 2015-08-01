@@ -26,11 +26,11 @@ enum {
     VIEW_FN_PKG_INFO,
     VIEW_FN_PKG_CODE,
     VIEW_FN_PKG_SAMPLE,
-    LOAD_FN_PKG,
     EDIT_FN_PKG,
     DELETE_FN_PKG,
     CALL_FN_PKG,
     MENU_ADD_FN_PKG,
+    MENU_REMOVE_FN_PKG,
     VIEW_PKG_RESOURCES,
     VIEW_PKG_DOC
 };
@@ -38,8 +38,6 @@ enum {
 void browser_open_data (GtkWidget *w, gpointer data);
 
 void browser_open_ps (GtkWidget *w, gpointer data);
-
-void browser_load_func (GtkWidget *w, gpointer data);
 
 void browser_edit_func (GtkWidget *w, gpointer data);
 
@@ -63,9 +61,17 @@ windata_t *display_function_package_data (const char *pkgname,
 					  const char *path,
 					  int role);
 
-void maybe_update_func_files_window (int code);
+void maybe_update_gfn_browser (const char *pkgname,
+			       const char *version,
+			       const char *descrip,
+			       const char *fname,
+			       int uses_subdir,
+			       int pdfdoc);
 
-void set_funcs_dir_callback (windata_t *vwin, char *path);
+void maybe_update_pkg_registry_window (const char *pkgname,
+				       int code);
+
+void set_alternate_gfn_dir (windata_t *vwin, char *path);
 
 windata_t *get_local_viewer (int remote_role);
 
