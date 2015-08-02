@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language id="gfnspec" _name="gfnspec" version="2.0" _section="Scripts">
+  <metadata>
+    <property name="mimetypes">application/x-gfn-spec</property>
+    <property name="globs">*.spec</property>
+  </metadata>
+
+  <styles>
+    <style id="comment" _name="Comment" map-to="def:comment"/>
+    <style id="string" _name="String" map-to="def:string"/>
+    <style id="keyword" _name="Keyword" map-to="def:keyword"/>
+  </styles>
+
+  <definitions>
+    <context id="line-comment" style-ref="comment" end-at-line-end="true">
+      <start>#</start>
+      <include>
+        <context ref="def:escape"/>
+        <context ref="def:line-continue"/>
+      </include>
+    </context>
+    <context id="string" style-ref="string" end-at-line-end="true">
+      <start>"</start>
+      <end>"</end>
+      <include>
+        <context ref="def:escape"/>
+        <context ref="def:line-continue"/>
+      </include>
+    </context>
+    <context id="keys" style-ref="keyword">
+      <prefix>(^|\040|\011)</prefix>
+      <suffix>(?![\w\-\.\(])</suffix>
+      <keyword>author</keyword>
+      <keyword>email</keyword>
+      <keyword>version</keyword>
+      <keyword>date</keyword>
+      <keyword>description</keyword>
+      <keyword>min-version</keyword>
+      <keyword>data-requirement</keyword>
+      <keyword>public</keyword>
+      <keyword>no-print</keyword>
+      <keyword>sample-script</keyword>
+      <keyword>help</keyword>
+      <keyword>menu-attachment</keyword>
+      <keyword>label</keyword>
+      <keyword>gui-main</keyword>
+      <keyword>gui-help</keyword>
+      <keyword>menu-only</keyword>
+      <keyword>model-requirement</keyword>
+      <keyword>gui-precheck</keyword>
+      <keyword>bundle-print</keyword>
+      <keyword>bundle-plot</keyword>
+      <keyword>bundle-test</keyword>
+      <keyword>bundle-fcast</keyword>
+      <keyword>bundle-extra</keyword>
+      <keyword>data-files</keyword>
+    </context>
+    <context id="gfnspec">
+      <include>
+        <context ref="line-comment"/>
+        <context ref="string"/>
+        <context ref="keys"/>
+      </include>
+    </context>    
+  </definitions>
+</language>
