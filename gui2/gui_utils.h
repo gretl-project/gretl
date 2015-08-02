@@ -27,7 +27,8 @@
                                 r == EDIT_OCTAVE || \
 				r == EDIT_PYTHON || \
 				r == EDIT_STATA ||  \
-				r == EDIT_X12A)
+				r == EDIT_X12A ||   \
+				r == EDIT_SPEC)
 
 #define vwin_editing_buffer(r) (r == EDIT_HEADER || \
 	                        r == EDIT_NOTES)

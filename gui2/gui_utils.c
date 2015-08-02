@@ -1650,6 +1650,8 @@ gchar *title_from_filename (const char *fname, int role, gboolean prepend)
 	    title = g_strdup(_("gretl: edit Python script"));
 	} else if (role == EDIT_STATA) {
 	    title = g_strdup(_("gretl: edit Stata program"));
+	} else if (role == EDIT_SPEC) {
+	    title = g_strdup(_("gretl: edit package spec file"));
 	} else {
 	    title = g_strdup(_("gretl: untitled"));
 	}
@@ -1725,6 +1727,7 @@ static gchar *make_viewer_title (int role, const char *fname)
     case EDIT_OCTAVE:
     case EDIT_PYTHON:
     case EDIT_STATA:
+    case EDIT_SPEC:
 	title = title_from_filename(fname, role, TRUE);
 	break;
     case EDIT_NOTES:

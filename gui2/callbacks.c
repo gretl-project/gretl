@@ -196,6 +196,7 @@ void file_save (windata_t *vwin, int ci)
     case SAVE_STATA_CMDS:
     case SAVE_DATA:
     case SAVE_DATA_AS:
+    case SAVE_SPEC_FILE:
 	file_selector(ci, FSEL_DATA_VWIN, vwin);
 	break;
     case EXPORT_CSV:

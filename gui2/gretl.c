@@ -218,6 +218,11 @@ static void edit_package_callback (GtkAction *action, gpointer p)
     file_selector(OPEN_GFN, FSEL_DATA_NONE, NULL);
 }
 
+static void edit_spec_callback (GtkAction *action, gpointer p)
+{
+    file_selector(OPEN_SPEC, FSEL_DATA_NONE, NULL);
+}
+
 static void upload_package_callback (GtkAction *action, gpointer p)
 {
     file_selector(UPLOAD_PKG, FSEL_DATA_NONE, NULL);
@@ -1562,6 +1567,7 @@ GtkActionEntry main_entries[] = {
     { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_package_callback) },
     { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_package_callback) },
     { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
+    { "EditSpec", GTK_STOCK_EDIT, N_("Edit spec file..."), NULL, NULL, G_CALLBACK(edit_spec_callback) },
     { "NistTest", NULL, N_("_NIST test suite"), NULL, NULL, NULL },
     { "NistBasic", NULL, N_("_Basic"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVerbose", NULL, N_("_Verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },

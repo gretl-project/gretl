@@ -64,6 +64,7 @@ enum extra_cmds {
     EDIT_PYTHON,
     EDIT_STATA,
     EDIT_X12A,
+    EDIT_SPEC,
     EDIT_MAX,
     CLI_HELP,
     GUI_HELP,
@@ -139,6 +140,7 @@ enum file_ops {
     OPEN_LABELS,
     OPEN_BARS,
     OPEN_GFN,
+    OPEN_SPEC,
     OPEN_ANY,
     UPLOAD_PKG,
     END_OPEN,        /* marker for end of file open section */
@@ -169,6 +171,7 @@ enum file_ops {
     SAVE_OCTAVE_CMDS,
     SAVE_PYTHON_CMDS,
     SAVE_STATA_CMDS,
+    SAVE_SPEC_FILE,
     SAVE_CONSOLE,
     SAVE_CMD_LOG,
     SAVE_FUNCTIONS,

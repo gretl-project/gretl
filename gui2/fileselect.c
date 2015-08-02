@@ -68,6 +68,7 @@ static struct extmap action_map[] = {
     { SAVE_OCTAVE_CMDS,  ".m" }, 
     { SAVE_PYTHON_CMDS,  ".py" },
     { SAVE_STATA_CMDS,   ".do" },
+    { SAVE_SPEC_FILE,    ".spec" },
     { SAVE_FUNCTIONS,    ".gfn" },
     { SAVE_MARKERS,      ".txt" },
     { SAVE_LABELS,       ".txt" },
@@ -86,6 +87,7 @@ static struct extmap action_map[] = {
     { OPEN_RATS_DB,      ".rat" },
     { OPEN_PCGIVE_DB,    ".bn7" },
     { OPEN_GFN,          ".gfn" },
+    { OPEN_SPEC,         ".spec" },
     { OPEN_BARS,         ".txt" },
     { FILE_OP_MAX,       NULL }
 };
@@ -584,6 +586,8 @@ file_selector_process_result (const char *in_fname, int action,
 	set_plotbars_filename(fname, data);
     } else if (action == OPEN_GFN) {
 	edit_function_package(fname);
+    } else if (action == OPEN_SPEC) {
+	view_script(fname, 1, EDIT_SPEC);
     } else if (action == OPEN_RATS_DB) {
 	open_rats_window(fname);
     } else if (action == OPEN_PCGIVE_DB) {

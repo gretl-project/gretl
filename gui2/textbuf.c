@@ -430,6 +430,8 @@ static void sourceview_apply_language (windata_t *vwin)
 	id = "python";
     } else if (vwin->role == EDIT_STATA) {
 	id = "stata";
+    } else if (vwin->role == EDIT_SPEC) {
+	id = "gfnspec";
     } else {
 	id = "gretl";
     }

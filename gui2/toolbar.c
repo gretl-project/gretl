@@ -102,7 +102,8 @@ enum {
     ALPHA_ITEM,
     REFRESH_ITEM,
     OPEN_ITEM,
-    SPLIT_ITEM,
+    SPLIT_H_ITEM,
+    SPLIT_V_ITEM,
     EDITOR_ITEM,
     NOTES_ITEM,
     NEW_ITEM,
@@ -241,6 +242,8 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
         u = SAVE_PYTHON_CMDS;
     } else if (vwin->role == EDIT_STATA) {
 	u = SAVE_STATA_CMDS;
+    } else if (vwin->role == EDIT_SPEC) {
+	u = SAVE_SPEC_FILE;
     } else if (vwin->role == VIEW_FILE) {
 	u = SAVE_TEXT;
     } else {
@@ -708,8 +711,8 @@ static GretlToolItem viewbar_items[] = {
     { N_("Add to dataset..."), GTK_STOCK_ADD, G_CALLBACK(add_data_callback), ADD_DATA_ITEM },
     { N_("Add as matrix..."), GTK_STOCK_ADD, G_CALLBACK(add_matrix_callback), ADD_MATRIX_ITEM },
     { N_("Stickiness..."), GRETL_STOCK_PIN, G_CALLBACK(stickiness_callback), STICKIFY_ITEM },
-    { N_("Toggle split pane"), GRETL_STOCK_SPLIT_H, G_CALLBACK(split_pane_callback), SPLIT_ITEM },
-    { N_("Toggle split pane"), GRETL_STOCK_SPLIT_V, G_CALLBACK(split_pane_callback), SPLIT_ITEM },
+    { N_("Toggle split pane"), GRETL_STOCK_SPLIT_H, G_CALLBACK(split_pane_callback), SPLIT_H_ITEM },
+    { N_("Toggle split pane"), GRETL_STOCK_SPLIT_V, G_CALLBACK(split_pane_callback), SPLIT_V_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
@@ -764,8 +767,10 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
                         r == MAHAL || r == FCAST || \
 			r == LOESS || r == NADARWAT)
 
-#define split_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT || \
-                     r == VIEW_LOG || vwin_editing_script(r))
+#define split_h_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT || \
+		       r == VIEW_LOG || vwin_editing_script(r))
+
+#define split_v_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT)
 
 #define clear_ok(r) (r == VIEW_LOG)
 
@@ -781,6 +786,15 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     GCallback func = item->func;
     int f = item->flag;
     int r = vwin->role;
+
+    if (r == EDIT_SPEC) {
+	/* This is a "special" that should maybe be regularized:
+	   a bit like editing a script, but different...
+	*/
+	if (f == NEW_ITEM || f == OPEN_ITEM || f == EXEC_ITEM) {
+	    return NULL;
+	}
+    }
 
     if (r != VIEW_LOG && f == LOG_COPY_ITEM) {
 	return NULL;
@@ -816,7 +830,9 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	} else {
 	    return NULL;
 	}
-    } else if (!split_ok(r) && f == SPLIT_ITEM) {
+    } else if (!split_h_ok(r) && f == SPLIT_H_ITEM) {
+	return NULL;
+    } else if (!split_v_ok(r) && f == SPLIT_V_ITEM) {
 	return NULL;
     } else if (!format_ok && f == FORMAT_ITEM) {
 	return NULL;
@@ -1143,7 +1159,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
 
     for (i=0; i<n_viewbar_items; i++) {
 	item = &viewbar_items[i];
-	if (item->flag == SPLIT_ITEM) {
+	if (item->flag == SPLIT_H_ITEM || item->flag == SPLIT_V_ITEM) {
 	    continue;
 	}
 	if (vwin->role == EDIT_SCRIPT) {

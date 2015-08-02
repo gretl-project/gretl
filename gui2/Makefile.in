@@ -252,6 +252,7 @@ install-lang: $(GRETL_LANG) installdirs
 	$(INSTALL_DATA) $(GRETL_LANG) $(DESTDIR)$(langdir)/gretl.lang
 	$(INSTALL_DATA) $(topsrc)/gui2/gnuplot.lang $(DESTDIR)$(langdir)/gnuplot.lang
 	$(INSTALL_DATA) $(topsrc)/gui2/stata.lang $(DESTDIR)$(langdir)/stata.lang
+	$(INSTALL_DATA) $(topsrc)/gui2/gfnspec.lang $(DESTDIR)$(langdir)/gfnspec.lang
 
 install-news: $(GRETL_NEWS) installdirs
 	$(INSTALL_DATA) $(GRETL_NEWS) $(DESTDIR)$(gretldir)
