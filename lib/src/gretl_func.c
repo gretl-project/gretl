@@ -3796,35 +3796,6 @@ static int pkg_get_special_func_id (fnpkg *pkg, int role)
     return -1;
 }
 
-static int pkg_get_func_privacy (fnpkg *pkg, int role)
-{
-    int i;
-
-    if (role == UFUN_GUI_MAIN) {
-	if (pkg->mpath != NULL && strstr(pkg->mpath, "MODELWIN")) {
-	    /* An interface designed to be called from a model-
-	       window menu is in a sense "private"; it's
-	       expecting special set-up.
-	    */
-	    return 1;
-	}
-    }
-
-    for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == role) {
-	    if (function_is_private(ufuns[i])) {
-		return 1;
-	    } else if (function_is_menu_only(ufuns[i])) {
-		return 1;
-	    } else {
-		return 0;
-	    }
-	}
-    }	    
-
-    return -1;
-}
-
 static void handle_optional_string (char **ps, const char *src)
 {
     if (src == NULL) {
@@ -3945,9 +3916,6 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "gui-main-id")) {
 	    pi = (int *) ptr;
 	    *pi = pkg_get_special_func_id(pkg, UFUN_GUI_MAIN);
-	} else if (!strcmp(key, "gui-main-priv")) {
-	    pi = (int *) ptr;
-	    *pi = pkg_get_func_privacy(pkg, UFUN_GUI_MAIN);
 	} else if (!strcmp(key, BUNDLE_PRINT)) {
 	    ps = (char **) ptr;
 	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_PRINT);
@@ -7943,27 +7911,28 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
     int i;
 
     if (markup) {
-	pprintf(prn, "<@itl=\"%s\">\n\n", fun->name);
+	pprintf(prn, "<@itl=\"Function\">: %s\n", fun->name);
     } else {
-	pprintf(prn, "%s\n\n", fun->name);
+	pprintf(prn, "Function: %s\n", fun->name);
     }
 
     if (pkg != NULL) {
 	if (markup) {
+	    pprintf(prn, "<@itl=\"Package\">: %s %s (%s)\n", pkg->name, pkg->version,
+		    pkg->date);
 	    pprintf(prn, "<@itl=\"Author\">: %s\n", pkg->author? pkg->author : "unknown");
 	    if (pkg->email != NULL && *pkg->email != '\0') {
 		pprintf(prn, "<@itl=\"Email\">: %s\n", pkg->email);
 	    }
-	    pprintf(prn, "<@itl=\"Version\">: %s (%s)\n\n", pkg->version? pkg->version : "unknown",
-		    pkg->date? pkg->date : "unknown");
 	} else {
+	    pprintf(prn, "Package: %s %s (%s)\n", pkg->name, pkg->version,
+		    pkg->date);
 	    pprintf(prn, "Author: %s\n", pkg->author? pkg->author : "unknown");
 	    if (pkg->email != NULL && *pkg->email != '\0') {
 		pprintf(prn, "Email:  %s\n", pkg->email);
 	    }
-	    pprintf(prn, "Version: %s (%s)\n\n", pkg->version? pkg->version : "unknown",
-		    pkg->date? pkg->date : "unknown");
 	}
+	pputc(prn, '\n');
     }
 
     if ((opt & OPT_G) && pkg != NULL && pkg->gui_help != NULL) {
