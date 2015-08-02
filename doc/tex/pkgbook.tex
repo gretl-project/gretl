@@ -459,19 +459,44 @@ If you have a suitable dataset in place you will get a dialog box to
 specify arguments to the function, much as you would with a built-in
 gretl procedure. (However, if the package offers more than one public
 interface you may get an initial dialog asking you to choose a
-particular function to call.)
+particular function to call.) If the package's data requirement is not
+met, you'll be told what's wrong and asked if you'd like to run the
+sample script. This should load suitable data and ``demo'' the
+package.\footnote{By the way, if a package's sample script does not
+  run correctly you are encouraged to report that to the author of the
+  package or the \texttt{gretl-users} mailing list. Although gretl
+  function packages carry no warranty it is supposed to be an absolute
+  requirement that the sample script runs OK.}
 
-If the package's data requirement is not met, you'll be told what's
-wrong and asked if you'd like to run the sample script. This should
-load suitable data and ``demo'' the package.\footnote{By the way, if a
-  package's sample script does not run correctly you are encouraged
-  to report that to the author of the package or the
-  \texttt{gretl-users} mailing list. Although gretl function packages
-  carry no warranty it is supposed to be an absolute requirement that
-  the sample script runs OK.}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/ghegy-call}
+  \caption{GUI call to the \textsf{GHegy} packge}
+  \label{fig:ghegy-call}
+\end{figure}
 
-[FIXME should provide an illustration of a GUI function call here;
-maybe continue with the GHegy theme?]
+Figure~\ref{fig:ghegy-call} illustrates a function-call dialog, this
+one put up by the \textsf{GHegy} package. Each argument to the
+function is represented by either a drop-down selector or a check
+box. Note that the ``\textsf{+}'' button next to a selector allows you
+to define a new variable as an argument if you
+wish. Figure~\ref{fig:ghegy-output} then shows part of the output from
+this call.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/ghegy-output}
+  \caption{Output window from call to \textsf{GHegy}}
+  \label{fig:ghegy-output}
+\end{figure}
+
+We have moved the mouse pointer over the ``bundle'' icon in the
+toolbar of this window ro reveal the tooltip, ``Save bundle content.''
+What's going on here is that \textsf{GHegy} has constructed a gretl
+bundle containing various details of the unit root test, and we can
+extract these details if we wish. Package authors: for an account of
+how to do this sort of thing see section~\ref{sec:idioms}.
+
 
 \section{Some finer points}
 \label{sec:finer}
@@ -969,24 +994,36 @@ probably don't make sense for cross-sectional data (which in most
 cases can be ordered any old how, arbitrarily), so you might pull down
 the list of options and select ``Time-series data.''
 
-Clicking the \textsf{Save} button in this window brings up a little
-menu. For the present, it's just the first item, \textsf{Save gfn},
-that's relevant. Selecting this item takes you to a File Save
-dialog---unless there's something missing from your package
-specification (e.g.\ no help text), in which case you'll get a nag
-box!
+Clicking the \textsf{Save} button in the package editor window brings
+up a little menu. For the present, it's just the first item,
+\textsf{Save gfn}, that's relevant. If there's something missing from
+your package specification at this point (e.g.\ no help text), you'll
+get a nag box when you select this item. Otherwise you'll see a dialog
+where you get to choose whether to save the \textsf{gfn} file to an
+``installed'' location (see section~\ref{sec:installed}) or in some
+other place; you are also prompted for a name for the package
+(Figure~\ref{fig:gfnsave}). The package-name entry box will offer the
+names of any suitable public functions as candidates (here \textsf{pc}
+is the default). But you can type in some other name, and recall that
+in our example the package should be called \textsf{pcchange} for
+consistency with the sample script.
 
-When File Save comes up, you want to remember that for consistency
-with your sample script, the package file should be called
-\texttt{pcchange.gfn}. Also, you need to pay attention to where the
-dialog is ``pointing.'' By default, it will reference a directory
-named \texttt{functions}, either under the gretl system directory (if
-you have write permission on that) or the gretl user directory.  This
-is the recommended place to save function package files, since it's
-where the program will look in the special routine for opening such
-files (see section~\ref{sec:installed}). However, if you're just
-experimenting and don't want to ``install'' the package yet, you can
-choose a different location.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.6]{figures/gfnsave}
+  \caption{Where do you want your new package to go?}
+  \label{fig:gfnsave}
+\end{figure}
+
+If you select the first option you will get feedback on where the gfn
+file was actually written;\footnote{Technical note: this option will
+  take care of saving the \textsf{gfn} to a named subdirectory of the
+  relevant \texttt{functions} directory, if the specification includes
+  PDF documentation or other additional files.} if you select the
+second you'll get a regular File Save dialog box. The advantage of the
+first choice is that the package will be found automatically by gretl.
+However, if you're just experimenting and don't want to ``install''
+the package yet, by all means choose a different location.
 
 \subsection{Check your package!}
 
@@ -1681,7 +1718,8 @@ use via the gretl GUI and whether or not the main public function(s)
 return a gretl bundle.
 
 Elements in the first block below are all represented in the upper
-panel of the GUI package editor window.
+panel of the GUI package editor window (see
+Figure~\ref{fig:package_editor}).
 
 \begin{description}
 
@@ -1769,8 +1807,13 @@ in various ways, as described below.
 
   \vbusage{} \verb|help = lp-mfx_help.txt|
 
-  GUI: The help text is found in the lower panel of the main
-  package editor window.
+  GUI: The help text is found in the lower panel of the main package
+  editor window. To specify PDF documentation you put a special entry
+  into this panel, on the pattern
+
+  \texttt{pdfdoc:mypkg.pdf}
+
+  where \texttt{mypkg} should be replaced by the actual package name.
 
 \end{description}
 
@@ -1780,8 +1823,8 @@ in various ways, as described below.
 The elements described in this section are applicable only if at least
 one function in the package is designed to be called via gretl's
 graphical interface. In the GUI package editor these elements are
-shown in the window that appears on clicking the \textsf{Extra
-  properties} button.
+shown in one or other tab of the the window that appears on clicking
+the \textsf{Extra properties} button.
 
 \begin{description}
 
