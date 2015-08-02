@@ -1994,26 +1994,25 @@ static void maybe_set_gui_interface (call_info *cinfo,
 	/* a single interface: take as implicit gui-main */
 	fid = cinfo->publist[1];
     } else {
-	int priv = -1;
-	
+	/* let's see if we have a designated gui-main */
 	function_package_get_properties(cinfo->pkg, 
 					"gui-main-id", &fid,
-					"gui-main-priv", &priv,
 					NULL);
-	if (fid >= 0 && from_browser && priv) {
-	    /* We found gui-main -- bur we're coming
-	       from the package browser and this function
-	       is masked out (for use on menus only).
-	    */	    
-	    fid = -1;
+	if (fid >= 0 && from_browser) {
+	    const ufunc *u = get_user_function_by_index(fid);
+
+	    if (user_func_is_menu_only(u)) {
+		/* We found gui-main -- but we're coming
+		   from the package browser and this function
+		   is masked out (for use on menus only).
+		*/	    
+		fid = -1;
+	    }
 	}
     }
 
     if (fid >= 0) {
-	/* We found gui-main -- and if we're coming
-	   from the package browser, it's not masked
-	   by being designated as "private".
-	*/
+	/* we found a usable gui-main */
 	gchar *name = NULL, *label = NULL;
 	
 	cinfo->iface = fid;

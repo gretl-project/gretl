@@ -3582,14 +3582,23 @@ static int check_package_filename (const char *fname,
 static int pkg_save_special_functions (function_info *finfo)
 {
     const char *key;
-    int i, err = 0;
+    int i, role, err = 0;
 
     for (i=0; i<N_SPECIALS && !err; i++) {
-	key = package_role_get_key(i+1);
+	role = i + 1;
+	key = package_role_get_key(role);
 	err = function_set_package_role(finfo->specials[i], 
 					finfo->pkg,
 					key,
 					NULL);
+	if (!err && role == UFUN_GUI_MAIN) {
+	    /* ensure that the gui-main for a model-window
+	       package is set as menu-only */
+	    if (finfo->menupath != NULL &&
+		strstr(finfo->menupath, "MODELWIN")) {
+		finfo->gui_attrs[i] |= UFUN_MENU_ONLY;
+	    }
+	}
     }
 
     return err;
