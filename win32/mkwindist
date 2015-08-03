@@ -200,10 +200,10 @@ done
 
 # data files for gtksourceview
 mkdir -p windist/gretl/gtksourceview
-add_file gretl.lang \
-  gretl/gtksourceview/gretl.lang
+add_file gretl.lang gretl/gtksourceview/gretl.lang
 add_file ${TOPDIR}/gui2/gnuplot.lang gretl/gtksourceview/gnuplot.lang
 add_file ${TOPDIR}/gui2/stata.lang gretl/gtksourceview/stata.lang
+add_file ${TOPDIR}/gui2/gfnspec.lang gretl/gtksourceview/gfnspec.lang
 add_file ${SYSSV}/language-specs/R.lang gretl/gtksourceview/R.lang
 add_file ${SYSSV}/language-specs/cpp.lang gretl/gtksourceview/cpp.lang
 add_file ${SYSSV}/language-specs/octave.lang gretl/gtksourceview/octave.lang
