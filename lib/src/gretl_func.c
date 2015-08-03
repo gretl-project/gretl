@@ -3690,7 +3690,7 @@ int function_package_set_properties (fnpkg *pkg, ...)
 		}
 	    }
 	} else if (!strcmp(key, "gui-attrs")) {
-	    const unsigned char *np = va_arg(ap, const char *);
+	    const unsigned char *np = va_arg(ap, const unsigned char *);
 
 	    pkg_set_gui_attrs(pkg, np);
 	} else {
