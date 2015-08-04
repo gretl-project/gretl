@@ -101,18 +101,16 @@ hypothesis tests or other analytical procedures to gretl's repertoire
 of built-in procedures. While function packages may also be used for
 other purposes (e.g.\ pedagogy, replication exercises), those made
 available via the gretl server are expected to extend gretl's
-functionality in non-trivial ways.
-
-For an extended discussion of the rationale for such packages see
-``Extending gretl: addons and bundles'' \citep{addons-bundles}. Note,
-however, that the distinction between regular packages and ``addons''
-in that document has become somewhat blurred, as regular packages have
-gradually acquired many of the rights and responsibilities previously
-confined to official gretl ``addons''. On the rights side, regular
-packages are now able to hook into the gretl GUI; on the
-responsibilities side, contributed packages are now subject to
-(minimal) vetting before they can appear in the public download area
-on the gretl server.
+functionality in non-trivial ways.\footnote{For an extended discussion
+  of the rationale for such packages see ``Extending gretl: addons and
+  bundles'' \citep{addons-bundles}. Note, however, that the
+  distinction between regular packages and ``addons'' in that document
+  has become somewhat blurred, as regular packages have gradually
+  acquired many of the rights and responsibilities previously confined
+  to official gretl ``addons''.} On the rights side, regular packages
+are now able to hook into the gretl GUI; on the responsibilities side,
+contributed packages are now subject to (minimal) vetting before they
+can appear in the public download area on the gretl server.
   
 \section{The form of function packages}
 \label{sec:pkgform}
@@ -164,7 +162,7 @@ Chapter~\ref{chap:users} gives an account of function packages from
 the user's point of view. Even those who are familiar with packages
 might want to take a look, since there are some finer points that
 might not be totally evident. Moreover, there are several changes
-and enhancements in recent gretl.
+and enhancements in recent gretl versions.
 
 Chapter~\ref{chap:authors} gives a walk-through of the means of
 creating, refining and publishing function packages, both via
@@ -221,9 +219,10 @@ package''), a short ``description'' field is provided. \textbf{JEL
 \subsection{Installing a package via the GUI}
 
 We'll use as an example Ignacio D\'iaz-Emparanza's \textsf{GHegy}
-package.  Suppose you've read Ignacio's excellent paper
-\citep{Ignacio-HEGY} and you'd like to use his results. You were
-told a gretl package is available. Here's what you do.
+package.  Suppose you've read Ignacio's excellent paper on seasonal
+unit-root tests \citep{Ignacio-HEGY} and you'd like to use his
+results. You were told a gretl package is available. Here's what you
+do.
 
 Open gretl, and select ``Tools, Function packages, On server''. Since
 the package deals with seasonal unit roots, you'll probably want to
@@ -342,6 +341,25 @@ each available package, either ``Up to date,'' ``Not installed'' or
 or scroll to the right in order to see this column.) It's a good idea
 to visit this listing from time to time; if an installed package is
 marked as not up to date, just click the Install button to update it.
+
+\subsection{Uninstalling a package}
+
+This is also something for which the GUI provides an easy and
+intuitive way of getting the job done. From the list of
+locally-installed packages (choose ``Tools, Function packages, On
+local machine,'' from the main menu, or simply go for the
+``\textit{fx}'' button on the toolbar), select the package you want to
+get rid of and click on the ``Unload/delete'' icon, or right-click to
+the same effect.
+
+You will be presented the choice as to (a) just unload the package or
+(b) remove it from your system. The former might be useful during an
+interactive session in which you want to clear up all the functions you have
+in memory and start from scratch with no possible confusion between
+functions you have written and those provided by a package. The latter
+is of course more radical, and requires you to re-install the package
+if you change your mind.
+
 
 \section{Using function packages: the basics}
 
