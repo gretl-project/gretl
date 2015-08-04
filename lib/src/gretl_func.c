@@ -39,6 +39,10 @@
 #include <errno.h>
 #include <glib.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #define LOOPSAVE 0
 #define LSDEBUG 0
 
@@ -3057,15 +3061,38 @@ static void function_package_set_auxfile (fnpkg *pkg,
 
 /* Having assembled and checked the function-listing for a new
    package, now retrieve the additional information from the
-   spec file.
+   spec file (named by @fname, opened as @fp).
 */
 
-static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
+static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
+				       FILE *fp, gretlopt opt,
+				       PRN *prn)
 {
+    const char *okstr, *failed;
     char *p, line[1024];
     gchar *tmp;
+    int dfd = -1;
     int got = 0;
     int err = 0;
+
+    if (opt & OPT_G) {
+	/* GUI use */
+	okstr = "<@ok>\n";
+	failed = "<@fail>\n";
+    } else {
+	okstr = "OK\n";
+	failed = "failed\n";
+    }
+
+    if (strrchr(fname, SLASH) != NULL) {
+	char dirname[FILENAME_MAX];
+
+	strcpy(dirname, fname);
+	p = strrchr(dirname, SLASH);
+	*p = '\0';
+	dfd = gretl_open(".", O_RDONLY);
+	err = gretl_chdir(dirname);
+    }
 
     while (fgets(line, sizeof line, fp) && !err) {
 	if (*line == '#' || string_is_blank(line)) {
@@ -3104,8 +3131,13 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		    tmp = g_strdup_printf("pdfdoc:%s", p);
 		    pdfdoc = 1;
 		} else {
-		    pprintf(prn, "Looking for help text in %s\n", p);
+		    pprintf(prn, "Looking for help text in %s... ", p);
 		    tmp = pkg_aux_content(p, &err);
+		    if (err) {
+			pputs(prn, failed);
+		    } else {
+			pputs(prn, okstr);
+		    }
 		}
 		if (!err) {
 		    err = function_package_set_properties(pkg, "help", tmp, NULL);
@@ -3118,9 +3150,12 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		    g_free(tmp);
 		}
 	    } else if (!strncmp(line, "gui-help", 8)) {
-		pprintf(prn, "Looking for GUI help text in %s\n", p);
+		pprintf(prn, "Looking for GUI help text in %s... ", p);
 		tmp = pkg_aux_content(p, &err);
-		if (!err) {
+		if (err) {
+		    pputs(prn, failed);
+		} else {
+		    pputs(prn, okstr);
 		    err = function_package_set_properties(pkg, "gui-help", tmp, NULL);
 		    if (!err) {
 			function_package_set_auxfile(pkg, "gui-help-fname", p);
@@ -3128,9 +3163,12 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		    g_free(tmp);
 		}
 	    } else if (!strncmp(line, "sample-script", 13)) {
-		pprintf(prn, "Looking for sample script in %s\n", p);
+		pprintf(prn, "Looking for sample script in %s... ", p);
 		tmp = pkg_aux_content(p, &err);
-		if (!err) {
+		if (err) {
+		    pputs(prn, failed);
+		} else {
+		    pputs(prn, okstr);
 		    err = function_package_set_properties(pkg, "sample-script", tmp, NULL);
 		    if (!err) {
 			got++;
@@ -3163,13 +3201,18 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		    if (!strncmp(line, key, strlen(key))) {
 			err = function_set_package_role(p, pkg, key, prn);
 			if (!err) {
-			    pprintf(prn, "%s function is %s, OK\n", key, p);
+			    pprintf(prn, "%s function is %s, %s", key, p, okstr);
 			}
 			break;
 		    }
 		}
 	    }
 	}
+    }
+
+    if (dfd >= 0) {
+	/* go back where we came from */
+	gretl_fchdir(dfd);
     }
 
     if (!err && got < 7) {
@@ -3180,11 +3223,11 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
     return err;
 }
 
-static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
-				      int *err)
+static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
+				      PRN *prn, int *err)
 {
     fnpkg *pkg = NULL;
-    char *p, fname[FILENAME_MAX];
+    char fname[FILENAME_MAX];
     char line[4096], cont[1024];
     FILE *fp;
 
@@ -3194,10 +3237,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
 	return NULL;
     }
 
-    strcpy(fname, gfnname);
-    p = strrchr(fname, '.');
-    strcpy(p, ".spec");
-
+    switch_ext(fname, gfnname, "spec");
     fp = gretl_fopen(fname, "r");
 
     if (fp == NULL) {
@@ -3284,7 +3324,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
 
 	if (!*err) {
 	    rewind(fp);
-	    *err = new_package_info_from_spec(pkg, fp, prn);
+	    *err = new_package_info_from_spec(pkg, fname, fp, opt, prn);
 	}
 
 	if (*err && pkg != NULL) {
@@ -3485,7 +3525,7 @@ int create_and_write_function_package (const char *fname,
 	gretl_errmsg_set(_("No functions are available for packaging at present."));
 	err = E_DATA;
     } else if (build_gfn) {
-	pkg = new_pkg_from_spec_file(gfnname, prn, &err);
+	pkg = new_pkg_from_spec_file(gfnname, opt, prn, &err);
 	if (pkg != NULL) {
 	    err = function_package_write_file(pkg);
 	    if (!err) {
