@@ -714,22 +714,50 @@ that as the default selection on using the directory button.
 \chapter{For package authors}
 \label{chap:authors}
 
+A function package is, as you probably know already, an XML file with
+extension \texttt{gfn}, which
+contains four separate items:
+\begin{enumerate}
+\item One or more hansl functions;
+\item the package metadata (author, version and so on);
+\item some documentation (at least a few lines of text);
+\item an example script.
+\end{enumerate}
+These are the four vital elements of a function package, which are all
+contained in the \texttt{gfn} file. Then, optionally, you can ship
+additional material with your package, such as PDF documentation, a
+richer assortment of sample script, and so forth. In this case, you
+will want to wrap these into a zipfile, together with the package file
+proper. 
+
 This chapter explains how to build a gretl function packages using
 either command-line methods (section~\ref{sec:cli-build}) or gretl's
-graphical interface
-(\ref{sec:gui-build}). Section~\ref{sec:common-req} covers some common
-requirements that are important regardless of how the package is
-built.
+graphical interface. 
+
+A word of advice: ``In the beginning was the command line'' (Neal
+Stephenson), so we'll start with CLI methods for building a
+package. Even if you prefer to use a graphical interface whenever
+possible, we recommend that you at least skim this section before
+skipping forward.  The command-line approach is likely to pay off if
+you ever decide to tackle an ambitious function-package project. This
+is going to be somewhat Unix-centric, so Linux and OSX users should
+find themselves at home. If your preferred operating is Windows, a few
+tips on the necessary software tools are given in a short appendix to
+this chapter.
+
+% (\ref{sec:gui-build}). Section~\ref{sec:common-req} covers some common
+% requirements that are important regardless of how the package is
+% built.
 
 \section{Building a package via the command line}
 \label{sec:cli-build}
 
-``In the beginning was the command line'' (Neal Stephenson), so we'll
-start with CLI methods for building a package. Even if you prefer to
-use a graphical interface whenever possible, we recommend that you at
-least skim this section before skipping forward.  The command-line
-approach is likely to pay off if you ever decide to tackle an
-ambitious function-package project.
+Here, we assume you have a decent familiarity with the shell (often
+called the ``terminal'') and its basic commands. So we assume you know
+how to perform simple operating-system tasks, such as copying/deleting
+files, listing the contents of a directory and so on via the
+appropriate shell commands (\cmd{cp}, \cmd{rm}, \cmd{ls}, \cmd{cd},
+etcetera).
 
 First of all, we strongly recommend that when starting work on a
 package you create a specific directory to hold the makings of the
@@ -747,7 +775,7 @@ cd mypkg
 Now, the minimum requirement for building your package (as a ``simple
 package'' or stand-alone \textsf{gfn} file) is the following set of
 files:
-\begin{itemize}
+\begin{enumerate}
 \item At least one (for now, let's just say one) hansl \textsf{inp}
   file containing definitions of the functions you wish to
   package. Let's call this \texttt{mypkg.inp}.
@@ -757,7 +785,15 @@ files:
   package; call this \texttt{mypkg\_sample.inp}.
 \item A plain text file containing help on the packaged function(s);
   call this \texttt{mypkg\_help.txt}.
-\end{itemize}
+\end{enumerate}
+
+Note: the four files listed above are all text files that you can view
+and modify by using any editor of your choice. Moreover, there is a
+one-to-one correspondence between any of them and the four basic
+constituents of a \texttt{gfn} file. Therefore, once you have these
+four files ready, building the package is a simple matter of
+translating their contents to XML and putting everything together into
+the package file.
 
 You will need to create such files in the current directory (or maybe
 copy or move them from elsewhere if you've already made a start). It's
@@ -831,9 +867,15 @@ mark them as private.\footnote{To be quite explicit, the
   file. When using \texttt{makepkg} you should always start with a
   clean workspace and load only the relevant functions.}
 
+\subsection{Using a Makefile}
+
 If you're working on a platform that supports the \app{make} utility,
-you might find a Makefile helpful. Example~\ref{ex:make1} shows a very
-simple instance, though it does illustrate a small refinement.
+you might find a Makefile helpful. It is not obligatory to use a
+makefile, but especially if your project is large, it can make your
+life definitely easier.
+
+Example~\ref{ex:make1} shows a very simple instance, though it does
+illustrate a small refinement.
 
 \begin{script}[htbp]
   \caption{Makefile for simple package}
@@ -1703,6 +1745,22 @@ cross-over between the two. Avoid reverting any changes made by
 package admins to fix breakage in prior versions (tho' maybe that
 should never happen?).
 
+\section*{Appendix A - The CLI for Windows users}
+\addcontentsline{toc}{section}{Appendix A - The CLI for Windows users}
+
+\begin{itemize}
+\item Choice of shell: native (CMD.EXE) or some bash flavor. Pros of
+  native: no need to install anything but commands may be a bit different
+  (mkdir $\to$ md).
+\item With older gretl versions, you may have to fiddle with the PATH
+  environment variable (advice: upgrade)
+\item CygWin may be a nice idea: you get bash plus all sorts of extra
+  goodies, including \cmd{make}.
+\end{itemize}
+
+Using \cmd{gretlcli} under bash is a very nice way of exploiting
+certain gretl features (output redirection, environment variables etc)
+and may be quite useful in it own right.
 
 \chapter{Package specification details}
 \label{chap:specfile}
