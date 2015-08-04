@@ -727,9 +727,11 @@ documentation, a richer assortment of sample scripts, and so forth),
 in which case all the components including the \textsf{gfn} must be
 wrapped in a zip file.
 
-This chapter explains how to build a gretl function package using
-either command-line methods (section~\ref{sec:cli-build}) or gretl's
-graphical interface. 
+In this chapter, we will go through the creation and maintenance of
+these basic ingredients, plus the process of baking them together into
+a working function package. There are two ways to achieve this result:
+by using either command-line methods (section~\ref{sec:cli-build}) or
+by taking advantage of gretl's graphical interface.
 
 A word of advice: ``In the beginning was the command line'' (Neal
 Stephenson), so we'll start with CLI methods for building a
@@ -848,6 +850,11 @@ using the \cmd{makepkg} command.
 include mypkg.inp
 makepkg mypkg.gfn
 \end{code}
+You can further abbreviate the above by using the ``short'' syntax for
+options, as in 
+\begin{code}
+gretlcli -m mypkg.inp
+\end{code}
 
 We've said this package offers a single public function,
 \texttt{myfunc}: that's the only function that will be made directly
@@ -863,12 +870,119 @@ mark them as private.\footnote{To be quite explicit, the
   file. When using \texttt{makepkg} you should always start with a
   clean workspace and load only the relevant functions.}
 
+\subsection{Adding extra material}
+
+OK, so you now know how to use the CLI for putting together a
+\textsf{gfn} file. What if you want to distribute it together with
+some extra material (say, a data file)?
+
+The first thing is updating the \texttt{spec} file to that effect:
+therefore, you'll want to add a line like
+\begin{code}
+data-files = somedata.gdt
+\end{code}
+to it. We assume that the \texttt{somedata.gdt} file exists and is in the
+\texttt{mypkg} directory.
+
+A possible way is to do this ``by hand'': 
+\begin{code}
+cd ..
+zip mypkg/mypkg.zip mypkg/ mypkg/mypkg.gfn mypkg/somedata.gdt  
+\end{code}
+
+Alternatively, you can have gretl take care of everything for you, by
+by using the \cmd{makepkg} command: you can start \app{gretlcli} and
+issue the following command:
+%
+\begin{code}
+makepkg mypkg.zip
+\end{code}
+%
+When the argument to \cmd{makepkg} is a filename with the \textsf{zip}
+extension, gretl will do one of two things:
+\begin{itemize}
+\item If a matching \textsf{gfn} file is found, this will be used the
+  as the basis for the zipfile, with other components pulled in as
+  needed.
+\item Failing that, if a matching \textsf{spec} file is found (plus
+  the other files that it references), gretl will first build the
+  \textsf{gfn}, then build the zipfile wrapper.
+\end{itemize}
+
+An even neater way to do this is to ``pipe'' the above comand into
+\app{gretlcli} directly form the command line, as in
+\begin{code}
+echo "makepkg mypkg.zip" | gretlcli -q -b
+\end{code}
+
+\subsection{Uploading your package}
+
+This relies on the \app{curl} program, which is standard kit on
+platforms other than MS Windows.\footnote{For a Windows version of
+  \textsf{curl} see \url{http://curl.haxx.se/download.html}. But if
+  you decide to endow your Windows box with a few Unixy tools using
+  the approach described in Appendix A, \app{curl} is just one of the
+  many goodies you get nearly automatically.}
+Example~\ref{ex:curl-upload} shows two shell scripts, the first
+suitable for uploading a stand-alone gfn package and the second for
+uploading a zip package. The first three lines of each would, of
+course, have to be filled out appropriately for your case.
+
+\begin{script}[htbp]
+  \centering
+  \caption{Shell scripts for uploading packages}
+  \label{ex:curl-upload}
+\begin{scode}
+# (1) simple gfn file variant
+user=your_gretl_login
+password=your_gretl_password
+pkg=/path/to/your_package.gfn
+
+savename=`basename $pkg`
+curl -F login="${user}" -F pass="${password}" \
+-F "pkg=@${pkg};filename=${savename};type=text/plain;charset=utf-8" \
+http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
+
+
+# (2) zip file variant
+user=your_gretl_login
+password=your_gretl_password
+pkg=/path/to/your_package.zip
+
+bytes=`stat $pkg --printf="%s"`
+savename=`basename $pkg`
+echo "Uploading $pkg ($bytes bytes) as $savename ..."
+
+curl -F login="${user}" -F pass="${password}" -F datasize="${bytes}" \
+-F "pkg=@${pkg};filename=${savename};type=application/x-zip-compressed" \
+http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
+\end{scode}
+\end{script}
+%$
+
+
+
 \subsection{Using a Makefile}
 
 If you're working on a platform that supports the \app{make} utility,
 you might find a Makefile helpful. It is not obligatory to use a
 makefile, but especially if your project is large, it can definitely
 make your life easier.
+
+The \app{make} utility is a program that gives you a consistent
+interface for performing complex tasks. Its usefulness is particularly
+evident when there is some dependency structure between the tasks you
+want to perform. For example, when building a large software project,
+there is a series of operations that must be performed in a certain
+order (compiling, linking, installing); or, as another example, when
+you have a large \LaTeX{} document you have to compile it first, then
+run Bib\TeX{}, then compile it again, etcetera.  The \app{make}
+utility is excellent at automating such tasks.
+
+The \app{make} utility needs a file, normally called
+\texttt{Makefile}, which is basically a sequence of rules which tell
+\app{make} ``what to do when''.\footnote{A complete tutorial on
+  \app{make} can be found at \url{http://www.gnu.org/software/make/manual/make.html}.}
 
 Example~\ref{ex:make1} shows a very simple instance, though it does
 illustrate a small refinement.
@@ -882,27 +996,44 @@ PKG = mypkg
 $(PKG).gfn: $(PKG).inp $(PKG).spec $(PKG)_help.txt $(PKG)_sample.inp
 	gretlcli --makepkg $(PKG).inp
 
-install: $(PKG)_install.inp $(PKG).gfn
-        gretlcli --batch $<
+install: $(PKG).gfn
+	echo "install $(PKG).gfn --local" | gretlcli -q > /dev/null
 
+zip: $(PKG).gfn
+	echo "makepkg $(PKG).zip" | gretlcli -q > /dev/null
 clean: 
 	rm -f $(PKG).gfn
 \end{code}
+
+% USED TO BE:
+% install: $(PKG)_install.inp $(PKG).gfn
+%         gretlcli --batch $<
 \end{script}
 %$
+
+Warning: if you just copy and paste the example above into a text
+file, chances are it will not work. The \app{make} program can be
+quite fussy about the structure of the Makefile, particularly about
+the use of tabs vs spaces. Consult the \app{make} documentation for
+more details.
 
 Running ``\texttt{make}'' in your project directory will rebuild
 \texttt{mypkg.gfn} if and only any of the source files have changed
 since the \textsf{gfn} was last produced; running ``\texttt{make
   clean}'' will delete the \textsf{gfn}. Here's the refinement:
 running ``\texttt{make install}'' will install the package (after
-rebuilding it, if required), provided the additional file
-\texttt{mypkg\_install.inp} is present. Its content should just be a
-one-liner:
-%
-\begin{code}
-install mypkg.gfn --local
-\end{code}
+rebuilding it, if required).% , provided the additional file
+% \texttt{mypkg\_install.inp} is present. Its content should just be a
+% one-liner:
+% %
+% \begin{code}
+% install mypkg.gfn --local
+% \end{code}
+
+If you run \verb|make zip|, instead, the Makefile will first check
+that the \textsf{gfn} file exists; if it does, it will invoke
+\app{gretlcli} in such a way that the zip file will be generated with
+all the necessary extra files.
 
 [FIXME go over a proper example]
 
@@ -1646,79 +1777,6 @@ documentation or additional files, you must build the zip file
 yourself and select that for upload, not the plain \textsf{gfn} file.
 [FIXME: automate this?]
 
-We'll get to the independent upload method in a moment, but first a
-word on building a zip package yourself, in case that is required.
-
-An easy way of doing this is by using the \cmd{makepkg} command in the
-gretl console or in \app{gretlcli}, as in
-%
-\begin{code}
-makepkg mypkg.zip
-\end{code}
-%
-When the argument to \cmd{makepkg} is a filename with the \textsf{zip}
-extension, gretl will do one of two things:
-\begin{itemize}
-\item If a matching \textsf{gfn} file is found, this will be used the
-  as the basis for the zipfile, with other components pulled in as
-  needed.
-\item Failing that, if a matching \textsf{spec} file is found (plus
-  the other files that it references), gretl will first build the
-  \textsf{gfn}, then build the zipfile wrapper.
-\end{itemize}
-
-Alternatively you can use the command-line \app{zip} program to do the
-job by hand, as in
-%
-\begin{code}
-zip -r mypkg.zip mypkg
-\end{code}
-%
-where we assume that \texttt{mypkg} is a subdirectory of the current
-working directory containing everything that's needed for the package,
-laid out as described in chapter~\ref{chap:zipfile}. 
-
-\textit{Independent upload method}: This relies on the \app{curl}
-program, which is standard kit on platforms other than MS
-Windows.\footnote{For a Windows version of \textsf{curl} see
-  \url{http://curl.haxx.se/download.html}.}
-Example~\ref{ex:curl-upload} shows two shell scripts, the first
-suitable for uploading a stand-alone gfn package and the second for
-uploading a zip package. The first three lines of each would, of
-course, have to be filled out appropriately for your case.
-
-\begin{script}[htbp]
-  \centering
-  \caption{Shell scripts for uploading packages}
-  \label{ex:curl-upload}
-\begin{scode}
-# (1) simple gfn file variant
-user=your_gretl_login
-password=your_gretl_password
-pkg=/path/to/your_package.gfn
-
-savename=`basename $pkg`
-curl -F login="${user}" -F pass="${password}" \
--F "pkg=@${pkg};filename=${savename};type=text/plain;charset=utf-8" \
-http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
-
-
-# (2) zip file variant
-user=your_gretl_login
-password=your_gretl_password
-pkg=/path/to/your_package.zip
-
-bytes=`stat $pkg --printf="%s"`
-savename=`basename $pkg`
-echo "Uploading $pkg ($bytes bytes) as $savename ..."
-
-curl -F login="${user}" -F pass="${password}" -F datasize="${bytes}" \
--F "pkg=@${pkg};filename=${savename};type=application/x-zip-compressed" \
-http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
-\end{scode}
-\end{script}
-%$
-
 \subsection{Staging}
 
 When your package is successfully uploaded, it first goes into a
@@ -1759,7 +1817,7 @@ should never happen?).
 \item With older gretl versions, you may have to fiddle with the PATH
   environment variable (advice: upgrade)
 \item CygWin may be a nice idea: you get bash plus all sorts of extra
-  goodies, including \cmd{make}.
+  goodies, including \cmd{make} and \cmd{curl}.
 \end{itemize}
 
 Using \cmd{gretlcli} under bash is a very nice way of exploiting
