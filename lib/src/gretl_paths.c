@@ -446,6 +446,37 @@ FILE *gretl_fopen_with_recode (const char *fname, const char *mode,
     return fp;
 }
 
+#ifdef WIN32
+
+static int win32_open_fchdir (int fd)
+{
+    static char savedir[FILENAME_MAX];
+    int ret = 0;
+
+    if (fd == 0) {
+	/* call to record current directory */
+	if (getcwd(savedir, FILENAME_MAX - 1) == NULL) {
+	    *savedir = '\0';
+	    /* return invalid value */
+	    ret = -1;
+	} else {
+	    /* return fake positive file id! */
+	    ret = 1;
+	}
+    } else {
+	/* call to change back to prior directory */
+	if (*savedir == '\0') {
+	    ret = -1;
+	} else {
+	    ret = gretl_chdir(savedir);
+	}
+    }
+
+    return ret;
+}
+
+#endif
+
 /**
  * gretl_open:
  * @pathname: name of file to be opened.
@@ -463,6 +494,12 @@ int gretl_open (const char *pathname, int flags)
     gchar *pconv = NULL;
     int fd = -1;
     int err = 0;
+
+#ifdef WIN32
+    if (!strcmp(pathname, ".")) {
+	return win32_open_fchdir(0);
+    }
+#endif    
 
     gretl_error_clear();
 
@@ -482,6 +519,18 @@ int gretl_open (const char *pathname, int flags)
     }
 
     return fd;
+}
+
+/* On MS Windows support cheap fakery of fchdir, otherwise
+   call the real fchdir() */
+
+int gretl_fchdir (int fd)
+{
+#ifdef WIN32
+    return win32_open_fchdir(fd);
+#else
+    return fchdir(fd);
+#endif 
 }
 
 /**
