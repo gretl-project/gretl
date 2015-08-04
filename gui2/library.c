@@ -9149,6 +9149,35 @@ static int gui_try_http (const char *s, char *fname, int *http)
     return err;
 }
 
+static int find_and_include_inp (const char *fname, ExecState *s,
+				 DATASET *dset, PRN *prn)
+{
+    char inpname[FILENAME_MAX];
+    FILE *fp;
+    int err = 0;
+
+    switch_ext(inpname, fname, "inp");
+    fp = fopen(inpname, "r");
+    
+    if (fp == NULL) {
+	pprintf(prn, "Couldn't read %s\n", inpname);
+	err = E_FOPEN;
+    } else {
+	int save_batch = gretl_in_batch_mode();
+	int orig_flags = s->flags;
+
+	fclose(fp);
+
+	s->flags = SCRIPT_EXEC | INCLUDE_EXEC;
+	err = execute_script(inpname, NULL, prn, s->flags,
+			     NULL /* parent */);
+	gretl_set_batch_mode(save_batch);
+	s->flags = orig_flags;
+    }
+
+    return err;
+}
+
 static int script_open_append (ExecState *s, DATASET *dset, 
 			       PRN *prn)
 {
@@ -9595,6 +9624,19 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	}
 	break;
 
+    case MAKEPKG:
+	if (has_suffix(cmd->param, ".spec")) {
+	    err = find_and_include_inp(cmd->param, s, dset, prn);
+	    if (!err) {
+		char *gfnname = switch_ext_new(cmd->param, "gfn");
+
+		err = create_and_write_function_package(gfnname, cmd->opt, prn);
+		free(gfnname);
+	    }
+	} else {
+	    err = gretl_cmd_exec(s, dset);
+	}
+	break;
     case DATAMOD:
 	if (cmd->auxint == DS_CLEAR) {
 	    close_session(cmd->opt);
