@@ -344,21 +344,20 @@ marked as not up to date, just click the Install button to update it.
 
 \subsection{Uninstalling a package}
 
-This is also something for which the GUI provides an easy and
-intuitive way of getting the job done. From the list of
-locally-installed packages (choose ``Tools, Function packages, On
+This is also easily and intuitively done via the GUI.  From the list
+of locally-installed packages (choose ``Tools, Function packages, On
 local machine,'' from the main menu, or simply go for the
 ``\textit{fx}'' button on the toolbar), select the package you want to
 get rid of and click on the ``Unload/delete'' icon, or right-click to
 the same effect.
 
-You will be presented the choice as to (a) just unload the package or
-(b) remove it from your system. The former might be useful during an
-interactive session in which you want to clear up all the functions you have
-in memory and start from scratch with no possible confusion between
-functions you have written and those provided by a package. The latter
-is of course more radical, and requires you to re-install the package
-if you change your mind.
+You will be asked if you want to (a) just unload the package or (b)
+remove it from your system. The former might be useful during an
+interactive session in which you want to clear up all the functions
+you have in memory and start from scratch with no possible confusion
+between functions you have written and those provided by a
+package. The latter is of course more radical, and requires you to
+re-install the package if you change your mind.
 
 
 \section{Using function packages: the basics}
@@ -714,13 +713,13 @@ that as the default selection on using the directory button.
 \chapter{For package authors}
 \label{chap:authors}
 
-A function package is, as you probably know already, an XML file with
-extension \texttt{gfn}, which
-contains four separate items:
+As we said in section~\ref{sec:pkgform}, a ``simple'' function package
+is an XML file with extension \texttt{gfn}, which contains four
+separate items:
 \begin{enumerate}
 \item One or more hansl functions;
 \item the package metadata (author, version and so on);
-\item some documentation (at least a few lines of text);
+\item some documentation (at least a few lines of text); and
 \item an example script.
 \end{enumerate}
 These are the four vital elements of a function package, which are all
@@ -728,7 +727,8 @@ contained in the \texttt{gfn} file. Then, optionally, you can ship
 additional material with your package, such as PDF documentation, a
 richer assortment of sample script, and so forth. In this case, you
 will want to wrap these into a zipfile, together with the package file
-proper. 
+proper.
+[FIXME too repetitive of first chapter?]
 
 This chapter explains how to build a gretl function packages using
 either command-line methods (section~\ref{sec:cli-build}) or gretl's
@@ -740,7 +740,7 @@ package. Even if you prefer to use a graphical interface whenever
 possible, we recommend that you at least skim this section before
 skipping forward.  The command-line approach is likely to pay off if
 you ever decide to tackle an ambitious function-package project. This
-is going to be somewhat Unix-centric, so Linux and OSX users should
+is going to be somewhat Unix-centric, so Linux and OS X users should
 find themselves at home. If your preferred operating is Windows, a few
 tips on the necessary software tools are given in a short appendix to
 this chapter.
@@ -757,7 +757,7 @@ called the ``terminal'') and its basic commands. So we assume you know
 how to perform simple operating-system tasks, such as copying/deleting
 files, listing the contents of a directory and so on via the
 appropriate shell commands (\cmd{cp}, \cmd{rm}, \cmd{ls}, \cmd{cd},
-etcetera).
+etc.).
 
 First of all, we strongly recommend that when starting work on a
 package you create a specific directory to hold the makings of the
@@ -871,8 +871,8 @@ mark them as private.\footnote{To be quite explicit, the
 
 If you're working on a platform that supports the \app{make} utility,
 you might find a Makefile helpful. It is not obligatory to use a
-makefile, but especially if your project is large, it can make your
-life definitely easier.
+makefile, but especially if your project is large, it can definitely
+make your life easier.
 
 Example~\ref{ex:make1} shows a very simple instance, though it does
 illustrate a small refinement.
