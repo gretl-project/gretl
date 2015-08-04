@@ -1624,39 +1624,37 @@ everyone's time.
 
 If you don't already have a login to the gretl package server, you
 need to begin by creating one (please note, this is not the same thing
-as a sourceforge login). The URL will be given to you by gretl if you
-go to upload a package via the GUI, but for reference it's
-\url{http://gretl.ecn.wfu.edu/cgi-bin/apply/}.
+as a sourceforge login).\footnote{The URL will be given to you by
+  gretl if you go to upload a package via the GUI, but for reference
+  it's \url{http://gretl.ecn.wfu.edu/cgi-bin/apply/}.}
 
-With a login in hand, you can upload a package via the GUI package
-editor: under the \textsf{Save...} menu you'll find an \textsf{Upload
-  to server} option. Alternatively you can use the \app{curl} program:
-this is standard kit on platforms other than MS Windows, but also
-available for Windows via
-\url{http://curl.haxx.se/download.html}. Below is an example shell
-script for uploading a plain \textsf{gfn} file. Of course you'd have
-to fill out the first three lines appropriately.
+With a login in hand, there are two ways of uploading a package using
+gretl. There's also a way of doing this indendently of gretl, via
+the shell, though this may not be convenient on MS Windows.
 
-\begin{code}
-user=your_gretl_login
-password=your_gretl_password
-pkg=/path/to/your_package.gfn
+\textit{First gretl method}: open your package's \textsf{gfn} file in
+the GUI package editor (you can get there via the package browser, or
+via the main-window menu item ``Tools, Function pachages, Edit
+package'').  On clicking the \textsf{Save...} button you'll find an
+item titled \textsf{Upload to server}. This will ask for your login
+information then perform the upload. If your package specification is
+such that a zip package is needed, gretl will take care of building an
+up-to-date zip file and uploading that.
 
-savename=`basename $pkg`
-curl -F login="${user}" -F pass="${password}" \
--F "pkg=@${pkg};filename=${savename};type=text/plain;charset=utf-8" \
-http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
-\end{code}
-%$
+\textit{Second gretl method}: In the main gretl window, go to ``Tools,
+Function packages, Upload package'' and choose the package to
+upload. The file selection dialog will offer a choice of looking for
+\textsf{gfn} or \textsf{zip} files. Please note: in this case, as
+opposed to the first, if your package is supposed to contain PDF
+documentation or additional files, you must build the zip file
+yourself and select that for upload, not the plain \textsf{gfn} file.
+[FIXME: automate this?]
 
-Uploading a zip package via the GUI is no different from uploading a
-plain \textsf{gfn}: gretl handles the details, producing a zipfile in
-the background. But if you're using the command line the process is a
-bit different. You need to create the zipfile first, then use a
-modified version of the \textsf{curl} upload script shown above.
+We'll get to the independent upload method in a moment, but first a
+word on building a zip package yourself, in case that is required.
 
-One way of building the zipfile is to use the \cmd{makepkg}
-command in the gretl console or in \app{gretlcli}, as in
+An easy way of doing this is by using the \cmd{makepkg} command in the
+gretl console or in \app{gretlcli}, as in
 %
 \begin{code}
 makepkg mypkg.zip
@@ -1684,14 +1682,32 @@ where we assume that \texttt{mypkg} is a subdirectory of the current
 working directory containing everything that's needed for the package,
 laid out as described in chapter~\ref{chap:zipfile}. 
 
-For the modified \app{curl} invocation that is needed to upload a
-zipfile, see Example~\ref{ex:curl-zip}.
+\textit{Independent upload method}: This relies on the \app{curl}
+program, which is standard kit on platforms other than MS
+Windows.\footnote{For a Windows version of \textsf{curl} see
+  \url{http://curl.haxx.se/download.html}.}
+Example~\ref{ex:curl-upload} shows two shell scripts, the first
+suitable for uploading a stand-alone gfn package and the second for
+uploading a zip package. The first three lines of each would, of
+course, have to be filled out appropriately for your case.
 
 \begin{script}[htbp]
   \centering
-  \caption{Shell script for uploading zipfile}
-  \label{ex:curl-zip}
+  \caption{Shell scripts for uploading packages}
+  \label{ex:curl-upload}
 \begin{scode}
+# (1) simple gfn file variant
+user=your_gretl_login
+password=your_gretl_password
+pkg=/path/to/your_package.gfn
+
+savename=`basename $pkg`
+curl -F login="${user}" -F pass="${password}" \
+-F "pkg=@${pkg};filename=${savename};type=text/plain;charset=utf-8" \
+http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
+
+
+# (2) zip file variant
 user=your_gretl_login
 password=your_gretl_password
 pkg=/path/to/your_package.zip
@@ -1706,14 +1722,6 @@ http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
 \end{scode}
 \end{script}
 %$
-
-Even if you build your package via the command line, gretl can help
-with the uploading, if you prefer: in the main window, go to ``Tools,
-Function packages, Upload package'' and choose the package to
-upload. The file selection dialog will offer a choice of looking for
-\textsf{gfn} or \textsf{zip} files. Please note: if your package is
-supposed to contain PDF documentation or additional files, you must
-build the zip file and upload that, not the plain \textsf{gfn}.
 
 \subsection{Staging}
 
