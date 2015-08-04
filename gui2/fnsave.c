@@ -3491,6 +3491,10 @@ void upload_package_file (const char *fname)
 	if (err) {
 	    return;
 	}
+	if (package_needs_zipping(fname)) {
+	    infobox("You need to create a zip file first");
+	    return;
+	}
     }
 
     login_dialog(&linfo, mdata->main);
@@ -4431,5 +4435,3 @@ void build_package_from_spec_file (windata_t *vwin)
 	gtk_window_set_destroy_with_parent(GTK_WINDOW(prnwin->main), TRUE);
     }
 }
-
-

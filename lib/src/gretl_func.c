@@ -5046,6 +5046,52 @@ int package_has_menu_attachment (const char *fname,
     return found;
 }
 
+int package_needs_zipping (const char *fname)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr node = NULL;
+    xmlNodePtr sub;
+    char *tmp = NULL;
+    int stop = 0;
+    int ret = 0;
+    int err = 0;
+
+    err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
+    if (err) {
+	return 0;
+    }
+
+    node = node->xmlChildrenNode;
+    
+    while (!stop && node != NULL) {
+	if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
+	    sub = node->xmlChildrenNode;
+	    while (!stop && sub != NULL) {
+		if (!xmlStrcmp(sub->name, (XUC) "help")) {
+		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
+		    if (tmp != NULL && !strncmp(tmp, "pdfdoc", 6)) {
+			ret = stop = 1;
+		    }
+		    free(tmp);
+		} else if (!xmlStrcmp(sub->name, (XUC) "data-files")) {
+		    ret = stop = 1;
+		} else if (!xmlStrcmp(sub->name, (XUC) "gretl-function")) {
+		    /* we've overshot */
+		    stop = 1;
+		}
+		sub = sub->next;
+	    }
+	}
+	node = node->next;
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+    }
+
+    return ret;
+}
+
 double function_package_get_version (const char *fname)
 {
     xmlDocPtr doc = NULL;
