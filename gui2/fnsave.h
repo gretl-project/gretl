@@ -54,4 +54,6 @@ int query_package_editor (GtkWidget *w, const char *pkgname);
 
 int package_editor_exit_check (GtkWidget *w);
 
+void build_package_from_spec_file (windata_t *vwin);
+
 #endif /* FNSAVE_H */

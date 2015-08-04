@@ -107,11 +107,9 @@ void scroll_to_foot (windata_t *vwin)
     GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
     GtkTextBuffer *buf = gtk_text_view_get_buffer(view); 
     GtkTextIter end;
-    GtkTextMark *mark;
 
     gtk_text_buffer_get_end_iter(buf, &end);
-    mark = gtk_text_buffer_create_mark(buf, NULL, &end, FALSE);
-    gtk_text_view_scroll_to_mark(view, mark, 0.0, FALSE, 0, 0);
+    gtk_text_view_scroll_to_iter(view, &end, 0, FALSE, 0, 0);
 }
 
 void cursor_to_mark (windata_t *vwin, GtkTextMark *mark)

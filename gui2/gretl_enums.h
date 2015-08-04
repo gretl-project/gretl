@@ -122,7 +122,7 @@ enum extra_cmds {
     GUI_FUNCS,
     MENU_ATTACH,
     DAILY_PURGE,
-    ZIPBUILD,
+    BUILD_PKG,
     PKG_FILES,
     GUI_CMD_MAX
 };

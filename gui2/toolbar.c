@@ -34,6 +34,7 @@
 #include "winstack.h"
 #include "tabwin.h"
 #include "fncall.h"
+#include "fnsave.h"
 #include "toolbar.h"
 
 #include "uservar.h"
@@ -111,7 +112,8 @@ enum {
     BUNDLE_ITEM,
     FIND_ITEM,
     CLEAR_ITEM,
-    LOG_COPY_ITEM
+    LOG_COPY_ITEM,
+    BUILD_ITEM
 } viewbar_flags;
 
 struct stock_maker {
@@ -632,6 +634,24 @@ static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
+static void build_pkg_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin_content_changed(vwin)) {
+	int resp;
+	
+	resp = yes_no_cancel_dialog("gretl", _("Save changes?"),
+				    vwin->main);
+	if (resp == GRETL_CANCEL) {
+	    return;
+	}
+	if (resp == GRETL_YES) {
+	    vwin_save_callback(NULL, vwin);
+	}
+    }
+
+    build_package_from_spec_file(vwin);
+}
+
 static int bundle_plot_ok (windata_t *vwin)
 {
     gretl_bundle *b = vwin->data;
@@ -690,6 +710,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
     { N_("Show/hide"), GRETL_STOCK_PIN, G_CALLBACK(session_notes_callback), NOTES_ITEM },
     { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
+    { N_("Build package"), GRETL_STOCK_TOOLS, G_CALLBACK(build_pkg_callback), BUILD_ITEM },
     { N_("Cut"), GTK_STOCK_CUT, G_CALLBACK(vwin_cut_callback), EDIT_ITEM }, 
     { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(vwin_copy_callback), COPY_ITEM }, 
     { N_("Paste"), GTK_STOCK_PASTE, G_CALLBACK(text_paste), EDIT_ITEM },
@@ -794,6 +815,8 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	if (f == NEW_ITEM || f == OPEN_ITEM || f == EXEC_ITEM) {
 	    return NULL;
 	}
+    } else if (f == BUILD_ITEM) {
+	return NULL;
     }
 
     if (r != VIEW_LOG && f == LOG_COPY_ITEM) {

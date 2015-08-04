@@ -727,6 +727,29 @@ int save_gfn_dialog (function_info *finfo, gchar **pkgname)
     return ret;
 }
 
+static int overwrite_gfn_check (const char *fname,
+				GtkWidget *parent,
+				int *notified)
+{
+    struct stat sbuf = {0};
+    int resp = GRETL_YES;
+
+    if (gretl_stat(fname, &sbuf) == 0) {
+	gchar *msg;
+	
+	msg = g_strdup_printf("%s\n\n%s\n%s", fname,
+			      _("A file of this name already exists."),
+			      _("OK to overwite it?"));
+	resp = yes_no_dialog(NULL, msg, parent);
+	g_free(msg);
+	if (notified != NULL) {
+	    *notified = 1;
+	}	
+    }
+
+    return resp;
+}
+
 /* In saving a new package, the user has chosen to write to
    the "install" location. We need to figure out the correct
    path (possibly creating a package-specific directory) then
@@ -754,27 +777,15 @@ static int install_gfn (function_info *finfo, gchar *pkgname)
     }
 
     if (!err) {
-	struct stat sbuf = {0};
-
+	int resp;
+	
 	strcat(savepath, pkgname);
 	strcat(savepath, ".gfn");
-	
-	if (gretl_stat(savepath, &sbuf) == 0) {
-	    int resp;
-
-	    msg = g_strdup_printf("%s\n\n%s\n%s", savepath,
-				  _("A file of this name already exists."),
-				  _("OK to overwite it?"));
-	    resp = yes_no_dialog(NULL, msg, finfo->dlg);
-	    g_free(msg);
-
-	    if (resp == GRETL_YES) {
-		notified = 1;
-	    } else {
-		return 0;
-	    }
+	resp = overwrite_gfn_check(savepath, finfo->dlg,
+				   &notified);
+	if (resp != GRETL_YES) {
+	    return 0;
 	}
-	
 	err = save_function_package(savepath, finfo);
     }
 
@@ -3367,7 +3378,7 @@ static int gui_pkg_make_zipfile (function_info *finfo, int pdfdoc,
 			       OPT_G, prn);
     
     /* show details of operation */
-    vwin = view_buffer(prn, 78, 300, _("build zip file"), ZIPBUILD, NULL);
+    vwin = view_buffer(prn, 78, 300, _("build zip file"), BUILD_PKG, NULL);
     gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
 				 GTK_WINDOW(finfo->dlg));
     gtk_window_set_destroy_with_parent(GTK_WINDOW(vwin->main), TRUE);
@@ -4368,3 +4379,57 @@ int no_user_functions_check (GtkWidget *parent)
 
     return err;
 }
+
+/* called from toolbar.c in response to the "build" option from
+   window editing a .spec file */
+
+void build_package_from_spec_file (windata_t *vwin)
+{
+    char inpname[FILENAME_MAX];
+    char gfnname[FILENAME_MAX];
+    int resp, err = 0;
+
+    switch_ext(inpname, vwin->fname, "inp");
+    err = gretl_test_fopen(inpname, "r");
+    if (err) {
+	gchar *msg = g_strdup_printf(_("Couldn't open %s"), inpname);
+	
+	msgbox(msg, GTK_MESSAGE_ERROR, vwin->main);
+	g_free(msg);
+	return;
+    }
+    
+    switch_ext(gfnname, vwin->fname, "gfn");
+    resp = overwrite_gfn_check(gfnname, vwin->main, NULL);
+
+    if (resp == GRETL_YES) {
+	int save_batch = gretl_in_batch_mode();
+	windata_t *prnwin;
+	PRN *prn;
+
+	if (bufopen(&prn)) {
+	    return;
+	}
+
+	function_package_unload_by_filename(gfnname);
+
+	pprintf(prn, "Found script file '%s'\n", inpname);
+	err = execute_script(inpname, NULL, prn, SCRIPT_EXEC | INCLUDE_EXEC,
+			     vwin->main);
+	if (!err) {
+	    err = create_and_write_function_package(gfnname, OPT_G, prn);
+	    if (err) {
+		pputs(prn, "Failed to produce gfn file\n");
+	    } else {
+		pprintf(prn, "Wrote '%s'\n", gfnname);
+	    }
+	}
+	gretl_set_batch_mode(save_batch);
+	prnwin = view_buffer(prn, 78, 450, _("build gfn file"), BUILD_PKG, NULL);
+	gtk_window_set_transient_for(GTK_WINDOW(prnwin->main),
+				     GTK_WINDOW(vwin->main));
+	gtk_window_set_destroy_with_parent(GTK_WINDOW(prnwin->main), TRUE);
+    }
+}
+
+

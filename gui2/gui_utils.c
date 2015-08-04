@@ -1773,7 +1773,7 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 	    sourceview_insert_buffer(vwin, buf);
 	} else if (vwin->role == SCRIPT_OUT) {
 	    textview_set_text_colorized(vwin->text, buf);
-	} else if (vwin->role == ZIPBUILD) {
+	} else if (vwin->role == BUILD_PKG) {
 	    textview_set_text_report(vwin->text, buf);
 	} else {
 	    textview_set_text(vwin->text, buf);
@@ -1898,7 +1898,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	       role == EDIT_PKG_SAMPLE ||
 	       role == EDIT_PKG_GHLP) {
 	vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
-    } else if (role == IMPORT || role == ZIPBUILD) {
+    } else if (role == IMPORT || role == BUILD_PKG) {
 	vwin_add_closer(vwin);
     } else {
 	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
@@ -1953,14 +1953,16 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	attach_content_changed_signal(vwin);
 	g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 			 G_CALLBACK(query_save_text), vwin);
-    } 
-
-    if (role != ZIPBUILD) {
-	g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
-			 G_CALLBACK(text_popup_handler), vwin);
     }
 
-    cursor_to_top(vwin);
+    if (role == BUILD_PKG) {
+	scroll_to_foot(vwin);
+    } else {
+	g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
+			 G_CALLBACK(text_popup_handler), vwin);
+	cursor_to_top(vwin);
+    }
+
     gtk_widget_grab_focus(vwin->text);
 
     return vwin;
