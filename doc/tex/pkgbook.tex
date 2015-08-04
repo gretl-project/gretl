@@ -713,24 +713,21 @@ that as the default selection on using the directory button.
 \chapter{For package authors}
 \label{chap:authors}
 
-As we said in section~\ref{sec:pkgform}, a ``simple'' function package
-is an XML file with extension \texttt{gfn}, which contains four
-separate items:
+Recall from section~\ref{sec:pkgform} that the core elements 
+of a gretl function package are as follows:
 \begin{enumerate}
 \item One or more hansl functions;
 \item the package metadata (author, version and so on);
 \item some documentation (at least a few lines of text); and
 \item an example script.
 \end{enumerate}
-These are the four vital elements of a function package, which are all
-contained in the \texttt{gfn} file. Then, optionally, you can ship
-additional material with your package, such as PDF documentation, a
-richer assortment of sample script, and so forth. In this case, you
-will want to wrap these into a zipfile, together with the package file
-proper.
-[FIXME too repetitive of first chapter?]
+These elements are all contained in a \texttt{gfn} XML file.
+Optionally, you can ship additional material with your package (PDF
+documentation, a richer assortment of sample scripts, and so forth),
+in which case all the components including the \textsf{gfn} must be
+wrapped in a zip file.
 
-This chapter explains how to build a gretl function packages using
+This chapter explains how to build a gretl function package using
 either command-line methods (section~\ref{sec:cli-build}) or gretl's
 graphical interface. 
 
@@ -741,9 +738,9 @@ possible, we recommend that you at least skim this section before
 skipping forward.  The command-line approach is likely to pay off if
 you ever decide to tackle an ambitious function-package project. This
 is going to be somewhat Unix-centric, so Linux and OS X users should
-find themselves at home. If your preferred operating is Windows, a few
-tips on the necessary software tools are given in a short appendix to
-this chapter.
+find themselves at home. If your preferred operating system is
+Windows, a few tips on the necessary software tools are given in a
+short appendix to this chapter.
 
 % (\ref{sec:gui-build}). Section~\ref{sec:common-req} covers some common
 % requirements that are important regardless of how the package is
@@ -752,12 +749,12 @@ this chapter.
 \section{Building a package via the command line}
 \label{sec:cli-build}
 
-Here, we assume you have a decent familiarity with the shell (often
-called the ``terminal'') and its basic commands. So we assume you know
-how to perform simple operating-system tasks, such as copying/deleting
-files, listing the contents of a directory and so on via the
-appropriate shell commands (\cmd{cp}, \cmd{rm}, \cmd{ls}, \cmd{cd},
-etc.).
+Here we assume you are somewhat familiar with the shell---that is,
+the command processor which awaits your input when you open a terminal
+window. So we assume you know how to perform simple operating-system
+tasks such as copying/deleting files, listing the contents of a
+directory and so on via the appropriate shell commands (\cmd{cp},
+\cmd{rm}, \cmd{ls}, \cmd{cd}, and so on).
 
 First of all, we strongly recommend that when starting work on a
 package you create a specific directory to hold the makings of the
@@ -787,13 +784,12 @@ files:
   call this \texttt{mypkg\_help.txt}.
 \end{enumerate}
 
-Note: the four files listed above are all text files that you can view
-and modify by using any editor of your choice. Moreover, there is a
-one-to-one correspondence between any of them and the four basic
-constituents of a \texttt{gfn} file. Therefore, once you have these
-four files ready, building the package is a simple matter of
-translating their contents to XML and putting everything together into
-the package file.
+The four files listed above are all UTF-8 text files that you can view
+and modify using any text editor of your choice. Each text file
+corresponds to one of the four basic constituents of a \texttt{gfn}
+file. Therefore, once you have these four files ready, building the
+package is simply a matter of transcribing their contents into XML and
+putting everything together into the package file.
 
 You will need to create such files in the current directory (or maybe
 copy or move them from elsewhere if you've already made a start). It's
