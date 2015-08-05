@@ -1,5 +1,5 @@
 \documentclass[oneside]{book}
-\usepackage{url,verbatim,fancyvrb}
+\usepackage{doc,url,verbatim,fancyvrb}
 \usepackage{pifont}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
@@ -872,19 +872,19 @@ mark them as private.\footnote{To be quite explicit, the
 
 \subsection{Adding extra material}
 
-OK, so you now know how to use the CLI for putting together a
-\textsf{gfn} file. What if you want to distribute it together with
-some extra material (say, a data file)?
+Suppose now that you want to distribute it together with
+some extra material (say, a data file). As explained earlier (again,
+see section~\ref{sec:pkgform}), you will have to create a suitably
+organized zip file.
 
-The first thing is updating the \texttt{spec} file to that effect:
-therefore, you'll want to add a line like
+In order to do so, the first thing is updating the \texttt{spec} file
+to that effect: therefore, you'll want to add a line like
 \begin{code}
 data-files = somedata.gdt
 \end{code}
-to it. We assume that the \texttt{somedata.gdt} file exists and is in the
-\texttt{mypkg} directory.
-
-A possible way is to do this ``by hand'': 
+to it. We assume that the \texttt{somedata.gdt} file exists and is in
+the \texttt{mypkg} directory. One possibility is creating the zip file
+``by hand'':
 \begin{code}
 cd ..
 zip mypkg/mypkg.zip mypkg/ mypkg/mypkg.gfn mypkg/somedata.gdt  
@@ -976,7 +976,7 @@ want to perform. For example, when building a large software project,
 there is a series of operations that must be performed in a certain
 order (compiling, linking, installing); or, as another example, when
 you have a large \LaTeX{} document you have to compile it first, then
-run Bib\TeX{}, then compile it again, etcetera.  The \app{make}
+run \BibTeX{}, then compile it again, etcetera.  The \app{make}
 utility is excellent at automating such tasks.
 
 The \app{make} utility needs a file, normally called
@@ -1810,19 +1810,40 @@ should never happen?).
 \section*{Appendix A - The CLI for Windows users}
 \addcontentsline{toc}{section}{Appendix A - The CLI for Windows users}
 
+If you would like to use the CLI approach on a Windows computer, you
+must make a preliminary choice: you can either
 \begin{itemize}
-\item Choice of shell: native (CMD.EXE) or some bash flavor. Pros of
-  native: no need to install anything but commands may be a bit different
-  (mkdir $\to$ md).
-\item With older gretl versions, you may have to fiddle with the PATH
-  environment variable (advice: upgrade)
-\item CygWin may be a nice idea: you get bash plus all sorts of extra
-  goodies, including \cmd{make} and \cmd{curl}.
+\item Stick to the Windows way of doing things, or
+\item install a few programs which mimic a Unix enviromnent.
 \end{itemize}
+In the first case, you will be probably using CMD.EXE as your shell,
+and we assume you are able to translate the Unix shell commands we
+used in section \ref{sec:cli-build} to their Windows equivalent (eg
+\cmd{cp} becomes \cmd{copy}, \cmd{ls} becomes \cmd{dir} and so on).
 
-Using \cmd{gretlcli} under bash is a very nice way of exploiting
-certain gretl features (output redirection, environment variables etc)
-and may be quite useful in it own right.
+Alternatively, there are several tools which give you a working
+Unix-like enviroment under Windows, among which:
+\begin{description}
+\item[CygWin] (\url{https://www.cygwin.com/}): this is a massive
+  project, whose aim is providing a complete Unix-like environment for
+  Windows. It contains everything you need for building gretl packages
+  via the CLI and much, much more. Very up-to-date, actively developed
+  and updated.
+\item[MSYS] (\url{http://www.mingw.org/wiki/MSYS}): this is a minimal
+  but consistent set of tools that will get the job done. The only
+  tool that we mentioned in section \ref{sec:cli-build}, which is not
+  provided by MSYS is \app{curl}, that you can install separately.
+\end{description}
+
+In all cases, you will want to have \cmd{gretlcli} on your
+\texttt{PATH}: this may require some fiddling. However, recent
+versions of the gretl installer will sort things out for you
+automatically, so if you have trouble with this our advice is to
+upgrade gretl to a newer version, which is probably a good idea anyway.
+
+Finally: using \cmd{gretlcli} under bash is a very nice way of
+exploiting certain gretl features (output redirection, environment
+variables etc) and may be quite useful in it own right.
 
 \chapter{Package specification details}
 \label{chap:specfile}
