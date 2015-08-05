@@ -730,7 +730,10 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
     } else if (orig->ci == ARCH) {
 	order = gretl_model_get_int(orig, "arch_order");
     } else if (orig->ci == LOGIT || orig->ci == PROBIT) {
-	if (gretl_model_get_int(orig, "ordered")) {
+	if (orig->opt & OPT_P) {
+	    /* p-values, not slopes, selected */
+	    myopt |= OPT_P;
+	} else if (gretl_model_get_int(orig, "ordered")) {
 	    myopt |= OPT_D;
 	} else if (gretl_model_get_int(orig, "multinom")) {
 	    myopt |= OPT_M;
