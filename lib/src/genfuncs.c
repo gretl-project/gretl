@@ -2539,6 +2539,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
     int *list = NULL;
     int i, vi, k, t, pp;
     int ndums, nnew = 0;
+    int nfix = 0;
     int err = 0;
 
     if (dset == NULL || dset->n == 0) {
@@ -2572,23 +2573,26 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	}
 	seas_name_and_label(i, dset, opt, vname, vlabel);
 	vi = series_index(dset, vname);
-	if (vi < dset->v && !strcmp(vlabel, series_get_label(dset, vi))) {
-	    /* record dummy already present */
+	if (vi < dset->v) {
 	    list[k] = vi;
+	    if (strcmp(vlabel, series_get_label(dset, vi))) {
+		series_set_label(dset, vi, vlabel);
+		nfix++;
+	    }
 	} else {
 	    nnew++;
 	}
 	k++;
     }
 
-    if (nnew == 0) {
+    if (nnew == 0 && nfix == 0) {
 	goto finish;
     }
 
     /* starting point for new dummy IDs */
     vi = dset->v;
 
-    if (dataset_add_series(dset, nnew)) {
+    if (nnew > 0 && dataset_add_series(dset, nnew)) {
 	return E_ALLOC;
     }
 
@@ -2597,6 +2601,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	    continue;
 	}
 	if (list[k] == 0) {
+	    /* no pre-existing series */
 	    seas_name_and_label(i, dset, opt, vname, vlabel);
 	    strcpy(dset->varname[vi], vname);
 	    series_set_label(dset, vi, vlabel);
