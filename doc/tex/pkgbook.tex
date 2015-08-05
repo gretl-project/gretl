@@ -172,22 +172,62 @@ Chapters~\ref{chap:specfile} and \ref{chap:zipfile} provide reference
 material on the details of package specification and structure, along
 with some tips on usage.
 
+Please note that many of the statements and illustrations in this
+\textit{Guide} reflect refinements made to gretl's package management
+facilities since the release of gretl verion 1.10.1. If you plan to
+follow along you should update to gretl 1.10.2 or higher.
+
 %%%%%%%%%%%%%%%% chapter break %%%%%%%%%%%%%%%%%
 
 \chapter{For package users}
 \label{chap:users}
 
+\section{The two package browsers}
+\label{sec:browsers}
+
+Since we'll be referring to the ``browsers'' for function packages
+quite a lot in the following, let us be clear up front about the two
+package browser windows in gretl and how they are accessed. 
+
+One of these windows shows the packages installed on your own
+computer. To open it, either select the menu item ``Tools, Function
+packages, On local machine'' or use the short-cut button labeled
+``$fx$'' on the toolbar at the foot of the main gretl
+window. With a new installation of gretl there will not be much to see
+in this window at first.
+
+The other browser shows all the packages available from the gretl
+server. It can be opened via the menu item ``Tools, Function packages,
+On server.'' The same listing can be accessed via a web
+interface,\footnote{See
+  \url{http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi?opt=SHOW_FUNCS}.}
+but for most purposes it will be more convenient to work from within
+gretl.
+
+The two browsers are interconnected: from the ``local machine'' window
+you can open the ``on server'' one by clicking on the Network button
+in the toolbar (tooltip, ``Look on server''), while from the latter
+you can open or focus the ``local machine'' window by clicking the
+Home button (tooltip, ``Local machine''). They are also connected via
+drag-and-drop: one way of installing a package from the server is by
+selecting it in the server window and dragging it onto the local one.
+
+When we use the term ``package browser'' below we will generally mean
+the local window; we'll add the qualification ``on server'' when we're
+talking about the other one.
+
+That said, let's move on to the business of getting hold of a function
+package of interest.
+
 \section{Acquiring a package}
 \label{sec:acquire}
 
-The first thing is finding out what packages are available. At
-present, most packages that are likely to be of interest are contained
-in gretl's official repository. These have passed a minimal checking
-procedure on the part of the gretl development team, designed to
-ensure that they are usable with the current version of gretl. This
-does not mean, however, that they are guaranteed to be bug-free, or to
-deliver accurate results; those responsibilities rest on the shoulders
-of the package authors.
+We'll focus here on packages available from the gretl server. These
+have passed a minimal checking procedure on the part of the gretl
+development team, designed to ensure that they are usable with the
+current version of gretl. This does not mean, however, that they are
+guaranteed to be bug-free, or to deliver accurate results; those
+responsibilities rest on the shoulders of the package authors.
 
 Some authors may choose to make their packages available via other
 means. In that case, once the user has the package file available,
@@ -195,34 +235,13 @@ either as a \textsf{gfn} file or a \textsf{zip} file (see
 section~\ref{sec:pkgform}), the package can be installed using
 the instructions below (section \ref{sec:cli-install}).
 
-\subsection{Searching the package repository}
-\label{sec:repo}
-
-The list of available function packages can be browsed from within
-gretl itself or via the web.
-
-From within gretl, you can call up a list of packages on the gretl
-server by selecting the menu item ``Tools, Function packages, On
-server''. This provides a convenient interface for upgrading your
-packages, adding new ones, and deleting any that you don't
-need. Alternatively, if you're only interested in browsing the
-repository, you can visit the web interface at Wake Forest
-University.\footnote{See
-  \url{http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi?opt=SHOW_FUNCS}.}
-
-If you're looking for some specific functionality (``I was told that
-gretl can do such-and-such, but you need to install an additional
-package''), a short ``description'' field is provided. \textbf{JEL
-  codes should be on their way}
-
-
 \subsection{Installing a package via the GUI}
 
 We'll use as an example Ignacio D\'iaz-Emparanza's \textsf{GHegy}
 package.  Suppose you've read Ignacio's excellent paper on seasonal
 unit-root tests \citep{Ignacio-HEGY} and you'd like to use his
 results. You were told a gretl package is available. Here's what you
-do.
+do. (We assume you have an Internet connection.)
 
 Open gretl, and select ``Tools, Function packages, On server''. Since
 the package deals with seasonal unit roots, you'll probably want to
@@ -234,7 +253,7 @@ you find what looks like it (Figure~\ref{fig:ghegy-lst}).
 \begin{center}
   \includegraphics[width=0.8\textwidth]{figures/ghegy-lst.png}
 \end{center}
-\caption{Find GHegy in the package browser}
+\caption{Finding GHegy among the packages on the gretl server}
 \label{fig:ghegy-lst}
 \end{figure}
 
@@ -246,7 +265,7 @@ like Figure~\ref{fig:ghegy-info}.
 
 \begin{figure}[htbp]
 \begin{center}
-  \includegraphics[width=0.6\textwidth]{figures/ghegy-info.png}
+  \includegraphics[width=0.65\textwidth]{figures/ghegy-info.png}
 \end{center}
 \caption{Get more info on GHegy}
 \label{fig:ghegy-info}
@@ -255,8 +274,8 @@ like Figure~\ref{fig:ghegy-info}.
 Yes, this definitely looks like it. At this point, all you have to do
 is install the package: click on the ``Install'' icon in the browser
 window, or, again, right-click on the package entry. Gretl will now
-download the package from the server at Wake Forest University (we
-assume you have an Internet connection) and install it.
+download the package from the server at Wake Forest University and
+install it.
 
 \begin{figure}[htbp]
 \begin{center}
@@ -300,7 +319,7 @@ An alternative mechanism is provided by gretl's \cmd{install} command,
 which can be invoked in the gretl console or in the command-line
 program \app{gretlcli}. This command has three modes:
 
-\begin{itemize}
+\begin{enumerate}
 \item If you just type, for example,
 %
 \begin{code}
@@ -329,44 +348,43 @@ install http://somewhere.net/gretl/splendid.gfn
 install /Users/Me/Downloads/splendid.gfn --local
 \end{code}
 %
-\end{itemize}
+\end{enumerate}
+
+We have illustrated variants 2 and 3 of the \cmd{install} command
+with \textsf{gfn} files, but note that they will also work for
+packages in \textsf{zip} format.
 
 \subsection{Updating a package}
 
 Updating packages is easily done via the GUI. Look back at
-Figure~\ref{fig:ghegy-lst}: in the right-most column of the browser
-for ``packages on server'' you'll see a note of the local status of
-each available package, either ``Up to date,'' ``Not installed'' or
-``Not up to date.'' (It may be necessary to expand the browser window
-or scroll to the right in order to see this column.) It's a good idea
-to visit this listing from time to time; if an installed package is
+Figure~\ref{fig:ghegy-lst}: in the rightmost column of the browser for
+packages on the server you'll see a note of the local status of each
+available package, either ``Up to date,'' ``Not installed'' or ``Not
+up to date.'' (It may be necessary to expand the browser window or
+scroll to the right in order to see this column.) It's a good idea to
+visit this listing from time to time; if an installed package is
 marked as not up to date, just click the Install button to update it.
 
 \subsection{Uninstalling a package}
 
-This is also easily and intuitively done via the GUI.  From the list
-of locally-installed packages (choose ``Tools, Function packages, On
-local machine,'' from the main menu, or simply go for the
-``\textit{fx}'' button on the toolbar), select the package you want to
+This is also easily and intuitively done via the GUI. From the
+browser for locally-installed packages, select the package you want to
 get rid of and click on the ``Unload/delete'' icon, or right-click to
 the same effect.
 
-You will be asked if you want to (a) just unload the package or (b)
-remove it from your system. The former might be useful during an
-interactive session in which you want to clear up all the functions
-you have in memory and start from scratch with no possible confusion
-between functions you have written and those provided by a
+You will be asked if you want to (a) unload the package from memory
+(only) or (b) remove it from your system. The former might be useful
+during an interactive session in which you want to clear up all the
+functions you have in memory and start from scratch with no possible
+confusion between functions you have written and those provided by a
 package. The latter is of course more radical, and requires you to
-re-install the package if you change your mind.
+reinstall the package if you change your mind.
 
 
 \section{Using function packages: the basics}
 
-You can call up a browser window for your installed functions via the
-main-window menu item ``Tools, Function packages, On local machine,''
-or by clicking the ``\textit{fx}'' button on the toolbar at the foot
-of the main window. The function-browser window has quite a rich set
-of toolbar buttons and right-click context menu choices. If you're not
+The browser window for installed packages has quite a rich set of
+toolbar buttons and right-click context menu choices. If you're not
 sure what a button might do, try mousing over it to get a ``tooltip.''
 If you're still not sure, you might just try clicking it---gretl won't
 do anything destructive without asking for confirmation first!
@@ -379,9 +397,9 @@ but we would encourage you to explore.
 If you're interested in calling a function package via script you'll
 probably want to examine its ``sample script.'' Hopefully this should
 provide a useful template. Opening the sample script is one of the
-options on right-clicking an installed package in the browser for
-functions ``on local machine'' (see above).  Of course you should also
-read the help text for the function you want to call.
+options on right-clicking an installed package in the local package
+browser.  Of course you should also read the help text for the
+function you want to call.
 
 You'll want to start your script by using the \cmd{include} command
 to load the package in question, as in
@@ -441,18 +459,16 @@ Figure~\ref{fig:ghegy-plot}.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics{figures/ghegy-plot}
+  \includegraphics[scale=0.9]{figures/ghegy-plot}
   \caption{Output of the \cmd{GHegy\_test\_plot} function}
   \label{fig:ghegy-plot}
 \end{figure}
 
-Some packages may contain a substantial number of function or have
-other characteristics such that the package authors may prefer
-supplementing the help text with documentation in PDF format. This is
-the case, for example, of the \textsf{DPB} package
-\citep[see][]{DPBwp}. If a pdf file is available, you will have a
-``Help'' icon available among those of the list of locally-installed
-packages, and clicking on it should load it in your default pdf
+Some more complex packages offer help documentation in PDF format, for
+example the \textsf{DPB} package \citep[see][]{DPBwp}.  If such
+documentation is available for a given package, the PDF button on the
+local package browser toolbar becomes active when the package is
+selected; clicking it will display the file in your default PDF
 reader.
 
 Other than that, there's not much to say here. For help on scripting
@@ -488,7 +504,7 @@ package.\footnote{By the way, if a package's sample script does not
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.7\textwidth]{figures/ghegy-call}
-  \caption{GUI call to the \textsf{GHegy} packge}
+  \caption{GUI call to the \textsf{GHegy} package}
   \label{fig:ghegy-call}
 \end{figure}
 
@@ -525,11 +541,11 @@ We mentioned above that you can revise your initial choice of whether
 or not to have a function package insert itself into the gretl
 menus. We'll now explain how.
 
-Again, start from the browser for packages ``on local machine''. One
-of the buttons on the toolbar is a ``\textsf{+}'' icon (with tooltip
-``Add to menu''). This button should be active when you select a
-package which (a) offers a menu attachment but (b) is not currently
-attached. Click it and you'll get the sort of dialog shown in
+Again, start from the browser for installed packages. One of the
+buttons on the toolbar is a ``\textsf{+}'' icon (with tooltip ``Add to
+menu''). This button should be active when you select a package which
+(a) offers a menu attachment but (b) is not currently attached. Click
+it and you'll get the sort of dialog shown in
 Figure~\ref{fig:ghegy-menu}; say ``Yes'' to attach the package to the
 specified menu.
 
@@ -547,7 +563,7 @@ item---which is easily reversed, as we have just seen.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.8\textwidth]{figures/pkg-registry}
+  \includegraphics[width=0.7\textwidth]{figures/pkg-registry}
   \caption{The GUI package ``registry'': from here you can remove
     dynamic menu items}
   \label{fig:pkg-registry}
@@ -662,7 +678,7 @@ package browser window. Here's one possible scenario: you have package
 \textsf{XYZ} installed, and you don't want to mess with the installed
 version, but at the same time you'd like to do some exploration and/or
 experimentation. Solution: go to the web interface to gretl packages
-mentioned in section~\ref{sec:repo} and download a copy of
+mentioned in section~\ref{sec:browsers} and download a copy of
 \textsf{XYZ}, placing it somewhere other than one of the standard
 gretl function directories. Then go to the main-window menu item
 ``Tools, Function packages, Edit package...'' and navigate to find the
@@ -678,7 +694,6 @@ cd XYZ_work_dir
 gretl -p XYZ.gfn
 \end{code}
 %
-
 Either way, opening the specified \texttt{gfn} file for editing has
 the effect of loading the package into memory. Thereafter, operations
 related to \textsf{XYZ} will refer to the version you loaded
@@ -960,32 +975,29 @@ http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
 \end{script}
 %$
 
-
-
 \subsection{Using a Makefile}
 
 If you're working on a platform that supports the \app{make} utility,
-you might find a Makefile helpful. It is not obligatory to use a
-makefile, but especially if your project is large, it can definitely
+you might find a Makefile helpful. It is not obligatory to use this
+approach, but especially if your project is large, it can definitely
 make your life easier.
 
-The \app{make} utility is a program that gives you a consistent
-interface for performing complex tasks. Its usefulness is particularly
-evident when there is some dependency structure between the tasks you
-want to perform. For example, when building a large software project,
-there is a series of operations that must be performed in a certain
-order (compiling, linking, installing); or, as another example, when
-you have a large \LaTeX{} document you have to compile it first, then
-run \BibTeX{}, then compile it again, etcetera.  The \app{make}
-utility is excellent at automating such tasks.
+\app{Make} is a program that gives you a consistent interface for
+performing complex tasks. Its usefulness is particularly evident when
+there is some dependency structure between the tasks you want to
+perform. For example, when building a large software project, there is
+a series of operations that must be performed in a certain order
+(compiling, linking, installing); or, as another example, when you
+have a large \LaTeX{} document you have to compile it first, then run
+\BibTeX{}, then compile it again, etc. \app{Make} is excellent at
+automating such tasks.
 
-The \app{make} utility needs a file, normally called
-\texttt{Makefile}, which is basically a sequence of rules which tell
-\app{make} ``what to do when''.\footnote{A complete tutorial on
-  \app{make} can be found at \url{http://www.gnu.org/software/make/manual/make.html}.}
-
+To run \app{make} you need a file, normally called \texttt{Makefile},
+which contains a sequence of rules to tell the program ``what to do
+when''.\footnote{A complete tutorial on \app{make} can be found at
+  \url{http://www.gnu.org/software/make/manual/make.html}.}
 Example~\ref{ex:make1} shows a very simple instance, though it does
-illustrate a small refinement.
+illustrate a small refinement in the package-building process.
 
 \begin{script}[htbp]
   \caption{Makefile for simple package}
@@ -1001,6 +1013,7 @@ install: $(PKG).gfn
 
 zip: $(PKG).gfn
 	echo "makepkg $(PKG).zip" | gretlcli -q > /dev/null
+
 clean: 
 	rm -f $(PKG).gfn
 \end{code}
@@ -1012,10 +1025,9 @@ clean:
 %$
 
 Warning: if you just copy and paste the example above into a text
-file, chances are it will not work. The \app{make} program can be
-quite fussy about the structure of the Makefile, particularly about
-the use of tabs vs spaces. Consult the \app{make} documentation for
-more details.
+file, chances are it will not work. \app{Make} is quite fussy about
+the structure of the Makefile, particularly about the use of tabs
+versus spaces. Consult the \app{make} documentation for more details.
 
 Running ``\texttt{make}'' in your project directory will rebuild
 \texttt{mypkg.gfn} if and only any of the source files have changed
@@ -1197,7 +1209,7 @@ consistency with the sample script.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[scale=0.6]{figures/gfnsave}
+  \includegraphics[scale=0.45]{figures/gfnsave}
   \caption{Where do you want your new package to go?}
   \label{fig:gfnsave}
 \end{figure}
