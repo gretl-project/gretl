@@ -4330,7 +4330,7 @@ static int real_load_package (fnpkg *pkg)
 {
     int i, err = 0;
 
-#if 1 || PKG_DEBUG
+#if PKG_DEBUG
     fprintf(stderr, "real_load_package:\n loading '%s'\n", pkg->fname);
 #endif
 
@@ -4498,7 +4498,7 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
     char *tmp = NULL;
     int id;
 
-#if 1 || PKG_DEBUG
+#if PKG_DEBUG
     fprintf(stderr, "real_read_package: fname='%s'\n", fname);
 #endif
 
@@ -5046,19 +5046,27 @@ int package_has_menu_attachment (const char *fname,
     return found;
 }
 
-int package_needs_zipping (const char *fname)
+int package_needs_zipping (const char *fname,
+			   int *pdfdoc,
+			   char ***datafiles,
+			   int *n_files)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
     xmlNodePtr sub;
     char *tmp = NULL;
     int stop = 0;
+    int retmax = 1;
     int ret = 0;
     int err = 0;
 
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
     if (err) {
 	return 0;
+    }
+
+    if (datafiles != NULL) {
+	retmax = 2;
     }
 
     node = node->xmlChildrenNode;
@@ -5069,17 +5077,28 @@ int package_needs_zipping (const char *fname)
 	    while (!stop && sub != NULL) {
 		if (!xmlStrcmp(sub->name, (XUC) "help")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
-		    if (tmp != NULL && !strncmp(tmp, "pdfdoc", 6)) {
-			ret = stop = 1;
+		    if (tmp != NULL && !strncmp(tmp, "pdfdoc:", 7)) {
+			if (pdfdoc != NULL) {
+			    *pdfdoc = 1;
+			}
+			ret++;
 		    }
 		    free(tmp);
 		} else if (!xmlStrcmp(sub->name, (XUC) "data-files")) {
-		    ret = stop = 1;
+		    if (datafiles != NULL) {
+			*datafiles = gretl_xml_get_strings_array(sub, doc, n_files,
+								 0, &err);
+		    }
+		    ret++;
 		} else if (!xmlStrcmp(sub->name, (XUC) "gretl-function")) {
 		    /* we've overshot */
 		    stop = 1;
 		}
-		sub = sub->next;
+		if (ret == retmax) {
+		    stop = 1;
+		} else {
+		    sub = sub->next;
+		}
 	    }
 	}
 	node = node->next;

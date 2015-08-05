@@ -238,7 +238,10 @@ int package_has_menu_attachment (const char *fname,
 				 char **attach,
 				 char **label);
 
-int package_needs_zipping (const char *fname);
+int package_needs_zipping (const char *fname,
+			   int *pdfdoc,
+			   char ***datafiles,
+			   int *n_files);
 
 void gretl_functions_cleanup (void);
 
