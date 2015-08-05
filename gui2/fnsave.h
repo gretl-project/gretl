@@ -46,7 +46,7 @@ int update_func_code (windata_t *vwin);
 
 gboolean edit_specified_package (const char *fname);
 
-void upload_package_file (const char *fname);
+void upload_specified_package (const char *fname);
 
 void revise_function_package (void *p);
 

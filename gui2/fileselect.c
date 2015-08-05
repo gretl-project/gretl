@@ -593,7 +593,7 @@ file_selector_process_result (const char *in_fname, int action,
     } else if (action == OPEN_PCGIVE_DB) {
 	open_bn7_window(fname);
     } else if (action == UPLOAD_PKG) {
-	upload_package_file(fname);
+	upload_specified_package(fname);
     }
 
     if (action < END_OPEN) {

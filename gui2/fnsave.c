@@ -3473,8 +3473,61 @@ static void do_pkg_upload (function_info *finfo)
     linfo_free(&linfo);
 }
 
-void upload_package_file (const char *fname)
+static int upload_precheck_gfn (const char *fname,
+				gchar **zname)
 {
+    char **datafiles = NULL;
+    int pdfdoc = 0;
+    int n_files = 0;
+    int err;
+	    
+    err = validate_package_file(fname, 0);
+    if (err) {
+	return err;
+    }
+    
+    if (package_needs_zipping(fname, &pdfdoc, &datafiles, &n_files)) {
+	int resp;
+
+	resp = yes_no_dialog(NULL,
+			     _("This package must be uploaded as a zip file.\n"
+			       "Try to create the zip file now?"),
+			     NULL);
+	if (resp == GRETL_YES) {
+	    PRN *prn = NULL;
+
+	    if (bufopen(&prn)) {
+		err = 1;
+	    } else {
+		err = package_make_zipfile(fname, pdfdoc,
+					   datafiles, n_files,
+					   zname, NULL,
+					   OPT_G, prn);
+		/* show result on error */
+		if (err) {
+		    view_buffer(prn, 78, 300, _("build zip file"),
+				BUILD_PKG, NULL);
+		} else {
+		    gretl_print_destroy(prn);
+		}
+	    }
+	} else {
+	    /* not really an error, but canceled */
+	    err = 1;
+	}
+
+	strings_array_free(datafiles, n_files);
+    }
+
+    return err;
+}
+
+/* callback from file selector, so @fname will be a full path */
+
+void upload_specified_package (const char *fname)
+{
+    const char *realname;
+    gchar *zname = NULL;
     gchar *buf = NULL;
     char *retbuf = NULL;
     login_info linfo;
@@ -3487,12 +3540,8 @@ void upload_package_file (const char *fname)
     int err;
 
     if (has_suffix(fname, ".gfn")) {
-	err = validate_package_file(fname, 0);
+	err = upload_precheck_gfn(fname, &zname);
 	if (err) {
-	    return;
-	}
-	if (package_needs_zipping(fname)) {
-	    infobox("You need to create a zip file first");
 	    return;
 	}
     }
@@ -3500,9 +3549,15 @@ void upload_package_file (const char *fname)
     login_dialog(&linfo, mdata->main);
 
     if (linfo.canceled) {
+	if (zname != NULL) {
+	    gretl_remove(zname);
+	    g_free(zname);
+	}
 	linfo_free(&linfo);
 	return;
     }
+
+    realname = zname != NULL ? zname : fname;
 
     /* set waiting cursor */
     disp = gdk_display_get_default();
@@ -3514,13 +3569,13 @@ void upload_package_file (const char *fname)
 	gdk_cursor_unref(cursor);
     }
 
-    err = gretl_file_get_contents(fname, &buf, &buflen);
+    err = gretl_file_get_contents(realname, &buf, &buflen);
 
     if (err) {
 	error_printed = 1;
     } else {
 	err = upload_function_package(linfo.login, linfo.pass, 
-				      path_last_element(fname),
+				      path_last_element(realname),
 				      buf, buflen, &retbuf);
 	fprintf(stderr, "upload_function_package: err = %d\n", err);
     }
@@ -3536,6 +3591,12 @@ void upload_package_file (const char *fname)
 	}
     } else if (retbuf != NULL && *retbuf != '\0') {
 	infobox(retbuf);
+    }
+
+    if (zname != NULL) {
+	/* we created an on-the-fly temporary zipfile */
+	gretl_remove(zname);
+	g_free(zname);
     }
 
     g_free(buf);
