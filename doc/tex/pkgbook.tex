@@ -991,19 +991,11 @@ $(PKG).gfn: $(PKG).inp $(PKG).spec $(PKG)_help.txt $(PKG)_sample.inp
 install: $(PKG).gfn
 	echo "install $(PKG).gfn --local" | gretlcli -q > /dev/null
 
-zip: $(PKG).gfn
-	echo "makepkg $(PKG).zip" | gretlcli -q > /dev/null
-
 clean: 
 	rm -f $(PKG).gfn
 \end{code}
 \end{script}
 %$
-
-Warning: if you just copy and paste the example above into a text
-file, chances are it will not work. \app{Make} is quite fussy about
-the structure of the Makefile, particularly about the use of tabs
-versus spaces. Consult the \app{make} documentation for more details.
 
 Running ``\texttt{make}'' in your project directory will rebuild
 \texttt{mypkg.gfn} if and only any of the source files have changed
@@ -1012,12 +1004,12 @@ since the \textsf{gfn} was last produced; running ``\texttt{make
 running ``\texttt{make install}'' will install the package (after
 rebuilding it, if required).
 
-If you run \verb|make zip| instead, the Makefile will first check
-that the \textsf{gfn} file exists; if it does, it will invoke
-\app{gretlcli} in such a way that the zip file will be generated with
-all the necessary extra files.
+Warning: if you just copy and paste the example above into a text
+file, chances are it will not work. \app{Make} is quite fussy about
+the structure of the Makefile, particularly about the use of tabs
+versus spaces. Some details, and a more extended example, are provided
+in Appendix B to this chapter.
 
-[FIXME go over a proper example]
 
 \section{Building a package via the GUI}
 \label{sec:gui-build}
