@@ -764,20 +764,14 @@ wrapped in a zip file.
 
 In this chapter, we will go through the creation and maintenance of
 these basic ingredients, plus the process of baking them together into
-a working function package. There are two ways to achieve this result:
-by using either command-line methods (section~\ref{sec:cli-build}) or
-by taking advantage of gretl's graphical interface.
+a working function package. This result can be achieved either by
+command-line methods or via gretl's graphical interface.
 
-A word of advice: ``In the beginning was the command line'' (Neal
-Stephenson), so we'll start with CLI methods for building a
-package. Even if you prefer to use a graphical interface whenever
-possible, we recommend that you at least skim this section before
-skipping forward.  The command-line approach is likely to pay off if
-you ever decide to tackle an ambitious function-package project. This
-is going to be somewhat Unix-centric, so Linux and OS X users should
-find themselves at home. If your preferred operating system is
-Windows, a few tips on the necessary software tools are given in a
-short appendix to this chapter.
+We'll start with the command line. Yes, we know that many readers may
+prefer to use a graphical interface whenever possible, but we
+recommend that you at least skim this section rather than skipping
+forward.  The command-line approach is likely to pay off if you ever
+decide to tackle an ambitious function-package project.
 
 % (\ref{sec:gui-build}). Section~\ref{sec:common-req} covers some common
 % requirements that are important regardless of how the package is
@@ -786,12 +780,14 @@ short appendix to this chapter.
 \section{Building a package via the command line}
 \label{sec:cli-build}
 
-Here we assume you are somewhat familiar with the shell---that is,
-the command processor which awaits your input when you open a terminal
-window. So we assume you know how to perform simple operating-system
-tasks such as copying/deleting files, listing the contents of a
-directory and so on via the appropriate shell commands (\cmd{cp},
-\cmd{rm}, \cmd{ls}, \cmd{cd}, and so on).
+Here we assume you are at least somewhat familiar with the
+shell---that is, the command processor which awaits your input when
+you open a terminal window. So we assume you know how to perform
+simple operating-system tasks such as copying/deleting files, listing
+the contents of a directory and so on via the appropriate shell
+commands. With the exception of subsection~\ref{sec:using-make} all
+the commands shown in this section have been tested on Windows'
+\app{cmd.exe} as well as the unix-type Bourne shell.
 
 First of all, we strongly recommend that when starting work on a
 package you create a specific directory to hold the makings of the
@@ -822,11 +818,12 @@ files:
 \end{enumerate}
 
 The four files listed above are all UTF-8 text files that you can view
-and modify using any text editor of your choice. Each text file
-corresponds to one of the four basic constituents of a \texttt{gfn}
-file. Therefore, once you have these four files ready, building the
-package is simply a matter of transcribing their contents into XML and
-putting everything together into the package file.
+and modify using any text editor of your choice (no word processors,
+please). Each text file corresponds to one of the four basic
+constituents of a \texttt{gfn} file. Therefore, once you have these
+four files ready, building the package is simply a matter of
+transcribing their contents into XML and putting everything together
+into the package file.
 
 You will need to create such files in the current directory (or maybe
 copy or move them from elsewhere if you've already made a start). It's
@@ -840,9 +837,8 @@ should already be pretty comfortable with hansl. See the \textit{Hansl
   Primer} \citep{hansl-primer} if in doubt.
 
 The requirements on the sample script and help text are set out in
-section~\ref{sec:common-req}.  That leaves the \textsf{spec}
-file. We'll approach this by stages, starting with the simplest
-possible case (see Example~\ref{ex:spec1}).
+section~\ref{sec:common-req}.  That leaves the \textsf{spec} file. A
+simple case of this is shown in Example~\ref{ex:spec1}.
 
 \begin{script}[htbp]
   \caption{Simple \texttt{mypkg.spec}}
@@ -920,13 +916,15 @@ data-files = somedata.gdt
 where we assume that the file \texttt{somedata.gdt} file exists and is
 in the \texttt{mypkg} directory.
 
-Creating the zip file can be done ``by hand'':
+Creating the zip file can be done ``by hand'' if the command-line
+\textsf{zip} program is available (or substitute \textsf{pkzip} if
+it's avaiable):
 \begin{code}
 cd ..
 zip mypkg/mypkg.zip mypkg/ mypkg/mypkg.gfn mypkg/somedata.gdt
 \end{code}
 
-Or you can have gretl take care of everything for you, by by using the
+Or you can have gretl take care of everything for you, by using the
 \cmd{makepkg} command: you can start \app{gretlcli} and issue the
 following command:
 %
@@ -948,11 +946,10 @@ extension, gretl will do one of two things:
 A neater way of doing this is to ``pipe'' the \cmd{makepkg} comand
 into \app{gretlcli} directly from the command line, as in
 \begin{code}
-echo "makepkg mypkg.zip" | gretlcli -q -b
+echo makepkg mypkg.zip | gretlcli -q
 \end{code}
-where the \texttt{-q} flag makes \textsf{gretlcli} operate quietly,
-and \texttt{-b} tells the program to run in ``batch mode''
-(non-interactively).
+where the \texttt{-q} flag makes \textsf{gretlcli} operate
+(relatively) quietly.
 
 \subsection{Using a Makefile}
 \label{sec:using-make}
@@ -960,7 +957,8 @@ and \texttt{-b} tells the program to run in ``batch mode''
 If you're working on a platform that supports the \app{make} utility,
 you might find a Makefile helpful. It is not obligatory to use this
 approach, but especially if your project is large, it can definitely
-make your life easier.
+make your life easier. MS Windows does not provide \app{make}, but it
+can be installed; see Appendix A to this chapter for some options.
 
 \app{Make} is a program that gives you a consistent interface for
 performing complex tasks. Its usefulness is particularly evident when
@@ -989,7 +987,7 @@ $(PKG).gfn: $(PKG).inp $(PKG).spec $(PKG)_help.txt $(PKG)_sample.inp
 	gretlcli --makepkg $(PKG).inp
 
 install: $(PKG).gfn
-	echo "install $(PKG).gfn --local" | gretlcli -q > /dev/null
+	echo install $(PKG).gfn --local | gretlcli -q > /dev/null
 
 clean: 
 	rm -f $(PKG).gfn
@@ -1406,6 +1404,8 @@ correlogram), to calculate diagnostic tests, and so on.
 A function that returns a bundle can do just this sort of thing, and
 wherever it's appropriate we recommend that this facility be
 exploited.
+
+Let's see how this works by constructing a little example.
 
 Let's see how this works by reference to the \textsf{gig} package
 (GARCH in gretl, written by Jack Lucchetti). The specification file
@@ -1834,16 +1834,19 @@ If you would like to use the command-line approach on a Windows
 computer you must make a preliminary choice: you can either
 \begin{itemize}
 \item Stick to the native Windows way of doing things, or
-\item install a few programs which mimic a unix enviromnent.
+\item install software which mimics a unix environment on Windows.
 \end{itemize}
+
 In the first case you will presumably be using \app{cmd.exe} as your
-shell, and it will be necessary to translate the unix-type shell
-commands we used in section \ref{sec:cli-build} to their Windows
-equivalents (e.g.\ \cmd{cp} becomes \cmd{copy}, \cmd{ls} becomes
-\cmd{dir} and so on).
+shell. This supports the basic commands shown in
+section~\ref{sec:cli-build} but it doesn't support \app{make}; if you
+want to use that you will have to install it yourself. The simplest
+way of doing this is to run the installer for GNU \app{make} from the
+\textsf{GnuWin32} project on sourceforge: see
+\url{http://gnuwin32.sf.net/packages/make.htm}.
 
 Alternatively, there are two main tool-sets which give you a working
-unix-like environment on Windows:
+unix-like environment with Bourne-type shell:
 \begin{description}
 \item[CygWin] (\url{https://www.cygwin.com/}): this is a massive
   project, whose aim is providing a complete unix-like environment for
@@ -1854,9 +1857,10 @@ unix-like environment on Windows:
   but consistent set of tools that will get the job done.
 \end{description}
 
-If you wish to use \app{make}, and/or run scripts such as those shown
-in section~\ref{sec:publish}, you will probably have to install one
-or other of these packages.
+If you wish to run scripts such as those shown in
+section~\ref{sec:publish}, you will probably have to install one or
+other of these packages, unless perhaps you are very handy with
+Windows batch (\texttt{.bat}) files.
 
 Even if you decide not to go ``all the way'' with command-line
 methods, using \app{gretlcli} under either \app{cmd.exe} or a
@@ -1866,7 +1870,18 @@ may be quite useful in it own right.
 
 In all cases, you will have to ensure that \cmd{gretlcli} is in your
 \texttt{PATH}. Recent versions of the gretl installer will arrange
-this automatically.
+this automatically, but it can be done manually via \app{cmd.exe} like
+this:
+\begin{code}
+set PATH=%PATH%;c:\program files\gretl
+\end{code}
+Similarly, if you want to use \app{make} from \textsf{GnuWin32}:
+\begin{code}
+set PATH=%PATH%;c:\program files\gnuwin32\bin
+\end{code}
+In each case you need to check for the specific path to add (e.g.\ the
+correct directory might be ``\texttt{program files (x86)}'').
+
 
 
 \section*{Appendix B: Makefile basics}
@@ -1915,10 +1930,10 @@ $(PKG).pdf: $(PKG).tex
         pdflatex $<
 
 $(PKG).zip: $(PKG).gfn $(PKG).pdf
-	echo "makepkg $(PKG).zip" | gretlcli -q > /dev/null
+	echo makepkg $(PKG).zip | gretlcli -q > /dev/null
 
 install: $(PKG).zip
-	echo "install $(PKG).zip --local" | gretlcli -q > /dev/null
+	echo install $(PKG).zip --local | gretlcli -q > /dev/null
 
 clean: 
 	rm -f $(PKG).gfn $(PKG).pdf $(PKG).zip
@@ -1929,7 +1944,12 @@ clean:
 This Makefile specifies five targets. The first target (in this case,
 the \textsf{gfn} file) is invoked if you simply type
 ``\texttt{make}''; to invoke the other targets you have to name them,
-as in ``\texttt{make install}''.
+as in ``\texttt{make install}''.\footnote{There are two unix-specific
+  idioms in this Makefile. If you were running \app{make} under
+  \app{cmd.exe} on Windows you would have to make these substitutions:
+  \texttt{NUL} for \texttt{/dev/null} under the zipfile and install
+  targets, and \texttt{del} for \texttt{rm -f} under the clean
+  target.}
 
 If a target has no dependencies (like \texttt{clean} here) its
 associated instructions are carried out unconditionally, so
