@@ -63,6 +63,7 @@ char cmdfile[MAXLEN];
 FILE *fb;
 int batch;
 int runit;
+int batch_stdin;
 int data_status;
 char linebak[MAXLINE];      /* for storing comments */
 char *line_read;
@@ -116,8 +117,8 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
 	    opt |= OPT_MAKEPKG;
 	} else if (!strncmp(s, "--scriptopt=", 12)) {
 	    *scriptval = atof(s + 12);
-	} else if (*s == '-') {
-	    /* not a valid option */
+	} else if (*s == '-' && *(s+1) != '\0') {
+	    /* spurious option? */
 	    err = E_DATA;
 	    break;
 	} else if (!gotfile) {
@@ -545,6 +546,11 @@ int main (int argc, char *argv[])
 	    if (*filearg == '\0') {
 		/* we're missing a filename argument */
 		usage(1);
+	    } else if ((opt & OPT_BATCH) && !strcmp(filearg, "-")) {
+		/* batch mode but read from stdin */
+		quiet = batch_stdin = batch = 1;
+		*runfile = '\0';
+		load_datafile = 0;
 	    } else {
 		/* record argument (not a datafile) */
 		strcpy(runfile, filearg);
@@ -638,7 +644,10 @@ int main (int argc, char *argv[])
 	if (!runit && !data_status) {
 	    fputs(_("Type \"open filename\" to open a data set\n"), stdout);
 	}
-    }
+    } else if (batch_stdin) {
+	fb = stdin;
+	push_input_file(fb);
+    }	
 
 #ifdef HAVE_READLINE
     initialize_readline();
@@ -650,14 +659,16 @@ int main (int argc, char *argv[])
 	if (makepkg) {
 	    set_gretl_echo(0);
 	}
-	if (strchr(runfile, ' ')) {
-	    sprintf(line, "run \"%s\"", runfile);
-	} else {
-	    sprintf(line, "run %s", runfile);
-	}
-	err = cli_exec_line(&state, dset, cmdprn);
-	if (err && fb == NULL) {
-	    exit(EXIT_FAILURE);
+	if (*runfile != '\0') {
+	    if (strchr(runfile, ' ')) {
+		sprintf(line, "run \"%s\"", runfile);
+	    } else {
+		sprintf(line, "run %s", runfile);
+	    }
+	    err = cli_exec_line(&state, dset, cmdprn);
+	    if (err && fb == NULL) {
+		exit(EXIT_FAILURE);
+	    }
 	}
     }
 
@@ -1121,7 +1132,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	break;
 
     case QUIT:
-	if (runit) {
+	if (runit || batch_stdin) {
 	    *s->runfile = '\0';
 	    runit--;
 	    fclose(fb);
