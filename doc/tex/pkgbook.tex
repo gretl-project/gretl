@@ -907,27 +907,28 @@ mark them as private.\footnote{To be quite explicit, the
 
 \subsection{Adding extra material}
 
-Suppose now that you want to distribute it together with
-some extra material (say, a data file). As explained earlier (again,
+Suppose now that you want to include with your package some extra
+material (say, a specialized data file). As explained earlier (again,
 see section~\ref{sec:pkgform}), you will have to create a suitably
 organized zip file.
 
-In order to do so, the first thing is updating the \texttt{spec} file
-to that effect: therefore, you'll want to add a line like
+The first thing is to update the \texttt{spec} file to refer to the
+extra content: you'll want to add a line like
 \begin{code}
 data-files = somedata.gdt
 \end{code}
-to it. We assume that the \texttt{somedata.gdt} file exists and is in
-the \texttt{mypkg} directory. One possibility is creating the zip file
-``by hand'':
+where we assume that the file \texttt{somedata.gdt} file exists and is
+in the \texttt{mypkg} directory.
+
+Creating the zip file can be done ``by hand'':
 \begin{code}
 cd ..
-zip mypkg/mypkg.zip mypkg/ mypkg/mypkg.gfn mypkg/somedata.gdt  
+zip mypkg/mypkg.zip mypkg/ mypkg/mypkg.gfn mypkg/somedata.gdt
 \end{code}
 
-Alternatively, you can have gretl take care of everything for you, by
-by using the \cmd{makepkg} command: you can start \app{gretlcli} and
-issue the following command:
+Or you can have gretl take care of everything for you, by by using the
+\cmd{makepkg} command: you can start \app{gretlcli} and issue the
+following command:
 %
 \begin{code}
 makepkg mypkg.zip
@@ -938,64 +939,23 @@ extension, gretl will do one of two things:
 \begin{itemize}
 \item If a matching \textsf{gfn} file is found, this will be used the
   as the basis for the zipfile, with other components pulled in as
-  needed.
+  specified.
 \item Failing that, if a matching \textsf{spec} file is found (plus
   the other files that it references), gretl will first build the
-  \textsf{gfn}, then build the zipfile wrapper.
+  \textsf{gfn} and then build the zipfile wrapper.
 \end{itemize}
 
-An even neater way to do this is to ``pipe'' the above comand into
-\app{gretlcli} directly form the command line, as in
+A neater way of doing this is to ``pipe'' the \cmd{makepkg} comand
+into \app{gretlcli} directly from the command line, as in
 \begin{code}
 echo "makepkg mypkg.zip" | gretlcli -q -b
 \end{code}
-
-\subsection{Uploading your package}
-
-This relies on the \app{curl} program, which is standard kit on
-platforms other than MS Windows.\footnote{For a Windows version of
-  \textsf{curl} see \url{http://curl.haxx.se/download.html}. But if
-  you decide to endow your Windows box with a few Unixy tools using
-  the approach described in Appendix A, \app{curl} is just one of the
-  many goodies you get nearly automatically.}
-Example~\ref{ex:curl-upload} shows two shell scripts, the first
-suitable for uploading a stand-alone gfn package and the second for
-uploading a zip package. The first three lines of each would, of
-course, have to be filled out appropriately for your case.
-
-\begin{script}[htbp]
-  \centering
-  \caption{Shell scripts for uploading packages}
-  \label{ex:curl-upload}
-\begin{scode}
-# (1) simple gfn file variant
-user=your_gretl_login
-password=your_gretl_password
-pkg=/path/to/your_package.gfn
-
-savename=`basename $pkg`
-curl -F login="${user}" -F pass="${password}" \
--F "pkg=@${pkg};filename=${savename};type=text/plain;charset=utf-8" \
-http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
-
-
-# (2) zip file variant
-user=your_gretl_login
-password=your_gretl_password
-pkg=/path/to/your_package.zip
-
-bytes=`stat $pkg --printf="%s"`
-savename=`basename $pkg`
-echo "Uploading $pkg ($bytes bytes) as $savename ..."
-
-curl -F login="${user}" -F pass="${password}" -F datasize="${bytes}" \
--F "pkg=@${pkg};filename=${savename};type=application/x-zip-compressed" \
-http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
-\end{scode}
-\end{script}
-%$
+where the \texttt{-q} flag makes \textsf{gretlcli} operate quietly,
+and \texttt{-b} tells the program to run in ``batch mode''
+(non-interactively).
 
 \subsection{Using a Makefile}
+\label{sec:using-make}
 
 If you're working on a platform that supports the \app{make} utility,
 you might find a Makefile helpful. It is not obligatory to use this
@@ -1012,7 +972,7 @@ have a large \LaTeX{} document you have to compile it first, then run
 \BibTeX{}, then compile it again, etc. \app{Make} is excellent at
 automating such tasks.
 
-To run \app{make} you need a file, normally called \texttt{Makefile},
+To run \app{make} you need a file, usually called \texttt{Makefile},
 which contains a sequence of rules to tell the program ``what to do
 when''.\footnote{A complete tutorial on \app{make} can be found at
   \url{http://www.gnu.org/software/make/manual/make.html}.}
@@ -1037,10 +997,6 @@ zip: $(PKG).gfn
 clean: 
 	rm -f $(PKG).gfn
 \end{code}
-
-% USED TO BE:
-% install: $(PKG)_install.inp $(PKG).gfn
-%         gretlcli --batch $<
 \end{script}
 %$
 
@@ -1054,15 +1010,9 @@ Running ``\texttt{make}'' in your project directory will rebuild
 since the \textsf{gfn} was last produced; running ``\texttt{make
   clean}'' will delete the \textsf{gfn}. Here's the refinement:
 running ``\texttt{make install}'' will install the package (after
-rebuilding it, if required).% , provided the additional file
-% \texttt{mypkg\_install.inp} is present. Its content should just be a
-% one-liner:
-% %
-% \begin{code}
-% install mypkg.gfn --local
-% \end{code}
+rebuilding it, if required).
 
-If you run \verb|make zip|, instead, the Makefile will first check
+If you run \verb|make zip| instead, the Makefile will first check
 that the \textsf{gfn} file exists; if it does, it will invoke
 \app{gretlcli} in such a way that the zip file will be generated with
 all the necessary extra files.
@@ -1809,6 +1759,50 @@ documentation or additional files, you must build the zip file
 yourself and select that for upload, not the plain \textsf{gfn} file.
 [FIXME: automate this?]
 
+\textit{Shell method}: Example~\ref{ex:curl-upload} shows two shell
+scripts, the first suitable for uploading a stand-alone gfn package
+and the second for uploading a zip package. The first three lines of
+each would, of course, have to be filled out appropriately for your
+case.  
+
+These recipes rely on various components that are standard kit on
+unix-type systems such as Linux and OS X: a Bourne-type shell; the
+basic utility programs \app{basename} and \app{stat}; and the
+\app{curl} program for doing the actual upload. See Appendix A for
+some comments on doing this sort of thing on MS Windows.
+
+\begin{script}[htbp]
+  \centering
+  \caption{Shell scripts for uploading packages}
+  \label{ex:curl-upload}
+\begin{scode}
+# (1) simple gfn file variant
+user=your_gretl_login
+password=your_gretl_password
+pkg=/path/to/your_package.gfn
+
+savename=`basename $pkg`
+curl -F login="${user}" -F pass="${password}" \
+-F "pkg=@${pkg};filename=${savename};type=text/plain;charset=utf-8" \
+http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
+
+
+# (2) zip file variant
+user=your_gretl_login
+password=your_gretl_password
+pkg=/path/to/your_package.zip
+
+bytes=`stat $pkg --printf="%s"`
+savename=`basename $pkg`
+echo "Uploading $pkg ($bytes bytes) as $savename ..."
+
+curl -F login="${user}" -F pass="${password}" -F datasize="${bytes}" \
+-F "pkg=@${pkg};filename=${savename};type=application/x-zip-compressed" \
+http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
+\end{scode}
+\end{script}
+%$
+
 \subsection{Staging}
 
 When your package is successfully uploaded, it first goes into a
@@ -1839,43 +1833,158 @@ cross-over between the two. Avoid reverting any changes made by
 package admins to fix breakage in prior versions (tho' maybe that
 should never happen?).
 
-\section*{Appendix A - The CLI for Windows users}
-\addcontentsline{toc}{section}{Appendix A - The CLI for Windows users}
+\clearpage
 
-If you would like to use the CLI approach on a Windows computer, you
-must make a preliminary choice: you can either
+\section*{Appendix A: The CLI on Windows}
+\addcontentsline{toc}{section}{Appendix A: The CLI on Windows}
+
+If you would like to use the command-line approach on a Windows
+computer you must make a preliminary choice: you can either
 \begin{itemize}
-\item Stick to the Windows way of doing things, or
-\item install a few programs which mimic a Unix enviromnent.
+\item Stick to the native Windows way of doing things, or
+\item install a few programs which mimic a unix enviromnent.
 \end{itemize}
-In the first case, you will be probably using CMD.EXE as your shell,
-and we assume you are able to translate the Unix shell commands we
-used in section \ref{sec:cli-build} to their Windows equivalent (eg
-\cmd{cp} becomes \cmd{copy}, \cmd{ls} becomes \cmd{dir} and so on).
+In the first case you will presumably be using \app{cmd.exe} as your
+shell, and it will be necessary to translate the unix-type shell
+commands we used in section \ref{sec:cli-build} to their Windows
+equivalents (e.g.\ \cmd{cp} becomes \cmd{copy}, \cmd{ls} becomes
+\cmd{dir} and so on).
 
-Alternatively, there are several tools which give you a working
-Unix-like enviroment under Windows, among which:
+Alternatively, there are two main tool-sets which give you a working
+unix-like environment on Windows:
 \begin{description}
 \item[CygWin] (\url{https://www.cygwin.com/}): this is a massive
-  project, whose aim is providing a complete Unix-like environment for
+  project, whose aim is providing a complete unix-like environment for
   Windows. It contains everything you need for building gretl packages
   via the CLI and much, much more. Very up-to-date, actively developed
   and updated.
 \item[MSYS] (\url{http://www.mingw.org/wiki/MSYS}): this is a minimal
-  but consistent set of tools that will get the job done. The only
-  tool that we mentioned in section \ref{sec:cli-build}, which is not
-  provided by MSYS is \app{curl}, that you can install separately.
+  but consistent set of tools that will get the job done.
 \end{description}
 
-In all cases, you will want to have \cmd{gretlcli} on your
-\texttt{PATH}: this may require some fiddling. However, recent
-versions of the gretl installer will sort things out for you
-automatically, so if you have trouble with this our advice is to
-upgrade gretl to a newer version, which is probably a good idea anyway.
+If you wish to use \app{make}, and/or run scripts such as those shown
+in section~\ref{sec:publish}, you will probably have to install one
+or other of these packages.
 
-Finally: using \cmd{gretlcli} under bash is a very nice way of
-exploiting certain gretl features (output redirection, environment
-variables etc) and may be quite useful in it own right.
+Even if you decide not to go ``all the way'' with command-line
+methods, using \app{gretlcli} under either \app{cmd.exe} or a
+unix-type shell is a very nice way of exploiting certain gretl
+features (output redirection, use of environment variables, etc.) and
+may be quite useful in it own right.
+
+In all cases, you will have to ensure that \cmd{gretlcli} is in your
+\texttt{PATH}. Recent versions of the gretl installer will arrange
+this automatically.
+
+
+\section*{Appendix B: Makefile basics}
+\addcontentsline{toc}{section}{Appendix B: Makefile basics}
+
+Here we give a brief summary of some aspects of Makefile syntax and
+usage that are likely to be useful for package-building with gretl.
+
+A Makefile has (or can have) two main parts: a first section which
+defines variables, and a second section which defines rules. The
+initial definition of variables is optional but it allows for
+convenient shorthand when writing the rules, and also allows for easy
+``portability'' (names can be changed in just one place).
+
+Each Makefile rule has (up to) three components: a \textit{target};
+zero or more \textit{dependencies}; and zero or more
+\textit{instructions} for making the target. The target should be up
+against the left margin and followed by a colon. The dependencies, if
+any, should be listed following the colon. The instructions should be
+listed directly below the target line, offset from the left margin
+with a single tab character.\footnote{Explicit instructions are not
+  always necessary, since \app{make} knows natively how to build
+  certain kinds of targets. However, it doesn't know anything about
+  gretl files.}
+
+Example~\ref{ex:make2} shows a variant of the simple Makefile from
+section~\ref{sec:using-make}, where we have added PDF documentation to
+the package. In this example the initial section defines just one
+variable, \texttt{PKG}. Note the special syntax for using the value of
+a Makefile variable in the rules: the name of the variable must be
+placed in parentheses, preceded by a dollar sign: \texttt{\$(PKG)}.
+
+\begin{script}[htbp]
+  \caption{Makefile for package with PDF documentation}
+  \label{ex:make2}
+\begin{scode}
+PKG = mypkg
+
+$(PKG).gfn: $(PKG).inp $(PKG).spec $(PKG)_sample.inp
+	gretlcli --makepkg $(PKG).inp
+
+$(PKG).pdf: $(PKG).tex
+        pdflatex $<
+        bibtex $(PKG)
+        pdflatex $<
+        pdflatex $<
+
+$(PKG).zip: $(PKG).gfn $(PKG).pdf
+	echo "makepkg $(PKG).zip" | gretlcli -q > /dev/null
+
+install: $(PKG).zip
+	echo "install $(PKG).zip --local" | gretlcli -q > /dev/null
+
+clean: 
+	rm -f $(PKG).gfn $(PKG).pdf $(PKG).zip
+\end{scode}
+\end{script}
+%$
+
+This Makefile specifies five targets. The first target (in this case,
+the \textsf{gfn} file) is invoked if you simply type
+``\texttt{make}''; to invoke the other targets you have to name them,
+as in ``\texttt{make install}''.
+
+If a target has no dependencies (like \texttt{clean} here) its
+associated instructions are carried out unconditionally, so
+``\texttt{make clean}'' will always attempt to delete the three files
+that can be generated by \app{make}.  By the way, using the
+\texttt{-f} (``force'') flag with the \texttt{rm} (``remove'') command
+means that it will not seek confirmation, nor will it complain if the
+file to be deleted doesn't actually exist.
+
+If the target of a Makefile rule is the name of a file, and the rule
+has dependencies, then the instructions will be carried out if and
+only if any of the dependencies were modified more recently than the
+target file.  So ``\texttt{make}'' (with this Makefile) will simply
+report
+\begin{code}
+make: 'mypkg.gfn' is up to date.
+\end{code}
+if the \textsf{gfn} file has already been built and nothing has
+changed since among the files listed as dependencies.
+
+On the other hand, if a target does not name a file, but is rather a
+generic identifier such as \texttt{install}, it will get built
+regardless. So ``\texttt{make install}'' in this example will always
+(re-)install the package.
+
+A couple of things should be noted about the \texttt{\$(PKG).pdf}
+target: the \app{bibtex} instruction is needed only if the \TeX{}
+source contains a bibliography (which it probably should); and we use
+here the built-in Makefile variable ``\texttt{\$<}'', which refers to
+the first (or only) dependency of a rule.
+
+Makefile rules are applied recursively---this is what makes \app{make}
+so useful! So, for example, ``\texttt{make install}'' will not fail
+just because the \textsf{zip} file has not yet been built, so long as
+the Makefile contains a recipe for building the latter (as of course
+it does). By the same token, if you invoke the \texttt{install} target
+when the \textsf{zip} file already exists, it will be checked
+automatically for up-to-dateness and rebuilt if necessary---which also
+means that the \textsf{gfn} and PDF files will be checked and possibly
+rebuilt.
+
+Any files specified as dependencies must either (a) feature as the
+target of a rule, or (b) be provided as ``primitive'' inputs. In this
+example the primitives are the \textsf{inp} file containing function
+definitions, the \textsf{spec} file for the package, the sample
+script, and the \TeX{} source for the documentation. Everything else
+gets generated by \app{make}.
 
 \chapter{Package specification details}
 \label{chap:specfile}
