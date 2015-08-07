@@ -1869,7 +1869,7 @@ things discussed in section~\ref{sec:cli-build} \app{cmd.exe} is quite
 adequate, with some help from a few small additions.  We offer some
 more detail on the two options below.
 
-\subsection*{cmd.exe}
+\subsection*{Native Windows: cmd.exe}
 
 This supports all the commands shown in section~\ref{sec:cli-build}
 except that the \app{make} utility is not present. But \app{make} for
@@ -1877,10 +1877,11 @@ Windows can be downloaded from the \textsf{GnuWin32} project on
 sourceforge: see \url{http://gnuwin32.sf.net/packages/make.htm},
 which provides a nice easy self-installer. You may also want 
 command-line \textsf{zip} and \textsf{unzip} from \textsf{GnuWin32}: 
-\url{http://gnuwin32.sf.net/packages/zip.htm}.
+\url{http://gnuwin32.sf.net/packages/zip.htm}. (In both cases you
+should select the option ``Complete package, except sources''.)
 
-For anyone who's interested but not very familiar with
-\textsf{cmd.exe}, here's a basic guide.  First, to get easy access to
+For anyone who's interested, but not very familiar with
+\textsf{cmd.exe}, a basic guide follows.  First, to get easy access to
 the program go to the Windows desktop, right-click, and select New,
 Shortcut. You'll be asked for the location of the target for the
 shortcut. Most likely this should be
@@ -1889,13 +1890,14 @@ c:\windows\system32\cmd.exe
 \end{code}
 (but you can browse to find it if need be). Click \textsf{Next}, give
 the item a name, then \textsf{Finish}. Now right-click on the new
-shortcut and select \textsf{Properties}: let's make this a bit more
-functional. 
+shortcut and select \textsf{Properties}: let's make this dude a bit
+more functional.
 \begin{enumerate}
 \item Under the Shortcut tab, find ``Start in:''; this is the
   directory in which the shell will start and by default it's the
-  directory that contains \textsf{cmd.exe}, which is not a useful
-  place to be. Change it to \verb|%userprofile%| and it will open in
+  directory that contains \textsf{cmd.exe}, which is \textit{not} a
+  useful place to be for our purposes. Change it to
+  \verb|%userprofile%| and it will open in
   your personal file space (make it something more specific if you
   like).
 \item Under the Font tab, choose a decent TrueType font in place of
@@ -1910,7 +1912,7 @@ functional.
 Having fixed its properties, double-click on the new shortcut and you
 should have a fairly decent-looking terminal window. The
 \textsf{cmd.exe} window is sometimes called a ``DOS box.''  In fact it
-has nothing to do with \textsf{DOS}---a long-obsolete 16-bit operating
+has little to do with \textsf{DOS}---a long-obsolete 16-bit operating
 system---but its default appearance does look like a horrid blast from
 the past. Hopefully we've improved on that.
 
@@ -1969,24 +1971,27 @@ the third lets you type \texttt{profile} to open your shell AutoRun
 file in Notepad in case it needs updating.
 
 Speaking of \textsf{Notepad++}, unless you already have a personal
-favorite text editor for Windows we strongly recommend using this
-program. The Notepad supplied with Windows is a feeble program, easily
-confused by variant line-endings and inclined to hide the true content
-of some text files. \textsf{Notepad++} is very full-featured (it knows
-about the syntax of Makefiles, for example) and also easy to use. It's
-available from \url{http://notepad-plus-plus.org/}.
+favorite text editor we strongly recommend using this program. The
+\textsf{notepad.exe} supplied with Windows is a truly feeble piece of
+software, easily confused by variant line-endings and inclined to hide
+or misconstrue the true content of some text files. \textsf{Notepad++}
+is very full-featured (it knows about the syntax of Makefiles, for
+example) and also easy to use. It's free under GPL and available from
+\url{http://notepad-plus-plus.org/}.
 
 One more point: it's not always understood that you can launch GUI
-programs from \textsf{cmd.exe}. We've alluded to one example
+programs from \textsf{cmd.exe}. We've alluded to one instance
 above---typing \texttt{edit} at the command prompt to open a file in
 \textsf{Notepad++}---but here's another that can be useful. Having
 built a \textsf{gfn} file using \textsf{make} under the shell (see
 Figure~\ref{fig:cmd-exe}) you can easily open it for inspection in the
-gretl GUI with ``\texttt{gretl mypkg.gfn}''.
+gretl GUI with ``\texttt{gretl mypkg.gfn}''. No need to mess with File
+Open dialogs since you're already in the directory where
+\texttt{mypkg.gfn} is located.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.7\textwidth]{figures/cmd-exe}
+  \includegraphics[width=0.75\textwidth]{figures/cmd-exe}
   \caption{Running make to build a gfn file on Windows}
   \label{fig:cmd-exe}
 \end{figure}
@@ -1995,7 +2000,8 @@ gretl GUI with ``\texttt{gretl mypkg.gfn}''.
 
 There are two main packages which provide a unix-type shell on
 Windows, \textsf{CygWin} and \textsf{MSYS}. Both of these are quite
-big installs ($>$ 100 MB). 
+big installs ($>$ 100 MB). And both will take some getting used to for
+anyone unfamiliar with unix idioms.
 
 \textsf{CygWin} can be found at \url{https://www.cygwin.com/}. It is
 comprehensive, actively developed and bang up to date. One point to
@@ -2009,11 +2015,12 @@ able to do everything discussed in this chapter you'll need to select
 \textsf{Net} set.
 
 The requirements for installing \textsf{MSYS} can be somewhat
-confusing, but as of this writing there's a clear account at
-\url{http://sourceforge.net/p/mingw-w64/wiki2/MSYS/}. If you select
+confusing, but as of this writing there's a relatively clear account
+at \url{http://sourceforge.net/p/mingw-w64/wiki2/MSYS/}. If you select
 the ``all-in-one'' package (51 MB zip file), you'll get everything
-except for \textsf{curl} (which is pretty much of an optional extra
-anyway). \textsf{Curl} can be installed separately if you want it; see
+mentioned in this chapter apart from \textsf{curl} (which is pretty
+much an optional extra anyway). \textsf{Curl} can be installed
+separately if you want it; see
 \url{http://curl.haxx.se/download.html}.
 
 Even if you decide not to go ``all the way'' with command-line
@@ -2084,10 +2091,7 @@ clean:
 This Makefile specifies five targets. The first target (in this case,
 the \textsf{gfn} file) is invoked if you simply type
 ``\texttt{make}''; to invoke the other targets you have to name them,
-as in ``\texttt{make install}''.\footnote{There is one unix-specific
-  idiom in this Makefile. If you were running \app{make} under
-  \app{cmd.exe} on Windows you would have to substitute \texttt{del}
-  for \texttt{rm -f} under the clean target.}
+as in ``\texttt{make install}''.
 
 If a target has no dependencies (like \texttt{clean} here) its
 associated instructions are carried out unconditionally, so
@@ -2095,7 +2099,9 @@ associated instructions are carried out unconditionally, so
 that can be generated by \app{make}.  By the way, using the
 \texttt{-f} (``force'') flag with the \texttt{rm} (``remove'') command
 means that it will not seek confirmation, nor will it complain if the
-file to be deleted doesn't actually exist.
+file to be deleted doesn't actually exist.\footnote{This rule contain
+  the only unix-specific idiom in the Makefile: under \texttt{cmd.exe}
+  you would have to substitute \texttt{del} for \texttt{rm -f}.}
 
 If the target of a Makefile rule is the name of a file, and the rule
 has dependencies, then the instructions will be carried out if and
@@ -2114,7 +2120,7 @@ regardless. So ``\texttt{make install}'' in this example will always
 (re-)install the package.
 
 A couple of things should be noted about the \texttt{\$(PKG).pdf}
-target: the \app{bibtex} instruction is needed only if the \TeX{}
+target: the \app{bibtex} instruction is wanted only if the \TeX{}
 source contains a bibliography (which it probably should); and we use
 here the built-in Makefile variable ``\texttt{\$<}'', which refers to
 the first (or only) dependency of a rule.
