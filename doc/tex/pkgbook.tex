@@ -1861,50 +1861,166 @@ computer you must make a preliminary choice: you can either
 \item install software which mimics a unix environment on Windows.
 \end{itemize}
 
-In the first case you will presumably be using \app{cmd.exe} as your
-shell. This supports the basic commands shown in
-section~\ref{sec:cli-build} but it doesn't support \app{make}; if you
-want to use that you will have to install it yourself. The simplest
-way of doing this is to run the installer for GNU \app{make} from the
-\textsf{GnuWin32} project on sourceforge: see
-\url{http://gnuwin32.sf.net/packages/make.htm}.
+The first option is simpler, and probably best for most users. In this
+case you will presumably be using \app{cmd.exe} as your shell. The
+advantage of the second option is that it provides a much more
+powerful and versatile shell, but if you just want to do the sorts of
+things discussed in section~\ref{sec:cli-build} \app{cmd.exe} is quite
+adequate, with some help from a few small additions.  We offer some
+more detail on the two options below.
 
-Alternatively, there are two main tool-sets which give you a working
-unix-like environment with Bourne-type shell:
-\begin{description}
-\item[CygWin] (\url{https://www.cygwin.com/}): this is a massive
-  project, whose aim is providing a complete unix-like environment for
-  Windows. It contains everything you need for building gretl packages
-  via the CLI and much, much more. Very up-to-date, actively developed
-  and updated.
-\item[MSYS] (\url{http://www.mingw.org/wiki/MSYS}): this is a minimal
-  but consistent set of tools that will get the job done.
-\end{description}
+\subsection*{cmd.exe}
 
-If you wish to run scripts such as those shown in
-section~\ref{sec:publish}, you will probably have to install one or
-other of these packages, unless perhaps you are very handy with
-Windows batch (\texttt{.bat}) files.
+This supports all the commands shown in section~\ref{sec:cli-build}
+except that the \app{make} utility is not present. But \app{make} for
+Windows can be downloaded from the \textsf{GnuWin32} project on
+sourceforge: see \url{http://gnuwin32.sf.net/packages/make.htm},
+which provides a nice easy self-installer. You may also want 
+command-line \textsf{zip} and \textsf{unzip} from \textsf{GnuWin32}: 
+\url{http://gnuwin32.sf.net/packages/zip.htm}.
+
+For anyone who's interested but not very familiar with
+\textsf{cmd.exe}, here's a basic guide.  First, to get easy access to
+the program go to the Windows desktop, right-click, and select New,
+Shortcut. You'll be asked for the location of the target for the
+shortcut. Most likely this should be
+\begin{code}
+c:\windows\system32\cmd.exe
+\end{code}
+(but you can browse to find it if need be). Click \textsf{Next}, give
+the item a name, then \textsf{Finish}. Now right-click on the new
+shortcut and select \textsf{Properties}: let's make this a bit more
+functional. 
+\begin{enumerate}
+\item Under the Shortcut tab, find ``Start in:''; this is the
+  directory in which the shell will start and by default it's the
+  directory that contains \textsf{cmd.exe}, which is not a useful
+  place to be. Change it to \verb|%userprofile%| and it will open in
+  your personal file space (make it something more specific if you
+  like).
+\item Under the Font tab, choose a decent TrueType font in place of
+  the primitive raster default, for example Lucida Console at size 14.
+\item Under the Layout tab, Window Size panel, give yourself a
+  comfortable height for the window---say, 35 lines.
+\item If you like, under the Colors tab select black for ``Screen
+  text'' and white for ``Screen background'' to get a more modern
+  look.
+\end{enumerate}
+
+Having fixed its properties, double-click on the new shortcut and you
+should have a fairly decent-looking terminal window. The
+\textsf{cmd.exe} window is sometimes called a ``DOS box.''  In fact it
+has nothing to do with \textsf{DOS}---a long-obsolete 16-bit operating
+system---but its default appearance does look like a horrid blast from
+the past. Hopefully we've improved on that.
+
+A couple of other things are needed to get a usable shell: the
+programs we'll be using have to be in the \texttt{PATH}, and we need a
+decent text editor.
+
+As regards the \texttt{PATH}, recent versions of the gretl installer
+will ensure that the directory holding \textsf{gretl} and
+\textsf{gretlcli} is included, but that leaves the \textsf{GnuWin32}
+utilities. In \textsf{cmd.exe} you can do something like
+\begin{code}
+PATH %PATH%;c:\program files\gnuwin32\bin
+\end{code}
+or on a 64-bit system
+\begin{code}
+PATH %PATH%;c:\program files (x86)\gnuwin32\bin
+\end{code}
+(with any adjustment needed for the specifics of your system). That
+will work OK, but only for the duration of your current shell session.
+You can add directories to the \texttt{PATH} permanently by diving
+into ``Advanced system settings'' under Control Panel's ``System''
+item, but there's another approach that may be preferable, namely
+creating an AutoRun file for use with \textsf{cmd.exe}. This can
+handle \texttt{PATH} as well as other things. Here's an example:
+\begin{code}
+@echo off
+DOSKEY ls=dir /B
+DOSKEY edit="C:\Program Files (x86)\Notepad++\notepad++.exe" $*
+DOSKEY profile=notepad %USERPROFILE%\profile.cmd
+PATH %PATH%;c:\program files (x86)\gnuwin32\bin
+\end{code}
+%$
+To activate this you would type the above (or a variant that works for
+you) into \textsf{Notepad} and save it as \texttt{profile.cmd} in the
+directory that corresponds to \texttt{\%USERPROFILE\%} for
+you.\footnote{You can determine this by typing
+  ``\verb|echo %USERPROFILE%|'' at the shell prompt (without the
+  quotes).}  Then open the Registry editor, \textsf{regedit.exe}, and
+navigate to HKEY\_CURRENT\_USER $\rightarrow$ Software $\rightarrow$
+Microsoft $\rightarrow$ Command Processor.  Right-click in the
+right-hand pane and select Add String Value: give the new entry the
+name \textsf{AutoRun} and the value
+\begin{code}
+%USERPROFILE%\profile.cmd
+\end{code}
+This little file will then be run whenever you start \textsf{cmd.exe}.
+
+The last line of \texttt{profile.cmd} puts the \textsf{GnuWin32}
+programs into the path as promised. The other lines are just
+illustrative of what's possible. \texttt{DOSKEY} establishes an alias,
+so the first instance allows you to type \texttt{ls} to get a
+directory listing, the second allows you to type, e.g., ``\texttt{edit
+  Makefile}'' and have your Makefile opened by \textsf{Notepad++}, and
+the third lets you type \texttt{profile} to open your shell AutoRun
+file in Notepad in case it needs updating.
+
+Speaking of \textsf{Notepad++}, unless you already have a personal
+favorite text editor for Windows we strongly recommend using this
+program. The Notepad supplied with Windows is a feeble program, easily
+confused by variant line-endings and inclined to hide the true content
+of some text files. \textsf{Notepad++} is very full-featured (it knows
+about the syntax of Makefiles, for example) and also easy to use. It's
+available from \url{http://notepad-plus-plus.org/}.
+
+One more point: it's not always understood that you can launch GUI
+programs from \textsf{cmd.exe}. We've alluded to one example
+above---typing \texttt{edit} at the command prompt to open a file in
+\textsf{Notepad++}---but here's another that can be useful. Having
+built a \textsf{gfn} file using \textsf{make} under the shell (see
+Figure~\ref{fig:cmd-exe}) you can easily open it for inspection in the
+gretl GUI with ``\texttt{gretl mypkg.gfn}''.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/cmd-exe}
+  \caption{Running make to build a gfn file on Windows}
+  \label{fig:cmd-exe}
+\end{figure}
+
+\subsection*{A unix-type shell}
+
+There are two main packages which provide a unix-type shell on
+Windows, \textsf{CygWin} and \textsf{MSYS}. Both of these are quite
+big installs ($>$ 100 MB). 
+
+\textsf{CygWin} can be found at \url{https://www.cygwin.com/}. It is
+comprehensive, actively developed and bang up to date. One point to
+note, however, is that a default installation, while it contains a
+\textit{lot}, does not include several of the utilities you'll
+want. When running the \textsf{CygWin} setup program you have the
+option of adding packages on top of the ``base'': if you want to be
+able to do everything discussed in this chapter you'll need to select
+\textsf{zip} and \textsf{unzip} from the \textsf{Archive} package-set;
+\textsf{make} from the \textsf{Devel} set; and \textsf{curl} from the
+\textsf{Net} set.
+
+The requirements for installing \textsf{MSYS} can be somewhat
+confusing, but as of this writing there's a clear account at
+\url{http://sourceforge.net/p/mingw-w64/wiki2/MSYS/}. If you select
+the ``all-in-one'' package (51 MB zip file), you'll get everything
+except for \textsf{curl} (which is pretty much of an optional extra
+anyway). \textsf{Curl} can be installed separately if you want it; see
+\url{http://curl.haxx.se/download.html}.
 
 Even if you decide not to go ``all the way'' with command-line
 methods, using \app{gretlcli} under either \app{cmd.exe} or a
 unix-type shell is a very nice way of exploiting certain gretl
 features (output redirection, use of environment variables, etc.) and
 may be quite useful in it own right.
-
-In all cases, you will have to ensure that \cmd{gretlcli} is in your
-\texttt{PATH}. Recent versions of the gretl installer will arrange
-this automatically, but it can be done manually via \app{cmd.exe} like
-this:
-\begin{code}
-set PATH=%PATH%;c:\program files\gretl
-\end{code}
-Similarly, if you want to use \app{make} from \textsf{GnuWin32}:
-\begin{code}
-set PATH=%PATH%;c:\program files\gnuwin32\bin
-\end{code}
-In each case you need to check for the specific path to add (e.g.\ the
-correct programs directory might be ``\texttt{program files (x86)}'').
 
 
 
