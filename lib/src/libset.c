@@ -66,14 +66,13 @@ enum {
     STATE_SKIP_MISSING    = 1 << 14, /* skip NAs when building matrix from series */
     STATE_LOOPING         = 1 << 15, /* loop is in progress at this level */
     STATE_LOOP_QUIET      = 1 << 16, /* loop commands should be quiet */
-    STATE_LOOP_PROG       = 1 << 17, /* progressive loop is in progress */
-    STATE_BFGS_RSTEP      = 1 << 18, /* use Richardson method in BFGS numerical
+    STATE_BFGS_RSTEP      = 1 << 17, /* use Richardson method in BFGS numerical
 					gradient */
-    STATE_DPDSTYLE_ON     = 1 << 19, /* emulate dpd in dynamic panel data models */
-    STATE_OPENMP_ON       = 1 << 20, /* using openmp */
-    STATE_ROBUST_Z        = 1 << 21, /* use z- not t-score with HCCM/HAC */
-    STATE_MWRITE_G        = 1 << 22, /* use %g format with mwrite() */
-    STATE_ECHO_SPACE      = 1 << 23  /* preserve vertical space in output */
+    STATE_DPDSTYLE_ON     = 1 << 18, /* emulate dpd in dynamic panel data models */
+    STATE_OPENMP_ON       = 1 << 19, /* using openmp */
+    STATE_ROBUST_Z        = 1 << 20, /* use z- not t-score with HCCM/HAC */
+    STATE_MWRITE_G        = 1 << 21, /* use %g format with mwrite() */
+    STATE_ECHO_SPACE      = 1 << 22  /* preserve vertical space in output */
 };    
 
 /* for values that really want a non-negative integer */
@@ -2474,15 +2473,12 @@ void libset_cleanup (void)
    state of the program calling libgretl, they are not user-settable
 */
 
-void set_loop_on (int quiet, int progressive)
+void set_loop_on (int quiet)
 {
     state->flags |= STATE_LOOPING;
     if (quiet) {
 	state->flags |= STATE_LOOP_QUIET;
     }
-    if (progressive) {
-	state->flags |= STATE_LOOP_PROG;
-    }    
 }
 
 void set_loop_off (void)
@@ -2499,15 +2495,6 @@ void set_loop_off (void)
 	    state->flags ^= STATE_LOOP_QUIET;
 	}
     }
-    
-    /* and similarly for progressiveness */
-    if (state->flags & STATE_LOOP_PROG) {
-	int i = n_states - 1;
-
-	if (i <= 0 || !(state_stack[i-1]->flags & STATE_LOOP_PROG)) {
-	    state->flags ^= STATE_LOOP_PROG;
-	}
-    }    
 }
 
 /* returns 1 if there's a loop going on anywhere in the "caller
@@ -2558,11 +2545,6 @@ void gretl_iteration_pop (void)
 int gretl_iteration_depth (void)
 {
     return iter_depth;
-}
-
-int gretl_looping_progressive (void)
-{
-    return (state->flags & STATE_LOOP_PROG)? 1 : 0;
 }
 
 static int batch_mode_switch (int set, int val)

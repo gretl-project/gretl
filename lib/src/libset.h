@@ -148,12 +148,12 @@ const gretl_matrix *get_matrix_mask (void);
 int get_matrix_mask_nobs (void);
 void destroy_matrix_mask (void);
 
-void set_loop_on (int quiet, int progressive);
+void set_loop_on (int quiet);
 void set_loop_off (void);
+
 int gretl_looping (void);
 int gretl_looping_currently (void);
 int gretl_looping_quietly (void);
-int gretl_looping_progressive (void);
 
 void gretl_iteration_push (void);
 void gretl_iteration_pop (void);

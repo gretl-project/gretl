@@ -3122,7 +3122,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     
     indent0 = gretl_if_state_record();
     progressive = loop_is_progressive(loop);
-    set_loop_on(loop_is_quiet(loop), progressive);
+    set_loop_on(loop_is_quiet(loop));
 
 #if LOOP_DEBUG
     fprintf(stderr, "loop_exec: loop = %p\n", (void *) loop);
