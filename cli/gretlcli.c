@@ -547,7 +547,7 @@ int main (int argc, char *argv[])
 		/* we're missing a filename argument */
 		usage(1);
 	    } else if ((opt & OPT_BATCH) && !strcmp(filearg, "-")) {
-		/* batch mode but read from stdin */
+		/* batch mode, but read from stdin */
 		quiet = batch_stdin = batch = 1;
 		*runfile = '\0';
 		load_datafile = 0;
@@ -558,7 +558,7 @@ int main (int argc, char *argv[])
 		if (opt & OPT_BATCH) {
 		    batch = 1;
 		} else if (opt & OPT_MAKEPKG) {
-		    batch = 1;
+		    quiet = batch = 1;
 		    makepkg = 1;
 		} else {
 		    runit = 1;

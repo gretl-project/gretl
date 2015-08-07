@@ -625,9 +625,11 @@ int package_make_zipfile (const char *gfnname,
 	*origdir = '\0';
     }
 
+#if 0    
     fprintf(stderr, "origdir: '%s'\n", origdir);    
     fprintf(stderr, "pkgbase: '%s'\n", pkgbase);
     fprintf(stderr, "pkgname: '%s'\n", pkgname);
+#endif    
 
     if (*pkgbase != '\0') {
 	/* get into place for copying */
