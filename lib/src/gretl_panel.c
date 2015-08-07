@@ -1761,9 +1761,21 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
 	wrsq = 0.0;
     }
 
+    /* FIXME differentiate "regular" regressors from
+       time dummies, if included
+    */
+
     wdfn = fmod->ncoeff - 1;
 
-    wfstt = (wrsq / (1.0 - wrsq)) * ((double) fmod->dfd / wdfn);
+    if (pan->opt & OPT_R) {
+	/* note: NULL may be wrong if we're excluding
+	   time dummies from this test
+	*/
+	wfstt = wald_omit_F(NULL, fmod);
+    } else {
+	wfstt = (wrsq / (1.0 - wrsq)) * ((double) fmod->dfd / wdfn);
+    }
+    
     if (wfstt >= 0.0) {
 	ModelTest *test = model_test_new(GRETL_TEST_WITHIN_F);
 
