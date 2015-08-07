@@ -785,9 +785,32 @@ shell---that is, the command processor which awaits your input when
 you open a terminal window. So we assume you know how to perform
 simple operating-system tasks such as copying/deleting files, listing
 the contents of a directory and so on via the appropriate shell
-commands. With the exception of subsection~\ref{sec:using-make} all
-the commands shown in this section have been tested on Windows'
-\app{cmd.exe} as well as the unix-type Bourne shell.
+commands. A reminder of the basics is provided in
+Table~\ref{tab:basics}. On unix-type systems (such as Linux and OS X)
+you can get help on a command by typing man followed by the command
+word, as in \texttt{man cp}. On windows, get help by typing the
+command word followed by a slash and a question mark, as in
+\texttt{copy /?}.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lll}
+\textit{action} & \textit{unix} & \textit{Windows} \\[4pt]
+copy file(s) & \texttt{cp} & \texttt{copy} \\
+move files(s) & \texttt{mv} & \texttt{move} \\
+delete files(s) & \texttt{rm} & \texttt{del} \\
+make a directory & \texttt{mkdir} & \texttt{mkdir} \\
+change directory & \texttt{cd} & \texttt{cd} \\
+list files & \texttt{ls} & \texttt{dir} \\
+emit a string & \texttt{echo} & \texttt{echo} 
+\end{tabular}
+\caption{Basic shell commands by platform}
+\label{tab:basics}
+\end{table}
+
+With the exception of subsection~\ref{sec:using-make} all the commands
+used in this section have been tested on Windows' \app{cmd.exe} as
+well as the unix-type Bourne shell.
 
 First of all, we strongly recommend that when starting work on a
 package you create a specific directory to hold the makings of the
@@ -946,10 +969,11 @@ extension, gretl will do one of two things:
 A neater way of doing this is to ``pipe'' the \cmd{makepkg} comand
 into \app{gretlcli} directly from the command line, as in
 \begin{code}
-echo makepkg mypkg.zip | gretlcli -q
+echo makepkg mypkg.zip | gretlcli -b -
 \end{code}
-where the \texttt{-q} flag makes \textsf{gretlcli} operate
-(relatively) quietly.
+where the \texttt{-b} flag makes \textsf{gretlcli} operate
+non-interactively and the following dash tells the program to read
+commands from ``stdin'' instead of an \textsf{inp} file.
 
 \subsection{Using a Makefile}
 \label{sec:using-make}
@@ -972,7 +996,7 @@ automating such tasks.
 
 To run \app{make} you need a file, usually called \texttt{Makefile},
 which contains a sequence of rules to tell the program ``what to do
-when''.\footnote{A complete tutorial on \app{make} can be found at
+when.''\footnote{A complete tutorial on \app{make} can be found at
   \url{http://www.gnu.org/software/make/manual/make.html}.}
 Example~\ref{ex:make1} shows a very simple instance, though it does
 illustrate a small refinement in the package-building process.
@@ -987,7 +1011,7 @@ $(PKG).gfn: $(PKG).inp $(PKG).spec $(PKG)_help.txt $(PKG)_sample.inp
 	gretlcli --makepkg $(PKG).inp
 
 install: $(PKG).gfn
-	echo install $(PKG).gfn --local | gretlcli -q > /dev/null
+	echo install $(PKG).gfn --local | gretlcli -b -
 
 clean: 
 	rm -f $(PKG).gfn
@@ -1930,10 +1954,10 @@ $(PKG).pdf: $(PKG).tex
         pdflatex $<
 
 $(PKG).zip: $(PKG).gfn $(PKG).pdf
-	echo makepkg $(PKG).zip | gretlcli -q > /dev/null
+	echo makepkg $(PKG).zip | gretlcli -b -
 
 install: $(PKG).zip
-	echo install $(PKG).zip --local | gretlcli -q > /dev/null
+	echo install $(PKG).zip --local | gretlcli -b -
 
 clean: 
 	rm -f $(PKG).gfn $(PKG).pdf $(PKG).zip
@@ -1944,12 +1968,10 @@ clean:
 This Makefile specifies five targets. The first target (in this case,
 the \textsf{gfn} file) is invoked if you simply type
 ``\texttt{make}''; to invoke the other targets you have to name them,
-as in ``\texttt{make install}''.\footnote{There are two unix-specific
-  idioms in this Makefile. If you were running \app{make} under
-  \app{cmd.exe} on Windows you would have to make these substitutions:
-  \texttt{NUL} for \texttt{/dev/null} under the zipfile and install
-  targets, and \texttt{del} for \texttt{rm -f} under the clean
-  target.}
+as in ``\texttt{make install}''.\footnote{There is one unix-specific
+  idiom in this Makefile. If you were running \app{make} under
+  \app{cmd.exe} on Windows you would have to substitute \texttt{del}
+  for \texttt{rm -f} under the clean target.}
 
 If a target has no dependencies (like \texttt{clean} here) its
 associated instructions are carried out unconditionally, so
@@ -1982,7 +2004,7 @@ here the built-in Makefile variable ``\texttt{\$<}'', which refers to
 the first (or only) dependency of a rule.
 
 Makefile rules are applied recursively---this is what makes \app{make}
-so useful! So, for example, ``\texttt{make install}'' will not fail
+so powerful. So, for example, ``\texttt{make install}'' will not fail
 just because the \textsf{zip} file has not yet been built, so long as
 the Makefile contains a recipe for building the latter (as of course
 it does). By the same token, if you invoke the \texttt{install} target
