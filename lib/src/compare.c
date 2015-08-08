@@ -746,6 +746,7 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	}
     } else if (orig->ci == PANEL) {
 	if (gretl_model_get_int(orig, "pooled")) {
+	    /* pooled OLS */
 	    myopt |= OPT_P;
 	} else if (orig->opt & OPT_U) {
 	    /* random effects */

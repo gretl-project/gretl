@@ -1735,6 +1735,32 @@ static int fix_panelmod_list (MODEL *targ, panelmod_t *pan)
     return 0;
 }
 
+/* compute F-stat for the regular regressors, skipping
+   time dummies, if any */
+
+static double within_F (MODEL *fmod, panelmod_t *pan,
+			int nskip)
+{
+    double F = NADBL;
+
+    if (nskip > 0) {
+	int i, k = fmod->list[0] - nskip - 2;
+	int *omitlist;
+
+	omitlist = gretl_list_new(k);
+	for (i=1; i<=k; i++) {
+	    omitlist[i] = fmod->list[i+2];
+	}
+
+	F = wald_omit_F(omitlist, fmod);
+	free(omitlist);
+    } else {
+	F = wald_omit_F(NULL, fmod);
+    }
+
+    return F;
+}
+
 /* Correct various model statistics, in the case where we estimated
    the fixed effects or "within" model on an auxiliary dataset
    from which the group means were subtracted.
@@ -1761,20 +1787,23 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
 	wrsq = 0.0;
     }
 
-    /* FIXME differentiate "regular" regressors from
-       time dummies, if included
+    /* Should we differentiate "regular" regressors from
+       time dummies, if included? Also, should we be showing
+       a chi-square test for the regular regressors in the
+       --robust case?
     */
-
+    
+#if 1 /* skip time dummies */
+    wdfn = fmod->ncoeff - 1 - pan->ntdum;
+    wfstt = within_F(fmod, pan, pan->ntdum);
+#else  /* don't skip: what we were doing before */  
     wdfn = fmod->ncoeff - 1;
-
     if (pan->opt & OPT_R) {
-	/* note: NULL may be wrong if we're excluding
-	   time dummies from this test
-	*/
-	wfstt = wald_omit_F(NULL, fmod);
+	wfstt = within_F(fmod, pan, 0);
     } else {
 	wfstt = (wrsq / (1.0 - wrsq)) * ((double) fmod->dfd / wdfn);
     }
+#endif    
     
     if (wfstt >= 0.0) {
 	ModelTest *test = model_test_new(GRETL_TEST_WITHIN_F);
@@ -1792,13 +1821,18 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
     /* note: this member is being borrowed for the "Within R-squared" */
     fmod->adjrsq = wrsq;
 
-    /* LSDV-based statistics */
-    fmod->rsq = 1.0 - (fmod->ess / fmod->tss);
-    if (fmod->rsq < 0.0) {
-	fmod->rsq = 0.0;
+    /* LSDV-based statistics (FIXME --robust case?) */
+    if (pan->opt & OPT_R) {
+	fmod->rsq = 1.0 - (fmod->ess / fmod->tss);
+	fmod->fstt = NADBL;
     } else {
-	fmod->fstt = (fmod->rsq / (1.0 - fmod->rsq)) * 
-	    ((double) fmod->dfd / fmod->dfn);
+	fmod->rsq = 1.0 - (fmod->ess / fmod->tss);
+	if (fmod->rsq < 0.0) {
+	    fmod->rsq = 0.0;
+	} else {
+	    fmod->fstt = (fmod->rsq / (1.0 - fmod->rsq)) * 
+		((double) fmod->dfd / fmod->dfn);
+	}
     }
 
     fmod->ncoeff = fmod->dfn + 1; /* number of params estimated */
@@ -3057,13 +3091,14 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
 {
     gretl_model_set_int(pmod, "pooled", 1);
     add_panel_obs_info(pmod, pan);
-    
+
     if (!(pan->opt & OPT_A)) {
 	set_model_id(pmod);
     }
 
     if (pan->opt & OPT_R) {
 	panel_robust_vcv(pmod, pan, Z);
+	pmod->opt |= OPT_R;
     }
 
     panel_dwstat(pmod, pan);
