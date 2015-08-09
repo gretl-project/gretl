@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.10.0cvs
+# Polish translation for gretl-1.10.90cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.umk.pl>, 2004 - 2015
 # Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2015
@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.92\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-07-14 09:16-0400\n"
-"PO-Revision-Date: 2015-04-01 00:00+0100\n"
-"Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
+"PO-Revision-Date: 2015-08-09 10:51-0400\n"
+"Last-Translator: Pawel Kufel <qfel@mat.umk.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
@@ -24,14 +24,12 @@ msgid "lagged differences"
 msgstr "opóźnione różnice"
 
 #: lib/src/adf_kpss.c:504
-#, fuzzy
 msgid "modified BIC, Perron-Qu"
-msgstr "zmodyfikowane BIC"
+msgstr "zmodyfikowane BIC, Perron-Qu"
 
 #: lib/src/adf_kpss.c:506
-#, fuzzy
 msgid "modified AIC, Perron-Qu"
-msgstr "zmodyfikowane AIC"
+msgstr "zmodyfikowane AIC, Perron-Qu"
 
 #: lib/src/adf_kpss.c:512 gui2/library.c:920
 msgid "modified BIC"
@@ -178,12 +176,12 @@ msgstr "zmienna czasowa t"
 #: lib/src/adf_kpss.c:1053
 #, c-format
 msgid "GLS detrending: b0 = %g, b1 = %g\n"
-msgstr ""
+msgstr "GLS detrending: b0 = %g, b1 = %g\n"
 
 #: lib/src/adf_kpss.c:1056
-#, fuzzy, c-format
+#, c-format
 msgid "GLS estimate of b0: %g\n"
-msgstr "Wyniki estymacji równania regresji"
+msgstr "Estymacji GLS dla b0: %g\n"
 
 #: lib/src/adf_kpss.c:1150
 msgid "Invalid option"
@@ -1649,19 +1647,17 @@ msgstr ""
 "autokorelacji Ljunga-Boxa (Q) dla procesu: %s"
 
 #: lib/src/describe.c:3088
-#, fuzzy
 msgid "***, **, * indicate significance at the 1%, 5%, 10% levels\n"
-msgstr "** oznacza istotność przy poziomie  5 procent"
+msgstr "***, **, * oznacza istotność przy poziomach: 1%, 5%, 10%,\n"
 
 #: lib/src/describe.c:3091
-#, fuzzy
 msgid "using Bartlett standard errors for ACF"
-msgstr "Clustered standard errors"
+msgstr "z wykorzystaniem błędu standardowego Bartletta dla ACF"
 
 #: lib/src/describe.c:3093
-#, fuzzy, c-format
+#, c-format
 msgid "using standard error 1/T^%.1f"
-msgstr "Odporne błędy standardowe (robust)"
+msgstr "z wykorzystaniem błędu standardowego 1/T^%.1f"
 
 #: lib/src/describe.c:3111
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
@@ -2939,9 +2935,9 @@ msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%g%% elipsa ufności względem %g%% krańcowymi przedziałami"
 
 #: lib/src/graphing.c:6765
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "95% interval"
-msgstr "(90% przedział)"
+msgstr "95% przedział"
 
 #: lib/src/graphing.c:6791
 msgid "Residual ACF"
@@ -3341,22 +3337,22 @@ msgstr "Usunięto funkcję '%s'\n"
 
 #: lib/src/gretl_func.c:5232
 msgid "Expected a type identifier"
-msgstr ""
+msgstr "Oczekiwany identyfikator typu"
 
 #: lib/src/gretl_func.c:5237
-#, fuzzy, c-format
+#, c-format
 msgid "Unrecognized data type '%s'"
-msgstr "Nierozpoznany typ danych"
+msgstr "Nierozpoznany typ danych '%s'"
 
 #: lib/src/gretl_func.c:5240
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid parameter type"
-msgstr "%s: błędny argument typu %s"
+msgstr "%s: błędny parameter typu"
 
 #: lib/src/gretl_func.c:5257
-#, fuzzy, c-format
+#, c-format
 msgid "parameter %d: name is missing"
-msgstr "Błędna nazwa zmiennej"
+msgstr "parametr %d: błędna nazwa"
 
 #: lib/src/gretl_func.c:5436
 #, c-format
@@ -3364,14 +3360,14 @@ msgid "%s: duplicated parameter name '%s'"
 msgstr "%s: zduplikowana nazwą parametru '%s'"
 
 #: lib/src/gretl_func.c:5921
-#, fuzzy, c-format
+#, c-format
 msgid "%s: expected an integer but found %g"
-msgstr "oczekiwane %s, lecz znaleziono %s"
+msgstr "%s: oczekiwano liczbę całkowitą, a znaleziono %g"
 
 #: lib/src/gretl_func.c:5948
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument value %g is out of bounds"
-msgstr "%s, argument %d: wartość %g jest spoza zakresu\n"
+msgstr "%s: wartość argumentu %g jest spoza zakresu"
 
 #: lib/src/gretl_func.c:6020
 msgid "Duplicated pointer argument: not allowed"
@@ -4508,21 +4504,21 @@ msgstr "Napotkał niedodatnie (ujemne)) dane"
 #: lib/src/matrix_extra.c:1558
 #, c-format
 msgid "%s: matrix is NULL"
-msgstr ""
+msgstr "%s: macierz zerowa (NULL)"
 
 #: lib/src/matrix_extra.c:1560
 msgid "matrix is NULL"
-msgstr ""
+msgstr "macierz zerowa (NULL)"
 
 #: lib/src/matrix_extra.c:1566
-#, fuzzy, c-format
+#, c-format
 msgid "%s: matrix is empty (%d x %d)"
-msgstr "Zerowa macierz, %d x %d\n"
+msgstr "%s: macierz jest pusta (%d x %d)"
 
 #: lib/src/matrix_extra.c:1569
-#, fuzzy, c-format
+#, c-format
 msgid "matrix is empty (%d x %d)"
-msgstr "Zerowa macierz, %d x %d\n"
+msgstr "macierz jest pusta (%d x %d)"
 
 #: lib/src/missing.c:551
 #, c-format
@@ -5333,7 +5329,7 @@ msgstr "Using %d quadrature points"
 
 #: lib/src/modelprint.c:2081
 msgid "Without squared terms in variance equation"
-msgstr ""
+msgstr "Bez składników kwadratowych w równaniu wariancji"
 
 #: lib/src/modelprint.c:2094
 msgid "Allowing for groupwise heteroskedasticity"
@@ -5807,6 +5803,8 @@ msgid ""
 "Using the same index variable (%s) for nested loops:\n"
 "this is acceptable only with \"for\" loops."
 msgstr ""
+"Używając indeksu zmiennej (%s) dla zagnieżdżonych pętli:\n"
+"jest to dopuszczalne tylko dla \"for\" w pętli"
 
 #: lib/src/monte_carlo.c:1244
 msgid "No valid loop condition was given."
@@ -6343,8 +6341,8 @@ msgstr ""
 #: lib/src/printout.c:323
 msgid "Test for null hypothesis of normal distribution"
 msgstr ""
-"Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny. Test "
-"Doornika-Hansena (1994)- transformowana skośność i kurtoza."
+"Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny."
+"Test Doornika-Hansena (1994) - transformowana skośność i kurtoza."
 
 #: lib/src/printout.c:330
 msgid "Test for null hypothesis of gamma distribution"
@@ -6719,7 +6717,7 @@ msgstr "Nieakceptowany symbol '%c'"
 
 #: lib/src/strutils.c:2107
 msgid "out of memory in XML encoding"
-msgstr "Bład pamięci w kodowaniu XML"
+msgstr "Błąd pamięci w kodowaniu XML"
 
 #: lib/src/subsample.c:713
 msgid "Missing sub-sample information; can't merge data\n"
@@ -6765,6 +6763,7 @@ msgid ""
 "The full dataset must be restored before imposing a permanent sample "
 "restriction"
 msgstr ""
+"Pełna próba musi zostać przywrócona przed nałożeniem stałej reskrykcji"
 
 #: lib/src/subsample.c:2563 lib/src/subsample.c:2580
 msgid "error in new starting obs"
@@ -8551,14 +8550,12 @@ msgid "Function package %s"
 msgstr "Funkcje pakietu %s"
 
 #: gui2/datafiles.c:787
-#, fuzzy
 msgid "Unload member functions only"
-msgstr "Nieotwarta funkcja pakietu"
+msgstr "Unload member functions only"
 
 #: gui2/datafiles.c:788
-#, fuzzy
 msgid "Unload and delete package file"
-msgstr "Usunąć plik z funkcją pakietu"
+msgstr "Unload and delete package file"
 
 #: gui2/datafiles.c:793 gui2/session.c:2440
 #, c-format
@@ -8604,7 +8601,7 @@ msgstr "Edycja"
 
 #: gui2/datafiles.c:1316 gui2/datafiles.c:1487
 msgid "Sample script"
-msgstr "Przykłady skryptów"
+msgstr "Przykładowy skrypt"
 
 #: gui2/datafiles.c:1319 gui2/datafiles.c:1488
 msgid "View code"
@@ -8631,7 +8628,7 @@ msgstr "Pomoc"
 
 #: gui2/datafiles.c:1340 gui2/datafiles.c:1495
 msgid "Unload/delete..."
-msgstr ""
+msgstr "Zamknij/skasuj..."
 
 #: gui2/datafiles.c:1343 gui2/datafiles.c:1498
 msgid "New"
@@ -9217,7 +9214,7 @@ msgstr "do"
 
 #: gui2/dialogs.c:2342
 msgid "Make this restriction permanent"
-msgstr "Dodaj stałe restrykcje"
+msgstr "Wykonaj jako stałą restrykcje"
 
 #: gui2/dialogs.c:2375
 #, c-format
@@ -9305,9 +9302,8 @@ msgid "gretl: Chow test"
 msgstr "gretl: test stabilności Chowa"
 
 #: gui2/dialogs.c:2942
-#, fuzzy
 msgid "Test a subset of regressors"
-msgstr "Wybór regresorów"
+msgstr "Test dla podzbioru regresorów"
 
 #: gui2/dialogs.c:3054 gui2/dialogs.c:3350
 msgid "shaded area"
@@ -9683,9 +9679,9 @@ msgid "Always goes to a new window"
 msgstr "Zawsze przenieś do nowego okna"
 
 #: gui2/dialogs.c:6201
-#, fuzzy, c-format
+#, c-format
 msgid "percent change in %s"
-msgstr "brak zmian w parametrach"
+msgstr "procent zmian dla %s"
 
 #: gui2/dialogs.c:6208 gui2/ssheet.c:994
 #, c-format
@@ -10228,6 +10224,8 @@ msgid ""
 "This package requires data that are not currently in place.\n"
 "Would you like to open its sample script?"
 msgstr ""
+"Ten pakiet wymaga danych, które nie są obecnie otwarte.\n"
+"Czy chcesz otworzyć przykładowy skrypt pakietu?"
 
 #: gui2/fncall.c:2510
 #, c-format
@@ -10253,9 +10251,9 @@ msgid ""
 "as \"%s/%s\" in the %s.\n"
 "Do you want to do this?"
 msgstr ""
-"The package %s can be attached to the gretl menus\n"
-"as \"%s/%s\" in the %s.\n"
-"Do you want to do this?"
+"Pakiet %s może być dołączony do menu Gretl jako:\n"
+"\"%s/%s\" w poleceniu menu %s.\n"
+"Czy chcesz to wykonać?"
 
 #: gui2/fncall.c:3172 gui2/settings.c:1760
 msgid "This change will take effect when you restart gretl"
@@ -10271,39 +10269,32 @@ msgid "Error reading package"
 msgstr "Błąd wczytania pakietu funkcji"
 
 #: gui2/fnsave.c:323
-#, fuzzy
 msgid "_Save gfn"
-msgstr "_Zapisz"
+msgstr "_Zapisz gfn"
 
 #: gui2/fnsave.c:324
-#, fuzzy
 msgid "Save gfn _as..."
-msgstr "Zapisz jako..."
+msgstr "Zapisz gfn jako..."
 
 #: gui2/fnsave.c:325
-#, fuzzy
 msgid "Save _zip file..."
-msgstr "Zapisz jako plik tekstowy"
+msgstr "Zapisz plik _zip..."
 
 #: gui2/fnsave.c:326
-#, fuzzy
 msgid "Save as _script..."
-msgstr "Zapisz jako polecenia skryptowe"
+msgstr "Zapisz jako polecenia _skryptowe..."
 
 #: gui2/fnsave.c:327
-#, fuzzy
 msgid "_Write spec file..."
-msgstr "Zapisz plik spec"
+msgstr "Zapisz plik spec..."
 
 #: gui2/fnsave.c:328
-#, fuzzy
 msgid "_Upload to server..."
-msgstr "Zapisz zmiany pakietu funkcji na serwerze"
+msgstr "_Prześlij na serwer..."
 
 #: gui2/fnsave.c:521 gui2/fnsave.c:533
-#, fuzzy
 msgid "Please complete all fields"
-msgstr "Proszę najpierw otworzyć plik danych"
+msgstr "Proszę wypełnić wszystkie pola"
 
 #: gui2/fnsave.c:540
 msgid "Please add a sample script for this package"
@@ -10328,6 +10319,9 @@ msgid ""
 "the \"extra properties\" dialog (after applying any\n"
 "changes you wish to keep)."
 msgstr ""
+"Przed dodawaniem lub usuwaniem funkcji, należy zamknąć\n"
+"okno dialogowe(po wykonaniu jakiegokolwiek zmian,\n"
+"które chcesz zachować)."
 
 #: gui2/fnsave.c:1002
 msgid ""
@@ -10425,9 +10419,8 @@ msgstr ""
 "(a) zapisać ten pakiet, i (b) restartować gretla."
 
 #: gui2/fnsave.c:2148 gui2/fnsave.c:2167
-#, fuzzy
 msgid "Apply changes?"
-msgstr "Zapisać zmiany?"
+msgstr "Zatwierdź zmiany?"
 
 #: gui2/fnsave.c:2293
 msgid "gretl: extra properties"
@@ -11626,9 +11619,8 @@ msgid "Drop observations with _missing values..."
 msgstr "Pomija obserwacje z _brakującymi danymi"
 
 #: gui2/gretl.c:1650
-#, fuzzy
 msgid "Make current subsample permanent..."
-msgstr "Czy wykonywać zawsze"
+msgstr "Wykorzystaj bierzącą podpróbę..."
 
 #: gui2/gretl.c:1652
 msgid "_Count missing values"
@@ -12908,16 +12900,12 @@ msgstr ""
 "dla której był estymowany model?"
 
 #: gui2/gui_utils.c:4905
-#, fuzzy
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled."
 msgstr ""
 "Podpróba dla oszacowanego modelu jest różna od aktualnej\n"
-"podpróby, dlatego część opcji będzie wyłączonych.\n"
-"\n"
-"Czy chcesz przywrócić podpróbę\n"
-"dla której był estymowany model?"
+"podpróby, dlatego część opcji będzie wyłączonych."
 
 #: gui2/gui_utils.c:4970 gui2/library.c:4955
 #, c-format
@@ -13206,7 +13194,7 @@ msgstr "Opóźnienie dla testu ADF:"
 
 #: gui2/library.c:1041
 msgid "use Perron-Qu method"
-msgstr ""
+msgstr "wykorzystaj metodę Perron-Qu"
 
 #: gui2/library.c:1042 gui2/library.c:1050 gui2/library.c:1117
 #: gui2/library.c:1126
@@ -13271,6 +13259,12 @@ msgid ""
 "\n"
 "Do you want to go ahead with the subsampling now?"
 msgstr ""
+"Zmiana zestawu danych może doprowadzić do usunięcia\n"
+"modelu %d z tej sesji Gretl.\n"
+"\n"
+"Nie chcę zapisywać tej sesji.\n"
+"\n"
+"Czy chcesz wykonywać pracę na podpróbie?"
 
 #: gui2/library.c:1582
 #, c-format
@@ -13452,9 +13446,8 @@ msgid "Normal Q-Q plot"
 msgstr "Wykres Q-Q (kwantyle empiryczne - kwantyle normalne)"
 
 #: gui2/library.c:2919
-#, fuzzy
 msgid "You must select at least one regressor"
-msgstr "Należy wybrać dolną granicę zmiennej"
+msgstr "Należy wybrać co najmniej jedn regresor"
 
 #: gui2/library.c:2970 gui2/library.c:3080
 msgid "gretl: Chow test output"
@@ -13465,13 +13458,12 @@ msgid "This test only implemented for OLS models"
 msgstr "Ten test jest zaimplementowany tylko dla modeli estymowanych KMNK"
 
 #: gui2/library.c:3023
-#, fuzzy
 msgid "gretl: chow test"
-msgstr "gretl: test stabilności Chowa"
+msgstr "gretl: test Chowa"
 
 #: gui2/library.c:3082
 msgid "gretl: QLR test output"
-msgstr "gretl: wyniki testu QLR (ilorazu wiarygodnoś?ci Quandta)"
+msgstr "gretl: wyniki testu QLR (ilorazu wiarygodności Quandta)"
 
 #: gui2/library.c:3084
 msgid "gretl: CUSUM test output"
@@ -13604,9 +13596,8 @@ msgid "correlogram"
 msgstr "korelogram"
 
 #: gui2/library.c:5519
-#, fuzzy
 msgid "Use Bartlett standard errors"
-msgstr "Clustered standard errors"
+msgstr "wykorzystaj błąd standardowy Bartletta"
 
 #: gui2/library.c:5525 gui2/library.c:5529
 msgid "Maximum lag:"
@@ -13720,7 +13711,7 @@ msgid ""
 "%s (value = %g)\n"
 "Name (max. %d characters):"
 msgstr ""
-"Statyka z modelu %d\n"
+"Statystyka z modelu %d\n"
 "%s (value = %g)\n"
 "Nazwa (max. %d znaków):"
 
@@ -13983,7 +13974,7 @@ msgstr "Dodaj pierwsze różnice zmiennej"
 
 #: gui2/menustate.c:392 gui2/menustate.c:538
 msgid "Add percent change..."
-msgstr ""
+msgstr "Dodaj procent zmian zmiennej..."
 
 #: gui2/menustate.c:394 gui2/menustate.c:539
 msgid "Dummify..."
@@ -14662,9 +14653,8 @@ msgid "Show interval for median"
 msgstr "Pokaż przedział ufnoci dla mediany"
 
 #: gui2/selector.c:5575
-#, fuzzy
 msgid "Variance equation includes squares"
-msgstr "Estymacja z wykorzystaniem metody najmniejszych kwadratów"
+msgstr "Równanie wariancji z kwadratami"
 
 #: gui2/selector.c:5581
 msgid "Parameter covariance matrix via Hessian"
@@ -14975,9 +14965,8 @@ msgid "Select variables to copy"
 msgstr "Wybór zmiennych do kopiowania"
 
 #: gui2/selector.c:6825
-#, fuzzy
 msgid "Select variables to test"
-msgstr "Wybór zmiennych do testu pominiętych zmiennych (omit vars)"
+msgstr "Wybór zmiennych do testu"
 
 #: gui2/selector.c:6827
 msgid "Define named list"
@@ -17075,9 +17064,8 @@ msgid "Irregular"
 msgstr "składnik przypadkowy"
 
 #: plugin/tramo_options.c:425
-#, fuzzy
-msgid "Linearized series"
-msgstr "Dodaj serie danych"
+msgid "linearized series"
+msgstr "z linearyzowanym trendem"
 
 #: plugin/tramo_options.c:439
 msgid "Output"
@@ -17192,9 +17180,9 @@ msgid "irregular component of %s"
 msgstr "Składnik przypadkowy dla %s"
 
 #: plugin/tramo-x12a.c:70
-#, fuzzy, c-format
+#, c-format
 msgid "linearized %s"
-msgstr "Iteracji %s"
+msgstr "linearyzowana %s"
 
 #: plugin/tramo-x12a.c:239
 msgid "X-12-ARIMA options"
