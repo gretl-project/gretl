@@ -22,6 +22,8 @@ version 1.10.90, in progress
 - Random effects probit: parallelize quadrature code
 - GUI: numerous improvements and fixes for editing and
   configuring function packages
+- Fix bug: the wrong F-test was being reported for the fixed
+  effects estimator with the --robust option
 - Fix bug: possible hang of "foreign" on Windows when using
   Rterm non-interactively
 - Fix bug: bwrite() not completing until gretl exits
