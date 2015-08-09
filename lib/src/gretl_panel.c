@@ -1736,26 +1736,27 @@ static int fix_panelmod_list (MODEL *targ, panelmod_t *pan)
 }
 
 /* compute F-stat for the regular regressors, skipping
-   time dummies, if any */
+   @nskip trailing coefficients (which can be used to
+   skip time dummies
+*/
 
-static double within_F (MODEL *fmod, panelmod_t *pan,
-			int nskip)
+static double panel_F (MODEL *pmod, panelmod_t *pan, int nskip)
 {
     double F = NADBL;
 
     if (nskip > 0) {
-	int i, k = fmod->list[0] - nskip - 2;
+	int i, k = pmod->list[0] - nskip - 2;
 	int *omitlist;
 
 	omitlist = gretl_list_new(k);
 	for (i=1; i<=k; i++) {
-	    omitlist[i] = fmod->list[i+2];
+	    omitlist[i] = pmod->list[i+2];
 	}
 
-	F = wald_omit_F(omitlist, fmod);
+	F = wald_omit_F(omitlist, pmod);
 	free(omitlist);
     } else {
-	F = wald_omit_F(NULL, fmod);
+	F = wald_omit_F(NULL, pmod);
     }
 
     return F;
@@ -1788,22 +1789,20 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
     }
 
     /* Should we differentiate "regular" regressors from
-       time dummies, if included? Also, should we be showing
-       a chi-square test for the regular regressors in the
-       --robust case?
+       time dummies, if included? For now, yes.
     */
-    
-#if 1 /* skip time dummies */
-    wdfn = fmod->ncoeff - 1 - pan->ntdum;
-    wfstt = within_F(fmod, pan, pan->ntdum);
-#else  /* don't skip: what we were doing before */  
-    wdfn = fmod->ncoeff - 1;
-    if (pan->opt & OPT_R) {
-	wfstt = within_F(fmod, pan, 0);
+
+    if (pan->ntdum > 0) {
+	wdfn = fmod->ncoeff - 1 - pan->ntdum;
+	wfstt = panel_F(fmod, pan, pan->ntdum);
     } else {
-	wfstt = (wrsq / (1.0 - wrsq)) * ((double) fmod->dfd / wdfn);
+	wdfn = fmod->ncoeff - 1;
+	if (pan->opt & OPT_R) {
+	    wfstt = panel_F(fmod, pan, 0);
+	} else {
+	    wfstt = (wrsq / (1.0 - wrsq)) * ((double) fmod->dfd / wdfn);
+	}
     }
-#endif    
     
     if (wfstt >= 0.0) {
 	ModelTest *test = model_test_new(GRETL_TEST_WITHIN_F);
@@ -1821,7 +1820,9 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
     /* note: this member is being borrowed for the "Within R-squared" */
     fmod->adjrsq = wrsq;
 
-    /* LSDV-based statistics (FIXME --robust case?) */
+    /* LSDV-based statistics (FIXME: can we do this in
+       the --robust case?) 
+    */
     if (pan->opt & OPT_R) {
 	fmod->rsq = 1.0 - (fmod->ess / fmod->tss);
 	fmod->fstt = NADBL;
@@ -3099,6 +3100,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     if (pan->opt & OPT_R) {
 	panel_robust_vcv(pmod, pan, Z);
 	pmod->opt |= OPT_R;
+	pmod->fstt = panel_F(pmod, pan, 0);
     }
 
     panel_dwstat(pmod, pan);
