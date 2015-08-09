@@ -283,7 +283,7 @@ static double controller_get_val (controller *clr,
 	}
     }
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "controller_get_val: vname='%s', expr='%s', val=%g, err=%d\n", 
 	    clr->vname, clr->expr, clr->val, *err);
 #endif
@@ -435,7 +435,7 @@ static void loop_store_init (LOOP_STORE *lstore)
 
 static void gretl_loop_init (LOOPSET *loop)
 {
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "gretl_loop_init: initing loop at %p\n", (void *) loop);
 #endif
 
@@ -540,7 +540,7 @@ void gretl_loop_destroy (LOOPSET *loop)
 
     if (loop->lmodels != NULL) {
 	for (i=0; i<loop->n_loop_models; i++) {
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
 	    fprintf(stderr, "freeing loop->lmodels[%d]\n", i);
 #endif
 	    loop_model_free(&loop->lmodels[i]);
@@ -568,11 +568,30 @@ void gretl_loop_destroy (LOOPSET *loop)
     free(loop);
 }
 
+static void destroy_loop_stack (LOOPSET *loop)
+{
+    if (loop == NULL) {
+	return;
+    }
+    
+    /* find the origin of the stack */
+    while (loop->parent != NULL) {
+	loop = loop->parent;
+    }
+
+    /* and destroy recursively */
+    gretl_loop_destroy(loop);
+
+    compile_level = 0;
+    set_loop_off();
+    currloop = NULL;
+}
+
 static int parse_as_while_loop (LOOPSET *loop, const char *s)
 {
     int err = 0;
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "parse_as_while_loop: cond = '%s'\n", s);
 #endif
 
@@ -697,7 +716,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
        named scalars, scalar expressions.
     */
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "parse_as_indexed_loop: start='%s', end='%s'\n", start, end);
 #endif
 
@@ -729,7 +748,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	err = loop_attach_index_var(loop, lvar, dset);
     }
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "indexed_loop: init.val=%g, final.val=%g, err=%d\n",
 	    loop->init.val, loop->final.val, err);
 #endif
@@ -750,7 +769,7 @@ static int parse_as_count_loop (LOOPSET *loop,
 	loop->type = COUNT_LOOP;
     }
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "parse_as_count_loop: init.val=%g, final.val=%g\n",
 	    loop->init.val, loop->final.val);
 #endif
@@ -764,7 +783,7 @@ static int set_forloop_element (char *s, LOOPSET *loop, int i)
 	(i == 1)? &loop->test : &loop->delta;
     int len, err = 0;
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "set_forloop_element: i=%d: '%s'\n", i, s);
 #endif
 
@@ -790,7 +809,7 @@ static int set_forloop_element (char *s, LOOPSET *loop, int i)
 	err = extract_varname(clr->vname, s, &len);
     } 
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, " expr='%s', vname='%s'\n", clr->expr, clr->vname);
 #endif
 
@@ -810,7 +829,7 @@ static int list_vars_to_strings (LOOPSET *loop, const int *list,
     int i, vi;
     int err;
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "list_vars_to_strings: adding %d strings\n", list[0]);
 #endif
 
@@ -952,7 +971,7 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
 
     list = get_list_by_name(s);
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "list_loop_setup: s = '%s'\n", s);
     printlist(list, "get_list_by_name");
 #endif
@@ -1084,7 +1103,7 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
     
     s += strspn(s, " "); /* skip any spaces */
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "parse_as_each_loop: s = '%s'\n", s);
 #endif 
 
@@ -1096,7 +1115,7 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
     s += strlen(ivar);
     nf = count_each_fields(s);
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, " number of fields = %d\n", nf);
 #endif 
 
@@ -1133,7 +1152,7 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
 	err = loop_attach_index_var(loop, ivar, dset);
     }   
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "parse_as_each_loop: final.val=%g\n", loop->final.val);
 #endif 
 
@@ -1222,7 +1241,7 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 	s += 4;
     }
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "parse_first_loopline: '%s'\n", s);
 #endif
 
@@ -1245,7 +1264,7 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 	err = 1;
     }
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "parse_first_loopline: returning %d\n", err);
 #endif
 
@@ -1308,8 +1327,10 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
     }
 
     if (*err) {
-	free(loop->cmds);
-	free(loop);
+#if LOOP_DEBUG
+	fprintf(stderr, "start_new_loop: aborting on error\n");
+#endif
+	destroy_loop_stack(loop);
 	loop = NULL;
     } 
 
@@ -1439,7 +1460,7 @@ static void loop_model_free (LOOP_MODEL *lmod)
 {
     int i, n;
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "loop_model_free: lmod at %p, model0 at %p\n",
 	    (void *) lmod, (void *) lmod->model0);
 #endif
@@ -1463,7 +1484,7 @@ static void loop_model_zero (LOOP_MODEL *lmod, int started)
 {
     int i, bnc = 4 * lmod->nc;
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "loop_model_zero: %p\n", (void *) lmod);
 #endif
 
@@ -1503,7 +1524,7 @@ static int loop_model_start (LOOP_MODEL *lmod, const MODEL *pmod)
     int nc = pmod->ncoeff;
     int err = 0;
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "init: copying model at %p\n", (void *) pmod);
 #endif
 
@@ -1542,7 +1563,7 @@ static int loop_model_start (LOOP_MODEL *lmod, const MODEL *pmod)
 
     if (!err) {
 	loop_model_zero(lmod, 0);
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
 	fprintf(stderr, " model copied to %p, returning 0\n", 
 		(void *) lmod->model0);
 #endif
@@ -1770,7 +1791,7 @@ static int loop_store_start (LOOPSET *loop, const char *names,
 	return E_ALLOC;
     }
     
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "loop_store_init: created sZ, v = %d, n = %d\n",
 	    lstore->dset->v, lstore->dset->n);
 #endif
@@ -1909,7 +1930,7 @@ get_loop_model_by_line (LOOPSET *loop, int lno, int *err)
     int n = loop->n_loop_models;
     int i;
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "get_loop_model_by_line: loop->n_loop_models = %d\n",
 	    loop->n_loop_models);
 #endif
@@ -1944,7 +1965,7 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
     mpf_t m;
     int j, err = 0;
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "loop_model_update: lmod = %p, pmod = %p\n", 
 	    (void *) lmod, (void *) pmod);
 #endif
@@ -1991,7 +2012,7 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
 
     lmod->n += 1;
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "loop_model_update: returning %d\n", err);
 #endif
 
@@ -2079,7 +2100,7 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
     int n = loop->n_cmds;
     int err = 0;
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "real_append_line: s->line = '%s'\n", s->line);
 #endif
 
@@ -2104,7 +2125,7 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 	loop->n_cmds += 1;
     }
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "loop %p: n_cmds=%d, line[%d]='%s', ci=%d\n",
 	    (void *) loop, loop->n_cmds, n, loop->cmds[n].line,
 	    loop->cmds[n].ci);
@@ -2112,21 +2133,6 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 
     return err;
 }  
-
-static void destroy_loop_stack (void)
-{
-    LOOPSET *loop = currloop;
-
-    /* find the origin of the stack */
-    while (loop->parent != NULL) {
-	loop = loop->parent;
-    }
-
-    /* and destroy recursively */
-    gretl_loop_destroy(loop);
-
-    compile_level = 0;
-}
 
 /**
  * gretl_loop_append_line:
@@ -2155,7 +2161,7 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
     if (!ok_in_loop(s->cmd->ci)) {
 	gretl_errmsg_set(_("Sorry, this command is not available in loop mode"));
 	fprintf(stderr, "ci = %d (%s)\n", s->cmd->ci, s->line);
-	destroy_loop_stack();
+	destroy_loop_stack(loop);
 	return E_NOTIMP;
     }
 
@@ -2424,7 +2430,7 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
 	gretlopt opt = loop->cmds[i].opt;
 	int ci = loop->cmds[i].ci;
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
 	fprintf(stderr, "print_loop_results: loop command %d: %s\n", 
 		i, loop->cmds[i].line);
 #endif
@@ -2652,7 +2658,7 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 	    err = E_DATA;
 	} else {
 	    loop->itermax = loop->final.val - loop->init.val + 1;
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
 	    fprintf(stderr, "*** itermax = %g - %g + 1 = %d\n",
 		    loop->final.val, loop->init.val, loop->itermax);
 #endif
@@ -2843,7 +2849,7 @@ static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 static inline void loop_info_to_cmd (LOOPSET *loop, int j,
 				     CMD *cmd)
 {
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "loop_info_to_cmd: i=%d, j=%d: '%s'\n",
 	    loop->iter, j, loop->cmds[j].line);
 #endif
@@ -2869,7 +2875,7 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
 	cmd->flags &= ~CMD_CATCH;
     }
 
-#if LOOP_DEBUG    
+#if LOOP_DEBUG > 1
     fprintf(stderr, " flagged: prog %d, nosub %d, catch %d\n",
 	    (cmd->flags & CMD_PROG)? 1 : 0,
 	    (cmd->flags & CMD_NOSUB)? 1 : 0,
@@ -2886,7 +2892,7 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 {
     loop_command *lcmd = &loop->cmds[j];
     
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
     fprintf(stderr, "cmd_info_to_loop: j=%d: '%s'\n",
 	    j, lcmd->line);
 #endif
@@ -2915,7 +2921,7 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 	lcmd->flags |= LOOP_CMD_CATCH;
     }
 
-#if LOOP_DEBUG    
+#if LOOP_DEBUG > 1  
     fprintf(stderr, " loop-flagged: nosub %d, catch %d\n",
 	    loop_cmd_nosub(loop, j)? 1 : 0,
 	    loop_cmd_catch(loop, j)? 1 : 0);
@@ -3136,7 +3142,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     show_activity = show_activity_func_installed();
     
     while (!err && loop_condition(loop, dset, &err)) {
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
 	fprintf(stderr, "*** top of loop: iter = %d\n", loop->iter);
 #endif
 	j = -1;
@@ -3161,7 +3167,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    int parse = 1;
 	    int subst = 0;
 
-#if LTRACE || LOOP_DEBUG
+#if LTRACE || (LOOP_DEBUG > 1)
 	    fprintf(stderr, "iter=%d, j=%d, line='%s', ci=%s, compiled=%d\n",
 		    loop->iter, j, line, gretl_command_word(ci),
 		    genr_compiled(loop, j) || conditional_compiled(loop, j) ||
@@ -3270,7 +3276,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		err = parse_command_line(line, cmd, dset, NULL);
 	    }
 
-#if LOOP_DEBUG
+#if LOOP_DEBUG > 1
 	    fprintf(stderr, "    after: '%s', ci=%d\n", line, cmd->ci);
 	    fprintf(stderr, "    cmd->savename = '%s'\n", cmd->savename);
 	    fprintf(stderr, "    err from parse_command_line: %d\n", err);
@@ -3444,12 +3450,16 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     /* be sure to clear some loop-special parser flags */
     cmd->flags &= ~CMD_PROG;
 
+    if (err) {
+	err = process_command_error(cmd, err);
+    }
+
     if (loop->parent == NULL) {
 	/* reached top of stack: clean up */
 	currloop = NULL;
 	set_loop_off();
 #if LOOPSAVE
-	if (maybe_preserve_loop(loop)) {
+	if (!err && maybe_preserve_loop(loop)) {
 	    /* prevent destruction of saved loop */
 	    loop = NULL;
 	}
@@ -3457,5 +3467,5 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	gretl_loop_destroy(loop);
     }
 
-    return process_command_error(cmd, err);
+    return err;
 }
