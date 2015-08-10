@@ -1999,36 +1999,37 @@ Open dialogs since you're already in the directory where
 \subsection*{A unix-type shell}
 
 There are two main packages which provide a unix-type shell on
-Windows, \textsf{CygWin} and \textsf{MSYS}. Both of these are quite
-big installs ($>$ 100 MB). And both will take some getting used to for
-anyone unfamiliar with unix idioms.
+Windows, \textsf{CygWin} and \textsf{MSYS}. Both are likely to take
+some getting used to for anyone unfamiliar with unix idioms.
 
 \textsf{CygWin} can be found at \url{https://www.cygwin.com/}. It is
 comprehensive, actively developed and bang up to date. One point to
 note, however, is that a default installation, while it contains a
-\textit{lot}, does not include several of the utilities you'll
-want. When running the \textsf{CygWin} setup program you have the
-option of adding packages on top of the ``base'': if you want to be
-able to do everything discussed in this chapter you'll need to select
-\textsf{zip} and \textsf{unzip} from the \textsf{Archive} package-set;
-\textsf{make} from the \textsf{Devel} set; and \textsf{curl} from the
-\textsf{Net} set.
+\textit{lot} ($>$ 100 MB), does not include all of the utilities
+you'll want. When running the \textsf{CygWin} setup program you have
+the option of adding packages on top of the ``base'': if you want to
+be able to do everything discussed in this chapter you'll need to
+select \textsf{zip} and \textsf{unzip} from the \textsf{Archive}
+package-set; \textsf{make} from the \textsf{Devel} set; and
+\textsf{curl} from the \textsf{Net} set.
 
-The requirements for installing \textsf{MSYS} can be somewhat
-confusing, but as of this writing there's a relatively clear account
-at \url{http://sourceforge.net/p/mingw-w64/wiki2/MSYS/}. If you select
-the ``all-in-one'' package (51 MB zip file), you'll get everything
-mentioned in this chapter apart from \textsf{curl} (which is pretty
-much an optional extra anyway). \textsf{Curl} can be installed
-separately if you want it; see
-\url{http://curl.haxx.se/download.html}.
+As for \textsf{MSYS}, the place to start is
+\url{http://sf.net/projects/mingw/files/Installer/}; from
+there you can download \app{mingw-get-setup.exe}. Run this to set up
+the MinGW and MSYS installation manager. For our purposes here the
+base install of MSYS is sufficient, except that you may want to add
+the ``bin'' packages for \textsf{msys-zip} and \textsf{msys-unzip},
+and possibly the ``ext'' package for \textsf{msys-coreutils}. An
+installation with these extras weighs in at about 24 MB.  Note that
+\textsf{curl} is not available as a specific MSYS package, but it's
+pretty much an optional extra, and can be installed separately if you
+want it; see \url{http://curl.haxx.se/download.html}.
 
 Even if you decide not to go ``all the way'' with command-line
 methods, using \app{gretlcli} under either \app{cmd.exe} or a
 unix-type shell is a very nice way of exploiting certain gretl
 features (output redirection, use of environment variables, etc.) and
 may be quite useful in it own right.
-
 
 
 \section*{Appendix B: Makefile basics}
