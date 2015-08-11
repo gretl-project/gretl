@@ -868,7 +868,7 @@ static int process_panel_vars (DATASET *dwinfo, dw_opts *opts)
 	qsort(tid, n, sizeof *tid, gretl_compare_doubles);
 	nperiods = count_distinct_values(tid, n);
 
-	/* heuristic: if a variable represents either the panel
+	/* Heuristic: if a variable represents either the panel
 	   unit or period, it must have at least two distinct
 	   values, and must have fewer values than the total
 	   number of observations.  Further, the product of
