@@ -253,6 +253,8 @@ void gretl_model_free_on_exit (MODEL *pmod);
 
 void display_model_data_items (const MODEL *pmod);
 
+int bundlize_model_data_scalars (const MODEL *pmod, void *ptr);
+
 int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr, 
 					  GretlType type, size_t size, 
 					  void (*destructor) (void *));

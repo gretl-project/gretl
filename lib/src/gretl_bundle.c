@@ -1862,7 +1862,11 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
 	    key = mvarname(i) + 1;
 	    *err = gretl_bundle_set_string(b, key, s);	    
 	}	    
-    }    
+    }
+
+    if (!*err) {
+	*err = bundlize_model_data_scalars(pmod, b);
+    }
 
     free(x);
 

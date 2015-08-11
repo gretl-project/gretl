@@ -2882,6 +2882,7 @@ static int binary_model_finish (bin_info *bin, MODEL *pmod,
 	} else {
 	    pmod->ID = model_count_plus();
 	}
+	gretl_model_set_int(pmod, "binary", 1);
     }
 
     return pmod->errcode;

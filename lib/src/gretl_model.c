@@ -4223,6 +4223,28 @@ static int copy_model_data_items (MODEL *targ, const MODEL *src)
     return err;
 }
 
+int bundlize_model_data_scalars (const MODEL *pmod, void *ptr)
+{
+    gretl_bundle *b = (gretl_bundle *) ptr;
+    model_data_item *item;
+    double xval;
+    int i, ival;
+    int err = 0;
+	
+    for (i=0; i<pmod->n_data_items && !err; i++) {
+	item = pmod->data_items[i];
+	if (item->type == GRETL_TYPE_INT) {
+	    ival = *(int *) item->ptr;
+	    err = gretl_bundle_set_scalar(b, item->key, ival);
+	} else if (item->type == GRETL_TYPE_DOUBLE) {
+	    xval = *(double *) item->ptr;
+	    err = gretl_bundle_set_scalar(b, item->key, xval);
+	}
+    }
+
+    return err;
+}
+
 void display_model_data_items (const MODEL *pmod)
 {
     model_data_item *item;
