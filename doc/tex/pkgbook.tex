@@ -1400,11 +1400,6 @@ go together), namely offering a gretl bundle as the return value from
 a packaged function, and offering placement of a function package on
 one or other of the gretl menus. 
 
-[FIXME: this section as a whole has a good deal of material that I
-want to include, but it needs reworking -- at present it's 
-mostly just ripped from my ``Addons and Bundles'' with minimal
-changes. AC]
-
 \subsection{Working with bundles}
 
 The use of a bundle as the return type for a function allows it to
@@ -1429,52 +1424,130 @@ A function that returns a bundle can do just this sort of thing, and
 wherever it's appropriate we recommend that this facility be
 exploited.
 
-Let's see how this works by constructing a little example.
-
-Let's see how this works by reference to the \textsf{gig} package
-(GARCH in gretl, written by Jack Lucchetti). The specification file
-gig.spec contains three relevant entries:
+Let's see how this works by constructing a little example. We could
+make a package containing just this function,
 %
 \begin{code}
-gui-main = GUI_gig
-bundle-print = gig_bundle_print
-bundle-plot = GUI_gig_plot
+function bundle bunret (scalar x)
+  bundle b
+  b.x = x
+  b.mat = I(3)*x
+  return b
+end function
 \end{code}
 %
-The first of these singles out \texttt{GUI\_gig} (among the many
-public functions in the package) as the default interface for use
-in the gretl GUI. [...]
+with the following sample script:
+%
+\begin{code}
+include bunret.gfn
+bundle b = bunret(42)
+\end{code}
 
-% Commented extracts from gig.spec:
+Now this function and the bundle it returns are frankly silly, but
+that's alright. Our focus is on how gretl handles bundles and we don't
+want to get distracted by interesting econometric content. Let's
+create a menu entry for the package, under gretl's \textsf{Tools}
+menu. In the GUI package editor you would go to ``Extra properties'',
+open the ``Menu attachment'' tab, type in \texttt{bunret} for the
+label, select ``main window'' in the Window selector, and in the pane
+below, select Tools. In CLI mode you would add these lines to the
+project's \textsf{spec} file:
+%
+\begin{code}
+label = bunret
+menu-attachment = MAINWIN/Tools
+\end{code}
 
-% \begin{itemize}
-% \item \texttt{help = gig.pdf} : this line in the spec file tells gretl
-%   that the help for \texttt{gig} is in PDF. Unlike plain-text help,
-%   the specified file is not incorporated into the \texttt{gfn} file,
-%   but is included in the package file \texttt{gig.zip}.
-% \item \texttt{gui-main = GUI\_gig} : The \texttt{gui-main} key is
-%   optional in a spec file, and is relevant only if the package
-%   includes more than one public function. If a package has multiple
-%   public functions and no \texttt{gui-main} is specified, then on
-%   selecting the relevant GUI menu item the user will first be
-%   presented with a drop-down list of functions. The effect of
-%   \texttt{gui-main} is to single out a particular public function as
-%   the entry point, hence by-passing the function listing and
-%   streamlining the user experience.
-% \item \texttt{bundle-print = gig\_bundle\_print} : The
-%   \texttt{bundle-print} key is required for addons that return
-%   bundles. It is used to specify a function that prints the contents
-%   of bundles created by the package. The signature of the
-%   function so designated must conform to a specific standard; see
-%   below.
-% \item \texttt{bundle-plot = GUI\_gig\_plot} : The \texttt{bundle-plot}
-%   key is optional; it is used to specify a function that can produce
-%   one or more types of plot based on the bundle returned by the
-%   function. Again, this function (if given) must conform to a
-%   standard.
-% \end{itemize}
+What happens we we call this function via the menu? In the first
+instance we get this dialog
 
-[XREF for details. Connecting text needed here.]
+\begin{center}
+  \includegraphics[width=0.4\textwidth]{figures/bunret-call}
+\end{center}
+
+Something may seem strange here: the function \texttt{bunret} returms
+a bundle, but we're not seeing a slot to specify assigment of the
+return value. But let's continue. If we type some value into the
+\textsf{x} argument selector and click \textsf{OK} we get the window
+shown in Figure~\ref{fig:bunret-window}, which gives two view of the
+top part with two different menu buttons activated.
+
+\begin{figure}[htbp]
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{figures/bunret-window1} \\
+ \vspace{2ex}
+  \includegraphics[width=0.75\textwidth]{figures/bunret-window2}
+\end{center}
+\caption{bunret output window}
+\label{fig:bunret-window}
+\end{figure}
+
+So although we didn't get the option of assigning the bundle in the
+function-call dialog, gretl has snagged the bundle on our behalf, and
+will let us save its contents individually (upper picture), or the
+whole thing ``as an icon'' (lower picture).
+
+Another thing is noteworthy about the output window: its text area is
+empty. That shouldn't be a surprise because the bunret function
+doesn't print anything. Functions don't \textit{have} to print
+anything, and gretl's built-functions generally do not, they just
+return something useful. However, if a function is intended for GUI
+use it probably should give some visible output, or in other words it
+should be ``command-like.'' 
+
+So let's revisit the package code. We could add suitable printing
+commands within the \texttt{bunret} function itself, but for reasons
+that will become apparent shortly, let's instead write a separate
+printing function and add it to the package.
+%
+\begin{code}
+function void bunret_print (bundle *b)
+  printf "=== Hello from bunret_print ===\n\n"
+  printf "The x member of %s is %g\n\n", argname(b), b.x
+  printf "The matrix member is\n\n%10.3f\n", b.mat
+end function
+\end{code}
+%
+Having added this function (note, it should be public) we could then
+call it from the main \texttt{bunret} function, but we won't do
+that. Instead we'll select this function for the \texttt{bundle-print}
+role in our package. In the GUI, you go to the ``Special functions''
+tab under ``Extra properties'' to do that. And while we're at it,
+since the package now has two public functions, we'll select
+\texttt{bunret} for the \texttt{gui-main} role and in addition mark it
+as ``no print,'' because it's not going to do any printing itself
+(Figure~\ref{fig:special-funcs}).  In CLI mode, this means adding
+three \textsf{spec} lines:
+%
+\begin{code}
+gui-main = bunret
+bundle-print = bunret_print
+no-print = bunret
+\end{code}
+
+\begin{figure}[htbp]
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{figures/special-functions} \\
+\end{center}
+\caption{Selecting functions for special roles}
+\label{fig:special-funcs}
+\end{figure}
+
+Here's how things will now work if we go back and call \texttt{bunret}
+from the menu: gretl will snag the bundle as before, will notice that
+this function is no-print, and will see if the \textsf{bunret} package
+has a bundle-printer function. Since it does, it will call that
+function on the bundle and put the result into the output window,
+which will therefore no longer be blank. Your package's bundle window
+is now quite like a gretl model window: it shows you some stuff and
+allows you the possibility of saving some or all of it.
+
+In addition, if the user decides to save your bundle ``as an icon,''
+then subsequently double-clicking on the icon will again invoke the
+bundle-print function, and re-create a window like the original one.
+
+
+
 
 In \textsf{gig} we have:
 %
