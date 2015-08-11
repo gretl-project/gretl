@@ -83,6 +83,7 @@ struct function_info_ {
     GtkWidget *currtree;   /* currently displayed menu treeview */
     GtkWidget *alttree;    /* currently undisplayed menu treeview */
     GtkWidget *treewin;    /* scrolled window to hold menu trees */
+    GtkWidget *mreq_combo; /* model requirement selector */
     GtkWidget *specdlg;    /* pkg spec save dialog */
     GtkWidget *validate;   /* "Validate" gfn button */
     windata_t *samplewin;  /* window for editing sample script */
@@ -116,6 +117,7 @@ struct function_info_ {
     int menuwin;           /* code for none/main/model window */
     char *active;          /* name of 'active' function */
     FuncDataReq dreq;      /* data requirement of package */
+    GretlCmdIndex mreq;    /* model requirement of package */
     int minver;            /* minimum gretl version, package */
     gboolean modified;     /* anything changed in package? */
     int save_flags;        /* see PkgSaveFlags */
@@ -2162,7 +2164,7 @@ static GtkWidget *add_menu_navigator (GtkWidget *holder,
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
 					    GTK_SHADOW_IN);
 	gtk_container_add(GTK_CONTAINER(holder), sw);
-	gtk_widget_set_size_request(sw, 150, -1);
+	gtk_widget_set_size_request(sw, 150, 200);
     }
 
     if ((modelwin == 0 && finfo->menuwin != MODEL_WINDOW) ||
@@ -2176,6 +2178,44 @@ static GtkWidget *add_menu_navigator (GtkWidget *holder,
     gtk_tree_view_columns_autosize(GTK_TREE_VIEW(view));
 
     return view;
+}
+
+static GtkWidget *
+model_requirement_selector (GtkWidget *holder, 
+			    function_info *finfo)
+{
+    GtkWidget *hbox, *label;
+    GtkWidget *combo;
+    GretlCmdIndex ci;
+    int deflt = 0;
+    int j = 0;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new("Model requirement");
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    
+    combo = gtk_combo_box_text_new();
+    g_object_set_data(G_OBJECT(combo), "label", label);
+    combo_box_append_text(combo, _("Any model"));
+
+    for (ci=1; ci<NC; ci++) {
+	if (MODEL_COMMAND(ci)) {
+	    j++;
+	    combo_box_append_text(combo, gretl_command_word(ci));
+	    if (finfo->mreq == ci) {
+		deflt = j;
+	    }
+	}
+    }
+    
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), deflt);
+    gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
+
+    gtk_widget_set_sensitive(label, finfo->menuwin == MODEL_WINDOW);
+    gtk_widget_set_sensitive(combo, finfo->menuwin == MODEL_WINDOW);
+
+    return combo;
 }
 
 static void switch_menu_view (GtkComboBox *combo,
@@ -2206,7 +2246,16 @@ static void switch_menu_view (GtkComboBox *combo,
 	    finfo->currtree = finfo->modeltree;
 	}
 	gtk_widget_set_sensitive(finfo->currtree, TRUE);
-    }	
+    }
+
+    if (finfo->mreq_combo != NULL) {
+	GtkWidget *l = g_object_get_data(G_OBJECT(finfo->mreq_combo),
+					 "label");
+	
+	gtk_widget_set_sensitive(finfo->mreq_combo,
+				 w == MODEL_WINDOW);
+	gtk_widget_set_sensitive(l, w == MODEL_WINDOW);
+    }
 }
 
 static void add_data_files_entries (GtkWidget *holder,
@@ -2320,6 +2369,21 @@ static void add_menu_attach_top (GtkWidget *holder,
     gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
 }
 
+static GretlCmdIndex get_model_req_ci (function_info *finfo)
+{
+    GtkWidget *combo = finfo->mreq_combo;
+    GretlCmdIndex ci = 0;
+
+    if (combo != NULL && gtk_widget_is_sensitive(combo)) {
+	gchar *s = combo_box_get_active_text(combo);
+
+	ci = gretl_command_number(s);
+	g_free(s);
+    }
+
+    return ci;
+}
+
 /* pertaining to the "extra properties" dialog: check for
    any changes in relation to menu attachment
 */
@@ -2398,6 +2462,26 @@ static int process_menu_attachment (function_info *finfo,
     }
 
     finfo_set_menuwin(finfo);
+
+    if (finfo->menuwin == MODEL_WINDOW) {
+	/* model-requirement is relevant */
+	GretlCmdIndex ci = get_model_req_ci(finfo);
+
+	if (ci != finfo->mreq) {
+	    if (make_changes) {
+		finfo->mreq = ci;
+	    }
+	    changed = 1;
+	}
+    } else {
+	/* model-requirement is otiose */
+	if (finfo->mreq > 0) {
+	    if (make_changes) {
+		finfo->mreq = 0;
+	    }
+	    changed = 1;
+	}
+    }
 
  finish:
 
@@ -2819,6 +2903,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     finfo->maintree = finfo->modeltree = NULL;
     finfo->currtree = finfo->alttree = NULL;
     finfo->treewin = NULL;
+    finfo->mreq_combo = NULL;
 
     dlg = gretl_dialog_new(_("gretl: extra properties"), finfo->dlg,
 			   GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
@@ -2931,9 +3016,9 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     finfo->maintree = add_menu_navigator(vbox, finfo, 0);
     finfo->modeltree = add_menu_navigator(vbox, finfo, 1);
 
-    if (finfo->menuwin == NO_WINDOW) {
-	gtk_widget_set_sensitive(finfo->currtree, FALSE);
-    }
+    finfo->mreq_combo = model_requirement_selector(vbox, finfo);
+
+    gtk_widget_set_sensitive(finfo->currtree, finfo->menuwin != NO_WINDOW);
 
     /* the data files page */
     
@@ -3041,6 +3126,7 @@ static void finfo_dialog (function_info *finfo)
 	finfo->date,
 	finfo->pkgdesc
     };
+    gchar *tmp;
     int focused = 0;
     int i;
 
@@ -3174,7 +3260,9 @@ static void finfo_dialog (function_info *finfo)
 		     G_CALLBACK(extra_properties_dialog), finfo);
 
     /* 4: save-menu button */
-    button = gtk_button_new_with_label(_("Save..."));
+    tmp = g_strdup_printf(" %s ", _("Save..."));
+    button = gtk_button_new_with_label(tmp);
+    g_free(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), button, 3, 4, 0, 1);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(pkg_save_popup), finfo);    
@@ -3805,6 +3893,7 @@ int save_function_package (const char *fname, gpointer p)
 					      "gui-help", finfo->gui_help,
 					      "gui-attrs", finfo->gui_attrs,
 					      "lives-in-subdir", finfo->uses_subdir,
+					      "model-requirement", finfo->mreq,
 					      NULL);
 	if (err) {
 	    fprintf(stderr, "function_package_set_properties: err = %d\n", err);
@@ -4009,7 +4098,6 @@ int save_function_package_spec (const char *fname, gpointer p)
     const char *gui_help;
     const char *sample;
     gchar *strval;
-    int intval;
     function_info *finfo = p;
     PRN *prn;
     const char *reqstr = NULL;
@@ -4059,10 +4147,8 @@ int save_function_package_spec (const char *fname, gpointer p)
 	}
     }
 
-    function_package_get_properties(finfo->pkg, "model-requirement",
-				    &intval, NULL);
-    if (intval > 0) {
-	reqstr = gretl_command_word(intval);
+    if (finfo->mreq > 0) {
+	reqstr = gretl_command_word(finfo->mreq);
 	if (*reqstr != '\0') {
 	    pprintf(prn, "model-requirement = %s\n", reqstr);
 	}
@@ -4370,6 +4456,7 @@ void edit_function_package (const char *fname)
 					  "label", &finfo->menulabel,
 					  "gui-help", &finfo->gui_help,
 					  "lives-in-subdir", &finfo->uses_subdir,
+					  "model-requirement", &finfo->mreq,
 					  "gui-attrs", finfo->gui_attrs,
 					  NULL);
 
