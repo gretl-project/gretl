@@ -174,7 +174,7 @@ with some tips on usage.
 
 Please note that many of the statements and illustrations in this
 \textit{Guide} reflect refinements made to gretl's package management
-facilities since the release of gretl verion 1.10.1. If you plan to
+facilities since the release of gretl version 1.10.1. If you plan to
 follow along you should update to gretl 1.10.2 or higher.
 
 %%%%%%%%%%%%%%%% chapter break %%%%%%%%%%%%%%%%%
@@ -966,7 +966,7 @@ extension, gretl will do one of two things:
   \textsf{gfn} and then build the zipfile wrapper.
 \end{itemize}
 
-A neater way of doing this is to ``pipe'' the \cmd{makepkg} comand
+A neater way of doing this is to ``pipe'' the \cmd{makepkg} command
 into \app{gretlcli} directly from the command line, as in
 \begin{code}
 echo makepkg mypkg.zip | gretlcli -b -
@@ -1465,8 +1465,8 @@ instance we get this dialog
   \includegraphics[width=0.4\textwidth]{figures/bunret-call}
 \end{center}
 
-Something may seem strange here: the function \texttt{bunret} returms
-a bundle, but we're not seeing a slot to specify assigment of the
+Something may seem strange here: the function \texttt{bunret} returns
+a bundle, but we're not seeing a slot to specify assignment of the
 return value. But let's continue. If we type some value into the
 \textsf{x} argument selector and click \textsf{OK} we get the window
 shown in Figure~\ref{fig:bunret-window}, which gives two view of the
@@ -1546,79 +1546,74 @@ In addition, if the user decides to save your bundle ``as an icon,''
 then subsequently double-clicking on the icon will again invoke the
 bundle-print function, and re-create a window like the original one.
 
+One more refinement here. This is a bit of a stretch when we're
+looking at a little toy package, but you probably want to think about
+both GUI users and users who may wish to call your package via
+scripting. In the former case, as we've said, some visual feedback is
+wanted, but in the latter case it should probably be optional
+(assuming your function returns something).
 
+Example~\ref{ex:bunret} shows a modification of our toy package to
+accommodate this. Hopefully it should be self-explanatory. We would
+now make \texttt{GUI\_bunret} the \texttt{gui-main} function and mark
+it as \texttt{no-print}. Plain \texttt{bunret} (now intended for
+script use) would not be ``no-print'' any more: it's silent by default
+but the user can make it print by supplying a non-zero value for the
+optional second argument. In CLI mode the relevant \textsf{spec} files
+would be:
 
+\begin{code}
+public = GUI_bunret bunret bunret_print
+gui-main = GUI_bunret
+bundle-print = bunret_print
+no-print = GUI_bunret
+\end{code}
 
-In \textsf{gig} we have:
-%
-\begin{verbatim}
-  function void gig_bundle_print(bundle *model)
-\end{verbatim}
-%
-and
-%
-\begin{verbatim}
-  function void GUI_gig_plot(bundle *model, int ptype[0:1:0] \
-                             "Plot type" {"Time series", "Density"})
-\end{verbatim}
+\begin{script}[htbp]
+\caption{Toy package with GUI-specific function}
+\label{ex:bunret}
+\begin{scode}
+function void bunret_print (bundle *b)
+  printf "=== Hello from bunret_print ===\n\n"
+  printf "The x member of %s is %g\n\n", argname(b), b.x
+  printf "The matrix member is\n\n%10.3f\n", b.mat
+end function
 
-That is, \texttt{gig}'s basic \texttt{bundle-print} function has no
-options, but its \texttt{bundle-plot} function has a control parameter
-\texttt{ptype}. Note how the \texttt{ptype} parameter is set up: it
-has a minimum value of 0 and a maximum of 1 (these options could be
-extended), and 0 is the default. Further, the parameter is given a
-name for display in the GUI, ``Plot type'', and it also has
-strings---``Time series'' and ``Density''---associated with its two
-possible numerical values. The latter strings will be used to populate
-a menu on the window displaying a \texttt{gig} bundle.
+function bundle bunret (scalar x, bool verbose[0])
+  bundle b
+  b.x = x
+  b.mat = I(3)*x
+  if verbose
+    bunret_print(&b)
+  endif
+  return b
+end function
 
-Here's a sketch of how the whole apparatus works (i.e.\ a package
-creates a bundle and the bundle is displayed in the GUI):
+function bundle GUI_bunret (scalar x)
+  return bunret(x)
+end function
+\end{scode}
+\end{script}
 
-\begin{enumerate}
-\item The user loads a time-series dataset, goes to the \textsf{/Model/Time
-  series} menu, and selects \textsf{GARCH variants}.
-\item Gretl loads the \texttt{gig} package (if it's not already loaded)
-  and checks to see if it has a \texttt{gui-main} function
-  specified. Yes, it does, so the argument-selection dialog for
-  \texttt{GUI\_gig} is displayed directly.
-\item The user makes appropriate selections in the dialog and clicks
-  \textsf{OK}. (If she wants help she clicks \textsf{Help}, and is
-  shown gig's PDF documentation.)
-\item Gretl calls \texttt{GUI\_gig} and ``grabs'' the bundle that it
-  returns.
-\item Gretl looks up \texttt{gig}'s \texttt{bundle-print} function and
-  invokes it on the bundle. The output from this function is then
-  displayed in a GUI window.
-\item When building this window, gretl reads the bundle's list of
-  contents and creates a menu (UPDATE, toolbar) which enables the user
-  to save specific items (matrices, series and so on) from the
-  bundle. If the bundle is not already saved by name, this MENU also
-  offers the option of saving the entire bundle ``as an icon''.
-\item Also when building the bundle window, gretl checks if gig has a
-  \texttt{bundle-plot} function. If so, a \textsf{Graph} menu
-  (UPDATE!) is added; and if the \texttt{bundle-plot} function has
-  options these are used to add items to the MENU. (If it has no
-  options, there's just a single menu item.)
-\end{enumerate}
-
-SCREENSHOT
-
-If the user closes the bundle window without saving the bundle itself,
-the bundle is then destroyed. But if she saves it as an icon it
-becomes accessible in the ``icon view'' window. Double-clicking on a
-bundle icon again invokes its associated \texttt{bundle-print}
-function, and the window described above is rebuilt. Bundles present
-in the icon view are saved if the gretl session is saved to
-file.\footnote{Once we've lost the immediate association between
-  package and bundle, present when the bundle is first created via the
-  GUI, how do we know which package to query when determining if (say)
-  \texttt{bundle-plot} is applicable for a given bundle? The mechanism
-  we use is that whenever a bundle is returned by a packaged function,
-  we record the name of the package in a special member of the bundle
-  structure.}
+\textit{Further reading}: For more on the special roles for packages
+within functions see sections~\ref{sec:spec-gui} and
+\ref{sec:spec-bundle}. For a discussion of how a real
+package---\textsf{gig}, or GARCH in gretl, by Jack Lucchetti---does
+this sort of thing see section~4 of \cite{addons-bundles}, and for the
+internals of \textsf{gig} itself, find \textsf{gig} in the browser for
+packages on your local machine and select ``View
+code.''\footnote{Depending on your platform, you may have to install
+  gig first. Since \textsf{gig} is an official ``addon'' rather than a
+  contributed package, installation is via the menu item ``Help, Check
+  for addons'' in the gretl main window.} The GUI-related functions
+are found towards the end of the code listing: start from
+\texttt{gig\_bundle\_print} and \texttt{GUI\_gig\_plot}. You can also
+open \textsf{gig} in the package editor and inspect its ``Extra
+properties.''
 
 \subsection{Model-related packages}
+
+STILL TO BE REDONE.
 
 The packages we've considered above share two characteristics: they
 create and manipulate bundles, and they offer ``top-level''
@@ -1789,7 +1784,7 @@ if the user selects \textsf{x2} the value 3 will be given to
 The idea is that if an addon wants to single out a regressor, much the
 most user-friendly way of conveying this to the user is to show a list
 of names. Yet there is no way that a package can arrange for this
-directly; so we want a means of signalling to gretl that the list
+directly; so we want a means of signaling to gretl that the list
 should be constructed at runtime, based on the particular model.
 
 Third, consider a package whose job is to produce a special graph
@@ -1827,12 +1822,12 @@ as a sourceforge login).\footnote{The URL will be given to you by
   it's \url{http://gretl.ecn.wfu.edu/cgi-bin/apply/}.}
 
 With a login in hand, there are two ways of uploading a package using
-gretl. There's also a way of doing this indendently of gretl, via
+gretl. There's also a way of doing this independently of gretl, via
 the shell, though this may not be convenient on MS Windows.
 
 \textit{First gretl method}: open your package's \textsf{gfn} file in
 the GUI package editor (you can get there via the package browser, or
-via the main-window menu item ``Tools, Function pachages, Edit
+via the main-window menu item ``Tools, Function packages, Edit
 package'').  On clicking the \textsf{Save...} button you'll find an
 item titled \textsf{Upload to server}. This will ask for your login
 information then perform the upload. If your package specification is
@@ -2322,7 +2317,7 @@ in various ways, as described below.
   \textsf{Add/Remove functions} button.
 
 \item \texttt{sample-script} (required): the name of a hansl
-   script (\texttt{.inp}) file that serves as examplar for use
+   script (\texttt{.inp}) file that serves as exemplar for use
    of the package.
 
    \ttusage{sample-script = keane-mfx.inp}
