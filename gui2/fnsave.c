@@ -1613,6 +1613,25 @@ static int gfn_spec_save_dialog (function_info *finfo,
     return sinfo.retval;
 }
 
+/* callback from file selector on saving package spec
+   file: the default location should match that of the
+   gfn file
+*/
+
+void get_gfn_dir (char *dirname, gpointer p)
+{
+    function_info *finfo = (function_info *) p;
+    char *s;
+
+    strcpy(dirname, finfo->fname);
+    s = strrchr(dirname, SLASH);
+    if (s != NULL) {
+	*s = '\0';
+    } else {
+	*dirname = '\0';
+    }
+}
+
 static void gfn_to_spec_callback (function_info *finfo)
 {
     const char *texts[] = {

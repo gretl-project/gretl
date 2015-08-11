@@ -1005,6 +1005,8 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	/* we come here only if the user has not chosen
 	   to "install" a newly saved package */
 	get_default_dir_for_action(startdir, 0);
+    } else if (action == SAVE_GFN_SPEC || action == SAVE_GFN_ZIP) {
+	get_gfn_dir(startdir, data);
     } else {
 	get_default_dir_for_action(startdir, action);
     }

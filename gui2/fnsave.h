@@ -30,6 +30,8 @@ int save_function_package_as_script (const char *fname, gpointer p);
 
 int save_function_package_spec (const char *fname, gpointer p);
 
+void get_gfn_dir (char *dirname, gpointer p);
+
 int save_function_package_zipfile (const char *fname, gpointer p);
 
 int no_user_functions_check (GtkWidget *parent);

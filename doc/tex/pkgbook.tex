@@ -1615,10 +1615,9 @@ properties.''
 
 STILL TO BE REDONE.
 
-The packages we've considered above share two characteristics: they
-create and manipulate bundles, and they offer ``top-level''
-functionality, in the sense that they naturally appear somewhere in
-gretl's main menu tree.
+The packages we've considered above offer ``top-level'' functionality,
+in the sense that they naturally appear somewhere in gretl's main menu
+tree.
 
 It's also possible to write packages that do something interesting
 based on data embedded in a gretl model---create a graph, run a test,
@@ -1632,12 +1631,12 @@ Here's a brief overview of how such packages work.
 \item The user estimates a model in the GUI and gretl constructs a
   window to show the output.
 \item In the process of setting up the model-window menus, we check to
-  see if any possibly relevant model-related addons are available.
+  see if any possibly relevant model-related packages are available.
 \item If so, we run a ``pre-check'' (see below) to determine
-  if the addon can handle the particular sort of model in
+  if the package can handle the particular sort of model in
   question.
-\item If yes, we add a menu item for the addon, and selecting
-  this item pulls up a function call dialog for the addon.
+\item If yes, we add a menu item for the package, and selecting this
+  item pulls up a function call dialog for the package.
 \item The function is then executed in an environment in which gretl's
   model-related accessors, such as \verb|$uhat|, target the displayed
   model.
@@ -1647,17 +1646,15 @@ Let's consider this in some more detail.  First, how do we tell if any
 possibly relevant packages are available? UPDATED TEXT HERE.
 
 Second, how do we tell, for each model-related addon, if it can
-actually do something with the model we're displaying? 
-
-REF MODEL-REQUIREMENT
+actually do something with the model we're displaying?  REF
+MODEL-REQUIREMENT
 
 For example, a given addon may offer an additional test that's
 specific to models estimated via OLS, or to IV models.  Here we rely
 on another ``special role'' function within the function
-package. Parallel to the apparatus in a package spec file to identify
-a function as (e.g.) a bundle-printer or bundle-plotter you can also
-mark a function as a pre-checker, using the keyword
-\texttt{gui-precheck}, as in
+package. Parallel to the apparatus to identify a function as (e.g.) a
+bundle-printer or bundle-plotter you can also mark a function as a
+pre-checker, using the keyword \texttt{gui-precheck}, as in
 
 \begin{verbatim}
 gui-precheck = foo_precheck
@@ -1670,10 +1667,10 @@ the listing of public interfaces; it is intended only for internal use
 by gretl. It must take no arguments and must return a scalar, which is
 interpreted as an error code (0 for OK, non-zero for not OK). On
 execution it has access to the \texttt{\$}-variables for the model in
-question. Among these is the new accessor,
-\verb|$command|, which gives the command-word for the estimator. So,
-for example, the pre-check function for an addon which targets OLS
-models might look like Code Example~\ref{code:precheck}.
+question. Among these is the
+\verb|$command| accessor, which gives the command-word for the
+estimator. So, for example, the pre-check function for an addon which
+targets OLS models might look like Code Example~\ref{code:precheck}.
 
 \begin{script}[htbp]
 \begin{scode}
@@ -1701,14 +1698,11 @@ version of a package.
 \subsection{Example: bandplot}
 \label{sec:bandplot}
 
-Model-related package example.
-
-Creates a confidence band plot, that is, a plot displaying a
-confidence band for the effect of a selected regressor in the context
-of a multiple regression.  (Some more detail on what this means is
-provided below.)  In GUI use, this package is intended to latch onto
-windows displaying models estimated via OLS, attaching itself to the
-\textsf{Graphs} menu.
+The \textsf{bandplot} package creates a confidence band plot, that is,
+a plot displaying a confidence band for the effect of a selected
+regressor in the context of a multiple regression.  In GUI use, this
+package latches onto windows displaying models estimated via OLS,
+attaching itself to the \textsf{Graphs} menu.
 
 Here's the relevant part of \texttt{bandplot.spec}: 
 
@@ -1722,13 +1716,6 @@ help = bandplot.help
 gui-help = bpgui.help
 \end{code}
 
-XREF!
-
-The \texttt{label} and \texttt{gui-help} keywords in the spec file
-merit discussion. First, the \texttt{label} entry gives a means of
-controlling the label given to the package's menu item. Thus
-\texttt{bandplot}'s menu item will read \textsf{Confidence band plot}.
-
 The purpose of the optional \texttt{gui-help} keyword is to specify
 help text to be presented in response to the \textsf{Help} button in a
 dialog box. Note that in the online help for core gretl commands, a
@@ -1739,15 +1726,13 @@ arguments, the latter to buttons and pull-down lists. The
 \texttt{gui-help} spec file item extends this possibility to function
 packages. The string to the right of the equals sign should give the
 name of a plain text (UTF-8) file containing the GUI-specific help
-text. 
+text. In the GUI you can edit or add GUI help under ``Extra
+properties'' via a button in the ``Menu attachment'' tab.
 
-Ref to bpgui.help.
-
-Additional features helpful for this sort of thing.
-
-First, besides the \texttt{[min:max:default]} fields for a function
-parameter, you can add a fourth field to specify a ``step''. This
-is used only for non-integer scalar parameters. To make the step value
+Some addditional features helpful for this sort of thing. First,
+besides the \texttt{[min:max:default]} fields for a function
+parameter, you can add a fourth field to specify a ``step''. This is
+used only for non-integer scalar parameters. To make the step value
 active, the other three numerical fields must also be given. Example:
 
 \begin{code}
@@ -1759,11 +1744,11 @@ The effect of the above is that in the GUI the parameter
 minimum of 0.5, a maximum of 0.99, an initial value of 0.95, and a
 step or increment of 0.01 when the button is clicked. The step
 specifier is ignored outside the context of a GUI function-call
-dialog. Not specific to model-related packages.
+dialog. (This is not specific to model-related packages.)
 
-Second, a facility specific to model-related packages, and in
+Second, there's a facility specific to model-related packages, and in
 particular to packages that target models carrying a list of
-regressors. You can replace the \texttt{[min:max:default]} fields with
+regressors: you can replace the \texttt{[min:max:default]} fields with
 a single special symbol, \verb|[$xlist]|, as in
 
 \begin{code}
@@ -1794,10 +1779,6 @@ printed output, but for graph-only output such a window is superfluous
 and potentially confusing.  You can now suppress the text window by
 inserting a special comment into the code of the function in question,
 namely
-
-\begin{code}
-## no-print ##
-\end{code}
 
 UPDATE: ref no-print list in spec file or GUI Extra props.
 
