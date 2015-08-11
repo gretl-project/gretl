@@ -2412,9 +2412,14 @@
 	   label="Data files" context="gui">
     <description>
       <para>
-	This dialog enables you to specify additional data files to
-	be included with a function package. Including such files
-	implies that the package takes the form of a zip file.
+	This dialog enables you to specify additional files to be
+	included with a function package. Including such material
+	implies that the package takes the form of a zip file.  If
+	gretl is to build the zip file for you, all files referenced
+	here must be present in the same directory as the gfn file.
+	Sub-directories can be listed as well as regular files; in
+	that case it is implied that all of their contents should be
+	included in the zip package.
       </para>
       <para>
 	There are two main intended uses for this facility. First, you
@@ -7106,27 +7111,36 @@
 	   label="Menu attachment" context="gui">
     <description>
       <para>
-	This dialog enables you to specify a menu attachment for
-	a function package. To do this you must complete the three
-	fields in the dialog box.
+	This dialog enables you to specify a menu attachment for a
+	function package. To do this you must complete the following
+	three fields in the dialog box.
       </para>
-      <subhead>Label</subhead>
+      <subhead>1. Label</subhead>
       <para>
 	This requires a short label string, which will appear as
 	the menu entry for the package.
       </para>
-      <subhead>Window</subhead>
+      <subhead>2. Window</subhead>
       <para>
 	Select <quote>model window</quote> for a function package that
 	does something with a gretl model, and should appear in the
 	menu bar in a gretl model window. Otherwise, select
 	<quote>main window</quote>.
       </para>
-      <subhead>Menu tree</subhead>
+      <subhead>3. Menu tree</subhead>
       <para>
 	Select the position within the menu tree (for either the
 	main window or the model window, as chosen above) where the
 	entry for the package should appear.
+      </para>
+      <subhead>Optional elements</subhead>
+      <para>
+	In addition you can use the <quote>GUI help text</quote>
+	button to add or edit GUI-specific help text, to be shown when
+	the package is called from a menu. And if the package is
+	intended to be called from a model window you can specify a
+	certain type of model (identified by its gretl command-word)
+	as a requirement.
       </para>
     </description>
   </command>
