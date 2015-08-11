@@ -1988,26 +1988,23 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 static void maybe_set_gui_interface (call_info *cinfo,
 				     int from_browser)
 {
-    int fid = -1;
+    int gmid = -1, fid = -1;
 
-    if (cinfo->publist[0] == 1) {
-	/* a single interface: take as implicit gui-main */
+    function_package_get_properties(cinfo->pkg, 
+				    "gui-main-id", &gmid,
+				    NULL);
+
+    if (gmid >= 0 && !from_browser) {
+	fid = gmid;
+    } else if (cinfo->publist[0] == 1) {
+	/* single suitable interface: implicit gui-main */
 	fid = cinfo->publist[1];
-    } else {
-	/* let's see if we have a designated gui-main */
-	function_package_get_properties(cinfo->pkg, 
-					"gui-main-id", &fid,
-					NULL);
-	if (fid >= 0 && from_browser) {
-	    const ufunc *u = get_user_function_by_index(fid);
+    } else if (gmid >= 0) {
+	/* called from browser: check for masking */
+	const ufunc *u = get_user_function_by_index(gmid);
 
-	    if (user_func_is_menu_only(u)) {
-		/* We found gui-main -- but we're coming
-		   from the package browser and this function
-		   is masked out (for use on menus only).
-		*/	    
-		fid = -1;
-	    }
+	if (!user_func_is_menu_only(u)) {
+	    fid = gmid;
 	}
     }
 
