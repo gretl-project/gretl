@@ -791,6 +791,40 @@ static int translate_panel_vars (dw_opts *opts, int *uv, int *tv)
     return err;
 }
 
+static int diagnose_panel_problem (DATASET *dset, int uv, int tv)
+{
+    gchar *msg = NULL;
+    double ui, ti;
+    double uj, tj;
+    int i, j;
+    int found = 0;
+
+    for (i=1; i<dset->n && !found; i++) {
+	ui = dset->Z[uv][i];
+	ti = dset->Z[tv][i];
+	for (j=0; j<i; j++) {
+	    uj = dset->Z[uv][j];
+	    tj = dset->Z[tv][j];
+	    if (uj == ui && tj == ti) {
+		msg = g_strdup_printf("unit = %g and time = %g duplicated on "
+				      "rows %d and %d", ui, ti, i+1, j+1);
+		found = 1;
+		break;
+	    }
+	}
+    }
+
+    if (msg != NULL) {
+	errbox(msg);
+	g_free(msg);
+    } else {
+	errbox(_("The selected index variables do not represent "
+		 "a panel structure"));
+    }
+
+    return E_DATA;
+}
+
 /* Given two user-selected variables that supposedly represent the
    panel unit and period respectively, check that the selection makes
    sense. 
@@ -849,12 +883,15 @@ static int process_panel_vars (DATASET *dwinfo, dw_opts *opts)
 	   some implicit missing observations.
 	*/
 
-	if (nunits == 1 || nperiods == 1 || 
-	    nunits == n || nperiods == n ||
-	    nunits * nperiods < n) {
+	if (nunits == 1 || nperiods == 1 ||
+	    nunits == n || nperiods == n) {
 	    errbox(_("The selected index variables do not represent "
 		     "a panel structure"));
+	    fprintf(stderr, "nunits=%d, nperiods=%d, n=%d\n",
+		    nunits, nperiods, n);
 	    err = E_DATA;
+	} else if (nunits * nperiods < n) {
+	    err = diagnose_panel_problem(dataset, uv, tv);
 	} else {
 	    dwinfo->n = nunits; 
 	    dwinfo->pd = nperiods;
