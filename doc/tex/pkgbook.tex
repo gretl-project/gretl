@@ -1559,8 +1559,8 @@ now make \texttt{GUI\_bunret} the \texttt{gui-main} function and mark
 it as \texttt{no-print}. Plain \texttt{bunret} (now intended for
 script use) would not be ``no-print'' any more: it's silent by default
 but the user can make it print by supplying a non-zero value for the
-optional second argument. In CLI mode the relevant \textsf{spec} files
-would be:
+optional second argument. In CLI mode the relevant \textsf{spec} file
+lines would be:
 
 \begin{code}
 public = GUI_bunret bunret bunret_print
@@ -1597,7 +1597,9 @@ end function
 
 \textit{Further reading}: For more on the special roles for packages
 within functions see sections~\ref{sec:spec-gui} and
-\ref{sec:spec-bundle}. For a discussion of how a real
+\ref{sec:spec-bundle}. In particular section~\ref{sec:spec-bundle}
+explains the requirements for a function to be a candidate for a
+``bundle special'' role. For a discussion of how a real
 package---\textsf{gig}, or GARCH in gretl, by Jack Lucchetti---does
 this sort of thing see section~4 of \cite{addons-bundles}, and for the
 internals of \textsf{gig} itself, find \textsf{gig} in the browser for
@@ -1609,23 +1611,24 @@ code.''\footnote{Depending on your platform, you may have to install
 are found towards the end of the code listing: start from
 \texttt{gig\_bundle\_print} and \texttt{GUI\_gig\_plot}. You can also
 open \textsf{gig} in the package editor and inspect its ``Extra
-properties.''
+properties.'' The chapter titled ``User-defined functions'' in
+\cite{GUG}, besides providing essential background for package
+writers, details various refinements available when defining
+parameters to a function for use in the GUI.
 
 \subsection{Model-related packages}
 
-STILL TO BE REDONE.
-
 The packages we've considered above offer ``top-level'' functionality,
-in the sense that they naturally appear somewhere in gretl's main menu
-tree.
+in the sense that if they are to be shown in a menu they would
+naturally appear somewhere in gretl's main window.
 
-It's also possible to write packages that do something interesting
-based on data embedded in a gretl model---create a graph, run a test,
-do a piece of analysis. Such functions (which may, but are not
-required to, return bundles) have their proper place in menus on a
-gretl model window, not the main menus.
+One can also write packages that do something interesting based on
+data embedded in a gretl model---create a graph, run a test, do a
+piece of analysis. Such functions (which may, but are not required to,
+return bundles) have their proper place in menus on a gretl model
+window, not the main menus.
 
-Here's a brief overview of how such packages work.
+Here's an overview of how such packages work.
 
 \begin{enumerate}
 \item The user estimates a model in the GUI and gretl constructs a
@@ -1639,53 +1642,63 @@ Here's a brief overview of how such packages work.
   item pulls up a function call dialog for the package.
 \item The function is then executed in an environment in which gretl's
   model-related accessors, such as \verb|$uhat|, target the displayed
-  model.
+  model.%$
 \end{enumerate}
 
 Let's consider this in some more detail.  First, how do we tell if any
-possibly relevant packages are available? UPDATED TEXT HERE.
+possibly relevant packages are available? The mechanism here relies on
+the package ``registry'' discussed in section~\ref{sec:finer}. This
+information is stored between gretl sessions in a file named
+\texttt{packages.xml} in the user's gretl functions directory, which
+is automatically read on start-up.
 
-Second, how do we tell, for each model-related addon, if it can
-actually do something with the model we're displaying?  REF
-MODEL-REQUIREMENT
+Second, how do we tell, for each model-related package, if it can
+actually do something with a model that we're displaying? Two criteria
+are relevant here, both under the control of the package author.
 
-For example, a given addon may offer an additional test that's
-specific to models estimated via OLS, or to IV models.  Here we rely
-on another ``special role'' function within the function
-package. Parallel to the apparatus to identify a function as (e.g.) a
-bundle-printer or bundle-plotter you can also mark a function as a
-pre-checker, using the keyword \texttt{gui-precheck}, as in
-
+First there's the \texttt{model-requirement} field in the package
+\textsf{spec} file. Valid entries for the field are the gretl
+command-words corresponding to the various estimators (\cmd{ols},
+\cmd{logit}, \cmd{mle} and so on). So for a function specifically
+designed to handle logit models one could specify
 \begin{verbatim}
-gui-precheck = foo_precheck
+model-requirement = logit
 \end{verbatim}
+(or make the equivalent selection under the ``Menu attachment'' tab of
+the ``Extra properties'' window in the GUI package editor).
 
-XREF and reduce content here.
+The above would imply that your package can handle all (and only)
+logit models. In some cases you may want more fine-grained control
+(e.g.\ you can handle both logit and probit, but only the binary
+variants of these estimators). In that case you can use a second
+mechanism, specifying a \texttt{gui-precheck} function
+(section~\ref{sec:spec-gui}).
 
-The \texttt{gui-precheck} function should \textit{not} be included in
-the listing of public interfaces; it is intended only for internal use
-by gretl. It must take no arguments and must return a scalar, which is
-interpreted as an error code (0 for OK, non-zero for not OK). On
-execution it has access to the \texttt{\$}-variables for the model in
-question. Among these is the
-\verb|$command| accessor, which gives the command-word for the
-estimator. So, for example, the pre-check function for an addon which
-targets OLS models might look like Code Example~\ref{code:precheck}.
+This special function should not be included in the listing of public
+interfaces; it is intended only for internal use by gretl. It must
+take no arguments and must return a scalar, which is interpreted as an
+error code (0 for OK, non-zero for not-OK). On execution it has access
+to the \texttt{\$}-variables for the model in question. Among these is
+the \texttt{\$command} accessor, which gives the command-word for the
+estimator. So, for example, the pre-check function for a package which
+targets binary logit and probit models would look like
+Example~\ref{code:precheck}.
 
 \begin{script}[htbp]
-\begin{scode}
-function scalar ols_precheck (void)
-  string cmd = $command
-  if cmd != "ols"
-    print "non-OLS model, can't handle"
+\begin{code}
+function scalar lpbin_precheck (void)
+  string c = $command
+  if c != "logit" && c != "probit"
+    # can't handle estimator
     return 1
-  else
-    print "OLS model, OK"
-    return 0
+  elif !isdummy($ylist[1])
+    # non-binary, can't handle it
+    return 1
   endif
+  return 0
 end function
-\end{scode}
-\caption{GUI pre-checking function}
+\end{code}
+\caption{GUI pre-check for binary logit or probit}
 \label{code:precheck}
 \end{script}
 %$
@@ -1698,11 +1711,12 @@ version of a package.
 \subsection{Example: bandplot}
 \label{sec:bandplot}
 
-The \textsf{bandplot} package creates a confidence band plot, that is,
-a plot displaying a confidence band for the effect of a selected
-regressor in the context of a multiple regression.  In GUI use, this
-package latches onto windows displaying models estimated via OLS,
-attaching itself to the \textsf{Graphs} menu.
+For a simple but idiomatic example of a model-related package, take a
+look at \textsf{bandplot}, which creates a a plot displaying a
+confidence band for the effect of a selected regressor in the context
+of a multiple regression.  In GUI use, this package latches onto
+windows displaying models estimated via OLS, attaching itself to the
+\textsf{Graphs} menu.
 
 Here's the relevant part of \texttt{bandplot.spec}: 
 
@@ -1710,7 +1724,7 @@ Here's the relevant part of \texttt{bandplot.spec}:
 description = Confidence band plot for regression effects
 label = Confidence band plot
 public = GUI_bandplot bandplot
-gui-precheck = bandplot_precheck
+model-requirement = ols
 gui-main = GUI_bandplot
 help = bandplot.help
 gui-help = bpgui.help
@@ -1729,7 +1743,7 @@ name of a plain text (UTF-8) file containing the GUI-specific help
 text. In the GUI you can edit or add GUI help under ``Extra
 properties'' via a button in the ``Menu attachment'' tab.
 
-Some addditional features helpful for this sort of thing. First,
+Some additional features helpful for this sort of thing. First,
 besides the \texttt{[min:max:default]} fields for a function
 parameter, you can add a fourth field to specify a ``step''. This is
 used only for non-integer scalar parameters. To make the step value
