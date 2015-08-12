@@ -559,6 +559,12 @@
   <xsl:text>}}</xsl:text> 
 </xsl:template>
 
+<xsl:template match="url">
+  <xsl:text>\url{</xsl:text>  
+  <xsl:apply-templates/>
+  <xsl:text>}</xsl:text> 
+</xsl:template>
+
 <xsl:template match="code|mono">
   <xsl:if test="not(@context = 'notex')">
     <xsl:text>&#10;\begin{code}</xsl:text>  

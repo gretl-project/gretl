@@ -5,6 +5,7 @@
   <!-- Stylesheet for formatted GUI "online" help -->
 
 <xsl:param name="hlp">cli</xsl:param>
+<xsl:param name="fmt">plain</xsl:param>  
 <xsl:param name="topic">cmds</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
@@ -506,7 +507,7 @@
 
 <xsl:template match="url">
   <xsl:choose>
-    <xsl:when test="$hlp='gui'">
+    <xsl:when test="$fmt='pango'">
       <xsl:text>&lt;@url="</xsl:text>
     </xsl:when>
     <xsl:otherwise>
