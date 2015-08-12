@@ -2185,6 +2185,10 @@
 	      endloop
 	  endif
 	</code>
+	<para>
+	  See also the <fncref targ="jsonget"/> function for means of
+	  processing JSON data received.
+	</para>
       </description>
     </function>
 
@@ -3850,6 +3854,36 @@
 	</para>
       </description>
     </function>
+
+    <function name="jsonget" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="string">buf</fnarg>
+	<fnarg type="string">path</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The argument <argname>buf</argname> should be a JSON
+	  buffer, as may be retrieved from a suitable website via the
+	  <fncref targ="curl"/> function, and the
+	  <argname>path</argname> argument should be a JsonPath
+	  specification.
+	</para>
+	<para>
+	  This function returns a string representing the data found
+	  in the buffer at the specified path. Data types of double
+	  (floating-point), int (integer) and string are supported. In
+	  the case of doubles or ints, their string representation is
+	  returned (using the <quote>C</quote> locale for doubles).
+	  If the object to which <argname>path</argname> refers is an
+	  array, the members are printed one per line in the returned
+	  string.
+	</para>
+	<para>
+	  For an account of JsonPath syntax, see for example
+	  <url>http://goessner.net/articles/JsonPath/</url>.
+	</para>
+      </description>
+    </function>    
 
     <function name="kdensity" section="stats" output="matrix">
       <fnargs>
