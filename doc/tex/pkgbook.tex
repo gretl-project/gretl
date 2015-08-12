@@ -1315,7 +1315,7 @@ Here are the key things to watch out for in relation to sample
 scripts:
 
 \vspace{1ex}
-\textbf{Include yourself}: Right at the top, the sample script
+\textit{Include yourself}: Right at the top, the sample script
   must \texttt{include} the \texttt{gfn} file in question. This will
   never do any harm, and is needed when the script is run ``from
   scratch'', without the package being already loaded.  The name of
@@ -1325,7 +1325,7 @@ scripts:
   \texttt{include mypkg.gfn}
 
 \vspace{1ex}
-\textbf{Dataset}: If the package requires that a dataset be in
+\textit{Dataset}: If the package requires that a dataset be in
   place the sample script \textit{must} arrange for this in a portable
   manner. The options are as follows.
  \begin{enumerate}
@@ -1345,17 +1345,16 @@ scripts:
  the case of downloaded data the URL should be reasonably stable, not
  something that's likely to disappear or be moved before long.
 
- In \textit{no case} should a datafile be specified with a full path,
- as in
+ In no case should a datafile be specified with a full path, as in
  \begin{code}
- open /usr/share/gretl/...
- open C:\Program Files\gretl\...
+ open /usr/share/gretl/...       # No!
+ open C:\Program Files\gretl\... # No!
  \end{code}
   This is obviously not portable, and is never necessary when opening
   a supplied data file, given gretl's path-searching capability.
 
 \vspace{1ex}  
-\textbf{Execution time}: Some packages carry out Monte Carlo
+\textit{Execution time}: Some packages carry out Monte Carlo
   analyses and/or bootstrapping and we all know that such procedures
   are inherently time consuming. Nonetheless, a sample script should
   execute on current hardware in a reasonably short time---preferably
@@ -1368,7 +1367,7 @@ scripts:
   statement such as ``Uncomment this for a real test''.
 
 \vspace{1ex}  
-\textbf{Commenting out}: In some cases an author may wish to
+\textit{Commenting out}: In some cases an author may wish to
   indicate alternative ways of calling his or her package. That's
   fine, but if an alternative call requires a dataset other than
   the one opened by the script it must be commented out; we don't
