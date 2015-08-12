@@ -1683,6 +1683,7 @@ static void filter_remote_funcs (GtkButton *b, windata_t *vwin)
     if (filter != old_filter) {
 	populate_remote_func_list(vwin, filter);
 	widget_set_int(combo, "filter", filter);
+	listbox_select_first(vwin);
     }
 }
 
@@ -2738,7 +2739,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	types = remote_func_types;
 	cols = G_N_ELEMENTS(remote_func_types);
 	hidden_cols = 1;
-	full_width = 750;
+	full_width = 760;
 	file_height = 340;
 	break;
     case REMOTE_ADDONS:
