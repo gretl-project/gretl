@@ -82,7 +82,12 @@ static void build_params (char const **params, int content,
     if (content == CONTENT_FUNCS && format == FORMAT_PANGO) {
 	params[i++] = "topic";
 	params[i++] = "\"funcs\"";
-    }     
+    }
+
+    if (format == FORMAT_PANGO) {
+	params[i++] = "fmt";
+	params[i++] = "\"pango\"";
+    }	
 
     params[i] = NULL;
 }
