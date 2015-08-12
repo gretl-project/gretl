@@ -2796,12 +2796,12 @@ int package_is_available_for_menu (const gchar *pkgname,
 
 static int official_addon (const char *pkgname)
 {
-    /* FIXME this should be made more general, but for
-       now we'll restrict it to official addons that
-       are in zip format */
+    /* All of the following are available in zip format
+       from sourceforge */
     if (!strcmp(pkgname, "SVAR") ||
 	!strcmp(pkgname, "gig") ||
-	!strcmp(pkgname, "HIP")) {
+	!strcmp(pkgname, "HIP") ||
+	!strcmp(pkgname, "ivpanel")) {
 	return 1;
     } else {
 	return 0;
@@ -2830,10 +2830,6 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 	    gretl_function_package_get_path(pkgname, gpi_ptype(gpi));
     }
 
-    /* FIXME: the following block needs to be sorted out properly,
-       with testing, once SF is back online, AC 2015-07-21.
-    */
-
     if (gpi->filepath == NULL && official_addon(pkgname)) {
 	gchar *msg = g_strdup_printf(_("The %s package was not found, or is not "
 				       "up to date.\nWould you like to try "
@@ -2844,13 +2840,13 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 	if (resp == GRETL_YES) {
 	    int err;
 	    
-	    /* FIXME record download in command log? */
 	    if (official_addon(pkgname)) {
+		/* FIXME maybe record download in command log? */
 		err = download_addon(pkgname, &gpi->filepath);
 	    } else {
+		/* ?? err = download_package(pkgname, &gpi->filepath); */
 		err = 1;
 		errbox_printf("Sorry, could not find %s", pkgname);
-		/* err = download_package(pkgname, &gpi->filepath); */
 	    }
 	    if (err) {
 		return;
