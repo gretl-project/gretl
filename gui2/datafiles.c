@@ -1675,10 +1675,14 @@ static void filter_remote_funcs (GtkButton *b, windata_t *vwin)
 
     combo = g_object_get_data(G_OBJECT(vwin->main), "filter-combo");
     old_filter = widget_get_int(combo, "filter");
-    
-    s = combo_box_get_active_text(combo);
-    filter = atoi(s + 1);
-    g_free(s);
+
+    if (gtk_combo_box_get_active(GTK_COMBO_BOX(combo)) == 0) {
+	filter = 0;
+    } else {
+	s = combo_box_get_active_text(combo);
+	filter = atoi(s + 1); /* "C<number>" */
+	g_free(s);
+    }
 
     if (filter != old_filter) {
 	populate_remote_func_list(vwin, filter);
