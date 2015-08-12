@@ -1546,6 +1546,11 @@ In addition, if the user decides to save your bundle ``as an icon,''
 then subsequently double-clicking on the icon will again invoke the
 bundle-print function, and re-create a window like the original one.
 
+\tip{A word to the wise, in relation to the last Figure: clicking on
+  Help in the ``Extra properties'' window brings up help text that is
+  both specific to the active tab and reasonably complete. 'Nuff
+  said.}
+
 One more refinement here. This is a bit of a stretch when we're
 looking at a little toy package, but you probably want to think about
 both GUI users and users who may wish to call your package via
@@ -1658,9 +1663,9 @@ are relevant here, both under the control of the package author.
 
 First there's the \texttt{model-requirement} field in the package
 \textsf{spec} file. Valid entries for the field are the gretl
-command-words corresponding to the various estimators (\cmd{ols},
-\cmd{logit}, \cmd{mle} and so on). So for a function specifically
-designed to handle logit models one could specify
+command-words corresponding to the various built-in estimators
+(\cmd{ols}, \cmd{logit}, \cmd{mle} and so on). So for a function
+specifically designed to handle logit models one could specify
 \begin{verbatim}
 model-requirement = logit
 \end{verbatim}
@@ -1681,18 +1686,19 @@ error code (0 for OK, non-zero for not-OK). On execution it has access
 to the \texttt{\$}-variables for the model in question. Among these is
 the \texttt{\$command} accessor, which gives the command-word for the
 estimator. So, for example, the pre-check function for a package which
-targets binary logit and probit models would look like
-Example~\ref{code:precheck}.
+targets binary logit and probit models might look like
+Example~\ref{code:precheck} (it could be written a good deal more
+tersely, but the example shows the logic very explicitly).
 
 \begin{script}[htbp]
 \begin{code}
 function scalar lpbin_precheck (void)
   string c = $command
   if c != "logit" && c != "probit"
-    # can't handle estimator
+    # can't handle this estimator
     return 1
   elif !isdummy($ylist[1])
-    # non-binary, can't handle it
+    # logit/probit but non-binary, can't handle it
     return 1
   endif
   return 0
@@ -1711,21 +1717,25 @@ version of a package.
 \subsection{Example: bandplot}
 \label{sec:bandplot}
 
-For a simple but idiomatic example of a model-related package, take a
-look at \textsf{bandplot}, which creates a a plot displaying a
-confidence band for the effect of a selected regressor in the context
-of a multiple regression.  In GUI use, this package latches onto
-windows displaying models estimated via OLS, attaching itself to the
-\textsf{Graphs} menu.
+For a simple but idiomatic example of a model-related package, you
+might take a look at \textsf{bandplot} (version 0.3 or higher), which
+creates a a plot displaying a confidence band for the effect of a
+selected regressor in the context of a multiple regression.  In GUI
+use, this package latches onto windows displaying models estimated via
+OLS, attaching itself to the \textsf{Graphs} menu.
 
 Here's the relevant part of \texttt{bandplot.spec}: 
 
 \begin{code}
-description = Confidence band plot for regression effects
-label = Confidence band plot
-public = GUI_bandplot bandplot
-model-requirement = ols
+description = Confidence band plot
+min-version = 1.10.1
 gui-main = GUI_bandplot
+label = Confidence band plot
+menu-attachment = MODELWIN/Graphs
+model-requirement = ols
+public = GUI_bandplot bandplot 
+no-print = GUI_bandplot bandplot 
+menu-only = GUI_bandplot 
 help = bandplot.help
 gui-help = bpgui.help
 \end{code}
@@ -1743,59 +1753,98 @@ name of a plain text (UTF-8) file containing the GUI-specific help
 text. In the GUI you can edit or add GUI help under ``Extra
 properties'' via a button in the ``Menu attachment'' tab.
 
-Some additional features helpful for this sort of thing. First,
-besides the \texttt{[min:max:default]} fields for a function
-parameter, you can add a fourth field to specify a ``step''. This is
-used only for non-integer scalar parameters. To make the step value
-active, the other three numerical fields must also be given. Example:
+You may wonder, what happens if your package offers PDF documentation
+but you also choose to give some \texttt{gui-help} text? Answer: when
+the user clicks on \textsf{Help} in your GUI function-call dialog, she
+will see the GUI help text in the first instance, but the window
+showing this text will display a hyperlink to the PDF doc.
 
+This package also illustrates some special GUI-related inflections in
+the parameter listing for a user-defined function. Here's the
+signature of \texttt{GUI\_bandplot}, designed to be called from a
+menu:
+%
 \begin{code}
-function void foo (scalar clevel[0.5:0.99:0.95:0.01])
-\end{code}
-
-The effect of the above is that in the GUI the parameter
-\texttt{clevel} will be represented by a ``spin-button'' with a
-minimum of 0.5, a maximum of 0.99, an initial value of 0.95, and a
-step or increment of 0.01 when the button is clicked. The step
-specifier is ignored outside the context of a GUI function-call
-dialog. (This is not specific to model-related packages.)
-
-Second, there's a facility specific to model-related packages, and in
-particular to packages that target models carrying a list of
-regressors: you can replace the \texttt{[min:max:default]} fields with
-a single special symbol, \verb|[$xlist]|, as in
-
-\begin{code}
-function void foo (int xnum[$xlist])
+function void GUI_bandplot (int xvar[$xlist] "x-axis variable", 
+     scalar conf[0.5:0.99:0.95:.01] "confidence level")
 \end{code}
 %$
+Take the \texttt{conf} parameter first. Besides the usual
+\texttt{[min:max:default]} fields for a scalar parameter, you can add
+a fourth field to specify a ``step''. This is used only for
+non-integer scalar parameters. To make the step value active, the
+other three numerical fields must also be given.  In this case
+\texttt{conf} will be represented by a ``spin-button'' with a minimum
+of 0.5, a maximum of 0.99, an initial value of 0.95, and a
+\textit{step} or increment of 0.01 when the button is clicked. The
+step specifier is ignored outside the context of a GUI function-call
+dialog. (This is not specific to model-related packages.)
 
-The effect is that in a GUI dialog the parameter \texttt{xnum} is
-represented by a drop-down list showing the names of the regressors
-(skipping the constant, if any).  Based on the user's selection from
-the list, the argument is filled out with the 1-based index of the
-position of the selected regressor in the array of coefficients. For
-example, if the list of regressors is \texttt{const x1 x2 x3} then the
-drop-down list will show \textsf{x1}, \textsf{x2} and \textsf{x3}, and
-if the user selects \textsf{x2} the value 3 will be given to
-\texttt{xnum}.
+The \texttt{xvar} parameter above illustrates a a facility specific to
+model-related packages, and in particular to packages that target
+models carrying a list of regressors: you can replace the usual
+\texttt{[min:max:default]} fields for an integer-valued parameter with
+a single special symbol, \texttt{[\$xlist]}.  The effect is that in a
+GUI dialog the parameter is represented by a drop-down list showing
+the names of the regressors (skipping the constant, if any). See
+Figure~\ref{fig:bandplot-call}.
 
-The idea is that if an addon wants to single out a regressor, much the
-most user-friendly way of conveying this to the user is to show a list
-of names. Yet there is no way that a package can arrange for this
-directly; so we want a means of signaling to gretl that the list
-should be constructed at runtime, based on the particular model.
+\begin{figure}[htbp]
+\begin{center}
+  \includegraphics[width=0.4\textwidth]{figures/bandplot-call}
+\end{center}
+\caption{Call to \textsf{bandplot}, with special parameter-list
+  inflections. Note the spin-button selector for \texttt{conf}
+  (scalar) and the drop-down selector for \texttt{xvar} (int)
+  as described in the text.}
+\label{fig:bandplot-call}
+\end{figure}
 
-Third, consider a package whose job is to produce a special graph
-based on model data. By default, when a packaged function is invoked
-via the GUI a window is opened showing the command along with any
-printed output, but for graph-only output such a window is superfluous
-and potentially confusing.  You can now suppress the text window by
-inserting a special comment into the code of the function in question,
-namely
+Based on the user's selection from the list, the argument is filled
+out with the 1-based index of the position of the selected regressor
+in the array of coefficients. For example, if the list of regressors
+is \texttt{const x1 x2 x3} then the drop-down list will show
+\textsf{x1}, \textsf{x2} and \textsf{x3}, and if the user selects
+\textsf{x2} the value 3 will be given to \texttt{xvar}.
 
-UPDATE: ref no-print list in spec file or GUI Extra props.
+The idea is that if a package wants to single out a regressor, much
+the most user-friendly way of conveying this to the user is to show a
+list of names. There is no way that a package can arrange for this in
+advance, so we want a means of signaling to gretl that the list should
+be constructed at runtime, based on the particular model. But please
+note, this special feature is not ignored in non-GUI use; it will
+cause trouble. That's one reason why, as we saw in the spec file
+extract above, \texttt{GUI\_bandplot} is marked as \texttt{menu-only}.
+Note that the \texttt{menu-only} attribute is also visible and
+settable via the GUI package editor (Figure~\ref{fig:special-funcs}).
 
+The other reason why \texttt{GUI\_bandplot} is ``menu-only'' is
+evident from the first line of code in the function, namely
+%
+\begin{code}
+matrix b = $coeff
+\end{code}
+%$
+This assumes that the model-related \texttt{\$}-accessors are primed
+to refer to a valid model that, moreover, was estimated via
+OLS. That's a safe assumption when coming off a model-window menu
+(pre-screened by \texttt{model-requirement} and/or
+\texttt{gui-precheck}), but in general it's not at all safe.
+
+\subsection{No-print, once again}
+
+We've already come across the \texttt{no-print} attribute of packaged
+functions, but it's worth revisiting this in the context of functions
+whose sole job is to produce a graph or plot of some kind (whether or
+not they are model-related). 
+
+By default, when a packaged function is invoked via the GUI a window
+is opened showing the command along with any printed output, but for
+graph-only output such a window is superfluous and potentially
+confusing.  You can suppress the text window by marking the function
+in question as \texttt{no-print}. This applies to bandplot, but
+would also apply to a main-window function whose job is just to
+produce a plot.
 
 \section{Publishing a package}
 \label{sec:publish}
@@ -1906,11 +1955,34 @@ server'') and via the web interface.
 \section{Maintaining a package}
 \label{sec:maint}
 
-FIXME: This section should talk about issues arising in relation to
-the maintenance of an existing package. Use of CLI and GUI and
-cross-over between the two. Avoid reverting any changes made by
-package admins to fix breakage in prior versions (tho' maybe that
-should never happen?).
+Once you've uploaded a function package to the gretl server, hopefully
+that won't be the end of the story: unless your package was totally
+perfect on its first release (Ha!) you'll want to revisit it from time
+to time with fixes or enhancements in mind. 
+
+The question arises: if your initial work was via the GUI, or via the
+CLI, are you thereby committed to that mode of operation forever?
+Certainly not. You can mix and match the two approaches, subject to
+some basic requirements---although, if your package is truly complex,
+we advise sticking with the commmand-line approach thoughout.
+
+\textit{Case 1}: You started via the GUI but you'd like to explore
+maintaining your package by CLI means. Fine, you can disassemble your
+\textsf{gfn} file by opening it in the GUI package editor, going to
+the ``\textsf{Save...}'' button and selecting the options \textsf{Save
+  as script} (decline the option to save the sample script along with
+the packaged functions) and \textsf{Write spec file} (accept the
+options to save the auxiliary files). This will create the source
+files you need to rebuild your package by CLI means
+(section~\ref{sec:cli-build}).
+
+\textit{Case 2}: You started via the CLI but you'd like to explore
+maintaining your package by GUI means. Fine, you know that the
+\texttt{makepkg} command will create a \textsf{gfn} file, which you can
+then open in the GUI package editor to make changes. But you'd be wise
+to use the ``\textsf{Save...}''-button options, as described above, to
+keep your text-file sources in sync with your GUI-edited \textsf{gfn}
+File, so that on the next revision it doesn't matter where you start.
 
 \clearpage
 
@@ -1933,6 +2005,7 @@ adequate, with some help from a few small additions.  We offer some
 more detail on the two options below.
 
 \subsection*{Native Windows: cmd.exe}
+\label{sec:cmd.exe}
 
 This supports all the commands shown in section~\ref{sec:cli-build}
 except that the \app{make} utility is not present. But \app{make} for
@@ -1976,8 +2049,8 @@ Having fixed its properties, double-click on the new shortcut and you
 should have a fairly decent-looking terminal window. The
 \textsf{cmd.exe} window is sometimes called a ``DOS box.''  In fact it
 has little to do with \textsf{DOS}---a long-obsolete 16-bit operating
-system---but its default appearance does look like a horrid blast from
-the past. Hopefully we've improved on that.
+system---but its default appearance is indeed a nasty blast from the
+past. Hopefully we've improved on that.
 
 A couple of other things are needed to get a usable shell: the
 programs we'll be using have to be in the \texttt{PATH}, and we need a
@@ -2048,9 +2121,14 @@ above---typing \texttt{edit} at the command prompt to open a file in
 \textsf{Notepad++}---but here's another that can be useful. Having
 built a \textsf{gfn} file using \textsf{make} under the shell (see
 Figure~\ref{fig:cmd-exe}) you can easily open it for inspection in the
-gretl GUI with ``\texttt{gretl mypkg.gfn}''. No need to mess with File
-Open dialogs since you're already in the directory where
-\texttt{mypkg.gfn} is located.
+gretl GUI with
+%
+\begin{code}
+gretl mypkg.gfn
+\end{code}
+%
+No need to mess with File Open dialogs since you're already in the
+directory where \texttt{mypkg.gfn} is located.
 
 \begin{figure}[htbp]
   \centering
@@ -2088,9 +2166,31 @@ installation with these extras weighs in at about 24 MB.  Note that
 pretty much an optional extra, and can be installed separately if you
 want it; see \url{http://curl.haxx.se/download.html}.
 
-Even if you decide not to go ``all the way'' with command-line
-methods, using \app{gretlcli} under either \app{cmd.exe} or a
-unix-type shell is a very nice way of exploiting certain gretl
+We haven't given full details on running the installers for
+\textsf{CygWin} or \textsf{MSYS}; If you're taking this route we
+assume you know what you're doing, and these programs are reasonably
+intuitive. Nonetheless we advise you to take it slowly and pay close
+attention to (a) the installation path and (b) which packages you are
+selecting for installation.
+
+Once one or other of these packages is installed, you have access to a
+terminal window running a bash shell. With \textsf{CygWin} this should
+be apparent in the form of a desktop icon (unless you chose to disable
+it). With \textsf{MSYS} you have to establish the desktop link
+yourself: create a ``shortcut'' pointing at \texttt{msys.bat} in the
+\textsf{MSYS} installation. If you followed the defaults this will be
+at
+%
+\begin{code}
+  c:\mingw\msys\1.0\msys.bat
+\end{code}
+%
+In this case you can customize the window that appears as described 
+in section~\ref{sec:cmd.exe}.
+
+As a final note, even if you decide not to go ``all the way'' with
+command-line methods, using \app{gretlcli} under either \app{cmd.exe}
+or a unix-type shell is a very nice way of exploiting certain gretl
 features (output redirection, use of environment variables, etc.) and
 may be quite useful in it own right.
 
