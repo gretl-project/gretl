@@ -810,7 +810,7 @@ emit a string & \texttt{echo} & \texttt{echo}
 
 With the exception of subsection~\ref{sec:using-make} all the commands
 used in this section have been tested on Windows' \app{cmd.exe} as
-well as the unix-type Bourne shell.
+well as the \app{bash} shell.
 
 First of all, we strongly recommend that when starting work on a
 package you create a specific directory to hold the makings of the
@@ -1881,20 +1881,16 @@ up-to-date zip file and uploading that.
 \textit{Second gretl method}: In the main gretl window, go to ``Tools,
 Function packages, Upload package'' and choose the package to
 upload. The file selection dialog will offer a choice of looking for
-\textsf{gfn} or \textsf{zip} files. Please note: in this case, as
-opposed to the first, if your package is supposed to contain PDF
-documentation or additional files, you must build the zip file
-yourself and select that for upload, not the plain \textsf{gfn} file.
-[FIXME: automate this?]
+\textsf{gfn} or \textsf{zip} files. If you select a gfn file
+and gretl determines that it's actually a zip file that needs
+to be uploaded, it will attempt to build the zip package first.
 
 \textit{Shell method}: Example~\ref{ex:curl-upload} shows two shell
 scripts, the first suitable for uploading a stand-alone gfn package
 and the second for uploading a zip package. The first three lines of
 each would, of course, have to be filled out appropriately for your
-case.  
-
-These recipes rely on various components that are standard kit on
-unix-type systems such as Linux and OS X: a Bourne-type shell; the
+case.  These recipes rely on various components that are standard kit
+on unix-type systems such as Linux and OS X: a Bourne-type shell; the
 basic utility programs \app{basename} and \app{stat}; and the
 \app{curl} program for doing the actual upload. See Appendix A for
 some comments on doing this sort of thing on MS Windows.
@@ -2586,16 +2582,16 @@ to a definite standard, as follows:
 
 Taking the \textsf{gig} package as an example, we have:
 %
-\begin{verbatim}
+\begin{code}
   function void gig_bundle_print(bundle *model)
-\end{verbatim}
+\end{code}
 %
 and
 %
-\begin{verbatim}
+\begin{code}
   function void GUI_gig_plot(bundle *model, int ptype[0:1:0] \
                              "Plot type" {"Time series", "Density"})
-\end{verbatim}
+\end{code}
 
 That is, \textsf{gig}'s \texttt{bundle-print} function has no options,
 but its \texttt{bundle-plot} function has a control parameter
