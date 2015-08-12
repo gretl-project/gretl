@@ -76,7 +76,7 @@
                 lit | emphasis | book | quote | filename |
                 func | guideref | cmdref | fncref | tabref | 
                 footnote | argname | sub | sup | cite | seelist | 
-                by | cmd)*>
+                by | url | cmd)*>
 <!ATTLIST para
   context (tex | notex | both) "both"
 > 
@@ -159,6 +159,7 @@
 <!ELEMENT lit      (#PCDATA)>
 <!ELEMENT emphasis (#PCDATA)>
 <!ELEMENT book     (#PCDATA)>
+<!ELEMENT url      (#PCDATA)>
 <!ELEMENT quote    (#PCDATA | lit)*>
 <!ELEMENT filename (#PCDATA)>
 <!ELEMENT func     (#PCDATA)>
