@@ -1094,7 +1094,6 @@ static void db_drag_connect (windata_t *vwin, int i)
 
 #define db_drag_series_connect(v) db_drag_connect(v, GRETL_DBSERIES_PTR)
 #define db_drag_db_connect(v) db_drag_connect(v, GRETL_REMOTE_DB_PTR)
-#define fnpkg_drag_connect(v) db_drag_connect(v, GRETL_REMOTE_FNPKG_PTR)
 
 #define DB_LINELEN 512
 
@@ -2849,12 +2848,22 @@ gint populate_remote_addons_list (windata_t *vwin)
     return err;
 }
 
+static void check_gfn_drag_connection (windata_t *vwin)
+{
+    int dc = widget_get_int(vwin->main, "drag-connected");
+    
+    if (!dc) {
+	db_drag_connect(vwin, GRETL_REMOTE_FNPKG_PTR);
+	widget_set_int(vwin->main, "drag-connected", 1);
+    }
+}
+
 /* Fill a list box with name, version number, author,
    and short description of function packages, retrieved
    from server.
 */
 
-gint populate_remote_func_list (windata_t *vwin)
+gint populate_remote_func_list (windata_t *vwin, int filter)
 {
     GtkListStore *store;
     GtkTreeIter iter;  
@@ -2866,7 +2875,7 @@ gint populate_remote_func_list (windata_t *vwin)
     time_t remtime;
     int n, err = 0;
 
-    err = list_remote_function_packages(&getbuf);
+    err = list_remote_function_packages(&getbuf, filter);
     if (err) {
 	show_network_error(NULL);
 	free(getbuf);
@@ -2952,7 +2961,7 @@ gint populate_remote_func_list (windata_t *vwin)
     }
 
     if (!err) {
-	fnpkg_drag_connect(vwin);
+	check_gfn_drag_connection(vwin);
     }
 
     return err;
@@ -3027,12 +3036,6 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
 	warnbox(_("No data packages found"));
 	err = 1;
     }
-
-#if 0
-    if (!err) {
-	fnpkg_drag_connect(vwin);
-    }
-#endif
 
     return err;
 }

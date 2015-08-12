@@ -24,7 +24,7 @@ void set_db_dir_callback (windata_t *vwin, char *path);
 
 gint populate_remote_db_list (windata_t *vwin);
 
-gint populate_remote_func_list (windata_t *win);
+gint populate_remote_func_list (windata_t *win, int filter);
 
 gint populate_remote_addons_list (windata_t *vwin);
 

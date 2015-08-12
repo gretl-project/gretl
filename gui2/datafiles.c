@@ -1667,6 +1667,68 @@ static int files_item_get_callback (GretlToolItem *item, int role)
     return (item->func != NULL);
 }
 
+static void filter_remote_funcs (GtkButton *b, windata_t *vwin)
+{
+    GtkWidget *combo;
+    int filter, old_filter;
+    gchar *s;
+
+    combo = g_object_get_data(G_OBJECT(vwin->main), "filter-combo");
+    old_filter = widget_get_int(combo, "filter");
+    
+    s = combo_box_get_active_text(combo);
+    filter = atoi(s + 1);
+    g_free(s);
+
+    if (filter != old_filter) {
+	populate_remote_func_list(vwin, filter);
+	widget_set_int(combo, "filter", filter);
+    }
+}
+
+static void maybe_add_gfn_filter (windata_t *vwin,
+				  GtkWidget *hbox)
+{
+    char *getbuf = NULL;
+    int err;
+	
+    err = list_remote_function_categories(&getbuf);
+    if (!err && (getbuf == NULL || *getbuf != 'C')) {
+	free(getbuf);
+	err = 1;
+    }
+    
+    if (!err) {
+	GtkWidget *combo, *button;
+	char line[128];
+	gchar *label;
+
+	bufgets_init(getbuf);
+
+	combo = gtk_combo_box_text_new();
+	g_object_set_data(G_OBJECT(vwin->main), "filter-combo", combo);
+	widget_set_int(combo, "filter", 0);
+	
+	combo_box_append_text(combo, _("All packages"));
+	while (bufgets(line, sizeof line, getbuf)) {
+	    combo_box_append_text(combo, tailstrip(line));
+	}
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+
+	bufgets_finalize(getbuf);
+	free(getbuf);
+
+	gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+	label = g_strdup_printf(" %s ", _("filter"));
+	button = gtk_button_new_with_label(label);
+	g_free(label);
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(filter_remote_funcs), vwin);
+
+    }
+}
+
 static void make_files_toolbar (windata_t *vwin)
 {
     GtkWidget *hbox, *button;
@@ -1696,6 +1758,11 @@ static void make_files_toolbar (windata_t *vwin)
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+
+    if (vwin->role == REMOTE_FUNC_FILES) {
+	maybe_add_gfn_filter(vwin, hbox);
+    }
+
     vwin_add_winlist(vwin);
     vwin_add_finder(vwin);
     gtk_widget_show_all(hbox);
@@ -2533,7 +2600,7 @@ gint populate_filelist (windata_t *vwin, gpointer p)
     } else if (vwin->role == REMOTE_DB) {
 	return populate_remote_db_list(vwin);
     } else if (vwin->role == REMOTE_FUNC_FILES) {
-	return populate_remote_func_list(vwin);
+	return populate_remote_func_list(vwin, 0);
     } else if (vwin->role == REMOTE_DATA_PKGS) {
 	return populate_remote_data_pkg_list(vwin);
     } else if (vwin->role == FUNC_FILES) {
