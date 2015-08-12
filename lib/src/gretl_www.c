@@ -295,6 +295,8 @@ static const char *print_option (int opt)
 	return "GRAB_FUNC_INFO";
     case FUNC_FULLNAME:
 	return "FUNC_FULLNAME";
+    case LIST_CATS:
+	return "LIST_CATS";
     default:
 	break;
     }
@@ -304,7 +306,8 @@ static const char *print_option (int opt)
 
 static void urlinfo_set_params (urlinfo *u, CGIOpt opt, 
 				const char *fname,
-				const char *series)
+				const char *series,
+				int filter)
 {
     strcat(u->url, "?opt=");
     strcat(u->url, print_option(opt));
@@ -323,6 +326,14 @@ static void urlinfo_set_params (urlinfo *u, CGIOpt opt,
 	strcat(u->url, "&series=");
 	strcat(u->url, series);
     }
+
+    if (filter > 0) {
+	char fstr[8];
+
+	sprintf(fstr, "%d", filter);
+	strcat(u->url, "&filter=");
+	strcat(u->url, fstr);
+    }    
 }
 
 static void maybe_revise_www_paths (void)
@@ -441,7 +452,8 @@ static int retrieve_url (const char *hostname,
 			 CGIOpt opt, 
 			 const char *fname, 
 			 const char *dbseries, 
-			 const char *localfile, 
+			 const char *localfile,
+			 int filter,
 			 char **getbuf)
 {
     int saveopt = SAVE_NONE;
@@ -483,7 +495,7 @@ static int retrieve_url (const char *hostname,
 	opt != GRAB_PKG && opt != QUERY_SF &&
 	opt != LIST_PKGS) {
 	/* a gretl-server download */
-	urlinfo_set_params(&u, opt, fname, dbseries);
+	urlinfo_set_params(&u, opt, fname, dbseries, filter);
     }
 
     if (progress_bar_wanted(opt)) {
@@ -654,31 +666,37 @@ int upload_function_package (const char *login, const char *pass,
 int list_remote_dbs (char **getbuf)
 {
     return retrieve_url(dbhost, LIST_DBS, NULL, NULL, 
-			NULL, getbuf);
+			NULL, 0, getbuf);
 }
 
-int list_remote_function_packages (char **getbuf)
+int list_remote_function_packages (char **getbuf, int filter)
 {
     return retrieve_url(gretlhost, LIST_FUNCS, NULL, NULL, 
-			NULL, getbuf);
+			NULL, filter, getbuf);
+}
+
+int list_remote_function_categories (char **getbuf)
+{
+    return retrieve_url(gretlhost, LIST_CATS, NULL, NULL, 
+			NULL, 0, getbuf);
 }
 
 int query_sourceforge (const char *query, char **getbuf)
 {
     return retrieve_url(sfweb, QUERY_SF, query, NULL, 
-			NULL, getbuf);
+			NULL, 0, getbuf);
 }
 
 int list_remote_data_packages (char **getbuf)
 {
     return retrieve_url(sfweb, LIST_PKGS, NULL, NULL, 
-			NULL, getbuf);
+			NULL, 0, getbuf);
 }
 
 int retrieve_remote_db_index (const char *dbname, char **getbuf) 
 {
     return retrieve_url(dbhost, GRAB_IDX, dbname, NULL, 
-			NULL, getbuf);
+			NULL, 0, getbuf);
 }
 
 int retrieve_remote_db (const char *dbname, 
@@ -686,7 +704,7 @@ int retrieve_remote_db (const char *dbname,
 			int opt)
 {
     return retrieve_url(dbhost, opt, dbname, NULL, 
-			localname, NULL);
+			localname, 0, NULL);
 }
 
 int check_remote_db (const char *dbname)
@@ -695,7 +713,7 @@ int check_remote_db (const char *dbname)
     int err;
 
     err = retrieve_url(dbhost, CHECK_DB, dbname, NULL, 
-		       NULL, &getbuf);
+		       NULL, 0, &getbuf);
 
     if (!err && getbuf != NULL) {
 	err = strncmp(getbuf, "OK", 2) != 0;
@@ -766,7 +784,7 @@ int retrieve_remote_function_package (const char *pkgname,
     int err;
 
     err = retrieve_url(gretlhost, GRAB_FUNC, pkgname, NULL, 
-		       localname, NULL);
+		       localname, 0, NULL);
 
     if (!err) {
 	err = check_downloaded_file(localname, pkgname);
@@ -791,7 +809,7 @@ int retrieve_remote_gfn_content (const char *zipname,
 				 const char *localname)
 {
     return retrieve_url(gretlhost, GRAB_FUNC_INFO, zipname, NULL, 
-			localname, NULL);
+			localname, 0, NULL);
 }
 
 /**
@@ -810,7 +828,7 @@ char *retrieve_remote_pkg_filename (const char *pkgname,
     char *buf = NULL;
 
     *err = retrieve_url(gretlhost, FUNC_FULLNAME, pkgname, NULL, 
-			NULL, &buf);
+			NULL, 0, &buf);
     
     if (!*err) {
 	if (buf == NULL) {
@@ -848,7 +866,7 @@ int retrieve_remote_datafiles_package (const char *pkgname,
 				       const char *localname)
 {
     return retrieve_url(sffiles, GRAB_PKG, pkgname, NULL, 
-			localname, NULL);
+			localname, 0, NULL);
 }
 
 /**
@@ -871,7 +889,7 @@ int retrieve_remote_db_data (const char *dbname,
 			     int opt)
 {
     return retrieve_url(dbhost, opt, dbname, varname, 
-			NULL, getbuf);
+			NULL, 0, getbuf);
 }
 
 /**
@@ -889,7 +907,7 @@ int retrieve_remote_db_data (const char *dbname,
 int retrieve_manfile (const char *fname, const char *localname)
 {
     return retrieve_url(sffiles, GRAB_PDF, fname, NULL, 
-			localname, NULL);
+			localname, 0, NULL);
 }
 
 static int proto_length (const char *s)
