@@ -162,50 +162,43 @@ Copyright 1984, 1987, 1995, 2000 by Stephen L. Moshier
 
 #include "mconf.h"
 
-double fdtrc (int ia, int ib, double x)
+double fdtrc (double a, double b, double x)
 {
-    double a, b, w;
+    double w;
 
-    if (ia < 1 || ib < 1 || x < 0.0) {
+    if (a < 1 || b < 1 || x < 0.0) {
 	mtherr("fdtrc", CEPHES_DOMAIN);
 	return 0.0;
     }
 
-    a = ia;
-    b = ib;
     w = b / (b + a * x);
 
     return incbet(0.5*b, 0.5*a, w);
 }
 
-double fdtr (int ia, int ib, double x)
+double fdtr (double a, double b, double x)
 {
-    double a, b, w;
+    double w;
 
-    if (ia < 1 || ib < 1 || x < 0.0) {
+    if (a < 1 || b < 1 || x < 0.0) {
 	mtherr("fdtr", CEPHES_DOMAIN);
 	return 0.0;
     }
 
-    a = ia;
-    b = ib;
     w = a * x;
     w = w / (b + w);
 
     return incbet(0.5*a, 0.5*b, w);
 }
 
-double fdtri (int ia, int ib, double y)
+double fdtri (double a, double b, double y)
 {
-    double a, b, w, x;
+    double w, x;
 
-    if (ia < 1 || ib < 1 || y <= 0.0 || y > 1.0) {
+    if (a < 1 || b < 1 || y <= 0.0 || y > 1.0) {
 	mtherr("fdtri", CEPHES_DOMAIN);
 	return 0.0;
     }
-
-    a = ia;
-    b = ib;
 
     /* Compute probability for x = 0.5 */
     w = incbet(0.5*b, 0.5*a, 0.5);

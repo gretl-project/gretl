@@ -42,21 +42,21 @@ double chdtri (double df, double y);
    function (also known as Snedcor's density or the
    variance ratio density).
 */
-double fdtr (int ia, int ib, double x);
+double fdtr (double a, double b, double x);
 
 /*
    Returns the area from x to infinity under the F density
    function (also known as Snedcor's density or the
    variance ratio density).
 */
-double fdtrc (int ia, int ib, double x);
+double fdtrc (double a, double b, double x);
 
 /*
    Finds the F density argument x such that the integral
    from x to infinity of the F density is equal to the
    given probability p.
 */
-double fdtri (int ia, int ib, double y);
+double fdtri (double a, double b, double y);
 
 /*
    Computes the integral from minus infinity to t of the Student
