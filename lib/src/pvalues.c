@@ -2976,7 +2976,7 @@ double gretl_get_pvalue (int dist, const double *parm, double x)
     } else if (dist == D_CHISQ) {
 	y = chisq_cdf_comp((int) parm[0], x);
     } else if (dist == D_SNEDECOR) {
-	y = snedecor_cdf_comp((int) parm[0], (int) parm[1], x);
+	y = snedecor_cdf_comp(parm[0], parm[1], x);
     } else if (dist == D_GAMMA) {
 	y = gamma_cdf_comp(parm[0], parm[1], x, 1);
     } else if (dist == D_BINOMIAL) {
