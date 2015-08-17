@@ -195,7 +195,8 @@ enum test_stats {
     GRETL_STAT_WALD_CHISQ,
     GRETL_STAT_SUP_WALD,
     GRETL_STAT_Z,
-    GRETL_STAT_LB_CHISQ
+    GRETL_STAT_LB_CHISQ,
+    GRETL_STAT_WF
 };
 
 typedef enum {

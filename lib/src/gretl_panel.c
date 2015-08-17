@@ -70,7 +70,7 @@ struct panelmod_t_ {
     int balanced;         /* 1 if the model dataset is balanced, else 0 */
     int nbeta;            /* number of slope coeffs for Hausman test */
     int Fdfn;             /* numerator df, F for differing intercepts */
-    int Fdfd;             /* denominator df, F for differing intercepts */
+    double Fdfd;          /* denominator df, F for differing intercepts */
     double theta;         /* quasi-demeaning coefficient */
     double F;             /* joint significance of differing unit intercepts */
     double BP;            /* Breusch-Pagan test statistic */
@@ -1589,7 +1589,7 @@ static int print_fe_results (panelmod_t *pan,
 	    pmod->ess, pmod->nobs, pan->vlist[0] - 1 + dfn, pan->s2e);
 
     pprintf(prn, _("Joint significance of differing group means:\n"));
-    pprintf(prn, " F(%d, %d) = %g %s %g\n", pan->Fdfn, pan->Fdfd, pan->F, 
+    pprintf(prn, " F(%d, %g) = %g %s %g\n", pan->Fdfn, pan->Fdfd, pan->F, 
 	    _("with p-value"), snedecor_cdf_comp(pan->Fdfn, pan->Fdfd, pan->F));
 
     pputs(prn, _("(A low p-value counts against the null hypothesis that "
@@ -1676,10 +1676,14 @@ static int time_dummies_wald_test (panelmod_t *pan, MODEL *wmod)
 
 static void save_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 {
-    ModelTest *test = model_test_new(GRETL_TEST_PANEL_F);
+    int robust = (pan->opt & OPT_R);
+    ModelTest *test;
+
+    test = model_test_new(robust ? GRETL_TEST_PANEL_WELCH :
+			  GRETL_TEST_PANEL_F);
 
     if (test != NULL) {
-	model_test_set_teststat(test, GRETL_STAT_F);
+	model_test_set_teststat(test, robust ? GRETL_STAT_WF : GRETL_STAT_F);
 	model_test_set_dfn(test, pan->Fdfn);
 	model_test_set_dfd(test, pan->Fdfd);
 	model_test_set_value(test, pan->F);
@@ -1688,7 +1692,7 @@ static void save_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
     }	    
 }
 
-static void fixed_effects_F (panelmod_t *pan, MODEL *wmod)
+static void regular_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 {
     pan->Fdfn = pan->effn - 1;
     pan->Fdfd = wmod->dfd;
@@ -1769,7 +1773,7 @@ static double panel_F (MODEL *pmod, panelmod_t *pan, int nskip)
 
 static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
 {
-    double wfstt, wrsq;
+    double wrsq, wfstt = NADBL;
     int wdfn, nc = fmod->ncoeff;
     int err = 0;
 
@@ -1794,17 +1798,21 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
 
     if (pan->ntdum > 0) {
 	wdfn = fmod->ncoeff - 1 - pan->ntdum;
-	wfstt = panel_F(fmod, pan, pan->ntdum);
+	if (wdfn > 0) {
+	    wfstt = panel_F(fmod, pan, pan->ntdum);
+	}
     } else {
 	wdfn = fmod->ncoeff - 1;
-	if (pan->opt & OPT_R) {
-	    wfstt = panel_F(fmod, pan, 0);
-	} else {
-	    wfstt = (wrsq / (1.0 - wrsq)) * ((double) fmod->dfd / wdfn);
+	if (wdfn > 0) {
+	    if (pan->opt & OPT_R) {
+		wfstt = panel_F(fmod, pan, 0);
+	    } else {
+		wfstt = (wrsq / (1.0 - wrsq)) * ((double) fmod->dfd / wdfn);
+	    }
 	}
     }
     
-    if (wfstt >= 0.0) {
+    if (!na(wfstt) && wfstt >= 0.0) {
 	ModelTest *test = model_test_new(GRETL_TEST_WITHIN_F);
 
 	if (test != NULL) {
@@ -1898,6 +1906,89 @@ static int fe_model_add_ahat (MODEL *pmod, const DATASET *dset,
     err = gretl_model_set_data(pmod, "ahat", ahat, 
 			       GRETL_TYPE_DOUBLE_ARRAY, 
 			       dset->n * sizeof *ahat);
+
+    return err;
+}
+
+/* If we're estimating the fixed effects model with the --robust
+   flag, we should do a robust version of the joint test on
+   the fixed effects. Here we use the algorithm of B. L. Welch,
+   "On the Comparison of Several Mean Values: An Alternative
+   Approach" (Biometrika 38, 1951, pp. 330-336). The variable
+   we're testing for difference of means (by individual) is the
+   residual from pooled OLS.
+*/
+
+static int robust_fixed_effects_F (MODEL *wmod, const DATASET *dset,
+				   panelmod_t *pan)
+{
+    MODEL *pmod = pan->pooled;
+    double *u, *w, *h, *xbar;
+    double muhat = 0.0;
+    double x, s2, W = 0.0;
+    double A, B, sum_h;
+    int k = pan->effn;
+    int i, j, t, s;
+    int Ti, bigt;
+    int err = 0;
+
+    u = malloc(pan->Tmax * sizeof *u);
+    w = malloc(3 * k * sizeof *w);
+
+    if (u == NULL || w == NULL) {
+	free(u);
+	free(w);
+	return E_ALLOC;
+    }
+
+    h = w + k;
+    xbar = h + k;
+
+    j = 0;
+    for (i=0; i<pan->nunits; i++) {
+	Ti = pan->unit_obs[i];
+	if (Ti > 1) {
+	    s = 0;
+	    for (t=0; t<pan->T; t++) {
+		bigt = panel_index(i, t);
+		if (!panel_missing(pan, bigt)) {
+		    u[s++] = pmod->uhat[bigt];
+		}
+	    }
+	    xbar[j] = gretl_mean(0, s-1, u);
+	    s2 = gretl_variance(0, s-1, u);
+	    w[j] = Ti / s2;
+	    W += w[j];
+	    muhat += w[j] * xbar[j];
+	    j++;
+	}
+    }
+
+    muhat /= W;
+    A = sum_h = 0.0;
+
+    j = 0;
+    for (i=0; i<pan->nunits; i++) {
+	Ti = pan->unit_obs[i];
+	if (Ti > 1) {
+	    x = 1 - w[j]/W;
+	    h[j] = (x * x) / (Ti - 1);
+	    sum_h += h[j];
+	    x = xbar[j] - muhat;
+	    A += w[j] * x * x;
+	    j++;
+	}
+    }
+
+    A /= (k - 1);
+    B = 1.0 + (2.0*(k-2.0)/(k * k - 1.0)) * sum_h;
+
+    pan->F = A / B;
+    pan->Fdfn = k - 1;
+    pan->Fdfd = (k * k - 1.0)/(3 * sum_h);
+
+    free(u);
+    free(w);
 
     return err;
 }
@@ -2154,6 +2245,12 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 #endif
 	if (pan->opt & OPT_F) {
 	    /* estimating the FE model in its own right */
+	    if (pan->opt & OPT_R) {
+		/* we have to do this before the pooled residual
+		   array is "stolen" for the fixed-effects model
+		*/
+		robust_fixed_effects_F(&femod, dset, pan);
+	    }
 	    fix_panel_hatvars(&femod, pan, (const double **) dset->Z);
 	    if (pan->opt & OPT_R) {
 		panel_robust_vcv(&femod, pan, (const double **) wset->Z);
@@ -2398,7 +2495,10 @@ static int within_variance (panelmod_t *pan,
 	fprintf(stderr, "pan->s2e = %g / %d = %g\n", femod.ess,
 	       den, pan->s2e);
 #endif
-	fixed_effects_F(pan, &femod);
+
+	if (!(pan->opt & OPT_R)) {
+	    regular_fixed_effects_F(pan, &femod);
+	}
 
 	if (pan->opt & OPT_V) {
 	    print_fe_results(pan, &femod, dset, prn);
