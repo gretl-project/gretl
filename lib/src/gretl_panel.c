@@ -1692,6 +1692,9 @@ static void save_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
     }	    
 }
 
+/* "regular" = not robust: sums-of-squares based joint test on
+   the fixed effects */
+
 static void regular_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 {
     pan->Fdfn = pan->effn - 1;

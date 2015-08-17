@@ -81,6 +81,63 @@ static void gretl_test_init (ModelTest *test, ModelTestType ttype)
     test->opt = OPT_NONE;
 }
 
+static const char *test_type_key (ModelTestType t)
+{
+    if (t == GRETL_TEST_ADD) {
+	return "add_test";
+    } else if (t == GRETL_TEST_ARCH) {
+	return "arch_test";
+    } else if (t == GRETL_TEST_AUTOCORR) {
+	return "autocorr_test";
+    } else if (t == GRETL_TEST_CHOW ||
+	       t == GRETL_TEST_CHOWDUM) {
+	return "chow_test";
+    } else if (t == GRETL_TEST_CUSUM) {
+	return "cusum_test";
+    } else if (t == GRETL_TEST_QLR) {
+	return "qlr_test";
+    } else if (t == GRETL_TEST_GROUPWISE) {
+	return "grpwise_test";
+    } else if (t == GRETL_TEST_LOGS) {
+	return "logs_test";
+    } else if (t == GRETL_TEST_NORMAL) {
+	return "normality_test";
+    } else if (t == GRETL_TEST_OMIT) {
+	return "omit_test";
+    } else if (t == GRETL_TEST_RESET) {
+	return "reset_test";
+    } else if (t == GRETL_TEST_SQUARES) {
+	return "squares_test";
+    } else if (t == GRETL_TEST_WHITES) {
+	return "whites_test";
+    } else if (t == GRETL_TEST_SARGAN) {
+	return "sargan_test";
+    } else if (t == GRETL_TEST_IV_HAUSMAN ||
+	       t == GRETL_TEST_PANEL_HAUSMAN) {
+	return "hausman_test";
+    } else if (t == GRETL_TEST_PANEL_F ||
+	       t == GRETL_TEST_PANEL_WELCH) {
+	return "panel_f_test";
+    } else if (t == GRETL_TEST_PANEL_BP ||
+	       t == GRETL_TEST_BP) {
+	return "bp_test";
+    } else if (t == GRETL_TEST_PANEL_TIMEDUM) {
+	return "timedum_test";
+    } else if (t == GRETL_TEST_HET_1) {
+	return "het1_test";
+    } else if (t == GRETL_TEST_COMFAC) {
+	return "comfac_test";	
+    } else if (t == GRETL_TEST_INDEP) {
+	return "independence_test";	
+    } else if (t == GRETL_TEST_RE) {
+	return "rho_test";	
+    } else if (t == GRETL_TEST_WITHIN_F) {
+	return "within_f_test";	
+    } else {
+	return NULL;
+    }
+}
+
 static void free_model_data_item (model_data_item *item)
 {
     if (item->destructor != NULL) {
@@ -3215,6 +3272,49 @@ static void serialize_test (const ModelTest *src, FILE *fp)
     fputs("/>\n", fp);
 }
 
+static gretl_bundle *bundlize_test (const ModelTest *src,
+				    const char **key)
+{
+    gretl_bundle *b;
+
+    *key = test_type_key(src->type);
+    
+    if (*key == NULL) {
+	return NULL;
+    }
+
+    b = gretl_bundle_new();
+    if (b == NULL) {
+	return NULL;
+    }
+
+    if (src->param != NULL && *src->param != '\0') {
+	gretl_bundle_set_string(b, "param", src->param);
+    }
+
+    if (src->dfn > 0) {
+	gretl_bundle_set_scalar(b, "dfn", (double) src->dfn);
+    }
+    if (src->dfd > 0) {
+	gretl_bundle_set_scalar(b, "dfd", src->dfd);
+    }
+    if (src->order > 0) {
+	gretl_bundle_set_scalar(b, "order", src->order);
+    }
+    if (!na(src->value)) {
+	gretl_bundle_set_scalar(b, "test", src->value);
+    }    
+    if (!na(src->pvalue)) {
+	gretl_bundle_set_scalar(b, "pvalue", src->pvalue);
+    }
+    if (!na(src->crit)) {
+	gretl_bundle_set_scalar(b, "crit", src->crit);
+	gretl_bundle_set_scalar(b, "alpha", src->alpha);
+    }    
+
+    return b;
+}
+
 static int serialize_model_tests (const MODEL *pmod, FILE *fp)
 {
     int i, n = pmod->ntests;
@@ -4252,6 +4352,19 @@ int bundlize_model_data_scalars (const MODEL *pmod, void *ptr)
 	} else if (item->type == GRETL_TYPE_DOUBLE) {
 	    xval = *(double *) item->ptr;
 	    err = gretl_bundle_set_scalar(b, item->key, xval);
+	}
+    }
+
+    if (!err && pmod->tests != NULL) {
+	gretl_bundle *bt;
+	const char *key;
+	
+	for (i=0; i<pmod->ntests && !err; i++) {
+	    bt = bundlize_test(&pmod->tests[i], &key);
+	    if (bt != NULL) {
+		err = gretl_bundle_donate_data(b, key, bt,
+					       GRETL_TYPE_BUNDLE, 0);
+	    }
 	}
     }
 
