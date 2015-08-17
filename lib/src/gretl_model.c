@@ -48,7 +48,8 @@ struct ModelTest_ {
     int order;
     char *param;
     unsigned char teststat;
-    int dfn, dfd;
+    int dfn;
+    double dfd;
     double value;
     double pvalue;
     double crit;
@@ -73,7 +74,8 @@ static void gretl_test_init (ModelTest *test, ModelTestType ttype)
     test->order = 0;
     test->param = NULL;
     test->teststat = GRETL_STAT_NONE;
-    test->dfn = test->dfd = 0;
+    test->dfn = 0;
+    test->dfd = 0;
     test->value = test->pvalue = NADBL;
     test->crit = test->alpha = NADBL;
     test->opt = OPT_NONE;
@@ -3166,7 +3168,7 @@ int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node)
 	got += gretl_xml_get_prop_as_int(cur, "type", &test.type);
 	got += gretl_xml_get_prop_as_uchar(cur, "teststat", &test.teststat);
 	got += gretl_xml_get_prop_as_int(cur, "dfn", &test.dfn);
-	got += gretl_xml_get_prop_as_int(cur, "dfd", &test.dfd);
+	got += gretl_xml_get_prop_as_double(cur, "dfd", &test.dfd);
 	got += gretl_xml_get_prop_as_int(cur, "order", &test.order);
 	got += gretl_xml_get_prop_as_double(cur, "value", &test.value);
 	got += gretl_xml_get_prop_as_double(cur, "pvalue", &test.pvalue);
@@ -3196,7 +3198,7 @@ static void serialize_test (const ModelTest *src, FILE *fp)
 
     fprintf(fp, "teststat=\"%d\" ", (int) src->teststat);
     fprintf(fp, "dfn=\"%d\" ", src->dfn);
-    fprintf(fp, "dfd=\"%d\" ", src->dfd);
+    fprintf(fp, "dfd=\"%g\" ", src->dfd);
     fprintf(fp, "order=\"%d\" ", src->order);
     fprintf(fp, "value=\"%.15g\" ", src->value);
     fprintf(fp, "pvalue=\"%.15g\" ", src->pvalue);
@@ -3396,7 +3398,7 @@ void model_test_set_dfn (ModelTest *test, int df)
     test->dfn = df;
 }
 
-void model_test_set_dfd (ModelTest *test, int df)
+void model_test_set_dfd (ModelTest *test, double df)
 {
     test->dfd = df;
 }
@@ -3519,6 +3521,9 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_WITHIN_F,
       N_("Joint test on named regressors"),
       NULL },
+    { GRETL_TEST_PANEL_WELCH,
+      N_("Robust test for differing group intercepts"),
+      N_("The groups have a common intercept") },
     { GRETL_TEST_MAX, NULL, NULL }
 }; 
 
@@ -3712,9 +3717,9 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
     case GRETL_STAT_F:
     case GRETL_STAT_RESET:
 	if (tex) {
-	    sprintf(str, "$F(%d, %d)$ = %g", test->dfn, test->dfd, test->value);
+	    sprintf(str, "$F(%d, %g)$ = %g", test->dfn, test->dfd, test->value);
 	} else {
-	    sprintf(str, "F(%d, %d) = %g", test->dfn, test->dfd, test->value);
+	    sprintf(str, "F(%d, %g) = %g", test->dfn, test->dfd, test->value);
 	}
 	break;
     case GRETL_STAT_SUP_WALD:
@@ -3729,6 +3734,13 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
     case GRETL_STAT_LMF:
 	sprintf(str, "LMF = %g", test->value);
 	break;
+    case GRETL_STAT_WF:
+	if (tex) {
+	    sprintf(str, "Welch $F(%d, %g)$ = %g", test->dfn, test->dfd, test->value);
+	} else {
+	    sprintf(str, "Welch F(%d, %g) = %g", test->dfn, test->dfd, test->value);
+	}
+	break;	
     case GRETL_STAT_HARVEY_COLLIER:
 	if (tex) {
 	    sprintf(str, "Harvey--Collier $t(%d)$ = %g", test->dfn, test->value);
@@ -3787,20 +3799,21 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
 	break;
     case GRETL_STAT_F:
     case GRETL_STAT_RESET:
+    case GRETL_STAT_WF:
 	if (tex) {
-	    sprintf(str, "$P$($F(%d, %d) >$ %g) = %g", 
+	    sprintf(str, "$P$($F(%d, %g) >$ %g) = %g", 
 		    test->dfn, test->dfd, test->value, test->pvalue);
 	} else {
-	    sprintf(str, "P(F(%d, %d) > %g) = %g", 
+	    sprintf(str, "P(F(%d, %g) > %g) = %g", 
 		    test->dfn, test->dfd, test->value, test->pvalue);
 	}
 	break;
     case GRETL_STAT_LMF:
 	if (tex) {
-	    sprintf(str, "$P$($F(%d, %d) >$ %g) = %g", 
+	    sprintf(str, "$P$($F(%d, %g) >$ %g) = %g", 
 		    test->dfn, test->dfd, test->value, test->pvalue);
 	} else {
-	    sprintf(str, "P(F(%d,%d) > %g) = %g", 
+	    sprintf(str, "P(F(%d, %g) > %g) = %g", 
 		    test->dfn, test->dfd, test->value, test->pvalue);
 	}
 	break;
@@ -3855,7 +3868,7 @@ static void csv_print_test (const ModelTest *src, PRN *prn)
 
     if (src->dfn > 0 && src->dfd > 0) {
 	pprintf(prn, "\"%s\"%c%d\n", _("dfn"), c, src->dfn);
-	pprintf(prn, "\"%s\"%c%d\n", _("dfd"), c, src->dfd);
+	pprintf(prn, "\"%s\"%c%g\n", _("dfd"), c, src->dfd);
     } else if (src->dfn > 0) {
 	pprintf(prn, "\"%s\"%c%d\n", _("df"), c, src->dfn);
     }

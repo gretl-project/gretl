@@ -220,6 +220,7 @@ typedef enum {
     GRETL_TEST_INDEP,
     GRETL_TEST_RE,
     GRETL_TEST_WITHIN_F,
+    GRETL_TEST_PANEL_WELCH,
     GRETL_TEST_MAX
 } ModelTestType;
 
@@ -418,7 +419,7 @@ int maybe_add_test_to_model (MODEL *pmod, ModelTest *test);
 void model_test_set_teststat (ModelTest *test, unsigned char ts);
 void model_test_set_order (ModelTest *test, int order);
 void model_test_set_dfn (ModelTest *test, int df);
-void model_test_set_dfd (ModelTest *test, int df);
+void model_test_set_dfd (ModelTest *test, double df);
 void model_test_set_value (ModelTest *test, double val);
 void model_test_set_pvalue (ModelTest *test, double pval);
 void model_test_set_param (ModelTest *test, const char *s);
