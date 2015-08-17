@@ -1919,8 +1919,7 @@ static int fe_model_add_ahat (MODEL *pmod, const DATASET *dset,
    residual from pooled OLS.
 */
 
-static int robust_fixed_effects_F (MODEL *wmod, const DATASET *dset,
-				   panelmod_t *pan)
+static int robust_fixed_effects_F (panelmod_t *pan)
 {
     MODEL *pmod = pan->pooled;
     double *u, *w, *h, *xbar;
@@ -2249,7 +2248,7 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 		/* we have to do this before the pooled residual
 		   array is "stolen" for the fixed-effects model
 		*/
-		robust_fixed_effects_F(&femod, dset, pan);
+		robust_fixed_effects_F(pan);
 	    }
 	    fix_panel_hatvars(&femod, pan, (const double **) dset->Z);
 	    if (pan->opt & OPT_R) {
