@@ -75,11 +75,11 @@ double chisq_cdf_comp (double df, double x);
 
 double nc_chisq_cdf (double df, double delta, double x);
 
-double snedecor_cdf (int dfn, int dfd, double x);
+double snedecor_cdf (double dfn, double dfd, double x);
 
-double snedecor_cdf_comp (int dfn, int dfd, double x);
+double snedecor_cdf_comp (double dfn, double dfd, double x);
 
-double snedecor_critval (int dfn, int dfd, double a);
+double snedecor_critval (double dfn, double dfd, double a);
 
 double nc_snedecor_cdf (double dfn, double dfd, double delta, double x);
 

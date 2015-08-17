@@ -687,7 +687,7 @@ static double chisq_cdf_inverse (int df, double a)
  * @dfd degrees of freedom, from 0 to @x, or #NADBL on failure.
  */
 
-double snedecor_cdf (int dfn, int dfd, double x)
+double snedecor_cdf (double dfn, double dfd, double x)
 {
     double p = NADBL;
 
@@ -712,7 +712,7 @@ double snedecor_cdf (int dfn, int dfd, double x)
  * on failure.
  */
 
-double snedecor_cdf_comp (int dfn, int dfd, double x)
+double snedecor_cdf_comp (double dfn, double dfd, double x)
 {
     double p = NADBL;
 
@@ -737,7 +737,7 @@ double snedecor_cdf_comp (int dfn, int dfd, double x)
  * to the given probability @a, or #NADBL on failure.
  */
 
-double snedecor_critval (int dfn, int dfd, double a)
+double snedecor_critval (double dfn, double dfd, double a)
 {
     double x = NADBL;
 
@@ -751,7 +751,7 @@ double snedecor_critval (int dfn, int dfd, double a)
     return x;
 }
 
-static double snedecor_cdf_inverse (int dfn, int dfd, double a)
+static double snedecor_cdf_inverse (double dfn, double dfd, double a)
 {
     double x = NADBL;
 
@@ -789,7 +789,7 @@ static double Binv (double p, double q)
     return f;
 }    
 
-static int snedecor_pdf_array (int v1, int v2, double *x, int n)
+static int snedecor_pdf_array (double v1, double v2, double *x, int n)
 {
     int i, err = 0;
 
@@ -834,7 +834,7 @@ static int snedecor_pdf_array (int v1, int v2, double *x, int n)
     return err;
 }
 
-static double snedecor_pdf (int m, int n, double x)
+static double snedecor_pdf (double m, double n, double x)
 {
     snedecor_pdf_array(m, n, &x, 1);
 
@@ -2739,7 +2739,7 @@ double gretl_get_cdf_inverse (int dist, const double *parm,
     } else if (dist == D_GAMMA) {
 	y = gamma_cdf_inverse(parm[0], parm[1], a);
     } else if (dist == D_SNEDECOR) {
-	y = snedecor_cdf_inverse((int) parm[0], (int) parm[1], a);
+	y = snedecor_cdf_inverse(parm[0], parm[1], a);
     } else if (dist == D_BINOMIAL) {
 	y = binomial_cdf_inverse((int) parm[0], (int) parm[1], a);
     } else if (dist == D_POISSON) {
