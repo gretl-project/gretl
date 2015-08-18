@@ -3836,9 +3836,9 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 	break;
     case GRETL_STAT_WF:
 	if (tex) {
-	    sprintf(str, "Welch $F(%d, %g)$ = %g", test->dfn, test->dfd, test->value);
+	    sprintf(str, "Welch $F(%d, %.1f)$ = %g", test->dfn, test->dfd, test->value);
 	} else {
-	    sprintf(str, "Welch F(%d, %g) = %g", test->dfn, test->dfd, test->value);
+	    sprintf(str, "Welch F(%d, %.1f) = %g", test->dfn, test->dfd, test->value);
 	}
 	break;	
     case GRETL_STAT_HARVEY_COLLIER:
@@ -3899,12 +3899,20 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
 	break;
     case GRETL_STAT_F:
     case GRETL_STAT_RESET:
-    case GRETL_STAT_WF:
 	if (tex) {
 	    sprintf(str, "$P$($F(%d, %g) >$ %g) = %g", 
 		    test->dfn, test->dfd, test->value, test->pvalue);
 	} else {
 	    sprintf(str, "P(F(%d, %g) > %g) = %g", 
+		    test->dfn, test->dfd, test->value, test->pvalue);
+	}
+	break;
+    case GRETL_STAT_WF:
+	if (tex) {
+	    sprintf(str, "$P$($F(%d, %.1f) >$ %g) = %g", 
+		    test->dfn, test->dfd, test->value, test->pvalue);
+	} else {
+	    sprintf(str, "P(F(%d, %.1f) > %g) = %g", 
 		    test->dfn, test->dfd, test->value, test->pvalue);
 	}
 	break;
