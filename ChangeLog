@@ -8,6 +8,9 @@ version 1.10.90, in progress
   variant of this procedure favored by Wooldridge
 - "vif" command: upgrade to show Belsley-Kuh-Welsch variance
   decomposition for diagnosing collinearity
+- "panel" command, fixed-effects variant: when the --robust
+  option is given, substitute robust joint tests on both the
+  regressors and the fixed effects
 - cdf(), pdf() and invcdf() functions: add support for non-
   central variants of the chi-square, F and Student's t 
   distributions

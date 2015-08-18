@@ -5840,11 +5840,36 @@ static int panel_grid_ts_plot (int vnum, DATASET *dset,
     int u0, nunits, T = dset->pd;
     int panel_labels = 0;
     int use = 0, strip = 0;
+    int *badlist = NULL;
     int i, s, t, t0;
     int err = 0;
 
     nunits = panel_sample_size(dset);
     u0 = dset->t1 / dset->pd;
+    y = dset->Z[vnum];
+
+    /* check for "blank" units */
+    t0 = dset->t1;
+    for (i=0; i<nunits; i++) {
+	int ok = 0;
+	
+	for (t=0; t<T; t++) {
+	    if (!na(y[t+t0])) {
+		ok = 1;
+		break;
+	    }
+	}
+	if (!ok) {
+	    badlist = gretl_list_append_term(&badlist, i);
+	    nunits--;
+	}
+	t0 += T;
+    }
+
+    if (nunits < 2) {
+	free(badlist);
+	return E_MISSDATA;
+    }
 
     if (opt & OPT_V) {
 	int xvar = plausible_panel_time_var(dset);
@@ -5874,7 +5899,6 @@ static int panel_grid_ts_plot (int vnum, DATASET *dset,
     }
 
     vname = dset->varname[vnum];
-    y = dset->Z[vnum];
     gretl_minmax(dset->t1, dset->t2, y, &ymin, &ymax);
     w = panel_ytic_width(ymin, ymax);
 
@@ -5898,6 +5922,11 @@ static int panel_grid_ts_plot (int vnum, DATASET *dset,
     t0 = dset->t1;
 
     for (i=0; i<nunits; i++) {
+	if (in_gretl_list(badlist, i)) {
+	    t0 += T;
+	    continue;
+	}
+	
 	if (panel_labels) {
 	    *uname = '\0';
 	    s = (u0 + i) * dset->pd;
@@ -5944,6 +5973,8 @@ static int panel_grid_ts_plot (int vnum, DATASET *dset,
     gretl_pop_c_numeric_locale();
 
     fputs("unset multiplot\n", fp);
+
+    free(badlist);
 
     return finalize_plot_input_file(fp);
 }
