@@ -8669,8 +8669,10 @@
 	The <opt>--robust</opt> option is available only for fixed
 	effects models. The default variant is the Arellano HAC
 	estimator, but Beck&ndash;Katz <quote>Panel Corrected Standard
-	  Errors</quote> can be selected via the command
-	<lit>set pcse on</lit>.
+	Errors</quote> can be selected via the command <lit>set pcse
+	on</lit>. When the robust option is specified the joint
+	<math>F</math> test on the fixed effects is performed using
+	the robust method of <cite key="welch51">Welch (1951)</cite>.
       </para>
       <para context="gui">
 	If the "Random effects" button is checked, random effects
