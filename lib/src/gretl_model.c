@@ -117,7 +117,7 @@ static const char *test_type_key (ModelTestType t)
 	return "hausman_test";
     } else if (t == GRETL_TEST_PANEL_F ||
 	       t == GRETL_TEST_PANEL_WELCH) {
-	return "panel_f_test";
+	return "fixed_effects_F";
     } else if (t == GRETL_TEST_PANEL_BP ||
 	       t == GRETL_TEST_BP) {
 	return "bp_test";
@@ -132,7 +132,7 @@ static const char *test_type_key (ModelTestType t)
     } else if (t == GRETL_TEST_RE) {
 	return "rho_test";	
     } else if (t == GRETL_TEST_WITHIN_F) {
-	return "within_f_test";	
+	return "within_F";
     } else {
 	return NULL;
     }

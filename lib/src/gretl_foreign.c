@@ -892,7 +892,7 @@ static int write_stata_io_file (void)
     return 0;
 }
 
-static void add_gretl_include (int lang, FILE *fp)
+static void add_gretl_include (int lang, gretlopt opt, FILE *fp)
 {
     if (lang == LANG_PYTHON) {
 	fputs("from gretl_io import gretl_dotdir, gretl_loadmat, "
@@ -930,6 +930,9 @@ static void add_gretl_include (int lang, FILE *fp)
     } else if (lang == LANG_OCTAVE) {
 	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotdir);
     } else if (lang == LANG_STATA) {
+	if (opt & OPT_Q) {
+	    fputs("set output error\n", fp);
+	}
 	fprintf(fp, "quietly adopath + \"%s\"\n", dotdir);
     }
 #endif
@@ -963,7 +966,7 @@ static void put_foreign_lines (FILE *fp)
 	fprintf(fp, "%s\n", foreign_lines[i] + n);
 	if (foreign_lang == LANG_OX) {
 	    if (strstr(foreign_lines[i], "oxstd.h")) {
-		add_gretl_include(LANG_OX, fp);
+		add_gretl_include(LANG_OX, 0, fp);
 	    }
 	}
     }
@@ -979,7 +982,7 @@ static void put_foreign_buffer (const char *buf, FILE *fp)
 	fputs(line, fp);
 	if (foreign_lang == LANG_OX) {
 	    if (strstr(line, "oxstd.h")) {
-		add_gretl_include(LANG_OX, fp);
+		add_gretl_include(LANG_OX, 0, fp);
 	    }
 	}
     }
@@ -1047,7 +1050,7 @@ int write_gretl_python_file (const char *buf, gretlopt opt, const char **pfname)
     if (fp == NULL) {
 	return E_FOPEN;
     } else {
-	add_gretl_include(LANG_PYTHON, fp);
+	add_gretl_include(LANG_PYTHON, opt, fp);
 	if (buf != NULL) {
 	    /* pass on the material supplied in the 'buf' argument */
 	    put_foreign_buffer(buf, fp);
@@ -1202,7 +1205,7 @@ int write_gretl_stata_file (const char *buf, gretlopt opt,
 	int err;
 
 	/* source the I-O functions */
-	add_gretl_include(LANG_STATA, fp);
+	add_gretl_include(LANG_STATA, opt, fp);
 	if (opt & OPT_D) {
 	    /* --send-data */
 	    err = write_data_for_stata(dset, fp);
@@ -1272,7 +1275,7 @@ int write_gretl_octave_file (const char *buf, gretlopt opt,
 	int err;
 
 	/* source the I-O functions */
-	add_gretl_include(LANG_OCTAVE, fp);
+	add_gretl_include(LANG_OCTAVE, opt, fp);
 	if (opt & OPT_D) {
 	    /* --send-data */
 	    err = write_data_for_octave(dset, fp);
