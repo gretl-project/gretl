@@ -931,6 +931,18 @@ static void finder_add_options (GtkWidget *hbox, GtkWidget *entry)
 # define USE_ENTRY_ICON
 #endif
 
+#ifdef USE_ENTRY_ICON
+
+static void finder_icon_press (GtkEntry *entry,
+			       GtkEntryIconPosition pos,
+			       GdkEvent *event,
+			       windata_t *vwin)
+{
+    vwin_finder_callback(entry, vwin);
+}
+
+#endif
+
 /* add a "search box" to the right of a viewer window's toolbar */
 
 void vwin_add_finder (windata_t *vwin)
@@ -956,6 +968,12 @@ void vwin_add_finder (windata_t *vwin)
     gtk_entry_set_icon_from_stock(GTK_ENTRY(entry), 
 				  GTK_ENTRY_ICON_SECONDARY,
 				  GTK_STOCK_FIND);
+    gtk_entry_set_icon_activatable(GTK_ENTRY(entry),
+				   GTK_ENTRY_ICON_SECONDARY,
+				   TRUE);
+    g_signal_connect(G_OBJECT(entry), "icon-press",
+		     G_CALLBACK(finder_icon_press),
+		     vwin);    
 #else
     label = gtk_label_new(_("Find:"));
     gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 5);
