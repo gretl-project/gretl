@@ -486,7 +486,9 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 	vwin->listbox = view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(lstore));
     }
 
+#ifndef G_OS_WIN32    
     gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(view), TRUE);
+#endif    
 
     renderer = gtk_cell_renderer_text_new();
     g_object_set(renderer, "ypad", 0, NULL);
