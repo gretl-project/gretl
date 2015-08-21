@@ -36,8 +36,6 @@ void win32_start_R_async (void);
 
 int filename_to_win32 (char *targ, const char *src);
 
-int get_wimp_preferred (void);
-
 void gretl_win32_debug_init (int debug);
 
 void gretl_win32_init (const char *progname, int debug);

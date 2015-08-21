@@ -269,13 +269,6 @@ void gretl_win32_debug_init (int debug)
     set_g_logging(debug);
 }
 
-static int wimp_preferred;
-
-int get_wimp_preferred (void)
-{
-    return wimp_preferred;
-}
-
 /* Carry out some Windows-specific start-up tasks, and
    call read_rc to get the per-user configuration info. 
 */
@@ -293,9 +286,7 @@ void gretl_win32_init (const char *progname, int debug)
     read_reg_val(HKEY_CURRENT_USER, 
 		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager", 
 		 "ThemeActive", tmp);
-    if (!strcmp(tmp, "1")) {
-	wimp_preferred = 1;
-    }
+    set_wimp_preferred(!strcmp(tmp, "1"));
 
     read_win32_config(debug);
     set_gretl_startdir();

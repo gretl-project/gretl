@@ -20,6 +20,8 @@ void set_up_mac_look (void);
 #endif
 
 #ifdef G_OS_WIN32
+int using_wimp (void);
+void set_wimp_preferred (int s);
 void set_up_windows_look (void);
 #endif
 

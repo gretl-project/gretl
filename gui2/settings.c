@@ -2820,4 +2820,18 @@ void set_up_windows_look (void)
     }
 }
 
+int using_wimp (void)
+{
+    return !strcmp(themepref, "MS-Windows");
+}
+
+void set_wimp_preferred (int s)
+{
+    if (s) {
+	strcpy(themepref, "MS-Windows");
+    } else {
+	strcpy(themepref, "Clearlooks");
+    }
+}
+
 #endif

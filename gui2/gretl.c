@@ -1864,7 +1864,7 @@ static void add_conditional_items (windata_t *vwin)
     int add_appfont = 1;
 
 #ifdef G_OS_WIN32
-    if (get_wimp_preferred()) {
+    if (using_wimp()) {
 	add_appfont = 0;
     }
 #endif
