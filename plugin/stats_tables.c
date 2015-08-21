@@ -644,14 +644,14 @@ static double IPS_interpolate (int N, int N1, int N2,
     if (N == N1 || N == N2) {
 	c[0] = IPS_crit(a, N, T1, trend);
 	c[1] = IPS_crit(a, N, T2, trend);
-	w[0] = 1.0 / fabs(T-T1);
-	w[1] = 1.0 / fabs(T-T2);
+	w[0] = 1.0 / abs(T-T1);
+	w[1] = 1.0 / abs(T-T2);
 	return (w[0]*c[0] + w[1]*c[1]) / (w[0] + w[1]);
     } else if (T == T1 || T == T2) {
 	c[0] = IPS_crit(a, N1, T, trend);
 	c[1] = IPS_crit(a, N2, T, trend);
-	w[0] = 1.0 / fabs(N-N1);
-	w[1] = 1.0 / fabs(N-N2);
+	w[0] = 1.0 / abs(N-N1);
+	w[1] = 1.0 / abs(N-N2);
 	return (w[0]*c[0] + w[1]*c[1]) / (w[0] + w[1]);
     }
     

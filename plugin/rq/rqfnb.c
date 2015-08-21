@@ -144,16 +144,16 @@ static int lpfnb_ (integer *n, integer *p, doublereal *a, doublereal *c__,
     dgemv_("T", p, n, &c_b13, &a[a_offset], p, &y[1], &one, &c_b4, &s[1],
 	   &one);
     for (i = 1; i <= *n; ++i) {
-	if ((d1 = s[i], abs(d1)) < *eps) {
+	if ((d1 = s[i], fabs(d1)) < *eps) {
 	    d1 = s[i];
 	    z__[i] = max(d1,0.) + *eps;
 	    d1 = -s[i];
 	    w[i] = max(d1,0.) + *eps;
 	} else {
 	    d1 = s[i];
-	    z__[i] = max(d1,0.);
+	    z__[i] = max(d1, 0.);
 	    d1 = -s[i];
-	    w[i] = max(d1,0.);
+	    w[i] = max(d1, 0.);
 	}
 	s[i] = u[i] - x[i];
     }

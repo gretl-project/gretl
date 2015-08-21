@@ -4137,7 +4137,7 @@ static void serialize_coeff_sep (model_data_item *item, FILE *fp)
     CoeffSep *cs = (CoeffSep *) item->ptr;
 
     fprintf(fp, " pos=\"%d\"", cs->pos);
-    if (cs->str != NULL) {
+    if (*cs->str != '\0') {
 	fputs(" string=\"", fp);
 	gretl_xml_put_string(cs->str, fp);
 	fputc('"', fp);

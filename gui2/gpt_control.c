@@ -2744,7 +2744,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     err = plot_get_data_and_markers(spec, buf, datacols, do_markers);
 
-    if (!err && reglist != NULL && reglist[0] > 0) {
+    if (!err && reglist[0] > 0) {
 	spec->reglist = gretl_list_copy(reglist);
     }
 

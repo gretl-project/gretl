@@ -2491,7 +2491,7 @@ static GretlObjType get_obj_type (GretlType type)
     } else if (type == GRETL_TYPE_BUNDLE) {
 	return GRETL_OBJ_BUNDLE;
     } else {
-	return GRETL_TYPE_NONE;
+	return GRETL_OBJ_NULL;
     }
 }
 

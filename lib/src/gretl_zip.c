@@ -27,6 +27,7 @@
 
 #include "libgretl.h"
 #include "gretl_zip.h"
+#include <unistd.h>  /* for getcwd() */
 
 static int handle_zip_error (const char *fname,
 			     GError *gerr, int err,

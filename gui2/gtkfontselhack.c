@@ -990,7 +990,7 @@ gtk_fontsel_hack_size_activate (GtkWidget *w,
     fontsel = GTK_FNTHACK(data);
 
     text = gtk_entry_get_text(GTK_ENTRY(fontsel->size_entry));
-    new_size = MAX(0.1, atof(text) * PANGO_SCALE + 0.5);
+    new_size = (int) MAX(0.1, atof(text) * PANGO_SCALE + 0.5);
 
     gtk_fontsel_hack_set_size(fontsel, new_size);
 }
