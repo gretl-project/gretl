@@ -260,22 +260,6 @@ void get_default_windows_app_font (char *target)
     }
 }
 
-void set_up_windows_look (void)
-{
-    if (get_use_wimp()) { 
-	const char *gretldir = gretl_home();
-	size_t n = strlen(gretldir);
-	int needslash = (gretldir[n-1] != SLASH);
-	gchar *wimprc;
-
-	fprintf(stderr, "set_up_windows_look: reading wimprc\n");
-	wimprc = g_strdup_printf("%s%sshare\\themes\\MS-Windows\\gtk-2.0\\gtkrc", 
-				 gretldir, (needslash)? "\\" : "");
-	gtk_rc_parse(wimprc);
-	g_free(wimprc);
-    }
-}
-
 void gretl_win32_debug_init (int debug)
 {
     if (debug) {
@@ -283,6 +267,13 @@ void gretl_win32_debug_init (int debug)
     }
 
     set_g_logging(debug);
+}
+
+static int wimp_preferred;
+
+int get_wimp_preferred (void)
+{
+    return wimp_preferred;
 }
 
 /* Carry out some Windows-specific start-up tasks, and
@@ -303,16 +294,11 @@ void gretl_win32_init (const char *progname, int debug)
 		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager", 
 		 "ThemeActive", tmp);
     if (!strcmp(tmp, "1")) {
-	set_use_wimp(1);
+	wimp_preferred = 1;
     }
 
     read_win32_config(debug);
     set_gretl_startdir();
-
-    if (debug) {
-	fprintf(stderr, "gretl_win32_init: done (use_wimp = %d)\n",
-		get_use_wimp());
-    }
 }
 
 int prn_to_clipboard (PRN *prn, int fmt)

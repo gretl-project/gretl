@@ -134,12 +134,10 @@ static char mpi_pref[8] = "OpenMPI";
 static int lcnumeric = 1;
 static double graph_scale = 1.0;
 
-#ifdef G_OS_WIN32
-static int use_wimp;
-#endif
-
-#ifdef MAC_THEMING
+#if defined(MAC_THEMING)
 static char themepref[12] = "Clearlooks";
+#elif defined(G_OS_WIN32)
+static char themepref[12] = "MS-Windows";
 #endif
 
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
@@ -201,11 +199,7 @@ RCVAR rc_vars[] = {
     { "lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
       BOOLSET | RESTART, 0, TAB_MAIN, NULL },
 #endif
-#ifdef G_OS_WIN32 	 
-    { "wimp", N_("Emulate Windows look"), NULL, &use_wimp, 	 
-      BOOLSET | RESTART, 0, TAB_MAIN, NULL }, 	 
-#endif
-#ifdef MAC_THEMING
+#if defined(MAC_THEMING) || defined(G_OS_WIN32)
     { "themepref", N_("Theme preference"), NULL, themepref, 
       LISTSET | RESTART, 12, TAB_MAIN, NULL },    
 #endif
@@ -453,20 +447,6 @@ int get_script_output_policy (void)
 {
     return script_output_policy;
 }
-
-#ifdef G_OS_WIN32
-
-void set_use_wimp (int s)
-{
-    use_wimp = (s != 0);
-}
-
-int get_use_wimp (void)
-{
-    return use_wimp;
-}
-
-#endif
 
 void get_model_table_prefs (int *colheads,
 			    int *use_tstats,
@@ -1175,10 +1155,20 @@ static const char **get_list_setting_strings (void *var, int *n)
     }
 #endif
 
-#ifdef MAC_THEMING
+#if defined(MAC_THEMING)
     else if (var == themepref) {
 	static const char *theme_strs[] = {
 	    "Clearlooks", "Lion-like", "Plain"
+	};	
+
+	strs = theme_strs;
+	*n = sizeof theme_strs / sizeof theme_strs[0];
+    }
+#elif defined(G_OS_WIN32)
+    else if (var == themepref) {
+	
+	static const char *theme_strs[] = {
+	    "MS-Windows", "Clearlooks", "Plain"
 	};	
 
 	strs = theme_strs;
@@ -2789,7 +2779,7 @@ void working_dir_dialog (void)
     gtk_widget_show_all(dialog);
 }
 
-#ifdef MAC_THEMING
+#if defined(MAC_THEMING)
 
 void set_up_mac_look (void)
 {
@@ -2804,6 +2794,25 @@ void set_up_mac_look (void)
 	    gtk_rc_parse(gtkrc);
 	    g_free(gtkrc);
 	}
+    }
+}
+
+#elif defined (G_OS_WIN32)
+
+void set_up_windows_look (void)
+{
+    if (!strcmp(themepref, "MS-Windows") ||
+	!strcmp(themepref, "Clearlooks")) {
+	const char *gretldir = gretl_home();
+	size_t n = strlen(gretldir);
+	int needslash = (gretldir[n-1] != SLASH);
+	gchar *wimprc;
+
+	wimprc = g_strdup_printf("%s%sshare\\themes\\%s\\gtk-2.0\\gtkrc", 
+				 gretldir, themepref,
+				 (needslash)? "\\" : "");
+	gtk_rc_parse(wimprc);
+	g_free(wimprc);
     }
 }
 

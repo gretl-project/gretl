@@ -3,8 +3,6 @@
 
 #ifdef G_OS_WIN32
 int read_win32_config (int debug);
-void set_use_wimp (int s);
-int get_use_wimp (void);
 #else
 int gretl_config_init (void);
 #endif
@@ -19,6 +17,10 @@ int get_x12a_ok (void);
 
 #if defined(MAC_NATIVE) && defined(PKGBUILD)
 void set_up_mac_look (void);
+#endif
+
+#ifdef G_OS_WIN32
+void set_up_windows_look (void);
 #endif
 
 void set_gretl_startdir (void);
