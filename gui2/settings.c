@@ -2806,13 +2806,13 @@ void set_up_windows_look (void)
 	const char *gretldir = gretl_home();
 	size_t n = strlen(gretldir);
 	int needslash = (gretldir[n-1] != SLASH);
-	gchar *wimprc;
+	gchar *gtkprc;
 
-	wimprc = g_strdup_printf("%s%sshare\\themes\\%s\\gtk-2.0\\gtkrc", 
-				 gretldir, themepref,
-				 (needslash)? "\\" : "");
-	gtk_rc_parse(wimprc);
-	g_free(wimprc);
+	gtkrc = g_strdup_printf("%s%sshare\\themes\\%s\\gtk-2.0\\gtkrc", 
+				gretldir, themepref,
+				(needslash)? "\\" : "");
+	gtk_rc_parse(gtkrc);
+	g_free(gtkrc);
     }
 }
 
