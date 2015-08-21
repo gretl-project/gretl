@@ -2801,16 +2801,20 @@ void set_up_mac_look (void)
 
 void set_up_windows_look (void)
 {
+    fprintf(stderr, "set_up_windows_look: themepref = '%s'\n",
+	    themepref);
+    
     if (!strcmp(themepref, "MS-Windows") ||
 	!strcmp(themepref, "Clearlooks")) {
 	const char *gretldir = gretl_home();
 	size_t n = strlen(gretldir);
 	int needslash = (gretldir[n-1] != SLASH);
-	gchar *gtkprc;
+	gchar *gtkrc;
 
 	gtkrc = g_strdup_printf("%s%sshare\\themes\\%s\\gtk-2.0\\gtkrc", 
 				gretldir, themepref,
 				(needslash)? "\\" : "");
+	fprintf(stderr, "gtkrc = '%s'\n", gtkrc);
 	gtk_rc_parse(gtkrc);
 	g_free(gtkrc);
     }
