@@ -2811,9 +2811,9 @@ void set_up_windows_look (void)
 	int needslash = (gretldir[n-1] != SLASH);
 	gchar *gtkrc;
 
-	gtkrc = g_strdup_printf("%s%sshare\\themes\\%s\\gtk-2.0\\gtkrc", 
-				gretldir, themepref,
-				(needslash)? "\\" : "");
+	gtkrc = g_strdup_printf("%s%s\\share\\themes\\%s\\gtk-2.0\\gtkrc", 
+				gretldir, (needslash)? "\\" : "",
+				themepref);
 	fprintf(stderr, "gtkrc = '%s'\n", gtkrc);
 	gtk_rc_parse(gtkrc);
 	g_free(gtkrc);
