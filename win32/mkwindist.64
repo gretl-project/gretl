@@ -104,6 +104,7 @@ mkdir -p windist/gretl/share/themes/Emacs/gtk-2.0-key
 mkdir -p windist/gretl/share/themes/Default/gtk-2.0-key
 mkdir -p windist/gretl/share/themes/MS-Windows/gtk-2.0
 mkdir -p windist/gretl/share/themes/Raleigh/gtk-2.0
+mkdir -p windist/gretl/share/themes/Clearlooks/gtk-2.0
 
 mkdir -p windist/gretl/lib/gtk-2.0/modules
 mkdir -p windist/gretl/lib/gtk-2.0/2.10.0/engines
@@ -183,6 +184,7 @@ add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
 add_file $SYSTHEME/Emacs/gtk-2.0-key/gtkrc gretl/share/themes/Emacs/gtk-2.0-key/gtkrc
 add_file $SYSTHEME/Default/gtk-2.0-key/gtkrc gretl/share/themes/Default/gtk-2.0-key/gtkrc
 add_file $SYSTHEME/Raleigh/gtk-2.0/gtkrc gretl/share/themes/Raleigh/gtk-2.0/gtkrc
+add_file $SYSTHEME/Clearlooks/gtk-2.0/gtkrc gretl/share/themes/Clearlooks/gtk-2.0/gtkrc
 
 # GTK aux. files, gretl-specific
 add_file $WINFILES/auxfiles/locale.alias gretl/share/locale/locale.alias
@@ -191,6 +193,7 @@ add_file $WINFILES/auxfiles/gtkrc gretl/share/themes/MS-Windows/gtk-2.0/gtkrc
 add_file $SYSBASE/lib/gtk-2.0/modules/libgail.dll gretl/lib/gtk-2.0/modules/libgail.dll
 add_file $SYSBASE/lib/gtk-2.0/2.10.0/engines/libpixmap.dll gretl/lib/gtk-2.0/2.10.0/engines/libpixmap.dll
 add_file $SYSBASE/lib/gtk-2.0/2.10.0/engines/libwimp.dll gretl/lib/gtk-2.0/2.10.0/engines/libwimp.dll
+add_file $SYSBASE/lib/gtk-2.0/2.10.0/engines/libclearlooks.dll gretl/lib/gtk-2.0/2.10.0/engines/libclearlooks.dll
 add_file $SYSBASE/etc/gtk-2.0/im-multipress.conf gretl/etc/gtk-2.0/im-multipress.conf
 
 # XML UI-definition files
