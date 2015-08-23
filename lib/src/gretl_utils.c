@@ -1721,7 +1721,7 @@ int gretl_spawn (char *cmdline)
     } else if (errout != NULL && *errout) {
 	if (gp_fatal(cmdline, errout)) {
 	    gretl_errmsg_set(errout);
-	    fprintf(stderr, "gretl_errmsg: '%s'\n", gretl_errmsg_get());
+	    fprintf(stderr, "gnuplot stderr: '%s'\n", errout);
 	    ret = 1;
 	}
     } else if (status != 0) {
