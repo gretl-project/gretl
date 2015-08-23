@@ -1667,6 +1667,13 @@ static int gp_fatal (const char *cmd, const char *s)
     if (strstr(s, "Warning: Mismatch")) {
 	return 0;
     }
+
+#ifdef OS_OSX   
+    /* cairo on later OS X */
+    if (strstr(s, "CGFont")) {
+	return 0;
+    }
+#endif    
     
     /* "Could not find/open font when opening font X, using default" 
        "gnuplot_x11: Some character sets not available" 
