@@ -32,6 +32,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Building a relocatable package (Windows, OS X)? */
 #undef PKGBUILD
 
+/* Gnulot can do interactive 3D plots (not aquaterm) */
+#undef GNUPLOT3D
+
 /* Using libcurl for http? */
 #undef USE_CURL
 

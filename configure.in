@@ -74,6 +74,7 @@ pkg_build="no"
 mac_native="no"
 have_mac_integration="no"
 gui_disabled="no"
+gp_3d="yes"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
@@ -168,8 +169,21 @@ AC_ARG_ENABLE(gnuplot-checks,
 [if test "$enableval" = "yes"
 then
   check_gnuplot=yes
+  echo "check_gnuplot = yes"
 else
   check_gnuplot=no
+  echo "check_gnuplot = no"
+fi])
+
+AC_ARG_ENABLE(gnuplot-3d,
+[  --disable-gnuplot-3d     assume gnuplot can't do interactive 3D plots],
+[if test "$enableval" = "yes"
+then
+  gp_3d=yes
+  echo "test gp3d = yes"
+else
+  gp_3d=no
+  echo "test gp3d = no"
 fi])
 
 AC_ARG_ENABLE(www,
@@ -907,6 +921,10 @@ if test "${prefix}" = "NONE" ; then
 fi
 AC_DEFINE_UNQUOTED(GRETL_PREFIX, "${prefix}")
 
+if test "${gp_3d}" = "yes" ; then
+  AC_DEFINE(GNUPLOT3D)
+fi
+
 dnl Create output
 CFLAGS="$orig_CFLAGS"
 AC_OUTPUT([ 
@@ -1030,6 +1048,7 @@ Configuration:
   JSON parsing support:                   ${have_json_glib}
   Experimental audio support:             ${have_audio}
   Use xdg-utils in installation:          ${xdg_utils_msg}
+  
   LAPACK libraries:
     ${LAPACK_LIBS}
 

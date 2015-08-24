@@ -853,6 +853,7 @@ enable_json
 enable_xdg_utils
 enable_pkgbuild
 enable_gnuplot_checks
+enable_gnuplot_3d
 enable_www
 with_lucida
 with_gmake
@@ -1554,6 +1555,7 @@ Optional Features:
   --enable-xdg-utils      Use xdg-utils for installing XDG files [default=auto]
   --enable-pkgbuild       For building relocatable package (e.g. OS X)
   --disable-gnuplot-checks do not run checks for gnuplot
+  --disable-gnuplot-3d     assume gnuplot can't do interactive 3D plots
   --disable-www           do not link to libcurl for http
   --enable-static[=PKGS]  build static libraries [default=no]
   --enable-shared[=PKGS]  build shared libraries [default=yes]
@@ -2781,6 +2783,7 @@ pkg_build="no"
 mac_native="no"
 have_mac_integration="no"
 gui_disabled="no"
+gp_3d="yes"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
@@ -6457,8 +6460,23 @@ if test "${enable_gnuplot_checks+set}" = set; then :
   enableval=$enable_gnuplot_checks; if test "$enableval" = "yes"
 then
   check_gnuplot=yes
+  echo "check_gnuplot = yes"
 else
   check_gnuplot=no
+  echo "check_gnuplot = no"
+fi
+fi
+
+
+# Check whether --enable-gnuplot-3d was given.
+if test "${enable_gnuplot_3d+set}" = set; then :
+  enableval=$enable_gnuplot_3d; if test "$enableval" = "yes"
+then
+  gp_3d=yes
+  echo "test gp3d = yes"
+else
+  gp_3d=no
+  echo "test gp3d = no"
 fi
 fi
 
@@ -19057,6 +19075,11 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+if test "${gp_3d}" = "yes" ; then
+  $as_echo "#define GNUPLOT3D 1" >>confdefs.h
+
+fi
+
 CFLAGS="$orig_CFLAGS"
 ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug xdg/gretl.desktop xdg/Makefile cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/gretl.sh osx/fixlinks.sh redhat/gretl.spec utils/emacs/Makefile"
 
@@ -23863,6 +23886,7 @@ Configuration:
   JSON parsing support:                   ${have_json_glib}
   Experimental audio support:             ${have_audio}
   Use xdg-utils in installation:          ${xdg_utils_msg}
+
   LAPACK libraries:
     ${LAPACK_LIBS}
 
