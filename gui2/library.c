@@ -6627,11 +6627,9 @@ void fit_actual_plot (GtkAction *action, gpointer p)
 
 static void adjust_3d_plot_option (gretlopt *opt)
 {
-#if defined(MAC_NATIVE) && defined(PKGBUILD)
-    /* We don't have a fully interactive gnuplot terminal
-       (you can't rotate plots wirh aquaterm) */
-    ;
-#else
+#ifdef GNUPLOT3D
+    /* We have a fully interactive gnuplot terminal
+       (you can't rotate plots with aquaterm) */
     *opt |= OPT_I;
 #endif
 }

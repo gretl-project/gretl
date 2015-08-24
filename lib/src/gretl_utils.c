@@ -1689,10 +1689,8 @@ static int gp_fatal (const char *cmd, const char *s)
 	strstr(s, "Pango-WARNING") ||
 	strstr(s, "rid drawn") ||
 	strstr(s, "CGContextSetFont")) {
-	fprintf(stderr, "gnuplot stderr: '%s'\n", s);
 	return 0;
     } else {
-	fprintf(stderr, "gnuplot stderr: '%s'\n", s);
 	return 1;
     }
 }
