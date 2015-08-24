@@ -5205,7 +5205,7 @@ void gnuplot_view_3d (const char *plotfile)
 
     create_child_process(gpline);
     g_free(gpline);
-#elif defined(MAC_NATIVE)
+#elif defined(MAC_NATIVE) && !defined(GNUPLOT3D)
     mac_do_gp_script(plotfile);
 #else 
     const char *gp = gretl_gnuplot_path();
