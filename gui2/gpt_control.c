@@ -5206,6 +5206,7 @@ void gnuplot_view_3d (const char *plotfile)
     create_child_process(gpline);
     g_free(gpline);
 #elif defined(MAC_NATIVE) && !defined(GNUPLOT3D)
+    fprintf(stderr, "gnuplot_view_3d: calling mac_do_gp_script\n");
     mac_do_gp_script(plotfile);
 #else 
     const char *gp = gretl_gnuplot_path();
@@ -5215,6 +5216,9 @@ void gnuplot_view_3d (const char *plotfile)
     argv[0] = (char *) gp;
     argv[1] = (char *) plotfile;
     argv[2] = NULL;
+
+    fprintf(stderr, "gnuplot_view_3d: calling g_spawn_async\n"
+	    "%s %s\n", argv[0], argv[1]);
 
     g_spawn_async(NULL, /* working dir */
 		  argv,
