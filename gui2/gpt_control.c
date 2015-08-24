@@ -5206,24 +5206,15 @@ void gnuplot_view_3d (const char *plotfile)
     create_child_process(gpline);
     g_free(gpline);
 #elif defined(MAC_NATIVE) && !defined(GNUPLOT3D)
-    fprintf(stderr, "gnuplot_view_3d: calling mac_do_gp_script\n");
     mac_do_gp_script(plotfile);
 #else 
     const char *gp = gretl_gnuplot_path();
     GError *error = NULL;
     gchar *argv[3];
 
-#if defined(MAC_NATIVE)    
-    gchar *gpsh = g-_strdup_printf("%s.sh", gp);
-    argv[0] = (char *) gpsh;
-#else    
     argv[0] = (char *) gp;
-#endif    
     argv[1] = (char *) plotfile;
     argv[2] = NULL;
-
-    fprintf(stderr, "gnuplot_view_3d: calling g_spawn_async\n"
-	    "%s %s\n", argv[0], argv[1]);
 
     g_spawn_async(NULL, /* working dir */
 		  argv,
@@ -5238,10 +5229,5 @@ void gnuplot_view_3d (const char *plotfile)
 	errbox(error->message);
 	g_error_free(error);
     }
-
-#if defined(MAC_NATIVE)    
-    g_free(gpsh);
-#endif    
-    
 #endif /* !(G_OS_WIN32 or MAC_NATIVE) */
 }
