@@ -5213,7 +5213,12 @@ void gnuplot_view_3d (const char *plotfile)
     GError *error = NULL;
     gchar *argv[3];
 
+#if defined(MAC_NATIVE)    
+    gchar *gpsh = g-_strdup_printf("%s.sh", gp);
+    argv[0] = (char *) gpsh;
+#else    
     argv[0] = (char *) gp;
+#endif    
     argv[1] = (char *) plotfile;
     argv[2] = NULL;
 
@@ -5232,6 +5237,11 @@ void gnuplot_view_3d (const char *plotfile)
     if (error != NULL) {
 	errbox(error->message);
 	g_error_free(error);
-    }    
+    }
+
+#if defined(MAC_NATIVE)    
+    g_free(gpsh);
+#endif    
+    
 #endif /* !(G_OS_WIN32 or MAC_NATIVE) */
 }
