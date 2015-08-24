@@ -6738,7 +6738,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
 	build_selector_switches(sr);
     }
 
-#if !defined(MAC_NATIVE) || !defined(PKGBUILD)
+#ifdef GNUPLOT3D
     if (ci == GR_3D) {
 	build_selector_switches(sr);
     }
