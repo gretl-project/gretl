@@ -288,7 +288,7 @@ static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
     GretlToolItem *item;
     int i, n = G_N_ELEMENTS(plotbar_items);
 
-    tbar = gretl_toolbar_new();
+    tbar = gretl_toolbar_new(NULL);
 
     for (i=0; i<n; i++) {
 	item = &plotbar_items[i];

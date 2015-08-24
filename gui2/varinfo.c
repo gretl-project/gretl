@@ -661,7 +661,7 @@ static void varinfo_add_toolbar (gui_varinfo *vset, GtkWidget *hbox)
     GtkWidget *tbar;
     GtkToolItem *item;
 
-    tbar = gretl_toolbar_new();
+    tbar = gretl_toolbar_new(NULL);
 
     item = gtk_tool_button_new_from_stock(GTK_STOCK_APPLY);
     g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(varinfo_apply), vset);

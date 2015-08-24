@@ -1253,11 +1253,17 @@ static GtkWidget *real_add_winlist (windata_t *vwin,
 				    GtkWidget *hbox)
 {
     GtkWidget *button, *img, *tbar;
+    GtkWidget *sibling = NULL;
     GtkToolItem *item;
 
     button = gtk_button_new();
     item = gtk_tool_item_new();
-    tbar = gretl_toolbar_new();
+
+    if (vwin != NULL && vwin->ui != NULL) {
+	sibling = gtk_ui_manager_get_widget(vwin->ui, "/menubar");
+    }
+    
+    tbar = gretl_toolbar_new(sibling);
     
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
@@ -1272,6 +1278,7 @@ static GtkWidget *real_add_winlist (windata_t *vwin,
 	g_signal_connect(G_OBJECT(button), "button-press-event", 
 			 G_CALLBACK(window_list_popup), window);
     }
+    
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     gtk_widget_show_all(tbar);
     gtk_box_pack_end(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);

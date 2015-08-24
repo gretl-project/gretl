@@ -997,7 +997,7 @@ void set_up_helpview_menu (windata_t *hwin)
     int i;
 
     hbox = gtk_hbox_new(FALSE, 0);
-    hwin->mbar = gretl_toolbar_new();
+    hwin->mbar = gretl_toolbar_new(NULL);
 
     for (i=0; i<n_help_tools; i++) {
 	item = &help_tools[i];

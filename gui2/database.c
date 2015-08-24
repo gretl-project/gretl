@@ -842,7 +842,7 @@ static void make_db_toolbar (windata_t *vwin, int cb, int del,
     hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
-    vwin->mbar = gretl_toolbar_new();
+    vwin->mbar = gretl_toolbar_new(NULL);
 
     for (i=0; i<n_db_items; i++) {
 	item = &db_items[i];

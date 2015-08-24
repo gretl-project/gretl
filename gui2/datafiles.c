@@ -1743,7 +1743,7 @@ static void make_files_toolbar (windata_t *vwin)
     hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
-    vwin->mbar = gretl_toolbar_new();
+    vwin->mbar = gretl_toolbar_new(NULL);
 
     for (i=0; i<n_files_items; i++) {
 	item = &files_items[i];

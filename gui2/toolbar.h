@@ -43,7 +43,7 @@ void gretl_stock_icons_init (void);
 
 void gretl_tooltips_add (GtkWidget *w, const gchar *str);
 
-GtkWidget *gretl_toolbar_new (void);
+GtkWidget *gretl_toolbar_new (GtkWidget *sibling);
 
 GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
 				 GretlToolItem *item,

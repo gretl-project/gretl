@@ -3064,7 +3064,7 @@ static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
     int i, n_items;
 
     hbox = gtk_hbox_new(FALSE, 0);
-    tbar = gretl_toolbar_new();
+    tbar = gretl_toolbar_new(NULL);
 
     if (editing_scalars(sheet)) {
 	items = scalar_items;

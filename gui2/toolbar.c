@@ -919,7 +919,7 @@ static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
     return menu;
 }
 
-static void gretl_toolbar_relief (GtkWidget *w)
+static void gretl_toolbar_flat (GtkWidget *w)
 {
     static int style_done;
 
@@ -934,14 +934,25 @@ static void gretl_toolbar_relief (GtkWidget *w)
     }
 }
 
-GtkWidget *gretl_toolbar_new (void)
+GtkWidget *gretl_toolbar_new (GtkWidget *sibling)
 {
     GtkWidget *tb = gtk_toolbar_new();
 
     gtk_toolbar_set_icon_size(GTK_TOOLBAR(tb), GTK_ICON_SIZE_MENU);
     gtk_toolbar_set_style(GTK_TOOLBAR(tb), GTK_TOOLBAR_ICONS);
     gtk_toolbar_set_show_arrow(GTK_TOOLBAR(tb), FALSE);
-    gretl_toolbar_relief(tb);
+
+    if (sibling != NULL) {
+	GValue val = {0};
+
+	g_value_init(&val, G_TYPE_INT);
+	gtk_widget_style_get_property(sibling, "shadow-type", &val);
+	if (G_VALUE_TYPE(&val) == G_TYPE_INT) {
+	    if (g_value_get_int(&val) == GTK_SHADOW_NONE) {
+		gretl_toolbar_flat(tb);
+	    }
+	}
+    }       
 
     return tb;
 }
@@ -1148,7 +1159,7 @@ void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
 			  GINT_TO_POINTER(1));
     }
 
-    vwin->mbar = gretl_toolbar_new();
+    vwin->mbar = gretl_toolbar_new(NULL);
     viewbar_add_items(vwin, flags);
 
     vwin_pack_toolbar(vwin);
@@ -1301,7 +1312,7 @@ void add_mainwin_toolbar (GtkWidget *vbox)
     GtkWidget *hbox;
     int i, n = G_N_ELEMENTS(mainbar_items);
 
-    mdata->mbar = gretl_toolbar_new();
+    mdata->mbar = gretl_toolbar_new(NULL);
 
     for (i=0; i<n; i++) {
 	item = &mainbar_items[i];
@@ -1352,7 +1363,7 @@ void vwin_add_tmpbar (windata_t *vwin)
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
     }
 
-    tmp = gretl_toolbar_new();
+    tmp = gretl_toolbar_new(NULL);
     gretl_toolbar_insert(tmp, &item, item.func, NULL, 0);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
