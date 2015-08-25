@@ -5196,8 +5196,27 @@ void launch_gnuplot_interactive (void)
 #endif /* !(G_OS_WIN32 or MAC_NATIVE) */
 }
 
+static void gp_wait (GPid pid, gint status, gpointer p)
+{
+    GError *error = NULL;
+    
+    fprintf(stderr, "gp_wait: status = %d, pid = %d\n", status, (int) pid);
+    g_spawn_check_exit_status(status, &error);
+    if (error != NULL) {
+	fprintf(stderr, "%s\n", error->message);
+	g_error_free(error);
+    }
+    g_spawn_close_pid(pid);
+}
+
 void gnuplot_view_3d (const char *plotfile)
 {
+#if defined(MAC_NATIVE)
+    if (getenv("NO_GSPAWN") != NULL) {
+	mac_do_gp_script(plotfile);
+	return;
+    }
+#endif    
 #if defined(G_OS_WIN32)
     gchar *gpline = g_strdup_printf("\"%s\" \"%s\"", 
 				    gretl_gnuplot_path(),
@@ -5211,6 +5230,7 @@ void gnuplot_view_3d (const char *plotfile)
     const char *gp = gretl_gnuplot_path();
     GError *error = NULL;
     gchar *argv[3];
+    GPid child_pid;
 
     argv[0] = (char *) gp;
     argv[1] = (char *) plotfile;
@@ -5219,15 +5239,17 @@ void gnuplot_view_3d (const char *plotfile)
     g_spawn_async(NULL, /* working dir */
 		  argv,
 		  NULL, /* env */
-		  G_SPAWN_SEARCH_PATH,
+		  G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD,
 		  NULL, /* child_setup */
 		  NULL, /* user_data */
-		  NULL, /* child_pid ptr */
+		  &child_pid, /* child_pid ptr */
 		  &error);
 
     if (error != NULL) {
 	errbox(error->message);
 	g_error_free(error);
+    } else {
+	g_child_watch_add(child_pid, gp_wait, NULL);
     }
 #endif /* !(G_OS_WIN32 or MAC_NATIVE) */
 }
