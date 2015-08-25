@@ -7957,7 +7957,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
     }
 
     if (vwin->role == EDIT_GP) {
-	run_gp_script(buf);
+	run_gnuplot_script(buf);
     } else if (vwin->role == EDIT_R) {
 	run_R_script(buf, vwin_toplevel(vwin));
     } else if (vwin->role == EDIT_OX) {

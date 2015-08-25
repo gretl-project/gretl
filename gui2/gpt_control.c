@@ -990,8 +990,8 @@ static int is_batch_term_line (const char *s)
 	if (s != NULL) {
 	    ret = 1;
 	    s += 8;
-	    s += strcspn(s, " ");
-	    s += strspn(s, " ");
+	    s += strcspn(s, " "); /* skip "inal"? */
+	    s += strspn(s, " ");  /* skip space */
 	    if (!strncmp(s, "win", 3) ||
 		!strncmp(s, "x11", 3) ||
 		!strncmp(s, "wxt", 3) ||
@@ -1066,14 +1066,14 @@ int dump_plot_buffer (const char *buf, const char *fname,
 
 #ifdef G_OS_WIN32
 
-static void real_send_to_gp (const char *tmpfile)
+static void real_send_to_gp (const char *fname, int persist)
 {
     gchar *cmd;
     int err;
 
     cmd = g_strdup_printf("\"%s\" \"%s\"", 
 			  gretl_gnuplot_path(), 
-			  tmpfile);
+			  fname);
     err = (WinExec(cmd, SW_SHOWNORMAL) < 32);
     g_free(cmd);
 
@@ -1104,17 +1104,18 @@ static void gnuplot_done (GPid pid, gint status, gpointer p)
     g_spawn_close_pid(pid);
 }
 
-static void real_send_to_gp (const char *tmpfile)
+static void real_send_to_gp (const char *fname, int persist)
 {
+    const char *gp = gretl_gnuplot_path();
     GError *error = NULL;
     gchar *argv[4];
     GPid pid = 0;
     gint fd = -1;
     gboolean run;
 
-    argv[0] = g_strdup(gretl_gnuplot_path());
-    argv[1] = g_strdup(tmpfile);
-    argv[2] = g_strdup("-persist");
+    argv[0] = g_strdup(gp);
+    argv[1] = g_strdup(fname);
+    argv[2] = persist ? g_strdup("-persist") : NULL;
     argv[3] = NULL;
 
     run = g_spawn_async_with_pipes(NULL, argv, NULL, 
@@ -1142,10 +1143,10 @@ static void real_send_to_gp (const char *tmpfile)
 
 #endif
 
-/* callback for execute icon in window editing gnuplot
-   commands */
+/* Callback for execute icon in window editing gnuplot
+   commands: send script in @buf to gnuplot itself */
 
-void run_gp_script (gchar *buf)
+void run_gnuplot_script (gchar *buf)
 {
     gchar *tmpfile;
     int err;
@@ -1154,7 +1155,7 @@ void run_gp_script (gchar *buf)
     err = dump_plot_buffer(buf, tmpfile, 1);
 
     if (!err) {
-	real_send_to_gp(tmpfile);
+	real_send_to_gp(tmpfile, 1);
     }
 
     /* don't remove the temp script before gnuplot has
@@ -5132,12 +5133,15 @@ static void mac_do_gp_script (const char *plotfile)
     gsize sz = 0;
     
     if (g_file_get_contents(plotfile, &buf, &sz, NULL)) {
-	run_gp_script(buf);
+	run_gnuplot_script(buf);
 	g_free(buf);
     }
 }
 
 #endif
+
+/* Callback for "Gnuplot" item in Tools menu: open a 
+   gnuplot session and let the user do whatever */
 
 void launch_gnuplot_interactive (void)
 {
@@ -5196,27 +5200,121 @@ void launch_gnuplot_interactive (void)
 #endif /* !(G_OS_WIN32 or MAC_NATIVE) */
 }
 
-static void gp_wait (GPid pid, gint status, gpointer p)
+#ifdef MAC_NATIVE
+
+#include <fcntl.h>
+
+static void osx_gnuplot_done (GPid pid, gint status, gpointer p)
 {
-    GError *error = NULL;
-    
-    fprintf(stderr, "gp_wait: status = %d, pid = %d\n", status, (int) pid);
-    g_spawn_check_exit_status(status, &error);
-    if (error != NULL) {
-	fprintf(stderr, "%s\n", error->message);
-	g_error_free(error);
-    }
+    fprintf(stderr, "osx_gnuplot_done: pid=%d\n", pid);
     g_spawn_close_pid(pid);
 }
 
+static gboolean test_gp_done (gpointer p)
+{
+    int *fds = (int *) p;
+    char buf[64] = {0};
+    int n;
+
+    n = read(fds[2], buf, 63);
+    if (n > 0) {
+	fprintf(stderr, "read on stderr: '%s'\n", buf);
+	if (n > 6 && strstr(buf, "OnClose") != NULL) {
+	    close(fds[0]);
+	    close(fds[1]);
+	    close(fds[2]);
+	    free(fds);
+	    return G_SOURCE_REMOVE;
+	}
+    }
+
+    errno = 0;
+
+    n = read(fds[1], buf, 63);
+    if (errno == EAGAIN) {
+	fprintf(stderr, "EAGAIN\n");
+	errno = 0;
+    } else if (n > 6 && strstr(buf, "WXTdone") != NULL) {
+	fprintf(stderr, "stdout: '%s'\n", buf);
+    } else {
+	fprintf(stderr, "n=%d, buf='%s'\n", n, buf);
+    }
+
+    return G_SOURCE_CONTINUE;
+}
+
+static void remedial_open (const char *fname)
+{
+    const char *gp = gretl_gnuplot_path();
+    GError *error = NULL;
+    gchar *argv[2];
+    GPid pid = 0;
+    int *fds;
+    gboolean run;
+
+    argv[0] = g_strdup(gp);
+    argv[1] = NULL;
+
+    fds = malloc(3 * sizeof *fds);
+
+    run = g_spawn_async_with_pipes(NULL, argv, NULL, 
+				   G_SPAWN_SEARCH_PATH | 
+				   G_SPAWN_DO_NOT_REAP_CHILD,
+				   NULL, NULL, &pid, 
+				   &fds[0], &fds[1],
+				   &fds[2], &error);
+
+    if (error != NULL) {
+	errbox(error->message);
+	g_error_free(error);
+    } else if (!run) {
+	errbox(_("gnuplot command failed"));
+    } else if (pid > 0) {
+	FILE *fp = fopen(fname, "r");
+	char line[256];
+	int flags, n;
+
+	fprintf(stderr, "pid = %d\n", pid);
+	g_child_watch_add(pid, osx_gnuplot_done, NULL);
+
+	strcpy(line, "set print \"-\"\n");
+	n = write(fds[0], line, strlen(line));
+	fprintf(stderr, "write 1, n = %d\n", n);
+	
+	strcpy(line, "print \"eggs\"\n");
+	n = write(fds[0], line, strlen(line));
+	fprintf(stderr, "write 2, n = %d\n", n);
+
+	while (fgets(line, sizeof line, fp)) {
+	    if (strstr(line, "pause")) {
+		fprintf(stderr, "*** %s", line);
+	    }
+	    write(fds[0], line, strlen(line));
+	}
+
+	strcpy(line, "\nprint \"WXTdone\"\n");
+	n = write(fds[0], line, strlen(line));
+	fprintf(stderr, "write 3, n = %d\n", n);
+
+	fclose(fp);
+	fprintf(stderr, "script submitted\n");
+
+	flags = fcntl(fds[1], F_GETFL, 0);
+	fcntl(fds[1], F_SETFL, flags | O_NONBLOCK);
+
+	flags = fcntl(fds[2], F_GETFL, 0);
+	fcntl(fds[2], F_SETFL, flags | O_NONBLOCK);
+
+	g_timeout_add(500, test_gp_done, fds);
+    }
+
+    g_free(argv[0]);
+}
+
+#endif
+
 void gnuplot_view_3d (const char *plotfile)
 {
-#if defined(MAC_NATIVE)
-    if (getenv("NO_GSPAWN") != NULL) {
-	mac_do_gp_script(plotfile);
-	return;
-    }
-#endif    
 #if defined(G_OS_WIN32)
     gchar *gpline = g_strdup_printf("\"%s\" \"%s\"", 
 				    gretl_gnuplot_path(),
@@ -5226,30 +5324,9 @@ void gnuplot_view_3d (const char *plotfile)
     g_free(gpline);
 #elif defined(MAC_NATIVE) && !defined(GNUPLOT3D)
     mac_do_gp_script(plotfile);
-#else 
-    const char *gp = gretl_gnuplot_path();
-    GError *error = NULL;
-    gchar *argv[3];
-    GPid child_pid;
-
-    argv[0] = (char *) gp;
-    argv[1] = (char *) plotfile;
-    argv[2] = NULL;
-
-    g_spawn_async(NULL, /* working dir */
-		  argv,
-		  NULL, /* env */
-		  G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD,
-		  NULL, /* child_setup */
-		  NULL, /* user_data */
-		  &child_pid, /* child_pid ptr */
-		  &error);
-
-    if (error != NULL) {
-	errbox(error->message);
-	g_error_free(error);
-    } else {
-	g_child_watch_add(child_pid, gp_wait, NULL);
-    }
+#elif defined(MAC_NATIVE)
+    remedial_open(plotfile);
+#else
+    real_send_to_gp(plotfile, 0);
 #endif /* !(G_OS_WIN32 or MAC_NATIVE) */
 }
