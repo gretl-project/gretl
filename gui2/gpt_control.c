@@ -5218,7 +5218,7 @@ static gboolean test_gp_done (gpointer p)
 
     n = read(fds[2], buf, 63);
     if (n > 0) {
-	fprintf(stderr, "read on stderr: '%s'\n", buf);
+	// fprintf(stderr, "read on stderr: '%s'\n", buf);
 	if (n > 6 && strstr(buf, "OnClose") != NULL) {
 	    close(fds[0]);
 	    close(fds[1]);
@@ -5232,7 +5232,7 @@ static gboolean test_gp_done (gpointer p)
 
     n = read(fds[1], buf, 63);
     if (errno == EAGAIN) {
-	fprintf(stderr, "EAGAIN\n");
+	// fprintf(stderr, "EAGAIN\n");
 	errno = 0;
     } else if (n > 6 && strstr(buf, "WXTdone") != NULL) {
 	fprintf(stderr, "stdout: '%s'\n", buf);
@@ -5279,22 +5279,19 @@ static void remedial_open (const char *fname)
 
 	strcpy(line, "set print \"-\"\n");
 	n = write(fds[0], line, strlen(line));
-	fprintf(stderr, "write 1, n = %d\n", n);
+	// fprintf(stderr, "write 1, n = %d\n", n);
 	
 	strcpy(line, "print \"eggs\"\n");
 	n = write(fds[0], line, strlen(line));
-	fprintf(stderr, "write 2, n = %d\n", n);
+	// fprintf(stderr, "write 2, n = %d\n", n);
 
 	while (fgets(line, sizeof line, fp)) {
-	    if (strstr(line, "pause")) {
-		fprintf(stderr, "*** %s", line);
-	    }
 	    write(fds[0], line, strlen(line));
 	}
 
 	strcpy(line, "\nprint \"WXTdone\"\n");
 	n = write(fds[0], line, strlen(line));
-	fprintf(stderr, "write 3, n = %d\n", n);
+	// fprintf(stderr, "write 3, n = %d\n", n);
 
 	fclose(fp);
 	fprintf(stderr, "script submitted\n");

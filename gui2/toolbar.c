@@ -942,16 +942,11 @@ GtkWidget *gretl_toolbar_new (GtkWidget *sibling)
     gtk_toolbar_set_style(GTK_TOOLBAR(tb), GTK_TOOLBAR_ICONS);
     gtk_toolbar_set_show_arrow(GTK_TOOLBAR(tb), FALSE);
 
-    if (sibling != NULL) {
-	GValue val = {0};
-
-	g_value_init(&val, G_TYPE_INT);
-	gtk_widget_style_get_property(sibling, "shadow-type", &val);
-	if (G_VALUE_TYPE(&val) == G_TYPE_INT) {
-	    if (g_value_get_int(&val) == GTK_SHADOW_NONE) {
-		gretl_toolbar_flat(tb);
-	    }
-	}
+    if (sibling == NULL) {
+	/* if we're not alongside a menu bar ("sibling"),
+	   show the toolbar without a shadow 
+	*/
+	gretl_toolbar_flat(tb);
     }       
 
     return tb;

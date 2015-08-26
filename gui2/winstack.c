@@ -1259,8 +1259,9 @@ static GtkWidget *real_add_winlist (windata_t *vwin,
     button = gtk_button_new();
     item = gtk_tool_item_new();
 
-    if (vwin != NULL && vwin->ui != NULL) {
-	sibling = gtk_ui_manager_get_widget(vwin->ui, "/menubar");
+    if (vwin != NULL && vwin->mbar != NULL &&
+	GTK_IS_MENU_BAR(vwin->mbar)) {
+	sibling = vwin->mbar;
     }
     
     tbar = gretl_toolbar_new(sibling);
