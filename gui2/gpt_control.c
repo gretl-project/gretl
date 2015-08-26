@@ -5216,28 +5216,18 @@ static gboolean test_gp_done (gpointer p)
     char buf[64] = {0};
     int n;
 
-    n = read(fds[2], buf, 63);
-    if (n > 0) {
-	// fprintf(stderr, "read on stderr: '%s'\n", buf);
-	if (n > 6 && strstr(buf, "OnClose") != NULL) {
-	    close(fds[0]);
-	    close(fds[1]);
-	    close(fds[2]);
-	    free(fds);
-	    return G_SOURCE_REMOVE;
-	}
-    }
-
     errno = 0;
 
     n = read(fds[1], buf, 63);
+
     if (errno == EAGAIN) {
-	// fprintf(stderr, "EAGAIN\n");
 	errno = 0;
-    } else if (n > 6 && strstr(buf, "WXTdone") != NULL) {
-	fprintf(stderr, "stdout: '%s'\n", buf);
-    } else {
-	fprintf(stderr, "n=%d, buf='%s'\n", n, buf);
+    } else if (n > 7 && strstr(buf, "WXTClose") != NULL) {
+	close(fds[0]);
+	close(fds[1]);
+	close(fds[2]);
+	free(fds);
+	return G_SOURCE_REMOVE;	
     }
 
     return G_SOURCE_CONTINUE;
@@ -5274,33 +5264,16 @@ static void remedial_open (const char *fname)
 	char line[256];
 	int flags, n;
 
-	fprintf(stderr, "pid = %d\n", pid);
 	g_child_watch_add(pid, osx_gnuplot_done, NULL);
-
-	strcpy(line, "set print \"-\"\n");
-	n = write(fds[0], line, strlen(line));
-	// fprintf(stderr, "write 1, n = %d\n", n);
-	
-	strcpy(line, "print \"eggs\"\n");
-	n = write(fds[0], line, strlen(line));
-	// fprintf(stderr, "write 2, n = %d\n", n);
 
 	while (fgets(line, sizeof line, fp)) {
 	    write(fds[0], line, strlen(line));
 	}
 
-	strcpy(line, "\nprint \"WXTdone\"\n");
-	n = write(fds[0], line, strlen(line));
-	// fprintf(stderr, "write 3, n = %d\n", n);
-
 	fclose(fp);
-	fprintf(stderr, "script submitted\n");
 
 	flags = fcntl(fds[1], F_GETFL, 0);
 	fcntl(fds[1], F_SETFL, flags | O_NONBLOCK);
-
-	flags = fcntl(fds[2], F_GETFL, 0);
-	fcntl(fds[2], F_SETFL, flags | O_NONBLOCK);
 
 	g_timeout_add(500, test_gp_done, fds);
     }
