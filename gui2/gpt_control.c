@@ -5200,100 +5200,6 @@ void launch_gnuplot_interactive (void)
 #endif /* !(G_OS_WIN32 or MAC_NATIVE) */
 }
 
-#ifdef MAC_NATIVE
-
-#include <fcntl.h>
-
-static void osx_gnuplot_done (GPid pid, gint status, gpointer p)
-{
-    fprintf(stderr, "osx_gnuplot_done: pid=%d\n", pid);
-    g_spawn_close_pid(pid);
-}
-
-static gboolean test_gp_done (gpointer p)
-{
-    int *fds = (int *) p;
-    char buf[64] = {0};
-    int n;
-
-    errno = 0;
-
-    n = read(fds[1], buf, 63);
-
-    if (errno == EAGAIN) {
-	errno = 0;
-    } else if (n > 7 && strstr(buf, "WXTClose") != NULL) {
-	close(fds[0]);
-	close(fds[1]);
-	close(fds[2]);
-	free(fds);
-	return G_SOURCE_REMOVE;	
-    }
-
-    return G_SOURCE_CONTINUE;
-}
-
-static void remedial_open (const char *fname)
-{
-    const char *gp = gretl_gnuplot_path();
-    FILE *fp;
-    GError *error = NULL;
-    gchar *argv[2];
-    GPid pid = 0;
-    int *fds;
-    gboolean run;
-
-    fds = malloc(3 * sizeof *fds);
-    if (fds == NULL) {
-	gui_errmsg(E_ALLOC);
-	return;
-    }
-
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	gui_errmsg(E_FOPEN);
-	free(fds);
-	return;
-    }
-
-    argv[0] = (char *) gp;
-    argv[1] = NULL;
-
-    run = g_spawn_async_with_pipes(NULL, argv, NULL, 
-				   G_SPAWN_SEARCH_PATH | 
-				   G_SPAWN_DO_NOT_REAP_CHILD,
-				   NULL, NULL, &pid, 
-				   &fds[0], &fds[1],
-				   &fds[2], &error);
-
-    if (error != NULL) {
-	errbox(error->message);
-	g_error_free(error);
-    } else if (!run) {
-	errbox(_("gnuplot command failed"));
-    } else if (pid > 0) {
-	char line[256];
-	int flags;
-
-	g_child_watch_add(pid, osx_gnuplot_done, NULL);
-
-	/* send plot script via stdin pipe */
-	while (fgets(line, sizeof line, fp)) {
-	    write(fds[0], line, strlen(line));
-	}
-
-	/* make read on gnuplot's stdout non-blocking */
-	flags = fcntl(fds[1], F_GETFL, 0);
-	fcntl(fds[1], F_SETFL, flags | O_NONBLOCK);
-
-	g_timeout_add(500, test_gp_done, fds);
-    }
-
-    fclose(fp);
-}
-
-#endif
-
 void gnuplot_view_3d (const char *plotfile)
 {
 #if defined(G_OS_WIN32)
@@ -5305,8 +5211,6 @@ void gnuplot_view_3d (const char *plotfile)
     g_free(gpline);
 #elif defined(MAC_NATIVE) && !defined(GNUPLOT3D)
     mac_do_gp_script(plotfile);
-#elif defined(BAC_NATIVE)
-    remedial_open(plotfile);
 #else
     real_send_to_gp(plotfile, 0);
 #endif /* !(G_OS_WIN32 or MAC_NATIVE) */
