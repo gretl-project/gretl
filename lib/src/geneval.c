@@ -5683,8 +5683,6 @@ static int series_get_end (int t1, int t2, const double *x)
     return t + 1;
 }
 
-#define series_cast_optional(f) (f == F_SD) 
-
 static void cast_to_series (NODE *n, int f, gretl_matrix **tmp, 
 			    int *t1, int *t2, parser *p)
 {
@@ -5693,21 +5691,17 @@ static void cast_to_series (NODE *n, int f, gretl_matrix **tmp,
 
     if (gretl_is_null_matrix(m)) {
 	p->err = E_DATA;
-    } else if (len == p->dset->n) {
+    } else if (len > 0 && len == p->dset->n) {
 	*tmp = m;
 	n->v.xvec = m->val;
+    } else if (len > 0 && t1 != NULL && t2 != NULL) {
+	*tmp = m;
+	n->v.xvec = m->val;
+	*t1 = 0;
+	*t2 = len - 1;
     } else {
-	if (series_cast_optional(f)) {
-	    p->err = E_TYPES; /* temporary error flag */
-	} else if (len > 0 && t1 != NULL && t2 != NULL) {
-	    *tmp = m;
-	    n->v.xvec = m->val;
-	    *t1 = 0;
-	    *t2 = len - 1;
-	} else {
-	    node_type_error(f, 1, SERIES, n, p);
-	}
-    } 
+	node_type_error(f, 1, SERIES, n, p);
+    }
 }
 
 /* functions taking a series as argument and returning a scalar */
@@ -5736,13 +5730,7 @@ series_scalar_func (NODE *n, int f, parser *p)
 		cast_to_series(n, f, &tmp, &t1, &t2, p);
 	    }
 	    if (p->err) {
-		if (f == F_SD) {
-		    /* offer column s.d. instead */
-		    p->err = 0;
-		    return matrix_to_matrix_func(n, NULL, f, p);
-		} else {
-		    return NULL;
-		}
+		return NULL;
 	    }
 	}
 
