@@ -5236,16 +5236,28 @@ static gboolean test_gp_done (gpointer p)
 static void remedial_open (const char *fname)
 {
     const char *gp = gretl_gnuplot_path();
+    FILE *fp;
     GError *error = NULL;
     gchar *argv[2];
     GPid pid = 0;
     int *fds;
     gboolean run;
 
-    argv[0] = g_strdup(gp);
-    argv[1] = NULL;
-
     fds = malloc(3 * sizeof *fds);
+    if (fds == NULL) {
+	gui_errmsg(E_ALLOC);
+	return;
+    }
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	gui_errmsg(E_FOPEN);
+	free(fds);
+	return;
+    }
+
+    argv[0] = (char *) gp;
+    argv[1] = NULL;
 
     run = g_spawn_async_with_pipes(NULL, argv, NULL, 
 				   G_SPAWN_SEARCH_PATH | 
@@ -5260,25 +5272,24 @@ static void remedial_open (const char *fname)
     } else if (!run) {
 	errbox(_("gnuplot command failed"));
     } else if (pid > 0) {
-	FILE *fp = fopen(fname, "r");
 	char line[256];
-	int flags, n;
+	int flags;
 
 	g_child_watch_add(pid, osx_gnuplot_done, NULL);
 
+	/* send plot script via stdin pipe */
 	while (fgets(line, sizeof line, fp)) {
 	    write(fds[0], line, strlen(line));
 	}
 
-	fclose(fp);
-
+	/* make read on gnuplot's stdout non-blocking */
 	flags = fcntl(fds[1], F_GETFL, 0);
 	fcntl(fds[1], F_SETFL, flags | O_NONBLOCK);
 
 	g_timeout_add(500, test_gp_done, fds);
     }
 
-    g_free(argv[0]);
+    fclose(fp);
 }
 
 #endif
