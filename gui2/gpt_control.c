@@ -5305,7 +5305,7 @@ void gnuplot_view_3d (const char *plotfile)
     g_free(gpline);
 #elif defined(MAC_NATIVE) && !defined(GNUPLOT3D)
     mac_do_gp_script(plotfile);
-#elif defined(MAC_NATIVE)
+#elif defined(BAC_NATIVE)
     remedial_open(plotfile);
 #else
     real_send_to_gp(plotfile, 0);
