@@ -274,6 +274,8 @@ struct gretl_option gretl_opts[] = {
     { HSK,      OPT_N, "no-squares" },
     { HURST,    OPT_U, "plot", 2 },
     { INSTALL,  OPT_L, "local", 0 },
+    { INSTALL,  OPT_R, "remove", 0 },
+    { INSTALL,  OPT_P, "purge", 0 },
     { INTREG,   OPT_R, "robust", 0 },
     { INTREG,   OPT_C, "cluster", 2 },    
     { INTREG,   OPT_V, "verbose", 0 },

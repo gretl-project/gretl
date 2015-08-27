@@ -3086,7 +3086,7 @@ static int menu_paths_differ (const char *rp, const char *mp)
     }
 }
 
-int gpi_strings_differ (const char *s1, const char *s2)
+static int gpi_strings_differ (const char *s1, const char *s2)
 {
     if ((s1 == NULL && s2 != NULL) ||
 	(s1 != NULL && s2 == NULL)) {

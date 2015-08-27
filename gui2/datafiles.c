@@ -833,7 +833,9 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
 	gui_function_pkg_unregister(pkgname);
 	/* unload the package and its members from memory */
 	function_package_unload_full_by_filename(fname);
-	/* scratch the package file */
+	/* scratch the package file - FIXME should delete
+	   the whole tree if applicable 
+	*/
 	err = gretl_remove(fname);
 	if (err) {
 	    file_write_errbox(fname);

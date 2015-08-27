@@ -8994,6 +8994,55 @@ GList *get_or_send_gui_models (GList *list)
     }
 }
 
+#if 0 /* not yet */
+
+static int script_delete_function_package (const char *pkgname,
+					   gretlopt opt,
+					   PRN *prn)
+{
+    gchar *gfnname;
+    char fname[MAXLEN];
+    struct stat buf;
+    int err;
+
+    if (has_suffix(pkgname, ".gfn")) {
+	gfnname = g_strdup(pkgname);
+    } else {
+	gfnname = g_strdup_printf("%s.gfn", pkgname);
+    }
+
+    *fname = '\0';
+    err = get_full_filename(gfnname, fname, OPT_I);
+
+    if (!err && gretl_stat(fname, &buf) != 0) {
+	pprintf(prn, "Couldn't find %s\n", pkgname);
+	err = E_FOPEN;
+    }
+
+    g_free(gfnname);
+
+    if (!err) {
+	pprintf(prn, "Got request to remove %s (%s)\n",
+		pkgname, fname);
+	/* unload the package from memory */
+	function_package_unload_full_by_filename(fname);
+	if (opt & OPT_R) {
+	    /* remove entry from registry, if present */
+	    gui_function_pkg_unregister(pkgname);
+	}
+	if (opt & OPT_P) {
+	    /* delete the package file(s) */
+	    err = gretl_remove(fname);
+	    /* FIXME update browser window if open */
+	    ;
+	}	
+    }
+
+    return err;
+}
+
+#endif
+
 int script_install_function_package (const char *pkgname,
 				     gretlopt opt,
 				     PRN *prn,
@@ -9006,6 +9055,12 @@ int script_install_function_package (const char *pkgname,
     int local = (opt & OPT_L);
     int http = 0;
     int err = 0;
+
+#if 0 /* not yet */   
+    if (opt & (OPT_R | OPT_P)) {
+	return script_delete_function_package(pkgname, opt, prn);
+    }
+#endif    
 
     if (!strncmp(pkgname, "http://", 7)) {
 	http = 1;
