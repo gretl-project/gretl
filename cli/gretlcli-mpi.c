@@ -928,15 +928,6 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	err = cli_clear_data(cmd, dset, model);
 	break;
 
-    case INSTALL:
-	if (cmd->opt & (OPT_R | OPT_P)) {
-	    pputs(prn, "Not implemented in gretlcli\n");
-	    err = E_BADOPT;
-	} else {
-	    err = gretl_cmd_exec(s, dset);
-	}
-	break;	
-
     case DATAMOD:
 	if (cmd->auxint == DS_CLEAR) {
 	    err = cli_clear_data(cmd, dset, model);

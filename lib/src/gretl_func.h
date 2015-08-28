@@ -217,6 +217,9 @@ void function_package_unload_full_by_filename (const char *fname);
 
 int delete_function_package (const char *gfnname);
 
+int uninstall_function_package (const char *package, gretlopt opt,
+				PRN *prn);
+
 int print_function_package_info (const char *fname, PRN *prn);
 
 int print_function_package_code (const char *fname, int tabwidth,

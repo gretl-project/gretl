@@ -5758,6 +5758,14 @@
 	  <flag>--local</flag>
 	  <effect>install from local file</effect>
         </option>
+        <option>
+	  <flag>--remove</flag>
+	  <effect>see below</effect>
+        </option>	
+        <option>
+	  <flag>--purge</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
      <examples>
         <example>install armax</example>
@@ -5777,7 +5785,7 @@
 	gretl function package (as in the first two examples) the
 	action is to download the specified package from the gretl
 	server and install it on the local machine. In this case
-	it's not necessary to supply the filename extension.
+	it is not necessary to supply a filename extension.
       </para>
       <para>
 	If the <opt>--local</opt> option is given, the
@@ -5789,10 +5797,21 @@
 	targ="include"/> command will find it.
       </para>
       <para>
-	Finally, if <repl>pkgname</repl> begins with
-	<lit>http://</lit>, the effect is to download a package
-	file from a specified server and install it locally.
+	When no option is given, if <repl>pkgname</repl> begins with
+	<lit>http://</lit>, the effect is to download a package file
+	from a specified server and install it locally.
       </para>
+      <para>
+	With the <opt>--remove</opt> or <opt>--purge</opt> option the
+	inverse operation is performed; that is, an installed package
+	is uninstalled. If just <opt>--remove</opt> is given, the
+	specified package is unloaded from memory and is removed from
+	the GUI menu to which it is attached, if any. If the
+	<opt>--purge</opt> option is given then in addition to the
+	actions just mentioned the package file is deleted. (If the
+	package is installed in its own subdirectory, the whole
+	subdirectory is deleted.)
+      </para>      
     </description>
 
     <gui-access>

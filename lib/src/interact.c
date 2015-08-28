@@ -2653,7 +2653,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case INSTALL:
-	err = install_function_package(cmd->param, cmd->opt, prn);
+	if (cmd->opt & (OPT_R | OPT_P)) {
+	    err = uninstall_function_package(cmd->param, cmd->opt, prn);
+	} else {
+	    err = install_function_package(cmd->param, cmd->opt, prn);
+	}
 	break;
 
     case MAKEPKG:

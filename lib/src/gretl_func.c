@@ -8253,3 +8253,60 @@ int delete_function_package (const char *gfnname)
 
     return err;
 }
+
+/**
+ * uninstall_function_package:
+ * @package: name of package (with or without .gfn extension).
+ * @opt: option flag(s).
+ * @prn: gretl printer.
+ * 
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int uninstall_function_package (const char *package, gretlopt opt,
+				PRN *prn)
+{
+    gchar *gfnname = NULL;
+    gchar *pkgname = NULL;
+    char *p, fname[MAXLEN];
+    struct stat buf;
+    int err;
+
+    if (has_suffix(package, ".gfn")) {
+	gfnname = g_strdup(package);
+	pkgname = g_strdup(package);
+	p = strrchr(pkgname, '.');
+	*p = '\0';
+    } else {
+	gfnname = g_strdup_printf("%s.gfn", package);
+	pkgname = g_strdup(package);
+    }
+
+    *fname = '\0';
+    err = get_full_filename(gfnname, fname, OPT_I);
+
+    if (!err && gretl_stat(fname, &buf) != 0) {
+	gretl_errmsg_sprintf("Couldn't find %s", gfnname);
+	err = E_FOPEN;
+    }
+
+    if (!err) {
+	function_package_unload_full_by_filename(fname);
+	if (opt & OPT_P) {
+	    err = delete_function_package(fname);
+	}	
+    }
+
+    if (!err && gretl_messages_on()) {
+	if (opt & OPT_P) {
+	    pprintf(prn, "Purged %s\n", pkgname);
+	} else {
+	    pprintf(prn, "Removed %s\n", pkgname);
+	}
+    }
+
+    g_free(gfnname);
+    g_free(pkgname);
+
+    return err;
+}
