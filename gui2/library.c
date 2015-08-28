@@ -8994,54 +8994,66 @@ GList *get_or_send_gui_models (GList *list)
     }
 }
 
-#if 0 /* not yet */
-
-static int script_delete_function_package (const char *pkgname,
+static int script_delete_function_package (const char *param,
 					   gretlopt opt,
 					   PRN *prn)
 {
-    gchar *gfnname;
-    char fname[MAXLEN];
+    gchar *gfnname = NULL;
+    gchar *pkgname = NULL;
+    char *p, fname[MAXLEN];
     struct stat buf;
     int err;
 
-    if (has_suffix(pkgname, ".gfn")) {
-	gfnname = g_strdup(pkgname);
+    if (has_suffix(param, ".gfn")) {
+	gfnname = g_strdup(param);
+	pkgname = g_strdup(param);
+	p = strrchr(pkgname, '.');
+	*p = '\0';
     } else {
-	gfnname = g_strdup_printf("%s.gfn", pkgname);
+	gfnname = g_strdup_printf("%s.gfn", param);
+	pkgname = g_strdup(param);
     }
 
     *fname = '\0';
     err = get_full_filename(gfnname, fname, OPT_I);
 
     if (!err && gretl_stat(fname, &buf) != 0) {
-	pprintf(prn, "Couldn't find %s\n", pkgname);
+	pprintf(prn, "Couldn't find %s\n", gfnname);
 	err = E_FOPEN;
     }
 
-    g_free(gfnname);
-
     if (!err) {
-	pprintf(prn, "Got request to remove %s (%s)\n",
-		pkgname, fname);
 	/* unload the package from memory */
 	function_package_unload_full_by_filename(fname);
-	if (opt & OPT_R) {
-	    /* remove entry from registry, if present */
-	    gui_function_pkg_unregister(pkgname);
-	}
+	/* remove entry from registry, if present */
+	gui_function_pkg_unregister(pkgname);
 	if (opt & OPT_P) {
-	    /* delete the package file(s) */
-	    err = gretl_remove(fname);
-	    /* FIXME update browser window if open */
-	    ;
+	    /* delete package file(s) */
+	    err = delete_function_package(fname);
+	    if (!err) {
+		p = strrchr(fname, SLASH);
+		if (p != NULL) {
+		    *p = '\0';
+		}
+		maybe_update_gfn_browser(pkgname, NULL, NULL,
+					 fname, 0, 0);
+	    }
 	}	
     }
 
+    if (err) {
+	errmsg(err, prn);
+    } else if (opt & OPT_P) {
+	pprintf(prn, "Purged %s\n", pkgname);
+    } else {
+	pprintf(prn, "Removed %s\n", pkgname);
+    }
+
+    g_free(gfnname);
+    g_free(pkgname);
+
     return err;
 }
-
-#endif
 
 int script_install_function_package (const char *pkgname,
 				     gretlopt opt,
@@ -9056,11 +9068,9 @@ int script_install_function_package (const char *pkgname,
     int http = 0;
     int err = 0;
 
-#if 0 /* not yet */   
     if (opt & (OPT_R | OPT_P)) {
 	return script_delete_function_package(pkgname, opt, prn);
     }
-#endif    
 
     if (!strncmp(pkgname, "http://", 7)) {
 	http = 1;

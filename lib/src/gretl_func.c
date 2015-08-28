@@ -8205,3 +8205,51 @@ int function_package_has_gui_help (fnpkg *pkg)
 {
     return pkg->gui_help != NULL && !string_is_blank(pkg->gui_help);
 }
+
+/**
+ * delete_function_package:
+ * @gfnname: full path to gfn file.
+ * 
+ * Deletes @gfnname, taking care of deleting its enclosing
+ * specific subdirectory and all of its contents if applicable.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int delete_function_package (const char *gfnname)
+{
+    char *p = strrchr(gfnname, SLASH);
+    gchar *pkgname = NULL;
+    gchar *pkgdir = NULL;
+    gchar *pkgsub = NULL;
+    int err = 0;
+
+    if (p != NULL) {
+	pkgname = g_strdup(p + 1);
+	p = strrchr(pkgname, '.');
+	if (p != NULL) {
+	    *p = '\0';
+	}
+	pkgdir = g_strdup(gfnname);
+	p = strrchr(pkgdir, SLASH);
+	*p = '\0';
+	p = strrchr(pkgdir, SLASH);
+	if (p != NULL) {
+	    pkgsub = g_strdup(p + 1);
+	}
+    }
+
+    if (pkgname != NULL && pkgdir != NULL && pkgsub != NULL &&
+	!strcmp(pkgname, pkgsub)) {
+	err = gretl_deltree(pkgdir);
+    } else {
+	/* should not happen! */
+	err = gretl_remove(gfnname);
+    }
+
+    g_free(pkgname);
+    g_free(pkgdir);
+    g_free(pkgsub);
+
+    return err;
+}

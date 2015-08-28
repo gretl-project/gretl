@@ -775,8 +775,10 @@ static void browser_delete_current_row (windata_t *vwin)
 }
 
 static void browser_delete_row_by_content (windata_t *vwin,
-					   int colnum,
-					   const char *test)
+					   int colnum1,
+					   const char *test1,
+					   int colnum2,
+					   const char *test2)
 {
     GtkTreeModel *mod;
     GtkTreeIter iter;
@@ -789,10 +791,20 @@ static void browser_delete_row_by_content (windata_t *vwin,
     }
 
     while (1) {
-	gtk_tree_model_get(mod, &iter, colnum, &content, -1);
-	if (content != NULL && !strcmp(content, test)) {
-	    gtk_list_store_remove(GTK_LIST_STORE(mod), &iter);
-	    done = 1;
+	gtk_tree_model_get(mod, &iter, colnum1, &content, -1);
+	if (content != NULL && !strcmp(content, test1)) {
+	    if (test2 == NULL) {
+		done = 1;
+	    } else {
+		g_free(content);
+		gtk_tree_model_get(mod, &iter, colnum2, &content, -1);
+		if (content != NULL && !strcmp(content, test2)) {
+		    done = 1;
+		}
+	    }
+	    if (done) {
+		gtk_list_store_remove(GTK_LIST_STORE(mod), &iter);
+	    }
 	}
 	g_free(content);
 	if (done || !gtk_tree_model_iter_next(mod, &iter)) {
@@ -826,19 +838,17 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
     }
 
     if (resp == 0) {
-	/* just unload the package from memory */
-	function_package_unload_by_filename(fname);
+	/* unload the package from memory */
+	function_package_unload_full_by_filename(fname);
     } else {
 	/* remove entry from registry, if present */
 	gui_function_pkg_unregister(pkgname);
-	/* unload the package and its members from memory */
+	/* unload the package from memory */
 	function_package_unload_full_by_filename(fname);
-	/* scratch the package file - FIXME should delete
-	   the whole tree if applicable 
-	*/
-	err = gretl_remove(fname);
+	/* trash the package file(s) */
+	err = delete_function_package(fname);
 	if (err) {
-	    file_write_errbox(fname);
+	    gui_errmsg(err);
 	} else {
 	    /* remove package from GUI listing */
 	    browser_delete_current_row(vwin);
@@ -2568,8 +2578,11 @@ static void update_gfn_browser (const char *pkgname,
     g_free(summary);
 }
 
-/* update function package status, if needed, after call
-   to save a function package */
+/* Update function package status, if needed, either after 
+   a call to save a function package, or after deleting a
+   package by CLI means; the latter case is flagged by
+   NULL values for @version and @descrip.
+*/
 
 void maybe_update_gfn_browser (const char *pkgname,
 			       const char *version,
@@ -2579,10 +2592,16 @@ void maybe_update_gfn_browser (const char *pkgname,
 			       int pdfdoc)
 {
     windata_t *vwin = get_browser_for_role(FUNC_FILES);
+    int del = (version == NULL && descrip == NULL);
 
     if (vwin != NULL && vwin->listbox != NULL) {
-	update_gfn_browser(pkgname, version, descrip, fname,
-			   uses_subdir, pdfdoc, vwin);
+	if (del) {
+	    browser_delete_row_by_content(vwin, 0, pkgname,
+					  3, fname);
+	} else {
+	    update_gfn_browser(pkgname, version, descrip, fname,
+			       uses_subdir, pdfdoc, vwin);
+	}
     }
 }
 
@@ -2595,7 +2614,8 @@ void maybe_update_pkg_registry_window (const char *pkgname,
 	if (code == MENU_ADD_FN_PKG) {
 	    populate_gfn_registry_list(vwin);
 	} else if (code == DELETE_FN_PKG) {
-	    browser_delete_row_by_content(vwin, 0, pkgname);
+	    browser_delete_row_by_content(vwin, 0, pkgname,
+					  0, NULL);
 	}
     }
 }
