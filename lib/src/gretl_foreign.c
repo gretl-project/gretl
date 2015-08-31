@@ -275,6 +275,10 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     gchar *cmd;
     int err = 0;
 
+    /* note that here we're calling R with gretl_Rprofile
+       as an argument, as opposed to getting R to source
+       it via the environment */
+
     cmd = g_strdup_printf("\"%s\" CMD BATCH --no-save --no-init-file "
 			  "--no-restore-data --slave \"%s\"",
 			  gretl_rbin_path(), gretl_Rprofile);
@@ -1425,8 +1429,18 @@ static int write_gretl_R_profile (gretlopt opt)
     printf("writing R profile: starting\n");
 #endif
 
-#ifndef G_OS_WIN32
-    /* On Windows we'll not use this mechanism */
+    /* On Windows we'll not use the environment-variable
+       mechanism unless we're in interactive (async) mode
+    */ 
+
+#ifdef G_OS_WIN32
+    if (opt & OPT_I) {
+	err = gretl_setenv("R_PROFILE", gretl_Rprofile);
+	if (err) {
+	    return err;
+	}
+    }
+#else
     err = gretl_setenv("R_PROFILE", gretl_Rprofile);
     if (err) {
 	return err;
