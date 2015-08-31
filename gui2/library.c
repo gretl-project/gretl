@@ -8891,6 +8891,8 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 	} else {
 	    register_graph();
 	}
+    } else if (ci == FCAST) {
+	register_graph();
     } else if (ci == CLEAR) {
 	if (s->cmd->opt & OPT_D) {
 	    /* --dataset only */

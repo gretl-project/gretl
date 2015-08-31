@@ -2714,10 +2714,6 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 
     if ((opt & OPT_P) && fr->nobs > 0) {
 	err = plot_fcast_errs(fr, maxerr, dset, opt);
-	if (!err && (opt & OPT_U)) {
-	    /* specified output file for graph */
-	    report_plot_written(prn);
-	}
     }
 
     if (maxerr != NULL) {

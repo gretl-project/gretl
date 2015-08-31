@@ -1000,7 +1000,7 @@ static void mark_option_tokens (CMD *c)
 		    tok->type = TOK_OPTVAL;
 		}
 	    } else if (prevtok->type == TOK_OPTVAL) {
-		if (tok->type == TOK_NAME) {
+		if (tok->type == TOK_NAME || tok->type == TOK_DOT) {
 		    tok->type = TOK_OPTVAL;
 		}
 	    }

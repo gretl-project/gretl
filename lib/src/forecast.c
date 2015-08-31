@@ -3200,8 +3200,8 @@ static int system_do_forecast (const char *str, void *ptr, int type,
  * @prn: gretl printing struct.
  *
  * In the case of "simple" models with an autoregressive error term 
- * (%AR, %AR1) the predicted values incorporate the forecastable portion 
- * of the error.  
+ * (%AR, %AR1) the forecast values incorporate the predictable
+ * component of the error.  
  *
  * Returns: 0 on success, non-zero error code on failure.
  */

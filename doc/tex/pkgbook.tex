@@ -400,6 +400,13 @@ confusion between functions you have written and those provided by a
 package. The latter is of course more radical, and requires you to
 reinstall the package if you change your mind.
 
+Packages can also be removed via the command line: use the
+\cmd{install} command with the name of an installed package plus
+\option{remove} or \option{purge}. The former option unloads a package
+from memory and also removes its menu attachment, if any (see
+section~\ref{manage-menus}); the latter option performs these action
+but also deletes the package file(s).
+
 
 \section{Using function packages: the basics}
 
@@ -1290,11 +1297,11 @@ function, insofar as explanation is reasonably required. (A boolean
 \texttt{verbose} parameter probably doesn't need much if any comment,
 but most parameters do need comment.)
 
-If the help is not in PDF format (FIXME add cross-ref) it must be
-encoded in UTF-8 (or plain ASCII, which is a proper subset of
-UTF-8). We also recommend that lines of text are kept to close to 70
-characters in width: some people may like to run gretl windows at
-full-screen size, but many of us do not!
+If the help is not in PDF format it must be encoded in UTF-8 (or plain
+ASCII, which is a proper subset of UTF-8). We also recommend that
+lines of text are kept to close to 70 characters in width: some people
+may like to run gretl windows at full-screen size, but many of us do
+not!
 
 \subsection{Sample script}
 \label{sec:common-sample}
@@ -1959,7 +1966,7 @@ The question arises: if your initial work was via the GUI, or via the
 CLI, are you thereby committed to that mode of operation forever?
 Certainly not. You can mix and match the two approaches, subject to
 some basic requirements---although, if your package is truly complex,
-we advise sticking with the commmand-line approach thoughout.
+we advise sticking with the commmand-line approach throughout.
 
 \textit{Case 1}: You started via the GUI but you'd like to explore
 maintaining your package by CLI means. Fine, you can disassemble your

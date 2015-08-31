@@ -2149,7 +2149,7 @@ static void maybe_schedule_graph_callback (ExecState *s)
 	if (gui_mode && *s->cmd->savename != '\0') {
 	    /* FIXME? */
 	    pprintf(s->prn, "Warning: ignoring \"%s <-\"\n", s->cmd->savename);
-	}	
+	}
 	report_plot_written(s->prn);
     } else if (gui_mode) {
 	schedule_callback(s);
