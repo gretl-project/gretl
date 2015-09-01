@@ -29,9 +29,9 @@ loop while crit > 1.0e-9 --quiet
    de_m = -e(-1) -m * de_m(-1)
    
    # partials of l wrt c, a and m
-   genr sc_c = -de_c * e
-   genr sc_a = -de_a * e
-   genr sc_m = -de_m * e
+   series sc_c = -de_c * e
+   series sc_a = -de_a * e
+   series sc_m = -de_m * e
    
    # OPG regression
    ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv

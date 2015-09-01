@@ -20,12 +20,12 @@ restrict --quiet
 end restrict
 
 # Manual equivalent to the above...
-genr essu = $ess
-genr dfu = $df
-genr vsum = WHITE + ADMEXP
+scalar essu = $ess
+scalar dfu = $df
+series vsum = WHITE + ADMEXP
 ols 1 0 2 3 vsum
-genr essr = $ess
-genr Fval = (essr - essu)/(essu/dfu)
+scalar essr = $ess
+scalar Fval = (essr - essu)/(essu/dfu)
 pvalue F 1 dfu Fval 
 
 # Try testing for sum of coefficients

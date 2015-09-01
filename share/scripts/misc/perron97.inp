@@ -3,46 +3,46 @@ function scalar perron_test (series y, int maxlag, scalar testsig,
 
    # generate trend, first lag, first difference
    genr time
-   genr y_1 = y(-1)
-   genr dyt = diff(y)
+   series y_1 = y(-1)
+   series dyt = diff(y)
 
    # starting year for the series (the first non-missing obs)
-   genr startyr = firstobs(y)
+   scalar startyr = firstobs(y)
     
-   genr t_a_min = 1.0E20
-   genr Tbstar = 0
-   genr Tbk = 0
+   scalar t_a_min = 1.0E20
+   scalar Tbstar = 0
+   scalar Tbk = 0
 
    # loop across possible breakpoints
 
-   genr Tbmin = startyr + maxlag + 2
-   genr Tbmax = max(time) - 3
+   scalar Tbmin = startyr + maxlag + 2
+   scalar Tbmax = max(time) - 3
 
    loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1) --quiet
 
-      if (verbose > 1)
+      if verbose > 1
          printf "Trying break in %s:\n", obslabel(Tb)
       endif
 
-      genr DU = (time > Tb)
-      genr DT = (time = (Tb + 1))
-      genr kstar = 0
+      series DU = (time > Tb)
+      series DT = (time = (Tb + 1))
+      scalar kstar = 0
 
       # Try trimming the list of lags
       loop for (k=maxlag; k>0; k-=1) --quiet
          ols y 0 DU time DT y_1 dyt(-1 to -k) --quiet
 
          # test significance of the last lag
-         genr tstat = $coeff(dyt_$k) / $stderr(dyt_$k)
-         genr pv = 2 * pvalue(z, abs(tstat))
+         scalar tstat = $coeff(dyt_$k) / $stderr(dyt_$k)
+         scalar pv = 2 * pvalue(z, abs(tstat))
 
-         if (verbose > 2)
+         if verbose > 2
             printf "\tlast lag (%2d): t = %8.4f, asy. p-value = %6.4f\n", \ 
             k, tstat, pv
          endif
 
-         if (pv < testsig)
-            genr kstar = k
+         if pv < testsig
+            kstar = k
             break
          endif
       endloop
@@ -52,21 +52,21 @@ function scalar perron_test (series y, int maxlag, scalar testsig,
          ols y 0 DU time DT y_1 --quiet
       endif
    
-      genr t_alpha = ($coeff(y_1) - 1.0) / $stderr(y_1)
-      if (verbose > 1)
+      scalar t_alpha = ($coeff(y_1) - 1.0) / $stderr(y_1)
+      if verbose > 1
          printf "\tt_alpha = %8g (k=%d)\n\n", t_alpha, kstar
       endif
    
       if t_alpha < t_a_min
-         genr t_a_min = t_alpha
-         genr Tbstar = Tb
-         genr Tbk = kstar
+         t_a_min = t_alpha
+         Tbstar = Tb
+         Tbk = kstar
       endif
    
    endloop
 
-   genr DU = (time > Tbstar)
-   genr DT = (time = (Tbstar + 1))
+   series DU = time > Tbstar
+   series DT = time == (Tbstar + 1)
    # print -o time yr DU DT
 
    printf "\n*** min(t_alpha) = %g in %s (k=%d) ***\n", \
@@ -74,7 +74,7 @@ function scalar perron_test (series y, int maxlag, scalar testsig,
 
    # print the regression ("Model 1") with the selected break year
 
-   if (verbose > 0)
+   if verbose > 0
       if Tbk > 0
          ols y 0 DU time DT y_1 dyt(-1 to -Tbk)
       else
@@ -89,7 +89,7 @@ function scalar perron_test (series y, int maxlag, scalar testsig,
    endif
 
    # just checking
-   genr t_alpha = ($coeff(y_1) - 1.0) / $stderr(y_1)
+   scalar t_alpha = ($coeff(y_1) - 1.0) / $stderr(y_1)
    printf "check: t_alpha = %g\n", t_alpha
 
    return t_alpha
@@ -108,7 +108,7 @@ end function
 open np.gdt
 
 # Select the variable to test (here, the natural log of real GNP)
-genr y = log(rgnp)
+series y = log(rgnp)
 
 # Maximum lag to try for the first difference of y
 scalar maxlag = 10

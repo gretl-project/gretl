@@ -6,7 +6,7 @@ open sw_ch14.gdt
 set force_hc on
 set hc_version 1
 
-genr infl = 400 * log(PUNEW/PUNEW(-1))
+series infl = 400 * log(PUNEW/PUNEW(-1))
 diff infl 
 lags d_infl LHUR
 smpl 1962:1 1999:4

@@ -8,7 +8,7 @@ set force_hc on
 set hc_version 1
 
 # generate inflation rate
-genr infl = 400 * log(PUNEW/PUNEW(-1))
+series infl = 400 * log(PUNEW/PUNEW(-1))
 diff infl 
 lags d_infl LHUR
 smpl 1962:1 1999:4
@@ -29,7 +29,7 @@ ols d_infl 0 d_infl(-1 to -4) LHUR_1 --robust
 ols d_infl 0 d_infl(-1 to -4) LHUR(-1 to -4) --robust
 
 # ADF regression, equation 12.34
-genr infl_1 = infl(-1)
+series infl_1 = infl(-1)
 ols d_infl 0 infl_1 d_infl(-1 to -4)
-genr adft = $coeff(infl_1) / $stderr(infl_1)
+scalar adft = $coeff(infl_1) / $stderr(infl_1)
 print adft

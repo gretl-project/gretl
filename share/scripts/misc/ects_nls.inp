@@ -4,10 +4,10 @@
 
 open ects_nls.gdt
 ols y 0 x1 x2 --vcv
-genr alpha = $coeff(0)
-genr beta = $coeff(x1)
-genr a0 = alpha
-genr b0 = beta
+scalar alpha = $coeff[1]
+scalar beta = $coeff[2]
+scalar a0 = alpha
+scalar b0 = beta
 
 # with analytical derivatives
 nls y = alpha + beta*x1 + (1/beta)*x2
@@ -16,8 +16,8 @@ nls y = alpha + beta*x1 + (1/beta)*x2
 end nls --vcv
 
 # with numerical derivatives
-genr alpha = a0
-genr beta = b0
+alpha = a0
+beta = b0
 nls y = alpha + beta*x1 + (1/beta)*x2
  params alpha beta
 end nls --vcv

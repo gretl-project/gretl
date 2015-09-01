@@ -9,7 +9,7 @@ labels
 # we subtract one to give a base of zero, mark the resulting
 # variable as discrete, examine its frequency distribution,
 # then relate it to gender (Z1) and age in years (Z2)
-genr rat = Z8 - 1
+series rat = Z8 - 1
 discrete rat 
 freq rat
 

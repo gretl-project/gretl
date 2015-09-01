@@ -6,13 +6,13 @@
 open hamilton.gdt
 
 # log of US price level
-genr p = 100*(log(PZUNEW)-log(PZUNEW[1973:01]))
+series p = 100*(log(PZUNEW)-log(PZUNEW[1973:01]))
 
 # log of exchange rate
-genr s = -100*(log(EXRITL)-log(EXRITL[1973:01]))
+series s = -100*(log(EXRITL)-log(EXRITL[1973:01]))
 
 # log of Italian price level
-genr pf = 100*(log(PC6IT)-log(PC6IT[1973:01]))
+series pf = 100*(log(PC6IT)-log(PC6IT[1973:01]))
 
 # Set the sample period used by Hamilton
 smpl 1974:2 ;

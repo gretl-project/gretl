@@ -4,12 +4,12 @@
 # application of quantile-regression methodology",
 # Economics Letters 99 (2008) pp. 387-9.
 open mrw.gdt
-genr ly60 = log(gdp60)
-genr dlny = log(gdp85) - ly60
-genr ngd = 0.05 + (popgrow/100)
-genr lngd = log(ngd)
-genr linv = log(inv/100)
-genr lschool = log(school/100)
+series ly60 = log(gdp60)
+series dlny = log(gdp85) - ly60
+series ngd = 0.05 + (popgrow/100)
+series lngd = log(ngd)
+series linv = log(inv/100)
+series lschool = log(school/100)
 # set sample to non-oil producing countries
 smpl nonoil --dummy
 # OLS, as per M, R & W

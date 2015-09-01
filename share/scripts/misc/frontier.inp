@@ -20,9 +20,9 @@ series p3 = ln(P3)
 
 # Cobb-Douglas cost function with homogeneity restrictions 
 # (unreported - used for initialization)
-genr rcost = cost - p1
-genr rp2 = p2 - p1
-genr rp3 = p3 - p1
+series rcost = cost - p1
+series rp2 = p2 - p1
+series rp3 = p3 - p1
 list X = const q1 q2 rp2 rp3 
 ols rcost X --quiet
 

@@ -4,10 +4,10 @@ open ooballot
 smpl Status > 0 --restrict
 
 # split CPI on median
-genr hicorr = CPI<3.95
+series hicorr = CPI < 3.95
 
 # make binary approval variable (omits abstainers)
-genr approv = (Vote=0)? 0 : ((Vote>1)? 1 : NA)
+series approv = (Vote==0)? 0 : ((Vote>1)? 1 : NA)
 
 # mark the two new variables as discrete
 discrete hicorr approv
@@ -29,7 +29,7 @@ probit Vote 0 CPI --robust
 # Compare the rank-sum test given on effi.org, using
 # all non-abstaining countries for which CPI is available
 smpl --full
-genr capp = (Vote > 1)? CPI : NA
-genr cdis = (Vote = 0)? CPI : NA
+series capp = (Vote > 1)? CPI : NA
+series cdis = (Vote == 0)? CPI : NA
 difftest capp cdis --rank-sum
 
