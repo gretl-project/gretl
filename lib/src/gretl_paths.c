@@ -1324,11 +1324,17 @@ char *search_dir (char *fname, const char *topdir, int flags)
 
     if (gretl_path_prepend(fname, topdir) == 0) {
 	err = gretl_test_fopen(fname, "r");
+#if SEARCH_DEBUG
+	fprintf(stderr, " trying '%s'\n", fname);
+#endif	
 	if (!err) {
 	    return fname;
 	}
 	if (flags & ADD_GDT) {
 	    if (maybe_add_suffix(fname, ".gdt")) {
+#if SEARCH_DEBUG
+		fprintf(stderr, " trying '%s'\n", fname);
+#endif		
 		err = gretl_test_fopen(fname, "r");
 		if (!err) {
 		    return fname;
