@@ -7723,7 +7723,7 @@ void finalize_reusable_output_window (windata_t *vwin)
     clear_output_handler();
 }
 
-static int maybe_stop_script (void)
+static int maybe_stop_script (GtkWidget *parent)
 {
     int resp, stop = 0;
 
@@ -7735,7 +7735,7 @@ static int maybe_stop_script (void)
 			 _("Opening a new data file will automatically\n"
 			   "close the current one.  Any unsaved work\n"
 			   "will be lost.  Proceed to open data file?"),
-			 NULL);
+			 parent);
 
     if (resp == GRETL_YES) {
 	if (oh.vwin != NULL) {
@@ -9212,7 +9212,7 @@ static int gui_try_http (const char *s, char *fname, int *http)
 }
 
 static int script_open_append (ExecState *s, DATASET *dset, 
-			       PRN *prn)
+			       PRN *prn, GtkWidget *parent)
 {
     gretlopt opt = s->cmd->opt;
     PRN *vprn = prn;
@@ -9265,7 +9265,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 
     if ((data_status & MODIFIED_DATA) && !dbdata && cmd->ci != APPEND) {
 	/* Requested by Sven: is it a good idea? */
-	if (maybe_stop_script()) {
+	if (maybe_stop_script(parent)) {
 	    return 1;
 	}
     }
@@ -9534,7 +9534,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 
     case OPEN:
     case APPEND:
-	err = script_open_append(s, dset, prn);
+	err = script_open_append(s, dset, prn, parent);
 	break;
 
     case INSTALL:
