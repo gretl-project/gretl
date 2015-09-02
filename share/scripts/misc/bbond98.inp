@@ -6,10 +6,11 @@ open abdata.gdt
 
 # compose list of regressors
 list X = w w(-1) k k(-1)
+list Z = w k
 
 # Blundell and Bond, Table 4: 1976-86 GMM-DIF
-dpanel 1 ; n X const ; GMM(w,2,99) GMM(k,2,99) --time --two-step --dpd
+dpanel 1 ; n X const ; GMM(Z,2,99) --time --two-step --dpd
 
 # Blundell and Bond, Table 4: 1976-86 GMM-SYS
-dpanel 1 ; n X const ; GMM(w,2,99) GMM(k,2,99) \
-  GMMlevel(w,1,1) GMMlevel(k,1,1) --time --two-step --dpd --system
+dpanel 1 ; n X const ; GMM(Z,2,99) GMMlevel(Z,1,1) \
+  --time --two-step --dpd --system
