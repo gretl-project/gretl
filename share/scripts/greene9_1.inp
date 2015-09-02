@@ -1,6 +1,8 @@
+# Replicate the comparison of OLS and LAD in section 9.8.1
+# of William Greene's Econometric Analysis, 4e
 open greene9_1.gdt
 series l_valadd = log(valadd)
-list X = capital labor nfirm
+list X = capital labor
 list lX = log(X)
 ols l_valadd 0 lX
 lad l_valadd 0 lX
