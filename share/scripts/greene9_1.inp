@@ -1,5 +1,7 @@
-open greene9_1.dat
-logs
-ols 5 0 6 7
-lad 5 0 6 7
+open greene9_1.gdt
+series l_valadd = log(valadd)
+list X = capital labor nfirm
+list lX = log(X)
+ols l_valadd 0 lX
+lad l_valadd 0 lX
 
