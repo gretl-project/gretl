@@ -1316,8 +1316,8 @@ char *search_dir (char *fname, const char *topdir, int flags)
     int err;
 
 #if SEARCH_DEBUG
-    fprintf(stderr, "search_dir: trying '%s' for '%s'\n",
-	    topdir, fname);
+    fprintf(stderr, "search_dir: trying '%s' for '%s' (ADD_GDT=%d)\n",
+	    topdir, fname, flags & ADD_GDT);
 #endif
 
     strcpy(orig, fname);
