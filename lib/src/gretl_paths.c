@@ -101,7 +101,7 @@ const char *helpfile_path (int id)
 
 static int maybe_add_suffix (char *fname, const char *sfx)
 {
-    if (strrchr(fname, '.') == NULL) {
+    if (!has_suffix(fname, sfx)) {
 	strcat(fname, sfx);
 	return 1;
     }
@@ -1308,7 +1308,7 @@ static int find_in_subdir (const char *topdir, char *fname, int flags)
 
 #endif /* win32 vs posix */
 
-#define SEARCH_DEBUG 1
+#define SEARCH_DEBUG 0
 
 char *search_dir (char *fname, const char *topdir, int flags)
 {
