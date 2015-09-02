@@ -2606,6 +2606,20 @@ static int process_command_list (CMD *c, DATASET *dset)
 	c->err = check_arma_ilist(ilist, vectest);
     }
 
+    if (!c->err && *lstr != '\0') {
+	tailstrip(lstr);
+	if (c->ci == ARBOND || c->ci == DPANEL) {
+	    /* We may have a ';' separator that's not followed
+	       by any regular second list, just GMM() terms; so
+	       don't error out on a trailing ';' in defining a
+	       list.
+	    */
+	    if (lstr[strlen(lstr)-1] == ';') {
+		lstr[strlen(lstr)-1] = '\0';
+	    }
+	}
+    }
+
 #if CDEBUG > 1
     fprintf(stderr, "process_command_list: lstr='%s' (err=%d)\n", lstr, c->err);
 #endif
