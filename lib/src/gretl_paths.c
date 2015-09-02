@@ -1308,7 +1308,7 @@ static int find_in_subdir (const char *topdir, char *fname, int flags)
 
 #endif /* win32 vs posix */
 
-#define SEARCH_DEBUG 0
+#define SEARCH_DEBUG 1
 
 char *search_dir (char *fname, const char *topdir, int flags)
 {
@@ -2040,6 +2040,9 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
     }
 
     if (g_path_is_absolute(fullname)) {
+#if SEARCH_DEBUG
+	fprintf(stderr, "g_path_is_absolute: returning '%s'\n", fullname);
+#endif	
 	return 0;
     }
 
