@@ -2672,14 +2672,27 @@ static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	gretl_matrix *b = l->v.m;
+	gretl_matrix *b = NULL;
 	const char *sf = m->v.str;
 	const char *sg = NULL;
 
-	if (r->t == STR) {
-	    sg = r->v.str;
-	} else if (r->t != EMPTY) {
-	    p->err = E_TYPES;
+	if (l->t == U_ADDR) {
+	    l = l->v.b1.b;
+	    if (l->t != MAT) {
+		p->err = E_TYPES;
+	    } else {
+		b = l->v.m;
+	    }
+	} else {
+	    b = l->v.m;
+	}
+
+	if (!p->err) {
+	    if (r->t == STR) {
+		sg = r->v.str;
+	    } else if (r->t != EMPTY) {
+		p->err = E_TYPES;
+	    }
 	}
 
 	if (!p->err && !is_function_call(sf)) {
@@ -2717,15 +2730,28 @@ static NODE *simann_node (NODE *l, NODE *m, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	gretl_matrix *b = l->v.m;
+	gretl_matrix *b = NULL;
 	const char *sf = m->v.str;
 	int maxit = 0;
 
-	if (gretl_is_null_matrix(b)) {
-	    p->err = E_DATA;
-	} else if (!is_function_call(sf)) {
-	    p->err = E_TYPES;
-	} 
+	if (l->t == U_ADDR) {
+	    l = l->v.b1.b;
+	    if (l->t != MAT) {
+		p->err = E_TYPES;
+	    } else {
+		b = l->v.m;
+	    }
+	} else {
+	    b = l->v.m;
+	}
+
+	if (!p->err) {
+	    if (gretl_is_null_matrix(b)) {
+		p->err = E_DATA;
+	    } else if (!is_function_call(sf)) {
+		p->err = E_TYPES;
+	    }
+	}
 
 	if (!p->err) {
 	    if (scalar_node(r)) {
@@ -8868,6 +8894,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		break;
 	    }
 	    if (i == 0) {
+		if (e->t == U_ADDR) {
+		    e = e->v.b1.b;
+		}
 		if (e->t != MAT) {
 		    node_type_error(t->t, i+1, MAT, e, p);
 		} else {
@@ -11563,16 +11592,16 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_BFGSMAX:
-	/* matrix, plus one or two string args */
-	if (l->t == MAT && m->t == STR) {
+	/* matrix-pointer, plus one or two string args */
+	if ((l->t == U_ADDR || l->t == MAT) && m->t == STR) {
 	    ret = BFGS_maximize(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
 	} 
 	break;
     case F_SIMANN:
-	/* matrix, plus string and int args */
-	if (l->t == MAT && m->t == STR) {
+	/* matrix-pointer, plus string and int args */
+	if ((l->t == U_ADDR || l->t == MAT) && m->t == STR) {
 	    ret = simann_node(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
