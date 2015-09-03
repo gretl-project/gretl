@@ -4614,9 +4614,6 @@ static int get_plot_ranges (png_plot *plot, PlotType ptype)
 	fprintf(stderr, "using px_height %d, px_width %d\n",
 		plot->pixel_height, plot->pixel_width);
 # endif
-	fprintf(stderr, "get_png_bounds_info(): OK\n");
-    } else {
-	fprintf(stderr, "get_png_bounds_info(): failed\n");
     }
 
     /* If got_x = 0 at this point, we didn't get an x-range out of 
