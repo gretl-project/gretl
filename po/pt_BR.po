@@ -10,15 +10,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-14 09:16-0400\n"
-"PO-Revision-Date: 2015-07-06 20:54-0300\n"
+"POT-Creation-Date: 2015-09-03 01:50-0300\n"
+"PO-Revision-Date: 2015-09-03 01:50-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.1\n"
+"X-Generator: Poedit 1.8.4\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -468,9 +468,9 @@ msgstr "Hipótese nula: o parâmetro de regressão é igual a zero para %s"
 
 #: lib/src/compare.c:278 lib/src/compare.c:281 lib/src/compare.c:284
 #: lib/src/describe.c:5939 lib/src/gretl_model.c:3684
-#: lib/src/gretl_model.c:3687 lib/src/gretl_model.c:3694
-#: lib/src/nonparam.c:980 lib/src/nonparam.c:1117 lib/src/varprint.c:1249
-#: lib/src/varprint.c:1255 lib/src/varprint.c:1263
+#: lib/src/gretl_model.c:3687 lib/src/gretl_model.c:3694 lib/src/nonparam.c:980
+#: lib/src/nonparam.c:1117 lib/src/varprint.c:1249 lib/src/varprint.c:1255
+#: lib/src/varprint.c:1263
 msgid "Null hypothesis"
 msgstr "Hipótese nula"
 
@@ -514,19 +514,18 @@ msgstr "Teste de Wald"
 #: lib/src/graphing.c:4374 lib/src/gretl_model.c:3743
 #: lib/src/gretl_model.c:3757 lib/src/gretl_model.c:3760
 #: lib/src/gretl_model.c:3785 lib/src/gretl_panel.c:3725
-#: lib/src/gretl_panel.c:3983 lib/src/modelprint.c:197
-#: lib/src/modelprint.c:375 lib/src/modelprint.c:379 lib/src/modelprint.c:469
-#: lib/src/modelprint.c:472 lib/src/modelprint.c:493 lib/src/modelprint.c:496
-#: lib/src/modelprint.c:2423 lib/src/modelprint.c:2428
-#: lib/src/modelprint.c:2450 lib/src/modelprint.c:2455
-#: lib/src/modelprint.c:2947 lib/src/modelprint.c:5120
-#: lib/src/modelprint.c:5143 lib/src/printout.c:325 lib/src/pvalues.c:2636
-#: lib/src/pvalues.c:3301 lib/src/system.c:1247 lib/src/system.c:1300
-#: lib/src/system.c:3381 lib/src/system.c:3403 lib/src/system.c:3475
-#: lib/src/system.c:3493 lib/src/system.c:4602 lib/src/varprint.c:853
-#: lib/src/varprint.c:857 lib/src/varprint.c:1258 lib/src/varprint.c:1266
-#: lib/src/vartest.c:76 lib/src/vartest.c:814 lib/src/vartest.c:1101
-#: plugin/johansen.c:1813 plugin/jrestrict.c:2811
+#: lib/src/gretl_panel.c:3983 lib/src/modelprint.c:197 lib/src/modelprint.c:375
+#: lib/src/modelprint.c:379 lib/src/modelprint.c:469 lib/src/modelprint.c:472
+#: lib/src/modelprint.c:493 lib/src/modelprint.c:496 lib/src/modelprint.c:2423
+#: lib/src/modelprint.c:2428 lib/src/modelprint.c:2450
+#: lib/src/modelprint.c:2455 lib/src/modelprint.c:2947
+#: lib/src/modelprint.c:5120 lib/src/modelprint.c:5143 lib/src/printout.c:325
+#: lib/src/pvalues.c:2636 lib/src/pvalues.c:3301 lib/src/system.c:1247
+#: lib/src/system.c:1300 lib/src/system.c:3381 lib/src/system.c:3403
+#: lib/src/system.c:3475 lib/src/system.c:3493 lib/src/system.c:4602
+#: lib/src/varprint.c:853 lib/src/varprint.c:857 lib/src/varprint.c:1258
+#: lib/src/varprint.c:1266 lib/src/vartest.c:76 lib/src/vartest.c:814
+#: lib/src/vartest.c:1101 plugin/johansen.c:1813 plugin/jrestrict.c:2811
 msgid "Chi-square"
 msgstr "Qui-quadrado"
 
@@ -1146,20 +1145,19 @@ msgstr ""
 msgid "Failed to interpret the data as numeric\n"
 msgstr "Falha ao interpretar os dados como sendo numéricos\n"
 
-#: lib/src/csvdata.c:3498 plugin/eviews_import.c:554
-#: plugin/excel_import.c:1741 plugin/gnumeric_import.c:832
-#: plugin/jmulti_import.c:379 plugin/sas_import.c:686
-#: plugin/spss_import.c:1942 plugin/stata_import.c:1752
+#: lib/src/csvdata.c:3498 plugin/eviews_import.c:554 plugin/excel_import.c:1741
+#: plugin/gnumeric_import.c:832 plugin/jmulti_import.c:379
+#: plugin/sas_import.c:686 plugin/spss_import.c:1942 plugin/stata_import.c:1752
 #: plugin/xlsx_import.c:1385
 msgid "warning: some variable names were duplicated\n"
 msgstr "aviso: alguns nomes de variáveis estavam repetidos\n"
 
-#: lib/src/csvdata.c:3536 plugin/eviews_import.c:520
-#: plugin/eviews_import.c:535 plugin/excel_import.c:1575
-#: plugin/gnumeric_import.c:653 plugin/jmulti_import.c:350
-#: plugin/jmulti_import.c:367 plugin/sas_import.c:647 plugin/sas_import.c:660
-#: plugin/spss_import.c:1847 plugin/spss_import.c:1868
-#: plugin/stata_import.c:1720 plugin/stata_import.c:1731
+#: lib/src/csvdata.c:3536 plugin/eviews_import.c:520 plugin/eviews_import.c:535
+#: plugin/excel_import.c:1575 plugin/gnumeric_import.c:653
+#: plugin/jmulti_import.c:350 plugin/jmulti_import.c:367
+#: plugin/sas_import.c:647 plugin/sas_import.c:660 plugin/spss_import.c:1847
+#: plugin/spss_import.c:1868 plugin/stata_import.c:1720
+#: plugin/stata_import.c:1731
 msgid "Out of memory\n"
 msgstr "Memória esgotada\n"
 
@@ -1653,19 +1651,17 @@ msgid "Autocorrelation function for %s"
 msgstr "Função de autocorrelação para %s"
 
 #: lib/src/describe.c:3088
-#, fuzzy
 msgid "***, **, * indicate significance at the 1%, 5%, 10% levels\n"
-msgstr "** indica significância ao nível de 5 por cento"
+msgstr "***, **, * indicam significância aos níveis de 1%, 5% e 10%\n"
 
 #: lib/src/describe.c:3091
-#, fuzzy
 msgid "using Bartlett standard errors for ACF"
-msgstr "Erros padrão agrupados"
+msgstr "usando erros padrão de Bartlett para o ACF"
 
 #: lib/src/describe.c:3093
-#, fuzzy, c-format
+#, c-format
 msgid "using standard error 1/T^%.1f"
-msgstr "Erros padrão robustos"
+msgstr "usando erro padrão 1/T^%.1f"
 
 #: lib/src/describe.c:3111
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
@@ -2943,9 +2939,9 @@ msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "elipse a %g%% de confiança e %g%% de intervalos marginais"
 
 #: lib/src/graphing.c:6765
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "95% interval"
-msgstr "(intervalo 90%)"
+msgstr "intervalo 95%"
 
 #: lib/src/graphing.c:6791
 msgid "Residual ACF"
@@ -3306,8 +3302,8 @@ msgid "%s: invalid return type for function"
 msgstr "%s: tipo de retorno inválido para função"
 
 #: lib/src/gretl_func.c:2441 lib/src/gretl_func.c:2501
-#: lib/src/gretl_func.c:2577 lib/src/gretl_utils.c:1750
-#: lib/src/interact.c:1085 gui2/dialogs.c:5524 plugin/tramo-x12a.c:789
+#: lib/src/gretl_func.c:2577 lib/src/gretl_utils.c:1750 lib/src/interact.c:1085
+#: gui2/dialogs.c:5524 plugin/tramo-x12a.c:789
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Não foi possível abrir %s"
@@ -3369,14 +3365,14 @@ msgid "%s: duplicated parameter name '%s'"
 msgstr "%s: nome de parâmetro duplicado '%s'"
 
 #: lib/src/gretl_func.c:5921
-#, fuzzy, c-format
+#, c-format
 msgid "%s: expected an integer but found %g"
-msgstr "%s: é esperada uma ordem inteira"
+msgstr "%s: esperado um inteiro mas foi encontrado %g"
 
 #: lib/src/gretl_func.c:5948
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument value %g is out of bounds"
-msgstr "%s, o argumento %d: valor%g está fora dos limites\n"
+msgstr "%s: o valor do argumento %g está fora dos limites"
 
 #: lib/src/gretl_func.c:6020
 msgid "Duplicated pointer argument: not allowed"
@@ -3690,8 +3686,7 @@ msgstr "gl (denomimador)"
 #: lib/src/gretl_model.c:3860 lib/src/modelprint.c:5189
 #: lib/src/modelprint.c:5200 lib/src/modelprint.c:5202 lib/src/varprint.c:946
 #: lib/src/varprint.c:950 lib/src/varprint.c:954 gui2/calculator.c:2007
-#: gui2/calculator.c:2010 plugin/anova.c:85 plugin/anova.c:96
-#: plugin/anova.c:98
+#: gui2/calculator.c:2010 plugin/anova.c:85 plugin/anova.c:96 plugin/anova.c:98
 msgid "df"
 msgstr "gl"
 
@@ -4051,8 +4046,7 @@ msgstr "Erro padrão da regressão"
 msgid "Robust chi^2"
 msgstr "Qui^2 robusto"
 
-#: lib/src/gretl_restrict.c:2246 lib/src/subsample.c:2998
-#: lib/src/system.c:1242
+#: lib/src/gretl_restrict.c:2246 lib/src/subsample.c:2998 lib/src/system.c:1242
 msgid "restriction"
 msgstr "restrição"
 
@@ -4523,21 +4517,21 @@ msgstr "Foram encontrados valores não positivos"
 #: lib/src/matrix_extra.c:1558
 #, c-format
 msgid "%s: matrix is NULL"
-msgstr ""
+msgstr "%s: matriz é NULA"
 
 #: lib/src/matrix_extra.c:1560
 msgid "matrix is NULL"
-msgstr ""
+msgstr "matriz é NULA"
 
 #: lib/src/matrix_extra.c:1566
-#, fuzzy, c-format
+#, c-format
 msgid "%s: matrix is empty (%d x %d)"
-msgstr "Matriz nula, %d x %d\n"
+msgstr "%s: matriz está vazia (%d x %d)"
 
 #: lib/src/matrix_extra.c:1569
-#, fuzzy, c-format
+#, c-format
 msgid "matrix is empty (%d x %d)"
-msgstr "Matriz nula, %d x %d\n"
+msgstr "matriz está vazia (%d x %d)"
 
 #: lib/src/missing.c:551
 #, c-format
@@ -5347,7 +5341,7 @@ msgstr "Usando %d pontos de quadratura"
 
 #: lib/src/modelprint.c:2081
 msgid "Without squared terms in variance equation"
-msgstr ""
+msgstr "Sem termos quadrados na equação da variância"
 
 #: lib/src/modelprint.c:2094
 msgid "Allowing for groupwise heteroskedasticity"
@@ -5709,8 +5703,8 @@ msgstr "Imaginária"
 msgid "Modulus"
 msgstr "Módulo"
 
-#: lib/src/modelprint.c:4904 lib/src/modelprint.c:4912
-#: lib/src/subsample.c:2986 lib/src/subsample.c:3008 lib/src/subsample.c:3063
+#: lib/src/modelprint.c:4904 lib/src/modelprint.c:4912 lib/src/subsample.c:2986
+#: lib/src/subsample.c:3008 lib/src/subsample.c:3063
 msgid "Frequency"
 msgstr "Frequência"
 
@@ -5806,8 +5800,7 @@ msgid "modprint: expected %d names"
 msgstr "modprint: esperado %d nomes"
 
 #: lib/src/monte_carlo.c:249 lib/src/monte_carlo.c:668
-#: lib/src/monte_carlo.c:1619 lib/src/monte_carlo.c:1782
-#: lib/src/uservar.c:1627
+#: lib/src/monte_carlo.c:1619 lib/src/monte_carlo.c:1782 lib/src/uservar.c:1627
 #, c-format
 msgid "'%s': not a scalar"
 msgstr "'%s': não é um escalar"
@@ -5823,6 +5816,8 @@ msgid ""
 "Using the same index variable (%s) for nested loops:\n"
 "this is acceptable only with \"for\" loops."
 msgstr ""
+"Utilizando a mesma variável índice (%s) para loops aninhados:\n"
+"isto só é permitido em loops do tipo “for”."
 
 #: lib/src/monte_carlo.c:1244
 msgid "No valid loop condition was given."
@@ -6791,6 +6786,8 @@ msgid ""
 "The full dataset must be restored before imposing a permanent sample "
 "restriction"
 msgstr ""
+"O conjunto de dados completo deve ser restaurado antes de ser imposta uma "
+"restrição permanente na amostra"
 
 #: lib/src/subsample.c:2563 lib/src/subsample.c:2580
 msgid "error in new starting obs"
@@ -7611,7 +7608,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 6 de julho de 2015."
+"Tradução de 3 de setembro de 2015."
 
 #: gui2/about.c:203
 msgid "News"
@@ -8465,9 +8462,8 @@ msgstr "Aviso: a série tem observações ausentes"
 msgid "Couldn't access binary datafile"
 msgstr "Não foi possível acessar o arquivo de dados binário"
 
-#: gui2/database.c:796 gui2/session.c:156 gui2/session.c:163
-#: gui2/session.c:169 gui2/session.c:176 gui2/session.c:182
-#: gui2/session.c:3365
+#: gui2/database.c:796 gui2/session.c:156 gui2/session.c:163 gui2/session.c:169
+#: gui2/session.c:176 gui2/session.c:182 gui2/session.c:3365
 msgid "Display"
 msgstr "Visualizar"
 
@@ -8581,14 +8577,12 @@ msgid "Function package %s"
 msgstr "Pacotes de funções %s"
 
 #: gui2/datafiles.c:787
-#, fuzzy
 msgid "Unload member functions only"
-msgstr "Descarregar funções-membro"
+msgstr "Descarregar apenas funções-membro"
 
 #: gui2/datafiles.c:788
-#, fuzzy
 msgid "Unload and delete package file"
-msgstr "Deletar arquivo de pacote"
+msgstr "Descarregar e deletar arquivo de pacote"
 
 #: gui2/datafiles.c:793 gui2/session.c:2440
 #, c-format
@@ -8654,14 +8648,14 @@ msgstr "Acrescentar ao menu"
 
 #: gui2/datafiles.c:1336 gui2/datafiles.c:1494 gui2/gpt_control.c:3764
 #: gui2/gpt_control.c:3766 gui2/gpt_control.c:3880 gui2/session.c:165
-#: gui2/session.c:172 gui2/session.c:3421 gui2/toolbar.c:714
-#: gui2/toolbar.c:715 gui2/toolbar.c:716
+#: gui2/session.c:172 gui2/session.c:3421 gui2/toolbar.c:714 gui2/toolbar.c:715
+#: gui2/toolbar.c:716
 msgid "Help"
 msgstr "Ajuda"
 
 #: gui2/datafiles.c:1340 gui2/datafiles.c:1495
 msgid "Unload/delete..."
-msgstr ""
+msgstr "Descarregar/deletar…"
 
 #: gui2/datafiles.c:1343 gui2/datafiles.c:1498
 msgid "New"
@@ -10256,6 +10250,8 @@ msgid ""
 "This package requires data that are not currently in place.\n"
 "Would you like to open its sample script?"
 msgstr ""
+"Este pacote requer dados que não estão atualmente carregados.\n"
+"Gostaria de abrir seu script de exemplo?"
 
 #: gui2/fncall.c:2510
 #, c-format
@@ -10350,6 +10346,9 @@ msgid ""
 "the \"extra properties\" dialog (after applying any\n"
 "changes you wish to keep)."
 msgstr ""
+"Antes de adicionar ou remover funções, favor fechar\n"
+"a caixa de diálogo “propriedades extras” (após aplicar\n"
+"quaisquer mudanças que deseje manter)."
 
 #: gui2/fnsave.c:1002
 msgid ""
@@ -10449,9 +10448,8 @@ msgstr ""
 "(a) salvar este pacote, e (b) reiniciar o Gretl."
 
 #: gui2/fnsave.c:2148 gui2/fnsave.c:2167
-#, fuzzy
 msgid "Apply changes?"
-msgstr "Salvar alterações?"
+msgstr "Aplicar alterações?"
 
 #: gui2/fnsave.c:2293
 msgid "gretl: extra properties"
@@ -11650,9 +11648,8 @@ msgid "Drop observations with _missing values..."
 msgstr "Descartar observações co_m valores ausentes..."
 
 #: gui2/gretl.c:1650
-#, fuzzy
 msgid "Make current subsample permanent..."
-msgstr "Tornar isto permanente"
+msgstr "Tornar a subamostra corrente permanente"
 
 #: gui2/gretl.c:1652
 msgid "_Count missing values"
@@ -12925,16 +12922,12 @@ msgstr ""
 "modelo?"
 
 #: gui2/gui_utils.c:4905
-#, fuzzy
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled."
 msgstr ""
 "A amostra do modelo difere da amostra do conjunto de dados,\n"
-"por isto algumas opções do menu serão desabilitaras.\n"
-"\n"
-"Deseja restaurar a amostra utilizada na estimação deste\n"
-"modelo?"
+"por isto algumas opções do menu serão desabilitadas."
 
 #: gui2/gui_utils.c:4970 gui2/library.c:4955
 #, c-format
@@ -13288,6 +13281,12 @@ msgid ""
 "\n"
 "Do you want to go ahead with the subsampling now?"
 msgstr ""
+"Alterar o conjunto de dados desta forma fará com que %d\n"
+"modelo(s) seja(m) deletado(s) desta sessão do Gretl.\n"
+"\n"
+"Talvez você queira reponder Não aqui e salvar a sessão primeiro.\n"
+"\n"
+"Deseja continuar a operação de subamostragem agora?"
 
 #: gui2/library.c:1582
 #, c-format
@@ -13619,9 +13618,8 @@ msgid "correlogram"
 msgstr "correlograma"
 
 #: gui2/library.c:5519
-#, fuzzy
 msgid "Use Bartlett standard errors"
-msgstr "Erros padrão agrupados"
+msgstr "Usar erros padrão de Bartlett"
 
 #: gui2/library.c:5525 gui2/library.c:5529
 msgid "Maximum lag:"
@@ -14673,9 +14671,8 @@ msgid "Show interval for median"
 msgstr "Mostrar intervalo para a mediana"
 
 #: gui2/selector.c:5575
-#, fuzzy
 msgid "Variance equation includes squares"
-msgstr "Estimado usando mínimos quadrados"
+msgstr "Equação da variância inclui quadrados"
 
 #: gui2/selector.c:5581
 msgid "Parameter covariance matrix via Hessian"
@@ -15083,8 +15080,7 @@ msgstr "Acrescentar à tabela de modelos"
 msgid "Rename"
 msgstr "Renomear"
 
-#: gui2/session.c:164 gui2/session.c:171 gui2/session.c:3415
-#: gui2/toolbar.c:685
+#: gui2/session.c:164 gui2/session.c:171 gui2/session.c:3415 gui2/toolbar.c:685
 msgid "Clear"
 msgstr "Limpar"
 
@@ -15100,13 +15096,13 @@ msgstr "Editar comandos do gráfico"
 msgid "Export as CSV..."
 msgstr "Exportar como CSV..."
 
-#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208
-#: gui2/session.c:3295 gui2/session.c:3333 gui2/session.c:3344
+#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208 gui2/session.c:3295
+#: gui2/session.c:3333 gui2/session.c:3344
 msgid "Copy as CSV..."
 msgstr "Copiar como CSV..."
 
-#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215
-#: gui2/session.c:3282 gui2/session.c:3316 gui2/textutil.c:478
+#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215 gui2/session.c:3282
+#: gui2/session.c:3316 gui2/textutil.c:478
 msgid "View"
 msgstr "Ver"
 
@@ -16474,8 +16470,7 @@ msgid "No worksheets found"
 msgstr "Não foram encontradas planilhas"
 
 #: plugin/excel_import.c:1608 plugin/gnumeric_import.c:686
-#: plugin/ods_import.c:1082 plugin/xlsx_import.c:1140
-#: plugin/xlsx_import.c:1200
+#: plugin/ods_import.c:1082 plugin/xlsx_import.c:1140 plugin/xlsx_import.c:1200
 msgid "Invalid argument for worksheet import"
 msgstr "Argumento inválido para a importação de planilha"
 
