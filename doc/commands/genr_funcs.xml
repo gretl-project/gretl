@@ -7451,7 +7451,7 @@
 	  on white space.
 	</para>
 	<para>
-	  If the second argument is provide, returns space-separated
+	  If the second argument is provided, returns space-separated
 	  element <argname>i</argname> from the string
 	  <argname>s</argname>. The index <argname>i</argname> is
 	  1-based, and it is an error if <argname>i</argname> is less
