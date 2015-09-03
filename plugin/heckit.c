@@ -1455,7 +1455,14 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
     }
 
     if (!err) {
+	gretl_matrix *fV;
+	
 	adjust_ml_vcv_hyperbolic(HC);
+	fV = gretl_matrix_copy(HC->vcv);
+	if (fV != NULL) {
+	    /* experiment */
+	    gretl_model_set_matrix_as_data(hm, "full_vcv", fV);
+	}	
 	add_lambda_to_ml_vcv(HC);
 #if HDEBUG
 	for (i=0; i<np; i++) {

@@ -4360,6 +4360,9 @@ int bundlize_model_data_scalars (const MODEL *pmod, void *ptr)
 	} else if (item->type == GRETL_TYPE_DOUBLE) {
 	    xval = *(double *) item->ptr;
 	    err = gretl_bundle_set_scalar(b, item->key, xval);
+	} else if (item->type == GRETL_TYPE_MATRIX) {
+	    /* experiment: include matrices here */
+	    err = gretl_bundle_set_matrix(b, item->key, item->ptr);
 	}
     }
 
