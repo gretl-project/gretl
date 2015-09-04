@@ -1322,31 +1322,34 @@
 
     <function name="BFGSmax" section="numerical" output="scalar">
       <fnargs>
-	<fnarg type="vector">b</fnarg>
+	<fnarg type="matrixref">&amp;b</fnarg>
 	<fnarg type="fncall">f</fnarg>
 	<fnarg type="fncall" optional="true">g</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Numerical maximization via the method of Broyden, Fletcher, Goldfarb
-	  and Shanno.  The vector <argname>b</argname> should hold the initial
-	  values of a set of parameters, and the argument <argname>f</argname>
-	  should specify a call to a function that calculates the (scalar)
-	  criterion to be maximized, given the current parameter values and
-	  any other relevant data. If the object is in fact minimization, this
-	  function should return the negative of the criterion.  On successful
-	  completion, <lit>BFGSmax</lit> returns the maximized value of the
-	  criterion, and <argname>b</argname> holds the parameter values which
-	  produce the maximum.  
+	  Numerical maximization via the method of Broyden, Fletcher,
+	  Goldfarb and Shanno. On input the vector
+	  <argname>b</argname> should hold the initial values of a set
+	  of parameters, and the argument <argname>f</argname> should
+	  specify a call to a function that calculates the (scalar)
+	  criterion to be maximized, given the current parameter
+	  values and any other relevant data. If the object is in fact
+	  minimization, this function should return the negative of
+	  the criterion.  On successful completion, <lit>BFGSmax</lit>
+	  returns the maximized value of the criterion, and
+	  <argname>b</argname> holds the parameter values which
+	  produce the maximum.
 	</para>
 	<para>
-	  The optional third argument provides a means of supplying analytical
-	  derivatives (otherwise the gradient is computed numerically).  The
-	  gradient function call <argname>g</argname> must have as its first
-	  argument a pre-defined matrix that is of the correct size to contain
-	  the gradient, given in pointer form. It also must take the parameter
-	  vector as an argument (in pointer form or otherwise).  Other
-	  arguments are optional.
+	  The optional third argument provides a means of supplying
+	  analytical derivatives (otherwise the gradient is computed
+	  numerically).  The gradient function call
+	  <argname>g</argname> must have as its first argument a
+	  pre-defined matrix that is of the correct size to contain
+	  the gradient, given in pointer form. It also must take the
+	  parameter vector as an argument (in pointer form or
+	  otherwise).  Other arguments are optional.
 	</para>
 	<para>
 	  For more details and examples see the chapter on numerical
@@ -5391,7 +5394,7 @@
 
     <function name="NRmax" section="numerical" output="scalar">
       <fnargs>
-	<fnarg type="vector">b</fnarg>
+	<fnarg type="matrixref">&amp;b</fnarg>
 	<fnarg type="fncall">f</fnarg>
 	<fnarg type="fncall" optional="true">g</fnarg>
 	<fnarg type="fncall" optional="true">h</fnarg>
@@ -5399,8 +5402,8 @@
       <description>
 	<para>
 	  Numerical maximization via the Newton&ndash;Raphson method.
-	  The vector <argname>b</argname> should hold the initial
-	  values of a set of parameters, and the argument
+	  On input the vector <argname>b</argname> should hold the
+	  initial values of a set of parameters, and the argument
 	  <argname>f</argname> should specify a call to a function
 	  that calculates the (scalar) criterion to be maximized,
 	  given the current parameter values and any other relevant
@@ -7096,7 +7099,7 @@
 
     <function name="simann" section="numerical" output="scalar">
       <fnargs>
-	<fnarg type="vector">b</fnarg>
+	<fnarg type="matrixref">&amp;b</fnarg>
 	<fnarg type="fncall">f</fnarg>
 	<fnarg type="int" optional="true">maxit</fnarg>
       </fnargs>
@@ -7107,13 +7110,14 @@
 	  problem.
 	</para>
 	<para>
-	  The first argument holds the intial value of a parameter
-	  vector and the second argument specifies a function call
-	  which returns the (scalar) value of the maximand. The
-	  optional third argument specifies the maximum number of
-	  iterations (which defaults to 1024). On successful
+	  On input the first argument holds the initial value of a
+	  parameter vector and the second argument specifies a
+	  function call which returns the (scalar) value of the
+	  maximand. The optional third argument specifies the maximum
+	  number of iterations (which defaults to 1024). On successful
 	  completion, <lit>simann</lit> returns the final value of the
-	  maximand.
+	  maximand and <argname>b</argname> holds the associated
+	  parameter vector.
 	</para>
 	<para>
 	  For more details and an example see the chapter on numerical
