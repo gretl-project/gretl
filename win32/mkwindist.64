@@ -182,6 +182,9 @@ fi
 # add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
 add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
 
+# cert for cURL
+add_file ${WINFILES}/curl-ca-bundle.crt gretl/curl-ca-bundle.crt
+
 # GTK theme files, standard
 add_file $SYSTHEME/Emacs/gtk-2.0-key/gtkrc gretl/share/themes/Emacs/gtk-2.0-key/gtkrc
 add_file $SYSTHEME/Default/gtk-2.0-key/gtkrc gretl/share/themes/Default/gtk-2.0-key/gtkrc

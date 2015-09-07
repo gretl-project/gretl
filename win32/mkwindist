@@ -141,6 +141,8 @@ for f in \
 	libcairo-2.dll \
 	libcairo-gobject-2.dll \
 	libcurl-4.dll \
+	ssleay32.dll \
+	libeay32.dll \
 	libffi-6.dll \
 	libfftw3-3.dll \
 	libgailutil-18.dll \
@@ -179,6 +181,9 @@ fi
 # system DLLs for threads/openmp, if required
 # add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
 add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
+
+# cert for cURL
+add_file ${WINFILES}/curl-ca-bundle.crt gretl/curl-ca-bundle.crt
 
 # GTK theme files, standard
 add_file $SYSTHEME/Emacs/gtk-2.0-key/gtkrc gretl/share/themes/Emacs/gtk-2.0-key/gtkrc
