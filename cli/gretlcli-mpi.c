@@ -541,7 +541,8 @@ static int cli_try_http (const char *s, char *fname, int *http)
 {
     int err = 0;
 
-    if (strncmp(s, "http://", 7) == 0) {
+    if (strncmp(s, "http://", 7) == 0 ||
+	strncmp(s, "https://", 8) == 0) {
 #ifdef USE_CURL
 	err = retrieve_public_file(s, fname);
 	if (!err) {

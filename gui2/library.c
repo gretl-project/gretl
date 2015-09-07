@@ -9074,7 +9074,8 @@ int script_install_function_package (const char *pkgname,
 	return script_delete_function_package(pkgname, opt, prn);
     }
 
-    if (!strncmp(pkgname, "http://", 7)) {
+    if (!strncmp(pkgname, "http://", 7) ||
+	!strncmp(pkgname, "https://", 8)) {
 	http = 1;
     }
 
@@ -9201,7 +9202,8 @@ static int gui_try_http (const char *s, char *fname, int *http)
 {
     int err = 0;
 
-    if (strncmp(s, "http://", 7) == 0) {
+    if (strncmp(s, "http://", 7) == 0 ||
+	strncmp(s, "https://", 8) == 0) {
 	err = retrieve_public_file(s, fname);
 	if (!err) {
 	    *http = 1;

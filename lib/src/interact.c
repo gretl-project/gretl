@@ -1123,7 +1123,8 @@ static int lib_try_http (const char *s, char *fname, int *http)
 {
     int err = 0;
 
-    if (strncmp(s, "http://", 7) == 0) {
+    if (strncmp(s, "http://", 7) == 0 ||
+	strncmp(s, "https://", 8) == 0) {
 #ifdef USE_CURL
 	err = retrieve_public_file(s, fname);
 	if (!err) {
@@ -2018,7 +2019,8 @@ static int install_function_package (const char *pkgname,
     int http = 0;
     int err = 0;
 
-    if (!strncmp(pkgname, "http://", 7)) {
+    if (!strncmp(pkgname, "http://", 7) ||
+	!strncmp(pkgname, "https://", 8)) {
 	http = 1;
     }
 

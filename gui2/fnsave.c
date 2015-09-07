@@ -820,6 +820,7 @@ static int check_help_text (function_info *finfo)
 	   long lines, which will look ugly and broken in the
 	   gretl GUI.
 	*/
+	int max_ulen = 78;
 	int ulen, n = 0, err = 0;
 	char *p = s;
 
@@ -830,10 +831,10 @@ static int check_help_text (function_info *finfo)
 	    } else {
 		n++;
 	    }
-	    if (n > 72) {
+	    if (n > max_ulen) {
 		ulen = g_utf8_strlen(p, n);
-		if (ulen > 72) {
-		    warnbox(_("Please limit help text lines to 72 characters"));
+		if (ulen > max_ulen) {
+		    warnbox(_("Please limit help text lines to 78 characters"));
 		    err = 1;
 		}
 	    }
@@ -3303,7 +3304,7 @@ static void finfo_dialog (function_info *finfo)
 
 static void web_get_login (GtkWidget *w, gpointer p)
 {
-    browser_open("http://gretl.ecn.wfu.edu/apply/");
+    browser_open("http://gretl.ecn.wfu.edu/cgi-bin/apply/");
 }
 
 static void login_dialog (login_info *linfo, GtkWidget *parent)
@@ -3349,7 +3350,7 @@ static void login_dialog (login_info *linfo, GtkWidget *parent)
 
     hbox = label_hbox(vbox, 
 		      _("If you don't have a login to the gretl server\n"
-			"please see http://gretl.ecn.wfu.edu/apply/.\n"
+			"please see http://gretl.ecn.wfu.edu/cgi-bin/apply/.\n"
 			"The 'Website' button below should open this page\n"
 			"in your web browser."));
 
