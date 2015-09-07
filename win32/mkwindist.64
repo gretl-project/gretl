@@ -141,6 +141,8 @@ for f in \
 	libcairo-2.dll \
 	libcairo-gobject-2.dll \
 	libcurl-4.dll \
+	ssleay32.dll \
+	libeay32.dll \
 	libffi-6.dll \
 	libfftw3-3.dll \
 	libgailutil-18.dll \
