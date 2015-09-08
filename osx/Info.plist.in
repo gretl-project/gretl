@@ -84,6 +84,6 @@
   <key>CFBundleSignature</key>
   <string>grtl</string>
   <key>CFBundleVersion</key>
-  <string>@VERSION</string>
+  <string>@VERSION@</string>
 </dict>
 </plist>
