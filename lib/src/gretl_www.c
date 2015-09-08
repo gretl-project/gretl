@@ -39,6 +39,10 @@ enum {
 
 #define DBHLEN 64
 
+#if defined(WIN32) && defined(PKGBUILD)
+# define SSLWIN 1
+#endif
+
 static char dbhost[DBHLEN]       = "ricardo.ecn.wfu.edu";
 static char gretlhost[DBHLEN]    = "ricardo.ecn.wfu.edu";
 static char datacgi[DBHLEN]      = "/gretl/cgi-bin/gretldata.cgi";
@@ -399,6 +403,15 @@ static int curl_get (urlinfo *u)
 	if (wproxy && *proxyhost != '\0') {
 	    curl_easy_setopt(curl, CURLOPT_PROXY, proxyhost);
 	}
+
+#if SSLWIN
+	if (!strncmp(u->url, "https", 5)) {
+	    char cpath[MAXLEN];
+
+	    sprintf(cpath, "%scurl-ca-bundle.crt", gretl_home());
+	    curl_easy_setopt(curl, CURLOPT_CAINFO, cpath);
+	}
+#endif	
 
 	if (u->progfunc != NULL) {
 	    curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func);
