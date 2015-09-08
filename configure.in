@@ -947,6 +947,7 @@ extra/Makefile
 osx/Makefile
 osx/gretl.sh
 osx/fixlinks.sh
+osx/Info.plist
 redhat/gretl.spec
 utils/emacs/Makefile
 ])
