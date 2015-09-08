@@ -33,7 +33,7 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 
-#define FRED_SERVER "http://api.stlouisfed.org/fred"
+#define FRED_SERVER "https://api.stlouisfed.org/fred"
 
 #define DEBUG 0
 
@@ -923,7 +923,7 @@ static int get_api_key (const char *keyopt)
 	if (keyopt == NULL) {
 	    fprintf(stderr, "Perhaps you need to use --keyfile=filename ?\n");
 	}
-	fprintf(stderr, "Note: see http://api.stlouisfed.org/api_key.html\n");
+	fprintf(stderr, "Note: see https://api.stlouisfed.org/api_key.html\n");
     } else {
 	char line[64];
 
@@ -953,7 +953,7 @@ static int get_api_key (const char *keyopt)
    - get the observations for each series
 
    The following list of top-level categories can be updated via
-   http://api.stlouisfed.org/fred/category/children?category_id=0&api_key=$KEY
+   https://api.stlouisfed.org/fred/category/children?category_id=0&api_key=$KEY
 
    As of 2015-01-23:
 
