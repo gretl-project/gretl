@@ -232,6 +232,7 @@ struct str_table funcs[] = {
     { F_PXSUM,    "pxsum" },     /* panel x-sectional sum */
     { F_PSD,      "psd" },       /* panel std dev */
     { F_PSHRINK,  "pshrink" },
+    { F_PEXPAND,  "pexpand" },
     { F_HPFILT,   "hpfilt" },    /* Hodrick-Prescott filter */
     { F_BKFILT,   "bkfilt" },    /* Baxter-King filter */
     { F_BWFILT,   "bwfilt" },    /* Butterworth filter */

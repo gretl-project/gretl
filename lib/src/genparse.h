@@ -266,6 +266,7 @@ enum {
     F_GETENV,
     F_NGETENV,
     F_PSHRINK,
+    F_PEXPAND,
     F_FREQ,
     F_ISNAN,
     F_TYPESTR,

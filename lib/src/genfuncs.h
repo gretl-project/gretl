@@ -77,6 +77,9 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
 			    int *err);
 
+int panel_expand (const gretl_matrix *x, double *y,
+		  gretlopt opt, const DATASET *dset);
+
 int hp_filter (const double *x, double *hp, const DATASET *dset,
 	       double lambda, gretlopt opt);
 

@@ -1368,6 +1368,58 @@ gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
     return m;
 }
 
+/**
+ * panel_expand:
+ * @x: source vector.
+ * @y target array.
+ * @dset: data set information.
+ * @opt: OPT_X to reap across inidividuals instead
+ * of across time.
+ *
+ * Constructs a series by repeating the values in @x,
+ * by default across time (in which case the source
+ * vector must have as many values as there are
+ * individuals in the current sample range).
+ * 
+ * Returns: zero on success, non-zero code on error.
+ */
+
+int panel_expand (const gretl_matrix *x, double *y,
+		  gretlopt opt, const DATASET *dset)
+{
+    int n, T = sample_size(dset);
+
+    if (x == NULL || !dataset_is_panel(dset)) {
+	return E_DATA;
+    }
+
+    n = (int) ceil((double) T / dset->pd);
+    
+    if (gretl_vector_get_length(x) != n) {
+	return E_NONCONF;
+    } else {
+	int ubak = -1;
+	int t, u, i = 0;
+	double xi = 0;
+
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    u = t / dset->pd;
+	    if (u != ubak) {
+		xi = x->val[i++];
+		ubak = u;
+	    }
+	    if (xna(xi)) {
+		y[t] = NADBL;
+	    } else {
+		y[t] = xi;
+	    }	    
+		
+	}
+    }
+
+    return 0;
+}
+
 static double default_hp_lambda (const DATASET *dset)
 {
     return 100 * dset->pd * dset->pd;

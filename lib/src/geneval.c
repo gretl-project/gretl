@@ -6402,6 +6402,17 @@ static NODE *do_panel_shrink (NODE *l, parser *p)
     return ret;
 }
 
+static NODE *do_panel_expand (NODE *l, parser *p)
+{
+    NODE *ret = aux_series_node(p);
+
+    if (ret != NULL && starting(p)) {
+	p->err = panel_expand(l->v.m, ret->v.xvec, OPT_NONE, p->dset);
+    }
+
+    return ret;
+}
+
 /* pergm function takes series or column vector arg, returns matrix:
    if we come up with more functions on that pattern, the following
    could be extended
@@ -11322,6 +11333,13 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 0, SERIES, l, p);
 	}
 	break;
+    case F_PEXPAND:
+	if (l->t == MAT) {
+	    ret = do_panel_expand(l, p);
+	} else {
+	    node_type_error(t->t, 0, MAT, l, p);
+	}
+	break;	
     case F_CUM:
     case F_DIFF:
     case F_RESAMPLE:
