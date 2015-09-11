@@ -201,12 +201,12 @@ open greene19_1
 
 probit GRADE const GPA PSI
 series u = $uhat 
-%$
 ols u const GPA PSI TUCE -q
 printf "Variable addition test for TUCE:\n"
 printf "Rsq * T = %g (p. val. = %g)\n", $trsq, pvalue(X,1,$trsq) 
 \end{scode}
 \end{script}
+%$
 
 \subsection{The perfect prediction problem}
 \label{sec:perfpred}
