@@ -19,6 +19,8 @@ version 1.10.90, in progress
   products
 - Add new function seasonals() for "smart" generation of
   seasonal dummies, with the option of centering the dummies
+- Add function pexpand() for creating a non-time varying
+  panel series from a vector
 - TRAMO interface: allow saving of "linearized" series
 - Add new accessor $lang to get national language identifier
 - Add Romanian translation
@@ -46,7 +48,10 @@ version 1.10.90, in progress
   up for non-time series models
 - Fix bug: "open" with --odbc option not working
 - MacKinnon urc p-values: much faster calculation
-- MS Windows build: add option of using Clearlooks theme
+- MS Windows build: add option of using Clearlooks theme;
+  add a new build of libcurl with SSL enabled
+- OS X (quartz) build: update the packaged gnuplot build and
+  add support for the "wxt" terminal
 
 2015-04-04 version 1.10.1
 - Fix bug: breakage in ADF test: giving more than one

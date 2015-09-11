@@ -5696,6 +5696,24 @@
       </description>
     </function>
 
+    <function name="pexpand" section="data-utils" output="series">
+      <fnargs>
+	<fnarg type="vector">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Only applicable if the currently open dataset has a panel
+	  structure. Performs the inverse operation of <fncref
+	  targ="pshrink"/>. That is, given a vector of length
+	  equal to the number of individuals in the current
+	  panel sample, it returns a series in which each value
+	  is repeated <math>T</math> times, for <math>T</math>
+	  the time-series length of the panel. The resulting
+	  series is therefore non-time varying.
+	</para>
+      </description>
+    </function>    
+
     <function name="pmax" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -6041,6 +6059,9 @@
 	  <fncref targ="pmean"/>, in which a value pertaining to
 	  each cross-sectional unit is repeated for each time
 	  period. 
+	</para>
+	<para>
+	  See <fncref targ="pexpand"/> for the inverse operation.
 	</para>
       </description>
     </function>
