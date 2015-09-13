@@ -643,6 +643,19 @@ const char *gretl_function_complete (const char *s)
     return NULL;
 }
 
+int gretl_const_count (void)
+{
+    int i;
+
+    for (i=0; consts[i].id != 0; i++) ;
+    return i;
+}
+
+const char *gretl_const_name (int i)
+{
+    return consts[i].str;
+}
+
 /* end external stuff */
 
 static int dummy_lookup (const char *s)

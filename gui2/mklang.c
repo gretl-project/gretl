@@ -75,12 +75,17 @@ char **make_var_name_list (int *pn)
 {
     char **S;
     const char *s;
-    int n1, n2, n, m;
+    int n1, n2, n3;
+    int n, m;
     int i;
 
     n1 = model_var_count();
     n2 = data_var_count();
-    n = n1 + n2;
+    n3 = gretl_const_count();
+    n = n1 + n2 + n3;
+
+    fprintf(stderr, "n1=%d, n2=%d, n3=%d, n=%d\n",
+	    n1, n2, n3, n);
 
     S = strings_array_new(n);
     if (S == NULL) {
@@ -100,6 +105,16 @@ char **make_var_name_list (int *pn)
 
     for (i=0; i<n2; i++) {
 	s = data_var_name(i);
+	if (s == NULL) {
+	    continue;
+	}
+	if (*s == '$') s++;
+	S[m++] = gretl_strdup(s);
+    }
+
+    for (i=0; i<n3; i++) {
+	s = gretl_const_name(i);
+	fprintf(stderr, "consts: i=%d, s='%s'\n", i, s);
 	if (s == NULL) {
 	    continue;
 	}

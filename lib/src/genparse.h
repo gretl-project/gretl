@@ -702,3 +702,5 @@ int model_var_count (void);
 const char *model_var_name (int i);
 int data_var_count (void);
 const char *data_var_name (int i);
+int gretl_const_count (void);
+const char *gretl_const_name (int i);
