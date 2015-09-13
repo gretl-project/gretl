@@ -1544,7 +1544,7 @@ static NODE *expr2 (parser *p)
     }
 
     while (!p->err && (p->sym == B_EQ || p->sym == B_NEQ ||
-		       p->sym == B_DOTEQ)) {
+		       p->sym == B_DOTEQ || p->sym == B_DOTNEQ)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);

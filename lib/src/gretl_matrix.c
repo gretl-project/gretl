@@ -5643,6 +5643,8 @@ static double x_op_y (double x, double y, int op)
 	return x >= y;
     case '[':
 	return x <= y;
+    case '!':
+	return x != y;
     default:
 	return 0;
     }

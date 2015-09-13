@@ -2090,6 +2090,7 @@ static int op_symbol (int op)
     case B_DOTLT:   return '<';
     case B_DOTGTE:  return ']';
     case B_DOTLTE:  return '[';
+    case B_DOTNEQ:  return '!';
     default: return 0;
     }
 }
@@ -2302,6 +2303,7 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     case B_DOTLT:
     case B_DOTGTE:
     case B_DOTLTE:
+    case B_DOTNEQ:
 	/* apply operator element-wise */
 	C = gretl_matrix_dot_op(A, B, op_symbol(op), err);
 	break;
@@ -3019,7 +3021,7 @@ static NODE *matrix_bool (NODE *l, NODE *r, int op, parser *p)
 	} else if (a->rows != b->rows || a->cols != b->cols) {
 	    ret->v.xval = NADBL;
 	} else {
-	    ret->v.xval = 1;
+	    ret->v.xval = op == B_NEQ ? 0 : 1;
 	    for (i=0; i<n; i++) {
 		if (op == B_EQ && a->val[i] != b->val[i]) {
 		    ret->v.xval = 0;
@@ -3036,8 +3038,8 @@ static NODE *matrix_bool (NODE *l, NODE *r, int op, parser *p)
 		} else if (op == B_GTE && a->val[i] < b->val[i]) {
 		    ret->v.xval = 0;
 		    break;
-		} else if (op == B_NEQ && a->val[i] == b->val[i]) {
-		    ret->v.xval = 0;
+		} else if (op == B_NEQ && a->val[i] != b->val[i]) {
+		    ret->v.xval = 1;
 		    break;
 		}
 	    }
@@ -11014,6 +11016,7 @@ static NODE *eval (NODE *t, parser *p)
     case B_DOTLT:
     case B_DOTGTE:
     case B_DOTLTE:
+    case B_DOTNEQ:
 	/* matrix-matrix or matrix-scalar binary operators */
 	if ((l->t == MAT && r->t == MAT) ||
 	    (l->t == MAT && r->t == NUM) ||

@@ -21,6 +21,8 @@ version 1.10.90, in progress
   seasonal dummies, with the option of centering the dummies
 - Add function pexpand() for creating a non-time varying
   panel series from a vector
+- Matrix comparison: add ".!=" operator to test for element-
+  wise inequality
 - TRAMO interface: allow saving of "linearized" series
 - Add new accessor $lang to get national language identifier
 - Add Romanian translation

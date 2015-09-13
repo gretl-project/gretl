@@ -263,7 +263,8 @@ The following binary operators are available for matrices:
 \verb+~+    & column-wise concatenation \\
 \verb+|+    & row-wise concatenation \\
 \texttt{**} & Kronecker product \\
-\texttt{=}  & test for equality 
+\texttt{=}  & test for equality \\
+\texttt{!=} & test for inequality
 \end{tabular}
 \end{center}
 
@@ -271,11 +272,11 @@ In addition, the following operators (``dot'' operators) apply on an
 element-by-element basis:
 
 \begin{center}
-\begin{tabular}{cccccccccc}
+\begin{tabular}{ccccccccccc}
 \texttt{.+}  &  \texttt{.-}  &
 \texttt{.*}  &  \texttt{./}  &  \verb+.^+  &
 \texttt{.=}  &  \texttt{.>}  &  \texttt{.<} &
-\texttt{.>=}  &  \texttt{.<=} 
+\texttt{.>=}  &  \texttt{.<=} & \texttt{.!=}
 \end{tabular}
 \end{center}
 

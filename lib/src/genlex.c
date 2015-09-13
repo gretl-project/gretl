@@ -1637,6 +1637,11 @@ void lex (parser *p)
 		    parser_getc(p);
 		}
 		return;
+	    } else if (p->ch == '!' && *p->point == '=') {
+		p->sym = B_DOTNEQ;
+		parser_getc(p);
+		parser_getc(p);
+		return;
 	    } else if (p->ch == '.') {
 		p->sym = B_ELLIP;
 		parser_getc(p);
@@ -1878,6 +1883,8 @@ const char *getsymb (int t, const parser *p)
 	return ".>=";
     case B_DOTLTE: 
 	return ".<=";
+    case B_DOTNEQ:
+	return ".!=";
     case B_KRON: 
 	return "**";
     case B_HCAT: 
