@@ -84,9 +84,6 @@ char **make_var_name_list (int *pn)
     n3 = gretl_const_count();
     n = n1 + n2 + n3;
 
-    fprintf(stderr, "n1=%d, n2=%d, n3=%d, n=%d\n",
-	    n1, n2, n3, n);
-
     S = strings_array_new(n);
     if (S == NULL) {
 	return NULL;
@@ -114,7 +111,6 @@ char **make_var_name_list (int *pn)
 
     for (i=0; i<n3; i++) {
 	s = gretl_const_name(i);
-	fprintf(stderr, "consts: i=%d, s='%s'\n", i, s);
 	if (s == NULL) {
 	    continue;
 	}
