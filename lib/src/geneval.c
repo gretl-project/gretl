@@ -5244,7 +5244,13 @@ static NODE *int_to_string_func (NODE *n, int f, parser *p)
 
 static NODE *list_to_string_func (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_string_node(p);
+    NODE *ret;
+
+    if (f == F_VARNAMES) {
+	ret = aux_array_node(p);
+    } else {
+	ret = aux_string_node(p);
+    }
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(n, p);
@@ -5256,6 +5262,14 @@ static NODE *list_to_string_func (NODE *n, int f, parser *p)
 	if (f == F_VARNAME) {
 	    ret->v.str = gretl_list_get_names(list, p->dset,
 					      &p->err);
+	} else if (f == F_VARNAMES) {
+	    char **S = gretl_list_get_names_array(list, p->dset,
+						  &p->err);
+	    int ns = list[0];
+
+	    if (!p->err) {
+		ret->v.a = gretl_array_from_strings(S, ns, 0, &p->err);
+	    }
 	} else {
 	    p->err = E_DATA;
 	}
@@ -11915,6 +11929,13 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 0, NUM, l, p);
 	}
 	break;
+    case F_VARNAMES:
+	if (l->t == LIST) {
+	    ret = list_to_string_func(l, t->t, p);
+	} else {
+	    node_type_error(t->t, 0, LIST, l, p);
+	}
+	break;	
     case F_VARNUM:
     case F_TOLOWER:
     case F_TOUPPER:

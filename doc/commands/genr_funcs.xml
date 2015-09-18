@@ -8033,10 +8033,25 @@
 	<para>
 	  If given a list argument, returns a string containing the
 	  names of the variables in the list, separated by commas.  If
-	  the supplied list is empty, so is the returned string.
+	  the supplied list is empty, so is the returned string. To
+	  get an array of strings as return value, use <fncref
+	  targ="varnames"/> instead.
 	</para>
       </description>
     </function>
+
+    <function name="varnames" section="strings" output="strings">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Returns an array of strings containing the names of the
+	  variables in the list <argname>L</argname>. If the supplied
+	  list is empty, so is the returned array.
+	</para>
+      </description>
+    </function>    
 
     <function name="varnum" section="data-utils" output="int">
       <fnargs>

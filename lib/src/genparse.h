@@ -257,6 +257,7 @@ enum {
     F_BACKTICK,
     F_STRLEN,
     F_VARNAME,
+    F_VARNAMES,
     F_VARNUM,
     F_TOLOWER,
     F_TOUPPER,

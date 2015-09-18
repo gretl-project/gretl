@@ -359,6 +359,7 @@ struct str_table funcs[] = {
     { F_SPRINTF,  "sprintf" },
     { F_SSCANF,   "sscanf" },
     { F_VARNAME,  "varname" },
+    { F_VARNAMES, "varnames" },
     { F_VARNUM,   "varnum" },
     { F_TOLOWER,  "tolower" },
     { F_TOUPPER,  "toupper" },
