@@ -1715,6 +1715,10 @@ static int list_count (const int *list)
 {
     int i, k = 0;
 
+    if (list == NULL) {
+	return 0;
+    }
+
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == LISTSEP) {
 	    break;
