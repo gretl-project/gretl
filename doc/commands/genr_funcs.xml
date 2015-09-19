@@ -119,15 +119,40 @@
     <function name="$df" section="access" output="scalar">
       <description>
 	<para>
-	  Returns the degrees of freedom of the last estimated model. If the
-	  last model was in fact a system of equations, the value returned is
-	  the degrees of freedom per equation; if this differs across the
-	  equations then the value given is the number of observations minus
-	  the mean number of coefficients per equation (rounded up to the
-	  nearest integer).
+	  Returns the degrees of freedom of the last estimated
+	  model. If the last model was in fact a system of equations,
+	  the value returned is the degrees of freedom per equation;
+	  if this differs across the equations then the value given is
+	  the number of observations minus the mean number of
+	  coefficients per equation (rounded up to the nearest
+	  integer).
 	</para>
       </description>
     </function>
+
+    <function name="$diagpval" section="access" output="scalar">
+      <description>
+	<para>
+	  Must follow estimation of a system of equations. Returns the
+	  <math>P</math>-value associated with the <fncref
+	  targ="$diagtest"/> statistic.
+	</para>
+      </description>
+    </function>     
+
+    <function name="$diagtest" section="access" output="scalar">
+      <description>
+	<para>
+	  Must follow estimation of a system of equations. Returns the
+	  test statistic for the null hypothesis that the
+	  cross-equation covariance matrix is diagonal. This is the
+	  Breusch&ndash;Pagan test except when the estimator is
+	  (unrestricted) iterated SUR, in which case it’s a Likelihood
+	  Ratio test. See <guideref targ="chap:system"/> for
+	  details; see also <fncref targ="$diagpval"/>.
+	</para>
+      </description>
+    </function>    
 
     <function name="$dwpval" section="access" output="scalar">
       <description>
