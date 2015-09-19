@@ -73,6 +73,8 @@ void maybe_update_pkg_registry_window (const char *pkgname,
 
 void set_alternate_gfn_dir (windata_t *vwin, char *path);
 
+gchar *gfn_browser_get_alt_path (windata_t *vwin);
+
 windata_t *get_local_viewer (int remote_role);
 
 void listbox_select_first (windata_t *vwin);

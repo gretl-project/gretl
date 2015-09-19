@@ -1004,6 +1004,18 @@ void set_alternate_gfn_dir (windata_t *vwin, char *path)
     closedir(dir);
 }
 
+gchar *gfn_browser_get_alt_path (windata_t *vwin)
+{
+    gchar *path = NULL;
+
+    if (widget_get_int(vwin->listbox, "altdir")) {
+	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 0,
+			     3, &path);
+    }
+
+    return path;
+}
+
 static void query_remove_gfn_from_registry (const char *pkgname,
 					    windata_t *vwin)
 {

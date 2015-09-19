@@ -8593,13 +8593,38 @@ static void clean_up_varlabels (DATASET *dset)
     }
 }
 
-static int ok_script_file (const char *runfile)
+static int ok_run_file (char *runfile, int *is_gfn)
 {
     FILE *fp;
     char myline[32];
     int content = 0;
 
     fp = gretl_fopen(runfile, "r");
+
+    if (fp == NULL && !g_path_is_absolute(runfile) &&
+	strstr(runfile, ".gfn") != NULL) {
+	/* try for ad hoc gfn file location */
+	windata_t *vwin = get_browser_for_role(FUNC_FILES);
+
+	if (vwin != NULL) {
+	    gchar *path = gfn_browser_get_alt_path(vwin);
+
+	    if (path != NULL) {
+		gchar *tmp = g_strdup(runfile);
+
+		build_path(runfile, path, tmp, NULL);
+		fp = fopen(runfile, "r");
+		g_free(tmp);
+		g_free(path);
+		if (fp != NULL) {
+		    fclose(fp);
+		    *is_gfn = 1;
+		    return 1;
+		}
+	    }
+	}
+    }
+
     if (fp == NULL) {
 	file_read_errbox(runfile);
 	return 0;
@@ -8701,7 +8726,7 @@ static void print_fatal_error (const char *s, PRN *prn)
 
 /* run commands from runfile or buf, output to prn */
 
-int execute_script (const char *runfile, const char *buf,
+int execute_script (char *runfile, const char *buf,
 		    PRN *prn, int exec_code,
 		    GtkWidget *parent)
 {
@@ -8721,10 +8746,15 @@ int execute_script (const char *runfile, const char *buf,
 
     if (runfile != NULL) { 
 	/* we'll get commands from file */
-	if (!ok_script_file(runfile)) {
+	int file_is_gfn = 0;
+	
+	if (!ok_run_file(runfile, &file_is_gfn)) {
 	    return -1;
+	} else if (file_is_gfn) {
+	    return load_function_package_by_filename(runfile, prn);
+	} else {
+	    fb = gretl_fopen(runfile, "r");
 	}
-	fb = gretl_fopen(runfile, "r");
     } else { 
 	/* no runfile, commands from buffer */
 	if (buf == NULL || *buf == '\0') {

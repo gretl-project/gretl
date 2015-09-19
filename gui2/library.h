@@ -57,7 +57,7 @@ int record_model_command_verbatim (int model_ID);
 
 int *command_list_from_string (const char *s, int *err);
 
-int execute_script (const char *runfile, const char *buf,
+int execute_script (char *runfile, const char *buf,
 		    PRN *prn, int exec_code,
 		    GtkWidget *parent);
 
