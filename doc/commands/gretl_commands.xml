@@ -11463,19 +11463,38 @@
       <para>
 	The purpose of <opt>panel-groups</opt> is to create a
 	string-valued series holding names for the groups
-	(individuals, cross-sectional units) in the panel. With this
-	option you must supply a name for the series followed by a
-	string variable holding a list of group names. The names
-	should be separated by spaces; if a name includes spaces it
-	should be wrapped in backslash-escaped double-quotes. For
-	example, the following will create a series named
+	(individuals, cross-sectional units) in the panel. (This will
+	be used where appropriate in panel graphs.) With this
+	option you supply either one or two arguments as follows.
+      </para>
+      <para>
+	First case: the (single) argument is the name of a
+	string-valued series. If the number of distinct values equals
+	the number of groups in the panel this series is used to
+	define the group names. If necessary, the numerical content of
+	the series will be adjusted such that the values are all 1s
+	for the first group, all 2s for the second, and so on. If the
+	number of string values doesn't match the number of groups an
+	error is flagged.
+      </para>
+      <para>
+	Second case: the first argument is the name of a series and
+	the second is a string literal or variable holding a name for
+	each group. The series will be created if it does not already
+	exist. If the second argument is a string literal or string
+	variable the group names should be separated by spaces; if a
+	name includes spaces it should be wrapped in backslash-escaped
+	double-quotes. Alternatively the second argument may be an
+	array of strings.
+      </para>
+      <para>
+	For example, the following will create a series named
 	<lit>country</lit> in which the names in <lit>cstrs</lit> are
 	each repeated <math>T</math> times, <math>T</math> being the
 	time-series length of the panel.
       </para>
       <code>
-	string cstrs
-	sprintf cstrs "France Germany Italy \"United Kingdom\""
+	string cstrs = sprintf("France Germany Italy \"United Kingdom\"")
 	setobs country cstrs --panel-groups
       </code>
     </description> 

@@ -1,6 +1,8 @@
 version 1.10.91cvs, in progress
 - add varnames() function: similar to varname() but returns
   an array of strings given a list argument
+- "setobs" command: provide more flexible means of setting
+  panel group names when using the --panel-groups option
   
 2015-09-13 version 1.10.2
 - "install" command: add a --local option plus the ability

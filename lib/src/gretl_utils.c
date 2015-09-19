@@ -1105,7 +1105,7 @@ int set_obs (const char *parm1, const char *parm2,
 	return 0;
     }
 
-    if (parm1 == NULL || parm2 == NULL) {
+    if (parm1 == NULL || (!(opt & OPT_G) && parm2 == NULL)) {
 	return E_ARGS;
     }
 

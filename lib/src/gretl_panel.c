@@ -27,6 +27,7 @@
 #include "libset.h"
 #include "uservar.h"
 #include "gretl_string_table.h"
+#include "gretl_array.h"
 
 /**
  * SECTION:gretl_panel
@@ -5102,17 +5103,76 @@ static int group_uniqueness_check (char **S, int n)
     return 0;
 }
 
-/* 2013-09-21: enable construction of a string-valued series
-   holding a name for each panel group/unit. The name of this
-   series is set on the 'pangrps' member of @dset, and the
-   names are then used in panel graphs where appropriate.
+static char **group_names_from_array (const char *aname,
+				      int n_groups,
+				      int *err)
+{
+    gretl_array *A = get_array_by_name(aname);
+    char **S = NULL;
+    int ns = 0;
 
-   @vname should contain the name of a series, either an
-   existing one (which will be overwritten) or a new one to
-   create; and @grpnames should be either a string literal or 
-   the name of a string variable, which in either case should
-   hold N space-separated strings, where N is the number of
-   panel groups.
+    if (A == NULL) {
+	*err = E_DATA;
+    } else {
+	char **AS = gretl_array_get_strings(A, &ns);
+	
+	if (ns != n_groups) {
+	    *err = E_DATA;
+	} else {
+	    S = strings_array_dup(AS, ns);
+	    if (S == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+    }
+
+    return S;
+}
+
+static int maybe_use_strval_series (DATASET *dset,
+				    const char *vname,
+				    int ng)
+{
+    int v = current_series_index(dset, vname);
+    series_table *st = NULL;
+    int ns = 0;
+
+    if (v > 0 && v < dset->v) {
+	st = series_get_string_table(dset, v);
+    }
+
+    if (st != NULL) {
+	series_table_get_strings(st, &ns);
+    }
+
+    if (ns != ng) {
+	return E_DATA;
+    } else {
+	int i, g = 0;
+
+	for (i=0; i<dset->n; i++) {
+	    if (i % dset->pd == 0) {
+		g++;
+	    }	    
+	    dset->Z[v][i] = g;
+	}
+
+	set_panel_groups_name(dset, vname);
+    }
+
+    return 0;
+}
+
+/* Enable construction of a string-valued series holding a name for
+   each panel group/unit. The name of this series is set on the
+   'pangrps' member of @dset, and the names are then used in panel
+   graphs where appropriate.
+
+   @vname should contain the name of a series, either an existing one
+   (which will be overwritten) or a new one to create; and @grpnames
+   should be either a string literal or the name of a string variable,
+   which in either case should hold N space-separated strings, where N
+   is the number of panel groups.
 */
 
 int set_panel_group_strings (const char *vname,
@@ -5125,24 +5185,27 @@ int set_panel_group_strings (const char *vname,
     int v, orig_v = dset->v;
     int err = 0;
 
-    if (vname == NULL || *vname == '\0' ||
-	grpnames == NULL || *grpnames == '\0') {
+    if (vname == NULL || *vname == '\0') {
 	return E_DATA;
     }
 
-    /* FIXME: accept an array of strings here */
+    if (grpnames == NULL || *grpnames == '\0') {
+	return maybe_use_strval_series(dset, vname, ng);
+    }
 
     if (strchr(grpnames, ' ')) {
 	/* group names as string literal */
 	namestr = grpnames;
     } else if (gretl_is_string(grpnames)) {
-	/* group names in a string variable */
+	/* group names in a single string variable */
 	namestr = get_string_by_name(grpnames);
     } else {
-	err = E_DATA;
+	/* try for array of strings */
+	S = group_names_from_array(grpnames, ng, &err);
     }
     
     if (namestr != NULL) {
+	/* we must obtain @S by splitting */
 	int ngtest = 0;
 
 	if (strchr(namestr, '"') != NULL) {
@@ -5158,9 +5221,10 @@ int set_panel_group_strings (const char *vname,
 		    ngtest, ng);
 	    err = E_DATA;
 	}
-	if (!err) {
-	    err = group_uniqueness_check(S, ng);
-	}
+    }
+
+    if (!err && S != NULL) {
+	err = group_uniqueness_check(S, ng);
     }
 
     if (!err) {

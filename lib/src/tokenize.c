@@ -219,7 +219,7 @@ static struct gretl_cmd gretl_cmds[] = {
 #define param_optional(c) (c == SET || c == HELP || c == RESTRICT || \
 			   c == SMPL || c == SYSTEM || c == FUNCERR)
 
-#define parm2_optional(c) (c == SET || c == SETOPT || \
+#define parm2_optional(c) (c == SET || c == SETOPT || c == SETOBS || \
 			   c == ESTIMATE || c == HELP)
 
 #define vargs_optional(c) (c == PRINTF || c == SPRINTF)
