@@ -260,7 +260,9 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 	    line, cmd_nosub(cmd) ? 1 : 0);
 #endif
 
-    if (!cmd_nosub(cmd)) {
+    if (cmd_nosub(cmd)) {
+	cmd->flags &= ~CMD_SUBST;
+    } else {
 	int subst = 0;
 
 	cmd->err = substitute_named_strings(line, &subst);
