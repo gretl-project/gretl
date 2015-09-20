@@ -1671,10 +1671,9 @@ void lex (parser *p)
 		parser_getc(p);
 		return;
 	    }
-
-	    if (p->targ == LIST && !doing_genseries && *(p->point - 2) == ' ' && 
+	    if (p->targ == LIST && !doing_genseries && 
 		(bare_data_type(p->sym) || closing_sym(p->sym) ||
-		 (p->sym == LAG))) {
+		 p->sym == LAG) && *(p->point - 2) == ' ') {
 		/* may be forming a list, but only if there are 
 		   spaces between the terms 
 		*/
