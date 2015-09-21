@@ -147,7 +147,7 @@
 	  test statistic for the null hypothesis that the
 	  cross-equation covariance matrix is diagonal. This is the
 	  Breusch&ndash;Pagan test except when the estimator is
-	  (unrestricted) iterated SUR, in which case it’s a Likelihood
+	  (unrestricted) iterated SUR, in which case it is a Likelihood
 	  Ratio test. See <guideref targ="chap:system"/> for
 	  details; see also <fncref targ="$diagpval"/>.
 	</para>
