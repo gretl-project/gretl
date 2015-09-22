@@ -9834,11 +9834,11 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
     }
 
     l = eval(n->v.b3.m, p);
-    if (p->err) {
-	return NULL;
-    }
 
-    r = eval(n->v.b3.r, p);
+    if (!p->err) {
+	r = eval(n->v.b3.r, p);
+    }
+    
     if (p->err) {
 	return NULL;
     }
@@ -9975,32 +9975,33 @@ static NODE *ternary_return_node (NODE *n, parser *p)
 static NODE *eval_query (NODE *t, parser *p)
 {
     NODE *e, *ret = NULL;
-    double *vec = NULL;
-    gretl_matrix *m = NULL;
-    double x = NADBL;
 
     if (p->flags & P_SAVEAUX) {
 	/* cancel */
 	p->flags &= ~P_SAVEAUX;
     }
 
+    /* evaluate and check the condition */
+    e = eval(t->v.b3.l, p);
+
 #if EDEBUG
     fprintf(stderr, "eval_query: t=%p, l=%p, m=%p, r=%p\n", 
 	    (void *) t, (void *) t->v.b3.l, (void *) t->v.b3.m,
-	    (void *) t->v.b3.r);
-#endif
-
-    /* evaluate and check the condition */
-
-    e = eval(t->v.b3.l, p);
+	    (void *) t->v.b3.r);    
+    fprintf(stderr, " result type=%d (%s)\n", e->t, getsymb(e->t, p));
+#endif     
 
     if (!p->err) {
 	if (e->t == NUM) {
-	    x = e->v.xval;
+	    ret = query_eval_scalar(e->v.xval, t, p);
 	} else if (e->t == SERIES) {
-	    vec = e->v.xvec;
+	    ret = query_eval_series(e->v.xvec, t, p);
 	} else if (e->t == MAT) {
-	    m = e->v.m;
+	    if (gretl_matrix_is_scalar(e->v.m)) {
+		ret = query_eval_scalar(e->v.m->val[0], t, p);
+	    } else {
+		ret = query_eval_matrix(e->v.m, t, p);
+	    }
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -10008,14 +10009,6 @@ static NODE *eval_query (NODE *t, parser *p)
 
     if (p->err) {
 	return NULL;
-    }
-
-    if (vec != NULL) {
-	ret = query_eval_series(vec, t, p);
-    } else if (m != NULL) {
-	ret = query_eval_matrix(m, t, p);
-    } else {
-	ret = query_eval_scalar(x, t, p);
     }
 
     if (ret != NULL && (ret == t->v.b3.m || ret == t->v.b3.r)) {
