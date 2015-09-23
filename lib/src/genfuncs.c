@@ -844,7 +844,7 @@ static int series_goodobs (const double *x, int *t1, int *t2)
  * exponential_movavg_series:
  * @x: array of original data.
  * @y: array into which to write the result.
- * @dset: data set information.
+ * @dset: dataset information.
  * @d: coefficient on lagged @x.
  * @n: number of @x observations to average to give the
  * initial @y value.
