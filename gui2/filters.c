@@ -438,7 +438,7 @@ static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
     /* default */
     r1 = gtk_radio_button_new_with_label(NULL, _("the mean of the first n observations"));
     gtk_table_attach_defaults(GTK_TABLE(tab), r1, 0, 1, 0, 1);
-    w = gtk_spin_button_new_with_range(1, (finfo->t2 - finfo->t1 + 1) / 4, 1);
+    w = gtk_spin_button_new_with_range(1, (finfo->t2 - finfo->t1 + 1) / 2, 1);
     gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, 0, 1);
     finfo->kspin = w;
 
