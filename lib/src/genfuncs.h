@@ -59,7 +59,8 @@ gretl_matrix *filter_matrix (gretl_matrix *X, gretl_vector *A, gretl_vector *C,
 
 int exponential_movavg_series (const double *x, double *y, 
 			       const DATASET *dset,
-			       double d, int n);
+			       double d, int n,
+			       double y0);
 
 int movavg_series (const double *x, double *y, const DATASET *dset,
 		   int k, int center);

@@ -114,6 +114,7 @@ enum extra_cmds {
     COUNTMOD,
     BWFILTER,
     POLYWEIGHTS,
+    EMAFILTER,
     X12AHELP,
     LOESS,
     NADARWAT,

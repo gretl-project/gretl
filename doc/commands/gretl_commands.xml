@@ -3280,6 +3280,40 @@
     </description>
   </command>
 
+  <command name="ema-filter" section="Transformations" context="gui"
+    label="Exponential Moving Average">
+
+    <description>
+      <para>
+	The formula for the exponential moving average (EMA) employed
+	by gretl is that of <cite key="roberts59">Roberts
+	(1959)</cite>, namely
+      </para>
+      <para>
+	<math>s</math><sub>t</sub> =
+	&agr;<math>y</math><sub>t</sub> +
+        (1&minus;&agr;)<math>s</math><sub>t&minus;1</sub>
+      </para>
+      <para>
+	where <math>s</math> is the EMA, <math>y</math> is the
+	original series, and &agr; is a constant between 0 and
+	1. Larger values of &agr; place more weight on the current
+	observation; smaller values produce greater smoothing.
+      </para>
+      <para>
+	The <quote>initial EMA value</quote>, however specified, is
+	taken to be the last pre-sample value, meaning that
+	calculation of the filter starts with the first observation in
+	the current sample range.
+      </para>
+      <para>
+	For a command-line equivalent, see the <fncref targ="movavg"/>
+	function.
+      </para>
+    </description>
+
+  </command>  
+
   <command name="end" section="Programming" 
     label="End block of commands" context="cli">
     <description>
@@ -9115,11 +9149,12 @@
       <para>
 	Suppose, for example, you select a maximum weight of 3.0 and a
 	central fraction of 0.4. This means that the middle 40 percent
-	of the data get a weight of 1.0. If the steps shape is
-	selected the first and last 30 percent of the observations get
-	a weight of 3.0; otherwise, for the first 30 percent of
-	observations the weights decline gradually from 3.0 to 1.0; and
-	for the last 30 percent the weights increase from 1.0 to 3.0.
+	of the data get a weight of 1.0. If the <quote>steps</quote>
+	shape is selected the first and last 30 percent of the
+	observations get a weight of 3.0; otherwise, for the first 30
+	percent of observations the weights decline gradually from 3.0
+	to 1.0; and for the last 30 percent the weights increase from
+	1.0 to 3.0.
       </para>
     </description>
 

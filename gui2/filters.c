@@ -59,6 +59,7 @@ struct filter_info_ {
     int k;                /* no. of terms in MA, or no. of obs for mean */
     int center;           /* for simple MA: center or not */
     double lambda;        /* general purpose parameter */
+    double fx0;           /* pre-sample EMA value */
     int bkk;              /* Baxter-King parameter */
     int bkl;              /* Baxter-King lower value */
     int bku;              /* Baxter-King upper value */
@@ -76,6 +77,7 @@ struct filter_info_ {
     GtkWidget *entry1;
     GtkWidget *entry2;
     GtkWidget *kspin;
+    GtkWidget *fx0spin;
     GtkWidget *spin1;
     GtkWidget *spin2;
     GtkWidget *button;
@@ -120,6 +122,7 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     finfo->k = 0;
     finfo->center = 0;
     finfo->lambda = 0.0;
+    finfo->fx0 = NADBL;
     finfo->bkk = 0;
     finfo->bkl = 0;
     finfo->bku = 0;
@@ -141,6 +144,7 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     finfo->entry1 = NULL;
     finfo->entry2 = NULL;
     finfo->kspin = NULL;
+    finfo->fx0spin = NULL;
     finfo->spin1 = NULL;
     finfo->spin2 = NULL;
     finfo->button = NULL;
@@ -412,27 +416,37 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
-static void toggle_use_submean (GtkWidget *w, GtkWidget *s)
+static void set_ema_init (GtkWidget *b, filter_info *finfo)
 {
-    gboolean t = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    gboolean t = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b));
+    int i = widget_get_int(b, "idx");
 
-    gtk_widget_set_sensitive(s, !t);
+    if (i == 1) {
+	gtk_widget_set_sensitive(finfo->kspin, t);
+	gtk_widget_set_sensitive(finfo->fx0spin, !t);
+    } else if (i == 2) {
+	gtk_widget_set_sensitive(finfo->kspin, !t);
+	gtk_widget_set_sensitive(finfo->fx0spin, !t);
+    } else if (i == 3) {
+	gtk_widget_set_sensitive(finfo->kspin, !t);
+	gtk_widget_set_sensitive(finfo->fx0spin, t);
+    }	
 }
 
 static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
 {
     GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));    
     GtkWidget *tab, *hbox, *w;
-    GtkWidget *r1, *r2;
+    GtkWidget *r1, *r2, *r3;
     GSList *group;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    w = gtk_label_new(_("The first EMA value is"));
+    w = gtk_label_new(_("The initial EMA value is"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    tab = gtk_table_new(2, 2, FALSE);
+    tab = gtk_table_new(3, 2, FALSE);
     gtk_table_set_col_spacing(GTK_TABLE(tab), 0, 5);
 
     /* default */
@@ -441,14 +455,29 @@ static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
     w = gtk_spin_button_new_with_range(1, (finfo->t2 - finfo->t1 + 1) / 2, 1);
     gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, 0, 1);
     finfo->kspin = w;
+    widget_set_int(r1, "idx", 1);
 
     /* alternate */
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(r1));
     r2 = gtk_radio_button_new_with_label(group, _("the mean of the whole series"));
     gtk_table_attach_defaults(GTK_TABLE(tab), r2, 0, 1, 1, 2);
+    widget_set_int(r2, "idx", 2);
 
-    /* connect */
-    g_signal_connect(G_OBJECT(r2), "clicked", G_CALLBACK(toggle_use_submean), w);
+    /* further alternate */
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(r2));
+    r3 = gtk_radio_button_new_with_label(group, _("a user-specified value"));
+    gtk_table_attach_defaults(GTK_TABLE(tab), r3, 0, 1, 2, 3);
+    w = gtk_spin_button_new_with_range(-1.0e6, 1.0e6, 0.001);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), 0.0);
+    gtk_widget_set_sensitive(w, FALSE);
+    gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, 2, 3);
+    finfo->fx0spin = w;
+    widget_set_int(r3, "idx", 3);
+
+    /* connect switching signals */
+    g_signal_connect(G_OBJECT(r1), "toggled", G_CALLBACK(set_ema_init), finfo);
+    g_signal_connect(G_OBJECT(r2), "toggled", G_CALLBACK(set_ema_init), finfo);
+    g_signal_connect(G_OBJECT(r3), "toggled", G_CALLBACK(set_ema_init), finfo);
 
     /* pack everything */
     gtk_box_pack_start(GTK_BOX(hbox), tab, TRUE, TRUE, 10);  
@@ -544,6 +573,10 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
 	} else {
 	    finfo->k = 0;
 	}
+    }
+
+    if (finfo->fx0spin != NULL && gtk_widget_is_sensitive(finfo->fx0spin)) {
+	finfo->fx0 = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->fx0spin));
     }
 
     if (finfo->spin1 != NULL && finfo->spin2 != NULL) {
@@ -824,6 +857,8 @@ static void filter_dialog (filter_info *finfo)
 	context_help_button(hbox, BWFILTER);
     } else if (finfo->ftype == FILTER_POLY) {
 	context_help_button(hbox, POLYWEIGHTS);
+    } else if (finfo->ftype == FILTER_EMA) {
+	context_help_button(hbox, EMAFILTER);
     }
 
     set_dataset_locked(TRUE);
@@ -1259,7 +1294,8 @@ static int calculate_filter (filter_info *finfo)
 	movavg_series(x, fx, dataset, finfo->k, finfo->center);
     } else if (finfo->ftype == FILTER_EMA) {
 	/* exponential moving average */
-	exponential_movavg_series(x, fx, dataset, finfo->lambda, finfo->k);
+	exponential_movavg_series(x, fx, dataset, finfo->lambda,
+				  finfo->k, finfo->fx0);
     } else if (finfo->ftype == FILTER_HP) {
 	/* Hodrick-Prescott */
 	err = hp_filter(x, fx, dataset, finfo->lambda, OPT_T);

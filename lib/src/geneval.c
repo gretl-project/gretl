@@ -6043,65 +6043,6 @@ static NODE *series_polyfit (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *series_movavg (NODE *l, NODE *m, NODE *r, parser *p)
-{
-    NODE *ret;
-    const double *x = l->v.xvec;
-    double d = node_get_scalar(m, p);
-    int ctrl = 0;
-    int k = 0;
-
-    if (p->err) {
-	/* from node_get_scalar */
-	return NULL;
-    }
-
-    if (d < 1.0) {
-	/* exponential MA */
-	if (d < 0.0) {
-	    p->err = E_INVARG;
-	    return NULL;
-	} else if (dataset_is_panel(p->dset)) {
-	    p->err = E_PDWRONG;
-	    return NULL;
-	}
-	k = -1;
-    } else {
-	/* regular MA */  
-	if (d <= 0 || d > INT_MAX) {
-	    p->err = E_INVARG;
-	    return NULL;
-	}
-	k = (int) d;
-	d = -1.0;
-    } 
-
-    if (r->t != EMPTY) {
-	/* optional control argument */
-	ctrl = node_get_int(r, p);
-	if (p->err) {
-	    return NULL;
-	}
-    } else if (d > 0) {
-	/* EMA default: initialize with one obs */
-	ctrl = 1;
-    }
-
-    ret = aux_series_node(p);
-    if (ret == NULL) {
-	return NULL;
-    }
-
-    if (d > 0) {
-	p->err = exponential_movavg_series(x, ret->v.xvec, 
-					   p->dset, d, ctrl);
-    } else {
-	p->err = movavg_series(x, ret->v.xvec, p->dset, k, ctrl);
-    }
-
-    return ret;
-}
-
 static NODE *series_lag (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -9196,6 +9137,59 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret->v.xval = last_model_get_boot_pval(cnum, p->dset, B,
 						   method, &p->err);
 	}
+    } else if (t->t == F_MOVAVG) {
+	const double *x = NULL;
+	double d = 0, y0 = NADBL;
+	int len = 0, ctrl = -9999;
+	int EMA = 0;
+	
+	if (k < 2 || k > 4) {
+	    n_args_error(k, 4, t->t, p);
+	} 
+	
+	for (i=0; i<k && !p->err; i++) {
+	    if (i > 1 && null_or_empty(n->v.bn.n[i])) {
+		continue; /* OK */
+	    }
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i == 0) {
+		if (e->t == SERIES) {
+		    x = e->v.xvec;
+		} else {
+		    node_type_error(t->t, i+1, SERIES, e, p);
+		}
+	    } else if (i == 1) {
+		d = node_get_scalar(e, p);
+		if (d < 1.0 && d > 0.0) {
+		    EMA = 1;
+		} else if (d < 1.0) {
+		    p->err = E_INVARG;
+		} else {
+		    len = node_get_int(e, p);
+		}
+	    } else if (i == 2) {
+		ctrl = node_get_int(e, p);
+	    } else {
+		y0 = node_get_scalar(e, p);
+	    }
+	}
+	if (!p->err) {
+	    ret = aux_series_node(p);
+	}
+	if (!p->err) {
+	    if (ctrl == -9999) {
+		/* set the respective defaults */
+		ctrl = EMA ? 1 : 0;
+	    }
+	    if (EMA) {
+		p->err = exponential_movavg_series(x, ret->v.xvec, p->dset,
+						   d, ctrl, y0);
+	    } else {
+		p->err = movavg_series(x, ret->v.xvec, p->dset, len, ctrl);
+	    }
+	}	
     } else if (t->t == HF_CLOGFI) {
 	const char *dfname = NULL;
 	gretl_matrix *z = NULL;
@@ -11230,18 +11224,6 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = series_obs(l, r, p); 
 	}
 	break;
-    case F_MOVAVG:
-	/* series on left, plus one or two scalars */
-	if (l->t != SERIES) {
-	    node_type_error(t->t, 1, SERIES, l, p);
-	} else if (!scalar_node(m)) {
-	    node_type_error(t->t, 2, NUM, m, p);
-	} else if (!empty_or_num(r)) {
-	    node_type_error(t->t, 3, NUM, r, p);
-	} else {
-	    ret = series_movavg(l, m, r, p);
-	}
-	break;
     case MSL:
 	/* user matrix plus subspec */
 	ret = submatrix_node(l, r, p);
@@ -11757,6 +11739,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_QLRPVAL:
     case F_BOOTCI:
     case F_BOOTPVAL:
+    case F_MOVAVG:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);

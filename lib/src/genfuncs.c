@@ -848,52 +848,65 @@ static int series_goodobs (const double *x, int *t1, int *t2)
  * @d: coefficient on lagged @x.
  * @n: number of @x observations to average to give the
  * initial @y value.
+ * @y0: optional initial value for EMA (or #NADBL).
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
 int exponential_movavg_series (const double *x, double *y, 
 			       const DATASET *dset,
-			       double d, int n)
+			       double d, int n,
+			       double y0)
 {
     int t1 = dset->t1;
     int t2 = dset->t2;
     int t, T, err = 0;
 
-    if (n < 0) {
+    if (dataset_is_panel(dset)) {
+	return E_PDWRONG;
+    }
+
+    if (na(y0) && n < 0) {
 	return E_INVARG;
     }
 
     T = series_goodobs(x, &t1, &t2);
 
-    if (T < n) {
+    if (na(y0) && T < n) {
 	return E_TOOFEW;
     }
 
-    if (n == 0) {
+    if (na(y0) && n == 0) {
 	/* signal to use full sample mean */
 	n = T;
     }
-    
-    if (n == 1) {
+
+    if (!na(y0)) {
+	; /* initialize on supplied value */
+    } else if (n == 1) {
 	/* initialize on first observation */
-	y[t1] = x[t1];
+	y0 = x[t1];
     } else {
 	/* initialize on mean of first n obs */
-	y[t1] = 0.0;
+	y0 = 0.0;
 	for (t=t1; t<t1+n; t++) {
 	    if (na(x[t])) {
 		err = E_MISSDATA;
 		break;
 	    }
-	    y[t1] += x[t];
+	    y0 += x[t];
 	}
 	if (!err) {
-	    y[t1] /= n;
+	    y0 /= n;
 	}
     }
 
+    if (!err && na(y0)) {
+	err = E_MISSDATA;
+    }
+
     if (!err) {
+	y[t1] = d * x[t1] + (1-d) * y0;
 	for (t=t1+1; t<=t2; t++) {
 	    if (na(x[t]) || na(y[t-1])) {
 		y[t] = NADBL;

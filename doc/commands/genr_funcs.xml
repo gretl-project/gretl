@@ -4835,6 +4835,7 @@
 	<fnarg type="series">x</fnarg>
 	<fnarg type="scalar">p</fnarg>
 	<fnarg type="int" optional="true">control</fnarg>
+	<fnarg type="scalar" optional="true">y0</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4843,37 +4844,54 @@
 	  moving average of the input series <argname>x</argname>.
 	</para>
 	<para context="notex">
-	  If <argname>p</argname> &gt; 1, a simple <argname>p</argname>-term
-	  moving average is computed, that is, the arithmetic mean of x(t) to
-	  x(t-p+1). If a non-zero value is supplied for the optional
-	  <argname>control</argname> parameter the MA is centered,
-	  otherwise it is <quote>trailing</quote>.
+	  If <argname>p</argname> &gt; 1, a simple
+	  <argname>p</argname>-term moving average is computed, that
+	  is, the arithmetic mean of <math>x</math> from period
+	  <math>t</math> to <math>t-p+1</math>. If a non-zero value is
+	  supplied for the optional <argname>control</argname>
+	  parameter the MA is centered, otherwise it is
+	  <quote>trailing</quote>. The optional <argname>y0</argname>
+	  argument is ignored.
 	</para>
 	<para context="tex">
-	  If $p&gt;1$, a simple <argname>p</argname>-term moving average is
-	  computed, that is, $\frac{1}{p} \sum_{i=0}^{p-1} x_{t-i}$. If a
-	  non-zero value is supplied for the optional
-	  <argname>control</argname> parameter the MA is centered, otherwise
-	  it is <quote>trailing</quote>.
+	  If $p&gt;1$, a simple <argname>p</argname>-term moving
+	  average is computed, that is, $\frac{1}{p} \sum_{i=0}^{p-1}
+	  x_{t-i}$. If a non-zero value is supplied for the optional
+	  <argname>control</argname> parameter the MA is centered,
+	  otherwise it is <quote>trailing</quote>. The optional
+	  <argname>y0</argname> argument is ignored.
 	</para>
 	<para context="notex">
-	  If <argname>p</argname> is a positive fraction, an exponential
-	  moving average is computed: y(t) = p*x(t) + (1-p)*y(t-1). By default
-	  the output series, y, is initialized using the first valid value of
-	  <argname>x</argname>, but the <argname>control</argname> parameter
-	  may be used to specify the number of initial observations that
-	  should be averaged to produce y(0).  A zero value for
-	  <argname>control</argname> indicates that all the observations
-	  should be used.
+	  If <argname>p</argname> is a positive fraction, an
+	  exponential moving average is computed:
+	</para>
+	<para context="notex">
+	  y(t) = p*x(t) + (1-p)*y(t-1).
+	</para>
+	<para context="notex">
+	  By default the output series, y, is initialized using the
+	  first value of <argname>x</argname>, but the
+	  <argname>control</argname> parameter may be used to specify
+	  the number of initial observations that should be averaged
+	  to produce y(0). A zero value for <argname>control</argname>
+	  indicates that all the observations should be
+	  used. Alternatively, an initializer may be specified using
+	  the optional <argname>y0</argname> argument; in that case
+	  the <argname>control</argname> argument is ignored.
 	</para>
 	<para context="tex">
-	  If $0 &lt; p &lt; 1$, an exponential moving average is computed:
-	  $y_t = p x_t + (1-p)y_{t-1}$. By default the output series $y$ is
-	  initialized using the first valid value of $x$, but the
-	  <argname>control</argname> parameter may be used to specify the
-	  number of initial observations that should be averaged to produce
-	  $y_0$.  A zero value for <argname>control</argname> indicates that
-	  all the observations should be used.
+	  If $0 &lt; p &lt; 1$, an exponential moving average is
+	  computed: \[y_t = p x_t + (1-p)y_{t-1}\]. (This is the formula
+	  of <cite key="roberts59">Roberts (1959)</cite>.) By default
+	  the output series $y$ is initialized using the first valid
+	  value of $x$, but the <argname>control</argname> parameter
+	  may be used to specify the number of initial observations
+	  that should be averaged to produce $y_0$.  A zero value for
+	  <argname>control</argname> indicates that all the
+	  observations should be used. Alternatively, an initializer
+	  may be specified using the optional <argname>y0</argname>
+	  argument; in that case the <argname>control</argname>
+	  argument is ignored.
 	</para> 
       </description>
     </function>

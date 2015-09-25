@@ -380,7 +380,6 @@ enum {
     F_WEEKDAY,
     F_MONTHLEN,
     F_EPOCHDAY,
-    F_MOVAVG,
     F_KDENSITY,
     F_SETNOTE,
     F_BWFILT,
@@ -420,6 +419,7 @@ enum {
     F_QLRPVAL,
     F_BOOTCI,
     F_BOOTPVAL,
+    F_MOVAVG,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };

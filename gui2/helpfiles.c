@@ -137,6 +137,7 @@ static struct gui_help_item gui_help_items[] = {
     { COUNTMOD,       "count-model" },
     { BWFILTER,       "bwfilter" },
     { POLYWEIGHTS,    "polyweights" },
+    { EMAFILTER,      "ema-filter" },
     { X12AHELP,       "x12a" },
     { LOESS,          "loess" },
     { NADARWAT,       "nadarwat" },
