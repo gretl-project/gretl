@@ -1,6 +1,9 @@
 version 1.10.91cvs, in progress
 - add varnames() function: similar to varname() but returns
   an array of strings given a list argument
+- movavg() function: add option to supply a specific
+  initializer for the exponential moving average; also
+  enhance the corresponding GUI  
 - "setobs" command: provide more flexible means of setting
   panel group names when using the --panel-groups option
   
