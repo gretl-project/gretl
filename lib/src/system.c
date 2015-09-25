@@ -841,9 +841,13 @@ int equation_system_append_multi (equation_system *sys,
 	/* look for two lists */
 	const int *LY = get_list_by_name(name1);
 	const int *LX = get_list_by_name(name2);
-	
-	if (LY == NULL || LX == NULL) {
-	    err = E_DATA;
+
+	if (LY == NULL) {
+	    gretl_errmsg_sprintf(_("'%s': no such list"), name1);
+	    err = E_UNKVAR;
+	} else if (LX == NULL) {
+	    gretl_errmsg_sprintf(_("'%s': no such list"), name2);
+	    err = E_UNKVAR;
 	} else {
 	    err = add_equations_from_lists(sys, LY, LX, dset);
 	}
@@ -852,6 +856,7 @@ int equation_system_append_multi (equation_system *sys,
 	const gretl_matrix *m = get_matrix_by_name(name1);
 
 	if (m == NULL) {
+	    gretl_errmsg_sprintf(_("'%s': no such matrix"), name1);
 	    err = E_UNKVAR;
 	} else if (m->rows == 0 || m->cols == 0) {
 	    err = E_DATA;
