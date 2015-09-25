@@ -452,6 +452,8 @@ static void unwrap_string_arg (parser *p)
 #define varargs_func(f) (f == F_PRINTF || f == F_SPRINTF || \
 			 f == F_SSCANF)
 
+#define testc(c) (c == '(' || c == '.' || c == '[')
+
 /* Grab a string argument. Note: we have a mechanism in genlex.c for
    retrieving arguments that take the form of quoted string literals
    or names of string variables.  The special use of this function is
@@ -485,17 +487,25 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
     }
 
     if (!fncall_func(sym) && !varargs_func(sym)) {
-	/* check for a nested function call (2013-08-25) */
+	/* check for a nested function call (2013-08-25) or
+	   bundle/array member (2015-09-25)
+	*/
 	src = p->point - 1;
 	n = gretl_namechar_spn(src);
-	if (n > 0 && n < FN_NAMELEN && src[n] == '(') {
-	    char fntest[FN_NAMELEN];
+	if (n > 0 && n < VNAMELEN && testc(src[n])) {
+	    char tmp[VNAMELEN];
+	    char c = src[n];
 
-	    *fntest = '\0';
-	    strncat(fntest, src, n);
+	    *tmp = '\0';
+	    strncat(tmp, src, n);
 	    src = NULL;
-	    if (function_lookup(fntest) ||
-		get_user_function_by_name(fntest)) {
+	    if (c == '(') {
+		if (function_lookup(tmp) || get_user_function_by_name(tmp)) {
+		    return base(p, t);
+		}
+	    } else if (gretl_is_bundle(tmp)) {
+		return base(p, t);
+	    } else if (c == '[' && get_array_by_name(tmp)) {
 		return base(p, t);
 	    }
 	}
