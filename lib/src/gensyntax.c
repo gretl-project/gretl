@@ -1043,8 +1043,9 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 		lex(p);
 	    }
 	} else {
-	    /* arg-separating comma was expected */
-	    cexp = ',';
+	    /* either arg-separating comma or closing paren was expected */
+	    // fprintf(stderr, "set cexp to comma (i=%d, k=%d)\n", i, k);
+	    cexp = (i < k)? ',' : ')';
 	    break;
 	}
     }
