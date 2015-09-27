@@ -2252,6 +2252,21 @@ static double eval_non_numeric (csvdata *c, int i, const char *s)
     return x;
 }
 
+static int converted_ok (const char *s, char *test, double x)
+{
+    if (*test != '\0') {
+	if (errno) perror(s);
+	return 0; /* definitely not OK */
+    } else if (errno == ERANGE && fabs(x) > 0 && fabs(x) < 0.001) {
+	return 1; /* subnormal, but we'll let that pass */
+    } else if (errno) {
+	perror(s);
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
 static double csv_atof (csvdata *c, int i, const char *s)
 {
     char tmp[CSVSTRLEN], clean[CSVSTRLEN];
@@ -2275,7 +2290,7 @@ static double csv_atof (csvdata *c, int i, const char *s)
 	*/
 	errno = 0;
 	x = strtod(s, &test);
-	if (*test == '\0' && errno == 0) {
+	if (converted_ok(s, test, x)) {
 	    return x; /* handled */
 	}
     } else if (csv_do_dotsub(c)) {
@@ -2284,7 +2299,7 @@ static double csv_atof (csvdata *c, int i, const char *s)
 	gretl_charsub(tmp, ',', '.');
 	errno = 0;
 	x = strtod(tmp, &test);
-	if (*test == '\0' && errno == 0) {
+	if (converted_ok(s, test, x)) {
 	    return x; /* handled */
 	}
     }
@@ -2295,7 +2310,7 @@ static double csv_atof (csvdata *c, int i, const char *s)
 	gretl_charsub(tmp, ',', '.');
 	errno = 0;
 	x = strtod(tmp, &test);
-	if (*test == '\0' && errno == 0) {
+	if (converted_ok(s, test, x)) {
 	    return x; /* handled */
 	}
     }
