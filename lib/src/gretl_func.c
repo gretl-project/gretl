@@ -5824,6 +5824,10 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     char *p = NULL, *fname = NULL;
     int err = 0;
 
+    if (gretl_function_depth() > 0) {
+	return E_FNEST;
+    }
+
     nf = get_two_words(line, s1, s2, &err);
 
     if (err) {
@@ -5978,8 +5982,7 @@ static int check_function_structure (ufunc *fun)
 	strcpy(line, fun->lines[i].s);
 	get_command_index(line, &cmd);
 	if (cmd.ci == FUNC) {
-	    gretl_errmsg_set("You can't define a function within a function");
-	    err = E_PARSE;
+	    err = E_FNEST;
 	} else if (cmd.ci == IF) {
 	    ifdepth++;
 	} else if (NEEDS_IF(cmd.ci) && ifdepth == 0) {
@@ -7329,7 +7332,7 @@ static void set_function_error_message (int err, ufunc *u,
 	    gretl_errmsg_set(msg);
 	} 
 
-	if (*line != '\0') {
+	if (*line != '\0' && err != E_FNEST) {
 	    gretl_errmsg_sprintf("*** error in function %s, line %d\n> %s", 
 				 u->name, lineno, line);
 	} else {

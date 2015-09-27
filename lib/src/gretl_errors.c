@@ -82,6 +82,7 @@ static const char *gretl_error_messages[] = {
     N_("Matrix is not positive definite"),                       /* E_NOTPD */
     N_("Failed to calculate Jacobian"),                          /* E_JACOBIAN */
     N_("Insufficient observations for this operation"),          /* E_TOOFEW */
+    N_("You cannot define a function within a function"),        /* E_FNEST */
     N_("Error executing function"),                              /* E_FUNCERR */
     N_("Execution aborted by request"),                          /* E_STOP */
     NULL,                                                        /* E_DB_DUP */
