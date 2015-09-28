@@ -3169,7 +3169,7 @@ double gretl_matrix_infinity_norm (const gretl_matrix *m)
 	if (rsum > rmax) {
 	    rmax = rsum;
 	}
-    }
+   }
 
     return rmax;
 }
@@ -7380,11 +7380,18 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err, double *rcnd)
     return rank;
 }
 
-static double svd_smin (const gretl_matrix *a)
+static double svd_smin (const gretl_matrix *a, double smax)
 {
-    const double macheps = 2.0e-16;
+    const double macheps = 2.20e-16;
+    int dmax = (a->rows > a->cols)? a->rows : a->cols;
 
+#if 1
+    /* as per numpy, Matlab (2015-09-28) */
+    return dmax * macheps * smax;
+#else
+    /* not sure where this version was from */
     return 1.0e4 * macheps * gretl_matrix_infinity_norm(a);
+#endif    
 }
 
 /**
@@ -7411,7 +7418,7 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
     *err = gretl_matrix_SVD(a, NULL, &S, NULL);
 
     if (!*err) {
-	double smin = svd_smin(a);
+	double smin = svd_smin(a, S->val[0]);
 
 	for (i=0; i<k; i++) {
 	    if (S->val[i] > smin) {
@@ -10435,7 +10442,7 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 
     if (!err) {
 #if 1 
-	double smin = svd_smin(a);
+	double smin = svd_smin(a, s->val[0]);
 #else
 	double smin = SVD_SMIN;
 #endif
