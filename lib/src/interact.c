@@ -1981,9 +1981,29 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
     if (!err) {
 	char fname[FILENAME_MAX];
 
+	*fname = '\0';
+
 	if (param != NULL) {
+	    /* the legacy mechanism */
 	    strcpy(fname, param);
-	} else {
+	} else if (opt & OPT_U) {
+	    /* try for --output=filename, and if found let
+	       the suffix determine the output type
+	    */
+	    const char *s = get_optval_string(ci, OPT_U);
+
+	    if (s != NULL && *s != '\0') {
+		strcpy(fname, s);
+		if (has_suffix(fname, ".rtf")) {
+		    opt |= OPT_R;
+		} else if (has_suffix(fname, ".csv")) {
+		    opt |= OPT_C;
+		}
+	    }
+	}
+
+	if (*fname == '\0') {
+	    /* fallback */
 	    const char *sfx = (opt & OPT_R)? "rtf" :
 		(opt & OPT_C)? "csv" : "tex";
 	    
