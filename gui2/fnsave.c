@@ -1872,7 +1872,13 @@ static void get_maj_min_pl (int v, int *maj, int *min, int *pl)
     *pl = v - *maj * 10000 - *min * 100;
 }
 
-static void adjust_minver (GtkWidget *w, function_info *finfo)
+static void get_year_rev (int v, int *yr, int *rev)
+{
+    *yr = v / 10;
+    *rev = v - *yr * 10;
+}
+
+static void old_adjust_minver (GtkWidget *w, function_info *finfo)
 {
     int val = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
     int lev = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "level"));
@@ -1891,19 +1897,27 @@ static void adjust_minver (GtkWidget *w, function_info *finfo)
     finfo_set_modified(finfo, TRUE);
 }
 
+static void new_adjust_minver (GtkWidget *w, function_info *finfo)
+{
+    int val = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
+    int lev = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "level"));
+    int yr, rev;
+
+    get_year_rev(finfo->minver, &yr, &rev);
+
+    if (lev == 1) {
+	finfo->minver = 10 * val + rev;
+    } else {
+	finfo->minver = 10 * yr + val;
+    }
+
+    finfo_set_modified(finfo, TRUE);
+}
+
 static void add_minver_selector (GtkWidget *tbl, int i, 
 				 function_info *finfo)
 {
     GtkWidget *tmp, *spin, *hbox;
-    int maj, min, pl;
-    int x, y, z;
-    int ymin = 0;
-
-    get_maj_min_pl(finfo->minver, &maj, &min, &pl);
-    sscanf(GRETL_VERSION, "%d.%d.%d", &x, &y, &z);
-    if (x == 1) {
-	ymin = 8;
-    }
 
     tmp = gtk_label_new(_("Minimum gretl version"));
     gtk_misc_set_alignment(GTK_MISC(tmp), 1.0, 0.5);
@@ -1912,39 +1926,80 @@ static void add_minver_selector (GtkWidget *tbl, int i,
 
     hbox = gtk_hbox_new(FALSE, 0);
 
-    /* major version number */
-    spin = gtk_spin_button_new_with_range(1, x, 1);
-    if (maj > 1) {
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) maj);
-    }
-    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
-    g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(1));
-    g_signal_connect(G_OBJECT(spin), "value-changed",
-		     G_CALLBACK(adjust_minver), finfo);
-    tmp = gtk_label_new(".");
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 2);
+    if (atoi(GRETL_VERSION) >= 2015) {
+	/* new style versioning */
+	int yr, rev;
+	int x;
+	char c;
 
-    /* minor version number */
-    spin = gtk_spin_button_new_with_range(ymin, y, 1);
-    if (min > 0) {
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) min);
-    }
-    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
-    g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(2));
-    g_signal_connect(G_OBJECT(spin), "value-changed",
-		     G_CALLBACK(adjust_minver), finfo);
-    tmp = gtk_label_new(".");
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 2);
+	get_year_rev(finfo->minver, &yr, &rev);
+	sscanf(GRETL_VERSION, "%d%c", &x, &c);
 
-    /* "patch-level" */
-    spin = gtk_spin_button_new_with_range(0, z + 1, 1);
-    if (pl > 0) {
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) pl);
+	/* release year */
+	spin = gtk_spin_button_new_with_range(x - 3, x, 1);
+	if (yr > x - 3) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) x);
+	}	
+	gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
+	g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(1));
+	g_signal_connect(G_OBJECT(spin), "value-changed",
+			 G_CALLBACK(new_adjust_minver), finfo);
+
+	/* FIXME: the "letter" spinner needs fixing up */
+
+	spin = gtk_spin_button_new_with_range(1, 9, 1);
+	if (rev > 1) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) rev);
+	}
+	gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
+	g_signal_connect(G_OBJECT(spin), "value-changed",
+			 G_CALLBACK(new_adjust_minver), finfo);
+    } else {
+	/* old-style versioning */
+	int maj, min, pl;
+	int x, y, z;
+	int ymin = 0;
+
+	get_maj_min_pl(finfo->minver, &maj, &min, &pl);
+	sscanf(GRETL_VERSION, "%d.%d.%d", &x, &y, &z);
+	if (x == 1) {
+	    ymin = 8;
+	}
+
+	/* major version number */
+	spin = gtk_spin_button_new_with_range(1, x, 1);
+	if (maj > 1) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) maj);
+	}
+	gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
+	g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(1));
+	g_signal_connect(G_OBJECT(spin), "value-changed",
+			 G_CALLBACK(old_adjust_minver), finfo);
+	tmp = gtk_label_new(".");
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 2);
+
+	/* minor version number */
+	spin = gtk_spin_button_new_with_range(ymin, y, 1);
+	if (min > 0) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) min);
+	}
+	gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
+	g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(2));
+	g_signal_connect(G_OBJECT(spin), "value-changed",
+			 G_CALLBACK(old_adjust_minver), finfo);
+	tmp = gtk_label_new(".");
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 2);
+
+	/* "patch-level" */
+	spin = gtk_spin_button_new_with_range(0, z + 1, 1);
+	if (pl > 0) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) pl);
+	}
+	gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
+	g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(3));
+	g_signal_connect(G_OBJECT(spin), "value-changed",
+			 G_CALLBACK(old_adjust_minver), finfo);
     }
-    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
-    g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(3));
-    g_signal_connect(G_OBJECT(spin), "value-changed",
-		     G_CALLBACK(adjust_minver), finfo);
 
     gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, i, i+1);
     gtk_widget_show_all(hbox);

@@ -6,6 +6,10 @@ version 1.10.91cvs, in progress
   enhance the corresponding GUI  
 - "setobs" command: provide more flexible means of setting
   panel group names when using the --panel-groups option
+- "tabprint" and "eqnprint" commands: deprecate the syntax
+  "-f filename" in favor of --output=filename
+- "modprint": respect the --quiet and --silent options when
+  the test is on a multi-equation model
   
 2015-09-13 version 1.10.2
 - "install" command: add a --local option plus the ability
