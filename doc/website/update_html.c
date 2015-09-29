@@ -46,6 +46,7 @@ struct _gretl_version {
     int major;
     int minor;
     int rev;
+    char letter;
 };
 
 struct lang_strings_t lang_strings[NLANGS];
@@ -398,6 +399,11 @@ char *get_src_version (void)
     p = strstr(verstr, "cvs");
     if (p != NULL) {
 	*p = '\0';
+    } else {
+	p = strstr(verstr, "-git");
+	if (p != NULL) {
+	    *p = '\0';
+	}
     }
 
     return (err)? NULL : verstr;
@@ -559,7 +565,20 @@ int version_history (char *fname, gretl_version *versions)
 	    versions[n].major = M;
 	    versions[n].minor = m;
 	    versions[n].rev = r;
+	    versions[n].letter = 0;
 	    n++;
+	} else {
+	    char c;
+	    
+	    ret = sscanf(line, "%d-%d-%d version %d%c\n",
+			 &year, &mon, &day, &M, &c);
+	    if (ret == 5 && M >= 2015) {
+		versions[n].major = M;
+		versions[n].minor = 0;
+		versions[n].rev = 0;
+		versions[n].letter = c;
+		n++;
+	    }
 	}
     }
 
@@ -605,7 +624,7 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
     int ret, M, m, r, i;
     FILE *clog;
     FILE *clogh;
-    char line[MYLEN];
+    char c, line[MYLEN];
     int year, mon, day;
 
     clogh = fopen(targ, "a");
@@ -620,12 +639,26 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 	M = gv[i].major;
 	m = gv[i].minor;
 	r = gv[i].rev;
+	c = gv[i].letter;
 
-	fprintf(clogh, "<a href=\"#v%d-%d-%d\">", M, m, r);
+	if (c != 0) {
+	    fprintf(clogh, "<a href=\"#v%d%c\">", M, c);
+	} else {
+	    fprintf(clogh, "<a href=\"#v%d-%d-%d\">", M, m, r);
+	}
+	
 	if (i == 0) {
-	    fprintf(clogh, "Version %d.%d.%d</a>&nbsp&nbsp;\n", M, m, r);
+	    if (c != 0) {
+		fprintf(clogh, "Version %d%c</a>&nbsp&nbsp;\n", M, c);
+	    } else {
+		fprintf(clogh, "Version %d.%d.%d</a>&nbsp&nbsp;\n", M, m, r);
+	    }
         } else {
-	    fprintf(clogh, "Version %d.%d.%d</a>\n", M, m, r);
+	    if (c != 0) {
+		fprintf(clogh, "Version %d%c</a>\n", M,c);
+	    } else {
+		fprintf(clogh, "Version %d.%d.%d</a>\n", M, m, r);
+	    }
         }
     }
 
@@ -640,7 +673,16 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 		    year, mon, day, M, m, r);
 	    fputs(" [<a href=\"#top\">Back to top</a>]\n", clogh);
 	} else {
-	    bug_print_line(line, clogh);
+	    ret = sscanf(line, "%d-%d-%d version %d%c\n", 
+			 &year, &mon, &day, &M, &c);
+	    if (ret == 5) {
+		fprintf(clogh, "<a name=\"v%d%c\">", M, c); 
+		fprintf(clogh, " %d-%02d-%02d Version %d%c</a>", 
+			year, mon, day, M, c);
+		fputs(" [<a href=\"#top\">Back to top</a>]\n", clogh);		
+	    } else {
+		bug_print_line(line, clogh);
+	    }
 	}
     }
 
