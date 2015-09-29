@@ -1260,6 +1260,18 @@ static int token_to_param (CMD *c, int pos, int i)
     return c->err;
 }
 
+static int may_be_dash_parm (cmd_token *tok, CMD *c)
+{
+    if (tok->type == TOK_NAME || tok->type == TOK_STRING) {
+	return 1;
+    } else if ((c->ci == TABPRINT || c->ci == EQNPRINT) &&
+	       tok->type == TOK_SYMB && !strcmp(tok->s, "/")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /* legacy: look for, e.g., "-f filename" */
 
 static int dash_char_index (CMD *c, const char *s)
@@ -1286,9 +1298,8 @@ static int dash_char_index (CMD *c, const char *s)
 	    }
 	} else if (step == 2) {
 	    /* suitable following string token */
-	    if (!token_done(tok) && 
-		(tok->type == TOK_NAME || tok->type == TOK_STRING) &&
-		!token_joined(tok)) {
+	    if (!token_done(tok) && !token_joined(tok) &&
+		may_be_dash_parm(tok, c)) {
 		mark_token_done(c->toks[i-1]);
 		mark_token_done(c->toks[i-2]);
 		return i;
