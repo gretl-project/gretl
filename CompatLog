@@ -1,3 +1,9 @@
+version 2015d, in progress
+
+The use of the "-f" flag to supply a filename for the
+"eqnprint" and "tabprint" command is deprecated. Please
+use the new --output option.
+
 2015-09-13 version 1.10.2
 
 No changes.
