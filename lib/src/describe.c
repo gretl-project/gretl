@@ -1437,8 +1437,8 @@ get_moments (const gretl_matrix *M, int row, double *skew, double *kurt)
 
 int 
 multivariate_normality_test (const gretl_matrix *E, 
-			     const gretl_matrix *Sigma, 
-			     PRN *prn)
+			     const gretl_matrix *Sigma,
+			     gretlopt opt, PRN *prn)
 {
     gretl_matrix *S = NULL;
     gretl_matrix *V = NULL;
@@ -1489,19 +1489,23 @@ multivariate_normality_test (const gretl_matrix *E,
 	goto bailout;
     }
 
-    pputc(prn, '\n');
-    gretl_matrix_print_to_prn(C, _("Residual correlation matrix, C"), prn);
+    if (!(opt & OPT_Q)) {
+	pputc(prn, '\n');
+	gretl_matrix_print_to_prn(C, _("Residual correlation matrix, C"), prn);
+    }
 
     evals = gretl_symmetric_matrix_eigenvals(C, 1, &err);
     if (err) {
 	goto bailout;
     }
 
-    pprintf(prn, "%s\n\n", _("Eigenvalues of C"));
-    for (i=0; i<p; i++) {
-	pprintf(prn, " %10g\n", evals->val[i]);
+    if (!(opt & OPT_Q)) {
+	pprintf(prn, "%s\n\n", _("Eigenvalues of C"));
+	for (i=0; i<p; i++) {
+	    pprintf(prn, " %10g\n", evals->val[i]);
+	}
+	pputc(prn, '\n');
     }
-    pputc(prn, '\n');
 
     /* C should now contain eigenvectors of the original C:
        relabel as 'H' for perspicuity */
@@ -1577,9 +1581,11 @@ multivariate_normality_test (const gretl_matrix *E,
 	/* print and record result */
 	double pv = chisq_cdf_comp(2 * p, X2);
 
-	pputs(prn, _("Doornik-Hansen test"));
-	pprintf(prn, "\n %s(%d) = %g [%.4f]\n\n", _("Chi-square"), 2 * p, 
-		X2, pv);
+	if (!(opt & OPT_I)) {
+	    pputs(prn, _("Doornik-Hansen test"));
+	    pprintf(prn, "\n %s(%d) = %g [%.4f]\n\n", _("Chi-square"), 2 * p, 
+		    X2, pv);
+	}
 	record_test_result(X2, pv, "Normality");
     }
 

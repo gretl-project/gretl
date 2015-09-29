@@ -56,7 +56,8 @@ int model_test_driver (int order, DATASET *dset,
     int k = 0;
     int err = 0;
 
-    if (opt == OPT_NONE || opt == OPT_Q) {
+    if (opt == OPT_NONE || opt == OPT_Q || opt == OPT_I) {
+	/* note: OPT_Q and OPT_I are just quiet and silent respectively */
 	pprintf(prn, "modtest: no options selected\n");
 	return 0;
     }
@@ -81,6 +82,7 @@ int model_test_driver (int order, DATASET *dset,
 	k = order > 0 ? order : dset->pd;
     }
 
+    /* transcribe the quietness flags */
     if (opt & OPT_I) {
 	testopt = OPT_I | OPT_Q;
     } else if (opt & OPT_Q) {

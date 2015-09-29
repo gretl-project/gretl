@@ -1660,9 +1660,9 @@ int last_model_test_uhat (DATASET *dset, gretlopt opt, PRN *prn)
     if (type == GRETL_OBJ_EQN) {
 	err = model_error_dist(ptr, dset, opt, prn);
     } else if (type == GRETL_OBJ_SYS) {
-	err = system_normality_test(ptr, prn);
+	err = system_normality_test(ptr, opt, prn);
     } else if (type == GRETL_OBJ_VAR) {
-	err = gretl_VAR_normality_test(ptr, prn);
+	err = gretl_VAR_normality_test(ptr, opt, prn);
     } else {
 	err = E_DATA;
     }

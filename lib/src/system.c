@@ -2363,7 +2363,8 @@ int *compose_ivreg_list (const equation_system *sys, int i)
     return list;
 }
 
-int system_normality_test (const equation_system *sys, PRN *prn)
+int system_normality_test (const equation_system *sys,
+			   gretlopt opt, PRN *prn)
 {
     int err = 0;
 
@@ -2371,7 +2372,8 @@ int system_normality_test (const equation_system *sys, PRN *prn)
 	err = 1;
     } else {
 	err = multivariate_normality_test(sys->E, 
-					  sys->S, 
+					  sys->S,
+					  opt,
 					  prn);
     }
 
@@ -4599,10 +4601,12 @@ int system_autocorrelation_test (equation_system *sys, int order,
     int i, err = 0;
 
     for (i=0; i<sys->neqns && !err; i++) {
-	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
+	if (!(opt & OPT_Q)) {
+	    pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
+	}
 	u = sys->E->val + (i * sys->T);
 	lb = ljung_box(order, 0, sys->T - 1, u, &err);
-	if (!err) {
+	if (!err && !((opt & OPT_Q))) {
 	    pprintf(prn, "%s: %s(%d) = %g [%.4f]\n\n", 
 		    _("Ljung-Box Q'"), _("Chi-square"), order,
 		    lb, chisq_cdf_comp(order, lb));
@@ -4618,10 +4622,16 @@ int system_arch_test (equation_system *sys, int order,
     const double *u;
     int i, err = 0;
 
+    if (!(opt & OPT_I)) {
+	pputc(prn, '\n');
+    }
+
     for (i=0; i<sys->neqns && !err; i++) {
-	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
+	if (!(opt & OPT_I)) {
+	    pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
+	}
 	u = sys->E->val + (i * sys->T);
-	err = array_arch_test(u, sys->T, order, OPT_NONE, prn);
+	err = array_arch_test(u, sys->T, order, opt | OPT_M, prn);
     }
 
     return err;

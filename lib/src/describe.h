@@ -254,7 +254,7 @@ double doornik_chisq (double skew, double xkurt, int n);
 
 int multivariate_normality_test (const gretl_matrix *E, 
 				 const gretl_matrix *Sigma, 
-				 PRN *prn);
+				 gretlopt opt, PRN *prn);
 
 int mahalanobis_distance (const int *list, DATASET *dset, 
 			  gretlopt opt, PRN *prn);

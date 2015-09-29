@@ -26,14 +26,16 @@
 #include "qr_estimate.h"
 #include "varprint.h"
 
-int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn)
+int gretl_VAR_normality_test (const GRETL_VAR *var,
+			      gretlopt opt, PRN *prn)
 {
     int err = 0;
 
     if (var->E == NULL || var->S == NULL) {
 	err = 1;
     } else {
-	err = multivariate_normality_test(var->E, var->S, prn);
+	err = multivariate_normality_test(var->E, var->S,
+					  opt, prn);
     }
 
     return err;
@@ -121,13 +123,15 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
 
     if (tests == NULL || pvals == NULL) {
 	err = E_ALLOC;
-    } else {
+    } else if (!(opt & OPT_I)) {
 	pprintf(prn, "%s %d\n\n", _("Test for ARCH of order"), 
 		order);
     }
 
     for (i=0; i<var->neqns && !err; i++) {
-	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
+	if (!(opt & OPT_I)) {
+	    pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
+	}
 	/* add OPT_M for multi-equation output */
 	err = arch_test(var->models[i], order, dset, 
 			opt | OPT_M, prn);

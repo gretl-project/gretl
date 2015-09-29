@@ -140,7 +140,8 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
 			 DATASET *dset, gretlopt opt,
 			 PRN *prn);
 
-int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn);
+int gretl_VAR_normality_test (const GRETL_VAR *var,
+			      gretlopt opt, PRN *prn);
 
 int set_VAR_model_stats (GRETL_VAR *var, int i);
 
