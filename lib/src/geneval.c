@@ -10015,7 +10015,7 @@ static NODE *eval_query (NODE *t, parser *p)
 
 static int cnum (char c)
 {
-    const char s = "abcdefghi";
+    const char *s = "abcdefghi";
     int i = 1;
 
     while (*s) {
@@ -10031,8 +10031,6 @@ static int cnum (char c)
 
 static int get_version_as_scalar (void)
 {
-    int x, y, z;
-
     if (atoi(GRETL_VERSION) >= 2015) {
 	int Y;
 	char c;
