@@ -1872,8 +1872,49 @@ static void get_maj_min_pl (int v, int *maj, int *min, int *pl)
     *pl = v - *maj * 10000 - *min * 100;
 }
 
+static int translate_version (int oldv)
+{
+    if (oldv == 10908) {
+	return 20121;
+    } else if (oldv == 10909) {
+	return 20122;
+    } else if (oldv == 10910) {
+	return 20123;
+    } else if (oldv == 10911) {
+	return 20124;
+    } else if (oldv == 10912) {
+	return 20131;
+    } else if (oldv == 10913) {
+	return 20132;
+    } else if (oldv == 10914) {
+	return 20133;
+    } else if (oldv == 10990) {
+	return 20141;
+    } else if (oldv == 10991) {
+	return 20142;
+    } else if (oldv == 10992) {
+	return 20143;
+    } else if (oldv == 11000) {
+	return 20151;
+    } else if (oldv == 11001) {
+	return 20152;
+    } else if (oldv == 11002) {
+	return 20153;
+    } else {
+	return 20152;
+    }
+}
+
 static void get_year_rev (int v, int *yr, int *rev)
 {
+    /* note: we need to make allowance for current gretl
+       editing a gfn file with a minimum gretl version
+       recording old-style. 
+    */
+    if (v < 20150) {
+	v = translate_version(v);
+    }
+    
     *yr = v / 10;
     *rev = v - *yr * 10;
 }
@@ -1914,6 +1955,61 @@ static void new_adjust_minver (GtkWidget *w, function_info *finfo)
     finfo_set_modified(finfo, TRUE);
 }
 
+static int letter_to_int (char c)
+{
+    const char *s = "abcdefghi";
+    int i = 1;
+
+    while (*s) {
+	if (c == *s) {
+	    return i;
+	}
+	s++;
+	i++;
+    }
+
+    return 0;
+}
+
+static char int_to_letter (int i)
+{
+    const char *s = "abcdefghi";
+    int j = i - 1;
+
+    if (j >= 0 && j < 9) {
+	return s[j];
+    }
+
+    return 'a';
+}
+
+static gboolean alpha_input (GtkSpinButton *spin, 
+			     gdouble *new_val,
+			     gpointer p)
+{
+    const gchar *s = gtk_entry_get_text(GTK_ENTRY(spin));
+
+    *new_val = letter_to_int(*s);
+
+    return TRUE;
+}
+
+static gboolean alpha_output (GtkSpinButton *spin, gpointer p)
+{
+    int n = gtk_spin_button_get_value_as_int(spin);
+    char c = int_to_letter(n);
+    char buf[2];
+
+    buf[0] = c;
+    buf[1] = '\0';
+
+    if (strcmp(buf, gtk_entry_get_text(GTK_ENTRY(spin)))) {
+	gtk_entry_set_text(GTK_ENTRY(spin), buf);
+    }
+
+    return TRUE;
+}
+
 static void add_minver_selector (GtkWidget *tbl, int i, 
 				 function_info *finfo)
 {
@@ -1945,9 +2041,14 @@ static void add_minver_selector (GtkWidget *tbl, int i,
 	g_signal_connect(G_OBJECT(spin), "value-changed",
 			 G_CALLBACK(new_adjust_minver), finfo);
 
-	/* FIXME: the "letter" spinner needs fixing up */
-
+	/* release letter */
 	spin = gtk_spin_button_new_with_range(1, 9, 1);
+	g_signal_connect(G_OBJECT(spin), "input",
+		     G_CALLBACK(alpha_input), NULL);
+	g_signal_connect(G_OBJECT(spin), "output",
+		     G_CALLBACK(alpha_output), NULL);	
+	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin), FALSE);
+	gtk_entry_set_width_chars(GTK_ENTRY(spin), 1);
 	if (rev > 1) {
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) rev);
 	}
