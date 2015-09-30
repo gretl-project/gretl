@@ -2049,6 +2049,10 @@ static void add_minver_selector (GtkWidget *tbl, int i,
 		     G_CALLBACK(alpha_output), NULL);	
 	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin), FALSE);
 	gtk_entry_set_width_chars(GTK_ENTRY(spin), 1);
+#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 12
+	/* remedy required for gtk3 */
+	gtk_entry_set_max_width_chars(GTK_ENTRY(spin), 1);
+#endif	
 	if (rev > 1) {
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) rev);
 	}
