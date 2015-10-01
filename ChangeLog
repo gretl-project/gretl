@@ -10,6 +10,8 @@ version 1.10.91cvs, in progress
   "-f filename" in favor of --output=filename
 - "modprint": respect the --quiet and --silent options when
   the test is on a multi-equation model
+- Fix bug: using options with the "data" command was broken
+  in the GUI program
   
 2015-09-13 version 1.10.2
 - "install" command: add a --local option plus the ability
