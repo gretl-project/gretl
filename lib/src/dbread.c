@@ -2521,7 +2521,7 @@ static int get_one_db_series (const char *series,
 	this_method = series_get_compact_method(dset, v);
     }
 
-#if DB_DEBUG
+#if 1 || DB_DEBUG
     fprintf(stderr, "db_get_series: dset->v = %d, v = %d, series = '%s'\n", 
 	    dset->v, v, series);
     fprintf(stderr, "this_var_method = %d\n", this_method);

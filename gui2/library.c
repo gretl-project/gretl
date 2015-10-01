@@ -9507,7 +9507,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     switch (cmd->ci) {
 
     case DATA:
-	err = db_get_series(line, dset, cmd->opt, prn);
+	err = db_get_series(cmd->param, dset, cmd->opt, prn);
         if (!err) { 
 	    clean_up_varlabels(dset);
 	    register_data(DATA_APPENDED);
