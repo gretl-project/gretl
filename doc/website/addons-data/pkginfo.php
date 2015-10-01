@@ -1,18 +1,5 @@
 <?php
-function too_new ($vg1, $vg2, $vg3, $vp1, $vp2, $vp3)
-{
-    if ($vp1 > $vg1) {
-	return 1;
-    } elseif ($vp1 == $vg1 && $vp2 > $vg2) {
-	return 1;
-    } elseif ($vp1 == $vg1 && $vp2 == $vg2 && $vp3 > $vg3) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-function get_latest ($file, $pkg, $vg1, $vg2, $vg3)
+function get_latest ($file, $pkg, $gver)
 {
     $fp = @fopen($file, "r");
  
@@ -26,13 +13,21 @@ function get_latest ($file, $pkg, $vg1, $vg2, $vg3)
     while (($line = fgets($fp, 32)) !== false) {
         $pkg_version = trim($line);
         if (strlen($pkg_version) > 0) {
-	    $vp1 = strtok($pkg_version, ". ");
-	    $vp2 = strtok(". ");
-	    $vp3 = strtok(". ");
-	    if (too_new($vg1, $vg2, $vg3, $vp1, $vp2, $vp3)) {
-	        break;
+            $new_style = 0;
+            $n = sscanf($pkg_version, "%d.%d.%d", $p1, $p2, $p3);
+	    if ($n == 3) {
+	        $pver = 10000 * $p1 + 100 * $p2 + $p3;
 	    } else {
-	        $last_version = $pkg_version;
+	        list($p1, $p2) = sscanf($pkg_version, "%d%c");
+	        $pver = 10 * $p1 + letter_to_int($p2);
+	        $new_style = 1;
+	    }
+	    if ($pver > $gver) {
+	        break;
+	    } else if ($new_style) {
+	        $last_version = "$p1$p2";
+	    } else {
+	        $last_version = "$p1.$p2.$p3";
 	    }
         }
     }
@@ -44,27 +39,27 @@ function get_latest ($file, $pkg, $vg1, $vg2, $vg3)
     }
     if (strlen($got_version)) {
         echo "$pkg $got_version\n";
-        // $specfile = "$pkg.spec";
-        // $spec = file_get_contents($specfile);
-        // if ($spec !== false) {
-        //     echo $spec;
-        // }
         return 1;
     } 
     return 0;
 }
 
 $gretl_version = $_GET["gretl_version"];
-$gretl_maj = strtok($gretl_version, ".");
-$gretl_min = strtok(".");
-$gretl_pl = strtok(".");
+
+$n = sscanf($gretl_version, "%d.%d.%d", $g1, $g2, $g3);
+if ($n == 3) {
+    $gver = 10000 * $g1 + 100 * $g2 + $g3;
+} else {
+    list($g1, $g2) = sscanf($gretl_version, "%d%c");
+    $gver = 10 * $g1 + letter_to_int($g2);
+}
 
 if ($dh = opendir(".")) {
     while (($file = readdir($dh)) !== false) {
         if (is_file($file) and strstr($file, ".versions")) {
            $pkgname = strstr($file, ".versions", TRUE);
            // echo "*** found versions file for $pkgname \n";
-           get_latest($file, $pkgname, $gretl_maj, $gretl_min, $gretl_pl);
+           get_latest($file, $pkgname, $gver);
         }
     }
     closedir($dh);
