@@ -3166,13 +3166,15 @@
   <command name="eqnprint" section="Printing" label="Stampa un modello come equazione" context="cli">
 
     <usage>
-      <arguments>
-        <argument optional="true">-f nomefile</argument>
-      </arguments>
       <options>
         <option>
 	  <flag>--complete</flag>
 	  <effect>crea un documento completo</effect>
+        </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
         </option>
       </options>
     </usage>
@@ -3180,12 +3182,13 @@
     <description>
       <para>
 	Va eseguito dopo la stima di un modello. Stampa il modello
-        stimato sotto forma di equazione &latex;. Se viene specificato
-        un nome di file usando l'opzione <lit>-f</lit>, il risultato
-        viene scritto in quel file, altrimenti viene scritto in un file
-        il cui nome ha la forma <filename>equation_N.tex</filename>, dove
-        <lit>N</lit> è il numero di modelli stimati finora nella sessione
-        in corso. Si veda anche <cmdref targ="tabprint"/>.
+	stimato sotto forma di equazione &latex;. Se viene specificato
+	un nome di file usando l'opzione <opt>output</opt>, il
+	risultato viene scritto in quel file, altrimenti viene scritto
+	in un file il cui nome ha la forma
+	<filename>equation_N.tex</filename>, dove <lit>N</lit> è il
+	numero di modelli stimati finora nella sessione in corso. Si
+	veda anche <cmdref targ="tabprint"/>.
       </para>
       <para>
 	Usando l'opzione <lit>--complete</lit>, il file &latex; è un
@@ -11129,13 +11132,14 @@
     tabulare" context="cli">
 
     <usage>
-      <arguments>
-        <argument optional="true">-f nomefile</argument>
-      </arguments>
       <options>
         <option>
 	  <flag>--rtf</flag>
 	  <effect>Produce RTF invece di &latex;</effect>
+        </option>
+        <option>
+	  <flag>--csv</flag>
+	  <effect>Produce CSV invece di &latex;</effect>
         </option>
         <option>
 	  <flag>--complete</flag>
@@ -11145,43 +11149,58 @@
 	  <flag>--format="f1|f2|f3|f4"</flag>
 	  <effect>Specifica un formato personalizzato</effect>
         </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>invia l'output al file specificato</effect>
+        </option>	
       </options>
     </usage>
 
     <description>
       <para>
 	Va eseguito dopo la stima di un modello.  Stampa il modello
-        stimato sotto forma di tabella, in formato &latex;, o, se viene
-        usata l'opzione <lit>--rtf</lit>, in formato RTF.  Se viene specificato
-        un nome di file dopo l'opzione <lit>-f</lit>, l'output viene scritto nel
-        file, altrimenti viene scritto in un file col nome
-        <filename>model_N.tex</filename> (o <filename>model_N.rtf</filename>),
-        dove <lit>N</lit> è il numero dei modelli stimati finora nella sessione
-        in corso.
+	stimato sotto forma di tabella, in formato &latex; o in
+	formato RTF o CSV, se viene usata l'opzione corrispondente.
+	Se viene specificato un nome di file dopo l'opzione
+	<opt>output</opt>, l'output viene scritto nel file, altrimenti
+	viene scritto in un file col nome
+	<filename>model_N.tex</filename> (o
+	<filename>model_N.rtf</filename>), dove <lit>N</lit> è il
+	numero dei modelli stimati finora nella sessione in corso.
       </para>
       <para>
-        Le opzioni illustrate di seguito sono disponibili solo per il formato
-        &latex;.
+	Selezionando il formato CSV, i valori sono separati da
+	virgole, a meno che il delimitatore decimale non sia esso
+	stesso la virgola, nel qual caso viene usato il punto e
+	virgola. Si noti che l'output in CSV potrebbe essere meno
+	completo degli altri formati.
+      </para>
+      <para>
+        Le opzioni illustrate di seguito sono disponibili solo per il
+        formato &latex;.
       </para>
       <para>
 	Usando l'opzione <lit>--complete</lit>, il file &latex; è un
-        documento completo, pronto per essere processato; altrimenti il
-        file va incluso in un documento.
+	documento completo, pronto per essere processato; altrimenti
+	il file va incluso in un documento.
       </para>
       <para>
-	Se si intende modificare lo stile del formato tabulare, è possibile
-        specificare un formato personalizzato usando l'opzione <lit>--format</lit>,
-        seguita da una stringa di formato. La stringa di formato va inclusa tra
-        virgolette doppie e deve essere unita all'opzione con un segno di
-        uguale. La composizione della stringa di formato è la seguente: ci sono
-        quattro campi, che rappresentano il coefficiente, l'errore standard, il
-        rapporto <math>t</math> e il p-value. Questi campi vanno separati
-        usando barre verticali e possono contenere una specificazione di formato
-        per valori numerici nello stile della funzione <lit>printf</lit>, oppure
-        possono essere lasciati in bianco, in modo da sopprimere la
-        visualizzazione del campo nella rispettiva colonna dela tabella (con
-        l'unico vincolo che non è possibile lasciare in bianco tutti i campi).
-        Ecco alcuni esempi:
+	Se si intende modificare lo stile del formato tabulare, è
+	possibile specificare un formato personalizzato usando
+	l'opzione <lit>--format</lit>, seguita da una stringa di
+	formato. La stringa di formato va inclusa tra virgolette
+	doppie e deve essere unita all'opzione con un segno di
+	uguale. La composizione della stringa di formato è la
+	seguente: ci sono quattro campi, che rappresentano il
+	coefficiente, l'errore standard, il rapporto <math>t</math> e
+	il p-value. Questi campi vanno separati usando barre verticali
+	e possono contenere una specificazione di formato per valori
+	numerici nello stile della funzione <lit>printf</lit>, oppure
+	possono essere lasciati in bianco, in modo da sopprimere la
+	visualizzazione del campo nella rispettiva colonna dela
+	tabella (con l'unico vincolo che non è possibile lasciare in
+	bianco tutti i campi).  Ecco alcuni esempi:
       </para>
       <code>
 	--format="%.4f|%.4f|%.4f|%.4f"
