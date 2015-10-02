@@ -10,6 +10,7 @@ ifeq ($(INSTALL_DATA),)
 endif
 
 GFNDIR = $(prefix)/share/gretl/functions
+GRETLCLI = ../../cli/gretlcli
 
 PKG = ivpanel
 PKGSRC = $(topsrc)/addons/ivpanel
@@ -20,8 +21,9 @@ vpath %.spec $(PKGSRC)
 INP = driver.inp \
       ivpanel.inp
 
-$(PKG).gfn: links.stamp $(INP) $(PKG).spec $(PKG).help examples/nc_crime.inp
-	gretlcli -b $(PKGSRC)/driver.inp
+$(PKG).gfn: links.stamp $(INP) $(PKG).spec $(PKG).help \
+	examples/nc_crime.inp $(GRETLCLI)
+	$(GRETLCLI) -b $(PKGSRC)/driver.inp
 
 links.stamp:
 	if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
@@ -30,16 +32,15 @@ links.stamp:
 	touch $@
 
 $(PKG).zip: $(PKG).gfn
-	mkdir $(PKG) && cp $(PKG).gfn $(PKG) && zip -r $(PKG).zip $(PKG) \
-	&& rm -rf $(PKG)
+	echo makepkg $(PKG).zip | $(GRETLCLI) -b -
 
 .PHONY : check install clean
 
 check: $(PKG).gfn
 	$(MAKE) -C examples check
 
-install: $(PKG).gfn
-	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
+install: $(PKG).zip
+	echo install $(PKG).zip --local | $(GRETLCLI) -b -
 
 clean: 
 	rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp

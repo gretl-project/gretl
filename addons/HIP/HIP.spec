@@ -14,3 +14,4 @@ min-version = 1.10.0
 
 label = IV/Heteroskedastic
 menu-attachment = MAINWIN/Model/LimdepModels/probit
+data-files = examples

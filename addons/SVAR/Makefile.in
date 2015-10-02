@@ -10,6 +10,7 @@ ifeq ($(INSTALL_DATA),)
 endif
 
 GFNDIR = $(prefix)/share/gretl/functions
+GRETLCLI = ../../cli/gretlcli
 
 PKG = SVAR
 PKGSRC = $(topsrc)/addons/$(PKG)
@@ -29,8 +30,8 @@ INP =   SVAR.inp \
 	SVAR_utils.inp \
 	pkg.inp
 
-$(PKG).gfn: links.stamp $(INP) $(PKG).spec
-	gretlcli -b $(PKGSRC)/pkg.inp
+$(PKG).gfn: links.stamp $(INP) $(PKG).spec $(GRETLCLI)
+	$(GRETLCLI) -b $(PKGSRC)/pkg.inp
 
 doc/$(PKG).pdf:
 	$(MAKE) -C doc
@@ -40,24 +41,13 @@ links.stamp:
 	if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
 	touch $@
 
-$(PKG).zip: $(PKG).gfn doc/$(PKG).pdf 
-	mkdir -p $(PKG) && mkdir -p $(PKG)/examples && cp $(PKG).gfn $(PKG) && \
-	cp doc/$(PKG).pdf $(PKG) && cp examples/*.inp $(PKG)/examples && \
-	cp examples/*.gdt $(PKG)/examples && zip -r $(PKG).zip $(PKG) && rm -rf $(PKG)
+$(PKG).zip: $(PKG).gfn doc/$(PKG).pdf  $(GRETLCLI)
+	echo makepkg $(PKG).zip | $(GRETLCLI) -b -
 
 .PHONY : check install clean
 
-install: $(PKG).gfn doc/$(PKG).pdf
-	if [ -d $(DESTDIR)$(GFNDIR)/$(PKG)/ ]; then \
-        rm -rf $(DESTDIR)$(GFNDIR)/$(PKG)/; fi; \
-	mkdir $(DESTDIR)$(GFNDIR)/$(PKG)/
-	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
-	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
-	if [ -d $(DESTDIR)$(GFNDIR)/$(PKG)/examples ]; then \
-        rm -rf $(DESTDIR)$(GFNDIR)/$(PKG)/examples; fi; \
-	mkdir $(DESTDIR)$(GFNDIR)/$(PKG)/examples
-	for f in examples/*.inp examples/*.gdt; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
+install: $(PKG).zip
+	echo install $(PKG).zip --local | $(GRETLCLI) -b -
 
 clean: 
 	rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp

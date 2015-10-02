@@ -10,6 +10,7 @@ ifeq ($(INSTALL_DATA),)
 endif
 
 GFNDIR = $(prefix)/share/gretl/functions
+GRETLCLI = ../../cli/gretlcli
 
 PKG = gig
 PKGSRC = $(topsrc)/addons/$(PKG)
@@ -24,8 +25,8 @@ INP = gig_estimate.inp \
       gig_printout.inp \
       gig_setup.inp
 
-$(PKG).gfn: links.stamp $(INP) $(PKG).spec
-	gretlcli -b $(PKGSRC)/gig.inp
+$(PKG).gfn: links.stamp $(INP) $(PKG).spec $(GRETLCLI)
+	$(GRETLCLI) -b $(PKGSRC)/gig.inp
 
 doc/gig.pdf:
 	$(MAKE) -C doc
@@ -35,22 +36,16 @@ links.stamp:
 	if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
 	touch $@
 
+$(PKG).zip: $(PKG).gfn doc/$(PKG).pdf $(GRETLCLI)
+	echo makepkg $(PKG).zip | $(GRETLCLI) -b -
+
 .PHONY : check install clean
 
 check: $(PKG).gfn
 	$(MAKE) -C examples check
 
-install: $(PKG).gfn doc/$(PKG).pdf
-	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
-	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
-	for f in examples/*.inp examples/*.gdt examples/README ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
-
-zipfile: $(PKG).gfn $(PKG)/gig.pdf 
-	mkdir -p $(PKG)/examples && cp $(PKG).gfn $(PKG) && \
-	cp doc/$(PKG).pdf $(PKG) && cp examples/*.inp $(PKG)/examples && \
-	cp examples/*.gdt $(PKG)/examples && cp examples/README $(PKG)/examples && \
-	zip -r $(PKG).zip $(PKG) && rm -rf $(PKG)
+install: $(PKG).zip
+	echo install $(PKG).zip --local | $(GRETLCLI) -b -
 
 clean: 
 	rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp

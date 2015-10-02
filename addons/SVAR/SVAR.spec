@@ -19,3 +19,4 @@ help = SVAR.pdf
 sample-script = examples/simple_C.inp
 min-version = 1.10.0
 data-requirement = needs-time-series-data
+data-files = examples

@@ -17,3 +17,4 @@ help = gig.pdf
 sample-script = examples/example1.inp
 min-version = 1.9.92
 data-requirement = needs-time-series-data
+data-files = examples

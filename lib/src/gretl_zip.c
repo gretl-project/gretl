@@ -531,9 +531,19 @@ static int pkg_zipfile_add (const char *fname,
 	}
 	g_free(ziptmp);
     } else {
-	/* a regular file, we hope */
-	dest = g_strdup_printf("%s%c%s", dotpath, SLASH, fname);
+	/* a regular file, we hope; but if this is the PDF file
+	   for a package we'll allow that it may be found in a
+	   subdirectory (probably "doc")
+	*/
+	const char *p = strrchr(fname, SLASH);
+	
+	if (p != NULL && has_suffix(fname, ".pdf")) {
+	    dest = g_strdup_printf("%s%c%s", dotpath, SLASH, p + 1);
+	} else {
+	    dest = g_strdup_printf("%s%c%s", dotpath, SLASH, fname);
+	}
 	err = gretl_copy_file(fname, dest);
+	fprintf(stderr, "branch 3, err = %d\n", err);
     }
     
     zip_report(err, nf, opt, prn);
@@ -660,7 +670,13 @@ int package_make_zipfile (const char *gfnname,
 
     if (!err && pdfdoc) {
 	/* copy PDF file into place */
+	struct stat sbuf;
+	
 	tmp = g_strdup_printf("%s.pdf", pkgname);
+	if (stat(tmp, &sbuf) != 0) {
+	    g_free(tmp);
+	    tmp = g_strdup_printf("doc/%s.pdf", pkgname);
+	}
 	err = pkg_zipfile_add(tmp, dotpath, opt, prn);
 	g_free(tmp);
     }
