@@ -10,9 +10,28 @@ ifeq ($(INSTALL_DATA),)
 endif
 
 GFNDIR = $(prefix)/share/gretl/functions
+ivpsrc = $(topsrc)/addons/ivpanel
 
-ivpanel.gfn: driver.inp ivpanel.inp ivpanel.spec ivpanel.help examples/nc_crime.inp
+INP = driver.inp \
+      ivpanel.inp
+
+SPEC = ivpanel.spec
+
+HELP = ivpanel.help
+
+ivpanel.gfn: links $(INP) $(SPEC) $(HELP) examples/nc_crime.inp
 	gretlcli -b driver.inp
+	
+.PHONY : links check install clean
+
+links:
+	for f in $(INP) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(ivpsrc)/$$f . ; fi ; done
+	for f in $(SPEC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(ivpsrc)/$$f . ; fi ; done
+	for f in $(HELP) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(ivpsrc)/$$f . ; fi ; done
+	if [ ! -d examples ] ; then ln -s $(ivpsrc)/examples . ; fi
 
 check: ivpanel.gfn
 	$(MAKE) -C examples check

@@ -10,17 +10,29 @@ ifeq ($(INSTALL_DATA),)
 endif
 
 GFNDIR = $(prefix)/share/gretl/functions
+hipsrc = $(topsrc)/addons/HIP
 
 INP = HIP_public.inp \
       HIP_private.inp \
       HIP.inp \
       HIP_example.inp
 
-HIP.gfn: $(INP) HIP.spec
+SPEC = HIP.spec
+
+HIP.gfn: links $(INP) $(SPEC)
 	gretlcli -b HIP.inp
 
 doc/HIP.pdf:
 	$(MAKE) -C doc
+
+.PHONY : links check install clean
+
+links:
+	for f in $(INP) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(hipsrc)/$$f . ; fi ; done
+	for f in $(SPEC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(hipsrc)/$$f . ; fi ; done
+	if [ ! -d examples ] ; then ln -s $(hipsrc)/examples . ; fi
 
 check: HIP.gfn
 	$(MAKE) -C examples check
