@@ -10,6 +10,10 @@ ifeq ($(INSTALL_DATA),)
 endif
 
 GFNDIR = $(prefix)/share/gretl/functions
+gigsrc = $(topsrc)/addons/gig
+
+vpath %.inp $(SRCPATH)
+vpath %.spec $(SRCPATH)
 
 INP = gig_estimate.inp \
       gig.inp \
@@ -17,12 +21,23 @@ INP = gig_estimate.inp \
       gig_plot.inp \
       gig_printout.inp \
       gig_setup.inp
+      
+SPEC = gig.spec     
 
-gig.gfn: $(INP) gig.spec
+gig.gfn: links $(INP) $(SPEC)
 	gretlcli -b gig.inp
 
 doc/gig.pdf:
 	$(MAKE) -C doc
+	
+.PHONY : links check install clean
+
+links:
+	for f in $(INP) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(gigsrc)/$$f . ; fi ; done
+	for f in $(SPEC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(gigsrc)/$$f . ; fi ; done
+	if [ ! -d examples ] ; then ln -s $(gigsrc)/examples . ; fi
 
 check: gig.gfn
 	$(MAKE) -C examples check
