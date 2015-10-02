@@ -12,8 +12,8 @@ endif
 GFNDIR = $(prefix)/share/gretl/functions
 gigsrc = $(topsrc)/addons/gig
 
-vpath %.inp $(SRCPATH)
-vpath %.spec $(SRCPATH)
+vpath %.inp $(gigsrc)
+vpath %.spec $(gigsrc)
 
 INP = gig_estimate.inp \
       gig.inp \
@@ -21,23 +21,22 @@ INP = gig_estimate.inp \
       gig_plot.inp \
       gig_printout.inp \
       gig_setup.inp
-      
+
 SPEC = gig.spec     
 
-gig.gfn: links $(INP) $(SPEC)
-	gretlcli -b gig.inp
+gig.gfn: links.stamp $(INP) $(SPEC)
+	gretlcli -b $(gigsrc)/gig.inp
 
 doc/gig.pdf:
 	$(MAKE) -C doc
-	
-.PHONY : links check install clean
 
-links:
-	for f in $(INP) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(gigsrc)/$$f . ; fi ; done
+links.stamp:
 	for f in $(SPEC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(gigsrc)/$$f . ; fi ; done
 	if [ ! -d examples ] ; then ln -s $(gigsrc)/examples . ; fi
+	touch $@
+
+.PHONY : check install clean
 
 check: gig.gfn
 	$(MAKE) -C examples check
@@ -55,7 +54,7 @@ zipfile: gig.gfn doc/gig.pdf
 	zip -r gig.zip gig && rm -rf gig
 
 clean: 
-	rm -f gig.gfn; find . -name "*~" | xargs rm -f
+	rm -f gig.gfn links.stamp ; find . -name "*~" | xargs rm -f
 	$(MAKE) -C doc clean
 
 

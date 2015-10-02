@@ -12,6 +12,9 @@ endif
 GFNDIR = $(prefix)/share/gretl/functions
 hipsrc = $(topsrc)/addons/HIP
 
+vpath %.inp $(hipsrc)
+vpath %.spec $(hipsrc)
+
 INP = HIP_public.inp \
       HIP_private.inp \
       HIP.inp \
@@ -19,20 +22,21 @@ INP = HIP_public.inp \
 
 SPEC = HIP.spec
 
-HIP.gfn: links $(INP) $(SPEC)
-	gretlcli -b HIP.inp
+EXAMP = HIP_example.inp
+
+HIP.gfn: links.stamp $(INP) $(SPEC)
+	gretlcli -b $(hipsrc)/HIP.inp
 
 doc/HIP.pdf:
 	$(MAKE) -C doc
 
-.PHONY : links check install clean
-
-links:
-	for f in $(INP) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(hipsrc)/$$f . ; fi ; done
+links.stamp:
+	if [ ! -f $(EXAMP) ] ; then ln -sf $(hipsrc)/$(EXAMP) . ; fi
 	for f in $(SPEC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(hipsrc)/$$f . ; fi ; done
 	if [ ! -d examples ] ; then ln -s $(hipsrc)/examples . ; fi
+
+.PHONY : check install clean
 
 check: HIP.gfn
 	$(MAKE) -C examples check
@@ -51,7 +55,7 @@ zipfile: HIP.gfn doc/HIP.pdf
 	zip -r HIP.zip HIP && rm -rf HIP
 
 clean: 
-	rm -f HIP.gfn; find . -name "*~" | xargs rm -f
+	rm -f HIP.gfn links.stamp ; find . -name "*~" | xargs rm -f
 	$(MAKE) -C doc clean
 
 
