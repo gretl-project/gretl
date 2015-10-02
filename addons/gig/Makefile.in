@@ -54,7 +54,8 @@ zipfile: gig.gfn doc/gig.pdf
 	zip -r gig.zip gig && rm -rf gig
 
 clean: 
-	rm -f gig.gfn links.stamp ; find . -name "*~" | xargs rm -f
+	rm -f gig.gfn gig-i18n.c gig.xml gig.zip links.stamp
+	find . -name "*~" | xargs rm -f
 	$(MAKE) -C doc clean
 
 

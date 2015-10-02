@@ -10,7 +10,7 @@ MAKE = @MAKE@
 INSTALL = @INSTALL@
 INSTALL_DATA = ${INSTALL} -m 644
 
-export
+vpath %.c $(topsrc)/addons
 
 tooldir = $(topsrc)/tools
 funcsdir = $(prefix)/share/gretl/functions

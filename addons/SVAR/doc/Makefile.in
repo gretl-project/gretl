@@ -1,0 +1,48 @@
+topsrc = @top_srcdir@
+
+TEXDIR = $(topsrc)/doc/tex
+DOCDIR = $(topsrc)/addons/SVAR/doc
+
+FIGS = 	awm-irfc.pdf \
+	awm-irfi.pdf \
+	awm-irfy.pdf \
+	bqhdu.pdf \
+	bqhdy.pdf \
+	bq_ud.pdf \
+	bq_us.pdf \
+	bq_Yd.pdf \
+	bq_Ys.pdf \
+	Cmodel_hd.pdf \
+	dynamic_IS.pdf \
+	FEVD_1.pdf \
+	FEVD_2.pdf \
+	GUI_SVAR.png \
+	Output.png \
+	simpleC_11_noboot.pdf \
+	simpleC_11.pdf \
+	simpleC_12.pdf \
+	simpleC_21.pdf \
+	simpleC_22.pdf \
+	simpleC_gretl.pdf \
+	TMPL.png
+
+pdfdoc: links.stamp bib
+	pdflatex SVAR; pdflatex SVAR
+
+SVAR.aux: SVAR.tex
+	pdflatex SVAR
+
+bib: SVAR.aux
+	bibtex $<
+
+links.stamp:
+	if [ ! -f gretl.bst ] ; then ln -sf $(TEXDIR)/gretl.bst . ; fi
+	if [ ! -f SVAR.bib ] ; then ln -sf $(DOCDIR)/SVAR.bib . ; fi
+	if [ ! -f SVAR.tex ] ; then ln -sf $(DOCDIR)/SVAR.tex . ; fi
+	for f in $(FIGS) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(DOCDIR)/$$f . ; fi ; done
+	touch $@
+
+clean : 
+	rm -rf *~ *.aux *.log *.bbl *.blg *.toc auto \
+	SVAR.pdf links.stamp

@@ -35,6 +35,13 @@ links.stamp:
 	for f in $(SPEC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(hipsrc)/$$f . ; fi ; done
 	if [ ! -d examples ] ; then ln -s $(hipsrc)/examples . ; fi
+	touch $@
+
+HIP.zip: HIP.gfn doc/HIP.pdf 
+	mkdir -p HIP && mkdir -p HIP/examples && cp HIP.gfn HIP && \
+	cp doc/HIP.pdf HIP && cp examples/*.inp HIP/examples && \
+	cp examples/*.gdtb HIP/examples && \
+	zip -r HIP.zip HIP && rm -rf HIP
 
 .PHONY : check install clean
 
@@ -48,14 +55,9 @@ install: HIP.gfn doc/HIP.pdf
 	for f in examples/*.inp examples/*.gdtb ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/HIP/examples ; done
 
-zipfile: HIP.gfn doc/HIP.pdf 
-	mkdir -p HIP && mkdir -p HIP/examples && cp HIP.gfn HIP && \
-	cp doc/HIP.pdf HIP && cp examples/*.inp HIP/examples && \
-	cp examples/*.gdtb HIP/examples && \
-	zip -r HIP.zip HIP && rm -rf HIP
-
 clean: 
-	rm -f HIP.gfn links.stamp ; find . -name "*~" | xargs rm -f
+	rm -f HIP.gfn HIP-i18n.c HIP.xml HIP.zip links.stamp
+	find . -name "*~" | xargs rm -f
 	$(MAKE) -C doc clean
 
 
