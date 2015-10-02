@@ -1,13 +1,14 @@
 topsrc = @top_srcdir@
+datarootdir = @datarootdir@
+
 prefix = @prefix@
 
+CC = @CC@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
 INSTALL_DATA = ${INSTALL} -m 644
-
-ifeq ($(CC),)
-  CC = gcc -Wall
-endif
 
 export
 
@@ -17,7 +18,7 @@ funcsdir = $(prefix)/share/gretl/functions
 SUBDIRS = gig ivpanel SVAR HIP
 ALLSUBDIRS = gig ivpanel SVAR HIP
 
-.PHONY : subdirs $(SUBDIRS) clean installdirs install dist
+.PHONY : subdirs $(SUBDIRS) clean installdirs install
 
 subdirs: $(SUBDIRS)
 

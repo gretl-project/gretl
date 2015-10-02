@@ -34,6 +34,7 @@ dnl
 build_gui="yes"
 prefer_gtk2="no"
 build_docs="no"
+build_addons="no"
 use_lucida="no"
 build_po="no"
 have_readline="no"
@@ -112,12 +113,21 @@ else
 fi])
 
 AC_ARG_ENABLE(build-doc,
-[  --enable-build-doc      Enable building of gretl docs [[CVS only]]],
+[  --enable-build-doc      Enable building of gretl docs [[git only]]],
 [if test "$enableval" = "yes"
 then
   build_docs=yes
 else
   build_docs=no
+fi])
+
+AC_ARG_ENABLE(build-addons,
+[  --enable-build-addons   Enable building of gretl addons [[git only]]],
+[if test "$enableval" = "yes"
+then
+  build_addons=yes
+else
+  build_addons=no
 fi])
 
 AC_ARG_ENABLE(quiet-build,
@@ -203,7 +213,7 @@ else
 fi])
 
 AC_ARG_WITH(lucida,
-[  --with-lucida           Use Lucida fonts for manual [[CVS only]]],
+[  --with-lucida           Use Lucida fonts for manual [[git only]]],
 [ case "$withval" in
   yes)
         FONTREQ="\\RequirePackage[[T1]]{fontenc,lucidabr}"
@@ -879,7 +889,16 @@ if test "${build_docs}" = "yes" ; then
    fi
 fi
 
+dnl If building addons was requested, see if we can do it
+if test "${build_addons}" = "yes" ; then
+   if test "$have_latex" = "no" ; then
+      build_addons="no"
+      echo "*** Can't build gretl addons: LaTeX not found"
+   fi
+fi
+
 AC_SUBST(build_docs)
+AC_SUBST(build_addons)
 AC_SUBST(quiet_build)
 AC_SUBST(pkg_build)
 AC_SUBST(swap_ends)
@@ -965,6 +984,12 @@ if test "${build_docs}" = "yes" ; then
   ])
 fi
 
+if test "${build_addons}" = "yes" ; then
+  AC_OUTPUT([
+    addons/Makefile
+  ])
+fi
+
 if test "${have_zlib}" = "no" ; then
 echo "
 Please install zlib (compression library) and then reconfigure gretl.
@@ -1042,6 +1067,7 @@ Configuration:
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}
+  Build gretl addons:                     ${build_addons}
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}
