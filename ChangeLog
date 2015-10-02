@@ -1,4 +1,4 @@
-version 1.10.91cvs, in progress
+version 1.10.91git, in progress
 - add varnames() function: similar to varname() but returns
   an array of strings given a list argument
 - movavg() function: add option to supply a specific
