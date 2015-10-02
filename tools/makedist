@@ -3,7 +3,7 @@
 # the directory above the source tree
 parent=/home/cottrell/stats/esl
 
-version=$(grep GRETL_VERSION[^_] ${parent}/gretl/lib/src/version.h | \
+version=$(grep GRETL_VERSION[^_] ${parent}/gretl-git/lib/src/version.h | \
           awk '{ print $NF}' | sed s/[\"\;]//g)
 versiondir=gretl-${version}	  
 tarfile="${versiondir}.tar.xz"
@@ -11,13 +11,13 @@ tarfile="${versiondir}.tar.xz"
 echo "making dist file for gretl $version using filename $tarfile"
 
 # make time stamp
-cd ${parent}/gretl && date > share/gretl.stamp
+cd ${parent}/gretl-git && date > share/gretl.stamp
 
 # make the distribution archive
 cd $parent 
 echo "making archive..."
-mv gretl ${versiondir}
+mv gretl-git ${versiondir}
 rm -f $tarfile
 tar cvJfX $tarfile tar_exclude ${versiondir}
-mv ${versiondir} gretl
+mv ${versiondir} gretl-git
 
