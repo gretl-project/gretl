@@ -1859,6 +1859,15 @@
 	  the given matrix an error is flagged. See also
 	  <fncref targ="colnames"/>.
 	</para>
+	<para>
+	  Example:
+	</para>
+	<code>
+	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
+	  colnames(A, "Col_A Col_B Col_C")
+	  string name = colname(A, 3)
+	  print name
+	</code>
       </description>
     </function>
 

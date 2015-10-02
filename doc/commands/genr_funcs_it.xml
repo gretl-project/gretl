@@ -1832,14 +1832,23 @@
     <fnarg type="int">col</fnarg>
       </fnargs>
       <description>
-    <para>
-      Restituisce il nome della colonna <argname>col</argname>
-      della matrice <argname>M</argname>. Se <argname>M</argname>
-      non ha nomi associati alle colonne, la funzione restituisce
-      una stringa vuota; se <argname>col</argname> è fuori dai
-      limiti per la matrice data, viene restituito un messaggio di
-      errore. Si veda anche <fncref targ="colnames"/>.
-    </para>
+	<para>
+	  Restituisce il nome della colonna <argname>col</argname>
+	  della matrice <argname>M</argname>. Se <argname>M</argname>
+	  non ha nomi associati alle colonne, la funzione restituisce
+	  una stringa vuota; se <argname>col</argname> è fuori dai
+	  limiti per la matrice data, viene restituito un messaggio di
+	  errore. Si veda anche <fncref targ="colnames"/>.
+	</para>
+    	<para>
+	  Esempio:
+	</para>
+	<code>
+	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
+	  colnames(A, "Col_A Col_B Col_C")
+	  string name = colname(A, 3)
+	  print name
+	</code>
       </description>
     </function>
 
