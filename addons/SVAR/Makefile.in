@@ -10,10 +10,12 @@ ifeq ($(INSTALL_DATA),)
 endif
 
 GFNDIR = $(prefix)/share/gretl/functions
-svarsrc = $(topsrc)/addons/SVAR
 
-vpath %.inp $(svarsrc)
-vpath %.spec $(svarsrc)
+PKG = SVAR
+PKGSRC = $(topsrc)/addons/$(PKG)
+
+vpath %.inp $(PKGSRC)
+vpath %.spec $(PKGSRC)
 
 INP =   SVAR.inp \
 	SVAR_ABfuncs.inp \
@@ -27,40 +29,37 @@ INP =   SVAR.inp \
 	SVAR_utils.inp \
 	pkg.inp
 
-SPEC = SVAR.spec
+$(PKG).gfn: links.stamp $(INP) $(PKG).spec
+	gretlcli -b $(PKGSRC)/pkg.inp
 
-SVAR.gfn: links.stamp $(INP) $(SPEC)
-	gretlcli -b $(svarsrc)/pkg.inp
-
-doc/SVAR.pdf:
+doc/$(PKG).pdf:
 	$(MAKE) -C doc
 
 links.stamp:
-	for f in $(SPEC) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(svarsrc)/$$f . ; fi ; done
-	if [ ! -d examples ] ; then ln -s $(svarsrc)/examples . ; fi
+	if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
+	if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
 	touch $@
 
-SVAR.zip: SVAR.gfn doc/SVAR.pdf 
-	mkdir -p SVAR && mkdir -p SVAR/examples && cp SVAR.gfn SVAR && \
-	cp doc/SVAR.pdf SVAR && cp examples/*.inp SVAR/examples && \
-	cp examples/*.gdt SVAR/examples && zip -r SVAR.zip SVAR && rm -rf SVAR
+$(PKG).zip: $(PKG).gfn doc/$(PKG).pdf 
+	mkdir -p $(PKG) && mkdir -p $(PKG)/examples && cp $(PKG).gfn $(PKG) && \
+	cp doc/$(PKG).pdf $(PKG) && cp examples/*.inp $(PKG)/examples && \
+	cp examples/*.gdt $(PKG)/examples && zip -r $(PKG).zip $(PKG) && rm -rf $(PKG)
 
 .PHONY : check install clean
 
-install: SVAR.gfn doc/SVAR.pdf
-	if [ -d $(DESTDIR)$(GFNDIR)/SVAR/ ]; then \
-        rm -rf $(DESTDIR)$(GFNDIR)/SVAR/; fi; \
-	mkdir $(DESTDIR)$(GFNDIR)/SVAR/
-	$(INSTALL_DATA) SVAR.gfn $(DESTDIR)$(GFNDIR)/SVAR/SVAR.gfn
-	$(INSTALL_DATA) doc/SVAR.pdf $(DESTDIR)$(GFNDIR)/SVAR
-	if [ -d $(DESTDIR)$(GFNDIR)/SVAR/examples ]; then \
-        rm -rf $(DESTDIR)$(GFNDIR)/SVAR/examples; fi; \
-	mkdir $(DESTDIR)$(GFNDIR)/SVAR/examples
+install: $(PKG).gfn doc/$(PKG).pdf
+	if [ -d $(DESTDIR)$(GFNDIR)/$(PKG)/ ]; then \
+        rm -rf $(DESTDIR)$(GFNDIR)/$(PKG)/; fi; \
+	mkdir $(DESTDIR)$(GFNDIR)/$(PKG)/
+	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
+	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
+	if [ -d $(DESTDIR)$(GFNDIR)/$(PKG)/examples ]; then \
+        rm -rf $(DESTDIR)$(GFNDIR)/$(PKG)/examples; fi; \
+	mkdir $(DESTDIR)$(GFNDIR)/$(PKG)/examples
 	for f in examples/*.inp examples/*.gdt; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/SVAR/examples ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
 
 clean: 
-	rm -f SVAR.gfn SVAR-i18n.c SVAR.xml SVAR.zip links.stamp
+	rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp
 	find . -name "*~" | xargs rm -f
 	$(MAKE) -C doc clean

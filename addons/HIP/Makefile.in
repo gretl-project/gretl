@@ -10,53 +10,52 @@ ifeq ($(INSTALL_DATA),)
 endif
 
 GFNDIR = $(prefix)/share/gretl/functions
-hipsrc = $(topsrc)/addons/HIP
 
-vpath %.inp $(hipsrc)
-vpath %.spec $(hipsrc)
+PKG = HIP
+PKGSRC = $(topsrc)/addons/$(PKG)
+
+vpath %.inp $(PKGSRC)
+vpath %.spec $(PKGSRC)
 
 INP = HIP_public.inp \
       HIP_private.inp \
       HIP.inp \
       HIP_example.inp
 
-SPEC = HIP.spec
-
 EXAMP = HIP_example.inp
 
-HIP.gfn: links.stamp $(INP) $(SPEC)
-	gretlcli -b $(hipsrc)/HIP.inp
+$(PKG).gfn: links.stamp $(INP) $(PKG).spec
+	gretlcli -b $(PKGSRC)/HIP.inp
 
-doc/HIP.pdf:
+doc/$(PKG).pdf:
 	$(MAKE) -C doc
 
 links.stamp:
-	if [ ! -f $(EXAMP) ] ; then ln -sf $(hipsrc)/$(EXAMP) . ; fi
-	for f in $(SPEC) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(hipsrc)/$$f . ; fi ; done
-	if [ ! -d examples ] ; then ln -s $(hipsrc)/examples . ; fi
+	if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
+	if [ ! -f $(EXAMP) ] ; then ln -sf $(PKGSRC)/$(EXAMP) . ; fi
+	if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
 	touch $@
 
-HIP.zip: HIP.gfn doc/HIP.pdf 
-	mkdir -p HIP && mkdir -p HIP/examples && cp HIP.gfn HIP && \
-	cp doc/HIP.pdf HIP && cp examples/*.inp HIP/examples && \
-	cp examples/*.gdtb HIP/examples && \
-	zip -r HIP.zip HIP && rm -rf HIP
+$(PKG).zip: $(PKG).gfn doc/$(PKG).pdf 
+	mkdir -p $(PKG) && mkdir -p $(PKG)/examples && cp $(PKG).gfn $(PKG) && \
+	cp doc/$(PKG).pdf $(PKG) && cp examples/*.inp $(PKG)/examples && \
+	cp examples/*.gdtb $(PKG)/examples && \
+	zip -r $(PKG).zip $(PKG) && rm -rf $(PKG)
 
 .PHONY : check install clean
 
-check: HIP.gfn
+check: $(PKG).gfn
 	$(MAKE) -C examples check
 
-install: HIP.gfn doc/HIP.pdf
-	mkdir -p $(DESTDIR)$(GFNDIR)/HIP/examples
-	$(INSTALL_DATA) HIP.gfn $(DESTDIR)$(GFNDIR)/HIP
-	$(INSTALL_DATA) doc/HIP.pdf $(DESTDIR)$(GFNDIR)/HIP
+install: $(PKG).gfn doc/$(PKG).pdf
+	mkdir -p $(DESTDIR)$(GFNDIR)/$(PKG)/examples
+	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
+	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 	for f in examples/*.inp examples/*.gdtb ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/HIP/examples ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
 
 clean: 
-	rm -f HIP.gfn HIP-i18n.c HIP.xml HIP.zip links.stamp
+	rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp
 	find . -name "*~" | xargs rm -f
 	$(MAKE) -C doc clean
 

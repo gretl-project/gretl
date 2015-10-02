@@ -10,10 +10,12 @@ ifeq ($(INSTALL_DATA),)
 endif
 
 GFNDIR = $(prefix)/share/gretl/functions
-gigsrc = $(topsrc)/addons/gig
 
-vpath %.inp $(gigsrc)
-vpath %.spec $(gigsrc)
+PKG = gig
+PKGSRC = $(topsrc)/addons/$(PKG)
+
+vpath %.inp $(PKGSRC)
+vpath %.spec $(PKGSRC)
 
 INP = gig_estimate.inp \
       gig.inp \
@@ -22,39 +24,36 @@ INP = gig_estimate.inp \
       gig_printout.inp \
       gig_setup.inp
 
-SPEC = gig.spec     
-
-gig.gfn: links.stamp $(INP) $(SPEC)
-	gretlcli -b $(gigsrc)/gig.inp
+$(PKG).gfn: links.stamp $(INP) $(PKG).spec
+	gretlcli -b $(PKGSRC)/gig.inp
 
 doc/gig.pdf:
 	$(MAKE) -C doc
 
 links.stamp:
-	for f in $(SPEC) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(gigsrc)/$$f . ; fi ; done
-	if [ ! -d examples ] ; then ln -s $(gigsrc)/examples . ; fi
+	if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
+	if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
 	touch $@
 
 .PHONY : check install clean
 
-check: gig.gfn
+check: $(PKG).gfn
 	$(MAKE) -C examples check
 
-install: gig.gfn doc/gig.pdf
-	$(INSTALL_DATA) gig.gfn $(DESTDIR)$(GFNDIR)/gig
-	$(INSTALL_DATA) doc/gig.pdf $(DESTDIR)$(GFNDIR)/gig
+install: $(PKG).gfn doc/$(PKG).pdf
+	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
+	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 	for f in examples/*.inp examples/*.gdt examples/README ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/gig/examples ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
 
-zipfile: gig.gfn doc/gig.pdf 
-	mkdir -p gig && mkdir -p gig/examples && cp gig.gfn gig && \
-	cp doc/gig.pdf gig && cp examples/*.inp gig/examples && \
-	cp examples/*.gdt gig/examples && cp examples/README gig/examples && \
-	zip -r gig.zip gig && rm -rf gig
+zipfile: $(PKG).gfn $(PKG)/gig.pdf 
+	mkdir -p $(PKG)/examples && cp $(PKG).gfn $(PKG) && \
+	cp doc/$(PKG).pdf $(PKG) && cp examples/*.inp $(PKG)/examples && \
+	cp examples/*.gdt $(PKG)/examples && cp examples/README $(PKG)/examples && \
+	zip -r $(PKG).zip $(PKG) && rm -rf $(PKG)
 
 clean: 
-	rm -f gig.gfn gig-i18n.c gig.xml gig.zip links.stamp
+	rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp
 	find . -name "*~" | xargs rm -f
 	$(MAKE) -C doc clean
 

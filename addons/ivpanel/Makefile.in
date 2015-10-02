@@ -10,42 +10,38 @@ ifeq ($(INSTALL_DATA),)
 endif
 
 GFNDIR = $(prefix)/share/gretl/functions
-ivpsrc = $(topsrc)/addons/ivpanel
 
-vpath %.inp $(ivpsrc)
-vpath %.spec $(ivpsrc)
+PKG = ivpanel
+PKGSRC = $(topsrc)/addons/ivpanel
+
+vpath %.inp $(PKGSRC)
+vpath %.spec $(PKGSRC)
 
 INP = driver.inp \
       ivpanel.inp
 
-SPEC = ivpanel.spec
-
-HELP = ivpanel.help
-
-ivpanel.gfn: links.stamp $(INP) $(SPEC) $(HELP) examples/nc_crime.inp
-	gretlcli -b $(ivpsrc)/driver.inp
+$(PKG).gfn: links.stamp $(INP) $(PKG).spec $(PKG).help examples/nc_crime.inp
+	gretlcli -b $(PKGSRC)/driver.inp
 
 links.stamp:
-	for f in $(SPEC) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(ivpsrc)/$$f . ; fi ; done
-	for f in $(HELP) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(ivpsrc)/$$f . ; fi ; done
-	if [ ! -d examples ] ; then ln -s $(ivpsrc)/examples . ; fi
+	if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
+	if [ ! -f $(PKG).help ] ; then ln -sf $(PKGSRC)/$(PKG).help . ; fi
+	if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
 	touch $@
 
-ivpanel.zip: ivpanel.gfn
-	mkdir ivpanel && cp ivpanel.gfn ivpanel && zip -r ivpanel.zip ivpanel \
-	&& rm -rf ivpanel
+$(PKG).zip: $(PKG).gfn
+	mkdir $(PKG) && cp $(PKG).gfn $(PKG) && zip -r $(PKG).zip $(PKG) \
+	&& rm -rf $(PKG)
 
 .PHONY : check install clean
 
-check: ivpanel.gfn
+check: $(PKG).gfn
 	$(MAKE) -C examples check
 
-install: ivpanel.gfn
-	$(INSTALL_DATA) ivpanel.gfn $(DESTDIR)$(GFNDIR)/ivpanel
+install: $(PKG).gfn
+	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
 
 clean: 
-	rm -f ivpanel.gfn ivpanel-i18n.c ivpanel.xml ivpanel.zip links.stamp
+	rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp
 	find . -name "*~" | xargs rm -f
 
