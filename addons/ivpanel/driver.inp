@@ -1,0 +1,2 @@
+include ivpanel.inp
+makepkg ivpanel.gfn --index --translations

@@ -1,0 +1,2 @@
+include SVAR.inp
+makepkg SVAR.gfn --index --translations

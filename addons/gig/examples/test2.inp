@@ -1,0 +1,28 @@
+set echo off
+# Import the gig library
+include gig.gfn
+
+# Read the data 
+open msft.gdt
+
+# compute returns
+r = 100*ldiff(Close)
+
+# compute the variance regressors
+lv = ln(Volume/1000000)
+hl = ln(High/Low) * 100
+
+# set up the regressor lists
+list X = const
+list vX = const lv(-1) hl(-1)
+
+# set up the model
+mod = gig_setup(r, 1, X, vX, 1)
+gig_set_dist(&mod, 4)
+
+# estimate
+gig_estimate(&mod)
+
+# re-estimate with QR decomposition
+gig_set_vQR(&mod, 1)
+gig_estimate(&mod)

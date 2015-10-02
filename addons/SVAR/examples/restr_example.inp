@@ -1,0 +1,24 @@
+/*
+  Script demostrating how the function SVAR_restrict
+  handles redundant or contradictory constraints
+*/
+
+include SVAR.gfn
+
+# set up a fake dataset, just for the example
+nulldata 20
+setobs 1 1 --special-time-series
+series x = normal()
+series y = normal()
+list X = y x
+
+ccc = SVAR_setup("C", X, const, 2)
+SVAR_restrict(&ccc, "C", 1, 2)
+# redundant
+SVAR_restrict(&ccc, "C", 1, 2)
+# inconsistent
+SVAR_restrict(&ccc, "C", 1, 2, 1)
+
+# print out the constraints matrix
+Rd = ccc.Rd1
+print Rd

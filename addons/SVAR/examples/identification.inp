@@ -1,0 +1,25 @@
+set echo off
+set messages off
+
+include SVAR.gfn
+open sw_ch14.gdt
+
+genr infl = 400*ldiff(PUNEW)
+rename LHUR unemp
+
+list X = unemp infl
+list Z = const
+
+Mod = SVAR_setup("C", X, Z, 3)
+SVAR_restrict(&Mod, "C", 1, 2)
+
+# Now check for identification
+scalar is_identified = SVAR_ident(&Mod)
+if is_identified
+    printf "Whew!\n"
+else
+    printf "Blast!\n"
+endif
+
+# Re-check, verbosely
+scalar is_identified = SVAR_ident(&Mod, 1)

@@ -1,0 +1,204 @@
+function void scoreC(matrix *ret, matrix *theta, matrix *dat)
+  matrix Sigma Ss 
+  unscramble_dat(&dat, &Sigma, &Ss)
+  n = rows(Sigma)
+  npar = cols(Ss)-1
+
+  # printf "scoreC\n%10.4f\n%4.1f\n", theta, Ss
+
+  matrix C = mat_exp(theta, Ss, 0)
+  matrix S = Ss[,1:npar]
+
+  matrix iC = inv(C)
+  matrix ret = iC' (qform(iC,Sigma) - I(n))
+
+  ret = vec(ret)'S
+end function
+
+/*
+This doesn't really seem to be called ??
+
+function matrix Cmat(matrix theta, matrix Rd, bool force_pos[0])
+  matrix Ss = imp2exp(Rd)
+
+  # printf "Cmat\n%10.4f\n%4.1f\n", theta, Ss
+
+  return mat_exp(theta, Ss, force_pos)
+end function
+*/
+
+function matrix C1mat(matrix A, bool VECM[0], 
+		      matrix *jalpha[null], matrix *jbeta[null])
+  /*
+      computes C(1) out of the autoregressive matrices; jalpha and jbeta
+      are alpha and beta, which are used only if VECM is nonzero,
+      that is under cointegration
+      
+      (Remark Sven: here jbeta is (n,r) without coeffs for restr. terms
+      I guess. Different from jbeta (n+1,r) in other contexts (?). 
+  */
+  n = rows(A)
+  p = cols(A)/n
+  matrix tmp = mshape(vec(A), n*n, p)  
+
+  if VECM == 0
+      tmp = mshape(sumr(tmp), n, n)    
+      matrix ret = inv(I(n) - tmp)
+  else # cointegrated
+      matrix aperp = nullspace(jalpha')
+      matrix bperp = nullspace(jbeta')
+      tmp = mshape(tmp*seq(1,p)', n, n)
+      matrix ret = bperp * inv(aperp'tmp*bperp) * aperp'
+  endif
+
+  return ret
+end function
+
+function matrix init_C(scalar scale, matrix Sigma, matrix Rd)
+  n = rows(Sigma)
+  matrix Ss = imp2exp(Rd)
+  k = cols(Ss)
+  matrix S = Ss[,1:k-1]
+  matrix s = Ss[,k]
+  matrix K = cholesky(Sigma)
+    
+  matrix bigmat = (K ** I(n))
+  matrix ret = mols(vec(Sigma) - bigmat*s, bigmat*S)
+
+  return ret
+end function
+
+function void PseudoHessC(matrix *H, matrix *theta, matrix *dat)
+  matrix Sigma Ss 
+  unscramble_dat(&dat, &Sigma, &Ss)
+  n = rows(Sigma)
+  npar = cols(Ss)-1
+  matrix S = Ss[,1:npar]
+
+  # printf "PseudoHessC\n%10.4f\n%4.1f\n", theta, Ss
+
+  matrix C = mat_exp(theta, Ss, 0)
+  H = InfoMat(C, S) # was InfoMatC
+end function
+
+function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
+  scalar *errcode, int method, scalar verbose[1])
+
+  scale = 0
+  matrix Ss = imp2exp(Rd)
+  npar = rows(theta)
+  n = rows(Sigma)
+
+  if scale == 1
+    printf "Scale!\n"
+    matrix s = sqrt(diag(Sigma))
+    matrix sSig = Sigma ./ (s*s')
+  else
+    matrix sSig = Sigma
+  endif
+  
+  # printf "estC\n%10.4f\n%4.1f\n", theta, Ss
+
+  matrix tmp = mat_exp(theta, Ss, 1)
+
+  if verbose > 2
+    /* obsolete ? */
+    printf "check within estC -- before estimation\n"
+    check_const(tmp, Rd)
+  endif
+  matrix dat = vec(sSig) ~ Ss
+    
+  matrix g H
+  if verbose > 1
+    set max_verbose 1
+  else
+    set max_verbose 0
+  endif
+  err = 1
+  iters = 0
+  #set bfgs_toler 1.0e-03
+
+  matrix theta0 = theta
+  errcode = 0
+
+  loop while (err==1 && iters<100) --quiet
+    if method == 0
+      catch scalar ll = BFGSmax(theta, "loglik(&theta, &dat, -1)")
+      errcode = $error
+      scoreC(&g, &theta, &dat)
+    elif method == 1
+      catch scalar ll = BFGSmax(theta, "loglik(&theta, &dat, -1)", 
+      "scoreC(&g, &theta, &dat)")
+      errcode = $error
+    elif method == 2
+      catch scalar ll = NRmax(theta, "loglik(&theta, &dat, -1)")
+      errcode = $error
+      scoreC(&g, &theta, &dat)
+    elif method == 3
+      catch scalar ll = NRmax(theta, "loglik(&theta, &dat, -1)", 
+      "scoreC(&g, &theta, &dat)")
+      errcode = $error
+    elif method == 4
+      catch scalar ll = NRmax(theta, "loglik(&theta, &dat, -1)", 
+      "scoreC(&g, &theta, &dat)",
+      "PseudoHessC(&H, &theta, &dat)")
+      errcode = $error
+    endif
+
+    if errcode>0
+      printf "errcode = %d\n", errcode
+    endif
+    scalar crit = maxr(abs(g))
+    err = (crit > 1.0e-4)
+
+    if err==1
+      iters++
+      theta = 0.1*mnormal(npar,1) + theta0
+      if verbose>1
+        printf "Iter %3d: Restarting... ll = %12.7f, crit = %16.10f\n", \
+        iters, ll, crit
+        printf "theta = %10.5f grad = %10.5f\n", theta', g
+      endif
+    endif
+
+  endloop
+
+  scalar crit = maxr(abs(g))
+  warn = (crit > 1.0e-1)
+
+  if !err
+    if (iters > 0) && (verbose > 1)
+      printf "Converged after %d restarts\n", iters
+    endif
+
+    # printf "estC(2)\n%10.4f\n%4.1f\n", theta, Ss
+    matrix C = mat_exp(theta, Ss, 1)
+
+    if scale == 1
+      C = C .* s'
+    endif
+    if verbose > 1
+      printf "Estimated C matrix:\n%12.5f", C
+    endif
+
+    if !isnull(vcv)
+      vcv = coeffVCV(Ss[,1:npar], &C)
+    endif
+
+    if verbose > 1
+      matrix Info = InfoMat(C, Ss[,1:npar])	# was InfoMatC
+      printf "estC : Info = \n%14.10f\n", Info
+      printf "estC : score = \n%14.10f\n", g
+    endif
+
+  else
+    if verbose > 1
+      printf "No convergence! :-( \n%12.6f\n", theta' | g 
+    endif
+    matrix C = {}
+    errcode = 1
+  endif
+
+  return C 
+end function
+

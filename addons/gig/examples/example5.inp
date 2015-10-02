@@ -1,0 +1,33 @@
+# Example n. 5
+
+# APARCH(1,1) with GED conditional distribution, constant and the lagged
+# variable as mean regressors. Several techniques for standard errors
+# are compared.
+
+set echo off
+set messages off
+include gig.gfn
+
+open djclose
+rr = 100*ldiff(djclose)
+
+mod = gig_setup(rr, 6, const, null, 1)
+gig_set_dist(&mod, 2)
+
+# Sandwich (default)
+gig_estimate(&mod)
+cf   = mod["coeff"]
+se_s = mod["stderr"]
+
+# Hessian
+mod["vcvtype"] = 1
+gig_estimate(&mod)
+se_h = mod["stderr"]
+
+# OPG
+mod["vcvtype"] = 2
+gig_estimate(&mod)
+se_o = mod["stderr"]
+
+matrix a = cf ~ se_s ~ se_h ~ se_o
+printf "%12.6f", a

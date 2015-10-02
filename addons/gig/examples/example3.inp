@@ -1,0 +1,35 @@
+# Example n. 3
+
+# GJR(1,1) with Student's t conditional distribution, 
+# constant as mean regressor and minimal output.
+# Also show how to retrieve stuff from the estimated model
+
+set echo off
+set messages off
+include gig.gfn
+
+open djclose
+rr = 100*ldiff(djclose)
+bundle model = gig_setup(rr, 3, const)
+gig_set_dist(&model, 1)
+gig_estimate(&model)
+
+# Do some post-estimation work
+    
+# Fitted coefficients
+matrix cf = model["coeff"]
+
+# Variance-covariance matrix
+matrix V = model["vcv"]
+
+# Residuals and conditional variance
+series u = model["uhat"]
+series h = model["h"]
+series e = model["stduhat"]
+summary u e h
+
+# Graph residuals and conditional sd
+gig_plot(&model)
+
+
+

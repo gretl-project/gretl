@@ -1,0 +1,28 @@
+set echo off
+set messages off
+include SVAR.gfn
+open BlQuah.gdt
+
+list X = DY U
+list exog = const time
+maxlag = 8
+
+# set up the model
+BQModel = SVAR_setup("C", X, exog, maxlag)
+BQModel["horizon"] = 40
+
+# set up the long-run restriction
+SVAR_restrict(&BQModel, "lrC", 1, 2, 0)
+
+# set up the short-run restriction
+SVAR_restrict(&BQModel, "C", 1, 1, 0)
+
+# name the shocks to something meaningful
+BQModel["snames"] = strsplit("Supply Demand")
+
+# cumulate the IRFs for variable 1
+SVAR_cumulate(&BQModel, 1)
+
+set stopwatch
+SVAR_estimate(&BQModel)
+printf "Time (Cmodel) = %g\n", $stopwatch

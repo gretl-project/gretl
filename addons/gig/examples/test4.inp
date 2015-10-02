@@ -1,0 +1,19 @@
+set echo off
+set messages off
+include gig.gfn
+
+open IBM.gdt -q
+ret = 100*ldiff(Adj_Close)
+lVol = log(Volume/1000000)
+lRange = 100 * log(High/Low)
+
+list mReg = const
+list vReg = const lVol(-1) lRange(-1)
+
+#smpl 9000 11000
+
+mod = gig_setup(ret,1,mReg,vReg)
+gig_set_dist(&mod,2)
+set stopwatch
+gig_estimate(&mod,2)
+printf "Elapsed time = %g seconds\n", $stopwatch

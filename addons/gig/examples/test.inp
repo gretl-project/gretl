@@ -1,0 +1,20 @@
+include gig.gfn
+
+open djclose
+r = 100*ldiff(djclose)
+open b-g
+marzullo = Y
+
+x = uniform()
+list X = const
+list vX = const #x
+
+mod = gig_setup(marzullo, 1, X, vX)
+d = {0, 2, 4, 1, 3}
+loop for i=0..2
+#    scalar di = d[i]
+#    gig_set_dist(&mod, di)
+    mod["vcvtype"] = i
+    gig_estimate(&mod)
+endloop
+#gig_set_pq(&mod, 4, 0)

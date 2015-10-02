@@ -1,0 +1,36 @@
+# Example n. 6
+
+# compare QR and non-QR treatment of regressors in
+# variance
+
+set echo off
+set messages off
+include gig.gfn
+
+# prepare data
+open IBM.gdt -q
+ret = 100*ldiff(Adj_Close)
+lVol = log(Volume/1000000)
+lRange = 100 * log(High/Low)
+ONI = 100 * (Open/Close(-1) - 1)^2
+IDV = 100 * (High-Low)/Close
+
+list mReg = const
+list vReg = const lVol(-1) IDV(-1) lRange(-1) # ONI
+model = 3 # try with 4 too
+
+# without QR
+mod = gig_setup(ret,model,mReg,vReg,1)
+gig_set_vQR(&mod, 0)
+set stopwatch
+gig_estimate(&mod,1)
+t0 = $stopwatch
+
+# with QR
+mod = gig_setup(ret,model,mReg,vReg,1)
+gig_set_vQR(&mod, 1)
+set stopwatch
+gig_estimate(&mod,1)
+t1 = $stopwatch
+
+printf "Elapsed time = %g seconds vs %g\n", t0, t1

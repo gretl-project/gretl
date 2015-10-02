@@ -1,0 +1,45 @@
+topsrc = @top_srcdir@
+prefix = @prefix@
+datarootdir = @datarootdir@
+
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+
+ifeq ($(INSTALL_DATA),)
+  INSTALL_DATA = $(INSTALL) -m 644
+endif
+
+GFNDIR = $(prefix)/share/gretl/functions
+
+INP = HIP_public.inp \
+      HIP_private.inp \
+      HIP.inp \
+      HIP_example.inp
+
+HIP.gfn: $(INP) HIP.spec
+	gretlcli -b HIP.inp
+
+doc/HIP.pdf:
+	$(MAKE) -C doc
+
+check: HIP.gfn
+	$(MAKE) -C examples check
+
+install: HIP.gfn doc/HIP.pdf
+	mkdir -p $(DESTDIR)$(GFNDIR)/HIP/examples
+	$(INSTALL_DATA) HIP.gfn $(DESTDIR)$(GFNDIR)/HIP
+	$(INSTALL_DATA) doc/HIP.pdf $(DESTDIR)$(GFNDIR)/HIP
+	for f in examples/*.inp examples/*.gdtb ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/HIP/examples ; done
+
+zipfile: HIP.gfn doc/HIP.pdf 
+	mkdir -p HIP && mkdir -p HIP/examples && cp HIP.gfn HIP && \
+	cp doc/HIP.pdf HIP && cp examples/*.inp HIP/examples && \
+	cp examples/*.gdtb HIP/examples && \
+	zip -r HIP.zip HIP && rm -rf HIP
+
+clean: 
+	rm -f HIP.gfn; find . -name "*~" | xargs rm -f
+	$(MAKE) -C doc clean
+
+

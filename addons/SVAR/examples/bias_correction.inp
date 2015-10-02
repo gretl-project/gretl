@@ -1,0 +1,39 @@
+set echo off
+set messages off
+include SVAR.gfn
+
+function list GenerateExampleData(scalar phi, scalar T)
+/* 
+   this function returns pseudorandom data according to 
+   the DGP used in Kilian (1998)
+*/
+    K = cholesky({1, 0.3; 0.3, 1})
+    A = {phi, 0; 0.5, 0.5}
+    E = mnormal(T, 2) * K'
+    Y = varsimul(A, E, zeros(1,2))
+    list ret = null
+    loop for i=1..2 -q
+	series y$i = Y[2:,i]
+	ret += y$i
+    endloop
+    return ret
+end function
+
+/* ------------------------------------------------------ */
+
+nulldata 200
+setobs 1 1 --special-time-series
+list Y = GenerateExampleData(0.9, $nobs)
+
+Model = SVAR_setup("plain", Y, null, 1)
+Model["horizon"] = 20
+SVAR_estimate(&Model)
+
+SVAR_boot(&Model, 1000, 0.95)
+IRFplot(&Model, 1, 1)
+IRFplot(&Model, 1, 2)
+
+Model["biascorr"] = 1
+SVAR_boot(&Model, 1000, 0.95)
+IRFplot(&Model, 1, 1)
+IRFplot(&Model, 1, 2)

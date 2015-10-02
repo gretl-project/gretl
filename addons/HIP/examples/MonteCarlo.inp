@@ -1,0 +1,103 @@
+/*
+In this file we give an example of how HIP can be used
+for heavy computational jobs such as a Monte Carlo simulation.
+We investigate the properties of the ml estimate of \beta_2 for
+varying degrees of over-identification.
+*/
+
+set echo off 
+set messages off
+include HIP.gfn
+
+set seed 12345
+nulldata 256
+
+# ----- set up the experiment ----------------------
+
+scalar p = 1
+scalar k1 = 1
+scalar k2 = 4
+
+scalar k = k1 + k2
+matrix Sigma = 0.5 .* (I(p) + ones(p,p)./p)
+matrix Pi    = 0.1 .* mnormal(k,p)
+matrix beta1 = 0.25 .* ones(k1,1)
+matrix beta2 = ones(p,1)
+matrix lambda = 0.1 .* ones(p,1)
+matrix Omega = ((1 ~ lambda') | (lambda ~ Sigma))
+
+# build exogenous vars
+
+list X1 = const
+loop i=1..(k1-1) --quiet
+    series x_$i = normal()
+    list X1 += x_$i
+endloop
+
+list X2 = null
+loop i=1..k2 --quiet
+    series z_$i = normal()
+    list X2 += z_$i
+endloop
+
+list X = X1 X2
+
+# now run the Monte Carlo experiment proper
+Repli = 400
+
+string ToSave = ""
+loop i=1..k2 --quiet
+    ToSave += "b$i "
+    scalar b$i = NA
+endloop
+
+matrix K = cholesky(Omega)'
+iter = 0
+
+printf "Be patient; this might take a while.\n"
+
+
+loop Repli --quiet --progressive
+    # build disturbances
+
+    matrix E = mnormal($nobs, p+1) * K
+    series epsilon = E[,1]
+    loop for i=1..p --quiet
+	series u_$i = E[,i+1]
+    endloop
+
+    # build observables
+
+    list Y = null
+
+    loop i=1..p --quiet
+	series y_$i = lincomb(X, Pi[,i]) + u_$i
+	list Y += y_$i
+    endloop
+
+    series ystar = lincomb(X1, beta1) + lincomb(Y, beta2) + epsilon
+    series y = (ystar > 0)
+
+    list Inst = null
+
+    loop i=1..k2 --quiet
+	list Inst += z_$i
+
+	# estimate only; we don't neet the printout
+	# so we _don't_ call HIP_printout()
+
+	bundle MyModel = HIP_setup(y, X1, Y, Inst)
+	scalar err = HIP_estimate(&MyModel)
+	if err==0
+	    matrix param = MyModel["theta"]
+	    scalar b$i = param[1+k1]
+	else
+	    scalar b$i = NA
+	endif
+    endloop
+
+    store foo.gdt @ToSave
+endloop
+
+open foo.gdt
+summary

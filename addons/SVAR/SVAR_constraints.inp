@@ -1,0 +1,191 @@
+/* 
+  internal; constraints-related functions
+*/
+
+function scalar CheckNormalizeRd(matrix *R, matrix *d)
+  /*
+    Checks that
+    (1) the constraints are consistent
+    (2) the constraints are non-contradictory
+
+    if (1) fails, an error message is printed and R and d are replaced by 
+    empty matrices; if (2) fails, redundant rows in R and d are dropped.
+  */  
+
+  p = rows(R)
+  r = rank(R)
+  ret = 0
+
+  if r < p 
+      matrix Rd = R ~ d
+      if r < rank(Rd) #contradictory
+	  R = {}
+	  d = {}
+	  ret = 1
+      else # redundant
+	  matrix RR
+	  matrix QQ = qrdecomp(Rd', &RR)
+	  e = abs(diag(RR)) .> $macheps
+	  QQ = selifc(QQ, e')
+	  matrix RR = selifr(selifc(RR, e'), e)
+	  matrix Rd = QQ * RR
+	  R = Rd[1:rows(Rd)-1,]'
+	  d = Rd[rows(Rd),]'
+	  ret = 2
+      endif
+  endif
+
+  return ret
+end function
+
+function scalar add_constraint(matrix *Rd, int n, int i, int j, 
+			       scalar d)
+
+  err = (i>n) || (j>n) || (i<1) || (j<1)
+  if !err
+    n2 = n*n
+    matrix tmp = zeros(1,n2 + 1)
+    k = n*(j-1) + i
+    tmp[1,k] = 1
+    tmp[1,n2+1] = d
+    
+    # check for consistency/redundancy
+    if rows(Rd) > 0
+	matrix newR = Rd[,1:n2] | tmp[1:n2]
+	matrix newd = Rd[,n2+1] | d
+    else
+	matrix newR = tmp[1:n2]
+	matrix newd = d
+    endif
+
+    err2 = CheckNormalizeRd(&newR, &newd)
+    if err2==0
+	Rd = Rd | tmp
+    elif err2 == 1
+	printf "The restriction conflicts with previous ones and was ignored\n"
+    elif err2 == 2
+	printf "The restriction is redundant and was ignored\n"
+    endif
+  endif
+
+  return err ? -err : 10*err2 # -1 for bad input, 10 or 20 upstream error
+end function
+
+function matrix cholRd(int n)
+    n2 = n*n
+    k = 1
+    matrix ret = {}
+    loop i=1..n -q
+	loop j=1..n -q
+	    matrix tmp = zeros(1,n2+1)
+	    if i > j
+		tmp[k] = 1
+		ret = ret | tmp
+	    endif
+	    k++
+	endloop
+    endloop
+    return ret
+end function
+
+function matrix diag_Rd(int n, scalar x)
+    return selifr(I(n*n), vec(I(n))) ~ (x*ones(n,1))
+end function
+
+function matrix free_diag_Rd(int n)
+    n2 = n*n
+    return selifr(I(n2)~zeros(n2,1), !vec(I(n)))
+end function
+
+function matrix imp2exp(matrix Rd)
+  /*
+    Given the constraints in implicit form, returns the matrix [ S | s ]
+    of the constraints in explicit form
+  */
+
+  p = cols(Rd)
+  matrix R = Rd[,1:(p-1)]
+  matrix d = Rd[,p]
+  matrix s = R'invpd(R*R')*d
+  S = nullspace(R | s')
+  return S ~ s
+end function
+
+function void check_const(matrix K, matrix fullRd)
+  k = cols(fullRd) - 1
+  matrix R = fullRd[,1:k]
+  matrix d = fullRd[,k+1]
+
+  printf "Constraint matrix:\n"
+  print R
+  matrix tmp = R*vec(K)
+  print tmp
+  printf "Should be:\n"
+  print d
+end function
+
+function matrix lrConstr(matrix C1, matrix lrRd)
+    if rows(lrRd) == 0
+	# nothing to do
+	ret = {}
+    else
+	n = rows(C1)
+	k = cols(lrRd) - 1
+	matrix d = lrRd[,k+1]
+	ret = ( lrRd[,1:k] * (I(n) ** C1) ) ~ d
+    endif
+    
+  return ret
+end function
+
+function matrix get_full_Rd(bundle *obj, int verbosity)
+    type = obj["type"]
+    n = obj["n"]
+    matrix fullRd = {}
+
+    if type == 1
+	# duh
+	fullRd = obj["Rd1"]
+    elif (type==2) || (type == 4)
+	# generic C-model: may also have long-run restrictions
+	# includes SVEC
+	
+	fullRd = obj["Rd1"] # grab sr-restrictions first
+	nc2 = rows(obj["Rd1l"])
+	if (type == 4) || (nc2 > 0) # long-run restrictions
+
+	    matrix A = obj["VARpar"]              # grab the autoregressive parameters
+
+	    # before ML estimation, we need to take into account the
+	    # permanent/temporary shock classification in SVEC
+	    if type == 4
+		matrix alpha = obj["jalpha"]
+		matrix beta  = obj["jbeta"]
+		if obj["jcase"] % 2 == 0
+		    # trim beta
+		    beta = beta[1:n,]
+		endif
+		matrix C1 = C1mat(A, 1, &alpha, &beta)
+		r = cols(beta)
+		matrix J = zeros(n-r, r) | I(r)
+		matrix ptRd = (J ** nullspace(alpha'))' ~ zeros(r*(n-r),1)
+		fullRd = fullRd | ptRd  # put the constraints together
+	    else 
+		matrix C1 = C1mat(A, 0)        # compute the lr matrix
+	    endif
+	    
+	    printf "Long-run matrix C(1) = \n%12.4f\n", C1
+
+	    matrix lrRd = obj["Rd1l"]                    # grab lr-restrictions, if any
+	    fullRd = fullRd | lrConstr(C1, lrRd)  # put the constraints together
+
+	    if verbosity>1 
+		matrix lrSigma = qform(C1, obj.Sigma) # compute the lr covariance matrix
+		printf "Long-run matrix: \n%8.3f\n", C1 
+		printf "Long-run Sigma: \n%8.3f\n", lrSigma
+	    endif
+	endif
+    endif
+
+    return fullRd
+end function

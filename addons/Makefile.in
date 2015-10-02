@@ -1,0 +1,52 @@
+topsrc = @top_srcdir@
+prefix = @prefix@
+
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+INSTALL_DATA = ${INSTALL} -m 644
+
+ifeq ($(CC),)
+  CC = gcc -Wall
+endif
+
+export
+
+tooldir = $(topsrc)/tools
+funcsdir = $(prefix)/share/gretl/functions
+
+SUBDIRS = gig ivpanel SVAR HIP
+ALLSUBDIRS = gig ivpanel SVAR HIP
+
+.PHONY : subdirs $(SUBDIRS) clean installdirs install dist
+
+subdirs: $(SUBDIRS)
+
+$(SUBDIRS):
+	$(MAKE) -C $@
+
+addons.xml: gfnindex $(SUBDIRS)
+	./gfnindex $(SUBDIRS) > $@
+
+addons-i18n.c: gfnstrings $(SUBDIRS)
+	./gfnstrings $(SUBDIRS) > $@
+
+gfnindex: gfnindex.c
+	$(CC) -o $@ $<
+
+gfnstrings: gfnstrings.c
+	$(CC) -o $@ $<
+
+clean:
+	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d clean; done
+	rm -f gfnindex addons.xml gfnstrings addons-i18n.c
+
+installdirs:
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/gig 
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/gig/examples 
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/ivpanel
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/SVAR
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/HIP
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/HIP/examples
+
+install: $(SUBDIRS) installdirs
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done

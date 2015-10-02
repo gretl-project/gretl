@@ -1,0 +1,25 @@
+# Example n. 2
+
+# GARCH(1,1) with Normal conditional distribution, 
+# constant and lagged variable as mean regressors 
+
+set echo off
+set messages off
+
+include gig.gfn
+open djclose
+rr = 100*ldiff(djclose)
+
+# The regressors should be passed as a list
+# note the separate treatment of AR lags
+list regressors = const 
+
+# create the bundle
+bundle model = gig_setup(rr, 1, regressors, null, 1)
+
+# populate the bundle with the estimation results
+gig_estimate(&model)
+
+# Compare with native implementation
+garch 1 1 ; rr const rr(-1) --robust
+

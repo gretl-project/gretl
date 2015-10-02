@@ -1,0 +1,49 @@
+set echo off
+set messages off
+include SVAR.gfn
+open BlQuah.gdt
+set seed 1234
+
+list X = DY U
+list exog = const time
+maxlag = 8
+
+# set up the model
+BQModel = SVAR_setup("C", X, exog, maxlag)
+BQModel["horizon"] = 40
+
+# set up the long-run restriction
+SVAR_restrict(&BQModel, "lrC", 1, 2, 0)
+
+# name the shocks to something meaningful
+BQModel["snames"] = strsplit("Supply Demand")
+
+# cumulate the IRFs for variable 1
+SVAR_cumulate(&BQModel, 1)
+
+# perform estimation
+SVAR_estimate(&BQModel)
+
+# retrieve the demand shocks
+dShock = GetShock(&BQModel, 2)
+
+BQModel["biascorr"] = 1
+# do bootstrap
+set stopwatch
+bfail = SVAR_boot(&BQModel, 1024, 0.9)
+printf "Failed = %d, Time (bootstrap) = %g\n", bfail, $stopwatch
+
+
+/*
+# page 662
+
+IRFplot(&BQModel,  1, 1)
+IRFplot(&BQModel, -2, 1)
+IRFplot(&BQModel,  1, 2)
+IRFplot(&BQModel, -2, 2)
+*/
+
+IRFsave("bq_Yd.pdf", &BQModel,  1, 1)
+IRFsave("bq_ud.pdf", &BQModel, -2, 1)
+IRFsave("bq_Ys.pdf", &BQModel,  1, 2)
+IRFsave("bq_us.pdf", &BQModel, -2, 2)

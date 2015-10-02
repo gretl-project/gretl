@@ -1,0 +1,12 @@
+set echo off 
+set messages off
+include HIP.gfn
+
+open mroz87.gdt -q
+
+list EXOG = const WA CIT K618 
+list ENDOG = WE
+list ADDIN = WMED WFED 
+list HETVAR = HW 
+
+Mroz = HIP(LFP, EXOG, ENDOG, ADDIN, HETVAR, 2, 0)

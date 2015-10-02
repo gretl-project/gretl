@@ -1,0 +1,46 @@
+topsrc = @top_srcdir@
+prefix = @prefix@
+datarootdir = @datarootdir@
+
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+
+ifeq ($(INSTALL_DATA),)
+  INSTALL_DATA = $(INSTALL) -m 644
+endif
+
+GFNDIR = $(prefix)/share/gretl/functions
+
+INP = gig_estimate.inp \
+      gig.inp \
+      gig_mle.inp \
+      gig_plot.inp \
+      gig_printout.inp \
+      gig_setup.inp
+
+gig.gfn: $(INP) gig.spec
+	gretlcli -b gig.inp
+
+doc/gig.pdf:
+	$(MAKE) -C doc
+
+check: gig.gfn
+	$(MAKE) -C examples check
+
+install: gig.gfn doc/gig.pdf
+	$(INSTALL_DATA) gig.gfn $(DESTDIR)$(GFNDIR)/gig
+	$(INSTALL_DATA) doc/gig.pdf $(DESTDIR)$(GFNDIR)/gig
+	for f in examples/*.inp examples/*.gdt examples/README ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/gig/examples ; done
+
+zipfile: gig.gfn doc/gig.pdf 
+	mkdir -p gig && mkdir -p gig/examples && cp gig.gfn gig && \
+	cp doc/gig.pdf gig && cp examples/*.inp gig/examples && \
+	cp examples/*.gdt gig/examples && cp examples/README gig/examples && \
+	zip -r gig.zip gig && rm -rf gig
+
+clean: 
+	rm -f gig.gfn; find . -name "*~" | xargs rm -f
+	$(MAKE) -C doc clean
+
+

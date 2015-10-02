@@ -1,0 +1,34 @@
+set echo off
+set messages off
+include SVAR.gfn
+open sw_ch14.gdt
+
+genr infl = 400*ldiff(PUNEW)
+rename LHUR unemp
+
+list X = unemp infl
+list Z = const
+
+Mod = SVAR_setup("C", X, Z, 3)
+Mod["horizon"] = 36
+SVAR_restrict(&Mod, "C", 1, 2)
+
+set stopwatch
+SVAR_estimate(&Mod)
+printf "Time (Cmodel) = %g\n", $stopwatch
+
+fevdmat = FEVD(&Mod)
+print fevdmat
+#IRFplot(&Mod, 1, 1)
+IRFsave("simple_C_11_noboot.pdf", &Mod, 1, 1)
+
+set stopwatch
+bfail = SVAR_boot(&Mod, 1024, 0.90)
+printf "Failed = %d, Time (bootstrap) = %g\n", bfail, $stopwatch
+
+loop for i=1..2 -q
+    loop for j=1..2 -q
+        sprintf fnam "simpleC_%d%d.pdf", i, j
+        IRFsave(fnam, &Mod, i, j)
+    endloop
+endloop

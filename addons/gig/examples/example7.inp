@@ -1,0 +1,77 @@
+# Compares the results 
+# between Gretl (native and gig) and R (fGarch).
+
+set echo off
+set messages off
+
+include gig.gfn
+open b-g.gdt
+genr rr = Y
+setinfo rr -d "weekly returns"
+
+# Estimate a GARCH model natively
+set stopwatch
+garch 1 1 ; rr const rr(-1) --quiet
+t0 = $stopwatch
+series u0	= $uhat
+series s0	= sqrt($h)
+
+matrix cf = $coeff
+matrix se = $stderr
+matrix tratios	= cf ./ se
+matrix pvalues	= 2*pvalue(n, abs(tratios))
+matrix gretl_model = cf ~ se ~ tratios ~ pvalues
+
+# Estimate a GARCH model via gig
+set stopwatch
+mod = gig_setup(rr, 1, const, null, 1)
+mod["vcvtype"] = 1 # use Hessian for compatibility
+gig_estimate(&mod, 0)
+t1 = $stopwatch
+
+# Extract the info from the results matrix
+series u1	= mod["uhat"]
+series s1	= sqrt(mod["h"])
+matrix cf	= mod["coeff"]
+matrix cf	= cf[mod["active"]]
+matrix se	= sqrt(diag(mod["vcv"]))
+matrix tratios	= cf ./ se
+matrix pvalues	= 2*pvalue(n, abs(tratios))
+
+# Pack all the above in a matrix
+matrix gig_model = cf ~ se ~ tratios ~ pvalues
+
+# Starts R with data from Gretl
+# Loads the fGarch library
+# Performs a GARCH(1,1) estimation
+# Sends back the results
+set stopwatch
+foreign language=R --send-data
+    library(fGarch)
+    rr <- gretldata[-1,"rr"]
+    mod <- garchFit(~arma(1,0)+garch(1,1), data=rr, trace=F)
+    coef <- mod@fit$matcoef
+    gretl.export(coef) 
+    uh <- as.data.frame(cbind(mod@sigma.t, mod@residuals))
+    names(uh) <- c("csd", "resid")
+    gretl.export(uh)
+end foreign
+t2 = $stopwatch
+R_model = mread("@dotdir/coef.mat")
+smpl +1 ;
+append @dotdir/uh.csv --quiet
+smpl full
+
+# Compare results
+printf "Results via gretl (native)\n"
+print gretl_model
+printf "Results via gretl/gig\n"
+print gig_model
+printf "Results via R/fGarch\n"
+print R_model
+summary u0 u1 resid s0 s1 csd --simple
+
+printf "Performance:\n"
+printf "\t  native: %10.3f seconds\n", t0
+printf "\t     gig: %10.3f seconds\n", t1
+printf "\tR/fGarch: %10.3f seconds\n", t2

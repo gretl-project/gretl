@@ -1,0 +1,19 @@
+# Example n. 1
+
+# GARCH(1,1) with Normal conditional distribution, 
+# no mean regressors.
+  
+set echo off
+set messages off
+
+# Import the gig library.
+include gig.gfn
+open djclose
+rr = 100*ldiff(djclose)
+
+model = gig_setup(rr)
+gig_estimate(&model)
+
+# Compare with native implementation
+garch 1 1 ; rr --nc --robust
+

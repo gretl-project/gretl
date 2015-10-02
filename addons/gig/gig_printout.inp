@@ -1,0 +1,326 @@
+function void gig_printHeader(bundle *mod)
+
+    ncoeff  = rows(mod["coeff"]) # rows
+    nfitted = rows(mod["active"]) # cols
+	
+    type  = mod["type"]
+    dtype = mod["cdist"]
+    vtype = mod["vcvtype"]
+
+    p    = mod["p"]
+    q    = mod["q"]
+    t1   = mod["t1"]
+    t2   = mod["t2"]
+    nobs = mod["nobs"]
+
+    printf "\nModel: "
+
+    if type =  0
+        printf "ARCH(%d) [Engle]", p
+    elif type =  1
+        printf "GARCH(%d,%d) [Bollerslev]", p, q
+    elif type =  2
+        printf "Taylor/Schwert's GARCH(%d,%d)", p, q
+    elif type =  3
+        printf "GJR(%d,%d) [Glosten et al.]", p, q
+    elif type =  4
+        printf "TARCH(%d,%d) [Zakoian]", p, q
+    elif type =  5
+        printf "NARCH(%d,%d) [Higgins and Bera]", p, q
+    elif type =  6
+        printf "APARCH(%d,%d) [Ding]", p, q
+    elif type =  7
+        printf "EGARCH(%d,%d) [Nelson]", p, q
+    elif type =  8
+        printf "GARCH-in-mean(%d,%d) [Engle]", p, q
+    elif type =  9
+        printf "free-APARCH(%d,%d)", p, q
+    endif
+
+    # DISTRIBUTIONS ordered by no. of extra params
+
+    if dtype =  0
+        printf " (Normal)" 
+    elif dtype =  1
+        printf " (Student's t)"
+    elif dtype =  2
+        printf " (GED)"
+    elif dtype =  3
+        printf " (Skewed T)"
+    elif dtype =  4
+        printf " (Skewed GED)"
+    endif
+
+    if ascore_ok(type, dtype)
+	printf "*"
+    endif
+
+    # OBS used
+
+    printf "\nDependent variable: %s", mod["depvarname"]
+    printf "\nSample: %s-%s (T = %d)", obslabel(t1), obslabel(t2), nobs
+
+    # VCV 
+
+    printf ", VCV method: "
+
+    if vtype =  0
+        printf "Robust" 
+    elif vtype =  1
+        printf "Hessian"
+    else
+        printf "OPG"
+    endif
+
+    if (mod["vX_QR"] == 1) && (mod["vk"]>1)
+        printf "\nQR decomposition used for variance regressors"
+    endif
+
+    # if (mod["scale"] != 1)
+    #     printf "\nexperimental: scaling = %g\n", mod["scale"]
+    # endif
+
+    printf "\n\n"
+
+end function
+
+function void GJR_alt_param(matrix coeff, matrix vcv, scalar p, scalar q,
+			    scalar nmX, scalar nvX, string svX)
+
+    matrix c_om = coeff[nmX+1:nmX+nvX]
+    matrix v_om = vcv[nmX+1:nmX+nvX, nmX+1:nmX+nvX]
+
+    matrix c_ag = coeff[nmX+nvX+1:nmX+nvX+2*q]
+    matrix v_ag = vcv[nmX+nvX+1:nmX+nvX+2*q, nmX+nvX+1:nmX+nvX+2*q]
+
+    matrix c_bt = coeff[nmX+nvX+2*q+1:nmX+nvX+2*q+p]
+    matrix v_bt = vcv[nmX+nvX+2*q+1:nmX+nvX+2*q+p, nmX+nvX+2*q+1:nmX+nvX+2*q+p]
+
+    if nvX == 1
+    	parNames = "delta"
+    else
+	parNames = svX
+    endif
+
+    cs = c_om ~ sqrt(diag(v_om))
+
+    if q = 1 
+	parNames += ",alpha,gamma"
+    else
+	loop for i=1..q --quiet
+	    parNames += ",alpha_$i"
+	endloop
+	loop for i=1..q --quiet
+	    parNames += ",gamma_$i"
+	endloop
+    endif
+
+    c_ag2 = zeros(2*q,1)
+    J = zeros(2*q,2*q) # Jacobian
+
+    loop i=1..q --quiet
+	alpha = c_ag[i]
+	gamma = c_ag[i+q]
+	c_ag2[i] = alpha * (1-gamma)^2
+	c_ag2[i+q] = 4 * alpha * gamma
+	J[i,i] = (1-gamma)^2
+	J[i,i+q] = -2 * alpha * (1-gamma)
+	J[i+q,i] = 4 * gamma
+	J[i+q,i+q] = 4 * alpha
+    endloop
+
+    v_ag2 = qform(J, v_ag)
+    cs |= (c_ag2 ~ sqrt(diag(v_ag2)))
+
+    if p = 1
+	parNames += ",beta"
+    else	
+	loop for i=1..p --quiet
+	    parNames += ",beta_$i"
+	endloop
+    endif
+
+    cs |= (c_bt ~ sqrt(diag(v_bt)))
+
+    printf "\n   (alt. parametrization)\n"
+
+    modprint cs parNames
+
+end function
+
+function void maybe_gig_print(bundle *mod, scalar verbose[0:3:0])
+
+    ncoeff  = rows(mod["coeff"]) # rows
+    nfitted = rows(mod["active"]) # cols
+
+    type  = mod["type"]
+    dtype = mod["cdist"]
+    vtype = mod["vcvtype"]
+
+    p    = mod["p"]
+    q    = mod["q"]
+    nmX  = mod["mk"]
+    nvX  = mod["vk"]
+
+    crit = mod["criteria"]
+    vcv = mod["vcv"]
+
+    # Composing print-out results
+	
+    coeff  = mod["coeff"]
+    sel    = mod["active"]
+    stderr = mod["stderr"]
+
+    cs2 = coeff[sel] ~ stderr 
+
+    # MEAN REGR
+    if nmX > 0
+        parNames = mod["mXnames"]
+	cs = cs2[1:nmX,]
+
+	if cols(cs)>0
+            printf "    Conditional mean equation\n"
+            modprint cs parNames
+	endif
+    endif    
+
+    # VAR REGR
+
+    if nvX == 1
+    	parNames = "omega"
+    else
+	parNames = mod["vXnames"]
+    endif
+
+    #ALPHAS
+    counter = nmX+nvX
+    if q = 1 
+	parNames += ",alpha"
+    else
+	loop for i=1..q --quiet
+	    parNames += ",alpha_$i"
+	endloop
+    endif
+    counter += q
+
+    #GAMMAS
+    if has_asymm_fx(type)
+	if q = 1 
+	    parNames += ",gamma"
+	else		
+	    loop for i=1..q --quiet
+		parNames += ",gamma_$i"
+	    endloop
+	endif
+    endif
+    counter += q
+
+    #BETAS
+    if type>0
+	if p = 1
+	    parNames += ",beta"
+	else	
+	    loop for i=1..p --quiet
+		parNames += ",beta_$i"
+	    endloop
+	endif
+    endif
+    counter += p
+		
+    #DELTAS
+    if (type==5) || (type==6) 
+	parNames += ",delta"
+    endif
+
+    if type != 9
+	cs = cs2[nmX+1:nfitted,]
+	limit = nfitted-nmX
+    else
+	cs = cs2[nmX+1:,]
+	limit = ncoeff-nmX
+    endif
+
+    printf "    Conditional variance equation\n"
+
+    if dtype > 0    	
+	ndenspar = n_cdist_par(dtype)
+	csdens = cs[limit-ndenspar+1:limit,]
+	cs = cs[1:limit-ndenspar,]
+    endif
+
+    modprint cs parNames
+    if (type == 3) # GJR
+	GJR_alt_param(coeff, vcv, p, q, nmX, nvX, mod["vXnames"])
+    endif
+
+    if dtype > 0    	
+	# DENSITY FUNCTION PART
+
+	/*
+	   FIXME (or maybe not):
+	   for asymmetric densities what we're actually printing here 
+	   is not really \lambda, but rather atanh(\lambda). In most cases,
+	   the difference is so minuscule to be inconsequential. Besides, 
+	   I don't think anyone is going to care. However, it's annoying.
+	   What shall we do? Transform the estimated parameter (and vcv) into 
+	   \lambda or just correct its label? Note that when we plot the 
+	   density (see gig_plot.inp) we do transform the parameter back to 
+	   \lambda, so we should at least be consistent. Hmmm.
+	 */
+
+	if dtype<3
+	    parNames = ",ni"
+	elif dtype<5
+	    parNames = "ni,lambda"
+	endif
+	printf "    Conditional density parameters\n"
+	modprint csdens parNames
+    endif
+
+    # INFO
+
+    printf "\tLlik: %12.5f\t", crit[1]
+    printf " AIC: %12.5f\n",   crit[2]
+    printf "\tBIC:  %12.5f\t", crit[3]
+    printf " HQC: %12.5f\n\n", crit[4]
+
+    if verbose > 2
+        # Starting Values
+        printf "Starting/Fitted Values Comparison Matrix:\n\n"
+        printf "       Initial         Final    Difference\n\n"
+    
+        fitted  = mod["coeff"]
+	initial = mod["inipar"]
+        loop for i=1..ncoeff -q
+	    difff = initial[i] - fitted[i]
+	    printf "%14.7f%14.7f%14.7f\n", initial[i], fitted[i], difff
+        endloop			
+        printf "\n"
+    endif
+
+end function
+
+/*
+ * Prints the requested info from the results matrix
+ */
+
+function void gig_print(bundle *b, scalar verbose[0:3:0])
+
+    err = b["errcode"]
+    if err == 0
+	gig_printHeader(&b)
+	maybe_gig_print(&b, verbose)
+    else
+	printf "\nESTIMATION FAILED: %s\n", errmsg(err)
+    endif
+
+end function
+
+/*
+  This function could be eliminated if the default verbose
+  value for gig_print were 1
+*/  
+
+function void gig_bundle_print(bundle *b)
+    gig_print(&b, 1)
+end function

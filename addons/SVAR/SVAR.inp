@@ -1,0 +1,420 @@
+include ./SVAR_utils.inp
+include ./SVAR_constraints.inp
+include ./SVAR_ident.inp
+include ./SVAR_Cfuncs.inp
+include ./SVAR_ABfuncs.inp
+include ./SVAR_IRF.inp
+include ./SVAR_plots.inp
+include ./SVAR_boot.inp
+include ./SVAR_setup.inp
+
+/* ---------------------------------------------------------------------- */
+
+function scalar SVAR_estimate(bundle *obj, int verbosity[1])
+
+  /*
+   this function fills the bundle with the estimated structural 
+   matrices and the covariance matrix of their free elements; it also
+   calls do_IRF at the end so that the structural VMA is stored into 
+   the bundle
+  */
+
+  scalar type = obj["type"]
+  scalar meth = obj["optmeth"]
+  scalar n = obj["n"]
+  scalar T = obj["T"]
+  matrix vcv
+  scalar errcode = 0
+
+  if type == 4 # do VECM
+    vecm_est(&obj)
+  else # estimate ordinary VAR
+    base_est(&obj)
+  endif
+
+  # grab the instantanous covariance matrix and 
+  # print it if required 
+  matrix Sigma = obj["Sigma"]
+  LL0 = VARloglik(T, Sigma)
+
+  if verbosity > 0
+    printf "\nUnconstrained Sigma:\n%12.5f\n", Sigma
+  endif
+
+  if type == 1
+      # plain model: no fancy stuff, just Cholesky decomposition
+      matrix C = cholesky(Sigma)
+      matrix param = vech(C')
+      obj["S1"] = C  # store C into the bundle
+      
+      # compute the covariance matrix for C
+      matrix Ss = imp2exp(obj["Rd1"])
+      matrix vcv = coeffVCV(Ss[,1:cols(Ss)-1], &C)
+      
+  elif (type==2) || (type == 4)
+      
+      matrix fullRd = get_full_Rd(&obj, verbosity)
+      matrix param = init_C(0, Sigma, fullRd) # try to set some "sensible" inital values
+            
+      if obj["simann"] > 0
+	  printf "before simann:\n%12.6f\n", param
+	  matrix dat = vec(Sigma) ~ imp2exp(fullRd)
+	  matrix parcpy = param
+	  zzz = simann(parcpy, "loglik(&parcpy, &dat, -1)", obj["simann"])
+	  param = parcpy
+	  printf "after simann:\n%12.6f\n", param
+      endif
+      
+      # do estimation; note that vcv is estimated inside "estC"	
+      # (is C also a matrix? probably...)
+      C = estC(&param, Sigma, fullRd, &vcv, &errcode, meth, verbosity)
+      
+      if errcode == 0
+	  obj["S1"] = C # store C into the bundle
+      else
+	  funcerr "Estimation failed"
+      endif
+      
+  elif type == 3
+      # AB-model
+      
+      matrix E = obj["E"]     # grab the VAR residuals (needed for initialisation)
+      matrix bRd = obj["Rd1"] # restrictions on B
+      matrix aRd = obj["Rd0"] # restrictions on A
+      
+      # try to set some "sensible" inital values
+      # (substitute out call to (former) init_AB)
+      matrix param = is_standard_AB(aRd, bRd) ? \
+      stdAB_init(E, aRd, bRd) : nonstdAB_init(E, aRd, bRd)
+      
+      # matrix param = init_AB(E, aRd, bRd) # try to set some "sensible" inital values
+      # scalar errcode = 0
+      
+      # do estimation; note that vcv is estimated inside "estAB"
+      C = estAB(&param, Sigma, aRd, bRd, &vcv, &errcode, meth, verbosity) 
+      
+      if errcode == 0
+	  matrix mA mB
+	  matrix aSs = imp2exp(aRd)
+	  matrix bSs = imp2exp(bRd)
+	  ABmat_exp(param, aSs, bSs, &mA, &mB)     # reconstruct A and B
+	  
+	  obj["S1"] = mA
+	  obj["S2"] = mB
+      else
+	  funcerr "Estimation failed"
+      endif
+  endif
+  
+  if (verbosity > 0)
+      printf "Optimization method = %s\n", optimstring(meth)
+      
+    if type == 3
+	  n2 = n*n
+	  ka = cols(aSs) - 1
+	  kb = cols(bSs) - 1
+	  matrix S = zeros(2*n2, ka+kb)  
+
+	  if ka > 0
+	      S[1:n2,1:ka] = aSs[,1:ka]
+	  endif
+	  if kb > 0
+	      S[n2+1:2*n2,ka+1:ka+kb] = bSs[,1:kb]
+      endif
+      
+      matrix vcv = coeffVCV(S, &mB, &mA)
+	  
+	  if ka > 0
+	      printStrMat(mA, vcv[1:n2,1:n2], "A")
+	  endif
+	  
+	  if kb > 0
+	      printStrMat(mB, vcv[n2+1:2*n2,n2+1:2*n2], "B")
+	  endif
+    else
+	  printStrMat(C, vcv, "C")
+    endif
+
+      LL1 = VARloglik(T, Sigma, &C)
+      printf "  Log-likelihood = %g\n\n", LL1
+	  
+      overid = (n*(n+1)/2 - rows(param))
+      if overid > 0
+	  LR = 2*(LL0-LL1)
+	  printf "\n  Overidentification LR test = %g (%d df, pval = %g)\n", LR,
+	  overid, pvalue(X, overid, LR)
+      endif
+  endif
+
+  if errcode == 0
+      obj["step"] = 2
+      obj["theta"] = param
+      obj["vcv"] = vcv
+      doIRF(&obj)
+  endif
+  
+  return errcode
+end function
+
+/* ---------------------------------------------------------------------- */
+function list autodrop(list X, scalar criterion[1.0e-12])
+    list drop = null
+    matrix R
+    qrdecomp({X}, &R)
+    scalar ndrop = 0
+    loop i=1..nelem(X) --quiet
+        if criterion > abs(R[i,i])
+            drop += X[i]
+            ndrop++
+        endif
+    endloop
+    if ndrop > 0
+        printf "%d collinear variables dropped (%s)\n", \
+          ndrop, varname(drop)
+        return X - drop
+    else
+        return X
+    endif
+end function
+
+function list determ(list X, bool cnst, bool trnd, bool seas)
+    if cnst
+	list ret = const
+    else
+	list ret = null
+    endif
+    
+    if trnd
+	list ret += time
+    endif
+    
+    if seas
+	ipd = 1/$pd 
+	tt = time % $pd	
+	loop i=1..$pd-1 --quiet
+	    ret += genseries(sprintf("seas_%d", i), (tt == i) - ipd)
+	endloop
+    endif
+  
+    # stick together deterministics and other exog.
+    list ret = ret || X
+    return ret
+end function
+
+function bundle GUI_SVAR(int type[1:3:1] "Model type" \
+			 {"plain (Cholesky)", "C-model", "AB-model"}, 
+			 list Y "VAR variables", 
+			 list X[null] "Exogenous regressors",
+			 bool hasconst[1] "Constant",
+			 bool hastrend[0] "Time trend",
+			 bool hasseas[0] "Seasonal dummies",
+			 int l[1::1] "Lags",
+			 int h[0::] "Horizon",
+			 matrix *R1[null] "Restriction pattern (short-run C or B)",
+			 matrix *R2[null] "Restriction pattern (long-run C or A)",
+			 int b[0::] "Bootstrap replications",
+			 scalar alpha[0:1:0.9] "Bootstrap alpha",
+			 bool biascorr[0] "Bias correction",
+			 bool checkident[0] "Check identification",
+			 matrix *cumix[null] "Indices of responses to cumulate",
+			 int optmeth[0:4:4] "Optimization method" \
+			 {"BFGS (numerical score)", \
+			  "BFGS (analytical score)", \
+			  "Newton-Raphson (numerical score)", \
+			  "Newton-Raphson (analytical score)"\
+			  "Scoring algorithm"})
+    
+    n = nelem(Y)    
+   
+    # stick together deterministics and other exog.
+    list lX = autodrop(determ(X, hasconst, hastrend, hasseas))
+    
+    # initialize the model bundle    
+    bundle m = SVAR_setup(modelstring(type), Y, lX, l)
+    if h > 0
+	m["horizon"] = h
+    endif
+    
+    # copy options (new by Sven)
+    m.biascorr = biascorr
+    m.optmeth = optmeth
+
+    ## implement the cumulation spec (sven 1.0.2)
+    if !isnull(cumix)
+        # ensure column vector
+        cumix = vec(cumix)
+        # input checks (numbers out of bounds)
+        if max(cumix) > nelem(Y) || min(cumix) < 1
+            print "Invalid cumulation specification!"
+            print "(No responses will be cumulated.)"
+        else	# sensible cumulation spec	
+            loop i=1..rows(cumix) -q
+                SVAR_cumulate(&m, cumix[i])
+            endloop
+        endif
+    endif 
+    
+    ## process restrictions
+    if type == 1
+        if !isnull(R1) || !isnull(R2)
+            print "Estimating plain model. Discarding provided restrictions."
+        endif
+        
+        if checkident
+            print "(Identification trivially given in plain model.)"
+        endif
+    else # C or AB model
+        # input check
+        if isnull(R1) && isnull(R2)
+            funcerr "Must provide some restrictions for C and AB models!"
+	endif
+        
+        if type == 3 && ( isnull(R1) || isnull(R2) ) 
+	    funcerr "Must provide restrictions on A and B for AB model!"
+        endif
+                    
+	# transform the R1-matrix to SVAR-style restrictions
+	if !isnull(R1)
+            r = rows(R1)
+            c = cols(R1)
+            if (r != n || c != n)
+		funcerr "wrong R1 dimensions"
+            endif
+	    
+            string sBorC = type == 3 ? "B" : "C" # new by Sven 1.0.2
+            loop i=1..n -q
+    		loop j=1..n -q
+    		    scalar rij = R1[i,j] 
+    		    if ok(rij) # valid number = restricted element
+                        SVAR_restrict(&m, sBorC, i, j, rij)
+    		    endif
+    		endloop
+            endloop
+	endif
+        
+        # still need to consider the A or longrun-C matrix (new by Sven 1.0.1 and after)
+	# transform the R2-matrix to SVAR-style restrictions
+	if !isnull(R2)
+	    r2 = rows(R2)
+	    c2 = cols(R2)
+	    if (r2 != n || c2 != n)
+		funcerr "wrong R2 dimension"
+	    endif
+            
+            string sAorlrC = type == 3 ? "A" : "lrC"
+	    loop i=1..n -q
+		loop j=1..n -q
+		    scalar rij = R2[i,j]
+		    if ok(rij) # valid number = restricted element
+                        SVAR_restrict(&m, sAorlrC, i, j, rij)                
+		    endif
+		endloop
+	    endloop
+	endif
+    endif
+    
+    # do an explicit ID check (sven 1.0.2)
+    scalar id_ok = 1
+	
+    if checkident
+        if (type == 2  && !isnull(R2) ) # longrun C
+            print "FIXME: not yet implemented for models with long-run restrictions"
+        else
+            print "Check identification:" 
+            id_ok = SVAR_ident(&m, 1)	# request verbosity==1 to get messages
+	endif
+    endif
+
+    # and of course estimate
+    if !id_ok
+	return m
+    else
+	SVAR_estimate(&m)
+	
+	if b > 0
+	    SVAR_boot(&m, b, alpha, 0)
+	endif
+    endif
+	
+    return m
+end function
+
+/* ---------------------------------------------------------------------- */
+
+function void SVAR_bundle_print(bundle *b)
+    # Some specification echoing (sven 1.0.2)
+    # (not sure whether this should go into SVAR_est_printout() instead...)
+
+    loop foreach i type n k p --quiet
+	scalar $i = b["$i"]
+    endloop
+    
+    printf "Model type: %s\n", modelstring(type)
+    
+    strings Ynames = b["Ynames"]
+    print "Endogenous variables:"
+    loop i=1..n --quiet
+	printf "%s", Ynames[i]
+	if (i==n)
+	    printf "\n"
+	else
+	    printf ", "
+	endif
+    endloop
+    printf "\n"
+    
+    if k>0
+        print "Exogenous variables:"
+	strings Xnames = b["Xnames"]
+	loop i=1..k --quiet
+	    printf "%s", Xnames[i]
+	    if (i==k)
+		printf "\n"
+	    else
+		printf ", "
+	    endif
+	endloop
+    else
+        print "(No exogenous variables.)"
+    endif
+    printf "\n"
+    
+    printf "Restriction patterns:\n\n"
+    
+    if type == 1
+        print "Lower-triangular C matrix (Choleski decomposition)\n" 
+    elif type == 2 # C-model
+        if rows(b.Rd1)>0
+            printf "Short-run restrictions:\n"
+            printf "%3.0f\n", b.Rd1
+        else
+            print "(No short-run restrictions)"
+        endif
+        if rows(b.Rd1l)>0
+            print "Long-run restrictions:"
+            printf "%3.0f\n", b.Rd1l
+        else
+            print "(No long-run restrictions.)"
+        endif
+    elif type == 3 # AB-model
+        if rows(b.Rd0)
+            print "Restrictions on A:"
+            printf "%3.0f\n", b.Rd0
+        else
+            print "(No restrictions on A.)"
+        endif
+        if rows(b.Rd1)
+            print "Restrictions on B:"
+            printf "%3.0f\n", b.Rd1
+        else
+            print "(No restrictions on B.)"
+        endif
+    endif
+    
+    # only print this if actual estimation took place
+    if inbundle(b, "Sigma")
+        printf "Sigma = \n%10.6f", b["Sigma"]
+        SVAR_est_printout(&b)
+    endif
+    
+end function

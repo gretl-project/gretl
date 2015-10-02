@@ -1,0 +1,27 @@
+set echo off
+set messages off
+
+# Import the gig library.
+include gig.gfn
+
+# open the sample file and compute returns
+open djclose
+rr = 100*ldiff(djclose)
+
+open b-g
+rr = Y
+list X = const 
+
+models = {1, 3, 6, 7}
+
+# loop over various specifications
+set stopwatch
+loop for i=1..4 --quiet #models
+    mod = gig_setup(rr, models[i], X)
+    mod["vcvtype"] = 2
+    loop for d=0..4 --quiet    #distributions
+	gig_set_dist(&mod, d)
+	gig_estimate(&mod)
+    endloop
+endloop
+printf "Elapsed time = %g seconds\n", $stopwatch

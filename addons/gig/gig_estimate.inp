@@ -1,0 +1,86 @@
+/*
+ * Copies all the estimation results nicely into the bundle.
+*/
+function void gig_packResults(bundle *mod, scalar err, matrix thetahat, 
+			      series *h, series *e,
+			      matrix inipar, matrix Sigma, matrix crit)
+
+    mod["errcode"] = err
+
+    if (err = 0)
+	theta = mod["coeff"]
+	sel = mod["active"]
+	theta[sel] = thetahat
+	mod["inipar"] = inipar
+
+	vk = mod["vk"]
+
+	if (vk>1) && (mod["vX_QR"] == 1)
+	    J = I(rows(Sigma))
+	    mk = mod["mk"]
+	    sel = seq(mk+1, mk+vk)
+	    invR = inv(mod["vX_R"])
+	    J[sel,sel] = invR
+	    theta[sel] = invR * theta[sel]
+	    Sigma = qform(J, Sigma)
+	endif
+
+	mod["coeff"] = theta
+	mod["vcv"] = Sigma
+	mod["stderr"] = sqrt(diag(Sigma))
+
+	mod["h"] = h
+	mod["uhat"] = e
+	mod["stduhat"] = e/sqrt(h)
+
+	mod["criteria"] = crit
+    endif
+
+end function
+
+/*
+Performs garch-like parameters estimation: the parameters must have 
+already been initialised somehow.
+*/
+
+
+function scalar gig_estimate(bundle *model, int verbose[0:2:1])
+    # verbose = 0 -> quiet
+    # verbose = 1 -> show output
+    # verbose = 2 -> show iterations
+
+    scalar garchType = model["type"]
+    t1 = model["t1"]
+    t2 = model["t2"]
+
+    smpl t1 t2
+
+    if garchType <= 7 #APARCH & EGARCH
+	scalar err = do_mle(&model, verbose==2)
+
+    elif garchType == 8
+	# GARCH-in-Mean
+	# Not yet, Buster!
+
+	# if verbose > 1
+ 	#     printParList( parIndex, parList, rows(distrInit))  
+ 	#     printf "Proceeding with GARCH-in-mean by Engle et al. estimation.\n\n"
+	# endif
+
+	# ret = garchmean( depVar, meanX, lagOrders, garchInit, distrType,\
+     	# 		distrInit, verbose, vcv)
+	printf "Not yet, Buster!\n"
+   endif	
+
+   if model["scale"] != 1
+       s = model["scale"]
+       adjust_for_scale(&model, 1/s)
+   endif
+
+   if (verbose>0)
+       gig_print(&model)
+   endif
+   return err
+
+end function
+

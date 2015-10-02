@@ -1,0 +1,29 @@
+topsrc = @top_srcdir@
+prefix = @prefix@
+datarootdir = @datarootdir@
+
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+
+ifeq ($(INSTALL_DATA),)
+  INSTALL_DATA = $(INSTALL) -m 644
+endif
+
+GFNDIR = $(prefix)/share/gretl/functions
+
+ivpanel.gfn: driver.inp ivpanel.inp ivpanel.spec ivpanel.help examples/nc_crime.inp
+	gretlcli -b driver.inp
+
+check: ivpanel.gfn
+	$(MAKE) -C examples check
+
+install: ivpanel.gfn
+	$(INSTALL_DATA) ivpanel.gfn $(DESTDIR)$(GFNDIR)/ivpanel
+
+zipfile: ivpanel.gfn
+	mkdir ivpanel && cp ivpanel.gfn ivpanel && zip -r ivpanel.zip ivpanel \
+	&& rm -rf ivpanel
+
+clean: 
+	rm -f ivpanel.gfn ; find . -name "*~" | xargs rm -f
+

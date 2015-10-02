@@ -1,0 +1,10 @@
+Structural VAR package
+
+This package provides functions for estimating Structural VAR via
+Maximum Likelihood.
+
+Several model types are supported. We also provide convenience functions
+for computing, printing and plotting various customary auxiliary statistics,
+such as Impulse Responses, FEVD and Historical Decompositions.
+
+For a fuller description, please read the accompanying pdf file.

@@ -1,0 +1,43 @@
+/* 
+  Replicate three of the models estimated by Baltagi
+  (Econometric Analysis of Panel Data, 3e, chapter 7),
+  based on North Carolina crime panel data from Cornwell 
+  and Trumbull
+*/
+
+set messages off
+include ivpanel.gfn
+
+open nc_crime.gdt --quiet
+
+# primary regressors
+list X = lprbarr lprbconv lprbpris lavgsen lpolpc ldensity \
+ lwcon lwtuc lwtrd lwfir lwser lwmfg lwfed lwsta lwloc lpctymle
+# time-invariant regressors
+list invariant = lpctmin west central urban
+# time dummies
+list TD = d82 d83 d84 d85 d86 d87
+# endogenous regressors
+list Endo = lpolpc lprbarr
+# instruments
+list Inst = ltaxpc lmix
+
+# fixed effects: can use time dummies
+list FX = X TD
+list FZ = FX - Endo Inst
+# Fixed-effects TSLS
+ivpanel(lcrmrte, FX, FZ, 1)
+
+# between: exclude time dummies but add time-invariant series
+list BX = X invariant
+list BZ = BX - Endo Inst
+# Between TSLS
+ivpanel(lcrmrte, BX, BZ, 2)
+
+# random effects (G2SLS): use all regressors
+list RX = X invariant TD
+list RZ = RX - Endo Inst
+ivpanel(lcrmrte, RX, RZ, 3)
+ 
+
+

@@ -1,0 +1,493 @@
+function scalar n_cdist_par(int cdist)
+    # number of parameters for given density
+    ret = NA
+
+    if (cdist == 0) # normal
+	ret = 0
+    elif ((cdist == 1) || (cdist == 2)) # t and GED
+	ret = 1
+    elif ((cdist == 3) || (cdist == 4)) # Skewed t/GED
+	ret = 2
+    endif
+
+    return ret
+end function
+
+
+function matrix cdist_initpar(int cdist)
+    /*
+    initial parameters for given density; in the future, this may 
+    be data-based, although it's not trivial
+    */
+
+    ret = {}
+    if (cdist == 0) # normal
+	ret = {}
+    elif (cdist == 1) # t
+	ret = {10}
+    elif (cdist == 2) # GED
+	ret = {2}
+    elif (cdist == 3) # Skewed t
+	ret = {10; 0}
+    elif (cdist == 4) # Skewed GED
+	ret = {2; 0}
+    endif
+
+    return ret
+end function
+
+function matrix distpar(scalar type, matrix theta)
+    # extract the density parameter from the full vector
+
+    ret = {}
+    if (type>2) 
+	ret = theta[rows(theta)-1:]
+    elif (type>0) 
+	ret = theta[rows(theta)] 
+    endif
+    return ret
+end function
+
+function scalar has_asymm_fx(int code)
+    # does the model accommodate asymmetry (eg GJR)?
+
+    scalar ret = NA
+    if (code == 0) || (code == 1) || (code == 2) || (code == 5) 
+        ret = 0
+    elif (code == 3) || (code == 4) || (code == 6) || (code == 7) 
+        ret = 1
+    endif
+    return ret
+end function
+
+function scalar ascore_ok(scalar code, scalar cdist)
+    # do we have ascore in a usable state?
+
+    scalar mod_ok = 0
+    scalar dist_ok = 0
+
+    if (code == 0) || (code == 1) || (code == 3)
+	# other models may be ok at this point too,
+	# need to investigate
+        mod_ok = 1
+    endif
+
+    if (cdist<2)
+	# only normal and t so far
+        dist_ok = 1
+    endif
+
+    force_ascore = ngetenv("ASCORE")
+    ret = ok(force_ascore) ? force_ascore : (mod_ok && dist_ok)
+
+    return ret
+end function
+
+function string gigDistString(int code)
+
+    string dist = ""
+    if code == 0  
+        string garchName = "Normal"
+    elif code == 1
+        string garchName = "T"
+    elif code == 2
+        string garchName = "GED"
+    elif code == 3
+        string garchName = "Skewed T"
+    elif code == 4
+        string garchName = "Skewed GED"
+    endif
+
+    return dist
+end function
+
+function matrix var_coef_init(bundle *mod, scalar s2)
+    /* 
+       build variance parameters in this order:
+
+       1) omega + possible variance regressors
+       2) alphas
+       3) gammas
+       4) betas
+       5) delta
+    */
+
+    code = mod["type"] 
+    p = mod["p"]
+    q = mod["q"]
+    if (p > 0)
+	a = 0.1
+	b = 0.8
+	omega = s2 * (1 - a - b) 
+    else
+	a = 0.9
+	omega = s2 * (1 - a) 
+    endif
+
+    vk = mod["vk"] # variance regressors
+    matrix initv = {omega} | zeros(vk-1,1) 
+    matrix alphas = (a/q) * ones(q,1)
+    initv |= alphas
+    initv |= zeros(q,1) #gammas
+    if (p > 0)
+	initv |= {b} | zeros(p-1,1)
+    endif
+
+    # delta
+    if (code == 0) || (code == 1) || (code == 3) 
+        delta = 2
+    elif (code == 2) || (code == 4) 
+        delta = 1
+    elif (code == 5) || (code == 6) 
+        delta = 1.5 # totally made up
+    else # eg EGARCH, though not really needed
+        delta = 2
+    endif
+
+    initv |= {delta}
+
+    return initv
+end function
+
+function scalar coef_init(bundle *mod)
+    /* for the moment, naive; we ought to try hannan-rissanen on 
+       the squared ols residuals
+    */
+
+    series dep = mod["y"]
+    if mod["mk"] > 0
+	matrix e
+	matrix Reg = mod["mX"]
+	matrix initm = mols({dep}, Reg, &e)
+	scalar s2 = meanc(e.^2)
+    else
+	matrix initm = {}
+	scalar s2 = var(dep)
+    endif
+
+    mod["s2"] = s2
+
+    initv = var_coef_init(&mod, s2)
+
+    cdist = mod["cdist"]
+    matrix initd = cdist_initpar(cdist)
+
+    mod["coeff"] = initm | initv | initd
+    
+    return 0
+end function
+
+function scalar set_active_par(bundle *mod)
+
+    scalar modeltype = mod["type"]
+
+    scalar mk = mod["mk"]
+    scalar vk = mod["vk"]
+    scalar p  = mod["p"]
+    scalar q  = mod["q"]
+
+    /* mean and variance regressors are always in 
+       for any type of model
+    */
+
+    matrix act = ones(mk+vk, 1)
+
+    act |= ones(q, 1) # alphas
+
+    if has_asymm_fx(modeltype) # gammas
+	act |= ones(q, 1) 
+    else
+	act |= zeros(q, 1) 
+    endif
+
+    if (p>0) # betas
+	act |= ones(p, 1) 
+    endif
+
+    # delta is active only for NARCH and APARCH
+    act |= {(modeltype == 5) || (modeltype == 6)} 
+
+    # density parameters
+    scalar cdist = mod["cdist"]
+    if (cdist == 1) || (cdist == 2)
+	act |= {1}
+    elif (cdist == 3) 
+	act |= {1;1}
+    endif
+
+    n = rows(act)
+    mod["active"] = selifr(seq(1,n)', act)
+    
+    return 0
+
+end function
+
+function void gig_set_dist(bundle *model, scalar cdist)
+
+    old_cdist = model["cdist"]
+
+    if (old_cdist != cdist)
+	model["cdist"] = cdist
+	
+	n_old = n_cdist_par(old_cdist)
+	n_new = n_cdist_par(cdist)
+
+	active = model["active"]
+	params = model["coeff"]
+	noldpar = rows(params)
+
+	# zap existing parameters
+	if n_old > 0
+	    active = trimr(active,0,n_old)
+	    params = trimr(params,0,n_old)
+	endif
+
+	if n_new > 0
+	    active |= (rows(params)+seq(1,n_new)')
+	    params |= cdist_initpar(cdist)	    
+	endif
+
+	model["active"] = active
+	model["coeff"] = params 
+    endif
+end function
+
+function void gig_set_pq(bundle *model, scalar p, scalar q)
+
+    scalar old_p = model["p"]
+    scalar old_q = model["q"]
+
+    if (old_p != p) || (old_q != q)
+	model["p"] = p
+	model["q"] = q
+	theta = model["coeff"]
+
+	mk = model["mk"]
+	if (mk>0) 
+	    matrix mpar = theta[1:mk]
+	else
+	    matrix mpar = {}
+	endif
+
+	dpar = distpar(model["cdist"], theta)
+	vpar = var_coef_init(&model, model["s2"])
+	model["coeff"] = mpar | vpar | dpar
+	set_active_par(&model)
+    endif
+
+end function
+
+function matrix vreg_QR(matrix vX, matrix *R)
+
+    /* do a QR decomp of the variance regressors 
+    (seems to help)
+    */
+
+    scale = 10 * sqrt(rows(vX)) # totally heuristic
+    QvX = qrdecomp(vX, &R)
+    matrix flip = selifr(seq(1,cols(vX))', (R[diag] .< 0))
+    if rows(flip)>0
+	QvX[,flip] = -QvX[,flip]
+	R[flip,] = -R[flip,]
+    endif
+
+    R = R ./ scale
+    return QvX .* scale
+end function
+
+function void gig_set_vQR(bundle *model, boolean on_off)
+
+    model["vX_QR"] = on_off 
+
+    if model["vX_QR"]
+	matrix vX_R
+	matrix QvX = vreg_QR(model["vX"], &vX_R)
+	model["vX_R"] = vX_R
+	model["QvX"] = QvX
+    endif
+end function
+
+function void gig_set_vcvtype(bundle *model, string s)
+    s = tolower(s)
+    if s == "sandwich"
+	model["vcvtype"] = 0
+    elif s == "hessian"
+	model["vcvtype"] = 1
+    elif s == "opg"
+	model["vcvtype"] = 2
+    endif
+end function
+
+function void adjust_for_scale(bundle *m, scalar scale)
+
+    sc2 = scale^2
+    mk = m["mk"]
+    vk = m["vk"]
+    
+    est_done = inbundle(m, "vcv")
+    if est_done
+	# we have two dimensions here: "coeff" contains all parameters,
+	# "vcv" and "stderr" only active ones; shit, what was I thinking?
+
+	J1 = ones(rows(m["coeff"]),1)
+	J2 = ones(rows(m["vcv"]),1)
+	if mk>0
+	    J1[1:mk] = 1/scale
+	    J2[1:mk] = 1/scale
+	endif
+	J1[mk+1:mk+vk] = 1/sc2
+	J2[mk+1:mk+vk] = 1/sc2
+    endif
+
+    if inbundle(m, "s2")
+	m["s2"] = m["s2"] / sc2
+    endif
+
+    if est_done
+	# FIXME: what happens to the variance equation if 
+	# delta != 2?
+	m["coeff"] = m["coeff"] .* J1
+	m["stderr"] = m["stderr"] .* J2
+	m["vcv"] = m["vcv"] .* (J2*J2')
+	m["h"] = m["h"] / sc2
+	crit_adj = ln(scale)*m["nobs"] .* {1; -2; -2; -2}
+	m["criteria"] = m["criteria"] + crit_adj
+    endif
+    
+    if inbundle(m, "uhat")
+	m["uhat"] = m["uhat"] / scale
+    endif
+
+end function
+
+function bundle gig_setup(series y, int type[1], list X[null], list Y[null], 
+			  scalar ARlags[0])
+
+    /*
+    autoscaling is much, much trickier that one would think: assume we
+    have a suitable number to scale the dep. var.; what should we 
+    do with regressors? Surely we need to scale the lags accordingly, 
+    but we don't have atm a clean way to tell them apart. 
+
+    At the moment, we leave the regressors alone and leave all the 
+    scale accounting (coeff, vcv modification etc) for post-estimation.
+    */
+
+    envvar = ngetenv("NOSCALE")
+    AUTOSCALE = missing(envvar) || (envvar == 0)
+
+    bundle model
+    model["type"] = type
+
+    model["AR"] = ARlags
+    if (ARlags>0)
+	list fullX = X || lags(ARlags, y)
+    else
+	list fullX = X
+    endif
+    
+    list everything = y || fullX || Y
+    smpl everything --no-missing
+    model["t1"] = $t1
+    model["t2"] = $t2
+
+    if (AUTOSCALE == 1) && (type<7) # skip EGARCH for the moment
+	if nelem(X) > 0
+	    ols y X --quiet
+	    scalar scale = $sigma
+	else
+	    scale = sd(y)
+	endif
+
+	model["scale"] = scale
+	model["y"] = y/scale
+    else	
+	model["scale"] = 1
+	model["y"] = y
+    endif
+
+    model["depvarname"] = argname(y)
+    model["q"] = 1
+    model["p"] = (type>0)
+
+    model["nobs"] = $nobs
+
+    k = nelem(X)
+    model["mk"] = k + ARlags
+    if model["mk"] == 0
+	matrix mlistX = {}
+	matrix mX = {}
+	model["mXnames"] = ""
+    else
+	if nelem(X)>0
+	    matrix mlistX = X
+	else
+	    matrix mlistX = {}
+	endif
+	matrix mX = { fullX }
+	string names = varname(X)
+
+	if (ARlags>0)
+	    loop i=1..ARlags --quiet
+		names = sprintf("%s,AR%d", names, i)
+	    endloop
+	endif
+
+	model["mXnames"] = names
+    endif
+
+    model["mlistX"] = mlistX
+    model["mX"] = mX
+
+    list lY = const || Y
+    vk = nelem(lY)
+    model["vk"] = vk
+    matrix vlistX = lY
+    matrix mX = { lY }
+    model["vXnames"] = varname(lY)
+
+    model["vlistX"] = vlistX
+    model["vX"] = mX
+
+    gig_set_vQR(&model, 0) # disable for now
+
+    model["cdist"] = 0
+
+    /* initialisation */
+    coef_init(&model)
+    set_active_par(&model)
+
+    /* robust */
+    model["vcvtype"] = 0
+
+    return model
+end function
+
+function bundle GUI_gig(series y "Dependent Variable", 
+			int type[1:7:1] "Model type" \
+                        {"GARCH", "Taylor/Schwert GARCH", "GJR", "TARCH", "NARCH", "APARCH", "EGARCH"}, 
+			int p[1] "GARCH", int q[1] "ARCH",
+                        list X[null] "Mean regressors",
+			bool hasconst[1] "Constant",
+			int ARlags[0::0] "AR lags",
+			list Y[null] "Variance regressors",
+			int cdist[0:4:0] "Distribution" \
+			{"Normal", "t", "GED", "Skewed t", "Skewed GED"},
+			int vtype[0:2:0] "Covariance estimator" \
+			{"Sandwich", "Hessian", "OPG"},
+			int verb[0:2:1] "Verbosity")
+
+    if hasconst
+	list X = const || X
+    endif
+
+    bundle m = gig_setup(y, type, X, Y, ARlags)
+    # this has to be forced
+    m["depvarname"] = argname(y)
+
+    gig_set_dist(&m, cdist)
+    gig_set_pq(&m, p, q)
+    m["vcvtype"] = vtype
+    gig_estimate(&m, verb)
+    return m
+end function

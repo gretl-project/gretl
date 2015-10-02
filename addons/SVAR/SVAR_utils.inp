@@ -1,0 +1,442 @@
+function scalar base_est(bundle *SVARobj)
+
+/*
+   takes a SVAR object and adds the basic VAR estimates
+   to the bundle; returns an errcode (virginity check).
+  */
+  
+  scalar step = SVARobj["step"]
+  err = (step>0)
+
+  if err
+    printf "Base estimation done already!\n"
+  else
+    matrix mY  = SVARobj["Y"]
+    scalar p   = SVARobj["p"] 
+    scalar n   = SVARobj["n"]
+    scalar k   = SVARobj["k"]
+
+    scalar T   = SVARobj["T"]
+
+    matrix E
+    matrix mreg = SVARobj["X"] ~ mlag(mY, seq(1,p))
+    matrix olspar = mols(mY[p+1:T,], mreg[p+1:T,], &E)
+
+    df = T - (n*p + k) 
+    matrix Sigma = (E'E)./df
+
+    if k > 0
+      matrix d = olspar[1:k,]
+    else
+      matrix d = {}
+    endif
+
+    matrix A = transp(olspar[k+1:k+n*p,])
+
+    SVARobj["VARpar"] = A
+    SVARobj["mu"] = d
+    SVARobj["Sigma"] = Sigma
+    SVARobj["E"] = E
+    SVARobj["step"] = 1
+    SVARobj["LL0"] = T*(n*ln(2*pi) - 0.5*ln(det(Sigma)) - 0.5)
+  endif
+
+  return err
+
+end function
+
+function matrix vecm_det(int T, int dcase)
+    # build the deterministic matrix for the VECM; if alpha is
+    # empty, it will be estimated via ols later
+
+    # deterministics
+    # note that in the "even cases" (restr. const or trend)
+    # the restricted term is _not_ included in x, since its
+    # parameter will be recovered later via alpha*beta
+    
+    if dcase < 3
+	matrix mreg = {}
+    else
+	matrix mreg = ones(T,1)
+    endif
+
+    if dcase == 5
+	matrix mreg ~= seq(1,T)'
+    endif
+
+    return mreg
+end function
+    
+    
+function scalar vecm_est(bundle *SVARobj)
+
+    /*
+    We can't afford to be too flexible here, and the intended usage
+    is as follows.
+
+    We assume the model has already been declared as a SVEC (type=4)
+    model. We also assume that the cointegration properties (beta mat plus
+    deterministics) have already been set up via the SVAR_coint() function,
+    so that we already have beta and alpha available as "jbeta" and
+    "jalpha", respectively. Finally, we take care of proper treatment of
+    deterministics, via the scalar "jcase" (1 to 5).
+    */
+
+    # --- preliminary checks 
+    
+    err = (SVARobj["step"] > 0)
+    
+    if err
+	printf "Base estimation done already!\n"
+	return err
+    endif
+
+    err = (SVARobj["type"] != 4)
+    
+    if err
+	printf "Wrong model type!\n"
+	return err
+    endif
+
+    # --- grab stuff from the bundle 
+
+    matrix mY     = SVARobj["Y"]
+    matrix jbeta   = SVARobj["jbeta"]
+    matrix jalpha  = SVARobj["jalpha"]
+    scalar p	  = SVARobj["p"] 
+    scalar n	  = SVARobj["n"]
+    scalar k	  = SVARobj["k"]
+    scalar r      = cols(jbeta)
+    scalar dcase   = SVARobj["jcase"]
+    scalar ols_al = rows(jalpha) == 0
+    
+    scalar T      = SVARobj["T"]
+
+    # --- first thing: do we have a pre-set value for alpha?
+
+    matrix dY = diff(mY)
+    matrix dep = dY[p+1:T,]
+    matrix E = {}
+
+    # deterministics
+    matrix mreg = vecm_det(T, dcase)
+    
+    # ECM terms
+    matrix ECM = mlag(mY * jbeta[1:n,],1)
+    if dcase == 2
+	ECM = ECM .+ jbeta[n+1, ]
+    elif dcase == 4
+	ECM += seq(1,T)'jbeta[n+1, ]
+    endif
+
+    if ols_al
+	# alpha must be estimated together with the rest of the VECM
+	matrix mreg ~= SVARobj["X"] ~ ECM
+    else
+	matrix dep -= (ECM[p+1:T,] * jalpha')
+	matrix mreg ~= SVARobj["X"] 
+    endif
+    
+    # extra lags
+    if p > 1
+	mreg ~= mlag(dY, seq(1,p-1))
+    endif
+
+    # trim the first rows
+    if rows(mreg)>0
+	mreg = mreg[p+1:T,]
+	# printf "%d rows\n", rows(dep)
+	# printf "%8.3f\n", (dep[1:10,] ~ mreg[1:10,])
+	matrix olspar = mols(dep, mreg, &E)
+    else
+	matrix olspar = {}
+	E = dep
+    endif
+
+    df = T - (n*p + k - (n-r)) 
+    matrix Sigma = (E'E)./T
+
+    # print olspar Sigma
+    
+    # --- construct the various matrices required later
+
+    rp = rows(olspar)
+
+    # alpha first (should be before the gammas, if estimated)
+    if ols_al
+	ng = n*(p-1)
+	jalpha = olspar[rp-ng-r+1:rp-ng,]'
+    endif
+    
+    # exogenous
+
+    if dcase == 1
+	matrix mu = {}
+	scalar nd = 0
+    elif dcase == 2
+	matrix mu = jalpha * jbeta[n+1,]
+	scalar nd = 0
+    elif dcase == 3
+	matrix mu = olspar[1,]
+	scalar nd = 1
+    elif dcase == 4
+	matrix mu =  olspar[1,] | (jalpha * jbeta[n+1,])'
+	scalar nd = 1
+    elif dcase == 5
+	matrix mu = olspar[1:2,]
+	scalar nd = 2
+    endif
+
+    if k > 0
+	matrix sel = nd + seq(0, k-1) 
+	mu = mu ~ olspar[sel,]
+    endif
+
+    /*
+    companion form in levels
+    */
+    Pi = jalpha * jbeta[1:n,]'
+    
+    if p>1
+	if ols_al
+	    # the Gammas should be after the ECM terms
+	    ini = nd + r + 1
+	else
+	    # the Gammas should be right after the deterministics
+	    ini = nd + 1
+	endif
+	fin = ini + (p-1) * n - 1
+	matrix A = olspar[ini:fin,] | zeros(n,n)
+	A += I(n) + Pi' | -olspar[ini:fin,]
+    else
+	matrix A = I(n) + Pi'
+    endif
+    
+    SVARobj["VARpar"] = A'
+    SVARobj["mu"] = mu
+    SVARobj["Sigma"] = Sigma
+    SVARobj["E"] = E
+    SVARobj["jalpha"] = jalpha
+    SVARobj["step"] = 1
+    SVARobj["LL0"] = T*(n*ln(2*pi) - 0.5*ln(det(Sigma)) - 0.5)
+
+    return err
+
+end function
+
+function matrix N2_ify(matrix A)
+  n2 = rows(A) 
+  n = int(sqrt(n2))
+  k = cols(A)
+  matrix e = vec(transp(mshape(seq(1,n2),n,n)))
+  matrix ret = A + A[e,1:k]
+  return ret
+end function
+
+function scalar has_unit_diag(matrix Rd)
+  ret = 0
+  n2 = cols(Rd) - 1
+  n = sqrt(n2)
+  printf "%6.1f\n", n
+  matrix test = transp(seq(0,n2-1)) .= seq(0,n2-1,n+1)
+  printf "%6.1f\n", test
+
+  test |= ones(1,n)
+
+  printf "%6.1f", test
+
+  matrix e
+  mols(test, Rd', &e)
+  ret = maxr(sumc(e.*e)) < 1.0e-12
+
+  return ret
+end function
+
+function scalar has_free_diag(matrix Rd)
+  n2 = cols(Rd) - 1
+  n = sqrt(n2)
+  matrix e = 1 + seq(0,n2-1,n+1)
+  matrix test = Rd[,e]
+  ret = sumc(abs(test)) < 1.0e-12
+  return ret
+end function
+
+function matrix mat_exp(matrix theta, matrix Ss, bool force_pos[0])
+
+    # we don't check for conformability, but 
+    # cols(Ss) should be equal to rows(theta)+1
+
+  n2 = rows(Ss) 
+  n = int(sqrt(n2))
+  k = cols(Ss) - 1
+  if k>0
+    matrix C = Ss[,1:k]*theta + Ss[,k+1]
+  else
+    matrix C = Ss
+  endif
+
+  C = mshape(C,n,n)
+
+  /*
+     if force_pos
+     neg = (diag(C)') .< 0
+     pos = !neg
+     C = C .* (pos - neg)
+     endif
+  */
+  return C 
+end function
+
+function void unscramble_dat(matrix *dat, matrix *Sigma, matrix *Ss)
+    n2 = rows(dat) 
+    n = int(sqrt(n2))
+    k = cols(dat)
+
+    Sigma = mshape(dat[,1],n,n)
+    Ss = dat[,2:k]
+end function
+
+function scalar VARloglik(scalar T, matrix Sigma, matrix *C[null])
+  # computes the (concentrated) loglikelihood for a VAR
+  # the matrix C (such that in theory CC' = Sigma) may be null,
+  # for just-identified models
+
+  n = rows(Sigma)
+  ll = n * 1.83787706640934548355 # ln(2*pi)
+
+  if isnull(C) # just-identified model
+    ll += ln(det(Sigma)) + n
+  else
+    matrix KK = invpd(C*C')
+    ll += -ln(det(KK)) + tr(KK*Sigma)
+  endif
+
+  return -(T/2) * ll
+end function
+
+function scalar loglik(matrix *theta, matrix *dat, scalar modeltype)
+  # modeltype < 0->C; modeltype>=0: AB (contains free elements of a)
+  matrix Sigma = {}
+  matrix Ss = {}
+  unscramble_dat(&dat, &Sigma, &Ss)
+  if modeltype < 0
+    matrix C = mat_exp(theta, Ss, 0)
+  else
+    p1 = modeltype
+    p2 = rows(theta)
+    matrix aSs = Ss[,1:p1+1]
+    matrix bSs = Ss[,p1+2:p2+2]
+    matrix A B
+    ABmat_exp(theta, aSs, bSs, &A, &B)
+    # was: matrix C = B/A
+    matrix C = A\B
+  endif
+
+  matrix KK = invpd(C*C')
+  ll = det(KK)
+  if ll <= 0 # should never happen
+    ll = NA
+  else 
+    ll = -0.5*(tr(KK*Sigma)-log(ll))
+  endif
+  return ll
+end function 
+
+function matrix InfoMat(matrix CorB, matrix S, matrix *A[null])
+    /*
+    merged from InfoMatC and InfoMatAB
+    First case C model (A is null), latter AB model.
+    */
+  matrix tmp = isnull(A) ? I(rows(CorB)) : (A\CorB) | -I(rows(A))    
+  tmp = S' (tmp ** inv(CorB'))    
+  return tmp * N2_ify(tmp')
+end function
+
+
+function matrix coeffVCV(matrix S, matrix *rhs, matrix *lhs[null])
+    # C or AB model
+    matrix IM = isnull(lhs) ? InfoMat(rhs, S) : InfoMat(rhs, S, &lhs)
+    # (should be correct with new InfoMat)
+  
+  
+    # quick-dirty check for singularity
+    if rcond(IM)>1.0e-10
+        matrix iIM = invpd(IM)/$nobs
+    else
+        matrix evec
+        l = eigensym(IM, &evec)
+        printf "\n\nInformation matrix is not pd!!\n\n%12.5f\n", IM
+        printf "Eigenvalues:\n%12.5f\n", l 
+        matrix e = (l .< 1.0e-07)
+        printf "Troublesome eigenvectors:\n%12.5f\n", selifc(evec, e')
+        printf "S:\n%4.0f\n", S
+        matrix iIM = zeros(rows(IM), cols(IM))
+    endif
+
+    return qform(S,iIM)
+end function
+
+function void maybe_flip_columns(matrix C, matrix *X)
+  /*
+   the objective here is to make X as similar as possible to C
+   by flipping the sign of the columns. Used for bootstrapping, 
+   to have IRFs with comparable signs.
+  */
+  n = rows(C)
+  matrix sel = seq(1,n)
+  matrix plus = sumc((C + X).^2)
+  matrix minus = sumc((C - X).^2)
+
+  matrix flip = plus .< minus
+  if sumr(flip) > 0
+    sel = selifc(sel, flip)
+    X[,sel] = -X[,sel] 
+  endif
+end function
+
+function void printStrMat(matrix X, matrix V, string name)
+  n = rows(X)
+  matrix x = vec(X)
+
+  matrix cfse = vec(X)
+  matrix se = sqrt(diag(V))
+  matrix numzero = selifr(seq(1,rows(se))', (se .< 1.0e-15))
+  if rows(numzero) > 1
+    se[numzero] = 0.0
+  endif
+  cfse ~= se
+  string parnames = ""
+
+  loop j=1..n --quiet
+    loop i=1..n --quiet
+      sprintf tmpstr "%s[%2d;%2d]", name, i, j
+      parnames += tmpstr
+      if (j<n) || (i<n)
+        parnames += ","
+      endif
+    endloop
+  endloop
+
+  modprint cfse parnames
+end function
+
+function void SVAR_est_printout(bundle *mod)
+  scalar type = mod["type"]
+  /*
+  matrix theta = mod["theta"]
+  matrix V = mod["vcv"]
+  
+     printf "Free parameters\n"
+     scalar npar = rows(theta)
+     matrix cs = theta ~ sqrt(diag(V))
+     pname = ""
+     loop i=1..npar -q
+     sprintf pname "%s theta_%d", pname, i
+     endloop
+
+     modprint cs pname
+  */  
+  if type == 1 || type == 2  # plain or C-model
+    printStrMat(mod["S1"], mod["vcv"], "C")  
+  endif
+end function

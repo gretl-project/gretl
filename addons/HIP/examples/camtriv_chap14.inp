@@ -1,0 +1,18 @@
+# Hansl program replication of IV probit 
+# exampled contained in chapter 14 of 
+# "Microeconometrics Using Stata, Revised Edition" 
+# by A. Colin Cameron and Pravin K. Trivedi (2010)
+  
+open camtriv_chap14.gdtb --quiet
+include HIP.gfn
+
+# Heteroskedastic probit using ML estimator (p.456)
+list xlist = const retire age hstatusg hhincome educyear married hisp
+HIP(ins, xlist, null, null, chronic, 1, 1)
+
+# Endogenous probit using ML estimator (p.468)
+series linc = log(hhincome)
+series age2 = age^2
+list xlist2 = const female age age2 educyear married hisp white chronic adl hstatusg
+list ivlist2 = retire sretire
+HIP(ins, xlist2, linc, ivlist2, null, 2, 2)

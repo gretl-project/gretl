@@ -1,0 +1,44 @@
+topsrc = @top_srcdir@
+prefix = @prefix@
+datarootdir = @datarootdir@
+
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+
+ifeq ($(INSTALL_DATA),)
+  INSTALL_DATA = $(INSTALL) -m 644
+endif
+
+GFNDIR = $(prefix)/share/gretl/functions
+
+INP =   SVAR.inp \
+	SVAR_ABfuncs.inp SVAR_Cfuncs.inp SVAR_constraints.inp  \
+	SVAR_IRF.inp SVAR_setup.inp SVAR_boot.inp SVAR_plots.inp  \
+	SVAR_utils.inp
+
+SVAR.gfn: $(INP) SVAR.spec
+	gretlcli -b pkg.inp
+
+doc/SVAR.pdf:
+	$(MAKE) -C doc
+
+install: SVAR.gfn doc/SVAR.pdf
+	if [ -d $(DESTDIR)$(GFNDIR)/SVAR/ ]; then \
+        rm -rf $(DESTDIR)$(GFNDIR)/SVAR/; fi; \
+	mkdir $(DESTDIR)$(GFNDIR)/SVAR/
+	$(INSTALL_DATA) SVAR.gfn $(DESTDIR)$(GFNDIR)/SVAR/SVAR.gfn
+	$(INSTALL_DATA) doc/SVAR.pdf $(DESTDIR)$(GFNDIR)/SVAR
+	if [ -d $(DESTDIR)$(GFNDIR)/SVAR/examples ]; then \
+        rm -rf $(DESTDIR)$(GFNDIR)/SVAR/examples; fi; \
+	mkdir $(DESTDIR)$(GFNDIR)/SVAR/examples
+	for f in examples/*.inp examples/*.gdt; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/SVAR/examples ; done
+
+zipfile: SVAR.gfn doc/SVAR.pdf 
+	mkdir -p SVAR && mkdir -p SVAR/examples && cp SVAR.gfn SVAR && \
+	cp doc/SVAR.pdf SVAR && cp examples/*.inp SVAR/examples && \
+	cp examples/*.gdt SVAR/examples && zip -r SVAR.zip SVAR && rm -rf SVAR
+
+clean: 
+	rm -f SVAR.gfn; find . -name "*~" | xargs rm -f
+	$(MAKE) -C doc clean
