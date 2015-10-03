@@ -1,6 +1,7 @@
 topsrc = @top_srcdir@
 prefix = @prefix@
 datarootdir = @datarootdir@
+tooldir = $(topsrc)/tools
 
 MAKE = @MAKE@
 INSTALL = @INSTALL@
@@ -34,15 +35,21 @@ links.stamp:
 $(PKG).zip: $(PKG).gfn
 	echo makepkg $(PKG).zip | $(GRETLCLI) -b -
 
-.PHONY : check install clean
+.PHONY : check install installdirs clean
 
 check: $(PKG).gfn
-	$(MAKE) -C examples check
+	$(tooldir)/test_addon $(GRETLCLI)
 
-install: $(PKG).zip
-	echo install $(PKG).zip --local | $(GRETLCLI) -b -
+install: $(PKG).gfn installdirs
+	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
+	for f in examples/* ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
+
+installdirs:
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
 
 clean: 
 	rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp
-	find . -name "*~" | xargs rm -f
+	rm -f test.out
 
