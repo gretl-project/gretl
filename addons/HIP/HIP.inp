@@ -1,4 +1,0 @@
-set echo off
-set messages off
-include HIP_public.inp
-makepkg HIP.gfn --index --translations --quiet

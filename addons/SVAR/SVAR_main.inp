@@ -1,15 +1,3 @@
-include ./SVAR_utils.inp
-include ./SVAR_constraints.inp
-include ./SVAR_ident.inp
-include ./SVAR_Cfuncs.inp
-include ./SVAR_ABfuncs.inp
-include ./SVAR_IRF.inp
-include ./SVAR_plots.inp
-include ./SVAR_boot.inp
-include ./SVAR_setup.inp
-
-/* ---------------------------------------------------------------------- */
-
 function scalar SVAR_estimate(bundle *obj, int verbosity[1])
 
   /*

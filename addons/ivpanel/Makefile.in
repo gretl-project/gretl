@@ -19,12 +19,11 @@ PKGSRC = $(topsrc)/addons/ivpanel
 vpath %.inp $(PKGSRC)
 vpath %.spec $(PKGSRC)
 
-INP = driver.inp \
-      ivpanel.inp
+INP = ivpanel.inp
 
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec $(PKG).help \
 	examples/nc_crime.inp $(GRETLCLI)
-	$(GRETLCLI) -b -q $(PKGSRC)/driver.inp
+	$(GRETLCLI) -b -q pkg.inp
 
 links.stamp:
 	@if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi

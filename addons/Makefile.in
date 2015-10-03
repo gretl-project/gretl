@@ -51,3 +51,6 @@ installdirs:
 
 install: $(SUBDIRS) installdirs
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done
+
+check: $(SUBDIRS)
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d check; done

@@ -19,8 +19,7 @@ PKGSRC = $(topsrc)/addons/$(PKG)
 vpath %.inp $(PKGSRC)
 vpath %.spec $(PKGSRC)
 
-INP =   SVAR.inp \
-	SVAR_ABfuncs.inp \
+INP =   SVAR_ABfuncs.inp \
 	SVAR_Cfuncs.inp \
 	SVAR_constraints.inp \
 	SVAR_ident.inp \
@@ -29,10 +28,10 @@ INP =   SVAR.inp \
 	SVAR_boot.inp \
 	SVAR_plots.inp \
 	SVAR_utils.inp \
-	pkg.inp
+	SVAR_main.inp
 
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec $(GRETLCLI)
-	$(GRETLCLI) -b -q $(PKGSRC)/pkg.inp
+	$(GRETLCLI) -b -q pkg.inp
 
 doc/$(PKG).pdf:
 	$(MAKE) -C doc

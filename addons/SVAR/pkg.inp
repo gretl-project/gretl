@@ -1,4 +1,0 @@
-set echo off
-set messages off
-include SVAR.inp
-makepkg SVAR.gfn --index --translations --quiet

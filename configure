@@ -23828,7 +23828,7 @@ fi
 fi
 
 if test "${build_addons}" = "yes" ; then
-  ac_config_files="$ac_config_files addons/Makefile addons/gig/Makefile addons/gig/doc/Makefile addons/HIP/Makefile addons/HIP/doc/Makefile addons/ivpanel/Makefile addons/SVAR/Makefile addons/SVAR/doc/Makefile"
+  ac_config_files="$ac_config_files addons/Makefile addons/gig/Makefile addons/gig/pkg.inp addons/gig/doc/Makefile addons/HIP/Makefile addons/HIP/pkg.inp addons/HIP/doc/Makefile addons/ivpanel/Makefile addons/ivpanel/pkg.inp addons/SVAR/Makefile addons/SVAR/pkg.inp addons/SVAR/doc/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -24852,11 +24852,15 @@ do
     "doc/tex_pt/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_pt/Makefile" ;;
     "addons/Makefile") CONFIG_FILES="$CONFIG_FILES addons/Makefile" ;;
     "addons/gig/Makefile") CONFIG_FILES="$CONFIG_FILES addons/gig/Makefile" ;;
+    "addons/gig/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/gig/pkg.inp" ;;
     "addons/gig/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/gig/doc/Makefile" ;;
     "addons/HIP/Makefile") CONFIG_FILES="$CONFIG_FILES addons/HIP/Makefile" ;;
+    "addons/HIP/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/HIP/pkg.inp" ;;
     "addons/HIP/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/HIP/doc/Makefile" ;;
     "addons/ivpanel/Makefile") CONFIG_FILES="$CONFIG_FILES addons/ivpanel/Makefile" ;;
+    "addons/ivpanel/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/ivpanel/pkg.inp" ;;
     "addons/SVAR/Makefile") CONFIG_FILES="$CONFIG_FILES addons/SVAR/Makefile" ;;
+    "addons/SVAR/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/SVAR/pkg.inp" ;;
     "addons/SVAR/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/SVAR/doc/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;

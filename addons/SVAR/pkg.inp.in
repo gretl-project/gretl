@@ -1,0 +1,19 @@
+set echo off
+set messages off
+
+string topsrc = "@top_srcdir@"
+string dtd = topsrc ~ "/share/functions/gretlfunc.dtd"
+string pkgdir = topsrc ~ "/addons/SVAR"
+
+include @pkgdir/SVAR_utils.inp
+include @pkgdir/SVAR_constraints.inp
+include @pkgdir/SVAR_ident.inp
+include @pkgdir/SVAR_Cfuncs.inp
+include @pkgdir/SVAR_ABfuncs.inp
+include @pkgdir/SVAR_IRF.inp
+include @pkgdir/SVAR_plots.inp
+include @pkgdir/SVAR_boot.inp
+include @pkgdir/SVAR_setup.inp
+include @pkgdir/SVAR_main.inp
+
+makepkg SVAR.gfn --index --translations --quiet --dtd="@dtd"

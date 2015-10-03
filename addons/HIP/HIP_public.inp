@@ -1,5 +1,3 @@
-include ./HIP_private.inp
-
 /***********************************************************
  Bundle structure. 
  IVPROBIT: initial values for mle are computed by

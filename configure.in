@@ -988,11 +988,15 @@ if test "${build_addons}" = "yes" ; then
   AC_OUTPUT([
     addons/Makefile
     addons/gig/Makefile
+    addons/gig/pkg.inp
     addons/gig/doc/Makefile
     addons/HIP/Makefile
+    addons/HIP/pkg.inp
     addons/HIP/doc/Makefile
     addons/ivpanel/Makefile
+    addons/ivpanel/pkg.inp
     addons/SVAR/Makefile
+    addons/SVAR/pkg.inp
     addons/SVAR/doc/Makefile
   ])
 fi

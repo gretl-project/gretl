@@ -3360,11 +3360,12 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
     return pkg;
 }
 
-static int cli_validate_package_file (const char *fname, PRN *prn)
+static int cli_validate_package_file (const char *fname,
+				      gretlopt opt, PRN *prn)
 {
     char dtdname[FILENAME_MAX];
-    xmlDocPtr doc;
-    xmlDtdPtr dtd;
+    xmlDocPtr doc = NULL;
+    xmlDtdPtr dtd = NULL;
     int err;
 
     err = gretl_xml_open_doc_root(fname, NULL, &doc, NULL);
@@ -3373,8 +3374,21 @@ static int cli_validate_package_file (const char *fname, PRN *prn)
 	return 1;
     }
 
-    sprintf(dtdname, "%sfunctions%cgretlfunc.dtd", gretl_home(), SLASH);
-    dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname); 
+    *dtdname = '\0';
+
+    if (opt & OPT_D) {
+	const char *dpath = get_optval_string(MAKEPKG, OPT_D);
+
+	if (dpath != NULL && *dpath != '\0') {
+	    strcat(dtdname, dpath);
+	}
+    } else {
+	sprintf(dtdname, "%sfunctions%cgretlfunc.dtd", gretl_home(), SLASH);
+    }
+
+    if (*dtdname != '\0') {
+	dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname);
+    }
 
     if (dtd == NULL) {
 	pputs(prn, "Couldn't open DTD to check package\n");
@@ -3551,7 +3565,7 @@ int create_and_write_function_package (const char *fname,
 	if (pkg != NULL) {
 	    err = function_package_write_file(pkg);
 	    if (!err) {
-		err = cli_validate_package_file(gfnname, prn);
+		err = cli_validate_package_file(gfnname, opt, prn);
 		/* should we delete @gfnname ? */
 	    }
 	    if (!err) {

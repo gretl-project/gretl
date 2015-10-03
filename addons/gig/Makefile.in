@@ -20,14 +20,13 @@ vpath %.inp $(PKGSRC)
 vpath %.spec $(PKGSRC)
 
 INP = gig_estimate.inp \
-      gig.inp \
       gig_mle.inp \
       gig_plot.inp \
       gig_printout.inp \
       gig_setup.inp
 
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec $(GRETLCLI)
-	$(GRETLCLI) -b -q $(PKGSRC)/gig.inp
+	$(GRETLCLI) -b -q pkg.inp
 
 doc/gig.pdf:
 	$(MAKE) -C doc
