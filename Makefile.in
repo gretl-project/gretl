@@ -14,6 +14,7 @@ build_gui = @build_gui@
 gtk_version = @gtk_version@
 build_po = @build_po@
 build_doc = @build_docs@
+build_addons = @build_addons@
 use_xdg = @use_xdg@
 
 ifeq ($(CC),)
@@ -36,6 +37,10 @@ ifeq ($(build_doc),yes)
   DOCDIR = doc
 endif
 
+ifeq ($(build_addons),yes)
+  ADDONSDIR = addons
+endif
+
 ifeq ($(use_xdg),yes)
   XDGDIR = xdg
 endif
@@ -47,8 +52,8 @@ export
 
 tooldir = $(topsrc)/tools
 
-SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR) share $(XDGDIR)
-ALLSUBDIRS = lib cli gui2 plugin po share tests xdg
+SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR) share $(XDGDIR) $(ADDONSDIR)
+ALLSUBDIRS = lib cli gui2 plugin po share tests xdg addons
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-strip \
 install-man tags dist distclean check buildstamp
@@ -114,5 +119,6 @@ share: lib
 $(GUIDIR): lib
 plugin: lib
 tests: lib
+addons: cli
 
 

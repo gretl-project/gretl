@@ -17290,8 +17290,8 @@ fi
 
 
 
-# Extract the first word of "latex", so it can be a program name with args.
-set dummy latex; ac_word=$2
+# Extract the first word of "pdflatex", so it can be a program name with args.
+set dummy pdflatex; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_LATEX+:} false; then :
@@ -19026,14 +19026,14 @@ fi
 if test "${build_docs}" = "yes" ; then
    if test "$have_xslt" = "no" || test "$have_latex" = "no" ; then
       build_docs="no"
-      echo "*** Can't build gretl docs: XSLT and/or LaTeX not found"
+      echo "*** Can't build gretl docs: XSLT and/or pdfLaTeX not found"
    fi
 fi
 
 if test "${build_addons}" = "yes" ; then
    if test "$have_latex" = "no" ; then
       build_addons="no"
-      echo "*** Can't build gretl addons: LaTeX not found"
+      echo "*** Can't build gretl addons: pdfLaTeX not found"
    fi
 fi
 

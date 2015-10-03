@@ -588,10 +588,10 @@ else
 fi
 
 dnl
-dnl Check for latex executable
+dnl Check for pdflatex executable
 dnl
 AC_DEFUN([AC_PROG_LATEX],
-[AC_CHECK_PROG(LATEX,latex,yes)])
+[AC_CHECK_PROG(LATEX,pdflatex,yes)])
 
 AC_PROG_LATEX
 test x"${LATEX}" = xyes && AC_DEFINE(HAVE_LATEX)
@@ -885,7 +885,7 @@ dnl If building docs was requested, see if we can do it
 if test "${build_docs}" = "yes" ; then
    if test "$have_xslt" = "no" || test "$have_latex" = "no" ; then
       build_docs="no"
-      echo "*** Can't build gretl docs: XSLT and/or LaTeX not found"
+      echo "*** Can't build gretl docs: XSLT and/or pdfLaTeX not found"
    fi
 fi
 
@@ -893,7 +893,7 @@ dnl If building addons was requested, see if we can do it
 if test "${build_addons}" = "yes" ; then
    if test "$have_latex" = "no" ; then
       build_addons="no"
-      echo "*** Can't build gretl addons: LaTeX not found"
+      echo "*** Can't build gretl addons: pdfLaTeX not found"
    fi
 fi
 
