@@ -2052,6 +2052,16 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
 	return 0;
     }
 
+    if (opt & OPT_I) {
+	/* respect special "include" setting if present */
+	char *ipath = getenv("GRETL_INCLUDE_PATH");
+
+	if (ipath != NULL && *ipath != '\0') {
+	    build_path(fullname, ipath, fname, NULL);
+	    return 0;
+	}
+    }	
+
     if (has_suffix(fullname, ".gfn") && get_gfn_special(fullname)) {
 	return 0;
     }
