@@ -39,7 +39,7 @@ gfnstrings: gfnstrings.c
 
 clean:
 	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d clean; done
-	rm -f gfnindex addons.xml gfnstrings addons-i18n.c
+	@rm -f gfnindex addons.xml gfnstrings addons-i18n.c
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/gig 

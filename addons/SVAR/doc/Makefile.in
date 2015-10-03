@@ -27,22 +27,21 @@ FIGS = 	awm-irfc.pdf \
 	TMPL.png
 
 pdfdoc: links.stamp bib
-	pdflatex SVAR; pdflatex SVAR
+	@pdflatex SVAR; pdflatex SVAR
 
 SVAR.aux: SVAR.tex
-	pdflatex SVAR
+	@pdflatex SVAR
 
 bib: SVAR.aux
-	bibtex $<
+	@bibtex $<
 
 links.stamp:
-	if [ ! -f gretl.bst ] ; then ln -sf $(TEXDIR)/gretl.bst . ; fi
-	if [ ! -f SVAR.bib ] ; then ln -sf $(DOCDIR)/SVAR.bib . ; fi
-	if [ ! -f SVAR.tex ] ; then ln -sf $(DOCDIR)/SVAR.tex . ; fi
-	for f in $(FIGS) ; do \
+	@if [ ! -f gretl.bst ] ; then ln -sf $(TEXDIR)/gretl.bst . ; fi
+	@if [ ! -f SVAR.bib ] ; then ln -sf $(DOCDIR)/SVAR.bib . ; fi
+	@if [ ! -f SVAR.tex ] ; then ln -sf $(DOCDIR)/SVAR.tex . ; fi
+	@for f in $(FIGS) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(DOCDIR)/$$f . ; fi ; done
-	touch $@
+	@touch $@
 
 clean : 
-	rm -rf *~ *.aux *.log *.bbl *.blg *.toc auto \
-	SVAR.pdf links.stamp
+	@rm -f *.aux *.log *.bbl *.blg *.toc SVAR.pdf links.stamp

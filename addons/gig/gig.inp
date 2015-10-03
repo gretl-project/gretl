@@ -1,3 +1,6 @@
+set echo off
+set messages off
+
 string basedir = "."
 
 include @basedir/gig_mle.inp
@@ -6,5 +9,5 @@ include @basedir/gig_estimate.inp
 include @basedir/gig_printout.inp
 include @basedir/gig_plot.inp
 
-makepkg gig.gfn --index --translations
+makepkg gig.gfn --index --translations --quiet
 

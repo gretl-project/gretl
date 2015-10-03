@@ -50,6 +50,7 @@
                          c == FRACTINT ||       \
 			 c == FREQ ||		\
 			 c == KPSS ||		\
+			 c == MAKEPKG ||	\
 			 c == MODTEST ||	\
 			 c == LEVERAGE ||	\
                          c == LEVINLIN ||       \

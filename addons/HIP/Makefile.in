@@ -27,16 +27,16 @@ INP = HIP_public.inp \
 EXAMP = HIP_example.inp
 
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec $(GRETLCLI)
-	$(GRETLCLI) -b $(PKGSRC)/HIP.inp
+	$(GRETLCLI) -b -q $(PKGSRC)/HIP.inp
 
 doc/$(PKG).pdf:
 	$(MAKE) -C doc
 
 links.stamp:
-	if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
-	if [ ! -f $(EXAMP) ] ; then ln -sf $(PKGSRC)/$(EXAMP) . ; fi
-	if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
-	touch $@
+	@if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
+	@if [ ! -f $(EXAMP) ] ; then ln -sf $(PKGSRC)/$(EXAMP) . ; fi
+	@if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
+	@touch $@
 
 $(PKG).zip: $(PKG).gfn doc/$(PKG).pdf $(GRETLCLI)
 	echo makepkg $(PKG).zip | $(GRETLCLI) -b -
@@ -57,8 +57,8 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
 
 clean: 
-	rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp
-	rm -f *.gdt test.out
-	$(MAKE) -C doc clean
+	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp
+	@rm -f *.gdt test.out
+	@$(MAKE) -C doc clean
 
 

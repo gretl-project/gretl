@@ -3069,6 +3069,7 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 				       PRN *prn)
 {
     const char *okstr, *failed;
+    int quiet = (opt & OPT_Q);
     char *p, line[1024];
     gchar *tmp;
     int dfd = -1;
@@ -3127,11 +3128,15 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		int pdfdoc = 0;
 		
 		if (has_suffix(p, ".pdf")) {
-		    pprintf(prn, "Recording help reference %s\n", p);
+		    if (!quiet) {
+			pprintf(prn, "Recording help reference %s\n", p);
+		    }
 		    tmp = g_strdup_printf("pdfdoc:%s", p);
 		    pdfdoc = 1;
 		} else {
-		    pprintf(prn, "Looking for help text in %s... ", p);
+		    if (!quiet) {
+			pprintf(prn, "Looking for help text in %s... ", p);
+		    }
 		    tmp = pkg_aux_content(p, &err);
 		    if (err) {
 			pputs(prn, failed);
@@ -3150,7 +3155,9 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		    g_free(tmp);
 		}
 	    } else if (!strncmp(line, "gui-help", 8)) {
-		pprintf(prn, "Looking for GUI help text in %s... ", p);
+		if (!quiet) {
+		    pprintf(prn, "Looking for GUI help text in %s... ", p);
+		}
 		tmp = pkg_aux_content(p, &err);
 		if (err) {
 		    pputs(prn, failed);
@@ -3163,7 +3170,9 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		    g_free(tmp);
 		}
 	    } else if (!strncmp(line, "sample-script", 13)) {
-		pprintf(prn, "Looking for sample script in %s... ", p);
+		if (!quiet) {
+		    pprintf(prn, "Looking for sample script in %s... ", p);
+		}
 		tmp = pkg_aux_content(p, &err);
 		if (err) {
 		    pputs(prn, failed);
@@ -3177,7 +3186,9 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		    g_free(tmp);
 		}
 	    } else if (!strncmp(line, "data-files", 10)) {
-		pprintf(prn, "Recording data-file list: %s\n", p);
+		if (!quiet) {
+		    pprintf(prn, "Recording data-file list: %s\n", p);
+		}
 		err = pkg_set_datafiles(pkg, p);
 	    } else if (!strncmp(line, "data-requirement", 16)) {
 		err = pkg_set_dreq(pkg, p);
@@ -3200,7 +3211,7 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		    key = pkg_lookups[i].key;
 		    if (!strncmp(line, key, strlen(key))) {
 			err = function_set_package_role(p, pkg, key, prn);
-			if (!err) {
+			if (!err && !quiet) {
 			    pprintf(prn, "%s function is %s, %s", key, p, okstr);
 			}
 			break;
@@ -3229,6 +3240,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
     fnpkg *pkg = NULL;
     char fname[FILENAME_MAX];
     char line[4096], cont[1024];
+    int quiet = (opt & OPT_Q);
     FILE *fp;
 
     if (!has_suffix(gfnname, ".gfn")) {
@@ -3249,7 +3261,9 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
 	ufunc *uf;
 	int i;
 
-	pprintf(prn, "Found spec file '%s'\n", fname);
+	if (!quiet) {
+	    pprintf(prn, "Found spec file '%s'\n", fname);
+	}
 
 	/* first pass: gather names of public functions */
 
@@ -3275,16 +3289,24 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
 	}
 
 	if (!*err) {
-	    pprintf(prn, "number of public interfaces = %d\n", npub);
+	    if (!quiet) {
+		pprintf(prn, "number of public interfaces = %d\n", npub);
+	    }
 	    for (i=0; i<npub && !*err; i++) {
 		uf = get_user_function_by_name(pubnames[i]);
-		pprintf(prn, " %s", pubnames[i]);
+		if (!quiet) {
+		    pprintf(prn, " %s", pubnames[i]);
+		}
 		if (uf == NULL) {
-		    pputs(prn, ": *** not found");
+		    if (!quiet) {
+			pputs(prn, ": *** not found");
+		    }
 		    gretl_errmsg_sprintf("'%s': no such function", pubnames[i]);
 		    *err = E_DATA;
-		} 
-		pputc(prn, '\n');
+		}
+		if (!quiet) {
+		    pputc(prn, '\n');
+		}
 	    }
 	}
 
@@ -3307,7 +3329,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
 	    }
 	}
 
-	if (!*err && npriv > 0) {
+	if (!quiet && !*err && npriv > 0) {
 	    pprintf(prn, "number of private functions = %d\n", npriv);
 	    for (i=0; i<npriv; i++) {
 		pprintf(prn, " %s\n", privnames[i]);

@@ -1,2 +1,4 @@
+set echo off
+set messages off
 include ivpanel.inp
-makepkg ivpanel.gfn --index --translations
+makepkg ivpanel.gfn --index --translations --quiet

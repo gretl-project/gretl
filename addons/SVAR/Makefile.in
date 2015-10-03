@@ -32,15 +32,15 @@ INP =   SVAR.inp \
 	pkg.inp
 
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec $(GRETLCLI)
-	$(GRETLCLI) -b $(PKGSRC)/pkg.inp
+	$(GRETLCLI) -b -q $(PKGSRC)/pkg.inp
 
 doc/$(PKG).pdf:
 	$(MAKE) -C doc
 
 links.stamp:
-	if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
-	if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
-	touch $@
+	@if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
+	@if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
+	@touch $@
 
 $(PKG).zip: $(PKG).gfn doc/$(PKG).pdf  $(GRETLCLI)
 	echo makepkg $(PKG).zip | $(GRETLCLI) -b -
@@ -61,6 +61,6 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
 
 clean: 
-	rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp
-	rm -f *.pdf test.out
-	$(MAKE) -C doc clean
+	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp
+	@rm -f *.pdf test.out
+	@$(MAKE) -C doc clean
