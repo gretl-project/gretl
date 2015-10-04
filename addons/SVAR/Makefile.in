@@ -31,7 +31,7 @@ INP =   SVAR_ABfuncs.inp \
 	SVAR_main.inp
 
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec $(GRETLCLI)
-	$(GRETLCLI) -b -q pkg.inp
+	$(GRETLCLI) -t pkg.inp
 
 doc/$(PKG).pdf:
 	$(MAKE) -C doc
@@ -42,7 +42,7 @@ links.stamp:
 	@touch $@
 
 $(PKG).zip: $(PKG).gfn doc/$(PKG).pdf  $(GRETLCLI)
-	echo makepkg $(PKG).zip | $(GRETLCLI) -b -
+	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
 
 .PHONY : check install installdirs clean
 

@@ -26,7 +26,7 @@ INP = gig_estimate.inp \
       gig_setup.inp
 
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec $(GRETLCLI)
-	$(GRETLCLI) -b -q pkg.inp
+	$(GRETLCLI) -t pkg.inp
 
 doc/gig.pdf:
 	$(MAKE) -C doc
@@ -38,7 +38,7 @@ links.stamp:
 	@touch $@
 
 $(PKG).zip: $(PKG).gfn doc/$(PKG).pdf $(GRETLCLI)
-	echo makepkg $(PKG).zip | $(GRETLCLI) -b -
+	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
 
 .PHONY : check install installdirs clean
 

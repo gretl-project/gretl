@@ -23,7 +23,7 @@ INP = ivpanel.inp
 
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec $(PKG).help \
 	examples/nc_crime.inp $(GRETLCLI)
-	$(GRETLCLI) -b -q pkg.inp
+	$(GRETLCLI) -t pkg.inp
 
 links.stamp:
 	@if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
@@ -32,7 +32,7 @@ links.stamp:
 	@touch $@
 
 $(PKG).zip: $(PKG).gfn
-	echo makepkg $(PKG).zip | $(GRETLCLI) -b -
+	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
 
 .PHONY : check install installdirs clean
 
