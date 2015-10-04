@@ -1,6 +1,6 @@
-# generated automatically by aclocal 1.14.1 -*- Autoconf -*-
+# generated automatically by aclocal 1.15 -*- Autoconf -*-
 
-# Copyright (C) 1996-2013 Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -12,8 +12,8 @@
 # PARTICULAR PURPOSE.
 
 m4_ifndef([AC_CONFIG_MACRO_DIRS], [m4_defun([_AM_CONFIG_MACRO_DIRS], [])m4_defun([AC_CONFIG_MACRO_DIRS], [_AM_CONFIG_MACRO_DIRS($@)])])
-# gettext.m4 serial 66 (gettext-0.18.2)
-dnl Copyright (C) 1995-2013 Free Software Foundation, Inc.
+# gettext.m4 serial 67 (gettext-0.19.6)
+dnl Copyright (C) 1995-2014 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -414,8 +414,12 @@ AC_DEFUN([AM_GNU_GETTEXT_NEED],
 dnl Usage: AM_GNU_GETTEXT_VERSION([gettext-version])
 AC_DEFUN([AM_GNU_GETTEXT_VERSION], [])
 
-# iconv.m4 serial 18 (gettext-0.18.2)
-dnl Copyright (C) 2000-2002, 2007-2013 Free Software Foundation, Inc.
+
+dnl Usage: AM_GNU_GETTEXT_REQUIRE_VERSION([gettext-version])
+AC_DEFUN([AM_GNU_GETTEXT_REQUIRE_VERSION], [])
+
+# iconv.m4 serial 19 (gettext-0.18.2)
+dnl Copyright (C) 2000-2002, 2007-2014 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -488,27 +492,33 @@ AC_DEFUN([AM_ICONV_LINK],
       if test $am_cv_lib_iconv = yes; then
         LIBS="$LIBS $LIBICONV"
       fi
-      AC_RUN_IFELSE(
-        [AC_LANG_SOURCE([[
+      am_cv_func_iconv_works=no
+      for ac_iconv_const in '' 'const'; do
+        AC_RUN_IFELSE(
+          [AC_LANG_PROGRAM(
+             [[
 #include <iconv.h>
 #include <string.h>
-int main ()
-{
-  int result = 0;
+
+#ifndef ICONV_CONST
+# define ICONV_CONST $ac_iconv_const
+#endif
+             ]],
+             [[int result = 0;
   /* Test against AIX 5.1 bug: Failures are not distinguishable from successful
      returns.  */
   {
     iconv_t cd_utf8_to_88591 = iconv_open ("ISO8859-1", "UTF-8");
     if (cd_utf8_to_88591 != (iconv_t)(-1))
       {
-        static const char input[] = "\342\202\254"; /* EURO SIGN */
+        static ICONV_CONST char input[] = "\342\202\254"; /* EURO SIGN */
         char buf[10];
-        const char *inptr = input;
+        ICONV_CONST char *inptr = input;
         size_t inbytesleft = strlen (input);
         char *outptr = buf;
         size_t outbytesleft = sizeof (buf);
         size_t res = iconv (cd_utf8_to_88591,
-                            (char **) &inptr, &inbytesleft,
+                            &inptr, &inbytesleft,
                             &outptr, &outbytesleft);
         if (res == 0)
           result |= 1;
@@ -521,14 +531,14 @@ int main ()
     iconv_t cd_ascii_to_88591 = iconv_open ("ISO8859-1", "646");
     if (cd_ascii_to_88591 != (iconv_t)(-1))
       {
-        static const char input[] = "\263";
+        static ICONV_CONST char input[] = "\263";
         char buf[10];
-        const char *inptr = input;
+        ICONV_CONST char *inptr = input;
         size_t inbytesleft = strlen (input);
         char *outptr = buf;
         size_t outbytesleft = sizeof (buf);
         size_t res = iconv (cd_ascii_to_88591,
-                            (char **) &inptr, &inbytesleft,
+                            &inptr, &inbytesleft,
                             &outptr, &outbytesleft);
         if (res == 0)
           result |= 2;
@@ -540,14 +550,14 @@ int main ()
     iconv_t cd_88591_to_utf8 = iconv_open ("UTF-8", "ISO-8859-1");
     if (cd_88591_to_utf8 != (iconv_t)(-1))
       {
-        static const char input[] = "\304";
+        static ICONV_CONST char input[] = "\304";
         static char buf[2] = { (char)0xDE, (char)0xAD };
-        const char *inptr = input;
+        ICONV_CONST char *inptr = input;
         size_t inbytesleft = 1;
         char *outptr = buf;
         size_t outbytesleft = 1;
         size_t res = iconv (cd_88591_to_utf8,
-                            (char **) &inptr, &inbytesleft,
+                            &inptr, &inbytesleft,
                             &outptr, &outbytesleft);
         if (res != (size_t)(-1) || outptr - buf > 1 || buf[1] != (char)0xAD)
           result |= 4;
@@ -560,14 +570,14 @@ int main ()
     iconv_t cd_88591_to_utf8 = iconv_open ("utf8", "iso88591");
     if (cd_88591_to_utf8 != (iconv_t)(-1))
       {
-        static const char input[] = "\304rger mit b\366sen B\374bchen ohne Augenma\337";
+        static ICONV_CONST char input[] = "\304rger mit b\366sen B\374bchen ohne Augenma\337";
         char buf[50];
-        const char *inptr = input;
+        ICONV_CONST char *inptr = input;
         size_t inbytesleft = strlen (input);
         char *outptr = buf;
         size_t outbytesleft = sizeof (buf);
         size_t res = iconv (cd_88591_to_utf8,
-                            (char **) &inptr, &inbytesleft,
+                            &inptr, &inbytesleft,
                             &outptr, &outbytesleft);
         if ((int)res > 0)
           result |= 8;
@@ -587,17 +597,14 @@ int main ()
       && iconv_open ("utf8", "eucJP") == (iconv_t)(-1))
     result |= 16;
   return result;
-}]])],
-        [am_cv_func_iconv_works=yes],
-        [am_cv_func_iconv_works=no],
-        [
-changequote(,)dnl
-         case "$host_os" in
-           aix* | hpux*) am_cv_func_iconv_works="guessing no" ;;
-           *)            am_cv_func_iconv_works="guessing yes" ;;
-         esac
-changequote([,])dnl
-        ])
+]])],
+          [am_cv_func_iconv_works=yes], ,
+          [case "$host_os" in
+             aix* | hpux*) am_cv_func_iconv_works="guessing no" ;;
+             *)            am_cv_func_iconv_works="guessing yes" ;;
+           esac])
+        test "$am_cv_func_iconv_works" = no || break
+      done
       LIBS="$am_save_LIBS"
     ])
     case "$am_cv_func_iconv_works" in
@@ -684,7 +691,7 @@ size_t iconv();
 ])
 
 # intlmacosx.m4 serial 5 (gettext-0.18.2)
-dnl Copyright (C) 2004-2013 Free Software Foundation, Inc.
+dnl Copyright (C) 2004-2014 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -741,7 +748,7 @@ AC_DEFUN([gt_INTL_MACOSX],
 ])
 
 # lib-ld.m4 serial 6
-dnl Copyright (C) 1996-2003, 2009-2013 Free Software Foundation, Inc.
+dnl Copyright (C) 1996-2003, 2009-2015 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -861,7 +868,7 @@ AC_LIB_PROG_LD_GNU
 ])
 
 # lib-link.m4 serial 26 (gettext-0.18.2)
-dnl Copyright (C) 2001-2013 Free Software Foundation, Inc.
+dnl Copyright (C) 2001-2015 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -1639,7 +1646,7 @@ AC_DEFUN([AC_LIB_LINKFLAGS_FROM_LIBS],
 ])
 
 # lib-prefix.m4 serial 7 (gettext-0.18)
-dnl Copyright (C) 2001-2005, 2008-2013 Free Software Foundation, Inc.
+dnl Copyright (C) 2001-2005, 2008-2015 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -1865,15 +1872,15 @@ sixtyfour bits
 
 # Helper functions for option handling.                    -*- Autoconf -*-
 #
-#   Copyright (C) 2004, 2005, 2007, 2008, 2009 Free Software Foundation,
-#   Inc.
+#   Copyright (C) 2004-2005, 2007-2009, 2011-2015 Free Software
+#   Foundation, Inc.
 #   Written by Gary V. Vaughan, 2004
 #
 # This file is free software; the Free Software Foundation gives
 # unlimited permission to copy and/or distribute it, with or without
 # modifications, as long as this notice is preserved.
 
-# serial 7 ltoptions.m4
+# serial 8 ltoptions.m4
 
 # This is to help aclocal find these macros, as it can't see m4_define.
 AC_DEFUN([LTOPTIONS_VERSION], [m4_if([1])])
@@ -1894,7 +1901,7 @@ m4_define([_LT_SET_OPTION],
 [m4_define(_LT_MANGLE_OPTION([$1], [$2]))dnl
 m4_ifdef(_LT_MANGLE_DEFUN([$1], [$2]),
         _LT_MANGLE_DEFUN([$1], [$2]),
-    [m4_warning([Unknown $1 option `$2'])])[]dnl
+    [m4_warning([Unknown $1 option '$2'])])[]dnl
 ])
 
 
@@ -1940,13 +1947,15 @@ m4_if([$1],[LT_INIT],[
   dnl
   dnl If no reference was made to various pairs of opposing options, then
   dnl we run the default mode handler for the pair.  For example, if neither
-  dnl `shared' nor `disable-shared' was passed, we enable building of shared
+  dnl 'shared' nor 'disable-shared' was passed, we enable building of shared
   dnl archives by default:
   _LT_UNLESS_OPTIONS([LT_INIT], [shared disable-shared], [_LT_ENABLE_SHARED])
   _LT_UNLESS_OPTIONS([LT_INIT], [static disable-static], [_LT_ENABLE_STATIC])
   _LT_UNLESS_OPTIONS([LT_INIT], [pic-only no-pic], [_LT_WITH_PIC])
   _LT_UNLESS_OPTIONS([LT_INIT], [fast-install disable-fast-install],
-  		   [_LT_ENABLE_FAST_INSTALL])
+		   [_LT_ENABLE_FAST_INSTALL])
+  _LT_UNLESS_OPTIONS([LT_INIT], [aix-soname=aix aix-soname=both aix-soname=svr4],
+		   [_LT_WITH_AIX_SONAME([aix])])
   ])
 ])# _LT_SET_OPTIONS
 
@@ -1974,7 +1983,7 @@ AU_DEFUN([AC_LIBTOOL_DLOPEN],
 [_LT_SET_OPTION([LT_INIT], [dlopen])
 AC_DIAGNOSE([obsolete],
 [$0: Remove this warning and the call to _LT_SET_OPTION when you
-put the `dlopen' option into LT_INIT's first parameter.])
+put the 'dlopen' option into LT_INIT's first parameter.])
 ])
 
 dnl aclocal-1.4 backwards compatibility:
@@ -2010,7 +2019,7 @@ AU_DEFUN([AC_LIBTOOL_WIN32_DLL],
 _LT_SET_OPTION([LT_INIT], [win32-dll])
 AC_DIAGNOSE([obsolete],
 [$0: Remove this warning and the call to _LT_SET_OPTION when you
-put the `win32-dll' option into LT_INIT's first parameter.])
+put the 'win32-dll' option into LT_INIT's first parameter.])
 ])
 
 dnl aclocal-1.4 backwards compatibility:
@@ -2019,9 +2028,9 @@ dnl AC_DEFUN([AC_LIBTOOL_WIN32_DLL], [])
 
 # _LT_ENABLE_SHARED([DEFAULT])
 # ----------------------------
-# implement the --enable-shared flag, and supports the `shared' and
-# `disable-shared' LT_INIT options.
-# DEFAULT is either `yes' or `no'.  If omitted, it defaults to `yes'.
+# implement the --enable-shared flag, and supports the 'shared' and
+# 'disable-shared' LT_INIT options.
+# DEFAULT is either 'yes' or 'no'.  If omitted, it defaults to 'yes'.
 m4_define([_LT_ENABLE_SHARED],
 [m4_define([_LT_ENABLE_SHARED_DEFAULT], [m4_if($1, no, no, yes)])dnl
 AC_ARG_ENABLE([shared],
@@ -2034,14 +2043,14 @@ AC_ARG_ENABLE([shared],
     *)
       enable_shared=no
       # Look at the argument we got.  We use all the common list separators.
-      lt_save_ifs="$IFS"; IFS="${IFS}$PATH_SEPARATOR,"
+      lt_save_ifs=$IFS; IFS=$IFS$PATH_SEPARATOR,
       for pkg in $enableval; do
-	IFS="$lt_save_ifs"
+	IFS=$lt_save_ifs
 	if test "X$pkg" = "X$p"; then
 	  enable_shared=yes
 	fi
       done
-      IFS="$lt_save_ifs"
+      IFS=$lt_save_ifs
       ;;
     esac],
     [enable_shared=]_LT_ENABLE_SHARED_DEFAULT)
@@ -2073,9 +2082,9 @@ dnl AC_DEFUN([AM_DISABLE_SHARED], [])
 
 # _LT_ENABLE_STATIC([DEFAULT])
 # ----------------------------
-# implement the --enable-static flag, and support the `static' and
-# `disable-static' LT_INIT options.
-# DEFAULT is either `yes' or `no'.  If omitted, it defaults to `yes'.
+# implement the --enable-static flag, and support the 'static' and
+# 'disable-static' LT_INIT options.
+# DEFAULT is either 'yes' or 'no'.  If omitted, it defaults to 'yes'.
 m4_define([_LT_ENABLE_STATIC],
 [m4_define([_LT_ENABLE_STATIC_DEFAULT], [m4_if($1, no, no, yes)])dnl
 AC_ARG_ENABLE([static],
@@ -2088,14 +2097,14 @@ AC_ARG_ENABLE([static],
     *)
      enable_static=no
       # Look at the argument we got.  We use all the common list separators.
-      lt_save_ifs="$IFS"; IFS="${IFS}$PATH_SEPARATOR,"
+      lt_save_ifs=$IFS; IFS=$IFS$PATH_SEPARATOR,
       for pkg in $enableval; do
-	IFS="$lt_save_ifs"
+	IFS=$lt_save_ifs
 	if test "X$pkg" = "X$p"; then
 	  enable_static=yes
 	fi
       done
-      IFS="$lt_save_ifs"
+      IFS=$lt_save_ifs
       ;;
     esac],
     [enable_static=]_LT_ENABLE_STATIC_DEFAULT)
@@ -2127,9 +2136,9 @@ dnl AC_DEFUN([AM_DISABLE_STATIC], [])
 
 # _LT_ENABLE_FAST_INSTALL([DEFAULT])
 # ----------------------------------
-# implement the --enable-fast-install flag, and support the `fast-install'
-# and `disable-fast-install' LT_INIT options.
-# DEFAULT is either `yes' or `no'.  If omitted, it defaults to `yes'.
+# implement the --enable-fast-install flag, and support the 'fast-install'
+# and 'disable-fast-install' LT_INIT options.
+# DEFAULT is either 'yes' or 'no'.  If omitted, it defaults to 'yes'.
 m4_define([_LT_ENABLE_FAST_INSTALL],
 [m4_define([_LT_ENABLE_FAST_INSTALL_DEFAULT], [m4_if($1, no, no, yes)])dnl
 AC_ARG_ENABLE([fast-install],
@@ -2142,14 +2151,14 @@ AC_ARG_ENABLE([fast-install],
     *)
       enable_fast_install=no
       # Look at the argument we got.  We use all the common list separators.
-      lt_save_ifs="$IFS"; IFS="${IFS}$PATH_SEPARATOR,"
+      lt_save_ifs=$IFS; IFS=$IFS$PATH_SEPARATOR,
       for pkg in $enableval; do
-	IFS="$lt_save_ifs"
+	IFS=$lt_save_ifs
 	if test "X$pkg" = "X$p"; then
 	  enable_fast_install=yes
 	fi
       done
-      IFS="$lt_save_ifs"
+      IFS=$lt_save_ifs
       ;;
     esac],
     [enable_fast_install=]_LT_ENABLE_FAST_INSTALL_DEFAULT)
@@ -2166,14 +2175,14 @@ AU_DEFUN([AC_ENABLE_FAST_INSTALL],
 [_LT_SET_OPTION([LT_INIT], m4_if([$1], [no], [disable-])[fast-install])
 AC_DIAGNOSE([obsolete],
 [$0: Remove this warning and the call to _LT_SET_OPTION when you put
-the `fast-install' option into LT_INIT's first parameter.])
+the 'fast-install' option into LT_INIT's first parameter.])
 ])
 
 AU_DEFUN([AC_DISABLE_FAST_INSTALL],
 [_LT_SET_OPTION([LT_INIT], [disable-fast-install])
 AC_DIAGNOSE([obsolete],
 [$0: Remove this warning and the call to _LT_SET_OPTION when you put
-the `disable-fast-install' option into LT_INIT's first parameter.])
+the 'disable-fast-install' option into LT_INIT's first parameter.])
 ])
 
 dnl aclocal-1.4 backwards compatibility:
@@ -2181,11 +2190,64 @@ dnl AC_DEFUN([AC_ENABLE_FAST_INSTALL], [])
 dnl AC_DEFUN([AM_DISABLE_FAST_INSTALL], [])
 
 
+# _LT_WITH_AIX_SONAME([DEFAULT])
+# ----------------------------------
+# implement the --with-aix-soname flag, and support the `aix-soname=aix'
+# and `aix-soname=both' and `aix-soname=svr4' LT_INIT options. DEFAULT
+# is either `aix', `both' or `svr4'.  If omitted, it defaults to `aix'.
+m4_define([_LT_WITH_AIX_SONAME],
+[m4_define([_LT_WITH_AIX_SONAME_DEFAULT], [m4_if($1, svr4, svr4, m4_if($1, both, both, aix))])dnl
+shared_archive_member_spec=
+case $host,$enable_shared in
+power*-*-aix[[5-9]]*,yes)
+  AC_MSG_CHECKING([which variant of shared library versioning to provide])
+  AC_ARG_WITH([aix-soname],
+    [AS_HELP_STRING([--with-aix-soname=aix|svr4|both],
+      [shared library versioning (aka "SONAME") variant to provide on AIX, @<:@default=]_LT_WITH_AIX_SONAME_DEFAULT[@:>@.])],
+    [case $withval in
+    aix|svr4|both)
+      ;;
+    *)
+      AC_MSG_ERROR([Unknown argument to --with-aix-soname])
+      ;;
+    esac
+    lt_cv_with_aix_soname=$with_aix_soname],
+    [AC_CACHE_VAL([lt_cv_with_aix_soname],
+      [lt_cv_with_aix_soname=]_LT_WITH_AIX_SONAME_DEFAULT)
+    with_aix_soname=$lt_cv_with_aix_soname])
+  AC_MSG_RESULT([$with_aix_soname])
+  if test aix != "$with_aix_soname"; then
+    # For the AIX way of multilib, we name the shared archive member
+    # based on the bitwidth used, traditionally 'shr.o' or 'shr_64.o',
+    # and 'shr.imp' or 'shr_64.imp', respectively, for the Import File.
+    # Even when GNU compilers ignore OBJECT_MODE but need '-maix64' flag,
+    # the AIX toolchain works better with OBJECT_MODE set (default 32).
+    if test 64 = "${OBJECT_MODE-32}"; then
+      shared_archive_member_spec=shr_64
+    else
+      shared_archive_member_spec=shr
+    fi
+  fi
+  ;;
+*)
+  with_aix_soname=aix
+  ;;
+esac
+
+_LT_DECL([], [shared_archive_member_spec], [0],
+    [Shared archive member basename, for filename based shared library versioning on AIX])dnl
+])# _LT_WITH_AIX_SONAME
+
+LT_OPTION_DEFINE([LT_INIT], [aix-soname=aix], [_LT_WITH_AIX_SONAME([aix])])
+LT_OPTION_DEFINE([LT_INIT], [aix-soname=both], [_LT_WITH_AIX_SONAME([both])])
+LT_OPTION_DEFINE([LT_INIT], [aix-soname=svr4], [_LT_WITH_AIX_SONAME([svr4])])
+
+
 # _LT_WITH_PIC([MODE])
 # --------------------
-# implement the --with-pic flag, and support the `pic-only' and `no-pic'
+# implement the --with-pic flag, and support the 'pic-only' and 'no-pic'
 # LT_INIT options.
-# MODE is either `yes' or `no'.  If omitted, it defaults to `both'.
+# MODE is either 'yes' or 'no'.  If omitted, it defaults to 'both'.
 m4_define([_LT_WITH_PIC],
 [AC_ARG_WITH([pic],
     [AS_HELP_STRING([--with-pic@<:@=PKGS@:>@],
@@ -2196,19 +2258,17 @@ m4_define([_LT_WITH_PIC],
     *)
       pic_mode=default
       # Look at the argument we got.  We use all the common list separators.
-      lt_save_ifs="$IFS"; IFS="${IFS}$PATH_SEPARATOR,"
+      lt_save_ifs=$IFS; IFS=$IFS$PATH_SEPARATOR,
       for lt_pkg in $withval; do
-	IFS="$lt_save_ifs"
+	IFS=$lt_save_ifs
 	if test "X$lt_pkg" = "X$lt_p"; then
 	  pic_mode=yes
 	fi
       done
-      IFS="$lt_save_ifs"
+      IFS=$lt_save_ifs
       ;;
     esac],
-    [pic_mode=default])
-
-test -z "$pic_mode" && pic_mode=m4_default([$1], [default])
+    [pic_mode=m4_default([$1], [default])])
 
 _LT_DECL([], [pic_mode], [0], [What type of objects to build])dnl
 ])# _LT_WITH_PIC
@@ -2221,7 +2281,7 @@ AU_DEFUN([AC_LIBTOOL_PICMODE],
 [_LT_SET_OPTION([LT_INIT], [pic-only])
 AC_DIAGNOSE([obsolete],
 [$0: Remove this warning and the call to _LT_SET_OPTION when you
-put the `pic-only' option into LT_INIT's first parameter.])
+put the 'pic-only' option into LT_INIT's first parameter.])
 ])
 
 dnl aclocal-1.4 backwards compatibility:
@@ -2244,7 +2304,8 @@ LT_OPTION_DEFINE([LTDL_INIT], [convenience],
 
 # ltsugar.m4 -- libtool m4 base layer.                         -*-Autoconf-*-
 #
-# Copyright (C) 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
+# Copyright (C) 2004-2005, 2007-2008, 2011-2015 Free Software
+# Foundation, Inc.
 # Written by Gary V. Vaughan, 2004
 #
 # This file is free software; the Free Software Foundation gives
@@ -2277,7 +2338,7 @@ m4_define([_lt_join],
 # ------------
 # Manipulate m4 lists.
 # These macros are necessary as long as will still need to support
-# Autoconf-2.59 which quotes differently.
+# Autoconf-2.59, which quotes differently.
 m4_define([lt_car], [[$1]])
 m4_define([lt_cdr],
 [m4_if([$#], 0, [m4_fatal([$0: cannot be called without arguments])],
@@ -2288,7 +2349,7 @@ m4_define([lt_unquote], $1)
 
 # lt_append(MACRO-NAME, STRING, [SEPARATOR])
 # ------------------------------------------
-# Redefine MACRO-NAME to hold its former content plus `SEPARATOR'`STRING'.
+# Redefine MACRO-NAME to hold its former content plus 'SEPARATOR''STRING'.
 # Note that neither SEPARATOR nor STRING are expanded; they are appended
 # to MACRO-NAME as is (leaving the expansion for when MACRO-NAME is invoked).
 # No SEPARATOR is output if MACRO-NAME was previously undefined (different
@@ -2368,7 +2429,7 @@ m4_define([lt_dict_filter],
 
 # ltversion.m4 -- version numbers			-*- Autoconf -*-
 #
-#   Copyright (C) 2004 Free Software Foundation, Inc.
+#   Copyright (C) 2004, 2011-2015 Free Software Foundation, Inc.
 #   Written by Scott James Remnant, 2004
 #
 # This file is free software; the Free Software Foundation gives
@@ -2377,22 +2438,23 @@ m4_define([lt_dict_filter],
 
 # @configure_input@
 
-# serial 3337 ltversion.m4
+# serial 4179 ltversion.m4
 # This file is part of GNU Libtool
 
-m4_define([LT_PACKAGE_VERSION], [2.4.2])
-m4_define([LT_PACKAGE_REVISION], [1.3337])
+m4_define([LT_PACKAGE_VERSION], [2.4.6])
+m4_define([LT_PACKAGE_REVISION], [2.4.6])
 
 AC_DEFUN([LTVERSION_VERSION],
-[macro_version='2.4.2'
-macro_revision='1.3337'
+[macro_version='2.4.6'
+macro_revision='2.4.6'
 _LT_DECL(, macro_version, 0, [Which release of libtool.m4 was used?])
 _LT_DECL(, macro_revision, 0)
 ])
 
 # lt~obsolete.m4 -- aclocal satisfying obsolete definitions.    -*-Autoconf-*-
 #
-#   Copyright (C) 2004, 2005, 2007, 2009 Free Software Foundation, Inc.
+#   Copyright (C) 2004-2005, 2007, 2009, 2011-2015 Free Software
+#   Foundation, Inc.
 #   Written by Scott James Remnant, 2004.
 #
 # This file is free software; the Free Software Foundation gives
@@ -2403,7 +2465,7 @@ _LT_DECL(, macro_revision, 0)
 
 # These exist entirely to fool aclocal when bootstrapping libtool.
 #
-# In the past libtool.m4 has provided macros via AC_DEFUN (or AU_DEFUN)
+# In the past libtool.m4 has provided macros via AC_DEFUN (or AU_DEFUN),
 # which have later been changed to m4_define as they aren't part of the
 # exported API, or moved to Autoconf or Automake where they belong.
 #
@@ -2417,7 +2479,7 @@ _LT_DECL(, macro_revision, 0)
 # included after everything else.  This provides aclocal with the
 # AC_DEFUNs it wants, but when m4 processes it, it doesn't do anything
 # because those macros already exist, or will be overwritten later.
-# We use AC_DEFUN over AU_DEFUN for compatibility with aclocal-1.6. 
+# We use AC_DEFUN over AU_DEFUN for compatibility with aclocal-1.6.
 #
 # Anytime we withdraw an AC_DEFUN or AU_DEFUN, remember to add it here.
 # Yes, that means every name once taken will need to remain here until
@@ -2490,7 +2552,7 @@ m4_ifndef([_LT_PROG_FC],		[AC_DEFUN([_LT_PROG_FC])])
 m4_ifndef([_LT_PROG_CXX],		[AC_DEFUN([_LT_PROG_CXX])])
 
 # nls.m4 serial 5 (gettext-0.18)
-dnl Copyright (C) 1995-2003, 2005-2006, 2008-2013 Free Software Foundation,
+dnl Copyright (C) 1995-2003, 2005-2006, 2008-2014 Free Software Foundation,
 dnl Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -2737,8 +2799,8 @@ AS_VAR_COPY([$1], [pkg_cv_][$1])
 AS_VAR_IF([$1], [""], [$5], [$4])dnl
 ])# PKG_CHECK_VAR
 
-# po.m4 serial 21 (gettext-0.18.3)
-dnl Copyright (C) 1995-2013 Free Software Foundation, Inc.
+# po.m4 serial 24 (gettext-0.19)
+dnl Copyright (C) 1995-2014 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -2769,7 +2831,7 @@ AC_DEFUN([AM_PO_SUBDIRS],
 
   dnl Release version of the gettext macros. This is used to ensure that
   dnl the gettext macros and po/Makefile.in.in are in sync.
-  AC_SUBST([GETTEXT_MACRO_VERSION], [0.18])
+  AC_SUBST([GETTEXT_MACRO_VERSION], [0.19])
 
   dnl Perform the following tests also if --disable-nls has been given,
   dnl because they are needed for "make dist" to work.
@@ -3192,7 +3254,7 @@ AC_DEFUN([AM_XGETTEXT_OPTION],
 ])
 
 # progtest.m4 serial 7 (gettext-0.18.2)
-dnl Copyright (C) 1996-2003, 2005, 2008-2013 Free Software Foundation, Inc.
+dnl Copyright (C) 1996-2003, 2005, 2008-2015 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
