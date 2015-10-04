@@ -56,7 +56,7 @@ function process_tarball {
 function process_addon {
     echo "adding content of $1"
     unzip -l $1 | awk '{ print $1" 20"$2" "$3" gretl/functions/"$4 }' | \
-     grep -ve "^0\|^Arc\|^Len\|\bfiles" | grep -v ^'-' >> ../../MANIFEST
+     grep -ve "^0\|^Arc\|^Len\|\bfile" | grep -v ^'-' >> ../../MANIFEST
     unzip $1
 }
 
