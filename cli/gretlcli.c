@@ -115,6 +115,8 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
 	    opt |= OPT_QUIET;
 	} else if (!strcmp(s, "-m") || !strcmp(s, "--makepkg")) { 
 	    opt |= OPT_MAKEPKG;
+	} else if (!strcmp(s, "-t") || !strcmp(s, "--tool")) {
+	    opt |= (OPT_TOOL | OPT_BATCH);
 	} else if (!strncmp(s, "--scriptopt=", 12)) {
 	    *scriptval = atof(s + 12);
 	} else if (*s == '-' && *(s+1) != '\0') {
@@ -491,6 +493,7 @@ int main (int argc, char *argv[])
     ExecState state;
     char *line = NULL;
     int quiet = 0;
+    int tool = 0;
     int makepkg = 0;
     int load_datafile = 1;
     char filearg[MAXLEN];
@@ -568,7 +571,10 @@ int main (int argc, char *argv[])
 	    load_datafile = 0;
 	}
 
-	if (opt & OPT_QUIET) {
+	if (opt & OPT_TOOL) {
+	    tool = quiet = 1;
+	    gretl_set_tool_mode();
+	} else if (opt & OPT_QUIET) {
 	    quiet = 1;
 	}
 
@@ -581,9 +587,11 @@ int main (int argc, char *argv[])
 
     libgretl_init();
 
-    logo(quiet);
-    if (!quiet) {
-	session_time(NULL);
+    if (!tool) {
+	logo(quiet);
+	if (!quiet) {
+	    session_time(NULL);
+	}
     }
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, &err);
@@ -602,7 +610,7 @@ int main (int argc, char *argv[])
     cli_read_rc();
 #endif /* WIN32 */
 
-    if (!batch) {
+    if (!batch && !tool) {
 	strcpy(cmdfile, gretl_workdir());
 	strcat(cmdfile, "session.inp");
 	cmdprn = gretl_print_new_with_filename(cmdfile, &err);
@@ -656,7 +664,7 @@ int main (int argc, char *argv[])
     if (batch || runit) {
 	/* re-initialize: will be incremented by "run" cmd */
 	runit = 0;
-	if (makepkg) {
+	if (makepkg || tool) {
 	    set_gretl_echo(0);
 	}
 	if (*runfile != '\0') {

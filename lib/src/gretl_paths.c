@@ -2735,7 +2735,7 @@ static void check_gretldir (char *config_path)
 	}
     }
 
-    if (!gotit) {
+    if (!gotit && !gretl_in_tool_mode()) {
 	/* we're messed up; try to recover */
 	pid_t pid = getpid();
 	gchar *proc_exe;

@@ -1984,7 +1984,7 @@ void libgretl_init (void)
     gretl_stopwatch_init();
     mpf_set_default_prec(get_mp_bits());
 
-    if (have_optimized_blas()) {
+    if (!gretl_in_tool_mode() && have_optimized_blas()) {
 	set_blas_mnk_min(90000);
     } 
 }

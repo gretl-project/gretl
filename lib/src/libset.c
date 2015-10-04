@@ -2593,6 +2593,21 @@ int gretl_in_gui_mode (void)
     return gui_mode;
 }
 
+/* "tool_mode" is set when gretlcli is being used as
+   a build tool */
+
+static int tool_mode;
+
+void gretl_set_tool_mode (void)
+{
+    tool_mode = 1;
+}
+
+int gretl_in_tool_mode (void)
+{
+    return tool_mode;
+}
+
 /* mechanism to support callback for printing iteration info */
 
 static ITER_PRINT_FUNC ifunc;
