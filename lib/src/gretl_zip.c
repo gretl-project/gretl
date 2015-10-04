@@ -90,7 +90,7 @@ static int clone_gsf_tree (GsfInput *input, GsfOutput *output)
 
     if (gsf_input_size(input) > 0) {
 	err = transcribe_gsf_data(input, output);
-    } 
+    }
 
     if (GSF_IS_INFILE(input) && gsf_infile_num_children(GSF_INFILE(input)) > 0) {
 	GsfInfile *in = GSF_INFILE(input);
@@ -431,7 +431,7 @@ int gretl_unzip_into (const char *fname, const char *dirname)
 int gretl_make_zipfile (const char *fname, const char *path)
 {
 #if USE_GSF
-    return gretl_gsf_make_zipfile(fname, path);    
+    return gretl_gsf_make_zipfile(fname, path);
 #else
     return gretl_plugin_make_zipfile(fname, path);       
 #endif 
