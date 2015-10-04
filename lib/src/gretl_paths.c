@@ -1542,6 +1542,11 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
 # define NAME_MAX 255
 #endif
 
+/* Search relevant paths for an addon, trying to ensure we
+   pick up the most recent version in case there are any
+   duplicates.
+*/
+
 static char *gretl_addon_get_path (const char *name)
 {
     char *ret = NULL;
