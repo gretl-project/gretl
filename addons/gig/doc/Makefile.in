@@ -11,7 +11,7 @@ links.stamp:
 	@if [ ! -f gig.bib ] ; then ln -sf $(DOCDIR)/gig.bib . ; fi
 	@if [ ! -f gig.tex ] ; then ln -sf $(DOCDIR)/gig.tex . ; fi
 	@if [ ! -d graphs ] ; then ln -sf $(DOCDIR)/graphs . ; fi
-	@itouch $@	
+	@touch $@	
 
 clean:
 	@rm -f *.log *.aux *.bbl *.blg *.toc links.stamp gig.pdf
