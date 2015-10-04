@@ -4,11 +4,11 @@ Libtool 2.4.6 has escalated a non-absolute path in -rpath to a
 fatal error. Modified ltmain.sh to permit, for OS X, an -rpath
 entry of the sort "@executable_path/..."
 
-Also modified ltmain.sh to hush the "seems to be moved" and "has
-been moved" warnings for .la files, which get to be extremely 
-tedious when cross-compiling.
+Also modified ltmain.sh to hush the "seems to be moved" and "was
+moved" warnings for .la files, which get to be extremely tedious
+when cross-compiling.
 
-As of 2014-05-08
+As of 2014-05-08:
 For the latest config.guess and config.sub, see
 
 http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD
