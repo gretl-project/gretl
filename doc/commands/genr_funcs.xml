@@ -5376,6 +5376,14 @@
 	  Returns a count of the complete lines (that is, lines that
 	  end with the newline character) in <argname>buf</argname>.
 	</para>
+    <para>
+        Example:
+    </para>
+    <code>
+        string web_page = readfile("http://gretl.sourceforge.net/")
+        scalar number = nlines(web_page)
+        print number
+    </code>
       </description>
     </function>
 
