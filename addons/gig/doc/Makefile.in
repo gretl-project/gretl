@@ -4,7 +4,7 @@ TEXDIR = $(topsrc)/doc/tex
 DOCDIR = $(topsrc)/addons/gig/doc
 
 pdfdoc: links.stamp gig.bib gig.tex
-	@ipdflatex gig && bibtex gig && pdflatex gig && pdflatex gig
+	@pdflatex gig && bibtex gig && pdflatex gig && pdflatex gig
 
 links.stamp:
 	@if [ ! -f gretl.bst ] ; then ln -sf $(TEXDIR)/gretl.bst . ; fi
