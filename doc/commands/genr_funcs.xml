@@ -6769,6 +6769,16 @@
 	  your locale codeset, you should give a second argument of
 	  <lit>"cp1251"</lit>.
 	</para>
+    <para>
+        Examples:
+    </para>
+    <code>
+        string web_page = readfile("http://gretl.sourceforge.net/")
+        print web_page
+        
+        string current_settings = readfile("@dotdir/.gretl2rc")
+        print current_settings
+    </code>
 	<para>
 	  Also see the <fncref targ="sscanf"/> and <fncref
 	  targ="getline"/> functions.
@@ -7498,6 +7508,14 @@
 	  equal the number of bytes if some characters are outside
 	  of the printable-ASCII range.
 	</para>
+    <para>
+        Example:
+    </para>
+    <code>
+        string s = "regression"
+        scalar number = strlen(s)
+        print number
+    </code>
       </description>
     </function>
 
@@ -7546,6 +7564,21 @@
 	  exceeds the number of space-separated elements an empty
 	  string is returned.
 	</para>
+    <para>
+        Examples:
+    </para>
+    <code>
+        string basket = "banana apple jackfruit orange"
+        
+        strings fruits = strsplit(basket)
+        eval fruits[1]
+        eval fruits[2]
+        eval fruits[3]
+        eval fruits[4]
+        
+        string favorite = strsplit(basket, 3)
+        eval favorite
+    </code>
       </description>
     </function>
 
@@ -7561,6 +7594,14 @@
 	  portion of <argname>s1</argname> that starts with
 	  <argname>s2</argname>, otherwise returns an empty string.
 	</para>
+    <para>
+        Example:
+    </para>
+    <code>
+        string s1 = "Gretl is an econometrics package"
+        string s2 = strstr(s1, "an")
+        print s2
+    </code>
       </description>
     </function>
 
@@ -7573,6 +7614,14 @@
 	  Returns a copy of the argument <argname>s</argname> from
 	  which leading and trailing white space have been removed.
 	</para>
+    <para>
+        Example:
+    </para>
+    <code>
+        string s1 = "    A lot of white space.  "
+        string s2 = strstrip(s1)
+        print s1 s2
+    </code>
       </description>
     </function>
 
@@ -7589,6 +7638,14 @@
 	  <argname>subst</argname>. See also <fncref targ="regsub"/>
 	  for more complex string replacement via regular expressions.
 	</para>
+    <para>
+        Example:
+    </para>
+    <code>
+        string s1 =  "Hello, Gretl!"
+        string s2 = strsub(s1, "Gretl", "Hansl")
+        print s2
+    </code>
       </description>
     </function>
 
@@ -7622,6 +7679,17 @@
 	  character with (1-based) index <argname>start</argname> to
 	  that with index <argname>end</argname>, inclusive.
 	</para>
+    <para>
+        Examples:
+    </para>
+    <code>
+        string s1 = "Hello, Gretl!"
+        string s2 = substr(s1, 8, 12)
+        print s2
+        
+        string s3 = substr("Hello, Gretl!", 8, 12)
+        print s3
+    </code>
       </description>
     </function>
 
@@ -7822,6 +7890,17 @@
 	  Returns a copy of <argname>s</argname> in which any upper-case
 	  characters are converted to lower case.
 	</para>
+    <para>
+        Examples:
+    </para>
+    <code>
+        string s1 = "Hello, Gretl!"
+        string s2 = tolower(s1)
+        print s2
+        
+        string s3 = tolower("Hello, Gretl!")
+        print s3
+    </code>
       </description>
     </function>
 
@@ -7834,6 +7913,17 @@
 	  Returns a copy of <argname>s</argname> in which any lower-case
 	  characters are converted to upper case.
 	</para>
+    <para>
+        Examples:
+    </para>
+    <code>
+        string s1 = "Hello, Gretl!"
+        string s2 = toupper(s1)
+        print s2
+        
+        string s3 = toupper("Hello, Gretl!")
+        print s3
+    </code>
       </description>
     </function>
 
@@ -8097,6 +8187,14 @@
 	  get an array of strings as return value, use <fncref
 	  targ="varnames"/> instead.
 	</para>
+    <para>
+        Example:
+    </para>
+    <code>
+        open broiler.gdt
+        string s = varname(7)
+        print s
+    </code>
       </description>
     </function>
 
@@ -8110,6 +8208,17 @@
 	  variables in the list <argname>L</argname>. If the supplied
 	  list is empty, so is the returned array.
 	</para>
+    <para>
+        Example:
+    </para>
+    <code>
+        open keane.gdt
+        list L = year wage status
+        strings S = varnames(L)
+        eval S[1]
+        eval S[2]
+        eval S[3]
+    </code>
       </description>
     </function>    
 
