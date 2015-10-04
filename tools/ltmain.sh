@@ -6818,13 +6818,6 @@ func_mode_link ()
 	  continue
 	  ;;
 	rpath | xrpath)
-	  # We need an absolute path.
-	  case $arg in
-	  [\\/]* | [A-Za-z]:[\\/]*) ;;
-	  *)
-	    func_fatal_error "only absolute run-paths are allowed"
-	    ;;
-	  esac
 	  if test rpath = "$prev"; then
 	    case "$rpath " in
 	    *" $arg "*) ;;
@@ -7154,7 +7147,7 @@ func_mode_link ()
 	  dir=$lt_sysroot$func_stripname_result
 	  ;;
 	*)
-	  func_fatal_error "only absolute run-paths are allowed"
+	  # func_fatal_error "only absolute run-paths are allowed"
 	  ;;
 	esac
 	case "$xrpath " in
