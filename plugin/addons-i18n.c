@@ -42,24 +42,35 @@ const char *ivpanel_translations[] = {
 };
 
 const char *SVAR_translations[] = {
-    N_("SVAR"),
+    N_("Structural VARs"),
     N_("AB-model"),
+    N_("BFGS (analytical score)"),
+    N_("BFGS (numerical score)"),
+    N_("Bias correction"),
     N_("Bootstrap alpha"),
     N_("Bootstrap replications"),
     N_("C-model"),
+    N_("Check identification"),
     N_("Constant"),
     N_("Exogenous regressors"),
-    N_("IRF by shock"),
-    N_("IRF by var"),
-    N_("KPSW"),
+    N_("FEVD"),
+    N_("Historical decomposition"),
+    N_("Horizon"),
+    N_("IRF"),
+    N_("Indices of responses to cumulate"),
     N_("Lags"),
     N_("Model type"),
+    N_("Newton-Raphson (analytical score)"),
+    N_("Newton-Raphson (numerical score)"),
+    N_("Optimization method"),
     N_("Plot type"),
+    N_("Restriction pattern (long-run C or A)"),
+    N_("Restriction pattern (short-run C or B)"),
+    N_("Scoring algorithm"),
+    N_("Seasonal dummies"),
     N_("Time trend"),
     N_("VAR variables"),
-    N_("horizon"),
-    N_("plain"),
-    N_("template matrix")
+    N_("plain (Cholesky)")
 };
 
 const char *HIP_translations[] = {
