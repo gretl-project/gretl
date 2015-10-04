@@ -37,6 +37,7 @@ bib: SVAR.aux
 
 links.stamp:
 	@if [ ! -f gretl.bst ] ; then ln -sf $(TEXDIR)/gretl.bst . ; fi
+	@if [ ! -f gretlhds.sty ] ; then ln -sf $(TEXDIR)/gretlhds.sty . ; fi
 	@if [ ! -f SVAR.bib ] ; then ln -sf $(DOCDIR)/SVAR.bib . ; fi
 	@if [ ! -f SVAR.tex ] ; then ln -sf $(DOCDIR)/SVAR.tex . ; fi
 	@for f in $(FIGS) ; do \
