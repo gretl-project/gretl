@@ -1872,37 +1872,41 @@ static void get_maj_min_pl (int v, int *maj, int *min, int *pl)
     *pl = v - *maj * 10000 - *min * 100;
 }
 
-static int translate_version (int oldv)
+static int translate_program_version (int v, int old_to_new)
 {
-    if (oldv == 10908) {
-	return 20121;
-    } else if (oldv == 10909) {
-	return 20122;
-    } else if (oldv == 10910) {
-	return 20123;
-    } else if (oldv == 10911) {
-	return 20124;
-    } else if (oldv == 10912) {
-	return 20131;
-    } else if (oldv == 10913) {
-	return 20132;
-    } else if (oldv == 10914) {
-	return 20133;
-    } else if (oldv == 10990) {
-	return 20141;
-    } else if (oldv == 10991) {
-	return 20142;
-    } else if (oldv == 10992) {
-	return 20143;
-    } else if (oldv == 11000) {
-	return 20151;
-    } else if (oldv == 11001) {
-	return 20152;
-    } else if (oldv == 11002) {
-	return 20153;
+    int vtrans[13][2] = {
+	{10908, 20121},
+	{10909, 20122},
+	{10910, 20123},
+	{10911, 20124},
+	{10912, 20131},
+	{10913, 20132},
+	{10914, 20133},
+	{10990, 20141},
+	{10991, 20142},
+	{10992, 20143},
+	{11000, 20151},
+	{11001, 20152},
+	{11002, 20153}
+    };
+    int i;
+
+    if (old_to_new) {
+	for (i=0; i<13; i++) {
+	    if (v == vtrans[i][0]) {
+		return vtrans[i][1];
+	    }
+	}
     } else {
-	return 20152;
-    }
+	/* new to old */
+	for (i=0; i<13; i++) {
+	    if (v == vtrans[i][1]) {
+		return vtrans[i][0];
+	    }
+	}
+    }	
+
+    return 20152;
 }
 
 static void get_year_rev (int v, int *yr, int *rev)
@@ -1912,7 +1916,7 @@ static void get_year_rev (int v, int *yr, int *rev)
        recording old-style. 
     */
     if (v < 20150) {
-	v = translate_version(v);
+	v = translate_program_version(v, 1);
     }
     
     *yr = v / 10;
@@ -4262,7 +4266,7 @@ int save_function_package_spec (const char *fname, gpointer p)
     function_info *finfo = p;
     PRN *prn;
     const char *reqstr = NULL;
-    int v1, v2, v3;
+    char vstr[10];
     int nnp = 0, nmo = 0;
     int i, len;
     int err = 0;
@@ -4279,8 +4283,15 @@ int save_function_package_spec (const char *fname, gpointer p)
     maybe_print(prn, "date", finfo->date);
     maybe_print(prn, "description", finfo->pkgdesc);
 
-    get_maj_min_pl(finfo->minver, &v1, &v2, &v3);
-    pprintf(prn,"min-version = %d.%d.%d\n", v1, v2, v3); 
+    if (finfo->minver > 20000 && finfo->minver < 20151) {
+	int oldv = translate_program_version(finfo->minver, 0);
+
+	gretl_version_string(vstr, oldv);
+    } else {
+	gretl_version_string(vstr, finfo->minver);
+    }
+    
+    pprintf(prn,"min-version = %s\n", vstr); 
 
     if (finfo->dreq == FN_NEEDS_TS) {
 	reqstr = NEEDS_TS;

@@ -100,6 +100,10 @@ int gretl_compare_ints (const void *a, const void *b);
 
 /* miscellaneous */
 
+int gretl_version_number (const char *version);
+
+char *gretl_version_string (char *targ, int vnum);
+
 void printlist (const int *list, const char *msg);
 
 double gretl_double_from_string (const char *s, int *err);

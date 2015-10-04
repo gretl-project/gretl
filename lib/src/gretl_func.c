@@ -217,7 +217,6 @@ static fnpkg *current_pkg;  /* pointer to package currently being edited */
 
 static int function_package_record (fnpkg *pkg);
 static void function_package_free (fnpkg *pkg);
-static int version_number_from_string (const char *s);
 static int function_recursing (fncall *refcall);
 static void free_args_array (fn_arg *args, int n);
 
@@ -2414,18 +2413,6 @@ fnpkg *function_package_new (const char *fname,
     return pkg;
 }
 
-static char *get_version_string (char *s, int v)
-{
-    int x, y, z;
-
-    x = v / 10000;
-    y = (v - x * 10000) / 100;
-    z = v % 100;
-
-    sprintf(s, "%d.%d.%d", x, y, z);
-    return s;
-}
-
 static char *trim_text (char *s)
 {
     while (isspace(*s)) s++;
@@ -2532,7 +2519,7 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
     if (pkg->minver > 0) {
 	char vstr[8];
 
-	fprintf(fp, " minver=\"%s\"", get_version_string(vstr, pkg->minver));
+	fprintf(fp, " minver=\"%s\"", gretl_version_string(vstr, pkg->minver));
     }
 
     if (pkg->uses_subdir) {
@@ -2612,7 +2599,7 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     if (pkg->minver > 0) {
 	char vstr[8];
 
-	fprintf(fp, " minver=\"%s\"", get_version_string(vstr, pkg->minver));
+	fprintf(fp, " minver=\"%s\"", gretl_version_string(vstr, pkg->minver));
     }
 
     if (pkg->uses_subdir) {
@@ -3195,7 +3182,7 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 	    } else if (!strncmp(line, "model-requirement", 17)) {
 		err = pkg_set_modelreq(pkg, p);
 	    } else if (!strncmp(line, "min-version", 11)) {
-		pkg->minver = version_number_from_string(p);
+		pkg->minver = gretl_version_number(p);
 		got++;
 	    } else if (!strncmp(line, "lives-in-subdir", 15)) {
 		pkg->uses_subdir = pkg_boolean_from_string(p);
@@ -4390,14 +4377,6 @@ static int real_load_package (fnpkg *pkg)
     return err;
 }
 
-static int version_number_from_string (const char *s)
-{
-    int x, y, z;
-
-    sscanf(s, "%d.%d.%d", &x, &y, &z);
-    return 10000 * x + 100 * y + z;
-}
-
 static const char *data_needs_string (FuncDataReq dr)
 {
     if (dr == FN_NEEDS_TS) {
@@ -4432,7 +4411,7 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 	return;
     }
 
-    get_version_string(vstr, pkg->minver);
+    gretl_version_string(vstr, pkg->minver);
     pdfdoc = has_suffix(pkg->help, ".pdf");
 
     pprintf(prn, "<@itl=\"Package\">: %s %s (%s)\n", pkg->name, pkg->version,
@@ -4572,7 +4551,7 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
     }    
 
     if (gretl_xml_get_prop_as_string(node, "minver", &tmp)) {
-	pkg->minver = version_number_from_string(tmp);
+	pkg->minver = gretl_version_number(tmp);
 	free(tmp);
     }
 
@@ -6507,13 +6486,13 @@ int check_function_needs (const DATASET *dset, FuncDataReq dreq,
     static int thisver = 0;
 
     if (thisver == 0) {
-	thisver = version_number_from_string(GRETL_VERSION);
+	thisver = gretl_version_number(GRETL_VERSION);
     }
 
     if (minver > thisver) {
 	char vstr[8];
 
-	get_version_string(vstr, minver);
+	gretl_version_string(vstr, minver);
 	gretl_errmsg_sprintf("This function needs gretl version %s", vstr);
 	return 1;
     }
@@ -6561,13 +6540,13 @@ int package_version_ok (int minver, char *reqstr)
     int ret = 0;
 
     if (thisver == 0) {
-	thisver = version_number_from_string(GRETL_VERSION);
+	thisver = gretl_version_number(GRETL_VERSION);
     }
 
     ret = thisver >= minver;
 
     if (!ret && reqstr != NULL) {
-	get_version_string(reqstr, minver);
+	gretl_version_string(reqstr, minver);
     }
 
     return ret;

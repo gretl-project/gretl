@@ -1393,6 +1393,83 @@ int positive_int_from_string (const char *s)
     return ret;
 }
 
+static int letter_to_int (char c)
+{
+    const char *s = "abcdefghi";
+    int i = 1;
+
+    while (*s) {
+	if (c == *s) {
+	    return i;
+	}
+	s++;
+	i++;
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_version_number:
+ * @version: gretl program version in string form.
+ * 
+ * Returns: the integer gretl version number.
+ */
+
+int gretl_version_number (const char *version)
+{
+    if (atoi(version) >= 2015) {
+	int Y;
+	char c;
+
+	sscanf(version, "%d%c", &Y, &c);
+	return 10 * Y + letter_to_int(c);
+    } else {
+	int x, y, z;
+
+	sscanf(version, "%d.%d.%d", &x, &y, &z);
+	return 10000 * x + 100 * y + z;
+    }
+}
+
+/**
+ * gretl_version_string:
+ * @targ: string into which to write (9 bytes minimum).
+ * @vnum: integer program version number.
+ * 
+ * Returns: the string representation of @vnum, in @targ.
+ */
+
+char *gretl_version_string (char *targ, int vnum)
+{
+    if (vnum >= 20150) {
+	const char *s = "abcdefghi";
+	char c;
+	int y;
+
+	y = vnum / 10;
+	c = vnum - 10 * y - 1;
+	
+	if (c >= 0 && c < 9) {
+	    c = s[(int) c];
+	} else {
+	    c = 'a';
+	}
+	
+	sprintf(targ, "%d%c", y, c);
+    } else {
+	int x, y, z;
+
+	x = vnum / 10000;
+	y = (vnum - x * 10000) / 100;
+	z = vnum % 100;
+
+	sprintf(targ, "%d.%d.%d", x, y, z);
+    }
+    
+    return targ;
+}
+
 /**
  * varnum_from_string:
  * @str: string representation of an integer ID number.

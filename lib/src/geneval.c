@@ -10013,38 +10013,6 @@ static NODE *eval_query (NODE *t, parser *p)
     return ret;
 }
 
-static int cnum (char c)
-{
-    const char *s = "abcdefghi";
-    int i = 1;
-
-    while (*s) {
-	if (c == *s) {
-	    return i;
-	}
-	s++;
-	i++;
-    }
-
-    return 0;
-}
-
-static int get_version_as_scalar (void)
-{
-    if (atoi(GRETL_VERSION) >= 2015) {
-	int Y;
-	char c;
-
-	sscanf(GRETL_VERSION, "%d%c", &Y, &c);
-	return 10 * Y + cnum(c);
-    } else {
-	int x, y, z;
-
-	sscanf(GRETL_VERSION, "%d.%d.%d", &x, &y, &z);
-	return 10000 * x + 100 * y + z;
-    }
-}
-
 #define dvar_scalar(i) (i > 0 && i < R_SCALAR_MAX)
 #define dvar_series(i) (i > R_SCALAR_MAX && i < R_SERIES_MAX)
 #define dvar_variant(i) (i > R_SERIES_MAX && i < R_MAX)
@@ -10095,7 +10063,7 @@ double dvar_get_scalar (int i, const DATASET *dset,
 	return 0;
 #endif
     case R_VERSION:
-	return get_version_as_scalar();
+	return gretl_version_number(GRETL_VERSION);
     case R_ERRNO:
 	return get_gretl_errno();
     case R_SEED:

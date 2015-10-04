@@ -18,7 +18,7 @@ funcsdir = $(prefix)/share/gretl/functions
 SUBDIRS = gig ivpanel SVAR HIP
 ALLSUBDIRS = gig ivpanel SVAR HIP
 
-.PHONY : subdirs $(SUBDIRS) clean installdirs install
+.PHONY : subdirs $(SUBDIRS) clean installdirs install install-private
 
 subdirs: $(SUBDIRS)
 
@@ -51,6 +51,9 @@ installdirs:
 
 install: $(SUBDIRS) installdirs
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done
+
+install-private: addons-i18n.c
+	$(INSTALL_DATA) $< $(topsrc)/plugin	
 
 check: $(SUBDIRS)
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d check; done
