@@ -1,4 +1,4 @@
-version 1.10.91git, in progress
+version 2015d-git, in progress
 - add varnames() function: similar to varname() but returns
   an array of strings given a list argument
 - movavg() function: add option to supply a specific
@@ -8,12 +8,14 @@ version 1.10.91git, in progress
   panel group names when using the --panel-groups option
 - "tabprint" and "eqnprint" commands: deprecate the syntax
   "-f filename" in favor of --output=filename
-- "modprint": respect the --quiet and --silent options when
-  the test is on a multi-equation model
+- "modtest" command: respect the --quiet and --silent options
+  when the test is on a multi-equation model
+- Document some undocumented accessor variables
+- Make some error messages more specific and explicit
 - Fix bug: using options with the "data" command was broken
   in the GUI program
   
-2015-09-13 version 1.10.2
+2015-09-13 version 1.10.2 (2015c)
 - "install" command: add a --local option plus the ability
   to install a package from a chosen server
 - "chow" command: represent the --limit-to option in the GUI
@@ -70,12 +72,12 @@ version 1.10.91git, in progress
 - OS X (quartz) build: update the packaged gnuplot build and
   add support for the "wxt" terminal
 
-2015-04-04 version 1.10.1
+2015-04-04 version 1.10.1 (2015b)
 - Fix bug: breakage in ADF test: giving more than one
   deterministics option with the "adf" command (in its basic 
   form) should not provoke an error
 
-2015-04-02 version 1.10.0
+2015-04-02 version 1.10.0 (2015a)
 - Replace old command-line parser with new, faster "tokenizer"
 - Add "install" command to install function packages via the
   command line
@@ -134,7 +136,7 @@ version 1.10.91git, in progress
   update to gnuplot 5.1 (CVS)
 - Mac quartz build: update to GTK 2.24.25
 
-2014-09-20 version 1.9.92
+2014-09-20 version 1.9.92 (2014c)
 - Add new functions: isdiscrete(), isdummy()
 - Enable faster execution of assignment statements in loops
 - Add and document function-form of "sprintf"
@@ -153,7 +155,7 @@ version 1.10.91git, in progress
 - MS Windows: improve handling of non-ASCII text in RTF output
   and when putting data on the clipboard
 
-2014-07-28 version 1.9.91
+2014-07-28 version 1.9.91 (2014b)
 - Add Japanese translation (thanks to Shintaro Nakagawa)
 - Add new functions: curl(), jsonget(), nlines(), kpsscrit(),
   genseries()
@@ -196,7 +198,7 @@ version 1.10.91git, in progress
 - Windows build: update to gtk 2.24.24; update gnuplot version
   to 4.6.6
 
-2014-05-02 version 1.9.90
+2014-05-02 version 1.9.90 (2014a)
 - GUI reorganization: move the Function packages menu from
   /Files to /Tools
 - GUI enhancement: add News button under "/Help/About gretl"
@@ -249,7 +251,7 @@ version 1.10.91git, in progress
   GUI program
 - win32 build: update gmp to 5.1.3, mpfr to 3.1.2
 	
-2013-11-21 version 1.9.14
+2013-11-21 version 1.9.14 (2013c)
 - Use daily dates when plotting daily/weekly data and there
   are not too many observations
 - Line-numbering in the script editor: make this a preference
@@ -273,7 +275,7 @@ version 1.10.91git, in progress
 - Fix bug: panel Hausman test producing bad output under some
   conditions
 
-2013-10-24 version 1.9.13
+2013-10-24 version 1.9.13 (2013b)
 - Add Bulgarian, Catalan and Galician translations
 - Add new functions: psum(), prodc(), prodr(), toupper(),
   getline(), isodate(), regsub(), atof()
@@ -338,7 +340,7 @@ version 1.10.91git, in progress
 - MS Windows: add a 64-bit build of gretl as a download option
 - OS X: add a 64-bit gtk-quartz build of the gretl package
 
-2013-03-15 version 1.9.12
+2013-03-15 version 1.9.12 (2013a)
 - Officially increase the maximum length of variable names
   to 31 characters
 - "foreign" command: add support for Python + NumPy
@@ -393,7 +395,7 @@ version 1.10.91git, in progress
 - MS Windows build: update GTK to version 2.24.17, and build
   with openmp support
 
-2012-11-21 version 1.9.11
+2012-11-21 version 1.9.11 (2012d)
 - Substantial re-write of code for handling named variables
   other than series (matrices, scalars, strings, etc.) in the
   interest of maintainability and efficiency
@@ -424,7 +426,7 @@ version 1.10.91git, in progress
 - GUI: fix for right-click in icon view window
 - GUI: fix for font selector in the GTK 3 version of the code
 
-2012-11-05 version 1.9.10
+2012-11-05 version 1.9.10 (2012c)
 - Update translations
 - Major new command "join": this adds sophisticated procedures for
   assembling a dataset from multiple sources
@@ -477,7 +479,7 @@ version 1.10.91git, in progress
 - OS X package: update the gmp, mpfr and fftw libraries
 - MS Windows and OS X: update gnuplot to version 4.6.1
 
-2012-06-01 version 1.9.9
+2012-06-01 version 1.9.9 (2012b)
 - Add --cluster option (cluster-robust standard errors) for several
   estimators; see the User's Guide for details
 - Add (limited) support for Stata under the "foreign" command
@@ -508,7 +510,7 @@ version 1.10.91git, in progress
 - GTK 3 support: add some workarounds for GTK 2 features that are
   no longer properly supported
 
-2012-03-29 version 1.9.8
+2012-03-29 version 1.9.8 (2012a)
 - GUI: support use of named lists in the model specification dialog and
   other contexts
 - GUI: add option of making the script editor and the model viewer
@@ -565,7 +567,7 @@ version 1.10.91git, in progress
 - Build tools: update to libtool 2.4.2
 - Building from source: fix configure script for non-sse2 build
 
-2011-12-22 version 1.9.7
+2011-12-22 version 1.9.7 (2011d)
 - Add two nonparametric estimators: William Cleveland's loess and the
   Nadaraya-Watson estimator; these are available via the new functions
   loess() and nadarwat(), and they're also in the GUI Model menu
@@ -617,7 +619,7 @@ version 1.10.91git, in progress
 - Fix bug: the option of providing a named list of series as the left-
   hand term in a GMM orthogonality condition was not fully implemented
 
-2011-10-17 version 1.9.6
+2011-10-17 version 1.9.6 (2011c)
 - Add an importer for xlsx (Office Open XML) worksheet data
 - cum() function: make this respect panel structure
 - ranking() function: accept vectors as well as series
@@ -702,7 +704,7 @@ version 1.10.91git, in progress
   view" with a zoomed graph in the GUI
 - Increase maximum command-line length to 16384 bytes
 
-2011-04-22 version 1.9.5
+2011-04-22 version 1.9.5 (2011b)
 - Add new translation: Greek (Manolis Tzagarakis and Ioannis Venetis)
 - When building against gtk3, put the plugins into LIBDIR/gretl-gtk3
 - "foreign" command: enable the --send-data option for Octave, in
@@ -755,7 +757,7 @@ version 1.10.91git, in progress
 - Fix bug: gretl could crash on start-up with no datafile specified
 - MS Windows: update netlib lapack/blas to version 3.3.1
 
-2011-02-24 version 1.9.4
+2011-02-24 version 1.9.4 (2011a)
 - Change the default random number generator from GLib's 
   implementation of the Mersenne Twister to the SIMD-oriented Fast 
   Mersenne Twister
