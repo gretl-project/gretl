@@ -689,7 +689,7 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 	    char *p = strchr(line, '(');
 
 	    if (p != NULL) {
-		fprintf(fout, " %7s", p);
+		fprintf(fout, " %.7s", p);
 	    }
 	    fputs(" [<a href=\"#top\">Back to top</a>]\n", fout);
 	}
