@@ -622,18 +622,18 @@ void bug_print_line (char *s, FILE *fp)
 void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 {
     int ret, M, m, r, i;
-    FILE *clog;
-    FILE *clogh;
+    FILE *fin;
+    FILE *fout;
     char c, line[MYLEN];
     int year, mon, day;
 
-    clogh = fopen(targ, "a");
-    clog = fopen(src, "r");
+    fout = fopen(targ, "a");
+    fin = fopen(src, "r");
 
-    fputs("<table>\n", clogh);
+    fputs("<table>\n", fout);
 
-    fputs("<a name=\"top\">\n", clogh);
-    fputs("<tr>\n<td valign=\"top\">\n<pre>\n&nbsp;\n", clogh);
+    fputs("<a name=\"top\">\n", fout);
+    fputs("<tr>\n<td valign=\"top\">\n<pre>\n&nbsp;\n", fout);
 
     for (i=0; i<nv; i++) {
 	M = gv[i].major;
@@ -642,54 +642,63 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 	c = gv[i].letter;
 
 	if (c != 0) {
-	    fprintf(clogh, "<a href=\"#v%d%c\">", M, c);
+	    fprintf(fout, "<a href=\"#v%d%c\">", M, c);
 	} else {
-	    fprintf(clogh, "<a href=\"#v%d-%d-%d\">", M, m, r);
+	    fprintf(fout, "<a href=\"#v%d-%d-%d\">", M, m, r);
 	}
 	
 	if (i == 0) {
 	    if (c != 0) {
-		fprintf(clogh, "Version %d%c</a>&nbsp&nbsp;\n", M, c);
+		fprintf(fout, "Version %d%c</a>&nbsp&nbsp;\n", M, c);
 	    } else {
-		fprintf(clogh, "Version %d.%d.%d</a>&nbsp&nbsp;\n", M, m, r);
+		fprintf(fout, "Version %d.%d.%d</a>&nbsp&nbsp;\n", M, m, r);
 	    }
         } else {
 	    if (c != 0) {
-		fprintf(clogh, "Version %d%c</a>\n", M,c);
+		fprintf(fout, "Version %d%c</a>\n", M,c);
 	    } else {
-		fprintf(clogh, "Version %d.%d.%d</a>\n", M, m, r);
+		fprintf(fout, "Version %d.%d.%d</a>\n", M, m, r);
 	    }
         }
     }
 
-    fputs("</pre>\n</td>\n<td valign=\"top\">\n<pre>\n", clogh);
+    fputs("</pre>\n</td>\n<td valign=\"top\">\n<pre>\n", fout);
 
-    while (fgets(line, MYLEN, clog)) {
+    while (fgets(line, MYLEN, fin)) {
+	int err = 0;
+	
 	ret = sscanf(line, "%d-%d-%d version %d.%d.%d\n", 
 		     &year, &mon, &day, &M, &m, &r);
 	if (ret == 6) {
-	    fprintf(clogh, "<a name=\"v%d-%d-%d\">", M, m, r); 
-	    fprintf(clogh, " %d-%02d-%02d Version %d.%d.%d</a>", 
+	    fprintf(fout, "<a name=\"v%d-%d-%d\">", M, m, r); 
+	    fprintf(fout, " %d-%02d-%02d Version %d.%d.%d</a>", 
 		    year, mon, day, M, m, r);
-	    fputs(" [<a href=\"#top\">Back to top</a>]\n", clogh);
 	} else {
 	    ret = sscanf(line, "%d-%d-%d version %d%c\n", 
 			 &year, &mon, &day, &M, &c);
 	    if (ret == 5) {
-		fprintf(clogh, "<a name=\"v%d%c\">", M, c); 
-		fprintf(clogh, " %d-%02d-%02d Version %d%c</a>", 
+		fprintf(fout, "<a name=\"v%d%c\">", M, c); 
+		fprintf(fout, " %d-%02d-%02d Version %d%c</a>", 
 			year, mon, day, M, c);
-		fputs(" [<a href=\"#top\">Back to top</a>]\n", clogh);		
 	    } else {
-		bug_print_line(line, clogh);
+		bug_print_line(line, fout);
+		err = 1;
 	    }
+	}
+	if (!err) {
+	    char *p = strchr(line, '(');
+
+	    if (p != NULL) {
+		fprintf(fout, " %7s", p);
+	    }
+	    fputs(" [<a href=\"#top\">Back to top</a>]\n", fout);
 	}
     }
 
-    fputs("</pre>\n</td>\n</tr>\n", clogh);
+    fputs("</pre>\n</td>\n</tr>\n", fout);
 
-    fclose(clog);
-    fclose(clogh);
+    fclose(fin);
+    fclose(fout);
 }
 
 enum {
