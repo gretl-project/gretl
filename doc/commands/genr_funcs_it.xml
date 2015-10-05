@@ -6511,6 +6511,16 @@
       <lit>"cp1251"</lit>.
     </para>
     <para>
+      Esempi:
+    </para>
+    <code>
+      string web_page = readfile("http://gretl.sourceforge.net/")
+      print web_page
+        
+      string current_settings = readfile("@dotdir/.gretl2rc")
+      print current_settings
+    </code>
+    <para>
       Si vedano anche le funzioni <fncref targ="sscanf"/> e
       <fncref targ="getline"/>.
     </para>
@@ -7121,6 +7131,32 @@
       </description>
     </function>
 
+    <function name="stringify" section="strings" output="int">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="strings">S</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Serve a definire valori di stringa per la serie
+	  <argname>y</argname>. Affinché la cosa funzioni, ci sono due
+	  condizioni: la serie risultante deve contenere solo interi
+	  maggiori o uguali a 1, e l'array <argname>S</argname> deve
+	  contenere almeno <math>n</math> elementi, dove
+	  <math>n</math> è il massimo valore in <argname>y</argname>.
+	  In più, ogni elemento di <argname>S</argname> deve contenere
+	  caratteri validi secondo la codifica UTF-8.
+	  <seelist> 
+            <fncref targ="strvals"/>
+	  </seelist>	  
+	</para>
+	<para>
+	  Ritorna 0 se l'operazione ha avuto successo, o un codice di errore
+	  positivo.
+	</para>
+      </description>
+    </function>
+
     <function name="strlen" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -7133,6 +7169,15 @@
       caratteri al di fuori del campo ASCII stampabile (ad
       esempio, lettere accentate).
     </para>
+    <para>
+        Esempio:
+    </para>
+    <code>
+        string s = "regression"
+        scalar number = strlen(s)
+        print number
+    </code>
+
       </description>
     </function>
 
@@ -7176,6 +7221,21 @@
       numero di elementi separati da spazio la funzione
       restituisce una stringa vuota.
     </para>
+    <para>
+        Esempi:
+    </para>
+    <code>
+        string basket = "banana apple jackfruit orange"
+        
+        strings fruits = strsplit(basket)
+        eval fruits[1]
+        eval fruits[2]
+        eval fruits[3]
+        eval fruits[4]
+        
+        string favorite = strsplit(basket, 3)
+        eval favorite
+    </code>
       </description>
     </function>
 
@@ -7193,6 +7253,14 @@
       <argname>s2</argname>; in caso contrario, la funzione
       restituisce una stringa vuota.
     </para>
+    <para>
+      Esempi:
+    </para>
+    <code>
+        string s1 = "Gretl is an econometrics package"
+        string s2 = strstr(s1, "an")
+        print s2
+    </code>
       </description>
     </function>
 
@@ -7205,6 +7273,15 @@
 	  Restituisce una copia dell'argomento <argname>s</argname> da
 	  cui sono stati rimossi gli spazi bianchi iniziali e finali.
 	</para>
+	<para>
+          Esempio:
+	</para>
+	<code>
+          string s1 = "    A lot of white space.  "
+          string s2 = strstrip(s1)
+          print s1 s2
+	</code>
+
       </description>
     </function>
 
@@ -7222,6 +7299,32 @@
       una funzione più complessa che permette di sostituire stringhe sulla
       base di espressioni regolari.
     </para>
+    <para>
+        Esempio:
+    </para>
+    <code>
+        string s1 =  "Ciao, Gretl!"
+        string s2 = strsub(s1, "Gretl", "Hansl")
+        print s2
+    </code>
+      </description>
+    </function>
+
+    <function name="strvals" section="strings" output="strings">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Se la serie <argname>y</argname> contiene stringhe,
+	  restituisce un array contenente tutti i suoi valori
+	  distinti, ordinati per il valore numerico associato,
+	  partendo da 1. Se invece <argname>y</argname> non contiene
+	  stringhe, viene restituito un array vuoto.
+	  <seelist> 
+            <fncref targ="stringify"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -7238,6 +7341,17 @@
       <argname>end</argname> compresi. L'indicizzazione è a base
       1.
     </para>
+	<para>
+          Esempi:
+	</para>
+	<code>
+          string s1 = "Ciao, Gretl!"
+          string s2 = substr(s1, 7, 11)
+          print s2
+        
+          string s3 = substr("Ciao, Gretl!", 7, 11)
+          print s3
+	</code>
       </description>
     </function>
 
@@ -7437,6 +7551,17 @@
 	  Restituisce una copia di <argname>s</argname> in cui ogni
 	  lettera maiuscola è convertita in minuscola.
 	</para>
+	<para>
+          Esempi:
+	</para>
+	<code>
+          string s1 = "Ciao, Gretl!"
+          string s2 = tolower(s1)
+          print s2
+          
+          string s3 = tolower("Ciao, Gretl!")
+          print s3
+	</code>
       </description>
     </function>
 
@@ -7449,6 +7574,17 @@
 	  Restituisce una copia di <argname>s</argname> in cui ogni
 	  lettera minuscola è convertita in maiuscola.
 	</para>
+	<para>
+          Esempi:
+	</para>
+	<code>
+          string s1 = "Ciao, Gretl!"
+          string s2 = toupper(s1)
+          print s2
+          
+          string s3 = toupper("Ciao, Gretl!")
+          print s3
+	</code>
       </description>
     </function>
 
@@ -7713,6 +7849,38 @@
       virgole. Se la lista fornita è vuota, la stringa
       restituita sarà vuota.
     </para>
+    <para>
+      Esempio:
+    </para>
+    <code>
+      open broiler.gdt
+      string s = varname(7)
+      print s
+    </code>
+      </description>
+    </function>
+
+    <function name="varnames" section="strings" output="strings">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Restituisce un array di stringhe contenente i nomi delle
+	  variabili nella lista <argname>L</argname>. Se quest'ultima
+	  è vuota, lo sarà anche l'array risultato.
+	</para>
+    <para>
+        Esempio:
+    </para>
+    <code>
+        open keane.gdt
+        list L = year wage status
+        strings S = varnames(L)
+        eval S[1]
+        eval S[2]
+        eval S[3]
+    </code>
       </description>
     </function>
 
