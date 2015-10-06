@@ -86,6 +86,7 @@ struct function_info_ {
     GtkWidget *mreq_combo; /* model requirement selector */
     GtkWidget *specdlg;    /* pkg spec save dialog */
     GtkWidget *validate;   /* "Validate" gfn button */
+    GtkWidget *tagsel[2];  /* tag selector combos */
     windata_t *samplewin;  /* window for editing sample script */
     windata_t *gui_helpwin;  /* window for editing GUI help text */
     GtkUIManager *ui;      /* for dialog File menu */
@@ -98,6 +99,7 @@ struct function_info_ {
     gchar *version;        /* package version number */
     gchar *date;           /* package last-revised date */
     gchar *pkgdesc;        /* package description */
+    gchar *tags;           /* package tag(s) */
     gchar *sample;         /* sample script for package */
     gchar *help;           /* package help text */
     gchar *gui_help;       /* GUI-specific help text */
@@ -175,6 +177,7 @@ function_info *finfo_new (void)
     finfo->version = NULL;
     finfo->date = NULL;
     finfo->pkgdesc = NULL;
+    finfo->tags = NULL;
     finfo->sample = NULL;
     finfo->menupath = NULL;
     finfo->menulabel = NULL;
@@ -197,6 +200,9 @@ function_info *finfo_new (void)
     finfo->popup = NULL;
     finfo->extra = NULL;
     finfo->specdlg = NULL;
+
+    finfo->tagsel[0] = NULL;
+    finfo->tagsel[1] = NULL;
 
     finfo->help = NULL;
     finfo->gui_help = NULL;
@@ -249,6 +255,7 @@ static void finfo_free (function_info *finfo)
     g_free(finfo->version);
     g_free(finfo->date);
     g_free(finfo->pkgdesc);
+    g_free(finfo->tags);
     g_free(finfo->sample);
     g_free(finfo->help);
     g_free(finfo->gui_help);
@@ -2027,18 +2034,20 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     hbox = gtk_hbox_new(FALSE, 0);
 
     if (atoi(GRETL_VERSION) >= 2015) {
-	/* new style versioning */
-	int yr, rev;
-	int x;
-	char c;
+	/* new style program versioning */
+	int minminyr = 2013; /* gretl 1.9.12 */
+	int minyr, minrev;   /* requested by package */
+	int cp_yr;           /* this program year */
 
-	get_year_rev(finfo->minver, &yr, &rev);
-	sscanf(GRETL_VERSION, "%d%c", &x, &c);
+	get_year_rev(finfo->minver, &minyr, &minrev);
+	cp_yr = atoi(GRETL_VERSION);
 
 	/* release year */
-	spin = gtk_spin_button_new_with_range(x - 3, x, 1);
-	if (yr > x - 3) {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) x);
+	spin = gtk_spin_button_new_with_range(minminyr, cp_yr, 1);
+	if (minyr > minminyr && minyr <= cp_yr) {
+	    /* package wants a gretl version more recent than the
+	       oldest supported version, OK */
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) minyr);
 	}	
 	gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
 	g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(1));
@@ -2057,14 +2066,14 @@ static void add_minver_selector (GtkWidget *tbl, int i,
 	/* remedy required for gtk3 */
 	gtk_entry_set_max_width_chars(GTK_ENTRY(spin), 1);
 #endif	
-	if (rev > 1) {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) rev);
+	if (minrev > 1) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) minrev);
 	}
 	gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
 	g_signal_connect(G_OBJECT(spin), "value-changed",
 			 G_CALLBACK(new_adjust_minver), finfo);
     } else {
-	/* old-style versioning */
+	/* old-style program versioning */
 	int maj, min, pl;
 	int x, y, z;
 	int ymin = 0;
@@ -2112,6 +2121,137 @@ static void add_minver_selector (GtkWidget *tbl, int i,
 
     gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, i, i+1);
     gtk_widget_show_all(hbox);
+}
+
+static void tagsel_callback (GtkComboBox *combo,
+			     function_info *finfo)
+{
+    char code[6], newtags[32];
+    int t1, t2;
+    gchar *s;
+
+    if (GTK_WIDGET(combo) == finfo->tagsel[0]) {
+	t1 = gtk_combo_box_get_active(combo);
+	t2 = gtk_combo_box_get_active(GTK_COMBO_BOX(finfo->tagsel[1]));
+    } else {
+	t1 = gtk_combo_box_get_active(GTK_COMBO_BOX(finfo->tagsel[0]));
+	t2 = gtk_combo_box_get_active(combo);
+    }
+
+    /* make Tag 2 selectable only if we have a Tag 1 */
+    gtk_widget_set_sensitive(finfo->tagsel[1], t1 > 0);
+
+    if (t1 == 0 || (t2 > 0 && t2 == t1)) {
+	/* interdict setting the same tag twice */
+	gtk_combo_box_set_active(GTK_COMBO_BOX(finfo->tagsel[1]), 0);
+    }
+
+    *code = *newtags = '\0';
+
+    if (t1 > 0) {
+	s = combo_box_get_active_text(finfo->tagsel[0]);
+	sscanf(s, "%4[^: ]", code);
+	strcat(newtags, code);
+	g_free(s);
+    }
+    if (t2 > 0) {
+	s = combo_box_get_active_text(finfo->tagsel[1]);
+	sscanf(s, "%4[^: ]", code);
+	if (*newtags != '\0') {
+	    strcat(newtags, " ");
+	}
+	strcat(newtags, code);
+	g_free(s);
+    }
+
+    if (*newtags == '\0') {
+	/* no tags selected in dialog */
+	if (finfo->tags != NULL) {
+	    g_free(finfo->tags);
+	    finfo->tags = NULL;
+	    finfo_set_modified(finfo, TRUE);
+	}
+    } else if (finfo->tags == NULL || strcmp(newtags, finfo->tags)) {
+	/* update from non-empty @newtags */
+	g_free(finfo->tags);
+	finfo->tags = g_strdup(newtags);
+	finfo_set_modified(finfo, TRUE);
+    }
+}
+
+static void add_tag_selectors (GtkWidget *tbl, int i, 
+			       function_info *finfo)
+{
+    GtkWidget *tmp, *hbox, *combo;
+    char line[128];
+    char *getbuf = NULL;
+    char **S = NULL;
+    int n_tags = 0;
+    int j, err;
+	
+    err = list_remote_function_categories(&getbuf);
+
+    if (!err && (getbuf == NULL || *getbuf != 'C')) {
+	free(getbuf);
+	err = 1;
+    }
+
+    if (err) {
+	return;
+    }
+
+    if (finfo->tags != NULL) {
+	S = gretl_string_split(finfo->tags, &n_tags, NULL);
+    }
+
+    bufgets_init(getbuf);
+
+    for (j=0; j<2; j++) {
+	int active = 0;
+	int k = 0;
+
+	if (j == 0) {
+	    tmp = gtk_label_new(_("Tag 1"));
+	} else {
+	    tmp = gtk_label_new(_("Tag 2 (optional)"));
+	}
+	gtk_misc_set_alignment(GTK_MISC(tmp), 1.0, 0.5);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, i, i+1);
+	gtk_widget_show(tmp);    
+    
+	finfo->tagsel[j] = combo = gtk_combo_box_text_new();
+	combo_box_append_text(combo, _("none"));
+	while (bufgets(line, sizeof line, getbuf)) {
+	    k++;
+	    combo_box_append_text(combo, tailstrip(line));
+	    if (n_tags > j && !strncmp(line, S[j], strlen(S[j]))) {
+		/* this code is pre-selected */
+		active = k;
+	    }
+	}
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), active);
+	g_signal_connect(G_OBJECT(combo), "changed",
+			 G_CALLBACK(tagsel_callback), finfo);
+	if (j > 0 && n_tags == 0) {
+	    gtk_widget_set_sensitive(combo, FALSE);
+	}
+	
+	hbox = gtk_hbox_new(FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 2);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, i, i+1);
+	gtk_widget_show_all(hbox);
+
+	if (j == 0) {
+	    buf_rewind(getbuf);
+	    i++;
+	}
+    }
+
+    bufgets_finalize(getbuf);
+
+    if (S != NULL) {
+	strings_array_free(S, n_tags);
+    }
 }
 
 static void pkg_changed (gpointer p, function_info *finfo)
@@ -3319,7 +3459,7 @@ static void finfo_dialog (function_info *finfo)
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
     gtk_container_add(GTK_CONTAINER(finfo->dlg), vbox);
 
-    tbl = gtk_table_new(NENTRIES + 1, 2, FALSE);
+    tbl = gtk_table_new(NENTRIES + 3, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 4);
     gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
@@ -3379,8 +3519,10 @@ static void finfo_dialog (function_info *finfo)
 			 G_CALLBACK(pkg_changed), finfo);
     }
 
-    add_minver_selector(tbl, i++, finfo);
-    add_data_requirement_menu(tbl, i, finfo);
+    add_tag_selectors(tbl, i, finfo);
+    i += 2;
+    add_data_requirement_menu(tbl, i++, finfo);
+    add_minver_selector(tbl, i, finfo);
 
     hbox = label_hbox(vbox, _("Help text:"));
 
@@ -4049,6 +4191,7 @@ int save_function_package (const char *fname, gpointer p)
 					      "version", finfo->version,
 					      "date",    finfo->date,
 					      "description", finfo->pkgdesc,
+					      "tags", finfo->tags,
 					      "help", finfo->help,
 					      "sample-script", finfo->sample,
 					      "data-requirement", finfo->dreq,
@@ -4282,6 +4425,7 @@ int save_function_package_spec (const char *fname, gpointer p)
     maybe_print(prn, "version", finfo->version);
     maybe_print(prn, "date", finfo->date);
     maybe_print(prn, "description", finfo->pkgdesc);
+    maybe_print(prn, "tags", finfo->tags);
 
     if (finfo->minver > 20000 && finfo->minver < 20151) {
 	int oldv = translate_program_version(finfo->minver, 0);
@@ -4620,6 +4764,7 @@ void edit_function_package (const char *fname)
 					  "version",  &finfo->version,
 					  "date",     &finfo->date,
 					  "description", &finfo->pkgdesc,
+					  "tags", &finfo->tags,
 					  "help", &finfo->help,
 					  "sample-script", &finfo->sample,
 					  "data-requirement", &finfo->dreq,

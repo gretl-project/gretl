@@ -146,6 +146,7 @@ struct fnpkg_ {
     char *help_fname;     /* filename: package help text */
     char *gui_help_fname; /* filename: GUI-specific help text */
     char *sample_fname;   /* filename: sample caller script */
+    char *tags;       /* tag string(s) */
     char *label;      /* for use in GUI menus */
     char *mpath;      /* menu path in GUI */
     int minver;       /* minimum required gretl version */
@@ -529,6 +530,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->help_fname = NULL;
     pkg->gui_help_fname = NULL;
     pkg->sample_fname = NULL;
+    pkg->tags = NULL;
     pkg->label = NULL;
     pkg->mpath = NULL;
     pkg->dreq = 0;
@@ -2533,6 +2535,10 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
     gretl_xml_put_tagged_string("date",    pkg->date, fp);
     gretl_xml_put_tagged_string("description", pkg->descrip, fp);
 
+    if (pkg->tags != NULL) {
+	gretl_xml_put_tagged_string("tags", pkg->tags, fp);
+    }    
+
     if (pkg->label != NULL) {
 	gretl_xml_put_tagged_string("label", pkg->label, fp);
     }
@@ -2618,6 +2624,10 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     gretl_xml_put_tagged_string("version", pkg->version, fp);
     gretl_xml_put_tagged_string("date",    pkg->date, fp);
     gretl_xml_put_tagged_string("description", pkg->descrip, fp);
+
+    if (pkg->tags != NULL) {
+	gretl_xml_put_tagged_string("tags", pkg->tags, fp);
+    }    
 
     if (pkg->label != NULL) {
 	gretl_xml_put_tagged_string("label", pkg->label, fp);
@@ -3107,6 +3117,8 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 	    } else if (!strncmp(line, "description", 11)) {
 		err = function_package_set_properties(pkg, "description", p, NULL);
 		if (!err) got++;
+	    } else if (!strncmp(line, "tags", 4)) {
+		err = function_package_set_properties(pkg, "tags", p, NULL);
 	    } else if (!strncmp(line, "label", 5)) {
 		err = function_package_set_properties(pkg, "label", p, NULL);
 	    } else if (!strncmp(line, "menu-attachment", 15)) {
@@ -3697,8 +3709,10 @@ static char **pkg_strvar_pointer (fnpkg *pkg, const char *key,
     }
 
     *optional = 1;
-    
-    if (!strcmp(key, "label")) {
+
+    if (!strcmp(key, "tags")) {
+	return &pkg->tags; /* FIXME should become non-optional */
+    } else if (!strcmp(key, "label")) {
 	return &pkg->label;
     } else if (!strcmp(key, "menu-attachment")) {
 	return &pkg->mpath;
@@ -3949,6 +3963,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "sample-fname")) {
 	    ps = (char **) ptr;
 	    handle_optional_string(ps, pkg->sample_fname);
+	} else if (!strcmp(key, "tags")) {
+	    ps = (char **) ptr;
+	    *ps = g_strdup(pkg->tags);
 	} else if (!strcmp(key, "label")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->label);
@@ -4177,6 +4194,7 @@ static void real_function_package_free (fnpkg *pkg, int full)
 	free(pkg->help_fname);
 	free(pkg->gui_help_fname);
 	free(pkg->sample_fname);
+	free(pkg->tags);
 	free(pkg->label);
 	free(pkg->mpath);
 	free(pkg);
@@ -4582,6 +4600,8 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 	} else if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sample);
 	    gretl_xml_get_prop_as_string(cur, "filename", &pkg->sample_fname);
+	} else if (!xmlStrcmp(cur->name, (XUC) "tags")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->tags);
 	} else if (!xmlStrcmp(cur->name, (XUC) "label")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->label);
 	} else if (!xmlStrcmp(cur->name, (XUC) "menu-attachment")) {

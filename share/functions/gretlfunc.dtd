@@ -29,6 +29,7 @@
 <!ELEMENT version     (#PCDATA)>
 <!ELEMENT date        (#PCDATA)>
 <!ELEMENT description (#PCDATA)>
+<!ELEMENT tags        (#PCDATA)>
 <!ELEMENT label       (#PCDATA)>
 <!ELEMENT menu-attachment (#PCDATA)>
 <!ATTLIST author
