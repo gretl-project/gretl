@@ -1553,7 +1553,7 @@ Optional Features:
   --enable-gui            Enable gui [default=yes]
   --enable-gtk2           Use GTK 2.0 in preference to GTK 3.0 [default=no]
   --enable-build-doc      Enable building of gretl docs [git only]
-  --enable-build-addons   Enable building of gretl addons [git only]
+  --enable-build-addons   Enable building of gretl addons [default=no]
   --enable-quiet-build    Enable quiet building
   --enable-swap-ends      Build FRED database with swapped endianness
   --disable-xdg           Don't Install XDG files
@@ -19525,14 +19525,14 @@ fi
 if test "${build_docs}" = "yes" ; then
    if test "$have_xslt" = "no" || test "$have_latex" = "no" ; then
       build_docs="no"
-      echo "*** Can't build gretl docs: XSLT and/or pdfLaTeX not found"
+      echo "*** Can't build gretl docs: XSLT and/or pdflatex not found"
    fi
 fi
 
 if test "${build_addons}" = "yes" ; then
    if test "$have_latex" = "no" ; then
       build_addons="no"
-      echo "*** Can't build gretl addons: pdfLaTeX not found"
+      echo "*** Can't build gretl addons: pdflatex not found"
    fi
 fi
 
@@ -26529,7 +26529,7 @@ Configuration:
   Installation path:                      ${prefix}
   Use readline library:                   ${have_readline}
   Use gnuplot for graphs:                 ${have_gnuplot}
-  Use LaTeX for typesetting output:       ${have_latex}
+  Use pdflatex for typesetting:           ${have_latex}
   Use libgsf for zip/unzip:               ${use_gsf}
   MPFR support:                           ${have_mpfr}
   sse2 support for RNG:                   ${sse2_result}

@@ -1,7 +1,8 @@
 topsrc = @top_srcdir@
-
 TEXDIR = $(topsrc)/doc/tex
-DOCDIR = $(topsrc)/addons/SVAR/doc
+
+PKG = SVAR
+DOCDIR = $(topsrc)/addons/$(PKG)/doc
 
 FIGS = 	awm-irfc.pdf \
 	awm-irfi.pdf \
@@ -26,23 +27,18 @@ FIGS = 	awm-irfc.pdf \
 	simpleC_gretl.pdf \
 	TMPL.png
 
-pdfdoc: links.stamp bib
-	@pdflatex SVAR; pdflatex SVAR
-
-SVAR.aux: SVAR.tex
-	@pdflatex SVAR
-
-bib: SVAR.aux
-	@bibtex $<
+pdfdoc: links.stamp $(PKG).bib $(PKG).tex $(FIGS)
+	@pdflatex $(PKG) && bibtex $(PKG) && pdflatex $(PKG) && pdflatex $(PKG)
+	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
 
 links.stamp:
 	@if [ ! -f gretl.bst ] ; then ln -sf $(TEXDIR)/gretl.bst . ; fi
 	@if [ ! -f gretlhds.sty ] ; then ln -sf $(TEXDIR)/gretlhds.sty . ; fi
-	@if [ ! -f SVAR.bib ] ; then ln -sf $(DOCDIR)/SVAR.bib . ; fi
-	@if [ ! -f SVAR.tex ] ; then ln -sf $(DOCDIR)/SVAR.tex . ; fi
+	@if [ ! -f $(PKG).bib ] ; then ln -sf $(DOCDIR)/$(PKG).bib . ; fi
+	@if [ ! -f $(PKG).tex ] ; then ln -sf $(DOCDIR)/$(PKG).tex . ; fi
 	@for f in $(FIGS) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(DOCDIR)/$$f . ; fi ; done
 	@touch $@
 
 clean : 
-	@rm -f *.aux *.log *.bbl *.blg *.toc SVAR.pdf links.stamp
+	@rm -f *.aux *.log *.bbl *.blg *.toc $(PKG).pdf links.stamp
