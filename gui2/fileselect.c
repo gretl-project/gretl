@@ -848,9 +848,13 @@ static void filesel_add_native_data_filter (GtkWidget *filesel)
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
 }
 
-static void filesel_set_filters (GtkWidget *filesel, int action,
-				 FselDataSrc src, gpointer data)
+/* return non-zero if we add more than one selectable filter */
+
+static int filesel_set_filters (GtkWidget *filesel, int action,
+				FselDataSrc src, gpointer data)
 {
+    int multi = 1;
+    
     if (action == OPEN_DATA || action == APPEND_DATA) {
 	filesel_add_native_data_filter(filesel);
 	filesel_add_filter(filesel, N_("CSV files (*.csv)"), "*.csv");
@@ -893,7 +897,10 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 	GtkFileFilter *filter = get_file_filter(action, data);
 
 	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filter);
+	multi = 0;
     }
+
+    return multi;
 }
 
 static void remember_folder (GtkFileChooser *chooser, char *savedir)
@@ -956,6 +963,32 @@ static void check_native_save_filter (GtkWidget *filesel)
     }
 }
 
+static void set_up_filesel_filters (GtkWidget *filesel,
+				    int action,
+				    FselDataSrc src,
+				    gpointer data,
+				    gboolean plain_open)
+{
+    int multi = filesel_set_filters(filesel, action, src, data);
+
+    if (plain_open && !multi) {
+	/* For an "Open" action with a single filename filter:
+	   make the dialog's title bar more informative by
+	   showing the required extension. (When multiple
+	   filters are offered the user will already have
+	   plenty of information available.)
+	*/
+	const char *s = get_extension_for_action(action, data);
+
+	if (s != NULL) {
+	    gchar *title = g_strdup_printf(_("Open %s file"), s);
+
+	    gtk_window_set_title(GTK_WINDOW(filesel), title);
+	    g_free(title);
+	}
+    }
+}
+
 static void gtk_file_selector (int action, FselDataSrc src, 
 			       gpointer data, GtkWidget *parent,
 			       const char *dirname) 
@@ -964,8 +997,10 @@ static void gtk_file_selector (int action, FselDataSrc src,
     char startdir[MAXLEN];
     GtkWidget *filesel;
     GtkFileChooserAction fsel_action;
+    gchar *title = NULL;
     const gchar *okstr;
     int remember = get_keep_folder();
+    gboolean plain_open = 0;
     gint response;
 
     gdtb_save = 0;
@@ -973,16 +1008,20 @@ static void gtk_file_selector (int action, FselDataSrc src,
     if (SET_DIR_ACTION(action)) {
 	fsel_action = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
 	okstr = GTK_STOCK_OK;
+	title = g_strdup_printf("gretl: %s", _("select directory"));
 	remember = 0;
     } else if (action == SET_PROG ||
 	       action == SET_OTHER ||
 	       action == UPLOAD_PKG) {
 	fsel_action = GTK_FILE_CHOOSER_ACTION_OPEN;
 	okstr = GTK_STOCK_OK;
+	title = g_strdup_printf("gretl: %s", _("select file"));
 	remember = 0;
     } else if (action < END_OPEN) {
 	fsel_action = GTK_FILE_CHOOSER_ACTION_OPEN;
 	okstr = GTK_STOCK_OPEN;
+	title = g_strdup_printf("gretl: %s", _("open file"));
+	plain_open = 1;
     } else {
 	fsel_action = GTK_FILE_CHOOSER_ACTION_SAVE;
 	okstr = GTK_STOCK_SAVE;
@@ -992,6 +1031,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	    action == SAVE_GFN_ZIP) {
 	    remember = 0;
 	}
+	title = g_strdup_printf("gretl: %s", _("save file"));
     }
 
     if (dirname != NULL) {
@@ -1021,7 +1061,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	parent = mdata->main;
     }
 
-    filesel = gtk_file_chooser_dialog_new(NULL,
+    filesel = gtk_file_chooser_dialog_new(title,
 					  GTK_WINDOW(parent),
 					  fsel_action,
 					  GTK_STOCK_CANCEL,
@@ -1049,7 +1089,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), startdir);
     } else {
 	if (action != SET_PROG && action != SET_OTHER) {
-	    filesel_set_filters(filesel, action, src, data);
+	    set_up_filesel_filters(filesel, action, src, data, plain_open);
 	}
 	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
 	filesel_maybe_set_current_name(GTK_FILE_CHOOSER(filesel), action,
@@ -1057,6 +1097,8 @@ static void gtk_file_selector (int action, FselDataSrc src,
     }
 
     response = gtk_dialog_run(GTK_DIALOG(filesel));
+
+    g_free(title);
 
     if (response == GTK_RESPONSE_ACCEPT) {
 	gchar *fname;
