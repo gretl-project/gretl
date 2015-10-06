@@ -50,6 +50,12 @@
 #define N_FILE_ENTRIES 4
 #define N_SPECIALS (UFUN_ROLE_MAX - 1)
 
+/* the following two things need some work before they 
+   "go live" (2015-10-06)
+*/
+#define SHOW_TAG_SELECTORS 0
+#define HELP_TEXT_WINDOW 0
+
 enum {
     NO_WINDOW,
     MAIN_WINDOW,
@@ -88,7 +94,8 @@ struct function_info_ {
     GtkWidget *validate;   /* "Validate" gfn button */
     GtkWidget *tagsel[2];  /* tag selector combos */
     windata_t *samplewin;  /* window for editing sample script */
-    windata_t *gui_helpwin;  /* window for editing GUI help text */
+    windata_t *helpwin;    /* window for editing regular help text */
+    windata_t *gui_helpwin;  /* window for editing GUI-specific help text */
     GtkUIManager *ui;      /* for dialog File menu */
     GList *codewins;       /* list of windows editing function code */
     fnpkg *pkg;            /* pointer to package being edited */
@@ -151,6 +158,10 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo);
 static int check_package_filename (const char *fname,
 				   int fullpath,
 				   GtkWidget *parent);
+#if HELP_TEXT_WINDOW
+static void regular_help_text_callback (GtkButton *b,
+					function_info *finfo);
+#endif
 
 function_info *finfo_new (void)
 {
@@ -194,6 +205,7 @@ function_info *finfo_new (void)
 
     finfo->active = NULL;
     finfo->samplewin = NULL;
+    finfo->helpwin = NULL;
     finfo->gui_helpwin = NULL;
     finfo->codewins = NULL;
     finfo->codesel = NULL;
@@ -286,6 +298,10 @@ static void finfo_free (function_info *finfo)
     if (finfo->samplewin != NULL) {
 	gtk_widget_destroy(finfo->samplewin->main);
     }
+
+    if (finfo->helpwin != NULL) {
+	gtk_widget_destroy(finfo->helpwin->main);
+    }      
 
     if (finfo->gui_helpwin != NULL) {
 	gtk_widget_destroy(finfo->gui_helpwin->main);
@@ -1312,9 +1328,9 @@ void update_sample_script (windata_t *vwin)
     }
 }
 
-/* callback from Save in GUI help text editor window */
+/* callback from Save in help text editor window */
 
-void update_gfn_gui_help (windata_t *vwin)
+void update_gfn_help_text (windata_t *vwin)
 {
     function_info *finfo;
 
@@ -1323,12 +1339,22 @@ void update_gfn_gui_help (windata_t *vwin)
     if (finfo != NULL) {
 	gchar *text = textview_get_text(vwin->text);
 
-	free(finfo->gui_help);
-	if (text == NULL || string_is_blank(text)) {
-	    finfo->gui_help = NULL;
+	if (vwin->role == EDIT_PKG_GHLP) {
+	    free(finfo->gui_help);
+	    if (text == NULL || string_is_blank(text)) {
+		finfo->gui_help = NULL;
+	    } else {
+		finfo->gui_help = gretl_strdup(text);
+	    }
 	} else {
-	    finfo->gui_help = gretl_strdup(text);
+	    free(finfo->help);
+	    if (text == NULL || string_is_blank(text)) {
+		finfo->help = NULL;
+	    } else {
+		finfo->help = gretl_strdup(text);
+	    }
 	}
+	
 	g_free(text);
 	mark_vwin_content_saved(vwin);
 	finfo_set_modified(finfo, TRUE);
@@ -1339,6 +1365,15 @@ static void nullify_sample_window (GtkWidget *w, function_info *finfo)
 {
     finfo->samplewin = NULL;
 }
+
+#if HELP_TEXT_WINDOW
+
+static void nullify_helpwin (GtkWidget *w, function_info *finfo)
+{
+    finfo->helpwin = NULL;
+}
+
+#endif
 
 static void nullify_gui_helpwin (GtkWidget *w, function_info *finfo)
 {
@@ -1872,6 +1907,51 @@ static void add_data_requirement_menu (GtkWidget *tbl, int i,
 		     G_CALLBACK(dreq_select), finfo);
 }
 
+#if HELP_TEXT_WINDOW
+
+static void add_help_radios (GtkWidget *tbl, int i,
+			     function_info *finfo)
+{
+    GtkWidget *w, *rb, *vbox, *hbox, *tmp;
+    GSList *group = NULL;
+
+    vbox = gtk_vbox_new(FALSE, 0);
+
+    tmp = gtk_label_new(_("Help text"));
+    gtk_misc_set_alignment(GTK_MISC(tmp), 1.0, 0.5);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), vbox, 0, 1, i, i+1);
+    gtk_widget_show_all(vbox);
+
+    vbox = gtk_vbox_new(FALSE, 0);
+
+    hbox = gtk_hbox_new(FALSE, 0);
+    rb = gtk_radio_button_new_with_label(group, _("Plain text"));
+    gtk_box_pack_start(GTK_BOX(hbox), rb, FALSE, FALSE, 0);
+    w = gtk_button_new_with_label(_("Edit"));
+    g_signal_connect(G_OBJECT(w), "clicked",
+		     G_CALLBACK(regular_help_text_callback), finfo);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    sensitize_conditional_on(w, rb);    
+
+    hbox = gtk_hbox_new(FALSE, 0);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
+    rb = gtk_radio_button_new_with_label(group, _("PDF file"));
+    gtk_box_pack_start(GTK_BOX(hbox), rb, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    if (pkg_has_pdf_doc(finfo)) {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rb), TRUE);
+    }
+
+    gtk_table_attach_defaults(GTK_TABLE(tbl), vbox, 1, 2, i, i+1);
+    gtk_widget_show_all(vbox);
+}
+
+#endif /* HELP_TEXT_WINDOW */
+
 static void get_maj_min_pl (int v, int *maj, int *min, int *pl)
 {
     *maj = v / 10000;
@@ -2123,6 +2203,8 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     gtk_widget_show_all(hbox);
 }
 
+#if SHOW_TAG_SELECTORS
+
 static void tagsel_callback (GtkComboBox *combo,
 			     function_info *finfo)
 {
@@ -2254,10 +2336,14 @@ static void add_tag_selectors (GtkWidget *tbl, int i,
     }
 }
 
+#endif /* SHOW_TAG_SELECTORS */
+
 static void pkg_changed (gpointer p, function_info *finfo)
 {
     finfo_set_modified(finfo, TRUE);
 }
+
+#if !HELP_TEXT_WINDOW
 
 static GtkWidget *editable_text_box (GtkTextBuffer **pbuf)
 {
@@ -2275,6 +2361,8 @@ static GtkWidget *editable_text_box (GtkTextBuffer **pbuf)
 
     return w;
 }
+
+#endif
 
 static const gchar *get_user_string (void)
 {
@@ -2630,6 +2718,42 @@ static void gui_help_text_callback (GtkButton *b, function_info *finfo)
 		     G_CALLBACK(nullify_gui_helpwin), finfo);
     g_free(title);
 }
+
+#if HELP_TEXT_WINDOW
+
+static void regular_help_text_callback (GtkButton *b, function_info *finfo)
+{
+    const char *pkgname;
+    gchar *title;
+    PRN *prn = NULL;
+
+    if (finfo->helpwin != NULL) {
+	gtk_window_present(GTK_WINDOW(finfo->helpwin->main));
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    pkgname = function_package_get_name(finfo->pkg);
+    title = g_strdup_printf("%s help", pkgname);
+
+    if (finfo->help != NULL) {
+	pputs(prn, finfo->help);
+	pputc(prn, '\n');
+    } 
+
+    finfo->helpwin = view_buffer(prn, 72, 350, title,
+				 EDIT_PKG_HELP, finfo);
+    g_object_set_data(G_OBJECT(finfo->helpwin->main), "finfo",
+		      finfo);
+    g_signal_connect(G_OBJECT(finfo->helpwin->main), "destroy",
+		     G_CALLBACK(nullify_helpwin), finfo);
+    g_free(title);
+}
+
+#endif
 
 static void add_menu_attach_top (GtkWidget *holder,
 				 function_info *finfo)
@@ -3414,9 +3538,11 @@ static void delete_dlg_callback (GtkWidget *button, function_info *finfo)
 
 static void finfo_dialog (function_info *finfo)
 {
+#if !HELP_TEXT_WINDOW
+    GtkTextBuffer *hbuf = NULL;
+#endif    
     GtkWidget *button, *label;
     GtkWidget *tbl, *vbox, *hbox;
-    GtkTextBuffer *hbuf = NULL;
     const char *entry_labels[] = {
 	N_("Author"),
 	N_("Email"),
@@ -3433,6 +3559,7 @@ static void finfo_dialog (function_info *finfo)
     };
     gchar *tmp;
     int focused = 0;
+    int rows = NENTRIES + 1;
     int i;
 
     finfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -3459,7 +3586,14 @@ static void finfo_dialog (function_info *finfo)
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
     gtk_container_add(GTK_CONTAINER(finfo->dlg), vbox);
 
-    tbl = gtk_table_new(NENTRIES + 3, 2, FALSE);
+#if SHOW_TAG_SELECTORS    
+    rows += 2;
+#endif
+#if HELP_TEXT_WINDOW
+    rows += 1;
+#endif    
+
+    tbl = gtk_table_new(rows, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 4);
     gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
@@ -3519,13 +3653,20 @@ static void finfo_dialog (function_info *finfo)
 			 G_CALLBACK(pkg_changed), finfo);
     }
 
+#if SHOW_TAG_SELECTORS    
     add_tag_selectors(tbl, i, finfo);
     i += 2;
+#endif    
     add_data_requirement_menu(tbl, i++, finfo);
-    add_minver_selector(tbl, i, finfo);
+    add_minver_selector(tbl, i++, finfo);
 
+#if HELP_TEXT_WINDOW    
+    add_help_radios(tbl, i, finfo);
+    hbox = gtk_hseparator_new();
+    gtk_widget_show(hbox);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+#else    
     hbox = label_hbox(vbox, _("Help text:"));
-
     finfo->text = editable_text_box(&hbuf);
     text_table_setup(vbox, finfo->text);
 
@@ -3534,6 +3675,7 @@ static void finfo_dialog (function_info *finfo)
     }
     g_signal_connect(G_OBJECT(hbuf), "changed", 
 		     G_CALLBACK(pkg_changed), finfo);
+#endif    
 
     /* table for buttons arrayed at foot of window */
     hbox = gtk_hbox_new(FALSE, 0);

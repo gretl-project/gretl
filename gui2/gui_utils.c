@@ -1400,9 +1400,10 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
     } else if (vwin->role == EDIT_PKG_CODE) {
 	/* function package editor, function code window */
 	update_func_code(vwin);
-    } else if (vwin->role == EDIT_PKG_GHLP) {
-	/* function package editor, gui-help window */
-	update_gfn_gui_help(vwin);
+    } else if (vwin->role == EDIT_PKG_HELP ||
+	       vwin->role == EDIT_PKG_GHLP) {
+	/* function package editor, help text window */
+	update_gfn_help_text(vwin);
     } else if (*vwin->fname == '\0' || strstr(vwin->fname, "script_tmp")) {
 	/* no real filename is available yet */
 	if (vwin->role == EDIT_SCRIPT) {
@@ -1896,6 +1897,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	vwin_add_viewbar(vwin, 0);
     } else if (role == EDIT_PKG_CODE ||
 	       role == EDIT_PKG_SAMPLE ||
+	       role == EDIT_PKG_HELP ||
 	       role == EDIT_PKG_GHLP) {
 	vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
     } else if (role == IMPORT || role == BUILD_PKG) {
@@ -1918,6 +1920,8 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	create_source(vwin, hsize, vsize, FALSE);
     } else if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
 	create_source(vwin, hsize, vsize, TRUE);
+    } else if (role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
+	create_text(vwin, hsize, vsize, nlines, TRUE);
     } else {
 	create_text(vwin, hsize, vsize, nlines, FALSE);
 	if (role == PRINT || role == SCRIPT_OUT ||
@@ -1949,7 +1953,8 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->main);
 
-    if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
+    if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE ||
+	role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
 	attach_content_changed_signal(vwin);
 	g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 			 G_CALLBACK(query_save_text), vwin);

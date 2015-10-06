@@ -56,6 +56,7 @@ enum extra_cmds {
     EDIT_NOTES,
     EDIT_PKG_CODE,
     EDIT_PKG_SAMPLE,
+    EDIT_PKG_HELP,
     EDIT_PKG_GHLP,
     EDIT_GP,
     EDIT_R,
