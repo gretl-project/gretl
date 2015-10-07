@@ -4974,7 +4974,7 @@ int get_function_file_header (const char *fname, char **pdesc,
 		    
 		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
 		    if (tmp != NULL) {
-			if (!strncmp(tmp, "pdfdoc", 6) || has_suffix(rmp, ".pdf")) {
+			if (!strncmp(tmp, "pdfdoc", 6) || has_suffix(tmp, ".pdf")) {
 			    *pdfdoc = 1;
 			}
 			free(tmp);
