@@ -53,8 +53,7 @@
 /* the following two things need some work before they 
    "go live" (2015-10-06)
 */
-#define SHOW_TAG_SELECTORS 0
-#define HELP_TEXT_WINDOW 0
+#define SHOW_TAG_SELECTORS 1
 
 enum {
     NO_WINDOW,
@@ -80,7 +79,6 @@ struct function_info_ {
     GtkWidget *entries[NENTRIES];
     /* entry boxes for data file names */
     GtkWidget *file_entries[N_FILE_ENTRIES];
-    GtkWidget *text;       /* text box for help */
     GtkWidget *codesel;    /* code-editing selector */
     GtkWidget *popup;      /* popup menu */
     GtkWidget *extra;      /* extra properties child dialog */
@@ -95,7 +93,7 @@ struct function_info_ {
     GtkWidget *tagsel[2];  /* tag selector combos */
     windata_t *samplewin;  /* window for editing sample script */
     windata_t *helpwin;    /* window for editing regular help text */
-    windata_t *gui_helpwin;  /* window for editing GUI-specific help text */
+    windata_t *gui_helpwin; /* window for editing GUI-specific help text */
     GtkUIManager *ui;      /* for dialog File menu */
     GList *codewins;       /* list of windows editing function code */
     fnpkg *pkg;            /* pointer to package being edited */
@@ -121,6 +119,7 @@ struct function_info_ {
     int n_priv;            /* number of private functions */
     int n_files;           /* number of include data files */
     gboolean uses_subdir;  /* the package has its own subdir (0/1) */
+    gboolean pdfdoc;       /* the package has PDF documentation */
     gchar *menupath;       /* path for menu attachment, if any */
     gchar *menulabel;      /* label for menu attachment, if any */
     int menuwin;           /* code for none/main/model window */
@@ -153,15 +152,12 @@ static int finfo_save (function_info *finfo);
 static void gfn_to_script_callback (function_info *finfo);
 static void gfn_to_spec_callback (function_info *finfo);
 static void do_pkg_upload (function_info *finfo);
-static int pkg_has_pdf_doc (function_info *finfo);
 static void edit_code_callback (GtkWidget *w, function_info *finfo);
 static int check_package_filename (const char *fname,
 				   int fullpath,
 				   GtkWidget *parent);
-#if HELP_TEXT_WINDOW
 static void regular_help_text_callback (GtkButton *b,
 					function_info *finfo);
-#endif
 
 function_info *finfo_new (void)
 {
@@ -234,6 +230,7 @@ function_info *finfo_new (void)
     finfo->dreq = 0;
     finfo->minver = 10900;
     finfo->uses_subdir = 0;
+    finfo->pdfdoc = 0;
 
     return finfo;
 }
@@ -401,7 +398,7 @@ static void pkg_save_popup (GtkWidget *button,
     flip(finfo->ui, "/popup/Save", finfo->modified);
     cond = finfo->fname != NULL;
     flip(finfo->ui, "/popup/Upload", cond);
-    cond = pkg_has_pdf_doc(finfo) || finfo->datafiles != NULL;
+    cond = finfo->pdfdoc || finfo->datafiles != NULL;
     flip(finfo->ui, "/popup/SaveZip", cond);    
 
     menu = gtk_ui_manager_get_widget(finfo->ui, "/popup");
@@ -477,7 +474,7 @@ void get_default_package_name (char *fname, gpointer p, int mode)
     const char *pkgname;
 
     if (finfo->pkgname != NULL) {
-	/* first=time save */
+	/* first-time save */
 	pkgname = finfo->pkgname;
     } else {
 	pkgname = function_package_get_name(finfo->pkg);
@@ -561,16 +558,6 @@ static int check_version_string (const char *s)
     }
 
     return err;
-}
-
-static int pkg_has_pdf_doc (function_info *finfo)
-{
-    if (finfo->help != NULL &&
-	!strncmp(finfo->help, "pdfdoc", 6)) {
-	return 1;
-    } else {
-	return 0;
-    }
 }
 
 static int pkg_path_is_toplevel (function_info *finfo,
@@ -823,51 +810,6 @@ static int install_gfn (function_info *finfo, gchar *pkgname)
     return err;
 }
 
-static int check_help_text (function_info *finfo)
-{
-    const char *missing = "???";
-    char *s = finfo->help;
-    int err = 0;
-    
-    if (s == NULL || !strcmp(s, missing)) {
-	warnbox(_("Please complete all fields"));
-	textview_set_text_selected(finfo->text, missing);
-	err = 1;
-    } else if (!strncmp(s, "pdfdoc:", 7) &&
-	       strstr(s + 7, ".pdf") == NULL) {
-	warnbox(_("Please complete all fields"));
-	err = 1;
-    } else {
-	/* We can't do any kind of semantic test on the help
-	   text here, but we can at least check it for overly
-	   long lines, which will look ugly and broken in the
-	   gretl GUI.
-	*/
-	int max_ulen = 78;
-	int ulen, n = 0, err = 0;
-	char *p = s;
-
-	while (*s && !err) {
-	    if (*s == '\n') {
-		p = s + 1; /* start of line marker */
-		n = 0;
-	    } else {
-		n++;
-	    }
-	    if (n > max_ulen) {
-		ulen = g_utf8_strlen(p, n);
-		if (ulen > max_ulen) {
-		    warnbox(_("Please limit help text lines to 78 characters"));
-		    err = 1;
-		}
-	    }
-	    s++;
-	}
-    }
-
-    return err;
-}
-
 /* Callback from "Save" , when editing a function package. We first
    assemble and check the relevant info then if the package is new and
    has not been saved yet (which is flagged by finfo->fname being
@@ -899,11 +841,8 @@ static int finfo_save (function_info *finfo)
 	} 
     }
 
-    g_free(finfo->help);
-    finfo->help = textview_get_trimmed_text(finfo->text);
-    
-    if (check_help_text(finfo)) {
-	gtk_widget_grab_focus(finfo->text);
+    if (!finfo->pdfdoc && (finfo->help == NULL || *finfo->help == '\0')) {
+	warnbox(_("Please add some help text for this package"));
 	return 1;
     }
 
@@ -925,7 +864,7 @@ static int finfo_save (function_info *finfo)
     }
 
     if (!finfo->uses_subdir) {
-	if (finfo->n_files > 0 || pkg_has_pdf_doc(finfo)) {
+	if (finfo->n_files > 0 || finfo->pdfdoc) {
 	    finfo->uses_subdir = 1;
 	}
     }
@@ -1366,14 +1305,10 @@ static void nullify_sample_window (GtkWidget *w, function_info *finfo)
     finfo->samplewin = NULL;
 }
 
-#if HELP_TEXT_WINDOW
-
 static void nullify_helpwin (GtkWidget *w, function_info *finfo)
 {
     finfo->helpwin = NULL;
 }
-
-#endif
 
 static void nullify_gui_helpwin (GtkWidget *w, function_info *finfo)
 {
@@ -1699,7 +1634,8 @@ static void gfn_to_spec_callback (function_info *finfo)
     if (texts[0] == NULL) {
 	texts[0] = function_package_get_string(finfo->pkg, "sample-script");
     }
-    if (texts[1] != NULL && !strncmp(texts[1], "pdfdoc", 6)) {
+    if (texts[1] != NULL && finfo->pdfdoc) {
+	/* shouldn't happen! */
 	texts[1] = NULL;
     }    
     if (texts[2] == NULL) {
@@ -1907,7 +1843,53 @@ static void add_data_requirement_menu (GtkWidget *tbl, int i,
 		     G_CALLBACK(dreq_select), finfo);
 }
 
-#if HELP_TEXT_WINDOW
+static void pdf_toggled_callback (GtkToggleButton *button,
+				  function_info *finfo)
+{
+    g_free(finfo->help);
+    finfo->help = NULL;
+    finfo->pdfdoc = button_is_active(button);
+}
+
+static gboolean pdf_press_callback (GtkWidget *button,
+				    GdkEvent  *event,
+				    function_info *finfo)
+{
+    const gchar *msg1, *msg2;
+    gchar *msg;
+    int resp;
+    gboolean ret = TRUE;
+
+    msg1 = N_("Switching to PDF help means that you must make\n"
+	      "available a PDF file containing the help text for\n"
+	      "your package.\n\n");
+
+    msg2 = N_("Switch to PDF help now?");
+    
+    if (finfo->help != NULL && finfo->help != NULL &&
+	strlen(finfo->help) > 256) {
+	/* Seems like we may have a usable plain text help
+	   buffer in place -- so warn the user.
+	*/
+	gchar *extra = N_("It also means that any existing plain text help\n"
+			  "will be lost.\n\n");
+	
+	msg = g_strconcat(msg1, extra, msg2, NULL);
+    } else {
+	msg = g_strconcat(msg1, msg2, NULL);
+    }
+
+    resp = yes_no_dialog(NULL, msg, finfo->dlg);
+
+    if (resp == GRETL_YES) {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+	ret = FALSE;
+    }
+
+    g_free(msg);
+
+    return ret;
+}
 
 static void add_help_radios (GtkWidget *tbl, int i,
 			     function_info *finfo)
@@ -1931,7 +1913,7 @@ static void add_help_radios (GtkWidget *tbl, int i,
     w = gtk_button_new_with_label(_("Edit"));
     g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(regular_help_text_callback), finfo);
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 10);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     sensitize_conditional_on(w, rb);    
@@ -1941,16 +1923,18 @@ static void add_help_radios (GtkWidget *tbl, int i,
     rb = gtk_radio_button_new_with_label(group, _("PDF file"));
     gtk_box_pack_start(GTK_BOX(hbox), rb, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    g_signal_connect(G_OBJECT(rb), "button-press-event",
+		     G_CALLBACK(pdf_press_callback), finfo);
+    g_signal_connect(G_OBJECT(rb), "toggled",
+		     G_CALLBACK(pdf_toggled_callback), finfo);
 
-    if (pkg_has_pdf_doc(finfo)) {
+    if (finfo->pdfdoc) {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rb), TRUE);
     }
 
     gtk_table_attach_defaults(GTK_TABLE(tbl), vbox, 1, 2, i, i+1);
     gtk_widget_show_all(vbox);
 }
-
-#endif /* HELP_TEXT_WINDOW */
 
 static void get_maj_min_pl (int v, int *maj, int *min, int *pl)
 {
@@ -2343,27 +2327,6 @@ static void pkg_changed (gpointer p, function_info *finfo)
     finfo_set_modified(finfo, TRUE);
 }
 
-#if !HELP_TEXT_WINDOW
-
-static GtkWidget *editable_text_box (GtkTextBuffer **pbuf)
-{
-    GtkTextBuffer *tbuf = gretl_text_buf_new();
-    GtkWidget *w = gtk_text_view_new_with_buffer(tbuf);
-
-    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
-    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(w), 4);
-    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(w), 4);
-    gtk_widget_modify_font(GTK_WIDGET(w), fixed_font);
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(w), TRUE);
-    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), TRUE);
-
-    *pbuf = tbuf;
-
-    return w;
-}
-
-#endif
-
 static const gchar *get_user_string (void)
 {
     const gchar *name;
@@ -2710,7 +2673,7 @@ static void gui_help_text_callback (GtkButton *b, function_info *finfo)
 	pputc(prn, '\n');
     } 
 
-    finfo->gui_helpwin = view_buffer(prn, 72, 350, title,
+    finfo->gui_helpwin = view_buffer(prn, 76, 400, title,
 				     EDIT_PKG_GHLP, finfo);
     g_object_set_data(G_OBJECT(finfo->gui_helpwin->main), "finfo",
 		      finfo);
@@ -2718,8 +2681,6 @@ static void gui_help_text_callback (GtkButton *b, function_info *finfo)
 		     G_CALLBACK(nullify_gui_helpwin), finfo);
     g_free(title);
 }
-
-#if HELP_TEXT_WINDOW
 
 static void regular_help_text_callback (GtkButton *b, function_info *finfo)
 {
@@ -2744,7 +2705,7 @@ static void regular_help_text_callback (GtkButton *b, function_info *finfo)
 	pputc(prn, '\n');
     } 
 
-    finfo->helpwin = view_buffer(prn, 72, 350, title,
+    finfo->helpwin = view_buffer(prn, 76, 400, title,
 				 EDIT_PKG_HELP, finfo);
     g_object_set_data(G_OBJECT(finfo->helpwin->main), "finfo",
 		      finfo);
@@ -2752,8 +2713,6 @@ static void regular_help_text_callback (GtkButton *b, function_info *finfo)
 		     G_CALLBACK(nullify_helpwin), finfo);
     g_free(title);
 }
-
-#endif
 
 static void add_menu_attach_top (GtkWidget *holder,
 				 function_info *finfo)
@@ -3538,9 +3497,6 @@ static void delete_dlg_callback (GtkWidget *button, function_info *finfo)
 
 static void finfo_dialog (function_info *finfo)
 {
-#if !HELP_TEXT_WINDOW
-    GtkTextBuffer *hbuf = NULL;
-#endif    
     GtkWidget *button, *label;
     GtkWidget *tbl, *vbox, *hbox;
     const char *entry_labels[] = {
@@ -3559,11 +3515,11 @@ static void finfo_dialog (function_info *finfo)
     };
     gchar *tmp;
     int focused = 0;
-    int rows = NENTRIES + 1;
+    int rows = NENTRIES + 2;
     int i;
 
     finfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, 500);
+    gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, -1);
 
     if (finfo->fname != NULL) {
 	gchar *title = title_from_filename(finfo->fname, EDIT_PKG_CODE, TRUE);
@@ -3589,9 +3545,6 @@ static void finfo_dialog (function_info *finfo)
 #if SHOW_TAG_SELECTORS    
     rows += 2;
 #endif
-#if HELP_TEXT_WINDOW
-    rows += 1;
-#endif    
 
     tbl = gtk_table_new(rows, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
@@ -3660,22 +3613,10 @@ static void finfo_dialog (function_info *finfo)
     add_data_requirement_menu(tbl, i++, finfo);
     add_minver_selector(tbl, i++, finfo);
 
-#if HELP_TEXT_WINDOW    
     add_help_radios(tbl, i, finfo);
     hbox = gtk_hseparator_new();
     gtk_widget_show(hbox);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-#else    
-    hbox = label_hbox(vbox, _("Help text:"));
-    finfo->text = editable_text_box(&hbuf);
-    text_table_setup(vbox, finfo->text);
-
-    if (finfo->help != NULL) {
-	textview_set_text(finfo->text, finfo->help);
-    }
-    g_signal_connect(G_OBJECT(hbuf), "changed", 
-		     G_CALLBACK(pkg_changed), finfo);
-#endif    
 
     /* table for buttons arrayed at foot of window */
     hbox = gtk_hbox_new(FALSE, 0);
@@ -3911,8 +3852,9 @@ static int validate_package_file (const char *fname, int verbose)
    "returned" in @pzipname.
 */
 
-static int gui_pkg_make_zipfile (function_info *finfo, int pdfdoc,
-				 gchar **pzipname, const char *dest)
+static int gui_pkg_make_zipfile (function_info *finfo,
+				 gchar **pzipname,
+				 const char *dest)
 {
     windata_t *vwin;
     PRN *prn = NULL;
@@ -3927,7 +3869,7 @@ static int gui_pkg_make_zipfile (function_info *finfo, int pdfdoc,
     bufopen(&prn);
 
     err = package_make_zipfile(finfo->fname,
-			       pdfdoc,
+			       finfo->pdfdoc,
 			       finfo->datafiles,
 			       finfo->n_files,
 			       pzipname, dest,
@@ -3955,7 +3897,6 @@ static void do_pkg_upload (function_info *finfo)
     gint x, y;
     gsize buflen;
     int error_printed = 0;
-    int pdfdoc;
     int err;
 
     err = validate_package_file(finfo->fname, 0);
@@ -3963,10 +3904,8 @@ static void do_pkg_upload (function_info *finfo)
 	return;
     }
 
-    pdfdoc = pkg_has_pdf_doc(finfo);
-
-    if (pdfdoc || finfo->datafiles != NULL) {
-	err = gui_pkg_make_zipfile(finfo, pdfdoc, &zipname, NULL);
+    if (finfo->pdfdoc || finfo->datafiles != NULL) {
+	err = gui_pkg_make_zipfile(finfo, &zipname, NULL);
 	if (err) {
 	    /* the error message will have been handled abive */
 	    return;
@@ -4296,6 +4235,7 @@ static int maybe_fix_package_location (function_info *finfo)
 int save_function_package (const char *fname, gpointer p)
 {
     function_info *finfo = p;
+    int free_help = 0;
     int err = 0;
 
     if (finfo->fname == NULL) {
@@ -4324,6 +4264,12 @@ int save_function_package (const char *fname, gpointer p)
     if (!err) {
 	/* we need to do this before setting the "gui-attrs" below */
 	pkg_save_special_functions(finfo);
+    }
+
+    if (!err && finfo->pdfdoc) {
+	finfo->help = g_strdup_printf("pdfdoc: %s.pdf",
+				      function_package_get_name(finfo->pkg));
+	free_help = 1;
     }
 
     if (!err) {
@@ -4358,7 +4304,13 @@ int save_function_package (const char *fname, gpointer p)
 
     if (!err && finfo->uses_subdir) {
 	maybe_fix_package_location(finfo);
-    }    
+    }
+
+    if (free_help) {
+	/* free temporary placeholder */
+	g_free(finfo->help);
+	finfo->help = NULL;
+    }
 
     if (!err) {
 	err = function_package_write_file(finfo->pkg);
@@ -4383,7 +4335,7 @@ int save_function_package (const char *fname, gpointer p)
 				 finfo->pkgdesc,
 				 finfo->fname,
 				 finfo->uses_subdir,
-				 pkg_has_pdf_doc(finfo));
+				 finfo->pdfdoc);
 	mkfilelist(FILE_LIST_GFN, finfo->fname);
 	
 	/* revise stored gui package info in accordance with any
@@ -4669,18 +4621,10 @@ int save_function_package_spec (const char *fname, gpointer p)
 
     /* write out help text? */
     pputs(prn, "help = ");
-    if (finfo->text != NULL) {
-	gchar *help = textview_get_trimmed_text(finfo->text);
-
-	if (help != NULL) {
-	    if (!strncmp(help, "pdfdoc", 6)) {
-		pputs(prn, help + 7);
-	    } else {
-		maybe_write_aux_file(finfo, fname, "help",
-				     help, prn);
-	    }
-	    g_free(help);
-	}
+    if (finfo->pdfdoc) {
+	pprintf(prn, "%s.pdf\n", function_package_get_name(finfo->pkg));
+    } else if (finfo->help != NULL) {
+	maybe_write_aux_file(finfo, fname, "help", finfo->help, prn);
 	pputc(prn, '\n');
     }
 
@@ -4712,9 +4656,8 @@ int save_function_package_spec (const char *fname, gpointer p)
 int save_function_package_zipfile (const char *fname, gpointer p)
 {
     function_info *finfo = p;
-    int pdfdoc = pkg_has_pdf_doc(finfo);
     
-    gui_pkg_make_zipfile(finfo, pdfdoc, NULL, fname);
+    gui_pkg_make_zipfile(finfo, NULL, fname);
 
     return 0;
 }
@@ -4876,6 +4819,17 @@ static int finfo_set_data_files (function_info *finfo)
     return 0;
 }
 
+static int signifies_pdf (const char *s)
+{
+    if (s != NULL) {
+	if (!strncmp(s, "pdfdoc", 6) || has_suffix(s, ".pdf")) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 void edit_function_package (const char *fname)
 {
     function_info *finfo = NULL;
@@ -4937,6 +4891,12 @@ void edit_function_package (const char *fname)
 
     if (!err) {
 	err = finfo_set_data_files(finfo);
+    }
+
+    if (signifies_pdf(finfo->help)) {
+	g_free(finfo->help);
+	finfo->help = NULL;
+	finfo->pdfdoc = TRUE;
     }
 
 #if PKG_DEBUG

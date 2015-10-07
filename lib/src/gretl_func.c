@@ -3762,7 +3762,7 @@ int function_package_set_properties (fnpkg *pkg, ...)
 	    }
 	    
 	    if (!err && !strcmp(key, "help")) {
-		if (!strncmp(sval, "pdfdoc", 6)) {
+		if (!strncmp(sval, "pdfdoc", 6) || has_suffix(sval, ".pdf")) {
 		    pkg->uses_subdir = 1;
 		}
 	    }
@@ -4954,7 +4954,7 @@ int get_function_file_header (const char *fname, char **pdesc,
     }
 
     if (pdfdoc == NULL) {
-	/* not wanted, so count it is "done" already */
+	/* not wanted, so count it as "done" already */
 	docdone = 1;
     } else {
 	*pdfdoc = 0;
@@ -4974,7 +4974,7 @@ int get_function_file_header (const char *fname, char **pdesc,
 		    
 		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
 		    if (tmp != NULL) {
-			if (!strncmp(tmp, "pdfdoc", 6)) {
+			if (!strncmp(tmp, "pdfdoc", 6) || has_suffix(rmp, ".pdf")) {
 			    *pdfdoc = 1;
 			}
 			free(tmp);

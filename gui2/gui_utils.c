@@ -1909,6 +1909,8 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     if (role != VIEW_PKG_CODE && 
 	role != EDIT_PKG_CODE &&
 	role != VIEW_PKG_SAMPLE &&
+	role != EDIT_PKG_HELP &&
+	role != EDIT_PKG_GHLP &&
 	role != SCRIPT_OUT) {
 	gretl_print_get_size(prn, &width, &nlines);
 	if (width > 0 && width + 2 < hsize) {
