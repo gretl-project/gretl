@@ -50,10 +50,9 @@
 #define N_FILE_ENTRIES 4
 #define N_SPECIALS (UFUN_ROLE_MAX - 1)
 
-/* the following two things need some work before they 
-   "go live" (2015-10-06)
+/* This needs some work before it "goes live" (2015-10-07)
 */
-#define SHOW_TAG_SELECTORS 1
+#define SHOW_TAG_SELECTORS 0
 
 enum {
     NO_WINDOW,
@@ -1846,47 +1845,49 @@ static void add_data_requirement_menu (GtkWidget *tbl, int i,
 static void pdf_toggled_callback (GtkToggleButton *button,
 				  function_info *finfo)
 {
-    g_free(finfo->help);
-    finfo->help = NULL;
     finfo->pdfdoc = button_is_active(button);
+    
+    if (finfo->pdfdoc && finfo->help != NULL) {
+	g_free(finfo->help);
+	finfo->help = NULL;
+    }
 }
 
 static gboolean pdf_press_callback (GtkWidget *button,
 				    GdkEvent  *event,
 				    function_info *finfo)
 {
-    const gchar *msg1, *msg2;
-    gchar *msg;
+    const gchar *msg, *query;
+    gchar *text;
     int resp;
-    gboolean ret = TRUE;
+    gboolean ret = TRUE; /* block */
 
-    msg1 = N_("Switching to PDF help means that you must make\n"
-	      "available a PDF file containing the help text for\n"
-	      "your package.\n\n");
+    msg = N_("Switching to PDF help means that you must make\n"
+	     "available a PDF file containing the help text for\n"
+	     "your package.\n\n");
 
-    msg2 = N_("Switch to PDF help now?");
+    query = N_("Switch to PDF help now?");
     
-    if (finfo->help != NULL && finfo->help != NULL &&
-	strlen(finfo->help) > 256) {
+    if (finfo->help != NULL && strlen(finfo->help) > 256) {
 	/* Seems like we may have a usable plain text help
 	   buffer in place -- so warn the user.
 	*/
 	gchar *extra = N_("It also means that any existing plain text help\n"
 			  "will be lost.\n\n");
 	
-	msg = g_strconcat(msg1, extra, msg2, NULL);
+	text = g_strconcat(msg, extra, query, NULL);
     } else {
-	msg = g_strconcat(msg1, msg2, NULL);
+	text = g_strconcat(msg, query, NULL);
     }
 
-    resp = yes_no_dialog(NULL, msg, finfo->dlg);
+    resp = yes_no_dialog(NULL, text, finfo->dlg);
 
     if (resp == GRETL_YES) {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	ret = FALSE;
     }
 
-    g_free(msg);
+    g_free(text);
 
     return ret;
 }
@@ -1910,7 +1911,7 @@ static void add_help_radios (GtkWidget *tbl, int i,
     hbox = gtk_hbox_new(FALSE, 0);
     rb = gtk_radio_button_new_with_label(group, _("Plain text"));
     gtk_box_pack_start(GTK_BOX(hbox), rb, FALSE, FALSE, 0);
-    w = gtk_button_new_with_label(_("Edit"));
+    w = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(regular_help_text_callback), finfo);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 10);
@@ -1968,6 +1969,9 @@ static int translate_program_version (int v, int old_to_new)
 		return vtrans[i][1];
 	    }
 	}
+	if (v < vtrans[0][0]) {
+	    return vtrans[0][1];
+	}
     } else {
 	/* new to old */
 	for (i=0; i<13; i++) {
@@ -1975,6 +1979,9 @@ static int translate_program_version (int v, int old_to_new)
 		return vtrans[i][0];
 	    }
 	}
+	if (v < vtrans[0][1]) {
+	    return vtrans[0][0];
+	}	
     }	
 
     return 20152;
@@ -1982,9 +1989,9 @@ static int translate_program_version (int v, int old_to_new)
 
 static void get_year_rev (int v, int *yr, int *rev)
 {
-    /* note: we need to make allowance for current gretl
+    /* Note: we need to make allowance for current gretl
        editing a gfn file with a minimum gretl version
-       recording old-style. 
+       recorded in the old way.
     */
     if (v < 20150) {
 	v = translate_program_version(v, 1);
@@ -2099,7 +2106,7 @@ static void add_minver_selector (GtkWidget *tbl, int i,
 
     if (atoi(GRETL_VERSION) >= 2015) {
 	/* new style program versioning */
-	int minminyr = 2013; /* gretl 1.9.12 */
+	int minminyr = 2012; /* gretl 1.9.8 */
 	int minyr, minrev;   /* requested by package */
 	int cp_yr;           /* this program year */
 
@@ -2112,7 +2119,9 @@ static void add_minver_selector (GtkWidget *tbl, int i,
 	    /* package wants a gretl version more recent than the
 	       oldest supported version, OK */
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) minyr);
-	}	
+	} else {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) minminyr);
+	}
 	gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
 	g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(1));
 	g_signal_connect(G_OBJECT(spin), "value-changed",
@@ -4267,6 +4276,7 @@ int save_function_package (const char *fname, gpointer p)
     }
 
     if (!err && finfo->pdfdoc) {
+	/* make temporary "help" placeholder */
 	finfo->help = g_strdup_printf("pdfdoc: %s.pdf",
 				      function_package_get_name(finfo->pkg));
 	free_help = 1;
@@ -4620,12 +4630,14 @@ int save_function_package_spec (const char *fname, gpointer p)
     }
 
     /* write out help text? */
-    pputs(prn, "help = ");
-    if (finfo->pdfdoc) {
-	pprintf(prn, "%s.pdf\n", function_package_get_name(finfo->pkg));
-    } else if (finfo->help != NULL) {
-	maybe_write_aux_file(finfo, fname, "help", finfo->help, prn);
-	pputc(prn, '\n');
+    if (finfo->pdfdoc || finfo->help != NULL) {
+	pputs(prn, "help = ");
+	if (finfo->pdfdoc) {
+	    pprintf(prn, "%s.pdf\n", function_package_get_name(finfo->pkg));
+	} else {
+	    maybe_write_aux_file(finfo, fname, "help", finfo->help, prn);
+	    pputc(prn, '\n');
+	}
     }
 
     gui_help = (finfo->gui_help != NULL)? finfo->gui_help :
@@ -4819,7 +4831,7 @@ static int finfo_set_data_files (function_info *finfo)
     return 0;
 }
 
-static int signifies_pdf (const char *s)
+static int is_pdf_reference (const char *s)
 {
     if (s != NULL) {
 	if (!strncmp(s, "pdfdoc", 6) || has_suffix(s, ".pdf")) {
@@ -4893,7 +4905,7 @@ void edit_function_package (const char *fname)
 	err = finfo_set_data_files(finfo);
     }
 
-    if (signifies_pdf(finfo->help)) {
+    if (is_pdf_reference(finfo->help)) {
 	g_free(finfo->help);
 	finfo->help = NULL;
 	finfo->pdfdoc = TRUE;

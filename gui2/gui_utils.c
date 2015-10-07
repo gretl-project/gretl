@@ -1923,9 +1923,9 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     } else if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
 	create_source(vwin, hsize, vsize, TRUE);
     } else if (role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
-	create_text(vwin, hsize, vsize, nlines, TRUE);
+	create_text(vwin, hsize, vsize, nlines, TRUE, TRUE);
     } else {
-	create_text(vwin, hsize, vsize, nlines, FALSE);
+	create_text(vwin, hsize, vsize, nlines, FALSE, FALSE);
 	if (role == PRINT || role == SCRIPT_OUT ||
 	    role == VIEW_MODELTABLE) {
 	    text_set_word_wrap(vwin->text, 0);
@@ -2013,7 +2013,7 @@ windata_t *hansl_output_viewer_new (PRN *prn, int mode,
     }
 
     vwin_add_tmpbar(vwin);
-    create_text(vwin, SCRIPT_WIDTH, 450, 0, FALSE);
+    create_text(vwin, SCRIPT_WIDTH, 450, 0, FALSE, FALSE);
     text_set_word_wrap(vwin->text, 0);
     text_table_setup(vwin->vbox, vwin->text);
 
@@ -2089,7 +2089,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     if (textview_use_highlighting(role) || editable) {
 	create_source(vwin, hsize, vsize, editable);
     } else {
-	create_text(vwin, hsize, vsize, 0, editable);
+	create_text(vwin, hsize, vsize, 0, editable, FALSE);
     }
 
     text_table_setup(vwin->vbox, vwin->text);
@@ -2237,7 +2237,7 @@ windata_t *view_help_file (const char *filename, int role)
 	vsize = 500;
     }
 
-    create_text(vwin, hsize, vsize, 0, FALSE);
+    create_text(vwin, hsize, vsize, 0, FALSE, FALSE);
 
     if (role == GUI_HELP || role == GUI_HELP_EN) {
 	text_table_setup(vwin->vbox, vwin->text);
@@ -2359,7 +2359,7 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 					NULL);
     if (vwin == NULL) return NULL;
 
-    create_text(vwin, hsize, vsize, 0, FALSE);
+    create_text(vwin, hsize, vsize, 0, FALSE, FALSE);
 
     if (minimal) {
 	/* no scrolling apparatus */
@@ -2501,7 +2501,7 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
 	hsize = width + 2;
     }
 
-    create_text(vwin, hsize, vsize, nlines, FALSE);
+    create_text(vwin, hsize, vsize, nlines, FALSE, FALSE);
     text_table_setup(vwin->vbox, vwin->text);
 
     /* insert and then free the model results buffer */

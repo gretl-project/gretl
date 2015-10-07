@@ -3563,10 +3563,26 @@ static int get_screen_height (void)
     return screen_height;
 }
 
+static void set_max_text_width (windata_t *vwin,
+				int width,
+				int height)
+{
+    GdkGeometry hints = {0};
+
+    hints.max_width = width;
+    hints.max_height = height * 3;
+
+    gtk_window_set_geometry_hints(GTK_WINDOW(vwin->main),
+				  GTK_WIDGET(vwin->main),
+				  &hints,
+				  GDK_HINT_MAX_SIZE);
+}
+
 #define HDEBUG 0
 
 void create_text (windata_t *vwin, int hsize, int vsize, 
-		  int nlines, gboolean editable)
+		  int nlines, gboolean editable,
+		  gboolean fixed_width)
 {
     GtkTextBuffer *tbuf = gretl_text_buf_new();
     GtkWidget *w = gtk_text_view_new_with_buffer(tbuf);
@@ -3587,16 +3603,13 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	int px, py;
 
 	get_char_width_and_height(w, &px, &py);
-
 	if (hsize > 0) {
 	    hsize *= px;
 	    hsize += 48;
 	}
-
 #if HDEBUG
 	fprintf(stderr, " px = %d, hsize now = %d\n", px, hsize);
 #endif
-
 	if (nlines > 0) {
 	    double v1 = (nlines + 2) * py;
 	    int sv = get_screen_height();
@@ -3613,11 +3626,16 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	if (window_is_tab(vwin)) {
 	    vsize += 15;
 	}
-
 #if HDEBUG
 	fprintf(stderr, " setting default size (%d, %d)\n", hsize, vsize);
 #endif
 	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);
+	if (fixed_width) {
+	    /* for editing help files: limit the width of the window
+	       to discourage use of excessively long lines
+	    */
+	    set_max_text_width(vwin, hsize, vsize);
+	}
     }
 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(w), editable);

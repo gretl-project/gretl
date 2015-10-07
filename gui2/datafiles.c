@@ -893,7 +893,7 @@ windata_t *display_function_package_data (const char *pkgname,
 	if (role == VIEW_PKG_INFO) {
 	    char *buf = gretl_print_steal_buffer(prn);
 	    
-	    vwin = view_formatted_text_buffer(title, buf, 70, 350);
+	    vwin = view_formatted_text_buffer(title, buf, 76, 350);
 	    free(buf);
 	    gretl_print_destroy(prn);
 	} else {
