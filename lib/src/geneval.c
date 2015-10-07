@@ -4155,7 +4155,7 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		p->err = E_ALLOC;
 	    } else {
 		k = node_get_int(l, p);
-		if (!p->err) {
+		if (!p->err && list[0] > 0) {
 		    p->err = list_laggenr(&list, k, p->dset, opt);
 		}
 		ret->v.ivec = list;
@@ -4331,6 +4331,15 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
 	    lv = l->vnum;
 	}
 
+	if (imax == 0) {
+	    /* empty list on input -> empty on output */
+	    list = gretl_list_new(0);
+	    if (list == NULL) {
+		p->err = E_ALLOC;
+	    }
+	    goto loopdone;
+	}
+
 	for (i=imin; i<=imax && !p->err; i++) {
 	    if (srclist != NULL) {
 		lv = srclist[i];
@@ -4364,6 +4373,8 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
 		}
 	    }
 	}
+
+    loopdone:
 
 	if (list != NULL) {
 	    ret = aux_list_node(p);
