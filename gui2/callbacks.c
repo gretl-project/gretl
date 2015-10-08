@@ -203,9 +203,6 @@ void file_save (windata_t *vwin, int ci)
     case EXPORT:
 	data_export_selection_wrapper(ci);
 	break;
-    case SAVE_FUNCTIONS:
-	functions_selection_wrapper(vwin_toplevel(vwin));
-	break;
     case SAVE_TEX:
     case SAVE_TEXT:
 	file_selector(ci, FSEL_DATA_MISC, vwin->data);
@@ -221,8 +218,6 @@ static int fsave_code (const gchar *s)
 	return SAVE_DATA_AS;
     if (!strcmp(s, "ExportData"))
 	return EXPORT;
-    if (!strcmp(s, "NewGfn"))
-	return SAVE_FUNCTIONS;
 
     return SAVE_DATA;
 }

@@ -96,7 +96,7 @@ struct function_info_ {
     GtkUIManager *ui;      /* for dialog File menu */
     GList *codewins;       /* list of windows editing function code */
     fnpkg *pkg;            /* pointer to package being edited */
-    gchar *pkgname;        /* suggested savename (temporary) */
+    gchar *pkgname;        /* suggested savename (may be temporary) */
     gchar *fname;          /* package filename */
     gchar *author;         /* package author */
     gchar *email;          /* author's email address */
@@ -157,6 +157,7 @@ static int check_package_filename (const char *fname,
 				   GtkWidget *parent);
 static void regular_help_text_callback (GtkButton *b,
 					function_info *finfo);
+static void edit_sample_callback (GtkWidget *w, function_info *finfo);
 
 function_info *finfo_new (void)
 {
@@ -462,6 +463,17 @@ static void login_finalize (GtkWidget *w, login_info *linfo)
     gtk_widget_destroy(linfo->dlg);
 }
 
+static const char *finfo_pkgname (function_info *finfo)
+{
+    if (finfo->pkgname != NULL) {
+	return finfo->pkgname;
+    } else if (finfo->pkg != NULL) {
+	return function_package_get_name(finfo->pkg);
+    } else {
+	return NULL;
+    }
+}
+
 /* Used by the File, Save dialog when saving a package,
    or saving packaged functions as a script, or writing
    a .spec file based on a package.
@@ -470,14 +482,7 @@ static void login_finalize (GtkWidget *w, login_info *linfo)
 void get_default_package_name (char *fname, gpointer p, int mode)
 {
     function_info *finfo = (function_info *) p;
-    const char *pkgname;
-
-    if (finfo->pkgname != NULL) {
-	/* first-time save */
-	pkgname = finfo->pkgname;
-    } else {
-	pkgname = function_package_get_name(finfo->pkg);
-    }
+    const char *pkgname = finfo_pkgname(finfo);
 
     if (pkgname != NULL && *pkgname != '\0') {
 	strcpy(fname, pkgname);
@@ -578,67 +583,9 @@ static void set_gfn_save_opt (GtkWidget *w, int *opt)
     *opt = widget_get_int(w, "action");
 }
 
-gint compare_pubnames (gconstpointer a, gconstpointer b)
+static void save_gfn_ok (GtkButton *button, GtkWidget *dialog)
 {
-    const char *sa = a, *sb = b;
-
-    if (strchr(sa, '_') == NULL && strchr(sb, '_') != NULL) {
-	return -1;
-    } else if (strchr(sb, '_') == NULL && strchr(sa, '_') != NULL) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-static GList *suitable_savenames (function_info *finfo, gchar **pkgname)
-{
-    GList *list = NULL;
-    char *s;
-    int i, role;
-
-    for (i=0; i<finfo->n_pub; i++) {
-	role = i + 1;
-	s = finfo->pubnames[i];
-	role = strings_array_position(finfo->specials, N_SPECIALS, s) + 1;
-	if (role == 0 || role == UFUN_GUI_MAIN) {
-	    list = g_list_append(list, finfo->pubnames[i]);
-	}
-    }
-
-    if (list != NULL) {
-	list = g_list_sort(list, compare_pubnames);
-	*pkgname = g_strdup((char *) list->data);
-    }
-
-    return list;
-}
-
-static void save_gfn_ok (GtkButton *button, gchar **pkgname)
-{
-    GtkWidget *dialog, *combo, *entry;
-    const gchar *s;
-    int err = 0;
-
-    dialog = g_object_get_data(G_OBJECT(button), "dialog");
-    combo = g_object_get_data(G_OBJECT(button), "combo");
-    entry = gtk_bin_get_child(GTK_BIN(combo));
-    s = gtk_entry_get_text(GTK_ENTRY(entry));
-
-    if (string_is_blank(s)) {
-	err = 1;
-    } else {
-	g_free(*pkgname);
-	*pkgname = g_strdup(s);
-	g_strstrip(*pkgname);
-	err = check_package_filename(*pkgname, 0, dialog);
-    }
-
-    if (err) {
-	gtk_widget_grab_focus(entry);
-    } else {
-	gtk_widget_destroy(dialog);
-    }
+    gtk_widget_destroy(dialog);
 }
 
 static void save_gfn_cancel (GtkButton *button, int *retval)
@@ -655,18 +602,16 @@ static void save_gfn_delete (GtkWidget *w, GdkEvent *event, int *retval)
     *retval = GRETL_CANCEL;
 }
 
-int save_gfn_dialog (function_info *finfo, gchar **pkgname)
+static int save_gfn_dialog (function_info *finfo)
 {
     const char *opts[] = {
 	N_("Save the file to its standard \"installed\" location"),
 	N_("Save it to a location of your own choosing")
     };    
     GtkWidget *dialog;
-    GtkWidget *vbox, *hbox, *w;
-    GtkWidget *combo, *entry;
+    GtkWidget *vbox, *hbox, *label;
     GtkWidget *button = NULL;
     GSList *group = NULL;
-    GList *flist = NULL;
     int i, ret = 0;
 
     if (maybe_raise_dialog()) {
@@ -681,8 +626,8 @@ int save_gfn_dialog (function_info *finfo, gchar **pkgname)
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox);
-    w = gtk_label_new(_("Save gfn file"));
-    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
+    label = gtk_label_new(_("Save gfn file"));
+    gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 5);
 
     for (i=0; i<2; i++) {
 	button = gtk_radio_button_new_with_label(group, _(opts[i]));
@@ -696,42 +641,20 @@ int save_gfn_dialog (function_info *finfo, gchar **pkgname)
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
-    /* label + combo box with entry for naming the package */
-
-    hbox = gtk_hbox_new(FALSE, 5);
-    w = gtk_label_new(_("Select or type a name for the package:"));
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-
-    hbox = gtk_hbox_new(FALSE, 5);
-    combo = combo_box_text_new_with_entry();
-    flist = suitable_savenames(finfo, pkgname);
-    if (flist != NULL) {
-	set_combo_box_strings_from_list(combo, flist);
-	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
-    }
-    gtk_box_pack_end(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
     /* "Cancel" */
-    w = cancel_button(hbox);
-    gtk_widget_set_can_default(w, FALSE);
-    g_object_set_data(G_OBJECT(w), "dialog", dialog);
-    g_signal_connect(G_OBJECT(w), "clicked", 
+    button = cancel_button(hbox);
+    gtk_widget_set_can_default(button, FALSE);
+    g_object_set_data(G_OBJECT(button), "dialog", dialog);
+    g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(save_gfn_cancel), &ret);
 
     /* "OK" */
-    w = ok_button(hbox);
-    g_object_set_data(G_OBJECT(w), "combo", combo);
-    g_object_set_data(G_OBJECT(w), "dialog", dialog);
-    g_signal_connect(G_OBJECT(w), "clicked", 
-		     G_CALLBACK(save_gfn_ok), pkgname);
-    gtk_widget_grab_default(w);
-
-    entry = gtk_bin_get_child(GTK_BIN(combo));
-    gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
+    button = ok_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(save_gfn_ok), dialog);
+    gtk_widget_grab_default(button);
 
     gtk_widget_show_all(dialog);
 
@@ -768,7 +691,7 @@ static int overwrite_gfn_check (const char *fname,
    whether or not this is successful.
 */
 
-static int install_gfn (function_info *finfo, gchar *pkgname)
+static int install_gfn (function_info *finfo)
 {
     char savepath[FILENAME_MAX];
     gchar *msg;
@@ -778,7 +701,7 @@ static int install_gfn (function_info *finfo, gchar *pkgname)
     get_default_dir_for_action(savepath, SAVE_FUNCTIONS);
     
     if (finfo->uses_subdir) {
-	strcat(savepath, pkgname);
+	strcat(savepath, finfo->pkgname);
 	err = gretl_mkdir(savepath);
 	if (err) {
 	    gui_errmsg(err);
@@ -790,7 +713,7 @@ static int install_gfn (function_info *finfo, gchar *pkgname)
     if (!err) {
 	int resp;
 	
-	strcat(savepath, pkgname);
+	strcat(savepath, finfo->pkgname);
 	strcat(savepath, ".gfn");
 	resp = overwrite_gfn_check(savepath, finfo->dlg,
 				   &notified);
@@ -842,11 +765,13 @@ static int finfo_save (function_info *finfo)
 
     if (!finfo->pdfdoc && (finfo->help == NULL || *finfo->help == '\0')) {
 	warnbox(_("Please add some help text for this package"));
+	regular_help_text_callback(NULL, finfo);
 	return 1;
     }
 
     if (finfo->sample == NULL) {
 	warnbox(_("Please add a sample script for this package"));
+	edit_sample_callback(NULL, finfo);
 	return 1;
     }
 
@@ -869,25 +794,15 @@ static int finfo_save (function_info *finfo)
     }
 
     if (finfo->fname == NULL) {
-	/* first-time save */
-	gchar *pkgname = NULL;
-	int resp;
-
-	resp = save_gfn_dialog(finfo, &pkgname);
+	/* a new save */
+	int resp = save_gfn_dialog(finfo);
 
 	if (resp == 0) {
 	    /* "install" the gfn file */
-	    err = install_gfn(finfo, pkgname);
-	} else if (resp == 1) {
-	    /* we'll save to a user-determined location: but first 
-	       set the default package name on @finfo
-	    */
-	    finfo->pkgname = pkgname;
-	    pkgname = NULL;
+	    err = install_gfn(finfo);
 	}
-	g_free(pkgname);
 	if (resp < 1) {
-	    /* cancel or "install": handled above */
+	    /* cancel or "install" */
 	    return err;
 	}
     }
@@ -1275,21 +1190,24 @@ void update_gfn_help_text (windata_t *vwin)
     finfo = g_object_get_data(G_OBJECT(vwin->main), "finfo");
 
     if (finfo != NULL) {
+	/* FIXME get trimmed text? */
 	gchar *text = textview_get_text(vwin->text);
 
 	if (vwin->role == EDIT_PKG_GHLP) {
-	    free(finfo->gui_help);
+	    g_free(finfo->gui_help);
 	    if (text == NULL || string_is_blank(text)) {
 		finfo->gui_help = NULL;
 	    } else {
-		finfo->gui_help = gretl_strdup(text);
+		finfo->gui_help = text;
+		text = NULL;
 	    }
 	} else {
-	    free(finfo->help);
+	    g_free(finfo->help);
 	    if (text == NULL || string_is_blank(text)) {
 		finfo->help = NULL;
 	    } else {
-		finfo->help = gretl_strdup(text);
+		finfo->help = text;
+		text = NULL;
 	    }
 	}
 	
@@ -1320,7 +1238,7 @@ static void nullify_gui_helpwin (GtkWidget *w, function_info *finfo)
 
 static void edit_sample_callback (GtkWidget *w, function_info *finfo)
 {
-    const char *pkgname = NULL;
+    const char *pkgname = finfo_pkgname(finfo);
     gchar *title;
     PRN *prn = NULL;
 
@@ -1332,10 +1250,6 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
     if (bufopen(&prn)) {
 	return;
     }
-
-    if (finfo->pkg != NULL) {
-	pkgname = function_package_get_name(finfo->pkg);
-    } 
 
     if (pkgname != NULL) {
 	title = g_strdup_printf("%s-sample", pkgname);
@@ -1634,7 +1548,6 @@ static void gfn_to_spec_callback (function_info *finfo)
 	texts[0] = function_package_get_string(finfo->pkg, "sample-script");
     }
     if (texts[1] != NULL && finfo->pdfdoc) {
-	/* shouldn't happen! */
 	texts[1] = NULL;
     }    
     if (texts[2] == NULL) {
@@ -1846,21 +1759,60 @@ static void pdf_toggled_callback (GtkToggleButton *button,
 				  function_info *finfo)
 {
     finfo->pdfdoc = button_is_active(button);
-    
-    if (finfo->pdfdoc && finfo->help != NULL) {
-	g_free(finfo->help);
-	finfo->help = NULL;
-    }
 }
+
+#if 0 /* not ready yet */
+
+static int test_for_pdf (char *pdfname, function_info *finfo)
+{
+    int found = 0;
+
+    if (finfo->fname != NULL) {
+	struct stat sbuf;
+	char *p;
+	
+	switch_ext(pdfname, finfo->fname, "pdf");
+	if (gretl_stat(pdfname, &sbuf) == 0) {
+	    found = 1;
+	} else if ((p = strrchr(pdfname, SLASH)) != NULL) {
+	    gchar *tmp = g_strdup(p + 1);
+
+	    p++;
+	    *p = '\0';
+	    strcat(p, "doc");
+	    strcat(p, SLASHSTR);
+	    strcat(p, tmp);
+	    g_free(tmp);
+	    if (gretl_stat(pdfname, &sbuf) == 0) {
+		found = 1;
+	    }
+	} else {
+	    sprintf(pdfname, "doc%c%s", SLASH, finfo->fname);
+	    switch_ext(pdfname, pdfname, "pdf");
+	}
+    }
+
+    return found;
+}
+
+#endif
 
 static gboolean pdf_press_callback (GtkWidget *button,
 				    GdkEvent  *event,
 				    function_info *finfo)
 {
+#if 0    
+    char pdfname[FILENAME_MAX];
+    int found;
+#endif    
     const gchar *msg, *query;
     gchar *text;
     int resp;
     gboolean ret = TRUE; /* block */
+
+#if 0    
+    found = test_for_pdf(pdfname, finfo);
+#endif    
 
     msg = N_("Switching to PDF help means that you must make\n"
 	     "available a PDF file containing the help text for\n"
@@ -1868,12 +1820,12 @@ static gboolean pdf_press_callback (GtkWidget *button,
 
     query = N_("Switch to PDF help now?");
     
-    if (finfo->help != NULL && strlen(finfo->help) > 256) {
+    if (finfo->help != NULL && strlen(finfo->help) > 128) {
 	/* Seems like we may have a usable plain text help
 	   buffer in place -- so warn the user.
 	*/
 	gchar *extra = N_("It also means that any existing plain text help\n"
-			  "will be lost.\n\n");
+			  "will be lost when the package is saved.\n\n");
 	
 	text = g_strconcat(msg, extra, query, NULL);
     } else {
@@ -2691,9 +2643,11 @@ static void gui_help_text_callback (GtkButton *b, function_info *finfo)
     g_free(title);
 }
 
+/* callback for editing plain-text package help */
+
 static void regular_help_text_callback (GtkButton *b, function_info *finfo)
 {
-    const char *pkgname;
+    const char *pkgname = finfo_pkgname(finfo);
     gchar *title;
     PRN *prn = NULL;
 
@@ -2706,8 +2660,11 @@ static void regular_help_text_callback (GtkButton *b, function_info *finfo)
 	return;
     }
 
-    pkgname = function_package_get_name(finfo->pkg);
-    title = g_strdup_printf("%s help", pkgname);
+    if (pkgname != NULL) {
+	title = g_strdup_printf("%s help", pkgname);
+    } else {
+	title = g_strdup("edit help");
+    }
 
     if (finfo->help != NULL) {
 	pputs(prn, finfo->help);
@@ -4244,7 +4201,7 @@ static int maybe_fix_package_location (function_info *finfo)
 int save_function_package (const char *fname, gpointer p)
 {
     function_info *finfo = p;
-    int free_help = 0;
+    gchar *pdfstr = NULL;
     int err = 0;
 
     if (finfo->fname == NULL) {
@@ -4277,9 +4234,8 @@ int save_function_package (const char *fname, gpointer p)
 
     if (!err && finfo->pdfdoc) {
 	/* make temporary "help" placeholder */
-	finfo->help = g_strdup_printf("pdfdoc: %s.pdf",
-				      function_package_get_name(finfo->pkg));
-	free_help = 1;
+	pdfstr = g_strdup_printf("pdfdoc:%s.pdf",
+				 function_package_get_name(finfo->pkg));
     }
 
     if (!err) {
@@ -4290,7 +4246,7 @@ int save_function_package (const char *fname, gpointer p)
 					      "date",    finfo->date,
 					      "description", finfo->pkgdesc,
 					      "tags", finfo->tags,
-					      "help", finfo->help,
+					      "help", pdfstr ? pdfstr : finfo->help,
 					      "sample-script", finfo->sample,
 					      "data-requirement", finfo->dreq,
 					      "min-version", finfo->minver,
@@ -4316,10 +4272,9 @@ int save_function_package (const char *fname, gpointer p)
 	maybe_fix_package_location(finfo);
     }
 
-    if (free_help) {
+    if (pdfstr != NULL) {
 	/* free temporary placeholder */
-	g_free(finfo->help);
-	finfo->help = NULL;
+	g_free(pdfstr);
     }
 
     if (!err) {
@@ -4703,7 +4658,7 @@ static int get_lists_from_selector (int **l1, int **l2)
    selected and now we need to add info on author, version, etc.
 */
 
-void edit_new_function_package (void)
+void edit_new_function_package (gchar *pkgname)
 {
     function_info *finfo;
     int *publist = NULL;
@@ -4719,6 +4674,8 @@ void edit_new_function_package (void)
     if (finfo == NULL) {
 	return;
     }
+
+    finfo->pkgname = pkgname;
 
     if (!err) {
 	err = finfo_set_function_names(finfo, publist, privlist);

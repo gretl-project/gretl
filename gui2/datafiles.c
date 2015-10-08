@@ -1261,7 +1261,7 @@ windata_t *get_local_viewer (int remote_role)
     return vwin;
 }
 
-static void new_package_callback (GtkWidget *w, gpointer data)
+void start_new_function_package (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
     
@@ -1405,7 +1405,7 @@ static void build_funcfiles_popup (windata_t *vwin)
 		       G_CALLBACK(browser_del_func), 
 		       vwin);
 	add_popup_item(_("New"), vwin->popup, 
-		       G_CALLBACK(new_package_callback), 
+		       G_CALLBACK(start_new_function_package), 
 		       vwin);
     } else if (vwin->role == REMOTE_FUNC_FILES) {
 	/* files on server: limited menu */
@@ -1603,7 +1603,7 @@ static GretlToolItem files_items[] = {
     { N_("Unload/delete..."), GTK_STOCK_DELETE,   G_CALLBACK(browser_del_func),  BTN_DEL },
     { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
     { N_("Local machine"),  GTK_STOCK_HOME,       NULL,                          BTN_HOME },
-    { N_("New"),            GTK_STOCK_NEW,        G_CALLBACK(new_package_callback), BTN_NEW }
+    { N_("New"),            GTK_STOCK_NEW,        G_CALLBACK(start_new_function_package), BTN_NEW }
 };
 
 static int n_files_items = G_N_ELEMENTS(files_items);

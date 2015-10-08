@@ -6463,6 +6463,19 @@ static void selection_dialog_add_top_label (selector *sr)
 	    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 16);
 	}
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    } else if (ci == SAVE_FUNCTIONS) {
+	GtkWidget *hbox, *entry;
+	
+	hbox = gtk_hbox_new(FALSE, 5);
+	label = gtk_label_new(_("Name for package:"));
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);		      
+	entry = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(entry), 31);
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), 24);
+	gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
+	gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
+	sr->extra[0] = entry;
     } else {
 	if (ci == GR_XY)
 	    s = N_("XY scatterplot");
@@ -6478,8 +6491,6 @@ static void selection_dialog_add_top_label (selector *sr)
 	    s = N_("factorized boxplot");
 	else if (ci == GR_XYZ)
 	    s = N_("scatterplot with control");
-	else if (ci == SAVE_FUNCTIONS) 
-	    s = N_("functions to package");
 	else if (ci == ANOVA) 
 	    s = N_("ANOVA");
 
@@ -7380,19 +7391,65 @@ static int pkg_add_remove_callback (selector *sr)
     return 0;
 }
 
+static int check_pkgname (const char *name,
+			  GtkWidget *parent)
+{
+    int n = strlen(name);
+    int err = 0;
+
+    if (has_suffix(name, ".gfn")) {
+	n -= 4;
+    }
+
+    if (n >= FN_NAMELEN) {
+	/* too long */
+	err = 1;
+    } else if (gretl_namechar_spn(name) != n) {
+	/* contains funny stuff */
+	err = 1;
+    }
+
+    if (err) {
+	msgbox(_("Invalid package name: the name must start with a letter,\n"
+		 "must be less than 32 characters in length, and must include\n"
+		 "only ASCII letters, numbers and '_'."),
+	       GTK_MESSAGE_ERROR, parent);
+    }
+
+    return err;
+}
+
 static int functions_selected_callback (selector *sr)
 {
+    GtkWidget *entry = sr->extra[0];
+    gchar *pkgname;
+    const char *s;
+    
     if ((sr->cmdlist == NULL || *sr->cmdlist == '\0') && sr->n_left == 0) {
 	/* nothing selected (can't happen?) */
 	return 0;
+    }
+
+    s = gtk_entry_get_text(GTK_ENTRY(entry));
+
+    if (s == NULL || *s == '\0' || check_pkgname(s, sr->dlg)) {
+	gtk_widget_grab_focus(entry);
+	return 1;
     }
 
     if (sr->cmdlist != NULL) {
 	set_selector_storelist(sr->cmdlist);
     }
 
+    pkgname = g_strdup(s);
+    if (has_suffix(pkgname, ".gfn")) {
+	char *p = strrchr(pkgname, '.');
+
+	*p = '\0';
+    }
+    
     gtk_widget_destroy(sr->dlg);
-    edit_new_function_package();
+    edit_new_function_package(pkgname);
 
     return 0;
 }
@@ -7479,7 +7536,7 @@ void functions_selection_wrapper (GtkWidget *parent)
     if (!err) {
 	selector *sr;
 
-	sr = selection_dialog(SAVE_FUNCTIONS, _("Save functions"), 
+	sr = selection_dialog(SAVE_FUNCTIONS, _("Select functions"), 
 			      functions_selected_callback);
 	if (sr != NULL) {
 	    selector_set_blocking(sr, 1);

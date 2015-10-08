@@ -238,13 +238,9 @@ static void pc_change_callback (GtkAction *action, gpointer p)
     percent_change_dialog(mdata->active_var);
 }
 
-static void new_package_callback (GtkAction *action, gpointer p)
+static void new_gfn_callback (GtkAction *action, gpointer p)
 {
-    if (no_user_functions_check(NULL)) {
-	return;
-    } else {
-	fsave_callback(action, p);
-    }
+    start_new_function_package(NULL, p);
 }
 
 #ifdef ENABLE_MAILER
@@ -1565,7 +1561,7 @@ GtkActionEntry main_entries[] = {
     { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
     { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
     { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_package_callback) },
-    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_package_callback) },
+    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_gfn_callback) },
     { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
     { "EditSpec", GTK_STOCK_EDIT, N_("Edit spec file..."), NULL, NULL, G_CALLBACK(edit_spec_callback) },
     { "NistTest", NULL, N_("_NIST test suite"), NULL, NULL, NULL },

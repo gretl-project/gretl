@@ -75,6 +75,8 @@ void set_alternate_gfn_dir (windata_t *vwin, char *path);
 
 gchar *gfn_browser_get_alt_path (windata_t *vwin);
 
+void start_new_function_package (GtkWidget *w, gpointer data);
+
 windata_t *get_local_viewer (int remote_role);
 
 void listbox_select_first (windata_t *vwin);
