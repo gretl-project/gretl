@@ -50,10 +50,6 @@
 #define N_FILE_ENTRIES 4
 #define N_SPECIALS (UFUN_ROLE_MAX - 1)
 
-/* This needs some work before it "goes live" (2015-10-07)
-*/
-#define SHOW_TAG_SELECTORS 0
-
 enum {
     NO_WINDOW,
     MAIN_WINDOW,
@@ -2148,8 +2144,6 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     gtk_widget_show_all(hbox);
 }
 
-#if SHOW_TAG_SELECTORS
-
 static void tagsel_callback (GtkComboBox *combo,
 			     function_info *finfo)
 {
@@ -2280,8 +2274,6 @@ static void add_tag_selectors (GtkWidget *tbl, int i,
 	strings_array_free(S, n_tags);
     }
 }
-
-#endif /* SHOW_TAG_SELECTORS */
 
 static void pkg_changed (gpointer p, function_info *finfo)
 {
@@ -3481,7 +3473,7 @@ static void finfo_dialog (function_info *finfo)
     };
     gchar *tmp;
     int focused = 0;
-    int rows = NENTRIES + 2;
+    int rows = NENTRIES + 4;
     int i;
 
     finfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -3507,10 +3499,6 @@ static void finfo_dialog (function_info *finfo)
     vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
     gtk_container_add(GTK_CONTAINER(finfo->dlg), vbox);
-
-#if SHOW_TAG_SELECTORS    
-    rows += 2;
-#endif
 
     tbl = gtk_table_new(rows, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
@@ -3572,10 +3560,8 @@ static void finfo_dialog (function_info *finfo)
 			 G_CALLBACK(pkg_changed), finfo);
     }
 
-#if SHOW_TAG_SELECTORS    
     add_tag_selectors(tbl, i, finfo);
     i += 2;
-#endif    
     add_data_requirement_menu(tbl, i++, finfo);
     add_minver_selector(tbl, i++, finfo);
 
