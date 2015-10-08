@@ -398,7 +398,7 @@ static void pkg_save_popup (GtkWidget *button,
     cond = finfo->fname != NULL;
     flip(finfo->ui, "/popup/Upload", cond);
     cond = finfo->pdfdoc || finfo->datafiles != NULL;
-    flip(finfo->ui, "/popup/SaveZip", cond && !finfo->modified);    
+    flip(finfo->ui, "/popup/SaveZip", cond && !finfo->modified);
 
     menu = gtk_ui_manager_get_widget(finfo->ui, "/popup");
 
