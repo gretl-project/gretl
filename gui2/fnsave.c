@@ -106,6 +106,7 @@ struct function_info_ {
     gchar *sample_fname;   /* filename: sample script */
     gchar *help_fname;     /* filename: help text */
     gchar *gui_help_fname; /* filename: GUI-specific help */
+    gchar *pdfname;        /* name of PDF help file */
     char **pubnames;       /* names of public functions */
     char **privnames;      /* names of private functions */
     char **specials;       /* names of special functions */
@@ -214,6 +215,7 @@ function_info *finfo_new (void)
     finfo->sample_fname = NULL;
     finfo->help_fname = NULL;
     finfo->gui_help_fname = NULL;
+    finfo->pdfname = NULL;
     
     finfo->pubnames = NULL;
     finfo->privnames = NULL;
@@ -268,6 +270,7 @@ static void finfo_free (function_info *finfo)
     g_free(finfo->sample_fname);
     g_free(finfo->help_fname);
     g_free(finfo->gui_help_fname);
+    g_free(finfo->pdfname);
     
     g_free(finfo->menupath);
     g_free(finfo->menulabel);
@@ -395,7 +398,7 @@ static void pkg_save_popup (GtkWidget *button,
     cond = finfo->fname != NULL;
     flip(finfo->ui, "/popup/Upload", cond);
     cond = finfo->pdfdoc || finfo->datafiles != NULL;
-    flip(finfo->ui, "/popup/SaveZip", cond);    
+    flip(finfo->ui, "/popup/SaveZip", cond && !finfo->modified);    
 
     menu = gtk_ui_manager_get_widget(finfo->ui, "/popup");
 
@@ -780,6 +783,12 @@ static int finfo_save (function_info *finfo)
 
     if (check_version_string(finfo->version)) {
 	errbox(_("Invalid version string: use numbers and '.' only"));
+	return 1;
+    }
+
+    if (finfo->tags == NULL) {
+	warnbox(_("Please select a tag (or two) for this package"));
+	gtk_widget_grab_focus(finfo->tagsel[0]);
 	return 1;
     }
 
@@ -1510,14 +1519,18 @@ static int gfn_spec_save_dialog (function_info *finfo,
 void get_gfn_dir (char *dirname, gpointer p)
 {
     function_info *finfo = (function_info *) p;
-    char *s;
+    char *s = NULL;
 
-    strcpy(dirname, finfo->fname);
-    s = strrchr(dirname, SLASH);
-    if (s != NULL) {
-	*s = '\0';
-    } else {
-	*dirname = '\0';
+    *dirname = '\0';
+
+    if (finfo->fname != NULL) {
+	strcpy(dirname, finfo->fname);
+	s = strrchr(dirname, SLASH);
+	if (s != NULL) {
+	    *s = '\0';
+	} else {
+	    *dirname = '\0';
+	}
     }
 }
 
@@ -1754,65 +1767,86 @@ static void add_data_requirement_menu (GtkWidget *tbl, int i,
 static void pdf_toggled_callback (GtkToggleButton *button,
 				  function_info *finfo)
 {
+    int prev = finfo->pdfdoc;
+
     finfo->pdfdoc = button_is_active(button);
+    if (finfo->pdfdoc != prev) {
+	finfo_set_modified(finfo, TRUE);
+    }
+
+    if (!finfo->pdfdoc) {
+	g_free(finfo->pdfname);
+	finfo->pdfname = NULL;
+    }
 }
 
-#if 0 /* not ready yet */
+/* We have the name of the PDF file that the user selected
+   when switching to PDF help via the GUI, recorded in
+   finfo->pdfname. Now the user is trying to build a
+   zipfile, so we need to determine if the PDF is already
+   in place or has to be copied from somewhere else,
+   then do the copying if need be. 
 
-static int test_for_pdf (char *pdfname, function_info *finfo)
+   "Already in place" means that the basename of the PDF is
+   the same as the package name, and the file is either in
+   the same directory as the gfn or in a subdirectory named
+   "doc". 
+*/
+
+static int maybe_copy_pdf_file (function_info *finfo)
 {
-    int found = 0;
+    char *p, targ[FILENAME_MAX];
+    int copy = 1;
+    int err = 0;
+    
+    switch_ext(targ, finfo->fname, "pdf");
+    
+    if (!strcmp(targ, finfo->pdfname)) {
+	copy = 0;
+    } else if ((p = strrchr(targ, SLASH)) != NULL) {
+	gchar *tmp = g_strdup(p + 1);
 
-    if (finfo->fname != NULL) {
-	struct stat sbuf;
-	char *p;
-	
-	switch_ext(pdfname, finfo->fname, "pdf");
-	if (gretl_stat(pdfname, &sbuf) == 0) {
-	    found = 1;
-	} else if ((p = strrchr(pdfname, SLASH)) != NULL) {
-	    gchar *tmp = g_strdup(p + 1);
+	p++;
+	*p = '\0';
+	strcat(p, "doc");
+	strcat(p, SLASHSTR);
+	strcat(p, tmp);
+	g_free(tmp);
+	if (!strcmp(targ, finfo->pdfname)) {
+	    copy = 0;
+	}
+    } else {
+	sprintf(targ, "doc%c%s", SLASH, finfo->fname);
+	switch_ext(targ, targ, "pdf");
+	if (!strcmp(targ, finfo->pdfname)) {
+	    copy = 0;
+	}	    
+    }
 
-	    p++;
-	    *p = '\0';
-	    strcat(p, "doc");
-	    strcat(p, SLASHSTR);
-	    strcat(p, tmp);
-	    g_free(tmp);
-	    if (gretl_stat(pdfname, &sbuf) == 0) {
-		found = 1;
-	    }
-	} else {
-	    sprintf(pdfname, "doc%c%s", SLASH, finfo->fname);
-	    switch_ext(pdfname, pdfname, "pdf");
+    if (copy) {
+	switch_ext(targ, finfo->fname, "pdf");
+	err = gretl_copy_file(finfo->pdfname, targ);
+	if (!err) {
+	    /* this variable has done its work */
+	    g_free(finfo->pdfname);
+	    finfo->pdfname = NULL;
 	}
     }
 
-    return found;
+    return err;
 }
-
-#endif
 
 static gboolean pdf_press_callback (GtkWidget *button,
 				    GdkEvent  *event,
 				    function_info *finfo)
 {
-#if 0    
-    char pdfname[FILENAME_MAX];
-    int found;
-#endif    
     const gchar *msg, *query;
     gchar *text;
     int resp;
     gboolean ret = TRUE; /* block */
 
-#if 0    
-    found = test_for_pdf(pdfname, finfo);
-#endif    
-
-    msg = N_("Switching to PDF help means that you must make\n"
-	     "available a PDF file containing the help text for\n"
-	     "your package.\n\n");
+    msg = N_("Switching to PDF help means that you must supply\n"
+	     "a PDF file containing help text for your package.\n\n");
 
     query = N_("Switch to PDF help now?");
     
@@ -1831,8 +1865,15 @@ static gboolean pdf_press_callback (GtkWidget *button,
     resp = yes_no_dialog(NULL, text, finfo->dlg);
 
     if (resp == GRETL_YES) {
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	ret = FALSE;
+	g_free(finfo->pdfname);
+	finfo->pdfname = NULL;
+	file_selector_with_parent(SELECT_PDF, FSEL_DATA_MISC,
+				  finfo, finfo->dlg);
+	if (finfo->pdfname != NULL) {
+	    /* otherwise the user canceled */
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+	    ret = FALSE;
+	}
     }
 
     g_free(text);
@@ -3817,6 +3858,13 @@ static int gui_pkg_make_zipfile (function_info *finfo,
 	return E_DATA;
     }
 
+    if (finfo->pdfname != NULL) {
+	err = maybe_copy_pdf_file(finfo);
+	if (err) {
+	    return err;
+	}
+    }
+
     /* open printer for recording */
     bufopen(&prn);
 
@@ -4611,6 +4659,16 @@ int save_function_package_zipfile (const char *fname, gpointer p)
     function_info *finfo = p;
     
     gui_pkg_make_zipfile(finfo, NULL, fname);
+
+    return 0;
+}
+
+int set_package_pdfname (const char *fname, gpointer p)
+{
+    function_info *finfo = p;
+
+    g_free(finfo->pdfname);
+    finfo->pdfname = g_strdup(fname);
 
     return 0;
 }

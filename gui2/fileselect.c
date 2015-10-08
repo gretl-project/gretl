@@ -89,6 +89,7 @@ static struct extmap action_map[] = {
     { OPEN_GFN,          ".gfn" },
     { OPEN_SPEC,         ".spec" },
     { OPEN_BARS,         ".txt" },
+    { SELECT_PDF,        ".pdf" },
     { FILE_OP_MAX,       NULL }
 };
 
@@ -632,6 +633,8 @@ file_selector_process_result (const char *in_fname, int action,
 	err = save_function_package_spec(fname, data);
     } else if (action == SAVE_GFN_ZIP) {
 	err = save_function_package_zipfile(fname, data);
+    } else if (action == SELECT_PDF) {
+	err = set_package_pdfname(fname, data);
     } else if (action == SAVE_BOOT_DATA) {
 	bootstrap_save_callback(fname);
     } else if (action == SAVE_MARKERS) {
@@ -1012,10 +1015,15 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	remember = 0;
     } else if (action == SET_PROG ||
 	       action == SET_OTHER ||
-	       action == UPLOAD_PKG) {
+	       action == UPLOAD_PKG ||
+	       action == SELECT_PDF) {
 	fsel_action = GTK_FILE_CHOOSER_ACTION_OPEN;
 	okstr = GTK_STOCK_OK;
-	title = g_strdup_printf("gretl: %s", _("select file"));
+	if (action == SELECT_PDF) {
+	    title = g_strdup_printf("gretl: %s", _("select PDF file"));
+	} else {
+	    title = g_strdup_printf("gretl: %s", _("select file"));
+	}
 	remember = 0;
     } else if (action < END_OPEN) {
 	fsel_action = GTK_FILE_CHOOSER_ACTION_OPEN;
@@ -1045,7 +1053,9 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	/* we come here only if the user has not chosen
 	   to "install" a newly saved package */
 	get_default_dir_for_action(startdir, 0);
-    } else if (action == SAVE_GFN_SPEC || action == SAVE_GFN_ZIP) {
+    } else if (action == SAVE_GFN_SPEC ||
+	       action == SAVE_GFN_ZIP ||
+	       action == SELECT_PDF) {
 	get_gfn_dir(startdir, data);
     } else {
 	get_default_dir_for_action(startdir, action);
