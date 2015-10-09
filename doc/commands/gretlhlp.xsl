@@ -468,7 +468,7 @@
 </xsl:template>
 
 <xsl:template match="math">
-  <xsl:text>&lt;@itl="</xsl:text>
+  <xsl:text>&lt;@mth="</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
@@ -529,7 +529,7 @@
       <xsl:text>"&gt;</xsl:text>
     </xsl:when>
     <xsl:otherwise>
-      <xsl:text>&lt;@itl="</xsl:text>
+      <xsl:text>&lt;@mth="</xsl:text>
       <xsl:value-of select="@ascii"/>
       <xsl:text>"&gt;</xsl:text>
     </xsl:otherwise>

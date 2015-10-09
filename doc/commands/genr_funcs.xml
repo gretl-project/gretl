@@ -2690,7 +2690,7 @@
 	  <math>J</math><sub>1</sub> = <math>(f(x+h) - f(x-h))/2h</math>
 	</para>
 	<para context="notex">
-	  <math>J</math><sub>2</sub>  = <math>[8 (f(x+h) -  f(x-h)) -
+	  <math>J</math><sub>2</sub>  = <math>[8(f(x+h) - f(x-h)) -
 	  (f(x+2h) - f(x-2h))] /12h</math>
 	</para>
 	<para>
@@ -4875,18 +4875,19 @@
 	  exponential moving average is computed:
 	</para>
 	<para context="notex">
-	  y(t) = p*x(t) + (1-p)*y(t-1).
+	  <math>y(t) = p*x(t) + (1-p)*y(t-1)</math>
 	</para>
 	<para context="notex">
-	  By default the output series, y, is initialized using the
-	  first value of <argname>x</argname>, but the
+	  By default the output series, <math>y</math>, is initialized
+	  using the first value of <argname>x</argname>, but the
 	  <argname>control</argname> parameter may be used to specify
 	  the number of initial observations that should be averaged
-	  to produce y(0). A zero value for <argname>control</argname>
-	  indicates that all the observations should be
-	  used. Alternatively, an initializer may be specified using
-	  the optional <argname>y0</argname> argument; in that case
-	  the <argname>control</argname> argument is ignored.
+	  to produce <math>y(0)</math>. A zero value for
+	  <argname>control</argname> indicates that all the
+	  observations should be used. Alternatively, an initializer
+	  may be specified using the optional <argname>y0</argname>
+	  argument; in that case the <argname>control</argname>
+	  argument is ignored.
 	</para>
 	<para context="tex">
 	  If $0 &lt; p &lt; 1$, an exponential moving average is
@@ -4948,11 +4949,10 @@
 	  the desired random matrix.
 	</para>
 	<para>
-	  The first example above calls for a uniform random column vector
-	  of length 50, while the second example specifies a <by r="20"
-	  c="20"/> random matrix with drawings from the <math>t
-	</math>
-	distribution with 14 degrees of freedom.
+	  The first example above calls for a uniform random column
+	  vector of length 50, while the second example specifies a
+	  <by r="20" c="20"/> random matrix with drawings from the
+	  <math>t</math> distribution with 14 degrees of freedom.
 	</para>
 	<para>
 	  <seelist>
@@ -5307,10 +5307,9 @@
 	  and is called the trim parameter.
 	</para>
 	<para context="notex">
-	  The scalar <math>T
-	  </math> is used to prevent numerical
-	  problems when the kernel function is evaluated too far
-	  away from zero and is called the trim parameter.
+	  The scalar <math>T</math> is used to prevent numerical
+	  problems when the kernel function is evaluated too far away
+	  from zero and is called the trim parameter.
 	</para>
 	<para>
 	  The trim parameter can be adjusted via
@@ -5685,15 +5684,14 @@
 	  \frac{1}{T_i - t} \sum_{s=t+1}^{T_i} y_{i,s} \right) \]
 	</para>
 	<para>
-	  This transformation is sometimes used instead of differencing to
-	  remove individual effects from panel data.  For compatibility with
-	  first differences, the deviations are stored one step ahead of their
-	  true temporal location (that is, the value at observation
-	  <math>t
-	  </math> is the deviation that, strictly speaking, belongs at
-	  <math>t
-	  </math> &minus; 1).  That way one loses the first observation
-	  in each time series, not the last.
+	  This transformation is sometimes used instead of
+	  differencing to remove individual effects from panel data.
+	  For compatibility with first differences, the deviations are
+	  stored one step ahead of their true temporal location (that
+	  is, the value at observation <math>t</math> is the deviation
+	  that, strictly speaking, belongs at <math>t</math> &minus;
+	  1).  That way one loses the first observation in each time
+	  series, not the last.
 	</para>
 	<para>
 	  <seelist>
@@ -8266,7 +8264,7 @@
 	  <argname>U</argname> matrix: each row of <argname>U</argname>
 	  then becomes 
 	  <equation status="inline"
-		    ascii="u(t) = B' x(t) + e(t)." 
+		    ascii="u(t) = B'x(t) + e(t)." 
 		    tex="$u_t = B' x_t + e_t$."/>
 	</para>
 	<para>

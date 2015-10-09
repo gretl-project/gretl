@@ -23,6 +23,7 @@
 #include "dlgutils.h"
 #include "winstack.h"
 #include "tabwin.h"
+#include "guiprint.h"
 #include "gretl_func.h"
 
 #ifdef G_OS_WIN32
@@ -3169,6 +3170,7 @@ enum {
     INSERT_SUP,
     INSERT_SUB,
     INSERT_TEXT,
+    INSERT_MATH,
     INSERT_GUGLINK,
     INSERT_INPLINK,
     INSERT_GFRLINK,
@@ -3194,6 +3196,46 @@ static void insert_help_figure (GtkTextBuffer *tbuf, GtkTextIter *iter,
     }
 }
 
+static void insert_math_content (GtkTextBuffer *tbuf, GtkTextIter *iter,
+				 const char *s, const char *indent)
+{
+    static char minus[4];
+
+    if (*minus == '\0') {
+	PangoFontDescription *pfd;
+
+	pfd = pango_font_description_from_string(helpfont);
+	
+	if (font_has_symbol(pfd, 0x2212)) {
+	    /* unicode minus */
+	    minus[0] = 0xE2;
+	    minus[1] = 0x88;
+	    minus[2] = 0x92;
+	} else if (font_has_symbol(pfd, 0x2013)) {
+	    /* unicode endash */
+	    minus[0] = 0xE2;
+	    minus[1] = 0x80;
+	    minus[2] = 0x93;
+	} else {
+	    /* plain old dash */
+	    minus[0] = '-';
+	}
+	pango_font_description_free(pfd);
+    }
+    
+    while (*s) {
+	if (isalpha(*s)) {
+	    gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, 1,
+						     "italic", indent, NULL);
+	} else if (*s == '-') {
+	    gtk_text_buffer_insert(tbuf, iter, minus, -1);
+	} else {
+	    gtk_text_buffer_insert(tbuf, iter, s, 1);
+	}	    
+	s++;
+    }
+}
+
 static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
 				const char *s, int ins, const char *indent)
 {
@@ -3201,6 +3243,7 @@ static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
     switch (ins) {
     case INSERT_ITAL:
+    case INSERT_MATH: /* FIXME */
 	ftag = "italic";
 	break;
     case INSERT_REPL:
@@ -3277,6 +3320,8 @@ static int get_instruction_and_string (const char *p, char *str)
 	ins = INSERT_SUP;
     } else if (!strncmp(p, "sub", 3)) {
 	ins = INSERT_SUB;
+    } else if (!strncmp(p, "mth", 3)) {
+	ins = INSERT_MATH;
     } else if (!strncmp(p, "pdf", 3)) {
 	ins = INSERT_GUGLINK;
     } else if (!strncmp(p, "inp", 3)) {
@@ -3294,7 +3339,7 @@ static int get_instruction_and_string (const char *p, char *str)
     if (ins != INSERT_NONE) {
 	int i = 0;
 
-	p += 5;
+	p += 5; /* skip 'tag="' */
 	while (*p) {
 	    if (*p == '"' && *(p+1) == '>') {
 		str[i] = '\0';
@@ -3386,6 +3431,8 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 		ret = insert_link(tbuf, iter, targ, PDF_PAGE, indent);
 	    } else if (ins == INSERT_FIG) {
 		insert_help_figure(tbuf, iter, targ);
+	    } else if (ins == INSERT_MATH) {
+		insert_math_content(tbuf, iter, targ, indent);
 	    } else if (ins != INSERT_NONE) {
 		insert_tagged_text(tbuf, iter, targ, ins, indent);
 	    }
