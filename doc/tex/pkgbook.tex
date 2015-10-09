@@ -118,9 +118,9 @@ can appear in the public download area on the gretl server.}
 The core component of a gretl function package---in simpler cases,
 the sole component---is a \textsf{gfn} file. This is an XML file
 conforming to the Document Type Definition \texttt{gretlfunc.dtd},
-which is supplied in the gretl distribution and can also be found in
-gretl CVS.\footnote{See
-  \url{http://gretl.cvs.sourceforge.net/viewvc/gretl/gretl/share/functions/gretlfunc.dtd?view=log}.}
+which is supplied in the gretl distribution; the latest version can
+always be found online.\footnote{See
+  \url{http://sourceforge.net/p/gretl/git/ci/master/tree/share/functions/gretlfunc.dtd}.}
 Such files contain
 \begin{itemize}
 \item the hansl code for at least one function;
@@ -404,7 +404,7 @@ Packages can also be removed via the command line: use the
 \cmd{install} command with the name of an installed package plus
 \option{remove} or \option{purge}. The former option unloads a package
 from memory and also removes its menu attachment, if any (see
-section~\ref{manage-menus}); the latter option performs these action
+section~\ref{manage-menus}); the latter option performs these actions
 but also deletes the package file(s).
 
 
@@ -650,7 +650,10 @@ eval $dotdir
 \end{code}
 %
 to get the respective base directories on your system: append
-\texttt{functions} and you'll have the canonical package paths.
+\texttt{functions} and you'll have the canonical package
+paths.\footnote{OK, there's an exception here: on Mac OS X the path to
+  the per-user functions directory, which is shown above, is not the
+  same as the \verb|$dotdir| path.}
 
 When you install a package via gretl it will go to one of these
 locations, depending on the platform and whether or not you have
@@ -879,6 +882,7 @@ email = author@somewhere.net
 version = 1.0
 date = 2015-07-12
 description = Suitable description goes here
+tags = C13
 public = myfunc
 help = mypkg_help.txt
 sample-script = mypkg_sample.inp
@@ -889,7 +893,8 @@ min-version = 1.9.3
 According to this spec, the package has a single public function,
 \texttt{myfunc}, and requires gretl 1.9.3 or higher to run
 properly. For details on the specification keys used here (e.g.\
-\texttt{min-version}) see section~\ref{sec:spec-basic}.
+\texttt{tags} or \texttt{min-version}) see
+section~\ref{sec:spec-basic}.
 
 Now, assuming all the required files are in place, how do we actually
 build the package? Simple: the shell command
@@ -1051,17 +1056,10 @@ walk-through of the process.
 
 \subsection{Load at least one function into memory}
 
-There are several ways to load a function:
-
-\begin{itemize}
-\item If you have a script file containing function definitions, open
-  that file and run it.
-\item Create a script file from scratch.  Include at least one
-  function definition, and run the script.
-\item Open the GUI console and type a function definition
-  interactively.  But this method is not recommended; you are better
-  composing a function non-interactively.
-\end{itemize}
+If you have a script file containing relevant function definitions,
+open that file and run it. Otherwise you can create a script file from
+scratch in the GUI script editor: include at least one function
+definition, and run the script.
 
 For example, suppose you decide to package a function that returns the
 percentage change of a time series.\footnote{Strictly as an
@@ -1124,18 +1122,29 @@ In the gretl main window, take a look at the ``Tools, Function
 packages'' menu.  This menu contains four items: ``On local machine'',
 ``On server'', ``Edit package'' and ``New package''.
 
-Select ``New package''.  In the first dialog to appear you get to
-select:
+Select ``New package''.  In the first dialog to appear (see
+Figure~\ref{fig:startpkg} you must specify:
 
 \begin{itemize}
+\item The name of the package.
 \item One or more public functions to package.
 \item Zero or more ``private'' helper functions.
 \end{itemize}
 
-Public functions are directly available to users; private functions are
-part of the ``behind the scenes'' mechanism in a function package. So,
-at this point, you select the \cmd{pc} function from the left-hand
-panel and put it into the ``Public functions'' box.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/newpkg}
+  \caption{Starting a new function package}
+  \label{fig:startpkg}
+\end{figure}
+
+Public functions are directly available to users; private functions
+are part of the ``behind the scenes'' mechanism in a function
+package. So, at this point, you select the \cmd{pc} function from the
+left-hand panel and put it into the ``Public functions'' box. You also
+give the package a name. Leave off the \texttt{.gfn} extension, that
+will be added as required; here we name the package \texttt{pcchange}.
+ 
 
 \begin{figure}[htbp]
   \centering
@@ -1146,11 +1155,13 @@ panel and put it into the ``Public functions'' box.
 
 On clicking \textsf{OK} a second dialog should appear (see
 Figure~\ref{fig:package_editor}), where you get to enter the package
-information (author, version, date, etc.).  You should also enter help
-text for the public interface.  You have a further chance to edit the
-code of the function(s) to be packaged, by clicking on \textsf{Edit
-  function code}.  (If the package contains more than one function, a
-drop-down selector will be shown.)  
+information (author, email, version, date, etc.). Unless you have a
+PDF file containing help, you should also enter help text for the
+public interface (use the \textsf{Edit} button to open a text entry
+window).  You have a further chance to edit the code of the
+function(s) to be packaged, by clicking on \textsf{Edit function
+  code}.  (If the package contains more than one function, a drop-down
+selector will be shown.)
 
 And you get to (in fact, you \textit{must}) add a sample script that
 exercises your package.  This will be helpful for potential users, and
@@ -2374,16 +2385,6 @@ Figure~\ref{fig:package_editor}).
 
   \ttusage{description = logit/probit marginal effects}
 
- \item \texttt{min-version} (required): The minimum gretl version on
-   which the package is supported, format \textsf{M.N.P} (three
-   numbers separated by two dots). Ideally, this should truly be the
-   first gretl version on which the package will run OK, but if in
-   doubt it is preferable to specify a later version (users can
-   always update) rather than an earlier one (on which the package
-   might fail and give the user a bad impression).
-
-   \ttusage{min-version = 1.9.12}
-
 \item \texttt{data-requirement} (optional): If this element is
   supplied, it must be one of the following strings:
   \texttt{no-data-ok}, \texttt{needs-time-series-data},
@@ -2396,6 +2397,26 @@ Figure~\ref{fig:package_editor}).
   dataset is not required.
 
   \ttusage{data-requirement = needs-panel-data}
+
+\item \texttt{tags} (required): Here you must specify at least one
+  ``tag'' for your package based on the classification developed by
+  the American Economic Association for use with the \textit{Journal
+    of Economic Literature} (hence known as \textit{JEL tags}). This
+  is to help users who are searching on the gretl server for packages
+  that will perform some specific function. If you supply more than
+  one tag, the tags should be separated by spaces.
+
+  \ttusage{tags = C13}
+
+ \item \texttt{min-version} (required): The minimum gretl version on
+   which the package is supported, format \textsf{M.N.P} (three
+   numbers separated by two dots). Ideally, this should truly be the
+   first gretl version on which the package will run OK, but if in
+   doubt it is preferable to specify a later version (users can
+   always update) rather than an earlier one (on which the package
+   might fail and give the user a bad impression).
+
+   \ttusage{min-version = 1.9.12}
 
 \end{description}
 
@@ -2780,6 +2801,40 @@ button (open folder icon) and menu item become active. Selecting this
 item opens a file dialog pointing at the examples directory, from
 which you can open any scripts or datafiles that are provided. These
 are intended to supplement the required sample script.
+
+\chapter{Gretl versions}
+\label{chap:gretl-versions}
+
+As time passes this addendum should become redundant, but as of this
+writing (in the last quarter of 2015) gretl is in transition between
+two versioning schemes.
+
+For many years, gretl version identifiers have taken the form
+\texttt{M.N.P}: three integers with the traditional interpretation
+\texttt{M} = ``major version'', \texttt{N} = ``minor version'',
+\texttt{P} = ``patch-level''. However, at the biennial gretl
+conference in Berlin in the summer of 2015 it was suggested (and
+broadly accepted) that this scheme doesn't make a great deal of sense
+for gretl releases (although it does make good sense for software
+\texttt{libraries} that are widely used by other programs, for reasons
+that we needn't go into here---but see \url{http://semver.org/} if
+you're interested).
+
+The idea is that the development of gretl is a more or less continuous
+process, and it's more relevant to identify gretl releases by the year
+of the release (e.g.\ 2015) plus a letter to represent the release
+sequence in any given year: so \texttt{2015a}, \texttt{2015b}, and so
+on. (Not that we're devoted to copying anyone else, but this is how
+\textsf{Matlab} currently identifies its releases.)
+
+For most users of gretl the change in versioning scheme should be of
+no consequence, but for authors of function packages the question
+arises: how should I identify the minimal gretl version with which my
+function package is compatible?
+
+
+
+
 
 
 \bibliography{gretl}
