@@ -218,22 +218,22 @@ derivatives (Ubuntu, Knoppix and other distributions). The command
 will download and install all the necessary packages for building the
 version of gretl that is currently present in your APT
 sources. Techincally, this does not guarantee that all the software
-necessary to build the CVS version is included, because the version of
+necessary to build the git version is included, because the version of
 gretl on your repository may be quite old and build requirements
 may have changed in the meantime. However, the chances of a mismatch
 are rather remote for a reasonably up-to-date system, so in most cases
 the above command should take care of everything correctly.}
 
-\section{Getting the source: release or CVS}
+\section{Getting the source: release or git}
 
 At this point, it is possible to build from the source.  You have two
 options here: obtain the latest released source package, or retrieve
-the current CVS version of gretl (CVS = Concurrent Versions
-System).  The usual caveat applies to the CVS version, namely, that it
-may not build correctly and may contain ``experimental'' code; on the
-other hand, CVS often contains bug-fixes relative to the released
-version.  If you want to help with testing and to contribute bug
-reports, we recommend using CVS gretl.
+the current git version of gretl (git = the version control software
+currently in use for gretl).  The usual caveat applies to the git
+version, namely, that it may not build correctly and may contain
+``experimental'' code; on the other hand, git often contains bug-fixes
+relative to the released version.  If you want to help with testing
+and to contribute bug reports, we recommend using git gretl.
 
 To work with the released source:
 \begin{enumerate}
@@ -244,41 +244,38 @@ To work with the released source:
   (replace \cmd{N} with the specific version number of the file you
   downloaded at step 1).
 \item Change directory to the gretl source directory created at step 2
-  (e.g.\ \verb+gretl-1.9.14+).
+  (e.g.\ \verb+gretl-1.10.2+).
 \item Proceed to the next section, ``Configure and make''.
 \end{enumerate}
 
-To work with CVS you'll first need to install the \app{cvs} client
+To work with git you'll first need to install the \app{git} client
 program if it's not already on your system.  Relevant resources you
-may wish to consult include the CVS website at
-\href{http://www.nongnu.org/cvs/}{www.nongnu.org/cvs} and instructions
-specific to gretl at the
-\href{http://sourceforge.net/p/gretl/code/?source=navbar}{SF gretl CVS
-  page}.
+may wish to consult include the main git website at
+\href{https://git-scm.com/}{git-scm.com} and instructions specific to
+gretl:
+\href{http://ricardo.ecn.wfu.edu/~cottrell/gretl-git-basics.html}{gretl
+  git basics}.
 
-When grabbing the CVS sources \textit{for the first time}, you should
+When grabbing the git sources \textit{for the first time}, you should
 first decide where you want to store the code.  For example, you might
-create a directory called \texttt{cvs} under your home directory.
+create a directory called \texttt{git} under your home directory.
 Open a terminal window, \texttt{cd} into this directory, and type
 the following commands:
 %
 \begin{code}
-cvs -d:pserver:anonymous@gretl.cvs.sourceforge.net:/cvsroot/gretl login
-cvs -z3 -d:pserver:anonymous@gretl.cvs.sourceforge.net:/cvsroot/gretl co -P gretl
+git clone git://git.code.sf.net/p/gretl/git gretl-git
 \end{code}
 %
-After the first command you will be prompted for a password: just hit
-the Enter key.  After the second command, \app{cvs} should create a
-subdirectory named \texttt{gretl} and fill it with the current
-sources.
+At this point \app{git} should create a subdirectory named
+\texttt{gretl-git} and fill it with the current sources.
 
-When you want to \textit{update the source}, this is very simple: just move into
-the \texttt{gretl} directory and type
+When you want to \textit{update the source}, this is very simple: just
+move into the \texttt{gretl-git} directory and type
 \begin{code}
-cvs update -d -P
+git pull
 \end{code}
 
-Assuming you're now in the CVS \texttt{gretl} directory, you can
+Assuming you're now in the \texttt{gretl-git} directory, you can
 proceed in the same manner as with the released source package.
 
 
@@ -320,7 +317,7 @@ option to \texttt{configure}, as in
 --enable-build-doc
 \end{code}
 But please note that this option will work only if you are using
-the CVS source.
+the git source.
 
 
 \tip{In order to build the documentation, there is the possibility
@@ -379,7 +376,7 @@ You can also do 'make pdfdocs' to build the PDF documentation.
 \end{scode}
 \end{script}
 
-\tip{If you're using CVS, it's a good idea to re-run the
+\tip{If you're using git, it's a good idea to re-run the
   \texttt{configure} script after doing an update.  This is not always
   necessary, but sometimes it is, and it never does any harm.  For
   this purpose, you may want to write a little shell script that calls
