@@ -1304,7 +1304,7 @@ but most parameters do need comment.)
 
 If the help is not in PDF format it must be encoded in UTF-8 (or plain
 ASCII, which is a proper subset of UTF-8). We also recommend that
-lines of text are kept to close to 70 characters in width: some people
+lines of text are kept to around 70 characters in width: some people
 may like to run gretl windows at full-screen size, but many of us do
 not!
 
@@ -2443,17 +2443,11 @@ in various ways, as described below.
   Help for this package can be found. This should either be a 
   plain text (UTF-8) file, in which case the filename suffix
   doesn't really matter---although we suggest \texttt{.txt}---or a
-  PDF file, in which case the suffix must be \texttt{.pdf}. 
+  PDF file, in which case the suffix must be \texttt{.pdf} and
+  the basename of the file must be the same as that of the package
+  (as in \texttt{mypkg.gfn} and \texttt{mypkg.pdf}). 
 
   \vbusage{} \verb|help = lp-mfx_help.txt|
-
-  \textit{GUI}: The help text is found in the lower panel of the main
-  package editor window. To specify PDF documentation you put a
-  special entry into this panel, on the pattern
-
-  \texttt{pdfdoc:mypkg.pdf}
-
-  where \texttt{mypkg} should be replaced by the actual package name.
 
 \end{description}
 
