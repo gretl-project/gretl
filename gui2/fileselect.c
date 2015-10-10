@@ -818,7 +818,17 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 
 	*fname = '\0';
 	get_default_package_name(fname, data, action);
-	gtk_file_chooser_set_current_name(filesel, fname);
+	if (*fname != '\0') {
+	    gtk_file_chooser_set_current_name(filesel, fname);
+	}
+    } else if (action == SELECT_PDF) {
+	char fname[MAXLEN];
+
+	*fname = '\0';
+	get_default_package_name(fname, data, action);
+	if (*fname != '\0') {
+	    gtk_file_chooser_set_filename(filesel, fname);
+	}
     } else if (action == SAVE_MARKERS) {
 	gtk_file_chooser_set_current_name(filesel, "markers.txt");
     } else if (action == SAVE_LABELS) {
@@ -1054,9 +1064,10 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	   to "install" a newly saved package */
 	get_default_dir_for_action(startdir, 0);
     } else if (action == SAVE_GFN_SPEC ||
-	       action == SAVE_GFN_ZIP ||
-	       action == SELECT_PDF) {
+	       action == SAVE_GFN_ZIP) {
 	get_gfn_dir(startdir, data);
+    } else if (action == SELECT_PDF) {
+	get_gfn_pdf_dir(startdir, data);
     } else {
 	get_default_dir_for_action(startdir, action);
     }

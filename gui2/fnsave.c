@@ -483,39 +483,34 @@ void get_default_package_name (char *fname, gpointer p, int mode)
     function_info *finfo = (function_info *) p;
     const char *pkgname = finfo_pkgname(finfo);
 
-    if (pkgname != NULL && *pkgname != '\0') {
-	strcpy(fname, pkgname);
-    } else if (finfo->n_pub > 0) {
-	int i;
+    *fname = '\0';
 
-	/* We'll prefer, as definitive of the package name, the
-	   first public interface name that doesn't include an
-	   underscore.
-	*/
-	*fname = '\0';
-	for (i=0; i<finfo->n_pub; i++) {
-	    if (strchr(finfo->pubnames[i], '_') == NULL) {
-		strcpy(fname, finfo->pubnames[i]);
-		break;
+    if (mode == SELECT_PDF) {
+	if (finfo->pdfname != NULL) {
+	    strcpy(fname, finfo->pdfname);
+	} else if (finfo->fname != NULL) {
+	    switch_ext(fname, finfo->fname, "pdf");
+	}
+	if (*fname != '\0') {
+	    /* should be an existing file, or scrub it */
+	    struct stat sbuf = {0};
+
+	    if (gretl_stat(fname, &sbuf) != 0) {
+		*fname = '\0';
 	    }
 	}
-	/* fallback */
-	if (*fname == '\0') {
-	    strcpy(fname, finfo->pubnames[0]);
+    } else if (pkgname != NULL && *pkgname != '\0') {
+	strcpy(fname, pkgname);
+ 	if (mode == SAVE_FUNCTIONS_AS) {
+	    strcat(fname, ".inp");
+	} else if (mode == SAVE_GFN_SPEC) {
+	    strcat(fname, ".spec");
+	} else if (mode == SAVE_GFN_ZIP) {
+	    strcat(fname, ".zip");
+	} else {
+	    strcat(fname, ".gfn");
 	}
-    } else {
-	strcpy(fname, "pkg");
     }
-
-    if (mode == SAVE_FUNCTIONS_AS) {
-	strcat(fname, ".inp");
-    } else if (mode == SAVE_GFN_SPEC) {
-	strcat(fname, ".spec");
-    } else if (mode == SAVE_GFN_ZIP) {
-	strcat(fname, ".zip");
-    } else {
-	strcat(fname, ".gfn");
-    }	
 }
 
 /* fairly minimal check here! */
@@ -1511,8 +1506,8 @@ static int gfn_spec_save_dialog (function_info *finfo,
     return sinfo.retval;
 }
 
-/* callback from file selector on saving package spec
-   file: the default location should match that of the
+/* callback from file selector on saving package spec or
+   zip file: the default location should match that of the
    gfn file
 */
 
@@ -1881,49 +1876,94 @@ static gboolean pdf_press_callback (GtkWidget *button,
     return ret;
 }
 
+void get_gfn_pdf_dir (char *dirname, gpointer p)
+{
+    function_info *finfo = (function_info *) p;
+    char *s = NULL;
+
+    *dirname = '\0';
+
+    if (finfo->pdfname != NULL) {
+	strcpy(dirname, finfo->pdfname);
+	s = strrchr(dirname, SLASH);
+	if (s != NULL) {
+	    *s = '\0';
+	} else {
+	    *dirname = '\0';
+	}	
+    } else if (finfo->fname != NULL) {
+	strcpy(dirname, finfo->fname);
+	s = strrchr(dirname, SLASH);
+	if (s != NULL) {
+	    *s = '\0';
+	} else {
+	    *dirname = '\0';
+	}
+    }
+}
+
+/* We get here only if the package already has PDF doc selected
+   (otherwise the button whose callback this is is disabled).
+   If finfo->pdfname is non-NULL that means that we haven't
+   yet built a zipfile, so we should probably preserve that
+   filename (or at least, directory) as the default when we
+   open the file selector. But if finfo->pdfname is NULL we'll
+   show the gfn directory by default. See above, get_gfn_pdf_dir.
+*/
+
+static void select_pdf_callback (GtkButton *b, function_info *finfo)
+{
+    file_selector_with_parent(SELECT_PDF, FSEL_DATA_MISC,
+			      finfo, finfo->dlg);
+}
+
 static void add_help_radios (GtkWidget *tbl, int i,
 			     function_info *finfo)
 {
     GtkWidget *w, *rb, *vbox, *hbox, *tmp;
+    GtkWidget *htab;
     GSList *group = NULL;
 
     vbox = gtk_vbox_new(FALSE, 0);
-
     tmp = gtk_label_new(_("Help text"));
     gtk_misc_set_alignment(GTK_MISC(tmp), 1.0, 0.5);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), vbox, 0, 1, i, i+1);
     gtk_widget_show_all(vbox);
 
-    vbox = gtk_vbox_new(FALSE, 0);
-
-    hbox = gtk_hbox_new(FALSE, 0);
+    htab = gtk_table_new(2, 2, TRUE);
+    gtk_table_set_row_spacings(GTK_TABLE(htab), 4);
+    gtk_table_set_col_spacings(GTK_TABLE(htab), 2);
+   
     rb = gtk_radio_button_new_with_label(group, _("Plain text"));
-    gtk_box_pack_start(GTK_BOX(hbox), rb, FALSE, FALSE, 0);
+    gtk_table_attach_defaults(GTK_TABLE(htab), rb, 0, 1, 0, 1);
     w = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(regular_help_text_callback), finfo);
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 10);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-
+    gtk_table_attach_defaults(GTK_TABLE(htab), w, 1, 2, 0, 1);
     sensitize_conditional_on(w, rb);    
 
-    hbox = gtk_hbox_new(FALSE, 0);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
     rb = gtk_radio_button_new_with_label(group, _("PDF file"));
-    gtk_box_pack_start(GTK_BOX(hbox), rb, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    gtk_table_attach_defaults(GTK_TABLE(htab), rb, 0, 1, 1, 2);
     g_signal_connect(G_OBJECT(rb), "button-press-event",
 		     G_CALLBACK(pdf_press_callback), finfo);
     g_signal_connect(G_OBJECT(rb), "toggled",
 		     G_CALLBACK(pdf_toggled_callback), finfo);
+    w = gtk_button_new_with_label(_("Select"));
+    g_signal_connect(G_OBJECT(w), "clicked",
+		     G_CALLBACK(select_pdf_callback), finfo);
+    gtk_table_attach_defaults(GTK_TABLE(htab), w, 1, 2, 1, 2);
+    sensitize_conditional_on(w, rb);
 
     if (finfo->pdfdoc) {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rb), TRUE);
     }
 
-    gtk_table_attach_defaults(GTK_TABLE(tbl), vbox, 1, 2, i, i+1);
-    gtk_widget_show_all(vbox);
+    hbox = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), htab, FALSE, FALSE, 0);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, i, i+1);
+    gtk_widget_show_all(hbox);
 }
 
 static void get_maj_min_pl (int v, int *maj, int *min, int *pl)
