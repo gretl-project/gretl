@@ -3552,23 +3552,24 @@ static void finfo_dialog (function_info *finfo)
 	finfo->date,
 	finfo->pkgdesc
     };
-    gchar *tmp;
+    gchar *tmp, *title;
     int focused = 0;
     int rows = NENTRIES + 4;
     int i;
 
     finfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, -1);
-
+    gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 600, -1);
+    
     if (finfo->fname != NULL) {
-	gchar *title = title_from_filename(finfo->fname, EDIT_PKG_CODE, TRUE);
-
-	gtk_window_set_title(GTK_WINDOW(finfo->dlg), title);
-	g_free(title);
+	title = title_from_filename(finfo->fname, EDIT_PKG_CODE, TRUE);
+    } else if (finfo->pkgname != NULL) {
+	title = g_strdup_printf("gretl: %s", finfo->pkgname);
     } else {
-	gtk_window_set_title(GTK_WINDOW(finfo->dlg), 
-			     _("gretl: function package editor"));
-    } 
+	title = g_strdup(_("gretl: function package editor"));
+    }
+
+    gtk_window_set_title(GTK_WINDOW(finfo->dlg), title);
+    g_free(title);
 
     g_object_set_data(G_OBJECT(finfo->dlg), "finfo", finfo);
     gtk_widget_set_name(finfo->dlg, "pkg-editor");
