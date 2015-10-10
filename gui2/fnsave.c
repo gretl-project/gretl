@@ -2273,7 +2273,7 @@ static void add_tag_selectors (GtkWidget *tbl, int i,
 	int k = 0;
 
 	if (j == 0) {
-	    tmp = gtk_label_new(_("Tag 1"));
+	    tmp = gtk_label_new(_("Tag"));
 	} else {
 	    tmp = gtk_label_new(_("Tag 2 (optional)"));
 	}
