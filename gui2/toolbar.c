@@ -297,6 +297,20 @@ static void file_open_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
+static void open_pkg_sample (GtkWidget *w, windata_t *vwin)
+{
+    if (viewer_char_count(vwin) > 0) {
+	int resp;
+
+	resp = yes_no_dialog(NULL, _("Really replace content?"), vwin->main);
+	if (resp != GRETL_YES) {
+	    return;
+	}
+    }
+
+    file_selector(OPEN_SCRIPT, FSEL_DATA_VWIN, vwin);
+}
+
 static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
 {
     do_new_script(vwin->role, NULL);
@@ -821,7 +835,9 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     }
 
-    if (r != VIEW_LOG && f == LOG_COPY_ITEM) {
+    if (r == EDIT_PKG_SAMPLE && f == OPEN_ITEM) {
+	return G_CALLBACK(open_pkg_sample);
+    } else if (r != VIEW_LOG && f == LOG_COPY_ITEM) {
 	return NULL;
     } else if (!edit_ok(r) && f == EDIT_ITEM) {
 	return NULL;
