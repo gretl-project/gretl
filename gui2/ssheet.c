@@ -101,7 +101,7 @@ typedef struct {
                            s->cmd == SHEET_EDIT_DATASET || \
                            s->cmd == SHEET_NEW_DATASET)
 
-#define SERIES_DIGITS 8
+#define SERIES_DIGITS 10
 
 static void set_up_sheet_column (GtkTreeViewColumn *column, gint width, 
 				 gboolean expand);
