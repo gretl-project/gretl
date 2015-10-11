@@ -368,7 +368,7 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf,
     }
 
     gtk_source_buffer_end_not_undoable_action(sbuf);
-    gtk_text_buffer_set_modified(tbuf, FALSE);
+    gtk_text_buffer_set_modified(tbuf, role == EDIT_PKG_SAMPLE);
 
     /* move cursor to the beginning */
     gtk_text_buffer_get_start_iter(tbuf, &iter);

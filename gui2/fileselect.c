@@ -365,6 +365,11 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
     int role = EDIT_SCRIPT;
     int foreign = 0;
 
+    if (vwin->role == EDIT_PKG_SAMPLE) {
+	sourceview_insert_file(vwin, fname);
+	return;
+    }
+
     if (has_suffix(fname, ".R")) {
 	role = EDIT_R;
     } else if (has_suffix(fname, ".plt")) {
@@ -866,9 +871,20 @@ static void filesel_add_native_data_filter (GtkWidget *filesel)
 static int filesel_set_filters (GtkWidget *filesel, int action,
 				FselDataSrc src, gpointer data)
 {
-    int multi = 1;
-    
-    if (action == OPEN_DATA || action == APPEND_DATA) {
+    int multi = 1, role = 0;
+
+    if (src == FSEL_DATA_VWIN) {
+	windata_t *vwin = (windata_t *) data;
+
+	role = vwin->role;
+    }
+
+    if (role == EDIT_PKG_SAMPLE) {
+	GtkFileFilter *filter = get_file_filter(action, data);
+
+	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filter);
+	multi = 0;	
+    } else if (action == OPEN_DATA || action == APPEND_DATA) {
 	filesel_add_native_data_filter(filesel);
 	filesel_add_filter(filesel, N_("CSV files (*.csv)"), "*.csv");
 	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt");
