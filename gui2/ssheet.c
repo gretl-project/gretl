@@ -2075,28 +2075,43 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
 
     /* insert data values */
 
-    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-
-    for (t=dataset->t1; t<=dataset->t2; t++) {
-	if (c == SHEET_NEW_DATASET) {
-	    /* no hidden vars to consider; insert NAs for first var */
+    if (c == SHEET_NEW_DATASET) {
+	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+	for (t=dataset->t1; t<=dataset->t2; t++) {
 	    gtk_list_store_set(store, &iter, 1, "", -1);
-	} else {
-	    char numstr[32];
-	    int vi;
+	}
+	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+    } else {
+	GtkTreeViewColumn *col;
+	int vi, numlen, maxwidth;
+	char numstr[32];
 
-	    for (i=1; i<=sheet->varlist[0]; i++) {
-		vi = sheet->varlist[i];
+	for (i=1; i<=sheet->varlist[0]; i++) {
+	    maxwidth = 0;
+	    vi = sheet->varlist[i];
+	    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+	    for (t=dataset->t1; t<=dataset->t2; t++) {
 		if (na(dataset->Z[vi][t])) {
 		    *numstr = '\0';
 		} else {
 		    sprintf(numstr, sheet->numfmt, sheet->digits, 
 			    dataset->Z[vi][t]);
+		    numlen = strlen(numstr);
+		    if (numlen > maxwidth) {
+			maxwidth = numlen;
+		    }
 		}
 		gtk_list_store_set(store, &iter, i, numstr, -1);
+		gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
 	    }
+	    col = gtk_tree_view_get_column(view, i);
+	    memset(numstr, 0, sizeof numstr);
+	    for (t=0; t<maxwidth; t++) {
+		numstr[t] = '0';
+	    }
+	    maxwidth = get_string_width(numstr);
+	    gtk_tree_view_column_set_max_width(col, 4 + maxwidth);
 	}
-	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     }
 
     sheet->orig_main_v = dataset->v;

@@ -12,6 +12,7 @@ version 2015d-git, in progress
   when the test is on a multi-equation model
 - Document some undocumented accessor variables
 - Make some error messages more specific and explicit
+- GUI function package editor: further fixes and enhancements
 - Fix bug: using options with the "data" command was broken
   in the GUI program
   
