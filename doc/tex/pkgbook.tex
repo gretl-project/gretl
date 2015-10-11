@@ -1246,6 +1246,24 @@ selected PDF documentation, however, you can use the \textsf{Select}
 button (see Figure~\ref{fig:package_editor}) to check where gretl is
 finding the file, or to update it from another location.
 
+\subsection{Saving a zip file}
+\label{sec:save-zip}
+
+In the little menu that is brought up by the \textsf{Save} button in
+the package editor window, one of the items is ``Save zip file...''.
+This item becomes active if and only if the following conditions are
+satisfied:
+\begin{itemize}
+\item Your package offers PDF documentation and/or additional data
+  files. That is, the specified materials can't all be packed into the
+  straight \textsf{gfn} XML format.
+\item The \textsf{gfn} file is up-to-date with any current changes
+  made in the package editor.
+\end{itemize}
+If you think you ought to be able to save a zip file but that option
+is not enabled, you probably have to save the \textsf{gfn} file first
+(to keep things in sync).
+
 \subsection{Check your package!}
 
 Before sharing your package with others, you must check that it
