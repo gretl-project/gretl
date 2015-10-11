@@ -174,8 +174,8 @@ with some tips on usage.
 
 Please note that many of the statements and illustrations in this
 \textit{Guide} reflect refinements made to gretl's package management
-facilities since the release of gretl version 1.10.1. If you plan to
-follow along you should update to gretl 1.10.2 or higher.
+facilities over recent months. If you plan to follow along you should
+update to gretl 2015d or higher.
 
 %%%%%%%%%%%%%%%% chapter break %%%%%%%%%%%%%%%%%
 
@@ -1130,7 +1130,9 @@ zero or more ``private'' helper functions.
 \begin{figure}[htbp]
   \centering
   \includegraphics[scale=0.5]{figures/newpkg}
-  \caption{Starting a new function package}
+  \caption{Starting a new function package: you specify a name for the
+    package and select the functions to be included from the list on
+    the left.}
   \label{fig:startpkg}
 \end{figure}
 
@@ -1140,11 +1142,10 @@ package. So, at this point, you select the \cmd{pc} function from the
 left-hand panel and put it into the ``Public functions'' box. You also
 give the package a name. Leave off the \texttt{gfn} extension, that
 will be added as required; here we name the package \texttt{pcchange}.
- 
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[scale=0.5]{figures/package_editor}
+  \includegraphics[scale=0.55]{figures/package_editor}
   \caption{The package editor window}
   \label{fig:package_editor}
 \end{figure}
@@ -1153,11 +1154,12 @@ On clicking \textsf{OK} a second dialog should appear (see
 Figure~\ref{fig:package_editor}), where you get to enter the package
 information (author, email, version, date, etc.). Unless you have a
 PDF file containing help, you should also enter help text for the
-public interface (use the \textsf{Edit} button to open a text entry
-window).  You have a further chance to edit the code of the
-function(s) to be packaged, by clicking on \textsf{Edit function
-  code}.  (If the package contains more than one function, a drop-down
-selector will be shown.)
+public interface: use the \textsf{Edit} button to open a text entry
+window. (If you have documentation in PDF format, see
+section~\ref{sec:gui-pdf}.) You have a further chance to edit the code
+of the function(s) to be packaged, by clicking on \textsf{Edit
+  function code}.  (If the package contains more than one function, a
+drop-down selector will be shown.)
 
 And you get to (in fact, you \textit{must}) add a sample script that
 exercises your package.  This will be helpful for potential users, and
@@ -1219,6 +1221,30 @@ second you'll get a regular File Save dialog box. The advantage of the
 first choice is that the package will be found automatically by gretl.
 However, if you're just experimenting and don't want to ``install''
 the package yet, by all means choose a different location.
+
+\subsection{Adding PDF documentation}
+\label{sec:gui-pdf}
+
+The prerequisite here is that you have available a suitable PDF file
+containing documentation for your package. We can't help you with
+that. But if you have such a file, then click on the \textsf{PDF file}
+radio button to the right of the ``Help text'' field in the package
+editor. If you have already entered plain-text help you will see a
+dialog box warning you that this will be lost (not right away, but if
+and when you save the package). Otherwise you go straight to a file
+chooser window where you select the PDF file.
+
+To be included with your package, the PDF file must (a) be in the same
+location as the \textsf{gfn} file, and (b) have the same ``basename''
+(for example \texttt{mypkg.pdf} if the package is called
+\textsf{mypkg}). Nonetheless, you can select a PDF file of any name
+from any location, and gretl will take care of copying it into place
+under the correct name. But please note: if gretl has to copy the file
+into place, any changes made to the PDF in its original location will
+\textit{not} propagate to the copy included in the package. Having
+selected PDF documentation, however, you can use the \textsf{Select}
+button (see Figure~\ref{fig:package_editor}) to check where gretl is
+finding the file, or to update it from another location.
 
 \subsection{Check your package!}
 
@@ -2473,8 +2499,8 @@ the \textsf{Extra properties} button.
   or more slash-separated elements, using the internal representation
   of the menu tree in \texttt{gretlmain.xml} or
   \texttt{gretlmodel.xml}---these XML UI files can be found in the
-  gretl source package or in CVS.\footnote{See
-    \url{http://gretl.cvs.sourceforge.net/viewvc/gretl/gretl/gui2/}}
+  gretl source package or in git.\footnote{See
+    \url{http://sourceforge.net/p/gretl/git/ci/master/tree/gui2/}.}
 
   \ttusage{menu-attachment = MODELWIN/Analysis}
 
@@ -2652,7 +2678,7 @@ For many years, gretl version identifiers have taken the form
 conference in Berlin in the summer of 2015 it was suggested (and
 broadly accepted) that this scheme doesn't make a great deal of sense
 for gretl releases (although it does make good sense for software
-\texttt{libraries} that are widely used by other programs, for reasons
+\textit{libraries} that are widely used by other programs, for reasons
 that we needn't go into here---but see \url{http://semver.org/} if
 you're interested).
 
@@ -2660,8 +2686,8 @@ The idea is that the development of gretl is a more or less continuous
 process, and it's more relevant to identify gretl releases by the year
 of the release (e.g.\ 2015) plus a letter to represent the release
 sequence in any given year: so \texttt{2015a}, \texttt{2015b}, and so
-on. (Not that we're devoted to copying anyone else, but this is how
-\textsf{Matlab} currently identifies its releases.)
+on.\footnote{Not that we're devoted to copying anyone else, but this
+  is how \textsf{Matlab} currently identifies its releases.}
 
 For authors of function packages the question arises: given this
 change, how should you identify the minimal gretl version with which
@@ -2673,8 +2699,8 @@ new style for gretl \texttt{2015d} onward. In the GUI package editor
 only the new style is supported. The gretl ChangeLog
 (\url{http://gretl.sourceforge.net/ChangeLog.html}) can be used to map
 from historical identifiers to their new-style equivalents. For
-example 1.9.8 maps to \texttt{2012a} (being the first release in
-2012).
+example, the old-style version number \texttt{1.9.8} maps to
+\texttt{2012a} (being the first release in 2012).
 
 \chapter{Zip package details}
 \label{chap:zipfile}

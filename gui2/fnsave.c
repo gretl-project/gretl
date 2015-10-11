@@ -1835,29 +1835,28 @@ static gboolean pdf_press_callback (GtkWidget *button,
 				    GdkEvent  *event,
 				    function_info *finfo)
 {
-    const gchar *msg, *query;
-    gchar *text;
-    int resp;
+    int resp = GRETL_YES;
     gboolean ret = TRUE; /* block */
 
-    msg = N_("Switching to PDF help means that you must supply\n"
-	     "a PDF file containing help text for your package.\n\n");
-
-    query = N_("Switch to PDF help now?");
-    
     if (finfo->help != NULL && strlen(finfo->help) > 128) {
 	/* Seems like we may have a usable plain text help
 	   buffer in place -- so warn the user.
 	*/
-	gchar *extra = N_("It also means that any existing plain text help\n"
-			  "will be lost when the package is saved.\n\n");
-	
-	text = g_strconcat(msg, extra, query, NULL);
-    } else {
-	text = g_strconcat(msg, query, NULL);
-    }
+	const gchar *msg1, *msg2, *query;
+	gchar *text;
 
-    resp = yes_no_dialog(NULL, text, finfo->dlg);
+	msg1 = N_("Switching to PDF help means that you must supply\n"
+		  "a PDF file containing help text for your package.\n\n");
+
+	msg2 = N_("It also means that any existing plain text help\n"
+		  "will be lost when the package is saved.\n\n");
+
+	query = N_("Switch to PDF help now?");
+	
+	text = g_strconcat(_(msg1), _(msg2), _(query), NULL);
+	resp = yes_no_dialog(NULL, text, finfo->dlg);
+	g_free(text);
+    }
 
     if (resp == GRETL_YES) {
 	g_free(finfo->pdfname);
@@ -1870,8 +1869,6 @@ static gboolean pdf_press_callback (GtkWidget *button,
 	    ret = FALSE;
 	}
     }
-
-    g_free(text);
 
     return ret;
 }
