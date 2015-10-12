@@ -93,7 +93,7 @@ struct function_info_ {
     GtkUIManager *ui;      /* for dialog File menu */
     GList *codewins;       /* list of windows editing function code */
     fnpkg *pkg;            /* pointer to package being edited */
-    gchar *pkgname;        /* suggested savename (may be temporary) */
+    gchar *ininame;        /* initial name for new package (temporary) */
     gchar *fname;          /* package filename */
     gchar *author;         /* package author */
     gchar *email;          /* author's email address */
@@ -177,7 +177,7 @@ function_info *finfo_new (void)
 
     finfo->pkg = NULL;
     finfo->fname = NULL;
-    finfo->pkgname = NULL;
+    finfo->ininame = NULL;
     finfo->author = NULL;
     finfo->email = NULL;
     finfo->version = NULL;
@@ -269,6 +269,7 @@ static void finfo_free (function_info *finfo)
     g_free(finfo->help);
     g_free(finfo->gui_help);
 
+    g_free(finfo->ininame);
     g_free(finfo->sample_fname);
     g_free(finfo->help_fname);
     g_free(finfo->gui_help_fname);
@@ -479,12 +480,13 @@ static void login_finalize (GtkWidget *w, login_info *linfo)
 
 static const char *finfo_pkgname (function_info *finfo)
 {
-    if (finfo->pkgname != NULL) {
-	return finfo->pkgname;
-    } else if (finfo->pkg != NULL) {
+    if (finfo->pkg != NULL) {
 	return function_package_get_name(finfo->pkg);
+    } else if (finfo->ininame != NULL) {
+	return finfo->ininame;
     } else {
-	return NULL;
+	/* "can't happen" */
+	return "untitled";
     }
 }
 
@@ -514,7 +516,7 @@ void get_default_package_name (char *fname, gpointer p, int mode)
 		*fname = '\0';
 	    }
 	}
-    } else if (pkgname != NULL && *pkgname != '\0') {
+    } else {
 	strcpy(fname, pkgname);
  	if (mode == SAVE_FUNCTIONS_AS) {
 	    strcat(fname, ".inp");
@@ -710,7 +712,7 @@ static int install_gfn (function_info *finfo)
     get_default_dir_for_action(savepath, SAVE_FUNCTIONS);
     
     if (finfo->uses_subdir) {
-	strcat(savepath, finfo->pkgname);
+	strcat(savepath, finfo_pkgname(finfo));
 	err = gretl_mkdir(savepath);
 	if (err) {
 	    gui_errmsg(err);
@@ -722,7 +724,7 @@ static int install_gfn (function_info *finfo)
     if (!err) {
 	int resp;
 	
-	strcat(savepath, finfo->pkgname);
+	strcat(savepath, finfo_pkgname(finfo));
 	strcat(savepath, ".gfn");
 	resp = overwrite_gfn_check(savepath, finfo->dlg,
 				   &notified);
@@ -741,7 +743,7 @@ static int install_gfn (function_info *finfo)
     return err;
 }
 
-/* Callback from "Save" , when editing a function package. We first
+/* Callback from "Save", when editing a function package. We first
    assemble and check the relevant info then if the package is new and
    has not been saved yet (which is flagged by finfo->fname being
    NULL) we offer a file selector, otherwise we go ahead and save
@@ -831,9 +833,6 @@ static int finfo_save (function_info *finfo)
     } else {
 	err = save_function_package(finfo->fname, finfo);
     }
-
-    g_free(finfo->pkgname);
-    finfo->pkgname = NULL;
 
     return err;
 }
@@ -1266,11 +1265,7 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
 	return;
     }
 
-    if (pkgname != NULL) {
-	title = g_strdup_printf("%s-sample", pkgname);
-    } else {
-	title = g_strdup("sample script");
-    }
+    title = g_strdup_printf("%s-sample", pkgname);
 
     if (finfo->sample != NULL) {
 	pputs(prn, finfo->sample);
@@ -1466,7 +1461,7 @@ static int gfn_spec_save_dialog (function_info *finfo,
     
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
-    pkgname = function_package_get_name(finfo->pkg);
+    pkgname = finfo_pkgname(finfo);
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
@@ -1987,7 +1982,11 @@ static void get_maj_min_pl (int v, int *maj, int *min, int *pl)
 
 static int translate_program_version (int v, int old_to_new)
 {
-    int vtrans[13][2] = {
+    int vtrans[17][2] = {
+	{10904, 20111},
+	{10905, 20112},
+	{10906, 20113},
+	{10907, 20114},
 	{10908, 20121},
 	{10909, 20122},
 	{10910, 20123},
@@ -2005,7 +2004,7 @@ static int translate_program_version (int v, int old_to_new)
     int i;
 
     if (old_to_new) {
-	for (i=0; i<13; i++) {
+	for (i=0; i<17; i++) {
 	    if (v == vtrans[i][0]) {
 		return vtrans[i][1];
 	    }
@@ -2015,7 +2014,7 @@ static int translate_program_version (int v, int old_to_new)
 	}
     } else {
 	/* new to old */
-	for (i=0; i<13; i++) {
+	for (i=0; i<17; i++) {
 	    if (v == vtrans[i][1]) {
 		return vtrans[i][0];
 	    }
@@ -2147,7 +2146,7 @@ static void add_minver_selector (GtkWidget *tbl, int i,
 
     if (atoi(GRETL_VERSION) >= 2015) {
 	/* new style program versioning */
-	int minminyr = 2012; /* gretl 1.9.8 */
+	int minminyr = 2011; /* gretl 1.9.4 */
 	int minyr, minrev;   /* requested by package */
 	int cp_yr;           /* this program year */
 
@@ -2711,7 +2710,7 @@ static void gui_help_text_callback (GtkButton *b, function_info *finfo)
 	return;
     }
 
-    pkgname = function_package_get_name(finfo->pkg);
+    pkgname = finfo_pkgname(finfo);
     title = g_strdup_printf("%s gui-help", pkgname);
 
     if (finfo->gui_help != NULL) {
@@ -2745,11 +2744,7 @@ static void regular_help_text_callback (GtkButton *b, function_info *finfo)
 	return;
     }
 
-    if (pkgname != NULL) {
-	title = g_strdup_printf("%s help", pkgname);
-    } else {
-	title = g_strdup("edit help");
-    }
+    title = g_strdup_printf("%s help", pkgname);
 
     if (finfo->help != NULL) {
 	pputs(prn, finfo->help);
@@ -3571,15 +3566,8 @@ static void finfo_dialog (function_info *finfo)
 
     finfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 600, -1);
-    
-    if (finfo->fname != NULL) {
-	title = title_from_filename(finfo->fname, EDIT_PKG_CODE, TRUE);
-    } else if (finfo->pkgname != NULL) {
-	title = g_strdup_printf("gretl: %s", finfo->pkgname);
-    } else {
-	title = g_strdup(_("gretl: function package editor"));
-    }
 
+    title = g_strdup_printf("gretl: %s", finfo_pkgname(finfo));
     gtk_window_set_title(GTK_WINDOW(finfo->dlg), title);
     g_free(title);
 
@@ -3602,7 +3590,7 @@ static void finfo_dialog (function_info *finfo)
     gtk_label_set_markup(GTK_LABEL(label), tmp);
     g_free(tmp);    
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     window_add_winlist(finfo->dlg, hbox);
 
     tbl = gtk_table_new(rows, 2, FALSE);
@@ -4291,6 +4279,16 @@ static int maybe_fix_package_location (function_info *finfo)
     return err;
 }
 
+static void retitle_gfn_dialog (function_info *finfo,
+				const char *pkgname)
+{
+    gchar *title;
+
+    title = g_strdup_printf("gretl: %s", pkgname);
+    gtk_window_set_title(GTK_WINDOW(finfo->dlg), title);
+    g_free(title);
+}
+
 /* Callback from file selector when saving a function package, or
    directly from the package editor if using the package's
    existing filename.
@@ -4386,11 +4384,8 @@ int save_function_package (const char *fname, gpointer p)
 	gui_errmsg(err);
     } else {
 	const char *pkgname = function_package_get_name(finfo->pkg);
-	gchar *title;
-
-	title = g_strdup_printf("gretl: %s", pkgname);
-	gtk_window_set_title(GTK_WINDOW(finfo->dlg), title);
-	g_free(title);
+	
+	retitle_gfn_dialog(finfo, pkgname);
 	finfo_set_modified(finfo, FALSE);
 	gtk_widget_set_sensitive(finfo->validate, TRUE);
 	maybe_update_gfn_browser(pkgname,
@@ -4400,6 +4395,10 @@ int save_function_package (const char *fname, gpointer p)
 				 finfo->uses_subdir,
 				 finfo->pdfdoc);
 	mkfilelist(FILE_LIST_GFN, finfo->fname);
+
+	/* destroy the temporary pkgname variable */
+	g_free(finfo->ininame);
+	finfo->ininame = NULL;
 	
 	/* revise stored gui package info in accordance with any
 	   changes above, as needed */
@@ -4762,8 +4761,9 @@ static int get_lists_from_selector (int **l1, int **l2)
     return err;
 }
 
-/* called from function selection dialog: a set of functions has been
-   selected and now we need to add info on author, version, etc.
+/* Called from function selection dialog: a name has been specified
+   anda set of functions has been selected -- now we need to add info
+   on author, version, etc, etc.
 */
 
 void edit_new_function_package (gchar *pkgname)
@@ -4783,7 +4783,7 @@ void edit_new_function_package (gchar *pkgname)
 	return;
     }
 
-    finfo->pkgname = pkgname;
+    finfo->ininame = pkgname;
 
     if (!err) {
 	err = finfo_set_function_names(finfo, publist, privlist);

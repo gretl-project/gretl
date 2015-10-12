@@ -302,7 +302,9 @@ static void open_pkg_sample (GtkWidget *w, windata_t *vwin)
     if (viewer_char_count(vwin) > 0) {
 	int resp;
 
-	resp = yes_no_dialog(NULL, _("Really replace content?"), vwin->main);
+	resp = yes_no_dialog(NULL, _("Really replace content with\n"
+				     "a selected file?"),
+			     vwin->main);
 	if (resp != GRETL_YES) {
 	    return;
 	}
