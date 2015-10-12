@@ -86,6 +86,7 @@ struct function_info_ {
     GtkWidget *specdlg;    /* pkg spec save dialog */
     GtkWidget *validate;   /* "Validate" gfn button */
     GtkWidget *tagsel[2];  /* tag selector combos */
+    GtkWidget *pkglabel;   /* label showing package name */
     windata_t *samplewin;  /* window for editing sample script */
     windata_t *helpwin;    /* window for editing regular help text */
     windata_t *gui_helpwin; /* window for editing GUI-specific help text */
@@ -155,6 +156,7 @@ static int check_package_filename (const char *fname,
 static void regular_help_text_callback (GtkButton *b,
 					function_info *finfo);
 static void edit_sample_callback (GtkWidget *w, function_info *finfo);
+static const char *finfo_pkgname (function_info *finfo);
 
 function_info *finfo_new (void)
 {
@@ -410,7 +412,20 @@ static void pkg_save_popup (GtkWidget *button,
 
 static void finfo_set_modified (function_info *finfo, gboolean s)
 {
+    gchar *tmp;
+    
     finfo->modified = s;
+    
+    if (s) {
+	tmp = g_markup_printf_escaped("<span weight=\"bold\">%s</span> *",
+				      finfo_pkgname(finfo));
+    } else {
+	tmp = g_markup_printf_escaped("<span weight=\"bold\">%s</span>",
+				      finfo_pkgname(finfo));
+    }
+    
+    gtk_label_set_markup(GTK_LABEL(finfo->pkglabel), tmp);
+    g_free(tmp);
 }
 
 static void login_init_or_free (login_info *linfo, int freeit)
@@ -3578,6 +3593,17 @@ static void finfo_dialog (function_info *finfo)
     vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
     gtk_container_add(GTK_CONTAINER(finfo->dlg), vbox);
+
+    /* package name label and window list button */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = g_markup_printf_escaped("<span weight=\"bold\">%s</span>",
+				  finfo_pkgname(finfo));
+    finfo->pkglabel = label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(label), tmp);
+    g_free(tmp);    
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    window_add_winlist(finfo->dlg, hbox);
 
     tbl = gtk_table_new(rows, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
