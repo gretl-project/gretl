@@ -1395,8 +1395,8 @@ int positive_int_from_string (const char *s)
 
 static int letter_to_int (char c)
 {
-    const char *s = "abcdefghi";
-    int i = 1;
+    const char *s = "abcdefghij";
+    int i = 0;
 
     while (*s) {
 	if (c == *s) {
@@ -1443,14 +1443,14 @@ int gretl_version_number (const char *version)
 char *gretl_version_string (char *targ, int vnum)
 {
     if (vnum >= 20150) {
-	const char *s = "abcdefghi";
+	const char *s = "abcdefghij";
 	char c;
 	int y;
 
 	y = vnum / 10;
 	c = vnum - 10 * y - 1;
 	
-	if (c >= 0 && c < 9) {
+	if (c >= 0 && c < 10) {
 	    c = s[(int) c];
 	} else {
 	    c = 'a';

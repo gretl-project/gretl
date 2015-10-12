@@ -1,15 +1,16 @@
 <?php
 function letter_to_int ($c)
 {
-    if ($c == 'a') return 1;
-    if ($c == 'b') return 2;
-    if ($c == 'c') return 3;
-    if ($c == 'd') return 4;
-    if ($c == 'e') return 5;
-    if ($c == 'f') return 6;
-    if ($c == 'g') return 7;
-    if ($c == 'h') return 8;
-    if ($c == 'i') return 9;
+    if ($c == 'a') return 0;
+    if ($c == 'b') return 1;
+    if ($c == 'c') return 2;
+    if ($c == 'd') return 3;
+    if ($c == 'e') return 4;
+    if ($c == 'f') return 5;
+    if ($c == 'g') return 6;
+    if ($c == 'h') return 7;
+    if ($c == 'i') return 8;
+    if ($c == 'j') return 9;
     return 0;
 }
 

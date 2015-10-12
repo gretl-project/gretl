@@ -975,11 +975,22 @@
     <function name="$version" section="access" output="scalar">
       <description>
 	<para>
-	  Returns an integer value that codes for the program version. The
-	  gretl version string takes the form <lit>x.y.z</lit> (for example,
-	  1.9.10).  The return value from this accessor is formed as
-	  <lit>10000*x + 100*y + z</lit>, so that 1.9.10 translates as 
-          10910.
+	  Returns an integer value that codes for the program
+	  version. The current gretl version string takes the form of
+	  a 4-digit year followed by a letter from a to j representing
+	  the sequence of releases within the year (for example,
+	  2015d).  The return value from this accessor is formed as 10
+	  times the year plus the zero-based lexical order of the
+	  letter, so 2015d translates to 20153.
+	</para>
+	<para>
+	  Prior to gretl 2015d, version identifiers took the form
+	  x.y.z (three integers separated by dots), and in that case
+	  the accessor value was calculated as <lit>10000*x + 100*y +
+	  z</lit>, so that for example 1.10.2 (the last release under
+	  the old scheme) translates as 11002. Numerical order of
+	  <lit>$version</lit> values is therefore preserved across the
+	  change in versioning scheme.
 	</para>
       </description>
     </function>

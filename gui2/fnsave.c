@@ -1973,37 +1973,36 @@ static void add_help_radios (GtkWidget *tbl, int i,
     gtk_widget_show_all(hbox);
 }
 
-static void get_maj_min_pl (int v, int *maj, int *min, int *pl)
-{
-    *maj = v / 10000;
-    *min = (v - *maj * 10000) / 100;
-    *pl = v - *maj * 10000 - *min * 100;
-}
+enum {
+    OLD_TO_NEW,
+    NEW_TO_OLD,
+    FOR_DISPLAY
+};   
 
-static int translate_program_version (int v, int old_to_new)
+static int translate_program_version (int v, int trans)
 {
     int vtrans[17][2] = {
-	{10904, 20111},
-	{10905, 20112},
-	{10906, 20113},
-	{10907, 20114},
-	{10908, 20121},
-	{10909, 20122},
-	{10910, 20123},
-	{10911, 20124},
-	{10912, 20131},
-	{10913, 20132},
-	{10914, 20133},
-	{10990, 20141},
-	{10991, 20142},
-	{10992, 20143},
-	{11000, 20151},
-	{11001, 20152},
-	{11002, 20153}
+	{10904, 20110},
+	{10905, 20111},
+	{10906, 20112},
+	{10907, 20113},
+	{10908, 20120},
+	{10909, 20121},
+	{10910, 20122},
+	{10911, 20123},
+	{10912, 20130},
+	{10913, 20131},
+	{10914, 20132},
+	{10990, 20140},
+	{10991, 20141},
+	{10992, 20142},
+	{11000, 20150},
+	{11001, 20151},
+	{11002, 20152}
     };
     int i;
 
-    if (old_to_new) {
+    if (trans == OLD_TO_NEW) {
 	for (i=0; i<17; i++) {
 	    if (v == vtrans[i][0]) {
 		return vtrans[i][1];
@@ -2013,74 +2012,55 @@ static int translate_program_version (int v, int old_to_new)
 	    return vtrans[0][1];
 	}
     } else {
-	/* new to old */
+	/* new to old, or "for display" */
 	for (i=0; i<17; i++) {
 	    if (v == vtrans[i][1]) {
 		return vtrans[i][0];
+	    } else if (i < 16 && v < vtrans[i+1][1]) {
+		return vtrans[i][0];
 	    }
 	}
-	if (v < vtrans[0][1]) {
+	if (trans == NEW_TO_OLD && v < vtrans[0][1]) {
 	    return vtrans[0][0];
 	}	
-    }	
-
-    return 20152;
-}
-
-static void get_year_rev (int v, int *yr, int *rev)
-{
-    /* Note: we need to make allowance for current gretl
-       editing a gfn file with a minimum gretl version
-       recorded in the old way.
-    */
-    if (v < 20150) {
-	v = translate_program_version(v, 1);
-    }
-    
-    *yr = v / 10;
-    *rev = v - *yr * 10;
-}
-
-static void old_adjust_minver (GtkWidget *w, function_info *finfo)
-{
-    int val = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
-    int lev = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "level"));
-    int maj, min, pl;
-
-    get_maj_min_pl(finfo->minver, &maj, &min, &pl);
-
-    if (lev == 1) {
-	finfo->minver = 10000 * val + 100 * min + pl;
-    } else if (lev == 2) {
-	finfo->minver = 10000 * maj + 100 * val + pl;
-    } else if (lev == 3) {
-	finfo->minver = 10000 * maj + 100 * min + val;
     }
 
-    finfo_set_modified(finfo, TRUE);
+    return trans == FOR_DISPLAY ? 0 : 20151;
 }
 
-static void new_adjust_minver (GtkWidget *w, function_info *finfo)
+static void set_oldver_label (GtkWidget *label, int minver)
 {
-    int val = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
-    int lev = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "level"));
-    int yr, rev;
+    int oldv = translate_program_version(minver, FOR_DISPLAY);
 
-    get_year_rev(finfo->minver, &yr, &rev);
-
-    if (lev == 1) {
-	finfo->minver = 10 * val + rev;
+    if (oldv == 0) {
+	gtk_label_set_text(GTK_LABEL(label), "");
     } else {
-	finfo->minver = 10 * yr + val;
-    }
+	char vstr[12];
 
+	vstr[0] = '(';
+	gretl_version_string(vstr + 1, oldv);
+	strncat(vstr, ")", 1);
+	gtk_label_set_text(GTK_LABEL(label), vstr);
+    }    
+}
+
+static void adjust_minver (GtkSpinButton *b, function_info *finfo)
+{
+    GtkWidget *label;
+
+    finfo->minver = gtk_spin_button_get_value_as_int(b);
     finfo_set_modified(finfo, TRUE);
+
+    label = g_object_get_data(G_OBJECT(b), "old-label");
+    if (label != NULL) {
+	set_oldver_label(label, finfo->minver);
+    }
 }
 
 static int letter_to_int (char c)
 {
-    const char *s = "abcdefghi";
-    int i = 1;
+    const char *s = "abcdefghij";
+    int i = 0;
 
     while (*s) {
 	if (c == *s) {
@@ -2095,39 +2075,35 @@ static int letter_to_int (char c)
 
 static char int_to_letter (int i)
 {
-    const char *s = "abcdefghi";
-    int j = i - 1;
+    const char *s = "abcdefghij";
 
-    if (j >= 0 && j < 9) {
-	return s[j];
+    if (i >= 0 && i < 10) {
+	return s[i];
     }
 
     return 'a';
 }
 
-static gboolean alpha_input (GtkSpinButton *spin, 
-			     gdouble *new_val,
-			     gpointer p)
+static gint version_input (GtkSpinButton *spin, 
+			   gdouble *new_val,
+			   gpointer p)
 {
     const gchar *s = gtk_entry_get_text(GTK_ENTRY(spin));
 
-    *new_val = letter_to_int(*s);
+    *new_val = 10 * atoi(s) + letter_to_int(s[4]);
 
     return TRUE;
 }
 
-static gboolean alpha_output (GtkSpinButton *spin, gpointer p)
+static gboolean version_output (GtkSpinButton *spin, gpointer p)
 {
     int n = gtk_spin_button_get_value_as_int(spin);
-    char c = int_to_letter(n);
-    char buf[2];
+    int r = n - 10*(n/10);
+    char buf[6] = {0};
 
-    buf[0] = c;
-    buf[1] = '\0';
-
-    if (strcmp(buf, gtk_entry_get_text(GTK_ENTRY(spin)))) {
-	gtk_entry_set_text(GTK_ENTRY(spin), buf);
-    }
+    sprintf(buf, "%d", n);
+    buf[4] = int_to_letter(r);
+    gtk_entry_set_text(GTK_ENTRY(spin), buf);
 
     return TRUE;
 }
@@ -2136,101 +2112,51 @@ static void add_minver_selector (GtkWidget *tbl, int i,
 				 function_info *finfo)
 {
     GtkWidget *tmp, *spin, *hbox;
+    int minminver = 20110; /* gretl 1.9.4 */
+    int maxminver;
 
     tmp = gtk_label_new(_("Minimum gretl version"));
     gtk_misc_set_alignment(GTK_MISC(tmp), 1.0, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, i, i+1);
     gtk_widget_show(tmp);
 
+    /* to align everything below */
     hbox = gtk_hbox_new(FALSE, 0);
 
-    if (atoi(GRETL_VERSION) >= 2015) {
-	/* new style program versioning */
-	int minminyr = 2011; /* gretl 1.9.4 */
-	int minyr, minrev;   /* requested by package */
-	int cp_yr;           /* this program year */
+    /* max version requirement: the highest possible release
+       in the build year */
+    maxminver = 10 * atoi(GRETL_VERSION) + 9;
 
-	get_year_rev(finfo->minver, &minyr, &minrev);
-	cp_yr = atoi(GRETL_VERSION);
-
-	/* release year */
-	spin = gtk_spin_button_new_with_range(minminyr, cp_yr, 1);
-	if (minyr > minminyr && minyr <= cp_yr) {
-	    /* package wants a gretl version more recent than the
-	       oldest supported version, OK */
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) minyr);
-	} else {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) minminyr);
-	}
-	gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
-	g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(1));
-	g_signal_connect(G_OBJECT(spin), "value-changed",
-			 G_CALLBACK(new_adjust_minver), finfo);
-
-	/* release letter */
-	spin = gtk_spin_button_new_with_range(1, 9, 1);
-	g_signal_connect(G_OBJECT(spin), "input",
-		     G_CALLBACK(alpha_input), NULL);
-	g_signal_connect(G_OBJECT(spin), "output",
-		     G_CALLBACK(alpha_output), NULL);	
-	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin), FALSE);
-	gtk_entry_set_width_chars(GTK_ENTRY(spin), 1);
-#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 12
-	/* remedy required for gtk3 */
-	gtk_entry_set_max_width_chars(GTK_ENTRY(spin), 1);
-#endif	
-	if (minrev > 1) {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) minrev);
-	}
-	gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
-	g_signal_connect(G_OBJECT(spin), "value-changed",
-			 G_CALLBACK(new_adjust_minver), finfo);
-    } else {
-	/* old-style program versioning */
-	int maj, min, pl;
-	int x, y, z;
-	int ymin = 0;
-
-	get_maj_min_pl(finfo->minver, &maj, &min, &pl);
-	sscanf(GRETL_VERSION, "%d.%d.%d", &x, &y, &z);
-	if (x == 1) {
-	    ymin = 8;
-	}
-
-	/* major version number */
-	spin = gtk_spin_button_new_with_range(1, x, 1);
-	if (maj > 1) {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) maj);
-	}
-	gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
-	g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(1));
-	g_signal_connect(G_OBJECT(spin), "value-changed",
-			 G_CALLBACK(old_adjust_minver), finfo);
-	tmp = gtk_label_new(".");
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 2);
-
-	/* minor version number */
-	spin = gtk_spin_button_new_with_range(ymin, y, 1);
-	if (min > 0) {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) min);
-	}
-	gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
-	g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(2));
-	g_signal_connect(G_OBJECT(spin), "value-changed",
-			 G_CALLBACK(old_adjust_minver), finfo);
-	tmp = gtk_label_new(".");
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 2);
-
-	/* "patch-level" */
-	spin = gtk_spin_button_new_with_range(0, z + 1, 1);
-	if (pl > 0) {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) pl);
-	}
-	gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
-	g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(3));
-	g_signal_connect(G_OBJECT(spin), "value-changed",
-			 G_CALLBACK(old_adjust_minver), finfo);
+    /* fix out-of-bounds minver */
+    if (finfo->minver < minminver) {
+	finfo->minver = minminver;
+    } else if (finfo->minver > maxminver) {
+	finfo->minver = maxminver;
     }
+
+    /* new-style version spinner */
+    spin = gtk_spin_button_new_with_range(minminver, maxminver, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), finfo->minver);
+    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin), 5);
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin), FALSE);
+    g_signal_connect(G_OBJECT(spin), "value-changed",
+   		     G_CALLBACK(adjust_minver), finfo);
+    g_signal_connect(G_OBJECT(spin), "input",
+		     G_CALLBACK(version_input), NULL);	
+    g_signal_connect(G_OBJECT(spin), "output",
+		     G_CALLBACK(version_output), NULL);	
+    gtk_entry_set_width_chars(GTK_ENTRY(spin), 5);
+#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 12
+    /* remedy required for gtk3 */
+    gtk_entry_set_max_width_chars(GTK_ENTRY(spin), 5);
+#endif    
+    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
+
+    /* translation to old-style version? */
+    tmp = gtk_label_new(NULL);
+    g_object_set_data(G_OBJECT(spin), "old-label", tmp);
+    set_oldver_label(tmp, finfo->minver);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
     gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, i, i+1);
     gtk_widget_show_all(hbox);
@@ -4584,7 +4510,7 @@ int save_function_package_spec (const char *fname, gpointer p)
     maybe_print(prn, "tags", finfo->tags);
 
     if (finfo->minver > 20000 && finfo->minver < 20151) {
-	int oldv = translate_program_version(finfo->minver, 0);
+	int oldv = translate_program_version(finfo->minver, NEW_TO_OLD);
 
 	gretl_version_string(vstr, oldv);
     } else {
