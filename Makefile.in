@@ -51,6 +51,7 @@ INSTALL_DATA = ${INSTALL} -m 644
 export
 
 tooldir = $(topsrc)/tools
+texdir = $(DOCDIR)/tex
 
 SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR) share $(XDGDIR) $(ADDONSDIR)
 ALLSUBDIRS = lib cli gui2 plugin po share tests xdg addons
@@ -66,7 +67,11 @@ $(SUBDIRS):
 pdfdocs:
 	$(MAKE) -C $(DOCDIR)
 
-clean:
+texclean:
+	rm -rf $(texdir)/*.aux $(texdir)/*.log $(texdir)/*.out $(texdir)/*.toc
+	rm -rf $(texdir)/*.bbl $(texdir)/*.blg
+
+clean: texclean
 	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d clean; done
 	$(MAKE) -C utils/emacs clean
 	rm -f build.h builddate
