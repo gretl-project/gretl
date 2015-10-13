@@ -1911,7 +1911,8 @@ enum {
     GNUPLOT_REF,
     X12A_REF,
     GRETL_KEYS,
-    HANSL_PRIMER
+    HANSL_PRIMER,
+    PKGBOOK
 };
 
 static int get_writable_doc_path (char *path, const char *fname)
@@ -2031,6 +2032,10 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     const char *primer_files[] = {
 	"hansl-primer.pdf",
 	"hansl-primer-a4.pdf"
+    };
+    const char *pkgbook_files[] = {
+	"pkgbook.pdf",
+	"pkgbook-a4.pdf"
     };    
     const char *fname;
     FILE *fp;
@@ -2054,6 +2059,8 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	fname = kbd_files[i];
     } else if (code == HANSL_PRIMER) {
 	fname = primer_files[i];
+    } else if (code == PKGBOOK) {
+	fname = pkgbook_files[i];
     } else if (code == GNUPLOT_REF) {
 	fname = "gnuplot.pdf";
     } else if (code == X12A_REF) {
@@ -2140,6 +2147,8 @@ void display_pdf_help (GtkAction *action)
 	    code = GRETL_KEYS;
 	} else if (!strcmp(gtk_action_get_name(action), "Primer")) {
 	    code = HANSL_PRIMER;
+	} else if (!strcmp(gtk_action_get_name(action), "Pkgbook")) {
+	    code = PKGBOOK;
 	}
     }
 
