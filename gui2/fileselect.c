@@ -365,7 +365,7 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
     int role = EDIT_SCRIPT;
     int foreign = 0;
 
-    if (vwin->role == EDIT_PKG_SAMPLE) {
+    if (vwin != NULL && vwin->role == EDIT_PKG_SAMPLE) {
 	sourceview_insert_file(vwin, fname);
 	return;
     }

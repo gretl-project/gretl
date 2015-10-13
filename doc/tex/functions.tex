@@ -436,19 +436,19 @@ spends doing the job it was written for.
 
 Example \ref{ex:perf-pointers} takes this to the extreme.  We define
 two functions which return the number of rows of a matrix (a pretty
-fast operation).  One function gets a matrix as argument, the other
-one a pointer to a matrix.  The two functions are evaluated on a
-matrix with 2000 rows and 2000 columns; on a typical system,
-floating-point numbers take 8 bytes of memory, so the space occupied
-by the matrix is roughly 32 megabytes.
+fast operation).  Function \texttt{a()} gets a matrix as argument;
+function \texttt{b()} gets a pointer to a matrix.  The functions are
+evaluated 500 times on a matrix with 2000 rows and 2000 columns; on a
+typical system floating-point numbers take 8 bytes of memory, so the
+total size of the matrix is roughly 32 megabytes.
 
 Running the code in example \ref{ex:perf-pointers} will produce output
-similar to the following (the actual numbers depend on the
-machine you're running the example on):
+similar to the following (the actual numbers of course depend on the
+machine you're using):
 \begin{code}
-Elapsed time: 
-	without pointers (copy) = 3.66 seconds,
-	with pointers (no copy) = 0.01 seconds.
+Elapsed time:
+        a: without pointers (copy) = 3.3274 seconds,
+        b: with pointers (no copy) = 0.00463796 seconds,
 \end{code}
 
 \begin{script}[htbp]
@@ -463,38 +463,51 @@ function scalar b(const matrix *X)
   return rows(X)
 end function
 
-nulldata 10
 set echo off
 set messages off
 X = zeros(2000,2000)
-r = 0
+scalar r
 
 set stopwatch
-loop 100
+loop 500
   r = a(X)
 endloop
 fa = $stopwatch
 
 set stopwatch
-loop 100
+loop 500
   r = b(&X)
 endloop
 fb = $stopwatch
 
 printf "Elapsed time:\n\
-\twithout pointers (copy) = %g seconds,\n\
-\twith pointers (no copy) = %g seconds.\n", fa, fb 
+\ta: without pointers (copy) = %g seconds,\n \
+\tb: with pointers (no copy) = %g seconds,\n", fa, fb
 \end{scode}
 %$
 \end{script}
 
 If a pointer argument is used for this sort of purpose---and the
-object to which the pointer points is not modified by the
-function---it is a good idea to signal this to the user by adding the
-\texttt{const} qualifier, as shown for function \texttt{b} in
+object to which the pointer points is not modified (is treated as
+read-only) by the function---one can signal this to the user by adding
+the \texttt{const} qualifier, as shown for function \texttt{b()} in
 Example~\ref{ex:perf-pointers}.  When a pointer argument is qualified
 in this way, any attempt to modify the object within the function will
-generate an error.
+generate an error. 
+
+However, combining the \texttt{const} flag with the pointer mechanism
+is technically redundant for the following reason: if you mark a
+matrix argument as \texttt{const} then gretl will in fact pass it in
+pointer mode internally (since it can't be modified within the
+function there's no downside to simply making it available to the
+function rather than copying it). So in the Example we could give the
+signature of the \texttt{b()} function as simply
+\begin{code}
+function scalar b(const matrix X)
+\end{code}
+and call it via \texttt{r = b(X)}, for the same speed-up relative to
+function \texttt{a()}.  Nonetheless, the version of \texttt{b()} shown
+in the example has the virtue of making clearer what is going on.
 
 One limitation on the use of pointer-type arguments should be noted:
 you cannot supply a given variable as a pointer argument more than
@@ -512,7 +525,9 @@ is OK, but the call
 \begin{code}
 pointfunc(&x, &x) # will not work
 \end{code}
-will generate an error.
+will generate an error. That's because the situation inside the
+function would become too confusing, with what is really the same
+object existing under two names.
 
 \subsection{List arguments}
 

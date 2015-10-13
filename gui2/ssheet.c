@@ -2126,11 +2126,10 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
 
 gint get_string_width (const gchar *str)
 {
-    gint width;
-
     GtkWidget *w;
     PangoLayout *pl;
     PangoContext *pc;
+    gint width;
 
     w = gtk_label_new(NULL);
     pc = gtk_widget_get_pango_context(w);
