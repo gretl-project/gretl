@@ -175,7 +175,9 @@ form_C0j (const GRETL_VAR *var, gretl_matrix *C0j,
     gretl_matrix_divide_by_scalar(C0j, var->T);
 }
 
-/* See Johansen (1995 book) pp. 21-22 */
+/* See S. Johansen, Likelihood-Based Inference in Cointegrated
+   Vector Autoregressive Models, 1995, pp. 21-22 
+*/
 
 int VAR_portmanteau_test (GRETL_VAR *var)
 {
