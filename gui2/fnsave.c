@@ -32,6 +32,7 @@
 #include "menustate.h"
 #include "selector.h"
 #include "textutil.h"
+#include "ssheet.h"
 #include "fncall.h"
 #include "fnsave.h"
 
@@ -2103,17 +2104,10 @@ static gboolean version_output (GtkSpinButton *spin, gpointer p)
 static void add_minver_selector (GtkWidget *tbl, int i, 
 				 function_info *finfo)
 {
-    GtkWidget *tmp, *spin, *hbox;
+    GtkWidget *label, *spin, *hbox;
     int minminver = 20110; /* gretl 1.9.4 */
     int maxminver;
-
-    tmp = gtk_label_new(_("Minimum gretl version"));
-    gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, i, i+1, 0, 1);
-    gtk_widget_show(tmp);
-
-    /* to align everything below */
-    hbox = gtk_hbox_new(FALSE, 0);
+    int lwidth;
 
     /* max version requirement: the highest possible release
        in the build year */
@@ -2125,6 +2119,14 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     } else if (finfo->minver > maxminver) {
 	finfo->minver = maxminver;
     }
+
+    label = gtk_label_new(_("Minimum gretl version"));
+    gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), label, i, i+1, 0, 1);
+    gtk_widget_show(label);
+
+    /* to align things below */
+    hbox = gtk_hbox_new(FALSE, 0);
 
     /* new-style version spinner */
     spin = gtk_spin_button_new_with_range(minminver, maxminver, 1);
@@ -2145,18 +2147,20 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
 
     /* translation to old-style version? */
-    tmp = gtk_label_new(NULL);
-    g_object_set_data(G_OBJECT(spin), "old-label", tmp);
-    set_oldver_label(tmp, finfo->minver);
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    label = gtk_label_new(NULL);
+    lwidth = get_string_width(" (1.9.12) ");
+    gtk_widget_set_size_request(label, lwidth, -1);
+    g_object_set_data(G_OBJECT(spin), "old-label", label);
+    set_oldver_label(label, finfo->minver);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 
     gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, i, i+1, 1, 2);
     gtk_widget_show_all(hbox);
 
-    /* placeholder to prevent the above from slumping down */
-    tmp = gtk_label_new("");
-    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, i, i+1, 2, 3);
-    gtk_widget_show_all(tmp);
+    /* placeholder to prevent the above from slipping down */
+    label = gtk_label_new("");
+    gtk_table_attach_defaults(GTK_TABLE(tbl), label, i, i+1, 2, 3);
+    gtk_widget_show_all(label);
 }
 
 static void tagsel_callback (GtkComboBox *combo,
