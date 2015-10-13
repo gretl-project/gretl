@@ -86,7 +86,6 @@ struct function_info_ {
     GtkWidget *specdlg;    /* pkg spec save dialog */
     GtkWidget *validate;   /* "Validate" gfn button */
     GtkWidget *tagsel[2];  /* tag selector combos */
-    GtkWidget *pkglabel;   /* label showing package name */
     windata_t *samplewin;  /* window for editing sample script */
     windata_t *helpwin;    /* window for editing regular help text */
     windata_t *gui_helpwin; /* window for editing GUI-specific help text */
@@ -413,20 +412,18 @@ static void pkg_save_popup (GtkWidget *button,
 
 static void finfo_set_modified (function_info *finfo, gboolean s)
 {
-    gchar *tmp;
+    if (s != finfo->modified) {
+	gchar *tmp;
     
-    finfo->modified = s;
-    
-    if (s) {
-	tmp = g_markup_printf_escaped("<span weight=\"bold\">%s</span> *",
-				      finfo_pkgname(finfo));
-    } else {
-	tmp = g_markup_printf_escaped("<span weight=\"bold\">%s</span>",
-				      finfo_pkgname(finfo));
+	finfo->modified = s;
+	if (s) {
+	    tmp = g_strdup_printf("gretl: %s *", finfo_pkgname(finfo));
+	} else {
+	    tmp = g_strdup_printf("gretl: %s", finfo_pkgname(finfo));
+	}
+	gtk_window_set_title(GTK_WINDOW(finfo->dlg), tmp);
+	g_free(tmp);
     }
-    
-    gtk_label_set_markup(GTK_LABEL(finfo->pkglabel), tmp);
-    g_free(tmp);
 }
 
 static void login_init_or_free (login_info *linfo, int freeit)
@@ -1927,16 +1924,13 @@ static void select_pdf_callback (GtkButton *b, function_info *finfo)
 static void add_help_radios (GtkWidget *tbl, int i,
 			     function_info *finfo)
 {
-    GtkWidget *w, *rb, *vbox, *hbox, *tmp;
-    GtkWidget *htab;
+    GtkWidget *w, *rb, *htab;
     GSList *group = NULL;
 
-    vbox = gtk_vbox_new(FALSE, 0);
-    tmp = gtk_label_new(_("Help text"));
-    gtk_misc_set_alignment(GTK_MISC(tmp), 1.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), vbox, 0, 1, i, i+1);
-    gtk_widget_show_all(vbox);
+    w = gtk_label_new(_("Help text"));
+    gtk_misc_set_alignment(GTK_MISC(w), 0.0, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), w, i, i+1, 0, 1);
+    gtk_widget_show_all(w);
 
     htab = gtk_table_new(2, 2, TRUE);
     gtk_table_set_row_spacings(GTK_TABLE(htab), 4);
@@ -1967,10 +1961,8 @@ static void add_help_radios (GtkWidget *tbl, int i,
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rb), TRUE);
     }
 
-    hbox = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), htab, FALSE, FALSE, 0);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, i, i+1);
-    gtk_widget_show_all(hbox);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), htab, i, i+1, 1, 3);
+    gtk_widget_show_all(htab);
 }
 
 enum {
@@ -2116,8 +2108,8 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     int maxminver;
 
     tmp = gtk_label_new(_("Minimum gretl version"));
-    gtk_misc_set_alignment(GTK_MISC(tmp), 1.0, 0.5);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, i, i+1);
+    gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, i, i+1, 0, 1);
     gtk_widget_show(tmp);
 
     /* to align everything below */
@@ -2158,8 +2150,13 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     set_oldver_label(tmp, finfo->minver);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
-    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, i, i+1);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, i, i+1, 1, 2);
     gtk_widget_show_all(hbox);
+
+    /* placeholder to prevent the above from slumping down */
+    tmp = gtk_label_new("");
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, i, i+1, 2, 3);
+    gtk_widget_show_all(tmp);
 }
 
 static void tagsel_callback (GtkComboBox *combo,
@@ -3487,7 +3484,7 @@ static void finfo_dialog (function_info *finfo)
     };
     gchar *tmp, *title;
     int focused = 0;
-    int rows = NENTRIES + 4;
+    int rows = NENTRIES + 2;
     int i;
 
     finfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -3507,17 +3504,6 @@ static void finfo_dialog (function_info *finfo)
     vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
     gtk_container_add(GTK_CONTAINER(finfo->dlg), vbox);
-
-    /* package name label and window list button */
-    hbox = gtk_hbox_new(FALSE, 5);
-    tmp = g_markup_printf_escaped("<span weight=\"bold\">%s</span>",
-				  finfo_pkgname(finfo));
-    finfo->pkglabel = label = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(label), tmp);
-    g_free(tmp);    
-    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-    window_add_winlist(finfo->dlg, hbox);
 
     tbl = gtk_table_new(rows, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
@@ -3581,13 +3567,18 @@ static void finfo_dialog (function_info *finfo)
 
     add_tag_selectors(tbl, i, finfo);
     i += 2;
-    add_data_requirement_menu(tbl, i++, finfo);
-    add_minver_selector(tbl, i++, finfo);
+    add_data_requirement_menu(tbl, i, finfo);
 
-    add_help_radios(tbl, i, finfo);
-    hbox = gtk_hseparator_new();
-    gtk_widget_show(hbox);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    /* table for min version and help doc controls */
+    hbox = gtk_hbox_new(FALSE, 0);
+    tbl = gtk_table_new(3, 2, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 4);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 64);
+    gtk_box_pack_start(GTK_BOX(hbox), tbl, TRUE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 8);
+
+    add_minver_selector(tbl, 0, finfo);
+    add_help_radios(tbl, 1, finfo);
 
     /* table for buttons arrayed at foot of window */
     hbox = gtk_hbox_new(FALSE, 0);
