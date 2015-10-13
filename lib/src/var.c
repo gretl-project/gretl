@@ -1481,6 +1481,33 @@ gretl_VAR_get_vma_matrix (const GRETL_VAR *var, const DATASET *dset,
     return VMA;
 }
 
+static gretl_matrix *
+gretl_VAR_get_portmanteau_test (const GRETL_VAR *var, int *err)
+{
+    gretl_matrix *m = NULL;
+
+    if (na(var->LB)) {
+	*err = E_BADSTAT;
+    } else {
+	m = gretl_matrix_alloc(1, 4);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    int k = var->order + (var->ci == VECM);
+	    int df = var->neqns * var->neqns * (var->LBs - k);
+	    double pv = chisq_cdf_comp(df, var->LB);
+
+	    m->val[0] = var->LB;
+	    m->val[1] = var->LBs;
+	    m->val[2] = df;
+	    m->val[3] = pv;
+	    *err = 0;
+	}
+    }
+
+    return m;
+}
+
 int gretl_VAR_get_variable_number (const GRETL_VAR *var, int k)
 {
     int vnum = 0;
@@ -3759,6 +3786,9 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 	src = var->XTX;
     } else if (idx == M_SIGMA) {
 	src = var->S;
+    } else if (idx == M_PMANTEAU) {
+	M = gretl_VAR_get_portmanteau_test(var, err);
+	copy = 0;
     } else if (vecm_matrix(idx)) {
 	if (var->jinfo != NULL) {
 	    switch (idx) {

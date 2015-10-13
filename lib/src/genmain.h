@@ -113,6 +113,7 @@ typedef enum {
     M_KLLT,       /* Kalman log-likelihood, per time-step */
     M_KUHAT,      /* Kalman: current prediction error */
     M_EHAT,       /* ARMA: vector of estimated innovations */
+    M_PMANTEAU,   /* VAR portmanteau test plus 's' value */
     M_MATRIX_MAX, /*** SEPARATOR, end of matrices ***/
     M_EC,         /* VECM error-correction terms */
     M_VMA,        /* VARs, VECMs: vector moving average representation */
