@@ -685,6 +685,10 @@ int generate (const char *line, DATASET *dset, gretlopt opt,
 	flags |= P_QUIET;
     }
 
+    if (opt & OPT_C) {
+	flags |= P_CATCH;
+    }    
+
     oldv = (dset != NULL)? dset->v : 0;
 
 #if GDEBUG

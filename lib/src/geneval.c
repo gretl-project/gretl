@@ -6733,6 +6733,11 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	return NULL;
     }
 
+    if (t == p->tree && (p->flags & P_CATCH)) {
+	p->err = E_BADCATCH;
+	return NULL;
+    }
+
     /* evaluate the function argument nodes */
 
     for (i=0; i<argc && !p->err; i++) {
