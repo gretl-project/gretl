@@ -28,6 +28,10 @@
 #include "clapack_double.h"
 #include "../../cephes/libprob.h"
 
+#ifdef HAVE_FENV_H
+# include <fenv.h>
+#endif
+
 #if defined(_OPENMP)
 # include <omp.h>
 #endif
@@ -5650,6 +5654,28 @@ static double x_op_y (double x, double y, int op)
     }
 }
 
+static void math_err_init (void)
+{
+    errno = 0;
+#ifdef HAVE_FENV_H
+    feclearexcept(FE_ALL_EXCEPT);
+#endif    
+}
+
+/* the following is called after math operations only
+   if errno is non-zero */
+
+static int math_err_check (void)
+{
+#ifdef HAVE_FENV_H
+    if (!fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW)) {
+	/* we'll consider "pure" underflow OK */
+	return 0;
+    }
+#endif
+    return E_DATA;
+}
+
 /**
  * gretl_matrix_dot_op:
  * @a: left-hand matrix.
@@ -5701,7 +5727,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	return NULL;
     }
 
-    errno = 0;
+    math_err_init();
 
 #if defined(_OPENMP)
     if (conftype == CONF_ELEMENTS) {
@@ -5915,10 +5941,12 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 #endif
 
     if (errno) {
-	gretl_matrix_free(c);
-	c = NULL;
-	*err = E_DATA;
-	gretl_errmsg_set_from_errno("gretl_matrix_dot_op");
+	*err = math_err_check();
+	if (*err) {
+	    gretl_matrix_free(c);
+	    c = NULL;
+	    gretl_errmsg_set_from_errno("gretl_matrix_dot_op");
+	}
     }
 
     return c;
@@ -5965,7 +5993,7 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
 	return NULL;
     }
 
-    errno = 0;
+    math_err_init();
 
     ar = a->val; 
     ai = (a->cols == 2)? ar + m : NULL;
@@ -6015,11 +6043,15 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
     }
 
     if (errno) {
-	gretl_matrix_free(c);
-	c = NULL;
-	*err = E_DATA;
-	gretl_errmsg_set_from_errno("gretl_matrix_complex_multdiv");
-    } else if (c->cols == 2 && izero) {
+	*err = math_err_check();
+	if (*err) {
+	    gretl_matrix_free(c);
+	    c = NULL;
+	    gretl_errmsg_set_from_errno("gretl_matrix_complex_multdiv");
+	}
+    }
+
+    if (!*err && c->cols == 2 && izero) {
 	*err = gretl_matrix_realloc(c, c->rows, 1);
 	if (*err) {
 	    gretl_matrix_free(c);
