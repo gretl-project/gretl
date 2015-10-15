@@ -5663,17 +5663,28 @@ static void math_err_init (void)
 }
 
 /* the following is called after math operations only
-   if errno is non-zero */
+   if errno is found to be non-zero */
 
-static int math_err_check (void)
+static int math_err_check (const char *msg)
 {
 #ifdef HAVE_FENV_H
+    int err = E_DATA;
+    
     if (!fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW)) {
-	/* we'll consider "pure" underflow OK */
-	return 0;
+	/* we'll let "pure" underflow pass */
+	fprintf(stderr, "warning: calculation underflow\n");
+	err = 0;
+    } else {
+	gretl_errmsg_set_from_errno(msg);
     }
-#endif
+    feclearexcept(FE_ALL_EXCEPT);
+    errno = 0;
+    return err;
+#else
+    gretl_errmsg_set_from_errno(msg);
+    errno = 0;
     return E_DATA;
+#endif    
 }
 
 /**
@@ -5941,11 +5952,10 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 #endif
 
     if (errno) {
-	*err = math_err_check();
+	*err = math_err_check("gretl_matrix_dot_op");
 	if (*err) {
 	    gretl_matrix_free(c);
 	    c = NULL;
-	    gretl_errmsg_set_from_errno("gretl_matrix_dot_op");
 	}
     }
 
@@ -6043,11 +6053,10 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
     }
 
     if (errno) {
-	*err = math_err_check();
+	*err = math_err_check("gretl_matrix_complex_multdiv");
 	if (*err) {
 	    gretl_matrix_free(c);
 	    c = NULL;
-	    gretl_errmsg_set_from_errno("gretl_matrix_complex_multdiv");
 	}
     }
 
