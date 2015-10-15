@@ -2858,6 +2858,9 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
     return err;
 }
 
+/* Read the values for all (or selected) variables at
+   observation @t */
+
 static int process_values (DATASET *dset, 
 			   int t, char *s,
 			   int fullv, 
@@ -2877,8 +2880,11 @@ static int process_values (DATASET *dset,
 	} else {
 	    x = strtod(s, &test);
 	    if (errno) {
-		if (SMALLVAL(x)) {
-		    errno = 0; /* underflow, OK */
+		if (errno == ERANGE && SMALLVAL(x)) {
+		    errno = 0; /* underflow, treat as OK? */
+		    fprintf(stderr, "warning, underflow: %g for series %d (%s) at obs %d\n",
+			    x, i, dset->varname[i], t + 1);
+		    s = test;
 		} else {
 		    fprintf(stderr, "%s: %d: bad data\n", __FILE__, __LINE__);
 		    perror(NULL);
@@ -2896,7 +2902,14 @@ static int process_values (DATASET *dset,
 		dset->Z[k++][t] = x;
 	    }
 	}
-    }	
+    }
+
+    /* check for trailing junk in <obs> line */
+    s += strspn(s, " \t");
+    if (*s) {
+	fprintf(stderr, "Warning: found trailing junk at obs %d:\n'%s'\n",
+		t + 1, s);
+    }
 
     if (err && !gretl_errmsg_is_set()) {
 	gretl_errmsg_sprintf(_("Failed to parse data values at obs %d"), t+1);
