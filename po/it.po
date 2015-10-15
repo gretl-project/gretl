@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-10-10 11:17-0400\n"
-"PO-Revision-Date: 2015-08-08 13:50+0200\n"
+"PO-Revision-Date: 2015-10-15 19:38+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -8623,6 +8623,7 @@ msgid "%s: please close this object's window first"
 msgstr "%s: occorre prima chiudere la finestra di questo oggetto"
 
 #: gui2/datafiles.c:951 gui2/datafiles.c:992
+#, fuzzy
 msgid "No function files were found"
 msgstr "Non è stato trovato alcun file di funzioni"
 
@@ -8636,7 +8637,7 @@ msgstr "Trovati %d file di funzioni"
 #: gui2/datafiles.c:1025
 #, c-format
 msgid "Really remove %s from menu?"
-msgstr ""
+msgstr "Rimuovere %s dal menu? Sul serio?"
 
 #: gui2/datafiles.c:1275 gui2/datafiles.c:1374 gui2/datafiles.c:1412
 #: gui2/datafiles.c:1419 gui2/datafiles.c:1592
@@ -8713,7 +8714,7 @@ msgstr "Directory utente %s creata\n"
 
 #: gui2/datafiles.c:1537
 msgid "Revert to installed packages"
-msgstr ""
+msgstr "Torna al pacchetto installato"
 
 #: gui2/datafiles.c:1591
 msgid "Select directory"
@@ -8734,7 +8735,7 @@ msgstr "Sistema locale"
 
 #: gui2/datafiles.c:1624
 msgid "Remove from menu"
-msgstr ""
+msgstr "Rimuovi dal menu"
 
 #: gui2/datafiles.c:1741
 #, fuzzy
@@ -10364,7 +10365,7 @@ msgstr "Questa funzione richiede un modello"
 
 #: gui2/fncall.c:2219
 msgid "Would you like to open its sample script?"
-msgstr ""
+msgstr "Vuoi aprire lo script di esempio?"
 
 #: gui2/fncall.c:2834
 #, c-format
@@ -10396,7 +10397,7 @@ msgstr ""
 
 #: gui2/fncall.c:3658
 msgid "This package lacks a label or menu-path"
-msgstr ""
+msgstr "Questo pacchetto è sprovvisto di etichetta o percorso di menu"
 
 #: gui2/fncall.c:3725
 #, c-format
@@ -10429,21 +10430,21 @@ msgstr "Carica sul server... "
 
 #: gui2/fnsave.c:607
 msgid "Save the file to its standard \"installed\" location"
-msgstr ""
+msgstr "Salva il file nella sua directory di installazione \\\"standard\\\""
 
 #: gui2/fnsave.c:608
 msgid "Save it to a location of your own choosing"
-msgstr ""
+msgstr "Salvalo in un posto di tua scelta"
 
 #: gui2/fnsave.c:628
 #, fuzzy
 msgid "Save gfn file"
-msgstr "Salva al file"
+msgstr "Salva il file gfn"
 
 #: gui2/fnsave.c:674
 #, fuzzy
 msgid "A file of this name already exists."
-msgstr "Esiste già una lista chiamata %s"
+msgstr "Esiste già un file di nome %s"
 
 #: gui2/fnsave.c:675
 #, fuzzy
@@ -10474,7 +10475,7 @@ msgstr "Aggiungere uno script di esempio per questo pacchetto"
 
 #: gui2/fnsave.c:778
 msgid "Please supply a valid email address"
-msgstr ""
+msgstr "Inserire un indirizzo email valido"
 
 #: gui2/fnsave.c:785
 msgid "Invalid version string: use numbers and '.' only"
@@ -10555,10 +10556,12 @@ msgid ""
 "a PDF file containing help text for your package.\n"
 "\n"
 msgstr ""
+"Se si opta per l'opzione PDF bisogna fornire un file\n"
+"PDF valido con dentro l'help per il pacchetto\n"
 
 #: gui2/fnsave.c:1851
 msgid "Switch to PDF help now?"
-msgstr ""
+msgstr "Passare a PDF ora?"
 
 #: gui2/fnsave.c:1857
 msgid ""
@@ -10566,6 +10569,8 @@ msgid ""
 "will be lost when the package is saved.\n"
 "\n"
 msgstr ""
+"Fra le conseguenze, c'è anche che ogni help preesistente in\n"
+"formato testo verrà perso al momento del salvataggio\n"
 
 #: gui2/fnsave.c:1892
 #, fuzzy
@@ -10586,13 +10591,12 @@ msgid "Minimum gretl version"
 msgstr "Versione di gretl richiesta"
 
 #: gui2/fnsave.c:2276
-#, fuzzy
 msgid "Tag"
-msgstr "Ritardo"
+msgstr "Codice JEL"
 
 #: gui2/fnsave.c:2278
 msgid "Tag 2 (optional)"
-msgstr ""
+msgstr "Secondo codice JEL (opzionale)"
 
 #: gui2/fnsave.c:2348
 msgid "Insert today's date"
@@ -10733,9 +10737,10 @@ msgid ""
 "This package must be uploaded as a zip file.\n"
 "Try to create the zip file now?"
 msgstr ""
+"Questo pacchetto deve essere caricato sul server\n"
+"in formato zip; vuoi creare il file zip adesso?"
 
 #: gui2/fnsave.c:4138
-#, fuzzy
 msgid ""
 "Invalid package filename: the name must start with a letter,\n"
 "must be less than 32 characters in length, must include only\n"
@@ -10746,15 +10751,14 @@ msgstr ""
 "il carattere \"_\", e deve terminare per \".gfn\""
 
 #: gui2/fnsave.c:4143 gui2/selector.c:7413
-#, fuzzy
 msgid ""
 "Invalid package name: the name must start with a letter,\n"
 "must be less than 32 characters in length, and must include\n"
 "only ASCII letters, numbers and '_'."
 msgstr ""
-"Nome file del pacchetto non valido: il nome deve iniziare con una lettera,\n"
-"essere lungo meno di 32 caratteri, includere solo lettere ASCII, numeri,\n"
-"il carattere \"_\", e deve terminare per \".gfn\""
+"Nome fdel pacchetto non valido: il nome deve iniziare con una\n"
+"lettera, essere lungo meno di 32 caratteri, includere solo\n"
+"lettere ASCII, numeri e il carattere \"_\"."
 
 #: gui2/fnsave.c:4971
 msgid ""
@@ -13155,27 +13159,27 @@ msgstr ""
 #: gui2/gui_utils.c:5001 gui2/library.c:4955
 #, c-format
 msgid "A series named %s already exists"
-msgstr "Esiste già una serie chiamata %s"
+msgstr "Esiste già una serie di nome %s"
 
 #: gui2/gui_utils.c:5003
 #, c-format
 msgid "A matrix named %s already exists"
-msgstr "Esiste già una matrice chiamata %s"
+msgstr "Esiste già una matrice di nome %s"
 
 #: gui2/gui_utils.c:5005
 #, c-format
 msgid "A scalar named %s already exists"
-msgstr "Esiste già uno scalare chiamato %s"
+msgstr "Esiste già uno scalare di nome %s"
 
 #: gui2/gui_utils.c:5007
 #, c-format
 msgid "A list named %s already exists"
-msgstr "Esiste già una lista chiamata %s"
+msgstr "Esiste già una lista di nome%s"
 
 #: gui2/gui_utils.c:5009
 #, c-format
 msgid "A string named %s already exists"
-msgstr "Esiste già una stringa chiamata %s"
+msgstr "Esiste già una stringa di nome %s"
 
 #: gui2/gui_utils.c:5019
 msgid "OK to overwrite it?"
@@ -16541,7 +16545,7 @@ msgstr "regressori"
 
 #: plugin/addons-i18n.c:45
 msgid "Structural VARs"
-msgstr ""
+msgstr "VAR strutturali"
 
 #: plugin/addons-i18n.c:46
 msgid "AB-model"
@@ -16549,11 +16553,11 @@ msgstr "Modello AB"
 
 #: plugin/addons-i18n.c:47
 msgid "BFGS (analytical score)"
-msgstr ""
+msgstr "BFGS (score analitico)"
 
 #: plugin/addons-i18n.c:48
 msgid "BFGS (numerical score)"
-msgstr ""
+msgstr "BFGS (score numerico)"
 
 #: plugin/addons-i18n.c:49
 #, fuzzy
