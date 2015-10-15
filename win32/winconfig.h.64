@@ -60,7 +60,10 @@
 #define HAVE_STDINT_H 1 
 
 /* Do we have unistd.h? */
-#define HAVE_UNISTD_H 1 
+#define HAVE_UNISTD_H 1
+
+/* Do we have fenv.h? */
+#define HAVE_FENV_H 1
 
 /* Define if the `long double' type works.  */
 /* #undef HAVE_LONG_DOUBLE */
