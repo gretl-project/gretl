@@ -1137,10 +1137,10 @@ const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
 	    ptsize /= 2;
 	}
 #endif
-	sprintf(pdf_term_line, "set term pdfcairo font \"sans,%d\"", 
+	sprintf(pdf_term_line, "set term pdfcairo noenhanced font \"sans,%d\"", 
 		ptsize);
     } else {
-	strcpy(pdf_term_line, "set term pdf");
+	strcpy(pdf_term_line, "set term pdf noenhanced");
     }
 
     maybe_set_eps_pdf_dims(pdf_term_line, ptype, flags);
@@ -1153,9 +1153,9 @@ const char *get_gretl_eps_term_line (PlotType ptype, GptFlags flags)
     static char eps_term_line[128];
 
     if (flags & GPT_MONO) {
-	strcpy(eps_term_line, "set term post eps enhanced mono");
+	strcpy(eps_term_line, "set term post eps noenhanced mono");
     } else {
-	strcpy(eps_term_line, "set term post eps enhanced color solid");
+	strcpy(eps_term_line, "set term post eps noenhanced color solid");
     }
 
     maybe_set_eps_pdf_dims(eps_term_line, ptype, flags);

@@ -392,16 +392,16 @@ saver_make_term_string (struct pdf_ps_saver *s, char *termstr)
     }
 
     if (s->pdfcairo) {
-	ttype = (s->mono)? "pdfcairo mono dashed" : "pdfcairo";
+	ttype = (s->mono)? "pdfcairo noenhanced mono dashed" : "pdfcairo noenhanced";
 	sprintf(fontstr, "font \"%s,%d\"", s->pdffont, s->pdffontsize);
     } else {
 	record_selected_ps_font(s);
 	if (s->spec->termtype == GP_TERM_EPS) {
-	    ttype = (s->mono)? "post eps enhanced mono" : "post eps enhanced solid";
+	    ttype = (s->mono)? "post eps noenhanced mono" : "post eps noenhanced solid";
 	    sprintf(fontstr, "font \"%s,%d\"", s->psfont, 2 * s->psfontsize);
 	} else {
 	    /* PDF via pdflib */
-	    ttype = (s->mono)? "pdf mono dashed" : "pdf";
+	    ttype = (s->mono)? "pdf mono dashed noenhanced" : "pdf noenhanced";
 	    sprintf(fontstr, "font \"%s,%d\"", s->psfont, s->psfontsize);
 	}
     } 
