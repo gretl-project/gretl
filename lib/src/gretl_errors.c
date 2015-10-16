@@ -330,7 +330,7 @@ void gretl_errmsg_ensure (const char *str)
  * gretl_warnmsg_set:
  * @str: a warning message.
  *
- * If copy the given string into the warning message space.
+ * Copy the given string into the warning message space.
  */
 
 void gretl_warnmsg_set (const char *str)

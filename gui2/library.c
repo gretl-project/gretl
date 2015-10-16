@@ -1473,7 +1473,13 @@ void gui_errmsg (int errcode)
 
 void gui_warnmsg (int errcode)
 {
-    const char *msg = errmsg_get_with_default(errcode);
+    const char *msg = NULL;
+
+    if (errcode > 0) {
+	msg = errmsg_get_with_default(errcode);
+    } else {
+	msg = gretl_warnmsg_get();
+    }
 
     if (msg != NULL && *msg != '\0') {
 	warnbox(msg);
@@ -9354,7 +9360,9 @@ static int script_open_append (ExecState *s, DATASET *dset,
     if (err) {
 	gui_errmsg(err);
 	return err;
-    } 
+    } else if (check_gretl_warning()) {
+	gui_warnmsg(0);
+    }
 
     if (!dbdata && !http && cmd->ci != APPEND) {
 	strncpy(datafile, myfile, MAXLEN - 1);

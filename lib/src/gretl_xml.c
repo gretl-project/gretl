@@ -1128,7 +1128,8 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 		    }
 		} else if (*test != '\0' && !isspace(*test)) {
 		    *err = E_DATA;
-		} else {
+		}
+		if (!*err) {
 		    s = test;
 		    if (rval) {
 			cvals[nread].r = x;
@@ -2858,13 +2859,23 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
     return err;
 }
 
+static void set_underflow_warning (int n)
+{
+    gchar *msg;
+
+    msg = g_strdup_printf(_("Data file contains %d subnormal values"), n);
+    gretl_warnmsg_set(msg);
+    g_free(msg);
+}
+
 /* Read the values for all (or selected) variables at
    observation @t */
 
 static int process_values (DATASET *dset, 
 			   int t, char *s,
 			   int fullv, 
-			   const int *vlist)
+			   const int *vlist,
+			   int *n_uflow)
 {
     char *test;
     double x;
@@ -2879,17 +2890,16 @@ static int process_values (DATASET *dset,
 	    s += strcspn(s, " \t\r\n");
 	} else {
 	    x = strtod(s, &test);
-	    if (errno) {
-		if (errno == ERANGE && SMALLVAL(x)) {
-		    errno = 0; /* underflow, treat as OK? */
-		    fprintf(stderr, "warning, underflow: %g for series %d (%s) at obs %d\n",
-			    x, i, dset->varname[i], t + 1);
-		    s = test;
-		} else {
-		    fprintf(stderr, "%s: %d: bad data\n", __FILE__, __LINE__);
-		    perror(NULL);
-		    err = E_DATA;
-		}
+	    if (errno == ERANGE && SMALLVAL(x)) {
+		errno = 0; /* underflow, treat as OK? */
+		fprintf(stderr, "warning, underflow: %g for series %d (%s) at obs %d\n",
+			x, i, dset->varname[i], t + 1);
+		*n_uflow += 1;
+		s = test;
+	    } else if (errno) {
+		fprintf(stderr, "%s: %d: bad data\n", __FILE__, __LINE__);
+		perror(NULL);
+		err = E_DATA;
 	    } else if (!strncmp(test, "NA", 2)) {
 		x = NADBL;
 		s = test + 2;
@@ -2898,7 +2908,7 @@ static int process_values (DATASET *dset,
 	    } else {
 		s = test;
 	    }
-	    if (t < dset->n) {
+	    if (!err && t < dset->n) {
 		dset->Z[k++][t] = x;
 	    }
 	}
@@ -2927,6 +2937,7 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
     int n, i, t;
     int (*show_progress) (double, double, int) = NULL;
     int progbar = 0;
+    int n_uflow = 0;
     int err = 0;
 
     tmp = xmlGetProp(node, (XUC) "count");
@@ -3021,7 +3032,7 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
 	    if (!binary) {
 		tmp = xmlNodeListGetRawString(doc, cur->xmlChildrenNode, 1);
 		if (tmp) {
-		    err = process_values(dset, t, (char *) tmp, dset->v, NULL);
+		    err = process_values(dset, t, (char *) tmp, dset->v, NULL, &n_uflow);
 		    free(tmp);
 		} else if (dset->v > 1) {
 		    gretl_errmsg_sprintf(_("Values missing at observation %d"), t+1);
@@ -3062,6 +3073,10 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
 	err = E_DATA;
     }
 
+    if (!err && n_uflow > 0) {
+	set_underflow_warning(n_uflow);
+    }    
+
     return err;
 }
 
@@ -3077,6 +3092,7 @@ static int read_observations_subset (xmlDocPtr doc,
     xmlNodePtr cur;
     xmlChar *tmp;
     int n, i, t;
+    int n_uflow = 0;
     int err = 0;
 
     tmp = xmlGetProp(node, (XUC) "count");
@@ -3158,7 +3174,7 @@ static int read_observations_subset (xmlDocPtr doc,
 	    if (!binary) {
 		tmp = xmlNodeListGetRawString(doc, cur->xmlChildrenNode, 1);
 		if (tmp) {
-		    err = process_values(dset, t, (char *) tmp, fullv, vlist);
+		    err = process_values(dset, t, (char *) tmp, fullv, vlist, &n_uflow);
 		    free(tmp);
 		} else if (dset->v > 1) {
 		    gretl_errmsg_sprintf(_("Values missing at observation %d"), t+1);
@@ -3186,6 +3202,10 @@ static int read_observations_subset (xmlDocPtr doc,
     if (!err && t != dset->n) {
 	gretl_errmsg_set(_("Number of observations does not match declaration"));
 	err = E_DATA;
+    }
+
+    if (!err && n_uflow > 0) {
+	set_underflow_warning(n_uflow);
     }
 
     return err;
