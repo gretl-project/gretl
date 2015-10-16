@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-10-10 11:17-0400\n"
-"PO-Revision-Date: 2015-10-15 19:38+0200\n"
+"PO-Revision-Date: 2015-10-15 22:43+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -3262,10 +3262,8 @@ msgid "Insufficient observations for this operation"
 msgstr "Osservazioni insufficienti per l'operazione richiesta"
 
 #: lib/src/gretl_errors.c:85
-#, fuzzy
 msgid "You cannot define a function within a function"
-msgstr ""
-"È possibile anche eseguire 'help functions' per la lista delle funzioni\n"
+msgstr "Non si può definire una funzione dentro una funzione"
 
 #: lib/src/gretl_errors.c:86
 msgid "Error executing function"
@@ -3339,9 +3337,8 @@ msgid "Panel data"
 msgstr "Dati panel"
 
 #: lib/src/gretl_func.c:4409
-#, fuzzy
 msgid "some sort of dataset"
-msgstr "Struttura del dataset"
+msgstr "dataset di qualche tipo"
 
 #: lib/src/gretl_func.c:5002
 msgid "No description available"
@@ -3683,14 +3680,13 @@ msgid "Joint test on named regressors"
 msgstr "Test congiunto sui regressori"
 
 #: lib/src/gretl_model.c:3625
-#, fuzzy
 msgid "Robust test for differing group intercepts"
-msgstr "Test per la differenza delle intercette di gruppo"
+msgstr "Test robusto per la differenza delle intercette di gruppo"
 
 #  ???distr. free???
 #: lib/src/gretl_model.c:3633 lib/src/gretl_panel.c:3876
 msgid "Distribution free Wald test for heteroskedasticity"
-msgstr "Test di Wald per l'eteroschedasticità"
+msgstr "Test non-parametrico di Wald per l'eteroschedasticità"
 
 #: lib/src/gretl_model.c:3665
 msgid "robust variant"
@@ -7040,9 +7036,9 @@ msgid "variable %d duplicated in the command list."
 msgstr "la variabile numero %d duplicata nella lista comandi."
 
 #: lib/src/system.c:846 lib/src/system.c:849
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no such list"
-msgstr "%s: matrice inesistente"
+msgstr "'%s': lista inesistente"
 
 #: lib/src/system.c:1251
 msgid "Wald test for the specified restrictions"
@@ -8623,16 +8619,17 @@ msgid "%s: please close this object's window first"
 msgstr "%s: occorre prima chiudere la finestra di questo oggetto"
 
 #: gui2/datafiles.c:951 gui2/datafiles.c:992
-#, fuzzy
 msgid "No function files were found"
 msgstr "Non è stato trovato alcun file di funzioni"
 
 #: gui2/datafiles.c:957
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Found %d function file(s).\n"
 "Replace the current listing?"
-msgstr "Trovati %d file di funzioni"
+msgstr ""
+"Trovati %d file di funzioni.\n"
+"Sostituire la lista attuale?"
 
 #: gui2/datafiles.c:1025
 #, c-format
@@ -8708,9 +8705,8 @@ msgid "Find..."
 msgstr "Trova..."
 
 #: gui2/datafiles.c:1536
-#, fuzzy
 msgid "Choose another directory"
-msgstr "Directory utente %s creata\n"
+msgstr "Scegli un'altra directory"
 
 #: gui2/datafiles.c:1537
 msgid "Revert to installed packages"
@@ -8721,9 +8717,8 @@ msgid "Select directory"
 msgstr "Seleziona directory"
 
 #: gui2/datafiles.c:1601
-#, fuzzy
 msgid "Package registry"
-msgstr "Descrizione del pacchetto"
+msgstr "Registro del pacchetto"
 
 #: gui2/datafiles.c:1604
 msgid "Look on server"
@@ -8738,12 +8733,10 @@ msgid "Remove from menu"
 msgstr "Rimuovi dal menu"
 
 #: gui2/datafiles.c:1741
-#, fuzzy
 msgid "All packages"
-msgstr "tutte le pagine"
+msgstr "Tutti i pacchetti"
 
 #: gui2/datafiles.c:1751
-#, fuzzy
 msgid "filter"
 msgstr "Filtro"
 
@@ -8762,9 +8755,8 @@ msgid "gretl: function packages on %s"
 msgstr "gretl: pacchetti di funzioni su %s"
 
 #: gui2/datafiles.c:1938
-#, fuzzy
 msgid "The gui package registry is empty"
-msgstr "La pagina dei grafici è vuota"
+msgstr "Il registro GUI dei pacchetti è vuoto"
 
 #: gui2/datafiles.c:1945
 msgid "gretl: practice files"
@@ -8791,18 +8783,16 @@ msgid "gretl: addons"
 msgstr "gretl: componenti aggiuntivi"
 
 #: gui2/datafiles.c:1957
-#, fuzzy
 msgid "gretl: packages on menus"
-msgstr "gretl: pacchetti di funzioni su %s"
+msgstr "gretl: pacchetti sui menu"
 
 #: gui2/datafiles.c:2491
-#, fuzzy
 msgid ""
 "No gretl function packages were found on this computer.\n"
 "Please try /Tools/Function packages/On server"
 msgstr ""
 "Non sono stati trovati pacchetti di funzioni sul computer.\n"
-"Si desidera cercare sul server di gretl?"
+"Prova su /Strumenti/Pacchetti di funzioni/Sul server"
 
 #: gui2/datafiles.c:2659 gui2/datafiles.c:2663
 msgid "File"
@@ -8862,7 +8852,7 @@ msgstr "Finestra"
 #: gui2/datafiles.c:2702
 #, fuzzy
 msgid "Menu"
-msgstr "Carattere del menù"
+msgstr "Menu"
 
 #: gui2/datawiz.c:104
 msgid "Structure of dataset"
@@ -9951,48 +9941,41 @@ msgid "Gretl binary datafiles (*.gdtb)"
 msgstr "File di dati binario gretl (*.gdtb)"
 
 #: gui2/fileselect.c:897
-#, fuzzy
 msgid "plain function packages (*.gfn)"
-msgstr "Invia al server il pacchetto"
+msgstr "Pacchetti di funzioni normali"
 
 #: gui2/fileselect.c:898
-#, fuzzy
 msgid "zipped function packages (*.zip)"
-msgstr "pacchetti di funzioni"
+msgstr "pacchetti di funzioni zippati (*.zip)"
 
 #: gui2/fileselect.c:940
 msgid "Compression level (0 = none)"
 msgstr "Livello di compressione (0=nessuna)"
 
 #: gui2/fileselect.c:987
-#, fuzzy, c-format
+#, c-format
 msgid "Open %s file"
-msgstr "Apri file CSV"
+msgstr "Apri il file %s"
 
 #: gui2/fileselect.c:1014
-#, fuzzy
 msgid "select directory"
 msgstr "Seleziona directory"
 
 #: gui2/fileselect.c:1023
-#, fuzzy
 msgid "select PDF file"
-msgstr "file PDF"
+msgstr "seleziona il file PDF"
 
 #: gui2/fileselect.c:1025
-#, fuzzy
 msgid "select file"
-msgstr "scelta variabile"
+msgstr "scelta file"
 
 #: gui2/fileselect.c:1031
-#, fuzzy
 msgid "open file"
-msgstr "Apri file CSV"
+msgstr "Apri il file"
 
 #: gui2/fileselect.c:1042
-#, fuzzy
 msgid "save file"
-msgstr "Salva al file"
+msgstr "Salva il file"
 
 #: gui2/filters.c:94
 msgid "Simple moving average"
@@ -10111,9 +10094,8 @@ msgid "Upper frequency bound:"
 msgstr "Limite superiore di frequenza"
 
 #: gui2/filters.c:444
-#, fuzzy
 msgid "The initial EMA value is"
-msgstr "Il primo valore è"
+msgstr "Il valore iniziale è"
 
 #: gui2/filters.c:453
 msgid "the mean of the first n observations"
@@ -10124,9 +10106,8 @@ msgid "the mean of the whole series"
 msgstr "la media della serie completa"
 
 #: gui2/filters.c:468
-#, fuzzy
 msgid "a user-specified value"
-msgstr "valori forniti dall'utente"
+msgstr "un valore fornito dall'utente"
 
 #: gui2/filters.c:511
 msgid "quadratic"
@@ -10344,24 +10325,20 @@ msgid "Couldn't get function package information"
 msgstr "Impossibile ottenere informazioni sul pacchetto"
 
 #: gui2/fncall.c:2215
-#, fuzzy
 msgid "This package needs time series data."
-msgstr "pila di serie storiche"
+msgstr "Questo pacchetto richiede un dataset di serie storiche"
 
 #: gui2/fncall.c:2216
-#, fuzzy
 msgid "This package needs quarterly or monthly data."
-msgstr "Dati trimestrali o mensili"
+msgstr "Questo pacchetto richiede un dataset di dati trimestrali o mensili"
 
 #: gui2/fncall.c:2217
-#, fuzzy
 msgid "This package needs panel data."
-msgstr "Questo stimatore richiede dati panel"
+msgstr "Questo pacchetto richiede dati panel"
 
 #: gui2/fncall.c:2218
-#, fuzzy
 msgid "This package needs a dataset in place."
-msgstr "Questa funzione richiede un modello"
+msgstr "Questo pacchetto richiede un dataset aperto"
 
 #: gui2/fncall.c:2219
 msgid "Would you like to open its sample script?"
@@ -10437,27 +10414,24 @@ msgid "Save it to a location of your own choosing"
 msgstr "Salvalo in un posto di tua scelta"
 
 #: gui2/fnsave.c:628
-#, fuzzy
 msgid "Save gfn file"
 msgstr "Salva il file gfn"
 
 #: gui2/fnsave.c:674
-#, fuzzy
 msgid "A file of this name already exists."
-msgstr "Esiste già un file di nome %s"
+msgstr "Esiste già un file con questo nome"
 
 #: gui2/fnsave.c:675
-#, fuzzy
 msgid "OK to overwite it?"
 msgstr "Conferma la sovrascrittura?"
 
 #: gui2/fnsave.c:726
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Wrote gfn file as\n"
 "%s"
 msgstr ""
-"Impossibile scrivere il file di dati\n"
+"File gfn scritto come\n"
 "%s"
 
 #: gui2/fnsave.c:757
@@ -10465,9 +10439,8 @@ msgid "Please complete all fields"
 msgstr "Riempire tutti i campi"
 
 #: gui2/fnsave.c:766
-#, fuzzy
 msgid "Please add some help text for this package"
-msgstr "Aggiungere uno script di esempio per questo pacchetto"
+msgstr "Aggiungere un testo di help per questo pacchetto"
 
 #: gui2/fnsave.c:772
 msgid "Please add a sample script for this package"
@@ -10482,9 +10455,8 @@ msgid "Invalid version string: use numbers and '.' only"
 msgstr "Stringa di versione non valida: usare solo numeri e \".\""
 
 #: gui2/fnsave.c:790
-#, fuzzy
 msgid "Please select a tag (or two) for this package"
-msgstr "Aggiungere uno script di esempio per questo pacchetto"
+msgstr "Aggiungere uno o due codici JEL per questo pacchetto"
 
 #: gui2/fnsave.c:896
 msgid "You can't change the name of a function here"
@@ -10573,14 +10545,12 @@ msgstr ""
 "formato testo verrà perso al momento del salvataggio\n"
 
 #: gui2/fnsave.c:1892
-#, fuzzy
 msgid "Help text"
 msgstr "Testo di aiuto"
 
 #: gui2/fnsave.c:1901
-#, fuzzy
 msgid "Plain text"
-msgstr "Guida in _linea"
+msgstr "Testo semplice"
 
 #: gui2/fnsave.c:1913 gui2/graphics.c:470
 msgid "PDF file"
@@ -10608,9 +10578,8 @@ msgid "Save changes?"
 msgstr "Salva le modifiche?"
 
 #: gui2/fnsave.c:2549
-#, fuzzy
 msgid "Any model"
-msgstr "Modello"
+msgstr "Qualsiasi modello"
 
 #: gui2/fnsave.c:2614
 msgid "You may add or delete names of datafiles to be included in the package."
@@ -10618,13 +10587,12 @@ msgstr ""
 "Si possono aggiungere o cancellare file di dati da includere nel pacchetto"
 
 #: gui2/fnsave.c:2650
-#, fuzzy
 msgid ""
 "This package has no GUI-specific help text at present.\n"
 "Would you like to add some?"
 msgstr ""
-"Il file di dati non contiene commenti informativi.\n"
-"Si desidera aggiungerne ora?"
+"Il file di dati non contiene al momento help specifico \n"
+"per la GUI. Si desidera aggiungerne ora?"
 
 #: gui2/fnsave.c:2724
 msgid "Label"
@@ -10635,9 +10603,9 @@ msgid "To create a menu attachment, you must supply a label."
 msgstr "È necessario inserire un'etichetta per creare un'aggiunta al menu"
 
 #: gui2/fnsave.c:3047
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find %s"
-msgstr "Impossibile aprire %s"
+msgstr "Non trovo %s"
 
 #: gui2/fnsave.c:3149 gui2/fnsave.c:3168
 msgid "Apply changes?"
@@ -10716,7 +10684,6 @@ msgid "Password"
 msgstr "Password"
 
 #: gui2/fnsave.c:3734
-#, fuzzy
 msgid ""
 "If you don't have a login to the gretl server\n"
 "please see http://gretl.ecn.wfu.edu/cgi-bin/apply/.\n"
@@ -10724,7 +10691,7 @@ msgid ""
 "in your web browser."
 msgstr ""
 "Se non si ha un login sul server di gretl\n"
-"si veda http://gretl.ecn.wfu.edu/apply/.\n"
+"si veda http://gretl.ecn.wfu.edu/cgi-bin/apply/.\n"
 "Il pulsante 'Sito web' dovrebbe aprire la pagina\n"
 "nel vostro browser web."
 
@@ -10773,9 +10740,8 @@ msgid "gretl: function packages"
 msgstr "gretl: pacchetti di funzioni"
 
 #: gui2/fnsave.c:5031
-#, fuzzy
 msgid "build gfn file"
-msgstr "genera il file zip"
+msgstr "genera il file gfn"
 
 #: gui2/gpt_control.c:277
 msgid "Bigger"
@@ -11486,7 +11452,7 @@ msgstr "_PcGive..."
 
 #: gui2/gretl.c:1543
 msgid "On database _server..."
-msgstr "Sul _server di gretl"
+msgstr "Sul _server"
 
 #: gui2/gretl.c:1548
 msgid "_Tools"
@@ -11546,7 +11512,7 @@ msgstr "Sul sistema _locale"
 
 #: gui2/gretl.c:1562
 msgid "On _server..."
-msgstr "Sul _server di gretl"
+msgstr "Sul _server"
 
 #: gui2/gretl.c:1563
 msgid "Edit package..."
@@ -11557,14 +11523,12 @@ msgid "_New package"
 msgstr "_Nuovo pacchetto"
 
 #: gui2/gretl.c:1565
-#, fuzzy
 msgid "_Upload package..."
-msgstr "Modifica pacchetto..."
+msgstr "Carica il pacchetto"
 
 #: gui2/gretl.c:1566
-#, fuzzy
 msgid "Edit spec file..."
-msgstr "Scrivi file spec..."
+msgstr "Modifica file spec..."
 
 #: gui2/gretl.c:1567
 msgid "_NIST test suite"
@@ -12820,9 +12784,8 @@ msgid "gretl: edit Stata program"
 msgstr "gretl: modifica programma Stata"
 
 #: gui2/gui_utils.c:1655
-#, fuzzy
 msgid "gretl: edit package spec file"
-msgstr "gretl: file database"
+msgstr "gretl: modifica il file spec del pacchetto"
 
 #: gui2/gui_utils.c:1657
 msgid "gretl: untitled"
@@ -15121,9 +15084,8 @@ msgid "Select format"
 msgstr "Selezionare il formato"
 
 #: gui2/selector.c:6470
-#, fuzzy
 msgid "Name for package:"
-msgstr "_Nuovo pacchetto"
+msgstr "Nome del pacchetto:"
 
 #: gui2/selector.c:6483
 msgid "plot with impulses"
@@ -15250,9 +15212,8 @@ msgid "Export data"
 msgstr "Esporta dati"
 
 #: gui2/selector.c:7539
-#, fuzzy
 msgid "Select functions"
-msgstr "Scegli una funzione"
+msgstr "Scegli le funzioni"
 
 #: gui2/selector.c:7561
 msgid "Edit package list"
@@ -15616,9 +15577,8 @@ msgid "Command to launch GNU R"
 msgstr "Comando per eseguire GNU R"
 
 #: gui2/settings.c:237
-#, fuzzy
 msgid "Path to R.exe"
-msgstr "Path di Rterm.exe"
+msgstr "Path di R.exe"
 
 #: gui2/settings.c:240
 msgid "Command to compile TeX files"
@@ -16218,9 +16178,8 @@ msgid "Run"
 msgstr "Esegui"
 
 #: gui2/toolbar.c:713
-#, fuzzy
 msgid "Build package"
-msgstr "pacchetti di funzioni"
+msgstr "Compila il pacchetto"
 
 #: gui2/toolbar.c:714
 msgid "Cut"
@@ -16560,9 +16519,8 @@ msgid "BFGS (numerical score)"
 msgstr "BFGS (score numerico)"
 
 #: plugin/addons-i18n.c:49
-#, fuzzy
 msgid "Bias correction"
-msgstr "Correzione della media"
+msgstr "Correzione per la distorsione"
 
 #: plugin/addons-i18n.c:50
 msgid "Bootstrap alpha"
@@ -16577,9 +16535,8 @@ msgid "C-model"
 msgstr "Modello C"
 
 #: plugin/addons-i18n.c:53
-#, fuzzy
 msgid "Check identification"
-msgstr "Test LR di sovra-identificazione"
+msgstr "Controlla l'identificazione"
 
 #: plugin/addons-i18n.c:55
 msgid "Exogenous regressors"
@@ -16587,25 +16544,23 @@ msgstr "Regressori esogeni"
 
 #: plugin/addons-i18n.c:56
 msgid "FEVD"
-msgstr ""
+msgstr "FEVD"
 
 #: plugin/addons-i18n.c:57
-#, fuzzy
 msgid "Historical decomposition"
-msgstr "Scomposizioni della varianza"
+msgstr "Scomposizione storica"
 
 #: plugin/addons-i18n.c:58
-#, fuzzy
 msgid "Horizon"
 msgstr "orizzonte"
 
 #: plugin/addons-i18n.c:59
 msgid "IRF"
-msgstr ""
+msgstr "IRF"
 
 #: plugin/addons-i18n.c:60
 msgid "Indices of responses to cumulate"
-msgstr ""
+msgstr "Indici delle IRF da cumulare"
 
 #: plugin/addons-i18n.c:61
 msgid "Lags"
@@ -16613,34 +16568,31 @@ msgstr "Ritardi"
 
 #: plugin/addons-i18n.c:63
 msgid "Newton-Raphson (analytical score)"
-msgstr ""
+msgstr "Newton-Raphson (score analitico)"
 
 #: plugin/addons-i18n.c:64
 msgid "Newton-Raphson (numerical score)"
-msgstr ""
+msgstr "Newton-Raphson (score numerico)"
 
 #: plugin/addons-i18n.c:65
-#, fuzzy
 msgid "Optimization method"
-msgstr "Periodo di stima"
+msgstr "Matodo di ottimizzazione"
 
 #: plugin/addons-i18n.c:67
 msgid "Restriction pattern (long-run C or A)"
-msgstr ""
+msgstr "Restrizioni di lungo periodo su C o su A"
 
 #: plugin/addons-i18n.c:68
 msgid "Restriction pattern (short-run C or B)"
-msgstr ""
+msgstr "Restrizioni istantanee su C o su B"
 
 #: plugin/addons-i18n.c:69
-#, fuzzy
 msgid "Scoring algorithm"
-msgstr "Algoritmo di switching: fallito"
+msgstr "Algoritmo scoring"
 
 #: plugin/addons-i18n.c:70
-#, fuzzy
 msgid "Seasonal dummies"
-msgstr "Con dummy stagionali"
+msgstr "Dummy stagionali"
 
 #: plugin/addons-i18n.c:71
 msgid "Time trend"
@@ -16651,9 +16603,8 @@ msgid "VAR variables"
 msgstr "Variabili VAR"
 
 #: plugin/addons-i18n.c:73
-#, fuzzy
 msgid "plain (Cholesky)"
-msgstr "_Cholesky"
+msgstr "triangolare (Cholesky)"
 
 #: plugin/addons-i18n.c:77
 msgid "IV/Heteroskedastic"
@@ -17552,25 +17503,23 @@ msgstr "La statistica richiesta non ha senso per questo modello"
 
 #: plugin/vif.c:221
 msgid "Belsley-Kuh-Welsch collinearity diagnostics"
-msgstr ""
+msgstr "Diagnostiche di collinearità di Besley, Kuh e Welsch"
 
 #: plugin/vif.c:222
-#, fuzzy
 msgid "variance proportions"
-msgstr "Scomposizioni della varianza"
+msgstr "proporzioni della varianza"
 
 #: plugin/vif.c:223
 msgid "eigenvalues of X'X, largest to smallest"
-msgstr ""
+msgstr "autovalori di X'X, in ordine decrescente"
 
 #: plugin/vif.c:224
-#, fuzzy
 msgid "condition index"
-msgstr "condizione"
+msgstr "indice di condizione"
 
 #: plugin/vif.c:225
 msgid "note: variance proportions columns sum to 1.0"
-msgstr ""
+msgstr "nota: le colonne delle proporzioni di varianza sommano ad uno"
 
 #: plugin/vif.c:281
 msgid "Variance Inflation Factors"
@@ -17578,11 +17527,11 @@ msgstr "Fattori di Inflazione della Varianza (VIF)"
 
 #: plugin/vif.c:282
 msgid "Minimum possible value = 1.0"
-msgstr "Valore minimo possibile: 1.0"
+msgstr "Valore minimo possibile = 1.0"
 
 #: plugin/vif.c:283
 msgid "Values > 10.0 may indicate a collinearity problem"
-msgstr "Valori superiori a 10.0 indicano un problema di collinearità"
+msgstr "Valori oltre 10.0 indicano un problema di collinearità"
 
 #: plugin/vif.c:308
 msgid ""
