@@ -17,9 +17,9 @@ end function
 
 function string IRFgrph(matrix IRFmat, int snum, int vnum, \
           string sname, string vname, matrix *cumul[null], \
-          bundle *boot[null], bool bc[0])
+          bundle *boot[null], int bc[0:2:0])
 
-    # bc: bias correction switch
+  # bc: bias correction choice
     
   flip = (snum<0)
   snum = abs(snum)
@@ -71,9 +71,11 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, \
   string l_vname = vname=="" ? sprintf("%d", vnum) : vname 
 
   printf "set title \"IRF: %s -> %s", l_sname, l_vname
-  
-  if bc > 0
-    printf " (bias-corrected)"
+
+  if bc == 1
+      printf "; bias-correction = partial"
+  elif bc == 2
+      printf "; bias-correction = full"
   endif
 
   if cumulate > 0

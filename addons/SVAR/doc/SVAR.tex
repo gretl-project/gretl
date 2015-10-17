@@ -730,14 +730,26 @@ go. The output is shown in Figure \ref{fig:simpleC.IRF}.
 
 The default method for performing the bootstrap is the the most
 straightforward residual-based bootstrap, that is the one put forward
-by \cite{Runkle87}. As an alternative, one may use the bias-correction
-procedure known as ``bootstrap-after-bootstrap''
-\citep{Kilian98}. This may be enabled by setting the bundle member
-\texttt{biascorr} to a non-zero value before calling
-\texttt{SVAR\_boot}.\footnote{For an example, look at the example file
-  \texttt{bias\_correction.inp}.} None of the fancier alternatives
-listed, for example, in \cite{Brug06} are available. They are planned,
-though.
+by \cite{Runkle87}. 
+
+
+As an alternative, one may use bias-correction, which comes in two
+flavors, both inspired to the procedure known as
+``bootstrap-after-bootstrap'' \citep{Kilian98}.\footnote{None of the
+  fancier alternatives listed, for example, in \cite{Brug06} are
+  available. They are planned, though.}
+
+The one which corresponds more closely to \citeauthor{Kilian98}'s
+proceudre is what what we call the ``Full'' variant; The ``Partial''
+variant applies the bias correction only for adjusting the VAR
+coefficients used for generating the bootstrap replications, but
+\emph{not} for computing the VMA representation. The interested user
+may want to experiment with both. 
+
+The ``Partial'' and ``Full'' variant may be enabled by setting the
+bundle member \texttt{biascorr} to 1 and 2, respectively, before
+calling \texttt{SVAR\_boot}. For an example, look at the example file
+\texttt{bias\_correction.inp}.
 
 Finally: if you change the \texttt{optmeth} bundle element before
 \texttt{SVAR\_boot} is called, the choice affects the estimation of
@@ -2355,7 +2367,8 @@ a warning will be printed.
     \texttt{nboot}	 & number of bootstrap replications \\
     \texttt{boot\_alpha} & bootstrap confidence level \\
     \texttt{bootdata}	 & output from the bootstrap (see section \ref{sec:bootstrap})\\
-    \texttt{biascorr}	 & scalar, 0 for no bias correction
+    \texttt{biascorr}	 & scalar, 0 for no bias correction, 1 for
+    partial, 2 for full
   \end{tabular}
 \end{document}
 

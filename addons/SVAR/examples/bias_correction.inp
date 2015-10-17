@@ -8,7 +8,7 @@ function list GenerateExampleData(scalar phi, scalar T)
    the DGP used in Kilian (1998)
 */
     K = cholesky({1, 0.3; 0.3, 1})
-    A = {phi, 0; 0.5, 0.5}
+    A = {phi, 0; 0.5, 0.8}
     E = mnormal(T, 2) * K'
     Y = varsimul(A, E, zeros(1,2))
     list ret = null
@@ -23,7 +23,7 @@ end function
 
 nulldata 200
 setobs 1 1 --special-time-series
-list Y = GenerateExampleData(0.9, $nobs)
+list Y = GenerateExampleData(0.95, $nobs)
 
 Model = SVAR_setup("plain", Y, null, 1)
 Model["horizon"] = 20
@@ -34,6 +34,11 @@ IRFplot(&Model, 1, 1)
 IRFplot(&Model, 1, 2)
 
 Model["biascorr"] = 1
+SVAR_boot(&Model, 1000, 0.95)
+IRFplot(&Model, 1, 1)
+IRFplot(&Model, 1, 2)
+
+Model["biascorr"] = 2
 SVAR_boot(&Model, 1000, 0.95)
 IRFplot(&Model, 1, 1)
 IRFplot(&Model, 1, 2)

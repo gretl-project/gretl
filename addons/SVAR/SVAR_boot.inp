@@ -31,7 +31,7 @@ end function
 
 function matrix bias_correction(scalar H, matrix Ahat, matrix mu, 
                                 const matrix E, const matrix X, 
-                                matrix Y0)
+                                matrix Y0, matrix *BC)
 
   /* This function implements a bias correction for
      the estimate of the VAR parameters as per Kilian,
@@ -65,20 +65,8 @@ function matrix bias_correction(scalar H, matrix Ahat, matrix mu,
       Ab = Ab ./ H
       matrix BC = Ahat - Ab
 
-      Ab = Ahat + BC
-      # now check stationarity
-      scalar maxmod = max_eval(Ab)
-
-      h = 0.99
-      H = 1
-      loop while maxmod > 0.9999
-	  Ab = Ahat + H .* BC
-	  # now check stationarity
-	  scalar maxmod = max_eval(Ab)
-	  H *= h
-	  printf "H = %g\n", H
-      endloop 
-
+      H = smash_unstable_roots(&Ab, BC)
+      printf "H = %g\n", H
   else
       matrix Ab = Ahat
   endif
@@ -153,9 +141,11 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
     set loop_maxiter 16384
     matrix Spar_mat = (type<3 || type==4) ? zeros(rep, n2) : zeros(rep, 2*n2) 
 
-    BIASCORR = (type != 4) && obj["biascorr"] # not available w/unit roots
+    scalar bc = obj["biascorr"]
+    BIASCORR = (type != 4) && bc # not available w/unit roots
     if BIASCORR
-	matrix ABC = bias_correction(1000, A, bmu, E, X, start)
+	matrix Psi = {}
+	matrix ABC = bias_correction(1000, A, bmu, E, X, start, &Psi)
     endif
 
     meth = obj["optmeth"]
@@ -178,8 +168,8 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 	endif
 
 	# generate bootstrap data
-    matrix ABCorA = BIASCORR ? ABC : A
-    matrix bY = varsimul(ABCorA, U[p+1:,], start)
+	matrix ABCorA = BIASCORR ? ABC : A
+	matrix bY = varsimul(ABCorA, U[p+1:,], start)
 
 	bobj["Y"] = bY                # and store it into the bootstrap object
 
@@ -248,6 +238,18 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 		Spar_mat[i,] = vec(bmA)' ~ vec(bmB)'
 	    endif
 
+	    if bc==2
+		scalar H = smash_unstable_roots(&bA, Psi)
+		# printf("\tH=%g\n",H)
+		if ok(H)
+		    bobj["VARpar"] = bA
+		else
+		    errcode = 101
+		endif
+	    endif
+	endif
+
+	if !errcode && rows(K) == n
 	    doIRF(&bobj)
 	    matrix ir = bobj["IRFs"]	
 	    bands[i,] = vec(ir)'
@@ -255,7 +257,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 	else
 	    failed++
 	    outfile stderr --write
-	    printf "No convergence at iter %4d\n", i
+	    printf "Iter %4d failed (error code = %d)\n", i, errcode
 	    outfile --close
 	endif
     endloop
@@ -276,7 +278,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
     bundle bootdata = null
     bootdata["rep"]   = rep             # no of replications
     bootdata["alpha"] = alpha           # alpha 
-    bootdata["biascorr"]  = BIASCORR	# 1 = bias correction
+    bootdata["biascorr"]  = bc	        # type of bias correction
     bootdata["lo_cb"] = locb 	        # lower bounds
     bootdata["hi_cb"] = hicb	        # upper bounds
     bootdata["mdns"]  = mdn	        # medians

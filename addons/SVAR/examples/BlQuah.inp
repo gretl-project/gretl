@@ -27,7 +27,7 @@ SVAR_estimate(&BQModel)
 # retrieve the demand shocks
 dShock = GetShock(&BQModel, 2)
 
-BQModel["biascorr"] = 1
+BQModel["biascorr"] = 2
 # do bootstrap
 set stopwatch
 bfail = SVAR_boot(&BQModel, 1024, 0.9)
