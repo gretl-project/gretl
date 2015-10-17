@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-10-16 21:31-0400\n"
-"PO-Revision-Date: 2015-10-15 22:43+0200\n"
+"PO-Revision-Date: 2015-10-17 08:57+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -3274,9 +3274,8 @@ msgid "Execution aborted by request"
 msgstr "Esecuzione fermata su richiesta"
 
 #: lib/src/gretl_errors.c:88
-#, fuzzy
 msgid "'catch' cannot be used in this context"
-msgstr "Il comando '%s' non è valido in questo contesto"
+msgstr "Il modificatore 'catch' non è valido in questo contesto"
 
 #: lib/src/gretl_errors.c:96
 msgid "gradient is not close to zero"
@@ -4269,9 +4268,9 @@ msgid "Number of variables does not match declaration"
 msgstr "Il numero delle variabili non corrisponde alla dichiarazione"
 
 #: lib/src/gretl_xml.c:2866
-#, fuzzy, c-format
+#, c-format
 msgid "Data file contains %d subnormal values"
-msgstr "La variabile peso contiene valori negativi"
+msgstr "Il file contiene valori %d subnormali"
 
 #: lib/src/gretl_xml.c:2925
 #, c-format
@@ -8860,7 +8859,6 @@ msgid "Window"
 msgstr "Finestra"
 
 #: gui2/datafiles.c:2702
-#, fuzzy
 msgid "Menu"
 msgstr "Menu"
 
@@ -10567,9 +10565,8 @@ msgid "PDF file"
 msgstr "file PDF"
 
 #: gui2/fnsave.c:1955
-#, fuzzy
 msgid "Select"
-msgstr "Aggiungi ->"
+msgstr "Seleziona"
 
 #: gui2/fnsave.c:2123
 msgid "Minimum gretl version"
@@ -12192,9 +12189,8 @@ msgid "_Hansl primer"
 msgstr "Introduzione ad Hansl (in inglese)"
 
 #: gui2/gretl.c:1768
-#, fuzzy
 msgid "_Function package guide"
-msgstr "Pacchetti di _funzioni"
+msgstr "Guida ai pacchetti"
 
 #: gui2/gretl.c:1769
 msgid "Check for _updates"
@@ -16153,11 +16149,12 @@ msgid "Nothing to send"
 msgstr "Non c'è niente da inviare"
 
 #: gui2/toolbar.c:305
-#, fuzzy
 msgid ""
 "Really replace content with\n"
 "a selected file?"
-msgstr "Cancellare davvero le variabili selezionate?"
+msgstr ""
+"Rimpiazzare davvero il contenuto\n"
+"con un file selezionato?"
 
 #: gui2/toolbar.c:334
 msgid "Print with syntax highlighting?"
