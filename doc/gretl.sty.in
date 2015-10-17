@@ -2,7 +2,7 @@
 %% To be used when generating the Gretl manuals from LaTeX source.
 
 @FONTREQ@
-\RequirePackage{amsmath}
+\RequirePackage{amsmath,color}
 \ProvidesPackage{gretl}
 
 \newcommand{\scriptname}{Example}
@@ -26,8 +26,12 @@
    \vspace{.5in}
 }
 
-\setcounter{secnumdepth}{1}
-\setcounter{chapter}{-1}
+\ifcsname c@chapter\endcsname
+  \setcounter{secnumdepth}{1}
+  \setcounter{chapter}{-1}
+\else
+  \setcounter{secnumdepth}{2}
+\fi
 
 \newcommand{\app}[1]{\textsf{#1}}
 \newcommand{\cmd}[1]{\texttt{#1}}
@@ -36,9 +40,6 @@
 \newcommand{\dollar}[1]{\texttt{\$#1}}
 
 \newcommand{\ttsl}[1]{\ttfamily{\textsl{#1}}\normalfont}
-
-%% \newenvironment{code}{\par\small\verbatim}
-%% {\endverbatim\normalsize\vspace{-1ex}}
 
 %% --- a few handy math additions ---------------------------------------
 
@@ -80,22 +81,28 @@
 \definecolor{myteal}{rgb}{0.0,0.25,0.15}
 \definecolor{steel}{rgb}{0.03,0.20,0.45} 
 
-%% Unlike standard book class, running heads not in caps  
-%% \renewcommand{\chaptermark}[1]{\markboth{\chaptername\
-%%                                         \thechapter. #1}{}}
-%% \renewcommand{\sectionmark}[1]{\markright{#1}}
+%% offset "tip" text
+\newcommand{\tip}[1]{\par\vspace{4pt}
+ \ding{43} {\small \sffamily #1}\par}
+
+%% rule for use in bibliography
+\newcommand{\bibliorule}{\rule[-.01in]{.5in}{.005in}}
 
 %% floats
-%% \def\floatpagefraction{.85}
 \renewcommand{\topfraction}{0.9}
 \renewcommand{\bottomfraction}{0.8}
 \renewcommand{\textfraction}{0.07}
 
-
 %% add script as float ("Example")
-\newcounter{script}[chapter]
-\renewcommand \thescript
+\ifcsname c@chapter\endcsname
+ \newcounter{script}[chapter]
+ \renewcommand \thescript
      {\ifnum \c@chapter>\z@ \thechapter.\fi \@arabic\c@script}
+\else
+ \newcounter{script}
+ \renewcommand \thescript
+     {\@arabic\c@script}
+\fi
 \def\fps@script{tbp}
 \def\ftype@script{1}
 \def\ext@script{los}
@@ -106,8 +113,48 @@
 \newenvironment{script*}
                {\@dblfloat{script}}
                {\end@dblfloat}
-\newcommand\theHscript{\thechapter.\arabic{script}}
-%% \def\toclevel@script{0}
+\ifcsname c@chapter\endcsname
+ \newcommand\theHscript{\thechapter.\arabic{script}}
+\else
+ \newcommand\theHscript{\arabic{script}}
+\fi
+
+%% section headings
+
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+                                   {-3ex \@plus -1ex \@minus -.2ex}%
+                                   {.5ex \@plus .2ex}%
+                                   {\normalfont\large\sffamily}}
+
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+                                     {-2.5ex\@plus -1ex \@minus -.2ex}%
+                                     {.2ex \@plus .5ex}%
+                                     {\normalfont\bfseries}}
+
+\renewcommand\subsubsection{\@startsection{subsubsection}{2}{\z@}%
+                                     {-2ex\@plus -1ex \@minus -.2ex}%
+                                     {.2ex \@plus .2ex}%
+                                     {\normalfont\normalsize\itshape}}
+
+%% revised caption style
+\long\def\@makecaption#1#2{%
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{\small {\bfseries #1}: #2}%
+  \ifdim \wd\@tempboxa >\hsize
+    {\small {\bfseries #1}: #2}\par
+  \else
+    \global \@minipagefalse
+    \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip\belowcaptionskip}
+
+%% The rest of the material below is specific to the book
+%% document class
+
+\ifcsname c@chapter\endcsname
+\else
+ \endinput
+\fi
 
 %% Make TOC match revised chapter style
 \renewcommand\tableofcontents{%
@@ -217,18 +264,6 @@
     \vskip 30\p@
   }}
 
-%% revised caption style
-\long\def\@makecaption#1#2{%
-  \vskip\abovecaptionskip
-  \sbox\@tempboxa{\small {\bfseries #1}: #2}%
-  \ifdim \wd\@tempboxa >\hsize
-    {\small {\bfseries #1}: #2}\par
-  \else
-    \global \@minipagefalse
-    \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
-  \fi
-  \vskip\belowcaptionskip}
-
 %% table of contents
 \renewcommand{\l@chapter}[2]{%
   \ifnum \c@tocdepth >\m@ne
@@ -249,25 +284,5 @@
 \renewcommand{\l@section}{\@dottedtocline{1}{1.5em}{2.8em}}
 \renewcommand{\l@subsection}{\@dottedtocline{2}{4.3em}{3.2em}}
 
-%% Make section numbers go into left margin:
-%% \def\@seccntformat#1{\protect\makebox[0pt][r]{\csname
-%%                      the#1\endcsname\quad}}
-
-\renewcommand\section{\@startsection{section}{1}{\z@}%
-                                   {-3ex \@plus -1ex \@minus -.2ex}%
-                                   {.5ex \@plus .2ex}%
-                                   {\normalfont\large\sffamily}}
-
-\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
-                                     {-2.5ex\@plus -1ex \@minus -.2ex}%
-                                     {.2ex \@plus .5ex}%
-                                     {\normalfont\bfseries}}
-
-\renewcommand\subsubsection{\@startsection{subsubsection}{2}{\z@}%
-                                     {-2ex\@plus -1ex \@minus -.2ex}%
-                                     {.2ex \@plus .2ex}%
-                                     {\normalfont\normalsize\itshape}}
-
-                           
 \endinput
 %% end of gretl.sty

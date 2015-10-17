@@ -974,8 +974,6 @@ utils/emacs/Makefile
 if test "${build_docs}" = "yes" ; then
   AC_OUTPUT([
     doc/Makefile
-    doc/gretl.sty
-    doc/gretl-lite.sty
     doc/commands/Makefile
     doc/tex/Makefile
     doc/tex_it/Makefile
@@ -983,6 +981,11 @@ if test "${build_docs}" = "yes" ; then
     doc/tex_pt/Makefile
   ])
 fi
+
+AC_OUTPUT([
+  doc/gretl.sty
+  doc/gretl-lite.sty
+])
 
 if test "${build_addons}" = "yes" ; then
   AC_OUTPUT([
@@ -995,6 +998,7 @@ if test "${build_addons}" = "yes" ; then
     addons/HIP/doc/Makefile
     addons/ivpanel/Makefile
     addons/ivpanel/pkg.inp
+    addons/ivpanel/doc/Makefile
     addons/SVAR/Makefile
     addons/SVAR/pkg.inp
     addons/SVAR/doc/Makefile
