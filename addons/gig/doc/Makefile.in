@@ -4,7 +4,7 @@ TEXDIR = $(topsrc)/doc/tex
 PKG = gig
 DOCDIR = $(topsrc)/addons/$(PKG)/doc
 
-pdfdoc: links.stamp $(PKG).bib $(PKG).tex
+$(PKG).pdf: links.stamp $(PKG).bib $(PKG).tex
 	@pdflatex $(PKG) && bibtex $(PKG) && pdflatex $(PKG) && pdflatex $(PKG)
 	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
 
