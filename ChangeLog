@@ -15,6 +15,7 @@ version 2015d-git, in progress
 - Add new Function Package Guide to Help menu
 - Data-editing spreadsheet: improve formatting of values
 - GUI function package editor: further fixes and enhancements
+- SVAR: implement Kilian's bias correction procedure properly
 - Fix bug: possible data corruption on reading a gdt file
   containing subnormal values
 - Fix bug: using options with the "data" command was broken

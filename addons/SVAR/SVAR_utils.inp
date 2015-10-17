@@ -237,13 +237,8 @@ function scalar has_unit_diag(matrix Rd)
   ret = 0
   n2 = cols(Rd) - 1
   n = sqrt(n2)
-  printf "%6.1f\n", n
   matrix test = transp(seq(0,n2-1)) .= seq(0,n2-1,n+1)
-  printf "%6.1f\n", test
-
   test |= ones(1,n)
-
-  printf "%6.1f", test
 
   matrix e
   mols(test, Rd', &e)
@@ -439,4 +434,26 @@ function void SVAR_est_printout(bundle *mod)
   if type == 1 || type == 2  # plain or C-model
     printStrMat(mod["S1"], mod["vcv"], "C")  
   endif
+end function
+
+function scalar smash_unstable_roots(matrix *A, const matrix Psi)
+
+    matrix Ab = A + Psi
+    # now check stationarity
+    scalar maxmod = max_eval(Ab)
+
+    scalar h = 0.99
+    scalar H = 1
+    scalar maxiter = 1000
+    scalar iter = 0
+    loop while (maxmod > 0.9999) && (iter<maxiter) --quiet
+	iter++
+	Ab = A + H .* Psi
+	scalar maxmod = max_eval(Ab)
+	H *= h
+	# printf "H = %g\n", H
+    endloop
+    A = Ab
+    H = (iter>=maxiter) ? NA : H
+    return H
 end function
