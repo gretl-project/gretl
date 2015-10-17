@@ -1,12 +1,12 @@
 author = Allin Cottrell
 email = cottrell@wfu.edu
 version = 0.5
-date = 2011-02-10
+date = 2015-10-17
 description = Within and Between TSLS models plus G2SLS
 public = ivpanel ivp_print GUI_ivpanel
 gui-main = GUI_ivpanel
 bundle-print = ivp_print
 help = ivpanel.pdf
 sample-script = nc_crime.inp
-min-version = 1.9.3
+min-version = 1.9.12
 data-requirement = needs-panel-data

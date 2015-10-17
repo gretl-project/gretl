@@ -22,7 +22,7 @@
 
 \section{Introduction}
 
-This package estimates three variants of panel models with
+This package estimates three variants of panel data models with
 instrumental variables, namely fixed-effects, the ``between'' model,
 and random effects (Generalized 2-Stage Least Squares or G2SLS). An
 extended discussion of these models can be found in chapter 7 of
@@ -136,7 +136,9 @@ versus other) and a set of year dummies.
 It's perhaps noteworthy that despite the IV approach, the coefficient
 on \texttt{lpolpc} is positive in all the models, the opposite of what
 would be expected if the estimator had succeeded in picking up a
-causal relationship.
+causal relationship. At least in the fixed effects specification the
+positive \texttt{lpolpc} coefficient is not statistically significant
+($P$-value > 0.4).
 
 \section{Graphical interface}
 
