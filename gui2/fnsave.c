@@ -682,7 +682,7 @@ static int overwrite_gfn_check (const char *fname,
 	
 	msg = g_strdup_printf("%s\n\n%s\n%s", fname,
 			      _("A file of this name already exists."),
-			      _("OK to overwite it?"));
+			      _("OK to overwrite it?"));
 	resp = yes_no_dialog(NULL, msg, parent);
 	g_free(msg);
 	if (notified != NULL) {
