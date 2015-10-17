@@ -21,8 +21,7 @@ vpath %.spec $(PKGSRC)
 
 INP = ivpanel.inp
 
-$(PKG).gfn: links.stamp $(INP) $(PKG).spec $(PKG).help \
-	examples/nc_crime.inp $(GRETLCLI)
+$(PKG).gfn: links.stamp $(INP) $(PKG).spec $(PKG).help examples/nc_crime.inp
 	$(GRETLCLI) -t pkg.inp
 
 links.stamp:
