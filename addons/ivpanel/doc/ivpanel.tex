@@ -24,10 +24,11 @@
 
 This package estimates three variants of panel models with
 instrumental variables, namely fixed-effects, the ``between'' model,
-and random effects (G2SLS). An extended discussion of these models can
-be found in chapter 5 of \cite{baltagi05}. The sample script provided
-with this package replicates the results obtained by Baltagi using
-\textsf{Stata} for each of the three supported models.
+and random effects (Generalized 2-Stage Least Squares or G2SLS). An
+extended discussion of these models can be found in chapter 7 of
+\cite{baltagi05}. The sample script provided with this package
+replicates the results obtained by Baltagi using \textsf{Stata} for
+each of the three supported models.
 
 The required arguments to the main public function \texttt{ivpanel()}
 are as follows:
@@ -35,11 +36,14 @@ are as follows:
 \begin{enumerate}
 \item \argname{y} (series), the dependent variable
 \item \argname{X} (list), the regressors, both exogenous and endogenous
-\item \argname{Z} (list), the instruments
+\item \argname{Z} (list), the instruments, including any exogenous
+  regressors
 \end{enumerate}
 
-Note that exogenous variables in list \argname{X} should be repeated in
-\argname{Z}, as in gretl's \texttt{tsls} command.
+Note that exogenous variables in list \argname{X} should be repeated
+in \argname{Z}, as in gretl's \texttt{tsls} command. The constant is
+automatically added to \argname{X} and \argname{Z} if it's not already
+present.
 
 An optional fourth argument, \argname{case}, can be used to specify the
 type of model. The argument is an integer switch that takes values 1,
@@ -105,15 +109,15 @@ Some comments on the bundle members follow.
  where SSRf is the sum of squared residuals from the fixed-effects IV
  model and the other two SSR values are calculated thus:
 \begin{enumerate}
-\item Run fixed-effects first-stage regressions and save the fitted
-values; use these to replace the endogenous regressors.
-
-\item SSRr is then obtained via OLS, and SSRu from a fixed-effects 
-regression. SSRu differs from SSRf in that it uses the ``raw''
-residuals, without correction as one usually applies with two 
-stage least squares (i.e.\ replacing the first-stage fitted 
-values with the actual data for the endogenous regressors 
-when computing the fitted values).
+\item We run the fixed-effects first-stage regressions and save the
+  fitted values; we then use these to replace the endogenous
+  regressors.
+\item SSRr is then obtained via OLS, and SSRu from a fixed-effects
+  regression. SSRu differs from SSRf in that it uses the ``raw''
+  residuals, without correction as one usually applies with two stage
+  least squares (i.e.\ replacing the first-stage fitted values with
+  the actual data for the endogenous regressors when computing the
+  fitted values).
 \end{enumerate}
 
 \end{itemize}
@@ -123,18 +127,25 @@ when computing the fitted values).
 The sample script estimates three models of the (log) crime rate
 across the counties of North Carolina over the years 1981 to 1987,
 using data from \cite{cornwell94}. The endogenous regressors are
-\texttt{lpolpc} (the log of police per capita) and \texttt{lprbarr}
-(the log of the estimated probability of arrest). The instruments are
-\texttt{ltaxpc} (log of tax revenue per capita), \texttt{lmix} (log of
-the offense ``mix'', face-to-face versus other) and a set of year
-dummies. It's perhaps noteworthy that despite the IV approach, the
-coefficient on \texttt{lpolpc} is positive in all the models.
+\texttt{lpolpc} (log of police per capita) and \texttt{lprbarr} (log
+of the estimated probability of arrest). The instruments (besides the
+exogenous regressors) are \texttt{ltaxpc} (log of tax revenue per
+capita), \texttt{lmix} (log of the offense ``mix'', face-to-face
+versus other) and a set of year dummies. 
+
+It's perhaps noteworthy that despite the IV approach, the coefficient
+on \texttt{lpolpc} is positive in all the models, the opposite of what
+would be expected if the estimator had succeeded in picking up a
+causal relationship.
 
 \section{Graphical interface}
 
 An entry-point for \textsf{ivpanel} can be found under the
 \textsf{Panel} sub-menu of gretl's \textsf{Model} menu: the label is
-``Panel IV model.'' See Figure~\ref{fig:gui}.
+``Panel IV model.'' See Figure~\ref{fig:gui}. The specification of the
+endogenous regressors is implicit: any variables that appear in the
+``regressors'' list and not in the ``instruments'' list are taken to
+be endogenous.
 
 \begin{figure}[htbp]
   \centering
@@ -146,7 +157,7 @@ An entry-point for \textsf{ivpanel} can be found under the
 \section{Auxiliary printing function}
 
 The auxiliary public function \texttt{ivp\_print()} is provided to
-pretty-print the results contained in the bundle provided by
+``pretty-print'' the results contained in the bundle provided by
 \texttt{ivpanel()}; \texttt{ivp\_print()} takes a pointer to the
 bundle as its sole argument.
 
