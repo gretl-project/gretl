@@ -21,13 +21,17 @@ vpath %.spec $(PKGSRC)
 
 INP = ivpanel.inp
 
-$(PKG).gfn: links.stamp $(INP) $(PKG).spec $(PKG).help examples/nc_crime.inp
+EXAMP = nc_crime.inp
+
+$(PKG).gfn: links.stamp $(INP) $(PKG).spec $(EXAMP)
 	$(GRETLCLI) -t pkg.inp
+
+doc/$(PKG).pdf:
+	$(MAKE) -C doc
 
 links.stamp:
 	@if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
-	@if [ ! -f $(PKG).help ] ; then ln -sf $(PKGSRC)/$(PKG).help . ; fi
-	@if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
+	@if [ ! -f $(EXAMP) ] ; then ln -sf $(PKGSRC)/$(EXAMP) . ; fi
 	@touch $@
 
 $(PKG).zip: $(PKG).gfn
