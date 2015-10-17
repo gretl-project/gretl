@@ -2,9 +2,9 @@ function void ivp_print (bundle *b)
   matrix result = b["coeff"] ~ b["stderr"]
   scalar case = b["case"]
   scalar N = 0
-  if (case == 1) 
+  if case == 1
     printf "\nFixed-effects TSLS, using %d observations\n", b["nobs"]
-  elif (case == 2) 
+  elif case == 2
     printf "\nBetween TSLS, N = %d\n", b["nobs"]
   else 
     printf "\nG2SLS random effects, using %d observations\n", b["nobs"]
@@ -47,7 +47,7 @@ end function
    y and yhat: we may want to do something else, or nothing
 */
 
-function scalar tsls_rsq (matrix *y, matrix *yh)
+function scalar tsls_rsq (const matrix y, const matrix yh)
   scalar r = corr(y, yh)
   return r^2
 end function 
@@ -60,7 +60,7 @@ end function
   between model.
 */
 
-function matrix panel_means_matrix (const matrix *X, const matrix *u)
+function matrix panel_means_matrix (const matrix X, const matrix u)
   scalar NT = rows(X)
   matrix e = seq(1, NT)'
 
@@ -80,7 +80,7 @@ end function
    we want this for the poolability F-test for fixed effects
 */
 
-function void get_panel_means (matrix *X, const matrix *u)
+function void get_panel_means (matrix *X, const matrix u)
   matrix grand = meanc(X)
   matrix e = seq(1, rows(X))'
   matrix vU = values(u)
@@ -106,7 +106,7 @@ end function
   minimum and maximum group time-series lengths.
 */
 
-function void real_panel_demean (matrix *X, const matrix *u,
+function void real_panel_demean (matrix *X, const matrix u,
                                  matrix *dims)
   matrix grand = meanc(X)
   scalar NT = rows(X)
@@ -133,21 +133,18 @@ end function
 
 function matrix panel_demean_1 (matrix *X, const matrix *u)
   matrix dims
-  real_panel_demean(&X, &u, &dims)
+  real_panel_demean(&X, u, &dims)
   return dims
 end function
 
 /* panel-demean X into ret, preserving X; return ret
    and fill out dims argument. 
-
-   BUG: gretl complains if you make the X arg const, but 
-   it shouldn't since X itself is not modified.
 */
 
-function matrix panel_demean_2 (matrix *X, const matrix *u,
+function matrix panel_demean_2 (const matrix X, const matrix u,
                                 matrix *dims)
   matrix ret = X
-  real_panel_demean(&ret, &u, &dims)
+  real_panel_demean(&ret, u, &dims)
   return ret
 end function
 
@@ -165,8 +162,8 @@ end function
   the residuals vector.
 */
 
-function matrix matrix_tsls(matrix *y, matrix *X, matrix *Z, 
-                            matrix *V[null], matrix *S1[null])
+function matrix matrix_tsls (const matrix y, matrix *X, matrix *Z, 
+                             matrix *V[null], matrix *S1[null])
     matrix R 
     matrix Q = qrdecomp(Z, &R)
     if !isnull(S1)
@@ -191,15 +188,15 @@ end function
 
 /* Compute restricted SSR for poolability test */
 
-function scalar get_SSR_r (matrix *y, matrix *X)
+function scalar get_SSRr (const matrix y, const matrix X)
   matrix u
   matrix b = mols(y, X, &u)
   return u'u
 end function
 
-function scalar panel_sigma (const matrix *All, int k,
-                             const matrix *endocols,
-                             const matrix *exocols,
+function scalar panel_sigma (const matrix All, int k,
+                             const matrix endocols,
+                             const matrix exocols,
 			     int ng, int code)
   # break out the various required sub-matrices
   matrix my = All[,1]
@@ -208,7 +205,7 @@ function scalar panel_sigma (const matrix *All, int k,
   matrix mZ = mX[,exocols] ~ All[,k+2:]
 
   # compute IV estimator
-  matrix beta = matrix_tsls(&my, &mX, &mZ)
+  matrix beta = matrix_tsls(my, &mX, &mZ)
 
   n = rows(mX)  
   dfk = cols(mX)
@@ -289,23 +286,23 @@ function bundle ivpanel (series y "dependent variable",
     scalar N = dims[1]
     scalar NT = rows(All)
   elif case == 2 # between
-    All = panel_means_matrix(&All, &u)
+    All = panel_means_matrix(All, u)
     scalar N = rows(values(u))
     NT = N
   elif case == 3 # G2SLS
     matrix dims
-    matrix X1 = panel_demean_2(&All, &u, &dims)
+    matrix X1 = panel_demean_2(All, u, &dims)
     scalar N = dims[1]
     scalar NT = rows(X1)
-    sw = panel_sigma(&X1, k, &endocols, &exocols, N, 1)
-    matrix X2 = panel_means_matrix(&All, &u)
-    sb = panel_sigma(&X2, k, &endocols, &exocols, N, 2)
+    sw = panel_sigma(X1, k, endocols, exocols, N, 1)
+    matrix X2 = panel_means_matrix(All, u)
+    sb = panel_sigma(X2, k, endocols, exocols, N, 2)
     if !quiet
       printf "sigma-hat(within)  = %.8g\n", sw
       printf "sigma-hat(between) = %.8g\n", sb
     endif    
     # total s^2 for comparison
-    # stot = panel_sigma(&All, k, &endocols, &exocols, N, 3)
+    # stot = panel_sigma(All, k, endocols, exocols, N, 3)
     # printf "stot = %.8g\n", stot
     All = (X1/sw) | (X2/sb)
   endif    
@@ -322,9 +319,9 @@ function bundle ivpanel (series y "dependent variable",
   matrix V 
   if case == 1
     matrix S1 = mX[,endocols]
-    matrix beta = matrix_tsls(&my, &mX, &mZ, &V, &S1)
+    matrix beta = matrix_tsls(my, &mX, &mZ, &V, &S1)
   else
-    matrix beta = matrix_tsls(&my, &mX, &mZ, &V)
+    matrix beta = matrix_tsls(my, &mX, &mZ, &V)
   endif
   matrix U = my - mX * beta
 
@@ -336,9 +333,9 @@ function bundle ivpanel (series y "dependent variable",
     matrix y0 = {y}
     matrix X0 = {X}
     matrix S0 = X0[,endocols]
-    get_panel_means(&S0, &u)   
+    get_panel_means(&S0, u)   
     X0[,endocols] = S1 + S0
-    scalar SSRr = get_SSR_r(&y0, &X0)
+    scalar SSRr = get_SSRr(y0, X0)
     Fpnum = SSRr - SSRu
     # end F-test stuff
     scalar df = NT - k - N + 1
@@ -360,7 +357,7 @@ function bundle ivpanel (series y "dependent variable",
   endif
     
   matrix yhat = my - U
-  scalar rsq = tsls_rsq(&my, &yhat)
+  scalar rsq = tsls_rsq(my, yhat)
 
   # lists of endog vars and additional instruments
   list tmp = X - Z
