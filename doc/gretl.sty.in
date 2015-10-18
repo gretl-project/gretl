@@ -85,9 +85,6 @@
 \newcommand{\tip}[1]{\par\vspace{4pt}
  \ding{43} {\small \sffamily #1}\par}
 
-%% rule for use in bibliography
-\newcommand{\bibliorule}{\rule[-.01in]{.5in}{.005in}}
-
 %% floats
 \renewcommand{\topfraction}{0.9}
 \renewcommand{\bottomfraction}{0.8}
@@ -167,10 +164,6 @@
         \@mkboth{\contentsname}{\contentsname}}%
     \@starttoc{toc}%
     \if@restonecol\twocolumn\fi}
-
-%% offset "tip" text
-\newcommand{\tip}[1]{\par\vspace{4pt}
- \ding{43} {\small \sffamily #1}\par}
 
 %% rule for use in bibliography
 \newcommand{\bibliorule}{\rule[-.01in]{.5in}{.005in}}
