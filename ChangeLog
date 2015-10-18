@@ -1,6 +1,9 @@
 version 2015d-git, in progress
 - add varnames() function: similar to varname() but returns
   an array of strings given a list argument
+- add tvarying() function: detect whether a series is time-
+  varying, or whether all members of a list of series are
+  time-varying (panel data only)
 - movavg() function: add option to supply a specific
   initializer for the exponential moving average; also
   enhance the corresponding GUI  
