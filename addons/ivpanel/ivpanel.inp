@@ -226,6 +226,16 @@ function scalar panel_sigma (const matrix All, int k,
   return sqrt(U'U / df)
 end function
 
+function scalar all_varying (list X, list Z)
+  scalar ret = 1
+  # sorry, too tedious to do this without the tvarying()
+  # function, which is new in gretl 2015d (20153)
+  if $version >= 20153
+    ret = tvarying(X) && tvarying(Z)
+  endif
+  return ret
+end function
+
 function bundle ivpanel (series y "dependent variable", 
                          list X "regressors",
                          list Z "instruments", 
@@ -240,8 +250,13 @@ function bundle ivpanel (series y "dependent variable",
 
   scalar nendo = nelem(X - Z)
   scalar ninst = nelem(Z - X)
-  if (nendo > ninst) 
-     funcerr "Order condition is not satisfied"
+  if nendo > ninst 
+     funcerr "Order condition for identification is not satisfied"
+  endif
+
+  # fixed effects: test for time variation  
+  if case == 1 && !all_varying(X, Z)
+     funcerr "Fixed effects: all regressors and instruments must be time-varying"
   endif
 
   # construct string for printing coeffs

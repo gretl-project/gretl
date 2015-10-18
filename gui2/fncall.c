@@ -381,6 +381,8 @@ static int probably_stochastic (int v)
     int ret = 1;
 
     if (sample_size(dataset) >= 3) {
+	/* rule our vars that seem to be integer-valued with
+	   a constant increment */
 	int t = dataset->t1;
 	double d1 = dataset->Z[v][t+1] - dataset->Z[v][t];
 	double d2 = dataset->Z[v][t+2] - dataset->Z[v][t+1];
@@ -1072,14 +1074,13 @@ static void arg_combo_set_default (call_info *cinfo,
 {
     GList *mylist = g_list_first(list);
     const char *targname = NULL;
-    int i, k = 0;
+    int i, v, k = 0;
 
     if (ptype == GRETL_TYPE_SERIES) {
 	if (has_single_arg_of_type(cinfo, ptype)) {
-	    int vsel = mdata_active_var();
-
-	    if (vsel > 0) {
-		targname = dataset->varname[vsel];
+	    v = mdata_active_var();
+	    if (v > 0 && probably_stochastic(v)) {
+		targname = dataset->varname[v];
 	    }
 	}
     } else if (ptype == GRETL_TYPE_LIST) {
@@ -1097,8 +1098,7 @@ static void arg_combo_set_default (call_info *cinfo,
 	if (targname != NULL) {
 	    ok = strcmp(name, targname) == 0;
 	} else if (series_arg(ptype)) {
-	    int v = current_series_index(dataset, name);
-
+	    v = current_series_index(dataset, name);
 	    if (v > 0 && probably_stochastic(v)) {
 		ok = !already_set_as_default(cinfo, name, ptype);
 	    }
