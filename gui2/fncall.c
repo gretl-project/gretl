@@ -753,6 +753,10 @@ static void launch_matrix_maker (GtkWidget *button, call_info *cinfo)
 {
     int n = n_user_matrices();
 
+    if (!strcmp(cinfo->pkgname, "SVAR")) {
+	widget_set_int(cinfo->dlg, "matrix-no-series", 1);
+    }
+
     fncall_add_matrix(cinfo->dlg);
 
     if (n_user_matrices() > n) {

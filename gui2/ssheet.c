@@ -3569,7 +3569,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
 			      int fncall)
 {
     struct mdialog mdlg;
-    GSList *group;
+    GSList *group = NULL;
     GtkWidget *dlg;
     GtkWidget *hbox;
     GtkWidget *vbox;
@@ -3577,11 +3577,13 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
     GtkWidget *rb;
     GtkWidget *w;
     int maxdim = 1000;
+    int series_ok = 1;
     int ret = GRETL_CANCEL;
 
     dlg = gretl_dialog_new("Matrix", parent, 
 			   GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+    
     mdlg.dlg = dlg;
     mdlg.spec = spec;
     mdlg.numerics = NULL;
@@ -3600,29 +3602,35 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     w = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(w), VNAMELEN-1);
-    gtk_entry_set_width_chars(GTK_ENTRY(w), VNAMELEN+3);
+    gtk_entry_set_width_chars(GTK_ENTRY(w), 24);
     if (*spec->name != '\0') {
 	gtk_entry_set_text(GTK_ENTRY(w), spec->name);
 	gtk_widget_set_sensitive(w, FALSE);
     } else {
 	gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
     }
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     mdlg.nentry = w;
 
+    if (fncall && parent != NULL) {
+	series_ok = !widget_get_int(parent, "matrix-no-series");
+    }
+
     /* matrix construction options */
 
-    /* option: build from series */
-    hbox = gtk_hbox_new(FALSE, 5);
-    rb = gtk_radio_button_new_with_label(NULL, _("Build from series"));
-    g_signal_connect(G_OBJECT(rb), "clicked", G_CALLBACK(choose_series), &mdlg);
-    gtk_box_pack_start(GTK_BOX(hbox), rb, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    if (series_ok) {
+	/* option: build from series */
+	hbox = gtk_hbox_new(FALSE, 5);
+	rb = gtk_radio_button_new_with_label(NULL, _("Build from series"));
+	g_signal_connect(G_OBJECT(rb), "clicked", G_CALLBACK(choose_series), &mdlg);
+	gtk_box_pack_start(GTK_BOX(hbox), rb, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
+    }
 
     /* option: build from formula */
     hbox = gtk_hbox_new(FALSE, 5);
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
     rb = gtk_radio_button_new_with_label(group, _("Build from formula"));
     g_signal_connect(G_OBJECT(rb), "clicked", G_CALLBACK(choose_formula), &mdlg);
     gtk_box_pack_start(GTK_BOX(hbox), rb, TRUE, TRUE, 0);
@@ -3657,6 +3665,8 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
     gtk_misc_set_alignment(GTK_MISC(w), 0, 1);
     gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 0, 1);
     w = gtk_spin_button_new_with_range(1, maxdim, 1);
+    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(w), 0);
+    gtk_entry_set_width_chars(GTK_ENTRY(w), 4);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), (gdouble) spec->rows);
     g_signal_connect(G_OBJECT(w), "value-changed",
 		     G_CALLBACK(spin_call), &spec->rows);
@@ -3666,6 +3676,8 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
     gtk_misc_set_alignment(GTK_MISC(w), 0, 1);
     gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 1, 2);
     w = gtk_spin_button_new_with_range(1, maxdim, 1);
+    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(w), 0);
+    gtk_entry_set_width_chars(GTK_ENTRY(w), 4);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), (gdouble) spec->cols);
     g_signal_connect(G_OBJECT(w), "value-changed",
 		     G_CALLBACK(spin_call), &spec->cols);
@@ -3676,7 +3688,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
     gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 2, 3);
     w = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(w), VNAMELEN-1);
-    gtk_entry_set_width_chars(GTK_ENTRY(w), VNAMELEN+3);
+    gtk_entry_set_width_chars(GTK_ENTRY(w), 16);
     gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
     gtk_entry_set_text(GTK_ENTRY(w), "0");
     gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, 2, 3);
@@ -3687,7 +3699,12 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
     gtk_box_pack_start(GTK_BOX(hbox), tab, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    gtk_widget_set_sensitive(hbox, FALSE);
+    if (series_ok) {
+	gtk_widget_set_sensitive(hbox, FALSE);
+    } else {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rb), TRUE);
+    }
+    
     mdlg.numerics = hbox;
 
     /* control buttons */
