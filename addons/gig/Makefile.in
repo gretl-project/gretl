@@ -25,13 +25,10 @@ INP = gig_estimate.inp \
       gig_printout.inp \
       gig_setup.inp
 
-all: $(PKG).gfn doc/$(PKG).pdf
+all: $(PKG).gfn pdfdoc
 
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec
 	$(GRETLCLI) -t pkg.inp
-
-doc/$(PKG).pdf:
-	$(MAKE) -C doc
 
 links.stamp:
 	@if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
@@ -39,10 +36,13 @@ links.stamp:
 	@if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
 	@touch $@
 
-$(PKG).zip: $(PKG).gfn doc/$(PKG).pdf
+$(PKG).zip: $(PKG).gfn pdfdoc
 	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
 
-.PHONY : check install installdirs clean
+.PHONY : pdfdoc check install installdirs clean
+
+pdfdoc: 
+	$(MAKE) -C doc
 
 check: $(PKG).gfn
 	./test.sh $(GRETLCLI)

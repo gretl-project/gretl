@@ -45,11 +45,14 @@ in \argname{Z}, as in gretl's \texttt{tsls} command. The constant is
 automatically added to \argname{X} and \argname{Z} if it's not already
 present.
 
-An optional fourth argument, \argname{case}, can be used to specify the
-type of model. The argument is an integer switch that takes values 1,
-2 or 3 (this may be extended in future).  A value of 1 means fixed
+An optional fourth argument, \argname{case}, can be used to specify
+the type of model. The argument is an integer switch that takes values
+1, 2 or 3 (this may be extended in future).  A value of 1 means fixed
 effects, and is implicit if no fourth argument is given; a value of 2
 means to use the between estimator; and a value of 3 means G2SLS.
+Leaving aside the constant, all the members of \argname{X} and
+\argname{Z} must be time-varying when the fixed effects case is
+selected.
 
 An optional final boolean argument, \argname{quiet}, controls the
 printing of output: if \argname{quiet} is set to a non-zero value,
