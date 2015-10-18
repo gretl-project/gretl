@@ -85,6 +85,9 @@
 \newcommand{\tip}[1]{\par\vspace{4pt}
  \ding{43} {\small \sffamily #1}\par}
 
+%% rule for use in bibliography
+\newcommand{\bibliorule}{\rule[-.01in]{.5in}{.005in}}
+
 %% floats
 \renewcommand{\topfraction}{0.9}
 \renewcommand{\bottomfraction}{0.8}
@@ -165,9 +168,6 @@
     \@starttoc{toc}%
     \if@restonecol\twocolumn\fi}
 
-%% rule for use in bibliography
-\newcommand{\bibliorule}{\rule[-.01in]{.5in}{.005in}}
-
 %% get the bibliography into the TOC
 \renewenvironment{thebibliography}[1]
      {\chapter*{\bibname\@mkboth{\bibname}{\bibname}}
@@ -225,7 +225,6 @@
         \fi
         ##1}}}}
 \fi
-
 
 \def\@makechapterhead#1{%
   \vspace*{10\p@}%
