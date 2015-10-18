@@ -7996,6 +7996,8 @@
 	  a series argument, returns 1 if the series is time-varying,
 	  otherwise 0. Given a list argument, returns 1 if all
 	  the series in the list are time-varying, otherwise 0.
+	  In the list case the built-in constant (series 0) is
+	  ignored when doing the test. 
 	</para>
 	<para>
 	  The working definition of a <quote>time-varying</quote>

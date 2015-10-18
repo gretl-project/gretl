@@ -544,8 +544,10 @@ int series_is_time_varying (const double *x, const DATASET *dset,
 	    for (t=0; t<T && !varying; t++) {
 		xt = x[s];
 		if (na(x0) && !na(xt)) {
+		    /* set the reference value */
 		    x0 = x[s];
 		} else if (!na(xt) && !na(x0) && xt != x0) {
+		    /* got two differing values */
 		    varying = 1;
 		}
 		s++;
@@ -557,7 +559,8 @@ int series_is_time_varying (const double *x, const DATASET *dset,
 }
 
 /* panel data only: return 1 if all members of @list are 
-   time-varying, otherwise return 0 */
+   time-varying (ignoring the built-in constant, if present), 
+   otherwise return 0 */
 
 int list_is_time_varying (const int *list, const DATASET *dset,
 			  int *err)
@@ -566,17 +569,24 @@ int list_is_time_varying (const int *list, const DATASET *dset,
     
     if (!dataset_is_panel(dset)) {
 	*err = E_PDWRONG;
+    } else if (list[0] == 1 && list[1] == 0) {
+	/* @list contains only the constant */
+	return 0;
     } else {
 	const double *x;
-	int i;
+	int i, vi;
 
 	all_varying = 1;
 
 	for (i=1; i<=list[0]; i++) {
-	    x = dset->Z[list[i]];
-	    if (!series_is_time_varying(x, dset, err)) {
-		all_varying = 0;
-		break;
+	    vi = list[i];
+	    if (vi > 0) {
+		/* we'll ignore the constant */
+		x = dset->Z[vi];
+		if (!series_is_time_varying(x, dset, err)) {
+		    all_varying = 0;
+		    break;
+		}
 	    }
 	}
     }
