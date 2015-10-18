@@ -1983,8 +1983,16 @@ skip the bootstrap), and finally the choice of the precise
 optimization algorithm from the drop-down menu at the bottom, where as
 before the scoring algorithm is the default.
 
-The other function parameters will be explained now. First there are three checkboxes that specify the deterministic terms
-to be included in the model.\footnote{The seasonal dummies are automatically centered, which should only matter in the rather exotic case without a constant term, however.} Note that it is still possible to manually specify the deterministic terms as in the script interface, namely as part of the exogenous regressor list. Next, the \emph{horizon} parameter sets the desired maximum impulse response horizon as explained above for the script interface, and can be left at zero to invoke the default settings. 
+The other function parameters will be explained now. First there are
+three checkboxes that specify the deterministic terms to be included
+in the model.\footnote{The seasonal dummies are automatically
+  centered, which should only matter in the rather exotic case without
+  a constant term, however.} Note that it is still possible to
+manually specify the deterministic terms as in the script interface,
+namely as part of the exogenous regressor list. Next, the
+\emph{horizon} parameter sets the desired maximum impulse response
+horizon as explained above for the script interface, and can be left
+at zero to invoke the default settings.
 
 \subsection{Identifying constraints}
 
@@ -2055,12 +2063,13 @@ provides the access to the central SVAR analyses, namely the impulse
 responses, the error variance as well as the historical
 decompositions.
 
-
 \subsection{An example}
+
 For example, suppose we wanted to estimate a C model like the one used
 as example so far, with the only difference that we want the $C$
-matrix to be \emph{upper} triangular, rather than lower triangular. Via
-a script, you would use the function \texttt{SVAR\_restrict()}, as in
+matrix to be \emph{upper} triangular, rather than lower
+triangular. Via a script, you would use the function
+\texttt{SVAR\_restrict()}, as in
 \begin{code}
 # Force C_{2,1} to 0
 SVAR_restrict(&Mod, "C", 2, 1, 0)
@@ -2076,24 +2085,20 @@ size as $C$).
   \label{fig:tmpl}
 \end{figure}
 
-Suppose we call
-the pattern matrix \texttt{TMPL} and that we select the option
-``Build Numerically'' (of course, with 2 rows and 2 columns in this
-example).
-When you're done, you return to the main SVAR window
-(be sure to select C-model as the model type). After clicking ``OK'',
-the results window will appear, as in Figure
-\ref{fig:GUI-output}. Note that the estimated $C$ matrix is now upper
-triangular.
+Suppose we call the pattern matrix \texttt{TMPL} and that we select
+the option ``Build Numerically'' (of course, with 2 rows and 2 columns
+in this example).  When you're done, you return to the main SVAR
+window (be sure to select C-model as the model type). After clicking
+``OK'', the results window will appear, as in
+Figure~\ref{fig:GUI-output}. Note that the estimated $C$ matrix is now
+upper triangular.
 
 From the output window, you can save the model bundle to the Icon view
-by clicking on the leftmost icon\footnote{The visual appearance of
-  the icons on your computer may be different from the one shown in
-  Figure \ref{fig:tmpl}, as they depend on your software setup; the
-  screenshots in this document, for example, were generated with
-  different Linux graphical widgets and themes. The ordering of the
-  icons, however, should be the same on all systems.} and re-use it as
-needed for further processing.
+by clicking on the leftmost icon\footnote{The visual appearance of the
+  icons on your computer may be different from the one shown in Figure
+  \ref{fig:tmpl}, as they depend on your software setup.  The number
+  and ordering of the icons, however, should be the same on all
+  systems.} and re-use it as needed for further processing.
 \begin{figure}[htbp]
   \centering
   \includegraphics[scale=0.5]{Output.png}
