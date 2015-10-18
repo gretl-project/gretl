@@ -285,6 +285,7 @@ enum {
     F_STRVALS,
     F_DOTWRITE,
     F_TRAMOLIN,
+    F_TVARYING,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,

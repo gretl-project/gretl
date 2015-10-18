@@ -522,6 +522,68 @@ static int panel_resample_series (const double *x, double *y,
     return 0;
 }
 
+/* panel data only: return 1 if @x is time-varying, 
+   otherwise return 0 */
+
+int series_is_time_varying (const double *x, const DATASET *dset,
+			    int *err)
+{
+    int varying = 0;
+    
+    if (!dataset_is_panel(dset)) {
+	*err = E_PDWRONG;
+    } else {
+	double x0, xt;
+	int n = panel_sample_size(dset);
+	int T = dset->pd;
+	int i, t, s;
+
+	for (i=0; i<n && !varying; i++) {
+	    s = dset->t1 + i * T;
+	    x0 = NADBL;
+	    for (t=0; t<T && !varying; t++) {
+		xt = x[s];
+		if (na(x0) && !na(xt)) {
+		    x0 = x[s];
+		} else if (!na(xt) && !na(x0) && xt != x0) {
+		    varying = 1;
+		}
+		s++;
+	    }
+	}
+    }
+
+    return varying;
+}
+
+/* panel data only: return 1 if all members of @list are 
+   time-varying, otherwise return 0 */
+
+int list_is_time_varying (const int *list, const DATASET *dset,
+			  int *err)
+{
+    int all_varying = 0;
+    
+    if (!dataset_is_panel(dset)) {
+	*err = E_PDWRONG;
+    } else {
+	const double *x;
+	int i;
+
+	all_varying = 1;
+
+	for (i=1; i<=list[0]; i++) {
+	    x = dset->Z[list[i]];
+	    if (!series_is_time_varying(x, dset, err)) {
+		all_varying = 0;
+		break;
+	    }
+	}
+    }
+
+    return all_varying;
+}
+
 int resample_series (const double *x, double *y, const DATASET *dset)
 {
     int *z = NULL;
@@ -1386,7 +1448,7 @@ gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
  * @x: source vector.
  * @y target array.
  * @dset: data set information.
- * @opt: OPT_X to reap across inidividuals instead
+ * @opt: OPT_X to repeat across individuals instead
  * of across time.
  *
  * Constructs a series by repeating the values in @x,

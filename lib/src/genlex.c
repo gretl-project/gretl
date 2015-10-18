@@ -382,6 +382,7 @@ struct str_table funcs[] = {
     { F_MREVERSE, "mreverse" },
     { F_DESEAS,   "deseas" },
     { F_TRAMOLIN, "linearize" },
+    { F_TVARYING, "tvarying" },
     { F_PERGM,    "pergm" },
     { F_IRR,      "irr" },
     { F_NPV,      "npv" },

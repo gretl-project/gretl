@@ -5835,6 +5835,9 @@ series_scalar_func (NODE *n, int f, parser *p)
 	case F_ISDUMMY:
 	    ret->v.xval = gretl_isdummy(t1, t2, x);
 	    break;
+	case F_TVARYING:
+	    ret->v.xval = series_is_time_varying(x, p->dset, &p->err);
+	    break;
 	case F_T1:
 	    ret->v.xval = series_get_start(0, p->dset->n - 1, x);
 	    break;
@@ -5848,6 +5851,27 @@ series_scalar_func (NODE *n, int f, parser *p)
 	if (n->t == MAT) {
 	    n->v.m = tmp;
 	}
+    }
+
+    return ret;
+}
+
+static NODE *list_varying_node (NODE *n, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	int *list = node_get_list(n, p);
+
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
+	
+	if (!p->err) {
+	    ret->v.xval = list_is_time_varying(list, p->dset, &p->err);
+	}
+
+	free(list);
     }
 
     return ret;
@@ -11430,6 +11454,15 @@ static NODE *eval (NODE *t, parser *p)
 	    } 
 	} else {
 	    node_type_error(t->t, 1, SERIES, l, p);
+	}
+	break;
+    case F_TVARYING:
+	if (l->t == SERIES) {
+	    ret = series_scalar_func(l, t->t, p);
+	} else if (ok_list_node(l)) {
+	    ret = list_varying_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, SERIES, l, p);
 	}
 	break;
     case F_QUANTILE:
