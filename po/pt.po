@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-10-16 21:31-0400\n"
-"PO-Revision-Date: 2015-10-17 00:50+0100\n"
+"PO-Revision-Date: 2015-10-18 19:24+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -3262,9 +3262,8 @@ msgid "Execution aborted by request"
 msgstr "Execução abortada por pedido"
 
 #: lib/src/gretl_errors.c:88
-#, fuzzy
 msgid "'catch' cannot be used in this context"
-msgstr "O comando \"%s\" não pode ser utilizado neste contexto"
+msgstr "'catch' não pode ser utilizado neste contexto"
 
 #: lib/src/gretl_errors.c:96
 msgid "gradient is not close to zero"
@@ -4265,9 +4264,9 @@ msgid "Number of variables does not match declaration"
 msgstr "O número de variáveis não corresponde à declaração"
 
 #: lib/src/gretl_xml.c:2866
-#, fuzzy, c-format
+#, c-format
 msgid "Data file contains %d subnormal values"
-msgstr "A variável peso contém valores negativos"
+msgstr "O ficheiro de dados contém %d valores subnormais"
 
 #: lib/src/gretl_xml.c:2925
 #, c-format
@@ -7649,7 +7648,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 17 de outubro de 2015."
+"Tradução de 18 de outubro de 2015."
 
 #: gui2/about.c:203
 msgid "News"
@@ -12188,9 +12187,8 @@ msgid "_Hansl primer"
 msgstr "Introdução ao _Hansl"
 
 #: gui2/gretl.c:1768
-#, fuzzy
 msgid "_Function package guide"
-msgstr "Pacotes de _funções"
+msgstr "Guia dos pacotes de _funções"
 
 #: gui2/gretl.c:1769
 msgid "Check for _updates"
@@ -16130,11 +16128,12 @@ msgid "Nothing to send"
 msgstr "Nada a enviar"
 
 #: gui2/toolbar.c:305
-#, fuzzy
 msgid ""
 "Really replace content with\n"
 "a selected file?"
-msgstr "Confirma apagar as variáveis seleccionadas?"
+msgstr ""
+"Confirma substituir o conteúdo com\n"
+"o ficheiro selecionado?"
 
 #: gui2/toolbar.c:334
 msgid "Print with syntax highlighting?"
