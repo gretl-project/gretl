@@ -20,8 +20,9 @@ vpath %.inp $(PKGSRC)
 vpath %.spec $(PKGSRC)
 
 INP = ivpanel.inp
-
 EXAMP = nc_crime.inp
+
+all: $(PKG).gfn doc/$(PKG).pdf
 
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec $(EXAMP)
 	$(GRETLCLI) -t pkg.inp

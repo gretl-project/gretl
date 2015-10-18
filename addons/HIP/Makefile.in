@@ -25,6 +25,8 @@ INP = HIP_public.inp \
 
 EXAMP = HIP_example.inp
 
+all: $(PKG).gfn doc/$(PKG).pdf
+
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec $(EXAMP)
 	$(GRETLCLI) -t pkg.inp
 

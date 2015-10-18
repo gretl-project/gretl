@@ -25,10 +25,12 @@ INP = gig_estimate.inp \
       gig_printout.inp \
       gig_setup.inp
 
+all: $(PKG).gfn doc/$(PKG).pdf
+
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec
 	$(GRETLCLI) -t pkg.inp
 
-doc/gig.pdf:
+doc/$(PKG).pdf:
 	$(MAKE) -C doc
 
 links.stamp:

@@ -6,11 +6,24 @@ export GRETL_INCLUDE_PATH=`pwd`
 
 rm -f test.out
 
-for f in examples/*.inp ; do
-  if $GRETLCLI -b $f >> test.out ; then 
-     echo "$f: OK"
-  else
-     echo "$f: failed"
-     break
+for f in *.inp ; do
+  if [ "x$f" != "xpkg.inp" ] ; then
+    if $GRETLCLI -b $f >> test.out ; then 
+       echo "$f: OK"
+    else
+       echo "$f: failed"
+       break
+    fi
   fi
 done
+
+if [ -d examples ] ; then
+  for f in examples/*.inp ; do
+    if $GRETLCLI -b $f >> test.out ; then 
+       echo "$f: OK"
+    else
+       echo "$f: failed"
+       break
+    fi
+  done
+fi

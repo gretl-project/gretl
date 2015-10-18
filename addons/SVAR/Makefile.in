@@ -30,6 +30,8 @@ INP =   SVAR_ABfuncs.inp \
 	SVAR_utils.inp \
 	SVAR_main.inp
 
+all: $(PKG).gfn doc/$(PKG).pdf
+
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec
 	$(GRETLCLI) -t pkg.inp
 
