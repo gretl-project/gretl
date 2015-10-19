@@ -1,4 +1,4 @@
-version 2015d-git, in progress
+2015-10-19 version 2015d
 
 The use of the "-f" flag to supply a filename for the
 "eqnprint" and "tabprint" commands is deprecated. Please
