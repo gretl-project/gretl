@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Gretl (1.10.1)\n"
+"Project-Id-Version: Gretl (2015)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-10-16 21:31-0400\n"
-"PO-Revision-Date: 2015-10-14 13:45+0100\n"
+"PO-Revision-Date: 2015-10-19 12:45+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -3263,9 +3263,8 @@ msgid "Execution aborted by request"
 msgstr "Cancelouse a execución a petición do usuario"
 
 #: lib/src/gretl_errors.c:88
-#, fuzzy
 msgid "'catch' cannot be used in this context"
-msgstr "A instrución '%s' non pode usarse neste contexto"
+msgstr "A instrución 'catch' non pode usarse neste contexto"
 
 #: lib/src/gretl_errors.c:96
 msgid "gradient is not close to zero"
@@ -4262,9 +4261,9 @@ msgid "Number of variables does not match declaration"
 msgstr "O número de variables non coincide co declarado"
 
 #: lib/src/gretl_xml.c:2866
-#, fuzzy, c-format
+#, c-format
 msgid "Data file contains %d subnormal values"
-msgstr "A variable das ponderacións ten valores negativos"
+msgstr "O ficheiro de datos contén %d valores anormais"
 
 #: lib/src/gretl_xml.c:2925
 #, c-format
@@ -10572,9 +10571,8 @@ msgid "PDF file"
 msgstr "Ficheiro PDF"
 
 #: gui2/fnsave.c:1955
-#, fuzzy
 msgid "Select"
-msgstr "Escoller _todo"
+msgstr "Escoller"
 
 #: gui2/fnsave.c:2123
 msgid "Minimum gretl version"
@@ -12195,9 +12193,8 @@ msgid "_Hansl primer"
 msgstr "Manual básico de _Hansl"
 
 #: gui2/gretl.c:1768
-#, fuzzy
 msgid "_Function package guide"
-msgstr "Paquetes de _funcións"
+msgstr "Manual de paquetes de _funcións"
 
 #: gui2/gretl.c:1769
 msgid "Check for _updates"
@@ -12894,15 +12891,15 @@ msgstr "_Log-verosimilitude"
 
 #: gui2/gui_utils.c:2755
 msgid "_Akaike Information Criterion"
-msgstr "Criterio de inform. de _Akaike"
+msgstr "Criterio Inform. _Akaike"
 
 #: gui2/gui_utils.c:2757
 msgid "_Bayesian Information Criterion"
-msgstr "Criterio de inform. _bayes. de Schwarz"
+msgstr "Criterio Inform. _bayesiano Schwarz"
 
 #: gui2/gui_utils.c:2759
 msgid "_Hannan-Quinn Information Criterion"
-msgstr "Criterio de inform. de _Hannan-Quinn"
+msgstr "Criterio Inform. _Hannan-Quinn"
 
 #: gui2/gui_utils.c:2764
 msgid "_Predicted error variance"
@@ -16140,11 +16137,12 @@ msgid "Nothing to send"
 msgstr "Non hai nada que enviar"
 
 #: gui2/toolbar.c:305
-#, fuzzy
 msgid ""
 "Really replace content with\n"
 "a selected file?"
-msgstr "Deséxase realmente borrar as variables seleccionadas?"
+msgstr ""
+"Substituír realmente o contido\n"
+"cun ficheiro seleccionado?"
 
 #: gui2/toolbar.c:334
 msgid "Print with syntax highlighting?"
@@ -17515,7 +17513,7 @@ msgstr "Proporcións de varianza"
 
 #: plugin/vif.c:223
 msgid "eigenvalues of X'X, largest to smallest"
-msgstr "Autovalores de X'X, de maior a menor"
+msgstr "Autovalores de X'X (de maior a menor)"
 
 #: plugin/vif.c:224
 msgid "condition index"
