@@ -38,6 +38,9 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *funname);
 
 int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn);
 
+void get_fncall_param_info (GtkWidget *dlg, int *series_ok,
+			    char **pname);
+
 void maybe_add_packages_to_model_menus (windata_t *vwin);
 
 void maybe_add_packages_to_menus (windata_t *vwin);

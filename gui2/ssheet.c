@@ -27,6 +27,7 @@
 #include "winstack.h"
 #include "toolbar.h"
 #include "cmdstack.h"
+#include "fncall.h"
 #include "usermat.h"
 #include "uservar.h"
 #include "matrix_extra.h"
@@ -3576,6 +3577,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
     GtkWidget *tab;
     GtkWidget *rb;
     GtkWidget *w;
+    gchar *pname = NULL;
     int maxdim = 1000;
     int series_ok = 1;
     int ret = GRETL_CANCEL;
@@ -3589,6 +3591,13 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
     mdlg.numerics = NULL;
     mdlg.formula = NULL;
     mdlg.retp = &ret;
+
+    if (fncall && parent != NULL) {
+	/* we're being called from the function-call dialog
+	   for a gfn package: pick up some relevant info
+	*/
+	get_fncall_param_info(parent, &series_ok, &pname);
+    }    
 
     /* top label */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -3607,15 +3616,16 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
 	gtk_entry_set_text(GTK_ENTRY(w), spec->name);
 	gtk_widget_set_sensitive(w, FALSE);
     } else {
+	if (pname != NULL) {
+	    gtk_entry_set_text(GTK_ENTRY(w), pname);
+	}
 	gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
     }
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     mdlg.nentry = w;
 
-    if (fncall && parent != NULL) {
-	series_ok = !widget_get_int(parent, "matrix-no-series");
-    }
+    g_free(pname);
 
     /* matrix construction options */
 

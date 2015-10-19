@@ -756,6 +756,7 @@ static void launch_matrix_maker (GtkWidget *button, call_info *cinfo)
 
     if (!strcmp(cinfo->pkgname, "SVAR")) {
 	widget_set_int(cinfo->dlg, "matrix-no-series", 1);
+	g_object_set_data(G_OBJECT(cinfo->dlg), "button", button);
     }
 
     fncall_add_matrix(cinfo->dlg);
@@ -1225,7 +1226,8 @@ static void add_table_cell (GtkWidget *tbl, GtkWidget *w,
 		     GTK_FILL, GTK_FILL, 5, 3);
 }
 
-static GtkWidget *add_object_button (int ptype, GtkWidget *combo)
+static GtkWidget *add_object_button (int ptype, GtkWidget *combo,
+				     const char *parname)
 {
     GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_ADD, 
 					      GTK_ICON_SIZE_MENU);
@@ -1233,6 +1235,10 @@ static GtkWidget *add_object_button (int ptype, GtkWidget *combo)
 
     gtk_container_add(GTK_CONTAINER(button), img);
     g_object_set_data(G_OBJECT(button), "combo", combo);
+    if (parname != NULL) {
+	/* FIXME is the cast OK here? */
+	g_object_set_data(G_OBJECT(button), "parname", (char *) parname);
+    }
 
     if (series_arg(ptype)) {
 	gretl_tooltips_add(button, _("New variable"));
@@ -1407,7 +1413,7 @@ static void function_call_dialog (call_info *cinfo)
 	if (series_arg(ptype)) {
 	    cinfo->vsels = g_list_append(cinfo->vsels, sel);
 	    widget_set_int(sel, "ptype", GRETL_TYPE_SERIES);
-	    button = add_object_button(ptype, sel);
+	    button = add_object_button(ptype, sel, parname);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_series_maker), 
@@ -1415,14 +1421,14 @@ static void function_call_dialog (call_info *cinfo)
 	} else if (scalar_arg(ptype) && !spinnable) {
 	    cinfo->ssels = g_list_append(cinfo->ssels, sel);
 	    widget_set_int(sel, "ptype", GRETL_TYPE_DOUBLE);
-	    button = add_object_button(ptype, sel);
+	    button = add_object_button(ptype, sel, parname);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_scalar_maker), 
 			     cinfo);
 	} else if (matrix_arg(ptype)) {
 	    cinfo->msels = g_list_append(cinfo->msels, sel);
-	    button = add_object_button(ptype, sel);
+	    button = add_object_button(ptype, sel, parname);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_matrix_maker), 
@@ -1435,7 +1441,7 @@ static void function_call_dialog (call_info *cinfo)
 	    GtkWidget *entry = gtk_bin_get_child(GTK_BIN(sel));
 	    
 	    cinfo->lsels = g_list_append(cinfo->lsels, sel);
-	    button = add_object_button(ptype, sel);
+	    button = add_object_button(ptype, sel, parname);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    widget_set_int(entry, "argnum", i);
 	    g_object_set_data(G_OBJECT(button), "cinfo", cinfo);
@@ -1520,6 +1526,34 @@ static void function_call_dialog (call_info *cinfo)
     }
 
     gtk_widget_show_all(cinfo->dlg);
+}
+
+/* called when defining a matrix for use as an argument:
+   @dlg will be the function call dialog
+*/
+
+void get_fncall_param_info (GtkWidget *dlg, int *series_ok,
+			    char **pname)
+{
+    *series_ok = !widget_get_int(dlg, "matrix-no-series");
+
+    if (pname != NULL) {
+	GtkWidget *button;
+
+	button = g_object_get_data(G_OBJECT(dlg), "button");
+	if (button != NULL) {
+	    char *name = g_object_get_data(G_OBJECT(button),
+					   "parname");
+
+	    if (name != NULL &&
+		current_series_index(dataset, name) < 0 &&
+		gretl_get_object_by_name(name) == NULL) {
+		/* OK, not the name of current object, so
+		   offer it as default */
+		*pname = g_strdup(name);
+	    }
+	}
+    }	
 }
 
 static int function_data_check (call_info *cinfo)
