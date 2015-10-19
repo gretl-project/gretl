@@ -16,8 +16,9 @@ end function
 /* ---------------------------------------------------------------------- */
 
 function string IRFgrph(matrix IRFmat, int snum, int vnum, \
-          string sname, string vname, matrix *cumul[null], \
-          bundle *boot[null], int bc[0:2:0])
+			string sname, string vname, int keypos[0:2:1], \
+			matrix *cumul[null],  bundle *boot[null], \
+			int bc[0:2:0])
 
   # bc: bias correction choice
     
@@ -86,21 +87,27 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, \
   printf "\"\n"
 
   if bootrep > 0
-    printf "set key outside\n"
-    printf "set style fill solid 0.125\n" 
-    printf "plot '-' using 1:2:3 w filledcurve t 'Bstrap %d%% CI', \\\n", floor(100*alpha)
-    printf "'-' w l lw 1 lc 1 t 'Bstrap median', \\\n"
-    printf "'-' w l lw 2 lc -1 t 'IRF'\n"
-    loop i=1..h -q
-      printf "%d\t%g\t%g\n", i-1, locb[i,], hicb[i,]
-    endloop
-    printf "e\n"
-    loop i=1..h -q
-      printf "%d\t%g\n", i-1, mdn[i,]
-    endloop
-    printf "e\n"
+      if keypos == 0
+	  printf "set key off\n"
+      elif keypos == 1
+	  printf "set key outside\n"
+      elif keypos == 2
+	  printf "set key below\n"
+      endif
+      printf "set style fill solid 0.125\n" 
+      printf "plot '-' using 1:2:3 w filledcurve t 'Bstrap %d%% CI', \\\n", floor(100*alpha)
+      printf "'-' w l lw 1 lc 1 t 'Bstrap median', \\\n"
+      printf "'-' w l lw 2 lc -1 t 'IRF'\n"
+      loop i=1..h -q
+	  printf "%d\t%g\t%g\n", i-1, locb[i,], hicb[i,]
+      endloop
+      printf "e\n"
+      loop i=1..h -q
+	  printf "%d\t%g\n", i-1, mdn[i,]
+      endloop
+      printf "e\n"
   else
-    printf "plot '-' w l lw 2\n"
+      printf "plot '-' w l lw 2\n"
   endif
 
   loop i=1..h -q
@@ -118,7 +125,7 @@ end function
 /* ---------------------------------------------------------------------- */
 
 function void IRFsave(string outfilename, bundle *obj, int snum, 
-  int vnum)
+  int vnum, int keypos[0:2:1])
 
   err = check_bounds(snum, vnum, obj["n"])
 
@@ -141,20 +148,20 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
   
   if ncumul == 0
     if nboot == 0
-      string tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn)
+      string tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, keypos)
     else
       boot = obj["bootdata"]
       bc = boot["biascorr"]
-      string tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, null, &boot, bc)
+      string tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, keypos, null, &boot, bc)
     endif
   else
     matrix cumul = obj["cumul"]
     if nboot == 0
-      tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, &cumul)
+      tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, keypos, &cumul)
     else
       boot = obj["bootdata"]
       bc = boot["biascorr"]
-      tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, &cumul, &boot, bc)
+      tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, keypos, &cumul, &boot, bc)
     endif
   endif
 
@@ -162,9 +169,9 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
 
 end function
 
-function void IRFplot(bundle *obj, scalar snum, scalar vnum)
+function void IRFplot(bundle *obj, scalar snum, scalar vnum, int keypos[0:2:1])
 
-  IRFsave("display", &obj, snum, vnum)
+  IRFsave("display", &obj, snum, vnum, keypos)
 
 end function
 

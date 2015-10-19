@@ -571,7 +571,7 @@ general rule. Experiment!
 The \texttt{SVAR} package provides a function called \texttt{IRFplot}
 for plotting the impulse response function on your screen, with a
 little help from our friend \texttt{gnuplot}; its syntax is relatively
-simple. The three arguments used here are:
+simple. \texttt{IRFplot} requires three arguments:
 \begin{enumerate}
 \item The model bundle (as a pointer);
 \item the number of the structural shock we want the IRF to;
@@ -702,7 +702,12 @@ medians in this example):
 
 However, if you invoke \texttt{IRFplot()} after the bootstrap, the
 above information will be automatically used for generating the
-graph. Another \texttt{SVAR} function, \texttt{IRFsave()}, is used to
+graph. In this case, you may supply \texttt{IRFplot()} with a fourth
+argument, an integer from 0 to 2, to place the legend to the right of
+the plot (value: 1), below it (value: 2) or omit it altogether (value:
+0). The default, which applies if you omit the parameter, is 1.
+
+Another \texttt{SVAR} function, \texttt{IRFsave()}, is used to
 store plots the impulse responses into graphic files files for later
 use;\footnote{The format is dictated by the extension you use for the
   output file name: since this job is delegated to \texttt{gnuplot},
@@ -1819,7 +1824,7 @@ provide an extended and annotated example.
     42					 
     43	SVAR_boot(&x, 1024, 0.90) 
     44	loop j=1..3 --quiet				 
-    45	    IRFplot(&x, 1, j)	 
+    45	    IRFplot(&x, 1, j, 2)
     46	endloop		     		 
   \end{scode}
   \caption{The \texttt{awm.inp} script}
@@ -1859,9 +1864,9 @@ plots.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.9\textwidth,height=4cm]{awm-irfy}\\
-  \includegraphics[width=0.9\textwidth,height=4cm]{awm-irfc}\\
-  \includegraphics[width=0.9\textwidth,height=4cm]{awm-irfi}
+  \includegraphics[height=4.75cm]{awm-irfy}
+  \includegraphics[height=4.75cm]{awm-irfc}
+  \includegraphics[height=4.75cm]{awm-irfi}
   \caption{Impulse responses to a permanent shock}
   \label{fig:AWM-irfs}
 \end{figure}
@@ -1892,9 +1897,11 @@ More in detail, the script goes like this:
 
 A selection of the output is shown below, while Figure
 \ref{fig:AWM-irfs} is the equivalent of \citeauthor{KPSW91}'s figure 2
-(p. 820). Considering that the data span a different period and
-describe a different economy, the similarity between the original
-figure and the replicated one is quite remarkable.
+(p. 820).\footnote{Note the usage of the fourth, optional parameter in
+  the call to IRFplot to move the legend to the bottom of the figure.}
+Considering that the data span a different period and describe a
+different economy, the similarity between the original figure and the
+replicated one is quite remarkable.
 
 \begin{code}
 # ok, now go for the real thing
@@ -1946,12 +1953,14 @@ Optimization method = Scoring algorithm
 
 \appendix
 
+\pagebreak
+
 \section{The GUI interface}
 \label{sec:GUI}
 
 \emph{by Sven Schreiber}
 
-\vfil
+\vfil 
 
 This section introduces the GUI interface with which most of the
 available calculations can be accomplished as well and which can be
@@ -2106,6 +2115,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \label{fig:GUI-output}
 \end{figure}
 
+\clearpage
 
 \section{Alphabetical list of functions}
 \label{sec:syntax}
@@ -2166,13 +2176,14 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{IRFplot(bundle *obj, scalar snum, scalar vnum)}
+\begin{funcdoc}{IRFplot(bundle *obj, scalar snum, scalar vnum, int keypos[0:2:1])}
   Plots an impulse response function on screen. Its arguments are:
   \begin{enumerate}
   \item a bundle holding the model
   \item the progressive number of the shock (may be negative, in which
     case the IRF is flipped)
   \item the progressive number of the variable
+  \item the position of the legend, if any (optional; default = right).
   \end{enumerate}
 \end{funcdoc}
 
@@ -2336,6 +2347,7 @@ a warning will be printed.
     \texttt{p}	  & VAR order \\
     \texttt{k}	  & number of exogenous variables \\
     \texttt{T}	  & number of observations \\
+    \texttt{t1, t2}	  & initial and final observations \\
     \texttt{X}	  & exogenous variables data matrix \\
     \hline
     \multicolumn{2}{c}{\textbf{VAR}} \\
@@ -2355,7 +2367,9 @@ a warning will be printed.
     \texttt{horizon}	 & horizon for structural VMA \\
     \texttt{cumul}	 & vector of cumuland variables \\
     \texttt{ncumul}	 & number of cumuland variables \\
-    \texttt{Ynames}	 & string array, names for observables \\
+    \texttt{Ynames}	 & string array, names for VAR variables \\
+    \texttt{Xnames}	 & string array, names for exogenous
+    variables, if any \\
     \texttt{snames}	 & string array, names for shocks \\
     \texttt{optmeth}	 & integer between 0 and 4, optimisation method \\
     \hline
