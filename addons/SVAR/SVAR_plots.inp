@@ -32,7 +32,8 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, \
     bootrep = 0
   endif
 
-  cumulate = !isnull(cumul) ? sumr(sumc(cumul .= vnum)) > 0 : 0
+  # anything to cumulate?
+  scalar cumulate = !isnull(cumul) ? sumr(sumc(cumul .= vnum)) > 0 : 0
 
   scalar tmpfname = int(1000*muniform(1,1))
   string tmpfile = $windows ? sprintf("@dotdir\\irf%d.gp", tmpfname) : \
@@ -129,8 +130,8 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     return
   endif
 
-  ncumul = obj["ncumul"]
-  nboot  = obj["nboot"]
+  scalar ncumul = obj["ncumul"]
+  scalar nboot  = obj["nboot"]
   matrix IRFmat = obj["IRFs"]
   strings Ynames = obj["Ynames"]
   strings snames = obj["snames"]

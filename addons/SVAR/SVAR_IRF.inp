@@ -33,7 +33,7 @@ function void doIRF(bundle *SVARobj)
   endloop
 
   if SVARobj["ncumul"] > 0
-    to_cum = SVARobj["cumul"]
+    matrix to_cum = SVARobj["cumul"]
     tmp = zeros(n,n)
     tmp[to_cum,] = 1
     sel = selifr(transp(seq(1,n*n)), vec(tmp))

@@ -130,7 +130,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
     obj["boot_alpha"] = alpha  # into original model
 
     if obj["ncumul"] > 0
-	to_cum = obj["cumul"]	# matrix?
+	matrix to_cum = obj["cumul"]
 	matrix tmp = zeros(n,n)
 	tmp[to_cum,] = 1
 	sel = selifr(transp(seq(1,n*n)), vec(tmp))

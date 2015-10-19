@@ -430,15 +430,13 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
 end function
 
 function scalar SVAR_cumulate(bundle *b, int nv)
-    n = b["n"]
+    scalar n = b["n"]
     err = (nv>n || nv<1) # was nv<0, but 0 makes no sense (?)
     if !err
 	vn = b.Ynames
 	printf "Variable %s cumulated\n",  vn[nv]
-	matrix cumul = b["cumul"] ~ {nv}
-	scalar nc    = b["ncumul"]
-	b["cumul"] = cumul
-	b["ncumul"] = nc + 1
+	b["cumul"] = b["cumul"] | {nv}
+	b["ncumul"] = b["ncumul"] + 1
     endif
   return err
 end function
