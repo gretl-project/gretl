@@ -18,6 +18,7 @@ FIGS = 	awm-irfc.pdf \
 	FEVD_1.pdf \
 	FEVD_2.pdf \
 	GUI_SVAR.png \
+	dialog_mat.png \
 	Output.png \
 	simpleC_11_noboot.pdf \
 	simpleC_11.pdf \

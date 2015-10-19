@@ -2019,11 +2019,11 @@ drop-down menu, or you have to click on the ``+'' button next to the
 function argument field and specify the matrix on the spot in the
 following standard \app{gretl} matrix creation dialog.\footnote{Hint:
   with recent gretl versions it is possible to initialize the matrix
-  to hold only missings, by entering "na" or "nan" as the initial fill
-  value. Then you just have to edit the actually restricted elements
-  afterwards.} If you do not wish to restrict any of the involved
-matrices, just leave the function argument at the default "null"
-value.
+  to hold only missing values, by entering \texttt{na} or \texttt{nan}
+  as the initial fill value. Then you just have to edit the actually
+  restricted elements afterwards.} If you do not wish to restrict any
+of the involved matrices, just leave the function argument at the
+default "null" value.
 
 For a C model, as indicated by the function argument labels the first
 restriction pattern matrix refers to the short-run restrictions, while
@@ -2051,29 +2051,38 @@ and the responses of \emph{foo} and \emph{bar} should be cumulated,
 then you would need to pass a vector \texttt{\{1, 3\}} (or
 \texttt{\{1; 3\}}).\footnote{This way of specifying the responses to
   be cumulated in the GUI of SVAR may change in the future, perhaps by
-  using another list of variables instead.}
+  using another list of variables instead.} Note that you can type an
+expression of this sort into the matrix entry box directly, as shown in
+Figure~\ref{fig:matrix-entry}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{dialog_mat.png}
+  \caption{Entering a matrix specification directly}
+  \label{fig:matrix-entry}
+\end{figure}
 
 \subsection{The output window}
 
 After specifying all necessary function arguments and clicking OK, you
-are presented --possibly after having to wait for the CPU intensive
-bootstrap to finish-- with a first output window holding the basic
+are presented---possibly after having to wait for the CPU intensive
+bootstrap to finish---with a first output window holding the basic
 estimation results, for example of the C matrix or of the A and B
 matrices. If the provided restrictions are over-identifying the
 corresponding LR test result is also printed out.
 
-In this first output window three toolbar buttons deserve special
-mention: The ``Save'' button allows you to save the printed output,
-but more importantly you can also save the entire bundle that was
-returned by the SVAR package as an icon (element) of the current
-\app{gretl} session. When you open (view) the bundle again later, some
-information about the model specification will also be shown. (And the
-session can in turn later be saved into a session file.) Next, for
-saving only selected members of the SVAR bundle there is the ``Save
-bundle content'' button. Finally you have the ``Graph'' button which
-provides the access to the central SVAR analyses, namely the impulse
-responses, the error variance as well as the historical
-decompositions.
+In the SVAR output window (see Figure~\ref{fig:GUI-output} below)
+three toolbar buttons deserve special mention: The ``Save'' button
+allows you to save the printed output, but more importantly you can
+also save the entire bundle that was returned by the SVAR package as
+an icon (element) of the current \app{gretl} session. When you open
+(view) the bundle again later, some information about the model
+specification will also be shown. (And the session can in turn later
+be saved into a session file.) Next, for saving only selected members
+of the SVAR bundle there is the ``Save bundle content''
+button. Finally you have the ``Graph'' button which provides the
+access to the central SVAR analyses, namely the impulse responses, the
+error variance as well as the historical decompositions.
 
 \subsection{An example}
 
