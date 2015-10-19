@@ -223,7 +223,9 @@ enum pref_tabs {
     TAB_MAIN,
     TAB_NET,
     TAB_PROGS,
+#ifdef HAVE_MPI    
     TAB_MPI,
+#endif    
     TAB_VCV,
     TAB_MAN,
     TAB_MAX
