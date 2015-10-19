@@ -7986,28 +7986,6 @@
       </description>
     </function>
 
-    <function name="tvarying" section="data-utils" output="int">
-      <fnargs>
-	<fnarg type="series-or-list">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Applicable only if the current dataset is a panel. Given
-	  a series argument, returns 1 if the series is time-varying,
-	  otherwise 0. Given a list argument, returns 1 if all
-	  the series in the list are time-varying, otherwise 0.
-	  In the list case the built-in constant (series 0) is
-	  ignored when doing the test. 
-	</para>
-	<para>
-	  The working definition of a <quote>time-varying</quote>
-	  series is minimal: there must be at least one unit or
-	  individual in the panel for which the series in question
-	  takes on at least two distinct (non-missing) values.
-	</para>
-      </description>
-    </function>    
-
     <function name="typestr" section="data-utils" output="string">
       <fnargs>
 	<fnarg type="int">typecode</fnarg>

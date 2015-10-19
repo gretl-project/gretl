@@ -81,12 +81,6 @@ gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
 int panel_expand (const gretl_matrix *x, double *y,
 		  gretlopt opt, const DATASET *dset);
 
-int series_is_time_varying (const double *x, const DATASET *dset,
-			    int *err);
-
-int list_is_time_varying (const int *list, const DATASET *dset,
-			  int *err);
-
 int hp_filter (const double *x, double *hp, const DATASET *dset,
 	       double lambda, gretlopt opt);
 

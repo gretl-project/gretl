@@ -228,11 +228,18 @@ end function
 
 function scalar all_varying (list X, list Z)
   scalar ret = 1
-  # sorry, too tedious to do this without the tvarying()
-  # function, which is new in gretl 2015d (20153)
-  if $version >= 20153
-    ret = tvarying(X) && tvarying(Z)
-  endif
+  loop foreach i X -q
+    if isconst(X.$i, 0)
+      printf "$i is not time-varying\n"
+      ret = 0
+    endif
+  endloop
+  loop foreach i Y -q
+    if isconst(Y.$i, 0)
+      printf "$i is not time-varying\n"
+      ret = 0
+    endif
+  endloop  
   return ret
 end function
 
