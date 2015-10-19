@@ -281,6 +281,7 @@ GUISRC = about.c \
 	filters.c \
 	fncall.c \
 	fnsave.c \
+	gfn_arglists.c \
 	gpt_control.c \
 	gpt_dialog.c \
 	graphics.c \
