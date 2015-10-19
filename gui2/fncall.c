@@ -38,6 +38,7 @@
 #include "cmdstack.h"
 #include "winstack.h"
 #include "treeutils.h"
+#include "gfn_arglists.h"
 #include "fncall.h"
 
 #include <errno.h>
@@ -805,11 +806,19 @@ static void launch_scalar_maker (GtkWidget *button, call_info *cinfo)
 		VARCLICK_INSERT_NAME, cinfo->dlg);  
 }
 
-static GtkWidget *bool_arg_selector (call_info *cinfo, int i)
+static GtkWidget *bool_arg_selector (call_info *cinfo, int i,
+				     const char *prior_val)
 {
-    double deflt = fn_param_default(cinfo->func, i);
-    int active = !na(deflt) && deflt != 0.0;
     GtkWidget *button;
+    int active;
+
+    if (prior_val != NULL) {
+	active = *prior_val == '1';
+    } else {
+	double deflt = fn_param_default(cinfo->func, i);
+	
+	active = !na(deflt) && deflt != 0.0;
+    }
 
     button = gtk_check_button_new();
     widget_set_int(button, "argnum", i);
@@ -924,8 +933,9 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i,
     return spin;
 }
 
-static GtkWidget *int_arg_selector (call_info *cinfo, int i,
-				    GretlType type)
+static GtkWidget *int_arg_selector (call_info *cinfo,
+				    int i, GretlType type,
+				    const char *prior_val)
 {
     double dminv = fn_param_minval(cinfo->func, i);
     double dmaxv = fn_param_maxval(cinfo->func, i);
@@ -942,7 +952,9 @@ static GtkWidget *int_arg_selector (call_info *cinfo, int i,
 	maxv = (na(dmaxv))? INT_MAX : (int) dmaxv;
     }
 
-    if (!na(deflt)) {
+    if (prior_val != NULL) {
+	initv = atoi(prior_val);
+    } else if (!na(deflt)) {
 	initv = (int) deflt;
     } else if (!na(dminv)) {
 	initv = (int) dminv;
@@ -961,7 +973,8 @@ static GtkWidget *int_arg_selector (call_info *cinfo, int i,
     return spin_arg_selector(cinfo, i, minv, maxv, initv, type);
 }
 
-static GtkWidget *double_arg_selector (call_info *cinfo, int i)
+static GtkWidget *double_arg_selector (call_info *cinfo, int i,
+				       const char *prior_val)
 {
     double minv  = fn_param_minval(cinfo->func, i);
     double maxv  = fn_param_maxval(cinfo->func, i);
@@ -981,6 +994,11 @@ static GtkWidget *double_arg_selector (call_info *cinfo, int i)
 	ndec = strlen(p + 1);
     }
     g_free(tmp);
+
+    if (prior_val != NULL) {
+	/* locale? */
+	deflt = atof(prior_val);
+    }
 
     if (deflt > maxv) {
 	/* note that default may be NADBL */
@@ -1126,7 +1144,8 @@ static void arg_combo_set_default (call_info *cinfo,
    list (which may initally be empty)
 */
 
-static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
+static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i,
+				      const char *prior_val)
 {
     GList *list = NULL;
     GtkWidget *combo;
@@ -1160,7 +1179,9 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);	
     }
 
-    if (ptype == GRETL_TYPE_INT) {
+    if (prior_val != NULL) {
+	gtk_entry_set_text(GTK_ENTRY(entry), prior_val);
+    } else if (ptype == GRETL_TYPE_INT) {
 	double x = fn_param_default(cinfo->func, i);
 
 	if (!na(x)) {
@@ -1263,6 +1284,7 @@ static void function_call_dialog (call_info *cinfo)
     GtkWidget *button, *label;
     GtkWidget *sel, *tbl = NULL;
     GtkWidget *vbox, *hbox, *bbox;
+    arglist *alist = NULL;
     gchar *txt;
     int trows = 0, tcols = 0;
     int show_ret;
@@ -1300,6 +1322,7 @@ static void function_call_dialog (call_info *cinfo)
 	if (show_ret) { 
 	    trows += 4;
 	}
+	alist = arglist_lookup(cinfo->pkgname);
     } else if (show_ret) {
 	tcols = 2;
 	trows = 3;
@@ -1314,12 +1337,17 @@ static void function_call_dialog (call_info *cinfo)
     for (i=0; i<cinfo->n_params; i++) {
 	const char *desc = fn_param_descrip(cinfo->func, i);
 	const char *parname = fn_param_name(cinfo->func, i);
+	const char *prior_val = NULL;
 	int ptype = fn_param_type(cinfo->func, i);
 	int spinnable = 0;
 	gchar *argtxt;
 
 	if (i == 0) {
 	    add_table_header(tbl, _("Select arguments:"), tcols, row, 5);
+	}
+
+	if (alist != NULL) {
+	    prior_val = arglist_lookup_val(alist, i);
 	}
 
 	row++;
@@ -1359,14 +1387,14 @@ static void function_call_dialog (call_info *cinfo)
 	if (fn_param_uses_xlist(cinfo->func, i)) {
 	    sel = xlist_int_selector(cinfo, i);
 	} else if (ptype == GRETL_TYPE_BOOL) {
-	    sel = bool_arg_selector(cinfo, i);
+	    sel = bool_arg_selector(cinfo, i, prior_val);
 	} else if (ptype == GRETL_TYPE_INT ||
 		   ptype == GRETL_TYPE_OBS) {
-	    sel = int_arg_selector(cinfo, i, ptype);
+	    sel = int_arg_selector(cinfo, i, ptype, prior_val);
 	} else if (spinnable) {
-	    sel = double_arg_selector(cinfo, i);
+	    sel = double_arg_selector(cinfo, i, prior_val);
 	} else {
-	    sel = combo_arg_selector(cinfo, ptype, i);
+	    sel = combo_arg_selector(cinfo, ptype, i, prior_val);
 	}
 
 	add_table_cell(tbl, sel, 1, 2, row);
@@ -1674,6 +1702,12 @@ static void compose_fncall_line (char *line,
 				 char **tmpname,
 				 int *grab_bundle)
 {
+    arglist *alist = arglist_lookup(cinfo->pkgname);
+
+    if (alist == NULL) {
+	alist = arglist_new(cinfo->pkgname, cinfo->n_params);
+    }
+    
     *line = '\0';
     
     if (cinfo->ret != NULL) {
@@ -1698,6 +1732,9 @@ static void compose_fncall_line (char *line,
 
 	for (i=0; i<cinfo->n_params; i++) {
 	    strcat(line, cinfo->args[i]);
+	    if (alist != NULL) {
+		arglist_record_arg(alist, i, cinfo->args[i]);
+	    }
 	    if (i < cinfo->n_params - 1) {
 		strcat(line, ", ");
 	    }
@@ -2256,6 +2293,8 @@ void function_call_cleanup (void)
     if (open_fncall_dlg != NULL) {
 	gtk_widget_destroy(open_fncall_dlg);
     }
+
+    arglist_cleanup();
 }
 
 /* Execute the plotting function made available by the function
