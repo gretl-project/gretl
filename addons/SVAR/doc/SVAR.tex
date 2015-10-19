@@ -855,7 +855,9 @@ As shown in Table \ref{tab:FEVDprint}, after the model has been
 estimated, it can be passed to another function called \texttt{FEVD}
 to compute the Forecast Error Variance Decomposition, which is
 subsequently printed. Its usage is very simple, since it only needs
-one input (a pointer to the model bundle).
+one input (a pointer to the model bundle); like the \cmd{IRFplot}
+function, you can also attach an extra optional parameter at the end
+to control the position of the legend.
 
 \begin{figure}[htbp]
   \centering
@@ -873,7 +875,8 @@ with the horizon on the x-axis. This can be accomplished rather simply
 in SVAR by using the specialised function \cmd{FEVDplot()}, which
 needs two arguments: a pointer to the model bundle and the number of
 the variable you want the FEVD for. Running the code in Table
-\ref{tab:FEVDprint} you should see two graphs similar to Figure \ref{fig:FEVDplot}.
+\ref{tab:FEVDprint} you should see two graphs similar to Figure
+\ref{fig:FEVDplot}.
 
 For saving the output to a file, its variant \cmd{FEVDsave()} works
 the same, except you need an extra argument (which goes first) with
@@ -2128,16 +2131,17 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   variables in the VAR).
 \end{funcdoc}
 
-\begin{funcdoc}{FEVDplot(bundle *obj, scalar vnum)}
+\begin{funcdoc}{FEVDplot(bundle *obj, scalar vnum, int keypos[0:2:1])}
   Plots on screen the Forecast Error Variance Decomposition for a
   variable. Its arguments are:
   \begin{enumerate}
   \item a bundle holding the model
   \item the progressive number of the variable
+  \item the position of the legend, if any (optional; default = right).
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{FEVDsave(string outfilename, bundle *obj, scalar vnum)}
+\begin{funcdoc}{FEVDsave(string outfilename, bundle *obj, scalar vnum, int keypos[0:2:1])}
   Saves the Forecast Error Variance Decomposition for a variable to a
   graphic file, whose format is identified by its extension. Its
   arguments are:
@@ -2145,6 +2149,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \item The graphic file name
   \item a bundle holding the model
   \item the progressive number of the variable
+  \item the position of the legend, if any (optional; default = right).
   \end{enumerate}
 \end{funcdoc}
 
@@ -2187,7 +2192,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{IRFsave(string outfilename, bundle *obj, scalar snum, scalar vnum)}
+\begin{funcdoc}{IRFsave(string outfilename, bundle *obj, scalar snum, scalar vnum, int keypos[0:2:1]))}
   Saves an impulse response function to a graphic file, whose format is
   identified by its extension. Its arguments are:
   \begin{enumerate}
