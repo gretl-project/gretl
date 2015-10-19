@@ -114,7 +114,6 @@
 static void parser_init (parser *p, const char *str, DATASET *dset, 
 			 PRN *prn, int flags, int targtype);
 static void parser_reinit (parser *p, DATASET *dset, PRN *prn);
-static void printnode (NODE *t, parser *p);
 static NODE *eval (NODE *t, parser *p);
 static void node_type_error (int ntype, int argnum, int goodt, 
 			     NODE *bad, parser *p);
@@ -12172,13 +12171,13 @@ static void printsymb (int symb, const parser *p)
     pputs(p->prn, getsymb(symb, NULL));
 }
 
-static void printnode (NODE *t, parser *p)
+static void printnode (NODE *t, parser *p, int value)
 {  
     if (t == NULL) {
 	pputs(p->prn, "NULL"); 
-    } else if (useries_node(t)) {
+    } else if (!value && useries_node(t)) {
 	pprintf(p->prn, "%s", p->dset->varname[t->vnum]);
-    } else if (uscalar_node(t)) {
+    } else if (!value && uscalar_node(t)) {
 	pprintf(p->prn, "%s", t->vname);
     } else if (t->t == NUM) {
 	if (na(t->v.xval)) {
@@ -12228,50 +12227,50 @@ static void printnode (NODE *t, parser *p)
 	pputs(p->prn, dumname(t->v.idnum));
     } else if (binary_op(t->t)) {
 	pputc(p->prn, '(');
-	printnode(t->v.b2.l, p);
+	printnode(t->v.b2.l, p, 0);
 	printsymb(t->t, p);
-	printnode(t->v.b2.r, p);
+	printnode(t->v.b2.r, p, 0);
 	pputc(p->prn, ')');
     } else if (t->t == MSL || t->t == DMSL) {
-	printnode(t->v.b2.l, p);
+	printnode(t->v.b2.l, p, 0);
 	pputc(p->prn, '[');
-	printnode(t->v.b2.r, p);
+	printnode(t->v.b2.r, p, 0);
 	pputc(p->prn, ']');
     } else if (t->t == MSLRAW) {
 	pputs(p->prn, "MSLRAW");
     } else if (t->t == SUBSL) {
 	pputs(p->prn, "SUBSL");
     } else if (t->t == OVAR) {
-	printnode(t->v.b2.l, p);
+	printnode(t->v.b2.l, p, 0);
 	pputc(p->prn, '.');
-	printnode(t->v.b2.r, p);
+	printnode(t->v.b2.r, p, 0);
     } else if (func1_symb(t->t)) {
 	printsymb(t->t, p);
 	pputc(p->prn, '(');
-	printnode(t->v.b1.b, p);
+	printnode(t->v.b1.b, p, 0);
 	pputc(p->prn, ')');
     } else if (unary_op(t->t)) {
 	printsymb(t->t, p);
-	printnode(t->v.b1.b, p);
+	printnode(t->v.b1.b, p, 0);
     } else if (t->t == EROOT) {
-	printnode(t->v.b1.b, p);
+	printnode(t->v.b1.b, p, 0);
     } else if (func2_symb(t->t)) {
 	printsymb(t->t, p);
 	pputc(p->prn, '(');
-	printnode(t->v.b2.l, p);
+	printnode(t->v.b2.l, p, 0);
 	if (t->v.b2.r->t != EMPTY) {
 	    pputc(p->prn, ',');
 	}
-	printnode(t->v.b2.r, p);
+	printnode(t->v.b2.r, p, 0);
 	pputc(p->prn, ')');
     } else if (t->t == STR || t->t == USTR) {
 	pprintf(p->prn, "%s", t->v.str);
     } else if (t->t == MDEF) {
 	pprintf(p->prn, "{ MDEF }");
     } else if (t->t == DMSTR || t->t == UFUN) {
-	printnode(t->v.b2.l, p);
+	printnode(t->v.b2.l, p, 0);
 	pputc(p->prn, '(');
-	printnode(t->v.b2.r, p);
+	printnode(t->v.b2.r, p, 0);
 	pputc(p->prn, ')');
     } else if (t->t == LISTVAR) {
 	pprintf(p->prn, "%s.%s", t->v.b2.l->v.str, t->v.b2.r->v.str);
@@ -14632,7 +14631,7 @@ void gen_save_or_print (parser *p, PRN *prn)
 	    gretl_array_print(get_array_by_name(p->lh.name), prn);
 	} else {
 	    /* scalar, series */
-	    printnode(p->ret, p);
+	    printnode(p->ret, p, 1);
 	    pputc(p->prn, '\n');
 	}
     } else if (p->flags & P_DECL) {
