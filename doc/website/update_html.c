@@ -528,7 +528,7 @@ int process_templates (char *verstr)
 
     while (ptr->src != NULL && !err) {
 
-	/* take source from CVS-controlled directory; write 
+	/* take source from git-controlled directory; write 
 	   output to web directory */
 
 	sprintf(fullsrc, "%s/template/%s", WEBSRC, ptr->src);
