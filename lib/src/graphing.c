@@ -3849,18 +3849,18 @@ int multi_scatters (const int *list, const DATASET *dset,
     if (obs != NULL) {
 	double startdate = obs[dset->t1];
 	double enddate = obs[dset->t2];
-	int jump, T = dset->t2 - dset->t1 + 1;
+	int incr, T = dset->t2 - dset->t1 + 1;
 
 	fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
 
 	if (dset->pd == 1) {
-	    jump = T / 6;
+	    incr = T / 6;
 	} else {
-	    jump = T / (4 * dset->pd);
+	    incr = T / (4 * dset->pd);
 	}
 
-	if (jump > 0) {
-	    fprintf(fp, "set xtics %g, %d\n", ceil(startdate), jump);
+	if (incr > 0) {
+	    fprintf(fp, "set xtics %g, %d\n", ceil(startdate), incr);
 	}
     } else {
 	fputs("set noxtics\nset noytics\n", fp);
