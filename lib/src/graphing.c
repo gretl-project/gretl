@@ -4105,15 +4105,21 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
     if (obs != NULL) {
 	double startdate = obs[t1];
 	double enddate = obs[t2];
-	int jump, T = t2 - t1 + 1;
+	int incr, T = t2 - t1 + 1;
 
 	fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
 
-	jump = (pd == 1)? (T / 6) : (T / (4 * pd));
-	fprintf(fp, "set xtics %g, %d\n", ceil(startdate), jump);
+	incr = (pd == 1)? (T / 6) : (T / (4 * pd));
+	if (incr > 0) {
+	    fprintf(fp, "set xtics %g, %d\n", ceil(startdate), incr);
+	}
     } else if (simple_obs) {
+	int incr = m->rows / 6;
+	    
 	fprintf(fp, "set xrange [0:%d]\n", m->rows - 1);
-	fprintf(fp, "set xtics 0, %d\n", m->rows / 6);
+	if (incr > 0) {
+	    fprintf(fp, "set xtics 0, %d\n", incr);
+	}
     } else {
 	fputs("set noxtics\nset noytics\n", fp);
     }
@@ -6521,7 +6527,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
     const double *obs;
     double startdate;
     double xmin, xmax, xrange;
-    int nvars, nobs, jump;
+    int nvars, nobs, incr;
     int i, v, t, t1;
     int err = 0;
 
@@ -6564,8 +6570,10 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
     gretl_push_c_numeric_locale();
 
     startdate = obs[t1];
-    jump = nobs / (2 * dset->pd);
-    fprintf(fp, "set xtics %g, %d\n", ceil(startdate), jump);
+    incr = nobs / (2 * dset->pd);
+    if (incr > 0) {
+	fprintf(fp, "set xtics %g, %d\n", ceil(startdate), incr);
+    }
 
     gretl_minmax(t1, t1 + nobs - 1, obs, &xmin, &xmax);
     xrange = xmax - xmin;
