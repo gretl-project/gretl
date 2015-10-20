@@ -1682,7 +1682,9 @@ static int cholbeta (MODEL *pmod, double *xpy, double *rss)
 
 	/* check for singularity */
         if (test < TINY) {
+#if 0	    
 	    fprintf(stderr, "cholbeta: test[%d] = %g\n", j, test);
+#endif	    
 	    *rss = -1.0;
 	    return E_SINGULAR;
         } else if (test < SMALL) {

@@ -64,6 +64,11 @@
    not vice versa.
 */
 
+/* Also note: we should be OK using plain fopen() here rather than
+   gretl_fopen(), since all the reads and writes are within
+   @dotdir, which will be in the locale encoding.
+*/
+
 #ifdef GRETL_PID_FILE
 
 static int my_sequence_number;
@@ -244,7 +249,7 @@ static int prune_pid_file (const char *pidfile, FILE *f1,
     int err = 0;
 
     sprintf(newfile, "%sgretlpid.tmp", gretl_dotdir());
-    f2 = gretl_fopen(newfile, "w");
+    f2 = fopen(newfile, "w");
 
     if (f2 == NULL) {
 	err = E_FOPEN;
@@ -294,11 +299,11 @@ int write_pid_to_file (void)
 
     dotdir = gretl_dotdir();
     sprintf(pidfile, "%sgretl.pid", dotdir);
-    f1 = gretl_fopen(pidfile, "r");
+    f1 = fopen(pidfile, "r");
 
     if (f1 == NULL) {
 	/* no pid file, starting from scratch */
-	f1 = gretl_fopen(pidfile, "w");
+	f1 = fopen(pidfile, "w");
 	if (f1 == NULL) {
 	    err = E_FOPEN;
 	} else {
@@ -314,7 +319,7 @@ int write_pid_to_file (void)
 	int m, n = 0;
 
 	sprintf(newfile, "%sgretlpid.tmp", dotdir);
-	f2 = gretl_fopen(newfile, "w");
+	f2 = fopen(newfile, "w");
 
 	if (f2 == NULL) {
 	    err = E_FOPEN;
@@ -378,7 +383,7 @@ void delete_pid_from_file (void)
 	int nleft = 0;
 
 	sprintf(newfile, "%sgretlpid.tmp", dotdir);
-	f2 = gretl_fopen(newfile, "w");
+	f2 = fopen(newfile, "w");
 
 	if (f2 == NULL) {
 	    err = E_FOPEN;
@@ -444,7 +449,7 @@ long gretl_prior_instance (void)
 # endif   
 
     sprintf(pidfile, "%sgretl.pid", gretl_dotdir());
-    fp = gretl_fopen(pidfile, "r");
+    fp = fopen(pidfile, "r");
 
 #if IPC_DEBUG
     fprintf(stderr, "*** gretl_prior_instance: pidfile='%s', fp=%p\n",
