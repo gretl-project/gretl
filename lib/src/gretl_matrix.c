@@ -3997,8 +3997,10 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
     if (!err) {
 	dtrcon_(&norm, &uplo, &diag, &n, a->val, &n, &rcond, work, iwork, &info);
 	if (rcond < CHOL_RCOND_MIN) {
+#if 0	    
 	    fprintf(stderr, "gretl_cholesky_decomp_solve: rcond = %g (info = %d)\n",
 		    rcond, (int) info);
+#endif	    
 	    err = E_SINGULAR;
 	} 
     }
