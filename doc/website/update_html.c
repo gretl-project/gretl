@@ -592,7 +592,7 @@ void bug_print_line (char *s, FILE *fp)
     int bnum = 0, bnum2 = 0;
 
     if (sscanf(s, "- Fix bug %d\n", &bnum) == 1 ||
-        sscanf(s, "- Fix bugs %d, %d\n", &bnum, bnum2) == 2) {
+        sscanf(s, "- Fix bugs %d, %d\n", &bnum, &bnum2) == 2) {
 	int n;
 
 	while (*s) {
