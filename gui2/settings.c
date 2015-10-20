@@ -1267,8 +1267,10 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	w = gtk_label_new(_("Network"));
     } else if (tab == TAB_PROGS) {
 	w = gtk_label_new(_("Programs"));
+#ifdef HAVE_MPI	
     } else if (tab == TAB_MPI) {
 	w = gtk_label_new(_("MPI"));
+#endif	
     } else if (tab == TAB_VCV) {
 	w = gtk_label_new(_("HCCME"));
     } else if (tab == TAB_MAN) {
