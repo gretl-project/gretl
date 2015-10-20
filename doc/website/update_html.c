@@ -589,25 +589,26 @@ int version_history (char *fname, gretl_version *versions)
 
 void bug_print_line (char *s, FILE *fp)
 {
-    int bugnum;
+    int bnum = 0, bnum2 = 0;
 
-    if (sscanf(s, "- Fix bug %d\n", &bugnum) == 1) {
+    if (sscanf(s, "- Fix bug %d\n", &bnum) == 1 ||
+        sscanf(s, "- Fix bugs %d, %d\n", &bnum, bnum2) == 2) {
 	int n;
 
 	while (*s) {
 	    n = strspn(s, "0123456789");
 	    if (n == 7) {
 		/* old-style SF bug reference */
-		sscanf(s, "%d", &bugnum);
+		sscanf(s, "%d", &bnum);
 		fprintf(fp, "<a href=\"http://sourceforge.net/tracker/index.php?"
 			"func=detail&aid=%d&group_id=36234&atid=416803\">%d</a>", 
-			bugnum, bugnum);
+			bnum, bnum);
 		s += n;
 	    } else if (n > 0) {
 		/* new-style reference */
-		sscanf(s, "%d", &bugnum);
+		sscanf(s, "%d", &bnum);
 		fprintf(fp, "<a href=\"http://sourceforge.net/p/gretl/bugs/%d/\">%d</a>",
-			bugnum, bugnum);
+			bnum, bnum);
 		s += n;
 	    } else {
 		fputc(*s, fp);

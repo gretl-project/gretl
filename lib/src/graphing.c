@@ -3859,7 +3859,9 @@ int multi_scatters (const int *list, const DATASET *dset,
 	    jump = T / (4 * dset->pd);
 	}
 
-	fprintf(fp, "set xtics %g, %d\n", ceil(startdate), jump);
+	if (jump > 0) {
+	    fprintf(fp, "set xtics %g, %d\n", ceil(startdate), jump);
+	}
     } else {
 	fputs("set noxtics\nset noytics\n", fp);
     }
