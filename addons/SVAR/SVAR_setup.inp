@@ -89,7 +89,7 @@ function matrix set_default_dimensions(bundle *mod, list lY,
     return mreg
 end function
     
-function bundle SVAR_setup(string typestr, list lY, list lX[null], 
+function bundle SVAR_setup(string type_string, list lY, list lX[null], 
 			   int varorder[1::1], int dcase[1:5:3])
 
   /*
@@ -104,7 +104,7 @@ function bundle SVAR_setup(string typestr, list lY, list lX[null],
      The bootstrap does _not_ live here.
   */
 
-  scalar type = modeltype(typestr)
+  scalar type = modeltype(type_string)
  
   if type == 4	# SVEC
       # SVEC treats restricted deterministic terms specially as per Johansen,
