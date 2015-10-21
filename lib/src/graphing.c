@@ -590,11 +590,10 @@ static int factor_check (gnuplot_info *gi, int *haslabels,
 	gretl_errmsg_set(_("You must supply three variables, the last of "
 			   "which is discrete"));
     } else {
+	*haslabels = is_string_valued(dset, gi->list[3]);
 	const double *d = dset->Z[gi->list[3]] + gi->t1;
 	int T = gi->t2 - gi->t1 + 1;
-
 	gi->dvals = gretl_matrix_values(d, T, OPT_S, &err);
-	*haslabels = is_string_valued(dset, gi->list[3]);
     }
 
     return err;
@@ -3483,6 +3482,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	ptype = PLOT_FACTORIZED;
     } 
 
+    fprintf(stderr, "haslabels = %d\n", dum_haslabels);
+    
     /* special tics for time series plots */
     if (gi.flags & GPT_TS) {
 	make_time_tics(&gi, dset, many, xlabel, prn);
@@ -3627,19 +3628,19 @@ int gnuplot (const int *plotlist, const char *literal,
 	strcpy(s1, (gi.flags & GPT_RESIDS)? _("residual") : 
 	       series_get_graph_name(dset, list[1]));
 	strcpy(s2, series_get_graph_name(dset, list[3]));
-	
+
 	if (dum_haslabels) {
 	    labels = (const char **)
 		series_get_string_vals(dset, list[3], &n_labels);
 	}
 
 	for (i=0; i<nd; i++) {
-
+	    
 	    if (dum_haslabels) {
 		fprintf(fp, " '-' using 1:($2) title \"%s (%s=%s)\" w points ", 
 			s1, s2, labels[i]);
 	    } else {
-		fprintf(fp, " '-' using 1:($2) title \"%s (%s=%s)\" w points ", 
+		fprintf(fp, " '-' using 1:($2) title \"%s (%s=%g)\" w points ", 
 			s1, s2, gretl_vector_get(gi.dvals, i));
 	    }
 	    
