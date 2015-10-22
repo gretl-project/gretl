@@ -394,9 +394,6 @@ static int gp_cairo_fontsize (void)
 
 static int gp_make_outfile (const char *gfname, int i, double scale)
 {
-    int latin = 0;
-    int pdfterm = 0;
-    int epsterm = 0;
     char *fname;
     FILE *fp, *fq;
     int err = 0;
@@ -416,45 +413,23 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 	return E_FOPEN;
     }
 
-    if (gpage.term == GP_TERM_PDF) {
-	pdfterm = gnuplot_pdf_terminal();
-	if (pdfterm != GP_PDF_CAIRO) {
-	    latin = iso_latin_version();
-	}
-    } else if (gpage.term == GP_TERM_EPS) {
-	epsterm = gnuplot_eps_terminal();
-	if (epsterm != GP_EPS_CAIRO) {
-	    latin = iso_latin_version();
-	}	
-    }
-
     gretl_push_c_numeric_locale();
 
     /* FIXME: is "dashed" wanted when "mono" is given below? */
     
     if (gpage.term == GP_TERM_PDF) {
-	/* PDF output variants */
-	if (pdfterm == GP_PDF_CAIRO) {
-	    int fontsize = gp_cairo_fontsize();
+	/* PDF output */
+	int fontsize = gp_cairo_fontsize();
 
-	    fprintf(fq, "set term pdfcairo font \"sans,%d\"%s", fontsize,
-		    (gpage.mono)? " mono dashed" : " ");
-	} else if (gpage.mono) {
-	    fputs("set term pdf mono dashed", fq);
-	} else {
-	    fputs("set term pdf color", fq);
-	}
+	fprintf(fq, "set term pdfcairo font \"sans,%d\"%s", fontsize,
+		(gpage.mono)? " mono dashed" : " ");
 	fname = gpage_fname(".pdf", i);
     } else {
 	/* EPS output variants */
-	if (epsterm == GP_EPS_CAIRO) {
-	    int fontsize = gp_cairo_fontsize();
+	int fontsize = gp_cairo_fontsize();
 
-	    fprintf(fq, "set term epscairo font \"sans,%d\"%s", fontsize,
-		    (gpage.mono)? " mono dashed" : " ");	    
-	} else {
-	    fprintf(fq, "set term postscript eps%s", (gpage.mono)? " mono" : " color");
-	}
+	fprintf(fq, "set term epscairo font \"sans,%d\"%s", fontsize,
+		(gpage.mono)? " mono dashed" : " ");	    
 	fname = gpage_fname(".ps", i);
     }
 
@@ -468,7 +443,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 
     fprintf(fq, "set output '%s'\n", fname);
 
-    filter_gnuplot_file(latin, gpage.mono, fp, fq);
+    filter_gnuplot_file(0, gpage.mono, fp, fq);
 
     fclose(fp);
     fclose(fq);
@@ -746,12 +721,7 @@ int display_graph_page (GtkWidget *parent)
     gpage_filenames_init(NULL);
 
     if (get_tex_use_pdf()) {
-	if (gnuplot_pdf_terminal()) {
-	    gpage.term = GP_TERM_PDF;
-	} else {
-	    gpage.term = GP_TERM_EPS;
-	    latex_orig = gpage_switch_compiler(gpage.term);
-	}
+	gpage.term = GP_TERM_PDF;
     } else {
 	gpage.term = GP_TERM_EPS;
     }
@@ -817,12 +787,7 @@ int save_graph_page (const char *fname)
     gpage_filenames_init(fname);
 
     if (get_tex_use_pdf()) {
-	if (gnuplot_pdf_terminal()) {
-	    gpage.term = GP_TERM_PDF;
-	} else {
-	    gpage.term = GP_TERM_EPS;
-	    latex_orig = gpage_switch_compiler(gpage.term);
-	}
+	gpage.term = GP_TERM_PDF;
     } else {
 	gpage.term = GP_TERM_EPS;
     }

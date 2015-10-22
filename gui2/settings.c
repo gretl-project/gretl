@@ -502,45 +502,6 @@ void set_fixed_font (const char *fontname)
     }
 }
 
-#ifndef G_OS_WIN32
-
-/* remedial setting of font path for libgd, in case it's not set right
-   (which, I'm sorry to say, seems often to be the case on Linux)
-*/
-
-static void set_gd_fontpath (void)
-{
-    char *gdpath = NULL;
-    char *newpath = NULL;
-
-    if (gnuplot_has_ttf(0)) {
-	/* we're OK, don't mess */
-	return;
-    }
-
-    gdpath = getenv("GDFONTPATH");
-
-    if (gdpath != NULL) {
-	if (strstr(gdpath, "gretl") == NULL &&
-	    strstr(gdpath, "GRETL") == NULL) {
-	    newpath = g_strdup_printf("%s:%sfonts", gdpath, 
-				      gretl_home());
-	}
-    } else {
-	newpath = g_strdup_printf("%sfonts", gretl_home());
-    }
-
-    if (newpath != NULL) {
-	/* Vera is supplied with gretl, so it should work */
-	set_gretl_png_font("Vera 9");
-	setenv("GDFONTPATH", newpath, 1);
-	g_free(newpath);
-	gnuplot_has_ttf(1);
-    }
-}
-
-#endif
-
 void update_persistent_graph_font (void)
 {
     strcpy(paths.pngfont, gretl_png_font());
@@ -878,7 +839,6 @@ int gretl_config_init (void)
     get_gretl_rc_path(rcfile);
     err = read_gretlrc();
     set_gretl_startdir();
-    set_gd_fontpath();
     root_check();
 
     return err;

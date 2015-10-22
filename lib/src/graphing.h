@@ -142,25 +142,6 @@ typedef enum {
     GP_TERM_PLT
 } TermType;
 
-typedef enum {
-    GP_PNG_NONE,  /* no PNG terminal available */
-    GP_PNG_GD1,   /* libgd driver, no truecolor option */
-    GP_PNG_GD2,   /* libgd with truecolor option */
-    GP_PNG_CAIRO  /* newer cairo-based driver */
-} PNGTerm;
-
-typedef enum {
-    GP_PDF_NONE,
-    GP_PDF_PDFLIB,
-    GP_PDF_CAIRO
-} PDFTerm;
-
-typedef enum {
-    GP_EPS_NONE,
-    GP_EPS_PS,
-    GP_EPS_CAIRO
-} EPSTerm;
-
 #define maybe_big_multiplot(c) (c == PLOT_MULTI_IRF || \
 				c == PLOT_MULTI_SCATTER || \
 				c == PLOT_PANEL)
@@ -312,14 +293,6 @@ void print_gnuplot_literal_lines (const char *s, FILE *fp);
 
 int is_auto_fit_string (const char *s);
 
-int gnuplot_has_ttf (int reset);
-
-int gnuplot_pdf_terminal (void);
-
-int gnuplot_eps_terminal (void);
-
-int gnuplot_png_terminal (void);
-
 int gnuplot_has_cp950 (void);
 
 void set_graph_palette (int i, gretlRGB color);
@@ -337,8 +310,6 @@ void print_palette_string (char *s);
 const gretlRGB *get_graph_color (int i);
 
 int gnuplot_test_command (const char *cmd);
-
-void gnuplot_png_set_use_aa (int s);
 
 void gnuplot_png_set_default_scale (double s);
 

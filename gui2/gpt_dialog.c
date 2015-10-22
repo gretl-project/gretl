@@ -1420,32 +1420,6 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
 
 #endif /* end aternative font selectors */
 
-#ifndef G_OS_WIN32
-
-static int font_is_ok (const char *fname)
-{
-    static int pngterm;
-    gchar *cmd;
-    int err;
-
-    if (pngterm == 0) {
-	pngterm = gnuplot_png_terminal();
-    }
-
-    if (pngterm == GP_PNG_CAIRO) {
-	cmd = g_strdup_printf("set term pngcairo font \"%s,10\"", fname);
-    } else {
-	cmd = g_strdup_printf("set term png font %s 10", fname);
-    }
-
-    err = gnuplot_test_command(cmd);
-    g_free(cmd);
-
-    return err == 0;
-}
-
-#endif
-
 static void graph_font_selector (GtkButton *button, gpointer p)
 {
     real_graph_font_selector(button, p, 0, NULL);
@@ -1459,52 +1433,6 @@ void pdf_font_selector (GtkButton *button, gpointer p)
 void plot_add_font_selector (png_plot *plot, const char *oldfont) 
 {
     real_graph_font_selector(NULL, plot, 2, oldfont);
-}
-
-static struct font_info *get_gnuplot_ttf_list (int *nf)
-{
-    static struct font_info *retlist = NULL;
-    static int goodfonts = -1;
-
-    if (goodfonts >= 0) {
-	*nf = goodfonts;
-    } else {
-	int i, j, nfonts = sizeof ttf_fonts / sizeof ttf_fonts[0];
-
-	retlist = malloc(nfonts * sizeof *retlist);
-	if (retlist == NULL) return NULL;
-
-	j = 0;
-	for (i=0; i<nfonts; i++) {
-#ifdef G_OS_WIN32
-	    retlist[j++] = ttf_fonts[i];
-#else
-	    if (font_is_ok(ttf_fonts[i].fname)) {
-		retlist[j++] = ttf_fonts[i];
-	    }
-#endif
-	}
-	goodfonts = j;
-	*nf = goodfonts;
-    }
-
-    return retlist;
-}
-
-static int font_match (const char *ttfname, const char *pngfont)
-{
-    return !strncmp(ttfname, pngfont, strlen(ttfname));
-}
-
-static int get_point_size (const char *font)
-{
-    int pts;
-
-    if (sscanf(font, "%*s %d\n", &pts) == 1) {
-	return pts;
-    } else {
-	return 10;
-    }
 }
 
 static void strip_lr (gchar *txt)
@@ -1750,15 +1678,6 @@ static void plot_bars_changed (GtkComboBox *box, plot_editor *ed)
     }
 } 
 
-/* PNG anti-aliasing switch */
-
-static void set_aa_status (GtkWidget *w, int *ok)
-{
-    *ok = button_is_active(w);
-
-    gnuplot_png_set_use_aa(*ok);
-}
-
 static GtkWidget *gp_dialog_table (int rows, int cols, 
 				   GtkWidget *vbox)
 {
@@ -1795,61 +1714,6 @@ static GtkWidget *gp_page_vbox (GtkWidget *notebook, char *str)
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, label); 
 
     return vbox;
-}
-
-static void add_gd_font_selector (plot_editor *ed, GtkWidget *tbl, int *rows)
-{
-    GtkWidget *ebox, *entry, *label;
-    GList *fontnames = NULL;
-    struct font_info *ttflist;
-    const char *default_font = NULL;
-    int i, nfonts = 0;
-
-    ttflist = get_gnuplot_ttf_list(&nfonts);
-
-    for (i=0; i<nfonts; i++) {
-	fontnames = g_list_append(fontnames, (gpointer) ttflist[i].showname);
-	if (font_match(ttflist[i].fname, gretl_png_font())) {
-	    default_font = ttflist[i].showname;
-	}
-    }
-
-    fontnames = g_list_append(fontnames, _("None"));
-    if (default_font == NULL) {
-	default_font = _("None");
-    }
-
-    table_add_row(tbl, rows, TAB_MAIN_COLS);
-    ebox = gtk_event_box_new();
-    label = gtk_label_new(_("TrueType font"));
-    gtk_container_add(GTK_CONTAINER(ebox), label);
-    gtk_table_attach_defaults(GTK_TABLE (tbl), ebox, 0, 1, 
-			      *rows-1, *rows);
-    gtk_widget_show(label);
-    gtk_widget_show(ebox);
-
-    /* FIXME max length of font name? */
-
-    ed->ttfcombo = combo_box_text_new_with_entry();
-    entry = gtk_bin_get_child(GTK_BIN(ed->ttfcombo));
-    gtk_entry_set_max_length(GTK_ENTRY(entry), 15);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), ed->ttfcombo, 1, 2, 
-			      *rows-1, *rows);
-    set_combo_box_strings_from_list(ed->ttfcombo, fontnames); 
-    gtk_entry_set_text(GTK_ENTRY(entry), default_font);
-    gtk_entry_set_width_chars(GTK_ENTRY(entry), 15);
-    g_signal_connect(G_OBJECT(entry), "activate", 
-		     G_CALLBACK(apply_gpt_changes), 
-		     ed);
-    gtk_widget_show(ed->ttfcombo);
-    g_list_free(fontnames);
-
-    ed->ttfspin = gtk_spin_button_new_with_range(6, 24, 1);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->ttfspin), 
-			      get_point_size(gretl_png_font()));
-    gtk_table_attach_defaults(GTK_TABLE(tbl), ed->ttfspin, 2, 3, 
-			      *rows-1, *rows);
-    gtk_widget_show(ed->ttfspin);
 }
 
 static int semilog_is_ok (GPT_SPEC *spec)
@@ -1908,16 +1772,11 @@ static int show_bars_check (GPT_SPEC *spec)
 
 static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec) 
 {
-    static int aa_ok = 1;
-    static int show_aa_check = -1;
-    static int pngcairo = -1;
     GtkWidget *label, *vbox, *tbl;
+    GtkWidget *hsep, *button;
+    gchar *title;
     int i, rows = 1;
     int kactive = 0;
-
-    if (pngcairo < 0) {
-	pngcairo = (gnuplot_png_terminal() == GP_PNG_CAIRO);
-    }
 
     vbox = gp_page_vbox(ed->notebook, _("Main"));
 
@@ -2094,26 +1953,6 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	sensitize_conditional_on(combo, ed->grid_check);
     }
 
-    if (show_aa_check < 0) {
-	show_aa_check = (gnuplot_png_terminal() == GP_PNG_GD2);
-    }
-
-    if (show_aa_check) {
-	/* give option of suppressing anti-aliasing for PNGs */
-	GtkWidget *aa_check;
-
-	table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	aa_check = gtk_check_button_new_with_label(_("Allow anti-aliasing of lines"));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  aa_check, 0, TAB_MAIN_COLS, 
-				  rows-1, rows);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(aa_check),
-				     aa_ok);
-	g_signal_connect(G_OBJECT(aa_check), "clicked", 
-			 G_CALLBACK(set_aa_status), &aa_ok);
-	gtk_widget_show(aa_check);
-    }
-
     if (show_bars_check(spec)) {
 	/* option to display NBER "recession bars" or similar */
 	gboolean userbars = FALSE;
@@ -2148,41 +1987,31 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	sensitize_conditional_on(combo, ed->bars_check);
     }
 
-    if (pngcairo || gnuplot_has_ttf(0)) {
-	/* setting of graph font, if gnuplot supports freetype */
-	GtkWidget *hsep, *b;
+    /* setting of graph font */
+    table_add_row(tbl, &rows, TAB_MAIN_COLS);	
+    hsep = gtk_hseparator_new();
+    gtk_table_attach_defaults(GTK_TABLE(tbl), hsep, 0, TAB_MAIN_COLS, 
+			      rows-1, rows);  
+    gtk_widget_show(hsep);
 
-	/* first a separator */
-	table_add_row(tbl, &rows, TAB_MAIN_COLS);	
-	hsep = gtk_hseparator_new();
-	gtk_table_attach_defaults(GTK_TABLE(tbl), hsep, 0, TAB_MAIN_COLS, 
-				  rows-1, rows);  
-	gtk_widget_show(hsep);
+    title = g_strdup_printf(_("font: %s"), gretl_png_font());
+    button = gtk_button_new_with_label(title);
+    table_add_row(tbl, &rows, TAB_MAIN_COLS);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, TAB_MAIN_COLS, 
+			      rows - 1, rows); 
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(graph_font_selector), 
+		     ed);
+    gtk_widget_show(button);
+    g_free(title);
 
-	if (pngcairo) {
-	    gchar *title = g_strdup_printf(_("font: %s"), gretl_png_font());
-
-	    b = gtk_button_new_with_label(title);
-	    table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), b, 0, TAB_MAIN_COLS, 
-				      rows - 1, rows); 
-	    g_signal_connect(G_OBJECT(b), "clicked", 
-			     G_CALLBACK(graph_font_selector), 
-			     ed);
-	    gtk_widget_show(b);
-	    g_free(title);
-	} else {
-	    add_gd_font_selector(ed, tbl, &rows);
-	}
-
-	/* set font as default button */
-	table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	b = gtk_check_button_new_with_label(_("Set as default"));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), b, 0, TAB_MAIN_COLS, 
-				  rows - 1, rows); 
-	gtk_widget_show(b);
-	ed->fontcheck = b;
-    } 
+    /* set font as default button */
+    table_add_row(tbl, &rows, TAB_MAIN_COLS);
+    button = gtk_check_button_new_with_label(_("Set as default"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, TAB_MAIN_COLS, 
+			      rows - 1, rows); 
+    gtk_widget_show(button);
+    ed->fontcheck = button;
 
     if (frequency_plot_code(spec->code)) {
 	/* give option of setting fill color */

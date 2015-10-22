@@ -298,8 +298,7 @@ static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
 	}
 	if ((item->func == G_CALLBACK(graph_enlarge_callback) ||
 	     item->func == G_CALLBACK(graph_shrink_callback)) &&
-	    (plot_not_editable(plot) || 
-	     gnuplot_png_terminal() != GP_PNG_CAIRO)) {
+	    plot_not_editable(plot)) {
 	    continue;
 	}	
 	button = gretl_toolbar_insert(tbar, item, item->func, plot, -1);
@@ -721,16 +720,12 @@ static int non_ascii_gp_file (FILE *fp)
 
 static int term_uses_utf8 (int ttype)
 {
-    if (ttype == GP_TERM_PNG || 
+    if (ttype == GP_TERM_PNG ||
+	ttype == GP_TERM_PDF ||
+	ttype == GP_TERM_EPS ||
 	ttype == GP_TERM_SVG ||
 	ttype == GP_TERM_EMF ||
 	ttype == GP_TERM_PLT) {
-	return 1;
-    } else if (ttype == GP_TERM_PDF && 
-	       gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	return 1;
-    } else if (ttype == GP_TERM_EPS &&
-	       gnuplot_eps_terminal() == GP_EPS_CAIRO) {
 	return 1;
     } else {
 	return 0;
@@ -3869,8 +3864,6 @@ static void build_plot_menu (png_plot *plot)
 	N_("Zoom..."),
 #ifdef G_OS_WIN32
 	N_("Print"),
-#else
-	N_("Print..."),
 #endif
 	N_("Display PDF"),
 	N_("OLS estimates"),
@@ -3889,17 +3882,7 @@ static void build_plot_menu (png_plot *plot)
 	NULL
     };
     const char **plot_items;
-    static int pdf_ok = -1;
-    static int pngcairo = -1;
     int i;
-
-    if (pdf_ok < 0) {
-	pdf_ok = gnuplot_pdf_terminal();
-    }
-
-    if (pngcairo < 0) {
-	pngcairo = (gnuplot_png_terminal() == GP_PNG_CAIRO);
-    }    
 
     plot->popup = gtk_menu_new();
 
@@ -3938,22 +3921,11 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if ((!pngcairo || plot_has_controller(plot) || 
-	     plot_is_editable(plot)) && !strcmp(plot_items[i], "Font")) {
+	if ((plot_has_controller(plot) || plot_is_editable(plot)) &&
+	    !strcmp(plot_items[i], "Font")) {
 	    i++;
 	    continue;
 	}
-	if (!pdf_ok && (!strcmp(plot_items[i], "Save as PDF...") ||
-			!strcmp(plot_items[i], "Display PDF"))) {
-	    i++;
-	    continue;
-	}
-	if ((plot->err || pdf_ok) && !strcmp(plot_items[i], "Print...")) {
-	    /* Print... is currently very funky for graphs.  If
-	       we're able to display PDF, bypass this option */
-	    i++;
-	    continue;
-	}	    
 	if (!plot_labels_shown(plot) &&
 	    (!strcmp(plot_items[i], "Freeze data labels") ||
 	     !strcmp(plot_items[i], "Clear data labels"))) {
@@ -4284,8 +4256,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 {
     guint k = key->keyval;
 
-    if (gnuplot_png_terminal() == GP_PNG_CAIRO &&
-	plot_is_editable(plot) && 
+    if (plot_is_editable(plot) && 
 	(k == GDK_plus || k == GDK_greater ||
 	 k == GDK_minus || k == GDK_less ||
 	 k == GDK_equal || k == GDK_0)) {

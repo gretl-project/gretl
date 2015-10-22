@@ -304,19 +304,14 @@ gchar *gp_locale_from_utf8 (const gchar *src)
     return ret;
 }
 
+/* If need be, fix up an old, pre-cairo PNG terminal line */
+
 static int maybe_adjust_cairo (char *line)
 {
     char *s = line + 12;
     int ret = 0;
 
-     if (!strncmp(s, "cairo", 5)) {
-	if (gnuplot_png_terminal() != GP_PNG_CAIRO) {
-	    /* drop back to non-cairo PNG term */
-	    shift_string_left(s + 5, 5);
-	    ret = 1;
-	}
-    } else if (gnuplot_png_terminal() == GP_PNG_CAIRO &&
-	       strlen(line) < 512 - 5) {
+    if (strlen(line) < 512 - 5) {
 	/* substitute the preferred cairo PNG term */
 	char *p, tmp[512];
 

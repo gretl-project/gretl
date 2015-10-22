@@ -28,63 +28,21 @@
 /* default values */
 static double pwidth = 5.0;
 static double pheight = 3.5;
-static char ps_font[64] = "Helvetica";
 static char cairo_font[64] = "Sans";
-static int ps_fontsize = 8;
 static int cairo_fontsize = 12;
 static double lw_factor = 1.0;
 static int mono;
-
-static const char *ps_fonts[] = {
-    "AvantGarde-Book",
-    "AvantGarde-BookOblique",
-    "AvantGarde-Demi",
-    "AvantGarde-DemiOblique",
-    "Bookman-Demi",
-    "Bookman-DemiItalic",
-    "Bookman-Light",
-    "Bookman-LightItalic",
-    "Courier",
-    "Courier-Bold",
-    "Courier-BoldOblique",
-    "Courier-Oblique",
-    "Helvetica",
-    "Helvetica-Bold",
-    "Helvetica-BoldOblique",
-    "Helvetica-Narrow",
-    "Helvetica-Narrow-Bold",
-    "Helvetica-Narrow-BoldOblique",
-    "Helvetica-Narrow-Oblique",
-    "Helvetica-Oblique",
-    "NewCenturySchlbk-Bold",
-    "NewCenturySchlbk-BoldItalic",
-    "NewCenturySchlbk-Italic",
-    "NewCenturySchlbk-Roman",
-    "Palatino-Bold",
-    "Palatino-BoldItalic",
-    "Palatino-Italic",
-    "Palatino-Roman",
-    "Times-Bold",
-    "Times-BoldItalic",
-    "Times-Italic",
-    "Times-Roman",
-    NULL
-};
 
 #define CMFAC 2.54 /* centimeters per inch */
 
 struct pdf_ps_saver {
     GtkWidget *dialog;
     GPT_SPEC *spec;
-    int pdfcairo;
-    int epscairo;
     int mono;
     int stdsize;
     double pwidth;
     double pheight;
-    char ps_font[64];
     char cairo_font[64];
-    int ps_fontsize;
     int cairo_fontsize;
     double lw_factor;
     GtkWidget *w_in, *h_in;
@@ -123,25 +81,11 @@ static void saver_init (struct pdf_ps_saver *s,
 			GtkWidget *w,
 			GPT_SPEC *spec)
 {
-#ifndef G_OS_WIN32
-    static int started;
-
-    if (!started && gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	/* also applies for GP_EPS_CAIRO */
-	cairo_fontsize = (gnuplot_version() > 4.4)? 12 : 6; /* was 10:5 */
-	started = 1;
-    }
-#endif
-
     s->dialog = w;
     s->spec = spec;
-    s->pdfcairo = 0;
-    s->epscairo = 0;
     s->mono = mono;
     s->stdsize = 1;
-    strcpy(s->ps_font, ps_font);
     strcpy(s->cairo_font, cairo_font);
-    s->ps_fontsize = ps_fontsize;
     s->cairo_fontsize = cairo_fontsize;
     s->lw_factor = lw_factor;
 
@@ -150,12 +94,6 @@ static void saver_init (struct pdf_ps_saver *s,
     if (!s->stdsize) {
 	s->cairo_fontsize *= 0.8;
     } 
-
-    if (spec->termtype == GP_TERM_PDF) {
-	s->pdfcairo = gnuplot_pdf_terminal() == GP_PDF_CAIRO;
-    } else if (spec->termtype == GP_TERM_EPS) {
-	s->epscairo = gnuplot_eps_terminal() == GP_EPS_CAIRO;
-    }
 }
 
 static void saver_set_defaults (struct pdf_ps_saver *s)
@@ -166,16 +104,9 @@ static void saver_set_defaults (struct pdf_ps_saver *s)
 	pheight = s->pheight;
     }
 
-    if (s->pdfcairo || s->epscairo) {
-	strcpy(cairo_font, s->cairo_font);
-	if (s->stdsize) {
-	    cairo_fontsize = s->cairo_fontsize;
-	}
-    } else {
-	strcpy(ps_font, s->ps_font);
-	if (s->stdsize) {
-	    ps_fontsize = s->ps_fontsize;
-	}
+    strcpy(cairo_font, s->cairo_font);
+    if (s->stdsize) {
+	cairo_fontsize = s->cairo_fontsize;
     }
 
     mono = s->mono;
@@ -277,11 +208,6 @@ static GtkWidget *pdf_ps_size_spinners (struct pdf_ps_saver *s)
     return vbox;
 }
 
-static void set_ps_fontsize (GtkSpinButton *b, struct pdf_ps_saver *s)
-{
-    s->ps_fontsize = gtk_spin_button_get_value_as_int(b);
-}
-
 static GtkWidget *label_in_hbox (const char *s, int center)
 {
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
@@ -318,39 +244,6 @@ static void color_mode_selector (struct pdf_ps_saver *s,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), s->mono);
 }
 
-/* for use with gnuplot's traditional "post" terminal */
-
-static GtkWidget *ps_font_selector (struct pdf_ps_saver *s)
-{
-    GtkWidget *hbox, *entry, *fspin;
-    GList *fontlist = NULL;
-    int i;
-
-    for (i=0; ps_fonts[i] != NULL; i++) {
-	fontlist = g_list_append(fontlist, (gpointer) ps_fonts[i]);
-    }
-
-    hbox = gtk_hbox_new(FALSE, 5);
-
-    s->combo = combo_box_text_new_with_entry();
-    entry = gtk_bin_get_child(GTK_BIN(s->combo));
-    gtk_entry_set_max_length(GTK_ENTRY(entry), 48);
-    set_combo_box_strings_from_list(s->combo, fontlist); 
-    gtk_entry_set_text(GTK_ENTRY(entry), s->ps_font);
-    gtk_entry_set_width_chars(GTK_ENTRY(entry), 20);
-    gtk_box_pack_start(GTK_BOX(hbox), s->combo, FALSE, FALSE, 5);
-
-    g_list_free(fontlist);
-
-    fspin = gtk_spin_button_new_with_range(2, 50, 1); /* FIXME? */
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(fspin), s->ps_fontsize);
-    g_signal_connect(G_OBJECT(fspin), "value-changed",
-		     G_CALLBACK(set_ps_fontsize), s);
-    gtk_box_pack_start(GTK_BOX(hbox), fspin, FALSE, FALSE, 5);
-    
-    return hbox;
-}
-
 const char *pdf_ps_saver_current_font (gpointer p)
 {
     static char fontname[68];
@@ -374,14 +267,6 @@ void pdf_ps_saver_set_fontname (gpointer p, const char *fontname)
     }
 }
 
-static void record_selected_ps_font (struct pdf_ps_saver *s)
-{
-    GtkWidget *entry = gtk_bin_get_child(GTK_BIN(s->combo));
-    const gchar *name = gtk_entry_get_text(GTK_ENTRY(entry));
-
-    strcpy(s->ps_font, name);
-}
-
 static void 
 saver_make_term_string (struct pdf_ps_saver *s, char *termstr)
 {
@@ -397,24 +282,13 @@ saver_make_term_string (struct pdf_ps_saver *s, char *termstr)
 	*lwstr = '\0';
     }
 
-    if (s->pdfcairo) {
+    if (s->spec->termtype == GP_TERM_PDF) {
 	ttype = (s->mono)? "pdfcairo noenhanced mono dashed" : "pdfcairo noenhanced";
 	sprintf(fontstr, "font \"%s,%d\"", s->cairo_font, s->cairo_fontsize);
-    } else if (s->epscairo) {
+    } else {
 	ttype = (s->mono)? "epscairo noenhanced mono dashed" : "epscairo noenhanced";
 	sprintf(fontstr, "font \"%s,%d\"", s->cairo_font, s->cairo_fontsize);
-    } else {
-	/* old-style terminals */
-	record_selected_ps_font(s);
-	if (s->spec->termtype == GP_TERM_EPS) {
-	    ttype = (s->mono)? "post eps noenhanced mono" : "post eps noenhanced color solid";
-	    sprintf(fontstr, "font \"%s,%d\"", s->ps_font, 2 * s->ps_fontsize);
-	} else {
-	    /* PDF via pdflib */
-	    ttype = (s->mono)? "pdf mono dashed noenhanced" : "pdf noenhanced color";
-	    sprintf(fontstr, "font \"%s,%d\"", s->ps_font, s->ps_fontsize);
-	}
-    } 
+    }
 
     if (s->mono) {
 	s->spec->flags |= GPT_MONO;
@@ -487,23 +361,16 @@ void pdf_ps_dialog (GPT_SPEC *spec, GtkWidget *parent)
 
     vbox_add_hsep(vbox);
 
-    if (saver.pdfcairo || saver.epscairo) {
-	title = g_strdup_printf(_("font: %s"), 
-				pdf_ps_saver_current_font(&saver));
-	hbox = gtk_hbox_new(FALSE, 5);
-	b = gtk_button_new_with_label(title);
-	gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
-	gtk_container_add(GTK_CONTAINER(vbox), hbox);
-	g_signal_connect(G_OBJECT(b), "clicked", 
-			 G_CALLBACK(pdf_font_selector), 
-			 &saver);
-	g_free(title);
-    } else {
-	hbox = label_in_hbox(_("Font and size:"), 0);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-	hbox = ps_font_selector(&saver);
-	gtk_container_add(GTK_CONTAINER(vbox), hbox);
-    }
+    title = g_strdup_printf(_("font: %s"), 
+			    pdf_ps_saver_current_font(&saver));
+    hbox = gtk_hbox_new(FALSE, 5);
+    b = gtk_button_new_with_label(title);
+    gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+    g_signal_connect(G_OBJECT(b), "clicked", 
+		     G_CALLBACK(pdf_font_selector), 
+		     &saver);
+    g_free(title);
 
     vbox_add_hsep(vbox);
     color_mode_selector(&saver, vbox);

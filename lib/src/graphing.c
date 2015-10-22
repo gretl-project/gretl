@@ -607,21 +607,6 @@ int gnuplot_has_ttf (int reset)
     return 1;
 }
 
-int gnuplot_pdf_terminal (void)
-{
-    return GP_PDF_CAIRO;
-}
-
-int gnuplot_eps_terminal (void)
-{
-    return GP_EPS_CAIRO;
-}
-
-int gnuplot_png_terminal (void)
-{
-    return GP_PNG_CAIRO;
-}
-   
 int gnuplot_has_cp950 (void)
 {
     /* ... and that it supports CP950 */
@@ -637,16 +622,6 @@ int gnuplot_has_ttf (int reset)
     if (err == -1 || reset) {
 	/* if we have cairo we know we (should be!) OK */
         err = gnuplot_test_command("set term pngcairo");
-	if (err) {
-	    /* otherwise (libgd) try some plausible ttf fonts */
-	    err = gnuplot_test_command("set term png font Vera 8");
-	    if (err) {
-		err = gnuplot_test_command("set term png font luxisr 8");
-	    }
-	    if (err) {
-		err = gnuplot_test_command("set term png font arial 8");
-	    }
-	}
     }
 
     return !err;
@@ -663,47 +638,6 @@ int gnuplot_has_cp950 (void)
     }
 
     return !err;
-}
-
-int gnuplot_pdf_terminal (void)
-{
-    static int ret = -1;
-
-    if (ret == -1) {
-	int err = gnuplot_test_command("set term pdfcairo");
-
-	if (!err) {
-	    ret = GP_PDF_CAIRO;
-	} else {
-	    err = gnuplot_test_command("set term pdf");
-	    if (!err) {
-		ret = GP_PDF_PDFLIB;
-	    } else {
-		ret = GP_PDF_NONE;
-	    }
-	}
-    }
-
-    return ret;
-}
-
-int gnuplot_eps_terminal (void)
-{
-    static int ret = -1;
-
-    if (ret == -1) {
-	int err = gnuplot_test_command("set term epscairo");
-
-	/* note: won't work in gnuplot 4.4.0 */
-
-	if (!err) {
-	    ret = GP_EPS_CAIRO;
-	} else {
-	    ret = GP_EPS_PS;
-	}
-    }
-
-    return ret;
 }
 
 static int gnuplot_has_x11 (void)
@@ -739,34 +673,7 @@ int gnuplot_has_qt (void)
     return !err;
 }
 
-int gnuplot_png_terminal (void)
-{
-    static int ret = -1;
-
-    if (ret == -1) {
-	int err = gnuplot_test_command("set term pngcairo");
-
-	if (!err) {
-	    fprintf(stderr, "gnuplot: using pngcairo driver\n");
-	    ret = GP_PNG_CAIRO;
-	} else {
-	    fprintf(stderr, "gnuplot: using libgd png driver\n");
-	    err = gnuplot_test_command("set term png truecolor");
-	    ret = (err)? GP_PNG_GD1 : GP_PNG_GD2;
-	}
-    }
-
-    return ret;
-}
-
 #endif /* !WIN32 */
-
-static int gnuplot_png_use_aa = 1;
-
-void gnuplot_png_set_use_aa (int s)
-{
-    gnuplot_png_use_aa = s;
-}
 
 /* apparatus for handling plot colors */
 
@@ -919,7 +826,7 @@ static void maybe_set_small_font (int nplots)
 }
 
 static void 
-write_gnuplot_font_string (char *fstr, PlotType ptype, int pngterm,
+write_gnuplot_font_string (char *fstr, PlotType ptype,
 			   const char *grfont, double scale)
 {
     if (grfont == NULL) {
@@ -933,9 +840,7 @@ write_gnuplot_font_string (char *fstr, PlotType ptype, int pngterm,
     if (grfont == NULL || *grfont == '\0') {
 	*fstr = '\0';
 	return;
-    }
-
-    if (pngterm == GP_PNG_CAIRO) {
+    } else {
 	char fname[128];
 	int nf, fsize = 0;
 
@@ -951,40 +856,8 @@ write_gnuplot_font_string (char *fstr, PlotType ptype, int pngterm,
 	} else if (nf == 1) {
 	    sprintf(fstr, " font \"%s\"", fname);
 	}
-    } else {
-	int shrink = 0;
-
-	if (maybe_big_multiplot(ptype) && gp_small_font_size > 0) {
-	    char fname[64];
-	    int fsize;
-
-	    if (sscanf(grfont, "%s %d", fname, &fsize) == 2) {
-		sprintf(fstr, " font %s %d", fname, gp_small_font_size);
-		shrink = 1;
-	    }
-	}
-
-	if (!shrink) {
-	    sprintf(fstr, " font %s", grfont);
-	}
     }
 }
-
-#ifndef WIN32
-
-static void 
-write_old_gnuplot_font_string (char *fstr, PlotType ptype)
-{
-    if (maybe_big_multiplot(ptype)) {
-	strcpy(fstr, " tiny");
-    } else {
-	strcpy(fstr, " small");
-    }
-}
-
-#endif
-
-/* requires gnuplot 4.2 or higher */
 
 void write_plot_line_styles (int ptype, FILE *fp)
 {
@@ -1129,31 +1002,24 @@ static void maybe_set_eps_pdf_dims (char *s, PlotType ptype, GptFlags flags)
 const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
 {
     static char pdf_term_line[128];
+    int ptsize = 12; /* was 10 */
 
-    if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	int ptsize = 12; /* was 10 */
-
-	if (ptype == PLOT_MULTI_SCATTER) {
-	    ptsize = 6;
-	}
+    if (ptype == PLOT_MULTI_SCATTER) {
+	ptsize = 6;
+    }
 #ifndef WIN32
-	if (gnuplot_version() <= 4.4) {
-	    ptsize /= 2;
-	}
+    if (gnuplot_version() <= 4.4) {
+	ptsize /= 2;
+    }
 #endif
-	if (flags & GPT_MONO) {
-	    sprintf(pdf_term_line,
-		    "set term pdfcairo noenhanced mono font \"sans,%d\"", 
-		    ptsize);
-	} else {
-	    sprintf(pdf_term_line,
-		    "set term pdfcairo noenhanced font \"sans,%d\"", 
-		    ptsize);
-	}	    
-    } else if (flags & GPT_MONO) {
-	strcpy(pdf_term_line, "set term pdf noenhanced mono");
+    if (flags & GPT_MONO) {
+	sprintf(pdf_term_line,
+		"set term pdfcairo noenhanced mono font \"sans,%d\"", 
+		ptsize);
     } else {
-	strcpy(pdf_term_line, "set term pdf noenhanced");
+	sprintf(pdf_term_line,
+		"set term pdfcairo noenhanced font \"sans,%d\"", 
+		ptsize);
     }
 
     maybe_set_eps_pdf_dims(pdf_term_line, ptype, flags);
@@ -1164,26 +1030,19 @@ const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
 const char *get_gretl_eps_term_line (PlotType ptype, GptFlags flags)
 {
     static char eps_term_line[128];
-
-    if (gnuplot_eps_terminal() == GP_EPS_CAIRO) {
-	int ptsize = 12; /* ? */
-
-	if (ptype == PLOT_MULTI_SCATTER) {
-	    ptsize = 6;
-	}
-	if (flags & GPT_MONO) {
-	    sprintf(eps_term_line,
-		    "set term epscairo noenhanced mono font \"sans,%d\"", 
-		    ptsize);
-	} else {
-	    sprintf(eps_term_line,
-		    "set term epscairo noenhanced font \"sans,%d\"", 
-		    ptsize);
-	}	    
-    } else if (flags & GPT_MONO) {
-	strcpy(eps_term_line, "set term post eps noenhanced mono");
+    int ptsize = 12;
+    
+    if (ptype == PLOT_MULTI_SCATTER) {
+	ptsize = 6;
+    }
+    if (flags & GPT_MONO) {
+	sprintf(eps_term_line,
+		"set term epscairo noenhanced mono font \"sans,%d\"", 
+		ptsize);
     } else {
-	strcpy(eps_term_line, "set term post eps noenhanced color solid");
+	sprintf(eps_term_line,
+		"set term epscairo noenhanced font \"sans,%d\"", 
+		ptsize);
     }
 
     maybe_set_eps_pdf_dims(eps_term_line, ptype, flags);
@@ -1238,46 +1097,17 @@ static const char *real_png_term_line (PlotType ptype,
 				       double scale)
 {
     static char png_term_line[256];
-    char truecolor_string[12] = {0};
     char font_string[128];
     char size_string[16];
-    int gpttf, pngterm = 0;
 
     *font_string = *size_string = '\0';
 
-    pngterm = gnuplot_png_terminal();
-
-#ifdef WIN32
-    gpttf = 1;
-#else
-    gpttf = gnuplot_has_ttf(0);
-#endif
-
-    if (pngterm == GP_PNG_GD2 && gnuplot_png_use_aa) {
-	strcpy(truecolor_string, " truecolor");
-    }   
-
-    if (gpttf) {
-	write_gnuplot_font_string(font_string, ptype, pngterm,
-				  specfont, scale);
-    } 
-
-#ifndef WIN32
-    if (!gpttf) {
-	write_old_gnuplot_font_string(font_string, ptype);
-    }
-#endif
-
+    write_gnuplot_font_string(font_string, ptype, specfont, scale);
     write_png_size_string(size_string, ptype, flags, scale);
 
-    if (pngterm == GP_PNG_CAIRO) {
-	sprintf(png_term_line, "set term pngcairo%s%s noenhanced",
-		font_string, size_string);
-	strcat(png_term_line, "\nset encoding utf8");
-    } else {
-	sprintf(png_term_line, "set term png%s%s%s noenhanced",
-		truecolor_string, font_string, size_string); 
-    }
+    sprintf(png_term_line, "set term pngcairo%s%s noenhanced",
+	    font_string, size_string);
+    strcat(png_term_line, "\nset encoding utf8");
 
 #if GP_DEBUG
     fprintf(stderr, "png term line:\n'%s'\n", png_term_line);
@@ -1881,13 +1711,6 @@ static int gnuplot_make_graph (void)
 	/* no-op: just the gnuplot commands are wanted */
 	graph_file_written = 1;
 	return 0;
-    } else if (fmt == GP_TERM_PDF) {
-	/* can we do this? */
-	if (gnuplot_pdf_terminal() == GP_PDF_NONE) {
-	    gretl_errmsg_set(_("Gnuplot does not support PDF output "
-			       "on this system"));
-	    return E_EXTERNAL;
-	}
     } else if (fmt == GP_TERM_NONE && gui) {
 	do_plot_bounding_box();
 	/* ensure we don't get stale output */
