@@ -359,7 +359,7 @@ static int graph_page_set_font_scale (const char *s)
     }
 }
 
-static int gp_pdfcairo_fontsize (void)
+static int gp_cairo_fontsize (void)
 {
 #ifdef G_OS_WIN32
     int basesize = 10;
@@ -371,6 +371,10 @@ static int gp_pdfcairo_fontsize (void)
 #ifndef G_OS_WIN32
     if (basesize == 0) {
 	double gpver = gnuplot_version();
+
+	/* note: the default @basesize here is inconsistent with 
+	   get_gretl_pdf_term_line (default 12) 
+	*/
 
 	basesize = (gpver > 4.4)? 10 : 5;
     }
@@ -425,20 +429,32 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
     }
 
     gretl_push_c_numeric_locale();
+
+    /* FIXME: is "dashed" wanted when "mono" is given below? */
     
     if (gpage.term == GP_TERM_PDF) {
+	/* PDF output variants */
 	if (pdfterm == GP_PDF_CAIRO) {
-	    int fontsize = gp_pdfcairo_fontsize();
+	    int fontsize = gp_cairo_fontsize();
 
 	    fprintf(fq, "set term pdfcairo font \"sans,%d\"%s", fontsize,
-		    (gpage.mono)? " monochrome dashed" : " ");
+		    (gpage.mono)? " mono dashed" : " ");
+	} else if (gpage.mono) {
+	    fputs("set term pdf mono dashed", fq);
 	} else {
-	    fprintf(fq, "set term pdf%s", (gpage.mono)? " monochrome dashed" : " color");
+	    fputs("set term pdf color", fq);
 	}
 	fname = gpage_fname(".pdf", i);
     } else {
-	/* FIXME epscairo */
-	fprintf(fq, "set term postscript eps%s", (gpage.mono)? " monochrome" : " color");
+	/* EPS output variants */
+	if (epsterm == GP_EPS_CAIRO) {
+	    int fontsize = gp_cairo_fontsize();
+
+	    fprintf(fq, "set term epscairo font \"sans,%d\"%s", fontsize,
+		    (gpage.mono)? " mono dashed" : " ");	    
+	} else {
+	    fprintf(fq, "set term postscript eps%s", (gpage.mono)? " mono" : " color");
+	}
 	fname = gpage_fname(".ps", i);
     }
 

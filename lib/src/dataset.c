@@ -4112,7 +4112,7 @@ double series_decode_string (const DATASET *dset, int i, const char *s)
  */
 
 char **series_get_string_vals (const DATASET *dset, int i,
-				     int *n_strs)
+			       int *n_strs)
 {
     char **strs = NULL;
     int n = 0;

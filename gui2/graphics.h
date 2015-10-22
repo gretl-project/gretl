@@ -26,8 +26,8 @@ void save_graphic_to_file (gpointer data, const char *fname);
 
 GPT_SPEC *graph_saver_get_plotspec (gpointer p);
 
-void pdf_saver_set_fontname (gpointer p, const char *fontname);
+void pdf_ps_saver_set_fontname (gpointer p, const char *fontname);
 
-const char *pdf_saver_current_font (gpointer p);
+const char *pdf_ps_saver_current_font (gpointer p);
 
 #endif /* GRAPHICS_H_ */

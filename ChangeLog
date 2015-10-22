@@ -3,6 +3,8 @@ version 2015e, in progress
   non-MPI enabled build
 - Fix bug 197, bad "xtics" specification for some weekly
   time-series plots
+- Improve handling of EPS plot output (including respecting
+  the color/mono choice properly)
 
 2015-10-19 version 2015d
 - add varnames() function: similar to varname() but returns
