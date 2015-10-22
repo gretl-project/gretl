@@ -10,7 +10,7 @@ $(PKG).pdf: links.stamp $(PKG).tex $(FIG)
 	@pdflatex $(PKG) && bibtex $(PKG) && pdflatex $(PKG) && pdflatex $(PKG)
 	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
 
-links.stamp:
+links.stamp: Makefile
 	@if [ ! -f gretl.bst ] ; then ln -sf $(TEXDIR)/gretl.bst . ; fi
 	@if [ ! -f gretl.bib ] ; then ln -sf $(TEXDIR)/gretl.bib . ; fi
 	@if [ ! -f gretl.sty ] ; then ln -sf ../../../doc/gretl.sty . ; fi

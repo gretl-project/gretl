@@ -27,7 +27,7 @@ all: $(PKG).gfn pdfdoc
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec $(EXAMP)
 	$(GRETLCLI) -t pkg.inp
 
-links.stamp:
+links.stamp: Makefile
 	@if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
 	@if [ ! -f $(EXAMP) ] ; then ln -sf $(PKGSRC)/$(EXAMP) . ; fi
 	@touch $@

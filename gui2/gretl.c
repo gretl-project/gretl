@@ -2010,7 +2010,6 @@ static GtkWidget *make_main_menu (void)
     gtk_action_group_set_translation_domain(actions, "gretl");
     gtk_action_group_add_actions(actions, main_entries, 
 				 G_N_ELEMENTS(main_entries), mdata);
-
     gtk_ui_manager_insert_action_group(mdata->ui, actions, 0);
     g_object_unref(actions);
 
