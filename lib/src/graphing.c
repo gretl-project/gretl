@@ -570,16 +570,15 @@ static void printvars (FILE *fp, int t,
     fputc('\n', fp);
 }
 
-static int factor_check (gnuplot_info *gi, int *haslabels,
-			 const DATASET *dset)
+static int factor_check (gnuplot_info *gi, const DATASET *dset)
 {
     int err = 0;
+    int v3 = 0;
 
     if (gi->list[0] != 3) {
 	err = E_DATA;
     } else {
-	int v3 = gi->list[3];
-
+	v3 = gi->list[3];
 	if (!series_is_discrete(dset, v3) &&
 	    !gretl_isdiscrete(gi->t1, gi->t2, dset->Z[v3])) {
 	    err = E_DATA;
@@ -590,9 +589,9 @@ static int factor_check (gnuplot_info *gi, int *haslabels,
 	gretl_errmsg_set(_("You must supply three variables, the last of "
 			   "which is discrete"));
     } else {
-	*haslabels = is_string_valued(dset, gi->list[3]);
-	const double *d = dset->Z[gi->list[3]] + gi->t1;
+	const double *d = dset->Z[v3] + gi->t1;
 	int T = gi->t2 - gi->t1 + 1;
+	
 	gi->dvals = gretl_matrix_values(d, T, OPT_S, &err);
     }
 
@@ -695,7 +694,7 @@ int gnuplot_eps_terminal (void)
     if (ret == -1) {
 	int err = gnuplot_test_command("set term epscairo");
 
-	/* not OK in gnuplot 4.4.0 */
+	/* note: won't work in gnuplot 4.4.0 */
 
 	if (!err) {
 	    ret = GP_EPS_CAIRO;
@@ -1123,6 +1122,10 @@ static void maybe_set_eps_pdf_dims (char *s, PlotType ptype, GptFlags flags)
     }    
 }
 
+/* In @pdf_term_line and @eps_term_line: should "dashed" be
+   appended when "mono" is specified? Try experimenting?
+*/
+
 const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
 {
     static char pdf_term_line[128];
@@ -1138,8 +1141,17 @@ const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
 	    ptsize /= 2;
 	}
 #endif
-	sprintf(pdf_term_line, "set term pdfcairo noenhanced font \"sans,%d\"", 
-		ptsize);
+	if (flags & GPT_MONO) {
+	    sprintf(pdf_term_line,
+		    "set term pdfcairo noenhanced mono font \"sans,%d\"", 
+		    ptsize);
+	} else {
+	    sprintf(pdf_term_line,
+		    "set term pdfcairo noenhanced font \"sans,%d\"", 
+		    ptsize);
+	}	    
+    } else if (flags & GPT_MONO) {
+	strcpy(pdf_term_line, "set term pdf noenhanced mono");
     } else {
 	strcpy(pdf_term_line, "set term pdf noenhanced");
     }
@@ -1153,7 +1165,22 @@ const char *get_gretl_eps_term_line (PlotType ptype, GptFlags flags)
 {
     static char eps_term_line[128];
 
-    if (flags & GPT_MONO) {
+    if (gnuplot_eps_terminal() == GP_EPS_CAIRO) {
+	int ptsize = 12; /* ? */
+
+	if (ptype == PLOT_MULTI_SCATTER) {
+	    ptsize = 6;
+	}
+	if (flags & GPT_MONO) {
+	    sprintf(eps_term_line,
+		    "set term epscairo noenhanced mono font \"sans,%d\"", 
+		    ptsize);
+	} else {
+	    sprintf(eps_term_line,
+		    "set term epscairo noenhanced font \"sans,%d\"", 
+		    ptsize);
+	}	    
+    } else if (flags & GPT_MONO) {
 	strcpy(eps_term_line, "set term post eps noenhanced mono");
     } else {
 	strcpy(eps_term_line, "set term post eps noenhanced color solid");
@@ -1411,14 +1438,14 @@ static void print_term_string (int ttype, PlotType ptype,
     } else if (ttype == GP_TERM_EMF) {
 	tstr = get_gretl_emf_term_line(ptype, flags);
     } else if (ttype == GP_TERM_FIG) {
-	tstr = "set term fig";
+	tstr = "set term fig noenhanced";
     } else if (ttype == GP_TERM_SVG) {
 	tstr = "set term svg noenhanced";
     }
 
     if (tstr != NULL) {
 	fprintf(fp, "%s\n", tstr);
-	if (ttype != GP_TERM_EPS) {
+	if (!(flags & GPT_MONO)) {
 	    write_plot_line_styles(PLOT_REGULAR, fp);
 	}
     }
@@ -3366,9 +3393,6 @@ int gnuplot (const int *plotlist, const char *literal,
     int oddman = 0;
     int lmin, many = 0;
     int set_xrange = 1;
-    int dum_haslabels = 0;
-    const char **labels = NULL;
-    int n_labels;
     PlotType ptype;
     gnuplot_info gi;
     int i, err = 0;
@@ -3474,16 +3498,13 @@ int gnuplot (const int *plotlist, const char *literal,
 
     /* separation by dummy: create special vars */
     if (gi.flags & GPT_DUMMY) {
-
-	err = factor_check(&gi, &dum_haslabels, dset);
+	err = factor_check(&gi, dset);
 	if (err) {
 	    goto bailout;
 	}
 	ptype = PLOT_FACTORIZED;
     } 
 
-    fprintf(stderr, "haslabels = %d\n", dum_haslabels);
-    
     /* special tics for time series plots */
     if (gi.flags & GPT_TS) {
 	make_time_tics(&gi, dset, many, xlabel, prn);
@@ -3623,27 +3644,27 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     } else if (gi.flags & GPT_DUMMY) { 
 	/* plot shows separation by discrete variable */
+	const char **labels = NULL;
 	int nd = gretl_vector_get_length(gi.dvals);
+	int dv = list[3];
 
 	strcpy(s1, (gi.flags & GPT_RESIDS)? _("residual") : 
 	       series_get_graph_name(dset, list[1]));
-	strcpy(s2, series_get_graph_name(dset, list[3]));
+	strcpy(s2, series_get_graph_name(dset, dv));
 
-	if (dum_haslabels) {
+	if (is_string_valued(dset, dv)) {
 	    labels = (const char **)
-		series_get_string_vals(dset, list[3], &n_labels);
+		series_get_string_vals(dset, dv, NULL);
 	}
 
 	for (i=0; i<nd; i++) {
-	    
-	    if (dum_haslabels) {
+	    if (labels != NULL) {
 		fprintf(fp, " '-' using 1:($2) title \"%s (%s=%s)\" w points ", 
 			s1, s2, labels[i]);
 	    } else {
 		fprintf(fp, " '-' using 1:($2) title \"%s (%s=%g)\" w points ", 
 			s1, s2, gretl_vector_get(gi.dvals, i));
 	    }
-	    
 	    if (i < nd - 1) {
 		fputs(", \\\n", fp);
 	    } else {
