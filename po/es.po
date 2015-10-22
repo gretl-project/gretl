@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-10-16 21:31-0400\n"
-"PO-Revision-Date: 2015-10-14 13:04+0200\n"
+"PO-Revision-Date: 2015-10-22 12:03+0200\n"
 "Last-Translator: \n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -10595,9 +10595,8 @@ msgid "PDF file"
 msgstr "Fichero PDF"
 
 #: gui2/fnsave.c:1955
-#, fuzzy
 msgid "Select"
-msgstr "Seleccionar _todas las variables"
+msgstr "Seleccionar"
 
 #: gui2/fnsave.c:2123
 msgid "Minimum gretl version"
@@ -12221,9 +12220,8 @@ msgid "_Hansl primer"
 msgstr "_Hansl primer"
 
 #: gui2/gretl.c:1768
-#, fuzzy
 msgid "_Function package guide"
-msgstr "Paquetes de _funciones"
+msgstr "Guía de los paquetes de _funciones"
 
 #: gui2/gretl.c:1769
 msgid "Check for _updates"
@@ -16168,11 +16166,12 @@ msgid "Nothing to send"
 msgstr "No hay nada que enviar"
 
 #: gui2/toolbar.c:305
-#, fuzzy
 msgid ""
 "Really replace content with\n"
 "a selected file?"
-msgstr "¿Borrar realmente las variables seleccionadas?"
+msgstr ""
+"¿Realmente desea reemplazar el contenido\\ "
+"con el archivo elegido?"
 
 #: gui2/toolbar.c:334
 msgid "Print with syntax highlighting?"
