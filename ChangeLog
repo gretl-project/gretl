@@ -5,6 +5,7 @@ version 2015e, in progress
   time-series plots
 - Improve handling of EPS plot output (including respecting
   the color/mono choice properly)
+- Remove support for gnuplot < version 4.6.0
 
 2015-10-19 version 2015d
 - add varnames() function: similar to varname() but returns

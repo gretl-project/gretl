@@ -1,3 +1,8 @@
+version 2015e, in progress
+
+Support for gnuplot versions older than 4.6.0 (of March
+2012) has been removed.
+
 2015-10-19 version 2015d
 
 The use of the "-f" flag to supply a filename for the
