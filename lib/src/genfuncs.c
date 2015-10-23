@@ -4486,8 +4486,8 @@ static int theil_decomp (double *m, double MSE,
 }
 
 /* 
-  Forecast evaluation statistics: @y is the data series, @f the
-  forecast.
+   Forecast evaluation statistics: @y is the data series, @f the
+   forecast.
 
    cf. http://www.economicsnetwork.ac.uk/showcase/cook_forecast
    by Steven Cook of Swansea University <s.cook@Swansea.ac.uk>
@@ -4503,13 +4503,28 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
     double ME, MSE, MAE, MPE, MAPE, U;
     double x, u[2];
     int nstats = (opt & OPT_D)? 9 : 6;
-    int t, T = t2 - t1 + 1;
+    int t, T;
 
     for (t=t1; t<=t2; t++) {
 	if (na(y[t]) || na(f[t])) {
-	    *err = E_MISSDATA;
-	    return NULL;
+	    t1++;
+	} else {
+	    break;
 	}
+    }
+
+    for (t=t2; t>=t1; t--) {
+	if (na(y[t]) || na(f[t])) {
+	    t2--;
+	} else {
+	    break;
+	}
+    }
+
+    T = t2 - t1 + 1;
+    if (T < 1) {
+	*err = E_MISSDATA;
+	return NULL;
     }
 
     m = gretl_column_vector_alloc(nstats);
@@ -4522,6 +4537,10 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
     u[0] = u[1] = 0.0;
 
     for (t=t1; t<=t2; t++) {
+	if (na(y[t]) || na(f[t])) {
+	    *err = E_MISSDATA;
+	    break;
+	}
 	x = y[t] - f[t];
 	ME += x;
 	MSE += x * x;
@@ -4538,6 +4557,11 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 		u[1] += x * x;
 	    }
 	}
+    }
+
+    if (*err) {
+	gretl_matrix_free(m);
+	return NULL;
     }
 
     ME /= T;
