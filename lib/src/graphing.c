@@ -598,47 +598,7 @@ static int factor_check (gnuplot_info *gi, const DATASET *dset)
     return err;
 }
 
-#ifdef WIN32
-
-int gnuplot_has_ttf (int reset)
-{
-    /* we know the gnuplot supplied with gretl for win32
-       does TrueType fonts */
-    return 1;
-}
-
-int gnuplot_has_cp950 (void)
-{
-    /* ... and that it supports CP950 */
-    return 1;
-}
-
-#else /* !WIN32 */
-
-int gnuplot_has_ttf (int reset)
-{
-    static int err = -1; 
-
-    if (err == -1 || reset) {
-	/* if we have cairo we know we (should be!) OK */
-        err = gnuplot_test_command("set term pngcairo");
-    }
-
-    return !err;
-}
-
-int gnuplot_has_cp950 (void)
-{
-    static int err = -1; 
-
-    /* not OK in gnuplot 4.4.0 */
-
-    if (err == -1) {
-	err = gnuplot_test_command("set encoding cp950");
-    }
-
-    return !err;
-}
+#ifndef WIN32
 
 static int gnuplot_has_x11 (void)
 {
@@ -651,7 +611,7 @@ static int gnuplot_has_x11 (void)
     return !err;
 }
 
-int gnuplot_has_wxt (void)
+static int gnuplot_has_wxt (void)
 {
     static int err = -1; 
 
@@ -662,7 +622,7 @@ int gnuplot_has_wxt (void)
     return !err;
 }
 
-int gnuplot_has_qt (void)
+static int gnuplot_has_qt (void)
 {
     static int err = -1; 
 
@@ -680,12 +640,12 @@ int gnuplot_has_qt (void)
 static const gretlRGB default_color[N_GP_COLORS] = {
     { 0xff, 0x00, 0x00 },
     { 0x00, 0x00, 0xff },
-    { 0x00, 0xcc, 0x00 }, /* full-intensity green is not very legible */
+    { 0x00, 0xcc, 0x00 }, /* full-intensity green is not easily legible */
     { 0xbf, 0x25, 0xb2 },
     { 0x8f, 0xaa, 0xb3 },
     { 0xff, 0xa5, 0x00 },
-    { 0x5f, 0x6b, 0x84 },  /* box fill */
-    { 0xdd, 0xdd, 0xdd },  /* shade fill */    
+    { 0x5f, 0x6b, 0x84 }, /* box fill */
+    { 0xdd, 0xdd, 0xdd }, /* shade fill */    
 };
 
 static gretlRGB user_color[N_GP_COLORS] = {

@@ -293,8 +293,6 @@ void print_gnuplot_literal_lines (const char *s, FILE *fp);
 
 int is_auto_fit_string (const char *s);
 
-int gnuplot_has_cp950 (void);
-
 void set_graph_palette (int i, gretlRGB color);
 
 void set_graph_palette_from_string (int i, const char *cstr);
@@ -320,14 +318,6 @@ double gnuplot_time_from_date (const char *s,
 			       const char *fmt);
 
 double gnuplot_version (void);
-
-#ifndef WIN32
-
-int gnuplot_has_wxt (void);
-
-int gnuplot_has_qt (void);
-
-#endif
 
 #endif /* GRAPHING_H */
 
