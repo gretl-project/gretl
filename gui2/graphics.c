@@ -28,8 +28,8 @@
 /* default values */
 static double pwidth = 5.0;
 static double pheight = 3.5;
-static char cairo_font[64] = "Sans";
-static int cairo_fontsize = 12;
+static char font[64] = "Sans";
+static int fontsize = 12;
 static double lw_factor = 1.0;
 static int mono;
 
@@ -42,8 +42,8 @@ struct pdf_ps_saver {
     int stdsize;
     double pwidth;
     double pheight;
-    char cairo_font[64];
-    int cairo_fontsize;
+    char font[64];
+    int fontsize;
     double lw_factor;
     GtkWidget *w_in, *h_in;
     GtkWidget *w_cm, *h_cm;
@@ -85,14 +85,14 @@ static void saver_init (struct pdf_ps_saver *s,
     s->spec = spec;
     s->mono = mono;
     s->stdsize = 1;
-    strcpy(s->cairo_font, cairo_font);
-    s->cairo_fontsize = cairo_fontsize;
+    strcpy(s->font, font);
+    s->fontsize = fontsize;
     s->lw_factor = lw_factor;
 
     set_pdf_ps_dims(s, spec);
 
     if (!s->stdsize) {
-	s->cairo_fontsize *= 0.8;
+	s->fontsize *= 0.8;
     } 
 }
 
@@ -104,9 +104,9 @@ static void saver_set_defaults (struct pdf_ps_saver *s)
 	pheight = s->pheight;
     }
 
-    strcpy(cairo_font, s->cairo_font);
+    strcpy(font, s->font);
     if (s->stdsize) {
-	cairo_fontsize = s->cairo_fontsize;
+	fontsize = s->fontsize;
     }
 
     mono = s->mono;
@@ -249,7 +249,7 @@ const char *pdf_ps_saver_current_font (gpointer p)
     static char fontname[68];
     struct pdf_ps_saver *s = p;
 
-    sprintf(fontname, "%s %d", s->cairo_font, s->cairo_fontsize);
+    sprintf(fontname, "%s %d", s->font, s->fontsize);
     return fontname;
 }
 
@@ -262,8 +262,8 @@ void pdf_ps_saver_set_fontname (gpointer p, const char *fontname)
     *name = '\0';
     split_graph_fontspec(fontname, name, &psz);
     if (*name != '\0' && psz > 1) {
-	strcpy(s->cairo_font, name);
-	s->cairo_fontsize = psz;
+	strcpy(s->font, name);
+	s->fontsize = psz;
     }
 }
 
@@ -284,10 +284,10 @@ saver_make_term_string (struct pdf_ps_saver *s, char *termstr)
 
     if (s->spec->termtype == GP_TERM_PDF) {
 	ttype = (s->mono)? "pdfcairo noenhanced mono dashed" : "pdfcairo noenhanced";
-	sprintf(fontstr, "font \"%s,%d\"", s->cairo_font, s->cairo_fontsize);
+	sprintf(fontstr, "font \"%s,%d\"", s->font, s->fontsize);
     } else {
 	ttype = (s->mono)? "epscairo noenhanced mono dashed" : "epscairo noenhanced";
-	sprintf(fontstr, "font \"%s,%d\"", s->cairo_font, s->cairo_fontsize);
+	sprintf(fontstr, "font \"%s,%d\"", s->font, s->fontsize);
     }
 
     if (s->mono) {
