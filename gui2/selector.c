@@ -30,6 +30,7 @@
 #include "winstack.h"
 #include "tabwin.h"
 #include "lagpref.h"
+#include "fncall.h"
 
 #include "var.h"
 #include "gretl_func.h"
@@ -57,6 +58,7 @@ enum {
 #define N_EXTRA  8
 
 struct _selector {
+    GtkWidget *parent;
     GtkWidget *dlg;
     GtkWidget *vbox;
     GtkWidget *action_area;
@@ -4748,6 +4750,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     sr->blocking = 0;
     sr->ci = ci;
     sr->opts = OPT_NONE;
+    sr->parent = parent;
     sr->data = data;
     
     if (MODEL_CODE(ci)) {
@@ -7057,7 +7060,24 @@ static void listdef_vars_callback (GtkComboBox *b, selector *sr)
     } 
 }
 
-static void selector_add_top_entry (selector *sr)
+static void set_name_from_fn_param (GtkWidget *w, selector *sr,
+				    GtkWidget *entry)
+{
+    gchar *tmp = NULL;
+
+    get_fncall_param_info(sr->parent, NULL, &tmp);
+
+    if (tmp == NULL) {
+	int argnum = widget_get_int(w, "argnum");
+
+	tmp = g_strdup_printf("arg%d", argnum + 1);
+    }
+
+    gtk_entry_set_text(GTK_ENTRY(entry), tmp);
+    g_free(tmp);
+}
+
+static void selector_add_list_name_entry (selector *sr)
 {
     const char *lname = NULL;
     GtkWidget *src = NULL;
@@ -7096,11 +7116,7 @@ static void selector_add_top_entry (selector *sr)
 	if (lname != NULL && *lname != '\0' && strcmp(lname, "null")) {
 	    gtk_entry_set_text(GTK_ENTRY(entry), lname);
 	} else {
-	    int argnum = widget_get_int(src, "argnum");
-	    gchar *tmp = g_strdup_printf("arg%d", argnum + 1);
-
-	    gtk_entry_set_text(GTK_ENTRY(entry), tmp);
-	    g_free(tmp);
+	    set_name_from_fn_param(src, sr, entry);
 	}
 	gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
     }
@@ -7219,7 +7235,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 
     /* entry field for some uses */
     if (ci == DEFINE_LIST) {
-	selector_add_top_entry(sr);
+	selector_add_list_name_entry(sr);
     }
 
     /* put buttons into mid-section */

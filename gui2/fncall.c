@@ -739,6 +739,7 @@ static void launch_list_maker (GtkWidget *button, GtkWidget *entry)
     call_info *cinfo;
 
     cinfo = g_object_get_data(G_OBJECT(button), "cinfo");
+    g_object_set_data(G_OBJECT(cinfo->dlg), "button", button);
     simple_selection_with_data(DEFINE_LIST, _("Define list"), 
 			       do_make_list, cinfo->dlg, 
 			       entry);
@@ -756,9 +757,9 @@ static void launch_matrix_maker (GtkWidget *button, call_info *cinfo)
 
     if (!strcmp(cinfo->pkgname, "SVAR")) {
 	widget_set_int(cinfo->dlg, "matrix-no-series", 1);
-	g_object_set_data(G_OBJECT(cinfo->dlg), "button", button);
     }
 
+    g_object_set_data(G_OBJECT(cinfo->dlg), "button", button);
     fncall_add_matrix(cinfo->dlg);
 
     if (n_user_matrices() > n) {
@@ -1535,12 +1536,18 @@ static void function_call_dialog (call_info *cinfo)
 void get_fncall_param_info (GtkWidget *dlg, int *series_ok,
 			    char **pname)
 {
-    *series_ok = !widget_get_int(dlg, "matrix-no-series");
+    if (dlg == NULL) {
+	return;
+    }
+    
+    if (series_ok != NULL) {
+	*series_ok = !widget_get_int(dlg, "matrix-no-series");
+    }
 
     if (pname != NULL) {
-	GtkWidget *button;
+	GtkWidget *button =
+	    g_object_get_data(G_OBJECT(dlg), "button");
 
-	button = g_object_get_data(G_OBJECT(dlg), "button");
 	if (button != NULL) {
 	    char *name = g_object_get_data(G_OBJECT(button),
 					   "parname");
