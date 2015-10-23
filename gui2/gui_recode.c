@@ -304,11 +304,14 @@ gchar *gp_locale_from_utf8 (const gchar *src)
     return ret;
 }
 
-/* If need be, fix up an old, pre-cairo PNG terminal line */
+/* If need be, fix up an old, pre-cairo PNG terminal line:
+   we come here only if a plot line starts "set term png"
+   followed by a space rather than "cairo".
+*/
 
 static int maybe_adjust_cairo (char *line)
 {
-    char *s = line + 12;
+    char *s = line + 12; /* skip "set term png" */
     int ret = 0;
 
     if (strlen(line) < 512 - 5) {
@@ -431,7 +434,7 @@ int maybe_rewrite_gp_file (const char *fname)
 	} else if (!strncmp(line, "# set term", 10)) {
 	    /* skip it */
 	    modline = 1;
-	} else if (!strncmp(line, "set term png", 12)) {
+	} else if (!strncmp(line, "set term png ", 13)) {
 	    if (maybe_adjust_cairo(line)) {
 		fputs(line, fout);
 		modline = 1;

@@ -1002,16 +1002,10 @@ static void maybe_set_eps_pdf_dims (char *s, PlotType ptype, GptFlags flags)
 const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
 {
     static char pdf_term_line[128];
-    int ptsize = 12; /* was 10 */
+    int ptsize;
 
-    if (ptype == PLOT_MULTI_SCATTER) {
-	ptsize = 6;
-    }
-#ifndef WIN32
-    if (gnuplot_version() <= 4.4) {
-	ptsize /= 2;
-    }
-#endif
+    ptsize = (ptype == PLOT_MULTI_SCATTER)? 6 : 12;
+
     if (flags & GPT_MONO) {
 	sprintf(pdf_term_line,
 		"set term pdfcairo noenhanced mono font \"sans,%d\"", 
@@ -1030,11 +1024,10 @@ const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
 const char *get_gretl_eps_term_line (PlotType ptype, GptFlags flags)
 {
     static char eps_term_line[128];
-    int ptsize = 12;
+    int ptsize;
+
+    ptsize = (ptype == PLOT_MULTI_SCATTER)? 6 : 12;
     
-    if (ptype == PLOT_MULTI_SCATTER) {
-	ptsize = 6;
-    }
     if (flags & GPT_MONO) {
 	sprintf(eps_term_line,
 		"set term epscairo noenhanced mono font \"sans,%d\"", 
@@ -1459,8 +1452,8 @@ static int gnuplot_too_old (void)
 	gpv = gnuplot_version();
     }
 
-    if (gpv < 4.4) {
-	gretl_errmsg_set("Gnuplot is too old: must be >= version 4.4.0");
+    if (gpv < 4.6) {
+	gretl_errmsg_set("Gnuplot is too old: must be >= version 4.6.0");
 	return 1;
     } else {
 	return 0;
