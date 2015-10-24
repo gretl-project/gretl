@@ -320,6 +320,21 @@ static void arma_depvar_stats (MODEL *pmod, arma_info *ainfo,
     }
 }
 
+static void handle_null_model (MODEL *pmod, arma_info *ainfo)
+{
+    int full_n = pmod->full_n;
+
+    pmod->ncoeff = 1;
+    pmod->full_n = 0;
+    pmod->errcode = gretl_model_allocate_storage(pmod);
+    pmod->full_n = full_n;
+
+    if (!pmod->errcode) {
+	gretl_model_set_int(pmod, "null-model", 1);
+	pmod->coeff[0] = 0.0;
+    }
+}
+
 #define USE_ARIMA_INTEGRATE 1
 
 /* write the various statistics from ARMA estimation into
@@ -390,11 +405,17 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
 	mle_criteria(pmod, 1);
     }
 
-    gretl_model_add_arma_varnames(pmod, dset, ainfo->yno,
-				  ainfo->p, ainfo->q, 
-				  ainfo->pmask, ainfo->qmask,
-				  ainfo->P, ainfo->Q,
-				  ainfo->nexo);
+    if (!pmod->errcode && pmod->ncoeff == 0) {
+	handle_null_model(pmod, ainfo);
+    }
+
+    if (!pmod->errcode) {
+	gretl_model_add_arma_varnames(pmod, dset, ainfo->yno,
+				      ainfo->p, ainfo->q, 
+				      ainfo->pmask, ainfo->qmask,
+				      ainfo->P, ainfo->Q,
+				      ainfo->nexo);
+    }
 }
 
 static void calc_max_lag (arma_info *ainfo)
@@ -813,13 +834,19 @@ static int arma_check_list (arma_info *ainfo,
 	} else {	    
 	    /* check for simple arma spec */
 	    err = check_arma_list(ainfo, dset, opt);
+	    /* catch null model */
+	    if (ainfo->nc == 0) {
+		err = E_ARGS;
+	    }	    
 	} 
     }
 
+#if 0    
     /* catch null model */
     if (ainfo->nc == 0) {
 	err = E_ARGS;
     }
+#endif    
 
     return err;
 }

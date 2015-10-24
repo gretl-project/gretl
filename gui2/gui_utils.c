@@ -2723,6 +2723,11 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     if (!bootstrap_ok(pmod->ci)) {
 	flip(vwin->ui, "/menubar/Analysis/Bootstrap", FALSE);
     }
+
+    if (gretl_model_get_int(pmod, "null-model")) {
+	flip(vwin->ui, "/menubar/Analysis/ConfIntervals", FALSE);
+	flip(vwin->ui, "/menubar/Analysis/Covariance", FALSE);
+    }
 }
 
 static GtkActionEntry model_data_base_items[] = {

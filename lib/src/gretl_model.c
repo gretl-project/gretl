@@ -5492,6 +5492,12 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 	}
     }
 
+    if (ok && ci == RESTRICT) {
+	if (gretl_model_get_int(pmod, "null-model")) {
+	    ok = 0;
+	}
+    }
+
     return ok;
 }
 
@@ -5760,6 +5766,7 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATASET *dset,
 				   int P, int Q, 
 				   int r)
 {
+    int nullmod = 0;
     int nc, xstart;
     int i, j;
 
@@ -5782,6 +5789,13 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATASET *dset,
 	free(pmod->params);
     }
 
+    nullmod = gretl_model_get_int(pmod, "null-model");
+
+    if (nc == 0 && nullmod) {
+	/* special case of null model */
+	nc = 1;
+    }
+
     pmod->params = strings_array_new_with_length(nc, VNAMELEN);
     if (pmod->params == NULL) {
 	free(pmod->depvar);
@@ -5792,7 +5806,7 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATASET *dset,
 
     pmod->nparams = nc;
 
-    if (pmod->ifc) {
+    if (pmod->ifc || nullmod) {
 	strcpy(pmod->params[0], dset->varname[0]);
 	j = 1;
     } else {

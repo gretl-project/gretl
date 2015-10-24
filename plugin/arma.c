@@ -1615,6 +1615,10 @@ static int arma_via_OLS (arma_info *ainfo, const double *coeff,
 	gretl_model_set_int(pmod, "arma_flags", f);
     }
 
+    if (!err && pmod->errcode) {
+	err = pmod->errcode;
+    }
+
     return err;
 }
 
@@ -1688,7 +1692,7 @@ MODEL arma_model (const int *list, const int *pqspec,
 	if (ainfo->alist == NULL) {
 	    err = E_ALLOC;
 	}
-    } 
+    }
 
     if (!err) {
 	err = arma_check_list(ainfo, dset, opt);

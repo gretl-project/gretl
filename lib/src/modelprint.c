@@ -1668,6 +1668,9 @@ static void arma_extra_info (const MODEL *pmod, PRN *prn)
 	pputs(prn, (acode & ARMA_EXACT)? _("exact ML") : _("conditional ML"));
 	pputs(prn, ")\n");
     } else if (acode & ARMA_OLS) {
+	if (gretl_model_get_int(pmod, "null-model")) {
+	    return;
+	}
 	pputs(prn, _("Estimated using least squares"));
 	pputs(prn, " (");
 	pputs(prn, _("= MLE"));

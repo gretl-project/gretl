@@ -1260,7 +1260,12 @@ int arma_by_ls (const double *coeff, const DATASET *dset,
 	pmod->errcode = arma_get_nls_model(pmod, ainfo, 0, coeff, aset,
 					   prn);
     } else {
-	*pmod = lsq(arlist, aset, OLS, OPT_A | OPT_Z);
+	gretlopt opt = OPT_A | OPT_Z;
+	
+	if (ainfo->nc == 0) {
+	    opt |= OPT_U;
+	}
+	*pmod = lsq(arlist, aset, OLS, opt);
     }
 
     /* clean up */
