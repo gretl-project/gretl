@@ -117,7 +117,7 @@ check:
 osx-dist:
 	$(MAKE) -C osx postinst
 
-# dependency for parallel builds
+# dependencies for parallel builds
 lib: buildstamp
 cli: lib
 share: lib
@@ -125,5 +125,5 @@ $(GUIDIR): lib
 plugin: lib
 tests: lib
 addons: cli
-
+share: $(DOCDIR)
 
