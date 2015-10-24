@@ -116,7 +116,12 @@ AC_ARG_ENABLE(build-doc,
 [  --enable-build-doc      Enable building of gretl docs [[git only]]],
 [if test "$enableval" = "yes"
 then
-  build_docs=yes
+  if ! echo $VERSION | grep git ; then
+    echo "The --enable-build-doc option is valid only when building from git"
+    exit 1
+  else
+    build_docs=yes
+  fi
 else
   build_docs=no
 fi])
