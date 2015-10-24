@@ -72,7 +72,7 @@ texclean:
 	rm -rf $(texdir)/*.bbl $(texdir)/*.blg
 
 clean: texclean
-	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d clean; done
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d clean; done
 	$(MAKE) -C utils/emacs clean
 	rm -f build.h builddate
 
