@@ -583,7 +583,7 @@
 </xsl:template>
 
 <xsl:template match="url">
-  <xsl:text>&lt;a href="http://</xsl:text>
+  <xsl:text>&lt;a href="</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>"&gt;</xsl:text>
   <xsl:apply-templates/>
