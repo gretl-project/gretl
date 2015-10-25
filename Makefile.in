@@ -65,7 +65,9 @@ $(SUBDIRS):
 	$(MAKE) -C $@
 
 pdfdocs:
-	$(MAKE) -C $(DOCDIR)
+	if [ "x$(DOCDIR)" = "x" ] ; then \
+	echo "pdfdocs: this target is not enabled" ; else \
+	$(MAKE) -C $(DOCDIR) ; fi
 
 texclean:
 	rm -rf $(texdir)/*.aux $(texdir)/*.log $(texdir)/*.out $(texdir)/*.toc
