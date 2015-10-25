@@ -2,7 +2,7 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
                "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 ]>
-<refentry id="gretl-resources" revision="21 Jun 2010">
+<refentry id="gretl-resources" revision="25 October 2015">
 <refmeta>
 <refentrytitle>Mailing lists and bug reports</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -21,8 +21,9 @@ Getting help with libgretl
 
 <para>
 If you encounter a bug, misfeature, or missing feature in libgretl, please
-file a bug report or feature request at
-<ulink url="http://sourceforge.net/tracker/?group_id=36234">sourceforge.net</ulink>.
+file a <ulink url="http://sourceforge.net/p/gretl/bugs/">bug report</ulink> or 
+<ulink url="http://sourceforge.net/p/gretl/feature-requests/">feature request</ulink>
+at sourceforge.
 </para>
 
 </refsect1>

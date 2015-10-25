@@ -984,6 +984,7 @@ if test "${build_docs}" = "yes" ; then
     doc/tex_it/Makefile
     doc/tex_es/Makefile
     doc/tex_pt/Makefile
+    doc/reference/Makefile
   ])
 fi
 

@@ -21884,7 +21884,7 @@ fi
 
 
 if test "${build_docs}" = "yes" ; then
-  ac_config_files="$ac_config_files doc/Makefile doc/commands/Makefile doc/tex/Makefile doc/tex_it/Makefile doc/tex_es/Makefile doc/tex_pt/Makefile"
+  ac_config_files="$ac_config_files doc/Makefile doc/commands/Makefile doc/tex/Makefile doc/tex_it/Makefile doc/tex_es/Makefile doc/tex_pt/Makefile doc/reference/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -22909,6 +22909,7 @@ do
     "doc/tex_it/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_it/Makefile" ;;
     "doc/tex_es/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_es/Makefile" ;;
     "doc/tex_pt/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_pt/Makefile" ;;
+    "doc/reference/Makefile") CONFIG_FILES="$CONFIG_FILES doc/reference/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -25193,6 +25194,7 @@ do
     "doc/tex_it/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_it/Makefile" ;;
     "doc/tex_es/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_es/Makefile" ;;
     "doc/tex_pt/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_pt/Makefile" ;;
+    "doc/reference/Makefile") CONFIG_FILES="$CONFIG_FILES doc/reference/Makefile" ;;
     "doc/gretl.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl.sty" ;;
     "doc/gretl-lite.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl-lite.sty" ;;
 
@@ -27480,6 +27482,7 @@ do
     "doc/tex_it/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_it/Makefile" ;;
     "doc/tex_es/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_es/Makefile" ;;
     "doc/tex_pt/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_pt/Makefile" ;;
+    "doc/reference/Makefile") CONFIG_FILES="$CONFIG_FILES doc/reference/Makefile" ;;
     "doc/gretl.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl.sty" ;;
     "doc/gretl-lite.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl-lite.sty" ;;
     "addons/Makefile") CONFIG_FILES="$CONFIG_FILES addons/Makefile" ;;

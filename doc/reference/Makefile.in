@@ -1,9 +1,8 @@
-# Copy this to your project's API docs directory and modify the variables to
-# suit your project. See the GTK+ Makefiles in gtk+/docs/reference for examples
-# of using the various options.
+topsrc = @top_srcdir@
+prefix = @prefix@
+datarootdir = @datarootdir@
 
-# modify for local use
-HTML_DIR = /home/cottrell/stats/esl/website/API/new/gretl
+HTML_DIR = $(prefix)/share/gtk-doc/html/libgretl
 
 srcdir = .
 LIBTOOL = ../../libtool
@@ -17,11 +16,14 @@ DOC_MODULE = gretl
 # The top-level SGML file. Change it if you want.
 DOC_MAIN_SGML_FILE = $(DOC_MODULE)-docs.sgml
 
+# The directory containing the above
+DOC_SGML_DIR = $(topsrc)/doc/reference
+
 # Directories containing the source code, relative to $(srcdir).
 # gtk-doc will search all .c and .h files beneath these paths
 # for inline comments documenting functions and macros.
 # e.g. DOC_SOURCE_DIR=../../../gtk ../../../gdk
-DOC_SOURCE_DIR = ../../lib/src
+DOC_SOURCE_DIR = $(topsrc)/lib/src
 
 # Extra options to supply to gtkdoc-scan.
 # e.g. SCAN_OPTIONS=--deprecated-guards="GTK_DISABLE_DEPRECATED"
@@ -114,7 +116,7 @@ all-local: html-build.stamp
 
 #### scan ####
 
-scan-build.stamp: $(HFILE_GLOB)
+scan-build.stamp: $(HFILE_GLOB) links.stamp
 	@echo '*** Scanning header files ***'
 	cd $(srcdir) && \
 	  gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) \
@@ -158,6 +160,11 @@ html-build.stamp: sgml.stamp $(DOC_MAIN_SGML_FILE) $(content_files)
 
 ##############
 
+links.stamp: Makefile
+	for f in $(DOC_SGML_DIR)/*.sgml; do \
+	if [ ! -f `basename $$f` ] ; then ln -sf $$f . ; fi ; done
+	touch $@
+
 man: sgml.stamp $(DOC_MAIN_SGML_FILE) $(content_files)
 	test -d $(srcdir)/man || mkdir $(srcdir)/man
 	gtkdoc-mkman 
@@ -171,15 +178,15 @@ realclean: clean
 	$(DOC_MODULE)-decl.txt
 
 install:
-	mkdir -p $(HTML_DIR)
-	rm -f $(HTML_DIR)/*.html
+	mkdir -p $(DESTDIR)$(HTML_DIR)
+	rm -f $(DESTDIR)$(HTML_DIR)/*.html
 	(installfiles=`echo $(srcdir)/html/*.html`; \
 	if test "$$installfiles" = '$(srcdir)/html/*.html'; \
 	then echo '-- Nothing to install' ; \
 	else \
 	  for i in $$installfiles; do \
 	    echo '-- Installing '$$i ; \
-	    install -m 644 $$i $(HTML_DIR); \
+	    install -m 644 $$i $(DESTDIR)$(HTML_DIR); \
 	  done \
 	fi)
 

@@ -23,8 +23,6 @@ enum {
     RU
 };
 
-char substfile[FILENAME_MAX];
-
 const char *lang_names[] = {
     "en_US",
     "es_ES",
@@ -110,13 +108,13 @@ int read_lang_info (const char *s, int i)
 /* read info with which to perform substitutions, from the
    little file "subst" */
 
-int read_subst_file_full (void)
+int read_subst_file_full (const char *fname)
 {
     FILE *fp;
     char line[MYLEN];
     int err = 0;
 
-    fp = fopen(substfile, "r");
+    fp = fopen(fname, "r");
     if (fp == NULL) {
 	return 1;
     }
@@ -145,16 +143,18 @@ int read_subst_file_full (void)
 
 /* print out version and date info to the file "subst" */
 
-int print_subst (const char *verstr)
+int print_subst (const char *fname, const char *verstr)
 {
     FILE *fp;
     int i;
 
-    fp = fopen(substfile, "w");
+    fp = fopen(fname, "w");
     if (fp == NULL) {
-	fprintf(stderr, "Couldn't open '%s'\n", substfile);
+	fprintf(stderr, "Couldn't open '%s'\n", fname);
 	return 1;
     }
+
+    fprintf(stderr, "opened '%s' for writing\n", fname);
 
     fprintf(fp, "VERSION %s\n", verstr);
 
@@ -247,7 +247,8 @@ int syscmd_to_string (const char *syscmd, char *targ, const char *tmpfile)
 /* get version and data info organized, and call for this info
    to be written to file */
 
-int make_subst_file (const char *verstr, const char *progdate)
+int make_subst_file (const char *fname, const char *verstr,
+		     const char *progdate)
 {
     const char *tmpfile = "tmp.txt";
     char syscmd[64];
@@ -274,10 +275,12 @@ int make_subst_file (const char *verstr, const char *progdate)
 	    }
 	    err = syscmd_to_string(syscmd, lang_strings[i].shortdate, tmpfile);
 	}
+	fprintf(stderr, "lang %d: '%s', '%s'\n", i, lang_strings[i].longdate,
+		lang_strings[i].shortdate);
     }
 
     if (!err) {
-	err = print_subst(verstr);
+	err = print_subst(fname, verstr);
     }
 
     return err;
@@ -339,7 +342,8 @@ static int mstr_to_mon (const char *s)
    returns 1 if we got everything
 */
 
-int get_info_from_subst_file (char *verstr, char *progdate)
+int get_info_from_subst_file (const char *fname, char *verstr,
+			      char *progdate)
 {
     FILE *fp;
     char line[MYLEN];
@@ -350,7 +354,7 @@ int get_info_from_subst_file (char *verstr, char *progdate)
     *verstr = '\0';
     *progdate = '\0';
 
-    fp = fopen(substfile, "r");
+    fp = fopen(fname, "r");
     if (fp == NULL) {
 	return 0;
     }
@@ -385,7 +389,9 @@ char *get_src_version (void)
 
     sprintf(fname, "%s/lib/src/version.h", SRCDIR);
     fp = fopen(fname, "r");
-    if (fp == NULL) return NULL;
+    if (fp == NULL) {
+	return NULL;
+    }
 
     while (fgets(line, sizeof line, fp)) {
 	if (sscanf(line, "#define GRETL_VERSION \"%15[^\"]", verstr)) {
@@ -396,14 +402,9 @@ char *get_src_version (void)
 
     fclose(fp);
 
-    p = strstr(verstr, "cvs");
+    p = strstr(verstr, "-git");
     if (p != NULL) {
 	*p = '\0';
-    } else {
-	p = strstr(verstr, "-git");
-	if (p != NULL) {
-	    *p = '\0';
-	}
     }
 
     return (err)? NULL : verstr;
@@ -810,6 +811,7 @@ int set_working_directories (void)
 
 int main (int argc, char **argv)
 {
+    char substfile[FILENAME_MAX];
     char *src_version = NULL;
     char *progdate = NULL;
     char subst_version[8];
@@ -819,7 +821,7 @@ int main (int argc, char **argv)
     int err = 0;
 
     if (argc == 2 && !strcmp(argv[1], "--help")) {
-	fprintf(stderr, "%s: You can a gretl version number, or say \"auto\"\n"
+	fprintf(stderr, "%s: You can give a gretl version number, or say \"auto\"\n"
 		" to read version info from the source tree.\n",
 		argv[0]);
 	fputs("* You can specify a program date, YYYY.MM.DD, as a second arg.\n", stderr);
@@ -852,8 +854,10 @@ int main (int argc, char **argv)
     }
 
     sprintf(substfile, "%s/subst", WEBDIR);
+    fprintf(stderr, "Using substfile '%s'\n", substfile);
 
-    got_subst = get_info_from_subst_file(subst_version, subst_progdate);
+    got_subst = get_info_from_subst_file(substfile, subst_version,
+					 subst_progdate);
     if (!got_subst) {
 	fprintf(stderr, "Couldn't get info from %s\n", substfile);
 	if (src_version == NULL) {
@@ -886,9 +890,9 @@ int main (int argc, char **argv)
     lang_strings_init();
 
     if (up_to_date) {
-	err = read_subst_file_full();
+	err = read_subst_file_full(substfile);
     } else {
-	err = make_subst_file(src_version, progdate);
+	err = make_subst_file(substfile, src_version, progdate);
     }
 
     if (err) {
