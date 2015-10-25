@@ -332,6 +332,7 @@ static void handle_null_model (MODEL *pmod, arma_info *ainfo)
     if (!pmod->errcode) {
 	gretl_model_set_int(pmod, "null-model", 1);
 	pmod->coeff[0] = 0.0;
+	pmod->sigma = pmod->sdy;
     }
 }
 
@@ -383,6 +384,10 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
 #endif
 
     mean_error /= pmod->nobs;
+    if (arma_least_squares(ainfo) && pmod->ifc &&
+	mean_error < 1.0e-15) {
+	mean_error = 0.0;
+    }
     gretl_model_set_double(pmod, "mean_error", mean_error);
 
     if (na(pmod->sigma)) {
