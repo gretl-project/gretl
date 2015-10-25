@@ -14,7 +14,7 @@ settings in the Makefiles and scripts to suit your own setup.
 A. Additional files:
 
 1. GTK+ for win32 (with iconv and libintl): glib version 2.0 and also
-   gdk/gtk version 2.0.  See http://www.gtk.org/download-windows.html .
+   gdk/gtk version 2.0. See http://www.gtk.org/download/windows.php .
 
 2. libxml, libreadline, libpng, zlib and gmp
 
@@ -30,12 +30,15 @@ A. Additional files:
    distribution in the gretl package). See
 
    http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/
+   
+   (Sorry, as of 2015 these files are way outdated.)
 
 3. The Inno Setup compiler for making a self-installing executable
    See http://www.jrsoftware.org/
 
 4. The gnuplot for win32 distribution.  
    See http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/
+   (Sorry, out of date)
 
 B. Modifications to scripts:
 
@@ -54,4 +57,4 @@ win32, and "make dist" to build the installer executable for gretl.
 If all goes well, you should find gretl_install.exe in windist/Output.
 
 Allin Cottrell
-last updated March 2009
+last updated October 2015
