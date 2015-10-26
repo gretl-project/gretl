@@ -154,8 +154,8 @@ end function
 
 function void ABmat_exp(matrix theta, matrix aSs, matrix bSs,
 			    matrix *A, matrix *B)
-  p1 = cols(aSs) - 1
-  p2 = rows(theta)
+  scalar p1 = cols(aSs) - 1
+  scalar p2 = rows(theta)
 
   matrix theta_a = (p1>0) ? theta[1:p1]: {} 
   matrix A = mat_exp(theta_a, aSs)
@@ -168,16 +168,16 @@ function void PseudoHessAB(matrix *H, matrix *theta, matrix *dat, int p1)
   matrix Sigma Ss A B 
   unscramble_dat(&dat, &Sigma, &Ss)
 
-  p2 = rows(theta)
+  scalar p2 = rows(theta)
   matrix aSs = Ss[,1:p1+1]
   matrix bSs = Ss[,p1+2:p2+2]
 
-  n = rows(Sigma)
-  n2 = n*n
+  scalar n = rows(Sigma)
+  scalar n2 = n*n
   ABmat_exp(theta, aSs, bSs, &A, &B)
 
-  ka = cols(aSs) - 1
-  kb = cols(bSs) - 1
+  scalar ka = cols(aSs) - 1
+  scalar kb = cols(bSs) - 1
   matrix S = zeros(2*n2, ka+kb)  
   if ka>0
     S[1:n2,1:ka] = aSs[,1:ka]
@@ -186,24 +186,22 @@ function void PseudoHessAB(matrix *H, matrix *theta, matrix *dat, int p1)
     S[n2+1:,ka+1:ka+kb] = bSs[,1:kb]
   endif
 
-  H = InfoMat(B, S, &A) # was InfoMatAB(A, B, S)
+  H = InfoMat(B, S, &A) 
 end function
 
 function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
                       matrix *vcv[null], scalar *errcode, int method, \
                       int verbose[1])
   
-  set bfgs_maxiter 1000
-
-  matrix aSs = imp2exp(aRd)
-  matrix bSs = imp2exp(bRd)
-  npar = rows(theta)
-  n    = rows(Sigma)
+  matrix aSs  = imp2exp(aRd)
+  matrix bSs  = imp2exp(bRd)
+  scalar npar = rows(theta)
+  scalar n    = rows(Sigma)
 
   matrix sSig = Sigma
 
-  p1 = cols(aSs) - 1  
-  p2 = p1 + cols(bSs) - 1  
+  scalar p1 = cols(aSs) - 1  
+  scalar p2 = p1 + cols(bSs) - 1  
   matrix dat = vec(Sigma) ~ aSs ~ bSs
 
   matrix g H
@@ -212,7 +210,7 @@ function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
   else
     set max_verbose 0
   endif
-  err = 0
+  scalar err = 0
 
   if method == 0
     catch scalar ll = BFGSmax(theta, "loglik(&theta, &dat, p1)")
@@ -238,7 +236,7 @@ function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
   endif
 
   scalar crit = maxr(abs(g))
-  warn = (crit > 1.0e-1)
+  scalar warn = (crit > 1.0e-1)
 
   if err || warn
     C = {}
@@ -251,8 +249,9 @@ function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
 
   matrix A B
   ABmat_exp(theta, aSs, bSs, &A, &B)
-  # was: matrix C = B/A
-  matrix C = A\B
+  
+  # use matlab-style "matrix division" for speed and accuracy
+  matrix C = A\B 
 
   if verbose > 1
     printf "Estimated A matrix:\n%12.5f", A
