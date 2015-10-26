@@ -127,5 +127,5 @@ $(GUIDIR): lib
 plugin: lib
 tests: lib
 addons: cli
-share: $(DOCDIR)
+
 

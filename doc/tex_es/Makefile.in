@@ -25,8 +25,6 @@ TEXSRC = appendices.tex \
 	optarg.tex \
 	var.tex
 
-WEBDIR = /home/cottrell/stats/esl/website
-
 all: $(GUIDE) $(REF)
 
 $(GUIDE): gretl-guide-es.tex links date.tex
@@ -45,7 +43,7 @@ gretl-guide-es.tex:
 gretl-ref-es.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_es/$@ . ; fi
 
-.PHONY : links cmdtex textables onepass refpass topiclist install clean
+.PHONY : links cmdtex textables onepass refpass topiclist clean
 
 links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
@@ -71,14 +69,8 @@ onepass: gretl-guide-es.tex links
 refpass: gretl-ref-es.tex links cmdtex topiclist
 	pdflatex gretl-ref-es
 
-install: $(GUIDE) $(REF)
-	cp $(GUIDE) $(REF) $(WEBDIR)
-
 clean:
 	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
 	rm -f ../commands/textables_es ../commands/topiclist_es 
 	rm -f ../commands/cmdtex_es 
-
-distclean: clean
-	rm -rf CVS

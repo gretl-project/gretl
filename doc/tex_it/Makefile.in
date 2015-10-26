@@ -41,8 +41,6 @@ BIBSRC = gretl.bib gretl.bst
 
 STYSRC = $(docsrc)/gretl.sty.in
 
-WEBDIR = /home/cottrell/stats/esl/website
-
 all: $(GUIDE) $(REF)
 
 $(GUIDE): gretl-guide-it.tex links textables_it date.tex
@@ -68,7 +66,7 @@ gretl-guide-it.tex:
 gretl-ref-it.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_it/$@ . ; fi
 
-.PHONY : links cmdtex functex textables_it onepass refpass topiclist install clean
+.PHONY : links cmdtex functex textables_it onepass refpass topiclist clean
 
 links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
@@ -99,14 +97,8 @@ onepass: gretl-guide-it.tex links textables_it
 refpass: gretl-ref-it.tex links cmdtex functex textables_it topiclist
 	pdflatex gretl-ref-it
 
-install: $(GUIDE) $(REF)
-	cp $(GUIDE) $(REF) $(WEBDIR)
-
 clean:
 	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
 	rm -f ../commands/textables_it ../commands/topiclist_it 
 	rm -f ../commands/cmdtex_it ../commands/functex_it
-
-distclean: clean
-	rm -rf CVS

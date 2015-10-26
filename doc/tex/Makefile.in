@@ -1,7 +1,11 @@
 topsrc = @top_srcdir@
 docsrc = $(topsrc)/doc
+tooldir = $(topsrc)/tools
+prefix = @prefix@
+gretldir = $(prefix)/share/gretl
 
 MAKE = @MAKE@
+INSTALL_DATA = cp -fp
 
 GUIDE = gretl-guide.pdf
 REF = gretl-ref.pdf
@@ -231,6 +235,13 @@ bibpass: onepass refpass
 	bibtex gretl-guide
 	bibtex gretl-ref
 
+install: all installdirs
+	for f in *.pdf ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/doc ; done
+
+installdirs:
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/doc
+
 clean:
 	rm -f *.aux *.log *.out *.toc *.pdf *.bbl *.blg
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
@@ -238,7 +249,4 @@ clean:
 	rm -f pkgbook-a4.tex gretl-keys-a4.tex
 	rm -f ../commands/textables ../commands/topiclist_en 
 	rm -f ../commands/cmdtex ../commands/functex
-
-distclean: clean
-	rm -rf CVS
 

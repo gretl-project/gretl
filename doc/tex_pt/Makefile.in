@@ -127,6 +127,3 @@ clean:
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
 	rm -f ../commands/textables_pt ../commands/topiclist_pt 
 	rm -f ../commands/cmdtex_pt ../commands/functex_pt
-
-distclean: clean
-	rm -rf CVS
