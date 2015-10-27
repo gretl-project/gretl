@@ -1887,14 +1887,18 @@ void import_na_init (void)
 
 int import_na_string (const char *s)
 {
-    if (strcmp(import_na, "default")) {
+    if (*import_na != '\0' && strcmp(import_na, "default")) {
+	/* the user has set a specific "NA" string, so
+	   respect it */
 	return !strcmp(s, import_na);
     } else {
+	/* consult a list of common representations of NA */
 	const char *defaults[] = {
 	    "NA",
 	    "N.A.",
 	    "n.a.",
 	    "na",
+	    "n/a",
 	    "N/A",
 	    "#N/A",
 	    "NaN",

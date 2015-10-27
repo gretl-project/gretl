@@ -31,6 +31,7 @@
 #include "gretl_foreign.h"
 #include "gretl_typemap.h"
 #include "uservar.h"
+#include "csvdata.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -1073,6 +1074,7 @@ int get_imported_data (char *fname, int ftype, int append)
 	return E_FOPEN;
     }
 
+    import_na_init();
     ss_importer = NULL;
     misc_importer = NULL;
 
