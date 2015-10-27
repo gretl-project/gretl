@@ -329,3 +329,5 @@ clean: docclean
 	rm -f textables cmdtex* functex* topiclist_*
 	rm -rf .libs
 
+distclean: clean
+	rm -f Makefile

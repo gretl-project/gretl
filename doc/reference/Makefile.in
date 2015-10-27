@@ -173,9 +173,9 @@ clean:
 	rm -f *~ *.bak $(SCANOBJ_FILES) *-unused.txt $(DOC_STAMPS)
 	rm -f $(DOC_MODULE)-sections.txt
 
-realclean: clean
+distclean: clean
 	cd $(srcdir) && rm -rf sgml html $(DOC_MODULE)-decl-list.txt \
-	$(DOC_MODULE)-decl.txt
+	$(DOC_MODULE)-decl.txt Makefile
 
 install:
 	mkdir -p $(DESTDIR)$(HTML_DIR)
