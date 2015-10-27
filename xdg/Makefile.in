@@ -71,3 +71,4 @@ clean:
 	rm -f gretl.desktop
 
 distclean: clean
+	rm -f Makefile

@@ -24,5 +24,6 @@ install: gretl.elc
 clean:
 	rm -f gretl.el gretl.elc gretl.el.middle
 
-	
+distclean: clean
+	rm -f Makefile
 

@@ -34,3 +34,9 @@ postinst_common:
 	$(INSTALL_DATA) -m 644 $(topsrc)/osx/README.pdf $(topdir)	
 	$(INSTALL_PROGRAM) $(topsrc)/osx/script $(prefix)
 	cd $(prefix) && sh $(HERE)/fixlinks.sh
+
+clean:
+	rm -f fixlinks.sh gretl.sh Info.plist
+
+distclean: clean
+	rm -f Makefile

@@ -19,4 +19,6 @@ install:
 	$(MAKE) -C $$d install ; done
 
 distclean: clean
+	for d in $(SUBDIRS) commands reference ; do \
+	$(MAKE) -C $$d distclean ; done
 	rm -f Makefile *.sty

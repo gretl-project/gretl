@@ -424,6 +424,11 @@ static int real_read_cell (xmlNodePtr cur,
 			   int iread, int *preadcol,
 			   PRN *prn)
 {
+#if ODEBUG
+    int verbose = 1;
+#else
+    int verbose = 0;
+#endif    
     char *val = NULL;
     char *badval = NULL;
     int jread = *preadcol;
@@ -485,7 +490,9 @@ static int real_read_cell (xmlNodePtr cur,
 	if (vtype == ODS_STRING) {
 	    val = get_ods_string_value(cur);
 	    if (val != NULL) {
-		fprintf(stderr, " obs string: '%s'\n", val);
+		if (verbose) {
+		    fprintf(stderr, " obs string: '%s'\n", val);
+		}
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_STRING,
 				ODS_NONE, NULL, prn);
@@ -493,7 +500,9 @@ static int real_read_cell (xmlNodePtr cur,
 	} else if (vtype == ODS_DATE) {
 	    val = (char *) xmlGetProp(cur, (XUC) "date-value");
 	    if (val != NULL) {
-		fprintf(stderr, " date: '%s'\n", val); 
+		if (verbose) {
+		    fprintf(stderr, " date: '%s'\n", val);
+		}
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_DATE,
 				ODS_NONE, NULL, prn);
@@ -501,7 +510,9 @@ static int real_read_cell (xmlNodePtr cur,
 	} else if (vtype == ODS_NUMERIC) {
 	    val = (char *) xmlGetProp(cur, (XUC) "value");
 	    if (val != NULL) {
-		fprintf(stderr, " numeric obs: '%s'\n", val); 
+		if (verbose) {
+		    fprintf(stderr, " numeric obs: '%s'\n", val);
+		}
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_NUMERIC,
 				ODS_NONE, NULL, prn);		
@@ -524,16 +535,24 @@ static int real_read_cell (xmlNodePtr cur,
 
     if (vtype == ODS_NUMERIC) {
 	x = get_ods_numeric_value(cur);
-	fprintf(stderr, " float: %.15g\n", x); 
+#if ODEBUG	
+	fprintf(stderr, " float: %.15g\n", x);
+#endif	
     } else if (vtype == ODS_BOOL) {
 	x = get_ods_bool_value(cur);
-	fprintf(stderr, " boolean: %g\n", x); 
+#if ODEBUG	
+	fprintf(stderr, " boolean: %g\n", x);
+#endif	
     } else if (vtype == ODS_NONE) {
+#if ODEBUG	
 	fprintf(stderr, " blank: NA?\n");
+#endif	
     } else if (vtype == ODS_STRING) {
 	val = get_ods_string_value(cur);
 	if (val != NULL && import_na_string(val)) {
+#if ODEBUG	    
 	    fprintf(stderr, " string: NA?\n");
+#endif	    
 	    free(val);
 	} else {
 	    err = E_DATA;
