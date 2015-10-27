@@ -3,7 +3,7 @@
 
 SUBDIRS = tex
 
-.PHONY : subdirs $(SUBDIRS) clean install 
+.PHONY : subdirs $(SUBDIRS) clean install distclean
 
 subdirs: $(SUBDIRS)
 
@@ -17,3 +17,6 @@ clean:
 install: 
 	for d in $(SUBDIRS) ; do \
 	$(MAKE) -C $$d install ; done
+
+distclean: clean
+	rm -f Makefile *.sty
