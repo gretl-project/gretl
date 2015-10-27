@@ -9,7 +9,7 @@ Version: %{ver}
 Release: %{rel}
 License: GPL
 Group: X11/Scientific Applications
-Source: http://sourceforge.net/projects/gretl/files/gretl/%{ver}/%{name}-%{ver}.tar.bz2
+Source: http://sourceforge.net/projects/gretl/files/gretl/%{ver}/%{name}-%{ver}.tar.xz
 Buildroot: %{_tmppath}/%{name}-%{ver}-%{rel}-root
 Packager: Allin Cottrell <cottrell@wfu.edu>
 URL: http://gretl.sourceforge.net/
