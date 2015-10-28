@@ -4,6 +4,8 @@ version 2015e, in progress
   non-MPI enabled build
 - Fix bug 197, bad "xtics" specification for some weekly
   time-series plots
+- Fix bug: failing to detect common "missing value" strings in
+  spreadsheet data importation via the GUI
 - Improve handling of EPS plot output (including respecting
   the color/mono choice properly)
 - Remove support for gnuplot < version 4.6.0

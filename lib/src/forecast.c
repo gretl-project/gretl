@@ -2429,12 +2429,6 @@ static int parse_forecast_string (const char *s,
 	return err;
     }
 
-    if (!strncmp(s, "fcasterr", 8)) {
-	s += 8;
-    } else if (!strncmp(s, "fcast", 5)) {
-	s += 5;
-    }
-
     *vname = '\0';
 
     /* How many fields should we be looking for in the user input?
@@ -2466,8 +2460,8 @@ static int parse_forecast_string (const char *s,
     }
 
     if (nf < nmin || nf > nmax) {
-	fprintf(stderr, "fcast: expected %d to %d fields in input, got %d\n",
-		nmin, nmax, nf);
+	gretl_errmsg_sprintf("fcast: expected %d to %d fields in input, got %d",
+			     nmin, nmax, nf);
 	return E_PARSE;
     }
 
@@ -2508,7 +2502,7 @@ static int parse_forecast_string (const char *s,
     }
 
     if ((opt & OPT_O) && (t1str != NULL || t2str != NULL)) {
-	fprintf(stderr, "fcast: got unexpected t1 and/or t2 field in input\n");
+	gretl_errmsg_set("fcast: got unexpected t1 and/or t2 field in input");
 	return E_DATA;
     }	
 
