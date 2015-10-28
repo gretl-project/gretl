@@ -125,9 +125,9 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
       endif      
   endif
   
-  n = nelem(lY)
-  k = nelem(lX)
-  n2 = n*n
+  scalar n = nelem(lY)
+  scalar k = nelem(lX)
+  scalar n2 = n*n
 
   bundle ret = null
 
