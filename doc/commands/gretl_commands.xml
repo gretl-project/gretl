@@ -3648,11 +3648,10 @@
     label="Generate forecasts">
 
     <usage>
-      <arguments>
-        <argument optional="true">startobs endobs</argument>
-	<argument optional="true">steps-ahead</argument>
-	<argument optional="true">varname</argument>
-      </arguments>
+      <altforms>
+	<altform><lit>fcast [</lit><repl>startobs endobs</repl><lit>] [</lit><repl>vname</repl><lit>]</lit></altform>
+	<altform><lit>fcast [</lit><repl>startobs endobs</repl><lit>]</lit> <repl>steps-ahead</repl> <lit>[</lit><repl>vname</repl><lit>] --rolling</lit></altform>
+      </altforms>
       <options>
         <option>
 	  <flag>--dynamic</flag>
@@ -3714,13 +3713,13 @@
 
       <para context="cli">
 	If the last model estimated is a single equation, then the
-	optional <repl>varname</repl> argument has the following effect:
+	optional <repl>vname</repl> argument has the following effect:
 	the forecast values are not printed, but are saved to the dataset
 	under the given name.  If the last model is a system of equations,
-	<repl>varname</repl> has a different effect, namely selecting a
+	<repl>vname</repl> has a different effect, namely selecting a
 	particular endogenous variable for forecasting (the default being
 	to produce forecasts for all the endogenous variables). In the
-	system case, or if <repl>varname</repl> is not given, the forecast
+	system case, or if <repl>vname</repl> is not given, the forecast
 	values can be retrieved using the accessor <lit>$fcast</lit>, and
 	the standard errors, if available, via <lit>$fcerr</lit>.
       </para>
