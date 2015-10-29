@@ -2030,6 +2030,23 @@ static int sys_check_lists (equation_system *sys,
 	}
     }
 
+    if (!err && sys->ylist[0] != nlhs) {
+	/* Note: check added 2009-08-10, modified 2012-04-05,
+	   moved in front of the following "xplist" block
+	   2015-10-29.
+	*/
+	if (tsls_style && sys->ylist[0] > nlhs) {
+	    /* from the pov of the structural form, endogenous regressors
+	       without an equation should be treated "as if" exogenous?
+	    */
+	    tsls_style_shift_vars(sys, xplist);
+	} else {
+	    gretl_errmsg_sprintf("Found %d endogenous variables but %d equations",
+				 sys->ylist[0], nlhs);
+	    err = E_DATA;
+	}
+    }    
+
     /* Now narrow down "xplist", removing variables that are in fact
        lags of endogenous variables (and recording them as such): this
        should leave a list of truly exogenous variables.
@@ -2046,20 +2063,6 @@ static int sys_check_lists (equation_system *sys,
 		    gretl_list_delete_at_pos(xplist, j--);
 		}
 	    }
-	}
-    }
-
-    if (!err && sys->ylist[0] != nlhs) {
-	/* Note: check added 2009-08-10, modified 2012-04-05 */
-	if (tsls_style && sys->ylist[0] > nlhs) {
-	    /* from the pov of the structural form, endogenous regressors
-	       without an equation should be treated "as if" exogenous?
-	    */
-	    tsls_style_shift_vars(sys, xplist);
-	} else {
-	    gretl_errmsg_sprintf("Found %d endogenous variables but %d equations",
-				 sys->ylist[0], nlhs);
-	    err = E_DATA;
 	}
     }
 
@@ -3683,10 +3686,8 @@ static int sys_add_structural_form (equation_system *sys,
 		col += n * (lag - 1);
 		gretl_matrix_set(sys->A, i, col, x);
 	    } else {
-		fprintf(stderr, "add_structural_form: couldn't categorize series\n"
-			"%d (%s) in eqn %d (type=%d)\n", vj, dset->varname[vj],
-			i, type);
-		printlist(mlist, "model list");
+		gretl_errmsg_sprintf("structural form:\n couldn't categorize series "
+				     "%s in eqn %d\n", dset->varname[vj], i+1);
 		err = E_DATA;
 	    }
 	}
@@ -3718,9 +3719,8 @@ static int sys_add_structural_form (equation_system *sys,
 		col += n * (lag - 1);
 		gretl_matrix_set(sys->A, ne+i, col, x);
 	    } else {
-		fprintf(stderr, "add_structural_form: couldn't categorize series\n"
-			"%d (%s) in identity %d (type=%d)\n", vj, dset->varname[vj],
-			i, type);
+		gretl_errmsg_sprintf("structural form:\n couldn't categorize series "
+				     "%s in identity %d\n", dset->varname[vj], i+1);
 		err = E_DATA;
 	    }
 	}
