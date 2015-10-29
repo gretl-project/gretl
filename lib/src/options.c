@@ -1142,13 +1142,17 @@ const char *get_optval_string (int ci, gretlopt opt)
  * get_optval_double:
  * @ci: gretl command index.
  * @opt: gretl option value.
+ * @err: location to receive error code.
  *
  * Returns: the double-precision ancillary value currently 
  * associated with option @opt for command @ci, if any,
- * otherwise #NADBL.
+ * otherwise #NADBL. If @opt is an active option for
+ * @ci but the parameter for this option cannot be 
+ * interpreted as a numerical value, E_INVARG is written
+ * into @err.
  */
 
-double get_optval_double (int ci, gretlopt opt)
+double get_optval_double (int ci, gretlopt opt, int *err)
 {
     stored_opt *so = matching_stored_opt(ci, opt);
     double ret = NADBL;
@@ -1156,8 +1160,11 @@ double get_optval_double (int ci, gretlopt opt)
     if (so != NULL && so->val != NULL) {
 	if (numeric_string(so->val)) {
 	    ret = dot_atof(so->val);
-	} else {
+	} else if (gretl_is_scalar(so->val)) {
 	    ret = gretl_scalar_get_value(so->val, NULL);
+	} else {
+	    gretl_errmsg_sprintf(_("%s: invalid option argument"), so->val);
+	    *err = E_INVARG;
 	}
     }
 

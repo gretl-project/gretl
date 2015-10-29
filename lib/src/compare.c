@@ -1421,7 +1421,12 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 	return omod;
     }
 
-    amax = get_optval_double(OMIT, OPT_A);
+    amax = get_optval_double(OMIT, OPT_A, &err);
+    if (err) {
+	omod.errcode = err;
+	return omod;
+    }
+    
     if (na(amax) || amax <= 0.0 || amax >= 1.0) {
 	amax = 0.10;
     }

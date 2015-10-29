@@ -837,9 +837,11 @@ static int real_boxplots (const int *list,
 
     if (opt & OPT_L) {
 	/* we should have an explicit outlier limit */
-	lim = get_optval_double(BXPLOT, OPT_L);
-	if (na(lim) || lim < 0) {
-	    return E_BADOPT;
+	lim = get_optval_double(BXPLOT, OPT_L, &err);
+	if (err) {
+	    return err;
+	} else if (na(lim) || lim < 0) {
+	    return E_INVARG;
 	} 
     }
 

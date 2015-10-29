@@ -2003,8 +2003,10 @@ static int check_freq_opts (gretlopt opt, int *n_bins,
 	    /* but no width given */
 	    return E_ARGS;
 	} else {
-	    x = get_optval_double(FREQ, OPT_M);
-	    if (na(x)) {
+	    x = get_optval_double(FREQ, OPT_M, &err);
+	    if (err) {
+		return err;
+	    } else if (na(x)) {
 		return E_ARGS;
 	    } else {
 		*fmin = x;
@@ -2018,8 +2020,10 @@ static int check_freq_opts (gretlopt opt, int *n_bins,
 	    /* but no min given */
 	    return E_ARGS;
 	} else {
-	    x = get_optval_double(FREQ, OPT_W);
-	    if (na(x)) {
+	    x = get_optval_double(FREQ, OPT_W, &err);
+	    if (err) {
+		return err;
+	    } else if (na(x)) {
 		return E_ARGS;
 	    } else if (x <= 0) {
 		return E_INVARG;

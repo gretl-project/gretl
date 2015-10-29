@@ -61,7 +61,7 @@ int inapplicable_option_error (int ci, gretlopt opt);
 
 int push_option_param (int ci, gretlopt opt, char *val);
 
-double get_optval_double (int ci, gretlopt opt);
+double get_optval_double (int ci, gretlopt opt, int *err);
 
 int set_optval_double (int ci, gretlopt opt, double x);
 

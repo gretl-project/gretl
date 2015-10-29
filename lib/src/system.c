@@ -29,8 +29,6 @@
 #include "gretl_func.h"
 #include "tsls.h"
 
-#include <glib.h>
-
 #define SYSDEBUG 0
 
 enum {
@@ -3616,7 +3614,8 @@ sys_add_RF_covariance_matrix (equation_system *sys, int n)
     return err;
 }
 
-static int sys_add_structural_form (equation_system *sys)
+static int sys_add_structural_form (equation_system *sys,
+				    const DATASET *dset)
 {
     const int *ylist = sys->ylist;
     const int *xlist = sys->xlist;
@@ -3684,8 +3683,9 @@ static int sys_add_structural_form (equation_system *sys)
 		col += n * (lag - 1);
 		gretl_matrix_set(sys->A, i, col, x);
 	    } else {
-		fprintf(stderr, "add_structural_form: i=%d, j=%d, vj=%d, type=%d\n",
-			i, j, vj, type);
+		fprintf(stderr, "add_structural_form: couldn't categorize series\n"
+			"%d (%s) in eqn %d (type=%d)\n", vj, dset->varname[vj],
+			i, type);
 		printlist(mlist, "model list");
 		err = E_DATA;
 	    }
@@ -3718,8 +3718,9 @@ static int sys_add_structural_form (equation_system *sys)
 		col += n * (lag - 1);
 		gretl_matrix_set(sys->A, ne+i, col, x);
 	    } else {
-		fprintf(stderr, "add_structural_form: i=%d, j=%d, vj=%d, type=%d\n",
-			i, j, vj, type);
+		fprintf(stderr, "add_structural_form: couldn't categorize series\n"
+			"%d (%s) in identity %d (type=%d)\n", vj, dset->varname[vj],
+			i, type);
 		err = E_DATA;
 	    }
 	}
@@ -4581,7 +4582,7 @@ system_save_and_print_results (equation_system *sys, DATASET *dset,
     }
 
     if (!err) {
-	err = sys_add_structural_form(sys);
+	err = sys_add_structural_form(sys, dset);
     } 
 
     if (!(opt & OPT_Q)) {

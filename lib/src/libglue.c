@@ -340,7 +340,18 @@ MODEL logit_probit (int *list, DATASET *dset, int ci,
 MODEL logistic_driver (const int *list, DATASET *dset,
 		       gretlopt opt) 
 {
-    double lmax = get_optval_double(LOGISTIC, OPT_M);
+    double lmax;
+    int err = 0;
+
+    lmax = get_optval_double(LOGISTIC, OPT_M, &err);
+    
+    if (err) {
+	MODEL mdl;
+
+	gretl_model_init(&mdl, dset);
+	mdl.errcode = err;
+	return mdl;
+    }
 
     return logistic_model(list, lmax, dset);
 }
@@ -359,17 +370,17 @@ MODEL tobit_driver (const int *list, DATASET *dset,
 
     if (opt & OPT_L) {
 	/* we should have an explicit lower limit */
-	llim = get_optval_double(TOBIT, OPT_L);
-	if (na(llim)) {
-	    err = E_BADOPT;
+	llim = get_optval_double(TOBIT, OPT_L, &err);
+	if (!err && na(llim)) {
+	    err = E_INVARG;
 	} 
     }
 
     if (!err && (opt & OPT_M)) {
 	/* we should have an explicit upper limit */
-	rlim = get_optval_double(TOBIT, OPT_M);
-	if (na(rlim) || rlim <= llim) {
-	    err = E_BADOPT; 
+	rlim = get_optval_double(TOBIT, OPT_M, &err);
+	if (!err && (na(rlim) || rlim <= llim)) {
+	    err = E_INVARG; 
 	}	
     }
 

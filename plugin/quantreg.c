@@ -1037,7 +1037,13 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 
 static int get_ci_alpha (double *a)
 {
-    double c = get_optval_double(QUANTREG, OPT_I);
+    int err = 0;
+    double c;
+
+    c = get_optval_double(QUANTREG, OPT_I, &err);
+    if (err) {
+	return err;
+    }
 
     if (na(c)) {
 	*a = 0.1;

@@ -3050,8 +3050,10 @@ static void read_logistic_extras (selector *sr)
 static void read_omit_cutoff (selector *sr)
 {
     if (sr->extra[0] != NULL && gtk_widget_is_sensitive(sr->extra[0])) {
-	double val, orig = get_optval_double(OMIT, OPT_A);
+	double val, orig;
+	int err = 0;
 
+	orig = get_optval_double(OMIT, OPT_A, &err);
 	val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[0]));
 	if (val != orig) {
 	    set_optval_double(OMIT, OPT_A, val);
