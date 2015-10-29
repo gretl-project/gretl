@@ -5040,6 +5040,13 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    } else if (gretl_is_user_var(s)) {
 		ret->v.xval = 0.0;
 	    }
+	} else if (f == F_EXISTS) {
+	    ret->v.xval = 0;
+	    if (gretl_is_series(s, p->dset)) {
+		ret->v.xval = 1;
+	    } else if (gretl_is_user_var(s)) {
+		ret->v.xval = 1;
+	    }	    
 	} else if (f == F_ISSTRING) {
 	    /* temporarily reinstated */
 	    ret->v.xval = gretl_is_string(s);
@@ -11778,6 +11785,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_OBSNUM:
     case F_ISDISCR:	
     case F_ISNULL:
+    case F_EXISTS:
     case F_ISSTRING:
     case F_STRLEN:
     case F_NLINES:

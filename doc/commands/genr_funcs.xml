@@ -2611,6 +2611,19 @@
       </description>
     </function>
 
+    <function name="exists" section="data-utils" output="int">
+      <fnargs>
+	<fnarg type="string">name</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns 1 if <argname>name</argname> is the identifier for a
+	  currently defined object, be it a scalar, a series, a matrix,
+	  list, string, bundle or array; otherwise returns 0.
+	</para>
+      </description>
+    </function>    
+
     <function name="exp" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -3827,6 +3840,10 @@
 	  Returns 0 if <argname>name</argname> is the identifier for a
 	  currently defined object, be it a scalar, a series, a matrix,
 	  list, string or bundle; otherwise returns 1.
+	</para>
+	<para>
+	  This function is deprecated: the recommended replacment is
+	  (the negation of) <fncref targ="exists"/>.
 	</para>
       </description>
     </function>
