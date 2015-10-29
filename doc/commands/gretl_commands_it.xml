@@ -1202,19 +1202,27 @@
 	  </para>
 	</li>
 	<li>
-	  <para>Residui ricampionati o simulazione degli errori normali. Nel
-            primo caso i residui originali (riscalati, come suggerito in ETM)
-            vengono ricampionati con rimpiazzo. Nel secondo caso, vengono generati
-	    valori normali pseudo-casuali con la varianza dei residui originali.
+	  <para>Il metodo di bootstrap. Con la prima opzione i residui
+	  originali (riscalati, come suggerito in ETM) vengono
+	  ricampionati con rimpiazzo. Nel secondo caso, viene
+	  effettuato in ricampionamente per <quote>coppie</quote> o
+	  <quote>casi</quote>, ossia le righe di dati <math>y</math>,
+	  <math>X</math>. Con la terza opzione, i residui originali
+	  vengono prima trasformati secondo il metodo di <cite
+	  key="davidson-flachaire01">Davidson e Flachaire
+	  (2001)</cite>, dopodiché in ogni replicazione bootstrap
+	  ognuno di essi viene cambiato di segno con probabilità
+	  0.5. Con l'ultima opzione, vengono generati valori normali
+	  pseudo-casuali con la varianza dei residui originali.
 	  </para>
 	</li>
 	<li>
-	  <para>Il numero di replicazioni da eseguire. Si noti che quando si
-            costruisce un intervallo di confidenza al 95 per cento è opportuno
-            che 0.05(<math>B</math> + 1)/2 sia un intero
-	    (dove <math>B</math> è il numero di replicazioni), quindi
-            gretl può aggiustare il numero scelto di replicazioni per assicurare
-            questa condizione.
+	  <para>Il numero di replicazioni da eseguire. Si noti che
+	  quando si costruisce un intervallo di confidenza al 95 per
+	  cento è opportuno che 0.05(<math>B</math> + 1)/2 sia un
+	  intero (dove <math>B</math> è il numero di replicazioni),
+	  quindi gretl può aggiustare il numero scelto di replicazioni
+	  per assicurare questa condizione.
 	  </para>
 	</li>
 	<li>
@@ -3474,28 +3482,27 @@
   <command name="fcast" section="Prediction" label="Genera previsioni">
 
     <usage>
-      <arguments>
-        <argument optional="true" >oss-iniziale oss-finale</argument>
-        <argument optional="true">passi-avanti</argument>
-	<argument optional="true">nome-variabile</argument>
-      </arguments>
+      <altforms>
+	<altform><lit>fcast [</lit><repl>oss-iniziale oss-finale</repl><lit>] [</lit><repl>nome-variabile</repl><lit>]</lit></altform>
+	<altform><lit>fcast [</lit><repl>oss-iniziale oss-finale</repl><lit>]</lit> <repl>passi-avanti</repl> <lit>[</lit><repl>nome-variabile</repl><lit>] --rolling</lit></altform>
+      </altforms>
       <options>
-        <option>
+	<option>
 	  <flag>--dynamic</flag>
 	  <effect>crea previsioni dinamiche</effect>
-        </option>
-        <option>
+	</option>
+	<option>
 	  <flag>--static</flag>
 	  <effect>crea previsioni statiche</effect>
-        </option>
-        <option>
+	</option>
+	<option>
 	  <flag>--out-of-sample</flag>
 	  <effect>genera previsioni fuori dal campione</effect>
-        </option>
-        <option>
+	</option>
+	<option>
 	  <flag>--no-stats</flag>
 	  <effect>non mostra le statistiche di previsione</effect>
-        </option>
+	</option>
         <option>
 	  <flag>--quiet</flag>
 	  <effect>non mostra le previsioni</effect>
