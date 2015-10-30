@@ -1163,6 +1163,9 @@ double get_optval_double (int ci, gretlopt opt, int *err)
 	} else if (gretl_is_scalar(so->val)) {
 	    ret = gretl_scalar_get_value(so->val, NULL);
 	} else {
+	    ret = generate_scalar(so->val, NULL, err);
+	}
+	if (*err) {
 	    gretl_errmsg_sprintf(_("%s: invalid option argument"), so->val);
 	    *err = E_INVARG;
 	}
@@ -1194,10 +1197,10 @@ int get_optval_int (int ci, gretlopt opt, int *err)
 	if (integer_string(so->val)) {
 	    ret = atoi(so->val);
 	} else {
-	    double x = gretl_scalar_get_value(so->val, err);
-
-	    if (!*err) {
-		ret = (int) x;
+	    ret = generate_int(so->val, NULL, err);
+	    if (*err) {
+		gretl_errmsg_sprintf(_("%s: invalid option argument"), so->val);
+		*err = E_INVARG;
 	    }
 	}
     } else if (status == 2 && err != NULL) {

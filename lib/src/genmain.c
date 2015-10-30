@@ -23,6 +23,8 @@
 #include "libset.h"
 #include "gretl_func.h"
 
+#include <errno.h>
+
 #if GENDEBUG
 # define GDEBUG 1
 #else
@@ -761,6 +763,39 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
     gen_cleanup(&p);
 
     return x;
+}
+
+/* retrieve an integer result directly */
+
+int generate_int (const char *s, DATASET *dset, int *err)
+{
+    double x = generate_scalar(s, dset, err);
+    double slop = 0.001;
+    int ret = 0;
+
+    if (!*err) {
+	if (xna(x)) {
+	    *err = E_DATA;
+	} else {
+	    errno = 0;
+	    if (x - floor(x) < slop) {
+		ret = lrint(x);
+	    } else if (ceil(x) - x < slop) {
+		ret = lrint(x);
+	    } else {
+		*err = E_DATA;
+	    }
+	    if (!*err && errno) {
+		*err = E_DATA;
+	    }
+	}
+    }
+
+    if (*err) {
+	ret = 0;
+    }
+
+    return ret;
 }
 
 /* retrieve a series result directly */
