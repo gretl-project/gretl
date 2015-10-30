@@ -698,6 +698,10 @@ static void clear_tramo_files (const char *path, const char *vname)
 
     sprintf(fname, "%s%coutput%c%s.out", path, SLASH, SLASH, vname);
     gretl_remove(fname);
+
+    /* clear the genric "summary.txt" */
+    sprintf(fname, "%s%coutput%csummary.txt", path, SLASH, SLASH);
+    gretl_remove(fname);
 }
 
 static void clear_x12a_files (const char *path, const char *vname)
@@ -938,8 +942,10 @@ static int grab_deseasonal_series (double *y, const DATASET *dset,
     return err;
 }
 
-static int grab_linearized_series (double *y, const DATASET *dset,
-				   const char *path)
+static int grab_linearized_series (double *y, const double *x,
+				   const DATASET *dset,
+				   const char *path,
+				   const char *vname)
 {
     FILE *fp;
     char line[128], sfname[MAXLEN];
@@ -951,6 +957,28 @@ static int grab_linearized_series (double *y, const DATASET *dset,
 	    tramo_save_strings[TX_LN]);
 
     fp = gretl_fopen(sfname, "r");
+
+    /* The linearized series may not have been produced: is this
+       because a genuine error has occurred, or simply because
+       tramo judges that the series doesn't need linearizing?
+    */    
+    
+    if (fp == NULL) {
+	sprintf(sfname, "%s%coutput%c%s.out", path, SLASH, SLASH, vname);
+	fp = fopen(sfname, "r");
+	if (fp != NULL) {
+	    fclose(fp); /* OK ? */
+	    sprintf(sfname, "%s%coutput%csummary.txt", path, SLASH, SLASH);
+	    fp = fopen(sfname, "r");
+	    if (fp != NULL) {
+		fclose(fp); /* agian, OK ? */
+		sprintf(sfname, "%s%cgraph%cseries%cxorigt.t", path, SLASH,
+			SLASH, SLASH);
+		fp = fopen(sfname, "r");
+	    }
+	}
+    }
+
     if (fp == NULL) {
 	return E_FOPEN;
     }
@@ -1760,7 +1788,7 @@ int linearize_series (const double *x, double *y, const DATASET *dset)
     err = helper_spawn(exepath, vname, workdir, TRAMO_ONLY);
 
     if (!err) {
-	err = grab_linearized_series(y, dset, workdir);
+	err = grab_linearized_series(y, x, dset, workdir, vname);
     }
 
     return err;
