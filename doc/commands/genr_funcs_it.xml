@@ -4044,6 +4044,27 @@
       </description>
     </function>
 
+    <function name="linearize" section="filters" output="series">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Richiede che TRAMO sia installato. Restituisce una versione
+	  <quote>linearizzata</quote> della serie in input, ossia una
+	  serie in cui le osservazioni mancanti vengono sostituite da
+	  valori interpolati e gli outlier vengono aggiustati. A tal
+	  fine, viene usato il meccanismo automatico di TRAMO'; per
+	  maggiori dettagli, si consulti la documentazione di TRAMO.
+	</para>
+	<para>
+	  Si noti che, se la serie in input non contiene osservazioni
+	  mancanti né valori che TRAMO considera outlier, la funzione
+	  ritorna una copia della serie originale.
+	</para>
+      </description>
+    </function>
+    
     <function name="ljungbox" section="stats" output="scalar">
       <fnargs>
     <fnarg type="series">y</fnarg>
