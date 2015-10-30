@@ -769,9 +769,14 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
 
 int generate_int (const char *s, DATASET *dset, int *err)
 {
-    double x = generate_scalar(s, dset, err);
-    double slop = 0.001;
+    double x, slop = 0.001;
     int ret = 0;
+
+    if (gretl_is_scalar(s)) {
+	x = gretl_scalar_get_value(s, NULL);
+    } else {
+	x = generate_scalar(s, dset, err);
+    }
 
     if (!*err) {
 	if (xna(x)) {
