@@ -7370,6 +7370,10 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 		    size = p->dset->n;
 		    donate = 1;
 		}
+	    } else if (p->lh.gtype == GRETL_TYPE_MATRIX) {
+		ptr = gretl_matrix_from_scalar(n->v.xval);
+		type = GRETL_TYPE_MATRIX;
+		donate = 1;
 	    } else {
 		ptr = &n->v.xval;
 		type = GRETL_TYPE_DOUBLE;
@@ -7381,9 +7385,15 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	    donate = is_tmp_node(n);
 	    break;
 	case MAT:
-	    ptr = n->v.m;
-	    type = GRETL_TYPE_MATRIX;
-	    donate = is_tmp_node(n);
+	    if (p->lh.gtype == GRETL_TYPE_DOUBLE &&
+		scalar_matrix_node(n)) {
+		ptr = &n->v.m->val[0];
+		type = GRETL_TYPE_DOUBLE;
+	    } else {
+		ptr = n->v.m;
+		type = GRETL_TYPE_MATRIX;
+		donate = is_tmp_node(n);
+	    }
 	    break;
 	case U_ADDR:
 	    n = n->v.b1.b;
