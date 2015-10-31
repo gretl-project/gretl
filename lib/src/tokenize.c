@@ -2506,31 +2506,20 @@ static void rejoin_list_toks (CMD *c, int k1, int *k2,
 
 static int validate_list_token (cmd_token *tok)
 {
-    int ret = 1;
-
     /* In a "genr" context we might accept a scalar or matrix as
        representing one or more integer series IDs in constructing a
        list, but this is not acceptable in the regular command
-       context so we'll screen them out here.
+       context. So we'll screen out all "uservars" other than named
+       lists (this does not include series, which are of course OK).
     */
 
-#if 1
-    if (tok->type == TOK_NAME && get_user_var_by_name(tok->s)) {
-	return 0;
-    }
-#else    
     if (tok->type == TOK_NAME) {
-	if (gretl_is_scalar(tok->s)) {
-	    ret = 0;
-	} else if (gretl_is_matrix(tok->s)) {
-	    ret = 0;
-	} else if (gretl_is_bundle(tok->s)) {
-	    ret = 0;
-	}
-    }
-#endif    
+	GretlType t = user_var_get_type_by_name(tok->s);
 
-    return ret;
+	return t == GRETL_TYPE_NONE || t == GRETL_TYPE_LIST;
+    } else {
+	return 1;
+    }
 }
 
 static int process_command_list (CMD *c, DATASET *dset)

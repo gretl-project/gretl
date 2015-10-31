@@ -769,35 +769,11 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
 
 int generate_int (const char *s, DATASET *dset, int *err)
 {
-    double x, slop = 0.001;
-    int ret = 0;
-
-    if (gretl_is_scalar(s)) {
-	x = gretl_scalar_get_value(s, NULL);
-    } else {
-	x = generate_scalar(s, dset, err);
-    }
+    double x = generate_scalar(s, dset, err);
+    int ret = -1;
 
     if (!*err) {
-	if (xna(x)) {
-	    *err = E_DATA;
-	} else {
-	    errno = 0;
-	    if (x - floor(x) < slop) {
-		ret = lrint(x);
-	    } else if (ceil(x) - x < slop) {
-		ret = lrint(x);
-	    } else {
-		*err = E_DATA;
-	    }
-	    if (!*err && errno) {
-		*err = E_DATA;
-	    }
-	}
-    }
-
-    if (*err) {
-	ret = 0;
+	ret = gretl_int_from_double(x, err);
     }
 
     return ret;
@@ -913,21 +889,6 @@ char *generate_string (const char *s, DATASET *dset, int *err)
     gen_cleanup(&p);
 
     return ret;
-}
-
-static int x_to_list_member (double x, DATASET *dset, int *err)
-{
-    int v = -1;
-
-    if (x < 0 || x >= dset->v) {
-	*err = E_INVARG;
-    } else if (fabs(x - nearbyint(x)) > 1.0e-8) {
-	*err = E_INVARG;
-    } else {
-	v = nearbyint(x);
-    }
-
-    return v;
 }
 
 /* retrieve a list result directly */

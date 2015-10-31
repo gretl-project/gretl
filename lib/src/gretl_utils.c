@@ -1278,7 +1278,7 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
  * @err: location to receive error code.
  * 
  * If @s is a valid string representation of a double,
- * return that integer, otherwise if @s is the name of a
+ * return its value, otherwise if @s is the name of a
  * scalar variable, return the value of that variable,
  * otherwise set the content of @err to a non-zero value.
  *
@@ -1295,9 +1295,10 @@ double gretl_double_from_string (const char *s, int *err)
 	return NADBL;
     }
 
+    gretl_push_c_numeric_locale();
     errno = 0;
-
     x = strtod(s, &test);
+    gretl_pop_c_numeric_locale();
 
     if (errno == ERANGE) {
 	*err = E_DATA;
@@ -1320,7 +1321,8 @@ double gretl_double_from_string (const char *s, int *err)
  * If @s is a valid string representation of an integer,
  * return that integer, otherwise if @s is the name of a
  * scalar variable, return the value of that variable,
- * otherwise set the content of @err to a non-zero value.
+ * provided it can be converted to an integer, otherwise
+ * set the content of @err to a non-zero value.
  *
  * Returns: integer value.
  */
@@ -1337,7 +1339,6 @@ int gretl_int_from_string (const char *s, int *err)
     }
 
     errno = 0;
-
     n = strtol(s, &test, 10);
 
     if (errno == ERANGE) {
@@ -1353,13 +1354,7 @@ int gretl_int_from_string (const char *s, int *err)
     x = get_scalar_value_by_name(s, err);
 
     if (!*err) {
-	if (na(x)) {
-	    *err = E_MISSDATA;
-	} else if (fabs(x) > INT_MAX) {
-	    *err = E_DATA;
-	} else {
-	    n = (int) x;
-	}
+	n = gretl_int_from_double(x, err);
     }
 
     return n;    
@@ -1487,6 +1482,40 @@ int varnum_from_string (const char *str, DATASET *dset)
     } 
     
     return v;
+}
+
+/**
+ * gretl_int_from_double:
+ * @x: double-precision floating point value
+ * @err: location to receive error code.
+ * 
+ * Returns: the value of @x converted to an integer, if
+ * possible. Otherwise returns -1 with @err set to a
+ * non-zero value. Note that it is considered an
+ * error if @x is "too far" from the nearest integer;
+ * it must be "almost integral", with tolerance
+ * 1.0e-6.
+ */
+
+int gretl_int_from_double (double x, int *err)
+{
+    int k = -1;
+
+    if (fabs(x) > INT_MAX) {
+	*err = E_INVARG;
+    } else {
+	double slop = 1.0e-6;
+	
+	if (x - floor(x) < slop) {
+	    k = lrint(x);
+	} else if (ceil(x) - x < slop) {
+	    k = lrint(x);
+	} else {
+	    *err = E_INVARG;
+	}
+    }
+
+    return k;
 }
 
 /**

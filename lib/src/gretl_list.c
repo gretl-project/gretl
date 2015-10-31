@@ -2850,11 +2850,10 @@ int *list_from_matrix (const gretl_matrix *m, const DATASET *dset,
 	if (k == 0) {
 	    *err = E_TYPES;
 	} else {
-	    for (i=0; i<k; i++) {
-		v = (int) m->val[i];
-		if (v < 0 || v >= dset->v) {
+	    for (i=0; i<k && !*err; i++) {
+		v = gretl_int_from_double(m->val[i], err);
+		if (!*err && (v < 0 || v >= dset->v)) {
 		    *err = E_UNKVAR;
-		    break;
 		}
 	    }
 	    if (!*err) {

@@ -6257,20 +6257,8 @@ static int localize_series_ref (fncall *call, fn_arg *arg,
 
 static int argval_get_int (fn_param *param, double x, int *err)
 {
-    int ret = 0;
+    int ret = gretl_int_from_double(x, err);
     
-    if (fabs(x) > INT_MAX) {
-	*err = E_INVARG;
-    } else {
-	double nx = nearbyint(x);
-	
-	if (fabs(x - nx) > 1.0e-8) {
-	    *err = E_INVARG;
-	} else {	
-	    ret = (int) nx;
-	}
-    }
-
     if (*err) {
 	gretl_errmsg_sprintf(_("%s: expected an integer but found %g"),
 			     param->name, x);

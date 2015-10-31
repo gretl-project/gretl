@@ -411,15 +411,13 @@ int numeric_string (const char *str)
     }
 
     gretl_push_c_numeric_locale();
-
     errno = 0;
-
     strtod(str, &test);
+    gretl_pop_c_numeric_locale();
+    
     if (*test != '\0' || errno == ERANGE) {
 	ret = 0;
     }
-
-    gretl_pop_c_numeric_locale();
 
     return ret;
 }
@@ -441,7 +439,6 @@ int integer_string (const char *str)
     }
 
     errno = 0;
-
     strtol(str, &test, 10);
     if (*test != '\0' || errno != 0) {
 	ret = 0;

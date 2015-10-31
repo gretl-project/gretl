@@ -114,6 +114,8 @@ int positive_int_from_string (const char *s);
 
 int varnum_from_string (const char *str, DATASET *dset);
 
+int gretl_int_from_double (double x, int *err);
+
 GretlType gretl_type_from_name (const char *s, const DATASET *dset);
 
 double *copyvec (const double *src, int n);

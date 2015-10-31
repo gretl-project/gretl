@@ -134,31 +134,25 @@ static char *printf_get_string (char *s, DATASET *dset,
 static int printf_get_int (const char *s, DATASET *dset, 
 			   int *err)
 {
-    double x;
     int ret = 0;
 
 #if PSDEBUG
     fprintf(stderr, "printf_get_int: looking at '%s'\n", s);
 #endif
 
-    if (numeric_string(s)) {
-	x = dot_atof(s);
-    } else if (gretl_is_scalar(s)) {
-	x = gretl_scalar_get_value(s, NULL);
-    } else {
-	x = generate_scalar(s, dset, err);
-    }
+    ret = gretl_int_from_string(s, err);
 
-    if (!*err && (xna(x) || fabs(x) > 255)) {
+    if (*err) {
+	*err = 0;
+	ret = generate_int(s, dset, err);
+    }
+    
+    if (!*err && abs(ret) > 255) {
 	*err = E_DATA;
     } 
 
-    if (!*err) {
-	ret = (int) x;
-    }
-
 #if PSDEBUG
-    fprintf(stderr, "printf_get_int: returning %g\n", x);
+    fprintf(stderr, "printf_get_int: returning %d\n", ret);
 #endif
 
     return ret;

@@ -1193,18 +1193,8 @@ static int node_get_int (NODE *n, parser *p)
 
     if (p->err) {
 	return -1;
-    } else if (na(x) || fabs(x) > INT_MAX) {
-	p->err = E_INVARG;
-	return -1;
     } else {
-	double nx = nearbyint(x);
-	
-	if (fabs(x - nx) > 1.0e-8) {
-	    p->err = E_INVARG;
-	    return -1;
-	} else {	
-	    return (int) nx;
-	}
+	return gretl_int_from_double(x, &p->err);
     }
 }
 
