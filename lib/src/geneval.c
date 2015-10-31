@@ -117,11 +117,11 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn);
 static NODE *eval (NODE *t, parser *p);
 static void node_type_error (int ntype, int argnum, int goodt, 
 			     NODE *bad, parser *p);
-static int *node_get_list (NODE *n, parser *p);
 static void reattach_series (NODE *n, parser *p);
 static void edit_matrix (parser *p);
 static void edit_array (parser *p);
 static int node_is_true (NODE *n, parser *p);
+static gretl_matrix *list_to_matrix (const int *list, int *err);
 
 static const char *typestr (int t)
 {
@@ -4395,7 +4395,7 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
    it's just for temporary use
 */
 
-static int *node_get_list (NODE *n, parser *p)
+int *node_get_list (NODE *n, parser *p)
 {
     int *list = NULL;
     int v = 0;
@@ -4425,6 +4425,8 @@ static int *node_get_list (NODE *n, parser *p)
 	list = full_var_list(p->dset, NULL);
     } else if (n->t == MAT) {
 	list = list_from_matrix(n->v.m, p->dset, &p->err);
+    } else {
+	p->err = E_TYPES;
     }
 
     if (p->err == E_UNKVAR && v != 0) {
@@ -7293,6 +7295,31 @@ static NODE *type_string_node (NODE *n, parser *p)
     return ret;
 }
 
+static double *scalar_to_series (NODE *n, parser *p)
+{
+    double *ret = NULL;
+    int t;
+
+    if (p->dset == NULL || p->dset->n == 0) {
+	p->err = E_NODATA;
+    } else {
+	ret = malloc(p->dset->n * sizeof *ret);
+	if (ret == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    for (t=0; t<p->dset->n; t++) {
+		if (t >= p->dset->t1 && t <= p->dset->t2) {
+		    ret[t] = n->v.xval;
+		} else {
+		    ret[t] = NADBL;
+		}
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* Setting an object in a bundle under a given key string. We get here
    only if p->lh.substr is non-NULL. That "substr" may be a string
    literal, or it may be the name of a string variable. In the latter
@@ -7305,7 +7332,7 @@ static NODE *type_string_node (NODE *n, parser *p)
 static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 {
     gretl_bundle *bundle;
-    GretlType type;
+    GretlType type = 0;
     void *ptr = NULL;
     char *key = NULL;
     int size = 0;
@@ -7344,8 +7371,19 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     if (!err) {
 	switch (n->t) {
 	case NUM:
-	    ptr = &n->v.xval;
-	    type = GRETL_TYPE_DOUBLE;
+	    if (p->lh.gtype == GRETL_TYPE_SERIES) {
+		ptr = scalar_to_series(n, p);
+		if (p->err) {
+		    err = p->err;
+		} else {
+		    type = GRETL_TYPE_SERIES;
+		    size = p->dset->n;
+		    donate = 1;
+		}
+	    } else {
+		ptr = &n->v.xval;
+		type = GRETL_TYPE_DOUBLE;
+	    }
 	    break;
 	case STR:
 	    ptr = n->v.str;
@@ -7380,15 +7418,23 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	    ptr = n->v.a;
 	    type = GRETL_TYPE_ARRAY;
 	    donate = is_tmp_node(n);
-	    break;	    
+	    break;
+	case LIST:
+	    ptr = list_to_matrix(n->v.ivec, &err);
+	    type = GRETL_TYPE_MATRIX;
+	    donate = 1;
+	    break;
 	default:
-	    err = E_DATA;
+	    err = E_TYPES;
 	    break;
 	}
     }
 
     if (!err) {
-	if (donate) {
+	if (p->lh.gtype && type != p->lh.gtype) {
+	    /* result is type-incompatible with user's spec */
+	    err = E_TYPES;
+	} else if (donate) {
 	    /* it's OK to hand over the data pointer */
 	    err = gretl_bundle_donate_data(bundle, key, ptr, type, size);
 	    n->v.ptr = NULL;
@@ -9633,7 +9679,7 @@ static NODE *gen_array_node (NODE *n, parser *p)
 
     if (!empty_or_num(n)) {
 	p->err = E_TYPES;
-    } else if (p->lh.atype == 0) {
+    } else if (p->lh.gtype == 0) {
 	gretl_errmsg_set(_("array: no type was specified"));
 	p->err = E_DATA;
     } else {
@@ -9646,7 +9692,7 @@ static NODE *gen_array_node (NODE *n, parser *p)
 	if (!p->err) {
 	    ret = aux_array_node(p);
 	    if (!p->err) {
-		ret->v.a = gretl_array_new(p->lh.atype, len, &p->err);
+		ret->v.a = gretl_array_new(p->lh.gtype, len, &p->err);
 	    }
 	} 
     }
@@ -12632,7 +12678,7 @@ static void do_declaration (parser *p)
 		} else if (p->targ == LIST) {
 		    type = GRETL_TYPE_LIST;
 		} else if (p->targ == ARRAY) {
-		    type = p->lh.atype;
+		    type = p->lh.gtype;
 		} else {
 		    p->err = E_DATA;
 		}
@@ -12830,19 +12876,34 @@ static void maybe_set_matrix_target (parser *p)
 
 static int ok_array_decl (parser *p, const char *s) 
 {
-    p->lh.atype = 0;
+    p->lh.gtype = 0;
 
     if (!strncmp(s, "strings ", 8)) {
-	p->lh.atype = GRETL_TYPE_STRINGS;
+	p->lh.gtype = GRETL_TYPE_STRINGS;
     } else if (!strncmp(s, "matrices ", 9)) {
-	p->lh.atype = GRETL_TYPE_MATRICES;
+	p->lh.gtype = GRETL_TYPE_MATRICES;
     } else if (!strncmp(s, "bundles ", 8)) {
-	p->lh.atype = GRETL_TYPE_BUNDLES;
+	p->lh.gtype = GRETL_TYPE_BUNDLES;
     } else if (!strncmp(s, "lists ", 6)) {
-	p->lh.atype = GRETL_TYPE_LISTS;
+	p->lh.gtype = GRETL_TYPE_LISTS;
     }
 
-    return p->lh.atype != 0;
+    return p->lh.gtype != 0;
+}
+
+static GretlType type_from_gentype (int t)
+{
+    if (t == NUM) {
+	return GRETL_TYPE_DOUBLE;
+    } else if (t == SERIES) {
+	return GRETL_TYPE_SERIES;
+    } else if (t == MAT) {
+	return GRETL_TYPE_MATRIX;
+    } else if (t == STR) {
+	return GRETL_TYPE_STRING;
+    } else {
+	return GRETL_TYPE_NONE;
+    }
 }
 
 /* process the left-hand side of a genr formula */
@@ -12979,9 +13040,13 @@ static void pre_process (parser *p, int flags)
 	    } else if (vtype == GRETL_TYPE_STRING) {
 		p->lh.t = STR;
 	    } else if (vtype == GRETL_TYPE_BUNDLE) {
+		if (p->targ != BUNDLE && ok_bundled_type(p->targ)) {
+		    p->lh.gtype = type_from_gentype(p->targ);
+		    /* FIXME notation */
+		}
 		p->lh.t = BUNDLE;
 	    } else if (vtype == GRETL_TYPE_ARRAY) {
-		p->lh.atype = gretl_array_get_type(uval);
+		p->lh.gtype = gretl_array_get_type(uval);
 		p->lh.t = ARRAY;
 	    }
 	}
@@ -13978,7 +14043,9 @@ static int gen_check_return_type (parser *p)
 	    err = E_TYPES;
 	}
     } else if (p->targ == BMEMB) {
-	if (!ok_bundled_type(r->t)) {
+	if (r->t == LIST && p->lh.gtype == GRETL_TYPE_MATRIX) {
+	    ; /* OK, we can handle this */
+	} else if (!ok_bundled_type(r->t)) {
 	    err = E_TYPES;
 	}
     } else if (p->targ == ARRAY) {
@@ -14097,10 +14164,10 @@ static int assign_null_to_array (parser *p)
 	a = get_array_by_name(p->lh.name);
 	gretl_array_void_content(a);
     } else {
-	a = gretl_array_new(p->lh.atype, 0, &err);
+	a = gretl_array_new(p->lh.gtype, 0, &err);
 	if (!err) {
 	    err = user_var_add_or_replace(p->lh.name,
-					  p->lh.atype,
+					  p->lh.gtype,
 					  a);
 	}
     }
@@ -14371,7 +14438,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    p->err = assign_null_to_array(p);
 	} else {
 	    /* full assignment of RHS array */
-	    GretlType atype = p->lh.atype > 0 ? p->lh.atype :
+	    GretlType atype = p->lh.gtype > 0 ? p->lh.gtype :
 		gretl_array_get_type(r->v.a);
 	    gretl_array *a;
 
@@ -14580,7 +14647,7 @@ static void parser_init (parser *p, const char *str,
     p->lh.substr = NULL;
     p->lh.subvar = NULL;
     p->lh.mspec = NULL;
-    p->lh.atype = 0;
+    p->lh.gtype = 0;
 
     /* auxiliary node apparatus */
     p->aux = NULL;

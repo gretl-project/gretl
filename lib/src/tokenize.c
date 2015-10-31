@@ -2514,13 +2514,21 @@ static int validate_list_token (cmd_token *tok)
        context so we'll screen them out here.
     */
 
+#if 1
+    if (tok->type == TOK_NAME && get_user_var_by_name(tok->s)) {
+	return 0;
+    }
+#else    
     if (tok->type == TOK_NAME) {
 	if (gretl_is_scalar(tok->s)) {
 	    ret = 0;
 	} else if (gretl_is_matrix(tok->s)) {
 	    ret = 0;
+	} else if (gretl_is_bundle(tok->s)) {
+	    ret = 0;
 	}
     }
+#endif    
 
     return ret;
 }

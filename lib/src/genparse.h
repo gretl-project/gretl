@@ -592,8 +592,8 @@ enum parser_flags {
     P_SLAVE   = 1 << 12, /* running as "slave" of NLS/MLE/GMM */
     P_LHPTR   = 1 << 13, /* left-hand side: pointer type wanted */
     P_MMASK   = 1 << 14, /* genr result is masked matrix */
-    P_SLICING = 1 << 15, /* calculating object slice (temporary) */
-    P_LAGPRSE = 1 << 16, /* parsing lag spec (temporary) */
+    P_SLICING = 1 << 15, /* state: calculating object slice (temporary) */
+    P_LAGPRSE = 1 << 16, /* state: parsing lag spec (temporary) */
     P_SAVEAUX = 1 << 17, /* indicates try aux node compilation */
     P_AUXDONE = 1 << 18, /* indicates aux nodes compiled */
     P_DELTAN  = 1 << 19, /* flag for change in series length */
@@ -613,7 +613,8 @@ struct lhinfo {
     char *substr;          /* obs or matrix/array selection string */
     char *subvar;          /* name of targetted bundle member */
     matrix_subspec *mspec; /* evaluated submatrix spec */
-    GretlType atype;       /* type of LHS array, if any */
+    GretlType gtype;       /* gretl type of LHS array, if any, or
+			      of LHS bundle member */
 };
 
 typedef struct parser_ parser;
@@ -698,6 +699,7 @@ int x_sectional_weighted_stat (double *x, const int *list,
 /* in geneval.c, used only internally */
 double dvar_get_scalar (int i, const DATASET *dset,
 			char *label);
+int *node_get_list (NODE *n, parser *p);
 
 /* helper functions for manual, gretl.lang file */
 int gen_func_count (void);

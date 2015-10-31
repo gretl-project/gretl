@@ -945,39 +945,8 @@ int *generate_list (const char *s, DATASET *dset, int *err)
     *err = realgen(s, &p, dset, NULL, P_PRIVATE, LIST);
 
     if (!*err) {
-	NODE *n = p.ret;
-
-	if (n->t == LIST) {
-	    const int *nlist = n->v.ivec;
-
-	    if (nlist == NULL) {
-		*err = E_DATA;
-	    } else {
-		ret = gretl_list_copy(nlist);
-	    }
-	} else if (n->t == SERIES && n->vnum >= 0) {
-	    ret = gretl_list_new(1);
-	    if (ret != NULL) {
-		ret[1] = n->vnum;
-	    }
-	} else if (n->t == NUM) {
-	    int v = x_to_list_member(n->v.xval, dset, err);
-
-	    if (!*err) {
-		ret = gretl_list_new(1);
-		if (ret == NULL) {
-		    *err = E_ALLOC;
-		} else {
-		    ret[1] = v;
-		}
-	    }	    
-	} else {
-	    *err = E_TYPES;
-	}
-    }
-
-    if (ret == NULL && !*err) {
-	*err = E_ALLOC;
+	ret = node_get_list(p.ret, &p);
+	*err = p.err;
     }
 
     gen_cleanup(&p);
