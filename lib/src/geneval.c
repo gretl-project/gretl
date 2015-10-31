@@ -12891,17 +12891,26 @@ static int ok_array_decl (parser *p, const char *s)
     return p->lh.gtype != 0;
 }
 
-static GretlType type_from_gentype (int t)
+static GretlType bundle_type_from_gentype (parser *p)
 {
+    int t = p->targ;
+    
     if (t == NUM) {
 	return GRETL_TYPE_DOUBLE;
-    } else if (t == SERIES) {
-	return GRETL_TYPE_SERIES;
-    } else if (t == MAT) {
-	return GRETL_TYPE_MATRIX;
     } else if (t == STR) {
 	return GRETL_TYPE_STRING;
+    } else if (t == MAT) {
+	return GRETL_TYPE_MATRIX;
+    } else if (t == SERIES) {
+	return GRETL_TYPE_SERIES;
+    } else if (t == BUNDLE) {
+	return GRETL_TYPE_BUNDLE;
+    } else if (t == ARRAY) {
+	return GRETL_TYPE_ARRAY;
+    } else if (t == U_ADDR) {
+	return GRETL_TYPE_MATRIX_REF;
     } else {
+	p->err = E_TYPES;
 	return GRETL_TYPE_NONE;
     }
 }
@@ -13040,9 +13049,11 @@ static void pre_process (parser *p, int flags)
 	    } else if (vtype == GRETL_TYPE_STRING) {
 		p->lh.t = STR;
 	    } else if (vtype == GRETL_TYPE_BUNDLE) {
-		if (p->targ != BUNDLE && ok_bundled_type(p->targ)) {
-		    p->lh.gtype = type_from_gentype(p->targ);
-		    /* FIXME notation */
+		if (p->targ != UNK) {
+		    p->lh.gtype = bundle_type_from_gentype(p);
+		    if (p->err) {
+			return;
+		    }
 		}
 		p->lh.t = BUNDLE;
 	    } else if (vtype == GRETL_TYPE_ARRAY) {

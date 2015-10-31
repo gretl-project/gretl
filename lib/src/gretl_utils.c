@@ -1295,22 +1295,22 @@ double gretl_double_from_string (const char *s, int *err)
 	return NADBL;
     }
 
+    if (isalpha(*s)) {
+	return get_scalar_value_by_name(s, err);
+    }
+
     gretl_push_c_numeric_locale();
     errno = 0;
     x = strtod(s, &test);
     gretl_pop_c_numeric_locale();
 
-    if (errno == ERANGE) {
+    if (*test != '\0' || errno == ERANGE) {
 	*err = E_DATA;
 	errno = 0;
 	return NADBL;
     }
 
-    if (*test == '\0') {
-	return x;
-    }
-
-    return get_scalar_value_by_name(s, err);
+    return x;
 }
 
 /**
@@ -1330,34 +1330,32 @@ double gretl_double_from_string (const char *s, int *err)
 int gretl_int_from_string (const char *s, int *err)
 {
     char *test;
-    double x;
     int n = 0;
 
     if (s == NULL || *s == '\0') {
 	*err = E_DATA;
 	return 0;
     }
+    
+    if (isalpha(*s)) {
+	double x = get_scalar_value_by_name(s, err);
+	
+	if (!*err) {
+	    n = gretl_int_from_double(x, err);
+	}
+	return n;
+    }
 
     errno = 0;
     n = strtol(s, &test, 10);
 
-    if (errno == ERANGE) {
+    if (*test != '\0' || errno == ERANGE) {
 	*err = E_DATA;
 	errno = 0;
 	return 0;
     }
 
-    if (*test == '\0') {
-	return n;
-    }
-
-    x = get_scalar_value_by_name(s, err);
-
-    if (!*err) {
-	n = gretl_int_from_double(x, err);
-    }
-
-    return n;    
+    return n;
 }
 
 /**
