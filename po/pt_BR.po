@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-10-17 19:13-0300\n"
-"PO-Revision-Date: 2015-10-17 19:18-0300\n"
+"PO-Revision-Date: 2015-10-30 21:10-0200\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.5\n"
+"X-Generator: Poedit 1.8.6\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -135,7 +135,7 @@ msgstr "p-valor assintótico"
 #: lib/src/adf_kpss.c:635
 #, c-format
 msgid "sample size %d\n"
-msgstr "dimensão de amostragem %d\n"
+msgstr "tamanho da amostra: %d\n"
 
 #: lib/src/adf_kpss.c:639
 msgid "unit-root null hypothesis: a = 1"
@@ -5636,7 +5636,7 @@ msgstr "$R^2$ não-centrado"
 
 #: lib/src/modelprint.c:2957
 msgid "Uncentered R-squared"
-msgstr "R-quadrado não-centrado"
+msgstr "R-quad. não-centrado"
 
 #: lib/src/modelprint.c:2958
 msgid "Centered $R^2$"
@@ -5680,11 +5680,11 @@ msgstr "D.P. das inovações"
 
 #: lib/src/modelprint.c:3006
 msgid "Median depend. var"
-msgstr "Mediana var. dependente"
+msgstr "Mediana var dependente"
 
 #: lib/src/modelprint.c:3008
 msgid "Sum absolute resid"
-msgstr "Soma dos resíduos absolutos"
+msgstr "Soma resíd. absolutos"
 
 #: lib/src/modelprint.c:3053
 msgid "Durbin's $h$"
@@ -6435,7 +6435,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"       intervalo    pt. médio  frequência   rel.     acum.\n"
+"       intervalo   pt. médio  frequência   rel.     acum.\n"
 "\n"
 
 #: lib/src/printout.c:512
@@ -7647,7 +7647,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 17 de outubro de 2015."
+"Tradução de 29 de outubro de 2015."
 
 #: gui2/about.c:203
 msgid "News"
@@ -11704,7 +11704,7 @@ msgstr "Séries _temporais..."
 
 #: gui2/gretl.c:1615 gui2/gretl.c:1666
 msgid "_Summary statistics"
-msgstr "Estatí_sticas descritivas"
+msgstr "E_statísticas descritivas"
 
 #: gui2/gretl.c:1616
 msgid "_Correlation matrix"
