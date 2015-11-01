@@ -483,6 +483,7 @@
 	<opt>fixed-cols</opt> work in the same way as with <cmdref
 	targ="open"/>; see that command for explanations.
       </para>
+      <para>
 	Ver também o comando <cmdref targ="join"/> para um manuseamento
         mais sofisticado com várias fontes de dados.
       </para>
@@ -2564,9 +2565,9 @@
 
     <usage>
       <altforms>
-        <altform><lit>delete</lit> <repl>lista-de-variáveis<</repl></altform>
+        <altform><lit>delete</lit> <repl>lista-de-variáveis</repl></altform>
         <altform><lit>delete</lit> <repl>nome-de-variável</repl></altform>
-	<altform><lit>delete --type=</lit><repl>nome-de-tipo/repl></altform>
+	<altform><lit>delete --type=</lit><repl>nome-de-tipo</repl></altform>
       </altforms>
       <options>
 	<option>
