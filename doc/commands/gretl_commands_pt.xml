@@ -156,6 +156,10 @@
 	  <optparm optional="true">critério</optparm>
 	  <effect>ordem de desfasamento automática</effect>
 	</option>
+	<option>
+	  <flag>--perron-qu</flag>
+	  <effect>ver abaixo</effect>
+	</option>	
       </options>
       <examples>
 	<example>adf 0 y</example>
@@ -168,11 +172,8 @@
     </usage>
 
     <description>
-      <para context="gui">Este comando requer uma ordem desfasamento inteira; se
-        a ordem for 0 é executado um teste Dickey&ndash;Fuller padrão 
-        (não aumentado).</para>
-
-      <para>
+      <para context="gui">Este comando requer uma ordem de desfasamento inteira; se
+        a ordem for 0 é executado um teste Dickey&ndash;Fuller padrão (não aumentado).
 	Determina estatísticas para um conjunto de testes de Dickey&ndash;Fuller
         sobre a variável especificada, com a hipótese nula de que a variável
         tem uma raiz unitária.  (Mas se a opção de diferenciação tiver sido 
@@ -180,42 +181,98 @@
         deve ser interpretada como sendo referente à variável transformada.)
       </para>
 
-      <para>Por omissão, são apresentadas três variantes do teste: uma baseada
-        na regressão contendo uma constante, uma usando uma constante e uma
-        tendência linear, e uma usando uma constante e uma tendência quadrática.
-          Você pode controlar as variantes que são apresentadas ao especificar
+      <para context="cli">
+	The options shown above and the discussion which follows pertain
+	to the use of the <lit>adf</lit> command with regular time series
+	data. For use of this command with panel data please see below.
+      </para>
+
+      <para context="cli">
+	Computes a set of Dickey&ndash;Fuller tests on each of the the
+	listed variables, the null hypothesis being that the variable in
+	question has a unit root.  (But if the <opt>difference</opt>
+	flag is given, the first difference of the variable is taken prior
+	to testing, and the discussion below must be taken as referring to
+	the transformed variable.)
+      </para>
+
+      <para context="cli">
+        Por omissão, são apresentadas duas variantes do teste: uma baseada
+        na regressão contendo uma constante e uma usando uma constante e uma
+        tendência linear.  Você pode controlar as variantes que são apresentadas ao especificar
         uma ou mais opções.
       </para>
 
-      <para>Em todos os casos a variável dependente é a primeira diferença
-        da variável especificada, <math>y</math>,	e a variável independente
+      <para context="cli">
+	The <opt>--gls</opt> option can be used in conjunction with
+	one or other of the flags <opt>--c</opt> and <opt>--ct</opt>
+	(the model with constant, or model with constant and trend).
+	The effect of this option is that the de-meaning or
+	de-trending of the variable to be tested is done using the GLS
+	procedure suggested by <cite key="ERS96">Elliott,
+	Rothenberg and Stock (1996)</cite>, which gives a test of
+	greater power than the standard Dickey&ndash;Fuller approach.
+	This option is not compatible with <opt>--nc</opt>,
+	<opt>--ctt</opt> or <opt>--seasonals</opt>.
+      </para>      
+
+      <para>
+        Em todos os casos a variável dependente é a primeira diferença
+        da variável especificada, <math>y</math>, e a variável independente
         chave é o primeiro desfasamento de <math>y</math>.  O modelo é construido
-        de modo a que o coeficiente do desfasamento de <math>y</math> iguale 1 
-        menos a raiz em questão.  Por exemplo, o modelo com uma constante pode
+        de modo a que o coeficiente do desfasamento de <math>y</math> iguale a
+        raiz em questão menos 1.  Por exemplo, o modelo com uma constante pode
         ser escrito como <equation status="display"
-	tex="\[(1-L)y_t=\beta_0+(1-\alpha)y_{t-1}+\epsilon_t\]"
-	ascii="(1 - L)y(t) = b0 + (1-a)y(t-1) + e(t)"
-	  graphic="adf1"/></para>
+	tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
+	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)"
+	  graphic="adf1"/> Under the null hypothesis of a unit root the
+	coefficient on lagged <math>y</math> equals zero; under the
+	alternative that <math>y</math> is stationary this coefficient is
+	negative.
+      </para>
 
       <para context="cli">
-	Se a ordem de desfasamento, <math>k</math>, é maior que 0, então
-        <math>k</math> desfasamentos da variável dependente são incluidos 
-        no lado direito das regressões de teste, sujeitos à seguinte
-        qualificação.  Se a opção <lit>--test-down</lit> foi dada, 
-        <math>k</math> é considerada como sendo o desfasamento máximo e a
-        ordem de desfasamento efectivamente usada é obtida testando para baixo,
-        de acordo com o seguinte algoritmo:
+	Se a <repl>ordem</repl> de desfasamento (daqui em diante, 
+        <math>k</math>) é maior que 0, então <math>k</math> desfasamentos
+        da variável dependente são incluidos no lado direito das regressões
+        de teste.  If the order is given as &minus;1,
+	<math>k</math> is set following the recommendation of <cite
+	key="schwert89">Schwert (1989)</cite>, namely the integer part
+	of 12(<math>T</math>/100)<sup>0.25</sup>, where <math>T</math>
+	is the sample size.   Se a opção <lit>--test-down</lit> foi dada, 
+        <math>k</math> é considerada como sendo o desfasamento 
+        <emphasis>máximo</emphasis> e a ordem de desfasamento efectivamente
+        usada é obtida testando para baixo.  O critério para testar para baixo
+        pode ser selecionado usando o parâmetro opcional, que  deve ser um de 
+        <lit>AIC</lit>, <lit>BIC</lit> ou <lit>tstat</lit>; por omissão é
+        <lit>AIC</lit>.
+      </para>
+
+
+      <para context="cli">
+	When testing down via AIC or BIC is called for, the final lag
+	order for the ADF equation is that which optimizes the chosen
+	information criterion (Akaike or Schwarz Bayesian).  The
+	exact procedure depends on whether or not the <opt>--gls</opt>
+	option is given: when GLS detrending is specified, AIC and BIC
+	are the <quote>modified</quote> versions described in <cite
+	key="ng-perron01">Ng and Perron (2001)</cite>, otherwise they
+	are the standard versions. In the GLS case a refinement is
+	available: if the additional option <opt>perron-qu</opt> is
+	given, the modified information criteria are computed
+	according to the revised method recommended by <cite
+	key="perron-qu07">Perron and Qu (2007)</cite>.
       </para>
 
       <para context="gui">
-	Se a ordem de desfasamento, <math>k</math>, é maior que 0, então
-        <math>k</math> desfasamentos da variável dependente são incluidos 
-        no lado direito das regressões de teste, sujeitos à seguinte
-        qualificação.  Se estiver seleccionada a opção <quote>testar para 
-        baixo a partir da ordem máxima de "lag"</quote>, a ordem de desfasamento
-        seleccionada é considerada como sendo o desfasamento máximo e a
-        ordem de desfasamento efectivamente usada é obtida testando para baixo,
-        de acordo com o seguinte algoritmo:
+	When testing down via AIC or BIC is called for, the final lag
+	order for the ADF equation is that which optimizes the chosen
+	information criterion (Akaike or Schwarz Bayesian).
+      </para>      
+	
+      <para>
+	When testing down via the <math>t</math>-statistic method
+	is called for, the procedure is as follows:
       </para>
 
       <nlist>
@@ -234,12 +291,46 @@
 
       <para>No contexto do passo 2 acima, <quote>significante</quote>
 	quer dizer que para o último desfasamento, a estatística-<math>t</math>,
-        que segue uma distribuição normal, tem um <emphasis>p</emphasis>-value
+        que segue uma distribuição normal, tem um <emphasis>p</emphasis> valor
         bilateral assimptótico menor ou igual a 0,10.</para> 
 
-      <para>Os <emphasis>p</emphasis>-values para os testes de
+      <para>Os <emphasis>p</emphasis> valores para os testes de
 	Dickey&ndash;Fuller baseiam-se em MacKinnon (1996).  O código relevante
-	é incluído com a generosa permissão do autor.</para>
+	é incluído com a generosa permissão do autor.  In the case of the test with linear
+	trend using GLS these <emphasis>P</emphasis>-values are not
+	applicable; critical values from Table 1 in <cite
+	key="ERS96">Elliott, Rothenberg and Stock (1996)</cite> are
+	shown instead.
+      </para>
+
+      <subhead context="cli">Panel data</subhead>
+
+      <para context="cli">
+	When the <lit>adf</lit> command is used with panel data, to
+	produce a panel unit root test, the applicable options and the
+	results shown are somewhat different.
+      </para>
+      <para context="cli">
+	First, while you may give a list of variables for testing in
+	the regular time-series case, with panel data only one
+	variable may be tested per command. Second, the options
+	governing the inclusion of deterministic terms become mutually
+	exclusive: you must choose between no-constant, constant only,
+	and constant plus trend; the default is constant only. In
+	addition, the <opt>--seasonals</opt> option is not available.
+	Third, the <opt>--verbose</opt> option has a different meaning:
+	it produces a brief account of the test for each individual
+	time series (the default being to show only the overall
+	result).
+      </para>
+      <para context="cli">
+	The overall test (null hypothesis: the series in question has
+	a unit root for all the panel units) is calculated in one or
+	both of two ways: using the method of <cite key="IPS03">Im,
+	Pesaran and Shin (Journal of Econometrics, 2003)</cite> or that
+	of <cite key="choi01">Choi (Journal of International Money and
+	Finance, 2001)</cite>.
+      </para>
 
     </description>
 
@@ -332,6 +423,13 @@
 	  <flag>--time-series</flag>
 	  <effect>ver abaixo</effect>
 	</option>
+	<option>
+	  <flag>--update-overlap</flag>
+	  <effect>ver abaixo</effect>
+	</option>
+	<option>
+	  <note>Ver abaixo para opções especializadas adicionais</note>
+	</option>
       </options>
     </usage>
 
@@ -370,6 +468,21 @@
 	<opt>--time-series</opt>.  (Esta opção é ignorada nos outros casos.)
       </para>
       <para>
+	When a data file is selected for appending, there may be an
+	area of overlap with the existing dataset; that is, one or
+	more series may have one or more observations in common across
+	the two sources. If the option <opt>update-overlap</opt> is
+	given, the <lit>append</lit> operation will replace any
+	overlapping observations with the values from the selected
+	data file, otherwise the values currently in place will be
+	unaffected.
+      </para>
+      <para>
+	The additional specialized options <opt>sheet</opt>,
+	<opt>coloffset</opt>, <opt>rowoffset</opt> and
+	<opt>fixed-cols</opt> work in the same way as with <cmdref
+	targ="open"/>; see that command for explanations.
+      </para>
 	Ver também o comando <cmdref targ="join"/> para um manuseamento
         mais sofisticado com várias fontes de dados.
       </para>
@@ -463,11 +576,15 @@
 	  <flag>--no-corc</flag>
 	  <effect>não aperfeiçoar os resultados com Cochrane-Orcutt</effect>
 	</option>
+	<option>
+	  <flag>--loose</flag>
+	  <effect>usar critério de convergência mais relaxado</effect>
+	</option>
       </options>
       <examples>
         <example>ar1 1 0 2 4 6 7</example>
-	<example>ar1 y 0 xlist --hilu --no-corc</example>
 	<example>ar1 y 0 xlist --pwe</example>
+	<example>ar1 y 0 xlist --hilu --no-corc</example>
       </examples>
     </usage>
 
@@ -478,7 +595,7 @@
 	primeira-ordem.
       </para>
       <para>
-	O métudo por omissão é o procedimento iterativo de Cochrane&ndash;Orcutt
+	O método por omissão é o procedimento iterativo de Cochrane&ndash;Orcutt
 	(ver, por exemplo, a Secção 9.4 de Ramanathan, 2002). A iteração termina
 	quando as estimativas sucessivas do coeficiente de autocorrelação não 
 	diferirem por mais de 0.001 ou após 20 iterações.
@@ -502,9 +619,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelo/Série temporal/Cochrane-Orcutt</menu-path>
-      <menu-path>/Modelo/Série temporal/Hildreth-Lu</menu-path>
-      <menu-path>/Modelo/Série temporal/Prais-Winsten</menu-path>
+      <menu-path>/Modelo/Série temporal/AR(1)</menu-path>
     </gui-access>
 
   </command>
@@ -754,6 +869,7 @@
     </usage>
 
     <description>
+
       <para context="cli">
 	Se não for dada a lista de <repl>variáveis-independentes</repl>,
         é estimado um modelo ARIMA (Média Móvel, Autoregressiva, Integrada)
@@ -765,6 +881,7 @@
         de 1 em <repl>d</repl>, significa que a primeira diferença da variável
         dependente deve ser obtida antes de estimar os parâmetros ARMA.
       </para>
+
       <para context="cli">
 	Se você pretender apenas incluir no modelo desfasamentos específicos
 	AR ou MA (e não todos os desfasamentos até uma certa ordem) você pode
@@ -774,6 +891,7 @@
 	(b) uma expressão tal como <lit>{1 4}</lit>; ou seja, um conjunto de 
 	desfasamentos separados por espaços dentro de chavetas.
       </para>
+
       <para context="cli">
 	Os valores inteiros opcionais,<repl>P</repl>, <repl>D</repl> e
 	<repl>Q</repl> representam respectivamente, a sazonalidade AR,
@@ -938,6 +1056,7 @@
 	<math>z</math> é a raiz em questão e <math>r</math>
 	 o seu módulo.
       </para>
+
     </description>
 
     <gui-access>
@@ -945,8 +1064,8 @@
       <other-access>Menu de contexto da janela principal (selecção singular)</other-access>
     </gui-access>
 
-
   </command>
+
   <command name="bfgs-config" section="Estimation" label="Opções do maximizador BFGS"
     context="gui">
     <description>
@@ -1226,9 +1345,7 @@
         sai de dentro do ciclo (o mais interior).  
         Ver também <cmdref targ="loop"/>.
       </para> 
-
     </description>
-
   </command>
 
   <command name="bwfilter" section="Transformations" context="gui"
@@ -1302,6 +1419,11 @@
 	  <flag>--quiet</flag>
 	  <effect>não mostrar estimativas para o modelo aumentado</effect>
 	</option>
+	<option>
+	  <flag>--limit-to</flag>
+	  <optparm>list</optparm>
+	  <effect>limit test to subset of regressors</effect>
+	</option>	
       </options>
       <examples>
         <example>chow 25</example>
@@ -1330,7 +1452,6 @@
     <gui-access>
       <menu-path>Janela do modelo, /Testes/Teste de Chow</menu-path>
     </gui-access>
-
   </command>
 
   <command name="clear" section="Programming" context="cli">
@@ -1450,11 +1571,16 @@
 	</option>
 	<option>
 	  <flag>--test-down</flag>
+	  <optparm optional="true">criterion</optparm>
 	  <effect>ordem de desfasamento automática</effect>
 	</option>
 	<option>
 	  <flag>--verbose</flag>
 	  <effect>mostrar detalhes adicionais das regressões</effect>
+	</option>
+	<option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
 	</option>
       </options>
       <examples>
@@ -1628,6 +1754,7 @@
        seleccionar um caso estão explicados no 
        <guideref targ="chap:vecm"/>.
       </para>
+
       <para context="gui">
         A inclusão de termos determinísticos no modelo é controlada por
         intermédio dos botões das opções.  Por omissão, se não tiver sido
@@ -1668,6 +1795,7 @@
         auxiliares sazonais.  Esta opção apenas está disponível para dados
         trimestrais ou mensais.
       </para>
+
       <para context="gui">
         Se os dados são trimestrais ou mensais, fica disponível a seleção
         de uma opção que lhe permite incluir um conjunto de variáveis
@@ -1676,6 +1804,7 @@
         auxiliares que formam o ponto de partida do procedimento da estimação
         de máxima verosimilhança de Johansen.
       </para>
+
       <para context="notex">
 	A seguinte tabela serve como um guia à interpretação dos resultados
         apresentados pelo teste, num caso de 3-variáveis.  <lit>H0</lit>
@@ -1712,6 +1841,7 @@
 	\end{tabular}
 	\end{center}
       </para>
+
       <para>
 	Ver também o comando <cmdref targ="vecm"/>.
       </para>
@@ -1736,8 +1866,7 @@
 
       <para>Adicionalmente, por vezes você pode querer compactar um conjunto
         de dados para uma frequência mais baixa (eventualmente, antes de
-        acrescentar uma variável de baixa-frequência ao conjunto de dados).
-      </para>
+        acrescentar uma variável de baixa-frequência ao conjunto de dados).</para>
 
       <para>Gretl oferece quatro opções de compactação:</para>
 
@@ -1840,7 +1969,7 @@
       </examples>
     </usage>
 
-    <description>
+    <description context="gui">
       <para>
 	Apresenta os coeficientes de correlação emparelhados 
         (correlação momento-produto de Pearson) para as variáveis indicadas.
@@ -1895,6 +2024,10 @@
         <argument optional="true">ordem</argument>
       </arguments>
       <options>
+       <option>
+	  <flag>--bartlett</flag>
+	  <effect>use Bartlett standard errors</effect>
+        </option>	
        <option>
 	  <flag>--plot</flag>
 	  <optparm>modo ou nome-de-ficheiro</optparm>
@@ -2079,6 +2212,32 @@
 
   </command>
 
+  <command name="daily-purge" section="Dataset" 
+	   label="Purge daily data" context="gui">
+    <description>
+      <para>
+	If a daily dataset is nominally on a 7-day calendar but
+	in fact only includes business-day data, it is recommended
+	that you delete the blank weekend rows, thereby switching
+	to a 5-day calendar.
+      </para>
+      <para>
+	If a business-daily dataset contains a relatively small number
+	of rows with no data entries (presumably due to trading
+	holidays) you may wish to delete these rows. In effect, this
+	means treating the missing values for holidays as non-existent
+	rather than truly <quote>missing</quote>, and treating the
+	trading days as forming a continuous time-series.
+      </para>
+      <para>
+	Note that if you take either of these options gretl will
+	nonetheless preserve the date information, and it will be
+	possible to reconstruct the full calendar dataset later
+	if that's required.
+      </para>
+    </description>
+  </command>
+
   <command name="data" section="Dataset" 
     label="Importar de uma base de dados" context="cli">
 
@@ -2087,6 +2246,15 @@
         <argument>lista-de-variáveis</argument>
       </arguments>
       <options>
+	<option>
+	  <flag>--compact</flag>
+	  <optparm>method</optparm>
+	  <effect>specify compaction method</effect>
+	</option>
+	<option>
+	  <flag>--interpolate</flag>
+	  <effect>do interpolation for low-frequency data</effect>
+	</option>	
 	<option>
 	  <flag>--quiet</flag>
 	  <effect>não reportar resultados exceto quando hajam erros</effect>
@@ -2137,6 +2305,28 @@
 	Soma; <quote>sum</quote>.  Se não tiver sido indicado
 	nenhum métod, será usado a Média.
       </para>
+      <para>
+	If the series to be read are of lower frequency than the
+	working dataset, the default is to repeat the values of the
+	added data as required, but the <opt>interpolate</opt> option
+	can be used to request interpolation using the method of <cite
+	key="chowlin71">Chow and Lin (1971)</cite>: the regressors are
+	a constant and quadratic trend and an AR(1) disturbance
+	process is assumed. Note, however, that this option is
+	available only for conversion from quarterly data to monthly
+	or annual data to quarterly.
+      </para>
+      <para>
+	In the case of native gretl databases (only), the
+	<quote>glob</quote> characters <lit>*</lit> and <lit>?</lit>
+	can be used in <repl>varlist</repl> to import series that
+	match the given pattern. For example, the following will
+	import all series in the database whose names begin with
+	<lit>cpi</lit>:
+      </para>
+      <code>
+	data cpi*
+      </code>
 
     </description>
 
@@ -2145,6 +2335,55 @@
     </gui-access>
 
   </command>
+
+  <command name="data-files" section="Programming" 
+	   label="Data files" context="gui">
+    <description>
+      <para>
+	This dialog enables you to specify additional files to be
+	included with a function package. Including such material
+	implies that the package takes the form of a zip file.  If
+	gretl is to build the zip file for you, all files referenced
+	here must be present in the same directory as the gfn file.
+	Sub-directories can be listed as well as regular files; in
+	that case it is implied that all of their contents should be
+	included in the zip package.
+      </para>
+      <para>
+	There are two main intended uses for this facility. First, you
+	can include a data file for use with the package's sample
+	script, if none of the data files supplied with the gretl
+	distribution are suitable. In this case the data should be in
+	gretl native format (<lit>gdt</lit> or binary
+	<lit>gdtb</lit>). Second, if your package requires a big
+	matrix (for example, holding critical values for a specialized
+	test statistic) it may be more convenient to include this as a
+	gretl matrix file (<lit>mat</lit>) than to assemble the matrix
+	via multiple hansl statements.
+      </para>
+      <para>
+	To access a packaged <lit>gdt</lit> or <lit>gdtb</lit> file
+	from a sample script, use the <opt>frompkg</opt> option with
+	the <lit>open</lit> command, supplying the name of the
+	package as a parameter, as in
+      </para>
+      <code>
+	open almon.gdt --frompkg=almonreg
+      </code>
+      <para>
+	To read a packaged matrix file from within your package code,
+	use the built-in string variable <lit>$pkgdir</lit>, as in
+      </para>
+      <code>
+	string mname = sprintf("%s/A.mat", $pkgdir)
+	matrix A = mread(mname)
+      </code>
+      <para>
+	(Note that <quote><lit>/</lit></quote> will work OK as
+	path separator on MS Windows.)
+      </para>
+    </description>
+  </command>  
 
   <command name="dataset" section="Dataset" 
     label="Manipular o conjunto de dados" context="cli">
@@ -2324,18 +2563,15 @@
     label="Apagar variáveis" context="cli">
 
     <usage>
-      <arguments>
-        <argument>nome-de-variável</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>delete</lit> <repl>lista-de-variáveis<</repl></altform>
+        <altform><lit>delete</lit> <repl>nome-de-variável</repl></altform>
+	<altform><lit>delete --type=</lit><repl>nome-de-tipo/repl></altform>
+      </altforms>
       <options>
 	<option>
 	  <flag>--db</flag>
 	  <effect>apaga séries em base de dados</effect>
-	</option>
-	<option>
-	  <flag>--type</flag>
-	  <optparm>nome-de-tipo</optparm>
-	  <effect>todas as variáveis do tipo dado</effect>
 	</option>
       </options>
     </usage>
@@ -2765,6 +3001,37 @@
 
   </command>
 
+  <command name="dummify" section="Transformations" context="gui"
+    label="Create sets of dummies">
+
+    <description>
+      <para>
+	The <quote>dummify</quote> operation is available only
+	for discrete-valued series. Its effect is to create a
+	set of dummy variables coding for the distinct values
+	present in the series.
+      </para>
+      <para>
+	For example suppose one has a series named <lit>race</lit>,
+	with values 1 for <quote>white</quote>, 2 for
+	<quote>black</quote>, 3 for <quote>hispanic</quote> and 4 for
+	<quote>other</quote>. To dummify this series means to create 4
+	dummy variables: the first has value 1 for all observations at
+	which race = 1, zero otherwise; the second has value 1 for all
+	observations at which race = 2, zero otherwise; and so on.
+      </para>
+      <para>
+	In practice it's likely that for a discrete series with
+	<math>k</math> categories you will want to create only
+	<math>k</math> &minus; 1 dummies, to avoid falling into
+	the so-called <quote>dummy variable trap</quote>. Hence you
+	have the option of dropping either the lowest or the
+	highest value from the coding.
+      </para>
+    </description>
+
+  </command>
+
   <command name="dummify" section="Transformations" 
     label="Cria conjuntos de variáveis auxiliares ('dummies')" context="cli">
 
@@ -2819,6 +3086,10 @@
 	ols y dummify(x)
       </code>
     </description>
+
+    <gui-access>
+      <other-access>Main window pop-up menu (single selection)</other-access>
+    </gui-access>
 
   </command>
 
@@ -2930,6 +3201,40 @@
     </description>
   </command>
 
+  <command name="ema-filter" section="Transformations" context="gui"
+    label="Exponential Moving Average">
+
+    <description>
+      <para>
+	The formula for the exponential moving average (EMA) employed
+	by gretl is that of <cite key="roberts59">Roberts
+	(1959)</cite>, namely
+      </para>
+      <para>
+	<math>s</math><sub>t</sub> =
+	&agr;<math>y</math><sub>t</sub> +
+        (1&minus;&agr;)<math>s</math><sub>t&minus;1</sub>
+      </para>
+      <para>
+	where <math>s</math> is the EMA, <math>y</math> is the
+	original series, and &agr; is a constant between 0 and
+	1. Larger values of &agr; place more weight on the current
+	observation; smaller values produce greater smoothing.
+      </para>
+      <para>
+	The <quote>initial EMA value</quote>, however specified, is
+	taken to be the last pre-sample value, meaning that
+	calculation of the filter starts with the first observation in
+	the current sample range.
+      </para>
+      <para>
+	For a command-line equivalent, see the <fncref targ="movavg"/>
+	function.
+      </para>
+    </description>
+
+  </command>  
+
   <command name="end" section="Programming" 
     label="Termina um bloco de comandos" context="cli">
     <description>
@@ -2958,13 +3263,15 @@
     label="Mostra o modelo como equação" context="cli">
 
     <usage>
-      <arguments>
-        <argument optional="true">-f nome-de-ficheiro</argument>
-      </arguments>
       <options>
         <option>
 	  <flag>--complete</flag>
 	  <effect>Cria um documento completo</effect>
+        </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>nome-de-ficheiro</optparm>
+	  <effect>envia a saída para o ficheiro especificado</effect>
         </option>
       </options>
     </usage>
@@ -3117,6 +3424,29 @@
       </para>
     </description>
 
+  </command>
+
+  <command name="eval" section="Utilities">
+    <usage>
+      <arguments>
+        <argument>expression</argument>
+      </arguments>
+      <examples>
+        <example>eval x</example>
+	<example>eval inv(X'X)</example>
+	<example>eval sqrt($pi)</example>
+      </examples>
+    </usage>    
+    <description>
+      <para>
+	This command makes gretl act like a glorified calculator.  The
+	program evaluates <repl>expression</repl> and prints its
+	value. The argument may be the name of a variable, or
+	something more complicated. In any case, it should be an
+	expression which could stand as the right-hand side of an
+	assignment statement.
+      </para>
+    </description>
   </command>
 
   <command name="expand" section="Dataset" context="gui"
@@ -3383,7 +3713,6 @@
 	completos para ficheiros, senão os ficheiros são escritos na
 	diretoria de trabalho do gretl.
       </para>
-
       <para>
 	A natureza dos erros padrão de predição (se disponíveis)
 	depende da natureza do modelo e da predição.  Para modelos
@@ -3403,6 +3732,72 @@
     <gui-access>
       <menu-path>Janela de Modelo, /Análise/Predições...</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="flush" section="Programming" context="cli">
+
+    <description>
+     <para>
+       This simple command (no arguments, no options) is intended for
+       use in time-consuming scripts that may be executed via the
+       gretl GUI (it is ignored by the command-line program), to give
+       the user a visual indication that things are moving along and
+       gretl is not <quote>frozen</quote>.
+     </para>
+     <para>
+       Ordinarily if you launch a script in the GUI no output is shown
+       until its execution is completed, but the effect of invoking
+       <lit>flush</lit> is as follows:
+     </para>
+     <ilist>
+       <li>
+	 <para>
+	   On the first invocation, gretl opens a window, displays the
+	   output so far, and appends the message
+	   <quote>Processing...</quote>.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   On subsequent invocations the text shown in the output
+	   window is updated, and a new <quote>processing</quote>
+	   message is appended.
+	 </para>
+       </li>
+     </ilist>
+     <para>
+       When execution of the script is completed any remaining output
+       is automatically flushed to the text window.
+     </para>
+     <para>
+       Please note, there is no point in using <lit>flush</lit> in
+       scripts that take less than (say) 5 seconds to execute. Also
+       note that this command should not be used at a point in the
+       script where there is no further output to be printed, as the
+       <quote>processing</quote> message will then be misleading
+       to the user.
+     </para>
+     <para>
+       The following illustrates the intended use of <lit>flush</lit>:
+     </para>
+     <code>
+       set echo off
+       scalar n = 10
+       loop i=1..n
+           # do some time-consuming operation
+           loop 100 --quiet
+               a = mnormal(200,200)
+               b = inv(a)
+           endloop
+           # print some results
+           printf "Iteration %2d done\n", i
+           if i &lt; n
+               flush
+           endif
+       endloop
+     </code>
+    </description>
 
   </command>
 
@@ -3440,6 +3835,10 @@
 	com R e Octave; tem o efeito de tornar o corrente conjunto de dados de
 	gretl disponível dentro do programa alvo, usando o nome <lit>gretldata</lit>.
       </para>
+      <code>
+	list Rlist = x1 x2 x3
+	foreign language=R --send-data=Rlist
+      </code>
       <para>
 	Para detalhes e exemplos ver <guideref targ="chap:gretlR"/>.
       </para>
@@ -3848,6 +4247,16 @@
     </usage>
 
     <description>
+
+      <para>
+	NOTE: this command has undergone numerous changes and
+	enhancements since the following help text was written, so for
+	comprehensive and updated info on this command you'll want to
+	refer to <guideref targ="chap-genr"/>. On the other hand, this
+	help does not contain anything actually erroneous, so take the
+	following as <quote>you have this, plus more</quote>.
+      </para>
+
       <para context="cli">
 	No contexto apropriado, o nomes; <lit>series</lit>, <lit>scalar</lit>
 	e <lit>matrix</lit> são sinónimos para este comando.
@@ -4385,6 +4794,7 @@
         <example>gnuplot y1 y2 x</example>
         <example>gnuplot x --time-series --with-lines</example>
 	<example>gnuplot wages educ gender --dummy</example>
+	<example>gnuplot y x --fit=quadratic</example>
 	<example>gnuplot y1 y2 x --with-lines=y2</example>
       </examples>
     </usage>
@@ -4431,7 +4841,6 @@
       <code context="cli">
 	gnuplot 2 1 --matrix=M
       </code>
-
       <para>
 	Em modo interativo o gráfico é apresentado imediatamente. Em modo de 
 	sequência de comandos o comportamento por omissão é o de criar um 
@@ -4452,7 +4861,38 @@
 	em modo interativo. Se o nome de ficheiro tiver outra qualquer extensão que
 	não as mencionadas, será escrito um ficheiro de comandos gnuplot.
       </para>
-
+      <ilist>
+	<li>
+	  <para>
+	    <lit>linear</lit>: show the OLS fit regardless of its
+	    level of statistical significance.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>none</lit>: don't show any fitted line.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>inverse</lit>, <lit>quadratic</lit>,
+	    <lit>cubic</lit>, <lit>semilog</lit> or <lit>linlog</lit>:
+	    show a fitted line based on a regression of the specified
+	    type. By <lit>semilog</lit>, we mean a regression of log
+	    <math>y</math> on <math>x</math>; the fitted line
+	    represents the conditional expectation of <math>y</math>,
+	    obtained by exponentiation. By <lit>linlog</lit> we mean a
+	    regression of <math>y</math> on the log of <math>x</math>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>loess</lit>: show the fit from a robust locally
+	    weighted regression (also is sometimes known as
+	    <quote>lowess</quote>).
+	  </para>
+	</li>	
+      </ilist>
       <para>
 	As várias opções de <quote>ajustamento</quote> são aplicáveis
 	apenas nos caso de gráficos de dispersão bivariados e nos de uma
@@ -4571,6 +5011,17 @@
 	    de execução na barra de ferramentas da janela de edição).
 	  </para>
 	</li>
+	<li>
+	  <para>
+	    Another way to save the plot commands (or to save
+	    the displayed plot in formats other than EPS or PNG) is to
+	    use <quote>Edit</quote> item on a graph's pop-up menu to
+	    invoke the graphical controller, then click on the
+	    <quote>Output to file</quote> tab in the controller.  You
+	    are then presented with a drop-down menu of formats in
+	    which to save the graph.
+	  </para>
+	</li>
       </ilist>
 
       <para>
@@ -4583,6 +5034,16 @@
 
   <command name="graphpg" section="Graphs" label="Página dos gráficos de Gretl">
 
+    <usage>
+      <altforms>
+        <altform><lit>graphpg add</lit></altform>
+	<altform><lit>graphpg fontscale </lit><repl>value</repl></altform>
+	<altform><lit>graphpg show</lit></altform>
+	<altform><lit>graphpg free</lit></altform>
+	<altform><lit>graphpg --output=</lit><repl>filename</repl></altform>
+      </altforms>
+    </usage>
+
     <description>
 
       <para>
@@ -4590,7 +5051,6 @@
 	tiver instalado o sistema de produção de texto &latex;, e puder gerar e 
 	visionar documentos PDF ou PostScript.
       </para>
-
       <para>
 	Na janela de sessão por ícones, você pode arrastar até oito gráficos
 	para dentro de um ícone de página de gráficos.  Quando você fizer
@@ -4599,7 +5059,6 @@
 	selecionados e apresentada no visionador adequado.  A partir deste você
 	poderá imprimir a página.
       </para>
-
       <para>
 	Para limpar a página de gráficos, clicar com o botão direito no seu ícone e
 	selecionar <quote>Limpar</quote>.
@@ -4735,6 +5194,20 @@
 	  </para>
 	</li>	
       </ilist>
+      <para>
+	In addition certain functions may be marked as
+	<quote>no-print</quote>. Usually, when a function is invoked
+	via the GUI program, gretl opens a window to display its text
+	output. By checking this box you are telling gretl not to do
+	this, since no text output should be expected.
+      </para>
+      <para>
+	Finally, the <lit>gui-main</lit> function (if any) can be
+	marked as <quote>menu-only</quote>. This tells gretl that the
+	function in question is specifically designed to be called
+	from the GUI menu to which it is attached, and should not be
+	presented to users otherwise.
+      </para>
     </description>
   </command>
 
@@ -4940,6 +5413,13 @@
         matriz de covariância: o estimador de Verosimilhança Quasi-Maximum
         (QML), e estimador de Bollerslev-Wooldridge (BW).
       </para>
+      <para>
+	By default gretl uses the Student <math>t</math> distribution
+	when calculating p-values based on robust standard errors in
+	the context of least squares estimators. The option labeled
+	<quote>Use the normal distribution for robust p-values</quote>
+	can be used to change this behavior.
+      </para>
     </description>
 
   </command>
@@ -5066,6 +5546,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--no-squares</flag>
+	  <effect>see below</effect>
+	</option>	
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
@@ -5086,14 +5570,28 @@
 	error variance, then finally (c) weighted least squares, using as
 	weight the reciprocal of the estimated variance.
       </para>
-      <para>
-	In the auxiliary regression (b) we regress the log of the squared
-	residuals from the first OLS on the original regressors and their
-	squares.  The log transformation is performed to ensure that the
-	estimated variances are non-negative.  Call the fitted values from
-	this regression <math>u</math><sup>*</sup>.  The weight series for the
-	final WLS is then formed as 1/exp(<math>u</math><sup>*</sup>).
+      <para context="cli">
+	In the auxiliary regression (b) we regress the log of the
+	squared residuals from the first OLS on the original
+	regressors and their squares (by default), or just on the
+	original regressors (if the <opt>no-squares</opt> option is
+	given).  The log transformation is performed to ensure that the
+	estimated variances are all non-negative.  Call the fitted
+	values from this regression <math>u</math><sup>*</sup>.  The
+	weight series for the final WLS is then formed as
+	1/exp(<math>u</math><sup>*</sup>).
       </para>
+      <para context="gui">
+	In the auxiliary regression (b) we regress the log of the
+	squared residuals from the first OLS on the original
+	regressors and their squares (by default), or just on the
+	original regressors (if the <quote>include squares</quote> box
+	is cleared).  The log transformation is performed to ensure
+	that the estimated variances are all non-negative.  Call the
+	fitted values from this regression <math>u</math><sup>*</sup>.
+	The weight series for the final WLS is then formed as
+	1/exp(<math>u</math><sup>*</sup>).
+      </para>      
     </description>
 
     <gui-access>
@@ -5245,11 +5743,83 @@
 
   </command>
 
+  <command name="install" section="Utilities" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>pkgname</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--local</flag>
+	  <effect>install from local file</effect>
+        </option>
+        <option>
+	  <flag>--remove</flag>
+	  <effect>see below</effect>
+        </option>	
+        <option>
+	  <flag>--purge</flag>
+	  <effect>see below</effect>
+        </option>
+      </options>
+     <examples>
+        <example>install armax</example>
+        <example>install felogit.gfn</example>
+	<example>install /path/to/myfile.gfn --local</example>
+	<example>install http://foo.bar.net/gretl/myfile.gfn</example>
+     </examples>
+    </usage>    
+
+    <description>
+      <para>
+	Installer for gretl function packages (<lit>gfn</lit> or
+	<lit>zip</lit> files).
+      </para>
+      <para>
+	If this command is given the <quote>plain</quote> name of a
+	gretl function package (as in the first two examples) the
+	action is to download the specified package from the gretl
+	server and install it on the local machine. In this case
+	it is not necessary to supply a filename extension.
+      </para>
+      <para>
+	If the <opt>--local</opt> option is given, the
+	<repl>pkgname</repl> argument should be the path to an
+	uninstalled package file on the local machine, with the
+	correct extension. The action is to copy the file into place
+	(<lit>gfn</lit>), or unzip it into place (<lit>zip</lit>),
+	<quote>into place</quote> meaning where the <cmdref
+	targ="include"/> command will find it.
+      </para>
+      <para>
+	When no option is given, if <repl>pkgname</repl> begins with
+	<lit>http://</lit>, the effect is to download a package file
+	from a specified server and install it locally.
+      </para>
+      <para>
+	With the <opt>--remove</opt> or <opt>--purge</opt> option the
+	inverse operation is performed; that is, an installed package
+	is uninstalled. If just <opt>--remove</opt> is given, the
+	specified package is unloaded from memory and is removed from
+	the GUI menu to which it is attached, if any. If the
+	<opt>--purge</opt> option is given then in addition to the
+	actions just mentioned the package file is deleted. (If the
+	package is installed in its own subdirectory, the whole
+	subdirectory is deleted.)
+      </para>      
+    </description>
+
+    <gui-access>
+      <menu-path>/Tools/Function packages/On server</menu-path>
+    </gui-access>
+
+  </command>  
+
   <command name="intreg" section="Estimation" label="Interval regression model">
 
     <usage>
       <arguments>
-        <argument></argument>
         <argument>minvar</argument>
         <argument>maxvar</argument>
         <argument>indepvars</argument>
@@ -5400,15 +5970,20 @@
 	  <optparm>column-name,format-string</optparm>
 	  <effect>see below</effect>
 	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>report on progress</effect>
+	</option>	
       </options>
     </usage>
 
     <description>
       <para>
 	This command imports a data series from the source
-	<repl>filename</repl> (which must be a delimited text data
-	file) under the name <repl>varname</repl>. For details please
-	see <guideref targ="chap:join"/>; here we just give a brief
+	<repl>filename</repl> (which must be either a delimited text
+	data file or a <quote>native</quote> gretl data file) under
+	the name <repl>varname</repl>. For details please see
+	<guideref targ="chap:join"/>; here we just give a brief
 	summary of the available options.
       </para>
       <para>
@@ -5478,7 +6053,25 @@
 	end kalman
       </code>
       <para>
-	Please see <guideref targ="chap:kalman"/> for details.
+	would set up a linear, time invariant state-space model with
+	observation equation 
+	<equation status="display" 
+	  tex="\[y_t=H'\alpha_t\]"
+	  ascii="y(t) = H'a(t)"
+	  graphic="kalman1"/> 
+	and state transition equation
+	<equation status="display" 
+	  tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
+	  ascii="a(t+1) = F a(t) + u(t)"
+	  graphic="kalman2"/> 
+	where <math>V(u) = Q</math>.
+      </para>
+      <para>
+	More complex state-space models are handled via the additional
+	keywords <lit>obsx</lit>, <lit>obsxmat</lit>,
+	<lit>obsvar</lit>, <lit>inistate</lit>, <lit>inivar</lit> and
+	<lit>stconst</lit>. Please see <guideref targ="chap:kalman"/>
+	for details.
       </para>
 	<para>
 	  <seelist>
@@ -5561,21 +6154,30 @@
       </para>
 
       <para context="cli">
-	The order argument determines the size of the window used for
-	Bartlett smoothing.  If the <opt>--verbose</opt> option is
-	chosen the results of the auxiliary regression are printed,
-	along with the estimated variance of the random walk component
-	of the variable.
+	The <repl>order</repl> argument determines the size of the
+	window used for Bartlett smoothing. If a negative value is
+	given this is taken as a signal to use an automatic window
+	size of 4(<math>T</math>/100)<sup>0.25</sup>, where
+	<math>T</math> is the sample size.
+      </para>
+
+      <para context="cli">
+	If the <opt>--verbose</opt> option is chosen the results of
+	the auxiliary regression are printed, along with the estimated
+	variance of the random walk component of the variable.
       </para>
 
       <para>
-	The critical values shown for the test statistic are based on the
-	response surfaces estimated by <cite key="sephton95">Sephton
-	(Economics Letters, 1995)</cite>, which are more accurate for
-	small samples than the values given in the original KPSS
-	article. When the test statistic lies between the 10 percent and 1
-	percent critical values a p-value is shown; this is obtained
-	by linear interpolation and should not be taken too literally.
+	The critical values shown for the test statistic are based on
+	response surfaces estimated in the manner set out by <cite
+	key="sephton95">Sephton (Economics Letters, 1995)</cite>,
+	which are more accurate for small samples than the values
+	given in the original KPSS article. When the test statistic
+	lies between the 10 percent and 1 percent critical values a
+	p-value is shown; this is obtained by linear interpolation and
+	should not be taken too literally.  See the <fncref
+	targ="kpsscrit"/> function for a means of obtaining these
+	critical values programmatically.
       </para>
 
       <subhead context="cli">Panel data</subhead>
@@ -6368,20 +6970,42 @@
     <description>
       <para>
 	Supports creation of a gretl function package via the command
-	line. The filename argument represents the name of the package
-	to be created, and should have the <lit>.gfn</lit>
-	extension. Please see <guideref targ="chap:functions"/> for
-	details.
+	line. The mode of operation of this command depends on the
+	extension of <repl>filename</repl>, which must be either
+	<lit>.gfn</lit> or <lit>.zip</lit>.
       </para>
+      <subhead>Gfn mode</subhead>
       <para>
-	The option flags support the writing of auxiliary files for
-	use with gretl <quote>addons</quote>. The index file is a
-	short XML document containing basic information about the
-	package; it has the same basename as the package and the
-	extension <lit>.xml</lit>. The translations file contains
+	Writes a gfn file. It is assumed that a package specification
+	file, with the same basename as <repl>filename</repl> but with
+	the extension <lit>.spec</lit>, is accessible, along with any
+	auxiliary files that it references. It is also assumed that
+	all the functions to be packaged have been read into memory.
+      </para>
+      <subhead>Zip mode</subhead>
+      <para>
+	Writes a zip package file (gfn plus other materials). If
+	a gfn file of the same basename as <repl>filename</repl>
+	is found, it forms the basis of the zip package. If no
+	gfn file is found, the program first attempts to build
+	the gfn, as described above.
+      </para>
+      <subhead>Gfn options</subhead>
+      <para>
+	The option flags support the writing of auxiliary files,
+	intended for use with gretl <quote>addons</quote>. The index
+	file is a short XML document containing basic information
+	about the package; it has the same basename as the package and
+	the extension <lit>.xml</lit>. The translations file contains
 	strings from the package that may be suitable for translation,
 	in C format; for package <lit>foo</lit> this file is named
-	<lit>foo-i18n.c</lit>.
+	<lit>foo-i18n.c</lit>. These files are not produced if the
+	command is operating in zip mode and a pre-existing gfn
+	file is used.
+      </para>
+      <para>
+	For details on all of this, see the the <book>Gretl Function
+	Package Guide</book>.
       </para>
     </description>
 
@@ -6453,20 +7077,20 @@
       </para>
       <para>
 	By default the test statistic is calculated on the assumption
-	that the variances are equal for the two variables; with the
+	that the variances are equal for the two variables. With the
 	<opt>--unequal-vars</opt> option the variances are assumed to
-	be different.  This will make a difference to the test
-	statistic only if there are different numbers of non-missing
-	observations for the two series.
+	be different; in this case the degrees of freedom for the test
+	statistic are approximated as per <cite
+	key="satter46">Satterthwaite (1946)</cite>.
       </para>
       <para context="gui">
-	Calculates the t statistic for the null hypothesis that the
-	population means are equal for two selected series, and
-	shows its p-value.  The command may be called with or without
-	the assumption that the variances are equal for the two
-	variables (although this will make a difference to the test
-	statistic only if there are different numbers of non-missing
-	observations for the two series.)
+	Calculates the t-test for the null hypothesis that the
+	population means are equal for two selected series, and shows
+	its p-value.  The command may be called with or without the
+	assumption that the variances are equal for the two variables.
+	In the latter case the degrees of freedom for the test are
+	approximated as per <cite key="satter46">Satterthwaite
+	(1946)</cite>.
       </para>
     </description>
 
@@ -6502,27 +7126,36 @@
 	   label="Menu attachment" context="gui">
     <description>
       <para>
-	This dialog enables you to specify a menu attachment for
-	a function package. To do this you must complete the three
-	fields in the dialog box.
+	This dialog enables you to specify a menu attachment for a
+	function package. To do this you must complete the following
+	three fields in the dialog box.
       </para>
-      <subhead>Label</subhead>
+      <subhead>1. Label</subhead>
       <para>
 	This requires a short label string, which will appear as
 	the menu entry for the package.
       </para>
-      <subhead>Window</subhead>
+      <subhead>2. Window</subhead>
       <para>
 	Select <quote>model window</quote> for a function package that
 	does something with a gretl model, and should appear in the
 	menu bar in a gretl model window. Otherwise, select
 	<quote>main window</quote>.
       </para>
-      <subhead>Menu tree</subhead>
+      <subhead>3. Menu tree</subhead>
       <para>
 	Select the position within the menu tree (for either the
 	main window or the model window, as chosen above) where the
 	entry for the package should appear.
+      </para>
+      <subhead>Optional elements</subhead>
+      <para>
+	In addition you can use the <quote>GUI help text</quote>
+	button to add or edit GUI-specific help text, to be shown when
+	the package is called from a menu. And if the package is
+	intended to be called from a model window you can specify a
+	certain type of model (identified by its gretl command-word)
+	as a requirement.
       </para>
     </description>
   </command>
@@ -6740,11 +7373,14 @@
 	results in the form of a table, where each column contains the
 	results (coefficient estimates and standard errors) for a
 	given model, and each row contains the estimates for a given
-	variable across the models.</para>
+	variable across the models.
+      </para>
 
-      <para>Gretl provides a means of constructing such a table (and
+      <para>
+	Gretl provides a means of constructing such a table (and
 	copying it in plain text, &latex; or Rich Text Format).  Here is
-	how to do it:</para>
+	how to do it:
+      </para>
 
       <nlist>
 	<li><para>Estimate a model which you wish to include in the
@@ -6799,7 +7435,7 @@
       </para>
       <para>
 	To call for printing of the model table, use the flag
-	<opt>output=</opt> plus a filename. If the filename has the
+	<opt>--output=</opt> plus a filename. If the filename has the
 	suffix <quote><lit>.tex</lit></quote>, the output will be in
 	&tex; format; if the suffix is <quote><lit>.rtf</lit></quote>
 	the output will be RTF; otherwise it will be plain text.
@@ -6914,6 +7550,10 @@
 	  <flag>--quiet</flag>
 	  <effect>don't print details</effect>
         </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
+        </option>
       </options>
     </usage>
 
@@ -6963,11 +7603,13 @@
 	implicit in the AR(1) specification.
       </para>
       <para>
-	By default, the program prints the auxiliary regression on which the
-	test statistic is based, where applicable.  This may be suppressed by
-	using the <opt>--quiet</opt> flag.  The test statistic and its p-value
-	may be retrieved using the accessors <lit>$test</lit> and
-	<lit>$pvalue</lit> respectively.
+	By default, the program prints the auxiliary regression on
+	which the test statistic is based, where applicable.  This may
+	be suppressed by using the <opt>--quiet</opt> flag (minimal
+	printed output) or the <opt>--silent</opt> flag (no printed
+	output).  The test statistic and its p-value may be retrieved
+	using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
+	respectively.
       </para>
       <para>
 	When a model has been estimated by two-stage least squares (see
@@ -7715,8 +8357,13 @@
 	</option>
 	<option>
 	  <flag>--preserve</flag>
-	  <effect>preserve any matrices and scalars</effect>
+	  <effect>preserve variables other than series</effect>
 	</option>
+	<option>
+	  <flag>--frompkg</flag>
+	  <optparm>pkgname</optparm>
+	  <effect>see below</effect>
+	</option>	
 	<option>
 	  <flag>--www</flag>
 	  <effect>use a database on the gretl server</effect>
@@ -7734,10 +8381,10 @@
 
     <description>
       <para>
-	Opens a data file.  If a data file is already open, it is
-	replaced by the newly opened one. To add data to the current
-	dataset, see <cmdref targ="append"/> and (for greater
-	flexibility) <cmdref targ="join"/>.
+	Opens a data file or database.  If a data file is already
+	open, it is replaced by the newly opened one. To add data to
+	the current dataset, see <cmdref targ="append"/> and (for
+	greater flexibility) <cmdref targ="join"/>.
       </para>
       <para>
 	If a full path is not given, the program will search some relevant
@@ -7748,15 +8395,22 @@
 	(native, plain text, CSV, MS Excel, Stata, SPSS, etc.).
       </para>
       <para>
+	If the <opt>frompkg</opt> option is used, gretl will look for
+	the specified data file in the subdirectory associated with
+	the function package specified by <repl>pkgname</repl>.
+      </para>
+      <para>
 	If the <repl>filename</repl> argument takes the form of a
 	URI starting with <lit>http://</lit>, then gretl will attempt
 	to download the indicated data file before opening it.
       </para>
       <para>
 	By default, opening a new data file clears the current gretl
-	session, which includes deletion of any named matrices and
-	scalars. If you wish to keep any currently defined matrices
-	and scalars, use the <opt>--preserve</opt> option.
+	session, which includes deletion of all named variables,
+	including matrices, scalars and strings.  If you wish to keep
+	your currently defined variables (other than series, which are
+	necessarily cleared out), use the <opt>--preserve</opt>
+	option.
       </para>
       <para>
 	The <lit>open</lit> command can also be used to open a database
@@ -7820,7 +8474,7 @@
 
     <gui-access>
       <menu-path>/File/Open data</menu-path>
-      <other-access>Drag a data file into gretl (MS Windows or Gnome)</other-access>
+      <other-access>Drag a data file onto gretl's main window</other-access>
     </gui-access>
 
   </command>
@@ -7892,7 +8546,10 @@
       <para>
 	The <opt>--close</opt> flag is used to close an output
 	file that was previously opened as above.  Output will then
-	revert to the default stream.
+	revert to the default stream. Note that since only one file
+	can be opened via <lit>outfile</lit> at any given time, no
+	filename argument need (nor should) be supplied with this
+	variant of the command.
       </para>
       <para>
 	In the first example command above, the file
@@ -8027,8 +8684,10 @@
 	The <opt>--robust</opt> option is available only for fixed
 	effects models. The default variant is the Arellano HAC
 	estimator, but Beck&ndash;Katz <quote>Panel Corrected Standard
-	  Errors</quote> can be selected via the command
-	<lit>set pcse on</lit>.
+	Errors</quote> can be selected via the command <lit>set pcse
+	on</lit>. When the robust option is specified the joint
+	<math>F</math> test on the fixed effects is performed using
+	the robust method of <cite key="welch51">Welch (1951)</cite>.
       </para>
       <para context="gui">
 	If the "Random effects" button is checked, random effects
@@ -8290,6 +8949,146 @@
 
   </command>
 
+  <command name="plot" section="Graphs" context="cli">
+    <usage>
+      <arguments>
+        <argument>data</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--with-lines</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>use lines, not points</effect>
+        </option>
+        <option>
+	  <flag>--with-lp</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>use lines and points</effect>
+        </option>
+        <option>
+	  <flag>--with-impulses</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>use vertical lines</effect>
+        </option>
+        <option>
+	  <flag>--time-series</flag>
+	  <effect>plot against time</effect>
+        </option>
+        <option>
+	  <flag>--single-yaxis</flag>
+	  <effect>force use of just one y-axis</effect>
+        </option>
+        <option>
+	  <flag>--dummy</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--fit</flag>
+	  <optparm>fitspec</optparm>
+	  <effect>see below</effect>
+        </option>	
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+        </option>
+      </options>
+    </usage>
+    
+    <description>
+      <para>
+	The <lit>plot</lit> block provides an alternative to the
+	<cmdref targ="gnuplot"/> command which may be more convenient
+	when you are producing an elaborate plot (with several options
+	and/or gnuplot commands to be inserted into the plot file).
+      </para>
+      <para>
+	A <lit>plot</lit> block starts with the command-word
+	<lit>plot</lit> followed by the required argument,
+	<repl>data</repl>, which specifies the data to be plotted:
+	this should be the name of a list, a matrix, or a single
+	series.
+      </para>
+      <para>
+	If a list or matrix is given, the last element (list) or
+	column (matrix) is assumed to be the <math>x</math>-axis
+	variable and the other(s) the <math>y</math>-axis variable(s),
+	unless the <opt>time-series</opt> option is given in which
+	case all the specified data go on the <math>y</math> axis.
+      </para>
+      <para>
+	The option of supplying a single series name is restricted to
+	time-series data, in which case it is assumed that a
+	time-series plot is wanted; otherwise an error is flagged.
+      </para>
+      <para>
+	The starting line may be prefixed with
+	the <quote><repl>savename</repl> <lit>&lt;-</lit></quote>
+	apparatus to save a plot as an icon in the GUI program.
+	The block ends with <lit>end plot</lit>.
+      </para>
+      <para>
+	Inside the block you have zero or more lines of these types,
+	identified by an initial keyword:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>option</lit>: specify a single option.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	  <lit>options</lit>: specify multiple options on a single
+	  line, separated by spaces.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>literal</lit>: a command to be passed to gnuplot
+	    literally.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>printf</lit>: a printf statement whose result will be
+	    passed to gnuplot literally.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Note that when you specify an option using the
+	<lit>option</lit> or <lit>options</lit> keywords, it is not
+	necessary to supply the customary double-dash before the
+	option specifier. For details on the effects of the various
+	options please see <cmdref targ="gnuplot"/>.
+      </para>
+      <para>
+	The intended use of the <lit>plot</lit> block is best
+	illustrated by example:
+      </para>
+      <code>
+	string title = "My title"
+	string xname = "My x-variable"
+	plot plotmat
+	    options with-lines fit=none
+	    literal set linetype 3 lc rgb "#0000ff"
+	    literal set nokey
+	    printf "set title \"%s\"", title
+	    printf "set xlabel \"%s\"", xname
+	end plot --output=display
+      </code>
+      <para>
+	This example assumes that <lit>plotmat</lit> is the name of a
+	matrix with at least 2 columns (or a list with at least two
+	members).  Note that it is considered good practice to place
+	the <opt>output</opt> option (only) on the last line of the
+	block.
+      </para>
+    </description>
+
+  </command>
+
   <command name="polyweights" section="Transformations" context="gui"
     label="Polynomial trend fitting">
 
@@ -8312,11 +9111,12 @@
       <para>
 	Suppose, for example, you select a maximum weight of 3.0 and a
 	central fraction of 0.4. This means that the middle 40 percent
-	of the data get a weight of 1.0. If the steps shape is
-	selected the first and last 30 percent of the observations get
-	a weight of 3.0; otherwise, for the first 30 percent of
-	observations the weights decline gradually from 3.0 to 1.0; and
-	for the last 30 percent the weights increase from 1.0 to 3.0.
+	of the data get a weight of 1.0. If the <quote>steps</quote>
+	shape is selected the first and last 30 percent of the
+	observations get a weight of 3.0; otherwise, for the first 30
+	percent of observations the weights decline gradually from 3.0
+	to 1.0; and for the last 30 percent the weights increase from
+	1.0 to 3.0.
       </para>
     </description>
 
@@ -8590,6 +9390,13 @@
 	  <effect>number of quadrature points for RE estimation</effect>
 	</option>
       </options>
+      <examples>
+	<demos>
+	  <demo>ooballot.inp</demo>
+	  <demo>oprobit.inp</demo>
+	  <demo>reprobit.inp</demo>
+	</demos>
+      </examples>      
     </usage>
 
     <description>
@@ -8629,6 +9436,7 @@
 	Probit estimates are obtained.  (If the variable selected as dependent
 	is not discrete, an error is flagged.)
       </para>
+      <subhead>Probit for panel data</subhead>
       <para>
 	With the <opt>--random-effects</opt> option, the error
 	term is assumed to be composed of two normally distributed
@@ -8680,10 +9488,6 @@
 	whether the random effects specification is needed. If
 	the null is not rejected that suggests that a simple
 	pooled probit specification is adequate.
-      </para>
-      <para>
-	Probit for analysis of proportions is not implemented in
-	<program>gretl</program> at this point.
       </para>
 
     </description>
@@ -8753,9 +9557,23 @@
 
   </command>
 
-  <command name="qlrtest" section="Tests" 
-    label="Quandt likelihood ratio test">
+  <command name="qlrtest" section="Tests" label="Quandt likelihood ratio test">
 
+    <usage>
+      <options>
+	<option>
+	  <flag>--limit-to</flag>
+	  <optparm>list</optparm>
+	  <effect>limit test to subset of regressors</effect>
+	</option>
+	<option>
+	  <flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>see below</effect>
+	</option>
+      </options>      
+    </usage>
+    
     <description>
       <para>
 	For a model estimated on time-series data via OLS, performs the
@@ -8764,16 +9582,41 @@
 	and end of the sample period.
       </para>
       <para>
-	For each potential break point within the central 70 percent of the
-	observations, a Chow test is performed. See <cmdref targ="chow"/> for
-	details; as with the regular Chow test, this is a robust Wald test if
-	the original model was estimated with the <opt>robust</opt> option, an
-	F-test otherwise. The QLR statistic is then the maximum of the
-	individual test statistics.
+	For each potential break point within the central 70 percent
+	of the observations, a Chow test is performed. See <cmdref
+	targ="chow"/> for details; as with the regular Chow test, this
+	is a robust Wald test if the original model was estimated with
+	the <opt>robust</opt> option, an F-test otherwise. The QLR
+	statistic is then the maximum of the individual test
+	statistics.
       </para>
       <para>
 	An asymptotic p-value is obtained using the method of <cite
 	key="hansen97">Bruce Hansen (1997)</cite>.
+      </para>
+      <para>
+	Besides the standard hypothesis test accessors <fncref
+	targ="$test"/> and <fncref targ="$pvalue"/>, <fncref
+	targ="$qlrbreak"/> can be used to retrieve the index of the
+	observation at which the test statistic is maximized.
+      </para>      
+      <para context="cli">
+	The <opt>limit-to</opt> option can be used to limit the set of
+	interactions with the split dummy variable in the Chow tests
+	to a subset of the original regressors. The parameter for this
+	option must be a named list, all of whose members are among
+	the original regressors. The list should not include the
+	constant.
+      </para>
+      <para>
+	When this command is run interactively (only), a plot of the
+	Chow test statistic is displayed by default.  This can be
+	adjusted via the <opt>plot</opt> option. The acceptable
+	parameters to this option are <lit>none</lit> (to suppress the
+	plot); <lit>display</lit> (to display a plot even when not in
+	interactive mode); or a file name. The effect of providing a
+	file name is as described for the <opt>output</opt> option of
+	the <cmdref targ="gnuplot"/> command.
       </para>
     </description>
 
@@ -9777,7 +10620,7 @@
       <para>
 	If the dataset is time-series, then the second sub-list can be
 	omitted, in which case it will implicitly be taken as "time",
-	so you can plot multiple time series in separated sub-graphs
+	so you can plot multiple time series in separated sub-graphs.
       </para>
     </description>
 
@@ -9902,7 +10745,7 @@
 	<li>
 	  <para><lit>csv_digits</lit>: a positive integer specifying
 	  the number of significant digits to use when writing data in
-	  CSV format. By default up to 12 digits are used depending on
+	  CSV format. By default up to 15 digits are used depending on
 	  the precision of the original data. Note that CSV output
 	  employs the C library's <lit>fprintf</lit> function with
 	  <quote><lit>%g</lit></quote> conversion, which means that
@@ -9910,27 +10753,28 @@
 	  </para>
 	</li>
 	<li>
+	  <para><lit>mwrite_g</lit>: <lit>on</lit> or <lit>off</lit>
+	  (the default). When writing a matrix to file as text, gretl
+	  by default uses scientific notation with 18-digit precision,
+	  hence ensuring that the stored values are a faithful
+	  representation of the numbers in memory. When writing
+	  primary data with no more than 6 digits of precision it may
+	  be preferable to use <lit>%g</lit> format for a more compact
+	  and human-readable file; you can make this switch via
+	  <lit>set mwrite_g on</lit>.
+	  </para>
+	</li>
+	<li>
 	  <para><lit>echo</lit>: <lit>off</lit> or <lit>on</lit> (the
 	  default). Suppress or resume the echoing of commands in gretl's
-	    output.</para>
+	  output.
+	  </para>
 	</li>
 	<li>
 	  <para><lit>force_decpoint</lit>: <lit>on</lit> or <lit>off</lit>
 	    (the default).  Force gretl to use the decimal point
 	    character, in a locale where another character (most likely
 	    the comma) is the standard decimal separator.
-	  </para>
-	</li>
-	<li>
-	  <para><lit>halt_on_error</lit>: <lit>off</lit> or <lit>on</lit> (the
-	    default). By default, when an error is encountered in the course
-	    of executing a script, execution is halted (and if the
-	    command-line program is operating in batch mode, it exits with a
-	    non-zero return status).  You can force gretl to continue on error
-	    by setting <lit>halt_on_error</lit> to <lit>off</lit> (or by
-	    setting the environment variable <lit>GRETL_KEEP_GOING</lit> to
-	    1). If an error occurs while <quote>compiling</quote> a loop or
-	    user-defined function, however, execution is halted regardless.
 	  </para>
 	</li>
 	<li>	  
@@ -10230,6 +11074,16 @@
 	  option is given the default method is regular HCCM, but the
 	  <opt>robust-hac</opt> flag can be used to force the use of a
 	  HAC estimator.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>robust_z</lit>: <lit>off</lit> (the default) or
+	  <lit>on</lit>. This controls the distribution used when
+	  calculating p-values based on robust standard errors in
+	  the context of least-squares estimators. By default gretl
+	  uses the Student <math>t</math> distribution but if
+	  <lit>robust_z</lit> is turned on the normal distribution
+	  is used.
 	  </para>
 	</li>
 	<li>
@@ -10606,19 +11460,38 @@
       <para>
 	The purpose of <opt>panel-groups</opt> is to create a
 	string-valued series holding names for the groups
-	(individuals, cross-sectional units) in the panel. With this
-	option you must supply a name for the series and a string
-	variable holding a list of group names (in that order). The
-	names should be separated by spaces; if a name includes spaces
-	it should be wrapped in backslash-escaped double-quotes. For
-	example, the following will create a series named
+	(individuals, cross-sectional units) in the panel. (This will
+	be used where appropriate in panel graphs.) With this
+	option you supply either one or two arguments as follows.
+      </para>
+      <para>
+	First case: the (single) argument is the name of a
+	string-valued series. If the number of distinct values equals
+	the number of groups in the panel this series is used to
+	define the group names. If necessary, the numerical content of
+	the series will be adjusted such that the values are all 1s
+	for the first group, all 2s for the second, and so on. If the
+	number of string values doesn't match the number of groups an
+	error is flagged.
+      </para>
+      <para>
+	Second case: the first argument is the name of a series and
+	the second is a string literal or variable holding a name for
+	each group. The series will be created if it does not already
+	exist. If the second argument is a string literal or string
+	variable the group names should be separated by spaces; if a
+	name includes spaces it should be wrapped in backslash-escaped
+	double-quotes. Alternatively the second argument may be an
+	array of strings.
+      </para>
+      <para>
+	For example, the following will create a series named
 	<lit>country</lit> in which the names in <lit>cstrs</lit> are
 	each repeated <math>T</math> times, <math>T</math> being the
 	time-series length of the panel.
       </para>
       <code>
-	string cstrs
-	sprintf cstrs "France Germany Italy \"United Kingdom\""
+	string cstrs = sprintf("France Germany Italy \"United Kingdom\"")
 	setobs country cstrs --panel-groups
       </code>
     </description> 
@@ -10627,6 +11500,68 @@
       <menu-path>/Data/Dataset structure</menu-path>
     </gui-access>
       
+  </command>
+
+  <command name="setopt" section="Programming" context="cli"
+    label="Set options for next command">
+
+    <usage>
+      <arguments>
+	<argument>command</argument>
+	<argument optional="true">action</argument>
+	<argument>options</argument>
+      </arguments>
+      <examples>
+        <example>setopt mle --hessian</example>
+        <example>setopt ols persist --quiet</example>
+	<example>setopt ols clear</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	This command enables the pre-setting of options for a
+	specified command. Ordinarily this is not required, but it may
+	be useful for the writers of hansl functions when they wish to
+	make certain command options conditional on the value of an
+	argument supplied by the caller.
+      </para>
+      <para>
+	For example, suppose a function offers a boolean
+	<quote><lit>quiet</lit></quote> switch, whose intended effect
+	is to suppress the printing of results from a certain
+	regression executed within the function. In that case one
+	might write:
+      </para>
+      <code>
+	if quiet
+	  setopt ols --quiet
+	endif
+	ols ...
+      </code>
+      <para>
+	The <opt>quiet</opt> option will then be applied to the
+	next <lit>ols</lit> command if and only if the variable
+	<lit>quiet</lit> has a non-zero value.
+      </para>
+      <para>
+	By default, options set in this way apply only to the
+	following instance of <repl>command</repl>; they are not
+	persistent. However if you give <lit>persist</lit> as the
+	value for <repl>action</repl> the options will continue to
+	apply to the given command until further notice.  The antidote
+	to the <lit>persist</lit> action is <lit>clear</lit>: this
+	erases any stored setting for the specified command.
+      </para>
+      <para>
+	It should be noted that options set via <lit>setopt</lit> are
+	compounded with any options attached to the target command
+	directly. So for example one might append the
+	<opt>hessian</opt> option to an <lit>mle</lit> command
+	unconditionally but use <lit>setopt</lit> to add
+	<opt>quiet</opt> conditionally.
+      </para>
+    </description> 
   </command>
 
   <command name="shell" section="Utilities" 
@@ -10645,11 +11580,12 @@
 
     <description>
       <para>
-	A <cmd>!</cmd>, or the keyword <cmd>launch</cmd>, at the beginning
-	of a command line is interpreted as an escape to the user's shell.
-	Thus arbitrary shell commands can be executed from within
-	<program>gretl</program>.  When <cmd>!</cmd> is used, the external
-	command is executed synchronously.  That is,
+	An exclamation mark, <cmd>!</cmd>, or the keyword
+	<cmd>launch</cmd>, at the beginning of a command line is
+	interpreted as an escape to the user's shell.  Thus arbitrary
+	shell commands can be executed from within
+	<program>gretl</program>.  When <cmd>!</cmd> is used, the
+	external command is executed synchronously.  That is,
 	<program>gretl</program> waits for it to complete before
 	proceeding.  If you want to start another program from within
 	<program>gretl</program> and not wait for its completion
@@ -10679,6 +11615,7 @@
 	<altform><lit>smpl</lit> <repl>dumvar</repl> <lit>--dummy</lit></altform>
 	<altform><lit>smpl</lit> <repl>condition</repl> <lit>--restrict</lit></altform>
 	<altform><lit>smpl</lit> <lit>--no-missing [ </lit><repl>varlist</repl> <lit>]</lit></altform>
+	<altform><lit>smpl</lit> <lit>--no-all-missing [ </lit><repl>varlist</repl> <lit>]</lit></altform>
 	<altform><lit>smpl</lit> <lit>--contiguous [ </lit><repl>varlist</repl> <lit>]</lit></altform>
 	<altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
 	<altform><lit>smpl full</lit></altform>
@@ -10701,12 +11638,20 @@
 	  <effect>restrict to valid observations</effect>
         </option>
         <option>
+	  <flag>--no-all-missing</flag>
+	  <effect>omit empty observations (see below)</effect>
+        </option>
+        <option>
 	  <flag>--contiguous</flag>
 	  <effect>see below</effect>
         </option>
         <option>
 	  <flag>--random</flag>
 	  <effect>form random sub-sample</effect>
+        </option>
+        <option>
+	  <flag>--permanent</flag>
+	  <effect>see below</effect>
         </option>
         <option>
 	  <flag>--balanced</flag>
@@ -10725,29 +11670,36 @@
 
     <description>
       <para>
-	Resets the sample range.  The new range can be defined in several
-	ways.  In the first alternate form (and the first two examples) above,
-	<repl>startobs</repl> and <repl>endobs</repl> must be consistent with
-	the periodicity of the data.  Either one may be replaced by a
-	semicolon to leave the value unchanged.  In the second form, the
-	integers <repl>i</repl> and <repl>j</repl> (which may be positive or
-	negative, and should be signed) are taken as offsets relative to the
-	existing sample range. In the third form <repl>dummyvar</repl> must be
-	an indicator variable with values 0 or 1 at each observation; the
-	sample will be restricted to observations where the value is 1. The
-	fourth form, using <opt>--restrict</opt>, restricts the sample to
-	observations that satisfy the given Boolean condition (which is
-	specified according to the syntax of the <cmdref targ="genr"/>
-	command).
+	Resets the sample range.  The new range can be defined in
+	several ways.  In the first alternate form (and the first two
+	examples) above, <repl>startobs</repl> and <repl>endobs</repl>
+	must be consistent with the periodicity of the data.  Either
+	one may be replaced by a semicolon to leave the value
+	unchanged.  In the second form, the integers <repl>i</repl>
+	and <repl>j</repl> (which may be positive or negative, and
+	should be signed) are taken as offsets relative to the
+	existing sample range. In the third form <repl>dummyvar</repl>
+	must be an indicator variable with values 0 or 1 at each
+	observation; the sample will be restricted to observations
+	where the value is 1. The fourth form, using
+	<opt>--restrict</opt>, restricts the sample to observations
+	that satisfy the given Boolean condition (which is specified
+	according to the syntax of the <cmdref targ="genr"/> command).
       </para>
 
       <para>
-	With the <opt>--no-missing</opt> form, if <repl>varlist</repl> is
-	specified observations are selected on condition that all variables in
-	<repl>varlist</repl> have valid values at that observation; otherwise,
-	if no <repl>varlist</repl> is given, observations are selected on
-	condition that <emphasis>all</emphasis> variables have valid
-	(non-missing) values.
+	The options <opt>--no-missing</opt> and
+	<opt>--no-all-missing</opt> may be used to exclude from the
+	sample observations for which data are missing. The first
+	variant excludes those rows in the dataset for which at least
+	one variable has a missing value, while the second excludes
+	just those rows on which <emphasis>all</emphasis> variables
+	have missing values. In each case the test is confined to the
+	variables in <repl>varlist</repl> if this argument is given,
+	otherwise it is applied to all series&mdash;with the
+	qualification that in the case of <opt>--no-all-missing</opt>
+	and no <repl>varlist</repl>, the generic variables
+	<lit>index</lit> and <lit>time</lit> are ignored.
       </para>
 
       <para>
@@ -10810,6 +11762,17 @@
 	a balanced panel is reconstituted after sub-sampling, via the
 	insertion of <quote>missing rows</quote> if need be.  But note that it
 	is not always possible to comply with this request.  
+      </para>
+
+      <para>
+	By default, restrictions on the current sample range are
+	undoable: by doing <lit>smpl full</lit> you can restore
+	the unrestricted dataset. However, the <opt>permanent</opt>
+	flag can be used to substitute the restricted dataset for the
+	original. This option is only available in conjunction
+	with the <opt>restrict</opt>, <opt>dummy</opt>,
+	<opt>no-missing</opt>, <opt>no-all-missing</opt> or
+	<opt>random</opt> forms of <lit>smpl</lit>.
       </para>
 
       <para>
@@ -11328,9 +12291,6 @@
     label="Print model in tabular form" context="cli">
 
     <usage>
-      <arguments>
-        <argument optional="true">-f filename</argument>
-      </arguments>
       <options>
         <option>
 	  <flag>--rtf</flag>
@@ -11348,6 +12308,11 @@
 	  <flag>--format="f1|f2|f3|f4"</flag>
 	  <effect>Specify a custom format</effect>
         </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+        </option>	
       </options>
     </usage>
 
@@ -11357,7 +12322,7 @@
 	model in tabular form &mdash; by default as &latex;, but as
 	RTF if the <opt>--rtf</opt> flag is given or as CSV is the
 	<opt>--csv</opt> flag is given.  If a filename is specified
-	using the <lit>-f</lit> flag output goes to that file,
+	using the <opt>output</opt> option output goes to that file,
 	otherwise it goes to a file with a name of the form
 	<filename>model_N</filename> followed by the extension
 	<lit>tex</lit>, <lit>rtf</lit> or <lit>csv</lit>, where
@@ -11881,7 +12846,7 @@
       <para context="cli">
 	If the <opt>--lagselect</opt> option is given, the first parameter to
 	the <lit>var</lit> command is taken as the maximum lag order.  Output
-	consists of a table showing the values of the Akaike (AIC), Schwartz
+	consists of a table showing the values of the Akaike (AIC), Schwarz
 	(BIC) and Hannan&ndash;Quinn (HQC) information criteria computed from
 	VARs of order 1 to the given maximum.  This is intended to help
 	with the selection of the optimal lag order.  The usual VAR output is
@@ -11907,7 +12872,7 @@
       </para>
       <para>
 	Output will consist of a table showing the values of the Akaike (AIC),
-	Schwartz (BIC) and Hannan&ndash;Quinn (HQC) information criteria computed
+	Schwarz (BIC) and Hannan&ndash;Quinn (HQC) information criteria computed
 	from VARs of order 1 to the chosen maximum.  This is intended to help with
 	the selection of the optimal lag order.  
       </para>
@@ -11953,8 +12918,9 @@
 
     <description>
       <para>
-	By default, prints a listing of the (series) variables currently
-	available.  <cmd>list</cmd> and <cmd>ls</cmd> are synonyms.
+	By default, prints a listing of the (series) variables
+	currently available; <cmd>ls</cmd> may be used as an alias for
+	this command.
       </para>
       <para>
 	If the <opt>--scalars</opt> option is given, prints a listing
