@@ -1106,6 +1106,7 @@ int set_obs (const char *parm1, const char *parm2,
     }
 
     if (parm1 == NULL || (!(opt & OPT_G) && parm2 == NULL)) {
+	/* all cases need at least one param, most need two */
 	return E_ARGS;
     }
 

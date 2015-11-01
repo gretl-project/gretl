@@ -5146,6 +5146,8 @@ static int maybe_use_strval_series (DATASET *dset,
     }
 
     if (ns != ng) {
+	gretl_errmsg_sprintf("The series %s holds %d strings but %d "
+			     "are wanted", vname, ns, ng);
 	return E_DATA;
     } else {
 	int i, g = 0;
