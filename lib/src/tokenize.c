@@ -1010,7 +1010,7 @@ static void mark_option_tokens (CMD *c)
 
 static cmd_token *next_joined_token (CMD *c, int i)
 {
-    if (i < c->ntoks - 1) {
+    if (i >= 0 && i < c->ntoks - 1) {
 	if (c->toks[i+1].flag & TOK_JOINED) {
 	    return &c->toks[i+1];
 	}
@@ -1021,7 +1021,7 @@ static cmd_token *next_joined_token (CMD *c, int i)
 
 static cmd_token *next_nogap_token (CMD *c, int i)
 {
-    if (i < c->ntoks - 1) {
+    if (i >= 0 && i < c->ntoks - 1) {
 	if (c->toks[i+1].flag & TOK_NOGAP) {
 	    return &c->toks[i+1];
 	}
@@ -1715,6 +1715,27 @@ static int get_VAR_order (CMD *c, int k)
     return ret;
 }
 
+static int get_bundled_int (CMD *c, int k)
+{
+    char *s = merge_toks_l_to_r(c, k);
+    int ret = -1;
+
+    if (s != NULL) {
+	double x = get_scalar_value_by_name(s, &c->err);
+
+	if (!c->err) {
+	    if (x > 0 && x < INT_MAX) {
+		ret = x;
+	    } else {
+		c->err = E_INVARG;
+	    }
+	}
+	free(s);
+    }
+
+    return ret;
+}
+
 /* Some commands require an integer order as the first
    argument, but we also have the cases where an order
    in first argument position is optional, viz:
@@ -1727,15 +1748,26 @@ static int get_VAR_order (CMD *c, int k)
 static int get_command_order (CMD *c)
 {
     int pos = real_arg_index(c, 1);
-    cmd_token *ntok = next_joined_token(c, pos);
+    int try_bundle = 0;
 
-    if (ntok != NULL && ntok->type != TOK_SEMIC) {
-	/* nothing should be "stuck onto" the order
-	   specifier; however, we have accepted ";" 
-	   without an intervening space
-	*/	
-	c->err = E_PARSE;
-	return c->err;
+    if (pos >= 0) {
+	cmd_token *ntok = next_joined_token(c, pos);
+	
+	/* In general, nothing should be "stuck onto" the
+	   order specifier; however, we have accepted ";" 
+	   without an intervening space, and we might be
+	   given a bundle member in dot notation.
+	*/
+	if (ntok != NULL) {
+	    if (ntok->type == TOK_SEMIC) {
+		; /* OK */
+	    } else if (ntok->type == TOK_DOT) {
+		try_bundle = 1; /* try handling this */
+	    } else {
+		c->err = E_PARSE;
+		return c->err;
+	    }
+	}
     }
 
     if (c->ci == MODTEST && pos < 0) {
@@ -1750,6 +1782,8 @@ static int get_command_order (CMD *c)
 
     if (pos < 0) {
 	c->err = E_ARGS;
+    } else if (try_bundle) {
+	c->order = get_bundled_int(c, pos);
     } else if (c->ci == VAR) {
 	/* order can be special, "gappy" */
 	c->order = get_VAR_order(c, pos);
@@ -1766,10 +1800,16 @@ static int get_vecm_rank (CMD *c)
 {
     int pos = real_arg_index(c, 2);
 
-     if (pos < 0) {
+    if (pos < 0) {
 	c->err = E_ARGS;
     } else {
-	c->auxint = token_to_int(c, pos);
+	cmd_token *nt = next_joined_token(c, pos);
+
+	if (nt != NULL && nt->type == TOK_DOT) {
+	    c->auxint = get_bundled_int(c, pos);
+	} else {
+	    c->auxint = token_to_int(c, pos);
+	}
     }
 
     return c->err;
@@ -1779,10 +1819,16 @@ static int get_vecm_rank (CMD *c)
 
 static int get_optional_order (CMD *c)
 {
-    int pos = last_arg_index(c);
+    int pos = first_unused_arg_index(c);
 
     if (pos > 0) {
-	c->order = token_to_int(c, pos);
+	cmd_token *nt = next_joined_token(c, pos);
+
+	if (nt != NULL && nt->type == TOK_DOT) {
+	    c->order = get_bundled_int(c, pos);
+	} else {
+	    c->order = token_to_int(c, pos);
+	}
     }
 
     return c->err;

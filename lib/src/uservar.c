@@ -1594,10 +1594,6 @@ double gretl_scalar_get_value (const char *name, int *err)
     return ret;
 }
 
-#define TRY_BUNDLED_SCALAR 1
-
-#if TRY_BUNDLED_SCALAR
-
 static double maybe_get_bundled_scalar (const char *name, int *err)
 {
     const char *p = strchr(name, '.');
@@ -1621,10 +1617,9 @@ static double maybe_get_bundled_scalar (const char *name, int *err)
     return x;
 }
 
-#endif
-
 /* more "permissive" than gretl_scalar_get_value(): allows
-   for @name being the identifier for a 1 x 1 matrix 
+   for @name being the identifier for a 1 x 1 matrix, or
+   bundle.member
 */
 
 double get_scalar_value_by_name (const char *name, int *err)
@@ -1632,12 +1627,10 @@ double get_scalar_value_by_name (const char *name, int *err)
     double ret = NADBL;
     user_var *u;
 
-#if TRY_BUNDLED_SCALAR    
     if (strchr(name, '.')) {
 	ret = maybe_get_bundled_scalar(name, err);
 	goto bailout;
     }
-#endif    
 
     u = get_user_var_by_name(name);
 
