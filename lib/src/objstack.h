@@ -117,9 +117,6 @@ double saved_object_get_scalar (const char *oname, int idx,
 
 int saved_object_print_scalar (const char *oname, const char *key, PRN *prn);
 
-double saved_object_get_scalar_element (const char *oname, const char *key,
-					const DATASET *dset, int *err);
-
 int saved_object_get_series (double *x, const char *oname, 
 			     int idx, const DATASET *dset);
 
