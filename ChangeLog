@@ -1,4 +1,6 @@
 version 2015e, in progress
+- syntax enhancement: allow specification of type when setting
+  a bundle member
 - add exists() function, recommended as a replacment for the
   now-deprecated isnull()
 - "arima" command: allow ARIMA(0,1,0) without constant
@@ -8,6 +10,8 @@ version 2015e, in progress
   time-series plots
 - Fix bug: failing to detect common "missing value" strings in
   spreadsheet data importation via the GUI
+- Fix for linearize() function: don't fail when tramo finds
+  that the input doesn't need linearizing
 - Improve handling of EPS plot output (including respecting
   the color/mono choice properly)
 - Remove support for gnuplot < version 4.6.0
