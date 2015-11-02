@@ -619,7 +619,9 @@ int start_new_Z (DATASET *dset, gretlopt opt)
     dset->submask = NULL;
     dset->restriction = NULL;
     dset->padmask = NULL;
-    dset->pangrps = NULL;
+    if (!(opt & OPT_R)) {
+	dset->pangrps = NULL;
+    }
     
     return 0;
 }
@@ -4304,7 +4306,7 @@ int panel_group_names_ok (const DATASET *dset)
 
 	    if (S != NULL) {
 		int ng = dset->n / dset->pd;
-		
+
 		if (complex_subsampled()) {
 		    ret = (ns >= ng);
 		} else {

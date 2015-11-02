@@ -1622,7 +1622,9 @@ make_mixed_mask (int t1, int t2, DATASET *dset,
     return err;
 }
 
-static void finalize_panel_subset (DATASET *subset)
+static void finalize_panel_subset (DATASET *subset,
+				   DATASET *dset,
+				   int npad)
 {
     int pdp = subset->pd;
     int den = 10.0;
@@ -1634,6 +1636,10 @@ static void finalize_panel_subset (DATASET *subset)
     subset->sd0 = 1.0 + 1.0 / den;
     ntodate(subset->stobs, 0, subset); 
     ntodate(subset->endobs, subset->n - 1, subset);
+
+    if (dset->pangrps != NULL && npad == 0) {
+	subset->pangrps = gretl_strdup(dset->pangrps);
+    }
 }    
 
 /* This is also used elsewhere: 
@@ -1706,7 +1712,7 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 		subset->structure = STACKED_TIME_SERIES;
 		subset->n += npad;
 		subset->pd = subset->n / nunits;
-		finalize_panel_subset(subset);
+		finalize_panel_subset(subset, dset, npad);
 	    }
 	} else if (nunits == 1 && subset->n == dset->pd) {
 	    /* time series for single panel unit */
