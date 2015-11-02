@@ -5129,7 +5129,8 @@ static char **group_names_from_array (const char *aname,
     return S;
 }
 
-static int usable_groups_series (DATASET *dset, int v)
+static int usable_groups_series (DATASET *dset, int v,
+				 const char *vname)
 {
     const double *x = dset->Z[v];
     int i, j, g = 0;
@@ -5141,13 +5142,14 @@ static int usable_groups_series (DATASET *dset, int v)
 	       prior group's value */
 	    for (j=0; j<=g; j++) {
 		if (x[i] == x[j*dset->pd]) {
-		    gretl_errmsg_set("series values are not unique per group");
+		    gretl_errmsg_sprintf("%s: values are not unique per group",
+					 vname);
 		    ok = 0;
 		}
 	    }
 	    g++;
 	} else if (x[i] != x[i-1]) {
-	    gretl_errmsg_set("series is not constant within group");
+	    gretl_errmsg_sprintf("%s: is not constant within group", vname);
 	    ok = 0;
 	} 
     }
@@ -5182,13 +5184,13 @@ static int maybe_use_strval_series (DATASET *dset,
 	err = E_INVARG;
     } else if (complex_subsampled()) {
 	/* don't mess with numerical values, just check them */
-	if (usable_groups_series(dset, v)) {
+	if (usable_groups_series(dset, v, vname)) {
 	    set_panel_groups_name(dset, vname);
 	} else {
 	    err = E_INVARG;
 	}
     } else {
-	/* ensure numerical values are suiable */
+	/* ensure numerical values are suitable */
 	int i, g = 0;
 
 	for (i=0; i<dset->n; i++) {
@@ -5210,10 +5212,11 @@ static int maybe_use_strval_series (DATASET *dset,
    graphs where appropriate.
 
    @vname should contain the name of a series, either an existing one
-   (which will be overwritten) or a new one to create; and @grpnames
-   should be either a string literal or the name of a string variable,
-   which in either case should hold N space-separated strings, where N
-   is the number of panel groups.
+   (which may be overwritten) or a new one to create; and @grpnames
+   should be either a string literal or the name of a string variable
+   (which in either case should hold N space-separated strings, where N
+   is the number of panel groups), or the name of an array variable
+   holding N strings.
 */
 
 int set_panel_group_strings (const char *vname,
@@ -5258,6 +5261,7 @@ int set_panel_group_strings (const char *vname,
 	    err = E_ALLOC;
 	}
 	if (!err && ngtest != ng) {
+	    /* FIXME subsampled case? */
 	    fprintf(stderr, "Got %d strings but there are %d groups\n",
 		    ngtest, ng);
 	    err = E_DATA;
