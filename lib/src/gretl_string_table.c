@@ -243,6 +243,86 @@ char **series_table_get_strings (series_table *st, int *n_strs)
     }
 }
 
+static char **subsampled_strvals (series_table *st,
+				  const DATASET *dset,
+				  int v, int *n_strs,
+				  int *err)
+{
+    char **S = NULL;
+    gretl_matrix *m;
+    int i, n;
+
+    m = gretl_matrix_values(dset->Z[v], dset->n, OPT_S, err);
+    if (*err) {
+	return NULL;
+    }
+
+    n = m->rows;
+    S = strings_array_new(n);
+
+    fprintf(stderr, "HERE: n = %d\n", n);
+
+    if (S == NULL) {
+	*err = E_ALLOC;
+    } else {
+	const char *si;
+	
+	for (i=0; i<n; i++) {
+	    si = series_table_get_string(st, m->val[i]);
+	    S[i] = gretl_strdup(si);
+	    if (S[i] == NULL) {
+		*err = E_ALLOC;
+		break;
+	    }
+	}
+    }
+
+    gretl_matrix_free(m);
+
+    if (S != NULL && *err) {
+	strings_array_free(S, n);
+	S = NULL;
+    }
+
+    if (!*err) {
+	*n_strs = n;
+    }
+
+    return S;
+}
+
+/**
+ * get_subsampled_string_vals:
+ * @dset: pointer to dataset.
+ * @v: ID number of series in @dset.
+ * @n_strs: location to receive the number of strings.
+ * @err: location to receive error code.
+ *
+ * Returns: a copy of the array of strings associated with 
+ * series @v, or NULL on failure, in which case @err is set to
+ * a non-zero value. The caller is responsible for freeing the
+ * returned array if and when it is no longer needed.
+ */
+
+char **get_subsampled_string_vals (const DATASET *dset, int v,
+				   int *n_strs, int *err)
+{
+    series_table *st = NULL;
+
+    *n_strs = 0;
+
+    if (v > 0 && v < dset->v) {
+	st = series_get_string_table(dset, v);
+    }
+
+    if (st == NULL) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    return subsampled_strvals(st, dset, v, n_strs, err);
+}
+
 /**
  * series_table_add_string:
  * @st: a gretl series table.

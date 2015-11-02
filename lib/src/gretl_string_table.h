@@ -55,6 +55,9 @@ int series_table_add_string (series_table *st, const char *s);
 
 char **series_table_get_strings (series_table *st, int *n_strs);
 
+char **get_subsampled_string_vals (const DATASET *dset, int v,
+				   int *n_strs, int *err);
+
 int *series_table_map (series_table *st_from, series_table *st_to);
 
 void gretl_insert_builtin_string (const char *name, const char *s);

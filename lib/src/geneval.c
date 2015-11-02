@@ -9711,10 +9711,17 @@ static NODE *get_series_stringvals (NODE *n, parser *p)
 	    ret->v.a = gretl_array_new(GRETL_TYPE_STRINGS, 0, &p->err);
 	} else {
 	    int n_strs = 0;
-	    char **S;
+	    char **S = NULL;
 
-	    S = series_get_string_vals(p->dset, v, &n_strs);
-	    if (!p->err) {
+	    if (complex_subsampled()) {
+		S = get_subsampled_string_vals(p->dset, v, &n_strs,
+					       &p->err);
+		if (!p->err) {
+		    ret->v.a = gretl_array_from_strings(S, n_strs, 0,
+							&p->err);
+		}
+	    } else {
+		S = series_get_string_vals(p->dset, v, &n_strs);
 		ret->v.a = gretl_array_from_strings(S, n_strs, 1,
 						    &p->err);
 	    }
