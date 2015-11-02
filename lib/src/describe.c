@@ -2225,9 +2225,6 @@ static Xtab *xtab_new (int n, int t1, int t2)
     *tab->rvarname = '\0';
     *tab->cvarname = '\0';
 
-    tab->rlabels = NULL;
-    tab->clabels = NULL;
-
     return tab;
 }
 
@@ -2303,7 +2300,6 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
     int t1 = dset->t1;
     int t2 = dset->t2;
     int i, t, n = 0;
-    int n_labels_chk;
 
     /* count non-missing values */
     for (t=t1; t<=t2; t++) {
@@ -2345,25 +2341,9 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
     rowfreq = get_freq(rvarno, dset, NADBL, NADBL, 0, 
 		       0, OPT_D | OPT_X, err); 
 
-    if (rvarno > 0 && dset != NULL && is_string_valued(dset, rvarno)) {
-	tab->rlabels = (const char **) 
-	    series_get_string_vals(dset, rvarno, &n_labels_chk);
-	if (n_labels_chk != rowfreq->numbins) {
-	    tab->rlabels = NULL;
-	}
-    }
-
     if (!*err) {
 	colfreq = get_freq(cvarno, dset, NADBL, NADBL, 0, 
 			   0, OPT_D | OPT_X, err); 
-	
-	if (cvarno > 0 && dset != NULL && is_string_valued(dset, cvarno)) {
-	    tab->clabels = (const char **)
-		series_get_string_vals(dset, cvarno, &n_labels_chk);
-	    if (n_labels_chk != colfreq->numbins) {
-		tab->clabels = NULL;
-	    }
-	}
     }
 
     if (*err) {
@@ -2506,7 +2486,7 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
 	}
     }  
 
-    print_xtab(tab, opt, prn);
+    print_xtab(tab, NULL, opt, prn);
     free_xtab(tab);	
 
     return err;    
@@ -2585,7 +2565,7 @@ int crosstab (const int *list, const DATASET *dset,
 	    for (j=1; j<i && !err; j++) {
 		tab = get_xtab(rowvar[j], rowvar[i], dset, &err); 
 		if (!err) {
-		    print_xtab(tab, opt, prn); 
+		    print_xtab(tab, dset, opt, prn); 
 		    free_xtab(tab);
 		}
 	    }
@@ -2593,7 +2573,7 @@ int crosstab (const int *list, const DATASET *dset,
 	    for (j=1; j<=colvar[0] && !err; j++) {
 		tab = get_xtab(rowvar[i], colvar[j], dset, &err); 
 		if (!err) {
-		    print_xtab(tab, opt, prn); 
+		    print_xtab(tab, dset, opt, prn); 
 		    free_xtab(tab);
 		}
 	    }
@@ -2634,7 +2614,7 @@ Xtab *single_crosstab (const int *list, const DATASET *dset,
 
     tab = get_xtab(rv, cv, dset, err);
     if (!*err) {
-	print_xtab(tab, opt, prn); 
+	print_xtab(tab, dset, opt, prn); 
     }
 
     return tab;

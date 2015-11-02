@@ -5129,6 +5129,32 @@ static char **group_names_from_array (const char *aname,
     return S;
 }
 
+static int usable_groups_series (DATASET *dset, int v)
+{
+    const double *x = dset->Z[v];
+    int i, j, g = 0;
+    int ok = 1;
+
+    for (i=1; i<dset->n && ok; i++) {
+	if (i % dset->pd == 0) {
+	    /* starting a new group: x-value must not repeat a
+	       prior group's value */
+	    for (j=0; j<=g; j++) {
+		if (x[i] == x[j*dset->pd]) {
+		    gretl_errmsg_set("series values are not unique per group");
+		    ok = 0;
+		}
+	    }
+	    g++;
+	} else if (x[i] != x[i-1]) {
+	    gretl_errmsg_set("series is not constant within group");
+	    ok = 0;
+	} 
+    }
+
+    return ok;
+}
+
 static int maybe_use_strval_series (DATASET *dset,
 				    const char *vname,
 				    int ng)
@@ -5136,20 +5162,33 @@ static int maybe_use_strval_series (DATASET *dset,
     int v = current_series_index(dset, vname);
     series_table *st = NULL;
     int ns = 0;
+    int err = 0;
 
-    if (v > 0 && v < dset->v) {
-	st = series_get_string_table(dset, v);
+    if (v <= 0) {
+	return E_INVARG;
     }
 
-    if (st != NULL) {
-	series_table_get_strings(st, &ns);
+    st = series_get_string_table(dset, v);
+    if (st == NULL) {
+	gretl_errmsg_sprintf("The series %s is not string-valued", vname);
+	return E_INVARG;
     }
 
-    if (ns != ng) {
+    series_table_get_strings(st, &ns);
+
+    if (ns < ng) {
 	gretl_errmsg_sprintf("The series %s holds %d strings but %d "
-			     "are wanted", vname, ns, ng);
-	return E_DATA;
+			     "are needed", vname, ns, ng);
+	err = E_INVARG;
+    } else if (complex_subsampled()) {
+	/* don't mess with numerical values, just check them */
+	if (usable_groups_series(dset, v)) {
+	    set_panel_groups_name(dset, vname);
+	} else {
+	    err = E_INVARG;
+	}
     } else {
+	/* ensure numerical values are suiable */
 	int i, g = 0;
 
 	for (i=0; i<dset->n; i++) {
@@ -5162,7 +5201,7 @@ static int maybe_use_strval_series (DATASET *dset,
 	set_panel_groups_name(dset, vname);
     }
 
-    return 0;
+    return err;
 }
 
 /* Enable construction of a string-valued series holding a name for

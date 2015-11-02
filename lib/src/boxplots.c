@@ -20,6 +20,7 @@
 /* boxplots for gretl via gnuplot */
 
 #include "libgretl.h"
+#include "gretl_string_table.h"
 #include "boxplots.h"
 #include "libset.h"
 
@@ -782,7 +783,6 @@ static int transcribe_array_factorized (PLOTGROUP *grp, int i,
 }
 
 static int factorized_boxplot_check (const int *list, 
-				     int *haslabels,
 				     const DATASET *dset)
 {
     int err = 0;
@@ -799,8 +799,6 @@ static int factorized_boxplot_check (const int *list,
 	    gretl_errmsg_set(_("You must supply two variables, the second of "
 			       "which is discrete"));
 	    err = E_DATA;
-	} else {
-	    *haslabels = is_string_valued(dset, v2);
 	}
     }
 
@@ -829,10 +827,9 @@ static int real_boxplots (const int *list,
 			  gretlopt opt)
 {
     PLOTGROUP *grp;
-    const char **labels = NULL;
+    series_table *st = NULL;
     double lim = NADBL;
     int i, k, np;
-    int haslabels = 0;
     int err = 0;
 
     if (opt & OPT_L) {
@@ -858,14 +855,11 @@ static int real_boxplots (const int *list,
 
     if (opt & OPT_Z) {
 	/* --factorized */
-	err = factorized_boxplot_check(list, &haslabels, dset);
+	err = factorized_boxplot_check(list, dset);
 	if (err) {
 	    return err;
-	} else if (haslabels) {
-	    int n_labels;
-
-	    labels = (const char **)
-		series_get_string_vals(dset, list[2], &n_labels);
+	} else {
+	    st = series_get_string_table(dset, list[2]);
 	}
     } 
 
@@ -949,10 +943,12 @@ static int real_boxplots (const int *list,
 	strcpy(plot->varname, vname);
 
 	if (opt & OPT_Z) {
-	    if (labels != NULL) {
-		plot->bool = gretl_strdup(labels[i]);
+	    double di = grp->dvals->val[i];
+	    
+	    if (st != NULL) {
+		plot->bool = gretl_strdup(series_table_get_string(st, di));
 	    } else {
-		plot->bool = gretl_strdup_printf("%g", grp->dvals->val[i]);
+		plot->bool = gretl_strdup_printf("%g", di);
 	    }
 	    grp->n_bools += 1;
 	}

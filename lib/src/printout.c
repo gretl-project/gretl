@@ -25,6 +25,7 @@
 #include "forecast.h"
 #include "gretl_func.h"
 #include "uservar.h"
+#include "gretl_string_table.h"
 
 #include <time.h>
 
@@ -523,6 +524,7 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 /**
  * print_xtab:
  * @tab: gretl cross-tabulation struct.
+ * @dset: pointer to dataset, or NULL.
  * @opt: may contain %OPT_R to print row percentages, %OPT_C
  * to print column percentages, %OPT_Z to display zero entries.
  * @prn: gretl printing struct.
@@ -530,18 +532,30 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
  * Print crosstab to @prn.
  */
 
-void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
+void print_xtab (const Xtab *tab, const DATASET *dset,
+		 gretlopt opt, PRN *prn)
 {
-    int collabels = (tab->clabels != NULL);
-    int rowlabels = (tab->rlabels != NULL);
-    int r = tab->rows;
-    int c = tab->cols;
+    series_table *col_st = NULL;
+    series_table *row_st = NULL;
+    const char *sval;
     double x, y;
     int n5 = 0;
     double ymin = 1.0e-7;
     double pearson = 0.0;
     char lbl[64];
     int i, j;
+
+    if (dset != NULL) {
+	int cv = current_series_index(dset, tab->cvarname);
+	int rv = current_series_index(dset, tab->rvarname);
+
+	if (cv > 0) {
+	    col_st = series_get_string_table(dset, cv);
+	}
+	if (rv > 0) {
+	    row_st = series_get_string_table(dset, rv);
+	}
+    }
 
     if (*tab->rvarname != '\0' && *tab->cvarname != '\0') {
 	pputc(prn, '\n');
@@ -552,33 +566,39 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 	pputs(prn, "\n       ");
     }
 
-    if (rowlabels) {
+    if (row_st != NULL) {
 	pputs(prn, "    ");
     }
 
-    for (j=0; j<c; j++) {
-	if (!collabels) {
-	    pprintf(prn, "[%4g]", tab->cval[j]);
+    for (j=0; j<tab->cols; j++) {
+	double cj = tab->cval[j];
+	
+	if (col_st == NULL) {
+	    pprintf(prn, "[%4g]", cj);
 	} else {
+	    sval = series_table_get_string(col_st, cj);
 	    *lbl = '\0';
-	    gretl_utf8_strncat(lbl, tab->clabels[j], 8);
+	    gretl_utf8_strncat(lbl, sval, 8);
 	    pprintf(prn, "[%8s]", lbl);
 	}
     }
 
     pprintf(prn,"  %s\n  \n", _("TOT."));
 
-    for (i=0; i<r; i++) {
+    for (i=0; i<tab->rows; i++) {
 	if (tab->rtotal[i] > 0) {
-	    if (!rowlabels) {
-		pprintf(prn, "[%4g] ", tab->rval[i]);
+	    double ri = tab->rval[i];
+	    
+	    if (row_st == NULL) {
+		pprintf(prn, "[%4g] ", ri);
 	    } else {
+		sval = series_table_get_string(row_st, ri);
 		*lbl = '\0';
-		gretl_utf8_strncat(lbl, tab->rlabels[i], 8);
+		gretl_utf8_strncat(lbl, sval, 8);
 		pprintf(prn, "[%8s] ", lbl);
 	    }
-	    for (j=0; j<c; j++) {
-		if (collabels) {
+	    for (j=0; j<tab->cols; j++) {
+		if (col_st != NULL) {
 		    pputs(prn, "    ");
 		}
 		if (tab->ctotal[j]) {
@@ -621,12 +641,12 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 
     pputc(prn, '\n');
     pputs(prn, _("TOTAL  "));
-    if (rowlabels) {
+    if (row_st != NULL) {
 	pputs(prn, "    ");
     }
 
-    for (j=0; j<c; j++) {
-	if (collabels) {
+    for (j=0; j<tab->cols; j++) {
+	if (col_st != NULL) {
 	    pputs(prn, "    ");
 	}
 	if (opt & OPT_R) {
@@ -651,8 +671,8 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 		       "expected frequencies were less\n"
 		       "than %g\n"), ymin);
     } else {
-	double n5p = (double) n5 / (r * c);
-	int df = (r - 1) * (c - 1);
+	double n5p = (double) n5 / (tab->rows * tab->cols);
+	int df = (tab->rows - 1) * (tab->cols - 1);
 	double pval = chisq_cdf_comp(df, pearson);
 
 	if (!na(pval)) {
@@ -668,7 +688,7 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 	}
     }
 
-    if (r == 2 && c == 2) {
+    if (tab->rows == 2 && tab->cols == 2) {
 	fishers_exact_test(tab, prn);
     }
 }

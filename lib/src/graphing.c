@@ -29,6 +29,7 @@
 #include "usermat.h"
 #include "gretl_panel.h"
 #include "missing_private.h"
+#include "gretl_string_table.h"
 
 #ifdef WIN32
 # include "gretl_win32.h"
@@ -3420,26 +3421,24 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     } else if (gi.flags & GPT_DUMMY) { 
 	/* plot shows separation by discrete variable */
-	const char **labels = NULL;
 	int nd = gretl_vector_get_length(gi.dvals);
 	int dv = list[3];
+	series_table *st;
 
 	strcpy(s1, (gi.flags & GPT_RESIDS)? _("residual") : 
 	       series_get_graph_name(dset, list[1]));
 	strcpy(s2, series_get_graph_name(dset, dv));
-
-	if (is_string_valued(dset, dv)) {
-	    labels = (const char **)
-		series_get_string_vals(dset, dv, NULL);
-	}
+	st = series_get_string_table(dset, dv);
 
 	for (i=0; i<nd; i++) {
-	    if (labels != NULL) {
+	    double di = gretl_vector_get(gi.dvals, i);
+	    
+	    if (st != NULL) {
 		fprintf(fp, " '-' using 1:($2) title \"%s (%s=%s)\" w points ", 
-			s1, s2, labels[i]);
+			s1, s2, series_table_get_string(st, di));
 	    } else {
 		fprintf(fp, " '-' using 1:($2) title \"%s (%s=%g)\" w points ", 
-			s1, s2, gretl_vector_get(gi.dvals, i));
+			s1, s2, di);
 	    }
 	    if (i < nd - 1) {
 		fputs(", \\\n", fp);
@@ -5334,9 +5333,9 @@ int panel_means_XY_scatter (const int *list, const DATASET *dset,
     int N, T = dset->pd;
     int glist[3] = {2, 1, 2};
     gchar *literal = NULL;
-    char **grpnames = NULL;
+    int grpnames = 0;
     int yvar, xvar;
-    int i, t, s, u;
+    int i, t, s;
     int err = 0;
 
     if (list == NULL || list[0] != 2) {
@@ -5350,10 +5349,10 @@ int panel_means_XY_scatter (const int *list, const DATASET *dset,
 	return E_ALLOC;
     }
 
-    /* If we have panel group names, use them
+    /* If we have valid panel group names, use them
        as obs markers here */
-    grpnames = get_panel_group_names((DATASET *) dset);
-    if (grpnames != NULL) {
+    grpnames = panel_group_names_ok(dset);
+    if (grpnames) {
 	dataset_allocate_obs_markers(gset);
     }
 
@@ -5367,7 +5366,6 @@ int panel_means_XY_scatter (const int *list, const DATASET *dset,
     series_set_display_name(gset, 2, series_get_display_name(dset, xvar));
 
     s = dset->t1;
-    u = dset->t1 / T;
 
     for (i=0; i<N; i++) {
 	double yit, ysum = 0.0;
@@ -5390,9 +5388,8 @@ int panel_means_XY_scatter (const int *list, const DATASET *dset,
 	gset->Z[1][i] = ny == 0 ? NADBL : ysum / ny;
 	gset->Z[2][i] = nx == 0 ? NADBL : xsum / nx;
 	if (gset->S != NULL) {
-	    strcpy(gset->S[i], grpnames[u]);
+	    strcpy(gset->S[i], get_panel_group_name(dset, s));
 	}
-	u++;
     }
 
     literal = g_strdup_printf("set title \"%s\";", _("Group means"));
@@ -5547,7 +5544,7 @@ static int panel_overlay_ts_plot (const int vnum,
     gchar *literal = NULL;
     gchar *title = NULL;
     const double *obs = NULL;
-    char **grpnames = NULL;
+    int grpnames = 0;
     int nv, panel_labels = 0;
     int single_series;
     int use = 0, strip = 0;
@@ -5582,8 +5579,9 @@ static int panel_overlay_ts_plot (const int vnum,
     }
 
     if (!single_series) {
-	grpnames = get_panel_group_names(dset);
-	if (grpnames == NULL && dset->S != NULL) {
+	grpnames = panel_group_names_ok(dset);
+	if (!grpnames && dset->S != NULL) {
+	    /* maybe we have obs markers that are usable */
 	    panel_labels = dataset_has_panel_labels(dset, &use, &strip);
 	}
     }
@@ -5594,8 +5592,10 @@ static int panel_overlay_ts_plot (const int vnum,
 	s = s0 + i * T;
 	if (single_series) {
 	    strcpy(gset->varname[i+1], dset->varname[vnum]);
-	} else if (grpnames != NULL) {
-	    strncat(gset->varname[i+1], grpnames[u0+i], VNAMELEN-1);
+	} else if (grpnames) {
+	    const char *sval = get_panel_group_name(dset, s);
+	    
+	    strncat(gset->varname[i+1], sval, VNAMELEN-1);
 	} else if (panel_labels) {
 	    if (use > 0) {
 		strncat(gset->varname[i+1], dset->S[s], use);

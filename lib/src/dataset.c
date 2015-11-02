@@ -4272,26 +4272,24 @@ int set_panel_groups_name (DATASET *dset, const char *vname)
     return (dset->pangrps == NULL)? E_ALLOC : 0;
 }
 
-/* don't modify the returned value */
+/* This should be called only after the "group names"
+   property of @dset has been (recently) validated, via
+   panel_group_names_ok().
+*/
 
-char **get_panel_group_names (DATASET *dset)
+const char *get_panel_group_name (const DATASET *dset, int obs)
 {
-    char **S = NULL;
+    const char *s = NULL;
 
     if (dataset_is_panel(dset) && dset->pangrps != NULL) {
-	int n, v = current_series_index(dset, dset->pangrps);
+	int v = current_series_index(dset, dset->pangrps);
+	series_table *st = series_get_string_table(dset, v);
+	double x = dset->Z[v][obs];
 
-	if (v > 0 && v < dset->v) {
-	    S = series_get_string_vals(dset, v, &n);
-	    if (S != NULL && n != dset->n / dset->pd) {
-		free(dset->pangrps);
-		dset->pangrps = NULL;
-		S = NULL;
-	    }
-	}
+	s = series_table_get_string(st, x);
     }
 
-    return S;
+    return s;
 }
 
 int panel_group_names_ok (const DATASET *dset)
@@ -4299,13 +4297,19 @@ int panel_group_names_ok (const DATASET *dset)
     int ret = 0;
 
     if (dataset_is_panel(dset) && dset->pangrps != NULL) {
-	int n, v = current_series_index(dset, dset->pangrps);
+	int ns, v = current_series_index(dset, dset->pangrps);
 
 	if (v > 0 && v < dset->v) {
-	    char **S = series_get_string_vals(dset, v, &n);
+	    char **S = series_get_string_vals(dset, v, &ns);
 
-	    if (S != NULL && n == dset->n / dset->pd) {
-		ret = 1;
+	    if (S != NULL) {
+		int ng = dset->n / dset->pd;
+		
+		if (complex_subsampled()) {
+		    ret = (ns >= ng);
+		} else {
+		    ret = (ns == ng);
+		}
 	    }
 	}
     }
@@ -4316,13 +4320,19 @@ int panel_group_names_ok (const DATASET *dset)
 const char *panel_group_names_varname (const DATASET *dset)
 {
     if (dataset_is_panel(dset) && dset->pangrps != NULL) {
-	int n, v = current_series_index(dset, dset->pangrps);
+	int ns, v = current_series_index(dset, dset->pangrps);
 
 	if (v > 0 && v < dset->v) {
-	    char **S = series_get_string_vals(dset, v, &n);
+	    char **S = series_get_string_vals(dset, v, &ns);
 
-	    if (S != NULL && n == dset->n / dset->pd) {
-		return dset->pangrps;
+	    if (S != NULL) {
+		int ng = dset->n / dset->pd;
+
+		if (complex_subsampled() && ns >= ng) {
+		    return dset->pangrps;
+		} else if (ns == ng) {
+		    return dset->pangrps;
+		}
 	    }
 	}
     }

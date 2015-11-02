@@ -1776,7 +1776,7 @@ static int do_debug_command (ExecState *state, const char *param,
 static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 {
     const char *byvar = get_optval_string(cmd->ci, OPT_B);
-    char **labels = NULL;
+    series_table *st = NULL;
     gretl_matrix *xvals = NULL;
     const double *x;
     int i, v, nvals = 0;
@@ -1810,13 +1810,8 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	nvals = gretl_vector_get_length(xvals);
 	if (nvals == 0) {
 	    err = E_DATA;
-	} else if (is_string_valued(dset, v)) {
-	    int n_labels;
-
-	    labels = series_get_string_vals(dset, v, &n_labels);
-	    if (n_labels != nvals) {
-		labels = NULL;
-	    }
+	} else {
+	    st = series_get_string_table(dset, v);
 	}
     }
 
@@ -1850,8 +1845,10 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	    if (single) {
 		bufspace(2, prn);
 	    }
-	    if (labels != NULL) {
-		pprintf(prn, "%s = %s (n = %d):\n", byvar, labels[i], summ->n);
+	    if (st != NULL) {
+		const char *s = series_table_get_string(st, xi);
+		
+		pprintf(prn, "%s = %s (n = %d):\n", byvar, s, summ->n);
 	    } else {
 		pprintf(prn, "%s = %g (n = %d):\n", byvar, xi, summ->n);
 	    }

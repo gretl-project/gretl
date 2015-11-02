@@ -525,7 +525,7 @@ int steal_string_table (DATASET *l_dset, int lvar,
 
 int set_panel_groups_name (DATASET *dset, const char *vname);
 
-char **get_panel_group_names (DATASET *dset);
+const char *get_panel_group_name (const DATASET *dset, int obs);
 
 int panel_group_names_ok (const DATASET *dset);
 

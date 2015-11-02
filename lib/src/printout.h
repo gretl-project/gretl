@@ -40,7 +40,8 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 
 void print_freq_test (const FreqDist *freq, PRN *prn);
 
-void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn);
+void print_xtab (const Xtab *tab, const DATASET *dset,
+		 gretlopt opt, PRN *prn);
 
 void print_smpl (const DATASET *dset, 
 		 int fulln, PRN *prn); 
