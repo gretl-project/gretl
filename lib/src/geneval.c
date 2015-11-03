@@ -122,6 +122,8 @@ static void edit_matrix (parser *p);
 static void edit_array (parser *p);
 static int node_is_true (NODE *n, parser *p);
 static gretl_matrix *list_to_matrix (const int *list, int *err);
+static gretl_matrix *series_to_matrix (const double *x, 
+				       parser *p);
 
 static const char *typestr (int t)
 {
@@ -7285,29 +7287,28 @@ static NODE *type_string_node (NODE *n, parser *p)
     return ret;
 }
 
-static double *scalar_to_series (NODE *n, parser *p)
+static gretl_matrix *scalar_to_series_matrix (NODE *t, parser *p)
 {
-    double *ret = NULL;
-    int t;
+    gretl_matrix *v = NULL;
 
     if (p->dset == NULL || p->dset->n == 0) {
 	p->err = E_NODATA;
     } else {
-	ret = malloc(p->dset->n * sizeof *ret);
-	if (ret == NULL) {
+	int n = sample_size(p->dset);
+	
+	v = gretl_column_vector_alloc(n);
+	if (v == NULL) {
 	    p->err = E_ALLOC;
 	} else {
-	    for (t=0; t<p->dset->n; t++) {
-		if (t >= p->dset->t1 && t <= p->dset->t2) {
-		    ret[t] = n->v.xval;
-		} else {
-		    ret[t] = NADBL;
-		}
-	    }
+	    double x = na(t->v.xval) ? M_NA : t->v.xval;
+	    
+	    gretl_matrix_fill(v, x);
+	    gretl_matrix_set_t1(v, p->dset->t1);
+	    gretl_matrix_set_t2(v, p->dset->t2);
 	}
     }
 
-    return ret;
+    return v;
 }
 
 /* Setting an object in a bundle under a given key string. We get here
@@ -7322,10 +7323,10 @@ static double *scalar_to_series (NODE *n, parser *p)
 static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 {
     gretl_bundle *bundle;
+    GretlType lhtype = 0;
     GretlType type = 0;
     void *ptr = NULL;
     char *key = NULL;
-    int size = 0;
     int donate = 0;
     int err = 0;
 
@@ -7358,19 +7359,31 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     }
 #endif
 
+    /* Note: @lhtype is the gretl type specified by the caller for
+       the bundle member (if any, this need not be supplied), and
+       @type is the gretl type of the object arising on the RHS.
+       It's an error if @lhtype is non-zero and @type does not
+       agree with it -- except for the case where @lhtype is given
+       as "series" and we get a suitable matrix on the right. As
+       of 2015-10-03, when we get a request to put a series into
+       a bundle we actually put in a matrix, which in fact makes it
+       easier to get a series back out again.
+    */
+
+    lhtype = p->lh.gtype;
+
     if (!err) {
 	switch (n->t) {
 	case NUM:
-	    if (p->lh.gtype == GRETL_TYPE_SERIES) {
-		ptr = scalar_to_series(n, p);
+	    if (lhtype == GRETL_TYPE_SERIES) {
+		ptr = scalar_to_series_matrix(n, p);
 		if (p->err) {
 		    err = p->err;
 		} else {
-		    type = GRETL_TYPE_SERIES;
-		    size = p->dset->n;
+		    lhtype = type = GRETL_TYPE_MATRIX;
 		    donate = 1;
 		}
-	    } else if (p->lh.gtype == GRETL_TYPE_MATRIX) {
+	    } else if (lhtype == GRETL_TYPE_MATRIX) {
 		ptr = gretl_matrix_from_scalar(n->v.xval);
 		type = GRETL_TYPE_MATRIX;
 		donate = 1;
@@ -7385,8 +7398,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	    donate = is_tmp_node(n);
 	    break;
 	case MAT:
-	    if (p->lh.gtype == GRETL_TYPE_DOUBLE &&
-		scalar_matrix_node(n)) {
+	    if (lhtype == GRETL_TYPE_DOUBLE && scalar_matrix_node(n)) {
 		ptr = &n->v.m->val[0];
 		type = GRETL_TYPE_DOUBLE;
 	    } else {
@@ -7405,10 +7417,11 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	    }	 
 	    break;
 	case SERIES:
-	    ptr = n->v.xvec;
-	    type = GRETL_TYPE_SERIES;
-	    size = p->dset->n;
-	    donate = is_tmp_node(n);
+	    ptr = series_to_matrix(n->v.xvec, p);
+	    if (!p->err) {
+		lhtype = type = GRETL_TYPE_MATRIX;
+		donate = 1;
+	    }
 	    break;
 	case BUNDLE:
 	    ptr = n->v.b;
@@ -7431,16 +7444,16 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     }
 
     if (!err) {
-	if (p->lh.gtype && type != p->lh.gtype) {
+	if (lhtype && type != lhtype) {
 	    /* result is type-incompatible with user's spec */
 	    err = E_TYPES;
 	} else if (donate) {
 	    /* it's OK to hand over the data pointer */
-	    err = gretl_bundle_donate_data(bundle, key, ptr, type, size);
+	    err = gretl_bundle_donate_data(bundle, key, ptr, type, 0);
 	    n->v.ptr = NULL;
 	} else {
 	    /* the data must be copied into the bundle */
-	    err = gretl_bundle_set_data(bundle, key, ptr, type, size);
+	    err = gretl_bundle_set_data(bundle, key, ptr, type, 0);
 	}
     }
 
@@ -13372,16 +13385,21 @@ static gretl_matrix *list_to_matrix (const int *list, int *err)
 static gretl_matrix *series_to_matrix (const double *x, 
 				       parser *p)
 {
-    gretl_matrix *v = NULL;
     int i, n = sample_size(p->dset);
+    gretl_matrix *v;
+    double xi;
 
     v = gretl_column_vector_alloc(n);
+    
     if (v == NULL) {
 	p->err = E_ALLOC;
     } else {
 	for (i=0; i<n; i++) {
-	    v->val[i] = x[i + p->dset->t1];
+	    xi = x[i + p->dset->t1];
+	    v->val[i] = na(xi) ? M_NA : xi;
 	}
+	gretl_matrix_set_t1(v, p->dset->t1);
+	gretl_matrix_set_t2(v, p->dset->t2);
     }
 
     return v;
