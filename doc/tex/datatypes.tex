@@ -145,7 +145,7 @@ via the gretl GUI.
 \label{sec:Bundles}
 
 A \texttt{bundle} is a container or wrapper for various sorts of
-objects---specifically, scalars, series, matrices, strings and
+objects---specifically, scalars, series, matrices, strings, arrays and
 bundles. (Yes, a bundle can contain other bundles). A bundle takes the
 form of a hash table or associative array: each item placed in the
 bundle is associated with a key which can used to retrieve it
@@ -173,36 +173,38 @@ exists.
 
 To add an object to a bundle you assign to a compound left-hand value:
 the name of the bundle followed by the key. Two forms of syntax are
-acceptable in this context. The original syntax (and the only form
-supported prior to version 1.9.12 of gretl) requires that the
-key be given as a quoted string literal enclosed in square brackets.
-For example, the statement
-
-\begin{code}
-foo["matrix1"] = m
-\end{code}
-
-adds an object called \texttt{m} (presumably a matrix) to bundle
-\texttt{foo} under the key \texttt{matrix1}. From gretl 1.9.12,
-however, a simpler syntax is available, \emph{provided} the key
-satisfies the rules for a gretl variable name (31 characters maximum,
-starting with a letter and composed of just letters, numbers or
-underscore).\footnote{When using the original syntax, keys do not have
-  to be valid as variable names---for example, they can include
-  spaces---but they are limited to 31 characters.}  In that case you
-can simply join the key to the bundle name with a dot, as in
-
+acceptable in this context. The currently recommended syntax is
+\textsl{bundlename}.\textsl{key}; that is, the name of the bundle
+followed by a dot, then the key. Both the bundle name and the key must
+be valid gretl identifiers.\footnote{As a reminder: 31 characters
+  maximum, starting with a letter and composed of just letters,
+  numbers or underscore.} For example, the statement
+%
 \begin{code}
 foo.matrix1 = m
 \end{code}
+%
+adds an object called \texttt{m} (presumably a matrix) to bundle
+\texttt{foo} under the key \texttt{matrix1}. The original syntax (and
+the only form supported prior to version 1.9.12 of gretl) requires
+that the key be given as a quoted string literal enclosed in square
+brackets, as in
+%
+\begin{code}
+foo["matrix1"] = m
+\end{code}
+%
+While the old syntax is still acceptable, we suggest that it be used
+only if you wish to preserve compatibility with gretl version 1.9.11
+(December, 2012) or earlier.
 
 To get an item out of a bundle, again use the name of the bundle
 followed by the key, as in
 
 \begin{code}
+matrix bm = foo.matrix1
+# or using the old notation
 matrix bm = foo["matrix1"]
-# or using the dot notation
-matrix m = foo.matrix1
 \end{code}
 
 Note that the key identifying an object within a given bundle is
@@ -233,7 +235,6 @@ with the bundle/key combination, as in
 
 \begin{code}
 delete foo.mykey
-delete foo["quoted key"]
 \end{code}
 
 This destroys the object associated with the key and removes the key
@@ -241,13 +242,12 @@ from the hash table.
 
 To determine whether a bundle contains an object associated with a
 given key, use the \texttt{inbundle()} function. This takes two
-arguments: the name of the bundle and the key string. If the key
-string contains embedded spaces it must be double-quoted, otherwise
-quotation is optional. The value returned by this function is an
-integer which codes for the type of the object (0 for no match, 1 for
-scalar, 2 for series, 3 for matrix, 4 for string and 5 for
-bundle). The function \texttt{typestr()} may be used to get the string
-corresponding to this code. For example:
+arguments: the name of the bundle and the key string. The value
+returned by this function is an integer which codes for the type of
+the object (0 for no match, 1 for scalar, 2 for series, 3 for matrix,
+4 for string, 5 for bundle and 6 for array). The function
+\texttt{typestr()} may be used to get the string corresponding to this
+code. For example:
 
 \begin{code}
 scalar type = inbundle(foo, x)
@@ -452,7 +452,7 @@ end function
 function strings mkstrs (int n)
   strings S = array(n)
   loop i=1..n -q
-    sprintf S[i] "member %d", i
+    S[i] = sprintf("member %d", i)
   endloop
   return S
 end function
