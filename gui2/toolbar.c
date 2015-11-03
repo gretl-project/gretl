@@ -730,7 +730,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Cut"), GTK_STOCK_CUT, G_CALLBACK(vwin_cut_callback), EDIT_ITEM }, 
     { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(vwin_copy_callback), COPY_ITEM }, 
     { N_("Paste"), GTK_STOCK_PASTE, G_CALLBACK(text_paste), EDIT_ITEM },
-    { N_("Find..."), GTK_STOCK_FIND, G_CALLBACK(text_find), FIND_ITEM },
+    { N_("Find..."), GTK_STOCK_FIND, G_CALLBACK(text_find), FIND_ITEM }, /* EDIT_ITEM? */
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, G_CALLBACK(text_replace), EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, G_CALLBACK(text_undo), EDIT_ITEM },
     { N_("Redo"), GTK_STOCK_REDO, G_CALLBACK(text_redo), EDIT_ITEM },
@@ -1178,6 +1178,12 @@ void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
     viewbar_add_items(vwin, flags);
 
     vwin_pack_toolbar(vwin);
+
+#if 0 /* not yet */    
+    if (!edit_ok(vwin->role)) {
+	vwin_add_finder(vwin);
+    }
+#endif    
 }
 
 static void remove_child (GtkWidget *child, GtkWidget *cont)
