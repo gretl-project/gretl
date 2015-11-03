@@ -10,6 +10,6 @@ loop for i=1..4 --quiet
     native = $coeff
     gig_set_pq(&aristotle, 0, i)
     gig_estimate(&aristotle,0)
-    gigish = aristotle["coeff"]
+    gigish = aristotle.coeff
     printf "%10.4f\n", native ~ gigish[1:rows(native)]
 endloop

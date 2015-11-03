@@ -1,17 +1,17 @@
 function void gig_printHeader(bundle *mod)
 
-    ncoeff  = rows(mod["coeff"]) # rows
-    nfitted = rows(mod["active"]) # cols
+    ncoeff  = rows(mod.coeff) # rows
+    nfitted = rows(mod.active) # cols
 	
-    type  = mod["type"]
-    dtype = mod["cdist"]
-    vtype = mod["vcvtype"]
+    type  = mod.type
+    dtype = mod.cdist
+    vtype = mod.vcvtype
 
-    p    = mod["p"]
-    q    = mod["q"]
-    t1   = mod["t1"]
-    t2   = mod["t2"]
-    nobs = mod["nobs"]
+    p    = mod.p
+    q    = mod.q
+    t1   = mod.t1
+    t2   = mod.t2
+    nobs = mod.nobs
 
     printf "\nModel: "
 
@@ -57,7 +57,7 @@ function void gig_printHeader(bundle *mod)
 
     # OBS used
 
-    printf "\nDependent variable: %s", mod["depvarname"]
+    printf "\nDependent variable: %s", mod.depvarname
     printf "\nSample: %s-%s (T = %d)", obslabel(t1), obslabel(t2), nobs
 
     # VCV 
@@ -72,12 +72,12 @@ function void gig_printHeader(bundle *mod)
         printf "OPG"
     endif
 
-    if (mod["vX_QR"] == 1) && (mod["vk"]>1)
+    if (mod.vX_QR == 1) && (mod.vk>1)
         printf "\nQR decomposition used for variance regressors"
     endif
 
-    # if (mod["scale"] != 1)
-    #     printf "\nexperimental: scaling = %g\n", mod["scale"]
+    # if (mod.scale != 1)
+    #     printf "\nexperimental: scaling = %g\n", mod.scale
     # endif
 
     printf "\n\n"
@@ -150,32 +150,32 @@ end function
 
 function void maybe_gig_print(bundle *mod, scalar verbose[0:3:0])
 
-    ncoeff  = rows(mod["coeff"]) # rows
-    nfitted = rows(mod["active"]) # cols
+    ncoeff  = rows(mod.coeff) # rows
+    nfitted = rows(mod.active) # cols
 
-    type  = mod["type"]
-    dtype = mod["cdist"]
-    vtype = mod["vcvtype"]
+    type  = mod.type
+    dtype = mod.cdist
+    vtype = mod.vcvtype
 
-    p    = mod["p"]
-    q    = mod["q"]
-    nmX  = mod["mk"]
-    nvX  = mod["vk"]
+    p    = mod.p
+    q    = mod.q
+    nmX  = mod.mk
+    nvX  = mod.vk
 
-    crit = mod["criteria"]
-    vcv = mod["vcv"]
+    crit = mod.criteria
+    vcv = mod.vcv
 
     # Composing print-out results
 	
-    coeff  = mod["coeff"]
-    sel    = mod["active"]
-    stderr = mod["stderr"]
+    coeff  = mod.coeff
+    sel    = mod.active
+    stderr = mod.stderr
 
     cs2 = coeff[sel] ~ stderr 
 
     # MEAN REGR
     if nmX > 0
-        parNames = mod["mXnames"]
+        parNames = mod.mXnames
 	cs = cs2[1:nmX,]
 
 	if cols(cs)>0
@@ -189,7 +189,7 @@ function void maybe_gig_print(bundle *mod, scalar verbose[0:3:0])
     if nvX == 1
     	parNames = "omega"
     else
-	parNames = mod["vXnames"]
+	parNames = mod.vXnames
     endif
 
     #ALPHAS
@@ -250,7 +250,7 @@ function void maybe_gig_print(bundle *mod, scalar verbose[0:3:0])
 
     modprint cs parNames
     if (type == 3) # GJR
-	GJR_alt_param(coeff, vcv, p, q, nmX, nvX, mod["vXnames"])
+	GJR_alt_param(coeff, vcv, p, q, nmX, nvX, mod.vXnames)
     endif
 
     if dtype > 0    	
@@ -289,8 +289,8 @@ function void maybe_gig_print(bundle *mod, scalar verbose[0:3:0])
         printf "Starting/Fitted Values Comparison Matrix:\n\n"
         printf "       Initial         Final    Difference\n\n"
     
-        fitted  = mod["coeff"]
-	initial = mod["inipar"]
+        fitted  = mod.coeff
+	initial = mod.inipar
         loop for i=1..ncoeff -q
 	    difff = initial[i] - fitted[i]
 	    printf "%14.7f%14.7f%14.7f\n", initial[i], fitted[i], difff
@@ -306,7 +306,7 @@ end function
 
 function void gig_print(bundle *b, scalar verbose[0:3:0])
 
-    err = b["errcode"]
+    err = b.errcode
     if err == 0
 	gig_printHeader(&b)
 	maybe_gig_print(&b, verbose)

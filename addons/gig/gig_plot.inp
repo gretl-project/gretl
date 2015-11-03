@@ -137,7 +137,7 @@ function string gig_dgrph(matrix X, string desc)
 end function
 
 function void gig_plot(bundle *model)
-    string tmpfile = gig_grph(model["depvarname"], model["uhat"], model["h"])
+    string tmpfile = gig_grph(model.depvarname, model.uhat, model.h)
     gnuplot --input="@tmpfile" --output="display"
 end function
 
@@ -184,10 +184,10 @@ function matrix pdf_skged(matrix *x, scalar ni, scalar ta)
 end function
 
 function void gig_dplot(bundle *model)
-    series eps = model["stduhat"]
+    series eps = model.stduhat
     matrix X = kdensity(eps)
-    scalar dtype = model["cdist"]
-    theta = model["coeff"]
+    scalar dtype = model.cdist
+    theta = model.coeff
     ncoef = rows(theta)
     e = X[,1]
 

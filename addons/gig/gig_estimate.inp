@@ -5,35 +5,35 @@ function void gig_packResults(bundle *mod, scalar err, matrix thetahat,
 			      series *h, series *e,
 			      matrix inipar, matrix Sigma, matrix crit)
 
-    mod["errcode"] = err
+    mod.errcode = err
 
     if (err = 0)
-	theta = mod["coeff"]
-	sel = mod["active"]
+	theta = mod.coeff
+	sel = mod.active
 	theta[sel] = thetahat
-	mod["inipar"] = inipar
+	mod.inipar = inipar
 
-	vk = mod["vk"]
+	vk = mod.vk
 
-	if (vk>1) && (mod["vX_QR"] == 1)
+	if (vk>1) && (mod.vX_QR == 1)
 	    J = I(rows(Sigma))
-	    mk = mod["mk"]
+	    mk = mod.mk
 	    sel = seq(mk+1, mk+vk)
-	    invR = inv(mod["vX_R"])
+	    invR = inv(mod.vX_R)
 	    J[sel,sel] = invR
 	    theta[sel] = invR * theta[sel]
 	    Sigma = qform(J, Sigma)
 	endif
 
-	mod["coeff"] = theta
-	mod["vcv"] = Sigma
-	mod["stderr"] = sqrt(diag(Sigma))
+	mod.coeff = theta
+	mod.vcv = Sigma
+	mod.stderr = sqrt(diag(Sigma))
 
-	mod["h"] = h
-	mod["uhat"] = e
-	mod["stduhat"] = e/sqrt(h)
+	mod.h = h
+	mod.uhat = e
+	mod.stduhat = e/sqrt(h)
 
-	mod["criteria"] = crit
+	mod.criteria = crit
     endif
 
 end function
@@ -49,9 +49,9 @@ function scalar gig_estimate(bundle *model, int verbose[0:2:1])
     # verbose = 1 -> show output
     # verbose = 2 -> show iterations
 
-    scalar garchType = model["type"]
-    t1 = model["t1"]
-    t2 = model["t2"]
+    scalar garchType = model.type
+    t1 = model.t1
+    t2 = model.t2
 
     smpl t1 t2
 
@@ -72,8 +72,8 @@ function scalar gig_estimate(bundle *model, int verbose[0:2:1])
 	printf "Not yet, Buster!\n"
    endif	
 
-   if model["scale"] != 1
-       s = model["scale"]
+   if model.scale != 1
+       s = model.scale
        adjust_for_scale(&model, 1/s)
    endif
 
