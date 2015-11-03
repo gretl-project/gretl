@@ -11,7 +11,7 @@ list X = unemp infl
 list Z = const
 
 Mod = SVAR_setup("plain", X, Z, order)
-Mod["horizon"] = 40
+Mod.horizon = 40
 SVAR_estimate(&Mod)
 
 fevdmat = FEVD(&Mod)

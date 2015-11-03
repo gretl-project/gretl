@@ -5,21 +5,21 @@ function scalar base_est(bundle *SVARobj)
    to the bundle; returns an errcode (virginity check).
   */
   
-  scalar step = SVARobj["step"]
+  scalar step = SVARobj.step
   err = (step>0)
 
   if err
     printf "Base estimation done already!\n"
   else
-    matrix mY  = SVARobj["Y"]
-    scalar p   = SVARobj["p"] 
-    scalar n   = SVARobj["n"]
-    scalar k   = SVARobj["k"]
+    matrix mY  = SVARobj.Y
+    scalar p   = SVARobj.p 
+    scalar n   = SVARobj.n
+    scalar k   = SVARobj.k
 
-    scalar T   = SVARobj["T"]
+    scalar T   = SVARobj.T
 
     matrix E
-    matrix mreg = SVARobj["X"] ~ mlag(mY, seq(1,p))
+    matrix mreg = SVARobj.X ~ mlag(mY, seq(1,p))
     matrix olspar = mols(mY[p+1:T,], mreg[p+1:T,], &E)
 
     df = T - (n*p + k) 
@@ -33,12 +33,12 @@ function scalar base_est(bundle *SVARobj)
 
     matrix A = transp(olspar[k+1:k+n*p,])
 
-    SVARobj["VARpar"] = A
-    SVARobj["mu"] = d
-    SVARobj["Sigma"] = Sigma
-    SVARobj["E"] = E
-    SVARobj["step"] = 1
-    SVARobj["LL0"] = T*(n*ln(2*pi) - 0.5*ln(det(Sigma)) - 0.5)
+    SVARobj.VARpar = A
+    SVARobj.mu = d
+    SVARobj.Sigma = Sigma
+    SVARobj.E = E
+    SVARobj.step = 1
+    SVARobj.LL0 = T*(n*ln(2*pi) - 0.5*ln(det(Sigma)) - 0.5)
   endif
 
   return err
@@ -84,14 +84,14 @@ function scalar vecm_est(bundle *SVARobj)
 
     # --- preliminary checks 
     
-    err = (SVARobj["step"] > 0)
+    err = (SVARobj.step > 0)
     
     if err
 	printf "Base estimation done already!\n"
 	return err
     endif
 
-    err = (SVARobj["type"] != 4)
+    err = (SVARobj.type != 4)
     
     if err
 	printf "Wrong model type!\n"
@@ -100,17 +100,17 @@ function scalar vecm_est(bundle *SVARobj)
 
     # --- grab stuff from the bundle 
 
-    matrix mY     = SVARobj["Y"]
-    matrix jbeta   = SVARobj["jbeta"]
-    matrix jalpha  = SVARobj["jalpha"]
-    scalar p	  = SVARobj["p"] 
-    scalar n	  = SVARobj["n"]
-    scalar k	  = SVARobj["k"]
+    matrix mY     = SVARobj.Y
+    matrix jbeta   = SVARobj.jbeta
+    matrix jalpha  = SVARobj.jalpha
+    scalar p	  = SVARobj.p 
+    scalar n	  = SVARobj.n
+    scalar k	  = SVARobj.k
     scalar r      = cols(jbeta)
-    scalar dcase   = SVARobj["jcase"]
+    scalar dcase   = SVARobj.jcase
     scalar ols_al = rows(jalpha) == 0
     
-    scalar T      = SVARobj["T"]
+    scalar T      = SVARobj.T
 
     # --- first thing: do we have a pre-set value for alpha?
 
@@ -131,10 +131,10 @@ function scalar vecm_est(bundle *SVARobj)
 
     if ols_al
 	# alpha must be estimated together with the rest of the VECM
-	matrix mreg ~= SVARobj["X"] ~ ECM
+	matrix mreg ~= SVARobj.X ~ ECM
     else
 	matrix dep -= (ECM[p+1:T,] * jalpha')
-	matrix mreg ~= SVARobj["X"] 
+	matrix mreg ~= SVARobj.X 
     endif
     
     # extra lags
@@ -212,13 +212,13 @@ function scalar vecm_est(bundle *SVARobj)
 	matrix A = I(n) + Pi'
     endif
     
-    SVARobj["VARpar"] = A'
-    SVARobj["mu"] = mu
-    SVARobj["Sigma"] = Sigma
-    SVARobj["E"] = E
-    SVARobj["jalpha"] = jalpha
-    SVARobj["step"] = 1
-    SVARobj["LL0"] = T*(n*ln(2*pi) - 0.5*ln(det(Sigma)) - 0.5)
+    SVARobj.VARpar = A'
+    SVARobj.mu = mu
+    SVARobj.Sigma = Sigma
+    SVARobj.E = E
+    SVARobj.jalpha = jalpha
+    SVARobj.step = 1
+    SVARobj.LL0 = T*(n*ln(2*pi) - 0.5*ln(det(Sigma)) - 0.5)
 
     return err
 
@@ -416,10 +416,10 @@ function void printStrMat(matrix X, matrix V, string name)
 end function
 
 function void SVAR_est_printout(bundle *mod)
-  scalar type = mod["type"]
+  scalar type = mod.type
   /*
-  matrix theta = mod["theta"]
-  matrix V = mod["vcv"]
+  matrix theta = mod.theta
+  matrix V = mod.vcv
   
      printf "Free parameters\n"
      scalar npar = rows(theta)
@@ -432,7 +432,7 @@ function void SVAR_est_printout(bundle *mod)
      modprint cs pname
   */  
   if type == 1 || type == 2  # plain or C-model
-    printStrMat(mod["S1"], mod["vcv"], "C")  
+    printStrMat(mod.S1, mod.vcv, "C")  
   endif
 end function
 

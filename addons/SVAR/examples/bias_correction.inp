@@ -26,19 +26,19 @@ setobs 1 1 --special-time-series
 list Y = GenerateExampleData(0.95, $nobs)
 
 Model = SVAR_setup("plain", Y, null, 1)
-Model["horizon"] = 20
+Model.horizon = 20
 SVAR_estimate(&Model)
 
 SVAR_boot(&Model, 1000, 0.95)
 IRFplot(&Model, 1, 1)
 IRFplot(&Model, 1, 2)
 
-Model["biascorr"] = 1
+Model.biascorr = 1
 SVAR_boot(&Model, 1000, 0.95)
 IRFplot(&Model, 1, 1)
 IRFplot(&Model, 1, 2)
 
-Model["biascorr"] = 2
+Model.biascorr = 2
 SVAR_boot(&Model, 1000, 0.95)
 IRFplot(&Model, 1, 1)
 IRFplot(&Model, 1, 2)

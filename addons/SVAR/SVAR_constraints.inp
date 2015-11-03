@@ -139,29 +139,29 @@ function matrix lrConstr(matrix C1, matrix lrRd)
 end function
 
 function matrix get_full_Rd(bundle *obj, int verbosity)
-    type = obj["type"]
-    n = obj["n"]
+    type = obj.type
+    n = obj.n
     matrix fullRd = {}
 
     if type == 1
 	# duh
-	fullRd = obj["Rd1"]
+	fullRd = obj.Rd1
     elif (type==2) || (type == 4)
 	# generic C-model: may also have long-run restrictions
 	# includes SVEC
 	
-	fullRd = obj["Rd1"] # grab sr-restrictions first
-	nc2 = rows(obj["Rd1l"])
+	fullRd = obj.Rd1 # grab sr-restrictions first
+	nc2 = rows(obj.Rd1l)
 	if (type == 4) || (nc2 > 0) # long-run restrictions
 
-	    matrix A = obj["VARpar"]              # grab the autoregressive parameters
+	    matrix A = obj.VARpar              # grab the autoregressive parameters
 
 	    # before ML estimation, we need to take into account the
 	    # permanent/temporary shock classification in SVEC
 	    if type == 4
-		matrix alpha = obj["jalpha"]
-		matrix beta  = obj["jbeta"]
-		if obj["jcase"] % 2 == 0
+		matrix alpha = obj.jalpha
+		matrix beta  = obj.jbeta
+		if obj.jcase % 2 == 0
 		    # trim beta
 		    beta = beta[1:n,]
 		endif
@@ -176,7 +176,7 @@ function matrix get_full_Rd(bundle *obj, int verbosity)
 	    
 	    printf "Long-run matrix C(1) = \n%12.4f\n", C1
 
-	    matrix lrRd = obj["Rd1l"]                    # grab lr-restrictions, if any
+	    matrix lrRd = obj.Rd1l                    # grab lr-restrictions, if any
 	    fullRd = fullRd | lrConstr(C1, lrRd)  # put the constraints together
 
 	    if verbosity>1 

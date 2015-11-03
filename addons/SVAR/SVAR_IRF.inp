@@ -6,16 +6,16 @@ function void doIRF(bundle *SVARobj)
    The output is not returned by the function, but rather 
    put into the bundle under the "IRFs" key.
   */
-  scalar type = SVARobj["type"]
-  matrix varA = SVARobj["VARpar"]
-  scalar H = SVARobj["horizon"] + 1
-  scalar n = SVARobj["n"]
-  scalar p = SVARobj["p"]
+  scalar type = SVARobj.type
+  matrix varA = SVARobj.VARpar
+  scalar H = SVARobj.horizon + 1
+  scalar n = SVARobj.n
+  scalar p = SVARobj.p
 
   if (type == 1) || (type == 2) || (type == 4)
-    matrix C = SVARobj["S1"]
+    matrix C = SVARobj.S1
   elif type == 3
-    matrix C = SVARobj["S1"] \ SVARobj["S2"]
+    matrix C = SVARobj.S1 \ SVARobj.S2
   endif
 
   matrix ret = zeros(H,n*n)
@@ -32,21 +32,21 @@ function void doIRF(bundle *SVARobj)
     tmp = prd
   endloop
 
-  if SVARobj["ncumul"] > 0
-    matrix to_cum = SVARobj["cumul"]
+  if SVARobj.ncumul > 0
+    matrix to_cum = SVARobj.cumul
     tmp = zeros(n,n)
     tmp[to_cum,] = 1
     sel = selifr(transp(seq(1,n*n)), vec(tmp))
     ret[, sel] = cum(ret[, sel])
   endif
 
-  SVARobj["IRFs"] = ret
+  SVARobj.IRFs = ret
 end function
 
 function matrix FEVD(bundle *SVARobj)
-  n = SVARobj["n"]
-  h = SVARobj["horizon"] + 1
-  sIRF = SVARobj["IRFs"]
+  n = SVARobj.n
+  h = SVARobj.horizon + 1
+  sIRF = SVARobj.IRFs
 
   matrix ret = zeros(h, n*n)
   ctmp = cum(sIRF .* sIRF)
@@ -61,29 +61,29 @@ end function
 
 function series GetShock(bundle *SVARobj, scalar i)
   series ret = NA
-  scalar n = SVARobj["n"]
+  scalar n = SVARobj.n
   
   if (i <= n) && (i > 0) 
-    scalar p = SVARobj["p"]
-    scalar type = SVARobj["type"]
+    scalar p = SVARobj.p
+    scalar type = SVARobj.type
     if (type == 1) || (type == 2) || (type == 4)
-      matrix C = SVARobj["S1"]
+      matrix C = SVARobj.S1
     elif type == 3
-      matrix C = SVARobj["S1"] \ SVARobj["S2"]
+      matrix C = SVARobj.S1 \ SVARobj.S2
     endif
 
     matrix iC = inv(C')
-    scalar extra = $nobs - rows(SVARobj["E"])
+    scalar extra = $nobs - rows(SVARobj.E)
     if extra > 0
       set warnings off
       matrix tmp = ones(extra,1) .* NA
     else
       matrix tmp = {}
     endif
-    tmp |= SVARobj["E"] * iC[,i]
+    tmp |= SVARobj.E * iC[,i]
     series ret = tmp
 
-    snames = SVARobj["snames"]
+    snames = SVARobj.snames
     vlab = snames[i]
           
     setinfo ret --description="@vlab"    
@@ -96,7 +96,7 @@ function list SVAR_hd(bundle *Mod, scalar nv)
     
     list ret = null
     loop foreach i n p t1 t2 type --quiet
-        scalar $i = Mod["$i"]
+        scalar $i = Mod.$i
     endloop
     
     if nv<0 && nv>n
@@ -133,14 +133,14 @@ function list SVAR_hd(bundle *Mod, scalar nv)
     matrix E = Mod.E 
     matrix VARpar = Mod.VARpar
     if (type == 1) || (type == 2) || (type == 4)
-	matrix C = Mod["S1"]
+	matrix C = Mod.S1
     elif type == 3
-	matrix C = Mod["S1"] \ Mod["S2"]
+	matrix C = Mod.S1 \ Mod.S2
     endif
 
     matrix iC = inv(C)
-    strings Ynames = Mod["Ynames"]
-    strings snames = Mod["snames"]
+    strings Ynames = Mod.Ynames
+    strings snames = Mod.snames
     string yn = Ynames[nv]
 
     smpl t1 t2

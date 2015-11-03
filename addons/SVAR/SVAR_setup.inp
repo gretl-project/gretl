@@ -63,28 +63,28 @@ function matrix set_default_dimensions(bundle *mod, list lY,
     k = nelem(lX)
     
     /* no of endogenous variables */
-    mod["n"] = n
+    mod.n = n
     /* no of exogenous variables */
-    mod["k"] = k
+    mod.k = k
     /* VAR order */
-    mod["p"] = varorder
+    mod.p = varorder
     /* horizon for IRFs etc */
-    mod["horizon"] = 10
+    mod.horizon = 10
     if $pd == 4
 	/* quarterly: try 5 years */
-	mod["horizon"] = 20
+	mod.horizon = 20
     elif $pd == 12
 	/* monthly: two years */
-	mod["horizon"] = 24
+	mod.horizon = 24
     endif
 
     /* sample size */
     list everything = lY lX
     smpl everything --no-missing
     matrix mreg = { everything }
-    mod["T"] = rows(mreg)
-    mod["t1"] = $t1
-    mod["t2"] = $t2
+    mod.T = rows(mreg)
+    mod.t1 = $t1
+    mod.t2 = $t2
 
     return mreg
 end function
@@ -136,24 +136,24 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
   /*-----------------------------------------------------------------------*/
 
   /* type goes from 1 to 4 (plain, "C", "AB" or "SVEC") */
-  ret["type"] = type
+  ret.type = type
 
   /* the step we're at: 0 = no estimation done, 1 = VAR only, 2 = SVAR */
-  ret["step"] = 0 # maybe not needed any more
+  ret.step = 0 # maybe not needed any more
 
   matrix mreg = set_default_dimensions(&ret, lY, lX, varorder)
 
   /* the actual data */
-  ret["Y"] = mreg[,1:n]
+  ret.Y = mreg[,1:n]
   if k > 0
-    ret["X"] = mreg[,n+1:n+k]
+    ret.X = mreg[,n+1:n+k]
   else
-    ret["X"] = {}
+    ret.X = {}
   endif
 
   # variable names
-  ret["Ynames"] = strsplit(strsub(varname(lY),","," ")) # note: string array
-  ret["Xnames"] = strsplit(strsub(varname(lX),","," ")) # needed?
+  ret.Ynames = strsplit(strsub(varname(lY),","," ")) # note: string array
+  ret.Xnames = strsplit(strsub(varname(lX),","," ")) # needed?
 
   /*
   The constraint matrices.
@@ -168,49 +168,49 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
   */
 
   if type == 1
-    ret["Rd1"] = cholRd(n)
+    ret.Rd1 = cholRd(n)
   else
-    ret["Rd1"] = {}
+    ret.Rd1 = {}
   endif
 
-  ret["Rd1l"] = {}
+  ret.Rd1l = {}
 
   if type == 3
-    ret["Rd0"] = {}
+    ret.Rd0 = {}
   endif
 
   if type == 4
     /* SVEC model: cointegration stuff */
-    ret["jalpha"] = {}
-    ret["jbeta"] = {}
-    ret["jcase"] = 0
+    ret.jalpha = {}
+    ret.jbeta = {}
+    ret.jcase = 0
   endif
 
   /* 
      Optimisation
   */
   # Sven remark: user choice has to override after calling this func
-  ret["optmeth"] = 4 # default = scoring
-  ret["simann"]  = 0 # not for now
+  ret.optmeth = 4 # default = scoring
+  ret.simann  = 0 # not for now
 
   /* 
      Information for cumulating IRFs
   */
 
-  ret["ncumul"] = 0
-  ret["cumul"] = {}
+  ret.ncumul = 0
+  ret.cumul = {}
     
   /* 
      Bootstrap
   */
-  ret["nboot"] = 0
-  ret["boot_alpha"] = -1
-  ret["bootdata"] = {}
-  ret["biascorr"] = 0
+  ret.nboot = 0
+  ret.boot_alpha = -1
+  ret.bootdata = {}
+  ret.biascorr = 0
 
   /* Names for shocks */
   # per default, we borrow variable names, following tradition
-  ret["snames"] = ret["Ynames"]
+  ret.snames = ret.Ynames
 
   return ret
 end function
@@ -221,8 +221,8 @@ function scalar SVAR_restrict(bundle *b, string code, int r,
     # c gets a default so that it can be omitted with Adiag, Bdiag (?)
     # the d default is also natural 
 
-  type = b["type"]
-  n = b["n"]
+  type = b.type
+  n = b.n
   
   # check input for implemented restriction code
   if strstr("C lrC A B Adiag Bdiag", code) == "" # code unknown
@@ -242,42 +242,42 @@ function scalar SVAR_restrict(bundle *b, string code, int r,
   # if no input error, proceed with this:
   err = 0
   if code == "C"
-      matrix Rd = b["Rd1"]
+      matrix Rd = b.Rd1
       err = add_constraint(&Rd, n, r, c, d)
       if !err 
-        b["Rd1"] = Rd
+        b.Rd1 = Rd
       endif
   elif code == "lrC"
-      matrix Rd = b["Rd1l"]
+      matrix Rd = b.Rd1l
       err = add_constraint(&Rd, n, r, c, d)
       if !err 
-        b["Rd1l"] = Rd
+        b.Rd1l = Rd
       endif
   elif code == "A"
-      matrix Rd = b["Rd0"]
+      matrix Rd = b.Rd0
       err = add_constraint(&Rd, n, r, c, d)
       if !err 
-        b["Rd0"] = Rd
+        b.Rd0 = Rd
       endif
   elif code == "B"
-      matrix Rd = b["Rd1"]
+      matrix Rd = b.Rd1
       err = add_constraint(&Rd, n, r, c, d)
       if !err 
-        b["Rd1"] = Rd
+        b.Rd1 = Rd
       endif
   elif code == "Adiag"
-      matrix Rd = b["Rd0"]
+      matrix Rd = b.Rd0
       if ok(r)
-        b["Rd0"] = Rd | diag_Rd(n, r)
+        b.Rd0 = Rd | diag_Rd(n, r)
       else
-        b["Rd0"] = Rd | free_diag_Rd(n)
+        b.Rd0 = Rd | free_diag_Rd(n)
       endif
   elif code == "Bdiag"
-      matrix Rd = b["Rd1"]
+      matrix Rd = b.Rd1
       if ok(r)
-        b["Rd1"] = Rd | diag_Rd(n, r)
+        b.Rd1 = Rd | diag_Rd(n, r)
       else
-        b["Rd1"] = Rd | free_diag_Rd(n)
+        b.Rd1 = Rd | free_diag_Rd(n)
       endif
   endif
 
@@ -335,7 +335,7 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
     "Perm_1", "Perm_2", "Trans_1", "Trans_2", etc.
     */
 
-    scalar n = SVARobj["n"]
+    scalar n = SVARobj.n
     
     # syntax check
     err = (dcase<1) || (dcase>5)
@@ -369,11 +369,11 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
 
     # fill up the object with the info
     
-    SVARobj["crank"] = r
-    SVARobj["jcase"] = dcase
-    SVARobj["jbeta"] = jbeta
-    SVARobj["jalpha"] = jalpha
-    SVARobj["free_a"] = free_a
+    SVARobj.crank = r
+    SVARobj.jcase = dcase
+    SVARobj.jbeta = jbeta
+    SVARobj.jalpha = jalpha
+    SVARobj.free_a = free_a
     
     if verbose
 	if dcase == 1
@@ -400,7 +400,7 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
 
     # relabel transitory structural shocks
 
-    strings sn = SVARobj["snames"]
+    strings sn = SVARobj.snames
     
     if n-r == 1
 	sn[1] = sprintf("Permanent")
@@ -424,19 +424,18 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
 	endif
     endif
 
-    SVARobj["snames"] = sn
+    SVARobj.snames = sn
     
     return err
 end function
 
 function scalar SVAR_cumulate(bundle *b, int nv)
-    scalar n = b["n"]
-    err = (nv>n || nv<1) # was nv<0, but 0 makes no sense (?)
+    err = (nv>b.n || nv<1) # was nv<0, but 0 makes no sense (?)
     if !err
 	vn = b.Ynames
 	printf "Variable %s cumulated\n",  vn[nv]
-	b["cumul"] = b["cumul"] | {nv}
-	b["ncumul"] = b["ncumul"] + 1
+	b.cumul = b.cumul | {nv}
+	b.ncumul = b.ncumul + 1
     endif
   return err
 end function

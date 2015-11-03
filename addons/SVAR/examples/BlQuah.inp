@@ -10,13 +10,13 @@ maxlag = 8
 
 # set up the model
 BQModel = SVAR_setup("C", X, exog, maxlag)
-BQModel["horizon"] = 40
+BQModel.horizon = 40
 
 # set up the long-run restriction
 SVAR_restrict(&BQModel, "lrC", 1, 2, 0)
 
 # name the shocks to something meaningful
-BQModel["snames"] = strsplit("Supply Demand")
+BQModel.snames = strsplit("Supply Demand")
 
 # cumulate the IRFs for variable 1
 SVAR_cumulate(&BQModel, 1)
@@ -27,7 +27,7 @@ SVAR_estimate(&BQModel)
 # retrieve the demand shocks
 dShock = GetShock(&BQModel, 2)
 
-BQModel["biascorr"] = 2
+BQModel.biascorr = 2
 # do bootstrap
 set stopwatch
 bfail = SVAR_boot(&BQModel, 1024, 0.9)
