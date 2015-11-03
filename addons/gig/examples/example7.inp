@@ -25,16 +25,16 @@ matrix gretl_model = cf ~ se ~ tratios ~ pvalues
 # Estimate a GARCH model via gig
 set stopwatch
 mod = gig_setup(rr, 1, const, null, 1)
-mod["vcvtype"] = 1 # use Hessian for compatibility
+mod.vcvtype = 1 # use Hessian for compatibility
 gig_estimate(&mod, 0)
 t1 = $stopwatch
 
 # Extract the info from the results matrix
-series u1	= mod["uhat"]
-series s1	= sqrt(mod["h"])
-matrix cf	= mod["coeff"]
-matrix cf	= cf[mod["active"]]
-matrix se	= sqrt(diag(mod["vcv"]))
+series u1	= mod.uhat
+series s1	= sqrt(mod.h)
+matrix cf	= mod.coeff
+matrix cf	= cf[mod.active]
+matrix se	= sqrt(diag(mod.vcv))
 matrix tratios	= cf ./ se
 matrix pvalues	= 2*pvalue(n, abs(tratios))
 

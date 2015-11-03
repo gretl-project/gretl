@@ -17,15 +17,15 @@ gig_estimate(&model)
 # Do some post-estimation work
     
 # Fitted coefficients
-matrix cf = model["coeff"]
+matrix cf = model.coeff
 
 # Variance-covariance matrix
-matrix V = model["vcv"]
+matrix V = model.vcv
 
 # Residuals and conditional variance
-series u = model["uhat"]
-series h = model["h"]
-series e = model["stduhat"]
+series u = model.uhat
+series h = model.h
+series e = model.stduhat
 summary u e h
 
 # Graph residuals and conditional sd

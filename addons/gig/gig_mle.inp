@@ -436,19 +436,19 @@ end function
 
 function scalar do_mle(bundle *model, bool verbose)
 
-    series depVar = model["y"]
-    scalar type = model["type"]
+    series depVar = model.y
+    scalar type = model.type
 
-    scalar cdist = model["cdist"]
+    scalar cdist = model.cdist
 
-    list mlX = model["mlistX"]
-    list vlX = model["vlistX"]
+    list mlX = model.mlistX
+    list vlX = model.vlistX
 
-    scalar p = model["p"]
-    scalar q = model["q"]
+    scalar p = model.p
+    scalar q = model.q
 
-    scalar nmX 	= model["mk"]
-    scalar nvX 	= model["vk"]
+    scalar nmX 	= model.mk
+    scalar nvX 	= model.vk
 
     scalar err 	= 0
     series h, e, ll
@@ -461,9 +461,9 @@ function scalar do_mle(bundle *model, bool verbose)
 	string mleString += "q"
     endif
 	
-    if model["vcvtype"] == 0 # robust
+    if model.vcvtype == 0 # robust
 	string mleString += "r"
-    elif model["vcvtype"] == 1 # hessian
+    elif model.vcvtype == 1 # hessian
 	string mleString += "h"
 	# otherwise opg 
     endif
@@ -472,21 +472,21 @@ function scalar do_mle(bundle *model, bool verbose)
 	mleString = ""
     endif
 
-    fulltheta = model["coeff"]
+    fulltheta = model.coeff
     inipar = fulltheta
-    sel = model["active"]
+    sel = model.active
     theta = fulltheta[sel] 
 
     filtpar_end = rows(fulltheta) - n_cdist_par(cdist)
 
-    mX = model["mX"]
-    if model["vX_QR"] == 1
-	vX = model["QvX"]
-	ini = model["mk"]+1
-	fin = ini+model["vk"]-1
-	theta[ini:fin] = model["vX_R"] * theta[ini:fin]
+    mX = model.mX
+    if model.vX_QR == 1
+	vX = model.QvX
+	ini = model.mk+1
+	fin = ini+model.vk-1
+	theta[ini:fin] = model.vX_R * theta[ini:fin]
     else
-	vX = model["vX"]
+	vX = model.vX
     endif
 
     set warnings off

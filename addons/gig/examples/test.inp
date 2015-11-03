@@ -14,7 +14,7 @@ d = {0, 2, 4, 1, 3}
 loop for i=0..2
 #    scalar di = d[i]
 #    gig_set_dist(&mod, di)
-    mod["vcvtype"] = i
+    mod.vcvtype = i
     gig_estimate(&mod)
 endloop
 #gig_set_pq(&mod, 4, 0)
