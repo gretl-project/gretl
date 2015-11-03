@@ -504,6 +504,29 @@ int gretl_array_append_list (gretl_array *A,
     return err;
 }
 
+/* @ptr must be pre-checked as matching the array type */
+
+int gretl_array_append_object (gretl_array *A,
+			       void *ptr,
+			       int copy)
+{
+    int err = 0;
+
+    if (A == NULL) {
+	err = E_DATA;
+    } else if (A->type == GRETL_TYPE_MATRICES) {
+	gretl_array_append_matrix(A, ptr, copy);
+    } else if (A->type == GRETL_TYPE_STRINGS) {
+	gretl_array_append_string(A, ptr, copy);
+    } else if (A->type == GRETL_TYPE_BUNDLES) {
+	gretl_array_append_bundle(A, ptr, copy);
+    } else if (A->type == GRETL_TYPE_LISTS) {
+	gretl_array_append_list(A, ptr, copy);
+    }	
+
+    return err;
+}
+
 static int 
 gretl_array_copy_content (gretl_array *Acpy, const gretl_array *A,
 			  int write_offset)

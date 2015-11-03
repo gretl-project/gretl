@@ -8513,6 +8513,63 @@ static NODE *isoconv_node (NODE *t, parser *p)
     return ret;
 }
 
+static GretlType lh_array_type (parser *p)
+{
+    GretlType gtype = p->lh.gtype;
+
+    if (gtype == GRETL_TYPE_NONE) {
+	/* shouldn't happen? */
+	if (p->lh.t == ARRAY) {
+	    gretl_array *a = get_array_by_name(p->lh.name);
+
+	    gtype = gretl_array_get_type(a);
+	}
+    }
+
+    if (gtype != GRETL_TYPE_MATRICES &&
+	gtype != GRETL_TYPE_STRINGS &&
+	gtype != GRETL_TYPE_BUNDLES && 
+	gtype != GRETL_TYPE_LISTS) {
+	p->err = E_TYPES;
+    }
+
+    return gtype;
+}
+
+static int check_array_element_type (NODE *n, GretlType t)
+{
+    int ok = 0;
+    
+    if (t == GRETL_TYPE_MATRICES) {
+	ok = n->t == MAT;
+    } else if (t == GRETL_TYPE_STRINGS) {
+	ok = n->t == STR;
+    } else if (t == GRETL_TYPE_BUNDLES) {
+	ok = n->t == BUNDLE;
+    } else if (t == GRETL_TYPE_LISTS) {
+	ok = n->t == LIST;
+    }
+
+    return ok ? 0 : E_TYPES;
+}
+
+static void *node_get_ptr (NODE *n)
+{
+    if (n->t == MAT)    return n->v.m;
+    if (n->t == STR)    return n->v.str;
+    if (n->t == BUNDLE) return n->v.b;
+    if (n->t == LIST)   return n->v.ivec;
+    return NULL;
+}
+
+static void node_nullify_ptr (NODE *n)
+{
+    if (n->t == MAT)    n->v.m = NULL;
+    if (n->t == STR)    n->v.str = NULL;
+    if (n->t == BUNDLE) n->v.b = NULL;
+    if (n->t == LIST)   n->v.ivec = NULL;
+}
+
 /* evaluate a built-in function that has more than three arguments */
 
 static NODE *eval_nargs_func (NODE *t, parser *p)
@@ -9322,6 +9379,41 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (!p->err) {
 	    ret->v.xval = clogit_fi(T, K, z, dfname, &p->err);
 	} 
+    } else if (t->t == F_MKARRAY) {
+	GretlType gtype = lh_array_type(p);
+	gretl_array *A = NULL;
+	void *ptr;
+
+	if (!p->err) {
+	    A = gretl_array_new(gtype, 0, &p->err);
+	}
+
+	if (!p->err) {
+	    for (i=0; i<k && !p->err; i++) {
+		e = eval(n->v.bn.n[i], p);
+		if (!p->err) {
+		    p->err = check_array_element_type(e, gtype);
+		}
+		if (!p->err) {
+		    ptr = node_get_ptr(e);
+		    if (is_tmp_node(e)) {
+			p->err = gretl_array_append_object(A, ptr, 0);
+			node_nullify_ptr(e);
+		    } else {
+			p->err = gretl_array_append_object(A, ptr, 1);
+		    }
+		}		
+	    }
+	}
+
+	if (p->err) {
+	    gretl_array_destroy(A);
+	} else {
+	    ret = aux_array_node(p);
+	    if (ret != NULL) {
+		ret->v.a = A;
+	    }
+	}
     }
 
     return ret;
@@ -11811,6 +11903,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BOOTCI:
     case F_BOOTPVAL:
     case F_MOVAVG:
+    case F_MKARRAY:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);

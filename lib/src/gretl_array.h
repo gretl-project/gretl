@@ -70,6 +70,10 @@ int gretl_array_set_list (gretl_array *A, int i,
 int gretl_array_append_list (gretl_array *A,
 			     int *L, int copy);
 
+int gretl_array_append_object (gretl_array *A,
+			       void *ptr,
+			       int copy);
+
 int gretl_array_append_array (gretl_array *A1,
 			      const gretl_array *A2);
 
