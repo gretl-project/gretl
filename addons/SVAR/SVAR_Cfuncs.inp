@@ -1,10 +1,8 @@
 function void scoreC(matrix *ret, matrix *theta, matrix *dat)
   matrix Sigma Ss 
   unscramble_dat(&dat, &Sigma, &Ss)
-  n = rows(Sigma)
-  npar = cols(Ss)-1
-
-  # printf "scoreC\n%10.4f\n%4.1f\n", theta, Ss
+  scalar n = rows(Sigma)
+  scalar npar = cols(Ss)-1
 
   matrix C = mat_exp(theta, Ss, 0)
   matrix S = Ss[,1:npar]
@@ -16,7 +14,8 @@ function void scoreC(matrix *ret, matrix *theta, matrix *dat)
 end function
 
 /*
-This doesn't really seem to be called ??
+This function is called nowhere; it's a fossil convenience function
+used back in the day for debugging. Let's keep it, just in case.
 
 function matrix Cmat(matrix theta, matrix Rd, bool force_pos[0])
   matrix Ss = imp2exp(Rd)
@@ -37,8 +36,8 @@ function matrix C1mat(matrix A, bool VECM[0],
       (Remark Sven: here jbeta is (n,r) without coeffs for restr. terms
       I guess. Different from jbeta (n+1,r) in other contexts (?). 
   */
-  n = rows(A)
-  p = cols(A)/n
+  scalar n = rows(A)
+  scalar p = cols(A)/n
   matrix tmp = mshape(vec(A), n*n, p)  
 
   if VECM == 0
@@ -55,9 +54,9 @@ function matrix C1mat(matrix A, bool VECM[0],
 end function
 
 function matrix init_C(scalar scale, matrix Sigma, matrix Rd)
-  n = rows(Sigma)
+  scalar n = rows(Sigma)
   matrix Ss = imp2exp(Rd)
-  k = cols(Ss)
+  scalar k = cols(Ss)
   matrix S = Ss[,1:k-1]
   matrix s = Ss[,k]
   matrix K = cholesky(Sigma)
@@ -71,8 +70,8 @@ end function
 function void PseudoHessC(matrix *H, matrix *theta, matrix *dat)
   matrix Sigma Ss 
   unscramble_dat(&dat, &Sigma, &Ss)
-  n = rows(Sigma)
-  npar = cols(Ss)-1
+  scalar n = rows(Sigma)
+  scalar npar = cols(Ss)-1
   matrix S = Ss[,1:npar]
 
   # printf "PseudoHessC\n%10.4f\n%4.1f\n", theta, Ss
@@ -84,12 +83,12 @@ end function
 function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
   scalar *errcode, int method, scalar verbose[1])
 
-  scale = 0
   matrix Ss = imp2exp(Rd)
-  npar = rows(theta)
-  n = rows(Sigma)
+  scalar SCALE = 0 # EXPERIMENTAL 
+  scalar npar = rows(theta)
+  scalar n = rows(Sigma)
 
-  if scale == 1
+  if SCALE == 1
     printf "Scale!\n"
     matrix s = sqrt(diag(Sigma))
     matrix sSig = Sigma ./ (s*s')
@@ -174,7 +173,7 @@ function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
     # printf "estC(2)\n%10.4f\n%4.1f\n", theta, Ss
     matrix C = mat_exp(theta, Ss, 1)
 
-    if scale == 1
+    if SCALE == 1
       C = C .* s'
     endif
     if verbose > 1
