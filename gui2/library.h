@@ -269,8 +269,11 @@ void add_system_resid (GtkAction *action, gpointer p);
 
 int save_fit_resid (windata_t *vwin, int code);
 
-int save_bundled_series (const double *x, const char *key,
-			 const char *note, windata_t *vwin);
+int save_bundled_series (const double *x,
+			 int t1, int t2,
+			 const char *key,
+			 const char *note,
+			 windata_t *vwin);
 
 void add_model_stat (MODEL *pmod, int which, windata_t *vwin);
 

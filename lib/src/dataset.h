@@ -368,6 +368,11 @@ int dataset_replace_series (DATASET *dset, int v,
 			    double *x, const char *descrip,
 			    DataCopyFlag flag);
 
+int dataset_replace_series_data (DATASET *dset, int v,
+				 const double *x,
+				 int t1, int t2,
+				 const char *descrip);
+
 int dataset_rename_series (DATASET *dset, int v, const char *name);
 
 int dataset_drop_listed_variables (int *list, DATASET *dset, 

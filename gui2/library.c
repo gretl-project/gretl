@@ -427,7 +427,8 @@ static int gui_exact_fit_check (MODEL *pmod)
     return 0;
 }
 
-static int add_or_replace_series (double *x, const char *vname,
+static int add_or_replace_series (double *x,
+				  const char *vname,
 				  const char *descrip,
 				  int flag)
 {
@@ -456,6 +457,43 @@ static int add_or_replace_series (double *x, const char *vname,
 
 		for (t=0; t<dataset->n; t++) {
 		    dataset->Z[v][t] = x[t];
+		}
+	    }
+	}
+    }
+
+    return err;
+}
+
+static int add_or_replace_series_data (const double *x,
+				       int t1, int t2,
+				       const char *vname,
+				       const char *descrip)
+{
+    int v = series_index(dataset, vname);
+    int err = 0;
+
+    if (v > 0 && v < dataset->v) {
+	/* replacing */
+	err = dataset_replace_series_data(dataset, v,
+					  x, t1, t2,
+					  descrip);
+    } else {
+	/* adding */
+	int t, s = 0;
+	
+	err = dataset_add_series(dataset, 1);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    v = dataset->v - 1;
+	    strcpy(dataset->varname[v], vname);
+	    series_record_label(dataset, v, descrip);
+	    for (t=0; t<dataset->n; t++) {
+		if (t >= t1 && t <= t2) {
+		    dataset->Z[v][t] = x[s++];
+		} else {
+		    dataset->Z[v][t] = NADBL;
 		}
 	    }
 	}
@@ -496,8 +534,8 @@ void add_mahalanobis_data (windata_t *vwin)
 	return;
     }
 
-    err = add_or_replace_series((double *) dx, vname,
-				descrip, DS_COPY_VALUES);
+    err = add_or_replace_series((double *) dx, vname, descrip,
+				DS_COPY_VALUES);
 
     if (!err) {
 	liststr = gretl_list_to_string(mlist, dataset, &err);
@@ -603,7 +641,7 @@ void add_fcast_data (windata_t *vwin)
 	return;
     }
 
-    err = add_or_replace_series(fr->fitted, vname, descrip, 
+    err = add_or_replace_series(fr->fitted, vname, descrip,
 				DS_COPY_VALUES);
 
     if (!err) {
@@ -4312,8 +4350,7 @@ void add_nonparam_data (windata_t *vwin)
 	name_new_series_dialog(vname, descrip, vwin, &cancel);
 
 	if (!cancel) {
-	    err = add_or_replace_series(m, vname, descrip, 
-					DS_COPY_VALUES);
+	    err = add_or_replace_series(m, vname, descrip, DS_COPY_VALUES);
 	}
 
 	if (!cancel && !err) {
@@ -6238,8 +6275,11 @@ int save_fit_resid (windata_t *vwin, int code)
     return err;
 }
 
-int save_bundled_series (const double *x, const char *key,
-			 const char *note, windata_t *vwin)
+int save_bundled_series (const double *x,
+			 int t1, int t2,
+			 const char *key,
+			 const char *note,
+			 windata_t *vwin)
 {
     char vname[VNAMELEN];
     char descrip[MAXLABEL];
@@ -6258,7 +6298,13 @@ int save_bundled_series (const double *x, const char *key,
 	return 0;
     }
 
-    err = add_or_replace_series((double *) x, vname, descrip, DS_COPY_VALUES);
+    if (t1 == 0 && t2 == dataset->n - 1) {
+	err = add_or_replace_series((double *) x, vname,
+				    descrip, DS_COPY_VALUES);
+    } else {
+	err = add_or_replace_series_data(x, t1, t2, vname,
+					 descrip);
+    }
 
     if (!err) {
 	populate_varlist();
@@ -6315,8 +6361,7 @@ void add_system_resid (GtkAction *action, gpointer p)
 	return;
     }
 
-    err = add_or_replace_series(uhat, vname, descrip,
-				DS_GRAB_VALUES);
+    err = add_or_replace_series(uhat, vname, descrip, DS_GRAB_VALUES);
 
     if (err) {
 	free(uhat);
@@ -8345,6 +8390,7 @@ static gretlopt store_action_to_opt (const char *fname, int action,
 				     int *exporting)
 {
     gretlopt opt = OPT_NONE;
+    int err = 0;
 
     *exporting = 1;
 
@@ -8389,7 +8435,7 @@ static gretlopt store_action_to_opt (const char *fname, int action,
 	}
     } else if (action == SAVE_DATA || action == SAVE_DATA_AS ||
 	       action == SAVE_BOOT_DATA || action == EXPORT_GDT) {
-	int level = get_optval_int(STORE, OPT_Z, NULL);
+	int level = get_optval_int(STORE, OPT_Z, &err);
 
 	/* apply compression unless the user has set the
 	   gzip level to zero via the file save dialog */

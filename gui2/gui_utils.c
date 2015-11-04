@@ -4535,6 +4535,19 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     }
 }
 
+static int vector_suitable_for_series (const gretl_matrix *m)
+{
+    if (m->cols == 1 && gretl_matrix_is_dated(m)) {
+	int t2 = gretl_matrix_get_t2(m);
+
+	/* the column vector can be "cast" to series
+	   without data loss */
+	return t2 < dataset->n;
+    } else {
+	return 0;
+    }
+}
+
 static void save_bundled_item_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -4557,7 +4570,14 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
     if (type == GRETL_TYPE_SERIES && size == dataset->n) {
 	const double *x = (double *) val;
 
-	save_bundled_series(x, key, note, vwin);
+	save_bundled_series(x, 0, dataset->n - 1, key, note, vwin);
+    } else if (type == GRETL_TYPE_MATRIX &&
+	       vector_suitable_for_series((gretl_matrix *) val)) {
+	const gretl_matrix *m = val;
+	int t1 = gretl_matrix_get_t1(m);
+	int t2 = gretl_matrix_get_t2(m);
+	
+	save_bundled_series(m->val, t1, t2, key, note, vwin);
     } else {
 	char vname[VNAMELEN];
 	gchar *blurb;
@@ -4651,10 +4671,10 @@ static void add_bundled_item_to_menu (gpointer key,
 
 	if (gretl_is_null_matrix(m)) {
 	    return;
+	} else if (vector_suitable_for_series(m)) {
+	    type = GRETL_TYPE_SERIES;
 	}
-    }
-
-    if (type == GRETL_TYPE_SERIES && size != dataset->n) {
+    } else if (type == GRETL_TYPE_SERIES && size != dataset->n) {
 	type = GRETL_TYPE_MATRIX;
     }
 

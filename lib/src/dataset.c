@@ -1525,8 +1525,7 @@ int dataset_rename_series (DATASET *dset, int v, const char *name)
  * @x: replacement values.
  * @descrip: replacement description.
  * @flag: if = DS_GRAB_VALUES then replace dset->Z[@v]
- * with x, otherwise copy the values the values in
- * x to dset->Z[@v];
+ * with @x, otherwise copy the values in @x to dset->Z[@v].
  *
  * Replaces the description and numerical content of
  * series @v with the information provided. 
@@ -1560,6 +1559,52 @@ int dataset_replace_series (DATASET *dset, int v,
 	for (t=0; t<dset->n; t++) {
 	    dset->Z[v][t] = x[t];
 	}
+    }
+
+    set_dataset_is_changed();
+
+    return 0;
+}
+
+/**
+ * dataset_replace_series_data:
+ * @dset: pointer to dataset.
+ * @v: ID number of the series to be modified.
+ * @x: replacement values.
+ * @t1: start of sample range.
+ * @t2: end of sample range.
+ * @descrip: replacement description.
+ *
+ * Replaces the description and numerical content of
+ * series @v over the given sample range, with the
+ * information provided. 
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int dataset_replace_series_data (DATASET *dset, int v,
+				 const double *x,
+				 int t1, int t2,
+				 const char *descrip)
+{
+    int t, s;
+    
+    if (v < 0 || v >= dset->v) {
+	/* out of bounds */
+	return E_DATA;
+    }
+
+    if (object_is_const(dset->varname[v]) ||
+	series_is_parent(dset, v)) {
+	return overwrite_err(dset->varname[v]);
+    }
+
+    gretl_varinfo_init(dset->varinfo[v]);
+    series_set_label(dset, v, descrip);
+
+    s = 0;
+    for (t=t1; t<=t2; t++) {
+	dset->Z[v][t] = x[s++];
     }
 
     set_dataset_is_changed();
