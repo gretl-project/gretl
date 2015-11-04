@@ -10,7 +10,6 @@ function void doIRF(bundle *SVARobj)
   matrix varA = SVARobj.VARpar
   scalar H = SVARobj.horizon + 1
   scalar n = SVARobj.n
-  scalar p = SVARobj.p
 
   if (type == 1) || (type == 2) || (type == 4)
     matrix C = SVARobj.S1
@@ -19,7 +18,7 @@ function void doIRF(bundle *SVARobj)
   endif
 
   matrix ret = zeros(H,n*n)
-  np = n*p
+  scalar np = SVARobj.p * n
   matrix tmp = I(np)
   matrix prd = zeros(np,np)
 
@@ -64,7 +63,6 @@ function series GetShock(bundle *SVARobj, scalar i)
   scalar n = SVARobj.n
   
   if (i <= n) && (i > 0) 
-    scalar p = SVARobj.p
     scalar type = SVARobj.type
     if (type == 1) || (type == 2) || (type == 4)
       matrix C = SVARobj.S1

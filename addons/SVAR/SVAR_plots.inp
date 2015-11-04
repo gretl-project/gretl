@@ -15,22 +15,22 @@ end function
 /* --- IRF core graphing function --------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
-function string IRFgrph(matrix IRFmat, int snum, int vnum, \
+function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
 			string sname, string vname, int keypos[0:2:1], \
 			matrix *cumul[null],  bundle *boot[null], \
 			int bc[0:2:0])
 
   # bc: bias correction choice
     
-  flip = (snum<0)
-  snum = abs(snum)
-  n = round(sqrt(cols(IRFmat)))
+  scalar flip = (snum<0)
+  scalar snum = abs(snum)
+  scalar n = round(sqrt(cols(IRFmat)))
                         
   if !isnull(boot)
-    bootrep = boot.rep
-    alpha = boot.alpha
+    scalar bootrep = boot.rep
+    scalar alpha = boot.alpha
   else
-    bootrep = 0
+    scalar bootrep = 0
   endif
 
   # anything to cumulate?
@@ -40,26 +40,26 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, \
   string tmpfile = $windows ? sprintf("@dotdir\\irf%d.gp", tmpfname) : \
     sprintf("@dotdir/irf%d.gp", tmpfname)
  
-  k = (snum-1)*n + vnum
+  scalar k = (snum-1)*n + vnum
 
-  h = rows(IRFmat)
-  x = flip ? -IRFmat[,k] : IRFmat[,k]	# matrix?
+  scalar h = rows(IRFmat)
+  matrix x = flip ? -IRFmat[,k]./scale : IRFmat[,k]./scale	# matrix?
   if bootrep > 0
-    hicb = flip ? -boot.lo_cb : boot.hi_cb	# matrix?
-    locb = flip ? -boot.hi_cb : boot.lo_cb
-    mdn  = flip ? -boot.mdns : boot.mdns
-    locb = locb[,k]
-    hicb = hicb[,k]
-    mdn  = mdn[,k]
-    miny = minc((locb | x))
-    maxy = maxc((hicb | x))
+    matrix hicb = flip ? -boot.lo_cb : boot.hi_cb	# matrix?
+    matrix locb = flip ? -boot.hi_cb : boot.lo_cb
+    matrix mdn  = flip ? -boot.mdns : boot.mdns
+    matrix locb = locb[,k] ./ scale
+    matrix hicb = hicb[,k] ./ scale
+    matrix mdn  = mdn[,k]  ./ scale
+    scalar miny = minc((locb | x))
+    scalar maxy = maxc((hicb | x))
   else
-    miny = minc(x)
-    maxy = maxc(x)
+    scalar miny = minc(x)
+    scalar maxy = maxc(x)
   endif
 
-  miny = (miny>0) ? 0 : miny
-  maxy = (maxy<0) ? 0 : maxy
+  scalar miny = (miny>0) ? 0 : miny
+  scalar maxy = (maxy<0) ? 0 : maxy
 
   set force_decpoint on
   
@@ -126,7 +126,8 @@ end function
 function void IRFsave(string outfilename, bundle *obj, int snum, 
   int vnum, int keypos[0:2:1])
 
-  err = check_bounds(snum, vnum, obj.n)
+  scalar n = obj.n
+  err = check_bounds(snum, vnum, n)
 
   if err == 1
     printf "Shock number %d out of bounds\n", abs(snum)
@@ -136,31 +137,38 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     return
   endif
 
-  scalar ncumul = obj.ncumul
-  scalar nboot  = obj.nboot
-  matrix IRFmat = obj.IRFs
+  scalar ncumul  = obj.ncumul
+  scalar nboot   = obj.nboot
+  matrix IRFmat  = obj.IRFs
   strings Ynames = obj.Ynames
   strings snames = obj.snames
 
   string yn = Ynames[vnum]
   string sn = snames[abs(snum)]
-  
+
+  if obj.normalize == 1
+      matrix tmp = mshape(IRFmat[1,], n, n)
+      scalar scale =  tmp[snum, snum]
+  else
+      scalar scale = 1
+  endif
+    
   if ncumul == 0
     if nboot == 0
-      string tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, keypos)
+      string tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos)
     else
       boot = obj.bootdata
       bc = boot.biascorr
-      string tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, keypos, null, &boot, bc)
+      string tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, null, &boot, bc)
     endif
   else
     matrix cumul = obj.cumul
     if nboot == 0
-      tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, keypos, &cumul)
+      tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, &cumul)
     else
       boot = obj.bootdata
       bc = boot.biascorr
-      tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, keypos, &cumul, &boot, bc)
+      tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, &cumul, &boot, bc)
     endif
   endif
 
@@ -278,7 +286,7 @@ function void HDsave(string outfilename, bundle *obj, int vnum)
 
     list tmp = SVAR_hd(&obj, vnum)
     list tmp -= tmp[1] # take away deterministic component
-    loop i=1..nelem(tmp)
+    loop i=1..nelem(tmp) --quiet
         string sn = snames[i]
         setinfo tmp[i] --graph-name="@sn"
     endloop
