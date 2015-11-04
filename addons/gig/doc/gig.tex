@@ -1026,15 +1026,15 @@ convergence problems, you may want to try the following tricks:
 
 \begin{scode}
 include gig.gfn
-open b-g.gdt --quiet           # Bollerslev-Ghysels esample dataset
-moo = gig_setup(Y, 3, const)   # GJR, no regressors
-gig_set_pq(&moo, 2, 1)         # set p and q (just for fun)
-theta_0 = moo["coeff"]         # the automatic starting values
-print theta_0                  # have a look at them
-gig_estimate(&moo,2)           # now estimate verbosely
+open b-g.gdt --quiet                    # Bollerslev-Ghysels esample dataset
+moo = gig_setup(Y, 3, const)            # GJR, no regressors
+gig_set_pq(&moo, 2, 1)                  # set p and q (just for fun)
+theta_0 = moo.coeff                     # the automatic starting values
+print theta_0                           # have a look at them
+gig_estimate(&moo,2)                    # now estimate verbosely
 theta_1 = {0; 0.5; 0.2; 0; 0.7; 0.1; 2} # choose another starting point
-moo["coeff"] = theta_1         # stuff it into the model
-gig_estimate(&moo,2)           # now re-estimate verbosely
+moo.coeff = theta_1                     # stuff it into the model
+gig_estimate(&moo,2)                    # now re-estimate verbosely
 \end{scode}
 
 \subsection{The algorithm converges but complains about a singular

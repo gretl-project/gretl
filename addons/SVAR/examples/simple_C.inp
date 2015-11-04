@@ -10,7 +10,7 @@ list X = unemp infl
 list Z = const
 
 Mod = SVAR_setup("C", X, Z, 3)
-Mod["horizon"] = 36
+Mod.horizon = 36
 SVAR_restrict(&Mod, "C", 1, 2)
 
 set stopwatch

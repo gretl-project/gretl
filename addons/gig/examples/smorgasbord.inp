@@ -18,7 +18,7 @@ models = {1, 3, 6, 7}
 set stopwatch
 loop for i=1..4 --quiet #models
     mod = gig_setup(rr, models[i], X)
-    mod["vcvtype"] = 2
+    mod.vcvtype = 2
     loop for d=0..4 --quiet    #distributions
 	gig_set_dist(&mod, d)
 	gig_estimate(&mod)

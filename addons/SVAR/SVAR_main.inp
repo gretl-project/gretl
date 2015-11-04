@@ -7,10 +7,10 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
    the bundle
   */
 
-  scalar type = obj["type"]
-  scalar meth = obj["optmeth"]
-  scalar n = obj["n"]
-  scalar T = obj["T"]
+  scalar type = obj.type
+  scalar meth = obj.optmeth
+  scalar n = obj.n
+  scalar T = obj.T
   matrix vcv
   scalar errcode = 0
 
@@ -22,7 +22,7 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
 
   # grab the instantanous covariance matrix and 
   # print it if required 
-  matrix Sigma = obj["Sigma"]
+  matrix Sigma = obj.Sigma
   LL0 = VARloglik(T, Sigma)
 
   if verbosity > 0
@@ -33,10 +33,10 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
       # plain model: no fancy stuff, just Cholesky decomposition
       matrix C = cholesky(Sigma)
       matrix param = vech(C')
-      obj["S1"] = C  # store C into the bundle
+      obj.S1 = C  # store C into the bundle
       
       # compute the covariance matrix for C
-      matrix Ss = imp2exp(obj["Rd1"])
+      matrix Ss = imp2exp(obj.Rd1)
       matrix vcv = coeffVCV(Ss[,1:cols(Ss)-1], &C)
       
   elif (type==2) || (type == 4)
@@ -44,11 +44,11 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
       matrix fullRd = get_full_Rd(&obj, verbosity)
       matrix param = init_C(0, Sigma, fullRd) # try to set some "sensible" inital values
             
-      if obj["simann"] > 0
+      if obj.simann > 0
 	  printf "before simann:\n%12.6f\n", param
 	  matrix dat = vec(Sigma) ~ imp2exp(fullRd)
 	  matrix parcpy = param
-	  zzz = simann(parcpy, "loglik(&parcpy, &dat, -1)", obj["simann"])
+	  zzz = simann(parcpy, "loglik(&parcpy, &dat, -1)", obj.simann)
 	  param = parcpy
 	  printf "after simann:\n%12.6f\n", param
       endif
@@ -58,7 +58,7 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
       C = estC(&param, Sigma, fullRd, &vcv, &errcode, meth, verbosity)
       
       if errcode == 0
-	  obj["S1"] = C # store C into the bundle
+	  obj.S1 = C # store C into the bundle
       else
 	  funcerr "Estimation failed"
       endif
@@ -66,9 +66,9 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
   elif type == 3
       # AB-model
       
-      matrix E = obj["E"]     # grab the VAR residuals (needed for initialisation)
-      matrix bRd = obj["Rd1"] # restrictions on B
-      matrix aRd = obj["Rd0"] # restrictions on A
+      matrix E = obj.E     # grab the VAR residuals (needed for initialisation)
+      matrix bRd = obj.Rd1 # restrictions on B
+      matrix aRd = obj.Rd0 # restrictions on A
       
       # try to set some "sensible" inital values
       # (substitute out call to (former) init_AB)
@@ -87,8 +87,8 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
 	  matrix bSs = imp2exp(bRd)
 	  ABmat_exp(param, aSs, bSs, &mA, &mB)     # reconstruct A and B
 	  
-	  obj["S1"] = mA
-	  obj["S2"] = mB
+	  obj.S1 = mA
+	  obj.S2 = mB
       else
 	  funcerr "Estimation failed"
       endif
@@ -135,9 +135,9 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
   endif
 
   if errcode == 0
-      obj["step"] = 2
-      obj["theta"] = param
-      obj["vcv"] = vcv
+      obj.step = 2
+      obj.theta = param
+      obj.vcv = vcv
       doIRF(&obj)
   endif
   
@@ -221,7 +221,7 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
     # initialize the model bundle    
     bundle m = SVAR_setup(modelstring(type), Y, lX, l)
     if h > 0
-	m["horizon"] = h
+	m.horizon = h
     endif
     
     # copy options (new by Sven)
@@ -335,12 +335,12 @@ function void SVAR_bundle_print(bundle *b)
     # (not sure whether this should go into SVAR_est_printout() instead...)
 
     loop foreach i type n k p --quiet
-	scalar $i = b["$i"]
+	scalar $i = b.$i
     endloop
     
     printf "Model type: %s\n", modelstring(type)
     
-    strings Ynames = b["Ynames"]
+    strings Ynames = b.Ynames
     print "Endogenous variables:"
     loop i=1..n --quiet
 	printf "%s", Ynames[i]
@@ -354,7 +354,7 @@ function void SVAR_bundle_print(bundle *b)
     
     if k>0
         print "Exogenous variables:"
-	strings Xnames = b["Xnames"]
+	strings Xnames = b.Xnames
 	loop i=1..k --quiet
 	    printf "%s", Xnames[i]
 	    if (i==k)
@@ -402,7 +402,7 @@ function void SVAR_bundle_print(bundle *b)
     
     # only print this if actual estimation took place
     if inbundle(b, "Sigma")
-        printf "Sigma = \n%10.6f", b["Sigma"]
+        printf "Sigma = \n%10.6f", b.Sigma
         SVAR_est_printout(&b)
     endif
     

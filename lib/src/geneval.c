@@ -2397,25 +2397,21 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-	gretl_matrix *a = NULL;
-	gretl_matrix *b = NULL;
-	gretl_matrix *c = NULL;
+	gretl_matrix *a, *b, *tmp;
 
 	if (l->t == SERIES) {
-	    a = tmp_matrix_from_series(l, p);
-	    c = a;
+	    tmp = a = tmp_matrix_from_series(l, p);
 	    b = r->v.m;
 	} else {
 	    a = l->v.m;
-	    b = tmp_matrix_from_series(r, p);
-	    c = b;
+	    tmp = b = tmp_matrix_from_series(r, p);
 	}
 
 	if (!p->err) {
 	    ret->v.m = real_matrix_calc(a, b, op, &p->err);
 	}
 
-	gretl_matrix_free(c);
+	gretl_matrix_free(tmp);
     }
 
     return ret;

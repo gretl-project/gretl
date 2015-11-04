@@ -266,8 +266,8 @@ end function
 
 function scalar SVAR_ident(bundle *b, int verbose[0])
 
-    type = b["type"]
-    n = b["n"]
+    type = b.type
+    n = b.n
     n2 = n*n
     ret = 1
 
@@ -278,8 +278,8 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
 	matrix Rb = Rd[,1:n2]
 	matrix db = Rd[,n2+1]
     elif type == 3 # AB - Model
-	matrix bRd = b["Rd1"] # restrictions on B
-	matrix aRd = b["Rd0"] # restrictions on A
+	matrix bRd = b.Rd1 # restrictions on B
+	matrix aRd = b.Rd0 # restrictions on A
 
 	matrix Ra = aRd[,1:n2]
 	matrix da = aRd[,n2+1]

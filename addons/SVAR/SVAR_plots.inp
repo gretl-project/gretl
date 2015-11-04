@@ -27,8 +27,8 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, \
   n = round(sqrt(cols(IRFmat)))
                         
   if !isnull(boot)
-    bootrep = boot["rep"]
-    alpha = boot["alpha"]
+    bootrep = boot.rep
+    alpha = boot.alpha
   else
     bootrep = 0
   endif
@@ -45,9 +45,9 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, \
   h = rows(IRFmat)
   x = flip ? -IRFmat[,k] : IRFmat[,k]	# matrix?
   if bootrep > 0
-    hicb = flip ? -boot["lo_cb"] : boot["hi_cb"]	# matrix?
-    locb = flip ? -boot["hi_cb"] : boot["lo_cb"]
-    mdn  = flip ? -boot["mdns"] : boot["mdns"]
+    hicb = flip ? -boot.lo_cb : boot.hi_cb	# matrix?
+    locb = flip ? -boot.hi_cb : boot.lo_cb
+    mdn  = flip ? -boot.mdns : boot.mdns
     locb = locb[,k]
     hicb = hicb[,k]
     mdn  = mdn[,k]
@@ -126,7 +126,7 @@ end function
 function void IRFsave(string outfilename, bundle *obj, int snum, 
   int vnum, int keypos[0:2:1])
 
-  err = check_bounds(snum, vnum, obj["n"])
+  err = check_bounds(snum, vnum, obj.n)
 
   if err == 1
     printf "Shock number %d out of bounds\n", abs(snum)
@@ -136,11 +136,11 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     return
   endif
 
-  scalar ncumul = obj["ncumul"]
-  scalar nboot  = obj["nboot"]
-  matrix IRFmat = obj["IRFs"]
-  strings Ynames = obj["Ynames"]
-  strings snames = obj["snames"]
+  scalar ncumul = obj.ncumul
+  scalar nboot  = obj.nboot
+  matrix IRFmat = obj.IRFs
+  strings Ynames = obj.Ynames
+  strings snames = obj.snames
 
   string yn = Ynames[vnum]
   string sn = snames[abs(snum)]
@@ -149,17 +149,17 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     if nboot == 0
       string tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, keypos)
     else
-      boot = obj["bootdata"]
-      bc = boot["biascorr"]
+      boot = obj.bootdata
+      bc = boot.biascorr
       string tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, keypos, null, &boot, bc)
     endif
   else
-    matrix cumul = obj["cumul"]
+    matrix cumul = obj.cumul
     if nboot == 0
       tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, keypos, &cumul)
     else
-      boot = obj["bootdata"]
-      bc = boot["biascorr"]
+      boot = obj.bootdata
+      bc = boot.biascorr
       tmpfile = IRFgrph(IRFmat, snum, vnum, sn, yn, keypos, &cumul, &boot, bc)
     endif
   endif
@@ -243,7 +243,7 @@ end function
 function void FEVDsave(string outfilename, bundle *obj, int vnum, \
 		       int keypos[0:2:1])
 
-  err = check_bounds(1, vnum, obj["n"])
+  err = check_bounds(1, vnum, obj.n)
 
   if err == 2
     printf "Variable number %d out of bounds\n", vnum 
@@ -251,8 +251,8 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum, \
   endif
 
   matrix Fmat = FEVD(&obj)
-  strings Ynames = obj["Ynames"]
-  strings snames = obj["snames"]
+  strings Ynames = obj.Ynames
+  strings snames = obj.snames
 
   string tmpfile = FEVDgrph(Fmat, vnum, Ynames[vnum], snames, keypos)
   gnuplot --input="@tmpfile" --output="@outfilename"
@@ -311,8 +311,8 @@ function void GUI_plot(bundle *b, int ptype[0:2:0] \
 		       "Plot type" {"IRF", "FEVD", \ 
 				    "Historical decomposition"})
 
-  scalar n = b["n"]
-  matrix tt = seq(0, b["horizon"])'
+  scalar n = b.n
+  matrix tt = seq(0, b.horizon)'
   
   if ptype == 0
     loop i=1..n -q

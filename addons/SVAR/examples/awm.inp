@@ -32,7 +32,7 @@ end restrict
 x = SVAR_setup("SVEC", X, const, p)
 matrix b = I(2) | -ones(1,2)
 SVAR_coint(&x, 3, b, {}, 1)
-x["horizon"] = 40
+x.horizon = 40
 SVAR_restrict(&x, "C", 1, 2, 0)
 
 SVAR_estimate(&x)

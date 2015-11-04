@@ -80,38 +80,38 @@ end function
 function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 
     loop foreach i n k T p --quiet 
-	scalar $i = obj["$i"]
+	scalar $i = obj.$i
     endloop
     
-    type = obj["type"]
-    scalar h = obj["horizon"]
+    type = obj.type
+    scalar h = obj.horizon
     n2 = n*n
 
-    matrix A = obj["VARpar"]    # VAR parameters (first n rows of companion m.)
-    matrix m = obj["mu"]	      # deterministics 
-    matrix param = obj["theta"] # SVAR params
+    matrix A = obj.VARpar    # VAR parameters (first n rows of companion m.)
+    matrix m = obj.mu	      # deterministics 
+    matrix param = obj.theta # SVAR params
 
     /* --- constraints-related matrices ---------------------*/
-    matrix Rd1 = obj["Rd1"]
-    matrix Rd2 = type==3 ? obj["Rd0"] : obj["Rd1l"]
+    matrix Rd1 = obj.Rd1
+    matrix Rd2 = type==3 ? obj.Rd0 : obj.Rd1l
    
     nc2 = rows(Rd2)
 
     if type == 4
-	coint_r = cols(obj["jbeta"])
+	coint_r = cols(obj.jbeta)
 	matrix J = zeros(n-coint_r, coint_r) | I(coint_r)
     endif
 
-    matrix X = obj["X"]        # exogenous variables
-    matrix start = obj["Y"]    
+    matrix X = obj.X        # exogenous variables
+    matrix start = obj.Y    
     start = start[1:p,] # Y0
-    matrix E = obj["E"]
+    matrix E = obj.E
     E = E .- meanc(E)   # centre residuals
 
     if (type == 1) || (type == 2) || (type == 4) 
-	matrix C = obj["S1"]
+	matrix C = obj.S1
     elif type == 3 # if AB-model, compute C as inv(A)*B
-	matrix C = obj["S1"] \ obj["S2"]
+	matrix C = obj.S1 \ obj.S2
 	matrix bmA bmB
     endif
 
@@ -125,12 +125,12 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 
     matrix bmu = k>0 ? X*m : {}
 
-    bundle bobj = obj          # store a copy of the model for bootstrap
-    obj["nboot"] = rep         # record bootstrap details
-    obj["boot_alpha"] = alpha  # into original model
+    bundle bobj = obj       # store a copy of the model for bootstrap
+    obj.nboot = rep         # record bootstrap details
+    obj.boot_alpha = alpha  # into original model
 
-    if obj["ncumul"] > 0
-	matrix to_cum = obj["cumul"]
+    if obj.ncumul > 0
+	matrix to_cum = obj.cumul
 	matrix tmp = zeros(n,n)
 	tmp[to_cum,] = 1
 	sel = selifr(transp(seq(1,n*n)), vec(tmp))
@@ -141,21 +141,21 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
     set loop_maxiter 16384
     matrix Spar_mat = (type<3 || type==4) ? zeros(rep, n2) : zeros(rep, 2*n2) 
 
-    scalar bc = obj["biascorr"]
+    scalar bc = obj.biascorr
     BIASCORR = (type != 4) && bc # not available w/unit roots
     if BIASCORR
 	matrix Psi = {}
 	matrix ABC = bias_correction(1000, A, bmu, E, X, start, &Psi)
     endif
 
-    meth = obj["optmeth"]
+    meth = obj.optmeth
 
     printf "\nBootstrapping model (%d iterations)\n\n", rep
     flush
 
     loop while i<=rep -q
 	# clear previous bootstrap
-	bobj["step"] = 0
+	bobj.step = 0
 
 	/*
 	    generate bootstrap disturbances: first p rows
@@ -171,7 +171,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 	matrix ABCorA = BIASCORR ? ABC : A
 	matrix bY = varsimul(ABCorA, U[p+1:,], start)
 
-	bobj["Y"] = bY                # and store it into the bootstrap object
+	bobj.Y = bY                # and store it into the bootstrap object
 
 	/*
 	    estimate VAR parameters, via VECM if type==4 (KPSW) 
@@ -183,8 +183,8 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 	    base_est(&bobj)
 	endif
 	
-	matrix bA = bobj["VARpar"]    # recover estimates
-	matrix bSigma = bobj["Sigma"]
+	matrix bA = bobj.VARpar    # recover estimates
+	matrix bSigma = bobj.Sigma
 	matrix theta = param
 	errcode = 0
 
@@ -204,11 +204,11 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 	elif type == 4 # "KPSW"
 	    # FIXME: this is very much WIP
 	    
-	    matrix aperp = nullspace(bobj["jalpha"]')
+	    matrix aperp = nullspace(bobj.jalpha')
 
 	    /* set up permanent-transitory constraints */
 
-	    r = cols(bobj["jbeta"])
+	    r = cols(bobj.jbeta)
 	    matrix J = zeros(n-r, r) | I(r)
 	    matrix ptRd = (J ** aperp)' ~ zeros(r*(n-r),1)
 	    # matrix J = I(n-r) | zeros(r, n-r)
@@ -220,21 +220,21 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 	endif
 
 	if !errcode && rows(K) == n
-	    bobj["step"] = 2
-	    bobj["theta"] = theta
+	    bobj.step = 2
+	    bobj.theta = theta
 	    # we don't treat the AB-model specially here
 	    # (there's no reason to)
 	    maybe_flip_columns(C, &K)
 
 	    if (type == 1) || (type == 2) || (type == 4) 
-		bobj["S1"] = K
+		bobj.S1 = K
 		Spar_mat[i,] = vec(K)'
 	    elif type = 3
 		matrix aSs = imp2exp(Rd2)
 		matrix bSs = imp2exp(Rd1)
 		ABmat_exp(theta, aSs, bSs, &bmA, &bmB)
-		bobj["S1"] = bmA
-		bobj["S2"] = bmB
+		bobj.S1 = bmA
+		bobj.S2 = bmB
 		Spar_mat[i,] = vec(bmA)' ~ vec(bmB)'
 	    endif
 
@@ -242,7 +242,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 		scalar H = smash_unstable_roots(&bA, Psi)
 		# printf("\tH=%g\n",H)
 		if ok(H)
-		    bobj["VARpar"] = bA
+		    bobj.VARpar = bA
 		else
 		    errcode = 101
 		endif
@@ -251,7 +251,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 
 	if !errcode && rows(K) == n
 	    doIRF(&bobj)
-	    matrix ir = bobj["IRFs"]	
+	    matrix ir = bobj.IRFs	
 	    bands[i,] = vec(ir)'
 	    i++
 	else
@@ -276,13 +276,13 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
     mdn  = mshape(mdn, h+1, n2)    
 
     bundle bootdata = null
-    bootdata["rep"]   = rep             # no of replications
-    bootdata["alpha"] = alpha           # alpha 
-    bootdata["biascorr"]  = bc	        # type of bias correction
-    bootdata["lo_cb"] = locb 	        # lower bounds
-    bootdata["hi_cb"] = hicb	        # upper bounds
-    bootdata["mdns"]  = mdn	        # medians
+    bootdata.rep   = rep             # no of replications
+    bootdata.alpha = alpha           # alpha 
+    bootdata.biascorr  = bc	        # type of bias correction
+    bootdata.lo_cb = locb 	        # lower bounds
+    bootdata.hi_cb = hicb	        # upper bounds
+    bootdata.mdns  = mdn	        # medians
 
-    obj["bootdata"] = bootdata
+    obj.bootdata = bootdata
     return failed
 end function
