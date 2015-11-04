@@ -82,7 +82,7 @@
 \newlength{\irfw}
 \newlength{\irfh}
 \setlength{\irfw}{6.5cm}
-\setlength{\irfh}{30mm}
+\setlength{\irfh}{35mm}
 \newcommand{\rk}[1]{\mathrm{rank}\left(#1\right)}
 
 \title{The SVAR addon for \app{gretl}}
@@ -232,9 +232,10 @@ representation as
 \end{equation}
 From equation \eqref{eq:svma} it is immediate to compute the impulse response
 functions:
-\[
+\begin{equation}
+  \label{eq:IRFdef}
   \IRF{i,j,h} = \pder{y_{i,t}}{\StS{j, t-h}} = \pder{y_{i,t+h}}{\StS{j, t}} 
-\]
+\end{equation}
 which in this case equal simply
 \[
   \IRF{i,j,h} = \left[ M_h \right]_{ij}
@@ -625,6 +626,20 @@ names corresponding to the observable variables in your VAR. This
 doesn't make particular sense in general, but it does in a triangular
 model, in which there is a one-to-one correspondence, so I decided to
 make this the default choice.
+
+A word on the unit of measurement of IRFs: by their definition (see
+equation \eqref{eq:IRFdef}), and the fact the structural shocks are
+assumed to have unit variance, clearly their unit of measurement is
+the same as the one for the corresponding observable variable
+$y_{i,t}$. Sometimes, however, a different convention is adopted, and
+people want to display IRFs graphically by normalizing $\IRF{i,i,0} =
+1$. This can be achieved by setting the bundle member \cmd{normalize}
+to 1, as in
+\begin{code}
+  Model.normalize = 1
+\end{code}
+before calling \cmd{IRFplot}. Setting ot back to its default value of
+0 will restore standard behavior.
 
 \subsection{Bootstrapping}
 \label{sec:bootstrap}

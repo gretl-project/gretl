@@ -194,11 +194,12 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
   ret.simann  = 0 # not for now
 
   /* 
-     Information for cumulating IRFs
+     Information for cumulating/normalizing IRFs
   */
 
   ret.ncumul = 0
   ret.cumul = {}
+  ret.normalize = 0
     
   /* 
      Bootstrap
