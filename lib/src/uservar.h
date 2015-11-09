@@ -85,6 +85,8 @@ int user_var_localize (const char *origname,
 		       const char *localname,
 		       GretlType type);
 
+void switch_uservar_hash (int level);
+
 int user_var_unlocalize (const char *localname,
 			 const char *origname,
 			 GretlType type);

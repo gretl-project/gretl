@@ -184,6 +184,16 @@ static GHashTable *uvh1;       /* for use within functions */
 static GHashTable *uvars_hash; /* pointer to one or other of the above */
 static int previous_d = -1;    /* record of previous "function depth" */
 
+void switch_uservar_hash (int level)
+{
+    if (level == 0) {
+	uvars_hash = uvh0;
+	if (uvh1 != NULL) {
+	    g_hash_table_remove_all(uvh1);
+	}
+    }
+}
+
 static void uvar_hash_destroy (void)
 {
 #if HDEBUG	

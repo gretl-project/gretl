@@ -612,6 +612,11 @@ static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
 	set_listargs_from_call(popcall, dset);
     }
 
+    if (popcall == NULL) {
+	/* returning to main */
+	switch_uservar_hash(0);
+    }
+
     if (dbg) {
 	if (popcall != NULL) {
 	    pprintf(prn, "returning to %s\n", popcall->fun->name);
