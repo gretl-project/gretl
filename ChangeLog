@@ -4,6 +4,7 @@ version 2015e, in progress
 - add exists() function, recommended as a replacment for the
   now-deprecated isnull()
 - "arima" command: allow ARIMA(0,1,0) without constant
+- Improve handling of string-valued series across sub-sampling
 - Fix bug 196, Help button for HCCME misaligned in case of a
   non-MPI enabled build
 - Fix bug 197, bad "xtics" specification for some weekly
