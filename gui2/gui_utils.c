@@ -5315,7 +5315,7 @@ static int alt_show (const char *uri)
 	g_error_free(err);
     }
 
-    return ret;
+    return ret == FALSE;
 }
 
 #endif /* not used on Mac */
@@ -5331,8 +5331,13 @@ int browser_open (const char *url)
     if (getenv("ALTSHOW") != NULL) {
 	return alt_show(url);
     }
+
+    if (strstr(Browser, "hrom")) {
+	urlcmd = g_strdup_printf("%s \"%s\"\"", Browser, url);
+    } else {
+	urlcmd = g_strdup_printf("%s -remote \"openURLNewWindow(%s)\"", Browser, url);
+    }
     
-    urlcmd = g_strdup_printf("%s -remote \"openURLNewWindow(%s)\"", Browser, url);
     fprintf(stderr, "urlcmd='%s'\n", urlcmd);
     err = gretl_spawn(urlcmd);
     fprintf(stderr, " err = %d\n", err);
