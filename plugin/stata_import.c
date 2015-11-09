@@ -986,7 +986,7 @@ static int process_strl_values (FILE *fp, int *err)
     stata_read_string(fp, 8, test, err);
     test[8] = '\0';
     if (!strcmp(test, "</strls>")) {
-	fprintf(stderr, "strls block is empty\n");
+	fprintf(stderr, "dta import: got empty strls block\n");
     }
 
     return 0;
