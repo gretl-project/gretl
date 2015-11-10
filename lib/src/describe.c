@@ -4808,7 +4808,7 @@ static int weighted_order_stats (const double *y, const double *w,
 	}
     }
 
-    qsort(X, n, sizeof *X, compare_wgtord_rows);
+    qsort(X, i, sizeof *X, compare_wgtord_rows);
 
     for (i=0; i<k; i++) {
 	p = ostats[i] * wsum;
