@@ -2669,17 +2669,41 @@ static int process_varlist (xmlNodePtr node, DATASET *dset)
     return err;
 }
 
-static int series_wanted (const char *name, const char **vnames, int nv)
+static int series_wanted (const char *name, const char **vnames,
+			  int nv, char *check)
 {
     int i;
 
     for (i=0; i<nv; i++) {
 	if (!strcmp(name, vnames[i])) {
+	    if (check != NULL) {
+		check[i] = 1;
+	    }
 	    return 1;
 	}
     }
 
     return 0;
+}
+
+static int missing_series_error (const char **vnames, int nv,
+				 char *check)
+{
+    const char *missing = NULL;
+    int i;
+	
+    for (i=0; i<nv; i++) {
+	if (!check[i]) {
+	    missing = vnames[i];
+	    break;
+	}
+    }
+
+    gretl_errmsg_sprintf(_("join: column '%s' was not found"),
+			 missing);
+    free(check);
+
+    return E_DATA;
 }
 
 #define GDT_DEBUG 0
@@ -2691,6 +2715,7 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
     xmlNodePtr vars_node, cur;
     xmlChar *tmp = xmlGetProp(node, (XUC) "count");
     int *vlist = NULL;
+    char *check = NULL;
     int nv_found = 0;
     int i, k, err = 0;
 
@@ -2725,13 +2750,15 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 
     vars_node = cur;
     nv_found = 0;
+    check = calloc(nv, 1);
 
     /* first pass: check for matches */
     while (cur != NULL) {
         if (!xmlStrcmp(cur->name, (XUC) "variable")) {
 	    tmp = xmlGetProp(cur, (XUC) "name");
 	    if (tmp != NULL) {
-		if (series_wanted((const char *) tmp, vnames, nv)) {
+		if (series_wanted((const char *) tmp, vnames,
+				  nv, check)) {
 		    nv_found++;
 		}
 		free(tmp);
@@ -2745,8 +2772,10 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 #endif
 
     if (nv_found < nv) {
-	return E_DATA;
+	return missing_series_error(vnames, nv, check);
     }
+
+    free(check);
 
     /* allocate the dataset content */
 
@@ -2783,7 +2812,7 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 	    
 	    tmp = xmlGetProp(cur, (XUC) "name");
 	    if (tmp != NULL) {
-		if (series_wanted((const char *) tmp, vnames, nv)) {
+		if (series_wanted((const char *) tmp, vnames, nv, NULL)) {
 		    wanted = 1;
 		    transcribe_string(dset->varname[k], (char *) tmp, VNAMELEN);
 		    vlist[k] = i;
@@ -3906,29 +3935,29 @@ static int real_read_gdt_subset (const char *fname,
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (XUC) "variables")) {
-	    if (process_varlist_subset(cur, tmpset, vnames, nv,
-				       &fullv, &vlist)) {
-		err = 1;
-	    } else {
+	    err = process_varlist_subset(cur, tmpset, vnames, nv,
+					 &fullv, &vlist);
+	    if (!err) {
 		gotvars = 1;
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "observations")) {
 	    if (!gotvars) {
 		gretl_errmsg_set(_("Variables information is missing"));
-		err = 1;
-	    } else if (read_observations_subset(doc, cur, tmpset, 
-						binary, fname,
-						fullv, vlist, opt)) {
-		err = 1;
+		err = E_DATA;
 	    } else {
+		err = read_observations_subset(doc, cur, tmpset, 
+					       binary, fname,
+					       fullv, vlist, opt);
+	    }
+	    if (!err) {
 		gotobs = 1;
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "string-tables")) {
 	    if (!gotvars) {
 		gretl_errmsg_set(_("Variables information is missing"));
 		err = 1;
-	    } else if (process_string_tables(doc, cur, tmpset, 1)) {
-		err = 1;
+	    } else {
+		err = process_string_tables(doc, cur, tmpset, 1);
 	    }	    
 	}
 	if (!err) {
