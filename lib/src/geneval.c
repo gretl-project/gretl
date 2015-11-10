@@ -2559,6 +2559,11 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 		return NULL;
 	    }
 
+	    if (gretl_matrix_is_dated(m)) {
+		gretl_matrix_set_t1(ret->v.m, gretl_matrix_get_t1(m));
+		gretl_matrix_set_t2(ret->v.m, gretl_matrix_get_t2(m));
+	    }
+
 	    if (l->t == NUM) {
 		for (i=0; i<n; i++) {
 		    y = xy_calc(x, m->val[i], op, MAT, p);
@@ -7283,6 +7288,37 @@ static NODE *type_string_node (NODE *n, parser *p)
     return ret;
 }
 
+#define BUNDLE_SERIES 1
+
+#if BUNDLE_SERIES
+
+static double *scalar_to_series (NODE *n, parser *p)
+{
+    double *ret = NULL;
+    int t;
+
+    if (p->dset == NULL || p->dset->n == 0) {
+	p->err = E_NODATA;
+    } else {
+	ret = malloc(p->dset->n * sizeof *ret);
+	if (ret == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    for (t=0; t<p->dset->n; t++) {
+		if (t >= p->dset->t1 && t <= p->dset->t2) {
+		    ret[t] = n->v.xval;
+		} else {
+		    ret[t] = NADBL;
+		}
+	    }
+	}
+    }
+
+    return ret;
+}
+
+#else
+
 static gretl_matrix *scalar_to_series_matrix (NODE *t, parser *p)
 {
     gretl_matrix *v = NULL;
@@ -7307,6 +7343,8 @@ static gretl_matrix *scalar_to_series_matrix (NODE *t, parser *p)
     return v;
 }
 
+#endif
+
 /* Setting an object in a bundle under a given key string. We get here
    only if p->lh.substr is non-NULL. That "substr" may be a string
    literal, or it may be the name of a string variable. In the latter
@@ -7323,6 +7361,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     GretlType type = 0;
     void *ptr = NULL;
     char *key = NULL;
+    int size = 0;
     int donate = 0;
     int err = 0;
 
@@ -7372,6 +7411,16 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	switch (n->t) {
 	case NUM:
 	    if (lhtype == GRETL_TYPE_SERIES) {
+#if BUNDLE_SERIES
+		ptr = scalar_to_series(n, p);
+		if (p->err) {
+		    err = p->err;
+		} else {
+		    type = GRETL_TYPE_SERIES;
+		    size = p->dset->n;
+		    donate = 1;
+		}
+#else
 		ptr = scalar_to_series_matrix(n, p);
 		if (p->err) {
 		    err = p->err;
@@ -7379,6 +7428,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 		    lhtype = type = GRETL_TYPE_MATRIX;
 		    donate = 1;
 		}
+#endif		
 	    } else if (lhtype == GRETL_TYPE_MATRIX) {
 		ptr = gretl_matrix_from_scalar(n->v.xval);
 		type = GRETL_TYPE_MATRIX;
@@ -7413,11 +7463,18 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	    }	 
 	    break;
 	case SERIES:
+#if BUNDLE_SERIES	    
+	    ptr = n->v.xvec;
+	    type = GRETL_TYPE_SERIES;
+	    size = p->dset->n;
+	    donate = is_tmp_node(n);
+#else	    
 	    ptr = series_to_matrix(n->v.xvec, p);
 	    if (!p->err) {
 		lhtype = type = GRETL_TYPE_MATRIX;
 		donate = 1;
 	    }
+#endif	    
 	    break;
 	case BUNDLE:
 	    ptr = n->v.b;
@@ -7445,11 +7502,11 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	    err = E_TYPES;
 	} else if (donate) {
 	    /* it's OK to hand over the data pointer */
-	    err = gretl_bundle_donate_data(bundle, key, ptr, type, 0);
+	    err = gretl_bundle_donate_data(bundle, key, ptr, type, size);
 	    n->v.ptr = NULL;
 	} else {
 	    /* the data must be copied into the bundle */
-	    err = gretl_bundle_set_data(bundle, key, ptr, type, 0);
+	    err = gretl_bundle_set_data(bundle, key, ptr, type, size);
 	}
     }
 
@@ -9948,6 +10005,8 @@ static NODE *query_eval_series (const double *c, NODE *n, parser *p)
     return ret;
 }
 
+/* the condition in the ternary query operator is a scalar */
+
 static NODE *query_eval_scalar (double x, NODE *n, parser *p)
 {
     NODE *l = NULL, *r = NULL, *ret = NULL;
@@ -9983,6 +10042,8 @@ static NODE *query_eval_scalar (double x, NODE *n, parser *p)
 
     return ret;
 }
+
+/* the condition in the ternary query operator is a matrix */
 
 static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
 {
@@ -10057,6 +10118,12 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
     return ret;
 }
 
+/* it seems the following may now be redundant,
+   but more checking is needed */
+#define DUP_TERNARY_CHILD 1
+
+#if DUP_TERNARY_CHILD
+
 /* Handle the case where a ternary "query" expression has produced one
    of its own child nodes as output: we duplicate the information in an
    auxiliary node so as to avoid double-freeing of the result.
@@ -10127,8 +10194,10 @@ static NODE *ternary_return_node (NODE *n, parser *p)
     return ret;
 }
 
+#endif
+
 /* Evaluate a ternary "query" expression: (C)? X : Y.  The condition C
-   must be a scalar, series or matrix.  The relevant sub-nodes of @t
+   may be a scalar, series or matrix.  The relevant sub-nodes of @t
    are named "l" (left, the condition), "m" and "r" (middle and right
    respectively, the two alternates).
 */
@@ -10172,11 +10241,13 @@ static NODE *eval_query (NODE *t, parser *p)
 	return NULL;
     }
 
+#if DUP_TERNARY_CHILD 
     if (ret != NULL && (ret == t->v.b3.m || ret == t->v.b3.r)) {
 	/* forestall double-freeing */
 	ret = ternary_return_node(ret, p);
     }
-
+#endif
+    
     return ret;
 }
 
@@ -14149,7 +14220,7 @@ static int gen_check_return_type (parser *p)
     } else if (p->targ == LIST) {
 	if (r->t != EMPTY && !ok_list_node(r)) {
 	    err = E_TYPES;
-	} 
+	}
     } else if (p->targ == STR) {
 	if (r->t != EMPTY && r->t != STR && r->t != NUM) {
 	    err = E_TYPES;
@@ -15097,7 +15168,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 #if EDEBUG
     fprintf(stderr, "realgen: post-eval, err = %d\n", p->err);
 # if EDEBUG > 1
-    printnode(p->ret, p);
+    printnode(p->ret, p, 0);
     pputc(prn, '\n');
 # endif
 #endif
