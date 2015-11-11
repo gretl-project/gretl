@@ -7288,10 +7288,6 @@ static NODE *type_string_node (NODE *n, parser *p)
     return ret;
 }
 
-#define BUNDLE_SERIES 1
-
-#if BUNDLE_SERIES
-
 static double *scalar_to_series (NODE *n, parser *p)
 {
     double *ret = NULL;
@@ -7316,34 +7312,6 @@ static double *scalar_to_series (NODE *n, parser *p)
 
     return ret;
 }
-
-#else
-
-static gretl_matrix *scalar_to_series_matrix (NODE *t, parser *p)
-{
-    gretl_matrix *v = NULL;
-
-    if (p->dset == NULL || p->dset->n == 0) {
-	p->err = E_NODATA;
-    } else {
-	int n = sample_size(p->dset);
-	
-	v = gretl_column_vector_alloc(n);
-	if (v == NULL) {
-	    p->err = E_ALLOC;
-	} else {
-	    double x = na(t->v.xval) ? M_NA : t->v.xval;
-	    
-	    gretl_matrix_fill(v, x);
-	    gretl_matrix_set_t1(v, p->dset->t1);
-	    gretl_matrix_set_t2(v, p->dset->t2);
-	}
-    }
-
-    return v;
-}
-
-#endif
 
 /* Setting an object in a bundle under a given key string. We get here
    only if p->lh.substr is non-NULL. That "substr" may be a string
@@ -7411,7 +7379,6 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	switch (n->t) {
 	case NUM:
 	    if (lhtype == GRETL_TYPE_SERIES) {
-#if BUNDLE_SERIES
 		ptr = scalar_to_series(n, p);
 		if (p->err) {
 		    err = p->err;
@@ -7420,15 +7387,6 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 		    size = p->dset->n;
 		    donate = 1;
 		}
-#else
-		ptr = scalar_to_series_matrix(n, p);
-		if (p->err) {
-		    err = p->err;
-		} else {
-		    lhtype = type = GRETL_TYPE_MATRIX;
-		    donate = 1;
-		}
-#endif		
 	    } else if (lhtype == GRETL_TYPE_MATRIX) {
 		ptr = gretl_matrix_from_scalar(n->v.xval);
 		type = GRETL_TYPE_MATRIX;
@@ -7463,18 +7421,10 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	    }	 
 	    break;
 	case SERIES:
-#if BUNDLE_SERIES	    
 	    ptr = n->v.xvec;
 	    type = GRETL_TYPE_SERIES;
 	    size = p->dset->n;
 	    donate = is_tmp_node(n);
-#else	    
-	    ptr = series_to_matrix(n->v.xvec, p);
-	    if (!p->err) {
-		lhtype = type = GRETL_TYPE_MATRIX;
-		donate = 1;
-	    }
-#endif	    
 	    break;
 	case BUNDLE:
 	    ptr = n->v.b;

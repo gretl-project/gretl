@@ -4567,10 +4567,10 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 
     note = gretl_bundle_get_note(bundle, key);
 
-    if (type == GRETL_TYPE_SERIES && size == dataset->n) {
+    if (type == GRETL_TYPE_SERIES && size <= dataset->n) {
 	const double *x = (double *) val;
 
-	save_bundled_series(x, 0, dataset->n - 1, key, note, vwin);
+	save_bundled_series(x, 0, size - 1, key, note, vwin);
     } else if (type == GRETL_TYPE_MATRIX &&
 	       vector_suitable_for_series((gretl_matrix *) val)) {
 	const gretl_matrix *m = val;
