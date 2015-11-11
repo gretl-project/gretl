@@ -7402,6 +7402,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	    donate = is_tmp_node(n);
 	    break;
 	case MAT:
+	    /* FIXME assignment of (suitable) vector to series */
 	    if (lhtype == GRETL_TYPE_DOUBLE && scalar_matrix_node(n)) {
 		ptr = &n->v.m->val[0];
 		type = GRETL_TYPE_DOUBLE;
