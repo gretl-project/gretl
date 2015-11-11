@@ -7123,12 +7123,12 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     } else if (type == GRETL_TYPE_SERIES) {
 	const double *x = val;
 
-	if (size == p->dset->n) {
+	if (size <= p->dset->n) {
 	    ret = aux_series_node(p);
 	    if (ret != NULL) {
 		int t;
 
-		for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		for (t=p->dset->t1; t<=p->dset->t2 && t<size; t++) {
 		    ret->v.xvec[t] = x[t];
 		}
 	    }
