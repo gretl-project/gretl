@@ -4674,7 +4674,7 @@ static void add_bundled_item_to_menu (gpointer key,
 	} else if (vector_suitable_for_series(m)) {
 	    type = GRETL_TYPE_SERIES;
 	}
-    } else if (type == GRETL_TYPE_SERIES && size != dataset->n) {
+    } else if (type == GRETL_TYPE_SERIES && size > dataset->n) {
 	type = GRETL_TYPE_MATRIX;
     }
 
