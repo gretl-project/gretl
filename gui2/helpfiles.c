@@ -683,7 +683,7 @@ static void en_help_callback (GtkWidget *w, windata_t *hwin)
     real_do_help(idx, pos, role);
 }
 
-#if GTK_MAJOR_VERSION == 2  
+#if GTK_MAJOR_VERSION == 2
 
 static void normalize_base (GtkWidget *w, gpointer p)
 {
@@ -702,35 +702,37 @@ void notify_string_not_found (GtkWidget *entry)
 		     G_CALLBACK(normalize_base), NULL);
 }
 
-#else /* GTK 3 */
+#else /* GTK 3.0 */
 
 void notify_string_not_found (GtkWidget *entry)
 {
     GtkStyleContext *context;
     PangoLayout *layout;
     PangoRectangle r;
+    GdkWindow *win;
     cairo_surface_t *cs;
     cairo_t *cr;
 
     gtk_widget_grab_focus(entry);
     gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
+    
     layout = gtk_entry_get_layout(GTK_ENTRY(entry));
     pango_layout_get_pixel_extents(layout, &r, NULL);
 
-   //  cs = gdk_window_create_similar_surface(gtk_widget_get_window(entry),
-					   // CAIRO_CONTENT_COLOR,
-					   // r.width, r.height);
-
-    // cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, r.width, r.height);
-    // cr = cairo_create(cs);
-    // cairo_surface_destroy(cs);
-    cr = gdk_cairo_create(gtk_widget_get_window(entry));
+    win = gtk_widget_get_window(entry);
+    cs = gdk_window_create_similar_surface(win,
+					   CAIRO_CONTENT_COLOR,
+					   r.width,
+					   r.height);
+    cr = cairo_create(cs);
+    cairo_surface_destroy(cs);
     cairo_set_source_rgb(cr, 1.0, 0.0, 0.0);
     cairo_paint(cr);
-    
+
+    /* This seems like it ought to work but it doesn't */
+
     context = gtk_widget_get_style_context(entry);
     gtk_render_background(context, cr, r.x, r.y, r.width, r.height);
-    // gtk_widget_queue_draw_area(entry, r.x, r.y, r.width, r.height);
     cairo_destroy(cr);
 }
 
