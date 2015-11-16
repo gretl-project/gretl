@@ -704,31 +704,23 @@ void notify_string_not_found (GtkWidget *entry)
 
 #else /* GTK 3.0 */
 
-static void normalize_base (GtkWidget *w, gpointer p)
+static void normalize_style (GtkWidget *w, gpointer p)
 {
-    GtkStyleContext *context;
-
-    context = gtk_widget_get_style_context(w);
-    gtk_style_context_remove_provider(context,
-				      GTK_STYLE_PROVIDER(p));
+    gtk_style_context_remove_class(GTK_STYLE_CONTEXT(p),
+				   GTK_STYLE_CLASS_ERROR);
 }
 
 void notify_string_not_found (GtkWidget *entry)
 {
-    GtkCssProvider *prov;
     GtkStyleContext *context;
-    const gchar *snippet =
-	"GtkEntry:selected {background-color: #ff0000;}";
 
-    prov = gtk_css_provider_new();
-    gtk_css_provider_load_from_data(prov, snippet, -1, NULL);
     context = gtk_widget_get_style_context(entry);
-    gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(prov),
-				   GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    gtk_style_context_add_class(context,
+				GTK_STYLE_CLASS_ERROR);
     gtk_widget_grab_focus(entry);
     gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
     g_signal_connect(G_OBJECT(entry), "changed",
-		     G_CALLBACK(normalize_base), prov);    
+		     G_CALLBACK(normalize_style), context);    
 }
 
 #endif
