@@ -1352,6 +1352,10 @@ void vwin_pack_toolbar (windata_t *vwin)
 		gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, TRUE, TRUE, 0);
 	    } else {
 		gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+		if (vwin->role == SCRIPT_OUT) {
+		    /* added 2015-11-16 */
+		    g_object_set_data(G_OBJECT(vwin->main), "top-hbox", hbox);
+		}
 	    }
 	    if (window_is_tab(vwin)) {
 		/* here we're re-packing vwin->mbar: move it up top */

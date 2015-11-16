@@ -1943,6 +1943,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	if (data != NULL) {
 	    /* partial output window for script */
 	    vwin_add_child((windata_t *) data, vwin);
+	    /* define "top-hbox" here? */
 	}
 	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 			 G_CALLBACK(nullify_script_out),

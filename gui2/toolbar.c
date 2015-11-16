@@ -1363,7 +1363,7 @@ void vwin_add_tmpbar (windata_t *vwin)
     GtkWidget *hbox, *tmp;
 
     hbox = g_object_get_data(G_OBJECT(vwin->main), "top-hbox");
-    
+
     if (hbox != NULL) {
 	/* We're replacing a "real" menubar temporarily: ref. the
 	   widgets in @hbox before removing them so we can put
