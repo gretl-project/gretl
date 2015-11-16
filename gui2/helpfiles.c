@@ -704,7 +704,7 @@ void notify_string_not_found (GtkWidget *entry)
 
 #else /* GTK 3.0 */
 
-void notify_string_not_found_not_work (GtkWidget *entry)
+void notify_string_not_found_not_working (GtkWidget *entry)
 {
     GtkStyleContext *context;
     PangoLayout *layout;
@@ -736,7 +736,7 @@ void notify_string_not_found_not_work (GtkWidget *entry)
     cairo_destroy(cr);
 }
 
-void notify_string_not_found (GtkWidget *entry)
+void notify_string_not_found_cant_revert (GtkWidget *entry)
 {
     GtkCssProvider *prov;
     GtkStyleContext *context;
@@ -751,6 +751,15 @@ void notify_string_not_found (GtkWidget *entry)
     gtk_widget_grab_focus(entry);
     gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
     g_object_unref(G_OBJECT(prov));
+}
+
+void notify_string_not_found (GtkWidget *entry)
+{
+    GdkWindow *win = gtk_widget_get_window(entry);
+    
+    gtk_widget_grab_focus(entry);
+    gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
+    gdk_window_beep(win); 
 }
 
 #endif
