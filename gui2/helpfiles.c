@@ -704,7 +704,7 @@ void notify_string_not_found (GtkWidget *entry)
 
 #else /* GTK 3.0 */
 
-void notify_string_not_found (GtkWidget *entry)
+void notify_string_not_found_not_work (GtkWidget *entry)
 {
     GtkStyleContext *context;
     PangoLayout *layout;
@@ -734,6 +734,23 @@ void notify_string_not_found (GtkWidget *entry)
     context = gtk_widget_get_style_context(entry);
     gtk_render_background(context, cr, r.x, r.y, r.width, r.height);
     cairo_destroy(cr);
+}
+
+void notify_string_not_found (GtkWidget *entry)
+{
+    GtkCssProvider *prov;
+    GtkStyleContext *context;
+    const gchar *snippet =
+	"GtkEntry:selected {background-color: #ff0000;}";
+
+    prov = gtk_css_provider_new();
+    gtk_css_provider_load_from_data(prov, snippet, -1, NULL);
+    context = gtk_widget_get_style_context(entry);
+    gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(prov),
+				   GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    gtk_widget_grab_focus(entry);
+    gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
+    g_object_unref(G_OBJECT(prov));
 }
 
 #endif
