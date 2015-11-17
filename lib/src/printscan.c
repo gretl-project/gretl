@@ -144,7 +144,10 @@ static int printf_get_int (const char *s, DATASET *dset,
 
     if (*err) {
 	*err = 0;
-	ret = generate_int(s, dset, err);
+	gretl_error_clear();
+	/* we'll allow a bit of slop with regard to 
+	   integerhood here */
+	ret = (int) generate_scalar(s, dset, err);
     }
     
     if (!*err && abs(ret) > 255) {
