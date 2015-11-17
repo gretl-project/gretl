@@ -2172,6 +2172,13 @@ static void grab_line_title (char *targ, const char *src)
     sscanf(src + 1, fmt, targ);
 }
 
+static void grab_line_rgb (char *targ, const char *src)
+{
+    if (*src == '"') {
+	sscanf(src + 1, "%7s", targ);
+    }
+}
+
 /* parse the "using..." portion of plot specification for a
    given plot line: full form is like:
   
@@ -2267,6 +2274,8 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 
     if ((p = strstr(s, " lt "))) {
 	sscanf(p + 4, "%d", &line->type);
+    } else if ((p = strstr(s, " lc rgb "))) {
+	grab_line_rgb(line->rgb, p + 8);
     }
 
     if ((p = strstr(s, " ps "))) {
