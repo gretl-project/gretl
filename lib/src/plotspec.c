@@ -34,6 +34,8 @@ static int n_bars_shown (double xmin, double xmax, plotbars *bars);
 static void print_bars_header (int n, FILE *fp);
 static void print_plotbars (plotbars *bars, FILE *fp);
 
+static void print_filledcurve_color (FILE *fp);
+
 GPT_SPEC *plotspec_new (void)
 {
     GPT_SPEC *spec;
@@ -966,11 +968,7 @@ static void print_linestyle (const GPT_SPEC *spec, int i, FILE *fp)
     GPT_LINE *line;
     int done = 0;
 
-    if (gnuplot_version() >= 5.0) {
-	fprintf(fp, "set linetype %d ", i+1);
-    } else {
-	fprintf(fp, "set style line %d ", i+1);
-    }
+    fprintf(fp, "set linetype %d ", i+1);
 
     if (i < spec->n_lines) {
 	line = &spec->lines[i];
@@ -989,76 +987,26 @@ static void print_linestyle (const GPT_SPEC *spec, int i, FILE *fp)
     }
 }
 
-static int any_filledcurve (const GPT_SPEC *spec)
-{
-    int i;
-
-    for (i=0; i<spec->n_lines; i++) {
-	if (spec->lines[i].style == GP_STYLE_FILLEDCURVE) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
 static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
 {
     char cstr[8];
     int i;
 
-    if (gnuplot_version() >= 5.0) {
-	if (frequency_plot_code(spec->code)) {
-	    const gretlRGB *color = get_graph_color(BOXCOLOR);
+    if (frequency_plot_code(spec->code)) {
+	const gretlRGB *color = get_graph_color(BOXCOLOR);
 
-	    print_rgb_hash(cstr, color);
-	    fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
-	    fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
-	} else if (spec->code == PLOT_RQ_TAU) {
-	    fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
-	    for (i=1; i<BOXCOLOR; i++) {
-		print_linestyle(spec, i, fp);
-	    }
-	} else {
-	    for (i=0; i<BOXCOLOR; i++) {
-		print_linestyle(spec, i, fp);
-	    }
-	}
-
-	if (spec->nbars > 0 || any_filledcurve(spec)) {
-	    const gretlRGB *color = get_graph_color(SHADECOLOR);
-
-	    print_rgb_hash(cstr, color);
-	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", 
-		    SHADECOLOR + 1, cstr);
+	print_rgb_hash(cstr, color);
+	fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
+	fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
+    } else if (spec->code == PLOT_RQ_TAU) {
+	fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
+	for (i=1; i<BOXCOLOR; i++) {
+	    print_linestyle(spec, i, fp);
 	}
     } else {
-	if (frequency_plot_code(spec->code)) {
-	    const gretlRGB *color = get_graph_color(BOXCOLOR);
-
-	    print_rgb_hash(cstr, color);
-	    fprintf(fp, "set style line 1 lc rgb \"%s\"\n", cstr);
-	    fputs("set style line 2 lc rgb \"#000000\"\n", fp);
-	} else if (spec->code == PLOT_RQ_TAU) {
-	    fputs("set style line 1 lc rgb \"#000000\"\n", fp);
-	    for (i=1; i<BOXCOLOR; i++) {
-		print_linestyle(spec, i, fp);
-	    }
-	} else {
-	    for (i=0; i<BOXCOLOR; i++) {
-		print_linestyle(spec, i, fp);
-	    }
+	for (i=0; i<BOXCOLOR; i++) {
+	    print_linestyle(spec, i, fp);
 	}
-
-	if (spec->nbars > 0 || any_filledcurve(spec)) {
-	    const gretlRGB *color = get_graph_color(SHADECOLOR);
-
-	    print_rgb_hash(cstr, color);
-	    fprintf(fp, "set style line %d lc rgb \"%s\"\n", 
-		    SHADECOLOR + 1, cstr);
-	}
-
-	fputs("set style increment user\n", fp);
     }
 }
 
@@ -1301,9 +1249,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	} else {
 	    fputs("set style fill solid 0.6\n", fp);
 	}
-    } else if (spec->code == PLOT_FORECAST) {
-	fputs("set style fill solid 0.4\n", fp);
-    } 
+    }
 
     if (spec->flags & GPT_PRINT_MARKERS) {
 	print_data_labels(spec, fp);
@@ -1312,8 +1258,6 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     if (spec->flags & GPT_FIT_HIDDEN) {
 	skipline = 1;
     }
-
-    fputs("plot \\\n", fp);
 
     for (i=0; i<spec->n_lines; i++) {
 	if (i == skipline || blank_user_line(spec, i)) {
@@ -1324,6 +1268,8 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    break;
 	}
     }
+
+    fputs("plot \\\n", fp);
 
     gretl_push_c_numeric_locale();
 
@@ -1391,11 +1337,15 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    }
 	}
 
+	if (line->style == GP_STYLE_FILLEDCURVE && line->type == LT_AUTO) {
+	    print_filledcurve_color(fp);
+	}
+
 	fprintf(fp, "w %s", gp_line_style_name(line->style));
 
 	if (line->type != LT_AUTO) {
 	    fprintf(fp, " lt %d", line->type);
-	} else if (spec->nbars > 0) {
+	} else if (spec->nbars > 0 && line->style != GP_STYLE_FILLEDCURVE) {
 	    fprintf(fp, " lt %d", i + 1);
 	}
 
@@ -2057,12 +2007,23 @@ static void print_plotbars (plotbars *bars, FILE *fp)
 
 static void print_bars_header (int n, FILE *fp)
 {
+    char cstr[8];
     int i;
 
+    print_rgb_hash(cstr, get_graph_color(SHADECOLOR));
+
     for (i=0; i<n; i++) {
-	fprintf(fp, "'-' using 1:2:3 notitle lt %d w filledcurve , \\\n", 
-		SHADECOLOR + 1);
+	fprintf(fp, "'-' using 1:2:3 notitle lc rgb \"%s\" w filledcurve, \\\n", 
+		cstr);
     }
+}
+
+static void print_filledcurve_color (FILE *fp)
+{
+    char cstr[8];
+
+    print_rgb_hash(cstr, get_graph_color(SHADECOLOR));
+    fprintf(fp, "lc rgb \"%s\" ", cstr);
 }
 
 /* given the info in @bars, calculate how many of its start-stop

@@ -361,24 +361,8 @@ static int graph_page_set_font_scale (const char *s)
 
 static int gp_cairo_fontsize (void)
 {
-#ifdef G_OS_WIN32
-    int basesize = 10;
-#else
-    static int basesize;
-#endif
+    int basesize = 10; /* or 12? */
     int fontsize;
-
-#ifndef G_OS_WIN32
-    if (basesize == 0) {
-	double gpver = gnuplot_version();
-
-	/* note: the default @basesize here is inconsistent with 
-	   get_gretl_pdf_term_line (default 12) 
-	*/
-
-	basesize = (gpver > 4.4)? 10 : 5;
-    }
-#endif
 
     if (gp_fontscale != 1.0) {
 	fontsize = basesize * gp_fontscale;

@@ -181,8 +181,6 @@ int gnuplot_test_command (const char *cmd)
 
     argv[0] = gnuplot_path;
 
-    // signal(SIGCHLD, SIG_DFL);
-
     ok = g_spawn_async_with_pipes (NULL,
 				   argv,
 				   NULL,
@@ -660,6 +658,14 @@ static gretlRGB user_color[N_GP_COLORS] = {
     { 0xdd, 0xdd, 0xdd }    
 };
 
+static const gretlRGB default_shade_color = {
+    0xdd, 0xdd, 0xdd
+};
+
+static gretlRGB user_shade_color = {
+    0xdd, 0xdd, 0xdd
+};
+
 void print_rgb_hash (char *s, const gretlRGB *color)
 {
     sprintf(s, "#%02x%02x%02x", color->r, color->g, color->b);
@@ -699,13 +705,19 @@ void print_palette_string (char *s)
 
 const gretlRGB *get_graph_color (int i)
 {
-    return (i >= 0 && i < N_GP_COLORS)? &user_color[i] : NULL;
+    if (i == SHADECOLOR) {
+	return &user_shade_color;
+    } else {
+	return (i >= 0 && i < N_GP_COLORS)? &user_color[i] : NULL;
+    }
 }
 
 void set_graph_palette (int i, gretlRGB color)
 {
     if (i >= 0 && i < N_GP_COLORS) {
 	user_color[i] = color;
+    } else if (i == SHADECOLOR) {
+	user_shade_color = color;
     } else {
 	fprintf(stderr, "Out of bounds color index %d\n", i);
     }
@@ -738,7 +750,7 @@ void set_graph_palette_from_string (int i, const char *s)
 void graph_palette_reset (int i)
 {
     if (i == SHADECOLOR) {
-	user_color[SHADECOLOR] = default_color[SHADECOLOR];
+	user_shade_color = default_shade_color;
     } else if (i == BOXCOLOR) {
 	user_color[BOXCOLOR] = default_color[BOXCOLOR];
     } else {
@@ -825,61 +837,27 @@ void write_plot_line_styles (int ptype, FILE *fp)
     char cstr[8];
     int i;
 
-    if (gnuplot_version() >= 5.0) {
-	if (ptype == PLOT_3D) {
-	    for (i=0; i<2; i++) {
-		print_rgb_hash(cstr, &user_color[i]);
-		fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
-	    }
-	} else if (frequency_plot_code(ptype)) {
-	    print_rgb_hash(cstr, &user_color[BOXCOLOR]);
-	    fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
-	    fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
-	} else if (ptype == PLOT_RQ_TAU) {
-	    fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
-	    for (i=1; i<BOXCOLOR; i++) {
-		print_rgb_hash(cstr, &user_color[i]);
-		fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
-	    }
-	} else {
-	    for (i=0; i<BOXCOLOR; i++) {
-		print_rgb_hash(cstr, &user_color[i]);
-		fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
-	    }
-	    print_rgb_hash(cstr, &user_color[SHADECOLOR]);
-	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", 
-		    SHADECOLOR + 1, cstr);
-	}	
+    if (ptype == PLOT_3D) {
+	for (i=0; i<2; i++) {
+	    print_rgb_hash(cstr, &user_color[i]);
+	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
+	}
+    } else if (frequency_plot_code(ptype)) {
+	print_rgb_hash(cstr, &user_color[BOXCOLOR]);
+	fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
+	fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
+    } else if (ptype == PLOT_RQ_TAU) {
+	fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
+	for (i=1; i<BOXCOLOR; i++) {
+	    print_rgb_hash(cstr, &user_color[i]);
+	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
+	}
     } else {
-	if (ptype == PLOT_3D) {
-	    for (i=0; i<2; i++) {
-		print_rgb_hash(cstr, &user_color[i]);
-		fprintf(fp, "set style line %d lc rgb \"%s\"\n", i+1, cstr);
-	    }
-	} else if (frequency_plot_code(ptype)) {
-	    print_rgb_hash(cstr, &user_color[BOXCOLOR]);
-	    fprintf(fp, "set style line 1 lc rgb \"%s\"\n", cstr);
-	    fputs("set style line 2 lc rgb \"#000000\"\n", fp);
-	} else if (ptype == PLOT_RQ_TAU) {
-	    fputs("set style line 1 lc rgb \"#000000\"\n", fp);
-	    for (i=1; i<BOXCOLOR; i++) {
-		print_rgb_hash(cstr, &user_color[i]);
-		fprintf(fp, "set style line %d lc rgb \"%s\"\n", i+1, cstr);
-	    }
-	} else {
-	    for (i=0; i<BOXCOLOR; i++) {
-		print_rgb_hash(cstr, &user_color[i]);
-		fprintf(fp, "set style line %d lc rgb \"%s\"\n", i+1, cstr);
-	    }
-	    print_rgb_hash(cstr, &user_color[SHADECOLOR]);
-	    fprintf(fp, "set style line %d lc rgb \"%s\"\n", 
-		    SHADECOLOR + 1, cstr);
+	for (i=0; i<BOXCOLOR; i++) {
+	    print_rgb_hash(cstr, &user_color[i]);
+	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
 	}
-
-	if (gnuplot_version() < 5.0) {
-	    fputs("set style increment user\n", fp);
-	}
-    }
+    }	
 }
 
 #ifdef WIN32
@@ -3434,10 +3412,10 @@ int gnuplot (const int *plotlist, const char *literal,
 	    double di = gretl_vector_get(gi.dvals, i);
 	    
 	    if (st != NULL) {
-		fprintf(fp, " '-' using 1:($2) title \"%s (%s=%s)\" w points ", 
+		fprintf(fp, " '-' using 1:($2) title \"%s (%s=%s)\" w points", 
 			s1, s2, series_table_get_string(st, di));
 	    } else {
-		fprintf(fp, " '-' using 1:($2) title \"%s (%s=%g)\" w points ", 
+		fprintf(fp, " '-' using 1:($2) title \"%s (%s=%g)\" w points", 
 			s1, s2, di);
 	    }
 	    if (i < nd - 1) {
@@ -3448,7 +3426,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     } else if (gi.yformula != NULL) {
 	/* we have a formula to plot, not just data */
-	fprintf(fp, " '-' using 1:($2) title \"%s\" w points , \\\n", _("actual"));	
+	fprintf(fp, " '-' using 1:($2) title \"%s\" w points, \\\n", _("actual"));	
 	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, _("fitted"));
     } else if (gi.flags & GPT_FA) {
 	/* this is a fitted vs actual plot */
@@ -3474,7 +3452,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    set_withstr(&gi, i, withstr);
 	    fprintf(fp, " '-' using 1:($2) title \"%s\" %s%s", s1, withstr, lwstr);
 	    if (i < lmax || (gi.flags & GPT_AUTO_FIT)) {
-	        fputs(" , \\\n", fp); 
+	        fputs(", \\\n", fp); 
 	    } else {
 	        fputc('\n', fp);
 	    }
@@ -3550,7 +3528,7 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
     print_x_range_from_list(&gi, dset, gi.list, fp);
 
     fputs("plot \\\n", fp);
-    fputs(" '-' using 1:($2) notitle w points , \\\n", fp);
+    fputs(" '-' using 1:($2) notitle w points, \\\n", fp);
     fprintf(fp, " x title \"%s\" w lines\n", _("actual = predicted"));
 
     print_gp_data(&gi, dset, fp);
@@ -4625,6 +4603,21 @@ static int *get_sorted_fcast_order (const FITRESID *fr,
     return order;
 }
 
+static void print_filledcurve_line (const char *title, FILE *fp)
+{
+    char cstr[8];
+
+    print_rgb_hash(cstr, &user_shade_color);
+    
+    if (title == NULL) {
+	fprintf(fp, "'-' using 1:2:3 notitle lc rgb \"%s\" w filledcurve, \\\n",
+		cstr);
+    } else {
+	fprintf(fp, "'-' using 1:2:3 title '%s' lc rgb \"%s\" w filledcurve, \\\n",
+		title, cstr);
+    }
+}
+
 /* note: if @opt includes OPT_H, that says to show fitted 
    values for the pre-forecast range
 */
@@ -4728,10 +4721,6 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	use_fill = 1;
     }
 
-    if (use_fill) {
-	fprintf(fp, "set style fill solid 0.4\n");
-    }
-
     fputs("set key left top\n", fp);
     fputs("plot \\\n", fp);
 
@@ -4743,28 +4732,27 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	/* plot the confidence bands first so the other lines
 	   come out on top */
 	if (do_errs) {
-	    fprintf(fp, "'-' using 1:2:3 title '%s' w filledcurve lt 3 , \\\n",
-		    cistr);
+	    print_filledcurve_line(cistr, fp);
 	} 
 	if (depvar_present) {
-	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1 , \\\n",
+	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1, \\\n",
 		    fr->depvar);
 	}
 	fprintf(fp, "'-' using 1:2 title '%s' w lines lt 2\n", _("forecast"));
     } else {
 	/* plot confidence bands last */
 	if (depvar_present) {
-	    fprintf(fp, "'-' using 1:2 title '%s' w lines , \\\n",
+	    fprintf(fp, "'-' using 1:2 title '%s' w lines, \\\n",
 		    fr->depvar);
 	}
 	fprintf(fp, "'-' using 1:2 title '%s' w lines", _("forecast"));
 	if (do_errs) {
 	    if (use_lines) {
-		fprintf(fp, " , \\\n'-' using 1:2 title '%s' w lines , \\\n",
+		fprintf(fp, ", \\\n'-' using 1:2 title '%s' w lines, \\\n",
 			cistr);
 		fputs("'-' using 1:2 notitle '%s' w lines lt 3\n", fp);
 	    } else {
-		fprintf(fp, " , \\\n'-' using 1:2:3 title '%s' w errorbars\n",
+		fprintf(fp, ", \\\n'-' using 1:2:3 title '%s' w errorbars\n",
 			cistr);
 	    }
 	} else {
@@ -4963,9 +4951,9 @@ int plot_simple_fcast_bands (const MODEL *pmod,
 	cistr = g_strdup_printf(_("%g percent interval"), a);
     }
 
-    fputs("'-' using 1:2 notitle w points , \\\n", fp);
-    fputs("'-' using 1:2 notitle w lines , \\\n", fp);
-    fprintf(fp, "'-' using 1:2 title '%s' w lines , \\\n", cistr);
+    fputs("'-' using 1:2 notitle w points, \\\n", fp);
+    fputs("'-' using 1:2 notitle w lines, \\\n", fp);
+    fprintf(fp, "'-' using 1:2 title '%s' w lines, \\\n", cistr);
     fputs("'-' using 1:2 notitle '%s' w lines lt 3\n", fp);
     g_free(cistr);
 
@@ -5083,11 +5071,11 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 
     /* plot the rq confidence band first so the other lines
        come out on top */
-    fputs("'-' using 1:2:3 notitle w filledcurve lt 3 , \\\n", fp);
+    print_filledcurve_line(NULL, fp);
 
     /* rq estimates */
     tmp = g_strdup_printf(_("Quantile estimates with %g%% band"), cval);
-    fprintf(fp, "'-' using 1:2 title '%s' w lp lt 1 , \\\n", tmp);
+    fprintf(fp, "'-' using 1:2 title '%s' w lp lt 1, \\\n", tmp);
     g_free(tmp);
 
     /* numeric output coming up! */
@@ -5095,9 +5083,9 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 
     /* ols estimate plus (1 - alpha) band */
     tmp = g_strdup_printf(_("OLS estimate with %g%% band"), cval);
-    fprintf(fp, "%g title '%s' w lines lt 2 , \\\n", pmod->coeff[k], tmp);
+    fprintf(fp, "%g title '%s' w lines lt 2, \\\n", pmod->coeff[k], tmp);
     g_free(tmp);
-    fprintf(fp, "%g notitle w dots lt 2 , \\\n", pmod->coeff[k] + olsband);
+    fprintf(fp, "%g notitle w dots lt 2, \\\n", pmod->coeff[k] + olsband);
     fprintf(fp, "%g notitle w dots lt 2\n", pmod->coeff[k] - olsband);
 
     /* write out the interval values */
@@ -5877,8 +5865,7 @@ static void real_irf_print_plot (const gretl_matrix *resp,
 	fputs("plot \\\n", fp);
 	if (use_fill) {
 	    sprintf(title, _("%g percent confidence band"), 100 * (1 - alpha));
-	    fprintf(fp, "'-' using 1:2:3 title '%s' w filledcurve lt %d, \\\n", 
-		    title, SHADECOLOR + 1);
+	    print_filledcurve_line(title, fp);
 	    if (data_straddle_zero(resp)) {
 		fputs("0 notitle w lines lt 0, \\\n", fp);
 	    }
@@ -6110,8 +6097,7 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 	    fputs("plot \\\n", fp);
 
 	    if (confint && use_fill) {
-		fprintf(fp, "'-' using 1:2:3 notitle w filledcurve lt %d, \\\n", 
-			SHADECOLOR + 1);
+		print_filledcurve_line(NULL, fp);
 		fputs("'-' using 1:2 notitle w lines lt 1\n", fp);
 	    } else if (confint) {
 		fputs("'-' using 1:2 notitle w lines, \\\n", fp); 

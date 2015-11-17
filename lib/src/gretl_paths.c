@@ -3553,16 +3553,35 @@ int slash_terminate (char *path)
 
 static void rc_set_gp_colors (const char *gpcolors)
 {
+    const char *s = gpcolors;
     char cstr[N_GP_COLORS][8];
-    int i, nc;
+    int i, nc = 0;
 
-    *cstr[0] = *cstr[1] = *cstr[2] = *cstr[3] = '\0';
+    for (i=0; i<N_GP_COLORS; i++) {
+	if (sscanf(s, "%7s", cstr[i]) == 1) {
+	    nc++;
+	    s += 7;
+	    if (*s == ' ') {
+		s++;
+	    } else {
+		break;
+	    }
+	} else {
+	    *cstr[i] = '\0';
+	    break;
+	}
+    }
 
-    nc = sscanf(gpcolors, "%7s %7s %7s %7s", 
-		cstr[0], cstr[1], cstr[2], cstr[3]);
-
-    for (i=0; i<nc; i++) {
-	set_graph_palette_from_string(i, cstr[i]);
+    if (nc == 4) {
+	/* old-style */
+	for (i=0; i<3; i++) {
+	    set_graph_palette_from_string(i, cstr[i]);
+	}
+	set_graph_palette_from_string(BOXCOLOR, cstr[3]);
+    } else {
+	for (i=0; i<nc; i++) {
+	    set_graph_palette_from_string(i, cstr[i]);
+	}
     }
 }
 

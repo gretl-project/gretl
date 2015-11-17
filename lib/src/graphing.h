@@ -69,7 +69,7 @@ typedef struct GPT_SPEC_ GPT_SPEC;
 #define MAXTITLE 128
 #define N_GP_COLORS 8
 #define BOXCOLOR (N_GP_COLORS - 2)
-#define SHADECOLOR (N_GP_COLORS - 1)
+#define SHADECOLOR 0x54ade
 
 #define GP_WIDTH      640
 #define GP_HEIGHT     480
