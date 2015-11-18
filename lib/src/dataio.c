@@ -1794,7 +1794,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
     }
 
     if (!err && !addpanel && dset->markers != addset->markers) {
-	if (addset->n != dset->n && !yrspecial) {
+	if (addset->n != dset->n && !yrspecial && !dayspecial) {
 	    merge_error(_("Inconsistency in observation markers\n"), prn);
 	    err = E_DATA;
 	} else if (addset->markers && !dset->markers && !yrspecial) {
