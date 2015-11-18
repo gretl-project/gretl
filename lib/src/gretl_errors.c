@@ -210,6 +210,21 @@ void errmsg (int err, PRN *prn)
     } 
 }
 
+static void print_function_info (PRN *prn)
+{
+    if (gretl_function_depth() > 0) {
+	const char *fname = NULL;
+	const char *pname = NULL;
+
+	current_function_info(&fname, &pname);
+	if (fname != NULL && pname != NULL) {
+	    pprintf(prn, "In regard to function %s (package %s):\n", fname, pname);
+	} else if (fname != NULL) {
+	    pprintf(prn, "In regard to function %s:\n", fname);
+	}
+    }
+}
+
 /**
  * warnmsg:
  * @prn: gretl printing struct.
@@ -231,11 +246,13 @@ void warnmsg (PRN *prn)
     }
 
     if (*gretl_warnmsg != '\0') {
+	print_function_info(prn);
 	pprintf(prn, "%s: %s\n", _("Warning"), gretl_warnmsg);
 	*gretl_warnmsg = '\0';
     } else {
 	const char *s = look_up_warnmsg(gretl_warnnum);
 
+	print_function_info(prn);
 	pprintf(prn, "%s: %s\n", _("Warning"), _(s));
     }
 
@@ -338,6 +355,8 @@ void gretl_warnmsg_set (const char *str)
     *gretl_warnmsg = '\0';
     strncat(gretl_warnmsg, str, ERRLEN - 1);
     gretl_warnnum = W_MAX;
+    fputs(str, stderr);
+    fputc('\n', stderr);
 }
 
 /**
@@ -455,9 +474,13 @@ int gretl_error_clear (void)
     }
     error_printed = 0;
     errno = 0;
+#if 0 /* 2015-11-18: with the following activated, warning
+	 messages will rarely, if ever, get printed? 
+      */    
     gretl_warnnum = 0;
     *gretl_warnmsg = '\0';
-
+#endif
+    
     return 0;
 }
 

@@ -126,6 +126,9 @@ int gretl_compiling_python (const char *line);
 
 int gretl_function_depth (void);
 
+void current_function_info (char const **funcname,
+			    char const **pkgname);
+
 int gretl_start_compiling_function (const char *line, PRN *prn);
 
 int gretl_function_append_line (const char *line);

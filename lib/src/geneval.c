@@ -64,6 +64,10 @@
 */
 #define TRY_SAVE_AUX 1
 
+/* it seems the following may now be redundant,
+   but more checking is needed */
+#define DUP_TERNARY_CHILD 0
+
 #define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
 #define SERIES_ENSURE_FINITE 1  /* debatable */
 
@@ -834,15 +838,19 @@ static NODE *array_pointer_node (parser *p)
     return get_aux_node(p, ARRAY, 0, 0);
 }
 
+static NODE *aux_any_node (parser *p)
+{
+    return get_aux_node(p, 0, 0, 0);
+}
+
+#if DUP_TERNARY_CHILD
+
 static NODE *aux_empty_node (parser *p)
 {
     return get_aux_node(p, EMPTY, 0, 0);
 }
 
-static NODE *aux_any_node (parser *p)
-{
-    return get_aux_node(p, 0, 0, 0);
-}
+#endif
 
 static void eval_warning (parser *p, int op, int errnum)
 {
@@ -6734,10 +6742,17 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	return NULL;
     }
 
+#if 1 /* for now, just warn */
+    if (t == p->tree && (p->flags & P_CATCH)) {
+	gretl_warnmsg_set("catch should not be used on calls to "
+			  "user-defined functions");
+    }
+#else
     if (t == p->tree && (p->flags & P_CATCH)) {
 	p->err = E_BADCATCH;
 	return NULL;
     }
+#endif    
 
     /* evaluate the function argument nodes */
 
@@ -10068,10 +10083,6 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
 
     return ret;
 }
-
-/* it seems the following may now be redundant,
-   but more checking is needed */
-#define DUP_TERNARY_CHILD 0
 
 #if DUP_TERNARY_CHILD
 

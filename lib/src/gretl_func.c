@@ -1040,6 +1040,19 @@ static ufunc *currently_called_function (void)
     return (call != NULL)? call->fun : NULL;
 }
 
+void current_function_info (char const **funcname,
+			    char const **pkgname)
+{
+    ufunc *u = currently_called_function();
+
+    if (u != NULL) {
+	*funcname = u->name;
+	if (u->pkg != NULL) {
+	    *pkgname = u->pkg->name;
+	}
+    }
+}
+
 /* see if a function is currently employed in the call stack */
 
 static int function_in_use (ufunc *fun)
