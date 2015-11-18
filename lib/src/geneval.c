@@ -10071,7 +10071,7 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
 
 /* it seems the following may now be redundant,
    but more checking is needed */
-#define DUP_TERNARY_CHILD 1
+#define DUP_TERNARY_CHILD 0
 
 #if DUP_TERNARY_CHILD
 
@@ -10197,7 +10197,7 @@ static NODE *eval_query (NODE *t, parser *p)
 	/* forestall double-freeing */
 	ret = ternary_return_node(ret, p);
     }
-#endif
+#endif    
     
     return ret;
 }
