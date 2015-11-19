@@ -13,8 +13,13 @@ version 2015e, in progress
   spreadsheet data importation via the GUI
 - Fix for linearize() function: don't fail when tramo finds
   that the input doesn't need linearizing
+- Application of "catch" to user-defined functions: drop back
+  from an error to a warning, for now
+- Appending daily data: don't fail when we have enough date
+  information to succeed
 - Improve handling of EPS plot output (including respecting
   the color/mono choice properly)
+- GUI: some cosmetic fixes specific to gtk 3
 - Remove support for gnuplot < version 4.6.0
 
 2015-10-19 version 2015d

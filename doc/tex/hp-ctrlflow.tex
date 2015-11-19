@@ -73,8 +73,7 @@ one for which the logical condition is satisfied and then jump to
   different from Stata's \texttt{if} option: the latter selects a
   subsample of observations for some action, while the former is used
   to decide if a group of statements should be executed or not;
-  hansl's \cmd{if} is what Stata calls this the ``branching
-  \texttt{if}''.}
+  hansl's \cmd{if} is what Stata calls ``branching \texttt{if}''.}
 
 
 \subsection{The ternary query operator}
@@ -130,8 +129,8 @@ requires that the condition is of ``suitable'' type in light of the
 types of the operands.  So, for example, suppose you have a square
 matrix \texttt{A} and you want to switch the sign of the negative
 elements of \texttt{A} on and above its diagonal. You could use a
-loop\footnote{The \texttt{loop} keyword is explained in detail in the
-  next section.}, and write a piece of code such as
+loop,\footnote{The \texttt{loop} keyword is explained in detail in the
+  next section.} and write a piece of code such as
 \begin{code}
 matrix A = mnormal(4,4)
 matrix B = A
@@ -452,7 +451,49 @@ endif
 %$
 
 Note that the catch keyword cannot be used before \cmd{if}, \cmd{elif}
-or \cmd{endif}. 
+or \cmd{endif}. In addition, it should not be used on calls to
+user-defined functions; it is intended for use only with gretl
+commands and calls to ``built-in'' functions or operators. Suppose
+you're writing a function package which includes some subsidiary
+functionality which may fail under certain conditions, and you want to
+prevent such failure from aborting execution. In that case you should
+use \cmd{catch} \textit{within} the particular function in question,
+and if an error condition is detected, signal this to the caller by
+returning a suitable ``invalid'' value---say, \texttt{NA} (for a
+function that returns a scalar) or an empty matrix. For example:
+
+\begin{code}
+function scalar may_fail (matrix *m)
+  catch scalar x = ... # call to built-in procedure
+  if $error
+    x = NA
+  endif
+  return x
+end function
+
+function scalar caller (...)
+  matrix m = ... # whatever
+  scalar x = may_fail(&m)
+  if na(x)
+    print "Couldn't calculate x"
+  else
+    printf "Calculated x = %g\n", x
+  endif
+end function
+\end{code}
+
+What you should \textit{not} do here is apply catch to
+\cmd{may\_fail()}
+
+\begin{code}
+function scalar caller (...)
+  matrix m = ... # whatever
+  catch scalar x = may_fail(&m) # No, don't do this!
+  ...
+end function
+\end{code}
+
+as this is likely to leave gretl in a confused state.
 
 \section{The \cmd{quit} statement}
 

@@ -1446,8 +1446,11 @@
 	taken if the command failed.
       </para> 
       <para>
-	The <lit>catch</lit> keyword cannot be used before <lit>if</lit>,
-	<lit>elif</lit> or <lit>endif</lit>.
+	The <lit>catch</lit> keyword cannot be used before
+	<lit>if</lit>, <lit>elif</lit> or <lit>endif</lit>. In
+	addition it should not be used on calls to user-defined
+	functions; it is intended for use only with gretl commands and
+	calls to <quote>built-in</quote> functions or operators.
       </para>
     </description>
   </command>
