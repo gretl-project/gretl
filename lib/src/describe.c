@@ -1121,7 +1121,12 @@ int gretl_moments (int t1, int t2, const double *x,
     
     
     /* variance */
-    var = s2 / (wn - k);
+    if (weighted) {
+	/* as per Stata's -summary- with aweights */
+	var = n * s2 / (wn * (n-1));
+    } else {
+	var = s2 / (wn - k);
+    }
 
     if (var < 0.0) {
 	/* in principle impossible, but this is a computer */
@@ -4885,16 +4890,15 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
 	int vi = s->list[i+1];
 	int ni = 0;
         int ntot = 0;
-        double wt, wtot = 0;
+        double wt;
 
-	/* create the weighted series: substitute NAs for values at
-	   which the weights are invalid or zero
+	/* prepare the series for weighting: substitute NAs for values
+	   at which the weights are invalid or zero
 	*/
 	for (t=t1; t<=t2; t++) {
 	    wt = wts[t];
 	    if (!na(wt) && wt != 0.0) {
                 ntot++;
-		wtot += wt;
 		x[t] = dset->Z[vi][t];
 		if (!na(x[t])) {
 		    ni++;
