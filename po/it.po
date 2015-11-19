@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-18 19:50-0500\n"
-"PO-Revision-Date: 2015-10-17 08:57+0200\n"
+"PO-Revision-Date: 2015-11-19 12:22+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -2344,7 +2344,7 @@ msgstr ""
 
 #: lib/src/geneval.c:6747
 msgid "\"catch\" should not be used on calls to user-defined functions"
-msgstr ""
+msgstr "\"catch\" non può essere usato su funzioni definite dall'utente"
 
 #: lib/src/geneval.c:9807
 msgid "array: no type was specified"
@@ -4268,9 +4268,9 @@ msgid "Number of variables does not match declaration"
 msgstr "Il numero delle variabili non corrisponde alla dichiarazione"
 
 #: lib/src/gretl_xml.c:2702
-#, fuzzy, c-format
+#, c-format
 msgid "join: column '%s' was not found"
-msgstr "%s: colonna '%s' non trovata"
+msgstr "join: colonna '%s' non trovata"
 
 #: lib/src/gretl_xml.c:2895
 #, c-format
@@ -6270,9 +6270,9 @@ msgstr ""
 "stimato il modello di riferimento\n"
 
 #: lib/src/options.c:1166 lib/src/options.c:1199
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid option argument"
-msgstr "%s: tipo di argomento non valido %s"
+msgstr "%s: argomento non valido per l'opzione"
 
 #: lib/src/options.c:1205 lib/src/tokenize.c:1055
 #, c-format
@@ -16466,7 +16466,7 @@ msgstr "Sandwich"
 
 #: plugin/addons-i18n.c:25
 msgid "Skewed GED"
-msgstr "GED asimmetrico"
+msgstr "GED asimmetrica"
 
 #: plugin/addons-i18n.c:26
 msgid "Skewed t"
@@ -16482,7 +16482,7 @@ msgstr "GARCH Taylor/Schwert"
 
 #: plugin/addons-i18n.c:30 plugin/addons-i18n.c:89
 msgid "Variance regressors"
-msgstr "Regressori varianza"
+msgstr "Regressori in varianza"
 
 #: plugin/addons-i18n.c:31
 msgid "Verbosity"
@@ -16558,7 +16558,7 @@ msgstr "FEVD"
 
 #: plugin/addons-i18n.c:57
 msgid "Full"
-msgstr ""
+msgstr "Completa"
 
 #: plugin/addons-i18n.c:58
 msgid "Historical decomposition"
@@ -16597,9 +16597,8 @@ msgid "Optimization method"
 msgstr "Matodo di ottimizzazione"
 
 #: plugin/addons-i18n.c:68
-#, fuzzy
 msgid "Partial"
-msgstr "quartile"
+msgstr "Parziale"
 
 #: plugin/addons-i18n.c:70
 msgid "Restriction pattern (long-run C or A)"
