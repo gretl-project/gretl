@@ -498,24 +498,24 @@ char *ntodate_8601 (char *datestr, int t, const DATASET *dset)
 	}
     } else if (dataset_is_decennial(dset)) {
 	double x = dset->sd0 + 10 * t;
+	int yr = lrint(x);
 	
-	sprintf(datestr, "%d-01-01", (int) x);
+	sprintf(datestr, "%d-01-01", yr);
     } else {
 	double x = date_as_double(t, dset->pd, dset->sd0);
+	int maj = lrint(floor(x));
 	
 	if (dset->pd == 1) {
-	    sprintf(datestr, "%d-01-01", (int) x);
-	} else if (dset->pd == 12 || dset->pd == 4) {
-	    int maj = floor(x);
-	    int min = lrint(10 * (x - floor(x)));
+	    sprintf(datestr, "%d-01-01", maj);
+	} else if (dset->pd == 12) {
+	    int min = lrint(100 * (x - floor(x)));
 
-	    if (dset->pd == 12) {
-		sprintf(datestr, "%d-%02d-01", maj, min);
-	    } else if (dset->pd == 4) {
-		int mo = min==2 ? 4 : min==3? 7 : min==4? 10 : min;
-		
-		sprintf(datestr, "%d-%02d-01", maj, mo);
-	    }
+	    sprintf(datestr, "%d-%02d-01", maj, min);
+	} else if (dset->pd == 4) {
+	    int min = lrint(10 * (x - floor(x)));
+	    int mo = min==2 ? 4 : min==3? 7 : min==4? 10 : min;
+
+	    sprintf(datestr, "%d-%02d-01", maj, mo);
 	}
     }
     
