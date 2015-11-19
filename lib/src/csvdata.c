@@ -3648,6 +3648,7 @@ struct obskey_ {
     int keycol;    /* the column holding the outer time-key */
     int m_means_q; /* "monthly means quarterly" */
     int numdates;  /* flag for conversion from numeric to string */
+    int native;    /* native time-series info */
 };
 
 typedef struct obskey_ obskey;
@@ -3829,6 +3830,11 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 	    s = series_get_string_for_obs(jr->r_dset, tcol, i);
 	    s_src = 2;
 	}
+    } else if (jr->auto_keys->native) {
+	/* using native time-series info on right */
+	ntodate_8601(sconv, i, jr->r_dset);
+	s = sconv;
+	s_src = 1;
     } else {
 	/* using first-column observation strings */
 	s = jr->r_dset->S[i];
@@ -5151,7 +5157,9 @@ static int auto_keys_check (const DATASET *l_dset,
 	goto bailout;
     }
 
-    if (r_dset->S == NULL && auto_keys->keycol < 0) {
+    if ((opt & OPT_G) && dataset_is_time_series(r_dset)) {
+	auto_keys->native = 1;
+    } else if (r_dset->S == NULL && auto_keys->keycol < 0) {
 	/* On the right, we need either obs strings or a specified
 	   time column */
 	err = E_DATA;
@@ -5331,6 +5339,7 @@ static void obskey_init (obskey *keys)
     keys->keycol = -1;
     keys->m_means_q = 0;
     keys->numdates = 0;
+    keys->native = 0;
 }
 
 #define lr_mismatch(l,r) ((l > 0 && r == 0) || (r > 0 && l == 0))

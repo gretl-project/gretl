@@ -80,6 +80,8 @@ int merge_dateton (const char *date, const DATASET *dset);
 
 char *ntodate (char *datestr, int t, const DATASET *dset);
 
+char *ntodate_8601 (char *datestr, int t, const DATASET *dset);
+
 int get_subperiod (int t, const DATASET *dset, int *err);
 
 int get_precision (const double *x, int n, int placemax);

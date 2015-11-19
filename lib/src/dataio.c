@@ -440,7 +440,7 @@ char *ntodate (char *datestr, int t, const DATASET *dset)
     double x;
 
 #if 0
-    fprintf(stderr, "real_ntodate: t=%d, pd=%d, sd0=%g\n",
+    fprintf(stderr, "ntodate: t=%d, pd=%d, sd0=%g\n",
 	    t, dset->pd, dset->sd0);
 #endif
 
@@ -479,6 +479,44 @@ char *ntodate (char *datestr, int t, const DATASET *dset)
 	sprintf(fmt, "%%.%df", len);
 	sprintf(datestr, fmt, x);
 	colonize_obs(datestr);
+    }
+    
+    return datestr;
+}
+
+/* print observation date in ISO 8601 extended format */
+
+char *ntodate_8601 (char *datestr, int t, const DATASET *dset)
+{
+    *datestr = '\0';
+
+    if (calendar_data(dset)) {
+	if (dataset_has_markers(dset)) {
+	    strcpy(datestr, dset->S[t]);
+	} else {
+	    calendar_date_string(datestr, t, dset);
+	}
+    } else if (dataset_is_decennial(dset)) {
+	double x = dset->sd0 + 10 * t;
+	
+	sprintf(datestr, "%d-01-01", (int) x);
+    } else {
+	double x = date_as_double(t, dset->pd, dset->sd0);
+	
+	if (dset->pd == 1) {
+	    sprintf(datestr, "%d-01-01", (int) x);
+	} else if (dset->pd == 12 || dset->pd == 4) {
+	    int maj = floor(x);
+	    int min = lrint(10 * (x - floor(x)));
+
+	    if (dset->pd == 12) {
+		sprintf(datestr, "%d-%02d-01", maj, min);
+	    } else if (dset->pd == 4) {
+		int mo = min==2 ? 4 : min==3? 7 : min==4? 10 : min;
+		
+		sprintf(datestr, "%d-%02d-01", maj, mo);
+	    }
+	}
     }
     
     return datestr;
