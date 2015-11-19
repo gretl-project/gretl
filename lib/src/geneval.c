@@ -6744,8 +6744,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
 #if 1 /* for now, just warn */
     if (t == p->tree && (p->flags & P_CATCH)) {
-	gretl_warnmsg_set("catch should not be used on calls to "
-			  "user-defined functions");
+	gretl_warnmsg_set(_("\"catch\" should not be used on calls to "
+			    "user-defined functions"));
     }
 #else
     if (t == p->tree && (p->flags & P_CATCH)) {
