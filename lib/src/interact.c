@@ -1346,6 +1346,10 @@ static int get_join_import_names (const char *s,
     int ns = 0;
     int err = 0;
 
+    if (s == NULL) {
+	return E_PARSE;
+    }
+
     if (strchr(s, ' ') != NULL) {
 	/* @s should hold two or more names */
 	S = gretl_string_split(s, &ns, NULL);
