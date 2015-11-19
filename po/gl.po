@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2015)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-18 19:50-0500\n"
-"PO-Revision-Date: 2015-10-19 12:45+0100\n"
+"PO-Revision-Date: 2015-11-19 12:28+0100\n"
 "Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -2335,7 +2335,7 @@ msgstr ""
 
 #: lib/src/geneval.c:6747
 msgid "\"catch\" should not be used on calls to user-defined functions"
-msgstr ""
+msgstr "\"catch\" non debe usarse para invocar funcións definidas polo usuario"
 
 #: lib/src/geneval.c:9807
 msgid "array: no type was specified"
@@ -4261,9 +4261,9 @@ msgid "Number of variables does not match declaration"
 msgstr "O número de variables non coincide co declarado"
 
 #: lib/src/gretl_xml.c:2702
-#, fuzzy, c-format
+#, c-format
 msgid "join: column '%s' was not found"
-msgstr "%s: non se atopou a columna '%s'"
+msgstr "join: non se atopou a columna '%s'"
 
 #: lib/src/gretl_xml.c:2895
 #, c-format
@@ -6260,9 +6260,9 @@ msgstr ""
 "se usou para estimar o modelo de referencia\n"
 
 #: lib/src/options.c:1166 lib/src/options.c:1199
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid option argument"
-msgstr "%s: tipo de argumento incorrecto %s"
+msgstr "%s: opción de argumento incorrecta"
 
 #: lib/src/options.c:1205 lib/src/tokenize.c:1055
 #, c-format
@@ -16545,7 +16545,7 @@ msgstr "FEVD"
 
 #: plugin/addons-i18n.c:57
 msgid "Full"
-msgstr ""
+msgstr "Completo"
 
 #: plugin/addons-i18n.c:58
 msgid "Historical decomposition"
@@ -16584,9 +16584,8 @@ msgid "Optimization method"
 msgstr "Método de optimización"
 
 #: plugin/addons-i18n.c:68
-#, fuzzy
 msgid "Partial"
-msgstr "cuartiles"
+msgstr "Parcial"
 
 #: plugin/addons-i18n.c:70
 msgid "Restriction pattern (long-run C or A)"
