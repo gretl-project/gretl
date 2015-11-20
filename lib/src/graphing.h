@@ -164,6 +164,8 @@ const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags);
 
 const char *get_gretl_eps_term_line (PlotType ptype, GptFlags flags);
 
+const char *get_gretl_tex_term_line (PlotType ptype, GptFlags flags);
+
 const char *gp_justification_string (int j);
 
 int split_graph_fontspec (const char *s, char *name, int *psz);

@@ -621,6 +621,8 @@ static void get_full_term_string (const GPT_SPEC *spec, char *termstr)
 	strcpy(termstr, "set term fig");
     } else if (spec->termtype == GP_TERM_SVG) {
 	strcpy(termstr, "set term svg noenhanced");
+    } else if (spec->termtype == GP_TERM_TEX) {
+	strcpy(termstr, get_gretl_tex_term_line(spec->code, spec->flags));
     }
 }
 
@@ -725,6 +727,7 @@ static int term_uses_utf8 (int ttype)
 	ttype == GP_TERM_EPS ||
 	ttype == GP_TERM_SVG ||
 	ttype == GP_TERM_EMF ||
+	ttype == GP_TERM_TEX ||
 	ttype == GP_TERM_PLT) {
 	return 1;
     } else {
