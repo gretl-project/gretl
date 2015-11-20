@@ -305,13 +305,14 @@
         Rothenberg and Stock (1996)</cite>.
       </para>
 
-      <subhead context="cli">Panel data</subhead>
+      <subhead context="cli">Dati panel</subhead>
 
       <para context="cli">
 	Quando il comando <lit>adf</lit> è usato con dati panel per calcolare 
 	un test panel di radici unitarie le opzioni applicabili sono leggermente
 	diverse.
-	      </para>
+      </para>
+
       <para context="cli">
 	In primo luogo, mentre nel caso di serie storiche regolari è
 	possibile indicare un elenco di variabili da testare, con dati panel
@@ -338,7 +339,8 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variabile/Test Dickey-Fuller aumentato</menu-path>
+      <menu-path>/Variabile/Test di radice unitaria/Test Dickey-Fuller
+      aumentato</menu-path>
     </gui-access>
 
   </command>
@@ -1430,7 +1432,10 @@
       </para> 
       <para>
 	<lit>catch</lit> non può essere usato prima di <lit>if</lit>,
-	<lit>elif</lit> o <lit>endif</lit>.
+	<lit>elif</lit> o <lit>endif</lit>. Inoltre, non può essere
+	neanche usato per chiamate a funzioni definite dall'utente; il
+	suo uso è limitato ai comandi di gretl e alle chiamate a
+	funzioni od operatori <quote>nativi</quote>.
       </para>
     </description>
   </command>
@@ -5890,19 +5895,21 @@
       </para>
 
       <para context="cli">
-	For use of this command with panel data please see the final
-	section in this entry.
+	Si veda il paragrafo in fondo per l'uso di questo test su dati
+	panel.
       </para>
 
       <para context="cli">
-	Calcola il test KPSS (Kwiatkowski, Phillips, Schmidt e Shin,
-	1992) per la stazionarietà di ognuna delle variabili
-	specificate (o della loro differenza prima, se si usa
-	l'opzione <lit>--difference</lit>. L'ipotesi nulla è che la
-	variabile in questione sia stazionaria, attorno a un valore
-	fisso o, se è stata usata l'opzione <lit>--trend</lit>,
-	attorno a un trend deterministico lineare.
+	Calcola il test KPSS <cite key="KPSS92" p="true">(Kwiatkowski
+	et al, Journal of Econometrics, 1992)</cite> per la
+	stazionarietà di ognuna delle variabili specificate (o della
+	loro differenza prima, se si usa l'opzione
+	<lit>--difference</lit>. L'ipotesi nulla è che la variabile in
+	questione sia stazionaria, attorno a un valore fisso o, se è
+	stata usata l'opzione <lit>--trend</lit>, attorno a un trend
+	deterministico lineare.
       </para>
+
       <para context="gui">
 	L'argomento ordine determina la dimensione della finestra usata per
         il livellamento di Bartlett.  Se si usa l'opzione <lit>Mostra i risultati
@@ -5910,6 +5917,7 @@
         regressione ausiliaria, insieme alla varianza stimata della componente
         random walk della variabile.
       </para>
+
       <para context="cli">
 	L'argomento ordine determina la dimensione della finestra usata per
         il livellamento di Bartlett.  Se si usa l'opzione <lit>--verbose</lit>,
@@ -5918,49 +5926,59 @@
       </para>
 
       <para>
-	Il valori critici riportati per questa statistica test sono basati
-	sulle superfici di risposta	stimati da <cite key="sephton95">Sephton
-	(Economics Letters, 1995)</cite>, che per piccoli campioni sono più accurati 
-	di quelli forniti nell'articolo originale di KPSS. Quando la statistica test
-	si trova fra i valori critici al 10 e all'1 per cento viene mostrato un 
-	p-value ottenuto per interpolazione lineare, che non dovrebbe essere 
-	accettato in maniera acritica.
+	Il valori critici riportati per questa statistica test sono
+	basati sulle superfici di risposta stimati da <cite
+	key="sephton95">Sephton (Economics Letters, 1995)</cite>, che
+	per piccoli campioni sono più accurati di quelli forniti
+	nell'articolo originale di KPSS. Quando la statistica test si
+	trova fra i valori critici al 10 e all'1 per cento viene
+	mostrato un p-value ottenuto per interpolazione lineare, che
+	non dovrebbe essere accettato in maniera acritica.
       </para>
 
-      <subhead context="cli">Panel data</subhead>
+      <subhead context="cli">Dati panel</subhead>
 
       <para context="cli">
-	Quando il comando <lit>kpss</lit> viene usato con dati panel per calcolare 
-	un test panel di radice unitaria, le opzioni applicabili e i risultati
-	mostrati sono leggermente diversi. Mentre nel caso di serie storiche regolari
-	potete fornire una lista di variabili da testare, con dati panel il comando
-	può testare solo una variabile alla volta. L'opzione <opt>--verbose</opt>,
-	inoltre, ha un isgnificato diverso: produce un breve resoconto del test
-	per ciascuna singola serie storica (di default viene mostrato solo il
-	risultato complessivo).
+	Quando il comando <lit>kpss</lit> viene usato con dati panel
+	per calcolare un test panel di radice unitaria, le opzioni
+	applicabili e i risultati mostrati sono leggermente
+	diversi. Mentre nel caso di serie storiche regolari potete
+	fornire una lista di variabili da testare, con dati panel il
+	comando può testare solo una variabile alla volta. L'opzione
+	<opt>--verbose</opt>, inoltre, ha un isgnificato diverso:
+	produce un breve resoconto del test per ciascuna singola serie
+	storica (di default viene mostrato solo il risultato
+	complessivo).
       </para>
+
       <para context="cli">
-	Se possibile viene calcolato il test complessivo (ipotesi nulla: la ariabile in 
-	questione è stazionaria per tutte le unità panel) usando il metodo di 
-	<cite key="choi01">Choi (Journal of International Money and Finance, 
-	2001)</cite>. Questo calcolo non è sempre immediato perchè mentre il test di Choi
-	è basato sui p-valu dei test sulle singole serie, attualmente non esiste un modo
-	per calcolare i p-value della statistica test KPSS; dobbiamo perciò basarci
-	su qualche valore critico.
+	Se possibile, viene calcolato il test complessivo (ipotesi
+	nulla: la ariabile in questione è stazionaria per tutte le
+	unità panel) usando il metodo di <cite key="choi01">Choi
+	(Journal of International Money and Finance,
+	2001)</cite>. Questo calcolo non è sempre immediato perchè
+	mentre il test di Choi è basato sui p-valu dei test sulle
+	singole serie, attualmente non esiste un modo per calcolare i
+	p-value della statistica test KPSS; dobbiamo perciò basarci su
+	qualche valore critico.
       </para>
+
       <para context="cli">
-	Se per una data variabile la statistica test cade fra i valori critici al 10 e all'1
-	per cento siamo in grado di interpolare un p-value. Ma se il test cade a sinistra
-	del valore critico al 10 per cento, o supera quello all'1 per cento, non riusciamo 
-	a interpolare e tutto ciò che possiamo ottenere è un limite superiore al test
-	globale di Choi. Se le singole statistiche test si trovano a sinistra del valore
-	critico al 10 per cento per alcune unità ma superano quello all'1 per cento per altre 
-	non è possibile neppure il calcolo del limite superiore del test globale.
+	Se per una data variabile la statistica test cade fra i valori
+	critici al 10 e all'1 per cento siamo in grado di interpolare
+	un p-value. Ma se il test cade a sinistra del valore critico
+	al 10 per cento, o supera quello all'1 per cento, non
+	riusciamo a interpolare e tutto ciò che possiamo ottenere è un
+	limite superiore al test globale di Choi. Se le singole
+	statistiche test si trovano a sinistra del valore critico al
+	10 per cento per alcune unità ma superano quello all'1 per
+	cento per altre non è possibile neppure il calcolo del limite
+	superiore del test globale.
      </para>
     </description>
 
     <gui-access>
-      <menu-path>/Variabile/Test KPSS</menu-path>
+      <menu-path>/Variabile/Test di radice unitaria/Test KPSS</menu-path>
     </gui-access>
 
   </command>
