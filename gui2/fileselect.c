@@ -227,44 +227,12 @@ static void script_window_update (windata_t *vwin, const char *fname)
 
     g_free(trfname);
 
-    if (vwin->role == VIEW_SCRIPT ||
-	vwin->role == VIEW_PKG_CODE ||
-	vwin->role == VIEW_PKG_SAMPLE) {
-	/* change role of window for editing */
-	vwin->role = EDIT_SCRIPT;
-    } else if (vwin->role == EDIT_GP) {
+    if (vwin->role == EDIT_GP) {
 	/* plot file no longer under session control */
 	vwin->flags &= ~VWIN_SESSION_GRAPH;
     }
 
     mark_vwin_content_saved(vwin);
-
-    /* make the window editable */
-    if (!gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->text))) {
-	viewer_set_editable(vwin);
-    }
-}
-
-static void log_view_save_as (const char *fname, windata_t *vwin)
-{
-    char basename[128];
-    gchar *msg;
-    int resp;
-
-    gretl_basename(basename, fname, 0);
-    msg = g_strdup_printf("Open %s in the script editor?", basename);
-
-    resp = yes_no_dialog(NULL, msg, vwin_toplevel(vwin));
-    g_free(msg);
-
-    if (resp == GRETL_YES) {
-	strcpy(tryfile, fname);
-	if (view_script(tryfile, 1, EDIT_SCRIPT) != NULL) {
-	    strcpy(scriptfile, tryfile);
-	    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
-	    gretl_set_current_dir(scriptfile);
-	}
-    }
 }
 
 gchar *pre_trim_buffer (gchar *s)
@@ -306,25 +274,14 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	return;
     }
 
-    if (vwin->role == VIEW_LOG) {
-	gchar *lbuf = pre_trim_buffer(buf);
-
-	system_print_buf(lbuf, fp);
-    } else {
-	system_print_buf(buf, fp);
-    }
-
+    system_print_buf(buf, fp);
     g_free(buf);
     fclose(fp);
 
     if (action == SAVE_SCRIPT) {
-	if (vwin->role == VIEW_LOG) {
-	    log_view_save_as(fname, vwin);
-	} else {
-	    strcpy(scriptfile, fname);
-	    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
-	    script_window_update(vwin, fname);
-	}
+	strcpy(scriptfile, fname);
+	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
+	script_window_update(vwin, fname);
     } else if (action == SAVE_GP_CMDS || 
 	       action == SAVE_R_CMDS ||
 	       action == SAVE_OX_CMDS ||

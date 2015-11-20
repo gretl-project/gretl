@@ -111,8 +111,7 @@ enum {
     CLOSE_ITEM,
     BUNDLE_ITEM,
     FIND_ITEM,
-    CLEAR_ITEM,
-    LOG_COPY_ITEM,
+    COPY_SCRIPT_ITEM,
     BUILD_ITEM
 } viewbar_flags;
 
@@ -177,26 +176,32 @@ void gretl_stock_icons_init (void)
 
 /* callbacks for viewer window toolbar */
 
-static void copy_log_callback (GtkWidget *w, windata_t *vwin)
+static void copy_to_editor (GtkWidget *w, windata_t *vwin)
 {
     gchar *buf = textview_get_text(vwin->text);
-    gchar *s = buf;
-    int n = 0;
 
-    while (s != NULL && n < 3) {
-	s = strchr(s, '\n');
-	if (s != NULL) {
-	    s++;
-	    n++;
+    if (vwin->role == VIEW_LOG) {
+	/* allow for the possibility that the buffer is empty */
+	gchar *s = buf;
+	int n = 0;
+
+	while (s != NULL && n < 3) {
+	    s = strchr(s, '\n');
+	    if (s != NULL) {
+		s++;
+		n++;
+	    }
 	}
-    }
 
-    if (s != NULL) {
-	gchar *modbuf;
+	if (s != NULL) {
+	    gchar *modbuf;
 
-	modbuf = g_strdup_printf("# logged commands\n%s", s);
-	do_new_script(EDIT_SCRIPT, modbuf);
-	g_free(modbuf);
+	    modbuf = g_strdup_printf("# logged commands\n%s", s);
+	    do_new_script(EDIT_SCRIPT, modbuf);
+	    g_free(modbuf);
+	} else {
+	    do_new_script(EDIT_SCRIPT, buf);
+	}
     } else {
 	do_new_script(EDIT_SCRIPT, buf);
     }
@@ -226,11 +231,7 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 	} else {
 	    u = SAVE_OUTPUT;
 	}
-    } else if (vwin->role == EDIT_SCRIPT ||
-	       vwin->role == VIEW_SCRIPT ||
-	       vwin->role == VIEW_PKG_SAMPLE ||
-	       vwin->role == VIEW_LOG ||
-	       vwin->role == VIEW_PKG_CODE) {
+    } else if (vwin->role == EDIT_SCRIPT) {
 	u = SAVE_SCRIPT;
     } else if (vwin->role == EDIT_GP) {
 	u = SAVE_GP_CMDS;
@@ -316,11 +317,6 @@ static void open_pkg_sample (GtkWidget *w, windata_t *vwin)
 static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
 {
     do_new_script(vwin->role, NULL);
-}
-
-static void clear_text_callback (GtkWidget *w, windata_t *vwin)
-{
-    textview_set_text(vwin->text, "");
 }
 
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
@@ -720,8 +716,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
     { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(vwin_save_callback), SAVE_ITEM },
     { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(save_as_callback), SAVE_AS_ITEM },
-    { N_("Open in script editor"), GTK_STOCK_EDIT, G_CALLBACK(copy_log_callback), LOG_COPY_ITEM },
-    { N_("Clear"), GTK_STOCK_CLEAR, G_CALLBACK(clear_text_callback), CLEAR_ITEM },
+    { N_("Open in script editor"), GTK_STOCK_EDIT, G_CALLBACK(copy_to_editor), COPY_SCRIPT_ITEM },
     { N_("Save bundle content..."), GRETL_STOCK_BUNDLE, NULL, BUNDLE_ITEM },
     { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
     { N_("Show/hide"), GRETL_STOCK_PIN, G_CALLBACK(session_notes_callback), NOTES_ITEM },
@@ -730,7 +725,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Cut"), GTK_STOCK_CUT, G_CALLBACK(vwin_cut_callback), EDIT_ITEM }, 
     { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(vwin_copy_callback), COPY_ITEM }, 
     { N_("Paste"), GTK_STOCK_PASTE, G_CALLBACK(text_paste), EDIT_ITEM },
-    { N_("Find..."), GTK_STOCK_FIND, G_CALLBACK(text_find), FIND_ITEM }, /* EDIT_ITEM? */
+    { N_("Find..."), GTK_STOCK_FIND, G_CALLBACK(text_find), FIND_ITEM },
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, G_CALLBACK(text_replace), EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, G_CALLBACK(text_undo), EDIT_ITEM },
     { N_("Redo"), GTK_STOCK_REDO, G_CALLBACK(text_redo), EDIT_ITEM },
@@ -793,8 +788,14 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 	                r == EDIT_PKG_CODE || \
                         r == EDIT_PKG_SAMPLE || \
 			r == VIEW_PKG_SAMPLE || \
+			r == VIEW_PKG_CODE || \
 			r == VIEW_SCRIPT || \
 			r == VIEW_LOG)
+
+#define copy_script_ok(r) (r == VIEW_PKG_SAMPLE || \
+			   r == VIEW_PKG_CODE || \
+			   r == VIEW_SCRIPT || \
+			   r == VIEW_LOG)
 
 #define sort_ok(r) (r == VIEW_SERIES)
 
@@ -807,11 +808,10 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 			r == LOESS || r == NADARWAT)
 
 #define split_h_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT || \
-		       r == VIEW_LOG || vwin_editing_script(r))
+		       r == VIEW_LOG || r == VIEW_PKG_CODE || \
+		       vwin_editing_script(r))
 
 #define split_v_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT)
-
-#define clear_ok(r) (r == VIEW_LOG)
 
 /* Screen out unwanted menu items depending on the context; also
    adjust the callbacks associated with some items based on
@@ -837,17 +837,21 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     }
 
+    if (copy_script_ok(r)) {
+	if (f == FIND_ITEM || f == SAVE_AS_ITEM) {
+	    return NULL;
+	}
+    } else if (f == COPY_SCRIPT_ITEM) {
+	return NULL;
+    }
+
     if (r == EDIT_PKG_SAMPLE && f == OPEN_ITEM) {
 	return G_CALLBACK(open_pkg_sample);
-    } else if (r != VIEW_LOG && f == LOG_COPY_ITEM) {
-	return NULL;
     } else if (!edit_ok(r) && f == EDIT_ITEM) {
 	return NULL;
     } else if (!open_ok(r) && f == OPEN_ITEM) {
 	return NULL;
     } else if (!new_ok(r) && f == NEW_ITEM) {
-	return NULL;
-    } else if (!clear_ok(r) && f == CLEAR_ITEM) {
 	return NULL;
     } else if (!exec_ok(r) && f == EXEC_ITEM) {
 	return NULL;
@@ -1087,11 +1091,6 @@ static GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 	}
     }
 
-#if 0
-    /* separate the buttons a tad more? */
-    gtk_widget_set_size_request(GTK_WIDGET(item), 30, -1);
-#endif
-    
     gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, pos);
 
     return GTK_WIDGET(item);
@@ -1176,32 +1175,7 @@ void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
 
     vwin->mbar = gretl_toolbar_new(NULL);
     viewbar_add_items(vwin, flags);
-
     vwin_pack_toolbar(vwin);
-
-#if 0 /* not yet */    
-    if (!edit_ok(vwin->role)) {
-	vwin_add_finder(vwin);
-    }
-#endif    
-}
-
-static void remove_child (GtkWidget *child, GtkWidget *cont)
-{
-    gtk_container_remove(GTK_CONTAINER(cont), child);
-}
-
-void viewbar_add_edit_items (windata_t *vwin)
-{
-    gtk_container_foreach(GTK_CONTAINER(vwin->mbar),
-			  (GtkCallback) remove_child, vwin->mbar);
-    viewbar_add_items(vwin, VIEWBAR_EDITABLE);
-    gtk_widget_show_all(vwin->mbar);
-
-    if (vwin->role == EDIT_SCRIPT && use_tabbed_editor() && 
-	!window_is_tab(vwin)) {
-	script_editor_show_new_open(vwin, FALSE);
-    }
 }
 
 GtkWidget *build_text_popup (windata_t *vwin)

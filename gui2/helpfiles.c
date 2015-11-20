@@ -901,7 +901,7 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 
     if (g_object_get_data(G_OBJECT(entry), "search-all")) {
 	search_all = TRUE;
-    } 
+    }
 
     if (vwin->text != NULL) {
 	found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, 
@@ -980,7 +980,6 @@ void vwin_add_finder (windata_t *vwin)
     GtkWidget *hbox;
 
     hbox = gtk_widget_get_parent(vwin->mbar);
-
     vwin->finder = entry = gtk_entry_new();
 
     if (vwin->role == FUNCS_HELP || vwin->role == CLI_HELP) {
@@ -1003,7 +1002,7 @@ void vwin_add_finder (windata_t *vwin)
 #else
     label = gtk_label_new(_("Find:"));
     gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-#endif  
+#endif
 
     g_signal_connect(G_OBJECT(entry), "key-press-event",
 		     G_CALLBACK(finder_key_handler), vwin);

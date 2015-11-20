@@ -718,15 +718,16 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	}
     }
 
-    if (editing) {
+    if (editing || (vwin->finder != NULL && gtk_widget_has_focus(vwin->finder))) {
 	/* we set up "special" responses to some plain keystrokes 
-	   below: this won't do if we're in editing mode 
+	   below: this won't do if we're in editing/typing mode 
 	*/
 	return FALSE;
     }
 
     if (!event->state && vwin->finder != NULL && GTK_IS_ENTRY(vwin->finder)) {
 	if (jump_to_finder(event->keyval, vwin)) {
+	    /* FIXME is this really wanted? */
 	    return TRUE;
 	}
     }
@@ -2390,17 +2391,6 @@ windata_t *view_formatted_text_buffer (const gchar *title,
     }
 
     return vwin;
-}
-
-void viewer_set_editable (windata_t *vwin)
-{
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->text), TRUE);
-    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->text), TRUE);
-    g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
-		     G_CALLBACK(query_save_text), vwin);
-    vwin->role = EDIT_SCRIPT;
-    viewbar_add_edit_items(vwin);
-    attach_content_changed_signal(vwin);
 }
 
 /* Called on destroying an editing window: give the user a chance

@@ -128,8 +128,6 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 
 void set_model_save_state (windata_t *vwin, gboolean s);
 
-void viewer_set_editable (windata_t *vwin);
-
 int gui_validate_varname_strict (const char *name, GretlType type,
 				 GtkWidget *parent);
 
