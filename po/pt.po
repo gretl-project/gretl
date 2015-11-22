@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-18 19:50-0500\n"
-"PO-Revision-Date: 2015-10-18 19:24+0100\n"
+"PO-Revision-Date: 2015-11-22 19:19+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -2339,6 +2339,8 @@ msgstr ""
 #: lib/src/geneval.c:6747
 msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
+"\"catch\" não deve ser utilizada em chamadas a funções definidas pelo "
+"utilizador"
 
 #: lib/src/geneval.c:9807
 msgid "array: no type was specified"
@@ -4264,9 +4266,9 @@ msgid "Number of variables does not match declaration"
 msgstr "O número de variáveis não corresponde à declaração"
 
 #: lib/src/gretl_xml.c:2702
-#, fuzzy, c-format
+#, c-format
 msgid "join: column '%s' was not found"
-msgstr "%s: a coluna '%s' não foi encontrada"
+msgstr "join: a coluna '%s' não foi encontrada"
 
 #: lib/src/gretl_xml.c:2895
 #, c-format
@@ -6262,9 +6264,9 @@ msgstr ""
 "a partir do qual o modelo de referência foi estimado\n"
 
 #: lib/src/options.c:1166 lib/src/options.c:1199
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid option argument"
-msgstr "%s: tipo de argumento inválido %s"
+msgstr "%s: opção inválida"
 
 #: lib/src/options.c:1205 lib/src/tokenize.c:1055
 #, c-format
@@ -7658,7 +7660,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 18 de outubro de 2015."
+"Tradução de 22 de novembro de 2015."
 
 #: gui2/about.c:203
 msgid "News"
@@ -16537,7 +16539,7 @@ msgstr "FEVD"
 
 #: plugin/addons-i18n.c:57
 msgid "Full"
-msgstr ""
+msgstr "Completo"
 
 #: plugin/addons-i18n.c:58
 msgid "Historical decomposition"
@@ -16576,9 +16578,8 @@ msgid "Optimization method"
 msgstr "Método de otimização"
 
 #: plugin/addons-i18n.c:68
-#, fuzzy
 msgid "Partial"
-msgstr "quartis"
+msgstr "Parcial"
 
 #: plugin/addons-i18n.c:70
 msgid "Restriction pattern (long-run C or A)"
