@@ -127,7 +127,7 @@ function list SVAR_hd(bundle *Mod, scalar nv)
 	
 	matrix m = (mreg ~ Mod.X) * Mod.mu'
     endif
-	
+
     matrix E = Mod.E 
     matrix VARpar = Mod.VARpar
     if (type == 1) || (type == 2) || (type == 4)
@@ -142,7 +142,12 @@ function list SVAR_hd(bundle *Mod, scalar nv)
     string yn = Ynames[nv]
 
     smpl t1 t2
-    Xdet = varsimul(VARpar, m[p+1:,], Mod.Y[1:p,])
+    if cols(m)>0
+	Xdet = varsimul(VARpar, m[p+1:,], Mod.Y[1:p,])
+    else
+	Xdet = varsimul(VARpar, zeros(Mod.T-p,n), Mod.Y[1:p,])
+    endif
+
     # printf "nobs = %d, rows(Xdet) = %d\n", $nobs, rows(Xdet)
 
     ret += genseries( sprintf("hd_%s_det", yn), Xdet[,nv])
