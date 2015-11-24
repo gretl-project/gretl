@@ -632,7 +632,28 @@ static int gnuplot_has_qt (void)
     return !err;
 }
 
-#endif /* !WIN32 */
+static int gnuplot_has_tikz (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set term tikz");
+    }
+
+    return !err;
+}
+
+#else
+
+static int gnuplot_has_tikz (void)
+{
+    /* There's no Lua/TikZ support in the current
+       Windows build of gnuplot 5 
+    */
+    return 0;
+}
+
+#endif /* !WIN32 or WIN32 */
 
 /* apparatus for handling plot colors */
 
@@ -982,6 +1003,29 @@ const char *get_gretl_eps_term_line (PlotType ptype, GptFlags flags)
     return eps_term_line;
 }
 
+const char *get_gretl_tex_term_line (PlotType ptype, GptFlags flags)
+{
+    static char tex_term_line[128];
+
+    /* FIXME */
+
+    if (gnuplot_has_tikz()) {
+	if (flags & GPT_MONO) {
+	    strcpy(tex_term_line, "set term tikz mono");
+	} else {
+	    strcpy(tex_term_line, "set term tikz");
+	}
+    } else {
+	if (flags & GPT_MONO) {
+	    strcpy(tex_term_line, "set term cairolatex mono");
+	} else {
+	    strcpy(tex_term_line, "set term cairolatex");
+	}
+    }
+
+    return tex_term_line;
+}
+
 void plot_get_scaled_dimensions (int *width, int *height, double scale)
 {
     *width *= scale;
@@ -1203,6 +1247,8 @@ static void print_term_string (int ttype, PlotType ptype,
 	tstr = "set term fig noenhanced";
     } else if (ttype == GP_TERM_SVG) {
 	tstr = "set term svg noenhanced";
+    } else if (ttype == GP_TERM_TEX) {
+	tstr = get_gretl_tex_term_line(ptype, flags);
     }
 
     if (tstr != NULL) {
@@ -1235,6 +1281,8 @@ static int set_term_type_from_fname (const char *fname)
 	this_term_type = GP_TERM_EMF;
     } else if (has_suffix(fname, ".svg")) {
 	this_term_type = GP_TERM_SVG;
+    } else if (has_suffix(fname, ".tex")) {
+	this_term_type = GP_TERM_TEX;
     }
 
     return this_term_type;
