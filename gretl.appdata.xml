@@ -21,4 +21,7 @@
   <screenshot type="default">http://gretl.sourceforge.net/images/gretl_screen.png</screenshot>
  </screenshots>
  <updatecontact>gretl-devel@lists.wfu.edu</updatecontact>
+ <kudos>
+  <kudo>ModernToolkit</kudo>
+ </kudos>
 </application>
