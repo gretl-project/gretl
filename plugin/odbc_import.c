@@ -219,7 +219,7 @@ int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 		    char **grabstr, double *xt, 
 		    SQLINTEGER *nrows, int *obsgot)
 {
-    char obsbit[16];
+    char obsbit[OBSLEN];
     long ret;
     int i, j, k, p, v;
     int t = 0, err = 0;
