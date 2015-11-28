@@ -1862,7 +1862,7 @@ static void ODBC_info_clear_read (void)
     gretl_odinfo.nvars = 0;
 }
 
-static void ODBC_info_clear_all (void)
+static void gretl_odbc_cleanup (void)
 {
     free(gretl_odinfo.dsn);
     gretl_odinfo.dsn = NULL;
@@ -1885,7 +1885,7 @@ int set_odbc_dsn (const char *line, PRN *prn)
     int got_plugin = 0;
     int err = 0;
 
-    ODBC_info_clear_all();
+    gretl_odbc_cleanup();
 
     dbname = get_dsn_field("dsn", line);
     if (dbname == NULL) {
@@ -1918,7 +1918,7 @@ int set_odbc_dsn (const char *line, PRN *prn)
 	    pprintf(prn, "Failed to connect to ODBC data source '%s'\n", 
 		    gretl_odinfo.dsn);
 	} 
-	ODBC_info_clear_all();
+	gretl_odbc_cleanup();
     } else if (gretl_messages_on()) {
 	pprintf(prn, "Connected to ODBC data source '%s'\n", 
 		gretl_odinfo.dsn);

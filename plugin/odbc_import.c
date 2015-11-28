@@ -122,7 +122,7 @@ static int expand_catchment (ODBC_info *odinfo, SQLINTEGER *nrows)
     return err;
 }
 
-/* Try connecting to data source.  If penv is NULL we're just checking
+/* Try connecting to data source.  If @penv is NULL we're just checking
    that it can be opened OK, otherwise we return a connection.
 */
 
@@ -189,14 +189,14 @@ gretl_odbc_connect_to_dsn (ODBC_info *odinfo, SQLHENV *penv,
     if (*err || penv == NULL) {
 	/* either we bombed out, or we're just checking and the handles
 	   are not really wanted */
-	if (OD_env != NULL) {
-	    SQLFreeHandle(SQL_HANDLE_ENV, OD_env);
-	}
 	if (dbc != NULL) {
 	    SQLDisconnect(dbc);
 	    SQLFreeHandle(SQL_HANDLE_ENV, dbc);
 	    dbc = NULL;
-	} 
+	} 	
+	if (OD_env != NULL) {
+	    SQLFreeHandle(SQL_HANDLE_ENV, OD_env);
+	}
     } else {
 	*penv = OD_env;
     }
@@ -214,7 +214,7 @@ int gretl_odbc_check_dsn (ODBC_info *odinfo)
 }
 
 int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
-		    int totcols, SQLINTEGER *colbytes, 
+		    int totcols, SQLLEN *colbytes, 
 		    long *grabint, double *grabx, 
 		    char **grabstr, double *xt, 
 		    SQLINTEGER *nrows, int *obsgot)
@@ -328,7 +328,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     SQLINTEGER OD_err, nrows;
     SQLSMALLINT mlen, ncols;
     double *xt = NULL;
-    SQLINTEGER *colbytes = NULL;
+    SQLLEN *colbytes = NULL;
     long grabint[ODBC_OBSCOLS];
     double grabx[ODBC_OBSCOLS];
     char **grabstr = NULL;
@@ -390,21 +390,21 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	    /* auxiliary obs columns */
 	    if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
 		SQLBindCol(stmt, i+1, SQL_C_LONG, &grabint[j++], 0, 
-			   (SQLLEN *) &colbytes[i]);
+			   &colbytes[i]);
 	    } else if (odinfo->coltypes[i] == GRETL_TYPE_STRING) {
 		SQLBindCol(stmt, i+1, SQL_C_CHAR, grabstr[k++], ODBC_STRSZ, 
-			   (SQLLEN *) &colbytes[i]);
+			   &colbytes[i]);
 	    } else if (odinfo->coltypes[i] == GRETL_TYPE_DATE) {
 		SQLBindCol(stmt, i+1, SQL_C_TYPE_DATE, grabstr[k++], 10, 
-			   (SQLLEN *) &colbytes[i]);
+			   &colbytes[i]);
 	    } else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
 		SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &grabx[p++], sizeof(double), 
-			   (SQLLEN *) &colbytes[i]);
+			   &colbytes[i]);
 	    }
 	} else {
 	    /* data columns */
 	    SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &xt[v++], sizeof(double), 
-		       (SQLLEN *) &colbytes[i]);
+		       &colbytes[i]);
 	}
     }
 
@@ -426,7 +426,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	goto bailout;
     }
 
-    printf("Number of Columns = %d\n", (int) ncols);
+    fprintf(stderr, "Number of Columns = %d\n", (int) ncols);
 
     if (ncols != totcols) {
 	gretl_errmsg_sprintf("ODBC: expected %d columns but got %d",
@@ -448,7 +448,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
        (e.g. Microsoft but maybe also others).
     */
 
-    printf("Number of Rows (from SQLRowCount) = %d\n", (int) nrows);
+    fprintf(stderr, "Number of Rows (from SQLRowCount) = %d\n", (int) nrows);
 
     if (ncols <= 0) {
 	gretl_errmsg_set("Didn't get any data");
@@ -503,12 +503,16 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     strings_array_free(grabstr, nstrs);
 
     if (stmt != NULL) {
-	SQLFreeHandle(SQL_HANDLE_STMT, stmt);
+	ret = SQLFreeHandle(SQL_HANDLE_STMT, stmt);
+	fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_STMT): %d\n", (int) ret);
     }
 
-    SQLDisconnect(dbc);
-    SQLFreeHandle(SQL_HANDLE_DBC, dbc);
-    SQLFreeHandle(SQL_HANDLE_ENV, OD_env);
+    ret = SQLDisconnect(dbc);
+    fprintf(stderr, "SQLDisconnect: %d\n", (int) ret);
+    ret = SQLFreeHandle(SQL_HANDLE_DBC, dbc);
+    fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_DBC): %d\n", (int) ret);
+    ret = SQLFreeHandle(SQL_HANDLE_ENV, OD_env);
+    fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_ENV): %d\n", (int) ret);
 
     return err;
 }
