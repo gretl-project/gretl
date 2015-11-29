@@ -228,7 +228,7 @@ int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 
     while (ret == SQL_SUCCESS && !err) {
 	j = k = p = v = 0;
-	fprintf(stderr, "SQLFetch, row %d:\n", t);
+	fprintf(stderr, "SQLFetch, row %d bytes: ", t);
 
 	for (i=0; i<totcols; i++) {
 	    if (i < odinfo->obscols) {
@@ -269,7 +269,10 @@ int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 		}
 		v++;
 	    }
+	    fprintf(stderr, "%d ", (int) colbytes[i]);
 	}
+
+	fputc('\n', stderr);
 
 	t++;
 
@@ -315,6 +318,51 @@ static char **allocate_string_grabbers (ODBC_info *odinfo,
     }
 
     return G;
+}
+
+static const char *sql_datatype_name (SQLSMALLINT dt)
+{
+    switch (dt) {
+    case SQL_UNKNOWN_TYPE:     return "SQL_UNKNOWN_TYPE";
+    case SQL_CHAR:             return "SQL_CHAR";
+    case SQL_NUMERIC:          return "SQL_NUMERIC";
+    case SQL_DECIMAL:          return "SQL_DECIMAL";
+    case SQL_INTEGER:          return "SQL_INTEGER";
+    case SQL_SMALLINT:         return "SQL_SMALLINT";
+    case SQL_FLOAT:            return "SQL_FLOAT";	
+    case SQL_REAL:             return "SQL_REAL";
+    case SQL_DOUBLE:           return "SQL_DOUBLE";
+    case SQL_DATETIME:         return "SQL_DATETIME";
+    case SQL_VARCHAR:          return "SQL_VARCHAR";
+    }
+
+    return "invalid";
+}
+
+static int get_col_info (SQLHSTMT stmt, int colnum)
+{
+    SQLCHAR colname[128+1] = {0};
+    SQLSMALLINT colname_len;
+    SQLSMALLINT data_type;
+    SQLULEN     colsize;
+    SQLSMALLINT digits;
+    SQLSMALLINT nullable;
+
+    SQLDescribeCol(stmt,             /* handle of stmt */
+		   colnum,           /* column number */
+		   colname,          /* where to put column name */
+		   sizeof(colname),  /* = 128+1 ... allow for \0 */
+		   &colname_len,     /* where to put name length */
+		   &data_type,       /* where to put <data type> */
+		   &colsize,         /* where to put column size */
+		   &digits,          /* where to put scale/frac precision */
+		   &nullable);       /* where to put null/not-null flag */    
+
+    fprintf(stderr, " col %d (%s): data_type %s, size %d, digits %d, nullable %d\n",
+	    colnum, colname, sql_datatype_name(data_type), (int) colsize,
+	    digits, nullable);
+
+    return 0;
 }
 
 int gretl_odbc_get_data (ODBC_info *odinfo)
@@ -427,6 +475,9 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     }
 
     fprintf(stderr, "Number of Columns = %d\n", (int) ncols);
+    for (i=0; i<ncols; i++) {
+	get_col_info(stmt, i+1);
+    }
 
     if (ncols != totcols) {
 	gretl_errmsg_sprintf("ODBC: expected %d columns but got %d",
