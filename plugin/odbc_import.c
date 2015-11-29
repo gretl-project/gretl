@@ -96,7 +96,7 @@ static int show_list (void)
 /* we got more data that we initially allocated space for; so
    expand the space available */
 
-static int expand_catchment (ODBC_info *odinfo, SQLINTEGER *nrows)
+static int expand_catchment (ODBC_info *odinfo, int *nrows)
 {
     int n = 2 * *nrows;
     int err;
@@ -217,7 +217,7 @@ int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 		    int totcols, SQLLEN *colbytes, 
 		    long *grabint, double *grabx, 
 		    char **grabstr, double *xt, 
-		    SQLINTEGER *nrows, int *obsgot)
+		    int *nrows, int *obsgot)
 {
     char obsbit[OBSLEN];
     long ret;
@@ -351,7 +351,7 @@ static int get_col_info (SQLHSTMT stmt, int colnum)
     SQLDescribeCol(stmt,             /* handle of stmt */
 		   colnum,           /* column number */
 		   colname,          /* where to put column name */
-		   sizeof(colname),  /* = 128+1 ... allow for \0 */
+		   sizeof(colname),  /* = 128+1 ... allow for nul */
 		   &colname_len,     /* where to put name length */
 		   &data_type,       /* where to put <data type> */
 		   &colsize,         /* where to put column size */
@@ -373,14 +373,15 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     long ret;                 /* return value from SQL functions */
     unsigned char status[10]; /* SQL status */
     unsigned char msg[512];
-    SQLINTEGER OD_err, nrows;
+    SQLINTEGER OD_err;
     SQLSMALLINT mlen, ncols;
     double *xt = NULL;
     SQLLEN *colbytes = NULL;
+    SQLLEN sqlnrows;
     long grabint[ODBC_OBSCOLS];
     double grabx[ODBC_OBSCOLS];
     char **grabstr = NULL;
-    int totcols, nstrs = 0;
+    int totcols, nrows, nstrs = 0;
     int i, j, k, p, v;
     int T = 0, err = 0;
 
@@ -486,7 +487,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	goto bailout;
     }
 
-    ret = SQLRowCount(stmt, (SQLLEN *) &nrows);
+    ret = SQLRowCount(stmt, &sqlnrows);
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLRowCount");
 	err = 1;
@@ -499,7 +500,8 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
        (e.g. Microsoft but maybe also others).
     */
 
-    fprintf(stderr, "Number of Rows (from SQLRowCount) = %d\n", (int) nrows);
+    nrows = sqlnrows;
+    fprintf(stderr, "Number of Rows (from SQLRowCount) = %d\n", nrows);
 
     if (ncols <= 0) {
 	gretl_errmsg_set("Didn't get any data");
