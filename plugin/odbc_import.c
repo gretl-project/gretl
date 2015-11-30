@@ -512,11 +512,12 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 		    strvals = strings_array_new(odinfo->nvars);
 		    if (strvals == NULL) {
 			err = E_ALLOC;
-		    } else {
-			strvals[j] = calloc(len, 1);
-			if (strvals[j] == NULL) {
-			    err = E_ALLOC;
-			}
+		    }
+		}
+		if (strvals != NULL) {
+		    strvals[j] = calloc(len, 1);
+		    if (strvals[j] == NULL) {
+			err = E_ALLOC;
 		    }
 		}
 		if (!err) {
