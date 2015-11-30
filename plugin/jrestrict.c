@@ -3052,6 +3052,11 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	return err;
     }
 
+    /* Identification analysis; notation follows quite closely 
+       Boswijk and Doornik (2004) */
+
+    /* do we have constraints on beta? If so, set up the H matrix */
+
     if (rset_VECM_bcols(rset) > 0) {
 	err = set_up_H(J, rset);
     }
@@ -3059,6 +3064,8 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     if (!err) {
 	err = allocate_phi(J);
     }
+
+    /* do we have constraints on alpha? if so, set up the G matrix */
 
     if (!err && rset_VECM_acols(rset) > 0) {
 	err = set_up_G(J, rset);
@@ -3069,9 +3076,15 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     }   
 
     if (!err) {
+	/* check identification via the rank of the Jacobian and
+	   assign to J->df the value 
+
+	   (rows_alpha + rows_beta - rank)*rank - Jacobian_rank
+
+	   if this is zero, there's no need for numerical optimization.
+	*/
 	err = vecm_id_check(J, jvar, opt, prn);
 	if (J->df == 0) {
-	    fprintf(stderr, "warning: test df = 0\n");
 	    J->flags &= ~J_USE_LBFGS;
 	    do_simann = 0;
 	}
