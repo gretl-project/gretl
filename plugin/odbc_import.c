@@ -219,7 +219,7 @@ static double strval_to_double (const char *s, int r, int c, int *err)
 	return atof(s);
     } else {
 	gretl_errmsg_sprintf(_("Expected numeric data, found string:\n"
-			       "%s\" at row %d, column %d\n"),
+			       "'%s' at row %d, column %d\n"),
 			     s, r, c);
 	*err = E_DATA;
 	return NADBL;
@@ -336,6 +336,30 @@ static char **allocate_string_grabbers (ODBC_info *odinfo,
     return G;
 }
 
+static char *get_bind_target (char ***pS, int len, int nv,
+			      int j, int *err)
+{
+    char *ret = NULL;
+    
+    if (*pS == NULL) {
+	*pS = strings_array_new(nv);
+	if (*pS == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+    
+    if (*pS != NULL) {
+	(*pS)[j] = calloc(len + 1, 1);
+	if ((*pS)[j] == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    ret = (*pS)[j];
+	}
+    }
+
+    return ret;
+}
+
 static const char *sql_datatype_name (SQLSMALLINT dt)
 {
     switch (dt) {
@@ -403,7 +427,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     char **grabstr = NULL;
     char **strvals = NULL;
     int totcols, nrows = 0, nstrs = 0;
-    int i, j, k, p, v;
+    int i, j, k, p;
     int T = 0, err = 0;
 
     odinfo->X = NULL;
@@ -451,9 +475,9 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	goto bailout;
     }
 
-    j = k = p = v = 0;
+    j = k = p = 0;
 
-    /* bind auxiliary obs columns */
+    /* bind auxiliary (obs) columns */
     for (i=0; i<odinfo->obscols; i++) {
 	colbytes[i] = 0;
 	if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
@@ -503,35 +527,24 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     
     /* show and process column info */
     for (i=0; i<ncols && !err; i++) {
-	int j, len = 0;
+	int len = 0;
 	
 	dt = get_col_info(stmt, i+1, &len);
 	if (i >= odinfo->obscols) {
 	    /* bind data columns */
 	    colbytes[i] = 0;
+	    j = i - odinfo->obscols;
 	    if (dt == SQL_VARCHAR) {
-		/* experimental */
-		j = i - odinfo->obscols;
-		if (strvals == NULL) {
-		    strvals = strings_array_new(odinfo->nvars);
-		    if (strvals == NULL) {
-			err = E_ALLOC;
-		    }
-		}
-		if (strvals != NULL) {
-		    strvals[j] = calloc(len + 1, 1);
-		    if (strvals[j] == NULL) {
-			err = E_ALLOC;
-		    }
-		}
+		char *sval = get_bind_target(&strvals, len, odinfo->nvars, j, &err);
+
 		if (!err) {
 		    fprintf(stderr, " binding data col %d to strvals[%d] (len = %d)\n",
 			    i+1, j, len);
-		    SQLBindCol(stmt, i+1, SQL_C_CHAR, strvals[j], len, &colbytes[i]);
+		    SQLBindCol(stmt, i+1, SQL_C_CHAR, sval, len, &colbytes[i]);
 		}
 	    } else {
 		/* should be numerical data */
-		SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &xt[v++], sizeof(double), 
+		SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &xt[j], sizeof(double), 
 			   &colbytes[i]);
 	    }
 	}		
