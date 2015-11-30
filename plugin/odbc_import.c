@@ -98,8 +98,7 @@ static int show_list (void)
 
 static int expand_catchment (ODBC_info *odinfo, int *nrows)
 {
-    int n = 2 * *nrows;
-    int err;
+    int err, n = 2 * *nrows;
 
     err = doubles_array_adjust_length(odinfo->X, odinfo->nvars, n);
     if (err) {
@@ -132,7 +131,7 @@ gretl_odbc_connect_to_dsn (ODBC_info *odinfo, SQLHENV *penv,
 {
     SQLHENV OD_env = NULL;    /* ODBC environment handle */
     SQLHDBC dbc = NULL;       /* connection handle */
-    long ret;                 /* return value from functions */
+    SQLRETURN ret;            /* return value from functions */
     unsigned char status[10]; /* SQL status */
     SQLINTEGER OD_err;
     SQLSMALLINT mlen;
@@ -234,7 +233,7 @@ static int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 			   char **strvals)
 {
     char obsbit[OBSLEN];
-    long ret;
+    SQLRETURN ret;
     int i, j, k, p, v;
     int t = 0, err = 0;
 
@@ -336,12 +335,19 @@ static char **allocate_string_grabbers (ODBC_info *odinfo,
     return G;
 }
 
+/* Allocate a char *object of size @len to hold a
+   string value provided by ODBC. If the array to hold
+   such objects has not yet been allocated if must be
+   be created first.
+*/
+
 static char *get_bind_target (char ***pS, int len, int nv,
 			      int j, int *err)
 {
     char *ret = NULL;
     
     if (*pS == NULL) {
+	/* starting from scratch */
 	*pS = strings_array_new(nv);
 	if (*pS == NULL) {
 	    *err = E_ALLOC;
@@ -374,12 +380,21 @@ static const char *sql_datatype_name (SQLSMALLINT dt)
     case SQL_DOUBLE:           return "SQL_DOUBLE";
     case SQL_DATETIME:         return "SQL_DATETIME";
     case SQL_VARCHAR:          return "SQL_VARCHAR";
+    case SQL_WCHAR:            return "SQL_WCHAR";
+    case SQL_WVARCHAR:         return "SQL_WVARCHAR";
     }
 
+    fprintf(stderr, "sql_datatype_name: got dt = %d\n", dt);
     return "invalid";
 }
 
-static SQLSMALLINT get_col_info (SQLHSTMT stmt, int colnum, int *len)
+#define IS_SQL_STRING_TYPE(t) (t == SQL_CHAR || \
+			       t == SQL_VARCHAR || \
+			       t == SQL_WCHAR || \
+			       t == SQL_WVARCHAR)
+
+static SQLSMALLINT get_col_info (SQLHSTMT stmt, int colnum,
+				 int *len, int *err)
 {
     SQLCHAR colname[128+1] = {0};
     SQLSMALLINT colname_len;
@@ -387,22 +402,25 @@ static SQLSMALLINT get_col_info (SQLHSTMT stmt, int colnum, int *len)
     SQLULEN     colsize;
     SQLSMALLINT digits;
     SQLSMALLINT nullable;
+    SQLRETURN ret;
 
-    SQLDescribeCol(stmt,             /* handle of stmt */
-		   colnum,           /* column number */
-		   colname,          /* where to put column name */
-		   sizeof(colname),  /* = 128+1 ... allow for nul */
-		   &colname_len,     /* where to put name length */
-		   &data_type,       /* where to put <data type> */
-		   &colsize,         /* where to put column size */
-		   &digits,          /* where to put scale/frac precision */
-		   &nullable);       /* where to put null/not-null flag */    
+    ret = SQLDescribeCol(stmt,             /* handle of stmt */
+			 colnum,           /* column number */
+			 colname,          /* where to put column name */
+			 sizeof(colname),  /* = 128+1 ... allow for nul */
+			 &colname_len,     /* where to put name length */
+			 &data_type,       /* where to put <data type> */
+			 &colsize,         /* where to put column size */
+			 &digits,          /* where to put scale/frac precision */
+			 &nullable);       /* where to put null/not-null flag */
 
-    fprintf(stderr, " col %d (%s): data_type %s, size %d, digits %d, nullable %d\n",
-	    colnum, colname, sql_datatype_name(data_type), (int) colsize,
-	    digits, nullable);
-
-    if (data_type == SQL_VARCHAR) {
+    if (OD_error(ret)) {
+	gretl_errmsg_set("Error in SQLDescribeCol");
+	*err = E_DATA;
+    } else {
+	fprintf(stderr, " col %d (%s): data_type %s, size %d, digits %d, nullable %d\n",
+		colnum, colname, sql_datatype_name(data_type), (int) colsize,
+		digits, nullable);
 	*len = (int) colsize;
     }
 
@@ -529,12 +547,12 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     for (i=0; i<ncols && !err; i++) {
 	int len = 0;
 	
-	dt = get_col_info(stmt, i+1, &len);
-	if (i >= odinfo->obscols) {
+	dt = get_col_info(stmt, i+1, &len, &err);
+	if (!err && i >= odinfo->obscols) {
 	    /* bind data columns */
 	    colbytes[i] = 0;
 	    j = i - odinfo->obscols;
-	    if (dt == SQL_VARCHAR) {
+	    if (IS_SQL_STRING_TYPE(dt)) {
 		char *sval = get_bind_target(&strvals, len, odinfo->nvars, j, &err);
 
 		if (!err) {
