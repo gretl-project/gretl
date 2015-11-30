@@ -495,8 +495,12 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 			     totcols, ncols);
 	err = 1;
 	goto bailout;
+    } else if (ncols <= 0) {
+	gretl_errmsg_set("Didn't get any data");
+	err = E_DATA;
+	goto bailout;
     }
-
+    
     /* show and process column info */
     for (i=0; i<ncols && !err; i++) {
 	int j, len = 0;
@@ -515,20 +519,27 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 		    }
 		}
 		if (strvals != NULL) {
-		    strvals[j] = calloc(len, 1);
+		    strvals[j] = calloc(len + 1, 1);
 		    if (strvals[j] == NULL) {
 			err = E_ALLOC;
 		    }
 		}
 		if (!err) {
-		    SQLBindCol(stmt, i+1, SQL_C_CHAR, &strvals[j], len, &colbytes[i]);
+		    fprintf(stderr, " binding data col %d to strvals[%d] (len = %d)\n",
+			    i+1, j, len);
+		    SQLBindCol(stmt, i+1, SQL_C_CHAR, strvals[j], len, &colbytes[i]);
 		}
 	    } else {
+		/* should be numerical data */
 		SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &xt[v++], sizeof(double), 
 			   &colbytes[i]);
 	    }
 	}		
-    }    
+    }
+
+    if (err) {
+	goto bailout;
+    }
 
     ret = SQLRowCount(stmt, &sqlnrows);
     if (OD_error(ret)) {
@@ -545,11 +556,6 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 
     nrows = sqlnrows;
     fprintf(stderr, "Number of Rows (from SQLRowCount) = %d\n", nrows);
-
-    if (ncols <= 0) {
-	gretl_errmsg_set("Didn't get any data");
-	err = E_DATA;
-    } 
 
     if (!err) {
 	if (nrows <= 0) {
