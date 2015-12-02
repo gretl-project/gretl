@@ -220,6 +220,37 @@ modify the code snippet above into
 series x = lincomb(D, seq(0, nelem(D)-1))
 \end{code}
 
+\subsection{Recoding a variable}
+
+\emph{Problem:} You want to perform a 1-to-1 recode on a variable. For
+example, consider tennis points: you may have a variable $x$ holding
+values 1 to 3 and you want to recode it to 15, 30, 40. 
+
+\emph{Solution 1:}
+\begin{code}
+series x = replace(x, 1, 15)
+series x = replace(x, 2, 30)
+series x = replace(x, 3, 40)
+\end{code}
+
+\emph{Solution 2:}
+\begin{code}
+matrix tennis = {15, 30, 40}
+series x = replace(x, seq(1,3), tennis)
+\end{code}
+
+\emph{Comment:} There are many equivalent ways to achieve the same
+effect, but for simple cases such as this, the \cmd{replace} function
+is simple and transparent. If you don't mind using matrices, scripts
+using \cmd{replace} can also be remarkably compact. Note that
+\cmd{replace} also performs $n$-to-1 (``surjective'') replacements,
+such as
+\begin{code}
+series x = replace{z, {2, 3, 5, 11, 22, 33}, 1)  
+\end{code}
+which would turn all entries equal to 2, 3, 5, 11, 22 or 33 to 1 and
+leave the other ones unchanged.
+
 \subsection{Generating a ``subset of values'' dummy}
 
 \emph{Problem:} You have a dataset which contains a fine-grained
@@ -231,12 +262,11 @@ want a manageable number of occupational category dummies.
 
 Let's call the source series \texttt{src} and one of the target dummies
 \texttt{D1}. And let's say that the values of \texttt{src} to be grouped
-under \texttt{D1} are 2, 13, 14, 25, plus an unspecified number of
-other values.
+under \texttt{D1} are 2, 13, 14 and 25.
 
 \emph{``Longhand'' solution:}
 \begin{code}
-series D1 = src==2 || src==13 || src==14 || src==25 || ...
+series D1 = src==2 || src==13 || src==14 || src==25
 \end{code}
 
 \emph{Comment:} The above works fine if the number of distinct values
@@ -246,7 +276,7 @@ dozens of source values.
 
 \emph{Clever solution:}
 \begin{code}
-matrix sel = {2,13,14,25,...}
+matrix sel = {2,13,14,25}
 series D1 = maxr({src} .= vec(sel)') .> 0
 \end{code}
 
@@ -265,7 +295,9 @@ the ``\verb|.>|'' operator (see chapter~\ref{chap:matrices} for both)
 then produces the result we want.
 
 Of course, whichever procedure you use, you have to repeat for each of
-the dummy series you want to create.
+the dummy series you want to create (but keep reading --- the
+``proper'' solution is probably what you want if you have more than
+one or two).
 
 \emph{Further comment:} Note that the clever solution depends on
 converting what is ``naturally'' a vector result into a series. This
@@ -276,6 +308,16 @@ number of observations in the dataset. One fix is then to subsample
 the dataset to exclude missing values before employing this method;
 another is to adjust the \texttt{skip\_missing} setting via the
 \cmd{set} command (see the \GCR).
+
+\emph{Proper solution}
+
+The best solution, both in terms of computational efficiency and code
+clarity would be using a ``conversion table'' and the \cmd{replace}
+function, after which you can use the \cmd{dummify} command. However,
+this would entail generating a matrix with a complete list of
+corresponding values from the finer grid to the coarser one: in some
+cases, this could be just a waste of time and energy, so the quicker
+hack above may be preferable.
 
 \subsection{Generating an ARMA(1,1)}
 
@@ -310,30 +352,6 @@ because the next statement evaluates \texttt{y} recursively, so
 \texttt{series} here instead of writing \texttt{genr y = 0} or simply
 \texttt{y = 0}, to ensure that \texttt{y} is a series and
 not a scalar.
-
-\subsection{Recoding a variable}
-
-\emph{Problem:} You want to perform a 1-to-1 recode on a variable. For
-example, consider tennis points: you may have a variable $x$ holding
-values 1 to 3 and you want to recode it to 15, 30, 40. 
-
-\emph{Solution 1:}
-\begin{code}
-series x = replace(x, 1, 15)
-series x = replace(x, 2, 30)
-series x = replace(x, 3, 40)
-\end{code}
-
-\emph{Solution 2:}
-\begin{code}
-matrix tennis = {15, 30, 40}
-series x = replace(x, seq(1,3), tennis)
-\end{code}
-
-\emph{Comment:} There are many equivalent ways to achieve the same
-effect, but for simple cases such as this, the \texttt{replace}
-function is simple and transparent. If you don't mind using matrices,
-scripts using \texttt{replace} can also be remarkably compact.
 
 \subsection{Recoding a variable by classes}
 
