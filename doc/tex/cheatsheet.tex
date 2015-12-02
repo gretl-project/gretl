@@ -220,6 +220,63 @@ modify the code snippet above into
 series x = lincomb(D, seq(0, nelem(D)-1))
 \end{code}
 
+\subsection{Generating a ``subset of values'' dummy}
+
+\emph{Problem:} You have a dataset which contains a fine-grained
+coding for some qualitative variable and you want to ``collapse'' this
+to a relatively small set of dummy variables. Examples: you have place
+of work by US state and you want a small set of regional dummies; or
+you have detailed occupational codes from a census dataset and you
+want a manageable number of occupational category dummies.
+
+Let's call the source series \texttt{src} and one of the target dummies
+\texttt{D1}. And let's say that the values of \texttt{src} to be grouped
+under \texttt{D1} are 2, 13, 14, 25, plus an unspecified number of
+other values.
+
+\emph{``Longhand'' solution:}
+\begin{code}
+series D1 = src==2 || src==13 || src==14 || src==25 || ...
+\end{code}
+
+\emph{Comment:} The above works fine if the number of distinct values
+in the source to be condensed into each dummy variable is fairly
+small, but it becomes cumbersome if a single dummy must comprise
+dozens of source values.
+
+\emph{Clever solution:}
+\begin{code}
+matrix sel = {2,13,14,25,...}
+series D1 = maxr({src} .= vec(sel)') .> 0
+\end{code}
+
+\emph{Comment:} The subset of values to be grouped together can be
+written out as a matrix relatively compactly (first line). The magic
+that turns this into the desired series (second line) relies on the
+versatility of the ``dot'' (element-wise) matrix operators. The
+expression ``\texttt{\{src\}}'' gets a column-vector version of the
+input series---call this $x$---and ``\texttt{vec(sel)'}'' gets the
+input matrix as a row vector, in case it's a column vector or a matrix
+with both dimensions greater than 1---call this $s$. If $x$ is
+$n\times1$ and $s$ is $1\times m$, the ``\texttt{.=}'' operator
+produces an $n\times m$ result, each element $(i,j)$ of which equals 1
+if $x_i = s_j$, otherwise 0. The \texttt{maxr()} function along with
+the ``\verb|.>|'' operator (see chapter~\ref{chap:matrices} for both)
+then produces the result we want.
+
+Of course, whichever procedure you use, you have to repeat for each of
+the dummy series you want to create.
+
+\emph{Further comment:} Note that the clever solution depends on
+converting what is ``naturally'' a vector result into a series. This
+will fail if there are missing values in \texttt{src}, since (by
+default) missing values will be skipped when converting \texttt{src}
+to $x$, and so the number of rows in the result will fall short of the
+number of observations in the dataset. One fix is then to subsample
+the dataset to exclude missing values before employing this method;
+another is to adjust the \texttt{skip\_missing} setting via the
+\cmd{set} command (see the \GCR).
+
 \subsection{Generating an ARMA(1,1)}
 
 \emph{Problem:} Generate $y_t = 0.9 y_{t-1} + \varepsilon_t - 0.5
