@@ -311,13 +311,20 @@ another is to adjust the \texttt{skip\_missing} setting via the
 
 \emph{Proper solution:}
 
-The best solution, both in terms of computational efficiency and code
+The best solution, in terms of both computational efficiency and code
 clarity, would be using a ``conversion table'' and the \cmd{replace}
-function, after which you can use the \cmd{dummify} command. However,
-this would entail generating a matrix with a complete list of
-corresponding values from the finer grid to the coarser one: in some
-cases, this could be just a waste of time and energy, so the quicker
-hack above may be preferable.
+function, to produce a series on which the \cmd{dummify} command can
+be used. For example, suppose we want to convert from a series called
+\texttt{fips} holding FIPS codes\footnote{FIPS is the Federal
+  Information Processing Standard: it assigns numeric codes from 1 to
+  56 to the US states and outlying areas.} for the 50 US states plus
+the District of Columbia to a series holding codes for the four
+standard US regions. We could create a $2 \times 51$ matrix---call it
+\texttt{srmap}---with the 51 FIPS codes on the first row and the
+corresponding region codes on the second, and then do
+\begin{code}
+series region = replace(fips, srmap[1,], srmap[2,])
+\end{code}
 
 \subsection{Generating an ARMA(1,1)}
 
