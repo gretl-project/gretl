@@ -265,7 +265,7 @@ static GtkWidget *label_hbox (call_info *cinfo, GtkWidget *w)
 
     if (cinfo->label != NULL) {
 	buf = g_markup_printf_escaped("<span weight=\"bold\">%s</span>",
-				      cinfo->label);
+				      _(cinfo->label));
     } else {
 	const char *funcname;
 	
@@ -3312,16 +3312,12 @@ static void add_package_to_menu (gui_package_info *gpi,
     guint merge_id;
 
 #if PKG_DEBUG
-    fprintf(stderr, "add_package_to_menu:\n pkgname='%s', menupath='%s'\n",
-	    gpi->pkgname, gpi->menupath);
+    fprintf(stderr, "add_package_to_menu:\n pkgname='%s', menupath='%s', label='%s'\n",
+	    gpi->pkgname, gpi->menupath, gpi->label);
 #endif
 
     item.name = gpi->pkgname;
-    if (gpi->label != NULL) {
-	item.label = _(gpi->label);
-    } else {
-	item.label = gpi->pkgname;
-    }
+    item.label = gpi->label != NULL ? gpi->label : gpi->pkgname;
     
     if (strchr(item.label, '_')) {
 	const char *s = item.label;
@@ -3339,7 +3335,7 @@ static void add_package_to_menu (gui_package_info *gpi,
     merge_id = gtk_ui_manager_new_merge_id(vwin->ui);
 
     gtk_ui_manager_add_ui(vwin->ui, merge_id, gpi->menupath, 
-			  item.label, item.name,
+			  _(item.label), item.name,
 			  GTK_UI_MANAGER_MENUITEM, 
 			  FALSE);
 
