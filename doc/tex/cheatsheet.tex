@@ -295,9 +295,9 @@ the ``\verb|.>|'' operator (see chapter~\ref{chap:matrices} for both)
 then produces the result we want.
 
 Of course, whichever procedure you use, you have to repeat for each of
-the dummy series you want to create (but keep reading --- the
-``proper'' solution is probably what you want if you have more than
-one or two).
+the dummy series you want to create (but keep reading---the ``proper''
+solution is probably what you want if you plan to create several
+dummies).
 
 \emph{Further comment:} Note that the clever solution depends on
 converting what is ``naturally'' a vector result into a series. This
@@ -309,10 +309,10 @@ the dataset to exclude missing values before employing this method;
 another is to adjust the \texttt{skip\_missing} setting via the
 \cmd{set} command (see the \GCR).
 
-\emph{Proper solution}
+\emph{Proper solution:}
 
 The best solution, both in terms of computational efficiency and code
-clarity would be using a ``conversion table'' and the \cmd{replace}
+clarity, would be using a ``conversion table'' and the \cmd{replace}
 function, after which you can use the \cmd{dummify} command. However,
 this would entail generating a matrix with a complete list of
 corresponding values from the finer grid to the coarser one: in some
