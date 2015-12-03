@@ -1932,10 +1932,6 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	create_text(vwin, hsize, vsize, nlines, TRUE, TRUE);
     } else {
 	create_text(vwin, hsize, vsize, nlines, FALSE, FALSE);
-	if (role == PRINT || role == SCRIPT_OUT ||
-	    role == VIEW_MODELTABLE) {
-	    text_set_word_wrap(vwin->text, 0);
-	}
     }
 
     text_table_setup(vwin->vbox, vwin->text);

@@ -1919,17 +1919,16 @@ static int *get_pmax_array (const int *list, const DATASET *dset)
 
 static void bufprint_string (char *buf, const char *s, int width)
 {
-    int i, n = width - g_utf8_strlen(s, -1);
+    int i, n = width - g_utf8_strlen(s, -1) - 1;
 
-    *buf = '\0';
-		    
+    buf[0] = ' '; buf[1] = '\0';
+
     if (n > 0) {
+	strcat(buf, s);
 	for (i=0; i<n; i++) {
 	    strcat(buf, " ");
 	}
-	strcat(buf, s);
     } else {
-	strcat(buf, " ");
 	gretl_utf8_strncat(buf, s, width - 3);
 	strcat(buf, "..");
     }
@@ -1937,16 +1936,17 @@ static void bufprint_string (char *buf, const char *s, int width)
 
 int column_width_from_list (const int *list, const DATASET *dset)
 {
-    int i, n, vi, w = 13;
+    int i, n, w = 13;
 
     for (i=1; i<=list[0]; i++) {
-	vi = list[i];
-	if (vi > 0 && vi < dset->v) {
-	    n = strlen(dset->varname[vi]);
-	    if (n >= w) {
-		w = n + 1;
-	    }
+	n = series_get_string_width(dset, list[i]);
+	if (n >= w) {
+	    w = n + 1;
 	}
+    }
+
+    if (list[0] > 1 && w > 32) {
+	w = 32;
     }
 
     return w;
@@ -2396,7 +2396,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 
     if (rtf) {
 	rtf_print_row_spec(ncols, RTF_TRAILER, prn);
-    }    
+    }
 
     /* print data by observations */
     for (s=0; s<T; s++) {
@@ -2422,22 +2422,49 @@ int print_data_in_columns (const int *list, const int *obsvec,
 	}
 
 	for (i=1; i<=list[0]; i++) {
-	    xx = dset->Z[list[i]][t];
-	    if (na(xx)) {
-		if (csv) {
-		    pputs(prn, csv_na);
+	    const char *strval = NULL;
+
+	    if (is_string_valued(dset, list[i])) {
+		strval = series_get_string_for_obs(dset, list[i], t);
+	    }
+
+	    if (strval != NULL) {
+		/* display string value */
+		if (*strval == '\0') {
+		    if (csv) {
+			pputs(prn, "\"\"");
+		    } else if (rtf) {
+			pputs(prn, "\\qr \\cell ");
+		    } else {
+			bufspace(colwidth, prn);
+		    }
+		} else if (csv) {
+		    pprintf(prn, "\"%s\"", strval);
 		} else if (rtf) {
-		    pputs(prn, "\\qr NA\\cell ");
+		    pprintf(prn, "\\qr %s\\cell ", strval);
 		} else {
-		    bufspace(colwidth, prn);
-		}
-	    } else { 
-		if (rtf) {
-		    bufprintnum(buf, xx, pmax[i-1], gprec, 0);
-		    pprintf(prn, "\\qr %s\\cell ", buf);
-		} else {
-		    bufprintnum(buf, xx, pmax[i-1], gprec, colwidth);
+		    bufprint_string(buf, strval, colwidth);
 		    pputs(prn, buf);
+		}
+	    } else {
+		/* numerical value */
+		xx = dset->Z[list[i]][t];
+		if (na(xx)) {
+		    if (csv) {
+			pputs(prn, csv_na);
+		    } else if (rtf) {
+			pputs(prn, "\\qr NA\\cell ");
+		    } else {
+			bufspace(colwidth, prn);
+		    }
+		} else { 
+		    if (rtf) {
+			bufprintnum(buf, xx, pmax[i-1], gprec, 0);
+			pprintf(prn, "\\qr %s\\cell ", buf);
+		    } else {
+			bufprintnum(buf, xx, pmax[i-1], gprec, colwidth);
+			pputs(prn, buf);
+		    }
 		}
 	    }
 	    if (csv && i < list[0]) {

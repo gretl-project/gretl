@@ -471,6 +471,8 @@ int series_get_transform (const DATASET *dset, int i);
 
 int series_get_lag (const DATASET *dset, int i);
 
+int series_get_string_width (const DATASET *dset, int i);
+
 void series_set_mtime (DATASET *dset, int i);
 
 gint64 series_get_mtime (const DATASET *dset, int i);

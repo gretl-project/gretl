@@ -4176,6 +4176,40 @@ char **series_get_string_vals (const DATASET *dset, int i,
 }
 
 /**
+ * series_get_string_width:
+ * @dset: pointer to dataset.
+ * @i: index number of series.
+ *
+ * Returns: the maximum of (a) the number of characters in the
+ * name of series @i and (b) the number of bytes in the longest
+ * "string value" attached to series @i, if applicable; or 0
+ * if @i is not a valid series index.
+ */
+
+int series_get_string_width (const DATASET *dset, int i)
+{
+    int n = 0;
+
+    if (i > 0 && i < dset->v) {
+	n = strlen(dset->varname[i]);
+	if (dset->varinfo[i]->st != NULL) {
+	    char **S;
+	    int j, ns, m;
+	    
+	    S = series_table_get_strings(dset->varinfo[i]->st, &ns);
+	    for (j=0; j<ns; j++) {
+		m = strlen(S[j]);
+		if (m > n) {
+		    n = m;
+		}
+	    }
+	}
+    }
+
+    return n;    
+}
+
+/**
  * steal_string_table:
  * @l_dset: pointer to recipient dataset.
  * @lvar: index number of target series.
