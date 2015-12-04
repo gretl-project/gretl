@@ -44,7 +44,7 @@
 	Va invocato dopo un comando di stima. Esegue un test congiunto
 	per l'aggiunta delle variabili specificate all'ultimo modello
 	stimato; si può avere accesso ai risultati del test tramite
-	<lit>$test</lit> e <lit>$pvalue</lit>.
+	<fncref targ="$test"/> e <fncref targ="$pvalue"/>.
       </para>
       <para context="cli">
 	Di default, aggiunge al modello precedente le variabili nella
@@ -192,7 +192,7 @@
 	Calcola una serie di test Dickey&ndash;Fuller sulle variabili
 	specificate, assumendo come ipotesi nulla che le variabili
 	abbiano una radice unitaria. Se si usa l'opzione
-	<lit>--difference</lit>, i test vengono condotti sulla
+	<opt>difference</opt>, i test vengono condotti sulla
 	differenza prima delle variabili e la discussione che segue va
 	riferita a questa trasformazione delle variabili.
       </para>
@@ -292,8 +292,8 @@
         <cite key="ERS96">Elliott, Rothenberg and Stock (1996)</cite>,
         che fornisce un test di potenza maggiore rispetto a
         quell'approccio standard di Dickey&ndash;Fuller. Questa
-        opzione non è compatibile con le opzioni <lit>--nc</lit>,
-        <lit>--ctt</lit> o <lit>--seasonals</lit>.
+        opzione non è compatibile con le opzioni <opt>nc</opt>,
+        <opt>ctt</opt> o <opt>seasonals</opt>.
       </para>
       <para>
         I <emphasis>p-</emphasis>value per questo test sono basati su
@@ -374,7 +374,7 @@
 	medie dei quadrati, nonché un test <math>F</math>.  Il test
 	<math>F</math> e il suo <emphasis>p-</emphasis>value possono
 	essere recuperati rispettivamente con gli accessori
-	<lit>$test</lit> e <lit>$pvalue</lit>.
+	<fncref targ="$test"/> e <fncref targ="$pvalue"/>.
       </para>
       <para>
 	L'ipotesi nulla del test <math>F</math> è che la risposta
@@ -583,15 +583,15 @@
 	dopo 20 iterazioni.
       </para>
       <para>
-	Se si usa l'opzione <lit>--hilu</lit>, verrà usata la
+	Se si usa l'opzione <opt>hilu</opt>, verrà usata la
 	procedura di ricerca di Hildreth&ndash;Lu.  I risultati sono
 	quindi ottimizzati con la procedura iterativa di
 	Cochrane&ndash;Orcutt, a meno che non si usi l'opzione
 	<lit>--no-corc</lit> (che viene ignorata se non viene
-	specificata <lit>--hilu</lit>).
+	specificata <opt>hilu</opt>).
       </para>
       <para>
-        Se si usa l'opzione <lit>--pwe</lit>, viene usato lo stimatore di
+        Se si usa l'opzione <opt>pwe</opt>, viene usato lo stimatore di
         Prais&ndash;Winsten, che prevede una procedura simile a quella di
         Cochrane&ndash;Orcutt; la differenza è che mentre Cochrane&ndash;Orcutt
         tralascia la prima osservazione, Prais&ndash;Winsten ne fa uso.  Per i
@@ -718,7 +718,7 @@
         errori standard asintotici calcolati nel modo consueto non
         sono generalmente ritenuti affidabili nel caso dello stimatore
         a due passi, ma se per qualche motivo si vuole usarli, è
-        possibile usare l'opzione <lit>--asymptotic</lit> per
+        possibile usare l'opzione <opt>asymptotic</opt> per
         disabilitare la correzione di Windmeijer.
       </para>
       <para>
@@ -777,7 +777,7 @@
       </para>
       <para>
 	Si veda anche <cmdref targ="garch"/> e <cmdref targ="modtest"/>
-        (l'opzione <lit>--arch</lit>).
+        (l'opzione <opt>arch</opt>).
       </para>
     </description>
 
@@ -892,7 +892,7 @@
       <para context="cli">
         Nel caso univariato la scelta predefinita include
         un'intercetta nel modello, ma questa può essere soppressa con
-        l'opzione <lit>--nc</lit>.  Se vengono aggiunte delle
+        l'opzione <opt>nc</opt>.  Se vengono aggiunte delle
         <repl>variabili-indipendenti</repl>, il modello diventa un
         ARMAX: in questo caso occorre indicare esplicitamente la
         costante se si desidera un'intercetta (come nel secondo degli
@@ -945,9 +945,9 @@
         sono stimate basandosi su un'approssimazione numerica
         all'inversa negativa dell'Hessiana, passando automaticamente
         al prodotto esterno del gradiente (OPG) in caso di problemi
-        numerici. Se si usa l'opzione <lit>--opg</lit> il prodotto
+        numerici. Se si usa l'opzione <opt>opg</opt> il prodotto
         esterno del gradiente viene usato in ogni caso. L'opzione
-        <lit>--hessian</lit>, invece, disabilita il passaggio
+        <opt>hessian</opt>, invece, disabilita il passaggio
         automatico all'OPG in caso di problemi. Si noti, peraltro, che
         l'impossibilità di calcolare numericamente l'hessiana è per
         solito indice di un modello mal specificato.
@@ -976,8 +976,8 @@
 	esatta. Il suo effetto è quello di rendere disponibile un vettore
 	contenente la stima ottimale alla data <math>t</math> del disturbo
 	o innovazione alla stessa data: questo valore può essere recuperato
-	grazie all'accessore <lit>$ehat</lit>. Questi valori sono diversi
-	dalla variabile dei residui (<lit>$uhat</lit>) che contiene gli errori 
+	grazie all'accessore <fncref targ="$ehat"/>. Questi valori sono diversi
+	dalla variabile dei residui (<fncref targ="$uhat"/>) che contiene gli errori 
 	di previsione un passo in avanti.
       </para>
 
@@ -1149,17 +1149,17 @@
       </para>
       <para>
 	Una volta completata con successo la stima, l'accessore
-	<lit>$uhat</lit> consente di recuperare una matrice di due
+	<fncref targ="$uhat"/> consente di recuperare una matrice di due
 	colonne contenente i residui generalizzati delle due
 	equazioni; in altre parole, i valori attesi degli errori
 	condizionali ai valori osservati delle variabili dipendenti e
-	delle covariate. Di default <lit>$yhat</lit> restituisce una
+	delle covariate. Di default <fncref targ="$yhat"/> restituisce una
 	matrice di quattro colonne contenente le stime delle
 	probabilità dei quattro possibili esiti congiunti per
 	(<math>y</math><sub>1</sub>, <math>y</math><sub>2</sub>),
 	nell'ordine (1,1), (1,0), (0,1), (0,0). In alternativa, se il
 	comando è seguito dall'opzione <opt>--save-xbeta</opt> ,
-	<lit>$yhat</lit> ha due colonne contenenti i valori delle
+	<fncref targ="$yhat"/> ha due colonne contenenti i valori delle
 	funzioni indice delle rispettive equazioni.
       </para>
       <para>
@@ -1423,9 +1423,9 @@
 	di uno script nel caso in cui si verifichi un errore
 	nell'esecuzione di un comando. Un eventuale errore viene
 	registrato in un codice d'errore interno cui è possibile
-	accedere con <lit>$error</lit> (un valore nullo indica che
+	accedere con <fncref targ="$error"/> (un valore nullo indica che
 	l'esecuzione ha avuto successo). Il valore di
-	<lit>$error</lit> dovrebbe sempre essere controllato subito
+	<fncref targ="$error"/> dovrebbe sempre essere controllato subito
 	dopo aver usato <lit>catch</lit>, in modo da adottare le
 	misure più opportune nel caso in cui il comando non dovesse
 	aver avuto successo.
@@ -1649,10 +1649,10 @@
 	L'impostazione predefinita consiste nell'includere una
 	costante nella regressione di cointegrazione; se si vuole
 	omettere la costante, basta usare l'opzione
-	<lit>--nc</lit>. Se si vuole aggiungere all'elenco dei termini
+	<opt>nc</opt>. Se si vuole aggiungere all'elenco dei termini
 	deterministici della regressione un trend lineare o
-	quadratico, basta usare le opzioni <lit>--ct</lit> o
-	<lit>--ctt</lit>. Queste opzioni sono mutualmente esclusive.
+	quadratico, basta usare le opzioni <opt>ct</opt> o
+	<opt>ctt</opt>. Queste opzioni sono mutualmente esclusive.
       </para>
       <para context="cli">
         Test di cointegrazione di Engle&ndash;Granger. La procedura
@@ -1767,7 +1767,7 @@
         gamma di J. Doornik (Doornik, 1998). Per il test traccia,
         vengono formiti due set di valori critici: asintotici e
         aggiustati per l'ampiezza campionaria. Di default, l'accessore
-        <lit>$pvalue</lit> riporta la variante aggiustata, ma i valori
+        <fncref targ="$pvalue"/> riporta la variante aggiustata, ma i valori
         asintotici possono essere ottenuti usando l'opzione
         <opt>--asy</opt>
       </para>
@@ -1826,7 +1826,7 @@
 	pop-up. Il simbolo vicino alla variabile diventerà una V.
       </para>
       <para context="cli">
-        L'opzione <lit>--seasonals</lit>, che può accompagnare una qualsiasi
+        L'opzione <opt>seasonals</opt>, che può accompagnare una qualsiasi
         delle altre opzioni, specifica l'inclusione di un gruppo di variabili
         dummy stagionali centrate. Questa opzione è disponibile solo per dati
         trimestrali o mensili.
@@ -2033,7 +2033,7 @@
        </para>
       <para>
         Quando viene calcolata la correlazione di rango, si può usare l'opzione
-        <lit>--verbose</lit> per mostrare i dati originali e ordinati
+        <opt>verbose</opt> per mostrare i dati originali e ordinati
         (altrimenti questa opzione verrà ignorata).
       </para>
     </description>
@@ -2114,8 +2114,8 @@
       </para>
 
       <para>
-	Se il comando va a buon fine, gli accessori <lit>$test</lit> e
-	<lit>$pvalue</lit> conterranno i valori corrispondenti per la
+	Se il comando va a buon fine, gli accessori <fncref targ="$test"/> e
+	<fncref targ="$pvalue"/> conterranno i valori corrispondenti per la
 	statistica di Ljung&ndash;Box, per l'ordine
 	<repl>max-ritardo</repl>. Peraltro, se si vuole semplicemente
 	calcolare la statistica <math>Q</math> senza che il programma
@@ -2219,7 +2219,7 @@
     <description>
       <para>
 	Va eseguito dopo la stima di un modello OLS. Esegue il test
-	CUSUM (o, se si usa l'opzione <lit>--squares</lit>, il test
+	CUSUM (o, se si usa l'opzione <opt>squares</opt>, il test
         CUSUMSQ ) per la stabilità dei parametri. Viene calcolata una 
         serie di errori di previsione per il periodo successivo,
         attraverso una serie di regressioni: la prima usa le prime
@@ -2524,7 +2524,7 @@
 	inclusi nella lista da cancellare saranno rinumerati.
       </para>
       <para>
-       Se si usa l'opzione <lit>--db</lit>, il comando rimuove le variabili
+       Se si usa l'opzione <opt>db</opt>, il comando rimuove le variabili
        elencate non dal dataset attuale ma da un database gretl, assumendo che
        questo sia stato aperto in precedenza e che l'utente abbia il permesso
        di scrittura sul file che contiene il database. Si veda anche il comando
@@ -2612,7 +2612,7 @@
        Dickey&ndash;Fuller.
       </para>
       <para>
-       Si veda anche l'opzione <lit>--gls</lit> del comando <cmdref
+       Si veda anche l'opzione <opt>gls</opt> del comando <cmdref
        targ="adf"/>.
       </para>
     </description>
@@ -2711,7 +2711,7 @@
         gruppi; il tipo di test dipende dall'opzione usata.
       </para>
       <para>
-	Con l'opzione <lit>--sign</lit>, viene eseguito il test del segno,
+	Con l'opzione <opt>sign</opt>, viene eseguito il test del segno,
         che si basa sul fatto che per due campioni
 	<math>x</math> e <math>y</math> estratti casualmente dalla
         stessa distribuzione, la probabilità che valga
@@ -2757,7 +2757,7 @@
         caso di campioni abbastanza ampi.
       </para>
       <para>
-        Usando l'opzione <lit>--verbose</lit> con i test di Wilcoxon viene
+        Usando l'opzione <opt>verbose</opt> con i test di Wilcoxon viene
         mostrato l'ordinamento delle osservazioni (l'opzione non ha effetto se
         usata con il test del segno).
       </para>
@@ -2789,7 +2789,7 @@
         comando <cmdref targ="dummify"/>.
       </para>
       <para>
-        Usando l'opzione <lit>--reverse</lit>, l'operazione viene invertita,
+        Usando l'opzione <opt>reverse</opt>, l'operazione viene invertita,
         ossia, le variabili nella <repl>lista-variabili</repl> sono marcate come
         continue.
       </para>
@@ -3105,9 +3105,9 @@
       </para>
       <para>
 	Di default i valori stimati ottenuti mediante l'accessore
-	<lit>$yhat</lit> rappresentano le medie condizionali delle
+	<fncref targ="$yhat"/> rappresentano le medie condizionali delle
 	durate; se tuttavia viene indicata l'opzione
-	<opt>--medians</opt>, <lit>$yhat</lit> fornisce le mediane
+	<opt>--medians</opt>, <fncref targ="$yhat"/> fornisce le mediane
 	condizionali.
 	  </para>
       <para>
@@ -3204,7 +3204,7 @@
 	veda anche <cmdref targ="tabprint"/>.
       </para>
       <para>
-	Usando l'opzione <lit>--complete</lit>, il file &latex; è un
+	Usando l'opzione <opt>complete</opt>, il file &latex; è un
         documento completo, pronto per essere processato; altrimenti il
         file va incluso in un documento.
       </para>
@@ -3302,12 +3302,12 @@
       </para>
       <para>
        Se il metodo di stima è <cmd>sur</cmd> o <cmd>3sls</cmd>
-       e viene usata l'opzione <lit>--iterate</lit>, lo stimatore verrà
+       e viene usata l'opzione <opt>iterate</opt>, lo stimatore verrà
        iterato. Nel caso di SUR, se la procedura converge, i risultati
        saranno stime di massima verosimiglianza. Invece l'iterazione della
        procedura dei minimi quadrati a tre stadi non produce in genere
        risultati di massima verosimiglianza a informazione completa.
-       L'opzione <lit>--iterate</lit> viene ignorata con gli altri metodi di
+       L'opzione <opt>iterate</opt> viene ignorata con gli altri metodi di
        stima.
       </para>
       <para>Se vengono scelti gli stimatori "equazione per equazione"
@@ -3324,7 +3324,7 @@
        tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{T}\]"
        ascii="sigma(i,j) = u(i)' * u(j) / T"
        graphic="syssigma1"/>
-       Se viene usata l'opzione <lit>--geomean</lit>, viene applicata
+       Se viene usata l'opzione <opt>geomean</opt>, viene applicata
        una correzione per i gradi di libertà secondo la formula
        <equation status="display"
        tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{\sqrt{(T-k_i)(T-k_j)}}\]"
@@ -3334,7 +3334,7 @@
        indipendenti in ogni equazione.
       </para>
       <para>
-        Se si usa l'opzione <lit>--verbose</lit> e un metodo iterativo, vengono
+        Se si usa l'opzione <opt>verbose</opt> e un metodo iterativo, vengono
         mostrati i dettagli delle iterazioni.
       </para>
     </description>
@@ -3546,7 +3546,7 @@
         impostato. Se si sceglie una previsione fuori dal campione ma non sono
         disponibili osservazioni, viene segnalato un errore. A seconda del tipo
         di modello, calcola anche gli errori standard (si veda oltre).
-        L'opzione <lit>--rolling</lit> produce un comportamento speciale
+        L'opzione <opt>rolling</opt> produce un comportamento speciale
         spiegato oltre.
       </para>
       <para context="cli">
@@ -3560,8 +3560,8 @@
         produrre previsioni per tutte le variabili endogene). Nel caso del
         sistema, o se non viene specificata <repl>nome-variabile</repl>, i
         valori della previsione possono essere recuperati usando la varaiabile
-        accessoria <lit>$fcast</lit>, mentre gli errori standard, se
-        disponibili, con <lit>$fcerr</lit>.
+        accessoria <fncref targ="$fcast"/>, mentre gli errori standard, se
+        disponibili, con <fncref targ="$fcerr"/>.
       </para>
       <para>
 	La scelta tra previsione statica e dinamica è rilevante solo nel caso di
@@ -3801,7 +3801,7 @@
       </para>
       <para>
 	I risultati possono essere recuperati usando gli accessori
-	<lit>$test</lit> e <lit>$pvalue</lit>. Questi valori sono
+	<fncref targ="$test"/> e <fncref targ="$pvalue"/>. Questi valori sono
 	basati sullo stimatore locale di Whittle a meno che non sia
 	stata indicata l'opzione <opt>--gph</opt>.
       </para>
@@ -3889,9 +3889,9 @@
 	a sinistra.
       </para>
       <para>
-       Usando l'opzione <lit>--normal</lit>, vengono mostrati i
+       Usando l'opzione <opt>normal</opt>, vengono mostrati i
        risultati del test chi-quadro di Doornik&ndash;Hansen per la
-       normalità.  Usando l'opzione <lit>--gamma</lit>, al posto del
+       normalità.  Usando l'opzione <opt>gamma</opt>, al posto del
        test di normalità viene eseguito il test non parametrico di
        Locke per l'ipotesi nulla che la variabile segua la
        distribuzione gamma; si veda <cite key="locke76">Locke
@@ -3902,18 +3902,18 @@
       <para>
         In modalità interattiva viene mostrato anche un grafico della
         distribuzione, a meno che non si usi l'opzione
-        <lit>--quiet</lit>. Per converso, il grafico non viene
+        <opt>quiet</opt>. Per converso, il grafico non viene
         mostrato quando il comando è invocato da script, a meno che
         non venga usata l'opzione <opt>--show-plot</opt>. (Questo non
         si applica alla versione di gretl a linea di comando,
         <lit>gretlcli</lit>.)
       </para>
       <para>
-       L'opzione <lit>--silent</lit> sopprime interamente l'output
+       L'opzione <opt>silent</opt> sopprime interamente l'output
        mostrato di solito. Ha senso usarla insieme a una delle opzioni
        riguardanti la distribuzione: in questo modo la statistica test
        e il suo p-value verranno salvati nelle variabili accessorie
-       <lit>$test</lit> e <lit>$pvalue</lit>.
+       <fncref targ="$test"/> e <fncref targ="$pvalue"/>.
       </para>
     </description>
  
@@ -4045,7 +4045,7 @@
         consueto impostando <repl>q</repl> a un valore positivo e <repl>p</repl>
         a zero. La somma di <repl>p</repl> e <repl>q</repl> non deve superare 5.
         Si noti che nell'equazione della media viene automaticamente inclusa una
-        costante, a meno che non si usi l'opzione <lit>--nc</lit>.
+        costante, a meno che non si usi l'opzione <opt>nc</opt>.
       </para>
 
       <para context="gui">
@@ -4079,7 +4079,7 @@
       <para context="cli">
         Sono disponibili varie stime della matrice di covarianza dei
         coefficienti. Il metodo predefinito è quello dell'Hessiana, a meno che
-        non si usi l'opzione <lit>--robust</lit>, nel qual caso viene usata la
+        non si usi l'opzione <opt>robust</opt>, nel qual caso viene usata la
         matrice di covarianza QML (White).  Altre possibilità (ad es. la matrice
         di informazione, o lo stimatore di Bollerslev&ndash;Wooldridge) possono
         essere specificate con il comando <cmdref targ="set"/>.
@@ -4120,14 +4120,14 @@
 
       <para context="cli">
         I residui GARCH e la varianza condizionale stimata sono memorizzate
-        rispettivamente nelle variabili <lit>$uhat</lit> e <lit>$h</lit>. Ad
+        rispettivamente nelle variabili <fncref targ="$uhat"/> e <fncref targ="$h"/>. Ad
         esempio, per ottenere la varianza condizionale è possibile scrivere: 
         </para>
       <code context="cli">
         genr ht = $h
       </code>
       <para context="cli">
-	Con l'opzione <opt>--stdresid</opt>, i valori di <lit>$uhat</lit>
+	Con l'opzione <opt>--stdresid</opt>, i valori di <fncref targ="$uhat"/>
 	vengono divisi per la radice di <math>h</math><sub>t</sub>.
       </para>
 
@@ -4732,7 +4732,7 @@
       </para>
 
       <para>
- 	Usando l'opzione <lit>--dummy</lit>, occorre fornire
+ 	Usando l'opzione <opt>dummy</opt>, occorre fornire
  	esattamente tre variabili: una variabile <math>y</math>, una
  	variabile <math>x</math>, e una variabile dummy
  	<repl>dumvar</repl>. L'effetto è quello di mostrare
@@ -5393,7 +5393,7 @@
         descrive la <repl>funzione</repl> (ad es. <lit>help ldet</lit>).
         Alcune funzioni hanno lo stesso nome dei comandi relativi (ad esempio
         <lit>diff</lit>): in questo caso verrà mostrato l'aiuto relativo al
-        comando, a meno che non si usi l'opzione <lit>--func</lit>.
+        comando, a meno che non si usi l'opzione <opt>func</opt>.
       </para> 
     </description>
 
@@ -5655,7 +5655,7 @@
 
       <para context="cli">
 	Per impostazione predefinita, gli errori standard sono calcolati usando
-        l'inversa dell'Hessiana. Se si usa l'opzione <lit>--robust</lit>, vengono
+        l'inversa dell'Hessiana. Se si usa l'opzione <opt>robust</opt>, vengono
         calcolati invece gli errori standard QML o Huber&ndash;White. In questo caso
         la matrice di covarianza stimata è un <quote>sandwich</quote>
         dell'inversa dell'Hessiana stimata e del prodotto esterno del gradiente.
@@ -5904,9 +5904,9 @@
 	et al, Journal of Econometrics, 1992)</cite> per la
 	stazionarietà di ognuna delle variabili specificate (o della
 	loro differenza prima, se si usa l'opzione
-	<lit>--difference</lit>. L'ipotesi nulla è che la variabile in
+	<opt>difference</opt>. L'ipotesi nulla è che la variabile in
 	questione sia stazionaria, attorno a un valore fisso o, se è
-	stata usata l'opzione <lit>--trend</lit>, attorno a un trend
+	stata usata l'opzione <opt>trend</opt>, attorno a un trend
 	deterministico lineare.
       </para>
 
@@ -5920,7 +5920,7 @@
 
       <para context="cli">
 	L'argomento ordine determina la dimensione della finestra usata per
-        il livellamento di Bartlett.  Se si usa l'opzione <lit>--verbose</lit>,
+        il livellamento di Bartlett.  Se si usa l'opzione <opt>verbose</opt>,
         vengono mostrati anche i risultati della regressione ausiliaria, insieme
         alla varianza stimata della componente random walk della variabile.
       </para>
@@ -6046,7 +6046,7 @@
       <para>
 	Gli errori standard sono derivati usando la procedura bootstrap
         con 500 estrazioni. La matrice di covarianza per le stime dei
-        parametri, mostrata se si usa l'opzione <lit>--vcv</lit>, si basa
+        parametri, mostrata se si usa l'opzione <opt>vcv</opt>, si basa
         sulla stessa procedura.
       </para>
     </description>
@@ -6221,7 +6221,7 @@
         dividendo il residuo previsto per il proprio errore standard.
       </para>
 
-      <para context="cli">Se si usa l'opzione <lit>--save</lit>, il
+      <para context="cli">Se si usa l'opzione <opt>save</opt>, il
       leverage, il valore di influenza e il valore DFFITS vengono aggiunti
       al dataset in uso.</para>
 
@@ -6230,7 +6230,7 @@
         finestra di dialogo che permette di salvare nel dataset in uso
         una o più delle variabili del test.</para>
       <para context="tex">
-	Dopo l'esecuzione l'accessore <lit>$test</lit> restituisce il criterio di 
+	Dopo l'esecuzione l'accessore <fncref targ="$test"/> restituisce il criterio di 
 	validazione incrociata, definito come
         \[
 	\sum_{i=1}^n (y_i - \hat{y}_{-i})^2 
@@ -6245,7 +6245,7 @@
 	e i riferimenti bibliografici ivi citati.
       </para>
       <para context="notex">
-	Dopo l'esecuzione, l'accessore <lit>$test</lit> restituisce il criterio di 
+	Dopo l'esecuzione, l'accessore <fncref targ="$test"/> restituisce il criterio di 
 	validazione incrociata, definito come la somma dei quadrati degli scarti fra
 	la variabile dipendente e il suo valore previsto, calcolato a partire 
 	da un campione dal quale quell'osservazione è stata esclusa.  
@@ -6489,7 +6489,7 @@
       <para context="cli">
         In modalità predefinita, gli errori standard sono calcolati con
         l'inversa negativa dell'Hessiana.  Se si usa l'opzione
-        <lit>--robust</lit>, verranno calcolati gli errori standard QML o quelli
+        <opt>robust</opt>, verranno calcolati gli errori standard QML o quelli
         di Huber&ndash;White. In questo caso, la matrice di covarianza stimata è
         un <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e del
         prodotto esterno del gradiente. Per i dettagli, si veda Davidson e
@@ -6511,7 +6511,7 @@
         interpretata come non ordinale, e vengono prodotte stime Logit
         Multinomiali. (In ambo i casi, verrà dato un errore se la
         dipendente non è discreta.) Nel caso multinomiale, l'accessore
-        <lit>$mnlprobs</lit> sarà disponibile dopo la stima; esso
+        <fncref targ="$mnlprobs"/> sarà disponibile dopo la stima; esso
         conterrà una matrice con le probabilità stimate dei possibili
         valori della dipendente per ogni osservazione (osservazioni
         per riga, valori per colonna).
@@ -6615,7 +6615,7 @@
       </para>
       <para>
         Si veda la <guideref targ="chap:looping"/> per altri dettagli ed esempi,
-        oltre che per la spiegazione dell'opzione <lit>--progressive</lit> (che
+        oltre che per la spiegazione dell'opzione <opt>progressive</opt> (che
         è destinata ad essere usata nelle simulazioni Monte Carlo) e per
         l'elenco dei comandi di gretl che possono essere usati all'interno di un
         loop.
@@ -6674,9 +6674,9 @@
       osservazione <quote>appartiene</quote> a un gruppo di altre osservazioni.
       </para>
 
-      <para context="cli">Se si usa l'opzione <lit>--vcv</lit>, vengono mostrate
+      <para context="cli">Se si usa l'opzione <opt>vcv</opt>, vengono mostrate
       la matrice di covarianza e la sua inversa. Se si usa l'opzione
-      <lit>--save</lit>, le distanze vengono salvate nel dataset con il nome
+      <opt>save</opt>, le distanze vengono salvate nel dataset con il nome
       <lit>mdist</lit> (o <lit>mdist1</lit>, <lit>mdist2</lit> e così via, se
       esiste già una variabile con quel nome).
       </para>
@@ -7030,9 +7030,9 @@
       <para>
 	Per impostazione predefinita, gli errori standard sono basati sul
         prodotto esterno del gradiente. Se si usa l'opzione
-        <lit>--hessian</lit>, vengono basati sull'inversa
+        <opt>hessian</opt>, vengono basati sull'inversa
         negativa dell'Hessiana (che è approssimata numericamente). Se si usa
-        l'opzione <lit>--robust</lit>, viene usato uno stimatore QML
+        l'opzione <opt>robust</opt>, viene usato uno stimatore QML
         (ossia, un sandwich dell'inversa negativa dell'Hessiana e della matrice
         di covarianza del gradiente).
       </para>
@@ -7276,20 +7276,20 @@
       </para>
       <para>
 	L'argomento opzionale <lit>ordine</lit> è rilevante solo nel caso si
-        scelga l'opzione <lit>--autocorr</lit> o l'opzione <lit>--arch</lit>.
+        scelga l'opzione <opt>autocorr</opt> o l'opzione <opt>--arch</opt>.
         Per impostazione predefinita, questi test sono eseguiti usando un ordine
         di ritardo pari alla periodicità dei dati, ma è possibile anche
         impostare un ordine di ritardo specifico.
       </para>
        <para>
-	L'opzione <lit>--robust</lit> ha effetto solo se viene scelto
+	L'opzione <opt>robust</opt> ha effetto solo se viene scelto
 	il test di Breusch&ndash;Pagan; l'effetto è quello di usare lo
 	stimatore robusto per la varianza proposto da <cite
 	key="koenker81">Koenker (1981)</cite>, rendendo il test meno
 	sensibile all'ipotesi di normalità.
       </para>
       <para>
-	L'opzione <lit>--panel</lit> è disponibile solo se il modello viene
+	L'opzione <opt>panel</opt> è disponibile solo se il modello viene
         stimato su dati panel: in questo caso viene eseguito un test per
         eteroschedasticità a gruppi (ossia per una varianza dell'errore diversa
         fra le unità cross section).
@@ -7303,9 +7303,9 @@
       <para>
 	Per impostazione predefinita, il programma mostra la regressione
         ausiliaria su cui si basa la statistica test, ma è possibile evitarlo
-        usando l'opzione <lit>--quiet</lit>. La statistica test e il suo p-value
-        possono essere recuperati usando le variabili accessorie <lit>$test</lit>
-        e <lit>$pvalue</lit>.
+        usando l'opzione <opt>quiet</opt>. La statistica test e il suo p-value
+        possono essere recuperati usando le variabili accessorie <fncref targ="$test"/>
+        e <fncref targ="$pvalue"/>.
       </para>
       <para>
         Nel caso di modelli stimati col metodo dei minimi quadrati a due stadi
@@ -7603,7 +7603,7 @@
         Analysis</book> di William Greene (capitolo 11 della quarta
         edizione, o capitolo 9 della quinta). I numeri alla sinistra
         delle righe sono dei punti di riferimento e non fanno parte dei
-        comandi. Si noti che le opzioni, come ad esempio <lit>--vcv</lit> per mostrare la
+        comandi. Si noti che le opzioni, come ad esempio <opt>vcv</opt> per mostrare la
 	matrice di covarianza delle stime dei parametri, vanno aggiunte al
         comando finale <lit>end nls</lit>.
       </para>
@@ -7707,8 +7707,8 @@
       </para>
       <para>
 	La statistica test e il suo p-value possono essere recuperati usando gli
-        accessori <lit>$test</lit> e <lit>$pvalue</lit>. Se si usa l'opzione
-        <lit>--all</lit>, i risultati salvati saranno queslli del test di
+        accessori <fncref targ="$test"/> e <fncref targ="$pvalue"/>. Se si usa l'opzione
+        <opt>all</opt>, i risultati salvati saranno queslli del test di
         Doornik&ndash;Hansen.
       </para>
     </description>
@@ -7747,7 +7747,7 @@
       <para>
 	Per impostazione predefinita, questo comando cancella tutti i dati
         presenti nell'ambiente di lavoro di gretl. Usando l'opzione
-        <lit>--preserve</lit>, verranno mantenute tutte le matrici attualmente
+        <opt>preserve</opt>, verranno mantenute tutte le matrici attualmente
         definite.
       </para>
     </description>
@@ -7852,9 +7852,9 @@
 
       <para context="cli">La formula usata per generare gli errori
       standard robusti (quando viene usata l'opzione
-      <lit>--robust</lit>) può essere modificata con il comando <cmdref
+      <opt>robust</opt>) può essere modificata con il comando <cmdref
       targ="set"/>.
-      L'opzione <lit>--jackknife</lit> equivale a impostare
+      L'opzione <opt>jackknife</opt> equivale a impostare
       <lit>hc_version</lit> a <lit>3a</lit>, in modo da emulare il vecchio
       comando <lit>hccm</lit>.
       </para>
@@ -7941,7 +7941,7 @@
         significatività congiunta delle variabili nella
         <repl>lista-variabili</repl>, che deve essere un sottoinsieme delle
         variabili indipendenti del modello stimato in precedenza. In
-        alternativa, se si usa l'opzione <lit>--auto</lit> viene attivata la
+        alternativa, se si usa l'opzione <opt>auto</opt> viene attivata la
         procedura di eliminazione sequenziale: ad ogni passo
         viene omessa la variabile con il p-value più alto, fino a che tutte le
         variabili restanti hanno un p-value inferiore a una certa soglia. La
@@ -7959,7 +7959,7 @@
         versione <math>F</math> di un test di Wald).
       </para>
       <para context="cli">
-	Per gli stimatori diversi da OLS, o se si usa l'opzione <lit>--wald</lit>,
+	Per gli stimatori diversi da OLS, o se si usa l'opzione <opt>wald</opt>,
         la statistica usata è un valore chi-quadro asintotico di Wald, basato
         sulla matrice di covarianza del modello originale.
       </para>
@@ -7967,34 +7967,34 @@
         Per impostazione predefinita, viene stimato il modello vincolato,
         vengono mostrate le stime e il modello vincolato rimpiazza quello
         originale come <quote>modello attuale</quote> nel caso si voglia,
-        ad esempio, recuperare i residui con <lit>$uhat</lit> (o eseguire
+        ad esempio, recuperare i residui con <fncref targ="$uhat"/> (o eseguire
         test ulteriori, come <cmd>add</cmd> o <cmd>omit</cmd>).  
       </para>
       <para>
 	Usando l'opzione Wald, il modello vincolato
         non viene stimato (quindi il modello attuale non viene rimpiazzato).
-        L'opzione <lit>--quiet</lit> sopprime la stampa dei risultati del
+        L'opzione <opt>quiet</opt> sopprime la stampa dei risultati del
         modello vincolato (se esso viene stimato): viene mostrato solo il
         risultato del test. Se il modello vincolato viene stimato e ne viene
-        chiesta la stampa, l'opzione <lit>--vcv</lit> ha l'effetto di
+        chiesta la stampa, l'opzione <opt>vcv</opt> ha l'effetto di
         mostrare la matrice di covarianza dei coefficienti del modello
         vincolato, altrimenti quest'opzione è ignorata.
       </para>
       <para context="cli">
-	Se si usa l'opzione <lit>--silent</lit>, non viene mostrato
+	Se si usa l'opzione <opt>silent</opt>, non viene mostrato
         alcun risultato; tuttavia, i risultati del test possono essere
         recuperati usando le variabili speciali
-	<lit>$test</lit> e <lit>$pvalue</lit>.
+	<fncref targ="$test"/> e <fncref targ="$pvalue"/>.
       </para>
       <para context="cli">
        Se il modello originale è stato stimato con i minimi quadrati a due
        stadi, può sorgere un'ambiguità: le nuove variabili vanno omesse come
        regressori, come strumenti o con entrambe le funzioni? Per risolvere
        l'ambiguità, nella modalità predefinita le variabili sono omesse
-       dall'elenco dei regressori, se si usa l'opzione <lit>--inst</lit> sono
+       dall'elenco dei regressori, se si usa l'opzione <opt>inst</opt> sono
        omesse dall'elenco degli strumenti, mentre se si usa l'opzione
-       <lit>--both</lit> sono rimosse totalmente dal modello. Queste due opzioni
-       sono incompatibili con l'opzione <lit>--wald</lit>; se uno o più strumenti
+       <opt>both</opt> sono rimosse totalmente dal modello. Queste due opzioni
+       sono incompatibili con l'opzione <opt>wald</opt>; se uno o più strumenti
        vengono omessi, il modello va ri-stimato.
       </para>
     </description>
@@ -8176,14 +8176,14 @@
     <description>
       <para>
         Scrive i risultati sul <repl>file-output</repl>, fino a nuovo
-        ordine. Usando l'opzione <lit>--append</lit>, i risultati
-        vengono aggiunti a un file esistente, mentre <lit>--write</lit>
+        ordine. Usando l'opzione <opt>append</opt>, i risultati
+        vengono aggiunti a un file esistente, mentre <opt>write</opt>
         apre un nuovo file (o ne sovrascrive uno esistente). Può essere
         aperto solo un file alla volta.
       </para>
 
       <para>
-        L'opzione <lit>--close</lit> può essere usata per chiudere
+        L'opzione <opt>close</opt> può essere usata per chiudere
         un file di output aperto in precedenza, tornando a scrivere i
         risultati sul canale predefinito.
       </para>
@@ -8191,7 +8191,7 @@
       <para>
         Nel primo degli esempi precedenti viene aperto il file
 	<filename>regress.txt</filename>, mentre nel secondo viene
-        chiuso. Se prima del comando <lit>--close</lit> fosse
+        chiuso. Se prima del comando <opt>close</opt> fosse
         eseguito un comando <cmd>ols</cmd>, i risultati della
         regressione verrebbero scritti su
         <filename>regress.txt</filename> invece che sullo schermo.
@@ -8199,7 +8199,7 @@
 
       <para>
         Esiste una variante: se si usa la parola chiave <lit>null</lit>
-        al posto di un nome di file insieme all'opzione <lit>--write</lit>,
+        al posto di un nome di file insieme all'opzione <opt>write</opt>,
         l'effetto è quello di sopprimere la stampa dei risultati fino alla
         successiva istruzione <lit>outfile --close</lit>.
       </para>
@@ -8266,11 +8266,11 @@
         stimato con i minimi quadrati ponderati, con i pesi costruiti a partire
         dalla varianza residua per le rispettive unità cross section nel
         campione. Solo in questo caso, è possibile usare l'opzione
-        <lit>--iterate</lit> per produrre stime iterative: nel caso di
+        <opt>iterate</opt> per produrre stime iterative: nel caso di
         convergenza, le stime sono di massima verosimiglianza.
       </para>
       <para context="cli">
-        Come ulteriore alternativa, se si usa l'opzione <lit>--between</lit>,
+        Come ulteriore alternativa, se si usa l'opzione <opt>between</opt>,
         viene stimato il modello tra i gruppi, ossia una regressione OLS usando
         le medie dei gruppi.
       </para>
@@ -8418,7 +8418,7 @@
         corrispondenti autovettori (o <quote>pesi della componente</quote>).
       </para>  
       <para>
-        Usando l'opzione <lit>--save</lit>, le componenti con autovalori
+        Usando l'opzione <opt>save</opt>, le componenti con autovalori
         maggiori di 1.0 vengono salvati nel dataset come variabili, con i nomi
         <lit>PC1</lit>, <lit>PC2</lit> e così via.  Queste variabili artificiali
         sono definite come la somma del peso della componente moltiplicato per
@@ -8463,13 +8463,13 @@
 	Calcola e mostra (graficamente se non si è in modalità batch)
         lo spettro della variabile specificata.  Per impostazione predefinita
         viene mostrato il periodogramma nel campione, mentre usando  l'opzione
-	<lit>--bartlett</lit>, lo spettro viene stimato usando una
+	<opt>bartlett</opt>, lo spettro viene stimato usando una
         finestra di Bartlett per i ritardi (si veda ad esempio <book>Econometric
         Analysis</book> di Greene per una discussione su questo argomento).
         L'ampiezza predefinita della fiestra di Bartlett è pari a due volte la
         radice quadrata dell'ampiezza campionaria, ma questo valore può essere
         impostato manualmente usando il parametro <repl>banda</repl>, fino a un
-        massimo pari a metà dell'ampiezza campionaria. Usando l'opzione <lit>--log</lit>,
+        massimo pari a metà dell'ampiezza campionaria. Usando l'opzione <opt>log</opt>,
         lo spettro viene rappresentato su una scala logaritmica.
       </para>
       <para>
@@ -8624,12 +8624,12 @@
 	Se viene indicata una <repl>lista-variabili</repl>, stampa i
         valori delle variabili specificate, altrimenti stampa i valori
         di tutte le variabili nel dataset in uso. Usando l'opzione
-	<lit>--byobs</lit> i dati vengono stampati per osservazione,
+	<opt>byobs</opt> i dati vengono stampati per osservazione,
         altrimenti sono stampati per variabile.
       </para>
 
       <para>
- 	Se si usa l'opzione <lit>--byobs</lit> e i dati sono mostrati per
+ 	Se si usa l'opzione <opt>byobs</opt> e i dati sono mostrati per
         osservazione, il comportamento predefinito è quello di mostrare la data
         (per serie storiche) o il marcatore (se esiste) all'inizio di ogni riga.
  	L'opzione <lit>--no-dates</lit> sopprime la visualizzazione delle date o
@@ -8645,7 +8645,7 @@
       
       <para>
         Nota: c'è un <quote>trucco</quote> con questo comando, usando
-        l'opzione <lit>--byobs</lit>, che può essere utile quando si
+        l'opzione <opt>byobs</opt>, che può essere utile quando si
         lavora su un dataset con valori mancanti. Se si fornisce una
         lista di variabili seguite da un punto e virgola e da una
         variabile finale, la variabile finale non viene mostrata, ma
@@ -8804,7 +8804,7 @@
       </para>
       <para context="cli">
         In modalità predefinita, gli errori standard sono calcolati
-        tramite l'Hessiana.  Se si usa l'opzione <lit>--robust</lit>,
+        tramite l'Hessiana.  Se si usa l'opzione <opt>robust</opt>,
         verranno calcolati gli errori standard QML
         (Huber&ndash;White). In questo caso, la matrice di covarianza
         stimata è un <quote>sandwich</quote> dell'inversa
@@ -9158,14 +9158,14 @@
         regressori sul modello di quello usato in <cmdref targ="ols"/>.
       </para>
       <para>
-        Senza l'opzione <lit>--intervals</lit>, vengono mostrati gli errori
+        Senza l'opzione <opt>intervals</opt>, vengono mostrati gli errori
         standard per le stime quantili; questi sono calcolati con la formula
         asintotica di Koenker e Bassett (1978), ma se si usa l'opzione
-        <lit>--robust</lit>, verrà usata la variante robusta per
+        <opt>robust</opt>, verrà usata la variante robusta per
         l'eteroschedasticità di Koenker e Zhao (1994).
       </para>
       <para>
-        Se si usa l'opzione <lit>--intervals</lit>, gretl calcolerà gli
+        Se si usa l'opzione <opt>intervals</opt>, gretl calcolerà gli
         intervalli di confidenza invece degli errori standard.  Questi
         intervalli sono calcolati col metodo dell'inversione del rango e in
         generale sono asimmetrici rispetto alle stime puntuali dei parametri.
@@ -9421,7 +9421,7 @@
         test <math>F</math> di Wald, usando la matrice di covarianza dei
         coefficienti del modello in questione. In modalità predefinita vengono
         mostrate le stime dei coefficienti vincolati; se si desidera solo la
-        statistica test, basta aggiungere l'opzione <lit>--quiet</lit> al
+        statistica test, basta aggiungere l'opzione <opt>quiet</opt> al
         comando <lit>restrict</lit> iniziale.
       </para>
       <para>
@@ -9673,13 +9673,13 @@
 	runs signx1
       </code>
       <para>
-       Se si usa l'opzione <lit>--difference</lit>, la variabile viene differenziata
+       Se si usa l'opzione <opt>difference</opt>, la variabile viene differenziata
        prima dell'analisi, quindi le successioni sono interpretabili come
        sequenze di incrementi o decrementi consecutivi nel valore della
        variabile.
       </para>
       <para>
-        Se si usa l'opzione <lit>--equal</lit>, l'ipotesi nulla incorpora
+        Se si usa l'opzione <opt>equal</opt>, l'ipotesi nulla incorpora
         l'assunzione che i valori positivi e negativi siano equiprobabili,
         altrimenti la statistica test è invariante rispetto
         all'<quote>equilibrio</quote> del processo che genera la sequenza,
@@ -9933,14 +9933,14 @@
         essere impostati in questo modo sono elencati di seguito.
         Si noti che le impostazioni di <lit>hac_lag</lit>, <lit>hc_version</lit>
         e <lit>hac_kernel</lit> sono usate quando viene data l'opzione
-        <lit>--robust</lit> a un comando di stima.
+        <opt>robust</opt> a un comando di stima.
       </para>
       <para>
         Un uso speciale di questo comando è <cmd>set stopwatch</cmd>. In questo
         modo viene avviata la misurazione del tempo della CPU, che viene fermata
         la prima volta che viene usata la variabile accessoria
-        <lit>$stopwatch</lit>, ad esempio assegnandola a un'altra variabile,
-        oppure stampandola. <lit>$stopwatch</lit> conterrà il numero di secondi
+        <fncref targ="$stopwatch"/>, ad esempio assegnandola a un'altra variabile,
+        oppure stampandola. <fncref targ="$stopwatch"/> conterrà il numero di secondi
         usati dalla CPU, dal momento in cui è stato dato il comando
         <lit>set stopwatch</lit>.
       </para>
@@ -10177,7 +10177,7 @@
       <ilist>
 	<li>
 	  <para><lit>bootrep</lit>: un intero. Imposta il numero di replicazioni
-          per il comando <cmdref targ="restrict"/> con l'opzione <lit>--bootstrap</lit>.
+          per il comando <cmdref targ="restrict"/> con l'opzione <opt>bootstrap</opt>.
           </para>
 	</li>
 	<li>
@@ -10203,7 +10203,7 @@
 	  <para><lit>force_hc</lit>: <lit>off</lit> (predefinito) o
 	  <lit>on</lit>. Lo stimatore HAC viene usato in modo
 	  predefinito con dati serie storiche e quando si usa
-	  l'opzione <lit>--robust</lit> di <lit>ols</lit>. Impostando
+	  l'opzione <opt>robust</opt> di <lit>ols</lit>. Impostando
 	  invece <lit>force_hc</lit> a <quote>on</quote>, si forza
 	  l'uso della matrice di covarianza coerente con
 	  l'eteroschedasticità (che non tiene conto
@@ -10265,7 +10265,7 @@
 	<li>
 	  <para><lit>pcse</lit>: <lit>off</lit> (impostazione predefinita) o
 	    <lit>on</lit>.  Di solito, quando si stima un modello con pooled OLS
-            su dati panel usando l'opzione <lit>--robust</lit>, viene usato lo
+            su dati panel usando l'opzione <opt>robust</opt>, viene usato lo
             stimatore di Arellano per la matrice di covarianza. Se si imposta
             <lit>pcse</lit> a <quote>on</quote>, verranno usati i Panel
             Corrected Standard Errors (PCSE) di Beck e Katz, che non tengono
@@ -10379,8 +10379,8 @@
         della variabile.
       </para>
       <para>
-        Usando una delle opzioni <lit>--discrete</lit> o
-        <lit>--continuous</lit>, viene impostato il carattere numerico della
+        Usando una delle opzioni <opt>discrete</opt> o
+        <opt>continuous</opt>, viene impostato il carattere numerico della
         variabile.  In modalità predefinita, tutte le variabili sono considerate come
         continue; marcando una variabile come discreta, essa viene trattata in
         modo speciale nei diagrammi di frequenza.
@@ -10615,10 +10615,10 @@
       <altforms>
 	<altform><lit>smpl</lit> <repl>oss-iniziale oss-finale</repl></altform>
 	<altform><lit>smpl</lit> <repl>+i -j</repl></altform>
-	<altform><lit>smpl</lit> <repl>variabile-dummy</repl> <lit>--dummy</lit></altform>
-	<altform><lit>smpl</lit> <repl>condizione</repl> <lit>--restrict</lit></altform>
+	<altform><lit>smpl</lit> <repl>variabile-dummy</repl> <opt>dummy</opt></altform>
+	<altform><lit>smpl</lit> <repl>condizione</repl> <opt>restrict</opt></altform>
 	<altform><lit>smpl</lit> <lit>--no-missing [ </lit><repl>lista-variabili</repl> <lit>]</lit></altform>
- 	<altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
+ 	<altform><lit>smpl</lit> <repl>n</repl> <opt>random</opt></altform>
 	<altform><lit>smpl full</lit></altform>
       </altforms>
       <examples>
@@ -10646,7 +10646,7 @@
         <repl>variabile-dummy</repl> deve essere una variabile
         indicatrice che assume solo valori 0 o 1 e il campione verrà
         ristretto alle osservazioni per cui la variabile dummy vale 1.
-	Il quarto modo, che usa <lit>--restrict</lit>, limita il
+	Il quarto modo, che usa <opt>restrict</opt>, limita il
         campione alle osservazioni che soddisfano la condizione Booleana
 	specificata secondo la sintassi del comando <cmdref
         targ="genr"/>.</para>
@@ -10659,7 +10659,7 @@
       selezionate le osservazioni per cui <emphasis>tutte</emphasis> le
       variabili hanno valori validi (non mancanti).</para>
 
-      <para>Con la forma <lit>--random</lit>, viene estratto casualmente dal
+      <para>Con la forma <opt>random</opt>, viene estratto casualmente dal
       dataset il numero indicato di osservazioni. Per essere in grado di
       replicare questa selezione, occorre per prima cosa impostare il seme
       del generatore di numeri casuali (si veda il comando
@@ -10674,10 +10674,10 @@
       <lit>smpl</lit> è il campione attuale, così che ogni vincolo si
       aggiunge a quelli già impostati. Se si vuole che il comando
       funzioni sostituendo i vincoli esistenti, occorre usare
-      l'opzione <lit>--replace</lit> alla fine del comando.</para>
+      l'opzione <opt>replace</opt> alla fine del comando.</para>
 
       <para>La variabile interna <lit>obs</lit> può essere usata con la
-      forma <lit>--restrict</lit> di <lit>smpl</lit> per escludere
+      forma <opt>restrict</opt> di <lit>smpl</lit> per escludere
       particolari osservazioni dal campione. Ad esempio,</para>
 
       <code>
@@ -10695,7 +10695,7 @@
         <quote>USA</quote>.
         </para>
 
-      <para>Per le forme <lit>--dummy</lit>, <lit>--restrict</lit> e
+      <para>Per le forme <opt>dummy</opt>, <opt>restrict</opt> e
       <lit>--no-missing</lit> di <lit>smpl</lit>, occore tenere presente
       che tutte le informazioni <quote>strutturali</quote> contenute nel
       file dei dati (a proposito della struttura di serie storiche o di
@@ -10812,7 +10812,7 @@
       <para>
 	Genera nuove variabili che sono i quadrati delle variabili nella
 	<repl>lista-variabili</repl> (con anche i prodotti incrociati,
-        se si usa l'opzione <lit>--cross</lit>). Ad esempio, <cmd>square
+        se si usa l'opzione <opt>cross</opt>). Ad esempio, <cmd>square
           x y</cmd> genera <lit>sq_x</lit> = <lit>x</lit> al quadrato,
           <lit>sq_y</lit> = <lit>y</lit> al quadrato e (opzionalmente)
           <lit>x_y</lit> = <lit>x</lit> per <lit>y</lit>.
@@ -10918,7 +10918,7 @@
         accodare le nuove serie al contenuto del database preesistente. In
         questo contesto, se una o più delle variabili da salvare hanno lo stesso
         nome di una delle variabili già presenti nel database si otterrà un
-        messaggio di errore. L'opzione <lit>--overwrite</lit> permette invece di
+        messaggio di errore. L'opzione <opt>overwrite</opt> permette invece di
         sovrascrivere eventuali variabili del dataset che hanno lo stesso nome
         delle nuove variabili, in modo che queste ultime rimpiazzino le
         variabili preesistenti.
@@ -11086,34 +11086,35 @@
 
       <ilist context="cli">
 	<li>
-          <para><lit>$uhat</lit>: la matrice dei residui, una colonna per
+          <para><fncref targ="$uhat"/>: la matrice dei residui, una colonna per
             equazione.
 	  </para>
 	</li>
 	<li>
-          <para><lit>$yhat</lit>: la matrice dei valori stimati, una colonna
+          <para><fncref targ="$yhat"/>: la matrice dei valori stimati, una colonna
             per equazione.
 	  </para>
 	</li>
 	<li>
-          <para><lit>$coeff</lit>: il vettore colonna dei coefficienti
+          <para><fncref targ="$coeff"/>: il vettore colonna dei coefficienti
           (tutti i coefficienti della prima equazione, seguiti da
           quelli della seconda equazione, e così via).
 	  </para>
 	</li>
 	<li>
-          <para><lit>$vcv</lit>: la matrice di covarianza dei coefficienti.
-            Se il vettore <lit>$coeff</lit> ha <math>k</math> elementi,
+          <para><fncref targ="$vcv"/>: la matrice di covarianza dei coefficienti.
+            Se il vettore <fncref targ="$coeff"/> ha <math>k</math> elementi,
             questa matrice ha dimensione <math>k</math> per <math>k</math>.
 	  </para>
 	</li>
 	<li>
-          <para><lit>$sigma</lit>: la matrice di covarianza dei residui
+          <para><fncref targ="$sigma"/>: la matrice di covarianza dei residui
           incrociata tra equazioni.
 	  </para>
 	</li>
-	<li><para><lit>$sysGamma</lit>, <lit>$sysA</lit> e <lit>$sysB</lit>: 
-          matrici dei coefficienti in forma strutturale (si veda oltre).
+	<li><para><fncref targ="$sysGamma"/>, <fncref targ="$sysA"/> e
+	<fncref targ="$sysB"/>: matrici dei coefficienti in forma
+	strutturale (si veda oltre).
 	  </para>
 	</li>
       </ilist>
@@ -11121,7 +11122,7 @@
       <para context="cli">
         Se si vuole salvare i residui o i valori stimati per una specifica
         equazione come serie di dati, basta selezionare la colonna dalla matrice
-	<lit>$uhat</lit> o <lit>$yhat</lit> e assegnarla a una serie, come in
+	<fncref targ="$uhat"/> o <fncref targ="$yhat"/> e assegnarla a una serie, come in
       </para>
       <code context="cli">
 	series uh1 = $uhat[,1]
@@ -11206,14 +11207,14 @@
         formato &latex;.
       </para>
       <para>
-	Usando l'opzione <lit>--complete</lit>, il file &latex; è un
+	Usando l'opzione <opt>complete</opt>, il file &latex; è un
 	documento completo, pronto per essere processato; altrimenti
 	il file va incluso in un documento.
       </para>
       <para>
 	Se si intende modificare lo stile del formato tabulare, è
 	possibile specificare un formato personalizzato usando
-	l'opzione <lit>--format</lit>, seguita da una stringa di
+	l'opzione <opt>format</opt>, seguita da una stringa di
 	formato. La stringa di formato va inclusa tra virgolette
 	doppie e deve essere unita all'opzione con un segno di
 	uguale. La composizione della stringa di formato è la
@@ -11446,8 +11447,8 @@
 
       <para context="cli">
 	In alternativa al metodo TSLS, il modello può essere stimato usando la
-        massima verosimiglianza a informazione limitata (opzione <lit>--liml</lit>)
-        o il metodo generalizzato dei momenti (opzione <lit>--gmm</lit>). Si noti che
+        massima verosimiglianza a informazione limitata (opzione <opt>liml</opt>)
+        o il metodo generalizzato dei momenti (opzione <opt>gmm</opt>). Si noti che
         se il modello è esattamente identificato, questi metodi dovrebbero
         produrre gli stessi risultati del metodo TSLS, ma se il modello è
         sovraidentificato, i risultati saranno in genere diversi.
@@ -11466,7 +11467,7 @@
 	</li>
 	<li>
 	  <para>
-	    <lit>--iterate</lit>: itera il GMM fino alla convergenza.
+	    <opt>iterate</opt>: itera il GMM fino alla convergenza.
 	  </para>
 	</li>
 	<li>
@@ -11569,7 +11570,7 @@
 	Imposta e stima (usando OLS) un'autoregressione vettoriale
 	(VAR).  Il primo argomento specifica l'ordine di ritardo (o il
 	massimo ordine di ritardi se è stata usata l'opzione
-	<lit>--lagselect</lit>). L'ordine può essere indicato
+	<opt>lagselect</opt>). L'ordine può essere indicato
 	numericamente o con il nome di una variabile scalare
 	preesistente.  Quindi segue l'impostazione della prima
 	equazione. Non occorre includere i ritardi tra gli elementi
@@ -11579,9 +11580,9 @@
 	<repl>ordine</repl>, dai termini deterministici o esogeni
 	presenti nella <repl>lista-esogene</repl>. Si noti che viene
 	inclusa automaticamente una costante, a meno che non si usi
-	l'opzione <lit>--nc</lit>; inoltre è possibile aggiungere un
-	trend con l'opzione <lit>--trend</lit> e variabili dummy
-	stagionali con l'opzione <lit>--seasonals</lit>.
+	l'opzione <opt>nc</opt>; inoltre è possibile aggiungere un
+	trend con l'opzione <opt>trend</opt> e variabili dummy
+	stagionali con l'opzione <opt>seasonals</opt>.
       </para>
 
       <para context="cli">
@@ -11605,7 +11606,7 @@
         può essere impostato usando il comando <cmdref targ="set"/>.
       </para> 
       <para context="cli">
-        Se si usa l'opzione <lit>--lagselect</lit>, il primo parametro
+        Se si usa l'opzione <opt>lagselect</opt>, il primo parametro
         del comando <lit>var</lit> viene interpretato come il massimo
         ordine di ritardo.  In questo caso, il comando non produce il
         solito risultato della stima del VAR, ma una tabella che
@@ -11835,7 +11836,7 @@
         punto e virgola.
       </para>
       <para context="cli">
-        L'opzione <lit>--seasonals</lit>, che può accompagnare una qualsiasi
+        L'opzione <opt>seasonals</opt>, che può accompagnare una qualsiasi
         delle altre opzioni, specifica l'inclusione di un gruppo di variabili
         dummy stagionali centrate. Questa opzione è disponibile solo per dati
         trimestrali o mensili.
@@ -12102,11 +12103,11 @@
       </para>
       <para>
 	Per impostazione predefinita le celle indicano la frequenza assoluta.
-        Le opzioni <lit>--row</lit> e <lit>--column</lit> (che sono mutualmente
+        Le opzioni <opt>row</opt> e <opt>column</opt> (che sono mutualmente
         esclusive) sostituiscono la frequenza assoluta con le frequenze in
         percentuale relativamente a ciascuna riga o colonna. Le celle con valore
         di frequenza nullo sono lasciate vuote, a meno che non venga usata l'opzione
-	<lit>--zeros</lit>, che mostra esplicitamente i valori pari a zero;
+	<opt>zeros</opt>, che mostra esplicitamente i valori pari a zero;
         questa opzione può essere comoda se occorre importare la tabella in un
         altro programma, come un foglio di calcolo.
       </para>
