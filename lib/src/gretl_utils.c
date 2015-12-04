@@ -402,6 +402,7 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
 int gretl_isdiscrete (int t1, int t2, const double *x)
 {
     int t, n = 0, d = 1;
+    int allints = 1;
     double r = 0;
 
     for (t=t1; t<=t2; t++) {
@@ -417,11 +418,16 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
 	if (r != 0.0 && r != 0.25 && r != 0.5 && r != 0.75) {
 	    d = 0;
 	    break;
-	}	    
+	}
+	if (allints && r != 0.0) {
+	    allints = 0;
+	}
     }
 
     if (n == 0) {
 	d = 0;
+    } else if (allints) {
+	return 1;
     }
 
     if (d) {
